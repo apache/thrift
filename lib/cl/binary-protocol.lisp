@@ -1,4 +1,4 @@
-(in-package :org.apache.thrift.implementation)
+(in-package #:org.apache.thrift.implementation)
 
 ;;; This file defines the concrete `binary-protocol` layer for the `org.apache.thrift` library.
 ;;;

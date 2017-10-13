@@ -1,4 +1,4 @@
-(in-package :common-lisp-user)
+(in-package #:common-lisp-user)
 
 
 ;;; This files defines the ASDF system for the `org.apache.thrift` library.
@@ -21,15 +21,12 @@
 ;;; under the License.
 
 
-(asdf:defsystem :thrift
-  :depends-on (;; use this puri version to support thrift uri class
-               ;; #-:asdf.hierarchical-names :puri-ppcre
-               ;; #+:asdf.hierarchical-names :com.b9.puri.puri-ppcre
-	       :puri
-               :usocket
-               :closer-mop 
-               :trivial-utf-8
-	       :ieee-floats)
+(asdf:defsystem #:thrift
+  :depends-on (#:puri
+               #:usocket
+               #:closer-mop 
+               #:trivial-utf-8
+	       #:ieee-floats)
   :description "org.apache.thrift implements a Common Lisp binding for the Apache Thrift cross-language
  services protocol."
   :serial t

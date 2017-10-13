@@ -1,4 +1,4 @@
-(in-package :org.apache.thrift.implementation)
+(in-package #:org.apache.thrift.implementation)
 
 ;;; This file defines types for the `org.apache.thrift` library.
 ;;;

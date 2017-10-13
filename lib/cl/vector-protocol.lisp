@@ -1,4 +1,4 @@
-(in-package :org.apache.thrift.implementation)
+(in-package #:org.apache.thrift.implementation)
 
 ;;; define a binary stream to wrap a vector for use in tests.
 ;;; adapted from the cl-xml version to restrict i/o to unsigned byte operations.

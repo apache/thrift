@@ -1,4 +1,4 @@
-(in-package :org.apache.thrift.implementation)
+(in-package #:org.apache.thrift.implementation)
 
 ;;; This file defines the abstract and metaclass definitions for the `org.apache.thrift` library.
 ;;;
