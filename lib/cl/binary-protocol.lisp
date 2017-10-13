@@ -232,8 +232,7 @@
              (type (simple-array (unsigned-byte 8) (4)) buffer)
              (type (unsigned-byte 32) int-value))
     ;; if the conversion is correct, this is redundant, sbcl eliminate it
-    (assert  (typep int-value '(unsigned-byte 32)) ()
-             'type-error :datum int-value :expected-type '(unsigned-byte 64))
+    (assert (typep int-value '(unsigned-byte 32)) ())
     ;; (format *trace-output* "~%(out 0x~16,'0x)" int-value)
     (macrolet ((pack-buffer ()
                  `(progn ,@(loop for i from 3 downto 0
