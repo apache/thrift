@@ -132,9 +132,6 @@
       (export sym *package*)
       sym))
   
-  (defun strs-syms (strs &key (key #'identity))
-    (mapcar #'str-sym (mapcar key strs)))
-
   (defmacro with-gensyms (syms &body b)
     `(let ,(mapcar #'(lambda (s) `(,s (gensym ,(string s)))) syms)
        ,@b))
