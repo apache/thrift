@@ -4,6 +4,8 @@ software/closer-mop-20170830-git/closer-mop.asd
 software/ieee-floats-20170830-git/ieee-floats.asd
 software/puri-20150923-git/puri.asd
 software/split-sequence-1.2/split-sequence.asd
+software/trivial-gray-streams-20140826-git/trivial-gray-streams-test.asd
+software/trivial-gray-streams-20140826-git/trivial-gray-streams.asd
 software/trivial-utf-8-20111001-darcs/trivial-utf-8.asd
 software/usocket-0.7.0.1/usocket-server.asd
 software/usocket-0.7.0.1/usocket-test.asd
