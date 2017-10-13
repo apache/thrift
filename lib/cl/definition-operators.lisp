@@ -22,8 +22,9 @@
 ;;; under the License.
 
 
-;;; The Common Lisp backend for the Thrift IDL translator[[1]] generates Lisp source code in terms of the
-;;; following definition operators:
+;;; The Common Lisp backend for the Thrift IDL translator[[1]]
+;;; generates Lisp source code in terms of the following definition
+;;; operators:
 ;;;
 ;;;   def-constant
 ;;;   def-eum
@@ -33,41 +34,50 @@
 ;;;   def-response-method
 ;;;   def-service
 ;;;
-;;; The syntax resembles that of the standard Lisp operators. The primary distinction is that identifiers are
-;;; the original strings from the Thrift IDL source. The macro operators canonicalize and intern these
-;;; according to the current package and read table case. The original values are retained to use as method
-;;; and class names for encoding/decoding.
+;;; The syntax resembles that of the standard Lisp operators. The
+;;; primary distinction is that identifiers are the original strings
+;;; from the Thrift IDL source. The macro operators canonicalize and
+;;; intern these according to the current package and read table
+;;; case. The original values are retained to use as method and class
+;;; names for encoding/decoding.
 ;;;
-;;; The interface  definitions can incorporate structures in variable definitions, and the service definitions
-;;; entail method definitions, which in turn require structure definitions in order to compile codecs
-;;; in-line. This suggests the following file load order and organization:
+;;; The interface definitions can incorporate structures in variable
+;;; definitions, and the service definitions entail method
+;;; definitions, which in turn require structure definitions in order
+;;; to compile codecs in-line. This suggests the following file load
+;;; order and organization:
 ;;;
 ;;;   <service>-types.lisp : (generated) enums, structs, exceptions, services
 ;;;   <service>-vars.lisp : (generated) constants
 ;;;   <service.lisp : (authored) the base function definitions
 ;;;
-;;; The extra file for constants is required, as the generator emits them before the structs. Each operation
-;;; comprises three phases:
+;;; The extra file for constants is required, as the generator emits
+;;; them before the structs. Each operation comprises three phases:
 ;;;
-;;;  * The client invokes a proxy to communicate with the service. This sends a request message and
-;;;    interprets results.
-;;;  * The service accepts messages and processes them with individual operators which decode arguments,
-;;;    invoke the implementation operator, and encode the response to return to the client.
-;;;  * The implementation operator itself.
+;;;  * The client invokes a proxy to communicate with the
+;;;    service. This sends a request message and interprets results.
+;;;  * The service accepts messages and processes them with individual
+;;;    operators which decode arguments, invoke the implementation
+;;;    operator, and encode the response to return to the client.  *
+;;;    The implementation operator itself.
 ;;;
 ;;; The three operators are defined as homologues in three related packages:
 ;;;
-;;;  * <namespace> : This, the application interface package, has the respective namespace name.
-;;;    It is the home package for the names for the request proxy function, structure and exception types
-;;;    and accessors, enum types, and constants
-;;;  * <namespace>-implementation : This is the home package for implementation function names. It uses
-;;;    the application interface package, but shadows all interface function names, and it cross-exports
-;;;    all other interface symbols.
-;;;  * <namespace>-response : This is the home package for response function names. It needs no other
-;;;    symbols as the functions only intended role is bound to service instances.
+;;;  * <namespace> : This, the application interface package, has the
+;;;    respective namespace name.  It is the home package for the
+;;;    names for the request proxy function, structure and exception
+;;;    types and accessors, enum types, and constants
+;;;  * <namespace>-implementation : This is the home package for
+;;;    implementation function names. It uses the application
+;;;    interface package, but shadows all interface function names,
+;;;    and it cross-exports all other interface symbols.
+;;;  * <namespace>-response : This is the home package for response
+;;;    function names. It needs no other symbols as the functions only
+;;;    intended role is bound to service instances.
 ;;;
-;;; The translated IDL files each begin with an in-package form for the application interface package and
-;;; other symbols are generated relative to that.
+;;; The translated IDL files each begin with an in-package form for
+;;; the application interface package and other symbols are generated
+;;; relative to that.
 ;;;
 ;;; [1]: $THRIFT/compiler/src/generate/t_cl_generator.cc
 
