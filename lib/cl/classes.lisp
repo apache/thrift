@@ -392,8 +392,7 @@
 ;;;
 ;;; exceptions
 
-(defmethod unknown-field ((class thrift-class) (name t) (id t) (type t) (value t))
+(defmethod unknown-field ((class thrift-class) (id t) (name t) (type t) (value t))
   "The default method for thrift classes does nothing, which is intended to leave the final
  disposition to the protocol."
-
   nil)

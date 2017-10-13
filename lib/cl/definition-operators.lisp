@@ -315,10 +315,10 @@
                  (t
                   ;; handle unknown fields
                   (let* ((value (stream-read-value-as ,prot read-field-type))
-                         (fd (unknown-field ,read-class name id read-field-type value)))
+                         (fd (unknown-field ,read-class id name read-field-type value)))
                     (if fd
                       (setf (getf ,extra-field-plist (field-definition-initarg fd)) value)
-                      (unknown-field ,prot name id read-field-type value)))))
+                      (unknown-field ,prot id name read-field-type value)))))
                (stream-read-field-end ,prot))))))
 
 (defmacro decode-struct (prot class field-definitions extra-plist)
