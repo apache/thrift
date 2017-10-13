@@ -387,12 +387,3 @@
     (class-name class))
   (:method ((class thrift-exception-class))
     (class-condition-class class)))
-
-
-;;;
-;;; exceptions
-
-(defmethod unknown-field ((class thrift-class) (id t) (name t) (type t) (value t))
-  "The default method for thrift classes does nothing, which is intended to leave the final
- disposition to the protocol."
-  nil)

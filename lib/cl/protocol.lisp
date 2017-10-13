@@ -1188,14 +1188,16 @@
   (:method ((protocol protocol) type datum)
     (error 'enum-type-error :protocol protocol :expected-type type :datum datum)))
 
-
 (defgeneric unknown-field (protocol field-id-number field-name field-type value)
   (:documentation "Called when a decoded field is not present in the specified type.
  The base method for protocols ignores it.
  A prototypical protocol/class combination could extend the class by adding a
  field definition as per the name/id/type specified and bindng the value")
-
   (:method ((protocol protocol) (id-number integer) (name t) (type t) (value t))
+    nil)
+  ;; The default method for thrift classes does nothing, which is intended to leave the final
+  ;; disposition to the protocol.
+  (:method ((class thrift-class) (id t) (name t) (type t) (value t))
     nil))
 
 
