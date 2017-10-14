@@ -547,9 +547,8 @@
             (defparameter ,name
               (make-instance ',class
                 :identifier ,identifier
-                :base-services (list ,@(mapcar #'str-sym (if (listp base-services) base-services (list base-services))))
-                :methods ',(mapcar #'(lambda (identifier name) `(,identifier . ,name))
-                                   identifiers response-names)
+                :base-services (list ,@(mapcar #'str-sym (alexandria:ensure-list base-services)))
+                :methods ',(mapcar #'cons identifiers response-names)
                 :documentation ,(format nil "~@[~a~%---~%~]~(~{~{~a~24t~a : ~a~}~^~%~}~)"
                                         documentation (sort method-interfaces #'string-lessp :key #'first))
                 ,@initargs)))))
