@@ -157,10 +157,12 @@
           | (:metaclass metaclass)
           | (:identifier identifier)
 
- Define a thrift struct with the declared fields. The class and field names are computed by cononicalizing the
- respective identifier and interning it in the current *package*. Each identifier remains associated with its
- metaobject for codec use. Options allow for an explicit identifier, a metacoal other than thrift-struct-class,
- and a documentation string.
+ Define a thrift struct with the declared fields. The class and field
+ names are computed by cononicalizing the respective identifier and
+ interning it in the current *package*. Each identifier remains
+ associated with its metaobject for codec use. Options allow for an
+ explicit identifier, a metacoal other than thrift-struct-class, and a
+ documentation string.
 
  The class is bound to its name as both the thrift class and CLOS class."
 
@@ -241,10 +243,11 @@
           | (:metaclass metaclass)
           | (:identifier identifier)
 
- Define a thrift exception with the declared fields. This involves two classes. A condition is defined
- to use as a signal/error argument and a proxy struct class is defined for codec use.
- The proxy class is bound as the class name's thrift class, while the struct class is bound as the
- CLOS class."
+ Define a thrift exception with the declared fields. This involves two
+ classes. A condition is defined to use as a signal/error argument and
+ a proxy struct class is defined for codec use.  The proxy class is
+ bound as the class name's thrift class, while the struct class is
+ bound as the CLOS class."
   
   (let* ((metaclass (or (second (assoc :metaclass options)) 'thrift-exception-class))
          (identifier (or (second (assoc :identifier options)) identifier))
