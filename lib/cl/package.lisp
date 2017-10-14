@@ -101,6 +101,7 @@
    #:protocol-output-transport
    #:protocol-version-error
    #:reply
+   #:response-exception
    #:serve
    #:serve #:simple-server #:handler
    #:service
