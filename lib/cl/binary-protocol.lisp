@@ -79,7 +79,7 @@
                 (declare (dynamic-extent buffer)
                          (type (simple-array (unsigned-byte 8) (,byte-count)) buffer)
                          (type (unsigned-byte ,(* byte-count 8)) value))
-                (stream-read-sequence (protocol-input-transport ,protocol) buffer)
+                (stream-read-sequence (protocol-input-transport ,protocol) buffer 0 nil)
                 ,@(loop for i from 0 below byte-count
                         collect `(setf value ,(if (= i 0)
                                                 `(aref buffer ,i)
@@ -103,7 +103,7 @@
     (declare (dynamic-extent buffer)
 	     (type (simple-array (unsigned-byte 8) (8)) buffer)
 	     (type (unsigned-byte 64) value))
-    (stream-read-sequence (protocol-input-transport protocol) buffer)
+    (stream-read-sequence (protocol-input-transport protocol) buffer 0 nil)
     ;; it it matters, could unwrap it with fewer intermediates saves
     (macrolet ((unpack-buffer ()
 		 `(progn
@@ -123,7 +123,7 @@
     (declare (dynamic-extent buffer)
              (type (simple-array (unsigned-byte 8) (4)) buffer)
              (type (unsigned-byte 32) value))
-    (stream-read-sequence (protocol-input-transport protocol) buffer)
+    (stream-read-sequence (protocol-input-transport protocol) buffer 0 nil)
     ;; it it matters, could unwrap it with fewer intermediates saves
     (macrolet ((unpack-buffer ()
                  `(progn
@@ -139,7 +139,7 @@
   (let* ((l (stream-read-i32 protocol))
          (a (make-array l :element-type *binary-transport-element-type*)))
     (declare (dynamic-extent a))
-    (stream-read-sequence (protocol-input-transport protocol) a)
+    (stream-read-sequence (protocol-input-transport protocol) a 0 nil)
     (funcall (transport-string-decoder protocol) a)))
 
 
@@ -152,7 +152,7 @@
   (let* ((l (stream-read-i32 protocol))
          (result (make-array l :element-type *binary-transport-element-type*)))
     ;; would need to check the length before trying stack allocation
-    (stream-read-sequence (protocol-input-transport protocol) result)
+    (stream-read-sequence (protocol-input-transport protocol) result 0 nil)
     result))
   
 
@@ -191,7 +191,7 @@
                   ,@(loop for i from (1- byte-count) downto 0
                           append `((setf (aref buffer ,i) (logand #xff ,value))
                                    (setf ,value (ash ,value -8))))
-                  (stream-write-sequence (protocol-output-transport ,protocol) buffer)
+                  (stream-write-sequence (protocol-output-transport ,protocol) buffer 0 nil)
                   ,byte-count))))
   ;; no sign conversion as shift&mask encodes the sign bit
   (defmethod stream-write-i16 ((protocol binary-protocol) val)
@@ -220,7 +220,7 @@
 			      append `((setf (aref buffer ,i) (logand #xff int-value))
                                                     (setf int-value (ash int-value -8)))))))
                 (pack-buffer))
-    (stream-write-sequence (protocol-output-transport protocol) buffer)
+    (stream-write-sequence (protocol-output-transport protocol) buffer 0 nil)
     8))
 
 (defmethod stream-write-float ((protocol binary-protocol) val)
@@ -239,7 +239,7 @@
                                  append `((setf (aref buffer ,i) (logand #xff int-value))
                                           (setf int-value (ash int-value -8)))))))
       (pack-buffer))
-    (stream-write-sequence (protocol-output-transport protocol) buffer)
+    (stream-write-sequence (protocol-output-transport protocol) buffer 0 nil)
     4))
 
 
@@ -248,14 +248,14 @@
           "Substring writes are not supported.")
   (let ((bytes (funcall (transport-string-encoder protocol) string)))
     (stream-write-i32 protocol (length bytes))
-    (stream-write-sequence (protocol-output-transport protocol) bytes)
+    (stream-write-sequence (protocol-output-transport protocol) bytes 0 nil)
     (+ 4 (length bytes))))
 
 (defmethod stream-write-string ((protocol binary-protocol) (bytes vector) &optional (start 0) end)
   (assert (and (zerop start) (or (null end) (= end (length bytes)))) ()
           "Substring writes are not supported.")
   (stream-write-i32 protocol (length bytes))
-  (stream-write-sequence (protocol-output-transport protocol) bytes)
+  (stream-write-sequence (protocol-output-transport protocol) bytes 0 nil)
   (+ 4 (length bytes)))
 
 
@@ -263,11 +263,11 @@
   (let ((unsigned-bytes (make-array (length bytes) :element-type '(unsigned-byte 8))))
     (stream-write-i32 protocol (length bytes))
     (map-into unsigned-bytes #'unsigned-byte-8 bytes)
-    (stream-write-sequence (protocol-output-transport protocol) unsigned-bytes)
+    (stream-write-sequence (protocol-output-transport protocol) unsigned-bytes 0 nil)
     (+ 4 (length bytes))))
 
 (defmethod stream-write-binary ((protocol binary-protocol) (string string))
   (let ((bytes (funcall (transport-string-encoder protocol) string)))
     (stream-write-i32 protocol (length bytes))
-    (stream-write-sequence (protocol-output-transport protocol) bytes)
+    (stream-write-sequence (protocol-output-transport protocol) bytes 0 nil)
     (+ 4 (length bytes))))

@@ -184,7 +184,7 @@
 ;;;
 ;;; classes
 
-(defclass protocol (#+ccl stream #+sbcl sb-gray:fundamental-stream)
+(defclass protocol (trivial-gray-streams:fundamental-stream)
   ((input-transport
     :initform (error "transport is required.") :initarg :input-transport :initarg :transport
     :reader protocol-input-transport)

@@ -197,6 +197,11 @@
  stream operators.")
 
   (:shadowing-import-from #:common-lisp #:byte #:set #:list #:map #:type-of #:float)
+
+  (:import-from #:trivial-gray-streams
+		#:stream-write-sequence #:stream-read-sequence
+		#:stream-write-byte #:stream-read-byte
+		#:stream-force-output #:stream-finish-output)
   
   ;; (:import-from #:de.setf.utility
   ;;               #:stream-reader
@@ -223,10 +228,5 @@
                 #:double-float-positive-infinity
                 #:double-float-negative-infinity
                 #:single-float-positive-infinity
-                #:single-float-negative-infinity)
-  #+sbcl
-  (:import-from #:sb-gray
-                #:stream-write-byte #:stream-read-byte
-                #:stream-read-sequence #:stream-write-sequence
-                #:stream-force-output #:stream-finish-output)
+                #:single-float-negative-infinity)  
   )

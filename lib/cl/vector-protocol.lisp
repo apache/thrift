@@ -26,27 +26,11 @@
   (:default-initargs
     #+CormanLisp :element-type #+CormanLisp 'character))
 
-(defclass vector-input-stream (vector-stream
-                               #+ALLEGRO excl::fundamental-binary-input-stream
-                               #+LispWorks stream:fundamental-stream
-                               #+(and MCL digitool) ccl::input-binary-stream
-                               #+(and MCL openmcl) fundamental-binary-input-stream
-                               #+CMU extensions:fundamental-binary-input-stream
-                               #+sbcl sb-gray:fundamental-binary-input-stream
-                               #+CormanLisp stream
-                               )
+(defclass vector-input-stream (vector-stream trivial-gray-streams:fundamental-binary-input-stream)
   ()
   (:default-initargs :direction :input))
 
-(defclass vector-output-stream (vector-stream
-                                #+ALLEGRO excl::fundamental-binary-output-stream
-                                #+LispWorks stream:fundamental-stream
-                                #+(and MCL digitool) ccl::output-binary-stream
-                                #+(and MCL openmcl) fundamental-binary-output-stream
-                                #+CMU extensions:fundamental-binary-output-stream
-                                #+sbcl sb-gray:fundamental-binary-output-stream
-                                #+CormanLisp stream
-                                )
+(defclass vector-output-stream (vector-stream trivial-gray-streams:fundamental-binary-output-stream)
   ()
   (:default-initargs :direction :output))
 
@@ -167,7 +151,7 @@
 
 
 (defmethod stream-read-sequence ((stream vector-input-stream) (sequence vector)
-                                  #+mcl &key #-mcl &optional (start 0) (end nil))
+				 start end &key)
   (unless end (setf end (length sequence)))
   (assert (typep start '(integer 0)))
   (assert (>= end start))
@@ -213,7 +197,7 @@
               stream))
 
 (defmethod stream-write-sequence ((stream vector-output-stream) (sequence vector)
-                                  #+mcl &key #-mcl &optional (start 0) (end nil))
+                                  start end &key)
   (unless end (setf end (length sequence)))
   (assert (typep start '(integer 0)))
   (assert (>= end start))

@@ -71,7 +71,7 @@
 ;;;
 ;;; classes
 
-(defclass transport (#+sbcl sb-gray:fundamental-stream #+ccl stream)
+(defclass transport (trivial-gray-streams:fundamental-stream)
   ((stream :reader transport-stream)
    (direction :initarg :direction :accessor stream-direction))
   (:documentation "The abstract transport class is a specialized stream which wraps a base binary
@@ -206,7 +206,7 @@
   (apply #'stream-read-sequence (transport-stream transport) sequence args))
 
 #+sbcl
-(defmethod stream-read-sequence ((transport binary-transport) (sequence vector) &optional (start 0) (end nil))
+(defmethod stream-read-sequence ((transport binary-transport) (sequence vector) start end &key)
   (unless (= (read-sequence sequence (transport-stream transport) :start start :end end)
              (or end (length sequence)))
     (error 'end-of-file :stream (transport-stream transport))))
@@ -232,5 +232,5 @@
   (apply #'stream-write-sequence (transport-stream transport) sequence args))
 
 #+sbcl
-(defmethod stream-write-sequence ((transport binary-transport) (sequence vector) &optional (start 0) (end nil))
+(defmethod stream-write-sequence ((transport binary-transport) (sequence vector) start end &key)
   (write-sequence sequence (transport-stream transport) :start start :end end))
