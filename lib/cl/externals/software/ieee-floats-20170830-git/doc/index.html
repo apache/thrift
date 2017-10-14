@@ -34,10 +34,49 @@ from <a href="https://github.com/marijnh/ieee-floats/zipball/current">https://gi
 
 <p>A git repository with the most recent changes can be checked out with:</p>
 
-<pre>&gt; git clone https://github.com/marijnh/ieee-floats.git</pre>
+<pre>
+  <code>
+    &gt; git clone https://github.com/marijnh/ieee-floats.git
+  </code>
+</pre>
 
 <p>Or look at it <a href="https://github.com/marijnh/ieee-floats">on
 github</a>.</p>
+
+<p>If you have Quicklisp installed, you can run:</p>
+
+<pre>
+  <code>
+    CL-USER> (ql:quickload :ieee-floats)
+    </code>
+</pre>
+
+<h2>Running tests</h2>
+
+<p>Tests are available from ASDF:</p>
+
+<pre>
+  <code>
+    CL-USER> (asdf:test-system :ieee-floats)
+  </code>
+</pre>
+
+<p>Alternatively, you can run tests manually, provided you first load the <tt>ieee-floats-tests</tt> system.</p>
+
+<pre>
+  <code>
+    CL-USER> (asdf:load-system :ieee-floats-tests)
+    ...
+    CL-USER> (fiveam:run! :ieee-floats)
+    ..................................................
+    Did 50 checks.
+    Pass: 50 (100%)
+    Skip: 0 ( 0%)
+    Fail: 0 ( 0%)
+
+    NIL
+  </code>
+</pre>
 
 <h2>Support and mailing lists</h2>
 

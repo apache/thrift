@@ -137,7 +137,7 @@ In MCL, generic functions work completely differently than specified. The specif
 - The automatically created accessor methods in DEFCLASS forms don't call SLOT-VALUE-USING-CLASS and (SETF SLOT-VALUE-USING-CLASS). Fixed.
 - Subclasses of DIRECT-SLOT-DEFINITION, EFFECTIVE-SLOT-DEFINITION, SLOT-DEFINITION, STANDARD-ACCESSOR-METHOD, STANDARD-DIRECT-SLOT-DEFINITION, STANDARD-EFFECTIVE-SLOT-DEFINITION, STANDARD-GENERIC-FUNCTION, STANDARD-METHOD, STANDARD-READER-METHOD, STANDARD-SLOT-DEFINITION and STANDARD-WRITER-METHOD will inherit slots whose names are exported symbols and/or accessible in the package common-lisp-user. Not fixed.
 
-SBCL 1.3.18
+SBCL 1.3.20
 
 All features implemented. (In SBCL 1.0.47, there is a glitch with methods on slot-boundp-using-class, which may not work in all cases.)
 

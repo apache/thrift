@@ -1,9 +1,11 @@
 (defpackage :ieee-floats-tests
-  (:use :common-lisp :ieee-floats :Eos))
+  (:use :common-lisp
+        :ieee-floats
+        :fiveam))
 
 (in-package :ieee-floats-tests)
 
-;; After loading, run the tests with (Eos:run! :ieee-floats)
+;; After loading, run the tests with (fiveam:run! :ieee-floats)
 
 ;; The tiny-XX tests will error on systems that do not support 64-bit
 ;; floats, CLISP is one of those.

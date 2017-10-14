@@ -1,5 +1,7 @@
-software/closer-mop-20170630-git/closer-mop.asd
-software/ieee-floats-20160318-git/ieee-floats.asd
+software/alexandria-20170830-git/alexandria-tests.asd
+software/alexandria-20170830-git/alexandria.asd
+software/closer-mop-20170830-git/closer-mop.asd
+software/ieee-floats-20170830-git/ieee-floats.asd
 software/puri-20150923-git/puri.asd
 software/split-sequence-1.2/split-sequence.asd
 software/trivial-utf-8-20111001-darcs/trivial-utf-8.asd
