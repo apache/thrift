@@ -96,15 +96,16 @@
 ;;; definition operators
 
 (defmacro def-package (name &key use)
-  (let ((implementation-name (cons-symbol :keyword name :-implementation))
+  (let ((base-package-name (cons-symbol :keyword name))
+        (implementation-name (cons-symbol :keyword name :-implementation))
         (response-name (cons-symbol :keyword name :-response)))
     `(eval-when (:load-toplevel :compile-toplevel :execute)
-       (unless (find-package ,name)
-         (defpackage ,name
+       (unless (find-package ,base-package-name)
+         (defpackage ,base-package-name
            (:use :thrift ,@use)
            (:import-from :common-lisp nil t)
            (:documentation ,(format nil "This is the application interface package for ~a.
- It uses the generic THRIFT package for access to the library interface." name))))
+ It uses the generic THRIFT package for access to the library interface." base-package-name))))
        
        (unless (find-package ,implementation-name)
          (defpackage ,implementation-name
