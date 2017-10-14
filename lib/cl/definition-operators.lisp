@@ -360,12 +360,8 @@
     
     (with-gensyms (gprot extra-initargs)
       `(progn
-         (ensure-generic-function ',name
-                                  :lambda-list '(protocol ,@parameter-names)
-                                  :generic-function-class 'thrift-request-function
-                                  :identifier ,identifier)
-         #+ccl (ccl::record-arglist ',name '(protocol ,@parameter-names))
-         (defmethod ,name ((,gprot protocol) ,@(mapcar #'list parameter-names type-names))
+         (declaim (ftype (function (protocol ,@type-names)) ,name))
+         (defun ,name (,gprot ,@parameter-names)
            ,@(when documentation `(,documentation))
            (stream-write-message-begin ,gprot ,identifier 'call
                                        (protocol-next-sequence-number ,gprot))
@@ -432,18 +428,10 @@
 				  (apply #',implementation ,@parameter-names ,extra-args)
 				  (,implementation ,@parameter-names))))
       `(progn (declaim (ftype (function ,(make-list parameter-count :initial-element t)) ,implementation))
-	      (ensure-generic-function ',name
-				       :lambda-list '(service sequence-number protocol)
-				       :generic-function-class 'thrift-response-function
-				       :identifier ,identifier
-				       :implementation-function
-				       ,(etypecase implementation
-					  ;; defer the evaluation
-					  (symbol `(quote ,implementation))
-					  ((cons (eql lambda)) `(function ,implementation))))
-	      #+ccl (ccl::record-arglist ',name '(service sequence-number protocol))
-	      (defmethod ,name ((,service t) (,seq t) (,gprot protocol))
+              (declaim (ftype (function (t t protocol)) ,name))
+	      (defun ,name (,service ,seq ,gprot)
 		,@(when documentation `(,documentation))
+                (declare (ignore ,service))
 		(let (,@(mapcar #'list parameter-names defaults)
 		      (,extra-args nil))
 		  ,(generate-struct-decoder gprot `(find-thrift-class ',(str-sym call-struct))

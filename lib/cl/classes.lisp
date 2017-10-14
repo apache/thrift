@@ -85,38 +85,6 @@
   ((reader
     :reader field-definition-reader)))
 
-
-;;; the specialized generic function classes
-;;; now serve just to document the relation between the external identifier and the function
-;;; all information is compiled statically into the request/response function definitions.
-
-(defclass thrift-generic-function (standard-generic-function)
-  ((identifier
-    :initarg :identifier
-    :reader generic-function-identifier))
-  (:metaclass c2mop:funcallable-standard-class)
-  (:documentation "The abstract mixin for thrift interface operators which binds the external name."))
-
-
-(defclass thrift-request-function (thrift-generic-function)
-  ()
-  (:metaclass c2mop:funcallable-standard-class)
-  (:documentation "The class of thrift request operators. Each acts as a proxy for an external
- operator, encodes and manages the request/response exchange and returns the result value or signals
- an exception - as per the response message."))
-
-
-(defclass thrift-response-function (thrift-generic-function)
-  ((implementation-function
-    :initarg :implementation-function
-    :reader generic-function-implementation-function))
-  (:metaclass c2mop:funcallable-standard-class)
-  (:documentation "The class of thrift response operators. Each wraps the invocation of a base
- implemntation operator with a mechanism to decode the arguments for application, to encode
- the results as a 'reply' response message, and to catch exceptions and encode them as an
- 'exception' response message."))
-
-
 ;;;
 ;;; thrift-class operators
 

@@ -112,7 +112,7 @@
             (when fun (return-from method-definition (values fun service)))))))))
 
 (defgeneric (setf method-definition) (function service identifier)
-  (:method ((function thrift-generic-function) (service service) (identifier string))
+  (:method ((function function) (service service) (identifier string))
     (setf (gethash identifier (service-methods service)) function))
   (:method ((function null) (service service) (identifier string))
     (remhash identifier (service-methods service))))
