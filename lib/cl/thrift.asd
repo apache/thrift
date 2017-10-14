@@ -27,6 +27,7 @@
                #:closer-mop 
                #:trivial-utf-8
 	       #:ieee-floats)
+               #:alexandria)
   :description "org.apache.thrift implements a Common Lisp binding for the Apache Thrift cross-language
  services protocol."
   :serial t
