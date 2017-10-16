@@ -958,6 +958,12 @@ if test "$have_cpp" = "yes" ; then
   echo "   Build TQTcpServer (Qt5) ... : $have_qt5"
   echo "   C++ compiler version ...... : $($CXX --version | head -1)"
 fi
+if test "$have_cl" = "yes" ; then
+  echo
+  echo "Common Lisp Library:"
+  echo "   Using Common Lisp ......... : $SBCL"
+  echo "   Using Common Lisp version . : $($SBCL --version)"
+fi
 if test "$have_d" = "yes" ; then
   echo
   echo "D Library:"
