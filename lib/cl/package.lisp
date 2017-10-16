@@ -11,9 +11,9 @@
 ;;; to you under the Apache License, Version 2.0 (the
 ;;; "License"); you may not use this file except in compliance
 ;;; with the License. You may obtain a copy of the License at
-;;; 
+;;;
 ;;;   http://www.apache.org/licenses/LICENSE-2.0
-;;; 
+;;;
 ;;; Unless required by applicable law or agreed to in writing,
 ;;; software distributed under the License is distributed on an
 ;;; "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
@@ -24,7 +24,7 @@
 (defpackage #:org.apache.thrift
   (:nicknames #:thrift)
   (:use)
-  
+
   (:documentation "This is the home package for the symbols in the library's interface.
  It uses no packages, but imports 'string' from :cl. It does export some symbols
  particular to Thrift types and/or operators which conflict with standard Common Lisp symbols.
@@ -42,7 +42,7 @@
   #+lispworks
   (:import-from #:stream
                 #:stream-write-string)
-  (:export 
+  (:export
    #:*binary-transport-element-type*
    #:application-error
    #:binary-protocol
@@ -188,7 +188,7 @@
 (defpackage #:org.apache.thrift.implementation
   (:use #:common-lisp #:org.apache.thrift)
   (:nicknames #:thrift.implementation)
-  
+
   (:documentation "The is the package for the thrift implementation. It exports nothing, uses the
  :common-lisp and :thrift package for access to the respective interfaces. Those names which conflict, eg.
  cl:list v/s thrift:list, are imported the :common-lisp package and referenced with an explicit prefix
@@ -199,10 +199,10 @@
   (:shadowing-import-from #:common-lisp #:byte #:set #:list #:map #:type-of #:float)
 
   (:import-from #:trivial-gray-streams
-		#:stream-write-sequence #:stream-read-sequence
-		#:stream-write-byte #:stream-read-byte
-		#:stream-force-output #:stream-finish-output)
-  
+                #:stream-write-sequence #:stream-read-sequence
+                #:stream-write-byte #:stream-read-byte
+                #:stream-force-output #:stream-finish-output)
+
   ;; (:import-from #:de.setf.utility
   ;;               #:stream-reader
   ;;               #:stream-writer
@@ -225,5 +225,5 @@
                 #:double-float-positive-infinity
                 #:double-float-negative-infinity
                 #:single-float-positive-infinity
-                #:single-float-negative-infinity)  
+                #:single-float-negative-infinity)
   )

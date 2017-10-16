@@ -11,9 +11,9 @@
 ;;; to you under the Apache License, Version 2.0 (the
 ;;; "License"); you may not use this file except in compliance
 ;;; with the License. You may obtain a copy of the License at
-;;; 
+;;;
 ;;;   http://www.apache.org/licenses/LICENSE-2.0
-;;; 
+;;;
 ;;; Unless required by applicable law or agreed to in writing,
 ;;; software distributed under the License is distributed on an
 ;;; "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
@@ -309,7 +309,7 @@
  The protocol's field-id-mode determines which id form to expect.
    :identifier-number : decodes a type, and unless the type is STOP a subsequent id number
    :identifier-name : decodes an identifier name and a type."
-  
+
   (let ((type nil)
         (id-number 0)
         (identifier nil))
@@ -377,7 +377,7 @@
  last step. Otherwise allocate an instacen and bind each value in succession.
  Should the field fail to correspond to a known slot, delegate unknown-field to the class for a field
  defintion. If it supplies none, then resort to the class."
-  
+
   ;; Were it slot classes only, a better protocol would be (setf slot-value-using-class), but that does not
   ;; apply to exceptions. Given both cases, this is coded to stay symmetric.
   (let* ((class (stream-read-struct-begin protocol))
@@ -433,7 +433,7 @@
   "Iff the type is a constant, compile the decoder inline. If class is not defined, signal an error.
  The intended use is to compile IDL files, for which the code generator and the definition macros
  arrange that structure definitions preceed references."
-  
+
   (expand-iff-constant-types (type) form
     (with-gensyms (expected-class)
       (with-optional-gensyms (prot) env
@@ -469,7 +469,7 @@
   "Iff the type is a constant, compile the decoder inline. If class is not defined, signal an error.
  The intended use is to compile IDL files, for which the code generator and the definition macros
  arrange that structure definitions preceed references."
-  
+
   (expand-iff-constant-types (type) form
     (with-gensyms (expected-class)
       (with-optional-gensyms (prot) env
@@ -752,7 +752,7 @@
      `(stream-read-struct ,protocol ',(str-sym (second type))))
     (enum-type
      `(stream-read-enum ,protocol ',(str-sym (second type))))))
-  
+
 
 (defgeneric stream-read-typed-value (protocol)
   (:documentation "Given a PROTOCOL instance, decode the value's type and then the value itself.
@@ -764,7 +764,7 @@
 
 
 
-;;; output implementation 
+;;; output implementation
 ;;; nb. defined in this sequence to ensure compile-macro presence is whether loading one or
 ;;; reloading while developing
 
@@ -930,7 +930,7 @@
   (stream-write-message-begin protocol (class-identifier type) message-type sequence-number)
   (stream-write-struct protocol object type)
   (stream-write-message-end protocol))
-  
+
 
 (defmethod stream-write-message-end ((protocol protocol))
   (stream-force-output (protocol-output-transport protocol)))
@@ -940,7 +940,7 @@
   (:method ((protocol protocol) (exception thrift-error))
     (stream-write-message protocol exception 'exception
                           :identifier (class-identifier exception)))
-  
+
   (:method ((protocol protocol) (exception condition))
     (stream-write-message protocol
                           (make-instance 'application-error :condition exception)
@@ -1061,7 +1061,7 @@
     (stream-write-string protocol value))
   (:method ((protocol protocol) (value vector))
     (stream-write-binary protocol value))
-  
+
   (:method ((protocol protocol) (value thrift-object))
     (stream-write-struct protocol value))
   (:method ((protocol protocol) (value list))

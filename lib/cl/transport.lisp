@@ -11,9 +11,9 @@
 ;;; to you under the Apache License, Version 2.0 (the
 ;;; "License"); you may not use this file except in compliance
 ;;; with the License. You may obtain a copy of the License at
-;;; 
+;;;
 ;;;   http://www.apache.org/licenses/LICENSE-2.0
-;;; 
+;;;
 ;;; Unless required by applicable law or agreed to in writing,
 ;;; software distributed under the License is distributed on an
 ;;; "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
@@ -108,7 +108,7 @@
   (when d-s
     (setf initargs (copy-list initargs))
     (remf initargs :direction))
-  
+
   (make-instance 'socket-transport
     :direction direction
     :socket (apply #'usocket:socket-connect (puri:uri-host location) (puri:uri-port location)
@@ -184,12 +184,12 @@
 
 (defmethod stream-read-byte ((transport binary-transport))
   (let ((unsigned-byte
-	 #-(or sbcl ccl)(stream-read-byte (transport-stream transport))
-	 #+ccl(ccl:stream-read-byte (transport-stream transport))
-	 #+sbcl(read-byte (transport-stream transport))))
+         #-(or sbcl ccl)(stream-read-byte (transport-stream transport))
+         #+ccl(ccl:stream-read-byte (transport-stream transport))
+         #+sbcl(read-byte (transport-stream transport))))
     (if unsigned-byte
-	(signed-byte-8 unsigned-byte)
-	(error 'end-of-file :stream (transport-stream transport)))))
+        (signed-byte-8 unsigned-byte)
+        (error 'end-of-file :stream (transport-stream transport)))))
 
 (defmethod stream-read-sequence ((transport binary-transport) (sequence vector) start end &key)
   (unless (= (read-sequence sequence (transport-stream transport) :start start :end end)
