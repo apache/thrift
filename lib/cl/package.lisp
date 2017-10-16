@@ -209,14 +209,11 @@
   ;;               )
   #+ccl
   (:import-from #:ccl
-                #:stream-write-byte #:stream-read-byte
                 #:stream-direction
-                #:stream-position
-                #:stream-force-output #:stream-finish-output)
+                #:stream-position)
   #+mcl
   (:import-from #:ccl
                 #:stream-close
-                #:stream-read-sequence #:stream-write-sequence
                 #:stream-tyi #:stream-tyo #:stream-untyi)
   #+clozure
   (:import-from #:ccl
