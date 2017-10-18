@@ -45,6 +45,7 @@
             &key (protocol (class-of instance) p-s) (direction (stream-direction instance)) &allow-other-keys)
     "Given a protocol INSTANCE, and a PROTOCOL class, make a new protocol instance which reuses
      the given instance's transports."
+    (print "bleh")
     (when p-s
       (setf initargs (copy-list initargs))
       (remf initargs :protocol))
@@ -55,12 +56,19 @@
       initargs))
 
   (:method ((instance binary-transport) &rest initargs
-            &key (protocol 'binary-protocol p-s) (direction (stream-direction instance)) &allow-other-keys)
+            &key (framed nil f-s) (protocol 'binary-protocol p-s)
+              (direction (stream-direction instance)) &allow-other-keys)
     (when p-s
       (setf initargs (copy-list initargs))
       (remf initargs :protocol))
-    (apply #'make-instance protocol :transport instance :direction direction
-           initargs)))
+    (when f-s
+      (setf initargs (copy-list initargs))
+      (remf initargs :framed))
+    (let ((transport (if framed
+                         (framed-transport instance)
+                         instance)))
+      (apply #'make-instance protocol :transport transport :direction direction
+             initargs))))
 
 
 (defmacro with-client ((protocol &rest args) &body body)
