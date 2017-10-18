@@ -35,7 +35,7 @@
 	    :argument-name "ARG"
 	    :argument-type :optional)
     (stropt :long-name "transport"
-	    :description "Transport: currently only \"buffered\""
+	    :description "Transport: transport to use; one of: \"buffered\", \"framed\""
 	    :default-value "buffered"
 	    :argument-name "ARG")
     (stropt :long-name "protocol"
@@ -50,16 +50,22 @@
     (clon:help)
     (clon:exit))
   (let ((port "9090")
-	(host "localhost"))
+	(host "localhost")
+        (framed nil))
     (clon:do-cmdline-options (option name value source)
       (print (list option name value source))
       (if (string= name "host")
 	  (setf host value))
       (if (string= name "port")
-	  (setf port value)))
+	  (setf port value))
+      (if (string= name "transport")
+          (cond ((string= value "buffered") (setf framed nil))
+                ((string= value "framed") (setf framed t))
+                (t (error "Unsupported transport.")))))
     (terpri)
     (setf *prot* (thrift.implementation::client (puri:parse-uri
-			       (concatenate 'string "thrift://" host ":" port))))
+                                                 (concatenate 'string "thrift://" host ":" port))
+                                                :framed framed))
     (let ((result (cross-test)))
       (thrift.implementation::close *prot*)
       (clon:exit result))))
