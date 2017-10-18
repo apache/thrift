@@ -144,40 +144,43 @@
 
 (defparameter *debug-server* t)
 
-(defgeneric serve (connection-server service)
+(defgeneric serve (connection-server service &optional framed)
   (:documentation "Accept to a CONNECTION-SERVER, configure the CLIENT's transport and protocol
  in combination with the connection, and process messages until the connection closes.")
 
-  (:method ((location puri:uri) service)
+  (:method ((location puri:uri) service &optional (framed nil))
     "Given a basic thrift uri, open a binary socket server and listen on the port."
     (let ((server (make-instance 'socket-server
                     :socket (usocket:socket-listen (puri:uri-host location) (puri:uri-port location)
                                                    :element-type 'unsigned-byte
                                                    :reuseaddress t))))
-      (unwind-protect (serve server service)
+      (unwind-protect (serve server service framed)
         (server-close server))))
 
-  (:method ((s socket-server) (service service))
+  (:method ((s socket-server) (service service) &optional (framed nil))
     (loop 
       (let ((connection (accept-connection s)))
         (if (open-stream-p (usocket:socket-stream connection))
-          (let* ((input-transport (server-input-transport s connection))
-                 (output-transport (server-output-transport s connection))
-                 (protocol (server-protocol s input-transport output-transport)))
-            (unwind-protect (block :process-loop
-                              (handler-bind ((end-of-file (lambda (eof)
-                                                            (declare (ignore eof))
-                                                            (return-from :process-loop)))
-                                             (error (lambda (error)
-                                                      (if *debug-server*
-                                                        (break "Server error: ~s: ~a" s error)
-                                                        (warn "Server error: ~s: ~a" s error))
-                                                      (stream-write-exception protocol error)
-                                                      (return-from :process-loop))))
-                                (loop (unless (open-stream-p input-transport) (return))
-                                      (process service protocol))))
+          (let ((input-transport (server-input-transport s connection))
+                (output-transport (server-output-transport s connection)))
+            (when framed
+              (setf input-transport (framed-transport input-transport))
+              (setf output-transport (framed-transport output-transport)))
+            (let ((protocol (server-protocol s input-transport output-transport)))
+              (unwind-protect (block :process-loop
+                                (handler-bind ((end-of-file (lambda (eof)
+                                                              (declare (ignore eof))
+                                                              (return-from :process-loop)))
+                                               (error (lambda (error)
+                                                        (if *debug-server*
+                                                            (break "Server error: ~s: ~a" s error)
+                                                            (warn "Server error: ~s: ~a" s error))
+                                                        (stream-write-exception protocol error)
+                                                        (return-from :process-loop))))
+                                  (loop (unless (open-stream-p input-transport) (return))
+                                     (process service protocol))))
               (close input-transport)
-              (close output-transport)))
+              (close output-transport))))   
           ;; listening socket closed
           (return))))))
 
