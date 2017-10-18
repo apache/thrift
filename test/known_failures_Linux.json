@@ -1,6 +1,8 @@
 [
   "cl-rs_binary_buffered-ip",
   "cl-c_glib_binary_buffered-ip",
+  "cl-rs_binary_framed-ip",
+  "cl-c_glib_binary_framed-ip",  
   "cpp-cpp_binary_buffered-ip-ssl",
   "cpp-cpp_binary_framed-ip-ssl",
   "cpp-cpp_binary_http-domain",
