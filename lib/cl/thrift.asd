@@ -39,6 +39,7 @@
                (:file "classes")
                (:file "definition-operators")
                (:file "transport")
+               (:file "framed-transport")
                (:file "conditions")
                (:file "protocol")
                (:file "binary-protocol")

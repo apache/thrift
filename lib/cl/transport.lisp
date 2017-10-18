@@ -86,7 +86,6 @@
   ()
   (:documentation "A specialzed transport which wraps a socket and its stream."))
 
-
 (defclass file-transport (binary-transport)
   ((pathname :initarg :pathname :accessor transport-pathname :initform (error "pathname is required."))
    ;; delegation, as make-instance does not return a usable stream in all implementations
@@ -135,7 +134,6 @@
          :pathname pathname :element-type element-type
          initargs))
 
-
 ;;; open-stream-p is the only operator which guards against an unbound slot.
 ;;; stream-close checks that the stream is still open
 ;;; all other presume it is open.
@@ -145,10 +143,15 @@
   (when (slot-boundp transport 'stream)
     (open-stream-p (transport-stream transport))))
 
-(defun transport-close (transport &key abort)
+(defun transport-close-wrapper (transport &key abort)
   "The transport close implementation is used by whichever interface the runtime presents for extensions.
  as per the gray interface, close is replaced with a generic function. in other cases, stream-close
  is a generic operator."
+  (transport-close transport :abort abort))
+
+(defgeneric transport-close (transport &key abort))
+
+(defmethod transport-close ((transport transport) &key abort)
   (when (open-stream-p transport)
     (close (transport-stream transport) :abort abort)
     (setf (slot-value transport 'direction) :closed)
@@ -157,12 +160,12 @@
 (when (fboundp 'stream-close)
   (defmethod stream-close ((transport transport))
     (when (next-method-p) (call-next-method))
-    (transport-close transport)))
+    (transport-close-wrapper transport)))
 
 (when (typep #'close 'generic-function)
   (defmethod close ((stream transport) &rest args)
     (when (next-method-p) (call-next-method))
-    (apply #'transport-close stream args)
+    (apply #'transport-close-wrapper stream args)
     t))
 
 (defmethod stream-finish-output ((transport transport))
