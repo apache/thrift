@@ -45,7 +45,6 @@
             &key (protocol (class-of instance) p-s) (direction (stream-direction instance)) &allow-other-keys)
     "Given a protocol INSTANCE, and a PROTOCOL class, make a new protocol instance which reuses
      the given instance's transports."
-    (print "bleh")
     (when p-s
       (setf initargs (copy-list initargs))
       (remf initargs :protocol))
