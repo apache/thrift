@@ -67,6 +67,7 @@ class TimeoutTest(unittest.TestCase):
         except:
             self.assert_(time.time() - starttime < 5.0)
 
+
 if __name__ == '__main__':
     suite = unittest.TestSuite()
     loader = unittest.TestLoader()

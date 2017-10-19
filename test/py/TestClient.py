@@ -301,6 +301,7 @@ class OwnArgsTestProgram(unittest.TestProgram):
             self.testNames = ([self.defaultTest])
         self.createTests()
 
+
 if __name__ == "__main__":
     parser = OptionParser()
     parser.add_option('--libpydir', type='string', dest='libpydir',

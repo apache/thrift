@@ -166,5 +166,6 @@ def main(argv):
         res = run_cross_tests(server_match, client_match, options.jobs, options.skip_known_failures, options.retry_count, options.regex)
     return 0 if res else 1
 
+
 if __name__ == '__main__':
     sys.exit(main(sys.argv[1:]))
