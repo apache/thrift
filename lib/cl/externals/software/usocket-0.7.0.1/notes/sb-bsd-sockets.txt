@@ -1,0 +1,114 @@
+http://www.xach.com/sbcl/sb-bsd-sockets.html
+
+$Id$
+
+package: sb-bsd-sockets
+
+class: socket
+
+slots:
+
+    * file-descriptor :
+    * family :
+    * protocol :
+    * type :
+    * stream :
+
+operators:
+
+  (socket-bind (s socket) &rest address)	Generic Function
+  (socket-accept (socket socket))	Method
+  (socket-connect (s socket) &rest address)	Generic Function
+  (socket-peername (socket socket))	Method
+  (socket-name (socket socket))	Method
+  (socket-receive (socket socket) buffer length &key oob peek waitall (element-type 'character))	Method
+  (socket-listen (socket socket) backlog)	Method
+  (socket-close (socket socket))	Method
+  (socket-make-stream (socket socket) &rest args)	Method
+
+  (sockopt-reuse-address (socket socket) argument)	Accessor
+  (sockopt-keep-alive (socket socket) argument)	Accessor
+  (sockopt-oob-inline (socket socket) argument)	Accessor
+  (sockopt-bsd-compatible (socket socket) argument)	Accessor
+  (sockopt-pass-credentials (socket socket) argument)	Accessor
+  (sockopt-debug (socket socket) argument)	Accessor
+  (sockopt-dont-route (socket socket) argument)	Accessor
+  (sockopt-broadcast (socket socket) argument)	Accessor
+  (sockopt-tcp-nodelay (socket socket) argument)	Accessor
+
+inet-domain sockets
+
+class: inet-socket
+
+slots:
+
+    * family :
+
+operators:
+
+   (make-inet-address dotted-quads)	Function
+   (get-protocol-by-name name)	Function
+   (make-inet-socket type protocol)	Function
+
+file-domain sockets
+
+class: unix-socket
+
+slots:
+
+    * family :
+
+class: host-ent
+
+Slots:
+
+    * name :
+    * aliases :
+    * address-type :
+    * addresses :
+
+   (host-ent-address (host-ent host-ent))	Method
+   (get-host-by-name host-name)	Function
+   (get-host-by-address address)	Function
+   (name-service-error where)	Function
+   (non-blocking-mode (socket socket))	Method
+
+(define-socket-condition sockint::EADDRINUSE address-in-use-error)
+(define-socket-condition sockint::EAGAIN interrupted-error)
+(define-socket-condition sockint::EBADF bad-file-descriptor-error)
+(define-socket-condition sockint::ECONNREFUSED connection-refused-error)
+(define-socket-condition sockint::EINTR interrupted-error)
+(define-socket-condition sockint::EINVAL invalid-argument-error)
+(define-socket-condition sockint::ENOBUFS no-buffers-error)
+(define-socket-condition sockint::ENOMEM out-of-memory-error)
+(define-socket-condition sockint::EOPNOTSUPP operation-not-supported-error)
+(define-socket-condition sockint::EPERM operation-not-permitted-error)
+(define-socket-condition sockint::EPROTONOSUPPORT protocol-not-supported-error)
+(define-socket-condition sockint::ESOCKTNOSUPPORT socket-type-not-supported-error)
+(define-socket-condition sockint::ENETUNREACH network-unreachable-error)
+
+Exported errors:
+* (apropos "ERROR" :sb-bsd-sockets)
+
+SB-BSD-SOCKETS:INTERRUPTED-ERROR
+SB-BSD-SOCKETS:TRY-AGAIN-ERROR
+* SB-BSD-SOCKETS:NO-RECOVERY-ERROR (EFAIL?)
+SB-BSD-SOCKETS:CONNECTION-REFUSED-ERROR
+SB-BSD-SOCKETS:INVALID-ARGUMENT-ERROR
+* SB-BSD-SOCKETS:HOST-NOT-FOUND-ERROR
+SB-BSD-SOCKETS:OPERATION-NOT-PERMITTED-ERROR
+SB-BSD-SOCKETS:OPERATION-NOT-SUPPORTED-ERROR
+SB-BSD-SOCKETS:PROTOCOL-NOT-SUPPORTED-ERROR
+SB-BSD-SOCKETS:OPERATION-TIMEOUT-ERROR
+SB-BSD-SOCKETS:SOCKET-TYPE-NOT-SUPPORTED-ERROR
+SB-BSD-SOCKETS:NO-BUFFERS-ERROR
+SB-BSD-SOCKETS:NETWORK-UNREACHABLE-ERROR
+SB-BSD-SOCKETS:BAD-FILE-DESCRIPTOR-ERROR
+SB-BSD-SOCKETS:ADDRESS-IN-USE-ERROR
+SB-BSD-SOCKETS:OUT-OF-MEMORY-ERROR
+
+And 1 non-exported error:
+
+SB-BSD-SOCKETS::NO-ADDRESS-ERROR
+
+*-ed errors aren't yet addressed in the errorlist supported by usocket

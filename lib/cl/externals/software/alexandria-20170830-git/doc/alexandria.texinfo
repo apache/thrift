@@ -1,0 +1,277 @@
+\input texinfo   @c -*-texinfo-*-
+@c %**start of header
+@setfilename alexandria.info
+@settitle Alexandria Manual
+@c %**end of header
+
+@settitle Alexandria Manual -- draft version
+
+@c for install-info
+@dircategory Software development
+@direntry
+* alexandria:           Common Lisp utilities.
+@end direntry
+
+@copying
+Alexandria software and associated documentation are in the public
+domain:
+
+@quotation
+  Authors dedicate this work to public domain, for the benefit of the
+  public at large and to the detriment of the authors' heirs and
+  successors. Authors intends this dedication to be an overt act of
+  relinquishment in perpetuity of all present and future rights under
+  copyright law, whether vested or contingent, in the work. Authors
+  understands that such relinquishment of all rights includes the
+  relinquishment of all rights to enforce (by lawsuit or otherwise)
+  those copyrights in the work.
+
+  Authors recognize that, once placed in the public domain, the work
+  may be freely reproduced, distributed, transmitted, used, modified,
+  built upon, or otherwise exploited by anyone for any purpose,
+  commercial or non-commercial, and in any way, including by methods
+  that have not yet been invented or conceived.
+@end quotation
+
+In those legislations where public domain dedications are not
+recognized or possible, Alexandria is distributed under the following
+terms and conditions:
+
+@quotation
+  Permission is hereby granted, free of charge, to any person
+  obtaining a copy of this software and associated documentation files
+  (the "Software"), to deal in the Software without restriction,
+  including without limitation the rights to use, copy, modify, merge,
+  publish, distribute, sublicense, and/or sell copies of the Software,
+  and to permit persons to whom the Software is furnished to do so,
+  subject to the following conditions:
+
+  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+  EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+  MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+  IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
+  CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+  TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+  SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+@end quotation
+@end copying
+
+@titlepage
+
+@title Alexandria Manual
+@subtitle draft version
+
+@c The following two commands start the copyright page.
+@page
+@vskip 0pt plus 1filll
+@insertcopying
+
+@end titlepage
+
+@contents
+
+@ifnottex
+
+@include include/ifnottex.texinfo
+
+@node Top
+@comment  node-name,  next,  previous,  up
+@top Alexandria
+
+@insertcopying
+
+@menu
+* Hash Tables::
+* Data and Control Flow::
+* Conses::
+* Sequences::
+* IO::
+* Macro Writing::
+* Symbols::
+* Arrays::
+* Types::
+* Numbers::
+@end menu
+
+@end ifnottex
+
+@node Hash Tables
+@comment  node-name,  next,  previous,  up
+@chapter Hash Tables
+
+@include include/macro-alexandria-ensure-gethash.texinfo
+@include include/fun-alexandria-copy-hash-table.texinfo
+@include include/fun-alexandria-maphash-keys.texinfo
+@include include/fun-alexandria-maphash-values.texinfo
+@include include/fun-alexandria-hash-table-keys.texinfo
+@include include/fun-alexandria-hash-table-values.texinfo
+@include include/fun-alexandria-hash-table-alist.texinfo
+@include include/fun-alexandria-hash-table-plist.texinfo
+@include include/fun-alexandria-alist-hash-table.texinfo
+@include include/fun-alexandria-plist-hash-table.texinfo
+
+@node Data and Control Flow
+@comment  node-name,  next,  previous,  up
+@chapter Data and Control Flow
+
+@include include/macro-alexandria-define-constant.texinfo
+@include include/macro-alexandria-destructuring-case.texinfo
+@include include/macro-alexandria-ensure-functionf.texinfo
+@include include/macro-alexandria-multiple-value-prog2.texinfo
+@include include/macro-alexandria-named-lambda.texinfo
+@include include/macro-alexandria-nth-value-or.texinfo
+@include include/macro-alexandria-if-let.texinfo
+@include include/macro-alexandria-when-let.texinfo
+@include include/macro-alexandria-when-let-star.texinfo
+@include include/macro-alexandria-switch.texinfo
+@include include/macro-alexandria-cswitch.texinfo
+@include include/macro-alexandria-eswitch.texinfo
+@include include/macro-alexandria-whichever.texinfo
+@include include/macro-alexandria-xor.texinfo
+
+@include include/fun-alexandria-disjoin.texinfo
+@include include/fun-alexandria-conjoin.texinfo
+@include include/fun-alexandria-compose.texinfo
+@include include/fun-alexandria-ensure-function.texinfo
+@include include/fun-alexandria-multiple-value-compose.texinfo
+@include include/fun-alexandria-curry.texinfo
+@include include/fun-alexandria-rcurry.texinfo
+
+@node Conses
+@comment  node-name,  next,  previous,  up
+@chapter Conses
+
+@include include/type-alexandria-proper-list.texinfo
+@include include/type-alexandria-circular-list.texinfo
+
+@include include/macro-alexandria-appendf.texinfo
+@include include/macro-alexandria-nconcf.texinfo
+@include include/macro-alexandria-remove-from-plistf.texinfo
+@include include/macro-alexandria-delete-from-plistf.texinfo
+@include include/macro-alexandria-reversef.texinfo
+@include include/macro-alexandria-nreversef.texinfo
+@include include/macro-alexandria-unionf.texinfo
+@include include/macro-alexandria-nunionf.texinfo
+
+@include include/macro-alexandria-doplist.texinfo
+
+@include include/fun-alexandria-circular-list-p.texinfo
+@include include/fun-alexandria-circular-tree-p.texinfo
+@include include/fun-alexandria-proper-list-p.texinfo
+
+@include include/fun-alexandria-alist-plist.texinfo
+@include include/fun-alexandria-plist-alist.texinfo
+@include include/fun-alexandria-circular-list.texinfo
+@include include/fun-alexandria-make-circular-list.texinfo
+@include include/fun-alexandria-ensure-car.texinfo
+@include include/fun-alexandria-ensure-cons.texinfo
+@include include/fun-alexandria-ensure-list.texinfo
+@include include/fun-alexandria-flatten.texinfo
+@include include/fun-alexandria-lastcar.texinfo
+@include include/fun-alexandria-setf-lastcar.texinfo
+@include include/fun-alexandria-proper-list-length.texinfo
+@include include/fun-alexandria-mappend.texinfo
+@include include/fun-alexandria-map-product.texinfo
+@include include/fun-alexandria-remove-from-plist.texinfo
+@include include/fun-alexandria-delete-from-plist.texinfo
+@include include/fun-alexandria-set-equal.texinfo
+@include include/fun-alexandria-setp.texinfo
+
+@node Sequences
+@comment  node-name,  next,  previous,  up
+@chapter Sequences
+
+@include include/type-alexandria-proper-sequence.texinfo
+
+@include include/macro-alexandria-deletef.texinfo
+@include include/macro-alexandria-removef.texinfo
+
+@include include/fun-alexandria-rotate.texinfo
+@include include/fun-alexandria-shuffle.texinfo
+@include include/fun-alexandria-random-elt.texinfo
+@include include/fun-alexandria-emptyp.texinfo
+@include include/fun-alexandria-sequence-of-length-p.texinfo
+@include include/fun-alexandria-length-equals.texinfo
+@include include/fun-alexandria-copy-sequence.texinfo
+@include include/fun-alexandria-first-elt.texinfo
+@include include/fun-alexandria-setf-first-elt.texinfo
+@include include/fun-alexandria-last-elt.texinfo
+@include include/fun-alexandria-setf-last-elt.texinfo
+@include include/fun-alexandria-starts-with.texinfo
+@include include/fun-alexandria-starts-with-subseq.texinfo
+@include include/fun-alexandria-ends-with.texinfo
+@include include/fun-alexandria-ends-with-subseq.texinfo
+@include include/fun-alexandria-map-combinations.texinfo
+@include include/fun-alexandria-map-derangements.texinfo
+@include include/fun-alexandria-map-permutations.texinfo
+
+@node IO
+@comment  node-name,   next,  previous,  up
+@chapter IO
+
+@include include/fun-alexandria-read-stream-content-into-string.texinfo
+@include include/fun-alexandria-read-file-into-string.texinfo
+@include include/fun-alexandria-read-stream-content-into-byte-vector.texinfo
+@include include/fun-alexandria-read-file-into-byte-vector.texinfo
+
+@node Macro Writing
+@comment  node-name,  next,  previous,  up
+@chapter Macro Writing
+
+@include include/macro-alexandria-once-only.texinfo
+@include include/macro-alexandria-with-gensyms.texinfo
+@include include/macro-alexandria-with-unique-names.texinfo
+@include include/fun-alexandria-featurep.texinfo
+@include include/fun-alexandria-parse-body.texinfo
+@include include/fun-alexandria-parse-ordinary-lambda-list.texinfo
+
+@node Symbols
+@comment  node-name,  next,  previous,  up
+@chapter Symbols
+
+@include include/fun-alexandria-ensure-symbol.texinfo
+@include include/fun-alexandria-format-symbol.texinfo
+@include include/fun-alexandria-make-keyword.texinfo
+@include include/fun-alexandria-make-gensym.texinfo
+@include include/fun-alexandria-make-gensym-list.texinfo
+@include include/fun-alexandria-symbolicate.texinfo
+
+@node Arrays
+@comment  node-name,  next,  previous,  up
+@chapter Arrays
+
+@include include/type-alexandria-array-index.texinfo
+@include include/type-alexandria-array-length.texinfo
+@include include/fun-alexandria-copy-array.texinfo
+
+@node Types
+@comment  node-name,  next,  previous,  up
+@chapter Types
+
+@include include/type-alexandria-string-designator.texinfo
+@include include/macro-alexandria-coercef.texinfo
+@include include/fun-alexandria-of-type.texinfo
+@include include/fun-alexandria-type-equals.texinfo
+
+@node Numbers
+@comment  node-name,  next,  previous,  up
+@chapter Numbers
+
+@include include/macro-alexandria-maxf.texinfo
+@include include/macro-alexandria-minf.texinfo
+
+@include include/fun-alexandria-binomial-coefficient.texinfo
+@include include/fun-alexandria-count-permutations.texinfo
+@include include/fun-alexandria-clamp.texinfo
+@include include/fun-alexandria-lerp.texinfo
+@include include/fun-alexandria-factorial.texinfo
+@include include/fun-alexandria-subfactorial.texinfo
+@include include/fun-alexandria-gaussian-random.texinfo
+@include include/fun-alexandria-iota.texinfo
+@include include/fun-alexandria-map-iota.texinfo
+@include include/fun-alexandria-mean.texinfo
+@include include/fun-alexandria-median.texinfo
+@include include/fun-alexandria-variance.texinfo
+@include include/fun-alexandria-standard-deviation.texinfo
+
+@bye

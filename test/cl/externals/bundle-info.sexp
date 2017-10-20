@@ -1,0 +1,12 @@
+(:CREATION-TIME #A((20) BASE-CHAR . "2017-10-03T10:07:05Z") :REQUESTED-SYSTEMS
+ (NET.DIDIERVERNA.CLON FIASCO) :LISP-INFO
+ (:MACHINE-INSTANCE "tomtoo" :MACHINE-TYPE #A((6) BASE-CHAR . "X86-64")
+  :MACHINE-VERSION "Intel(R) Core(TM) i5-6300HQ CPU @ 2.30GHz"
+  :LISP-IMPLEMENTATION-TYPE #A((4) BASE-CHAR . "SBCL")
+  :LISP-IMPLEMENTATION-VERSION #A((5) BASE-CHAR . "1.4.0"))
+ :QUICKLISP-INFO
+ (:HOME #A((20) BASE-CHAR . "/home/tom/quicklisp/") :LOCAL-PROJECT-DIRECTORIES
+  (#A((35) BASE-CHAR . "/home/tom/quicklisp/local-projects/")) :DISTS
+  ((:NAME "quicklisp" :DIST-URL
+    "http://beta.quicklisp.org/dist/quicklisp/2017-06-30/distinfo.txt" :VERSION
+    "2017-06-30"))))

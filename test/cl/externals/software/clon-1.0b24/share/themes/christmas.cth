@@ -1,0 +1,72 @@
+;;; christmas.cth --- Christmas theme                            -*- lisp -*-
+
+;; Copyright (C) 2010, 2011, 2015 Didier Verna
+
+;; Author: Didier Verna <didier@didierverna.net>
+
+;; This file is part of Clon.
+
+;; Permission to use, copy, modify, and distribute this software for any
+;; purpose with or without fee is hereby granted, provided that the above
+;; copyright notice and this permission notice appear in all copies.
+
+;; THIS SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+;; WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+;; MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+;; ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+;; WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+;; ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+;; OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+
+
+;;; Commentary:
+
+;; Contents management by FCM version 0.1.
+
+;; This theme is not meant to be used, but rather to illustrate most of the
+;; highlighting features of Clon.
+
+
+;;; Code:
+
+:padding-right 0
+:background blue
+
+:face (synopsis :padding-bottom 1 :bold t)
+
+:face (text :padding-top 0 :padding-bottom 0
+	    :foreground red)
+
+:face (option :padding-left 2 :padding-right 2 :padding-top 0 :padding-bottom 0
+	      :background cyan
+	      :face (syntax :item-separator ", "
+			    :padding-right (29 absolute)
+			    :background magenta
+			    :face (short :item-separator nil)
+			    :face (long  :item-separator nil))
+	      :face (usage :padding-left (30 absolute) :padding-right 0
+			   :background green
+			   :face (fallback :bold t
+					   :foreground yellow
+					   :padding-top 0
+					   :face (header :underline t)
+					   :face (value :blink t))
+			   :face (default :padding-top 0
+				   :bold t
+				   :foreground yellow
+				   :face (header :underline t)
+				   :face (value :blink t))
+			   :face (environment :bold t
+					      :foreground yellow
+					      :padding-top 0
+					      :face (header :underline t)
+					      :face (variable :blink t))))
+
+:face (group :padding-right 0 :padding-top 0 :padding-bottom 0
+	     :face (header :padding-top 0 :padding-bottom 0
+			  :underline t :bold t)
+	     :face (items :padding-right 0 :padding-top 0 :padding-bottom 0)
+	     :face (group :padding-left 2 :padding-right 0))
+
+
+;;; christmas.cth ends here

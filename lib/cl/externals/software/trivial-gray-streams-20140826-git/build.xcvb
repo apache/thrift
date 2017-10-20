@@ -1,0 +1,7 @@
+#+xcvb
+(module
+  (:fullname "trivial-gray-streams"
+   :depends-on
+    ("package"
+     "streams")
+   :supersedes-asdf ("trivial-gray-streams")))

@@ -1,0 +1,28 @@
+Package:
+
+  clisp  : socket
+  cmucl  : extensions
+  sbcl   : sb-bsd-sockets
+  lw     : comm
+  openmcl: openmcl-socket
+  allegro: sock
+
+Connecting (TCP/inet only)
+
+  clisp  : socket-connect port &optional [host] &key :element-type :external-format :buffered :timeout = > socket-stream
+  cmucl  : connect-to-inet-socket host port &optional kind => file descriptor
+  sbcl   : sb-socket-connect socket &rest address => socket
+  lw     : open-tcp-stream hostname service &key direction element-type buffered => stream-object
+  openmcl: socket-connect socket => :active, :passive or nil
+  allegro: make-socket (&rest args &key type format connect address-family eol) => socket
+
+Closing
+
+  clisp  : close socket
+  cmucl  : close-socket socket
+  sbcl   : socket-close socket
+  lw     : close socket
+  openmcl: close socket
+  allegro: close socket
+
+Errors

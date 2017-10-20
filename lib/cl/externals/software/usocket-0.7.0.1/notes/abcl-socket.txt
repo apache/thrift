@@ -1,0 +1,18 @@
+
+ABCL provides a callback interface to java objects, next to these calls:
+
+ - ext:make-socket
+ - ext:socket-close
+ - ext:make-server-socket
+ - ext:socket-accept
+ - ext:get-socket-stream (returning an io-stream)
+
+abcl-swank (see SLIME) shows how to call directly into java.
+
+
+See for the sockets implementation:
+
+ - src/org/armedbear/lisp
+   * socket.lisp
+   * socket_stream.java
+   * SocketStream.java

@@ -1,0 +1,48 @@
+#!/usr/bin/make -f
+
+pkg		:= puri
+debpkg  	:= cl-puri
+
+clc-source	:= usr/share/common-lisp/source
+clc-systems	:= usr/share/common-lisp/systems
+clc-files	:= $(clc-source)/$(pkg)
+
+
+build: build-indep build-arch
+
+build-indep:
+
+build-arch:
+
+clean:
+	dh_testdir
+	dh_testroot
+	dh_clean
+
+install: build
+	dh_testdir
+	dh_testroot
+	dh_prep
+	dh_installdirs
+	dh_install $(pkg).asd $(clc-files)
+	dh_install *.lisp $(clc-files)
+
+binary-indep: install
+	dh_testdir
+	dh_testroot
+	dh_installdocs README
+	dh_installchangelogs
+	dh_lisp
+	dh_compress
+	dh_fixperms
+	dh_installdeb
+	dh_gencontrol
+	dh_md5sums
+	dh_builddeb
+
+binary-arch:
+
+binary: binary-indep
+
+
+.PHONY: build clean binary-indep binary-arch binary install

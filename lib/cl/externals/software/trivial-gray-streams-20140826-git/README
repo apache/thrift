@@ -1,0 +1,40 @@
+trivial-gray-streams
+====================
+
+Gray streams is an interface proposed for inclusion with ANSI CL
+by David N. Gray in Issue STREAM-DEFINITION-BY-USER
+(http://www.nhplace.com/kent/CL/Issues/stream-definition-by-user.html).
+The proposal did not make it into ANSI CL, but most popular
+CL implementations implement this facility anyway.
+
+This system provides an extremely thin compatibility layer for gray
+streams.
+
+How to use it
+=============
+
+Use the package TRIVIAL-GRAY-STREAMS to refer Gray stream
+classes to inherit from, generic functions to implement.
+
+Extensions
+==========
+
+The Gray proposal was made before the ANCI CL standard was finalized,
+and was based on the Common Lisp The Language book.
+
+The book does not have cl:file-position, cl:read-sequence, cl:write-sequence
+functions. That's why (we think) the Gray proposal does not specify
+their counterparts: stream-file-position, stream-read-sequence, stream-write-sequence.
+
+trivial-gray-streams supports these functions:
+
+Generic function STREAM-READ-SEQUENCE (stream sequence start end &key)
+Generic function STREAM-WRITE-SEQUENCE (stream sequence start end &key)
+
+    Notice that we use two required arguments and allow additional
+    keyword arguments. Your methods on these function should have
+    compliant lambda lists:
+        (stream sequence start end &key)
+
+Generic function STREAM-FILE-POSITION (stream) => file position
+Generic function (SETF STREAM-FILE-POSITION) (position-spec stream) => successp

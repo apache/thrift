@@ -1,0 +1,136 @@
+
+                                                        -*- text -*-
+
+$Id$
+
+
+                  usocket: Universal sockets library
+                  ==================================
+
+Contents
+========
+
+ * Motivation
+ * Design goal
+ * Functional requirements
+ * Class structure
+
+
+
+Motivation
+==========
+
+There are 2 other portability sockets packages [that I know of]
+out there:
+
+ 1) trivial-sockets
+ 2) acl-compat (which is a *lot* broader, but contains sockets too)
+
+The first misses some functionality which is fundamental when
+the requirements stop being 'trivial', such as finding out the
+addresses of either side connected to the tcp/ip stream.
+
+The second, being a complete compatibility library for Allegro,
+contains much more than only sockets.  Next to that, as the docs
+say, is it mainly directed at providing the functionality required
+to port portable-allegroserve - meaning it may be (very) incomplete
+on some platforms.
+
+So, that's why I decided to inherit Erik Enge's project to build
+a library with the intention to provide portability code in only
+1 area of programming, targeted at 'not so trivial' programming.
+
+Also, I need this library to extend cl-irc with full DCC functionality.
+
+
+
+Design goal
+===========
+
+To provide a portable TCP/IP socket interface for as many
+implementations as possible, while keeping the portability layer
+as thin as possible.
+
+
+
+Functional requirements
+=======================
+
+The interface provided should allow:
+ - 'client'/active sockets
+ - 'server'/listening sockets
+ - provide the usual stream methods to operate on the connection stream
+   (not necessarily the socket itself; maybe a socket slot too)
+
+For now, as long as there are no possibilities to have UDP sockets
+to write a DNS client library: (which in the end may work better,
+because in this respect all implementations are different...)
+ - retrieve IP addresses/ports for both sides of the connection
+
+Several relevant support functionalities will have to be provided too:
+ - long <-> quad-vector operators
+ - quad-vector <-> string operators
+ - hostname <-> quad-vector operators (hostname resolution)
+
+
+Minimally, I'd like to support:
+ - SBCL
+ - CMUCL
+ - ABCL (ArmedBear)
+ - clisp
+ - Allegro
+ - LispWorks
+ - OpenMCL
+
+
+Comments on the design above
+============================
+
+I don't think it's a good idea to implement name lookup in the
+very first of steps: we'll see if this is required to get the
+package accepted; not all implementations support it.
+
+Name resolution errors ...
+Since there is no name resolution library (yet), nor standardized
+hooks into the standard C library to do it the same way on
+all platforms, name resolution errors can manifest themselves
+in a lot of different ways.  How to marshall these to the
+library users?
+
+Several solutions come to mind:
+
+1) Map them to 'unknown-error
+2) Give them their own errors and map to those
+   ... which implies that they are actually supported atm.
+3) ...
+
+Given that the library doesn't now, but may in the future,
+include name resolution officially, I tend to think (1) is the
+right answer: it leaves it all undecided.
+
+These errors can be raised by the nameresolution service
+(netdb.h) as values for 'int h_errno':
+
+- HOST_NOT_FOUND (1)
+- TRY_AGAIN      (2) /* Server fail or non-authoritive Host not found */
+- NO_RECOVERY    (3) /* Failed permanently */
+- NO_DATA        (4) /* Valid address, no data for requested record */
+
+int *__h_errno_location(void) points to thread local h_errno on
+threaded glibc2 systems.
+
+
+Class structure
+===============
+
+ usocket
+  |
+  +- datagram-usocket
+  +- stream-usocket
+  \- stream-server-usocket
+
+The usocket class will have methods to query local properties, such
+as:
+
+ - get-local-name: to query to which interface the socket is bound
+ - <other socket and protocol options such as SO_REUSEADDRESS>
