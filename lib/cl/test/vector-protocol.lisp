@@ -22,7 +22,7 @@
                (data3 (make-array 4)))
            (thrift.implementation::setf-vector-stream-vector (thrift.implementation::get-vector-stream-vector outstream)
                                                              instream)
-           (and (eql (stream-read-sequence instream data2) (length data2) 0 nil)
+           (and (eql (stream-read-sequence instream data2 0 nil) (length data2))
                 (equalp data2 data)
                 (stream-read-sequence instream data3 0 nil)
                 (equal (cl:map 'string #'code-char data3) "asdf"))))))

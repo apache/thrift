@@ -36,7 +36,12 @@
     (every #'(lambda (entry)
                (apply #'test-read-write-equivalence stream entry))
            `((stream-read-bool stream-write-bool t nil)
-             (stream-read-type stream-write-type thrift:byte thrift:map thrift:list thrift:set struct)
+             ;; `thfit:byte' is encoded the same in the protocol as i8,
+             ;; so it will be read back as i8. There is no good way
+             ;; around that, but these types are equivalent according
+             ;; to spec and `thrift:byte' is deprecated.
+             (stream-read-type stream-write-type ;thrift:byte
+                               thrift:map thrift:list thrift:set struct)
              (stream-read-message-type stream-write-message-type call)
              (stream-read-i8 stream-write-i8 ,(- (expt 2 7))  -1 0 1 ,(1- (expt 2 7)))
              (stream-read-i16 stream-write-i16 ,(- (expt 2 15))  -1 0 1 ,(1- #x70f0) ,(1- (expt 2 15)))
