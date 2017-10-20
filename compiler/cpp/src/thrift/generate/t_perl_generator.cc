@@ -1259,8 +1259,8 @@ void t_perl_generator::generate_deserialize_field(ofstream& out,
 void t_perl_generator::generate_deserialize_struct(ofstream& out,
                                                    t_struct* tstruct,
                                                    string prefix) {
-  out << indent() << "$" << prefix << " = new " << perl_namespace(tstruct->get_program())
-      << tstruct->get_name() << "();" << endl << indent() << "$xfer += $" << prefix
+  out << indent() << "$" << prefix << " = " << perl_namespace(tstruct->get_program())
+      << tstruct->get_name() << "->new();" << endl << indent() << "$xfer += $" << prefix
       << "->read($input);" << endl;
 }
 
