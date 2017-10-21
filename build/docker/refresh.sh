@@ -31,7 +31,7 @@
 set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-. $SCRIPT_DIR/vars.sh
+DOCKER_TAG=$DOCKER_REPO:$DISTRO
 
 function dockerfile_changed {
   # image may not exist yet, so we have to let it fail silently:
@@ -63,15 +63,20 @@ fi
 popd
 
 #
-# Dockerfile has changed
+# Dockerfile has changed - rebuild it for the current build job.
+# If it is a "docker" stage build then we want to push it back
+# to the DOCKER_REPO.  If it is a "test" stage build then we do
+# not.  If nobody defined a DOCKER_PASS then it doesn't matter.
 #
 
 echo Rebuilding docker image $DISTRO
 docker build --tag $DOCKER_TAG build/docker/$DISTRO
 
-if [[ ! -z "$DOCKER_PASS" ]]; then 
+if [[ "$TRAVIS_BUILD_STAGE" == "docker" ]] && [[ ! -z "$DOCKER_USER" ]] && [[ ! -z "$DOCKER_PASS" ]]; then 
   echo Pushing docker image $DOCKER_TAG
   docker login -u $DOCKER_USER -p $DOCKER_PASS
   docker push $DOCKER_TAG
+else
+  echo Not pushing docker image: either not a docker stage build job, or one of DOCKER_USER or DOCKER_PASS is undefined.
 fi
 
