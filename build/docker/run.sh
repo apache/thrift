@@ -21,7 +21,7 @@
 set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-. $SCRIPT_DIR/vars.sh
+DOCKER_TAG=$DOCKER_REPO:$DISTRO
 
 printenv | sort
 

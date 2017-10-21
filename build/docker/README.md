@@ -11,13 +11,15 @@ The Travis CI scripts use the following environment variables and logic to deter
 | Variable | Default | Usage |
 | -------- | ----- | ------- |
 | `DISTRO` | `ubuntu-xenial` | Set by various build jobs in `.travis.yml` to run builds in different containers.  Not intended to be set externally.|
-| `DOCKER_REPO` | `thrift` | The name of the Docker Hub repository to obtain and store docker images. |
-| `DOCKER_USER` | `apache` | The Docker Hub account name containing the repository. |
+| `DOCKER_REPO` | `thrift/thrift-build` | The name of the Docker Hub repository to obtain and store docker images. |
+| `DOCKER_USER` | `<none>` | The Docker Hub account name containing the repository. |
 | `DOCKER_PASS` | `<none>` | The Docker Hub account password to use when pushing new tags. |
 
-For example, the default docker image that is used in builds if no overrides are specified would be: `apache/thrift:ubuntu-xenial`
+For example, the default docker image that is used in builds if no overrides are specified would be: `thrift/thrift-build:ubuntu-xenial`
 
-If you have forked the Apache Thrift repository and you would like to use your own Docker Hub account to store thrift build images, you can use the Travis CI web interface to set the `DOCKER_USER`, `DOCKER_PASS`, and `DOCKER_REPO` variables in a secure manner.
+### Forks ###
+
+If you have forked the Apache Thrift repository and you would like to use your own Docker Hub account to store thrift build images, you can use the Travis CI web interface to set the `DOCKER_USER`, `DOCKER_PASS`, and `DOCKER_REPO` variables in a secure manner.  Your fork builds will then pull, push, and tag the docker images in your account.
 
 ### Logic ###
 
@@ -27,36 +29,42 @@ The Travis CI build runs in two phases - first the docker images are rebuilt for
 
 The Travis CI (continuous integration) builds use the Ubuntu Trusty, Xenial, and Artful images to maximize language level coverage.
 
-### Ubuntu
+### Ubuntu ###
+
 * trusty (legacy)
 * xenial (stable)
 * artful (latest)
 
-## Unsupported Containers
+## Unsupported Containers ##
 
 These containers may be in various states, and may not build everything.
 
-### CentOS
+### CentOS ###
 * 7.3
   * make check in lib/py may hang in test_sslsocket - root cause unknown
 
-### Debian
+### Debian ###
+
 * jessie
 * stretch
   * make check in lib/cpp fails due to https://svn.boost.org/trac10/ticket/12507
 
-## Usage
+## Building Locally ##
+
 From the Apache Thrift code base root:
 
-* Build
+* Build the image
 
 	docker build -t thrift build/docker/ubuntu-xenial
 
-* Run
+* Open a command prompt in the image
 
 	docker run -v $(pwd):/thrift/src -it thrift /bin/bash
 
-## Core Tool Versions per Dockerfile
+## Core Tool Versions per Dockerfile ##
+
+Last updated: October 1, 2017
+
 | Tool      | ubuntu-trusty | ubuntu-xenial | ubuntu-artful | Notes |
 | :-------- | :------------ | :------------ | :------------ | :---- |
 | ant       | 1.9.3         | 1.9.6         | 1.9.9         |       |
@@ -74,7 +82,10 @@ From the Apache Thrift code base root:
 | openssl   | 1.0.1f        | 1.0.2g        | 1.0.2g        |       |
 | qt5       | 5.2.1         | 5.5.1         | 5.9.1         |       |
 
-## Compiler/Language Versions per Dockerfile
+## Compiler/Language Versions per Dockerfile ##
+
+Last updated: October 1, 2017
+
 | Language  | ubuntu-trusty | ubuntu-xenial | ubuntu-artful | Notes |
 | :-------- | :------------ | :------------ | :------------ | :---- |
 | as3       |               |               |               | Not in CI |

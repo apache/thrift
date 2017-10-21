@@ -21,25 +21,8 @@
 
 #
 # Docker Integration
+# see: build/docker/README.md
 # 
-# DOCKER_REPO
-#   [required] The repository name (within your account).
-# DOCKER_PASS
-#   [optional, secure] Your docker account password.
-#   If you do not set this, each build job in the "test"
-#   stage might rebuild the docker image and extend build
-#   time by about 10 minutes per job.  If you do set this
-#   then each build job in the "docker" stage" will build
-#   the docker image if Dockerfile has changed, and then
-#   push the new tag up to your docker hub account.
-# DOCKER_USER
-#   [required] Your docker hub account name.
-#
-# The resulting tag is:
-#   $DOCKER_USER/$DOCKER_REPO:$DISTRO
-# example (and the default):
-#   apache/thrift:ubuntu-xenial
-#
 
 sudo: required
 dist: trusty
@@ -64,8 +47,10 @@ env:
     - DISTRO=ubuntu-xenial
     - BUILD_LIBS="CPP C_GLIB HASKELL JAVA PYTHON TESTING TUTORIALS"  # only meaningful for CMake builds
     - TRAVIS_BUILD_STAGE=test
-    - DEFAULT_DOCKER_USER="apache"
-    - DEFAULT_DOCKER_REPO="thrift"
+    # DOCKER_REPO (this works for all builds as a source for docker images - you can override for fork builds in your Travis settings)
+    - DOCKER_REPO="thrift/thrift-build"
+    # DOCKER_USER (provide in your Travis settings if you want to build and update docker images once, instead of on every job)
+    # DOCKER_PASS (same)
 
 jobs:
   include:
