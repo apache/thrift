@@ -131,6 +131,7 @@ protected:
 
       vector<t_const*>::iterator c_iter;
       for (c_iter = consts.begin(); c_iter != consts.end(); ++c_iter) {
+        this->emit_doc(*c_iter, f_consts);
         string name = (*c_iter)->get_name();
         t_type* type = (*c_iter)->get_type();
         indent(f_consts) << "immutable(" << render_type_name(type) << ") " << name << ";" << endl;
@@ -159,6 +160,7 @@ protected:
   }
 
   virtual void generate_typedef(t_typedef* ttypedef) {
+    this->emit_doc(ttypedef, f_types_);
     f_types_ << indent() << "alias " << render_type_name(ttypedef->get_type()) << " "
              << ttypedef->get_symbolic() << ";" << endl << endl;
   }
@@ -166,21 +168,17 @@ protected:
   virtual void generate_enum(t_enum* tenum) {
     vector<t_enum_value*> constants = tenum->get_constants();
 
+    this->emit_doc(tenum, f_types_);
     string enum_name = tenum->get_name();
     f_types_ << indent() << "enum " << enum_name << " {" << endl;
 
     indent_up();
 
     vector<t_enum_value*>::const_iterator c_iter;
-    bool first = true;
     for (c_iter = constants.begin(); c_iter != constants.end(); ++c_iter) {
-      if (first) {
-        first = false;
-      } else {
-        f_types_ << "," << endl;
-      }
+      this->emit_doc(*c_iter, f_types_);
       indent(f_types_) << (*c_iter)->get_name();
-      f_types_ << " = " << (*c_iter)->get_value();
+      f_types_ << " = " << (*c_iter)->get_value() << ",";
     }
 
     f_types_ << endl;
@@ -225,6 +223,7 @@ protected:
       extends = " : " + render_type_name(tservice->get_extends());
     }
 
+    this->emit_doc(tservice, f_service);
     f_service << indent() << "interface " << svc_name << extends << " {" << endl;
     indent_up();
 
@@ -236,6 +235,7 @@ protected:
     vector<t_function*> functions = tservice->get_functions();
     vector<t_function*>::iterator fn_iter;
     for (fn_iter = functions.begin(); fn_iter != functions.end(); ++fn_iter) {
+      this->emit_doc(*fn_iter, f_service);
       f_service << indent();
       print_function_signature(f_service, *fn_iter);
       f_service << ";" << endl;
@@ -343,6 +343,20 @@ protected:
     f_skeleton.open(f_skeletonname.c_str());
     print_server_skeleton(f_skeleton, tservice);
     f_skeleton.close();
+  }
+
+  void emit_doc(t_doc *doc, std::ofstream& out) {
+    if (!doc->has_doc()) {
+      return;
+    }
+    indent(out) << "/**" << std::endl;
+    indent_up();
+    // No endl -- comments reliably have a newline at the end.
+    // This is true even for stuff like:
+    //     /** method infos */ void foo(/** huh?*/ 1: i64 stuff)
+    indent(out) << doc->get_doc();
+    indent_down();
+    indent(out) << "*/" << std::endl;
   }
 
 private:
