@@ -103,7 +103,7 @@ protected:
     // Include type modules from other imported programs.
     const vector<t_program*>& includes = program_->get_includes();
     for (size_t i = 0; i < includes.size(); ++i) {
-      f_types_ << "import " << render_package(*(includes[i])) << includes[i]->get_name()
+      f_types_ << "public import " << render_package(*(includes[i])) << includes[i]->get_name()
                << "_types;" << endl;
     }
     if (!includes.empty())
