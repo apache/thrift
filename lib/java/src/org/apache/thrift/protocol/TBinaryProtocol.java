@@ -373,6 +373,7 @@ public class TBinaryProtocol extends TProtocol {
   }
 
   public String readStringBody(int size) throws TException {
+    checkStringReadLength(size);
     try {
       byte[] buf = new byte[size];
       trans_.readAll(buf, 0, size);
