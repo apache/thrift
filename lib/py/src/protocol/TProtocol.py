@@ -118,6 +118,8 @@ class TProtocolBase(object):
         pass
 
     def writeString(self, str_val):
+        if isinstance(str_val, bytes):
+            str_val = str_val.decode('utf8')
         self.writeBinary(str_to_binary(str_val))
 
     def writeBinary(self, str_val):
