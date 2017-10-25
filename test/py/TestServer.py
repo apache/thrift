@@ -193,7 +193,7 @@ def main(options):
     try:
         pfactory.string_length_limit = options.string_limit
         pfactory.container_length_limit = options.container_limit
-    except:
+    except Exception:
         # Ignore errors for those protocols that does not support length limit
         pass
 
@@ -255,7 +255,7 @@ def main(options):
                     logging.info('Requesting server to stop()')
                 try:
                     server.stop()
-                except:
+                except Exception:
                     pass
             signal.signal(signal.SIGALRM, clean_shutdown)
             signal.alarm(4)
