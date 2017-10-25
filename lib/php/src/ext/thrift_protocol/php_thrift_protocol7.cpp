@@ -88,6 +88,7 @@ const int BAD_VERSION = 4;
 static zend_function_entry thrift_protocol_functions[] = {
   PHP_FE(thrift_protocol_write_binary, nullptr)
   PHP_FE(thrift_protocol_read_binary, nullptr)
+  PHP_FE(thrift_protocol_read_binary_after_message_begin, nullptr)
   {nullptr, nullptr, nullptr}
 };
 
@@ -1061,6 +1062,32 @@ PHP_FUNCTION(thrift_protocol_read_binary) {
     ZVAL_COPY(&myex, ex);
     zval_dtor(return_value);
     zend_throw_exception_object(&myex);
+    RETURN_NULL();
+  } catch (const std::exception& ex) {
+    throw_zend_exception_from_std_exception(ex);
+    RETURN_NULL();
+  }
+}
+
+// 4 params: $transport $response_Typename $strict_read $buffer_size
+PHP_FUNCTION(thrift_protocol_read_binary_after_message_begin) {
+  zval *protocol;
+  zend_string *obj_typename;
+  zend_bool strict_read;
+  size_t buffer_size = 8192;
+
+  if (zend_parse_parameters(ZEND_NUM_ARGS(), "oSb|l", &protocol, &obj_typename, &strict_read, &buffer_size) == FAILURE) {
+    return;
+  }
+
+  try {
+    PHPInputTransport transport(protocol, buffer_size);
+
+    createObject(ZSTR_VAL(obj_typename), return_value);
+    zval* spec = zend_read_static_property(Z_OBJCE_P(return_value), "_TSPEC", sizeof("_TSPEC")-1, false);
+    binary_deserialize_spec(return_value, transport, Z_ARRVAL_P(spec));
+  } catch (const PHPExceptionWrapper& ex) {
+    zend_throw_exception_object(ex);
     RETURN_NULL();
   } catch (const std::exception& ex) {
     throw_zend_exception_from_std_exception(ex);
