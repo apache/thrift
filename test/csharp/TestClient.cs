@@ -265,10 +265,11 @@ namespace Test
             return BitConverter.ToString(data).Replace("-", string.Empty);
         }
 
-        public static byte[] PrepareTestData(bool randomDist)
+        public static byte[] PrepareTestData(bool randomDist, bool huge)
         {
-            byte[] retval = new byte[0x100];
-            int initLen = Math.Min(0x100,retval.Length);
+            // huge = true tests for THRIFT-4372
+            byte[] retval = new byte[huge ? 0x12345 : 0x100];
+            int initLen = retval.Length;
 
             // linear distribution, unless random is requested
             if (!randomDist) {
@@ -374,29 +375,33 @@ namespace Test
                 returnCode |= ErrorBaseTypes;
             }
 
-            byte[] binOut = PrepareTestData(true);
-            Console.Write("testBinary(" + BytesToHex(binOut) + ")");
-            try
+            for (i32 = 0; i32 < 2; ++i32)
             {
-                byte[] binIn = client.testBinary(binOut);
-                Console.WriteLine(" = " + BytesToHex(binIn));
-                if (binIn.Length != binOut.Length)
+                var huge = (i32 > 0);
+                byte[] binOut = PrepareTestData(false,huge);
+                Console.Write("testBinary(" + BytesToHex(binOut) + ")");
+                try
                 {
-                    Console.WriteLine("*** FAILED ***");
-                    returnCode |= ErrorBaseTypes;
-                }
-                for (int ofs = 0; ofs < Math.Min(binIn.Length, binOut.Length); ++ofs)
-                    if (binIn[ofs] != binOut[ofs])
+                    byte[] binIn = client.testBinary(binOut);
+                    Console.WriteLine(" = " + BytesToHex(binIn));
+                    if (binIn.Length != binOut.Length)
                     {
                         Console.WriteLine("*** FAILED ***");
                         returnCode |= ErrorBaseTypes;
                     }
-            }
-            catch (Thrift.TApplicationException ex)
-            {
-                Console.WriteLine("*** FAILED ***");
-                returnCode |= ErrorBaseTypes;
-                Console.WriteLine(ex.Message + " ST: " + ex.StackTrace);
+                    for (int ofs = 0; ofs < Math.Min(binIn.Length, binOut.Length); ++ofs)
+                        if (binIn[ofs] != binOut[ofs])
+                        {
+                            Console.WriteLine("*** FAILED ***");
+                            returnCode |= ErrorBaseTypes;
+                        }
+                }
+                catch (Thrift.TApplicationException ex)
+                {
+                    Console.WriteLine("*** FAILED ***");
+                    returnCode |= ErrorBaseTypes;
+                    Console.WriteLine(ex.Message + " ST: " + ex.StackTrace);
+                }
             }
 
             // binary equals? only with hashcode option enabled ...
