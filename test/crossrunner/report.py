@@ -332,8 +332,8 @@ class SummaryReporter(TestReporter):
             '# then browse:\n',
             '# \thttp://localhost:%d/%s/\n' % (8001, self._testdir_rel),
             'Full log for each test is here:\n',
-            '\ttest/log/client_server_protocol_transport_client.log\n',
-            '\ttest/log/client_server_protocol_transport_server.log\n',
+            '\ttest/log/server_client_protocol_transport_client.log\n',
+            '\ttest/log/server_client_protocol_transport_server.log\n',
             '%d failed of %d tests in total.\n' % (fail_count, len(self._tests)),
         ])
         self._print_exec_time()
