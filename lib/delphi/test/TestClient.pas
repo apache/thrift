@@ -86,7 +86,7 @@ type
 
     procedure ClientTest;
     procedure JSONProtocolReadWriteTest;
-    function  PrepareBinaryData( aRandomDist : Boolean = FALSE) : TBytes;
+    function  PrepareBinaryData( aRandomDist, aHuge : Boolean) : TBytes;
     {$IFDEF StressTest}
     procedure StressTest(const client : TThriftTest.Iface);
     {$ENDIF}
@@ -546,8 +546,21 @@ begin
   i64 := client.testI64(-34359738368);
   Expect( i64 = -34359738368, 'testI64(-34359738368) = ' + IntToStr( i64));
 
-  // random binary
-  binOut := PrepareBinaryData( TRUE);
+  // random binary small
+  binOut := PrepareBinaryData( TRUE, FALSE);
+  Console.WriteLine('testBinary('+BytesToHex(binOut)+')');
+  try
+    binIn := client.testBinary(binOut);
+    Expect( Length(binOut) = Length(binIn), 'testBinary(): length '+IntToStr(Length(binOut))+' = '+IntToStr(Length(binIn)));
+    i32 := Min( Length(binOut), Length(binIn));
+    Expect( CompareMem( binOut, binIn, i32), 'testBinary('+BytesToHex(binOut)+') = '+BytesToHex(binIn));
+  except
+    on e:TApplicationException do Console.WriteLine('testBinary(): '+e.Message);
+    on e:Exception do Expect( FALSE, 'testBinary(): Unexpected exception "'+e.ClassName+'": '+e.Message);
+  end;
+
+  // random binary huge
+  binOut := PrepareBinaryData( TRUE, TRUE);
   Console.WriteLine('testBinary('+BytesToHex(binOut)+')');
   try
     binIn := client.testBinary(binOut);
@@ -1011,10 +1024,12 @@ end;
 {$ENDIF}
 
 
-function TClientThread.PrepareBinaryData( aRandomDist : Boolean = FALSE) : TBytes;
-var i, nextPos : Integer;
+function TClientThread.PrepareBinaryData( aRandomDist, aHuge : Boolean) : TBytes;
+var i : Integer;
 begin
-  SetLength( result, $100);
+  if aHuge
+  then SetLength( result, $12345)  // tests for THRIFT-4372
+  else SetLength( result, $100);
   ASSERT( Low(result) = 0);
 
   // linear distribution, unless random is requested
@@ -1027,13 +1042,8 @@ begin
 
   // random distribution of all 256 values
   FillChar( result[0], Length(result) * SizeOf(result[0]), $0);
-  i := 1;
-  while i < Length(result) do begin
-    nextPos := Byte( Random($100));
-    if result[nextPos] = 0 then begin  // unused?
-      result[nextPos] := i;
-      Inc(i);
-    end;
+  for i := Low(result) to High(result) do begin
+    result[i] := Byte( Random($100));
   end;
 end;
 
@@ -1080,7 +1090,7 @@ begin
     StartTestGroup( 'JsonProtocolTest', test_Unknown);
 
     // prepare binary data
-    binary := PrepareBinaryData( FALSE);
+    binary := PrepareBinaryData( FALSE, FALSE);
     SetLength( emptyBinary, 0); // empty binary data block
 
     // output setup

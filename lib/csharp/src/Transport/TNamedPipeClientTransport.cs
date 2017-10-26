@@ -21,6 +21,7 @@
  * details.
  */
 
+using System;
 using System.IO.Pipes;
 using System.Threading;
 
@@ -88,7 +89,18 @@ namespace Thrift.Transport
                 throw new TTransportException(TTransportException.ExceptionType.NotOpen);
             }
 
-            client.Write(buf, off, len);
+            // if necessary, send the data in chunks
+            // there's a system limit around 0x10000 bytes that we hit otherwise
+            // MSDN: "Pipe write operations across a network are limited to 65,535 bytes per write. For more information regarding pipes, see the Remarks section."
+            var nBytes = Math.Min(len, 15 * 4096);  // 16 would exceed the limit
+            while (nBytes > 0)
+            {
+                client.Write(buf, off, nBytes);
+
+                off += nBytes;
+                len -= nBytes;
+                nBytes = Math.Min(len, nBytes);
+            }
         }
 
         protected override void Dispose(bool disposing)
