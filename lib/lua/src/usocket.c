@@ -113,7 +113,7 @@ T_ERRCODE socket_create(p_socket sock, int domain, int type, int protocol) {
 T_ERRCODE socket_destroy(p_socket sock) {
   // TODO Figure out if I should be free-ing this
   if (*sock > 0) {
-    socket_setblocking(sock);
+    (void)socket_setblocking(sock);
     close(*sock);
     *sock = -1;
   }
@@ -121,13 +121,15 @@ T_ERRCODE socket_destroy(p_socket sock) {
 }
 
 T_ERRCODE socket_bind(p_socket sock, p_sa addr, int addr_len) {
-  int ret = SUCCESS;
-  socket_setblocking(sock);
+  int ret = socket_setblocking(sock);
+  if (ret != SUCCESS) {
+    return ret;
+  }
   if (bind(*sock, addr, addr_len)) {
     ret = errno;
   }
-  socket_setnonblocking(sock);
-  return ret;
+  int ret2 = socket_setnonblocking(sock);
+  return ret == SUCCESS ? ret2 : ret;
 }
 
 T_ERRCODE socket_get_info(p_socket sock, short *port, char *buf, size_t len) {
@@ -168,22 +170,25 @@ T_ERRCODE socket_accept(p_socket sock, p_socket client,
     if (*client > 0) {
       return SUCCESS;
     }
-    err = errno;
-  } while (err != EINTR);
+  } while ((err = errno) == EINTR);
+
   if (err == EAGAIN || err == ECONNABORTED) {
     return socket_wait(sock, WAIT_MODE_R, timeout);
   }
+
   return err;
 }
 
 T_ERRCODE socket_listen(p_socket sock, int backlog) {
-  int ret = SUCCESS;
-  socket_setblocking(sock);
+  int ret = socket_setblocking(sock);
+  if (ret != SUCCESS) {
+    return ret;
+  }
   if (listen(*sock, backlog)) {
     ret = errno;
   }
-  socket_setnonblocking(sock);
-  return ret;
+  int ret2 = socket_setnonblocking(sock);
+  return ret == SUCCESS ? ret2 : ret;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -217,12 +222,12 @@ T_ERRCODE socket_send(
     if (put > 0) {
       return SUCCESS;
     }
-    err = errno;
-  } while (err != EINTR);
+  } while ((err = errno) == EINTR);
 
   if (err == EAGAIN) {
     return socket_wait(sock, WAIT_MODE_W, timeout);
   }
+
   return err;
 }
 
@@ -232,8 +237,8 @@ T_ERRCODE socket_recv(
   if (*sock < 0) {
     return CLOSED;
   }
+  *received = 0;
 
-  int flags = fcntl(*sock, F_GETFL, 0);
   do {
     got = recv(*sock, data, len, 0);
     if (got > 0) {
@@ -246,27 +251,28 @@ T_ERRCODE socket_recv(
     if (got == 0) {
       return CLOSED;
     }
-  } while (err != EINTR);
+  } while (err == EINTR);
 
   if (err == EAGAIN) {
     return socket_wait(sock, WAIT_MODE_R, timeout);
   }
+
   return err;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
 // Util
 
-void socket_setnonblocking(p_socket sock) {
+T_ERRCODE socket_setnonblocking(p_socket sock) {
   int flags = fcntl(*sock, F_GETFL, 0);
   flags |= O_NONBLOCK;
-  fcntl(*sock, F_SETFL, flags);
+  return fcntl(*sock, F_SETFL, flags) != -1 ? SUCCESS : errno;
 }
 
-void socket_setblocking(p_socket sock) {
+T_ERRCODE socket_setblocking(p_socket sock) {
   int flags = fcntl(*sock, F_GETFL, 0);
   flags &= (~(O_NONBLOCK));
-  fcntl(*sock, F_SETFL, flags);
+  return fcntl(*sock, F_SETFL, flags) != -1 ? SUCCESS : errno;
 }
 
 ////////////////////////////////////////////////////////////////////////////////

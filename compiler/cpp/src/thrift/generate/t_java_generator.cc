@@ -2716,8 +2716,6 @@ std::string t_java_generator::get_java_type_string(t_type* type) {
   } else {
     throw std::runtime_error("Unknown thrift type \"" + type->get_name()
                              + "\" passed to t_java_generator::get_java_type_string!");
-    return "Unknown thrift type \"" + type->get_name()
-           + "\" passed to t_java_generator::get_java_type_string!";
     // This should never happen!
   }
 }

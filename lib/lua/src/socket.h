@@ -51,8 +51,8 @@ T_ERRCODE socket_send(p_socket sock, const char *data, size_t len, int timeout);
 T_ERRCODE socket_recv(p_socket sock, char *data, size_t len, int timeout,
                       int *received);
 
-void socket_setblocking(p_socket sock);
-void socket_setnonblocking(p_socket sock);
+T_ERRCODE socket_setblocking(p_socket sock);
+T_ERRCODE socket_setnonblocking(p_socket sock);
 
 T_ERRCODE socket_accept(p_socket sock, p_socket sibling,
                         p_sa addr, socklen_t *addr_len, int timeout);

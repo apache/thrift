@@ -38,13 +38,13 @@ void convert(From*, To&);
  */
 class t_const_value {
 public:
-  enum t_const_value_type { CV_INTEGER, CV_DOUBLE, CV_STRING, CV_MAP, CV_LIST, CV_IDENTIFIER };
+  enum t_const_value_type { CV_INTEGER, CV_DOUBLE, CV_STRING, CV_MAP, CV_LIST, CV_IDENTIFIER, CV_UNKNOWN };
 
-  t_const_value() {}
+  t_const_value() : intVal_(0), doubleVal_(0.0f), enum_((t_enum*)0), valType_(CV_UNKNOWN) {}
 
-  t_const_value(int64_t val) { set_integer(val); }
+  t_const_value(int64_t val) : doubleVal_(0.0f), enum_((t_enum*)0), valType_(CV_UNKNOWN) { set_integer(val); }
 
-  t_const_value(std::string val) { set_string(val); }
+  t_const_value(std::string val) : intVal_(0), doubleVal_(0.0f), enum_((t_enum*)0), valType_(CV_UNKNOWN) { set_string(val); }
 
   void set_string(std::string val) {
     valType_ = CV_STRING;
@@ -134,7 +134,7 @@ public:
 
   void set_enum(t_enum* tenum) { enum_ = tenum; }
 
-  t_const_value_type get_type() const { return valType_; }
+  t_const_value_type get_type() const { if (valType_ == CV_UNKNOWN) { throw std::string("unknown t_const_value"); } return valType_; }
 
 private:
   std::map<t_const_value*, t_const_value*> mapVal_;
