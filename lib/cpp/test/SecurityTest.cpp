@@ -255,11 +255,12 @@ BOOST_AUTO_TEST_CASE(ssl_security_matrix)
                     % protocol2str(si) % protocol2str(ci));
 
                 mConnected = false;
+                // thread_group manages the thread lifetime - ignore the return value of create_thread
                 boost::thread_group threads;
-                threads.create_thread(bind(&SecurityFixture::server, this, static_cast<apache::thrift::transport::SSLProtocol>(si)));
+                (void)threads.create_thread(bind(&SecurityFixture::server, this, static_cast<apache::thrift::transport::SSLProtocol>(si)));
                 mCVar.wait(lock);           // wait for listen() to succeed
                 lock.unlock();
-                threads.create_thread(bind(&SecurityFixture::client, this, static_cast<apache::thrift::transport::SSLProtocol>(ci)));
+                (void)threads.create_thread(bind(&SecurityFixture::client, this, static_cast<apache::thrift::transport::SSLProtocol>(ci)));
                 threads.join_all();
 
                 BOOST_CHECK_MESSAGE(mConnected == matrix[ci][si],

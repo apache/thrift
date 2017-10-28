@@ -34,10 +34,13 @@
 #include <sys/stat.h>
 #endif
 
+#include <cerrno>
+
+// ignore EEXIST, throw on any other error
 #ifdef _WIN32
-#define MKDIR(x) mkdir(x)
+#define MKDIR(x) { int r = _mkdir(x); if (r == -1 && errno != EEXIST) { throw (std::string(x) + ": ") + strerror(errno); } }
 #else
-#define MKDIR(x) mkdir(x, S_IRWXU | S_IRWXG | S_IRWXO)
+#define MKDIR(x) { int r = mkdir(x, S_IRWXU | S_IRWXG | S_IRWXO); if (r == -1 && errno != EEXIST) { throw (std::string(x) + ": ") + strerror(errno); } }
 #endif
 
 #ifdef PATH_MAX

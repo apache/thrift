@@ -80,20 +80,11 @@ BOOST_AUTO_TEST_CASE(test_roundtrip) {
   BOOST_CHECK(a == a2);
 }
 
-BOOST_AUTO_TEST_CASE(test_copy) {
+BOOST_AUTO_TEST_CASE(test_readAppendToString) {
   string* str1 = new string("abcd1234");
-  ptrdiff_t str1addr = reinterpret_cast<ptrdiff_t>(str1);
-  const char* data1 = str1->data();
   TMemoryBuffer buf((uint8_t*)str1->data(),
                     static_cast<uint32_t>(str1->length()),
                     TMemoryBuffer::COPY);
-  delete str1;
-  string* str2 = new string("plsreuse");
-  bool obj_reuse = (str1addr == reinterpret_cast<ptrdiff_t>(str2));
-  bool dat_reuse = (data1 == str2->data());
-  BOOST_TEST_MESSAGE("Object reuse: " << obj_reuse << "   Data reuse: " << dat_reuse
-                << ((obj_reuse && dat_reuse) ? "   YAY!" : ""));
-  delete str2;
 
   string str3 = "wxyz", str4 = "6789";
   buf.readAppendToString(str3, 4);

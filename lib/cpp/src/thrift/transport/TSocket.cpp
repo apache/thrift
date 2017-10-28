@@ -385,7 +385,11 @@ void TSocket::openConnection(struct addrinfo* res) {
 
 done:
   // Set socket back to normal mode (blocking)
-  THRIFT_FCNTL(socket_, THRIFT_F_SETFL, flags);
+  if (-1 == THRIFT_FCNTL(socket_, THRIFT_F_SETFL, flags)) {
+    int errno_copy = THRIFT_GET_SOCKET_ERROR;
+    GlobalOutput.perror("TSocket::open() THRIFT_FCNTL " + getSocketInfo(), errno_copy);
+    throw TTransportException(TTransportException::NOT_OPEN, "THRIFT_FCNTL() failed", errno_copy);
+  }
 
   if (path_.empty()) {
     setCachedAddress(res->ai_addr, static_cast<socklen_t>(res->ai_addrlen));
