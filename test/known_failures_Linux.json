@@ -131,6 +131,8 @@
   "d-py_json_buffered-ip-ssl",
   "d-py_json_framed-ip",
   "d-py_json_framed-ip-ssl",
+  "erl-csharp_binary_buffered-ip",
+  "erl-csharp_compact_buffered-ip",
   "erl-nodejs_binary_buffered-ip",
   "erl-nodejs_compact_buffered-ip",
   "erl-rb_binary-accel_buffered-ip",
@@ -167,6 +169,10 @@
   "java-d_compact_buffered-ip",
   "java-d_compact_buffered-ip-ssl",
   "java-d_compact_framed-ip",
+  "rs-csharp_binary_buffered-ip",
+  "rs-csharp_compact_buffered-ip",
+  "rs-csharp_binary_framed-ip",
+  "rs-csharp_compact_framed-ip",
   "rs-dart_binary_framed-ip",
   "rs-dart_compact_framed-ip"
 ]

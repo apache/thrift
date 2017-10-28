@@ -1,4 +1,3 @@
-#include <assert.h>
 #include <netdb.h>
 
 #include <thrift/c_glib/thrift.h>
@@ -87,14 +86,14 @@ test_thrift_handler (void)
 
   g_object_weak_ref (G_OBJECT (argument), set_indicator, (gpointer) &indicator);
 
-  assert (thrift_test_handler_test_insanity (NULL, &_return, argument, &error));
-  assert (! indicator);
+  g_assert (thrift_test_handler_test_insanity (NULL, &_return, argument, &error));
+  g_assert (! indicator);
 
   g_hash_table_unref (_return);
-  assert (! indicator);
+  g_assert (! indicator);
 
   g_object_unref (argument);
-  assert (indicator);
+  g_assert (indicator);
 }
 
 int

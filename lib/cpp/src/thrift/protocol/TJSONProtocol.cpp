@@ -773,7 +773,7 @@ uint32_t TJSONProtocol::readJSONString(std::string& str, bool skipContext) {
         continue;
       } else {
         size_t pos = kEscapeChars.find(ch);
-        if (pos == std::string::npos) {
+        if (pos == kEscapeChars.npos) {
           throw TProtocolException(TProtocolException::INVALID_DATA,
                                    "Expected control char, got '" + std::string((const char*)&ch, 1)
                                    + "'.");

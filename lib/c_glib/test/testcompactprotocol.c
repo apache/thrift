@@ -19,7 +19,7 @@
 
 /* Disable string-function optimizations when glibc is used, as these produce
    compiler warnings about string length when a string function is used inside
-   a call to assert () */
+   a call to g_assert () */
 #if !defined(__APPLE__) && !defined(__FreeBSD__) && \
     !defined(__OpenBSD__) && !defined(__NetBSD__)
 #include <features.h>
@@ -32,7 +32,6 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <stdio.h>
-#include <assert.h>
 #include <netdb.h>
 #include <string.h>
 #include <sys/wait.h>
@@ -103,7 +102,7 @@ test_create_and_destroy (void)
 
   /* create an object and then destroy it */
   object = g_object_new (THRIFT_TYPE_COMPACT_PROTOCOL, NULL);
-  assert (object != NULL);
+  g_assert (object != NULL);
   g_object_unref (object);
 }
 
@@ -117,11 +116,11 @@ test_initialize (void)
   /* create a ThriftTransport */
   tsocket = g_object_new (THRIFT_TYPE_SOCKET, "hostname", "localhost",
                           "port", 51188, NULL);
-  assert (tsocket != NULL);
+  g_assert (tsocket != NULL);
   /* create a ThriftCompactProtocol using the Transport */
   protocol = g_object_new (THRIFT_TYPE_COMPACT_PROTOCOL, "transport",
                            tsocket, NULL);
-  assert (protocol != NULL);
+  g_assert (protocol != NULL);
   /* fetch the properties */
   g_object_get (G_OBJECT (protocol), "transport", &temp, NULL);
   g_object_unref (temp);
@@ -146,7 +145,7 @@ test_read_and_write_primitives (void)
 
   /* fork a server from the client */
   pid = fork ();
-  assert (pid >= 0);
+  g_assert (pid >= 0);
 
   if (pid == 0)
   {
@@ -162,63 +161,63 @@ test_read_and_write_primitives (void)
                             "port", port, NULL);
     transport = THRIFT_TRANSPORT (tsocket);
     thrift_transport_open (transport, NULL);
-    assert (thrift_transport_is_open (transport));
+    g_assert (thrift_transport_is_open (transport));
 
     /* create a ThriftCompactTransport */
     tc = g_object_new (THRIFT_TYPE_COMPACT_PROTOCOL, "transport",
                        tsocket, NULL);
     protocol = THRIFT_PROTOCOL (tc);
-    assert (protocol != NULL);
+    g_assert (protocol != NULL);
 
     /* write a bunch of primitives */
-    assert (thrift_compact_protocol_write_bool (protocol, TEST_BOOL, NULL) > 0);
-    assert (thrift_compact_protocol_write_byte (protocol, TEST_BYTE, NULL) > 0);
-    assert (thrift_compact_protocol_write_i16 (protocol, TEST_I16, NULL) > 0);
-    assert (thrift_compact_protocol_write_i32 (protocol, TEST_I32, NULL) > 0);
-    assert (thrift_compact_protocol_write_i64 (protocol, TEST_I64, NULL) > 0);
-    assert (thrift_compact_protocol_write_i16 (protocol, TEST_NI16, NULL) > 0);
-    assert (thrift_compact_protocol_write_i32 (protocol, TEST_NI32, NULL) > 0);
-    assert (thrift_compact_protocol_write_i64 (protocol, TEST_NI64, NULL) > 0);
-    assert (thrift_compact_protocol_write_i16 (protocol, 2, NULL) > 0);
-    assert (thrift_compact_protocol_write_i32 (protocol, 2, NULL) > 0);
-    assert (thrift_compact_protocol_write_i64 (protocol, 2, NULL) > 0);
-    assert (thrift_compact_protocol_write_i16 (protocol, -2, NULL) > 0);
-    assert (thrift_compact_protocol_write_i32 (protocol, -2, NULL) > 0);
-    assert (thrift_compact_protocol_write_i64 (protocol, -2, NULL) > 0);
-    assert (thrift_compact_protocol_write_double (protocol,
+    g_assert (thrift_compact_protocol_write_bool (protocol, TEST_BOOL, NULL) > 0);
+    g_assert (thrift_compact_protocol_write_byte (protocol, TEST_BYTE, NULL) > 0);
+    g_assert (thrift_compact_protocol_write_i16 (protocol, TEST_I16, NULL) > 0);
+    g_assert (thrift_compact_protocol_write_i32 (protocol, TEST_I32, NULL) > 0);
+    g_assert (thrift_compact_protocol_write_i64 (protocol, TEST_I64, NULL) > 0);
+    g_assert (thrift_compact_protocol_write_i16 (protocol, TEST_NI16, NULL) > 0);
+    g_assert (thrift_compact_protocol_write_i32 (protocol, TEST_NI32, NULL) > 0);
+    g_assert (thrift_compact_protocol_write_i64 (protocol, TEST_NI64, NULL) > 0);
+    g_assert (thrift_compact_protocol_write_i16 (protocol, 2, NULL) > 0);
+    g_assert (thrift_compact_protocol_write_i32 (protocol, 2, NULL) > 0);
+    g_assert (thrift_compact_protocol_write_i64 (protocol, 2, NULL) > 0);
+    g_assert (thrift_compact_protocol_write_i16 (protocol, -2, NULL) > 0);
+    g_assert (thrift_compact_protocol_write_i32 (protocol, -2, NULL) > 0);
+    g_assert (thrift_compact_protocol_write_i64 (protocol, -2, NULL) > 0);
+    g_assert (thrift_compact_protocol_write_double (protocol,
                                                  TEST_DOUBLE, NULL) > 0);
-    assert (thrift_compact_protocol_write_string (protocol,
+    g_assert (thrift_compact_protocol_write_string (protocol,
                                                  TEST_STRING, NULL) > 0);
-    assert (thrift_compact_protocol_write_string (protocol, "", NULL) > 0);
-    assert (thrift_compact_protocol_write_binary (protocol, binary,
+    g_assert (thrift_compact_protocol_write_string (protocol, "", NULL) > 0);
+    g_assert (thrift_compact_protocol_write_binary (protocol, binary,
                                                  len, NULL) > 0);
-    assert (thrift_compact_protocol_write_binary (protocol, NULL, 0, NULL) > 0);
-    assert (thrift_compact_protocol_write_binary (protocol, binary,
+    g_assert (thrift_compact_protocol_write_binary (protocol, NULL, 0, NULL) > 0);
+    g_assert (thrift_compact_protocol_write_binary (protocol, binary,
                                                  len, NULL) > 0);
 
     /* test write errors */
     transport_write_error = 1;
-    assert (thrift_compact_protocol_write_byte (protocol, TEST_BYTE,
+    g_assert (thrift_compact_protocol_write_byte (protocol, TEST_BYTE,
                                                NULL) == -1);
-    assert (thrift_compact_protocol_write_i16 (protocol, TEST_I16, NULL) == -1);
-    assert (thrift_compact_protocol_write_i32 (protocol, TEST_I32, NULL) == -1);
-    assert (thrift_compact_protocol_write_i64 (protocol, TEST_I64, NULL) == -1);
-    assert (thrift_compact_protocol_write_i16 (protocol, TEST_NI16,
+    g_assert (thrift_compact_protocol_write_i16 (protocol, TEST_I16, NULL) == -1);
+    g_assert (thrift_compact_protocol_write_i32 (protocol, TEST_I32, NULL) == -1);
+    g_assert (thrift_compact_protocol_write_i64 (protocol, TEST_I64, NULL) == -1);
+    g_assert (thrift_compact_protocol_write_i16 (protocol, TEST_NI16,
                                                NULL) == -1);
-    assert (thrift_compact_protocol_write_i32 (protocol, TEST_NI32,
+    g_assert (thrift_compact_protocol_write_i32 (protocol, TEST_NI32,
                                                NULL) == -1);
-    assert (thrift_compact_protocol_write_i64 (protocol, TEST_NI64,
+    g_assert (thrift_compact_protocol_write_i64 (protocol, TEST_NI64,
                                                NULL) == -1);
-    assert (thrift_compact_protocol_write_double (protocol, TEST_DOUBLE,
+    g_assert (thrift_compact_protocol_write_double (protocol, TEST_DOUBLE,
                                                  NULL) == -1);
-    assert (thrift_compact_protocol_write_binary (protocol, binary, len,
+    g_assert (thrift_compact_protocol_write_binary (protocol, binary, len,
                                                  NULL) == -1);
     transport_write_error = 0;
 
     /* test binary partial failure */
     transport_write_count = 0;
     transport_write_error_at = 1;
-    assert (thrift_compact_protocol_write_binary (protocol, binary,
+    g_assert (thrift_compact_protocol_write_binary (protocol, binary,
                                                  len, NULL) == -1);
     transport_write_error_at = -1;
 
@@ -226,8 +225,8 @@ test_read_and_write_primitives (void)
     thrift_transport_close (transport, NULL);
     g_object_unref (tsocket);
     g_object_unref (protocol);
-    assert (wait (&status) == pid);
-    assert (status == 0);
+    g_assert (wait (&status) == pid);
+    g_assert (status == 0);
   }
 }
 
@@ -244,7 +243,7 @@ test_read_and_write_complex_types (void)
 
   /* fork a server from the client */
   pid = fork ();
-  assert (pid >= 0);
+  g_assert (pid >= 0);
 
   if (pid == 0)
   {
@@ -260,144 +259,144 @@ test_read_and_write_complex_types (void)
                             "port", port, NULL);
     transport = THRIFT_TRANSPORT (tsocket);
     thrift_transport_open (transport, NULL);
-    assert (thrift_transport_is_open (transport));
+    g_assert (thrift_transport_is_open (transport));
 
     /* create a ThriftCompactTransport */
     tc = g_object_new (THRIFT_TYPE_COMPACT_PROTOCOL, "transport",
                        tsocket, NULL);
     protocol = THRIFT_PROTOCOL (tc);
-    assert (protocol != NULL);
+    g_assert (protocol != NULL);
 
     /* test structures */
-    assert (thrift_compact_protocol_write_struct_begin (protocol,
+    g_assert (thrift_compact_protocol_write_struct_begin (protocol,
                                                        NULL, NULL) == 0);
-    assert (thrift_compact_protocol_write_struct_end (protocol, NULL) == 0);
+    g_assert (thrift_compact_protocol_write_struct_end (protocol, NULL) == 0);
 
     /* test field state w.r.t. deltas */
 
-    assert (thrift_compact_protocol_write_field_begin (protocol, "test",
+    g_assert (thrift_compact_protocol_write_field_begin (protocol, "test",
                                                        T_DOUBLE, 1, NULL) == 1);
-    assert (thrift_compact_protocol_write_field_begin (protocol, "test",
+    g_assert (thrift_compact_protocol_write_field_begin (protocol, "test",
                                                        T_DOUBLE,
                                                        16, NULL) == 1);
-    assert (thrift_compact_protocol_write_field_begin (protocol, "test",
+    g_assert (thrift_compact_protocol_write_field_begin (protocol, "test",
                                                        T_DOUBLE,
                                                        17, NULL) == 1);
-    assert (thrift_compact_protocol_write_field_begin (protocol, "test",
+    g_assert (thrift_compact_protocol_write_field_begin (protocol, "test",
                                                        T_DOUBLE,
                                                        15, NULL) > 1);
-    assert (thrift_compact_protocol_write_field_begin (protocol, "test",
+    g_assert (thrift_compact_protocol_write_field_begin (protocol, "test",
                                                        T_DOUBLE,
                                                        30, NULL) == 1);
-    assert (thrift_compact_protocol_write_field_begin (protocol, "test",
+    g_assert (thrift_compact_protocol_write_field_begin (protocol, "test",
                                                        T_DOUBLE,
                                                        46, NULL) > 1);
-    assert (thrift_compact_protocol_write_field_begin (protocol, "test",
+    g_assert (thrift_compact_protocol_write_field_begin (protocol, "test",
                                                        T_DOUBLE,
                                                        47, NULL) == 1);
 
     /* test fields */
-    assert (thrift_compact_protocol_write_field_begin (protocol, "test",
+    g_assert (thrift_compact_protocol_write_field_begin (protocol, "test",
                                                        T_DOUBLE,
                                                        1, NULL) > 1);
-    assert (thrift_compact_protocol_write_field_end (protocol, NULL) == 0);
+    g_assert (thrift_compact_protocol_write_field_end (protocol, NULL) == 0);
 
     /* test field state w.r.t. structs */
 
-    assert (thrift_compact_protocol_write_field_begin (protocol, "test",
+    g_assert (thrift_compact_protocol_write_field_begin (protocol, "test",
                                                        T_DOUBLE,
                                                        1, NULL) > 1);
-    assert (thrift_compact_protocol_write_field_end (protocol, NULL) == 0);
-    assert (thrift_compact_protocol_write_field_begin (protocol, "test",
+    g_assert (thrift_compact_protocol_write_field_end (protocol, NULL) == 0);
+    g_assert (thrift_compact_protocol_write_field_begin (protocol, "test",
                                                        T_DOUBLE,
                                                        16, NULL) == 1);
-    assert (thrift_compact_protocol_write_field_end (protocol, NULL) == 0);
+    g_assert (thrift_compact_protocol_write_field_end (protocol, NULL) == 0);
 
-    assert (thrift_compact_protocol_write_struct_begin (protocol,
+    g_assert (thrift_compact_protocol_write_struct_begin (protocol,
                                                        NULL, NULL) == 0);
-    assert (thrift_compact_protocol_write_field_begin (protocol, "test",
+    g_assert (thrift_compact_protocol_write_field_begin (protocol, "test",
                                                        T_DOUBLE,
                                                        17, NULL) > 1);
-    assert (thrift_compact_protocol_write_field_end (protocol, NULL) == 0);
+    g_assert (thrift_compact_protocol_write_field_end (protocol, NULL) == 0);
 
-    assert (thrift_compact_protocol_write_struct_begin (protocol,
+    g_assert (thrift_compact_protocol_write_struct_begin (protocol,
                                                        NULL, NULL) == 0);
-    assert (thrift_compact_protocol_write_field_begin (protocol, "test",
+    g_assert (thrift_compact_protocol_write_field_begin (protocol, "test",
                                                        T_DOUBLE,
                                                        18, NULL) > 1);
-    assert (thrift_compact_protocol_write_field_end (protocol, NULL) == 0);
-    assert (thrift_compact_protocol_write_field_begin (protocol, "test",
+    g_assert (thrift_compact_protocol_write_field_end (protocol, NULL) == 0);
+    g_assert (thrift_compact_protocol_write_field_begin (protocol, "test",
                                                        T_DOUBLE,
                                                        19, NULL) == 1);
-    assert (thrift_compact_protocol_write_field_end (protocol, NULL) == 0);
-    assert (thrift_compact_protocol_write_struct_end (protocol, NULL) == 0);
+    g_assert (thrift_compact_protocol_write_field_end (protocol, NULL) == 0);
+    g_assert (thrift_compact_protocol_write_struct_end (protocol, NULL) == 0);
 
-    assert (thrift_compact_protocol_write_field_begin (protocol, "test",
+    g_assert (thrift_compact_protocol_write_field_begin (protocol, "test",
                                                        T_DOUBLE,
                                                        18, NULL) == 1);
-    assert (thrift_compact_protocol_write_field_end (protocol, NULL) == 0);
-    assert (thrift_compact_protocol_write_field_begin (protocol, "test",
+    g_assert (thrift_compact_protocol_write_field_end (protocol, NULL) == 0);
+    g_assert (thrift_compact_protocol_write_field_begin (protocol, "test",
                                                        T_DOUBLE,
                                                        25, NULL) == 1);
-    assert (thrift_compact_protocol_write_field_end (protocol, NULL) == 0);
-    assert (thrift_compact_protocol_write_struct_end (protocol, NULL) == 0);
+    g_assert (thrift_compact_protocol_write_field_end (protocol, NULL) == 0);
+    g_assert (thrift_compact_protocol_write_struct_end (protocol, NULL) == 0);
 
-    assert (thrift_compact_protocol_write_field_begin (protocol, "test",
+    g_assert (thrift_compact_protocol_write_field_begin (protocol, "test",
                                                        T_DOUBLE,
                                                        17, NULL) == 1);
-    assert (thrift_compact_protocol_write_field_end (protocol, NULL) == 0);
+    g_assert (thrift_compact_protocol_write_field_end (protocol, NULL) == 0);
 
     /* test field state w.r.t. bools */
 
     /* deltas */
     /* non-bool field -> bool field -> non-bool field */
-    assert (thrift_compact_protocol_write_field_begin (protocol, "test",
+    g_assert (thrift_compact_protocol_write_field_begin (protocol, "test",
                                                        T_DOUBLE,
                                                        18, NULL) == 1);
-    assert (thrift_compact_protocol_write_field_end (protocol, NULL) == 0);
-    assert (thrift_compact_protocol_write_field_begin (protocol, "test", T_BOOL,
+    g_assert (thrift_compact_protocol_write_field_end (protocol, NULL) == 0);
+    g_assert (thrift_compact_protocol_write_field_begin (protocol, "test", T_BOOL,
                                                        19, NULL) == 0);
-    assert (thrift_compact_protocol_write_bool (protocol, TEST_BOOL,
+    g_assert (thrift_compact_protocol_write_bool (protocol, TEST_BOOL,
                                                 NULL) == 1);
-    assert (thrift_compact_protocol_write_field_end (protocol, NULL) == 0);
-    assert (thrift_compact_protocol_write_field_begin (protocol, "test",
+    g_assert (thrift_compact_protocol_write_field_end (protocol, NULL) == 0);
+    g_assert (thrift_compact_protocol_write_field_begin (protocol, "test",
                                                        T_DOUBLE,
                                                        20, NULL) == 1);
-    assert (thrift_compact_protocol_write_field_end (protocol, NULL) == 0);
+    g_assert (thrift_compact_protocol_write_field_end (protocol, NULL) == 0);
     /* bool -> bool field -> bool */
-    assert (thrift_compact_protocol_write_bool (protocol, TEST_BOOL, NULL) > 0);
-    assert (thrift_compact_protocol_write_field_begin (protocol, "test", T_BOOL,
+    g_assert (thrift_compact_protocol_write_bool (protocol, TEST_BOOL, NULL) > 0);
+    g_assert (thrift_compact_protocol_write_field_begin (protocol, "test", T_BOOL,
                                                        21, NULL) == 0);
-    assert (thrift_compact_protocol_write_bool (protocol, TEST_BOOL,
+    g_assert (thrift_compact_protocol_write_bool (protocol, TEST_BOOL,
                                                 NULL) == 1);
-    assert (thrift_compact_protocol_write_field_end (protocol, NULL) == 0);
-    assert (thrift_compact_protocol_write_bool (protocol, TEST_BOOL, NULL) > 0);
+    g_assert (thrift_compact_protocol_write_field_end (protocol, NULL) == 0);
+    g_assert (thrift_compact_protocol_write_bool (protocol, TEST_BOOL, NULL) > 0);
 
     /* no deltas */
     /* non-bool field -> bool field -> non-bool field */
-    assert (thrift_compact_protocol_write_field_begin (protocol, "test",
+    g_assert (thrift_compact_protocol_write_field_begin (protocol, "test",
                                                        T_DOUBLE,
                                                        1, NULL) > 1);
-    assert (thrift_compact_protocol_write_field_end (protocol, NULL) == 0);
-    assert (thrift_compact_protocol_write_field_begin (protocol, "test", T_BOOL,
+    g_assert (thrift_compact_protocol_write_field_end (protocol, NULL) == 0);
+    g_assert (thrift_compact_protocol_write_field_begin (protocol, "test", T_BOOL,
                                                       1, NULL) == 0);
-    assert (thrift_compact_protocol_write_bool (protocol, TEST_BOOL, NULL) > 1);
-    assert (thrift_compact_protocol_write_field_end (protocol, NULL) == 0);
-    assert (thrift_compact_protocol_write_field_begin (protocol, "test",
+    g_assert (thrift_compact_protocol_write_bool (protocol, TEST_BOOL, NULL) > 1);
+    g_assert (thrift_compact_protocol_write_field_end (protocol, NULL) == 0);
+    g_assert (thrift_compact_protocol_write_field_begin (protocol, "test",
                                                        T_DOUBLE,
                                                        1, NULL) > 1);
-    assert (thrift_compact_protocol_write_field_end (protocol, NULL) == 0);
+    g_assert (thrift_compact_protocol_write_field_end (protocol, NULL) == 0);
     /* bool -> bool field -> bool */
-    assert (thrift_compact_protocol_write_bool (protocol, TEST_BOOL, NULL) > 0);
-    assert (thrift_compact_protocol_write_field_begin (protocol, "test", T_BOOL,
+    g_assert (thrift_compact_protocol_write_bool (protocol, TEST_BOOL, NULL) > 0);
+    g_assert (thrift_compact_protocol_write_field_begin (protocol, "test", T_BOOL,
                                                       1, NULL) == 0);
-    assert (thrift_compact_protocol_write_bool (protocol, TEST_BOOL, NULL) > 1);
-    assert (thrift_compact_protocol_write_field_end (protocol, NULL) == 0);
-    assert (thrift_compact_protocol_write_bool (protocol, TEST_BOOL, NULL) > 0);
+    g_assert (thrift_compact_protocol_write_bool (protocol, TEST_BOOL, NULL) > 1);
+    g_assert (thrift_compact_protocol_write_field_end (protocol, NULL) == 0);
+    g_assert (thrift_compact_protocol_write_bool (protocol, TEST_BOOL, NULL) > 0);
 
     /* test write error */
     transport_write_error = 1;
-    assert (thrift_compact_protocol_write_field_begin (protocol, "test",
+    g_assert (thrift_compact_protocol_write_field_begin (protocol, "test",
                                                        T_DOUBLE,
                                                        1, NULL) == -1);
     transport_write_error = 0;
@@ -405,7 +404,7 @@ test_read_and_write_complex_types (void)
     /* test 2nd write error */
     transport_write_count = 0;
     transport_write_error_at = 1;
-    assert (thrift_compact_protocol_write_field_begin (protocol, "test",
+    g_assert (thrift_compact_protocol_write_field_begin (protocol, "test",
                                                        T_DOUBLE,
                                                        1, NULL) == -1);
     transport_write_error_at = -1;
@@ -414,13 +413,13 @@ test_read_and_write_complex_types (void)
     thrift_compact_protocol_write_byte (protocol, T_DOUBLE, NULL);
 
     /* test write_field_stop */
-    assert (thrift_compact_protocol_write_field_stop (protocol, NULL) > 0);
+    g_assert (thrift_compact_protocol_write_field_stop (protocol, NULL) > 0);
 
     /* write a map */
-    assert (thrift_compact_protocol_write_map_begin (protocol, T_DOUBLE,
+    g_assert (thrift_compact_protocol_write_map_begin (protocol, T_DOUBLE,
                                                      T_DOUBLE,
                                                      1, NULL) > 0);
-    assert (thrift_compact_protocol_write_map_end (protocol, NULL) == 0);
+    g_assert (thrift_compact_protocol_write_map_end (protocol, NULL) == 0);
 
     /* test 1st read failure on map---nothing to do on our side */
 
@@ -429,7 +428,7 @@ test_read_and_write_complex_types (void)
 
     /* test 1st write failure on a map */
     transport_write_error = 1;
-    assert (thrift_compact_protocol_write_map_begin (protocol, T_DOUBLE,
+    g_assert (thrift_compact_protocol_write_map_begin (protocol, T_DOUBLE,
                                                      T_DOUBLE,
                                                      1, NULL) == -1);
     transport_write_error = 0;
@@ -437,7 +436,7 @@ test_read_and_write_complex_types (void)
     /* test 2nd write failure on a map */
     transport_write_count = 0;
     transport_write_error_at = 1;
-    assert (thrift_compact_protocol_write_map_begin (protocol, T_DOUBLE,
+    g_assert (thrift_compact_protocol_write_map_begin (protocol, T_DOUBLE,
                                                      T_DOUBLE,
                                                      1, NULL) == -1);
     transport_write_error_at = -1;
@@ -447,9 +446,9 @@ test_read_and_write_complex_types (void)
     thrift_compact_protocol_write_byte (protocol, T_DOUBLE, NULL);
 
     /* test list operations */
-    assert (thrift_compact_protocol_write_list_begin (protocol, T_DOUBLE,
+    g_assert (thrift_compact_protocol_write_list_begin (protocol, T_DOUBLE,
                                                      15, NULL) > 0);
-    assert (thrift_compact_protocol_write_list_end (protocol, NULL) == 0);
+    g_assert (thrift_compact_protocol_write_list_end (protocol, NULL) == 0);
 
     /* test 1st read failure on a small list---nothing to do on our end */
 
@@ -464,40 +463,40 @@ test_read_and_write_complex_types (void)
 
     /* test first write error on a small list */
     transport_write_error = 1;
-    assert (thrift_compact_protocol_write_list_begin (protocol, T_DOUBLE,
+    g_assert (thrift_compact_protocol_write_list_begin (protocol, T_DOUBLE,
                                                      14, NULL) == -1);
     transport_write_error = 0;
 
     /* test first write error on a big list */
     transport_write_error = 1;
-    assert (thrift_compact_protocol_write_list_begin (protocol, T_DOUBLE,
+    g_assert (thrift_compact_protocol_write_list_begin (protocol, T_DOUBLE,
                                                      15, NULL) == -1);
     transport_write_error = 0;
 
     /* test 2nd write error on a big list */
     transport_write_count = 0;
     transport_write_error_at = 1;
-    assert (thrift_compact_protocol_write_list_begin (protocol, T_DOUBLE,
+    g_assert (thrift_compact_protocol_write_list_begin (protocol, T_DOUBLE,
                                                      15, NULL) == -1);
     transport_write_error_at = -1;
 
     /* test set operation s*/
-    assert (thrift_compact_protocol_write_set_begin (protocol, T_DOUBLE,
+    g_assert (thrift_compact_protocol_write_set_begin (protocol, T_DOUBLE,
                                                     1, NULL) > 0);
-    assert (thrift_compact_protocol_write_set_end (protocol, NULL) == 0);
+    g_assert (thrift_compact_protocol_write_set_end (protocol, NULL) == 0);
 
     /* invalid protocol */
-    assert (thrift_compact_protocol_write_byte (protocol, 0, NULL) > 0);
+    g_assert (thrift_compact_protocol_write_byte (protocol, 0, NULL) > 0);
 
     /* invalid version */
-    assert (thrift_compact_protocol_write_byte (protocol, (gint8) 0x82u,
+    g_assert (thrift_compact_protocol_write_byte (protocol, (gint8) 0x82u,
                                                 NULL) > 0);
-    assert (thrift_compact_protocol_write_byte (protocol, 0, NULL) > 0);
+    g_assert (thrift_compact_protocol_write_byte (protocol, 0, NULL) > 0);
 
     /* send a valid message */
-    assert (thrift_compact_protocol_write_byte (protocol, (gint8) 0x82u,
+    g_assert (thrift_compact_protocol_write_byte (protocol, (gint8) 0x82u,
                                                 NULL) > 0);
-    assert (thrift_compact_protocol_write_byte (protocol, 0x01u, NULL) > 0);
+    g_assert (thrift_compact_protocol_write_byte (protocol, 0x01u, NULL) > 0);
     thrift_compact_protocol_write_varint32 (tc, 1, NULL);
     thrift_compact_protocol_write_string (protocol, "test", NULL);
 
@@ -514,32 +513,32 @@ test_read_and_write_complex_types (void)
     thrift_compact_protocol_write_varint32 (tc, 1, NULL);
 
     /* send a valid message */
-    assert (thrift_compact_protocol_write_message_begin (protocol, "test",
+    g_assert (thrift_compact_protocol_write_message_begin (protocol, "test",
                                                         T_CALL, 1, NULL) > 0);
 
-    assert (thrift_compact_protocol_write_message_end (protocol, NULL) == 0);
+    g_assert (thrift_compact_protocol_write_message_end (protocol, NULL) == 0);
 
     /* send broken writes */
     transport_write_error = 1;
-    assert (thrift_compact_protocol_write_message_begin (protocol, "test",
+    g_assert (thrift_compact_protocol_write_message_begin (protocol, "test",
                                                         T_CALL, 1, NULL) == -1);
     transport_write_error = 0;
 
     transport_write_count = 0;
     transport_write_error_at = 1;
-    assert (thrift_compact_protocol_write_message_begin (protocol, "test",
+    g_assert (thrift_compact_protocol_write_message_begin (protocol, "test",
                                                         T_CALL, 1, NULL) == -1);
     transport_write_error_at = -1;
 
     transport_write_count = 0;
     transport_write_error_at = 2;
-    assert (thrift_compact_protocol_write_message_begin (protocol, "test",
+    g_assert (thrift_compact_protocol_write_message_begin (protocol, "test",
                                                         T_CALL, 1, NULL) == -1);
     transport_write_error_at = -1;
 
     transport_write_count = 0;
     transport_write_error_at = 3;
-    assert (thrift_compact_protocol_write_message_begin (protocol, "test",
+    g_assert (thrift_compact_protocol_write_message_begin (protocol, "test",
                                                         T_CALL, 1, NULL) == -1);
     transport_write_error_at = -1;
 
@@ -547,8 +546,8 @@ test_read_and_write_complex_types (void)
     thrift_transport_close (transport, NULL);
     g_object_unref (tsocket);
     g_object_unref (protocol);
-    assert (wait (&status) == pid);
-    assert (status == 0);
+    g_assert (wait (&status) == pid);
+    g_assert (status == 0);
   }
 }
 
@@ -568,7 +567,7 @@ test_read_and_write_many_frames (void)
 
   /* fork a server from the client */
   pid = fork ();
-  assert (pid >= 0);
+  g_assert (pid >= 0);
 
   if (pid == 0)
   {
@@ -582,70 +581,70 @@ test_read_and_write_many_frames (void)
     /* create a ThriftSocket */
     tsocket = g_object_new (THRIFT_TYPE_SOCKET, "hostname", "localhost",
                             "port", port, NULL);
-    assert (tsocket != NULL);
+    g_assert (tsocket != NULL);
     transport = THRIFT_TRANSPORT (tsocket);
 
     /* wrap in a framed transport */
     ft = g_object_new (THRIFT_TYPE_FRAMED_TRANSPORT, "transport", transport,
                        "w_buf_size", 1, NULL);
-    assert (ft != NULL);
+    g_assert (ft != NULL);
     transport = THRIFT_TRANSPORT (ft);
 
     thrift_transport_open (transport, NULL);
-    assert (thrift_transport_is_open (transport));
+    g_assert (thrift_transport_is_open (transport));
 
     /* create a compact protocol */
     tc = g_object_new (THRIFT_TYPE_COMPACT_PROTOCOL, "transport",
                        transport, NULL);
     protocol = THRIFT_PROTOCOL (tc);
-    assert (protocol != NULL);
+    g_assert (protocol != NULL);
 
     /* write a bunch of primitives */
-    assert (thrift_compact_protocol_write_bool (protocol, TEST_BOOL,
+    g_assert (thrift_compact_protocol_write_bool (protocol, TEST_BOOL,
                                                 NULL) > 0);
     thrift_transport_flush (transport, NULL);
-    assert (thrift_compact_protocol_write_byte (protocol, TEST_BYTE,
+    g_assert (thrift_compact_protocol_write_byte (protocol, TEST_BYTE,
                                                 NULL) > 0);
     thrift_transport_flush (transport, NULL);
-    assert (thrift_compact_protocol_write_i16 (protocol, TEST_I16, NULL) > 0);
+    g_assert (thrift_compact_protocol_write_i16 (protocol, TEST_I16, NULL) > 0);
     thrift_transport_flush (transport, NULL);
-    assert (thrift_compact_protocol_write_i32 (protocol, TEST_I32, NULL) > 0);
+    g_assert (thrift_compact_protocol_write_i32 (protocol, TEST_I32, NULL) > 0);
     thrift_transport_flush (transport, NULL);
-    assert (thrift_compact_protocol_write_i64 (protocol, TEST_I64, NULL) > 0);
+    g_assert (thrift_compact_protocol_write_i64 (protocol, TEST_I64, NULL) > 0);
     thrift_transport_flush (transport, NULL);
-    assert (thrift_compact_protocol_write_i16 (protocol, TEST_NI16, NULL) > 0);
+    g_assert (thrift_compact_protocol_write_i16 (protocol, TEST_NI16, NULL) > 0);
     thrift_transport_flush (transport, NULL);
-    assert (thrift_compact_protocol_write_i32 (protocol, TEST_NI32, NULL) > 0);
+    g_assert (thrift_compact_protocol_write_i32 (protocol, TEST_NI32, NULL) > 0);
     thrift_transport_flush (transport, NULL);
-    assert (thrift_compact_protocol_write_i64 (protocol, TEST_NI64, NULL) > 0);
+    g_assert (thrift_compact_protocol_write_i64 (protocol, TEST_NI64, NULL) > 0);
     thrift_transport_flush (transport, NULL);
-    assert (thrift_compact_protocol_write_i16 (protocol, 2, NULL) > 0);
+    g_assert (thrift_compact_protocol_write_i16 (protocol, 2, NULL) > 0);
     thrift_transport_flush (transport, NULL);
-    assert (thrift_compact_protocol_write_i32 (protocol, 2, NULL) > 0);
+    g_assert (thrift_compact_protocol_write_i32 (protocol, 2, NULL) > 0);
     thrift_transport_flush (transport, NULL);
-    assert (thrift_compact_protocol_write_i64 (protocol, 2, NULL) > 0);
+    g_assert (thrift_compact_protocol_write_i64 (protocol, 2, NULL) > 0);
     thrift_transport_flush (transport, NULL);
-    assert (thrift_compact_protocol_write_i16 (protocol, -2, NULL) > 0);
+    g_assert (thrift_compact_protocol_write_i16 (protocol, -2, NULL) > 0);
     thrift_transport_flush (transport, NULL);
-    assert (thrift_compact_protocol_write_i32 (protocol, -2, NULL) > 0);
+    g_assert (thrift_compact_protocol_write_i32 (protocol, -2, NULL) > 0);
     thrift_transport_flush (transport, NULL);
-    assert (thrift_compact_protocol_write_i64 (protocol, -2, NULL) > 0);
+    g_assert (thrift_compact_protocol_write_i64 (protocol, -2, NULL) > 0);
     thrift_transport_flush (transport, NULL);
-    assert (thrift_compact_protocol_write_double (protocol,
+    g_assert (thrift_compact_protocol_write_double (protocol,
                                                  TEST_DOUBLE, NULL) > 0);
     thrift_transport_flush (transport, NULL);
-    assert (thrift_compact_protocol_write_string (protocol,
+    g_assert (thrift_compact_protocol_write_string (protocol,
                                                  TEST_STRING, NULL) > 0);
     thrift_transport_flush (transport, NULL);
-    assert (thrift_compact_protocol_write_string (protocol, "", NULL) > 0);
+    g_assert (thrift_compact_protocol_write_string (protocol, "", NULL) > 0);
     thrift_transport_flush (transport, NULL);
-    assert (thrift_compact_protocol_write_binary (protocol, binary,
+    g_assert (thrift_compact_protocol_write_binary (protocol, binary,
                                                  len, NULL) > 0);
     thrift_transport_flush (transport, NULL);
-    assert (thrift_compact_protocol_write_binary (protocol, NULL,
+    g_assert (thrift_compact_protocol_write_binary (protocol, NULL,
                                                   0, NULL) > 0);
     thrift_transport_flush (transport, NULL);
-    assert (thrift_compact_protocol_write_binary (protocol, binary,
+    g_assert (thrift_compact_protocol_write_binary (protocol, binary,
                                                  len, NULL) > 0);
     thrift_transport_flush (transport, NULL);
 
@@ -655,8 +654,8 @@ test_read_and_write_many_frames (void)
     g_object_unref (ft);
     g_object_unref (tsocket);
     g_object_unref (tc);
-    assert (wait (&status) == pid);
-    assert (status == 0);
+    g_assert (wait (&status) == pid);
+    g_assert (status == 0);
   }
 }
 
@@ -690,90 +689,90 @@ thrift_server_primitives (const int port)
   transport = THRIFT_SERVER_TRANSPORT (tsocket);
   thrift_server_transport_listen (transport, NULL);
   client = thrift_server_transport_accept (transport, NULL);
-  assert (client != NULL);
+  g_assert (client != NULL);
 
   tc = g_object_new (THRIFT_TYPE_COMPACT_PROTOCOL, "transport",
                       client, NULL);
   protocol = THRIFT_PROTOCOL (tc);
 
-  assert (thrift_compact_protocol_read_bool (protocol,
+  g_assert (thrift_compact_protocol_read_bool (protocol,
                                             &value_boolean, NULL) > 0);
-  assert (thrift_compact_protocol_read_byte (protocol, &value_byte, NULL) > 0);
-  assert (thrift_compact_protocol_read_i16 (protocol, &value_16, NULL) > 0);
-  assert (thrift_compact_protocol_read_i32 (protocol, &value_32, NULL) > 0);
-  assert (thrift_compact_protocol_read_i64 (protocol, &value_64, NULL) > 0);
-  assert (thrift_compact_protocol_read_i16 (protocol, &value_n16, NULL) > 0);
-  assert (thrift_compact_protocol_read_i32 (protocol, &value_n32, NULL) > 0);
-  assert (thrift_compact_protocol_read_i64 (protocol, &value_n64, NULL) > 0);
-  assert (thrift_compact_protocol_read_byte (protocol, &zigzag_p16, NULL) > 0);
-  assert (thrift_compact_protocol_read_byte (protocol, &zigzag_p32, NULL) > 0);
-  assert (thrift_compact_protocol_read_byte (protocol, &zigzag_p64, NULL) > 0);
-  assert (thrift_compact_protocol_read_byte (protocol, &zigzag_n16, NULL) > 0);
-  assert (thrift_compact_protocol_read_byte (protocol, &zigzag_n32, NULL) > 0);
-  assert (thrift_compact_protocol_read_byte (protocol, &zigzag_n64, NULL) > 0);
-  assert (thrift_compact_protocol_read_double (protocol,
+  g_assert (thrift_compact_protocol_read_byte (protocol, &value_byte, NULL) > 0);
+  g_assert (thrift_compact_protocol_read_i16 (protocol, &value_16, NULL) > 0);
+  g_assert (thrift_compact_protocol_read_i32 (protocol, &value_32, NULL) > 0);
+  g_assert (thrift_compact_protocol_read_i64 (protocol, &value_64, NULL) > 0);
+  g_assert (thrift_compact_protocol_read_i16 (protocol, &value_n16, NULL) > 0);
+  g_assert (thrift_compact_protocol_read_i32 (protocol, &value_n32, NULL) > 0);
+  g_assert (thrift_compact_protocol_read_i64 (protocol, &value_n64, NULL) > 0);
+  g_assert (thrift_compact_protocol_read_byte (protocol, &zigzag_p16, NULL) > 0);
+  g_assert (thrift_compact_protocol_read_byte (protocol, &zigzag_p32, NULL) > 0);
+  g_assert (thrift_compact_protocol_read_byte (protocol, &zigzag_p64, NULL) > 0);
+  g_assert (thrift_compact_protocol_read_byte (protocol, &zigzag_n16, NULL) > 0);
+  g_assert (thrift_compact_protocol_read_byte (protocol, &zigzag_n32, NULL) > 0);
+  g_assert (thrift_compact_protocol_read_byte (protocol, &zigzag_n64, NULL) > 0);
+  g_assert (thrift_compact_protocol_read_double (protocol,
                                               &value_double, NULL) > 0);
-  assert (thrift_compact_protocol_read_string (protocol, &string, NULL) > 0);
-  assert (thrift_compact_protocol_read_string (protocol, &empty_string,
+  g_assert (thrift_compact_protocol_read_string (protocol, &string, NULL) > 0);
+  g_assert (thrift_compact_protocol_read_string (protocol, &empty_string,
                                                NULL) > 0);
-  assert (thrift_compact_protocol_read_binary (protocol, &binary,
+  g_assert (thrift_compact_protocol_read_binary (protocol, &binary,
                                               &len, NULL) > 0);
 
-  assert (value_boolean == TEST_BOOL);
-  assert (value_byte == TEST_BYTE);
-  assert (value_16 == TEST_I16);
-  assert (value_32 == TEST_I32);
-  assert (value_64 == TEST_I64);
-  assert (value_n16 == TEST_NI16);
-  assert (value_n32 == TEST_NI32);
-  assert (value_n64 == TEST_NI64);
-  assert (zigzag_p16 == 4);
-  assert (zigzag_p32 == 4);
-  assert (zigzag_p64 == 4);
-  assert (zigzag_n16 == 3);
-  assert (zigzag_n32 == 3);
-  assert (zigzag_n64 == 3);
-  assert (value_double == TEST_DOUBLE);
-  assert (strcmp (TEST_STRING, string) == 0);
-  assert (strcmp ("", empty_string) == 0);
-  assert (memcmp (comparator, binary, len) == 0);
+  g_assert (value_boolean == TEST_BOOL);
+  g_assert (value_byte == TEST_BYTE);
+  g_assert (value_16 == TEST_I16);
+  g_assert (value_32 == TEST_I32);
+  g_assert (value_64 == TEST_I64);
+  g_assert (value_n16 == TEST_NI16);
+  g_assert (value_n32 == TEST_NI32);
+  g_assert (value_n64 == TEST_NI64);
+  g_assert (zigzag_p16 == 4);
+  g_assert (zigzag_p32 == 4);
+  g_assert (zigzag_p64 == 4);
+  g_assert (zigzag_n16 == 3);
+  g_assert (zigzag_n32 == 3);
+  g_assert (zigzag_n64 == 3);
+  g_assert (value_double == TEST_DOUBLE);
+  g_assert (strcmp (TEST_STRING, string) == 0);
+  g_assert (strcmp ("", empty_string) == 0);
+  g_assert (memcmp (comparator, binary, len) == 0);
 
   g_free (string);
   g_free (empty_string);
   g_free (binary);
 
-  assert (thrift_compact_protocol_read_binary (protocol, &binary,
+  g_assert (thrift_compact_protocol_read_binary (protocol, &binary,
                                                &len, NULL) > 0);
-  assert (binary == NULL);
-  assert (len == 0);
+  g_assert (binary == NULL);
+  g_assert (len == 0);
   g_free (binary);
 
   transport_read_count = 0;
   transport_read_error_at = 0;
-  assert (thrift_compact_protocol_read_binary (protocol, &binary,
+  g_assert (thrift_compact_protocol_read_binary (protocol, &binary,
                                               &len, NULL) == -1);
   transport_read_error_at = -1;
 
   transport_read_count = 0;
   transport_read_error_at = 1;
-  assert (thrift_compact_protocol_read_binary (protocol, &binary,
+  g_assert (thrift_compact_protocol_read_binary (protocol, &binary,
                                               &len, NULL) == -1);
   transport_read_error_at = -1;
 
   transport_read_error = 1;
-  assert (thrift_compact_protocol_read_bool (protocol,
+  g_assert (thrift_compact_protocol_read_bool (protocol,
                                             &value_boolean, NULL) == -1);
-  assert (thrift_compact_protocol_read_byte (protocol,
+  g_assert (thrift_compact_protocol_read_byte (protocol,
                                             &value_byte, NULL) == -1);
-  assert (thrift_compact_protocol_read_i16 (protocol,
+  g_assert (thrift_compact_protocol_read_i16 (protocol,
                                            &value_16, NULL) == -1);
-  assert (thrift_compact_protocol_read_i32 (protocol, &value_32, NULL) == -1);
-  assert (thrift_compact_protocol_read_i64 (protocol, &value_64, NULL) == -1);
-  assert (thrift_compact_protocol_read_i16 (protocol,
+  g_assert (thrift_compact_protocol_read_i32 (protocol, &value_32, NULL) == -1);
+  g_assert (thrift_compact_protocol_read_i64 (protocol, &value_64, NULL) == -1);
+  g_assert (thrift_compact_protocol_read_i16 (protocol,
                                            &value_n16, NULL) == -1);
-  assert (thrift_compact_protocol_read_i32 (protocol, &value_n32, NULL) == -1);
-  assert (thrift_compact_protocol_read_i64 (protocol, &value_n64, NULL) == -1);
-  assert (thrift_compact_protocol_read_double (protocol,
+  g_assert (thrift_compact_protocol_read_i32 (protocol, &value_n32, NULL) == -1);
+  g_assert (thrift_compact_protocol_read_i64 (protocol, &value_n64, NULL) == -1);
+  g_assert (thrift_compact_protocol_read_double (protocol,
                                               &value_double, NULL) == -1);
   transport_read_error = 0;
 
@@ -813,7 +812,7 @@ thrift_server_complex_types (const int port)
   transport = THRIFT_SERVER_TRANSPORT (tsocket);
   thrift_server_transport_listen (transport, NULL);
   client = thrift_server_transport_accept (transport, NULL);
-  assert (client != NULL);
+  g_assert (client != NULL);
 
   tc = g_object_new (THRIFT_TYPE_COMPACT_PROTOCOL, "transport",
                       client, NULL);
@@ -827,40 +826,40 @@ thrift_server_complex_types (const int port)
   /* test field state w.r.t. deltas */
 
   field_id = 0;
-  assert (thrift_compact_protocol_read_field_begin (protocol, &field_name,
+  g_assert (thrift_compact_protocol_read_field_begin (protocol, &field_name,
                                                     &field_type,
                                            &field_id, NULL) == 1);
-  assert (field_id == 1);
+  g_assert (field_id == 1);
   field_id = 0;
-  assert (thrift_compact_protocol_read_field_begin (protocol, &field_name,
+  g_assert (thrift_compact_protocol_read_field_begin (protocol, &field_name,
                                                     &field_type,
                                            &field_id, NULL) == 1);
-  assert (field_id == 16);
+  g_assert (field_id == 16);
   field_id = 0;
-  assert (thrift_compact_protocol_read_field_begin (protocol, &field_name,
+  g_assert (thrift_compact_protocol_read_field_begin (protocol, &field_name,
                                                     &field_type,
                                            &field_id, NULL) == 1);
-  assert (field_id == 17);
+  g_assert (field_id == 17);
   field_id = 0;
-  assert (thrift_compact_protocol_read_field_begin (protocol, &field_name,
+  g_assert (thrift_compact_protocol_read_field_begin (protocol, &field_name,
                                                     &field_type,
                                            &field_id, NULL) > 1);
-  assert (field_id == 15);
+  g_assert (field_id == 15);
   field_id = 0;
-  assert (thrift_compact_protocol_read_field_begin (protocol, &field_name,
+  g_assert (thrift_compact_protocol_read_field_begin (protocol, &field_name,
                                                     &field_type,
                                            &field_id, NULL) == 1);
-  assert (field_id == 30);
+  g_assert (field_id == 30);
   field_id = 0;
-  assert (thrift_compact_protocol_read_field_begin (protocol, &field_name,
+  g_assert (thrift_compact_protocol_read_field_begin (protocol, &field_name,
                                                     &field_type,
                                            &field_id, NULL) > 1);
-  assert (field_id == 46);
+  g_assert (field_id == 46);
   field_id = 0;
-  assert (thrift_compact_protocol_read_field_begin (protocol, &field_name,
+  g_assert (thrift_compact_protocol_read_field_begin (protocol, &field_name,
                                                     &field_type,
                                            &field_id, NULL) == 1);
-  assert (field_id == 47);
+  g_assert (field_id == 47);
   field_id = 0;
 
   /* test field operations */
@@ -871,62 +870,62 @@ thrift_server_complex_types (const int port)
 
   /* test field state w.r.t. structs */
 
-  assert (thrift_compact_protocol_read_field_begin (protocol, &field_name,
+  g_assert (thrift_compact_protocol_read_field_begin (protocol, &field_name,
                                                     &field_type,
                                                     &field_id, NULL) > 1);
-  assert (field_id == 1);
+  g_assert (field_id == 1);
   field_id = 0;
   thrift_compact_protocol_read_field_end (protocol, NULL);
-  assert (thrift_compact_protocol_read_field_begin (protocol, &field_name,
+  g_assert (thrift_compact_protocol_read_field_begin (protocol, &field_name,
                                                     &field_type,
                                                     &field_id, NULL) == 1);
-  assert (field_id == 16);
+  g_assert (field_id == 16);
   field_id = 0;
   thrift_compact_protocol_read_field_end (protocol, NULL);
 
-  assert (thrift_compact_protocol_read_struct_begin (protocol,
+  g_assert (thrift_compact_protocol_read_struct_begin (protocol,
                                                      &struct_name, NULL) == 0);
-  assert (thrift_compact_protocol_read_field_begin (protocol, &field_name,
+  g_assert (thrift_compact_protocol_read_field_begin (protocol, &field_name,
                                                     &field_type,
                                                     &field_id, NULL) > 1);
-  assert (field_id == 17);
+  g_assert (field_id == 17);
   field_id = 0;
   thrift_compact_protocol_read_field_end (protocol, NULL);
 
-  assert (thrift_compact_protocol_read_struct_begin (protocol,
+  g_assert (thrift_compact_protocol_read_struct_begin (protocol,
                                                      &struct_name, NULL) == 0);
-  assert (thrift_compact_protocol_read_field_begin (protocol, &field_name,
+  g_assert (thrift_compact_protocol_read_field_begin (protocol, &field_name,
                                                     &field_type,
                                                     &field_id, NULL) > 1);
-  assert (field_id == 18);
+  g_assert (field_id == 18);
   field_id = 0;
   thrift_compact_protocol_read_field_end (protocol, NULL);
-  assert (thrift_compact_protocol_read_field_begin (protocol, &field_name,
+  g_assert (thrift_compact_protocol_read_field_begin (protocol, &field_name,
                                                     &field_type,
                                                     &field_id, NULL) == 1);
-  assert (field_id == 19);
+  g_assert (field_id == 19);
   field_id = 0;
   thrift_compact_protocol_read_field_end (protocol, NULL);
-  assert (thrift_compact_protocol_read_struct_end (protocol, NULL) == 0);
+  g_assert (thrift_compact_protocol_read_struct_end (protocol, NULL) == 0);
 
-  assert (thrift_compact_protocol_read_field_begin (protocol, &field_name,
+  g_assert (thrift_compact_protocol_read_field_begin (protocol, &field_name,
                                                     &field_type,
                                                     &field_id, NULL) == 1);
-  assert (field_id == 18);
+  g_assert (field_id == 18);
   field_id = 0;
   thrift_compact_protocol_read_field_end (protocol, NULL);
-  assert (thrift_compact_protocol_read_field_begin (protocol, &field_name,
+  g_assert (thrift_compact_protocol_read_field_begin (protocol, &field_name,
                                                     &field_type,
                                                     &field_id, NULL) == 1);
-  assert (field_id == 25);
+  g_assert (field_id == 25);
   field_id = 0;
   thrift_compact_protocol_read_field_end (protocol, NULL);
-  assert (thrift_compact_protocol_read_struct_end (protocol, NULL) == 0);
+  g_assert (thrift_compact_protocol_read_struct_end (protocol, NULL) == 0);
 
-  assert (thrift_compact_protocol_read_field_begin (protocol, &field_name,
+  g_assert (thrift_compact_protocol_read_field_begin (protocol, &field_name,
                                                     &field_type,
                                                     &field_id, NULL) == 1);
-  assert (field_id == 17);
+  g_assert (field_id == 17);
   field_id = 0;
   thrift_compact_protocol_read_field_end (protocol, NULL);
 
@@ -934,83 +933,83 @@ thrift_server_complex_types (const int port)
 
   /* deltas */
   /* non-bool field -> bool field -> non-bool field */
-  assert (thrift_compact_protocol_read_field_begin (protocol, &field_name,
+  g_assert (thrift_compact_protocol_read_field_begin (protocol, &field_name,
                                                     &field_type,
                                            &field_id, NULL) == 1);
   thrift_compact_protocol_read_field_end (protocol, NULL);
-  assert (thrift_compact_protocol_read_field_begin (protocol, &field_name,
+  g_assert (thrift_compact_protocol_read_field_begin (protocol, &field_name,
                                                     &field_type,
                                            &field_id, NULL) == 1);
-  assert (field_type == T_BOOL);
-  assert (thrift_compact_protocol_read_bool (protocol,
+  g_assert (field_type == T_BOOL);
+  g_assert (thrift_compact_protocol_read_bool (protocol,
                                             &value_boolean, NULL) == 0);
-  assert (value_boolean == TEST_BOOL);
+  g_assert (value_boolean == TEST_BOOL);
   value_boolean = ! TEST_BOOL;
   thrift_compact_protocol_read_field_end (protocol, NULL);
-  assert (thrift_compact_protocol_read_field_begin (protocol, &field_name,
+  g_assert (thrift_compact_protocol_read_field_begin (protocol, &field_name,
                                                     &field_type,
                                            &field_id, NULL) == 1);
   thrift_compact_protocol_read_field_end (protocol, NULL);
   /* bool -> bool field -> bool */
-  assert (thrift_compact_protocol_read_bool (protocol,
+  g_assert (thrift_compact_protocol_read_bool (protocol,
                                             &value_boolean, NULL) > 0);
-  assert (value_boolean == TEST_BOOL);
+  g_assert (value_boolean == TEST_BOOL);
   value_boolean = ! TEST_BOOL;
-  assert (thrift_compact_protocol_read_field_begin (protocol, &field_name,
+  g_assert (thrift_compact_protocol_read_field_begin (protocol, &field_name,
                                                     &field_type,
                                            &field_id, NULL) == 1);
-  assert (field_type == T_BOOL);
-  assert (thrift_compact_protocol_read_bool (protocol,
+  g_assert (field_type == T_BOOL);
+  g_assert (thrift_compact_protocol_read_bool (protocol,
                                             &value_boolean, NULL) == 0);
-  assert (value_boolean == TEST_BOOL);
+  g_assert (value_boolean == TEST_BOOL);
   value_boolean = ! TEST_BOOL;
   thrift_compact_protocol_read_field_end (protocol, NULL);
-  assert (thrift_compact_protocol_read_bool (protocol,
+  g_assert (thrift_compact_protocol_read_bool (protocol,
                                             &value_boolean, NULL) > 0);
-  assert (value_boolean == TEST_BOOL);
+  g_assert (value_boolean == TEST_BOOL);
   value_boolean = ! TEST_BOOL;
 
   /* no deltas */
   /* non-bool field -> bool field -> non-bool field */
-  assert (thrift_compact_protocol_read_field_begin (protocol, &field_name,
+  g_assert (thrift_compact_protocol_read_field_begin (protocol, &field_name,
                                                     &field_type,
                                            &field_id, NULL) > 1);
   thrift_compact_protocol_read_field_end (protocol, NULL);
-  assert (thrift_compact_protocol_read_field_begin (protocol, &field_name,
+  g_assert (thrift_compact_protocol_read_field_begin (protocol, &field_name,
                                                     &field_type,
                                            &field_id, NULL) > 1);
-  assert (field_type == T_BOOL);
-  assert (thrift_compact_protocol_read_bool (protocol,
+  g_assert (field_type == T_BOOL);
+  g_assert (thrift_compact_protocol_read_bool (protocol,
                                             &value_boolean, NULL) == 0);
-  assert (value_boolean == TEST_BOOL);
+  g_assert (value_boolean == TEST_BOOL);
   value_boolean = ! TEST_BOOL;
   thrift_compact_protocol_read_field_end (protocol, NULL);
-  assert (thrift_compact_protocol_read_field_begin (protocol, &field_name,
+  g_assert (thrift_compact_protocol_read_field_begin (protocol, &field_name,
                                                     &field_type,
                                            &field_id, NULL) > 1);
   thrift_compact_protocol_read_field_end (protocol, NULL);
   /* bool -> bool field -> bool */
-  assert (thrift_compact_protocol_read_bool (protocol,
+  g_assert (thrift_compact_protocol_read_bool (protocol,
                                             &value_boolean, NULL) > 0);
-  assert (value_boolean == TEST_BOOL);
+  g_assert (value_boolean == TEST_BOOL);
   value_boolean = ! TEST_BOOL;
-  assert (thrift_compact_protocol_read_field_begin (protocol, &field_name,
+  g_assert (thrift_compact_protocol_read_field_begin (protocol, &field_name,
                                                     &field_type,
                                            &field_id, NULL) > 1);
-  assert (field_type == T_BOOL);
-  assert (thrift_compact_protocol_read_bool (protocol,
+  g_assert (field_type == T_BOOL);
+  g_assert (thrift_compact_protocol_read_bool (protocol,
                                             &value_boolean, NULL) == 0);
-  assert (value_boolean == TEST_BOOL);
+  g_assert (value_boolean == TEST_BOOL);
   value_boolean = ! TEST_BOOL;
   thrift_compact_protocol_read_field_end (protocol, NULL);
-  assert (thrift_compact_protocol_read_bool (protocol,
+  g_assert (thrift_compact_protocol_read_bool (protocol,
                                             &value_boolean, NULL) > 0);
-  assert (value_boolean == TEST_BOOL);
+  g_assert (value_boolean == TEST_BOOL);
   value_boolean = ! TEST_BOOL;
 
   /* test first read error on a field */
   transport_read_error = 1;
-  assert (thrift_compact_protocol_read_field_begin (protocol,
+  g_assert (thrift_compact_protocol_read_field_begin (protocol,
                                                    &field_name, &field_type,
                                                    &field_id, NULL) == -1);
   transport_read_error = 0;
@@ -1021,7 +1020,7 @@ thrift_server_complex_types (const int port)
   /* test 2nd read failure on a field */
   transport_read_count = 0;
   transport_read_error_at = 1;
-  assert (thrift_compact_protocol_read_field_begin (protocol,
+  g_assert (thrift_compact_protocol_read_field_begin (protocol,
                                                    &field_name, &field_type,
                                                    &field_id, NULL) == -1);
   transport_read_error_at = -1;
@@ -1039,7 +1038,7 @@ thrift_server_complex_types (const int port)
   /* test 1st read failure on a map */
   transport_read_count = 0;
   transport_read_error_at = 0;
-  assert (thrift_compact_protocol_read_map_begin (protocol,
+  g_assert (thrift_compact_protocol_read_map_begin (protocol,
                                                  &key_type, &value_type,
                                                  &size, NULL) == -1);
   transport_read_error_at = -1;
@@ -1047,7 +1046,7 @@ thrift_server_complex_types (const int port)
   /* test 2nd read failure on a map */
   transport_read_count = 0;
   transport_read_error_at = 1;
-  assert (thrift_compact_protocol_read_map_begin (protocol,
+  g_assert (thrift_compact_protocol_read_map_begin (protocol,
                                                  &key_type, &value_type,
                                                  &size, NULL) == -1);
   transport_read_error_at = -1;
@@ -1058,7 +1057,7 @@ thrift_server_complex_types (const int port)
   thrift_compact_protocol_read_byte (protocol, &value, NULL);
 
   /* test negative map size */
-  assert (thrift_compact_protocol_read_map_begin (protocol,
+  g_assert (thrift_compact_protocol_read_map_begin (protocol,
                                                  &key_type, &value_type,
                                                  &size, NULL) == -1);
 
@@ -1069,13 +1068,13 @@ thrift_server_complex_types (const int port)
 
   /* test small list 1st read failure */
   transport_read_error = 1;
-  assert (thrift_compact_protocol_read_list_begin (protocol, &element_type,
+  g_assert (thrift_compact_protocol_read_list_begin (protocol, &element_type,
                                                   &size, NULL) == -1);
   transport_read_error = 0;
 
   /* test big list 1st read failure */
   transport_read_error = 1;
-  assert (thrift_compact_protocol_read_list_begin (protocol, &element_type,
+  g_assert (thrift_compact_protocol_read_list_begin (protocol, &element_type,
                                                   &size, NULL) == -1);
   transport_read_error = 0;
 
@@ -1103,23 +1102,23 @@ thrift_server_complex_types (const int port)
 
   /* broken read */
   transport_read_error = 1;
-  assert (thrift_compact_protocol_read_message_begin (protocol, &message_name,
+  g_assert (thrift_compact_protocol_read_message_begin (protocol, &message_name,
                                                      &message_type, &seqid,
                                                      NULL) == -1);
   transport_read_error = 0;
 
   /* invalid protocol */
-  assert (thrift_compact_protocol_read_message_begin (protocol, &message_name,
+  g_assert (thrift_compact_protocol_read_message_begin (protocol, &message_name,
                                                      &message_type, &seqid,
                                                      NULL) == -1);
 
   /* invalid version */
-  assert (thrift_compact_protocol_read_message_begin (protocol, &message_name,
+  g_assert (thrift_compact_protocol_read_message_begin (protocol, &message_name,
                                                      &message_type, &seqid,
                                                      NULL) == -1);
 
   /* read a valid message */
-  assert (thrift_compact_protocol_read_message_begin (protocol, &message_name,
+  g_assert (thrift_compact_protocol_read_message_begin (protocol, &message_name,
                                                      &message_type, &seqid,
                                                      NULL) > 0);
   g_free (message_name);
@@ -1127,7 +1126,7 @@ thrift_server_complex_types (const int port)
   /* broken 2nd read on a message */
   transport_read_count = 0;
   transport_read_error_at = 1;
-  assert (thrift_compact_protocol_read_message_begin (protocol, &message_name,
+  g_assert (thrift_compact_protocol_read_message_begin (protocol, &message_name,
                                                      &message_type, &seqid,
                                                      NULL) == -1);
   transport_read_error_at = -1;
@@ -1135,7 +1134,7 @@ thrift_server_complex_types (const int port)
   /* broken 3rd read on a message */
   transport_read_count = 0;
   transport_read_error_at = 2;
-  assert (thrift_compact_protocol_read_message_begin (protocol, &message_name,
+  g_assert (thrift_compact_protocol_read_message_begin (protocol, &message_name,
                                                      &message_type, &seqid,
                                                      NULL) == -1);
   transport_read_error_at = -1;
@@ -1143,18 +1142,18 @@ thrift_server_complex_types (const int port)
   /* broken 4th read on a message */
   transport_read_count = 0;
   transport_read_error_at = 3;
-  assert (thrift_compact_protocol_read_message_begin (protocol, &message_name,
+  g_assert (thrift_compact_protocol_read_message_begin (protocol, &message_name,
                                                      &message_type, &seqid,
                                                      NULL) == -1);
   transport_read_error_at = -1;
 
   /* read a valid message */
-  assert (thrift_compact_protocol_read_message_begin (protocol, &message_name,
+  g_assert (thrift_compact_protocol_read_message_begin (protocol, &message_name,
                                                      &message_type, &seqid,
                                                      NULL) > 0);
   g_free (message_name);
 
-  assert (thrift_compact_protocol_read_message_end (protocol, NULL) == 0);
+  g_assert (thrift_compact_protocol_read_message_end (protocol, NULL) == 0);
 
   /* handle 2nd write failure on a message */
   thrift_compact_protocol_read_byte (protocol, &protocol_id, NULL);
@@ -1205,62 +1204,62 @@ thrift_server_many_frames (const int port)
   client = g_object_new (THRIFT_TYPE_FRAMED_TRANSPORT, "transport",
                          thrift_server_transport_accept (transport, NULL),
                          "r_buf_size", 1, NULL);
-  assert (client != NULL);
+  g_assert (client != NULL);
 
   tcp = g_object_new (THRIFT_TYPE_COMPACT_PROTOCOL, "transport",
                       client, NULL);
   protocol = THRIFT_PROTOCOL (tcp);
 
-  assert (thrift_compact_protocol_read_bool (protocol,
+  g_assert (thrift_compact_protocol_read_bool (protocol,
                                             &value_boolean, NULL) > 0);
-  assert (thrift_compact_protocol_read_byte (protocol, &value_byte, NULL) > 0);
-  assert (thrift_compact_protocol_read_i16 (protocol, &value_16, NULL) > 0);
-  assert (thrift_compact_protocol_read_i32 (protocol, &value_32, NULL) > 0);
-  assert (thrift_compact_protocol_read_i64 (protocol, &value_64, NULL) > 0);
-  assert (thrift_compact_protocol_read_i16 (protocol, &value_n16, NULL) > 0);
-  assert (thrift_compact_protocol_read_i32 (protocol, &value_n32, NULL) > 0);
-  assert (thrift_compact_protocol_read_i64 (protocol, &value_n64, NULL) > 0);
-  assert (thrift_compact_protocol_read_byte (protocol, &zigzag_p16, NULL) > 0);
-  assert (thrift_compact_protocol_read_byte (protocol, &zigzag_p32, NULL) > 0);
-  assert (thrift_compact_protocol_read_byte (protocol, &zigzag_p64, NULL) > 0);
-  assert (thrift_compact_protocol_read_byte (protocol, &zigzag_n16, NULL) > 0);
-  assert (thrift_compact_protocol_read_byte (protocol, &zigzag_n32, NULL) > 0);
-  assert (thrift_compact_protocol_read_byte (protocol, &zigzag_n64, NULL) > 0);
-  assert (thrift_compact_protocol_read_double (protocol,
+  g_assert (thrift_compact_protocol_read_byte (protocol, &value_byte, NULL) > 0);
+  g_assert (thrift_compact_protocol_read_i16 (protocol, &value_16, NULL) > 0);
+  g_assert (thrift_compact_protocol_read_i32 (protocol, &value_32, NULL) > 0);
+  g_assert (thrift_compact_protocol_read_i64 (protocol, &value_64, NULL) > 0);
+  g_assert (thrift_compact_protocol_read_i16 (protocol, &value_n16, NULL) > 0);
+  g_assert (thrift_compact_protocol_read_i32 (protocol, &value_n32, NULL) > 0);
+  g_assert (thrift_compact_protocol_read_i64 (protocol, &value_n64, NULL) > 0);
+  g_assert (thrift_compact_protocol_read_byte (protocol, &zigzag_p16, NULL) > 0);
+  g_assert (thrift_compact_protocol_read_byte (protocol, &zigzag_p32, NULL) > 0);
+  g_assert (thrift_compact_protocol_read_byte (protocol, &zigzag_p64, NULL) > 0);
+  g_assert (thrift_compact_protocol_read_byte (protocol, &zigzag_n16, NULL) > 0);
+  g_assert (thrift_compact_protocol_read_byte (protocol, &zigzag_n32, NULL) > 0);
+  g_assert (thrift_compact_protocol_read_byte (protocol, &zigzag_n64, NULL) > 0);
+  g_assert (thrift_compact_protocol_read_double (protocol,
                                               &value_double, NULL) > 0);
-  assert (thrift_compact_protocol_read_string (protocol, &string, NULL) > 0);
-  assert (thrift_compact_protocol_read_string (protocol, &empty_string,
+  g_assert (thrift_compact_protocol_read_string (protocol, &string, NULL) > 0);
+  g_assert (thrift_compact_protocol_read_string (protocol, &empty_string,
                                                NULL) > 0);
-  assert (thrift_compact_protocol_read_binary (protocol, &binary,
+  g_assert (thrift_compact_protocol_read_binary (protocol, &binary,
                                               &len, NULL) > 0);
 
-  assert (value_boolean == TEST_BOOL);
-  assert (value_byte == TEST_BYTE);
-  assert (value_16 == TEST_I16);
-  assert (value_32 == TEST_I32);
-  assert (value_64 == TEST_I64);
-  assert (value_n16 == TEST_NI16);
-  assert (value_n32 == TEST_NI32);
-  assert (value_n64 == TEST_NI64);
-  assert (zigzag_p16 == 4);
-  assert (zigzag_p32 == 4);
-  assert (zigzag_p64 == 4);
-  assert (zigzag_n16 == 3);
-  assert (zigzag_n32 == 3);
-  assert (zigzag_n64 == 3);
-  assert (value_double == TEST_DOUBLE);
-  assert (strcmp (TEST_STRING, string) == 0);
-  assert (strcmp ("", empty_string) == 0);
-  assert (memcmp (comparator, binary, len) == 0);
+  g_assert (value_boolean == TEST_BOOL);
+  g_assert (value_byte == TEST_BYTE);
+  g_assert (value_16 == TEST_I16);
+  g_assert (value_32 == TEST_I32);
+  g_assert (value_64 == TEST_I64);
+  g_assert (value_n16 == TEST_NI16);
+  g_assert (value_n32 == TEST_NI32);
+  g_assert (value_n64 == TEST_NI64);
+  g_assert (zigzag_p16 == 4);
+  g_assert (zigzag_p32 == 4);
+  g_assert (zigzag_p64 == 4);
+  g_assert (zigzag_n16 == 3);
+  g_assert (zigzag_n32 == 3);
+  g_assert (zigzag_n64 == 3);
+  g_assert (value_double == TEST_DOUBLE);
+  g_assert (strcmp (TEST_STRING, string) == 0);
+  g_assert (strcmp ("", empty_string) == 0);
+  g_assert (memcmp (comparator, binary, len) == 0);
 
   g_free (string);
   g_free (empty_string);
   g_free (binary);
 
-  assert (thrift_compact_protocol_read_binary (protocol, &binary,
+  g_assert (thrift_compact_protocol_read_binary (protocol, &binary,
                                                &len, NULL) > 0);
-  assert (binary == NULL);
-  assert (len == 0);
+  g_assert (binary == NULL);
+  g_assert (len == 0);
   g_free (binary);
 
   thrift_transport_read_end (client, NULL);

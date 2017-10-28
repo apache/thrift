@@ -17,7 +17,6 @@
  * under the License.
  */
 
-#include <assert.h>
 #include <netdb.h>
 #include <signal.h>
 #include <sys/wait.h>
@@ -43,7 +42,7 @@ test_create_and_destroy(void)
 
   GObject *object = NULL;
   object = g_object_new (THRIFT_TYPE_BUFFERED_TRANSPORT, NULL);
-  assert (object != NULL);
+  g_assert (object != NULL);
   g_object_get (G_OBJECT (object), "transport", &transport,
                 "r_buf_size", &r_buf_size,
                 "w_buf_size", &w_buf_size, NULL);
@@ -66,9 +65,9 @@ test_open_and_close(void)
                             "transport", THRIFT_TRANSPORT (tsocket), NULL);
 
   /* this shouldn't work */
-  assert (thrift_buffered_transport_open (transport, NULL) == FALSE);
-  assert (thrift_buffered_transport_is_open (transport) == TRUE);
-  assert (thrift_buffered_transport_close (transport, NULL) == TRUE);
+  g_assert (thrift_buffered_transport_open (transport, NULL) == FALSE);
+  g_assert (thrift_buffered_transport_is_open (transport) == TRUE);
+  g_assert (thrift_buffered_transport_close (transport, NULL) == TRUE);
   g_object_unref (transport);
   g_object_unref (tsocket);
 
@@ -80,7 +79,7 @@ test_open_and_close(void)
   transport = g_object_new (THRIFT_TYPE_BUFFERED_TRANSPORT,
                             "transport", THRIFT_TRANSPORT (tsocket), NULL);
 
-  assert (thrift_buffered_transport_open (transport, &err) == FALSE);
+  g_assert (thrift_buffered_transport_open (transport, &err) == FALSE);
   g_object_unref (transport);
   g_object_unref (tsocket);
   g_error_free (err);
@@ -98,7 +97,7 @@ test_read_and_write(void)
   guchar buf[10] = TEST_DATA; /* a buffer */
 
   pid = fork ();
-  assert ( pid >= 0 );
+  g_assert ( pid >= 0 );
 
   if ( pid == 0 )
   {
@@ -115,8 +114,8 @@ test_read_and_write(void)
                               "transport", THRIFT_TRANSPORT (tsocket),
                               "w_buf_size", 4, NULL);
 
-    assert (thrift_buffered_transport_open (transport, NULL) == TRUE);
-    assert (thrift_buffered_transport_is_open (transport));
+    g_assert (thrift_buffered_transport_open (transport, NULL) == TRUE);
+    g_assert (thrift_buffered_transport_is_open (transport));
 
     /* write 10 bytes */
     thrift_buffered_transport_write (transport, buf, 10, NULL);
@@ -149,8 +148,8 @@ test_read_and_write(void)
     g_object_unref (transport);
     g_object_unref (tsocket);
 
-    assert ( wait (&status) == pid );
-    assert ( status == 0 );
+    g_assert ( wait (&status) == pid );
+    g_assert ( status == 0 );
   }
 }
 
@@ -173,12 +172,12 @@ thrift_server (const int port)
   client = g_object_new (THRIFT_TYPE_BUFFERED_TRANSPORT, "transport",
                          thrift_server_transport_accept (transport, NULL),
                          "r_buf_size", 5, NULL);
-  assert (client != NULL);
+  g_assert (client != NULL);
 
   /* read 10 bytes */
   bytes = thrift_buffered_transport_read (client, buf, 10, NULL);
-  assert (bytes == 10); /* make sure we've read 10 bytes */
-  assert ( memcmp (buf, match, 10) == 0 ); /* make sure what we got matches */
+  g_assert (bytes == 10); /* make sure we've read 10 bytes */
+  g_assert ( memcmp (buf, match, 10) == 0 ); /* make sure what we got matches */
 
   /* read 1 byte */
   bytes = thrift_buffered_transport_read (client, buf, 1, NULL);
@@ -207,7 +206,7 @@ test_write_fail(void)
   signal(SIGPIPE, SIG_IGN);
 
   pid = fork ();
-  assert ( pid >= 0 );
+  g_assert ( pid >= 0 );
 
   if ( pid == 0 )
   {
@@ -225,7 +224,7 @@ test_write_fail(void)
     client = g_object_new (THRIFT_TYPE_BUFFERED_TRANSPORT, "transport",
         thrift_server_transport_accept (transport, NULL),
         "r_buf_size", 5, NULL);
-    assert (client != NULL);
+    g_assert (client != NULL);
 
     /* just close socket */
     thrift_buffered_transport_close (client, NULL);
@@ -243,28 +242,28 @@ test_write_fail(void)
                               "w_buf_size", 4, NULL);
 
 
-    assert (thrift_buffered_transport_open (transport, NULL) == TRUE);
-    assert (thrift_buffered_transport_is_open (transport));
+    g_assert (thrift_buffered_transport_open (transport, NULL) == TRUE);
+    g_assert (thrift_buffered_transport_is_open (transport));
 
     /* recognize disconnection */
     sleep(1);
-    assert (thrift_buffered_transport_write (transport, buf, 10, NULL) == TRUE);
-    assert (thrift_buffered_transport_write (transport, buf, 10, NULL) == FALSE);
+    g_assert (thrift_buffered_transport_write (transport, buf, 10, NULL) == TRUE);
+    g_assert (thrift_buffered_transport_write (transport, buf, 10, NULL) == FALSE);
 
     /* write and overflow buffer */
-    assert (thrift_buffered_transport_write (transport, buf, 10, NULL) == FALSE);
+    g_assert (thrift_buffered_transport_write (transport, buf, 10, NULL) == FALSE);
 
     /* write 1 and flush */
-    assert (thrift_buffered_transport_write (transport, buf, 1, NULL) == TRUE);
-    assert (thrift_buffered_transport_flush (transport, NULL) == FALSE);
+    g_assert (thrift_buffered_transport_write (transport, buf, 1, NULL) == TRUE);
+    g_assert (thrift_buffered_transport_flush (transport, NULL) == FALSE);
 
     thrift_buffered_transport_close (transport, NULL);
 
     g_object_unref (transport);
     g_object_unref (tsocket);
 
-    assert ( wait (&status) == pid );
-    assert ( status == 0 );
+    g_assert ( wait (&status) == pid );
+    g_assert ( status == 0 );
   }
 }
 

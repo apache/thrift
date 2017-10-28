@@ -34,8 +34,12 @@
 class t_function : public t_doc {
 public:
   t_function(t_type* returntype, std::string name, t_struct* arglist, bool oneway = false)
-    : returntype_(returntype), name_(name), arglist_(arglist), oneway_(oneway) {
-    xceptions_ = new t_struct(NULL);
+    : returntype_(returntype),
+      name_(name),
+      arglist_(arglist),
+      xceptions_(new t_struct(NULL)),
+      own_xceptions_(true),
+      oneway_(oneway) {
     if (oneway_ && (!returntype_->is_void())) {
       pwarning(1, "Oneway methods should return void.\n");
     }
@@ -50,6 +54,7 @@ public:
       name_(name),
       arglist_(arglist),
       xceptions_(xceptions),
+      own_xceptions_(false),
       oneway_(oneway) {
     if (oneway_ && !xceptions_->get_members().empty()) {
       throw std::string("Oneway methods can't throw exceptions.");
@@ -59,7 +64,10 @@ public:
     }
   }
 
-  ~t_function() {}
+  ~t_function() {
+    if (own_xceptions_)
+      delete xceptions_;
+  }
 
   t_type* get_returntype() const { return returntype_; }
 
@@ -78,6 +86,7 @@ private:
   std::string name_;
   t_struct* arglist_;
   t_struct* xceptions_;
+  bool own_xceptions_;
   bool oneway_;
 };
 

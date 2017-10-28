@@ -17,7 +17,6 @@
  * under the License.
  */
 
-#include <assert.h>
 #include <netdb.h>
 #include <sys/wait.h>
 
@@ -81,7 +80,7 @@ test_create_and_destroy(void)
 
   GObject *object = NULL;
   object = g_object_new (THRIFT_TYPE_SOCKET, NULL);
-  assert (object != NULL);
+  g_assert (object != NULL);
   g_object_get (G_OBJECT(object), "hostname", &hostname, "port", &port, NULL);
   g_free (hostname);
 
@@ -100,9 +99,9 @@ test_open_and_close(void)
                           "port", 51188, NULL); 
   transport = THRIFT_TRANSPORT (tsocket);
   thrift_socket_open (transport, NULL);
-  assert (thrift_socket_is_open (transport) == TRUE);
+  g_assert (thrift_socket_is_open (transport) == TRUE);
   thrift_socket_close (transport, NULL);
-  assert (thrift_socket_is_open (transport) == FALSE);
+  g_assert (thrift_socket_is_open (transport) == FALSE);
 
   /* test close failure */
   tsocket->sd = -1;
@@ -113,7 +112,7 @@ test_open_and_close(void)
   tsocket = g_object_new (THRIFT_TYPE_SOCKET, "hostname", "localhost.broken",
                           NULL);
   transport = THRIFT_TRANSPORT (tsocket);
-  assert (thrift_socket_open (transport, &err) == FALSE);
+  g_assert (thrift_socket_open (transport, &err) == FALSE);
   g_object_unref (tsocket);
   g_error_free (err);
   err = NULL;
@@ -122,7 +121,7 @@ test_open_and_close(void)
   tsocket = g_object_new (THRIFT_TYPE_SOCKET, "hostname", "localhost", NULL);
   transport = THRIFT_TRANSPORT (tsocket);
   socket_error = 1;
-  assert (thrift_socket_open (transport, &err) == FALSE);
+  g_assert (thrift_socket_open (transport, &err) == FALSE);
   socket_error = 0;
   g_object_unref (tsocket);
   g_error_free (err);
@@ -139,7 +138,7 @@ test_read_and_write(void)
   guchar buf[10] = TEST_DATA; /* a buffer */
 
   pid = fork ();
-  assert ( pid >= 0 );
+  g_assert ( pid >= 0 );
 
   if ( pid == 0 )
   {
@@ -153,8 +152,8 @@ test_read_and_write(void)
     tsocket = g_object_new (THRIFT_TYPE_SOCKET, "hostname", "localhost",
                             "port", port, NULL);
     transport = THRIFT_TRANSPORT (tsocket);
-    assert (thrift_socket_open (transport, NULL) == TRUE);
-    assert (thrift_socket_is_open (transport));
+    g_assert (thrift_socket_open (transport, NULL) == TRUE);
+    g_assert (thrift_socket_is_open (transport));
     thrift_socket_write (transport, buf, 10, NULL);
 
     /* write fail */
@@ -167,8 +166,8 @@ test_read_and_write(void)
     thrift_socket_close (transport, NULL);
     g_object_unref (tsocket);
 
-    assert ( wait (&status) == pid );
-    assert ( status == 0 );
+    g_assert ( wait (&status) == pid );
+    g_assert ( status == 0 );
   }
 }
 
@@ -286,12 +285,12 @@ thrift_socket_server (const int port)
   transport = THRIFT_SERVER_TRANSPORT (tsocket);
   thrift_server_transport_listen (transport, NULL);
   client = thrift_server_transport_accept (transport, NULL);
-  assert (client != NULL);
+  g_assert (client != NULL);
 
   /* read 10 bytes */
   bytes = thrift_socket_read (client, buf, 10, NULL);
-  assert (bytes == 10); /* make sure we've read 10 bytes */
-  assert ( memcmp(buf, match, 10) == 0 ); /* make sure what we got matches */
+  g_assert (bytes == 10); /* make sure we've read 10 bytes */
+  g_assert ( memcmp(buf, match, 10) == 0 ); /* make sure what we got matches */
 
   /* failed read */
   recv_error = 1;

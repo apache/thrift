@@ -17,7 +17,6 @@
  * under the License.
  */
 
-#include <assert.h>
 #include <glib-object.h>
 
 #include "../src/thrift/c_glib/thrift_struct.c"
@@ -89,7 +88,7 @@ test_initialize_object (void)
   ThriftTestStruct *t = NULL;
 
   t = g_object_new (THRIFT_TYPE_TEST_STRUCT, NULL);
-  assert ( THRIFT_IS_STRUCT (t));
+  g_assert ( THRIFT_IS_STRUCT (t));
   thrift_struct_read (THRIFT_STRUCT (t), NULL, NULL);
   thrift_struct_write (THRIFT_STRUCT (t), NULL, NULL);
   thrift_test_struct_read (THRIFT_STRUCT (t), NULL, NULL);
