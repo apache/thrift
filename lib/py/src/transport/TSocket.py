@@ -22,6 +22,14 @@ import logging
 import os
 import socket
 import sys
+try:
+    from select import poll, POLLIN
+except ImportError:  # `poll` doesn't exist on OSX and other platforms
+    poll = False
+    try:
+        from select import select
+    except ImportError:  # `select` doesn't exist on AppEngine.
+        select = False
 
 from .TTransport import TTransportBase, TTransportException, TServerTransportBase
 
@@ -34,12 +42,14 @@ class TSocketBase(TTransportBase):
             return [(socket.AF_UNIX, socket.SOCK_STREAM, None, None,
                      self._unix_socket)]
         else:
-            return socket.getaddrinfo(self.host,
-                                      self.port,
-                                      self._socket_family,
-                                      socket.SOCK_STREAM,
-                                      0,
-                                      socket.AI_PASSIVE | socket.AI_ADDRCONFIG)
+            return socket.getaddrinfo(
+                self.host,
+                self.port,
+                self._socket_family,
+                socket.SOCK_STREAM,
+                0,
+                socket.AI_PASSIVE | socket.AI_ADDRCONFIG
+            )
 
     def close(self):
         if self.handle:
@@ -70,7 +80,67 @@ class TSocket(TSocketBase):
         self.handle = h
 
     def isOpen(self):
+        """
+        Returns True if the connection is open (not been closed explicitly).
+
+        Note: If you want to know if the connection could be used to
+            communicate with the other side, do NOT use this method, call
+            `isActive()` instead.
+        """
         return self.handle is not None
+
+    def isActive(self):
+        """
+        Returns False if the connection is dropped and should be closed.
+
+        :param sock:
+            :class:`socket.socket` object.
+
+        Note: If the connection is still open but not "active" any more, you
+            must close before reopen it. Otherwise you'll expect an exception.
+            For platforms like AppEngine, this will always return `True` to
+            let the platform handle connection recycling transparently for us.
+        """
+        if not self.isOpen():  # Connection already closed.
+            return False
+
+        readable = False
+        if not poll:
+            if not select:  # Platform-specific: AppEngine
+                return True
+
+            try:
+                readable = bool(select([self.handle], [], [], 0.0)[0])
+            except socket.error:
+                return False
+
+        else:
+            # This version is better on platforms that support it.
+            p = poll()
+            p.register(self.handle, POLLIN)
+            for (fno, ev) in p.poll(0.0):
+                if fno == self.handle.fileno():
+                    # Either data is buffered, or the connection is dropped.
+                    readable = True
+                    break
+
+        if readable:
+            try:
+                buff = self.handle.recv(1, socket.MSG_PEEK)
+            except socket.error as e:
+                if (e.args[0] == errno.ECONNRESET and
+                        (sys.platform == 'darwin' or sys.platform.startswith('freebsd'))):
+                    # freebsd and Mach don't follow POSIX semantic of recv
+                    # and fail with ECONNRESET if peer performed shutdown.
+                    # See corresponding comment and code in TSocket::read()
+                    # in lib/cpp/src/transport/TSocket.cpp.
+                    self.close()
+                    # Trigger the check to raise the END_OF_FILE exception below.
+                    buff = ''
+                else:
+                    raise
+            return len(buff) > 0
+        return True
 
     def setTimeout(self, ms):
         if ms is None:
@@ -89,7 +159,7 @@ class TSocket(TSocketBase):
         return self._unix_socket if self._unix_socket else '%s:%d' % (self.host, self.port)
 
     def open(self):
-        if self.handle:
+        if self.isOpen():
             raise TTransportException(TTransportException.ALREADY_OPEN)
         try:
             addrs = self._resolveAddr()

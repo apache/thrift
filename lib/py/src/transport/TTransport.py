@@ -44,6 +44,9 @@ class TTransportBase(object):
     def isOpen(self):
         pass
 
+    def isActive(self):
+        return self.isOpen()
+
     def open(self):
         pass
 
@@ -148,6 +151,9 @@ class TBufferedTransport(TTransportBase, CReadableTransport):
 
     def isOpen(self):
         return self.__trans.isOpen()
+
+    def isActive(self):
+        return self.__trans.isActive()
 
     def open(self):
         return self.__trans.open()
@@ -266,6 +272,9 @@ class TFramedTransport(TTransportBase, CReadableTransport):
 
     def isOpen(self):
         return self.__trans.isOpen()
+
+    def isActive(self):
+        return self.__trans.isActive()
 
     def open(self):
         return self.__trans.open()
