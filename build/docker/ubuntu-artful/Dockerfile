@@ -46,8 +46,7 @@ RUN apt-get update && \
 #     echo "deb [arch=amd64] https://packages.microsoft.com/repos/microsoft-ubuntu-xenial-prod xenial main" > /etc/apt/sources.list.d/dotnetdev.list
 
 # node.js (this step runs apt-get update internally) - if we ever want a later version
-# note: node 8.5 introduced some issues with directory handling / jsdoc / something... using 7.x for now
-# RUN curl -sL https://deb.nodesource.com/setup_7.x | bash
+RUN curl -sL https://deb.nodesource.com/setup_8.x | bash -
 
 ### install general dependencies
 RUN apt-get install -y --no-install-recommends \
@@ -170,8 +169,7 @@ RUN apt-get install -y --no-install-recommends \
 
 RUN apt-get install -y --no-install-recommends \
 `# Node.js dependencies` \
-      nodejs \
-      npm
+      nodejs
 
 RUN apt-get install -y --no-install-recommends \
 `# OCaml dependencies` \

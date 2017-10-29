@@ -282,7 +282,7 @@ sub testSet() {
         print(", ");
     }
     print("$key");
-    push($result, $key);
+    push(@arr, $key);
   }
   print("})\n");
   return $result;
