@@ -105,7 +105,7 @@ Last updated: October 1, 2017
 | java      | 1.7.0_151     | 1.8.0_131     | 1.8.0_144     |       |
 | js        |               |               |               | Unsure how to look for version info? |
 | lua       | 5.1.5         | 5.2.4         | 5.3.3         |       |
-| nodejs    |               | 4.2.6         | 6.11.2        | trusty has node.js 0.10.0 which is too old |
+| nodejs    |               | 4.2.6         | 8.8.1         | trusty has node.js 0.10.0 which is too old |
 | ocaml     |               | 4.02.3        | 4.04.0        |       |
 | perl      | 5.18.2        | 5.22.1        | 5.26.0        |       |
 | php       | 5.5.9         | 7.0.22        | 7.1.8         |       |
