@@ -56,6 +56,7 @@ public:
                  const std::string& option_string)
     : t_oop_generator(program) {
     (void)option_string;
+    temporary_var = 0;
     std::map<std::string, std::string>::const_iterator iter;
 
     /* no options yet */

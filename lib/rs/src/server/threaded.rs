@@ -155,7 +155,7 @@ impl<PRC, RTF, IPF, WTF, OPF> TServer<PRC, RTF, IPF, WTF, OPF>
             w_trans_factory: write_transport_factory,
             o_proto_factory: output_protocol_factory,
             processor: Arc::new(processor),
-            worker_pool: ThreadPool::new_with_name(
+            worker_pool: ThreadPool::with_name(
                 "Thrift service processor".to_owned(),
                 num_workers,
             ),
