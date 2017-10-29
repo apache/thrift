@@ -121,6 +121,11 @@ class TSimpleServer extends TServer  {
                 logDelegate(e); // Unexpected
             }
 
+            if(client != null && !runOnce)
+            {
+                client.close();
+            }
+
             // Fire deleteContext server event after client disconnects
             if (serverEventHandler != null) {
                 serverEventHandler.deleteContext(connectionContext, inputProtocol, outputProtocol);
