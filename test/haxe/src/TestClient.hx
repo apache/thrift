@@ -444,6 +444,10 @@ class TestClient {
             rslt.Expect( e.message == "Xception", 'testException("Xception")  -  e.message == "Xception"');
             rslt.Expect( e.errorCode == 1001, 'testException("Xception")  -  e.errorCode == 1001');
         }
+        catch (e : TException)
+        {
+            rslt.Expect( false, 'testException("Xception")  -  ${e} : ${e.errorMsg}');
+        }
         catch (e : Dynamic)
         {
             rslt.Expect( false, 'testException("Xception")  -  $e');
@@ -457,7 +461,7 @@ class TestClient {
         }
         catch (e : TException)
         {
-            rslt.Expect( true, 'testException("TException")  -  $e');
+            rslt.Expect( true, 'testException("TException")  -  $e : ${e.errorMsg}');
         }
         catch (e : Dynamic)
         {
@@ -474,6 +478,10 @@ class TestClient {
         try {
             client.testException("bla");
             rslt.Expect( true, 'testException("bla") should not throw');
+        }
+        catch (e : TException)
+        {
+            rslt.Expect( false, 'testException("bla")  -  ${e} : ${e.errorMsg}');
         }
         catch (e : Dynamic)
         {

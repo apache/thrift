@@ -121,7 +121,7 @@ class TSimpleServer extends TServer  {
                 logDelegate(e); // Unexpected
             }
 
-            if(client != null)
+            if(client != null && !runOnce)
             {
                 client.close();
             }
