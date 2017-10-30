@@ -75,6 +75,11 @@ public class TThreadPoolServer extends TServer {
       return this;
     }
 
+    public Args stopTimeoutUnit(TimeUnit tu) {
+      stopTimeoutUnit = tu;
+      return this;
+    }
+
     public Args requestTimeout(int n) {
       requestTimeout = n;
       return this;
