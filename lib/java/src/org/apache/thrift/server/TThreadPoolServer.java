@@ -141,7 +141,7 @@ public class TThreadPoolServer extends TServer {
     return new ThreadPoolExecutor(args.minWorkerThreads,
                                   args.maxWorkerThreads,
                                   args.stopTimeoutVal,
-                                  TimeUnit.SECONDS,
+                                  args.stopTimeoutUnit,
                                   executorQueue);
   }
 
@@ -274,7 +274,7 @@ public class TThreadPoolServer extends TServer {
         inputTransport = inputTransportFactory_.getTransport(client_);
         outputTransport = outputTransportFactory_.getTransport(client_);
         inputProtocol = inputProtocolFactory_.getProtocol(inputTransport);
-        outputProtocol = outputProtocolFactory_.getProtocol(outputTransport);	  
+        outputProtocol = outputProtocolFactory_.getProtocol(outputTransport);
 
         eventHandler = getEventHandler();
         if (eventHandler != null) {
@@ -293,7 +293,7 @@ public class TThreadPoolServer extends TServer {
             }
         }
       } catch (TSaslTransportException ttx) {
-        // Something thats not SASL was in the stream, continue silently 
+        // Something thats not SASL was in the stream, continue silently
       } catch (TTransportException ttx) {
         // Assume the client died and continue silently
       } catch (TException tx) {
