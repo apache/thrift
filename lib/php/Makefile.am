@@ -37,96 +37,96 @@ distclean-local:
 
 endif
 
-phpdir = $(PHP_PREFIX)/Thrift
+phpdir = $(PHP_PREFIX)/
 php_DATA = \
-  lib/Thrift/TMultiplexedProcessor.php
+  lib/TMultiplexedProcessor.php
 
 phpbasedir = $(phpdir)/Base
 phpbase_DATA = \
-  lib/Thrift/Base/TBase.php
+  lib/Base/TBase.php
 
 phpclassloaderdir = $(phpdir)/ClassLoader
 phpclassloader_DATA = \
-  lib/Thrift/ClassLoader/ThriftClassLoader.php
+  lib/ClassLoader/ThriftClassLoader.php
 
 phpexceptiondir = $(phpdir)/Exception
 phpexception_DATA = \
-  lib/Thrift/Exception/TApplicationException.php \
-  lib/Thrift/Exception/TException.php \
-  lib/Thrift/Exception/TProtocolException.php \
-  lib/Thrift/Exception/TTransportException.php
+  lib/Exception/TApplicationException.php \
+  lib/Exception/TException.php \
+  lib/Exception/TProtocolException.php \
+  lib/Exception/TTransportException.php
 
 phpfactorydir = $(phpdir)/Factory
 phpfactory_DATA = \
-  lib/Thrift/Factory/TBinaryProtocolFactory.php \
-  lib/Thrift/Factory/TCompactProtocolFactory.php \
-  lib/Thrift/Factory/TJSONProtocolFactory.php \
-  lib/Thrift/Factory/TProtocolFactory.php \
-  lib/Thrift/Factory/TStringFuncFactory.php \
-  lib/Thrift/Factory/TTransportFactory.php
+  lib/Factory/TBinaryProtocolFactory.php \
+  lib/Factory/TCompactProtocolFactory.php \
+  lib/Factory/TJSONProtocolFactory.php \
+  lib/Factory/TProtocolFactory.php \
+  lib/Factory/TStringFuncFactory.php \
+  lib/Factory/TTransportFactory.php
 
 phpprotocoldir = $(phpdir)/Protocol
 phpprotocol_DATA = \
-  lib/Thrift/Protocol/TBinaryProtocolAccelerated.php \
-  lib/Thrift/Protocol/TBinaryProtocol.php \
-  lib/Thrift/Protocol/TCompactProtocol.php \
-  lib/Thrift/Protocol/TJSONProtocol.php \
-  lib/Thrift/Protocol/TMultiplexedProtocol.php \
-  lib/Thrift/Protocol/TProtocol.php \
-  lib/Thrift/Protocol/TProtocolDecorator.php \
-  lib/Thrift/Protocol/TSimpleJSONProtocol.php
+  lib/Protocol/TBinaryProtocolAccelerated.php \
+  lib/Protocol/TBinaryProtocol.php \
+  lib/Protocol/TCompactProtocol.php \
+  lib/Protocol/TJSONProtocol.php \
+  lib/Protocol/TMultiplexedProtocol.php \
+  lib/Protocol/TProtocol.php \
+  lib/Protocol/TProtocolDecorator.php \
+  lib/Protocol/TSimpleJSONProtocol.php
 
 phpprotocoljsondir = $(phpprotocoldir)/JSON
 phpprotocoljson_DATA = \
-  lib/Thrift/Protocol/JSON/BaseContext.php \
-  lib/Thrift/Protocol/JSON/ListContext.php \
-  lib/Thrift/Protocol/JSON/LookaheadReader.php \
-  lib/Thrift/Protocol/JSON/PairContext.php
+  lib/Protocol/JSON/BaseContext.php \
+  lib/Protocol/JSON/ListContext.php \
+  lib/Protocol/JSON/LookaheadReader.php \
+  lib/Protocol/JSON/PairContext.php
 
 phpprotocolsimplejsondir = $(phpprotocoldir)/SimpleJSON
 phpprotocolsimplejson_DATA = \
-  lib/Thrift/Protocol/SimpleJSON/CollectionMapKeyException.php \
-  lib/Thrift/Protocol/SimpleJSON/Context.php \
-  lib/Thrift/Protocol/SimpleJSON/ListContext.php \
-  lib/Thrift/Protocol/SimpleJSON/MapContext.php \
-  lib/Thrift/Protocol/SimpleJSON/StructContext.php
+  lib/Protocol/SimpleJSON/CollectionMapKeyException.php \
+  lib/Protocol/SimpleJSON/Context.php \
+  lib/Protocol/SimpleJSON/ListContext.php \
+  lib/Protocol/SimpleJSON/MapContext.php \
+  lib/Protocol/SimpleJSON/StructContext.php
 
 phpserializerdir = $(phpdir)/Serializer
 phpserializer_DATA = \
-  lib/Thrift/Serializer/TBinarySerializer.php
+  lib/Serializer/TBinarySerializer.php
 
 phpserverdir = $(phpdir)/Server
 phpserver_DATA = \
-  lib/Thrift/Server/TServerSocket.php \
-  lib/Thrift/Server/TForkingServer.php \
-  lib/Thrift/Server/TServer.php \
-  lib/Thrift/Server/TServerTransport.php \
-  lib/Thrift/Server/TSimpleServer.php
+  lib/Server/TServerSocket.php \
+  lib/Server/TForkingServer.php \
+  lib/Server/TServer.php \
+  lib/Server/TServerTransport.php \
+  lib/Server/TSimpleServer.php
 
 phpstringfuncdir = $(phpdir)/StringFunc
 phpstringfunc_DATA = \
-  lib/Thrift/StringFunc/Mbstring.php \
-  lib/Thrift/StringFunc/Core.php \
-  lib/Thrift/StringFunc/TStringFunc.php
+  lib/StringFunc/Mbstring.php \
+  lib/StringFunc/Core.php \
+  lib/StringFunc/TStringFunc.php
 
 phptransportdir = $(phpdir)/Transport
 phptransport_DATA = \
-  lib/Thrift/Transport/TBufferedTransport.php \
-  lib/Thrift/Transport/TCurlClient.php \
-  lib/Thrift/Transport/TFramedTransport.php \
-  lib/Thrift/Transport/THttpClient.php \
-  lib/Thrift/Transport/TMemoryBuffer.php \
-  lib/Thrift/Transport/TNullTransport.php \
-  lib/Thrift/Transport/TPhpStream.php \
-  lib/Thrift/Transport/TSocket.php \
-  lib/Thrift/Transport/TSocketPool.php \
-  lib/Thrift/Transport/TTransport.php
+  lib/Transport/TBufferedTransport.php \
+  lib/Transport/TCurlClient.php \
+  lib/Transport/TFramedTransport.php \
+  lib/Transport/THttpClient.php \
+  lib/Transport/TMemoryBuffer.php \
+  lib/Transport/TNullTransport.php \
+  lib/Transport/TPhpStream.php \
+  lib/Transport/TSocket.php \
+  lib/Transport/TSocketPool.php \
+  lib/Transport/TTransport.php
 
 phptypedir = $(phpdir)/Type
 phptype_DATA = \
-  lib/Thrift/Type/TMessageType.php \
-  lib/Thrift/Type/TType.php \
-  lib/Thrift/Type/TConstant.php
+  lib/Type/TMessageType.php \
+  lib/Type/TType.php \
+  lib/Type/TConstant.php
 
 EXTRA_DIST = \
   lib \

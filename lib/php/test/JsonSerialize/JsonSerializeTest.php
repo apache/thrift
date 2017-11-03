@@ -23,10 +23,10 @@ namespace Test\Thrift\JsonSerialize;
 use stdClass;
 use Thrift\ClassLoader\ThriftClassLoader;
 
-require_once __DIR__.'/../../../../../../vendor/autoload.php';
+require_once __DIR__.'/../../../../vendor/autoload.php';
 
 $loader = new ThriftClassLoader();
-$loader->registerDefinition('ThriftTest', __DIR__ . '/../../../packages/phpjs');
+$loader->registerDefinition('ThriftTest', __DIR__ . '/../packages/phpjs');
 $loader->register();
 
 class JsonSerializeTest extends \PHPUnit_Framework_TestCase
