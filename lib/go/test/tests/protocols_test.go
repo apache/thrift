@@ -47,7 +47,7 @@ func RunSocketTestSuite(t *testing.T, protocolFactory thrift.TProtocolFactory,
 		t.Fatal(err)
 	}
 	var protocol thrift.TProtocol = protocolFactory.GetProtocol(transport)
-	thriftTestClient := thrifttest.NewThriftTestClientProtocol(transport, protocol, protocol)
+	thriftTestClient := thrifttest.NewThriftTestClient(thrift.NewTStandardClient(protocol, protocol))
 	err = transport.Open()
 	if err != nil {
 		t.Fatal("Unable to open client socket", err)

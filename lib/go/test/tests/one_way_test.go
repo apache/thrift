@@ -59,7 +59,7 @@ func TestInitOneway(t *testing.T) {
 func TestInitOnewayClient(t *testing.T) {
 	transport := thrift.NewTSocketFromAddrTimeout(addr, TIMEOUT)
 	protocol := thrift.NewTBinaryProtocolTransport(transport)
-	client = onewaytest.NewOneWayClientProtocol(transport, protocol, protocol)
+	client = onewaytest.NewOneWayClient(thrift.NewTStandardClient(protocol, protocol))
 	err := transport.Open()
 	if err != nil {
 		t.Fatal("Unable to open client socket", err)
