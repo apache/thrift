@@ -2130,7 +2130,7 @@ void t_go_generator::generate_service_remote(t_service* tservice) {
   f_remote << indent() << "var urlString string" << endl;
   f_remote << indent() << "var framed bool" << endl;
   f_remote << indent() << "var useHttp bool" << endl;
-  f_remote << indent() << "var parsedUrl url.URL" << endl;
+  f_remote << indent() << "var parsedUrl *url.URL" << endl;
   f_remote << indent() << "var trans thrift.TTransport" << endl;
   f_remote << indent() << "_ = strconv.Atoi" << endl;
   f_remote << indent() << "_ = math.Abs" << endl;
@@ -2147,7 +2147,8 @@ void t_go_generator::generate_service_remote(t_service* tservice) {
   f_remote << indent() << "flag.Parse()" << endl;
   f_remote << indent() << endl;
   f_remote << indent() << "if len(urlString) > 0 {" << endl;
-  f_remote << indent() << "  parsedUrl, err := url.Parse(urlString)" << endl;
+  f_remote << indent() << "  var err error" << endl;
+  f_remote << indent() << "  parsedUrl, err = url.Parse(urlString)" << endl;
   f_remote << indent() << "  if err != nil {" << endl;
   f_remote << indent() << "    fmt.Fprintln(os.Stderr, \"Error parsing URL: \", err)" << endl;
   f_remote << indent() << "    flag.Usage()" << endl;
