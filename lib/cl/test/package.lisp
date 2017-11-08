@@ -1,0 +1,56 @@
+;;;; Copyright 2010 James Anderson <james.anderson@setf.de>
+;;;;
+;;;; Licensed under the Apache License, Version 2.0 (the "License");
+;;;; you may not use this file except in compliance with the License.
+;;;; You may obtain a copy of the License at
+;;;;
+;;;;     http://www.apache.org/licenses/LICENSE-2.0
+;;;;
+;;;; Unless required by applicable law or agreed to in writing, software
+;;;; distributed under the License is distributed on an "AS IS" BASIS,
+;;;; WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+;;;; See the License for the specific language governing permissions and
+;;;; limitations under the License.
+
+(in-package #:common-lisp-user)
+
+(defpackage #:thrift-test
+  (:use #:common-lisp)
+  (:export #:thrift-self-tests))
+
+(defpackage #:thrift-test-utils
+  (:shadowing-import-from #:thrift #:byte #:set #:list #:map #:type-of #:float)
+  (:use #:thrift
+        #:cl)
+  (:import-from #:trivial-gray-streams
+                #:stream-write-byte
+                #:stream-read-byte
+                #:stream-read-sequence
+                #:stream-write-sequence
+                #:stream-force-output
+                #:stream-finish-output)
+  (:export #:field-three
+           #:make-test-large-struct
+           #:make-test-protocol
+           #:make-test-struct
+           #:make-test-transport
+           #:reset
+           #:rewind
+           #:stream-write-byte
+           #:stream-read-byte
+           #:stream-read-sequence
+           #:stream-write-sequence
+           #:stream-force-output
+           #:stream-finish-output
+           #:test-large-struct
+           #:test-large-struct-field-one
+           #:test-large-struct-field-two
+           #:test-large-struct-field-three
+           #:test-struct
+           #:test-struct-field-one
+           #:test-struct-field-two
+           #:with-test-services))
+
+(defpackage #:thrift-test-request (:use))
+
+(defpackage #:thrift-test-response (:use))
