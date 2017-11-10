@@ -534,7 +534,7 @@ void t_erlang_generator::generate_enum_types(std::ostream& os) {
     if (constants.size() > 0) {
       os << i.nlup();
       for (vec_ev::const_iterator ev = constants.begin(); ev != constants.end();) {
-        os << underscore((*ev)->get_name());
+        os << atomify(underscore((*ev)->get_name()));
         if (++ev != constants.end()) {
         os << " |" << i.nl();
         }
@@ -651,7 +651,7 @@ void t_erlang_generator::generate_enum_info(std::ostream& buf, t_enum* tenum) {
     buf << i.nlup();
     for (vector<t_enum_value*>::const_iterator it = constants.begin(); it != constants.end(); ) {
       int value = (*it)->get_value();
-      string name = underscore((*it)->get_name());
+      string name = atomify(underscore((*it)->get_name()));
       buf << "{" << name << ", " << value << "}";
       if (++it != constants.end()) {
         buf << "," << i.nl();
