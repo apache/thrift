@@ -8,11 +8,11 @@ Thank you for your interest in contributing to the Apache Thrift project!  Infor
 
 ## If you want to build the project locally ##
 
-For Windows systems, see our detailed instructions on the [CMake README](build/cmake/README.md).
+For Windows systems, see our detailed instructions on the [CMake README](/build/cmake/README.md).
 
-For Windows Native C++ builds, see our detailed instructions on the [WinCPP README](build/wincpp/README.md).
+For Windows Native C++ builds, see our detailed instructions on the [WinCPP README](/build/wincpp/README.md).
 
-For unix systems, see our detailed instructions on the [Docker README](build/docker/README.md).
+For unix systems, see our detailed instructions on the [Docker README](/build/docker/README.md).
 
 ## If you want to review open issues... ##
 
