@@ -49,17 +49,67 @@ These containers may be in various states, and may not build everything.
 * stretch
   * make check in lib/cpp fails due to https://svn.boost.org/trac10/ticket/12507
 
-## Building Locally ##
+## Building like Travis CI does, locally ##
 
-From the Apache Thrift code base root:
+We recommend you build locally the same way Travis CI does, so that when you submit your pull request you will run into fewer surprises.  To make it a little easier, put the following into your `~/.bash_aliases` file:
 
-* Build the image
+    # Kill all running containers.
+    alias dockerkillall='docker kill $(docker ps -q)'
 
-	docker build -t thrift build/docker/ubuntu-xenial
+    # Delete all stopped containers.
+    alias dockercleanc='printf "\n>>> Deleting stopped containers\n\n" && docker rm $(docker ps -a -q)'
 
-* Open a command prompt in the image
+    # Delete all untagged images.
+    alias dockercleani='printf "\n>>> Deleting untagged images\n\n" && docker rmi $(docker images -q -f dangling=true)'
 
-	docker run -v $(pwd):/thrift/src -it thrift /bin/bash
+    # Delete all stopped containers and untagged images.
+    alias dockerclean='dockercleanc || true && dockercleani'
+
+    # Build a thrift docker image (run from top level of git repo): argument #1 is image type (ubuntu, centos, etc).
+    function dockerbuild
+    {
+      docker build -t $1 build/docker/$1
+    }
+
+    # Run a thrift docker image: argument #1 is image type (ubuntu, centos, etc).
+    function dockerrun
+    {
+      docker run -v $(pwd):/thrift/src -it $1 /bin/bash
+    }
+
+To pull down the current image being used to build (the same way Travis CI does it) - if it is out of date in any way it will build a new one for you:
+
+    thrift$ DOCKER_REPO=thrift/thrift-build DISTRO=ubuntu-xenial build/docker/refresh.sh
+
+To run all unit tests (just like Travis CI):
+
+    thrift$ dockerrun ubuntu-xenial
+    root@8caf56b0ce7b:/thrift/src# build/docker/scripts/autotools.sh
+
+To run the cross tests (just like Travis CI):
+
+    thrift$ dockerrun ubuntu-xenial
+    root@8caf56b0ce7b:/thrift/src# build/docker/scripts/cross-test.sh
+
+When you are done, you want to clean up occasionally so that docker isn't using lots of extra disk space:
+
+    thrift$ dockerclean
+
+You need to run the docker commands from the root of the git repository for them to work.
+
+When you are done in the root docker shell you can `exit` to go back to your user host shell.  Once the unit tests and cross test passes locally, then submit he changes, and squash the pull request to one commit to make it easier to merge.  Thanks.  I am going to update the docker README.md with this information so others can leverage it too.  Now you are building like Travis CI does!
+
+## Raw Commands for Building with Docker ##
+
+If you do not want to use the same scripts Travis CI does, you can do it manually:
+
+Build the image:
+
+    thrift$ docker build -t thrift build/docker/ubuntu-xenial
+
+Open a command prompt in the image:
+
+    thrift$ docker run -v $(pwd):/thrift/src -it thrift /bin/bash
 
 ## Core Tool Versions per Dockerfile ##
 
