@@ -17,7 +17,7 @@
  * under the License.
  */
 
-// clang-format off
+/* clang-format off */
 
 #ifndef _THRIFT_TRANSPORT_PLATFORM_SOCKET_H_
 #  define _THRIFT_TRANSPORT_PLATFORM_SOCKET_H_
@@ -63,17 +63,17 @@
 #  define THRIFT_TIMESPEC thrift_timespec
 #  define THRIFT_CTIME_R thrift_ctime_r
 #  define THRIFT_POLL thrift_poll
-#  if WINVER <= 0x0502 //XP, Server2003
+#  if WINVER <= 0x0502 /* XP, Server2003 */
 #    define THRIFT_POLLFD  thrift_pollfd
 #    define THRIFT_POLLIN  0x0300
 #    define THRIFT_POLLOUT 0x0010
-#  else //Vista, Win7...
+#  else /* Vista, Win7... */
 #    define THRIFT_POLLFD  pollfd
 #    define THRIFT_POLLIN  POLLIN
 #    define THRIFT_POLLOUT POLLOUT
-#  endif //WINVER
+#  endif /* WINVER */
 #  define THRIFT_SHUT_RDWR SD_BOTH
-#else //not _WIN32
+#else /* not _WIN32 */
 #  include <errno.h>
 #  define THRIFT_GET_SOCKET_ERROR errno
 #  define THRIFT_ERRNO errno
@@ -117,4 +117,4 @@
 #  define THRIFT_SHUT_RDWR SHUT_RDWR
 #endif
 
-#endif // _THRIFT_TRANSPORT_PLATFORM_SOCKET_H_
+#endif /* _THRIFT_TRANSPORT_PLATFORM_SOCKET_H_ */
