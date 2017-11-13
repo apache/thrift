@@ -188,7 +188,7 @@ void thrift_ssl_socket_get_ssl_error(ThriftSSLSocket *socket, const guchar *erro
 
       }
       g_set_error (error, THRIFT_TRANSPORT_ERROR,
-		   thrift_error_no, buffer);
+		   thrift_error_no, "%s", buffer);
   }
 }
 
