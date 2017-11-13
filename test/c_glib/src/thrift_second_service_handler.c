@@ -41,9 +41,11 @@ second_service_handler_secondtest_string (TTestSecondServiceIf  *iface,
 {
   THRIFT_UNUSED_VAR (iface);
   THRIFT_UNUSED_VAR (error);
+  gchar buffer[256];
 
   printf ("testSecondServiceMultiplexSecondTestString(\"%s\")\n", thing);
-  *_return = g_strdup (thing);
+  snprintf(buffer, 255, "testString(\"%s\")", thing);
+  *_return = g_strdup (buffer);
 
   return TRUE;
 }
