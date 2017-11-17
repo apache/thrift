@@ -287,18 +287,6 @@ fn make_thrift_calls(
 
     // do the multiplexed calls while making the main ThriftTest calls
     if let Some(ref mut client) = second_service_client.as_mut() {
-        info!("SecondService blahBlah");
-        {
-            let r = client.blah_blah();
-            match r {
-                Err(thrift::Error::Application(ref e)) => {
-                    info!("received an {:?}", e);
-                    Ok(())
-                }
-                _ => Err(thrift::Error::User("did not get exception".into())),
-            }?;
-        }
-
         info!("SecondService secondtestString");
         {
             verify_expected_result(

@@ -26,6 +26,7 @@
 #include <thrift/protocol/TCompactProtocol.h>
 #include <thrift/protocol/THeaderProtocol.h>
 #include <thrift/protocol/TJSONProtocol.h>
+#include <thrift/protocol/TMultiplexedProtocol.h>
 #include <thrift/transport/THttpClient.h>
 #include <thrift/transport/TTransportUtils.h>
 #include <thrift/transport/TSocket.h>
@@ -40,13 +41,15 @@
 #include <inttypes.h>
 #endif
 
-#include <boost/program_options.hpp>
+#include <boost/algorithm/string.hpp>
 #include <boost/filesystem.hpp>
+#include <boost/program_options.hpp>
 #include <thrift/stdcxx.h>
 #if _WIN32
 #include <thrift/windows/TWinsockSingleton.h>
 #endif
 
+#include "SecondService.h"
 #include "ThriftTest.h"
 
 using namespace std;
@@ -156,28 +159,33 @@ int main(int argc, char** argv) {
   int return_code = 0;
 
   boost::program_options::options_description desc("Allowed options");
-  desc.add_options()("help,h",
-                     "produce help message")("host",
-                                             boost::program_options::value<string>(&host)
-                                                 ->default_value(host),
-                                             "Host to connect")("port",
-                                                                boost::program_options::value<int>(
-                                                                    &port)->default_value(port),
-                                                                "Port number to connect")(
-      "domain-socket",
-      boost::program_options::value<string>(&domain_socket)->default_value(domain_socket),
-      "Domain Socket (e.g. /tmp/ThriftTest.thrift), instead of host and port")(
-      "abstract-namespace",
-      "Look for the domain socket in the Abstract Namespace (no connection with filesystem pathnames)")(
-      "transport",
-      boost::program_options::value<string>(&transport_type)->default_value(transport_type),
-      "Transport: buffered, framed, http, evhttp")(
-      "protocol",
-      boost::program_options::value<string>(&protocol_type)->default_value(protocol_type),
-      "Protocol: binary, header, compact, json")("ssl", "Encrypted Transport using SSL")(
-      "testloops,n",
-      boost::program_options::value<int>(&numTests)->default_value(numTests),
-      "Number of Tests")("noinsane", "Do not run insanity test");
+  desc.add_options()
+      ("help,h", "produce help message")
+      ("host", 
+          boost::program_options::value<string>(&host)->default_value(host), 
+          "Host to connect")
+      ("port", 
+          boost::program_options::value<int>(&port)->default_value(port), 
+          "Port number to connect")
+      ("domain-socket", 
+          boost::program_options::value<string>(&domain_socket)->default_value(domain_socket),
+          "Domain Socket (e.g. /tmp/ThriftTest.thrift), instead of host and port")
+      ("abstract-namespace",
+          "Look for the domain socket in the Abstract Namespace"
+          " (no connection with filesystem pathnames)")
+      ("transport",
+          boost::program_options::value<string>(&transport_type)->default_value(transport_type),
+          "Transport: buffered, framed, http, evhttp")
+      ("protocol",
+          boost::program_options::value<string>(&protocol_type)->default_value(protocol_type),
+          "Protocol: binary, compact, header, json, multi, multic, multih, multij")
+      ("ssl", 
+          "Encrypted Transport using SSL")
+      ("testloops,n",
+          boost::program_options::value<int>(&numTests)->default_value(numTests),
+          "Number of Tests")
+      ("noinsane",
+          "Do not run insanity test");
 
   boost::program_options::variables_map vm;
   boost::program_options::store(boost::program_options::parse_command_line(argc, argv, desc), vm);
@@ -194,6 +202,10 @@ int main(int argc, char** argv) {
       } else if (protocol_type == "compact") {
       } else if (protocol_type == "header") {
       } else if (protocol_type == "json") {
+      } else if (protocol_type == "multi") {
+      } else if (protocol_type == "multic") {
+      } else if (protocol_type == "multih") {
+      } else if (protocol_type == "multij") {
       } else {
         throw invalid_argument("Unknown protocol type " + protocol_type);
       }
@@ -232,6 +244,7 @@ int main(int argc, char** argv) {
   stdcxx::shared_ptr<TSocket> socket;
   stdcxx::shared_ptr<TTransport> transport;
   stdcxx::shared_ptr<TProtocol> protocol;
+  stdcxx::shared_ptr<TProtocol> protocol2;	// SecondService for multiplexed
 
   if (ssl) {
     cout << "Client Certificate File: " << certPath << endl;
@@ -271,18 +284,20 @@ int main(int argc, char** argv) {
     transport = bufferedSocket;
   }
 
-  if (protocol_type.compare("json") == 0) {
-    stdcxx::shared_ptr<TProtocol> jsonProtocol(new TJSONProtocol(transport));
-    protocol = jsonProtocol;
-  } else if (protocol_type.compare("compact") == 0) {
-    stdcxx::shared_ptr<TProtocol> compactProtocol(new TCompactProtocol(transport));
-    protocol = compactProtocol;
-  } else if (protocol_type == "header") {
-    stdcxx::shared_ptr<TProtocol> headerProtocol(new THeaderProtocol(transport));
-    protocol = headerProtocol;
+  if (protocol_type == "json" || protocol_type == "multij") {
+    protocol = stdcxx::make_shared<TJSONProtocol>(transport);
+  } else if (protocol_type == "compact" || protocol_type == "multic") {
+    protocol = stdcxx::make_shared<TCompactProtocol>(transport);
+  } else if (protocol_type == "header" || protocol_type == "multih") {
+    protocol = stdcxx::make_shared<THeaderProtocol>(transport);
   } else {
-    stdcxx::shared_ptr<TBinaryProtocol> binaryProtocol(new TBinaryProtocol(transport));
-    protocol = binaryProtocol;
+    protocol = stdcxx::make_shared<TBinaryProtocol>(transport);
+  }
+
+  if (boost::starts_with(protocol_type, "multi")) {
+	protocol2 = stdcxx::make_shared<TMultiplexedProtocol>(protocol, "SecondService");
+	// we don't need access to the original protocol any more, so...
+	protocol = stdcxx::make_shared<TMultiplexedProtocol>(protocol, "ThriftTest");
   }
 
   // Connection info
@@ -365,6 +380,25 @@ int main(int argc, char** argv) {
     if (s != "Test") {
       cout << "*** FAILED ***" << endl;
       return_code |= ERR_BASETYPES;
+    }
+
+    //
+    // Multiplexed protocol - call another service method
+    // in the middle of the ThriftTest
+    //
+    if (boost::starts_with(protocol_type, "multi")) {
+		SecondServiceClient ssc(protocol2);
+		// transport is already open...
+		  
+        try {
+          cout << "secondService.secondTestString(\"foo\") => " << flush;
+	  	  std::string result;
+		  ssc.secondtestString(result, "foo");
+		  cout << "{" << result << "}" << endl;
+	    } catch (std::exception& e) {
+		  cout << "  *** FAILED *** " << e.what() << endl;
+		  return_code |= ERR_EXCEPTIONS;
+		}
     }
 
     try {
@@ -1096,12 +1130,14 @@ int main(int argc, char** argv) {
     /**
      * I32 TEST
      */
-    cout << "re-test testI32(-1)";
+    cout << "re-test testI32(-1)" << flush;
     int i32 = testClient.testI32(-1);
     cout << " = " << i32 << endl;
     if (i32 != -1)
       return_code |= ERR_BASETYPES;
 
+    cout << endl << "All tests done." << endl << flush;
+    
     uint64_t stop = now();
     uint64_t tot = stop - start;
 
@@ -1115,10 +1151,10 @@ int main(int argc, char** argv) {
       time_max = tot;
     }
 
+    cout << flush;
     transport->close();
   }
 
-  cout << endl << "All tests done." << endl;
 
   uint64_t time_avg = time_tot / numTests;
 

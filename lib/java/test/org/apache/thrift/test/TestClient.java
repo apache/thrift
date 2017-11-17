@@ -33,6 +33,7 @@ import org.apache.thrift.TSerializer;
 import org.apache.thrift.protocol.TBinaryProtocol;
 import org.apache.thrift.protocol.TCompactProtocol;
 import org.apache.thrift.protocol.TJSONProtocol;
+import org.apache.thrift.protocol.TMultiplexedProtocol;
 import org.apache.thrift.protocol.TProtocol;
 import org.apache.thrift.protocol.TSimpleJSONProtocol;
 import org.apache.thrift.transport.TFastFramedTransport;
@@ -46,6 +47,7 @@ import org.apache.thrift.transport.TTransportException;
 // Generated code
 import thrift.test.Insanity;
 import thrift.test.Numberz;
+import thrift.test.SecondService;
 import thrift.test.ThriftTest;
 import thrift.test.Xception;
 import thrift.test.Xception2;
@@ -64,6 +66,7 @@ public class TestClient {
   private static int ERR_STRUCTS = 2;
   private static int ERR_CONTAINERS = 4;
   private static int ERR_EXCEPTIONS = 8;
+  private static int ERR_PROTOCOLS = 16;
   private static int ERR_UNKNOWN = 64;
 
   public static void main(String [] args) {
@@ -102,7 +105,7 @@ public class TestClient {
           System.out.println("  --host=arg (=" + host + ")\tHost to connect");
           System.out.println("  --port=arg (=" + port + ")\tPort number to connect");
           System.out.println("  --transport=arg (=" + transport_type + ")\n\t\t\t\tTransport: buffered, framed, fastframed, http");
-          System.out.println("  --protocol=arg (=" + protocol_type + ")\tProtocol: binary, json, compact");
+          System.out.println("  --protocol=arg (=" + protocol_type + ")\tProtocol: binary, compact, json, multi, multic, multij");
           System.out.println("  --ssl\t\t\tEncrypted Transport using SSL");
           System.out.println("  --testloops[--n]=arg (=" + numTests + ")\tNumber of Tests");
           System.exit(0);
@@ -117,6 +120,9 @@ public class TestClient {
       if (protocol_type.equals("binary")) {
       } else if (protocol_type.equals("compact")) {
       } else if (protocol_type.equals("json")) {
+      } else if (protocol_type.equals("multi")) {
+      } else if (protocol_type.equals("multic")) {
+      } else if (protocol_type.equals("multij")) {
       } else {
         throw new Exception("Unknown protocol type! " + protocol_type);
       }
@@ -163,16 +169,21 @@ public class TestClient {
     }
 
     TProtocol tProtocol = null;
-    if (protocol_type.equals("json")) {
+    TProtocol tProtocol2 = null;
+    if (protocol_type.equals("json") || protocol_type.equals("multij")) {
       tProtocol = new TJSONProtocol(transport);
-    } else if (protocol_type.equals("compact")) {
+    } else if (protocol_type.equals("compact") || protocol_type.equals("multic")) {
       tProtocol = new TCompactProtocol(transport);
     } else {
       tProtocol = new TBinaryProtocol(transport);
     }
 
-    ThriftTest.Client testClient =
-      new ThriftTest.Client(tProtocol);
+    if (protocol_type.startsWith("multi")) {
+      tProtocol2 = new TMultiplexedProtocol(tProtocol, "SecondService");
+      tProtocol = new TMultiplexedProtocol(tProtocol, "ThriftTest");
+    }
+
+    ThriftTest.Client testClient = new ThriftTest.Client(tProtocol);
     Insanity insane = new Insanity();
 
     long timeMin = 0;
@@ -222,6 +233,19 @@ public class TestClient {
           System.out.println("*** FAILURE ***\n");
         }
 
+        /**
+         * Multiplexed test
+         */
+        if (protocol_type.startsWith("multi")) {
+          SecondService.Client secondClient = new SecondService.Client(tProtocol2);
+          System.out.print("secondtestString(\"Test2\")");
+          s = secondClient.secondtestString("Test2");
+          System.out.print(" = \"" + s + "\"\n");
+          if (!s.equals("testString(\"Test2\")")) {
+            returnCode |= ERR_PROTOCOLS;
+            System.out.println("*** FAILURE ***\n");
+          }
+        }
         /**
          * BYTE TEST
          */

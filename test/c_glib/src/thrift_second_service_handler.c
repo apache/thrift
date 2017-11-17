@@ -50,17 +50,6 @@ second_service_handler_secondtest_string (TTestSecondServiceIf  *iface,
   return TRUE;
 }
 
-gboolean
-second_service_handler_blah_blah (TTestSecondServiceIf *iface, GError **error)
-{
-  THRIFT_UNUSED_VAR (iface);
-  THRIFT_UNUSED_VAR (error);
-
-  printf ("blahBlah()\n");
-
-  return TRUE;
-}
-
 static void
 second_service_handler_init (SecondServiceHandler *self)
 {
@@ -76,7 +65,5 @@ second_service_handler_class_init (SecondServiceHandlerClass *klass)
 
   base_class->secondtest_string =
       second_service_handler_secondtest_string;
-  base_class->blah_blah =
-      second_service_handler_blah_blah;
 
 }

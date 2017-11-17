@@ -321,13 +321,12 @@ service ThriftTest
 
 service SecondService
 {
-  void blahBlah()
   /**
    * Prints 'testString("%s")' with thing as '%s'
    * @param string thing - the string to print
    * @return string - returns the string 'thing'
    */
-  string       secondtestString(1: string thing),
+  string secondtestString(1: string thing)
 }
 
 struct VersioningTestV1 {
