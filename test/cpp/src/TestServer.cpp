@@ -17,26 +17,29 @@
  * under the License.
  */
 
-#include <thrift/concurrency/ThreadManager.h>
+#include <thrift/async/TAsyncBufferProcessor.h>
+#include <thrift/async/TAsyncProtocolProcessor.h>
+#include <thrift/async/TEvhttpServer.h>
 #include <thrift/concurrency/PlatformThreadFactory.h>
+#include <thrift/concurrency/ThreadManager.h>
+#include <thrift/processor/TMultiplexedProcessor.h>
 #include <thrift/protocol/TBinaryProtocol.h>
 #include <thrift/protocol/TCompactProtocol.h>
 #include <thrift/protocol/THeaderProtocol.h>
 #include <thrift/protocol/TJSONProtocol.h>
-#include <thrift/server/TSimpleServer.h>
-#include <thrift/server/TThreadedServer.h>
-#include <thrift/server/TThreadPoolServer.h>
-#include <thrift/async/TEvhttpServer.h>
-#include <thrift/async/TAsyncBufferProcessor.h>
-#include <thrift/async/TAsyncProtocolProcessor.h>
 #include <thrift/server/TNonblockingServer.h>
-#include <thrift/transport/TServerSocket.h>
-#include <thrift/transport/TSSLServerSocket.h>
-#include <thrift/transport/TSSLSocket.h>
-#include <thrift/transport/TNonblockingServerSocket.h>
+#include <thrift/server/TSimpleServer.h>
+#include <thrift/server/TThreadPoolServer.h>
+#include <thrift/server/TThreadedServer.h>
 #include <thrift/transport/THttpServer.h>
 #include <thrift/transport/THttpTransport.h>
+#include <thrift/transport/TNonblockingServerSocket.h>
+#include <thrift/transport/TSSLServerSocket.h>
+#include <thrift/transport/TSSLSocket.h>
+#include <thrift/transport/TServerSocket.h>
 #include <thrift/transport/TTransportUtils.h>
+
+#include "SecondService.h"
 #include "ThriftTest.h"
 
 #ifdef HAVE_STDINT_H
@@ -50,6 +53,7 @@
 #include <stdexcept>
 #include <sstream>
 
+#include <boost/algorithm/string.hpp>
 #include <boost/program_options.hpp>
 #include <boost/filesystem.hpp>
 #include <thrift/stdcxx.h>
@@ -331,12 +335,17 @@ public:
     }
   }
 
-  void testOneway(const int32_t sleepFor) {
-    printf("testOneway(%d): Sleeping...\n", sleepFor);
-    THRIFT_SLEEP_SEC(sleepFor);
-    printf("testOneway(%d): done sleeping!\n", sleepFor);
+  void testOneway(const int32_t aNum) {
+    printf("testOneway(%d): call received\n", aNum);
   }
 };
+
+class SecondHandler : public SecondServiceIf
+{
+  public:
+    void secondtestString(std::string& result, const std::string& thing)
+    { result = "testString(\"" + thing + "\")"; }
+};	
 
 class TestProcessorEventHandler : public TProcessorEventHandler {
   virtual void* getContext(const char* fn_name, void* serverContext) {
@@ -565,7 +574,7 @@ int main(int argc, char** argv) {
     ("abstract-namespace", "Create the domain socket in the Abstract Namespace (no connection with filesystem pathnames)")
     ("server-type", po::value<string>(&server_type)->default_value(server_type), "type of server, \"simple\", \"thread-pool\", \"threaded\", or \"nonblocking\"")
     ("transport", po::value<string>(&transport_type)->default_value(transport_type), "transport: buffered, framed, http")
-    ("protocol", po::value<string>(&protocol_type)->default_value(protocol_type), "protocol: binary, compact, header, json")
+    ("protocol", po::value<string>(&protocol_type)->default_value(protocol_type), "protocol: binary, compact, header, json, multi, multic, multih, multij")
     ("ssl", "Encrypted Transport using SSL")
     ("processor-events", "processor-events")
     ("workers,n", po::value<size_t>(&workers)->default_value(workers), "Number of thread pools workers. Only valid for thread-pool server type")
@@ -597,6 +606,10 @@ int main(int argc, char** argv) {
       } else if (protocol_type == "compact") {
       } else if (protocol_type == "json") {
       } else if (protocol_type == "header") {
+      } else if (protocol_type == "multi") {	// multiplexed binary
+      } else if (protocol_type == "multic") {	// multiplexed compact
+      } else if (protocol_type == "multih") {	// multiplexed header
+      } else if (protocol_type == "multij") {	// multiplexed json
       } else {
         throw invalid_argument("Unknown protocol type " + protocol_type);
       }
@@ -627,15 +640,15 @@ int main(int argc, char** argv) {
 
   // Dispatcher
   stdcxx::shared_ptr<TProtocolFactory> protocolFactory;
-  if (protocol_type == "json") {
+  if (protocol_type == "json" || protocol_type == "multij") {
     stdcxx::shared_ptr<TProtocolFactory> jsonProtocolFactory(new TJSONProtocolFactory());
     protocolFactory = jsonProtocolFactory;
-  } else if (protocol_type == "compact") {
+  } else if (protocol_type == "compact" || protocol_type == "multic") {
     TCompactProtocolFactoryT<TBufferBase> *compactProtocolFactory = new TCompactProtocolFactoryT<TBufferBase>();
     compactProtocolFactory->setContainerSizeLimit(container_limit);
     compactProtocolFactory->setStringSizeLimit(string_limit);
     protocolFactory.reset(compactProtocolFactory);
-  } else if (protocol_type == "header") {
+  } else if (protocol_type == "header" || protocol_type == "multih") {
     stdcxx::shared_ptr<TProtocolFactory> headerProtocolFactory(new THeaderProtocolFactory());
     protocolFactory = headerProtocolFactory;
   } else {
@@ -645,9 +658,9 @@ int main(int argc, char** argv) {
     protocolFactory.reset(binaryProtocolFactory);
   }
 
-  // Processor
+  // Processors
   stdcxx::shared_ptr<TestHandler> testHandler(new TestHandler());
-  stdcxx::shared_ptr<ThriftTestProcessor> testProcessor(new ThriftTestProcessor(testHandler));
+  stdcxx::shared_ptr<TProcessor> testProcessor(new ThriftTestProcessor(testHandler));
 
   if (vm.count("processor-events")) {
     testProcessor->setEventHandler(
@@ -705,6 +718,18 @@ int main(int argc, char** argv) {
     cout << port;
   }
   cout << endl;
+
+  // Multiplexed Processor if needed
+  if (boost::starts_with(protocol_type, "multi")) {
+    stdcxx::shared_ptr<SecondHandler> secondHandler(new SecondHandler());
+    stdcxx::shared_ptr<SecondServiceProcessor> secondProcessor(new SecondServiceProcessor(secondHandler));
+
+    stdcxx::shared_ptr<TMultiplexedProcessor> multiplexedProcessor(new TMultiplexedProcessor());
+    multiplexedProcessor->registerDefault(testProcessor); // non-multi clients go to the default processor (multi:binary, multic:compact, ...)
+    multiplexedProcessor->registerProcessor("ThriftTest", testProcessor);
+    multiplexedProcessor->registerProcessor("SecondService", secondProcessor);
+    testProcessor = stdcxx::dynamic_pointer_cast<TProcessor>(multiplexedProcessor);
+  }
 
   // Server
   stdcxx::shared_ptr<apache::thrift::server::TServer> server;

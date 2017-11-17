@@ -192,7 +192,7 @@ class THeaderProtocolFactory : public TProtocolFactory {
 public:
   virtual stdcxx::shared_ptr<TProtocol> getProtocol(stdcxx::shared_ptr<transport::TTransport> trans) {
     THeaderProtocol* headerProtocol
-        = new THeaderProtocol(trans, stdcxx::shared_ptr<transport::TTransport>(), T_BINARY_PROTOCOL);
+        = new THeaderProtocol(trans, trans, T_BINARY_PROTOCOL);
     return stdcxx::shared_ptr<TProtocol>(headerProtocol);
   }
 
