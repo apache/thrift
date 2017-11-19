@@ -21,12 +21,16 @@ AUTOMAKE_OPTIONS = subdir-objects serial-tests
 BUILT_SOURCES = gen-cpp/ThriftTest.cpp \
                 gen-cpp/ThriftTest_types.cpp \
                 gen-cpp/ThriftTest_constants.cpp \
+                gen-cpp/SecondService.cpp \
                 gen-cpp/StressTest_types.cpp \
                 gen-cpp/StressTest_constants.cpp \
                 gen-cpp/Service.cpp
 
 noinst_LTLIBRARIES = libtestgencpp.la libstresstestgencpp.la
 nodist_libtestgencpp_la_SOURCES = \
+	gen-cpp/SecondService.cpp \
+	gen-cpp/SecondService.h \
+	gen-cpp/SecondService.tcc \
 	gen-cpp/ThriftTest_constants.cpp \
 	gen-cpp/ThriftTest_constants.h \
 	gen-cpp/ThriftTest_types.cpp \
@@ -98,7 +102,7 @@ StressTestNonBlocking_LDADD = \
 #
 # Common thrift code generation rules
 #
-gen-cpp/ThriftTest.cpp gen-cpp/ThriftTest_types.cpp gen-cpp/ThriftTest_constants.cpp: $(top_srcdir)/test/ThriftTest.thrift $(THRIFT)
+gen-cpp/ThriftTest.cpp gen-cpp/ThriftTest_types.cpp gen-cpp/ThriftTest_constants.cpp gen-cpp/SecondService.cpp gen-cpp/SecondService.h gen-cpp/SecondService.tcc: $(top_srcdir)/test/ThriftTest.thrift $(THRIFT)
 	$(THRIFT) --gen cpp:templates,cob_style -r $<
 
 gen-cpp/StressTest_types.cpp gen-cpp/StressTest_constants.cpp gen-cpp/Service.cpp: $(top_srcdir)/test/StressTest.thrift $(THRIFT)

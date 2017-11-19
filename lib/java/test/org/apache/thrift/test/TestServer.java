@@ -73,10 +73,6 @@ public class TestServer {
   static class SecondHandler implements thrift.test.SecondService.Iface {
 
     @Override
-    public void blahBlah() throws org.apache.thrift.TException
-    { throw new org.apache.thrift.TException("blahBlah"); }
-
-    @Override
     public java.lang.String secondtestString(java.lang.String thing) throws org.apache.thrift.TException
     { return "testString(\"" + thing + "\")"; }
 

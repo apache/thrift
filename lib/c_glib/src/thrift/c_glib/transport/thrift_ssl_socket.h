@@ -53,6 +53,7 @@ G_BEGIN_DECLS
 typedef enum
 {
   THRIFT_SSL_SOCKET_ERROR_TRANSPORT=7,
+  THRIFT_SSL_SOCKET_ERROR_CONNECT_BIND,
   THRIFT_SSL_SOCKET_ERROR_CIPHER_NOT_AVAILABLE,
   THRIFT_SSL_SOCKET_ERROR_SSL,
   THRIFT_SSL_SOCKET_ERROR_SSL_CERT_VALIDATION_FAILED
@@ -115,21 +116,6 @@ thrift_ssl_socket_context_initialize(ThriftSSLSocketProtocol ssl_protocol, GErro
 GType thrift_ssl_socket_get_type (void);
 
 /* Public API */
-
-/**
- * @brief Returns a error message for a defined error code.
- *
- * It uses gobject error functionality to get the error code of the last error
- * produced by this API.
- *
- * @param error Pointer to the error message.
- * @param error_msg Adds this message to the error that will be added to the
- * code.
- * @param thrift_error_no number of the error triggered.
- *
- * @see https://developer.gnome.org/glib/stable/glib-Error-Reporting.html#g-set-error
- */
-void thrift_ssl_socket_get_error(GError **error, const guchar *error_msg, guint thrift_error_no);
 
 /**
  * @brief Set a pinning manager instead of the default one.

@@ -8,6 +8,10 @@
       "command": [
         "test_server",
         "--lt-debug"
+      ],
+      "protocols": [
+        "binary:multi",
+        "compact:multic"
       ]
     },
     "client": {
@@ -16,8 +20,6 @@
         "--lt-debug"
       ],
       "protocols": [
-        "multi",
-        "multic",
         "multi:binary",
         "multic:compact"
       ],
@@ -34,7 +36,9 @@
     ],
     "protocols": [
       "binary",
-      "compact"
+      "compact",
+      "multi",
+      "multic"
     ],
     "workdir": "c_glib"
   },
@@ -118,10 +122,7 @@
       "protocols": [
         "binary:multi",
         "compact:multic",
-        "json:multij",
-        "multi",
-        "multic",
-        "multij"
+        "json:multij"
       ]
     },
     "client": {
@@ -129,6 +130,11 @@
       "extra_args": ["run-testclient"],
       "transports": [
         "http"
+      ],
+      "protocols": [
+        "multi:binary",
+        "multic:compact",
+        "multij:json"
       ]
     },
     "transports": [
@@ -143,7 +149,10 @@
     "protocols": [
       "binary",
       "compact",
-      "json"
+      "json",
+      "multi",
+      "multic",
+      "multij"
     ],
     "workdir": "../lib/java"
   },
@@ -292,12 +301,24 @@
     "server": {
       "command": [
         "TestServer"
+      ],
+      "protocols": [
+        "binary:multi",
+        "compact:multic",
+        "header:multih",
+        "json:multij"
       ]
     },
     "client": {
       "timeout": 8,
       "command": [
         "TestClient"
+      ],
+      "protocols": [
+        "multi:binary",
+        "multic:compact",
+        "multih:header",
+        "multij:json"
       ]
     },
     "transports": [
@@ -314,7 +335,11 @@
       "compact",
       "binary",
       "json",
-      "header"
+      "header",
+      "multi",
+      "multic",
+      "multih",
+      "multij"
     ],
     "workdir": "cpp"
   },
@@ -379,6 +404,12 @@
         "mono",
         "TestClientServer.exe",
         "client"
+      ],
+      "protocols": [
+        "multi",
+        "multic",
+        "multi:binary",
+        "multic:compact"
       ]
     },
     "workdir": "csharp"
@@ -402,9 +433,9 @@
       "command": [
         "dotnet",
         "run",
-	"--no-build",
-	"--no-restore",
-	"--",
+  "--no-build",
+  "--no-restore",
+  "--",
         "server"
       ]
     },
@@ -413,9 +444,9 @@
       "command": [
         "dotnet",
         "run",
-	"--no-build",
-	"--no-restore",
-	"--",
+  "--no-build",
+  "--no-restore",
+  "--",
         "client"
       ]
     },
@@ -616,12 +647,20 @@
     "server": {
       "command": [
         "test_server"
+      ],
+      "protocols": [
+        "binary:multi",
+        "compact:multic"
       ]
     },
     "client": {
       "timeout": 6,
       "command": [
         "test_client"
+      ],
+      "protocols": [
+        "multi:binary",
+        "multic:compact"
       ]
     },
     "sockets": [

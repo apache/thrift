@@ -57,7 +57,7 @@ thrift_multiplexed_protocol_write_message_begin (ThriftMultiplexedProtocol *prot
     service_name = g_strdup(name);
   }
 
-  // relay to the protocol_decorator
+  /* relay to the protocol_decorator */
   ret = thrift_protocol_decorator_write_message_begin(protocol, service_name, message_type, seqid, error);
 
   g_free(service_name);
