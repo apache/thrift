@@ -33,11 +33,13 @@ use Thrift;
 use Thrift::BinaryProtocol;
 use Thrift::BufferedTransport;
 use Thrift::FramedTransport;
+use Thrift::MultiplexedProcessor;
 use Thrift::SSLServerSocket;
 use Thrift::ServerSocket;
 use Thrift::Server;
 use Thrift::UnixServerSocket;
 
+use ThriftTest::SecondService;
 use ThriftTest::ThriftTest;
 use ThriftTest::Types;
 
@@ -96,7 +98,9 @@ if ($opts{ssl} and not defined $opts{cert}) {
 }
 
 my $handler = new ThriftTestHandler();
+my $handler2 = new SecondServiceHandler();
 my $processor = new ThriftTest::ThriftTestProcessor($handler);
+my $processor2 = new ThriftTest::SecondServiceProcessor($handler2);
 my $serversocket;
 if ($opts{"domain-socket"}) {
     unlink($opts{"domain-socket"});
@@ -116,11 +120,19 @@ if ($opts{transport} eq 'buffered') {
     exit 1;
 }
 my $protocol;
-if ($opts{protocol} eq 'binary') {
+if ($opts{protocol} eq 'binary' || $opts{protocol} eq 'multi') {
     $protocol = new Thrift::BinaryProtocolFactory();
 } else {
     usage();
     exit 1;
+}
+
+if (index($opts{protocol}, 'multi') == 0) {
+  my $newProcessor = new Thrift::MultiplexedProcessor($protocol);
+  $newProcessor->defaultProcessor($processor);
+  $newProcessor->registerProcessor("ThriftTest", $processor);
+  $newProcessor->registerProcessor("SecondService", $processor2);
+  $processor = $newProcessor;
 }
 
 my $ssltag = '';
@@ -390,11 +402,29 @@ sub testMultiException() {
 
 sub testOneway() {
   my $self = shift;
-  my $sleepFor = shift;
-  print("testOneway($sleepFor): Sleeping...\n");
-  sleep $sleepFor;
-  print("testOneway($sleepFor): done sleeping!\n");
+  my $num = shift;
+  print("testOneway($num): received\n");
 }
 
+###
+### Test server implementation
+###
+
+package SecondServiceHandler;
+
+use base qw( ThriftTest::SecondServiceIf );
+
+sub new {
+    my $classname = shift;
+    my $self = {};
+    return bless($self, $classname);
+}
+
+sub secondtestString() {
+  my $self = shift;
+  my $thing = shift;
+  print("testString($thing)\n");
+  return "testString(\"" . $thing . "\")";
+}
 
 1;

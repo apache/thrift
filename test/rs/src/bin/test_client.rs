@@ -588,11 +588,15 @@ fn verify_expected_result<T: Debug + PartialEq + Sized>(
     actual: Result<T, thrift::Error>,
     expected: T,
 ) -> Result<(), thrift::Error> {
+    info!("*** EXPECTED: Ok({:?})", expected);
+    info!("*** ACTUAL  : {:?}", actual);
     match actual {
         Ok(v) => {
             if v == expected {
+                info!("*** OK ***");
                 Ok(())
             } else {
+                info!("*** FAILED ***");
                 Err(thrift::Error::User(format!("expected {:?} but got {:?}", &expected, &v).into()),)
             }
         }
