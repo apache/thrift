@@ -145,9 +145,9 @@ Last updated: October 1, 2017
 | c_glib    | 2.40.2        | 2.48.2        | 2.54.0        |       |
 | cocoa     |               |               |               | Not in CI |
 | d         | 2.070.2       | 2.073.2       | 2.076.0       |       |
-| dart      | 1.20.1        | 1.24.2        |               | artful: apt repo not compatible with apt 1.4? |
+| dart      | 1.20.1        | 1.24.2        | 1.24.2        |       |
 | delphi    |               |               |               | Not in CI |
-| dotnet    |               | 2.0.0         |               | Needs to be added to artful |
+| dotnet    |               | 2.0.3         |               | Needs to be added to artful |
 | erlang    | R16B03        | 18.3          | 20.0.4        |       |
 | go        | 1.2.1         | 1.6.2         | 1.8.3         |       |
 | haskell   | 7.6.3         | 7.10.3        | 8.0.2         |       |
