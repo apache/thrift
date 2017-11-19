@@ -464,7 +464,8 @@
       "domain"
     ],
     "protocols": [
-      "binary"
+      "binary",
+      "multi"
     ],
     "client": {
       "command": [
@@ -475,6 +476,9 @@
         "--ca=../keys/CA.pem",
         "--cert=../keys/client.crt",
         "--key=../keys/client.key"
+      ],
+      "protocols": [
+        "multi:binary"
       ]
     },
     "server": {
@@ -485,6 +489,9 @@
         "TestServer.pl",
         "--cert=../keys/server.crt",
         "--key=../keys/server.key"
+      ],
+      "protocols": [
+        "binary:multi"
       ]
     },
     "workdir": "perl"

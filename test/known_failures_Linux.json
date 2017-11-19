@@ -299,6 +299,8 @@
   "nodejs-netcore_json_buffered-ip-ssl",
   "nodejs-netcore_json_framed-ip",
   "nodejs-netcore_json_framed-ip-ssl",
+  "perl-rs_multi_buffered-ip",
+  "perl-rs_multi_framed-ip",
   "rb-cpp_json_buffered-ip",
   "rb-cpp_json_framed-ip",
   "rs-cpp_binary_buffered-ip",

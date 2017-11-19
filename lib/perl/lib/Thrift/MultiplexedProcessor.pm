@@ -66,8 +66,16 @@ sub new {
     my $self      = {};
 
     $self->{serviceProcessorMap} = {};
+    $self->{defaultProcessor} = undef;
 
     return bless($self,$classname);
+}
+
+sub defaultProcessor {
+    my $self = shift;
+    my $processor = shift;
+
+    $self->{defaultProcessor} = $processor;
 }
 
 sub registerProcessor {
@@ -98,8 +106,14 @@ sub process {
 
     # Extract the service name and the new Message name.
     if (index($fname, Thrift::MultiplexedProtocol::SEPARATOR) == -1) {
-        die new Thrift::TException("Service name not found in message name: {$fname}. Did you " .
-            "forget to use a MultiplexProtocol in your client?");
+        if (defined $self->{defaultProcessor}) {
+            return $self->{defaultProcessor}->process(
+                new Thrift::StoredMessageProtocol($input, $fname, $mtype, $rseqid), $output
+            );
+        } else {
+            die new Thrift::TException("Service name not found in message name: {$fname} and no default processor defined. Did you " .
+                "forget to use a MultiplexProtocol in your client?");
+        }
     }
 
     (my $serviceName, my $messageName) = split(':', $fname, 2);
@@ -109,11 +123,11 @@ sub process {
             "to call registerProcessor()?");
     }
 
-     # Dispatch processing to the stored processor
-     my $processor = $self->{serviceProcessorMap}->{$serviceName};
-     return $processor->process(
+    # Dispatch processing to the stored processor
+    my $processor = $self->{serviceProcessorMap}->{$serviceName};
+    return $processor->process(
         new Thrift::StoredMessageProtocol($input, $messageName, $mtype, $rseqid), $output
-     );
+    );
 }
 
 1;
