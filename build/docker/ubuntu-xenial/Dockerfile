@@ -45,7 +45,7 @@ RUN curl https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - &
 # since ubuntu-artful can't run dart, we'll run 1.240 on xenial for now
 ENV DART_VERSION 1.24.2-1
 
-# dotnet (core) 2.0.0
+# dotnet (core)
 RUN curl https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor > /etc/apt/trusted.gpg.d/microsoft.gpg && \
     echo "deb [arch=amd64] https://packages.microsoft.com/repos/microsoft-ubuntu-xenial-prod xenial main" > /etc/apt/sources.list.d/dotnetdev.list
 
@@ -121,7 +121,7 @@ ENV PATH /usr/lib/dart/bin:$PATH
 
 RUN apt-get install -y --no-install-recommends \
 `# dotnet core dependencies` \
-      dotnet-sdk-2.0.0
+      dotnet-sdk-2.0.3
 
 RUN apt-get install -y --no-install-recommends \
 `# Erlang dependencies` \
