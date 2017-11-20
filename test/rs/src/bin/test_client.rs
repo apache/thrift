@@ -126,7 +126,7 @@ fn build_protocols(
     };
 
     let (i_prot, o_prot): (Box<TInputProtocol>, Box<TOutputProtocol>) = match protocol {
-        "binary" | "multi:binary" => {
+        "binary" => {
             (Box::new(TBinaryInputProtocol::new(i_tran, true)),
              Box::new(TBinaryOutputProtocol::new(o_tran, true)))
         }
@@ -139,7 +139,7 @@ fn build_protocols(
                 ),
             ))
         }
-        "compact" | "multi:compact" => {
+        "compact" => {
             (Box::new(TCompactInputProtocol::new(i_tran)),
              Box::new(TCompactOutputProtocol::new(o_tran)))
         }

@@ -162,12 +162,11 @@ RUN apt-get install -y --no-install-recommends \
 
 RUN apt-get install -y --no-install-recommends \
 `# Lua dependencies` \
-      lua5.3 \
-      lua5.3-dev && \
-    ln -s /usr/bin/lua5.3 /usr/bin/lua && \
-    ln -s /usr/bin/luac5.3 /usr/bin/luac
+      lua5.2 \
+      lua5.2-dev
 # https://bugs.launchpad.net/ubuntu/+source/lua5.3/+bug/1707212
 # lua5.3 does not install alternatives!
+# need to update our luasocket code, lua doesn't have luaL_openlib any more
 
 RUN apt-get install -y --no-install-recommends \
 `# Node.js dependencies` \
