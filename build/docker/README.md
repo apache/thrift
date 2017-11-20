@@ -145,17 +145,17 @@ Last updated: October 1, 2017
 | c_glib    | 2.40.2        | 2.48.2        | 2.54.0        |       |
 | cocoa     |               |               |               | Not in CI |
 | d         | 2.070.2       | 2.073.2       | 2.076.0       |       |
-| dart      | 1.20.1        | 1.24.2        |               | artful: apt repo not compatible with apt 1.4? |
+| dart      | 1.20.1        | 1.24.2        | 1.24.2        |       |
 | delphi    |               |               |               | Not in CI |
-| dotnet    |               | 2.0.0         |               | Needs to be added to artful |
+| dotnet    |               | 2.0.3         | 2.0.3         |       |
 | erlang    | R16B03        | 18.3          | 20.0.4        |       |
 | go        | 1.2.1         | 1.6.2         | 1.8.3         |       |
 | haskell   | 7.6.3         | 7.10.3        | 8.0.2         |       |
 | haxe      |               | 3.2.1         | 3.4.2         | disabled in trusty builds - cores on install v3.0.0, disabled in artful builds - see THRIFT-4352 |
-| java      | 1.7.0_151     | 1.8.0_131     | 1.8.0_144     |       |
+| java      | 1.7.0_151     | 1.8.0_131     | 1.8.0_151     |       |
 | js        |               |               |               | Unsure how to look for version info? |
-| lua       | 5.1.5         | 5.2.4         | 5.3.3         |       |
-| nodejs    |               | 4.2.6         | 8.8.1         | trusty has node.js 0.10.0 which is too old |
+| lua       | 5.1.5         | 5.2.4         | 5.2.4         | Lua 5.3: see THRIFT-4386 |
+| nodejs    |               | 4.2.6         | 8.9.1         | trusty has node.js 0.10.0 which is too old |
 | ocaml     |               | 4.02.3        | 4.04.0        |       |
 | perl      | 5.18.2        | 5.22.1        | 5.26.0        |       |
 | php       | 5.5.9         | 7.0.22        | 7.1.8         |       |

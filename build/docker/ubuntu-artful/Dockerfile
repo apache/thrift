@@ -16,8 +16,6 @@
 # - cpp: stock boost 1.62 in artful has a nasty bug so we use stock boost 1.63
 # - d: does not come with Ubuntu so we're installing the latest
 # - d: deimos for libevent and openssl omitted - not compatible / build errors
-# - dart: dart repository doesn't work with apt 1.4 in artful
-# - dotnetcore, because netcore is for 1.0.0-preview and 2.0.0 is out
 # - haxe: see THRIFT-4352, but test/haxe cores during testing
 #         and hxcpp 3.4.64 is not compatible with artful
 #
@@ -41,9 +39,9 @@ RUN apt-get update && \
 # RUN echo "deb http://download.mono-project.com/repo/debian xenial main" | tee /etc/apt/sources.list.d/mono.list && \
 #     apt-key adv --keyserver keyserver.ubuntu.com --recv-keys A6A19B38D3D831EF
 
-# dotnet (core) 2.0.0 - project isn't ready for this yet:
-# RUN curl https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor > /etc/apt/trusted.gpg.d/microsoft.gpg && \
-#     echo "deb [arch=amd64] https://packages.microsoft.com/repos/microsoft-ubuntu-xenial-prod xenial main" > /etc/apt/sources.list.d/dotnetdev.list
+# dotnet (core)
+RUN curl https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor > /etc/apt/trusted.gpg.d/microsoft.gpg && \
+    echo "deb [arch=amd64] https://packages.microsoft.com/repos/microsoft-ubuntu-artful-prod artful main" > /etc/apt/sources.list.d/dotnetdev.list
 
 # node.js (this step runs apt-get update internally) - if we ever want a later version
 RUN curl -sL https://deb.nodesource.com/setup_8.x | bash -
@@ -106,19 +104,23 @@ RUN apt-key adv --keyserver keyserver.ubuntu.com --recv-keys EBCF975E5BA24D5E &&
 #     mv openssl-master/C/* /usr/include/dmd/druntime/import/C/ && \
 #     rm -rf openssl-master
 
-# dart is disabled because the repository won't sync properly with apt 1.4
+# dart cannot be downloaded by aptitude because of
+# https://github.com/dart-lang/sdk/issues/30512
 # RUN curl https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - && \
 #     curl https://storage.googleapis.com/download.dartlang.org/linux/debian/dart_stable.list > /etc/apt/sources.list.d/dart_stable.list && \
 #     apt-get update && \
 #     apt-get install -y --no-install-recommends \
 #       `# Dart dependencies` \
 #       dart
-# ENV PATH /usr/lib/dart/bin:$PATH
+# so instead we do:
+RUN wget https://storage.googleapis.com/dart-archive/channels/stable/release/latest/linux_packages/dart_1.24.2-1_amd64.deb && \
+    dpkg -i dart_1.24.2-1_amd64.deb && \
+    rm dart_1.24.2-1_amd64.deb
+ENV PATH /usr/lib/dart/bin:$PATH
 
-# project isn't ready for this quite yet:
-# RUN apt-get install -y --no-install-recommends \
-# `# dotnet core dependencies` \
-#       dotnet-sdk-2.0.0
+RUN apt-get install -y --no-install-recommends \
+`# dotnet core dependencies` \
+      dotnet-sdk-2.0.3
 
 RUN apt-get install -y --no-install-recommends \
 `# Erlang dependencies` \
@@ -160,12 +162,11 @@ RUN apt-get install -y --no-install-recommends \
 
 RUN apt-get install -y --no-install-recommends \
 `# Lua dependencies` \
-      lua5.3 \
-      lua5.3-dev && \
-    ln -s /usr/bin/lua5.3 /usr/bin/lua && \
-    ln -s /usr/bin/luac5.3 /usr/bin/luac
+      lua5.2 \
+      lua5.2-dev
 # https://bugs.launchpad.net/ubuntu/+source/lua5.3/+bug/1707212
 # lua5.3 does not install alternatives!
+# need to update our luasocket code, lua doesn't have luaL_openlib any more
 
 RUN apt-get install -y --no-install-recommends \
 `# Node.js dependencies` \
