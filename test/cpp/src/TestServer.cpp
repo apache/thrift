@@ -113,7 +113,7 @@ public:
   void testBinary(std::string& _return, const std::string& thing) {
     std::ostringstream hexstr;
     hexstr << std::hex << thing;
-    printf("testBinary(%s)\n", hexstr.str().c_str());
+    printf("testBinary(%lu: %s)\n", thing.size(), hexstr.str().c_str());
     _return = thing;
   }
 
@@ -345,7 +345,7 @@ class SecondHandler : public SecondServiceIf
   public:
     void secondtestString(std::string& result, const std::string& thing)
     { result = "testString(\"" + thing + "\")"; }
-};	
+};
 
 class TestProcessorEventHandler : public TProcessorEventHandler {
   virtual void* getContext(const char* fn_name, void* serverContext) {
@@ -606,10 +606,10 @@ int main(int argc, char** argv) {
       } else if (protocol_type == "compact") {
       } else if (protocol_type == "json") {
       } else if (protocol_type == "header") {
-      } else if (protocol_type == "multi") {	// multiplexed binary
-      } else if (protocol_type == "multic") {	// multiplexed compact
-      } else if (protocol_type == "multih") {	// multiplexed header
-      } else if (protocol_type == "multij") {	// multiplexed json
+      } else if (protocol_type == "multi") {  // multiplexed binary
+      } else if (protocol_type == "multic") { // multiplexed compact
+      } else if (protocol_type == "multih") { // multiplexed header
+      } else if (protocol_type == "multij") { // multiplexed json
       } else {
         throw invalid_argument("Unknown protocol type " + protocol_type);
       }

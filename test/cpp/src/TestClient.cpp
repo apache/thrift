@@ -44,6 +44,7 @@
 #include <boost/algorithm/string.hpp>
 #include <boost/filesystem.hpp>
 #include <boost/program_options.hpp>
+#include <boost/random/random_device.hpp>
 #include <thrift/stdcxx.h>
 #if _WIN32
 #include <thrift/windows/TWinsockSingleton.h>
@@ -130,13 +131,16 @@ bool print_eq(T expected, T actual) {
     return_code |= ERR_BASETYPES;                                                                  \
   }
 
+int binary_test(ThriftTestClient& testClient, string::size_type siz);
+
+BOOST_CONSTEXPR_OR_CONST int ERR_BASETYPES = 1;
+BOOST_CONSTEXPR_OR_CONST int ERR_STRUCTS = 2;
+BOOST_CONSTEXPR_OR_CONST int ERR_CONTAINERS = 4;
+BOOST_CONSTEXPR_OR_CONST int ERR_EXCEPTIONS = 8;
+BOOST_CONSTEXPR_OR_CONST int ERR_UNKNOWN = 64;
+
 int main(int argc, char** argv) {
   cout.precision(19);
-  int ERR_BASETYPES = 1;
-  int ERR_STRUCTS = 2;
-  int ERR_CONTAINERS = 4;
-  int ERR_EXCEPTIONS = 8;
-  int ERR_UNKNOWN = 64;
 
   string testDir  = boost::filesystem::system_complete(argv[0]).parent_path().parent_path().parent_path().string();
   string caPath   = testDir + "/keys/CA.pem";
@@ -161,13 +165,13 @@ int main(int argc, char** argv) {
   boost::program_options::options_description desc("Allowed options");
   desc.add_options()
       ("help,h", "produce help message")
-      ("host", 
-          boost::program_options::value<string>(&host)->default_value(host), 
+      ("host",
+          boost::program_options::value<string>(&host)->default_value(host),
           "Host to connect")
-      ("port", 
-          boost::program_options::value<int>(&port)->default_value(port), 
+      ("port",
+          boost::program_options::value<int>(&port)->default_value(port),
           "Port number to connect")
-      ("domain-socket", 
+      ("domain-socket",
           boost::program_options::value<string>(&domain_socket)->default_value(domain_socket),
           "Domain Socket (e.g. /tmp/ThriftTest.thrift), instead of host and port")
       ("abstract-namespace",
@@ -179,7 +183,7 @@ int main(int argc, char** argv) {
       ("protocol",
           boost::program_options::value<string>(&protocol_type)->default_value(protocol_type),
           "Protocol: binary, compact, header, json, multi, multic, multih, multij")
-      ("ssl", 
+      ("ssl",
           "Encrypted Transport using SSL")
       ("testloops,n",
           boost::program_options::value<int>(&numTests)->default_value(numTests),
@@ -244,7 +248,7 @@ int main(int argc, char** argv) {
   stdcxx::shared_ptr<TSocket> socket;
   stdcxx::shared_ptr<TTransport> transport;
   stdcxx::shared_ptr<TProtocol> protocol;
-  stdcxx::shared_ptr<TProtocol> protocol2;	// SecondService for multiplexed
+  stdcxx::shared_ptr<TProtocol> protocol2;  // SecondService for multiplexed
 
   if (ssl) {
     cout << "Client Certificate File: " << certPath << endl;
@@ -295,9 +299,9 @@ int main(int argc, char** argv) {
   }
 
   if (boost::starts_with(protocol_type, "multi")) {
-	protocol2 = stdcxx::make_shared<TMultiplexedProtocol>(protocol, "SecondService");
-	// we don't need access to the original protocol any more, so...
-	protocol = stdcxx::make_shared<TMultiplexedProtocol>(protocol, "ThriftTest");
+  protocol2 = stdcxx::make_shared<TMultiplexedProtocol>(protocol, "SecondService");
+  // we don't need access to the original protocol any more, so...
+  protocol = stdcxx::make_shared<TMultiplexedProtocol>(protocol, "ThriftTest");
   }
 
   // Connection info
@@ -387,18 +391,18 @@ int main(int argc, char** argv) {
     // in the middle of the ThriftTest
     //
     if (boost::starts_with(protocol_type, "multi")) {
-		SecondServiceClient ssc(protocol2);
-		// transport is already open...
-		  
+    SecondServiceClient ssc(protocol2);
+    // transport is already open...
+
         try {
           cout << "secondService.secondTestString(\"foo\") => " << flush;
-	  	  std::string result;
-		  ssc.secondtestString(result, "foo");
-		  cout << "{" << result << "}" << endl;
-	    } catch (std::exception& e) {
-		  cout << "  *** FAILED *** " << e.what() << endl;
-		  return_code |= ERR_EXCEPTIONS;
-		}
+        std::string result;
+      ssc.secondtestString(result, "foo");
+      cout << "{" << result << "}" << endl;
+      } catch (std::exception& e) {
+      cout << "  *** FAILED *** " << e.what() << endl;
+      return_code |= ERR_EXCEPTIONS;
+    }
     }
 
     try {
@@ -568,72 +572,9 @@ int main(int argc, char** argv) {
     /**
      * BINARY TEST
      */
-    cout << "testBinary(empty)" << endl;
-    try {
-      string bin_result;
-      testClient.testBinary(bin_result, string());
-      if (!bin_result.empty()) {
-        cout << endl << "*** FAILED ***" << endl;
-        cout << "invalid length: " << bin_result.size() << endl;
-        return_code |= ERR_BASETYPES;
-      }
-    } catch (TTransportException&) {
-      throw;
-    } catch (exception& ex) {
-      cout << "*** FAILED ***" << endl << ex.what() << endl;
-      return_code |= ERR_BASETYPES;
-    }
-    cout << "testBinary([-128..127]) = {" << flush;
-    const signed char bin_data[256]
-        = {-128, -127, -126, -125, -124, -123, -122, -121, -120, -119, -118, -117, -116, -115, -114,
-           -113, -112, -111, -110, -109, -108, -107, -106, -105, -104, -103, -102, -101, -100, -99,
-           -98,  -97,  -96,  -95,  -94,  -93,  -92,  -91,  -90,  -89,  -88,  -87,  -86,  -85,  -84,
-           -83,  -82,  -81,  -80,  -79,  -78,  -77,  -76,  -75,  -74,  -73,  -72,  -71,  -70,  -69,
-           -68,  -67,  -66,  -65,  -64,  -63,  -62,  -61,  -60,  -59,  -58,  -57,  -56,  -55,  -54,
-           -53,  -52,  -51,  -50,  -49,  -48,  -47,  -46,  -45,  -44,  -43,  -42,  -41,  -40,  -39,
-           -38,  -37,  -36,  -35,  -34,  -33,  -32,  -31,  -30,  -29,  -28,  -27,  -26,  -25,  -24,
-           -23,  -22,  -21,  -20,  -19,  -18,  -17,  -16,  -15,  -14,  -13,  -12,  -11,  -10,  -9,
-           -8,   -7,   -6,   -5,   -4,   -3,   -2,   -1,   0,    1,    2,    3,    4,    5,    6,
-           7,    8,    9,    10,   11,   12,   13,   14,   15,   16,   17,   18,   19,   20,   21,
-           22,   23,   24,   25,   26,   27,   28,   29,   30,   31,   32,   33,   34,   35,   36,
-           37,   38,   39,   40,   41,   42,   43,   44,   45,   46,   47,   48,   49,   50,   51,
-           52,   53,   54,   55,   56,   57,   58,   59,   60,   61,   62,   63,   64,   65,   66,
-           67,   68,   69,   70,   71,   72,   73,   74,   75,   76,   77,   78,   79,   80,   81,
-           82,   83,   84,   85,   86,   87,   88,   89,   90,   91,   92,   93,   94,   95,   96,
-           97,   98,   99,   100,  101,  102,  103,  104,  105,  106,  107,  108,  109,  110,  111,
-           112,  113,  114,  115,  116,  117,  118,  119,  120,  121,  122,  123,  124,  125,  126,
-           127};
-    try {
-      string bin_result;
-      testClient.testBinary(bin_result, string(reinterpret_cast<const char *>(bin_data), 256));
-      if (bin_result.size() != 256) {
-        cout << endl << "*** FAILED ***" << endl;
-        cout << "invalid length: " << bin_result.size() << endl;
-        return_code |= ERR_BASETYPES;
-      } else {
-        bool first = true;
-        bool failed = false;
-        for (int i = 0; i < 256; ++i) {
-          if (!first)
-            cout << ",";
-          else
-            first = false;
-          cout << static_cast<int>(bin_result[i]);
-          if (!failed && bin_result[i] != i - 128) {
-            failed = true;
-          }
-        }
-        cout << "}" << endl;
-        if (failed) {
-          cout << "*** FAILED ***" << endl;
-          return_code |= ERR_BASETYPES;
-        }
-      }
-    } catch (TTransportException&) {
-      throw;
-    } catch (exception& ex) {
-      cout << "*** FAILED ***" << endl << ex.what() << endl;
-      return_code |= ERR_BASETYPES;
+    for (string::size_type i = 0; i < 131073 && !return_code; ) {
+      return_code |= binary_test(testClient, i);
+      if (i > 0) { i *= 2; } else { ++i; }
     }
 
 
@@ -1137,7 +1078,7 @@ int main(int argc, char** argv) {
       return_code |= ERR_BASETYPES;
 
     cout << endl << "All tests done." << endl << flush;
-    
+
     uint64_t stop = now();
     uint64_t tot = stop - start;
 
@@ -1163,4 +1104,67 @@ int main(int argc, char** argv) {
   cout << "Avg time: " << time_avg << " us" << endl;
 
   return return_code;
+}
+
+void binary_fill(std::string& str, string::size_type siz)
+{
+    static const signed char bin_data[256]
+        = {-128, -127, -126, -125, -124, -123, -122, -121, -120, -119, -118, -117, -116, -115, -114,
+           -113, -112, -111, -110, -109, -108, -107, -106, -105, -104, -103, -102, -101, -100, -99,
+           -98,  -97,  -96,  -95,  -94,  -93,  -92,  -91,  -90,  -89,  -88,  -87,  -86,  -85,  -84,
+           -83,  -82,  -81,  -80,  -79,  -78,  -77,  -76,  -75,  -74,  -73,  -72,  -71,  -70,  -69,
+           -68,  -67,  -66,  -65,  -64,  -63,  -62,  -61,  -60,  -59,  -58,  -57,  -56,  -55,  -54,
+           -53,  -52,  -51,  -50,  -49,  -48,  -47,  -46,  -45,  -44,  -43,  -42,  -41,  -40,  -39,
+           -38,  -37,  -36,  -35,  -34,  -33,  -32,  -31,  -30,  -29,  -28,  -27,  -26,  -25,  -24,
+           -23,  -22,  -21,  -20,  -19,  -18,  -17,  -16,  -15,  -14,  -13,  -12,  -11,  -10,  -9,
+           -8,   -7,   -6,   -5,   -4,   -3,   -2,   -1,   0,    1,    2,    3,    4,    5,    6,
+           7,    8,    9,    10,   11,   12,   13,   14,   15,   16,   17,   18,   19,   20,   21,
+           22,   23,   24,   25,   26,   27,   28,   29,   30,   31,   32,   33,   34,   35,   36,
+           37,   38,   39,   40,   41,   42,   43,   44,   45,   46,   47,   48,   49,   50,   51,
+           52,   53,   54,   55,   56,   57,   58,   59,   60,   61,   62,   63,   64,   65,   66,
+           67,   68,   69,   70,   71,   72,   73,   74,   75,   76,   77,   78,   79,   80,   81,
+           82,   83,   84,   85,   86,   87,   88,   89,   90,   91,   92,   93,   94,   95,   96,
+           97,   98,   99,   100,  101,  102,  103,  104,  105,  106,  107,  108,  109,  110,  111,
+           112,  113,  114,  115,  116,  117,  118,  119,  120,  121,  122,  123,  124,  125,  126,
+           127};
+
+    str.resize(siz);
+    char *ptr = &str[0];
+    string::size_type pos = 0;
+    for (string::size_type i = 0; i < siz; ++i)
+    {
+        if (pos == 255) { pos = 0; } else { ++pos; }
+        *ptr++ = bin_data[pos];
+    }
+}
+
+int binary_test(ThriftTestClient& testClient, string::size_type siz)
+{
+    string bin_request;
+    string bin_result;
+
+    cout << "testBinary(siz = " << siz << ")" << endl;
+    binary_fill(bin_request, siz);
+    try {
+        testClient.testBinary(bin_result, bin_request);
+
+        if (bin_request.size() != bin_result.size()) {
+            cout << "*** FAILED: request size " << bin_request.size() << "; result size " << bin_result.size() << endl;
+            return ERR_BASETYPES;
+        }
+
+        for (string::size_type i = 0; i < siz; ++i) {
+            if (bin_request.at(i) != bin_result.at(i)) {
+                cout << "*** FAILED: at position " << i << " request[i] is h" << hex << bin_request.at(i) << " result[i] is h" << hex << bin_result.at(i) << endl;
+                return ERR_BASETYPES;
+            }
+        }
+    } catch (TTransportException&) {
+        throw;
+    } catch (exception& ex) {
+        cout << "*** FAILED ***" << endl << ex.what() << endl;
+        return ERR_BASETYPES;
+    }
+
+    return 0;
 }
