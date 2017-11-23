@@ -137,11 +137,13 @@ class TestClient {
         catch (e : TException)
         {
             trace('TException: $e');
+            trace(haxe.CallStack.toString(haxe.CallStack.exceptionStack()));
             exitCode = 0xFF;
         }
         catch (e : Dynamic)
         {
             trace('Exception: $e');
+            trace(haxe.CallStack.toString(haxe.CallStack.exceptionStack()));
             exitCode = 0xFF;
         }
 

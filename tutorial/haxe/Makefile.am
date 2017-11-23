@@ -20,31 +20,41 @@
 BIN_CPP = bin/Main-debug
 BIN_PHP = bin/php/Main-debug.php
 BIN_PHP_WEB = bin/php-web-server/Main-debug.php
+BIN_JS = bin/js/Main.js
+BIN_NODE_JS = bin/nodejs/Main.js
 
 gen-haxe/tutorial/calculator.hx gen-haxe/shared/shared_service.hx: $(top_srcdir)/tutorial/tutorial.thrift
 	$(THRIFT) --gen haxe -r $<
 
-all-local: $(BIN_CPP) $(BIN_PHP) $(BIN_PHP_WEB)
+all-local: $(BIN_CPP) $(BIN_PHP) $(BIN_PHP_WEB) $(BIN_NODE_JS) $(BIN_JS)
 
 check: gen-haxe/tutorial/calculator.hx
 
-$(BIN_CPP): \
+HX_SRC = \
 		src/*.hx \
 		../../lib/haxe/src/org/apache/thrift/**/*.hx \
 		gen-haxe/tutorial/calculator.hx
+
+$(BIN_CPP): $(HX_SRC) \
+		cpp.hxml
 	$(HAXE) --cwd .  cpp.hxml
 
-$(BIN_PHP): \
-		src/*.hx \
-		../../lib/haxe/src/org/apache/thrift/**/*.hx \
-		gen-haxe/tutorial/calculator.hx
+$(BIN_PHP): $(HX_SRC) \
+		php.hxml
 	$(HAXE) --cwd .  php.hxml
 
-$(BIN_PHP_WEB): \
-		src/*.hx \
-		../../lib/haxe/src/org/apache/thrift/**/*.hx \
-		gen-haxe/tutorial/calculator.hx
+$(BIN_PHP_WEB): $(HX_SRC) \
+		php-web-server.hxml
 	$(HAXE) --cwd .  php-web-server.hxml
+
+$(BIN_NODE_JS): $(HX_SRC) \
+		nodejs.hxml
+	haxelib list | grep hxnodejs > /dev/null || haxelib install hxnodejs
+	$(HAXE) --cwd .  nodejs.hxml
+
+$(BIN_JS): $(HX_SRC) \
+		javascript.hxml
+	$(HAXE) --cwd .  javascript.hxml
 
 tutorialserver: all
 	$(BIN_CPP) server
@@ -76,8 +86,17 @@ tutorialserver_php_http: all
 tutorialclient_http: all
 	$(BIN_CPP) client http
 
+tutorialclient_php_http: all
+	php -f $(BIN_PHP) client http
+
+tutorialclient_nodejs_http_json: all
+	node $(BIN_NODE_JS) client http json
+
+tutorialclient_nodejs_http: all
+	node $(BIN_NODE_JS) client http
+
 clean-local:
-	$(RM) -r gen-haxe bin
+	$(RM) -r gen-haxe bin node_modules
 
 EXTRA_DIST = \
              src \
@@ -86,10 +105,12 @@ EXTRA_DIST = \
              flash.hxml \
              java.hxml \
              javascript.hxml \
+             nodejs.hxml \
              neko.hxml \
              php.hxml \
              python.hxml \
              project.hide \
              Tutorial.hxproj \
              make_all.bat \
-             make_all.sh
+             make_all.sh \
+			 router.php

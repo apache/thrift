@@ -28,7 +28,6 @@ import org.apache.thrift.meta_data.*;
 import tutorial.*;
 import shared.*;
 
-
 enum Prot {
     binary;
     json;
@@ -39,6 +38,10 @@ enum Trns {
     http;
 }
 
+#if js
+@:expose
+@:keep
+#end
 class Main {
 
     private static var server : Bool = false;
@@ -52,7 +55,7 @@ class Main {
 
     static function main() {
 
-        #if ! (flash || js || phpwebserver)
+        #if ! (flash || phpwebserver || (js && !nodejs))
         try {
               ParseArgs();
         } catch (e : String) {
@@ -62,6 +65,19 @@ class Main {
         }
 
         #elseif  phpwebserver
+        //support json proto via url
+        var uri = php.Web.getURI();
+        if(uri == '/json') {
+            prot = json;
+        } else if (uri != '/' && uri.length > 0) {
+            //work as simple web server for files in directory
+            Sys.stderr().writeString('${uri}\n');
+            var path = uri.substr(1); //remove trailing /
+            if(sys.FileSystem.exists(path) && !sys.FileSystem.isDirectory(path)) {
+                php.Lib.printFile(path);
+                return;
+            }
+        }
         //forcing server
         server = true;
         trns = http;
@@ -71,8 +87,14 @@ class Main {
           Sys.println('http endpoint for thrift test server');
           return;
         }
+        //provide content type
+        #elseif (js && !nodejs)
+        trns = http;
+        prot = json;
+        initJsBrowser();
         #end
 
+        #if ! (flash || (js && !nodejs))
         try {
             if (server)
                 RunServer();
@@ -83,7 +105,31 @@ class Main {
         }
 
         trace("Completed.");
+        #end
     }
+    #if (js && !nodejs)
+    private static function initJsBrowser()
+    {
+        //remap trace to div
+        haxe.Log.trace = function(v:Dynamic, ?infos:haxe.PosInfos)
+        {
+          // handle trace
+          var newValue : Dynamic;
+          if (infos != null && infos.customParams!=null) {
+            var extra:String = "";
+            for( v in infos.customParams )
+              extra += "," + v;
+            newValue = v + extra;
+          }
+          else {
+            newValue = v;
+          }
+          var msg = infos != null ? infos.fileName + ':' + infos.lineNumber + ': ' : '';
+          var traceDiv = new js.JQuery('#trace');
+          traceDiv.html(traceDiv.html() + '<br />${msg}${newValue}');
+        }
+    }
+    #end
 
     #if phpwebserver
     private static function initPhpWebServer()
@@ -109,7 +155,7 @@ class Main {
     #end
 
 
-    #if ! (flash || js)
+    #if ! (flash || (js && !nodejs))
 
     private static function GetHelp() : String {
         return Sys.executablePath()+"  modus  trnsOption  transport  protocol\n"
@@ -178,6 +224,14 @@ class Main {
 
     #end
 
+    public static function setProtJson() {
+        prot = json;
+    }
+
+    public static function setProtBinary() {
+        prot = binary;
+    }
+
     private static function ClientSetup() : Calculator {
          trace("Client configuration:");
 
@@ -190,6 +244,11 @@ class Main {
             transport = new TSocket( targetHost, targetPort);
         case http:
             var uri = 'http://${targetHost}:${targetPort}';
+            #if js
+            if(haxe.Json.stringify(prot) == haxe.Json.stringify(json)) {
+                uri += '/json';
+            }
+            #end
             trace('- HTTP transport $uri');
             transport = new THttpClient(uri);
         default:
@@ -236,8 +295,10 @@ class Main {
             trace("ping() successful");
         } catch(error : TException) {
             trace('ping() failed: $error');
+             trace(haxe.CallStack.toString(haxe.CallStack.exceptionStack()));
         } catch(error : Dynamic) {
             trace('ping() failed: $error');
+            trace(haxe.CallStack.toString(haxe.CallStack.exceptionStack()));
         }
 
         try {

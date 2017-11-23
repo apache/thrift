@@ -39,14 +39,18 @@ class TestServer
             switch( args.transport) {
             case socket:
                 trace("- socket port "+args.port);
-                transport = new TServerSocket( args.port);
+                #if !js
+                    transport = new TServerSocket( args.port);
+                #else
+                    throw "Server Socket not implemented yet";
+                #end
             case http:
                 trace("- http");
                 #if !phpwebserver
-                  throw "HTTP server not implemented yet";
-                 //transport = new THttpServer( targetHost);
+                    throw "HTTP server not implemented yet";
+                    //transport = new THttpServer( targetHost);
                 #else
-                transport =    new TWrappingServerTransport(
+                    transport =    new TWrappingServerTransport(
                         new TStreamTransport(
                           new TFileStream("php://input", Read),
                           new TFileStream("php://output", Append)
@@ -86,6 +90,9 @@ class TestServer
 
 
             // Processor
+            #if js
+                throw "Server Handler not implemented yet";
+            #else
             var handler = new TestServerHandler();
             var processor = new ThriftTestProcessor(handler);
 
@@ -117,6 +124,7 @@ class TestServer
             // Run it
             server.Serve();
             trace("done.");
+            #end //!js
 
         }
         catch (x : TException)

@@ -19,8 +19,8 @@
  
 #integrate files to classpath
 -cp src
--cp ../src
 -cp gen-haxe
+-cp ../../lib/haxe/src
 
 #libs
 -lib hxnodejs
@@ -29,7 +29,7 @@
 -main Main
 
 #JavaScript target
--js bin/Main.js
+-js bin/nodejs/Main.js
 
 #You can use -D source-map-content (requires Haxe 3.1+) to have the .hx 
 #files directly embedded into the map file, this way you only have to 

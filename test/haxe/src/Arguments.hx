@@ -71,7 +71,7 @@ class Arguments
 
 
     public function new() {
-        #if sys
+        #if (sys || nodejs)
           #if !phpwebserver
           try {
               ParseArgs();
@@ -84,12 +84,14 @@ class Arguments
             server = true;
             transport = http;
           #end
+        #elseif js
+            transport = http;
         #else
         trace("WN: Platform does not support program arguments, using defaults.");
         #end
     }
 
-    #if sys
+    #if (sys || nodejs)
 
     private static function GetHelp() : String {
         var sProg = Path.withoutDirectory( Sys.executablePath());

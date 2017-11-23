@@ -26,7 +26,7 @@
 -main Main
 
 #JavaScript target
--js bin/Tutorial.js
+-js bin/js/Main.js
 
 #You can use -D source-map-content (requires Haxe 3.1+) to have the .hx 
 #files directly embedded into the map file, this way you only have to 

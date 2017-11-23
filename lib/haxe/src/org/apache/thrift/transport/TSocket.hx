@@ -262,7 +262,7 @@ class TSocket extends TTransport  {
     public override function open()  :  Void
     {
         #if js
-        var socket = new WebSocket();
+        var socket = new WebSocket(host);
         socket.onmessage = function( event : js.html.MessageEvent) {
             this.input = event.data;
         }
@@ -308,10 +308,13 @@ class TSocket extends TTransport  {
         #end
     }
 
-    public function setTimeout( timeout : Float ) : Void {
+    public function setTimeout( timeout : Float ) : Void 
+    {
+        #if !js
         if(isOpen()) {
             socket.setTimeout(timeout);
         }
+        #end
         this.timeout = timeout;
     }
 

@@ -50,7 +50,6 @@ class Main
                 TestServer.Execute(args);
             else
                 TestClient.Execute(args);
-
             trace("Completed.");
         } catch (e : String) {
             trace(e);

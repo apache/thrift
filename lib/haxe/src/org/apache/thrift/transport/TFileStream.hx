@@ -24,6 +24,9 @@ import haxe.io.BytesBuffer;
 import haxe.io.Input;
 import haxe.io.Output;
 
+#if js
+import js.node.Fs;
+#end
 
 enum TFileMode {
     CreateNew;
@@ -36,8 +39,14 @@ class TFileStream implements TStream {
 
     public var FileName(default,null) : String;
 
+    #if !js
     private var Input  : sys.io.FileInput;
     private var Output : sys.io.FileOutput;
+    #else
+    private var Input  : Null<Int>;
+    private var Output  : Null<Int>;
+    private var lastInputOffset : Int = 0;
+    #end
 
 
     public function new( fname : String, mode : TFileMode) {
@@ -45,13 +54,25 @@ class TFileStream implements TStream {
         switch ( mode)
         {
             case TFileMode.CreateNew:
+                #if !js
                 Output = sys.io.File.write( fname, true);
+                #else
+                Output = Fs.openSync(fname, WriteCreate);
+                #end
 
             case TFileMode.Append:
+                #if !js
                 Output = sys.io.File.append( fname, true);
+                #else
+                Output = Fs.openSync(fname, AppendCreate);
+                #end
 
             case TFileMode.Read:
+                #if !js
                 Input = sys.io.File.read( fname, true);
+                #else
+                Input = Fs.openSync(fname, js.node.FsOpenFlag.Read);
+                #end
 
             default:
                 throw new TTransportException( TTransportException.UNKNOWN,
@@ -62,11 +83,19 @@ class TFileStream implements TStream {
 
     public function Close() : Void {
         if( Input != null) {
+            #if !js
             Input.close();
+            #else
+            Fs.closeSync(Input);
+            #end
             Input = null;
         }
         if( Output != null) {
+            #if !js
             Output.close();
+            #else
+            Fs.closeSync(Output);
+            #end
             Output = null;
         }
     }
@@ -75,26 +104,55 @@ class TFileStream implements TStream {
         if( Input == null)
             throw new TTransportException( TTransportException.NOT_OPEN, "File not open for input");
 
+        #if !js
         return (! Input.eof());
+        #else
+        var bytesRead = 0;
+        var copyBuf = new js.node.Buffer(1);
+        return ((bytesRead = Fs.readSync(Input, copyBuf, 0, 1, lastInputOffset)) > 0);
+        #end
+        
     }
 
     public function Read( buf : Bytes, offset : Int, count : Int) : Int {
         if( Input == null)
             throw new TTransportException( TTransportException.NOT_OPEN, "File not open for input");
 
+        #if !js
         return Input.readBytes( buf, offset, count);
+        #else
+        var bytesRead = 0;
+        var copyJsBuf = new js.node.Buffer(count);
+        bytesRead = Fs.readSync(Input, copyJsBuf, 0, count, lastInputOffset);
+        if(bytesRead > 0) {
+            lastInputOffset += bytesRead;
+            var readBuf = copyJsBuf.hxToBytes();
+            buf.blit(offset, readBuf, 0, bytesRead);
+        }
+        return bytesRead;
+        #end
     }
 
     public function Write( buf : Bytes, offset : Int, count : Int) : Void {
         if( Output == null)
             throw new TTransportException( TTransportException.NOT_OPEN, "File not open for output");
 
+        #if !js
         Output.writeBytes( buf, offset, count);
+        #else
+        var writeBuf = js.node.buffer.Buffer.hxFromBytes(buf);
+        Fs.writeSync(Output, writeBuf, offset, count);
+        #end
     }
 
     public function Flush() : Void {
-        if( Output != null)
+        if( Output != null) {
+            #if !js
             Output.flush();
+            #else
+            Fs.fsyncSync(Output);
+            #end
+        }
     }
 
 }
