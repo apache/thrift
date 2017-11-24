@@ -120,12 +120,6 @@ struct t_const {
   3: required t_const_value value
   100: optional string doc
 }
-struct t_struct {
-  1: required TypeMetadata metadata
-  2: required list<t_field> members
-  3: required bool is_union
-  4: required bool is_xception
-}
 struct t_field {
   1: required string name
   2: required t_type_id type
@@ -135,6 +129,12 @@ struct t_field {
   10: required bool reference
   99: optional map<string, string> annotations
   100: optional string doc
+}
+struct t_struct {
+  1: required TypeMetadata metadata
+  2: required list<t_field> members
+  3: required bool is_union
+  4: required bool is_xception
 }
 struct t_function {
   1: required string name
