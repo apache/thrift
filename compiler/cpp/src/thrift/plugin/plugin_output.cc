@@ -170,6 +170,7 @@ T_STORE(type)
 T_STORE(const)
 T_STORE(service)
 #undef T_STORE
+// this id_generator is for gensymm-ing t_program_id
 id_generator program_cache ;
 
 #define THRIFT_ASSIGN_ID_N(t, from_name, to_name)                                                  \
