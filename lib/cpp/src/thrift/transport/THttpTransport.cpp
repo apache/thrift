@@ -84,8 +84,10 @@ uint32_t THttpTransport::readEnd() {
 uint32_t THttpTransport::readMoreData() {
   uint32_t size;
 
-  // Get more data!
-  refill();
+  if (httpPos_ == httpBufLen_) {
+    // Get more data!
+    refill();
+  }
 
   if (readHeaders_) {
     readHeaders();
