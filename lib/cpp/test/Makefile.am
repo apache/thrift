@@ -28,6 +28,7 @@ BUILT_SOURCES = gen-cpp/AnnotationTest_types.h \
                 gen-cpp/ChildService.h \
                 gen-cpp/EmptyService.h \
                 gen-cpp/ParentService.h \
+		gen-cpp/OneWayTest.h \
                 gen-cpp/proc_types.h
 
 noinst_LTLIBRARIES = libtestgencpp.la libprocessortest.la
@@ -48,6 +49,8 @@ nodist_libtestgencpp_la_SOURCES = \
 	gen-cpp/ThriftTest_constants.h \
 	gen-cpp/TypedefTest_types.cpp \
 	gen-cpp/TypedefTest_types.h \
+	gen-cpp/OneWayTest.cpp \
+	gen-cpp/OneWayTest.h \
 	ThriftTest_extras.cpp \
 	DebugProtoTest_extras.cpp
 
@@ -113,6 +116,7 @@ TESTS = \
 
 UnitTests_SOURCES = \
 	UnitTestMain.cpp \
+	OneWayHTTPTest.cpp \
 	TMemoryBufferTest.cpp \
 	TBufferBaseTest.cpp \
 	Base64Test.cpp \
@@ -130,7 +134,9 @@ endif
 
 UnitTests_LDADD = \
   libtestgencpp.la \
-  $(BOOST_TEST_LDADD)
+  $(BOOST_TEST_LDADD) \
+  $(BOOST_SYSTEM_LDADD) \
+  $(BOOST_THREAD_LDADD)
 
 TInterruptTest_SOURCES = \
 	TSocketInterruptTest.cpp \
