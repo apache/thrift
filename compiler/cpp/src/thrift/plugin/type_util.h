@@ -38,6 +38,7 @@ typename ToType<From>::type* convert(const From& from);
 
 class TypeRegistry;
 void set_global_cache(const TypeRegistry&);
+void clear_global_cache();
 }
 }
 }

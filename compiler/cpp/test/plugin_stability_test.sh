@@ -20,6 +20,11 @@
 #
 
 # this file is intended to be invoked by make.
+#
+# This file runs the compiler twice, using a plugin that just invokes
+# /bin/cat, and compares the output.  If GeneratorInput is
+# nondeterminsitic, you'd expect the output to differ from run-to-run.
+# So this tests that in fact, the output is stable from run-to-run.
 set -e
 mkdir -p gen-bincat
 PATH=.:"$PATH" ../thrift -r -gen bincat ../../../test/Include.thrift > gen-bincat/1.ser

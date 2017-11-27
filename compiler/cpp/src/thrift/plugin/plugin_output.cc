@@ -99,29 +99,62 @@ using namespace apache::thrift;
 
 #define THRIFT_ASSIGN_METADATA() convert(reinterpret_cast<t_type*>(from), to.metadata)
 
+// a generator of sequential unique identifiers for addresses -- so
+// that the TypeCache below can use those IDs instead of
+// addresses. This allows GeneratorInput's various
+// t_{program,type,etc}_id types to be dense consecutively-numbered
+// integers, instead of large random-seeming integers.
+//
+// Furthermore, this allows GeneratorInput to be deterministic (no
+// addresses, so no pseudo-randomness) and that means reproducibility
+// of output.
+const int64_t ONE_MILLION = 1000 * 1000;
+class id_generator {
+public:
+  id_generator() : addr2id_(), next_id_(ONE_MILLION) {}
+
+  void clear() {
+    addr2id_.clear() ;
+    next_id_ = ONE_MILLION ;
+  }
+
+  int64_t gensym(const int64_t addr) {
+    if (!addr) return 0L ;
+    std::map<int64_t, int64_t>::iterator it = addr2id_.find(addr);
+    if (it != addr2id_.end()) return it->second ;
+    int64_t id = next_id_++ ;
+    addr2id_.insert(std::make_pair(addr, id)) ;
+    return id ;
+  }
+
+  std::map<int64_t, int64_t> addr2id_ ;
+  int64_t next_id_ ;
+} ;
+
 // To avoid multiple instances of same type, t_type, t_const and t_service are stored in one place
 // and referenced by ID.
 template <typename T>
 struct TypeCache {
   typedef typename plugin::ToType<T>::type to_type;
+  id_generator idgen ;
   std::map<int64_t, to_type> cache;
 
   template <typename T2>
   int64_t store(T2* t) {
-    intptr_t id = reinterpret_cast<intptr_t>(t);
-    if (id) {
-      typename std::map<int64_t, to_type>::iterator it = cache.find(id);
-      if (it == cache.end()) {
-        // HACK: fake resolve for recursive type
-        cache.insert(std::make_pair(id, to_type()));
-        // overwrite with true value
-        cache[id] = convert(t);
-      }
-    }
-    return static_cast<int64_t>(id);
+    intptr_t addr = reinterpret_cast<intptr_t>(t);
+    if (!addr) return 0L ;
+
+    int64_t id = idgen.gensym(addr) ;
+    if (cache.end() != cache.find(id)) return id ;
+
+    // HACK: fake resolve for recursive type
+    cache.insert(std::make_pair(id, to_type()));
+    // overwrite with true value
+    cache[id] = convert(t);
+    return id ;
   }
 
-  void clear() { cache.clear(); }
+  void clear() { cache.clear() ; idgen.clear(); }
 };
 
 template <typename T>
@@ -137,6 +170,7 @@ T_STORE(type)
 T_STORE(const)
 T_STORE(service)
 #undef T_STORE
+id_generator program_cache ;
 
 #define THRIFT_ASSIGN_ID_N(t, from_name, to_name)                                                  \
   do {                                                                                             \
@@ -157,7 +191,7 @@ T_STORE(service)
   } while (0)
 
 THRIFT_CONVERSION_N(::t_type, plugin::TypeMetadata) {
-  to.program_id = reinterpret_cast<int64_t>(from->get_program());
+  to.program_id = program_cache.gensym(reinterpret_cast<int64_t>(from->get_program()));
   THRIFT_ASSIGN_N(annotations_, annotations, );
   if (from->has_doc()) {
     to.__set_doc(from->get_doc());
@@ -341,6 +375,7 @@ void clear_global_cache() {
   type_cache.clear();
   const_cache.clear();
   service_cache.clear();
+  program_cache.clear() ;
 }
 
 THRIFT_CONVERSION(t_program) {
@@ -360,7 +395,7 @@ THRIFT_CONVERSION(t_program) {
   THRIFT_ASSIGN_LIST_ID(t_const, const);
   THRIFT_ASSIGN_LIST_ID(t_service, service);
   THRIFT_ASSIGN_LIST_N(t_program, get_includes(), includes);
-  to.program_id = reinterpret_cast<plugin::t_program_id>(from);
+  to.program_id = program_cache.gensym(reinterpret_cast<plugin::t_program_id>(from));
 }
 
 PluginDelegateResult delegateToPlugin(t_program* program, const std::string& options) {
@@ -410,3 +445,4 @@ PluginDelegateResult delegateToPlugin(t_program* program, const std::string& opt
   return PLUGIN_NOT_FOUND;
 }
 }
+
