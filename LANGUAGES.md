@@ -1,7 +1,7 @@
 # Apache Thrift Language Support #
 
 Last Modified: 2017-10-05<br>
-Version: 0.10.0+
+Version: 0.11.0+
 
 Thrift supports many programming languages and has an impressive test suite that exercises most of the languages, protocols, and transports that represents a matrix of thousands of possible combinations.  Each language typically has a minimum required version as well as support libraries - some mandatory and some optional.  All of this information is provided below to help you assess whether you can use Apache Thrift with your project.  Obviously this is a complex matrix to maintain and may not be correct in all cases - if you spot an error please inform the developers using the mailing list.
 

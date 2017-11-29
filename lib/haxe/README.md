@@ -69,10 +69,10 @@ Thrift Haxe bindings
 Thrift Haxe bindings can be set up via the `haxelib` tool  
 either from the official ASF repo, or via the github mirror.
 
-- To set up any **stable version**, choose the appropriate branch (e.g. `0.10.0`):
+- To set up any **stable version**, choose the appropriate branch (e.g. `0.11.0`):
 
-    - `haxelib git thrift https://git.apache.org/thrift.git 0.10.0 lib/haxe`
-    - `haxelib git thrift https://github.com/apache/thrift.git 0.10.0 lib/haxe`
+    - `haxelib git thrift https://git.apache.org/thrift.git 0.11.0 lib/haxe`
+    - `haxelib git thrift https://github.com/apache/thrift.git 0.11.0 lib/haxe`
 
 - To set up the current **development version**, use the `master` branch:
   
