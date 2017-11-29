@@ -409,3 +409,8 @@ struct StructB {
   1: optional StructA aa;
   2: required StructA ab;
 }
+
+service OneWayTest {
+  void roundTripRPC(),
+  oneway void oneWayRPC()
+}

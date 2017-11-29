@@ -28,6 +28,7 @@ BUILT_SOURCES = gen-cpp/AnnotationTest_types.h \
                 gen-cpp/ChildService.h \
                 gen-cpp/EmptyService.h \
                 gen-cpp/ParentService.h \
+		gen-cpp/OneWayTest.h \
                 gen-cpp/proc_types.h
 
 noinst_LTLIBRARIES = libtestgencpp.la libprocessortest.la
@@ -48,6 +49,8 @@ nodist_libtestgencpp_la_SOURCES = \
 	gen-cpp/ThriftTest_constants.h \
 	gen-cpp/TypedefTest_types.cpp \
 	gen-cpp/TypedefTest_types.h \
+	gen-cpp/OneWayTest.cpp \
+	gen-cpp/OneWayTest.h \
 	ThriftTest_extras.cpp \
 	DebugProtoTest_extras.cpp
 
@@ -113,6 +116,7 @@ TESTS = \
 
 UnitTests_SOURCES = \
 	UnitTestMain.cpp \
+	OneWayHTTPTest.cpp \
 	TMemoryBufferTest.cpp \
 	TBufferBaseTest.cpp \
 	Base64Test.cpp \
@@ -130,7 +134,9 @@ endif
 
 UnitTests_LDADD = \
   libtestgencpp.la \
-  $(BOOST_TEST_LDADD)
+  $(BOOST_TEST_LDADD) \
+  $(BOOST_SYSTEM_LDADD) \
+  $(BOOST_THREAD_LDADD)
 
 TInterruptTest_SOURCES = \
 	TSocketInterruptTest.cpp \
@@ -382,7 +388,7 @@ gen-cpp/Recursive_types.cpp gen-cpp/Recursive_types.h: $(top_srcdir)/test/Recurs
 gen-cpp/Service.cpp gen-cpp/StressTest_types.cpp: $(top_srcdir)/test/StressTest.thrift
 	$(THRIFT) --gen cpp $<
 
-gen-cpp/SecondService.cpp gen-cpp/ThriftTest_constants.cpp gen-cpp/ThriftTest.cpp gen-cpp/ThriftTest_types.cpp gen-cpp/ThriftTest_types.h: $(top_srcdir)/test/ThriftTest.thrift
+gen-cpp/SecondService.cpp gen-cpp/ThriftTest_constants.cpp gen-cpp/ThriftTest.cpp gen-cpp/ThriftTest_types.cpp gen-cpp/ThriftTest_types.h gen-cpp/OneWayTest.cpp gen-cpp/OneWayTest.h: $(top_srcdir)/test/ThriftTest.thrift
 	$(THRIFT) --gen cpp $<
 
 gen-cpp/ChildService.cpp gen-cpp/ChildService.h gen-cpp/ParentService.cpp gen-cpp/ParentService.h gen-cpp/proc_types.cpp gen-cpp/proc_types.h: processor/proc.thrift
