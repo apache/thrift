@@ -82,6 +82,7 @@ EXTRA_DIST = \
 	src \
 	coding_standards.md \
 	rebar.config \
+	rebar.config.script \
 	rebar.test.config \
 	test \
 	README.md

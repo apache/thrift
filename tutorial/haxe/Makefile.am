@@ -80,16 +80,18 @@ clean-local:
 	$(RM) -r gen-haxe bin
 
 EXTRA_DIST = \
-             src \
-             cpp.hxml \
-             csharp.hxml \
-             flash.hxml \
-             java.hxml \
-             javascript.hxml \
-             neko.hxml \
-             php.hxml \
-             python.hxml \
-             project.hide \
-             Tutorial.hxproj \
-             make_all.bat \
-             make_all.sh
+	src \
+	cpp.hxml \
+	csharp.hxml \
+	flash.hxml \
+	java.hxml \
+	javascript.hxml \
+	php-web-server.hxml \
+	neko.hxml \
+	php.hxml \
+	python.hxml \
+	router.php \
+	project.hide \
+	Tutorial.hxproj \
+	make_all.bat \
+	make_all.sh
