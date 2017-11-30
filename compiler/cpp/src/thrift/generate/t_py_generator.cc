@@ -1979,17 +1979,16 @@ void t_py_generator::generate_process_function(t_service* tservice, t_function* 
     }
 
   } else if (gen_tornado_) {
-    // TODO: Propagate arbitrary exception raised by handler to client as does plain "py"
-
     // Generate the function call
     t_struct* arg_struct = tfunction->get_arglist();
     const std::vector<t_field*>& fields = arg_struct->get_members();
     vector<t_field*>::const_iterator f_iter;
 
-    if (xceptions.size() > 0) {
-      f_service_ << indent() << "try:" << endl;
-      indent_up();
+    if (!tfunction->is_oneway()) {
+      indent(f_service_) << "msg_type = TMessageType.REPLY" << endl;
     }
+    f_service_ << indent() << "try:" << endl;
+    indent_up();
     f_service_ << indent();
     if (!tfunction->is_oneway() && !tfunction->get_returntype()->is_void()) {
       f_service_ << "result.success = ";
@@ -2006,27 +2005,43 @@ void t_py_generator::generate_process_function(t_service* tservice, t_function* 
     }
     f_service_ << "))" << endl;
 
-    if (!tfunction->is_oneway() && xceptions.size() > 0) {
-      indent_down();
+    indent_down();
+    if (!tfunction->is_oneway()) {
       for (x_iter = xceptions.begin(); x_iter != xceptions.end(); ++x_iter) {
-        f_service_ << indent() << "except " << type_name((*x_iter)->get_type()) << " as "
-                   << (*x_iter)->get_name() << ":" << endl;
-        if (!tfunction->is_oneway()) {
-          indent_up();
-          f_service_ << indent() << "result." << (*x_iter)->get_name() << " = "
-                     << (*x_iter)->get_name() << endl;
-          indent_down();
-        } else {
-          f_service_ << indent() << "pass" << endl;
-        }
+        const string& xname = (*x_iter)->get_name();
+        f_service_ << indent() << "except " << type_name((*x_iter)->get_type()) << " as " << xname
+                   << ":" << endl
+                   << indent() << indent_str() << "result." << xname << " = " << xname << endl;
       }
+    }
+    f_service_ << indent() << "except TTransport.TTransportException:" << endl
+               << indent() << indent_str() << "raise" << endl;
+    if (!tfunction->is_oneway()) {
+      f_service_ << indent() << "except TApplicationException as ex:" << endl
+                 << indent() << indent_str()
+                 << "logging.exception('TApplication exception in handler')" << endl
+                 << indent() << indent_str() << "msg_type = TMessageType.EXCEPTION" << endl
+                 << indent() << indent_str() << "result = ex" << endl
+                 << indent() << "except Exception:" << endl
+                 << indent() << indent_str()
+                 << "logging.exception('Unexpected exception in handler')" << endl
+                 << indent() << indent_str() << "msg_type = TMessageType.EXCEPTION" << endl
+                 << indent() << indent_str()
+                 << "result = TApplicationException(TApplicationException.INTERNAL_ERROR, "
+                    "'Internal error')"
+                 << endl;
+    } else {
+      f_service_ << indent() << "except Exception:" << endl
+                 << indent() << indent_str()
+                 << "logging.exception('Exception in oneway handler')" << endl;
     }
 
     if (!tfunction->is_oneway()) {
       f_service_ << indent() << "oprot.writeMessageBegin(\"" << tfunction->get_name()
-                 << "\", TMessageType.REPLY, seqid)" << endl << indent() << "result.write(oprot)"
-                 << endl << indent() << "oprot.writeMessageEnd()" << endl << indent()
-                 << "oprot.trans.flush()" << endl;
+                 << "\", msg_type, seqid)" << endl
+                 << indent() << "result.write(oprot)" << endl
+                 << indent() << "oprot.writeMessageEnd()" << endl
+                 << indent() << "oprot.trans.flush()" << endl;
     }
 
     // Close function
