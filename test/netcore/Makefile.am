@@ -52,6 +52,7 @@ EXTRA_DIST = \
 			 $(THRIFTCODE) \
 			 ThriftTest.sln \
 			 ThriftTest/ThriftTest.csproj \
+			 ThriftTest/Properties/launchSettings.json \
 			 build.cmd \
 			 build.sh \
 			 README.md
