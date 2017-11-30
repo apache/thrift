@@ -25,6 +25,7 @@ TESTDIR = Tests/Thrift.PublicInterfaces.Compile.Tests
 GENDIR = $(TESTDIR)/gen-netcore
 
 THRIFTCODE = \
+			Thrift/Thrift.csproj \
 			Thrift/ITAsyncProcessor.cs \
 			Thrift/ITProcessorFactory.cs \
 			Thrift/SingletonTProcessorFactory.cs \
@@ -72,6 +73,7 @@ THRIFTCODE = \
 			Thrift/Transports/Client/TTlsSocketClientTransport.cs \
 			Thrift/Transports/Server/THttpServerTransport.cs \
 			Thrift/Transports/Server/TNamedPipeServerTransport.cs \
+			Thrift/Transports/Server/TServerFramedTransport.cs \
 			Thrift/Transports/Server/TServerSocketTransport.cs \
 			Thrift/Transports/Server/TTlsServerSocketTransport.cs 
 

@@ -44,6 +44,10 @@ clean-local:
 
 EXTRA_DIST = \
 	Cargo.toml \
+	thrifts/Base_One.thrift \
+	thrifts/Base_Two.thrift \
+	thrifts/Midlayer.thrift \
+	thrifts/Ultimate.thrift \
 	src/lib.rs \
 	src/bin/kitchen_sink_server.rs \
 	src/bin/kitchen_sink_client.rs
