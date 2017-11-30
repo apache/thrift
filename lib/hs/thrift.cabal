@@ -49,6 +49,7 @@ Library
     Thrift,
     Thrift.Arbitraries
     Thrift.Protocol,
+    Thrift.Protocol.Header,
     Thrift.Protocol.Binary,
     Thrift.Protocol.Compact,
     Thrift.Protocol.JSON,
@@ -57,6 +58,7 @@ Library
     Thrift.Transport.Empty,
     Thrift.Transport.Framed,
     Thrift.Transport.Handle,
+    Thrift.Transport.Header,
     Thrift.Transport.HttpClient,
     Thrift.Transport.IOBuffer,
     Thrift.Transport.Memory,
