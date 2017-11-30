@@ -1,7 +1,7 @@
 ## Debian/Ubuntu install
 The following command will install tools and libraries required to build and install the Apache Thrift compiler and C++ libraries on a Debian/Ubuntu Linux based system.
 
-	sudo apt-get install automake bison flex g++ git libboost1.55-all-dev libevent-dev libssl-dev libtool make pkg-config
+	sudo apt-get install automake bison flex g++ git libboost-all-dev libevent-dev libssl-dev libtool make pkg-config
 
 Debian 7/Ubuntu 12 users need to manually install a more recent version of automake and (for C++ library and test support) boost:
 
@@ -18,9 +18,10 @@ Debian 7/Ubuntu 12 users need to manually install a more recent version of autom
 If you would like to build Apache Thrift libraries for other programming languages you may need to install additional packages. The following languages require the specified additional packages:
 
  * Java
-	* To build Apache Thrift support for Java you will need to install the ant package and Java JDK v1.7 or higher. Type **javac** to see a list of available packages, pick the one you prefer and **apt-get install** it (e.g. openjdk-7-jdk).
+	* packages: ant  
+	* You will also need Java JDK v1.7 or higher. Type **javac** to see a list of available packages, pick the one you prefer and **apt-get install** it (e.g. default-jdk).
  * Ruby
-	* ruby-full ruby-dev ruby-rspec rake rubygems libdaemons-ruby libgemplugin-ruby mongrel
+	* ruby-full ruby-dev ruby-rspec rake rubygems bundler
  * Python
 	* python-all python-all-dev python-all-dbg
  * Perl
@@ -30,14 +31,29 @@ If you would like to build Apache Thrift libraries for other programming languag
  * C_glib
 	* libglib2.0-dev
  * Erlang
-	* erlang-base erlang-eunit erlang-dev
+	* erlang-base erlang-eunit erlang-dev rebar
  * Csharp
 	* mono-gmcs mono-devel libmono-system-web2.0-cil nunit nunit-console
  * Haskell
-	* ghc6 cabal-install libghc6-binary-dev libghc6-network-dev libghc6-http-dev
+	* ghc cabal-install libghc-binary-dev libghc-network-dev libghc-http-dev
  * Thrift Compiler for Windows
-	* mingw32 mingw32-binutils mingw32-runtime nsis
-
+	* mingw-w64 mingw-w64-x86-64-dev nsis
+ * Rust
+	* rustc cargo
+ * Haxe
+	* haxe
+ * Lua
+    * lua5.3 liblua5.3-dev
+ * NodeJs
+    * nodejs npm
+ * dotnetcore
+    * https://www.microsoft.com/net/learn/get-started/linuxubuntu
+ * d-lang
+    * curl -fsS https://dlang.org/install.sh | bash -s dmd
+ * dart & pub
+    * https://www.dartlang.org/install/linux
+    * https://www.dartlang.org/tools/pub/installing
+	
 
 ## Additional reading
 
