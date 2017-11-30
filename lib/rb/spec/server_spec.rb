@@ -97,6 +97,7 @@ describe 'Server' do
       @prot = mock("BaseProtocol")
       @client = mock("Client")
       @server = described_class.new(@processor, @server_trans, @trans, @prot)
+      sleep(0.1)
     end
 
     it "should serve inside a thread" do
