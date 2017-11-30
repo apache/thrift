@@ -326,7 +326,7 @@
       url="http://thrift.apache.org"
       name="Apache Thrift"
       description="Thrift is a software framework for scalable cross-language services development."
-      packaging="pom"
+      packaging="jar"
     >
       <remoteRepository refid="central"/>
       <remoteRepository refid="apache"/>
