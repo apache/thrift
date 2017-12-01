@@ -27,3 +27,7 @@ clean-local:
 	find . -type f -name "pubspec.lock" | xargs $(RM)
 
 check-local: all
+
+EXTRA_DIST = \
+	.analysis_options
+

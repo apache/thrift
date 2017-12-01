@@ -49,6 +49,7 @@ check-local: all py3-test
 
 EXTRA_DIST = \
 	CMakeLists.txt \
+	MANIFEST.in \
 	coding_standards.md \
 	compat \
 	setup.py \

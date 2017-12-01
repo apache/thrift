@@ -65,8 +65,10 @@ EXTRA_DIST = \
 			 Interfaces/Interfaces.csproj \
 			 Client/Client.csproj \
 			 Client/ThriftTest.pfx \
+			 Client/Properties/launchSettings.json \
 			 Server/Server.csproj \
 			 Server/ThriftTest.pfx \
+			 Server/Properties/launchSettings.json \
 			 build.cmd \
 			 build.sh \
 			 README.md

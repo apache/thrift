@@ -85,3 +85,11 @@ check-local: TestClientServer.exe
 	MONO_PATH=$(LIBDIR) timeout 10 mono TestClientServer.exe server --port=$(TESTPORT) &
 	sleep 1
 	MONO_PATH=$(LIBDIR) mono TestClientServer.exe client --port=$(TESTPORT)
+
+EXTRA_DIST = \
+	Properties/AssemblyInfo.cs \
+	ThriftTest.csproj \
+	ThriftTest.sln \
+	Program.cs \
+	TestServer.cs \
+	TestClient.cs

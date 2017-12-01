@@ -61,6 +61,9 @@ EXTRA_DIST = \
 	src/handler.go \
 	src/server.go \
 	src/main.go \
+	src/go17.go \
+	src/handler_go17.go \
+	src/pre_go17.go \
 	server.crt \
 	server.key
 
