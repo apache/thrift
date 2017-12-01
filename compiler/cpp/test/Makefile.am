@@ -30,7 +30,9 @@ AM_CXXFLAGS = -Wall -Wextra -pedantic
 if WITH_PLUGIN
 check_PROGRAMS = plugintest
 
-noinst_PROGRAMS = thrift-gen-mycpp thrift-gen-bincat
+noinst_PROGRAMS = thrift-gen-mycpp
+
+all-local: thrift-gen-bincat
 
 AM_CPPFLAGS += -I$(top_srcdir)/lib/cpp/src -I$(top_builddir)/lib/cpp/src
 
