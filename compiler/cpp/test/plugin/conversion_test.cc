@@ -269,6 +269,12 @@ void test_const_value(t_const_value* sut) {
     T_CONST_VALUE_CASE(CV_INTEGER, integer);
     T_CONST_VALUE_CASE(CV_DOUBLE, double);
     T_CONST_VALUE_CASE(CV_STRING, string);
+
+#if 0
+  case t_const_value::CV_IDENTIFIER:
+    BOOST_CHECK_EQUAL(sut->const_identifer_val.identifier, sut2->const_identifer_val.identifier)
+      break ;
+#endif
     T_CONST_VALUE_CASE(CV_IDENTIFIER, identifier);
 #undef T_CONST_VALUE_CASE
   case t_const_value::CV_MAP:
