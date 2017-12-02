@@ -51,7 +51,7 @@
     <ClInclude Include="src\thrift\version.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="src\thrift\audit\t_audit.cpp"/>
+    <ClCompile Include="src\thrift\audit\t_audit.cpp" />
     <ClCompile Include="src\thrift\common.cc" />
     <ClCompile Include="src\thrift\generate\t_as3_generator.cc" />
     <ClCompile Include="src\thrift\generate\t_cocoa_generator.cc" />
@@ -196,7 +196,6 @@
     </Link>
     <PreBuildEvent>
       <Command>flex -o "src\\thrift\\thriftl.cc" src/thrift/thriftl.ll &amp;&amp; bison -y -o "src\\thrift\\thrifty.cc" --defines="src\\thrift\\thrifty.hh" src/thrift/thrifty.yy</Command>
-
     </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -210,6 +209,7 @@
       <PreprocessorDefinitions>WIN32;MINGW;YY_NO_UNISTD_H;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ForcedIncludeFiles>thrift\windows\config.h</ForcedIncludeFiles>
       <CompileAs>CompileAsCpp</CompileAs>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -219,7 +219,6 @@
     </Link>
     <PreBuildEvent>
       <Command>flex -o "src\\thrift\\thriftl.cc" src/thrift/thriftl.ll &amp;&amp; bison -y -o "src\\thrift\\thrifty.cc" --defines="src\\thrift\\thrifty.hh" src/thrift/thrifty.yy</Command>
-
     </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -233,6 +232,7 @@
       <PreprocessorDefinitions>WIN32;MINGW;YY_NO_UNISTD_H;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ForcedIncludeFiles>thrift\windows\config.h</ForcedIncludeFiles>
       <CompileAs>CompileAsCpp</CompileAs>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -242,7 +242,6 @@
     </Link>
     <PreBuildEvent>
       <Command>flex -o "src\\thrift\\thriftl.cc" src/thrift/thriftl.ll &amp;&amp; bison -y -o "src\\thrift\\thrifty.cc" --defines="src\\thrift\\thrifty.hh" src/thrift/thrifty.yy</Command>
-
     </PreBuildEvent>
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
