@@ -7,18 +7,8 @@ Thrift 0.11.0
     * [THRIFT-2740] - Perl coding standards
     * [THRIFT-3610] - Streamline exception handling in Python server handler
     * [THRIFT-3686] - Java processor should report internal error on uncaught exception
-    * [THRIFT-4047] - Skip() should throw TProtocolException.INVALID_DATA on unknown data types
-    * [THRIFT-4048] - Skip() should throw TProtocolException.INVALID_DATA on unknown data types
     * [THRIFT-4049] - Skip() should throw TProtocolException.INVALID_DATA on unknown data types
-    * [THRIFT-4050] - Skip() should throw TProtocolException.INVALID_DATA on unknown data types
-    * [THRIFT-4051] - Skip() should throw TProtocolException.INVALID_DATA on unknown data types
-    * [THRIFT-4052] - Skip() should throw TProtocolException.INVALID_DATA on unknown data types
     * [THRIFT-4053] - Skip() should throw TProtocolException.INVALID_DATA on unknown data types
-    * [THRIFT-4054] - Skip() should throw TProtocolException.INVALID_DATA on unknown data types
-    * [THRIFT-4055] - Skip() should throw TProtocolException.INVALID_DATA on unknown data types
-    * [THRIFT-4056] - Skip() should throw TProtocolException.INVALID_DATA on unknown data types
-    * [THRIFT-4057] - Skip() should throw TProtocolException.INVALID_DATA on unknown data types
-    * [THRIFT-4058] - Skip() should throw TProtocolException.INVALID_DATA on unknown data types
     * [THRIFT-4136] - Align is_binary() method with is_string() to simplify those checks
     * [THRIFT-4137] - Fix remaining undefined behavior invalid vptr casts in Thrift Compiler
     * [THRIFT-4138] - Fix remaining undefined behavior invalid vptr casts in C++ library
@@ -107,7 +97,6 @@ Thrift 0.11.0
     * [THRIFT-4134] - Fix remaining undefined behavior invalid vptr casts
     * [THRIFT-4140] - Use of non-thread-safe function gmtime()
     * [THRIFT-4141] - Installation of haxe in docker files refers to a redirect link and fails
-    * [THRIFT-4146] - Appveyor builds are being triggered by apache master pushes
     * [THRIFT-4147] - Rust: protocol should accept transports with non-static lifetime
     * [THRIFT-4148] - [maven-thrift-plugin] compile error while import a thrift in dependency jar file.
     * [THRIFT-4149] - System.out pollutes log files 
@@ -193,7 +182,6 @@ Thrift 0.11.0
     * [THRIFT-4376] - Coverity high impact issue resolution
     * [THRIFT-4377] - haxe. socket handles leak in TSimpleServer
     * [THRIFT-4381] - Wrong isset bitfield value after transmission
-    * [THRIFT-4384] - Using multiple services simultaneously is not thread-safe.
     * [THRIFT-4385] - Go remote client -u flag is broken
     * [THRIFT-4392] - compiler/..../plugin.thrift structs mis-ordered blows up ocaml generator
     * [THRIFT-4395] - Unable to build in the ubuntu-xenial docker image: clap 2.28 requires Rust 1.20
@@ -214,6 +202,7 @@ Thrift 0.11.0
     * [THRIFT-3357] - Generate EnumSet/EnumMap where elements/keys are enums
     * [THRIFT-3369] - Implement SSL/TLS support on C with c_glib
     * [THRIFT-3467] - Go Maps for Thrift Sets Should Have Values of Type struct{} 
+    * [THRIFT-3580] - THeader for Haskell
     * [THRIFT-3627] - Missing basic code style consistency of JavaScript.
     * [THRIFT-3706] - There's no support for Multiplexed protocol on c_glib library
     * [THRIFT-3766] - Add getUnderlyingTransport() to TZlibTransport
@@ -223,7 +212,6 @@ Thrift 0.11.0
     * [THRIFT-3859] - Unix Domain Socket Support in Objective-C
     * [THRIFT-3921] - C++ code should print enums as strings
     * [THRIFT-3926] - There should be an error emitted when http status code is not 200 
-    * [THRIFT-4000] - Add union test to Test Suite
     * [THRIFT-4007] - Micro-optimization of TTransport.py
     * [THRIFT-4040] - Add real cause of TNonblockingServerSocket error to exception
     * [THRIFT-4064] - Update node library dependencies
@@ -240,7 +228,6 @@ Thrift 0.11.0
     * [THRIFT-4126] - Validate objects in php extension
     * [THRIFT-4130] - Ensure Apache Http connection is released back to pool after use
     * [THRIFT-4151] - Thrift Mutex Contention Profiling (pthreads) should be disabled by default
-    * [THRIFT-4168] - Travis CI builds are being triggered by apache master pushes
     * [THRIFT-4176] - Implement a threaded and threadpool server type for Rust
     * [THRIFT-4183] - Named pipe client blocks forever on Open() when there is no server at the other end
     * [THRIFT-4190] - improve C# TThreadPoolServer defaults
