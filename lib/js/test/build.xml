@@ -96,6 +96,7 @@
     <get src="http://code.jquery.com/jquery-1.11.3.min.js" dest="${build}/js/lib/jquery.js" usetimestamp="true"/>
     <get src="http://code.jquery.com/qunit/qunit-1.18.0.js" dest="${build}/js/lib/qunit.js" usetimestamp="true"/>
     <get src="http://code.jquery.com/qunit/qunit-1.18.0.css" dest="${build}/js/lib/qunit.css" usetimestamp="true"/>
+    <get src="https://cdn.jsdelivr.net/npm/es6-promise@4/dist/es6-promise.auto.js" dest="${build}/js/lib/es6-promise.js" usetimestamp="true"/>
   </target>
 
   <target name="compile" description="compile the test suite" depends="init, generate, resolve">
