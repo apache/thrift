@@ -38,13 +38,14 @@ TEvhttpClientChannel::TEvhttpClientChannel(const std::string& host,
                                            const std::string& path,
                                            const char* address,
                                            int port,
-                                           struct event_base* eb)
+                                           struct event_base* eb,
+                                           struct evdns_base* dnsbase)
+
   : host_(host), path_(path), conn_(NULL) {
-  conn_ = evhttp_connection_new(address, port);
+  conn_ = evhttp_connection_base_new(eb, dnsbase, address, port);
   if (conn_ == NULL) {
     throw TException("evhttp_connection_new failed");
   }
-  evhttp_connection_set_base(conn_, eb);
 }
 
 TEvhttpClientChannel::~TEvhttpClientChannel() {
