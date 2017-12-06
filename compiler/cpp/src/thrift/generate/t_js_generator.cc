@@ -58,6 +58,7 @@ public:
     gen_node_ = false;
     gen_jquery_ = false;
     gen_ts_ = false;
+    gen_es6_ = false;
 
     bool with_ns_ = false;
 
@@ -70,6 +71,8 @@ public:
         gen_ts_ = true;
       } else if( iter->first.compare("with_ns") == 0) {
         with_ns_ = true;
+      } else if( iter->first.compare("es6") == 0) {
+        gen_es6_ = true;
       } else {
         throw "unknown option js:" + iter->first;
       }
@@ -77,6 +80,10 @@ public:
 
     if (gen_node_ && gen_ts_) {
       throw "Invalid switch: [-gen js:node,ts] options not compatible";
+    }
+
+    if (gen_es6_ && gen_jquery_) {
+      throw "Invalid switch: [-gen js:es6,jquery] options not compatible";
     }
 
     if (gen_node_ && gen_jquery_) {
@@ -328,6 +335,11 @@ private:
   bool gen_ts_;
 
   /**
+   * True if we should generate ES6 code, i.e. with Promises
+   */
+  bool gen_es6_;
+
+  /**
    * The name of the defined module(s), for TypeScript Definition Files.
    */
   string ts_module_;
@@ -370,7 +382,7 @@ void t_js_generator::init_generator() {
   // Print header
   f_types_ << autogen_comment();
 
-  if (gen_node_ && no_ns_) {
+  if ((gen_node_ || gen_es6_) && no_ns_) {
     f_types_ << "\"use strict\";" << endl << endl;
   }
 
@@ -408,10 +420,13 @@ void t_js_generator::init_generator() {
  */
 string t_js_generator::js_includes() {
   if (gen_node_) {
-    return string(
+    string result = string(
         "var thrift = require('thrift');\n"
-        "var Thrift = thrift.Thrift;\n"
-        "var Q = thrift.Q;\n");
+        "var Thrift = thrift.Thrift;\n");
+    if (!gen_es6_) {
+      result += "var Q = thrift.Q;\n";
+    }
+    return result;
   }
 
   return "";
@@ -965,7 +980,7 @@ void t_js_generator::generate_service(t_service* tservice) {
 
   f_service_ << autogen_comment();
 
-  if (gen_node_ && no_ns_) {
+  if ((gen_node_ || gen_es6_) && no_ns_) {
     f_service_ << "\"use strict\";" << endl << endl;
   }
 
@@ -1373,19 +1388,42 @@ void t_js_generator::generate_service_client(t_service* tservice) {
 
     // Open function
     f_service_ << js_namespace(tservice->get_program()) << service_name_ << "Client.prototype."
-               << function_signature(*f_iter, "", true) << " {" << endl;
+               << function_signature(*f_iter, "", !gen_es6_) << " {" << endl;
 
     indent_up();
 
     if (gen_ts_) {
-      f_service_ts_ << ts_print_doc(*f_iter) <<
-          // function definition without callback
-          ts_indent() << ts_function_signature(*f_iter, false) << endl << ts_print_doc(*f_iter) <<
-          // overload with callback
-          ts_indent() << ts_function_signature(*f_iter, true) << endl;
+      // function definition without callback
+      f_service_ts_ << ts_print_doc(*f_iter) << ts_indent() << ts_function_signature(*f_iter, false) << endl;
+
+      if (!gen_es6_) {
+        // overload with callback
+        f_service_ts_ << ts_print_doc(*f_iter) << ts_indent() << ts_function_signature(*f_iter, true) << endl;
+      }
     }
 
-    if (gen_node_) { // Node.js output      ./gen-nodejs
+    if (gen_es6_ && gen_node_) {
+      f_service_ << indent() << "this._seqid = this.new_seqid();" << endl;
+      f_service_ << indent() << "var self = this;" << endl << indent()
+                 << "return new Promise(function(resolve, reject) {" << endl;
+      indent_up();
+      f_service_ << indent() << "self._reqs[self.seqid()] = function(error, result) {" << endl;
+      indent_up();
+      indent(f_service_) << "if (error) {" << endl;
+      indent_up();
+      indent(f_service_) << "reject(error);" << endl;
+      indent_down();
+      indent(f_service_) << "} else {" << endl;
+      indent_up();
+      indent(f_service_) << "resolve(result);" << endl;
+      indent_down();
+      indent(f_service_) << "}" << endl;
+      indent_down();
+      indent(f_service_) << "};" << endl;
+      f_service_ << indent() << "self.send_" << funname << "(" << arglist << ");" << endl;
+      indent_down();
+      f_service_ << indent() << "});" << endl;
+    } else if (gen_node_) { // Node.js output      ./gen-nodejs
       f_service_ << indent() << "this._seqid = this.new_seqid();" << endl << indent()
                  << "if (callback === undefined) {" << endl;
       indent_up();
@@ -1412,6 +1450,23 @@ void t_js_generator::generate_service_client(t_service* tservice) {
                  << "this.send_" << funname << "(" << arglist << ");" << endl;
       indent_down();
       indent(f_service_) << "}" << endl;
+    } else if (gen_es6_) {
+      f_service_ << indent() << "var self = this;" << endl << indent()
+                 << "return new Promise(function(resolve, reject) {" << endl;
+      indent_up();
+      f_service_ << indent() << "self.send_" << funname << "(" << arglist
+                 << (arglist.empty() ? "" : ", ") << "function(error, result) {" << endl;
+      indent_up();
+      f_service_ << indent() << "if (error) {" << endl;
+      f_service_ << indent() << "  reject(error);" << endl;
+      f_service_ << indent() << "} else {" << endl;
+      f_service_ << indent() << "  resolve(result);" << endl;
+      f_service_ << indent() << "}" << endl;
+      indent_down();
+      f_service_ << indent() << "});" << endl;
+      indent_down();
+      f_service_ << indent() << "});" << endl;
+
     } else if (gen_jquery_) { // jQuery output       ./gen-js
       f_service_ << indent() << "if (callback === undefined) {" << endl;
       indent_up();
@@ -1507,10 +1562,29 @@ void t_js_generator::generate_service_client(t_service* tservice) {
     } else {
       if (gen_jquery_) {
         f_service_ << indent() << "return this.output.getTransport().flush(callback);" << endl;
+      } else if (gen_es6_) {
+        f_service_ << indent() << "var self = this;" << endl;
+        if((*f_iter)->is_oneway()) {
+          f_service_ << indent() << "this.output.getTransport().flush(true, null);" << endl;
+          f_service_ << indent() << "callback();" << endl;
+        } else {
+          f_service_ << indent() << "this.output.getTransport().flush(true, function() {" << endl;
+          indent_up();
+          f_service_ << indent() << "var error = null, result = null;" << endl;
+          f_service_ << indent() << "try {" << endl;
+          f_service_ << indent() << "  result = self.recv_" << funname << "();" << endl;
+          f_service_ << indent() << "} catch (e) {" << endl;
+          f_service_ << indent() << "  error = e;" << endl;
+          f_service_ << indent() << "}" << endl;
+          f_service_ << indent() << "callback(error, result);" << endl;
+          indent_down();
+          f_service_ << indent() << "});";
+        }
       } else {
         f_service_ << indent() << "if (callback) {" << endl;
         if((*f_iter)->is_oneway()) {
           f_service_ << indent() << "  this.output.getTransport().flush(true, null);" << endl;
+          f_service_ << indent() << "  callback();" << endl;
         } else {
           f_service_ << indent() << "  var self = this;" << endl;
           f_service_ << indent() << "  this.output.getTransport().flush(true, function() {" << endl;
@@ -2238,7 +2312,12 @@ std::string t_js_generator::ts_function_signature(t_function* tfunction, bool in
       str += "void;";
     }
   } else {
-    str += "): " + ts_get_type(tfunction->get_returntype()) + ";";
+    if (gen_es6_) {
+      str += "): Promise<" + ts_get_type(tfunction->get_returntype()) + ">;";
+    }
+    else {
+      str += "): " + ts_get_type(tfunction->get_returntype()) + ";";
+    }
   }
 
   return str;
@@ -2282,4 +2361,5 @@ THRIFT_REGISTER_GENERATOR(js,
                           "    jquery:          Generate jQuery compatible code.\n"
                           "    node:            Generate node.js compatible code.\n"
                           "    ts:              Generate TypeScript definition files.\n"
-                          "    with_ns:         Create global namespace objects when using node.js\n")
+                          "    with_ns:         Create global namespace objects when using node.js\n"
+                          "    es6:             Create ES6 code with Promises\n")
