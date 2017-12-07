@@ -22,6 +22,7 @@
 
 #include "FacebookService.h"
 
+#include <boost/shared_ptr.hpp>
 #include <thrift/server/TServer.h>
 #include <thrift/concurrency/Mutex.h>
 
