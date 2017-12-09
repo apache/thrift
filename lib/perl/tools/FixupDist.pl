@@ -17,20 +17,19 @@
 # under the License.
 #
 
+#
+# This will fix up the distribution so that CPAN properly
+# indexes Thrift.
+#
+
 use 5.10.0;
 use strict;
 use warnings;
+use utf8;
 
-use ExtUtils::MakeMaker;
+use Data::Dumper;
+use CPAN::Meta;
 
-WriteMakefile( ABSTRACT => 'Apache Thrift is a software framework for scalable cross-language services development.',
-               AUTHOR => 'Apache Thrift <dev@thrift.apache.org>',
-               LICENSE => 'apache_2_0',
-               MIN_PERL_VERSION => '5.010000',
-               NAME => 'Thrift',
-               NEEDS_LINKING => 0,
-               PREREQ_PM => {
-                   'Bit::Vector'     => 0,
-                   'Class::Accessor' => 0
-               },
-               VERSION_FROM => 'lib/Thrift.pm' );
+my $meta = CPAN::Meta->load_file('META.json');
+$meta->{'provides'} = { 'Thrift' => { 'file' => 'lib/Thrift.pm', 'version' => $meta->version() } };
+$meta->save('META.json');
