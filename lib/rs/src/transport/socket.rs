@@ -156,7 +156,7 @@ impl Read for TTcpChannel {
 
 impl Write for TTcpChannel {
     fn write(&mut self, b: &[u8]) -> io::Result<usize> {
-        self.if_set(|s| s.write_all(b)).map(|_| b.len())
+        self.if_set(|s| s.write(b))
     }
 
     fn flush(&mut self) -> io::Result<()> {
