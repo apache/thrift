@@ -253,8 +253,8 @@ uint32_t TCompactProtocolT<Transport_>::writeI64(const int64_t i64) {
  */
 template <class Transport_>
 uint32_t TCompactProtocolT<Transport_>::writeDouble(const double dub) {
-  BOOST_STATIC_ASSERT(sizeof(double) == sizeof(uint64_t));
-  BOOST_STATIC_ASSERT(std::numeric_limits<double>::is_iec559);
+  THRIFT_STATIC_ASSERT(sizeof(double) == sizeof(uint64_t));
+  THRIFT_STATIC_ASSERT(std::numeric_limits<double>::is_iec559);
 
   uint64_t bits = bitwise_cast<uint64_t>(dub);
   bits = THRIFT_htolell(bits);
@@ -653,8 +653,8 @@ uint32_t TCompactProtocolT<Transport_>::readI64(int64_t& i64) {
  */
 template <class Transport_>
 uint32_t TCompactProtocolT<Transport_>::readDouble(double& dub) {
-  BOOST_STATIC_ASSERT(sizeof(double) == sizeof(uint64_t));
-  BOOST_STATIC_ASSERT(std::numeric_limits<double>::is_iec559);
+  THRIFT_STATIC_ASSERT(sizeof(double) == sizeof(uint64_t));
+  THRIFT_STATIC_ASSERT(std::numeric_limits<double>::is_iec559);
 
   union {
     uint64_t bits;

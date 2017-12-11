@@ -30,9 +30,6 @@
 
 #include <thrift/thrift-config.h>
 
-// boost
-#include <boost/noncopyable.hpp>
-
 #if USE_BOOST_THREAD
 #include <boost/thread/once.hpp>
 #elif USE_STD_THREAD
@@ -41,6 +38,7 @@
 #error For windows you must choose USE_BOOST_THREAD or USE_STD_THREAD
 #endif
 
+#include <thrift/noncopyable.h>
 #include <thrift/stdcxx.h>
 
 namespace apache {
@@ -51,7 +49,7 @@ namespace transport {
  * Winsock2 must be intialised once only in order to create sockets. This class
  * performs a one time initialisation when create is called.
  */
-class TWinsockSingleton : private boost::noncopyable {
+class TWinsockSingleton : private TNonCopyable {
 
 public:
   typedef stdcxx::shared_ptr<TWinsockSingleton> instance_ptr;

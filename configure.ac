@@ -151,6 +151,9 @@ if test "$with_cpp" = "yes";  then
     AC_SUBST([BOOST_TEST_LDADD], [$(echo "$BOOST_LIB_DIR/libboost_unit_test_framework.a")])
     AC_SUBST([BOOST_THREAD_LDADD], [$(echo "$BOOST_LIB_DIR/libboost_thread.a")])
     have_cpp="yes"
+  elif test "$HAVE_CXX11" ; then
+    # may actually not be enough: e.g. GCC needs >=5 and VC++ needs >=2013
+    have_cpp="yes"
   fi
 
   AX_LIB_EVENT([1.0])

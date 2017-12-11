@@ -22,6 +22,7 @@
 
 #include <thrift/thrift-config.h>
 
+#include <sstream>
 #include <thrift/Thrift.h>
 #include <thrift/concurrency/Exception.h>
 #include <thrift/concurrency/Mutex.h>
@@ -32,8 +33,7 @@
 #include <pthread.h>
 #include <signal.h>
 #include <string.h>
-
-#include <boost/format.hpp>
+#include <unistd.h>
 
 namespace apache {
 namespace thrift {
@@ -116,7 +116,8 @@ static inline int64_t maybeGetProfilingStartTime() {
 
 #define EINTR_LOOP(_CALL)          int ret; do { ret = _CALL; } while (ret == EINTR)
 #define ABORT_ONFAIL(_CALL)      { EINTR_LOOP(_CALL); if (ret) { abort(); } }
-#define THROW_SRE(_CALLSTR, RET) { throw SystemResourceException(boost::str(boost::format("%1% returned %2% (%3%)") % _CALLSTR % RET % ::strerror(RET))); }
+
+#define THROW_SRE(_CALLSTR, RET) { throw SystemResourceException(static_cast<const std::ostringstream&>(std::ostringstream() << _CALLSTR " returned " << RET << "(" << ::strerror(RET) << ")").str()); }
 #define THROW_SRE_ONFAIL(_CALL)  { EINTR_LOOP(_CALL); if (ret) { THROW_SRE(#_CALL, ret); } }
 #define THROW_SRE_TRYFAIL(_CALL) { EINTR_LOOP(_CALL); if (ret == 0) { return true; } else if (ret == EBUSY) { return false; } THROW_SRE(#_CALL, ret); }
 

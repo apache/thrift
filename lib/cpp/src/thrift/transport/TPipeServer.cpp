@@ -20,10 +20,10 @@
 #include <thrift/thrift-config.h>
 #include <cstring>
 
+#include <thrift/noncopyable.h>
 #include <thrift/transport/TPipe.h>
 #include <thrift/transport/TPipeServer.h>
 #include <thrift/stdcxx.h>
-#include <boost/noncopyable.hpp>
 
 #ifdef _WIN32
 #include <thrift/windows/OverlappedSubmissionThread.h>
@@ -39,7 +39,7 @@ namespace transport {
 
 using stdcxx::shared_ptr;
 
-class TPipeServerImpl : boost::noncopyable {
+class TPipeServerImpl : TNonCopyable {
 public:
   TPipeServerImpl() {}
   virtual ~TPipeServerImpl() {}

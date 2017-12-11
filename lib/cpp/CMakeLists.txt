@@ -17,7 +17,9 @@
 # under the License.
 #
 
-include_directories(SYSTEM "${Boost_INCLUDE_DIRS}")
+if(Boost_FOUND)
+  include_directories(SYSTEM "${Boost_INCLUDE_DIRS}")
+endif()
 include_directories(src)
 
 # SYSLIBS contains libraries that need to be linked to all lib targets

@@ -20,10 +20,11 @@
 #ifndef THRIFT_TMULTIPLEXEDPROCESSOR_H_
 #define THRIFT_TMULTIPLEXEDPROCESSOR_H_ 1
 
+#include <sstream>
+#include <string>
 #include <thrift/protocol/TProtocolDecorator.h>
 #include <thrift/TApplicationException.h>
 #include <thrift/TProcessor.h>
-#include <boost/tokenizer.hpp>
 
 namespace apache {
 namespace thrift {
@@ -165,10 +166,11 @@ public:
     }
 
     // Extract the service name
-    boost::tokenizer<boost::char_separator<char> > tok(name, boost::char_separator<char>(":"));
-
     std::vector<std::string> tokens;
-    std::copy(tok.begin(), tok.end(), std::back_inserter(tokens));
+    std::istringstream tokenStream(name);
+    for (std::string token; std::getline(tokenStream, token, ':');) {
+        tokens.push_back(token);
+    }
 
     // A valid message should consist of two tokens: the service
     // name and the name of the method to call.

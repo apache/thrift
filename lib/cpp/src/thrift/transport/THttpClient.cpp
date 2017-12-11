@@ -20,7 +20,7 @@
 #include <limits>
 #include <cstdlib>
 #include <sstream>
-#include <boost/algorithm/string.hpp>
+#include <cstring>
 
 #include <thrift/config.h>
 #include <thrift/transport/THttpClient.h>
@@ -47,6 +47,20 @@ THttpClient::THttpClient(string host, int port, string path)
 THttpClient::~THttpClient() {
 }
 
+namespace {
+bool iStartWith(char const* str, char const* prefix){
+  for(; *prefix; str++, prefix++) {
+    if (!*str || ::tolower(*str) != ::tolower(*prefix))
+      return false;
+  }
+  return true;
+}
+bool iEndsWith(char const* str, char const* suffix){
+  size_t suffixLen = ::strlen(suffix);
+  return ::strlen(str) >= suffixLen && iStartWith(str - suffixLen, suffix);
+}
+}
+
 void THttpClient::parseHeader(char* header) {
   char* colon = strchr(header, ':');
   if (colon == NULL) {
@@ -54,11 +68,11 @@ void THttpClient::parseHeader(char* header) {
   }
   char* value = colon + 1;
 
-  if (boost::istarts_with(header, "Transfer-Encoding")) {
-    if (boost::iends_with(value, "chunked")) {
+  if (iStartWith(header, "Transfer-Encoding")) {
+    if (iEndsWith(value, "chunked")) {
       chunked_ = true;
     }
-  } else if (boost::istarts_with(header, "Content-Length")) {
+  } else if (iStartWith(header, "Content-Length")) {
     chunked_ = false;
     contentLength_ = atoi(value);
   }

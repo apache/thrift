@@ -29,6 +29,7 @@
 
 #include <assert.h>
 #include <pthread.h>
+#include <unistd.h>
 
 #include <iostream>
 

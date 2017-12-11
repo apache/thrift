@@ -19,8 +19,7 @@
 
 #include <thrift/windows/OverlappedSubmissionThread.h>
 #include <thrift/transport/TTransportException.h>
-#include <boost/noncopyable.hpp>
-#include <boost/scope_exit.hpp>
+#include <thrift/stdcxx.h>
 #include <process.h>
 
 namespace apache {
@@ -58,9 +57,13 @@ uint32_t TOverlappedWorkItem::overlappedResults(bool signal_failure) {
   return bytes;
 }
 
+struct setEventDeleter
+{
+  void operator()(TAutoResetEvent* ptr) const { SetEvent(ptr->h); }
+};
+
 bool TOverlappedWorkItem::process() {
-  BOOST_SCOPE_EXIT((&doneSubmittingEvent)) { SetEvent(doneSubmittingEvent.h); }
-  BOOST_SCOPE_EXIT_END
+  stdcxx::unique_ptr<TAutoResetEvent, setEventDeleter> setEventOnReturn(&doneSubmittingEvent);
 
   switch (action) {
   case (CONNECT):

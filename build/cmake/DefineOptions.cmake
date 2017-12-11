@@ -91,11 +91,26 @@ if(WITH_CPP)
     option(WITH_STDTHREADS "Build with C++ std::thread support" OFF)
     CMAKE_DEPENDENT_OPTION(WITH_BOOSTTHREADS "Build with Boost threads support" OFF
         "NOT WITH_STDTHREADS;Boost_FOUND" OFF)
+
+    set(WITH_CPP_SUPPORT OFF)
+    if (Boost_FOUND)
+      set(WITH_CPP_SUPPORT ON)
+    elseif (CMAKE_COMPILER_IS_GNUCC)
+      if (CMAKE_CXX_COMPILER_VERSION VERSION_GREATER 5.0)
+        set(WITH_CPP_SUPPORT ON)
+      endif()
+    elseif (MSVC)
+      if (NOT (MSVC_VERSION LESS 1900))
+        set(WITH_CPP_SUPPORT ON)
+      endif()
+    elseif (NOT (CMAKE_CXX_STANDARD LESS 11))
+      set(WITH_CPP_SUPPORT ON)
+    endif()
 endif()
 CMAKE_DEPENDENT_OPTION(BUILD_CPP "Build C++ library" ON
-                       "BUILD_LIBRARIES;WITH_CPP;Boost_FOUND" OFF)
+                       "BUILD_LIBRARIES;WITH_CPP;WITH_CPP_SUPPORT" OFF)
 CMAKE_DEPENDENT_OPTION(WITH_PLUGIN "Build compiler plugin support" OFF
-                       "BUILD_COMPILER;BUILD_CPP" OFF)
+                       "BUILD_COMPILER;BUILD_CPP;Boost_FOUND" OFF)
 
 # C GLib
 option(WITH_C_GLIB "Build C (GLib) Thrift library" ON)
@@ -107,7 +122,7 @@ CMAKE_DEPENDENT_OPTION(BUILD_C_GLIB "Build C (GLib) library" ON
 
 if(BUILD_CPP)
     set(boost_components)
-    if(WITH_BOOSTTHREADS OR BUILD_TESTING)
+    if(WITH_BOOSTTHREADS OR BUILD_TESTING OR BUILD_TUTORIALS)
         list(APPEND boost_components system thread)
     endif()
     if(BUILD_TESTING)

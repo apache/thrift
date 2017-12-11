@@ -27,6 +27,7 @@
 #include <thrift/server/TSimpleServer.h>
 #include <thrift/stdcxx.h>
 #include <thrift/transport/TServerSocket.h>
+#include <unistd.h>
 #include "ThriftTest.h"
 #include "ThriftTest_types.h"
 

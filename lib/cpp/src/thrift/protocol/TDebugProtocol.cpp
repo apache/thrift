@@ -24,7 +24,6 @@
 #include <cctype>
 #include <cstdio>
 #include <stdexcept>
-#include <boost/static_assert.hpp>
 
 using std::string;
 

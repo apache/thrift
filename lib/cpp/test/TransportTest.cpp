@@ -380,7 +380,7 @@ void alarm_handler() {
   // Write some data to the transport to hopefully unblock it.
   uint8_t* buf = new uint8_t[info->writeLength];
   memset(buf, 'b', info->writeLength);
-  boost::scoped_array<uint8_t> array(buf);
+  stdcxx::scoped_array<uint8_t> array(buf);
   info->transport->write(buf, info->writeLength);
   info->transport->flush();
 

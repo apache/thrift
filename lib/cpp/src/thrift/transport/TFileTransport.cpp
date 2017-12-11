@@ -19,19 +19,11 @@
 
 #include <thrift/thrift-config.h>
 
+#include <thrift/stdcxx.h>
 #include <thrift/transport/TFileTransport.h>
 #include <thrift/transport/TTransportUtils.h>
 #include <thrift/transport/PlatformSocket.h>
 #include <thrift/concurrency/FunctionRunner.h>
-
-#include <boost/version.hpp>
-#if (BOOST_VERSION >= 105700)
-#include <boost/move/unique_ptr.hpp>
-using boost::movelib::unique_ptr;
-#else
-#include <boost/interprocess/smart_ptr/unique_ptr.hpp>
-using boost::interprocess::unique_ptr;
-#endif
 
 #ifdef HAVE_SYS_TIME_H
 #include <sys/time.h>
@@ -62,6 +54,7 @@ namespace thrift {
 namespace transport {
 
 using stdcxx::shared_ptr;
+using stdcxx::unique_ptr;
 using std::cerr;
 using std::cout;
 using std::endl;
@@ -436,7 +429,7 @@ void TFileTransport::writerThread() {
 
             uint8_t* zeros = new uint8_t[padding];
             memset(zeros, '\0', padding);
-            boost::scoped_array<uint8_t> array(zeros);
+            stdcxx::scoped_array<uint8_t> array(zeros);
             if (-1 == ::write(fd_, zeros, padding)) {
               int errno_copy = THRIFT_ERRNO;
               GlobalOutput.perror("TFileTransport: writerThread() error while padding zeros ",

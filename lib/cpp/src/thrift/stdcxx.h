@@ -20,15 +20,13 @@
 #ifndef _THRIFT_STDCXX_H_
 #define _THRIFT_STDCXX_H_ 1
 
-#include <boost/config.hpp>
-
 ///////////////////////////////////////////////////////////////////
 //
 // functional (function, bind)
 //
 ///////////////////////////////////////////////////////////////////
 
-#if defined(BOOST_NO_CXX11_HDR_FUNCTIONAL) || (defined(_MSC_VER) && _MSC_VER < 1800) || defined(FORCE_BOOST_FUNCTIONAL)
+#if (!defined(_MSC_VER) && __cplusplus < 201103L) || (defined(_MSC_VER) && _MSC_VER < 1800) || defined(FORCE_BOOST_FUNCTIONAL)
 #include <boost/tr1/functional.hpp>
 #define _THRIFT_FUNCTIONAL_TR1_ 1
 #endif
@@ -83,28 +81,42 @@
 ///////////////////////////////////////////////////////////////////
 
 // We can use std for memory functions only if the compiler supports template aliasing
-// The macro BOOST_NO_CXX11_SMART_PTR is defined as 1 under Visual Studio 2010 and 2012
-// which do not support the feature, so we must continue to use C++98 and boost on them.
-// We cannot use __cplusplus to detect this either, since Microsoft advertises an older one.
+// Visual Studio 2010 and 2012 do not support the feature, so we must continue to use C++98
+// and boost on them. We cannot use __cplusplus to detect this either, since Microsoft
+// advertises an older one.
 
-#if defined(BOOST_NO_CXX11_SMART_PTR) || (defined(_MSC_VER) && _MSC_VER < 1800) || defined(FORCE_BOOST_SMART_PTR)
+#if (!defined(_MSC_VER) && __cplusplus < 201103L) || (defined(_MSC_VER) && _MSC_VER < 1800) || defined(FORCE_BOOST_SMART_PTR)
 #include <boost/smart_ptr.hpp>
+#include <boost/version.hpp>
+#if (BOOST_VERSION >= 105700)
+#include <boost/move/unique_ptr.hpp>
+#else
+#include <boost/interprocess/smart_ptr/unique_ptr.hpp>
+#endif
+#define _THRIFT_USE_BOOST_SMARTPTR_ 1
 #else
 #include <memory>
 #endif
 
 namespace apache { namespace thrift { namespace stdcxx {
 
-#if defined(BOOST_NO_CXX11_SMART_PTR) || (defined(_MSC_VER) && _MSC_VER < 1800) || defined(FORCE_BOOST_SMART_PTR)
+#if _THRIFT_USE_BOOST_SMARTPTR_
 
   using ::boost::const_pointer_cast;
   using ::boost::dynamic_pointer_cast;
   using ::boost::enable_shared_from_this;
   using ::boost::make_shared;
   using ::boost::scoped_ptr;
+  using ::boost::scoped_array;
   using ::boost::shared_ptr;
   using ::boost::static_pointer_cast;
   using ::boost::weak_ptr;
+
+#if (BOOST_VERSION >= 105700)
+  using ::boost::movelib::unique_ptr;
+#else
+  using ::boost::interprocess::unique_ptr;
+#endif
 
 #else
 
@@ -113,12 +125,54 @@ namespace apache { namespace thrift { namespace stdcxx {
   using ::std::enable_shared_from_this;
   using ::std::make_shared;
   template <typename T> using scoped_ptr = std::unique_ptr<T>;		// compiler must support template aliasing
+  template <typename T> using scoped_array = std::unique_ptr<T[]>;      // compiler must support template aliasing
   using ::std::shared_ptr;
   using ::std::static_pointer_cast;
   using ::std::weak_ptr;
+  using ::std::unique_ptr;
 
 #endif
 
 }}} // apache::thrift::stdcxx
+
+///////////////////////////////////////////////////////////////////
+//
+// Atomic
+//
+///////////////////////////////////////////////////////////////////
+
+#if (!defined(_MSC_VER) && __cplusplus < 201103L) || (defined(_MSC_VER) && _MSC_VER < 1700)
+#include <boost/atomic.hpp>
+#define _THRIFT_USE_BOOST_ATOMIC_ 1
+#else
+#include <atomic>
+#endif
+
+namespace apache { namespace thrift { namespace stdcxx {
+
+#if _THRIFT_USE_BOOST_ATOMIC_
+
+  using ::boost::atomic;
+
+#else
+
+  using ::std::atomic;
+
+#endif
+
+}}} // apache::thrift::stdcxx
+
+///////////////////////////////////////////////////////////////////
+//
+// Static Assert
+//
+///////////////////////////////////////////////////////////////////
+
+#if (!defined(_MSC_VER) && __cplusplus < 201103L) || (defined(_MSC_VER) && _MSC_VER < 1600)
+#include <boost/static_assert.hpp>
+#define THRIFT_STATIC_ASSERT(_x) BOOST_STATIC_ASSERT(_x)
+#else
+#define THRIFT_STATIC_ASSERT(_x) static_assert((_x), #_x)
+#endif
 
 #endif // #ifndef _THRIFT_STDCXX_H_

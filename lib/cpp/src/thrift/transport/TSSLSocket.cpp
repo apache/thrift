@@ -35,11 +35,13 @@
 #ifdef HAVE_FCNTL_H
 #include <fcntl.h>
 #endif
+#ifdef HAVE_UNISTD_H
+#include <unistd.h>
+#endif
 
 #define OPENSSL_VERSION_NO_THREAD_ID_BEFORE    0x10000000L
 #define OPENSSL_ENGINE_CLEANUP_REQUIRED_BEFORE 0x10100000L
 
-#include <boost/shared_array.hpp>
 #include <openssl/opensslv.h>
 #if (OPENSSL_VERSION_NUMBER < OPENSSL_ENGINE_CLEANUP_REQUIRED_BEFORE)
 #include <openssl/engine.h>
@@ -49,6 +51,7 @@
 #include <openssl/ssl.h>
 #include <openssl/x509v3.h>
 #include <thrift/concurrency/Mutex.h>
+#include <thrift/stdcxx.h>
 #include <thrift/transport/TSSLSocket.h>
 #include <thrift/transport/PlatformSocket.h>
 #include <thrift/TToString.h>
@@ -67,7 +70,7 @@ namespace transport {
 // OpenSSL initialization/cleanup
 
 static bool openSSLInitialized = false;
-static boost::shared_array<Mutex> mutexes;
+static stdcxx::scoped_array<Mutex> mutexes;
 
 static void callbackLocking(int mode, int n, const char*, int) {
   if (mode & CRYPTO_LOCK) {
@@ -120,9 +123,9 @@ void initializeOpenSSL() {
   // static locking
   // newer versions of OpenSSL changed CRYPTO_num_locks - see THRIFT-3878
 #ifdef CRYPTO_num_locks
-  mutexes = boost::shared_array<Mutex>(new Mutex[CRYPTO_num_locks()]);
+  mutexes.reset(new Mutex[CRYPTO_num_locks()]);
 #else
-  mutexes = boost::shared_array<Mutex>(new Mutex[ ::CRYPTO_num_locks()]);
+  mutexes.reset(new Mutex[ ::CRYPTO_num_locks()]);
 #endif
 
 #if (OPENSSL_VERSION_NUMBER < OPENSSL_VERSION_NO_THREAD_ID_BEFORE)

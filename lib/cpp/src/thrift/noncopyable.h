@@ -17,12 +17,33 @@
  * under the License.
  */
 
-#include <boost/type_traits/is_same.hpp>
-#include <thrift/stdcxx.h>
+#ifndef _THRIFT_NONCOPYABLE_H_
+#define _THRIFT_NONCOPYABLE_H_ 1
 
-#include "gen-cpp/TypedefTest_types.h"
+namespace apache { namespace thrift {
 
-THRIFT_STATIC_ASSERT((boost::is_same<int32_t, thrift::test::MyInt32>::value));
-THRIFT_STATIC_ASSERT((boost::is_same<std::string, thrift::test::MyString>::value));
-THRIFT_STATIC_ASSERT(
-    (boost::is_same<thrift::test::TypedefTestStruct, thrift::test::MyStruct>::value));
+class TNonCopyable
+{
+protected:
+    // Keep default constructor
+#if __cplusplus >= 201103L
+    TNonCopyable() = default;
+#else
+    TNonCopyable() {}
+#endif
+
+    // Remove copy constructor and assignment operator
+#if __cplusplus >= 201103L
+public:
+    TNonCopyable(const TNonCopyable&) = delete;
+    TNonCopyable& operator=(const TNonCopyable&) = delete;
+#else
+private:
+    TNonCopyable(const TNonCopyable&);
+    TNonCopyable& operator=(const TNonCopyable&);
+#endif
+};
+
+}} // apache::thrift
+
+#endif // _THRIFT_NONCOPYABLE_H_

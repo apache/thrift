@@ -33,7 +33,6 @@
 #include <inttypes.h>
 #endif
 
-#include <boost/scoped_array.hpp>
 #include <thrift/stdcxx.h>
 
 #include <thrift/protocol/TProtocolTypes.h>
@@ -83,7 +82,7 @@ public:
       seqId(0),
       flags(0),
       tBufSize_(0),
-      tBuf_(NULL) {
+      tBuf_() {
     if (!transport_) throw std::invalid_argument("transport is empty");
     initBuffers();
   }
@@ -97,7 +96,7 @@ public:
       seqId(0),
       flags(0),
       tBufSize_(0),
-      tBuf_(NULL) {
+      tBuf_() {
     if (!transport_) throw std::invalid_argument("inTransport is empty");
     if (!outTransport_) throw std::invalid_argument("outTransport is empty");
     initBuffers();
@@ -222,7 +221,7 @@ protected:
 
   // Buffers to use for transform processing
   uint32_t tBufSize_;
-  boost::scoped_array<uint8_t> tBuf_;
+  stdcxx::scoped_array<uint8_t> tBuf_;
 
   void readString(uint8_t*& ptr, /* out */ std::string& str, uint8_t const* headerBoundary);
 

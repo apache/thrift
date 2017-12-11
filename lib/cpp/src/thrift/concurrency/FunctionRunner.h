@@ -23,6 +23,11 @@
 #include <thrift/concurrency/Thread.h>
 #include <thrift/stdcxx.h>
 
+#include <thrift/thrift-config.h>
+#ifdef HAVE_UNISTD_H
+#include <unistd.h>
+#endif
+
 namespace apache {
 namespace thrift {
 namespace concurrency {

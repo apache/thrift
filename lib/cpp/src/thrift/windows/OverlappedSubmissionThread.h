@@ -24,8 +24,8 @@
 #error "OverlappedSubmissionThread.h is only usable on Windows"
 #endif
 
+#include <thrift/noncopyable.h>
 #include <thrift/windows/Sync.h>
-#include <boost/noncopyable.hpp>
 #include <Windows.h>
 
 /*
@@ -89,7 +89,7 @@ struct DECLSPEC_ALIGN(MEMORY_ALLOCATION_ALIGNMENT) TOverlappedWorkItem : public 
   bool process();
 };
 
-class TOverlappedSubmissionThread : boost::noncopyable {
+class TOverlappedSubmissionThread : TNonCopyable {
 public:
   void addWorkItem(TOverlappedWorkItem* item);
 
@@ -117,7 +117,7 @@ private:
   HANDLE thread_;
 };
 
-class TAutoOverlapThread : boost::noncopyable {
+class TAutoOverlapThread : TNonCopyable {
 private:
   TOverlappedSubmissionThread* p;
 

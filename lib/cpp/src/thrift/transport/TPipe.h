@@ -28,7 +28,6 @@
 #ifdef _WIN32
 #include <thrift/windows/Sync.h>
 #endif
-#include <boost/noncopyable.hpp>
 #ifdef _WIN32
 #include <thrift/windows/Sync.h>
 #endif

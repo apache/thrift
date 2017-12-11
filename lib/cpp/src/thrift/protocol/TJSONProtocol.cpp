@@ -19,10 +19,6 @@
 
 #include <thrift/protocol/TJSONProtocol.h>
 
-#include <boost/locale.hpp>
-#include <boost/math/special_functions/fpclassify.hpp>
-#include <boost/math/special_functions/sign.hpp>
-
 #include <cmath>
 #include <limits>
 #include <locale>
@@ -32,6 +28,34 @@
 #include <thrift/protocol/TBase64Utils.h>
 #include <thrift/transport/TTransportException.h>
 #include <thrift/TToString.h>
+
+// Codecvt is supported with C++11, but GCC added support only in version 5.
+#if __cplusplus < 201103L || (defined(__GNUC__) && !defined(__clang__) && __GNUC__ < 5)
+#include <boost/locale.hpp>
+#include <boost/math/special_functions/fpclassify.hpp>
+#include <boost/math/special_functions/sign.hpp>
+#else
+#include <codecvt>
+#endif
+
+namespace apache { namespace thrift { namespace stdcxx {
+#if __cplusplus < 201103L || (defined(__GNUC__) && !defined(__clang__) && __GNUC__ < 5)
+  using ::boost::math::fpclassify;
+  using ::boost::math::signbit;
+  typedef uint16_t char16;
+  std::string utf16_to_utf8(char16 * data) {
+    return ::boost::locale::conv::utf_to_utf<char>(data);
+  }
+#else
+  using ::std::fpclassify;
+  using ::std::signbit;
+  typedef char16_t char16;
+  std::string utf16_to_utf8(char16 * data) {
+    return ::std::wstring_convert<::std::codecvt_utf8_utf16<char16_t>, char16_t>()
+        .to_bytes(data);
+  }
+#endif
+}}} // namespace apache::thrift::stdcxx
 
 using namespace apache::thrift::transport;
 
@@ -539,9 +563,9 @@ uint32_t TJSONProtocol::writeJSONDouble(double num) {
   std::string val;
 
   bool special = false;
-  switch (boost::math::fpclassify(num)) {
+  switch (stdcxx::fpclassify(num)) {
   case FP_INFINITE:
-    if (boost::math::signbit(num)) {
+    if (stdcxx::signbit(num)) {
       val = kThriftNegativeInfinity;
     } else {
       val = kThriftInfinity;
@@ -742,7 +766,7 @@ uint32_t TJSONProtocol::readJSONEscapeChar(uint16_t* out) {
 uint32_t TJSONProtocol::readJSONString(std::string& str, bool skipContext) {
   uint32_t result = (skipContext ? 0 : context_->read(reader_));
   result += readJSONSyntaxChar(kJSONStringDelimiter);
-  std::vector<uint16_t> codeunits;
+  std::vector<stdcxx::char16> codeunits;
   uint8_t ch;
   str.clear();
   while (true) {
@@ -767,7 +791,7 @@ uint32_t TJSONProtocol::readJSONString(std::string& str, bool skipContext) {
           }
           codeunits.push_back(cp);
           codeunits.push_back(0);
-          str += boost::locale::conv::utf_to_utf<char>(codeunits.data());
+          str += stdcxx::utf16_to_utf8(codeunits.data());
           codeunits.clear();
         }
         continue;

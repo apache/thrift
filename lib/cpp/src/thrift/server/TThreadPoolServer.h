@@ -20,7 +20,7 @@
 #ifndef _THRIFT_SERVER_TTHREADPOOLSERVER_H_
 #define _THRIFT_SERVER_TTHREADPOOLSERVER_H_ 1
 
-#include <boost/atomic.hpp>
+#include <thrift/stdcxx.h>
 #include <thrift/concurrency/ThreadManager.h>
 #include <thrift/server/TServerFramework.h>
 
@@ -90,8 +90,8 @@ protected:
   virtual void onClientDisconnected(TConnectedClient* pClient) /* override */;
 
   stdcxx::shared_ptr<apache::thrift::concurrency::ThreadManager> threadManager_;
-  boost::atomic<int64_t> timeout_;
-  boost::atomic<int64_t> taskExpiration_;
+  stdcxx::atomic<int64_t> timeout_;
+  stdcxx::atomic<int64_t> taskExpiration_;
 };
 
 }

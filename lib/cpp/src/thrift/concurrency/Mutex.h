@@ -20,8 +20,8 @@
 #ifndef _THRIFT_CONCURRENCY_MUTEX_H_
 #define _THRIFT_CONCURRENCY_MUTEX_H_ 1
 
+#include <thrift/noncopyable.h>
 #include <thrift/stdcxx.h>
-#include <boost/noncopyable.hpp>
 #include <stdint.h>
 
 namespace apache {
@@ -129,7 +129,7 @@ private:
   mutable volatile bool writerWaiting_;
 };
 
-class Guard : boost::noncopyable {
+class Guard : TNonCopyable {
 public:
   Guard(const Mutex& value, int64_t timeout = 0) : mutex_(&value) {
     if (timeout == 0) {
@@ -160,7 +160,7 @@ private:
 // as to whether we're doing acquireRead() or acquireWrite().
 enum RWGuardType { RW_READ = 0, RW_WRITE = 1 };
 
-class RWGuard : boost::noncopyable {
+class RWGuard : TNonCopyable {
 public:
   RWGuard(const ReadWriteMutex& value, bool write = false) : rw_mutex_(value) {
     if (write) {

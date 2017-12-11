@@ -26,7 +26,6 @@
 
 #include <limits>
 
-#include <boost/static_assert.hpp>
 #include <thrift/stdcxx.h>
 
 namespace apache {

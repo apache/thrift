@@ -17,6 +17,7 @@
 * under the License.
 */
 
+#include <thrift/noncopyable.h>
 #include <thrift/transport/TTransportException.h>
 #include <thrift/transport/TPipe.h>
 #ifdef _WIN32
@@ -40,7 +41,7 @@ void pipe_write(HANDLE pipe, const uint8_t* buf, uint32_t len);
 uint32_t pseudo_sync_read(HANDLE pipe, HANDLE event, uint8_t* buf, uint32_t len);
 void pseudo_sync_write(HANDLE pipe, HANDLE event, const uint8_t* buf, uint32_t len);
 
-class TPipeImpl : boost::noncopyable {
+class TPipeImpl : TNonCopyable {
 public:
   TPipeImpl() {}
   virtual ~TPipeImpl() {}
