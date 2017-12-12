@@ -7,7 +7,7 @@
 
 set -e
 
-rm MANIFEST
+rm -f MANIFEST
 rm -rf Thrift-*
 
 # setup cpan without a prompt
@@ -18,7 +18,6 @@ cpan install CPAN::Meta ExtUtils::MakeMaker JSON::PP
 
 perl Makefile.PL
 rm MYMETA.yml
-make
 make manifest
 make dist
 
@@ -31,9 +30,21 @@ echo '-----------------------------------------------------------'
 set -x
 
 DISTFILE=$(ls Thrift*.gz)
-tar xzf Thrift-*.gz
-rm Thrift-*.gz
+NEWFILE=${DISTFILE/t-v/t-}
+if [[ "$DISTFILE" != "$NEWFILE" ]]; then
+    mv $DISTFILE $NEWFILE
+    DISTFILE="$NEWFILE"
+fi
+tar xzf $DISTFILE
+rm $DISTFILE
 DISTDIR=$(ls -d Thrift*)
+# cpan doesn't like "Thrift-v0.11.0 as a directory name
+# needs to be Thrift-0.11.0
+NEWDIR=${DISTDIR/t-v/t-}
+if [[ "$DISTDIR" != "$NEWDIR" ]]; then
+    mv $DISTDIR $NEWDIR
+    DISTDIR="$NEWDIR"
+fi
 cd $DISTDIR
 perl ../tools/FixupDist.pl
 cd ..
