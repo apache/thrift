@@ -40,6 +40,7 @@ func TestStructReadRequiredFields(t *testing.T) {
 
 	err := testStruct.Read(protocol)
 	mockCtrl.Finish()
+	mockCtrl = gomock.NewController(t)
 	if err == nil {
 		t.Fatal("Expected read to fail")
 	}
@@ -63,6 +64,7 @@ func TestStructReadRequiredFields(t *testing.T) {
 
 	err = testStruct.Read(protocol)
 	mockCtrl.Finish()
+	mockCtrl = gomock.NewController(t)
 	if err == nil {
 		t.Fatal("Expected read to fail")
 	}
