@@ -25,10 +25,15 @@ unit TestClient;
 {.$DEFINE PerfTest}     // activate the performance test
 {$DEFINE Exceptions}    // activate the exceptions test (or disable while debugging)
 
+{$if CompilerVersion >= 28}
+{$DEFINE SupportsAsync}
+{$ifend}
+
 interface
 
 uses
   Windows, SysUtils, Classes, Math,
+  {$IFDEF SupportsAsync} System.Threading, {$ENDIF}
   DateUtils,
   Generics.Collections,
   TestConstants,
@@ -85,6 +90,10 @@ type
     function  CalculateExitCode : Byte;
 
     procedure ClientTest;
+    {$IFDEF SupportsAsync}
+    procedure ClientAsyncTest;
+    {$ENDIF}
+
     procedure JSONProtocolReadWriteTest;
     function  PrepareBinaryData( aRandomDist, aHuge : Boolean) : TBytes;
     {$IFDEF StressTest}
@@ -177,6 +186,7 @@ end;
 class function TTestClient.Execute(const args: array of string) : Byte;
 var
   i : Integer;
+  threadExitCode : Byte;
   host : string;
   port : Integer;
   sPipeName : string;
@@ -374,11 +384,13 @@ begin
 
     result := 0;
     for test := 0 to FNumThread - 1 do begin
-      result := result or threads[test].WaitFor;
+      threadExitCode := threads[test].WaitFor;
+      result := result or threadExitCode;
     end;
 
-    for test := 0 to FNumThread - 1
-    do threads[test].Free;
+    for test := 0 to FNumThread - 1 do begin
+      threads[test].Free;
+    end;
 
     Console.Write('Total time: ' + IntToStr( MilliSecondsBetween(Now, dtStart)));
 
@@ -1004,6 +1016,33 @@ begin
 end;
 
 
+{$IFDEF SupportsAsync}
+procedure TClientThread.ClientAsyncTest;
+var
+  client : TThriftTest.IAsync;
+  s : string;
+  i8 : ShortInt;
+begin
+  StartTestGroup( 'Async Tests', test_Unknown);
+  client := TThriftTest.TClient.Create( FProtocol);
+  FTransport.Open;
+
+  // oneway void functions
+  client.testOnewayAsync(1).Wait;
+  Expect( TRUE, 'Test Oneway(1)');  // success := no exception
+
+  // normal functions
+  s := client.testStringAsync(HUGE_TEST_STRING).Value;
+  Expect( length(s) = length(HUGE_TEST_STRING),
+          'testString( length(HUGE_TEST_STRING) = '+IntToStr(Length(HUGE_TEST_STRING))+') '
+         +'=> length(result) = '+IntToStr(Length(s)));
+
+  i8 := client.testByte(1).Value;
+  Expect( i8 = 1, 'testByte(1) = ' + IntToStr( i8 ));
+end;
+{$ENDIF}
+
+
 {$IFDEF StressTest}
 procedure TClientThread.StressTest(const client : TThriftTest.Iface);
 begin
@@ -1303,12 +1342,15 @@ begin
   try
     {$IFDEF Win64}  
     UseInterlockedExchangeAdd64;
-	{$ENDIF}
+    {$ENDIF}
     JSONProtocolReadWriteTest;
 	
     for i := 0 to FNumIteration - 1 do
     begin
       ClientTest;
+      {$IFDEF SupportsAsync}
+      ClientAsyncTest;
+      {$ENDIF}
     end;
   except
     on e:Exception do Expect( FALSE, 'unexpected exception: "'+e.message+'"');
