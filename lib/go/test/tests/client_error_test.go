@@ -414,6 +414,7 @@ func TestClientReportTTransportErrors(t *testing.T) {
 		client := errortest.NewErrorTestClient(thrift.NewTStandardClient(protocol, protocol))
 		_, retErr := client.TestStruct(defaultCtx, thing)
 		mockCtrl.Finish()
+		mockCtrl = gomock.NewController(t)
 		err2, ok := retErr.(thrift.TTransportException)
 		if !ok {
 			t.Fatal("Expected a TTrasportException")
@@ -446,6 +447,7 @@ func TestClientReportTTransportErrorsLegacy(t *testing.T) {
 		client := errortest.NewErrorTestClientProtocol(transport, protocol, protocol)
 		_, retErr := client.TestStruct(defaultCtx, thing)
 		mockCtrl.Finish()
+		mockCtrl = gomock.NewController(t)
 		err2, ok := retErr.(thrift.TTransportException)
 		if !ok {
 			t.Fatal("Expected a TTrasportException")
@@ -477,6 +479,7 @@ func TestClientReportTProtocolErrors(t *testing.T) {
 		client := errortest.NewErrorTestClient(thrift.NewTStandardClient(protocol, protocol))
 		_, retErr := client.TestStruct(defaultCtx, thing)
 		mockCtrl.Finish()
+		mockCtrl = gomock.NewController(t)
 		err2, ok := retErr.(thrift.TProtocolException)
 		if !ok {
 			t.Fatal("Expected a TProtocolException")
@@ -508,6 +511,7 @@ func TestClientReportTProtocolErrorsLegacy(t *testing.T) {
 		client := errortest.NewErrorTestClientProtocol(transport, protocol, protocol)
 		_, retErr := client.TestStruct(defaultCtx, thing)
 		mockCtrl.Finish()
+		mockCtrl = gomock.NewController(t)
 		err2, ok := retErr.(thrift.TProtocolException)
 		if !ok {
 			t.Fatal("Expected a TProtocolException")
@@ -628,6 +632,7 @@ func TestClientCallException(t *testing.T) {
 		client := errortest.NewErrorTestClient(thrift.NewTStandardClient(protocol, protocol))
 		_, retErr := client.TestString(defaultCtx, "test")
 		mockCtrl.Finish()
+		mockCtrl = gomock.NewController(t)
 
 		if !willComplete {
 			err2, ok := retErr.(thrift.TTransportException)
@@ -663,6 +668,7 @@ func TestClientCallExceptionLegacy(t *testing.T) {
 		client := errortest.NewErrorTestClientProtocol(transport, protocol, protocol)
 		_, retErr := client.TestString(defaultCtx, "test")
 		mockCtrl.Finish()
+		mockCtrl = gomock.NewController(t)
 
 		if !willComplete {
 			err2, ok := retErr.(thrift.TTransportException)
