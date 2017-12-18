@@ -99,3 +99,38 @@ Download inttypes.h from the interwebs and place it in an include path
 location (e.g. thrift/compiler/cpp/src).
 
 Build the compiler in Visual Studio.
+
+# Building the Thrift IDL compiler in Windows with CMake and free VS2017 Community Edition
+
+#### Prerequisites:
+- Install CMake - https://cmake.org/download/
+- Install winflexbison - https://sourceforge.net/projects/winflexbison/
+- Install VS2017 Community Edition - https://www.visualstudio.com/vs/whatsnew/ (ensure that you installed workload "Desktop Development with C++" for VS2017)
+
+#### Generation of VS2017 project with CMake and build in Windows
+- Go to **thrift\compiler\cpp**
+- Run commands in command line:
+```
+mkdir cmake-vs
+cd cmake-vs
+cmake -G "Visual Studio 15 2017" -DWITH_PLUGIN=OFF ..
+```
+- Build solution and use executable
+
+
+# Building the Thrift IDL compiler in MacOS with CMake and XCode
+#### Prerequisites:
+- Install XCode
+- Install/update bison and cmake with brew
+```
+brew install cmake
+brew install bison
+```
+#### Generation of XCode project with CMake and build in MacOs
+- Go to **thrift\compiler\cpp**
+- Run commands in command line:
+```
+mkdir cmake-build && cd cmake-build
+cmake -G "Xcode" -DWITH_PLUGIN=OFF ..
+```
+- Build solution and use executable

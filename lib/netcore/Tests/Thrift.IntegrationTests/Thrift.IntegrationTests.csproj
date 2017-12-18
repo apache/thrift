@@ -1,0 +1,36 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <PreBuildEvent>thrift -out ./../../../ -gen netcore:wcf,union,serial,hashcode -r ./../../../CassandraTest.thrift</PreBuildEvent>
+    <OutputType>Library</OutputType>
+    <LangVersion>7</LangVersion>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Remove="Cassandra\**" />
+    <EmbeddedResource Remove="Cassandra\**" />
+    <None Remove="Cassandra\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="CompareNETObjects" Version="3.9.0" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk">
+      <Version>15.5.0-preview-20170810-02</Version>
+    </PackageReference>
+    <PackageReference Include="MSTest.TestAdapter">
+      <Version>1.2.0-beta3</Version>
+    </PackageReference>
+    <PackageReference Include="MSTest.TestFramework">
+      <Version>1.2.0-beta3</Version>
+    </PackageReference>
+    <PackageReference Include="System.ServiceModel.Primitives">
+      <Version>4.4.0</Version>
+    </PackageReference>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\Thrift\Thrift.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <Service Include="{82a7f48d-3b50-4b1e-b82e-3ada8210c358}" />
+  </ItemGroup>
+
+</Project>

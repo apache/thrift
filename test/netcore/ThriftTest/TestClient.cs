@@ -1,4 +1,4 @@
-﻿// Licensed to the Apache Software Foundation(ASF) under one
+// Licensed to the Apache Software Foundation(ASF) under one
 // or more contributor license agreements.See the NOTICE file
 // distributed with this work for additional information
 // regarding copyright ownership.The ASF licenses this file
@@ -167,7 +167,7 @@ namespace Test
 
                 if (protocol == "json")
                 {
-                    return new TJsonProtocol(transport);
+                    return new TJSONProtocol(transport);
                 }
 
                 return new TBinaryProtocol(transport);
@@ -285,17 +285,14 @@ namespace Test
                 var tests = Enumerable.Range(0, param.numThreads).Select(_ => new ClientTest(param)).ToArray();
 
                 //issue tests on separate threads simultaneously
-                var threads = tests.Select(test => new Thread(test.Execute)).ToArray();
+                var threads = tests.Select(test => new Task(test.Execute)).ToArray();
                 var start = DateTime.Now;
                 foreach (var t in threads)
                 {
                     t.Start();
                 }
 
-                foreach (var t in threads)
-                {
-                    t.Join();
-                }
+                Task.WaitAll(threads);
 
                 Console.WriteLine("Total time: " + (DateTime.Now - start));
                 Console.WriteLine();

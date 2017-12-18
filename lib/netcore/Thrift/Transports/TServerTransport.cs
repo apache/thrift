@@ -45,7 +45,7 @@ namespace Thrift.Transports
 
             if (transport == null)
             {
-                throw new TTransportException("AcceptAsync() should not return null");
+                throw new TTransportException($"{nameof(AcceptImplementationAsync)} should not return null");
             }
 
             return transport;

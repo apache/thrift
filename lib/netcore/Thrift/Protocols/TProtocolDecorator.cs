@@ -1,4 +1,4 @@
-// Licensed to the Apache Software Foundation(ASF) under one
+﻿// Licensed to the Apache Software Foundation(ASF) under one
 // or more contributor license agreements.See the NOTICE file
 // distributed with this work for additional information
 // regarding copyright ownership.The ASF licenses this file
@@ -36,12 +36,7 @@ namespace Thrift.Protocols
         protected TProtocolDecorator(TProtocol protocol)
             : base(protocol.Transport)
         {
-            if (protocol == null)
-            {
-                throw new ArgumentNullException(nameof(protocol));
-            }
-
-            _wrappedProtocol = protocol;
+            _wrappedProtocol = protocol ?? throw new ArgumentNullException(nameof(protocol));
         }
 
         public override async Task WriteMessageBeginAsync(TMessage message, CancellationToken cancellationToken)
@@ -54,9 +49,9 @@ namespace Thrift.Protocols
             await _wrappedProtocol.WriteMessageEndAsync(cancellationToken);
         }
 
-        public override async Task WriteStructBeginAsync(TStruct struc, CancellationToken cancellationToken)
+        public override async Task WriteStructBeginAsync(TStruct @struct, CancellationToken cancellationToken)
         {
-            await _wrappedProtocol.WriteStructBeginAsync(struc, cancellationToken);
+            await _wrappedProtocol.WriteStructBeginAsync(@struct, cancellationToken);
         }
 
         public override async Task WriteStructEndAsync(CancellationToken cancellationToken)
@@ -144,9 +139,9 @@ namespace Thrift.Protocols
             await _wrappedProtocol.WriteStringAsync(s, cancellationToken);
         }
 
-        public override async Task WriteBinaryAsync(byte[] b, CancellationToken cancellationToken)
+        public override async Task WriteBinaryAsync(byte[] bytes, CancellationToken cancellationToken)
         {
-            await _wrappedProtocol.WriteBinaryAsync(b, cancellationToken);
+            await _wrappedProtocol.WriteBinaryAsync(bytes, cancellationToken);
         }
 
         public override async Task<TMessage> ReadMessageBeginAsync(CancellationToken cancellationToken)

@@ -16,11 +16,9 @@
 // under the License.
 
 using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Security.Cryptography.X509Certificates;
@@ -198,7 +196,7 @@ namespace Thrift.Transports.Client
                 {
                     throw new TTransportException(TTransportException.ExceptionType.Unknown, iox.ToString());
                 }
-                catch (WebException wx)
+                catch (HttpRequestException wx)
                 {
                     throw new TTransportException(TTransportException.ExceptionType.Unknown,
                         "Couldn't connect to server: " + wx);

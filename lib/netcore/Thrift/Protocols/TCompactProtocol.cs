@@ -1,4 +1,4 @@
-// Licensed to the Apache Software Foundation(ASF) under one
+﻿// Licensed to the Apache Software Foundation(ASF) under one
 // or more contributor license agreements.See the NOTICE file
 // distributed with this work for additional information
 // regarding copyright ownership.The ASF licenses this file
@@ -114,7 +114,7 @@ namespace Thrift.Protocols
         ///     use it as an opportunity to put special placeholder markers on the field
         ///     stack so we can get the field id deltas correct.
         /// </summary>
-        public override async Task WriteStructBeginAsync(TStruct struc, CancellationToken cancellationToken)
+        public override async Task WriteStructBeginAsync(TStruct @struct, CancellationToken cancellationToken)
         {
             if (cancellationToken.IsCancellationRequested)
             {
@@ -383,16 +383,16 @@ namespace Thrift.Protocols
             await Trans.WriteAsync(bytes, 0, bytes.Length, cancellationToken);
         }
 
-        public override async Task WriteBinaryAsync(byte[] b, CancellationToken cancellationToken)
+        public override async Task WriteBinaryAsync(byte[] bytes, CancellationToken cancellationToken)
         {
             if (cancellationToken.IsCancellationRequested)
             {
                 return;
             }
 
-            var bufferTuple = CreateWriteVarInt32((uint) b.Length);
+            var bufferTuple = CreateWriteVarInt32((uint) bytes.Length);
             await Trans.WriteAsync(bufferTuple.Item1, 0, bufferTuple.Item2, cancellationToken);
-            await Trans.WriteAsync(b, 0, b.Length, cancellationToken);
+            await Trans.WriteAsync(bytes, 0, bytes.Length, cancellationToken);
         }
 
         public override async Task WriteMapBeginAsync(TMap map, CancellationToken cancellationToken)

@@ -1,4 +1,4 @@
-﻿// Licensed to the Apache Software Foundation(ASF) under one
+// Licensed to the Apache Software Foundation(ASF) under one
 // or more contributor license agreements.See the NOTICE file
 // distributed with this work for additional information
 // regarding copyright ownership.The ASF licenses this file
@@ -439,7 +439,7 @@ namespace Test
             public Task testOnewayAsync(int secondsToSleep, CancellationToken cancellationToken)
             {
                 logger.Invoke("testOneway({0}), sleeping...", secondsToSleep);
-                Thread.Sleep(secondsToSleep * 1000);
+                Task.Delay(secondsToSleep * 1000, cancellationToken).GetAwaiter().GetResult();
                 logger.Invoke("testOneway finished");
 
                 return Task.CompletedTask;
@@ -497,8 +497,8 @@ namespace Test
                 {
                     if (param.useEncryption)
                     {
-                        var certPath = "../../keys/server.p12";
-                        trans = new TTlsServerSocketTransport(param.port, param.useBufferedSockets, new X509Certificate2(certPath, "thrift"), null, null, SslProtocols.Tls);
+                        var certPath = "../keys/server.p12";
+                        trans = new TTlsServerSocketTransport(param.port, param.useBufferedSockets, new X509Certificate2(certPath, "thrift"), null, null, SslProtocols.Tls12);
                     }
                     else
                     {
@@ -510,7 +510,7 @@ namespace Test
                 if (param.compact)
                     proto = new TCompactProtocol.Factory();
                 else if (param.json)
-                    proto = new TJsonProtocol.Factory();
+                    proto = new TJSONProtocol.Factory();
                 else
                     proto = new TBinaryProtocol.Factory();
 

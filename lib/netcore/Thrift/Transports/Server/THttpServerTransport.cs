@@ -53,29 +53,14 @@ namespace Thrift.Transports.Server
         public THttpServerTransport(ITAsyncProcessor processor, ITProtocolFactory inputProtocolFactory,
             ITProtocolFactory outputProtocolFactory, RequestDelegate next, ILoggerFactory loggerFactory)
         {
-            if (processor == null)
-            {
-                throw new ArgumentNullException(nameof(processor));
-            }
-
-            if (inputProtocolFactory == null)
-            {
-                throw new ArgumentNullException(nameof(inputProtocolFactory));
-            }
-
-            if (outputProtocolFactory == null)
-            {
-                throw new ArgumentNullException(nameof(outputProtocolFactory));
-            }
-
             if (loggerFactory == null)
             {
                 throw new ArgumentNullException(nameof(loggerFactory));
             }
 
-            Processor = processor;
-            InputProtocolFactory = inputProtocolFactory;
-            OutputProtocolFactory = outputProtocolFactory;
+            Processor = processor ?? throw new ArgumentNullException(nameof(processor));
+            InputProtocolFactory = inputProtocolFactory ?? throw new ArgumentNullException(nameof(inputProtocolFactory));
+            OutputProtocolFactory = outputProtocolFactory ?? throw new ArgumentNullException(nameof(outputProtocolFactory));
 
             _next = next;
             _logger = loggerFactory.CreateLogger<THttpServerTransport>();
