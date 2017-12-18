@@ -1,4 +1,4 @@
-﻿// Licensed to the Apache Software Foundation(ASF) under one
+// Licensed to the Apache Software Foundation(ASF) under one
 // or more contributor license agreements.See the NOTICE file
 // distributed with this work for additional information
 // regarding copyright ownership.The ASF licenses this file
@@ -18,28 +18,29 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Net;
 using System.Reflection;
 using System.Security.Authentication;
 using System.Security.Cryptography.X509Certificates;
+using System.ServiceModel;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using ThriftAsync.Test;
 using Thrift.Collections;
 using Thrift.Protocols;
 using Thrift.Transports;
 using Thrift.Transports.Client;
 
-namespace Test
+namespace ThriftTest
 {
     public class TestClient
     {
         private class TestParams
         {
             public int numIterations = 1;
-            public IPAddress host = IPAddress.Loopback;
+            public IPAddress host = IPAddress.Any;
             public int port = 9090;
             public int numThreads = 1;
             public string url;
@@ -111,11 +112,43 @@ namespace Test
                     }
                     else
                     {
-                        throw new ArgumentException(args[i]);
+                        //throw new ArgumentException(args[i]);
                     }
                 }
             }
 
+            private static X509Certificate2 GetClientCert()
+            {
+                var clientCertName = "client.p12";
+                var possiblePaths = new List<string>
+                {
+                    "../../../keys/",
+                    "../../keys/",
+                    "../keys/",
+                    "keys/",
+                };
+
+                string existingPath = null;
+                foreach (var possiblePath in possiblePaths)
+                {
+                    var path = Path.GetFullPath(possiblePath + clientCertName);
+                    if (File.Exists(path))
+                    {
+                        existingPath = path;
+                        break;
+                    }
+                }
+
+                if (string.IsNullOrEmpty(existingPath))
+                {
+                    throw new FileNotFoundException($"Cannot find file: {clientCertName}");
+                }
+            
+                var cert = new X509Certificate2(existingPath, "thrift");
+
+                return cert;
+            }
+            
             public TClientTransport CreateTransport()
             {
                 if (url == null)
@@ -131,9 +164,16 @@ namespace Test
                     {
                         if (encrypted)
                         {
-                            var certPath = "../../keys/client.p12";
-                            var cert = new X509Certificate2(certPath, "thrift");
-                            trans = new TTlsSocketClientTransport(host, port, 0, cert, (o, c, chain, errors) => true, null, SslProtocols.Tls);
+                           var cert = GetClientCert();
+                        
+                            if (cert == null || !cert.HasPrivateKey)
+                            {
+                                throw new InvalidOperationException("Certificate doesn't contain private key");
+                            }
+                            
+                            trans = new TTlsSocketClientTransport(host, port, 0, cert, 
+                                (sender, certificate, chain, errors) => true,
+                                null, SslProtocols.Tls | SslProtocols.Tls11 | SslProtocols.Tls12);
                         }
                         else
                         {
@@ -184,7 +224,7 @@ namespace Test
         private class ClientTest
         {
             private readonly TClientTransport transport;
-            private readonly ThriftAsync.Test.ThriftTest.Client client;
+            private readonly ThriftTest.Client client;
             private readonly int numIterations;
             private bool done;
 
@@ -193,7 +233,7 @@ namespace Test
             public ClientTest(TestParams param)
             {
                 transport = param.CreateTransport();
-                client = new ThriftAsync.Test.ThriftTest.Client(param.CreateProtocol(transport));
+                client = new ThriftTest.Client(param.CreateProtocol(transport));
                 numIterations = param.numIterations;
             }
 
@@ -217,6 +257,14 @@ namespace Test
                         }
                     }
                     catch (TTransportException ex)
+                    {
+                        Console.WriteLine("*** FAILED ***");
+                        Console.WriteLine("Connect failed: " + ex.Message);
+                        ReturnCode |= ErrorUnknown;
+                        Console.WriteLine(ex.Message + " ST: " + ex.StackTrace);
+                        continue;
+                    }
+                    catch (Exception ex)
                     {
                         Console.WriteLine("*** FAILED ***");
                         Console.WriteLine("Connect failed: " + ex.Message);
@@ -285,17 +333,14 @@ namespace Test
                 var tests = Enumerable.Range(0, param.numThreads).Select(_ => new ClientTest(param)).ToArray();
 
                 //issue tests on separate threads simultaneously
-                var threads = tests.Select(test => new Thread(test.Execute)).ToArray();
+                var threads = tests.Select(test => new Task(test.Execute)).ToArray();
                 var start = DateTime.Now;
                 foreach (var t in threads)
                 {
                     t.Start();
                 }
 
-                foreach (var t in threads)
-                {
-                    t.Join();
-                }
+                Task.WaitAll(threads);
 
                 Console.WriteLine("Total time: " + (DateTime.Now - start));
                 Console.WriteLine();
@@ -351,7 +396,7 @@ namespace Test
             return retval;
         }
 
-        public static async Task<int> ExecuteClientTestAsync(ThriftAsync.Test.ThriftTest.Client client)
+        public static async Task<int> ExecuteClientTestAsync(ThriftTest.Client client)
         {
             var token = CancellationToken.None;
             var returnCode = 0;

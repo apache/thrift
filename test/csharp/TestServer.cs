@@ -455,7 +455,9 @@ namespace Test
                     if (useEncryption)
                     {
                         string certPath = "../keys/server.p12";
-                        trans = new TTLSServerSocket(port, 0, useBufferedSockets, new X509Certificate2(certPath, "thrift"), null, null, SslProtocols.Tls);
+                        trans = new TTLSServerSocket(port, 0, useBufferedSockets, new X509Certificate2(certPath, "thrift"), 
+                            null,
+                            null, SslProtocols.Tls);
                     }
                     else
                     {

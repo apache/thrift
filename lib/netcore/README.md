@@ -10,7 +10,10 @@ Thrift client library ported to Microsoft .Net Core
 - .NET Standard 1.6 (SDK 2.0.0)
 
 # How to build on Windows
+- Get Thrift IDL compiler executable, add to some folder and add path to this folder into PATH variable
 - Open the Thrift.sln project with Visual Studio and build.
+or 
+- Build with scripts
 
 # How to build on Unix
 - Ensure you have .NET Core 2.0.0 SDK installed or use the Ubuntu Xenial docker image
