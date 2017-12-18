@@ -105,15 +105,20 @@ enum Requiredness {
   T_OPT_IN_REQ_OUT = 2
 }
 
+struct t_const_identifier_value {
+  1: required string identifier_val
+  2: required t_type_id enum_val
+}
+
 union t_const_value {
   1: optional map<t_const_value, t_const_value> map_val
   2: optional list<t_const_value> list_val
   3: optional string string_val
   4: optional i64 integer_val
   5: optional double double_val
-  6: optional string identifier_val
-  7: optional t_type_id enum_val
+  8: optional t_const_identifier_value const_identifier_val
 }
+
 struct t_const {
   1: required string name
   2: required t_type_id type

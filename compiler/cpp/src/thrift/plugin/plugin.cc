@@ -269,11 +269,11 @@ THRIFT_CONVERSION(t_const_value, ) {
     T_CONST_VALUE_CASE(string);
   else T_CONST_VALUE_CASE(integer);
   else T_CONST_VALUE_CASE(double);
-  else {
-    T_CONST_VALUE_CASE(identifier);
-    if (from.__isset.enum_val)
-      to->set_enum(resolve_type< ::t_enum>(from.enum_val));
+  else if (from.__isset.const_identifier_val) {
+    to->set_identifier(from.const_identifier_val.identifier_val) ;
+    to->set_enum(resolve_type< ::t_enum>(from.const_identifier_val.enum_val)) ;
   }
+
 #undef T_CONST_VALUE_CASE
 }
 THRIFT_CONVERSION(t_field, resolve_type< ::t_type>(from.type), from.name, from.key) {
@@ -469,9 +469,7 @@ int GeneratorPlugin::exec(int, char* []) {
     return ::t_const_value::CV_INTEGER;
   if (v.__isset.double_val)
     return ::t_const_value::CV_DOUBLE;
-  if (v.__isset.identifier_val)
-    return ::t_const_value::CV_IDENTIFIER;
-  if (v.__isset.enum_val)
+  if (v.__isset.const_identifier_val)
     return ::t_const_value::CV_IDENTIFIER;
   throw ThriftPluginError("Unknown const value type");
 }
