@@ -1,4 +1,4 @@
-﻿// Licensed to the Apache Software Foundation(ASF) under one
+// Licensed to the Apache Software Foundation(ASF) under one
 // or more contributor license agreements.See the NOTICE file
 // distributed with this work for additional information
 // regarding copyright ownership.The ASF licenses this file
@@ -16,14 +16,13 @@
 // under the License.
 
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Thrift.Protocols;
 
 namespace Thrift
 {
+    // ReSharper disable once InconsistentNaming
     /// <summary>
     ///     TBaseClient.
     ///     Base client for generated clients.
@@ -39,18 +38,8 @@ namespace Thrift
 
         protected TBaseClient(TProtocol inputProtocol, TProtocol outputProtocol)
         {
-            if (inputProtocol == null)
-            {
-                throw new ArgumentNullException(nameof(inputProtocol));
-            }
-
-            if (outputProtocol == null)
-            {
-                throw new ArgumentNullException(nameof(outputProtocol));
-            }
-
-            _inputProtocol = inputProtocol;
-            _outputProtocol = outputProtocol;
+            _inputProtocol = inputProtocol ?? throw new ArgumentNullException(nameof(inputProtocol));
+            _outputProtocol = outputProtocol ?? throw new ArgumentNullException(nameof(outputProtocol));
         }
 
         public TProtocol InputProtocol => _inputProtocol;

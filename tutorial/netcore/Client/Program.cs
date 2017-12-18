@@ -1,4 +1,4 @@
-﻿// Licensed to the Apache Software Foundation(ASF) under one
+// Licensed to the Apache Software Foundation(ASF) under one
 // or more contributor license agreements.See the NOTICE file
 // distributed with this work for additional information
 // regarding copyright ownership.The ASF licenses this file
@@ -42,14 +42,14 @@ namespace Client
         {
             Logger.LogInformation(@"
 Usage: 
-    Client.exe -h
+    Client.exe -help
         will diplay help information 
 
-    Client.exe -t:<transport> -p:<protocol> -mc:<numClients>
+    Client.exe -tr:<transport> -pr:<protocol> -mc:<numClients>
         will run client with specified arguments (tcp transport and binary protocol by default) and with 1 client
 
 Options:
-    -t (transport): 
+    -tr (transport): 
         tcp - (default) tcp transport will be used (host - ""localhost"", port - 9090)
         tcpbuffered - buffered transport over tcp will be used (host - ""localhost"", port - 9090)
         namedpipe - namedpipe transport will be used (pipe address - "".test"")
@@ -57,7 +57,7 @@ Options:
         tcptls - tcp tls transport will be used (host - ""localhost"", port - 9090)
         framed - tcp framed transport will be used (host - ""localhost"", port - 9090)
 
-    -p (protocol): 
+    -pr (protocol): 
         binary - (default) binary protocol will be used
         compact - compact protocol will be used
         json - json protocol will be used
@@ -67,7 +67,7 @@ Options:
         <numClients> - number of multiple clients to connect to server (max 100, default 1)
 
 Sample:
-    Client.exe -t:tcp -p:binary
+    Client.exe -tr:tcp -p:binary
 ");
         }
 
@@ -75,7 +75,7 @@ Sample:
         {
             args = args ?? new string[0];
 
-            if (args.Any(x => x.StartsWith("-h", StringComparison.OrdinalIgnoreCase)))
+            if (args.Any(x => x.StartsWith("-help", StringComparison.OrdinalIgnoreCase)))
             {
                 DisplayHelp();
                 return;
@@ -127,7 +127,7 @@ Sample:
 
         private static TClientTransport GetTransport(string[] args)
         {
-            var transport = args.FirstOrDefault(x => x.StartsWith("-t"))?.Split(':')?[1];
+            var transport = args.FirstOrDefault(x => x.StartsWith("-tr"))?.Split(':')?[1];
 
             Transport selectedTransport;
             if (Enum.TryParse(transport, true, out selectedTransport))
@@ -203,7 +203,7 @@ Sample:
 
         private static Tuple<Protocol, TProtocol> GetProtocol(string[] args, TClientTransport transport)
         {
-            var protocol = args.FirstOrDefault(x => x.StartsWith("-p"))?.Split(':')?[1];
+            var protocol = args.FirstOrDefault(x => x.StartsWith("-pr"))?.Split(':')?[1];
 
             Protocol selectedProtocol;
             if (Enum.TryParse(protocol, true, out selectedProtocol))

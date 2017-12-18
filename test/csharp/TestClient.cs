@@ -62,7 +62,9 @@ namespace Test
                         {
                             string certPath = "../keys/client.p12";
                             X509Certificate cert = new X509Certificate2(certPath, "thrift");
-                            trans = new TTLSSocket(host, port, 0, cert, (o, c, chain, errors) => true, null, SslProtocols.Tls);
+                            trans = new TTLSSocket(host, port, 0, cert, 
+                                (o, c, chain, errors) => true, 
+                                null, SslProtocols.Tls);
                         }
                         else
                         {

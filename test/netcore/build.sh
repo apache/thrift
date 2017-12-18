@@ -22,10 +22,5 @@
 #exit if any command fails
 set -e
 
-cd ThriftTest
-../../../compiler/cpp/thrift  -gen netcore:wcf   -r  ../../ThriftTest.thrift
-cd ..
-
 dotnet --info
-dotnet restore
 dotnet build

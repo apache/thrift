@@ -1,4 +1,4 @@
-// Licensed to the Apache Software Foundation(ASF) under one
+﻿// Licensed to the Apache Software Foundation(ASF) under one
 // or more contributor license agreements.See the NOTICE file
 // distributed with this work for additional information
 // regarding copyright ownership.The ASF licenses this file
@@ -57,7 +57,7 @@ namespace Thrift.Transports.Client
             if (isServer && certificate == null)
             {
                 throw new ArgumentException("TTlsSocketClientTransport needs certificate to be used for server",
-                    "certificate");
+                    nameof(certificate));
             }
 
             if (IsOpen)
@@ -204,7 +204,8 @@ namespace Thrift.Transports.Client
                         ? new X509CertificateCollection {_certificate}
                         : new X509CertificateCollection();
 
-                    await _secureStream.AuthenticateAsClientAsync(_host.ToString(), certs, _sslProtocols, true);
+                    var targetHost = _host.ToString();
+                    await _secureStream.AuthenticateAsClientAsync(targetHost, certs, _sslProtocols, true);
                 }
             }
             catch (Exception)

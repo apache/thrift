@@ -1,4 +1,4 @@
-// Licensed to the Apache Software Foundation(ASF) under one
+﻿// Licensed to the Apache Software Foundation(ASF) under one
 // or more contributor license agreements.See the NOTICE file
 // distributed with this work for additional information
 // regarding copyright ownership.The ASF licenses this file
@@ -79,7 +79,7 @@ namespace Thrift.Protocols
             }
         }
 
-        public override async Task WriteStructBeginAsync(TStruct struc, CancellationToken cancellationToken)
+        public override async Task WriteStructBeginAsync(TStruct @struct, CancellationToken cancellationToken)
         {
             if (cancellationToken.IsCancellationRequested)
             {
@@ -293,15 +293,15 @@ namespace Thrift.Protocols
             await WriteI64Async(BitConverter.DoubleToInt64Bits(d), cancellationToken);
         }
 
-        public override async Task WriteBinaryAsync(byte[] b, CancellationToken cancellationToken)
+        public override async Task WriteBinaryAsync(byte[] bytes, CancellationToken cancellationToken)
         {
             if (cancellationToken.IsCancellationRequested)
             {
                 return;
             }
 
-            await WriteI32Async(b.Length, cancellationToken);
-            await Trans.WriteAsync(b, 0, b.Length, cancellationToken);
+            await WriteI32Async(bytes.Length, cancellationToken);
+            await Trans.WriteAsync(bytes, 0, bytes.Length, cancellationToken);
         }
 
         public override async Task<TMessage> ReadMessageBeginAsync(CancellationToken cancellationToken)
@@ -511,8 +511,13 @@ namespace Thrift.Protocols
 
             var i32In = new byte[4];
             await Trans.ReadAllAsync(i32In, 0, 4, cancellationToken);
-            var result = ((i32In[0] & 0xff) << 24) | ((i32In[1] & 0xff) << 16) | ((i32In[2] & 0xff) << 8) |
-                         i32In[3] & 0xff;
+
+            var result = 
+                ((i32In[0] & 0xff) << 24) | 
+                ((i32In[1] & 0xff) << 16) | 
+                ((i32In[2] & 0xff) << 8) |
+                i32In[3] & 0xff;
+
             return result;
         }
 
