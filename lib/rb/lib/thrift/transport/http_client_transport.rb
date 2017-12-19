@@ -52,6 +52,7 @@ module Thrift
       @inbuf = StringIO.new data
     ensure
       @outbuf = Bytes.empty_byte_buffer
+      http.finish
     end
   end
 end
