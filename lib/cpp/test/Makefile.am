@@ -416,4 +416,5 @@ EXTRA_DIST = \
 	qt \
 	CMakeLists.txt \
 	DebugProtoTest_extras.cpp \
-	ThriftTest_extras.cpp
+	ThriftTest_extras.cpp \
+	OneWayTest.thrift
