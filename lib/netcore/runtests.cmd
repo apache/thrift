@@ -22,8 +22,6 @@ setlocal
 thrift -version
 dotnet --info
 
-dotnet restore
-
 dotnet test Tests\Thrift.IntegrationTests\Thrift.IntegrationTests.csproj
 dotnet test Tests\Thrift.Tests\Thrift.Tests.csproj
 

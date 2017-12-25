@@ -148,3 +148,6 @@ set_target_properties(thrift_compiler_tests PROPERTIES RUNTIME_OUTPUT_DIRECTORY 
 set_target_properties(thrift_compiler_tests PROPERTIES OUTPUT_NAME thrift_compiler_tests)
 
 target_link_libraries(thrift_compiler_tests thrift_compiler)
+
+enable_testing()
+add_test(NAME ThriftTests COMMAND thrift_compiler_tests)

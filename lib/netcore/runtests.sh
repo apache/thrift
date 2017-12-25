@@ -19,14 +19,8 @@
 # under the License.
 #
 
-#exit if any command fails
-#set -e
-
-thrift --version
+thrift -version
 dotnet --info
-dotnet build 
 
-#revision=${TRAVIS_JOB_ID:=1}  
-#revision=$(printf "%04d" $revision) 
-
-#dotnet pack ./src/PROJECT_NAME -c Release -o ./artifacts --version-suffix=$revision  
+dotnet test Tests\Thrift.IntegrationTests\Thrift.IntegrationTests.csproj
+dotnet test Tests\Thrift.Tests\Thrift.Tests.csproj

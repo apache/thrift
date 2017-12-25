@@ -17,11 +17,11 @@ rem  * KIND, either express or implied. See the License for the
 rem  * specific language governing permissions and limitations
 rem  * under the License.
 rem  */
+
 setlocal
 
 thrift -version
 dotnet --info
-dotnet restore
 dotnet build 
 
 :eof

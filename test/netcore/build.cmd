@@ -19,12 +19,7 @@ rem  * under the License.
 rem  */
 setlocal
 
-cd Interfaces
-thrift  -gen netcore:wcf   -r  ..\..\tutorial.thrift
-cd ..
-
 dotnet --info
-dotnet restore
 dotnet build
 
 :eof
