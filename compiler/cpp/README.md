@@ -16,6 +16,9 @@
         - [Cross compile using mingw32 and generate a Windows Installer with CPack](#cross-compile-using-mingw32-and-generate-a-windows-installer-with-cpack)
 - [Other cases](#other-cases)
     - [Building the Thrift IDL compiler in Windows without CMake](#building-the-thrift-idl-compiler-in-windows-without-cmake)
+- [Unit tests for compiler](#unit-tests-for-compiler)
+    - [Using boost test](#using-boost-test)
+    - [Using Catch C++ test library](#using-catch-c-test-library)
 - [Have a Happy free time and holidays](#have-a-happy-free-time-and-holidays)
 
 <!-- /TOC -->
@@ -157,5 +160,16 @@ Download inttypes.h from the interwebs and place it in an include path
 location (e.g. thrift/compiler/cpp/src).
 
 Build the compiler in Visual Studio.
+
+# Unit tests for compiler
+
+## Using boost test
+- pls check **test** folder
+
+## Using Catch C++ test library
+
+Added generic way to cover code by tests for many languages (you just need to make a correct header file for generator for your language - example in **netcore** implementation)
+
+- pls check **tests** folder
 
 # Have a Happy free time and holidays 

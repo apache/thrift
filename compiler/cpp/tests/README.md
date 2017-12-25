@@ -16,10 +16,12 @@
 
 ## General information 
 
+Added generic way to cover code by tests for many languages (you just need to make a correct header file for generator for your language - example in **netcore** implementation)
+
 At current moment these tests use free Catch library (https://github.com/catchorg/Catch2/tree/Catch1.x) for easy test creation and usage.
 Decision to use it was because of simplicity, easy usage, one header file to use, stable community and growing interest  (https://cpp.libhunt.com/project/googletest-google/vs/catch?rel=cmp-cmp)
-Also, maybe, later it will be migrated to Catch2 (https://github.com/philsquared/Catch) - depends on need to support legacy compilers (c++98)
 
+Also, maybe, later it will be migrated to Catch2 (https://github.com/philsquared/Catch) - depends on need to support legacy compilers (c++98)
 
 ## How to add your tests
 
