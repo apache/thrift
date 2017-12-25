@@ -18,8 +18,10 @@
     <PackageReference Include="System.ServiceModel.Primitives" Version="[4.4,)" />
   </ItemGroup>
 
-  <Target Name="PreBuild" BeforeTargets="Compile;Restore">
-    <Exec Command="thrift -out $(ProjectDir) -gen netcore:wcf,union,serial,hashcode -r ./../../tutorial.thrift" />
+  <Target Name="PreBuild" BeforeTargets="_GenerateRestoreProjectSpec;Restore;Compile">
+    <Exec Condition="Exists('thrift.exe')" Command="thrift -out $(ProjectDir) -gen netcore:wcf,union,serial,hashcode -r ./../../tutorial.thrift" />
+    <Exec Condition="Exists('thrift')" Command="thrift -out $(ProjectDir) -gen netcore:wcf,union,serial,hashcode -r ./../../tutorial.thrift" />
+    <Exec Condition="Exists('./../../../compiler/cpp/thrift')" Command="./../../../compiler/cpp/thrift -out $(ProjectDir) -gen netcore:wcf,union,serial,hashcode -r ./../../tutorial.thrift" />
   </Target>
 
 </Project>

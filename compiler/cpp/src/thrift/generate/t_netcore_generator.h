@@ -24,7 +24,7 @@ static const string endl = "\n"; // avoid ostream << std::endl flushes
 
 struct member_mapping_scope
 {
-    void* scope_member;
+    void* scope_member = NULL;
     map<string, string> mapping_table;
 };
 
@@ -38,7 +38,7 @@ public:
     bool is_hashcode_enabled() const;
     bool is_serialize_enabled() const;
     bool is_union_enabled() const;
-    map<string, int> t_netcore_generator::get_keywords_list() const;
+    map<string, int> get_keywords_list() const;
 
     // overrides
     void init_generator();

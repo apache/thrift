@@ -24,8 +24,10 @@
     <ProjectReference Include="..\..\..\lib\netcore\Thrift\Thrift.csproj" />
   </ItemGroup>
 
-  <Target Name="PreBuild" BeforeTargets="Compile;Restore">
-    <Exec Command="thrift -out $(ProjectDir) -gen netcore:wcf,union,serial,hashcode -r ./../../ThriftTest.thrift" />
+  <Target Name="PreBuild" BeforeTargets="_GenerateRestoreProjectSpec;Restore;Compile">
+    <Exec Condition="Exists('thrift.exe')" Command="thrift -out $(ProjectDir) -gen netcore:wcf,union,serial,hashcode -r ./../../ThriftTest.thrift" />
+    <Exec Condition="Exists('thrift')" Command="thrift -out $(ProjectDir) -gen netcore:wcf,union,serial,hashcode -r ./../../ThriftTest.thrift" />
+    <Exec Condition="Exists('$(ProjectDir)/../../../compiler/cpp/thrift')" Command="$(ProjectDir)/../../../compiler/cpp/thrift -out $(ProjectDir) -gen netcore:wcf,union,serial,hashcode -r ./../../ThriftTest.thrift" />
   </Target>
 
 </Project>
