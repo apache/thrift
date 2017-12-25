@@ -1,4 +1,4 @@
-﻿// Licensed to the Apache Software Foundation(ASF) under one
+// Licensed to the Apache Software Foundation(ASF) under one
 // or more contributor license agreements.See the NOTICE file
 // distributed with this work for additional information
 // regarding copyright ownership.The ASF licenses this file
@@ -37,7 +37,7 @@ namespace Thrift.Protocols
     ///     Adapted from the Java version.
     /// </summary>
     // ReSharper disable once InconsistentNaming
-    public class TJSONProtocol : TProtocol
+    public class TJsonProtocol : TProtocol
     {
         private const long Version = 1;
 
@@ -59,7 +59,7 @@ namespace Thrift.Protocols
         /// <summary>
         ///     TJsonProtocol Constructor
         /// </summary>
-        public TJSONProtocol(TClientTransport trans)
+        public TJsonProtocol(TClientTransport trans)
             : base(trans)
         {
             Context = new JSONBaseContext(this);
@@ -797,7 +797,7 @@ namespace Thrift.Protocols
         {
             public TProtocol GetProtocol(TClientTransport trans)
             {
-                return new TJSONProtocol(trans);
+                return new TJsonProtocol(trans);
             }
         }
 
@@ -808,9 +808,9 @@ namespace Thrift.Protocols
         /// </summary>
         protected class JSONBaseContext
         {
-            protected TJSONProtocol Proto;
+            protected TJsonProtocol Proto;
 
-            public JSONBaseContext(TJSONProtocol proto)
+            public JSONBaseContext(TJsonProtocol proto)
             {
                 Proto = proto;
             }
@@ -845,7 +845,7 @@ namespace Thrift.Protocols
         {
             private bool _first = true;
 
-            public JSONListContext(TJSONProtocol protocol)
+            public JSONListContext(TJsonProtocol protocol)
                 : base(protocol)
             {
             }
@@ -888,7 +888,7 @@ namespace Thrift.Protocols
 
             private bool _first = true;
 
-            public JSONPairContext(TJSONProtocol proto)
+            public JSONPairContext(TJsonProtocol proto)
                 : base(proto)
             {
             }
@@ -935,9 +935,9 @@ namespace Thrift.Protocols
             private readonly byte[] _data = new byte[1];
 
             private bool _hasData;
-            protected TJSONProtocol Proto;
+            protected TJsonProtocol Proto;
 
-            public LookaheadReader(TJSONProtocol proto)
+            public LookaheadReader(TJsonProtocol proto)
             {
                 Proto = proto;
             }

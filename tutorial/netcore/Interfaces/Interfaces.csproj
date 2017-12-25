@@ -17,4 +17,9 @@
   <ItemGroup>
     <PackageReference Include="System.ServiceModel.Primitives" Version="[4.4,)" />
   </ItemGroup>
+
+  <Target Name="PreBuild" BeforeTargets="Compile;Restore">
+    <Exec Command="thrift -out $(ProjectDir) -gen netcore:wcf,union,serial,hashcode -r ./../../tutorial.thrift" />
+  </Target>
+
 </Project>

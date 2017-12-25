@@ -26,13 +26,12 @@ using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using ThriftAsync.Test;
 using Thrift.Collections;
 using Thrift.Protocols;
 using Thrift.Transports;
 using Thrift.Transports.Client;
 
-namespace Test
+namespace ThriftTest
 {
     public class TestClient
     {
@@ -167,7 +166,7 @@ namespace Test
 
                 if (protocol == "json")
                 {
-                    return new TJSONProtocol(transport);
+                    return new TJsonProtocol(transport);
                 }
 
                 return new TBinaryProtocol(transport);
@@ -184,7 +183,7 @@ namespace Test
         private class ClientTest
         {
             private readonly TClientTransport transport;
-            private readonly ThriftAsync.Test.ThriftTest.Client client;
+            private readonly ThriftTest.Client client;
             private readonly int numIterations;
             private bool done;
 
@@ -193,7 +192,7 @@ namespace Test
             public ClientTest(TestParams param)
             {
                 transport = param.CreateTransport();
-                client = new ThriftAsync.Test.ThriftTest.Client(param.CreateProtocol(transport));
+                client = new ThriftTest.Client(param.CreateProtocol(transport));
                 numIterations = param.numIterations;
             }
 
@@ -348,7 +347,7 @@ namespace Test
             return retval;
         }
 
-        public static async Task<int> ExecuteClientTestAsync(ThriftAsync.Test.ThriftTest.Client client)
+        public static async Task<int> ExecuteClientTestAsync(ThriftTest.Client client)
         {
             var token = CancellationToken.None;
             var returnCode = 0;

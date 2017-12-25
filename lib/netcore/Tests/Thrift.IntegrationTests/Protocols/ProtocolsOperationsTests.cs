@@ -24,10 +24,10 @@ namespace Thrift.IntegrationTests.Protocols
         [DataRow(typeof(TCompactProtocol), TMessageType.Exception)]
         [DataRow(typeof(TCompactProtocol), TMessageType.Oneway)]
         [DataRow(typeof(TCompactProtocol), TMessageType.Reply)]
-        [DataRow(typeof(TJSONProtocol), TMessageType.Call)]
-        [DataRow(typeof(TJSONProtocol), TMessageType.Exception)]
-        [DataRow(typeof(TJSONProtocol), TMessageType.Oneway)]
-        [DataRow(typeof(TJSONProtocol), TMessageType.Reply)]
+        [DataRow(typeof(TJsonProtocol), TMessageType.Call)]
+        [DataRow(typeof(TJsonProtocol), TMessageType.Exception)]
+        [DataRow(typeof(TJsonProtocol), TMessageType.Oneway)]
+        [DataRow(typeof(TJsonProtocol), TMessageType.Reply)]
         public async Task WriteReadMessage_Test(Type protocolType, TMessageType messageType)
         {
             var expected = new TMessage(nameof(TMessage), messageType, 1);
@@ -60,7 +60,7 @@ namespace Thrift.IntegrationTests.Protocols
         [DataTestMethod]
         [DataRow(typeof(TBinaryProtocol))]
         [DataRow(typeof(TCompactProtocol))]
-        [DataRow(typeof(TJSONProtocol))]
+        [DataRow(typeof(TJsonProtocol))]
         [ExpectedException(typeof(Exception))]
         public async Task WriteReadStruct_Test(Type protocolType)
         {
@@ -95,7 +95,7 @@ namespace Thrift.IntegrationTests.Protocols
         [DataTestMethod]
         [DataRow(typeof(TBinaryProtocol))]
         [DataRow(typeof(TCompactProtocol))]
-        [DataRow(typeof(TJSONProtocol))]
+        [DataRow(typeof(TJsonProtocol))]
         [ExpectedException(typeof(Exception))]
         public async Task WriteReadField_Test(Type protocolType)
         {
@@ -129,7 +129,7 @@ namespace Thrift.IntegrationTests.Protocols
         [DataTestMethod]
         [DataRow(typeof(TBinaryProtocol))]
         [DataRow(typeof(TCompactProtocol))]
-        [DataRow(typeof(TJSONProtocol))]
+        [DataRow(typeof(TJsonProtocol))]
         public async Task WriteReadMap_Test(Type protocolType)
         {
             var expected = new TMap(TType.String, TType.String, 1);
@@ -163,7 +163,7 @@ namespace Thrift.IntegrationTests.Protocols
         [DataTestMethod]
         [DataRow(typeof(TBinaryProtocol))]
         [DataRow(typeof(TCompactProtocol))]
-        [DataRow(typeof(TJSONProtocol))]
+        [DataRow(typeof(TJsonProtocol))]
         public async Task WriteReadList_Test(Type protocolType)
         {
             var expected = new TList(TType.String, 1);
@@ -196,7 +196,7 @@ namespace Thrift.IntegrationTests.Protocols
         [DataTestMethod]
         [DataRow(typeof(TBinaryProtocol))]
         [DataRow(typeof(TCompactProtocol))]
-        [DataRow(typeof(TJSONProtocol))]
+        [DataRow(typeof(TJsonProtocol))]
         public async Task WriteReadSet_Test(Type protocolType)
         {
             var expected = new TSet(TType.String, 1);
@@ -229,7 +229,7 @@ namespace Thrift.IntegrationTests.Protocols
         [DataTestMethod]
         [DataRow(typeof(TBinaryProtocol))]
         [DataRow(typeof(TCompactProtocol))]
-        [DataRow(typeof(TJSONProtocol))]
+        [DataRow(typeof(TJsonProtocol))]
         public async Task WriteReadBool_Test(Type protocolType)
         {
             var expected = true;
@@ -260,7 +260,7 @@ namespace Thrift.IntegrationTests.Protocols
         [DataTestMethod]
         [DataRow(typeof(TBinaryProtocol))]
         [DataRow(typeof(TCompactProtocol))]
-        [DataRow(typeof(TJSONProtocol))]
+        [DataRow(typeof(TJsonProtocol))]
         public async Task WriteReadByte_Test(Type protocolType)
         {
             var expected = sbyte.MaxValue;
@@ -291,7 +291,7 @@ namespace Thrift.IntegrationTests.Protocols
         [DataTestMethod]
         [DataRow(typeof(TBinaryProtocol))]
         [DataRow(typeof(TCompactProtocol))]
-        [DataRow(typeof(TJSONProtocol))]
+        [DataRow(typeof(TJsonProtocol))]
         public async Task WriteReadI16_Test(Type protocolType)
         {
             var expected = short.MaxValue;
@@ -322,7 +322,7 @@ namespace Thrift.IntegrationTests.Protocols
         [DataTestMethod]
         [DataRow(typeof(TBinaryProtocol))]
         [DataRow(typeof(TCompactProtocol))]
-        [DataRow(typeof(TJSONProtocol))]
+        [DataRow(typeof(TJsonProtocol))]
         public async Task WriteReadI32_Test(Type protocolType)
         {
             var expected = int.MaxValue;
@@ -353,7 +353,7 @@ namespace Thrift.IntegrationTests.Protocols
         [DataTestMethod]
         [DataRow(typeof(TBinaryProtocol))]
         [DataRow(typeof(TCompactProtocol))]
-        [DataRow(typeof(TJSONProtocol))]
+        [DataRow(typeof(TJsonProtocol))]
         public async Task WriteReadI64_Test(Type protocolType)
         {
             var expected = long.MaxValue;
@@ -384,7 +384,7 @@ namespace Thrift.IntegrationTests.Protocols
         [DataTestMethod]
         [DataRow(typeof(TBinaryProtocol))]
         [DataRow(typeof(TCompactProtocol))]
-        [DataRow(typeof(TJSONProtocol))]
+        [DataRow(typeof(TJsonProtocol))]
         public async Task WriteReadDouble_Test(Type protocolType)
         {
             var expected = double.MaxValue;
@@ -415,7 +415,7 @@ namespace Thrift.IntegrationTests.Protocols
         [DataTestMethod]
         [DataRow(typeof(TBinaryProtocol))]
         [DataRow(typeof(TCompactProtocol))]
-        [DataRow(typeof(TJSONProtocol))]
+        [DataRow(typeof(TJsonProtocol))]
         public async Task WriteReadString_Test(Type protocolType)
         {
             var expected = nameof(String);
@@ -446,7 +446,7 @@ namespace Thrift.IntegrationTests.Protocols
         [DataTestMethod]
         [DataRow(typeof(TBinaryProtocol))]
         [DataRow(typeof(TCompactProtocol))]
-        [DataRow(typeof(TJSONProtocol))]
+        [DataRow(typeof(TJsonProtocol))]
         public async Task WriteReadBinary_Test(Type protocolType)
         {
             var expected = Encoding.UTF8.GetBytes(nameof(String));

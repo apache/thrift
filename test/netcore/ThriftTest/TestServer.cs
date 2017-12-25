@@ -23,7 +23,6 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
-using ThriftAsync.Test;
 using Thrift;
 using Thrift.Collections;
 using Thrift.Protocols;
@@ -31,7 +30,7 @@ using Thrift.Server;
 using Thrift.Transports;
 using Thrift.Transports.Server;
 
-namespace Test
+namespace ThriftTest
 {
     internal class ServerParam
     {
@@ -134,7 +133,7 @@ namespace Test
             }
         };
 
-        public class TestHandlerAsync : ThriftAsync.Test.ThriftTest.IAsync
+        public class TestHandlerAsync : ThriftTest.IAsync
         {
             public TBaseServer server { get; set; }
             private int handlerID;
@@ -510,7 +509,7 @@ namespace Test
                 if (param.compact)
                     proto = new TCompactProtocol.Factory();
                 else if (param.json)
-                    proto = new TJSONProtocol.Factory();
+                    proto = new TJsonProtocol.Factory();
                 else
                     proto = new TBinaryProtocol.Factory();
 
@@ -518,7 +517,7 @@ namespace Test
 
                 // Processor
                 var testHandler = new TestHandlerAsync();
-                var testProcessor = new ThriftAsync.Test.ThriftTest.AsyncProcessor(testHandler);
+                var testProcessor = new ThriftTest.AsyncProcessor(testHandler);
                 processorFactory = new SingletonTProcessorFactory(testProcessor);
 
 

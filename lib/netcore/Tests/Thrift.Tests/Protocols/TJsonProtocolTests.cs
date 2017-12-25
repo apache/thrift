@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Threading;
@@ -35,7 +35,7 @@ namespace Thrift.Tests.Protocols
             Assert.IsTrue(result.WrappedReader.GetType().Name.Equals("LookaheadReader", StringComparison.OrdinalIgnoreCase));
         }
 
-        private class TJSONProtocolWrapper : TJSONProtocol
+        private class TJSONProtocolWrapper : TJsonProtocol
         {
             public TJSONProtocolWrapper(TClientTransport trans) : base(trans)
             {

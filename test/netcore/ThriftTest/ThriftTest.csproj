@@ -24,4 +24,8 @@
     <ProjectReference Include="..\..\..\lib\netcore\Thrift\Thrift.csproj" />
   </ItemGroup>
 
+  <Target Name="PreBuild" BeforeTargets="Compile;Restore">
+    <Exec Command="thrift -out $(ProjectDir) -gen netcore:wcf,union,serial,hashcode -r ./../../ThriftTest.thrift" />
+  </Target>
+
 </Project>
