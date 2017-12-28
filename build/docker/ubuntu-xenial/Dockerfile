@@ -197,7 +197,7 @@ RUN apt-get install -y --no-install-recommends \
       php7.0-dev \
       php-pear \
       re2c \
-      phpunit
+      composer
 
 RUN apt-get install -y --no-install-recommends \
 `# Python dependencies` \

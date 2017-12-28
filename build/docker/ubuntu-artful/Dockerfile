@@ -24,8 +24,8 @@ FROM buildpack-deps:artful-scm
 MAINTAINER Apache Thrift <dev@thrift.apache.org>
 ENV DEBIAN_FRONTEND noninteractive
 
-RUN apt-get update && \ 
-    apt-get dist-upgrade -y && \ 
+RUN apt-get update && \
+    apt-get dist-upgrade -y && \
     apt-get install -y --no-install-recommends \
       apt \
       apt-transport-https \
@@ -188,7 +188,7 @@ RUN apt-get install -y --no-install-recommends \
       php-dev \
       php-pear \
       re2c \
-      phpunit
+      composer
 
 RUN apt-get install -y --no-install-recommends \
 `# Python dependencies` \
