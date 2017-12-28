@@ -291,6 +291,8 @@ project.lock.json
 /ltmain.sh
 /missing
 /node_modules/
+/vendor/
+/composer.lock
 /stamp-h1
 /test/features/results.json
 /test/results.json

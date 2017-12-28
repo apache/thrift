@@ -2,7 +2,7 @@
 
 namespace test\php;
 
-require_once __DIR__.'/../../lib/php/lib/Thrift/ClassLoader/ThriftClassLoader.php';
+require_once __DIR__.'/../../vendor/autoload.php';
 
 use Thrift\ClassLoader\ThriftClassLoader;
 
@@ -14,7 +14,6 @@ if (!isset($MODE)) {
 }
 
 $loader = new ThriftClassLoader();
-$loader->registerNamespace('Thrift', __DIR__ . '/../../lib/php/lib');
 if ($GEN_DIR === 'gen-php-psr4') {
   $loader->registerNamespace('ThriftTest', $GEN_DIR);
 } else {
