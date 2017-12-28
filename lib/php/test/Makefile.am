@@ -30,7 +30,7 @@ stubs: ../../../test/ThriftTest.thrift  TestValidators.thrift
 	$(THRIFT) --gen php:json         -r --out ./packages/phpjs  TestValidators.thrift
 
 deps: $(top_srcdir)/composer.json
-	composer install $(top_srcdir)/
+	composer install --working-dir=$(top_srcdir)
 
 all-local: deps
 
