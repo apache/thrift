@@ -1,7 +1,8 @@
-thrift (1.0.0-dev) stable; urgency=low
+thrift (0.11.0) stable; urgency=low
   * update version
   * fix libthrift0.install
 
+  * update to 0.11.0
  -- Roger Meier <roger@apache.org>  Tue, 08 Jan 2013 22:40:12 +0100
 
 thrift (0.9.0) stable; urgency=low
