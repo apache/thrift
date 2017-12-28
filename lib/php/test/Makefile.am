@@ -17,7 +17,7 @@
 # under the License.
 #
 
-PHPUNIT=php ./../../../vendor/bin/phpunit
+PHPUNIT=php $(top_srcdir)/vendor/bin/phpunit
 
 stubs: ../../../test/ThriftTest.thrift  TestValidators.thrift
 	mkdir -p ./packages
@@ -29,19 +29,24 @@ stubs: ../../../test/ThriftTest.thrift  TestValidators.thrift
 	$(THRIFT) --gen php:validate,oop -r --out ./packages/phpvo  TestValidators.thrift
 	$(THRIFT) --gen php:json         -r --out ./packages/phpjs  TestValidators.thrift
 
-check-json-serializer: stubs
+deps: $(top_srcdir)/composer.json
+	composer install $(top_srcdir)/
+
+all-local: deps
+
+check-json-serializer: deps stubs
 	$(PHPUNIT) --log-junit=TEST-json-serializer.xml Test/Thrift/JsonSerialize/
 
-check-validator: stubs
+check-validator: deps stubs
 	php Test/Thrift/TestValidators.php
 	php Test/Thrift/TestValidators.php -oop
 
-check-protocol:	stubs
+check-protocol:	deps stubs
 	$(PHPUNIT) --log-junit=TEST-log-json-protocol.xml Test/Thrift/Protocol/TestTJSONProtocol.php
 	$(PHPUNIT) --log-junit=TEST-binary-serializer.xml Test/Thrift/Protocol/TestBinarySerializer.php
 	$(PHPUNIT) --log-junit=TEST-log-simple-json-protocol.xml Test/Thrift/Protocol/TestTSimpleJSONProtocol.php
 
-check: stubs \
+check: deps stubs \
   check-protocol \
   check-validator \
   check-json-serializer

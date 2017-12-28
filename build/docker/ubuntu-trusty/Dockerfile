@@ -25,8 +25,8 @@ FROM buildpack-deps:trusty-scm
 MAINTAINER Apache Thrift <dev@thrift.apache.org>
 ENV DEBIAN_FRONTEND noninteractive
 
-RUN apt-get update && \ 
-    apt-get dist-upgrade -y && \ 
+RUN apt-get update && \
+    apt-get dist-upgrade -y && \
     apt-get install -y --no-install-recommends \
       apt \
       apt-transport-https \
@@ -166,8 +166,8 @@ RUN apt-get install -y --no-install-recommends \
       php5-cli \
       php5-dev \
       php-pear \
-      re2c \
-      phpunit
+      re2c && \
+      wget https://getcomposer.org/installer -O - -q | php -- --quiet
 
 RUN apt-get install -y --no-install-recommends \
 `# Python dependencies` \
@@ -189,7 +189,7 @@ RUN apt-get install -y --no-install-recommends \
       python3-wheel \
       python3-zope.interface && \
     pip install -U ipaddress backports.ssl_match_hostname tornado && \
-    pip3 install -U backports.ssl_match_hostname tornado 
+    pip3 install -U backports.ssl_match_hostname tornado
 # installing tornado by pip/pip3 instead of debian package
 # if we install the debian package, the build fails in py2
 
