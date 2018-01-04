@@ -104,18 +104,12 @@ RUN apt-key adv --keyserver keyserver.ubuntu.com --recv-keys EBCF975E5BA24D5E &&
 #     mv openssl-master/C/* /usr/include/dmd/druntime/import/C/ && \
 #     rm -rf openssl-master
 
-# dart cannot be downloaded by aptitude because of
-# https://github.com/dart-lang/sdk/issues/30512
-# RUN curl https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - && \
-#     curl https://storage.googleapis.com/download.dartlang.org/linux/debian/dart_stable.list > /etc/apt/sources.list.d/dart_stable.list && \
-#     apt-get update && \
-#     apt-get install -y --no-install-recommends \
-#       `# Dart dependencies` \
-#       dart
-# so instead we do:
-RUN wget https://storage.googleapis.com/dart-archive/channels/stable/release/latest/linux_packages/dart_1.24.2-1_amd64.deb && \
-    dpkg -i dart_1.24.2-1_amd64.deb && \
-    rm dart_1.24.2-1_amd64.deb
+RUN curl https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - && \
+    curl https://storage.googleapis.com/download.dartlang.org/linux/debian/dart_stable.list > /etc/apt/sources.list.d/dart_stable.list && \
+    apt-get update && \
+    apt-get install -y --no-install-recommends \
+      `# Dart dependencies` \
+      dart/stable
 ENV PATH /usr/lib/dart/bin:$PATH
 
 RUN apt-get install -y --no-install-recommends \
