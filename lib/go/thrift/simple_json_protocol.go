@@ -22,6 +22,7 @@ package thrift
 import (
 	"bufio"
 	"bytes"
+	"context"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
@@ -552,7 +553,7 @@ func (p *TSimpleJSONProtocol) ReadBinary() ([]byte, error) {
 	return v, p.ParsePostValue()
 }
 
-func (p *TSimpleJSONProtocol) Flush() (err error) {
+func (p *TSimpleJSONProtocol) Flush(ctx context.Context) (err error) {
 	return NewTProtocolException(p.writer.Flush())
 }
 

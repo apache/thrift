@@ -17,10 +17,6 @@
 # under the License.
 #
 
-if GOVERSION_LT_17
-COMPILER_EXTRAFLAG=",legacy_context"
-endif
-
 THRIFTARGS = -out gopath/src/ --gen go:thrift_import=thrift$(COMPILER_EXTRAFLAG)
 THRIFTTEST = $(top_srcdir)/test/ThriftTest.thrift
 
@@ -59,7 +55,6 @@ gopath: $(THRIFT) $(THRIFTTEST) \
 	$(THRIFT) $(THRIFTARGS) InitialismsTest.thrift
 	$(THRIFT) $(THRIFTARGS),read_write_private DontExportRWTest.thrift
 	$(THRIFT) $(THRIFTARGS),ignore_initialisms IgnoreInitialismsTest.thrift
-	GOPATH=`pwd`/gopath $(GO) get golang.org/x/net/context
 	GOPATH=`pwd`/gopath $(GO) get github.com/golang/mock/gomock || true
 	sed -i 's/\"context\"/\"golang.org\/x\/net\/context\"/g' gopath/src/github.com/golang/mock/gomock/controller.go || true
 	GOPATH=`pwd`/gopath $(GO) get github.com/golang/mock/gomock

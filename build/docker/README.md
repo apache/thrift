@@ -148,7 +148,7 @@ Last updated: October 1, 2017
 | delphi    |               |               |               | Not in CI |
 | dotnet    |               | 2.1.4         | 2.1.4         | v2.1.4 SDK uses v2.0.5 Runtime |
 | erlang    | R16B03        | 18.3          | 20.0.4        |       |
-| go        | 1.2.1         | 1.6.2         | 1.8.3         |       |
+| go        | 1.7.6         | 1.7.6         | 1.8.3         |       |
 | haskell   | 7.6.3         | 7.10.3        | 8.0.2         |       |
 | haxe      |               | 3.2.1         | 3.4.2         | disabled in trusty builds - cores on install v3.0.0, disabled in artful builds - see THRIFT-4352 |
 | java      | 1.7.0_151     | 1.8.0_151     | 1.8.0_151     |       |

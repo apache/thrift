@@ -21,6 +21,7 @@ package main
 
 import (
 	"common"
+	"context"
 	"flag"
 	"gen/thrifttest"
 	t "log"
@@ -60,6 +61,7 @@ var xxs = &thrifttest.Xtruct{
 }
 
 var xcept = &thrifttest.Xception{ErrorCode: 1001, Message: "Xception"}
+var defaultCtx = context.Background()
 
 func callEverything(client *thrifttest.ThriftTestClient) {
 	var err error
