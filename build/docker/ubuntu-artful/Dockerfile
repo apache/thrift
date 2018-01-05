@@ -24,6 +24,8 @@ FROM buildpack-deps:artful-scm
 MAINTAINER Apache Thrift <dev@thrift.apache.org>
 ENV DEBIAN_FRONTEND noninteractive
 
+### Add apt repos
+
 RUN apt-get update && \
     apt-get dist-upgrade -y && \
     apt-get install -y --no-install-recommends \
@@ -41,10 +43,21 @@ RUN apt-get update && \
 
 # dotnet (core)
 RUN curl https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor > /etc/apt/trusted.gpg.d/microsoft.gpg && \
-    echo "deb [arch=amd64] https://packages.microsoft.com/repos/microsoft-ubuntu-artful-prod artful main" > /etc/apt/sources.list.d/dotnetdev.list
+    echo "deb [arch=amd64] https://packages.microsoft.com/repos/microsoft-ubuntu-artful-prod artful main" > \
+    /etc/apt/sources.list.d/dotnetdev.list
 
-# node.js (this step runs apt-get update internally) - if we ever want a later version
-RUN curl -sL https://deb.nodesource.com/setup_8.x | bash -
+# node.js
+RUN curl -sL https://deb.nodesource.com/gpgkey/nodesource.gpg.key | sudo apt-key add - \
+    echo "deb https://deb.nodesource.com/node_8.x artful main" | sudo tee /etc/apt/sources.list.d/nodesource.list
+# D
+RUN apt-key adv --keyserver keyserver.ubuntu.com --recv-keys EBCF975E5BA24D5E && \
+        wget http://master.dl.sourceforge.net/project/d-apt/files/d-apt.list -O /etc/apt/sources.list.d/d-apt.list && \
+        wget -qO - https://dlang.org/d-keyring.gpg | apt-key add -
+
+# Dart
+RUN curl https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - && \
+    curl https://storage.googleapis.com/download.dartlang.org/linux/debian/dart_stable.list > \
+    /etc/apt/sources.list.d/dart_stable.list
 
 ### install general dependencies
 RUN apt-get install -y --no-install-recommends \
@@ -78,11 +91,7 @@ RUN apt-get install -y --no-install-recommends \
 `# csharp (mono) dependencies` \
       mono-devel
 
-RUN apt-key adv --keyserver keyserver.ubuntu.com --recv-keys EBCF975E5BA24D5E && \
-    wget http://master.dl.sourceforge.net/project/d-apt/files/d-apt.list -O /etc/apt/sources.list.d/d-apt.list && \
-    wget -qO - https://dlang.org/d-keyring.gpg | apt-key add - && \
-    apt-get update && \
-    apt-get install -y --no-install-recommends \
+RUN apt-get install -y --no-install-recommends \
       `# D dependencies` \
       dmd-bin \
       libphobos2-dev \
@@ -104,10 +113,7 @@ RUN apt-key adv --keyserver keyserver.ubuntu.com --recv-keys EBCF975E5BA24D5E &&
 #     mv openssl-master/C/* /usr/include/dmd/druntime/import/C/ && \
 #     rm -rf openssl-master
 
-RUN curl https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - && \
-    curl https://storage.googleapis.com/download.dartlang.org/linux/debian/dart_stable.list > /etc/apt/sources.list.d/dart_stable.list && \
-    apt-get update && \
-    apt-get install -y --no-install-recommends \
+RUN apt-get install -y --no-install-recommends \
       `# Dart dependencies` \
       dart/stable
 ENV PATH /usr/lib/dart/bin:$PATH
