@@ -23,6 +23,7 @@
 package tests
 
 import (
+	"context"
 	thrift "thrift"
 
 	gomock "github.com/golang/mock/gomock"
@@ -49,13 +50,13 @@ func (_m *MockTProtocol) EXPECT() *_MockTProtocolRecorder {
 	return _m.recorder
 }
 
-func (_m *MockTProtocol) Flush() error {
+func (_m *MockTProtocol) Flush(ctx context.Context) error {
 	ret := _m.ctrl.Call(_m, "Flush")
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
-func (_mr *_MockTProtocolRecorder) Flush() *gomock.Call {
+func (_mr *_MockTProtocolRecorder) Flush(ctx context.Context) *gomock.Call {
 	return _mr.mock.ctrl.RecordCall(_mr.mock, "Flush")
 }
 

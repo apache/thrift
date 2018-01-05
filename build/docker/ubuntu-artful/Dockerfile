@@ -18,6 +18,7 @@
 # - dart: does not come with Ubuntu
 # - dotnet: does not come with Ubuntu
 # - haxe: version 3.4.2 that comes with Ubuntu cores in our CI build
+# - go: xenial comes with 1.8, we want the latest (supported)
 # - nodejs: want v8, Ubuntu comes with v6
 #
 
@@ -140,10 +141,15 @@ RUN apt-get install -y --no-install-recommends \
 `# GlibC dependencies` \
       libglib2.0-dev
 
-RUN apt-get install -y --no-install-recommends \
-`# golang (go) dependencies` \
-      golang-go \
-      golang-race-detector-runtime
+# golang
+ENV GOLANG_VERSION 1.9.4
+ENV GOLANG_DOWNLOAD_URL https://golang.org/dl/go$GOLANG_VERSION.linux-amd64.tar.gz
+ENV GOLANG_DOWNLOAD_SHA256 15b0937615809f87321a457bb1265f946f9f6e736c563d6c5e0bd2c22e44f779
+RUN curl -fsSL "$GOLANG_DOWNLOAD_URL" -o golang.tar.gz && \
+      echo "$GOLANG_DOWNLOAD_SHA256  golang.tar.gz" | sha256sum -c - && \
+            tar -C /usr/local -xzf golang.tar.gz && \
+                  ln -s /usr/local/go/bin/go /usr/local/bin && \
+                        rm golang.tar.gz
 
 RUN apt-get install -y --no-install-recommends \
 `# Haskell dependencies` \
