@@ -318,7 +318,7 @@ where
 
 impl<T> io::Seek for TCompactInputProtocol<T>
 where
-    T: io::Seek + io::Read,
+    T: io::Seek + TReadTransport,
 {
     fn seek(&mut self, pos: io::SeekFrom) -> io::Result<u64> {
         self.transport.seek(pos)
