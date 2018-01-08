@@ -1878,16 +1878,16 @@ void t_go_generator::generate_service_client(t_service* tservice) {
   f_types_ << indent() << "type " << serviceName << "Client struct {" << endl;
   indent_up();
 
-  f_types_ << indent() << "c thrift.TClient" << endl;
   if (!extends_client.empty()) {
     f_types_ << indent() << "*" << extends_client << endl;
+  } else {
+    f_types_ << indent() << "c thrift.TClient" << endl;
   }
 
   indent_down();
   f_types_ << indent() << "}" << endl << endl;
 
   // Legacy constructor function
-  f_types_ << indent() << "// Deprecated: Use New" << serviceName << " instead" << endl;
   f_types_ << indent() << "func New" << serviceName
              << "ClientFactory(t thrift.TTransport, f thrift.TProtocolFactory) *" << serviceName
              << "Client {" << endl;
@@ -1907,7 +1907,6 @@ void t_go_generator::generate_service_client(t_service* tservice) {
   indent_down();
   f_types_ << indent() << "}" << endl << endl;
   // Legacy constructor function with custom input & output protocols
-  f_types_ << indent() << "// Deprecated: Use New" << serviceName << " instead" << endl;
   f_types_
       << indent() << "func New" << serviceName
       << "ClientProtocol(t thrift.TTransport, iprot thrift.TProtocol, oprot thrift.TProtocol) *"
@@ -1936,15 +1935,24 @@ void t_go_generator::generate_service_client(t_service* tservice) {
   f_types_ << indent() << "return &" << serviceName << "Client{" << endl;
 
   indent_up();
-  f_types_ << indent() << "c: c," << endl;
   if (!extends.empty()) {
     f_types_ << indent() << extends_field << ": " << extends_client_new << "(c)," << endl;
+  } else {
+    f_types_ << indent() << "c: c," << endl;
   }
   indent_down();
   f_types_ << indent() << "}" << endl;
 
   indent_down();
   f_types_ << indent() << "}" << endl << endl;
+
+  if (extends.empty()) {
+    f_types_ << indent() << "func (p *" << serviceName << "Client) Client_() thrift.TClient {" << endl;
+    indent_up();
+    f_types_ << indent() << "return p.c" << endl;
+    indent_down();
+    f_types_ << indent() << "}" << endl;
+  }
 
   // Generate client method implementations
   vector<t_function*> functions = tservice->get_functions();
@@ -1975,7 +1983,7 @@ void t_go_generator::generate_service_client(t_service* tservice) {
       std::string resultName = tmp("_result");
       std::string resultType = publicize(method + "_result", true);
       f_types_ << indent() << "var " << resultName << " " << resultType << endl;
-      f_types_ << indent() << "if err = p.c.Call(ctx, \""
+      f_types_ << indent() << "if err = p.Client_().Call(ctx, \""
         << method << "\", &" << argsName << ", &" << resultName << "); err != nil {" << endl;
 
       indent_up();
@@ -2016,7 +2024,7 @@ void t_go_generator::generate_service_client(t_service* tservice) {
       }
     } else {
       // TODO: would be nice to not to duplicate the call generation
-      f_types_ << indent() << "if err := p.c.Call(ctx, \""
+      f_types_ << indent() << "if err := p.Client_().Call(ctx, \""
       << method << "\", &"<< argsName << ", nil); err != nil {" << endl;
 
       indent_up();
