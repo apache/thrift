@@ -22,14 +22,15 @@ using std::vector;
 
 static const string endl = "\n"; // avoid ostream << std::endl flushes
 
-struct member_mapping_scope
-{
-    void* scope_member;
-    map<string, string> mapping_table;
-};
-
 class t_netcore_generator : public t_oop_generator
 {
+
+    struct member_mapping_scope
+    {
+        void* scope_member;
+        map<string, string> mapping_table;
+    };
+
 public:
     t_netcore_generator(t_program* program, const map<string, string>& parsed_options, const string& option_string);
 

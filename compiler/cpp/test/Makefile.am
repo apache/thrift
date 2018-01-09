@@ -25,7 +25,7 @@ AUTOMAKE_OPTIONS = subdir-objects serial-tests
 
 AM_CPPFLAGS = $(BOOST_CPPFLAGS) -I$(top_srcdir)/compiler/cpp/src
 AM_LDFLAGS = $(BOOST_LDFLAGS)
-AM_CXXFLAGS = -Wall -Wextra -pedantic -Wno-error=maybe-uninitialized
+AM_CXXFLAGS = -Wall -Wextra -pedantic
 
 if WITH_PLUGIN
 check_PROGRAMS = plugintest

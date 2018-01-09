@@ -82,6 +82,6 @@ thrift_thrift_bootstrap_SOURCES = \
 
 main.cc: version.h
 
-thrift_thrift_bootstrap_CXXFLAGS = -Wall -Wextra -pedantic -Wno-error=maybe-uninitialized
+thrift_thrift_bootstrap_CXXFLAGS = -Wall -Wextra -pedantic
 thrift_thrift_bootstrap_LDADD = @LEXLIB@ thrift/libparse.a
 endif
