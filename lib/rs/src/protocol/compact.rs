@@ -19,6 +19,7 @@ use byteorder::{BigEndian, ReadBytesExt, WriteBytesExt};
 use integer_encoding::{VarIntReader, VarIntWriter};
 use std::convert::From;
 use try_from::TryFrom;
+use std::io;
 
 use transport::{TReadTransport, TWriteTransport};
 use super::{TFieldIdentifier, TInputProtocol, TInputProtocolFactory, TListIdentifier,
@@ -311,6 +312,16 @@ where
             .read_exact(&mut buf)
             .map_err(From::from)
             .map(|_| buf[0])
+    }
+}
+
+
+impl<T> io::Seek for TCompactInputProtocol<T>
+where
+    T: io::Seek + TReadTransport,
+{
+    fn seek(&mut self, pos: io::SeekFrom) -> io::Result<u64> {
+        self.transport.seek(pos)
     }
 }
 
