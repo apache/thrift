@@ -18,11 +18,13 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Net;
 using System.Reflection;
 using System.Security.Authentication;
 using System.Security.Cryptography.X509Certificates;
+using System.ServiceModel;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -38,7 +40,7 @@ namespace ThriftTest
         private class TestParams
         {
             public int numIterations = 1;
-            public IPAddress host = IPAddress.Loopback;
+            public IPAddress host = IPAddress.Any;
             public int port = 9090;
             public int numThreads = 1;
             public string url;
@@ -110,11 +112,43 @@ namespace ThriftTest
                     }
                     else
                     {
-                        throw new ArgumentException(args[i]);
+                        //throw new ArgumentException(args[i]);
                     }
                 }
             }
 
+            private static X509Certificate2 GetClientCert()
+            {
+                var clientCertName = "client.p12";
+                var possiblePaths = new List<string>
+                {
+                    "../../../keys/",
+                    "../../keys/",
+                    "../keys/",
+                    "keys/",
+                };
+
+                string existingPath = null;
+                foreach (var possiblePath in possiblePaths)
+                {
+                    var path = Path.GetFullPath(possiblePath + clientCertName);
+                    if (File.Exists(path))
+                    {
+                        existingPath = path;
+                        break;
+                    }
+                }
+
+                if (string.IsNullOrEmpty(existingPath))
+                {
+                    throw new FileNotFoundException($"Cannot find file: {clientCertName}");
+                }
+            
+                var cert = new X509Certificate2(existingPath, "thrift");
+
+                return cert;
+            }
+            
             public TClientTransport CreateTransport()
             {
                 if (url == null)
@@ -130,9 +164,15 @@ namespace ThriftTest
                     {
                         if (encrypted)
                         {
-                            var certPath = "../../keys/client.p12";
-                            var cert = new X509Certificate2(certPath, "thrift");
-                            trans = new TTlsSocketClientTransport(host, port, 0, cert, (o, c, chain, errors) => true, null, SslProtocols.Tls);
+                           var cert = GetClientCert();
+                        
+                            if (cert == null || !cert.HasPrivateKey)
+                            {
+                                throw new InvalidOperationException("Certificate doesn't contain private key");
+                            }
+                            
+                            trans = new TTlsSocketClientTransport(host, port, 0, cert, 
+                                (sender, certificate, chain, errors) => true);
                         }
                         else
                         {
@@ -216,6 +256,14 @@ namespace ThriftTest
                         }
                     }
                     catch (TTransportException ex)
+                    {
+                        Console.WriteLine("*** FAILED ***");
+                        Console.WriteLine("Connect failed: " + ex.Message);
+                        ReturnCode |= ErrorUnknown;
+                        Console.WriteLine(ex.Message + " ST: " + ex.StackTrace);
+                        continue;
+                    }
+                    catch (Exception ex)
                     {
                         Console.WriteLine("*** FAILED ***");
                         Console.WriteLine("Connect failed: " + ex.Message);

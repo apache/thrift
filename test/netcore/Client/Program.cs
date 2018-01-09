@@ -17,8 +17,9 @@
 
 using System;
 using System.Collections.Generic;
+using ThriftTest;
 
-namespace ThriftTest
+namespace Client
 {
     public class Program
     {
@@ -47,8 +48,6 @@ namespace ThriftTest
             {
                 case "client":
                     return TestClient.Execute(subArgs);
-                case "server":
-                    return TestServer.Execute(subArgs);
                 case "--help":
                     PrintHelp();
                     return 0;
@@ -61,12 +60,10 @@ namespace ThriftTest
         private static void PrintHelp()
         {
             Console.WriteLine("Usage:");
-            Console.WriteLine("  ThriftTest  server  [options]'");
-            Console.WriteLine("  ThriftTest  client  [options]'");
-            Console.WriteLine("  ThriftTest  --help");
+            Console.WriteLine("  Client  client  [options]'");
+            Console.WriteLine("  Client  --help");
             Console.WriteLine("");
 
-            TestServer.PrintOptionsHelp();
             TestClient.PrintOptionsHelp();
         }
     }

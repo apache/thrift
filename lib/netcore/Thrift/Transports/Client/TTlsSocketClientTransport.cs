@@ -204,7 +204,8 @@ namespace Thrift.Transports.Client
                         ? new X509CertificateCollection {_certificate}
                         : new X509CertificateCollection();
 
-                    await _secureStream.AuthenticateAsClientAsync(_host.ToString(), certs, _sslProtocols, true);
+                    var targetHost = _host.ToString();
+                    await _secureStream.AuthenticateAsClientAsync(targetHost, certs, _sslProtocols, true);
                 }
             }
             catch (Exception)

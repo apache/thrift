@@ -17,6 +17,8 @@
 
 using System;
 using System.Collections.Generic;
+using System.IO;
+using System.Linq;
 using System.Security.Authentication;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
@@ -92,7 +94,7 @@ namespace ThriftTest
                 }
                 else
                 {
-                    throw new ArgumentException(args[i]);
+                    //throw new ArgumentException(args[i]);
                 }
             }
 
@@ -131,7 +133,7 @@ namespace ThriftTest
                 callCount++;
                 return Task.CompletedTask;
             }
-        };
+        }
 
         public class TestHandlerAsync : ThriftTest.IAsync
         {
@@ -445,13 +447,6 @@ namespace ThriftTest
             }
         }
 
-
-        private enum ProcessorFactoryType
-        {
-            TSingletonProcessorFactory,
-            TPrototypeProcessorFactory,
-        }
-
         internal static void PrintOptionsHelp()
         {
             Console.WriteLine("Server options:");
@@ -465,8 +460,41 @@ namespace ThriftTest
             Console.WriteLine();
         }
 
+        private static X509Certificate2 GetServerCert()
+        {
+            var serverCertName = "server.p12";
+            var possiblePaths = new List<string>
+            {
+                "../../../keys/",
+                "../../keys/",
+                "../keys/",
+                "keys/",
+            };
+                        
+            string existingPath = null;
+            foreach (var possiblePath in possiblePaths)
+            {
+                var path = Path.GetFullPath(possiblePath + serverCertName);
+                if (File.Exists(path))
+                {
+                    existingPath = path;
+                    break;
+                }
+            }
+                        
+            if (string.IsNullOrEmpty(existingPath))
+            {
+                throw new FileNotFoundException($"Cannot find file: {serverCertName}");
+            }
+                                    
+            var cert = new X509Certificate2(existingPath, "thrift");
+                        
+            return cert;
+        }
+
         public static int Execute(List<string> args)
         {
+            var loggerFactory = new LoggerFactory();//.AddConsole().AddDebug();
             var logger = new LoggerFactory().CreateLogger("Test");
 
             try
@@ -492,16 +520,28 @@ namespace ThriftTest
                 {
                     trans = new TNamedPipeServerTransport(param.pipe);
                 }
+//                else if (param.useFramed)
+//                {
+//                    trans = new TServerFramedTransport(param.port);
+//                }
                 else
                 {
                     if (param.useEncryption)
                     {
-                        var certPath = "../keys/server.p12";
-                        trans = new TTlsServerSocketTransport(param.port, param.useBufferedSockets, new X509Certificate2(certPath, "thrift"), null, null, SslProtocols.Tls12);
+                        var cert = GetServerCert();
+                        
+                        if (cert == null || !cert.HasPrivateKey)
+                        {
+                            throw new InvalidOperationException("Certificate doesn't contain private key");
+                        }
+                        
+                        trans = new TTlsServerSocketTransport(param.port, param.useBufferedSockets, param.useFramed, cert, 
+                            (sender, certificate, chain, errors) => true, 
+                            null, SslProtocols.Tls12);
                     }
                     else
                     {
-                        trans = new TServerSocketTransport(param.port, 0, param.useBufferedSockets);
+                        trans = new TServerSocketTransport(param.port, 0, param.useBufferedSockets, param.useFramed);
                     }
                 }
 
@@ -520,12 +560,7 @@ namespace ThriftTest
                 var testProcessor = new ThriftTest.AsyncProcessor(testHandler);
                 processorFactory = new SingletonTProcessorFactory(testProcessor);
 
-
-                TTransportFactory transFactory;
-                if (param.useFramed)
-                    throw new NotImplementedException("framed"); // transFactory = new TFramedTransport.Factory();
-                else
-                    transFactory = new TTransportFactory();
+                TTransportFactory transFactory = new TTransportFactory(); 
 
                 TBaseServer serverEngine = new AsyncBaseServer(processorFactory, trans, transFactory, transFactory, proto, proto, logger);
 

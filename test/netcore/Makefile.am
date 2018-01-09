@@ -20,24 +20,27 @@
 SUBDIRS = . 
 
 THRIFTCODE = \
-			ThriftTest/ThriftTest.csproj 
+			ThriftTest.sln 
 
 all-local: \
-	ThriftTest/stage/ThriftTest.dll
+	ThriftTest/stage/binaries
 
-ThriftTest/stage/ThriftTest.dll: $(THRIFTCODE)
+ThriftTest/stage/binaries: $(THRIFTCODE)
 	$(DOTNETCORE) build
 
 precross: \
-	ThriftTest/stage/ThriftTest.dll
+	ThriftTest/stage/binaries
 
 clean-local:
-	$(RM) -r ThriftTest/bin
-	$(RM) -r ThriftTest/obj
+	$(RM) -r Client/bin
+	$(RM) -r Server/bin
+	$(RM) -r Client/obj
+	$(RM) -r Server/obj
 	$(RM) -r ThriftTest/ThriftTest
 
 EXTRA_DIST = \
 			 ThriftTest.sln \
-			 ThriftTest \
+			 Server \
+			 Client \
 			 README.md
 			 

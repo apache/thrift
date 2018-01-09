@@ -24,7 +24,7 @@ static const string endl = "\n"; // avoid ostream << std::endl flushes
 
 struct member_mapping_scope
 {
-    void* scope_member = NULL;
+    void* scope_member;
     map<string, string> mapping_table;
 };
 
