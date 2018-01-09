@@ -384,14 +384,6 @@ namespace Thrift.Protocols
             var len = b.Length;
             var off = 0;
 
-            // Ignore padding
-            var bound = len >= 2 ? len - 2 : 0;
-
-            for (var i = len - 1; i >= bound && b[i] == '='; --i)
-            {
-                --len;
-            }
-
             while (len >= 3)
             {
                 // Encode 3 bytes at a time
