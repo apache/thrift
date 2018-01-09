@@ -323,7 +323,6 @@ where
     fn seek(&mut self, pos: io::SeekFrom) -> io::Result<u64> {
         self.transport.seek(pos)
     }
-
 }
 
 /// Factory for creating instances of `TCompactInputProtocol`.
