@@ -67,7 +67,7 @@ Options:
         <numClients> - number of multiple clients to connect to server (max 100, default 1)
 
 Sample:
-    Client.exe -t:tcp -p:binary
+    Client.exe -tr:tcp -p:binary
 ");
         }
 

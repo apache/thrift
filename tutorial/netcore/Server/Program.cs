@@ -91,7 +91,7 @@ Options:
         multiplexed - multiplexed protocol will be used
 
 Sample:
-    Server.exe -t:tcp 
+    Server.exe -tr:tcp 
 ");
         }
 
