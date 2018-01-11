@@ -22,7 +22,7 @@
 #
 # Docker Integration
 # see: build/docker/README.md
-# 
+#
 
 sudo: required
 dist: trusty
@@ -63,11 +63,6 @@ jobs:
     # ========================= stage: docker =========================
     - stage: docker
       script: true
-      env:
-        - JOB="Docker Build ubuntu-trusty 14.04"
-        - DISTRO=ubuntu-trusty
-        - TRAVIS_BUILD_STAGE=docker
-    - script: true
       env:
         - JOB="Docker Build ubuntu-xenial 16.04"
         - DISTRO=ubuntu-xenial
@@ -172,13 +167,6 @@ jobs:
       env:
         - JOB="Autotools (Ubuntu Xenial)"
         - DISTRO=ubuntu-xenial
-        - SCRIPT="autotools.sh"
-        - BUILD_ENV="-e CC=gcc -e CXX=g++"
-
-    - script: build/docker/run.sh
-      env:
-        - JOB="Autotools (Ubuntu Trusty)"
-        - DISTRO=ubuntu-trusty
         - SCRIPT="autotools.sh"
         - BUILD_ENV="-e CC=gcc -e CXX=g++"
 
