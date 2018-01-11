@@ -353,9 +353,6 @@ if test "$with_php_extension" = "yes"; then
 fi
 AM_CONDITIONAL(WITH_PHP_EXTENSION, [test "$have_php_extension" = "yes"])
 
-AC_PATH_PROG([PHPUNIT], [phpunit])
-AM_CONDITIONAL(HAVE_PHPUNIT, [test "x$PHPUNIT" != "x"])
-
 AX_THRIFT_LIB(dart, [DART], yes)
 if test "$with_dart" = "yes"; then
   AC_PATH_PROG([DART], [dart])
