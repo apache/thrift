@@ -136,6 +136,7 @@ class TSocket extends TTransport
   public function setHandle($handle)
   {
     $this->handle_ = $handle;
+    stream_set_blocking($this->handle_, false);
   }
 
   /**
