@@ -124,6 +124,11 @@ struct TypeCache {
 
   std::map<int64_t, S> const* source;
 
+  void clear() {
+    source = nullptr ;
+    cache.clear() ;
+  }
+
 protected:
   std::map<int64_t, C*> cache;
 
@@ -140,6 +145,12 @@ std::map<int64_t, ::t_program*> g_program_cache;
 TypeCache< ::t_type, t_type> g_type_cache;
 TypeCache< ::t_const, t_const> g_const_cache;
 TypeCache< ::t_service, t_service> g_service_cache;
+
+void clear_global_cache() {
+  g_type_cache.clear();
+  g_const_cache.clear();
+  g_service_cache.clear();
+}
 
 void set_global_cache(const TypeRegistry& from) {
   g_type_cache.source = &from.types;
