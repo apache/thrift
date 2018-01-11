@@ -25,10 +25,10 @@ static const string endl = "\n"; // avoid ostream << std::endl flushes
 class t_netcore_generator : public t_oop_generator
 {
 
-    //TODO: change this after creation of tests (vc2010, gcc, clang, a lot of other compilers which cannot normally build that)
     struct member_mapping_scope
     {
-    public: 
+    public:
+        member_mapping_scope() : scope_member(0) { }
         void* scope_member;
         map<string, string> mapping_table;
     };
