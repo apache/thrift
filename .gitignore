@@ -24,6 +24,7 @@
 tags
 
 .*project
+.classpath
 junit*.properties
 .idea
 gen-*
@@ -223,6 +224,7 @@ project.lock.json
 /lib/haxe/test/bin
 /lib/hs/dist
 /lib/java/build
+/lib/java/target
 /lib/js/dist
 /lib/js/doc
 /lib/js/package-lock.json

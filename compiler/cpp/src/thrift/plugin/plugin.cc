@@ -124,6 +124,11 @@ struct TypeCache {
 
   std::map<int64_t, S> const* source;
 
+  void clear() {
+    source = nullptr ;
+    cache.clear() ;
+  }
+
 protected:
   std::map<int64_t, C*> cache;
 
@@ -140,6 +145,12 @@ std::map<int64_t, ::t_program*> g_program_cache;
 TypeCache< ::t_type, t_type> g_type_cache;
 TypeCache< ::t_const, t_const> g_const_cache;
 TypeCache< ::t_service, t_service> g_service_cache;
+
+void clear_global_cache() {
+  g_type_cache.clear();
+  g_const_cache.clear();
+  g_service_cache.clear();
+}
 
 void set_global_cache(const TypeRegistry& from) {
   g_type_cache.source = &from.types;
@@ -258,11 +269,11 @@ THRIFT_CONVERSION(t_const_value, ) {
     T_CONST_VALUE_CASE(string);
   else T_CONST_VALUE_CASE(integer);
   else T_CONST_VALUE_CASE(double);
-  else {
-    T_CONST_VALUE_CASE(identifier);
-    if (from.__isset.enum_val)
-      to->set_enum(resolve_type< ::t_enum>(from.enum_val));
+  else if (from.__isset.const_identifier_val) {
+    to->set_identifier(from.const_identifier_val.identifier_val) ;
+    to->set_enum(resolve_type< ::t_enum>(from.const_identifier_val.enum_val)) ;
   }
+
 #undef T_CONST_VALUE_CASE
 }
 THRIFT_CONVERSION(t_field, resolve_type< ::t_type>(from.type), from.name, from.key) {
@@ -458,9 +469,7 @@ int GeneratorPlugin::exec(int, char* []) {
     return ::t_const_value::CV_INTEGER;
   if (v.__isset.double_val)
     return ::t_const_value::CV_DOUBLE;
-  if (v.__isset.identifier_val)
-    return ::t_const_value::CV_IDENTIFIER;
-  if (v.__isset.enum_val)
+  if (v.__isset.const_identifier_val)
     return ::t_const_value::CV_IDENTIFIER;
   throw ThriftPluginError("Unknown const value type");
 }

@@ -234,6 +234,8 @@ void migrate_global_cache() {
 template <typename T>
 T* round_trip(T* t) {
   typename plugin::ToType<T>::type p;
+  plugin::clear_global_cache();
+  plugin_output::clear_global_cache();
   plugin_output::convert(t, p);
   migrate_global_cache();
   return plugin::convert(p);
