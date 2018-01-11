@@ -28,6 +28,7 @@ class t_netcore_generator : public t_oop_generator
     //TODO: change this after creation of tests (vc2010, gcc, clang, a lot of other compilers which cannot normally build that)
     struct member_mapping_scope
     {
+    public: 
         void* scope_member;
         map<string, string> mapping_table;
     };
