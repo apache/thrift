@@ -230,8 +230,13 @@ THRIFT_CONVERSION(t_const_value) {
     THRIFT_ASSIGN_N(get_string(), string_val, );
     break;
   case t_const_value::CV_IDENTIFIER:
-    THRIFT_ASSIGN_ID_N(t_type, enum_, enum_val);
-    THRIFT_ASSIGN_N(get_identifier(), identifier_val, );
+    if (from) {
+      apache::thrift::plugin::t_const_identifier_value cidval ;
+      if (from->enum_)
+	cidval.__set_enum_val(store_type<t_type>(from->enum_));
+      cidval.__set_identifier_val(from->get_identifier());
+      to.__set_const_identifier_val(cidval) ;
+    }
     break;
   case t_const_value::CV_MAP:
     to.__isset.map_val = true;
