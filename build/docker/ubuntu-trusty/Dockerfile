@@ -167,7 +167,7 @@ RUN apt-get install -y --no-install-recommends \
       php5-dev \
       php-pear \
       re2c && \
-      wget https://getcomposer.org/installer -O - -q | php -- --quiet
+      wget https://getcomposer.org/installer -O - -q | php -- --quiet --install-dir=/usr/local/bin/ --filename=composer
 
 RUN apt-get install -y --no-install-recommends \
 `# Python dependencies` \
