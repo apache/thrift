@@ -328,6 +328,7 @@ end;
 
 procedure TPipeStreamBase.WriteDirect( const pBuf : Pointer; offset: Integer; count: Integer);
 var cbWritten, nBytes : DWORD;
+    pData : PByte;
 begin
   if not IsOpen
   then raise TTransportExceptionNotOpen.Create('Called write on non-open pipe');
@@ -336,11 +337,13 @@ begin
   // there's a system limit around 0x10000 bytes that we hit otherwise
   // MSDN: "Pipe write operations across a network are limited to 65,535 bytes per write. For more information regarding pipes, see the Remarks section."
   nBytes := Min( 15*4096, count); // 16 would exceed the limit
+  pData  := pBuf;
+  Inc( pData, offset);
   while nBytes > 0 do begin
-    if not WriteFile( FPipe, PByteArray(pBuf)^[offset], nBytes, cbWritten, nil)
+    if not WriteFile( FPipe, pData^, nBytes, cbWritten, nil)
     then raise TTransportExceptionNotOpen.Create('Write to pipe failed');
 
-    Inc( offset, cbWritten);
+    Inc( pData, cbWritten);
     Dec( count, cbWritten);
     nBytes := Min( nBytes, count);
   end;
@@ -350,6 +353,7 @@ end;
 procedure TPipeStreamBase.WriteOverlapped( const pBuf : Pointer; offset: Integer; count: Integer);
 var cbWritten, dwWait, dwError, nBytes : DWORD;
     overlapped : IOverlappedHelper;
+    pData : PByte;
 begin
   if not IsOpen
   then raise TTransportExceptionNotOpen.Create('Called write on non-open pipe');
@@ -358,9 +362,11 @@ begin
   // there's a system limit around 0x10000 bytes that we hit otherwise
   // MSDN: "Pipe write operations across a network are limited to 65,535 bytes per write. For more information regarding pipes, see the Remarks section."
   nBytes := Min( 15*4096, count); // 16 would exceed the limit
+  pData  := pBuf;
+  Inc( pData, offset);
   while nBytes > 0 do begin
     overlapped := TOverlappedHelperImpl.Create;
-    if not WriteFile( FPipe, PByteArray(pBuf)^[offset], nBytes, cbWritten, overlapped.OverlappedPtr)
+    if not WriteFile( FPipe, pData^, nBytes, cbWritten, overlapped.OverlappedPtr)
     then begin
       dwError := GetLastError;
       case dwError of
@@ -382,7 +388,7 @@ begin
 
     ASSERT( DWORD(nBytes) = cbWritten);
 
-    Inc( offset, cbWritten);
+    Inc( pData, cbWritten);
     Dec( count, cbWritten);
     nBytes := Min( nBytes, count);
   end;
@@ -393,6 +399,7 @@ function TPipeStreamBase.ReadDirect(     const pBuf : Pointer; const buflen : In
 var cbRead, dwErr, nRemaining  : DWORD;
     bytes, retries  : LongInt;
     bOk     : Boolean;
+    pData   : PByte;
 const INTERVAL = 10;  // ms
 begin
   if not IsOpen
@@ -427,14 +434,16 @@ begin
 
   result := 0;
   nRemaining := count;
+  pData := pBuf;
+  Inc( pData, offset);
   while nRemaining > 0 do begin
     // read the data (or block INFINITE-ly)
-    bOk := ReadFile( FPipe, PByteArray(pBuf)^[offset], nRemaining, cbRead, nil);
+    bOk := ReadFile( FPipe, pData^, nRemaining, cbRead, nil);
     if (not bOk) and (GetLastError() <> ERROR_MORE_DATA)
     then Break; // No more data, possibly because client disconnected.
 
     Dec( nRemaining, cbRead);
-    Inc( offset, cbRead);
+    Inc( pData, cbRead);
     Inc( result, cbRead);
   end;
 end;
@@ -444,17 +453,20 @@ function TPipeStreamBase.ReadOverlapped( const pBuf : Pointer; const buflen : In
 var cbRead, dwWait, dwError, nRemaining : DWORD;
     bOk     : Boolean;
     overlapped : IOverlappedHelper;
+    pData   : PByte;
 begin
   if not IsOpen
   then raise TTransportExceptionNotOpen.Create('Called read on non-open pipe');
 
   result := 0;
   nRemaining := count;
+  pData := pBuf;
+  Inc( pData, offset);
   while nRemaining > 0 do begin
     overlapped := TOverlappedHelperImpl.Create;
 
      // read the data
-    bOk := ReadFile( FPipe, PByteArray(pBuf)^[offset], nRemaining, cbRead, overlapped.OverlappedPtr);
+    bOk := ReadFile( FPipe, pData^, nRemaining, cbRead, overlapped.OverlappedPtr);
     if not bOk then begin
       dwError := GetLastError;
       case dwError of
@@ -477,7 +489,7 @@ begin
     ASSERT( cbRead > 0);  // see TTransportImpl.ReadAll()
     ASSERT( cbRead <= DWORD(nRemaining));
     Dec( nRemaining, cbRead);
-    Inc( offset, cbRead);
+    Inc( pData, cbRead);
     Inc( result, cbRead);
   end;
 end;
