@@ -46,7 +46,7 @@ RUN apt-key adv --keyserver keyserver.ubuntu.com --recv-keys EBCF975E5BA24D5E &&
 # Dart
 RUN curl https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - && \
         curl https://storage.googleapis.com/download.dartlang.org/linux/debian/dart_stable.list > \
-        /etc/apt/sources.list.d/dart_stable.list
+          /etc/apt/sources.list.d/dart_stable.list
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
 `# General dependencies` \

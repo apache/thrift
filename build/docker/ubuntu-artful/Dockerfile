@@ -44,11 +44,11 @@ RUN apt-get update && \
 # dotnet (core)
 RUN curl https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor > /etc/apt/trusted.gpg.d/microsoft.gpg && \
     echo "deb [arch=amd64] https://packages.microsoft.com/repos/microsoft-ubuntu-artful-prod artful main" > \
-    /etc/apt/sources.list.d/dotnetdev.list
+      /etc/apt/sources.list.d/dotnetdev.list
 
 # node.js
-RUN curl -sL https://deb.nodesource.com/gpgkey/nodesource.gpg.key | sudo apt-key add - \
-    echo "deb https://deb.nodesource.com/node_8.x artful main" | sudo tee /etc/apt/sources.list.d/nodesource.list
+RUN curl -sL https://deb.nodesource.com/gpgkey/nodesource.gpg.key | apt-key add - \
+    echo "deb https://deb.nodesource.com/node_8.x artful main" | tee /etc/apt/sources.list.d/nodesource.list
 # D
 RUN apt-key adv --keyserver keyserver.ubuntu.com --recv-keys EBCF975E5BA24D5E && \
         wget http://master.dl.sourceforge.net/project/d-apt/files/d-apt.list -O /etc/apt/sources.list.d/d-apt.list && \
@@ -57,10 +57,10 @@ RUN apt-key adv --keyserver keyserver.ubuntu.com --recv-keys EBCF975E5BA24D5E &&
 # Dart
 RUN curl https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - && \
     curl https://storage.googleapis.com/download.dartlang.org/linux/debian/dart_stable.list > \
-    /etc/apt/sources.list.d/dart_stable.list
+      /etc/apt/sources.list.d/dart_stable.list
 
 ### install general dependencies
-RUN apt-get install -y --no-install-recommends \
+RUN apt-get update && apt-get install -y --no-install-recommends \
 `# General dependencies` \
       bash-completion \
       bison \
