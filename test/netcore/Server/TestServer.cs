@@ -537,7 +537,7 @@ namespace ThriftTest
                         
                         trans = new TTlsServerSocketTransport(param.port, param.useBufferedSockets, param.useFramed, cert, 
                             (sender, certificate, chain, errors) => true, 
-                            null, SslProtocols.Tls12);
+                            null, SslProtocols.Tls | SslProtocols.Tls11 | SslProtocols.Tls12);
                     }
                     else
                     {

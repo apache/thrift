@@ -172,7 +172,8 @@ namespace ThriftTest
                             }
                             
                             trans = new TTlsSocketClientTransport(host, port, 0, cert, 
-                                (sender, certificate, chain, errors) => true);
+                                (sender, certificate, chain, errors) => true,
+                                null, SslProtocols.Tls | SslProtocols.Tls11 | SslProtocols.Tls12);
                         }
                         else
                         {
