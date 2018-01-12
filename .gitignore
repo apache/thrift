@@ -227,6 +227,7 @@ project.lock.json
 /lib/erl/test/*.hrl
 /lib/erl/test/Thrift_omit_without.thrift
 /lib/haxe/test/bin
+/lib/haxe/test/data.tmp
 /lib/hs/dist
 /lib/java/.gradle
 /lib/java/android/.gradle

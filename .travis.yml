@@ -43,7 +43,7 @@ env:
   global:
     - SCRIPT="cmake.sh"
     - BUILD_ARG=""
-    - BUILD_ENV="-e CC=clang -e CXX=clang++"
+    - BUILD_ENV="-e CC=gcc -e CXX=g++ -e THRIFT_CROSSTEST_CONCURRENCY=4"
     - DISTRO=ubuntu-xenial
     - BUILD_LIBS="CPP C_GLIB HASKELL JAVA PYTHON TESTING TUTORIALS"  # only meaningful for CMake builds
     - TRAVIS_BUILD_STAGE=test
@@ -87,8 +87,6 @@ jobs:
       env:
         - JOB="Cross Language Tests"
         - SCRIPT="cross-test.sh"
-        - BUILD_ARG=""
-        - BUILD_ENV="-e CC=clang -e CXX=clang++ -e THRIFT_CROSSTEST_CONCURRENCY=4"
 
     # fork based PR builds cannot exceed 50 minutes per job
     - stage: thrift
@@ -98,7 +96,6 @@ jobs:
         - JOB="Cross Language Tests (Binary Protocol)"
         - SCRIPT="cross-test.sh"
         - BUILD_ARG="-'(binary)'"
-        - BUILD_ENV="-e CC=clang -e CXX=clang++ -e THRIFT_CROSSTEST_CONCURRENCY=4"
 
     - stage: thrift
       script: build/docker/run.sh
@@ -107,7 +104,6 @@ jobs:
         - JOB="Cross Language Tests (Header, JSON Protocols)"
         - SCRIPT="cross-test.sh"
         - BUILD_ARG="-'(header|json)'"
-        - BUILD_ENV="-e CC=clang -e CXX=clang++ -e THRIFT_CROSSTEST_CONCURRENCY=4"
 
     - stage: thrift
       script: build/docker/run.sh
@@ -116,7 +112,6 @@ jobs:
         - JOB="Cross Language Tests (Compact and Multiplexed Protocols)"
         - SCRIPT="cross-test.sh"
         - BUILD_ARG="-'(compact|multiplexed)'"
-        - BUILD_ENV="-e CC=clang -e CXX=clang++ -e THRIFT_CROSSTEST_CONCURRENCY=4"
 
     # ------------------------- phase: sca --------------------------
     # QA jobs for code analytics and metrics
@@ -149,7 +144,7 @@ jobs:
         - SCRIPT="cmake.sh"
         - BUILD_LIBS="CPP TESTING TUTORIALS"
         - BUILD_ARG="-DCMAKE_CXX_STANDARD=98 -DCMAKE_CXX_STANDARD_REQUIRED=ON -DCMAKE_CXX_EXTENSIONS=OFF --DWITH_BOOSTTHREADS=ON -DWITH_PYTHON=OFF -DWITH_C_GLIB=OFF -DWITH_JAVA=OFF -DWITH_HASKELL=OFF"
-        - BUILD_ENV=""
+        - BUILD_ENV="-e CC=clang -e CXX=clang++"
 
     - script: build/docker/run.sh
       env:
@@ -166,31 +161,27 @@ jobs:
         - JOB="Autotools (Ubuntu Artful)"
         - DISTRO=ubuntu-artful
         - SCRIPT="autotools.sh"
-        - BUILD_ENV="-e CC=gcc -e CXX=g++"
 
     - script: build/docker/run.sh
       env:
         - JOB="Autotools (Ubuntu Xenial)"
         - DISTRO=ubuntu-xenial
         - SCRIPT="autotools.sh"
-        - BUILD_ENV="-e CC=gcc -e CXX=g++"
 
     - script: build/docker/run.sh
       env:
         - JOB="Autotools (Ubuntu Trusty)"
         - DISTRO=ubuntu-trusty
         - SCRIPT="autotools.sh"
-        - BUILD_ENV="-e CC=gcc -e CXX=g++"
 
     # ------------------------- phase: dist -------------------------
     - script: build/docker/run.sh
       env:
         - JOB="make dist"
         - SCRIPT="make-dist.sh"
-        - BUILD_ENV="-e CC=gcc -e CXX=g++"
 
     - script: build/docker/run.sh
       env:
         - JOB="Debian Packages"
         - SCRIPT="dpkg.sh"
-        - BUILD_ENV="-e CC=gcc -e CXX=g++"
+

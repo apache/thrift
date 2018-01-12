@@ -150,11 +150,11 @@ Last updated: October 1, 2017
 | erlang    | R16B03        | 18.3          | 20.0.4        |       |
 | go        | 1.2.1         | 1.6.2         | 1.8.3         |       |
 | haskell   | 7.6.3         | 7.10.3        | 8.0.2         |       |
-| haxe      |               | 3.2.1         | 3.4.2         | disabled in trusty builds - cores on install v3.0.0, disabled in artful builds - see THRIFT-4352 |
+| haxe      |               | 3.2.1         | 3.4.4         | THRIFT-4352: avoid 3.4.2 |
 | java      | 1.7.0_151     | 1.8.0_151     | 1.8.0_151     |       |
 | js        |               |               |               | Unsure how to look for version info? |
 | lua       | 5.1.5         | 5.2.4         | 5.2.4         | Lua 5.3: see THRIFT-4386 |
-| nodejs    |               | 4.2.6         | 8.9.1         | trusty has node.js 0.10.0 which is too old |
+| nodejs    |               | 4.2.6         | 8.9.4         | trusty has node.js 0.10.0 which is too old |
 | ocaml     |               | 4.02.3        | 4.04.0        |       |
 | perl      | 5.18.2        | 5.22.1        | 5.26.0        |       |
 | php       | 5.5.9         | 7.0.22        | 7.1.11        |       |
