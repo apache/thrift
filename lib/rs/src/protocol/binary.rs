@@ -312,13 +312,6 @@ where
             transport: transport,
         }
     }
-
-    fn write_transport(&mut self, buf: &[u8]) -> ::Result<()> {
-        self.transport
-            .write(buf)
-            .map(|_| ())
-            .map_err(From::from)
-    }
 }
 
 impl<T> TOutputProtocol for TBinaryOutputProtocol<T>
@@ -384,7 +377,7 @@ where
 
     fn write_bytes(&mut self, b: &[u8]) -> ::Result<()> {
         self.write_i32(b.len() as i32)?;
-        self.write_transport(b)
+        self.transport.write_all(b).map_err(From::from)
     }
 
     fn write_bool(&mut self, b: bool) -> ::Result<()> {

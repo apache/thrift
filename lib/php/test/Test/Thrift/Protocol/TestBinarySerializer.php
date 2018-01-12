@@ -26,11 +26,9 @@ namespace Test\Thrift\Protocol;
 use Thrift\ClassLoader\ThriftClassLoader;
 use Thrift\Serializer\TBinarySerializer;
 
-require_once __DIR__.'/../../../../lib/Thrift/ClassLoader/ThriftClassLoader.php';
+require_once __DIR__.'/../../../../../../vendor/autoload.php';
 
 $loader = new ThriftClassLoader();
-$loader->registerNamespace('Thrift', __DIR__ . '/../../../../lib');
-$loader->registerNamespace('Test', __DIR__ . '/../../..');
 $loader->registerDefinition('ThriftTest', __DIR__ . '/../../../packages');
 $loader->register();
 

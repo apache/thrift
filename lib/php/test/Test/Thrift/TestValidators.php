@@ -18,9 +18,9 @@
  * under the License.
  */
 
-namespace test\php;
+namespace Test\Thrift;
 
-require_once __DIR__.'/../../../lib/Thrift/ClassLoader/ThriftClassLoader.php';
+require_once __DIR__.'/../../../../../vendor/autoload.php';
 
 use Thrift\ClassLoader\ThriftClassLoader;
 use Thrift\Exception\TProtocolException;
@@ -31,7 +31,6 @@ $oop_mode = (isset($argv[1]) && $argv[1] === '-oop');
 $GEN_DIR = $oop_mode ? 'phpvo' : 'phpv';
 
 $loader = new ThriftClassLoader();
-$loader->registerNamespace('Thrift', __DIR__ . '/../../../lib');
 $loader->registerDefinition('ThriftTest', __DIR__ . '/../../packages/' . $GEN_DIR);
 $loader->registerDefinition('TestValidators', __DIR__ . '/../../packages/' . $GEN_DIR);
 $loader->register();

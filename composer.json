@@ -16,10 +16,16 @@
         "issues": "https://issues.apache.org/jira/browse/THRIFT"
     },
     "require": {
-        "php": ">=5.3.0"
+        "php": ">=5.3.3"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "~4.8.36"
     },
     "autoload": {
-        "psr-0": {"Thrift": "lib/php/lib/"}
+        "psr-4": {"Thrift\\": "lib/php/lib/Thrift/"}
+    },
+    "autoload-dev": {
+        "psr-4": {"Test\\Thrift\\": "lib/php/test/Test/Thrift/"}
     },
     "minimum-stability": "dev",
     "extra": {
