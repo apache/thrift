@@ -64,7 +64,7 @@ namespace Test
                             X509Certificate cert = new X509Certificate2(certPath, "thrift");
                             trans = new TTLSSocket(host, port, 0, cert, 
                                 (o, c, chain, errors) => true, 
-                                null, SslProtocols.Tls | SslProtocols.Tls11 | SslProtocols.Tls12);
+                                null, SslProtocols.Tls);
                         }
                         else
                         {
