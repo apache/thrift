@@ -30,12 +30,7 @@ namespace Thrift.Transports.Client
 
         public TSocketClientTransport(TcpClient client)
         {
-            if (client == null)
-            {
-                throw new ArgumentNullException(nameof(client));
-            }
-
-            TcpClient = client;
+            TcpClient = client ?? throw new ArgumentNullException(nameof(client));
 
             if (IsOpen)
             {

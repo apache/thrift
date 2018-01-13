@@ -45,6 +45,7 @@ project.lock.json
 .DS_Store
 .svn
 .vagrant
+.vscode
 
 /contrib/.vagrant/
 /aclocal/libtool.m4

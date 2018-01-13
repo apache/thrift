@@ -30,6 +30,7 @@ namespace Thrift.Transports.Server
         private readonly int _clientTimeout;
         private readonly int _port;
         private readonly bool _useBufferedSockets;
+        private readonly bool _useFramedTransport;
         private TcpListener _server;
 
         public TServerSocketTransport(TcpListener listener)
@@ -53,11 +54,17 @@ namespace Thrift.Transports.Server
         {
         }
 
-        public TServerSocketTransport(int port, int clientTimeout, bool useBufferedSockets)
+        public TServerSocketTransport(int port, int clientTimeout, bool useBufferedSockets):
+            this(port, clientTimeout, useBufferedSockets, false)
+        {
+        }
+        
+        public TServerSocketTransport(int port, int clientTimeout, bool useBufferedSockets, bool useFramedTransport)
         {
             _port = port;
             _clientTimeout = clientTimeout;
             _useBufferedSockets = useBufferedSockets;
+            _useFramedTransport = useFramedTransport;
             try
             {
                 // Make server socket
@@ -106,7 +113,7 @@ namespace Thrift.Transports.Server
 
             try
             {
-                TSocketClientTransport tSocketTransport = null;
+                TClientTransport tSocketTransport = null;
                 var tcpClient = await _server.AcceptTcpClientAsync();
 
                 try
@@ -118,7 +125,12 @@ namespace Thrift.Transports.Server
 
                     if (_useBufferedSockets)
                     {
-                        return new TBufferedClientTransport(tSocketTransport);
+                        tSocketTransport = new TBufferedClientTransport(tSocketTransport);
+                    }
+
+                    if (_useFramedTransport)
+                    {
+                        tSocketTransport = new TFramedClientTransport(tSocketTransport);
                     }
 
                     return tSocketTransport;

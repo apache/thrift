@@ -74,22 +74,13 @@ namespace Thrift.Protocols
             _serviceName = serviceName;
         }
 
-        /**
-         * Prepends the service name to the function name, separated by TMultiplexedProtocol.SEPARATOR.
-         * Args:
-         *   tMessage     The original message.
-         */
-
         public override async Task WriteMessageBeginAsync(TMessage message, CancellationToken cancellationToken)
         {
             switch (message.Type)
             {
                 case TMessageType.Call:
                 case TMessageType.Oneway:
-                    await
-                        base.WriteMessageBeginAsync(
-                            new TMessage($"{_serviceName}{Separator}{message.Name}", message.Type, message.SeqID),
-                            cancellationToken);
+                    await base.WriteMessageBeginAsync(new TMessage($"{_serviceName}{Separator}{message.Name}", message.Type, message.SeqID), cancellationToken);
                     break;
                 default:
                     await base.WriteMessageBeginAsync(message, cancellationToken);

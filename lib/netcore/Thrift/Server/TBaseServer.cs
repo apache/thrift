@@ -42,20 +42,13 @@ namespace Thrift.Server
             ITProtocolFactory inputProtocolFactory, ITProtocolFactory outputProtocolFactory,
             ILogger logger)
         {
-            if (itProcessorFactory == null) throw new ArgumentNullException(nameof(itProcessorFactory));
-            if (inputTransportFactory == null) throw new ArgumentNullException(nameof(inputTransportFactory));
-            if (outputTransportFactory == null) throw new ArgumentNullException(nameof(outputTransportFactory));
-            if (inputProtocolFactory == null) throw new ArgumentNullException(nameof(inputProtocolFactory));
-            if (outputProtocolFactory == null) throw new ArgumentNullException(nameof(outputProtocolFactory));
-            if (logger == null) throw new ArgumentNullException(nameof(logger));
-
-            ItProcessorFactory = itProcessorFactory;
+            ItProcessorFactory = itProcessorFactory ?? throw new ArgumentNullException(nameof(itProcessorFactory));
             ServerTransport = serverTransport;
-            InputTransportFactory = inputTransportFactory;
-            OutputTransportFactory = outputTransportFactory;
-            InputProtocolFactory = inputProtocolFactory;
-            OutputProtocolFactory = outputProtocolFactory;
-            Logger = logger;
+            InputTransportFactory = inputTransportFactory ?? throw new ArgumentNullException(nameof(inputTransportFactory));
+            OutputTransportFactory = outputTransportFactory ?? throw new ArgumentNullException(nameof(outputTransportFactory));
+            InputProtocolFactory = inputProtocolFactory ?? throw new ArgumentNullException(nameof(inputProtocolFactory));
+            OutputProtocolFactory = outputProtocolFactory ?? throw new ArgumentNullException(nameof(outputProtocolFactory));
+            Logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
         public void SetEventHandler(TServerEventHandler seh)

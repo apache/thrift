@@ -37,6 +37,7 @@ namespace Thrift.Transports.Server
         private readonly X509Certificate2 _serverCertificate;
         private readonly SslProtocols _sslProtocols;
         private readonly bool _useBufferedSockets;
+        private readonly bool _useFramedTransport;
         private TcpListener _server;
 
         public TTlsServerSocketTransport(int port, X509Certificate2 certificate)
@@ -47,6 +48,19 @@ namespace Thrift.Transports.Server
         public TTlsServerSocketTransport(
             int port,
             bool useBufferedSockets,
+            X509Certificate2 certificate,
+            RemoteCertificateValidationCallback clientCertValidator = null,
+            LocalCertificateSelectionCallback localCertificateSelectionCallback = null,
+            SslProtocols sslProtocols = SslProtocols.Tls12) 
+            : this(port, useBufferedSockets, false, certificate,
+                clientCertValidator, localCertificateSelectionCallback, sslProtocols)
+        {
+        }
+        
+        public TTlsServerSocketTransport(
+            int port,
+            bool useBufferedSockets,
+            bool useFramedTransport,
             X509Certificate2 certificate,
             RemoteCertificateValidationCallback clientCertValidator = null,
             LocalCertificateSelectionCallback localCertificateSelectionCallback = null,
@@ -61,6 +75,7 @@ namespace Thrift.Transports.Server
             _port = port;
             _serverCertificate = certificate;
             _useBufferedSockets = useBufferedSockets;
+            _useFramedTransport = useFramedTransport;
             _clientCertValidator = clientCertValidator;
             _localCertificateSelectionCallback = localCertificateSelectionCallback;
             _sslProtocols = sslProtocols;
@@ -122,13 +137,19 @@ namespace Thrift.Transports.Server
 
                 await tTlsSocket.SetupTlsAsync();
 
+                TClientTransport trans = tTlsSocket;
+                
                 if (_useBufferedSockets)
                 {
-                    var trans = new TBufferedClientTransport(tTlsSocket);
-                    return trans;
+                    trans = new TBufferedClientTransport(trans);
                 }
 
-                return tTlsSocket;
+                if (_useFramedTransport)
+                {
+                    trans = new TFramedClientTransport(trans);
+                }
+                
+                return trans;
             }
             catch (Exception ex)
             {

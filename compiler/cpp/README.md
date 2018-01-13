@@ -1,19 +1,49 @@
-# Build compiler using CMake
+# Build Thrift IDL compiler using CMake
 
-## build on Unix-like System
+<!-- TOC -->
 
-### build using cmake
+- [Build Thrift IDL compiler using CMake](#build-thrift-idl-compiler-using-cmake)
+    - [Build on Unix-like System](#build-on-unix-like-system)
+        - [Prerequisites](#prerequisites)
+        - [Build using CMake](#build-using-cmake)
+            - [Build with Eclipse IDE](#build-with-eclipse-ide)
+            - [Build with XCode IDE in MacOS](#build-with-xcode-ide-in-macos)
+            - [Usage of other IDEs](#usage-of-other-ides)
+    - [Build on Windows](#build-on-windows)
+        - [Prerequisites](#prerequisites-1)
+        - [Build using Git Bash](#build-using-git-bash)
+        - [Using Visual Studio and Win flex-bison](#using-visual-studio-and-win-flex-bison)
+        - [Cross compile using mingw32 and generate a Windows Installer with CPack](#cross-compile-using-mingw32-and-generate-a-windows-installer-with-cpack)
+- [Other cases](#other-cases)
+    - [Building the Thrift IDL compiler in Windows without CMake](#building-the-thrift-idl-compiler-in-windows-without-cmake)
+- [Unit tests for compiler](#unit-tests-for-compiler)
+    - [Using boost test](#using-boost-test)
+    - [Using Catch C++ test library](#using-catch-c-test-library)
+- [Have a Happy free time and holidays](#have-a-happy-free-time-and-holidays)
 
-Use the following steps to build using cmake:
+<!-- /TOC -->
+
+## Build on Unix-like System
+
+### Prerequisites
+- Install CMake
+- Install flex and bison
+
+### Build using CMake
+
+- Go to **thrift\compiler\cpp**
+- Use the following steps to build using cmake:
 
 ```
-mkdir cmake-build
-cd cmake-build
+mkdir cmake-build && cd cmake-build
 cmake ..
 make
 ```
 
-### Create an eclipse project
+#### Build with Eclipse IDE
+
+- Go to **thrift\compiler\cpp**
+- Use the following steps to build using cmake:
 
 ```
 mkdir cmake-ec && cd cmake-ec
@@ -23,8 +53,65 @@ make
 
 Now open the folder cmake-ec using eclipse.
 
+#### Build with XCode IDE in MacOS
 
-## Cross compile using mingw32 and generate a Windows Installer with CPack
+- Install/update flex, bison and cmake with brew
+
+```
+brew install cmake
+brew install bison
+```
+
+- Go to **thrift\compiler\cpp**
+- Run commands in command line:
+
+```
+mkdir cmake-build && cd cmake-build
+cmake -G "Xcode" -DWITH_PLUGIN=OFF ..
+cmake --build .
+```
+
+#### Usage of other IDEs
+
+Please check list of supported IDE 
+
+```
+cmake --help
+```
+
+## Build on Windows
+
+### Prerequisites
+- Install CMake - https://cmake.org/download/
+- In case if you want to build without Git Bash - install winflexbison - https://sourceforge.net/projects/winflexbison/
+- In case if you want to build with Visual Studio - install Visual Studio 
+  - Better to use the latest stable Visual Studio Community Edition - https://www.visualstudio.com/vs/whatsnew/ (ensure that you installed workload "Desktop Development with C++" for VS2017) - Microsoft added some support for CMake and improving it in Visual Studio
+
+### Build using Git Bash
+
+Git Bash provides flex and bison
+
+- Go to **thrift\compiler\cpp**
+- Use the following steps to build using cmake:
+
+```
+mkdir cmake-vs && cd cmake-vs
+cmake -DWITH_SHARED_LIB=off ..
+cmake --build .
+```
+
+### Using Visual Studio and Win flex-bison
+
+- Generate a Visual Studio project for version of Visual Studio which you have (**cmake --help** can show list of supportable VS versions):
+- Run commands in command line:
+```
+mkdir cmake-vs
+cd cmake-vs
+cmake -G "Visual Studio 15 2017" -DWITH_PLUGIN=OFF ..
+```
+- Now open the folder cmake-vs using Visual Studio.
+
+### Cross compile using mingw32 and generate a Windows Installer with CPack
 
 ```
 mkdir cmake-mingw32 && cd cmake-mingw32
@@ -32,49 +119,23 @@ cmake -DCMAKE_TOOLCHAIN_FILE=../build/cmake/mingw32-toolchain.cmake -DBUILD_COMP
 cpack
 ```
 
-# Build on windows
+# Other cases
 
-### using Git Bash
+## Building the Thrift IDL compiler in Windows without CMake
 
-Git Bash provides flex and bison, so you just need to do this:
+If you don't want to use CMake you can use the already available Visual Studio 2010 solution.
 
-```
-mkdir cmake-vs && cd cmake-vs
-cmake -DWITH_SHARED_LIB=off ..
-```
+The Visual Studio project contains pre-build commands to generate the thriftl.cc, thrifty.cc and thrifty.hh files which are necessary to build the compiler. 
 
-### using Win flex-bison
+These depend on bison, flex and their dependencies to work properly.
 
-In order to build on windows with winflexbison a few additional steps are necessary:
+Download flex & bison as described above. 
 
-1. Download winflexbison from http://sourceforge.net/projects/winflexbison/
-2. Extract the winflex bison files to for e.g. C:\winflexbison
-3. Make the CMake variables point to the correct binaries.
-  * FLEX_EXECUTABLE = C:/winbuild/win_flex.exe
-  * BISON_EXECUTABLE = C:/winbuild/win_bison.exe
-4. Generate a Visual Studio project:
-```
-mkdir cmake-vs && cd cmake-vs
-cmake -G "Visual Studio 12" -DWITH_SHARED_LIB=off ..
-```
-5. Now open the folder build_vs using Visual Studio 2013.
-
-# Building the Thrift IDL compiler in Windows
-
-If you don't want to use CMake you can use the already available Visual Studio
-2010 solution.
-The Visual Studio project contains pre-build commands to generate the
-thriftl.cc, thrifty.cc and thrifty.hh files which are necessary to build
-the compiler. These depend on bison, flex and their dependencies to
-work properly.
-Download flex & bison as described above.
-Place these binaries somewhere in the path and
-rename win_flex.exe and win_bison.exe to flex.exe and bison.exe respectively.
+Place these binaries somewhere in the path and rename win_flex.exe and win_bison.exe to flex.exe and bison.exe respectively.
 
 If this doesn't work on a system, try these manual pre-build steps.
 
-Open compiler.sln and remove the Pre-build commands under the project's
- Properties -> Build Events -> Pre-Build Events.
+Open compiler.sln and remove the Pre-build commands under the project's: Properties -> Build Events -> Pre-Build Events.
 
 From a command prompt:
 ```
@@ -99,3 +160,16 @@ Download inttypes.h from the interwebs and place it in an include path
 location (e.g. thrift/compiler/cpp/src).
 
 Build the compiler in Visual Studio.
+
+# Unit tests for compiler
+
+## Using boost test
+- pls check **test** folder
+
+## Using Catch C++ test library
+
+Added generic way to cover code by tests for many languages (you just need to make a correct header file for generator for your language - example in **netcore** implementation)
+
+- pls check **tests** folder
+
+# Have a Happy free time and holidays 

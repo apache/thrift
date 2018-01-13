@@ -1,4 +1,4 @@
-// Licensed to the Apache Software Foundation(ASF) under one
+﻿// Licensed to the Apache Software Foundation(ASF) under one
 // or more contributor license agreements.See the NOTICE file
 // distributed with this work for additional information
 // regarding copyright ownership.The ASF licenses this file
@@ -34,17 +34,12 @@ namespace Thrift.Transports.Client
         //TODO: should support only specified input transport?
         public TBufferedClientTransport(TClientTransport transport, int bufSize = 1024)
         {
-            if (transport == null)
-            {
-                throw new ArgumentNullException(nameof(transport));
-            }
-
             if (bufSize <= 0)
             {
                 throw new ArgumentOutOfRangeException(nameof(bufSize), "Buffer size must be a positive number.");
             }
 
-            _transport = transport;
+            _transport = transport ?? throw new ArgumentNullException(nameof(transport));
             _bufSize = bufSize;
         }
 
@@ -200,8 +195,9 @@ namespace Thrift.Transports.Client
             {
                 if (disposing)
                 {
-                    _inputBuffer.Dispose();
-                    _outputBuffer.Dispose();
+                    _inputBuffer?.Dispose();
+                    _outputBuffer?.Dispose();
+                    _transport?.Dispose();
                 }
             }
             _isDisposed = true;

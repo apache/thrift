@@ -1,4 +1,4 @@
-// Licensed to the Apache Software Foundation(ASF) under one
+﻿// Licensed to the Apache Software Foundation(ASF) under one
 // or more contributor license agreements.See the NOTICE file
 // distributed with this work for additional information
 // regarding copyright ownership.The ASF licenses this file
@@ -27,7 +27,7 @@ namespace Thrift.Protocols
     // ReSharper disable once InconsistentNaming
     public abstract class TProtocol : IDisposable
     {
-        private const int DefaultRecursionDepth = 64;
+        public const int DefaultRecursionDepth = 64;
         private bool _isDisposed;
         protected int RecursionDepth;
 
@@ -42,7 +42,6 @@ namespace Thrift.Protocols
 
         public TClientTransport Transport => Trans;
 
-        //TODO: check for protected
         protected int RecursionLimit { get; set; }
 
         public void Dispose()
@@ -93,12 +92,12 @@ namespace Thrift.Protocols
 
         public abstract Task WriteMessageEndAsync(CancellationToken cancellationToken);
 
-        public virtual async Task WriteStructBeginAsync(TStruct struc)
+        public virtual async Task WriteStructBeginAsync(TStruct @struct)
         {
-            await WriteStructBeginAsync(struc, CancellationToken.None);
+            await WriteStructBeginAsync(@struct, CancellationToken.None);
         }
 
-        public abstract Task WriteStructBeginAsync(TStruct struc, CancellationToken cancellationToken);
+        public abstract Task WriteStructBeginAsync(TStruct @struct, CancellationToken cancellationToken);
 
         public virtual async Task WriteStructEndAsync()
         {
@@ -223,12 +222,12 @@ namespace Thrift.Protocols
             await WriteBinaryAsync(bytes, cancellationToken);
         }
 
-        public virtual async Task WriteBinaryAsync(byte[] b)
+        public virtual async Task WriteBinaryAsync(byte[] bytes)
         {
-            await WriteBinaryAsync(b, CancellationToken.None);
+            await WriteBinaryAsync(bytes, CancellationToken.None);
         }
 
-        public abstract Task WriteBinaryAsync(byte[] b, CancellationToken cancellationToken);
+        public abstract Task WriteBinaryAsync(byte[] bytes, CancellationToken cancellationToken);
 
         public virtual async Task<TMessage> ReadMessageBeginAsync()
         {

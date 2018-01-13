@@ -22,10 +22,5 @@
 #exit if any command fails
 set -e
 
-cd Interfaces
-../../../compiler/cpp/thrift  -gen netcore:wcf   -r  ../../tutorial.thrift
-cd ..
-
 dotnet --info
-dotnet restore
 dotnet build
