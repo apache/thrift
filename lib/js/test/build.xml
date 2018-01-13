@@ -31,17 +31,21 @@
   <!-- the root directory, where you unpack thrift distibution (e.g. thrift-0.x.x.tar.gz) -->
   <property name="thrift.dir" location="../../../" />
   <property name="thrift.java.dir" location="${thrift.dir}/lib/java" />
+  <property name="build.tools.dir" location="${thrift.java.dir}/build/tools/"/>
+  <property file="${basedir}/build.properties"/>
 
   <!-- Include the base java properties file -->
-  <property file="${thrift.java.dir}/build.properties" />
+  <property file="${thrift.java.dir}/gradle.properties" />
 
   <property name="thrift.compiler" location="${thrift.dir}/compiler/cpp/thrift" />
 
   <path id="libs.classpath">
-    <fileset dir="${thrift.java.dir}/build/">
-      <include name="*.jar" />
+    <fileset dir="${thrift.java.dir}/build/libs">
+      <include name="libthrift*.jar" />
+      <exclude name="libthrift*javadoc.jar" />
+      <exclude name="libthrift*sources.jar" />
     </fileset>
-    <fileset dir="${thrift.java.dir}/build/lib">
+    <fileset dir="${thrift.java.dir}/build/deps">
       <include name="*.jar" />
     </fileset>
     <fileset dir="${build}/lib">
@@ -59,9 +63,10 @@
       <condition>
         <not>
           <resourcecount count="2">
-            <fileset id="fs" dir="${thrift.java.dir}/build">
+            <fileset id="fs" dir="${thrift.java.dir}/build/libs">
               <include name="libthrift*.jar" />
               <exclude name="libthrift*javadoc.jar" />
+              <exclude name="libthrift*sources.jar" />
             </fileset>
           </resourcecount>
         </not>
@@ -84,6 +89,7 @@
 
   <target name="init" depends="dependencies">
     <tstamp />
+    <mkdir dir="${build.tools.dir}"/>
     <mkdir dir="${build}"/>
     <mkdir dir="${build}/js/lib"/>
     <mkdir dir="${build}/lib"/>
@@ -208,7 +214,17 @@
     <delete dir="${genjs}" />
   </target>
 
-  <target name="resolve" unless="mvn.finished">
+  <target name="mvn.ant.tasks.download" depends="init,mvn.ant.tasks.check" unless="mvn.ant.tasks.found">
+    <get src="${mvn.ant.task.url}/${mvn.ant.task.jar}" dest="${build.tools.dir}/${mvn.ant.task.jar}" usetimestamp="true"/>
+  </target>
+
+  <target name="mvn.ant.tasks.check">
+    <condition property="mvn.ant.tasks.found">
+      <typefound uri="antlib:org.apache.maven.artifact.ant" name="artifact"/>
+    </condition>
+  </target>
+
+  <target name="resolve" depends="mvn.ant.tasks.download" unless="mvn.finished">
     <typedef uri="antlib:org.apache.maven.artifact.ant" classpath="${thrift.java.dir}/build/tools/${mvn.ant.task.jar}"/>
 
     <artifact:dependencies filesetId="js.test.dependency.jars">
