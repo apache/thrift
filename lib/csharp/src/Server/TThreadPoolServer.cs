@@ -212,60 +212,78 @@ namespace Thrift.Server
     /// <param name="threadContext"></param>
     private void Execute(Object threadContext)
     {
-      TTransport client = (TTransport)threadContext;
-      TProcessor processor = processorFactory.GetProcessor(client, this);
-      TTransport inputTransport = null;
-      TTransport outputTransport = null;
-      TProtocol inputProtocol = null;
-      TProtocol outputProtocol = null;
-      Object connectionContext = null;
-      try
+      using( TTransport client = (TTransport)threadContext)
       {
-        inputTransport = inputTransportFactory.GetTransport(client);
-        outputTransport = outputTransportFactory.GetTransport(client);
-        inputProtocol = inputProtocolFactory.GetProtocol(inputTransport);
-        outputProtocol = outputProtocolFactory.GetProtocol(outputTransport);
-
-        //Recover event handler (if any) and fire createContext server event when a client connects
-        if (serverEventHandler != null)
-          connectionContext = serverEventHandler.createContext(inputProtocol, outputProtocol);
-
-        //Process client requests until client disconnects
-        while (!stop)
+        TProcessor processor = processorFactory.GetProcessor(client, this);
+        TTransport inputTransport = null;
+        TTransport outputTransport = null;
+        TProtocol inputProtocol = null;
+        TProtocol outputProtocol = null;
+        Object connectionContext = null;
+        try
         {
-          if (!inputTransport.Peek())
-            break;
-
-          //Fire processContext server event
-          //N.B. This is the pattern implemented in C++ and the event fires provisionally.
-          //That is to say it may be many minutes between the event firing and the client request
-          //actually arriving or the client may hang up without ever makeing a request.
+          try
+          {
+            inputTransport = inputTransportFactory.GetTransport(client);
+            outputTransport = outputTransportFactory.GetTransport(client);
+            inputProtocol = inputProtocolFactory.GetProtocol(inputTransport);
+            outputProtocol = outputProtocolFactory.GetProtocol(outputTransport);
+                   
+            //Recover event handler (if any) and fire createContext server event when a client connects
+            if (serverEventHandler != null)
+              connectionContext = serverEventHandler.createContext(inputProtocol, outputProtocol);
+  
+            //Process client requests until client disconnects
+            while (!stop)
+            {
+              if (!inputTransport.Peek())
+                break;
+  
+              //Fire processContext server event
+              //N.B. This is the pattern implemented in C++ and the event fires provisionally.
+              //That is to say it may be many minutes between the event firing and the client request
+              //actually arriving or the client may hang up without ever makeing a request.
+              if (serverEventHandler != null)
+                serverEventHandler.processContext(connectionContext, inputTransport);
+              //Process client request (blocks until transport is readable)
+              if (!processor.Process(inputProtocol, outputProtocol))
+                break;
+            }
+          }
+          catch (TTransportException)
+          {
+            //Usually a client disconnect, expected
+          }
+          catch (Exception x)
+          {
+            //Unexpected
+            logDelegate("Error: " + x);
+          }
+  
+          //Fire deleteContext server event after client disconnects
           if (serverEventHandler != null)
-            serverEventHandler.processContext(connectionContext, inputTransport);
-          //Process client request (blocks until transport is readable)
-          if (!processor.Process(inputProtocol, outputProtocol))
-            break;
+            serverEventHandler.deleteContext(connectionContext, inputProtocol, outputProtocol);
+  
+        } 
+        finally
+        {
+          //Close transports
+          if (inputTransport != null)
+            inputTransport.Close();
+          if (outputTransport != null)
+            outputTransport.Close();
+		
+          // disposable stuff should be disposed
+          if( inputProtocol != null)
+            inputProtocol.Dispose();
+          if( outputProtocol != null)
+            outputProtocol.Dispose();
+          if( inputTransport != null)
+            inputTransport.Dispose();
+          if( outputTransport != null)
+            outputTransport.Dispose();
         }
       }
-      catch (TTransportException)
-      {
-        //Usually a client disconnect, expected
-      }
-      catch (Exception x)
-      {
-        //Unexpected
-        logDelegate("Error: " + x);
-      }
-
-      //Fire deleteContext server event after client disconnects
-      if (serverEventHandler != null)
-        serverEventHandler.deleteContext(connectionContext, inputProtocol, outputProtocol);
-
-      //Close transports
-      if (inputTransport != null)
-        inputTransport.Close();
-      if (outputTransport != null)
-        outputTransport.Close();
     }
 
     public override void Stop()

@@ -192,32 +192,33 @@ namespace Thrift.Server
 
     private void ClientWorker(Object context)
     {
-      TTransport client = (TTransport)context;
-      TProcessor processor = processorFactory.GetProcessor(client);
-      TTransport inputTransport = null;
-      TTransport outputTransport = null;
-      TProtocol inputProtocol = null;
-      TProtocol outputProtocol = null;
-      Object connectionContext = null;
-      try
-      {
-        using (inputTransport = inputTransportFactory.GetTransport(client))
+      using( TTransport client = (TTransport)context)
+      { 
+        TProcessor processor = processorFactory.GetProcessor(client);
+        TTransport inputTransport = null;
+        TTransport outputTransport = null;
+        TProtocol inputProtocol = null;
+        TProtocol outputProtocol = null;
+        Object connectionContext = null;
+        try
         {
-          using (outputTransport = outputTransportFactory.GetTransport(client))
+          try
           {
+            inputTransport = inputTransportFactory.GetTransport(client);
+            outputTransport = outputTransportFactory.GetTransport(client);
             inputProtocol = inputProtocolFactory.GetProtocol(inputTransport);
             outputProtocol = outputProtocolFactory.GetProtocol(outputTransport);
-
+  
             //Recover event handler (if any) and fire createContext server event when a client connects
             if (serverEventHandler != null)
               connectionContext = serverEventHandler.createContext(inputProtocol, outputProtocol);
-
+  
             //Process client requests until client disconnects
             while (!stop)
             {
               if (!inputTransport.Peek())
                 break;
-
+  
               //Fire processContext server event
               //N.B. This is the pattern implemented in C++ and the event fires provisionally.
               //That is to say it may be many minutes between the event firing and the client request
@@ -229,28 +230,42 @@ namespace Thrift.Server
                 break;
             }
           }
+          catch (TTransportException)
+          {
+            //Usually a client disconnect, expected
+          }
+          catch (Exception x)
+          {
+            //Unexpected
+            logDelegate("Error: " + x);
+          }
+  
+          //Fire deleteContext server event after client disconnects
+          if (serverEventHandler != null)
+            serverEventHandler.deleteContext(connectionContext, inputProtocol, outputProtocol);
+  
+          lock (clientLock)
+          {
+            clientThreads.Remove(Thread.CurrentThread);
+            Monitor.Pulse(clientLock);
+          }
+
+        } 
+        finally
+        {
+          //Close transports
+          if (inputTransport != null)
+            inputTransport.Close();
+          if (outputTransport != null)
+            outputTransport.Close();
+		
+          // disposable stuff should be disposed
+          if (inputProtocol != null)
+            inputProtocol.Dispose();
+          if (outputProtocol != null)
+            outputProtocol.Dispose();
         }
       }
-      catch (TTransportException)
-      {
-        //Usually a client disconnect, expected
-      }
-      catch (Exception x)
-      {
-        //Unexpected
-        logDelegate("Error: " + x);
-      }
-
-      //Fire deleteContext server event after client disconnects
-      if (serverEventHandler != null)
-        serverEventHandler.deleteContext(connectionContext, inputProtocol, outputProtocol);
-
-      lock (clientLock)
-      {
-        clientThreads.Remove(Thread.CurrentThread);
-        Monitor.Pulse(clientLock);
-      }
-      return;
     }
 
     public override void Stop()
