@@ -19,13 +19,7 @@
 
 SUBDIRS = . 
 
-THRIFTCODE = \
-			Tutorial.sln
-
-all-local: \
-	Client.exe
-
-Client.exe: $(THRIFTCODE)
+all-local:
 	$(DOTNETCORE) build
 
 clean-local:
@@ -38,11 +32,11 @@ clean-local:
 	$(RM) -r Interfaces/obj
 
 EXTRA_DIST = \
-			 Tutorial.sln \
-			 Interfaces \
-			 Client \
-			 Server \
-			 build.cmd \
-			 build.sh \
-			 README.md
+	Client \
+	Interfaces \
+	README.md \
+	Server \
+	Tutorial.sln \
+	build.cmd \
+	build.sh
 			 

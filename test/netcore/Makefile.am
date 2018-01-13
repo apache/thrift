@@ -19,17 +19,11 @@
 
 SUBDIRS = . 
 
-THRIFTCODE = \
-			ThriftTest.sln 
-
-all-local: \
-	ThriftTest/stage/binaries
-
-ThriftTest/stage/binaries: $(THRIFTCODE)
+all-local:
 	$(DOTNETCORE) build
 
-precross: \
-	ThriftTest/stage/binaries
+precross:
+	$(DOTNETCORE) build
 
 clean-local:
 	$(RM) -r Client/bin
@@ -39,8 +33,9 @@ clean-local:
 	$(RM) -r ThriftTest/ThriftTest
 
 EXTRA_DIST = \
-			 ThriftTest.sln \
-			 Server \
-			 Client \
-			 README.md
-			 
+	Client \
+	README.md \
+	Server \
+	ThriftTest.sln \
+	build.cmd \
+	build.sh
