@@ -19,26 +19,23 @@
 
 SUBDIRS = . 
 
-THRIFTCODE = \
-			Thrift/Thrift.csproj
-
-all-local: \
-	Thrift.dll
-
-Thrift.dll: $(THRIFTCODE)
-#	$(MKDIR_P) $(GENDIR)
-#	$(THRIFT)  -gen netcore:wcf   -r  -out $(GENDIR)  $(TESTDIR)/CassandraTest.thrift
-#	$(THRIFT)  -gen netcore:wcf   -r  -out $(GENDIR)  $(top_srcdir)/test/ThriftTest.thrift
-#	$(THRIFT)  -gen netcore:wcf   -r  -out $(GENDIR)  $(top_srcdir)/contrib/fb303/if/fb303.thrift
+all-local:
 	$(DOTNETCORE) build
+
+check-local:
+	$(DOTNETCORE) test Tests/Thrift.Tests/Thrift.Tests.csproj
+	${DOTNETCORE} test Tests/Thrift.IntegrationTests/Thrift.IntegrationTests.csproj
 
 clean-local:
 	$(RM) -r Thrift/bin
 	$(RM) -r Thrift/obj
 
 EXTRA_DIST = \
-			 Thrift \
-			 Thrift.sln \
-			 Tests \
-			 README.md
-			 
+	README.md \
+	Tests \
+	Thrift \
+	Thrift.sln \
+	build.cmd \
+	build.sh \
+	runtests.cmd \
+	runtests.sh
