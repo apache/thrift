@@ -152,7 +152,7 @@ RUN apt-get install -y --no-install-recommends \
 #       neko \
 #       neko-dev
 # RUN haxelib setup --always /usr/share/haxe/lib && \
-#     haxelib install --always hxcpp
+#     haxelib install --quiet --always hxcpp
 
 RUN apt-get install -y --no-install-recommends \
 `# Java dependencies` \
