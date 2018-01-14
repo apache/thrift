@@ -156,7 +156,7 @@ RUN apt-get install -y --no-install-recommends \
       neko-dev \
       libneko0 && \
     haxelib setup --always /usr/share/haxe/lib && \
-    haxelib install --quiet --always hxcpp 3.4.64
+    haxelib install --always hxcpp 3.4.64 2>&1 > /dev/null
 # note: hxcpp 3.4.185 (latest) no longer ships static libraries, and caused a build failure
 
 RUN apt-get install -y --no-install-recommends \
