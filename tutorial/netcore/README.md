@@ -1,11 +1,11 @@
 # Building of samples for different platforms 
 
 # Reused components 
-- NET Core Standard 1.6 (SDK 1.0.0-preview2-003121)
-- NET Core App 1.1
+- NET Core Standard 2.0
+- NET Core App 2.0
 
 # How to build
-- Download and install .NET Core SDK for your platform https://www.microsoft.com/net/core#windowsvs2015 (archive for SDK 1.0.0-preview2-003121 located by: https://github.com/dotnet/core/blob/master/release-notes/download-archive.md)
+- Download and install the latest .NET Core SDK for your platform https://www.microsoft.com/net/core#windowsvs2015 (archive for SDK 1.0.0-preview2-003121 located by: https://github.com/dotnet/core/blob/master/release-notes/download-archive.md)
 - Ensure that you have thrift.exe which supports netcore lib and it added to PATH 
 - Go to current folder 
 - Run **build.sh** or **build.cmd** from the root of cloned repository
@@ -18,16 +18,13 @@ Notes: dotnet run supports passing arguments to app after -- symbols (https://do
 
 - build 
 - go to folder (Client/Server) 
-- run with specifying of correct parameters **dotnet run -t:tcp -p:multiplexed**, **dotnet run -help** (later, after migration to csproj and latest SDK will be possibility to use more usable form **dotnet run -- arguments**)
+- run with specifying of correct parameters **dotnet run -tr:tcp -pr:multiplexed**, **dotnet run -help** (later, after migration to csproj and latest SDK will be possibility to use more usable form **dotnet run -- arguments**)
 
 #Notes
-- Migration to .NET Standard 2.0 planned for later (Q1 2017) according to  https://blogs.msdn.microsoft.com/dotnet/2016/09/26/introducing-net-standard/
 - Possible adding additional platforms after stabilization of .NET Core (runtimes, platforms (Red Hat Linux, OpenSuse, etc.) 
 
 #Known issues
 - In trace logging mode you can see some not important internal exceptions
-- Ubuntu 16.10 still not supported fully 
-- There is some problems with .NET Core CLI and usage specific -r|--runtime for building and publishing projects with different target frameworks (netstandard1.6 and netcoreapp1.1) 
 
 # Running of samples 
 Please install Thrift C# .NET Core library or copy sources and build them to correcly build and run samples 
@@ -39,12 +36,12 @@ Usage:
     Server.exe -h
         will diplay help information 
 
-    Server.exe -t:<transport> -p:<protocol> 
+    Server.exe -tr:<transport> -pr:<protocol> 
         will run server with specified arguments (tcp transport and binary protocol by default)
 
 Options:
 
-    -t (transport): 
+    -tr (transport): 
         tcp - (default) tcp transport will be used (host - ""localhost"", port - 9090)
         tcpbuffered - tcp buffered transport will be used (host - ""localhost"", port - 9090)
         namedpipe - namedpipe transport will be used (pipe address - "".test"")
@@ -52,14 +49,14 @@ Options:
         tcptls - tcp transport with tls will be used (host - ""localhost"", port - 9090)
         framed - tcp framed transport will be used (host - ""localhost"", port - 9090)
 
-    -p (protocol): 
+    -pr (protocol): 
         binary - (default) binary protocol will be used
         compact - compact protocol will be used
         json - json protocol will be used
 		
 Sample:
 
-    Server.exe -t:tcp
+    Server.exe -tr:tcp
 
 **Remarks**:
 
@@ -75,12 +72,12 @@ Usage:
     Client.exe -h
         will diplay help information 
 
-    Client.exe -t:<transport> -p:<protocol> -mc:<numClients>
+    Client.exe -tr:<transport> -pr:<protocol> -mc:<numClients>
         will run client with specified arguments (tcp transport and binary protocol by default)
 
 Options:
 
-    -t (transport): 
+    -tr (transport): 
         tcp - (default) tcp transport will be used (host - ""localhost"", port - 9090)
         tcpbuffered - buffered transport over tcp will be used (host - ""localhost"", port - 9090)
         namedpipe - namedpipe transport will be used (pipe address - "".test"")
@@ -88,7 +85,7 @@ Options:
         tcptls - tcp tls transport will be used (host - ""localhost"", port - 9090)
         framed - tcp framed transport will be used (host - ""localhost"", port - 9090)
 
-    -p (protocol): 
+    -pr (protocol): 
         binary - (default) binary protocol will be used
         compact - compact protocol will be used
         json - json protocol will be used
@@ -98,7 +95,7 @@ Options:
 
 Sample:
 
-    Client.exe -t:tcp -p:binary -mc:10
+    Client.exe -tr:tcp -pr:binary -mc:10
 
 Remarks:
 

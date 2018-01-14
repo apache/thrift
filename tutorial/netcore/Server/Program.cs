@@ -1,4 +1,4 @@
-﻿// Licensed to the Apache Software Foundation(ASF) under one
+// Licensed to the Apache Software Foundation(ASF) under one
 // or more contributor license agreements.See the NOTICE file
 // distributed with this work for additional information
 // regarding copyright ownership.The ASF licenses this file
@@ -46,7 +46,7 @@ namespace Server
         {
             args = args ?? new string[0];
 
-            if (args.Any(x => x.StartsWith("-h", StringComparison.OrdinalIgnoreCase)))
+            if (args.Any(x => x.StartsWith("-help", StringComparison.OrdinalIgnoreCase)))
             {
                 DisplayHelp();
                 return;
@@ -69,14 +69,14 @@ namespace Server
         {
             Logger.LogInformation(@"
 Usage: 
-    Server.exe -h
+    Server.exe -help
         will diplay help information 
 
-    Server.exe -t:<transport> -p:<protocol>
+    Server.exe -tr:<transport> -pr:<protocol>
         will run server with specified arguments (tcp transport and binary protocol by default)
 
 Options:
-    -t (transport): 
+    -tr (transport): 
         tcp - (default) tcp transport will be used (host - ""localhost"", port - 9090)
         tcpbuffered - tcp buffered transport will be used (host - ""localhost"", port - 9090)
         namedpipe - namedpipe transport will be used (pipe address - "".test"")
@@ -84,14 +84,14 @@ Options:
         tcptls - tcp transport with tls will be used (host - ""localhost"", port - 9090)
         framed - tcp framed transport will be used (host - ""localhost"", port - 9090)
 
-    -p (protocol): 
+    -pr (protocol): 
         binary - (default) binary protocol will be used
         compact - compact protocol will be used
         json - json protocol will be used
         multiplexed - multiplexed protocol will be used
 
 Sample:
-    Server.exe -t:tcp 
+    Server.exe -tr:tcp 
 ");
         }
 
@@ -112,20 +112,18 @@ Sample:
 
         private static Protocol GetProtocol(string[] args)
         {
-            var transport = args.FirstOrDefault(x => x.StartsWith("-p"))?.Split(':')?[1];
-            Protocol selectedProtocol;
+            var transport = args.FirstOrDefault(x => x.StartsWith("-pr"))?.Split(':')?[1];
 
-            Enum.TryParse(transport, true, out selectedProtocol);
+            Enum.TryParse(transport, true, out Protocol selectedProtocol);
 
             return selectedProtocol;
         }
 
         private static Transport GetTransport(string[] args)
         {
-            var transport = args.FirstOrDefault(x => x.StartsWith("-t"))?.Split(':')?[1];
-            Transport selectedTransport;
+            var transport = args.FirstOrDefault(x => x.StartsWith("-tr"))?.Split(':')?[1];
 
-            Enum.TryParse(transport, true, out selectedTransport);
+            Enum.TryParse(transport, true, out Transport selectedTransport);
 
             return selectedTransport;
         }
@@ -288,11 +286,10 @@ Sample:
                     .UseKestrel()
                     .UseUrls("http://localhost:9090")
                     .UseContentRoot(Directory.GetCurrentDirectory())
-                    .UseIISIntegration()
                     .UseStartup<Startup>()
                     .Build();
 
-                host.StartAsync(cancellationToken); // was Run() in earlier .NET Core SDKs?
+                host.RunAsync(cancellationToken).GetAwaiter().GetResult();
             }
 
             public class Startup

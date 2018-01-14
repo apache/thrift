@@ -1,4 +1,4 @@
-﻿// Licensed to the Apache Software Foundation(ASF) under one
+// Licensed to the Apache Software Foundation(ASF) under one
 // or more contributor license agreements.See the NOTICE file
 // distributed with this work for additional information
 // regarding copyright ownership.The ASF licenses this file
@@ -17,13 +17,14 @@
 
 using System;
 using System.Collections.Generic;
+using System.IO;
+using System.Linq;
 using System.Security.Authentication;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
-using ThriftAsync.Test;
 using Thrift;
 using Thrift.Collections;
 using Thrift.Protocols;
@@ -31,7 +32,7 @@ using Thrift.Server;
 using Thrift.Transports;
 using Thrift.Transports.Server;
 
-namespace Test
+namespace ThriftTest
 {
     internal class ServerParam
     {
@@ -93,7 +94,7 @@ namespace Test
                 }
                 else
                 {
-                    throw new ArgumentException(args[i]);
+                    //throw new ArgumentException(args[i]);
                 }
             }
 
@@ -132,9 +133,9 @@ namespace Test
                 callCount++;
                 return Task.CompletedTask;
             }
-        };
+        }
 
-        public class TestHandlerAsync : ThriftAsync.Test.ThriftTest.IAsync
+        public class TestHandlerAsync : ThriftTest.IAsync
         {
             public TBaseServer server { get; set; }
             private int handlerID;
@@ -439,18 +440,11 @@ namespace Test
             public Task testOnewayAsync(int secondsToSleep, CancellationToken cancellationToken)
             {
                 logger.Invoke("testOneway({0}), sleeping...", secondsToSleep);
-                Thread.Sleep(secondsToSleep * 1000);
+                Task.Delay(secondsToSleep * 1000, cancellationToken).GetAwaiter().GetResult();
                 logger.Invoke("testOneway finished");
 
                 return Task.CompletedTask;
             }
-        }
-
-
-        private enum ProcessorFactoryType
-        {
-            TSingletonProcessorFactory,
-            TPrototypeProcessorFactory,
         }
 
         internal static void PrintOptionsHelp()
@@ -466,8 +460,41 @@ namespace Test
             Console.WriteLine();
         }
 
+        private static X509Certificate2 GetServerCert()
+        {
+            var serverCertName = "server.p12";
+            var possiblePaths = new List<string>
+            {
+                "../../../keys/",
+                "../../keys/",
+                "../keys/",
+                "keys/",
+            };
+                        
+            string existingPath = null;
+            foreach (var possiblePath in possiblePaths)
+            {
+                var path = Path.GetFullPath(possiblePath + serverCertName);
+                if (File.Exists(path))
+                {
+                    existingPath = path;
+                    break;
+                }
+            }
+                        
+            if (string.IsNullOrEmpty(existingPath))
+            {
+                throw new FileNotFoundException($"Cannot find file: {serverCertName}");
+            }
+                                    
+            var cert = new X509Certificate2(existingPath, "thrift");
+                        
+            return cert;
+        }
+
         public static int Execute(List<string> args)
         {
+            var loggerFactory = new LoggerFactory();//.AddConsole().AddDebug();
             var logger = new LoggerFactory().CreateLogger("Test");
 
             try
@@ -493,16 +520,28 @@ namespace Test
                 {
                     trans = new TNamedPipeServerTransport(param.pipe);
                 }
+//                else if (param.useFramed)
+//                {
+//                    trans = new TServerFramedTransport(param.port);
+//                }
                 else
                 {
                     if (param.useEncryption)
                     {
-                        var certPath = "../../keys/server.p12";
-                        trans = new TTlsServerSocketTransport(param.port, param.useBufferedSockets, new X509Certificate2(certPath, "thrift"), null, null, SslProtocols.Tls);
+                        var cert = GetServerCert();
+                        
+                        if (cert == null || !cert.HasPrivateKey)
+                        {
+                            throw new InvalidOperationException("Certificate doesn't contain private key");
+                        }
+                        
+                        trans = new TTlsServerSocketTransport(param.port, param.useBufferedSockets, param.useFramed, cert, 
+                            (sender, certificate, chain, errors) => true, 
+                            null, SslProtocols.Tls | SslProtocols.Tls11 | SslProtocols.Tls12);
                     }
                     else
                     {
-                        trans = new TServerSocketTransport(param.port, 0, param.useBufferedSockets);
+                        trans = new TServerSocketTransport(param.port, 0, param.useBufferedSockets, param.useFramed);
                     }
                 }
 
@@ -518,15 +557,10 @@ namespace Test
 
                 // Processor
                 var testHandler = new TestHandlerAsync();
-                var testProcessor = new ThriftAsync.Test.ThriftTest.AsyncProcessor(testHandler);
+                var testProcessor = new ThriftTest.AsyncProcessor(testHandler);
                 processorFactory = new SingletonTProcessorFactory(testProcessor);
 
-
-                TTransportFactory transFactory;
-                if (param.useFramed)
-                    throw new NotImplementedException("framed"); // transFactory = new TFramedTransport.Factory();
-                else
-                    transFactory = new TTransportFactory();
+                TTransportFactory transFactory = new TTransportFactory(); 
 
                 TBaseServer serverEngine = new AsyncBaseServer(processorFactory, trans, transFactory, transFactory, proto, proto, logger);
 

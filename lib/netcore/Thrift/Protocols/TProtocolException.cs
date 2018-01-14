@@ -1,4 +1,4 @@
-// Licensed to the Apache Software Foundation(ASF) under one
+﻿// Licensed to the Apache Software Foundation(ASF) under one
 // or more contributor license agreements.See the NOTICE file
 // distributed with this work for additional information
 // regarding copyright ownership.The ASF licenses this file
@@ -15,11 +15,12 @@
 // specific language governing permissions and limitations
 // under the License.
 
+// ReSharper disable InconsistentNaming
 namespace Thrift.Protocols
 {
     public class TProtocolException : TException
     {
-        // do not rename public contants - they used in generated files
+        // do not rename public constants - they used in generated files
         public const int UNKNOWN = 0;
         public const int INVALID_DATA = 1;
         public const int NEGATIVE_SIZE = 2;

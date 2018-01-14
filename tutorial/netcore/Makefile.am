@@ -19,39 +19,11 @@
 
 SUBDIRS = . 
 
-THRIFT = $(top_builddir)/compiler/cpp/thrift
-
-GENDIR = Interfaces/gen-netcore
-
-# Due to a known issue with "dotnet restore" the Thrift.dll dependency cannot be resolved from cmdline.
-# The problem does NOT affect Visual Studio builds, only cmdline. 
-# - For details see https://github.com/dotnet/cli/issues/3199 and related tickets.
-# - Workaround is to temporarily copy the Thrift project into the solution
-COPYCMD = cp  -u -p -r
-	
-
-THRIFTCODE = \
-			Interfaces/Properties/AssemblyInfo.cs \
-			Client/Properties/AssemblyInfo.cs \
-			Client/Program.cs \
-			Server/Properties/AssemblyInfo.cs \
-			Server/Program.cs 
-
-all-local: \
-	Client.exe
-
-Client.exe: $(THRIFTCODE)
-	$(MKDIR_P) $(GENDIR)
-	$(THRIFT)  -gen netcore:wcf   -r  -out $(GENDIR)  $(top_srcdir)/tutorial/tutorial.thrift
-	$(DOTNETCORE) --info
-	$(DOTNETCORE) restore
+all-local:
 	$(DOTNETCORE) build
 
 clean-local:
-	$(RM) Client.exe
-	$(RM) Server.exe
 	$(RM) Interfaces.dll
-	$(RM) -r $(GENDIR)
 	$(RM) -r Client/bin
 	$(RM) -r Client/obj
 	$(RM) -r Server/bin
@@ -60,16 +32,11 @@ clean-local:
 	$(RM) -r Interfaces/obj
 
 EXTRA_DIST = \
-			 $(THRIFTCODE) \
-			 Tutorial.sln \
-			 Interfaces/Interfaces.csproj \
-			 Client/Client.csproj \
-			 Client/ThriftTest.pfx \
-			 Client/Properties/launchSettings.json \
-			 Server/Server.csproj \
-			 Server/ThriftTest.pfx \
-			 Server/Properties/launchSettings.json \
-			 build.cmd \
-			 build.sh \
-			 README.md
+	Client \
+	Interfaces \
+	README.md \
+	Server \
+	Tutorial.sln \
+	build.cmd \
+	build.sh
 			 

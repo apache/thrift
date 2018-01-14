@@ -19,83 +19,83 @@ using System.Threading;
 using System.Threading.Tasks;
 using Thrift.Protocols.Entities;
 
-namespace Thrift.Protocols
+namespace Thrift.Protocols.Utilities
 {
     // ReSharper disable once InconsistentNaming
     public static class TProtocolUtil
     {
-        public static async Task SkipAsync(TProtocol prot, TType type, CancellationToken cancellationToken)
+        public static async Task SkipAsync(TProtocol protocol, TType type, CancellationToken cancellationToken)
         {
             if (cancellationToken.IsCancellationRequested)
             {
                 await Task.FromCanceled(cancellationToken);
             }
 
-            prot.IncrementRecursionDepth();
+            protocol.IncrementRecursionDepth();
             try
             {
                 switch (type)
                 {
                     case TType.Bool:
-                        await prot.ReadBoolAsync(cancellationToken);
+                        await protocol.ReadBoolAsync(cancellationToken);
                         break;
                     case TType.Byte:
-                        await prot.ReadByteAsync(cancellationToken);
+                        await protocol.ReadByteAsync(cancellationToken);
                         break;
                     case TType.I16:
-                        await prot.ReadI16Async(cancellationToken);
+                        await protocol.ReadI16Async(cancellationToken);
                         break;
                     case TType.I32:
-                        await prot.ReadI32Async(cancellationToken);
+                        await protocol.ReadI32Async(cancellationToken);
                         break;
                     case TType.I64:
-                        await prot.ReadI64Async(cancellationToken);
+                        await protocol.ReadI64Async(cancellationToken);
                         break;
                     case TType.Double:
-                        await prot.ReadDoubleAsync(cancellationToken);
+                        await protocol.ReadDoubleAsync(cancellationToken);
                         break;
                     case TType.String:
                         // Don't try to decode the string, just skip it.
-                        await prot.ReadBinaryAsync(cancellationToken);
+                        await protocol.ReadBinaryAsync(cancellationToken);
                         break;
                     case TType.Struct:
-                        await prot.ReadStructBeginAsync(cancellationToken);
+                        await protocol.ReadStructBeginAsync(cancellationToken);
                         while (true)
                         {
-                            var field = await prot.ReadFieldBeginAsync(cancellationToken);
+                            var field = await protocol.ReadFieldBeginAsync(cancellationToken);
                             if (field.Type == TType.Stop)
                             {
                                 break;
                             }
-                            await SkipAsync(prot, field.Type, cancellationToken);
-                            await prot.ReadFieldEndAsync(cancellationToken);
+                            await SkipAsync(protocol, field.Type, cancellationToken);
+                            await protocol.ReadFieldEndAsync(cancellationToken);
                         }
-                        await prot.ReadStructEndAsync(cancellationToken);
+                        await protocol.ReadStructEndAsync(cancellationToken);
                         break;
                     case TType.Map:
-                        var map = await prot.ReadMapBeginAsync(cancellationToken);
+                        var map = await protocol.ReadMapBeginAsync(cancellationToken);
                         for (var i = 0; i < map.Count; i++)
                         {
-                            await SkipAsync(prot, map.KeyType, cancellationToken);
-                            await SkipAsync(prot, map.ValueType, cancellationToken);
+                            await SkipAsync(protocol, map.KeyType, cancellationToken);
+                            await SkipAsync(protocol, map.ValueType, cancellationToken);
                         }
-                        await prot.ReadMapEndAsync(cancellationToken);
+                        await protocol.ReadMapEndAsync(cancellationToken);
                         break;
                     case TType.Set:
-                        var set = await prot.ReadSetBeginAsync(cancellationToken);
+                        var set = await protocol.ReadSetBeginAsync(cancellationToken);
                         for (var i = 0; i < set.Count; i++)
                         {
-                            await SkipAsync(prot, set.ElementType, cancellationToken);
+                            await SkipAsync(protocol, set.ElementType, cancellationToken);
                         }
-                        await prot.ReadSetEndAsync(cancellationToken);
+                        await protocol.ReadSetEndAsync(cancellationToken);
                         break;
                     case TType.List:
-                        var list = await prot.ReadListBeginAsync(cancellationToken);
+                        var list = await protocol.ReadListBeginAsync(cancellationToken);
                         for (var i = 0; i < list.Count; i++)
                         {
-                            await SkipAsync(prot, list.ElementType, cancellationToken);
+                            await SkipAsync(protocol, list.ElementType, cancellationToken);
                         }
-                        await prot.ReadListEndAsync(cancellationToken);
+                        await protocol.ReadListEndAsync(cancellationToken);
                         break;
                     default:
                         throw new TProtocolException(TProtocolException.INVALID_DATA, "Unknown data type " + type.ToString("d"));
@@ -103,7 +103,7 @@ namespace Thrift.Protocols
             }
             finally
             {
-                prot.DecrementRecursionDepth();
+                protocol.DecrementRecursionDepth();
             }
         }
     }

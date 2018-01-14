@@ -19,41 +19,23 @@
 
 SUBDIRS = . 
 
-THRIFT = $(top_builddir)/compiler/cpp/thrift
-
-GENDIR = ThriftTest/gen-netcore
-
-THRIFTCODE = \
-			ThriftTest/TestClient.cs \
-			ThriftTest/TestServer.cs \
-			ThriftTest/Properties/AssemblyInfo.cs \
-			ThriftTest/Program.cs 
-
-all-local: \
-	ThriftTest/stage/ThriftTest.dll
-
-ThriftTest/stage/ThriftTest.dll: $(THRIFTCODE)
-	$(MKDIR_P) $(GENDIR)
-	$(THRIFT)  -gen netcore:wcf   -r  -out $(GENDIR)  $(top_srcdir)/test/ThriftTest.thrift
-	$(DOTNETCORE) --info
-	$(DOTNETCORE) restore
+all-local:
 	$(DOTNETCORE) build
 
-precross: \
-	ThriftTest/stage/ThriftTest.dll
+precross:
+	$(DOTNETCORE) build
 
 clean-local:
-	$(RM) ThriftTest.exe
-	$(RM) -r $(GENDIR)
-	$(RM) -r ThriftTest/bin
-	$(RM) -r ThriftTest/obj
+	$(RM) -r Client/bin
+	$(RM) -r Server/bin
+	$(RM) -r Client/obj
+	$(RM) -r Server/obj
+	$(RM) -r ThriftTest/ThriftTest
 
 EXTRA_DIST = \
-			 $(THRIFTCODE) \
-			 ThriftTest.sln \
-			 ThriftTest/ThriftTest.csproj \
-			 ThriftTest/Properties/launchSettings.json \
-			 build.cmd \
-			 build.sh \
-			 README.md
-			 
+	Client \
+	README.md \
+	Server \
+	ThriftTest.sln \
+	build.cmd \
+	build.sh
