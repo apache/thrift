@@ -134,25 +134,24 @@ Last updated: October 1, 2017
 
 ## Compiler/Language Versions per Dockerfile ##
 
-Last updated: October 1, 2017
-
 | Language  | ubuntu-trusty | ubuntu-xenial | ubuntu-artful | Notes |
 | :-------- | :------------ | :------------ | :------------ | :---- |
+| as of     | Oct 01, 2017  | Jan 11, 2018  | Oct 01, 2017  |       |
 | as3       |               |               |               | Not in CI |
 | C++ gcc   | 4.8.4         | 5.4.0         | 7.2.0         |       |
 | C++ clang | 3.4           | 3.8           | 4.0           |       |
-| C# (mono) | 3.2.8.0       | 4.2.1         | 4.6.2.7       |       |
+| C# (mono) | 3.2.8.0       | 4.2.1.0       | 4.6.2.7       |       |
 | c_glib    | 2.40.2        | 2.48.2        | 2.54.0        |       |
 | cocoa     |               |               |               | Not in CI |
 | d         | 2.070.2       | 2.073.2       | 2.076.0       |       |
-| dart      | 1.20.1        | 1.24.2        | 1.24.2        |       |
+| dart      | 1.20.1        | 1.22.1        | 1.24.2        |       |
 | delphi    |               |               |               | Not in CI |
 | dotnet    |               | 2.0.3         | 2.0.3         |       |
 | erlang    | R16B03        | 18.3          | 20.0.4        |       |
 | go        | 1.2.1         | 1.6.2         | 1.8.3         |       |
 | haskell   | 7.6.3         | 7.10.3        | 8.0.2         |       |
 | haxe      |               | 3.2.1         | 3.4.2         | disabled in trusty builds - cores on install v3.0.0, disabled in artful builds - see THRIFT-4352 |
-| java      | 1.7.0_151     | 1.8.0_131     | 1.8.0_151     |       |
+| java      | 1.7.0_151     | 1.8.0_151     | 1.8.0_151     |       |
 | js        |               |               |               | Unsure how to look for version info? |
 | lua       | 5.1.5         | 5.2.4         | 5.2.4         | Lua 5.3: see THRIFT-4386 |
 | nodejs    |               | 4.2.6         | 8.9.1         | trusty has node.js 0.10.0 which is too old |
@@ -162,7 +161,8 @@ Last updated: October 1, 2017
 | python    | 2.7.6         | 2.7.12        | 2.7.14        |       |
 | python3   | 3.4.3         | 3.5.2         | 3.6.3         |       |
 | ruby      | 1.9.3p484     | 2.3.1p112     | 2.3.3p222     |       |
-| rust      | 1.15.1        | 1.15.1        | 1.18.0        |       |
+| rust      | 1.15.1        | 1.17.0        | 1.18.0        |       |
 | smalltalk |               |               |               | Not in CI |
 | swift     |               |               |               | Not in CI |
+
 

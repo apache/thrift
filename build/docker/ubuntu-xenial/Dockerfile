@@ -34,6 +34,7 @@ RUN apt-get update && \
       apt-transport-https \
       apt-utils \
       curl \
+      software-properties-common \
       wget
 
 # csharp (mono)
@@ -41,7 +42,8 @@ RUN apt-get update && \
 #     apt-key adv --keyserver keyserver.ubuntu.com --recv-keys A6A19B38D3D831EF
 
 # D
-RUN wget http://master.dl.sourceforge.net/project/d-apt/files/d-apt.list -O /etc/apt/sources.list.d/d-apt.list && \
+RUN apt-key adv --keyserver keyserver.ubuntu.com --recv-keys EBCF975E5BA24D5E && \
+    wget http://master.dl.sourceforge.net/project/d-apt/files/d-apt.list -O /etc/apt/sources.list.d/d-apt.list && \
     wget -qO - https://dlang.org/d-keyring.gpg | apt-key add -
 ENV D_VERSION 2.073.2-0
 
@@ -49,7 +51,7 @@ ENV D_VERSION 2.073.2-0
 RUN curl https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - && \
     curl https://storage.googleapis.com/download.dartlang.org/linux/debian/dart_stable.list > \
       /etc/apt/sources.list.d/dart_stable.list
-ENV DART_VERSION 1.24.2-1
+ENV DART_VERSION 1.22.1-1
 
 # dotnet (core)
 RUN curl https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor > /etc/apt/trusted.gpg.d/microsoft.gpg && \
@@ -152,8 +154,8 @@ RUN apt-get install -y --no-install-recommends \
       haxe \
       neko \
       neko-dev \
-      libneko0
-RUN haxelib setup --always /usr/share/haxe/lib && \
+      libneko0 && \
+    haxelib setup --always /usr/share/haxe/lib && \
     haxelib install --quiet --always hxcpp 3.4.64
 # note: hxcpp 3.4.185 (latest) no longer ships static libraries, and caused a build failure
 
