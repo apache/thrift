@@ -22,10 +22,10 @@
         "phpunit/phpunit": "~4.8.36"
     },
     "autoload": {
-        "psr-4": {"Thrift\\": "lib/php/lib/Thrift/"}
+        "psr-4": {"Thrift\\": "lib/php/lib/"}
     },
     "autoload-dev": {
-        "psr-4": {"Test\\Thrift\\": "lib/php/test/Test/Thrift/"}
+        "psr-4": {"Test\\Thrift\\": "lib/php/test/"}
     },
     "minimum-stability": "dev",
     "extra": {

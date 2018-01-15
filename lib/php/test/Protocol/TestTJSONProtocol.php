@@ -30,10 +30,10 @@ use Thrift\Protocol\TJSONProtocol;
 
 define( 'BUFSIZ', 8192 ); //big enough to read biggest serialized Fixture arg.
 
-require_once __DIR__.'/../../../../../../vendor/autoload.php';
+require_once __DIR__.'/../../../../vendor/autoload.php';
 
 $loader = new ThriftClassLoader();
-$loader->registerDefinition('ThriftTest', __DIR__ . '/../../../packages');
+$loader->registerDefinition('ThriftTest', __DIR__ . '/../packages');
 $loader->register();
 
 /***
