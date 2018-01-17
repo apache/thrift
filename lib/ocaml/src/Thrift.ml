@@ -299,6 +299,9 @@ struct
       | INVALID_TRANSFORM
       | INVALID_PROTOCOL
       | UNSUPPORTED_CLIENT_TYPE
+      | LOADSHEDDING
+      | TIMEOUT
+      | INJECTED_FAILURE
 
   let typ_of_i = function
       0l -> UNKNOWN
@@ -312,6 +315,9 @@ struct
     | 8l -> INVALID_TRANSFORM
     | 9l -> INVALID_PROTOCOL
     | 10l -> UNSUPPORTED_CLIENT_TYPE
+    | 11l -> LOADSHEDDING
+    | 12l -> TIMEOUT
+    | 13l -> INJECTED_FAILURE
     | _ -> raise Thrift_error;;
   let typ_to_i = function
     | UNKNOWN -> 0l
@@ -325,6 +331,9 @@ struct
     | INVALID_TRANSFORM -> 8l
     | INVALID_PROTOCOL -> 9l
     | UNSUPPORTED_CLIENT_TYPE -> 10l
+    | LOADSHEDDING -> 11l
+    | TIMEOUT -> 12l
+    | INJECTED_FAILURE -> 13l
 
   class t =
   object (self)

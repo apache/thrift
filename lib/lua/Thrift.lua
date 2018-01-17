@@ -161,6 +161,9 @@ TApplicationException = TException:new{
   INVALID_TRANSFORM       = 8,
   INVALID_PROTOCOL        = 9,
   UNSUPPORTED_CLIENT_TYPE = 10,
+  LOADSHEDDING            = 11,
+  TIMEOUT                 = 12,
+  INJECTED_FAILURE        = 13,
   errorCode               = 0,
   __type = 'TApplicationException'
 }
@@ -186,6 +189,12 @@ function TApplicationException:__errorCodeToString()
     return 'Invalid protocol'
   elseif self.errorCode == self.UNSUPPORTED_CLIENT_TYPE then
     return 'Unsupported client type'
+  elseif self.errorCode == self.LOADSHEDDING then
+    return 'Loadshedding'
+  elseif self.errorCode == self.TIMEOUT then
+    return 'Timeout'
+  elseif self.errorCode == self.INJECTED_FAILURE then
+    return 'Injected failure'
   else
     return 'Default (unknown)'
   end

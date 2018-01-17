@@ -47,6 +47,9 @@ class TApplicationException extends TException {
     public static inline var INVALID_TRANSFORM : Int = 8;
     public static inline var INVALID_PROTOCOL : Int = 9;
     public static inline var UNSUPPORTED_CLIENT_TYPE : Int = 10;
+    public static inline var LOADSHEDDING : Int = 11;
+    public static inline var TIMEOUT : Int = 12;
+    public static inline var INJECTED_FAILURE : Int = 13;
 
     public function new(type : Int = UNKNOWN, message : String = "") {
       super(message, type);

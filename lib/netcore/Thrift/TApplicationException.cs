@@ -38,7 +38,10 @@ namespace Thrift
             ProtocolError,
             InvalidTransform,
             InvalidProtocol,
-            UnsupportedClientType
+            UnsupportedClientType,
+            Loadshedding,
+            Timeout,
+            InjectedFailure
         }
 
         private const int MessageTypeFieldId = 1;

@@ -45,7 +45,10 @@ type
         ProtocolError,
         InvalidTransform,
         InvalidProtocol,
-        UnsupportedClientType
+        UnsupportedClientType,
+        Loadshedding,
+        Timeout,
+        InjectedFailure
       );
 {$SCOPEDENUMS OFF}
   private

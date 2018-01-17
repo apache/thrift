@@ -40,6 +40,9 @@ module Thrift
     INVALID_TRANSFORM = 8
     INVALID_PROTOCOL = 9
     UNSUPPORTED_CLIENT_TYPE = 10
+    LOADSHEDDING = 11
+    TIMEOUT = 12
+    INJECTED_FAILURE = 13
 
     attr_reader :type
 

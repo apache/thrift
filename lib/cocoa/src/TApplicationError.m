@@ -85,6 +85,18 @@ NSString *TApplicationErrorMethodKey = @"method";
     name = @"Unsupported Client Type";
     break;
 
+  case TApplicationErrorLoadshedding:
+    name = @"Loadshedding";
+    break;
+
+  case TApplicationErrorTimeout:
+    name = @"Timeout";
+    break;
+
+  case TApplicationErrorInjectedFailure:
+    name = @"Injected Failure";
+    break;
+
   default:
     name = @"Unknown";
     break;

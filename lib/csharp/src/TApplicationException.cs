@@ -135,7 +135,10 @@ namespace Thrift
             ProtocolError,
             InvalidTransform,
             InvalidProtocol,
-            UnsupportedClientType
+            UnsupportedClientType,
+            Loadshedding,
+            Timeout,
+            InjectedFailure
         }
     }
 }

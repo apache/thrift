@@ -127,6 +127,9 @@ declare module Thrift {
    * @property {number}  INVALID_TRANSFORM       - Unused.
    * @property {number}  INVALID_PROTOCOL        - The protocol (or version) is not supported.
    * @property {number}  UNSUPPORTED_CLIENT_TYPE - Unused.
+   * @property {number}  LOADSHEDDING            - Unused.
+   * @property {number}  TIMEOUT                 - Unused.
+   * @property {number}  INJECTED_FAILURE        - Unused.
    */
   interface TApplicationExceptionType {
     'UNKNOWN': number;
@@ -140,6 +143,9 @@ declare module Thrift {
     'INVALID_TRANSFORM': number;
     'INVALID_PROTOCOL': number;
     'UNSUPPORTED_CLIENT_TYPE': number;
+    'LOADSHEDDING': number;
+    'TIMEOUT': number;
+    'INJECTED_FAILURE': number;
   }
   var TApplicationExceptionType: TApplicationExceptionType;
 

@@ -106,6 +106,9 @@ class TApplicationException(TException):
     INVALID_TRANSFORM = 8
     INVALID_PROTOCOL = 9
     UNSUPPORTED_CLIENT_TYPE = 10
+    LOADSHEDDING = 11
+    TIMEOUT = 12
+    INJECTED_FAILURE = 13
 
     def __init__(self, type=UNKNOWN, message=None):
         TException.__init__(self, message)
@@ -134,6 +137,12 @@ class TApplicationException(TException):
             return 'Invalid protocol'
         elif self.type == self.UNSUPPORTED_CLIENT_TYPE:
             return 'Unsupported client type'
+        elif self.type == self.LOADSHEDDING:
+            return 'Loadshedding'
+        elif self.type == self.TIMEOUT:
+            return 'Timeout'
+        elif self.type == self.INJECTED_FAILURE:
+            return 'Injected failure'
         else:
             return 'Default (unknown) TApplicationException'
 

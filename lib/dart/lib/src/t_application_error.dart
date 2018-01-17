@@ -29,6 +29,9 @@ class TApplicationErrorType {
   static const int INVALID_TRANSFORM = 8;
   static const int INVALID_PROTOCOL = 9;
   static const int UNSUPPORTED_CLIENT_TYPE = 10;
+  static const int LOADSHEDDING = 11;
+  static const int TIMEOUT = 12;
+  static const int INJECTED_FAILURE = 13;
 }
 
 class TApplicationError extends TError {
