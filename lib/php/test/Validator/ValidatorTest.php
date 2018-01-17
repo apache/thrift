@@ -20,7 +20,7 @@
 
 namespace Test\Thrift;
 
-require_once __DIR__ . '/../../../../vendor/autoload.php';
+require __DIR__ . '/../../../../vendor/autoload.php';
 
 use Thrift\ClassLoader\ThriftClassLoader;
 
@@ -34,9 +34,8 @@ class ValidatorTest extends BaseValidatorTest
 {
     public function setUp()
     {
-        $loader = new ThriftClassLoader();
-        $loader->registerDefinition('ThriftTest', __DIR__ . '/../packages/phpv');
-        $loader->registerDefinition('TestValidators', __DIR__ . '/../packages/phpv');
-        $loader->register();
+        /** @var \Composer\Autoload\ClassLoader $loader */
+        $loader = require __DIR__ . '/../../../../vendor/autoload.php';
+        $loader->addPsr4('', __DIR__ . '/../packages/phpv');
     }
 }
