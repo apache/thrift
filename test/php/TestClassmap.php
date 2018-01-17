@@ -18,6 +18,6 @@
  */
 
 <?php
-$GEN_DIR = 'gen-php-psr4';
+$GEN_DIR = 'gen-php-classmap';
 include_once('TestClient.php');
 ?>
