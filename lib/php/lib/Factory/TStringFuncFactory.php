@@ -53,13 +53,12 @@ class TStringFuncFactory
          */
         if (ini_get('mbstring.func_overload') & 2) {
             self::$_instance = new Mbstring();
-        }
-        /**
-         * mbstring is not installed or does not have function overloading
-         * of the str* functions enabled so use PHP core str* functions for
-         * byte counting.
-         */
-        else {
+        } else {
+            /**
+             * mbstring is not installed or does not have function overloading
+             * of the str* functions enabled so use PHP core str* functions for
+             * byte counting.
+             */
             self::$_instance = new Core();
         }
     }

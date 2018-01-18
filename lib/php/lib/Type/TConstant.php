@@ -30,7 +30,9 @@ abstract class TConstant
     /**
      * Don't instanciate this class
      */
-    protected function __construct() {}
+    protected function __construct()
+    {
+    }
 
     /**
      * Get a constant value
@@ -41,8 +43,8 @@ abstract class TConstant
     {
         if (is_null(static::$$constant)) {
             static::$$constant = call_user_func(
-                    sprintf('static::init_%s', $constant)
-                );
+                sprintf('static::init_%s', $constant)
+            );
         }
 
         return static::$$constant;

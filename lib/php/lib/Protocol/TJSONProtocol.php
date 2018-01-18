@@ -217,9 +217,9 @@ class TJSONProtocol extends TProtocol
 
     private function hasJSONUnescapedUnicode()
     {
-        if (PHP_MAJOR_VERSION > 5
-            || (PHP_MAJOR_VERSION == 5 && PHP_MINOR_VERSION >= 4))
+        if (PHP_MAJOR_VERSION > 5 || (PHP_MAJOR_VERSION == 5 && PHP_MINOR_VERSION >= 4)) {
             return true;
+        }
 
         return false;
     }
@@ -237,18 +237,24 @@ class TJSONProtocol extends TProtocol
          * High surrogate: 0xD800 - 0xDBFF
          * Low surrogate: 0xDC00 - 0xDFFF
          */
-        $json = preg_replace_callback('/\\\\u(d[89ab][0-9a-f]{2})\\\\u(d[cdef][0-9a-f]{2})/i',
+        $json = preg_replace_callback(
+            '/\\\\u(d[89ab][0-9a-f]{2})\\\\u(d[cdef][0-9a-f]{2})/i',
             function ($matches) {
-                return mb_convert_encoding(pack('H*', $matches[1].$matches[2]), 'UTF-8', 'UTF-16BE');
-            }, $json);
+                return mb_convert_encoding(pack('H*', $matches[1] . $matches[2]), 'UTF-8', 'UTF-16BE');
+            },
+            $json
+        );
 
         /*
          * Unescaped characters within the Basic Multilingual Plane
          */
-        $json = preg_replace_callback('/\\\\u([0-9a-f]{4})/i',
+        $json = preg_replace_callback(
+            '/\\\\u([0-9a-f]{4})/i',
             function ($matches) {
                 return mb_convert_encoding(pack('H*', $matches[1]), 'UTF-8', 'UTF-16BE');
-            }, $json);
+            },
+            $json
+        );
 
         return $json;
     }
@@ -308,54 +314,54 @@ class TJSONProtocol extends TProtocol
 
     private function writeJSONObjectStart()
     {
-      $this->context_->write();
-      $this->trans_->write(self::LBRACE);
-      $this->pushContext(new PairContext($this));
+        $this->context_->write();
+        $this->trans_->write(self::LBRACE);
+        $this->pushContext(new PairContext($this));
     }
 
     private function writeJSONObjectEnd()
     {
-      $this->popContext();
-      $this->trans_->write(self::RBRACE);
+        $this->popContext();
+        $this->trans_->write(self::RBRACE);
     }
 
     private function writeJSONArrayStart()
     {
-      $this->context_->write();
-      $this->trans_->write(self::LBRACKET);
-      $this->pushContext(new ListContext($this));
+        $this->context_->write();
+        $this->trans_->write(self::LBRACKET);
+        $this->pushContext(new ListContext($this));
     }
 
     private function writeJSONArrayEnd()
     {
-      $this->popContext();
-      $this->trans_->write(self::RBRACKET);
+        $this->popContext();
+        $this->trans_->write(self::RBRACKET);
     }
 
     private function readJSONString($skipContext)
     {
-      if (!$skipContext) {
-        $this->context_->read();
-      }
-
-      $jsonString = '';
-      $lastChar = null;
-      while (true) {
-        $ch = $this->reader_->read();
-        $jsonString .= $ch;
-        if ($ch == self::QUOTE &&
-          $lastChar !== NULL &&
-            $lastChar !== self::ESCSEQ) {
-          break;
+        if (!$skipContext) {
+            $this->context_->read();
         }
-        if ($ch == self::ESCSEQ && $lastChar == self::ESCSEQ) {
-          $lastChar = self::DOUBLEESC;
-        } else {
-          $lastChar = $ch;
-        }
-      }
 
-      return json_decode($jsonString);
+        $jsonString = '';
+        $lastChar = null;
+        while (true) {
+            $ch = $this->reader_->read();
+            $jsonString .= $ch;
+            if ($ch == self::QUOTE &&
+                $lastChar !== null &&
+                $lastChar !== self::ESCSEQ) {
+                break;
+            }
+            if ($ch == self::ESCSEQ && $lastChar == self::ESCSEQ) {
+                $lastChar = self::DOUBLEESC;
+            } else {
+                $lastChar = $ch;
+            }
+        }
+
+        return json_decode($jsonString);
     }
 
     private function isJSONNumeric($b)
@@ -376,8 +382,8 @@ class TJSONProtocol extends TProtocol
             case '9':
             case 'E':
             case 'e':
-              return true;
-            }
+                return true;
+        }
 
         return false;
     }
@@ -459,8 +465,10 @@ class TJSONProtocol extends TProtocol
             } elseif ($arr == "Infinity") {
                 return INF;
             } elseif (!$this->context_->escapeNum()) {
-                throw new TProtocolException("Numeric data unexpectedly quoted " . $arr,
-                                              TProtocolException::INVALID_DATA);
+                throw new TProtocolException(
+                    "Numeric data unexpectedly quoted " . $arr,
+                    TProtocolException::INVALID_DATA
+                );
             }
 
             return floatval($arr);
@@ -514,9 +522,9 @@ class TJSONProtocol extends TProtocol
     /**
      * Writes the message header
      *
-     * @param string $name  Function name
-     * @param int    $type  message type TMessageType::CALL or TMessageType::REPLY
-     * @param int    $seqid The sequence id of this message
+     * @param string $name Function name
+     * @param int $type message type TMessageType::CALL or TMessageType::REPLY
+     * @param int $seqid The sequence id of this message
      */
     public function writeMessageBegin($name, $type, $seqid)
     {
@@ -538,7 +546,7 @@ class TJSONProtocol extends TProtocol
     /**
      * Writes a struct header.
      *
-     * @param  string     $name Struct name
+     * @param  string $name Struct name
      * @throws TException on write error
      * @return int        How many bytes written
      */
@@ -652,7 +660,7 @@ class TJSONProtocol extends TProtocol
      * Reads the message header
      *
      * @param string $name Function name
-     * @param int    $type message type TMessageType::CALL or TMessageType::REPLY
+     * @param int $type message type TMessageType::CALL or TMessageType::REPLY
      * @parem int $seqid The sequence id of this message
      */
     public function readMessageBegin(&$name, &$type, &$seqid)
