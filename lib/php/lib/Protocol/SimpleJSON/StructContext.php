@@ -43,11 +43,10 @@ class StructContext extends Context
         } else {
             $this->p_->getTransport()->write(
                 $this->colon_ ?
-                TSimpleJSONProtocol::COLON :
-                TSimpleJSONProtocol::COMMA
+                    TSimpleJSONProtocol::COLON :
+                    TSimpleJSONProtocol::COMMA
             );
             $this->colon_ = !$this->colon_;
         }
     }
 }
-

@@ -21,6 +21,7 @@
  */
 
 namespace Thrift\Protocol;
+
 use Thrift\Exception\TException;
 
 /**

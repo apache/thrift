@@ -22,8 +22,6 @@
 
 namespace Thrift\Protocol\SimpleJSON;
 
-use Thrift\Protocol\TSimpleJSONProtocol;
-
 class MapContext extends StructContext
 {
     protected $isKey = true;
@@ -47,5 +45,3 @@ class MapContext extends StructContext
         return $this->isKey;
     }
 }
-
-

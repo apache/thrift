@@ -1,0 +1,18 @@
+<?xml version="1.0"?>
+<ruleset name="PHP_CodeSniffer">
+    <description>The coding standard for PHP_CodeSniffer itself.</description>
+
+    <file>lib/php/lib</file>
+
+    <exclude-pattern>*/Standards/*/Tests/*\.(inc|css|js)</exclude-pattern>
+
+    <arg name="basepath" value="."/>
+    <arg name="colors" />
+    <arg name="parallel" value="4" />
+
+    <rule ref="PSR2">
+        <exclude name="PSR2.Methods.MethodDeclaration.Underscore"/>
+        <exclude name="PSR2.Classes.PropertyDeclaration.Underscore"/>
+    </rule>
+
+</ruleset>
