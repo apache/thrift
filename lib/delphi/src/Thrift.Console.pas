@@ -99,10 +99,9 @@ begin
   begin
     idx := FMemo.Count - 1;
     if idx < 0 then
-    begin
-      FMemo.Add( S );
-    end;
-    FMemo[idx] := FMemo[idx] + S;
+      FMemo.Add( S )
+    else
+      FMemo[idx] := FMemo[idx] + S;
   end;
   FLineBreak := bWriteLine;
 end;
