@@ -174,7 +174,7 @@ class Connection(object):
             self._wbuf = b''
             self.len = 0
         else:
-            self._wbuf = self.message[sent:]
+            self._wbuf = self._wbuf[sent:]
 
     @locked
     def ready(self, all_ok, message):
