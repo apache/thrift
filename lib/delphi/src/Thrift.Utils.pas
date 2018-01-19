@@ -206,8 +206,12 @@ end;
 
 class function CharUtils.IsHighSurrogate( const c : Char) : Boolean;
 begin
-  {$IF CompilerVersion < 23.0}
-  result := Character.IsHighSurrogate( c);
+  {$IF CompilerVersion < 25.0}
+    {$IFDEF OLD_UNIT_NAMES}
+    result := Character.IsHighSurrogate(c);
+    {$ELSE}
+    result := System.Character.IsHighSurrogate(c);
+    {$ENDIF}
   {$ELSE}
   result := c.IsHighSurrogate();
   {$IFEND}
@@ -216,10 +220,14 @@ end;
 
 class function CharUtils.IsLowSurrogate( const c : Char) : Boolean;
 begin
-  {$IF CompilerVersion < 23.0}
-  result := Character.IsLowSurrogate( c);
+  {$IF CompilerVersion < 25.0}
+    {$IFDEF OLD_UNIT_NAMES}
+    result := Character.IsLowSurrogate(c);
+    {$ELSE}
+    result := System.Character.IsLowSurrogate(c);
+    {$ENDIF}
   {$ELSE}
-  result := c.IsLowSurrogate;
+  result := c.IsLowSurrogate();
   {$IFEND}
 end;
 
