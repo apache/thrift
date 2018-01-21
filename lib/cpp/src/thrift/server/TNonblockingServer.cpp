@@ -677,9 +677,6 @@ void TNonblockingServer::TConnection::transition() {
       appState_ = APP_SEND_RESULT;
       setWrite();
 
-      // Try to work the socket immediately
-      // workSocket();
-
       return;
     }
 
@@ -718,9 +715,6 @@ void TNonblockingServer::TConnection::transition() {
     // Register read event
     setRead();
 
-    // Try to work the socket right away
-    // workSocket();
-
     return;
 
   case APP_READ_FRAME_SIZE:
@@ -752,9 +746,6 @@ void TNonblockingServer::TConnection::transition() {
     // Move into read request state
     socketState_ = SOCKET_RECV;
     appState_ = APP_READ_REQUEST;
-
-    // Work the socket right away
-    workSocket();
 
     return;
 
@@ -1063,7 +1054,7 @@ void TNonblockingServer::expireClose(stdcxx::shared_ptr<Runnable> task) {
   connection->forceClose();
 }
 
-void TNonblockingServer::stop() { 
+void TNonblockingServer::stop() {
   // Breaks the event loop in all threads so that they end ASAP.
   for (uint32_t i = 0; i < ioThreads_.size(); ++i) {
     ioThreads_[i]->stop();
