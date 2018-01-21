@@ -249,6 +249,17 @@ TSSLSocket::~TSSLSocket() {
   close();
 }
 
+bool TSSLSocket::hasPendingDataToRead() {
+  if (!isOpen()) {
+    return false;
+  }
+  initializeHandshake();
+  if (!checkHandshake())
+    throw TSSLException("TSSLSocket::hasPendingDataToRead: Handshake is not completed");
+  // data may be available in SSL buffers (note: SSL_pending does not have a failure mode)
+  return SSL_pending(ssl_) > 0 || TSocket::hasPendingDataToRead();
+}
+
 void TSSLSocket::init() {
   handshakeCompleted_ = false;
   readRetryCount_ = 0;

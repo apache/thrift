@@ -472,6 +472,18 @@ void TNonblockingServer::TConnection::workSocket() {
     }
     // size known; now get the rest of the frame
     transition();
+
+    // If the socket has more data than the frame header, continue to work on it. This is not strictly necessary for
+    // regular sockets, because if there is more data, libevent will fire the event handler registered for read
+    // readiness, which will in turn call workSocket(). However, some socket types (such as TSSLSocket) may have the
+    // data sitting in their internal buffers and from libevent's perspective, there is no further data available. In
+    // that case, not having this workSocket() call here would result in a hang as we will never get to work the socket,
+    // despite having more data.
+    if (tSocket_->hasPendingDataToRead())
+    {
+        workSocket();
+    }
+
     return;
 
   case SOCKET_RECV:
@@ -677,9 +689,6 @@ void TNonblockingServer::TConnection::transition() {
       appState_ = APP_SEND_RESULT;
       setWrite();
 
-      // Try to work the socket immediately
-      // workSocket();
-
       return;
     }
 
@@ -718,9 +727,6 @@ void TNonblockingServer::TConnection::transition() {
     // Register read event
     setRead();
 
-    // Try to work the socket right away
-    // workSocket();
-
     return;
 
   case APP_READ_FRAME_SIZE:
@@ -752,9 +758,6 @@ void TNonblockingServer::TConnection::transition() {
     // Move into read request state
     socketState_ = SOCKET_RECV;
     appState_ = APP_READ_REQUEST;
-
-    // Work the socket right away
-    workSocket();
 
     return;
 
@@ -1063,7 +1066,7 @@ void TNonblockingServer::expireClose(stdcxx::shared_ptr<Runnable> task) {
   connection->forceClose();
 }
 
-void TNonblockingServer::stop() { 
+void TNonblockingServer::stop() {
   // Breaks the event loop in all threads so that they end ASAP.
   for (uint32_t i = 0; i < ioThreads_.size(); ++i) {
     ioThreads_[i]->stop();
