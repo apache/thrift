@@ -21,6 +21,9 @@
 
 #include <cstring>
 #include <sstream>
+#ifdef HAVE_SYS_IOCTL_H
+#include <sys/ioctl.h>
+#endif
 #ifdef HAVE_SYS_SOCKET_H
 #include <sys/socket.h>
 #endif
@@ -172,24 +175,19 @@ bool TSocket::hasPendingDataToRead() {
     return false;
   }
 
-  uint8_t buf;
   int32_t retries = 0;
-
+  int numBytesAvailable;
 try_again:
-  // Peek from the socket without waiting
-  int r = static_cast<int>(recv(socket_, cast_sockopt(&buf), 1, MSG_PEEK | MSG_DONTWAIT));
+  int r = THRIFT_IOCTL_SOCKET(socket_, FIONREAD, &numBytesAvailable);
   if (r == -1) {
     int errno_copy = THRIFT_GET_SOCKET_ERROR;
-    if (errno_copy == THRIFT_EAGAIN) {
-      return false;
-    }
     if (errno_copy == THRIFT_EINTR && (retries++ < maxRecvRetries_)) {
       goto try_again;
     }
-    GlobalOutput.perror("TSocket::hasPendingDataToRead() recv() " + getSocketInfo(), errno_copy);
+    GlobalOutput.perror("TSocket::hasPendingDataToRead() THRIFT_IOCTL_SOCKET() " + getSocketInfo(), errno_copy);
     throw TTransportException(TTransportException::UNKNOWN, "Unknown", errno_copy);
   }
-  return r > 0;
+  return numBytesAvailable > 0;
 }
 
 bool TSocket::isOpen() {
