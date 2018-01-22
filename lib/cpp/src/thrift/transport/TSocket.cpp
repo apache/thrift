@@ -167,6 +167,31 @@ TSocket::~TSocket() {
   close();
 }
 
+bool TSocket::hasPendingDataToRead() {
+  if (!isOpen()) {
+    return false;
+  }
+
+  uint8_t buf;
+  int32_t retries = 0;
+
+try_again:
+  // Peek from the socket without waiting
+  int r = static_cast<int>(recv(socket_, cast_sockopt(&buf), 1, MSG_PEEK | MSG_DONTWAIT));
+  if (r == -1) {
+    int errno_copy = THRIFT_GET_SOCKET_ERROR;
+    if (errno_copy == THRIFT_EAGAIN) {
+      return false;
+    }
+    if (errno_copy == THRIFT_EINTR && (retries++ < maxRecvRetries_)) {
+      goto try_again;
+    }
+    GlobalOutput.perror("TSocket::hasPendingDataToRead() recv() " + getSocketInfo(), errno_copy);
+    throw TTransportException(TTransportException::UNKNOWN, "Unknown", errno_copy);
+  }
+  return r > 0;
+}
+
 bool TSocket::isOpen() {
   return (socket_ != THRIFT_INVALID_SOCKET);
 }

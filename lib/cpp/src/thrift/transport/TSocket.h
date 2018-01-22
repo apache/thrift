@@ -101,6 +101,17 @@ public:
   virtual void close();
 
   /**
+   * Determines whether there is pending data to read or not.
+   *
+   * This call does not block.
+   * \throws TTransportException of types:
+   *           NOT_OPEN means the socket has been closed
+   *           UNKNOWN means something unexpected happened
+   * \returns true of there is pending data to read, false otherwise
+   */
+  virtual bool hasPendingDataToRead();
+
+  /**
    * Reads from the underlying socket.
    * \returns the number of bytes read or 0 indicates EOF
    * \throws TTransportException of types:
