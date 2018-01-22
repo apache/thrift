@@ -473,7 +473,7 @@ void TNonblockingServer::TConnection::workSocket() {
     // size known; now get the rest of the frame
     transition();
 
-    // If the socket has more than the frame size, continue to work on it. This is not strictly necessary for regular
+    // If the socket has more than the frame header, continue to work on it. This is not strictly necessary for regular
     // sockets, because if there is more data, libevent will fire the event handler, which will call workSocket().
     // However, some socket types (such as TSSLSocket) may have the data sitting in their internal buffers and from
     // libevent's perspective, there is no further data available. In that case, not having this workSocket() call here
