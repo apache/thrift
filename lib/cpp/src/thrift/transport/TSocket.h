@@ -107,7 +107,7 @@ public:
    * \throws TTransportException of types:
    *           NOT_OPEN means the socket has been closed
    *           UNKNOWN means something unexpected happened
-   * \returns true of there is pending data to read, false otherwise
+   * \returns true if there is pending data to read, false otherwise
    */
   virtual bool hasPendingDataToRead();
 
