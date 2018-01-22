@@ -176,7 +176,7 @@ bool TSocket::hasPendingDataToRead() {
   }
 
   int32_t retries = 0;
-  int numBytesAvailable;
+  unsigned long numBytesAvailable;
 try_again:
   int r = THRIFT_IOCTL_SOCKET(socket_, FIONREAD, &numBytesAvailable);
   if (r == -1) {
