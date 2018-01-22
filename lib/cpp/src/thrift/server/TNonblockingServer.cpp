@@ -747,6 +747,12 @@ void TNonblockingServer::TConnection::transition() {
     socketState_ = SOCKET_RECV;
     appState_ = APP_READ_REQUEST;
 
+    if (tSocket_->peek())
+    {
+        // Work the socket right away as we have more than the frame size
+        workSocket();
+    }
+
     return;
 
   case APP_CLOSE_CONNECTION:
