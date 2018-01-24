@@ -101,21 +101,22 @@ void t_generator::generate_docstring_comment(ostream& out,
                                              const string& line_prefix,
                                              const string& contents,
                                              const string& comment_end) {
-  if (comment_start != "")
+  if (!comment_start.empty())
     indent(out) << comment_start;
   stringstream docs(contents, ios_base::in);
   while (!(docs.eof() || docs.fail())) {
     char line[1024];
     docs.getline(line, 1024);
 
-    // Just prnt a newline when the line & prefix are empty.
-    if (strlen(line) == 0 && line_prefix == "" && !docs.eof()) {
-      out << std::endl;
-    } else if (strlen(line) > 0 || !docs.eof()) { // skip the empty last line
+    if (strlen(line) > 0) {
       indent(out) << line_prefix << line << std::endl;
+    } else if (line_prefix.empty()){
+      out << std::endl;
+    } else if(!docs.eof()) {
+      indent(out) << line_prefix << std::endl;
     }
   }
-  if (comment_end != "")
+  if (!comment_end.empty())
     indent(out) << comment_end;
 }
 
