@@ -9,8 +9,8 @@ Gem::Specification.new do |s|
   s.homepage    = 'http://thrift.apache.org'
   s.summary     = %q{Ruby bindings for Apache Thrift}
   s.description = %q{Ruby bindings for the Apache Thrift RPC system}
-  s.license = 'Apache 2.0'
-  s.extensions = ['ext/extconf.rb']
+  s.license     = 'Apache-2.0'
+  s.extensions  = ['ext/extconf.rb']
 
   s.has_rdoc      = true
   s.rdoc_options  = %w[--line-numbers --inline-source --title Thrift --main README]
