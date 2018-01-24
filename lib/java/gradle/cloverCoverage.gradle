@@ -17,34 +17,32 @@
  * under the License.
  */
 
-apply plugin: 'com.android.library'
+// Following Gradle best practices to keep build logic organized
 
-android {
-    compileSdkVersion 23
-    buildToolsVersion "23.0.1"
-    useLibrary 'org.apache.http.legacy'
-    sourceSets.main.java {
-        srcDir '../src'
-        exclude 'org/apache/thrift/transport/TSaslClientTransport.java'
-        exclude 'org/apache/thrift/transport/TSaslServerTransport.java'
-        exclude 'org/apache/thrift/transport/TSaslTransport.java'
-    }
-}
+// Keep this as an optional feature for now, disabled by default
+if (Boolean.parseBoolean(project.cloverEnabled)) {
+    apply plugin: 'com.bmuschko.clover'
 
-repositories {
-    mavenCentral()
-}
-dependencies {
-    compile 'org.slf4j:slf4j-api:1.7.13'
-    compile 'javax.servlet:servlet-api:2.5'
-    compile 'org.apache.httpcomponents:httpcore:4.4.4'
-}
-
-buildscript {
-    repositories {
-        mavenCentral()
-    }
     dependencies {
-        classpath 'com.android.tools.build:gradle:1.5.0'
+        clover 'org.openclover:clover:4.2.+'
     }
+
+    clover {
+
+        testIncludes = ['**/Test*.java']
+        // Exclude the generated test code from code coverage
+        testExcludes = ['thrift/test/Test*.java']
+
+        compiler {
+            encoding = 'UTF-8'
+            debug = true
+        }
+
+        report {
+            html = true
+            pdf = true
+        }
+    }
+
+    build.dependsOn cloverGenerateReport
 }

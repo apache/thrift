@@ -235,6 +235,7 @@ if test "$with_java" = "yes";  then
   AX_CHECK_ANT_VERSION($ANT, 1.7)
   AC_SUBST(CLASSPATH)
   AC_SUBST(ANT_FLAGS)
+  AC_SUBST(GRADLE_OPTS)
   if test "x$JAVA" != "x" && test "x$JAVAC" != "x" && test "x$ANT" != "x" ; then
     have_java="yes"
   fi
@@ -989,10 +990,10 @@ fi
 if test "$have_java" = "yes" ; then
   echo
   echo "Java Library:"
-  echo "   Using ant ................. : $ANT"
+  echo "   Using gradlew ............. : lib/java/gradlew"
   echo "   Using java ................ : $JAVA"
   echo "   Using javac ............... : $JAVAC"
-  echo "   Using ant version ......... : $($ANT -version 2>&1)"
+  echo "   Using Gradle version ...... : $(lib/java/gradlew --version --quiet | grep Gradle 2>&1)"
   echo "   Using java version ........ : $($JAVA -version 2>&1 | grep 'version ')"
 fi
 if test "$have_lua" = "yes" ; then
