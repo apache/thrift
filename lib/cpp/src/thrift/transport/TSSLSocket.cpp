@@ -249,17 +249,6 @@ TSSLSocket::~TSSLSocket() {
   close();
 }
 
-bool TSSLSocket::hasPendingDataToRead() {
-  if (!isOpen()) {
-    return false;
-  }
-  initializeHandshake();
-  if (!checkHandshake())
-    throw TSSLException("SSL_peek: Handshake is not completed");
-  // data may be available in SSL buffers (note: SSL_pending does not have a failure mode)
-  return TSocket::hasPendingDataToRead() || SSL_pending(ssl_) > 0;
-}
-
 void TSSLSocket::init() {
   handshakeCompleted_ = false;
   readRetryCount_ = 0;
@@ -283,13 +272,19 @@ bool TSSLSocket::isOpen() {
 /*
  * Note: This method is not libevent safe.
 */
-bool TSSLSocket::peek() {
+bool TSSLSocket::peek(bool nonBlocking) {
   if (!isOpen()) {
     return false;
   }
   initializeHandshake();
   if (!checkHandshake())
     throw TSSLException("SSL_peek: Handshake is not completed");
+  if (nonBlocking)
+  {
+    // data may be available in SSL buffers (note: SSL_pending does not have a failure mode)
+    return TSocket::peek(true) || SSL_pending(ssl_) > 0;
+  }
+
   int rc;
   uint8_t byte;
   do {

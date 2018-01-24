@@ -75,10 +75,9 @@ public:
    * TTransport interface.
    */
   bool isOpen();
-  bool peek();
+  bool peek(bool nonBlocking=false);
   void open();
   void close();
-  bool hasPendingDataToRead();
   uint32_t read(uint8_t* buf, uint32_t len);
   void write(const uint8_t* buf, uint32_t len);
   uint32_t write_partial(const uint8_t* buf, uint32_t len);

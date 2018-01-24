@@ -171,10 +171,6 @@ TSocket::~TSocket() {
 }
 
 bool TSocket::hasPendingDataToRead() {
-  if (!isOpen()) {
-    return false;
-  }
-
   int32_t retries = 0;
   THRIFT_IOCTL_SOCKET_NUM_BYTES_TYPE numBytesAvailable;
 try_again:
@@ -194,9 +190,13 @@ bool TSocket::isOpen() {
   return (socket_ != THRIFT_INVALID_SOCKET);
 }
 
-bool TSocket::peek() {
+bool TSocket::peek(bool nonBlocking) {
   if (!isOpen()) {
     return false;
+  }
+  if (nonBlocking)
+  {
+    return hasPendingDataToRead();
   }
   if (interruptListener_) {
     for (int retries = 0;;) {
