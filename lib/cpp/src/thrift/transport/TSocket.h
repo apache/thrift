@@ -84,11 +84,9 @@ public:
   virtual bool isOpen();
 
   /**
-   * Peeks at the socket to determine if there is at least 1 byte of data available to read
-   *
-   * @param nonBlocking whether the operation is non-blocking or not
+   * Calls select on the socket to see if there is more data available.
    */
-  virtual bool peek(bool nonBlocking=false);
+  virtual bool peek();
 
   /**
    * Creates and opens the UNIX socket.
@@ -101,6 +99,17 @@ public:
    * Shuts down communications on the socket.
    */
   virtual void close();
+
+  /**
+   * Determines whether there is pending data to read or not.
+   *
+   * This call does not block.
+   * \throws TTransportException of types:
+   *           NOT_OPEN means the socket has been closed
+   *           UNKNOWN means something unexpected happened
+   * \returns true if there is pending data to read, false otherwise
+   */
+  virtual bool hasPendingDataToRead();
 
   /**
    * Reads from the underlying socket.
@@ -332,9 +341,8 @@ protected:
   static bool useLowMinRto_;
 
 private:
-  bool hasPendingDataToRead();
-  void local_open();
   void unix_open();
+  void local_open();
 };
 }
 }

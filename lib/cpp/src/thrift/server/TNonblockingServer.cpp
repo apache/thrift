@@ -479,7 +479,7 @@ void TNonblockingServer::TConnection::workSocket() {
     // data sitting in their internal buffers and from libevent's perspective, there is no further data available. In
     // that case, not having this workSocket() call here would result in a hang as we will never get to work the socket,
     // despite having more data.
-    if (tSocket_->peek(true))
+    if (tSocket_->hasPendingDataToRead())
     {
         workSocket();
     }
