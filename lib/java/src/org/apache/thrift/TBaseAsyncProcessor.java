@@ -44,10 +44,11 @@ public class TBaseAsyncProcessor<I> implements TAsyncProcessor, TProcessor {
     }
 
     public boolean process(final AsyncFrameBuffer fb) throws TException {
+        return process(fb, fb.getInputProtocol(), fb.getOutputProtocol());
+    }
 
-        final TProtocol in = fb.getInputProtocol();
-        final TProtocol out = fb.getOutputProtocol();
-
+    /** Allow to decorate input and output protocols */
+    boolean process(AsyncFrameBuffer fb, TProtocol in, TProtocol out) throws TException {
         //Find processing function
         final TMessage msg = in.readMessageBegin();
         AsyncProcessFunction fn = processMap.get(msg.name);
@@ -98,7 +99,6 @@ public class TBaseAsyncProcessor<I> implements TAsyncProcessor, TProcessor {
         return true;
     }
 
-    @Override
     public boolean process(TProtocol in, TProtocol out) throws TException {
         return false;
     }
