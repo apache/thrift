@@ -216,6 +216,16 @@ RUN apt-get install -y --no-install-recommends \
       sloccount && \
     pip install flake8
 
+# Install BouncyCastle provider to fix Java builds issues with JDK 7
+# Builds accessing repote repositories fail as seen here: https://github.com/travis-ci/travis-ci/issues/8503
+RUN apt-get install -y --no-install-recommends \
+`# BouncyCastle JCE Provider dependencies` \
+      libbcprov-java && \
+    ln -s /usr/share/java/bcprov.jar /usr/lib/jvm/java-7-openjdk-amd64/jre/lib/ext/bcprov.jar && \
+    awk -F . -v OFS=. 'BEGIN{n=2}/^security\.provider/ {split($3, posAndEquals, "=");$3=n++"="posAndEquals[2];print;next} 1' /etc/java-7-openjdk/security/java.security > /tmp/java.security && \
+  echo "security.provider.1=org.bouncycastle.jce.provider.BouncyCastleProvider" >> /tmp/java.security && \
+  mv /tmp/java.security /etc/java-7-openjdk/security/java.security
+
 # Clean up
 RUN rm -rf /var/cache/apt/* && \
     rm -rf /var/lib/apt/lists/* && \

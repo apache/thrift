@@ -7,9 +7,9 @@
  to you under the Apache License, Version 2.0 (the
  "License"); you may not use this file except in compliance
  with the License. You may obtain a copy of the License at
- 
+
  http://www.apache.org/licenses/LICENSE-2.0
- 
+
  Unless required by applicable law or agreed to in writing,
  software distributed under the License is distributed on an
  "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
@@ -19,23 +19,24 @@
  -->
 <project name="libthrift-as3" default="compile" basedir="."
   xmlns:artifact="antlib:org.apache.maven.artifact.ant">
-	
+
   <property name="as3.artifactid" value="${ant.project.name}"/>
-	
+
   <property name="thrift.root" location="${basedir}/../../"/>
   <property name="thrift.java.dir" location="${thrift.root}/lib/java"/>
   <property name="build.tools.dir" location="${thrift.java.dir}/build/tools/"/>
-  <property name="thrift_compiler" value="${thrift.root}/compiler/cpp/thrift"/> 
+  <property name="thrift_compiler" value="${thrift.root}/compiler/cpp/thrift"/>
+  <property file="${basedir}/build.properties"/>
 
   <!-- inherit from the java build file for version and other properties -->
-  <property file="${thrift.java.dir}/build.properties" />
+  <property file="${thrift.java.dir}/gradle.properties" />
 
   <property environment="env"/>
 
   <condition property="version" value="${thrift.version}">
     <isset property="release"/>
   </condition>
-  <property name="version" value="${thrift.version}-snapshot"/>
+  <property name="version" value="${thrift.version}-SNAPSHOT"/>
 
   <property name="as3.final.name" value="${as3.artifactid}-${version}"/>
 
@@ -52,12 +53,13 @@
   <target name="setup.init">
     <tstamp/>
     <mkdir dir="${build.dir}"/>
+    <mkdir dir="${build.tools.dir}"/>
   </target>
 
   <target name="flex.check" unless="FLEX_HOME">
     <fail message='You must set the FLEX_HOME property pointing to your flex SDK, eg. ant -DFLEX_HOME="/Applications/Adobe Flex Builder 3/sdks/3.2.0"'/>
   </target>
-	
+
   <target name="flex.init" depends="flex.check" unless="flex.finished">
     <taskdef resource="flexTasks.tasks" classpath="${FLEX_HOME}/ant/lib/flexTasks.jar" />
     <property name="flex.finished" value="true"/>
@@ -69,10 +71,10 @@
         <include name="**/*.as"/>
       </fileset>
     </path>
-    <pathconvert 
-      property="as.src.classes" 
-      pathsep=" " 
-      dirsep="." 
+    <pathconvert
+      property="as.src.classes"
+      pathsep=" "
+      dirsep="."
       refid="as.src.files"
     >
       <map from="${src}/" to=""/>
@@ -108,19 +110,19 @@
     <artifact:remoteRepository id="apache" url="${apache.repo}"/>
 
     <!-- Pom file information -->
-    <artifact:pom id="pom" 
-      groupId="${thrift.groupid}" 
+    <artifact:pom id="pom"
+      groupId="${thrift.groupid}"
       artifactId="${as3.artifactid}"
-      version="${version}" 
+      version="${version}"
       url="http://thrift.apache.org"
       name="Apache Thrift"
       description="Thrift is a software framework for scalable cross-language services development."
-      packaging="pom"
+      packaging="swc"
     >
       <remoteRepository refid="central"/>
       <remoteRepository refid="apache"/>
       <license name="The Apache Software License, Version 2.0" url="${license}"/>
-      <scm connection="scm:git:https://git-wip-us.apache.org/repos/asf/thrift.git" 
+      <scm connection="scm:git:https://git-wip-us.apache.org/repos/asf/thrift.git"
       developerConnection="scm:git:https://git-wip-us.apache.org/repos/asf/thrift.git"
       url="https://git-wip-us.apache.org/repos/asf?p=thrift.git"
       />
@@ -176,5 +178,5 @@
     <!-- run with: ant -Drelease=true publish -->
     <signAndDeploy file="${as3.pom.xml}" packaging="pom" classifier="" pom="${as3.pom.xml}"/>
     <signAndDeploy file="${as3.swc.file}" packaging="swc" classifier="" pom="${as3.pom.xml}"/>
-  </target>	
+  </target>
 </project>

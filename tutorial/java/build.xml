@@ -25,11 +25,13 @@
   <property name="build" location="build" />
 
   <path id="libs.classpath">
-    <fileset dir="../../lib/java/build">
-      <include name="*.jar" />
-      <exclude name="-test.jar" />
+    <fileset dir="../../lib/java/build/libs">
+      <include name="libthrift*.jar" />
+      <exclude name="libthrift*test.jar" />
+      <exclude name="libthrift*javadoc.jar" />
+      <exclude name="libthrift*sources.jar" />
     </fileset>
-    <fileset dir="../../lib/java/build/lib">
+    <fileset dir="../../lib/java/build/deps">
       <include name="*.jar" />
     </fileset>
   </path>
@@ -42,7 +44,7 @@
     <pathelement path="${build}" />
     <pathelement path="tutorial.jar" />
   </path>
-  
+
   <target name="init">
     <tstamp />
     <mkdir dir="${build}"/>

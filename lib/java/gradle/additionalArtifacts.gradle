@@ -17,34 +17,24 @@
  * under the License.
  */
 
-apply plugin: 'com.android.library'
+// Following Gradle best practices to keep build logic organized
 
-android {
-    compileSdkVersion 23
-    buildToolsVersion "23.0.1"
-    useLibrary 'org.apache.http.legacy'
-    sourceSets.main.java {
-        srcDir '../src'
-        exclude 'org/apache/thrift/transport/TSaslClientTransport.java'
-        exclude 'org/apache/thrift/transport/TSaslServerTransport.java'
-        exclude 'org/apache/thrift/transport/TSaslTransport.java'
-    }
+task sourcesJar(type: Jar, group: 'Build') {
+    description = 'Assembles a jar archive containing the main Java sources.'
+
+    classifier 'sources'
+    from sourceSets.main.allSource
 }
 
-repositories {
-    mavenCentral()
-}
-dependencies {
-    compile 'org.slf4j:slf4j-api:1.7.13'
-    compile 'javax.servlet:servlet-api:2.5'
-    compile 'org.apache.httpcomponents:httpcore:4.4.4'
+task javadocJar(type: Jar, dependsOn: javadoc, group: 'Build') {
+    description = 'Assembles a jar archive containing the JavaDoc.'
+
+    classifier 'javadoc'
+    from javadoc.destinationDir
 }
 
-buildscript {
-    repositories {
-        mavenCentral()
-    }
-    dependencies {
-        classpath 'com.android.tools.build:gradle:1.5.0'
-    }
+artifacts {
+    archives sourcesJar
+    archives javadocJar
 }
+

@@ -17,19 +17,14 @@
 # under the License.
 #
 
-file(GLOB java_sources src/**/*.java)
-
 if(ANDROID)
-    set(android_sources
-        android/build.gradle
-        android/settings.gradle
-        android/src/main/AndroidManifest.xml
-    )
     set(THRIFT_AAR outputs/aar/thrift-debug.aar outputs/aar/thrift-release.aar)
     add_custom_command(
         OUTPUT ${THRIFT_AAR}
-        COMMAND ${GRADLE_EXECUTABLE} -p"${CMAKE_CURRENT_SOURCE_DIR}/android" -PbuildDir="${CMAKE_CURRENT_BINARY_DIR}" assemble
-        DEPENDS ${java_sources} ${android_sources})
+        COMMAND ${GRADLE_EXECUTABLE}
+            -p "${CMAKE_CURRENT_SOURCE_DIR}/android"
+            "-PbuildDir=${CMAKE_CURRENT_BINARY_DIR}/android/build" assemble
+    )
     add_custom_target(thrift_aar ALL DEPENDS ${THRIFT_AAR})
 
 else(ANDROID)
@@ -46,35 +41,47 @@ else(ANDROID)
         set(JAVA_DOC_INSTALL_DIR "${CMAKE_INSTALL_PREFIX}/${DOC_INSTALL_DIR}/java")
     endif()
 
-    file(GLOB_RECURSE ThriftJava_SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/src/*.java)
-    set(ThriftJava_ARTIFACTS
-        libthrift-${thrift_VERSION}.jar
-        libthrift-${thrift_VERSION}.pom
-    )
-    add_custom_command(
-        OUTPUT ${ThriftJava_ARTIFACTS}
-        COMMAND ${Ant_EXECUTABLE} ${ANT_FLAGS} -Dbuild.dir="${CMAKE_CURRENT_BINARY_DIR}" -f build.xml
-        MAIN_DEPENDENCY ${CMAKE_CURRENT_SOURCE_DIR}/build.xml
-        DEPENDS ${ThriftJava_SOURCES}
-        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-    )
-
     add_custom_target(ThriftJava ALL
-        COMMENT "Building Java library using Ant"
-        DEPENDS ${ThriftJava_ARTIFACTS}
+        COMMENT "Building Java library using Gradle Wrapper"
+        COMMAND ${GRADLEW_EXECUTABLE} ${GRADLE_OPTS} assemble
+            --console=plain --no-daemon
+            -Prelease=true
+            -Pthrift.version=${thrift_VERSION}
+            "-Pbuild.dir=${CMAKE_CURRENT_BINARY_DIR}/build"
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
     )
 
-    # Hook the ant install task into CMake install
-    install(CODE "execute_process(
-        COMMAND ${Ant_EXECUTABLE} ${ANT_FLAGS} install
-        -Dbuild.dir=\"${CMAKE_CURRENT_BINARY_DIR}\"
-        -Dinstall.path=\"${JAVA_INSTALL_DIR}\" -Dinstall.javadoc.path=\"${JAVA_DOC_INSTALL_DIR}\" -f build.xml
+    # Enable publishing from CMake if the publishing information is provided
+    add_custom_target(MavenPublish
+        COMMENT "Publishing Java Library to Apache Maven staging"
+        COMMAND ${GRADLEW_EXECUTABLE} ${GRADLE_OPTS} clean uploadArchives
+            --console=plain --no-daemon
+            -Prelease=true
+            -Pthrift.version=${thrift_VERSION}
+            "-Pbuild.dir=${CMAKE_CURRENT_BINARY_DIR}/build"
         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-    )")
+    )
+
+    # Hook the CMake install process to the results from make ALL.
+    # This works best when 'make all && sudo make install/fast' is used.
+    # Using slash to end the source location to avoid copying the directory path.
+    install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/build/libs/
+            DESTINATION ${JAVA_INSTALL_DIR}
+            FILES_MATCHING PATTERN "libthrift-${thrift_VERSION}.jar")
+    install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/build/deps/
+            DESTINATION ${JAVA_INSTALL_DIR}
+            FILES_MATCHING PATTERN "*.jar")
+    install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/build/docs/javadoc/
+            DESTINATION ${JAVA_DOC_INSTALL_DIR})
 
     if(BUILD_TESTING)
         add_test(NAME JavaTest
-                 COMMAND ${Ant_EXECUTABLE} ${ANT_FLAGS} -Dbuild.dir=${CMAKE_CURRENT_BINARY_DIR} -Dthrift.compiler=${THRIFT_COMPILER} -f build.xml test
-                 WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
+                COMMAND ${GRADLEW_EXECUTABLE} ${GRADLE_OPTS} test
+                    --console=plain --no-daemon
+                    -Prelease=true
+                    -Pthrift.version=${thrift_VERSION}
+                    "-Pbuild.dir=${CMAKE_CURRENT_BINARY_DIR}/build"
+                    "-Pthrift.compiler=${THRIFT_COMPILER}"
+                WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
     endif()
 endif(ANDROID)
