@@ -330,7 +330,7 @@ protected:
       "Host: " ~ host_ ~ "\r\n" ~
       "Content-Type: application/x-thrift\r\n" ~
       "Content-Length: " ~ to!string(dataLength) ~ "\r\n" ~
-      "Accept: application/x-thrift\r\n"
+      "Accept: application/x-thrift\r\n" ~
       "User-Agent: Thrift/" ~ VERSION ~ " (D/TClientHttpTransport)\r\n" ~
       "\r\n";
   }

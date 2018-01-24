@@ -1,0 +1,27 @@
+{
+  "name": "apache-thrift",
+  "description": "Apache Thrift D library",
+  "authors": [
+    "Apache Thrift Developers <dev@thrift.apache.org>"
+  ],
+  "homepage": "http://thrift.apache.org",
+  "license": "Apache-2.0",
+  "dependencies": {
+    "libevent": {
+      "version": "*"
+    },
+    "openssl": {
+      "version": "*"
+    }
+  },
+  "targetType": "library",
+  "sourcePaths": [
+    "lib/d/src" 
+  ],
+  "importPaths": [
+    "lib/d/src"
+  ],
+  "excludedSourceFiles": [
+    "src/thrift/index.d"
+  ]
+}
