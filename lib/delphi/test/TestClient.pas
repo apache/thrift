@@ -37,6 +37,7 @@ uses
   DateUtils,
   Generics.Collections,
   TestConstants,
+  ConsoleHelper,
   Thrift,
   Thrift.Protocol.Compact,
   Thrift.Protocol.JSON,
@@ -46,8 +47,7 @@ uses
   Thrift.Stream,
   Thrift.Test,
   Thrift.Utils,
-  Thrift.Collections,
-  Thrift.Console;
+  Thrift.Collections;
 
 type
   TThreadConsole = class
