@@ -38,14 +38,15 @@ fi
 tar xzf $DISTFILE
 rm $DISTFILE
 DISTDIR=$(ls -d Thrift*)
-# cpan doesn't like "Thrift-v0.11.0 as a directory name
-# needs to be Thrift-0.11.0
+# cpan doesn't like "Thrift-v0.nn.0 as a directory name
+# needs to be Thrift-0.nn.0
 NEWDIR=${DISTDIR/t-v/t-}
 if [[ "$DISTDIR" != "$NEWDIR" ]]; then
     mv $DISTDIR $NEWDIR
     DISTDIR="$NEWDIR"
 fi
 cd $DISTDIR
+cp -p ../Makefile.PL .
 perl ../tools/FixupDist.pl
 cd ..
 tar cvzf $DISTFILE $DISTDIR
