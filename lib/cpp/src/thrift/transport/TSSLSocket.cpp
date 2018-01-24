@@ -255,7 +255,7 @@ bool TSSLSocket::hasPendingDataToRead() {
   }
   initializeHandshake();
   if (!checkHandshake())
-    throw TSSLException("SSL_peek: Handshake is not completed");
+    throw TSSLException("hasPendingDataToRead: Handshake is not completed");
   // data may be available in SSL buffers (note: SSL_pending does not have a failure mode)
   return TSocket::hasPendingDataToRead() || SSL_pending(ssl_) > 0;
 }

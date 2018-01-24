@@ -84,7 +84,9 @@ public:
   virtual bool isOpen();
 
   /**
-   * Calls select on the socket to see if there is more data available.
+   * Checks whether there is more data available in the socket to read.
+   *
+   * This call blocks until at least one byte is available or the socket is closed.
    */
   virtual bool peek();
 
