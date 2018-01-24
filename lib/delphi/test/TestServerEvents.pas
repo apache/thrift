@@ -27,7 +27,7 @@ uses
   Thrift.Protocol,
   Thrift.Transport,
   Thrift.Server,
-  Thrift.Console;
+  ConsoleHelper;
 
 type
   TRequestEventsImpl = class( TInterfacedObject, IRequestEvents)
