@@ -17,7 +17,7 @@
  * under the License.
  *)
 
-unit Thrift.Console;
+unit ConsoleHelper;
 
 interface
 

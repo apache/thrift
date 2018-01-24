@@ -30,7 +30,6 @@ uses
   Thrift.Protocol.JSON in '..\..\src\Thrift.Protocol.JSON.pas',
   Thrift.Collections in '..\..\src\Thrift.Collections.pas',
   Thrift.Server in '..\..\src\Thrift.Server.pas',
-  Thrift.Console in '..\..\src\Thrift.Console.pas',
   Thrift.Utils in '..\..\src\Thrift.Utils.pas',
   Thrift.Serializer in '..\..\src\Thrift.Serializer.pas',
   Thrift.Stream in '..\..\src\Thrift.Stream.pas',
