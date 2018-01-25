@@ -18,9 +18,9 @@
  * under the License.
  */
 
-namespace test\Thrift;
+namespace Test\Thrift;
 
-require_once __DIR__.'/../../../vendor/autoload.php';
+require_once __DIR__ . '/../../../vendor/autoload.php';
 
 use Thrift\ClassLoader\ThriftClassLoader;
 use Thrift\Exception\TProtocolException;
@@ -35,121 +35,127 @@ $loader->registerDefinition('ThriftTest', __DIR__ . '/packages/' . $GEN_DIR);
 $loader->registerDefinition('TestValidators', __DIR__ . '/packages/' . $GEN_DIR);
 $loader->register();
 
-// Would be nice to have PHPUnit here, but for now just hack it.
-
-set_exception_handler(function ($e) {
-    my_assert(false, "Unexpected exception caught: " . $e->getMessage());
-});
-
-set_error_handler(function ($errno, $errmsg) {
-    my_assert(false, "Unexpected PHP error: " . $errmsg);
-});
-
-// Empty structs should not have validators
-assert_has_no_read_validator('ThriftTest\EmptyStruct');
-assert_has_no_write_validator('ThriftTest\EmptyStruct');
-
-// Bonk has only opt_in_req_out fields
+class TestValidators extends \PHPUnit_Framework_TestCase
 {
-    assert_has_no_read_validator('ThriftTest\Bonk');
-    assert_has_a_write_validator('ThriftTest\Bonk');
+    protected function testEmptyStructValidator()
     {
-        // Check that we can read an empty object
+        $this->assertNoReadValidator('ThriftTest\EmptyStruct');
+        $this->assertNoWriteValidator('ThriftTest\EmptyStruct');
+    }
+
+
+    protected function testBonkValidator()
+    {
+        $this->assertNoReadValidator('ThriftTest\Bonk');
+        $this->assertHasWriteValidator('ThriftTest\Bonk');
+    }
+
+    protected function testStructAValidator()
+    {
+        $this->assertHasReadValidator('ThriftTest\StructA');
+        $this->assertHasWriteValidator('ThriftTest\StructA');
+    }
+
+    protected function testUnionOfStringsValidator()
+    {
+        $this->assertNoWriteValidator('TestValidators\UnionOfStrings');
+    }
+
+    protected function testServiceResultValidator()
+    {
+        $this->assertNoReadValidator('TestValidators\TestService_test_result');
+        $this->assertNoWriteValidator('TestValidators\TestService_test_result');
+    }
+
+    public function testReadEmpty()
+    {
         $bonk = new \ThriftTest\Bonk();
         $transport = new TMemoryBuffer("\000");
         $protocol = new TBinaryProtocol($transport);
         $bonk->read($protocol);
     }
+
+    public function testWriteEmpty()
     {
-        // ...but not write an empty object
         $bonk = new \ThriftTest\Bonk();
         $transport = new TMemoryBuffer();
         $protocol = new TBinaryProtocol($transport);
-        assert_protocol_exception_thrown(function () use ($bonk, $protocol) { $bonk->write($protocol); },
-                                         'Bonk was able to write an empty object');
+        try {
+            $bonk->write($protocol);
+            $this->fail('Bonk was able to write an empty object');
+        } catch (TProtocolException $e) {
+        }
     }
-}
 
-// StructA has a single required field
-{
-    assert_has_a_read_validator('ThriftTest\StructA');
-    assert_has_a_write_validator('ThriftTest\StructA');
+    public function testWriteWithMissingRequired()
     {
         // Check that we are not able to write StructA with a missing required field
         $structa = new \ThriftTest\StructA();
         $transport = new TMemoryBuffer();
         $protocol = new TBinaryProtocol($transport);
-        assert_protocol_exception_thrown(function () use ($structa, $protocol) { $structa->write($protocol); },
-                                         'StructA was able to write an empty object');
+
+        try {
+            $structa->write($protocol);
+            $this->fail('StructA was able to write an empty object');
+        } catch (TProtocolException $e) {
+        }
     }
+
+    public function testReadStructA()
     {
-        // Check that we are able to read and write a message with a good StructA
         $transport = new TMemoryBuffer(base64_decode('CwABAAAAA2FiYwA='));
         $protocol = new TBinaryProtocol($transport);
         $structa = new \ThriftTest\StructA();
         $structa->read($protocol);
+    }
+
+    public function testWriteStructA()
+    {
+        $transport = new TMemoryBuffer(base64_decode('CwABAAAAA2FiYwA='));
+        $protocol = new TBinaryProtocol($transport);
+        $structa = new \ThriftTest\StructA();
         $structa->write($protocol);
     }
-}
 
-// Unions should not get write validators
-assert_has_no_write_validator('TestValidators\UnionOfStrings');
-
-// Service _result classes should not get any validators
-assert_has_no_read_validator('TestValidators\TestService_test_result');
-assert_has_no_write_validator('TestValidators\TestService_test_result');
-
-function assert_has_a_read_validator($class)
-{
-    my_assert(has_read_validator_method($class),
-              $class . ' class should have a read validator');
-}
-
-function assert_has_no_read_validator($class)
-{
-    my_assert(!has_read_validator_method($class),
-              $class . ' class should not have a read validator');
-}
-
-function assert_has_a_write_validator($class)
-{
-    my_assert(has_write_validator_method($class),
-              $class . ' class should have a write validator');
-}
-
-function assert_has_no_write_validator($class)
-{
-    my_assert(!has_write_validator_method($class),
-              $class . ' class should not have a write validator');
-}
-
-function assert_protocol_exception_thrown($callable, $message)
-{
-    try {
-        call_user_func($callable);
-        my_assert(false, $message);
-    } catch (TProtocolException $e) {
+    protected static function assertHasReadValidator($class)
+    {
+        if (!static::hasReadValidator($class)) {
+            static::fail($class . ' class should have a read validator');
+        }
     }
-}
 
-function has_write_validator_method($class)
-{
-    $rc = new \ReflectionClass($class);
+    protected static function assertNoReadValidator($class)
+    {
+        if (static::hasReadValidator($class)) {
+            static::fail($class . ' class should not have a write validator');
+        }
+    }
 
-    return $rc->hasMethod('_validateForWrite');
-}
+    protected static function assertHasWriteValidator($class)
+    {
+        if (!static::hasWriteValidator($class)) {
+            static::fail($class . ' class should have a write validator');
+        }
+    }
 
-function has_read_validator_method($class)
-{
-    $rc = new \ReflectionClass($class);
+    protected static function assertNoWriteValidator($class)
+    {
+        if (static::hasWriteValidator($class)) {
+            static::fail($class . ' class should not have a write validator');
+        }
+    }
 
-    return $rc->hasMethod('_validateForRead');
-}
+    private static function hasReadValidator($class)
+    {
+        $rc = new \ReflectionClass($class);
 
-function my_assert($something, $message)
-{
-    if (!$something) {
-        fwrite(STDERR, basename(__FILE__) . " FAILED: $message\n");
-        exit(1);
+        return $rc->hasMethod('_validateForRead');
+    }
+
+    private static function hasWriteValidator($class)
+    {
+        $rc = new \ReflectionClass($class);
+
+        return $rc->hasMethod('_validateForWrite');
     }
 }
