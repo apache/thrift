@@ -26,7 +26,7 @@ namespace Test\Thrift\Protocol;
 use Thrift\ClassLoader\ThriftClassLoader;
 use Thrift\Serializer\TBinarySerializer;
 
-require_once __DIR__.'/../../../../vendor/autoload.php';
+require_once __DIR__ . '/../../../../vendor/autoload.php';
 
 $loader = new ThriftClassLoader();
 $loader->registerDefinition('ThriftTest', __DIR__ . '/../packages');
@@ -39,24 +39,17 @@ $loader->register();
  * lib/php/test$ ../../../compiler/cpp/thrift --gen php -r \
  *   --out ./packages ../../../test/ThriftTest.thrift
  */
-
 class TestBinarySerializer extends \PHPUnit_Framework_TestCase
 {
-
-  public function setUp()
-  {
-  }
-
-  /**
-    * We try to serialize and deserialize a random object to make sure no exceptions are thrown.
-    * @see THRIFT-1579
-    */
-  public function testBinarySerializer()
-  {
-    $struct = new \ThriftTest\Xtruct(array('string_thing' => 'abc'));
-    $serialized = TBinarySerializer::serialize($struct, 'ThriftTest\\Xtruct');
-    $deserialized = TBinarySerializer::deserialize($serialized, 'ThriftTest\\Xtruct');
-    $this->assertEquals($struct, $deserialized);
-  }
-
+    /**
+     * We try to serialize and deserialize a random object to make sure no exceptions are thrown.
+     * @see THRIFT-1579
+     */
+    public function testBinarySerializer()
+    {
+        $struct = new \ThriftTest\Xtruct(array('string_thing' => 'abc'));
+        $serialized = TBinarySerializer::serialize($struct, 'ThriftTest\\Xtruct');
+        $deserialized = TBinarySerializer::deserialize($serialized, 'ThriftTest\\Xtruct');
+        $this->assertEquals($struct, $deserialized);
+    }
 }

@@ -38,8 +38,8 @@ check-json-serializer: deps stubs
 	$(PHPUNIT) --log-junit=TEST-json-serializer.xml JsonSerialize/
 
 check-validator: deps stubs
-	php TestValidators.php
-	php TestValidators.php -oop
+	$(PHPUNIT) --log-junit=TEST-validators.xml TestValidators.php
+	$(PHPUNIT) --log-junit=TEST-validators-oop.xml TestValidators.php -oop
 
 check-protocol:	deps stubs
 	$(PHPUNIT) --log-junit=TEST-log-json-protocol.xml Protocol/TestTJSONProtocol.php
