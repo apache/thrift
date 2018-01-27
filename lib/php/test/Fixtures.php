@@ -30,6 +30,7 @@ use ThriftTest\Insanity;
 
 class Fixtures
 {
+    public static $bufsize = 8192; //big enough to read biggest serialized Fixture arg.
     public static $testArgs = array();
 
     public static function populateTestArgs()

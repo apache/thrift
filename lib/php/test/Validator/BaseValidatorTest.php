@@ -20,36 +20,18 @@
 
 namespace Test\Thrift;
 
-require_once __DIR__ . '/../../../vendor/autoload.php';
-
-use Thrift\ClassLoader\ThriftClassLoader;
+use PHPUnit\Framework\TestCase;
 use Thrift\Exception\TProtocolException;
 use Thrift\Protocol\TBinaryProtocol;
 use Thrift\Transport\TMemoryBuffer;
 
-$oop_mode = (isset($argv[1]) && $argv[1] === '-oop');
-$GEN_DIR = $oop_mode ? 'phpvo' : 'phpv';
-
-$loader = new ThriftClassLoader();
-$loader->registerDefinition('ThriftTest', __DIR__ . '/packages/' . $GEN_DIR);
-$loader->registerDefinition('TestValidators', __DIR__ . '/packages/' . $GEN_DIR);
-$loader->register();
-
-$transport = new TMemoryBuffer(base64_decode('CwABAAAAA2FiYwA='));
-$protocol = new TBinaryProtocol($transport);
-$structa = new \ThriftTest\StructA();
-$structa->read($protocol);
-
-var_dump($structa);
-
-class TestValidators extends \PHPUnit_Framework_TestCase
+abstract class BaseValidatorTest extends TestCase
 {
     public function testEmptyStructValidator()
     {
         $this->assertNoReadValidator('ThriftTest\EmptyStruct');
         $this->assertNoWriteValidator('ThriftTest\EmptyStruct');
     }
-
 
     public function testBonkValidator()
     {

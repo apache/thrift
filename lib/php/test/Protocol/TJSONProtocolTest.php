@@ -21,20 +21,15 @@
  * @package thrift.test
  */
 
-namespace test\Thrift\Protocol;
+namespace Test\Thrift\Protocol;
 
-use Thrift\ClassLoader\ThriftClassLoader;
+use PHPUnit\Framework\TestCase;
 use Test\Thrift\Fixtures;
-use Thrift\Transport\TMemoryBuffer;
+use Thrift\ClassLoader\ThriftClassLoader;
 use Thrift\Protocol\TJSONProtocol;
-
-define('BUFSIZ', 8192); //big enough to read biggest serialized Fixture arg.
+use Thrift\Transport\TMemoryBuffer;
 
 require_once __DIR__ . '/../../../../vendor/autoload.php';
-
-$loader = new ThriftClassLoader();
-$loader->registerDefinition('ThriftTest', __DIR__ . '/../packages');
-$loader->register();
 
 /***
  * This test suite depends on running the compiler against the
@@ -42,16 +37,22 @@ $loader->register();
  *
  * lib/php/test$ ../../../compiler/cpp/thrift --gen php -r \
  *   --out ./packages ../../../test/ThriftTest.thrift
+ *
+ * @runTestsInSeparateProcesses
  */
-class TestTJSONProtocol extends \PHPUnit_Framework_TestCase
+class TJSONProtocolTest extends TestCase
 {
     private $transport;
     private $protocol;
 
     public static function setUpBeforeClass()
     {
+        $loader = new ThriftClassLoader();
+        $loader->registerDefinition('ThriftTest', __DIR__ . '/../packages');
+        $loader->register();
+
         Fixtures::populateTestArgs();
-        TestTJSONProtocolFixtures::populateTestArgsJSON();
+        TJSONProtocolFixtures::populateTestArgsJSON();
     }
 
     public function setUp()
@@ -61,17 +62,16 @@ class TestTJSONProtocol extends \PHPUnit_Framework_TestCase
         $this->transport->open();
     }
 
-    /***
+    /**
      * WRITE TESTS
      */
-
     public function testVoidWrite()
     {
         $args = new \ThriftTest\ThriftTest_testVoid_args();
         $args->write($this->protocol);
 
-        $actual = $this->transport->read(BUFSIZ);
-        $expected = TestTJSONProtocolFixtures::$testArgsJSON['testVoid'];
+        $actual = $this->transport->read(Fixtures::$bufsize);
+        $expected = TJSONProtocolFixtures::$testArgsJSON['testVoid'];
 
         $this->assertEquals($expected, $actual);
     }
@@ -82,8 +82,8 @@ class TestTJSONProtocol extends \PHPUnit_Framework_TestCase
         $args->thing = Fixtures::$testArgs['testString1'];
         $args->write($this->protocol);
 
-        $actual = $this->transport->read(BUFSIZ);
-        $expected = TestTJSONProtocolFixtures::$testArgsJSON['testString1'];
+        $actual = $this->transport->read(Fixtures::$bufsize);
+        $expected = TJSONProtocolFixtures::$testArgsJSON['testString1'];
 
         $this->assertEquals($expected, $actual);
     }
@@ -94,8 +94,8 @@ class TestTJSONProtocol extends \PHPUnit_Framework_TestCase
         $args->thing = Fixtures::$testArgs['testString2'];
         $args->write($this->protocol);
 
-        $actual = $this->transport->read(BUFSIZ);
-        $expected = TestTJSONProtocolFixtures::$testArgsJSON['testString2'];
+        $actual = $this->transport->read(Fixtures::$bufsize);
+        $expected = TJSONProtocolFixtures::$testArgsJSON['testString2'];
 
         $this->assertEquals($expected, $actual);
     }
@@ -106,8 +106,8 @@ class TestTJSONProtocol extends \PHPUnit_Framework_TestCase
         $args->thing = Fixtures::$testArgs['testDouble'];
         $args->write($this->protocol);
 
-        $actual = $this->transport->read(BUFSIZ);
-        $expected = TestTJSONProtocolFixtures::$testArgsJSON['testDouble'];
+        $actual = $this->transport->read(Fixtures::$bufsize);
+        $expected = TJSONProtocolFixtures::$testArgsJSON['testDouble'];
 
         $this->assertEquals($expected, $actual);
     }
@@ -118,8 +118,8 @@ class TestTJSONProtocol extends \PHPUnit_Framework_TestCase
         $args->thing = Fixtures::$testArgs['testByte'];
         $args->write($this->protocol);
 
-        $actual = $this->transport->read(BUFSIZ);
-        $expected = TestTJSONProtocolFixtures::$testArgsJSON['testByte'];
+        $actual = $this->transport->read(Fixtures::$bufsize);
+        $expected = TJSONProtocolFixtures::$testArgsJSON['testByte'];
 
         $this->assertEquals($expected, $actual);
     }
@@ -130,8 +130,8 @@ class TestTJSONProtocol extends \PHPUnit_Framework_TestCase
         $args->thing = Fixtures::$testArgs['testI32'];
         $args->write($this->protocol);
 
-        $actual = $this->transport->read(BUFSIZ);
-        $expected = TestTJSONProtocolFixtures::$testArgsJSON['testI32'];
+        $actual = $this->transport->read(Fixtures::$bufsize);
+        $expected = TJSONProtocolFixtures::$testArgsJSON['testI32'];
 
         $this->assertEquals($expected, $actual);
     }
@@ -142,8 +142,8 @@ class TestTJSONProtocol extends \PHPUnit_Framework_TestCase
         $args->thing = Fixtures::$testArgs['testI64'];
         $args->write($this->protocol);
 
-        $actual = $this->transport->read(BUFSIZ);
-        $expected = TestTJSONProtocolFixtures::$testArgsJSON['testI64'];
+        $actual = $this->transport->read(Fixtures::$bufsize);
+        $expected = TJSONProtocolFixtures::$testArgsJSON['testI64'];
 
         $this->assertEquals($expected, $actual);
     }
@@ -155,8 +155,8 @@ class TestTJSONProtocol extends \PHPUnit_Framework_TestCase
 
         $args->write($this->protocol);
 
-        $actual = $this->transport->read(BUFSIZ);
-        $expected = TestTJSONProtocolFixtures::$testArgsJSON['testStruct'];
+        $actual = $this->transport->read(Fixtures::$bufsize);
+        $expected = TJSONProtocolFixtures::$testArgsJSON['testStruct'];
 
         $this->assertEquals($expected, $actual);
     }
@@ -168,8 +168,8 @@ class TestTJSONProtocol extends \PHPUnit_Framework_TestCase
 
         $args->write($this->protocol);
 
-        $actual = $this->transport->read(BUFSIZ);
-        $expected = TestTJSONProtocolFixtures::$testArgsJSON['testNest'];
+        $actual = $this->transport->read(Fixtures::$bufsize);
+        $expected = TJSONProtocolFixtures::$testArgsJSON['testNest'];
 
         $this->assertEquals($expected, $actual);
     }
@@ -181,8 +181,8 @@ class TestTJSONProtocol extends \PHPUnit_Framework_TestCase
 
         $args->write($this->protocol);
 
-        $actual = $this->transport->read(BUFSIZ);
-        $expected = TestTJSONProtocolFixtures::$testArgsJSON['testMap'];
+        $actual = $this->transport->read(Fixtures::$bufsize);
+        $expected = TJSONProtocolFixtures::$testArgsJSON['testMap'];
 
         $this->assertEquals($expected, $actual);
     }
@@ -194,8 +194,8 @@ class TestTJSONProtocol extends \PHPUnit_Framework_TestCase
 
         $args->write($this->protocol);
 
-        $actual = $this->transport->read(BUFSIZ);
-        $expected = TestTJSONProtocolFixtures::$testArgsJSON['testStringMap'];
+        $actual = $this->transport->read(Fixtures::$bufsize);
+        $expected = TJSONProtocolFixtures::$testArgsJSON['testStringMap'];
 
         /*
          * The $actual returns unescaped string.
@@ -212,8 +212,8 @@ class TestTJSONProtocol extends \PHPUnit_Framework_TestCase
 
         $args->write($this->protocol);
 
-        $actual = $this->transport->read(BUFSIZ);
-        $expected = TestTJSONProtocolFixtures::$testArgsJSON['testSet'];
+        $actual = $this->transport->read(Fixtures::$bufsize);
+        $expected = TJSONProtocolFixtures::$testArgsJSON['testSet'];
 
         $this->assertEquals($expected, $actual);
     }
@@ -225,8 +225,8 @@ class TestTJSONProtocol extends \PHPUnit_Framework_TestCase
 
         $args->write($this->protocol);
 
-        $actual = $this->transport->read(BUFSIZ);
-        $expected = TestTJSONProtocolFixtures::$testArgsJSON['testList'];
+        $actual = $this->transport->read(Fixtures::$bufsize);
+        $expected = TJSONProtocolFixtures::$testArgsJSON['testList'];
 
         $this->assertEquals($expected, $actual);
     }
@@ -238,8 +238,8 @@ class TestTJSONProtocol extends \PHPUnit_Framework_TestCase
 
         $args->write($this->protocol);
 
-        $actual = $this->transport->read(BUFSIZ);
-        $expected = TestTJSONProtocolFixtures::$testArgsJSON['testEnum'];
+        $actual = $this->transport->read(Fixtures::$bufsize);
+        $expected = TJSONProtocolFixtures::$testArgsJSON['testEnum'];
 
         $this->assertEquals($expected, $actual);
     }
@@ -251,8 +251,8 @@ class TestTJSONProtocol extends \PHPUnit_Framework_TestCase
 
         $args->write($this->protocol);
 
-        $actual = $this->transport->read(BUFSIZ);
-        $expected = TestTJSONProtocolFixtures::$testArgsJSON['testTypedef'];
+        $actual = $this->transport->read(Fixtures::$bufsize);
+        $expected = TJSONProtocolFixtures::$testArgsJSON['testTypedef'];
 
         $this->assertEquals($expected, $actual);
     }
@@ -263,7 +263,7 @@ class TestTJSONProtocol extends \PHPUnit_Framework_TestCase
     public function testVoidRead()
     {
         $this->transport->write(
-            TestTJSONProtocolFixtures::$testArgsJSON['testVoid']
+            TJSONProtocolFixtures::$testArgsJSON['testVoid']
         );
         $args = new \ThriftTest\ThriftTest_testVoid_args();
         $args->read($this->protocol);
@@ -272,7 +272,7 @@ class TestTJSONProtocol extends \PHPUnit_Framework_TestCase
     public function testString1Read()
     {
         $this->transport->write(
-            TestTJSONProtocolFixtures::$testArgsJSON['testString1']
+            TJSONProtocolFixtures::$testArgsJSON['testString1']
         );
         $args = new \ThriftTest\ThriftTest_testString_args();
         $args->read($this->protocol);
@@ -286,7 +286,7 @@ class TestTJSONProtocol extends \PHPUnit_Framework_TestCase
     public function testString2Read()
     {
         $this->transport->write(
-            TestTJSONProtocolFixtures::$testArgsJSON['testString2']
+            TJSONProtocolFixtures::$testArgsJSON['testString2']
         );
         $args = new \ThriftTest\ThriftTest_testString_args();
         $args->read($this->protocol);
@@ -303,8 +303,8 @@ class TestTJSONProtocol extends \PHPUnit_Framework_TestCase
         $args->thing = Fixtures::$testArgs['testString3'];
         $args->write($this->protocol);
 
-        $actual = $this->transport->read(BUFSIZ);
-        $expected = TestTJSONProtocolFixtures::$testArgsJSON['testString3'];
+        $actual = $this->transport->read(Fixtures::$bufsize);
+        $expected = TJSONProtocolFixtures::$testArgsJSON['testString3'];
 
         $this->assertEquals($expected, $actual);
     }
@@ -315,8 +315,8 @@ class TestTJSONProtocol extends \PHPUnit_Framework_TestCase
         $args->thing = Fixtures::$testArgs['testUnicodeStringWithNonBMP'];
         $args->write($this->protocol);
 
-        $actual = $this->transport->read(BUFSIZ);
-        $expected = TestTJSONProtocolFixtures::$testArgsJSON['testUnicodeStringWithNonBMP'];
+        $actual = $this->transport->read(Fixtures::$bufsize);
+        $expected = TJSONProtocolFixtures::$testArgsJSON['testUnicodeStringWithNonBMP'];
 
         $this->assertEquals($expected, $actual);
     }
@@ -324,7 +324,7 @@ class TestTJSONProtocol extends \PHPUnit_Framework_TestCase
     public function testDoubleRead()
     {
         $this->transport->write(
-            TestTJSONProtocolFixtures::$testArgsJSON['testDouble']
+            TJSONProtocolFixtures::$testArgsJSON['testDouble']
         );
         $args = new \ThriftTest\ThriftTest_testDouble_args();
         $args->read($this->protocol);
@@ -338,7 +338,7 @@ class TestTJSONProtocol extends \PHPUnit_Framework_TestCase
     public function testByteRead()
     {
         $this->transport->write(
-            TestTJSONProtocolFixtures::$testArgsJSON['testByte']
+            TJSONProtocolFixtures::$testArgsJSON['testByte']
         );
         $args = new \ThriftTest\ThriftTest_testByte_args();
         $args->read($this->protocol);
@@ -352,7 +352,7 @@ class TestTJSONProtocol extends \PHPUnit_Framework_TestCase
     public function testI32Read()
     {
         $this->transport->write(
-            TestTJSONProtocolFixtures::$testArgsJSON['testI32']
+            TJSONProtocolFixtures::$testArgsJSON['testI32']
         );
         $args = new \ThriftTest\ThriftTest_testI32_args();
         $args->read($this->protocol);
@@ -366,7 +366,7 @@ class TestTJSONProtocol extends \PHPUnit_Framework_TestCase
     public function testI64Read()
     {
         $this->transport->write(
-            TestTJSONProtocolFixtures::$testArgsJSON['testI64']
+            TJSONProtocolFixtures::$testArgsJSON['testI64']
         );
         $args = new \ThriftTest\ThriftTest_testI64_args();
         $args->read($this->protocol);
@@ -380,7 +380,7 @@ class TestTJSONProtocol extends \PHPUnit_Framework_TestCase
     public function testStructRead()
     {
         $this->transport->write(
-            TestTJSONProtocolFixtures::$testArgsJSON['testStruct']
+            TJSONProtocolFixtures::$testArgsJSON['testStruct']
         );
         $args = new \ThriftTest\ThriftTest_testStruct_args();
         $args->read($this->protocol);
@@ -394,7 +394,7 @@ class TestTJSONProtocol extends \PHPUnit_Framework_TestCase
     public function testNestRead()
     {
         $this->transport->write(
-            TestTJSONProtocolFixtures::$testArgsJSON['testNest']
+            TJSONProtocolFixtures::$testArgsJSON['testNest']
         );
         $args = new \ThriftTest\ThriftTest_testNest_args();
         $args->read($this->protocol);
@@ -408,7 +408,7 @@ class TestTJSONProtocol extends \PHPUnit_Framework_TestCase
     public function testMapRead()
     {
         $this->transport->write(
-            TestTJSONProtocolFixtures::$testArgsJSON['testMap']
+            TJSONProtocolFixtures::$testArgsJSON['testMap']
         );
         $args = new \ThriftTest\ThriftTest_testMap_args();
         $args->read($this->protocol);
@@ -422,7 +422,7 @@ class TestTJSONProtocol extends \PHPUnit_Framework_TestCase
     public function testStringMapRead()
     {
         $this->transport->write(
-            TestTJSONProtocolFixtures::$testArgsJSON['testStringMap']
+            TJSONProtocolFixtures::$testArgsJSON['testStringMap']
         );
         $args = new \ThriftTest\ThriftTest_testStringMap_args();
         $args->read($this->protocol);
@@ -436,7 +436,7 @@ class TestTJSONProtocol extends \PHPUnit_Framework_TestCase
     public function testSetRead()
     {
         $this->transport->write(
-            TestTJSONProtocolFixtures::$testArgsJSON['testSet']
+            TJSONProtocolFixtures::$testArgsJSON['testSet']
         );
         $args = new \ThriftTest\ThriftTest_testSet_args();
         $args->read($this->protocol);
@@ -450,7 +450,7 @@ class TestTJSONProtocol extends \PHPUnit_Framework_TestCase
     public function testListRead()
     {
         $this->transport->write(
-            TestTJSONProtocolFixtures::$testArgsJSON['testList']
+            TJSONProtocolFixtures::$testArgsJSON['testList']
         );
         $args = new \ThriftTest\ThriftTest_testList_args();
         $args->read($this->protocol);
@@ -464,7 +464,7 @@ class TestTJSONProtocol extends \PHPUnit_Framework_TestCase
     public function testEnumRead()
     {
         $this->transport->write(
-            TestTJSONProtocolFixtures::$testArgsJSON['testEnum']
+            TJSONProtocolFixtures::$testArgsJSON['testEnum']
         );
         $args = new \ThriftTest\ThriftTest_testEnum_args();
         $args->read($this->protocol);
@@ -478,7 +478,7 @@ class TestTJSONProtocol extends \PHPUnit_Framework_TestCase
     public function testTypedefRead()
     {
         $this->transport->write(
-            TestTJSONProtocolFixtures::$testArgsJSON['testTypedef']
+            TJSONProtocolFixtures::$testArgsJSON['testTypedef']
         );
         $args = new \ThriftTest\ThriftTest_testTypedef_args();
         $args->read($this->protocol);
@@ -492,7 +492,7 @@ class TestTJSONProtocol extends \PHPUnit_Framework_TestCase
     public function testMapMapRead()
     {
         $this->transport->write(
-            TestTJSONProtocolFixtures::$testArgsJSON['testMapMap']
+            TJSONProtocolFixtures::$testArgsJSON['testMapMap']
         );
         $result = new \ThriftTest\ThriftTest_testMapMap_result();
         $result->read($this->protocol);
@@ -506,7 +506,7 @@ class TestTJSONProtocol extends \PHPUnit_Framework_TestCase
     public function testInsanityRead()
     {
         $this->transport->write(
-            TestTJSONProtocolFixtures::$testArgsJSON['testInsanity']
+            TJSONProtocolFixtures::$testArgsJSON['testInsanity']
         );
         $result = new \ThriftTest\ThriftTest_testInsanity_result();
         $result->read($this->protocol);

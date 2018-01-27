@@ -20,22 +20,25 @@
 
 namespace Test\Thrift\JsonSerialize;
 
+use PHPUnit\Framework\TestCase;
 use stdClass;
 use Thrift\ClassLoader\ThriftClassLoader;
 
 require_once __DIR__ . '/../../../../vendor/autoload.php';
 
-$loader = new ThriftClassLoader();
-$loader->registerDefinition('ThriftTest', __DIR__ . '/../packages/phpjs');
-$loader->register();
-
-class JsonSerializeTest extends \PHPUnit_Framework_TestCase
+/**
+ * @runTestsInSeparateProcesses
+ */
+class JsonSerializeTest extends TestCase
 {
     protected function setUp()
     {
         if (version_compare(phpversion(), '5.4', '<')) {
             $this->markTestSkipped('Requires PHP 5.4 or newer!');
         }
+        $loader = new ThriftClassLoader();
+        $loader->registerDefinition('ThriftTest', __DIR__ . '/../packages/phpjs');
+        $loader->register();
     }
 
     public function testEmptyStruct()
