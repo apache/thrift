@@ -106,17 +106,15 @@ RUN apt-get install -y --allow-unauthenticated --no-install-recommends \
       libevent-dev \
       libssl-dev \
       xdg-utils
-# libevent deimos doesn't seem to work so not enabling it:
-# RUN mkdir -p /usr/include/dmd/druntime/import/deimos /usr/include/dmd/druntime/import/C && \
-#     curl -sSL https://github.com/D-Programming-Deimos/libevent/archive/master.tar.gz| tar xz && \
-#     mv libevent-master/deimos/* /usr/include/dmd/druntime/import/deimos/ && \
-#     mv libevent-master/C/* /usr/include/dmd/druntime/import/C/ && \
-#     rm -rf libevent-master
-# openssl deimos doesn't work with openssl-1.0.2 so not enabling it:
-# RUN curl -sSL https://github.com/D-Programming-Deimos/openssl/archive/master.tar.gz| tar xz && \
-#     mv openssl-master/deimos/* /usr/include/dmd/druntime/import/deimos/ && \
-#     mv openssl-master/C/* /usr/include/dmd/druntime/import/C/ && \
-#     rm -rf openssl-master
+RUN mkdir -p /usr/include/dmd/druntime/import/deimos /usr/include/dmd/druntime/import/C && \
+    curl -sSL https://github.com/D-Programming-Deimos/libevent/archive/master.tar.gz| tar xz && \
+    mv libevent-master/deimos/* /usr/include/dmd/druntime/import/deimos/ && \
+    mv libevent-master/C/* /usr/include/dmd/druntime/import/C/ && \
+    rm -rf libevent-master
+RUN curl -sSL https://github.com/D-Programming-Deimos/openssl/archive/master.tar.gz| tar xz && \
+    mv openssl-master/deimos/* /usr/include/dmd/druntime/import/deimos/ && \
+    mv openssl-master/C/* /usr/include/dmd/druntime/import/C/ && \
+    rm -rf openssl-master
 
 RUN apt-get install -y --no-install-recommends \
 `# Dart dependencies` \
@@ -125,7 +123,7 @@ ENV PATH /usr/lib/dart/bin:$PATH
 
 RUN apt-get install -y --no-install-recommends \
 `# dotnet core dependencies` \
-      dotnet-sdk-2.0.3
+      dotnet-sdk-2.1.4
 
 RUN apt-get install -y --no-install-recommends \
 `# Erlang dependencies` \
