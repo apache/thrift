@@ -22,6 +22,7 @@
 
 namespace Thrift\Transport;
 
+use Thrift\Exception\TTransportException;
 use Thrift\Factory\TStringFuncFactory;
 
 /**
@@ -34,21 +35,11 @@ use Thrift\Factory\TStringFuncFactory;
 class TBufferedTransport extends TTransport
 {
     /**
-     * Constructor. Creates a buffered transport around an underlying transport
-     */
-    public function __construct($transport = null, $rBufSize = 512, $wBufSize = 512)
-    {
-        $this->transport_ = $transport;
-        $this->rBufSize_ = $rBufSize;
-        $this->wBufSize_ = $wBufSize;
-    }
-
-    /**
      * The underlying transport
      *
      * @var TTransport
      */
-    protected $transport_ = null;
+    protected $transport_;
 
     /**
      * The receive buffer size
@@ -78,11 +69,26 @@ class TBufferedTransport extends TTransport
      */
     protected $rBuf_ = '';
 
+    /**
+     * Constructor. Creates a buffered transport around an underlying transport
+     */
+    public function __construct($transport, $rBufSize = 512, $wBufSize = 512)
+    {
+        $this->transport_ = $transport;
+        $this->rBufSize_ = $rBufSize;
+        $this->wBufSize_ = $wBufSize;
+    }
+
     public function isOpen()
     {
         return $this->transport_->isOpen();
     }
 
+    /**
+     * @inheritdoc
+     *
+     * @throws TTransportException
+     */
     public function open()
     {
         $this->transport_->open();
@@ -110,6 +116,8 @@ class TBufferedTransport extends TTransport
      *
      * Therefore, use the readAll method of the wrapped transport inside
      * the buffered readAll.
+     *
+     * @throws TTransportException
      */
     public function readAll($len)
     {
@@ -131,6 +139,13 @@ class TBufferedTransport extends TTransport
         return $data;
     }
 
+    /**
+     * @inheritdoc
+     *
+     * @param int $len
+     * @return string
+     * @throws TTransportException
+     */
     public function read($len)
     {
         if (TStringFuncFactory::create()->strlen($this->rBuf_) === 0) {
@@ -150,6 +165,12 @@ class TBufferedTransport extends TTransport
         return $ret;
     }
 
+    /**
+     * @inheritdoc
+     *
+     * @param string $buf
+     * @throws TTransportException
+     */
     public function write($buf)
     {
         $this->wBuf_ .= $buf;
@@ -164,6 +185,11 @@ class TBufferedTransport extends TTransport
         }
     }
 
+    /**
+     * @inheritdoc
+     *
+     * @throws TTransportException
+     */
     public function flush()
     {
         if (TStringFuncFactory::create()->strlen($this->wBuf_) > 0) {

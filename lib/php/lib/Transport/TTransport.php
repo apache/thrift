@@ -22,6 +22,7 @@
 
 namespace Thrift\Transport;
 
+use Thrift\Exception\TTransportException;
 use Thrift\Factory\TStringFuncFactory;
 
 /**
