@@ -145,22 +145,40 @@ public class TThreadPoolServer extends TServer {
                                   executorQueue);
   }
 
-
-  public void serve() {
-    try {
+  protected ExecutorService getExecutorService() {
+    return executorService_;
+  }
+  
+  protected boolean preServe() {
+  	try {
       serverTransport_.listen();
     } catch (TTransportException ttx) {
       LOGGER.error("Error occurred during listening.", ttx);
-      return;
+      return false;
     }
 
     // Run the preServe event
     if (eventHandler_ != null) {
       eventHandler_.preServe();
     }
-
     stopped_ = false;
     setServing(true);
+    
+    return true;
+  }
+
+  public void serve() {
+  	if (!preServe()) {
+  		return;
+  	}
+
+  	execute();
+  	waitForShutdown();
+    
+    setServing(false);
+  }
+  
+  protected void execute() {
     int failureCount = 0;
     while (!stopped_) {
       try {
@@ -213,8 +231,10 @@ public class TThreadPoolServer extends TServer {
         }
       }
     }
-
-    executorService_.shutdown();
+  }
+  
+  protected void waitForShutdown() {
+  	executorService_.shutdown();
 
     // Loop until awaitTermination finally does return without a interrupted
     // exception. If we don't do this, then we'll shut down prematurely. We want
@@ -232,7 +252,6 @@ public class TThreadPoolServer extends TServer {
         now = newnow;
       }
     }
-    setServing(false);
   }
 
   public void stop() {
