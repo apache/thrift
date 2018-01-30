@@ -513,7 +513,7 @@ linker flags for OPTLINK. Please set DMD_LIBEVENT_FLAGS manually.])
       else
         AX_LIB_EVENT([2.0])
         if test "$success" = "yes"; then
-          DMD_LIBEVENT_FLAGS=$(echo "$LIBEVENT_LDFLAGS $LIBEVENT_LIBS" | \
+          DMD_LIBEVENT_FLAGS=$(echo "-fuse-ld=gold $LIBEVENT_LDFLAGS $LIBEVENT_LIBS" | \
             sed -e 's/^ *//g;s/ *$//g;s/^\(.\)/-L\1/g;s/  */ -L/g')
           with_d_event_tests="yes"
         else
@@ -537,7 +537,7 @@ linker flags for OPTLINK. Please set DMD_OPENSSL_FLAGS manually.])
       else
         AX_CHECK_OPENSSL([with_d_ssl_tests="yes"])
         if test "$with_d_ssl_tests" = "yes"; then
-          DMD_OPENSSL_FLAGS=$(echo "$OPENSSL_LDFLAGS $OPENSSL_LIBS" | \
+          DMD_OPENSSL_FLAGS=$(echo "-fuse-ld=gold $OPENSSL_LDFLAGS $OPENSSL_LIBS" | \
             sed -e 's/^ *//g;s/ *$//g;s/^\(.\)/-L\1/g;s/  */ -L/g')
         else
           AC_MSG_WARN([D OpenSSL interface present, but OpenSSL library not found.])
