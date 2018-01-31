@@ -2162,7 +2162,7 @@ void t_go_generator::generate_service_remote(t_service* tservice) {
   f_remote << indent() << "    flag.Usage()" << endl;
   f_remote << indent() << "  }" << endl;
   f_remote << indent() << "  host = parsedUrl.Host" << endl;
-  f_remote << indent() << "  useHttp = len(parsedUrl.Scheme) <= 0 || parsedUrl.Scheme == \"http\""
+  f_remote << indent() << "  useHttp = len(parsedUrl.Scheme) <= 0 || parsedUrl.Scheme == \"http\" || parsedUrl.Scheme == \"https\""
            << endl;
   f_remote << indent() << "} else if useHttp {" << endl;
   f_remote << indent() << "  _, err := url.Parse(fmt.Sprint(\"http://\", host, \":\", port))"
