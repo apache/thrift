@@ -373,8 +373,10 @@ begin
         ERROR_IO_PENDING : begin
           dwWait := overlapped.WaitFor(FTimeout);
 
-          if (dwWait = WAIT_TIMEOUT)
-          then raise TTransportExceptionTimedOut.Create('Pipe write timed out');
+          if (dwWait = WAIT_TIMEOUT) then begin
+            CancelIo( FPipe);  // prevents possible AV on invalid overlapped ptr
+            raise TTransportExceptionTimedOut.Create('Pipe write timed out');
+          end;
 
           if (dwWait <> WAIT_OBJECT_0)
           or not GetOverlappedResult( FPipe, overlapped.Overlapped, cbWritten, TRUE)
@@ -473,8 +475,10 @@ begin
         ERROR_IO_PENDING : begin
           dwWait := overlapped.WaitFor(FTimeout);
 
-          if (dwWait = WAIT_TIMEOUT)
-          then raise TTransportExceptionTimedOut.Create('Pipe read timed out');
+          if (dwWait = WAIT_TIMEOUT) then begin
+            CancelIo( FPipe);  // prevents possible AV on invalid overlapped ptr
+            raise TTransportExceptionTimedOut.Create('Pipe read timed out');
+          end;
 
           if (dwWait <> WAIT_OBJECT_0)
           or not GetOverlappedResult( FPipe, overlapped.Overlapped, cbRead, TRUE)
@@ -876,8 +880,10 @@ begin
   CreateNamedPipe;
   while not FConnected do begin
 
-    if QueryStopServer
-    then Abort;
+    if QueryStopServer then begin
+      InternalClose;
+      Abort;
+    end;
 
     if Assigned(fnAccepting)
     then fnAccepting();
