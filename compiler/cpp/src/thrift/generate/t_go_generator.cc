@@ -753,14 +753,6 @@ void t_go_generator::init_generator() {
   f_consts_name_ = package_dir_ + "/" + program_name_ + "-consts.go";
   f_consts_.open(f_consts_name_.c_str());
 
-  vector<t_service*> services = program_->get_services();
-  vector<t_service*>::iterator sv_iter;
-
-  for (sv_iter = services.begin(); sv_iter != services.end(); ++sv_iter) {
-    string service_dir = package_dir_ + "/" + underscore((*sv_iter)->get_name()) + "-remote";
-    MKDIR(service_dir.c_str());
-  }
-
   // Print header
   f_types_ << go_autogen_comment() << go_package() << render_includes(false);
 
@@ -2055,8 +2047,16 @@ void t_go_generator::generate_service_remote(t_service* tservice) {
     parent = parent->get_extends();
   }
 
+  // This file is not useful if there are no functions; don't generate it
+  if (functions.size() == 0) {
+    return;
+  }
+
+  string f_remote_dir = package_dir_ + "/" + underscore(service_name_) + "-remote";
+  MKDIR(f_remote_dir.c_str());
+
   vector<t_function*>::iterator f_iter;
-  string f_remote_name = package_dir_ + "/" + underscore(service_name_) + "-remote/"
+  string f_remote_name = f_remote_dir + "/"
                          + underscore(service_name_) + "-remote.go";
   ofstream f_remote;
   f_remote.open(f_remote_name.c_str());
