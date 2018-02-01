@@ -132,6 +132,7 @@ begin
 end;
 
 function TThriftStreamAdapterCOM.Read( const pBuf : Pointer; const buflen : Integer; offset: Integer; count: Integer): Integer;
+var pTmp : PByte;
 begin
   inherited;
 
@@ -141,7 +142,9 @@ begin
   Result := 0;
   if FStream <> nil then begin
     if count > 0 then begin
-      FStream.Read( @(PByteArray(pBuf)^[offset]), count, @Result);
+      pTmp := pBuf;
+      Inc( pTmp, offset);
+      FStream.Read( pTmp, count, @Result);
     end;
   end;
 end;
@@ -172,11 +175,14 @@ end;
 
 procedure TThriftStreamAdapterCOM.Write( const pBuf: Pointer; offset: Integer; count: Integer);
 var nWritten : Integer;
+    pTmp : PByte;
 begin
   inherited;
   if IsOpen then begin
     if count > 0 then begin
-      FStream.Write( @(PByteArray(pBuf)^[offset]), count, @nWritten);
+      pTmp := pBuf;
+      Inc( pTmp, offset);
+      FStream.Write( pTmp, count, @nWritten);
     end;
   end;
 end;
@@ -259,14 +265,18 @@ begin
 end;
 
 function TThriftStreamAdapterDelphi.Read(const pBuf : Pointer; const buflen : Integer; offset, count: Integer): Integer;
+var pTmp : PByte;
 begin
   inherited;
 
   if count >= buflen-offset
   then count := buflen-offset;
 
-  if count > 0
-  then Result := FStream.Read( PByteArray(pBuf)^[offset], count)
+  if count > 0 then begin
+    pTmp := pBuf;
+    Inc( pTmp, offset);
+    Result := FStream.Read( pTmp^, count)
+  end
   else Result := 0;
 end;
 
@@ -296,10 +306,13 @@ begin
 end;
 
 procedure TThriftStreamAdapterDelphi.Write(const pBuf : Pointer; offset, count: Integer);
+var pTmp : PByte;
 begin
   inherited;
   if count > 0 then begin
-    FStream.Write( PByteArray(pBuf)^[offset], count)
+    pTmp := pBuf;
+    Inc( pTmp, offset);
+    FStream.Write( pTmp^, count)
   end;
 end;
 

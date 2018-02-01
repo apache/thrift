@@ -966,10 +966,11 @@ function TBufferedStreamImpl.Read( const pBuf : Pointer; const buflen : Integer;
 var
   nRead : Integer;
   tempbuf : TBytes;
+  pTmp : PByte;
 begin
   inherited;
   Result := 0;
-  
+
   if IsOpen then begin
     while count > 0 do begin
 
@@ -984,8 +985,10 @@ begin
       end;
 
       if FReadBuffer.Position < FReadBuffer.Size then begin
-        nRead  := Min( FReadBuffer.Size - FReadBuffer.Position, count);
-        Inc( Result, FReadBuffer.Read( PByteArray(pBuf)^[offset], nRead));
+        nRead := Min( FReadBuffer.Size - FReadBuffer.Position, count);
+        pTmp  := pBuf;
+        Inc( pTmp, offset);
+        Inc( Result, FReadBuffer.Read( pTmp^, nRead));
         Dec( count, nRead);
         Inc( offset, nRead);
       end;
@@ -1011,11 +1014,14 @@ begin
 end;
 
 procedure TBufferedStreamImpl.Write( const pBuf : Pointer; offset: Integer; count: Integer);
+var pTmp : PByte;
 begin
   inherited;
   if count > 0 then begin
     if IsOpen then begin
-      FWriteBuffer.Write( PByteArray(pBuf)^[offset], count );
+      pTmp := pBuf;
+      Inc( pTmp, offset);
+      FWriteBuffer.Write( pTmp^, count );
       if FWriteBuffer.Size > FBufSize then begin
         Flush;
       end;
@@ -1254,12 +1260,16 @@ begin
 end;
 
 function TFramedTransportImpl.Read( const pBuf : Pointer; const buflen : Integer; off: Integer; len: Integer): Integer;
+var pTmp : PByte;
 begin
   if len > (buflen-off)
   then len := buflen-off;
 
+  pTmp := pBuf;
+  Inc( pTmp, off);
+
   if (FReadBuffer <> nil) and (len > 0) then begin
-    result := FReadBuffer.Read( PByteArray(pBuf)^[off], len);
+    result := FReadBuffer.Read( pTmp^, len);
     if result > 0 then begin
       Exit;
     end;
@@ -1267,7 +1277,7 @@ begin
 
   ReadFrame;
   if len > 0
-  then Result := FReadBuffer.Read( PByteArray(pBuf)^[off], len)
+  then Result := FReadBuffer.Read( pTmp^, len)
   else Result := 0;
 end;
 
@@ -1294,9 +1304,14 @@ begin
 end;
 
 procedure TFramedTransportImpl.Write( const pBuf : Pointer; off, len : Integer);
+var pTmp : PByte;
 begin
-  if len > 0
-  then FWriteBuffer.Write( PByteArray(pBuf)^[off], len );
+  if len > 0 then begin
+    pTmp := pBuf;
+    Inc( pTmp, off);
+
+    FWriteBuffer.Write( pTmp^, len );
+  end;
 end;
 
 { TFramedTransport.TFactory }
@@ -1482,7 +1497,7 @@ var wfd : TWaitForData;
     wsaError,
     msecs : Integer;
     nBytes : Integer;
-    pDest : PByte;
+    pTmp : PByte;
 begin
   inherited;
 
@@ -1491,11 +1506,12 @@ begin
   else msecs := DEFAULT_THRIFT_TIMEOUT;
 
   result := 0;
-  pDest := @(PByteArray(pBuf)^[offset]);
+  pTmp   := pBuf;
+  Inc( pTmp, offset);
   while count > 0 do begin
 
     while TRUE do begin
-      wfd := WaitForData( msecs, pDest, count, wsaError, nBytes);
+      wfd := WaitForData( msecs, pTmp, count, wsaError, nBytes);
       case wfd of
         TWaitForData.wfd_Error    :  Exit;
         TWaitForData.wfd_HaveData :  Break;
@@ -1519,8 +1535,8 @@ begin
     msecs := Max( msecs, 200);
 
     ASSERT( nBytes <= count);
-    nBytes := FTcpClient.ReceiveBuf( pDest^, nBytes);
-    Inc( pDest, nBytes);
+    nBytes := FTcpClient.ReceiveBuf( pTmp^, nBytes);
+    Inc( pTmp, nBytes);
     Dec( count, nBytes);
     Inc( result, nBytes);
   end;
@@ -1546,6 +1562,7 @@ procedure TTcpSocketStreamImpl.Write( const pBuf : Pointer; offset, count: Integ
 // old sockets version
 var bCanWrite, bError : Boolean;
     retval, wsaError : Integer;
+    pTmp : PByte;
 begin
   inherited;
 
@@ -1566,7 +1583,9 @@ begin
   if bError or not bCanWrite
   then raise TTransportExceptionUnknown.Create('unknown error');
 
-  FTcpClient.SendBuf( PByteArray(pBuf)^[offset], count);
+  pTmp := pBuf;
+  Inc( pTmp, offset);
+  FTcpClient.SendBuf( pTmp^, count);
 end;
 
 {$ELSE}
@@ -1574,16 +1593,17 @@ end;
 function TTcpSocketStreamImpl.Read( const pBuf : Pointer; const buflen : Integer; offset: Integer; count: Integer): Integer;
 // new sockets version
 var nBytes : Integer;
-    pDest : PByte;
+    pTmp : PByte;
 begin
   inherited;
 
   result := 0;
-  pDest := @(PByteArray(pBuf)^[offset]);
+  pTmp   := pBuf;
+  Inc( pTmp, offset);
   while count > 0 do begin
-    nBytes := FTcpClient.Read(pDest^, count);
+    nBytes := FTcpClient.Read( pTmp^, count);
     if nBytes = 0 then Exit;
-    Inc( pDest, nBytes);
+    Inc( pTmp, nBytes);
     Dec( count, nBytes);
     Inc( result, nBytes);
   end;
@@ -1610,13 +1630,16 @@ end;
 
 procedure TTcpSocketStreamImpl.Write( const pBuf : Pointer; offset, count: Integer);
 // new sockets version
+var pTmp : PByte;
 begin
   inherited;
 
   if not FTcpClient.IsOpen
   then raise TTransportExceptionNotOpen.Create('not open');
 
-  FTcpClient.Write( PByteArray(pBuf)^[offset], count);
+  pTmp := pBuf;
+  Inc( pTmp, offset);
+  FTcpClient.Write( pTmp^, count);
 end;
 
 {$ENDIF}
