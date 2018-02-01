@@ -105,98 +105,98 @@ struct_info_test_() ->
   [
     {"using extended definition", ?_assertEqual(
       {struct, struct, [
-        {1, undefined, double, single, undefined},
-        {2, undefined, double, integer, undefined}
+        {1, {optional, required}, double, single, undefined},
+        {2, {optional, required}, double, integer, undefined}
       ]},
       name_conflict_test_thrift:struct_info(using)
     )},
     {"delegate extended definition", ?_assertEqual(
       {struct, struct, [
-        {1, undefined, string, partial, undefined},
-        {2, undefined, {struct, struct, {name_conflict_test_thrift, delegate}}, delegate, undefined}
+        {1, {optional, required}, string, partial, undefined},
+        {2, {optional, required}, {struct, struct, {name_conflict_test_thrift, delegate}}, delegate, undefined}
       ]},
       name_conflict_test_thrift:struct_info(delegate)
     )},
     {"get extended definition", ?_assertEqual(
-      {struct, struct, [{1, undefined, bool, sbyte, undefined}]},
+      {struct, struct, [{1, {optional, required}, bool, sbyte, undefined}]},
       name_conflict_test_thrift:struct_info(get)
     )},
     {"partial extended definition", ?_assertEqual(
       {struct, struct, [
-        {1, undefined, {struct, struct, {name_conflict_test_thrift, using}}, using, undefined},
-        {2, undefined, bool, read, undefined},
-        {3, undefined, bool, write, undefined}
+        {1, {optional, required}, {struct, struct, {name_conflict_test_thrift, using}}, using, undefined},
+        {2, {optional, required}, bool, read, undefined},
+        {3, {optional, required}, bool, write, undefined}
       ]},
       name_conflict_test_thrift:struct_info(partial)
     )},
     {"ClassAndProp extended definition", ?_assertEqual(
       {struct, struct, [
-        {1, undefined, bool, 'ClassAndProp', undefined},
-        {2, undefined, bool, 'ClassAndProp_', undefined},
-        {3, undefined, bool, 'ClassAndProp__', undefined},
-        {4, undefined, bool, 'ClassAndProper', undefined}
+        {1, {optional, required}, bool, 'ClassAndProp', undefined},
+        {2, {optional, required}, bool, 'ClassAndProp_', undefined},
+        {3, {optional, required}, bool, 'ClassAndProp__', undefined},
+        {4, {optional, required}, bool, 'ClassAndProper', undefined}
       ]},
       name_conflict_test_thrift:struct_info('ClassAndProp')
     )},
     {"second_chance extended definition", ?_assertEqual(
       {struct, struct, [
-        {1, undefined, bool, 'SECOND_CHANCE', undefined},
-        {2, undefined, bool, 'SECOND_CHANCE_', undefined},
-        {3, undefined, bool, 'SECOND_CHANCE__', undefined},
-        {4, undefined, bool, 'SECOND_CHANCES', undefined}
+        {1, {optional, required}, bool, 'SECOND_CHANCE', undefined},
+        {2, {optional, required}, bool, 'SECOND_CHANCE_', undefined},
+        {3, {optional, required}, bool, 'SECOND_CHANCE__', undefined},
+        {4, {optional, required}, bool, 'SECOND_CHANCES', undefined}
       ]},
       name_conflict_test_thrift:struct_info(second_chance)
     )},
     {"NOW_EAT_THIS extended definition", ?_assertEqual(
       {struct, struct, [
-        {1, undefined, bool, now_eat_this, undefined},
-        {2, undefined, bool, now_eat_this_, undefined},
-        {3, undefined, bool, now_eat_this__, undefined},
-        {4, undefined, bool, now_eat_this_and_this, undefined}
+        {1, {optional, required}, bool, now_eat_this, undefined},
+        {2, {optional, required}, bool, now_eat_this_, undefined},
+        {3, {optional, required}, bool, now_eat_this__, undefined},
+        {4, {optional, required}, bool, now_eat_this_and_this, undefined}
       ]},
       name_conflict_test_thrift:struct_info('NOW_EAT_THIS')
     )},
     {"TheEdgeCase extended definition", ?_assertEqual(
       {struct, struct, [
-        {1, undefined, bool, theEdgeCase, undefined},
-        {2, undefined, bool, theEdgeCase_, undefined},
-        {3, undefined, bool, theEdgeCase__, undefined},
-        {4, undefined, bool, 'TheEdgeCase', undefined},
-        {5, undefined, bool, 'TheEdgeCase_', undefined},
-        {6, undefined, bool, 'TheEdgeCase__', undefined}
+        {1, {optional, required}, bool, theEdgeCase, undefined},
+        {2, {optional, required}, bool, theEdgeCase_, undefined},
+        {3, {optional, required}, bool, theEdgeCase__, undefined},
+        {4, {optional, required}, bool, 'TheEdgeCase', undefined},
+        {5, {optional, required}, bool, 'TheEdgeCase_', undefined},
+        {6, {optional, required}, bool, 'TheEdgeCase__', undefined}
       ]},
       name_conflict_test_thrift:struct_info('TheEdgeCase')
     )},
     {"Tricky_ extended definition", ?_assertEqual(
       {struct, struct, [
-        {1, undefined, bool, tricky, undefined},
-        {2, undefined, bool, 'Tricky', undefined}
+        {1, {optional, required}, bool, tricky, undefined},
+        {2, {optional, required}, bool, 'Tricky', undefined}
       ]},
       name_conflict_test_thrift:struct_info('Tricky_')
     )},
     {"Nested extended definition", ?_assertEqual(
       {struct, struct, [
-        {1, undefined, {struct, struct, {
+        {1, {optional, required}, {struct, struct, {
           name_conflict_test_thrift,
           'ClassAndProp'
         }}, 'ClassAndProp', undefined},
-        {2, undefined, {struct, struct, {
+        {2, {optional, required}, {struct, struct, {
           name_conflict_test_thrift,
           second_chance
         }}, second_chance, undefined},
-        {3, undefined, {struct, struct, {
+        {3, {optional, required}, {struct, struct, {
           name_conflict_test_thrift,
           'NOW_EAT_THIS'
         }}, 'NOW_EAT_THIS', undefined},
-        {4, undefined, {struct, struct, {
+        {4, {optional, required}, {struct, struct, {
           name_conflict_test_thrift,
           'TheEdgeCase'
         }}, 'TheEdgeCase', undefined},
-        {5, undefined, {struct, struct, {
+        {5, {optional, required}, {struct, struct, {
           name_conflict_test_thrift,
           'Tricky_'
         }}, 'Tricky_', undefined},
-        {6, undefined, {struct, struct, {
+        {6, {optional, required}, {struct, struct, {
           name_conflict_test_thrift,
           'Nested'
         }}, 'Nested', undefined}
@@ -205,8 +205,8 @@ struct_info_test_() ->
     )},
     {"Problem_ extended definition", ?_assertEqual(
       {struct, exception, [
-        {1, undefined, bool, problem, undefined},
-        {2, undefined, bool, 'Problem', undefined}
+        {1, {optional, required}, bool, problem, undefined},
+        {2, {optional, required}, bool, 'Problem', undefined}
       ]},
       name_conflict_test_thrift:struct_info('Problem_')
     )}
@@ -215,7 +215,9 @@ struct_info_test_() ->
 service_info_test_() ->
   [
     {"event params", ?_assertEqual(
-      {struct, struct, [{1, undefined, {struct, struct, {name_conflict_test_thrift, partial}}, 'get', undefined}]},
+      {struct, struct, [
+        {1, {optional, required}, {struct, struct, {name_conflict_test_thrift, partial}}, 'get', undefined}
+      ]},
       name_conflict_test_thrift:function_info(extern, event, params_type)
     )},
     {"event reply", ?_assertEqual(
@@ -227,7 +229,9 @@ service_info_test_() ->
       name_conflict_test_thrift:function_info(extern, event, exceptions)
     )},
     {"Foo params", ?_assertEqual(
-      {struct, struct, [{1, undefined, {struct, struct, {name_conflict_test_thrift, 'Nested'}}, 'Foo_args', undefined}]},
+      {struct, struct, [
+        {1, {optional, required}, {struct, struct, {name_conflict_test_thrift, 'Nested'}}, 'Foo_args', undefined}
+      ]},
       name_conflict_test_thrift:function_info(extern, 'Foo', params_type)
     )},
     {"Foo reply", ?_assertEqual(
@@ -235,7 +239,9 @@ service_info_test_() ->
       name_conflict_test_thrift:function_info(extern, 'Foo', reply_type)
     )},
     {"Foo exceptions", ?_assertEqual(
-      {struct, struct, [{1, undefined, {struct, exception, {name_conflict_test_thrift, 'Problem_'}}, 'Foo_result', undefined}]},
+      {struct, struct, [
+        {1, {optional, required}, {struct, exception, {name_conflict_test_thrift, 'Problem_'}}, 'Foo_result', undefined}
+      ]},
       name_conflict_test_thrift:function_info(extern, 'Foo', exceptions)
     )}
   ].
