@@ -2389,7 +2389,7 @@ void t_go_generator::generate_service_remote(t_service* tservice) {
         f_remote << indent() << "  Usage()" << endl;
         f_remote << indent() << "  return" << endl;
         f_remote << indent() << "}" << endl;
-        f_remote << indent() << factory << " := thrift.NewTSimpleJSONProtocolFactory()" << endl;
+        f_remote << indent() << factory << " := thrift.NewTJSONProtocolFactory()" << endl;
         f_remote << indent() << jsProt << " := " << factory << ".GetProtocol(" << mbTrans << ")"
                  << endl;
         f_remote << indent() << "argvalue" << i << " := " << tstruct_module << ".New" << tstruct_name
@@ -2417,7 +2417,7 @@ void t_go_generator::generate_service_remote(t_service* tservice) {
         f_remote << indent() << "  Usage()" << endl;
         f_remote << indent() << "  return" << endl;
         f_remote << indent() << "}" << endl;
-        f_remote << indent() << factory << " := thrift.NewTSimpleJSONProtocolFactory()" << endl;
+        f_remote << indent() << factory << " := thrift.NewTJSONProtocolFactory()" << endl;
         f_remote << indent() << jsProt << " := " << factory << ".GetProtocol(" << mbTrans << ")"
                  << endl;
         f_remote << indent() << "containerStruct" << i << " := " << package_name_ << ".New"
