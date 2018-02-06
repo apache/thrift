@@ -15,11 +15,11 @@
 # Using all stock Ubuntu Xenial packaging except for:
 # - d: does not come with Ubuntu so we're installing 2.073.2 for coverage
 # - dart: does not come with Ubuntu so we're installing 1.22.1 for coverage
+# - dotnet: does not come with Ubuntu
+# - go: Xenial comes with 1.6, but we need 1.7 or later
+# - nodejs: Xenial comes with 4.2.6 which exits LTS April 2018, so we're installing 6.x
+# - ocaml: causes stack overflow error, just started March 2018 not sure why
 #
-
-#
-# Known missing or disabled libraries:
-# - d: deimos for libevent and openssl omitted - not compatible / build errors
 
 FROM buildpack-deps:xenial-scm
 MAINTAINER Apache Thrift <dev@thrift.apache.org>
@@ -58,6 +58,10 @@ RUN curl https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor > /et
     echo "deb [arch=amd64] https://packages.microsoft.com/repos/microsoft-ubuntu-xenial-prod xenial main" > \
       /etc/apt/sources.list.d/dotnetdev.list
 
+# node.js
+RUN curl -sL https://deb.nodesource.com/gpgkey/nodesource.gpg.key | apt-key add - && \
+    echo "deb https://deb.nodesource.com/node_6.x xenial main" | tee /etc/apt/sources.list.d/nodesource.list
+    
 ### install general dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
 `# General dependencies` \
@@ -137,10 +141,15 @@ RUN apt-get install -y --no-install-recommends \
 `# GlibC dependencies` \
       libglib2.0-dev
 
-RUN apt-get install -y --no-install-recommends \
-`# golang (go) dependencies` \
-      golang-go \
-      golang-race-detector-runtime
+# golang
+ENV GOLANG_VERSION 1.7.6
+ENV GOLANG_DOWNLOAD_URL https://golang.org/dl/go$GOLANG_VERSION.linux-amd64.tar.gz
+ENV GOLANG_DOWNLOAD_SHA256 ad5808bf42b014c22dd7646458f631385003049ded0bb6af2efc7f1f79fa29ea
+RUN curl -fsSL "$GOLANG_DOWNLOAD_URL" -o golang.tar.gz && \
+      echo "$GOLANG_DOWNLOAD_SHA256  golang.tar.gz" | sha256sum -c - && \
+      tar -C /usr/local -xzf golang.tar.gz && \
+      ln -s /usr/local/go/bin/go /usr/local/bin && \
+      rm golang.tar.gz
 
 RUN apt-get install -y --no-install-recommends \
 `# Haskell dependencies` \
@@ -173,16 +182,15 @@ RUN apt-get install -y --no-install-recommends \
 
 RUN apt-get install -y --no-install-recommends \
 `# Node.js dependencies` \
-      nodejs \
-      npm && \
-    ln -s /usr/bin/nodejs /usr/bin/node
+      nodejs
 
-RUN apt-get install -y --no-install-recommends \
-`# OCaml dependencies` \
-      ocaml \
-      opam && \
-    opam init --yes && \
-    opam install --yes oasis
+# THRIFT-4517: causes stack overflows; version too old; skip ocaml in xenial
+# RUN apt-get install -y --no-install-recommends \
+# `# OCaml dependencies` \
+#       ocaml \
+#       opam && \
+#     opam init --yes && \
+#     opam install --yes oasis
 
 RUN apt-get install -y --no-install-recommends \
 `# Perl dependencies` \

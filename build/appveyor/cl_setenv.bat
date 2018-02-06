@@ -12,6 +12,8 @@
 :: limitations under the License.
 ::
 
+@ECHO OFF
+
        IF "%PROFILE%" == "MSVC2010" (
   CALL "C:\Program Files (x86)\Microsoft Visual Studio 10.0\VC\vcvarsall.bat" %PLATFORM%
 ) ELSE IF "%PROFILE%" == "MSVC2012" (
@@ -21,11 +23,11 @@
 ) ELSE IF "%PROFILE%" == "MSVC2015" (
   CALL "C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\vcvarsall.bat" %PLATFORM%
 ) ELSE IF "%PROFILE%" == "MSVC2017" (
-  CALL "C:\Program Files (x86)\Microsoft Visual Studio\2017\Enterprise\Common7\Tools\VsDevCmd.bat" %PLATFORM%
+  CALL :SETUPNEWERMSVC    || EXIT /B
 ) ELSE IF "%PROFILE%" == "MINGW" (
-  SET MSYS2_PATH_TYPE=stock
-) ELSE IF "%PROFILE%" == "MSYS" (
-  SET MSYS2_PATH_TYPE=stock
+  REM Supported, nothing special to do here.
+) ELSE IF "%PROFILE%" == "CYGWIN" (
+  REM Supported, nothing special to do here.
 ) ELSE (
   ECHO Unsupported PROFILE=%PROFILE% or PLATFORM=%PLATFORM%
   EXIT /B 1
@@ -35,58 +37,93 @@ CALL cl_setcompiler.bat   || EXIT /B
 CALL cl_setgenerator.bat  || EXIT /B
 
 SET APPVEYOR_SCRIPTS=%APPVEYOR_BUILD_FOLDER%\build\appveyor
-SET BUILDCACHE=%APPVEYOR_BUILD_FOLDER%\buildcache
-SET BUILDDIR=%APPVEYOR_BUILD_FOLDER%\local-thrift-build
-SET INSTDIR=%APPVEYOR_BUILD_FOLDER%\local-thrift-inst
+SET BUILDCACHE=%APPVEYOR_BUILD_FOLDER%\..\build\cache
+SET BUILDDIR=%APPVEYOR_BUILD_FOLDER%\..\build\%PROFILE%\%PLATFORM%
+SET INSTDIR=%APPVEYOR_BUILD_FOLDER%\..\build\%PROFILE%\%PLATFORM%
 SET SRCDIR=%APPVEYOR_BUILD_FOLDER%
 
-: PLATFORM is x64 or x86, but we want x86 to become "32" when we strip it down for paths:
+:: PLATFORM is x64 or x86
+:: NORM_PLATFORM is 64 or 32
 SET NORM_PLATFORM=%PLATFORM:~-2,2%
 IF "%NORM_PLATFORM%" == "86" (SET NORM_PLATFORM=32)
 
-:: FindBoost needs forward slashes so cmake doesn't see something as an escaped character
-SET BOOST_ROOT=C:/Libraries/boost_%BOOST_VERSION:.=_%
-SET BOOST_LIBRARYDIR=%BOOST_ROOT%/lib%NORM_PLATFORM%-msvc-%COMPILER:~-3,2%.0
-SET OPENSSL_ROOT=C:\OpenSSL-Win%NORM_PLATFORM%
-SET WIN3P=%APPVEYOR_BUILD_FOLDER%\thirdparty
+IF "%PROFILE:~0,4%" == "MSVC" (
 
-:: MSVC2010 doesn't "do" std::thread
-IF "%COMPILER%" == "vc100" (
-  SET THREADMODEL=BOOST
-) ELSE (
-  SET THREADMODEL=STD
-)
+  :: FindBoost needs forward slashes so cmake doesn't see something as an escaped character
+  SET BOOST_ROOT=C:/Libraries/boost_%BOOST_VERSION:.=_%
+  SET BOOST_LIBRARYDIR=!BOOST_ROOT!/lib%NORM_PLATFORM%-msvc-%COMPILER:~-3,2%.%COMPILER:~-1,1%
+  SET OPENSSL_ROOT=C:\OpenSSL-Win%NORM_PLATFORM%
+  SET WIN3P=%APPVEYOR_BUILD_FOLDER%\thirdparty
 
-IF "%PYTHON_VERSION%" == "" (
-  SET WITH_PYTHON=OFF
-) ELSE (
-  SET WITH_PYTHON=ON
-  SET PATH=C:\Python%PYTHON_VERSION:.=%\scripts;C:\Python%PYTHON_VERSION:.=%;!PATH!
-)
-IF "%CONFIGURATION%" == "Debug" (SET ZLIB_LIB_SUFFIX=d)
+  :: MSVC2010 doesn't "do" std::thread
+  IF "%COMPILER%" == "vc100" (
+    SET THREADMODEL=BOOST
+  ) ELSE (
+    SET THREADMODEL=STD
+  )
 
-IF NOT "%QT_VERSION%" == "" (
-  IF /i "%PLATFORM%" == "x64" SET QTEXT=_64
-  SET PATH=C:\Qt\%QT_VERSION%\%PROFILE%!QTEXT!\bin;!PATH!
-)
+  IF "%PYTHON_VERSION%" == "" (
+    SET WITH_PYTHON=OFF
+  ) ELSE (
+    SET WITH_PYTHON=ON
+    IF /i "%PLATFORM%" == "x64" SET PTEXT=-x64
+    SET PATH=C:\Python%PYTHON_VERSION:.=%!PTEXT!\scripts;C:\Python%PYTHON_VERSION:.=%!PTEXT!;!PATH!
+  )
+  IF "%CONFIGURATION%" == "Debug" (SET ZLIB_LIB_SUFFIX=d)
 
-IF NOT "%PROFILE:~0,4%" == "MSVC" (
+  IF NOT "%QT_VERSION%" == "" (
+    IF /i "%PLATFORM%" == "x64" SET QTEXT=_64
+    SET PATH=C:\Qt\%QT_VERSION%\%PROFILE%!QTEXT!\bin;!PATH!
+  )
+
+) ELSE IF "%PROFILE:~0,4%" == "MING" (
+
+  :: PLATFORM = x86 means MINGWPLAT i686
+  :: PLATFORM = x64 means MINGWPLAT x86_64
+  SET MINGWPLAT=x86_64
+  IF "%PLATFORM%" == "x86" (SET MINGWPLAT=i686)
 
   SET BASH=C:\msys64\usr\bin\bash.exe
-  SET BOOST_ROOT=
-  SET BOOST_INCLUDEDIR=/mingw64/include
-  SET BOOST_LIBRARYDIR=/mingw64/lib
-  SET OPENSSL_LIBRARIES=/mingw64/lib
-  SET OPENSSL_ROOT=/mingw64
-  SET WIN3P=
+  !BASH! -lc "sed -i '/export PATH=\/mingw32\/bin/d' ~/.bash_profile && sed -i '/export PATH=\/mingw64\/bin/d' ~/.bash_profile && echo 'export PATH=/mingw%NORM_PLATFORM%/bin:$PATH' >> ~/.bash_profile" || EXIT /B
 
-  !BASH! -lc "sed -i '/export PATH=\/mingw64\/bin/d' ~/.bash_profile && echo 'export PATH=/mingw64/bin:$PATH' >> ~/.bash_profile" || EXIT /B
+  SET BUILDDIR=%BUILDDIR:\=/%
+  SET BUILDDIR=/c!BUILDDIR:~2!
+  SET INSTDIR=%INSTDIR:\=/%
+  SET INSTDIR=/c!INSTDIR:~2!
+  SET SRCDIR=%SRCDIR:\=/%
+  SET SRCDIR=/c!SRCDIR:~2!
+
+) ELSE IF "%PROFILE:~0,4%" == "CYGW" (
+
+  SET CYGWINROOT=C:\cygwin
+  IF "%PLATFORM%" == "x64" (SET CYGWINROOT=!CYGWINROOT!64)
+
+  SET BASH=!CYGWINROOT!\bin\bash.exe
+  SET SETUP=!CYGWINROOT!\setup-x86
+  IF "%PLATFORM%" == "x64" (SET SETUP=!SETUP!_64)
+  SET SETUP=!SETUP!.exe
+
+  SET BUILDDIR=%BUILDDIR:\=/%
+  SET BUILDDIR=/cygdrive/c!BUILDDIR:~2!
+  SET INSTDIR=%INSTDIR:\=/%
+  SET INSTDIR_CYG=/cygdrive/c!INSTDIR:~2!
+  SET SRCDIR=%SRCDIR:\=/%
+  SET SRCDIR=/cygdrive/c!SRCDIR:~2!
 
 )
 
-SET BUILDDIR_MSYS=%BUILDDIR:\=/%
-SET BUILDDIR_MSYS=/c%BUILDDIR_MSYS:~2%
-SET INSTDIR_MSYS=%INSTDIR:\=/%
-SET INSTDIR_MSYS=/c%INSTDIR_MSYS:~2%
-SET SRCDIR_MSYS=%SRCDIR:\=/%
-SET SRCDIR_MSYS=/c%SRCDIR_MSYS:~2%
+GOTO :EOF
+
+:SETUPNEWERMSVC
+  FOR /F "USEBACKQ TOKENS=*" %%i IN (`call "%ProgramFiles(x86)%\Microsoft Visual Studio\Installer\vswhere.exe" -version "[15.0,16.0)" -property installationPath`) DO (
+    IF "%MSVCROOT%" == "" (SET MSVCROOT=%%i)
+  )
+  SET MSVCPLAT=x86
+  IF "%PLATFORM%" == "x64" (SET MSVCPLAT=amd64)
+
+  SET CURRENTDIR=%CD%
+  CALL "!MSVCROOT!\Common7\Tools\VsDevCmd.bat" -arch=!MSVCPLAT! || EXIT /B
+  CD %CURRENTDIR%
+  EXIT /B
+
+:EOF

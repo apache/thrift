@@ -22,15 +22,14 @@ CALL cl_setenv.bat                          || EXIT /B
 SET CMAKEARGS=^
   -G'%GENERATOR%' ^
   -DCMAKE_BUILD_TYPE=%CONFIGURATION% ^
-  -DCMAKE_INSTALL_PREFIX=%INSTDIR_MSYS% ^
-  -DCMAKE_MAKE_PROGRAM=/mingw64/bin/mingw32-make ^
-  -DCMAKE_C_COMPILER=x86_64-w64-mingw32-gcc.exe ^
-  -DCMAKE_CXX_COMPILER=x86_64-w64-mingw32-g++.exe ^
-  -DWITH_LIBEVENT=OFF ^
+  -DCMAKE_INSTALL_PREFIX=%INSTDIR% ^
+  -DCMAKE_MAKE_PROGRAM=/mingw%NORM_PLATFORM%/bin/mingw32-make ^
+  -DCMAKE_C_COMPILER=/mingw%NORM_PLATFORM%/bin/gcc.exe ^
+  -DCMAKE_CXX_COMPILER=/mingw%NORM_PLATFORM%/bin/g++.exe ^
   -DWITH_PYTHON=OFF ^
   -DWITH_SHARED_LIB=OFF ^
   -DWITH_STATIC_LIB=ON
 
 @ECHO ON
-%BASH% -lc "mkdir -p %BUILDDIR_MSYS% && cd %BUILDDIR_MSYS% && cmake.exe %SRCDIR_MSYS% %CMAKEARGS% && cmake --build . --config %CONFIGURATION% --target install" || EXIT /B
+%BASH% -lc "mkdir -p %BUILDDIR% && cd %BUILDDIR% && cmake.exe %SRCDIR% %CMAKEARGS% && cmake --build . --config %CONFIGURATION% --target install" || EXIT /B
 @ECHO OFF

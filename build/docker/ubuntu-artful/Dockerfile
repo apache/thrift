@@ -14,10 +14,12 @@
 # Apache Thrift Docker build environment for Ubuntu Artful
 # Using all stock Ubuntu Artful packaging except for:
 # - cpp: stock boost 1.62 in artful has a nasty bug so we use stock boost 1.63
-# - d: does not come with Ubuntu so we're installing the latest
-# - d: deimos for libevent and openssl omitted - not compatible / build errors
-# - haxe: see THRIFT-4352, but test/haxe cores during testing
-#         and hxcpp 3.4.64 is not compatible with artful
+# - d: dmd does not come with Ubuntu
+# - dart: does not come with Ubuntu
+# - dotnet: does not come with Ubuntu
+# - haxe: version 3.4.2 that comes with Ubuntu cores in our CI build
+# - go: xenial comes with 1.8, we want the latest (supported)
+# - nodejs: want v8, Ubuntu comes with v6
 #
 
 FROM buildpack-deps:artful-scm
@@ -41,24 +43,22 @@ RUN apt-get update && \
 # RUN echo "deb http://download.mono-project.com/repo/debian xenial main" | tee /etc/apt/sources.list.d/mono.list && \
 #     apt-key adv --keyserver keyserver.ubuntu.com --recv-keys A6A19B38D3D831EF
 
-# dotnet (core)
-RUN curl https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor > /etc/apt/trusted.gpg.d/microsoft.gpg && \
-    echo "deb [arch=amd64] https://packages.microsoft.com/repos/microsoft-ubuntu-artful-prod artful main" > \
-      /etc/apt/sources.list.d/dotnetdev.list
-
-# node.js
-RUN curl -sL https://deb.nodesource.com/gpgkey/nodesource.gpg.key | apt-key add - \
-    echo "deb https://deb.nodesource.com/node_8.x artful main" | tee /etc/apt/sources.list.d/nodesource.list
-
-# D
-RUN apt-key adv --keyserver keyserver.ubuntu.com --recv-keys EBCF975E5BA24D5E && \
-        wget http://master.dl.sourceforge.net/project/d-apt/files/d-apt.list -O /etc/apt/sources.list.d/d-apt.list && \
-        wget -qO - https://dlang.org/d-keyring.gpg | apt-key add -
-
 # Dart
 RUN curl https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - && \
     curl https://storage.googleapis.com/download.dartlang.org/linux/debian/dart_stable.list > \
       /etc/apt/sources.list.d/dart_stable.list
+
+# dotnet (netcore)
+RUN curl https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor > /etc/apt/trusted.gpg.d/microsoft.gpg && \
+    echo "deb [arch=amd64] https://packages.microsoft.com/repos/microsoft-ubuntu-artful-prod artful main" > \
+      /etc/apt/sources.list.d/dotnetdev.list
+
+# haxe (https://haxe.org/download/linux/)
+RUN add-apt-repository ppa:haxe/releases -y
+
+# node.js
+RUN curl -sL https://deb.nodesource.com/gpgkey/nodesource.gpg.key | apt-key add - && \
+    echo "deb https://deb.nodesource.com/node_8.x artful main" | tee /etc/apt/sources.list.d/nodesource.list
 
 ### install general dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -92,25 +92,30 @@ RUN apt-get install -y --no-install-recommends \
 `# csharp (mono) dependencies` \
       mono-devel
 
-ENV D_VERSION 2.077.1-0.1
-RUN apt-get install -y --no-install-recommends \
-      `# D dependencies` \
-      dmd-bin=$D_VERSION \
-      libphobos2-dev=$D_VERSION \
-      dmd-compiler=$D_VERSION \
-      dmd-tools=$D_VERSION \
-      dub \
-      dfmt \
-      dscanner \
-      libevent-dev \
-      libssl-dev \
-      xdg-utils
-RUN mkdir -p /usr/include/dmd/druntime/import/deimos /usr/include/dmd/druntime/import/C && \
+ENV SBCL_VERSION 1.4.4
+RUN \
+`# Common Lisp (sbcl) dependencies` \
+    curl --version && \
+    curl -O -J -L https://kent.dl.sourceforge.net/project/sbcl/sbcl/${SBCL_VERSION}/sbcl-${SBCL_VERSION}-x86-64-linux-binary.tar.bz2 && \
+    tar xjf sbcl-${SBCL_VERSION}-x86-64-linux-binary.tar.bz2 && \
+    cd sbcl-${SBCL_VERSION}-x86-64-linux && \
+    ./install.sh && \
+    sbcl --version && \
+    rm -rf sbcl*
+
+ENV D_VERSION     2.077.1
+ENV DMD_DEB       dmd_2.077.1-0_amd64.deb
+RUN \
+`# D dependencies` \
+    wget -q http://downloads.dlang.org/releases/2.x/${D_VERSION}/${DMD_DEB} && \
+    dpkg --install ${DMD_DEB} && \
+    rm -f ${DMD_DEB} && \
+    mkdir -p /usr/include/dmd/druntime/import/deimos /usr/include/dmd/druntime/import/C && \
     curl -sSL https://github.com/D-Programming-Deimos/libevent/archive/master.tar.gz| tar xz && \
     mv libevent-master/deimos/* /usr/include/dmd/druntime/import/deimos/ && \
     mv libevent-master/C/* /usr/include/dmd/druntime/import/C/ && \
-    rm -rf libevent-master
-RUN curl -sSL https://github.com/D-Programming-Deimos/openssl/archive/master.tar.gz| tar xz && \
+    rm -rf libevent-master && \
+    curl -sSL https://github.com/D-Programming-Deimos/openssl/archive/master.tar.gz| tar xz && \
     mv openssl-master/deimos/* /usr/include/dmd/druntime/import/deimos/ && \
     mv openssl-master/C/* /usr/include/dmd/druntime/import/C/ && \
     rm -rf openssl-master
@@ -136,24 +141,28 @@ RUN apt-get install -y --no-install-recommends \
 `# GlibC dependencies` \
       libglib2.0-dev
 
-RUN apt-get install -y --no-install-recommends \
-`# golang (go) dependencies` \
-      golang-go \
-      golang-race-detector-runtime
+# golang
+ENV GOLANG_VERSION 1.9.4
+ENV GOLANG_DOWNLOAD_URL https://golang.org/dl/go$GOLANG_VERSION.linux-amd64.tar.gz
+ENV GOLANG_DOWNLOAD_SHA256 15b0937615809f87321a457bb1265f946f9f6e736c563d6c5e0bd2c22e44f779
+RUN curl -fsSL "$GOLANG_DOWNLOAD_URL" -o golang.tar.gz && \
+      echo "$GOLANG_DOWNLOAD_SHA256  golang.tar.gz" | sha256sum -c - && \
+            tar -C /usr/local -xzf golang.tar.gz && \
+                  ln -s /usr/local/go/bin/go /usr/local/bin && \
+                        rm golang.tar.gz
 
 RUN apt-get install -y --no-install-recommends \
 `# Haskell dependencies` \
       ghc \
       cabal-install
 
-# see THRIFT-4352, test/haxe cores on artful
-# RUN apt-get install -y --no-install-recommends \
-# `# Haxe dependencies` \
-#       haxe \
-#       neko \
-#       neko-dev
-# RUN haxelib setup --always /usr/share/haxe/lib && \
-#     haxelib install --always hxcpp 2>&1 > /dev/null
+RUN apt-get install -y --no-install-recommends \
+`# Haxe dependencies` \
+      haxe \
+      neko \
+      neko-dev && \
+    haxelib setup --always /usr/share/haxe/lib && \
+    haxelib install --always hxcpp 2>&1 > /dev/null
 
 RUN apt-get install -y --no-install-recommends \
 `# Java dependencies` \

@@ -84,7 +84,9 @@ public:
   virtual bool isOpen();
 
   /**
-   * Calls select on the socket to see if there is more data available.
+   * Checks whether there is more data available in the socket to read.
+   *
+   * This call blocks until at least one byte is available or the socket is closed.
    */
   virtual bool peek();
 
@@ -99,6 +101,17 @@ public:
    * Shuts down communications on the socket.
    */
   virtual void close();
+
+  /**
+   * Determines whether there is pending data to read or not.
+   *
+   * This call does not block.
+   * \throws TTransportException of types:
+   *           NOT_OPEN means the socket has been closed
+   *           UNKNOWN means something unexpected happened
+   * \returns true if there is pending data to read, false otherwise
+   */
+  virtual bool hasPendingDataToRead();
 
   /**
    * Reads from the underlying socket.

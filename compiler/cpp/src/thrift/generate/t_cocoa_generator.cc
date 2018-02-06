@@ -2733,8 +2733,8 @@ void t_cocoa_generator::print_const_value(ostream& out,
     indent(out);
     const vector<t_field*>& fields = ((t_struct*)type)->get_members();
     vector<t_field*>::const_iterator f_iter;
-    const map<t_const_value*, t_const_value*>& val = value->get_map();
-    map<t_const_value*, t_const_value*>::const_iterator v_iter;
+    const map<t_const_value*, t_const_value*, t_const_value::value_compare>& val = value->get_map();
+    map<t_const_value*, t_const_value*, t_const_value::value_compare>::const_iterator v_iter;
     if (defval)
       out << type_name(type) << " ";
     out << name << " = [" << type_name(type, true) << " new];"
@@ -2758,8 +2758,8 @@ void t_cocoa_generator::print_const_value(ostream& out,
     indent(mapout);
     t_type* ktype = ((t_map*)type)->get_key_type();
     t_type* vtype = ((t_map*)type)->get_val_type();
-    const map<t_const_value*, t_const_value*>& val = value->get_map();
-    map<t_const_value*, t_const_value*>::const_iterator v_iter;
+    const map<t_const_value*, t_const_value*, t_const_value::value_compare>& val = value->get_map();
+    map<t_const_value*, t_const_value*, t_const_value::value_compare>::const_iterator v_iter;
     if (defval)
       mapout << type_name(type) << " ";
     mapout << name << " = @{";
@@ -2904,8 +2904,8 @@ string t_cocoa_generator::render_const_value(string name,
   } else if (type->is_struct() || type->is_xception()) {
     const vector<t_field*>& fields = ((t_struct*)type)->get_members();
     vector<t_field*>::const_iterator f_iter;
-    const map<t_const_value*, t_const_value*>& val = value->get_map();
-    map<t_const_value*, t_const_value*>::const_iterator v_iter;
+    const map<t_const_value*, t_const_value*, t_const_value::value_compare>& val = value->get_map();
+    map<t_const_value*, t_const_value*, t_const_value::value_compare>::const_iterator v_iter;
     if (val.size() > 0)
       render << "[[" << type_name(type, true) << " alloc] initWith";
     else
@@ -2937,8 +2937,8 @@ string t_cocoa_generator::render_const_value(string name,
     render << "[[NSDictionary alloc] initWithObjectsAndKeys: ";
     t_type* ktype = ((t_map*)type)->get_key_type();
     t_type* vtype = ((t_map*)type)->get_val_type();
-    const map<t_const_value*, t_const_value*>& val = value->get_map();
-    map<t_const_value*, t_const_value*>::const_iterator v_iter;
+    const map<t_const_value*, t_const_value*, t_const_value::value_compare>& val = value->get_map();
+    map<t_const_value*, t_const_value*, t_const_value::value_compare>::const_iterator v_iter;
     bool first = true;
     for (v_iter = val.begin(); v_iter != val.end(); ++v_iter) {
       string key = render_const_value(name, ktype, v_iter->first, true);

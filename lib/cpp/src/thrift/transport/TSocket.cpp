@@ -21,6 +21,9 @@
 
 #include <cstring>
 #include <sstream>
+#ifdef HAVE_SYS_IOCTL_H
+#include <sys/ioctl.h>
+#endif
 #ifdef HAVE_SYS_SOCKET_H
 #include <sys/socket.h>
 #endif
@@ -165,6 +168,26 @@ TSocket::TSocket(THRIFT_SOCKET socket, stdcxx::shared_ptr<THRIFT_SOCKET> interru
 
 TSocket::~TSocket() {
   close();
+}
+
+bool TSocket::hasPendingDataToRead() {
+  if (!isOpen()) {
+    return false;
+  }
+
+  int32_t retries = 0;
+  THRIFT_IOCTL_SOCKET_NUM_BYTES_TYPE numBytesAvailable;
+try_again:
+  int r = THRIFT_IOCTL_SOCKET(socket_, FIONREAD, &numBytesAvailable);
+  if (r == -1) {
+    int errno_copy = THRIFT_GET_SOCKET_ERROR;
+    if (errno_copy == THRIFT_EINTR && (retries++ < maxRecvRetries_)) {
+      goto try_again;
+    }
+    GlobalOutput.perror("TSocket::hasPendingDataToRead() THRIFT_IOCTL_SOCKET() " + getSocketInfo(), errno_copy);
+    throw TTransportException(TTransportException::UNKNOWN, "Unknown", errno_copy);
+  }
+  return numBytesAvailable > 0;
 }
 
 bool TSocket::isOpen() {

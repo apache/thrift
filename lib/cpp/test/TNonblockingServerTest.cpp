@@ -178,7 +178,7 @@ private:
 protected:
   shared_ptr<server::TNonblockingServer> server;
 private:
-  shared_ptr<concurrency::Thread> thread;
+  shared_ptr<apache::thrift::concurrency::Thread> thread;
 
 };
 

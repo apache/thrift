@@ -777,8 +777,8 @@ void t_html_generator::print_const_value(t_type* type, t_const_value* tvalue) {
     f_out_ << "{ ";
     const vector<t_field*>& fields = ((t_struct*)truetype)->get_members();
     vector<t_field*>::const_iterator f_iter;
-    const map<t_const_value*, t_const_value*>& val = tvalue->get_map();
-    map<t_const_value*, t_const_value*>::const_iterator v_iter;
+    const map<t_const_value*, t_const_value*, t_const_value::value_compare>& val = tvalue->get_map();
+    map<t_const_value*, t_const_value*, t_const_value::value_compare>::const_iterator v_iter;
     for (v_iter = val.begin(); v_iter != val.end(); ++v_iter) {
       t_type* field_type = NULL;
       for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
@@ -800,8 +800,8 @@ void t_html_generator::print_const_value(t_type* type, t_const_value* tvalue) {
     f_out_ << " }";
   } else if (truetype->is_map()) {
     f_out_ << "{ ";
-    map<t_const_value*, t_const_value*> map_elems = tvalue->get_map();
-    map<t_const_value*, t_const_value*>::iterator map_iter;
+    map<t_const_value*, t_const_value*, t_const_value::value_compare> map_elems = tvalue->get_map();
+    map<t_const_value*, t_const_value*, t_const_value::value_compare>::iterator map_iter;
     for (map_iter = map_elems.begin(); map_iter != map_elems.end(); map_iter++) {
       if (!first) {
         f_out_ << ", ";

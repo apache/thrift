@@ -1,5 +1,3 @@
-// +build !go1.7
-
 package main
 
 /*
@@ -22,12 +20,11 @@ package main
  */
 
 import (
+	"context"
 	"fmt"
 	"shared"
 	"strconv"
 	"tutorial"
-
-	"golang.org/x/net/context"
 )
 
 type CalculatorHandler struct {

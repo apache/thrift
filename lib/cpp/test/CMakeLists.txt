@@ -1,4 +1,4 @@
-﻿#
+#
 # Licensed to the Apache Software Foundation (ASF) under one
 # or more contributor license agreements. See the NOTICE file
 # distributed with this work for additional information
@@ -18,9 +18,6 @@
 #
 
 include_directories(SYSTEM "${Boost_INCLUDE_DIRS}")
-
-add_definitions("-D__STDC_FORMAT_MACROS")
-add_definitions("-D__STDC_LIMIT_MACROS")
 
 if (WITH_DYN_LINK_TEST)
     add_definitions( -DBOOST_TEST_DYN_LINK )

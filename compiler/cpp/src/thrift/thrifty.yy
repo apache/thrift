@@ -35,6 +35,7 @@
 #define __STDC_FORMAT_MACROS
 #endif
 #include <stdio.h>
+#include <string.h>
 #ifndef _MSC_VER
 #include <inttypes.h>
 #else

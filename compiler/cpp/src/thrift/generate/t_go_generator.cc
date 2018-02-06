@@ -81,7 +81,6 @@ public:
     gen_package_prefix_ = "";
     package_flag = "";
     read_write_private_ = false;
-    legacy_context_ = false;
     ignore_initialisms_ = false;
     for( iter = parsed_options.begin(); iter != parsed_options.end(); ++iter) {
       if( iter->first.compare("package_prefix") == 0) {
@@ -92,8 +91,6 @@ public:
         package_flag = (iter->second);
       } else if( iter->first.compare("read_write_private") == 0) {
         read_write_private_ = true;
-      } else if( iter->first.compare("legacy_context") == 0) {
-        legacy_context_ = true;
       } else if( iter->first.compare("ignore_initialisms") == 0) {
         ignore_initialisms_ =  true;
       } else {
@@ -287,7 +284,6 @@ private:
   std::string gen_package_prefix_;
   std::string gen_thrift_import_;
   bool read_write_private_;
-  bool legacy_context_;
   bool ignore_initialisms_;
 
   /**
@@ -753,14 +749,6 @@ void t_go_generator::init_generator() {
   f_consts_name_ = package_dir_ + "/" + program_name_ + "-consts.go";
   f_consts_.open(f_consts_name_.c_str());
 
-  vector<t_service*> services = program_->get_services();
-  vector<t_service*>::iterator sv_iter;
-
-  for (sv_iter = services.begin(); sv_iter != services.end(); ++sv_iter) {
-    string service_dir = package_dir_ + "/" + underscore((*sv_iter)->get_name()) + "-remote";
-    MKDIR(service_dir.c_str());
-  }
-
   // Print header
   f_types_ << go_autogen_comment() << go_package() << render_includes(false);
 
@@ -883,16 +871,10 @@ string t_go_generator::go_imports_begin(bool consts) {
       "\t\"database/sql/driver\"\n"
       "\t\"errors\"\n";
   }
-  if (legacy_context_) {
-    extra +=
-      "\t\"golang.org/x/net/context\"\n";
-  } else {
-    extra +=
-      "\t\"context\"\n";
-  }
   return string(
       "import (\n"
       "\t\"bytes\"\n"
+      "\t\"context\"\n"
       "\t\"reflect\"\n"
       + extra +
       "\t\"fmt\"\n"
@@ -1115,8 +1097,8 @@ string t_go_generator::render_const_value(t_type* type, t_const_value* value, co
     indent_up();
     const vector<t_field*>& fields = ((t_struct*)type)->get_members();
     vector<t_field*>::const_iterator f_iter;
-    const map<t_const_value*, t_const_value*>& val = value->get_map();
-    map<t_const_value*, t_const_value*>::const_iterator v_iter;
+    const map<t_const_value*, t_const_value*, t_const_value::value_compare>& val = value->get_map();
+    map<t_const_value*, t_const_value*, t_const_value::value_compare>::const_iterator v_iter;
 
     for (v_iter = val.begin(); v_iter != val.end(); ++v_iter) {
       t_type* field_type = NULL;
@@ -1141,10 +1123,10 @@ string t_go_generator::render_const_value(t_type* type, t_const_value* value, co
   } else if (type->is_map()) {
     t_type* ktype = ((t_map*)type)->get_key_type();
     t_type* vtype = ((t_map*)type)->get_val_type();
-    const map<t_const_value*, t_const_value*>& val = value->get_map();
+    const map<t_const_value*, t_const_value*, t_const_value::value_compare>& val = value->get_map();
     out << "map[" << type_to_go_type(ktype) << "]" << type_to_go_type(vtype) << "{" << endl;
     indent_up();
-    map<t_const_value*, t_const_value*>::const_iterator v_iter;
+    map<t_const_value*, t_const_value*, t_const_value::value_compare>::const_iterator v_iter;
 
     for (v_iter = val.begin(); v_iter != val.end(); ++v_iter) {
       out << indent() << render_const_value(ktype, v_iter->first, name) << ": "
@@ -2055,8 +2037,16 @@ void t_go_generator::generate_service_remote(t_service* tservice) {
     parent = parent->get_extends();
   }
 
+  // This file is not useful if there are no functions; don't generate it
+  if (functions.size() == 0) {
+    return;
+  }
+
+  string f_remote_dir = package_dir_ + "/" + underscore(service_name_) + "-remote";
+  MKDIR(f_remote_dir.c_str());
+
   vector<t_function*>::iterator f_iter;
-  string f_remote_name = package_dir_ + "/" + underscore(service_name_) + "-remote/"
+  string f_remote_name = f_remote_dir + "/"
                          + underscore(service_name_) + "-remote.go";
   ofstream f_remote;
   f_remote.open(f_remote_name.c_str());
@@ -2073,9 +2063,6 @@ void t_go_generator::generate_service_remote(t_service* tservice) {
   string unused_protection;
 
   string ctxPackage = "context";
-  if (legacy_context_) {
-    ctxPackage = "golang.org/x/net/context";
-  }
 
   f_remote << go_autogen_comment();
   f_remote << indent() << "package main" << endl << endl;
@@ -2129,6 +2116,24 @@ void t_go_generator::generate_service_remote(t_service* tservice) {
   f_remote << indent() << "  os.Exit(0)" << endl;
   f_remote << indent() << "}" << endl;
   f_remote << indent() << endl;
+
+  f_remote << indent() << "type httpHeaders map[string]string" << endl;
+  f_remote << indent() << endl;
+  f_remote << indent() << "func (h httpHeaders) String() string {" << endl;
+  f_remote << indent() << "  var m map[string]string = h" << endl;
+  f_remote << indent() << "  return fmt.Sprintf(\"%s\", m)" << endl;
+  f_remote << indent() << "}" << endl;
+  f_remote << indent() << endl;
+  f_remote << indent() << "func (h httpHeaders) Set(value string) error {" << endl;
+  f_remote << indent() << "  parts := strings.Split(value, \": \")" << endl;
+  f_remote << indent() << "  if len(parts) != 2 {" << endl;
+  f_remote << indent() << "    return fmt.Errorf(\"header should be of format 'Key: Value'\")" << endl;
+  f_remote << indent() << "  }" << endl;
+  f_remote << indent() << "  h[parts[0]] = parts[1]" << endl;
+  f_remote << indent() << "  return nil" << endl;
+  f_remote << indent() << "}" << endl;
+  f_remote << indent() << endl;
+
   f_remote << indent() << "func main() {" << endl;
   indent_up();
   f_remote << indent() << "flag.Usage = Usage" << endl;
@@ -2138,6 +2143,7 @@ void t_go_generator::generate_service_remote(t_service* tservice) {
   f_remote << indent() << "var urlString string" << endl;
   f_remote << indent() << "var framed bool" << endl;
   f_remote << indent() << "var useHttp bool" << endl;
+  f_remote << indent() << "headers := make(httpHeaders)" << endl;
   f_remote << indent() << "var parsedUrl *url.URL" << endl;
   f_remote << indent() << "var trans thrift.TTransport" << endl;
   f_remote << indent() << "_ = strconv.Atoi" << endl;
@@ -2152,6 +2158,7 @@ void t_go_generator::generate_service_remote(t_service* tservice) {
   f_remote << indent() << "flag.BoolVar(&framed, \"framed\", false, \"Use framed transport\")"
            << endl;
   f_remote << indent() << "flag.BoolVar(&useHttp, \"http\", false, \"Use http\")" << endl;
+  f_remote << indent() << "flag.Var(headers, \"H\", \"Headers to set on the http(s) request (e.g. -H \\\"Key: Value\\\")\")" << endl;
   f_remote << indent() << "flag.Parse()" << endl;
   f_remote << indent() << endl;
   f_remote << indent() << "if len(urlString) > 0 {" << endl;
@@ -2162,7 +2169,7 @@ void t_go_generator::generate_service_remote(t_service* tservice) {
   f_remote << indent() << "    flag.Usage()" << endl;
   f_remote << indent() << "  }" << endl;
   f_remote << indent() << "  host = parsedUrl.Host" << endl;
-  f_remote << indent() << "  useHttp = len(parsedUrl.Scheme) <= 0 || parsedUrl.Scheme == \"http\""
+  f_remote << indent() << "  useHttp = len(parsedUrl.Scheme) <= 0 || parsedUrl.Scheme == \"http\" || parsedUrl.Scheme == \"https\""
            << endl;
   f_remote << indent() << "} else if useHttp {" << endl;
   f_remote << indent() << "  _, err := url.Parse(fmt.Sprint(\"http://\", host, \":\", port))"
@@ -2177,6 +2184,12 @@ void t_go_generator::generate_service_remote(t_service* tservice) {
   f_remote << indent() << "var err error" << endl;
   f_remote << indent() << "if useHttp {" << endl;
   f_remote << indent() << "  trans, err = thrift.NewTHttpClient(parsedUrl.String())" << endl;
+  f_remote << indent() << "  if len(headers) > 0 {" << endl;
+  f_remote << indent() << "    httptrans := trans.(*thrift.THttpClient)" << endl;
+  f_remote << indent() << "    for key, value := range headers {" << endl;
+  f_remote << indent() << "      httptrans.SetHeader(key, value)" << endl;
+  f_remote << indent() << "    }" << endl;
+  f_remote << indent() << "  }" << endl;
   f_remote << indent() << "} else {" << endl;
   f_remote << indent() << "  portStr := fmt.Sprint(port)" << endl;
   f_remote << indent() << "  if strings.Contains(host, \":\") {" << endl;
@@ -2363,7 +2376,7 @@ void t_go_generator::generate_service_remote(t_service* tservice) {
         f_remote << indent() << "  Usage()" << endl;
         f_remote << indent() << "  return" << endl;
         f_remote << indent() << "}" << endl;
-        f_remote << indent() << factory << " := thrift.NewTSimpleJSONProtocolFactory()" << endl;
+        f_remote << indent() << factory << " := thrift.NewTJSONProtocolFactory()" << endl;
         f_remote << indent() << jsProt << " := " << factory << ".GetProtocol(" << mbTrans << ")"
                  << endl;
         f_remote << indent() << "argvalue" << i << " := " << tstruct_module << ".New" << tstruct_name
@@ -2391,7 +2404,7 @@ void t_go_generator::generate_service_remote(t_service* tservice) {
         f_remote << indent() << "  Usage()" << endl;
         f_remote << indent() << "  return" << endl;
         f_remote << indent() << "}" << endl;
-        f_remote << indent() << factory << " := thrift.NewTSimpleJSONProtocolFactory()" << endl;
+        f_remote << indent() << factory << " := thrift.NewTJSONProtocolFactory()" << endl;
         f_remote << indent() << jsProt << " := " << factory << ".GetProtocol(" << mbTrans << ")"
                  << endl;
         f_remote << indent() << "containerStruct" << i << " := " << package_name_ << ".New"
@@ -2576,7 +2589,7 @@ void t_go_generator::generate_service_server(t_service* tservice) {
     f_types_ << indent() << "  oprot.WriteMessageBegin(name, thrift.EXCEPTION, seqId)" << endl;
     f_types_ << indent() << "  " << x << ".Write(oprot)" << endl;
     f_types_ << indent() << "  oprot.WriteMessageEnd()" << endl;
-    f_types_ << indent() << "  oprot.Flush()" << endl;
+    f_types_ << indent() << "  oprot.Flush(ctx)" << endl;
     f_types_ << indent() << "  return false, " << x << endl;
     f_types_ << indent() << "" << endl;
     f_types_ << indent() << "}" << endl << endl;
@@ -2641,7 +2654,7 @@ void t_go_generator::generate_process_function(t_service* tservice, t_function* 
                << "\", thrift.EXCEPTION, seqId)" << endl;
     f_types_ << indent() << "  x.Write(oprot)" << endl;
     f_types_ << indent() << "  oprot.WriteMessageEnd()" << endl;
-    f_types_ << indent() << "  oprot.Flush()" << endl;
+    f_types_ << indent() << "  oprot.Flush(ctx)" << endl;
   }
   f_types_ << indent() << "  return false, err" << endl;
   f_types_ << indent() << "}" << endl << endl;
@@ -2709,7 +2722,7 @@ void t_go_generator::generate_process_function(t_service* tservice, t_function* 
                << "\", thrift.EXCEPTION, seqId)" << endl;
     f_types_ << indent() << "  x.Write(oprot)" << endl;
     f_types_ << indent() << "  oprot.WriteMessageEnd()" << endl;
-    f_types_ << indent() << "  oprot.Flush()" << endl;
+    f_types_ << indent() << "  oprot.Flush(ctx)" << endl;
   }
 
   f_types_ << indent() << "  return true, err2" << endl;
@@ -2746,7 +2759,7 @@ void t_go_generator::generate_process_function(t_service* tservice, t_function* 
                << endl;
     f_types_ << indent() << "  err = err2" << endl;
     f_types_ << indent() << "}" << endl;
-    f_types_ << indent() << "if err2 = oprot.Flush(); err == nil && err2 != nil {" << endl;
+    f_types_ << indent() << "if err2 = oprot.Flush(ctx); err == nil && err2 != nil {" << endl;
     f_types_ << indent() << "  err = err2" << endl;
     f_types_ << indent() << "}" << endl;
     f_types_ << indent() << "if err != nil {" << endl;
@@ -3642,6 +3655,4 @@ THRIFT_REGISTER_GENERATOR(go, "Go",
                           "    ignore_initialisms\n"
                           "                     Disable automatic spelling correction of initialisms (e.g. \"URL\")\n" \
                           "    read_write_private\n"
-                          "                     Make read/write methods private, default is public Read/Write\n" \
-                          "    legacy_context\n"
-                          "                     Use legacy x/net/context instead of context in go<1.7.\n")
+                          "                     Make read/write methods private, default is public Read/Write\n")

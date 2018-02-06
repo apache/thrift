@@ -53,11 +53,11 @@ uses
 
 type
   IMultiplexedProcessor = interface( IProcessor)
-    ['{810FF32D-22A2-4D58-B129-B0590703ECEC}']
+    ['{807F9D19-6CF4-4789-840E-93E87A12EB63}']
     // Register a service with this TMultiplexedProcessor.  This allows us
     // to broker requests to individual services by using the service name
     // to select them at request time.
-    procedure RegisterProcessor( const serviceName : String; const processor : IProcessor);
+    procedure RegisterProcessor( const serviceName : String; const processor : IProcessor; const asDefault : Boolean = FALSE);
   end;
 
 
@@ -76,6 +76,7 @@ type
 
   private
     FServiceProcessorMap : TDictionary<String, IProcessor>;
+    FDefaultProcessor : IProcessor;
 
     procedure Error( const oprot : IProtocol; const msg : TThriftMessage;
                      extype : TApplicationExceptionSpecializedClass; const etxt : string);
@@ -87,7 +88,7 @@ type
     // Register a service with this TMultiplexedProcessorImpl.  This allows us
     // to broker requests to individual services by using the service name
     // to select them at request time.
-    procedure RegisterProcessor( const serviceName : String; const processor : IProcessor);
+    procedure RegisterProcessor( const serviceName : String; const processor : IProcessor; const asDefault : Boolean = FALSE);
 
     { This implementation of process performs the following steps:
       - Read the beginning of the message.
@@ -135,9 +136,15 @@ begin
 end;
 
 
-procedure TMultiplexedProcessorImpl.RegisterProcessor( const serviceName : String; const processor : IProcessor);
+procedure TMultiplexedProcessorImpl.RegisterProcessor( const serviceName : String; const processor : IProcessor; const asDefault : Boolean);
 begin
   FServiceProcessorMap.Add( serviceName, processor);
+
+  if asDefault then begin
+    if FDefaultProcessor = nil
+    then FDefaultProcessor := processor
+    else raise TApplicationExceptionInternalError.Create('Only one default service allowed');
+  end;
 end;
 
 
@@ -184,27 +191,36 @@ begin
   end;
 
   // Extract the service name
+  // use FDefaultProcessor as fallback if there is no separator
   idx := Pos( TMultiplexedProtocol.SEPARATOR, msg.Name);
-  if idx < 1 then begin
+  if idx > 0 then begin
+
+    // Create a new TMessage, something that can be consumed by any TProtocol
+    sService := Copy( msg.Name, 1, idx-1);
+    if not FServiceProcessorMap.TryGetValue( sService, processor)
+    then begin
+      Error( oprot, msg,
+             TApplicationExceptionInternalError,
+             Format(ERROR_UNKNOWN_SERVICE,[sService]));
+      Exit( FALSE);
+    end;
+
+    // Create a new TMessage, removing the service name
+    Inc( idx, Length(TMultiplexedProtocol.SEPARATOR));
+    Init( newMsg, Copy( msg.Name, idx, MAXINT), msg.Type_, msg.SeqID);
+
+  end
+  else if FDefaultProcessor <> nil then begin
+    processor := FDefaultProcessor;
+    newMsg    := msg;  // no need to change
+
+  end
+  else begin
     Error( oprot, msg,
            TApplicationExceptionInvalidProtocol,
            Format(ERROR_INCOMPATIBLE_PROT,[msg.Name]));
     Exit( FALSE);
   end;
-
-  // Create a new TMessage, something that can be consumed by any TProtocol
-  sService := Copy( msg.Name, 1, idx-1);
-  if not FServiceProcessorMap.TryGetValue( sService, processor)
-  then begin
-    Error( oprot, msg,
-           TApplicationExceptionInternalError,
-           Format(ERROR_UNKNOWN_SERVICE,[sService]));
-    Exit( FALSE);
-  end;
-
-  // Create a new TMessage, removing the service name
-  Inc( idx, Length(TMultiplexedProtocol.SEPARATOR));
-  Init( newMsg, Copy( msg.Name, idx, MAXINT), msg.Type_, msg.SeqID);
 
   // Dispatch processing to the stored processor
   protocol := TStoredMessageProtocol.Create( iprot, newMsg);
@@ -213,4 +229,3 @@ end;
 
 
 end.
-

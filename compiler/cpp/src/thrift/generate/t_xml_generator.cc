@@ -483,8 +483,8 @@ void t_xml_generator::write_const_value(t_const_value* value) {
 
   case t_const_value::CV_MAP: {
     write_element_start("map");
-    std::map<t_const_value*, t_const_value*> map = value->get_map();
-    std::map<t_const_value*, t_const_value*>::iterator mit;
+    std::map<t_const_value*, t_const_value*, t_const_value::value_compare> map = value->get_map();
+    std::map<t_const_value*, t_const_value*, t_const_value::value_compare>::iterator mit;
     for (mit = map.begin(); mit != map.end(); ++mit) {
       write_element_start("entry");
       write_element_start("key");
