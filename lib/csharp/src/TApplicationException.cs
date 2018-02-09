@@ -28,21 +28,26 @@ namespace Thrift
 {
     public class TApplicationException : TException
     {
-        protected ExceptionType type;
+        protected ExceptionType _type;
+		public ExceptionType Type
+        {
+            get { return _type; }
+        }
 
+        
         public TApplicationException()
         {
         }
 
         public TApplicationException(ExceptionType type)
         {
-            this.type = type;
+            this._type = type;
         }
 
         public TApplicationException(ExceptionType type, string message)
             : base(message)
         {
-            this.type = type;
+            this._type = type;
         }
 
         public static TApplicationException Read(TProtocol iprot)
@@ -56,7 +61,7 @@ namespace Thrift
             while (true)
             {
                 field = iprot.ReadFieldBegin();
-                if (field.Type == TType.Stop)
+                if (field._type == TType.Stop)
                 {
                     break;
                 }
@@ -64,27 +69,27 @@ namespace Thrift
                 switch (field.ID)
                 {
                     case 1:
-                        if (field.Type == TType.String)
+                        if (field._type == TType.String)
                         {
                             message = iprot.ReadString();
                         }
                         else
                         {
-                            TProtocolUtil.Skip(iprot, field.Type);
+                            TProtocolUtil.Skip(iprot, field._type);
                         }
                         break;
                     case 2:
-                        if (field.Type == TType.I32)
+                        if (field._type == TType.I32)
                         {
                             type = (ExceptionType)iprot.ReadI32();
                         }
                         else
                         {
-                            TProtocolUtil.Skip(iprot, field.Type);
+                            TProtocolUtil.Skip(iprot, field._type);
                         }
                         break;
                     default:
-                        TProtocolUtil.Skip(iprot, field.Type);
+                        TProtocolUtil.Skip(iprot, field._type);
                         break;
                 }
 
@@ -106,7 +111,7 @@ namespace Thrift
             if (!String.IsNullOrEmpty(Message))
             {
                 field.Name = "message";
-                field.Type = TType.String;
+                field._type = TType.String;
                 field.ID = 1;
                 oprot.WriteFieldBegin(field);
                 oprot.WriteString(Message);
@@ -114,10 +119,10 @@ namespace Thrift
             }
 
             field.Name = "type";
-            field.Type = TType.I32;
+            field._type = TType.I32;
             field.ID = 2;
             oprot.WriteFieldBegin(field);
-            oprot.WriteI32((int)type);
+            oprot.WriteI32((int)_type);
             oprot.WriteFieldEnd();
             oprot.WriteFieldStop();
             oprot.WriteStructEnd();
