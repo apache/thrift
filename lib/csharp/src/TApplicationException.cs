@@ -137,5 +137,10 @@ namespace Thrift
             InvalidProtocol,
             UnsupportedClientType
         }
+
+        public ExceptionType Type
+        {
+            get { return type; }
+        }
     }
 }
