@@ -64,7 +64,7 @@ void testServeCancel(Server)(void delegate(Server) serverSetup = null) if (
   version (Windows) {
     enum ITERATIONS = 100;
   } else {
-    enum ITERATIONS = 10000;
+    enum ITERATIONS = 100; // 10000;
   }
 
   if (serverSetup) serverSetup(server);

@@ -39,7 +39,7 @@
 // TFieldMeta[]-typed values, but the is() expressions seems to always fail.
 module thrift.codegen.base;
 
-import std.algorithm : find;
+import std.algorithm;
 import std.array : empty, front;
 import std.conv : to;
 import std.exception : enforce;
@@ -461,9 +461,21 @@ mixin template TStructHelpers(alias fieldMetaData = cast(TFieldMeta[])null) if (
     return result;
   }
 
+
   private bool thriftOpEqualsImpl(const ref This rhs) const {
+    import std.traits;
+    import std.algorithm;
     foreach (name; FieldNames!This) {
-      if (mixin("this." ~ name) != mixin("rhs." ~ name)) return false;
+      enum ThisName = "this." ~ name;
+      enum RhsName = "rhs." ~ name;
+      static if(isArray!(typeof(mixin(ThisName))))
+      {
+        if(!std.algorithm.equal(mixin(ThisName), mixin(RhsName))) return false;
+      }
+      else
+      {
+        if (mixin(ThisName) != mixin(RhsName)) return false;
+      }
     }
     return true;
   }

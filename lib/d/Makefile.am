@@ -97,33 +97,7 @@ d_main_modules = $(filter-out $(d_libevent_dependent_modules) \
 	$(d_openssl_dependent_modules),$(d_modules))
 
 
-d_lib_flags = -w -wi -Isrc -lib
-all_targets =
-
-#
-# libevent-dependent modules.
-#
-if HAVE_DEIMOS_EVENT2
-$(D_EVENT_LIB_NAME): $(addprefix src/, $(addsuffix .d, $(d_libevent_dependent_modules)))
-	$(DMD) -of$(D_EVENT_LIB_NAME) $(d_lib_flags) $^
-all_targets += $(D_EVENT_LIB_NAME)
-endif
-
-#
-# OpenSSL-dependent modules.
-#
-if HAVE_DEIMOS_OPENSSL
-$(D_SSL_LIB_NAME): $(addprefix src/, $(addsuffix .d, $(d_openssl_dependent_modules)))
-	$(DMD) -of$(D_SSL_LIB_NAME) $(d_lib_flags) $^
-all_targets += $(D_SSL_LIB_NAME)
-endif
-
-#
-# Main library target.
-#
-$(D_LIB_NAME): $(addprefix src/, $(addsuffix .d, $(d_main_modules)))
-	$(DMD) -of$(D_LIB_NAME) $(d_lib_flags) $^
-all_targets += $(D_LIB_NAME)
+all_targets = $(D_LIB_NAME)
 
 
 #
@@ -136,54 +110,22 @@ docs: $(d_publicsources) src/thrift/index.d
 #
 # Hook custom library targets into the automake all/install targets.
 #
-all-local: $(all_targets)
+all-local:
+	dub build --config=library --arch=x86_64 --build=debug --compiler=dmd
 
 install-exec-local:
 	$(INSTALL_PROGRAM) $(all_targets) $(DESTDIR)$(libdir)
 
-
 clean-local:
-	$(RM) -rf docs $(D_LIB_NAME) $(D_EVENT_LIB_NAME) $(D_SSL_LIB_NAME) unittest
-
+	dub clean
+	$(RM) lib*.a
 
 #
 # Unit tests (built both in debug and release mode).
 #
-d_test_flags = -unittest -w -wi -I$(top_srcdir)/lib/d/src
+check-local:
+	dub test --config=library --arch=x86_64 --build=unittest --compiler=dmd
 
-# There just must be some way to reassign a variable without warnings in
-# Automake...
-d_test_modules__ = $(d_modules)
-
-if WITH_D_EVENT_TESTS
-d_test_flags += $(DMD_LIBEVENT_FLAGS)
-d_test_modules_ = $(d_test_modules__)
-else
-d_test_modules_ = $(filter-out $(d_libevent_dependent_modules), $(d_test_modules__))
-endif
-
-if WITH_D_SSL_TESTS
-d_test_flags += $(DMD_OPENSSL_FLAGS)
-d_test_modules = $(d_test_modules_)
-else
-d_test_modules = $(filter-out $(d_openssl_dependent_modules), $(d_test_modules_))
-endif
-
-unittest/emptymain.d: unittest/.directory
-	@echo 'void main(){}' >$@
-
-unittest/.directory:
-	mkdir -p unittest || exists unittest
-	touch $@
-
-unittest/debug/%: src/%.d $(all_targets) unittest/emptymain.d
-	$(DMD) -g -of$(subst /,$(DMD_OF_DIRSEP),$@) $(d_test_flags) $^
-
-unittest/release/%: src/%.d $(all_targets) unittest/emptymain.d
-	$(DMD) -O -release -of$(subst /,$(DMD_OF_DIRSEP),$@) $(d_test_flags) $^
-
-TESTS = $(addprefix unittest/debug/, $(d_test_modules)) \
-	$(addprefix unittest/release/, $(d_test_modules))
 
 precross: all-local
 	$(MAKE) -C test precross

@@ -26,7 +26,7 @@ import std.range;
 import std.string : format;
 import std.traits : isIntegral;
 import std.typetuple : allSatisfy, TypeTuple;
-import std.utf : toUTF8;
+import std.utf;
 import thrift.protocol.base;
 import thrift.transport.base;
 

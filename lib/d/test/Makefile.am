@@ -29,17 +29,19 @@ debug_proto_gen = $(addprefix gen-d/, DebugProtoTest_types.d)
 $(debug_proto_gen): $(top_srcdir)/test/DebugProtoTest.thrift
 	$(THRIFT) --gen d -nowarn $<
 
-stress_test_gen = $(addprefix gen-d/thrift/test/stress/, Service.d \
+stress_test_gen = $(addprefix stress_test/thrift/test/stress/, Service.d \
 	StressTest_types.d)
 
 $(stress_test_gen): $(top_srcdir)/test/StressTest.thrift
-	$(THRIFT) --gen d $<
+	$(MKDIR_P) ./stress-test-gen
+	$(THRIFT) --gen d -out ./stress-test-gen $<
 
-thrift_test_gen = $(addprefix gen-d/thrift/test/, SecondService.d \
+thrift_test_gen = $(addprefix thrift_test/thrift/test/, SecondService.d \
 	ThriftTest.d ThriftTest_constants.d ThriftTest_types.d)
 
 $(thrift_test_gen): $(top_srcdir)/test/ThriftTest.thrift
-	$(THRIFT) --gen d $<
+	$(MKDIR_P) ./thrift-test-gen
+	$(THRIFT) --gen d -out ./thrift-test-gen $<
 
 
 # The actual test targets.
@@ -82,21 +84,22 @@ endif
 d_test_flags += -w -wi -O -release -inline -I$(top_srcdir)/lib/d/src -Igen-d \
 	$(top_builddir)/lib/d/$(D_LIB_NAME)
 
+dub_flags = --config=$@ --arch=x86_64 --build=debug --compiler=dmd
 
 async_test client_pool_test transport_test: %: %.d
-	$(DMD) $(d_test_flags) -of$@ $^
+	dub build $(dub_flags)
 
 serialization_benchmark: %: %.d $(debug_proto_gen)
-	$(DMD) $(d_test_flags) -of$@ $^
+	dub build $(dub_flags)
 
 stress_test_server: %: %.d test_utils.d $(stress_test_gen)
-	$(DMD) $(d_test_flags) -of$@ $^
+	dub build $(dub_flags)
 
 thrift_test_client: %: %.d thrift_test_common.d $(thrift_test_gen)
-	$(DMD) $(d_test_flags) -of$@ $^
+	dub build $(dub_flags)
 
 thrift_test_server: %: %.d thrift_test_common.d test_utils.d $(thrift_test_gen)
-	$(DMD) $(d_test_flags) -of$@ $^
+	dub build $(dub_flags)
 
 
 # Certificate generation targets (for the SSL tests).
@@ -113,7 +116,8 @@ trusted-ca-certificate.pem: server-certificate.pem
 check-local: $(targets)
 
 clean-local:
-	$(RM) -rf gen-d $(targets) $(addsuffix .o, $(targets))
+	dub clean
+	$(RM) -rf gen-d stress-test-gen thrift-test-gen $(targets)
 
 
 # Tests ran as part of make check.

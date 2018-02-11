@@ -19,7 +19,7 @@
 module thrift_test_client;
 
 import std.conv;
-import std.datetime;
+import std.datetime.stopwatch;
 import std.exception : enforce;
 import std.getopt;
 import std.stdio;
@@ -338,14 +338,14 @@ void main(string[] args) {
       auto onewayWatch = StopWatch(AutoStart.yes);
       client.testOneway(3);
       onewayWatch.stop();
-      if (onewayWatch.peek().msecs > 200) {
+      if (onewayWatch.peek() > msecs(200)) {
         if (trace) {
-          writefln("  FAILURE - took %s ms", onewayWatch.peek().usecs / 1000.0);
+          writefln("  FAILURE - took %s ms", onewayWatch.peek() / usecs(1000));
         }
         throw new Exception("testOneway failed.");
       } else {
         if (trace) {
-          writefln("  success - took %s ms", onewayWatch.peek().usecs / 1000.0);
+          writefln("  success - took %s ms", onewayWatch.peek() / usecs(1000));
         }
       }
 
@@ -360,7 +360,7 @@ void main(string[] args) {
     // Time metering.
     sw.stop();
 
-    immutable tot = sw.peek().usecs;
+    immutable tot = sw.peek().total!"usecs";
     if (trace) writefln("Total time: %s us\n", tot);
 
     time_tot += tot;

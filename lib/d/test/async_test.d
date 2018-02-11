@@ -327,9 +327,9 @@ class ClientsThread : Thread {
       // Temporarily redirect error logs to stdout, as SSL errors on the server
       // side are expected when the client terminates aburptly (as is the case
       // in the timeout test).
-      auto oldErrorLogSink = g_errorLogSink;
-      g_errorLogSink = g_infoLogSink;
-      scope (exit) g_errorLogSink = oldErrorLogSink;
+      // auto oldErrorLogSink = g_errorLogSink;
+      // g_errorLogSink = g_infoLogSink;
+      // scope (exit) g_errorLogSink = oldErrorLogSink;
 
       foreach (i; 0 .. iterations_) {
         transport.open();
