@@ -1,0 +1,17 @@
+{
+    "name": "thriftd",
+    "description": "Thrift D Software Library.",
+    "authors": [
+        "David Nadlinger",
+        "Heromyth"
+    ],
+    "license": "Apache-2.0",
+    "dependencies": {
+        "libevent": "~>2.0.2+2.0.16",
+        "openssl": "~>1.1.6+1.0.1g"
+    },
+    "targetType": "library",
+    "excludedSourceFiles": [
+        "src/thrift/index.d"
+    ]
+}

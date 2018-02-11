@@ -1,0 +1,121 @@
+{
+    "name": "thriftd-test",
+    "description": "Thrift D Tests.",
+    "authors": [
+        "David Nadlinger",
+        "Heromyth"
+    ],
+    "license": "Apache-2.0",
+    "dependencies": {
+        "thriftd": {
+            "path": "../"
+        }
+    },
+    "configurations": [
+        {
+            "name": "async_test",
+            "targetType": "executable",
+            "targetName": "async_test",
+            "sourceFiles": [
+                "async_test.d"
+            ]
+        },
+        {
+            "name": "client_pool_test",
+            "targetType": "executable",
+            "targetName": "client_pool_test",
+            "sourceFiles": [
+                "client_pool_test.d"
+            ]
+        },
+        {
+            "name": "transport_test",
+            "targetType": "executable",
+            "targetName": "transport_test",
+            "sourceFiles": [
+                "transport_test.d"
+            ]
+        },
+        {
+            "name": "serialization_benchmark",
+            "targetType": "executable",
+            "targetName": "serialization_benchmark",
+            "sourcePaths": [
+                "./gen-d"
+            ],
+            "sourceFiles": [
+                "serialization_benchmark.d"
+            ],
+            "excludedSourceFiles": [
+                "*.skeleton.d"
+            ],
+            "preGenerateCommands": [
+                "../../../compiler/cpp/thrift --gen d -nowarn ../../../test/DebugProtoTest.thrift"
+            ]
+        },
+        {
+            "name": "stress_test_server",
+            "targetType": "executable",
+            "targetName": "stress_test_server",
+            "sourcePaths": [
+                "./stress-test-gen"
+            ],
+            "sourceFiles": [
+                "stress_test_server.d",
+                "test_utils.d"
+            ],
+            "excludedSourceFiles": [
+                "*.skeleton.d"
+            ],
+            "preGenerateCommands": [
+                "mkdir -p ./stress-test-gen",
+                "../../../compiler/cpp/thrift --gen d -out ./stress-test-gen ../../../test/StressTest.thrift"
+            ]
+        },
+        {
+            "name": "thrift_test_client",
+            "targetType": "executable",
+            "targetName": "thrift_test_client",
+            "sourcePaths": [
+                "./thrift-test-gen"
+            ],
+            "importPaths": [
+                "./"
+            ],
+            "sourceFiles": [
+                "thrift_test_client.d",
+                "thrift_test_common.d"
+            ],
+            "excludedSourceFiles": [
+                "*.skeleton.d"
+            ],
+            "preGenerateCommands": [
+                "mkdir -p ./thrift-test-gen",
+                "../../../compiler/cpp/thrift --gen d -out ./thrift-test-gen ../../../test/ThriftTest.thrift"
+            ]
+        },
+        {
+            "name": "thrift_test_server",
+            "targetType": "executable",
+            "targetName": "thrift_test_server",
+            "sourcePaths": [
+                "./thrift-test-gen"
+            ],
+            "importPaths": [
+                "./"
+            ],
+            "sourceFiles": [
+                "thrift_test_server.d",
+                "thrift_test_common.d",
+                "test_utils.d"
+            ],
+            "excludedSourceFiles": [
+                "*.skeleton.d"
+			],
+            "preGenerateCommands": [
+                "mkdir -p ./thrift-test-gen",
+                "../../../compiler/cpp/thrift --gen d -out ./thrift-test-gen ../../../test/ThriftTest.thrift"
+            ]
+        }
+    ]
+}
