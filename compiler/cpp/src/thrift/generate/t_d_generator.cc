@@ -550,8 +550,8 @@ private:
       out << "{" << endl;
       indent_up();
 
-      indent(out) << render_type_name(type) << " v;" << endl;
       if (type->is_struct() || type->is_xception()) {
+        indent(out) << render_type_name(type) << " v;" << endl;
         indent(out) << "v = " << (type->is_xception() ? "new " : "") << render_type_name(type)
                     << "();" << endl;
 
@@ -574,6 +574,7 @@ private:
           indent(out) << "v.set!`" << v_iter->first->get_string() << "`(" << val << ");" << endl;
         }
       } else if (type->is_map()) {
+        indent(out) << render_type_name(type) << " v;" << endl;
         t_type* ktype = ((t_map*)type)->get_key_type();
         t_type* vtype = ((t_map*)type)->get_val_type();
         const map<t_const_value*, t_const_value*>& val = value->get_map();
@@ -588,6 +589,7 @@ private:
           out << key << "] = " << val << ";" << endl;
         }
       } else if (type->is_list()) {
+        indent(out) << render_type_name(type) << " v;" << endl;
         t_type* etype = ((t_list*)type)->get_elem_type();
         const vector<t_const_value*>& val = value->get_list();
         vector<t_const_value*>::const_iterator v_iter;
@@ -596,6 +598,7 @@ private:
           indent(out) << "v ~= " << val << ";" << endl;
         }
       } else if (type->is_set()) {
+        indent(out) << "auto v = new " << render_type_name(type) << ";" << endl;
         t_type* etype = ((t_set*)type)->get_elem_type();
         const vector<t_const_value*>& val = value->get_list();
         vector<t_const_value*>::const_iterator v_iter;
