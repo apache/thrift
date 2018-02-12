@@ -54,6 +54,12 @@ class TCompoundOperationException : TException {
 // system in future versions.
 enum VERSION = "1.0.0 dev";
 
+/// 
+bool checkMinimumCompilerVersion(int ver)
+{
+    return __VERSION__ >= ver;
+}
+
 /**
  * Functions used for logging inside Thrift.
  *

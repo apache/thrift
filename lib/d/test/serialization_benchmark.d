@@ -13,7 +13,15 @@
  */
 module serialization_benchmark;
 
-import std.datetime.stopwatch;
+import thrift.base;
+static if(checkMinimumCompilerVersion(2077))
+{
+    import std.datetime.stopwatch;
+}
+else
+{
+    import std.datetime : AutoStart, dur, Duration, StopWatch;
+}
 import std.math : PI;
 import std.stdio;
 import thrift.protocol.binary;
@@ -46,7 +54,15 @@ void main() {
     }
     sw.stop();
 
-    auto msecs = sw.peek().total!"msecs";
+    static if(checkMinimumCompilerVersion(2077))
+    {
+      auto msecs = sw.peek().total!"msecs";
+    }
+    else
+    {
+      auto msecs = sw.peek().msecs;
+    }
+
     writefln("Write: %s ms (%s kHz)", msecs, ITERATIONS / msecs);
   }
 
@@ -64,7 +80,14 @@ void main() {
     }
     sw.stop();
 
-    auto msecs = sw.peek().total!"msecs";
+    static if(checkMinimumCompilerVersion(2077))
+    {
+      auto msecs = sw.peek().total!"msecs";
+    }
+    else
+    {
+      auto msecs = sw.peek().msecs;
+    }
     writefln(" Read: %s ms (%s kHz)", msecs, ITERATIONS / msecs);
   }
 }

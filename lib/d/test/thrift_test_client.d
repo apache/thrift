@@ -19,7 +19,14 @@
 module thrift_test_client;
 
 import std.conv;
-import std.datetime.stopwatch;
+static if(checkMinimumCompilerVersion(2077))
+{
+    import std.datetime.stopwatch;
+}
+else
+{
+    import std.datetime : AutoStart, dur, Duration, StopWatch;
+}
 import std.exception : enforce;
 import std.getopt;
 import std.stdio;
@@ -338,16 +345,33 @@ void main(string[] args) {
       auto onewayWatch = StopWatch(AutoStart.yes);
       client.testOneway(3);
       onewayWatch.stop();
-      if (onewayWatch.peek() > msecs(200)) {
-        if (trace) {
-          writefln("  FAILURE - took %s ms", onewayWatch.peek() / usecs(1000));
-        }
-        throw new Exception("testOneway failed.");
-      } else {
-        if (trace) {
-          writefln("  success - took %s ms", onewayWatch.peek() / usecs(1000));
+      static if(checkMinimumCompilerVersion(2077))
+      {
+        if (onewayWatch.peek() > msecs(200)) {
+          if (trace) {
+            writefln("  FAILURE - took %s ms", onewayWatch.peek() / usecs(1000));
+          }
+          throw new Exception("testOneway failed.");
+        } else {
+          if (trace) {
+            writefln("  success - took %s ms", onewayWatch.peek() / usecs(1000));
+          }
         }
       }
+      else
+      {
+        if (onewayWatch.peek().msecs > 200) {
+          if (trace) {
+            writefln("  FAILURE - took %s ms", onewayWatch.peek().usecs / 1000.0);
+          }
+          throw new Exception("testOneway failed.");
+        } else {
+          if (trace) {
+            writefln("  success - took %s ms", onewayWatch.peek().usecs / 1000.0);
+          }
+        }
+      }
+
 
       // Redo a simple test after the oneway to make sure we aren't "off by
       // one", which would be the case if the server treated oneway methods
@@ -360,7 +384,14 @@ void main(string[] args) {
     // Time metering.
     sw.stop();
 
-    immutable tot = sw.peek().total!"usecs";
+    static if(checkMinimumCompilerVersion(2077))
+    {
+      immutable tot = sw.peek().total!"usecs";
+    }
+    else
+    {
+      immutable tot = sw.peek().usecs;
+    }
     if (trace) writefln("Total time: %s us\n", tot);
 
     time_tot += tot;
