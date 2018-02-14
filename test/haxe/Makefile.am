@@ -33,19 +33,19 @@ $(BIN_CPP): \
 		src/*.hx \
 		../../lib/haxe/src/org/apache/thrift/**/*.hx \
 		gen-haxe/thrift/test/ThriftTest.hx
-	$(HAXE) --cwd .  cpp.hxml
+	$(HAXE) -D HXCPP_CPP11=0 --cwd .  cpp.hxml
 
 $(BIN_PHP): \
 		src/*.hx \
 		../../lib/haxe/src/org/apache/thrift/**/*.hx \
 		gen-haxe/thrift/test/ThriftTest.hx
-	$(HAXE) --cwd .  php.hxml
+	$(HAXE) -D HXCPP_CPP11=0 --cwd .  php.hxml
 
 $(BIN_PHP_WEB): \
 		src/*.hx \
 		../../lib/haxe/src/org/apache/thrift/**/*.hx \
 		gen-haxe/thrift/test/ThriftTest.hx
-	$(HAXE) --cwd .  php-web-server.hxml
+	$(HAXE) -D HXCPP_CPP11=0 --cwd .  php-web-server.hxml
 
 
 

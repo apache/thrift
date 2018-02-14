@@ -12,6 +12,9 @@ export CXXFLAGS="${CFLAGS}"
 export LDFLAGS="-lubsan"
 export UBSAN_OPTIONS=print_stacktrace=1
 
+# for hxcpp > 3.4.64, maybe, doesn't seem to work
+#export HXCPP_CPP11=0
+
 #
 # work around https://svn.boost.org/trac10/ticket/11632 if present
 #

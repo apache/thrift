@@ -16,8 +16,6 @@
 # - cpp: stock boost 1.62 in artful has a nasty bug so we use stock boost 1.63
 # - d: does not come with Ubuntu so we're installing the latest
 # - d: deimos for libevent and openssl omitted - not compatible / build errors
-# - haxe: see THRIFT-4352, but test/haxe cores during testing
-#         and hxcpp 3.4.64 is not compatible with artful
 #
 
 FROM buildpack-deps:artful-scm
@@ -41,15 +39,6 @@ RUN apt-get update && \
 # RUN echo "deb http://download.mono-project.com/repo/debian xenial main" | tee /etc/apt/sources.list.d/mono.list && \
 #     apt-key adv --keyserver keyserver.ubuntu.com --recv-keys A6A19B38D3D831EF
 
-# dotnet (core)
-RUN curl https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor > /etc/apt/trusted.gpg.d/microsoft.gpg && \
-    echo "deb [arch=amd64] https://packages.microsoft.com/repos/microsoft-ubuntu-artful-prod artful main" > \
-      /etc/apt/sources.list.d/dotnetdev.list
-
-# node.js
-RUN curl -sL https://deb.nodesource.com/gpgkey/nodesource.gpg.key | apt-key add - \
-    echo "deb https://deb.nodesource.com/node_8.x artful main" | tee /etc/apt/sources.list.d/nodesource.list
-
 # D
 RUN apt-key adv --keyserver keyserver.ubuntu.com --recv-keys EBCF975E5BA24D5E && \
         wget http://master.dl.sourceforge.net/project/d-apt/files/d-apt.list -O /etc/apt/sources.list.d/d-apt.list && \
@@ -59,6 +48,18 @@ RUN apt-key adv --keyserver keyserver.ubuntu.com --recv-keys EBCF975E5BA24D5E &&
 RUN curl https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - && \
     curl https://storage.googleapis.com/download.dartlang.org/linux/debian/dart_stable.list > \
       /etc/apt/sources.list.d/dart_stable.list
+
+# dotnet (netcore)
+RUN curl https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor > /etc/apt/trusted.gpg.d/microsoft.gpg && \
+    echo "deb [arch=amd64] https://packages.microsoft.com/repos/microsoft-ubuntu-artful-prod artful main" > \
+      /etc/apt/sources.list.d/dotnetdev.list
+
+# haxe (https://haxe.org/download/linux/)
+RUN add-apt-repository ppa:haxe/releases -y
+
+# node.js
+RUN curl -sL https://deb.nodesource.com/gpgkey/nodesource.gpg.key | apt-key add - \
+    echo "deb https://deb.nodesource.com/node_8.x artful main" | tee /etc/apt/sources.list.d/nodesource.list
 
 ### install general dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -146,14 +147,13 @@ RUN apt-get install -y --no-install-recommends \
       ghc \
       cabal-install
 
-# see THRIFT-4352, test/haxe cores on artful
-# RUN apt-get install -y --no-install-recommends \
-# `# Haxe dependencies` \
-#       haxe \
-#       neko \
-#       neko-dev
-# RUN haxelib setup --always /usr/share/haxe/lib && \
-#     haxelib install --always hxcpp 2>&1 > /dev/null
+RUN apt-get install -y --no-install-recommends \
+`# Haxe dependencies` \
+      haxe \
+      neko \
+      neko-dev && \
+    haxelib setup --always /usr/share/haxe/lib && \
+    haxelib install --always hxcpp hxcs hxjava 2>&1 > /dev/null
 
 RUN apt-get install -y --no-install-recommends \
 `# Java dependencies` \
