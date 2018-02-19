@@ -43,10 +43,28 @@
     "workdir": "c_glib"
   },
   {
+    "name": "cl",
+    "server": {
+      "command": ["TestServer"],
+      "workdir": "cl",
+      "protocols": ["binary", "multi"],
+      "transports": ["buffered", "framed"],
+      "sockets": ["ip"]
+    },
+    "client": {
+      "command": ["TestClient"],
+      "workdir": "cl",
+      "protocols": ["binary", "multi"],
+      "transports": ["buffered", "framed"],
+      "sockets": ["ip"]
+    }
+  },
+  {
     "name": "d",
     "server": {
       "command": [
-        "thrift_test_server"
+        "thrift_test_server",
+	"--trace"
       ]
     },
     "client": {
@@ -421,12 +439,12 @@
       "compact",
       "json"
     ],
-        "server": {
+    "server": {
       "command": [
         "dotnet",
         "run",
-  "--no-build",
-                "--project=Server/Server.csproj",
+        "--no-build",
+        "--project=Server/Server.csproj",
         "server"
       ]
     },
@@ -435,8 +453,8 @@
       "command": [
         "dotnet",
         "run",
-  "--no-build",
-                "--project=Client/Client.csproj",
+        "--no-build",
+        "--project=Client/Client.csproj",
         "client"
       ]
     },

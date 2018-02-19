@@ -25,6 +25,7 @@
 #include <fstream>
 #include <iomanip>
 #include <iostream>
+#include <limits>
 #include <vector>
 #include <cctype>
 
@@ -596,6 +597,7 @@ void t_java_generator::generate_consts(std::vector<t_const*> consts) {
   f_consts.close();
 }
 
+
 /**
  * Prints the value of a constant with the given type. Note that type checking
  * is NOT performed in this function as it is always run beforehand using the
@@ -619,10 +621,12 @@ void t_java_generator::print_const_value(std::ofstream& out,
   } else if (type->is_enum()) {
     out << name << " = " << render_const_value(out, type, value) << ";" << endl << endl;
   } else if (type->is_struct() || type->is_xception()) {
-    const vector<t_field*>& fields = ((t_struct*)type)->get_members();
+    const vector<t_field*>& unsorted_fields = ((t_struct*)type)->get_members();
+    vector<t_field*> fields = unsorted_fields;
+    std::sort(fields.begin(), fields.end(), t_field::key_compare());
     vector<t_field*>::const_iterator f_iter;
-    const map<t_const_value*, t_const_value*>& val = value->get_map();
-    map<t_const_value*, t_const_value*>::const_iterator v_iter;
+    const map<t_const_value*, t_const_value*, t_const_value::value_compare>& val = value->get_map();
+    map<t_const_value*, t_const_value*, t_const_value::value_compare>::const_iterator v_iter;
     out << name << " = new " << type_name(type, false, true) << "();" << endl;
     if (!in_static) {
       indent(out) << "static {" << endl;
@@ -660,8 +664,8 @@ void t_java_generator::print_const_value(std::ofstream& out,
     }
     t_type* ktype = ((t_map*)type)->get_key_type();
     t_type* vtype = ((t_map*)type)->get_val_type();
-    const map<t_const_value*, t_const_value*>& val = value->get_map();
-    map<t_const_value*, t_const_value*>::const_iterator v_iter;
+    const map<t_const_value*, t_const_value*, t_const_value::value_compare>& val = value->get_map();
+    map<t_const_value*, t_const_value*, t_const_value::value_compare>::const_iterator v_iter;
     for (v_iter = val.begin(); v_iter != val.end(); ++v_iter) {
       string key = render_const_value(out, ktype, v_iter->first);
       string val = render_const_value(out, vtype, v_iter->second);
@@ -731,9 +735,9 @@ string t_java_generator::render_const_value(ofstream& out, t_type* type, t_const
       break;
     case t_base_type::TYPE_DOUBLE:
       if (value->get_type() == t_const_value::CV_INTEGER) {
-        render << "(double)" << value->get_integer();
+        render << value->get_integer() << "d";
       } else {
-        render << value->get_double();
+        render << emit_double_as_string(value->get_double());
       }
       break;
     default:

@@ -16,7 +16,7 @@
 :: Helps build thrift by pretending to be appveyor
 :: Usage:
 ::   cd build\appveyor
-::   simulate-appveyor.bat [Debug|Release] [x86|x64] [MINGW|MSVC2015]
+::   simulate-appveyor.bat [Debug|Release] [x86|x64] [CYGWIN|MINGW|MSVC201?]
 ::
 
 @ECHO OFF

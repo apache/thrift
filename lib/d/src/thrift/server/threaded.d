@@ -173,7 +173,9 @@ private class WorkerThread : Thread {
         }
       }
     } catch (TTransportException ttx) {
-      logError("Client died: %s", ttx);
+      if (ttx.type() != TTransportException.Type.END_OF_FILE) {
+        logError("Client died unexpectedly: %s", ttx);
+      }
     } catch (Exception e) {
       logError("Uncaught exception: %s", e);
     }

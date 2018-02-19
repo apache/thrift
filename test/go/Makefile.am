@@ -18,9 +18,6 @@
 #
 
 BUILT_SOURCES = gopath
-if GOVERSION_LT_17
-COMPILER_EXTRAFLAG=",legacy_context"
-endif
 
 THRIFTCMD = $(THRIFT) -out src/gen --gen go:thrift_import=thrift$(COMPILER_EXTRAFLAG)
 THRIFTTEST = $(top_srcdir)/test/ThriftTest.thrift
@@ -37,7 +34,6 @@ gopath: $(THRIFT) ThriftTest.thrift
 	mkdir -p src/gen
 	$(THRIFTCMD) ThriftTest.thrift
 	$(THRIFTCMD) ../StressTest.thrift
-	GOPATH=`pwd` $(GO) get golang.org/x/net/context
 	GOPATH=`pwd` $(GO) get github.com/golang/mock/gomock || true
 	sed -i 's/\"context\"/\"golang.org\/x\/net\/context\"/g' src/github.com/golang/mock/gomock/controller.go || true
 	GOPATH=`pwd` $(GO) get github.com/golang/mock/gomock

@@ -19,7 +19,9 @@
 
 #include <string>
 #include <fstream>
+#include <iomanip>
 #include <iostream>
+#include <limits>
 #include <vector>
 
 #include <stdlib.h>
@@ -541,9 +543,9 @@ string t_py_generator::render_const_value(t_type* type, t_const_value* value) {
       break;
     case t_base_type::TYPE_DOUBLE:
       if (value->get_type() == t_const_value::CV_INTEGER) {
-        out << value->get_integer();
+        out << "float(" << value->get_integer() << ")";
       } else {
-        out << value->get_double();
+        out << emit_double_as_string(value->get_double());
       }
       break;
     default:
@@ -556,8 +558,8 @@ string t_py_generator::render_const_value(t_type* type, t_const_value* value) {
     indent_up();
     const vector<t_field*>& fields = ((t_struct*)type)->get_members();
     vector<t_field*>::const_iterator f_iter;
-    const map<t_const_value*, t_const_value*>& val = value->get_map();
-    map<t_const_value*, t_const_value*>::const_iterator v_iter;
+    const map<t_const_value*, t_const_value*, t_const_value::value_compare>& val = value->get_map();
+    map<t_const_value*, t_const_value*, t_const_value::value_compare>::const_iterator v_iter;
     for (v_iter = val.begin(); v_iter != val.end(); ++v_iter) {
       t_type* field_type = NULL;
       for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
@@ -581,8 +583,8 @@ string t_py_generator::render_const_value(t_type* type, t_const_value* value) {
     }
     out << "{" << endl;
     indent_up();
-    const map<t_const_value*, t_const_value*>& val = value->get_map();
-    map<t_const_value*, t_const_value*>::const_iterator v_iter;
+    const map<t_const_value*, t_const_value*, t_const_value::value_compare>& val = value->get_map();
+    map<t_const_value*, t_const_value*, t_const_value::value_compare>::const_iterator v_iter;
     for (v_iter = val.begin(); v_iter != val.end(); ++v_iter) {
       indent(out) << render_const_value(ktype, v_iter->first) << ": "
           << render_const_value(vtype, v_iter->second) << "," << endl;

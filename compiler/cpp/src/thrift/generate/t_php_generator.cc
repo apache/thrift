@@ -62,7 +62,7 @@ public:
     validate_ = false;
     json_serializable_ = false;
     nsglobal_ = ""; // by default global namespace is empty
-    psr4_ = false;
+    classmap_ = false;
     for (iter = parsed_options.begin(); iter != parsed_options.end(); ++iter) {
       if (iter->first.compare("inlined") == 0) {
         binary_inline_ = true;
@@ -78,8 +78,14 @@ public:
         json_serializable_ = true;
       } else if (iter->first.compare("nsglobal") == 0) {
         nsglobal_ = iter->second;
+      } else if (iter->first.compare("classmap") == 0) {
+        classmap_ = true;
       } else if (iter->first.compare("psr4") == 0) {
-        psr4_ = true;
+        if(classmap_){
+          throw "psr4 and classmap are mutually exclusive.";
+        } else {
+          pwarning(0, "psr4 is default option! needn't add psr4 option!\n");
+        }
       } else {
         throw "unknown option php:" + iter->first;
       }
@@ -376,9 +382,9 @@ private:
   bool oop_;
 
   /**
-   * Whether to hold each class in separate file to allow PSR4-autoloading
+   * Whether to generate old-style PHP file to use classmap autoloading
    */
-  bool psr4_;
+  bool classmap_;
 
   /**
    * Whether to generate validator code
@@ -419,8 +425,8 @@ void t_php_generator::init_generator() {
     MKDIR(package_dir_.c_str());
   }
 
-  // Prepare output file for all the types in non-psr4 mode
-  if (!psr4_) {
+  // Prepare output file for all the types in classmap mode
+  if (classmap_) {
     // Make output file
     string f_types_name = package_dir_ + "Types.php";
     f_types_.open(f_types_name.c_str());
@@ -453,7 +459,7 @@ string t_php_generator::php_includes() {
  * Close up (or down) some filez.
  */
 void t_php_generator::close_generator() {
-  if (!psr4_) {
+  if (classmap_) {
     // Close types file
     f_types_.close();
   }
@@ -504,7 +510,7 @@ void t_php_generator::generate_program_header(std::ofstream& file) {
  */
 void t_php_generator::generate_enum(t_enum* tenum) {
   std::ofstream& f_enum = f_types_;
-  if (psr4_) {
+  if (!classmap_) {
     string f_enum_name = package_dir_ + tenum->get_name() + ".php";
     f_enum.open(f_enum_name.c_str());
     generate_program_header(f_enum);
@@ -541,7 +547,7 @@ void t_php_generator::generate_enum(t_enum* tenum) {
   indent_down();
 
   f_enum << "}" << endl << endl;
-  if (psr4_) {
+  if (!classmap_) {
     f_enum.close();
   }
 }
@@ -558,7 +564,7 @@ void t_php_generator::generate_consts(vector<t_const*> consts) {
   if (consts.size() > 0) {
 
     std::ofstream& f_consts = f_types_;
-    if (psr4_) {
+    if (!classmap_) {
       string f_consts_name = package_dir_ + "Constant.php";
       f_consts.open(f_consts_name.c_str());
       generate_program_header(f_consts);
@@ -596,7 +602,7 @@ void t_php_generator::generate_consts(vector<t_const*> consts) {
 
     indent_down();
     f_consts << "}" << endl;
-    if (psr4_) {
+    if (!classmap_) {
       f_consts.close();
     }
   }
@@ -642,8 +648,8 @@ string t_php_generator::render_const_value(t_type* type, t_const_value* value) {
     indent_up();
     const vector<t_field*>& fields = ((t_struct*)type)->get_members();
     vector<t_field*>::const_iterator f_iter;
-    const map<t_const_value*, t_const_value*>& val = value->get_map();
-    map<t_const_value*, t_const_value*>::const_iterator v_iter;
+    const map<t_const_value*, t_const_value*, t_const_value::value_compare>& val = value->get_map();
+    map<t_const_value*, t_const_value*, t_const_value::value_compare>::const_iterator v_iter;
     for (v_iter = val.begin(); v_iter != val.end(); ++v_iter) {
       t_type* field_type = NULL;
       for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
@@ -667,8 +673,8 @@ string t_php_generator::render_const_value(t_type* type, t_const_value* value) {
     t_type* vtype = ((t_map*)type)->get_val_type();
     out << "array(" << endl;
     indent_up();
-    const map<t_const_value*, t_const_value*>& val = value->get_map();
-    map<t_const_value*, t_const_value*>::const_iterator v_iter;
+    const map<t_const_value*, t_const_value*, t_const_value::value_compare>& val = value->get_map();
+    map<t_const_value*, t_const_value*, t_const_value::value_compare>::const_iterator v_iter;
     for (v_iter = val.begin(); v_iter != val.end(); ++v_iter) {
       out << indent();
       out << render_const_value(ktype, v_iter->first);
@@ -725,13 +731,13 @@ void t_php_generator::generate_xception(t_struct* txception) {
  */
 void t_php_generator::generate_php_struct(t_struct* tstruct, bool is_exception) {
   std::ofstream& f_struct = f_types_;
-  if (psr4_) {
+  if (!classmap_) {
     string f_struct_name = package_dir_ + tstruct->get_name() + ".php";
     f_struct.open(f_struct_name.c_str());
     generate_program_header(f_struct);
   }
   generate_php_struct_definition(f_struct, tstruct, is_exception);
-  if (psr4_) {
+  if (!classmap_) {
     f_struct.close();
   }
 }
@@ -1244,7 +1250,7 @@ bool t_php_generator::needs_php_read_validator(t_struct* tstruct, bool is_result
  * @param tservice The service definition
  */
 void t_php_generator::generate_service(t_service* tservice) {
-  if(!psr4_) {
+  if(classmap_) {
     string f_service_name = package_dir_ + service_name_ + ".php";
     f_service_.open(f_service_name.c_str());
     generate_service_header(tservice, f_service_);
@@ -1261,7 +1267,7 @@ void t_php_generator::generate_service(t_service* tservice) {
     generate_service_processor(tservice);
   }
 
-  if(!psr4_) {
+  if(classmap_) {
     // Close service file
     f_service_ << endl;
     f_service_.close();
@@ -1275,7 +1281,7 @@ void t_php_generator::generate_service(t_service* tservice) {
  */
 void t_php_generator::generate_service_processor(t_service* tservice) {
   std::ofstream& f_service_processor = f_service_;
-  if (psr4_) {
+  if (!classmap_) {
     string f_service_processor_name = package_dir_ + service_name_ + "Processor.php";
     f_service_processor.open(f_service_processor_name.c_str());
     generate_service_header(tservice, f_service_processor);
@@ -1370,7 +1376,7 @@ void t_php_generator::generate_service_processor(t_service* tservice) {
   indent_down();
   f_service_processor << "}" << endl;
 
-  if (psr4_) {
+  if (!classmap_) {
     f_service_processor.close();
   }
 }
@@ -1539,7 +1545,7 @@ void t_php_generator::generate_service_helpers(t_service* tservice) {
   vector<t_function*>::iterator f_iter;
 
   std::ofstream& f_struct_definition = f_service_;
-  if (!psr4_) {
+  if (classmap_) {
     f_struct_definition << "// HELPER FUNCTIONS AND STRUCTURES" << endl << endl;
   }
 
@@ -1548,14 +1554,14 @@ void t_php_generator::generate_service_helpers(t_service* tservice) {
     string name = ts->get_name();
     ts->set_name(service_name_ + "_" + name);
 
-    if (psr4_) {
+    if (!classmap_) {
       string f_struct_definition_name = package_dir_ + service_name_ + "_" + name + ".php";
       f_struct_definition.open(f_struct_definition_name.c_str());
       generate_service_header(tservice, f_struct_definition);
     }
 
     generate_php_struct_definition(f_struct_definition, ts);
-    if (psr4_) {
+    if (!classmap_) {
       f_struct_definition.close();
     }
 
@@ -1585,13 +1591,13 @@ void t_php_generator::generate_php_function_helpers(t_service* tservice, t_funct
     }
 
     std::ofstream& f_struct_helper = f_service_;
-    if (psr4_) {
+    if (!classmap_) {
       string f_struct_helper_name = package_dir_ + result.get_name() + ".php";
       f_struct_helper.open(f_struct_helper_name.c_str());
       generate_service_header(tservice, f_struct_helper);
     }
     generate_php_struct_definition(f_struct_helper, &result, false, true);
-    if (psr4_) {
+    if (!classmap_) {
       f_struct_helper.close();
     }
   }
@@ -1604,7 +1610,7 @@ void t_php_generator::generate_php_function_helpers(t_service* tservice, t_funct
  */
 void t_php_generator::generate_service_interface(t_service* tservice) {
   std::ofstream& f_service_interface = f_service_;
-  if (psr4_) {
+  if (!classmap_) {
     string f_service_interface_name = package_dir_ + service_name_ + "If.php";
     f_service_interface.open(f_service_interface_name.c_str());
     generate_service_header(tservice, f_service_interface);
@@ -1633,7 +1639,7 @@ void t_php_generator::generate_service_interface(t_service* tservice) {
   f_service_interface << "}" << endl;
 
   // Close service interface file
-  if (psr4_) {
+  if (!classmap_) {
     f_service_interface.close();
   }
 }
@@ -1643,7 +1649,7 @@ void t_php_generator::generate_service_interface(t_service* tservice) {
  */
 void t_php_generator::generate_service_rest(t_service* tservice) {
   std::ofstream& f_service_rest = f_service_;
-  if (psr4_) {
+  if (!classmap_) {
     string f_service_rest_name = package_dir_ + service_name_ + "Rest.php";
     f_service_rest.open(f_service_rest_name.c_str());
     generate_service_header(tservice, f_service_rest);
@@ -1712,7 +1718,7 @@ void t_php_generator::generate_service_rest(t_service* tservice) {
 
   // Close service rest file
   f_service_rest << endl;
-  if (psr4_) {
+  if (!classmap_) {
     f_service_rest.close();
   }
 }
@@ -1724,7 +1730,7 @@ void t_php_generator::generate_service_rest(t_service* tservice) {
  */
 void t_php_generator::generate_service_client(t_service* tservice) {
   std::ofstream& f_service_client = f_service_;
-  if (psr4_) {
+  if (!classmap_) {
     string f_service_client_name = package_dir_ + service_name_ + "Client.php";
     f_service_client.open(f_service_client_name.c_str());
     generate_service_header(tservice, f_service_client);
@@ -1979,7 +1985,7 @@ void t_php_generator::generate_service_client(t_service* tservice) {
   f_service_client << "}" << endl;
 
   // Close service client file
-  if (psr4_) {
+  if (!classmap_) {
     f_service_client.close();
   }
 }
@@ -2772,7 +2778,7 @@ THRIFT_REGISTER_GENERATOR(
     "    inlined:         Generate PHP inlined files\n"
     "    server:          Generate PHP server stubs\n"
     "    oop:             Generate PHP with object oriented subclasses\n"
-    "    psr4:            Generate each PHP class in separate file (allows PSR4 autoloading)\n"
+    "    classmap:        Generate old-style PHP files (use classmap autoloading)\n"
     "    rest:            Generate PHP REST processors\n"
     "    nsglobal=NAME:   Set global namespace\n"
     "    validate:        Generate PHP validator methods\n"

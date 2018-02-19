@@ -24,7 +24,9 @@
 #include <cassert>
 
 #include <fstream>
+#include <iomanip>
 #include <iostream>
+#include <limits>
 #include <sstream>
 #include <string>
 #include <vector>
@@ -703,8 +705,8 @@ void t_cpp_generator::print_const_value(ofstream& out,
   } else if (type->is_struct() || type->is_xception()) {
     const vector<t_field*>& fields = ((t_struct*)type)->get_members();
     vector<t_field*>::const_iterator f_iter;
-    const map<t_const_value*, t_const_value*>& val = value->get_map();
-    map<t_const_value*, t_const_value*>::const_iterator v_iter;
+    const map<t_const_value*, t_const_value*, t_const_value::value_compare>& val = value->get_map();
+    map<t_const_value*, t_const_value*, t_const_value::value_compare>::const_iterator v_iter;
     bool is_nonrequired_field = false;
     for (v_iter = val.begin(); v_iter != val.end(); ++v_iter) {
       t_type* field_type = NULL;
@@ -728,8 +730,8 @@ void t_cpp_generator::print_const_value(ofstream& out,
   } else if (type->is_map()) {
     t_type* ktype = ((t_map*)type)->get_key_type();
     t_type* vtype = ((t_map*)type)->get_val_type();
-    const map<t_const_value*, t_const_value*>& val = value->get_map();
-    map<t_const_value*, t_const_value*>::const_iterator v_iter;
+    const map<t_const_value*, t_const_value*, t_const_value::value_compare>& val = value->get_map();
+    map<t_const_value*, t_const_value*, t_const_value::value_compare>::const_iterator v_iter;
     for (v_iter = val.begin(); v_iter != val.end(); ++v_iter) {
       string key = render_const_value(out, name, ktype, v_iter->first);
       string val = render_const_value(out, name, vtype, v_iter->second);
@@ -788,9 +790,9 @@ string t_cpp_generator::render_const_value(ofstream& out,
       break;
     case t_base_type::TYPE_DOUBLE:
       if (value->get_type() == t_const_value::CV_INTEGER) {
-        render << value->get_integer();
+        render << "static_cast<double>(" << value->get_integer() << ")";
       } else {
-        render << value->get_double();
+        render << emit_double_as_string(value->get_double());
       }
       break;
     default:
@@ -1796,7 +1798,7 @@ void t_cpp_generator::generate_service(t_service* tservice) {
     if (!gen_no_skeleton_) {
       generate_service_async_skeleton(tservice);
     }
-   
+
   }
 
   f_header_ << "#ifdef _MSC_VER\n"

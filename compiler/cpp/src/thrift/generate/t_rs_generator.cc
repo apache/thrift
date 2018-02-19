@@ -781,8 +781,8 @@ void t_rs_generator::render_const_map(t_type* ttype, t_const_value* tvalue) {
     << to_rust_type(key_type) << ", " << to_rust_type(val_type)
     << "> = BTreeMap::new();"
     << endl;
-  const map<t_const_value*, t_const_value*>& elems = tvalue->get_map();
-  map<t_const_value*, t_const_value*>::const_iterator elem_iter;
+  const map<t_const_value*, t_const_value*, t_const_value::value_compare>& elems = tvalue->get_map();
+  map<t_const_value*, t_const_value*, t_const_value::value_compare>::const_iterator elem_iter;
   for (elem_iter = elems.begin(); elem_iter != elems.end(); ++elem_iter) {
     t_const_value* key_value = elem_iter->first;
     t_const_value* val_value = elem_iter->second;

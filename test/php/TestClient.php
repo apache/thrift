@@ -2,7 +2,8 @@
 
 namespace test\php;
 
-require_once __DIR__.'/../../vendor/autoload.php';
+/** @var \Composer\Autoload\ClassLoader $loader */
+$loader = require __DIR__ . '/../../vendor/autoload.php';
 
 use Thrift\ClassLoader\ThriftClassLoader;
 
@@ -13,13 +14,14 @@ if (!isset($MODE)) {
   $MODE = 'normal';
 }
 
-$loader = new ThriftClassLoader();
-if ($GEN_DIR === 'gen-php-psr4') {
-  $loader->registerNamespace('ThriftTest', $GEN_DIR);
+
+if ($GEN_DIR == 'gen-php') {
+  $loader->addPsr4('', $GEN_DIR);
 } else {
+  $loader = new ThriftClassLoader();
   $loader->registerDefinition('ThriftTest', $GEN_DIR);
+  $loader->register();
 }
-$loader->register();
 
 /*
  * Licensed to the Apache Software Foundation (ASF) under one
@@ -93,7 +95,7 @@ foreach ($argv as $arg) {
     $MODE = substr($arg, 12);
   } else if (substr($arg, 0, 11) == '--protocol=') {
     $PROTO = substr($arg, 11);
-  } 
+  }
 }
 
 $hosts = array('localhost');

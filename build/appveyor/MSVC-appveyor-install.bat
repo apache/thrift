@@ -26,47 +26,35 @@ CALL cl_setenv.bat                        || EXIT /B
 CALL cl_showenv.bat                       || EXIT /B
 MKDIR "%WIN3P%"                           || EXIT /B
 
-:: Install ant - this also installs the latest JDK as a dependency
-:: The installation of JDK requires us to pick up PATH and JAVE_HOME from the registry
-cinst -c "%BUILDCACHE%" -y ant            || EXIT /B
+choco feature enable -n allowGlobalConfirmation || EXIT /B
 
-:: Install bison and flex
+:: Things to install when NOT running in appveyor:
+IF "%APPVEYOR_BUILD_ID%" == "" (
+    cup -y chocolatey                     || EXIT /B
+    cinst -c "%BUILDCACHE%" -y curl       || EXIT /B
+    cinst -c "%BUILDCACHE%" -y 7zip       || EXIT /B
+    cinst -c "%BUILDCACHE%" -y python3    || EXIT /B
+    cinst -c "%BUILDCACHE%" -y openssl.light || EXIT /B
+)
+
+cinst -c "%BUILDCACHE%" -y jdk8           || EXIT /B
 cinst -c "%BUILDCACHE%" -y winflexbison3  || EXIT /B
 
-:: zlib
+:: zlib - not available through chocolatey
 CD "%APPVEYOR_SCRIPTS%"                   || EXIT /B
 call build-zlib.bat                       || EXIT /B
 
-:: libevent
+:: libevent - not available through chocolatey
 CD "%APPVEYOR_SCRIPTS%"                   || EXIT /B
 call build-libevent.bat                   || EXIT /B
 
-:: python packages
-pip install backports.ssl_match_hostname ^
+:: python packages (correct path to pip set in cl_setenv.bat)
+pip.exe ^
+    install backports.ssl_match_hostname ^
             ipaddress ^
+            six ^
             tornado ^
             twisted                       || EXIT /B
-
-:: msinttypes - for MSVC2010 only
-SET MSINTTYPESURL=https://storage.googleapis.com/google-code-archive-downloads/v2/code.google.com/msinttypes/msinttypes-r26.zip
-IF "%COMPILER%" == "vc100" (
-  MKDIR "%WIN3P%\msinttypes"              || EXIT /B
-  CD "%WIN3P%\msinttypes"                 || EXIT /B
-  appveyor DownloadFile "%MSINTTYPESURL%" || EXIT /B
-  7z x "msinttypes-r26.zip"               || EXIT /B
-)
-
-:: appveyor build slaves do not have MSVC2010 Boost installed
-IF "%COMPILER%" == "vc100" (
-  SET BITS=64
-  IF "%PLATFORM%" == "x86" (
-    SET BITS=32
-  )
-  SET BOOSTEXEURL=https://downloads.sourceforge.net/project/boost/boost-binaries/%BOOST_VERSION%/boost_%BOOST_VERSION:.=_%-msvc-10.0-!BITS!.exe
-  SET BOOSTEXE=C:\projects\thrift\buildcache\boost_%BOOST_VERSION:.=_%-msvc-10.0-!BITS!.exe
-  appveyor DownloadFile "!BOOSTEXEURL!" -FileName "!BOOSTEXE!" || EXIT /B
-  "!BOOSTEXE!" /dir=C:\Libraries\boost_%BOOST_VERSION:.=_% /silent || EXIT /B
-)
 
 :: Haskell (GHC) and cabal
 cinst -c "%BUILDCACHE%" -y ghc            || EXIT /B

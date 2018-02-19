@@ -45,6 +45,10 @@ public class TestTSSLTransportFactory extends ServerTestBase {
   throws Exception {
     return TSSLTransportFactory.getClientSocket(HOST, PORT);
   }
+  
+  protected TServerSocket getServerTransport() throws Exception {
+    return TSSLTransportFactory.getServerSocket(PORT);
+  }
 
   @Override
   public void startServer(final TProcessor processor, final TProtocolFactory protoFactory, final TTransportFactory factory)
@@ -52,11 +56,11 @@ public class TestTSSLTransportFactory extends ServerTestBase {
     serverThread = new Thread() {
       public void run() {
         try {
-          TServerTransport serverTransport = TSSLTransportFactory.getServerSocket(PORT);
+          TServerTransport serverTransport = getServerTransport();
           final Args args = new Args(serverTransport).processor(processor);
           server = new TSimpleServer(args);
           server.serve();
-        } catch (TTransportException e) {
+        } catch (Exception e) {
           e.printStackTrace();
           assert false;
         }
@@ -64,7 +68,7 @@ public class TestTSSLTransportFactory extends ServerTestBase {
     };
 
     serverThread.start();
-    Thread.sleep(1000);
+    Thread.sleep(SLEEP_DELAY);
   }
 
   @Override

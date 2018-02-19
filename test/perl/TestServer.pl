@@ -26,6 +26,8 @@ use Data::Dumper;
 use Getopt::Long qw(GetOptions);
 use Time::HiRes qw(gettimeofday);
 
+$SIG{INT} = \&sigint_handler;
+ 
 use lib '../../lib/perl/lib';
 use lib 'gen-perl';
 
@@ -146,6 +148,12 @@ if ($opts{"domain-socket"}) {
 my $server = new Thrift::SimpleServer($processor, $serversocket, $transport, $protocol);
 print "Starting \"simple\" server ($opts{transport}/$opts{protocol}) listen on: $listening_on\n";
 $server->serve();
+print "done.\n";
+
+sub sigint_handler {
+  print "received SIGINT, stopping...\n";
+  $server->stop();
+}
 
 ###
 ### Test server implementation

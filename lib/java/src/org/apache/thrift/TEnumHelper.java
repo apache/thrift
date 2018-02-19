@@ -19,7 +19,6 @@
 
 package org.apache.thrift;
 
-import java.lang.InstantiationException;
 import java.lang.NoSuchMethodException;
 import java.lang.IllegalAccessException;
 import java.lang.reflect.InvocationTargetException;

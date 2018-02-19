@@ -25,17 +25,24 @@ CALL cl_banner_install.bat                 || EXIT /B
 CALL cl_setenv.bat                         || EXIT /B
 CALL cl_showenv.bat                        || EXIT /B
 
+:: We're going to keep boost at a version cmake understands
+SET BOOSTPKG=mingw-w64-x86_64-boost-1.64.0-3-any.pkg.tar.xz
+SET IGNORE=--ignore mingw-w64-x86_64-boost
+
 SET PACKAGES=^
-  --needed -S bison flex ^
-  make ^
-  mingw-w64-x86_64-boost ^
+  --needed -S bison flex make ^
   mingw-w64-x86_64-cmake ^
+  mingw-w64-x86_64-libevent ^
   mingw-w64-x86_64-openssl ^
   mingw-w64-x86_64-toolchain ^
   mingw-w64-x86_64-zlib
 
-:: omitting libevent-devel for now it is version 2.1.4 and doesn't play nice with MinGW
+%BASH% -lc "pacman --noconfirm -Syu %IGNORE%" || EXIT /B
+%BASH% -lc "pacman --noconfirm -Su %IGNORE%"  || EXIT /B
+%BASH% -lc "pacman --noconfirm %PACKAGES%"    || EXIT /B
 
-%BASH% -lc "pacman --noconfirm -Syu"       || EXIT /B
-%BASH% -lc "pacman --noconfirm -Su"        || EXIT /B
-%BASH% -lc "pacman --noconfirm %PACKAGES%" || EXIT /B
+:: Install a slightly older boost (1.64.0) as cmake 3.10
+:: does not have built-in dependencies for boost 1.66.0 yet
+:: -- this cuts down on build warning output --
+%BASH% -lc "wget http://repo.msys2.org/mingw/x86_64/%BOOSTPKG% && pacman --noconfirm --needed -U %BOOSTPKG% && rm %BOOSTPKG%" || EXIT /B
+

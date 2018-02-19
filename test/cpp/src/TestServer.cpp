@@ -33,6 +33,7 @@
 #include <thrift/server/TThreadedServer.h>
 #include <thrift/transport/THttpServer.h>
 #include <thrift/transport/THttpTransport.h>
+#include <thrift/transport/TNonblockingSSLServerSocket.h>
 #include <thrift/transport/TNonblockingServerSocket.h>
 #include <thrift/transport/TSSLServerSocket.h>
 #include <thrift/transport/TSSLSocket.h>
@@ -48,6 +49,9 @@
 #ifdef HAVE_INTTYPES_H
 #include <inttypes.h>
 #endif
+#ifdef HAVE_SIGNAL_H
+#include <signal.h>
+#endif
 
 #include <iostream>
 #include <stdexcept>
@@ -58,7 +62,6 @@
 #include <boost/filesystem.hpp>
 #include <thrift/stdcxx.h>
 
-#include <signal.h>
 #if _WIN32
 #include <thrift/windows/TWinsockSingleton.h>
 #endif
@@ -73,6 +76,17 @@ using namespace apache::thrift::transport;
 using namespace apache::thrift::server;
 
 using namespace thrift::test;
+
+// to handle a controlled shutdown, signal handling is mandatory
+#ifdef HAVE_SIGNAL_H
+apache::thrift::concurrency::Monitor gMonitor;
+void signal_handler(int signum)
+{
+  if (signum == SIGINT) {
+    gMonitor.notifyAll();
+  }
+}
+#endif
 
 class TestHandler : public ThriftTestIf {
 public:
@@ -113,7 +127,7 @@ public:
   void testBinary(std::string& _return, const std::string& thing) {
     std::ostringstream hexstr;
     hexstr << std::hex << thing;
-    printf("testBinary(%lu: %s)\n", thing.size(), hexstr.str().c_str());
+    printf("testBinary(%lu: %s)\n", safe_numeric_cast<unsigned long>(thing.size()), hexstr.str().c_str());
     _return = thing;
   }
 
@@ -634,6 +648,12 @@ int main(int argc, char** argv) {
     ssl = true;
   }
 
+#if defined(HAVE_SIGNAL_H) && defined(SIGPIPE)
+  if (ssl) {
+    signal(SIGPIPE, SIG_IGN); // for OpenSSL, otherwise we end abruptly
+  }
+#endif
+
   if (vm.count("abstract-namespace")) {
     abstract_namespace = true;
   }
@@ -676,7 +696,9 @@ int main(int argc, char** argv) {
     sslSocketFactory->loadCertificate(certPath.c_str());
     sslSocketFactory->loadPrivateKey(keyPath.c_str());
     sslSocketFactory->ciphers("ALL:!ADH:!LOW:!EXP:!MD5:@STRENGTH");
-    serverSocket = stdcxx::shared_ptr<TServerSocket>(new TSSLServerSocket(port, sslSocketFactory));
+    if (server_type != "nonblocking") {
+      serverSocket = stdcxx::shared_ptr<TServerSocket>(new TSSLServerSocket(port, sslSocketFactory));
+    }
   } else {
     if (domain_socket != "") {
       if (abstract_namespace) {
@@ -738,13 +760,11 @@ int main(int argc, char** argv) {
     server.reset(new TSimpleServer(testProcessor, serverSocket, transportFactory, protocolFactory));
   } else if (server_type == "thread-pool") {
 
-    stdcxx::shared_ptr<ThreadManager> threadManager = ThreadManager::newSimpleThreadManager(workers);
-
     stdcxx::shared_ptr<PlatformThreadFactory> threadFactory
         = stdcxx::shared_ptr<PlatformThreadFactory>(new PlatformThreadFactory());
 
+    stdcxx::shared_ptr<ThreadManager> threadManager = ThreadManager::newSimpleThreadManager(workers);
     threadManager->threadFactory(threadFactory);
-
     threadManager->start();
 
     server.reset(new TThreadPoolServer(testProcessor,
@@ -753,7 +773,6 @@ int main(int argc, char** argv) {
                                        protocolFactory,
                                        threadManager));
   } else if (server_type == "threaded") {
-
     server.reset(
         new TThreadedServer(testProcessor, serverSocket, transportFactory, protocolFactory));
   } else if (server_type == "nonblocking") {
@@ -769,10 +788,15 @@ int main(int argc, char** argv) {
       // provide a stop method.
       TEvhttpServer nonblockingServer(testBufferProcessor, port);
       nonblockingServer.serve();
-    } else {
-      stdcxx::shared_ptr<transport::TNonblockingServerSocket> nbSocket;
-      nbSocket.reset(new transport::TNonblockingServerSocket(port));
+    } else if (transport_type == "framed") {
+      stdcxx::shared_ptr<transport::TNonblockingServerTransport> nbSocket;
+      nbSocket.reset(
+          ssl ? new transport::TNonblockingSSLServerSocket(port, sslSocketFactory)
+              : new transport::TNonblockingServerSocket(port));
       server.reset(new TNonblockingServer(testProcessor, protocolFactory, nbSocket));
+    } else {
+      cerr << "server-type nonblocking requires transport of http or framed" << endl;
+      exit(1);
     }
   }
 
@@ -782,20 +806,23 @@ int main(int argc, char** argv) {
       // if using header
       server->setOutputProtocolFactory(stdcxx::shared_ptr<TProtocolFactory>());
     }
+    
     apache::thrift::concurrency::PlatformThreadFactory factory;
     factory.setDetached(false);
     stdcxx::shared_ptr<apache::thrift::concurrency::Runnable> serverThreadRunner(server);
     stdcxx::shared_ptr<apache::thrift::concurrency::Thread> thread
         = factory.newThread(serverThreadRunner);
-    thread->start();
 
-    // HACK: cross language test suite is unable to handle cin properly
-    //       that's why we stay in a endless loop here
-    while (1) {
-    }
-    // FIXME: find another way to stop the server (e.g. a signal)
-    // cout<<"Press enter to stop the server."<<endl;
-    // cin.ignore(); //wait until a key is pressed
+#ifdef HAVE_SIGNAL_H
+    signal(SIGINT, signal_handler);
+#endif
+
+    thread->start();
+    gMonitor.waitForever();         // wait for a shutdown signal
+    
+#ifdef HAVE_SIGNAL_H
+    signal(SIGINT, SIG_DFL);
+#endif
 
     server->stop();
     thread->join();
@@ -805,3 +832,4 @@ int main(int argc, char** argv) {
   cout << "done." << endl;
   return 0;
 }
+

@@ -18,7 +18,9 @@
 # - dart: does not come with Ubuntu
 # - dotnet: does not come with Ubuntu
 # - haxe: version 3.4.2 that comes with Ubuntu cores in our CI build
+# - go: xenial comes with 1.8, we want the latest (supported)
 # - nodejs: want v8, Ubuntu comes with v6
+#
 
 FROM buildpack-deps:artful-scm
 MAINTAINER Apache Thrift <dev@thrift.apache.org>
@@ -41,11 +43,6 @@ RUN apt-get update && \
 # RUN echo "deb http://download.mono-project.com/repo/debian xenial main" | tee /etc/apt/sources.list.d/mono.list && \
 #     apt-key adv --keyserver keyserver.ubuntu.com --recv-keys A6A19B38D3D831EF
 
-# D
-RUN apt-key adv --keyserver keyserver.ubuntu.com --recv-keys EBCF975E5BA24D5E && \
-        wget http://master.dl.sourceforge.net/project/d-apt/files/d-apt.list -O /etc/apt/sources.list.d/d-apt.list && \
-        wget -qO - https://dlang.org/d-keyring.gpg | apt-key add -
-
 # Dart
 RUN curl https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - && \
     curl https://storage.googleapis.com/download.dartlang.org/linux/debian/dart_stable.list > \
@@ -60,7 +57,7 @@ RUN curl https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor > /et
 RUN add-apt-repository ppa:haxe/releases -y
 
 # node.js
-RUN curl -sL https://deb.nodesource.com/gpgkey/nodesource.gpg.key | apt-key add - \
+RUN curl -sL https://deb.nodesource.com/gpgkey/nodesource.gpg.key | apt-key add - && \
     echo "deb https://deb.nodesource.com/node_8.x artful main" | tee /etc/apt/sources.list.d/nodesource.list
 
 ### install general dependencies
@@ -95,25 +92,30 @@ RUN apt-get install -y --no-install-recommends \
 `# csharp (mono) dependencies` \
       mono-devel
 
-ENV D_VERSION 2.077.1-0.1
-RUN apt-get install -y --no-install-recommends \
-      `# D dependencies` \
-      dmd-bin=$D_VERSION \
-      libphobos2-dev=$D_VERSION \
-      dmd-compiler=$D_VERSION \
-      dmd-tools=$D_VERSION \
-      dub \
-      dfmt \
-      dscanner \
-      libevent-dev \
-      libssl-dev \
-      xdg-utils
-RUN mkdir -p /usr/include/dmd/druntime/import/deimos /usr/include/dmd/druntime/import/C && \
+ENV SBCL_VERSION 1.4.5
+RUN \
+`# Common Lisp (sbcl) dependencies` \
+    curl --version && \
+    curl -O -J -L https://kent.dl.sourceforge.net/project/sbcl/sbcl/${SBCL_VERSION}/sbcl-${SBCL_VERSION}-x86-64-linux-binary.tar.bz2 && \
+    tar xjf sbcl-${SBCL_VERSION}-x86-64-linux-binary.tar.bz2 && \
+    cd sbcl-${SBCL_VERSION}-x86-64-linux && \
+    ./install.sh && \
+    sbcl --version && \
+    rm -rf sbcl*
+
+ENV D_VERSION     2.077.1
+ENV DMD_DEB       dmd_2.077.1-0_amd64.deb
+RUN \
+`# D dependencies` \
+    wget -q http://downloads.dlang.org/releases/2.x/${D_VERSION}/${DMD_DEB} && \
+    dpkg --install ${DMD_DEB} && \
+    rm -f ${DMD_DEB} && \
+    mkdir -p /usr/include/dmd/druntime/import/deimos /usr/include/dmd/druntime/import/C && \
     curl -sSL https://github.com/D-Programming-Deimos/libevent/archive/master.tar.gz| tar xz && \
     mv libevent-master/deimos/* /usr/include/dmd/druntime/import/deimos/ && \
     mv libevent-master/C/* /usr/include/dmd/druntime/import/C/ && \
-    rm -rf libevent-master
-RUN curl -sSL https://github.com/D-Programming-Deimos/openssl/archive/master.tar.gz| tar xz && \
+    rm -rf libevent-master && \
+    curl -sSL https://github.com/D-Programming-Deimos/openssl/archive/master.tar.gz| tar xz && \
     mv openssl-master/deimos/* /usr/include/dmd/druntime/import/deimos/ && \
     mv openssl-master/C/* /usr/include/dmd/druntime/import/C/ && \
     rm -rf openssl-master
@@ -139,10 +141,15 @@ RUN apt-get install -y --no-install-recommends \
 `# GlibC dependencies` \
       libglib2.0-dev
 
-RUN apt-get install -y --no-install-recommends \
-`# golang (go) dependencies` \
-      golang-go \
-      golang-race-detector-runtime
+# golang
+ENV GOLANG_VERSION 1.10
+ENV GOLANG_DOWNLOAD_URL https://golang.org/dl/go$GOLANG_VERSION.linux-amd64.tar.gz
+ENV GOLANG_DOWNLOAD_SHA256 b5a64335f1490277b585832d1f6c7f8c6c11206cba5cd3f771dcb87b98ad1a33
+RUN curl -fsSL "$GOLANG_DOWNLOAD_URL" -o golang.tar.gz && \
+      echo "$GOLANG_DOWNLOAD_SHA256  golang.tar.gz" | sha256sum -c - && \
+            tar -C /usr/local -xzf golang.tar.gz && \
+                  ln -s /usr/local/go/bin/go /usr/local/bin && \
+                        rm golang.tar.gz
 
 RUN apt-get install -y --no-install-recommends \
 `# Haskell dependencies` \

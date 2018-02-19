@@ -186,7 +186,11 @@ public class TSSLTransportFactory {
       if (params.isTrustStoreSet) {
         tmf = TrustManagerFactory.getInstance(params.trustManagerType);
         KeyStore ts = KeyStore.getInstance(params.trustStoreType);
-        in = getStoreAsStream(params.trustStore);
+        if (params.trustStoreStream != null) {
+          in = params.trustStoreStream;
+        } else {
+          in = getStoreAsStream(params.trustStore);
+        }
         ts.load(in,
                 (params.trustPass != null ? params.trustPass.toCharArray() : null));
         tmf.init(ts);
@@ -195,7 +199,11 @@ public class TSSLTransportFactory {
       if (params.isKeyStoreSet) {
         kmf = KeyManagerFactory.getInstance(params.keyManagerType);
         KeyStore ks = KeyStore.getInstance(params.keyStoreType);
-        is = getStoreAsStream(params.keyStore);
+        if (params.keyStoreStream != null) {
+        	is = params.keyStoreStream;
+        } else {
+        	is = getStoreAsStream(params.keyStore);
+        }
         ks.load(is, params.keyPass.toCharArray());
         kmf.init(ks, params.keyPass.toCharArray());
       }
@@ -273,10 +281,12 @@ public class TSSLTransportFactory {
   public static class TSSLTransportParameters {
     protected String protocol = "TLS";
     protected String keyStore;
+    protected InputStream keyStoreStream;
     protected String keyPass;
     protected String keyManagerType = KeyManagerFactory.getDefaultAlgorithm();
     protected String keyStoreType = "JKS";
     protected String trustStore;
+    protected InputStream trustStoreStream;
     protected String trustPass;
     protected String trustManagerType = TrustManagerFactory.getDefaultAlgorithm();
     protected String trustStoreType = "JKS";
@@ -332,7 +342,20 @@ public class TSSLTransportFactory {
       }
       isKeyStoreSet = true;
     }
-
+    
+    /**
+     * Set the keystore, password, certificate type and the store type
+     *
+     * @param keyStoreStream Keystore content input stream
+     * @param keyPass Keystore password
+     * @param keyManagerType The default is X509
+     * @param keyStoreType The default is JKS
+     */
+    public void setKeyStore(InputStream keyStoreStream, String keyPass, String keyManagerType, String keyStoreType) {
+    	this.keyStoreStream = keyStoreStream;
+    	setKeyStore("", keyPass, keyManagerType, keyStoreType);
+    }
+    
     /**
      * Set the keystore and password
      *
@@ -342,7 +365,17 @@ public class TSSLTransportFactory {
     public void setKeyStore(String keyStore, String keyPass) {
       setKeyStore(keyStore, keyPass, null, null);
     }
-
+    
+    /**
+     * Set the keystore and password
+     *
+     * @param keyStoreStream Keystore content input stream
+     * @param keyPass Keystore password
+     */
+    public void setKeyStore(InputStream keyStoreStream, String keyPass) {
+      setKeyStore(keyStoreStream, keyPass, null, null);
+    }
+    
     /**
      * Set the truststore, password, certificate type and the store type
      *
@@ -362,6 +395,19 @@ public class TSSLTransportFactory {
       }
       isTrustStoreSet = true;
     }
+    
+    /**
+     * Set the truststore, password, certificate type and the store type
+     *
+     * @param trustStoreStream Truststore content input stream
+     * @param trustPass Truststore password
+     * @param trustManagerType The default is X509
+     * @param trustStoreType The default is JKS
+     */
+    public void setTrustStore(InputStream trustStoreStream, String trustPass, String trustManagerType, String trustStoreType) {
+      this.trustStoreStream = trustStoreStream;
+      setTrustStore("", trustPass, trustManagerType, trustStoreType);
+    }
 
     /**
      * Set the truststore and password
@@ -372,6 +418,16 @@ public class TSSLTransportFactory {
     public void setTrustStore(String trustStore, String trustPass) {
       setTrustStore(trustStore, trustPass, null, null);
     }
+    
+    /**
+     * Set the truststore and password
+     *
+     * @param trustStoreStream Truststore content input stream
+     * @param trustPass Truststore password
+     */
+    public void setTrustStore(InputStream trustStoreStream, String trustPass) {
+      setTrustStore(trustStoreStream, trustPass, null, null);
+    }
 
     /**
      * Set if client authentication is required
@@ -380,6 +436,6 @@ public class TSSLTransportFactory {
      */
     public void requireClientAuth(boolean clientAuth) {
       this.clientAuth = clientAuth;
-    }
-  }
+		}
+	}
 }

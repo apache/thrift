@@ -727,14 +727,14 @@ void t_delphi_generator::init_generator() {
   has_enum = false;
   has_const = false;
   create_keywords();
-  
+
   add_delphi_uses_list("Classes");
   add_delphi_uses_list("SysUtils");
   add_delphi_uses_list("Generics.Collections");
   if(async_) {
     add_delphi_uses_list("System.Threading");
   }
-  
+
   add_delphi_uses_list("Thrift");
   add_delphi_uses_list("Thrift.Utils");
   add_delphi_uses_list("Thrift.Collections");
@@ -1205,8 +1205,8 @@ void t_delphi_generator::print_const_def_value(std::ostream& vars,
   if (type->is_struct() || type->is_xception()) {
     const vector<t_field*>& fields = ((t_struct*)type)->get_members();
     vector<t_field*>::const_iterator f_iter;
-    const map<t_const_value*, t_const_value*>& val = value->get_map();
-    map<t_const_value*, t_const_value*>::const_iterator v_iter;
+    const map<t_const_value*, t_const_value*, t_const_value::value_compare>& val = value->get_map();
+    map<t_const_value*, t_const_value*, t_const_value::value_compare>::const_iterator v_iter;
     for (v_iter = val.begin(); v_iter != val.end(); ++v_iter) {
       t_type* field_type = NULL;
       for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
@@ -1225,8 +1225,8 @@ void t_delphi_generator::print_const_def_value(std::ostream& vars,
   } else if (type->is_map()) {
     t_type* ktype = ((t_map*)type)->get_key_type();
     t_type* vtype = ((t_map*)type)->get_val_type();
-    const map<t_const_value*, t_const_value*>& val = value->get_map();
-    map<t_const_value*, t_const_value*>::const_iterator v_iter;
+    const map<t_const_value*, t_const_value*, t_const_value::value_compare>& val = value->get_map();
+    map<t_const_value*, t_const_value*, t_const_value::value_compare>::const_iterator v_iter;
     for (v_iter = val.begin(); v_iter != val.end(); ++v_iter) {
       string key = render_const_value(vars, out, name, ktype, v_iter->first);
       string val = render_const_value(vars, out, name, vtype, v_iter->second);
@@ -1917,7 +1917,7 @@ void t_delphi_generator::generate_service_client(t_service* tservice) {
   string extends = "";
   string extends_client = "TInterfacedObject";
   string implements = async_ ? "Iface, IAsync" : "Iface";
-  
+
   generate_delphi_doc(s_service, tservice);
   if (tservice->get_extends() != NULL) {
     extends = type_name(tservice->get_extends(), true, true);
@@ -1974,7 +1974,7 @@ void t_delphi_generator::generate_service_client(t_service* tservice) {
 
   indent(s_service) << "protected" << endl;
   indent_up();
-  
+
   indent(s_service) << "// Iface" << endl;
   for (f_iter = functions.begin(); f_iter != functions.end(); ++f_iter) {
     string funname = (*f_iter)->get_name();
@@ -1991,7 +1991,7 @@ void t_delphi_generator::generate_service_client(t_service* tservice) {
       indent(s_service) << function_signature(*f_iter, true) << endl;
     }
   }
-  
+
   indent_down();
 
   indent(s_service) << "public" << endl;
@@ -2015,22 +2015,22 @@ void t_delphi_generator::generate_service_client(t_service* tservice) {
       indent_impl(s_service_impl) << function_signature(*f_iter, for_async, full_cls) << endl;
       indent_impl(s_service_impl) << "begin" << endl;
       indent_up_impl();
-      
+
       t_type* ttype = (*f_iter)->get_returntype();
       if( for_async) {
-        if (is_void(ttype)) { 
+        if (is_void(ttype)) {
            // Delphi forces us to specify a type with IFuture<T>, so we use Integer=0 for void methods
           indent_impl(s_service_impl) << "result := TTask.Future<Integer>(function: Integer" << endl;
-        } else { 
-          string rettype = type_name(ttype, false, true, false, true);          
+        } else {
+          string rettype = type_name(ttype, false, true, false, true);
           indent_impl(s_service_impl) << "result := TTask.Future<" << rettype << ">(function: " << rettype << endl;
         }
         indent_impl(s_service_impl) << "begin" << endl;
         indent_up_impl();
       }
-      
+
       indent_impl(s_service_impl) << "send_" << funname << "(";
-  
+
       bool first = true;
       for (fld_iter = fields.begin(); fld_iter != fields.end(); ++fld_iter) {
         if (first) {
@@ -2041,7 +2041,7 @@ void t_delphi_generator::generate_service_client(t_service* tservice) {
         s_service_impl << normalize_name((*fld_iter)->get_name());
       }
       s_service_impl << ");" << endl;
-  
+
       if (!(*f_iter)->is_oneway()) {
         s_service_impl << indent_impl();
         if (!(*f_iter)->get_returntype()->is_void()) {
@@ -2049,7 +2049,7 @@ void t_delphi_generator::generate_service_client(t_service* tservice) {
         }
         s_service_impl << "recv_" << funname << "();" << endl;
       }
-  
+
       if( for_async) {
         if (is_void(ttype)) {
           indent_impl(s_service_impl) << "Result := 0;" << endl;  // no IFuture<void> in Delphi
@@ -2057,11 +2057,11 @@ void t_delphi_generator::generate_service_client(t_service* tservice) {
         indent_down_impl();
         indent_impl(s_service_impl) << "end);" << endl;
       }
-      
+
       indent_down_impl();
       indent_impl(s_service_impl) << "end;" << endl << endl;
     }
-    
+
     t_function send_function(g_type_void,
                              string("send_") + (*f_iter)->get_name(),
                              (*f_iter)->get_arglist());

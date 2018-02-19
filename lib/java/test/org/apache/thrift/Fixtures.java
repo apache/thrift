@@ -277,7 +277,7 @@ public class Fixtures {
       nesting = new Nesting(bonk, oneOfEach);
 
       holyMoley = new HolyMoley();
-      ArrayList big = new ArrayList<OneOfEach>();
+      List<OneOfEach> big = new ArrayList<OneOfEach>();
       big.add(new OneOfEach(oneOfEach));
       big.add(nesting.my_ooe);
       holyMoley.setBig(big);
