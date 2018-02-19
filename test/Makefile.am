@@ -25,6 +25,11 @@ SUBDIRS += c_glib
 PRECROSS_TARGET += precross-c_glib
 endif
 
+if WITH_CL
+SUBDIRS += cl
+PRECROSS_TARGET += precross-cl
+endif
+
 if WITH_MONO
 SUBDIRS += csharp
 PRECROSS_TARGET += precross-csharp
@@ -110,6 +115,7 @@ EXTRA_DIST = \
 	crossrunner \
 	keys \
 	c_glib \
+	cl \
 	cpp \
 	dart \
 	erl \
