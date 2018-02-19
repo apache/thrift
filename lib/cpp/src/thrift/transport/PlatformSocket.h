@@ -51,6 +51,8 @@
 #  define THRIFT_LSEEK _lseek
 #  define THRIFT_WRITE _write
 #  define THRIFT_READ _read
+#  define THRIFT_IOCTL_SOCKET ioctlsocket
+#  define THRIFT_IOCTL_SOCKET_NUM_BYTES_TYPE u_long
 #  define THRIFT_FSTAT _fstat
 #  define THRIFT_STAT _stat
 #  ifdef _WIN32_WCE
@@ -111,6 +113,8 @@
 #  define THRIFT_LSEEK lseek
 #  define THRIFT_WRITE write
 #  define THRIFT_READ read
+#  define THRIFT_IOCTL_SOCKET ioctl
+#  define THRIFT_IOCTL_SOCKET_NUM_BYTES_TYPE int
 #  define THRIFT_STAT stat
 #  define THRIFT_FSTAT fstat
 #  define THRIFT_GAI_STRERROR gai_strerror
