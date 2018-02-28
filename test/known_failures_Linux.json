@@ -98,6 +98,8 @@
   "csharp-erl_binary_framed-ip-ssl",
   "csharp-erl_compact_buffered-ip-ssl",
   "csharp-erl_compact_framed-ip-ssl",
+  "d-cl_binary_buffered-ip",
+  "d-cl_binary_framed-ip",
   "d-cpp_binary_buffered-ip",
   "d-cpp_binary_buffered-ip-ssl",
   "d-cpp_binary_framed-ip",

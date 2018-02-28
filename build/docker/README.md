@@ -136,13 +136,13 @@ Last updated: October 1, 2017
 
 | Language  | ubuntu-trusty | ubuntu-xenial | ubuntu-artful | Notes |
 | :-------- | :------------ | :------------ | :------------ | :---- |
-| as of     | Oct 01, 2017  | Jan 29, 2018  | Jan 29, 2018  |       |
+| as of     | Oct 01, 2017  | Jan 29, 2018  | Mar 02, 2018  |       |
 | as3       |               |               |               | Not in CI |
 | C++ gcc   | 4.8.4         | 5.4.0         | 7.2.0         |       |
 | C++ clang | 3.4           | 3.8           | 4.0           |       |
 | C# (mono) | 3.2.8.0       | 4.2.1.0       | 4.6.2.7       |       |
 | c_glib    | 2.40.2        | 2.48.2        | 2.54.0        |       |
-| CL (sbcl) |               |               | 1.3.14        |       |
+| CL (sbcl) |               |               | 1.4.4         |       |
 | cocoa     |               |               |               | Not in CI |
 | d         | 2.070.2       | 2.073.2       | 2.077.1       |       |
 | dart      | 1.20.1        | 1.22.1        | 1.24.3        |       |
