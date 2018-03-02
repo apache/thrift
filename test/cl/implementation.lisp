@@ -132,4 +132,5 @@
 
 (defun thrift.test.second-service-implementation:secondtest-string (thing)
   (format t "secondtestString(~a)~%" thing)
-  thing)
+  (concatenate 'string "testString(\"" thing "\")"))
+
