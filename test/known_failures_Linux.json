@@ -133,8 +133,6 @@
   "d-java_json_http-ip",
   "d-java_json_http-ip-ssl",
   "d-js_json_http-ip",
-  "d-lua_json_buffered-ip",
-  "d-lua_json_framed-ip",
   "d-nodejs_binary_buffered-ip",
   "d-nodejs_binary_buffered-ip-ssl",
   "d-nodejs_binary_framed-ip",
