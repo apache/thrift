@@ -287,15 +287,13 @@ abstract class TSaslTransport extends TTransport {
         if (message.status == NegotiationStatus.COMPLETE &&
             getRole() == SaslRole.CLIENT) {
           LOGGER.debug("{}: All done!", getRole());
-          break;
+          continue;
         }
 
         sendSaslMessage(sasl.isComplete() ? NegotiationStatus.COMPLETE : NegotiationStatus.OK,
                         challenge);
       }
       LOGGER.debug("{}: Main negotiation loop complete", getRole());
-
-      assert sasl.isComplete();
 
       // If we're the client, and we're complete, but the server isn't
       // complete yet, we need to wait for its response. This will occur
