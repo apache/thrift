@@ -1,7 +1,6 @@
 # Apache Thrift Language Support #
 
-Last Modified: 2018-01-13<br>
-Version: 0.10.0+
+Last Modified: 2018-03-05
 
 Thrift supports many programming languages and has an impressive test suite that exercises most of the languages, protocols, and transports that represents a matrix of thousands of possible combinations.  Each language typically has a minimum required version as well as support libraries - some mandatory and some optional.  All of this information is provided below to help you assess whether you can use Apache Thrift with your project.  Obviously this is a complex matrix to maintain and may not be correct in all cases - if you spot an error please inform the developers using the mailing list.
 
@@ -9,10 +8,11 @@ Apache Thrift has a choice of two build systems.  The `autoconf` build system is
 
 The Language/Library Levels indicate the minimum and maximum versions that are used in the [continuous integration environments](build/docker/README.md) (Appveyor, Travis) for Apache Thrift.  Note that while a language may contain support for protocols, transports, and servers, the extent to which each is tested as part of the overall build process varies.  The definitive integration test for the project is called the "cross" test which executes a test matrix with clients and servers communicating across languages.
 
-<table style="font-size: 65%; padding: 1px;">
+<table style="font-size: 60%; padding: 1px;">
 <thead>
 <tr>
 <th rowspan=2>Language</th>
+<th rowspan=2 align=center>Since</th>
 <th colspan=2 align=center>Build Systems</th>
 <th colspan=2 align=center>Lang/Lib Levels</th>
 <th colspan=6 align=center>Low-Level Transports</th>
@@ -33,6 +33,7 @@ The Language/Library Levels indicate the minimum and maximum versions that are u
 <tbody>
 <tr align=center>
 <td align=left><a href="lib/as3/README.md">ActionScript</a></td>
+<!-- Since -----------------><td>0.3.0</td>
 <!-- Build Systems ---------><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cred.png" alt=""/></td>
 <!-- Language Levels -------><td colspan=2>ActionScript 3</td>
 <!-- Low-Level Transports --><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cred.png" alt=""/></td>
@@ -43,6 +44,7 @@ The Language/Library Levels indicate the minimum and maximum versions that are u
 </tr>
 <tr align=center>
 <td align=left><a href="lib/c_glib/README.md">C (glib)</a></td>
+<!-- Since -----------------><td>0.6.0</td>
 <!-- Build Systems ---------><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td>
 <!-- Language Levels -------><td>2.40.2</td><td>2.54.0</td>
 <!-- Low-Level Transports --><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td>
@@ -53,6 +55,7 @@ The Language/Library Levels indicate the minimum and maximum versions that are u
 </tr>
 <tr align=center>
 <td align=left><a href="lib/cpp/README.md">C++</a></td>
+<!-- Since -----------------><td>0.2.0</td>
 <!-- Build Systems ---------><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td>
 <!-- Language Levels -------><td colspan=2>C++98, gcc </td>
 <!-- Low-Level Transports --><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td>
@@ -63,6 +66,7 @@ The Language/Library Levels indicate the minimum and maximum versions that are u
 </tr>
 <tr align=center>
 <td align=left><a href="lib/csharp/README.md">C#</a></td>
+<!-- Since -----------------><td>0.2.0</td>
 <!-- Build Systems ---------><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cred.png" alt=""/></td>
 <!-- Language Levels -------><td>.NET&nbsp;3.5 / mono&nbsp;3.2.8.0</td><td>.NET&nbsp;4.6.1 / mono&nbsp;4.6.2.7</td>
 <!-- Low-Level Transports --><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td>
@@ -73,6 +77,7 @@ The Language/Library Levels indicate the minimum and maximum versions that are u
 </tr>
 <tr align=center>
 <td align=left><a href="lib/cocoa/README.md">Cocoa</a></td>
+<!-- Since -----------------><td>0.2.0</td>
 <!-- Build Systems ---------><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cred.png" alt=""/></td>
 <!-- Language Levels -------><td colspan=2>unknown</td>
 <!-- Low-Level Transports --><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td>
@@ -83,6 +88,7 @@ The Language/Library Levels indicate the minimum and maximum versions that are u
 </tr>
 <tr align=center>
 <td align=left><a href="lib/cl/README.md">Common Lisp</a></td>
+<!-- Since -----------------><td>0.12.0</td>
 <!-- Build Systems ---------><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cred.png" alt=""/></td>
 <!-- Language Levels -------><td colspan=2>SBCL 1.4.4</td>
 <!-- Low-Level Transports --><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cred.png" alt="Yes"/></td><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cred.png" alt=""/></td>
@@ -93,6 +99,7 @@ The Language/Library Levels indicate the minimum and maximum versions that are u
 </tr>
 <tr align=center>
 <td align=left><a href="lib/d/README.md">Dlang</a></td>
+<!-- Since -----------------><td>0.9.0</td>
 <!-- Build Systems ---------><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cred.png" alt=""/></td>
 <!-- Language Levels -------><td>2.070.2</td><td>2.077.1</td>
 <!-- Low-Level Transports --><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td>
@@ -103,6 +110,7 @@ The Language/Library Levels indicate the minimum and maximum versions that are u
 </tr>
 <tr align=center>
 <td align=left><a href="lib/dart/README.md">Dart</a></td>
+<!-- Since -----------------><td>0.10.0</td>
 <!-- Build Systems ---------><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cred.png" alt=""/></td>
 <!-- Language Levels -------><td>1.20.1</td><td>1.24.3</td>
 <!-- Low-Level Transports --><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cred.png" alt=""/></td>
@@ -113,6 +121,7 @@ The Language/Library Levels indicate the minimum and maximum versions that are u
 </tr>
 <tr align=center>
 <td align=left><a href="lib/delphi/README.md">Delphi</a></td>
+<!-- Since -----------------><td>0.8.0</td>
 <!-- Build Systems ---------><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cred.png" alt=""/></td>
 <!-- Language Levels -------><td>2010</td><td>unknown</td>
 <!-- Low-Level Transports --><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cred.png" alt=""/></td>
@@ -123,6 +132,7 @@ The Language/Library Levels indicate the minimum and maximum versions that are u
 </tr>
 <tr align=center>
 <td align=left><a href="lib/netcore/README.md">.NET Core</a></td>
+<!-- Since -----------------><td>0.11.0</td>
 <!-- Build Systems ---------><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cred.png" alt=""/></td>
 <!-- Language Levels -------><td>2.0.0</td><td>2.0.5</td>
 <!-- Low-Level Transports --><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td>
@@ -133,6 +143,7 @@ The Language/Library Levels indicate the minimum and maximum versions that are u
 </tr>
 <tr align=center>
 <td align=left><a href="lib/erl/README.md">Erlang</a></td>
+<!-- Since -----------------><td>0.3.0</td>
 <!-- Build Systems ---------><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cred.png" alt=""/></td>
 <!-- Language Levels -------><td>R16B03</td><td>20.0.4</td>
 <!-- Low-Level Transports --><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td>
@@ -143,6 +154,7 @@ The Language/Library Levels indicate the minimum and maximum versions that are u
 </tr>
 <tr align=center>
 <td align=left><a href="lib/go/README.md">Go</a></td>
+<!-- Since -----------------><td>0.7.0</td>
 <!-- Build Systems ---------><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cred.png" alt=""/></td>
 <!-- Language Levels -------><td>1.2.1</td><td>1.8.3</td>
 <!-- Low-Level Transports --><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td>
@@ -153,6 +165,7 @@ The Language/Library Levels indicate the minimum and maximum versions that are u
 </tr>
 <tr align=center>
 <td align=left><a href="lib/hs/README.md">Haskell</a></td>
+<!-- Since -----------------><td>0.5.0</td>
 <!-- Build Systems ---------><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td>
 <!-- Language Levels -------><td>7.6.3</td><td>8.0.2</td>
 <!-- Low-Level Transports --><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td>
@@ -163,6 +176,7 @@ The Language/Library Levels indicate the minimum and maximum versions that are u
 </tr>
 <tr align=center>
 <td align=left><a href="lib/haxe/README.md">Haxe</a></td>
+<!-- Since -----------------><td>0.9.3</td>
 <!-- Build Systems ---------><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cred.png" alt=""/></td>
 <!-- Language Levels -------><td>3.2.1</td><td>3.4.4</td>
 <!-- Low-Level Transports --><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cred.png" alt=""/></td>
@@ -173,6 +187,7 @@ The Language/Library Levels indicate the minimum and maximum versions that are u
 </tr>
 <tr align=center>
 <td align=left><a href="lib/java/README.md">Java (SE)</a></td>
+<!-- Since -----------------><td>0.2.0</td>
 <!-- Build Systems ---------><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td>
 <!-- Language Levels -------><td>1.7.0_151</td><td>1.8.0_144</td>
 <!-- Low-Level Transports --><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td>
@@ -183,6 +198,7 @@ The Language/Library Levels indicate the minimum and maximum versions that are u
 </tr>
 <tr align=center>
 <td align=left><a href="lib/javame/README.md">Java (ME)</a></td>
+<!-- Since -----------------><td>0.5.0</td>
 <!-- Build Systems ---------><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cred.png" alt=""/></td>
 <!-- Language Levels -------><td colspan=2>unknown</td>
 <!-- Low-Level Transports --><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td>
@@ -193,6 +209,7 @@ The Language/Library Levels indicate the minimum and maximum versions that are u
 </tr>
 <tr align=center>
 <td align=left><a href="lib/js/README.md">Javascript</a></td>
+<!-- Since -----------------><td>0.3.0</td>
 <!-- Build Systems ---------><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cred.png" alt=""/></td>
 <!-- Language Levels -------><td colspan=2>unknown</td>
 <!-- Low-Level Transports --><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td>
@@ -203,6 +220,7 @@ The Language/Library Levels indicate the minimum and maximum versions that are u
 </tr>
 <tr align=center>
 <td align=left><a href="lib/lua/README.md">Lua</a></td>
+<!-- Since -----------------><td>0.9.2</td>
 <!-- Build Systems ---------><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cred.png" alt=""/></td>
 <!-- Language Levels -------><td>5.1.5</td><td>5.2.4</td>
 <!-- Low-Level Transports --><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cred.png" alt=""/></td>
@@ -213,6 +231,7 @@ The Language/Library Levels indicate the minimum and maximum versions that are u
 </tr>
 <tr align=center>
 <td align=left><a href="lib/nodejs/README.md">node.js</a></td>
+<!-- Since -----------------><td>0.6.0</td>
 <!-- Build Systems ---------><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cred.png" alt=""/></td>
 <!-- Language Levels -------><td>4.2.6</td><td>8.9.1</td>
 <!-- Low-Level Transports --><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td>
@@ -223,6 +242,7 @@ The Language/Library Levels indicate the minimum and maximum versions that are u
 </tr>
 <tr align=center>
 <td align=left><a href="lib/ocaml/README.md">OCaml</a></td>
+<!-- Since -----------------><td>0.2.0</td>
 <!-- Build Systems ---------><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cred.png" alt=""/></td>
 <!-- Language Levels -------><td>4.02.3</td><td>4.04.0</td>
 <!-- Low-Level Transports --><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cred.png" alt=""/></td>
@@ -233,6 +253,7 @@ The Language/Library Levels indicate the minimum and maximum versions that are u
 </tr>
 <tr align=center>
 <td align=left><a href="lib/perl/README.md">Perl</a></td>
+<!-- Since -----------------><td>0.2.0</td>
 <!-- Build Systems ---------><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cred.png" alt=""/></td>
 <!-- Language Levels -------><td>5.18.2</td><td>5.26.0</td>
 <!-- Low-Level Transports --><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td>
@@ -243,6 +264,7 @@ The Language/Library Levels indicate the minimum and maximum versions that are u
 </tr>
 <tr align=center>
 <td align=left><a href="lib/php/README.md">PHP</a></td>
+<!-- Since -----------------><td>0.2.0</td>
 <!-- Build Systems ---------><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cred.png" alt=""/></td>
 <!-- Language Levels -------><td>5.5.9</td><td>7.1.8</td>
 <!-- Low-Level Transports --><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td>
@@ -253,6 +275,7 @@ The Language/Library Levels indicate the minimum and maximum versions that are u
 </tr>
 <tr align=center>
 <td align=left><a href="lib/py/README.md">Python</a></td>
+<!-- Since -----------------><td>0.2.0</td>
 <!-- Build Systems ---------><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td>
 <!-- Language Levels -------><td>2.7.6, 3.4.3</td><td>2.7.14, 3.6.3</td>
 <!-- Low-Level Transports --><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td>
@@ -263,6 +286,7 @@ The Language/Library Levels indicate the minimum and maximum versions that are u
 </tr>
 <tr align=center>
 <td align=left><a href="lib/rb/README.md">Ruby</a></td>
+<!-- Since -----------------><td>0.2.0</td>
 <!-- Build Systems ---------><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cred.png" alt=""/></td>
 <!-- Language Levels -------><td>1.9.3p484</td><td>2.3.3p222</td>
 <!-- Low-Level Transports --><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td>
@@ -273,6 +297,7 @@ The Language/Library Levels indicate the minimum and maximum versions that are u
 </tr>
 <tr align=center>
 <td align=left><a href="lib/rs/README.md">Rust</a></td>
+<!-- Since -----------------><td>0.11.0</td>
 <!-- Build Systems ---------><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cred.png" alt=""/></td>
 <!-- Language Levels -------><td>1.15.1</td><td>1.18.0</td>
 <!-- Low-Level Transports --><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cred.png" alt=""/></td>
@@ -283,6 +308,7 @@ The Language/Library Levels indicate the minimum and maximum versions that are u
 </tr>
 <tr align=center>
 <td align=left><a href="lib/st/README.md">Smalltalk</a></td>
+<!-- Since -----------------><td>0.2.0</td>
 <!-- Build Systems ---------><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cred.png" alt=""/></td>
 <!-- Language Levels -------><td colspan=2>unknown</td>
 <!-- Low-Level Transports --><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cred.png" alt=""/></td>
@@ -295,6 +321,7 @@ The Language/Library Levels indicate the minimum and maximum versions that are u
 <tfoot>
 <tr>
 <th rowspan=2>Language</th>
+<th rowspan=2 align=center>Since</th>
 <!-- Build Systems ---------><th>autoconf</th><th>cmake</th>
 <!-- Lang/Lib Levels -------><th>Min</th><th>Max</th>
 <!-- Low-Level Transports --><th><a href="https://en.wikipedia.org/wiki/Unix_domain_socket">Domain</a></th></th><th>&nbsp;File&nbsp;</th><th>Memory</th><th>&nbsp;Pipe&nbsp;</th><th>Socket</th><th>&nbsp;TLS&nbsp;</th>
