@@ -31,7 +31,10 @@ from distutils.errors import CCompilerError, DistutilsExecError, DistutilsPlatfo
 # Fix to build sdist under vagrant
 import os
 if 'vagrant' in str(os.environ):
-    del os.link
+    try:
+        del os.link
+    except AttributeError:
+        pass
 
 include_dirs = ['src']
 if sys.platform == 'win32':
