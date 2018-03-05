@@ -20,6 +20,7 @@
 package common
 
 import (
+	"context"
 	"errors"
 	"gen/thrifttest"
 	"reflect"
@@ -95,6 +96,7 @@ var xxs = &thrifttest.Xtruct{
 }
 
 var xcept = &thrifttest.Xception{ErrorCode: 1001, Message: "some"}
+var defaultCtx = context.Background()
 
 func callEverythingWithMock(t *testing.T, client *thrifttest.ThriftTestClient, handler *MockThriftTest) {
 	gomock.InOrder(

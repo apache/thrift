@@ -20,12 +20,15 @@ package main
  */
 
 import (
+	"context"
 	"crypto/tls"
 	"fmt"
 	"tutorial"
 
 	"git.apache.org/thrift.git/lib/go/thrift"
 )
+
+var defaultCtx = context.Background()
 
 func handleClient(client *tutorial.CalculatorClient) (err error) {
 	client.Ping(defaultCtx)
