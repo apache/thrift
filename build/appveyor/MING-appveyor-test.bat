@@ -12,5 +12,11 @@
 :: limitations under the License.
 ::
 
-:: Same as MSYS2
-CALL build\appveyor\MSYS-appveyor-test.bat
+@ECHO OFF
+SETLOCAL EnableDelayedExpansion
+
+CD build\appveyor              || EXIT /B
+CALL cl_banner_test.bat        || EXIT /B
+CALL cl_setenv.bat             || EXIT /B
+
+%BASH% -lc "cd %BUILDDIR% && ctest.exe -C %CONFIGURATION% --timeout 300 -VV -E '%DISABLED_TESTS%'" || EXIT /B
