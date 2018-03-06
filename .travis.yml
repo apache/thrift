@@ -57,11 +57,6 @@ jobs:
     - stage: docker
       script: true
       env:
-        - JOB="Docker Build ubuntu-trusty 14.04"
-        - DISTRO=ubuntu-trusty
-        - TRAVIS_BUILD_STAGE=docker
-    - script: true
-      env:
         - JOB="Docker Build ubuntu-xenial 16.04"
         - DISTRO=ubuntu-xenial
         - TRAVIS_BUILD_STAGE=docker
@@ -157,12 +152,6 @@ jobs:
       env:
         - JOB="Autotools (Ubuntu Xenial)"
         - DISTRO=ubuntu-xenial
-        - SCRIPT="autotools.sh"
-
-    - script: build/docker/run.sh
-      env:
-        - JOB="Autotools (Ubuntu Trusty)"
-        - DISTRO=ubuntu-trusty
         - SCRIPT="autotools.sh"
 
     # ------------------------- phase: dist -------------------------

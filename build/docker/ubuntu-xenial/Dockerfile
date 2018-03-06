@@ -15,11 +15,8 @@
 # Using all stock Ubuntu Xenial packaging except for:
 # - d: does not come with Ubuntu so we're installing 2.073.2 for coverage
 # - dart: does not come with Ubuntu so we're installing 1.22.1 for coverage
+# - nodejs: Ubuntu comes with 4.2.6 which exits LTS April 2018, so we're installing 6.x
 #
-
-#
-# Known missing or disabled libraries:
-# - d: deimos for libevent and openssl omitted - not compatible / build errors
 
 FROM buildpack-deps:xenial-scm
 MAINTAINER Apache Thrift <dev@thrift.apache.org>
@@ -58,6 +55,10 @@ RUN curl https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor > /et
     echo "deb [arch=amd64] https://packages.microsoft.com/repos/microsoft-ubuntu-xenial-prod xenial main" > \
       /etc/apt/sources.list.d/dotnetdev.list
 
+# node.js
+RUN curl -sL https://deb.nodesource.com/gpgkey/nodesource.gpg.key | apt-key add - && \
+    echo "deb https://deb.nodesource.com/node_6.x xenial main" | tee /etc/apt/sources.list.d/nodesource.list
+    
 ### install general dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
 `# General dependencies` \
@@ -173,9 +174,7 @@ RUN apt-get install -y --no-install-recommends \
 
 RUN apt-get install -y --no-install-recommends \
 `# Node.js dependencies` \
-      nodejs \
-      npm && \
-    ln -s /usr/bin/nodejs /usr/bin/node
+      nodejs
 
 RUN apt-get install -y --no-install-recommends \
 `# OCaml dependencies` \

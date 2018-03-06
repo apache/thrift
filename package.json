@@ -37,19 +37,19 @@
   "dependencies": {
     "node-int64": "^0.4.0",
     "q": "^1.5.0",
-    "ws": ">= 2.2.3"
+    "ws": "^5.0.0"
   },
   "devDependencies": {
     "buffer-equals": "^1.0.4",
-    "commander": "^2.11.0",
-    "connect": "^3.6.4",
+    "commander": "^2.14.1",
+    "connect": "^3.6.6",
     "istanbul": "^0.4.5",
-    "jsdoc": ">=3.5.5",
+    "jsdoc": "^3.5.5",
     "minimatch": "^3.0.4",
-    "phantomjs-prebuilt": "^2.1.7",
+    "phantomjs-prebuilt": "^2.1.16",
     "run-browser": "^2.0.2",
-    "tape": "^4.8.0",
-    "utf-8-validate": "^3.0.0"
+    "tape": "^4.9.0",
+    "utf-8-validate": "^4.0.0"
   },
   "scripts": {
     "cover": "lib/nodejs/test/testAll.sh COVER",

@@ -22,7 +22,7 @@ under the License.
 
 ## Compatibility
 
-node version 4 or later is required
+node version 6 or later is required
 
 ## Install
 

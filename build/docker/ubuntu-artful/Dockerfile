@@ -19,6 +19,7 @@
 # - dotnet: does not come with Ubuntu
 # - haxe: version 3.4.2 that comes with Ubuntu cores in our CI build
 # - nodejs: want v8, Ubuntu comes with v6
+#
 
 FROM buildpack-deps:artful-scm
 MAINTAINER Apache Thrift <dev@thrift.apache.org>
