@@ -45,9 +45,7 @@
     "connect": "^3.6.6",
     "istanbul": "^0.4.5",
     "jsdoc": "^3.5.5",
-    "minimatch": "^3.0.4",
     "phantomjs-prebuilt": "^2.1.16",
-    "run-browser": "^2.0.2",
     "tape": "^4.9.0",
     "utf-8-validate": "^4.0.0"
   },
