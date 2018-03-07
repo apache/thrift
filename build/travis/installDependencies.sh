@@ -58,7 +58,8 @@ sudo apt-get install cabal-install-1.20 ghc-$GHCVER
 sudo apt-get install -qq lua5.2 lua5.2-dev
 
 # Node.js dependencies
-sudo apt-get install -qq nodejs nodejs-dev npm
+curl -sL https://deb.nodesource.com/setup_8.x | sudo -E bash -
+sudo apt-get install -qq nodejs
 sudo update-alternatives --install /usr/bin/node node /usr/bin/nodejs 10
 
 # CSharp
