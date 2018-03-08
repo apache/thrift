@@ -26,14 +26,14 @@
 /**
  * De-serialize object from the given input protocol
  *
- * @param input protocol used for reading
+ * @param inProtocol protocol used for reading
  */
 -(BOOL) read:(id <TProtocol>)inProtocol error:(NSError **)error;
 
 /**
  * Serialize object to the given protocol
  *
- * @param buf output protocol used for writing
+ * @param outProtocol output protocol used for writing
  */
 -(BOOL) write:(id <TProtocol>)outProtocol error:(NSError **)error;
 
