@@ -1097,8 +1097,8 @@ string t_go_generator::render_const_value(t_type* type, t_const_value* value, co
     indent_up();
     const vector<t_field*>& fields = ((t_struct*)type)->get_members();
     vector<t_field*>::const_iterator f_iter;
-    const map<t_const_value*, t_const_value*>& val = value->get_map();
-    map<t_const_value*, t_const_value*>::const_iterator v_iter;
+    const map<t_const_value*, t_const_value*, t_const_value::value_compare>& val = value->get_map();
+    map<t_const_value*, t_const_value*, t_const_value::value_compare>::const_iterator v_iter;
 
     for (v_iter = val.begin(); v_iter != val.end(); ++v_iter) {
       t_type* field_type = NULL;
@@ -1123,10 +1123,10 @@ string t_go_generator::render_const_value(t_type* type, t_const_value* value, co
   } else if (type->is_map()) {
     t_type* ktype = ((t_map*)type)->get_key_type();
     t_type* vtype = ((t_map*)type)->get_val_type();
-    const map<t_const_value*, t_const_value*>& val = value->get_map();
+    const map<t_const_value*, t_const_value*, t_const_value::value_compare>& val = value->get_map();
     out << "map[" << type_to_go_type(ktype) << "]" << type_to_go_type(vtype) << "{" << endl;
     indent_up();
-    map<t_const_value*, t_const_value*>::const_iterator v_iter;
+    map<t_const_value*, t_const_value*, t_const_value::value_compare>::const_iterator v_iter;
 
     for (v_iter = val.begin(); v_iter != val.end(); ++v_iter) {
       out << indent() << render_const_value(ktype, v_iter->first, name) << ": "

@@ -55,7 +55,7 @@ class t_cl_generator : public t_oop_generator {
     system_prefix = "thrift-gen-";
 
     std::map<std::string, std::string>::const_iterator iter;
-    
+
     for(iter = parsed_options.begin(); iter != parsed_options.end(); ++iter) {
       if(iter->first.compare("no_asd") == 0) {
         no_asd = true;
@@ -65,7 +65,7 @@ class t_cl_generator : public t_oop_generator {
         throw "unknown option cl:" + iter->first;
       }
     }
-    
+
     out_dir_base_ = "gen-cl";
     copy_options_ = option_string;
   }
@@ -112,7 +112,7 @@ class t_cl_generator : public t_oop_generator {
   std::ofstream f_vars_;
 
   std::string copy_options_;
-  
+
   bool no_asd;
   std::string system_prefix;
 };
@@ -310,8 +310,8 @@ string t_cl_generator::render_const_value(t_type* type, t_const_value* value) {
 
     const vector<t_field*>& fields = ((t_struct*)type)->get_members();
     vector<t_field*>::const_iterator f_iter;
-    const map<t_const_value*, t_const_value*>& val = value->get_map();
-    map<t_const_value*, t_const_value*>::const_iterator v_iter;
+    const map<t_const_value*, t_const_value*, t_const_value::value_compare>& val = value->get_map();
+    map<t_const_value*, t_const_value*, t_const_value::value_compare>::const_iterator v_iter;
 
     for (v_iter = val.begin(); v_iter != val.end(); ++v_iter) {
       t_type* field_type = NULL;
@@ -336,8 +336,8 @@ string t_cl_generator::render_const_value(t_type* type, t_const_value* value) {
     t_type* vtype = ((t_map*)type)->get_val_type();
     out << "(thrift:map ";
     indent_up();
-    const map<t_const_value*, t_const_value*>& val = value->get_map();
-    map<t_const_value*, t_const_value*>::const_iterator v_iter;
+    const map<t_const_value*, t_const_value*, t_const_value::value_compare>& val = value->get_map();
+    map<t_const_value*, t_const_value*, t_const_value::value_compare>::const_iterator v_iter;
     for (v_iter = val.begin(); v_iter != val.end(); ++v_iter) {
       out << endl << indent()
           << "(cl:cons " << render_const_value(ktype, v_iter->first) << " "
@@ -494,7 +494,7 @@ string t_cl_generator::typespec(t_type *t) {
     return type_name(t);
   } else if (t->is_map()) {
     t_map *m = (t_map*) t;
-    return "(thrift:map " + typespec(m->get_key_type()) + " " + 
+    return "(thrift:map " + typespec(m->get_key_type()) + " " +
       typespec(m->get_val_type()) + ")";
   } else if (t->is_struct() || t->is_xception()) {
     return "(struct " + prefix(type_name(t)) + ")";
@@ -530,7 +530,7 @@ string t_cl_generator::argument_list(t_struct* tstruct) {
       typespec((*f_iter)->get_type()) << " " <<
       (*f_iter)->get_key() <<  ")";
 
-    
+
   }
   res << ")";
   return res.str();

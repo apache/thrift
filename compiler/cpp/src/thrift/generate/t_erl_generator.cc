@@ -430,7 +430,7 @@ void t_erl_generator::generate_const_function(t_const* tconst, ostringstream& ex
     exports << const_fun_name << "/1, " << const_fun_name << "/2";
 
     // Emit const function definition.
-    map<t_const_value*, t_const_value*>::const_iterator i, end = value->get_map().end();
+    map<t_const_value*, t_const_value*, t_const_value::value_compare>::const_iterator i, end = value->get_map().end();
     // The one-argument form throws an error if the key does not exist in the map.
     for (i = value->get_map().begin(); i != end;) {
       functions << const_fun_name << "(" << render_const_value(ktype, i->first) << ") -> "
@@ -590,8 +590,8 @@ string t_erl_generator::render_const_value(t_type* type, t_const_value* value) {
     out << "#" << type_name(type) << "{";
     const vector<t_field*>& fields = ((t_struct*)type)->get_members();
     vector<t_field*>::const_iterator f_iter;
-    const map<t_const_value*, t_const_value*>& val = value->get_map();
-    map<t_const_value*, t_const_value*>::const_iterator v_iter;
+    const map<t_const_value*, t_const_value*, t_const_value::value_compare>& val = value->get_map();
+    map<t_const_value*, t_const_value*, t_const_value::value_compare>::const_iterator v_iter;
 
     bool first = true;
     for (v_iter = val.begin(); v_iter != val.end(); ++v_iter) {
@@ -626,7 +626,7 @@ string t_erl_generator::render_const_value(t_type* type, t_const_value* value) {
     } else {
       out << "dict:from_list([";
     }
-    map<t_const_value*, t_const_value*>::const_iterator i, end = value->get_map().end();
+    map<t_const_value*, t_const_value*, t_const_value::value_compare>::const_iterator i, end = value->get_map().end();
     for (i = value->get_map().begin(); i != end;) {
       out << "{" << render_const_value(ktype, i->first) << ","
           << render_const_value(vtype, i->second) << "}";

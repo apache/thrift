@@ -202,8 +202,8 @@ bool compare_defaults(t_const_value* newStructDefault, t_const_value* oldStructD
          }
       case t_const_value::CV_MAP:
          {
-            const std::map<t_const_value*, t_const_value*> newMap = newStructDefault->get_map();
-            const std::map<t_const_value*, t_const_value*> oldMap = oldStructDefault->get_map();
+            const std::map<t_const_value*, t_const_value*, t_const_value::value_compare> newMap = newStructDefault->get_map();
+            const std::map<t_const_value*, t_const_value*, t_const_value::value_compare> oldMap = oldStructDefault->get_map();
 
             bool defaultValuesCompare = (oldMap.size() == newMap.size());
 

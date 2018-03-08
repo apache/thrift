@@ -44,7 +44,7 @@ using std::string;
 using std::stringstream;
 using std::vector;
 
-//TODO: check for indentation 
+//TODO: check for indentation
 //TODO: Do we need seqId_ in generation?
 
 t_netcore_generator::t_netcore_generator(t_program* program, const map<string, string>& parsed_options, const string& option_string)
@@ -328,7 +328,7 @@ void t_netcore_generator::init_keywords()
     netcore_keywords["var"] = 1;
     netcore_keywords["where"] = 1;
     netcore_keywords["yield"] = 1;
-	
+
 	netcore_keywords["when"] = 1;
 }
 
@@ -400,7 +400,7 @@ void t_netcore_generator::generate_enum(t_enum* tenum)
 
     ofstream f_enum;
     f_enum.open(f_enum_name.c_str());
-    
+
 	generate_enum(f_enum, tenum);
 
     f_enum.close();
@@ -428,7 +428,7 @@ void t_netcore_generator::generate_enum(ofstream& out, t_enum* tenum)
 	}
 
 	scope_down(out);
-	end_netcore_namespace(out);	
+	end_netcore_namespace(out);
 }
 
 void t_netcore_generator::generate_consts(vector<t_const*> consts)
@@ -443,7 +443,7 @@ void t_netcore_generator::generate_consts(vector<t_const*> consts)
     f_consts.open(f_consts_name.c_str());
 
     generate_consts(f_consts, consts);
-    
+
     f_consts.close();
 }
 
@@ -487,15 +487,15 @@ void t_netcore_generator::print_const_def_value(ofstream& out, string name, t_ty
     if (type->is_struct() || type->is_xception())
     {
         const vector<t_field*>& fields = static_cast<t_struct*>(type)->get_members();
-        const map<t_const_value*, t_const_value*>& val = value->get_map();
+        const map<t_const_value*, t_const_value*, t_const_value::value_compare>& val = value->get_map();
         vector<t_field*>::const_iterator f_iter;
-        map<t_const_value*, t_const_value*>::const_iterator v_iter;
+        map<t_const_value*, t_const_value*, t_const_value::value_compare>::const_iterator v_iter;
         prepare_member_name_mapping(static_cast<t_struct*>(type));
 
         for (v_iter = val.begin(); v_iter != val.end(); ++v_iter)
         {
             t_field* field = NULL;
-            
+
             for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter)
             {
                 if ((*f_iter)->get_name() == v_iter->first->get_string())
@@ -510,7 +510,7 @@ void t_netcore_generator::print_const_def_value(ofstream& out, string name, t_ty
             }
 
             t_type* field_type = field->get_type();
-            
+
             string val = render_const_value(out, name, field_type, v_iter->second);
             out << indent() << name << "." << prop_name(field) << " = " << val << ";" << endl;
         }
@@ -521,8 +521,8 @@ void t_netcore_generator::print_const_def_value(ofstream& out, string name, t_ty
     {
         t_type* ktype = static_cast<t_map*>(type)->get_key_type();
         t_type* vtype = static_cast<t_map*>(type)->get_val_type();
-        const map<t_const_value*, t_const_value*>& val = value->get_map();
-        map<t_const_value*, t_const_value*>::const_iterator v_iter;
+        const map<t_const_value*, t_const_value*, t_const_value::value_compare>& val = value->get_map();
+        map<t_const_value*, t_const_value*, t_const_value::value_compare>::const_iterator v_iter;
         for (v_iter = val.begin(); v_iter != val.end(); ++v_iter)
         {
             string key = render_const_value(out, name, ktype, v_iter->first);
@@ -723,7 +723,7 @@ void t_netcore_generator::generate_netcore_struct_definition(ofstream& out, t_st
 
     out << indent() << "public " << (is_final ? "sealed " : "") << "partial class " << sharp_struct_name << " : ";
 
-    if (is_exception) 
+    if (is_exception)
     {
         out << "TException, ";
     }
@@ -786,7 +786,7 @@ void t_netcore_generator::generate_netcore_struct_definition(ofstream& out, t_st
         out << indent() << "public struct Isset" << endl
             << indent() << "{" << endl;
         indent_up();
-        
+
         for (m_iter = members.begin(); m_iter != members.end(); ++m_iter)
         {
             bool is_required = field_is_required((*m_iter));
@@ -912,7 +912,7 @@ void t_netcore_generator::generate_netcore_struct_definition(ofstream& out, t_st
         generate_netcore_struct_hashcode(out, tstruct);
     }
     generate_netcore_struct_tostring(out, tstruct);
-    
+
     indent_down();
     out << indent() << "}" << endl << endl;
 
@@ -968,7 +968,7 @@ void t_netcore_generator::generate_netcore_struct_reader(ofstream& out, t_struct
         << indent() << "try" << endl
         << indent() << "{" << endl;
     indent_up();
-    
+
     const vector<t_field*>& fields = tstruct->get_members();
     vector<t_field*>::const_iterator f_iter;
 
@@ -981,7 +981,7 @@ void t_netcore_generator::generate_netcore_struct_reader(ofstream& out, t_struct
         }
     }
 
-    out << indent() << "TField field;" << endl 
+    out << indent() << "TField field;" << endl
         << indent() << "await iprot.ReadStructBeginAsync(cancellationToken);" << endl
         << indent() << "while (true)" << endl
         << indent() << "{" << endl;
@@ -996,7 +996,7 @@ void t_netcore_generator::generate_netcore_struct_reader(ofstream& out, t_struct
         << indent() << "switch (field.ID)" << endl
         << indent() << "{" << endl;
     indent_up();
-    
+
     for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter)
     {
         bool is_required = field_is_required(*f_iter);
@@ -1050,7 +1050,7 @@ void t_netcore_generator::generate_netcore_struct_reader(ofstream& out, t_struct
             out << indent() << "}" << endl;
         }
     }
-    
+
     indent_down();
     out << indent() << "}" << endl;
     out << indent() << "finally" << endl
@@ -1147,7 +1147,7 @@ void t_netcore_generator::generate_netcore_struct_result_writer(ofstream& out, t
     indent_up();
 
     out << indent() << "oprot.IncrementRecursionDepth();" << endl
-        << indent() << "try" << endl 
+        << indent() << "try" << endl
         << indent() << "{" << endl;
     indent_up();
 
@@ -1333,7 +1333,7 @@ void t_netcore_generator::generate_netcore_union(t_struct* tunion)
     generate_netcore_union_definition(f_union, tunion);
 
     f_union.close();
-    
+
     indent_validate(ic, "generate_netcore_union.");
 }
 
@@ -1720,7 +1720,7 @@ void t_netcore_generator::generate_service_client(ofstream& out, t_service* tser
                 << indent() << "throw x;" << endl;
             indent_down();
 
-            out << indent() << "}" << endl 
+            out << indent() << "}" << endl
                 << endl
                 << indent() << "var result = new " << resultname << "();" << endl
                 << indent() << "await result.ReadAsync(InputProtocol, cancellationToken);" << endl
@@ -1741,7 +1741,7 @@ void t_netcore_generator::generate_service_client(ofstream& out, t_service* tser
                     }
                     else
                     {
-                        out << indent() << "if (result.Success.HasValue)" << endl 
+                        out << indent() << "if (result.Success.HasValue)" << endl
                             << indent() << "{" << endl;
                         indent_up();
                         out << indent() << "return result.Success.Value;" << endl;
@@ -1827,7 +1827,7 @@ void t_netcore_generator::generate_service_server(ofstream& out, t_service* tser
 
     indent_up();
 
-    out << indent() << "private IAsync _iAsync;" << endl 
+    out << indent() << "private IAsync _iAsync;" << endl
         << endl
         << indent() << "public AsyncProcessor(IAsync iAsync)";
 
@@ -1839,7 +1839,7 @@ void t_netcore_generator::generate_service_server(ofstream& out, t_service* tser
     out << endl
         << indent() << "{" << endl;
     indent_up();
-    
+
     out << indent() << "if (iAsync == null) throw new ArgumentNullException(nameof(iAsync));" << endl
         << endl
         << indent() << "_iAsync = iAsync;" << endl;
@@ -1965,7 +1965,7 @@ void t_netcore_generator::generate_function_helpers(ofstream& out, t_function* t
 void t_netcore_generator::generate_process_function_async(ofstream& out, t_service* tservice, t_function* tfunction)
 {
     (void)tservice;
-    out << indent() << "public async Task " << tfunction->get_name() 
+    out << indent() << "public async Task " << tfunction->get_name()
         << "_ProcessAsync(int seqid, TProtocol iprot, TProtocol oprot, CancellationToken cancellationToken)" << endl
         << indent() << "{" << endl;
     indent_up();
@@ -2029,7 +2029,7 @@ void t_netcore_generator::generate_process_function_async(ofstream& out, t_servi
     }
 
     cleanup_member_name_mapping(arg_struct);
-    
+
     if (!first)
     {
         out << ", ";
@@ -2044,7 +2044,7 @@ void t_netcore_generator::generate_process_function_async(ofstream& out, t_servi
     {
         indent_down();
         out << indent() << "}" << endl;
-        
+
         for (x_iter = xceptions.begin(); x_iter != xceptions.end(); ++x_iter)
         {
             out << indent() << "catch (" << type_name((*x_iter)->get_type(), false, false) << " " << (*x_iter)->get_name() << ")" << endl
@@ -2062,7 +2062,7 @@ void t_netcore_generator::generate_process_function_async(ofstream& out, t_servi
 
     if (!tfunction->is_oneway())
     {
-        out << indent() << "await oprot.WriteMessageBeginAsync(new TMessage(\"" 
+        out << indent() << "await oprot.WriteMessageBeginAsync(new TMessage(\""
                 << correct_function_name_for_async(tfunction->get_name()) << "\", TMessageType.Reply, seqid), cancellationToken); " << endl
             << indent() << "await result.WriteAsync(oprot, cancellationToken);" << endl;
     }
@@ -2274,7 +2274,7 @@ void t_netcore_generator::generate_deserialize_struct(ofstream& out, t_struct* t
     }
     else
     {
-        out << indent() << prefix << " = new " << type_name(tstruct) << "();" << endl 
+        out << indent() << prefix << " = new " << type_name(tstruct) << "();" << endl
             << indent() << "await " << prefix << ".ReadAsync(iprot, cancellationToken);" << endl;
     }
 }
@@ -3074,17 +3074,17 @@ void t_netcore_generator::docstring_comment(ofstream& out, const string& comment
 
     stringstream docs(contents, std::ios_base::in);
 
-    while (!(docs.eof() || docs.fail())) 
+    while (!(docs.eof() || docs.fail()))
     {
         char line[1024];
         docs.getline(line, 1024);
 
         // Just prnt a newline when the line & prefix are empty.
-        if (strlen(line) == 0 && line_prefix == "" && !docs.eof()) 
+        if (strlen(line) == 0 && line_prefix == "" && !docs.eof())
         {
             out << endl;
         }
-        else if (strlen(line) > 0 || !docs.eof()) 
+        else if (strlen(line) > 0 || !docs.eof())
         { // skip the empty last line
             out << indent() << line_prefix << line << endl;
         }
