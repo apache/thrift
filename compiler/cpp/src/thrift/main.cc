@@ -805,8 +805,8 @@ void validate_const_rec(std::string name, t_type* type, t_const_value* value) {
     const vector<t_field*>& fields = ((t_struct*)type)->get_members();
     vector<t_field*>::const_iterator f_iter;
 
-    const map<t_const_value*, t_const_value*>& val = value->get_map();
-    map<t_const_value*, t_const_value*>::const_iterator v_iter;
+    const map<t_const_value*, t_const_value*, t_const_value::value_compare>& val = value->get_map();
+    map<t_const_value*, t_const_value*, t_const_value::value_compare>::const_iterator v_iter;
     for (v_iter = val.begin(); v_iter != val.end(); ++v_iter) {
       if (v_iter->first->get_type() != t_const_value::CV_STRING) {
         throw "type error: " + name + " struct key must be string";
@@ -826,8 +826,8 @@ void validate_const_rec(std::string name, t_type* type, t_const_value* value) {
   } else if (type->is_map()) {
     t_type* k_type = ((t_map*)type)->get_key_type();
     t_type* v_type = ((t_map*)type)->get_val_type();
-    const map<t_const_value*, t_const_value*>& val = value->get_map();
-    map<t_const_value*, t_const_value*>::const_iterator v_iter;
+    const map<t_const_value*, t_const_value*, t_const_value::value_compare>& val = value->get_map();
+    map<t_const_value*, t_const_value*, t_const_value::value_compare>::const_iterator v_iter;
     for (v_iter = val.begin(); v_iter != val.end(); ++v_iter) {
       validate_const_rec(name + "<key>", k_type, v_iter->first);
       validate_const_rec(name + "<val>", v_type, v_iter->second);

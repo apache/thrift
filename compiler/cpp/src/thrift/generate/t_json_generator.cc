@@ -510,8 +510,8 @@ void t_json_generator::write_const_value(t_const_value* value, bool should_force
 
   case t_const_value::CV_MAP: {
     start_object(NO_INDENT);
-    std::map<t_const_value*, t_const_value*> map = value->get_map();
-    std::map<t_const_value*, t_const_value*>::iterator mit;
+    std::map<t_const_value*, t_const_value*, t_const_value::value_compare> map = value->get_map();
+    std::map<t_const_value*, t_const_value*, t_const_value::value_compare>::iterator mit;
     for (mit = map.begin(); mit != map.end(); ++mit) {
       write_comma_if_needed();
       f_json_ << indent();
