@@ -717,7 +717,7 @@ string t_erl_generator::render_member_type(t_field* field) {
     return type_name(type) + "()";
   } else if (type->is_map()) {
     if (maps_) {
-      return "#{}";
+      return "map()";
     } else if (otp16_) {
       return "dict()";
     } else {
