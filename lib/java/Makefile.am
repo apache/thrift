@@ -20,29 +20,53 @@
 export CLASSPATH
 
 all-local:
-	$(ANT) $(ANT_FLAGS)
+	./gradlew $(GRADLE_OPTS) assemble \
+		-Prelease=true \
+		-Pthrift.version=$(PACKAGE_VERSION) \
+		--console=plain
 
 install-exec-hook:
-	$(ANT) $(ANT_FLAGS) install -Dinstall.path=$(DESTDIR)$(JAVA_PREFIX) \
-		-Dinstall.javadoc.path=$(DESTDIR)$(docdir)/java
+	./gradlew $(GRADLE_OPTS) install \
+		-Prelease=true \
+		-Pinstall.path=$(DESTDIR)$(JAVA_PREFIX) \
+		-Pinstall.javadoc.path=$(DESTDIR)$(docdir)/java \
+		-Pthrift.version=$(PACKAGE_VERSION) \
+		--console=plain
 
-# Make sure this doesn't fail if ant is not configured.
 clean-local:
-	ANT=$(ANT) ; if test -z "$$ANT" ; then ANT=: ; fi ; \
-	$$ANT $(ANT_FLAGS) clean
+	./gradlew $(GRADLE_OPTS) clean --console=plain
 
 precross: $(THRIFT)
-	$(ANT) $(ANT_FLAGS) compile-test
+	./gradlew $(GRADLE_OPTS) shadowJar \
+		-Prelease=true \
+		-Pthrift.version=$(PACKAGE_VERSION) \
+		-Pthrift.compiler=$(THRIFT) \
+		--console=plain
 
-check-local: all
-	$(ANT) $(ANT_FLAGS) test
+check-local: $(THRIFT)
+	./gradlew $(GRADLE_OPTS) test \
+		-Prelease=true \
+		-Pthrift.version=$(PACKAGE_VERSION) \
+		-Pthrift.compiler=$(THRIFT) \
+		--console=plain
+
+maven-publish:
+	./gradlew $(GRADLE_OPTS) uploadArchives \
+		-Prelease=true \
+		-Pthrift.version=$(PACKAGE_VERSION) \
+		--console=plain
 
 EXTRA_DIST = \
-	build.xml \
-	build.properties \
+	build.gradle \
+	gradle.properties \
+	settings.gradle \
+	gradle \
+	gradlew \
+	gradlew.bat \
 	CMakeLists.txt \
 	coding_standards.md \
 	android \
 	src \
 	test \
+	code_quality_tools \
 	README.md

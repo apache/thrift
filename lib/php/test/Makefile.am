@@ -35,16 +35,13 @@ deps: $(top_srcdir)/composer.json
 all-local: deps
 
 check-json-serializer: deps stubs
-	$(PHPUNIT) --log-junit=TEST-json-serializer.xml JsonSerialize/
+	$(PHPUNIT) --log-junit=TEST-log-json-serializer.xml JsonSerialize/
 
 check-validator: deps stubs
-	php TestValidators.php
-	php TestValidators.php -oop
+	$(PHPUNIT) --log-junit=TEST-log-validator.xml Validator/
 
 check-protocol:	deps stubs
-	$(PHPUNIT) --log-junit=TEST-log-json-protocol.xml Protocol/TestTJSONProtocol.php
-	$(PHPUNIT) --log-junit=TEST-binary-serializer.xml Protocol/TestBinarySerializer.php
-	$(PHPUNIT) --log-junit=TEST-log-simple-json-protocol.xml Protocol/TestTSimpleJSONProtocol.php
+	$(PHPUNIT) --log-junit=TEST-log-protocol.xml Protocol/
 
 check: deps stubs \
   check-protocol \

@@ -86,15 +86,15 @@ RUN apt-get install -y --no-install-recommends \
       dfmt \
       dscanner \
       xdg-utils
-# RUN mkdir -p /usr/include/dmd/druntime/import/deimos /usr/include/dmd/druntime/import/C && \
-#     curl -sSL https://github.com/D-Programming-Deimos/libevent/archive/master.tar.gz| tar xz && \
-#     mv libevent-master/deimos/* /usr/include/dmd/druntime/import/deimos/ && \
-#     mv libevent-master/C/* /usr/include/dmd/druntime/import/C/ && \
-#     rm -rf libevent-master
-# RUN curl -sSL https://github.com/D-Programming-Deimos/openssl/archive/master.tar.gz| tar xz && \
-#     mv openssl-master/deimos/* /usr/include/dmd/druntime/import/deimos/ && \
-#     mv openssl-master/C/* /usr/include/dmd/druntime/import/C/ && \
-#     rm -rf openssl-master
+RUN mkdir -p /usr/include/dmd/druntime/import/deimos /usr/include/dmd/druntime/import/C && \
+    curl -sSL https://github.com/D-Programming-Deimos/libevent/archive/master.tar.gz| tar xz && \
+    mv libevent-master/deimos/* /usr/include/dmd/druntime/import/deimos/ && \
+    mv libevent-master/C/* /usr/include/dmd/druntime/import/C/ && \
+    rm -rf libevent-master
+RUN curl -sSL https://github.com/D-Programming-Deimos/openssl/archive/master.tar.gz| tar xz && \
+    mv openssl-master/deimos/* /usr/include/dmd/druntime/import/deimos/ && \
+    mv openssl-master/C/* /usr/include/dmd/druntime/import/C/ && \
+    rm -rf openssl-master
 
 RUN apt-get install -y --no-install-recommends \
 `# Dart dependencies` \
@@ -215,6 +215,16 @@ RUN apt-get install -y --no-install-recommends \
       cppcheck \
       sloccount && \
     pip install flake8
+
+# Install BouncyCastle provider to fix Java builds issues with JDK 7
+# Builds accessing repote repositories fail as seen here: https://github.com/travis-ci/travis-ci/issues/8503
+RUN apt-get install -y --no-install-recommends \
+`# BouncyCastle JCE Provider dependencies` \
+      libbcprov-java && \
+    ln -s /usr/share/java/bcprov.jar /usr/lib/jvm/java-7-openjdk-amd64/jre/lib/ext/bcprov.jar && \
+    awk -F . -v OFS=. 'BEGIN{n=2}/^security\.provider/ {split($3, posAndEquals, "=");$3=n++"="posAndEquals[2];print;next} 1' /etc/java-7-openjdk/security/java.security > /tmp/java.security && \
+  echo "security.provider.1=org.bouncycastle.jce.provider.BouncyCastleProvider" >> /tmp/java.security && \
+  mv /tmp/java.security /etc/java-7-openjdk/security/java.security
 
 # Clean up
 RUN rm -rf /var/cache/apt/* && \

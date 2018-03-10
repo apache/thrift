@@ -24,11 +24,18 @@ SET URLFILE=%PACKAGE%.tar.gz
 SET URL=http://zlib.net/%URLFILE%
 SET FURL=http://zlib.net/fossils/%URLFILE%
 
-:: Download
+:: Download - support running a local build or a build in appveyor
 CD "%WIN3P%"                                                     || EXIT /B
-appveyor DownloadFile "%URL%"
-IF ERRORLEVEL 1 (
-    appveyor DownloadFile "%FURL%"                               || EXIT /B
+IF "%APPVEYOR_BUILD_ID%" == "" (
+    curl -L -f -o "%URLFILE%" "%URL%"
+    IF ERRORLEVEL 1 (
+        curl -L -f -o "%URLFILE%" "%FURL%"
+    )
+) ELSE (
+    appveyor DownloadFile "%URL%"
+    IF ERRORLEVEL 1 (
+        appveyor DownloadFile "%FURL%"                           || EXIT /B
+    )
 )
 7z x "%URLFILE%" -so | 7z x -si -ttar > nul                      || EXIT /B
 

@@ -753,14 +753,6 @@ void t_go_generator::init_generator() {
   f_consts_name_ = package_dir_ + "/" + program_name_ + "-consts.go";
   f_consts_.open(f_consts_name_.c_str());
 
-  vector<t_service*> services = program_->get_services();
-  vector<t_service*>::iterator sv_iter;
-
-  for (sv_iter = services.begin(); sv_iter != services.end(); ++sv_iter) {
-    string service_dir = package_dir_ + "/" + underscore((*sv_iter)->get_name()) + "-remote";
-    MKDIR(service_dir.c_str());
-  }
-
   // Print header
   f_types_ << go_autogen_comment() << go_package() << render_includes(false);
 
@@ -2055,8 +2047,16 @@ void t_go_generator::generate_service_remote(t_service* tservice) {
     parent = parent->get_extends();
   }
 
+  // This file is not useful if there are no functions; don't generate it
+  if (functions.size() == 0) {
+    return;
+  }
+
+  string f_remote_dir = package_dir_ + "/" + underscore(service_name_) + "-remote";
+  MKDIR(f_remote_dir.c_str());
+
   vector<t_function*>::iterator f_iter;
-  string f_remote_name = package_dir_ + "/" + underscore(service_name_) + "-remote/"
+  string f_remote_name = f_remote_dir + "/"
                          + underscore(service_name_) + "-remote.go";
   ofstream f_remote;
   f_remote.open(f_remote_name.c_str());
@@ -2129,6 +2129,24 @@ void t_go_generator::generate_service_remote(t_service* tservice) {
   f_remote << indent() << "  os.Exit(0)" << endl;
   f_remote << indent() << "}" << endl;
   f_remote << indent() << endl;
+
+  f_remote << indent() << "type httpHeaders map[string]string" << endl;
+  f_remote << indent() << endl;
+  f_remote << indent() << "func (h httpHeaders) String() string {" << endl;
+  f_remote << indent() << "  var m map[string]string = h" << endl;
+  f_remote << indent() << "  return fmt.Sprintf(\"%s\", m)" << endl;
+  f_remote << indent() << "}" << endl;
+  f_remote << indent() << endl;
+  f_remote << indent() << "func (h httpHeaders) Set(value string) error {" << endl;
+  f_remote << indent() << "  parts := strings.Split(value, \": \")" << endl;
+  f_remote << indent() << "  if len(parts) != 2 {" << endl;
+  f_remote << indent() << "    return fmt.Errorf(\"header should be of format 'Key: Value'\")" << endl;
+  f_remote << indent() << "  }" << endl;
+  f_remote << indent() << "  h[parts[0]] = parts[1]" << endl;
+  f_remote << indent() << "  return nil" << endl;
+  f_remote << indent() << "}" << endl;
+  f_remote << indent() << endl;
+
   f_remote << indent() << "func main() {" << endl;
   indent_up();
   f_remote << indent() << "flag.Usage = Usage" << endl;
@@ -2138,6 +2156,7 @@ void t_go_generator::generate_service_remote(t_service* tservice) {
   f_remote << indent() << "var urlString string" << endl;
   f_remote << indent() << "var framed bool" << endl;
   f_remote << indent() << "var useHttp bool" << endl;
+  f_remote << indent() << "headers := make(httpHeaders)" << endl;
   f_remote << indent() << "var parsedUrl *url.URL" << endl;
   f_remote << indent() << "var trans thrift.TTransport" << endl;
   f_remote << indent() << "_ = strconv.Atoi" << endl;
@@ -2152,6 +2171,7 @@ void t_go_generator::generate_service_remote(t_service* tservice) {
   f_remote << indent() << "flag.BoolVar(&framed, \"framed\", false, \"Use framed transport\")"
            << endl;
   f_remote << indent() << "flag.BoolVar(&useHttp, \"http\", false, \"Use http\")" << endl;
+  f_remote << indent() << "flag.Var(headers, \"H\", \"Headers to set on the http(s) request (e.g. -H \\\"Key: Value\\\")\")" << endl;
   f_remote << indent() << "flag.Parse()" << endl;
   f_remote << indent() << endl;
   f_remote << indent() << "if len(urlString) > 0 {" << endl;
@@ -2162,7 +2182,7 @@ void t_go_generator::generate_service_remote(t_service* tservice) {
   f_remote << indent() << "    flag.Usage()" << endl;
   f_remote << indent() << "  }" << endl;
   f_remote << indent() << "  host = parsedUrl.Host" << endl;
-  f_remote << indent() << "  useHttp = len(parsedUrl.Scheme) <= 0 || parsedUrl.Scheme == \"http\""
+  f_remote << indent() << "  useHttp = len(parsedUrl.Scheme) <= 0 || parsedUrl.Scheme == \"http\" || parsedUrl.Scheme == \"https\""
            << endl;
   f_remote << indent() << "} else if useHttp {" << endl;
   f_remote << indent() << "  _, err := url.Parse(fmt.Sprint(\"http://\", host, \":\", port))"
@@ -2177,6 +2197,12 @@ void t_go_generator::generate_service_remote(t_service* tservice) {
   f_remote << indent() << "var err error" << endl;
   f_remote << indent() << "if useHttp {" << endl;
   f_remote << indent() << "  trans, err = thrift.NewTHttpClient(parsedUrl.String())" << endl;
+  f_remote << indent() << "  if len(headers) > 0 {" << endl;
+  f_remote << indent() << "    httptrans := trans.(*thrift.THttpClient)" << endl;
+  f_remote << indent() << "    for key, value := range headers {" << endl;
+  f_remote << indent() << "      httptrans.SetHeader(key, value)" << endl;
+  f_remote << indent() << "    }" << endl;
+  f_remote << indent() << "  }" << endl;
   f_remote << indent() << "} else {" << endl;
   f_remote << indent() << "  portStr := fmt.Sprint(port)" << endl;
   f_remote << indent() << "  if strings.Contains(host, \":\") {" << endl;
@@ -2363,7 +2389,7 @@ void t_go_generator::generate_service_remote(t_service* tservice) {
         f_remote << indent() << "  Usage()" << endl;
         f_remote << indent() << "  return" << endl;
         f_remote << indent() << "}" << endl;
-        f_remote << indent() << factory << " := thrift.NewTSimpleJSONProtocolFactory()" << endl;
+        f_remote << indent() << factory << " := thrift.NewTJSONProtocolFactory()" << endl;
         f_remote << indent() << jsProt << " := " << factory << ".GetProtocol(" << mbTrans << ")"
                  << endl;
         f_remote << indent() << "argvalue" << i << " := " << tstruct_module << ".New" << tstruct_name
@@ -2391,7 +2417,7 @@ void t_go_generator::generate_service_remote(t_service* tservice) {
         f_remote << indent() << "  Usage()" << endl;
         f_remote << indent() << "  return" << endl;
         f_remote << indent() << "}" << endl;
-        f_remote << indent() << factory << " := thrift.NewTSimpleJSONProtocolFactory()" << endl;
+        f_remote << indent() << factory << " := thrift.NewTJSONProtocolFactory()" << endl;
         f_remote << indent() << jsProt << " := " << factory << ".GetProtocol(" << mbTrans << ")"
                  << endl;
         f_remote << indent() << "containerStruct" << i << " := " << package_name_ << ".New"

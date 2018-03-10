@@ -34,6 +34,7 @@ ECHO/
 ECHO Our Variables
 ECHO -------------------------------------------------------------------------------
 ECHO APPVEYOR_SCRIPTS      = %APPVEYOR_SCRIPTS%
+ECHO BASH                  = %BASH%
 ECHO BOOST_ROOT            = %BOOST_ROOT%
 ECHO BOOST_INCLUDEDIR      = %BOOST_INCLUDEDIR%
 ECHO BOOST_LIBRARYDIR      = %BOOST_LIBRARYDIR%
@@ -44,20 +45,16 @@ ECHO GENERATOR             = %GENERATOR%
 ECHO INSTDIR               = %INSTDIR%
 ECHO JAVA_HOME             = %JAVA_HOME%
 ECHO OPENSSL_ROOT          = %OPENSSL_ROOT%
+ECHO SETUP                 = %SETUP%
 ECHO SRCDIR                = %SRCDIR%
 ECHO WIN3P                 = %WIN3P%
 ECHO WITH_PYTHON           = %WITH_PYTHON%
 ECHO ZLIB_STATIC_SUFFIX    = %ZLIB_STATIC_SUFFIX%
 IF NOT "%PROFILE:~0,4%" == "MSVC" (
-ECHO/
-ECHO MSYS2/MinGW
-ECHO -------------------------------------------------------------------------------
-ECHO BUILDDIR_MSYS         = %BUILDDIR_MSYS%
-ECHO INSTDIR_MSYS          = %INSTDIR_MSYS%
-ECHO MSYS2_PATH_TYPE       = %MSYS2_PATH_TYPE%
-ECHO SRCDIR_MSYS           = %SRCDIR_MSYS%
-ECHO PATH                  =
-C:\msys64\usr\bin\bash -lc "echo $PATH"
+  ECHO/
+  ECHO UNIXy PATH
+  ECHO -------------------------------------------------------------------------------
+  %BASH% -lc "echo $PATH"
 )
 ECHO/
 ECHO Windows PATH

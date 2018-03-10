@@ -717,7 +717,7 @@ string t_erl_generator::render_member_type(t_field* field) {
     return type_name(type) + "()";
   } else if (type->is_map()) {
     if (maps_) {
-      return "#{}";
+      return "map()";
     } else if (otp16_) {
       return "dict()";
     } else {
@@ -810,6 +810,8 @@ void t_erl_generator::generate_erl_struct_member(ostream& out, t_field* tmember)
   if (has_default_value(tmember))
     out << " = " << render_member_value(tmember);
   out << " :: " << render_member_type(tmember);
+  if (tmember->get_req() != t_field::T_REQUIRED)
+    out << " | 'undefined'";
 }
 
 bool t_erl_generator::has_default_value(t_field* field) {

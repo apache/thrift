@@ -28,6 +28,7 @@
 ::                                 Optional [arch] can be "Win64" or "IA64".
 ::  MinGW Makefiles              = Generates makefiles for MinGW
 ::  MSYS Makefiles               = Generates makefiles for MSYS
+::  Unix Makefiles               = Generates makefiles for CYGWIN
 ::
 :: Honors any existing GENERATOR environment variable
 ::   setting instead of overwriting it, to allow it
@@ -45,6 +46,10 @@ IF DEFINED GENERATOR (
 
 IF "%PROFILE:~0,4%" == "MING" (
   SET GENERATOR=MinGW Makefiles
+
+) ELSE IF "%PROFILE:~0,4%" == "CYGW" (
+  SET GENERATOR=Unix Makefiles
+
 ) ELSE IF "%PROFILE:~0,4%" == "MSYS" (
   SET GENERATOR=MSYS Makefiles
 ) ELSE (
@@ -55,9 +60,9 @@ IF "%PROFILE:~0,4%" == "MING" (
   IF !ERRORLEVEL! == 0 SET GENERATOR=Visual Studio 11 2012!GENARCH!
   CALL :CHECK 18
   IF !ERRORLEVEL! == 0 SET GENERATOR=Visual Studio 12 2013!GENARCH!
-  CALL :CHECK 19.00
+  CALL :CHECK 19.0
   IF !ERRORLEVEL! == 0 SET GENERATOR=Visual Studio 14 2015!GENARCH!
-  CALL :CHECK 19.10
+  CALL :CHECK 19.1
   IF !ERRORLEVEL! == 0 SET GENERATOR=Visual Studio 15 2017!GENARCH!
 )
 
@@ -70,5 +75,5 @@ ECHO [info ] using CMake generator        %GENERATOR%
 EXIT /B 0
 
 :CHECK
-cl /? 2>&1 | findstr /C:"Version %1%." > nul
+cl /? 2>&1 | findstr /C:"Version %1%" > nul
 EXIT /B

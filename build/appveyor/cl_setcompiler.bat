@@ -20,7 +20,7 @@
 ::   vc110 = Visual Studio 2012
 ::   vc120 = Visual Studio 2013
 ::   vc140 = Visual Studio 2015
-::   vc150 = Visual Studio 2017
+::   vc141 = Visual Studio 2017
 ::
 :: Honors any existing COMPILER environment variable
 ::   setting instead of overwriting it, to allow it
@@ -44,10 +44,10 @@ IF NOT "%PROFILE:~0,4%" == "MSVC" (
   IF !ERRORLEVEL! == 0 (SET COMPILER=vc110)
   CALL :CHECK 18
   IF !ERRORLEVEL! == 0 (SET COMPILER=vc120)
-  CALL :CHECK 19.00
+  CALL :CHECK 19.0
   IF !ERRORLEVEL! == 0 (SET COMPILER=vc140)
-  CALL :CHECK 19.10
-  IF !ERRORLEVEL! == 0 (SET COMPILER=vc150)
+  CALL :CHECK 19.1
+  IF !ERRORLEVEL! == 0 (SET COMPILER=vc141)
 )
 
 IF NOT DEFINED COMPILER (
@@ -59,5 +59,5 @@ ECHO [info ] detected compiler edition    %COMPILER%
 EXIT /B 0
 
 :CHECK
-cl /? 2>&1 | findstr /C:"Version %1%." > nul
+cl /? 2>&1 | findstr /C:"Version %1%" > nul
 EXIT /B

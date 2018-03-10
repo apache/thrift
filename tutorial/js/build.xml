@@ -31,11 +31,13 @@
   <property name="thrift.java.dir" location="${thrift.dir}/lib/java" />
 
   <path id="libs.classpath">
-    <fileset dir="../../lib/java/build">
-      <include name="*.jar" />
-      <exclude name="-test.jar" />
+    <fileset dir="${thrift.java.dir}/build/libs">
+      <include name="libthrift*.jar" />
+      <exclude name="libthrift*test.jar" />
+      <exclude name="libthrift*javadoc.jar" />
+      <exclude name="libthrift*sources.jar" />
     </fileset>
-    <fileset dir="../../lib/java/build/lib">
+    <fileset dir="${thrift.java.dir}/build/deps">
       <include name="*.jar" />
     </fileset>
   </path>
@@ -80,7 +82,7 @@
       <arg line="--gen js -r  ../tutorial.thrift"/>
     </exec>
   </target>
-  
+
   <target name="clean">
     <delete dir="${build}" />
     <delete dir="gen-js"/>

@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 set -ev
 
 #
@@ -48,6 +48,10 @@ flake8 test/py.tornado
 flake8 --ignore=E501 test/test.py
 flake8 --ignore=E501,E722 test/crossrunner
 flake8 test/features
+
+# PHP code style
+composer install --quiet
+./vendor/bin/phpcs
 
 # TODO etc
 echo FIXMEs: `grep -r FIXME * | wc -l`

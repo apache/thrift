@@ -119,6 +119,7 @@ if test "$enable_libs" = "no"; then
   have_libs="no"
   with_cpp="no"
   with_c_glib="no"
+  with_cl="no"
   with_java="no"
   with_csharp="no"
   with_python="no"
@@ -235,6 +236,7 @@ if test "$with_java" = "yes";  then
   AX_CHECK_ANT_VERSION($ANT, 1.7)
   AC_SUBST(CLASSPATH)
   AC_SUBST(ANT_FLAGS)
+  AC_SUBST(GRADLE_OPTS)
   if test "x$JAVA" != "x" && test "x$JAVAC" != "x" && test "x$ANT" != "x" ; then
     have_java="yes"
   fi
@@ -452,6 +454,16 @@ if test "$with_rs" = "yes";  then
 fi
 AM_CONDITIONAL(WITH_RS, [test "$have_rs" = "yes"])
 
+AX_THRIFT_LIB(cl, [Common Lisp], yes)
+have_cl="no"
+if test "$with_cl" = "yes";  then
+  AC_PATH_PROG([SBCL], [sbcl])
+  if test "x$SBCL" != "x"; then
+    have_cl="yes"
+  fi
+fi
+AM_CONDITIONAL(WITH_CL, [test "$have_cl" = "yes"])
+
 AX_THRIFT_LIB(haxe, [Haxe], yes)
 if test "$with_haxe" = "yes";  then
   AC_PATH_PROG([HAXE], [haxe])
@@ -512,7 +524,7 @@ linker flags for OPTLINK. Please set DMD_LIBEVENT_FLAGS manually.])
       else
         AX_LIB_EVENT([2.0])
         if test "$success" = "yes"; then
-          DMD_LIBEVENT_FLAGS=$(echo "$LIBEVENT_LDFLAGS $LIBEVENT_LIBS" | \
+          DMD_LIBEVENT_FLAGS=$(echo "-fuse-ld=gold $LIBEVENT_LDFLAGS $LIBEVENT_LIBS" | \
             sed -e 's/^ *//g;s/ *$//g;s/^\(.\)/-L\1/g;s/  */ -L/g')
           with_d_event_tests="yes"
         else
@@ -536,7 +548,7 @@ linker flags for OPTLINK. Please set DMD_OPENSSL_FLAGS manually.])
       else
         AX_CHECK_OPENSSL([with_d_ssl_tests="yes"])
         if test "$with_d_ssl_tests" = "yes"; then
-          DMD_OPENSSL_FLAGS=$(echo "$OPENSSL_LDFLAGS $OPENSSL_LIBS" | \
+          DMD_OPENSSL_FLAGS=$(echo "-fuse-ld=gold $OPENSSL_LDFLAGS $OPENSSL_LIBS" | \
             sed -e 's/^ *//g;s/ *$//g;s/^\(.\)/-L\1/g;s/  */ -L/g')
         else
           AC_MSG_WARN([D OpenSSL interface present, but OpenSSL library not found.])
@@ -784,6 +796,7 @@ AC_CONFIG_FILES([
   compiler/cpp/test/Makefile
   compiler/cpp/src/thrift/version.h
   lib/Makefile
+  lib/cl/Makefile
   lib/cpp/Makefile
   lib/cpp/test/Makefile
   lib/cpp/thrift-nb.pc
@@ -825,6 +838,7 @@ AC_CONFIG_FILES([
   test/Makefile
   test/features/Makefile
   test/c_glib/Makefile
+  test/cl/Makefile
   test/cpp/Makefile
   test/csharp/Makefile
   test/erl/Makefile
@@ -843,6 +857,7 @@ AC_CONFIG_FILES([
   test/rs/Makefile
   tutorial/Makefile
   tutorial/c_glib/Makefile
+  tutorial/cl/Makefile
   tutorial/cpp/Makefile
   tutorial/d/Makefile
   tutorial/go/Makefile
@@ -896,6 +911,8 @@ if test "$have_rs" = "yes" ; then MAYBE_RS="rs" ; else MAYBE_RS="" ; fi
 AC_SUBST([MAYBE_RS])
 if test "$have_dotnetcore" = "yes" ; then MAYBE_DOTNETCORE="netcore" ; else MAYBE_DOTNETCORE="" ; fi
 AC_SUBST([MAYBE_DOTNETCORE])
+if test "$have_cl" = "yes" ; then MAYBE_CL="cl" ; else MAYBE_CL="" ; fi
+AC_SUBST([MAYBE_CL])
 
 AC_OUTPUT
 
@@ -906,6 +923,7 @@ echo
 echo "Building C (GLib) Library .... : $have_c_glib"
 echo "Building C# (Mono) Library ... : $have_csharp"
 echo "Building C++ Library ......... : $have_cpp"
+echo "Building Common Lisp Library.. : $have_cl"
 echo "Building D Library ........... : $have_d"
 echo "Building Dart Library ........ : $have_dart"
 echo "Building dotnetcore Library .. : $have_dotnetcore"
@@ -939,6 +957,12 @@ if test "$have_cpp" = "yes" ; then
   echo "   Build TQTcpServer (Qt4) ... : $have_qt"
   echo "   Build TQTcpServer (Qt5) ... : $have_qt5"
   echo "   C++ compiler version ...... : $($CXX --version | head -1)"
+fi
+if test "$have_cl" = "yes" ; then
+  echo
+  echo "Common Lisp Library:"
+  echo "   Using Common Lisp ......... : $SBCL"
+  echo "   Using Common Lisp version . : $($SBCL --version)"
 fi
 if test "$have_d" = "yes" ; then
   echo
@@ -990,10 +1014,10 @@ fi
 if test "$have_java" = "yes" ; then
   echo
   echo "Java Library:"
-  echo "   Using ant ................. : $ANT"
+  echo "   Using gradlew ............. : lib/java/gradlew"
   echo "   Using java ................ : $JAVA"
   echo "   Using javac ............... : $JAVAC"
-  echo "   Using ant version ......... : $($ANT -version 2>&1)"
+  echo "   Using Gradle version ...... : $(lib/java/gradlew --version --quiet | grep Gradle 2>&1)"
   echo "   Using java version ........ : $($JAVA -version 2>&1 | grep 'version ')"
 fi
 if test "$have_lua" = "yes" ; then

@@ -111,7 +111,8 @@ class TMultiplexedProcessor
         $processor = $this->serviceProcessorMap_[$serviceName];
 
         return $processor->process(
-            new StoredMessageProtocol($input, $messageName, $mtype, $rseqid), $output
+            new StoredMessageProtocol($input, $messageName, $mtype, $rseqid),
+            $output
         );
     }
 }

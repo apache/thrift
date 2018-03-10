@@ -31,9 +31,8 @@ The Travis CI (continuous integration) builds use the Ubuntu Trusty, Xenial, and
 
 ### Ubuntu ###
 
-* trusty (legacy)
 * xenial (stable)
-* artful (latest)
+* artful (current)
 
 ## Unsupported Containers ##
 
@@ -115,54 +114,55 @@ Open a command prompt in the image:
 
 Last updated: October 1, 2017
 
-| Tool      | ubuntu-trusty | ubuntu-xenial | ubuntu-artful | Notes |
-| :-------- | :------------ | :------------ | :------------ | :---- |
-| ant       | 1.9.3         | 1.9.6         | 1.9.9         |       |
-| autoconf  | 2.69          | 2.69          | 2.69          |       |
-| automake  | 1.14.1        | 1.15          | 1.15          |       |
-| bison     | 3.0.2         | 3.0.4         | 3.0.4         |       |
-| boost     | 1.54.0        | 1.58.0        | 1.63.0        | artful: stock boost 1.62.0 has problems running unit tests |
-| cmake     | 3.2.2         | 3.5.1         | 3.9.1         |       |
-| cppcheck  | 1.61          | 1.72          | 1.80          |       |
-| flex      | 2.5.35        | 2.6.0         | 2.6.1         |       |
-| glibc     | 2.19          | 2.23          | 2.26          |       |
-| libevent  | 2.0.21        | 2.0.21        | 2.1           |       |
-| libstdc++ | 4.8.4         | 5.4.0         | 7.2.0         |       |
-| make      | 3.81          | 4.1           | 4.1           |       |
-| openssl   | 1.0.1f        | 1.0.2g        | 1.0.2g        |       |
-| qt5       | 5.2.1         | 5.5.1         | 5.9.1         |       |
+| Tool      | ubuntu-xenial | ubuntu-artful | Notes |
+| :-------- | :------------ | :------------ | :---- |
+| ant       | 1.9.6         | 1.9.9         |       |
+| autoconf  | 2.69          | 2.69          |       |
+| automake  | 1.15          | 1.15          |       |
+| bison     | 3.0.4         | 3.0.4         |       |
+| boost     | 1.58.0        | 1.63.0        | artful: stock boost 1.62.0 has problems running unit tests |
+| cmake     | 3.5.1         | 3.9.1         |       |
+| cppcheck  | 1.72          | 1.80          |       |
+| flex      | 2.6.0         | 2.6.1         |       |
+| glibc     | 2.23          | 2.26          |       |
+| libevent  | 2.0.21        | 2.1           |       |
+| libstdc++ | 5.4.0         | 7.2.0         |       |
+| make      | 4.1           | 4.1           |       |
+| openssl   | 1.0.2g        | 1.0.2g        |       |
+| qt5       | 5.5.1         | 5.9.1         |       |
 
 ## Compiler/Language Versions per Dockerfile ##
 
-| Language  | ubuntu-trusty | ubuntu-xenial | ubuntu-artful | Notes |
-| :-------- | :------------ | :------------ | :------------ | :---- |
-| as of     | Oct 01, 2017  | Jan 11, 2018  | Oct 01, 2017  |       |
-| as3       |               |               |               | Not in CI |
-| C++ gcc   | 4.8.4         | 5.4.0         | 7.2.0         |       |
-| C++ clang | 3.4           | 3.8           | 4.0           |       |
-| C# (mono) | 3.2.8.0       | 4.2.1.0       | 4.6.2.7       |       |
-| c_glib    | 2.40.2        | 2.48.2        | 2.54.0        |       |
-| cocoa     |               |               |               | Not in CI |
-| d         | 2.070.2       | 2.073.2       | 2.076.0       |       |
-| dart      | 1.20.1        | 1.22.1        | 1.24.2        |       |
-| delphi    |               |               |               | Not in CI |
-| dotnet    |               | 2.0.3         | 2.0.3         |       |
-| erlang    | R16B03        | 18.3          | 20.0.4        |       |
-| go        | 1.2.1         | 1.6.2         | 1.8.3         |       |
-| haskell   | 7.6.3         | 7.10.3        | 8.0.2         |       |
-| haxe      |               | 3.2.1         | 3.4.2         | disabled in trusty builds - cores on install v3.0.0, disabled in artful builds - see THRIFT-4352 |
-| java      | 1.7.0_151     | 1.8.0_151     | 1.8.0_151     |       |
-| js        |               |               |               | Unsure how to look for version info? |
-| lua       | 5.1.5         | 5.2.4         | 5.2.4         | Lua 5.3: see THRIFT-4386 |
-| nodejs    |               | 4.2.6         | 8.9.1         | trusty has node.js 0.10.0 which is too old |
-| ocaml     |               | 4.02.3        | 4.04.0        |       |
-| perl      | 5.18.2        | 5.22.1        | 5.26.0        |       |
-| php       | 5.5.9         | 7.0.22        | 7.1.8         |       |
-| python    | 2.7.6         | 2.7.12        | 2.7.14        |       |
-| python3   | 3.4.3         | 3.5.2         | 3.6.3         |       |
-| ruby      | 1.9.3p484     | 2.3.1p112     | 2.3.3p222     |       |
-| rust      | 1.15.1        | 1.17.0        | 1.18.0        |       |
-| smalltalk |               |               |               | Not in CI |
-| swift     |               |               |               | Not in CI |
+| Language  | ubuntu-xenial | ubuntu-artful | Notes |
+| :-------- | :------------ | :------------ | :---- |
+| as of     | Mar 06, 2018  | Mar 06, 2018  |       |
+| as3       |               |               | Not in CI |
+| C++ gcc   | 5.4.0         | 7.2.0         |       |
+| C++ clang | 3.8           | 4.0           |       |
+| C# (mono) | 4.2.1.0       | 4.6.2.7       |       |
+| c_glib    | 2.48.2        | 2.54.0        |       |
+| CL (sbcl) |               | 1.4.4         |       |
+| cocoa     |               |               | Not in CI |
+| d         | 2.073.2       | 2.077.1       |       |
+| dart      | 1.22.1        | 1.24.3        |       |
+| delphi    |               |               | Not in CI |
+| dotnet    | 2.1.4         | 2.1.4         | v2.1.4 SDK uses v2.0.5 Runtime |
+| erlang    | 18.3          | 20.0.4        |       |
+| go        | 1.6.2         | 1.8.3         |       |
+| haskell   | 7.10.3        | 8.0.2         |       |
+| haxe      | 3.2.1         | 3.4.4         | THRIFT-4352: avoid 3.4.2 |
+| java      | 1.8.0_151     | 1.8.0_151     |       |
+| js        |               |               | Unsure how to look for version info? |
+| lua       | 5.2.4         | 5.2.4         | Lua 5.3: see THRIFT-4386 |
+| nodejs    | 6.13.0        | 8.9.4         |       |
+| ocaml     | 4.02.3        | 4.04.0        |       |
+| perl      | 5.22.1        | 5.26.0        |       |
+| php       | 7.0.22        | 7.1.11        |       |
+| python    | 2.7.12        | 2.7.14        |       |
+| python3   | 3.5.2         | 3.6.3         |       |
+| ruby      | 2.3.1p112     | 2.3.3p222     |       |
+| rust      | 1.17.0        | 1.21.0        |       |
+| smalltalk |               |               | Not in CI |
+| swift     |               |               | Not in CI |
 
 

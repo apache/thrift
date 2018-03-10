@@ -73,7 +73,7 @@ build-indep-stamp: configure-stamp $(CURDIR)/compiler/cpp/thrift
 
 	# Java
 	cd $(CURDIR)/lib/java && \
-		ant
+		./gradlew --no-daemon -Prelease=true jar
 
 	# C#
 	$(MAKE) -C $(CURDIR)/lib/csharp
@@ -113,7 +113,7 @@ install-indep:
 
 	# Java
 	mkdir -p $(CURDIR)/debian/libthrift-java/usr/share/java/ && \
-	cp $(CURDIR)/lib/java/build/libthrift*.jar \
+	cp $(CURDIR)/lib/java/build/libs/libthrift*.jar \
 		$(CURDIR)/debian/libthrift-java/usr/share/java/
 
 	# Ruby

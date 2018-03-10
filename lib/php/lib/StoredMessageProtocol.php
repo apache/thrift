@@ -32,7 +32,9 @@ use Thrift\Protocol\TProtocolDecorator;
  */
 class StoredMessageProtocol extends TProtocolDecorator
 {
-    private $fname_, $mtype_, $rseqid_;
+    private $fname_;
+    private $mtype_;
+    private $rseqid_;
 
     public function __construct(TProtocol $protocol, $fname, $mtype, $rseqid)
     {

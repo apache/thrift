@@ -17,29 +17,24 @@
  * under the License.
  */
 
-var assert = require('assert');
-var thrift = require('thrift');
-var helpers = require('./helpers');
-var ThriftTest = require('./gen-nodejs/ThriftTest');
-var ThriftTestDriver = require('./test_driver').ThriftTestDriver;
+// Following Gradle best practices to keep build logic organized
 
-// createXHRConnection createWSConnection
-var connection = thrift.createXHRConnection("localhost", 9090, {
-    transport: helpers.transports['buffered'],
-    protocol: helpers.protocols['json'],
-    path: '/test'
-});
+task sourcesJar(type: Jar, group: 'Build') {
+    description = 'Assembles a jar archive containing the main Java sources.'
 
-connection.on('error', function(err) {
-    assert(false, err);
-});
+    classifier 'sources'
+    from sourceSets.main.allSource
+}
 
-// Uncomment the following line to start a websockets connection
-// connection.open();
+task javadocJar(type: Jar, dependsOn: javadoc, group: 'Build') {
+    description = 'Assembles a jar archive containing the JavaDoc.'
 
-// createWSClient createXHRClient
-var client = thrift.createXHRClient(ThriftTest, connection);
+    classifier 'javadoc'
+    from javadoc.destinationDir
+}
 
-ThriftTestDriver(client, function (status) {
-    console.log('Browser:', status);
-});
+artifacts {
+    archives sourcesJar
+    archives javadocJar
+}
+
