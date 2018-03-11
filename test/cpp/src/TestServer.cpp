@@ -33,6 +33,7 @@
 #include <thrift/server/TThreadedServer.h>
 #include <thrift/transport/THttpServer.h>
 #include <thrift/transport/THttpTransport.h>
+#include <thrift/transport/TNonblockingSSLServerSocket.h>
 #include <thrift/transport/TNonblockingServerSocket.h>
 #include <thrift/transport/TSSLServerSocket.h>
 #include <thrift/transport/TSSLSocket.h>
@@ -676,7 +677,9 @@ int main(int argc, char** argv) {
     sslSocketFactory->loadCertificate(certPath.c_str());
     sslSocketFactory->loadPrivateKey(keyPath.c_str());
     sslSocketFactory->ciphers("ALL:!ADH:!LOW:!EXP:!MD5:@STRENGTH");
-    serverSocket = stdcxx::shared_ptr<TServerSocket>(new TSSLServerSocket(port, sslSocketFactory));
+    if (server_type != "nonblocking") {
+      serverSocket = stdcxx::shared_ptr<TServerSocket>(new TSSLServerSocket(port, sslSocketFactory));
+    }
   } else {
     if (domain_socket != "") {
       if (abstract_namespace) {
@@ -738,13 +741,11 @@ int main(int argc, char** argv) {
     server.reset(new TSimpleServer(testProcessor, serverSocket, transportFactory, protocolFactory));
   } else if (server_type == "thread-pool") {
 
-    stdcxx::shared_ptr<ThreadManager> threadManager = ThreadManager::newSimpleThreadManager(workers);
-
     stdcxx::shared_ptr<PlatformThreadFactory> threadFactory
         = stdcxx::shared_ptr<PlatformThreadFactory>(new PlatformThreadFactory());
 
+    stdcxx::shared_ptr<ThreadManager> threadManager = ThreadManager::newSimpleThreadManager(workers);
     threadManager->threadFactory(threadFactory);
-
     threadManager->start();
 
     server.reset(new TThreadPoolServer(testProcessor,
@@ -753,7 +754,6 @@ int main(int argc, char** argv) {
                                        protocolFactory,
                                        threadManager));
   } else if (server_type == "threaded") {
-
     server.reset(
         new TThreadedServer(testProcessor, serverSocket, transportFactory, protocolFactory));
   } else if (server_type == "nonblocking") {
@@ -769,10 +769,15 @@ int main(int argc, char** argv) {
       // provide a stop method.
       TEvhttpServer nonblockingServer(testBufferProcessor, port);
       nonblockingServer.serve();
-    } else {
-      stdcxx::shared_ptr<transport::TNonblockingServerSocket> nbSocket;
-      nbSocket.reset(new transport::TNonblockingServerSocket(port));
+    } else if (transport_type == "framed") {
+	  stdcxx::shared_ptr<transport::TNonblockingServerTransport> nbSocket;
+	  nbSocket.reset(
+		ssl ? new transport::TNonblockingSSLServerSocket(port, sslSocketFactory)
+		    : new transport::TNonblockingServerSocket(port));
       server.reset(new TNonblockingServer(testProcessor, protocolFactory, nbSocket));
+    } else {
+	  cerr << "server-type nonblocking requires transport of http or framed" << endl;
+	  exit(1);
     }
   }
 
@@ -789,13 +794,11 @@ int main(int argc, char** argv) {
         = factory.newThread(serverThreadRunner);
     thread->start();
 
-    // HACK: cross language test suite is unable to handle cin properly
-    //       that's why we stay in a endless loop here
+	// THRIFT-4515: this needs to be improved
     while (1) {
+		sleep(1);	// do something other than chew up CPU like crazy
     }
-    // FIXME: find another way to stop the server (e.g. a signal)
-    // cout<<"Press enter to stop the server."<<endl;
-    // cin.ignore(); //wait until a key is pressed
+	// NOTREACHED
 
     server->stop();
     thread->join();
