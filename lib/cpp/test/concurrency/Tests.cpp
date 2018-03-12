@@ -27,7 +27,7 @@
 
 // The test weight, where 10 is 10 times more threads than baseline
 // and the baseline is optimized for running in valgrind
-static size_t WEIGHT = 10;
+static int WEIGHT = 10;
 
 int main(int argc, char** argv) {
 

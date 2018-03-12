@@ -114,7 +114,7 @@ public:
   void testBinary(std::string& _return, const std::string& thing) {
     std::ostringstream hexstr;
     hexstr << std::hex << thing;
-    printf("testBinary(%lu: %s)\n", thing.size(), hexstr.str().c_str());
+    printf("testBinary(%lu: %s)\n", safe_numeric_cast<unsigned long>(thing.size()), hexstr.str().c_str());
     _return = thing;
   }
 
@@ -796,7 +796,7 @@ int main(int argc, char** argv) {
 
 	// THRIFT-4515: this needs to be improved
     while (1) {
-		sleep(1);	// do something other than chew up CPU like crazy
+		  THRIFT_SLEEP_SEC(1);	// do something other than chew up CPU like crazy
     }
 	// NOTREACHED
 

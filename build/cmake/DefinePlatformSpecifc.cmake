@@ -90,6 +90,7 @@ elseif(UNIX)
 endif()
 
 add_definitions("-D__STDC_FORMAT_MACROS")
+add_definitions("-D__STDC_LIMIT_MACROS")
 
 # WITH_*THREADS selects which threading library to use
 if(WITH_BOOSTTHREADS)
