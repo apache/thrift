@@ -18,6 +18,7 @@
 # - dotnet: does not come with Ubuntu
 # - go: Xenial comes with 1.6, but we need 1.7 or later
 # - nodejs: Xenial comes with 4.2.6 which exits LTS April 2018, so we're installing 6.x
+# - ocaml: causes stack overflow error, just started March 2018 not sure why
 #
 
 FROM buildpack-deps:xenial-scm
@@ -183,12 +184,13 @@ RUN apt-get install -y --no-install-recommends \
 `# Node.js dependencies` \
       nodejs
 
-RUN apt-get install -y --no-install-recommends \
-`# OCaml dependencies` \
-      ocaml \
-      opam && \
-    opam init --yes && \
-    opam install --yes oasis
+# THRIFT-4517: causes stack overflows; version too old; skip ocaml in xenial
+# RUN apt-get install -y --no-install-recommends \
+# `# OCaml dependencies` \
+#       ocaml \
+#       opam && \
+#     opam init --yes && \
+#     opam install --yes oasis
 
 RUN apt-get install -y --no-install-recommends \
 `# Perl dependencies` \

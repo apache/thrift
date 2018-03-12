@@ -155,7 +155,7 @@ Last updated: October 1, 2017
 | js        |               |               | Unsure how to look for version info? |
 | lua       | 5.2.4         | 5.2.4         | Lua 5.3: see THRIFT-4386 |
 | nodejs    | 6.13.0        | 8.9.4         |       |
-| ocaml     | 4.02.3        | 4.04.0        |       |
+| ocaml     |               | 4.04.0        | THRIFT-4517: ocaml 4.02.3 on xenial appears broken |
 | perl      | 5.22.1        | 5.26.0        |       |
 | php       | 7.0.22        | 7.1.11        |       |
 | python    | 2.7.12        | 2.7.14        |       |
