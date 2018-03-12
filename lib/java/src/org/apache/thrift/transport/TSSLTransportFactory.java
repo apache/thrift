@@ -369,7 +369,7 @@ public class TSSLTransportFactory {
     /**
      * Set the keystore and password
      *
-     * @param keyStore Keystore content input stream
+     * @param keyStoreStream Keystore content input stream
      * @param keyPass Keystore password
      */
     public void setKeyStore(InputStream keyStoreStream, String keyPass) {
@@ -422,7 +422,7 @@ public class TSSLTransportFactory {
     /**
      * Set the truststore and password
      *
-     * @param trustStore Truststore content input stream
+     * @param trustStoreStream Truststore content input stream
      * @param trustPass Truststore password
      */
     public void setTrustStore(InputStream trustStoreStream, String trustPass) {
