@@ -72,7 +72,7 @@
         </not>
       </condition>
       You need libthrift*.jar and libthrift*test.jar located at
-      ${thrift.java.dir}/build
+      ${thrift.java.dir}/build/libs
       Did you compile Thrift Java library and its test suite by "ant compile-test"?
     </fail>
     <fail>
