@@ -18,14 +18,7 @@
  */
 package org.apache.thrift;
 
-import org.apache.thrift.protocol.*;
-
-import org.apache.thrift.server.AbstractNonblockingServer.*;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import java.util.Collections;
-import java.util.Map;
+import org.apache.thrift.server.AbstractNonblockingServer.AsyncFrameBuffer;
 
 public interface TAsyncProcessor {
     /**
