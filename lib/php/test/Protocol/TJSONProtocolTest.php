@@ -25,11 +25,10 @@ namespace Test\Thrift\Protocol;
 
 use PHPUnit\Framework\TestCase;
 use Test\Thrift\Fixtures;
-use Thrift\ClassLoader\ThriftClassLoader;
 use Thrift\Protocol\TJSONProtocol;
 use Thrift\Transport\TMemoryBuffer;
 
-require_once __DIR__ . '/../../../../vendor/autoload.php';
+require __DIR__ . '/../../../../vendor/autoload.php';
 
 /***
  * This test suite depends on running the compiler against the
@@ -47,9 +46,9 @@ class TJSONProtocolTest extends TestCase
 
     public static function setUpBeforeClass()
     {
-        $loader = new ThriftClassLoader();
-        $loader->registerDefinition('ThriftTest', __DIR__ . '/../packages');
-        $loader->register();
+        /** @var \Composer\Autoload\ClassLoader $loader */
+        $loader = require __DIR__ . '/../../../../vendor/autoload.php';
+        $loader->addPsr4('', __DIR__ . '/../packages/php');
 
         Fixtures::populateTestArgs();
         TJSONProtocolFixtures::populateTestArgsJSON();

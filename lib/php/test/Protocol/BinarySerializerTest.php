@@ -24,10 +24,9 @@
 namespace Test\Thrift\Protocol;
 
 use PHPUnit\Framework\TestCase;
-use Thrift\ClassLoader\ThriftClassLoader;
 use Thrift\Serializer\TBinarySerializer;
 
-require_once __DIR__ . '/../../../../vendor/autoload.php';
+require __DIR__ . '/../../../../vendor/autoload.php';
 
 /***
  * This test suite depends on running the compiler against the
@@ -42,9 +41,9 @@ class BinarySerializerTest extends TestCase
 {
     public function setUp()
     {
-        $loader = new ThriftClassLoader();
-        $loader->registerDefinition('ThriftTest', __DIR__ . '/../packages');
-        $loader->register();
+        /** @var \Composer\Autoload\ClassLoader $loader */
+        $loader = require __DIR__ . '/../../../../vendor/autoload.php';
+        $loader->addPsr4('', __DIR__ . '/../packages/php');
     }
 
     /**
