@@ -157,8 +157,10 @@ class ExecReporter(TestReporter):
         ])),
         'client': list(map(re.compile, [
             '[Cc]onnection refused',
-            'Could not connect to localhost',
+            'Could not connect to',
             'ECONNREFUSED',
+            'econnrefused',               # erl
+            'CONNECTION-REFUSED-ERROR',   # cl
             'No such file or directory',  # domain socket
         ])),
     }
@@ -174,6 +176,7 @@ class ExecReporter(TestReporter):
             def match(line):
                 for expr in exprs:
                     if expr.search(line):
+                        self._log.info("maybe false positive: %s" % line)
                         return True
 
             with logfile_open(self.logpath, 'r') as fp:
@@ -204,7 +207,7 @@ class ExecReporter(TestReporter):
     def _print_footer(self, returncode=None):
         self._print_bar()
         if returncode is not None:
-            print('Return code: %d' % returncode, file=self.out)
+            print('Return code: %d (negative values indicate kill by signal)' % returncode, file=self.out)
         else:
             print('Process is killed.', file=self.out)
         self._print_exec_time()
@@ -261,7 +264,8 @@ class SummaryReporter(TestReporter):
         if not with_result:
             return '{:24s}{:18s}{:25s}'.format(name[:23], test.protocol[:17], trans[:24])
         else:
-            return '{:24s}{:18s}{:25s}{:s}\n'.format(name[:23], test.protocol[:17], trans[:24], self._result_string(test))
+            return '{:24s}{:18s}{:25s}{:s}\n'.format(name[:23], test.protocol[:17],
+                                                     trans[:24], self._result_string(test))
 
     def _print_test_header(self):
         self._print_bar()

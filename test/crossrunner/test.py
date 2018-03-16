@@ -22,22 +22,20 @@ import multiprocessing
 import os
 import sys
 from .compat import path_join
-from .util import merge_dict
-
-
-def domain_socket_path(port):
-    return '/tmp/ThriftTest.thrift.%d' % port
+from .util import merge_dict, domain_socket_path
 
 
 class TestProgram(object):
-    def __init__(self, kind, name, protocol, transport, socket, workdir, command, env=None,
+    def __init__(self, kind, name, protocol, transport, socket, workdir, stop_signal, command, env=None,
                  extra_args=[], extra_args2=[], join_args=False, **kwargs):
+
         self.kind = kind
         self.name = name
         self.protocol = protocol
         self.transport = transport
         self.socket = socket
         self.workdir = workdir
+        self.stop_signal = stop_signal
         self.command = None
         self._base_command = self._fix_cmd_path(command)
         if env:

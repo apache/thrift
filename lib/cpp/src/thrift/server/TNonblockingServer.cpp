@@ -659,6 +659,7 @@ void TNonblockingServer::TConnection::transition() {
         return;
       }
     }
+    // fallthrough
 
   // Intentionally fall through here, the call to process has written into
   // the writeBuffer_
@@ -707,6 +708,7 @@ void TNonblockingServer::TConnection::transition() {
                               server_->getIdleWriteBufferLimit());
       callsForResize_ = 0;
     }
+    // fallthrough
 
   // N.B.: We also intentionally fall through here into the INIT state!
 

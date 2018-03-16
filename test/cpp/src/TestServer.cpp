@@ -49,6 +49,9 @@
 #ifdef HAVE_INTTYPES_H
 #include <inttypes.h>
 #endif
+#ifdef HAVE_SIGNAL_H
+#include <signal.h>
+#endif
 
 #include <iostream>
 #include <stdexcept>
@@ -59,7 +62,6 @@
 #include <boost/filesystem.hpp>
 #include <thrift/stdcxx.h>
 
-#include <signal.h>
 #if _WIN32
 #include <thrift/windows/TWinsockSingleton.h>
 #endif
@@ -74,6 +76,17 @@ using namespace apache::thrift::transport;
 using namespace apache::thrift::server;
 
 using namespace thrift::test;
+
+// to handle a controlled shutdown, signal handling is mandatory
+#ifdef HAVE_SIGNAL_H
+apache::thrift::concurrency::Monitor gMonitor;
+void signal_handler(int signum)
+{
+  if (signum == SIGINT) {
+    gMonitor.notifyAll();
+  }
+}
+#endif
 
 class TestHandler : public ThriftTestIf {
 public:
@@ -635,6 +648,12 @@ int main(int argc, char** argv) {
     ssl = true;
   }
 
+#if defined(HAVE_SIGNAL_H) && defined(SIGPIPE)
+  if (ssl) {
+    signal(SIGPIPE, SIG_IGN); // for OpenSSL, otherwise we end abruptly
+  }
+#endif
+
   if (vm.count("abstract-namespace")) {
     abstract_namespace = true;
   }
@@ -770,14 +789,14 @@ int main(int argc, char** argv) {
       TEvhttpServer nonblockingServer(testBufferProcessor, port);
       nonblockingServer.serve();
     } else if (transport_type == "framed") {
-	  stdcxx::shared_ptr<transport::TNonblockingServerTransport> nbSocket;
-	  nbSocket.reset(
-		ssl ? new transport::TNonblockingSSLServerSocket(port, sslSocketFactory)
-		    : new transport::TNonblockingServerSocket(port));
+      stdcxx::shared_ptr<transport::TNonblockingServerTransport> nbSocket;
+      nbSocket.reset(
+          ssl ? new transport::TNonblockingSSLServerSocket(port, sslSocketFactory)
+              : new transport::TNonblockingServerSocket(port));
       server.reset(new TNonblockingServer(testProcessor, protocolFactory, nbSocket));
     } else {
-	  cerr << "server-type nonblocking requires transport of http or framed" << endl;
-	  exit(1);
+      cerr << "server-type nonblocking requires transport of http or framed" << endl;
+      exit(1);
     }
   }
 
@@ -787,18 +806,23 @@ int main(int argc, char** argv) {
       // if using header
       server->setOutputProtocolFactory(stdcxx::shared_ptr<TProtocolFactory>());
     }
+    
     apache::thrift::concurrency::PlatformThreadFactory factory;
     factory.setDetached(false);
     stdcxx::shared_ptr<apache::thrift::concurrency::Runnable> serverThreadRunner(server);
     stdcxx::shared_ptr<apache::thrift::concurrency::Thread> thread
         = factory.newThread(serverThreadRunner);
-    thread->start();
 
-	// THRIFT-4515: this needs to be improved
-    while (1) {
-		  THRIFT_SLEEP_SEC(1);	// do something other than chew up CPU like crazy
-    }
-	// NOTREACHED
+#ifdef HAVE_SIGNAL_H
+    signal(SIGINT, signal_handler);
+#endif
+
+    thread->start();
+    gMonitor.waitForever();         // wait for a shutdown signal
+    
+#ifdef HAVE_SIGNAL_H
+    signal(SIGINT, SIG_DFL);
+#endif
 
     server->stop();
     thread->join();
@@ -808,3 +832,4 @@ int main(int argc, char** argv) {
   cout << "done." << endl;
   return 0;
 }
+
