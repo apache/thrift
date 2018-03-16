@@ -304,6 +304,7 @@ bool TSSLSocket::peek() {
               && (errno_copy != THRIFT_EAGAIN)) {
             break;
           }
+        // fallthrough
         case SSL_ERROR_WANT_READ:
         case SSL_ERROR_WANT_WRITE:
           // in the case of SSL_ERROR_SYSCALL we want to wait for an read event again
@@ -350,6 +351,7 @@ void TSSLSocket::close() {
                   && (errno_copy != THRIFT_EAGAIN)) {
                 break;
               }
+            // fallthrough
             case SSL_ERROR_WANT_READ:
             case SSL_ERROR_WANT_WRITE:
               // in the case of SSL_ERROR_SYSCALL we want to wait for an write/read event again
@@ -415,6 +417,8 @@ uint32_t TSSLSocket::read(uint8_t* buf, uint32_t len) {
           // a certain number
           break;
         }
+      // fallthrough
+
       case SSL_ERROR_WANT_READ:
       case SSL_ERROR_WANT_WRITE:
         if (isLibeventSafe()) {
@@ -471,6 +475,7 @@ void TSSLSocket::write(const uint8_t* buf, uint32_t len) {
               && (errno_copy != THRIFT_EAGAIN)) {
             break;
           }
+        // fallthrough        
         case SSL_ERROR_WANT_READ:
         case SSL_ERROR_WANT_WRITE:
           if (isLibeventSafe()) {
@@ -515,6 +520,7 @@ uint32_t TSSLSocket::write_partial(const uint8_t* buf, uint32_t len) {
               && (errno_copy != THRIFT_EAGAIN)) {
             break;
           }
+        // fallthrough
         case SSL_ERROR_WANT_READ:
         case SSL_ERROR_WANT_WRITE:
           if (isLibeventSafe()) {
@@ -602,6 +608,7 @@ void TSSLSocket::initializeHandshake() {
                 && (errno_copy != THRIFT_EAGAIN)) {
               break;
             }
+          // fallthrough
           case SSL_ERROR_WANT_READ:
           case SSL_ERROR_WANT_WRITE:
             if (isLibeventSafe()) {
@@ -634,6 +641,7 @@ void TSSLSocket::initializeHandshake() {
                 && (errno_copy != THRIFT_EAGAIN)) {
               break;
             }
+          // fallthrough
           case SSL_ERROR_WANT_READ:
           case SSL_ERROR_WANT_WRITE:
             if (isLibeventSafe()) {

@@ -81,15 +81,24 @@ sub accept
 {
     my $self = shift;
 
-    if ( exists $self->{handle} and defined $self->{handle} )
-    {
+    if ( exists $self->{handle} and defined $self->{handle} ) {
         my $client        = $self->{handle}->accept();
         my $result        = $self->__client();
         $result->{handle} = new IO::Select($client);
         return $result;
     }
 
-    return 0;
+    return undef;
+}
+
+sub close
+{
+	my $self = shift;
+	
+    if ( exists $self->{handle} and defined $self->{handle} )
+    {
+        $self->{handle}->close();
+	}
 }
 
 ###

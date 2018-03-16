@@ -94,7 +94,7 @@ void TOutput::errorTimeWrapper(const char* msg) {
 }
 
 void TOutput::perror(const char* message, int errno_copy) {
-  std::string out = message + strerror_s(errno_copy);
+  std::string out = message + std::string(": ") + strerror_s(errno_copy);
   f_(out.c_str());
 }
 
