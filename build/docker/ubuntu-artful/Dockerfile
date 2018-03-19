@@ -92,7 +92,7 @@ RUN apt-get install -y --no-install-recommends \
 `# csharp (mono) dependencies` \
       mono-devel
 
-ENV SBCL_VERSION 1.4.4
+ENV SBCL_VERSION 1.4.5
 RUN \
 `# Common Lisp (sbcl) dependencies` \
     curl --version && \

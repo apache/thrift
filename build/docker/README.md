@@ -135,13 +135,13 @@ Last updated: October 1, 2017
 
 | Language  | ubuntu-xenial | ubuntu-artful | Notes |
 | :-------- | :------------ | :------------ | :---- |
-| as of     | Mar 06, 2018  | Mar 06, 2018  |       |
+| as of     | Mar 06, 2018  | Mar 19, 2018  |       |
 | as3       |               |               | Not in CI |
 | C++ gcc   | 5.4.0         | 7.2.0         |       |
 | C++ clang | 3.8           | 4.0           |       |
 | C# (mono) | 4.2.1.0       | 4.6.2.7       |       |
 | c_glib    | 2.48.2        | 2.54.0        |       |
-| CL (sbcl) |               | 1.4.4         |       |
+| cl (sbcl) |               | 1.4.5         |       |
 | cocoa     |               |               | Not in CI |
 | d         | 2.073.2       | 2.077.1       |       |
 | dart      | 1.22.1        | 1.24.3        |       |
