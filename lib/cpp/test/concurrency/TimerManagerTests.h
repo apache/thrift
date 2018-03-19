@@ -79,14 +79,13 @@ public:
         = shared_ptr<TimerManagerTests::Task>(new TimerManagerTests::Task(_monitor, 10 * timeout));
 
     {
-
       TimerManager timerManager;
-
       timerManager.threadFactory(shared_ptr<PlatformThreadFactory>(new PlatformThreadFactory()));
-
       timerManager.start();
-
-      assert(timerManager.state() == TimerManager::STARTED);
+      if (timerManager.state() != TimerManager::STARTED) {
+        std::cerr << "timerManager is not in the STARTED state, but should be" << std::endl;
+        return false;
+      }
 
       // Don't create task yet, because its constructor sets the expected completion time, and we
       // need to delay between inserting the two tasks into the run queue.
@@ -94,34 +93,27 @@ public:
 
       {
         Synchronized s(_monitor);
-
         timerManager.add(orphanTask, 10 * timeout);
 
-        try {
-          // Wait for 1 second in order to give timerManager a chance to start sleeping in response
-          // to adding orphanTask. We need to do this so we can verify that adding the second task
-          // kicks the dispatcher out of the current wait and starts the new 1 second wait.
-          _monitor.wait(1000);
-          assert(
-              0 == "ERROR: This wait should time out. TimerManager dispatcher may have a problem.");
-        } catch (TimedOutException&) {
-        }
+        THRIFT_SLEEP_USEC(timeout * 1000);
 
         task.reset(new TimerManagerTests::Task(_monitor, timeout));
-
         timerManager.add(task, timeout);
-
         _monitor.wait();
       }
 
-      assert(task->_done);
+      if (!task->_done) {
+        std::cerr << "task is not done, but it should have executed" << std::endl;
+        return false;
+      }
 
       std::cout << "\t\t\t" << (task->_success ? "Success" : "Failure") << "!" << std::endl;
     }
 
-    // timerManager.stop(); This is where it happens via destructor
-
-    assert(!orphanTask->_done);
+    if (orphanTask->_done) {
+      std::cerr << "orphan task is done, but it should not have executed" << std::endl;
+      return false;
+    }
 
     return true;
   }
