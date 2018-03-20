@@ -23,6 +23,7 @@ THRIFT_FILES = $(wildcard test/*.thrift) \
 		  $(THRIFT_OMIT_FILE) \
 		  ../../test/ConstantsDemo.thrift \
 		  ../../test/NameConflictTest.thrift \
+		  ../../test/DoubleConstantsTest.thrift \
 		  ../../test/ThriftTest.thrift
 
 if ERLANG_OTP16
