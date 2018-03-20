@@ -529,8 +529,6 @@ string t_cl_generator::argument_list(t_struct* tstruct) {
     res << "(" + prefix((*f_iter)->get_name()) << " " <<
       typespec((*f_iter)->get_type()) << " " <<
       (*f_iter)->get_key() <<  ")";
-
-
   }
   res << ")";
   return res.str();

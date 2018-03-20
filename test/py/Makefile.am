@@ -23,24 +23,31 @@ py_unit_tests = RunClientServer.py
 thrift_gen =                                    \
         gen-py/ThriftTest/__init__.py           \
         gen-py/DebugProtoTest/__init__.py \
+        gen-py/DoubleConstantsTest/__init__.py \
         gen-py/Recursive/__init__.py \
         gen-py-default/ThriftTest/__init__.py           \
         gen-py-default/DebugProtoTest/__init__.py \
+        gen-py-default/DoubleConstantsTest/__init__.py \
         gen-py-default/Recursive/__init__.py \
         gen-py-slots/ThriftTest/__init__.py           \
         gen-py-slots/DebugProtoTest/__init__.py \
+        gen-py-slots/DoubleConstantsTest/__init__.py \
         gen-py-slots/Recursive/__init__.py \
         gen-py-oldstyle/ThriftTest/__init__.py \
         gen-py-oldstyle/DebugProtoTest/__init__.py \
+        gen-py-oldstyle/DoubleConstantsTest/__init__.py \
         gen-py-oldstyle/Recursive/__init__.py \
         gen-py-no_utf8strings/ThriftTest/__init__.py \
         gen-py-no_utf8strings/DebugProtoTest/__init__.py \
+        gen-py-no_utf8strings/DoubleConstantsTest/__init__.py \
         gen-py-no_utf8strings/Recursive/__init__.py \
         gen-py-dynamic/ThriftTest/__init__.py           \
         gen-py-dynamic/DebugProtoTest/__init__.py \
+        gen-py-dynamic/DoubleConstantsTest/__init__.py \
         gen-py-dynamic/Recursive/__init__.py \
         gen-py-dynamicslots/ThriftTest/__init__.py           \
         gen-py-dynamicslots/DebugProtoTest/__init__.py \
+        gen-py-dynamicslots/DoubleConstantsTest/__init__.py \
         gen-py-dynamicslots/Recursive/__init__.py
 
 

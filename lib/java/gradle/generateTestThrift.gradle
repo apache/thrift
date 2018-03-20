@@ -74,6 +74,7 @@ task generateJava(group: 'Build') {
     thriftCompile(it, 'ThriftTest.thrift')
     thriftCompile(it, 'JavaTypes.thrift')
     thriftCompile(it, 'DebugProtoTest.thrift')
+    thriftCompile(it, 'DoubleConstantsTest.thrift')
     thriftCompile(it, 'OptionalRequiredTest.thrift')
     thriftCompile(it, 'ManyOptionals.thrift')
     thriftCompile(it, 'JavaDeepCopyTest.thrift')
