@@ -39,6 +39,8 @@ nodist_libtestgencpp_la_SOURCES = \
 	gen-cpp/AnnotationTest_types.h \
 	gen-cpp/DebugProtoTest_types.cpp \
 	gen-cpp/DebugProtoTest_types.h \
+	gen-cpp/DoubleConstantsTest_constants.cpp \
+	gen-cpp/DoubleConstantsTest_constants.h \
 	gen-cpp/EnumTest_types.cpp \
 	gen-cpp/EnumTest_types.h \
 	gen-cpp/OptionalRequiredTest_types.cpp \
@@ -102,6 +104,7 @@ check_PROGRAMS = \
 	link_test \
 	OpenSSLManualInitTest \
 	EnumTest \
+	RenderedDoubleConstantsTest \
         AnnotationTest
 
 if AMX_HAVE_LIBEVENT
@@ -201,6 +204,10 @@ EnumTest_SOURCES = \
 EnumTest_LDADD = \
   libtestgencpp.la \
   $(BOOST_TEST_LDADD)
+
+RenderedDoubleConstantsTest_SOURCES = RenderedDoubleConstantsTest.cpp
+
+RenderedDoubleConstantsTest_LDADD = libtestgencpp.la $(BOOST_TEST_LDADD)
 
 AnnotationTest_SOURCES = \
 	AnnotationTest.cpp
@@ -378,6 +385,10 @@ gen-cpp/AnnotationTest_constants.cpp gen-cpp/AnnotationTest_constants.h gen-cpp/
 
 gen-cpp/DebugProtoTest_types.cpp gen-cpp/DebugProtoTest_types.h gen-cpp/EmptyService.cpp gen-cpp/EmptyService.h: $(top_srcdir)/test/DebugProtoTest.thrift
 	$(THRIFT) --gen cpp $<
+
+gen-cpp/DoubleConstantsTest_constants.cpp gen-cpp/DoubleConstantsTest_constants.h: $(top_srcdir)/test/DoubleConstantsTest.thrift
+	$(THRIFT) --gen cpp $<
+
 
 gen-cpp/EnumTest_types.cpp gen-cpp/EnumTest_types.h: $(top_srcdir)/test/EnumTest.thrift
 	$(THRIFT) --gen cpp $<

@@ -108,4 +108,3 @@ test_script:
 # also need:
 # environment:
 #   APPVEYOR_RDP_PASSWORD: thr1FT2345$xyzZ
-

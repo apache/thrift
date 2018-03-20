@@ -38,6 +38,7 @@ SCRIPT_DIR = os.path.abspath(os.path.dirname(__file__))
 SCRIPTS = [
     'FastbinaryTest.py',
     'TestFrozen.py',
+    'TestRenderedDoubleConstants.py',
     'TSimpleJSONProtocolTest.py',
     'SerializationTest.py',
     'TestEof.py',
