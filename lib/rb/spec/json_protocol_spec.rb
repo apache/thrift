@@ -534,11 +534,19 @@ describe 'JsonProtocol' do
       @trans.write("\"AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4vMDEyMzQ1Njc4OTo7PD0+P0BBQkNERUZHSElKS0xNTk9QUVJTVFVWV1hZWltcXV5fYGFiY2RlZmdoaWprbG1ub3BxcnN0dXZ3eHl6e3x9fn+AgYKDhIWGh4iJiouMjY6PkJGSk5SVlpeYmZqbnJ2en6ChoqOkpaanqKmqq6ytrq+wsbKztLW2t7i5uru8vb6/wMHCw8TFxsfIycrLzM3Oz9DR0tPU1dbX2Nna29zd3t/g4eLj5OXm5+jp6uvs7e7v8PHy8/T19vf4+fr7/P3+/w==\"")
       @prot.read_binary.bytes.to_a.should == (0...256).to_a
     end
+  
+    it "should provide a reasonable to_s" do
+      @prot.to_s.should == "json(memory)"
+    end
   end
 
   describe Thrift::JsonProtocolFactory do
     it "should create a JsonProtocol" do
       Thrift::JsonProtocolFactory.new.get_protocol(mock("MockTransport")).should be_instance_of(Thrift::JsonProtocol)
+    end
+
+    it "should provide a reasonable to_s" do
+      Thrift::JsonProtocolFactory.new.to_s.should == "json"
     end
   end
 end

@@ -43,5 +43,9 @@ module Thrift
         raise TransportException.new(TransportException::NOT_OPEN, "Could not connect to #{@desc}: #{e}")
       end
     end
+    
+    def to_s
+      "ssl(#{super.to_s})"
+    end
   end
 end

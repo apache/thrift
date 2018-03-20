@@ -99,11 +99,19 @@ module Thrift
     alias_method :<<, :write
 
     def flush; end
+
+    def to_s
+      "base"
+    end
   end
   
   class BaseTransportFactory
     def get_transport(trans)
       return trans
+    end
+    
+    def to_s
+      "base"
     end
   end
 end

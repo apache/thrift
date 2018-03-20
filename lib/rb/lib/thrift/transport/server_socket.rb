@@ -59,5 +59,10 @@ module Thrift
     end
 
     alias to_io handle
+
+    def to_s
+      "socket(#{@host}:#{@port})"
+    end
+
   end
 end

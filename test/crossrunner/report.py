@@ -158,6 +158,7 @@ class ExecReporter(TestReporter):
         'client': list(map(re.compile, [
             '[Cc]onnection refused',
             'Could not connect to',
+            'Could not open UNIX ',       # domain socket (rb)
             'ECONNREFUSED',
             'econnrefused',               # erl
             'CONNECTION-REFUSED-ERROR',   # cl
