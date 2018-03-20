@@ -134,6 +134,7 @@ EXTRA_DIST = \
 	BrokenConstants.thrift \
 	ConstantsDemo.thrift \
 	DebugProtoTest.thrift \
+	DoubleConstantsTest.thrift \
 	DenseLinkingTest.thrift \
 	DocTest.thrift \
 	EnumTest.thrift \

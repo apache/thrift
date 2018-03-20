@@ -42,6 +42,7 @@ environment:
      QT_VERSION: 5.10
      ZLIB_VERSION: 1.2.11
      DISABLED_TESTS: StressTestNonBlocking
+     APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015
 
    - PROFILE: MSVC2013
      PLATFORM: x86
@@ -98,14 +99,13 @@ test_script:
 #
 # enables RDP for each build job so you can inspect the environment at the beginning of the job:
 # init:
-#  - ps: iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
+#   - ps: iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
 #
 # enables RDP at the end of the build job so you can login and re-run
 # commands to see why something failed...
 #on_finish:
 #  - ps: $blockRdp = $true; iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
 #
-# also need:
+# also need
 # environment:
 #   APPVEYOR_RDP_PASSWORD: thr1FT2345$xyzZ
-

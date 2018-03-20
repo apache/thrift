@@ -24,7 +24,9 @@
 #include <cassert>
 
 #include <fstream>
+#include <iomanip>
 #include <iostream>
+#include <limits>
 #include <sstream>
 #include <string>
 #include <vector>
@@ -788,9 +790,9 @@ string t_cpp_generator::render_const_value(ofstream& out,
       break;
     case t_base_type::TYPE_DOUBLE:
       if (value->get_type() == t_const_value::CV_INTEGER) {
-        render << value->get_integer();
+        render << "static_cast<double>(" << value->get_integer() << ")";
       } else {
-        render << value->get_double();
+        render << emit_double_as_string(value->get_double());
       }
       break;
     default:
