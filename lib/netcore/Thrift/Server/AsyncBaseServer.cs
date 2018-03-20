@@ -100,7 +100,11 @@ namespace Thrift.Server
                 }
                 else
                 {
-                    await Task.Delay(TimeSpan.FromMilliseconds(_clientWaitingDelay), cancellationToken);
+                    try
+                    {
+                        await Task.Delay(TimeSpan.FromMilliseconds(_clientWaitingDelay), cancellationToken);
+                    }
+                    catch(TaskCanceledException) { }
                 }
             }
 
