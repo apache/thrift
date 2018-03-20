@@ -53,5 +53,9 @@ module Thrift
     ensure
       @outbuf = Bytes.empty_byte_buffer
     end
+    
+    def to_s
+      "@{self.url}"
+    end
   end
 end

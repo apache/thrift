@@ -373,13 +373,14 @@
       "framed"
     ],
     "sockets": [
+      "domain",
       "ip"
     ],
     "protocols": [
-      "compact",
       "binary",
-      "json",
-      "binary:accel"
+      "binary:accel",
+      "compact",
+      "json"
     ],
     "workdir": "rb/gen-rb"
   },

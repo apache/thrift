@@ -104,11 +104,19 @@ module Thrift
       
       @transport.flush
     end
+
+    def to_s
+      "buffered(#{@transport.to_s})"
+    end
   end
 
   class BufferedTransportFactory < BaseTransportFactory
     def get_transport(transport)
       return BufferedTransport.new(transport)
+    end
+    
+    def to_s
+      "buffered"
     end
   end
 end

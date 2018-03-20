@@ -106,19 +106,24 @@ class SimpleHandler
 
 end
 
-protocol = "binary"
+domain_socket = nil
 port = 9090
+protocol = "binary"
+@protocolFactory = nil
 transport = "buffered"
-@transportFactory = Thrift::BufferedTransportFactory.new
-@protocolFactory = Thrift::BinaryProtocolFactory.new
+@transportFactory = nil
+
 ARGV.each do|a|
   if a == "--help"
     puts "Allowed options:"
     puts "\t -h [ --help ] \t produce help message"
+    puts "\t--domain-socket arg (=) \t Unix domain socket path - if not empty, port is ignored"
     puts "\t--port arg (=9090) \t Port number to listen"
-    puts "\t--protocol arg (=binary) \t protocol: binary, accel"
+    puts "\t--protocol arg (=binary) \t protocol: accel, binary, compact, json"
     puts "\t--transport arg (=buffered) transport: buffered, framed, http"
     exit
+  elsif a.start_with?("--domain-socket")
+    domain_socket = a.split("=")[1]
   elsif a.start_with?("--protocol")
     protocol = a.split("=")[1]
   elsif a.start_with?("--transport")
@@ -128,9 +133,7 @@ ARGV.each do|a|
   end
 end
 
-if protocol == "binary"
-  @protocolFactory = Thrift::BinaryProtocolFactory.new
-elsif protocol == ""
+if protocol == "binary" || protocol.to_s.strip.empty?
   @protocolFactory = Thrift::BinaryProtocolFactory.new
 elsif protocol == "compact"
   @protocolFactory = Thrift::CompactProtocolFactory.new
@@ -142,9 +145,7 @@ else
   raise 'Unknown protocol type'
 end
 
-if transport == "buffered"
-  @transportFactory = Thrift::BufferedTransportFactory.new
-elsif transport == ""
+if transport == "buffered" || transport.to_s.strip.empty?
   @transportFactory = Thrift::BufferedTransportFactory.new
 elsif transport == "framed"
   @transportFactory = Thrift::FramedTransportFactory.new
@@ -152,8 +153,17 @@ else
   raise 'Unknown transport type'
 end
 
-@handler   = SimpleHandler.new
+@handler = SimpleHandler.new
 @processor = Thrift::Test::ThriftTest::Processor.new(@handler)
-@transport = Thrift::ServerSocket.new(port)
-@server    = Thrift::ThreadedServer.new(@processor, @transport, @transportFactory, @protocolFactory)
+@transport = nil
+if domain_socket.to_s.strip.empty?
+  @transport = Thrift::ServerSocket.new(port)
+else
+  @transport = Thrift::UNIXServerSocket.new(domain_socket)
+end
+
+@server = Thrift::ThreadedServer.new(@processor, @transport, @transportFactory, @protocolFactory)
+
+puts "Starting TestServer #{@server.to_s}"
 @server.serve
+puts "done."
