@@ -171,6 +171,9 @@
     <exec executable="${thrift.compiler}" failonerror="true">
       <arg line="--gen js:jquery ${thrift.dir}/test/ThriftTest.thrift" />
     </exec>
+    <exec executable="${thrift.compiler}" failonerror="true">
+      <arg line="--gen js:jquery ${thrift.dir}/test/DoubleConstantsTest.thrift" />
+    </exec>
   </target>
 
   <target name="test" description="run test suite (lint, unittest)" depends="lint, unittest"/>
