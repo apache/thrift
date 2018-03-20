@@ -310,6 +310,7 @@ public:
 
   std::string java_package();
   std::string java_suppressions();
+  std::string java_nullable_annotation();
   std::string type_name(t_type* ttype,
                         bool in_container = false,
                         bool in_init = false,
@@ -454,6 +455,10 @@ string t_java_generator::java_package() {
 
 string t_java_generator::java_suppressions() {
   return "@SuppressWarnings({\"cast\", \"rawtypes\", \"serial\", \"unchecked\", \"unused\"})\n";
+}
+
+string t_java_generator::java_nullable_annotation() {
+  return "@org.apache.thrift.annotation.Nullable";
 }
 
 /**
@@ -2125,6 +2130,7 @@ void t_java_generator::generate_java_struct_result_writer(ofstream& out, t_struc
 
 void t_java_generator::generate_java_struct_field_by_id(ofstream& out, t_struct* tstruct) {
   (void)tstruct;
+  indent(out) << java_nullable_annotation() << endl;
   indent(out) << "public _Fields fieldForId(int fieldId) {" << endl;
   indent(out) << "  return _Fields.findByThriftId(fieldId);" << endl;
   indent(out) << "}" << endl << endl;
@@ -2189,13 +2195,15 @@ void t_java_generator::generate_generic_field_getters_setters(std::ofstream& out
 
   // create the setter
 
-  indent(out) << "public void setFieldValue(_Fields field, java.lang.Object value) {" << endl;
+  indent(out) << "public void setFieldValue(_Fields field, " << java_nullable_annotation()
+              << " java.lang.Object value) {" << endl;
   indent(out) << "  switch (field) {" << endl;
   out << setter_stream.str();
   indent(out) << "  }" << endl;
   indent(out) << "}" << endl << endl;
 
   // create the getter
+  indent(out) << java_nullable_annotation() << endl;
   indent(out) << "public java.lang.Object getFieldValue(_Fields field) {" << endl;
   indent_up();
   indent(out) << "switch (field) {" << endl;
@@ -2430,6 +2438,9 @@ void t_java_generator::generate_java_bean_boilerplate(ofstream& out, t_struct* t
         if (is_deprecated) {
           indent(out) << "@Deprecated" << endl;
         }
+        if (type_can_be_null(type)) {
+          indent(out) << java_nullable_annotation() << endl;
+        }
         indent(out) << "public " << type_name(type);
         if (type->is_base_type() && ((t_base_type*)type)->get_base() == t_base_type::TYPE_BOOL) {
           out << " is";
@@ -2473,7 +2484,8 @@ void t_java_generator::generate_java_bean_boilerplate(ofstream& out, t_struct* t
     } else {
       out << type_name(tstruct);
     }
-    out << " set" << cap_name << "(" << type_name(type) << " " << field_name << ") {" << endl;
+    out << " set" << cap_name << "(" << (type_can_be_null(type) ? (java_nullable_annotation() + " ") : "")
+        << type_name(type) << " " << field_name << ") {" << endl;
     indent_up();
     indent(out) << "this." << field_name << " = ";
     if (type->is_binary()) {
@@ -4283,9 +4295,13 @@ string t_java_generator::base_type_name(t_base_type* type, bool in_container) {
  */
 string t_java_generator::declare_field(t_field* tfield, bool init, bool comment) {
   // TODO(mcslee): do we ever need to initialize the field?
-  string result = type_name(tfield->get_type()) + " " + tfield->get_name();
+  string result = "";
+  t_type* ttype = get_true_type(tfield->get_type());
+  if (type_can_be_null(ttype)) {
+    result += java_nullable_annotation() + " ";
+  }
+  result += type_name(tfield->get_type()) + " " + tfield->get_name();
   if (init) {
-    t_type* ttype = get_true_type(tfield->get_type());
     if (ttype->is_base_type() && tfield->get_value() != NULL) {
       ofstream dummy;
       result += " = " + render_const_value(dummy, ttype, tfield->get_value());
@@ -4851,6 +4867,7 @@ void t_java_generator::generate_field_name_constants(ofstream& out, t_struct* ts
   indent(out) << " * Find the _Fields constant that matches fieldId, or null if its not found."
               << endl;
   indent(out) << " */" << endl;
+  indent(out) << java_nullable_annotation() << endl;
   indent(out) << "public static _Fields findByThriftId(int fieldId) {" << endl;
   indent_up();
   indent(out) << "switch(fieldId) {" << endl;
@@ -4886,6 +4903,7 @@ void t_java_generator::generate_field_name_constants(ofstream& out, t_struct* ts
   indent(out) << " * Find the _Fields constant that matches name, or null if its not found."
               << endl;
   indent(out) << " */" << endl;
+  indent(out) << java_nullable_annotation() << endl;
   indent(out) << "public static _Fields findByName(java.lang.String name) {" << endl;
   indent(out) << "  return byName.get(name);" << endl;
   indent(out) << "}" << endl << endl;
