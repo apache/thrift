@@ -809,11 +809,15 @@ void TSocket::setMaxRecvRetries(int maxRecvRetries) {
 
 string TSocket::getSocketInfo() {
   std::ostringstream oss;
-  if (host_.empty() || port_ == 0) {
-    oss << "<Host: " << getPeerAddress();
-    oss << " Port: " << getPeerPort() << ">";
+  if (path_.empty()) {
+    if (host_.empty() || port_ == 0) {
+      oss << "<Host: " << getPeerAddress();
+      oss << " Port: " << getPeerPort() << ">";
+    } else {
+      oss << "<Host: " << host_ << " Port: " << port_ << ">";
+    }
   } else {
-    oss << "<Host: " << host_ << " Port: " << port_ << ">";
+    oss << "<Path: " << path_ << ">";
   }
   return oss.str();
 }

@@ -659,7 +659,7 @@ func TestWriteSimpleJSONProtocolMap(t *testing.T) {
 	}
 	str := trans.String()
 	if str[0] != '[' || str[len(str)-1] != ']' {
-		t.Fatalf("Bad value for %s, wrote: %q, in go: %q", thetype, str, DOUBLE_VALUES)
+		t.Fatalf("Bad value for %s, wrote: %v, in go: %v", thetype, str, DOUBLE_VALUES)
 	}
 	l := strings.Split(str[1:len(str)-1], ",")
 	if len(l) < 3 {

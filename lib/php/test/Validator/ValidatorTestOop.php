@@ -34,9 +34,8 @@ class ValidatorTestOop extends BaseValidatorTest
 {
     public function setUp()
     {
-        $loader = new ThriftClassLoader();
-        $loader->registerDefinition('ThriftTest', __DIR__ . '/../packages/phpvo');
-        $loader->registerDefinition('TestValidators', __DIR__ . '/../packages/phpvo');
-        $loader->register();
+        /** @var \Composer\Autoload\ClassLoader $loader */
+        $loader = require __DIR__ . '/../../../../vendor/autoload.php';
+        $loader->addPsr4('', __DIR__ . '/../packages/phpvo');
     }
 }

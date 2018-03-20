@@ -51,6 +51,7 @@ VALID_JSON_KEYS = [
 ]
 
 DEFAULT_MAX_DELAY = 5
+DEFAULT_SIGNAL = 1
 DEFAULT_TIMEOUT = 5
 
 
@@ -112,7 +113,7 @@ def _do_collect_tests(servers, clients):
                     yield name, impl1, impl2
 
     def maybe_max(key, o1, o2, default):
-        """maximum of two if present, otherwise defult value"""
+        """maximum of two if present, otherwise default value"""
         v1 = o1.get(key)
         v2 = o2.get(key)
         return max(v1, v2) if v1 and v2 else v1 or v2 or default
@@ -138,6 +139,7 @@ def _do_collect_tests(servers, clients):
                         'server': merge_metadata(sv, **{'protocol': proto1, 'transport': trans1}),
                         'client': merge_metadata(cl, **{'protocol': proto2, 'transport': trans2}),
                         'delay': maybe_max('delay', sv, cl, DEFAULT_MAX_DELAY),
+                        'stop_signal': maybe_max('stop_signal', sv, cl, DEFAULT_SIGNAL),
                         'timeout': maybe_max('timeout', sv, cl, DEFAULT_TIMEOUT),
                         'protocol': proto,
                         'transport': trans,

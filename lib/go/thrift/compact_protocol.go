@@ -807,7 +807,7 @@ func (p *TCompactProtocol) getTType(t tCompactType) (TType, error) {
 	case COMPACT_STRUCT:
 		return STRUCT, nil
 	}
-	return STOP, TException(fmt.Errorf("don't know what type: %s", t&0x0f))
+	return STOP, TException(fmt.Errorf("don't know what type: %v", t&0x0f))
 }
 
 // Given a TType value, find the appropriate TCompactProtocol.Types constant.
