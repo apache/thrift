@@ -35,6 +35,10 @@ if defined? Thrift::BinaryProtocolAccelerated
       it "should create a BinaryProtocolAccelerated" do
         Thrift::BinaryProtocolAcceleratedFactory.new.get_protocol(mock("MockTransport")).should be_instance_of(Thrift::BinaryProtocolAccelerated)
       end
+
+      it "should provide a reasonable to_s" do
+        Thrift::BinaryProtocolAcceleratedFactory.new.to_s.should == "binary-accel"
+      end
     end
   end
 else

@@ -70,5 +70,9 @@ describe 'SSLSocket' do
     it "should accept an optional context" do
       Thrift::SSLSocket.new('localhost', 8080, 5, @context).ssl_context.should == @context
     end
+
+    it "should provide a reasonable to_s" do
+      Thrift::SSLSocket.new('myhost', 8090).to_s.should == "ssl(socket(myhost:8090))"
+    end
   end
 end

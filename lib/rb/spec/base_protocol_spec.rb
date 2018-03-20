@@ -29,6 +29,11 @@ describe 'BaseProtocol' do
   describe Thrift::BaseProtocol do
     # most of the methods are stubs, so we can ignore them
 
+    it "should provide a reasonable to_s" do
+      @trans.should_receive(:to_s).once.and_return("trans")
+      @prot.to_s.should == "trans"
+    end
+
     it "should make trans accessible" do
       @prot.trans.should eql(@trans)
     end
@@ -212,6 +217,10 @@ describe 'BaseProtocol' do
     it "should raise NotImplementedError" do
       # returning nil since Protocol is just an abstract class
       lambda {Thrift::BaseProtocolFactory.new.get_protocol(mock("MockTransport"))}.should raise_error(NotImplementedError)
+    end
+
+    it "should provide a reasonable to_s" do
+      Thrift::BaseProtocolFactory.new.to_s.should == "base"
     end
   end
 end

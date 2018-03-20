@@ -35,6 +35,7 @@ describe 'Thrift::ServerSocket' do
     it "should accept an optional host argument" do
       @socket = Thrift::ServerSocket.new('localhost', 1234)
       TCPServer.should_receive(:new).with('localhost', 1234)
+      @socket.to_s == "server(localhost:1234)"
       @socket.listen
     end
 
@@ -74,6 +75,10 @@ describe 'Thrift::ServerSocket' do
       @socket.should_not be_closed
       handle.stub!(:closed?).and_return(true)
       @socket.should be_closed
+    end
+
+    it "should provide a reasonable to_s" do
+      @socket.to_s.should == "socket(:1234)"
     end
   end
 end

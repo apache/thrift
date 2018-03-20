@@ -56,11 +56,19 @@ describe 'BinaryProtocol' do
         e.type == Thrift::ProtocolException::BAD_VERSION
       end
     end
+
+    it "should provide a reasonable to_s" do
+      @prot.to_s.should == "binary(memory)"
+    end
   end
 
   describe Thrift::BinaryProtocolFactory do
     it "should create a BinaryProtocol" do
       Thrift::BinaryProtocolFactory.new.get_protocol(mock("MockTransport")).should be_instance_of(Thrift::BinaryProtocol)
+    end
+
+    it "should provide a reasonable to_s" do
+      Thrift::BinaryProtocolFactory.new.to_s.should == "binary"
     end
   end
 end

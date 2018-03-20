@@ -26,19 +26,24 @@ require 'test_helper'
 require 'thrift'
 require 'thrift_test'
 
+$domain_socket = nil
 $protocolType = "binary"
 $host = "localhost"
 $port = 9090
 $transport = "buffered"
+
 ARGV.each do|a|
   if a == "--help"
     puts "Allowed options:"
     puts "\t -h [ --help ] \t produce help message"
+    puts "\t--domain-socket arg (=) \t Unix domain socket path - if not empty, host and port are ignored"
     puts "\t--host arg (=localhost) \t Host to connect"
     puts "\t--port arg (=9090) \t Port number to listen"
-    puts "\t--protocol arg (=binary) \t protocol: binary, accel"
+    puts "\t--protocol arg (=binary) \t protocol: accel, binary, compact, json"
     puts "\t--transport arg (=buffered) transport: buffered, framed, http"
     exit
+  elsif a.start_with?("--domain-socket")
+    $domain_socket = a.split("=")[1]
   elsif a.start_with?("--host")
     $host = a.split("=")[1]
   elsif a.start_with?("--protocol")
@@ -54,7 +59,12 @@ ARGV=[]
 class SimpleClientTest < Test::Unit::TestCase
   def setup
     unless @socket
-      @socket   = Thrift::Socket.new($host, $port)
+      if $domain_socket.to_s.strip.empty?
+        @socket   = Thrift::Socket.new($host, $port)
+      else
+        @socket   = Thrift::UNIXSocket.new($domain_socket)
+      end
+      
       if $transport == "buffered"
         transportFactory = Thrift::BufferedTransport.new(@socket)
       elsif $transport == "framed"
