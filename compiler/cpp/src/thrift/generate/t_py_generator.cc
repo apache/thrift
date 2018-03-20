@@ -19,7 +19,9 @@
 
 #include <string>
 #include <fstream>
+#include <iomanip>
 #include <iostream>
+#include <limits>
 #include <vector>
 
 #include <stdlib.h>
@@ -541,9 +543,9 @@ string t_py_generator::render_const_value(t_type* type, t_const_value* value) {
       break;
     case t_base_type::TYPE_DOUBLE:
       if (value->get_type() == t_const_value::CV_INTEGER) {
-        out << value->get_integer();
+        out << "float(" << value->get_integer() << ")";
       } else {
-        out << value->get_double();
+        out << emit_double_as_string(value->get_double());
       }
       break;
     default:

@@ -21,6 +21,13 @@ generate(${MY_PROJECT_DIR}/test/DebugProtoTest.thrift py:no_utf8strings gen-py-n
 generate(${MY_PROJECT_DIR}/test/DebugProtoTest.thrift py:dynamic gen-py-dynamic)
 generate(${MY_PROJECT_DIR}/test/DebugProtoTest.thrift py:dynamic,slots gen-py-dynamicslots)
 
+generate(${MY_PROJECT_DIR}/test/DoubleConstantsTest.thrift py gen-py-default)
+generate(${MY_PROJECT_DIR}/test/DoubleConstantsTest.thrift py:slots gen-py-slots)
+generate(${MY_PROJECT_DIR}/test/DoubleConstantsTest.thrift py:old_style gen-py-oldstyle)
+generate(${MY_PROJECT_DIR}/test/DoubleConstantsTest.thrift py:no_utf8strings gen-py-no_utf8strings)
+generate(${MY_PROJECT_DIR}/test/DoubleConstantsTest.thrift py:dynamic gen-py-dynamic)
+generate(${MY_PROJECT_DIR}/test/DoubleConstantsTest.thrift py:dynamic,slots gen-py-dynamicslots)
+
 generate(${MY_PROJECT_DIR}/test/Recursive.thrift py gen-py-default)
 generate(${MY_PROJECT_DIR}/test/Recursive.thrift py:slots gen-py-slots)
 generate(${MY_PROJECT_DIR}/test/Recursive.thrift py:old_style gen-py-oldstyle)

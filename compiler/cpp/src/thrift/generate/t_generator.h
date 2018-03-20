@@ -19,10 +19,13 @@
 
 #ifndef T_GENERATOR_H
 #define T_GENERATOR_H
+#define MSC_2015_VER 1900
 
 #include <string>
+#include <iomanip>
 #include <iostream>
 #include <fstream>
+#include <limits>
 #include <sstream>
 #include "thrift/common.h"
 #include "thrift/version.h"
@@ -93,7 +96,7 @@ public:
 
 protected:
   /**
-   * Optional methods that may be imlemented by subclasses to take necessary
+   * Optional methods that may be implemented by subclasses to take necessary
    * steps at the beginning or end of code generation.
    */
 
@@ -266,6 +269,30 @@ protected:
     }
 
     return out.str();
+  }
+
+  const std::string emit_double_as_string(const double value) {
+      std::stringstream double_output_stream;
+      // sets the maximum precision: http://en.cppreference.com/w/cpp/io/manip/setprecision
+      // sets the output format to fixed: http://en.cppreference.com/w/cpp/io/manip/fixed (not in scientific notation)
+      double_output_stream << std::setprecision(std::numeric_limits<double>::digits10 + 1);
+
+      #ifdef _MSC_VER
+          // strtod is broken in MSVC compilers older than 2015, so std::fixed fails to format a double literal.
+          // more details: https://blogs.msdn.microsoft.com/vcblog/2014/06/18/
+          //               c-runtime-crt-features-fixes-and-breaking-changes-in-visual-studio-14-ctp1/
+          //               and
+          //               http://www.exploringbinary.com/visual-c-plus-plus-strtod-still-broken/
+          #if _MSC_VER >= MSC_2015_VER
+              double_output_stream << std::fixed;
+          #endif
+      #else
+          double_output_stream << std::fixed;
+      #endif
+
+      double_output_stream << value;
+
+      return double_output_stream.str();
   }
 
 public:

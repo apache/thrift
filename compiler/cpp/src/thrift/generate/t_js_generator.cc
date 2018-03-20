@@ -20,7 +20,9 @@
 #include <map>
 #include <string>
 #include <fstream>
+#include <iomanip>
 #include <iostream>
+#include <limits>
 #include <vector>
 #include <list>
 #include <cassert>
@@ -564,7 +566,7 @@ string t_js_generator::render_const_value(t_type* type, t_const_value* value) {
       if (value->get_type() == t_const_value::CV_INTEGER) {
         out << value->get_integer();
       } else {
-        out << value->get_double();
+        out << emit_double_as_string(value->get_double());
       }
       break;
     default:

@@ -25,6 +25,7 @@
 #include <fstream>
 #include <iomanip>
 #include <iostream>
+#include <limits>
 #include <vector>
 #include <cctype>
 
@@ -734,9 +735,9 @@ string t_java_generator::render_const_value(ofstream& out, t_type* type, t_const
       break;
     case t_base_type::TYPE_DOUBLE:
       if (value->get_type() == t_const_value::CV_INTEGER) {
-        render << "(double)" << value->get_integer();
+        render << value->get_integer() << "d";
       } else {
-        render << value->get_double();
+        render << emit_double_as_string(value->get_double());
       }
       break;
     default:
