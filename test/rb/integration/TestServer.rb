@@ -110,6 +110,7 @@ domain_socket = nil
 port = 9090
 protocol = "binary"
 @protocolFactory = nil
+ssl = false
 transport = "buffered"
 @transportFactory = nil
 
@@ -117,15 +118,18 @@ ARGV.each do|a|
   if a == "--help"
     puts "Allowed options:"
     puts "\t -h [ --help ] \t produce help message"
-    puts "\t--domain-socket arg (=) \t Unix domain socket path - if not empty, port is ignored"
-    puts "\t--port arg (=9090) \t Port number to listen"
+    puts "\t--domain-socket arg (=) \t Unix domain socket path"
+    puts "\t--port arg (=9090) \t Port number to listen \t not valid with domain-socket"
     puts "\t--protocol arg (=binary) \t protocol: accel, binary, compact, json"
+    puts "\t--ssl \t use ssl \t not valid with domain-socket"
     puts "\t--transport arg (=buffered) transport: buffered, framed, http"
     exit
   elsif a.start_with?("--domain-socket")
     domain_socket = a.split("=")[1]
   elsif a.start_with?("--protocol")
     protocol = a.split("=")[1]
+  elsif a == "--ssl"
+    ssl = true
   elsif a.start_with?("--transport")
     transport = a.split("=")[1]
   elsif a.start_with?("--port")
@@ -157,7 +161,22 @@ end
 @processor = Thrift::Test::ThriftTest::Processor.new(@handler)
 @transport = nil
 if domain_socket.to_s.strip.empty?
-  @transport = Thrift::ServerSocket.new(port)
+  if ssl
+    # the working directory for ruby crosstest is test/rb/gen-rb
+    keysDir = File.join(File.dirname(File.dirname(Dir.pwd)), "keys")
+    ctx = OpenSSL::SSL::SSLContext.new
+    ctx.ca_file = File.join(keysDir, "CA.pem")
+    ctx.cert = OpenSSL::X509::Certificate.new(File.open(File.join(keysDir, "server.crt")))
+    ctx.cert_store = OpenSSL::X509::Store.new
+    ctx.cert_store.add_file(File.join(keysDir, 'client.pem'))
+    ctx.key = OpenSSL::PKey::RSA.new(File.open(File.join(keysDir, "server.key")))
+    ctx.options = OpenSSL::SSL::OP_NO_SSLv2 | OpenSSL::SSL::OP_NO_SSLv3
+    ctx.ssl_version = :SSLv23
+    ctx.verify_mode = OpenSSL::SSL::VERIFY_PEER
+    @transport = Thrift::SSLServerSocket.new(nil, port, ctx)
+  else
+    @transport = Thrift::ServerSocket.new(port)
+  end
 else
   @transport = Thrift::UNIXServerSocket.new(domain_socket)
 end
