@@ -139,9 +139,9 @@ class TSocket extends TTransport
     */
     public function __construct(
         $host='localhost',
-        $port=9090,
-        $persist=false,
-        $debugHandler=null
+        $port = 9090,
+        $persist = false,
+        $debugHandler = null
     ) {
         $this->host_ = $host;
         $this->port_ = $port;
@@ -177,9 +177,9 @@ class TSocket extends TTransport
      */
     public function setSendTimeout($timeout)
     {
-            $this->sendTimeoutSec_ = floor($timeout / 1000);
-            $this->sendTimeoutUsec_ =
-                    ($timeout - ($this->sendTimeoutSec_ * 1000)) * 1000;
+        $this->sendTimeoutSec_ = floor($timeout / 1000);
+        $this->sendTimeoutUsec_ =
+            ($timeout - ($this->sendTimeoutSec_ * 1000)) * 1000;
     }
 
     /**
@@ -188,9 +188,9 @@ class TSocket extends TTransport
      * @param int $timeout  Timeout in milliseconds.
      */
     public function setRecvTimeout($timeout) {
-            $this->recvTimeoutSec_ = floor($timeout / 1000);
-            $this->recvTimeoutUsec_ =
-                    ($timeout - ($this->recvTimeoutSec_ * 1000)) * 1000;
+        $this->recvTimeoutSec_ = floor($timeout / 1000);
+        $this->recvTimeoutUsec_ =
+            ($timeout - ($this->recvTimeoutSec_ * 1000)) * 1000;
     }
 
     /**
@@ -230,7 +230,7 @@ class TSocket extends TTransport
      */
     public function isOpen()
     {
-            return is_resource($this->handle_);
+        return is_resource($this->handle_);
     }
 
     /**
