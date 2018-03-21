@@ -65,14 +65,14 @@ endif
 
 if WITH_PYTHON
 crossfeature: precross
-	$(CROSS_PY) test/test.py --retry-count 3 --features .* --skip-known-failures --server $(CROSS_LANGS_COMMA_SEPARATED)
+	$(CROSS_PY) test/test.py --retry-count 5 --features .* --skip-known-failures --server $(CROSS_LANGS_COMMA_SEPARATED)
 else
 # feature test needs python build
 crossfeature:
 endif
 
 cross-%: precross crossfeature
-	$(CROSS_PY) test/test.py --retry-count 3 --skip-known-failures --server $(CROSS_LANGS_COMMA_SEPARATED) --client $(CROSS_LANGS_COMMA_SEPARATED) --regex "$*"
+	$(CROSS_PY) test/test.py --retry-count 5 --skip-known-failures --server $(CROSS_LANGS_COMMA_SEPARATED) --client $(CROSS_LANGS_COMMA_SEPARATED) --regex "$*"
 
 cross: cross-.*
 

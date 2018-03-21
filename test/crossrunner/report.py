@@ -162,7 +162,9 @@ class ExecReporter(TestReporter):
             'ECONNREFUSED',
             'econnrefused',               # erl
             'CONNECTION-REFUSED-ERROR',   # cl
+            'connect ENOENT',             # nodejs domain socket
             'No such file or directory',  # domain socket
+            'Sockets.TcpClient.Connect',  # csharp
         ])),
     }
 

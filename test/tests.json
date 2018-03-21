@@ -366,7 +366,8 @@
       "timeout": 5,
       "command": [
         "ruby",
-        "../integration/TestClient.rb"
+        "../integration/TestClient.rb",
+        "--"
       ]
     },
     "transports": [
@@ -375,7 +376,8 @@
     ],
     "sockets": [
       "domain",
-      "ip"
+      "ip",
+      "ip-ssl"
     ],
     "protocols": [
       "binary",
