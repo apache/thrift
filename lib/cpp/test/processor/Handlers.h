@@ -23,15 +23,14 @@
 #include "gen-cpp/ParentService.h"
 #include "gen-cpp/ChildService.h"
 
-namespace apache { namespace thrift { namespace test {
+namespace apache {
+namespace thrift {
+namespace test {
 
 class ParentHandler : virtual public ParentServiceIf {
- public:
-  ParentHandler(const boost::shared_ptr<EventLog>& log) :
-      triggerMonitor(&mutex_),
-      generation_(0),
-      wait_(false),
-      log_(log) { }
+public:
+  ParentHandler(const stdcxx::shared_ptr<EventLog>& log)
+    : triggerMonitor(&mutex_), generation_(0), wait_(false), log_(log) {}
 
   int32_t incrementGeneration() {
     concurrency::Guard g(mutex_);
@@ -57,7 +56,7 @@ class ParentHandler : virtual public ParentServiceIf {
     _return = strings_;
   }
 
-  void getDataWait(std::string& _return, int32_t length) {
+  void getDataWait(std::string& _return, const int32_t length) {
     concurrency::Guard g(mutex_);
     log_->append(EventLog::ET_CALL_GET_DATA_WAIT, 0, 0);
 
@@ -116,7 +115,7 @@ class ParentHandler : virtual public ParentServiceIf {
     triggerMonitor.notifyAll();
   }
 
- protected:
+protected:
   /**
    * blockUntilTriggered() won't return until triggerPendingCalls() is invoked
    * in another thread.
@@ -137,16 +136,19 @@ class ParentHandler : virtual public ParentServiceIf {
   int32_t generation_;
   bool wait_;
   std::vector<std::string> strings_;
-  boost::shared_ptr<EventLog> log_;
+  stdcxx::shared_ptr<EventLog> log_;
 };
 
-class ChildHandler : public ParentHandler, virtual public ChildServiceIf {
- public:
-  ChildHandler(const boost::shared_ptr<EventLog>& log) :
-      ParentHandler(log),
-      value_(0) {}
+#ifdef _WIN32
+  #pragma warning( push )
+  #pragma warning (disable : 4250 ) //inheriting methods via dominance
+#endif
 
-  int32_t setValue(int32_t value) {
+class ChildHandler : public ParentHandler, virtual public ChildServiceIf {
+public:
+  ChildHandler(const stdcxx::shared_ptr<EventLog>& log) : ParentHandler(log), value_(0) {}
+
+  int32_t setValue(const int32_t value) {
     concurrency::Guard g(mutex_);
     log_->append(EventLog::ET_CALL_SET_VALUE, 0, 0);
 
@@ -162,46 +164,44 @@ class ChildHandler : public ParentHandler, virtual public ChildServiceIf {
     return value_;
   }
 
- protected:
+protected:
   int32_t value_;
 };
 
-struct ConnContext {
- public:
-  ConnContext(boost::shared_ptr<protocol::TProtocol> in,
-              boost::shared_ptr<protocol::TProtocol> out,
-              uint32_t id) :
-      input(in),
-      output(out),
-      id(id) {}
+#ifdef _WIN32
+  #pragma warning( pop )
+#endif
 
-  boost::shared_ptr<protocol::TProtocol> input;
-  boost::shared_ptr<protocol::TProtocol> output;
+struct ConnContext {
+public:
+  ConnContext(stdcxx::shared_ptr<protocol::TProtocol> in,
+              stdcxx::shared_ptr<protocol::TProtocol> out,
+              uint32_t id)
+    : input(in), output(out), id(id) {}
+
+  stdcxx::shared_ptr<protocol::TProtocol> input;
+  stdcxx::shared_ptr<protocol::TProtocol> output;
   uint32_t id;
 };
 
 struct CallContext {
- public:
-  CallContext(ConnContext *context, uint32_t id, const std::string& name) :
-      connContext(context),
-      name(name),
-      id(id) {}
+public:
+  CallContext(ConnContext* context, uint32_t id, const std::string& name)
+    : connContext(context), name(name), id(id) {}
 
-  ConnContext *connContext;
+  ConnContext* connContext;
   std::string name;
   uint32_t id;
 };
 
 class ServerEventHandler : public server::TServerEventHandler {
- public:
-  ServerEventHandler(const boost::shared_ptr<EventLog>& log) :
-      nextId_(1),
-      log_(log) {}
+public:
+  ServerEventHandler(const stdcxx::shared_ptr<EventLog>& log) : nextId_(1), log_(log) {}
 
   virtual void preServe() {}
 
-  virtual void* createContext(boost::shared_ptr<protocol::TProtocol> input,
-                              boost::shared_ptr<protocol::TProtocol> output) {
+  virtual void* createContext(stdcxx::shared_ptr<protocol::TProtocol> input,
+                              stdcxx::shared_ptr<protocol::TProtocol> output) {
     ConnContext* context = new ConnContext(input, output, nextId_);
     ++nextId_;
     log_->append(EventLog::ET_CONN_CREATED, context->id, 0);
@@ -209,8 +209,8 @@ class ServerEventHandler : public server::TServerEventHandler {
   }
 
   virtual void deleteContext(void* serverContext,
-                             boost::shared_ptr<protocol::TProtocol>input,
-                             boost::shared_ptr<protocol::TProtocol>output) {
+                             stdcxx::shared_ptr<protocol::TProtocol> input,
+                             stdcxx::shared_ptr<protocol::TProtocol> output) {
     ConnContext* context = reinterpret_cast<ConnContext*>(serverContext);
 
     if (input != context->input) {
@@ -225,38 +225,38 @@ class ServerEventHandler : public server::TServerEventHandler {
     delete context;
   }
 
-  virtual void processContext(
-      void* serverContext,
-      boost::shared_ptr<transport::TTransport> transport) {
-    // TODO: We currently don't test the behavior of the processContext()
-    // calls.  The various server implementations call processContext() at
-    // slightly different times, and it is too annoying to try and account for
-    // their various differences.
-    //
-    // TThreadedServer, TThreadPoolServer, and TSimpleServer usually wait until
-    // they see the first byte of a request before calling processContext().
-    // However, they don't wait for the first byte of the very first request,
-    // and instead immediately call processContext() before any data is
-    // received.
-    //
-    // TNonblockingServer always waits until receiving the full request before
-    // calling processContext().
+  virtual void processContext(void* serverContext,
+                              stdcxx::shared_ptr<transport::TTransport> transport) {
+// TODO: We currently don't test the behavior of the processContext()
+// calls.  The various server implementations call processContext() at
+// slightly different times, and it is too annoying to try and account for
+// their various differences.
+//
+// TThreadedServer, TThreadPoolServer, and TSimpleServer usually wait until
+// they see the first byte of a request before calling processContext().
+// However, they don't wait for the first byte of the very first request,
+// and instead immediately call processContext() before any data is
+// received.
+//
+// TNonblockingServer always waits until receiving the full request before
+// calling processContext().
 #if 0
     ConnContext* context = reinterpret_cast<ConnContext*>(serverContext);
     log_->append(EventLog::ET_PROCESS, context->id, 0);
+#else
+    THRIFT_UNUSED_VARIABLE(serverContext);
+    THRIFT_UNUSED_VARIABLE(transport);
 #endif
   }
 
- protected:
+protected:
   uint32_t nextId_;
-  boost::shared_ptr<EventLog> log_;
+  stdcxx::shared_ptr<EventLog> log_;
 };
 
 class ProcessorEventHandler : public TProcessorEventHandler {
- public:
-  ProcessorEventHandler(const boost::shared_ptr<EventLog>& log) :
-      nextId_(1),
-      log_(log) {}
+public:
+  ProcessorEventHandler(const stdcxx::shared_ptr<EventLog>& log) : nextId_(1), log_(log) {}
 
   void* getContext(const char* fnName, void* serverContext) {
     ConnContext* connContext = reinterpret_cast<ConnContext*>(serverContext);
@@ -264,78 +264,75 @@ class ProcessorEventHandler : public TProcessorEventHandler {
     CallContext* context = new CallContext(connContext, nextId_, fnName);
     ++nextId_;
 
-    log_->append(EventLog::ET_CALL_STARTED, connContext->id, context->id,
-                 fnName);
+    log_->append(EventLog::ET_CALL_STARTED, connContext->id, context->id, fnName);
     return context;
   }
 
   void freeContext(void* ctx, const char* fnName) {
     CallContext* context = reinterpret_cast<CallContext*>(ctx);
     checkName(context, fnName);
-    log_->append(EventLog::ET_CALL_FINISHED, context->connContext->id,
-                 context->id, fnName);
+    log_->append(EventLog::ET_CALL_FINISHED, context->connContext->id, context->id, fnName);
     delete context;
   }
 
   void preRead(void* ctx, const char* fnName) {
     CallContext* context = reinterpret_cast<CallContext*>(ctx);
     checkName(context, fnName);
-    log_->append(EventLog::ET_PRE_READ, context->connContext->id, context->id,
-                 fnName);
+    log_->append(EventLog::ET_PRE_READ, context->connContext->id, context->id, fnName);
   }
 
   void postRead(void* ctx, const char* fnName, uint32_t bytes) {
+    THRIFT_UNUSED_VARIABLE(bytes);
     CallContext* context = reinterpret_cast<CallContext*>(ctx);
     checkName(context, fnName);
-    log_->append(EventLog::ET_POST_READ, context->connContext->id, context->id,
-                 fnName);
+    log_->append(EventLog::ET_POST_READ, context->connContext->id, context->id, fnName);
   }
 
   void preWrite(void* ctx, const char* fnName) {
     CallContext* context = reinterpret_cast<CallContext*>(ctx);
     checkName(context, fnName);
-    log_->append(EventLog::ET_PRE_WRITE, context->connContext->id, context->id,
-                 fnName);
+    log_->append(EventLog::ET_PRE_WRITE, context->connContext->id, context->id, fnName);
   }
 
   void postWrite(void* ctx, const char* fnName, uint32_t bytes) {
+    THRIFT_UNUSED_VARIABLE(bytes);
     CallContext* context = reinterpret_cast<CallContext*>(ctx);
     checkName(context, fnName);
-    log_->append(EventLog::ET_POST_WRITE, context->connContext->id,
-                 context->id, fnName);
+    log_->append(EventLog::ET_POST_WRITE, context->connContext->id, context->id, fnName);
   }
 
   void asyncComplete(void* ctx, const char* fnName) {
     CallContext* context = reinterpret_cast<CallContext*>(ctx);
     checkName(context, fnName);
-    log_->append(EventLog::ET_ASYNC_COMPLETE, context->connContext->id,
-                 context->id, fnName);
+    log_->append(EventLog::ET_ASYNC_COMPLETE, context->connContext->id, context->id, fnName);
   }
 
   void handlerError(void* ctx, const char* fnName) {
     CallContext* context = reinterpret_cast<CallContext*>(ctx);
     checkName(context, fnName);
-    log_->append(EventLog::ET_HANDLER_ERROR, context->connContext->id,
-                 context->id, fnName);
+    log_->append(EventLog::ET_HANDLER_ERROR, context->connContext->id, context->id, fnName);
   }
 
- protected:
+protected:
   void checkName(const CallContext* context, const char* fnName) {
     // Note: we can't use BOOST_CHECK_EQUAL here, since the handler runs in a
     // different thread from the test functions.  Just abort if the names are
     // different
     if (context->name != fnName) {
-      fprintf(stderr, "call context name mismatch: \"%s\" != \"%s\"\n",
-              context->name.c_str(), fnName);
+      fprintf(stderr,
+              "call context name mismatch: \"%s\" != \"%s\"\n",
+              context->name.c_str(),
+              fnName);
       fflush(stderr);
       abort();
     }
   }
 
   uint32_t nextId_;
-  boost::shared_ptr<EventLog> log_;
+  stdcxx::shared_ptr<EventLog> log_;
 };
-
-}}} // apache::thrift::test
+}
+}
+} // apache::thrift::test
 
 #endif // _THRIFT_PROCESSOR_TEST_HANDLERS_H_

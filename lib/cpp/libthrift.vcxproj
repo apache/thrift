@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug-mt|Win32">
@@ -36,6 +36,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\thrift\async\TAsyncChannel.cpp"/>
+    <ClCompile Include="src\thrift\async\TConcurrentClientSyncInfo.cpp"/>
     <ClCompile Include="src\thrift\concurrency\BoostMonitor.cpp" />
     <ClCompile Include="src\thrift\concurrency\BoostMutex.cpp" />
     <ClCompile Include="src\thrift\concurrency\BoostThreadFactory.cpp" />
@@ -46,20 +47,22 @@
     <ClCompile Include="src\thrift\processor\PeekProcessor.cpp"/>
     <ClCompile Include="src\thrift\protocol\TBase64Utils.cpp" />
     <ClCompile Include="src\thrift\protocol\TDebugProtocol.cpp"/>
-    <ClCompile Include="src\thrift\protocol\TDenseProtocol.cpp"/>
     <ClCompile Include="src\thrift\protocol\TJSONProtocol.cpp"/>
+    <ClCompile Include="src\thrift\protocol\TProtocol.cpp"/>
+    <ClCompile Include="src\thrift\protocol\TMultiplexedProtocol.cpp"/>
     <ClCompile Include="src\thrift\server\TSimpleServer.cpp"/>
     <ClCompile Include="src\thrift\server\TThreadPoolServer.cpp"/>
+    <ClCompile Include="src\thrift\server\TThreadedServer.cpp"/>
+	<ClCompile Include="src\thrift\server\TConnectedClient.cpp"/>
+	<ClCompile Include="src\thrift\server\TNonblockingServer.cpp"/>
+	<ClCompile Include="src\thrift\server\TServerFramework.cpp"/>
+	<ClCompile Include="src\thrift\server\TSimpleServer.cpp"/>
+	<ClCompile Include="src\thrift\server\TThreadedServer.cpp"/>
+	<ClCompile Include="src\thrift\server\TThreadPoolServer.cpp"/>
     <ClCompile Include="src\thrift\TApplicationException.cpp"/>
-    <ClCompile Include="src\thrift\Thrift.cpp"/>
+    <ClCompile Include="src\thrift\TOutput.cpp"/>
     <ClCompile Include="src\thrift\transport\TBufferTransports.cpp"/>
     <ClCompile Include="src\thrift\transport\TFDTransport.cpp" />
-    <ClCompile Include="src\thrift\transport\TFileTransport.cpp">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release-mt|Win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release-mt|x64'">true</ExcludedFromBuild>
-    </ClCompile>
     <ClCompile Include="src\thrift\transport\THttpClient.cpp" />
     <ClCompile Include="src\thrift\transport\THttpServer.cpp" />
     <ClCompile Include="src\thrift\transport\THttpTransport.cpp"/>
@@ -67,42 +70,39 @@
     <ClCompile Include="src\thrift\transport\TPipeServer.cpp" />
     <ClCompile Include="src\thrift\transport\TServerSocket.cpp"/>
     <ClCompile Include="src\thrift\transport\TSimpleFileTransport.cpp" />
+    <ClCompile Include="src\thrift\transport\TFileTransport.cpp" />
     <ClCompile Include="src\thrift\transport\TSocket.cpp"/>
-    <ClCompile Include="src\thrift\transport\TSSLSocket.cpp">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug-mt|Win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug-mt|x64'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release-mt|Win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release-mt|x64'">true</ExcludedFromBuild>
-    </ClCompile>
+    <ClCompile Include="src\thrift\transport\TSSLSocket.cpp"/>
     <ClCompile Include="src\thrift\transport\TTransportException.cpp"/>
     <ClCompile Include="src\thrift\transport\TTransportUtils.cpp"/>
     <ClCompile Include="src\thrift\windows\GetTimeOfDay.cpp" />
+    <ClCompile Include="src\thrift\windows\OverlappedSubmissionThread.cpp" />
     <ClCompile Include="src\thrift\windows\SocketPair.cpp" />
     <ClCompile Include="src\thrift\windows\TWinsockSingleton.cpp" />
     <ClCompile Include="src\thrift\windows\WinFcntl.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\thrift\async\TAsyncChannel.h" />
+    <ClInclude Include="src\thrift\async\TConcurrentClientSyncInfo.h" />
     <ClInclude Include="src\thrift\concurrency\BoostThreadFactory.h" />
     <ClInclude Include="src\thrift\concurrency\StdThreadFactory.h" />
     <ClInclude Include="src\thrift\concurrency\Exception.h" />
     <ClInclude Include="src\thrift\concurrency\PlatformThreadFactory.h" />
     <ClInclude Include="src\thrift\processor\PeekProcessor.h" />
+    <ClInclude Include="src\thrift\processor\TMultiplexedProcessor.h" />
     <ClInclude Include="src\thrift\protocol\TBinaryProtocol.h" />
     <ClInclude Include="src\thrift\protocol\TDebugProtocol.h" />
-    <ClInclude Include="src\thrift\protocol\TDenseProtocol.h" />
     <ClInclude Include="src\thrift\protocol\TJSONProtocol.h" />
+    <ClInclude Include="src\thrift\protocol\TMultiplexedProtocol.h" />
     <ClInclude Include="src\thrift\protocol\TProtocol.h" />
     <ClInclude Include="src\thrift\protocol\TVirtualProtocol.h" />
     <ClInclude Include="src\thrift\server\TServer.h" />
     <ClInclude Include="src\thrift\server\TSimpleServer.h" />
     <ClInclude Include="src\thrift\server\TThreadPoolServer.h" />
+    <ClInclude Include="src\thrift\server\TThreadedServer.h" />
     <ClInclude Include="src\thrift\TApplicationException.h" />
     <ClInclude Include="src\thrift\Thrift.h" />
+    <ClInclude Include="src\thrift\TOutput.h" />
     <ClInclude Include="src\thrift\TProcessor.h" />
     <ClInclude Include="src\thrift\transport\TBufferTransports.h" />
     <ClInclude Include="src\thrift\transport\TFDTransport.h" />
@@ -123,6 +123,7 @@
     <ClInclude Include="src\thrift\windows\config.h" />
     <ClInclude Include="src\thrift\windows\GetTimeOfDay.h" />
     <ClInclude Include="src\thrift\windows\Operators.h" />
+    <ClInclude Include="src\thrift\windows\OverlappedSubmissionThread.h" />
     <ClInclude Include="src\thrift\windows\SocketPair.h" />
     <ClInclude Include="src\thrift\windows\TWinsockSingleton.h" />
     <ClInclude Include="src\thrift\windows\WinFcntl.h" />
@@ -186,52 +187,60 @@
   </ImportGroup>
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="3rdparty.props" />
   </ImportGroup>
   <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug-mt|Win32'" Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="3rdparty.props" />
   </ImportGroup>
   <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="3rdparty.props" />
   </ImportGroup>
   <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug-mt|x64'" Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="3rdparty.props" />
   </ImportGroup>
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="3rdparty.props" />
   </ImportGroup>
   <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release-mt|Win32'" Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="3rdparty.props" />
   </ImportGroup>
   <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="3rdparty.props" />
   </ImportGroup>
   <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release-mt|x64'" Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="3rdparty.props" />
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <IncludePath>$(ProjectDir)\src\;$(ProjectDir)\src\thrift\windows\;$(THIRD_PARTY)\boost\boost_1_47_0\include;$(THIRD_PARTY)\boost\boost_1_47_0\;$(THIRD_PARTY)\openssl\OpenSSL-Win32\include\;$(IncludePath)</IncludePath>
+    <IncludePath>$(ProjectDir)\src\;$(ProjectDir)\src\thrift\windows\;$(BOOST_ROOT)\include;$(BOOST_ROOT)\;$(OPENSSL_ROOT_DIR)\include\;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug-mt|Win32'">
-    <IncludePath>$(ProjectDir)\src\;$(ProjectDir)\src\thrift\windows\;$(THIRD_PARTY)\boost\boost_1_47_0\include;$(THIRD_PARTY)\boost\boost_1_47_0\;$(THIRD_PARTY)\openssl\OpenSSL-Win32\include\;$(IncludePath)</IncludePath>
+    <IncludePath>$(ProjectDir)\src\;$(ProjectDir)\src\thrift\windows\;$(BOOST_ROOT)\include;$(BOOST_ROOT)\;$(OPENSSL_ROOT_DIR)\include\;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <IncludePath>$(ProjectDir)\src\;$(ProjectDir)\src\thrift\windows\;$(THIRD_PARTY)\boost\boost_1_47_0\include;$(THIRD_PARTY)\boost\boost_1_47_0\;$(THIRD_PARTY)\openssl\OpenSSL-Win32\include\;$(IncludePath)</IncludePath>
+    <IncludePath>$(ProjectDir)\src\;$(ProjectDir)\src\thrift\windows\;$(BOOST_ROOT)\include;$(BOOST_ROOT)\;$(OPENSSL_ROOT_DIR)\include\;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug-mt|x64'">
-    <IncludePath>$(ProjectDir)\src\;$(ProjectDir)\src\thrift\windows\;$(THIRD_PARTY)\boost\boost_1_47_0\include;$(THIRD_PARTY)\boost\boost_1_47_0\;$(THIRD_PARTY)\openssl\OpenSSL-Win32\include\;$(IncludePath)</IncludePath>
+    <IncludePath>$(ProjectDir)\src\;$(ProjectDir)\src\thrift\windows\;$(BOOST_ROOT)\include;$(BOOST_ROOT)\;$(OPENSSL_ROOT_DIR)\include\;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-    <IncludePath>$(ProjectDir)\src\;$(ProjectDir)\src\thrift\windows\;$(THIRD_PARTY)\boost\boost_1_47_0\include;$(THIRD_PARTY)\boost\boost_1_47_0\;$(THIRD_PARTY)\openssl\OpenSSL-Win32\include\;$(IncludePath)</IncludePath>
+    <IncludePath>$(ProjectDir)\src\;$(ProjectDir)\src\thrift\windows\;$(BOOST_ROOT)\include;$(BOOST_ROOT)\;$(OPENSSL_ROOT_DIR)\include\;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release-mt|Win32'">
-    <IncludePath>$(ProjectDir)\src\;$(ProjectDir)\src\thrift\windows\;$(THIRD_PARTY)\boost\boost_1_47_0\include;$(THIRD_PARTY)\boost\boost_1_47_0\;$(THIRD_PARTY)\openssl\OpenSSL-Win32\include\;$(IncludePath)</IncludePath>
+    <IncludePath>$(ProjectDir)\src\;$(ProjectDir)\src\thrift\windows\;$(BOOST_ROOT)\include;$(BOOST_ROOT)\;$(OPENSSL_ROOT_DIR)\include\;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <IncludePath>$(ProjectDir)\src\;$(ProjectDir)\src\thrift\windows\;$(THIRD_PARTY)\boost\boost_1_47_0\include;$(THIRD_PARTY)\boost\boost_1_47_0\;$(THIRD_PARTY)\openssl\OpenSSL-Win32\include\;$(IncludePath)</IncludePath>
+    <IncludePath>$(ProjectDir)\src\;$(ProjectDir)\src\thrift\windows\;$(BOOST_ROOT)\include;$(BOOST_ROOT)\;$(OPENSSL_ROOT_DIR)\include\;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release-mt|x64'">
-    <IncludePath>$(ProjectDir)\src\;$(ProjectDir)\src\thrift\windows\;$(THIRD_PARTY)\boost\boost_1_47_0\include;$(THIRD_PARTY)\boost\boost_1_47_0\;$(THIRD_PARTY)\openssl\OpenSSL-Win32\include\;$(IncludePath)</IncludePath>
+    <IncludePath>$(ProjectDir)\src\;$(ProjectDir)\src\thrift\windows\;$(BOOST_ROOT)\include;$(BOOST_ROOT)\;$(OPENSSL_ROOT_DIR)\include\;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>

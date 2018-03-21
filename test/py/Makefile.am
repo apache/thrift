@@ -16,26 +16,43 @@
 # specific language governing permissions and limitations
 # under the License.
 #
-.NOTPARALLEL:
-THRIFT = $(top_srcdir)/compiler/cpp/thrift
+AUTOMAKE_OPTIONS = serial-tests
 
 py_unit_tests = RunClientServer.py
 
 thrift_gen =                                    \
         gen-py/ThriftTest/__init__.py           \
         gen-py/DebugProtoTest/__init__.py \
+        gen-py/DoubleConstantsTest/__init__.py \
+        gen-py/Recursive/__init__.py \
         gen-py-default/ThriftTest/__init__.py           \
         gen-py-default/DebugProtoTest/__init__.py \
+        gen-py-default/DoubleConstantsTest/__init__.py \
+        gen-py-default/Recursive/__init__.py \
         gen-py-slots/ThriftTest/__init__.py           \
         gen-py-slots/DebugProtoTest/__init__.py \
-        gen-py-newstyle/ThriftTest/__init__.py           \
-        gen-py-newstyle/DebugProtoTest/__init__.py \
-        gen-py-newstyleslots/ThriftTest/__init__.py           \
-        gen-py-newstyleslots/DebugProtoTest/__init__.py \
+        gen-py-slots/DoubleConstantsTest/__init__.py \
+        gen-py-slots/Recursive/__init__.py \
+        gen-py-oldstyle/ThriftTest/__init__.py \
+        gen-py-oldstyle/DebugProtoTest/__init__.py \
+        gen-py-oldstyle/DoubleConstantsTest/__init__.py \
+        gen-py-oldstyle/Recursive/__init__.py \
+        gen-py-no_utf8strings/ThriftTest/__init__.py \
+        gen-py-no_utf8strings/DebugProtoTest/__init__.py \
+        gen-py-no_utf8strings/DoubleConstantsTest/__init__.py \
+        gen-py-no_utf8strings/Recursive/__init__.py \
         gen-py-dynamic/ThriftTest/__init__.py           \
         gen-py-dynamic/DebugProtoTest/__init__.py \
+        gen-py-dynamic/DoubleConstantsTest/__init__.py \
+        gen-py-dynamic/Recursive/__init__.py \
         gen-py-dynamicslots/ThriftTest/__init__.py           \
-        gen-py-dynamicslots/DebugProtoTest/__init__.py
+        gen-py-dynamicslots/DebugProtoTest/__init__.py \
+        gen-py-dynamicslots/DoubleConstantsTest/__init__.py \
+        gen-py-dynamicslots/Recursive/__init__.py
+
+
+precross: $(thrift_gen)
+BUILT_SOURCES = $(thrift_gen)
 
 helper_scripts=                                 \
         TestClient.py                           \
@@ -49,30 +66,32 @@ check_SCRIPTS=                                  \
 TESTS= $(py_unit_tests)
 
 
-gen-py/%/__init__.py: ../%.thrift
+gen-py/%/__init__.py: ../%.thrift $(THRIFT)
 	$(THRIFT) --gen py  $<
-	test -d gen-py-default || mkdir gen-py-default
+
+gen-py-default/%/__init__.py: ../%.thrift $(THRIFT)
+	test -d gen-py-default || $(MKDIR_P) gen-py-default
 	$(THRIFT) --gen py -out gen-py-default $<
 
-gen-py-slots/%/__init__.py: ../%.thrift
-	test -d gen-py-slots || mkdir gen-py-slots
+gen-py-slots/%/__init__.py: ../%.thrift $(THRIFT)
+	test -d gen-py-slots || $(MKDIR_P) gen-py-slots
 	$(THRIFT) --gen py:slots -out gen-py-slots $<
 
-gen-py-newstyle/%/__init__.py: ../%.thrift
-	test -d gen-py-newstyle || mkdir gen-py-newstyle
-	$(THRIFT) --gen py:new_style -out gen-py-newstyle $<
+gen-py-oldstyle/%/__init__.py: ../%.thrift $(THRIFT)
+	test -d gen-py-oldstyle || $(MKDIR_P) gen-py-oldstyle
+	$(THRIFT) --gen py:old_style -out gen-py-oldstyle $<
 
-gen-py-newstyleslots/%/__init__.py: ../%.thrift
-	test -d gen-py-newstyleslots || mkdir gen-py-newstyleslots
-	$(THRIFT) --gen py:new_style,slots -out gen-py-newstyleslots $<
+gen-py-no_utf8strings/%/__init__.py: ../%.thrift $(THRIFT)
+	test -d gen-py-no_utf8strings || $(MKDIR_P) gen-py-no_utf8strings
+	$(THRIFT) --gen py:no_utf8strings -out gen-py-no_utf8strings $<
 
-gen-py-dynamic/%/__init__.py: ../%.thrift
-	test -d gen-py-dynamic || mkdir gen-py-dynamic
+gen-py-dynamic/%/__init__.py: ../%.thrift $(THRIFT)
+	test -d gen-py-dynamic || $(MKDIR_P) gen-py-dynamic
 	$(THRIFT) --gen py:dynamic -out gen-py-dynamic $<
 
-gen-py-dynamicslots/%/__init__.py: ../%.thrift
-	test -d gen-py-dynamicslots || mkdir gen-py-dynamicslots
+gen-py-dynamicslots/%/__init__.py: ../%.thrift $(THRIFT)
+	test -d gen-py-dynamicslots || $(MKDIR_P) gen-py-dynamicslots
 	$(THRIFT) --gen py:dynamic,slots -out gen-py-dynamicslots $<
 
 clean-local:
-	$(RM) -r gen-py gen-py-slots gen-py-default gen-py-newstyle gen-py-newstyleslots gen-py-dynamic gen-py-dynamicslots
+	$(RM) -r gen-py gen-py-slots gen-py-default gen-py-oldstyle gen-py-no_utf8strings gen-py-dynamic gen-py-dynamicslots

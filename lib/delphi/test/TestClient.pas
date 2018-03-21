@@ -19,25 +19,35 @@
 
 unit TestClient;
 
+{$I ../src/Thrift.Defines.inc}
+
 {.$DEFINE StressTest}   // activate to stress-test the server with frequent connects/disconnects
-{.$DEFINE PerfTest}     // activate to activate the performance test
+{.$DEFINE PerfTest}     // activate the performance test
+{$DEFINE Exceptions}    // activate the exceptions test (or disable while debugging)
+
+{$if CompilerVersion >= 28}
+{$DEFINE SupportsAsync}
+{$ifend}
 
 interface
 
 uses
-  Windows, SysUtils, Classes,
+  Windows, SysUtils, Classes, Math,
+  {$IFDEF SupportsAsync} System.Threading, {$ENDIF}
   DateUtils,
   Generics.Collections,
   TestConstants,
+  ConsoleHelper,
   Thrift,
+  Thrift.Protocol.Compact,
   Thrift.Protocol.JSON,
   Thrift.Protocol,
   Thrift.Transport.Pipes,
   Thrift.Transport,
   Thrift.Stream,
   Thrift.Test,
-  Thrift.Collections,
-  Thrift.Console;
+  Thrift.Utils,
+  Thrift.Collections;
 
 type
   TThreadConsole = class
@@ -50,6 +60,24 @@ type
   end;
 
   TClientThread = class( TThread )
+  private type
+    TTestGroup = (
+      test_Unknown,
+      test_BaseTypes,
+      test_Structs,
+      test_Containers,
+      test_Exceptions
+      // new values here
+    );
+    TTestGroups = set of TTestGroup;
+
+    TTestSize = (
+      Empty,           // Edge case: the zero-length empty binary
+      Normal,          // Fairly small array of usual size (256 bytes)
+      ByteArrayTest,   // THRIFT-4454 Large writes/reads may cause range check errors in debug mode
+      PipeWriteLimit   // THRIFT-4372 Pipe write operations across a network are limited to 65,535 bytes per write.
+    );
+
   private
     FTransport : ITransport;
     FProtocol : IProtocol;
@@ -58,16 +86,28 @@ type
 
     // test reporting, will be refactored out into separate class later
     FTestGroup : string;
+    FCurrentTest : TTestGroup;
     FSuccesses : Integer;
     FErrors : TStringList;
-    procedure StartTestGroup( const aGroup : string);
+    FFailed : TTestGroups;
+    FExecuted : TTestGroups;
+    procedure StartTestGroup( const aGroup : string; const aTest : TTestGroup);
     procedure Expect( aTestResult : Boolean; const aTestInfo : string);
     procedure ReportResults;
+    function  CalculateExitCode : Byte;
 
     procedure ClientTest;
+    {$IFDEF SupportsAsync}
+    procedure ClientAsyncTest;
+    {$ENDIF}
+
     procedure JSONProtocolReadWriteTest;
+    function  PrepareBinaryData( aRandomDist : Boolean; aSize : TTestSize) : TBytes;
     {$IFDEF StressTest}
     procedure StressTest(const client : TThriftTest.Iface);
+    {$ENDIF}
+    {$IFDEF Win64}
+	procedure UseInterlockedExchangeAdd64;
     {$ENDIF}
   protected
     procedure Execute; override;
@@ -81,11 +121,33 @@ type
     class var
       FNumIteration : Integer;
       FNumThread : Integer;
+
+    class procedure PrintCmdLineHelp;
+    class procedure InvalidArgs;
   public
-    class procedure Execute( const args: array of string);
+    class function Execute( const args: array of string) : Byte;
   end;
 
+
 implementation
+
+const
+   EXITCODE_SUCCESS           = $00;  // no errors bits set
+   //
+   EXITCODE_FAILBIT_BASETYPES  = $01;
+   EXITCODE_FAILBIT_STRUCTS    = $02;
+   EXITCODE_FAILBIT_CONTAINERS = $04;
+   EXITCODE_FAILBIT_EXCEPTIONS = $08;
+
+   MAP_FAILURES_TO_EXITCODE_BITS : array[TClientThread.TTestGroup] of Byte = (
+     EXITCODE_SUCCESS,  // no bits here
+     EXITCODE_FAILBIT_BASETYPES,
+     EXITCODE_FAILBIT_STRUCTS,
+     EXITCODE_FAILBIT_CONTAINERS,
+     EXITCODE_FAILBIT_EXCEPTIONS
+   );
+
+
 
 function BoolToString( b : Boolean) : string;
 // overrides global BoolToString()
@@ -100,19 +162,43 @@ function IsDebuggerPresent: BOOL; stdcall; external KERNEL32 name 'IsDebuggerPre
 
 { TTestClient }
 
-class procedure TTestClient.Execute(const args: array of string);
+class procedure TTestClient.PrintCmdLineHelp;
+const HELPTEXT = ' [options]'#10
+               + #10
+               + 'Allowed options:'#10
+               + '  -h [ --help ]               produce help message'#10
+               + '  --host arg (=localhost)     Host to connect'#10
+               + '  --port arg (=9090)          Port number to connect'#10
+               + '  --domain-socket arg         Domain Socket (e.g. /tmp/ThriftTest.thrift),'#10
+               + '                              instead of host and port'#10
+               + '  --named-pipe arg            Windows Named Pipe (e.g. MyThriftPipe)'#10
+               + '  --anon-pipes hRead hWrite   Windows Anonymous Pipes pair (handles)'#10
+               + '  --transport arg (=sockets)  Transport: buffered, framed, http, evhttp'#10
+               + '  --protocol arg (=binary)    Protocol: binary, compact, json'#10
+               + '  --ssl                       Encrypted Transport using SSL'#10
+               + '  -n [ --testloops ] arg (=1) Number of Tests'#10
+               + '  -t [ --threads ] arg (=1)   Number of Test threads'#10
+               ;
+begin
+  Writeln( ChangeFileExt(ExtractFileName(ParamStr(0)),'') + HELPTEXT);
+end;
+
+class procedure TTestClient.InvalidArgs;
+begin
+  Console.WriteLine( 'Invalid args.');
+  Console.WriteLine( ChangeFileExt(ExtractFileName(ParamStr(0)),'') + ' -h for more information');
+  Abort;
+end;
+
+class function TTestClient.Execute(const args: array of string) : Byte;
 var
   i : Integer;
+  threadExitCode : Byte;
   host : string;
   port : Integer;
-  url : string;
-  bBuffered : Boolean;
-  bAnonPipe : Boolean;
-  bFramed : Boolean;
   sPipeName : string;
   hAnonRead, hAnonWrite : THandle;
   s : string;
-  n : Integer;
   threads : array of TThread;
   dtStart : TDateTime;
   test : Integer;
@@ -121,116 +207,117 @@ var
   prot : IProtocol;
   streamtrans : IStreamTransport;
   http : IHTTPClient;
-  protType, p : TKnownProtocol;
+  protType : TKnownProtocol;
+  endpoint : TEndpointTransport;
+  layered : TLayeredTransports;
+  UseSSL : Boolean; // include where appropriate (TLayeredTransport?)
 const
   // pipe timeouts to be used
   DEBUG_TIMEOUT   = 30 * 1000;
-  RELEASE_TIMEOUT = DEFAULT_THRIFT_PIPE_TIMEOUT;
+  RELEASE_TIMEOUT = DEFAULT_THRIFT_TIMEOUT;
   TIMEOUT         = RELEASE_TIMEOUT;
 begin
-  bBuffered := False;;
-  bFramed := False;
   protType := prot_Binary;
+  endpoint := trns_Sockets;
+  layered := [];
+  UseSSL := FALSE;
+  host := 'localhost';
+  port := 9090;
+  sPipeName := '';
+  hAnonRead := INVALID_HANDLE_VALUE;
+  hAnonWrite := INVALID_HANDLE_VALUE;
   try
-    host := 'localhost';
-    port := 9090;
-    url := '';
-    sPipeName := '';
-    bAnonPipe := FALSE;
-    hAnonRead := INVALID_HANDLE_VALUE;
-    hAnonWrite := INVALID_HANDLE_VALUE;
     i := 0;
-    try
-      while ( i < Length(args) ) do
-      begin
+    while ( i < Length(args) ) do begin
+      s := args[i];
+      Inc( i);
 
-        try
-          if ( args[i] = '-h') then
-          begin
-            Inc( i );
-            s := args[i];
-            n := Pos( ':', s);
-            if ( n > 0 ) then
-            begin
-              host := Copy( s, 1, n - 1);
-              port := StrToInt( Copy( s, n + 1, MaxInt));
-            end else
-            begin
-              host := s;
-            end;
-          end
-          else if (args[i] = '-u') then
-          begin
-            Inc( i );
-            url := args[i];
-          end
-          else if (args[i] = '-n') then
-          begin
-            Inc( i );
-            FNumIteration := StrToInt( args[i] );
-          end
-          else if (args[i] = '-b') then
-          begin
-            bBuffered := True;
-            Console.WriteLine('Buffered transport');
-          end
-          else if (args[i] = '-f' ) or ( args[i] = '-framed') then
-          begin
-            bFramed := True;
-            Console.WriteLine('Framed transport');
-          end
-          else if (args[i] = '-pipe') then  // -pipe <name>
-          begin
-            Console.WriteLine('Named pipes transport');
-            Inc( i );
-            sPipeName := args[i];
-          end
-          else if (args[i] = '-anon') then  // -anon <hReadPipe> <hWritePipe>
-          begin
-            if Length(args) <= (i+2) then begin
-              Console.WriteLine('Invalid args: -anon <hRead> <hWrite> or use "server.exe -anon"');
-              Halt(1);
-            end;
-            Console.WriteLine('Anonymous pipes transport');
-            Inc( i);
-            hAnonRead := THandle( StrToIntDef( args[i], Integer(INVALID_HANDLE_VALUE)));
-            Inc( i);
-            hAnonWrite := THandle( StrToIntDef( args[i], Integer(INVALID_HANDLE_VALUE)));
-            bAnonPipe := TRUE;
-          end
-          else if (args[i] = '-t') then
-          begin
-            Inc( i );
-            FNumThread := StrToInt( args[i] );
-          end
-          else if (args[i] = '-prot') then  // -prot JSON|binary
-          begin
-            Inc( i );
-            s := args[i];
-            for p:= Low(TKnownProtocol) to High(TKnownProtocol) do begin
-              if SameText( s, KNOWN_PROTOCOLS[p]) then begin
-                protType := p;
-                Console.WriteLine('Using '+KNOWN_PROTOCOLS[protType]+' protocol');
-                Break;
-              end;
-            end;
-          end;
-        finally
-          Inc( i );
-        end;
+      if (s = '-h') or (s = '--help') then begin
+        // -h [ --help ]               produce help message
+        PrintCmdLineHelp;
+        result := $FF;   // all tests failed
+        Exit;
+      end
+      else if s = '--host' then begin
+        // --host arg (=localhost)     Host to connect
+        host := args[i];
+        Inc( i);
+      end
+      else if s = '--port' then begin
+        // --port arg (=9090)          Port number to connect
+        s := args[i];
+        Inc( i);
+        port := StrToIntDef(s,0);
+        if port <= 0 then InvalidArgs;
+      end
+      else if s = '--domain-socket' then begin
+        // --domain-socket arg         Domain Socket (e.g. /tmp/ThriftTest.thrift), instead of host and port
+        raise Exception.Create('domain-socket not supported');
+      end
+      else if s = '--named-pipe' then begin
+        // --named-pipe arg            Windows Named Pipe (e.g. MyThriftPipe)
+        endpoint := trns_NamedPipes;
+        sPipeName := args[i];
+        Inc( i);
+      end
+      else if s = '--anon-pipes' then begin
+        // --anon-pipes hRead hWrite   Windows Anonymous Pipes pair (handles)
+        endpoint := trns_AnonPipes;
+        hAnonRead := THandle( StrToIntDef( args[i], Integer(INVALID_HANDLE_VALUE)));
+        Inc( i);
+        hAnonWrite := THandle( StrToIntDef( args[i], Integer(INVALID_HANDLE_VALUE)));
+        Inc( i);
+      end
+      else if s = '--transport' then begin
+        // --transport arg (=sockets)  Transport: buffered, framed, http, evhttp
+        s := args[i];
+        Inc( i);
 
-      end;
+        if      s = 'buffered' then Include( layered, trns_Buffered)
+        else if s = 'framed'   then Include( layered, trns_Framed)
+        else if s = 'http'     then endpoint := trns_Http
+        else if s = 'evhttp'   then endpoint := trns_EvHttp
+        else InvalidArgs;
+      end
+      else if s = '--protocol' then begin
+        // --protocol arg (=binary)    Protocol: binary, compact, json
+        s := args[i];
+        Inc( i);
 
-    except
-      on E: Exception do
-      begin
-        Console.WriteLine( E.Message );
+        if      s = 'binary'   then protType := prot_Binary
+        else if s = 'compact'  then protType := prot_Compact
+        else if s = 'json'     then protType := prot_JSON
+        else InvalidArgs;
+      end
+      else if s = '--ssl' then begin
+        // --ssl                       Encrypted Transport using SSL
+        UseSSL := TRUE;
+
+      end
+      else if (s = '-n') or (s = '--testloops') then begin
+        // -n [ --testloops ] arg (=1) Number of Tests
+        FNumIteration := StrToIntDef( args[i], 0);
+        Inc( i);
+        if FNumIteration <= 0
+        then InvalidArgs;
+
+      end
+      else if (s = '-t') or (s = '--threads') then begin
+        // -t [ --threads ] arg (=1)   Number of Test threads
+        FNumThread := StrToIntDef( args[i], 0);
+        Inc( i);
+        if FNumThread <= 0
+        then InvalidArgs;
+      end
+      else begin
+        InvalidArgs;
       end;
     end;
 
+
     // In the anonymous pipes mode the client is launched by the test server
     // -> behave nicely and allow for attaching a debugger to this process
-    if bAnonPipe and not IsDebuggerPresent
+    if (endpoint = trns_AnonPipes) and not IsDebuggerPresent
     then MessageBox( 0, 'Attach Debugger and/or click OK to continue.',
                         'Thrift TestClient (Delphi)',
                         MB_OK or MB_ICONEXCLAMATION);
@@ -240,72 +327,85 @@ begin
 
     for test := 0 to FNumThread - 1 do
     begin
-      if url = '' then
-      begin
-        if sPipeName <> '' then begin
-          Console.WriteLine('Using named pipe ('+sPipeName+')');
-          streamtrans := TNamedPipeTransportClientEndImpl.Create( sPipeName, 0, nil, TIMEOUT);
-        end
-        else if bAnonPipe then begin
-          Console.WriteLine('Using anonymous pipes ('+IntToStr(Integer(hAnonRead))+' and '+IntToStr(Integer(hAnonWrite))+')');
-          streamtrans := TAnonymousPipeTransportImpl.Create( hAnonRead, hAnonWrite, FALSE);
-        end
-        else begin
+      case endpoint of
+        trns_Sockets: begin
           Console.WriteLine('Using sockets ('+host+' port '+IntToStr(port)+')');
           streamtrans := TSocketImpl.Create( host, port );
         end;
 
-        trans := streamtrans;
-
-        if bBuffered then begin
-          trans := TBufferedTransportImpl.Create( streamtrans, 32);  // small buffer to test read()
-          Console.WriteLine('Using buffered transport');
+        trns_Http: begin
+          Console.WriteLine('Using HTTPClient');
+          http := THTTPClientImpl.Create( host);
+          trans := http;
         end;
 
-        if bFramed then begin
-          trans := TFramedTransportImpl.Create( trans );
-          Console.WriteLine('Using framed transport');
+        trns_EvHttp: begin
+          raise Exception.Create(ENDPOINT_TRANSPORTS[endpoint]+' transport not implemented');
         end;
 
-      end
-      else begin
-        Console.WriteLine('Using HTTPClient');
-        http := THTTPClientImpl.Create( url );
-        trans := http;
+        trns_NamedPipes: begin
+          Console.WriteLine('Using named pipe ('+sPipeName+')');
+          streamtrans := TNamedPipeTransportClientEndImpl.Create( sPipeName, 0, nil, TIMEOUT, TIMEOUT);
+        end;
+
+        trns_AnonPipes: begin
+          Console.WriteLine('Using anonymous pipes ('+IntToStr(Integer(hAnonRead))+' and '+IntToStr(Integer(hAnonWrite))+')');
+          streamtrans := TAnonymousPipeTransportImpl.Create( hAnonRead, hAnonWrite, FALSE);
+        end;
+
+      else
+        raise Exception.Create('Unhandled endpoint transport');
+      end;
+      trans := streamtrans;
+      ASSERT( trans <> nil);
+
+      if (trns_Buffered in layered) then begin
+        trans := TBufferedTransportImpl.Create( streamtrans, 32);  // small buffer to test read()
+        Console.WriteLine('Using buffered transport');
+      end;
+
+      if (trns_Framed in layered) then begin
+        trans := TFramedTransportImpl.Create( trans );
+        Console.WriteLine('Using framed transport');
+      end;
+
+      if UseSSL then begin
+        raise Exception.Create('SSL not implemented');
       end;
 
       // create protocol instance, default to BinaryProtocol
       case protType of
-        prot_Binary:  prot := TBinaryProtocolImpl.Create( trans, BINARY_STRICT_READ, BINARY_STRICT_WRITE);
-        prot_JSON  :  prot := TJSONProtocolImpl.Create( trans);
+        prot_Binary  :  prot := TBinaryProtocolImpl.Create( trans, BINARY_STRICT_READ, BINARY_STRICT_WRITE);
+        prot_JSON    :  prot := TJSONProtocolImpl.Create( trans);
+        prot_Compact :  prot := TCompactProtocolImpl.Create( trans);
       else
-        ASSERT( FALSE);  // unhandled case!
-        prot := TBinaryProtocolImpl.Create( trans, BINARY_STRICT_READ, BINARY_STRICT_WRITE);  // use default
+        raise Exception.Create('Unhandled protocol');
       end;
+      ASSERT( trans <> nil);
+      Console.WriteLine(THRIFT_PROTOCOLS[protType]+' protocol');
 
       thread := TClientThread.Create( trans, prot, FNumIteration);
       threads[test] := thread;
-{$WARN SYMBOL_DEPRECATED OFF}
-      thread.Resume;
-{$WARN SYMBOL_DEPRECATED ON}
+      thread.Start;
     end;
 
-    for test := 0 to FNumThread - 1 do
-    begin
-      threads[test].WaitFor;
+    result := 0;
+    for test := 0 to FNumThread - 1 do begin
+      threadExitCode := threads[test].WaitFor;
+      result := result or threadExitCode;
     end;
 
-    for test := 0 to FNumThread - 1 do
-    begin
+    for test := 0 to FNumThread - 1 do begin
       threads[test].Free;
     end;
 
     Console.Write('Total time: ' + IntToStr( MilliSecondsBetween(Now, dtStart)));
 
   except
-    on E: Exception do
-    begin
-      Console.WriteLine( E.Message + ' ST: ' + E.StackTrace );
+    on E: EAbort do raise;
+    on E: Exception do begin
+      Console.WriteLine( E.Message + #10 + E.StackTrace);
+      raise;
     end;
   end;
 
@@ -322,6 +422,7 @@ var
   i8 : ShortInt;
   i32 : Integer;
   i64 : Int64;
+  binOut,binIn : TBytes;
   dub : Double;
   o : IXtruct;
   o2 : IXtruct2;
@@ -363,15 +464,17 @@ var
   arg3 : IThriftDictionary<SmallInt, string>;
   arg4 : TNumberz;
   arg5 : Int64;
+  {$IFDEF PerfTest}
   StartTick : Cardinal;
   k : Integer;
-  proc : TThreadProcedure;
+  {$ENDIF}
   hello, goodbye : IXtruct;
   crazy : IInsanity;
   looney : IInsanity;
   first_map : IThriftDictionary<TNumberz, IInsanity>;
   second_map : IThriftDictionary<TNumberz, IInsanity>;
-
+  pair : TPair<TNumberz, TUserId>;
+  testsize : TTestSize;
 begin
   client := TThriftTest.TClient.Create( FProtocol);
   FTransport.Open;
@@ -380,11 +483,12 @@ begin
   StressTest( client);
   {$ENDIF StressTest}
 
+  {$IFDEF Exceptions}
   // in-depth exception test
   // (1) do we get an exception at all?
   // (2) do we get the right exception?
   // (3) does the exception contain the expected data?
-  StartTestGroup( 'testException');
+  StartTestGroup( 'testException', test_Exceptions);
   // case 1: exception type declared in IDL at the function call
   try
     client.testException('Xception');
@@ -407,12 +511,18 @@ begin
   except
     on e:TTransportException do begin
       Console.WriteLine( e.ClassName+' = '+e.Message); // this is what we get
-      if FTransport.IsOpen then FTransport.Close;
-      FTransport.Open;   // re-open connection, server has already closed
+    end;
+    on e:TApplicationException do begin
+      Console.WriteLine( e.ClassName+' = '+e.Message); // this is what we get
     end;
     on e:TException do Expect( FALSE, 'Unexpected exception type "'+e.ClassName+'"');
     on e:Exception do Expect( FALSE, 'Unexpected exception type "'+e.ClassName+'"');
   end;
+
+
+  if FTransport.IsOpen then FTransport.Close;
+  FTransport.Open;   // re-open connection, server has already closed
+
 
   // case 3: no exception
   try
@@ -422,19 +532,28 @@ begin
     on e:TTransportException do Expect( FALSE, 'Unexpected : "'+e.ToString+'"');
     on e:Exception do Expect( FALSE, 'Unexpected exception "'+e.ClassName+'"');
   end;
+  {$ENDIF Exceptions}
 
 
   // simple things
-  StartTestGroup( 'simple Thrift calls');
+  StartTestGroup( 'simple Thrift calls', test_BaseTypes);
   client.testVoid();
   Expect( TRUE, 'testVoid()');  // success := no exception
+
+  s := BoolToString( client.testBool(TRUE));
+  Expect( s = BoolToString(TRUE),  'testBool(TRUE) = '+s);
+  s := BoolToString( client.testBool(FALSE));
+  Expect( s = BoolToString(FALSE),  'testBool(FALSE) = '+s);
 
   s := client.testString('Test');
   Expect( s = 'Test', 'testString(''Test'') = "'+s+'"');
 
+  s := client.testString('');  // empty string
+  Expect( s = '', 'testString('''') = "'+s+'"');
+
   s := client.testString(HUGE_TEST_STRING);
   Expect( length(s) = length(HUGE_TEST_STRING),
-          'testString( lenght(HUGE_TEST_STRING) = '+IntToStr(Length(HUGE_TEST_STRING))+') '
+          'testString( length(HUGE_TEST_STRING) = '+IntToStr(Length(HUGE_TEST_STRING))+') '
          +'=> length(result) = '+IntToStr(Length(s)));
 
   i8 := client.testByte(1);
@@ -447,12 +566,27 @@ begin
   i64 := client.testI64(-34359738368);
   Expect( i64 = -34359738368, 'testI64(-34359738368) = ' + IntToStr( i64));
 
+  // random binary small
+  for testsize := Low(TTestSize) to High(TTestSize) do begin
+    binOut := PrepareBinaryData( TRUE, testsize);
+    Console.WriteLine('testBinary('+BytesToHex(binOut)+')');
+    try
+      binIn := client.testBinary(binOut);
+      Expect( Length(binOut) = Length(binIn), 'testBinary(): length '+IntToStr(Length(binOut))+' = '+IntToStr(Length(binIn)));
+      i32 := Min( Length(binOut), Length(binIn));
+      Expect( CompareMem( binOut, binIn, i32), 'testBinary('+BytesToHex(binOut)+') = '+BytesToHex(binIn));
+    except
+      on e:TApplicationException do Console.WriteLine('testBinary(): '+e.Message);
+      on e:Exception do Expect( FALSE, 'testBinary(): Unexpected exception "'+e.ClassName+'": '+e.Message);
+    end;
+  end;
+
   Console.WriteLine('testDouble(5.325098235)');
   dub := client.testDouble(5.325098235);
   Expect( abs(dub-5.325098235) < 1e-14, 'testDouble(5.325098235) = ' + FloatToStr( dub));
 
   // structs
-  StartTestGroup( 'testStruct');
+  StartTestGroup( 'testStruct', test_Structs);
   Console.WriteLine('testStruct({''Zero'', 1, -3, -5})');
   o := TXtructImpl.Create;
   o.String_thing := 'Zero';
@@ -470,7 +604,7 @@ begin
   Expect( i.__isset_I64_thing, 'i.__isset_I64_thing = '+BoolToString(i.__isset_I64_thing));
 
   // nested structs
-  StartTestGroup( 'testNest');
+  StartTestGroup( 'testNest', test_Structs);
   Console.WriteLine('testNest({1, {''Zero'', 1, -3, -5}, 5})');
   o2 := TXtruct2Impl.Create;
   o2.Byte_thing := 1;
@@ -493,7 +627,7 @@ begin
 
   // map<type1,type2>: A map of strictly unique keys to values.
   // Translates to an STL map, Java HashMap, PHP associative array, Python/Ruby dictionary, etc.
-  StartTestGroup( 'testMap');
+  StartTestGroup( 'testMap', test_Containers);
   mapout := TThriftDictionaryImpl<Integer,Integer>.Create;
   for j := 0 to 4 do
   begin
@@ -525,7 +659,7 @@ begin
 
   // map<type1,type2>: A map of strictly unique keys to values.
   // Translates to an STL map, Java HashMap, PHP associative array, Python/Ruby dictionary, etc.
-  StartTestGroup( 'testStringMap');
+  StartTestGroup( 'testStringMap', test_Containers);
   strmapout := TThriftDictionaryImpl<string,string>.Create;
   for j := 0 to 4 do
   begin
@@ -560,7 +694,7 @@ begin
   // set<type>: An unordered set of unique elements.
   // Translates to an STL set, Java HashSet, set in Python, etc.
   // Note: PHP does not support sets, so it is treated similar to a List
-  StartTestGroup( 'testSet');
+  StartTestGroup( 'testSet', test_Containers);
   setout := THashSetImpl<Integer>.Create;
   for j := -2 to 2 do
   begin
@@ -587,7 +721,7 @@ begin
 
   // list<type>: An ordered list of elements.
   // Translates to an STL vector, Java ArrayList, native arrays in scripting languages, etc.
-  StartTestGroup( 'testList');
+  StartTestGroup( 'testList', test_Containers);
   listout := TThriftListImpl<Integer>.Create;
   listout.Add( +1);
   listout.Add( -2);
@@ -637,7 +771,7 @@ begin
 
 
   // maps of maps
-  StartTestGroup( 'testMapMap(1)');
+  StartTestGroup( 'testMapMap(1)', test_Containers);
   mm := client.testMapMap(1);
   Console.Write(' = {');
   for key in mm.Keys do
@@ -665,15 +799,15 @@ begin
 
 
   // insanity
-  StartTestGroup( 'testInsanity');
+  StartTestGroup( 'testInsanity', test_Structs);
   insane := TInsanityImpl.Create;
   insane.UserMap := TThriftDictionaryImpl<TNumberz, Int64>.Create;
   insane.UserMap.AddOrSetValue( TNumberz.FIVE, 5000);
   truck := TXtructImpl.Create;
   truck.String_thing := 'Truck';
-  truck.Byte_thing := 8;
-  truck.I32_thing := 8;
-  truck.I64_thing := 8;
+  truck.Byte_thing := -8;  // byte is signed
+  truck.I32_thing := 32;
+  truck.I64_thing := 64;
   insane.Xtructs := TThriftListImpl<IXtruct>.Create;
   insane.Xtructs.Add( truck );
   whoa := client.testInsanity( insane );
@@ -722,6 +856,18 @@ begin
   end;
   Console.WriteLine('}');
 
+  (**
+   * So you think you've got this all worked, out eh?
+   *
+   * Creates a the returned map with these values and prints it out:
+   *   { 1 => { 2 => argument,
+   *            3 => argument,
+   *          },
+   *     2 => { 6 => <empty Insanity struct>, },
+   *   }
+   * @return map<UserId, map<Numberz,Insanity>> - a map with the above values
+   *)
+
   // verify result data
   Expect( whoa.Count = 2, 'whoa.Count = '+IntToStr(whoa.Count));
   //
@@ -742,36 +888,25 @@ begin
     Expect( crazy.__isset_UserMap, 'crazy.__isset_UserMap = '+BoolToString(crazy.__isset_UserMap));
     Expect( crazy.__isset_Xtructs, 'crazy.__isset_Xtructs = '+BoolToString(crazy.__isset_Xtructs));
 
-    Expect( crazy.UserMap.Count = 2, 'crazy.UserMap.Count = '+IntToStr(crazy.UserMap.Count));
-    Expect( crazy.UserMap[TNumberz.FIVE] = 5, 'crazy.UserMap[TNumberz.FIVE] = '+IntToStr(crazy.UserMap[TNumberz.FIVE]));
-    Expect( crazy.UserMap[TNumberz.EIGHT] = 8, 'crazy.UserMap[TNumberz.EIGHT] = '+IntToStr(crazy.UserMap[TNumberz.EIGHT]));
+    Expect( crazy.UserMap.Count = insane.UserMap.Count, 'crazy.UserMap.Count = '+IntToStr(crazy.UserMap.Count));
+    for pair in insane.UserMap do begin
+      Expect( crazy.UserMap[pair.Key] = pair.Value, 'crazy.UserMap['+IntToStr(Ord(pair.key))+'] = '+IntToStr(crazy.UserMap[pair.Key]));
+    end;
 
-    Expect( crazy.Xtructs.Count = 2, 'crazy.Xtructs.Count = '+IntToStr(crazy.Xtructs.Count));
-    goodbye := crazy.Xtructs[0];  // lists are ordered, so we are allowed to assume this order
-	  hello   := crazy.Xtructs[1];
-
-    Expect( goodbye.String_thing = 'Goodbye4', 'goodbye.String_thing = "'+goodbye.String_thing+'"');
-    Expect( goodbye.Byte_thing = 4, 'goodbye.Byte_thing = '+IntToStr(goodbye.Byte_thing));
-    Expect( goodbye.I32_thing = 4, 'goodbye.I32_thing = '+IntToStr(goodbye.I32_thing));
-    Expect( goodbye.I64_thing = 4, 'goodbye.I64_thing = '+IntToStr(goodbye.I64_thing));
-    Expect( goodbye.__isset_String_thing, 'goodbye.__isset_String_thing = '+BoolToString(goodbye.__isset_String_thing));
-    Expect( goodbye.__isset_Byte_thing, 'goodbye.__isset_Byte_thing = '+BoolToString(goodbye.__isset_Byte_thing));
-    Expect( goodbye.__isset_I32_thing, 'goodbye.__isset_I32_thing = '+BoolToString(goodbye.__isset_I32_thing));
-    Expect( goodbye.__isset_I64_thing, 'goodbye.__isset_I64_thing = '+BoolToString(goodbye.__isset_I64_thing));
-
-    Expect( hello.String_thing = 'Hello2', 'hello.String_thing = "'+hello.String_thing+'"');
-    Expect( hello.Byte_thing = 2, 'hello.Byte_thing = '+IntToStr(hello.Byte_thing));
-    Expect( hello.I32_thing = 2, 'hello.I32_thing = '+IntToStr(hello.I32_thing));
-    Expect( hello.I64_thing = 2, 'hello.I64_thing = '+IntToStr(hello.I64_thing));
-    Expect( hello.__isset_String_thing, 'hello.__isset_String_thing = '+BoolToString(hello.__isset_String_thing));
-    Expect( hello.__isset_Byte_thing, 'hello.__isset_Byte_thing = '+BoolToString(hello.__isset_Byte_thing));
-    Expect( hello.__isset_I32_thing, 'hello.__isset_I32_thing = '+BoolToString(hello.__isset_I32_thing));
-    Expect( hello.__isset_I64_thing, 'hello.__isset_I64_thing = '+BoolToString(hello.__isset_I64_thing));
+    Expect( crazy.Xtructs.Count = insane.Xtructs.Count, 'crazy.Xtructs.Count = '+IntToStr(crazy.Xtructs.Count));
+    for arg0 := 0 to insane.Xtructs.Count-1 do begin
+      hello   := insane.Xtructs[arg0];
+      goodbye := crazy.Xtructs[arg0];
+      Expect( goodbye.String_thing = hello.String_thing, 'goodbye.String_thing = '+goodbye.String_thing);
+      Expect( goodbye.Byte_thing = hello.Byte_thing, 'goodbye.Byte_thing = '+IntToStr(goodbye.Byte_thing));
+      Expect( goodbye.I32_thing = hello.I32_thing, 'goodbye.I32_thing = '+IntToStr(goodbye.I32_thing));
+      Expect( goodbye.I64_thing = hello.I64_thing, 'goodbye.I64_thing = '+IntToStr(goodbye.I64_thing));
+    end;
   end;
 
 
   // multi args
-  StartTestGroup( 'testMulti');
+  StartTestGroup( 'testMulti', test_BaseTypes);
   arg0 := 1;
   arg1 := 2;
   arg2 := High(Int64);
@@ -795,19 +930,21 @@ begin
   Expect( i.__isset_I64_thing, 'testMulti: i.__isset_I64_thing = '+BoolToString(i.__isset_I64_thing));
 
   // multi exception
-  StartTestGroup( 'testMultiException(1)');
+  StartTestGroup( 'testMultiException(1)', test_Exceptions);
   try
     i := client.testMultiException( 'need more pizza', 'run out of beer');
     Expect( i.String_thing = 'run out of beer', 'i.String_thing = "' +i.String_thing+ '"');
     Expect( i.__isset_String_thing, 'i.__isset_String_thing = '+BoolToString(i.__isset_String_thing));
+    { this is not necessarily true, these fields are default-serialized
     Expect( not i.__isset_Byte_thing, 'i.__isset_Byte_thing = '+BoolToString(i.__isset_Byte_thing));
     Expect( not i.__isset_I32_thing, 'i.__isset_I32_thing = '+BoolToString(i.__isset_I32_thing));
     Expect( not i.__isset_I64_thing, 'i.__isset_I64_thing = '+BoolToString(i.__isset_I64_thing));
+    }
   except
     on e:Exception do Expect( FALSE, 'Unexpected exception "'+e.ClassName+'"');
   end;
 
-  StartTestGroup( 'testMultiException(Xception)');
+  StartTestGroup( 'testMultiException(Xception)', test_Exceptions);
   try
     i := client.testMultiException( 'Xception', 'second test');
     Expect( FALSE, 'testMultiException(''Xception''): must trow an exception');
@@ -821,7 +958,7 @@ begin
     on e:Exception do Expect( FALSE, 'Unexpected exception "'+e.ClassName+'"');
   end;
 
-  StartTestGroup( 'testMultiException(Xception2)');
+  StartTestGroup( 'testMultiException(Xception2)', test_Exceptions);
   try
     i := client.testMultiException( 'Xception2', 'third test');
     Expect( FALSE, 'testMultiException(''Xception2''): must trow an exception');
@@ -832,23 +969,25 @@ begin
       Expect( x.ErrorCode = 2002, 'x.ErrorCode = '+IntToStr(x.ErrorCode));
       Expect( x.Struct_thing.String_thing = 'This is an Xception2', 'x.Struct_thing.String_thing = "'+x.Struct_thing.String_thing+'"');
       Expect( x.Struct_thing.__isset_String_thing, 'x.Struct_thing.__isset_String_thing = '+BoolToString(x.Struct_thing.__isset_String_thing));
+      { this is not necessarily true, these fields are default-serialized
       Expect( not x.Struct_thing.__isset_Byte_thing, 'x.Struct_thing.__isset_Byte_thing = '+BoolToString(x.Struct_thing.__isset_Byte_thing));
       Expect( not x.Struct_thing.__isset_I32_thing, 'x.Struct_thing.__isset_I32_thing = '+BoolToString(x.Struct_thing.__isset_I32_thing));
       Expect( not x.Struct_thing.__isset_I64_thing, 'x.Struct_thing.__isset_I64_thing = '+BoolToString(x.Struct_thing.__isset_I64_thing));
+      }
     end;
     on e:Exception do Expect( FALSE, 'Unexpected exception "'+e.ClassName+'"');
   end;
 
 
   // oneway functions
-  StartTestGroup( 'Test Oneway(1)');
+  StartTestGroup( 'Test Oneway(1)', test_Unknown);
   client.testOneway(1);
   Expect( TRUE, 'Test Oneway(1)');  // success := no exception
 
   // call time
   {$IFDEF PerfTest}
   StartTestGroup( 'Test Calltime()');
-  StartTick := GetTIckCount;
+  StartTick := GetTickCount;
   for k := 0 to 1000 - 1 do
   begin
     client.testVoid();
@@ -857,8 +996,35 @@ begin
   {$ENDIF PerfTest}
 
   // no more tests here
-  StartTestGroup( '');
+  StartTestGroup( '', test_Unknown);
 end;
+
+
+{$IFDEF SupportsAsync}
+procedure TClientThread.ClientAsyncTest;
+var
+  client : TThriftTest.IAsync;
+  s : string;
+  i8 : ShortInt;
+begin
+  StartTestGroup( 'Async Tests', test_Unknown);
+  client := TThriftTest.TClient.Create( FProtocol);
+  FTransport.Open;
+
+  // oneway void functions
+  client.testOnewayAsync(1).Wait;
+  Expect( TRUE, 'Test Oneway(1)');  // success := no exception
+
+  // normal functions
+  s := client.testStringAsync(HUGE_TEST_STRING).Value;
+  Expect( length(s) = length(HUGE_TEST_STRING),
+          'testString( length(HUGE_TEST_STRING) = '+IntToStr(Length(HUGE_TEST_STRING))+') '
+         +'=> length(result) = '+IntToStr(Length(s)));
+
+  i8 := client.testByte(1).Value;
+  Expect( i8 = 1, 'testByte(1) = ' + IntToStr( i8 ));
+end;
+{$ENDIF}
 
 
 {$IFDEF StressTest}
@@ -880,6 +1046,50 @@ begin
 end;
 {$ENDIF}
 
+
+function TClientThread.PrepareBinaryData( aRandomDist : Boolean; aSize : TTestSize) : TBytes;
+var i : Integer;
+begin
+  case aSize of
+    Empty          : SetLength( result, 0);
+    Normal         : SetLength( result, $100);
+    ByteArrayTest  : SetLength( result, SizeOf(TByteArray) + 128);
+    PipeWriteLimit : SetLength( result, 65535 + 128);
+  else
+    raise EArgumentException.Create('aSize');
+  end;
+
+  ASSERT( Low(result) = 0);
+  if Length(result) = 0 then Exit;
+
+  // linear distribution, unless random is requested
+  if not aRandomDist then begin
+    for i := Low(result) to High(result) do begin
+      result[i] := i mod $100;
+    end;
+    Exit;
+  end;
+
+  // random distribution of all 256 values
+  FillChar( result[0], Length(result) * SizeOf(result[0]), $0);
+  for i := Low(result) to High(result) do begin
+    result[i] := Byte( Random($100));
+  end;
+end;
+
+
+{$IFDEF Win64}
+procedure TClientThread.UseInterlockedExchangeAdd64;
+var a,b : Int64;
+begin
+  a := 1;
+  b := 2;
+  Thrift.Utils.InterlockedExchangeAdd64( a,b);
+  Expect( a = 3, 'InterlockedExchangeAdd64');
+end;
+{$ENDIF}
+
+
 procedure TClientThread.JSONProtocolReadWriteTest;
 // Tests only then read/write procedures of the JSON protocol
 // All tests succeed, if we can read what we wrote before
@@ -887,8 +1097,8 @@ procedure TClientThread.JSONProtocolReadWriteTest;
 // other clients or servers expect as the real JSON. This is beyond the scope of this test.
 var prot   : IProtocol;
     stm    : TStringStream;
-    list   : IList;
-    binary, binRead : TBytes;
+    list   : TThriftList;
+    binary, binRead, emptyBinary : TBytes;
     i,iErr : Integer;
 const
   TEST_SHORT   = ShortInt( $FE);
@@ -898,20 +1108,20 @@ const
   TEST_DOUBLE  = -1.234e-56;
   DELTA_DOUBLE = TEST_DOUBLE * 1e-14;
   TEST_STRING  = 'abc-'#$00E4#$00f6#$00fc; // german umlauts (en-us: "funny chars")
-  // Test THRIFT-2336 with 'Русское Название';
-  RUSSIAN_TEXT = #$0420#$0443#$0441#$0441#$043a#$043e#$0435' '#$041d#$0430#$0437#$0432#$0430#$043d#$0438#$0435;
-  RUSSIAN_JSON = '"\u0420\u0443\u0441\u0441\u043a\u043e\u0435 \u041d\u0430\u0437\u0432\u0430\u043d\u0438\u0435"';
+  // Test THRIFT-2336 and THRIFT-3404 with U+1D11E (G Clef symbol) and 'Русское Название';
+  G_CLEF_AND_CYRILLIC_TEXT = #$1d11e' '#$0420#$0443#$0441#$0441#$043a#$043e#$0435' '#$041d#$0430#$0437#$0432#$0430#$043d#$0438#$0435;
+  G_CLEF_AND_CYRILLIC_JSON = '"\ud834\udd1e \u0420\u0443\u0441\u0441\u043a\u043e\u0435 \u041d\u0430\u0437\u0432\u0430\u043d\u0438\u0435"';
   // test both possible solidus encodings
   SOLIDUS_JSON_DATA = '"one/two\/three"';
   SOLIDUS_EXCPECTED = 'one/two/three';
 begin
   stm  := TStringStream.Create;
   try
-    StartTestGroup( 'JsonProtocolTest');  // no more tests here
+    StartTestGroup( 'JsonProtocolTest', test_Unknown);
 
     // prepare binary data
-    SetLength( binary, $100);
-    for i := Low(binary) to High(binary) do binary[i] := i;
+    binary := PrepareBinaryData( FALSE, Normal);
+    SetLength( emptyBinary, 0); // empty binary data block
 
     // output setup
     prot := TJSONProtocolImpl.Create(
@@ -919,7 +1129,8 @@ begin
                 nil, TThriftStreamAdapterDelphi.Create( stm, FALSE)));
 
     // write
-    prot.WriteListBegin( TListImpl.Create( TType.String_, 9));
+    Init( list, TType.String_, 9);
+    prot.WriteListBegin( list);
     prot.WriteBool( TRUE);
     prot.WriteBool( FALSE);
     prot.WriteByte( TEST_SHORT);
@@ -929,6 +1140,8 @@ begin
     prot.WriteDouble( TEST_DOUBLE);
     prot.WriteString( TEST_STRING);
     prot.WriteBinary( binary);
+    prot.WriteString( '');  // empty string
+    prot.WriteBinary( emptyBinary); // empty binary data block
     prot.WriteListEnd;
 
     // input setup
@@ -951,6 +1164,8 @@ begin
     Expect( abs(prot.ReadDouble-TEST_DOUBLE) < abs(DELTA_DOUBLE), 'WriteDouble/ReadDouble');
     Expect( prot.ReadString = TEST_STRING, 'WriteString/ReadString');
     binRead := prot.ReadBinary;
+    Expect( Length(prot.ReadString) = 0, 'WriteString/ReadString (empty string)');
+    Expect( Length(prot.ReadBinary) = 0, 'empty WriteBinary/ReadBinary (empty data block)');
     prot.ReadListEnd;
 
     // test binary data
@@ -988,35 +1203,39 @@ begin
     prot := TJSONProtocolImpl.Create(
               TStreamTransportImpl.Create(
                 nil, TThriftStreamAdapterDelphi.Create( stm, FALSE)));
-    prot.WriteString( RUSSIAN_TEXT);
+    prot.WriteString( G_CLEF_AND_CYRILLIC_TEXT);
     stm.Position := 0;
     prot := TJSONProtocolImpl.Create(
               TStreamTransportImpl.Create(
                 TThriftStreamAdapterDelphi.Create( stm, FALSE), nil));
-    Expect( prot.ReadString = RUSSIAN_TEXT, 'Writing JSON with chars > 8 bit');
+    Expect( prot.ReadString = G_CLEF_AND_CYRILLIC_TEXT, 'Writing JSON with chars > 8 bit');
 
     // Widechars should work with hex-encoding too. Do they?
     stm.Position := 0;
     stm.Size     := 0;
-    stm.WriteString( RUSSIAN_JSON);
+    stm.WriteString( G_CLEF_AND_CYRILLIC_JSON);
     stm.Position := 0;
     prot := TJSONProtocolImpl.Create(
               TStreamTransportImpl.Create(
                 TThriftStreamAdapterDelphi.Create( stm, FALSE), nil));
-    Expect( prot.ReadString = RUSSIAN_TEXT, 'Reading JSON with chars > 8 bit');
+    Expect( prot.ReadString = G_CLEF_AND_CYRILLIC_TEXT, 'Reading JSON with chars > 8 bit');
 
 
   finally
     stm.Free;
     prot := nil;  //-> Release
-    StartTestGroup( '');  // no more tests here
+    StartTestGroup( '', test_Unknown);  // no more tests here
   end;
 end;
 
 
-procedure TClientThread.StartTestGroup( const aGroup : string);
+procedure TClientThread.StartTestGroup( const aGroup : string; const aTest : TTestGroup);
 begin
   FTestGroup := aGroup;
+  FCurrentTest := aTest;
+
+  Include( FExecuted, aTest);
+
   if FTestGroup <> '' then begin
     Console.WriteLine('');
     Console.WriteLine( aGroup+' tests');
@@ -1033,12 +1252,14 @@ begin
   end
   else begin
     FErrors.Add( FTestGroup+': '+aTestInfo);
+    Include( FFailed, FCurrentTest);
     Console.WriteLine( aTestInfo+': *** FAILED ***');
 
     // We have a failed test!
     // -> issue DebugBreak ONLY if a debugger is attached,
     // -> unhandled DebugBreaks would cause Windows to terminate the app otherwise
-    if IsDebuggerPresent then asm int 3 end;
+    if IsDebuggerPresent
+    then {$IFDEF CPUX64} DebugBreak {$ELSE} asm int 3 end {$ENDIF};
   end;
 end;
 
@@ -1070,6 +1291,17 @@ begin
 end;
 
 
+function TClientThread.CalculateExitCode : Byte;
+var test : TTestGroup;
+begin
+  result := EXITCODE_SUCCESS;
+  for test := Low(TTestGroup) to High(TTestGroup) do begin
+    if (test in FFailed) or not (test in FExecuted)
+    then result := result or MAP_FAILURES_TO_EXITCODE_BITS[test];
+  end;
+end;
+
+
 constructor TClientThread.Create( const ATransport: ITransport; const AProtocol : IProtocol; ANumIteration: Integer);
 begin
   inherited Create( True );
@@ -1077,6 +1309,7 @@ begin
   FTransport := ATransport;
   FProtocol := AProtocol;
   FConsole := TThreadConsole.Create( Self );
+  FCurrentTest := test_Unknown;
 
   // error list: keep correct order, allow for duplicates
   FErrors := TStringList.Create;
@@ -1098,10 +1331,17 @@ var
 begin
   // perform all tests
   try
+    {$IFDEF Win64}  
+    UseInterlockedExchangeAdd64;
+    {$ENDIF}
     JSONProtocolReadWriteTest;
+	
     for i := 0 to FNumIteration - 1 do
     begin
       ClientTest;
+      {$IFDEF SupportsAsync}
+      ClientAsyncTest;
+      {$ENDIF}
     end;
   except
     on e:Exception do Expect( FALSE, 'unexpected exception: "'+e.message+'"');
@@ -1109,6 +1349,7 @@ begin
 
   // report the outcome
   ReportResults;
+  SetReturnValue( CalculateExitCode);
 
   // shutdown
   proc := procedure
@@ -1122,6 +1363,7 @@ begin
 
   Synchronize( proc );
 end;
+
 
 { TThreadConsole }
 

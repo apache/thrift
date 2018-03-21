@@ -16,17 +16,24 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+
+#include <thrift/thrift-config.h>
+
 #include <stdlib.h>
 #include <time.h>
+#ifdef HAVE_SYS_SOCKET_H
+#include <sys/socket.h>
+#endif
 #include <sstream>
 #include <fstream>
-#include <thrift/cxxfunctional.h>
+#include <thrift/stdcxx.h>
 
 #include <boost/mpl/list.hpp>
 #include <boost/shared_array.hpp>
 #include <boost/random.hpp>
 #include <boost/type_traits.hpp>
 #include <boost/test/unit_test.hpp>
+#include <boost/version.hpp>
 
 #include <thrift/transport/TBufferTransports.h>
 #include <thrift/transport/TFDTransport.h>
@@ -36,11 +43,12 @@
 
 #include <thrift/concurrency/FunctionRunner.h>
 #if _WIN32
-  #include <thrift/windows/TWinsockSingleton.h>
+#include <thrift/transport/TPipe.h>
+#include <thrift/windows/TWinsockSingleton.h>
 #endif
 
-
 using namespace apache::thrift::transport;
+using namespace apache::thrift;
 
 static boost::mt19937 rng;
 
@@ -49,14 +57,14 @@ void initrand(unsigned int seed) {
 }
 
 class SizeGenerator {
- public:
+public:
   virtual ~SizeGenerator() {}
   virtual uint32_t nextSize() = 0;
   virtual std::string describe() const = 0;
 };
 
 class ConstantSizeGenerator : public SizeGenerator {
- public:
+public:
   ConstantSizeGenerator(uint32_t value) : value_(value) {}
   uint32_t nextSize() { return value_; }
   std::string describe() const {
@@ -65,14 +73,14 @@ class ConstantSizeGenerator : public SizeGenerator {
     return desc.str();
   }
 
- private:
+private:
   uint32_t value_;
 };
 
 class RandomSizeGenerator : public SizeGenerator {
- public:
-  RandomSizeGenerator(uint32_t min, uint32_t max) :
-    generator_(rng, boost::uniform_int<int>(min, max)) {}
+public:
+  RandomSizeGenerator(uint32_t min, uint32_t max)
+    : generator_(rng, boost::uniform_int<int>(min, max)) {}
 
   uint32_t nextSize() { return generator_(); }
 
@@ -85,9 +93,8 @@ class RandomSizeGenerator : public SizeGenerator {
   uint32_t getMin() const { return (generator_.distribution().min)(); }
   uint32_t getMax() const { return (generator_.distribution().max)(); }
 
- private:
-  boost::variate_generator< boost::mt19937&, boost::uniform_int<int> >
-    generator_;
+private:
+  boost::variate_generator<boost::mt19937&, boost::uniform_int<int> > generator_;
 };
 
 /**
@@ -98,17 +105,16 @@ class RandomSizeGenerator : public SizeGenerator {
  *   to make a copy of the generator to bind it to the test function.)
  */
 class GenericSizeGenerator : public SizeGenerator {
- public:
-  GenericSizeGenerator(uint32_t value) :
-    generator_(new ConstantSizeGenerator(value)) {}
-  GenericSizeGenerator(uint32_t min, uint32_t max) :
-    generator_(new RandomSizeGenerator(min, max)) {}
+public:
+  GenericSizeGenerator(uint32_t value) : generator_(new ConstantSizeGenerator(value)) {}
+  GenericSizeGenerator(uint32_t min, uint32_t max)
+    : generator_(new RandomSizeGenerator(min, max)) {}
 
   uint32_t nextSize() { return generator_->nextSize(); }
   std::string describe() const { return generator_->describe(); }
 
- private:
-  boost::shared_ptr<SizeGenerator> generator_;
+private:
+  stdcxx::shared_ptr<SizeGenerator> generator_;
 };
 
 /**************************************************************************
@@ -125,32 +131,31 @@ class GenericSizeGenerator : public SizeGenerator {
  */
 template <class Transport_>
 class CoupledTransports {
- public:
+public:
   virtual ~CoupledTransports() {}
   typedef Transport_ TransportType;
 
   CoupledTransports() : in(), out() {}
 
-  boost::shared_ptr<Transport_> in;
-  boost::shared_ptr<Transport_> out;
+  stdcxx::shared_ptr<Transport_> in;
+  stdcxx::shared_ptr<Transport_> out;
 
- private:
+private:
   CoupledTransports(const CoupledTransports&);
-  CoupledTransports &operator=(const CoupledTransports&);
+  CoupledTransports& operator=(const CoupledTransports&);
 };
 
 /**
  * Coupled TMemoryBuffers
  */
 class CoupledMemoryBuffers : public CoupledTransports<TMemoryBuffer> {
- public:
-  CoupledMemoryBuffers() :
-    buf(new TMemoryBuffer) {
+public:
+  CoupledMemoryBuffers() : buf(new TMemoryBuffer) {
     in = buf;
     out = buf;
   }
 
-  boost::shared_ptr<TMemoryBuffer> buf;
+  stdcxx::shared_ptr<TMemoryBuffer> buf;
 };
 
 /**
@@ -159,7 +164,7 @@ class CoupledMemoryBuffers : public CoupledTransports<TMemoryBuffer> {
  */
 template <class WrapperTransport_, class InnerCoupledTransports_>
 class CoupledWrapperTransportsT : public CoupledTransports<WrapperTransport_> {
- public:
+public:
   CoupledWrapperTransportsT() {
     if (inner_.in) {
       this->in.reset(new WrapperTransport_(inner_.in));
@@ -176,34 +181,27 @@ class CoupledWrapperTransportsT : public CoupledTransports<WrapperTransport_> {
  * Coupled TBufferedTransports.
  */
 template <class InnerTransport_>
-class CoupledBufferedTransportsT :
-  public CoupledWrapperTransportsT<TBufferedTransport, InnerTransport_> {
-};
+class CoupledBufferedTransportsT
+    : public CoupledWrapperTransportsT<TBufferedTransport, InnerTransport_> {};
 
-typedef CoupledBufferedTransportsT<CoupledMemoryBuffers>
-  CoupledBufferedTransports;
+typedef CoupledBufferedTransportsT<CoupledMemoryBuffers> CoupledBufferedTransports;
 
 /**
  * Coupled TFramedTransports.
  */
 template <class InnerTransport_>
-class CoupledFramedTransportsT :
-  public CoupledWrapperTransportsT<TFramedTransport, InnerTransport_> {
-};
+class CoupledFramedTransportsT
+    : public CoupledWrapperTransportsT<TFramedTransport, InnerTransport_> {};
 
-typedef CoupledFramedTransportsT<CoupledMemoryBuffers>
-  CoupledFramedTransports;
+typedef CoupledFramedTransportsT<CoupledMemoryBuffers> CoupledFramedTransports;
 
 /**
  * Coupled TZlibTransports.
  */
 template <class InnerTransport_>
-class CoupledZlibTransportsT :
-  public CoupledWrapperTransportsT<TZlibTransport, InnerTransport_> {
-};
+class CoupledZlibTransportsT : public CoupledWrapperTransportsT<TZlibTransport, InnerTransport_> {};
 
-typedef CoupledZlibTransportsT<CoupledMemoryBuffers>
-  CoupledZlibTransports;
+typedef CoupledZlibTransportsT<CoupledMemoryBuffers> CoupledZlibTransports;
 
 #ifndef _WIN32
 // FD transport doesn't make much sense on Windows.
@@ -211,7 +209,7 @@ typedef CoupledZlibTransportsT<CoupledMemoryBuffers>
  * Coupled TFDTransports.
  */
 class CoupledFDTransports : public CoupledTransports<TFDTransport> {
- public:
+public:
   CoupledFDTransports() {
     int pipes[2];
 
@@ -223,13 +221,29 @@ class CoupledFDTransports : public CoupledTransports<TFDTransport> {
     out.reset(new TFDTransport(pipes[1], TFDTransport::CLOSE_ON_DESTROY));
   }
 };
+#else
+/**
+ * Coupled pipe transports
+ */
+class CoupledPipeTransports : public CoupledTransports<TPipe> {
+public:
+  HANDLE hRead;
+  HANDLE hWrite;
+
+  CoupledPipeTransports() {
+    BOOST_REQUIRE(CreatePipe(&hRead, &hWrite, NULL, 1048576 * 2));
+    in.reset(new TPipe(hRead, hWrite));
+    in->open();
+    out = in;
+  }
+};
 #endif
 
 /**
  * Coupled TSockets
  */
 class CoupledSocketTransports : public CoupledTransports<TSocket> {
- public:
+public:
   CoupledSocketTransports() {
     THRIFT_SOCKET sockets[2] = {0};
     if (THRIFT_SOCKETPAIR(PF_UNIX, SOCK_STREAM, 0, sockets) != 0) {
@@ -242,39 +256,34 @@ class CoupledSocketTransports : public CoupledTransports<TSocket> {
   }
 };
 
-//These could be made to work on Windows, but I don't care enough to make it happen
+// These could be made to work on Windows, but I don't care enough to make it happen
 #ifndef _WIN32
 /**
  * Coupled TFileTransports
  */
 class CoupledFileTransports : public CoupledTransports<TFileTransport> {
- public:
+public:
   CoupledFileTransports() {
 #ifndef _WIN32
     const char* tmp_dir = "/tmp";
-    #define FILENAME_SUFFIX "/thrift.transport_test"
+#define FILENAME_SUFFIX "/thrift.transport_test"
 #else
     const char* tmp_dir = getenv("TMP");
-    #define FILENAME_SUFFIX "\\thrift.transport_test"
+#define FILENAME_SUFFIX "\\thrift.transport_test"
 #endif
 
     // Create a temporary file to use
     filename.resize(strlen(tmp_dir) + strlen(FILENAME_SUFFIX));
-    THRIFT_SNPRINTF(&filename[0], filename.size(),
-             "%s" FILENAME_SUFFIX, tmp_dir);
-    #undef FILENAME_SUFFIX
+    THRIFT_SNPRINTF(&filename[0], filename.size(), "%s" FILENAME_SUFFIX, tmp_dir);
+#undef FILENAME_SUFFIX
 
-    {
-      std::ofstream dummy_creation(filename.c_str(), std::ofstream::trunc);
-    }
+    { std::ofstream dummy_creation(filename.c_str(), std::ofstream::trunc); }
 
     in.reset(new TFileTransport(filename, true));
     out.reset(new TFileTransport(filename));
   }
 
-  ~CoupledFileTransports() {
-    remove(filename.c_str());
-  }
+  ~CoupledFileTransports() { remove(filename.c_str()); }
 
   std::string filename;
 };
@@ -290,7 +299,7 @@ class CoupledFileTransports : public CoupledTransports<TFileTransport> {
  */
 template <class CoupledTransports_>
 class CoupledTTransports : public CoupledTransports<TTransport> {
- public:
+public:
   CoupledTTransports() : transports() {
     in = transports.in;
     out = transports.out;
@@ -308,7 +317,7 @@ class CoupledTTransports : public CoupledTransports<TTransport> {
  */
 template <class CoupledTransports_>
 class CoupledBufferBases : public CoupledTransports<TBufferBase> {
- public:
+public:
   CoupledBufferBases() : transports() {
     in = transports.in;
     out = transports.out;
@@ -332,15 +341,11 @@ class CoupledBufferBases : public CoupledTransports<TBufferBase> {
  **************************************************************************/
 
 struct TriggerInfo {
-  TriggerInfo(int seconds, const boost::shared_ptr<TTransport>& transport,
-              uint32_t writeLength) :
-    timeoutSeconds(seconds),
-    transport(transport),
-    writeLength(writeLength),
-    next(NULL) {}
+  TriggerInfo(int seconds, const stdcxx::shared_ptr<TTransport>& transport, uint32_t writeLength)
+    : timeoutSeconds(seconds), transport(transport), writeLength(writeLength), next(NULL) {}
 
   int timeoutSeconds;
-  boost::shared_ptr<TTransport> transport;
+  stdcxx::shared_ptr<TTransport> transport;
   uint32_t writeLength;
   TriggerInfo* next;
 };
@@ -351,7 +356,7 @@ unsigned int g_numTriggersFired;
 bool g_teardown = false;
 
 void alarm_handler() {
-  TriggerInfo *info = NULL;
+  TriggerInfo* info = NULL;
   {
     apache::thrift::concurrency::Synchronized s(g_alarm_monitor);
     // The alarm timed out, which almost certainly means we're stuck
@@ -383,26 +388,26 @@ void alarm_handler() {
 }
 
 void alarm_handler_wrapper() {
-  int64_t timeout = 0;  //timeout of 0 means wait forever
-  while(true) {
+  int64_t timeout = 0; // timeout of 0 means wait forever
+  while (true) {
     bool fireHandler = false;
     {
       apache::thrift::concurrency::Synchronized s(g_alarm_monitor);
-      if(g_teardown)
-         return;
-      //calculate timeout
+      if (g_teardown)
+        return;
+      // calculate timeout
       if (g_triggerInfo == NULL) {
         timeout = 0;
       } else {
-         timeout = g_triggerInfo->timeoutSeconds * 1000;
+        timeout = g_triggerInfo->timeoutSeconds * 1000;
       }
 
       int waitResult = g_alarm_monitor.waitForTimeRelative(timeout);
-      if(waitResult == THRIFT_ETIMEDOUT)
+      if (waitResult == THRIFT_ETIMEDOUT)
         fireHandler = true;
     }
-    if(fireHandler)
-      alarm_handler(); //calling outside the lock
+    if (fireHandler)
+      alarm_handler(); // calling outside the lock
   }
 }
 
@@ -415,7 +420,7 @@ void alarm_handler_wrapper() {
  * to the end.)
  */
 void add_trigger(unsigned int seconds,
-                 const boost::shared_ptr<TTransport> &transport,
+                 const stdcxx::shared_ptr<TTransport>& transport,
                  uint32_t write_len) {
   TriggerInfo* info = new TriggerInfo(seconds, transport, write_len);
   {
@@ -437,7 +442,7 @@ void add_trigger(unsigned int seconds,
 }
 
 void clear_triggers() {
-  TriggerInfo *info = NULL;
+  TriggerInfo* info = NULL;
 
   {
     apache::thrift::concurrency::Synchronized s(g_alarm_monitor);
@@ -455,7 +460,7 @@ void clear_triggers() {
 }
 
 void set_trigger(unsigned int seconds,
-                 const boost::shared_ptr<TTransport> &transport,
+                 const stdcxx::shared_ptr<TTransport>& transport,
                  uint32_t write_len) {
   clear_triggers();
   add_trigger(seconds, transport, write_len);
@@ -499,10 +504,8 @@ void test_rw(uint32_t totalSize,
   BOOST_REQUIRE(transports.in != NULL);
   BOOST_REQUIRE(transports.out != NULL);
 
-  boost::shared_array<uint8_t> wbuf =
-    boost::shared_array<uint8_t>(new uint8_t[totalSize]);
-  boost::shared_array<uint8_t> rbuf =
-    boost::shared_array<uint8_t>(new uint8_t[totalSize]);
+  boost::shared_array<uint8_t> wbuf = boost::shared_array<uint8_t>(new uint8_t[totalSize]);
+  boost::shared_array<uint8_t> rbuf = boost::shared_array<uint8_t>(new uint8_t[totalSize]);
 
   // store some data in wbuf
   for (uint32_t n = 0; n < totalSize; ++n) {
@@ -522,8 +525,7 @@ void test_rw(uint32_t totalSize,
 
     // Make sure (total_written - total_read) + wchunk_size
     // is less than maxOutstanding
-    if (maxOutstanding > 0 &&
-        wchunk_size > maxOutstanding - (total_written - total_read)) {
+    if (maxOutstanding > 0 && wchunk_size > maxOutstanding - (total_written - total_read)) {
       wchunk_size = maxOutstanding - (total_written - total_read);
     }
 
@@ -537,8 +539,7 @@ void test_rw(uint32_t totalSize,
 
       try {
         transports.out->write(wbuf.get() + total_written, write_size);
-      }
-      catch (TTransportException & te) {
+      } catch (TTransportException& te) {
         if (te.getType() == TTransportException::TIMED_OUT)
           break;
         throw te;
@@ -572,17 +573,15 @@ void test_rw(uint32_t totalSize,
       try {
         bytes_read = transports.in->read(rbuf.get() + total_read, read_size);
       } catch (TTransportException& e) {
-        BOOST_FAIL("read(pos=" << total_read << ", size=" << read_size <<
-                   ") threw exception \"" << e.what() <<
-                   "\"; written so far: " << total_written << " / " <<
-                   totalSize << " bytes");
+        BOOST_FAIL("read(pos=" << total_read << ", size=" << read_size << ") threw exception \""
+                               << e.what() << "\"; written so far: " << total_written << " / "
+                               << totalSize << " bytes");
       }
 
       BOOST_REQUIRE_MESSAGE(bytes_read > 0,
-                            "read(pos=" << total_read << ", size=" <<
-                            read_size << ") returned " << bytes_read <<
-                            "; written so far: " << total_written << " / " <<
-                            totalSize << " bytes");
+                            "read(pos=" << total_read << ", size=" << read_size << ") returned "
+                                        << bytes_read << "; written so far: " << total_written
+                                        << " / " << totalSize << " bytes");
       chunk_read += bytes_read;
       total_read += bytes_read;
     }
@@ -591,7 +590,6 @@ void test_rw(uint32_t totalSize,
   // make sure the data read back is identical to the data written
   BOOST_CHECK_EQUAL(memcmp(rbuf.get(), wbuf.get(), totalSize), 0);
 }
-
 
 template <class CoupledTransports>
 void test_read_part_available() {
@@ -609,8 +607,8 @@ void test_read_part_available() {
   transports.out->flush();
   set_trigger(3, transports.out, 1);
   uint32_t bytes_read = transports.in->read(read_buf, 10);
-  BOOST_CHECK_EQUAL(g_numTriggersFired, (unsigned int) 0);
-  BOOST_CHECK_EQUAL(bytes_read, (uint32_t) 9);
+  BOOST_CHECK_EQUAL(g_numTriggersFired, (unsigned int)0);
+  BOOST_CHECK_EQUAL(bytes_read, (uint32_t)9);
 
   clear_triggers();
 }
@@ -676,7 +674,7 @@ void test_read_partial_midframe() {
 
   // Now read 4 bytes, so that we are partway through the written data.
   uint32_t bytes_read = transports.in->read(read_buf, 4);
-  BOOST_CHECK_EQUAL(bytes_read, (uint32_t) 4);
+  BOOST_CHECK_EQUAL(bytes_read, (uint32_t)4);
 
   // Now attempt to read 10 bytes.  Only 9 more are available.
   //
@@ -689,13 +687,13 @@ void test_read_partial_midframe() {
   while (total_read < 9) {
     set_trigger(3, transports.out, 1);
     bytes_read = transports.in->read(read_buf, 10);
-    BOOST_REQUIRE_EQUAL(g_numTriggersFired, (unsigned int) 0);
-    BOOST_REQUIRE_GT(bytes_read, (uint32_t) 0);
+    BOOST_REQUIRE_EQUAL(g_numTriggersFired, (unsigned int)0);
+    BOOST_REQUIRE_GT(bytes_read, (uint32_t)0);
     total_read += bytes_read;
-    BOOST_REQUIRE_LE(total_read, (uint32_t) 9);
+    BOOST_REQUIRE_LE(total_read, (uint32_t)9);
   }
 
-  BOOST_CHECK_EQUAL(total_read, (uint32_t) 9);
+  BOOST_CHECK_EQUAL(total_read, (uint32_t)9);
 
   clear_triggers();
 }
@@ -717,7 +715,7 @@ void test_borrow_part_available() {
   set_trigger(3, transports.out, 1);
   uint32_t borrow_len = 10;
   const uint8_t* borrowed_buf = transports.in->borrow(read_buf, &borrow_len);
-  BOOST_CHECK_EQUAL(g_numTriggersFired, (unsigned int) 0);
+  BOOST_CHECK_EQUAL(g_numTriggersFired, (unsigned int)0);
   BOOST_CHECK(borrowed_buf == NULL);
 
   clear_triggers();
@@ -743,11 +741,11 @@ void test_read_none_available() {
   add_trigger(1, transports.out, 8);
   uint32_t bytes_read = transports.in->read(read_buf, 10);
   if (bytes_read == 0) {
-    BOOST_CHECK_EQUAL(g_numTriggersFired, (unsigned int) 0);
+    BOOST_CHECK_EQUAL(g_numTriggersFired, (unsigned int)0);
     clear_triggers();
   } else {
-    BOOST_CHECK_EQUAL(g_numTriggersFired, (unsigned int) 1);
-    BOOST_CHECK_EQUAL(bytes_read, (uint32_t) 2);
+    BOOST_CHECK_EQUAL(g_numTriggersFired, (unsigned int)1);
+    BOOST_CHECK_EQUAL(bytes_read, (uint32_t)2);
   }
 
   clear_triggers();
@@ -767,7 +765,7 @@ void test_borrow_none_available() {
   uint32_t borrow_len = 10;
   const uint8_t* borrowed_buf = transports.in->borrow(NULL, &borrow_len);
   BOOST_CHECK(borrowed_buf == NULL);
-  BOOST_CHECK_EQUAL(g_numTriggersFired, (unsigned int) 0);
+  BOOST_CHECK_EQUAL(g_numTriggersFired, (unsigned int)0);
 
   clear_triggers();
 }
@@ -782,53 +780,46 @@ void test_borrow_none_available() {
  * - Combining many tests into a single function makes it more difficult to
  *   tell precisely which tests failed.  It also means you can't get a progress
  *   update after each test, and the tests are already fairly slow.
- * - Similar registration could be acheived with BOOST_TEST_CASE_TEMPLATE,
+ * - Similar registration could be achieved with BOOST_TEST_CASE_TEMPLATE,
  *   but it requires a lot of awkward MPL code, and results in useless test
  *   case names.  (The names are generated from std::type_info::name(), which
  *   is compiler-dependent.  gcc returns mangled names.)
  **************************************************************************/
 
-#define ADD_TEST_RW(CoupledTransports, totalSize, ...) \
-    addTestRW< CoupledTransports >(BOOST_STRINGIZE(CoupledTransports), \
-                                   totalSize, ## __VA_ARGS__);
+#define ADD_TEST_RW(CoupledTransports, totalSize, ...)                                             \
+  addTestRW<CoupledTransports>(BOOST_STRINGIZE(CoupledTransports), totalSize, ##__VA_ARGS__);
 
-#define TEST_RW(CoupledTransports, totalSize, ...) \
-  do { \
-    /* Add the test as specified, to test the non-virtual function calls */ \
-    ADD_TEST_RW(CoupledTransports, totalSize, ## __VA_ARGS__); \
-    /* \
-     * Also test using the transport as a TTransport*, to test \
-     * the read_virt()/write_virt() calls \
-     */ \
-    ADD_TEST_RW(CoupledTTransports<CoupledTransports>, \
-                totalSize, ## __VA_ARGS__); \
-    /* Test wrapping the transport with TBufferedTransport */ \
-    ADD_TEST_RW(CoupledBufferedTransportsT<CoupledTransports>, \
-                totalSize, ## __VA_ARGS__); \
-    /* Test wrapping the transport with TFramedTransports */ \
-    ADD_TEST_RW(CoupledFramedTransportsT<CoupledTransports>, \
-                totalSize, ## __VA_ARGS__); \
-    /* Test wrapping the transport with TZlibTransport */ \
-    ADD_TEST_RW(CoupledZlibTransportsT<CoupledTransports>, \
-                totalSize, ## __VA_ARGS__); \
+#define TEST_RW(CoupledTransports, totalSize, ...)                                                 \
+  do {                                                                                             \
+    /* Add the test as specified, to test the non-virtual function calls */                        \
+    ADD_TEST_RW(CoupledTransports, totalSize, ##__VA_ARGS__);                                      \
+    /*                                                                                             \
+     * Also test using the transport as a TTransport*, to test                                     \
+     * the read_virt()/write_virt() calls                                                          \
+     */                                                                                            \
+    ADD_TEST_RW(CoupledTTransports<CoupledTransports>, totalSize, ##__VA_ARGS__);                  \
+    /* Test wrapping the transport with TBufferedTransport */                                      \
+    ADD_TEST_RW(CoupledBufferedTransportsT<CoupledTransports>, totalSize, ##__VA_ARGS__);          \
+    /* Test wrapping the transport with TFramedTransports */                                       \
+    ADD_TEST_RW(CoupledFramedTransportsT<CoupledTransports>, totalSize, ##__VA_ARGS__);            \
+    /* Test wrapping the transport with TZlibTransport */                                          \
+    ADD_TEST_RW(CoupledZlibTransportsT<CoupledTransports>, totalSize, ##__VA_ARGS__);              \
   } while (0)
 
-#define ADD_TEST_BLOCKING(CoupledTransports) \
-    addTestBlocking< CoupledTransports >(BOOST_STRINGIZE(CoupledTransports));
+#define ADD_TEST_BLOCKING(CoupledTransports)                                                       \
+  addTestBlocking<CoupledTransports>(BOOST_STRINGIZE(CoupledTransports));
 
-#define TEST_BLOCKING_BEHAVIOR(CoupledTransports) \
-  ADD_TEST_BLOCKING(CoupledTransports); \
-  ADD_TEST_BLOCKING(CoupledTTransports<CoupledTransports>); \
-  ADD_TEST_BLOCKING(CoupledBufferedTransportsT<CoupledTransports>); \
-  ADD_TEST_BLOCKING(CoupledFramedTransportsT<CoupledTransports>); \
+#define TEST_BLOCKING_BEHAVIOR(CoupledTransports)                                                  \
+  ADD_TEST_BLOCKING(CoupledTransports);                                                            \
+  ADD_TEST_BLOCKING(CoupledTTransports<CoupledTransports>);                                        \
+  ADD_TEST_BLOCKING(CoupledBufferedTransportsT<CoupledTransports>);                                \
+  ADD_TEST_BLOCKING(CoupledFramedTransportsT<CoupledTransports>);                                  \
   ADD_TEST_BLOCKING(CoupledZlibTransportsT<CoupledTransports>);
 
 class TransportTestGen {
- public:
-  TransportTestGen(boost::unit_test::test_suite* suite,
-                   float sizeMultiplier) :
-      suite_(suite),
-      sizeMultiplier_(sizeMultiplier) {}
+public:
+  TransportTestGen(boost::unit_test::test_suite* suite, float sizeMultiplier)
+    : suite_(suite), sizeMultiplier_(sizeMultiplier) {}
 
   void generate() {
     GenericSizeGenerator rand4k(1, 4096);
@@ -839,15 +830,15 @@ class TransportTestGen {
      */
 
     // TMemoryBuffer tests
-    TEST_RW(CoupledMemoryBuffers, 1024*1024, 0, 0);
-    TEST_RW(CoupledMemoryBuffers, 1024*256, rand4k, rand4k);
-    TEST_RW(CoupledMemoryBuffers, 1024*256, 167, 163);
-    TEST_RW(CoupledMemoryBuffers, 1024*16, 1, 1);
+    TEST_RW(CoupledMemoryBuffers, 1024 * 1024, 0, 0);
+    TEST_RW(CoupledMemoryBuffers, 1024 * 256, rand4k, rand4k);
+    TEST_RW(CoupledMemoryBuffers, 1024 * 256, 167, 163);
+    TEST_RW(CoupledMemoryBuffers, 1024 * 16, 1, 1);
 
-    TEST_RW(CoupledMemoryBuffers, 1024*256, 0, 0, rand4k, rand4k);
-    TEST_RW(CoupledMemoryBuffers, 1024*256, rand4k, rand4k, rand4k, rand4k);
-    TEST_RW(CoupledMemoryBuffers, 1024*256, 167, 163, rand4k, rand4k);
-    TEST_RW(CoupledMemoryBuffers, 1024*16, 1, 1, rand4k, rand4k);
+    TEST_RW(CoupledMemoryBuffers, 1024 * 256, 0, 0, rand4k, rand4k);
+    TEST_RW(CoupledMemoryBuffers, 1024 * 256, rand4k, rand4k, rand4k, rand4k);
+    TEST_RW(CoupledMemoryBuffers, 1024 * 256, 167, 163, rand4k, rand4k);
+    TEST_RW(CoupledMemoryBuffers, 1024 * 16, 1, 1, rand4k, rand4k);
 
     TEST_BLOCKING_BEHAVIOR(CoupledMemoryBuffers);
 
@@ -856,68 +847,70 @@ class TransportTestGen {
     // Since CoupledFDTransports tests with a pipe, writes will block
     // if there is too much outstanding unread data in the pipe.
     uint32_t fd_max_outstanding = 4096;
-    TEST_RW(CoupledFDTransports, 1024*1024, 0, 0,
-            0, 0, fd_max_outstanding);
-    TEST_RW(CoupledFDTransports, 1024*256, rand4k, rand4k,
-            0, 0, fd_max_outstanding);
-    TEST_RW(CoupledFDTransports, 1024*256, 167, 163,
-            0, 0, fd_max_outstanding);
-    TEST_RW(CoupledFDTransports, 1024*16, 1, 1,
-            0, 0, fd_max_outstanding);
+    TEST_RW(CoupledFDTransports, 1024 * 1024, 0, 0, 0, 0, fd_max_outstanding);
+    TEST_RW(CoupledFDTransports, 1024 * 256, rand4k, rand4k, 0, 0, fd_max_outstanding);
+    TEST_RW(CoupledFDTransports, 1024 * 256, 167, 163, 0, 0, fd_max_outstanding);
+    TEST_RW(CoupledFDTransports, 1024 * 16, 1, 1, 0, 0, fd_max_outstanding);
 
-    TEST_RW(CoupledFDTransports, 1024*256, 0, 0,
-            rand4k, rand4k, fd_max_outstanding);
-    TEST_RW(CoupledFDTransports, 1024*256, rand4k, rand4k,
-            rand4k, rand4k, fd_max_outstanding);
-    TEST_RW(CoupledFDTransports, 1024*256, 167, 163,
-            rand4k, rand4k, fd_max_outstanding);
-    TEST_RW(CoupledFDTransports, 1024*16, 1, 1,
-            rand4k, rand4k, fd_max_outstanding);
+    TEST_RW(CoupledFDTransports, 1024 * 256, 0, 0, rand4k, rand4k, fd_max_outstanding);
+    TEST_RW(CoupledFDTransports, 1024 * 256, rand4k, rand4k, rand4k, rand4k, fd_max_outstanding);
+    TEST_RW(CoupledFDTransports, 1024 * 256, 167, 163, rand4k, rand4k, fd_max_outstanding);
+    TEST_RW(CoupledFDTransports, 1024 * 16, 1, 1, rand4k, rand4k, fd_max_outstanding);
 
     TEST_BLOCKING_BEHAVIOR(CoupledFDTransports);
+#else
+    // TPipe tests (WIN32 only)
+    TEST_RW(CoupledPipeTransports, 1024 * 1024, 0, 0);
+    TEST_RW(CoupledPipeTransports, 1024 * 256, rand4k, rand4k);
+    TEST_RW(CoupledPipeTransports, 1024 * 256, 167, 163);
+    TEST_RW(CoupledPipeTransports, 1024 * 16, 1, 1);
+
+    TEST_RW(CoupledPipeTransports, 1024 * 256, 0, 0, rand4k, rand4k);
+    TEST_RW(CoupledPipeTransports, 1024 * 256, rand4k, rand4k, rand4k, rand4k);
+    TEST_RW(CoupledPipeTransports, 1024 * 256, 167, 163, rand4k, rand4k);
+    TEST_RW(CoupledPipeTransports, 1024 * 16, 1, 1, rand4k, rand4k);
+
+    TEST_BLOCKING_BEHAVIOR(CoupledPipeTransports);
 #endif //_WIN32
 
     // TSocket tests
     uint32_t socket_max_outstanding = 4096;
-    TEST_RW(CoupledSocketTransports, 1024*1024, 0, 0,
-            0, 0, socket_max_outstanding);
-    TEST_RW(CoupledSocketTransports, 1024*256, rand4k, rand4k,
-            0, 0, socket_max_outstanding);
-    TEST_RW(CoupledSocketTransports, 1024*256, 167, 163,
-            0, 0, socket_max_outstanding);
+    TEST_RW(CoupledSocketTransports, 1024 * 1024, 0, 0, 0, 0, socket_max_outstanding);
+    TEST_RW(CoupledSocketTransports, 1024 * 256, rand4k, rand4k, 0, 0, socket_max_outstanding);
+    TEST_RW(CoupledSocketTransports, 1024 * 256, 167, 163, 0, 0, socket_max_outstanding);
     // Doh.  Apparently writing to a socket has some additional overhead for
     // each send() call.  If we have more than ~400 outstanding 1-byte write
     // requests, additional send() calls start blocking.
-    TEST_RW(CoupledSocketTransports, 1024*16, 1, 1,
-            0, 0, socket_max_outstanding);
-    TEST_RW(CoupledSocketTransports, 1024*256, 0, 0,
-            rand4k, rand4k, socket_max_outstanding);
-    TEST_RW(CoupledSocketTransports, 1024*256, rand4k, rand4k,
-            rand4k, rand4k, socket_max_outstanding);
-    TEST_RW(CoupledSocketTransports, 1024*256, 167, 163,
-            rand4k, rand4k, socket_max_outstanding);
-    TEST_RW(CoupledSocketTransports, 1024*16, 1, 1,
-            rand4k, rand4k, socket_max_outstanding);
+    TEST_RW(CoupledSocketTransports, 1024 * 16, 1, 1, 0, 0, socket_max_outstanding);
+    TEST_RW(CoupledSocketTransports, 1024 * 256, 0, 0, rand4k, rand4k, socket_max_outstanding);
+    TEST_RW(CoupledSocketTransports,
+            1024 * 256,
+            rand4k,
+            rand4k,
+            rand4k,
+            rand4k,
+            socket_max_outstanding);
+    TEST_RW(CoupledSocketTransports, 1024 * 256, 167, 163, rand4k, rand4k, socket_max_outstanding);
+    TEST_RW(CoupledSocketTransports, 1024 * 16, 1, 1, rand4k, rand4k, socket_max_outstanding);
 
     TEST_BLOCKING_BEHAVIOR(CoupledSocketTransports);
 
-//These could be made to work on Windows, but I don't care enough to make it happen
+// These could be made to work on Windows, but I don't care enough to make it happen
 #ifndef _WIN32
     // TFileTransport tests
     // We use smaller buffer sizes here, since TFileTransport is fairly slow.
     //
     // TFileTransport can't write more than 16MB at once
-    uint32_t max_write_at_once = 1024*1024*16 - 4;
-    TEST_RW(CoupledFileTransports, 1024*1024, max_write_at_once, 0);
-    TEST_RW(CoupledFileTransports, 1024*128, rand4k, rand4k);
-    TEST_RW(CoupledFileTransports, 1024*128, 167, 163);
-    TEST_RW(CoupledFileTransports, 1024*2, 1, 1);
+    uint32_t max_write_at_once = 1024 * 1024 * 16 - 4;
+    TEST_RW(CoupledFileTransports, 1024 * 1024, max_write_at_once, 0);
+    TEST_RW(CoupledFileTransports, 1024 * 128, rand4k, rand4k);
+    TEST_RW(CoupledFileTransports, 1024 * 128, 167, 163);
+    TEST_RW(CoupledFileTransports, 1024 * 2, 1, 1);
 
-    TEST_RW(CoupledFileTransports, 1024*64, 0, 0, rand4k, rand4k);
-    TEST_RW(CoupledFileTransports, 1024*64,
-            rand4k, rand4k, rand4k, rand4k);
-    TEST_RW(CoupledFileTransports, 1024*64, 167, 163, rand4k, rand4k);
-    TEST_RW(CoupledFileTransports, 1024*2, 1, 1, rand4k, rand4k);
+    TEST_RW(CoupledFileTransports, 1024 * 64, 0, 0, rand4k, rand4k);
+    TEST_RW(CoupledFileTransports, 1024 * 64, rand4k, rand4k, rand4k, rand4k);
+    TEST_RW(CoupledFileTransports, 1024 * 64, 167, 163, rand4k, rand4k);
+    TEST_RW(CoupledFileTransports, 1024 * 2, 1, 1, rand4k, rand4k);
 
     TEST_BLOCKING_BEHAVIOR(CoupledFileTransports);
 #endif
@@ -925,23 +918,51 @@ class TransportTestGen {
     // Add some tests that access TBufferedTransport and TFramedTransport
     // via TTransport pointers and TBufferBase pointers.
     ADD_TEST_RW(CoupledTTransports<CoupledBufferedTransports>,
-                1024*1024, rand4k, rand4k, rand4k, rand4k);
+                1024 * 1024,
+                rand4k,
+                rand4k,
+                rand4k,
+                rand4k);
     ADD_TEST_RW(CoupledBufferBases<CoupledBufferedTransports>,
-                1024*1024, rand4k, rand4k, rand4k, rand4k);
+                1024 * 1024,
+                rand4k,
+                rand4k,
+                rand4k,
+                rand4k);
     ADD_TEST_RW(CoupledTTransports<CoupledFramedTransports>,
-                1024*1024, rand4k, rand4k, rand4k, rand4k);
+                1024 * 1024,
+                rand4k,
+                rand4k,
+                rand4k,
+                rand4k);
     ADD_TEST_RW(CoupledBufferBases<CoupledFramedTransports>,
-                1024*1024, rand4k, rand4k, rand4k, rand4k);
+                1024 * 1024,
+                rand4k,
+                rand4k,
+                rand4k,
+                rand4k);
 
     // Test using TZlibTransport via a TTransport pointer
     ADD_TEST_RW(CoupledTTransports<CoupledZlibTransports>,
-                1024*1024, rand4k, rand4k, rand4k, rand4k);
+                1024 * 1024,
+                rand4k,
+                rand4k,
+                rand4k,
+                rand4k);
   }
 
- private:
+#if (BOOST_VERSION >= 105900)
+#define MAKE_TEST_CASE(_FUNC, _NAME) boost::unit_test::make_test_case(_FUNC, _NAME, __FILE__, __LINE__)
+#else
+#define MAKE_TEST_CASE(_FUNC, _NAME) boost::unit_test::make_test_case(_FUNC, _NAME)
+#endif
+
+private:
   template <class CoupledTransports>
-  void addTestRW(const char* transport_name, uint32_t totalSize,
-                 GenericSizeGenerator wSizeGen, GenericSizeGenerator rSizeGen,
+  void addTestRW(const char* transport_name,
+                 uint32_t totalSize,
+                 GenericSizeGenerator wSizeGen,
+                 GenericSizeGenerator rSizeGen,
                  GenericSizeGenerator wChunkSizeGen = 0,
                  GenericSizeGenerator rChunkSizeGen = 0,
                  uint32_t maxOutstanding = 0,
@@ -950,61 +971,46 @@ class TransportTestGen {
     totalSize = static_cast<uint32_t>(totalSize * sizeMultiplier_);
 
     std::ostringstream name;
-    name << transport_name << "::test_rw(" << totalSize << ", " <<
-      wSizeGen.describe() << ", " << rSizeGen.describe() << ", " <<
-      wChunkSizeGen.describe() << ", " << rChunkSizeGen.describe() << ", " <<
-      maxOutstanding << ")";
+    name << transport_name << "::test_rw(" << totalSize << ", " << wSizeGen.describe() << ", "
+         << rSizeGen.describe() << ", " << wChunkSizeGen.describe() << ", "
+         << rChunkSizeGen.describe() << ", " << maxOutstanding << ")";
 
-    boost::unit_test::callback0<> test_func =
-      apache::thrift::stdcxx::bind(test_rw<CoupledTransports>, totalSize,
-                     wSizeGen, rSizeGen, wChunkSizeGen, rChunkSizeGen,
-                     maxOutstanding);
-    boost::unit_test::test_case* tc =
-      boost::unit_test::make_test_case(test_func, name.str());
-    suite_->add(tc, expectedFailures);
+#if (BOOST_VERSION >= 105900)
+    stdcxx::function<void ()> test_func
+#else
+    boost::unit_test::callback0<> test_func
+#endif
+        = stdcxx::bind(test_rw<CoupledTransports>,
+                                       totalSize,
+                                       wSizeGen,
+                                       rSizeGen,
+                                       wChunkSizeGen,
+                                       rChunkSizeGen,
+                                       maxOutstanding);
+    suite_->add(MAKE_TEST_CASE(test_func, name.str()), expectedFailures);
   }
 
   template <class CoupledTransports>
-  void addTestBlocking(const char* transportName,
-                       uint32_t expectedFailures = 0) {
+  void addTestBlocking(const char* transportName, uint32_t expectedFailures = 0) {
     char name[1024];
-    boost::unit_test::test_case* tc;
 
-    THRIFT_SNPRINTF(name, sizeof(name), "%s::test_read_part_available()",
-             transportName);
-    tc = boost::unit_test::make_test_case(
-          test_read_part_available<CoupledTransports>, name);
-    suite_->add(tc, expectedFailures);
+    THRIFT_SNPRINTF(name, sizeof(name), "%s::test_read_part_available()", transportName);
+    suite_->add(MAKE_TEST_CASE(test_read_part_available<CoupledTransports>, name), expectedFailures);
 
-    THRIFT_SNPRINTF(name, sizeof(name), "%s::test_read_part_available_in_chunks()",
-             transportName);
-    tc = boost::unit_test::make_test_case(
-          test_read_part_available_in_chunks<CoupledTransports>, name);
-    suite_->add(tc, expectedFailures);
+    THRIFT_SNPRINTF(name, sizeof(name), "%s::test_read_part_available_in_chunks()", transportName);
+    suite_->add(MAKE_TEST_CASE(test_read_part_available_in_chunks<CoupledTransports>, name), expectedFailures);
 
-    THRIFT_SNPRINTF(name, sizeof(name), "%s::test_read_partial_midframe()",
-             transportName);
-    tc = boost::unit_test::make_test_case(
-          test_read_partial_midframe<CoupledTransports>, name);
-    suite_->add(tc, expectedFailures);
+    THRIFT_SNPRINTF(name, sizeof(name), "%s::test_read_partial_midframe()", transportName);
+    suite_->add(MAKE_TEST_CASE(test_read_partial_midframe<CoupledTransports>, name), expectedFailures);
 
-    THRIFT_SNPRINTF(name, sizeof(name), "%s::test_read_none_available()",
-             transportName);
-    tc = boost::unit_test::make_test_case(
-          test_read_none_available<CoupledTransports>, name);
-    suite_->add(tc, expectedFailures);
+    THRIFT_SNPRINTF(name, sizeof(name), "%s::test_read_none_available()", transportName);
+    suite_->add(MAKE_TEST_CASE(test_read_none_available<CoupledTransports>, name), expectedFailures);
 
-    THRIFT_SNPRINTF(name, sizeof(name), "%s::test_borrow_part_available()",
-             transportName);
-    tc = boost::unit_test::make_test_case(
-          test_borrow_part_available<CoupledTransports>, name);
-    suite_->add(tc, expectedFailures);
+    THRIFT_SNPRINTF(name, sizeof(name), "%s::test_borrow_part_available()", transportName);
+    suite_->add(MAKE_TEST_CASE(test_borrow_part_available<CoupledTransports>, name), expectedFailures);
 
-    THRIFT_SNPRINTF(name, sizeof(name), "%s::test_borrow_none_available()",
-             transportName);
-    tc = boost::unit_test::make_test_case(
-          test_borrow_none_available<CoupledTransports>, name);
-    suite_->add(tc, expectedFailures);
+    THRIFT_SNPRINTF(name, sizeof(name), "%s::test_borrow_none_available()", transportName);
+    suite_->add(MAKE_TEST_CASE(test_borrow_none_available<CoupledTransports>, name), expectedFailures);
   }
 
   boost::unit_test::test_suite* suite_;
@@ -1020,17 +1026,17 @@ class TransportTestGen {
  **************************************************************************/
 
 struct global_fixture {
-  boost::shared_ptr<apache::thrift::concurrency::Thread> alarmThread_;
+  stdcxx::shared_ptr<apache::thrift::concurrency::Thread> alarmThread_;
   global_fixture() {
-  #if _WIN32
+#if _WIN32
     apache::thrift::transport::TWinsockSingleton::create();
-  #endif
+#endif
 
     apache::thrift::concurrency::PlatformThreadFactory factory;
     factory.setDetached(false);
 
     alarmThread_ = factory.newThread(
-      apache::thrift::concurrency::FunctionRunner::create(alarm_handler_wrapper));
+        apache::thrift::concurrency::FunctionRunner::create(alarm_handler_wrapper));
     alarmThread_->start();
   }
   ~global_fixture() {
@@ -1043,19 +1049,44 @@ struct global_fixture {
   }
 };
 
+#if (BOOST_VERSION >= 105900)
+BOOST_GLOBAL_FIXTURE(global_fixture);
+#else
 BOOST_GLOBAL_FIXTURE(global_fixture)
+#endif
 
-boost::unit_test::test_suite* init_unit_test_suite(int argc, char* argv[]) {
+#ifdef BOOST_TEST_DYN_LINK
+bool init_unit_test_suite() {
   struct timeval tv;
   THRIFT_GETTIMEOFDAY(&tv, NULL);
   int seed = tv.tv_sec ^ tv.tv_usec;
 
   initrand(seed);
 
-  boost::unit_test::test_suite* suite =
-    &boost::unit_test::framework::master_test_suite();
+  boost::unit_test::test_suite* suite = &boost::unit_test::framework::master_test_suite();
+  suite->p_name.value = "TransportTest";
+  TransportTestGen transport_test_generator(suite, 1);
+  transport_test_generator.generate();
+  return true;
+}
+
+int main( int argc, char* argv[] ) {
+  return ::boost::unit_test::unit_test_main(&init_unit_test_suite,argc,argv);
+}
+#else
+boost::unit_test::test_suite* init_unit_test_suite(int argc, char* argv[]) {
+  THRIFT_UNUSED_VARIABLE(argc);
+  THRIFT_UNUSED_VARIABLE(argv);
+  struct timeval tv;
+  THRIFT_GETTIMEOFDAY(&tv, NULL);
+  int seed = tv.tv_sec ^ tv.tv_usec;
+
+  initrand(seed);
+
+  boost::unit_test::test_suite* suite = &boost::unit_test::framework::master_test_suite();
   suite->p_name.value = "TransportTest";
   TransportTestGen transport_test_generator(suite, 1);
   transport_test_generator.generate();
   return NULL;
 }
+#endif

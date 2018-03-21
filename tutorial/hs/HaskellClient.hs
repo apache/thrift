@@ -30,7 +30,9 @@ import Thrift.Transport
 import Thrift.Transport.Handle
 import Thrift.Server
 
+import Control.Exception
 import Data.Maybe
+import Data.Text.Lazy
 import Text.Printf
 import Network
 
@@ -46,28 +48,27 @@ main = do
   printf "1+1=%d\n" sum
 
 
-  let work = Work { f_Work_op = Just DIVIDE,
-                    f_Work_num1 = Just 1,
-                    f_Work_num2 = Just 0,
-                    f_Work_comment = Nothing
+  let work = Work { work_op = DIVIDE,
+                    work_num1 = 1,
+                    work_num2 = 0,
+                    work_comment = Nothing
                   }
 
-  -- TODO - get this one working
-  --catch (Client.calculate client 1 work) (\except ->
-  --     printf "InvalidOp %s" (show except))
+  Control.Exception.catch (printf "1/0=%d\n" =<< Client.calculate client 1 work)
+        (\e -> printf "InvalidOperation %s\n" (show (e :: InvalidOperation)))
 
 
-  let work = Work { f_Work_op = Just SUBTRACT,
-                    f_Work_num1 = Just 15,
-                    f_Work_num2 = Just 10,
-                    f_Work_comment = Nothing
+  let work = Work { work_op = SUBTRACT,
+                    work_num1 = 15,
+                    work_num2 = 10,
+                    work_comment = Nothing
                   }
 
   diff <- Client.calculate client 1 work
   printf "15-10=%d\n" diff
 
   log <- SClient.getStruct client 1
-  printf "Check log: %s\n"  $ fromJust $ f_SharedStruct_value log
+  printf "Check log: %s\n" $ unpack $ sharedStruct_value log
 
   -- Close!
   tClose transport

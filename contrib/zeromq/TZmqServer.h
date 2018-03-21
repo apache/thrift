@@ -31,6 +31,7 @@ class TZmqServer : public TServer {
       boost::shared_ptr<TProcessor> processor,
       zmq::context_t& ctx, const std::string& endpoint, int type)
     : TServer(processor)
+    , processor_(processor)
     , zmq_type_(type)
     , sock_(ctx, type)
   {
@@ -55,6 +56,7 @@ class TZmqServer : public TServer {
   }
 
  private:
+  boost::shared_ptr<TProcessor> processor_;
   int zmq_type_;
   zmq::socket_t sock_;
 };

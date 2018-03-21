@@ -25,44 +25,45 @@ using System;
 
 namespace Thrift.Transport
 {
-	public class TTransportException : TException
-	{
-		protected ExceptionType type;
+    public class TTransportException : TException
+    {
+        protected ExceptionType type;
 
-		public TTransportException()
-			: base()
-		{
-		}
+        public TTransportException()
+            : base()
+        {
+        }
 
-		public TTransportException(ExceptionType type)
-			: this()
-		{
-			this.type = type;
-		}
+        public TTransportException(ExceptionType type)
+            : this()
+        {
+            this.type = type;
+        }
 
-		public TTransportException(ExceptionType type, string message)
-			: base(message)
-		{
-			this.type = type;
-		}
+        public TTransportException(ExceptionType type, string message)
+            : base(message)
+        {
+            this.type = type;
+        }
 
-		public TTransportException(string message)
-			: base(message)
-		{
-		}
+        public TTransportException(string message)
+            : base(message)
+        {
+        }
 
-		public ExceptionType Type
-		{
-			get { return type; }
-		}
+        public ExceptionType Type
+        {
+            get { return type; }
+        }
 
-		public enum ExceptionType
-		{
-			Unknown,
-			NotOpen,
-			AlreadyOpen,
-			TimedOut,
-			EndOfFile
-		}
-	}
+        public enum ExceptionType
+        {
+            Unknown,
+            NotOpen,
+            AlreadyOpen,
+            TimedOut,
+            EndOfFile,
+            Interrupted
+        }
+    }
 }

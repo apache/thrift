@@ -75,6 +75,11 @@ VALUE default_write_string(VALUE protocol, VALUE value) {
   return Qnil;
 }
 
+VALUE default_write_binary(VALUE protocol, VALUE value) {
+  rb_funcall(protocol, write_binary_method_id, 1, value);
+  return Qnil;
+}
+
 VALUE default_write_list_begin(VALUE protocol, VALUE etype, VALUE length) {
   rb_funcall(protocol, write_list_begin_method_id, 2, etype, length);
   return Qnil;
@@ -190,6 +195,10 @@ VALUE default_read_string(VALUE protocol) {
   return rb_funcall(protocol, read_string_method_id, 0);
 }
 
+VALUE default_read_binary(VALUE protocol) {
+  return rb_funcall(protocol, read_binary_method_id, 0);
+}
+
 VALUE default_read_struct_begin(VALUE protocol) {
   return rb_funcall(protocol, read_struct_begin_method_id, 0);
 }
@@ -281,7 +290,7 @@ static void write_container(int ttype, VALUE field_info, VALUE value, VALUE prot
 
     if (TYPE(value) == T_ARRAY) {
       items = value;
-    } else {        
+    } else {
       if (rb_cSet == CLASS_OF(value)) {
         items = rb_funcall(value, entries_method_id, 0);
       } else {
@@ -327,7 +336,12 @@ static void write_anything(int ttype, VALUE value, VALUE protocol, VALUE field_i
   } else if (ttype == TTYPE_DOUBLE) {
     default_write_double(protocol, value);
   } else if (ttype == TTYPE_STRING) {
-    default_write_string(protocol, value);
+    VALUE is_binary = rb_hash_aref(field_info, binary_sym);
+    if (is_binary != Qtrue) {
+      default_write_string(protocol, value);
+    } else {
+      default_write_binary(protocol, value);
+    }
   } else if (IS_CONTAINER(ttype)) {
     write_container(ttype, field_info, value, protocol);
   } else if (ttype == TTYPE_STRUCT) {
@@ -430,7 +444,12 @@ static VALUE read_anything(VALUE protocol, int ttype, VALUE field_info) {
   } else if (ttype == TTYPE_I64) {
     result = default_read_i64(protocol);
   } else if (ttype == TTYPE_STRING) {
-    result = default_read_string(protocol);
+    VALUE is_binary = rb_hash_aref(field_info, binary_sym);
+    if (is_binary != Qtrue) {
+      result = default_read_string(protocol);
+    } else {
+      result = default_read_binary(protocol);
+    }
   } else if (ttype == TTYPE_DOUBLE) {
     result = default_read_double(protocol);
   } else if (ttype == TTYPE_STRUCT) {
@@ -650,6 +669,10 @@ static VALUE rb_thrift_union_write(VALUE self, VALUE protocol) {
   VALUE field_id = rb_funcall(self, name_to_id_method_id, 1, rb_funcall(setfield, to_s_method_id, 0));
 
   VALUE field_info = rb_hash_aref(struct_fields, field_id);
+
+  if(NIL_P(field_info)) {
+    rb_raise(rb_eRuntimeError, "set_field is not valid for this union!");
+  }
 
   VALUE ttype_value = rb_hash_aref(field_info, type_sym);
   int ttype = FIX2INT(ttype_value);

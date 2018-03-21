@@ -45,7 +45,8 @@ public class TFramedTransport extends TTransport {
   /**
    * Buffer for input
    */
-  private TMemoryInputTransport readBuffer_ = new TMemoryInputTransport(new byte[0]);
+  private final TMemoryInputTransport readBuffer_ =
+    new TMemoryInputTransport(new byte[0]);
 
   public static class Factory extends TTransportFactory {
     private int maxLength_;
@@ -90,11 +91,9 @@ public class TFramedTransport extends TTransport {
   }
 
   public int read(byte[] buf, int off, int len) throws TTransportException {
-    if (readBuffer_ != null) {
-      int got = readBuffer_.read(buf, off, len);
-      if (got > 0) {
-        return got;
-      }
+    int got = readBuffer_.read(buf, off, len);
+    if (got > 0) {
+      return got;
     }
 
     // Read another frame of data
@@ -123,6 +122,10 @@ public class TFramedTransport extends TTransport {
     readBuffer_.consumeBuffer(len);
   }
 
+  public void clear() {
+    readBuffer_.clear();
+  }
+
   private final byte[] i32buf = new byte[4];
 
   private void readFrame() throws TTransportException {
@@ -130,11 +133,14 @@ public class TFramedTransport extends TTransport {
     int size = decodeFrameSize(i32buf);
 
     if (size < 0) {
-      throw new TTransportException("Read a negative frame size (" + size + ")!");
+      close();
+      throw new TTransportException(TTransportException.CORRUPTED_DATA, "Read a negative frame size (" + size + ")!");
     }
 
     if (size > maxLength_) {
-      throw new TTransportException("Frame size (" + size + ") larger than max length (" + maxLength_ + ")!");
+      close();
+      throw new TTransportException(TTransportException.CORRUPTED_DATA,
+          "Frame size (" + size + ") larger than max length (" + maxLength_ + ")!");
     }
 
     byte[] buff = new byte[size];
@@ -166,7 +172,7 @@ public class TFramedTransport extends TTransport {
   }
 
   public static final int decodeFrameSize(final byte[] buf) {
-    return 
+    return
       ((buf[0] & 0xff) << 24) |
       ((buf[1] & 0xff) << 16) |
       ((buf[2] & 0xff) <<  8) |

@@ -26,13 +26,15 @@
 
 #include "EventLog.h"
 
-namespace apache { namespace thrift { namespace test {
+namespace apache {
+namespace thrift {
+namespace test {
 
 /**
  * A helper class to tell ServerThread how to create the server
  */
 class ServerState {
- public:
+public:
   virtual ~ServerState() {}
 
   /**
@@ -41,7 +43,7 @@ class ServerState {
    * If the server returned fails to bind to the specified port when serve() is
    * called on it, createServer() may be called again on a different port.
    */
-  virtual boost::shared_ptr<server::TServer> createServer(uint16_t port) = 0;
+  virtual stdcxx::shared_ptr<server::TServer> createServer(uint16_t port) = 0;
 
   /**
    * Get the TServerEventHandler to set on the server.
@@ -50,9 +52,8 @@ class ServerState {
    * start serving traffic.  It is invoked from the server thread, rather than
    * the main thread.
    */
-  virtual boost::shared_ptr<server::TServerEventHandler>
-      getServerEventHandler() {
-    return boost::shared_ptr<server::TServerEventHandler>();
+  virtual stdcxx::shared_ptr<server::TServerEventHandler> getServerEventHandler() {
+    return stdcxx::shared_ptr<server::TServerEventHandler>();
   }
 
   /**
@@ -61,18 +62,16 @@ class ServerState {
    * Subclasses may override this method if they wish to record the final
    * port that was used for the server.
    */
-  virtual void bindSuccessful(uint16_t port) {
-  }
+  virtual void bindSuccessful(uint16_t /*port*/) {}
 };
 
 /**
  * ServerThread starts a thrift server running in a separate thread.
  */
 class ServerThread {
- public:
-  ServerThread(const boost::shared_ptr<ServerState>& state, bool autoStart) :
-      helper_(new Helper(this)),
-      port_(0),
+public:
+  ServerThread(const stdcxx::shared_ptr<ServerState>& state, bool autoStart)
+    : port_(0),
       running_(false),
       serving_(false),
       error_(false),
@@ -85,9 +84,7 @@ class ServerThread {
   void start();
   void stop();
 
-  uint16_t getPort() const {
-    return port_;
-  }
+  uint16_t getPort() const { return port_; }
 
   ~ServerThread() {
     if (running_) {
@@ -99,33 +96,27 @@ class ServerThread {
     }
   }
 
- protected:
+protected:
   // Annoying.  thrift forces us to use shared_ptr, so we have to use
   // a helper class that we can allocate on the heap and give to thrift.
   // It would be simpler if we could just make Runnable and TServerEventHandler
   // private base classes of ServerThread.
-  class Helper : public concurrency::Runnable,
-                 public server::TServerEventHandler {
-   public:
-    Helper(ServerThread* serverThread)
-      : serverThread_(serverThread) {}
+  class Helper : public concurrency::Runnable, public server::TServerEventHandler {
+  public:
+    Helper(ServerThread* serverThread) : serverThread_(serverThread) {}
 
-    void run() {
-      serverThread_->run();
-    }
+    void run() { serverThread_->run(); }
 
-    void preServe() {
-      serverThread_->preServe();
-    }
+    void preServe() { serverThread_->preServe(); }
 
-   private:
+  private:
     ServerThread* serverThread_;
   };
 
   void run();
   void preServe();
 
-  boost::shared_ptr<Helper> helper_;
+  stdcxx::shared_ptr<Helper> helper_;
 
   uint16_t port_;
   bool running_;
@@ -133,11 +124,12 @@ class ServerThread {
   bool error_;
   concurrency::Monitor serverMonitor_;
 
-  boost::shared_ptr<ServerState> serverState_;
-  boost::shared_ptr<server::TServer> server_;
-  boost::shared_ptr<concurrency::Thread> thread_;
+  stdcxx::shared_ptr<ServerState> serverState_;
+  stdcxx::shared_ptr<server::TServer> server_;
+  stdcxx::shared_ptr<concurrency::Thread> thread_;
 };
-
-}}} // apache::thrift::test
+}
+}
+} // apache::thrift::test
 
 #endif // _THRIFT_TEST_SERVERTHREAD_H_

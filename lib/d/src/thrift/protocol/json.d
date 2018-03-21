@@ -26,6 +26,7 @@ import std.range;
 import std.string : format;
 import std.traits : isIntegral;
 import std.typetuple : allSatisfy, TypeTuple;
+import std.utf : toUTF8;
 import thrift.protocol.base;
 import thrift.transport.base;
 
@@ -61,7 +62,7 @@ final class TJsonProtocol(Transport = TTransport) if (
   }
 
   void reset() {
-    contextStack_.clear();
+    destroy(contextStack_);
     context_ = new Context();
     reader_ = new LookaheadReader(trans_);
   }
@@ -132,7 +133,8 @@ final class TJsonProtocol(Transport = TTransport) if (
     bool escapeNum = value !is null || context_.escapeNum;
 
     if (value is null) {
-      value = format("%.16g", dub);
+      /* precision is 17 */
+      value = format("%.17g", dub);
     }
 
     if (escapeNum) trans_.write(STRING_DELIMITER);
@@ -492,12 +494,15 @@ private:
     return readSyntaxChar(reader_, ch);
   }
 
-  ubyte readJsonEscapeChar() {
-    readJsonSyntaxChar(ZERO_CHAR);
-    readJsonSyntaxChar(ZERO_CHAR);
+  wchar readJsonEscapeChar() {
     auto a = reader_.read();
     auto b = reader_.read();
-    return cast(ubyte)((hexVal(a[0]) << 4) + hexVal(b[0]));
+    auto c = reader_.read();
+    auto d = reader_.read();
+    return cast(ushort)(
+          (hexVal(a[0]) << 12) + (hexVal(b[0]) << 8) +
+          (hexVal(c[0]) << 4) + hexVal(d[0])
+        );
   }
 
   string readJsonString(bool skipContext = false) {
@@ -506,6 +511,7 @@ private:
     readJsonSyntaxChar(STRING_DELIMITER);
     auto buffer = appender!string();
 
+    wchar[] wchs;
     int bytesRead;
     while (true) {
       auto ch = reader_.read();
@@ -521,7 +527,18 @@ private:
       if (ch == BACKSLASH) {
         ch = reader_.read();
         if (ch == ESCAPE_CHAR) {
-          ch = readJsonEscapeChar();
+          auto wch = readJsonEscapeChar();
+          if (wch >= 0xD800 && wch <= 0xDBFF) {
+            wchs ~= wch;
+          } else if (wch >= 0xDC00 && wch <= 0xDFFF && wchs.length == 0) {
+            throw new TProtocolException("Missing UTF-16 high surrogate.",
+                                         TProtocolException.Type.INVALID_DATA);
+          } else {
+            wchs ~= wch;
+            buffer.put(wchs.toUTF8);
+            wchs = [];
+          }
+          continue;
         } else {
           auto pos = countUntil(kEscapeChars[], ch[0]);
           if (pos == -1) {
@@ -531,9 +548,17 @@ private:
           ch = kEscapeCharVals[pos];
         }
       }
+      if (wchs.length != 0) {
+        throw new TProtocolException("Missing UTF-16 low surrogate.",
+                                     TProtocolException.Type.INVALID_DATA);
+      }
       buffer.put(ch[0]);
     }
 
+    if (wchs.length != 0) {
+      throw new TProtocolException("Missing UTF-16 low surrogate.",
+                                   TProtocolException.Type.INVALID_DATA);
+    }
     return buffer.data;
   }
 
@@ -769,6 +794,36 @@ unittest {
   json.writeBinary([1, 2]);
   json.reset();
   enforce(json.readBinary() == [1, 2]);
+}
+
+unittest {
+  import std.exception;
+  import thrift.transport.memory;
+
+  auto buf = new TMemoryBuffer(cast(ubyte[])"\"\\u0e01 \\ud835\\udd3e\"");
+  auto json = tJsonProtocol(buf);
+  auto str = json.readString();
+  enforce(str == "ก 𝔾");
+}
+
+unittest {
+  // Thrown if low surrogate is missing.
+  import std.exception;
+  import thrift.transport.memory;
+
+  auto buf = new TMemoryBuffer(cast(ubyte[])"\"\\u0e01 \\ud835\"");
+  auto json = tJsonProtocol(buf);
+  assertThrown!TProtocolException(json.readString());
+}
+
+unittest {
+  // Thrown if high surrogate is missing.
+  import std.exception;
+  import thrift.transport.memory;
+
+  auto buf = new TMemoryBuffer(cast(ubyte[])"\"\\u0e01 \\udd3e\"");
+  auto json = tJsonProtocol(buf);
+  assertThrown!TProtocolException(json.readString());
 }
 
 unittest {

@@ -19,75 +19,100 @@
 
 
 #import "TNSFileHandleTransport.h"
-#import "TTransportException.h"
-#import "TObjective-C.h"
+#import "TTransportError.h"
+
+
+@interface TNSFileHandleTransport ()
+
+@property(strong, nonatomic) NSFileHandle *inputFileHandle;
+@property(strong, nonatomic) NSFileHandle *outputFileHandle;
+
+@end
 
 
 @implementation TNSFileHandleTransport
 
-- (id) initWithFileHandle: (NSFileHandle *) fileHandle
+-(id) initWithFileHandle:(NSFileHandle *)fileHandle
 {
-  return [self initWithInputFileHandle: fileHandle
-                      outputFileHandle: fileHandle];
+  return [self initWithInputFileHandle:fileHandle
+                      outputFileHandle:fileHandle];
 }
 
 
-- (id) initWithInputFileHandle: (NSFileHandle *) inputFileHandle
-              outputFileHandle: (NSFileHandle *) outputFileHandle
+-(id) initWithInputFileHandle:(NSFileHandle *)aInputFileHandle
+             outputFileHandle:(NSFileHandle *)aOutputFileHandle
 {
   self = [super init];
-
-  mInputFileHandle = [inputFileHandle retain_stub];
-  mOutputFileHandle = [outputFileHandle retain_stub];
-
+  if (self) {
+    _inputFileHandle = aInputFileHandle;
+    _outputFileHandle = aOutputFileHandle;
+  }
   return self;
 }
 
 
-- (void) dealloc {
-  [mInputFileHandle release_stub];
-  [mOutputFileHandle release_stub];
-  [super dealloc_stub];
+-(BOOL) readAll:(UInt8 *)buf offset:(UInt32)off length:(UInt32)len error:(NSError *__autoreleasing *)error
+{
+  UInt32 got = 0;
+  while (got < len) {
+
+    NSData *d = [_inputFileHandle readDataOfLength:len-got];
+    if (d.length == 0) {
+      if (error) {
+        *error = [NSError errorWithDomain:TTransportErrorDomain
+                                     code:TTransportErrorEndOfFile
+                                 userInfo:nil];
+      }
+      return NO;
+    }
+
+    [d getBytes:buf+got length:d.length];
+    got += d.length;
+  }
+  return YES;
 }
 
 
-- (int) readAll: (uint8_t *) buf offset: (int) off length: (int) len
+-(UInt32) readAvail:(UInt8 *)buf offset:(UInt32)off maxLength:(UInt32)len error:(NSError *__autoreleasing *)error
 {
-  int got = 0;
+  UInt32 got = 0;
   while (got < len) {
-    NSData * d = [mInputFileHandle readDataOfLength: len-got];
-    if ([d length] == 0) {
-      @throw [TTransportException exceptionWithName: @"TTransportException"
-                                  reason: @"Cannot read. No more data."];
+
+    NSData *d = [_inputFileHandle readDataOfLength:len-got];
+    if (d.length == 0) {
+      break;
     }
-    [d getBytes: buf+got];
-    got += [d length];
+
+    [d getBytes:buf+got length:d.length];
+    got += d.length;
   }
   return got;
 }
 
 
-- (void) write: (const uint8_t *) data offset: (unsigned int) offset length: (unsigned int) length
+-(BOOL) write:(const UInt8 *)data offset:(UInt32)offset length:(UInt32)length error:(NSError *__autoreleasing *)error
 {
-  void *pos = (void *) data + offset;
-  NSData * dataObject = [[NSData alloc] initWithBytesNoCopy: pos // data+offset
-                                                     length: length
-                                               freeWhenDone: NO];
+  void *pos = (void *)data + offset;
 
   @try {
-    [mOutputFileHandle writeData: dataObject];
-  } @catch (NSException * e) {
-    @throw [TTransportException exceptionWithName: @"TTransportException"
-                                           reason: [NSString stringWithFormat: @"%s: Unable to write data: %@", __PRETTY_FUNCTION__, e]];
+    [_outputFileHandle writeData:[NSData dataWithBytesNoCopy:pos length:length freeWhenDone:NO]];
+  }
+  @catch (NSException *e) {
+    if (error) {
+      *error = [NSError errorWithDomain:TTransportErrorDomain
+                                   code:TTransportErrorNotOpen
+                               userInfo:@{}];
+    }
+    return NO;
   }
 
-  [dataObject release_stub];
+  return YES;
 }
 
 
-- (void) flush
+-(BOOL) flush:(NSError *__autoreleasing *)error
 {
-
+  return YES;
 }
 
 @end

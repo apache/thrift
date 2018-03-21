@@ -17,7 +17,6 @@
  * under the License.
  */
 
-#include <assert.h>
 #include <glib-object.h>
 
 #include "../src/thrift/c_glib/thrift_struct.c"
@@ -51,6 +50,10 @@ gint32
 thrift_test_struct_read (ThriftStruct *object, ThriftProtocol *protocol,
                          GError **error)
 {
+  THRIFT_UNUSED_VAR (object);
+  THRIFT_UNUSED_VAR (protocol);
+  THRIFT_UNUSED_VAR (error);
+
   return 0;
 }
 
@@ -58,6 +61,10 @@ gint32
 thrift_test_struct_write (ThriftStruct *object, ThriftProtocol *protocol,
                           GError **error)
 {
+  THRIFT_UNUSED_VAR (object);
+  THRIFT_UNUSED_VAR (protocol);
+  THRIFT_UNUSED_VAR (error);
+
   return 0;
 }
 
@@ -81,7 +88,7 @@ test_initialize_object (void)
   ThriftTestStruct *t = NULL;
 
   t = g_object_new (THRIFT_TYPE_TEST_STRUCT, NULL);
-  assert ( THRIFT_IS_STRUCT (t));
+  g_assert ( THRIFT_IS_STRUCT (t));
   thrift_struct_read (THRIFT_STRUCT (t), NULL, NULL);
   thrift_struct_write (THRIFT_STRUCT (t), NULL, NULL);
   thrift_test_struct_read (THRIFT_STRUCT (t), NULL, NULL);
@@ -92,7 +99,10 @@ test_initialize_object (void)
 int
 main(int argc, char *argv[])
 {
+#if (!GLIB_CHECK_VERSION (2, 36, 0))
   g_type_init();
+#endif
+
   g_test_init (&argc, &argv, NULL);
 
   g_test_add_func ("/teststruct/InitializeObject", test_initialize_object);

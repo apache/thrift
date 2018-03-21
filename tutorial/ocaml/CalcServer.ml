@@ -49,7 +49,7 @@ object (self)
 	| Operation.DIVIDE ->
 	    if w#grab_num2 = Int32.zero then
 	      let io = new invalidOperation in
-		io#set_what (Operation.to_i w#grab_op) ;
+		io#set_whatOp (Operation.to_i w#grab_op) ;
 		io#set_why "Cannot divide by 0" ;
 		raise (InvalidOperation io)
 	    else

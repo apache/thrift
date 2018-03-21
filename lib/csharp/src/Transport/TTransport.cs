@@ -22,58 +22,101 @@
  */
 
 using System;
+using System.IO;
 
 namespace Thrift.Transport
 {
-	public abstract class TTransport : IDisposable
-	{
-		public abstract bool IsOpen
-		{
-			get;
-		}
+    public abstract class TTransport : IDisposable
+    {
+        public abstract bool IsOpen
+        {
+            get;
+        }
 
-		public bool Peek()
-		{
-			return IsOpen;
-		}
+        private byte[] _peekBuffer = new byte[1];
+        private bool _hasPeekByte;
 
-		public abstract void Open();
+        public bool Peek()
+        {
+            //If we already have a byte read but not consumed, do nothing.
+            if (_hasPeekByte)
+                return true;
 
-		public abstract void Close();
+            //If transport closed we can't peek.
+            if (!IsOpen)
+                return false;
 
-		public abstract int Read(byte[] buf, int off, int len);
+            //Try to read one byte. If succeeds we will need to store it for the next read.
+            try
+            {
+                int bytes = Read(_peekBuffer, 0, 1);
+                if (bytes == 0)
+                    return false;
+            }
+            catch( IOException)
+            {
+                return false;
+            }
 
-		public int ReadAll(byte[] buf, int off, int len)
-		{
-			int got = 0;
-			int ret = 0;
+            _hasPeekByte = true;
+            return true;
+        }
 
-			while (got < len)
-			{
-				ret = Read(buf, off + got, len - got);
-				if (ret <= 0)
-				{
-					throw new TTransportException(
-						TTransportException.ExceptionType.EndOfFile,
-						"Cannot read, Remote side has closed");
-				}
-				got += ret;
-			}
+        public abstract void Open();
 
-			return got;
-		}
+        public abstract void Close();
 
-		public virtual void Write(byte[] buf) 
-		{
-			Write (buf, 0, buf.Length);
-		}
+        protected static void ValidateBufferArgs(byte[] buf, int off, int len)
+        {
+            if (buf == null)
+                throw new ArgumentNullException("buf");
+            if (off < 0)
+                throw new ArgumentOutOfRangeException("Buffer offset is smaller than zero.");
+            if (len < 0)
+                throw new ArgumentOutOfRangeException("Buffer length is smaller than zero.");
+            if (off + len > buf.Length)
+                throw new ArgumentOutOfRangeException("Not enough data.");
+        }
 
-		public abstract void Write(byte[] buf, int off, int len);
+        public abstract int Read(byte[] buf, int off, int len);
 
-		public virtual void Flush()
-		{
-		}
-        
+        public int ReadAll(byte[] buf, int off, int len)
+        {
+            ValidateBufferArgs(buf, off, len);
+            int got = 0;
+
+            //If we previously peeked a byte, we need to use that first.
+            if (_hasPeekByte)
+            {
+                buf[off + got++] = _peekBuffer[0];
+                _hasPeekByte = false;
+            }
+
+            while (got < len)
+            {
+                int ret = Read(buf, off + got, len - got);
+                if (ret <= 0)
+                {
+                    throw new TTransportException(
+                        TTransportException.ExceptionType.EndOfFile,
+                        "Cannot read, Remote side has closed");
+                }
+                got += ret;
+            }
+            return got;
+        }
+
+        public virtual void Write(byte[] buf)
+        {
+            Write (buf, 0, buf.Length);
+        }
+
+        public abstract void Write(byte[] buf, int off, int len);
+
+        public virtual void Flush()
+        {
+        }
+
         public virtual IAsyncResult BeginFlush(AsyncCallback callback, object state)
         {
             throw new TTransportException(
@@ -88,16 +131,16 @@ namespace Thrift.Transport
                 "Asynchronous operations are not supported by this transport.");
         }
 
-		#region " IDisposable Support "
-		// IDisposable
-		protected abstract void Dispose(bool disposing);
+        #region " IDisposable Support "
+        // IDisposable
+        protected abstract void Dispose(bool disposing);
 
-		public void Dispose()
-		{
-			// Do not change this code.  Put cleanup code in Dispose(ByVal disposing As Boolean) above.
-			Dispose(true);
-			GC.SuppressFinalize(this);
-		}
-		#endregion
-	}
+        public void Dispose()
+        {
+            // Do not change this code.  Put cleanup code in Dispose(ByVal disposing As Boolean) above.
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+        #endregion
+    }
 }

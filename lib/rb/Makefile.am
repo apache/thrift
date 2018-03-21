@@ -17,28 +17,19 @@
 # under the License.
 #
 
-EXTRA_DIST = \
-	Rakefile \
-	Gemfile \
-	thrift.gemspec \
-	lib \
-	ext \
-	benchmark \
-	script \
-	spec
-
 DESTDIR ?= /
 
 if HAVE_BUNDLER
 
 all-local:
 	$(BUNDLER) install
-	$(BUNDLER) exec rake
+	$(BUNDLER) exec rake build_ext
 
 install-exec-hook:
 	$(BUNDLER) exec rake install
 
 clean-local:
+	$(BUNDLER) install
 	$(BUNDLER) exec rake clean
 
 check-local: all
@@ -47,3 +38,14 @@ check-local: all
 
 endif
 
+EXTRA_DIST = \
+	coding_standards.md \
+	Rakefile \
+	Gemfile \
+	thrift.gemspec \
+	lib \
+	ext \
+	benchmark \
+	script \
+	spec \
+	README.md

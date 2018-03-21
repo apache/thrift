@@ -40,22 +40,27 @@ public class TSocket extends TIOStreamTransport {
   /**
    * Wrapped Socket object
    */
-  private Socket socket_ = null;
+  private Socket socket_;
 
   /**
    * Remote host
    */
-  private String host_  = null;
+  private String host_;
 
   /**
    * Remote port
    */
-  private int port_ = 0;
+  private int port_;
 
   /**
-   * Socket timeout
+   * Socket timeout - read timeout on the socket
    */
-  private int timeout_ = 0;
+  private int socketTimeout_;
+
+  /**
+   * Connection timeout
+   */
+  private int connectTimeout_;
 
   /**
    * Constructor that takes an already created socket.
@@ -68,6 +73,7 @@ public class TSocket extends TIOStreamTransport {
     try {
       socket_.setSoLinger(false, 0);
       socket_.setTcpNoDelay(true);
+      socket_.setKeepAlive(true);
     } catch (SocketException sx) {
       LOGGER.warn("Could not configure socket.", sx);
     }
@@ -100,12 +106,27 @@ public class TSocket extends TIOStreamTransport {
    *
    * @param host    Remote host
    * @param port    Remote port
-   * @param timeout Socket timeout
+   * @param timeout Socket timeout and connection timeout
    */
   public TSocket(String host, int port, int timeout) {
+    this(host, port, timeout, timeout);
+  }
+
+  /**
+   * Creates a new unconnected socket that will connect to the given host
+   * on the given port, with a specific connection timeout and a
+   * specific socket timeout.
+   *
+   * @param host            Remote host
+   * @param port            Remote port
+   * @param socketTimeout   Socket timeout
+   * @param connectTimeout  Connection timeout
+   */
+  public TSocket(String host, int port, int socketTimeout, int connectTimeout) {
     host_ = host;
     port_ = port;
-    timeout_ = timeout;
+    socketTimeout_ = socketTimeout;
+    connectTimeout_ = connectTimeout;
     initSocket();
   }
 
@@ -117,10 +138,30 @@ public class TSocket extends TIOStreamTransport {
     try {
       socket_.setSoLinger(false, 0);
       socket_.setTcpNoDelay(true);
-      socket_.setSoTimeout(timeout_);
+      socket_.setKeepAlive(true);
+      socket_.setSoTimeout(socketTimeout_);
     } catch (SocketException sx) {
       LOGGER.error("Could not configure socket.", sx);
     }
+  }
+
+  /**
+   * Sets the socket timeout and connection timeout.
+   *
+   * @param timeout Milliseconds timeout
+   */
+  public void setTimeout(int timeout) {
+    this.setConnectTimeout(timeout);
+    this.setSocketTimeout(timeout);
+  }
+
+  /**
+   * Sets the time after which the connection attempt will time out
+   *
+   * @param timeout Milliseconds timeout
+   */
+  public void setConnectTimeout(int timeout) {
+    connectTimeout_ = timeout;
   }
 
   /**
@@ -128,8 +169,8 @@ public class TSocket extends TIOStreamTransport {
    *
    * @param timeout Milliseconds timeout
    */
-  public void setTimeout(int timeout) {
-    timeout_ = timeout;
+  public void setSocketTimeout(int timeout) {
+    socketTimeout_ = timeout;
     try {
       socket_.setSoTimeout(timeout);
     } catch (SocketException sx) {
@@ -165,11 +206,11 @@ public class TSocket extends TIOStreamTransport {
       throw new TTransportException(TTransportException.ALREADY_OPEN, "Socket already connected.");
     }
 
-    if (host_.length() == 0) {
+    if (host_ == null || host_.length() == 0) {
       throw new TTransportException(TTransportException.NOT_OPEN, "Cannot open null host.");
     }
-    if (port_ <= 0) {
-      throw new TTransportException(TTransportException.NOT_OPEN, "Cannot open without port.");
+    if (port_ <= 0 || port_ > 65535) {
+      throw new TTransportException(TTransportException.NOT_OPEN, "Invalid port " + port_);
     }
 
     if (socket_ == null) {
@@ -177,7 +218,7 @@ public class TSocket extends TIOStreamTransport {
     }
 
     try {
-      socket_.connect(new InetSocketAddress(host_, port_), timeout_);
+      socket_.connect(new InetSocketAddress(host_, port_), connectTimeout_);
       inputStream_ = new BufferedInputStream(socket_.getInputStream(), 1024);
       outputStream_ = new BufferedOutputStream(socket_.getOutputStream(), 1024);
     } catch (IOException iox) {

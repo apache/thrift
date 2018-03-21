@@ -51,7 +51,7 @@ class TestThriftTransport < Test::Unit::TestCase
   
   # TODO:
   # This doesn't necessarily test he right thing.
-  # It _looks_ like read isn't guarenteed to return the length
+  # It _looks_ like read isn't guaranteed to return the length
   # you ask for and read_all is. This means our test needs to check
   # for blocking. -- Kevin Clark 3/27/08
   def test_read_all

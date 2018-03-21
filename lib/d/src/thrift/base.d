@@ -43,14 +43,14 @@ class TCompoundOperationException : TException {
   }
 
   /// The exceptions thrown by the children of the operation. If applicable,
-  /// the list is ordered in the same way the exceptions occured.
+  /// the list is ordered in the same way the exceptions occurred.
   Exception[] exceptions;
 }
 
 /// The Thrift version string, used for informative purposes.
 // Note: This is currently hardcoded, but will likely be filled in by the build
 // system in future versions.
-enum VERSION = "0.9.0 dev";
+enum VERSION = "1.0.0 dev";
 
 /**
  * Functions used for logging inside Thrift.
@@ -62,7 +62,7 @@ enum VERSION = "0.9.0 dev";
  * Examples:
  * ---
  * logInfo("An informative message.");
- * logError("Some error occured: %s", e);
+ * logError("Some error occurred: %s", e);
  * ---
  */
 alias logFormatted!g_infoLogSink logInfo;
@@ -93,7 +93,7 @@ shared static this() {
 // This should be private, if it could still be used through the aliases then.
 template logFormatted(alias target) {
   void logFormatted(string file = __FILE__, int line = __LINE__,
-    T...)(string format, T args) if (
+    T...)(string fmt, T args) if (
     __traits(compiles, { target(""); })
   ) {
     import std.format, std.stdio;
@@ -107,9 +107,9 @@ template logFormatted(alias target) {
       formattedWrite(g_formatBuffer, "%s:%s: ", file, line);
 
       static if (T.length == 0) {
-        g_formatBuffer.put(format);
+        g_formatBuffer.put(fmt);
       } else {
-        formattedWrite(g_formatBuffer, format, args);
+        formattedWrite(g_formatBuffer, fmt, args);
       }
       target(g_formatBuffer.data);
     }

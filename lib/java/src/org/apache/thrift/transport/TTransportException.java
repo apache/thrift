@@ -34,6 +34,7 @@ public class TTransportException extends TException {
   public static final int ALREADY_OPEN = 2;
   public static final int TIMED_OUT = 3;
   public static final int END_OF_FILE = 4;
+  public static final int CORRUPTED_DATA = 5;
 
   protected int type_ = UNKNOWN;
 

@@ -63,6 +63,7 @@ struct _ThriftTransportClass
 
   /* vtable */
   gboolean (*is_open) (ThriftTransport *transport);
+  gboolean (*peek) (ThriftTransport *transport, GError **error);
   gboolean (*open) (ThriftTransport *transport, GError **error);
   gboolean (*close) (ThriftTransport *transport, GError **error);
   gint32 (*read) (ThriftTransport *transport, gpointer buf,
@@ -72,6 +73,8 @@ struct _ThriftTransportClass
                    const guint32 len, GError **error);
   gboolean (*write_end) (ThriftTransport *transport, GError **error);
   gboolean (*flush) (ThriftTransport *transport, GError **error);
+  gint32 (*read_all) (ThriftTransport *transport, gpointer buf,
+                      guint32 len, GError **error);
 };
 
 /* used by THRIFT_TYPE_TRANSPORT */
@@ -90,6 +93,17 @@ gboolean thrift_transport_is_open (ThriftTransport *transport);
  * \public \memberof ThriftTransportInterface
  */
 gboolean thrift_transport_open (ThriftTransport *transport, GError **error);
+
+/*!
+ * Tests whether there is more data to read or if the remote side is still
+ * open. By default this is true whenever the transport is open, but
+ * implementations should add logic to test for this condition where possible
+ * (i.e. on a socket).
+ *
+ * This is used by a server to check if it should listen for another request.
+ * \public \memberof ThriftTransportInterface
+ */
+gboolean thrift_transport_peek (ThriftTransport *transport, GError **error);
 
 /*!
  * Close the transport.
@@ -130,6 +144,13 @@ gboolean thrift_transport_write_end (ThriftTransport *transport,
  * \public \memberof ThriftTransportInterface
  */
 gboolean thrift_transport_flush (ThriftTransport *transport, GError **error);
+
+/*!
+ * Read len bytes of data into the buffer buf.
+ * \public \memberof ThriftTransportInterface
+ */
+gint32 thrift_transport_read_all (ThriftTransport *transport, gpointer buf,
+                                  guint32 len, GError **error);
 
 /* define error/exception types */
 typedef enum

@@ -21,20 +21,24 @@
 
 #include "ServerThread.h"
 
-#include <thrift/concurrency/PosixThreadFactory.h>
+#include <thrift/concurrency/PlatformThreadFactory.h>
 #include <thrift/concurrency/ThreadManager.h>
 #include <thrift/server/TThreadPoolServer.h>
 #include <thrift/transport/TBufferTransports.h>
 #include <thrift/transport/TServerSocket.h>
 
-namespace apache { namespace thrift { namespace test {
+namespace apache {
+namespace thrift {
+namespace test {
 
 void ServerThread::start() {
   assert(!running_);
   running_ = true;
 
+  helper_.reset(new Helper(this));
+
   // Start the other thread
-  concurrency::PosixThreadFactory threadFactory;
+  concurrency::PlatformThreadFactory threadFactory;
   threadFactory.setDetached(false);
   thread_ = threadFactory.newThread(helper_);
 
@@ -48,9 +52,8 @@ void ServerThread::start() {
   }
 
   if (error_) {
-    throw transport::TTransportException(
-        transport::TTransportException::NOT_OPEN,
-        "failed to bind on server socket");
+    throw transport::TTransportException(transport::TTransportException::NOT_OPEN,
+                                         "failed to bind on server socket");
   }
 }
 
@@ -89,7 +92,7 @@ void ServerThread::run() {
     try {
       // Try to serve requests
       server_->serve();
-    } catch (const TException& x) {
+    } catch (const TException&) {
       // TNonblockingServer throws a generic TException if it fails to bind.
       // If we get a TException, we'll optimistically assume the bind failed.
       ++port_;
@@ -127,8 +130,8 @@ void ServerThread::preServe() {
   serverState_->bindSuccessful(port_);
 
   // Set the real server event handler (replacing ourself)
-  boost::shared_ptr<server::TServerEventHandler> serverEventHandler =
-    serverState_->getServerEventHandler();
+  stdcxx::shared_ptr<server::TServerEventHandler> serverEventHandler
+      = serverState_->getServerEventHandler();
   server_->setServerEventHandler(serverEventHandler);
 
   // Notify the main thread that we have successfully started serving requests
@@ -142,7 +145,8 @@ void ServerThread::preServe() {
     serverEventHandler->preServe();
   }
 }
-
-}}} // apache::thrift::test
+}
+}
+} // apache::thrift::test
 
 #endif // _THRIFT_TEST_SERVERTHREAD_TCC_

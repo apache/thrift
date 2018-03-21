@@ -17,8 +17,10 @@
 # under the License.
 #
 
+SUBDIRS = .
+
 if WITH_TESTS
-SUBDIRS = test
+SUBDIRS += test
 endif
 
 install:
@@ -29,9 +31,15 @@ install:
 	@echo '##############################################################'
 
 check-local:
-	$(GO) test ./thrift
+	GOPATH=`pwd` $(GO) test -race ./thrift
 
-all-local: check-local
+clean-local:
+	$(RM) -rf pkg
+
+all-local:
+	GOPATH=`pwd` $(GO) build ./thrift
 
 EXTRA_DIST = \
-	thrift
+	thrift \
+	coding_standards.md \
+	README.md

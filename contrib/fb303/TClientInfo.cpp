@@ -154,9 +154,8 @@ void TClientInfoServerHandler::getStatsStrings(vector<string>& result) {
     }
 
     timespec start;
-    double secs = 0.0;
     info->getTime(&start);
-    secs = (double)(now.tv_sec - start.tv_sec) + (now.tv_nsec - start.tv_nsec)*0.000000001;
+    double secs = (double)(now.tv_sec - start.tv_sec) + (now.tv_nsec - start.tv_nsec)*0.000000001;
 
     char buf[256];
     snprintf(buf, sizeof buf, "%d %s %s %.3f %llu", i, addrStr, callStr, secs,

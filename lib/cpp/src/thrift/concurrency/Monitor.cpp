@@ -17,12 +17,13 @@
  * under the License.
  */
 
+#include <thrift/thrift-config.h>
+
 #include <thrift/concurrency/Monitor.h>
 #include <thrift/concurrency/Exception.h>
 #include <thrift/concurrency/Util.h>
 #include <thrift/transport/PlatformSocket.h>
-
-#include <boost/scoped_ptr.hpp>
+#include <thrift/stdcxx.h>
 
 #include <assert.h>
 
@@ -30,9 +31,13 @@
 
 #include <pthread.h>
 
-namespace apache { namespace thrift { namespace concurrency {
+namespace apache {
+namespace thrift {
 
-using boost::scoped_ptr;
+using stdcxx::scoped_ptr;
+using stdcxx::shared_ptr;
+
+namespace concurrency {
 
 /**
  * Monitor implementation using the POSIX pthread library
@@ -41,26 +46,14 @@ using boost::scoped_ptr;
  */
 class Monitor::Impl {
 
- public:
-
-  Impl()
-     : ownedMutex_(new Mutex()),
-       mutex_(NULL),
-       condInitialized_(false) {
+public:
+  Impl() : ownedMutex_(new Mutex()), mutex_(NULL), condInitialized_(false) {
     init(ownedMutex_.get());
   }
 
-  Impl(Mutex* mutex)
-     : mutex_(NULL),
-       condInitialized_(false) {
-    init(mutex);
-  }
+  Impl(Mutex* mutex) : mutex_(NULL), condInitialized_(false) { init(mutex); }
 
-  Impl(Monitor* monitor)
-     : mutex_(NULL),
-       condInitialized_(false) {
-    init(&(monitor->mutex()));
-  }
+  Impl(Monitor* monitor) : mutex_(NULL), condInitialized_(false) { init(&(monitor->mutex())); }
 
   ~Impl() { cleanup(); }
 
@@ -80,11 +73,10 @@ class Monitor::Impl {
     if (result == THRIFT_ETIMEDOUT) {
       // pthread_cond_timedwait has been observed to return early on
       // various platforms, so comment out this assert.
-      //assert(Util::currentTime() >= (now + timeout));
+      // assert(Util::currentTime() >= (now + timeout));
       throw TimedOutException();
     } else if (result != 0) {
-      throw TException(
-        "pthread_cond_wait() or pthread_cond_timedwait() failed");
+      throw TException("pthread_cond_wait() or pthread_cond_timedwait() failed");
     }
   }
 
@@ -110,19 +102,16 @@ class Monitor::Impl {
    */
   int waitForTime(const THRIFT_TIMESPEC* abstime) const {
     assert(mutex_);
-    pthread_mutex_t* mutexImpl =
-      reinterpret_cast<pthread_mutex_t*>(mutex_->getUnderlyingImpl());
+    pthread_mutex_t* mutexImpl = reinterpret_cast<pthread_mutex_t*>(mutex_->getUnderlyingImpl());
     assert(mutexImpl);
 
     // XXX Need to assert that caller owns mutex
-    return pthread_cond_timedwait(&pthread_cond_,
-                                  mutexImpl,
-                                  abstime);
+    return pthread_cond_timedwait(&pthread_cond_, mutexImpl, abstime);
   }
 
   int waitForTime(const struct timeval* abstime) const {
     struct THRIFT_TIMESPEC temp;
-    temp.tv_sec  = abstime->tv_sec;
+    temp.tv_sec = abstime->tv_sec;
     temp.tv_nsec = abstime->tv_usec * 1000;
     return waitForTime(&temp);
   }
@@ -132,12 +121,10 @@ class Monitor::Impl {
    */
   int waitForever() const {
     assert(mutex_);
-    pthread_mutex_t* mutexImpl =
-      reinterpret_cast<pthread_mutex_t*>(mutex_->getUnderlyingImpl());
+    pthread_mutex_t* mutexImpl = reinterpret_cast<pthread_mutex_t*>(mutex_->getUnderlyingImpl());
     assert(mutexImpl);
     return pthread_cond_wait(&pthread_cond_, mutexImpl);
   }
-
 
   void notify() {
     // XXX Need to assert that caller owns mutex
@@ -153,8 +140,7 @@ class Monitor::Impl {
     assert(iret == 0);
   }
 
- private:
-
+private:
   void init(Mutex* mutex) {
     mutex_ = mutex;
 
@@ -184,19 +170,32 @@ class Monitor::Impl {
   mutable bool condInitialized_;
 };
 
-Monitor::Monitor() : impl_(new Monitor::Impl()) {}
-Monitor::Monitor(Mutex* mutex) : impl_(new Monitor::Impl(mutex)) {}
-Monitor::Monitor(Monitor* monitor) : impl_(new Monitor::Impl(monitor)) {}
+Monitor::Monitor() : impl_(new Monitor::Impl()) {
+}
+Monitor::Monitor(Mutex* mutex) : impl_(new Monitor::Impl(mutex)) {
+}
+Monitor::Monitor(Monitor* monitor) : impl_(new Monitor::Impl(monitor)) {
+}
 
-Monitor::~Monitor() { delete impl_; }
+Monitor::~Monitor() {
+  delete impl_;
+}
 
-Mutex& Monitor::mutex() const { return impl_->mutex(); }
+Mutex& Monitor::mutex() const {
+  return impl_->mutex();
+}
 
-void Monitor::lock() const { impl_->lock(); }
+void Monitor::lock() const {
+  impl_->lock();
+}
 
-void Monitor::unlock() const { impl_->unlock(); }
+void Monitor::unlock() const {
+  impl_->unlock();
+}
 
-void Monitor::wait(int64_t timeout) const { impl_->wait(timeout); }
+void Monitor::wait(int64_t timeout) const {
+  impl_->wait(timeout);
+}
 
 int Monitor::waitForTime(const THRIFT_TIMESPEC* abstime) const {
   return impl_->waitForTime(abstime);
@@ -214,8 +213,13 @@ int Monitor::waitForever() const {
   return impl_->waitForever();
 }
 
-void Monitor::notify() const { impl_->notify(); }
+void Monitor::notify() const {
+  impl_->notify();
+}
 
-void Monitor::notifyAll() const { impl_->notifyAll(); }
-
-}}} // apache::thrift::concurrency
+void Monitor::notifyAll() const {
+  impl_->notifyAll();
+}
+}
+}
+} // apache::thrift::concurrency

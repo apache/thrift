@@ -7,7 +7,7 @@ dnl If "JAVA" is defined in the environment, that will be the only
 dnl java command tested.  Otherwise, a hard-coded list will be used.
 dnl Similarly for "JAVAC".
 dnl
-dnl AX_JAVAC_AND_JAVA does not currenly support testing for a particular
+dnl AX_JAVAC_AND_JAVA does not currently support testing for a particular
 dnl Java version, testing for only one of "java" and "javac", or
 dnl compiling or running user-provided Java code.
 dnl

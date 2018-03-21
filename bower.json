@@ -1,12 +1,11 @@
 {
   "name": "thrift",
-  "version": "0.9.1",
   "homepage": "https://git-wip-us.apache.org/repos/asf/thrift.git",
   "authors": [
     "Apache Thrift <dev@thrift.apache.org>"
   ],
   "description": "Apache Thrift",
-  "main": "lib/js/thrift.js",
+  "main": "lib/js/src/thrift.js",
   "keywords": [
     "thrift"
   ],

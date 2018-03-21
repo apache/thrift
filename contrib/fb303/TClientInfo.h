@@ -192,7 +192,7 @@ class TClientInfoConnection {
 
   /**
    * Return as string the thrift call either currently being processed or
-   * most recently processed if the connection is still open for additonal
+   * most recently processed if the connection is still open for additional
    * calls.  Returns NULL if a call hasn't been made yet or processing
    * has ended.
    */

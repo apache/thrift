@@ -77,12 +77,12 @@ public class TMemoryBuffer extends TTransport {
   }
 
   public String inspect() {
-    String buf = "";
+    StringBuilder buf = new StringBuilder();
     byte[] bytes = arr_.toByteArray();
     for (int i = 0; i < bytes.length; i++) {
-      buf += (pos_ == i ? "==>" : "" ) + Integer.toHexString(bytes[i] & 0xff) + " ";
+      buf.append(pos_ == i ? "==>" : "" ).append(Integer.toHexString(bytes[i] & 0xff)).append(" ");
     }
-    return buf;
+    return buf.toString();
   }
 
   // The contents of the buffer

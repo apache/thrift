@@ -18,21 +18,44 @@
 #
 
 THRIFT = ../../compiler/cpp/thrift
-THRIFT_FILES = $(wildcard ../../test/*.thrift) \
-			   $(wildcard test/*.thrift)
+THRIFT_OMIT_FILE = test/Thrift_omit_without.thrift
+THRIFT_FILES = $(wildcard test/*.thrift) \
+		  $(THRIFT_OMIT_FILE) \
+		  ../../test/ConstantsDemo.thrift \
+		  ../../test/NameConflictTest.thrift \
+		  ../../test/DoubleConstantsTest.thrift \
+		  ../../test/ThriftTest.thrift
 
-.generated: $(THRIFT_FILES)
+if ERLANG_OTP16
+ERL_FLAG = erl:otp16
+ERL_FLAG_LEGACY = erl:otp16,legacynames
+# otp16 + maps does not make sense. We need to generate it anyway to avoid include error.
+ERL_FLAG_MAPS = erl:otp16
+else
+ERL_FLAG = erl
+ERL_FLAG_LEGACY = erl:legacynames
+ERL_FLAG_MAPS = erl:maps
+endif
+
+$(THRIFT_OMIT_FILE): test/Thrift_omit_with.thrift
+	grep -v omit $< >$@
+
+.generated: $(THRIFT) $(THRIFT_FILES)
 	for f in $(THRIFT_FILES) ; do \
-	  $(THRIFT) --gen erl -out test $$f ; \
-	done ; \
+		$(THRIFT) --gen $(ERL_FLAG) -o test $$f ; \
+	done
+	$(THRIFT) --gen $(ERL_FLAG_LEGACY) -o test test/flags/LegacyNames.thrift
+	$(THRIFT) --gen $(ERL_FLAG_MAPS) -o test test/flags/Thrift3214.thrift
 	touch .generated
 
 all: .generated
-	./rebar get-deps
-	./rebar compile
+	$(REBAR) get-deps
+	$(REBAR) compile
 
 check: .generated
-	./rebar skip_deps=true eunit
+	$(REBAR) -C rebar.test.config get-deps
+	$(REBAR) -C rebar.test.config compile
+	$(REBAR) -C rebar.test.config skip_deps=true eunit
 
 install: all
 	mkdir -p $(DESTDIR)$(ERLANG_INSTALL_LIB_DIR_thrift) ; \
@@ -47,37 +70,22 @@ uninstall:
 	rm -rf $(DESTDIR)$(ERLANG_INSTALL_LIB_DIR_thrift)
 
 clean:
-	./rebar clean
 	rm -f .generated
-	rm -f test/secondService_* \
-		  test/aService_* \
-		  test/serviceForExceptionWithAMap_* \
-		  test/annotationTest_* \
-		  test/service_* \
-		  test/constantsDemo_* \
-		  test/smallService_* \
-		  test/smallTest_* \
-		  test/debugProtoTest_* \
-		  test/srv_* \
-		  test/denseLinkingTest_* \
-		  test/stressTest_* \
-		  test/docTest_* \
-		  test/emptyService_* \
-		  test/inherited_* \
-		  test/javaBeansTest_* \
-		  test/thrift1151_* \
-		  test/javaBeansTest_* \
-		  test/manyTypedefs_* \
-		  test/thriftTest_* \
-		  test/optionalRequiredTest_* \
-		  test/yowza_* \
-		  test/reverseOrderService_* \
-		  test/manyOptionals_*
-	./rebar clean
+	rm -rf test/gen-erl/
+	rm -f $(THRIFT_OMIT_FILE)
+	$(REBAR) clean
 
 maintainer-clean-local:
 	rm -rf ebin
 
-EXTRA_DIST = include src rebar rebar.config test
+EXTRA_DIST = \
+	include \
+	src \
+	coding_standards.md \
+	rebar.config \
+	rebar.config.script \
+	rebar.test.config \
+	test \
+	README.md
 
 MAINTAINERCLEANFILES = Makefile.in

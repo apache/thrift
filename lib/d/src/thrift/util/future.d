@@ -316,7 +316,7 @@ class TFutureException : TException {
 }
 
 /**
- * Creates an interface that is similiar to a given one, but accepts an
+ * Creates an interface that is similar to a given one, but accepts an
  * additional, optional TCancellation parameter each method, and returns
  * TFutures instead of plain return values.
  *
@@ -454,7 +454,7 @@ final class TFutureAggregatorRange(T) {
 
       ++completedCount_;
       if (completedCount_ == futures_.length) {
-        // This was the last future in the list, there is no possiblity
+        // This was the last future in the list, there is no possibility
         // another result could ever become available.
         finished_ = true;
       }

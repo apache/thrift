@@ -7,7 +7,7 @@
  * "License"); you may not use this file except in compliance
  * with the License. You may obtain a copy of the License at
  *
- *	 http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing,
  * software distributed under the License is distributed on an
@@ -15,8 +15,8 @@
  * KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations
  * under the License.
- * 
- * 
+ *
+ *
  */
 
 using System;
@@ -24,54 +24,65 @@ using System.Collections.Generic;
 using System.IO;
 using System.Net;
 using System.Threading;
+using System.Linq;
+using System.Security.Cryptography.X509Certificates;
+using System.IO.Compression;
 
 namespace Thrift.Transport
 {
-	public class THttpClient : TTransport, IDisposable
-	{
-		private readonly Uri uri;
-		private Stream inputStream;
-		private MemoryStream outputStream = new MemoryStream();
+
+    public class THttpClient : TTransport, IDisposable
+    {
+        private readonly Uri uri;
+        private readonly X509Certificate[] certificates;
+        private Stream inputStream;
+        private MemoryStream outputStream = new MemoryStream();
 
         // Timeouts in milliseconds
         private int connectTimeout = 30000;
 
         private int readTimeout = 30000;
 
-		private IDictionary<String, String> customHeaders = new Dictionary<string, string>();
+        private IDictionary<String, String> customHeaders = new Dictionary<string, string>();
 
 #if !SILVERLIGHT
         private IWebProxy proxy = WebRequest.DefaultWebProxy;
 #endif
 
         public THttpClient(Uri u)
-		{
-			uri = u;
-		}
+            : this(u, Enumerable.Empty<X509Certificate>())
+        {
+        }
 
-		public int ConnectTimeout
-		{
-			set
-			{
-			   connectTimeout = value;
-			}
-		}
+        public THttpClient(Uri u, IEnumerable<X509Certificate> certificates)
+        {
+            uri = u;
+            this.certificates = (certificates ?? Enumerable.Empty<X509Certificate>()).ToArray();
+        }
 
-		public int ReadTimeout
-		{
-			set
-			{
-				readTimeout = value;
-			}
-		}
+        public int ConnectTimeout
+        {
+            set
+            {
+               connectTimeout = value;
+            }
+        }
 
-		public IDictionary<String, String> CustomHeaders
-		{
-			get
-			{
-				return customHeaders;
-			}
-		}
+        public int ReadTimeout
+        {
+            set
+            {
+                readTimeout = value;
+            }
+        }
+
+        public IDictionary<String, String> CustomHeaders
+        {
+            get
+            {
+                return customHeaders;
+            }
+        }
 
 #if !SILVERLIGHT
         public IWebProxy Proxy
@@ -83,138 +94,206 @@ namespace Thrift.Transport
         }
 #endif
 
-		public override bool IsOpen
-		{
-			get
-			{
-				return true;
-			}
-		}
+        public override bool IsOpen
+        {
+            get
+            {
+                return true;
+            }
+        }
 
-		public override void Open()
-		{
-		}
+        public override void Open()
+        {
+        }
 
-		public override void Close()
-		{
-			if (inputStream != null)
-			{
-				inputStream.Close();
-				inputStream = null;
-			}
-			if (outputStream != null)
-			{
-				outputStream.Close();
-				outputStream = null;
-			}
-		}
+        public override void Close()
+        {
+            if (inputStream != null)
+            {
+                inputStream.Close();
+                inputStream = null;
+            }
+            if (outputStream != null)
+            {
+                outputStream.Close();
+                outputStream = null;
+            }
+        }
 
-		public override int Read(byte[] buf, int off, int len)
-		{
-			if (inputStream == null)
-			{
-				throw new TTransportException(TTransportException.ExceptionType.NotOpen, "No request has been sent");
-			}
+        public override int Read(byte[] buf, int off, int len)
+        {
+            if (inputStream == null)
+            {
+                throw new TTransportException(TTransportException.ExceptionType.NotOpen, "No request has been sent");
+            }
 
-			try
-			{
-				int ret = inputStream.Read(buf, off, len);
+            try
+            {
+                int ret = inputStream.Read(buf, off, len);
 
-				if (ret == -1)
-				{
-					throw new TTransportException(TTransportException.ExceptionType.EndOfFile, "No more data available");
-				}
+                if (ret == -1)
+                {
+                    throw new TTransportException(TTransportException.ExceptionType.EndOfFile, "No more data available");
+                }
 
-				return ret;
-			}
-			catch (IOException iox)
-			{ 
-				throw new TTransportException(TTransportException.ExceptionType.Unknown, iox.ToString());
-			}
-		}
+                return ret;
+            }
+            catch (IOException iox)
+            {
+                throw new TTransportException(TTransportException.ExceptionType.Unknown, iox.ToString());
+            }
+        }
 
-		public override void Write(byte[] buf, int off, int len)
-		{
-			outputStream.Write(buf, off, len);
-		}
+        public override void Write(byte[] buf, int off, int len)
+        {
+            outputStream.Write(buf, off, len);
+        }
 
 #if !SILVERLIGHT
-		public override void Flush()
-		{
-			try 
-			{
-				SendRequest();
-			}
-			finally
-			{
-				outputStream = new MemoryStream();
-			}
-		}
+        public override void Flush()
+        {
+            try
+            {
+                SendRequest();
+            }
+            finally
+            {
+                outputStream = new MemoryStream();
+            }
+        }
 
-		private void SendRequest()
-		{
-			try
-			{
-				HttpWebRequest connection = CreateRequest();
+        private void SendRequest()
+        {
+            try
+            {
+                HttpWebRequest connection = CreateRequest();
+                connection.Headers.Add("Accept-Encoding", "gzip, deflate");
 
-				byte[] data = outputStream.ToArray();
-				connection.ContentLength = data.Length;
+                byte[] data = outputStream.ToArray();
+                connection.ContentLength = data.Length;
 
-				using (Stream requestStream = connection.GetRequestStream())
-				{
-					requestStream.Write(data, 0, data.Length);
-					inputStream = connection.GetResponse().GetResponseStream();
-				}
-			}
-			catch (IOException iox)
-			{
-				throw new TTransportException(TTransportException.ExceptionType.Unknown, iox.ToString());
-			}
-			catch (WebException wx)
-			{
-				throw new TTransportException(TTransportException.ExceptionType.Unknown, "Couldn't connect to server: " + wx);
-			}
-		}
+                using (Stream requestStream = connection.GetRequestStream())
+                {
+                    requestStream.Write(data, 0, data.Length);
+
+                    // Resolve HTTP hang that can happens after successive calls by making sure
+                    // that we release the response and response stream. To support this, we copy
+                    // the response to a memory stream.
+                    using (var response = connection.GetResponse())
+                    {
+                        using (var responseStream = response.GetResponseStream())
+                        {
+                            // Copy the response to a memory stream so that we can
+                            // cleanly close the response and response stream.
+                            inputStream = new MemoryStream();
+                            byte[] buffer = new byte[8192];  // multiple of 4096
+                            int bytesRead;
+                            while ((bytesRead = responseStream.Read(buffer, 0, buffer.Length)) > 0)
+                            {
+                                inputStream.Write(buffer, 0, bytesRead);
+                            }
+                            inputStream.Seek(0, 0);
+                        }
+
+                        var encodings = response.Headers.GetValues("Content-Encoding");
+                        if (encodings != null)
+                        {
+                            foreach (var encoding in encodings)
+                            {
+                                switch (encoding)
+                                {
+                                    case "gzip":
+                                        DecompressGZipped(ref inputStream);
+                                        break;
+                                    case "deflate":
+                                        DecompressDeflated(ref inputStream);
+                                        break;
+                                    default:
+                                        break;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            catch (IOException iox)
+            {
+                throw new TTransportException(TTransportException.ExceptionType.Unknown, iox.ToString());
+            }
+            catch (WebException wx)
+            {
+                throw new TTransportException(TTransportException.ExceptionType.Unknown, "Couldn't connect to server: " + wx);
+            }
+        }
+
+        private void DecompressDeflated(ref Stream inputStream)
+        {
+            var tmp = new MemoryStream();
+            using (var decomp = new DeflateStream(inputStream, CompressionMode.Decompress))
+            {
+                decomp.CopyTo(tmp);
+            }
+            inputStream.Dispose();
+            inputStream = tmp;
+            inputStream.Seek(0, 0);
+        }
+
+        private void DecompressGZipped(ref Stream inputStream)
+        {
+            var tmp = new MemoryStream();
+            using (var decomp = new GZipStream(inputStream, CompressionMode.Decompress))
+            {
+                decomp.CopyTo(tmp);
+            }
+            inputStream.Dispose();
+            inputStream = tmp;
+            inputStream.Seek(0, 0);
+        }
 #endif
-		private HttpWebRequest CreateRequest()
-		{
-			HttpWebRequest connection = (HttpWebRequest)WebRequest.Create(uri);
+        private HttpWebRequest CreateRequest()
+        {
+            HttpWebRequest connection = (HttpWebRequest)WebRequest.Create(uri);
+
 
 #if !SILVERLIGHT
-			if (connectTimeout > 0)
-			{
-				connection.Timeout = connectTimeout;
-			}
-			if (readTimeout > 0)
-			{
-				connection.ReadWriteTimeout = readTimeout;
-			}
+            // Adding certificates through code is not supported with WP7 Silverlight
+            // see "Windows Phone 7 and Certificates_FINAL_121610.pdf"
+            connection.ClientCertificates.AddRange(certificates);
+
+            if (connectTimeout > 0)
+            {
+                connection.Timeout = connectTimeout;
+            }
+            if (readTimeout > 0)
+            {
+                connection.ReadWriteTimeout = readTimeout;
+            }
 #endif
-			// Make the request
-			connection.ContentType = "application/x-thrift";
-			connection.Accept = "application/x-thrift";
-			connection.UserAgent = "C#/THttpClient";
-			connection.Method = "POST";
+            // Make the request
+            connection.ContentType = "application/x-thrift";
+            connection.Accept = "application/x-thrift";
+            connection.UserAgent = "C#/THttpClient";
+            connection.Method = "POST";
 #if !SILVERLIGHT
-			connection.ProtocolVersion = HttpVersion.Version10;
+            connection.ProtocolVersion = HttpVersion.Version10;
 #endif
 
             //add custom headers here
-			foreach (KeyValuePair<string, string> item in customHeaders)
-			{
+            foreach (KeyValuePair<string, string> item in customHeaders)
+            {
 #if !SILVERLIGHT
-				connection.Headers.Add(item.Key, item.Value);
+                connection.Headers.Add(item.Key, item.Value);
 #else
                 connection.Headers[item.Key] = item.Value;
 #endif
-			}
+            }
 
 #if !SILVERLIGHT
             connection.Proxy = proxy;
 #endif
 
             return connection;
-		}
+        }
 
         public override IAsyncResult BeginFlush(AsyncCallback callback, object state)
         {
@@ -354,12 +433,12 @@ namespace Thrift.Transport
             }
             internal void UpdateStatusToComplete()
             {
-                _isCompleted = true; //1. set _iscompleted to true 
+                _isCompleted = true; //1. set _iscompleted to true
                 lock (_locker)
                 {
                     if (_evt != null)
                     {
-                        _evt.Set(); //2. set the event, when it exists 
+                        _evt.Set(); //2. set the event, when it exists
                     }
                 }
             }
@@ -374,23 +453,23 @@ namespace Thrift.Transport
         }
 
 #region " IDisposable Support "
-		private bool _IsDisposed;
+        private bool _IsDisposed;
 
-		// IDisposable
-		protected override void Dispose(bool disposing)
-		{
-			if (!_IsDisposed)
-			{
-				if (disposing)
-				{
-					if (inputStream != null)
-						inputStream.Dispose();
-					if (outputStream != null)
-						outputStream.Dispose();
-				}
-			}
-			_IsDisposed = true;
-		}
+        // IDisposable
+        protected override void Dispose(bool disposing)
+        {
+            if (!_IsDisposed)
+            {
+                if (disposing)
+                {
+                    if (inputStream != null)
+                        inputStream.Dispose();
+                    if (outputStream != null)
+                        outputStream.Dispose();
+                }
+            }
+            _IsDisposed = true;
+        }
 #endregion
-	}
+    }
 }

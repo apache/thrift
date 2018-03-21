@@ -17,10 +17,12 @@
 # under the License.
 #
 
+AUTOMAKE_OPTIONS = serial-tests
+
+BUILT_SOURCES = trusted-ca-certificate.pem server-certificate.pem
+
 
 # Thrift compiler rules
-
-THRIFT = $(top_builddir)/compiler/cpp/thrift
 
 debug_proto_gen = $(addprefix gen-d/, DebugProtoTest_types.d)
 
@@ -70,7 +72,7 @@ endif
 
 if WITH_D_SSL_TESTS
 d_test_flags += $(DMD_OPENSSL_FLAGS) ../$(D_SSL_LIB_NAME)
-targets = trusted-ca-certificate.pem server-certificate.pem $(targets_)
+targets = $(targets_)
 ran_tests = $(ran_tests_)
 else
 targets = $(filter-out $(openssl_dependent_targets), $(targets_))
@@ -121,3 +123,5 @@ thrift_test_runner.sh: thrift_test_client thrift_test_server \
 	trusted-ca-certificate.pem server-certificate.pem
 
 TESTS = $(ran_tests)
+
+precross: $(targets)

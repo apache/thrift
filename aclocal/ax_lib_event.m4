@@ -75,7 +75,7 @@ AC_DEFUN([AX_LIB_EVENT_DO_CHECK],
           AC_LANG_PUSH([C])
           dnl This can be changed to AC_LINK_IFELSE if you are cross-compiling,
           dnl but then the version cannot be checked.
-          AC_RUN_IFELSE([AC_LANG_PROGRAM([[
+          AC_LINK_IFELSE([AC_LANG_PROGRAM([[
           #include <sys/types.h>
           #include <event.h>
           ]], [[
@@ -165,7 +165,7 @@ AC_DEFUN([AX_LIB_EVENT],
             if test -n "$ax_libevent_path"; then
               AX_LIB_EVENT_DO_CHECK
             else
-              for ax_libevent_path in "" /usr /usr/local /opt /opt/local /opt/libevent "$LIBEVENT_ROOT" ; do
+              for ax_libevent_path in "" $lt_sysroot/usr $lt_sysroot/usr/local $lt_sysroot/opt $lt_sysroot/opt/local $lt_sysroot/opt/libevent "$LIBEVENT_ROOT" ; do
                 AX_LIB_EVENT_DO_CHECK
                 if test "$success" = "yes"; then
                   break;

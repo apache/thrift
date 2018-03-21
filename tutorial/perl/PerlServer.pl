@@ -68,14 +68,14 @@ sub calculate
     if ($num2 == 0)
     {
       my $x = new tutorial::InvalidOperation;
-      $x->what($op);
+      $x->whatOp($op);
       $x->why('Cannot divide by 0');
       die $x;
     }
     $val = $num1 / $num2;
   } else {
     my $x = new tutorial::InvalidOperation;
-    $x->what($op);
+    $x->whatOp($op);
     $x->why('Invalid operation');
     die $x;
   }

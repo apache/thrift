@@ -24,13 +24,14 @@ unit Thrift.Protocol.JSON;
 interface
 
 uses
+  Character,
   Classes,
   SysUtils,
   Math,
-  IdCoderMIME,
   Generics.Collections,
   Thrift.Transport,
-  Thrift.Protocol;
+  Thrift.Protocol,
+  Thrift.Utils;
 
 type
   IJSONProtocol = interface( IProtocol)
@@ -102,7 +103,7 @@ type
 
       private
         FHasData : Boolean;
-        FData    : TBytes;
+        FData    : Byte;
 
       public
         // Return and consume the next byte to be Read, either taking it from the
@@ -168,18 +169,18 @@ type
 
   public
     // IProtocol
-    procedure WriteMessageBegin( const aMsg : IMessage); override;
+    procedure WriteMessageBegin( const aMsg : TThriftMessage); override;
     procedure WriteMessageEnd; override;
-    procedure WriteStructBegin( const struc: IStruct); override;
+    procedure WriteStructBegin( const struc: TThriftStruct); override;
     procedure WriteStructEnd; override;
-    procedure WriteFieldBegin( const field: IField); override;
+    procedure WriteFieldBegin( const field: TThriftField); override;
     procedure WriteFieldEnd; override;
     procedure WriteFieldStop; override;
-    procedure WriteMapBegin( const map: IMap); override;
+    procedure WriteMapBegin( const map: TThriftMap); override;
     procedure WriteMapEnd; override;
-    procedure WriteListBegin( const list: IList); override;
+    procedure WriteListBegin( const list: TThriftList); override;
     procedure WriteListEnd(); override;
-    procedure WriteSetBegin( const set_: ISet ); override;
+    procedure WriteSetBegin( const set_: TThriftSet ); override;
     procedure WriteSetEnd(); override;
     procedure WriteBool( b: Boolean); override;
     procedure WriteByte( b: ShortInt); override;
@@ -190,17 +191,17 @@ type
     procedure WriteString( const s: string );   override;
     procedure WriteBinary( const b: TBytes); override;
     //
-    function ReadMessageBegin: IMessage; override;
+    function ReadMessageBegin: TThriftMessage; override;
     procedure ReadMessageEnd(); override;
-    function ReadStructBegin: IStruct; override;
+    function ReadStructBegin: TThriftStruct; override;
     procedure ReadStructEnd; override;
-    function ReadFieldBegin: IField; override;
+    function ReadFieldBegin: TThriftField; override;
     procedure ReadFieldEnd(); override;
-    function ReadMapBegin: IMap; override;
+    function ReadMapBegin: TThriftMap; override;
     procedure ReadMapEnd(); override;
-    function ReadListBegin: IList; override;
+    function ReadListBegin: TThriftList; override;
     procedure ReadListEnd(); override;
-    function ReadSetBegin: ISet; override;
+    function ReadSetBegin: TThriftSet; override;
     procedure ReadSetEnd(); override;
     function ReadBool: Boolean; override;
     function ReadByte: ShortInt; override;
@@ -309,7 +310,7 @@ begin
     TType.Set_:     result := NAME_SET;
     TType.List:     result := NAME_LIST;
   else
-    raise TProtocolException.Create( TProtocolException.NOT_IMPLEMENTED, 'Unrecognized type ('+IntToStr(Ord(typeID))+')');
+    raise TProtocolExceptionNotImplemented.Create('Unrecognized type ('+IntToStr(Ord(typeID))+')');
   end;
 end;
 
@@ -327,7 +328,7 @@ begin
   else if name = NAME_MAP    then result := TType.Map
   else if name = NAME_LIST   then result := TType.List
   else if name = NAME_SET    then result := TType.Set_
-  else raise TProtocolException.Create( TProtocolException.NOT_IMPLEMENTED, 'Unrecognized type ('+name+')');
+  else raise TProtocolExceptionNotImplemented.Create('Unrecognized type ('+name+')');
 end;
 
 
@@ -436,21 +437,19 @@ begin
   if FHasData
   then FHasData := FALSE
   else begin
-    SetLength( FData, 1);
-    IJSONProtocol(FProto).Transport.ReadAll( FData, 0, 1);
+    IJSONProtocol(FProto).Transport.ReadAll( @FData, SizeOf(FData), 0, 1);
   end;
-  result := FData[0];
+  result := FData;
 end;
 
 
 function TJSONProtocolImpl.TLookaheadReader.Peek : Byte;
 begin
   if not FHasData then begin
-    SetLength( FData, 1);
-    IJSONProtocol(FProto).Transport.ReadAll( FData, 0, 1);
+    IJSONProtocol(FProto).Transport.ReadAll( @FData, SizeOf(FData), 0, 1);
     FHasData := TRUE;
   end;
-  result := FData[0];
+  result := FData;
 end;
 
 
@@ -505,7 +504,7 @@ var ch : Byte;
 begin
   ch := FReader.Read;
   if (ch <> b)
-  then raise TProtocolException.Create( TProtocolException.INVALID_DATA, 'Unexpected character ('+Char(ch)+')');
+  then raise TProtocolExceptionInvalidData.Create('Unexpected character ('+Char(ch)+')');
 end;
 
 
@@ -515,7 +514,7 @@ begin
   i := StrToIntDef( '$0'+Char(ch), -1);
   if (0 <= i) and (i < $10)
   then result := i
-  else raise TProtocolException.Create( TProtocolException.INVALID_DATA, 'Expected hex character ('+Char(ch)+')');
+  else raise TProtocolExceptionInvalidData.Create('Expected hex character ('+Char(ch)+')');
 end;
 
 
@@ -622,24 +621,29 @@ end;
 
 
 procedure TJSONProtocolImpl.WriteJSONBase64( const b : TBytes);
-var str : string;
-    tmp : TBytes;
-    i   : Integer;
+var len, off, cnt : Integer;
+    tmpBuf : TBytes;
 begin
   FContext.Write;
   Transport.Write( QUOTE);
 
-  // First base64-encode b, then write the resulting 8-bit chars
-  // Unfortunately, EncodeBytes() returns a string of 16-bit (wide) chars
-  // And for the sake of efficiency, we want to write everything at once
-  str := TIdEncoderMIME.EncodeBytes(b);
-  ASSERT( SizeOf(str[1]) = SizeOf(Word));
-  SetLength( tmp, Length(str));
-  for i := 1 to Length(str) do begin
-    ASSERT( Hi(Word(str[i])) = 0);   // base64 consists of a well-defined set of 8-bit chars only
-    tmp[i-1] := Lo(Word(str[i]));    // extract the lower byte
+  len := Length(b);
+  off := 0;
+  SetLength( tmpBuf, 4);
+
+  while len >= 3 do begin
+    // Encode 3 bytes at a time
+    Base64Utils.Encode( b, off, 3, tmpBuf, 0);
+    Transport.Write( tmpBuf, 0, 4);
+    Inc( off, 3);
+    Dec( len, 3);
   end;
-  Transport.Write( tmp);  // now write all the data
+
+  // Encode remainder, if any
+  if len > 0 then begin
+    cnt := Base64Utils.Encode( b, off, len, tmpBuf, 0);
+    Transport.Write( tmpBuf, 0, cnt);
+  end;
 
   Transport.Write( QUOTE);
 end;
@@ -675,7 +679,7 @@ begin
 end;
 
 
-procedure TJSONProtocolImpl.WriteMessageBegin( const aMsg : IMessage);
+procedure TJSONProtocolImpl.WriteMessageBegin( const aMsg : TThriftMessage);
 begin
   ResetContextStack;  // THRIFT-1473
 
@@ -694,7 +698,7 @@ begin
 end;
 
 
-procedure TJSONProtocolImpl.WriteStructBegin( const struc: IStruct);
+procedure TJSONProtocolImpl.WriteStructBegin( const struc: TThriftStruct);
 begin
   WriteJSONObjectStart;
 end;
@@ -706,7 +710,7 @@ begin
 end;
 
 
-procedure TJSONProtocolImpl.WriteFieldBegin( const field : IField);
+procedure TJSONProtocolImpl.WriteFieldBegin( const field : TThriftField);
 begin
   WriteJSONInteger(field.ID);
   WriteJSONObjectStart;
@@ -725,7 +729,7 @@ begin
   // nothing to do
 end;
 
-procedure TJSONProtocolImpl.WriteMapBegin( const map: IMap);
+procedure TJSONProtocolImpl.WriteMapBegin( const map: TThriftMap);
 begin
   WriteJSONArrayStart;
   WriteJSONString( GetTypeNameForTypeID( map.KeyType));
@@ -742,7 +746,7 @@ begin
 end;
 
 
-procedure TJSONProtocolImpl.WriteListBegin( const list: IList);
+procedure TJSONProtocolImpl.WriteListBegin( const list: TThriftList);
 begin
   WriteJSONArrayStart;
   WriteJSONString( GetTypeNameForTypeID( list.ElementType));
@@ -756,7 +760,7 @@ begin
 end;
 
 
-procedure TJSONProtocolImpl.WriteSetBegin( const set_: ISet);
+procedure TJSONProtocolImpl.WriteSetBegin( const set_: TThriftSet);
 begin
   WriteJSONArrayStart;
   WriteJSONString( GetTypeNameForTypeID( set_.ElementType));
@@ -816,9 +820,12 @@ function TJSONProtocolImpl.ReadJSONString( skipContext : Boolean) : TBytes;
 var buffer : TMemoryStream;
     ch  : Byte;
     wch : Word;
+    highSurogate: Char;
+    surrogatePairs: Array[0..1] of Char;
     off : Integer;
     tmp : TBytes;
 begin
+  highSurogate := #0;
   buffer := TMemoryStream.Create;
   try
     if not skipContext
@@ -844,7 +851,7 @@ begin
       then begin
         off := Pos( Char(ch), ESCAPE_CHARS);
         if off < 1
-        then raise TProtocolException.Create( TProtocolException.INVALID_DATA, 'Expected control char');
+        then raise TProtocolExceptionInvalidData.Create('Expected control char');
         ch := Byte( ESCAPE_CHAR_VALS[off]);
         buffer.Write( ch, 1);
         Continue;
@@ -857,10 +864,30 @@ begin
            + (HexVal(tmp[1]) shl 8)
            + (HexVal(tmp[2]) shl 4)
            +  HexVal(tmp[3]);
+
       // we need to make UTF8 bytes from it, to be decoded later
-      tmp := SysUtils.TEncoding.UTF8.GetBytes(Char(wch));
-      buffer.Write( tmp[0], length(tmp));
+      if CharUtils.IsHighSurrogate(char(wch)) then begin
+        if highSurogate <> #0
+        then raise TProtocolExceptionInvalidData.Create('Expected low surrogate char');
+        highSurogate := char(wch);
+      end
+      else if CharUtils.IsLowSurrogate(char(wch)) then begin
+        if highSurogate = #0
+        then TProtocolExceptionInvalidData.Create('Expected high surrogate char');
+        surrogatePairs[0] := highSurogate;
+        surrogatePairs[1] := char(wch);
+        tmp := TEncoding.UTF8.GetBytes(surrogatePairs);
+        buffer.Write( tmp[0], Length(tmp));
+        highSurogate := #0;
+      end
+      else begin
+        tmp := SysUtils.TEncoding.UTF8.GetBytes(Char(wch));
+        buffer.Write( tmp[0], Length(tmp));
+      end;
     end;
+
+    if highSurogate <> #0
+    then raise TProtocolExceptionInvalidData.Create('Expected low surrogate char');
 
     SetLength( result, buffer.Size);
     if buffer.Size > 0 then Move( buffer.Memory^, result[0], Length(result));
@@ -914,8 +941,7 @@ begin
     result := StrToInt64(str);
   except
     on e:Exception do begin
-      raise TProtocolException.Create( TProtocolException.INVALID_DATA,
-                                       'Bad data encounted in numeric data ('+str+') ('+e.Message+')');
+      raise TProtocolExceptionInvalidData.Create('Bad data encounted in numeric data ('+str+') ('+e.Message+')');
     end;
   end;
 end;
@@ -937,7 +963,7 @@ begin
     and not Math.IsInfinite(dub)
     then begin
       // Throw exception -- we should not be in a string in  Self case
-      raise TProtocolException.Create( TProtocolException.INVALID_DATA, 'Numeric data unexpectedly quoted');
+      raise TProtocolExceptionInvalidData.Create('Numeric data unexpectedly quoted');
     end;
     result := dub;
     Exit;
@@ -952,20 +978,44 @@ begin
     result := StrToFloat( str, INVARIANT_CULTURE);
   except
     on e:Exception
-    do raise TProtocolException.Create( TProtocolException.INVALID_DATA,
-                                       'Bad data encounted in numeric data ('+str+') ('+e.Message+')');
+    do raise TProtocolExceptionInvalidData.Create('Bad data encounted in numeric data ('+str+') ('+e.Message+')');
   end;
 end;
 
 
 function TJSONProtocolImpl.ReadJSONBase64 : TBytes;
 var b : TBytes;
-    str : string;
+    len, off, size : Integer;
 begin
   b := ReadJSONString(false);
 
-  SetString( str, PAnsiChar(b), Length(b));
-  result := TIdDecoderMIME.DecodeBytes( str);
+  len := Length(b);
+  off := 0;
+  size := 0;
+
+  // reduce len to ignore fill bytes
+  Dec(len);
+  while (len >= 0) and (b[len] = Byte('=')) do Dec(len);
+  Inc(len);
+
+  // read & decode full byte triplets = 4 source bytes
+  while (len >= 4) do begin
+    // Decode 4 bytes at a time
+    Inc( size, Base64Utils.Decode( b, off, 4, b, size)); // decoded in place
+    Inc( off, 4);
+    Dec( len, 4);
+  end;
+
+  // Don't decode if we hit the end or got a single leftover byte (invalid
+  // base64 but legal for skip of regular string type)
+  if len > 1 then begin
+    // Decode remainder
+    Inc( size, Base64Utils.Decode( b, off, len, b, size)); // decoded in place
+  end;
+
+  // resize to final size and return the data
+  SetLength( b, size);
+  result := b;
 end;
 
 
@@ -999,15 +1049,15 @@ begin
 end;
 
 
-function TJSONProtocolImpl.ReadMessageBegin: IMessage;
+function TJSONProtocolImpl.ReadMessageBegin: TThriftMessage;
 begin
   ResetContextStack;  // THRIFT-1473
 
-  result := TMessageImpl.Create;
+  Init( result);
   ReadJSONArrayStart;
 
   if ReadJSONInteger <> VERSION
-  then raise TProtocolException.Create( TProtocolException.BAD_VERSION, 'Message contained bad version.');
+  then raise TProtocolExceptionBadVersion.Create('Message contained bad version.');
 
   result.Name  := SysUtils.TEncoding.UTF8.GetString( ReadJSONString( FALSE));
   result.Type_ := TMessageType( ReadJSONInteger);
@@ -1021,10 +1071,10 @@ begin
 end;
 
 
-function TJSONProtocolImpl.ReadStructBegin : IStruct ;
+function TJSONProtocolImpl.ReadStructBegin : TThriftStruct ;
 begin
   ReadJSONObjectStart;
-  result := TStructImpl.Create('');
+  Init( result);
 end;
 
 
@@ -1034,11 +1084,11 @@ begin
 end;
 
 
-function TJSONProtocolImpl.ReadFieldBegin : IField;
+function TJSONProtocolImpl.ReadFieldBegin : TThriftField;
 var ch : Byte;
     str : string;
 begin
-  result := TFieldImpl.Create;
+  Init( result);
   ch := FReader.Peek;
   if ch = RBRACE[0]
   then result.Type_ := TType.Stop
@@ -1058,10 +1108,10 @@ begin
 end;
 
 
-function TJSONProtocolImpl.ReadMapBegin : IMap;
+function TJSONProtocolImpl.ReadMapBegin : TThriftMap;
 var str : string;
 begin
-  result := TMapImpl.Create;
+  Init( result);
   ReadJSONArrayStart;
 
   str := SysUtils.TEncoding.UTF8.GetString( ReadJSONString(FALSE));
@@ -1082,10 +1132,10 @@ begin
 end;
 
 
-function TJSONProtocolImpl.ReadListBegin : IList;
+function TJSONProtocolImpl.ReadListBegin : TThriftList;
 var str : string;
 begin
-  result := TListImpl.Create;
+  Init( result);
   ReadJSONArrayStart;
 
   str := SysUtils.TEncoding.UTF8.GetString( ReadJSONString(FALSE));
@@ -1100,10 +1150,10 @@ begin
 end;
 
 
-function TJSONProtocolImpl.ReadSetBegin : ISet;
+function TJSONProtocolImpl.ReadSetBegin : TThriftSet;
 var str : string;
 begin
-  result := TSetImpl.Create;
+  Init( result);
   ReadJSONArrayStart;
 
   str := SysUtils.TEncoding.UTF8.GetString( ReadJSONString(FALSE));

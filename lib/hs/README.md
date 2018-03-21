@@ -39,7 +39,7 @@ Base Types
 The mapping from Thrift types to Haskell's is:
 
  * double -> Double
- * byte -> Data.Word.Word8
+ * byte -> Data.Int.Int8
  * i16 -> Data.Int.Int16
  * i32 -> Data.Int.Int32
  * i64 -> Data.Int.Int64
@@ -89,7 +89,7 @@ an interface, declare a label:
   data MyIface = MyIface
 
 and then declare it an instance of each iface class, starting with the superest
-class and proceding down (all the while defining the methods).  Then pass your
+class and proceeding down (all the while defining the methods).  Then pass your
 label to process as the handler.
 
 Processor

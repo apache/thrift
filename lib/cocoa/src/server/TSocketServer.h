@@ -27,23 +27,25 @@
 #import <CFNetwork/CFNetwork.h>
 #endif
 
-extern NSString * const kTSocketServer_ClientConnectionFinishedForProcessorNotification;
-extern NSString * const kTSocketServer_ProcessorKey;
-extern NSString * const kTSockerServer_TransportKey;
+NS_ASSUME_NONNULL_BEGIN
 
 
-@interface TSocketServer : NSObject {
-  NSFileHandle * mSocketFileHandle;
-  id <TProtocolFactory> mInputProtocolFactory;
-  id <TProtocolFactory> mOutputProtocolFactory;
-  id <TProcessorFactory> mProcessorFactory;
-}
+extern NSString *const TSocketServerClientConnectionFinished;
+extern NSString *const TSocketServerProcessorKey;
+extern NSString *const TSockerServerTransportKey;
 
-- (id) initWithPort: (int) port
-    protocolFactory: (id <TProtocolFactory>) protocolFactory
-   processorFactory: (id <TProcessorFactory>) processorFactory;
+
+@interface TSocketServer : NSObject
+
+-(instancetype) initWithPort:(int)port
+             protocolFactory:(id <TProtocolFactory>)protocolFactory
+            processorFactory:(id <TProcessorFactory>)processorFactory;
+
+- (instancetype) initWithPath: (NSString *) path
+              protocolFactory: (id <TProtocolFactory>) protocolFactory
+             processorFactory: (id <TProcessorFactory>) processorFactory;
 
 @end
 
 
-
+NS_ASSUME_NONNULL_END

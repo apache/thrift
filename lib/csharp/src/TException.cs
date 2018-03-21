@@ -25,16 +25,16 @@ using System;
 
 namespace Thrift
 {
-	public class TException : Exception
-	{
-		public TException()
-		{
-		}
+    public class TException : Exception
+    {
+        public TException()
+        {
+        }
 
-		public TException( string message)
-			: base(message)
-		{
-		}
+        public TException( string message)
+            : base(message)
+        {
+        }
 
-	}
+    }
 }

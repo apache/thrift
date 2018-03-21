@@ -42,7 +42,25 @@ public class TField {
     return "<TField name:'" + name + "' type:" + type + " field-id:" + id + ">";
   }
 
-  public boolean equals(TField otherField) {
+  @Override
+  public int hashCode() {
+    final int prime = 31;
+    int result = 1;
+    result = prime * result + id;
+    result = prime * result + ((name == null) ? 0 : name.hashCode());
+    result = prime * result + type;
+    return result;
+  }
+
+  @Override
+  public boolean equals(Object obj) {
+    if (this == obj)
+      return true;
+    if (obj == null)
+      return false;
+    if (getClass() != obj.getClass())
+      return false;
+    TField otherField = (TField) obj;
     return type == otherField.type && id == otherField.id;
   }
 }

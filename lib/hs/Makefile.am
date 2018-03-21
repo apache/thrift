@@ -18,16 +18,19 @@
 #
 
 EXTRA_DIST = \
-  LICENSE \
-  README.md \
-  Setup.lhs \
-  TODO \
-  Thrift.cabal \
-  src
+	coding_standards.md \
+	CMakeLists.txt \
+	LICENSE \
+	README.md \
+	Setup.lhs \
+	TODO \
+	thrift.cabal \
+	src \
+	test
 
 all-local:
-	$(CABAL) configure $(CABAL_CONFIGURE_FLAGS)
-	$(CABAL) build
+	$(CABAL) update
+	$(CABAL) install
 
 install-exec-hook:
 	$(CABAL) install
@@ -41,3 +44,7 @@ maintainer-clean-local:
 
 check-local:
 	$(CABAL) check
+	$(CABAL) install --only-dependencies --enable-tests
+	$(CABAL) configure --enable-tests
+	$(CABAL) build
+	$(CABAL) test

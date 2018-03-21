@@ -18,6 +18,7 @@
 # under the License.
 # 
 
+require 'base64'
 
 module Thrift
   class LookaheadReader
@@ -310,7 +311,7 @@ module Thrift
     def write_json_base64(str)
       @context.write(trans)
       trans.write(@@kJSONStringDelimiter)
-      write_json_string([str].pack("m"))
+      trans.write(Base64.strict_encode64(str))
       trans.write(@@kJSONStringDelimiter)
     end
 
@@ -332,7 +333,7 @@ module Thrift
     # "NaN" or "Infinity" or "-Infinity".
     def write_json_double(num)
       @context.write(trans)
-      # Normalize output of boost::lexical_cast for NaNs and Infinities
+      # Normalize output of thrift::to_string for NaNs and Infinities
       special = false;
       if (num.nan?)
         special = true;
@@ -513,7 +514,7 @@ module Thrift
       # The elements of this array must match up with the sequence of characters in
       # escape_chars
       escape_char_vals = [
-        '"', '\\', '/', '\b', '\f', '\n', '\r', '\t',
+        "\"", "\\", "\/", "\b", "\f", "\n", "\r", "\t",
       ]
 
       if !skipContext
@@ -546,7 +547,15 @@ module Thrift
 
     # Reads a block of base64 characters, decoding it, and returns via str
     def read_json_base64
-      read_json_string.unpack("m")[0]
+      str = read_json_string
+      m = str.length % 4
+      if m != 0
+        # Add missing padding
+        (4 - m).times do
+          str += '='
+        end
+      end
+      Base64.strict_decode64(str)
     end
 
     # Reads a sequence of characters, stopping at the first one that is not
@@ -759,11 +768,19 @@ module Thrift
     def read_binary
       read_json_base64
     end
+
+    def to_s
+      "json(#{super.to_s})"
+    end
   end
 
   class JsonProtocolFactory < BaseProtocolFactory
     def get_protocol(trans)
       return Thrift::JsonProtocol.new(trans)
+    end
+
+    def to_s
+      "json"
     end
   end
 end

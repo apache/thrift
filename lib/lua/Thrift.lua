@@ -40,6 +40,14 @@ function terror(e)
   error(e)
 end
 
+function ttable_size(t)
+  local count = 0
+  for k, v in pairs(t) do
+    count = count + 1
+  end
+  return count
+end
+
 version = 1.0
 
 TType = {
@@ -69,7 +77,7 @@ TMessageType = {
   ONEWAY = 4
 }
 
--- Recursive __index function to achive inheritance
+-- Recursive __index function to achieve inheritance
 function __tobj_index(self, key)
   local v = rawget(self, key)
   if v ~= nil then

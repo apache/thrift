@@ -21,74 +21,74 @@ using System.Collections;
 
 namespace Thrift.Collections
 {
-	public class TCollections
-	{
-		/// <summary>
-		/// This will return true if the two collections are value-wise the same.
-		/// If the collection contains a collection, the collections will be compared using this method.
-		/// </summary>
-		public static bool Equals (IEnumerable first, IEnumerable second)
-		{
-			if (first == null && second == null)
-			{
-				return true;
-			}
-			if (first == null || second == null)
-			{
-				return false;
-			}
-			IEnumerator fiter = first.GetEnumerator ();
-			IEnumerator siter = second.GetEnumerator ();
+    public class TCollections
+    {
+        /// <summary>
+        /// This will return true if the two collections are value-wise the same.
+        /// If the collection contains a collection, the collections will be compared using this method.
+        /// </summary>
+        public static bool Equals (IEnumerable first, IEnumerable second)
+        {
+            if (first == null && second == null)
+            {
+                return true;
+            }
+            if (first == null || second == null)
+            {
+                return false;
+            }
+            IEnumerator fiter = first.GetEnumerator ();
+            IEnumerator siter = second.GetEnumerator ();
 
-			bool fnext = fiter.MoveNext ();
-			bool snext = siter.MoveNext ();
-			while (fnext && snext)
-			{
-				IEnumerable fenum = fiter.Current as IEnumerable;
-				IEnumerable senum = siter.Current as IEnumerable;
-				if (fenum != null && senum != null)
-				{
-					if (!Equals(fenum, senum))
-					{
-						return false;
-					}
-				}
-				else if (fenum == null ^ senum == null)
-				{
-					return false;
-				}
-				else if (!Equals(fiter.Current, siter.Current))
-				{
-					return false;
-				}
-				fnext = fiter.MoveNext();
-				snext = siter.MoveNext();
-			}
+            bool fnext = fiter.MoveNext ();
+            bool snext = siter.MoveNext ();
+            while (fnext && snext)
+            {
+                IEnumerable fenum = fiter.Current as IEnumerable;
+                IEnumerable senum = siter.Current as IEnumerable;
+                if (fenum != null && senum != null)
+                {
+                    if (!Equals(fenum, senum))
+                    {
+                        return false;
+                    }
+                }
+                else if (fenum == null ^ senum == null)
+                {
+                    return false;
+                }
+                else if (!Equals(fiter.Current, siter.Current))
+                {
+                    return false;
+                }
+                fnext = fiter.MoveNext();
+                snext = siter.MoveNext();
+            }
 
-			return fnext == snext;
-		}
+            return fnext == snext;
+        }
 
-		/// <summary>
-		/// This returns a hashcode based on the value of the enumerable.
-		/// </summary>
-		public static int GetHashCode (IEnumerable enumerable)
-		{
-			if (enumerable == null)
-			{
-				return 0;
-			}
+        /// <summary>
+        /// This returns a hashcode based on the value of the enumerable.
+        /// </summary>
+        public static int GetHashCode (IEnumerable enumerable)
+        {
+            if (enumerable == null)
+            {
+                return 0;
+            }
 
-			int hashcode = 0;
-			foreach (Object obj in enumerable)
-			{
-				IEnumerable enum2 = obj as IEnumerable;
-				int objHash = enum2 == null ? obj.GetHashCode () : GetHashCode (enum2);
-				unchecked
-				{
-					hashcode = (hashcode * 397) ^ (objHash);
-				}
-			}
-			return hashcode;
-		}
-	}
+            int hashcode = 0;
+            foreach (Object obj in enumerable)
+            {
+                IEnumerable enum2 = obj as IEnumerable;
+                int objHash = enum2 == null ? obj.GetHashCode () : GetHashCode (enum2);
+                unchecked
+                {
+                    hashcode = (hashcode * 397) ^ (objHash);
+                }
+            }
+            return hashcode;
+        }
+    }
 }

@@ -27,12 +27,12 @@ using Thrift.Transport;
 using System.Collections.Generic;
 using System.IO;
 
-namespace Thrift.Protocol 
+namespace Thrift.Protocol
 {
 
     /**
      * TMultiplexedProcessor is a TProcessor allowing a single TServer to provide multiple services.
-     * To do so, you instantiate the processor and then register additional processors with it, 
+     * To do so, you instantiate the processor and then register additional processors with it,
      * as shown in the following example:
      *
      *     TMultiplexedProcessor processor = new TMultiplexedProcessor();
@@ -50,26 +50,26 @@ namespace Thrift.Protocol
      *
      *     server.serve();
      */
-    public class TMultiplexedProcessor : TProcessor 
+    public class TMultiplexedProcessor : TProcessor
     {
         private Dictionary<String,TProcessor> ServiceProcessorMap = new Dictionary<String,TProcessor>();
 
         /**
-         * 'Register' a service with this TMultiplexedProcessor. This allows us to broker 
+         * 'Register' a service with this TMultiplexedProcessor. This allows us to broker
          * requests to individual services by using the service name to select them at request time.
          *
-         * Args: 
+         * Args:
          * - serviceName    Name of a service, has to be identical to the name
          *                  declared in the Thrift IDL, e.g. "WeatherReport".
-         * - processor      Implementation of a service, ususally referred to as "handlers", 
+         * - processor      Implementation of a service, usually referred to as "handlers",
          *                  e.g. WeatherReportHandler implementing WeatherReport.Iface.
          */
-        public void RegisterProcessor(String serviceName, TProcessor processor) 
+        public void RegisterProcessor(String serviceName, TProcessor processor)
         {
             ServiceProcessorMap.Add(serviceName, processor);
         }
 
-        
+
         private void Fail( TProtocol oprot, TMessage message, TApplicationException.ExceptionType extype, string etxt)
         {
             TApplicationException appex = new TApplicationException( extype, etxt);
@@ -81,8 +81,8 @@ namespace Thrift.Protocol
             oprot.WriteMessageEnd();
             oprot.Transport.Flush();
         }
-            
-        
+
+
         /**
          * This implementation of process performs the following steps:
          *
@@ -91,11 +91,11 @@ namespace Thrift.Protocol
          * - Using the service name to locate the appropriate processor.
          * - Dispatch to the processor, with a decorated instance of TProtocol
          *    that allows readMessageBegin() to return the original TMessage.
-         *  
-         * Throws an exception if 
-         * - the message type is not CALL or ONEWAY, 
-         * - the service name was not found in the message, or 
-         * - the service name has not been RegisterProcessor()ed.  
+         *
+         * Throws an exception if
+         * - the message type is not CALL or ONEWAY,
+         * - the service name was not found in the message, or
+         * - the service name has not been RegisterProcessor()ed.
          */
         public bool Process(TProtocol iprot, TProtocol oprot)
         {
@@ -160,17 +160,17 @@ namespace Thrift.Protocol
          *  to allow them to call readMessageBegin() and get a TMessage in exactly
          *  the standard format, without the service name prepended to TMessage.name.
          */
-        private class StoredMessageProtocol : TProtocolDecorator 
+        private class StoredMessageProtocol : TProtocolDecorator
         {
             TMessage MsgBegin;
 
-            public StoredMessageProtocol(TProtocol protocol, TMessage messageBegin) 
+            public StoredMessageProtocol(TProtocol protocol, TMessage messageBegin)
                 :base(protocol)
             {
                 this.MsgBegin = messageBegin;
             }
 
-            public override TMessage ReadMessageBegin()  
+            public override TMessage ReadMessageBegin()
             {
                 return MsgBegin;
             }

@@ -30,20 +30,23 @@
 #include <unistd.h>
 #endif
 
-namespace apache { namespace thrift { namespace server {
+namespace apache {
+namespace thrift {
+namespace server {
 
 #ifdef HAVE_SYS_RESOURCE_H
-int increase_max_fds(int max_fds=(1<<24))  {
+int increase_max_fds(int max_fds = (1 << 24)) {
   struct rlimit fdmaxrl;
 
-  for(fdmaxrl.rlim_cur = max_fds, fdmaxrl.rlim_max = max_fds;
-      max_fds && (setrlimit(RLIMIT_NOFILE, &fdmaxrl) < 0);
-      fdmaxrl.rlim_cur = max_fds, fdmaxrl.rlim_max = max_fds) {
+  for (fdmaxrl.rlim_cur = max_fds, fdmaxrl.rlim_max = max_fds;
+       max_fds && (setrlimit(RLIMIT_NOFILE, &fdmaxrl) < 0);
+       fdmaxrl.rlim_cur = max_fds, fdmaxrl.rlim_max = max_fds) {
     max_fds /= 2;
   }
 
   return static_cast<int>(fdmaxrl.rlim_cur);
 }
 #endif
-
-}}} // apache::thrift::server
+}
+}
+} // apache::thrift::server

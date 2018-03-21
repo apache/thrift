@@ -27,7 +27,6 @@ using apache::thrift::protocol::TProtocol;
 
 namespace apache { namespace thrift { namespace server {
 
-
 bool TZmqServer::serveOne(int recv_flags) {
   zmq::message_t msg;
   bool received = sock_.recv(&msg, recv_flags);
@@ -40,8 +39,9 @@ bool TZmqServer::serveOne(int recv_flags) {
       inputProtocolFactory_->getProtocol(inputTransport));
   shared_ptr<TProtocol> outputProtocol(
       outputProtocolFactory_->getProtocol(outputTransport));
+  shared_ptr<TMemoryBuffer> transport(new TMemoryBuffer);
 
-  processor_->process(inputProtocol, outputProtocol);
+  processor_->process(inputProtocol, outputProtocol, NULL);
 
   if (zmq_type_ == ZMQ_REP) {
     uint8_t* buf;

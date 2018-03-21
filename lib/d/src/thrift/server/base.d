@@ -37,7 +37,7 @@ class TServer {
   /**
    * Starts serving.
    *
-   * Blocks until the server finishes, i.e. a serious problem occured or the
+   * Blocks until the server finishes, i.e. a serious problem occurred or the
    * cancellation request has been triggered.
    *
    * Server implementations are expected to implement cancellation in a best-

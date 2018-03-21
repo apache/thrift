@@ -102,7 +102,7 @@ void testServeCancel(Server)(void delegate(Server) serverSetup = null) if (
         servingCondition.wait();
 
         cancel.trigger();
-        enforce(doneCondition.wait(dur!"msecs"(100)));
+        enforce(doneCondition.wait(dur!"msecs"(3*1000)));
         serverThread.join();
       }
     }

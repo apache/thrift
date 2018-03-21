@@ -26,6 +26,7 @@ uses
   SysUtils,
   Multiplex.Client.Main in 'Multiplex.Client.Main.pas',
   Thrift in '..\..\src\Thrift.pas',
+  Thrift.Socket in '..\..\src\Thrift.Socket.pas',
   Thrift.Transport in '..\..\src\Thrift.Transport.pas',
   Thrift.Transport.Pipes in '..\..\src\Thrift.Transport.Pipes.pas',
   Thrift.Protocol in '..\..\src\Thrift.Protocol.pas',
@@ -33,7 +34,7 @@ uses
   Thrift.Collections in '..\..\src\Thrift.Collections.pas',
   Thrift.Server in '..\..\src\Thrift.Server.pas',
   Thrift.Stream in '..\..\src\Thrift.Stream.pas',
-  Thrift.Console in '..\..\src\Thrift.Console.pas',
+  Thrift.TypeRegistry in '..\..\src\Thrift.TypeRegistry.pas',
   Thrift.Utils in '..\..\src\Thrift.Utils.pas';
 
 var

@@ -20,11 +20,11 @@
  * @package thrift
  */
 
-
 /**
  * Data types that can be sent via Thrift
  */
-class TType {
+class TType
+{
   const STOP   = 0;
   const VOID   = 1;
   const BOOL   = 2;
@@ -47,7 +47,8 @@ class TType {
 /**
  * Message types for RPC
  */
-class TMessageType {
+class TMessageType
+{
   const CALL  = 1;
   const REPLY = 2;
   const EXCEPTION = 3;
@@ -67,8 +68,10 @@ class TMessageType {
  * @param mixed $p1 Message (string) or type-spec (array)
  * @param mixed $p2 Code (integer) or values (array)
  */
-class TException extends Exception {
-  function __construct($p1=null, $p2=0) {
+class TException extends Exception
+{
+  public function __construct($p1=null, $p2=0)
+  {
     if (is_array($p1) && is_array($p2)) {
       $spec = $p1;
       $vals = $p2;
@@ -91,7 +94,8 @@ class TException extends Exception {
                           TType::DOUBLE => 'Double',
                           TType::STRING => 'String');
 
-  private function _readMap(&$var, $spec, $input) {
+  private function _readMap(&$var, $spec, $input)
+  {
     $xfer = 0;
     $ktype = $spec['ktype'];
     $vtype = $spec['vtype'];
@@ -154,10 +158,12 @@ class TException extends Exception {
       $var[$key] = $val;
     }
     $xfer += $input->readMapEnd();
+
     return $xfer;
   }
 
-  private function _readList(&$var, $spec, $input, $set=false) {
+  private function _readList(&$var, $spec, $input, $set=false)
+  {
     $xfer = 0;
     $etype = $spec['etype'];
     $eread = $vread = null;
@@ -207,10 +213,12 @@ class TException extends Exception {
     } else {
       $xfer += $input->readListEnd();
     }
+
     return $xfer;
   }
 
-  protected function _read($class, $spec, $input) {
+  protected function _read($class, $spec, $input)
+  {
     $xfer = 0;
     $fname = null;
     $ftype = 0;
@@ -256,10 +264,12 @@ class TException extends Exception {
       $xfer += $input->readFieldEnd();
     }
     $xfer += $input->readStructEnd();
+
     return $xfer;
   }
 
-  private function _writeMap($var, $spec, $output) {
+  private function _writeMap($var, $spec, $output)
+  {
     $xfer = 0;
     $ktype = $spec['ktype'];
     $vtype = $spec['vtype'];
@@ -314,10 +324,12 @@ class TException extends Exception {
       }
     }
     $xfer += $output->writeMapEnd();
+
     return $xfer;
   }
 
-  private function _writeList($var, $spec, $output, $set=false) {
+  private function _writeList($var, $spec, $output, $set=false)
+  {
     $xfer = 0;
     $etype = $spec['etype'];
     $ewrite = null;
@@ -357,10 +369,12 @@ class TException extends Exception {
     } else {
       $xfer += $output->writeListEnd();
     }
+
     return $xfer;
   }
 
-  protected function _write($class, $spec, $output) {
+  protected function _write($class, $spec, $output)
+  {
     $xfer = 0;
     $xfer += $output->writeStructBegin($class);
     foreach ($spec as $fid => $fspec) {
@@ -392,6 +406,7 @@ class TException extends Exception {
     }
     $xfer += $output->writeFieldStop();
     $xfer += $output->writeStructEnd();
+
     return $xfer;
   }
 
@@ -404,8 +419,8 @@ class TException extends Exception {
  * of PHP. Note that code is intentionally duplicated in here to avoid making
  * function calls for every field or member of a container..
  */
-abstract class TBase {
-
+abstract class TBase
+{
   static $tmethod = array(TType::BOOL   => 'Bool',
                           TType::BYTE   => 'Byte',
                           TType::I16    => 'I16',
@@ -414,11 +429,12 @@ abstract class TBase {
                           TType::DOUBLE => 'Double',
                           TType::STRING => 'String');
 
-  abstract function read($input);
+  abstract public function read($input);
 
-  abstract function write($output);
+  abstract public function write($output);
 
-  public function __construct($spec=null, $vals=null) {
+  public function __construct($spec=null, $vals=null)
+  {
     if (is_array($spec) && is_array($vals)) {
       foreach ($spec as $fid => $fspec) {
         $var = $fspec['var'];
@@ -429,7 +445,8 @@ abstract class TBase {
     }
   }
 
-  private function _readMap(&$var, $spec, $input) {
+  private function _readMap(&$var, $spec, $input)
+  {
     $xfer = 0;
     $ktype = $spec['ktype'];
     $vtype = $spec['vtype'];
@@ -492,10 +509,12 @@ abstract class TBase {
       $var[$key] = $val;
     }
     $xfer += $input->readMapEnd();
+
     return $xfer;
   }
 
-  private function _readList(&$var, $spec, $input, $set=false) {
+  private function _readList(&$var, $spec, $input, $set=false)
+  {
     $xfer = 0;
     $etype = $spec['etype'];
     $eread = $vread = null;
@@ -545,10 +564,12 @@ abstract class TBase {
     } else {
       $xfer += $input->readListEnd();
     }
+
     return $xfer;
   }
 
-  protected function _read($class, $spec, $input) {
+  protected function _read($class, $spec, $input)
+  {
     $xfer = 0;
     $fname = null;
     $ftype = 0;
@@ -594,10 +615,12 @@ abstract class TBase {
       $xfer += $input->readFieldEnd();
     }
     $xfer += $input->readStructEnd();
+
     return $xfer;
   }
 
-  private function _writeMap($var, $spec, $output) {
+  private function _writeMap($var, $spec, $output)
+  {
     $xfer = 0;
     $ktype = $spec['ktype'];
     $vtype = $spec['vtype'];
@@ -652,10 +675,12 @@ abstract class TBase {
       }
     }
     $xfer += $output->writeMapEnd();
+
     return $xfer;
   }
 
-  private function _writeList($var, $spec, $output, $set=false) {
+  private function _writeList($var, $spec, $output, $set=false)
+  {
     $xfer = 0;
     $etype = $spec['etype'];
     $ewrite = null;
@@ -695,10 +720,12 @@ abstract class TBase {
     } else {
       $xfer += $output->writeListEnd();
     }
+
     return $xfer;
   }
 
-  protected function _write($class, $spec, $output) {
+  protected function _write($class, $spec, $output)
+  {
     $xfer = 0;
     $xfer += $output->writeStructBegin($class);
     foreach ($spec as $fid => $fspec) {
@@ -730,11 +757,13 @@ abstract class TBase {
     }
     $xfer += $output->writeFieldStop();
     $xfer += $output->writeStructEnd();
+
     return $xfer;
   }
 }
 
-class TApplicationException extends TException {
+class TApplicationException extends TException
+{
   static $_TSPEC =
     array(1 => array('var' => 'message',
                      'type' => TType::STRING),
@@ -750,15 +779,18 @@ class TApplicationException extends TException {
   const INTERNAL_ERROR = 6;
   const PROTOCOL_ERROR = 7;
 
-  function __construct($message=null, $code=0) {
+  public function __construct($message=null, $code=0)
+  {
     parent::__construct($message, $code);
   }
 
-  public function read($output) {
+  public function read($output)
+  {
     return $this->_read('TApplicationException', self::$_TSPEC, $output);
   }
 
-  public function write($output) {
+  public function write($output)
+  {
     $xfer = 0;
     $xfer += $output->writeStructBegin('TApplicationException');
     if ($message = $this->getMessage()) {
@@ -773,6 +805,7 @@ class TApplicationException extends TException {
     }
     $xfer += $output->writeFieldStop();
     $xfer += $output->writeStructEnd();
+
     return $xfer;
   }
 }
@@ -786,4 +819,3 @@ if (!isset($GLOBALS['THRIFT_ROOT'])) {
 include_once $GLOBALS['THRIFT_ROOT'].'/protocol/TProtocol.php';
 include_once $GLOBALS['THRIFT_ROOT'].'/transport/TTransport.php';
 include_once $GLOBALS['THRIFT_ROOT'].'/TStringUtils.php';
-

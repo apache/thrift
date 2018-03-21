@@ -19,18 +19,17 @@
 # under the License.
 #
 
-import sys
 import glob
-sys.path.append('gen-py.tornado')
-sys.path.insert(0, glob.glob('../../lib/py/build/lib.*')[0])
-
 import logging
+import sys
+
+sys.path.append('gen-py.tornado')
+sys.path.insert(0, glob.glob('../../lib/py/build/lib*')[0])
 
 from tutorial import Calculator
 from tutorial.ttypes import Operation, Work, InvalidOperation
 
 from thrift import TTornado
-from thrift.transport import TSocket
 from thrift.transport import TTransport
 from thrift.protocol import TBinaryProtocol
 
@@ -38,39 +37,38 @@ from tornado import gen
 from tornado import ioloop
 
 
-@gen.engine
-def communicate(callback=None):
+@gen.coroutine
+def communicate():
     # create client
     transport = TTornado.TTornadoStreamTransport('localhost', 9090)
+    # open the transport, bail on error
+    try:
+        yield transport.open()
+        print('Transport is opened')
+    except TTransport.TTransportException as ex:
+        logging.error(ex)
+        raise gen.Return()
+
     pfactory = TBinaryProtocol.TBinaryProtocolFactory()
     client = Calculator.Client(transport, pfactory)
 
-    # open the transport, bail on error
-    try:
-        yield gen.Task(transport.open)
-    except TTransport.TTransportException as ex:
-        logging.error(ex)
-        if callback:
-            callback()
-        return
-
     # ping
-    yield gen.Task(client.ping)
-    print "ping()"
+    yield client.ping()
+    print("ping()")
 
     # add
-    sum_ = yield gen.Task(client.add, 1, 1)
-    print "1 + 1 = {}".format(sum_)
+    sum_ = yield client.add(1, 1)
+    print("1 + 1 = {0}".format(sum_))
 
     # make a oneway call without a callback (schedule the write and continue
     # without blocking)
     client.zip()
-    print "zip() without callback"
+    print("zip() without callback")
 
     # make a oneway call with a callback (we'll wait for the stream write to
     # complete before continuing)
-    yield gen.Task(client.zip)
-    print "zip() with callback"
+    client.zip()
+    print("zip() with callback")
 
     # calculate 1/0
     work = Work()
@@ -79,37 +77,31 @@ def communicate(callback=None):
     work.num2 = 0
 
     try:
-        quotient = yield gen.Task(client.calculate, 1, work)
-        print "Whoa? You know how to divide by zero?"
+        quotient = yield client.calculate(1, work)
+        print("Whoa? You know how to divide by zero ? -> {0}".format(quotient))
     except InvalidOperation as io:
-        print "InvalidOperation: {}".format(io)
+        print("InvalidOperation: {0}".format(io))
 
     # calculate 15-10
     work.op = Operation.SUBTRACT
     work.num1 = 15
     work.num2 = 10
 
-    diff = yield gen.Task(client.calculate, 1, work)
-    print "15 - 10 = {}".format(diff)
+    diff = yield client.calculate(1, work)
+    print("15 - 10 = {0}".format(diff))
 
     # getStruct
-    log = yield gen.Task(client.getStruct, 1)
-    print "Check log: {}".format(log.value)
+    log = yield client.getStruct(1)
+    print("Check log: {0}".format(log.value))
 
     # close the transport
     client._transport.close()
-
-    if callback:
-        callback()
+    raise gen.Return()
 
 
 def main():
     # create an ioloop, do the above, then stop
-    io_loop = ioloop.IOLoop.instance()
-    def this_joint():
-        communicate(callback=io_loop.stop)
-    io_loop.add_callback(this_joint)
-    io_loop.start()
+    ioloop.IOLoop.current().run_sync(communicate)
 
 
 if __name__ == "__main__":

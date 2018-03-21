@@ -20,147 +20,167 @@ using System;
 using System.IO;
 
 namespace Thrift.Transport
-{ 
-  public class TFramedTransport : TTransport, IDisposable
-	{
-		protected TTransport transport = null;
-		protected MemoryStream writeBuffer;
-		protected MemoryStream readBuffer = null;
+{
+    public class TFramedTransport : TTransport, IDisposable
+    {
+        private readonly TTransport transport;
+        private readonly MemoryStream writeBuffer = new MemoryStream(1024);
+        private readonly MemoryStream readBuffer = new MemoryStream(1024);
 
-		private const int header_size = 4;
-		private static byte[] header_dummy = new byte[header_size]; // used as header placeholder while initilizing new write buffer
+        private const int HeaderSize = 4;
+        private readonly byte[] headerBuf = new byte[HeaderSize];
 
-		public class Factory : TTransportFactory
-		{
-			public override TTransport GetTransport(TTransport trans)
-			{
-				return new TFramedTransport(trans);
-			}
-		}
+        public class Factory : TTransportFactory
+        {
+            public override TTransport GetTransport(TTransport trans)
+            {
+                return new TFramedTransport(trans);
+            }
+        }
 
-		protected TFramedTransport()
-		{
-			InitWriteBuffer();
-		}
+        public TFramedTransport(TTransport transport)
+        {
+            if (transport == null)
+                throw new ArgumentNullException("transport");
+            this.transport = transport;
+            InitWriteBuffer();
+        }
 
-		public TFramedTransport(TTransport transport) : this()
-		{
-			this.transport = transport;
-		}
+        public override void Open()
+        {
+            CheckNotDisposed();
+            transport.Open();
+        }
 
-		public override void Open()
-		{
-			transport.Open();
-		}
+        public override bool IsOpen
+        {
+            get
+            {
+                // We can legitimately throw here but be nice a bit.
+                // CheckNotDisposed();
+                return !_IsDisposed && transport.IsOpen;
+            }
+        }
 
-		public override bool IsOpen
-		{
-			get
-			{
-				return transport.IsOpen;
-			}
-		}
+        public override void Close()
+        {
+            CheckNotDisposed();
+            transport.Close();
+        }
 
-		public override void Close()
-		{
-			transport.Close();
-		}
+        public override int Read(byte[] buf, int off, int len)
+        {
+            CheckNotDisposed();
+            ValidateBufferArgs(buf, off, len);
+            if (!IsOpen)
+                throw new TTransportException(TTransportException.ExceptionType.NotOpen);
+            int got = readBuffer.Read(buf, off, len);
+            if (got > 0)
+            {
+                return got;
+            }
 
-		public override int Read(byte[] buf, int off, int len)
-		{
-			if (readBuffer != null)
-			{
-				int got = readBuffer.Read(buf, off, len);
-				if (got > 0)
-				{
-					return got;
-				}
-			}
+            // Read another frame of data
+            ReadFrame();
 
-			// Read another frame of data
-			ReadFrame();
+            return readBuffer.Read(buf, off, len);
+        }
 
-			return readBuffer.Read(buf, off, len);
-		}
+        private void ReadFrame()
+        {
+            transport.ReadAll(headerBuf, 0, HeaderSize);
+            int size = DecodeFrameSize(headerBuf);
 
-		private void ReadFrame()
-		{
-			byte[] i32rd = new byte[header_size];
-			transport.ReadAll(i32rd, 0, header_size);
-			int size = DecodeFrameSize(i32rd);
+            readBuffer.SetLength(size);
+            readBuffer.Seek(0, SeekOrigin.Begin);
+            byte[] buff = readBuffer.GetBuffer();
+            transport.ReadAll(buff, 0, size);
+        }
 
-			byte[] buff = new byte[size];
-			transport.ReadAll(buff, 0, size);
-			readBuffer = new MemoryStream(buff);
-		}
+        public override void Write(byte[] buf, int off, int len)
+        {
+            CheckNotDisposed();
+            ValidateBufferArgs(buf, off, len);
+            if (!IsOpen)
+                throw new TTransportException(TTransportException.ExceptionType.NotOpen);
+            if (writeBuffer.Length + (long)len > (long)int.MaxValue)
+                Flush();
+            writeBuffer.Write(buf, off, len);
+        }
 
-		public override void Write(byte[] buf, int off, int len)
-		{
-			writeBuffer.Write(buf, off, len);
-		}
+        public override void Flush()
+        {
+            CheckNotDisposed();
+            if (!IsOpen)
+                throw new TTransportException(TTransportException.ExceptionType.NotOpen);
+            byte[] buf = writeBuffer.GetBuffer();
+            int len = (int)writeBuffer.Length;
+            int data_len = len - HeaderSize;
+            if ( data_len < 0 )
+                throw new System.InvalidOperationException (); // logic error actually
 
-		public override void Flush()
-		{
-			byte[] buf = writeBuffer.GetBuffer();
-			int len = (int)writeBuffer.Length;
-			int data_len = len - header_size;
-			if ( data_len < 0 )
-				throw new System.InvalidOperationException (); // logic error actually
+            // Inject message header into the reserved buffer space
+            EncodeFrameSize(data_len, buf);
 
-			InitWriteBuffer();
+            // Send the entire message at once
+            transport.Write(buf, 0, len);
 
-			// Inject message header into the reserved buffer space
-			EncodeFrameSize(data_len,ref buf);
+            InitWriteBuffer();
 
-			// Send the entire message at once
-			transport.Write(buf, 0, len);
+            transport.Flush();
+        }
 
-			transport.Flush();
-		}
+        private void InitWriteBuffer ()
+        {
+            // Reserve space for message header to be put right before sending it out
+            writeBuffer.SetLength(HeaderSize);
+            writeBuffer.Seek(0, SeekOrigin.End);
+        }
 
-		private void InitWriteBuffer ()
-		{
-			// Create new buffer instance
-			writeBuffer = new MemoryStream(1024);
+        private static void EncodeFrameSize(int frameSize, byte[] buf)
+        {
+            buf[0] = (byte)(0xff & (frameSize >> 24));
+            buf[1] = (byte)(0xff & (frameSize >> 16));
+            buf[2] = (byte)(0xff & (frameSize >> 8));
+            buf[3] = (byte)(0xff & (frameSize));
+        }
 
-			// Reserve space for message header to be put right before sending it out
-			writeBuffer.Write ( header_dummy, 0, header_size );
-		}
-		
-		private static void EncodeFrameSize(int frameSize, ref byte[] buf) 
-		{
-			buf[0] = (byte)(0xff & (frameSize >> 24));
-			buf[1] = (byte)(0xff & (frameSize >> 16));
-			buf[2] = (byte)(0xff & (frameSize >> 8));
-			buf[3] = (byte)(0xff & (frameSize));
-		}
-		
-		private static int DecodeFrameSize(byte[] buf)
-		{
-			return 
-				((buf[0] & 0xff) << 24) |
-				((buf[1] & 0xff) << 16) |
-				((buf[2] & 0xff) <<  8) |
-				((buf[3] & 0xff));
-		}
+        private static int DecodeFrameSize(byte[] buf)
+        {
+            return
+                ((buf[0] & 0xff) << 24) |
+                ((buf[1] & 0xff) << 16) |
+                ((buf[2] & 0xff) <<  8) |
+                ((buf[3] & 0xff));
+        }
 
 
-		#region " IDisposable Support "
-		private bool _IsDisposed;
-		
-		// IDisposable
-		protected override void Dispose(bool disposing)
-		{
-			if (!_IsDisposed)
-			{
-				if (disposing)
-				{
-					if (readBuffer != null)
-						readBuffer.Dispose();
-				}
-			}
-			_IsDisposed = true;
-		}
-		#endregion
-	}
+        private void CheckNotDisposed()
+        {
+            if (_IsDisposed)
+                throw new ObjectDisposedException("TFramedTransport");
+        }
+
+        #region " IDisposable Support "
+        private bool _IsDisposed;
+
+        // IDisposable
+        protected override void Dispose(bool disposing)
+        {
+            if (!_IsDisposed)
+            {
+                if (disposing)
+                {
+                    if(readBuffer != null)
+                        readBuffer.Dispose();
+                    if(writeBuffer != null)
+                        writeBuffer.Dispose();
+                    if(transport != null)
+                        transport.Dispose();
+                }
+            }
+            _IsDisposed = true;
+        }
+        #endregion
+    }
 }

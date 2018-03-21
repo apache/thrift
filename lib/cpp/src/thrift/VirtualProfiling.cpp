@@ -35,14 +35,14 @@
 #error "Thrift virtual function profiling currently requires glibc"
 #endif // !__GLIBC__
 
-
 #include <thrift/concurrency/Mutex.h>
 
 #include <ext/hash_map>
 #include <execinfo.h>
 #include <stdio.h>
 
-namespace apache { namespace thrift {
+namespace apache {
+namespace thrift {
 
 using ::apache::thrift::concurrency::Mutex;
 using ::apache::thrift::concurrency::Guard;
@@ -53,20 +53,18 @@ static const unsigned int MAX_STACK_DEPTH = 15;
  * A stack trace
  */
 class Backtrace {
- public:
+public:
   Backtrace(int skip = 0);
-  Backtrace(Backtrace const &bt);
+  Backtrace(Backtrace const& bt);
 
-  void operator=(Backtrace const &bt) {
+  void operator=(Backtrace const& bt) {
     numCallers_ = bt.numCallers_;
     if (numCallers_ >= 0) {
       memcpy(callers_, bt.callers_, numCallers_ * sizeof(void*));
     }
   }
 
-  bool operator==(Backtrace const &bt) const {
-    return (cmp(bt) == 0);
-  }
+  bool operator==(Backtrace const& bt) const { return (cmp(bt) == 0); }
 
   size_t hash() const {
     intptr_t ret = 0;
@@ -83,8 +81,8 @@ class Backtrace {
     }
 
     for (int n = 0; n < numCallers_; ++n) {
-      int diff = reinterpret_cast<intptr_t>(callers_[n]) -
-        reinterpret_cast<intptr_t>(bt.callers_[n]);
+      int diff = reinterpret_cast<intptr_t>(callers_[n])
+                 - reinterpret_cast<intptr_t>(bt.callers_[n]);
       if (diff != 0) {
         return diff;
       }
@@ -93,8 +91,8 @@ class Backtrace {
     return 0;
   }
 
-  void print(FILE *f, int indent=0, int start=0) const {
-    char **strings = backtrace_symbols(callers_, numCallers_);
+  void print(FILE* f, int indent = 0, int start = 0) const {
+    char** strings = backtrace_symbols(callers_, numCallers_);
     if (strings) {
       start += skip_;
       if (start < 0) {
@@ -109,11 +107,9 @@ class Backtrace {
     }
   }
 
-  int getDepth() const {
-    return numCallers_ - skip_;
-  }
+  int getDepth() const { return numCallers_ - skip_; }
 
-  void *getFrame(int index) const {
+  void* getFrame(int index) const {
     int adjusted_index = index + skip_;
     if (adjusted_index < 0 || adjusted_index >= numCallers_) {
       return NULL;
@@ -121,8 +117,8 @@ class Backtrace {
     return callers_[adjusted_index];
   }
 
- private:
-  void *callers_[MAX_STACK_DEPTH];
+private:
+  void* callers_[MAX_STACK_DEPTH];
   int numCallers_;
   int skip_;
 };
@@ -138,9 +134,7 @@ Backtrace::Backtrace(int skip)
   }
 }
 
-Backtrace::Backtrace(Backtrace const &bt)
-  : numCallers_(bt.numCallers_)
-  , skip_(bt.skip_) {
+Backtrace::Backtrace(Backtrace const& bt) : numCallers_(bt.numCallers_), skip_(bt.skip_) {
   if (numCallers_ >= 0) {
     memcpy(callers_, bt.callers_, numCallers_ * sizeof(void*));
   }
@@ -150,32 +144,20 @@ Backtrace::Backtrace(Backtrace const &bt)
  * A backtrace, plus one or two type names
  */
 class Key {
- public:
+public:
   class Hash {
-   public:
-    size_t operator()(Key const& k) const {
-      return k.hash();
-    }
+  public:
+    size_t operator()(Key const& k) const { return k.hash(); }
   };
 
   Key(const Backtrace* bt, const std::type_info& type_info)
-    : backtrace_(bt)
-    , typeName1_(type_info.name())
-    , typeName2_(NULL) {
-  }
+    : backtrace_(bt), typeName1_(type_info.name()), typeName2_(NULL) {}
 
-  Key(const Backtrace* bt, const std::type_info& type_info1,
-      const std::type_info& type_info2)
-    : backtrace_(bt)
-    , typeName1_(type_info1.name())
-    , typeName2_(type_info2.name()) {
-  }
+  Key(const Backtrace* bt, const std::type_info& type_info1, const std::type_info& type_info2)
+    : backtrace_(bt), typeName1_(type_info1.name()), typeName2_(type_info2.name()) {}
 
   Key(const Key& k)
-    : backtrace_(k.backtrace_)
-    , typeName1_(k.typeName1_)
-    , typeName2_(k.typeName2_) {
-  }
+    : backtrace_(k.backtrace_), typeName1_(k.typeName1_), typeName2_(k.typeName2_) {}
 
   void operator=(const Key& k) {
     backtrace_ = k.backtrace_;
@@ -183,17 +165,11 @@ class Key {
     typeName2_ = k.typeName2_;
   }
 
-  const Backtrace* getBacktrace() const {
-    return backtrace_;
-  }
+  const Backtrace* getBacktrace() const { return backtrace_; }
 
-  const char* getTypeName() const {
-    return typeName1_;
-  }
+  const char* getTypeName() const { return typeName1_; }
 
-  const char* getTypeName2() const {
-    return typeName2_;
-  }
+  const char* getTypeName2() const { return typeName2_; }
 
   void makePersistent() {
     // Copy the Backtrace object
@@ -233,20 +209,17 @@ class Key {
     return k.typeName2_ - typeName2_;
   }
 
-  bool operator==(const Key& k) const {
-    return cmp(k) == 0;
-  }
+  bool operator==(const Key& k) const { return cmp(k) == 0; }
 
   size_t hash() const {
     // NOTE: As above, we just use the name pointer value.
     // Works with GNU libstdc++, but not guaranteed to be correct on all
     // implementations.
-    return backtrace_->hash() ^
-      reinterpret_cast<size_t>(typeName1_) ^
-      reinterpret_cast<size_t>(typeName2_);
+    return backtrace_->hash() ^ reinterpret_cast<size_t>(typeName1_)
+           ^ reinterpret_cast<size_t>(typeName2_);
   }
 
- private:
+private:
   const Backtrace* backtrace_;
   const char* typeName1_;
   const char* typeName2_;
@@ -257,9 +230,8 @@ class Key {
  * has a higher count.
  */
 class CountGreater {
- public:
-  bool operator()(std::pair<Key, size_t> bt1,
-                  std::pair<Key, size_t> bt2) const {
+public:
+  bool operator()(std::pair<Key, size_t> bt1, std::pair<Key, size_t> bt2) const {
     return bt1.second > bt2.second;
   }
 };
@@ -278,8 +250,7 @@ Mutex virtual_calls_mutex;
 BacktraceMap generic_calls;
 Mutex generic_calls_mutex;
 
-
-void _record_backtrace(BacktraceMap* map, const Mutex& mutex, Key *k) {
+void _record_backtrace(BacktraceMap* map, const Mutex& mutex, Key* k) {
   Guard guard(mutex);
 
   BacktraceMap::iterator it = map->find(*k);
@@ -324,7 +295,7 @@ void profile_generic_protocol(const std::type_info& template_type,
  * Print the recorded profiling information to the specified file.
  */
 void profile_print_info(FILE* f) {
-  typedef std::vector< std::pair<Key, size_t> > BacktraceVector;
+  typedef std::vector<std::pair<Key, size_t> > BacktraceVector;
 
   CountGreater is_greater;
 
@@ -342,13 +313,14 @@ void profile_print_info(FILE* f) {
   BacktraceVector gp_sorted(generic_calls.begin(), generic_calls.end());
   std::sort(gp_sorted.begin(), gp_sorted.end(), is_greater);
 
-  for (BacktraceVector::const_iterator it = gp_sorted.begin();
-       it != gp_sorted.end();
-       ++it) {
-    Key const &key = it->first;
+  for (BacktraceVector::const_iterator it = gp_sorted.begin(); it != gp_sorted.end(); ++it) {
+    Key const& key = it->first;
     size_t const count = it->second;
-    fprintf(f, "T_GENERIC_PROTOCOL: %zu calls to %s with a %s:\n",
-            count, key.getTypeName(), key.getTypeName2());
+    fprintf(f,
+            "T_GENERIC_PROTOCOL: %zu calls to %s with a %s:\n",
+            count,
+            key.getTypeName(),
+            key.getTypeName2());
     key.getBacktrace()->print(f, 2);
     fprintf(f, "\n");
   }
@@ -357,10 +329,8 @@ void profile_print_info(FILE* f) {
   BacktraceVector vc_sorted(virtual_calls.begin(), virtual_calls.end());
   std::sort(vc_sorted.begin(), vc_sorted.end(), is_greater);
 
-  for (BacktraceVector::const_iterator it = vc_sorted.begin();
-       it != vc_sorted.end();
-       ++it) {
-    Key const &key = it->first;
+  for (BacktraceVector::const_iterator it = vc_sorted.begin(); it != vc_sorted.end(); ++it) {
+    Key const& key = it->first;
     size_t const count = it->second;
     fprintf(f, "T_VIRTUAL_CALL: %zu calls on %s:\n", count, key.getTypeName());
     key.getBacktrace()->print(f, 2);
@@ -380,7 +350,7 @@ void profile_print_info() {
  */
 static void profile_write_pprof_file(FILE* f, BacktraceMap const& map) {
   // Write the header
-  uintptr_t header[5] = { 0, 3, 0, 0, 0 };
+  uintptr_t header[5] = {0, 3, 0, 0, 0};
   fwrite(&header, sizeof(header), 1, f);
 
   // Write the profile records
@@ -399,12 +369,12 @@ static void profile_write_pprof_file(FILE* f, BacktraceMap const& map) {
   }
 
   // Write the trailer
-  uintptr_t trailer[3] = { 0, 1, 0 };
+  uintptr_t trailer[3] = {0, 1, 0};
   fwrite(&trailer, sizeof(trailer), 1, f);
 
   // Write /proc/self/maps
   // TODO(simpkins): This only works on linux
-  FILE *proc_maps = fopen("/proc/self/maps", "r");
+  FILE* proc_maps = fopen("/proc/self/maps", "r");
   if (proc_maps) {
     uint8_t buf[4096];
     while (true) {
@@ -434,7 +404,7 @@ static void profile_write_pprof_file(FILE* f, BacktraceMap const& map) {
  *                        profile_virtual_call() will be written to this file.
  */
 void profile_write_pprof(FILE* gen_calls_f, FILE* virtual_calls_f) {
-  typedef std::vector< std::pair<Key, size_t> > BacktraceVector;
+  typedef std::vector<std::pair<Key, size_t> > BacktraceVector;
 
   CountGreater is_greater;
 
@@ -449,7 +419,7 @@ void profile_write_pprof(FILE* gen_calls_f, FILE* virtual_calls_f) {
   // write the info from virtual_calls
   profile_write_pprof_file(virtual_calls_f, virtual_calls);
 }
-
-}} // apache::thrift
+}
+} // apache::thrift
 
 #endif // T_GLOBAL_PROFILE_VIRTUAL > 0

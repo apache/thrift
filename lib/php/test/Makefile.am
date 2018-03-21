@@ -17,20 +17,37 @@
 # under the License.
 #
 
-THRIFT = $(top_builddir)/compiler/cpp/thrift
+PHPUNIT=php $(top_srcdir)/vendor/bin/phpunit
 
-stubs: ../../../test/ThriftTest.thrift
-	mkdir -p ./packages
-	$(THRIFT) --gen php -r --out ./packages ../../../test/ThriftTest.thrift
+stubs: ../../../test/ThriftTest.thrift  TestValidators.thrift
+	mkdir -p ./packages/php
+	$(THRIFT) --gen php -r --out ./packages/php ../../../test/ThriftTest.thrift
+	mkdir -p ./packages/phpv
+	mkdir -p ./packages/phpvo
+	mkdir -p ./packages/phpjs
+	$(THRIFT) --gen php:validate     -r --out ./packages/phpv   TestValidators.thrift
+	$(THRIFT) --gen php:validate,oop -r --out ./packages/phpvo  TestValidators.thrift
+	$(THRIFT) --gen php:json         -r --out ./packages/phpjs  TestValidators.thrift
 
-if HAVE_PHPUNIT
-check: stubs
-	$(PHPUNIT) --log-junit=phpunit.xml Test/Thrift/Protocol/TestTJSONProtocol.php
-	$(PHPUNIT) --log-junit=phpunit.xml Test/Thrift/Protocol/TestBinarySerializer.php
-endif
+deps: $(top_srcdir)/composer.json
+	composer install --working-dir=$(top_srcdir)
+
+all-local: deps
+
+check-json-serializer: deps stubs
+	$(PHPUNIT) --log-junit=TEST-log-json-serializer.xml JsonSerialize/
+
+check-validator: deps stubs
+	$(PHPUNIT) --log-junit=TEST-log-validator.xml Validator/
+
+check-protocol:	deps stubs
+	$(PHPUNIT) --log-junit=TEST-log-protocol.xml Protocol/
+
+check: deps stubs \
+  check-protocol \
+  check-validator \
+  check-json-serializer
 
 clean-local:
 	$(RM) -r ./packages
-
-EXTRA_DIST = Test
-
+	$(RM) TEST-*.xml

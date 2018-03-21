@@ -21,18 +21,34 @@
 #include <sstream>
 #include <iostream>
 
+#include <thrift/config.h>
 #include <thrift/transport/THttpServer.h>
 #include <thrift/transport/TSocket.h>
+#if defined(_MSC_VER) || defined(__MINGW32__)
+  #include <Shlwapi.h>
+#endif
 
-namespace apache { namespace thrift { namespace transport {
+using std::string;
 
-using namespace std;
+namespace apache {
+namespace thrift {
+namespace transport {
 
-THttpServer::THttpServer(boost::shared_ptr<TTransport> transport) :
-  THttpTransport(transport) {
+THttpServer::THttpServer(stdcxx::shared_ptr<TTransport> transport) : THttpTransport(transport) {
 }
 
-THttpServer::~THttpServer() {}
+THttpServer::~THttpServer() {
+}
+
+#if defined(_MSC_VER) || defined(__MINGW32__)
+  #define THRIFT_GMTIME(TM, TIME)             gmtime_s(&TM, &TIME)
+  #define THRIFT_strncasecmp(str1, str2, len) _strnicmp(str1, str2, len)
+  #define THRIFT_strcasestr(haystack, needle) StrStrIA(haystack, needle)
+#else
+  #define THRIFT_GMTIME(TM, TIME)             gmtime_r(&TIME, &TM)
+  #define THRIFT_strncasecmp(str1, str2, len) strncasecmp(str1, str2, len)
+  #define THRIFT_strcasestr(haystack, needle) strcasestr(haystack, needle)
+#endif
 
 void THttpServer::parseHeader(char* header) {
   char* colon = strchr(header, ':');
@@ -40,15 +56,17 @@ void THttpServer::parseHeader(char* header) {
     return;
   }
   size_t sz = colon - header;
-  char* value = colon+1;
+  char* value = colon + 1;
 
-  if (strncmp(header, "Transfer-Encoding", sz) == 0) {
-    if (strstr(value, "chunked") != NULL) {
+  if (THRIFT_strncasecmp(header, "Transfer-Encoding", sz) == 0) {
+    if (THRIFT_strcasestr(value, "chunked") != NULL) {
       chunked_ = true;
     }
-  } else if (strncmp(header, "Content-Length", sz) == 0) {
+  } else if (THRIFT_strncasecmp(header, "Content-length", sz) == 0) {
     chunked_ = false;
     contentLength_ = atoi(value);
+  } else if (strncmp(header, "X-Forwarded-For", sz) == 0) {
+    origin_ = value;
   }
 }
 
@@ -61,7 +79,8 @@ bool THttpServer::parseStatusLine(char* status) {
   }
 
   *path = '\0';
-  while (*(++path) == ' ') {};
+  while (*(++path) == ' ') {
+  };
 
   char* http = strchr(path, ' ');
   if (http == NULL) {
@@ -72,8 +91,7 @@ bool THttpServer::parseStatusLine(char* status) {
   if (strcmp(method, "POST") == 0) {
     // POST method ok, looking for content.
     return true;
-  }
-  else if (strcmp(method, "OPTIONS") == 0) {
+  } else if (strcmp(method, "OPTIONS") == 0) {
     // preflight OPTIONS method, we don't need further content.
     // how to graciously close connection?
     uint8_t* buf;
@@ -82,13 +100,9 @@ bool THttpServer::parseStatusLine(char* status) {
 
     // Construct the HTTP header
     std::ostringstream h;
-    h <<
-      "HTTP/1.1 200 OK" << CRLF <<
-      "Date: " << getTimeRFC1123() << CRLF <<
-      "Access-Control-Allow-Origin: *" << CRLF <<
-      "Access-Control-Allow-Methods: POST, OPTIONS" << CRLF <<
-      "Access-Control-Allow-Headers: Content-Type" << CRLF <<
-      CRLF;
+    h << "HTTP/1.1 200 OK" << CRLF << "Date: " << getTimeRFC1123() << CRLF
+      << "Access-Control-Allow-Origin: *" << CRLF << "Access-Control-Allow-Methods: POST, OPTIONS"
+      << CRLF << "Access-Control-Allow-Headers: Content-Type" << CRLF << CRLF;
     string header = h.str();
 
     // Write the header, then the data, then flush
@@ -112,15 +126,10 @@ void THttpServer::flush() {
 
   // Construct the HTTP header
   std::ostringstream h;
-  h <<
-    "HTTP/1.1 200 OK" << CRLF <<
-    "Date: " << getTimeRFC1123() << CRLF <<
-    "Server: Thrift/" << VERSION << CRLF <<
-    "Access-Control-Allow-Origin: *" << CRLF <<
-    "Content-Type: application/x-thrift" << CRLF <<
-    "Content-Length: " << len << CRLF <<
-    "Connection: Keep-Alive" << CRLF <<
-    CRLF;
+  h << "HTTP/1.1 200 OK" << CRLF << "Date: " << getTimeRFC1123() << CRLF << "Server: Thrift/"
+    << PACKAGE_VERSION << CRLF << "Access-Control-Allow-Origin: *" << CRLF
+    << "Content-Type: application/x-thrift" << CRLF << "Content-Length: " << len << CRLF
+    << "Connection: Keep-Alive" << CRLF << CRLF;
   string header = h.str();
 
   // Write the header, then the data, then flush
@@ -134,19 +143,27 @@ void THttpServer::flush() {
   readHeaders_ = true;
 }
 
-std::string THttpServer::getTimeRFC1123()
-{
-  static const char* Days[] = {"Sun","Mon","Tue","Wed","Thu","Fri","Sat"};
-  static const char* Months[] = {"Jan","Feb","Mar", "Apr", "May", "Jun", "Jul","Aug", "Sep", "Oct","Nov","Dec"};
+std::string THttpServer::getTimeRFC1123() {
+  static const char* Days[] = {"Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"};
+  static const char* Months[]
+      = {"Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
   char buff[128];
-  time_t t = time(NULL);
-  tm* broken_t = gmtime(&t);
 
-  sprintf(buff,"%s, %d %s %d %d:%d:%d GMT",
-          Days[broken_t->tm_wday], broken_t->tm_mday, Months[broken_t->tm_mon],
-          broken_t->tm_year + 1900,
-          broken_t->tm_hour,broken_t->tm_min,broken_t->tm_sec);
+  time_t t = time(NULL);
+  struct tm tmb;
+  THRIFT_GMTIME(tmb, t);
+
+  sprintf(buff,
+          "%s, %d %s %d %d:%d:%d GMT",
+          Days[tmb.tm_wday],
+          tmb.tm_mday,
+          Months[tmb.tm_mon],
+          tmb.tm_year + 1900,
+          tmb.tm_hour,
+          tmb.tm_min,
+          tmb.tm_sec);
   return std::string(buff);
 }
-
-}}} // apache::thrift::transport
+}
+}
+} // apache::thrift::transport

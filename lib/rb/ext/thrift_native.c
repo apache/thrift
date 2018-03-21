@@ -57,6 +57,7 @@ ID write_i32_method_id;
 ID write_i64_method_id;
 ID write_double_method_id;
 ID write_string_method_id;
+ID write_binary_method_id;
 ID write_map_begin_method_id;
 ID write_map_end_method_id;
 ID write_list_begin_method_id;
@@ -69,6 +70,7 @@ ID read_i16_method_id;
 ID read_i32_method_id;
 ID read_i64_method_id;
 ID read_string_method_id;
+ID read_binary_method_id;
 ID read_double_method_id;
 ID read_map_begin_method_id;
 ID read_map_end_method_id;
@@ -104,6 +106,7 @@ VALUE key_sym;
 VALUE value_sym;
 VALUE element_sym;
 VALUE class_sym;
+VALUE binary_sym;
 VALUE protocol_exception_class;
 
 void Init_thrift_native() {
@@ -140,6 +143,7 @@ void Init_thrift_native() {
   write_i64_method_id = rb_intern("write_i64");
   write_double_method_id = rb_intern("write_double");
   write_string_method_id = rb_intern("write_string");
+  write_binary_method_id = rb_intern("write_binary");
   write_map_begin_method_id = rb_intern("write_map_begin");
   write_map_end_method_id = rb_intern("write_map_end");
   write_list_begin_method_id = rb_intern("write_list_begin");
@@ -152,6 +156,7 @@ void Init_thrift_native() {
   read_i32_method_id = rb_intern("read_i32");
   read_i64_method_id = rb_intern("read_i64");
   read_string_method_id = rb_intern("read_string");
+  read_binary_method_id = rb_intern("read_binary");
   read_double_method_id = rb_intern("read_double");
   read_map_begin_method_id = rb_intern("read_map_begin");
   read_map_end_method_id = rb_intern("read_map_end");  
@@ -187,6 +192,7 @@ void Init_thrift_native() {
   value_sym = ID2SYM(rb_intern("value"));
   element_sym = ID2SYM(rb_intern("element"));
   class_sym = ID2SYM(rb_intern("class"));
+  binary_sym = ID2SYM(rb_intern("binary"));
 
   Init_struct();
   Init_binary_protocol_accelerated();

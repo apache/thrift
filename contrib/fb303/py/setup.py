@@ -24,26 +24,25 @@ try:
     from setuptools import setup, Extension
 except:
     from distutils.core import setup, Extension, Command
-        
-setup(name = 'thrift_fb303',
-    version = '1.0.0-dev',
-    description = 'Python bindings for the Apache Thrift FB303',
-    author = ['Thrift Developers'],
-    author_email = ['dev@thrift.apache.org'],
-    url = 'http://thrift.apache.org',
-    license = 'Apache License 2.0',
-    packages = [
-        'fb303',
-        'fb303_scripts',
-    ],
-    classifiers = [
-        'Development Status :: 5 - Production/Stable',
-        'Environment :: Console',
-        'Intended Audience :: Developers',
-        'Programming Language :: Python',
-        'Programming Language :: Python :: 2',
-        'Topic :: Software Development :: Libraries',
-        'Topic :: System :: Networking'
-    ],
-)
 
+setup(name='thrift_fb303',
+      version='1.0.0-dev',
+      description='Python bindings for the Apache Thrift FB303',
+      author=['Thrift Developers'],
+      author_email=['dev@thrift.apache.org'],
+      url='http://thrift.apache.org',
+      license='Apache License 2.0',
+      packages=[
+          'fb303',
+          'fb303_scripts',
+      ],
+      classifiers=[
+          'Development Status :: 5 - Production/Stable',
+          'Environment :: Console',
+          'Intended Audience :: Developers',
+          'Programming Language :: Python',
+          'Programming Language :: Python :: 2',
+          'Topic :: Software Development :: Libraries',
+          'Topic :: System :: Networking'
+      ],
+      )

@@ -20,12 +20,13 @@
 #ifndef _THRIFT_CONCURRENCY_THREADMANAGER_H_
 #define _THRIFT_CONCURRENCY_THREADMANAGER_H_ 1
 
-#include <boost/shared_ptr.hpp>
-#include <thrift/cxxfunctional.h>
 #include <sys/types.h>
 #include <thrift/concurrency/Thread.h>
+#include <thrift/stdcxx.h>
 
-namespace apache { namespace thrift { namespace concurrency {
+namespace apache {
+namespace thrift {
+namespace concurrency {
 
 /**
  * Thread Pool Manager and related classes
@@ -39,26 +40,25 @@ class ThreadManager;
  *
  * This class manages a pool of threads. It uses a ThreadFactory to create
  * threads. It never actually creates or destroys worker threads, rather
- * It maintains statistics on number of idle threads, number of active threads,
+ * it maintains statistics on number of idle threads, number of active threads,
  * task backlog, and average wait and service times and informs the PoolPolicy
  * object bound to instances of this manager of interesting transitions. It is
  * then up the PoolPolicy object to decide if the thread pool size needs to be
  * adjusted and call this object addWorker and removeWorker methods to make
  * changes.
  *
- * This design allows different policy implementations to used this code to
+ * This design allows different policy implementations to use this code to
  * handle basic worker thread management and worker task execution and focus on
  * policy issues. The simplest policy, StaticPolicy, does nothing other than
  * create a fixed number of threads.
  */
 class ThreadManager {
 
- protected:
+protected:
   ThreadManager() {}
 
- public:
-  class Task;
-  typedef apache::thrift::stdcxx::function<void(boost::shared_ptr<Runnable>)> ExpireCallback;
+public:
+  typedef apache::thrift::stdcxx::function<void(stdcxx::shared_ptr<Runnable>)> ExpireCallback;
 
   virtual ~ThreadManager() {}
 
@@ -70,38 +70,46 @@ class ThreadManager {
 
   /**
    * Stops the thread manager. Aborts all remaining unprocessed task, shuts
-   * down all created worker threads, and realeases all allocated resources.
+   * down all created worker threads, and releases all allocated resources.
    * This method blocks for all worker threads to complete, thus it can
    * potentially block forever if a worker thread is running a task that
    * won't terminate.
+   *
+   * Worker threads will be joined depending on the threadFactory's detached
+   * disposition.
    */
   virtual void stop() = 0;
 
-  /**
-   * Joins the thread manager. This is the same as stop, except that it will
-   * block until all the workers have finished their work. At that point
-   * the ThreadManager will transition into the STOPPED state.
-   */
-  virtual void join() = 0;
-
-  enum STATE {
-    UNINITIALIZED,
-    STARTING,
-    STARTED,
-    JOINING,
-    STOPPING,
-    STOPPED
-  };
+  enum STATE { UNINITIALIZED, STARTING, STARTED, JOINING, STOPPING, STOPPED };
 
   virtual STATE state() const = 0;
 
-  virtual boost::shared_ptr<ThreadFactory> threadFactory() const = 0;
+  /**
+   * \returns the current thread factory
+   */
+  virtual stdcxx::shared_ptr<ThreadFactory> threadFactory() const = 0;
 
-  virtual void threadFactory(boost::shared_ptr<ThreadFactory> value) = 0;
+  /**
+   * Set the thread factory.
+   * \throws InvalidArgumentException if the new thread factory has a different
+   *                                  detached disposition than the one replacing it
+   */
+  virtual void threadFactory(stdcxx::shared_ptr<ThreadFactory> value) = 0;
 
-  virtual void addWorker(size_t value=1) = 0;
+  /**
+   * Adds worker thread(s).
+   */
+  virtual void addWorker(size_t value = 1) = 0;
 
-  virtual void removeWorker(size_t value=1) = 0;
+  /**
+   * Removes worker thread(s).
+   * Threads are joined if the thread factory detached disposition allows it.
+   * Blocks until the number of worker threads reaches the new limit.
+   * \param[in]  value  the number to remove
+   * \throws InvalidArgumentException if the value is greater than the number
+   *                                  of workers
+   */
+  virtual void removeWorker(size_t value = 1) = 0;
 
   /**
    * Gets the current number of idle worker threads
@@ -116,7 +124,7 @@ class ThreadManager {
   /**
    * Gets the current number of pending tasks
    */
-  virtual size_t pendingTaskCount() const  = 0;
+  virtual size_t pendingTaskCount() const = 0;
 
   /**
    * Gets the current number of pending and executing tasks
@@ -129,7 +137,8 @@ class ThreadManager {
   virtual size_t pendingTaskCountMax() const = 0;
 
   /**
-   * Gets the number of tasks which have been expired without being run.
+   * Gets the number of tasks which have been expired without being run
+   * since start() was called.
    */
   virtual size_t expiredTaskCount() = 0;
 
@@ -152,21 +161,21 @@ class ThreadManager {
    *
    * @throws TooManyPendingTasksException Pending task count exceeds max pending task count
    */
-  virtual void add(boost::shared_ptr<Runnable>task,
-                   int64_t timeout=0LL,
-                   int64_t expiration=0LL) = 0;
+  virtual void add(stdcxx::shared_ptr<Runnable> task,
+                   int64_t timeout = 0LL,
+                   int64_t expiration = 0LL) = 0;
 
   /**
    * Removes a pending task
    */
-  virtual void remove(boost::shared_ptr<Runnable> task) = 0;
+  virtual void remove(stdcxx::shared_ptr<Runnable> task) = 0;
 
   /**
    * Remove the next pending task which would be run.
    *
    * @return the task removed.
    */
-  virtual boost::shared_ptr<Runnable> removeNextPending() = 0;
+  virtual stdcxx::shared_ptr<Runnable> removeNextPending() = 0;
 
   /**
    * Remove tasks from front of task queue that have expired.
@@ -181,14 +190,15 @@ class ThreadManager {
    */
   virtual void setExpireCallback(ExpireCallback expireCallback) = 0;
 
-  static boost::shared_ptr<ThreadManager> newThreadManager();
+  static stdcxx::shared_ptr<ThreadManager> newThreadManager();
 
   /**
    * Creates a simple thread manager the uses count number of worker threads and has
    * a pendingTaskCountMax maximum pending tasks. The default, 0, specified no limit
    * on pending tasks
    */
-  static boost::shared_ptr<ThreadManager> newSimpleThreadManager(size_t count=4, size_t pendingTaskCountMax=0);
+  static stdcxx::shared_ptr<ThreadManager> newSimpleThreadManager(size_t count = 4,
+                                                                 size_t pendingTaskCountMax = 0);
 
   class Task;
 
@@ -196,7 +206,8 @@ class ThreadManager {
 
   class Impl;
 };
-
-}}} // apache::thrift::concurrency
+}
+}
+} // apache::thrift::concurrency
 
 #endif // #ifndef _THRIFT_CONCURRENCY_THREADMANAGER_H_

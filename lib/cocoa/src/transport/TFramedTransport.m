@@ -18,109 +18,163 @@
  */
 
 #import "TFramedTransport.h"
-#import "TTransportException.h"
-#import "TObjective-C.h"
+#import "TTransportError.h"
 
 #define HEADER_SIZE 4
 #define INIT_FRAME_SIZE 1024
 
-@implementation TFramedTransport {
-    NSMutableData* writeBuffer;
-    NSMutableData* readBuffer;
-    NSUInteger readOffset;
-    uint8_t dummy_header[HEADER_SIZE];
-}
 
-- (id) initWithTransport:(id <TTransport>)transport
+@interface TFramedTransport ()
+
+@property(strong, nonatomic) id<TTransport> transport;
+@property(strong, nonatomic) NSMutableData *writeBuffer;
+@property(strong, nonatomic) NSMutableData *readBuffer;
+@property(assign, nonatomic) NSUInteger readOffset;
+
+@end
+
+
+@implementation TFramedTransport
+
+-(id) initWithTransport:(id <TTransport>)aTransport
 {
-    mTransport = [transport retain_stub];
-    readBuffer = nil;
-    readOffset = 0;
-    writeBuffer = [[NSMutableData alloc] initWithCapacity:INIT_FRAME_SIZE];
-    [writeBuffer appendBytes:dummy_header length:HEADER_SIZE];
-    return self;
+  if ((self = [self init])) {
+    _transport = aTransport;
+    _readBuffer = nil;
+    _readOffset = 0;
+    _writeBuffer = [NSMutableData dataWithLength:HEADER_SIZE];
+  }
+  return self;
 }
 
-- (void) dealloc
+-(BOOL) flush:(NSError **)error
 {
-    [mTransport release_stub];
-    [writeBuffer release_stub];
-    if (readBuffer != nil)
-        [readBuffer release_stub];
-    [super dealloc_stub];
-}
-
-- (void)flush
-{
-    int len = [writeBuffer length];
-    int data_len = len - HEADER_SIZE;
-    if (data_len < 0)
-        @throw [TTransportException exceptionWithReason:@"Framed transport buffer has no header"];
-
-    uint8_t i32rd[HEADER_SIZE];
-    i32rd[0] = (uint8_t)(0xff & (data_len >> 24));
-    i32rd[1] = (uint8_t)(0xff & (data_len >> 16));
-    i32rd[2] = (uint8_t)(0xff & (data_len >> 8));
-    i32rd[3] = (uint8_t)(0xff & (data_len));
-
-    // should we make a copy of the writeBuffer instead? Better for threaded operations!
-    [writeBuffer replaceBytesInRange:NSMakeRange(0, HEADER_SIZE) withBytes:i32rd length:HEADER_SIZE];
-    [mTransport write:[writeBuffer mutableBytes] offset:0 length:len];
-    [mTransport flush];
-
-    // reuse old memory buffer
-    [writeBuffer setLength:0];
-    [writeBuffer appendBytes:dummy_header length:HEADER_SIZE];
-}
-
-- (void)write:(const uint8_t *)data offset:(unsigned int)offset length:(unsigned int)length
-{
-    [writeBuffer appendBytes:data+offset length:length];
-}
-
-- (int)readAll:(uint8_t *)buf offset:(int)off length:(int)len {
-    if (readBuffer == nil) {
-        [self readFrame];
+  int len = (int)[_writeBuffer length];
+  int data_len = len - HEADER_SIZE;
+  if (data_len < 0) {
+    if (error) {
+      *error = [NSError errorWithDomain:TTransportErrorDomain
+                                   code:TTransportErrorUnknown
+                               userInfo:@{}];
     }
-    
-    if (readBuffer != nil) {
-        int buffer_len = [readBuffer length];
-        if (buffer_len-readOffset >= len) {
-            [readBuffer getBytes:buf range:NSMakeRange(readOffset,len)]; // copy data
-            readOffset += len;
-        } else {
-            // void the previous readBuffer data and request a new frame
-            [self readFrame];
-            [readBuffer getBytes:buf range:NSMakeRange(0,len)]; // copy data
-            readOffset = len;
-        }
-    }
-    return len;
+    return NO;
+  }
+
+  UInt8 i32rd[HEADER_SIZE];
+  i32rd[0] = (UInt8)(0xff & (data_len >> 24));
+  i32rd[1] = (UInt8)(0xff & (data_len >> 16));
+  i32rd[2] = (UInt8)(0xff & (data_len >> 8));
+  i32rd[3] = (UInt8)(0xff & (data_len));
+
+  // should we make a copy of the writeBuffer instead? Better for threaded
+  //  operations!
+  [_writeBuffer replaceBytesInRange:NSMakeRange(0, HEADER_SIZE)
+                          withBytes:i32rd length:HEADER_SIZE];
+
+  if (![_transport write:_writeBuffer.mutableBytes offset:0 length:len error:error]) {
+    return NO;
+  }
+
+  if (![_transport flush:error]) {
+    return NO;
+  }
+
+  _writeBuffer.length = HEADER_SIZE;
+
+  return YES;
 }
 
-- (void)readFrame
+-(BOOL) write:(const UInt8 *)data offset:(UInt32)offset length:(UInt32)length error:(NSError *__autoreleasing *)error
 {
-    uint8_t i32rd[HEADER_SIZE];
-    [mTransport readAll: i32rd offset: 0 length: HEADER_SIZE];
-    int size =
-        ((i32rd[0] & 0xff) << 24) |
-        ((i32rd[1] & 0xff) << 16) |
-        ((i32rd[2] & 0xff) <<  8) |
-        ((i32rd[3] & 0xff));
+  [_writeBuffer appendBytes:data+offset length:length];
 
-    if (readBuffer == nil) {
-        readBuffer = [[NSMutableData alloc] initWithLength:size];
-    } else {
-        int len = [readBuffer length];
-        if (len >= size) {
-            [readBuffer setLength:size];
-        } else {
-            // increase length of data buffer
-            [readBuffer increaseLengthBy:size-len];
-        }
+  return YES;
+}
+
+-(BOOL) readAll:(UInt8 *)outBuffer offset:(UInt32)outBufferOffset length:(UInt32)length error:(NSError *__autoreleasing *)error
+{
+  UInt32 got = [self readAvail:outBuffer offset:outBufferOffset maxLength:length error:error];
+  if (got != length) {
+
+    // Report underflow only if readAvail didn't report error already
+    if (error && !*error) {
+      *error = [NSError errorWithDomain:TTransportErrorDomain
+                                   code:TTransportErrorEndOfFile
+                               userInfo:nil];
     }
-    // copy into internal memory buffer
-    [mTransport readAll:[readBuffer mutableBytes] offset:0 length:size];
+
+    return NO;
+  }
+
+  return YES;
+}
+
+-(UInt32) readAvail:(UInt8 *)outBuffer offset:(UInt32)outBufferOffset maxLength:(UInt32)length error:(NSError *__autoreleasing *)error
+{
+  UInt32 got = 0;
+  while (got < length) {
+
+    NSUInteger avail = _readBuffer.length - _readOffset;
+    if (avail == 0) {
+      if (![self readFrame:error]) {
+        return 0;
+      }
+      avail = _readBuffer.length;
+    }
+
+    NSRange range;
+    range.location = _readOffset;
+    range.length = MIN(length - got, avail);
+
+    [_readBuffer getBytes:outBuffer+outBufferOffset+got range:range];
+    _readOffset += range.length;
+    got += range.length;
+  }
+
+  return got;
+}
+
+-(BOOL) readFrame:(NSError **)error
+{
+  UInt8 i32rd[HEADER_SIZE];
+  if (![_transport readAll:i32rd offset:0 length:HEADER_SIZE error:error]) {
+    return NO;
+  }
+
+  SInt32 size =
+    ((i32rd[0] & 0xff) << 24) |
+    ((i32rd[1] & 0xff) << 16) |
+    ((i32rd[2] & 0xff) <<  8) |
+    ((i32rd[3] & 0xff));
+
+  if (_readBuffer == nil) {
+
+    _readBuffer = [NSMutableData dataWithLength:size];
+
+  }
+  else {
+
+    SInt32 len = (SInt32)_readBuffer.length;
+    if (len >= size) {
+
+      _readBuffer.length = size;
+
+    }
+    else {
+
+      // increase length of data buffer
+      [_readBuffer increaseLengthBy:size-len];
+
+    }
+
+  }
+
+  // copy into internal memory buffer
+  if (![_transport readAll:_readBuffer.mutableBytes offset:0 length:size error:error]) {
+    return NO;
+  }
+
+  return YES;
 }
 
 @end

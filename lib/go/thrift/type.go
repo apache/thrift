@@ -40,7 +40,7 @@ const (
 	LIST   = 15
 	UTF8   = 16
 	UTF16  = 17
-	BINARY = 18
+	//BINARY = 18   wrong and unusued
 )
 
 var typeNames = map[int]string{
@@ -48,6 +48,7 @@ var typeNames = map[int]string{
 	VOID:   "VOID",
 	BOOL:   "BOOL",
 	BYTE:   "BYTE",
+	DOUBLE: "DOUBLE",
 	I16:    "I16",
 	I32:    "I32",
 	I64:    "I64",

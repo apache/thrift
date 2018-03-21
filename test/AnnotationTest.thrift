@@ -52,10 +52,19 @@ enum weekdays {
 /* Note that annotations on senum values are not supported. */
 senum seasons {
   "Spring",
-  "Summer", 
+  "Summer",
   "Fall",
   "Winter"
 } ( foo = "bar" )
+
+struct ostr_default {
+  1: i32 bar;
+}
+
+struct ostr_custom {
+  1: i32 bar;
+} (cpp.customostream)
+
 
 service foo_service {
   void foo() ( foo = "bar" )

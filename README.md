@@ -1,7 +1,7 @@
 Apache Thrift
 =============
 
-Last Modified: 2014-03-16
+Last Modified: 2017-11-11
 
 License
 =======
@@ -33,22 +33,31 @@ level processing. The code generation system takes a simple definition
 language as its input and generates code across programming languages that
 uses the abstracted stack to build interoperable RPC clients and servers.
 
+![Apache Thrift Layered Architecture](doc/images/thrift-layers.png)
+
+Thrift makes it easy for programs written in different programming
+languages to share data and call remote procedures.  With support 
+for [over 20 programming languages](LANGUAGES.md), chances are Thrift 
+supports the ones that you currently use.
+
 Thrift is specifically designed to support non-atomic version changes
 across client and server code.
 
 For more details on Thrift's design and implementation, take a gander at
-the Thrift whitepaper included in this distribution or at the README.md files
+the Thrift whitepaper included in this distribution or at the README.md file
 in your particular subdirectory of interest.
 
-Hierarchy
-=========
+Project Hierarchy
+=================
 
 thrift/
 
   compiler/
+
     Contains the Thrift compiler, implemented in C++.
 
   lib/
+
     Contains the Thrift software library implementation, subdivided by
     language of implementation.
 
@@ -58,6 +67,7 @@ thrift/
     php/
     py/
     rb/
+    ...
 
   test/
 
@@ -72,8 +82,7 @@ thrift/
 Requirements
 ============
 
-See http://wiki.apache.org/thrift/ThriftRequirements for
-an up-to-date list of build requirements.
+See http://thrift.apache.org/docs/install for an up-to-date list of build requirements.
 
 Resources
 =========
@@ -95,25 +104,29 @@ If you are building from the first time out of the source repository, you will
 need to generate the configure scripts.  (This is not necessary if you
 downloaded a tarball.)  From the top directory, do:
 
-	./bootstrap.sh
+    ./bootstrap.sh
 
 Once the configure scripts are generated, thrift can be configured.
 From the top directory, do:
 
-	./configure
+    ./configure
 
 You may need to specify the location of the boost files explicitly.
 If you installed boost in /usr/local, you would run configure as follows:
 
-	./configure --with-boost=/usr/local
+    ./configure --with-boost=/usr/local
 
 Note that by default the thrift C++ library is typically built with debugging
 symbols included. If you want to customize these options you should use the
 CXXFLAGS option in configure, as such:
 
-        ./configure CXXFLAGS='-g -O2'
-        ./configure CFLAGS='-g -O2'
-        ./configure CPPFLAGS='-DDEBUG_MY_FEATURE'
+    ./configure CXXFLAGS='-g -O2'
+    ./configure CFLAGS='-g -O2'
+    ./configure CPPFLAGS='-DDEBUG_MY_FEATURE'
+
+To enable gcov required options -fprofile-arcs -ftest-coverage enable them:
+
+    ./configure  --enable-coverage
 
 Run ./configure --help to see other configuration options
 
@@ -157,3 +170,9 @@ To run the cross-language test suite, please run:
 
 This will run a set of tests that use different language clients and
 servers.
+
+Development
+===========
+
+To build the same way Travis CI builds the project you should use docker.
+We have [comprehensive building instructions for docker](build/docker/README.md).

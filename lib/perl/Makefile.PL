@@ -17,13 +17,20 @@
 # under the License.
 #
 
+use 5.10.0;
+use strict;
+use warnings;
+
 use ExtUtils::MakeMaker;
-WriteMakefile( 'NAME' => 'Thrift',
-               'VERSION_FROM' => 'lib/Thrift.pm',
-               'PREREQ_PM'              => {
-                   'Bit::Vector' => 0,
+
+WriteMakefile( ABSTRACT => 'Apache Thrift is a software framework for scalable cross-language services development.',
+               AUTHOR => 'Apache Thrift <dev@thrift.apache.org>',
+               LICENSE => 'apache_2_0',
+               MIN_PERL_VERSION => '5.010000',
+               NAME => 'Thrift',
+               NEEDS_LINKING => 0,
+               PREREQ_PM => {
+                   'Bit::Vector'     => 0,
                    'Class::Accessor' => 0
                },
-               ($] >= 5.005 ?
- (                AUTHOR     => 'Apache Thrift <dev@thrift.apache.org>') : ()),
-               );
+               VERSION_FROM => 'lib/Thrift.pm' );

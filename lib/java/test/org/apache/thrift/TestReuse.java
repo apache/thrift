@@ -21,10 +21,7 @@ package org.apache.thrift;
 
 import java.util.HashSet;
 
-import junit.framework.TestCase;
-
 import org.apache.thrift.protocol.TBinaryProtocol;
-import org.apache.thrift.protocol.TType;
 
 import thrift.test.Reuse;
 

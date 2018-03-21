@@ -18,14 +18,12 @@
  */
 
 var thrift = require('thrift');
-var ThriftTransports = require('thrift/transport');
-var ThriftProtocols = require('thrift/protocol');
 var Calculator = require('./gen-nodejs/Calculator');
 var ttypes = require('./gen-nodejs/tutorial_types');
+const assert = require('assert');
 
-
-transport = ThriftTransports.TBufferedTransport()
-protocol = ThriftProtocols.TBinaryProtocol()
+var transport = thrift.TBufferedTransport;
+var protocol = thrift.TBinaryProtocol;
 
 var connection = thrift.createConnection("localhost", 9090, {
   transport : transport,

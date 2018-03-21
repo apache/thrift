@@ -21,31 +21,29 @@
 #import "TTransport.h"
 #import "TProtocolFactory.h"
 
+NS_ASSUME_NONNULL_BEGIN
 
-@interface TBinaryProtocol : NSObject <TProtocol> {
-  id <TTransport> mTransport;
-  BOOL mStrictRead;
-  BOOL mStrictWrite;
-  int32_t mMessageSizeLimit;
-}
 
-- (id) initWithTransport: (id <TTransport>) transport;
+@interface TBinaryProtocol : NSObject <TProtocol>
 
-- (id) initWithTransport: (id <TTransport>) transport
-              strictRead: (BOOL) strictRead
-             strictWrite: (BOOL) strictWrite;
+@property (assign, nonatomic) UInt32 messageSizeLimit;
 
-- (int32_t) messageSizeLimit;
-- (void) setMessageSizeLimit: (int32_t) sizeLimit;
+-(id) initWithTransport:(id <TTransport>)transport;
+
+-(id) initWithTransport:(id <TTransport>)transport
+             strictRead:(BOOL)strictRead
+            strictWrite:(BOOL)strictWrite;
 
 @end;
 
 
-@interface TBinaryProtocolFactory : NSObject <TProtocolFactory> {
-}
+@interface TBinaryProtocolFactory : NSObject <TProtocolFactory>
 
-+ (TBinaryProtocolFactory *) sharedFactory;
++(TBinaryProtocolFactory *) sharedFactory;
 
-- (TBinaryProtocol *) newProtocolOnTransport: (id <TTransport>) transport;
+-(TBinaryProtocol *) newProtocolOnTransport:(id <TTransport>)transport;
 
 @end
+
+
+NS_ASSUME_NONNULL_END

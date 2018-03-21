@@ -17,10 +17,10 @@
 # under the License.
 #
 
-THRIFT = $(top_srcdir)/compiler/cpp/thrift
-
 stubs: ../ThriftTest.thrift
 	$(THRIFT) --gen perl ../ThriftTest.thrift
+
+precross: stubs
 
 check: stubs
 

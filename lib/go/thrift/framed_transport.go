@@ -22,6 +22,7 @@ package thrift
 import (
 	"bufio"
 	"bytes"
+	"context"
 	"encoding/binary"
 	"fmt"
 	"io"
@@ -33,29 +34,37 @@ type TFramedTransport struct {
 	transport TTransport
 	buf       bytes.Buffer
 	reader    *bufio.Reader
-	frameSize int //Current remaining size of the frame. if ==0 read next frame header
+	frameSize uint32 //Current remaining size of the frame. if ==0 read next frame header
 	buffer    [4]byte
-	maxLength int
+	maxLength uint32
 }
 
 type tFramedTransportFactory struct {
 	factory   TTransportFactory
-	maxLength int
+	maxLength uint32
 }
 
 func NewTFramedTransportFactory(factory TTransportFactory) TTransportFactory {
 	return &tFramedTransportFactory{factory: factory, maxLength: DEFAULT_MAX_LENGTH}
 }
 
-func (p *tFramedTransportFactory) GetTransport(base TTransport) TTransport {
-	return NewTFramedTransportMaxLength(p.factory.GetTransport(base), p.maxLength)
+func NewTFramedTransportFactoryMaxLength(factory TTransportFactory, maxLength uint32) TTransportFactory {
+	return &tFramedTransportFactory{factory: factory, maxLength: maxLength}
+}
+
+func (p *tFramedTransportFactory) GetTransport(base TTransport) (TTransport, error) {
+	tt, err := p.factory.GetTransport(base)
+	if err != nil {
+		return nil, err
+	}
+	return NewTFramedTransportMaxLength(tt, p.maxLength), nil
 }
 
 func NewTFramedTransport(transport TTransport) *TFramedTransport {
 	return &TFramedTransport{transport: transport, reader: bufio.NewReader(transport), maxLength: DEFAULT_MAX_LENGTH}
 }
 
-func NewTFramedTransportMaxLength(transport TTransport, maxLength int) *TFramedTransport {
+func NewTFramedTransportMaxLength(transport TTransport, maxLength uint32) *TFramedTransport {
 	return &TFramedTransport{transport: transport, reader: bufio.NewReader(transport), maxLength: maxLength}
 }
 
@@ -78,11 +87,18 @@ func (p *TFramedTransport) Read(buf []byte) (l int, err error) {
 			return
 		}
 	}
-	if p.frameSize < len(buf) {
-		return 0, NewTTransportExceptionFromError(fmt.Errorf("Not enought frame size %d to read %d bytes", p.frameSize, len(buf)))
+	if p.frameSize < uint32(len(buf)) {
+		frameSize := p.frameSize
+		tmp := make([]byte, p.frameSize)
+		l, err = p.Read(tmp)
+		copy(buf, tmp)
+		if err == nil {
+			err = NewTTransportExceptionFromError(fmt.Errorf("Not enough frame size %d to read %d bytes", frameSize, len(buf)))
+			return
+		}
 	}
 	got, err := p.reader.Read(buf)
-	p.frameSize = p.frameSize - got
+	p.frameSize = p.frameSize - uint32(got)
 	//sanity check
 	if p.frameSize < 0 {
 		return 0, NewTTransportException(UNKNOWN_TRANSPORT_EXCEPTION, "Negative frame size")
@@ -98,7 +114,7 @@ func (p *TFramedTransport) ReadByte() (c byte, err error) {
 		}
 	}
 	if p.frameSize < 1 {
-		return 0, NewTTransportExceptionFromError(fmt.Errorf("Not enought frame size %d to read %d bytes", p.frameSize, 1))
+		return 0, NewTTransportExceptionFromError(fmt.Errorf("Not enough frame size %d to read %d bytes", p.frameSize, 1))
 	}
 	c, err = p.reader.ReadByte()
 	if err == nil {
@@ -120,32 +136,38 @@ func (p *TFramedTransport) WriteString(s string) (n int, err error) {
 	return p.buf.WriteString(s)
 }
 
-func (p *TFramedTransport) Flush() error {
+func (p *TFramedTransport) Flush(ctx context.Context) error {
 	size := p.buf.Len()
 	buf := p.buffer[:4]
 	binary.BigEndian.PutUint32(buf, uint32(size))
 	_, err := p.transport.Write(buf)
 	if err != nil {
+		p.buf.Truncate(0)
 		return NewTTransportExceptionFromError(err)
 	}
 	if size > 0 {
 		if n, err := p.buf.WriteTo(p.transport); err != nil {
 			print("Error while flushing write buffer of size ", size, " to transport, only wrote ", n, " bytes: ", err.Error(), "\n")
+			p.buf.Truncate(0)
 			return NewTTransportExceptionFromError(err)
 		}
 	}
-	err = p.transport.Flush()
+	err = p.transport.Flush(ctx)
 	return NewTTransportExceptionFromError(err)
 }
 
-func (p *TFramedTransport) readFrameHeader() (int, error) {
+func (p *TFramedTransport) readFrameHeader() (uint32, error) {
 	buf := p.buffer[:4]
 	if _, err := io.ReadFull(p.reader, buf); err != nil {
 		return 0, err
 	}
-	size := int(binary.BigEndian.Uint32(buf))
+	size := binary.BigEndian.Uint32(buf)
 	if size < 0 || size > p.maxLength {
 		return 0, NewTTransportException(UNKNOWN_TRANSPORT_EXCEPTION, fmt.Sprintf("Incorrect frame size (%d)", size))
 	}
 	return size, nil
+}
+
+func (p *TFramedTransport) RemainingBytes() (num_bytes uint64) {
+	return uint64(p.frameSize)
 }

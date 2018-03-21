@@ -34,6 +34,7 @@ then compiling this should give errors because of doubly defined symbols.
 */
 
 namespace cpp thrift.test
+namespace java thrift.test
 
 struct OneOfEachZZ {
   1: bool im_true,
@@ -90,3 +91,8 @@ struct RandomStuffZZ {
 service Srv {
   i32 Janky(1: i32 arg)
 }
+
+service UnderscoreSrv {
+  i64 some_rpc_call(1: string message)
+}
+

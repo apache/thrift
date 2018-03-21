@@ -14,7 +14,7 @@
 # KIND, either express or implied. See the License for the
 # specific language governing permissions and limitations
 # under the License.
- 
+
 struct UserProfile {
   1: i32 uid,
   2: string name,

@@ -155,10 +155,10 @@ private {
       // the front. Because with the Thrift compiler types can only depend on
       // other types that have already been defined, we collect all the
       // dependencies, prepend them to the list, and then prune the duplicates
-      // (keeping the first occurences). If this requirement should ever be
+      // (keeping the first occurrences). If this requirement should ever be
       // dropped from Thrift, this could be easily adapted to handle circular
       // dependencies by passing TypeTuple!(T, List) to ForAllWithList instead
-      // of appending List afterwards, and removing the now unneccesary
+      // of appending List afterwards, and removing the now unnecessary
       // NoDuplicates.
       alias NoDuplicates!(
         ForAllWithList!(
@@ -641,13 +641,16 @@ version (unittest) {
 }
 `);
 
-  static assert(structIdlString!WithDefaults ==
+import std.algorithm;
+  static assert(structIdlString!WithDefaults.startsWith(
 `struct WithDefaults {
   -1: string a = "asdf",
-  -2: double b = 3.1415,
-  1: WithoutMeta c = {a: "foo", b: 3, },
+  -2: double b = 3.141`));
+
+  static assert(structIdlString!WithDefaults.endsWith(
+`1: WithoutMeta c = {a: "foo", b: 3, },
 }
-`);
+`));
 
   static assert(structIdlString!OneOfEach ==
 `struct OneOfEach {

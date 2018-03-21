@@ -18,10 +18,10 @@
 #
 
 service First {
-	i64 returnOne();
+    i64 returnOne();
 }
 
 service Second {
-	i64 returnTwo();
+    i64 returnTwo();
 }
 

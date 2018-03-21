@@ -21,84 +21,151 @@
 
 @implementation TProtocolUtil
 
-+ (void) skipType: (int) type onProtocol: (id <TProtocol>) protocol
++(BOOL) skipType:(int)type onProtocol:(id <TProtocol>)protocol error:(NSError **)error
 {
   switch (type) {
-  case TType_BOOL:
-    [protocol readBool];
-    break;
-  case TType_BYTE:
-    [protocol readByte];
-    break;
-  case TType_I16:
-    [protocol readI16];
-    break;
-  case TType_I32:
-    [protocol readI32];
-    break;
-  case TType_I64:
-    [protocol readI64];
-    break;
-  case TType_DOUBLE:
-    [protocol readDouble];
-    break;
-  case TType_STRING:
-    [protocol readString];
-    break;
-  case TType_STRUCT:
-    [protocol readStructBeginReturningName: NULL];
+  case TTypeBOOL: {
+    BOOL val;
+    if (![protocol readBool:&val error:error]) {
+      return NO;
+    }
+  }
+  break;
+
+  case TTypeBYTE: {
+    UInt8 val;
+    if (![protocol readByte:&val error:error]) {
+      return NO;
+    }
+  }
+  break;
+
+  case TTypeI16: {
+    SInt16 val;
+    if (![protocol readI16:&val error:error]) {
+      return NO;
+    }
+  }
+  break;
+
+  case TTypeI32: {
+    SInt32 val;
+    if (![protocol readI32:&val error:error]) {
+      return NO;
+    }
+  }
+  break;
+
+  case TTypeI64: {
+    SInt64 val;
+    if (![protocol readI64:&val error:error]) {
+      return NO;
+    }
+  }
+  break;
+
+  case TTypeDOUBLE: {
+    double val;
+    if (![protocol readDouble:&val error:error]) {
+      return NO;
+    }
+  }
+  break;
+
+  case TTypeSTRING: {
+    NSString *val;
+    if (![protocol readString:&val error:error]) {
+      return NO;
+    }
+  }
+  break;
+
+  case TTypeSTRUCT: {
+    if (![protocol readStructBeginReturningName:NULL error:error]) {
+      return NO;
+    }
     while (true) {
-      int fieldType;
-      [protocol readFieldBeginReturningName: nil type: &fieldType fieldID: nil];
-      if (fieldType == TType_STOP) {
+      SInt32 fieldType;
+      if (![protocol readFieldBeginReturningName:nil type:&fieldType fieldID:nil error:error]) {
+        return NO;
+      }
+      if (fieldType == TTypeSTOP) {
         break;
       }
-      [TProtocolUtil skipType: fieldType onProtocol: protocol];
-      [protocol readFieldEnd];
+      if (![self skipType:fieldType onProtocol:protocol error:error]) {
+        return NO;
+      }
+      if (![protocol readFieldEnd:error]) {
+        return NO;
+      }
     }
-    [protocol readStructEnd];
-    break;
-  case TType_MAP:
-  {
-    int keyType;
-    int valueType;
-    int size;
-    [protocol readMapBeginReturningKeyType: &keyType valueType: &valueType size: &size];
+    if (![protocol readStructEnd:error]) {
+      return NO;
+    }
+  }
+  break;
+
+  case TTypeMAP: {
+    SInt32 keyType;
+    SInt32 valueType;
+    SInt32 size;
+    if (![protocol readMapBeginReturningKeyType:&keyType valueType:&valueType size:&size error:error]) {
+      return NO;
+    }
     int i;
     for (i = 0; i < size; i++) {
-      [TProtocolUtil skipType: keyType onProtocol: protocol];
-      [TProtocolUtil skipType: valueType onProtocol: protocol];
-    }
-    [protocol readMapEnd];
-  }
-    break;
-    case TType_SET:
-    {
-      int elemType;
-      int size;
-      [protocol readSetBeginReturningElementType: &elemType size: &size];
-      int i;
-      for (i = 0; i < size; i++) {
-        [TProtocolUtil skipType: elemType onProtocol: protocol];
+      if (![TProtocolUtil skipType:keyType onProtocol:protocol error:error]) {
+        return NO;
       }
-      [protocol readSetEnd];
-    }
-      break;
-    case TType_LIST:
-    {
-      int elemType;
-      int size;
-      [protocol readListBeginReturningElementType: &elemType size: &size];
-      int i;
-      for (i = 0; i < size; i++) {
-        [TProtocolUtil skipType: elemType onProtocol: protocol];
+      if (![TProtocolUtil skipType:valueType onProtocol:protocol error:error]) {
+        return NO;
       }
-      [protocol readListEnd];
     }
-      break;
-    default:
-      return;
+    if (![protocol readMapEnd:error]) {
+      return NO;
+    }
   }
+  break;
+
+  case TTypeSET: {
+    SInt32 elemType;
+    SInt32 size;
+    if (![protocol readSetBeginReturningElementType:&elemType size:&size error:error]) {
+      return NO;
+    }
+    int i;
+    for (i = 0; i < size; i++) {
+      if (![TProtocolUtil skipType:elemType onProtocol:protocol error:error]) {
+        return NO;
+      }
+    }
+    if (![protocol readSetEnd:error]) {
+      return NO;
+    }
+  }
+  break;
+
+  case TTypeLIST: {
+    SInt32 elemType;
+    SInt32 size;
+    if (![protocol readListBeginReturningElementType:&elemType size:&size error:error]) {
+      return NO;
+    }
+    int i;
+    for (i = 0; i < size; i++) {
+      if (![TProtocolUtil skipType:elemType onProtocol:protocol error:error]) {
+        return NO;
+      }
+    }
+    if (![protocol readListEnd:error]) {
+      return NO;
+    }
+  }
+  break;
+
+  }
+
+  return YES;
 }
 
 @end

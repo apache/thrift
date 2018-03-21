@@ -19,60 +19,157 @@
 
 # build Apache Thrift on Travis CI - https://travis-ci.org/
 
+#
+# Docker Integration
+# see: build/docker/README.md
+# 
+
+sudo: required
+dist: trusty
 language: cpp
 
-cache:
- - apt
- - npm
- - maven
-
-# see what we need: http://thrift.apache.org/docs/install/ubuntu
-before_install:
- - export NUM_CPU="`grep processor /proc/cpuinfo | wc -l`"; echo $NUM_CPU
- - sudo apt-get update -qq
-# - sudo DEBIAN_FRONTEND=noninteractive apt-get -qq -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" upgrade
- - sudo apt-get install -qq libboost-dev libboost-test-dev libboost-program-options-dev libevent-dev automake libtool flex bison pkg-config g++ libssl-dev bc 
-# Java
- - sudo apt-get install -qq ant
-# Ruby
-# - gem uninstall bundler -I -x
- - gem install bundler -v 1.3.5 || true
-# Python
-# - sudo apt-get install -qq python-all python-all-dev python-all-dbg
-# Perl
- - sudo apt-get install -qq libbit-vector-perl libclass-accessor-class-perl
-# PHP
- - sudo apt-get install -qq php5-dev php5-cli phpunit php-pear
- - sudo pear channel-discover pear.phpunit.de
- - sudo pear channel-discover pear.symfony.com
-# - sudo pear channel-discover components.ez.no
- - sudo pear update-channels
- - sudo pear upgrade-all
- - sudo pear install --alldeps phpunit/PHPUnit
-# c_glib
- - sudo apt-get install -qq libglib2.0-dev
-# Erlang
-# - sudo apt-get install -qq erlang-base erlang-eunit erlang-dev
-# Csharp
- - sudo apt-get install -qq mono-gmcs mono-devel libmono-system-web2.0-cil nunit nunit-console
-# Haskell
-# - sudo apt-get install -qq ghc6 cabal-install libghc6-binary-dev libghc6-network-dev libghc6-http-dev
-# Thrift Compiler for Windows
- - sudo apt-get install -qq mingw32 mingw32-binutils mingw32-runtime
-# node.js
- - sudo apt-get install -qq nodejs npm
- - sudo npm install nodeunit -g || true
-# TODO: move npm install to nodejs Makefile
- - cd lib/nodejs; npm install & cd ../..
+services:
+  - docker
 
 install:
-  - sh bootstrap.sh
+  - if [[ `uname` == "Linux" ]]; then build/docker/refresh.sh; fi
 
-script:
-# TODO: fix these languages
-  - sh configure --without-erlang --without-haskell --without-python
-  - make -j$NUM_CPU && make dist
-  - make cross -j$NUM_CPU
-  - sh bootstrap.sh ; sh contrib/mingw-cross-compile.sh
-# TODO: add these steps
-#  - sh bootstrap.sh ; dpkg-buildpackage -tc
+stages:
+  - docker    # docker images
+  - thrift    # thrift build jobs
+
+env:
+  global:
+    - SCRIPT="cmake.sh"
+    - BUILD_ARG=""
+    - BUILD_ENV="-e CC=gcc -e CXX=g++ -e THRIFT_CROSSTEST_CONCURRENCY=4"
+    - DISTRO=ubuntu-artful
+    - BUILD_LIBS="CPP C_GLIB HASKELL JAVA PYTHON TESTING TUTORIALS"  # only meaningful for CMake builds
+    - TRAVIS_BUILD_STAGE=test
+    # DOCKER_REPO (this works for all builds as a source for docker images - you can override for fork builds in your Travis settings)
+    - DOCKER_REPO="thrift/thrift-build"
+    # DOCKER_USER (provide in your Travis settings if you want to build and update docker images once, instead of on every job)
+    # DOCKER_PASS (same)
+
+jobs:
+  include:
+    # ========================= stage: docker =========================
+    - stage: docker
+      script: true
+      env:
+        - JOB="Docker Build ubuntu-xenial 16.04"
+        - DISTRO=ubuntu-xenial
+        - TRAVIS_BUILD_STAGE=docker
+    - script: true
+      env:
+        - JOB="Docker Build ubuntu-artful 17.10"
+        - DISTRO=ubuntu-artful
+        - TRAVIS_BUILD_STAGE=docker
+
+    # ========================= stage: thrift =======================
+    # ------------------------- phase: cross ------------------------
+    # apache/thrift official PR builds can exceed 50 minutes per job so combine all cross tests
+    - stage: thrift
+      script: build/docker/run.sh
+      if: repo = apache/thrift
+      env:
+        - JOB="Cross Language Tests"
+        - SCRIPT="cross-test.sh"
+
+    # fork based PR builds cannot exceed 50 minutes per job
+    - stage: thrift
+      script: build/docker/run.sh
+      if: repo != apache/thrift
+      env:
+        - JOB="Cross Language Tests (Binary Protocol)"
+        - SCRIPT="cross-test.sh"
+        - BUILD_ARG="-'(binary)'"
+
+    - stage: thrift
+      script: build/docker/run.sh
+      if: repo != apache/thrift
+      env:
+        - JOB="Cross Language Tests (Header, JSON Protocols)"
+        - SCRIPT="cross-test.sh"
+        - BUILD_ARG="-'(header|json)'"
+
+    - stage: thrift
+      script: build/docker/run.sh
+      if: repo != apache/thrift
+      env:
+        - JOB="Cross Language Tests (Compact and Multiplexed Protocols)"
+        - SCRIPT="cross-test.sh"
+        - BUILD_ARG="-'(compact|multiplexed)'"
+
+    # ------------------------- phase: sca --------------------------
+    # QA jobs for code analytics and metrics
+    - stage: thrift
+      script: build/docker/run.sh
+      env:
+        - JOB="Static Code Analysis"
+        - SCRIPT="sca.sh"
+
+    # C and C++ undefined behavior.
+    # A binary crashes if undefined behavior occurs and produces a stack trace.
+    # python is disabled, see: THRIFT-4360
+    - script: build/docker/run.sh
+      env:
+        - JOB="UBSan"
+        - SCRIPT="ubsan.sh"
+        - BUILD_ARG="--without-python --without-py3"
+
+    # ------------------------- phase: cmake ------------------------
+    - script: build/docker/run.sh
+      env:
+        - JOB="CMake"
+
+    # C++ specific options: compiler plug-in, threading model
+    - script: build/docker/run.sh
+      env:
+        - JOB="C++98 (Boost Thread)"
+        - SCRIPT="cmake.sh"
+        - BUILD_LIBS="CPP TESTING TUTORIALS"
+        - BUILD_ARG="-DCMAKE_CXX_STANDARD=98 -DCMAKE_CXX_STANDARD_REQUIRED=ON -DCMAKE_CXX_EXTENSIONS=OFF --DWITH_BOOSTTHREADS=ON -DWITH_PYTHON=OFF -DWITH_C_GLIB=OFF -DWITH_JAVA=OFF -DWITH_HASKELL=OFF"
+        - BUILD_ENV="-e CC=clang -e CXX=clang++"
+
+    - script: build/docker/run.sh
+      env:
+        - JOB="C++ (Std Thread) and Plugin"
+        - SCRIPT="cmake.sh"
+        - BUILD_LIBS="CPP TESTING TUTORIALS"
+        - BUILD_ARG="-DWITH_PLUGIN=ON -DWITH_STDTHREADS=ON -DWITH_PYTHON=OFF -DWITH_C_GLIB=OFF -DWITH_JAVA=OFF -DWITH_HASKELL=OFF"
+        - BUILD_ENV="-e CC=clang -e CXX=clang++"
+
+    # ------------------------- phase: autotools --------------------
+    # TODO: Remove them once migrated to CMake
+    - script: build/docker/run.sh
+      env:
+        - JOB="Autotools (Ubuntu Artful)"
+        - DISTRO=ubuntu-artful
+        - SCRIPT="autotools.sh"
+
+    - script: build/docker/run.sh
+      env:
+        - JOB="Autotools (Ubuntu Xenial)"
+        - DISTRO=ubuntu-xenial
+        - SCRIPT="autotools.sh"
+
+    # ------------------------- phase: dist -------------------------
+    - script: build/docker/run.sh
+      env:
+        - JOB="make dist"
+        - DISTRO=ubuntu-xenial
+        - SCRIPT="make-dist.sh"
+
+    - script: build/docker/run.sh
+      env:
+        - JOB="Debian Packages"
+        - DISTRO=ubuntu-xenial
+        - SCRIPT="dpkg.sh"
+
+  ### ------------------------- phase: osx -------------------------
+  # disabled due to the time delays it imposes on build jobs
+  # - os: osx
+  #   osx_image: xcode9
+  #   script: build/docker/scripts/autotools.sh
+

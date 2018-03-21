@@ -26,19 +26,19 @@ using System.Text;
 using Thrift.Transport;
 using System.Collections.Generic;
 
-namespace Thrift.Protocol 
+namespace Thrift.Protocol
 {
 
     /**
-     * TProtocolDecorator forwards all requests to an enclosed TProtocol instance, 
-     * providing a way to author concise concrete decorator subclasses.  While it has 
-     * no abstract methods, it is marked abstract as a reminder that by itself, 
+     * TProtocolDecorator forwards all requests to an enclosed TProtocol instance,
+     * providing a way to author concise concrete decorator subclasses.  While it has
+     * no abstract methods, it is marked abstract as a reminder that by itself,
      * it does not modify the behaviour of the enclosed TProtocol.
      *
      * See p.175 of Design Patterns (by Gamma et al.)
      * See TMultiplexedProtocol
      */
-    public abstract class TProtocolDecorator : TProtocol 
+    public abstract class TProtocolDecorator : TProtocol
     {
         private TProtocol WrappedProtocol;
 
@@ -46,14 +46,14 @@ namespace Thrift.Protocol
          * Encloses the specified protocol.
          * @param protocol All operations will be forward to this protocol.  Must be non-null.
          */
-        public TProtocolDecorator(TProtocol protocol) 
+        public TProtocolDecorator(TProtocol protocol)
             : base( protocol.Transport)
         {
-            
+
             WrappedProtocol = protocol;
         }
 
-        public override void WriteMessageBegin(TMessage tMessage) 
+        public override void WriteMessageBegin(TMessage tMessage)
         {
             WrappedProtocol.WriteMessageBegin(tMessage);
         }
@@ -88,7 +88,7 @@ namespace Thrift.Protocol
             WrappedProtocol.WriteFieldStop();
         }
 
-        public override void WriteMapBegin(TMap tMap) 
+        public override void WriteMapBegin(TMap tMap)
         {
             WrappedProtocol.WriteMapBegin(tMap);
         }
@@ -98,7 +98,7 @@ namespace Thrift.Protocol
             WrappedProtocol.WriteMapEnd();
         }
 
-        public override void WriteListBegin(TList tList)  
+        public override void WriteListBegin(TList tList)
         {
             WrappedProtocol.WriteListBegin(tList);
         }
@@ -108,7 +108,7 @@ namespace Thrift.Protocol
             WrappedProtocol.WriteListEnd();
         }
 
-        public override void WriteSetBegin(TSet tSet)  
+        public override void WriteSetBegin(TSet tSet)
         {
             WrappedProtocol.WriteSetBegin(tSet);
         }
@@ -118,7 +118,7 @@ namespace Thrift.Protocol
             WrappedProtocol.WriteSetEnd();
         }
 
-        public override void WriteBool(bool b)  
+        public override void WriteBool(bool b)
         {
             WrappedProtocol.WriteBool(b);
         }

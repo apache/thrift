@@ -20,8 +20,14 @@
 #import <Foundation/Foundation.h>
 #import "TProcessor.h"
 
+NS_ASSUME_NONNULL_BEGIN
+
+
 @protocol TProcessorFactory <NSObject>
 
-- (id<TProcessor>) processorForTransport: (id<TTransport>) transport;
+-(id<TProcessor>) processorForTransport:(id<TTransport>)transport;
 
 @end
+
+
+NS_ASSUME_NONNULL_END

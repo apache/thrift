@@ -7,7 +7,7 @@ dnl If "JAVA" is defined in the environment, that will be the only
 dnl java command tested.  Otherwise, a hard-coded list will be used.
 dnl Similarly for "JAVAC".
 dnl
-dnl AX_JAVAC_AND_JAVA does not currenly support testing for a particular
+dnl AX_JAVAC_AND_JAVA does not currently support testing for a particular
 dnl Java version, testing for only one of "java" and "javac", or
 dnl compiling or running user-provided Java code.
 dnl
@@ -57,6 +57,10 @@ AC_DEFUN([AX_JAVAC_AND_JAVA],
             echo "Running \"$JAVAC configtest_ax_javac_and_java.java\"" >&AS_MESSAGE_LOG_FD
             if $JAVAC configtest_ax_javac_and_java.java >&AS_MESSAGE_LOG_FD 2>&1 ; then
 
+              # prevent $JAVA VM issues with UTF-8 path names (THRIFT-3271)
+              oLC_ALL="$LC_ALL"
+              LC_ALL=""
+
               IFS=","
               for JAVA in $JAVA_PROGS ; do
                 IFS="$oIFS"
@@ -68,6 +72,10 @@ AC_DEFUN([AX_JAVAC_AND_JAVA],
                 fi
 
               done
+
+              # restore LC_ALL
+              LC_ALL="$oLC_ALL"
+              oLC_ALL=""
 
             fi
 
@@ -110,7 +118,7 @@ AC_DEFUN([AX_CHECK_JAVA_CLASS],
 AC_DEFUN([AX_CHECK_ANT_VERSION],
          [
           AC_MSG_CHECKING(for ant version > $2)
-          ANT_VALID=`expr $($1 -version 2>/dev/null | sed -n 's/.*version \(@<:@0-9\.@:>@*\).*/\1/p') \>= $2`
+          ANT_VALID=`expr "x$(printf "$2\n$($1 -version 2>/dev/null | sed -n 's/.*version \(@<:@0-9\.@:>@*\).*/\1/p')" | sort -t '.' -k 1,1 -k 2,2 -k 3,3 -g | sed -n 1p)" = "x$2"`
           if test "x$ANT_VALID" = "x1" ; then
             AC_MSG_RESULT(yes)
           else

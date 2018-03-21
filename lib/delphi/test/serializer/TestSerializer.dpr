@@ -17,22 +17,24 @@
  * under the License.
  *)
 
-program skiptest_version1;
+program TestSerializer;
 
 {$APPTYPE CONSOLE}
 
 uses
   Classes, Windows, SysUtils, Generics.Collections,
   Thrift in '..\..\src\Thrift.pas',
+  Thrift.Socket in '..\..\src\Thrift.Socket.pas',
   Thrift.Transport in '..\..\src\Thrift.Transport.pas',
   Thrift.Protocol in '..\..\src\Thrift.Protocol.pas',
   Thrift.Protocol.JSON in '..\..\src\Thrift.Protocol.JSON.pas',
   Thrift.Collections in '..\..\src\Thrift.Collections.pas',
   Thrift.Server in '..\..\src\Thrift.Server.pas',
-  Thrift.Console in '..\..\src\Thrift.Console.pas',
   Thrift.Utils in '..\..\src\Thrift.Utils.pas',
   Thrift.Serializer in '..\..\src\Thrift.Serializer.pas',
   Thrift.Stream in '..\..\src\Thrift.Stream.pas',
+  Thrift.TypeRegistry in '..\..\src\Thrift.TypeRegistry.pas',
+  ReservedKeywords,
   DebugProtoTest,
   TestSerializer.Data;
 
@@ -48,11 +50,13 @@ type
     class procedure Deserialize( const input : TBytes; const target : IBase; const factory : IProtocolFactory);  overload;
     class procedure Deserialize( const input : TStream; const target : IBase; const factory : IProtocolFactory);  overload;
 
+    procedure Test_Serializer_Deserializer;
+
   public
     constructor Create;
     destructor Destroy;  override;
 
-    procedure TestDeserialize;
+    procedure RunTests;
   end;
 
 
@@ -78,9 +82,10 @@ begin
   end;
 end;
 
-
-procedure TTestSerializer.TestDeserialize;
 type TMethod = (mt_Bytes, mt_Stream);
+
+
+procedure TTestSerializer.Test_Serializer_Deserializer;
 var level3ooe, correct : IOneOfEach;
     factory : IProtocolFactory;
     bytes   : TBytes;
@@ -153,6 +158,19 @@ begin
 end;
 
 
+procedure TTestSerializer.RunTests;
+begin
+  try
+    Test_Serializer_Deserializer;
+  except
+    on e:Exception do begin
+      Writeln( e.Message);
+      Write('Hit ENTER to close ... '); Readln;
+    end;
+  end;
+end;
+
+
 class function TTestSerializer.Serialize(const input : IBase; const factory : IProtocolFactory) : TBytes;
 var serial : TSerializer;
 begin
@@ -204,7 +222,7 @@ var test : TTestSerializer;
 begin
   test := TTestSerializer.Create;
   try
-    test.TestDeserialize;
+    test.RunTests;
   finally
     test.Free;
   end;

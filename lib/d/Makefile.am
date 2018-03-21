@@ -17,7 +17,13 @@
 # under the License.
 #
 
-SUBDIRS = . test
+AUTOMAKE_OPTIONS = serial-tests
+
+SUBDIRS = .
+
+if WITH_TESTS
+SUBDIRS += test
+endif
 
 #
 # Enumeration of all the public and private modules.
@@ -35,7 +41,10 @@ d_asyncdir = $(d_thriftdir)/async
 d_async_DATA = $(addprefix src/, $(addsuffix .d, $(d_asyncmodules)))
 
 d_codegenmodules = $(addprefix thrift/codegen/, async_client \
-	async_client_pool base client client_pool idlgen processor)
+	async_client_pool base client client_pool processor)
+#d_codegenmodules = $(addprefix thrift/codegen/, async_client \
+#	async_client_pool base client client_pool idlgen processor)
+
 d_codegendir = $(d_thriftdir)/codegen
 d_codegen_DATA = $(addprefix src/, $(addsuffix .d, $(d_codegenmodules)))
 
@@ -168,7 +177,7 @@ unittest/.directory:
 	touch $@
 
 unittest/debug/%: src/%.d $(all_targets) unittest/emptymain.d
-	$(DMD) -gc -of$(subst /,$(DMD_OF_DIRSEP),$@) $(d_test_flags) $^
+	$(DMD) -g -of$(subst /,$(DMD_OF_DIRSEP),$@) $(d_test_flags) $^
 
 unittest/release/%: src/%.d $(all_targets) unittest/emptymain.d
 	$(DMD) -O -release -of$(subst /,$(DMD_OF_DIRSEP),$@) $(d_test_flags) $^
@@ -176,6 +185,8 @@ unittest/release/%: src/%.d $(all_targets) unittest/emptymain.d
 TESTS = $(addprefix unittest/debug/, $(d_test_modules)) \
 	$(addprefix unittest/release/, $(d_test_modules))
 
+precross: all-local
+	$(MAKE) -C test precross
 
 EXTRA_DIST = \
 	src \

@@ -7,9 +7,9 @@
  to you under the Apache License, Version 2.0 (the
  "License"); you may not use this file except in compliance
  with the License. You may obtain a copy of the License at
- 
+
  http://www.apache.org/licenses/LICENSE-2.0
- 
+
  Unless required by applicable law or agreed to in writing,
  software distributed under the License is distributed on an
  "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
@@ -26,20 +26,20 @@
   <property name="interface.dir" value="${basedir}/../if"/>
   <property name="thrift.java.dir" location="${thrift.root}/lib/java"/>
   <property name="build.tools.dir" location="${thrift.java.dir}/build/tools/"/>
-  <property name="thrift_compiler" value="${thrift.root}/compiler/cpp/thrift"/> 
+  <property name="thrift_compiler" value="${thrift.root}/compiler/cpp/thrift"/>
+  <property file="${basedir}/build.properties"/>
 
   <!-- inherit from the java build file for version and other properties -->
-  <property file="${thrift.java.dir}/build.properties" />
+  <property file="${thrift.java.dir}/gradle.properties" />
 
   <property environment="env"/>
 
   <condition property="version" value="${thrift.version}">
     <isset property="release"/>
   </condition>
-  <property name="version" value="${thrift.version}-snapshot"/>
+  <property name="version" value="${thrift.version}-SNAPSHOT"/>
 
   <property name="fb303.final.name" value="${fb303.artifactid}-${version}"/>
-  <property name="thrift.java.libthrift" value="${thrift.java.dir}/build/libthrift-${version}.jar"/>
 
   <property name="src" value="${basedir}/src"/>
   <property name="gen" value="${basedir}/gen-java"/>
@@ -74,8 +74,12 @@
     <echo message="Building ${fb303.final.name}.jar"/>
     <javac destdir="${build.classes.dir}" debug="on">
       <classpath>
-        <pathelement location="${thrift.java.libthrift}"/>
-        <fileset dir="${thrift.root}/lib/java/build/lib">
+        <fileset dir="${thrift.java.dir}/build/libs">
+          <include name="libthrift*.jar" />
+          <exclude name="libthrift*javadoc.jar" />
+          <exclude name="libthrift*sources.jar" />
+        </fileset>
+        <fileset dir="${thrift.java.dir}/build/deps">
           <include name="*.jar"/>
         </fileset>
       </classpath>
@@ -120,19 +124,19 @@
     <artifact:remoteRepository id="apache" url="${apache.repo}"/>
 
     <!-- Pom file information -->
-    <artifact:pom id="pom" 
-      groupId="${thrift.groupid}" 
+    <artifact:pom id="pom"
+      groupId="${thrift.groupid}"
       artifactId="${fb303.artifactid}"
-      version="${version}" 
+      version="${version}"
       url="http://thrift.apache.org"
       name="Apache Thrift"
       description="Thrift is a software framework for scalable cross-language services development."
-      packaging="pom"
+      packaging="jar"
     >
       <remoteRepository refid="central"/>
       <remoteRepository refid="apache"/>
       <license name="The Apache Software License, Version 2.0" url="${license}"/>
-      <scm connection="scm:git:https://git-wip-us.apache.org/repos/asf/thrift.git" 
+      <scm connection="scm:git:https://git-wip-us.apache.org/repos/asf/thrift.git"
       developerConnection="scm:git:https://git-wip-us.apache.org/repos/asf/thrift.git"
       url="https://git-wip-us.apache.org/repos/asf?p=thrift.git"
     />

@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python 
 
 #
 # Licensed to the Apache Software Foundation (ASF) under one
@@ -19,7 +19,9 @@
 # under the License.
 #
 
-import sys, os
+from __future__ import print_function
+import sys
+import os
 from optparse import OptionParser
 
 from thrift.Thrift import *
@@ -31,11 +33,12 @@ from thrift.protocol import TBinaryProtocol
 from fb303 import *
 from fb303.ttypes import *
 
+
 def service_ctrl(
-                 command,
-                 port,
-                 trans_factory = None,
-                 prot_factory = None):
+        command,
+        port,
+        trans_factory=None,
+        prot_factory=None):
     """
     service_ctrl is a generic function to execute standard fb303 functions
 
@@ -55,66 +58,59 @@ def service_ctrl(
             msg = fb_status_string(status)
             if (len(status_details)):
                 msg += " - %s" % status_details
-            print msg
-
-            if (status == fb_status.ALIVE):
-                return 2
-            else:
-                return 3
+            print(msg)
+            return 2 if status == fb_status.ALIVE else 3
         except:
-            print "Failed to get status"
+            print("Failed to get status")
             return 3
 
     # scalar commands
-    if command in ["version","alive","name"]:
+    if command in ["version", "alive", "name"]:
         try:
-            result = fb303_wrapper(command,  port, trans_factory, prot_factory)
-            print result
+            result = fb303_wrapper(command, port, trans_factory, prot_factory)
+            print(result)
             return 0
         except:
-            print "failed to get ",command
+            print("failed to get ", command)
             return 3
 
     # counters
     if command in ["counters"]:
         try:
-            counters = fb303_wrapper('counters',  port, trans_factory, prot_factory)
+            counters = fb303_wrapper('counters', port, trans_factory, prot_factory)
             for counter in counters:
-                print "%s: %d" % (counter, counters[counter])
+                print("%s: %d" % (counter.encode('utf-8'), counters[counter]))
             return 0
         except:
-            print "failed to get counters"
+            print("failed to get counters")
             return 3
-
 
     # Only root should be able to run the following commands
     if os.getuid() == 0:
         # async commands
-        if command in ["stop","reload"] :
+        if command in ["stop", "reload"]:
             try:
                 fb303_wrapper(command, port, trans_factory, prot_factory)
                 return 0
             except:
-                print "failed to tell the service to ", command
+                print("failed to tell the service to ", command)
                 return 3
     else:
-        if command in ["stop","reload"]:
-            print "root privileges are required to stop or reload the service."
+        if command in ["stop", "reload"]:
+            print("root privileges are required to stop or reload the service.")
             return 4
 
-    print "The following commands are available:"
-    for command in ["counters","name","version","alive","status"]:
-        print "\t%s" % command
-    print "The following commands are available for users with root privileges:"
-    for command in ["stop","reload"]:
-        print "\t%s" % command
+    print("The following commands are available:")
+    for command in ["counters", "name", "version", "alive", "status"]:
+        print("\t%s" % command)
+    print("The following commands are available for users with root privileges:")
+    for command in ["stop", "reload"]:
+        print("\t%s" % command)
+
+    return 0
 
 
-
-    return 0;
-
-
-def fb303_wrapper(command, port, trans_factory = None, prot_factory = None):
+def fb303_wrapper(command, port, trans_factory=None, prot_factory=None):
     sock = TSocket.TSocket('localhost', port)
 
     # use input transport factory if provided
@@ -179,11 +175,11 @@ def main():
 
     # parse command line options
     parser = OptionParser()
-    commands=["stop","counters","status","reload","version","name","alive"]
+    commands = ["stop", "counters", "status", "reload", "version", "name", "alive"]
 
     parser.add_option("-c", "--command", dest="command", help="execute this API",
                       choices=commands, default="status")
-    parser.add_option("-p","--port",dest="port",help="the service's port",
+    parser.add_option("-p", "--port", dest="port", help="the service's port",
                       default=9082)
 
     (options, args) = parser.parse_args()

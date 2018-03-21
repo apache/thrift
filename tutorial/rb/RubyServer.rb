@@ -52,14 +52,14 @@ class CalculatorHandler
     elsif work.op == Operation::DIVIDE
       if work.num2 == 0
         x = InvalidOperation.new()
-        x.what = work.op
+        x.whatOp = work.op
         x.why = "Cannot divide by 0"
         raise x
       end
       val = work.num1 / work.num2
     else
       x = InvalidOperation.new()
-      x.what = work.op
+      x.whatOp = work.op
       x.why = "Invalid operation"
       raise x
     end

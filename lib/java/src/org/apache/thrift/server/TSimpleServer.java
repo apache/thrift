@@ -35,9 +35,6 @@ public class TSimpleServer extends TServer {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(TSimpleServer.class.getName());
 
-  // Please see THRIFT-1795 for the usage of this flag
-  private volatile boolean stopped_ = false;
-
   public TSimpleServer(AbstractServerArgs args) {
     super(args);
   }

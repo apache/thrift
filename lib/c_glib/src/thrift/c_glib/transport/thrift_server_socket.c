@@ -42,9 +42,6 @@ enum _ThriftServerSocketProperties
 /* define the GError domain string */
 #define THRIFT_SERVER_SOCKET_ERROR_DOMAIN "thrift-server-socket-error-quark"
 
-/* for errors coming from socket() and connect() */
-extern int errno;
-
 G_DEFINE_TYPE(ThriftServerSocket, thrift_server_socket, THRIFT_TYPE_SERVER_TRANSPORT)
 
 gboolean
@@ -215,6 +212,7 @@ thrift_server_socket_set_property (GObject *object, guint property_id,
 static void
 thrift_server_socket_class_init (ThriftServerSocketClass *cls)
 {
+  ThriftServerTransportClass *tstc = THRIFT_SERVER_TRANSPORT_CLASS (cls);
   GObjectClass *gobject_class = G_OBJECT_CLASS (cls);
   GParamSpec *param_spec = NULL;
 
@@ -226,12 +224,12 @@ thrift_server_socket_class_init (ThriftServerSocketClass *cls)
                                   "port (construct)",
                                   "Set the port to listen to",
                                   0, /* min */
-                                  65534, /* max */
+                                  65535, /* max */
                                   9090, /* default by convention */
                                   G_PARAM_CONSTRUCT_ONLY |
                                   G_PARAM_READWRITE);
   g_object_class_install_property (gobject_class,
-                                   PROP_THRIFT_SERVER_SOCKET_PORT, 
+                                   PROP_THRIFT_SERVER_SOCKET_PORT,
                                    param_spec);
 
   param_spec = g_param_spec_uint ("backlog",
@@ -248,7 +246,6 @@ thrift_server_socket_class_init (ThriftServerSocketClass *cls)
 
   gobject_class->finalize = thrift_server_socket_finalize;
 
-  ThriftServerTransportClass *tstc = THRIFT_SERVER_TRANSPORT_CLASS (cls);
   tstc->listen = thrift_server_socket_listen;
   tstc->accept = thrift_server_socket_accept;
   tstc->close = thrift_server_socket_close;

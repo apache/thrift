@@ -65,7 +65,7 @@ final class TResourcePool(Resource) {
   /**
    * Returns an »enriched« input range to iterate over the pool members.
    */
-  struct Range {
+  static struct Range {
     /**
      * Whether the range is empty.
      *
@@ -98,9 +98,7 @@ final class TResourcePool(Resource) {
         auto fi = r in parent_.faultInfos_;
 
         if (fi && fi.resetTime != fi.resetTime.init) {
-          // The argument to < needs to be an lvalue…
-          auto currentTick = TickDuration.currSystemTick;
-          if (fi.resetTime < currentTick) {
+          if (fi.resetTime < parent_.getCurrentTick_()) {
             // The timeout expired, remove the resource from the list and go
             // ahead trying it.
             parent_.faultInfos_.remove(r);
@@ -154,7 +152,7 @@ final class TResourcePool(Resource) {
      */
     bool willBecomeNonempty(out Resource next, out Duration waitTime) {
       // If no resources are in the pool, the range will never become non-empty.
-      if (resources_.empty) return true;
+      if (resources_.empty) return false;
 
       // If cycle mode is not enabled, a range never becomes non-empty after
       // being empty once, because all the elements have already been
@@ -167,7 +165,7 @@ final class TResourcePool(Resource) {
       ).front;
 
       next = nextPair[0];
-      waitTime = to!Duration(nextPair[1].resetTime - TickDuration.currSystemTick);
+      waitTime = to!Duration(nextPair[1].resetTime - parent_.getCurrentTick_());
 
       return true;
     }
@@ -232,8 +230,7 @@ final class TResourcePool(Resource) {
     if (fi.count >= faultDisableCount) {
       // If the resource has hit the fault count limit, disable it for
       // specified duration.
-      fi.resetTime = TickDuration.currSystemTick +
-        TickDuration.from!"hnsecs"(faultDisableDuration.total!"hnsecs");
+      fi.resetTime = getCurrentTick_() + cast(TickDuration)faultDisableDuration;
     }
   }
 
@@ -270,6 +267,15 @@ final class TResourcePool(Resource) {
 private:
   Resource[] resources_;
   FaultInfo[Resource] faultInfos_;
+
+  /// Function to get the current timestamp from some monotonic system clock.
+  ///
+  /// This is overridable to be able to write timing-insensitive unit tests.
+  /// The extra indirection should not matter much performance-wise compared to
+  /// the actual system call, and by its very nature thisshould not be on a hot
+  /// path anyway.
+  typeof(&TickDuration.currSystemTick) getCurrentTick_ =
+    &TickDuration.currSystemTick;
 }
 
 private {
@@ -279,11 +285,17 @@ private {
   }
 }
 
-import std.datetime;
-import thrift.base;
+unittest {
+  auto pool = new TResourcePool!Object([]);
+  enforce(pool[].empty);
+  Object dummyRes;
+  Duration dummyDur;
+  enforce(!pool[].willBecomeNonempty(dummyRes, dummyDur));
+}
 
 unittest {
-  import core.thread;
+  import std.datetime;
+  import thrift.base;
 
   auto a = new Object;
   auto b = new Object;
@@ -291,7 +303,10 @@ unittest {
   auto objs = [a, b, c];
   auto pool = new TResourcePool!Object(objs);
   pool.permute = false;
-  pool.faultDisableDuration = dur!"msecs"(5);
+
+  static Duration fakeClock;
+  pool.getCurrentTick_ = () => cast(TickDuration)fakeClock;
+
   Object dummyRes = void;
   Duration dummyDur = void;
 
@@ -328,7 +343,7 @@ unittest {
     enforce(r.empty);
     enforce(!r.willBecomeNonempty(dummyRes, dummyDur));
 
-    Thread.sleep(dur!"msecs"(5));
+    fakeClock += 2.seconds;
     // Not in cycle mode, has to be still empty after the timeouts expired.
     enforce(r.empty);
     enforce(!r.willBecomeNonempty(dummyRes, dummyDur));
@@ -340,9 +355,7 @@ unittest {
     pool.faultDisableCount = 1;
 
     pool.recordFault(a);
-    Thread.sleep(dur!"usecs"(1));
     pool.recordFault(b);
-    Thread.sleep(dur!"usecs"(1));
     pool.recordFault(c);
 
     auto r = pool[];
@@ -383,7 +396,7 @@ unittest {
     r.popFront();
     enforce(r.front == b);
 
-    Thread.sleep(dur!"msecs"(5));
+    fakeClock += 2.seconds;
 
     r.popFront();
     enforce(r.front == c);
@@ -400,19 +413,18 @@ unittest {
     pool.faultDisableCount = 1;
 
     pool.recordFault(a);
-    Thread.sleep(dur!"usecs"(1));
+    fakeClock += 1.msecs;
     pool.recordFault(b);
-    Thread.sleep(dur!"usecs"(1));
+    fakeClock += 1.msecs;
     pool.recordFault(c);
 
     auto r = pool[];
     enforce(r.empty);
 
-    Object nextRes;
-    Duration nextWait;
-    enforce(r.willBecomeNonempty(nextRes, nextWait));
-    enforce(nextRes == a);
-    enforce(nextWait > dur!"hnsecs"(0));
+    // Make sure willBecomeNonempty gets the order right.
+    enforce(r.willBecomeNonempty(dummyRes, dummyDur));
+    enforce(dummyRes == a);
+    enforce(dummyDur > Duration.zero);
 
     foreach (o; objs) pool.recordSuccess(o);
   }

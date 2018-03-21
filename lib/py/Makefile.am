@@ -16,11 +16,21 @@
 # specific language governing permissions and limitations
 # under the License.
 #
-.NOTPARALLEL:
+AUTOMAKE_OPTIONS = serial-tests
 DESTDIR ?= /
-EXTRA_DIST = setup.py setup.cfg src compat
 
-all-local:
+if WITH_PY3
+py3-build:
+	$(PYTHON3) setup.py build
+py3-test: py3-build
+	$(PYTHON3) test/thrift_json.py
+	$(PYTHON3) test/test_sslsocket.py
+else
+py3-build:
+py3-test:
+endif
+
+all-local: py3-build
 	$(PYTHON) setup.py build
 
 # We're ignoring prefix here because site-packages seems to be
@@ -33,4 +43,17 @@ install-exec-hook:
 clean-local:
 	$(RM) -r build
 
-check-local: all
+check-local: all py3-test
+	$(PYTHON) test/thrift_json.py
+	$(PYTHON) test/test_sslsocket.py
+
+EXTRA_DIST = \
+	CMakeLists.txt \
+	MANIFEST.in \
+	coding_standards.md \
+	compat \
+	setup.py \
+	setup.cfg \
+	src \
+	test \
+	README.md

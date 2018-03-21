@@ -20,39 +20,36 @@
 from thrift.Thrift import TProcessor, TMessageType, TException
 from thrift.protocol import TProtocolDecorator, TMultiplexedProtocol
 
+
 class TMultiplexedProcessor(TProcessor):
-  def __init__(self):
-    self.services = {}
+    def __init__(self):
+        self.services = {}
 
-  def registerProcessor(self, serviceName, processor):
-    self.services[serviceName] = processor
+    def registerProcessor(self, serviceName, processor):
+        self.services[serviceName] = processor
 
-  def process(self, iprot, oprot):
-    (name, type, seqid) = iprot.readMessageBegin();
-    if type != TMessageType.CALL & type != TMessageType.ONEWAY:
-      raise TException("TMultiplex protocol only supports CALL & ONEWAY")
+    def process(self, iprot, oprot):
+        (name, type, seqid) = iprot.readMessageBegin()
+        if type != TMessageType.CALL and type != TMessageType.ONEWAY:
+            raise TException("TMultiplex protocol only supports CALL & ONEWAY")
 
-    index = name.find(TMultiplexedProtocol.SEPARATOR)
-    if index < 0:
-      raise TException("Service name not found in message name: " + name + ". Did you forget to use TMultiplexProtocol in your client?")
+        index = name.find(TMultiplexedProtocol.SEPARATOR)
+        if index < 0:
+            raise TException("Service name not found in message name: " + name + ". Did you forget to use TMultiplexProtocol in your client?")
 
-    serviceName = name[0:index]
-    call = name[index+len(TMultiplexedProtocol.SEPARATOR):]
-    if not serviceName in self.services:
-      raise TException("Service name not found: " + serviceName + ". Did you forget to call registerProcessor()?")
+        serviceName = name[0:index]
+        call = name[index + len(TMultiplexedProtocol.SEPARATOR):]
+        if serviceName not in self.services:
+            raise TException("Service name not found: " + serviceName + ". Did you forget to call registerProcessor()?")
 
-    standardMessage = (
-      call,
-      type,
-      seqid
-    )
-    return self.services[serviceName].process(StoredMessageProtocol(iprot, standardMessage), oprot)
+        standardMessage = (call, type, seqid)
+        return self.services[serviceName].process(StoredMessageProtocol(iprot, standardMessage), oprot)
 
 
 class StoredMessageProtocol(TProtocolDecorator.TProtocolDecorator):
-  def __init__(self, protocol, messageBegin):
-    TProtocolDecorator.TProtocolDecorator.__init__(self, protocol)
-    self.messageBegin = messageBegin
+    def __init__(self, protocol, messageBegin):
+        TProtocolDecorator.TProtocolDecorator.__init__(self, protocol)
+        self.messageBegin = messageBegin
 
-  def readMessageBegin(self):
-    return self.messageBegin
+    def readMessageBegin(self):
+        return self.messageBegin

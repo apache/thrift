@@ -73,7 +73,7 @@ AC_DEFUN([AX_LIB_ZLIB_DO_CHECK],
           #   (defined in the library).
           AC_LANG_PUSH([C])
           dnl This can be changed to AC_LINK_IFELSE if you are cross-compiling.
-          AC_RUN_IFELSE([AC_LANG_PROGRAM([[
+          AC_LINK_IFELSE([AC_LANG_PROGRAM([[
           #include <zlib.h>
           #if ZLIB_VERNUM >= 0x$WANT_ZLIB_VERSION
           #else

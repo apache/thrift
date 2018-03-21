@@ -58,7 +58,7 @@ struct Xtruct
   1:  string string_thing
 
   /** doct text goes before a comma */
-  4:  byte   byte_thing,
+  4:  i8     byte_thing,
 
   9:  i32    i32_thing,
   11: i64    i64_thing
@@ -74,7 +74,7 @@ const map<string,string> MAPCONSTANT = {'hello':'world', 'goodnight':'moon'}
 
 struct Xtruct2
 {
-  1: byte   byte_thing,
+  1: i8     byte_thing,
   2: Xtruct struct_thing,
   3: i32    i32_thing
 }
@@ -117,7 +117,7 @@ service ThriftTest
   /** And this is how you would document functions in a service */
   void         testVoid(),
   string       testString(1: string thing),
-  byte         testByte(1: byte thing),
+  i8           testByte(1: byte thing),
   i32          testI32(1: i32 thing),
 
   /** Like this one */
@@ -155,7 +155,7 @@ typedef i32 SorryNoGo
 typedef i32 TrivialMultiLine
 
 /**
- * This is the cannonical example
+ * This is the canonical example
  * of a multiline docstring.
  */
 typedef i32 StandardMultiLine
@@ -245,5 +245,43 @@ typedef i32 BigDog
 typedef i32 TotallyDegenerate
 
 /**no room for newline here*/
+
+/* * / */
+typedef i32 TestFor3501a
+
+/**
+ * /
+ */
+typedef i32 TestFor3501b
+
+
+/* Comment-end tokens can of course have more than one asterisk */
+struct TestFor3709_00 { /* ? */ 1: i32 foo }
+/* Comment-end tokens can of course have more than one asterisk **/
+struct TestFor3709_01 { /* ? */ 1: i32 foo }
+/* Comment-end tokens can of course have more than one asterisk ***/
+struct TestFor3709_02 { /* ? */ 1: i32 foo }
+/** Comment-end tokens can of course have more than one asterisk */
+struct TestFor3709_03 { /* ? */ 1: i32 foo }
+/** Comment-end tokens can of course have more than one asterisk **/
+struct TestFor3709_04 { /* ? */ 1: i32 foo }
+/** Comment-end tokens can of course have more than one asterisk ***/
+struct TestFor3709_05 { /* ? */ 1: i32 foo }
+/*** Comment-end tokens can of course have more than one asterisk */
+struct TestFor3709_06 { /* ? */ 1: i32 foo }
+/*** Comment-end tokens can of course have more than one asterisk **/
+struct TestFor3709_07 { /* ? */ 1: i32 foo }
+/*** Comment-end tokens can of course have more than one asterisk ***/
+struct TestFor3709_08 { /* ? */ 1: i32 foo }
+
+struct TestFor3709 {
+  /** This is a comment */
+  1: required string id,
+  /** This is also a comment **/
+  2: required string typeId,
+  /** Yet another comment! */
+  3: required i32 endTimestamp
+}
+
 
 /* THE END */

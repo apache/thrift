@@ -43,11 +43,12 @@ import std.algorithm : find;
 import std.array : empty, front;
 import std.conv : to;
 import std.exception : enforce;
-import std.traits : BaseTypeTuple, isPointer, isSomeFunction, pointerTarget,
+import std.traits : BaseTypeTuple, isPointer, isSomeFunction, PointerTarget,
   ReturnType;
 import thrift.base;
 import thrift.internal.codegen;
 import thrift.protocol.base;
+import thrift.util.hashset;
 
 /*
  * Thrift struct/service meta data, which is used to store information from
@@ -419,6 +420,10 @@ mixin template TStructHelpers(alias fieldMetaData = cast(TFieldMeta[])null) if (
 
       return (cast()super).opEquals(other);
     }
+
+    override size_t toHash() const {
+      return thriftToHashImpl();
+    }
   } else {
     string toString() const {
       return thriftToStringImpl();
@@ -426,6 +431,10 @@ mixin template TStructHelpers(alias fieldMetaData = cast(TFieldMeta[])null) if (
 
     bool opEquals(ref const This other) const {
       return thriftOpEqualsImpl(other);
+    }
+
+    size_t toHash() const @safe nothrow {
+      return thriftToHashImpl();
     }
   }
 
@@ -457,6 +466,15 @@ mixin template TStructHelpers(alias fieldMetaData = cast(TFieldMeta[])null) if (
       if (mixin("this." ~ name) != mixin("rhs." ~ name)) return false;
     }
     return true;
+  }
+
+  private size_t thriftToHashImpl() const @trusted nothrow {
+    size_t hash = 0;
+    foreach (i, _; this.tupleof) {
+      auto val = this.tupleof[i];
+      hash += typeid(val).getHash(&val);
+    }
+    return hash;
   }
 
   static if (any!`!a.defaultValue.empty`(mergeFieldMeta!(This, fieldMetaData))) {
@@ -574,7 +592,7 @@ template TIsSetFlags(T, alias fieldMetaData) {
  * the wire without altering their definitions.
  */
 void readStruct(T, Protocol, alias fieldMetaData = cast(TFieldMeta[])null,
-  bool pointerStruct = false)(ref T s, Protocol p) if (isTProtocol!Protocol)
+  bool pointerStruct = false)(auto ref T s, Protocol p) if (isTProtocol!Protocol)
 {
   mixin({
     string code;
@@ -673,7 +691,7 @@ void readStruct(T, Protocol, alias fieldMetaData = cast(TFieldMeta[])null,
     string readFieldCode(FieldType)(string name, short id, TReq req) {
       static if (pointerStruct && isPointer!FieldType) {
         immutable v = "(*s." ~ name ~ ")";
-        alias pointerTarget!FieldType F;
+        alias PointerTarget!FieldType F;
       } else {
         immutable v = "s." ~ name;
         alias FieldType F;
@@ -861,7 +879,7 @@ void writeStruct(T, Protocol, alias fieldMetaData = cast(TFieldMeta[])null,
 
       static if (pointerStruct && isPointer!FieldType) {
         immutable v = "(*s." ~ name ~ ")";
-        alias pointerTarget!FieldType F;
+        alias PointerTarget!FieldType F;
       } else {
         immutable v = "s." ~ name;
         alias FieldType F;
@@ -939,6 +957,29 @@ unittest {
 
   static assert(__traits(compiles, { Test t; t.read(cast(TProtocol)null); }));
   static assert(__traits(compiles, { Test t; t.write(cast(TProtocol)null); }));
+}
+
+// Ensure opEquals and toHash consistency.
+unittest {
+  struct TestEquals {
+    int a1;
+
+    mixin TStructHelpers!([
+      TFieldMeta("a1", 1, TReq.OPT_IN_REQ_OUT),
+    ]);
+  }
+
+  TestEquals a, b;
+  assert(a == b);
+  assert(a.toHash() == b.toHash());
+
+  a.a1 = 42;
+  assert(a != b);
+  assert(a.toHash() != b.toHash());
+
+  b.a1 = 42;
+  assert(a == b);
+  assert(a.toHash() == b.toHash());
 }
 
 private {

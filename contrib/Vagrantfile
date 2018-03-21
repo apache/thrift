@@ -22,49 +22,70 @@
 
 $build_and_test = <<SCRIPT
 echo "Provisioning system to compile and test Apache Thrift."
-sudo apt-get update -qq -y
-sudo apt-get upgrade -qq -y
+
+# Create swap space
+sudo fallocate -l 2G /swapfile
+sudo chmod 600 /swapfile
+sudo mkswap /swapfile
+sudo swapon /swapfile
+sudo swapon -s
+
+# Update the system
+sudo DEBIAN_FRONTEND=noninteractive apt-get update -qq -y
+sudo DEBIAN_FRONTEND=noninteractive apt-get upgrade -qq -y
 
 # Install Dependencies
 # ---
 # General dependencies
-sudo apt-get install -qq libboost-dev libboost-test-dev libboost-program-options-dev libevent-dev automake libtool flex bison pkg-config g++ libssl-dev make libqt4-dev git debhelper
+sudo apt-get install -qq automake libtool flex bison pkg-config g++ libssl-dev make libqt4-dev git debhelper
+
+# C++ dependencies
+sudo apt-get install -qq libboost-dev libboost-test-dev libboost-program-options-dev libboost-filesystem-dev libboost-system-dev libevent-dev 
 
 # Java dependencies
-sudo apt-get install -qq ant openjdk-7-jdk
+sudo apt-get install -qq ant openjdk-7-jdk maven
 
 # Python dependencies
-sudo apt-get install -qq python-all python-all-dev python-all-dbg python-setuptools
+sudo apt-get install -qq python-all python-all-dev python-all-dbg python-setuptools python-support python-six python3-six
 
 # Ruby dependencies
-sudo apt-get install -qq ruby rubygems
+sudo apt-get install -qq ruby ruby-dev
 sudo gem install bundler rake
 
 # Perl dependencies
 sudo apt-get install -qq libbit-vector-perl libclass-accessor-class-perl
 
 # Php dependencies
-sudo apt-get install -qq php5 php5-dev php5-cli php-pear
+sudo apt-get install -qq php5 php5-dev php5-cli php-pear re2c
 
 # GlibC dependencies
 sudo apt-get install -qq libglib2.0-dev
 
 # Erlang dependencies
-sudo apt-get install -qq erlang-base erlang-eunit erlang-dev
+sudo apt-get install -qq erlang-base erlang-eunit erlang-dev erlang-tools
 
 # GO dependencies
 echo "golang-go golang-go/dashboard boolean false" | debconf-set-selections
 sudo apt-get -y install -qq golang golang-go
 
 # Haskell dependencies
-sudo apt-get install -qq ghc6 cabal-install libghc6-binary-dev libghc6-network-dev libghc6-http-dev libghc-hashable-dev libghc-unordered-containers-dev libghc-vector-dev
+sudo apt-get install -qq ghc cabal-install libghc-binary-dev libghc-network-dev libghc-http-dev libghc-hashable-dev libghc-unordered-containers-dev libghc-vector-dev
+sudo cabal update
+
+# Lua dependencies
+sudo apt-get install -qq lua5.2 lua5.2-dev
 
 # Node.js dependencies
-sudo apt-get install -qq npm
+sudo apt-get install -qq nodejs nodejs-dev nodejs-legacy npm
 
 # CSharp
-sudo apt-get install -qq mono-gmcs mono-devel libmono-system-web2.0-cil
-sudo apt-get install -qq mingw32 mingw32-binutils mingw32-runtime
+sudo apt-get install -qq mono-gmcs mono-devel mono-xbuild mono-complete libmono-system-web2.0-cil
+sudo apt-get install -qq mingw32 mingw32-binutils mingw32-runtime nsis
+
+# D dependencies
+sudo wget http://master.dl.sourceforge.net/project/d-apt/files/d-apt.list -O /etc/apt/sources.list.d/d-apt.list
+sudo apt-get update && sudo apt-get -y --allow-unauthenticated install --reinstall d-apt-keyring && sudo apt-get update
+sudo apt-get install -qq xdg-utils dmd-bin
 
 # Customize the system
 # ---
@@ -87,29 +108,26 @@ date > /etc/vagrant.provisioned
 echo "Starting Apache Thrift build..."
 cd /thrift
 sh bootstrap.sh
-sh configure --without-erlang
+sh configure
 make
-make dist
 make check
 echo "Finished building Apache Thrift."
 
 SCRIPT
 
 Vagrant.configure("2") do |config|
-  # Ubuntu 12.04 LTS (Precise Pangolin)
-  config.vm.box = "precise64"
-  config.vm.box_url = "http://cloud-images.ubuntu.com/precise/current/precise-server-cloudimg-vagrant-amd64-disk1.box"
-  # config.vm.box = "precise32"
-  # config.vm.box_url = "http://cloud-images.ubuntu.com/precise/current/precise-server-cloudimg-vagrant-i386-disk1.box"
+  # Ubuntu 14.04 LTS (Trusty Tahr)
+  config.vm.box = "trusty64"
+  config.vm.box_url = "https://cloud-images.ubuntu.com/vagrant/trusty/current/trusty-server-cloudimg-amd64-vagrant-disk1.box"
 
   config.vm.synced_folder "../", "/thrift"
 
   config.vm.provider :virtualbox do |vbox|
     vbox.customize ["modifyvm", :id, "--memory", "1024"]
     vbox.customize ["modifyvm", :id, "--cpus", "2"]
+    vbox.customize ["modifyvm", :id, "--rtcuseutc", "on"]
   end
 
-  # call the script
+  # Run the build script to configure the system
   config.vm.provision :shell, :inline => $build_and_test
-
 end

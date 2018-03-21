@@ -48,6 +48,10 @@ describe 'BaseTransport' do
     it "should alias << to write" do
       Thrift::BaseTransport.instance_method(:<<).should == Thrift::BaseTransport.instance_method(:write)
     end
+    
+    it "should provide a reasonable to_s" do
+      Thrift::BaseTransport.new.to_s.should == "base"
+    end
   end
 
   describe Thrift::BaseServerTransport do
@@ -63,9 +67,19 @@ describe 'BaseTransport' do
       transport = mock("Transport")
       Thrift::BaseTransportFactory.new.get_transport(transport).should eql(transport)
     end
+    
+    it "should provide a reasonable to_s" do
+      Thrift::BaseTransportFactory.new.to_s.should == "base"
+    end
   end
 
   describe Thrift::BufferedTransport do
+    it "should provide a to_s that describes the encapsulation" do
+      trans = mock("Transport")
+      trans.should_receive(:to_s).and_return("mock")
+      Thrift::BufferedTransport.new(trans).to_s.should == "buffered(mock)"
+    end
+
     it "should pass through everything but write/flush/read" do
       trans = mock("Transport")
       trans.should_receive(:open?).ordered.and_return("+ open?")
@@ -135,11 +149,21 @@ describe 'BaseTransport' do
       Thrift::BufferedTransport.should_receive(:new).with(trans).and_return(btrans)
       Thrift::BufferedTransportFactory.new.get_transport(trans).should == btrans
     end
+    
+    it "should provide a reasonable to_s" do
+      Thrift::BufferedTransportFactory.new.to_s.should == "buffered"
+    end
   end
 
   describe Thrift::FramedTransport do
     before(:each) do
       @trans = mock("Transport")
+    end
+
+    it "should provide a to_s that describes the encapsulation" do
+      trans = mock("Transport")
+      trans.should_receive(:to_s).and_return("mock")
+      Thrift::FramedTransport.new(trans).to_s.should == "framed(mock)"
     end
 
     it "should pass through open?/open/close" do
@@ -247,11 +271,19 @@ describe 'BaseTransport' do
       Thrift::FramedTransport.should_receive(:new).with(trans)
       Thrift::FramedTransportFactory.new.get_transport(trans)
     end
+    
+    it "should provide a reasonable to_s" do
+      Thrift::FramedTransportFactory.new.to_s.should == "framed"
+    end
   end
 
   describe Thrift::MemoryBufferTransport do
     before(:each) do
       @buffer = Thrift::MemoryBufferTransport.new
+    end
+
+    it "should provide a reasonable to_s" do
+      @buffer.to_s.should == "memory"
     end
 
     it "should accept a buffer on input and use it directly" do
@@ -321,6 +353,12 @@ describe 'BaseTransport' do
       @input = mock("Input", :closed? => false)
       @output = mock("Output", :closed? => false)
       @trans = Thrift::IOStreamTransport.new(@input, @output)
+    end
+
+    it "should provide a reasonable to_s" do
+      @input.should_receive(:to_s).and_return("mock_input")
+      @output.should_receive(:to_s).and_return("mock_output")
+      @trans.to_s.should == "iostream(input=mock_input,output=mock_output)"
     end
 
     it "should be open as long as both input or output are open" do

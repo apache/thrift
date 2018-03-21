@@ -392,7 +392,7 @@ private:
       TAsyncEventReason.NORMAL;
     (*(cast(TSocketEventListener*)arg))(reason);
     GC.removeRange(arg);
-    clear(arg);
+    destroy(arg);
     free(arg);
   }
 
@@ -402,7 +402,7 @@ private:
     assert(flags & EV_TIMEOUT);
     (*(cast(void delegate()*)arg))();
     GC.removeRange(arg);
-    clear(arg);
+    destroy(arg);
     free(arg);
   }
 
@@ -430,7 +430,7 @@ private:
   Work[][TAsyncTransport] workQueues_;
 
   /// The total number of work items not yet finished (queued and currently
-  /// excecuted) and delays not yet executed.
+  /// executed) and delays not yet executed.
   uint queuedCount_;
 
   /// Protects queuedCount_.
@@ -442,8 +442,8 @@ private:
 
 private {
   timeval toTimeval(const(Duration) dur) {
-    timeval tv = {tv_sec: cast(int)dur.total!"seconds"(),
-      tv_usec: dur.fracSec.usecs};
+    timeval tv;
+    dur.split!("seconds", "usecs")(tv.tv_sec, tv.tv_usec);
     return tv;
   }
 

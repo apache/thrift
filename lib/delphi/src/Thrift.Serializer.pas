@@ -18,10 +18,16 @@
  *)
 unit Thrift.Serializer;
 
+{$I Thrift.Defines.inc}
+
 interface
 
 uses
+  {$IFDEF OLD_UNIT_NAMES}
   Classes, Windows, SysUtils,
+  {$ELSE}
+  System.Classes, Winapi.Windows, System.SysUtils,
+  {$ENDIF}
   Thrift.Protocol,
   Thrift.Transport,
   Thrift.Stream;
@@ -86,7 +92,7 @@ implementation
 constructor TSerializer.Create();
 // Create a new TSerializer that uses the TBinaryProtocol by default.
 begin
-  //no inherited;  
+  //no inherited;
   Create( TBinaryProtocolImpl.TFactory.Create);
 end;
 
@@ -138,7 +144,7 @@ end;
 procedure TSerializer.Serialize( const input : IBase; const aStm : TStream);
 // Serialize the Thrift object into a byte array. The process is simple,
 // just clear the byte array output, write the object into it, and grab the
-// raw bytes. 
+// raw bytes.
 const COPY_ENTIRE_STREAM = 0;
 begin
   try
@@ -157,7 +163,7 @@ end;
 constructor TDeserializer.Create();
 // Create a new TDeserializer that uses the TBinaryProtocol by default.
 begin
-  //no inherited;  
+  //no inherited;
   Create( TBinaryProtocolImpl.TFactory.Create);
 end;
 

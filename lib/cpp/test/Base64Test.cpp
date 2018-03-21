@@ -23,7 +23,7 @@
 using apache::thrift::protocol::base64_encode;
 using apache::thrift::protocol::base64_decode;
 
-BOOST_AUTO_TEST_SUITE( Base64Test )
+BOOST_AUTO_TEST_SUITE(Base64Test)
 
 void setupTestData(int i, uint8_t* data, int& len) {
   len = 0;
@@ -37,12 +37,16 @@ void setupTestData(int i, uint8_t* data, int& len) {
 }
 
 void checkEncoding(uint8_t* data, int len) {
+#ifdef NDEBUG
+  ((void)data);
+#endif
+
   for (int i = 0; i < len; i++) {
     BOOST_ASSERT(isalnum(data[i]) || data[i] == '/' || data[i] == '+');
   }
 }
 
-BOOST_AUTO_TEST_CASE( test_Base64_Encode_Decode ) {
+BOOST_AUTO_TEST_CASE(test_Base64_Encode_Decode) {
   int len;
   uint8_t testInput[3];
   uint8_t testOutput[4];
@@ -64,7 +68,6 @@ BOOST_AUTO_TEST_CASE( test_Base64_Encode_Decode ) {
     // decode output and check that it matches input
     base64_decode(testOutput, len + 1);
     BOOST_ASSERT(0 == memcmp(testInput, testOutput, len));
-
   }
 }
 

@@ -42,6 +42,11 @@ describe 'UNIXSocket' do
       ::UNIXSocket.stub!(:new)
       Thrift::UNIXSocket.new(@path, 5).timeout.should == 5
     end
+    
+    it "should provide a reasonable to_s" do
+      ::UNIXSocket.stub!(:new)
+      Thrift::UNIXSocket.new(@path).to_s.should == "domain(#{@path})"
+    end
   end
 
   describe Thrift::UNIXServerSocket do
@@ -102,6 +107,10 @@ describe 'UNIXSocket' do
       @socket.should_not be_closed
       handle.stub!(:closed?).and_return(true)
       @socket.should be_closed
+    end
+
+    it "should provide a reasonable to_s" do
+      @socket.to_s.should == "domain(#{@path})"
     end
   end
 end

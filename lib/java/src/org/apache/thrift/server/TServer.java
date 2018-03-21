@@ -127,6 +127,10 @@ public abstract class TServer {
 
   protected TServerEventHandler eventHandler_;
 
+  // Flag for stopping the server
+  // Please see THRIFT-1795 for the usage of this flag
+  protected volatile boolean stopped_ = false;
+
   protected TServer(AbstractServerArgs args) {
     processorFactory_ = args.processorFactory;
     serverTransport_ = args.serverTransport;
@@ -161,5 +165,13 @@ public abstract class TServer {
 
   public TServerEventHandler getEventHandler() {
     return eventHandler_;
+  }
+
+  public boolean getShouldStop() {
+    return this.stopped_;
+  }
+
+  public void setShouldStop(boolean shouldStop) {
+    this.stopped_ = shouldStop;
   }
 }

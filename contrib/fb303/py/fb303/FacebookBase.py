@@ -24,59 +24,60 @@ import FacebookService
 import thrift.reflection.limited
 from ttypes import fb_status
 
+
 class FacebookBase(FacebookService.Iface):
 
-  def __init__(self, name):
-    self.name = name
-    self.alive = int(time.time())
-    self.counters = {}
+    def __init__(self, name):
+        self.name = name
+        self.alive = int(time.time())
+        self.counters = {}
 
-  def getName(self, ):
-    return self.name
+    def getName(self, ):
+        return self.name
 
-  def getVersion(self, ):
-    return ''
+    def getVersion(self, ):
+        return ''
 
-  def getStatus(self, ):
-    return fb_status.ALIVE
+    def getStatus(self, ):
+        return fb_status.ALIVE
 
-  def getCounters(self):
-    return self.counters
+    def getCounters(self):
+        return self.counters
 
-  def resetCounter(self, key):
-    self.counters[key] = 0
+    def resetCounter(self, key):
+        self.counters[key] = 0
 
-  def getCounter(self, key):
-    if self.counters.has_key(key):
-      return self.counters[key]
-    return 0
+    def getCounter(self, key):
+        if self.counters.has_key(key):
+            return self.counters[key]
+        return 0
 
-  def incrementCounter(self, key):
-    self.counters[key] = self.getCounter(key) + 1
+    def incrementCounter(self, key):
+        self.counters[key] = self.getCounter(key) + 1
 
-  def setOption(self, key, value):
-    pass
+    def setOption(self, key, value):
+        pass
 
-  def getOption(self, key):
-    return ""
+    def getOption(self, key):
+        return ""
 
-  def getOptions(self):
-    return {}
+    def getOptions(self):
+        return {}
 
-  def getOptions(self):
-    return {}
+    def getOptions(self):
+        return {}
 
-  def aliveSince(self):
-    return self.alive
+    def aliveSince(self):
+        return self.alive
 
-  def getCpuProfile(self, duration):
-    return ""
+    def getCpuProfile(self, duration):
+        return ""
 
-  def getLimitedReflection(self):
-    return thrift.reflection.limited.Service()
+    def getLimitedReflection(self):
+        return thrift.reflection.limited.Service()
 
-  def reinitialize(self):
-    pass
+    def reinitialize(self):
+        pass
 
-  def shutdown(self):
-    pass
+    def shutdown(self):
+        pass

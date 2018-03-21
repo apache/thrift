@@ -23,21 +23,23 @@
 #include <boost/scope_exit.hpp>
 #include <process.h>
 
-namespace apache { namespace thrift { namespace transport {
+namespace apache {
+namespace thrift {
+namespace transport {
 
-TOverlappedWorkItem::TOverlappedWorkItem() :
-  SLIST_ENTRY(),
-  action(UNKNOWN),
-  h(INVALID_HANDLE_VALUE),
-  buffer(NULL),
-  buffer_len(0),
-  overlap(),
-  last_error(0),
-  success(TRUE)
-{}
+TOverlappedWorkItem::TOverlappedWorkItem()
+  : SLIST_ENTRY(),
+    action(UNKNOWN),
+    h(INVALID_HANDLE_VALUE),
+    buffer(NULL),
+    buffer_len(0),
+    overlap(),
+    last_error(0),
+    success(TRUE) {
+}
 
-void TOverlappedWorkItem::reset(uint8_t *buf, uint32_t len, HANDLE event) {
-  memset( &overlap, 0, sizeof(overlap));
+void TOverlappedWorkItem::reset(uint8_t* buf, uint32_t len, HANDLE event) {
+  memset(&overlap, 0, sizeof(overlap));
   overlap.hEvent = event;
   buffer = buf;
   buffer_len = len;
@@ -48,7 +50,7 @@ void TOverlappedWorkItem::reset(uint8_t *buf, uint32_t len, HANDLE event) {
 uint32_t TOverlappedWorkItem::overlappedResults(bool signal_failure) {
   DWORD bytes = 0;
   BOOL result = ::GetOverlappedResult(h, &overlap, &bytes, TRUE);
-  if(signal_failure && !result) //get overlapped error case
+  if (signal_failure && !result) // get overlapped error case
   {
     GlobalOutput.perror("TPipe ::GetOverlappedResult errored GLE=", ::GetLastError());
     throw TTransportException(TTransportException::UNKNOWN, "TPipe: GetOverlappedResult failed");
@@ -57,42 +59,40 @@ uint32_t TOverlappedWorkItem::overlappedResults(bool signal_failure) {
 }
 
 bool TOverlappedWorkItem::process() {
-  BOOST_SCOPE_EXIT( (&doneSubmittingEvent) ) {
-    SetEvent(doneSubmittingEvent.h);
-  } BOOST_SCOPE_EXIT_END
+  BOOST_SCOPE_EXIT((&doneSubmittingEvent)) { SetEvent(doneSubmittingEvent.h); }
+  BOOST_SCOPE_EXIT_END
 
-  switch(action) {
-  case(CONNECT):
+  switch (action) {
+  case (CONNECT):
     success = ::ConnectNamedPipe(h, &overlap);
-    if(success == FALSE)
+    if (success == FALSE)
       last_error = ::GetLastError();
     return true;
-  case(READ):
+  case (READ):
     success = ::ReadFile(h, buffer, buffer_len, NULL, &overlap);
-    if(success == FALSE)
+    if (success == FALSE)
       last_error = ::GetLastError();
     return true;
-  case(CANCELIO):
+  case (CANCELIO):
     success = ::CancelIo(h);
-    if(success == FALSE)
+    if (success == FALSE)
       last_error = ::GetLastError();
     return true;
-  case(STOP):
+  case (STOP):
   default:
     return false;
   }
 }
 
-void TOverlappedSubmissionThread::addWorkItem(TOverlappedWorkItem *item) {
+void TOverlappedSubmissionThread::addWorkItem(TOverlappedWorkItem* item) {
   InterlockedPushEntrySList(&workList_, item);
   SetEvent(workAvailableEvent_.h);
   WaitForSingleObject(item->doneSubmittingEvent.h, INFINITE);
 }
 
-TOverlappedSubmissionThread *TOverlappedSubmissionThread::acquire_instance() {
+TOverlappedSubmissionThread* TOverlappedSubmissionThread::acquire_instance() {
   TAutoCrit lock(instanceGuard_);
-  if(instance_ == NULL)
-  {
+  if (instance_ == NULL) {
     assert(instanceRefCount_ == 0);
     instance_ = new TOverlappedSubmissionThread;
   }
@@ -101,8 +101,7 @@ TOverlappedSubmissionThread *TOverlappedSubmissionThread::acquire_instance() {
 }
 void TOverlappedSubmissionThread::release_instance() {
   TAutoCrit lock(instanceGuard_);
-  if(--instanceRefCount_ == 0)
-  {
+  if (--instanceRefCount_ == 0) {
     delete instance_;
     instance_ = NULL;
   }
@@ -112,16 +111,11 @@ TOverlappedSubmissionThread::TOverlappedSubmissionThread() {
   stopItem_.action = TOverlappedWorkItem::STOP;
 
   InitializeSListHead(&workList_);
-  thread_ = (HANDLE)_beginthreadex(
-    NULL,
-    0,
-    thread_proc,
-    this,
-    0,
-    NULL);
-  if(thread_ == 0) {
+  thread_ = (HANDLE)_beginthreadex(NULL, 0, thread_proc, this, 0, NULL);
+  if (thread_ == 0) {
     GlobalOutput.perror("TOverlappedSubmissionThread unable to create thread, errno=", errno);
-    throw TTransportException(TTransportException::NOT_OPEN, " TOverlappedSubmissionThread unable to create thread");
+    throw TTransportException(TTransportException::NOT_OPEN,
+                              " TOverlappedSubmissionThread unable to create thread");
   }
 }
 
@@ -132,25 +126,26 @@ TOverlappedSubmissionThread::~TOverlappedSubmissionThread() {
 }
 
 void TOverlappedSubmissionThread::run() {
-  for(;;) {
+  for (;;) {
     WaitForSingleObject(workAvailableEvent_.h, INFINITE);
-    //todo check result
-    SLIST_ENTRY *entry = NULL;
-    while( (entry = InterlockedPopEntrySList(&workList_)) != NULL) {
-      TOverlappedWorkItem &item = *static_cast<TOverlappedWorkItem *>(entry);
-      if(!item.process())
+    // todo check result
+    SLIST_ENTRY* entry = NULL;
+    while ((entry = InterlockedPopEntrySList(&workList_)) != NULL) {
+      TOverlappedWorkItem& item = *static_cast<TOverlappedWorkItem*>(entry);
+      if (!item.process())
         return;
     }
   }
 }
 
-unsigned __stdcall TOverlappedSubmissionThread::thread_proc(void *addr) {
-  static_cast<TOverlappedSubmissionThread *>(addr)->run();
+unsigned __stdcall TOverlappedSubmissionThread::thread_proc(void* addr) {
+  static_cast<TOverlappedSubmissionThread*>(addr)->run();
   return 0;
 }
 
 TCriticalSection TOverlappedSubmissionThread::instanceGuard_;
 TOverlappedSubmissionThread* TOverlappedSubmissionThread::instance_;
-uint32_t TOverlappedSubmissionThread::instanceRefCount_=0;
-
-}}} //apach::thrift::transport
+uint32_t TOverlappedSubmissionThread::instanceRefCount_ = 0;
+}
+}
+} // apach::thrift::transport

@@ -66,7 +66,7 @@ namespace CSharpTutorial
                     if (work.Num2 == 0)
                     {
                         InvalidOperation io = new InvalidOperation();
-                        io.What = (int)work.Op;
+                        io.WhatOp = (int)work.Op;
                         io.Why = "Cannot divide by 0";
                         throw io;
                     }
@@ -76,7 +76,7 @@ namespace CSharpTutorial
                 default:
                     {
                         InvalidOperation io = new InvalidOperation();
-                        io.What = (int)work.Op;
+                        io.WhatOp = (int)work.Op;
                         io.Why = "Unknown operation";
                         throw io;
                     }

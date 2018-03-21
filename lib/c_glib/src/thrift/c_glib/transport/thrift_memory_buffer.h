@@ -51,6 +51,7 @@ struct _ThriftMemoryBuffer
   /* private */
   GByteArray *buf;
   guint32 buf_size;
+  gboolean owner;
 };
 
 typedef struct _ThriftMemoryBufferClass ThriftMemoryBufferClass;

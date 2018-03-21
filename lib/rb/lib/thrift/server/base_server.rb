@@ -26,6 +26,12 @@ module Thrift
       @protocol_factory = protocol_factory ? protocol_factory : Thrift::BinaryProtocolFactory.new
     end
 
-    def serve; nil; end
+    def serve
+      raise NotImplementedError
+    end
+
+    def to_s
+      "server(#{@protocol_factory.to_s}(#{@transport_factory.to_s}(#{@server_transport.to_s})))"
+    end
   end
 end

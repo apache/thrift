@@ -26,12 +26,12 @@ disklog_test() ->
   {ok, TransportFactory} =
     thrift_disk_log_transport:new_transport_factory(
       test_disklog,
-      [{file, "/tmp/test_log"},
+      [{file, "./test_log"},
        {size, {1024*1024, 10}}]),
   {ok, ProtocolFactory} =
     thrift_binary_protocol:new_protocol_factory( TransportFactory, []),
   {ok, Proto} = ProtocolFactory(),
-  {ok, Client0} = thrift_client:new(Proto, thriftTest_thrift),
+  {ok, Client0} = thrift_client:new(Proto, thrift_test_thrift),
 
   io:format("Client started~n"),
 
@@ -47,6 +47,13 @@ disklog_test() ->
 
   {_Client3, ok} = thrift_client:close(Client2),
   io:format("Client closed~n"),
+  
+  lists:foreach(fun(File) -> file:delete(File) end, [
+    "./test_log.1",
+    "./test_log.idx",
+    "./test_log.siz"
+  ]),
+  io:format("Cleaning up test files~n"),
 
   ok.
 
@@ -54,7 +61,7 @@ disklog_base64_test() ->
   {ok, TransportFactory} =
     thrift_disk_log_transport:new_transport_factory(
       test_disklog,
-      [{file, "/tmp/test_b64_log"},
+      [{file, "./test_b64_log"},
        {size, {1024*1024, 10}}]),
   {ok, B64Factory} =
     thrift_base64_transport:new_transport_factory(TransportFactory),
@@ -63,7 +70,7 @@ disklog_base64_test() ->
   {ok, ProtocolFactory} =
     thrift_binary_protocol:new_protocol_factory(BufFactory, []),
   {ok, Proto} = ProtocolFactory(),
-  {ok, Client0} = thrift_client:new(Proto, thriftTest_thrift),
+  {ok, Client0} = thrift_client:new(Proto, thrift_test_thrift),
 
   io:format("Client started~n"),
 
@@ -79,6 +86,13 @@ disklog_base64_test() ->
 
   {_Client3, ok} = thrift_client:close(Client2),
   io:format("Client closed~n"),
+
+  lists:foreach(fun(File) -> file:delete(File) end, [
+    "./test_b64_log.1",
+    "./test_b64_log.idx",
+    "./test_b64_log.siz"
+  ]),
+  io:format("Cleaning up test files~n"),
 
   ok.
 

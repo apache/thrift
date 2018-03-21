@@ -308,12 +308,40 @@ public class TestStruct extends TestCase {
         object.toString());
   }
 
+  private static void assertArrayEquals(byte[] expected, byte[] actual) {
+    if (!java.util.Arrays.equals(expected, actual)) {
+      fail("Expected byte array did not match actual.");
+    }
+  }
+
   public void testBytesBufferFeatures() throws Exception {
-    JavaTestHelper o = new JavaTestHelper();
+    
+    final String testString = "testBytesBufferFeatures";
+    final JavaTestHelper o = new JavaTestHelper();
+
     o.setReq_bin((ByteBuffer)null);
     assertNull(o.getReq_bin());
+
+    o.setReq_bin(ByteBuffer.wrap(testString.getBytes()));
+    assertArrayEquals(testString.getBytes(), o.getReq_bin());
+
     o.setReq_bin((byte[])null);
     assertNull(o.getReq_bin());
+
+    o.setReq_bin(testString.getBytes());
+    assertArrayEquals(testString.getBytes(), o.getReq_bin());
+
+    o.setFieldValue(JavaTestHelper._Fields.REQ_BIN, null);
+    assertNull(o.getReq_bin());
+
+    o.setFieldValue(JavaTestHelper._Fields.REQ_BIN, testString.getBytes());
+    assertArrayEquals(testString.getBytes(), o.getReq_bin());
+
+    o.setFieldValue(JavaTestHelper._Fields.REQ_BIN, null);
+    assertNull(o.getReq_bin());
+
+    o.setFieldValue(JavaTestHelper._Fields.REQ_BIN, ByteBuffer.wrap(testString.getBytes()));
+    assertArrayEquals(testString.getBytes(), o.getReq_bin());
   }
 
   public void testJavaSerializable() throws Exception {

@@ -44,8 +44,8 @@ namespace Thrift.Transport
 			}
 		}
 
-		public TSocket(string host, int port) 
-		    : this(host, port, 0)
+		public TSocket(string host, int port)
+			: this(host, port, 0)
 		{
 		}
 
@@ -60,9 +60,9 @@ namespace Thrift.Transport
 
 		private void InitSocket()
 		{
-			client = new TcpClient();
-			client.ReceiveTimeout = client.SendTimeout = timeout;
-			client.Client.NoDelay = true;
+			this.client = TSocketVersionizer.CreateTcpClient();
+			this.client.ReceiveTimeout = client.SendTimeout = timeout;
+			this.client.Client.NoDelay = true;
 		}
 
 		public int Timeout
@@ -132,32 +132,32 @@ namespace Thrift.Transport
 				InitSocket();
 			}
 
-			if( timeout == 0)			// no timeout -> infinite
+            if( timeout == 0)            // no timeout -> infinite
 			{
 				client.Connect(host, port);
 			}
 			else                        // we have a timeout -> use it
 			{
-                ConnectHelper hlp = new ConnectHelper(client);
-                IAsyncResult asyncres = client.BeginConnect(host, port, new AsyncCallback(ConnectCallback), hlp);
-                bool bConnected = asyncres.AsyncWaitHandle.WaitOne(timeout) && client.Connected;
-                if (!bConnected)
-                {
-                    lock (hlp.Mutex)
-                    {
+				ConnectHelper hlp = new ConnectHelper(client);
+				IAsyncResult asyncres = client.BeginConnect(host, port, new AsyncCallback(ConnectCallback), hlp);
+				bool bConnected = asyncres.AsyncWaitHandle.WaitOne(timeout) && client.Connected;
+				if (!bConnected)
+				{
+					lock (hlp.Mutex)
+					{
                         if( hlp.CallbackDone)
-                        {
-                            asyncres.AsyncWaitHandle.Close();
-                            client.Close();
-                        }
-                        else
-                        {
-                            hlp.DoCleanup = true;
-                            client = null;
-                        }
-                    }
-                    throw new TTransportException(TTransportException.ExceptionType.TimedOut, "Connect timed out");
-                }
+						{
+							asyncres.AsyncWaitHandle.Close();
+							client.Close();
+						}
+						else
+						{
+							hlp.DoCleanup = true;
+							client = null;
+						}
+					}
+					throw new TTransportException(TTransportException.ExceptionType.TimedOut, "Connect timed out");
+				}
 			}
 
 			inputStream = client.GetStream();
@@ -165,49 +165,49 @@ namespace Thrift.Transport
 		}
 
 
-        static void ConnectCallback(IAsyncResult asyncres)
-        {
-            ConnectHelper hlp = asyncres.AsyncState as ConnectHelper;
-            lock (hlp.Mutex)
-            {
-                hlp.CallbackDone = true;
-                    
-                try
-                {
+		static void ConnectCallback(IAsyncResult asyncres)
+		{
+			ConnectHelper hlp = asyncres.AsyncState as ConnectHelper;
+			lock (hlp.Mutex)
+			{
+				hlp.CallbackDone = true;
+
+				try
+				{
                     if( hlp.Client.Client != null)
-                        hlp.Client.EndConnect(asyncres);
-                }
-                catch (Exception)
-                {
-                    // catch that away
-                }
+						hlp.Client.EndConnect(asyncres);
+				}
+				catch (Exception)
+				{
+					// catch that away
+				}
 
-                if (hlp.DoCleanup) 
-                {
-                	try {
-                    	asyncres.AsyncWaitHandle.Close();
-                	} catch (Exception) {}
-                	
-                	try {
-                    	if (hlp.Client is IDisposable)
-	                        ((IDisposable)hlp.Client).Dispose();
-                	} catch (Exception) {}
-                    hlp.Client = null;
-                }
-            }
-        }
+				if (hlp.DoCleanup)
+				{
+                    try {
+						asyncres.AsyncWaitHandle.Close();
+                    } catch (Exception) {}
 
-        private class ConnectHelper
-        {
-            public object Mutex = new object();
-            public bool DoCleanup = false;
-            public bool CallbackDone = false;
-            public TcpClient Client;
-            public ConnectHelper(TcpClient client)
-            {
-                Client = client;
-            }
-        }
+                    try {
+						if (hlp.Client is IDisposable)
+							((IDisposable)hlp.Client).Dispose();
+                    } catch (Exception) {}
+					hlp.Client = null;
+				}
+			}
+		}
+
+		private class ConnectHelper
+		{
+			public object Mutex = new object();
+			public bool DoCleanup = false;
+			public bool CallbackDone = false;
+			public TcpClient Client;
+			public ConnectHelper(TcpClient client)
+			{
+				Client = client;
+			}
+		}
 
 		public override void Close()
 		{
@@ -219,23 +219,23 @@ namespace Thrift.Transport
 			}
 		}
 
-    #region " IDisposable Support "
-    private bool _IsDisposed;
+		#region " IDisposable Support "
+		private bool _IsDisposed;
 
-    // IDisposable
-    protected override void Dispose(bool disposing)
-    {
-      if (!_IsDisposed)
-      {
-        if (disposing)
-        {
-          if (client != null)
-            ((IDisposable)client).Dispose();
-          base.Dispose(disposing);
-        }
-      }
-      _IsDisposed = true;
-    }
-    #endregion
-  }
+		// IDisposable
+		protected override void Dispose(bool disposing)
+		{
+			if (!_IsDisposed)
+			{
+				if (disposing)
+				{
+					if (client != null)
+						((IDisposable)client).Dispose();
+					base.Dispose(disposing);
+				}
+			}
+			_IsDisposed = true;
+		}
+		#endregion
+	}
 }

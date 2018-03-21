@@ -62,7 +62,7 @@ class CalculatorHandler : Calculator {
     case Operation.DIVIDE:
       if (work.num2 == 0) {
         auto io = new InvalidOperation();
-        io.what = work.op;
+        io.whatOp = work.op;
         io.why = "Cannot divide by 0";
         throw io;
       }
@@ -70,7 +70,7 @@ class CalculatorHandler : Calculator {
       break;
     default:
       auto io = new InvalidOperation();
-      io.what = work.op;
+      io.whatOp = work.op;
       io.why = "Invalid Operation";
       throw io;
     }

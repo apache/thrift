@@ -47,14 +47,14 @@ var server = thrift.createServer(Calculator, {
     } else if (work.op === ttypes.Operation.DIVIDE) {
       if (work.num2 === 0) {
         var x = new ttypes.InvalidOperation();
-        x.what = work.op;
+        x.whatOp = work.op;
         x.why = 'Cannot divide by 0';
 		throw x;
       }
       val = work.num1 / work.num2;
     } else {
       var x = new ttypes.InvalidOperation();
-      x.what = work.op;
+      x.whatOp = work.op;
       x.why = 'Invalid operation';
       throw x;
     }

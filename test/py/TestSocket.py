@@ -19,29 +19,16 @@
 # under the License.
 #
 
-import sys, glob
-from optparse import OptionParser
-parser = OptionParser()
-parser.add_option('--genpydir', type='string', dest='genpydir', default='gen-py')
-options, args = parser.parse_args()
-del sys.argv[1:] # clean up hack so unittest doesn't complain
-sys.path.insert(0, options.genpydir)
-sys.path.insert(0, glob.glob('../../lib/py/build/lib.*')[0])
-
-from ThriftTest import ThriftTest
-from ThriftTest.ttypes import *
-from thrift.transport import TTransport
 from thrift.transport import TSocket
-from thrift.protocol import TBinaryProtocol
 import unittest
 import time
 import socket
 import random
-from optparse import OptionParser
+
 
 class TimeoutTest(unittest.TestCase):
     def setUp(self):
-        for i in xrange(50):
+        for i in range(50):
             try:
                 # find a port we can use
                 self.listen_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -49,7 +36,7 @@ class TimeoutTest(unittest.TestCase):
                 self.listen_sock.bind(('localhost', self.port))
                 self.listen_sock.listen(5)
                 break
-            except:
+            except Exception:
                 if i == 49:
                     raise
 
@@ -58,12 +45,12 @@ class TimeoutTest(unittest.TestCase):
 
         try:
             leaky = []
-            for i in xrange(100):
+            for i in range(100):
                 socket = TSocket.TSocket('localhost', self.port)
                 socket.setTimeout(10)
                 socket.open()
                 leaky.append(socket)
-        except:
+        except Exception:
             self.assert_(time.time() - starttime < 5.0)
 
     def testWriteTimeout(self):
@@ -75,15 +62,17 @@ class TimeoutTest(unittest.TestCase):
             socket.open()
             lsock = self.listen_sock.accept()
             while True:
-                socket.write("hi" * 100)
+                lsock.write("hi" * 100)
 
-        except:
+        except Exception:
             self.assert_(time.time() - starttime < 5.0)
 
-suite = unittest.TestSuite()
-loader = unittest.TestLoader()
 
-suite.addTest(loader.loadTestsFromTestCase(TimeoutTest))
+if __name__ == '__main__':
+    suite = unittest.TestSuite()
+    loader = unittest.TestLoader()
 
-testRunner = unittest.TextTestRunner(verbosity=2)
-testRunner.run(suite)
+    suite.addTest(loader.loadTestsFromTestCase(TimeoutTest))
+
+    testRunner = unittest.TextTestRunner(verbosity=2)
+    testRunner.run(suite)

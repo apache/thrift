@@ -21,27 +21,20 @@
 #include <thrift/processor/TMultiplexedProcessor.h>
 #include <thrift/protocol/TProtocolDecorator.h>
 
-namespace apache 
-{ 
-    namespace thrift 
-    { 
-        namespace protocol 
-        {
-            uint32_t TMultiplexedProtocol::writeMessageBegin_virt(
-                const std::string& _name,
-                const TMessageType _type,
-                const int32_t _seqid)
-            {
-                if( _type == T_CALL || _type == T_ONEWAY )
-                {
-                    return TProtocolDecorator::writeMessageBegin_virt( serviceName + separator + _name, _type, _seqid );
-                }
-                else
-                {
-                    return TProtocolDecorator::writeMessageBegin_virt(_name, _type, _seqid);
-                }
-            }
-        }
-    }
+namespace apache {
+namespace thrift {
+namespace protocol {
+uint32_t TMultiplexedProtocol::writeMessageBegin_virt(const std::string& _name,
+                                                      const TMessageType _type,
+                                                      const int32_t _seqid) {
+  if (_type == T_CALL || _type == T_ONEWAY) {
+    return TProtocolDecorator::writeMessageBegin_virt(serviceName + separator + _name,
+                                                      _type,
+                                                      _seqid);
+  } else {
+    return TProtocolDecorator::writeMessageBegin_virt(_name, _type, _seqid);
+  }
 }
-
+}
+}
+}

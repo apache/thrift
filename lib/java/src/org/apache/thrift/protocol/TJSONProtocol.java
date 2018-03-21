@@ -19,8 +19,10 @@
 
 package org.apache.thrift.protocol;
 
+import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
 import java.util.Stack;
 
 import org.apache.thrift.TByteArrayOutputStream;
@@ -42,9 +44,16 @@ public class TJSONProtocol extends TProtocol {
    * Factory for JSON protocol objects
    */
   public static class Factory implements TProtocolFactory {
+    protected boolean fieldNamesAsString_ = false;
+
+    public Factory() {}
+
+    public Factory(boolean fieldNamesAsString) {
+      fieldNamesAsString_ = fieldNamesAsString;
+    }
 
     public TProtocol getProtocol(TTransport trans) {
-      return new TJSONProtocol(trans);
+      return new TJSONProtocol(trans, fieldNamesAsString_);
     }
 
   }
@@ -285,6 +294,9 @@ public class TJSONProtocol extends TProtocol {
   // Reader that manages a 1-byte buffer
   private LookaheadReader reader_ = new LookaheadReader();
 
+  // Write out the TField names as a string instead of the default integer value
+  private boolean fieldNamesAsString_ = false;
+
   // Push a new JSON context onto the stack.
   private void pushContext(JSONBaseContext c) {
     contextStack_.push(context_);
@@ -296,11 +308,23 @@ public class TJSONProtocol extends TProtocol {
     context_ = contextStack_.pop();
   }
 
+  // Reset the context stack to its initial state
+  private void resetContext() {
+    while (!contextStack_.isEmpty()) {
+      popContext();
+    }
+  }
+
   /**
    * Constructor
    */
   public TJSONProtocol(TTransport trans) {
     super(trans);
+  }
+
+  public TJSONProtocol(TTransport trans, boolean fieldNamesAsString) {
+    super(trans);
+    fieldNamesAsString_ = fieldNamesAsString;
   }
 
   @Override
@@ -421,7 +445,9 @@ public class TJSONProtocol extends TProtocol {
         special = true;
       }
       break;
-    }
+    default:
+      break;
+  }
 
     boolean escapeNum = special || context_.escapeNum();
     if (escapeNum) {
@@ -484,6 +510,7 @@ public class TJSONProtocol extends TProtocol {
 
   @Override
   public void writeMessageBegin(TMessage message) throws TException {
+    resetContext(); // THRIFT-3743
     writeJSONArrayStart();
     writeJSONInteger(VERSION);
     try {
@@ -513,7 +540,11 @@ public class TJSONProtocol extends TProtocol {
 
   @Override
   public void writeFieldBegin(TField field) throws TException {
-    writeJSONInteger(field.id);
+    if (fieldNamesAsString_) {
+      writeString(field.name);
+    } else {
+      writeJSONInteger(field.id);
+    }
     writeJSONObjectStart();
     writeJSONString(getTypeNameForTypeID(field.type));
   }
@@ -619,6 +650,7 @@ public class TJSONProtocol extends TProtocol {
   private TByteArrayOutputStream readJSONString(boolean skipContext)
     throws TException {
     TByteArrayOutputStream arr = new TByteArrayOutputStream(DEF_STRING_SIZE);
+    ArrayList<Character> codeunits = new ArrayList<Character>();
     if (!skipContext) {
       context_.read();
     }
@@ -631,10 +663,43 @@ public class TJSONProtocol extends TProtocol {
       if (ch == ESCSEQ[0]) {
         ch = reader_.read();
         if (ch == ESCSEQ[1]) {
-          readJSONSyntaxChar(ZERO);
-          readJSONSyntaxChar(ZERO);
-          trans_.readAll(tmpbuf_, 0, 2);
-          ch = (byte)((hexVal((byte)tmpbuf_[0]) << 4) + hexVal(tmpbuf_[1]));
+          trans_.readAll(tmpbuf_, 0, 4);
+          short cu = (short)(
+              ((short)hexVal(tmpbuf_[0]) << 12) +
+              ((short)hexVal(tmpbuf_[1]) << 8) +
+              ((short)hexVal(tmpbuf_[2]) << 4) +
+              (short)hexVal(tmpbuf_[3]));
+          try {
+            if (Character.isHighSurrogate((char)cu)) {
+              if (codeunits.size() > 0) {
+                throw new TProtocolException(TProtocolException.INVALID_DATA,
+                    "Expected low surrogate char");
+              }
+              codeunits.add((char)cu);
+            }
+            else if (Character.isLowSurrogate((char)cu)) {
+              if (codeunits.size() == 0) {
+                throw new TProtocolException(TProtocolException.INVALID_DATA,
+                    "Expected high surrogate char");
+              }
+
+              codeunits.add((char)cu);
+              arr.write((new String(new int[] { codeunits.get(0), codeunits.get(1) }, 0, 2)).getBytes("UTF-8"));
+              codeunits.clear();
+            }
+            else {
+              arr.write((new String(new int[] { cu }, 0, 1)).getBytes("UTF-8"));
+            }
+            continue;
+          }
+          catch (UnsupportedEncodingException ex) {
+            throw new TProtocolException(TProtocolException.NOT_IMPLEMENTED,
+                "JVM does not support UTF-8");
+          }
+          catch (IOException ex) {
+            throw new TProtocolException(TProtocolException.INVALID_DATA,
+                "Invalid unicode sequence");
+          }
         }
         else {
           int off = ESCAPE_CHARS.indexOf(ch);
@@ -748,6 +813,11 @@ public class TJSONProtocol extends TProtocol {
     int len = arr.len();
     int off = 0;
     int size = 0;
+    // Ignore padding
+    int bound = len >= 2 ? len - 2 : 0;
+    for (int i = len - 1; i >= bound && b[i] == '='; --i) {
+      --len;
+    }
     while (len >= 4) {
       // Decode 4 bytes at a time
       TBase64Utils.decode(b, off, 4, b, size); // NB: decoded in place
@@ -792,6 +862,7 @@ public class TJSONProtocol extends TProtocol {
 
   @Override
   public TMessage readMessageBegin() throws TException {
+    resetContext(); // THRIFT-3743
     readJSONArrayStart();
     if (readJSONInteger() != VERSION) {
       throw new TProtocolException(TProtocolException.BAD_VERSION,

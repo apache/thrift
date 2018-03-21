@@ -21,22 +21,23 @@
 #define _THRIFT_CONCURRENCY_THREAD_H_ 1
 
 #include <stdint.h>
-#include <boost/shared_ptr.hpp>
-#include <boost/weak_ptr.hpp>
+#include <thrift/stdcxx.h>
 
 #include <thrift/thrift-config.h>
 
 #if USE_BOOST_THREAD
-#  include <boost/thread.hpp>
+#include <boost/thread.hpp>
 #elif USE_STD_THREAD
-#  include <thread>
+#include <thread>
 #else
-#  ifdef HAVE_PTHREAD_H
-#    include <pthread.h>
-#  endif
+#ifdef HAVE_PTHREAD_H
+#include <pthread.h>
+#endif
 #endif
 
-namespace apache { namespace thrift { namespace concurrency {
+namespace apache {
+namespace thrift {
+namespace concurrency {
 
 class Thread;
 
@@ -47,24 +48,24 @@ class Thread;
  */
 class Runnable {
 
- public:
-  virtual ~Runnable() {};
+public:
+  virtual ~Runnable(){};
   virtual void run() = 0;
 
   /**
    * Gets the thread object that is hosting this runnable object  - can return
-   * an empty boost::shared pointer if no references remain on thet thread  object
+   * an empty boost::shared pointer if no references remain on that thread object
    */
-  virtual boost::shared_ptr<Thread> thread() { return thread_.lock(); }
+  virtual stdcxx::shared_ptr<Thread> thread() { return thread_.lock(); }
 
   /**
    * Sets the thread that is executing this object.  This is only meant for
    * use by concrete implementations of Thread.
    */
-  virtual void thread(boost::shared_ptr<Thread> value) { thread_ = value; }
+  virtual void thread(stdcxx::shared_ptr<Thread> value) { thread_ = value; }
 
- private:
-  boost::weak_ptr<Thread> thread_;
+private:
+  stdcxx::weak_ptr<Thread> thread_;
 };
 
 /**
@@ -78,8 +79,7 @@ class Runnable {
  */
 class Thread {
 
- public:
-
+public:
 #if USE_BOOST_THREAD
   typedef boost::thread::id id_t;
 
@@ -97,7 +97,7 @@ class Thread {
   static inline id_t get_current() { return pthread_self(); }
 #endif
 
-  virtual ~Thread() {};
+  virtual ~Thread(){};
 
   /**
    * Starts the thread. Does platform specific thread creation and
@@ -107,8 +107,9 @@ class Thread {
   virtual void start() = 0;
 
   /**
-   * Join this thread. Current thread blocks until this target thread
-   * completes.
+   * Join this thread. If this thread is joinable, the calling thread blocks
+   * until this thread completes.  If the target thread is not joinable, then
+   * nothing happens.
    */
   virtual void join() = 0;
 
@@ -120,14 +121,13 @@ class Thread {
   /**
    * Gets the runnable object this thread is hosting
    */
-  virtual boost::shared_ptr<Runnable> runnable() const { return _runnable; }
+  virtual stdcxx::shared_ptr<Runnable> runnable() const { return _runnable; }
 
- protected:
-  virtual void runnable(boost::shared_ptr<Runnable> value) { _runnable = value; }
+protected:
+  virtual void runnable(stdcxx::shared_ptr<Runnable> value) { _runnable = value; }
 
- private:
-  boost::shared_ptr<Runnable> _runnable;
-
+private:
+  stdcxx::shared_ptr<Runnable> _runnable;
 };
 
 /**
@@ -135,18 +135,43 @@ class Thread {
  * object for execution
  */
 class ThreadFactory {
+protected:
+  ThreadFactory(bool detached) : detached_(detached) { }
 
- public:
-  virtual ~ThreadFactory() {}
-  virtual boost::shared_ptr<Thread> newThread(boost::shared_ptr<Runnable> runnable) const = 0;
+public:
+  virtual ~ThreadFactory() { }
 
-  /** Gets the current thread id or unknown_thread_id if the current thread is not a thrift thread */
+  /**
+   * Gets current detached mode
+   */
+  bool isDetached() const { return detached_; }
 
+  /**
+   * Sets the detached disposition of newly created threads.
+   */
+  void setDetached(bool detached) { detached_ = detached; }
+
+  /**
+   * Create a new thread.
+   */
+  virtual stdcxx::shared_ptr<Thread> newThread(stdcxx::shared_ptr<Runnable> runnable) const = 0;
+
+  /**
+   * Gets the current thread id or unknown_thread_id if the current thread is not a thrift thread
+   */
+  virtual Thread::id_t getCurrentThreadId() const = 0;
+
+  /**
+   * For code readability define the unknown/undefined thread id
+   */
   static const Thread::id_t unknown_thread_id;
 
-  virtual Thread::id_t getCurrentThreadId() const = 0;
+private:
+  bool detached_;
 };
 
-}}} // apache::thrift::concurrency
+}
+}
+} // apache::thrift::concurrency
 
 #endif // #ifndef _THRIFT_CONCURRENCY_THREAD_H_

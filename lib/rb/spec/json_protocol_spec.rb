@@ -57,7 +57,7 @@ describe 'JsonProtocol' do
 
     it "should write json base64" do
       @prot.write_json_base64("this is a base64 string")
-      @trans.read(@trans.available).should == "\"\"dGhpcyBpcyBhIGJhc2U2NCBzdHJpbmc=\\n\"\""
+      @trans.read(@trans.available).should == "\"dGhpcyBpcyBhIGJhc2U2NCBzdHJpbmc=\""
     end
 
     it "should write json integer" do
@@ -244,7 +244,12 @@ describe 'JsonProtocol' do
 
     it "should write binary" do
       @prot.write_binary("this is a base64 string")
-      @trans.read(@trans.available).should == "\"\"dGhpcyBpcyBhIGJhc2U2NCBzdHJpbmc=\\n\"\""
+      @trans.read(@trans.available).should == "\"dGhpcyBpcyBhIGJhc2U2NCBzdHJpbmc=\""
+    end
+
+    it "should write long binary" do
+      @prot.write_binary((0...256).to_a.pack('C*'))
+      @trans.read(@trans.available).should == "\"AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4vMDEyMzQ1Njc4OTo7PD0+P0BBQkNERUZHSElKS0xNTk9QUVJTVFVWV1hZWltcXV5fYGFiY2RlZmdoaWprbG1ub3BxcnN0dXZ3eHl6e3x9fn+AgYKDhIWGh4iJiouMjY6PkJGSk5SVlpeYmZqbnJ2en6ChoqOkpaanqKmqq6ytrq+wsbKztLW2t7i5uru8vb6/wMHCw8TFxsfIycrLzM3Oz9DR0tPU1dbX2Nna29zd3t/g4eLj5OXm5+jp6uvs7e7v8PHy8/T19vf4+fr7/P3+/w==\""
     end
 
     it "should get type name for type id" do
@@ -288,14 +293,35 @@ describe 'JsonProtocol' do
     it "should read json escape char" do
       @trans.write('0054')
       @prot.read_json_escape_char.should == 'T'
+
+      @trans.write("\"\\\"\"")
+      @prot.read_json_string(false).should == "\""
+
+      @trans.write("\"\\\\\"")
+      @prot.read_json_string(false).should == "\\"
+
+      @trans.write("\"\\/\"")
+      @prot.read_json_string(false).should == "\/"
+
+      @trans.write("\"\\b\"")
+      @prot.read_json_string(false).should == "\b"
+
+      @trans.write("\"\\f\"")
+      @prot.read_json_string(false).should == "\f"
+
+      @trans.write("\"\\n\"")
+      @prot.read_json_string(false).should == "\n"
+
+      @trans.write("\"\\r\"")
+      @prot.read_json_string(false).should == "\r"
+
+      @trans.write("\"\\t\"")
+      @prot.read_json_string(false).should == "\t"
     end
 
     it "should read json string" do
       @trans.write("\"\\P")
       expect {@prot.read_json_string(false)}.to raise_error(Thrift::ProtocolException)
-
-      @trans.write("\"\\n\"")
-      @prot.read_json_string(false).should == "\\n"
 
       @trans.write("\"this is a test string\"")
       @prot.read_json_string.should == "this is a test string"
@@ -503,11 +529,24 @@ describe 'JsonProtocol' do
       @trans.write("\"dGhpcyBpcyBhIHRlc3Qgc3RyaW5n\"")
       @prot.read_binary.should == "this is a test string"
     end
+
+    it "should read long binary" do
+      @trans.write("\"AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKissLS4vMDEyMzQ1Njc4OTo7PD0+P0BBQkNERUZHSElKS0xNTk9QUVJTVFVWV1hZWltcXV5fYGFiY2RlZmdoaWprbG1ub3BxcnN0dXZ3eHl6e3x9fn+AgYKDhIWGh4iJiouMjY6PkJGSk5SVlpeYmZqbnJ2en6ChoqOkpaanqKmqq6ytrq+wsbKztLW2t7i5uru8vb6/wMHCw8TFxsfIycrLzM3Oz9DR0tPU1dbX2Nna29zd3t/g4eLj5OXm5+jp6uvs7e7v8PHy8/T19vf4+fr7/P3+/w==\"")
+      @prot.read_binary.bytes.to_a.should == (0...256).to_a
+    end
+  
+    it "should provide a reasonable to_s" do
+      @prot.to_s.should == "json(memory)"
+    end
   end
 
   describe Thrift::JsonProtocolFactory do
     it "should create a JsonProtocol" do
       Thrift::JsonProtocolFactory.new.get_protocol(mock("MockTransport")).should be_instance_of(Thrift::JsonProtocol)
+    end
+
+    it "should provide a reasonable to_s" do
+      Thrift::JsonProtocolFactory.new.to_s.should == "json"
     end
   end
 end

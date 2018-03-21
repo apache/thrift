@@ -17,32 +17,50 @@
 # under the License.
 #
 
-THRIFT = $(top_srcdir)/compiler/cpp/thrift -out gopath/src/ --gen go:thrift_import=thrift
+THRIFTARGS = -out gopath/src/ --gen go:thrift_import=thrift$(COMPILER_EXTRAFLAG)
 THRIFTTEST = $(top_srcdir)/test/ThriftTest.thrift
 
 # Thrift for GO has problems with complex map keys: THRIFT-2063
-gopath: $(top_srcdir)/compiler/cpp/thrift $(THRIFTTEST) \
+gopath: $(THRIFT) $(THRIFTTEST) \
 				IncludesTest.thrift \
 				NamespacedTest.thrift \
 				MultiplexedProtocolTest.thrift \
 				OnewayTest.thrift \
 				OptionalFieldsTest.thrift \
 				ServicesTest.thrift \
+				GoTagTest.thrift \
 				TypedefFieldTest.thrift \
-				RefAnnotationFieldsTest.thrift
+				RefAnnotationFieldsTest.thrift \
+				UnionDefaultValueTest.thrift \
+				ErrorTest.thrift \
+				NamesTest.thrift \
+				InitialismsTest.thrift \
+				DontExportRWTest.thrift \
+				dontexportrwtest/compile_test.go \
+				IgnoreInitialismsTest.thrift
 	mkdir -p gopath/src
 	grep -v list.*map.*list.*map $(THRIFTTEST) | grep -v 'set<Insanity>' > ThriftTest.thrift
-	$(THRIFT) -r IncludesTest.thrift
-	$(THRIFT) BinaryKeyTest.thrift
-	$(THRIFT) MultiplexedProtocolTest.thrift
-	$(THRIFT) OnewayTest.thrift
-	$(THRIFT) OptionalFieldsTest.thrift
-	$(THRIFT) ServicesTest.thrift
-	$(THRIFT) TypedefFieldTest.thrift
-	$(THRIFT) RefAnnotationFieldsTest.thrift
-	GOPATH=`pwd`/gopath $(GO) get code.google.com/p/gomock/gomock
+	$(THRIFT) $(THRIFTARGS) -r IncludesTest.thrift
+	$(THRIFT) $(THRIFTARGS) BinaryKeyTest.thrift
+	$(THRIFT) $(THRIFTARGS) MultiplexedProtocolTest.thrift
+	$(THRIFT) $(THRIFTARGS) OnewayTest.thrift
+	$(THRIFT) $(THRIFTARGS) OptionalFieldsTest.thrift
+	$(THRIFT) $(THRIFTARGS) ServicesTest.thrift
+	$(THRIFT) $(THRIFTARGS) GoTagTest.thrift
+	$(THRIFT) $(THRIFTARGS) TypedefFieldTest.thrift
+	$(THRIFT) $(THRIFTARGS) RefAnnotationFieldsTest.thrift
+	$(THRIFT) $(THRIFTARGS) UnionDefaultValueTest.thrift
+	$(THRIFT) $(THRIFTARGS) ErrorTest.thrift
+	$(THRIFT) $(THRIFTARGS) NamesTest.thrift
+	$(THRIFT) $(THRIFTARGS) InitialismsTest.thrift
+	$(THRIFT) $(THRIFTARGS),read_write_private DontExportRWTest.thrift
+	$(THRIFT) $(THRIFTARGS),ignore_initialisms IgnoreInitialismsTest.thrift
+	GOPATH=`pwd`/gopath $(GO) get github.com/golang/mock/gomock || true
+	sed -i 's/\"context\"/\"golang.org\/x\/net\/context\"/g' gopath/src/github.com/golang/mock/gomock/controller.go || true
+	GOPATH=`pwd`/gopath $(GO) get github.com/golang/mock/gomock
 	ln -nfs ../../../thrift gopath/src/thrift
 	ln -nfs ../../tests gopath/src/tests
+	cp -r ./dontexportrwtest gopath/src
 	touch gopath
 
 check: gopath
@@ -51,15 +69,36 @@ check: gopath
 				binarykeytest \
 				servicestest \
 				typedeffieldtest \
-				refannotationfieldstest
-	GOPATH=`pwd`/gopath $(GO) test thrift tests
+				refannotationfieldstest \
+				errortest	\
+				namestest \
+				initialismstest \
+				dontexportrwtest \
+				ignoreinitialismstest
+	GOPATH=`pwd`/gopath $(GO) test thrift tests dontexportrwtest
 
 clean-local:
-	$(RM) -r gopath ThriftTest.thrift
+	$(RM) -r gopath ThriftTest.thrift gen-go
 
 client: stubs
 	$(GO) run TestClient.go
 
 EXTRA_DIST = \
+	dontexportrwtest \
+	tests \
+	BinaryKeyTest.thrift \
+	GoTagTest.thrift \
 	IncludesTest.thrift \
-	NamespacedTest.thrift
+	MultiplexedProtocolTest.thrift \
+	NamespacedTest.thrift \
+	OnewayTest.thrift \
+	OptionalFieldsTest.thrift \
+	RefAnnotationFieldsTest.thrift \
+	UnionDefaultValueTest.thrift \
+	ServicesTest.thrift \
+	TypedefFieldTest.thrift \
+	ErrorTest.thrift \
+	NamesTest.thrift \
+	InitialismsTest.thrift \
+	DontExportRWTest.thrift \
+	IgnoreInitialismsTest.thrift

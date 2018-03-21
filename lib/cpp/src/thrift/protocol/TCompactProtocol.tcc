@@ -21,6 +21,8 @@
 
 #include <limits>
 
+#include "thrift/config.h"
+
 /*
  * TCompactProtocol::i*ToZigzag depend on the fact that the right shift
  * operator on a signed integer is an arithmetic (sign-extending) shift.
@@ -255,13 +257,13 @@ uint32_t TCompactProtocolT<Transport_>::writeDouble(const double dub) {
   BOOST_STATIC_ASSERT(std::numeric_limits<double>::is_iec559);
 
   uint64_t bits = bitwise_cast<uint64_t>(dub);
-  bits = htolell(bits);
+  bits = THRIFT_htolell(bits);
   trans_->write((uint8_t*)&bits, 8);
   return 8;
 }
 
 /**
- * Write a string to the wire with a varint size preceeding.
+ * Write a string to the wire with a varint size preceding.
  */
 template <class Transport_>
 uint32_t TCompactProtocolT<Transport_>::writeString(const std::string& str) {
@@ -385,7 +387,7 @@ uint32_t TCompactProtocolT<Transport_>::writeVarint64(uint64_t n) {
  */
 template <class Transport_>
 uint64_t TCompactProtocolT<Transport_>::i64ToZigzag(const int64_t l) {
-  return (l << 1) ^ (l >> 63);
+  return (static_cast<uint64_t>(l) << 1) ^ (l >> 63);
 }
 
 /**
@@ -394,7 +396,7 @@ uint64_t TCompactProtocolT<Transport_>::i64ToZigzag(const int64_t l) {
  */
 template <class Transport_>
 uint32_t TCompactProtocolT<Transport_>::i32ToZigzag(const int32_t n) {
-  return (n << 1) ^ (n >> 31);
+  return (static_cast<uint32_t>(n) << 1) ^ (n >> 31);
 }
 
 /**
@@ -433,7 +435,7 @@ uint32_t TCompactProtocolT<Transport_>::readMessageBegin(
     throw TProtocolException(TProtocolException::BAD_VERSION, "Bad protocol version");
   }
 
-  messageType = (TMessageType)((versionAndType >> TYPE_SHIFT_AMOUNT) & 0x03);
+  messageType = (TMessageType)((versionAndType >> TYPE_SHIFT_AMOUNT) & TYPE_BITS);
   rsize += readVarint32(seqid);
   rsize += readString(name);
 
@@ -659,7 +661,7 @@ uint32_t TCompactProtocolT<Transport_>::readDouble(double& dub) {
     uint8_t b[8];
   } u;
   trans_->readAll(u.b, 8);
-  u.bits = letohll(u.bits);
+  u.bits = THRIFT_letohll(u.bits);
   dub = bitwise_cast<double>(u.bits);
   return 8;
 }
@@ -817,7 +819,6 @@ TType TCompactProtocolT<Transport_>::getTType(int8_t type) {
     default:
       throw TException(std::string("don't know what type: ") + (char)type);
   }
-  return T_STOP;
 }
 
 }}} // apache::thrift::protocol

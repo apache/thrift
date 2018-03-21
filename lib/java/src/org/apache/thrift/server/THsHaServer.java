@@ -35,7 +35,8 @@ import org.apache.thrift.transport.TNonblockingServerTransport;
 public class THsHaServer extends TNonblockingServer {
 
   public static class Args extends AbstractNonblockingServerArgs<Args> {
-    private int workerThreads = 5;
+    public int minWorkerThreads = 5;
+    public int maxWorkerThreads = Integer.MAX_VALUE;
     private int stopTimeoutVal = 60;
     private TimeUnit stopTimeoutUnit = TimeUnit.SECONDS;
     private ExecutorService executorService = null;
@@ -44,13 +45,44 @@ public class THsHaServer extends TNonblockingServer {
       super(transport);
     }
 
-    public Args workerThreads(int i) {
-      workerThreads = i;
+
+    /**
+     * Sets the min and max threads.
+     *
+     * @deprecated use {@link #minWorkerThreads(int)} and {@link #maxWorkerThreads(int)}  instead.
+     */
+    @Deprecated
+    public Args workerThreads(int n) {
+      minWorkerThreads = n;
+      maxWorkerThreads = n;
       return this;
     }
 
+    /**
+     * @return what the min threads was set to.
+     * @deprecated use {@link #getMinWorkerThreads()} and {@link #getMaxWorkerThreads()} instead.
+     */
+    @Deprecated
     public int getWorkerThreads() {
-      return workerThreads;
+      return minWorkerThreads;
+    }
+
+    public Args minWorkerThreads(int n) {
+      minWorkerThreads = n;
+      return this;
+    }
+
+    public Args maxWorkerThreads(int n) {
+      maxWorkerThreads = n;
+      return this;
+    }
+
+    public int getMinWorkerThreads() {
+      return minWorkerThreads;
+    }
+
+    public int getMaxWorkerThreads() {
+      return maxWorkerThreads;
     }
 
     public int getStopTimeoutVal() {
@@ -99,7 +131,7 @@ public class THsHaServer extends TNonblockingServer {
   }
 
   /**
-   * @inheritDoc
+   * {@inheritDoc}
    */
   @Override
   protected void waitForShutdown() {
@@ -111,17 +143,21 @@ public class THsHaServer extends TNonblockingServer {
    * Helper to create an invoker pool
    */
   protected static ExecutorService createInvokerPool(Args options) {
-    int workerThreads = options.workerThreads;
+    int minWorkerThreads = options.minWorkerThreads;
+    int maxWorkerThreads = options.maxWorkerThreads;
     int stopTimeoutVal = options.stopTimeoutVal;
     TimeUnit stopTimeoutUnit = options.stopTimeoutUnit;
 
     LinkedBlockingQueue<Runnable> queue = new LinkedBlockingQueue<Runnable>();
-    ExecutorService invoker = new ThreadPoolExecutor(workerThreads,
-      workerThreads, stopTimeoutVal, stopTimeoutUnit, queue);
+    ExecutorService invoker = new ThreadPoolExecutor(minWorkerThreads,
+      maxWorkerThreads, stopTimeoutVal, stopTimeoutUnit, queue);
 
     return invoker;
   }
 
+  protected ExecutorService getInvoker() {
+    return invoker;
+  }
 
   protected void gracefullyShutdownInvokerPool() {
     // try to gracefully shut down the executor service

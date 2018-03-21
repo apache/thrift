@@ -24,12 +24,14 @@ under the License.
 Using Thrift with Go
 ====================
 
-In following Go conventions, we reccomend you use the 'go' tool to install
+Thrift supports Go 1.7+
+
+In following Go conventions, we recommend you use the 'go' tool to install
 Thrift for go.
 
-    $ go get git.apache.org/thrift.git/lib/go/thrift
+    $ go get git.apache.org/thrift.git/lib/go/thrift/...
 
-Will install the last stable release.
+Will retrieve and install the most recent version of the package.
 
 
 A note about optional fields
@@ -64,3 +66,18 @@ As such, we provide some helpers that do just this under lib/go/thrift/. E.g.,
 
 And so on. The code generator also creates analogous helpers for user-defined
 typedefs and enums.
+
+Adding custom tags to generated Thrift structs
+==============================================
+
+You can add tags to the auto-generated thrift structs using the following format:
+
+    struct foo {
+      1: required string Bar (go.tag = "some_tag:\"some_tag_value\"")
+    }
+    
+which will generate:
+
+    type Foo struct {
+      Bar string `thrift:"bar,1,required" some_tag:"some_tag_value"`
+    }

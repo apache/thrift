@@ -21,36 +21,30 @@
 #include <stdexcept>
 #include <thrift/Thrift.h>
 #include <thrift/transport/TFDTransport.h>
+
+#define BOOST_TEST_MODULE TFDTransportTest
+#include <boost/test/unit_test.hpp>
+
+// Disabled on MSVC because the RTL asserts on an invalid file descriptor
+// in both debug and release mode; at least in MSVCR100 (Visual Studio 2010)
+#if !defined(WIN32)
+
 using apache::thrift::transport::TTransportException;
 using apache::thrift::transport::TFDTransport;
 
-class DummyException : std::exception {
-};
-
-int main() {
-  {
-    TFDTransport t(256, TFDTransport::NO_CLOSE_ON_DESTROY);
-  }
-
-  try {
-    {
-      TFDTransport t(256, TFDTransport::CLOSE_ON_DESTROY);
-    }
-    std::abort();
-  } catch (TTransportException) {
-  }
-
-  try {
-    {
-      TFDTransport t(256, TFDTransport::CLOSE_ON_DESTROY);
-      throw DummyException();
-    }
-    std::abort();
-  } catch (TTransportException&) {
-    abort();
-  } catch (DummyException&) {
-  }
-
-  return 0;
-
+BOOST_AUTO_TEST_CASE(test_tfdtransport_1) {
+  BOOST_CHECK_NO_THROW(TFDTransport t(256, TFDTransport::CLOSE_ON_DESTROY));
 }
+
+BOOST_AUTO_TEST_CASE(test_tfdtransport_2) {
+  TFDTransport t(256, TFDTransport::CLOSE_ON_DESTROY);
+  BOOST_CHECK_THROW(t.close(), TTransportException);
+}
+
+#else
+
+BOOST_AUTO_TEST_CASE(test_tfdtransport_dummy) {
+  BOOST_CHECK(true);
+}
+
+#endif

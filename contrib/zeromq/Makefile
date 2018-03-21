@@ -1,6 +1,4 @@
 THRIFT = thrift
-CXXFLAGS = `pkg-config --cflags libzmq thrift`
-LDLIBS = `pkg-config --libs libzmq thrift`
 
 CXXFLAGS += -g3 -O0
 
@@ -16,9 +14,13 @@ PROGS =  test-client test-server test-sender test-receiver
 all: $(PYLIBS) $(PROGS)
 
 test-client: test-client.o TZmqClient.o $(GENOBJS)
+	$(CXX) $^ -o $@ -lzmq -lthrift
 test-server: test-server.o TZmqServer.o $(GENOBJS)
+	$(CXX) $^ -o $@ -lzmq -lthrift
 test-sender: test-sender.o TZmqClient.o $(GENOBJS)
+	$(CXX) $^ -o $@ -lzmq -lthrift
 test-receiver: test-receiver.o TZmqServer.o $(GENOBJS)
+	$(CXX) $^ -o $@ -lzmq -lthrift
 
 test-client.o test-server.o test-sender.o test-receiver.o: $(GENSRCS)
 

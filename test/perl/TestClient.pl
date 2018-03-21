@@ -19,10 +19,11 @@
 # under the License.
 #
 
-require 5.6.0;
+use 5.10.0;
 use strict;
 use warnings;
 use Data::Dumper;
+use Getopt::Long qw(GetOptions);
 use Time::HiRes qw(gettimeofday);
 
 use lib '../../lib/perl/lib';
@@ -30,30 +31,116 @@ use lib 'gen-perl';
 
 use Thrift;
 use Thrift::BinaryProtocol;
-use Thrift::Socket;
 use Thrift::BufferedTransport;
+use Thrift::FramedTransport;
+use Thrift::MultiplexedProtocol;
+use Thrift::SSLSocket;
+use Thrift::Socket;
+use Thrift::UnixSocket;
 
+use ThriftTest::SecondService;
 use ThriftTest::ThriftTest;
 use ThriftTest::Types;
 
 $|++;
 
-my $host = 'localhost';
-my $port = 9090;
+sub usage {
+    print <<EOF;
+Usage: $0 [OPTIONS]
 
+Options:                          (default)
+  --ca                                         CA to validate server with.
+  --cert                                       Certificate to use.
+                                               Required if using --ssl.
+  --ciphers                                    Acceptable cipher list.
+  --domain-socket <file>                       Use a unix domain socket.
+  --help                                       Show usage.
+  --key                                        Certificate key.
+                                               Required if using --ssl.
+  --port <portnum>                9090         Port to use.
+  --protocol {binary}             binary       Protocol to use.
+  --ssl                                        If present, use SSL.
+  --transport {buffered|framed}   buffered     Transport to use.
 
-my $socket = new Thrift::Socket($host, $port);
+EOF
+}
 
-my $bufferedSocket = new Thrift::BufferedTransport($socket, 1024, 1024);
-my $transport = $bufferedSocket;
-my $protocol = new Thrift::BinaryProtocol($transport);
+my %opts = (
+    'port' => 9090,
+    'protocol' => 'binary',
+    'transport' => 'buffered'
+);
+
+GetOptions(\%opts, qw (
+    ca=s
+    cert=s
+    ciphers=s
+    key=s
+    domain-socket=s
+    help
+    host=s
+    port=i
+    protocol=s
+    ssl
+    transport=s
+)) || exit 1;
+
+if ($opts{help}) {
+    usage();
+    exit 0;
+}
+
+my $socket = undef;
+if ($opts{"domain-socket"}) {
+    $socket = new Thrift::UnixSocket($opts{"domain-socket"});
+} elsif ($opts{ssl}) {
+  $socket = new Thrift::SSLSocket(\%opts);
+} else {
+  $socket = new Thrift::Socket($opts{host}, $opts{port});
+}
+
+my $transport;
+if ($opts{transport} eq 'buffered') {
+    $transport = new Thrift::BufferedTransport($socket, 1024, 1024);
+} elsif ($opts{transport} eq 'framed') {
+    $transport = new Thrift::FramedTransport($socket);
+} else {
+    usage();
+    exit 1;
+}
+
+my $protocol;
+my $protocol2;
+if ($opts{protocol} eq 'binary' || $opts{protocol} eq 'multi') {
+    $protocol = new Thrift::BinaryProtocol($transport);
+} else {
+    usage();
+    exit 1;
+}
+
+my $secondService = undef;
+if (index($opts{protocol}, 'multi') == 0) {
+  $protocol2 = new Thrift::MultiplexedProtocol($protocol, "SecondService");
+  $protocol = new Thrift::MultiplexedProtocol($protocol, "ThriftTest");
+  $secondService = new ThriftTest::SecondServiceClient($protocol2);
+}
+
 my $testClient = new ThriftTest::ThriftTestClient($protocol);
 
-eval{
-$transport->open();
-}; if($@){
+eval {
+  $transport->open();
+};
+if($@){
     die(Dumper($@));
 }
+
+use constant ERR_BASETYPES => 1;
+use constant ERR_STRUCTS => 2;
+use constant ERR_CONTAINERS => 4;
+use constant ERR_EXCEPTIONS => 8;
+use constant ERR_PROTOCOL => 16;
+use constant ERR_UNKNOWN => 64;
+
 my $start = gettimeofday();
 
 #
@@ -69,6 +156,30 @@ print(" = void\n");
 print("testString(\"Test\")");
 my $s = $testClient->testString("Test");
 print(" = \"$s\"\n");
+exit(ERR_BASETYPES) if ($s ne 'Test');
+
+#
+# MULTIPLEXED TEST
+#
+if (index($opts{protocol}, 'multi') == 0) {
+    print("secondtestString(\"Test2\")");
+    $s = $secondService->secondtestString("Test2");
+    print(" = \"$s\"\n");
+    exit(ERR_PROTOCOL) if ($s ne 'testString("Test2")');
+}
+
+#
+# BOOL TEST
+#
+print("testBool(1)");
+my $t = $testClient->testBool(1);
+print(" = $t\n");
+exit(ERR_BASETYPES) if ($t ne 1);
+print("testBool(0)");
+my $f = $testClient->testBool(0);
+print(" = $f\n");
+exit(ERR_BASETYPES) if ($f ne "");
+
 
 #
 # BYTE TEST
@@ -83,13 +194,15 @@ print(" = $u8\n");
 print("testI32(-1)");
 my $i32 = $testClient->testI32(-1);
 print(" = $i32\n");
+exit(ERR_BASETYPES) if ($i32 ne -1);
 
 #
-#I64 TEST
+# I64 TEST
 #
 print("testI64(-34359738368)");
 my $i64 = $testClient->testI64(-34359738368);
 print(" = $i64\n");
+exit(ERR_BASETYPES) if ($i64 ne -34359738368);
 
 #
 # DOUBLE TEST
@@ -97,6 +210,12 @@ print(" = $i64\n");
 print("testDouble(-852.234234234)");
 my $dub = $testClient->testDouble(-852.234234234);
 print(" = $dub\n");
+exit(ERR_BASETYPES) if ($dub ne -852.234234234);
+
+#
+# BINARY TEST   ---  TODO
+#
+
 
 #
 # STRUCT TEST
@@ -243,11 +362,17 @@ print("}\n");
 my $insane = new ThriftTest::Insanity();
 $insane->{userMap}->{ThriftTest::Numberz::FIVE} = 5000;
 my $truck = new ThriftTest::Xtruct();
-$truck->string_thing("Truck");
-$truck->byte_thing(8);
-$truck->i32_thing(8);
-$truck->i64_thing(8);
+$truck->string_thing("Hello2");
+$truck->byte_thing(2);
+$truck->i32_thing(2);
+$truck->i64_thing(2);
+my $truck2 = new ThriftTest::Xtruct();
+$truck2->string_thing("Goodbye4");
+$truck2->byte_thing(4);
+$truck2->i32_thing(4);
+$truck2->i64_thing(4);
 push(@{$insane->{xtructs}}, $truck);
+push(@{$insane->{xtructs}}, $truck2);
 
 print("testInsanity()");
 my $whoa = $testClient->testInsanity($insane);

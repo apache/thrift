@@ -22,9 +22,9 @@ use Test::More tests => 2;
 use strict;
 use warnings;
 
-use Thrift;
 use Thrift::BinaryProtocol;
 use Thrift::MemoryBuffer;
+use Thrift::MessageType;
 
 use ThriftTest::ThriftTest;
 use ThriftTest::Types;
@@ -72,7 +72,7 @@ foreach my $val (("got foo","got bar")){
     $protocol->readMessageBegin(\$function_name, \$message_type, \$sequence_id);
     print "  $function_name, $message_type, $sequence_id\n";
 
-    if ($message_type == TMessageType::EXCEPTION) {
+    if ($message_type == Thrift::TMessageType::EXCEPTION) {
         die;
     }
 

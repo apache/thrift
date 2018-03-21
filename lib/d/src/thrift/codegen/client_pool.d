@@ -205,7 +205,7 @@ protected:
           } else {
             // We are dealing with a normal exception thrown by the
             // server-side method, just pass it on. As far as we are
-            // concerned, the method call succeded.
+            // concerned, the method call succeeded.
             pool_.recordSuccess(c);
             throw e;
           }

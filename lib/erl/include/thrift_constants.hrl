@@ -22,6 +22,7 @@
 -define(tType_VOID, 1).
 -define(tType_BOOL, 2).
 -define(tType_BYTE, 3).
+-define(tType_I8, 3).
 -define(tType_DOUBLE, 4).
 -define(tType_I16, 6).
 -define(tType_I32, 8).
@@ -56,3 +57,6 @@
 -define(TApplicationException_INVALID_TRANSFORM, 8).
 -define(TApplicationException_INVALID_PROTOCOL, 9).
 -define(TApplicationException_UNSUPPORTED_CLIENT_TYPE, 10).
+
+-define (MULTIPLEXED_SERVICE_SEPARATOR, ":").
+-define (MULTIPLEXED_ERROR_HANDLER_KEY, "error_handler").

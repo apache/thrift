@@ -22,9 +22,11 @@
 
 #include <thrift/concurrency/Thread.h>
 
-#include <boost/shared_ptr.hpp>
+#include <thrift/stdcxx.h>
 
-namespace apache { namespace thrift { namespace concurrency {
+namespace apache {
+namespace thrift {
+namespace concurrency {
 
 /**
  * A thread factory to create std::threads.
@@ -33,40 +35,27 @@ namespace apache { namespace thrift { namespace concurrency {
  */
 class StdThreadFactory : public ThreadFactory {
 
- public:
-
+public:
   /**
    * Std thread factory.  All threads created by a factory are reference-counted
-   * via boost::shared_ptr and boost::weak_ptr.  The factory guarantees that threads and
-   * the Runnable tasks they host will be properly cleaned up once the last strong reference
+   * via stdcxx::shared_ptr.  The factory guarantees that threads and the Runnable tasks
+   * they host will be properly cleaned up once the last strong reference
    * to both is given up.
    *
    * By default threads are not joinable.
    */
 
-  StdThreadFactory(bool detached=true);
+  StdThreadFactory(bool detached = true);
 
   // From ThreadFactory;
-  boost::shared_ptr<Thread> newThread(boost::shared_ptr<Runnable> runnable) const;
+  stdcxx::shared_ptr<Thread> newThread(stdcxx::shared_ptr<Runnable> runnable) const;
 
   // From ThreadFactory;
   Thread::id_t getCurrentThreadId() const;
-
-  /**
-   * Sets detached mode of threads
-   */
-  virtual void setDetached(bool detached);
-
-  /**
-   * Gets current detached mode
-   */
-  virtual bool isDetached() const;
-
-private:
-  class Impl;
-  boost::shared_ptr<Impl> impl_;
 };
 
-}}} // apache::thrift::concurrency
+}
+}
+} // apache::thrift::concurrency
 
 #endif // #ifndef _THRIFT_CONCURRENCY_STDTHREADFACTORY_H_

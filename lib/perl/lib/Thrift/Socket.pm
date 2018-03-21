@@ -17,36 +17,62 @@
 # under the License.
 #
 
-require 5.6.0;
+use 5.10.0;
 use strict;
 use warnings;
 
 use Thrift;
+use Thrift::Exception;
 use Thrift::Transport;
 
 use IO::Socket::INET;
 use IO::Select;
 
 package Thrift::Socket;
+use base qw( Thrift::Transport );
+use version 0.77; our $VERSION = version->declare("$Thrift::VERSION");
 
-use base('Thrift::Transport');
+#
+# Construction and usage
+#
+# my $opts = {}
+# my $socket = new Thrift::Socket(\%opts);
+#
+# options:
+#
+# host        => host to connect to
+# port        => port to connect to
+# sendTimeout => timeout used for send and for connect
+# recvTimeout => timeout used for recv
+#
 
 sub new
 {
-    my $classname    = shift;
-    my $host         = shift || "localhost";
-    my $port         = shift || 9090;
-    my $debugHandler = shift;
+    my $classname = shift;
+    my $opts      = shift;
 
+    # default settings:
     my $self = {
-        host         => $host,
-        port         => $port,
-        debugHandler => $debugHandler,
-        debug        => 0,
-        sendTimeout  => 10000,
+        host         => 'localhost',
+        port         => 9090,
         recvTimeout  => 10000,
-        handle       => undef,
+        sendTimeout  => 10000,
+
+        handle       => undef
     };
+
+    if (defined $opts and ref $opts eq ref {}) {
+
+      # argument is a hash of options so override the defaults
+      $self->{$_} = $opts->{$_} for keys %$opts;
+
+    } else {
+
+      # older style constructor takes 3 arguments, none of which are required
+      $self->{host} = $opts || 'localhost';
+      $self->{port} = shift || 9090;
+
+    }
 
     return bless($self,$classname);
 }
@@ -68,19 +94,6 @@ sub setRecvTimeout
     $self->{recvTimeout} = $timeout;
 }
 
-
-#
-#Sets debugging output on or off
-#
-# @param bool $debug
-#
-sub setDebug
-{
-    my $self  = shift;
-    my $debug = shift;
-
-    $self->{debug} = $debug;
-}
 
 #
 # Tests whether this is open
@@ -105,21 +118,10 @@ sub open
 {
     my $self = shift;
 
-    my $sock = IO::Socket::INET->new(PeerAddr => $self->{host},
-                                            PeerPort => $self->{port},
-                                            Proto    => 'tcp',
-                                            Timeout  => $self->{sendTimeout}/1000)
-        || do {
-            my $error = 'TSocket: Could not connect to '.$self->{host}.':'.$self->{port}.' ('.$!.')';
-
-            if ($self->{debug}) {
-                $self->{debugHandler}->($error);
-            }
-
-            die new Thrift::TException($error);
-
-        };
-
+    my $sock = $self->__open() || do {
+        my $error = ref($self).': Could not connect to '.$self->{host}.':'.$self->{port}.' ('.$!.')';
+        die new Thrift::TTransportException($error, Thrift::TTransportException::NOT_OPEN);
+    };
 
     $self->{handle} = new IO::Select( $sock );
 }
@@ -130,9 +132,8 @@ sub open
 sub close
 {
     my $self = shift;
-
-    if( defined $self->{handle} ){
-        CORE::close( ($self->{handle}->handles())[0] );
+    if( defined $self->{handle} ) {
+      $self->__close();
     }
 }
 
@@ -153,25 +154,15 @@ sub readAll
     my $pre = "";
     while (1) {
 
-        #check for timeout
-        my @sockets = $self->{handle}->can_read( $self->{recvTimeout} / 1000 );
-
-        if(@sockets == 0){
-            die new Thrift::TException('TSocket: timed out reading '.$len.' bytes from '.
-                                       $self->{host}.':'.$self->{port});
-        }
-
-        my $sock = $sockets[0];
-
-        my ($buf,$sz);
-        $sock->recv($buf, $len);
+        my $sock = $self->__wait();
+        my $buf = $self->__recv($sock, $len);
 
         if (!defined $buf || $buf eq '') {
 
-            die new Thrift::TException('TSocket: Could not read '.$len.' bytes from '.
-                               $self->{host}.':'.$self->{port});
+            die new Thrift::TTransportException(ref($self).': Could not read '.$len.' bytes from '.
+                               $self->{host}.':'.$self->{port}, Thrift::TTransportException::END_OF_FILE);
 
-        } elsif (($sz = length($buf)) < $len) {
+        } elsif ((my $sz = length($buf)) < $len) {
 
             $pre .= $buf;
             $len -= $sz;
@@ -195,23 +186,13 @@ sub read
 
     return unless defined $self->{handle};
 
-    #check for timeout
-    my @sockets = $self->{handle}->can_read( $self->{recvTimeout} / 1000 );
-
-    if(@sockets == 0){
-        die new Thrift::TException('TSocket: timed out reading '.$len.' bytes from '.
-                                   $self->{host}.':'.$self->{port});
-    }
-
-    my $sock = $sockets[0];
-
-    my ($buf,$sz);
-    $sock->recv($buf, $len);
+    my $sock = $self->__wait();
+    my $buf = $self->__recv($sock, $len);
 
     if (!defined $buf || $buf eq '') {
 
-        die new TException('TSocket: Could not read '.$len.' bytes from '.
-                           $self->{host}.':'.$self->{port});
+        die new Thrift::TTransportException(ref($self).': Could not read '.$len.' bytes from '.
+                           $self->{host}.':'.$self->{port}, Thrift::TTransportException::END_OF_FILE);
 
     }
 
@@ -229,30 +210,27 @@ sub write
     my $self = shift;
     my $buf  = shift;
 
-
     return unless defined $self->{handle};
 
     while (length($buf) > 0) {
-
-
         #check for timeout
         my @sockets = $self->{handle}->can_write( $self->{sendTimeout} / 1000 );
 
         if(@sockets == 0){
-            die new Thrift::TException('TSocket: timed out writing to bytes from '.
-                                       $self->{host}.':'.$self->{port});
+            die new Thrift::TTransportException(ref($self).': timed out writing to bytes from '.
+                                       $self->{host}.':'.$self->{port}, Thrift::TTransportException::TIMED_OUT);
         }
 
-        my $sock = $sockets[0];
+        my $sent = $self->__send($sockets[0], $buf);
 
-        my $got = $sock->send($buf);
+        if (!defined $sent || $sent == 0 ) {
 
-        if (!defined $got || $got == 0 ) {
-            die new Thrift::TException('TSocket: Could not write '.length($buf).' bytes '.
-                                 $self->{host}.':'.$self->{host});
+            die new Thrift::TTransportException(ref($self).': Could not write '.length($buf).' bytes '.
+                                 $self->{host}.':'.$self->{host}, Thrift::TTransportException::END_OF_FILE);
+
         }
 
-        $buf = substr($buf, $got);
+        $buf = substr($buf, $sent);
     }
 }
 
@@ -265,65 +243,82 @@ sub flush
 
     return unless defined $self->{handle};
 
-    my $ret  = ($self->{handle}->handles())[0]->flush;
+    my $ret = ($self->{handle}->handles())[0]->flush;
 }
 
+###
+### Overridable methods
+###
 
 #
-# Build a ServerSocket from the ServerTransport base class
+# Open a connection to a server.
 #
-package  Thrift::ServerSocket;
-
-use base qw( Thrift::Socket Thrift::ServerTransport );
-
-use constant LISTEN_QUEUE_SIZE => 128;
-
-sub new
-{
-    my $classname   = shift;
-    my $port        = shift;
-
-    my $self        = $classname->SUPER::new(undef, $port, undef);
-    return bless($self,$classname);
-}
-
-sub listen
+sub __open
 {
     my $self = shift;
-
-    # Listen to a new socket
-    my $sock = IO::Socket::INET->new(LocalAddr => undef, # any addr
-                                     LocalPort => $self->{port},
-                                     Proto     => 'tcp',
-                                     Listen    => LISTEN_QUEUE_SIZE,
-                                     ReuseAddr => 1)
-        || do {
-            my $error = 'TServerSocket: Could not bind to ' .
-                        $self->{host} . ':' . $self->{port} . ' (' . $! . ')';
-
-            if ($self->{debug}) {
-                $self->{debugHandler}->($error);
-            }
-
-            die new Thrift::TException($error);
-        };
-
-    $self->{handle} = $sock;
+    return IO::Socket::INET->new(PeerAddr => $self->{host},
+                                 PeerPort => $self->{port},
+                                 Proto    => 'tcp',
+                                 Timeout  => $self->{sendTimeout} / 1000);
 }
 
-sub accept
+#
+# Close the connection
+#
+sub __close
+{
+  my $self = shift;
+    CORE::close(($self->{handle}->handles())[0]);
+}
+
+#
+# Read data
+#
+# @param[in] $sock the socket
+# @param[in] $len the length to read
+# @returns the data buffer that was read
+#
+sub __recv
+{
+  my $self = shift;
+  my $sock = shift;
+  my $len = shift;
+  my $buf = undef;
+  $sock->recv($buf, $len);
+  return $buf;
+}
+
+#
+# Send data
+#
+# @param[in] $sock the socket
+# @param[in] $buf the data buffer
+# @returns the number of bytes written
+#
+sub __send
 {
     my $self = shift;
+    my $sock = shift;
+    my $buf = shift;
+    return $sock->send($buf);
+}
 
-    if ( exists $self->{handle} and defined $self->{handle} )
-    {
-        my $client        = $self->{handle}->accept();
-        my $result        = new Thrift::Socket;
-        $result->{handle} = new IO::Select($client);
-        return $result;
+#
+# Wait for data to be readable
+#
+# @returns a socket that can be read
+#
+sub __wait
+{
+    my $self = shift;
+    my @sockets = $self->{handle}->can_read( $self->{recvTimeout} / 1000 );
+
+    if (@sockets == 0) {
+        die new Thrift::TTransportException(ref($self).': timed out reading from '.
+                                   $self->{host}.':'.$self->{port}, Thrift::TTransportException::TIMED_OUT);
     }
 
-    return 0;
+    return $sockets[0];
 }
 
 

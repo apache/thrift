@@ -98,7 +98,7 @@ void FacebookBase::getCounters(std::map<std::string, int64_t>& _return) {
   // want our read/write structure to go over the wire
   counters_.acquireRead();
   for(ReadWriteCounterMap::iterator it = counters_.begin();
-      it != counters_.end(); it++)
+      it != counters_.end(); ++it)
   {
     _return[it->first] = it->second.value;
   }

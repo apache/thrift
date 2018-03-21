@@ -34,7 +34,7 @@ import org.apache.thrift.scheme.SchemeFactory;
 import org.apache.thrift.scheme.StandardScheme;
 import org.apache.thrift.scheme.TupleScheme;
 
-public abstract class TUnion<T extends TUnion<?,?>, F extends TFieldIdEnum> implements TBase<T, F> {
+public abstract class TUnion<T extends TUnion<T,F>, F extends TFieldIdEnum> implements TBase<T, F> {
 
   protected Object value_;
   protected F setField_;

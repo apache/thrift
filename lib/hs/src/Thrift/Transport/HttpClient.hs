@@ -22,18 +22,16 @@ module Thrift.Transport.HttpClient
     ( module Thrift.Transport
     , HttpClient (..)
     , openHttpClient
-    ) where
+) where
 
 import Thrift.Transport
+import Thrift.Transport.IOBuffer
 import Network.URI
 import Network.HTTP hiding (port, host)
 
-import Control.Monad (liftM)
 import Data.Maybe (fromJust)
-import Data.Monoid (mappend, mempty)
+import Data.Monoid (mempty)
 import Control.Exception (throw)
-import Control.Concurrent.MVar
-import qualified Data.Binary.Builder as B
 import qualified Data.ByteString.Lazy as LBS
 
 
@@ -73,11 +71,13 @@ openHttpClient uri_ = do
 
 instance Transport HttpClient where
 
-    tClose  = close . hstream
+    tClose = close . hstream
 
-    tRead hclient n = readBuf (readBuffer hclient) n
+    tPeek = peekBuf . readBuffer
 
-    tWrite hclient = writeBuf (writeBuffer hclient)
+    tRead = readBuf . readBuffer
+
+    tWrite = writeBuf . writeBuffer
 
     tFlush hclient = do
       body <- flushBuf $ writeBuffer hclient
@@ -92,36 +92,10 @@ instance Transport HttpClient where
 
       res <- sendHTTP (hstream hclient) request
       case res of
-        Right response -> do
-            fillBuf (readBuffer hclient) (rspBody response)
-        Left _ -> do
+        Right response ->
+          fillBuf (readBuffer hclient) (rspBody response)
+        Left _ ->
             throw $ TransportExn "THttpConnection: HTTP failure from server" TE_UNKNOWN
       return ()
 
     tIsOpen _ = return True
--- Mini IO buffers
-
-type WriteBuffer = MVar (B.Builder)
-
-newWriteBuffer :: IO WriteBuffer
-newWriteBuffer = newMVar mempty
-
-writeBuf :: WriteBuffer -> LBS.ByteString -> IO ()
-writeBuf w s = modifyMVar_ w $ return . (\builder ->
-                 builder `mappend` (B.fromLazyByteString s))
-
-flushBuf :: WriteBuffer -> IO (LBS.ByteString)
-flushBuf w = B.toLazyByteString `liftM` swapMVar w mempty
-
-
-type ReadBuffer = MVar (LBS.ByteString)
-
-newReadBuffer :: IO ReadBuffer
-newReadBuffer = newMVar mempty
-
-fillBuf :: ReadBuffer -> LBS.ByteString -> IO ()
-fillBuf r s = swapMVar r s >> return ()
-
-readBuf :: ReadBuffer -> Int -> IO (LBS.ByteString)
-readBuf r n = modifyMVar r $ return . flipPair . LBS.splitAt (fromIntegral n)
-    where flipPair (a, b) = (b, a)

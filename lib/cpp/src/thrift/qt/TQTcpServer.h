@@ -23,13 +23,19 @@
 #include <QObject>
 #include <QTcpServer>
 
-#include <boost/shared_ptr.hpp>
+#include <thrift/stdcxx.h>
 
-namespace apache { namespace thrift { namespace protocol {
+namespace apache {
+namespace thrift {
+namespace protocol {
 class TProtocolFactory;
-}}} // apache::thrift::protocol
+}
+}
+} // apache::thrift::protocol
 
-namespace apache { namespace thrift { namespace async {
+namespace apache {
+namespace thrift {
+namespace async {
 
 class TAsyncProcessor;
 
@@ -39,34 +45,37 @@ class TAsyncProcessor;
  *  processor and a protocol factory, and then run the Qt event loop.
  */
 class TQTcpServer : public QObject {
- Q_OBJECT
- public:
-  TQTcpServer(boost::shared_ptr<QTcpServer> server,
-              boost::shared_ptr<TAsyncProcessor> processor,
-              boost::shared_ptr<apache::thrift::protocol::TProtocolFactory> protocolFactory,
-              QT_PREPEND_NAMESPACE(QObject)* parent = NULL);
+  Q_OBJECT
+public:
+  TQTcpServer(stdcxx::shared_ptr<QTcpServer> server,
+              stdcxx::shared_ptr<TAsyncProcessor> processor,
+              stdcxx::shared_ptr<apache::thrift::protocol::TProtocolFactory> protocolFactory,
+              QObject* parent = NULL);
   virtual ~TQTcpServer();
 
- private Q_SLOTS:
+private Q_SLOTS:
   void processIncoming();
   void beginDecode();
   void socketClosed();
+  void deleteConnectionContext(QTcpSocket* connection);
 
- private:
-  TQTcpServer(const TQTcpServer&);
-  TQTcpServer& operator=(const TQTcpServer&);
-  
-  class ConnectionContext;
+private:
+  Q_DISABLE_COPY(TQTcpServer)
 
-  void finish(boost::shared_ptr<ConnectionContext> ctx, bool healthy);
+  struct ConnectionContext;
 
-  boost::shared_ptr<QTcpServer> server_;
-  boost::shared_ptr<TAsyncProcessor> processor_;
-  boost::shared_ptr<apache::thrift::protocol::TProtocolFactory> pfact_;
+  void scheduleDeleteConnectionContext(QTcpSocket* connection);
+  void finish(stdcxx::shared_ptr<ConnectionContext> ctx, bool healthy);
 
-  std::map<QT_PREPEND_NAMESPACE(QTcpSocket)*, boost::shared_ptr<ConnectionContext> > ctxMap_;
+  stdcxx::shared_ptr<QTcpServer> server_;
+  stdcxx::shared_ptr<TAsyncProcessor> processor_;
+  stdcxx::shared_ptr<apache::thrift::protocol::TProtocolFactory> pfact_;
+
+  typedef std::map<QTcpSocket*, stdcxx::shared_ptr<ConnectionContext> > ConnectionContextMap;
+  ConnectionContextMap ctxMap_;
 };
-
-}}} // apache::thrift::async
+}
+}
+} // apache::thrift::async
 
 #endif // #ifndef _THRIFT_TASYNC_QTCP_SERVER_H_

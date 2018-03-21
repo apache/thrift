@@ -62,7 +62,7 @@ set LOGFILE=%TARGET%\%SUBDIR%\codegen.log
 rem * create and/or empty target dirs
 if not exist "%TARGET%"           md "%TARGET%"
 if not exist "%TARGET%\%SUBDIR%"  md "%TARGET%\%SUBDIR%"
-if not exist "%OUTDCU%" 	      md "%OUTDCU%"
+if not exist "%OUTDCU%"           md "%OUTDCU%"
 if exist "%TARGET%\*.thrift"      del "%TARGET%\*.thrift"       /Q
 if exist "%TARGET%\%SUBDIR%\*.*"  del "%TARGET%\%SUBDIR%\*.*"   /Q
 if exist "%OUTDCU%\*.*"           del "%OUTDCU%\*.*"            /Q
@@ -76,7 +76,7 @@ rem * compile all thrift files, generate PAS and C++ code
 echo.
 echo Generating code, please wait ...
 cd "%TARGET%"
-for %%a in (*.thrift) do "%BIN%\thrift.exe" -v --gen delphi:ansistr_binary,register_types,constprefix,events,xmldoc "%%a" 2>> "%LOGFILE%"
+for %%a in (*.thrift) do "%BIN%\thrift.exe" -v --gen delphi:register_types,constprefix,events,xmldoc "%%a" 2>> "%LOGFILE%"
 REM * for %%a in (*.thrift) do "%BIN%\thrift.exe" -v --gen cpp "%%a" >> NUL:
 cmd /c start notepad "%LOGFILE%"
 cd ..
@@ -88,31 +88,31 @@ if not exist "%TARGET%\%SUBDIR%\ReservedKeywords.pas" goto TESTCASE_MISSING
 rem * generate a minimal DPR file that uses all generated pascal units
 cd "%TARGET%\%SUBDIR%\"
 if exist inherited.*  ren inherited.*  _inherited.*
-echo program %TESTAPP%;    					> %TESTAPP%.dpr
-echo {$APPTYPE CONSOLE}   					>> %TESTAPP%.dpr
-echo.    									>> %TESTAPP%.dpr
-echo uses 									>> %TESTAPP%.dpr
-for %%a in (*.pas) do echo   %%~na,			>> %TESTAPP%.dpr
-echo   Windows, Classes, SysUtils;			>> %TESTAPP%.dpr
-echo.    									>> %TESTAPP%.dpr
-echo begin 									>> %TESTAPP%.dpr
-echo   Writeln('Successfully compiled!');	>> %TESTAPP%.dpr
-echo   Writeln('List of units:');	>> %TESTAPP%.dpr
-for %%a in (*.pas) do echo   Write('%%~na':30,'':10);  >> %TESTAPP%.dpr
-echo   Writeln;	>> %TESTAPP%.dpr
-echo end. 									>> %TESTAPP%.dpr
-echo.    									>> %TESTAPP%.dpr
+echo program %TESTAPP%;                                           > %TESTAPP%.dpr
+echo {$APPTYPE CONSOLE}                                          >> %TESTAPP%.dpr
+echo.                                                            >> %TESTAPP%.dpr
+echo uses                                                        >> %TESTAPP%.dpr
+for %%a in (*.pas) do echo   %%~na,                              >> %TESTAPP%.dpr
+echo   Windows, Classes, SysUtils;                               >> %TESTAPP%.dpr
+echo.                                                            >> %TESTAPP%.dpr
+echo begin                                                       >> %TESTAPP%.dpr
+echo   Writeln('Successfully compiled!');                        >> %TESTAPP%.dpr
+echo   Writeln('List of units:');                                >> %TESTAPP%.dpr
+for %%a in (*.pas) do echo   Write('%%~na':30,'':10);            >> %TESTAPP%.dpr
+echo   Writeln;                                                  >> %TESTAPP%.dpr
+echo end.                                                        >> %TESTAPP%.dpr
+echo.                                                            >> %TESTAPP%.dpr
 cd ..\..
 
 rem * try to compile the DPR
 rem * this should not throw any errors, warnings or hints
-"%DCC%"  -B "%TARGET%\%SUBDIR%\%TESTAPP%" -U"%UNITSEARCH%" -I"%UNITSEARCH%" -N"%OUTDCU%" -E"%TARGET%\%SUBDIR%" 
+"%DCC%"  -B "%TARGET%\%SUBDIR%\%TESTAPP%" -U"%UNITSEARCH%" -I"%UNITSEARCH%" -N"%OUTDCU%" -E"%TARGET%\%SUBDIR%"
 dir "%TARGET%\%SUBDIR%\%TESTAPP%.exe"
 if not exist "%TARGET%\%SUBDIR%\%TESTAPP%.exe"  goto CODEGEN_FAILED
 echo.
 echo -----------------------------------------------------------------
 echo The compiled program is now executed. If it hangs or crashes, we
-echo have a serious problem with the generated code. Expected output 
+echo have a serious problem with the generated code. Expected output
 echo is "Successfully compiled:" followed by a list of generated units.
 echo -----------------------------------------------------------------
 "%TARGET%\%SUBDIR%\%TESTAPP%.exe"
@@ -124,7 +124,7 @@ GOTO EOF
 REM -----------------------------------------------------
 :DXE_NOT_FOUND
 REM -----------------------------------------------------
-echo Delphi Compiler (dcc32.exe) not found. 
+echo Delphi Compiler (dcc32.exe) not found.
 echo Please check the "DCC" setting in this batch.
 echo.
 cmd /c start notepad README.MD

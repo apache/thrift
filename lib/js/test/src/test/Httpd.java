@@ -183,16 +183,18 @@ public class Httpd {
 
                 } else {
 
-		    String mimeType = "application/octet-stream";
-		    MimeUtil2 mimeUtil = new MimeUtil2();
-		    mimeUtil.registerMimeDetector(ExtensionMimeDetector.class.getName());
-		    Collection<MimeType> collection = mimeUtil.getMimeTypes(file);
-		    Iterator<MimeType> iterator = collection.iterator();
-		    while(iterator.hasNext()) {
-			MimeType mt = iterator.next();
-			mimeType =  mt.getMediaType() + "/" + mt.getSubType();
-			break;
-		    }
+                    String mimeType = "application/octet-stream";
+                    MimeUtil2 mimeUtil = new MimeUtil2();
+                    synchronized (this) {
+                        mimeUtil.registerMimeDetector(ExtensionMimeDetector.class.getName());
+                    }
+                    Collection<MimeType> collection = mimeUtil.getMimeTypes(file);
+                    Iterator<MimeType> iterator = collection.iterator();
+                    while(iterator.hasNext()) {
+                        MimeType mt = iterator.next();
+                        mimeType =  mt.getMediaType() + "/" + mt.getSubType();
+                        break;
+                    }
 
                     response.setStatusCode(HttpStatus.SC_OK);
                     FileEntity body = new FileEntity(file, mimeType);

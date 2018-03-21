@@ -7,7 +7,7 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libthrift", "libthrift.vcxp
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "doc", "doc", "{006984E0-7CC1-47E2-ACD2-A40FE4D38693}"
 	ProjectSection(SolutionItems) = preProject
-		README_WINDOWS = README_WINDOWS
+		README.md = README.md
 	EndProjectSection
 EndProject
 Global

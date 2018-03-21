@@ -43,7 +43,7 @@ struct _ThriftApplicationException
 {
   ThriftStruct parent;
 
-  /* public */
+  /* private */
   gint32 type;
   gboolean __isset_type;
   gchar *message;
@@ -72,7 +72,9 @@ typedef enum
   THRIFT_APPLICATION_EXCEPTION_ERROR_PROTOCOL_ERROR,
   THRIFT_APPLICATION_EXCEPTION_ERROR_INVALID_TRANSFORM,
   THRIFT_APPLICATION_EXCEPTION_ERROR_INVALID_PROTOCOL,
-  THRIFT_APPLICATION_EXCEPTION_ERROR_UNSUPPORTED_CLIENT_TYPE
+  THRIFT_APPLICATION_EXCEPTION_ERROR_UNSUPPORTED_CLIENT_TYPE,
+
+  THRIFT_APPLICATION_EXCEPTION_ERROR_N
 } ThriftApplicationExceptionError;
 
 /* define error domain for GError */

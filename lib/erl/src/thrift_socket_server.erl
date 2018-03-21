@@ -21,12 +21,19 @@
 
 -behaviour(gen_server).
 
--export([start/1, stop/1]).
+-include ("thrift_constants.hrl").
 
--export([init/1, handle_call/3, handle_cast/2, terminate/2, code_change/3,
-         handle_info/2]).
+-ifdef(TEST).
+    -compile(export_all).
+    -export_records([thrift_socket_server]).
+-else.
+    -export([start/1, stop/1]).
 
--export([acceptor_loop/1]).
+    -export([init/1, handle_call/3, handle_cast/2, terminate/2, code_change/3,
+             handle_info/2]).
+
+    -export([acceptor_loop/1]).
+-endif.
 
 -record(thrift_socket_server,
         {port,
@@ -38,7 +45,10 @@
          listen=null,
          acceptor=null,
          socket_opts=[{recv_timeout, 500}],
-         framed=false
+         protocol=binary,
+         framed=false,
+         ssltransport=false,
+         ssloptions=[]
         }).
 
 start(State=#thrift_socket_server{}) ->
@@ -91,10 +101,46 @@ parse_options([{ip, Ip} | Rest], State) ->
     parse_options(Rest, State#thrift_socket_server{ip=ParsedIp});
 parse_options([{socket_opts, L} | Rest], State) when is_list(L), length(L) > 0 ->
     parse_options(Rest, State#thrift_socket_server{socket_opts=L});
-parse_options([{handler, Handler} | Rest], State) ->
+
+parse_options([{handler, []} | _Rest], _State) ->
+    throw("At least an error handler must be defined.");
+parse_options([{handler, ServiceHandlerPropertyList} | Rest], State) when is_list(ServiceHandlerPropertyList) ->
+    ServiceHandlerMap =
+    case State#thrift_socket_server.handler of
+        undefined ->
+            lists:foldl(
+                fun ({ServiceName, ServiceHandler}, Acc) when is_list(ServiceName), is_atom(ServiceHandler) ->
+                        thrift_multiplexed_map_wrapper:store(ServiceName, ServiceHandler, Acc);
+                    (_, _Acc) ->
+                        throw("The handler option is not properly configured for multiplexed services. It should be a kind of [{\"error_handler\", Module::atom()}, {SericeName::list(), Module::atom()}, ...]")
+                end, thrift_multiplexed_map_wrapper:new(), ServiceHandlerPropertyList);
+        _ -> throw("Error while parsing the handler option.")
+    end,
+    case thrift_multiplexed_map_wrapper:find(?MULTIPLEXED_ERROR_HANDLER_KEY, ServiceHandlerMap) of
+        {ok, _ErrorHandler} -> parse_options(Rest, State#thrift_socket_server{handler=ServiceHandlerMap});
+        error -> throw("The handler option is not properly configured for multiplexed services. It should be a kind of [{\"error_handler\", Module::atom()}, {SericeName::list(), Module::atom()}, ...]")
+    end;
+parse_options([{handler, Handler} | Rest], State) when State#thrift_socket_server.handler == undefined, is_atom(Handler) ->
     parse_options(Rest, State#thrift_socket_server{handler=Handler});
-parse_options([{service, Service} | Rest], State) ->
+
+parse_options([{service, []} | _Rest], _State) ->
+    throw("At least one service module must be defined.");
+parse_options([{service, ServiceModulePropertyList} | Rest], State) when is_list(ServiceModulePropertyList) ->
+    ServiceModuleMap =
+    case State#thrift_socket_server.service of
+        undefined ->
+            lists:foldl(
+                fun ({ServiceName, ServiceModule}, Acc) when is_list(ServiceName), is_atom(ServiceModule) ->
+                        thrift_multiplexed_map_wrapper:store(ServiceName, ServiceModule, Acc);
+                    (_, _Acc) ->
+                        throw("The service option is not properly configured for multiplexed services. It should be a kind of [{SericeName::list(), ServiceModule::atom()}, ...]")
+                end, thrift_multiplexed_map_wrapper:new(), ServiceModulePropertyList);
+        _ -> throw("Error while parsing the service option.")
+    end,
+    parse_options(Rest, State#thrift_socket_server{service=ServiceModuleMap});
+parse_options([{service, Service} | Rest], State) when State#thrift_socket_server.service == undefined, is_atom(Service) ->
     parse_options(Rest, State#thrift_socket_server{service=Service});
+
 parse_options([{max, Max} | Rest], State) ->
     MaxInt = case Max of
                  Max when is_list(Max) ->
@@ -103,8 +149,17 @@ parse_options([{max, Max} | Rest], State) ->
                      Max
              end,
     parse_options(Rest, State#thrift_socket_server{max=MaxInt});
+
+parse_options([{protocol, Proto} | Rest], State) when is_atom(Proto) ->
+    parse_options(Rest, State#thrift_socket_server{protocol=Proto});
+
 parse_options([{framed, Framed} | Rest], State) when is_boolean(Framed) ->
-    parse_options(Rest, State#thrift_socket_server{framed=Framed}).
+    parse_options(Rest, State#thrift_socket_server{framed=Framed});
+
+parse_options([{ssltransport, SSLTransport} | Rest], State) when is_boolean(SSLTransport) ->
+    parse_options(Rest, State#thrift_socket_server{ssltransport=SSLTransport});
+parse_options([{ssloptions, SSLOptions} | Rest], State) when is_list(SSLOptions) ->
+    parse_options(Rest, State#thrift_socket_server{ssloptions=SSLOptions}).
 
 start_server(State=#thrift_socket_server{name=Name}) ->
     case Name of
@@ -168,25 +223,32 @@ new_acceptor(State=#thrift_socket_server{max=0}) ->
     State#thrift_socket_server{acceptor=null};
 new_acceptor(State=#thrift_socket_server{listen=Listen,
                                          service=Service, handler=Handler,
-                                         socket_opts=Opts, framed=Framed
+                                         socket_opts=Opts, framed=Framed, protocol=Proto,
+                                         ssltransport=SslTransport, ssloptions=SslOptions
                                         }) ->
     Pid = proc_lib:spawn_link(?MODULE, acceptor_loop,
-                              [{self(), Listen, Service, Handler, Opts, Framed}]),
+                              [{self(), Listen, Service, Handler, Opts, Framed, SslTransport, SslOptions, Proto}]),
     State#thrift_socket_server{acceptor=Pid}.
 
-acceptor_loop({Server, Listen, Service, Handler, SocketOpts, Framed})
+acceptor_loop({Server, Listen, Service, Handler, SocketOpts, Framed, SslTransport, SslOptions, Proto})
   when is_pid(Server), is_list(SocketOpts) ->
     case catch gen_tcp:accept(Listen) of % infinite timeout
         {ok, Socket} ->
             gen_server:cast(Server, {accepted, self()}),
             ProtoGen = fun() ->
-                               {ok, SocketTransport}   = thrift_socket_transport:new(Socket, SocketOpts),
-                               {ok, Transport}         =
-                                   case Framed of
-                                       true  -> thrift_framed_transport:new(SocketTransport);
-                                       false -> thrift_buffered_transport:new(SocketTransport)
-                                   end,
-                               {ok, Protocol}          = thrift_binary_protocol:new(Transport),
+                               {ok, SocketTransport} = case SslTransport of
+                                                           true  -> thrift_sslsocket_transport:new(Socket, SocketOpts, SslOptions);
+                                                           false -> thrift_socket_transport:new(Socket, SocketOpts)
+                                                       end,
+                               {ok, Transport}       = case Framed of
+                                                           true  -> thrift_framed_transport:new(SocketTransport);
+                                                           false -> thrift_buffered_transport:new(SocketTransport)
+                                                       end,
+                               {ok, Protocol}        = case Proto of
+                                                         compact -> thrift_compact_protocol:new(Transport);
+                                                         json -> thrift_json_protocol:new(Transport);
+                                                         _ -> thrift_binary_protocol:new(Transport)
+                                                       end,
                                {ok, Protocol}
                        end,
             thrift_processor:init({Server, ProtoGen, Service, Handler});
@@ -214,8 +276,11 @@ handle_cast({accepted, Pid},
 handle_cast(stop, State) ->
     {stop, normal, State}.
 
-terminate(_Reason, #thrift_socket_server{listen=Listen, port=Port}) ->
+terminate(Reason, #thrift_socket_server{listen=Listen, port=Port}) ->
     gen_tcp:close(Listen),
+    {backtrace, Bt} = erlang:process_info(self(), backtrace),
+    error_logger:error_report({?MODULE, ?LINE,
+                               {child_error, Reason, Bt}}),
     case Port < 1024 of
         true ->
             catch fdsrv:stop(),

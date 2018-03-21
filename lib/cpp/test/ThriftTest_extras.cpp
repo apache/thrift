@@ -22,12 +22,12 @@
 #include <thrift/protocol/TDebugProtocol.h>
 #include "gen-cpp/ThriftTest_types.h"
 
-
-namespace thrift { namespace test {
+namespace thrift {
+namespace test {
 
 bool Insanity::operator<(thrift::test::Insanity const& other) const {
   using apache::thrift::ThriftDebugString;
   return ThriftDebugString(*this) < ThriftDebugString(other);
 }
-
-}}
+}
+}

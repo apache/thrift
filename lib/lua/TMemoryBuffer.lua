@@ -66,7 +66,7 @@ function TMemoryBuffer:read(len)
     len = avail
   end
 
-  local val = string.sub(self.buffer, self.rPos, len)
+  local val = string.sub(self.buffer, self.rPos + 1, self.rPos + len)
   self.rPos = self.rPos + len
   return val
 end
@@ -84,8 +84,8 @@ function TMemoryBuffer:readAll(len)
 end
 
 function TMemoryBuffer:write(buf)
-  self.buffer = self.buffer + buf
-  self.wPos = self.wPos + buf
+  self.buffer = self.buffer .. buf
+  self.wPos = self.wPos + string.len(buf)
 end
 
 function TMemoryBuffer:flush() end

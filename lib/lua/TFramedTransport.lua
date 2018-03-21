@@ -38,7 +38,7 @@ function TFramedTransport:new(obj)
     error('You must provide ' .. ttype(self) .. ' with a trans')
   end
 
-  return TTransportBase:new(obj)
+  return TTransportBase.new(self, obj)
 end
 
 function TFramedTransport:isOpen()
@@ -69,7 +69,7 @@ function TFramedTransport:read(len)
   end
 
   local val = string.sub(self.rBuf, 0, len)
-  self.rBuf = string.sub(self.rBuf, len)
+  self.rBuf = string.sub(self.rBuf, len+1)
   return val
 end
 
@@ -79,9 +79,6 @@ function TFramedTransport:__readFrame()
   self.rBuf = self.trans:readAll(frame_len)
 end
 
-function TFramedTransport:readAll(len)
-  return self.trans:readAll(len)
-end
 
 function TFramedTransport:write(buf, len)
   if self.doWrite == false then
@@ -91,7 +88,7 @@ function TFramedTransport:write(buf, len)
   if len and len < string.len(buf) then
     buf = string.sub(buf, 0, len)
   end
-  self.wBuf = self.wBuf + buf
+  self.wBuf = self.wBuf .. buf
 end
 
 function TFramedTransport:flush()
@@ -102,6 +99,8 @@ function TFramedTransport:flush()
   -- If the write fails we still want wBuf to be clear
   local tmp = self.wBuf
   self.wBuf = ''
+  local frame_len_buf = libluabpack.bpack("i", string.len(tmp))
+  self.trans:write(frame_len_buf)
   self.trans:write(tmp)
   self.trans:flush()
 end

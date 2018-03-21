@@ -31,7 +31,7 @@ struct Void {}
  * std.container gains something suitable.
  */
 // Note: The funky pointer casts (i.e. *(cast(immutable(E)*)&e) instead of
-// just cast(immutable(E))e) are a workaround for LDC 2 compatibilty.
+// just cast(immutable(E))e) are a workaround for LDC 2 compatibility.
 final class HashSet(E) {
   ///
   this() {}
@@ -88,7 +88,7 @@ final class HashSet(E) {
 
   ///
   auto opSlice() const {
-    // TODO: Implement using AA key range once availabe in release DMD/druntime
+    // TODO: Implement using AA key range once available in release DMD/druntime
     // to avoid allocation.
     return cast(E[])(aa_.keys);
   }

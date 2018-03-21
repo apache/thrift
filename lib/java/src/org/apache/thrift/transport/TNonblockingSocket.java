@@ -55,7 +55,6 @@ public class TNonblockingSocket extends TNonblockingTransport {
    * Create a new nonblocking socket transport that will be connected to host:port.
    * @param host
    * @param port
-   * @throws TTransportException
    * @throws IOException
    */
   public TNonblockingSocket(String host, int port, int timeout) throws IOException {
@@ -85,6 +84,7 @@ public class TNonblockingSocket extends TNonblockingTransport {
     Socket socket = socketChannel.socket();
     socket.setSoLinger(false, 0);
     socket.setTcpNoDelay(true);
+    socket.setKeepAlive(true);
     setTimeout(timeout);
   }
 

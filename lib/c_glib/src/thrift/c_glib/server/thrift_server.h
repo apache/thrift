@@ -69,7 +69,7 @@ struct _ThriftServerClass
   GObjectClass parent;
 
   /* vtable */
-  void (*serve) (ThriftServer *server);
+  gboolean (*serve) (ThriftServer *server, GError **error);
   void (*stop) (ThriftServer *server);
 };
 
@@ -80,7 +80,7 @@ GType thrift_server_get_type (void);
  * Processes the request.
  * \public \memberof ThriftServerClass
  */
-void thrift_server_serve (ThriftServer *server);
+gboolean thrift_server_serve (ThriftServer *server, GError **error);
 
 /*!
  * Stop handling requests.

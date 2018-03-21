@@ -44,14 +44,33 @@ public final class TMessage {
   }
 
   @Override
-  public boolean equals(Object other) {
-    if (other instanceof TMessage) {
-      return equals((TMessage) other);
-    }
-    return false;
+  public int hashCode() {
+    final int prime = 31;
+    int result = 1;
+    result = prime * result + ((name == null) ? 0 : name.hashCode());
+    result = prime * result + seqid;
+    result = prime * result + type;
+    return result;
   }
 
-  public boolean equals(TMessage other) {
-    return name.equals(other.name) && type == other.type && seqid == other.seqid;
+  @Override
+  public boolean equals(Object obj) {
+    if (this == obj)
+      return true;
+    if (obj == null)
+      return false;
+    if (getClass() != obj.getClass())
+      return false;
+    TMessage other = (TMessage) obj;
+    if (name == null) {
+      if (other.name != null)
+        return false;
+    } else if (!name.equals(other.name))
+      return false;
+    if (seqid != other.seqid)
+      return false;
+    if (type != other.type)
+      return false;
+    return true;
   }
 }

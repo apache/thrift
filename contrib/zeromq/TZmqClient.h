@@ -45,15 +45,15 @@ class TZmqClient : public TTransport {
     }
   }
 
-  uint32_t read(uint8_t* buf, uint32_t len);
+  uint32_t read_virt(uint8_t* buf, uint32_t len);
 
-  void write(const uint8_t* buf, uint32_t len);
+  void write_virt(const uint8_t* buf, uint32_t len);
 
-  void writeEnd();
+  uint32_t writeEnd();
 
  protected:
-  std::string endpoint_;
   zmq::socket_t sock_;
+  std::string endpoint_;
   TMemoryBuffer wbuf_;
   TMemoryBuffer rbuf_;
   zmq::message_t msg_;

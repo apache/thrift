@@ -21,9 +21,16 @@
 #import "TProtocol.h"
 #import "TTransport.h"
 
+NS_ASSUME_NONNULL_BEGIN
+
 
 @protocol TProtocolFactory <NSObject>
 
-- (id <TProtocol>) newProtocolOnTransport: (id <TTransport>) transport;
+@property (readonly, nonatomic) NSString *protocolName;
+
+-(id<TProtocol>) newProtocolOnTransport:(id<TTransport>)transport;
 
 @end
+
+
+NS_ASSUME_NONNULL_END

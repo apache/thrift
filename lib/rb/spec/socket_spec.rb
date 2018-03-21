@@ -35,7 +35,7 @@ describe 'Socket' do
     it_should_behave_like "a socket"
 
     it "should raise a TransportException when it cannot open a socket" do
-      ::Socket.should_receive(:new).and_raise(StandardError)
+      ::Socket.should_receive(:getaddrinfo).with("localhost", 9090, nil, ::Socket::SOCK_STREAM).and_return([[]])
       lambda { @socket.open }.should raise_error(Thrift::TransportException) { |e| e.type.should == Thrift::TransportException::NOT_OPEN }
     end
 
@@ -43,6 +43,7 @@ describe 'Socket' do
       ::Socket.should_receive(:new).and_return(mock("Handle", :connect_nonblock => true, :setsockopt => nil))
       ::Socket.should_receive(:getaddrinfo).with("localhost", 9090, nil, ::Socket::SOCK_STREAM).and_return([[]])
       ::Socket.should_receive(:sockaddr_in)
+      @socket.to_s == "socket(localhost:9090)"
       @socket.open
     end
 
@@ -50,12 +51,18 @@ describe 'Socket' do
       ::Socket.should_receive(:new).and_return(mock("Handle", :connect_nonblock => true, :setsockopt => nil))
       ::Socket.should_receive(:getaddrinfo).with("my.domain", 1234, nil, ::Socket::SOCK_STREAM).and_return([[]])
       ::Socket.should_receive(:sockaddr_in)
-      Thrift::Socket.new('my.domain', 1234).open
+      @socket = Thrift::Socket.new('my.domain', 1234).open
+      @socket.to_s == "socket(my.domain:1234)"
     end
 
     it "should accept an optional timeout" do
       ::Socket.stub!(:new)
       Thrift::Socket.new('localhost', 8080, 5).timeout.should == 5
+    end
+
+    it "should provide a reasonable to_s" do
+      ::Socket.stub!(:new)
+      Thrift::Socket.new('myhost', 8090).to_s.should == "socket(myhost:8090)"
     end
   end
 end

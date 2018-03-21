@@ -22,115 +22,275 @@
  */
 
 using System;
-using System.Collections.Generic;
 using System.IO.Pipes;
+using System.Threading;
+using System.Security.Principal;
 
 namespace Thrift.Transport
 {
-	public class TNamedPipeServerTransport : TServerTransport
-	{
-		/// <summary>
-		/// This is the address of the Pipe on the localhost.
-		/// </summary>
-		private readonly string pipeAddress;
-		NamedPipeServerStream stream = null;
+    public class TNamedPipeServerTransport : TServerTransport
+    {
+        /// <summary>
+        /// This is the address of the Pipe on the localhost.
+        /// </summary>
+        private readonly string pipeAddress;
+        private NamedPipeServerStream stream = null;
+        private bool asyncMode = true;
 
-		public TNamedPipeServerTransport(string pipeAddress)
-		{
-			this.pipeAddress = pipeAddress;
-		}
+        public TNamedPipeServerTransport(string pipeAddress)
+        {
+            this.pipeAddress = pipeAddress;
+        }
 
-		public override void Listen()
-		{
-			// nothing to do here
-		}
+        public override void Listen()
+        {
+            // nothing to do here
+        }
 
-		public override void Close()
-		{
-			if (stream != null)
-			{
-				try
-				{
-					stream.Close();
-					stream.Dispose();
-				}
-				finally
-				{
-					stream = null;
-				}
-			}
-		}
+        public override void Close()
+        {
+            if (stream != null)
+            {
+                try
+                {
+                    stream.Close();
+                    stream.Dispose();
+                }
+                finally
+                {
+                    stream = null;
+                }
+            }
+        }
 
-		private void EnsurePipeInstance()
-		{
-			if( stream == null)
-				stream = new NamedPipeServerStream(
-					pipeAddress, PipeDirection.InOut, 254,
-					PipeTransmissionMode.Byte,
-					PipeOptions.None, 4096, 4096 /*TODO: security*/);
-		}
+        private void EnsurePipeInstance()
+        {
+            if (stream == null)
+            {
+                var direction = PipeDirection.InOut;
+                var maxconn = NamedPipeServerStream.MaxAllowedServerInstances;
+                var mode = PipeTransmissionMode.Byte;
+                var options = asyncMode ? PipeOptions.Asynchronous : PipeOptions.None;
+                const int INBUF_SIZE = 4096;
+                const int OUTBUF_SIZE = 4096;
 
-		protected override TTransport AcceptImpl()
-		{
-			try
-			{
-				EnsurePipeInstance();
-				stream.WaitForConnection();
-				var trans = new ServerTransport(stream);
-				stream = null;  // pass ownership to ServerTransport
-				return trans;
-			}
-			catch (Exception e)
-			{
-				Close();
-				throw new TTransportException(TTransportException.ExceptionType.NotOpen, e.Message);
-			}
-		}
+                // security
+                var security = new PipeSecurity();
+                security.AddAccessRule(
+                    new PipeAccessRule(
+                        new SecurityIdentifier(WellKnownSidType.WorldSid, null),
+                        PipeAccessRights.Read | PipeAccessRights.Write | PipeAccessRights.Synchronize | PipeAccessRights.CreateNewInstance,
+                        System.Security.AccessControl.AccessControlType.Allow
+                    )
+                );
 
-		private class ServerTransport : TTransport
-		{
-			private NamedPipeServerStream server;
-			public ServerTransport(NamedPipeServerStream server)
-			{
-				this.server = server;
-			}
+                try
+                {
+                    stream = new NamedPipeServerStream(pipeAddress, direction, maxconn, mode, options, INBUF_SIZE, OUTBUF_SIZE, security);
+                }
+                catch (NotImplementedException)  // Mono still does not support async, fallback to sync
+                {
+                    if (asyncMode)
+                    {
+                        options &= (~PipeOptions.Asynchronous);
+                        stream = new NamedPipeServerStream(pipeAddress, direction, maxconn, mode, options, INBUF_SIZE, OUTBUF_SIZE, security);
+                        asyncMode = false;
+                    }
+                    else
+                    {
+                        throw;
+                    }
+                }
 
-			public override bool IsOpen
-			{
-				get { return server != null && server.IsConnected; }
-			}
+            }
+        }
 
-			public override void Open()
-			{
-			}
+        protected override TTransport AcceptImpl()
+        {
+            try
+            {
+                EnsurePipeInstance();
 
-			public override void Close()
-			{
-				if (server != null) server.Close();
-			}
+                if (asyncMode)
+                {
+                    var evt = new ManualResetEvent(false);
+                    Exception eOuter = null;
 
-			public override int Read(byte[] buf, int off, int len)
-			{
-				if (server == null)
-				{
-					throw new TTransportException(TTransportException.ExceptionType.NotOpen);
-				}
-				return server.Read(buf, off, len);
-			}
+                    stream.BeginWaitForConnection(asyncResult =>
+                    {
+                        try
+                        {
+                            if (stream != null)
+                                stream.EndWaitForConnection(asyncResult);
+                            else
+                                eOuter = new TTransportException(TTransportException.ExceptionType.Interrupted);
+                        }
+                        catch (Exception e)
+                        {
+                            if (stream != null)
+                                eOuter = e;
+                            else
+                                eOuter = new TTransportException(TTransportException.ExceptionType.Interrupted, e.Message);
+                        }
+                        evt.Set();
+                    }, null);
 
-			public override void Write(byte[] buf, int off, int len)
-			{
-				if (server == null)
-				{
-					throw new TTransportException(TTransportException.ExceptionType.NotOpen);
-				}
-				server.Write(buf, off, len);
-			}
+                    evt.WaitOne();
 
-			protected override void Dispose(bool disposing)
-			{
-				server.Dispose();
-			}
-		}
-	}
+                    if (eOuter != null)
+                        throw eOuter; // rethrow exception
+                }
+                else
+                {
+                    stream.WaitForConnection();
+                }
+
+                var trans = new ServerTransport(stream,asyncMode);
+                stream = null;  // pass ownership to ServerTransport
+                return trans;
+            }
+            catch (TTransportException)
+            {
+                Close();
+                throw;
+            }
+            catch (Exception e)
+            {
+                Close();
+                throw new TTransportException(TTransportException.ExceptionType.NotOpen, e.Message);
+            }
+        }
+
+        private class ServerTransport : TTransport
+        {
+            private NamedPipeServerStream stream;
+            private bool asyncMode;
+
+            public ServerTransport(NamedPipeServerStream stream, bool asyncMode)
+            {
+                this.stream = stream;
+                this.asyncMode = asyncMode;
+            }
+
+            public override bool IsOpen
+            {
+                get { return stream != null && stream.IsConnected; }
+            }
+
+            public override void Open()
+            {
+            }
+
+            public override void Close()
+            {
+                if (stream != null)
+                    stream.Close();
+            }
+
+            public override int Read(byte[] buf, int off, int len)
+            {
+                if (stream == null)
+                {
+                    throw new TTransportException(TTransportException.ExceptionType.NotOpen);
+                }
+
+                if (asyncMode)
+                {
+                    Exception eOuter = null;
+                    var evt = new ManualResetEvent(false);
+                    int retval = 0;
+
+                    stream.BeginRead(buf, off, len, asyncResult =>
+                    {
+                        try
+                        {
+                            if (stream != null)
+                                retval = stream.EndRead(asyncResult);
+                            else
+                                eOuter = new TTransportException(TTransportException.ExceptionType.Interrupted);
+                        }
+                        catch (Exception e)
+                        {
+                            if (stream != null)
+                                eOuter = e;
+                            else
+                                eOuter = new TTransportException(TTransportException.ExceptionType.Interrupted, e.Message);
+                        }
+                        evt.Set();
+                    }, null);
+
+                    evt.WaitOne();
+
+                    if (eOuter != null)
+                        throw eOuter; // rethrow exception
+                    else
+                        return retval;
+                }
+                else
+                {
+                    return stream.Read(buf, off, len);
+                }
+            }
+
+            public override void Write(byte[] buf, int off, int len)
+            {
+                if (stream == null)
+                {
+                    throw new TTransportException(TTransportException.ExceptionType.NotOpen);
+                }
+
+                // if necessary, send the data in chunks
+                // there's a system limit around 0x10000 bytes that we hit otherwise
+                // MSDN: "Pipe write operations across a network are limited to 65,535 bytes per write. For more information regarding pipes, see the Remarks section."
+                var nBytes = Math.Min(len, 15 * 4096);  // 16 would exceed the limit
+                while (nBytes > 0)
+                {
+
+                    if (asyncMode)
+                    {
+                        Exception eOuter = null;
+                        var evt = new ManualResetEvent(false);
+
+                        stream.BeginWrite(buf, off, nBytes, asyncResult =>
+                        {
+                            try
+                            {
+                                if (stream != null)
+                                    stream.EndWrite(asyncResult);
+                                else
+                                    eOuter = new TTransportException(TTransportException.ExceptionType.Interrupted);
+                            }
+                            catch (Exception e)
+                            {
+                                if (stream != null)
+                                    eOuter = e;
+                                else
+                                    eOuter = new TTransportException(TTransportException.ExceptionType.Interrupted, e.Message);
+                            }
+                            evt.Set();
+                        }, null);
+
+                        evt.WaitOne();
+
+                        if (eOuter != null)
+                            throw eOuter; // rethrow exception
+                    }
+                    else
+                    {
+                        stream.Write(buf, off, nBytes);
+                    }
+
+                    off += nBytes;
+                    len -= nBytes;
+                    nBytes = Math.Min(len, nBytes);
+                }
+            }
+
+            protected override void Dispose(bool disposing)
+            {
+                if (stream != null)
+                    stream.Dispose();
+            }
+        }
+    }
 }

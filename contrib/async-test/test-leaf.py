@@ -7,16 +7,17 @@ from thrift.protocol import TBinaryProtocol
 from thrift.server import THttpServer
 from aggr import Aggr
 
+
 class AggrHandler(Aggr.Iface):
-  def __init__(self):
-    self.values = []
+    def __init__(self):
+        self.values = []
 
-  def addValue(self, value):
-    self.values.append(value)
+    def addValue(self, value):
+        self.values.append(value)
 
-  def getValues(self, ):
-    time.sleep(1)
-    return self.values
+    def getValues(self, ):
+        time.sleep(1)
+        return self.values
 
 processor = Aggr.Processor(AggrHandler())
 pfactory = TBinaryProtocol.TBinaryProtocolFactory()

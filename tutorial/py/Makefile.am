@@ -17,8 +17,6 @@
 # under the License.
 #
 
-THRIFT = $(top_builddir)/compiler/cpp/thrift
-
 gen-py/tutorial/Calculator.py gen-py/shared/SharedService.py: $(top_srcdir)/tutorial/tutorial.thrift
 	$(THRIFT) --gen py -r $<
 
@@ -34,5 +32,6 @@ clean-local:
 	$(RM) -r gen-*
 
 EXTRA_DIST = \
+	setup.cfg \
 	PythonServer.py \
 	PythonClient.py

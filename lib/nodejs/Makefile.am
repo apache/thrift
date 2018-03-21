@@ -15,17 +15,28 @@
 # specific language governing permissions and limitations
 # under the License.
 
+# We call npm twice to work around npm issues
 
-THRIFT = $(top_srcdir)/compiler/cpp/thrift
+stubs: $(top_srcdir)/test/ThriftTest.thrift
+	$(THRIFT) --gen js:node -o test/ $(top_srcdir)/test/ThriftTest.thrift
 
-#stubs: $(top_srcdir)/test/ThriftTest.thrift
-#	$(THRIFT) --gen js:node -o test/ $(top_srcdir)/test/ThriftTest.thrift
+deps: $(top_srcdir)/package.json
+	$(NPM) install $(top_srcdir)/ || $(NPM) install $(top_srcdir)/
 
-deps: package.json
-	$(NPM) install
+all-local: deps
+
+precross: deps stubs
 
 check: deps
-	$(NPM) test
+	cd $(top_srcdir) && $(NPM) test && cd lib/nodejs
 
 clean-local:
 	$(RM) -r test/gen-nodejs
+	$(RM) -r $(top_srcdir)/node_modules
+
+EXTRA_DIST = \
+	examples \
+	lib \
+	test \
+	coding_standards.md \
+	README.md

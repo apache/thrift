@@ -1,22 +1,27 @@
--- Licensed to the Apache Software Foundation (ASF) under one                                                                                                                                                                         
--- or more contributor license agreements. See the NOTICE file                                                                                                                                                                        
--- distributed with this work for additional information                                                                                                                                                                              
--- regarding copyright ownership. The ASF licenses this file                                                                                                                                                                          
--- to you under the Apache License, Version 2.0 (the                                                                                                                                                                                  
--- "License"); you may not use this file except in compliance                                                                                                                                                                         
--- with the License. You may obtain a copy of the License at                                                                                                                                                                          
-                                                                                                                                                                                                                                   
---   http://www.apache.org/licenses/LICENSE-2.0                                                                                                                                                                                       
-                                                                                                                                                                                                                                   
--- Unless required by applicable law or agreed to in writing,                                                                                                                                                                         
--- software distributed under the License is distributed on an                                                                                                                                                                        
--- "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY                                                                                                                                                                             
--- KIND, either express or implied. See the License for the                                                                                                                                                                           
--- specific language governing permissions and limitations                                                                                                                                                                            
--- under the License.                                                                                                                                                                                                                 
+-- Licensed to the Apache Software Foundation (ASF) under one
+-- or more contributor license agreements. See the NOTICE file
+-- distributed with this work for additional information
+-- regarding copyright ownership. The ASF licenses this file
+-- to you under the Apache License, Version 2.0 (the
+-- "License"); you may not use this file except in compliance
+-- with the License. You may obtain a copy of the License at
+
+--   http://www.apache.org/licenses/LICENSE-2.0
+
+-- Unless required by applicable law or agreed to in writing,
+-- software distributed under the License is distributed on an
+-- "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+-- KIND, either express or implied. See the License for the
+-- specific language governing permissions and limitations
+-- under the License.
 
 
 require('TSocket')
+require('TBufferedTransport')
+require('TFramedTransport')
+require('THttpTransport')
+require('TCompactProtocol')
+require('TJsonProtocol')
 require('TBinaryProtocol')
 require('ThriftTest_ThriftTest')
 require('liblualongnumber')
@@ -25,27 +30,58 @@ local client
 
 function teardown()
   if client then
-    -- Shuts down the server
-    client:testVoid()
-
     -- close the connection
     client:close()
   end
+end
+
+function parseArgs(rawArgs)
+  local opt = {
+    protocol='binary',
+    transport='buffered',
+    port='9090',
+  }
+  for i, str in pairs(rawArgs) do
+    if i > 0 then
+      k, v = string.match(str, '--(%w+)=(%w+)')
+      assert(opt[k] ~= nil, 'Unknown argument')
+      opt[k] = v
+    end
+  end
+  return opt
 end
 
 function assertEqual(val1, val2, msg)
   assert(val1 == val2, msg)
 end
 
-function testBasicClient()
+function testBasicClient(rawArgs)
+  local opt = parseArgs(rawArgs)
   local socket = TSocket:new{
-    port = 9090
+    port = tonumber(opt.port)
   }
   assert(socket, 'Failed to create client socket')
   socket:setTimeout(5000)
 
-  local protocol = TBinaryProtocol:new{
-    trans = socket
+  local transports = {
+    buffered = TBufferedTransport,
+    framed = TFramedTransport,
+    http = THttpTransport,
+  }
+  assert(transports[opt.transport] ~= nil)
+  local transport = transports[opt.transport]:new{
+    trans = socket,
+    isServer = false
+  }
+
+  local protocols = {
+    binary = TBinaryProtocol,
+    compact = TCompactProtocol,
+    json = TJSONProtocol,
+  }
+  assert(protocols[opt.protocol] ~= nil)
+  local protocol = protocols[opt.protocol]:new{
+    trans = transport
   }
   assert(protocol, 'Failed to create binary protocol')
 
@@ -54,13 +90,17 @@ function testBasicClient()
   }
   assert(client, 'Failed to create client')
 
-  -- Open the socket
-  local status, _ = pcall(socket.open, socket)
+  -- Open the transport
+  local status, _ = pcall(transport.open, transport)
   assert(status, 'Failed to connect to server')
 
   -- String
   assertEqual(client:testString('lala'),  'lala',  'Failed testString')
   assertEqual(client:testString('wahoo'), 'wahoo', 'Failed testString')
+
+  -- Bool
+  assertEqual(client:testBool(true), true, 'Failed testBool true')
+  assertEqual(client:testBool(false), false, 'Failed testBool false')
 
   -- Byte
   assertEqual(client:testByte(0x01), 1,    'Failed testByte 1')
@@ -112,25 +152,28 @@ function testBasicClient()
   assertEqual(
       client:testDouble(0.123456789), 0.123456789, 'Failed testDouble 3')
 
+  -- TODO testBinary() ...
+	  
   -- Accuracy of 16 decimal digits (rounds)
   local a, b = 1.12345678906666663, 1.12345678906666661
   assertEqual(a, b)
   assertEqual(client:testDouble(a), b, 'Failed testDouble 5')
 
   -- Struct
-  local a = {
+  local o = Xtruct:new{
     string_thing = 'Zero',
     byte_thing = 1,
     i32_thing = -3,
     i64_thing = long(-5)
   }
+  local r = client:testStruct(o)
+  assertEqual(o.string_thing, r.string_thing, 'Failed testStruct 1')
+  assertEqual(o.byte_thing, r.byte_thing, 'Failed testStruct 2')
+  assertEqual(o.i32_thing, r.i32_thing, 'Failed testStruct 3')
+  assertEqual(o.i64_thing, r.i64_thing, 'Failed testStruct 4')
 
-  -- TODO fix client struct equality
-  --assertEqual(client:testStruct(a), a, 'Failed testStruct')
-
-  -- Call the void function and end the test (handler stops server)
-  client:testVoid()
+  -- TODO add list map set exception etc etc
 end
 
-testBasicClient()
+testBasicClient(arg)
 teardown()

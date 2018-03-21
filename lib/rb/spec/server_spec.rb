@@ -21,13 +21,30 @@ require 'spec_helper'
 describe 'Server' do
 
   describe Thrift::BaseServer do
-    it "should default to BaseTransportFactory and BinaryProtocolFactory when not specified" do
-      server = Thrift::BaseServer.new(mock("Processor"), mock("BaseServerTransport"))
-      server.instance_variable_get(:'@transport_factory').should be_an_instance_of(Thrift::BaseTransportFactory)
-      server.instance_variable_get(:'@protocol_factory').should be_an_instance_of(Thrift::BinaryProtocolFactory)
+    before(:each) do
+      @processor = mock("Processor")
+      @serverTrans = mock("ServerTransport")
+      @trans = mock("BaseTransport")
+      @prot = mock("BaseProtocol")
+      @server = described_class.new(@processor, @serverTrans, @trans, @prot)
     end
 
-    # serve is a noop, so can't test that
+    it "should default to BaseTransportFactory and BinaryProtocolFactory when not specified" do
+      @server = Thrift::BaseServer.new(mock("Processor"), mock("BaseServerTransport"))
+      @server.instance_variable_get(:'@transport_factory').should be_an_instance_of(Thrift::BaseTransportFactory)
+      @server.instance_variable_get(:'@protocol_factory').should be_an_instance_of(Thrift::BinaryProtocolFactory)
+    end
+
+    it "should not serve" do
+      expect { @server.serve()}.to raise_error(NotImplementedError)
+    end
+    
+    it "should provide a reasonable to_s" do
+      @serverTrans.should_receive(:to_s).once.and_return("serverTrans")
+      @trans.should_receive(:to_s).once.and_return("trans")
+      @prot.should_receive(:to_s).once.and_return("prot")
+      @server.to_s.should == "server(prot(trans(serverTrans)))"
+    end
   end
 
   describe Thrift::SimpleServer do
@@ -38,6 +55,13 @@ describe 'Server' do
       @prot = mock("BaseProtocol")
       @client = mock("Client")
       @server = described_class.new(@processor, @serverTrans, @trans, @prot)
+    end
+    
+    it "should provide a reasonable to_s" do
+      @serverTrans.should_receive(:to_s).once.and_return("serverTrans")
+      @trans.should_receive(:to_s).once.and_return("trans")
+      @prot.should_receive(:to_s).once.and_return("prot")
+      @server.to_s.should == "simple(server(prot(trans(serverTrans))))"
     end
     
     it "should serve in the main thread" do
@@ -69,6 +93,13 @@ describe 'Server' do
       @server = described_class.new(@processor, @serverTrans, @trans, @prot)
     end
 
+    it "should provide a reasonable to_s" do
+      @serverTrans.should_receive(:to_s).once.and_return("serverTrans")
+      @trans.should_receive(:to_s).once.and_return("trans")
+      @prot.should_receive(:to_s).once.and_return("prot")
+      @server.to_s.should == "threaded(server(prot(trans(serverTrans))))"
+    end
+    
     it "should serve using threads" do
       @serverTrans.should_receive(:listen).ordered
       @serverTrans.should_receive(:accept).exactly(3).times.and_return(@client)
@@ -97,8 +128,16 @@ describe 'Server' do
       @prot = mock("BaseProtocol")
       @client = mock("Client")
       @server = described_class.new(@processor, @server_trans, @trans, @prot)
+      sleep(0.15)
     end
 
+    it "should provide a reasonable to_s" do
+      @server_trans.should_receive(:to_s).once.and_return("server_trans")
+      @trans.should_receive(:to_s).once.and_return("trans")
+      @prot.should_receive(:to_s).once.and_return("prot")
+      @server.to_s.should == "threadpool(server(prot(trans(server_trans))))"
+    end
+    
     it "should serve inside a thread" do
       exception_q = @server.instance_variable_get(:@exception_q)
       described_class.any_instance.should_receive(:serve) do 

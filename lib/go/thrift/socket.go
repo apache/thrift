@@ -20,6 +20,7 @@
 package thrift
 
 import (
+	"context"
 	"net"
 	"time"
 )
@@ -100,7 +101,7 @@ func (p *TSocket) Open() error {
 	return nil
 }
 
-// Retreive the underlying net.Conn
+// Retrieve the underlying net.Conn
 func (p *TSocket) Conn() net.Conn {
 	return p.conn
 }
@@ -126,6 +127,11 @@ func (p *TSocket) Close() error {
 	return nil
 }
 
+//Returns the remote address of the socket.
+func (p *TSocket) Addr() net.Addr {
+	return p.addr
+}
+
 func (p *TSocket) Read(buf []byte) (int, error) {
 	if !p.IsOpen() {
 		return 0, NewTTransportException(NOT_OPEN, "Connection not open")
@@ -143,11 +149,7 @@ func (p *TSocket) Write(buf []byte) (int, error) {
 	return p.conn.Write(buf)
 }
 
-func (p *TSocket) Peek() bool {
-	return p.IsOpen()
-}
-
-func (p *TSocket) Flush() error {
+func (p *TSocket) Flush(ctx context.Context) error {
 	return nil
 }
 
@@ -156,4 +158,9 @@ func (p *TSocket) Interrupt() error {
 		return nil
 	}
 	return p.conn.Close()
+}
+
+func (p *TSocket) RemainingBytes() (num_bytes uint64) {
+	const maxSize = ^uint64(0)
+	return maxSize // the thruth is, we just don't know unless framed is used
 }

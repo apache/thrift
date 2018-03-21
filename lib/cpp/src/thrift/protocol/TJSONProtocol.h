@@ -24,7 +24,9 @@
 
 #include <stack>
 
-namespace apache { namespace thrift { namespace protocol {
+namespace apache {
+namespace thrift {
+namespace protocol {
 
 // Forward declaration
 class TJSONContext;
@@ -41,7 +43,7 @@ class TJSONContext;
  * 2. Thrift doubles are represented as JSON numbers. Some special values are
  *    represented as strings:
  *    a. "NaN" for not-a-number values
- *    b. "Infinity" for postive infinity
+ *    b. "Infinity" for positive infinity
  *    c. "-Infinity" for negative infinity
  *
  * 3. Thrift string values are emitted as JSON strings, with appropriate
@@ -50,6 +52,10 @@ class TJSONContext;
  * 4. Thrift binary values are encoded into Base64 and emitted as JSON strings.
  *    The readBinary() method is written such that it will properly skip if
  *    called on a Thrift string (although it will decode garbage data).
+ *
+ *    NOTE: Base64 padding is optional for Thrift binary value encoding. So
+ *    the readBinary() method needs to decode both input strings with padding
+ *    and those without one.
  *
  * 5. Thrift structs are represented as JSON objects, with the field ID as the
  *    key, and the field value represented as a JSON object with a single
@@ -81,22 +87,21 @@ class TJSONContext;
  * the current implementation is to match as closely as possible the behavior
  * of Java's Double.toString(), which has no precision loss.  Implementors in
  * other languages should strive to achieve that where possible. I have not
- * yet verified whether boost:lexical_cast, which is doing that work for me in
- * C++, loses any precision, but I am leaving this as a future improvement. I
- * may try to provide a C component for this, so that other languages could
- * bind to the same underlying implementation for maximum consistency.
+ * yet verified whether std::istringstream::operator>>, which is doing that
+ * work for me in C++, loses any precision, but I am leaving this as a future
+ * improvement. I may try to provide a C component for this, so that other
+ * languages could bind to the same underlying implementation for maximum
+ * consistency.
  *
  */
 class TJSONProtocol : public TVirtualProtocol<TJSONProtocol> {
- public:
-
-  TJSONProtocol(boost::shared_ptr<TTransport> ptrans);
+public:
+  TJSONProtocol(stdcxx::shared_ptr<TTransport> ptrans);
 
   ~TJSONProtocol();
 
- private:
-
-  void pushContext(boost::shared_ptr<TJSONContext> c);
+private:
+  void pushContext(stdcxx::shared_ptr<TJSONContext> c);
 
   void popContext();
 
@@ -104,16 +109,16 @@ class TJSONProtocol : public TVirtualProtocol<TJSONProtocol> {
 
   uint32_t writeJSONChar(uint8_t ch);
 
-  uint32_t writeJSONString(const std::string &str);
+  uint32_t writeJSONString(const std::string& str);
 
-  uint32_t writeJSONBase64(const std::string &str);
+  uint32_t writeJSONBase64(const std::string& str);
 
   template <typename NumberType>
   uint32_t writeJSONInteger(NumberType num);
 
   uint32_t writeJSONDouble(double num);
 
-  uint32_t writeJSONObjectStart() ;
+  uint32_t writeJSONObjectStart();
 
   uint32_t writeJSONObjectEnd();
 
@@ -123,18 +128,18 @@ class TJSONProtocol : public TVirtualProtocol<TJSONProtocol> {
 
   uint32_t readJSONSyntaxChar(uint8_t ch);
 
-  uint32_t readJSONEscapeChar(uint8_t *out);
+  uint32_t readJSONEscapeChar(uint16_t* out);
 
-  uint32_t readJSONString(std::string &str, bool skipContext = false);
+  uint32_t readJSONString(std::string& str, bool skipContext = false);
 
-  uint32_t readJSONBase64(std::string &str);
+  uint32_t readJSONBase64(std::string& str);
 
-  uint32_t readJSONNumericChars(std::string &str);
+  uint32_t readJSONNumericChars(std::string& str);
 
   template <typename NumberType>
-  uint32_t readJSONInteger(NumberType &num);
+  uint32_t readJSONInteger(NumberType& num);
 
-  uint32_t readJSONDouble(double &num);
+  uint32_t readJSONDouble(double& num);
 
   uint32_t readJSONObjectStart();
 
@@ -144,8 +149,7 @@ class TJSONProtocol : public TVirtualProtocol<TJSONProtocol> {
 
   uint32_t readJSONArrayEnd();
 
- public:
-
+public:
   /**
    * Writing functions.
    */
@@ -160,27 +164,21 @@ class TJSONProtocol : public TVirtualProtocol<TJSONProtocol> {
 
   uint32_t writeStructEnd();
 
-  uint32_t writeFieldBegin(const char* name,
-                           const TType fieldType,
-                           const int16_t fieldId);
+  uint32_t writeFieldBegin(const char* name, const TType fieldType, const int16_t fieldId);
 
   uint32_t writeFieldEnd();
 
   uint32_t writeFieldStop();
 
-  uint32_t writeMapBegin(const TType keyType,
-                         const TType valType,
-                         const uint32_t size);
+  uint32_t writeMapBegin(const TType keyType, const TType valType, const uint32_t size);
 
   uint32_t writeMapEnd();
 
-  uint32_t writeListBegin(const TType elemType,
-                          const uint32_t size);
+  uint32_t writeListBegin(const TType elemType, const uint32_t size);
 
   uint32_t writeListEnd();
 
-  uint32_t writeSetBegin(const TType elemType,
-                         const uint32_t size);
+  uint32_t writeSetBegin(const TType elemType, const uint32_t size);
 
   uint32_t writeSetEnd();
 
@@ -204,9 +202,7 @@ class TJSONProtocol : public TVirtualProtocol<TJSONProtocol> {
    * Reading functions
    */
 
-  uint32_t readMessageBegin(std::string& name,
-                            TMessageType& messageType,
-                            int32_t& seqid);
+  uint32_t readMessageBegin(std::string& name, TMessageType& messageType, int32_t& seqid);
 
   uint32_t readMessageEnd();
 
@@ -214,25 +210,19 @@ class TJSONProtocol : public TVirtualProtocol<TJSONProtocol> {
 
   uint32_t readStructEnd();
 
-  uint32_t readFieldBegin(std::string& name,
-                          TType& fieldType,
-                          int16_t& fieldId);
+  uint32_t readFieldBegin(std::string& name, TType& fieldType, int16_t& fieldId);
 
   uint32_t readFieldEnd();
 
-  uint32_t readMapBegin(TType& keyType,
-                        TType& valType,
-                        uint32_t& size);
+  uint32_t readMapBegin(TType& keyType, TType& valType, uint32_t& size);
 
   uint32_t readMapEnd();
 
-  uint32_t readListBegin(TType& elemType,
-                         uint32_t& size);
+  uint32_t readListBegin(TType& elemType, uint32_t& size);
 
   uint32_t readListEnd();
 
-  uint32_t readSetBegin(TType& elemType,
-                        uint32_t& size);
+  uint32_t readSetBegin(TType& elemType, uint32_t& size);
 
   uint32_t readSetEnd();
 
@@ -257,18 +247,13 @@ class TJSONProtocol : public TVirtualProtocol<TJSONProtocol> {
 
   class LookaheadReader {
 
-   public:
-
-    LookaheadReader(TTransport &trans) :
-      trans_(&trans),
-      hasData_(false) {
-    }
+  public:
+    LookaheadReader(TTransport& trans) : trans_(&trans), hasData_(false) {}
 
     uint8_t read() {
       if (hasData_) {
         hasData_ = false;
-      }
-      else {
+      } else {
         trans_->readAll(&data_, 1);
       }
       return data_;
@@ -282,17 +267,17 @@ class TJSONProtocol : public TVirtualProtocol<TJSONProtocol> {
       return data_;
     }
 
-   private:
-    TTransport *trans_;
+  private:
+    TTransport* trans_;
     bool hasData_;
     uint8_t data_;
   };
 
- private:
+private:
   TTransport* trans_;
 
-  std::stack<boost::shared_ptr<TJSONContext> > contexts_;
-  boost::shared_ptr<TJSONContext> context_;
+  std::stack<stdcxx::shared_ptr<TJSONContext> > contexts_;
+  stdcxx::shared_ptr<TJSONContext> context_;
   LookaheadReader reader_;
 };
 
@@ -300,30 +285,31 @@ class TJSONProtocol : public TVirtualProtocol<TJSONProtocol> {
  * Constructs input and output protocol objects given transports.
  */
 class TJSONProtocolFactory : public TProtocolFactory {
- public:
+public:
   TJSONProtocolFactory() {}
 
   virtual ~TJSONProtocolFactory() {}
 
-  boost::shared_ptr<TProtocol> getProtocol(boost::shared_ptr<TTransport> trans) {
-    return boost::shared_ptr<TProtocol>(new TJSONProtocol(trans));
+  stdcxx::shared_ptr<TProtocol> getProtocol(stdcxx::shared_ptr<TTransport> trans) {
+    return stdcxx::shared_ptr<TProtocol>(new TJSONProtocol(trans));
   }
 };
-
-}}} // apache::thrift::protocol
-
+}
+}
+} // apache::thrift::protocol
 
 // TODO(dreiss): Move part of ThriftJSONString into a .cpp file and remove this.
 #include <thrift/transport/TBufferTransports.h>
 
-namespace apache { namespace thrift {
+namespace apache {
+namespace thrift {
 
-template<typename ThriftStruct>
-  std::string ThriftJSONString(const ThriftStruct& ts) {
+template <typename ThriftStruct>
+std::string ThriftJSONString(const ThriftStruct& ts) {
   using namespace apache::thrift::transport;
   using namespace apache::thrift::protocol;
   TMemoryBuffer* buffer = new TMemoryBuffer;
-  boost::shared_ptr<TTransport> trans(buffer);
+  stdcxx::shared_ptr<TTransport> trans(buffer);
   TJSONProtocol protocol(trans);
 
   ts.write(&protocol);
@@ -333,7 +319,7 @@ template<typename ThriftStruct>
   buffer->getBuffer(&buf, &size);
   return std::string((char*)buf, (unsigned int)size);
 }
-
-}} // apache::thrift
+}
+} // apache::thrift
 
 #endif // #define _THRIFT_PROTOCOL_TJSONPROTOCOL_H_ 1

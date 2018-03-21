@@ -19,6 +19,7 @@
 
 package org.apache.thrift.server;
 
+import java.util.Random;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.SynchronousQueue;
@@ -50,6 +51,10 @@ public class TThreadPoolServer extends TServer {
     public ExecutorService executorService;
     public int stopTimeoutVal = 60;
     public TimeUnit stopTimeoutUnit = TimeUnit.SECONDS;
+    public int requestTimeout = 20;
+    public TimeUnit requestTimeoutUnit = TimeUnit.SECONDS;
+    public int beBackoffSlotLength = 100;
+    public TimeUnit beBackoffSlotLengthUnit = TimeUnit.MILLISECONDS;
 
     public Args(TServerTransport transport) {
       super(transport);
@@ -65,6 +70,37 @@ public class TThreadPoolServer extends TServer {
       return this;
     }
 
+    public Args stopTimeoutVal(int n) {
+      stopTimeoutVal = n;
+      return this;
+    }
+
+    public Args stopTimeoutUnit(TimeUnit tu) {
+      stopTimeoutUnit = tu;
+      return this;
+    }
+
+    public Args requestTimeout(int n) {
+      requestTimeout = n;
+      return this;
+    }
+
+    public Args requestTimeoutUnit(TimeUnit tu) {
+      requestTimeoutUnit = tu;
+      return this;
+    }
+    //Binary exponential backoff slot length
+    public Args beBackoffSlotLength(int n) {
+      beBackoffSlotLength = n;
+      return this;
+    }
+
+    //Binary exponential backoff slot time unit
+    public Args beBackoffSlotLengthUnit(TimeUnit tu) {
+      beBackoffSlotLengthUnit = tu;
+      return this;
+    }
+
     public Args executorService(ExecutorService executorService) {
       this.executorService = executorService;
       return this;
@@ -74,19 +110,26 @@ public class TThreadPoolServer extends TServer {
   // Executor service for handling client connections
   private ExecutorService executorService_;
 
-  // Flag for stopping the server
-  // Please see THRIFT-1795 for the usage of this flag
-  private volatile boolean stopped_ = false;
-
   private final TimeUnit stopTimeoutUnit;
 
   private final long stopTimeoutVal;
+
+  private final TimeUnit requestTimeoutUnit;
+
+  private final long requestTimeout;
+
+  private final long beBackoffSlotInMillis;
+
+  private Random random = new Random(System.currentTimeMillis());
 
   public TThreadPoolServer(Args args) {
     super(args);
 
     stopTimeoutUnit = args.stopTimeoutUnit;
     stopTimeoutVal = args.stopTimeoutVal;
+    requestTimeoutUnit = args.requestTimeoutUnit;
+    requestTimeout = args.requestTimeout;
+    beBackoffSlotInMillis = args.beBackoffSlotLengthUnit.toMillis(args.beBackoffSlotLength);
 
     executorService_ = args.executorService != null ?
         args.executorService : createDefaultExecutorService(args);
@@ -97,46 +140,86 @@ public class TThreadPoolServer extends TServer {
       new SynchronousQueue<Runnable>();
     return new ThreadPoolExecutor(args.minWorkerThreads,
                                   args.maxWorkerThreads,
-                                  60,
-                                  TimeUnit.SECONDS,
+                                  args.stopTimeoutVal,
+                                  args.stopTimeoutUnit,
                                   executorQueue);
   }
 
-
-  public void serve() {
-    try {
+  protected ExecutorService getExecutorService() {
+    return executorService_;
+  }
+  
+  protected boolean preServe() {
+  	try {
       serverTransport_.listen();
     } catch (TTransportException ttx) {
       LOGGER.error("Error occurred during listening.", ttx);
-      return;
+      return false;
     }
 
     // Run the preServe event
     if (eventHandler_ != null) {
       eventHandler_.preServe();
     }
-
     stopped_ = false;
     setServing(true);
+    
+    return true;
+  }
+
+  public void serve() {
+  	if (!preServe()) {
+  		return;
+  	}
+
+  	execute();
+  	waitForShutdown();
+    
+    setServing(false);
+  }
+  
+  protected void execute() {
     int failureCount = 0;
-    while (!stopped_) {      
+    while (!stopped_) {
       try {
         TTransport client = serverTransport_.accept();
         WorkerProcess wp = new WorkerProcess(client);
-        int rejections = 0;
+
+        int retryCount = 0;
+        long remainTimeInMillis = requestTimeoutUnit.toMillis(requestTimeout);
         while(true) {
           try {
             executorService_.execute(wp);
             break;
-          } catch(RejectedExecutionException ex) {
-            LOGGER.warn("ExecutorService rejected client " + (++rejections) +
-                " times(s)", ex);
-            try {
-              TimeUnit.SECONDS.sleep(1);
-            } catch (InterruptedException e) {
-              LOGGER.warn("Interrupted while waiting to place client on" +
-              		" executor queue.");
-              Thread.currentThread().interrupt();
+          } catch(Throwable t) {
+            if (t instanceof RejectedExecutionException) {
+              retryCount++;
+              try {
+                if (remainTimeInMillis > 0) {
+                  //do a truncated 20 binary exponential backoff sleep
+                  long sleepTimeInMillis = ((long) (random.nextDouble() *
+                      (1L << Math.min(retryCount, 20)))) * beBackoffSlotInMillis;
+                  sleepTimeInMillis = Math.min(sleepTimeInMillis, remainTimeInMillis);
+                  TimeUnit.MILLISECONDS.sleep(sleepTimeInMillis);
+                  remainTimeInMillis = remainTimeInMillis - sleepTimeInMillis;
+                } else {
+                  client.close();
+                  wp = null;
+                  LOGGER.warn("Task has been rejected by ExecutorService " + retryCount
+                      + " times till timedout, reason: " + t);
+                  break;
+                }
+              } catch (InterruptedException e) {
+                LOGGER.warn("Interrupted while waiting to place client on executor queue.");
+                Thread.currentThread().interrupt();
+                break;
+              }
+            } else if (t instanceof Error) {
+              LOGGER.error("ExecutorService threw error: " + t, t);
+              throw (Error)t;
+            } else {
+              //for other possible runtime errors from ExecutorService, should also not kill serve
+              LOGGER.warn("ExecutorService threw error: " + t, t);
               break;
             }
           }
@@ -148,8 +231,10 @@ public class TThreadPoolServer extends TServer {
         }
       }
     }
-
-    executorService_.shutdown();
+  }
+  
+  protected void waitForShutdown() {
+  	executorService_.shutdown();
 
     // Loop until awaitTermination finally does return without a interrupted
     // exception. If we don't do this, then we'll shut down prematurely. We want
@@ -167,7 +252,6 @@ public class TThreadPoolServer extends TServer {
         now = newnow;
       }
     }
-    setServing(false);
   }
 
   public void stop() {
@@ -209,7 +293,7 @@ public class TThreadPoolServer extends TServer {
         inputTransport = inputTransportFactory_.getTransport(client_);
         outputTransport = outputTransportFactory_.getTransport(client_);
         inputProtocol = inputProtocolFactory_.getProtocol(inputTransport);
-        outputProtocol = outputProtocolFactory_.getProtocol(outputTransport);	  
+        outputProtocol = outputProtocolFactory_.getProtocol(outputTransport);
 
         eventHandler = getEventHandler();
         if (eventHandler != null) {
@@ -228,25 +312,26 @@ public class TThreadPoolServer extends TServer {
             }
         }
       } catch (TSaslTransportException ttx) {
-        // Something thats not SASL was in the stream, continue silently 
+        // Something thats not SASL was in the stream, continue silently
       } catch (TTransportException ttx) {
         // Assume the client died and continue silently
       } catch (TException tx) {
         LOGGER.error("Thrift error occurred during processing of message.", tx);
       } catch (Exception x) {
         LOGGER.error("Error occurred during processing of message.", x);
-      }
-
-      if (eventHandler != null) {
-        eventHandler.deleteContext(connectionContext, inputProtocol, outputProtocol);
-      }
-
-      if (inputTransport != null) {
-        inputTransport.close();
-      }
-
-      if (outputTransport != null) {
-        outputTransport.close();
+      } finally {
+        if (eventHandler != null) {
+          eventHandler.deleteContext(connectionContext, inputProtocol, outputProtocol);
+        }
+        if (inputTransport != null) {
+          inputTransport.close();
+        }
+        if (outputTransport != null) {
+          outputTransport.close();
+        }
+        if (client_.isOpen()) {
+          client_.close();
+        }
       }
     }
   }

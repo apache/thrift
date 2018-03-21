@@ -17,7 +17,9 @@
 # under the License.
 #
 
-THRIFTCODE= \
+SUBDIRS = . test/Multiplex
+
+THRIFTCODE = \
             src/Collections/THashSet.cs \
             src/Collections/TCollections.cs \
             src/Properties/AssemblyInfo.cs \
@@ -46,9 +48,11 @@ THRIFTCODE= \
             src/Server/TThreadPoolServer.cs \
             src/Server/TSimpleServer.cs \
             src/Server/TServer.cs \
+            src/Server/TServerEventHandler.cs \
             src/Transport/TBufferedTransport.cs \
             src/Transport/TTransport.cs \
             src/Transport/TSocket.cs \
+            src/Transport/TSocketVersionizer.cs \
             src/Transport/TTransportException.cs \
             src/Transport/TStreamTransport.cs \
             src/Transport/TFramedTransport.cs \
@@ -63,33 +67,45 @@ THRIFTCODE= \
             src/Transport/TTLSSocket.cs \
             src/Transport/TTLSServerSocket.cs \
             src/TProcessor.cs \
+            src/TProcessorFactory.cs \
+            src/TSingletonProcessorFactory.cs \
+            src/TPrototypeProcessorFactory.cs \
+            src/TControllingHandler.cs \
             src/TException.cs \
             src/TApplicationException.cs
 
-CSC=gmcs
-
-if NET_2_0
-MONO_DEFINES=/d:NET_2_0
+if MONO_MCS
+export CSC = mcs
+else
+export CSC = gmcs
 endif
 
-all-local: Thrift.dll
+if NET_2_0
+export CSC_DEFINES = -d:NET_2_0
+endif
+
+all-local: Thrift.dll Thrift.45.dll
 
 Thrift.dll: $(THRIFTCODE)
-	$(CSC) $(THRIFTCODE) /out:Thrift.dll /target:library /reference:System.Web $(MONO_DEFINES)
+	$(CSC) $(CSC_DEFINES) -out:$@ -target:library -reference:System.Web $(THRIFTCODE)
+
+Thrift.45.dll: $(THRIFTCODE)
+	$(CSC) $(CSC_DEFINES) -out:$@ -target:library -reference:System.Web $(THRIFTCODE)
 
 clean-local:
-	$(RM) Thrift.dll
+	$(RM) Thrift.dll  \
+	$(RM) Thrift.45.dll
 
-# run csharp tests?
-# check:
-# 	cd test/ThriftTest && ./maketest.sh 
-# 	cd test/Multiplex && ./maketest.sh
-    
 EXTRA_DIST = \
-             $(THRIFTCODE) \
-             ThriftMSBuildTask \
-             src/Thrift.csproj \
-             src/Thrift.sln \
-             src/Thrift.WP7.csproj \
-             src/Properties/AssemblyInfo.WP7.cs \
-             test
+	$(THRIFTCODE) \
+	ThriftMSBuildTask \
+	src/Thrift.csproj \
+	src/Thrift.45.csproj \
+	src/Thrift.sln \
+	src/Net35/ExtensionsNet35.cs \
+	src/Transport/TSilverlightSocket.cs \
+	src/Transport/THttpTaskAsyncHandler.cs \
+	src/TAsyncProcessor.cs \
+	test \
+	coding_standards.md \
+	README.md

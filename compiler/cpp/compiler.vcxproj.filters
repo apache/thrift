@@ -1,6 +1,7 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
+    <ClInclude Include="src\audit\t_audit.h" />
     <ClInclude Include="src\generate\t_generator.h">
       <Filter>generate</Filter>
     </ClInclude>
@@ -15,7 +16,6 @@
     </ClInclude>
     <ClInclude Include="src\globals.h" />
     <ClInclude Include="src\main.h" />
-    <ClInclude Include="src\md5.h" />
     <ClInclude Include="src\parse\t_base_type.h">
       <Filter>parse</Filter>
     </ClInclude>
@@ -91,6 +91,7 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="src\audit\t_audit.cpp"/>
     <ClCompile Include="src\generate\t_as3_generator.cc">
       <Filter>generate</Filter>
     </ClCompile>
@@ -109,6 +110,9 @@
     <ClCompile Include="src\generate\t_d_generator.cc">
       <Filter>generate</Filter>
     </ClCompile>
+    <ClCompile Include="src\generate\t_dart_generator.cc">
+      <Filter>generate</Filter>
+    </ClCompile>
     <ClCompile Include="src\generate\t_delphi_generator.cc">
       <Filter>generate</Filter>
     </ClCompile>
@@ -119,6 +123,12 @@
       <Filter>generate</Filter>
     </ClCompile>
     <ClCompile Include="src\generate\t_go_generator.cc">
+      <Filter>generate</Filter>
+    </ClCompile>
+    <ClCompile Include="src\generate\t_gv_generator.cc">
+      <Filter>generate</Filter>
+    </ClCompile>
+    <ClCompile Include="src\generate\t_haxe_generator.cc">
       <Filter>generate</Filter>
     </ClCompile>
     <ClCompile Include="src\generate\t_hs_generator.cc">
@@ -151,19 +161,36 @@
     <ClCompile Include="src\generate\t_rb_generator.cc">
       <Filter>generate</Filter>
     </ClCompile>
+    <ClCompile Include="src\generate\t_rs_generator.cc">
+      <Filter>generate</Filter>
+    </ClCompile>
     <ClCompile Include="src\generate\t_st_generator.cc">
+      <Filter>generate</Filter>
+    </ClCompile>
+    <ClCompile Include="src\generate\t_swift_generator.cc">
       <Filter>generate</Filter>
     </ClCompile>
     <ClCompile Include="src\generate\t_xsd_generator.cc">
       <Filter>generate</Filter>
     </ClCompile>
+    <ClCompile Include="src\generate\t_xml_generator.cc">
+      <Filter>generate</Filter>
+    </ClCompile>
     <ClCompile Include="src\main.cc" />
-    <ClCompile Include="src\md5.c" />
     <ClCompile Include="src\parse\parse.cc">
       <Filter>parse</Filter>
     </ClCompile>
     <ClCompile Include="src\thriftl.cc" />
     <ClCompile Include="src\thrifty.cc" />
+    <ClCompile Include="src\parse\t_typedef.cc">
+      <Filter>parse</Filter>
+    </ClCompile>
+    <ClCompile Include="src\generate\t_json_generator.cc">
+      <Filter>generate</Filter>
+    </ClCompile>
+    <ClCompile Include="src\generate\t_lua_generator.cc">
+      <Filter>generate</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="src\thriftl.ll" />

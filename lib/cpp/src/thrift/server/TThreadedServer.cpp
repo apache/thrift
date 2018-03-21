@@ -17,225 +17,135 @@
  * under the License.
  */
 
-#include <thrift/server/TThreadedServer.h>
-#include <thrift/transport/TTransportException.h>
-#include <thrift/concurrency/PlatformThreadFactory.h>
-
 #include <string>
-#include <iostream>
+#include <thrift/stdcxx.h>
+#include <thrift/concurrency/PlatformThreadFactory.h>
+#include <thrift/server/TThreadedServer.h>
 
-#ifdef HAVE_UNISTD_H
-#include <unistd.h>
-#endif
+namespace apache {
+namespace thrift {
+namespace server {
 
-namespace apache { namespace thrift { namespace server {
+using apache::thrift::concurrency::Runnable;
+using apache::thrift::concurrency::Synchronized;
+using apache::thrift::concurrency::Thread;
+using apache::thrift::concurrency::ThreadFactory;
+using apache::thrift::protocol::TProtocol;
+using apache::thrift::protocol::TProtocolFactory;
+using apache::thrift::stdcxx::make_shared;
+using apache::thrift::stdcxx::shared_ptr;
+using apache::thrift::transport::TServerTransport;
+using apache::thrift::transport::TTransport;
+using apache::thrift::transport::TTransportException;
+using apache::thrift::transport::TTransportFactory;
 
-using boost::shared_ptr;
-using namespace std;
-using namespace apache::thrift;
-using namespace apache::thrift::protocol;
-using namespace apache::thrift::transport;
-using namespace apache::thrift::concurrency;
-
-class TThreadedServer::Task: public Runnable {
-
-public:
-
-  Task(TThreadedServer& server,
-       shared_ptr<TProcessor> processor,
-       shared_ptr<TProtocol> input,
-       shared_ptr<TProtocol> output,
-       shared_ptr<TTransport> transport) :
-    server_(server),
-    processor_(processor),
-    input_(input),
-    output_(output),
-    transport_(transport) {
-  }
-
-  ~Task() {}
-
-  void run() {
-    boost::shared_ptr<TServerEventHandler> eventHandler =
-      server_.getEventHandler();
-    void* connectionContext = NULL;
-    if (eventHandler) {
-      connectionContext = eventHandler->createContext(input_, output_);
-    }
-    try {
-      for (;;) {
-        if (eventHandler) {
-          eventHandler->processContext(connectionContext, transport_);
-        }
-        if (!processor_->process(input_, output_, connectionContext) ||
-            !input_->getTransport()->peek()) {
-          break;
-        }
-      }
-    } catch (const TTransportException& ttx) {
-      if (ttx.getType() != TTransportException::END_OF_FILE) {
-        string errStr = string("TThreadedServer client died: ") + ttx.what();
-        GlobalOutput(errStr.c_str());
-      }
-    } catch (const std::exception &x) {
-      GlobalOutput.printf("TThreadedServer exception: %s: %s",
-                          typeid(x).name(), x.what());
-    } catch (...) {
-      GlobalOutput("TThreadedServer uncaught exception.");
-    }
-    if (eventHandler) {
-      eventHandler->deleteContext(connectionContext, input_, output_);
-    }
-
-    try {
-      input_->getTransport()->close();
-    } catch (TTransportException& ttx) {
-      string errStr = string("TThreadedServer input close failed: ") + ttx.what();
-      GlobalOutput(errStr.c_str());
-    }
-    try {
-      output_->getTransport()->close();
-    } catch (TTransportException& ttx) {
-      string errStr = string("TThreadedServer output close failed: ") + ttx.what();
-      GlobalOutput(errStr.c_str());
-    }
-
-    // Remove this task from parent bookkeeping
-    {
-      Synchronized s(server_.tasksMonitor_);
-      server_.tasks_.erase(this);
-      if (server_.tasks_.empty()) {
-        server_.tasksMonitor_.notify();
-      }
-    }
-
-  }
-
- private:
-  TThreadedServer& server_;
-  friend class TThreadedServer;
-
-  shared_ptr<TProcessor> processor_;
-  shared_ptr<TProtocol> input_;
-  shared_ptr<TProtocol> output_;
-  shared_ptr<TTransport> transport_;
-};
-
-void TThreadedServer::init() {
-  stop_ = false;
-
-  if (!threadFactory_) {
-    threadFactory_.reset(new PlatformThreadFactory);
-  }
+TThreadedServer::TThreadedServer(const shared_ptr<TProcessorFactory>& processorFactory,
+                                 const shared_ptr<TServerTransport>& serverTransport,
+                                 const shared_ptr<TTransportFactory>& transportFactory,
+                                 const shared_ptr<TProtocolFactory>& protocolFactory,
+                                 const shared_ptr<ThreadFactory>& threadFactory)
+  : TServerFramework(processorFactory, serverTransport, transportFactory, protocolFactory),
+    threadFactory_(threadFactory) {
 }
 
-TThreadedServer::~TThreadedServer() {}
+TThreadedServer::TThreadedServer(const shared_ptr<TProcessor>& processor,
+                                 const shared_ptr<TServerTransport>& serverTransport,
+                                 const shared_ptr<TTransportFactory>& transportFactory,
+                                 const shared_ptr<TProtocolFactory>& protocolFactory,
+                                 const shared_ptr<ThreadFactory>& threadFactory)
+  : TServerFramework(processor, serverTransport, transportFactory, protocolFactory),
+    threadFactory_(threadFactory) {
+}
+
+TThreadedServer::TThreadedServer(const shared_ptr<TProcessorFactory>& processorFactory,
+                                 const shared_ptr<TServerTransport>& serverTransport,
+                                 const shared_ptr<TTransportFactory>& inputTransportFactory,
+                                 const shared_ptr<TTransportFactory>& outputTransportFactory,
+                                 const shared_ptr<TProtocolFactory>& inputProtocolFactory,
+                                 const shared_ptr<TProtocolFactory>& outputProtocolFactory,
+                                 const shared_ptr<ThreadFactory>& threadFactory)
+  : TServerFramework(processorFactory,
+                     serverTransport,
+                     inputTransportFactory,
+                     outputTransportFactory,
+                     inputProtocolFactory,
+                     outputProtocolFactory),
+    threadFactory_(threadFactory) {
+}
+
+TThreadedServer::TThreadedServer(const shared_ptr<TProcessor>& processor,
+                                 const shared_ptr<TServerTransport>& serverTransport,
+                                 const shared_ptr<TTransportFactory>& inputTransportFactory,
+                                 const shared_ptr<TTransportFactory>& outputTransportFactory,
+                                 const shared_ptr<TProtocolFactory>& inputProtocolFactory,
+                                 const shared_ptr<TProtocolFactory>& outputProtocolFactory,
+                                 const shared_ptr<ThreadFactory>& threadFactory)
+  : TServerFramework(processor,
+                     serverTransport,
+                     inputTransportFactory,
+                     outputTransportFactory,
+                     inputProtocolFactory,
+                     outputProtocolFactory),
+    threadFactory_(threadFactory) {
+}
+
+TThreadedServer::~TThreadedServer() {
+}
 
 void TThreadedServer::serve() {
+  TServerFramework::serve();
 
-  shared_ptr<TTransport> client;
-  shared_ptr<TTransport> inputTransport;
-  shared_ptr<TTransport> outputTransport;
-  shared_ptr<TProtocol> inputProtocol;
-  shared_ptr<TProtocol> outputProtocol;
-
-  // Start the server listening
-  serverTransport_->listen();
-
-  // Run the preServe event
-  if (eventHandler_) {
-    eventHandler_->preServe();
+  // Ensure post-condition of no active clients
+  Synchronized s(clientMonitor_);
+  while (!activeClientMap_.empty()) {
+    clientMonitor_.wait();
   }
 
-  while (!stop_) {
-    try {
-      client.reset();
-      inputTransport.reset();
-      outputTransport.reset();
-      inputProtocol.reset();
-      outputProtocol.reset();
-
-      // Fetch client from server
-      client = serverTransport_->accept();
-
-      // Make IO transports
-      inputTransport = inputTransportFactory_->getTransport(client);
-      outputTransport = outputTransportFactory_->getTransport(client);
-      inputProtocol = inputProtocolFactory_->getProtocol(inputTransport);
-      outputProtocol = outputProtocolFactory_->getProtocol(outputTransport);
-
-      shared_ptr<TProcessor> processor = getProcessor(inputProtocol,
-                                                      outputProtocol, client);
-
-      TThreadedServer::Task* task = new TThreadedServer::Task(*this,
-                                                              processor,
-                                                              inputProtocol,
-                                                              outputProtocol,
-                                                              client);
-
-      // Create a task
-      shared_ptr<Runnable> runnable =
-        shared_ptr<Runnable>(task);
-
-      // Create a thread for this task
-      shared_ptr<Thread> thread =
-        shared_ptr<Thread>(threadFactory_->newThread(runnable));
-
-      // Insert thread into the set of threads
-      {
-        Synchronized s(tasksMonitor_);
-        tasks_.insert(task);
-      }
-
-      // Start the thread!
-      thread->start();
-
-    } catch (TTransportException& ttx) {
-      if (inputTransport) { inputTransport->close(); }
-      if (outputTransport) { outputTransport->close(); }
-      if (client) { client->close(); }
-      if (!stop_ || ttx.getType() != TTransportException::INTERRUPTED) {
-        string errStr = string("TThreadedServer: TServerTransport died on accept: ") + ttx.what();
-        GlobalOutput(errStr.c_str());
-      }
-      continue;
-    } catch (TException& tx) {
-      if (inputTransport) { inputTransport->close(); }
-      if (outputTransport) { outputTransport->close(); }
-      if (client) { client->close(); }
-      string errStr = string("TThreadedServer: Caught TException: ") + tx.what();
-      GlobalOutput(errStr.c_str());
-      continue;
-    } catch (string s) {
-      if (inputTransport) { inputTransport->close(); }
-      if (outputTransport) { outputTransport->close(); }
-      if (client) { client->close(); }
-      string errStr = "TThreadedServer: Unknown exception: " + s;
-      GlobalOutput(errStr.c_str());
-      break;
-    }
-  }
-
-  // If stopped manually, make sure to close server transport
-  if (stop_) {
-    try {
-      serverTransport_->close();
-    } catch (TException &tx) {
-      string errStr = string("TThreadedServer: Exception shutting down: ") + tx.what();
-      GlobalOutput(errStr.c_str());
-    }
-    try {
-      Synchronized s(tasksMonitor_);
-      while (!tasks_.empty()) {
-        tasksMonitor_.wait();
-      }
-    } catch (TException &tx) {
-      string errStr = string("TThreadedServer: Exception joining workers: ") + tx.what();
-      GlobalOutput(errStr.c_str());
-    }
-    stop_ = false;
-  }
-
+  drainDeadClients();
 }
 
-}}} // apache::thrift::server
+void TThreadedServer::drainDeadClients() {
+  // we're in a monitor here
+  while (!deadClientMap_.empty()) {
+    ClientMap::iterator it = deadClientMap_.begin();
+    it->second->join();
+    deadClientMap_.erase(it);
+  }
+}
+
+void TThreadedServer::onClientConnected(const shared_ptr<TConnectedClient>& pClient) {
+  Synchronized sync(clientMonitor_);
+  shared_ptr<TConnectedClientRunner> pRunnable = make_shared<TConnectedClientRunner>(pClient);
+  shared_ptr<Thread> pThread = threadFactory_->newThread(pRunnable);
+  pRunnable->thread(pThread);
+  activeClientMap_.insert(ClientMap::value_type(pClient.get(), pThread));
+  pThread->start();
+}
+
+void TThreadedServer::onClientDisconnected(TConnectedClient* pClient) {
+  Synchronized sync(clientMonitor_);
+  drainDeadClients(); // use the outgoing thread to do some maintenance on our dead client backlog
+  ClientMap::iterator it = activeClientMap_.find(pClient);
+  ClientMap::iterator end = it;
+  deadClientMap_.insert(it, ++end);
+  activeClientMap_.erase(it);
+  if (activeClientMap_.empty()) {
+    clientMonitor_.notify();
+  }
+}
+
+TThreadedServer::TConnectedClientRunner::TConnectedClientRunner(const shared_ptr<TConnectedClient>& pClient)
+  : pClient_(pClient) {
+}
+
+TThreadedServer::TConnectedClientRunner::~TConnectedClientRunner() {
+}
+
+void TThreadedServer::TConnectedClientRunner::run() /* override */ {
+  pClient_->run();  // Run the client
+  pClient_.reset(); // The client is done - release it here rather than in the destructor for safety
+}
+
+}
+}
+} // apache::thrift::server
