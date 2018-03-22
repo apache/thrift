@@ -38,7 +38,7 @@ class TSocket extends TTransport
      *
      * @var resource
      */
-    private $handle_ = null;
+    protected $handle_ = null;
 
     /**
      * Remote hostname
@@ -61,7 +61,7 @@ class TSocket extends TTransport
      *
      * @var int
      */
-    private $connTimeoutSec_ = 0;
+    protected $connTimeoutSec_ = 0;
 
     /**
      * Connect timeout in microseconds.
@@ -70,7 +70,7 @@ class TSocket extends TTransport
      *
      * @var int
      */
-    private $connTimeoutUsec_ = 100000;
+    protected $connTimeoutUsec_ = 100000;
 
     /**
      * Send timeout in seconds.
@@ -79,7 +79,7 @@ class TSocket extends TTransport
      *
      * @var int
      */
-    private $sendTimeoutSec_ = 0;
+    protected $sendTimeoutSec_ = 0;
 
     /**
      * Send timeout in microseconds.
@@ -88,7 +88,7 @@ class TSocket extends TTransport
      *
      * @var int
      */
-    private $sendTimeoutUsec_ = 100000;
+    protected $sendTimeoutUsec_ = 100000;
 
     /**
      * Recv timeout in seconds
@@ -97,7 +97,7 @@ class TSocket extends TTransport
      *
      * @var int
      */
-    private $recvTimeoutSec_ = 0;
+    protected $recvTimeoutSec_ = 0;
 
     /**
      * Recv timeout in microseconds
@@ -106,7 +106,7 @@ class TSocket extends TTransport
      *
      * @var int
      */
-    private $recvTimeoutUsec_ = 750000;
+    protected $recvTimeoutUsec_ = 750000;
 
     /**
      * Persistent socket or plain?
@@ -136,13 +136,14 @@ class TSocket extends TTransport
      * @param int    $port         Remote port
      * @param bool   $persist      Whether to use a persistent socket
      * @param string $debugHandler Function to call for error logging
-    */
+     */
     public function __construct(
         $host = 'localhost',
         $port = 9090,
         $persist = false,
         $debugHandler = null
-    ) {
+    ) 
+    {
         $this->host_ = $host;
         $this->port_ = $port;
         $this->persist_ = $persist;
@@ -152,7 +153,7 @@ class TSocket extends TTransport
     /**
      * @param resource $handle
      * @return void
-    */
+     */
     public function setHandle($handle)
     {
         $this->handle_ = $handle;
