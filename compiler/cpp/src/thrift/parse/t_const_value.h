@@ -159,10 +159,10 @@ public:
       if (*(left.first) < *(right.first)) {
         return true;
       } else {
-        if (right.first < left.first) {
-          return *(left.second) < *(right.second);
-        } else {
+        if (*(right.first) < *(left.first)) {
           return false;
+        } else {
+          return *(left.second) < *(right.second);
         }
       }
     }
