@@ -3,12 +3,12 @@ Section: devel
 Priority: extra
 Build-Depends: debhelper (>= 9), build-essential, mono-mcs, python-dev, ant,
     mono-devel,  libmono-system-web4.0-cil, erlang-base, ruby-dev | ruby1.9.1-dev, ruby-bundler ,autoconf, automake,
-    pkg-config, libtool, bison, flex, libboost-dev | libboost1.53-dev,
+    pkg-config, libtool, bison, flex, libboost-dev | libboost1.53-dev | libboost1.63-all-dev,
     python-all, python-setuptools, python-all-dev, python-all-dbg,
     python3-all, python3-setuptools, python3-all-dev, python3-all-dbg,
     openjdk-7-jdk | openjdk-8-jdk | default-jdk,
-    libboost-test-dev | libboost-test1.53-dev, libevent-dev, libssl-dev, perl (>= 5.8.0-7),
-    php5 | php7.0, php5-dev | php7.0-dev, libglib2.0-dev, qtchooser, qtbase5-dev-tools
+    libboost-test-dev | libboost-test1.53-dev | libboost-test1.63-dev, libevent-dev, libssl-dev, perl (>= 5.8.0-7),
+    php (>= 5), php-dev (>= 5), libglib2.0-dev, qtchooser, qtbase5-dev-tools
 Maintainer: Thrift Developer's <dev@thrift.apache.org>
 Homepage: http://thrift.apache.org/
 Vcs-Git: https://git-wip-us.apache.org/repos/asf/thrift.git

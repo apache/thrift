@@ -158,13 +158,13 @@ jobs:
     - script: build/docker/run.sh
       env:
         - JOB="make dist"
-        - DISTRO=ubuntu-xenial
+        - DISTRO=ubuntu-artful
         - SCRIPT="make-dist.sh"
 
     - script: build/docker/run.sh
       env:
         - JOB="Debian Packages"
-        - DISTRO=ubuntu-xenial
+        - DISTRO=ubuntu-artful
         - SCRIPT="dpkg.sh"
 
   ### ------------------------- phase: osx -------------------------
