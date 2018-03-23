@@ -28,7 +28,7 @@ describe 'SSLServerSocket' do
     end
 
     it "should provide a reasonable to_s" do
-      @socket.to_s.should == "ssl(socket(:1234))"
+      expect(@socket.to_s).to eq("ssl(socket(:1234))")
     end
   end
 end

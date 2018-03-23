@@ -39,9 +39,9 @@ describe 'StructNestedContainers' do
           thrift_struct.value = [ [1, 2, 3], [2, 3, 4] ]
           thrift_struct.validate
         end
-        a.should == b
+        expect(a).to eq(b)
         b.value.push [3, 4, 5]
-        a.should_not == b
+        expect(a).not_to eq(b)
       end
     end
 
@@ -52,9 +52,9 @@ describe 'StructNestedContainers' do
           thrift_struct.value = [ [1, 2, 3], [2, 3, 4] ].to_set
           thrift_struct.validate
         end
-        a.should == b
+        expect(a).to eq(b)
         b.value.add [3, 4, 5]
-        a.should_not == b
+        expect(a).not_to eq(b)
       end
     end
 
@@ -65,9 +65,9 @@ describe 'StructNestedContainers' do
           thrift_struct.value = { [1, 2, 3] => 1, [2, 3, 4] => 2 }
           thrift_struct.validate
         end
-        a.should == b
+        expect(a).to eq(b)
         b.value[[3, 4, 5]] = 3
-        a.should_not == b
+        expect(a).not_to eq(b)
       end
     end
 
@@ -78,9 +78,9 @@ describe 'StructNestedContainers' do
           thrift_struct.value = { 1 => [1, 2, 3], 2 => [2, 3, 4] }
           thrift_struct.validate
         end
-        a.should == b
+        expect(a).to eq(b)
         b.value[3] = [3, 4, 5]
-        a.should_not == b
+        expect(a).not_to eq(b)
       end
     end
 
@@ -91,9 +91,9 @@ describe 'StructNestedContainers' do
           thrift_struct.value = [ [1, 2, 3].to_set, [2, 3, 4].to_set ]
           thrift_struct.validate
         end
-        a.should == b
+        expect(a).to eq(b)
         b.value.push([3, 4, 5].to_set)
-        a.should_not == b
+        expect(a).not_to eq(b)
       end
     end
 
@@ -104,9 +104,9 @@ describe 'StructNestedContainers' do
           thrift_struct.value = [ [1, 2, 3].to_set, [2, 3, 4].to_set ].to_set
           thrift_struct.validate
         end
-        a.should == b
+        expect(a).to eq(b)
         b.value.add([3, 4, 5].to_set)
-        a.should_not == b
+        expect(a).not_to eq(b)
       end
     end
 
@@ -117,9 +117,9 @@ describe 'StructNestedContainers' do
           thrift_struct.value = { [1, 2, 3].to_set => 1, [2, 3, 4].to_set => 2 }
           thrift_struct.validate
         end
-        a.should == b
+        expect(a).to eq(b)
         b.value[[3, 4, 5].to_set] = 3
-        a.should_not == b
+        expect(a).not_to eq(b)
       end
     end
 
@@ -130,9 +130,9 @@ describe 'StructNestedContainers' do
           thrift_struct.value = { 1 => [1, 2, 3].to_set, 2 => [2, 3, 4].to_set }
           thrift_struct.validate
         end
-        a.should == b
+        expect(a).to eq(b)
         b.value[3] = [3, 4, 5].to_set
-        a.should_not == b
+        expect(a).not_to eq(b)
       end
     end
 
@@ -143,9 +143,9 @@ describe 'StructNestedContainers' do
           thrift_struct.value = [ {1 => 2, 3 => 4}, {2 => 3, 4 => 5} ]
           thrift_struct.validate
         end
-        a.should == b
+        expect(a).to eq(b)
         b.value.push({ 3 => 4, 5 => 6 })
-        a.should_not == b
+        expect(a).not_to eq(b)
       end
     end
 
@@ -156,9 +156,9 @@ describe 'StructNestedContainers' do
           thrift_struct.value = [ {1 => 2, 3 => 4}, {2 => 3, 4 => 5} ].to_set
           thrift_struct.validate
         end
-        a.should == b
+        expect(a).to eq(b)
         b.value.add({ 3 => 4, 5 => 6 })
-        a.should_not == b
+        expect(a).not_to eq(b)
       end
     end
 
@@ -169,9 +169,9 @@ describe 'StructNestedContainers' do
           thrift_struct.value = { { 1 => 2, 3 => 4} => 1, {2 => 3, 4 => 5}  => 2 }
           thrift_struct.validate
         end
-        a.should == b
+        expect(a).to eq(b)
         b.value[{3 => 4, 5 => 6}] = 3
-        a.should_not == b
+        expect(a).not_to eq(b)
       end
     end
 
@@ -182,9 +182,9 @@ describe 'StructNestedContainers' do
           thrift_struct.value = { 1 => { 1 => 2, 3 => 4}, 2 => {2 => 3, 4 => 5} }
           thrift_struct.validate
         end
-        a.should == b
+        expect(a).to eq(b)
         b.value[3] = { 3 => 4, 5 => 6 }
-        a.should_not == b
+        expect(a).not_to eq(b)
       end
     end
   end

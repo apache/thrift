@@ -25,33 +25,33 @@ describe Thrift::Bytes do
     describe '.empty_byte_buffer' do
       it 'should create an empty buffer' do
         b = Thrift::Bytes.empty_byte_buffer
-        b.length.should == 0
-        b.encoding.should == Encoding::BINARY
+        expect(b.length).to eq(0)
+        expect(b.encoding).to eq(Encoding::BINARY)
       end
 
       it 'should create an empty buffer of given size' do
         b = Thrift::Bytes.empty_byte_buffer 2
-        b.length.should == 2
-        b.getbyte(0).should == 0
-        b.getbyte(1).should == 0
-        b.encoding.should == Encoding::BINARY
+        expect(b.length).to eq(2)
+        expect(b.getbyte(0)).to eq(0)
+        expect(b.getbyte(1)).to eq(0)
+        expect(b.encoding).to eq(Encoding::BINARY)
       end
     end
 
     describe '.force_binary_encoding' do
       it 'should change encoding' do
         e = 'STRING'.encode('UTF-8')
-        e.encoding.should_not == Encoding::BINARY
+        expect(e.encoding).not_to eq(Encoding::BINARY)
         a = Thrift::Bytes.force_binary_encoding e
-        a.encoding.should == Encoding::BINARY
+        expect(a.encoding).to eq(Encoding::BINARY)
       end
     end
 
     describe '.get_string_byte' do
       it 'should get the byte at index' do
         s = "\x41\x42"
-        Thrift::Bytes.get_string_byte(s, 0).should == 0x41
-        Thrift::Bytes.get_string_byte(s, 1).should == 0x42
+        expect(Thrift::Bytes.get_string_byte(s, 0)).to eq(0x41)
+        expect(Thrift::Bytes.get_string_byte(s, 1)).to eq(0x42)
       end
     end
 
@@ -59,42 +59,42 @@ describe Thrift::Bytes do
       it 'should set byte value at index' do
         s = "\x41\x42"
         Thrift::Bytes.set_string_byte(s, 0, 0x43)
-        s.getbyte(0).should == 0x43
-        s.should == 'CB'
+        expect(s.getbyte(0)).to eq(0x43)
+        expect(s).to eq('CB')
       end
     end
 
     describe '.convert_to_utf8_byte_buffer' do
       it 'should convert UTF-8 String to byte buffer' do
         e = "\u20AC".encode('UTF-8') # a string with euro sign character U+20AC
-        e.length.should == 1
+        expect(e.length).to eq(1)
 
         a = Thrift::Bytes.convert_to_utf8_byte_buffer e
-        a.encoding.should == Encoding::BINARY
-        a.length.should == 3
-        a.unpack('C*').should == [0xE2, 0x82, 0xAC]
+        expect(a.encoding).to eq(Encoding::BINARY)
+        expect(a.length).to eq(3)
+        expect(a.unpack('C*')).to eq([0xE2, 0x82, 0xAC])
       end
 
       it 'should convert ISO-8859-15 String to UTF-8 byte buffer' do
         # Assumptions
         e = "\u20AC".encode('ISO-8859-15') # a string with euro sign character U+20AC, then converted to ISO-8859-15
-        e.length.should == 1
-        e.unpack('C*').should == [0xA4] # euro sign is a different code point in ISO-8859-15
+        expect(e.length).to eq(1)
+        expect(e.unpack('C*')).to eq([0xA4]) # euro sign is a different code point in ISO-8859-15
 
         a = Thrift::Bytes.convert_to_utf8_byte_buffer e
-        a.encoding.should == Encoding::BINARY
-        a.length.should == 3
-        a.unpack('C*').should == [0xE2, 0x82, 0xAC]
+        expect(a.encoding).to eq(Encoding::BINARY)
+        expect(a.length).to eq(3)
+        expect(a.unpack('C*')).to eq([0xE2, 0x82, 0xAC])
       end
     end
 
     describe '.convert_to_string' do
       it 'should convert UTF-8 byte buffer to a UTF-8 String' do
         e = [0xE2, 0x82, 0xAC].pack("C*")
-        e.encoding.should == Encoding::BINARY
+        expect(e.encoding).to eq(Encoding::BINARY)
         a = Thrift::Bytes.convert_to_string e
-        a.encoding.should == Encoding::UTF_8
-        a.should == "\u20AC"
+        expect(a.encoding).to eq(Encoding::UTF_8)
+        expect(a).to eq("\u20AC")
       end
     end
 
@@ -102,14 +102,14 @@ describe Thrift::Bytes do
     describe '.empty_byte_buffer' do
       it 'should create an empty buffer' do
         b = Thrift::Bytes.empty_byte_buffer
-        b.length.should == 0
+        expect(b.length).to eq(0)
       end
 
       it 'should create an empty buffer of given size' do
         b = Thrift::Bytes.empty_byte_buffer 2
-        b.length.should == 2
-        b[0].should == 0
-        b[1].should == 0
+        expect(b.length).to eq(2)
+        expect(b[0]).to eq(0)
+        expect(b[1]).to eq(0)
       end
     end
 
@@ -117,16 +117,16 @@ describe Thrift::Bytes do
       it 'should be a no-op' do
         e = 'STRING'
         a = Thrift::Bytes.force_binary_encoding e
-        a.should == e
-        a.should be(e)
+        expect(a).to eq(e)
+        expect(a).to be(e)
       end
     end
 
     describe '.get_string_byte' do
       it 'should get the byte at index' do
         s = "\x41\x42"
-        Thrift::Bytes.get_string_byte(s, 0).should == 0x41
-        Thrift::Bytes.get_string_byte(s, 1).should == 0x42
+        expect(Thrift::Bytes.get_string_byte(s, 0)).to eq(0x41)
+        expect(Thrift::Bytes.get_string_byte(s, 1)).to eq(0x42)
       end
     end
 
@@ -134,8 +134,8 @@ describe Thrift::Bytes do
       it 'should set byte value at index' do
         s = "\x41\x42"
         Thrift::Bytes.set_string_byte(s, 0, 0x43)
-        s[0].should == 0x43
-        s.should == 'CB'
+        expect(s[0]).to eq(0x43)
+        expect(s).to eq('CB')
       end
     end
 
@@ -143,8 +143,8 @@ describe Thrift::Bytes do
       it 'should be a no-op' do
         e = 'STRING'
         a = Thrift::Bytes.convert_to_utf8_byte_buffer e
-        a.should == e
-        a.should be(e)
+        expect(a).to eq(e)
+        expect(a).to be(e)
       end
     end
 
@@ -152,8 +152,8 @@ describe Thrift::Bytes do
       it 'should be a no-op' do
         e = 'STRING'
         a = Thrift::Bytes.convert_to_string e
-        a.should == e
-        a.should be(e)
+        expect(a).to eq(e)
+        expect(a).to be(e)
       end
     end
   end

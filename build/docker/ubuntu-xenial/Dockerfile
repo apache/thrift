@@ -237,9 +237,8 @@ RUN apt-get install -y --no-install-recommends \
 RUN apt-get install -y --no-install-recommends \
 `# Ruby dependencies` \
       ruby \
-      ruby-dev \
-      ruby-bundler
-RUN gem install bundler --no-ri --no-rdoc
+      ruby-dev && \
+    gem install bundler --no-ri --no-rdoc
 
 RUN apt-get install -y --no-install-recommends \
 `# Rust dependencies` \
