@@ -64,7 +64,7 @@
     "server": {
       "command": [
         "thrift_test_server",
-	"--trace"
+        "--trace"
       ]
     },
     "client": {
@@ -254,7 +254,8 @@
     },
     "transports": [
       "buffered",
-      "framed"
+      "framed",
+      "http"
     ],
     "sockets": [
       "ip",
@@ -292,11 +293,12 @@
     },
     "transports": [
       "buffered",
-      "framed"
+      "framed",
+      "http"
     ],
     "sockets": [
-      "ip-ssl",
-      "ip"
+      "ip",
+      "ip-ssl"
     ],
     "protocols": [
       "compact",

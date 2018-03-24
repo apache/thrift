@@ -235,7 +235,7 @@ def run_test(testdir, logdir, test_dict, max_retry, async=True):
                 logger.warn('[%s]: Detected socket bind failure, retrying...', test.server.name)
                 bind_retry_count += 1
             else:
-                result = RESULT_TIMEOUT if cl.expired else cl.returncode if cl.proc.poll() is not None else RESULT_ERROR
+                result = RESULT_TIMEOUT if cl.expired else cl.returncode if (cl.proc and cl.proc.poll()) is not None else RESULT_ERROR
 
                 # For servers that handle a controlled shutdown by signal
                 # if they are killed, or return an error code, that is a

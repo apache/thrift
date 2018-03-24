@@ -20,6 +20,7 @@
 from io import BytesIO
 import os
 import socket
+import ssl
 import sys
 import warnings
 import base64
@@ -34,17 +35,20 @@ import six
 class THttpClient(TTransportBase):
     """Http implementation of TTransport base."""
 
-    def __init__(self, uri_or_host, port=None, path=None):
-        """THttpClient supports two different types constructor parameters.
+    def __init__(self, uri_or_host, port=None, path=None, cafile=None, cert_file=None, key_file=None, ssl_context=None):
+        """THttpClient supports two different types of construction:
 
         THttpClient(host, port, path) - deprecated
-        THttpClient(uri)
+        THttpClient(uri, [port=<n>, path=<s>, cafile=<filename>, cert_file=<filename>, key_file=<filename>, ssl_context=<context>])
 
-        Only the second supports https.
+        Only the second supports https.  To properly authenticate against the server,
+        provide the client's identity by specifying cert_file and key_file.  To properly
+        authenticate the server, specify either cafile or ssl_context with a CA defined.
+        NOTE: if both cafile and ssl_context are defined, ssl_context will override cafile.
         """
         if port is not None:
             warnings.warn(
-                "Please use the THttpClient('http://host:port/path') syntax",
+                "Please use the THttpClient('http{s}://host:port/path') constructor",
                 DeprecationWarning,
                 stacklevel=2)
             self.host = uri_or_host
@@ -60,6 +64,9 @@ class THttpClient(TTransportBase):
                 self.port = parsed.port or http_client.HTTP_PORT
             elif self.scheme == 'https':
                 self.port = parsed.port or http_client.HTTPS_PORT
+                self.certfile = cert_file
+                self.keyfile = key_file
+                self.context = ssl.create_default_context(cafile=cafile) if (cafile and not ssl_context) else ssl_context
             self.host = parsed.hostname
             self.path = parsed.path
             if parsed.query:
@@ -100,12 +107,17 @@ class THttpClient(TTransportBase):
 
     def open(self):
         if self.scheme == 'http':
-            self.__http = http_client.HTTPConnection(self.host, self.port)
+            self.__http = http_client.HTTPConnection(self.host, self.port,
+                                                     timeout=self.__timeout)
         elif self.scheme == 'https':
-            self.__http = http_client.HTTPSConnection(self.host, self.port)
-            if self.using_proxy():
-                self.__http.set_tunnel(self.realhost, self.realport,
-                                       {"Proxy-Authorization": self.proxy_auth})
+            self.__http = http_client.HTTPSConnection(self.host, self.port,
+                                                      key_file=self.keyfile,
+                                                      cert_file=self.certfile,
+                                                      timeout=self.__timeout,
+                                                      context=self.context)
+        if self.using_proxy():
+            self.__http.set_tunnel(self.realhost, self.realport,
+                                   {"Proxy-Authorization": self.proxy_auth})
 
     def close(self):
         self.__http.close()
