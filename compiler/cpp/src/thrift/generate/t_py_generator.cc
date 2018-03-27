@@ -948,6 +948,20 @@ void t_py_generator::generate_py_struct_reader(ofstream& out, t_struct* tstruct)
   indent_down();
 
   indent(out) << "iprot.readStructBegin()" << endl;
+  
+  if (is_immutable(tstruct)) {
+    for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
+      t_field* tfield = *f_iter;
+      std::ostringstream result;
+      result << tfield->get_name() << " = ";
+      if (tfield->get_value() != NULL) {
+        result << render_field_default_value(tfield);
+      } else {
+        result << "None";
+      }
+      indent(out) << result.str() << endl;
+     }
+  }
 
   // Loop over reading in fields
   indent(out) << "while True:" << endl;
