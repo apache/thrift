@@ -120,7 +120,7 @@ thrift_bitwise_cast_gdouble (const guint64 v)
 static guint64
 i64_to_zigzag (const gint64 l)
 {
-  return (l << 1) ^ (l >> 63);
+  return (((guint64)l) << 1) ^ (l >> 63);
 }
 
 /**
@@ -130,7 +130,7 @@ i64_to_zigzag (const gint64 l)
 static guint32
 i32_to_zigzag (const gint32 n)
 {
-  return (n << 1) ^ (n >> 31);
+  return (((guint32)n) << 1) ^ (n >> 31);
 }
 
 /**
@@ -1388,9 +1388,17 @@ thrift_compact_protocol_read_string (ThriftProtocol *protocol,
     return -1;
   }
 
+  if (read_len < 0) {
+    g_set_error (error, THRIFT_PROTOCOL_ERROR,
+                 THRIFT_PROTOCOL_ERROR_NEGATIVE_SIZE,
+                 "got negative size of %d", read_len);
+    *str = NULL;
+    return -1;
+  }
+
+  /* allocate the memory as an array of unsigned char for binary data */
+  *str = g_new0 (gchar, read_len + 1);
   if (read_len > 0) {
-    /* allocate the memory as an array of unsigned char for binary data */
-    *str = g_new0 (gchar, read_len + 1);
     if ((ret =
          thrift_transport_read_all (protocol->transport,
                                     *str, read_len, error)) < 0) {
@@ -1399,16 +1407,8 @@ thrift_compact_protocol_read_string (ThriftProtocol *protocol,
       return -1;
     }
     xfer += ret;
-
-  } else if (read_len == 0) {
-    *str = NULL;
-
   } else {
-    g_set_error (error, THRIFT_PROTOCOL_ERROR,
-                 THRIFT_PROTOCOL_ERROR_NEGATIVE_SIZE,
-                 "got negative size of %d", read_len);
-    *str = NULL;
-    return -1;
+    **str = 0;
   }
 
   return xfer;

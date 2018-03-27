@@ -43,7 +43,7 @@ public:
    * If the server returned fails to bind to the specified port when serve() is
    * called on it, createServer() may be called again on a different port.
    */
-  virtual boost::shared_ptr<server::TServer> createServer(uint16_t port) = 0;
+  virtual stdcxx::shared_ptr<server::TServer> createServer(uint16_t port) = 0;
 
   /**
    * Get the TServerEventHandler to set on the server.
@@ -52,8 +52,8 @@ public:
    * start serving traffic.  It is invoked from the server thread, rather than
    * the main thread.
    */
-  virtual boost::shared_ptr<server::TServerEventHandler> getServerEventHandler() {
-    return boost::shared_ptr<server::TServerEventHandler>();
+  virtual stdcxx::shared_ptr<server::TServerEventHandler> getServerEventHandler() {
+    return stdcxx::shared_ptr<server::TServerEventHandler>();
   }
 
   /**
@@ -70,9 +70,8 @@ public:
  */
 class ServerThread {
 public:
-  ServerThread(const boost::shared_ptr<ServerState>& state, bool autoStart)
-    : helper_(new Helper(this)),
-      port_(0),
+  ServerThread(const stdcxx::shared_ptr<ServerState>& state, bool autoStart)
+    : port_(0),
       running_(false),
       serving_(false),
       error_(false),
@@ -117,7 +116,7 @@ protected:
   void run();
   void preServe();
 
-  boost::shared_ptr<Helper> helper_;
+  stdcxx::shared_ptr<Helper> helper_;
 
   uint16_t port_;
   bool running_;
@@ -125,9 +124,9 @@ protected:
   bool error_;
   concurrency::Monitor serverMonitor_;
 
-  boost::shared_ptr<ServerState> serverState_;
-  boost::shared_ptr<server::TServer> server_;
-  boost::shared_ptr<concurrency::Thread> thread_;
+  stdcxx::shared_ptr<ServerState> serverState_;
+  stdcxx::shared_ptr<server::TServer> server_;
+  stdcxx::shared_ptr<concurrency::Thread> thread_;
 };
 }
 }

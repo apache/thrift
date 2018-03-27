@@ -151,7 +151,7 @@ determine how to decode the field value.
 Note that the field name is not encoded so field renames in the IDL do not affect forward and backward compatibility.
 
 The default Java implementation (Apache Thrift 0.9.1) has undefined behavior when it tries to decode a field that has
-another field-type then what is expected. Theoretically this could be detected at the cost of some additional checking.
+another field-type than what is expected. Theoretically this could be detected at the cost of some additional checking.
 Other implementation may perform this check and then either ignore the field, or return a protocol exception.
 
 A *Union* is encoded exactly the same as a struct with the additional restriction that at most 1 field may be encoded.

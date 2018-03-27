@@ -20,6 +20,7 @@
 #ifndef _THRIFT_TRANSPORT_TTRANSPORTEXCEPTION_H_
 #define _THRIFT_TRANSPORT_TTRANSPORTEXCEPTION_H_ 1
 
+#include <boost/numeric/conversion/cast.hpp>
 #include <string>
 #include <thrift/Thrift.h>
 
@@ -83,6 +84,21 @@ protected:
   /** Error code */
   TTransportExceptionType type_;
 };
+
+/**
+ * Legacy code in transport implementations have overflow issues
+ * that need to be enforced.
+ */
+template <typename To, typename From> To safe_numeric_cast(From i) {
+  try {
+    return boost::numeric_cast<To>(i);
+  }
+  catch (const std::bad_cast& bc) {
+    throw TTransportException(TTransportException::CORRUPTED_DATA,
+                              bc.what());
+  }
+}
+
 }
 }
 } // apache::thrift::transport

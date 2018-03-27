@@ -75,7 +75,7 @@ class THttpConfig {
   final Uri url;
 
   Map<String, String> _headers;
-  get headers => _headers;
+  Map<String, String> get headers => _headers;
 
   THttpConfig(this.url, Map<String, String> headers) {
     if (url == null || !url.hasAuthority) {

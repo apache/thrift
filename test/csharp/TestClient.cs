@@ -33,7 +33,7 @@ namespace Test
 {
     public class TestClient
     {
-        private class TestParams
+        public class TestParams
         {
             public int numIterations = 1;
             public string host = "localhost";
@@ -44,6 +44,7 @@ namespace Test
             public bool framed;
             public string protocol;
             public bool encrypted = false;
+            public bool multiplexed = false;
             protected bool _isFirstTransport = true;
 
 
@@ -61,7 +62,9 @@ namespace Test
                         {
                             string certPath = "../keys/client.p12";
                             X509Certificate cert = new X509Certificate2(certPath, "thrift");
-                            trans = new TTLSSocket(host, port, 0, cert, (o, c, chain, errors) => true, null, SslProtocols.Tls);
+                            trans = new TTLSSocket(host, port, 0, cert, 
+                                (o, c, chain, errors) => true, 
+                                null, SslProtocols.Tls);
                         }
                         else
                         {
@@ -105,21 +108,30 @@ namespace Test
         private const int ErrorStructs = 2;
         private const int ErrorContainers = 4;
         private const int ErrorExceptions = 8;
+        private const int ErrorProtocol = 16;
         private const int ErrorUnknown = 64;
 
         private class ClientTest
         {
+            private readonly TestParams param;
             private readonly TTransport transport;
+            private readonly SecondService.Client second;
             private readonly ThriftTest.Client client;
             private readonly int numIterations;
             private bool done;
 
             public int ReturnCode { get; set; }
 
-            public ClientTest(TestParams param)
+            public ClientTest(TestParams paramin)
             {
+                param = paramin;
                 transport = param.CreateTransport();
-                client = new ThriftTest.Client(param.CreateProtocol(transport));
+                TProtocol protocol = param.CreateProtocol(transport);
+                if (param.multiplexed)
+                {
+                    second = new SecondService.Client(new TMultiplexedProtocol(protocol, "SecondService"));
+                }
+                client = new ThriftTest.Client(protocol);
                 numIterations = param.numIterations;
             }
             public void Execute()
@@ -148,7 +160,7 @@ namespace Test
 
                     try
                     {
-                        ReturnCode |= ExecuteClientTest(client);
+                        ReturnCode |= ExecuteClientTest(client, second, param);
                     }
                     catch (Exception ex)
                     {
@@ -215,12 +227,12 @@ namespace Test
                         {
                             numThreads = Convert.ToInt32(args[++i]);
                         }
-                        else if (args[i] == "--compact" || args[i] == "--protocol=compact")
+                        else if (args[i] == "--compact" || args[i] == "--protocol=compact" || args[i] == "--protocol=multic")
                         {
                             param.protocol = "compact";
                             Console.WriteLine("Using compact protocol");
                         }
-                        else if (args[i] == "--json" || args[i] == "--protocol=json")
+                        else if (args[i] == "--json" || args[i] == "--protocol=json" || args[i] == "--protocol=multij")
                         {
                             param.protocol = "json";
                             Console.WriteLine("Using JSON protocol");
@@ -229,6 +241,11 @@ namespace Test
                         {
                             param.encrypted = true;
                             Console.WriteLine("Using encrypted transport");
+                        }
+
+                        if (args[i].StartsWith("--protocol=multi"))
+                        {
+                            param.multiplexed = true;
                         }
                     }
                 }
@@ -265,10 +282,11 @@ namespace Test
             return BitConverter.ToString(data).Replace("-", string.Empty);
         }
 
-        public static byte[] PrepareTestData(bool randomDist)
+        public static byte[] PrepareTestData(bool randomDist, bool huge)
         {
-            byte[] retval = new byte[0x100];
-            int initLen = Math.Min(0x100,retval.Length);
+            // huge = true tests for THRIFT-4372
+            byte[] retval = new byte[huge ? 0x12345 : 0x100];
+            int initLen = retval.Length;
 
             // linear distribution, unless random is requested
             if (!randomDist) {
@@ -295,7 +313,7 @@ namespace Test
             return retval;
         }
 
-        public static int ExecuteClientTest(ThriftTest.Client client)
+        public static int ExecuteClientTest(ThriftTest.Client client, SecondService.Client second, TestParams param)
         {
             int returnCode = 0;
 
@@ -310,6 +328,18 @@ namespace Test
             {
                 Console.WriteLine("*** FAILED ***");
                 returnCode |= ErrorBaseTypes;
+            }
+
+            if (param.multiplexed)
+            {
+                Console.WriteLine("secondTestString(\"Test2\")");
+                s = second.secondtestString("Test2");
+              Console.WriteLine(" = \"" + s + "\"");
+              if ("testString(\"Test2\")" != s)
+              {
+                  Console.WriteLine("*** FAILED ***");
+                  returnCode |= ErrorProtocol;
+              }
             }
 
             Console.Write("testBool(true)");
@@ -374,29 +404,33 @@ namespace Test
                 returnCode |= ErrorBaseTypes;
             }
 
-            byte[] binOut = PrepareTestData(true);
-            Console.Write("testBinary(" + BytesToHex(binOut) + ")");
-            try
+            for (i32 = 0; i32 < 2; ++i32)
             {
-                byte[] binIn = client.testBinary(binOut);
-                Console.WriteLine(" = " + BytesToHex(binIn));
-                if (binIn.Length != binOut.Length)
+                var huge = (i32 > 0);
+                byte[] binOut = PrepareTestData(false,huge);
+                Console.Write("testBinary(" + BytesToHex(binOut) + ")");
+                try
                 {
-                    Console.WriteLine("*** FAILED ***");
-                    returnCode |= ErrorBaseTypes;
-                }
-                for (int ofs = 0; ofs < Math.Min(binIn.Length, binOut.Length); ++ofs)
-                    if (binIn[ofs] != binOut[ofs])
+                    byte[] binIn = client.testBinary(binOut);
+                    Console.WriteLine(" = " + BytesToHex(binIn));
+                    if (binIn.Length != binOut.Length)
                     {
                         Console.WriteLine("*** FAILED ***");
                         returnCode |= ErrorBaseTypes;
                     }
-            }
-            catch (Thrift.TApplicationException ex)
-            {
-                Console.WriteLine("*** FAILED ***");
-                returnCode |= ErrorBaseTypes;
-                Console.WriteLine(ex.Message + " ST: " + ex.StackTrace);
+                    for (int ofs = 0; ofs < Math.Min(binIn.Length, binOut.Length); ++ofs)
+                        if (binIn[ofs] != binOut[ofs])
+                        {
+                            Console.WriteLine("*** FAILED ***");
+                            returnCode |= ErrorBaseTypes;
+                        }
+                }
+                catch (Thrift.TApplicationException ex)
+                {
+                    Console.WriteLine("*** FAILED ***");
+                    returnCode |= ErrorBaseTypes;
+                    Console.WriteLine(ex.Message + " ST: " + ex.StackTrace);
+                }
             }
 
             // binary equals? only with hashcode option enabled ...

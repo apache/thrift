@@ -17,8 +17,6 @@
 # under the License.
 #
 
-THRIFT = $(top_builddir)/compiler/cpp/thrift
-
 gen-dart/thrift_test/lib/thrift_test.dart: ../ThriftTest.thrift
 	$(THRIFT) --gen dart ../ThriftTest.thrift
 
@@ -38,6 +36,7 @@ clean-local:
 	$(RM) -r gen-dart test_client/.pub
 	find . -type d -name "packages" | xargs $(RM) -r
 	find . -type f -name ".packages" | xargs $(RM)
+	find . -type f -name "pubspec.lock" | xargs $(RM)
 
 client: stubs
 	${DART} test_client/bin/main.dart

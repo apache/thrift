@@ -22,15 +22,13 @@ use Test::More tests => 6;
 use strict;
 use warnings;
 
-use Thrift;
-use Thrift::Socket;
-use Thrift::Server;
-use Thrift::MultiplexedProcessor;
 use Thrift::BinaryProtocol;
-use Thrift::MemoryBuffer;
 use Thrift::FramedTransport;
 use Thrift::MemoryBuffer;
-
+use Thrift::MessageType;
+use Thrift::MultiplexedProcessor;
+use Thrift::Server;
+use Thrift::Socket;
 
 use BenchmarkService;
 use Aggr;
@@ -103,7 +101,7 @@ for(my $i = 1; $i <= 5; $i++) {
 
     $aggr_protocol->readMessageBegin(\$function_name, \$message_type, \$sequence_id);
 
-    if ($message_type == TMessageType::EXCEPTION) {
+    if ($message_type == Thrift::TMessageType::EXCEPTION) {
        die;
     }
     
@@ -116,7 +114,7 @@ my ($function_name, $message_type, $sequence_id);
 
 $aggr_protocol->readMessageBegin(\$function_name, \$message_type, \$sequence_id);
 
-if ($message_type == TMessageType::EXCEPTION) {
+if ($message_type == Thrift::TMessageType::EXCEPTION) {
     die;
 }
     
@@ -132,7 +130,7 @@ foreach my $val((1,2,3,5,8)) {
 
     $benchmark_protocol->readMessageBegin(\$function_name, \$message_type, \$sequence_id);
 
-    if ($message_type == TMessageType::EXCEPTION) {
+    if ($message_type == Thrift::TMessageType::EXCEPTION) {
         die;
     }
     my $benchmark_result = BenchmarkService_fibonacci_result->new();

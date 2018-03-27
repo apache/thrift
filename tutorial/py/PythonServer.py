@@ -82,10 +82,11 @@ class CalculatorHandler:
     def zip(self):
         print('zip()')
 
+
 if __name__ == '__main__':
     handler = CalculatorHandler()
     processor = Calculator.Processor(handler)
-    transport = TSocket.TServerSocket(port=9090)
+    transport = TSocket.TServerSocket(host='127.0.0.1', port=9090)
     tfactory = TTransport.TBufferedTransportFactory()
     pfactory = TBinaryProtocol.TBinaryProtocolFactory()
 

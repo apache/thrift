@@ -17,26 +17,27 @@
 # under the License.
 #
 
+use 5.10.0;
 use strict;
 use warnings;
 
+use Thrift;
+use Thrift::MessageType;
 use Thrift::Protocol;
 use Thrift::ProtocolDecorator;
-use Thrift::MessageType;
 
 package Thrift::MultiplexedProtocol;
 use base qw(Thrift::ProtocolDecorator);
+use version 0.77; our $VERSION = version->declare("$Thrift::VERSION");
 
-use strict;
-
-use constant SEPARATOR 	=> ':';
+use constant SEPARATOR  => ':';
 
 sub new {
     my $classname = shift;
     my $protocol  = shift;
     my $serviceName  = shift;
     my $self      = $classname->SUPER::new($protocol);
-    
+
     $self->{serviceName} = $serviceName;
 
     return bless($self,$classname);
@@ -50,17 +51,17 @@ sub new {
 # @param int    $type  Message type.
 # @param int    $seqid The sequence id of this message.
 #
-sub writeMessageBegin 
+sub writeMessageBegin
 {
-	my $self = shift;
+  my $self = shift;
     my ($name, $type, $seqid) = @_;
 
-    if ($type == Thrift::MessageType::CALL || $type == Thrift::MessageType::ONEWAY) {
+    if ($type == Thrift::TMessageType::CALL || $type == Thrift::TMessageType::ONEWAY) {
         my $nameWithService = $self->{serviceName}.SEPARATOR.$name;
         $self->SUPER::writeMessageBegin($nameWithService, $type, $seqid);
     }
     else {
-        $self->SUPER::writeMessageBegin($name, $type, $seqid);	
+        $self->SUPER::writeMessageBegin($name, $type, $seqid);
     }
 }
 

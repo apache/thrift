@@ -18,24 +18,10 @@
  */
 package org.apache.thrift.protocol;
 
-import java.nio.ByteBuffer;
-import java.util.Arrays;
-import java.util.List;
-
 import junit.framework.TestCase;
 
-import org.apache.thrift.Fixtures;
-import org.apache.thrift.TBase;
-import org.apache.thrift.TDeserializer;
-import org.apache.thrift.TException;
 import org.apache.thrift.TSerializer;
-import org.apache.thrift.transport.TMemoryBuffer;
 
-import thrift.test.CompactProtoTestStruct;
-import thrift.test.HolyMoley;
-import thrift.test.Nesting;
-import thrift.test.OneOfEach;
-import thrift.test.Srv;
 import thrift.test.GuessProtocolStruct;
 
 public class TestTProtocolUtil extends TestCase {

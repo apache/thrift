@@ -17,7 +17,6 @@
  * under the License.
  */
 
-#include <assert.h>
 #include <netdb.h>
 #include <sys/wait.h>
 
@@ -31,6 +30,7 @@
 #include "../src/thrift/c_glib/transport/thrift_framed_transport.c"
 
 static void thrift_server (const int port);
+static void thrift_socket_server_open (const int port, int times);
 
 /* test object creation and destruction */
 static void
@@ -42,10 +42,10 @@ test_create_and_destroy(void)
 
   GObject *object = NULL;
   object = g_object_new (THRIFT_TYPE_FRAMED_TRANSPORT, NULL);
-  assert (object != NULL);
+  g_assert (object != NULL);
   g_object_get (G_OBJECT (object), "transport", &transport,
-                "r_buf_size", &r_buf_size,
-                "w_buf_size", &w_buf_size, NULL);
+		"r_buf_size", &r_buf_size,
+		"w_buf_size", &w_buf_size, NULL);
   g_object_unref (object);
 }
 
@@ -55,35 +55,53 @@ test_open_and_close(void)
   ThriftSocket *tsocket = NULL;
   ThriftTransport *transport = NULL;
   GError *err = NULL;
+  pid_t pid;
+  int port = 51199;
+  int status;
 
-  /* create a ThriftSocket */
-  tsocket = g_object_new (THRIFT_TYPE_SOCKET, "hostname", "localhost",
-                          "port", 51188, NULL); 
+  pid = fork ();
+  g_assert ( pid >= 0 );
 
-  /* create a BufferedTransport wrapper of the Socket */
-  transport = g_object_new (THRIFT_TYPE_FRAMED_TRANSPORT,
-                            "transport", THRIFT_TRANSPORT (tsocket), NULL);
+  if ( pid == 0 )
+    {
+      /* child listens */
+      thrift_socket_server_open (port,1);
+      exit (0);
+    } else {
+	/* parent connects, wait a bit for the socket to be created */
+	sleep (1);
+	/* create a ThriftSocket */
+	tsocket = g_object_new (THRIFT_TYPE_SOCKET, "hostname", "localhost",
+				"port", port, NULL);
 
-  /* this shouldn't work */
-  assert (thrift_framed_transport_open (transport, NULL) == FALSE);
-  assert (thrift_framed_transport_is_open (transport) == TRUE);
-  assert (thrift_framed_transport_close (transport, NULL) == TRUE);
-  g_object_unref (transport);
-  g_object_unref (tsocket);
+	/* create a BufferedTransport wrapper of the Socket */
+	transport = g_object_new (THRIFT_TYPE_FRAMED_TRANSPORT,
+				  "transport", THRIFT_TRANSPORT (tsocket), NULL);
 
-  /* try and underlying socket failure */
-  tsocket = g_object_new (THRIFT_TYPE_SOCKET, "hostname", "localhost.broken",
-                          NULL);
+	/* this shouldn't work */
+	g_assert (thrift_framed_transport_open (transport, NULL) == TRUE);
+	g_assert (thrift_framed_transport_is_open (transport) == TRUE);
+	g_assert (thrift_framed_transport_close (transport, NULL) == TRUE);
+	g_object_unref (transport);
+	g_object_unref (tsocket);
 
-  /* create a BufferedTransport wrapper of the Socket */
-  transport = g_object_new (THRIFT_TYPE_FRAMED_TRANSPORT,
-                            "transport", THRIFT_TRANSPORT (tsocket), NULL);
+	/* try and underlying socket failure */
+	tsocket = g_object_new (THRIFT_TYPE_SOCKET, "hostname", "localhost.broken",
+				NULL);
 
-  assert (thrift_framed_transport_open (transport, &err) == FALSE);
-  g_object_unref (transport);
-  g_object_unref (tsocket);
-  g_error_free (err);
-  err = NULL;
+	/* create a BufferedTransport wrapper of the Socket */
+	transport = g_object_new (THRIFT_TYPE_FRAMED_TRANSPORT,
+				  "transport", THRIFT_TRANSPORT (tsocket), NULL);
+
+	g_assert (thrift_framed_transport_open (transport, &err) == FALSE);
+	g_object_unref (transport);
+	g_object_unref (tsocket);
+	g_error_free (err);
+	err = NULL;
+
+	g_assert ( wait (&status) == pid );
+	g_assert ( status == 0 );
+    }
 }
 
 static void
@@ -97,49 +115,49 @@ test_read_and_write(void)
   guchar buf[10] = TEST_DATA; /* a buffer */
 
   pid = fork ();
-  assert ( pid >= 0 );
+  g_assert ( pid >= 0 );
 
   if ( pid == 0 )
-  {
-    /* child listens */
-    thrift_server (port);
-    exit (0);
-  } else {
-    /* parent connects, wait a bit for the socket to be created */
-    sleep (1);
+    {
+      /* child listens */
+      thrift_server (port);
+      exit (0);
+    } else {
+	/* parent connects, wait a bit for the socket to be created */
+	sleep (1);
 
-    tsocket = g_object_new (THRIFT_TYPE_SOCKET, "hostname", "localhost",
-                            "port", port, NULL);
-    transport = g_object_new (THRIFT_TYPE_FRAMED_TRANSPORT,
-                              "transport", THRIFT_TRANSPORT (tsocket),
-                              "w_buf_size", 4, NULL);
+	tsocket = g_object_new (THRIFT_TYPE_SOCKET, "hostname", "localhost",
+				"port", port, NULL);
+	transport = g_object_new (THRIFT_TYPE_FRAMED_TRANSPORT,
+				  "transport", THRIFT_TRANSPORT (tsocket),
+				  "w_buf_size", 4, NULL);
 
-    assert (thrift_framed_transport_open (transport, NULL) == TRUE);
-    assert (thrift_framed_transport_is_open (transport));
+	g_assert (thrift_framed_transport_open (transport, NULL) == TRUE);
+	g_assert (thrift_framed_transport_is_open (transport));
 
-    /* write 10 bytes */
-    thrift_framed_transport_write (transport, buf, 10, NULL);
-    thrift_framed_transport_flush (transport, NULL);
+	/* write 10 bytes */
+	thrift_framed_transport_write (transport, buf, 10, NULL);
+	thrift_framed_transport_flush (transport, NULL);
 
-    thrift_framed_transport_write (transport, buf, 1, NULL);
-    thrift_framed_transport_flush (transport, NULL);
+	thrift_framed_transport_write (transport, buf, 1, NULL);
+	thrift_framed_transport_flush (transport, NULL);
 
-    thrift_framed_transport_write (transport, buf, 10, NULL);
-    thrift_framed_transport_flush (transport, NULL);
+	thrift_framed_transport_write (transport, buf, 10, NULL);
+	thrift_framed_transport_flush (transport, NULL);
 
-    thrift_framed_transport_write (transport, buf, 10, NULL);
-    thrift_framed_transport_flush (transport, NULL);
+	thrift_framed_transport_write (transport, buf, 10, NULL);
+	thrift_framed_transport_flush (transport, NULL);
 
-    thrift_framed_transport_write_end (transport, NULL);
-    thrift_framed_transport_flush (transport, NULL);
-    thrift_framed_transport_close (transport, NULL);
+	thrift_framed_transport_write_end (transport, NULL);
+	thrift_framed_transport_flush (transport, NULL);
+	thrift_framed_transport_close (transport, NULL);
 
-    g_object_unref (transport);
-    g_object_unref (tsocket);
+	g_object_unref (transport);
+	g_object_unref (tsocket);
 
-    assert ( wait (&status) == pid );
-    assert ( status == 0 );
-  }
+	g_assert ( wait (&status) == pid );
+	g_assert ( status == 0 );
+    }
 }
 
 /* test reading from the transport after the peer has unexpectedly
@@ -156,76 +174,100 @@ test_read_after_peer_close(void)
   g_assert (pid >= 0);
 
   if (pid == 0)
-  {
-    ThriftServerTransport *server_transport = NULL;
-    ThriftTransport *client_transport = NULL;
+    {
+      ThriftServerTransport *server_transport = NULL;
+      ThriftTransport *client_transport = NULL;
 
-    /* child listens */
-    server_transport = g_object_new (THRIFT_TYPE_SERVER_SOCKET,
-                                     "port", port,
-                                     NULL);
-    g_assert (server_transport != NULL);
+      /* child listens */
+      server_transport = g_object_new (THRIFT_TYPE_SERVER_SOCKET,
+				       "port", port,
+				       NULL);
+      g_assert (server_transport != NULL);
 
-    thrift_server_transport_listen (server_transport, &err);
-    g_assert (err == NULL);
+      thrift_server_transport_listen (server_transport, &err);
+      g_assert (err == NULL);
 
-    /* wrap the client transport in a ThriftFramedTransport */
-    client_transport = g_object_new
-      (THRIFT_TYPE_FRAMED_TRANSPORT,
-       "transport",  thrift_server_transport_accept (server_transport, &err),
-       "r_buf_size", 0,
-       NULL);
-    g_assert (err == NULL);
-    g_assert (client_transport != NULL);
+      /* wrap the client transport in a ThriftFramedTransport */
+      client_transport = g_object_new
+	  (THRIFT_TYPE_FRAMED_TRANSPORT,
+	   "transport",  thrift_server_transport_accept (server_transport, &err),
+	   "r_buf_size", 0,
+	   NULL);
+      g_assert (err == NULL);
+      g_assert (client_transport != NULL);
 
-    /* close the connection immediately after the client connects */
-    thrift_transport_close (client_transport, NULL);
+      /* close the connection immediately after the client connects */
+      thrift_transport_close (client_transport, NULL);
 
-    g_object_unref (client_transport);
-    g_object_unref (server_transport);
+      g_object_unref (client_transport);
+      g_object_unref (server_transport);
 
-    exit (0);
-  } else {
-    ThriftSocket *tsocket = NULL;
-    ThriftTransport *transport = NULL;
-    guchar buf[10]; /* a buffer */
+      exit (0);
+    } else {
+	ThriftSocket *tsocket = NULL;
+	ThriftTransport *transport = NULL;
+	guchar buf[10]; /* a buffer */
 
-    /* parent connects, wait a bit for the socket to be created */
-    sleep (1);
+	/* parent connects, wait a bit for the socket to be created */
+	sleep (1);
 
-    tsocket = g_object_new (THRIFT_TYPE_SOCKET,
-                            "hostname", "localhost",
-                            "port",     port,
-                            NULL);
-    transport = g_object_new (THRIFT_TYPE_FRAMED_TRANSPORT,
-                              "transport",  THRIFT_TRANSPORT (tsocket),
-                              "w_buf_size", 0,
-                              NULL);
+	tsocket = g_object_new (THRIFT_TYPE_SOCKET,
+				"hostname", "localhost",
+				"port",     port,
+				NULL);
+	transport = g_object_new (THRIFT_TYPE_FRAMED_TRANSPORT,
+				  "transport",  THRIFT_TRANSPORT (tsocket),
+				  "w_buf_size", 0,
+				  NULL);
 
-    g_assert (thrift_transport_open (transport, NULL) == TRUE);
-    g_assert (thrift_transport_is_open (transport));
+	g_assert (thrift_transport_open (transport, NULL) == TRUE);
+	g_assert (thrift_transport_is_open (transport));
 
-    /* attempting to read from the transport after the peer has closed
+	/* attempting to read from the transport after the peer has closed
        the connection fails gracefully without generating a critical
        warning or segmentation fault */
-    thrift_transport_read (transport, buf, 10, &err);
-    g_assert (err != NULL);
+	thrift_transport_read (transport, buf, 10, &err);
+	g_assert (err != NULL);
 
-    g_error_free (err);
-    err = NULL;
+	g_error_free (err);
+	err = NULL;
 
-    thrift_transport_read_end (transport, &err);
-    g_assert (err == NULL);
+	thrift_transport_read_end (transport, &err);
+	g_assert (err == NULL);
 
-    thrift_transport_close (transport, &err);
-    g_assert (err == NULL);
+	thrift_transport_close (transport, &err);
+	g_assert (err == NULL);
 
-    g_object_unref (transport);
-    g_object_unref (tsocket);
+	g_object_unref (transport);
+	g_object_unref (tsocket);
 
-    g_assert (wait (&status) == pid);
-    g_assert (status == 0);
+	g_assert (wait (&status) == pid);
+	g_assert (status == 0);
+    }
+}
+
+static void
+thrift_socket_server_open (const int port, int times)
+{
+  int bytes = 0;
+  ThriftServerTransport *transport = NULL;
+  ThriftTransport *client = NULL;
+  guchar buf[10]; /* a buffer */
+  guchar match[10] = TEST_DATA;
+  int i;
+
+  ThriftServerSocket *tsocket = g_object_new (THRIFT_TYPE_SERVER_SOCKET,
+					      "port", port, NULL);
+
+  transport = THRIFT_SERVER_TRANSPORT (tsocket);
+  thrift_server_transport_listen (transport, NULL);
+  for(i=0;i<times;i++){
+      client = thrift_server_transport_accept (transport, NULL);
+      g_assert (client != NULL);
+      thrift_socket_close (client, NULL);
+      g_object_unref (client);
   }
+  g_object_unref (tsocket);
 }
 
 static void
@@ -238,21 +280,21 @@ thrift_server (const int port)
   guchar match[10] = TEST_DATA;
 
   ThriftServerSocket *tsocket = g_object_new (THRIFT_TYPE_SERVER_SOCKET,
-                                              "port", port, NULL);
+					      "port", port, NULL);
 
   transport = THRIFT_SERVER_TRANSPORT (tsocket);
   thrift_server_transport_listen (transport, NULL);
 
   /* wrap the client in a BufferedTransport */
   client = g_object_new (THRIFT_TYPE_FRAMED_TRANSPORT, "transport",
-                         thrift_server_transport_accept (transport, NULL),
-                         "r_buf_size", 5, NULL);
-  assert (client != NULL);
+			 thrift_server_transport_accept (transport, NULL),
+			 "r_buf_size", 5, NULL);
+  g_assert (client != NULL);
 
   /* read 10 bytes */
   bytes = thrift_framed_transport_read (client, buf, 10, NULL);
-  assert (bytes == 10); /* make sure we've read 10 bytes */
-  assert ( memcmp (buf, match, 10) == 0 ); /* make sure what we got matches */
+  g_assert (bytes == 10); /* make sure we've read 10 bytes */
+  g_assert ( memcmp (buf, match, 10) == 0 ); /* make sure what we got matches */
 
   bytes = thrift_framed_transport_read (client, buf, 6, NULL);
   bytes = thrift_framed_transport_read (client, buf, 5, NULL);

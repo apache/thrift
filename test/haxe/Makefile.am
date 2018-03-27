@@ -17,7 +17,6 @@
 # under the License.
 #
 
-THRIFT = $(top_builddir)/compiler/cpp/thrift
 THRIFTCMD = $(THRIFT) --gen haxe -r
 THRIFTTEST = $(top_srcdir)/test/ThriftTest.thrift
 
@@ -88,16 +87,18 @@ check_php_web: $(BIN_PHP_WEB) $(BIN_CPP)
 
 
 EXTRA_DIST = \
-             src \
-             cpp.hxml \
-             csharp.hxml \
-             flash.hxml \
-             java.hxml \
-             javascript.hxml \
-             neko.hxml \
-             php.hxml \
-             python.hxml \
-             project.hide \
-             TestClientServer.hxproj \
-             make_all.bat \
-             make_all.sh
+	src \
+	cpp.hxml \
+	csharp.hxml \
+	flash.hxml \
+	java.hxml \
+	javascript.hxml \
+	neko.hxml \
+	php.hxml \
+	python.hxml \
+	router.php \
+	project.hide \
+	php-web-server.hxml \
+	TestClientServer.hxproj \
+	make_all.bat \
+	make_all.sh

@@ -43,5 +43,9 @@ module Thrift
         @server_transport.close
       end
     end
+    
+    def to_s
+      "threaded(#{super.to_s})"
+    end
   end
 end

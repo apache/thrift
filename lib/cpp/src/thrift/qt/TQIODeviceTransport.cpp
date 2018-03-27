@@ -23,11 +23,13 @@
 #include <QIODevice>
 
 #include <thrift/transport/TBufferTransports.h>
-
-using boost::shared_ptr;
+#include <thrift/stdcxx.h>
 
 namespace apache {
 namespace thrift {
+
+using stdcxx::shared_ptr;
+
 namespace transport {
 
 TQIODeviceTransport::TQIODeviceTransport(shared_ptr<QIODevice> dev) : dev_(dev) {

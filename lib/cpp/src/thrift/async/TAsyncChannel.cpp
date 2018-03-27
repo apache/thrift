@@ -18,7 +18,7 @@
  */
 
 #include <thrift/async/TAsyncChannel.h>
-#include <thrift/cxxfunctional.h>
+#include <thrift/stdcxx.h>
 
 namespace apache {
 namespace thrift {

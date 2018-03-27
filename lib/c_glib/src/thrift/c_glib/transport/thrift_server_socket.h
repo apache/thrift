@@ -49,7 +49,7 @@ struct _ThriftServerSocket
   ThriftServerTransport parent;
 
   /* private */
-  gshort port;
+  guint port;
   gshort backlog;
   int sd;
   guint8 *buf;

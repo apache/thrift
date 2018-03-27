@@ -17,20 +17,19 @@
 # under the License.
 #
 
-# Find required packages
-set(Boost_USE_STATIC_LIBS ON) # Force the use of static boost test framework
-find_package(Boost 1.53.0 REQUIRED COMPONENTS chrono filesystem system thread unit_test_framework)
 include_directories(SYSTEM "${Boost_INCLUDE_DIRS}")
 
 if (WITH_DYN_LINK_TEST)
     add_definitions( -DBOOST_TEST_DYN_LINK )
 endif()
 
-#Make sure gen-cpp files can be included
+# Make sure gen-cpp files can be included
 include_directories("${CMAKE_CURRENT_BINARY_DIR}")
 
 # Create the thrift C++ test library
 set(testgencpp_SOURCES
+    gen-cpp/AnnotationTest_types.cpp
+    gen-cpp/AnnotationTest_types.h
     gen-cpp/DebugProtoTest_types.cpp
     gen-cpp/DebugProtoTest_types.h
     gen-cpp/EnumTest_types.cpp
@@ -41,6 +40,10 @@ set(testgencpp_SOURCES
     gen-cpp/Recursive_types.h
     gen-cpp/ThriftTest_types.cpp
     gen-cpp/ThriftTest_types.h
+    gen-cpp/OneWayTest_types.cpp
+    gen-cpp/OneWayTest_types.h
+    gen-cpp/OneWayService.cpp
+    gen-cpp/OneWayService.h
     gen-cpp/TypedefTest_types.cpp
     gen-cpp/TypedefTest_types.h
     ThriftTest_extras.cpp
@@ -61,7 +64,6 @@ set(testgencpp_cob_SOURCES
 )
 add_library(testgencpp_cob STATIC ${testgencpp_cob_SOURCES})
 
-
 add_executable(Benchmark Benchmark.cpp)
 target_link_libraries(Benchmark testgencpp)
 LINK_AGAINST_THRIFT_LIBRARY(Benchmark thrift)
@@ -70,6 +72,7 @@ target_link_libraries(Benchmark testgencpp)
 
 set(UnitTest_SOURCES
     UnitTestMain.cpp
+    OneWayHTTPTest.cpp
     TMemoryBufferTest.cpp
     TBufferBaseTest.cpp
     Base64Test.cpp
@@ -79,8 +82,9 @@ set(UnitTest_SOURCES
     TServerTransportTest.cpp
 )
 
-if(NOT WITH_BOOSTTHREADS AND NOT WITH_STDTHREADS AND NOT MSVC)
-    list(APPEND UnitTest_SOURCES RWMutexStarveTest.cpp)
+if(NOT WITH_BOOSTTHREADS AND NOT WITH_STDTHREADS AND NOT MSVC AND NOT MINGW)
+    list(APPEND UnitTest_SOURCES concurrency/MutexTest.cpp)
+    list(APPEND UnitTest_SOURCES concurrency/RWMutexStarveTest.cpp)
 endif()
 
 add_executable(UnitTests ${UnitTest_SOURCES})
@@ -112,7 +116,7 @@ LINK_AGAINST_THRIFT_LIBRARY(TInterruptTest thrift)
 if (NOT MSVC AND NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin" AND NOT MINGW)
 target_link_libraries(TInterruptTest -lrt)
 endif ()
-add_test(NAME TInterruptTest COMMAND TInterruptTest "${CMAKE_CURRENT_SOURCE_DIR}/../../../test/keys")
+add_test(NAME TInterruptTest COMMAND TInterruptTest -- "${CMAKE_CURRENT_SOURCE_DIR}/../../../test/keys")
 
 add_executable(TServerIntegrationTest TServerIntegrationTest.cpp)
 target_link_libraries(TServerIntegrationTest
@@ -148,6 +152,13 @@ LINK_AGAINST_THRIFT_LIBRARY(ZlibTest thriftz)
 add_test(NAME ZlibTest COMMAND ZlibTest)
 endif(WITH_ZLIB)
 
+add_executable(AnnotationTest AnnotationTest.cpp)
+target_link_libraries(AnnotationTest
+    testgencpp
+    ${Boost_LIBRARIES}
+)
+LINK_AGAINST_THRIFT_LIBRARY(AnnotationTest thrift)
+add_test(NAME AnnotationTest COMMAND AnnotationTest)
 
 add_executable(EnumTest EnumTest.cpp)
 target_link_libraries(EnumTest
@@ -290,7 +301,21 @@ target_link_libraries(TNonblockingServerTest
 LINK_AGAINST_THRIFT_LIBRARY(TNonblockingServerTest thrift)
 LINK_AGAINST_THRIFT_LIBRARY(TNonblockingServerTest thriftnb)
 add_test(NAME TNonblockingServerTest COMMAND TNonblockingServerTest)
-endif()
+
+if(OPENSSL_FOUND AND WITH_OPENSSL)
+  set(TNonblockingSSLServerTest_SOURCES TNonblockingSSLServerTest.cpp)
+  add_executable(TNonblockingSSLServerTest ${TNonblockingSSLServerTest_SOURCES})
+  include_directories(${LIBEVENT_INCLUDE_DIRS})
+  target_link_libraries(TNonblockingSSLServerTest
+    testgencpp_cob
+    ${LIBEVENT_LIBRARIES}
+    ${Boost_LIBRARIES}
+  )
+  LINK_AGAINST_THRIFT_LIBRARY(TNonblockingSSLServerTest thrift)
+  LINK_AGAINST_THRIFT_LIBRARY(TNonblockingSSLServerTest thriftnb)
+  add_test(NAME TNonblockingSSLServerTest COMMAND TNonblockingSSLServerTest -- "${CMAKE_CURRENT_SOURCE_DIR}/../../../test/keys")
+endif(OPENSSL_FOUND AND WITH_OPENSSL)
+endif(WITH_LIBEVENT)
 
 if(OPENSSL_FOUND AND WITH_OPENSSL)
 add_executable(OpenSSLManualInitTest OpenSSLManualInitTest.cpp)
@@ -310,7 +335,7 @@ LINK_AGAINST_THRIFT_LIBRARY(SecurityTest thrift)
 if (NOT MSVC AND NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin" AND NOT MINGW)
 target_link_libraries(SecurityTest -lrt)
 endif ()
-add_test(NAME SecurityTest COMMAND SecurityTest "${CMAKE_CURRENT_SOURCE_DIR}/../../../test/keys")
+add_test(NAME SecurityTest COMMAND SecurityTest -- "${CMAKE_CURRENT_SOURCE_DIR}/../../../test/keys")
 
 endif()
 
@@ -334,8 +359,16 @@ endif()
 # Common thrift code generation rules
 #
 
+add_custom_command(OUTPUT gen-cpp/AnnotationTest_constants.cpp
+                          gen-cpp/AnnotationTest_constants.h
+                          gen-cpp/AnnotationTest_types.cpp
+                          gen-cpp/AnnotationTest_types.h
+                          gen-cpp/foo_service.cpp
+                          gen-cpp/foo_service.h
+    COMMAND ${THRIFT_COMPILER} --gen cpp ${PROJECT_SOURCE_DIR}/test/AnnotationTest.thrift
+)
 
-add_custom_command(OUTPUT gen-cpp/DebugProtoTest_types.cpp gen-cpp/DebugProtoTest_types.h gen-cpp/EmptyService.cpp  gen-cpp/EmptyService.h
+add_custom_command(OUTPUT gen-cpp/DebugProtoTest_types.cpp gen-cpp/DebugProtoTest_types.h gen-cpp/EmptyService.cpp gen-cpp/EmptyService.h
     COMMAND ${THRIFT_COMPILER} --gen cpp ${PROJECT_SOURCE_DIR}/test/DebugProtoTest.thrift
 )
 
@@ -361,6 +394,10 @@ add_custom_command(OUTPUT gen-cpp/Service.cpp gen-cpp/StressTest_types.cpp
 
 add_custom_command(OUTPUT gen-cpp/SecondService.cpp gen-cpp/ThriftTest_constants.cpp gen-cpp/ThriftTest.cpp gen-cpp/ThriftTest_types.cpp gen-cpp/ThriftTest_types.h
     COMMAND ${THRIFT_COMPILER} --gen cpp ${PROJECT_SOURCE_DIR}/test/ThriftTest.thrift
+)
+
+add_custom_command(OUTPUT gen-cpp/OneWayService.cpp gen-cpp/OneWayTest_constants.cpp gen-cpp/OneWayTest_types.h gen-cpp/OneWayService.h gen-cpp/OneWayTest_constants.h gen-cpp/OneWayTest_types.cpp
+    COMMAND ${THRIFT_COMPILER} --gen cpp ${CMAKE_CURRENT_SOURCE_DIR}/OneWayTest.thrift
 )
 
 add_custom_command(OUTPUT gen-cpp/ChildService.cpp gen-cpp/ChildService.h gen-cpp/ParentService.cpp gen-cpp/ParentService.h gen-cpp/proc_types.cpp gen-cpp/proc_types.h

@@ -172,10 +172,10 @@ end;
 
 class function TApplicationException.Read( const iprot: IProtocol): TApplicationException;
 var
-  field : IField;
+  field : TThriftField;
   msg : string;
   typ : TExceptionType;
-  struc : IStruct;
+  struc : TThriftStruct;
 begin
   msg := '';
   typ := TExceptionType.Unknown;
@@ -220,12 +220,11 @@ end;
 
 procedure TApplicationException.Write( const oprot: IProtocol);
 var
-  struc : IStruct;
-  field : IField;
-
+  struc : TThriftStruct;
+  field : TThriftField;
 begin
-  struc := TStructImpl.Create( 'TApplicationException' );
-  field := TFieldImpl.Create;
+  Init(struc, 'TApplicationException');
+  Init(field);
 
   oprot.WriteStructBegin( struc );
   if Message <> '' then

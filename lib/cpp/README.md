@@ -19,7 +19,6 @@ KIND, either express or implied. See the License for the
 specific language governing permissions and limitations
 under the License.
 
-
 # Using Thrift with C++
 
 The Thrift C++ libraries are built using the GNU tools. Follow the instructions
@@ -55,15 +54,22 @@ you are using libthriftnb you will also need libevent.
 
 ## Dependencies
 
-boost shared pointers
-http://www.boost.org/libs/smart_ptr/smart_ptr.htm
+If your C++ environment implements C++11 or later, thrift will automatically use
+std::shared_ptr.  Otherwise you will need the boost library to provide a shared_ptr
+implementation for C++ environments pre-C++11.  If you are linking against code
+that expects to be using boost::shared_ptr, you can define the preprocessor
+variable FORCE_BOOST_SMART_PTR for your build of thrift to make it use boost instead
+of std for a number of memory related classes.  See thrift/stdcxx.h for more.
 
 libevent (for libthriftnb only)
 http://monkey.org/~provos/libevent/
 
 # Using Thrift with C++ on Windows
 
-You need to define an environment variables for 3rd party components separately:
+Both the autoconf and cmake build systems are able to automatically detect many
+system configurations without the need to specify library locations, however if
+you run into problems or want to redirect thrift to build and link against your
+own provided third party libraries:
 
 BOOST_ROOT : For boost, e.g. D:\boost_1_55_0
 OPENSSL_ROOT_DIR : For OpenSSL, e.g. D:\OpenSSL-Win32
@@ -74,13 +80,7 @@ LIBEVENT_ROOT_DIR : For Libevent e.g. D:\libevent-2.0.21-stable
 
 See /3rdparty.user for more details.
 
-Thrift is divided into two libraries.
-
-* libthrift - The core Thrift library contains all the core Thrift code. It requires
-  boost shared pointers, pthreads, and librt.
-
-* libthriftnb - This library contains the Thrift nonblocking server, which uses libevent.
-  To link this library you will also need to link libevent.
+The same linking guidelines described above for libthriftnb apply to windows as well.
 
 ## Linking Against Thrift
 
@@ -93,8 +93,7 @@ the config header: "windows/confg.h"
 
 ## Dependencies
 
-boost shared pointers
-http://www.boost.org/libs/smart_ptr/smart_ptr.htm
+The same dependencies for shared_ptr as described above apply to windows as well.
 
 boost thread
 http://www.boost.org/doc/libs/release/doc/html/thread.html
@@ -272,3 +271,26 @@ OpenSSL's RAND_poll() when OpenSSL library is first initialized.
 
 The PRNG seed is key to the application security. This method should be
 overridden if it's not strong enough for you.
+
+# Breaking Changes
+
+## 0.11.0
+
+Older versions of thrift depended on the <boost/smart_ptr.hpp> classes which
+were used in thrift headers to define interfaces.  Thrift now detects C++11
+at build time and will prefer to use <memory> classes from C++11 instead.
+You can force the library to build with boost memory classes by defining the
+preprocessor macro `FORCE_BOOST_SMART_PTR`.  (THRIFT-2221)
+
+In the pthread mutex implementation, the contention profiling code was enabled
+by default in all builds.  This changed to be disabled by default.  (THRIFT-4151)
+
+In older releases, if a TSSLSocketFactory's lifetime was not at least as long
+as the TSSLSockets it created, we silently reverted openssl to unsafe multithread behavior
+and so the results were undefined.  Changes were made in 0.11.0 that cause either an
+assertion or a core instead of undefined behavior.  The lifetime of a TSSLSocketFactory
+*must* be longer than any TSSLSocket that it creates, otherwise openssl will be cleaned
+up too early.  If the static boolean is set to disable openssl initialization and
+cleanup and leave it up to the consuming application, this requirement is not needed.
+(THRIFT-4164)
+

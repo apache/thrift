@@ -1,7 +1,6 @@
 Thrift PHP Software Library
 
-License
-=======
+# License
 
 Licensed to the Apache Software Foundation (ASF) under one
 or more contributor license agreements. See the NOTICE file
@@ -20,8 +19,7 @@ KIND, either express or implied. See the License for the
 specific language governing permissions and limitations
 under the License.
 
-Using Thrift with PHP
-=====================
+# Using Thrift with PHP
 
 Thrift requires PHP 5. Thrift makes as few assumptions about your PHP
 environment as possible while trying to make some more advanced PHP
@@ -29,25 +27,34 @@ features (i.e. APC cacheing using asbolute path URLs) as simple as possible.
 
 To use Thrift in your PHP codebase, take the following steps:
 
-#1) Copy all of thrift/lib/php/lib into your PHP codebase
-#2) Configure Symfony Autoloader (or whatever you usually use)
+1. Copy all of thrift/lib/php/lib into your PHP codebase
+2. Configure Symfony Autoloader (or whatever you usually use)
 
 After that, you have to manually include the Thrift package
 created by the compiler:
 
+```
 require_once 'packages/Service/Service.php';
 require_once 'packages/Service/Types.php';
+```
 
-Dependencies
-============
+# Dependencies
 
 PHP_INT_SIZE
 
-  This built-in signals whether your architecture is 32 or 64 bit and is
-  used by the TBinaryProtocol to properly use pack() and unpack() to
-  serialize data.
+    This built-in signals whether your architecture is 32 or 64 bit and is
+    used by the TBinaryProtocol to properly use pack() and unpack() to
+    serialize data.
 
 apc_fetch(), apc_store()
 
-  APC cache is used by the TSocketPool class. If you do not have APC installed,
-  Thrift will fill in null stub function definitions.
+    APC cache is used by the TSocketPool class. If you do not have APC installed,
+    Thrift will fill in null stub function definitions.
+
+# Breaking Changes
+
+## 0.12.0
+
+1. [PSR-4](https://www.php-fig.org/psr/psr-4/) loader is now the default. If you want to use class maps instead, use `-gen php:classmap`.
+
+2. If using PSR-4, use `$thriftClassLoader->registerNamespace('namespace', '<path>')` instead of `$thriftClassLoader->registerDefinition('namespace', '<path>')`.

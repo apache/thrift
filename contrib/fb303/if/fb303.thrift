@@ -24,6 +24,7 @@
 namespace java com.facebook.fb303
 namespace cpp facebook.fb303
 namespace perl Facebook.FB303
+namespace netcore Facebook.FB303.Test
 
 /**
  * Common status reporting mechanism across all services

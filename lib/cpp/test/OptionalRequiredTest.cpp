@@ -40,7 +40,7 @@ template<typename Struct>
 void trywrite(const Struct& s, bool should_work) {
   bool worked;
   try {
-    TBinaryProtocol protocol(boost::shared_ptr<TTransport>(new TMemoryBuffer));
+    TBinaryProtocol protocol(stdcxx::shared_ptr<TTransport>(new TMemoryBuffer));
     s.write(&protocol);
     worked = true;
   } catch (TProtocolException & ex) {
@@ -52,7 +52,7 @@ void trywrite(const Struct& s, bool should_work) {
 
 template <typename Struct1, typename Struct2>
 void write_to_read(const Struct1& w, Struct2& r) {
-  TBinaryProtocol protocol(boost::shared_ptr<TTransport>(new TMemoryBuffer));
+  TBinaryProtocol protocol(stdcxx::shared_ptr<TTransport>(new TMemoryBuffer));
   w.write(&protocol);
   r.read(&protocol);
 }
@@ -303,7 +303,7 @@ BOOST_AUTO_TEST_CASE(test_optional_required_11) {
   o1.im_big.push_back(mymap);
   BOOST_CHECK(o1 == o2);
 
-  TBinaryProtocol protocol(boost::shared_ptr<TTransport>(new TMemoryBuffer));
+  TBinaryProtocol protocol(stdcxx::shared_ptr<TTransport>(new TMemoryBuffer));
   o1.write(&protocol);
 
   o1.im_big.push_back(mymap);

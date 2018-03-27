@@ -17,25 +17,31 @@
 # under the License.
 #
 
-require 5.6.0;
+use 5.10.0;
 use strict;
 use warnings;
 
 use Thrift;
-use Thrift::BufferedTransport;
 use Thrift::BinaryProtocol;
+use Thrift::BufferedTransport;
+use Thrift::Exception;
 
 #
 # Server base class module
 #
 package Thrift::Server;
+use version 0.77; our $VERSION = version->declare("$Thrift::VERSION");
 
+#
 # 3 possible constructors:
 #   1.  (processor, serverTransport)
+#       Uses a BufferedTransportFactory and a BinaryProtocolFactory.
 #   2.  (processor, serverTransport, transportFactory, protocolFactory)
+#       Uses the same factory for input and output of each type.
 #   3.  (processor, serverTransport,
 #        inputTransportFactory, outputTransportFactory,
 #        inputProtocolFactory, outputProtocolFactory)
+#
 sub new
 {
     my $classname    = shift;
@@ -61,7 +67,7 @@ sub new
     }
     else
     {
-      die "Thrift::Server expects exactly 2, 4, or 6 args";
+      die new Thrift::TException("Thrift::Server expects exactly 2, 4, or 6 args");
     }
 
     return bless($self,$classname);
@@ -109,7 +115,7 @@ sub _handleException
     my $self = shift;
     my $e    = shift;
 
-    if ($e =~ m/TException/ and exists $e->{message}) {
+    if ($e->isa("Thrift::TException") and exists $e->{message}) {
         my $message = $e->{message};
         my $code    = $e->{code};
         my $out     = $code . ':' . $message;
@@ -129,41 +135,46 @@ sub _handleException
 # SimpleServer from the Server base class that handles one connection at a time
 #
 package Thrift::SimpleServer;
-use base qw( Thrift::Server );
+use parent -norequire, 'Thrift::Server';
+use version 0.77; our $VERSION = version->declare("$Thrift::VERSION");
 
 sub new
 {
     my $classname = shift;
-    my @args      = @_;
 
-    my $self      = $classname->SUPER::new(@args);
+    my $self      = $classname->SUPER::new(@_);
+
     return bless($self,$classname);
 }
 
 sub serve
 {
     my $self = shift;
-
+    my $stop = 0;
+    
     $self->{serverTransport}->listen();
-    while (1)
-    {
+    while (!$stop) {
         my $client = $self->{serverTransport}->accept();
-        my $itrans = $self->{inputTransportFactory}->getTransport($client);
-        my $otrans = $self->{outputTransportFactory}->getTransport($client);
-        my $iprot  = $self->{inputProtocolFactory}->getProtocol($itrans);
-        my $oprot  = $self->{outputProtocolFactory}->getProtocol($otrans);
-        eval {
-            $self->_clientBegin($iprot, $oprot);
-            while (1)
-            {
-                $self->{processor}->process($iprot, $oprot);
+        if (defined $client) {
+            my $itrans = $self->{inputTransportFactory}->getTransport($client);
+            my $otrans = $self->{outputTransportFactory}->getTransport($client);
+            my $iprot  = $self->{inputProtocolFactory}->getProtocol($itrans);
+            my $oprot  = $self->{outputProtocolFactory}->getProtocol($otrans);
+            eval {
+                $self->_clientBegin($iprot, $oprot);
+                while (1)
+                {
+                    $self->{processor}->process($iprot, $oprot);
+                }
+            }; if($@) {
+                $self->_handleException($@);
             }
-        }; if($@) {
-            $self->_handleException($@);
-        }
 
-        $itrans->close();
-        $otrans->close();
+            $itrans->close();
+            $otrans->close();
+        } else {
+            $stop = 1;
+        }
     }
 }
 
@@ -172,9 +183,9 @@ sub serve
 # ForkingServer that forks a new process for each request
 #
 package Thrift::ForkingServer;
-use base qw( Thrift::Server );
-
+use parent -norequire, 'Thrift::Server';
 use POSIX ":sys_wait_h";
+use version 0.77; our $VERSION = version->declare("$Thrift::VERSION");
 
 sub new
 {
@@ -217,7 +228,7 @@ sub _client
 
         my $pid = fork();
 
-        if ($pid) #parent
+        if ($pid)
         {
             $self->_parent($pid, $itrans, $otrans);
         } else {
@@ -235,10 +246,6 @@ sub _parent
     my $itrans = shift;
     my $otrans = shift;
 
-    # add before collect, otherwise you race w/ waitpid
-    $self->{children}->{$pid} = 1;
-    $self->_collectChildren();
-
     # Parent must close socket or the connection may not get closed promptly
     $self->tryClose($itrans);
     $self->tryClose($otrans);
@@ -254,6 +261,8 @@ sub _child
 
     my $ecode = 0;
     eval {
+        # THRIFT-4065 ensure child process has normal signal handling in case thrift handler uses it
+        $SIG{CHLD} = 'DEFAULT';
         while (1)
         {
             $self->{processor}->process($iprot, $oprot);
@@ -280,7 +289,7 @@ sub tryClose
           $file->close();
         }
     }; if($@) {
-        if ($@ =~ m/TException/ and exists $@->{message}) {
+        if ($@->isa("Thrift::TException") and exists $@->{message}) {
             my $message = $@->{message};
             my $code    = $@->{code};
             my $out     = $code . ':' . $message;
@@ -291,25 +300,5 @@ sub tryClose
         }
     }
 }
-
-sub _collectChildren
-{
-    my $self = shift;
-
-    while (scalar keys %{$self->{children}})
-    {
-        my $pid    = waitpid(-1, WNOHANG);
-
-        if ($pid>0)
-        {
-            delete $self->{children}->{$pid};
-        }
-        else
-        {
-            last;
-        }
-    }
-}
-
 
 1;

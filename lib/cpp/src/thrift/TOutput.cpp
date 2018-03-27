@@ -18,9 +18,9 @@
  */
 
 #include <thrift/Thrift.h>
+#include <thrift/TToString.h>
 #include <cstring>
 #include <cstdlib>
-#include <boost/lexical_cast.hpp>
 #include <stdarg.h>
 #include <stdio.h>
 
@@ -94,13 +94,13 @@ void TOutput::errorTimeWrapper(const char* msg) {
 }
 
 void TOutput::perror(const char* message, int errno_copy) {
-  std::string out = message + strerror_s(errno_copy);
+  std::string out = message + std::string(": ") + strerror_s(errno_copy);
   f_(out.c_str());
 }
 
 std::string TOutput::strerror_s(int errno_copy) {
 #ifndef HAVE_STRERROR_R
-  return "errno = " + boost::lexical_cast<std::string>(errno_copy);
+  return "errno = " + to_string(errno_copy);
 #else // HAVE_STRERROR_R
 
   char b_errbuf[1024] = {'\0'};
@@ -112,7 +112,7 @@ std::string TOutput::strerror_s(int errno_copy) {
   if (rv == -1) {
     // strerror_r failed.  omgwtfbbq.
     return "XSI-compliant strerror_r() failed with errno = "
-           + boost::lexical_cast<std::string>(errno_copy);
+           + to_string(errno_copy);
   }
 #endif
   // Can anyone prove that explicit cast is probably not necessary

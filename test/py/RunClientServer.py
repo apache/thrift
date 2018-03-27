@@ -38,6 +38,7 @@ SCRIPT_DIR = os.path.abspath(os.path.dirname(__file__))
 SCRIPTS = [
     'FastbinaryTest.py',
     'TestFrozen.py',
+    'TestRenderedDoubleConstants.py',
     'TSimpleJSONProtocolTest.py',
     'SerializationTest.py',
     'TestEof.py',
@@ -46,7 +47,7 @@ SCRIPTS = [
 ]
 FRAMED = ["TNonblockingServer"]
 SKIP_ZLIB = ['TNonblockingServer', 'THttpServer']
-SKIP_SSL = ['TNonblockingServer', 'THttpServer']
+SKIP_SSL = ['THttpServer']
 EXTRA_DELAY = dict(TProcessPoolServer=5.5)
 
 PROTOS = [

@@ -19,15 +19,6 @@
 
 package org.apache.thrift.server;
 
-import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.nio.channels.SelectionKey;
-import java.nio.channels.Selector;
-import java.nio.channels.spi.SelectorProvider;
-import java.util.HashSet;
-import java.util.Set;
-import java.util.concurrent.atomic.AtomicLong;
-
 import org.apache.thrift.TAsyncProcessor;
 import org.apache.thrift.TByteArrayOutputStream;
 import org.apache.thrift.TException;
@@ -42,6 +33,15 @@ import org.apache.thrift.transport.TTransportException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.nio.channels.SelectionKey;
+import java.nio.channels.Selector;
+import java.nio.channels.spi.SelectorProvider;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.concurrent.atomic.AtomicLong;
+
 /**
  * Provides common methods and classes used by nonblocking TServer
  * implementations.
@@ -50,7 +50,7 @@ public abstract class AbstractNonblockingServer extends TServer {
   protected final Logger LOGGER = LoggerFactory.getLogger(getClass().getName());
 
   public static abstract class AbstractNonblockingServerArgs<T extends AbstractNonblockingServerArgs<T>> extends AbstractServerArgs<T> {
-    public long maxReadBufferBytes = Long.MAX_VALUE;
+    public long maxReadBufferBytes = 256 * 1024 * 1024;
 
     public AbstractNonblockingServerArgs(TNonblockingServerTransport transport) {
       super(transport);
@@ -102,7 +102,7 @@ public abstract class AbstractNonblockingServer extends TServer {
 
   /**
    * Starts any threads required for serving.
-   * 
+   *
    * @return true if everything went ok, false if threads could not be started.
    */
   protected abstract boolean startThreads();
@@ -115,7 +115,7 @@ public abstract class AbstractNonblockingServer extends TServer {
 
   /**
    * Have the server transport start accepting connections.
-   * 
+   *
    * @return true if we started listening successfully, false if something went
    *         wrong.
    */
@@ -139,7 +139,7 @@ public abstract class AbstractNonblockingServer extends TServer {
   /**
    * Perform an invocation. This method could behave several different ways -
    * invoke immediately inline, queue for separate execution, etc.
-   * 
+   *
    * @return true if invocation was successfully requested, which is not a
    *         guarantee that invocation has completed. False if the request
    *         failed.
@@ -152,7 +152,7 @@ public abstract class AbstractNonblockingServer extends TServer {
    * corresponding to requests.
    */
   protected abstract class AbstractSelectThread extends Thread {
-    protected final Selector selector;
+    protected Selector selector;
 
     // List of FrameBuffers that want to change their selection interests.
     protected final Set<FrameBuffer> selectInterestChanges = new HashSet<FrameBuffer>();
@@ -285,21 +285,21 @@ public abstract class AbstractNonblockingServer extends TServer {
     protected ByteBuffer buffer_;
 
     protected final TByteArrayOutputStream response_;
-    
+
     // the frame that the TTransport should wrap.
     protected final TMemoryInputTransport frameTrans_;
-    
+
     // the transport that should be used to connect to clients
     protected final TTransport inTrans_;
-    
+
     protected final TTransport outTrans_;
-    
+
     // the input protocol to use on frames
     protected final TProtocol inProt_;
-    
+
     // the output protocol to use on frames
     protected final TProtocol outProt_;
-    
+
     // context associated with this connection
     protected final ServerContext context_;
 
@@ -328,7 +328,7 @@ public abstract class AbstractNonblockingServer extends TServer {
     /**
      * Give this FrameBuffer a chance to read. The selector loop should have
      * received a read event for this FrameBuffer.
-     * 
+     *
      * @return true if the connection should live on, false if it should be
      *         closed
      */
@@ -455,7 +455,7 @@ public abstract class AbstractNonblockingServer extends TServer {
     public void close() {
       // if we're being closed due to an error, we might have allocated a
       // buffer that we need to subtract for our memory accounting.
-      if (state_ == FrameBufferState.READING_FRAME || 
+      if (state_ == FrameBufferState.READING_FRAME ||
           state_ == FrameBufferState.READ_FRAME_COMPLETE ||
           state_ == FrameBufferState.AWAITING_CLOSE) {
         readBufferBytesAllocated.addAndGet(-buffer_.array().length);
@@ -510,7 +510,7 @@ public abstract class AbstractNonblockingServer extends TServer {
     public void invoke() {
       frameTrans_.reset(buffer_.array());
       response_.reset();
-      
+
       try {
         if (eventHandler_ != null) {
           eventHandler_.processContext(context_, inTrans_, outTrans_);
@@ -530,7 +530,7 @@ public abstract class AbstractNonblockingServer extends TServer {
 
     /**
      * Perform a read into buffer.
-     * 
+     *
      * @return true if the read succeeded, false if there was an error or the
      *         connection closed.
      */

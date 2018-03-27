@@ -17,7 +17,6 @@
  * under the License.
  */
 
-#include <assert.h>
 #include <netdb.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -84,7 +83,7 @@ thrift_buffered_transport_read_slow (ThriftTransport *transport, gpointer buf,
   guint32 have = t->r_buf->len;
 
   /* we shouldn't hit this unless the buffer doesn't have enough to read */
-  assert (t->r_buf->len < want);
+  g_assert (t->r_buf->len < want);
 
   /* first copy what we have in our buffer. */
   if (have > 0)

@@ -95,6 +95,25 @@ thrift_socket_peek (ThriftTransport *transport, GError **error)
   return result;
 }
 
+
+/* implements thrift_transport_close */
+gboolean
+thrift_socket_close (ThriftTransport *transport, GError **error)
+{
+  ThriftSocket *socket = THRIFT_SOCKET (transport);
+
+  if (close (socket->sd) == -1)
+  {
+    g_set_error (error, THRIFT_TRANSPORT_ERROR, THRIFT_TRANSPORT_ERROR_CLOSE,
+                 "unable to close socket - %s",
+                 strerror(errno));
+    return FALSE;
+  }
+
+  socket->sd = THRIFT_INVALID_SOCKET;
+  return TRUE;
+}
+
 /* implements thrift_transport_open */
 gboolean
 thrift_socket_open (ThriftTransport *transport, GError **error)
@@ -128,8 +147,8 @@ thrift_socket_open (ThriftTransport *transport, GError **error)
   /* create a socket structure */
   memset (&pin, 0, sizeof(pin));
   pin.sin_family = AF_INET;
-  pin.sin_addr.s_addr = ((struct in_addr *) (hp->h_addr))->s_addr;
-  pin.sin_port = htons (tsocket->port); 
+  pin.sin_addr.s_addr = ((struct in_addr *) (hp->h_addr_list[0]))->s_addr;
+  pin.sin_port = htons (tsocket->port);
 
   /* create the socket */
   if ((tsocket->sd = socket (AF_INET, SOCK_STREAM, 0)) == -1)
@@ -144,7 +163,8 @@ thrift_socket_open (ThriftTransport *transport, GError **error)
   /* open a connection */
   if (connect (tsocket->sd, (struct sockaddr *) &pin, sizeof(pin)) == -1)
   {
-    g_set_error (error, THRIFT_TRANSPORT_ERROR, THRIFT_TRANSPORT_ERROR_CONNECT,
+      thrift_socket_close(tsocket, NULL);
+      g_set_error (error, THRIFT_TRANSPORT_ERROR, THRIFT_TRANSPORT_ERROR_CONNECT,
                  "failed to connect to host %s:%d - %s",
                  tsocket->hostname, tsocket->port, strerror(errno));
     return FALSE;
@@ -153,23 +173,6 @@ thrift_socket_open (ThriftTransport *transport, GError **error)
   return TRUE;
 }
 
-/* implements thrift_transport_close */
-gboolean
-thrift_socket_close (ThriftTransport *transport, GError **error)
-{
-  ThriftSocket *socket = THRIFT_SOCKET (transport);
-
-  if (close (socket->sd) == -1)
-  {
-    g_set_error (error, THRIFT_TRANSPORT_ERROR, THRIFT_TRANSPORT_ERROR_CLOSE,
-                 "unable to close socket - %s",
-                 strerror(errno));
-    return FALSE;
-  }
-
-  socket->sd = THRIFT_INVALID_SOCKET;
-  return TRUE;
-}
 
 /* implements thrift_transport_read */
 gint32
@@ -210,7 +213,7 @@ thrift_socket_read_end (ThriftTransport *transport, GError **error)
 
 /* implements thrift_transport_write */
 gboolean
-thrift_socket_write (ThriftTransport *transport, const gpointer buf,     
+thrift_socket_write (ThriftTransport *transport, const gpointer buf,
                      const guint32 len, GError **error)
 {
   gint ret = 0;
@@ -315,6 +318,9 @@ thrift_socket_set_property (GObject *object, guint property_id,
   switch (property_id)
   {
     case PROP_THRIFT_SOCKET_HOSTNAME:
+      if (socket->hostname) {
+        g_free(socket->hostname);
+      }
       socket->hostname = g_strdup (g_value_get_string (value));
       break;
     case PROP_THRIFT_SOCKET_PORT:
@@ -347,8 +353,8 @@ thrift_socket_class_init (ThriftSocketClass *cls)
   param_spec = g_param_spec_uint ("port",
                                   "port (construct)",
                                   "Set the port of the remote host",
-                                  0, /* min */
-                                  65534, /* max */
+                                  0u, /* min */
+                                  65535u, /* max */
                                   9090, /* default by convention */
                                   G_PARAM_CONSTRUCT_ONLY |
                                   G_PARAM_READWRITE);

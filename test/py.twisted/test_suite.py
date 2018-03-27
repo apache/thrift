@@ -19,13 +19,16 @@
 # under the License.
 #
 
-import sys
-import os
 import glob
+import os
+import sys
 import time
+
 basepath = os.path.abspath(os.path.dirname(__file__))
 sys.path.insert(0, os.path.join(basepath, 'gen-py.twisted'))
 sys.path.insert(0, glob.glob(os.path.join(basepath, '../../lib/py/build/lib.*'))[0])
+
+from thrift.Thrift import TApplicationException
 
 from ThriftTest import ThriftTest
 from ThriftTest.ttypes import Xception, Xtruct
@@ -36,12 +39,11 @@ from twisted.trial import unittest
 from twisted.internet import defer, reactor
 from twisted.internet.protocol import ClientCreator
 
-from zope.interface import implements
+from zope.interface import implementer
 
 
+@implementer(ThriftTest.Iface)
 class TestHandler:
-    implements(ThriftTest.Iface)
-
     def __init__(self):
         self.onewaysQueue = defer.DeferredQueue()
 
@@ -85,6 +87,7 @@ class TestHandler:
         def fireOneway(t):
             self.onewaysQueue.put((t, time.time(), seconds))
         reactor.callLater(seconds, fireOneway, time.time())
+        raise Exception('')
 
     def testNest(self, thing):
         return thing
@@ -172,7 +175,6 @@ class ThriftTestCase(unittest.TestCase):
 
     @defer.inlineCallbacks
     def testException(self):
-        yield self.client.testException('Safe')
         try:
             yield self.client.testException('Xception')
             self.fail("should have gotten exception")
@@ -182,12 +184,15 @@ class ThriftTestCase(unittest.TestCase):
 
         try:
             yield self.client.testException("throw_undeclared")
-            self.fail("should have thrown exception")
-        except Exception:  # type is undefined
+            self.fail("should have gotten exception")
+        except TApplicationException:
             pass
+
+        yield self.client.testException('Safe')
 
     @defer.inlineCallbacks
     def testOneway(self):
         yield self.client.testOneway(1)
         start, end, seconds = yield self.handler.onewaysQueue.get()
         self.assertAlmostEquals(seconds, (end - start), places=1)
+        self.assertEquals((yield self.client.testI32(-1)), -1)

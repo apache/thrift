@@ -18,8 +18,12 @@
 #
 
 THRIFT = ../../compiler/cpp/thrift
+THRIFT_OMIT_FILE = test/Thrift_omit_without.thrift
 THRIFT_FILES = $(wildcard test/*.thrift) \
+		  $(THRIFT_OMIT_FILE) \
+		  ../../test/ConstantsDemo.thrift \
 		  ../../test/NameConflictTest.thrift \
+		  ../../test/DoubleConstantsTest.thrift \
 		  ../../test/ThriftTest.thrift
 
 if ERLANG_OTP16
@@ -32,6 +36,10 @@ ERL_FLAG = erl
 ERL_FLAG_LEGACY = erl:legacynames
 ERL_FLAG_MAPS = erl:maps
 endif
+
+$(THRIFT_OMIT_FILE): test/Thrift_omit_with.thrift
+	grep -v omit $< >$@
+
 .generated: $(THRIFT) $(THRIFT_FILES)
 	for f in $(THRIFT_FILES) ; do \
 		$(THRIFT) --gen $(ERL_FLAG) -o test $$f ; \
@@ -64,6 +72,7 @@ uninstall:
 clean:
 	rm -f .generated
 	rm -rf test/gen-erl/
+	rm -f $(THRIFT_OMIT_FILE)
 	$(REBAR) clean
 
 maintainer-clean-local:
@@ -74,6 +83,7 @@ EXTRA_DIST = \
 	src \
 	coding_standards.md \
 	rebar.config \
+	rebar.config.script \
 	rebar.test.config \
 	test \
 	README.md

@@ -21,13 +21,14 @@
 #include <boost/test/auto_unit_test.hpp>
 #include <thrift/transport/TBufferTransports.h>
 #include <thrift/transport/TShortReadTransport.h>
+#include <thrift/stdcxx.h>
 
-using std::string;
-using boost::shared_ptr;
+using apache::thrift::stdcxx::shared_ptr;
 using apache::thrift::transport::TMemoryBuffer;
 using apache::thrift::transport::TBufferedTransport;
 using apache::thrift::transport::TFramedTransport;
 using apache::thrift::transport::test::TShortReadTransport;
+using std::string;
 
 // Shamelessly copied from ZlibTransport.  TODO: refactor.
 unsigned int dist[][5000] = {
@@ -566,7 +567,7 @@ BOOST_AUTO_TEST_CASE( test_FramedTransport_Write_Read ) {
       for (int d1 = 0; d1 < 3; d1++) {
         shared_ptr<TMemoryBuffer> buffer(new TMemoryBuffer(16));
         TFramedTransport trans(buffer, size);
-        uint8_t data_out[1<<15];
+        std::vector<uint8_t> data_out(1<<17, 0);
         std::vector<int> flush_sizes;
 
         int write_offset = 0;
@@ -604,7 +605,7 @@ BOOST_AUTO_TEST_CASE( test_FramedTransport_Write_Read ) {
         }
 
         BOOST_CHECK_EQUAL((unsigned int)read_offset, sizeof(data));
-        BOOST_CHECK(!memcmp(data, data_out, sizeof(data)));
+        BOOST_CHECK(!memcmp(data, &data_out[0], sizeof(data)));
       }
     }
   }

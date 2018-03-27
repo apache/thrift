@@ -73,7 +73,7 @@ private {
   void setError(Exception e) nothrow {
     ERR_put_error(ERR_LIB_D_EXCEPTION, ERR_F_D_EXCEPTION, ERR_R_D_EXCEPTION,
       ERR_FILE_D_EXCEPTION, ERR_LINE_D_EXCEPTION);
-    try { GC.addRoot(cast(void*)e); } catch {}
+    try { GC.addRoot(cast(void*)e); } catch (Throwable) {}
     ERR_set_error_data(cast(char*)e, ERR_FLAGS_D_EXCEPTION);
   }
 

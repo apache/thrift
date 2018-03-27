@@ -23,18 +23,20 @@
 
 #include <thrift/concurrency/BoostThreadFactory.h>
 #include <thrift/concurrency/Exception.h>
-
+#include <thrift/stdcxx.h>
 #include <cassert>
 
-#include <boost/weak_ptr.hpp>
 #include <boost/thread.hpp>
 
 namespace apache {
 namespace thrift {
-namespace concurrency {
 
-using boost::shared_ptr;
-using boost::weak_ptr;
+using stdcxx::bind;
+using stdcxx::scoped_ptr;
+using stdcxx::shared_ptr;
+using stdcxx::weak_ptr;
+
+namespace concurrency {
 
 /**
  * The boost thread class.
@@ -48,7 +50,8 @@ public:
   static void* threadMain(void* arg);
 
 private:
-  std::auto_ptr<boost::thread> thread_;
+  scoped_ptr<boost::thread> thread_;
+  Monitor monitor_;
   STATE state_;
   weak_ptr<BoostThread> self_;
   bool detached_;
@@ -60,7 +63,7 @@ public:
   }
 
   ~BoostThread() {
-    if (!detached_) {
+    if (!detached_ && thread_->joinable()) {
       try {
         join();
       } catch (...) {
@@ -69,26 +72,46 @@ public:
     }
   }
 
-  void start() {
-    if (state_ != uninitialized) {
-      return;
-    }
+  STATE getState() const
+  {
+    Synchronized sync(monitor_);
+    return state_;
+  }
 
+  void setState(STATE newState)
+  {
+    Synchronized sync(monitor_);
+    state_ = newState;
+
+    // unblock start() with the knowledge that the thread has actually
+    // started running, which avoids a race in detached threads.
+    if (newState == started) {
+	  monitor_.notify();
+    }
+  }
+
+  void start() {
     // Create reference
     shared_ptr<BoostThread>* selfRef = new shared_ptr<BoostThread>();
     *selfRef = self_.lock();
 
-    state_ = starting;
+    setState(starting);
 
-    thread_
-        = std::auto_ptr<boost::thread>(new boost::thread(boost::bind(threadMain, (void*)selfRef)));
+	Synchronized sync(monitor_);
+	
+    thread_.reset(new boost::thread(bind(threadMain, (void*)selfRef)));
 
     if (detached_)
       thread_->detach();
+    
+    // Wait for the thread to start and get far enough to grab everything
+    // that it needs from the calling context, thus absolving the caller
+    // from being required to hold on to runnable indefinitely.
+    monitor_.wait();
   }
 
   void join() {
-    if (!detached_ && state_ != uninitialized) {
+    if (!detached_ && getState() != uninitialized) {
       thread_->join();
     }
   }
@@ -109,71 +132,28 @@ void* BoostThread::threadMain(void* arg) {
   shared_ptr<BoostThread> thread = *(shared_ptr<BoostThread>*)arg;
   delete reinterpret_cast<shared_ptr<BoostThread>*>(arg);
 
-  if (!thread) {
-    return (void*)0;
-  }
-
-  if (thread->state_ != starting) {
-    return (void*)0;
-  }
-
-  thread->state_ = started;
+  thread->setState(started);
   thread->runnable()->run();
 
-  if (thread->state_ != stopping && thread->state_ != stopped) {
-    thread->state_ = stopping;
+  if (thread->getState() != stopping && thread->getState() != stopped) {
+    thread->setState(stopping);
   }
   return (void*)0;
 }
 
-/**
- * POSIX Thread factory implementation
- */
-class BoostThreadFactory::Impl {
-
-private:
-  bool detached_;
-
-public:
-  Impl(bool detached) : detached_(detached) {}
-
-  /**
-   * Creates a new POSIX thread to run the runnable object
-   *
-   * @param runnable A runnable object
-   */
-  shared_ptr<Thread> newThread(shared_ptr<Runnable> runnable) const {
-    shared_ptr<BoostThread> result = shared_ptr<BoostThread>(new BoostThread(detached_, runnable));
-    result->weakRef(result);
-    runnable->thread(result);
-    return result;
-  }
-
-  bool isDetached() const { return detached_; }
-
-  void setDetached(bool value) { detached_ = value; }
-
-  Thread::id_t getCurrentThreadId() const { return boost::this_thread::get_id(); }
-};
-
 BoostThreadFactory::BoostThreadFactory(bool detached)
-  : impl_(new BoostThreadFactory::Impl(detached)) {
+  : ThreadFactory(detached) {
 }
 
 shared_ptr<Thread> BoostThreadFactory::newThread(shared_ptr<Runnable> runnable) const {
-  return impl_->newThread(runnable);
-}
-
-bool BoostThreadFactory::isDetached() const {
-  return impl_->isDetached();
-}
-
-void BoostThreadFactory::setDetached(bool value) {
-  impl_->setDetached(value);
+  shared_ptr<BoostThread> result = shared_ptr<BoostThread>(new BoostThread(isDetached(), runnable));
+  result->weakRef(result);
+  runnable->thread(result);
+  return result;
 }
 
 Thread::id_t BoostThreadFactory::getCurrentThreadId() const {
-  return impl_->getCurrentThreadId();
+  return boost::this_thread::get_id();
 }
 }
 }

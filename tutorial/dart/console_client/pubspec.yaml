@@ -21,8 +21,10 @@ description: >
   A Dart console client to implementation of the Apache Thrift tutorial
 author: Apache Thrift Developers <dev@thrift.apache.org>
 homepage: http://thrift.apache.org
+
 environment:
-  sdk: ^1.12.0
+  sdk: ">=1.13.0 <2.0.0"
+
 dependencies:
   args: ^0.13.0
   collection: ^1.1.0

@@ -17,11 +17,8 @@
  * under the License.
  */
 
-#include <boost/bind.hpp>
-#include <boost/function.hpp>
-#include <boost/make_shared.hpp>
-#include <boost/shared_ptr.hpp>
 #include <string>
+#include <thrift/stdcxx.h>
 #include <thrift/concurrency/PlatformThreadFactory.h>
 #include <thrift/server/TThreadedServer.h>
 
@@ -35,11 +32,12 @@ using apache::thrift::concurrency::Thread;
 using apache::thrift::concurrency::ThreadFactory;
 using apache::thrift::protocol::TProtocol;
 using apache::thrift::protocol::TProtocolFactory;
+using apache::thrift::stdcxx::make_shared;
+using apache::thrift::stdcxx::shared_ptr;
 using apache::thrift::transport::TServerTransport;
 using apache::thrift::transport::TTransport;
 using apache::thrift::transport::TTransportException;
 using apache::thrift::transport::TTransportFactory;
-using boost::shared_ptr;
 
 TThreadedServer::TThreadedServer(const shared_ptr<TProcessorFactory>& processorFactory,
                                  const shared_ptr<TServerTransport>& serverTransport,
@@ -95,7 +93,6 @@ TThreadedServer::~TThreadedServer() {
 }
 
 void TThreadedServer::serve() {
-  threadFactory_->setDetached(false);
   TServerFramework::serve();
 
   // Ensure post-condition of no active clients
@@ -118,15 +115,16 @@ void TThreadedServer::drainDeadClients() {
 
 void TThreadedServer::onClientConnected(const shared_ptr<TConnectedClient>& pClient) {
   Synchronized sync(clientMonitor_);
-  ClientMap::iterator it = activeClientMap_.insert(ClientMap::value_type(pClient.get(), boost::make_shared<TConnectedClientRunner>(pClient))).first;
-  boost::shared_ptr<apache::thrift::concurrency::Thread> pThread = threadFactory_->newThread(it->second);
-  it->second->setThread(pThread);
+  shared_ptr<TConnectedClientRunner> pRunnable = make_shared<TConnectedClientRunner>(pClient);
+  shared_ptr<Thread> pThread = threadFactory_->newThread(pRunnable);
+  pRunnable->thread(pThread);
+  activeClientMap_.insert(ClientMap::value_type(pClient.get(), pThread));
   pThread->start();
 }
 
 void TThreadedServer::onClientDisconnected(TConnectedClient* pClient) {
   Synchronized sync(clientMonitor_);
-  drainDeadClients();	// use the outgoing thread to do some maintenance on our dead client backlog
+  drainDeadClients(); // use the outgoing thread to do some maintenance on our dead client backlog
   ClientMap::iterator it = activeClientMap_.find(pClient);
   ClientMap::iterator end = it;
   deadClientMap_.insert(it, ++end);
@@ -136,25 +134,16 @@ void TThreadedServer::onClientDisconnected(TConnectedClient* pClient) {
   }
 }
 
-TThreadedServer::TConnectedClientRunner::TConnectedClientRunner(const boost::shared_ptr<TConnectedClient>& pClient)
+TThreadedServer::TConnectedClientRunner::TConnectedClientRunner(const shared_ptr<TConnectedClient>& pClient)
   : pClient_(pClient) {
 }
 
 TThreadedServer::TConnectedClientRunner::~TConnectedClientRunner() {
 }
 
-void TThreadedServer::TConnectedClientRunner::join() {
-  pThread_->join();
-}
-
 void TThreadedServer::TConnectedClientRunner::run() /* override */ {
   pClient_->run();  // Run the client
   pClient_.reset(); // The client is done - release it here rather than in the destructor for safety
-}
-
-void TThreadedServer::TConnectedClientRunner::setThread(
-		const boost::shared_ptr<apache::thrift::concurrency::Thread>& pThread) {
-  pThread_ = pThread;
 }
 
 }

@@ -21,18 +21,20 @@
 #include <cmath>
 #include <iomanip>
 #include <sstream>
-#include <thrift/transport/TBufferTransports.h>
 #include <thrift/protocol/TJSONProtocol.h>
+#include <thrift/stdcxx.h>
+#include <thrift/transport/TBufferTransports.h>
 #include "gen-cpp/DebugProtoTest_types.h"
 
 #define BOOST_TEST_MODULE JSONProtoTest
 #include <boost/test/unit_test.hpp>
 
 using namespace thrift::test::debug;
+using namespace apache::thrift;
 using apache::thrift::transport::TMemoryBuffer;
 using apache::thrift::protocol::TJSONProtocol;
 
-static std::auto_ptr<OneOfEach> ooe;
+static stdcxx::shared_ptr<OneOfEach> ooe;
 
 void testCaseSetup_1() {
   ooe.reset(new OneOfEach);
@@ -65,7 +67,7 @@ BOOST_AUTO_TEST_CASE(test_json_proto_1) {
     "Expected:\n" << expected_result << "\nGotten:\n" << result);
 }
 
-static std::auto_ptr<Nesting> n;
+static stdcxx::shared_ptr<Nesting> n;
 
 void testCaseSetup_2() {
   testCaseSetup_1();
@@ -105,7 +107,7 @@ BOOST_AUTO_TEST_CASE(test_json_proto_2) {
     "Expected:\n" << expected_result << "\nGotten:\n" << result);
 }
 
-static std::auto_ptr<HolyMoley> hm;
+static stdcxx::shared_ptr<HolyMoley> hm;
 
 void testCaseSetup_3() {
   testCaseSetup_2();
@@ -183,8 +185,8 @@ BOOST_AUTO_TEST_CASE(test_json_proto_3) {
 BOOST_AUTO_TEST_CASE(test_json_proto_4) {
   testCaseSetup_1();
 
-  boost::shared_ptr<TMemoryBuffer> buffer(new TMemoryBuffer());
-  boost::shared_ptr<TJSONProtocol> proto(new TJSONProtocol(buffer));
+  stdcxx::shared_ptr<TMemoryBuffer> buffer(new TMemoryBuffer());
+  stdcxx::shared_ptr<TJSONProtocol> proto(new TJSONProtocol(buffer));
 
   ooe->write(proto.get());
   OneOfEach ooe2;
@@ -196,8 +198,8 @@ BOOST_AUTO_TEST_CASE(test_json_proto_4) {
 BOOST_AUTO_TEST_CASE(test_json_proto_5) {
   testCaseSetup_3();
 
-  boost::shared_ptr<TMemoryBuffer> buffer(new TMemoryBuffer());
-  boost::shared_ptr<TJSONProtocol> proto(new TJSONProtocol(buffer));
+  stdcxx::shared_ptr<TMemoryBuffer> buffer(new TMemoryBuffer());
+  stdcxx::shared_ptr<TJSONProtocol> proto(new TJSONProtocol(buffer));
 
   hm->write(proto.get());
   HolyMoley hm2;
@@ -234,8 +236,8 @@ BOOST_AUTO_TEST_CASE(test_json_proto_6) {
 }
 
 BOOST_AUTO_TEST_CASE(test_json_proto_7) {
-  boost::shared_ptr<TMemoryBuffer> buffer(new TMemoryBuffer());
-  boost::shared_ptr<TJSONProtocol> proto(new TJSONProtocol(buffer));
+  stdcxx::shared_ptr<TMemoryBuffer> buffer(new TMemoryBuffer());
+  stdcxx::shared_ptr<TJSONProtocol> proto(new TJSONProtocol(buffer));
 
   Base64 base;
   base.a = 123;
@@ -262,9 +264,10 @@ BOOST_AUTO_TEST_CASE(test_json_proto_8) {
   ":[\"i8\",3,1,2,3]},\"13\":{\"lst\":[\"i16\",3,1,2,3]},\"14\":{\"lst\":[\"i64"
   "\",3,1,2,3]}}";
 
-  boost::shared_ptr<TMemoryBuffer> buffer(new TMemoryBuffer(
-    (uint8_t*)(json_string), strlen(json_string)*sizeof(char)));
-  boost::shared_ptr<TJSONProtocol> proto(new TJSONProtocol(buffer));
+  const std::size_t bufSiz = strlen(json_string) * sizeof(char);
+  stdcxx::shared_ptr<TMemoryBuffer> buffer(new TMemoryBuffer(
+    (uint8_t*)(json_string), static_cast<uint32_t>(bufSiz)));
+  stdcxx::shared_ptr<TJSONProtocol> proto(new TJSONProtocol(buffer));
 
   OneOfEach ooe2;
 
@@ -291,9 +294,9 @@ BOOST_AUTO_TEST_CASE(test_json_unicode_escaped) {
   "\",3,1,2,3]}}";
   const char* expected_zomg_unicode = "\xe0\xb8\x81 \xf0\x9d\x94\xbe";
 
-  boost::shared_ptr<TMemoryBuffer> buffer(new TMemoryBuffer(
+  stdcxx::shared_ptr<TMemoryBuffer> buffer(new TMemoryBuffer(
     (uint8_t*)(json_string), sizeof(json_string)));
-  boost::shared_ptr<TJSONProtocol> proto(new TJSONProtocol(buffer));
+  stdcxx::shared_ptr<TJSONProtocol> proto(new TJSONProtocol(buffer));
 
   OneOfEach ooe2;
   ooe2.read(proto.get());
@@ -312,9 +315,9 @@ BOOST_AUTO_TEST_CASE(test_json_unicode_escaped_missing_low_surrogate) {
   ":[\"i8\",3,1,2,3]},\"13\":{\"lst\":[\"i16\",3,1,2,3]},\"14\":{\"lst\":[\"i64"
   "\",3,1,2,3]}}";
 
-  boost::shared_ptr<TMemoryBuffer> buffer(new TMemoryBuffer(
+  stdcxx::shared_ptr<TMemoryBuffer> buffer(new TMemoryBuffer(
     (uint8_t*)(json_string), sizeof(json_string)));
-  boost::shared_ptr<TJSONProtocol> proto(new TJSONProtocol(buffer));
+  stdcxx::shared_ptr<TJSONProtocol> proto(new TJSONProtocol(buffer));
 
   OneOfEach ooe2;
   BOOST_CHECK_THROW(ooe2.read(proto.get()),
@@ -330,9 +333,9 @@ BOOST_AUTO_TEST_CASE(test_json_unicode_escaped_missing_hi_surrogate) {
   ":[\"i8\",3,1,2,3]},\"13\":{\"lst\":[\"i16\",3,1,2,3]},\"14\":{\"lst\":[\"i64"
   "\",3,1,2,3]}}";
 
-  boost::shared_ptr<TMemoryBuffer> buffer(new TMemoryBuffer(
+  stdcxx::shared_ptr<TMemoryBuffer> buffer(new TMemoryBuffer(
     (uint8_t*)(json_string), sizeof(json_string)));
-  boost::shared_ptr<TJSONProtocol> proto(new TJSONProtocol(buffer));
+  stdcxx::shared_ptr<TJSONProtocol> proto(new TJSONProtocol(buffer));
 
   OneOfEach ooe2;
   BOOST_CHECK_THROW(ooe2.read(proto.get()),

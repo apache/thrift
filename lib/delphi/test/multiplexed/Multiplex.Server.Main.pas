@@ -28,7 +28,6 @@ interface
 uses
   Windows, SysUtils,
   Generics.Collections,
-  Thrift.Console,
   Thrift.Server,
   Thrift.Transport,
   Thrift.Transport.Pipes,
@@ -41,6 +40,7 @@ uses
   Benchmark,  // in gen-delphi folder
   Aggr,       // in gen-delphi folder
   Multiplex.Test.Common,
+  ConsoleHelper,
   Contnrs;
 
 type

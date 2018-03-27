@@ -76,10 +76,12 @@ class TClientSocketTransport extends TSocketTransport {
     // Use a sync completer to ensure that the buffer can be read immediately
     // after the read buffer is set, and avoid a race condition where another
     // response could overwrite the read buffer.
-    Completer completer = new Completer.sync();
+    var completer = new Completer<Uint8List>.sync();
     _completers.add(completer);
 
-    socket.send(bytes);
+    if (bytes.lengthInBytes > 0) {
+      socket.send(bytes);
+    }
 
     return completer.future;
   }
@@ -123,7 +125,7 @@ class TAsyncClientSocketTransport extends TSocketTransport {
     // Use a sync completer to ensure that the buffer can be read immediately
     // after the read buffer is set, and avoid a race condition where another
     // response could overwrite the read buffer.
-    Completer completer = new Completer.sync();
+    var completer = new Completer<Uint8List>.sync();
     _completers[seqid] = completer;
 
     if (responseTimeout != null) {

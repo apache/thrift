@@ -17,12 +17,9 @@
 # under the License.
 #
 
-THRIFT = $(top_builddir)/compiler/cpp/thrift
-
 BIN_CPP = bin/Main-debug
 BIN_PHP = bin/php/Main-debug.php
 BIN_PHP_WEB = bin/php-web-server/Main-debug.php
-
 
 gen-haxe/tutorial/calculator.hx gen-haxe/shared/shared_service.hx: $(top_srcdir)/tutorial/tutorial.thrift
 	$(THRIFT) --gen haxe -r $<
@@ -83,16 +80,18 @@ clean-local:
 	$(RM) -r gen-haxe bin
 
 EXTRA_DIST = \
-             src \
-             cpp.hxml \
-             csharp.hxml \
-             flash.hxml \
-             java.hxml \
-             javascript.hxml \
-             neko.hxml \
-             php.hxml \
-             python.hxml \
-             project.hide \
-             Tutorial.hxproj \
-             make_all.bat \
-             make_all.sh
+	src \
+	cpp.hxml \
+	csharp.hxml \
+	flash.hxml \
+	java.hxml \
+	javascript.hxml \
+	php-web-server.hxml \
+	neko.hxml \
+	php.hxml \
+	python.hxml \
+	router.php \
+	project.hide \
+	Tutorial.hxproj \
+	make_all.bat \
+	make_all.sh

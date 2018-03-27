@@ -87,20 +87,21 @@ class TJSONContext;
  * the current implementation is to match as closely as possible the behavior
  * of Java's Double.toString(), which has no precision loss.  Implementors in
  * other languages should strive to achieve that where possible. I have not
- * yet verified whether boost:lexical_cast, which is doing that work for me in
- * C++, loses any precision, but I am leaving this as a future improvement. I
- * may try to provide a C component for this, so that other languages could
- * bind to the same underlying implementation for maximum consistency.
+ * yet verified whether std::istringstream::operator>>, which is doing that
+ * work for me in C++, loses any precision, but I am leaving this as a future
+ * improvement. I may try to provide a C component for this, so that other
+ * languages could bind to the same underlying implementation for maximum
+ * consistency.
  *
  */
 class TJSONProtocol : public TVirtualProtocol<TJSONProtocol> {
 public:
-  TJSONProtocol(boost::shared_ptr<TTransport> ptrans);
+  TJSONProtocol(stdcxx::shared_ptr<TTransport> ptrans);
 
   ~TJSONProtocol();
 
 private:
-  void pushContext(boost::shared_ptr<TJSONContext> c);
+  void pushContext(stdcxx::shared_ptr<TJSONContext> c);
 
   void popContext();
 
@@ -275,8 +276,8 @@ public:
 private:
   TTransport* trans_;
 
-  std::stack<boost::shared_ptr<TJSONContext> > contexts_;
-  boost::shared_ptr<TJSONContext> context_;
+  std::stack<stdcxx::shared_ptr<TJSONContext> > contexts_;
+  stdcxx::shared_ptr<TJSONContext> context_;
   LookaheadReader reader_;
 };
 
@@ -289,8 +290,8 @@ public:
 
   virtual ~TJSONProtocolFactory() {}
 
-  boost::shared_ptr<TProtocol> getProtocol(boost::shared_ptr<TTransport> trans) {
-    return boost::shared_ptr<TProtocol>(new TJSONProtocol(trans));
+  stdcxx::shared_ptr<TProtocol> getProtocol(stdcxx::shared_ptr<TTransport> trans) {
+    return stdcxx::shared_ptr<TProtocol>(new TJSONProtocol(trans));
   }
 };
 }
@@ -308,7 +309,7 @@ std::string ThriftJSONString(const ThriftStruct& ts) {
   using namespace apache::thrift::transport;
   using namespace apache::thrift::protocol;
   TMemoryBuffer* buffer = new TMemoryBuffer;
-  boost::shared_ptr<TTransport> trans(buffer);
+  stdcxx::shared_ptr<TTransport> trans(buffer);
   TJSONProtocol protocol(trans);
 
   ts.write(&protocol);

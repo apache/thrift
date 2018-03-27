@@ -127,6 +127,11 @@ package org.apache.thrift.transport
     {
       this.eventDispatcher.addEventListener(type, listener, useCapture, priority, useWeakReference);
     }
+    
+    public function removeEventListener(type:String, listener:Function, useCapture:Boolean = false):void
+    {
+      this.eventDispatcher.removeEventListener(type, listener, useCapture);
+    }
 
     public override function open():void
     {

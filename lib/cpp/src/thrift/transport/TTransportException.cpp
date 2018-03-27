@@ -18,13 +18,11 @@
  */
 
 #include <thrift/transport/TTransportException.h>
-#include <boost/lexical_cast.hpp>
 #include <cstring>
 
 #include <thrift/thrift-config.h>
 
 using std::string;
-using boost::lexical_cast;
 
 namespace apache {
 namespace thrift {

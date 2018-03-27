@@ -23,10 +23,11 @@
 #include <queue>
 #include <string>
 #include <utility>
-#include <boost/shared_ptr.hpp>
+#include <thrift/stdcxx.h>
 #include <thrift/async/TAsyncChannel.h>
 
 struct event_base;
+struct evdns_base;
 struct evhttp_connection;
 struct evhttp_request;
 
@@ -50,7 +51,8 @@ public:
                        const std::string& path,
                        const char* address,
                        int port,
-                       struct event_base* eb);
+                       struct event_base* eb,
+                       struct evdns_base *dnsbase = 0);
   ~TEvhttpClientChannel();
 
   virtual void sendAndRecvMessage(const VoidCallback& cob,

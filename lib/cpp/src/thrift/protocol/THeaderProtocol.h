@@ -25,7 +25,7 @@
 #include <thrift/protocol/TVirtualProtocol.h>
 #include <thrift/transport/THeaderTransport.h>
 
-#include <boost/shared_ptr.hpp>
+#include <thrift/stdcxx.h>
 
 using apache::thrift::transport::THeaderTransport;
 
@@ -43,21 +43,21 @@ protected:
 public:
   void resetProtocol();
 
-  explicit THeaderProtocol(const boost::shared_ptr<TTransport>& trans,
+  explicit THeaderProtocol(const stdcxx::shared_ptr<TTransport>& trans,
                            uint16_t protoId = T_COMPACT_PROTOCOL)
-    : TVirtualProtocol<THeaderProtocol>(boost::shared_ptr<TTransport>(new THeaderTransport(trans))),
-      trans_(boost::dynamic_pointer_cast<THeaderTransport>(this->getTransport())),
+    : TVirtualProtocol<THeaderProtocol>(stdcxx::shared_ptr<TTransport>(new THeaderTransport(trans))),
+      trans_(stdcxx::dynamic_pointer_cast<THeaderTransport>(getTransport())),
       protoId_(protoId) {
     trans_->setProtocolId(protoId);
     resetProtocol();
   }
 
-  THeaderProtocol(const boost::shared_ptr<TTransport>& inTrans,
-                  const boost::shared_ptr<TTransport>& outTrans,
+  THeaderProtocol(const stdcxx::shared_ptr<TTransport>& inTrans,
+                  const stdcxx::shared_ptr<TTransport>& outTrans,
                   uint16_t protoId = T_COMPACT_PROTOCOL)
     : TVirtualProtocol<THeaderProtocol>(
-          boost::shared_ptr<TTransport>(new THeaderTransport(inTrans, outTrans))),
-      trans_(boost::dynamic_pointer_cast<THeaderTransport>(this->getTransport())),
+          stdcxx::shared_ptr<TTransport>(new THeaderTransport(inTrans, outTrans))),
+      trans_(stdcxx::dynamic_pointer_cast<THeaderTransport>(getTransport())),
       protoId_(protoId) {
     trans_->setProtocolId(protoId);
     resetProtocol();
@@ -182,25 +182,25 @@ public:
   uint32_t readBinary(std::string& binary);
 
 protected:
-  boost::shared_ptr<THeaderTransport> trans_;
+  stdcxx::shared_ptr<THeaderTransport> trans_;
 
-  boost::shared_ptr<TProtocol> proto_;
+  stdcxx::shared_ptr<TProtocol> proto_;
   uint32_t protoId_;
 };
 
 class THeaderProtocolFactory : public TProtocolFactory {
 public:
-  virtual boost::shared_ptr<TProtocol> getProtocol(boost::shared_ptr<transport::TTransport> trans) {
+  virtual stdcxx::shared_ptr<TProtocol> getProtocol(stdcxx::shared_ptr<transport::TTransport> trans) {
     THeaderProtocol* headerProtocol
-        = new THeaderProtocol(trans, boost::shared_ptr<transport::TTransport>(), T_BINARY_PROTOCOL);
-    return boost::shared_ptr<TProtocol>(headerProtocol);
+        = new THeaderProtocol(trans, trans, T_BINARY_PROTOCOL);
+    return stdcxx::shared_ptr<TProtocol>(headerProtocol);
   }
 
-  virtual boost::shared_ptr<TProtocol> getProtocol(
-      boost::shared_ptr<transport::TTransport> inTrans,
-      boost::shared_ptr<transport::TTransport> outTrans) {
+  virtual stdcxx::shared_ptr<TProtocol> getProtocol(
+      stdcxx::shared_ptr<transport::TTransport> inTrans,
+      stdcxx::shared_ptr<transport::TTransport> outTrans) {
     THeaderProtocol* headerProtocol = new THeaderProtocol(inTrans, outTrans, T_BINARY_PROTOCOL);
-    return boost::shared_ptr<TProtocol>(headerProtocol);
+    return stdcxx::shared_ptr<TProtocol>(headerProtocol);
   }
 };
 }

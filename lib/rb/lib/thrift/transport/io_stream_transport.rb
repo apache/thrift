@@ -35,5 +35,8 @@ module Thrift
     def write(buf); @output.write(Bytes.force_binary_encoding(buf)) end
     def close; @input.close; @output.close end
     def to_io; @input end # we're assuming this is used in a IO.select for reading
+    def to_s
+      "iostream(input=#{@input.to_s},output=#{@output.to_s})"
+    end
   end
 end

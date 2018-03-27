@@ -98,13 +98,13 @@ bool parse_map_args(MapTypeArgs* dest, PyObject* typeargs) {
 }
 
 bool parse_struct_args(StructTypeArgs* dest, PyObject* typeargs) {
-  if (PyTuple_Size(typeargs) != 2) {
-    PyErr_SetString(PyExc_TypeError, "expecting tuple of size 2 for struct args");
+  if (PyList_Size(typeargs) != 2) {
+    PyErr_SetString(PyExc_TypeError, "expecting list of size 2 for struct args");
     return false;
   }
 
-  dest->klass = PyTuple_GET_ITEM(typeargs, 0);
-  dest->spec = PyTuple_GET_ITEM(typeargs, 1);
+  dest->klass = PyList_GET_ITEM(typeargs, 0);
+  dest->spec = PyList_GET_ITEM(typeargs, 1);
 
   return true;
 }

@@ -20,6 +20,9 @@ KIND, either express or implied. See the License for the
 specific language governing permissions and limitations
 under the License.
 
+## Compatibility
+
+node version 6 or later is required
 
 ## Install
 
@@ -58,7 +61,7 @@ Here is a Cassandra example:
 <a name="int64"></a>
 ## Int64
 
-Since JavaScript represents all numbers as doubles, int64 values cannot be accurately represented naturally. To solve this, int64 values in responses will be wrapped with Thirft.Int64 objects. The Int64 implementation used is [broofa/node-int64](https://github.com/broofa/node-int64).
+Since JavaScript represents all numbers as doubles, int64 values cannot be accurately represented naturally. To solve this, int64 values in responses will be wrapped with Thrift.Int64 objects. The Int64 implementation used is [broofa/node-int64](https://github.com/broofa/node-int64).
 
 ## Client and server examples
 

@@ -17,22 +17,27 @@
  * under the License.
  */
 
-#define __STDC_FORMAT_MACROS
-
 #ifndef _GNU_SOURCE
 #define _GNU_SOURCE // needed for getopt_long
 #endif
 
+#if defined(_MSC_VER) && (_MSC_VER <= 1700)
+// polynomial and std::fill_t warning happens in MSVC 2010, 2013, maybe others
+// https://svn.boost.org/trac/boost/ticket/11426
+#pragma warning(disable:4996)
+#endif
+
+#ifdef HAVE_STDINT_H
 #include <stdint.h>
+#endif
 #ifdef HAVE_INTTYPES_H
 #include <inttypes.h>
 #endif
 #include <cstddef>
 #include <fstream>
 #include <iostream>
-#include <thrift/cxxfunctional.h>
+#include <thrift/stdcxx.h>
 
-#include <boost/function.hpp>
 #include <boost/random.hpp>
 #include <boost/shared_array.hpp>
 #include <boost/test/unit_test.hpp>
@@ -41,8 +46,9 @@
 #include <thrift/transport/TBufferTransports.h>
 #include <thrift/transport/TZlibTransport.h>
 
-using namespace std;
 using namespace apache::thrift::transport;
+using apache::thrift::stdcxx::shared_ptr;
+using std::string;
 
 boost::mt19937 rng;
 
@@ -141,8 +147,8 @@ boost::shared_array<uint8_t> gen_random_buffer(uint32_t buf_len) {
  */
 
 void test_write_then_read(const boost::shared_array<uint8_t> buf, uint32_t buf_len) {
-  boost::shared_ptr<TMemoryBuffer> membuf(new TMemoryBuffer());
-  boost::shared_ptr<TZlibTransport> zlib_trans(new TZlibTransport(membuf));
+  shared_ptr<TMemoryBuffer> membuf(new TMemoryBuffer());
+  shared_ptr<TZlibTransport> zlib_trans(new TZlibTransport(membuf));
   zlib_trans->write(buf.get(), buf_len);
   zlib_trans->finish();
 
@@ -160,8 +166,8 @@ void test_separate_checksum(const boost::shared_array<uint8_t> buf, uint32_t buf
   // it isn't there.  The original implementation complained that
   // the stream was not complete.  I'm about to go fix that.
   // It worked.  Awesome.
-  boost::shared_ptr<TMemoryBuffer> membuf(new TMemoryBuffer());
-  boost::shared_ptr<TZlibTransport> zlib_trans(new TZlibTransport(membuf));
+  shared_ptr<TMemoryBuffer> membuf(new TMemoryBuffer());
+  shared_ptr<TZlibTransport> zlib_trans(new TZlibTransport(membuf));
   zlib_trans->write(buf.get(), buf_len);
   zlib_trans->finish();
   string tmp_buf;
@@ -180,8 +186,8 @@ void test_separate_checksum(const boost::shared_array<uint8_t> buf, uint32_t buf
 void test_incomplete_checksum(const boost::shared_array<uint8_t> buf, uint32_t buf_len) {
   // Make sure we still get that "not complete" error if
   // it really isn't complete.
-  boost::shared_ptr<TMemoryBuffer> membuf(new TMemoryBuffer());
-  boost::shared_ptr<TZlibTransport> zlib_trans(new TZlibTransport(membuf));
+  shared_ptr<TMemoryBuffer> membuf(new TMemoryBuffer());
+  shared_ptr<TZlibTransport> zlib_trans(new TZlibTransport(membuf));
   zlib_trans->write(buf.get(), buf_len);
   zlib_trans->finish();
   string tmp_buf;
@@ -204,11 +210,11 @@ void test_incomplete_checksum(const boost::shared_array<uint8_t> buf, uint32_t b
 
 void test_read_write_mix(const boost::shared_array<uint8_t> buf,
                          uint32_t buf_len,
-                         const boost::shared_ptr<SizeGenerator>& write_gen,
-                         const boost::shared_ptr<SizeGenerator>& read_gen) {
+                         const shared_ptr<SizeGenerator>& write_gen,
+                         const shared_ptr<SizeGenerator>& read_gen) {
   // Try it with a mix of read/write sizes.
-  boost::shared_ptr<TMemoryBuffer> membuf(new TMemoryBuffer());
-  boost::shared_ptr<TZlibTransport> zlib_trans(new TZlibTransport(membuf));
+  shared_ptr<TMemoryBuffer> membuf(new TMemoryBuffer());
+  shared_ptr<TZlibTransport> zlib_trans(new TZlibTransport(membuf));
   unsigned int tot;
 
   tot = 0;
@@ -243,8 +249,8 @@ void test_read_write_mix(const boost::shared_array<uint8_t> buf,
 
 void test_invalid_checksum(const boost::shared_array<uint8_t> buf, uint32_t buf_len) {
   // Verify checksum checking.
-  boost::shared_ptr<TMemoryBuffer> membuf(new TMemoryBuffer());
-  boost::shared_ptr<TZlibTransport> zlib_trans(new TZlibTransport(membuf));
+  shared_ptr<TMemoryBuffer> membuf(new TMemoryBuffer());
+  shared_ptr<TZlibTransport> zlib_trans(new TZlibTransport(membuf));
   zlib_trans->write(buf.get(), buf_len);
   zlib_trans->finish();
   string tmp_buf;
@@ -280,8 +286,8 @@ void test_invalid_checksum(const boost::shared_array<uint8_t> buf, uint32_t buf_
 
 void test_write_after_flush(const boost::shared_array<uint8_t> buf, uint32_t buf_len) {
   // write some data
-  boost::shared_ptr<TMemoryBuffer> membuf(new TMemoryBuffer());
-  boost::shared_ptr<TZlibTransport> zlib_trans(new TZlibTransport(membuf));
+  shared_ptr<TMemoryBuffer> membuf(new TMemoryBuffer());
+  shared_ptr<TZlibTransport> zlib_trans(new TZlibTransport(membuf));
   zlib_trans->write(buf.get(), buf_len);
 
   // call finish()
@@ -316,7 +322,7 @@ void test_write_after_flush(const boost::shared_array<uint8_t> buf, uint32_t buf
 void test_no_write() {
   // Verify that no data is written to the underlying transport if we
   // never write data to the TZlibTransport.
-  boost::shared_ptr<TMemoryBuffer> membuf(new TMemoryBuffer());
+  shared_ptr<TMemoryBuffer> membuf(new TMemoryBuffer());
   {
     // Create a TZlibTransport object, and immediately destroy it
     // when it goes out of scope.
@@ -324,6 +330,12 @@ void test_no_write() {
   }
 
   BOOST_CHECK_EQUAL(membuf->available_read(), (uint32_t)0);
+}
+
+void test_get_underlying_transport() {
+  shared_ptr<TMemoryBuffer> membuf(new TMemoryBuffer());
+  shared_ptr<TZlibTransport> zlib_trans(new TZlibTransport(membuf));
+  BOOST_CHECK_EQUAL(membuf.get(), zlib_trans->getUnderlyingTransport().get());
 }
 
 /*
@@ -335,7 +347,8 @@ void test_no_write() {
   do {                                                                                             \
     ::std::ostringstream name_ss;                                                                  \
     name_ss << name << "-" << BOOST_STRINGIZE(_FUNC);                                              \
-    boost::function<void ()> test_func = ::apache::thrift::stdcxx::bind(_FUNC, ##__VA_ARGS__);     \
+    ::apache::thrift::stdcxx::function<void ()> test_func =                                        \
+        ::apache::thrift::stdcxx::bind(_FUNC, ##__VA_ARGS__);                                      \
     ::boost::unit_test::test_case* tc                                                              \
         = ::boost::unit_test::make_test_case(test_func, name_ss.str(), __FILE__, __LINE__);        \
     (suite)->add(tc);                                                                              \
@@ -363,8 +376,8 @@ void add_tests(boost::unit_test::test_suite* suite,
   ADD_TEST_CASE(suite, name, test_invalid_checksum, buf, buf_len);
   ADD_TEST_CASE(suite, name, test_write_after_flush, buf, buf_len);
 
-  boost::shared_ptr<SizeGenerator> size_32k(new ConstantSizeGenerator(1 << 15));
-  boost::shared_ptr<SizeGenerator> size_lognormal(new LogNormalSizeGenerator(20, 30));
+  shared_ptr<SizeGenerator> size_32k(new ConstantSizeGenerator(1 << 15));
+  shared_ptr<SizeGenerator> size_lognormal(new LogNormalSizeGenerator(20, 30));
   ADD_TEST_CASE(suite, name << "-constant", test_read_write_mix, buf, buf_len, size_32k, size_32k);
   ADD_TEST_CASE(suite,
                 name << "-lognormal-write",
@@ -394,8 +407,8 @@ void add_tests(boost::unit_test::test_suite* suite,
   // Because the SizeGenerator makes a copy of the random number generator,
   // both SizeGenerators should return the exact same set of values, since they
   // both start with random number generators in the same state.
-  boost::shared_ptr<SizeGenerator> write_size_gen(new LogNormalSizeGenerator(20, 30));
-  boost::shared_ptr<SizeGenerator> read_size_gen(new LogNormalSizeGenerator(20, 30));
+  shared_ptr<SizeGenerator> write_size_gen(new LogNormalSizeGenerator(20, 30));
+  shared_ptr<SizeGenerator> read_size_gen(new LogNormalSizeGenerator(20, 30));
   ADD_TEST_CASE(suite,
                 name << "-lognormal-same-distribution",
                 test_read_write_mix,
@@ -429,6 +442,7 @@ bool init_unit_test_suite() {
   add_tests(suite, gen_random_buffer(buf_len), buf_len, "random");
 
   suite->add(BOOST_TEST_CASE(test_no_write));
+  suite->add(BOOST_TEST_CASE(test_get_underlying_transport));
 
   return true;
 }

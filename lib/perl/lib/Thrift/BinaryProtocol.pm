@@ -17,24 +17,25 @@
 # under the License.
 #
 
-require 5.6.0;
-
+use 5.10.0;
 use strict;
 use warnings;
 
-use utf8;
-use Encode;
-
-use Thrift;
-use Thrift::Protocol;
-
 use Bit::Vector;
+use Encode;
+use Thrift;
+use Thrift::Exception;
+use Thrift::MessageType;
+use Thrift::Protocol;
+use Thrift::Type;
+use utf8;
 
 #
 # Binary implementation of the Thrift protocol.
 #
 package Thrift::BinaryProtocol;
 use base('Thrift::Protocol');
+use version 0.77; our $VERSION = version->declare("$Thrift::VERSION");
 
 use constant VERSION_MASK   => 0xffff0000;
 use constant VERSION_1      => 0x80010000;
@@ -97,7 +98,7 @@ sub writeFieldEnd
 sub writeFieldStop
 {
     my $self = shift;
-    return $self->writeByte(TType::STOP);
+    return $self->writeByte(Thrift::TType::STOP);
 }
 
 sub writeMapBegin
@@ -252,7 +253,8 @@ sub readMessageBegin
     my $result = $self->readI32(\$version);
     if (($version & VERSION_MASK) > 0) {
       if (($version & VERSION_MASK) != VERSION_1) {
-        die new Thrift::TException('Missing version identifier')
+        die new Thrift::TProtocolException('Missing version identifier',
+                                           Thrift::TProtocolException::BAD_VERSION);
       }
       $$type = $version & 0x000000ff;
       return
@@ -297,7 +299,7 @@ sub readFieldBegin
 
     my $result = $self->readByte($fieldType);
 
-    if ($$fieldType == TType::STOP) {
+    if ($$fieldType == Thrift::TType::STOP) {
       $$fieldId = 0;
       return $result;
     }
@@ -447,7 +449,7 @@ sub readDouble
     else {
       $data = scalar reverse($self->{trans}->readAll(8));
     }
-    
+
     my @arr = unpack('d', $data);
 
     $$value = $arr[0];
@@ -491,7 +493,8 @@ sub readStringBody
 # Binary Protocol Factory
 #
 package Thrift::BinaryProtocolFactory;
-use base('TProtocolFactory');
+use base('Thrift::TProtocolFactory');
+use version 0.77; our $VERSION = version->declare("$Thrift::VERSION");
 
 sub new
 {

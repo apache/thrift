@@ -102,7 +102,7 @@ inline bool ProtocolBase<Impl>::writeBuffer(char* data, size_t size) {
     PyErr_SetString(PyExc_IOError, "failed to write to cStringIO object");
     return false;
   }
-  if (len != size) {
+  if (static_cast<size_t>(len) != size) {
     PyErr_Format(PyExc_EOFError, "write length mismatch: expected %lu got %d", size, len);
     return false;
   }

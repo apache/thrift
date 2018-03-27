@@ -31,17 +31,21 @@
   <!-- the root directory, where you unpack thrift distibution (e.g. thrift-0.x.x.tar.gz) -->
   <property name="thrift.dir" location="../../../" />
   <property name="thrift.java.dir" location="${thrift.dir}/lib/java" />
+  <property name="build.tools.dir" location="${thrift.java.dir}/build/tools/"/>
+  <property file="${basedir}/build.properties"/>
 
   <!-- Include the base java properties file -->
-  <property file="${thrift.java.dir}/build.properties" />
+  <property file="${thrift.java.dir}/gradle.properties" />
 
   <property name="thrift.compiler" location="${thrift.dir}/compiler/cpp/thrift" />
 
   <path id="libs.classpath">
-    <fileset dir="${thrift.java.dir}/build/">
-      <include name="*.jar" />
+    <fileset dir="${thrift.java.dir}/build/libs">
+      <include name="libthrift*.jar" />
+      <exclude name="libthrift*javadoc.jar" />
+      <exclude name="libthrift*sources.jar" />
     </fileset>
-    <fileset dir="${thrift.java.dir}/build/lib">
+    <fileset dir="${thrift.java.dir}/build/deps">
       <include name="*.jar" />
     </fileset>
     <fileset dir="${build}/lib">
@@ -59,15 +63,16 @@
       <condition>
         <not>
           <resourcecount count="2">
-            <fileset id="fs" dir="${thrift.java.dir}/build">
+            <fileset id="fs" dir="${thrift.java.dir}/build/libs">
               <include name="libthrift*.jar" />
               <exclude name="libthrift*javadoc.jar" />
+              <exclude name="libthrift*sources.jar" />
             </fileset>
           </resourcecount>
         </not>
       </condition>
       You need libthrift*.jar and libthrift*test.jar located at
-      ${thrift.java.dir}/build
+      ${thrift.java.dir}/build/libs
       Did you compile Thrift Java library and its test suite by "ant compile-test"?
     </fail>
     <fail>
@@ -84,6 +89,7 @@
 
   <target name="init" depends="dependencies">
     <tstamp />
+    <mkdir dir="${build.tools.dir}"/>
     <mkdir dir="${build}"/>
     <mkdir dir="${build}/js/lib"/>
     <mkdir dir="${build}/lib"/>
@@ -92,16 +98,20 @@
     <mkdir dir="${build}/test/log"/>
   </target>
 
-  <target name="jslibs" depends="init, proxy">
+  <target name="download_jslibs">
     <get src="http://code.jquery.com/jquery-1.11.3.min.js" dest="${build}/js/lib/jquery.js" usetimestamp="true"/>
     <get src="http://code.jquery.com/qunit/qunit-1.18.0.js" dest="${build}/js/lib/qunit.js" usetimestamp="true"/>
     <get src="http://code.jquery.com/qunit/qunit-1.18.0.css" dest="${build}/js/lib/qunit.css" usetimestamp="true"/>
+    <get src="https://cdn.jsdelivr.net/npm/es6-promise@4/dist/es6-promise.auto.js" dest="${build}/js/lib/es6-promise.js" usetimestamp="true"/>
+  </target>
+
+  <target name="jslibs" depends="init, proxy, download_jslibs">
   </target>
 
   <target name="compile" description="compile the test suite" depends="init, generate, resolve">
     <!-- //TODO enable <compilerarg value="-Xlint"/>-->
-    <javac includeantruntime="false" srcdir="${genjava}" destdir="${build}/test" classpathref="libs.classpath"/>
-    <javac includeantruntime="false" srcdir="${src}" destdir="${build}/test" classpathref="libs.classpath"/>
+    <javac compiler="modern" includeantruntime="false" srcdir="${genjava}" destdir="${build}/test" classpathref="libs.classpath"/>
+    <javac compiler="modern" includeantruntime="false" srcdir="${src}" destdir="${build}/test" classpathref="libs.classpath"/>
   </target>
 
   <target name="jstest" description="create the test suite jar file" depends="compile">
@@ -161,6 +171,9 @@
     <exec executable="${thrift.compiler}" failonerror="true">
       <arg line="--gen js:jquery ${thrift.dir}/test/ThriftTest.thrift" />
     </exec>
+    <exec executable="${thrift.compiler}" failonerror="true">
+      <arg line="--gen js:jquery ${thrift.dir}/test/DoubleConstantsTest.thrift" />
+    </exec>
   </target>
 
   <target name="test" description="run test suite (lint, unittest)" depends="lint, unittest"/>
@@ -207,7 +220,17 @@
     <delete dir="${genjs}" />
   </target>
 
-  <target name="resolve" unless="mvn.finished">
+  <target name="mvn.ant.tasks.download" depends="init,mvn.ant.tasks.check" unless="mvn.ant.tasks.found">
+    <get src="${mvn.ant.task.url}/${mvn.ant.task.jar}" dest="${build.tools.dir}/${mvn.ant.task.jar}" usetimestamp="true"/>
+  </target>
+
+  <target name="mvn.ant.tasks.check">
+    <condition property="mvn.ant.tasks.found">
+      <typefound uri="antlib:org.apache.maven.artifact.ant" name="artifact"/>
+    </condition>
+  </target>
+
+  <target name="resolve" depends="mvn.ant.tasks.download" unless="mvn.finished">
     <typedef uri="antlib:org.apache.maven.artifact.ant" classpath="${thrift.java.dir}/build/tools/${mvn.ant.task.jar}"/>
 
     <artifact:dependencies filesetId="js.test.dependency.jars">

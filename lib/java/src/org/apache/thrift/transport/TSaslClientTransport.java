@@ -19,6 +19,7 @@
 
 package org.apache.thrift.transport;
 
+import java.io.UnsupportedEncodingException;
 import java.util.Map;
 
 import javax.security.auth.callback.CallbackHandler;
@@ -96,7 +97,12 @@ public class TSaslClientTransport extends TSaslTransport {
     LOGGER.debug("Sending mechanism name {} and initial response of length {}", mechanism,
         initialResponse.length);
 
-    byte[] mechanismBytes = mechanism.getBytes();
+    byte[] mechanismBytes;
+	try {
+		mechanismBytes = mechanism.getBytes("UTF-8");
+	} catch (UnsupportedEncodingException e) {
+		throw new TTransportException(e);
+	}
     sendSaslMessage(NegotiationStatus.START,
                     mechanismBytes);
     // Send initial response

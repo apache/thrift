@@ -18,12 +18,12 @@
 #
 
 
-#Make sure gen-cpp and gen-c_glib files can be included
-include_directories("${CMAKE_CURRENT_BINARY_DIR}")
-
 set(TEST_PREFIX "c_glib")
 
-include_directories(${Boost_INCLUDE_DIRS})
+include_directories(SYSTEM ${Boost_INCLUDE_DIRS})
+
+#Make sure gen-cpp and gen-c_glib files can be included
+include_directories("${CMAKE_CURRENT_BINARY_DIR}")
 
 # Create the thrift C test library
 set(testgenc_SOURCES
@@ -111,6 +111,8 @@ include_directories("${PROJECT_SOURCE_DIR}/test/c_glib/src" "${CMAKE_CURRENT_BIN
 add_executable(testthrifttest testthrifttest.c
     ${PROJECT_SOURCE_DIR}/test/c_glib/src/thrift_test_handler.c
     ${PROJECT_SOURCE_DIR}/test/c_glib/src/thrift_test_handler.h
+    ${PROJECT_SOURCE_DIR}/test/c_glib/src/thrift_second_service_handler.c
+    ${PROJECT_SOURCE_DIR}/test/c_glib/src/thrift_second_service_handler.h
     gen-c_glib/t_test_thrift_test_types.h)
 target_link_libraries(testthrifttest testgenc)
 add_test(NAME testthrifttest COMMAND testthrifttest)

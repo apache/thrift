@@ -17,8 +17,7 @@
 # under the License.
 #
 
-THRIFT = $(top_builddir)/compiler/cpp/thrift
-THRIFTARGS = -out gopath/src/ --gen go:thrift_import=thrift
+THRIFTARGS = -out gopath/src/ --gen go:thrift_import=thrift$(COMPILER_EXTRAFLAG)
 THRIFTTEST = $(top_srcdir)/test/ThriftTest.thrift
 
 # Thrift for GO has problems with complex map keys: THRIFT-2063
@@ -56,6 +55,8 @@ gopath: $(THRIFT) $(THRIFTTEST) \
 	$(THRIFT) $(THRIFTARGS) InitialismsTest.thrift
 	$(THRIFT) $(THRIFTARGS),read_write_private DontExportRWTest.thrift
 	$(THRIFT) $(THRIFTARGS),ignore_initialisms IgnoreInitialismsTest.thrift
+	GOPATH=`pwd`/gopath $(GO) get github.com/golang/mock/gomock || true
+	sed -i 's/\"context\"/\"golang.org\/x\/net\/context\"/g' gopath/src/github.com/golang/mock/gomock/controller.go || true
 	GOPATH=`pwd`/gopath $(GO) get github.com/golang/mock/gomock
 	ln -nfs ../../../thrift gopath/src/thrift
 	ln -nfs ../../tests gopath/src/tests

@@ -33,11 +33,14 @@ namespace concurrency {
 /**
  * Implementation of Mutex class using C++11 std::timed_mutex
  *
+ * Methods throw std::system_error on error.
+ *
  * @version $Id:$
  */
 class Mutex::impl : public std::timed_mutex {};
 
 Mutex::Mutex(Initializer init) : impl_(new Mutex::impl()) {
+  ((void)init);
 }
 
 void* Mutex::getUnderlyingImpl() const {
@@ -61,6 +64,7 @@ void Mutex::unlock() const {
 }
 
 void Mutex::DEFAULT_INITIALIZER(void* arg) {
+  ((void)arg);
 }
 }
 }

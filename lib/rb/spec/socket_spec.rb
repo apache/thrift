@@ -25,37 +25,44 @@ describe 'Socket' do
   describe Thrift::Socket do
     before(:each) do
       @socket = Thrift::Socket.new
-      @handle = mock("Handle", :closed? => false)
-      @handle.stub!(:close)
-      @handle.stub!(:connect_nonblock)
-      @handle.stub!(:setsockopt)
-      ::Socket.stub!(:new).and_return(@handle)
+      @handle = double("Handle", :closed? => false)
+      allow(@handle).to receive(:close)
+      allow(@handle).to receive(:connect_nonblock)
+      allow(@handle).to receive(:setsockopt)
+      allow(::Socket).to receive(:new).and_return(@handle)
     end
 
     it_should_behave_like "a socket"
 
     it "should raise a TransportException when it cannot open a socket" do
-      ::Socket.should_receive(:getaddrinfo).with("localhost", 9090, nil, ::Socket::SOCK_STREAM).and_return([[]])
-      lambda { @socket.open }.should raise_error(Thrift::TransportException) { |e| e.type.should == Thrift::TransportException::NOT_OPEN }
+      expect(::Socket).to receive(:getaddrinfo).with("localhost", 9090, nil, ::Socket::SOCK_STREAM).and_return([[]])
+      expect { @socket.open }.to raise_error(Thrift::TransportException) { |e| expect(e.type).to eq(Thrift::TransportException::NOT_OPEN) }
     end
 
     it "should open a ::Socket with default args" do
-      ::Socket.should_receive(:new).and_return(mock("Handle", :connect_nonblock => true, :setsockopt => nil))
-      ::Socket.should_receive(:getaddrinfo).with("localhost", 9090, nil, ::Socket::SOCK_STREAM).and_return([[]])
-      ::Socket.should_receive(:sockaddr_in)
+      expect(::Socket).to receive(:new).and_return(double("Handle", :connect_nonblock => true, :setsockopt => nil))
+      expect(::Socket).to receive(:getaddrinfo).with("localhost", 9090, nil, ::Socket::SOCK_STREAM).and_return([[]])
+      expect(::Socket).to receive(:sockaddr_in)
+      @socket.to_s == "socket(localhost:9090)"
       @socket.open
     end
 
     it "should accept host/port options" do
-      ::Socket.should_receive(:new).and_return(mock("Handle", :connect_nonblock => true, :setsockopt => nil))
-      ::Socket.should_receive(:getaddrinfo).with("my.domain", 1234, nil, ::Socket::SOCK_STREAM).and_return([[]])
-      ::Socket.should_receive(:sockaddr_in)
-      Thrift::Socket.new('my.domain', 1234).open
+      expect(::Socket).to receive(:new).and_return(double("Handle", :connect_nonblock => true, :setsockopt => nil))
+      expect(::Socket).to receive(:getaddrinfo).with("my.domain", 1234, nil, ::Socket::SOCK_STREAM).and_return([[]])
+      expect(::Socket).to receive(:sockaddr_in)
+      @socket = Thrift::Socket.new('my.domain', 1234).open
+      @socket.to_s == "socket(my.domain:1234)"
     end
 
     it "should accept an optional timeout" do
-      ::Socket.stub!(:new)
-      Thrift::Socket.new('localhost', 8080, 5).timeout.should == 5
+      allow(::Socket).to receive(:new)
+      expect(Thrift::Socket.new('localhost', 8080, 5).timeout).to eq(5)
+    end
+
+    it "should provide a reasonable to_s" do
+      allow(::Socket).to receive(:new)
+      expect(Thrift::Socket.new('myhost', 8090).to_s).to eq("socket(myhost:8090)")
     end
   end
 end

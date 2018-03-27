@@ -17,8 +17,6 @@
 # under the License.
 #
 
-THRIFT = $(top_builddir)/compiler/cpp/thrift
-
 gen-nodejs/Calculator.js gen-nodejs/SharedService.js: $(top_srcdir)/tutorial/tutorial.thrift
 	$(THRIFT) --gen js:node -r $<
 

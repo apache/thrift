@@ -19,8 +19,9 @@
 
 #include <thrift/thrift-config.h>
 
-#include <thrift/concurrency/PosixThreadFactory.h>
 #include <thrift/concurrency/Exception.h>
+#include <thrift/concurrency/Monitor.h>
+#include <thrift/concurrency/PosixThreadFactory.h>
 
 #if GOOGLE_PERFTOOLS_REGISTER_THREAD
 #include <google/profiler.h>
@@ -31,14 +32,11 @@
 
 #include <iostream>
 
-#include <boost/weak_ptr.hpp>
+#include <thrift/stdcxx.h>
 
 namespace apache {
 namespace thrift {
 namespace concurrency {
-
-using boost::shared_ptr;
-using boost::weak_ptr;
 
 /**
  * The POSIX thread class.
@@ -55,11 +53,12 @@ public:
 
 private:
   pthread_t pthread_;
-  STATE state_;
+  Monitor monitor_;		// guard to protect state_ and also notification
+  STATE state_;         // to protect proper thread start behavior
   int policy_;
   int priority_;
   int stackSize_;
-  weak_ptr<PthreadThread> self_;
+  stdcxx::weak_ptr<PthreadThread> self_;
   bool detached_;
 
 public:
@@ -67,13 +66,12 @@ public:
                 int priority,
                 int stackSize,
                 bool detached,
-                shared_ptr<Runnable> runnable)
+                stdcxx::shared_ptr<Runnable> runnable)
     :
 
 #ifndef _WIN32
       pthread_(0),
 #endif // _WIN32
-
       state_(uninitialized),
       policy_(policy),
       priority_(priority),
@@ -96,8 +94,26 @@ public:
     }
   }
 
+  STATE getState() const
+  {
+    Synchronized sync(monitor_);
+    return state_;
+  }
+
+  void setState(STATE newState)
+  {
+    Synchronized sync(monitor_);
+    state_ = newState;
+
+    // unblock start() with the knowledge that the thread has actually
+    // started running, which avoids a race in detached threads.
+    if (newState == started) {
+	  monitor_.notify();
+    }
+  }
+
   void start() {
-    if (state_ != uninitialized) {
+    if (getState() != uninitialized) {
       return;
     }
 
@@ -139,18 +155,27 @@ public:
     }
 
     // Create reference
-    shared_ptr<PthreadThread>* selfRef = new shared_ptr<PthreadThread>();
+    stdcxx::shared_ptr<PthreadThread>* selfRef = new stdcxx::shared_ptr<PthreadThread>();
     *selfRef = self_.lock();
 
-    state_ = starting;
+    setState(starting);
 
+	Synchronized sync(monitor_);
+	
     if (pthread_create(&pthread_, &thread_attr, threadMain, (void*)selfRef) != 0) {
       throw SystemResourceException("pthread_create failed");
     }
+    
+    // The caller may not choose to guarantee the scope of the Runnable
+    // being used in the thread, so we must actually wait until the thread
+    // starts before we return.  If we do not wait, it would be possible
+    // for the caller to start destructing the Runnable and the Thread,
+    // and we would end up in a race.  This was identified with valgrind.
+    monitor_.wait();
   }
 
   void join() {
-    if (!detached_ && state_ != uninitialized) {
+    if (!detached_ && getState() != uninitialized) {
       void* ignore;
       /* XXX
          If join fails it is most likely due to the fact
@@ -164,8 +189,6 @@ public:
       if (res != 0) {
         GlobalOutput.printf("PthreadThread::join(): fail with code %d", res);
       }
-    } else {
-      GlobalOutput.printf("PthreadThread::join(): detached thread");
     }
   }
 
@@ -178,185 +201,135 @@ public:
 #endif // _WIN32
   }
 
-  shared_ptr<Runnable> runnable() const { return Thread::runnable(); }
+  stdcxx::shared_ptr<Runnable> runnable() const { return Thread::runnable(); }
 
-  void runnable(shared_ptr<Runnable> value) { Thread::runnable(value); }
+  void runnable(stdcxx::shared_ptr<Runnable> value) { Thread::runnable(value); }
 
-  void weakRef(shared_ptr<PthreadThread> self) {
+  void weakRef(stdcxx::shared_ptr<PthreadThread> self) {
     assert(self.get() == this);
-    self_ = weak_ptr<PthreadThread>(self);
+    self_ = stdcxx::weak_ptr<PthreadThread>(self);
   }
 };
 
 void* PthreadThread::threadMain(void* arg) {
-  shared_ptr<PthreadThread> thread = *(shared_ptr<PthreadThread>*)arg;
-  delete reinterpret_cast<shared_ptr<PthreadThread>*>(arg);
-
-  if (thread == NULL) {
-    return (void*)0;
-  }
-
-  if (thread->state_ != starting) {
-    return (void*)0;
-  }
+  stdcxx::shared_ptr<PthreadThread> thread = *(stdcxx::shared_ptr<PthreadThread>*)arg;
+  delete reinterpret_cast<stdcxx::shared_ptr<PthreadThread>*>(arg);
 
 #if GOOGLE_PERFTOOLS_REGISTER_THREAD
   ProfilerRegisterThread();
 #endif
 
-  thread->state_ = started;
+  thread->setState(started);
+
   thread->runnable()->run();
-  if (thread->state_ != stopping && thread->state_ != stopped) {
-    thread->state_ = stopping;
+
+  STATE _s = thread->getState();
+  if (_s != stopping && _s != stopped) {
+    thread->setState(stopping);
   }
 
   return (void*)0;
 }
 
 /**
- * POSIX Thread factory implementation
+ * Converts generic posix thread schedule policy enums into pthread
+ * API values.
  */
-class PosixThreadFactory::Impl {
-
-private:
-  POLICY policy_;
-  PRIORITY priority_;
-  int stackSize_;
-  bool detached_;
-
-  /**
-   * Converts generic posix thread schedule policy enums into pthread
-   * API values.
-   */
-  static int toPthreadPolicy(POLICY policy) {
-    switch (policy) {
-    case OTHER:
-      return SCHED_OTHER;
-    case FIFO:
-      return SCHED_FIFO;
-    case ROUND_ROBIN:
-      return SCHED_RR;
-    }
+static int toPthreadPolicy(PosixThreadFactory::POLICY policy) {
+  switch (policy) {
+  case PosixThreadFactory::OTHER:
     return SCHED_OTHER;
+  case PosixThreadFactory::FIFO:
+    return SCHED_FIFO;
+  case PosixThreadFactory::ROUND_ROBIN:
+    return SCHED_RR;
   }
+  return SCHED_OTHER;
+}
 
-  /**
-   * Converts relative thread priorities to absolute value based on posix
-   * thread scheduler policy
-   *
-   *  The idea is simply to divide up the priority range for the given policy
-   * into the correpsonding relative priority level (lowest..highest) and
-   * then pro-rate accordingly.
-   */
-  static int toPthreadPriority(POLICY policy, PRIORITY priority) {
-    int pthread_policy = toPthreadPolicy(policy);
-    int min_priority = 0;
-    int max_priority = 0;
+/**
+ * Converts relative thread priorities to absolute value based on posix
+ * thread scheduler policy
+ *
+ *  The idea is simply to divide up the priority range for the given policy
+ * into the correpsonding relative priority level (lowest..highest) and
+ * then pro-rate accordingly.
+ */
+static int toPthreadPriority(PosixThreadFactory::POLICY policy, PosixThreadFactory::PRIORITY priority) {
+  int pthread_policy = toPthreadPolicy(policy);
+  int min_priority = 0;
+  int max_priority = 0;
 #ifdef HAVE_SCHED_GET_PRIORITY_MIN
-    min_priority = sched_get_priority_min(pthread_policy);
+  min_priority = sched_get_priority_min(pthread_policy);
 #endif
 #ifdef HAVE_SCHED_GET_PRIORITY_MAX
-    max_priority = sched_get_priority_max(pthread_policy);
+  max_priority = sched_get_priority_max(pthread_policy);
 #endif
-    int quanta = (HIGHEST - LOWEST) + 1;
-    float stepsperquanta = (float)(max_priority - min_priority) / quanta;
+  int quanta = (PosixThreadFactory::HIGHEST - PosixThreadFactory::LOWEST) + 1;
+  float stepsperquanta = (float)(max_priority - min_priority) / quanta;
 
-    if (priority <= HIGHEST) {
-      return (int)(min_priority + stepsperquanta * priority);
-    } else {
-      // should never get here for priority increments.
-      assert(false);
-      return (int)(min_priority + stepsperquanta * NORMAL);
-    }
+  if (priority <= PosixThreadFactory::HIGHEST) {
+    return (int)(min_priority + stepsperquanta * priority);
+  } else {
+    // should never get here for priority increments.
+    assert(false);
+    return (int)(min_priority + stepsperquanta * PosixThreadFactory::NORMAL);
   }
-
-public:
-  Impl(POLICY policy, PRIORITY priority, int stackSize, bool detached)
-    : policy_(policy), priority_(priority), stackSize_(stackSize), detached_(detached) {}
-
-  /**
-   * Creates a new POSIX thread to run the runnable object
-   *
-   * @param runnable A runnable object
-   */
-  shared_ptr<Thread> newThread(shared_ptr<Runnable> runnable) const {
-    shared_ptr<PthreadThread> result
-        = shared_ptr<PthreadThread>(new PthreadThread(toPthreadPolicy(policy_),
-                                                      toPthreadPriority(policy_, priority_),
-                                                      stackSize_,
-                                                      detached_,
-                                                      runnable));
-    result->weakRef(result);
-    runnable->thread(result);
-    return result;
-  }
-
-  int getStackSize() const { return stackSize_; }
-
-  void setStackSize(int value) { stackSize_ = value; }
-
-  PRIORITY getPriority() const { return priority_; }
-
-  /**
-   * Sets priority.
-   *
-   *  XXX
-   *  Need to handle incremental priorities properly.
-   */
-  void setPriority(PRIORITY value) { priority_ = value; }
-
-  bool isDetached() const { return detached_; }
-
-  void setDetached(bool value) { detached_ = value; }
-
-  Thread::id_t getCurrentThreadId() const {
-
-#ifndef _WIN32
-    return (Thread::id_t)pthread_self();
-#else
-    return (Thread::id_t)pthread_self().p;
-#endif // _WIN32
-  }
-};
+}
 
 PosixThreadFactory::PosixThreadFactory(POLICY policy,
                                        PRIORITY priority,
                                        int stackSize,
                                        bool detached)
-  : impl_(new PosixThreadFactory::Impl(policy, priority, stackSize, detached)) {
+  : ThreadFactory(detached),
+    policy_(policy),
+    priority_(priority),
+    stackSize_(stackSize) {
 }
 
-shared_ptr<Thread> PosixThreadFactory::newThread(shared_ptr<Runnable> runnable) const {
-  return impl_->newThread(runnable);
+PosixThreadFactory::PosixThreadFactory(bool detached)
+  : ThreadFactory(detached),
+    policy_(ROUND_ROBIN),
+    priority_(NORMAL),
+    stackSize_(1) {
+}
+
+stdcxx::shared_ptr<Thread> PosixThreadFactory::newThread(stdcxx::shared_ptr<Runnable> runnable) const {
+  stdcxx::shared_ptr<PthreadThread> result
+      = stdcxx::shared_ptr<PthreadThread>(new PthreadThread(toPthreadPolicy(policy_),
+                                                    toPthreadPriority(policy_, priority_),
+                                                    stackSize_,
+                                                    isDetached(),
+                                                    runnable));
+  result->weakRef(result);
+  runnable->thread(result);
+  return result;
 }
 
 int PosixThreadFactory::getStackSize() const {
-  return impl_->getStackSize();
+  return stackSize_;
 }
 
 void PosixThreadFactory::setStackSize(int value) {
-  impl_->setStackSize(value);
+  stackSize_ = value;
 }
 
 PosixThreadFactory::PRIORITY PosixThreadFactory::getPriority() const {
-  return impl_->getPriority();
+  return priority_;
 }
 
-void PosixThreadFactory::setPriority(PosixThreadFactory::PRIORITY value) {
-  impl_->setPriority(value);
-}
-
-bool PosixThreadFactory::isDetached() const {
-  return impl_->isDetached();
-}
-
-void PosixThreadFactory::setDetached(bool value) {
-  impl_->setDetached(value);
+void PosixThreadFactory::setPriority(PRIORITY value) {
+  priority_ = value;
 }
 
 Thread::id_t PosixThreadFactory::getCurrentThreadId() const {
-  return impl_->getCurrentThreadId();
+#ifndef _WIN32
+  return (Thread::id_t)pthread_self();
+#else
+  return (Thread::id_t)pthread_self().p;
+#endif // _WIN32
 }
+
 }
 }
 } // apache::thrift::concurrency

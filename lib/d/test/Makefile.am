@@ -24,8 +24,6 @@ BUILT_SOURCES = trusted-ca-certificate.pem server-certificate.pem
 
 # Thrift compiler rules
 
-THRIFT = $(top_builddir)/compiler/cpp/thrift
-
 debug_proto_gen = $(addprefix gen-d/, DebugProtoTest_types.d)
 
 $(debug_proto_gen): $(top_srcdir)/test/DebugProtoTest.thrift

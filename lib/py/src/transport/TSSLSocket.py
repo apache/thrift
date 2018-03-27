@@ -40,10 +40,10 @@ class TSSLBase(object):
     # ciphers argument is not available for Python < 2.7.0
     _has_ciphers = sys.hexversion >= 0x020700F0
 
-    # For pythoon >= 2.7.9, use latest TLS that both client and server
+    # For python >= 2.7.9, use latest TLS that both client and server
     # supports.
     # SSL 2.0 and 3.0 are disabled via ssl.OP_NO_SSLv2 and ssl.OP_NO_SSLv3.
-    # For pythoon < 2.7.9, use TLS 1.0 since TLSv1_X nor OP_NO_SSLvX is
+    # For python < 2.7.9, use TLS 1.0 since TLSv1_X nor OP_NO_SSLvX is
     # unavailable.
     _default_protocol = ssl.PROTOCOL_SSLv23 if _has_ssl_context else \
         ssl.PROTOCOL_TLSv1
@@ -368,7 +368,7 @@ class TSSLServerSocket(TSocket.TServerSocket, TSSLBase):
         plain_client, addr = self.handle.accept()
         try:
             client = self._wrap_socket(plain_client)
-        except ssl.SSLError:
+        except (ssl.SSLError, OSError):
             logger.exception('Error while accepting from %s', addr)
             # failed handshake/ssl wrap, close socket to client
             plain_client.close()

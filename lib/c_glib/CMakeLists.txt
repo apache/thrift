@@ -33,9 +33,12 @@ set(thrift_c_glib_SOURCES
     src/thrift/c_glib/thrift_application_exception.c
     src/thrift/c_glib/processor/thrift_processor.c
     src/thrift/c_glib/processor/thrift_dispatch_processor.c
+    src/thrift/c_glib/processor/thrift_multiplexed_processor.c
     src/thrift/c_glib/protocol/thrift_protocol.c
     src/thrift/c_glib/protocol/thrift_protocol_factory.c
+    src/thrift/c_glib/protocol/thrift_protocol_decorator.c
     src/thrift/c_glib/protocol/thrift_binary_protocol.c
+    src/thrift/c_glib/protocol/thrift_stored_message_protocol.c
     src/thrift/c_glib/protocol/thrift_binary_protocol_factory.c
     src/thrift/c_glib/protocol/thrift_compact_protocol.c
     src/thrift/c_glib/protocol/thrift_compact_protocol_factory.c
@@ -53,6 +56,17 @@ set(thrift_c_glib_SOURCES
     src/thrift/c_glib/server/thrift_server.c
     src/thrift/c_glib/server/thrift_simple_server.c
 )
+
+# If OpenSSL is not found just ignore the OpenSSL stuff
+find_package(OpenSSL)
+if(OPENSSL_FOUND AND WITH_OPENSSL)
+    list( APPEND thriftcpp_SOURCES
+	    src/thrift/c_glib/transport/thrift_ssl_socket.c
+    )
+    include_directories(SYSTEM "${OPENSSL_INCLUDE_DIR}")
+    list(APPEND SYSLIBS "${OPENSSL_LIBRARIES}")
+endif()
+
 
 # Contains the thrift specific ADD_LIBRARY_THRIFT and TARGET_LINK_LIBRARIES_THRIFT
 include(ThriftMacros)

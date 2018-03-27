@@ -51,8 +51,9 @@ parse_args([Head | Rest], Opts) ->
                 ssl:start(),
                 SslOptions =
                     {ssloptions, [
-                        {certfile, "../keys/client.crt"}
-                        ,{keyfile, "../keys/server.key"}
+                        {cacertfile, "../keys/CA.pem"},
+                        {certfile, "../keys/client.pem"},
+                        {keyfile, "../keys/client.key"}
                     ]},
                 Opts#options{client_opts = [{ssltransport, true} | [SslOptions | Opts#options.client_opts]]};
             "--protocol=" ++ Proto ->
@@ -159,12 +160,11 @@ start(Args) ->
         ClientS4
     end,
 
-  %% Use deprecated erlang:now until we start requiring OTP18
   %% Started = erlang:monotonic_time(milli_seconds),
-  {_, StartSec, StartUSec} = erlang:now(),
+  {_, StartSec, StartUSec} = erlang:timestamp(),
   error_logger:info_msg("testOneway"),
   {Client20, {ok, ok}} = thrift_client:call(Client19, testOneway, [1]),
-  {_, EndSec, EndUSec} = erlang:now(),
+  {_, EndSec, EndUSec} = erlang:timestamp(),
   Elapsed = (EndSec - StartSec) * 1000 + (EndUSec - StartUSec) / 1000,
   if
     Elapsed > 1000 -> exit(1);

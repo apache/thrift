@@ -17,7 +17,6 @@
  * under the License.
  */
 
-#include <assert.h>
 
 #include <string.h>
 #include <fcntl.h>
@@ -37,7 +36,7 @@ test_create_and_destroy (void)
 {
   GObject *object;
   object = g_object_new (THRIFT_TYPE_FD_TRANSPORT, "fd", -1, NULL);
-  assert (object != NULL);
+  g_assert (object != NULL);
   g_object_unref (object);
 }
 
@@ -54,7 +53,7 @@ test_open_and_close (void)
   filename = NULL;
 
   fd = g_file_open_tmp (NULL, &filename, &error);
-  assert (fd >= 0);
+  g_assert (fd >= 0);
 
   transport = THRIFT_TRANSPORT (g_object_new (THRIFT_TYPE_FD_TRANSPORT,
                                               "fd", fd,
@@ -62,20 +61,20 @@ test_open_and_close (void)
   klass = THRIFT_TRANSPORT_GET_CLASS (transport);
 
   /* open is no-op */
-  assert (klass->is_open (transport));
-  assert (klass->peek (transport, &error));
-  assert (klass->open (transport, &error));
-  assert (klass->is_open (transport));
-  assert (klass->peek (transport, &error));
+  g_assert (klass->is_open (transport));
+  g_assert (klass->peek (transport, &error));
+  g_assert (klass->open (transport, &error));
+  g_assert (klass->is_open (transport));
+  g_assert (klass->peek (transport, &error));
 
-  assert (klass->close (transport, &error));
-  assert (! klass->open (transport, &error));
-  assert (! klass->is_open (transport));
-  assert (! klass->peek (transport, &error));
+  g_assert (klass->close (transport, &error));
+  g_assert (! klass->open (transport, &error));
+  g_assert (! klass->is_open (transport));
+  g_assert (! klass->peek (transport, &error));
 
   /* already closed */
-  assert (close (fd) != 0);
-  assert (errno == EBADF);
+  g_assert (close (fd) != 0);
+  g_assert (errno == EBADF);
 
   g_object_unref (transport);
 
@@ -88,13 +87,13 @@ test_open_and_close (void)
                                               NULL));
   klass = THRIFT_TRANSPORT_GET_CLASS (transport);
 
-  assert (! klass->is_open (transport));
+  g_assert (! klass->is_open (transport));
   error = NULL;
-  assert (! klass->peek (transport, &error));
+  g_assert (! klass->peek (transport, &error));
   error = NULL;
-  assert (! klass->open (transport, &error));
+  g_assert (! klass->open (transport, &error));
   error = NULL;
-  assert (! klass->close (transport, &error));
+  g_assert (! klass->close (transport, &error));
 
   g_object_unref (transport);
 }
@@ -115,22 +114,22 @@ test_read_and_write (void)
   filename = NULL;
 
   fd = g_file_open_tmp (NULL, &filename, &error);
-  assert (fd >= 0);
+  g_assert (fd >= 0);
 
   /* write */
   transport = THRIFT_TRANSPORT (g_object_new (THRIFT_TYPE_FD_TRANSPORT,
                                               "fd", fd,
                                               NULL));
   klass = THRIFT_TRANSPORT_GET_CLASS (transport);
-  assert (klass->is_open (transport));
-  assert (klass->write (transport, (gpointer) TEST_DATA, 11, &error));
-  assert (klass->flush (transport, &error));
-  assert (klass->close (transport, &error));
+  g_assert (klass->is_open (transport));
+  g_assert (klass->write (transport, (gpointer) TEST_DATA, 11, &error));
+  g_assert (klass->flush (transport, &error));
+  g_assert (klass->close (transport, &error));
   g_object_unref (transport);
 
   /* read */
   fd = open(filename, O_RDONLY, S_IRUSR | S_IWUSR);
-  assert (fd >= 0);
+  g_assert (fd >= 0);
 
   transport = THRIFT_TRANSPORT (g_object_new (THRIFT_TYPE_FD_TRANSPORT,
                                               "fd", fd,
@@ -142,24 +141,24 @@ test_read_and_write (void)
   want = 7;
   while (want > 0) {
     got = klass->read (transport, (gpointer) b, want, &error);
-    assert (got > 0 && got <= want);
+    g_assert (got > 0 && got <= want);
     b += got;
     want -= got;
   }
-  assert (memcmp (out_buf, TEST_DATA, 7) == 0);
+  g_assert (memcmp (out_buf, TEST_DATA, 7) == 0);
 
   memset(out_buf, 0, 8);
   b = out_buf;
   want = 4;
   while (want > 0) {
     got = klass->read (transport, (gpointer) b, want, &error);
-    assert (got > 0 && got <= want);
+    g_assert (got > 0 && got <= want);
     b += got;
     want -= got;
   }
-  assert (memcmp (out_buf, TEST_DATA + 7, 4) == 0);
+  g_assert (memcmp (out_buf, TEST_DATA + 7, 4) == 0);
 
-  assert (klass->close (transport, &error));
+  g_assert (klass->close (transport, &error));
   g_object_unref (transport);
 
   /* clean up */

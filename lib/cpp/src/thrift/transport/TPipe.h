@@ -95,7 +95,7 @@ public:
   HANDLE getNativeWaitHandle();
 
 private:
-  boost::shared_ptr<TPipeImpl> impl_;
+  stdcxx::shared_ptr<TPipeImpl> impl_;
 
   std::string pipename_;
 

@@ -387,7 +387,7 @@ uint32_t TCompactProtocolT<Transport_>::writeVarint64(uint64_t n) {
  */
 template <class Transport_>
 uint64_t TCompactProtocolT<Transport_>::i64ToZigzag(const int64_t l) {
-  return (l << 1) ^ (l >> 63);
+  return (static_cast<uint64_t>(l) << 1) ^ (l >> 63);
 }
 
 /**
@@ -396,7 +396,7 @@ uint64_t TCompactProtocolT<Transport_>::i64ToZigzag(const int64_t l) {
  */
 template <class Transport_>
 uint32_t TCompactProtocolT<Transport_>::i32ToZigzag(const int32_t n) {
-  return (n << 1) ^ (n >> 31);
+  return (static_cast<uint32_t>(n) << 1) ^ (n >> 31);
 }
 
 /**

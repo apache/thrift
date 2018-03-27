@@ -35,6 +35,8 @@ void ServerThread::start() {
   assert(!running_);
   running_ = true;
 
+  helper_.reset(new Helper(this));
+
   // Start the other thread
   concurrency::PlatformThreadFactory threadFactory;
   threadFactory.setDetached(false);
@@ -128,7 +130,7 @@ void ServerThread::preServe() {
   serverState_->bindSuccessful(port_);
 
   // Set the real server event handler (replacing ourself)
-  boost::shared_ptr<server::TServerEventHandler> serverEventHandler
+  stdcxx::shared_ptr<server::TServerEventHandler> serverEventHandler
       = serverState_->getServerEventHandler();
   server_->setServerEventHandler(serverEventHandler);
 

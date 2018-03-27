@@ -35,5 +35,13 @@ module Thrift
         BinaryProtocol.new(trans)
       end
     end
+
+    def to_s
+      if (defined? BinaryProtocolAccelerated)
+        "binary-accel"
+      else
+        "binary"
+      end
+    end
   end
 end

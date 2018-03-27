@@ -28,8 +28,7 @@
 #include <stdio.h>
 
 #include <boost/atomic.hpp>
-#include <boost/scoped_ptr.hpp>
-#include <boost/shared_ptr.hpp>
+#include <thrift/stdcxx.h>
 
 #include <thrift/concurrency/Mutex.h>
 #include <thrift/concurrency/Monitor.h>
@@ -340,7 +339,7 @@ private:
 
   // writer thread
   apache::thrift::concurrency::PlatformThreadFactory threadFactory_;
-  boost::shared_ptr<apache::thrift::concurrency::Thread> writerThread_;
+  stdcxx::shared_ptr<apache::thrift::concurrency::Thread> writerThread_;
 
   // buffers to hold data before it is flushed. Each element of the buffer stores a msg that
   // needs to be written to the file.  The buffers are swapped by the writer thread.
@@ -349,7 +348,7 @@ private:
 
   // conditions used to block when the buffer is full or empty
   Monitor notFull_, notEmpty_;
-  volatile bool closing_;
+  boost::atomic<bool> closing_;
 
   // To keep track of whether the buffer has been flushed
   Monitor flushed_;
@@ -391,14 +390,14 @@ public:
    * @param protocolFactory protocol factory
    * @param inputTransport file transport
    */
-  TFileProcessor(boost::shared_ptr<TProcessor> processor,
-                 boost::shared_ptr<TProtocolFactory> protocolFactory,
-                 boost::shared_ptr<TFileReaderTransport> inputTransport);
+  TFileProcessor(stdcxx::shared_ptr<TProcessor> processor,
+                 stdcxx::shared_ptr<TProtocolFactory> protocolFactory,
+                 stdcxx::shared_ptr<TFileReaderTransport> inputTransport);
 
-  TFileProcessor(boost::shared_ptr<TProcessor> processor,
-                 boost::shared_ptr<TProtocolFactory> inputProtocolFactory,
-                 boost::shared_ptr<TProtocolFactory> outputProtocolFactory,
-                 boost::shared_ptr<TFileReaderTransport> inputTransport);
+  TFileProcessor(stdcxx::shared_ptr<TProcessor> processor,
+                 stdcxx::shared_ptr<TProtocolFactory> inputProtocolFactory,
+                 stdcxx::shared_ptr<TProtocolFactory> outputProtocolFactory,
+                 stdcxx::shared_ptr<TFileReaderTransport> inputTransport);
 
   /**
    * Constructor
@@ -408,10 +407,10 @@ public:
    * @param inputTransport input file transport
    * @param output output transport
    */
-  TFileProcessor(boost::shared_ptr<TProcessor> processor,
-                 boost::shared_ptr<TProtocolFactory> protocolFactory,
-                 boost::shared_ptr<TFileReaderTransport> inputTransport,
-                 boost::shared_ptr<TTransport> outputTransport);
+  TFileProcessor(stdcxx::shared_ptr<TProcessor> processor,
+                 stdcxx::shared_ptr<TProtocolFactory> protocolFactory,
+                 stdcxx::shared_ptr<TFileReaderTransport> inputTransport,
+                 stdcxx::shared_ptr<TTransport> outputTransport);
 
   /**
    * processes events from the file
@@ -428,11 +427,11 @@ public:
   void processChunk();
 
 private:
-  boost::shared_ptr<TProcessor> processor_;
-  boost::shared_ptr<TProtocolFactory> inputProtocolFactory_;
-  boost::shared_ptr<TProtocolFactory> outputProtocolFactory_;
-  boost::shared_ptr<TFileReaderTransport> inputTransport_;
-  boost::shared_ptr<TTransport> outputTransport_;
+  stdcxx::shared_ptr<TProcessor> processor_;
+  stdcxx::shared_ptr<TProtocolFactory> inputProtocolFactory_;
+  stdcxx::shared_ptr<TProtocolFactory> outputProtocolFactory_;
+  stdcxx::shared_ptr<TFileReaderTransport> inputTransport_;
+  stdcxx::shared_ptr<TTransport> outputTransport_;
 };
 }
 }

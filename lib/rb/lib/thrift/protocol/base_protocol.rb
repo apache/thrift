@@ -369,11 +369,19 @@ module Thrift
         read_list_end
       end
     end
+    
+    def to_s
+      "#{trans.to_s}"
+    end
   end
 
   class BaseProtocolFactory
     def get_protocol(trans)
       raise NotImplementedError
+    end
+    
+    def to_s
+      "base"
     end
   end
 end
