@@ -458,7 +458,7 @@ string t_java_generator::java_suppressions() {
 }
 
 string t_java_generator::java_nullable_annotation() {
-  return "@org.apache.thrift.annotations.Nullable";
+  return "@org.apache.thrift.annotation.Nullable";
 }
 
 /**

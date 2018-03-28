@@ -17,7 +17,7 @@
  * under the License.
  */
 
-package org.apache.thrift.annotations;
+package org.apache.thrift.annotation;
 
 import java.lang.annotation.Documented;
 import java.lang.annotation.Retention;
