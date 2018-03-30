@@ -395,7 +395,7 @@ namespace Test
         {
             try
             {
-                bool useBufferedSockets = false, useFramed = false, useEncryption = false, compact = false, json = false;
+                bool useBufferedSockets = false, useFramed = false, useZlib = false, useEncryption = false, compact = false, json = false;
                 ServerType serverType = ServerType.TSimpleServer;
                 ProcessorFactoryType processorFactoryType = ProcessorFactoryType.TSingletonProcessorFactory;
                 int port = 9090;
@@ -413,6 +413,10 @@ namespace Test
                     else if (args[i] == "-b" || args[i] == "--buffered" || args[i] == "--transport=buffered")
                     {
                         useBufferedSockets = true;
+                    }
+                    else if (args[i] == "--zlib" || args[i] == "--transport=zlib")
+                    {
+                        useZlib = true;
                     }
                     else if (args[i] == "-f" || args[i] == "--framed" || args[i] == "--transport=framed")
                     {
@@ -489,6 +493,8 @@ namespace Test
                 TTransportFactory transFactory;
                 if (useFramed)
                     transFactory = new TFramedTransport.Factory();
+                else if (useZlib)
+                    transFactory = new TZLibTransport.Factory();
                 else
                     transFactory = new TTransportFactory();
 
@@ -516,6 +522,7 @@ namespace Test
                     (processorFactoryType == ProcessorFactoryType.TPrototypeProcessorFactory ? " with processor prototype factory " : "") +
                     (useBufferedSockets ? " with buffered socket" : "") +
                     (useFramed ? " with framed transport" : "") +
+                    (useZlib ? " with zlib transport" : "") +
                     (useEncryption ? " with encryption" : "") +
                     (compact ? " with compact protocol" : "") +
                     (json ? " with json protocol" : "") +

@@ -130,6 +130,7 @@
     <Compile Include="Transport\TTransport.cs" />
     <Compile Include="Transport\TTransportException.cs" />
     <Compile Include="Transport\TTransportFactory.cs" />
+    <Compile Include="Transport\TZlibTransport.cs" />
     <Compile Include="TSingletonProcessorFactory.cs" />
   </ItemGroup>
   <ItemGroup>

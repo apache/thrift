@@ -41,6 +41,7 @@ namespace Test
             public string url;
             public string pipe;
             public bool buffered;
+            public bool zlib;
             public bool framed;
             public string protocol;
             public bool encrypted = false;
@@ -77,6 +78,8 @@ namespace Test
                         trans = new TBufferedTransport(trans);
                     if (framed)
                         trans = new TFramedTransport(trans);
+                    if (zlib)
+                        trans = new TZLibTransport(trans);
 
                     if (_isFirstTransport)
                     {
@@ -217,6 +220,11 @@ namespace Test
                         {
                             param.buffered = true;
                             Console.WriteLine("Using buffered sockets");
+                        }
+                        else if (args[i] == "--zlib" || args[i] == "--transport=zlib")
+                        {
+                            param.zlib = true;
+                            Console.WriteLine("Using zlib transport");
                         }
                         else if (args[i] == "-f" || args[i] == "--framed"  || args[i] == "--transport=framed")
                         {
