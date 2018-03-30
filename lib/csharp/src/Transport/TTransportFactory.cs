@@ -26,7 +26,7 @@ using System;
 namespace Thrift.Transport
 {
     /// <summary>
-    /// From Mark Slee & Aditya Agarwal of Facebook:
+    /// From Mark Slee &amp; Aditya Agarwal of Facebook:
     /// Factory class used to create wrapped instance of Transports.
     /// This is used primarily in servers, which get Transports from
     /// a ServerTransport and then may want to mutate them (i.e. create

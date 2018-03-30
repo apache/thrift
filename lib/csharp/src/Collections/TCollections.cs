@@ -79,7 +79,7 @@ namespace Thrift.Collections
             }
 
             int hashcode = 0;
-            foreach (Object obj in enumerable)
+            foreach (object obj in enumerable)
             {
                 IEnumerable enum2 = obj as IEnumerable;
                 int objHash = enum2 == null ? obj.GetHashCode () : GetHashCode (enum2);

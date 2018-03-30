@@ -76,7 +76,7 @@ namespace Thrift.Transport
         /// <param name="port">The port where the server runs.</param>
         /// <param name="certificate">The certificate object.</param>
         public TTLSServerSocket(int port, X509Certificate2 certificate)
-            : this(port,  0, certificate)
+            : this(port, 0, certificate)
         {
         }
 
