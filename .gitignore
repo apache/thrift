@@ -50,6 +50,7 @@ project.lock.json
 .svn
 .vagrant
 .vscode
+.vs
 
 /contrib/.vagrant/
 /aclocal/libtool.m4
@@ -238,10 +239,8 @@ project.lock.json
 /lib/js/dist
 /lib/js/doc
 /lib/js/test/build
-/lib/netcore/**/.vs
 /lib/netcore/**/bin
 /lib/netcore/**/obj
-/lib/netcore/**/gen-*
 /lib/nodejs/coverage
 /lib/nodejs/node_modules/
 /lib/perl/MANIFEST
@@ -314,6 +313,8 @@ project.lock.json
 /test/cpp/StressTestNonBlocking
 /test/cpp/TestClient
 /test/cpp/TestServer
+/test/csharp/obj
+/test/csharp/bin
 /test/dart/**/.packages
 /test/dart/**/packages
 /test/dart/**/.pub/
@@ -339,10 +340,8 @@ project.lock.json
 /test/php/php_ext_dir/
 /test/py.twisted/_trial_temp/
 /test/rb/Gemfile.lock
-/test/netcore/**/.vs
 /test/netcore/**/bin
 /test/netcore/**/obj
-/test/netcore/**/gen-*
 /test/netcore/Thrift
 /test/php/php_ext_dir/
 /test/rs/Cargo.lock
@@ -388,10 +387,8 @@ project.lock.json
 /tutorial/hs/dist/
 /tutorial/java/build/
 /tutorial/js/build/
-/tutorial/netcore/**/.vs
 /tutorial/netcore/**/bin
 /tutorial/netcore/**/obj
-/tutorial/netcore/**/gen-*
 /tutorial/netcore/Thrift
 /tutorial/rs/*.iml
 /tutorial/rs/src/shared.rs
@@ -404,3 +401,4 @@ project.lock.json
 /lib/cl/externals/
 /lib/cl/run-tests
 /lib/cl/quicklisp/
+
