@@ -30,7 +30,6 @@ using System.IO.Compression;
 
 namespace Thrift.Transport
 {
-
     public class THttpClient : TTransport, IDisposable
     {
         private readonly Uri uri;
@@ -43,7 +42,7 @@ namespace Thrift.Transport
 
         private int readTimeout = 30000;
 
-        private IDictionary<String, String> customHeaders = new Dictionary<string, string>();
+        private IDictionary<string, string> customHeaders = new Dictionary<string, string>();
 
 #if !SILVERLIGHT
         private IWebProxy proxy = WebRequest.DefaultWebProxy;
@@ -64,7 +63,7 @@ namespace Thrift.Transport
         {
             set
             {
-               connectTimeout = value;
+                connectTimeout = value;
             }
         }
 
@@ -76,7 +75,7 @@ namespace Thrift.Transport
             }
         }
 
-        public IDictionary<String, String> CustomHeaders
+        public IDictionary<string, string> CustomHeaders
         {
             get
             {
@@ -325,7 +324,7 @@ namespace Thrift.Transport
         {
             try
             {
-                var flushAsyncResult = (FlushAsyncResult) asyncResult;
+                var flushAsyncResult = (FlushAsyncResult)asyncResult;
 
                 if (!flushAsyncResult.IsCompleted)
                 {
@@ -338,7 +337,8 @@ namespace Thrift.Transport
                 {
                     throw flushAsyncResult.AsyncException;
                 }
-            } finally
+            }
+            finally
             {
                 outputStream = new MemoryStream();
             }
@@ -387,9 +387,9 @@ namespace Thrift.Transport
             private volatile Boolean _isCompleted;
             private ManualResetEvent _evt;
             private readonly AsyncCallback _cbMethod;
-            private readonly Object _state;
+            private readonly object _state;
 
-            public FlushAsyncResult(AsyncCallback cbMethod, Object state)
+            public FlushAsyncResult(AsyncCallback cbMethod, object state)
             {
                 _cbMethod = cbMethod;
                 _state = state;
@@ -415,7 +415,7 @@ namespace Thrift.Transport
             {
                 get { return _isCompleted; }
             }
-            private readonly Object _locker = new Object();
+            private readonly object _locker = new object();
             private ManualResetEvent GetEvtHandle()
             {
                 lock (_locker)
@@ -452,7 +452,7 @@ namespace Thrift.Transport
             }
         }
 
-#region " IDisposable Support "
+        #region " IDisposable Support "
         private bool _IsDisposed;
 
         // IDisposable
@@ -470,6 +470,6 @@ namespace Thrift.Transport
             }
             _IsDisposed = true;
         }
-#endregion
+        #endregion
     }
 }

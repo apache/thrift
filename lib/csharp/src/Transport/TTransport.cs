@@ -53,7 +53,7 @@ namespace Thrift.Transport
                 if (bytes == 0)
                     return false;
             }
-            catch( IOException)
+            catch (IOException)
             {
                 return false;
             }
@@ -108,7 +108,7 @@ namespace Thrift.Transport
 
         public virtual void Write(byte[] buf)
         {
-            Write (buf, 0, buf.Length);
+            Write(buf, 0, buf.Length);
         }
 
         public abstract void Write(byte[] buf, int off, int len);

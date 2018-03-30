@@ -98,7 +98,6 @@ namespace Thrift.Protocol
                     default:
                         throw new TProtocolException(TProtocolException.INVALID_DATA, "Unknown data type " + type.ToString("d"));
                 }
-
             }
             finally
             {
