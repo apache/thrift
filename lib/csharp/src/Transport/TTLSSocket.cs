@@ -263,7 +263,7 @@ namespace Thrift.Transport
         /// <param name="sender">The sender-object.</param>
         /// <param name="certificate">The used certificate.</param>
         /// <param name="chain">The certificate chain.</param>
-        /// <param name="sslPolicyErrors">An enum, which lists all the errors from the .NET certificate check.</param>
+        /// <param name="sslValidationErrors">An enum, which lists all the errors from the .NET certificate check.</param>
         /// <returns></returns>
         private bool DefaultCertificateValidator(object sender, X509Certificate certificate, X509Chain chain, SslPolicyErrors sslValidationErrors)
         {
@@ -280,7 +280,7 @@ namespace Thrift.Transport
                 throw new TTransportException(TTransportException.ExceptionType.AlreadyOpen, "Socket already connected");
             }
 
-            if (String.IsNullOrEmpty(host))
+            if (string.IsNullOrEmpty(host))
             {
                 throw new TTransportException(TTransportException.ExceptionType.NotOpen, "Cannot open null host");
             }
@@ -307,7 +307,7 @@ namespace Thrift.Transport
         {
             RemoteCertificateValidationCallback validator = this.certValidator ?? DefaultCertificateValidator;
 
-            if( this.localCertificateSelectionCallback != null)
+            if (this.localCertificateSelectionCallback != null)
             {
                 this.secureStream = new SslStream(
                     this.client.GetStream(),
@@ -335,7 +335,7 @@ namespace Thrift.Transport
                 else
                 {
                     // Client authentication
-                    X509CertificateCollection certs = certificate != null ?  new X509CertificateCollection { certificate } : new X509CertificateCollection();
+                    X509CertificateCollection certs = certificate != null ? new X509CertificateCollection { certificate } : new X509CertificateCollection();
                     this.secureStream.AuthenticateAsClient(host, certs, sslProtocols, true);
                 }
             }

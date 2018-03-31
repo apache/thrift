@@ -42,7 +42,7 @@ namespace Thrift
 
         public TProcessor GetProcessor(TTransport trans, TServer server = null)
         {
-            H handler = (H) Activator.CreateInstance(typeof(H), handlerArgs);
+            H handler = (H)Activator.CreateInstance(typeof(H), handlerArgs);
 
             TControllingHandler handlerServerRef = handler as TControllingHandler;
             if (handlerServerRef != null)

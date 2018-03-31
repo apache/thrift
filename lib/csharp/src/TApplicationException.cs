@@ -103,7 +103,7 @@ namespace Thrift
 
             oprot.WriteStructBegin(struc);
 
-            if (!String.IsNullOrEmpty(Message))
+            if (!string.IsNullOrEmpty(Message))
             {
                 field.Name = "message";
                 field.Type = TType.String;

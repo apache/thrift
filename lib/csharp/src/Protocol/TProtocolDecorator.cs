@@ -28,26 +28,25 @@ using System.Collections.Generic;
 
 namespace Thrift.Protocol
 {
-
-    /**
-     * TProtocolDecorator forwards all requests to an enclosed TProtocol instance,
-     * providing a way to author concise concrete decorator subclasses.  While it has
-     * no abstract methods, it is marked abstract as a reminder that by itself,
-     * it does not modify the behaviour of the enclosed TProtocol.
-     *
-     * See p.175 of Design Patterns (by Gamma et al.)
-     * See TMultiplexedProtocol
-     */
+    /// <summary>
+    /// <see cref="TProtocolDecorator"/> forwards all requests to an enclosed <see cref="TProtocol"/> instance,
+    /// providing a way to author concise concrete decorator subclasses. While it has
+    /// no abstract methods, it is marked abstract as a reminder that by itself,
+    /// it does not modify the behaviour of the enclosed <see cref="TProtocol"/>.
+    /// <para/>
+    /// See p.175 of Design Patterns (by Gamma et al.)
+    /// </summary>
+    /// <seealso cref="TMultiplexedProtocol"/>
     public abstract class TProtocolDecorator : TProtocol
     {
         private TProtocol WrappedProtocol;
 
-        /**
-         * Encloses the specified protocol.
-         * @param protocol All operations will be forward to this protocol.  Must be non-null.
-         */
+        /// <summary>
+        /// Encloses the specified protocol.
+        /// </summary>
+        /// <param name="protocol">All operations will be forward to this protocol.  Must be non-null.</param>
         public TProtocolDecorator(TProtocol protocol)
-            : base( protocol.Transport)
+            : base(protocol.Transport)
         {
 
             WrappedProtocol = protocol;
@@ -104,7 +103,7 @@ namespace Thrift.Protocol
         }
 
         public override void WriteListEnd()
-{
+        {
             WrappedProtocol.WriteListEnd();
         }
 
@@ -148,7 +147,7 @@ namespace Thrift.Protocol
             WrappedProtocol.WriteDouble(v);
         }
 
-        public override void WriteString(String s)
+        public override void WriteString(string s)
         {
             WrappedProtocol.WriteString(s);
         }
@@ -248,7 +247,7 @@ namespace Thrift.Protocol
             return WrappedProtocol.ReadDouble();
         }
 
-        public override String ReadString()
+        public override string ReadString()
         {
             return WrappedProtocol.ReadString();
         }

@@ -34,10 +34,11 @@ namespace Thrift.Transport
         public TTransport Accept()
         {
             TTransport transport = AcceptImpl();
-            if (transport == null) {
-              throw new TTransportException("accept() may not return NULL");
+            if (transport == null)
+            {
+                throw new TTransportException("accept() may not return NULL");
             }
             return transport;
-         }
+        }
     }
 }
