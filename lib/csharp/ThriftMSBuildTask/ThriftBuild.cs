@@ -92,29 +92,9 @@ namespace ThriftMSBuildTask
         private ITaskItem thriftImpl;
         private const string lastCompilationName = "LAST_COMP_TIMESTAMP";
 
-        //use the Message Build Task to write something to build log
         private void LogMessage(string text, MessageImportance importance)
         {
-            Message m = new Message();
-            m.Text = text;
-            m.Importance = importance.ToString();
-            m.BuildEngine = this.BuildEngine;
-            m.Execute();
-        }
-
-        //recursively find .cs files in srcDir, paths should initially be non-null and empty
-        private void FindSourcesHelper(string srcDir, List<string> paths)
-        {
-            string[] files = Directory.GetFiles(srcDir, "*.cs");
-            foreach (string f in files)
-            {
-                paths.Add(f);
-            }
-            string[] dirs = Directory.GetDirectories(srcDir);
-            foreach (string dir in dirs)
-            {
-                FindSourcesHelper(dir, paths);
-            }
+            Log.LogMessage(importance, text);
         }
 
         /// <summary>
@@ -127,18 +107,6 @@ namespace ThriftMSBuildTask
                 return "\"" + path + "\"";
             }
             return path;
-        }
-
-        private ITaskItem[] FindSources(string srcDir)
-        {
-            List<string> files = new List<string>();
-            FindSourcesHelper(srcDir, files);
-            ITaskItem[] items = new ITaskItem[files.Count];
-            for (int i = 0; i < items.Length; i++)
-            {
-                items[i] = new TaskItem(files[i]);
-            }
-            return items;
         }
 
         private string LastWriteTime(string defDir)
@@ -221,17 +189,23 @@ namespace ThriftMSBuildTask
                 }
             }
 
-            Csc csc = new Csc();
-            csc.TargetType = "library";
-            csc.References = new ITaskItem[] { new TaskItem(ThriftLibrary.ItemSpec) };
-            csc.EmitDebugInformation = true;
-            string outputPath = Path.Combine(thriftDir, OutputName.ItemSpec);
-            csc.OutputAssembly = new TaskItem(outputPath);
-            csc.Sources = FindSources(Path.Combine(thriftDir, "gen-csharp"));
-            csc.BuildEngine = this.BuildEngine;
+            // Compile generated C# files
             LogMessage("Compiling generated cs...", MessageImportance.Normal);
-            if (!csc.Execute())
+
+            string outputPath = Path.Combine(thriftDir, OutputName.ItemSpec);
+            outputPath = Path.Combine(outputPath, "ThriftImpl.dll");
+
+            Process csc = new Process();
+            csc.StartInfo.FileName = "csc";
+            csc.StartInfo.Arguments = $"/t:library /out:\"{outputPath}\" /recurse:\"{thriftDir}\\*\" /reference:\"{ThriftLibrary.ItemSpec}\"";
+            csc.StartInfo.UseShellExecute = false;
+            csc.StartInfo.CreateNoWindow = true;
+            csc.StartInfo.RedirectStandardOutput = false;
+            csc.Start();
+            csc.WaitForExit();
+            if (csc.ExitCode != 0)
             {
+                LogMessage("csc.exe failed to create " + outputPath, MessageImportance.High);
                 return false;
             }
 

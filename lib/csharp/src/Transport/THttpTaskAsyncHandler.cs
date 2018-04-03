@@ -21,6 +21,8 @@
  * details.
  */
 
+#if (HAS_SYSTEM_WEB)
+
 using System.Threading.Tasks;
 using System.Web;
 using Thrift.Protocol;
@@ -95,3 +97,5 @@ namespace Thrift.Transport
         }
     }
 }
+
+#endif

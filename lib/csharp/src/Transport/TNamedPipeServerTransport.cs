@@ -86,14 +86,22 @@ namespace Thrift.Transport
 
                 try
                 {
+#if (HAS_PIPESECURITY)
                     stream = new NamedPipeServerStream(pipeAddress, direction, maxconn, mode, options, INBUF_SIZE, OUTBUF_SIZE, security);
+#else
+                    stream = new NamedPipeServerStream(pipeAddress, direction, maxconn, mode, options, INBUF_SIZE, OUTBUF_SIZE);
+#endif
                 }
                 catch (NotImplementedException)  // Mono still does not support async, fallback to sync
                 {
                     if (asyncMode)
                     {
                         options &= (~PipeOptions.Asynchronous);
+#if (HAS_PIPESECURITY)
                         stream = new NamedPipeServerStream(pipeAddress, direction, maxconn, mode, options, INBUF_SIZE, OUTBUF_SIZE, security);
+#else
+                        stream = new NamedPipeServerStream(pipeAddress, direction, maxconn, mode, options, INBUF_SIZE, OUTBUF_SIZE);
+#endif
                         asyncMode = false;
                     }
                     else
@@ -101,7 +109,6 @@ namespace Thrift.Transport
                         throw;
                     }
                 }
-
             }
         }
 

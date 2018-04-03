@@ -1,4 +1,3 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
 <!--
   Licensed to the Apache Software Foundation (ASF) under one
   or more contributor license agreements. See the NOTICE file
@@ -8,7 +7,7 @@
   "License"); you may not use this file except in compliance
   with the License. You may obtain a copy of the License at
 
-  http://www.apache.org/licenses/LICENSE-2.0
+    http://www.apache.org/licenses/LICENSE-2.0
 
   Unless required by applicable law or agreed to in writing,
   software distributed under the License is distributed on an
@@ -17,9 +16,16 @@
   specific language governing permissions and limitations
   under the License.
 -->
-<packages>
-  <package id="Microsoft.AspNet.Mvc" version="5.2.3" targetFramework="net45" />
-  <package id="Microsoft.AspNet.Razor" version="3.2.3" targetFramework="net45" />
-  <package id="Microsoft.AspNet.WebPages" version="3.2.3" targetFramework="net45" />
-  <package id="Microsoft.Web.Infrastructure" version="1.0.0.0" targetFramework="net45" />
-</packages>
+<Project TreatAsLocalProperty="TaskFolder;TaskAssembly">
+  <!--
+  This file is automatically imported by NuGet into a user's project
+  when it targets a single framework, or in classic (pre 2017) csproj projects.
+  -->
+  <PropertyGroup>
+    <TaskFolder Condition=" '$(MSBuildRuntimeType)' == 'Core' ">netstandard1.6</TaskFolder>
+    <TaskFolder Condition=" '$(MSBuildRuntimeType)' != 'Core' ">net46</TaskFolder>
+    <TaskAssembly>$(MSBuildThisFileDirectory)..\tasks\$(TaskFolder)\ThriftMSBuildTask.dll</TaskAssembly>
+  </PropertyGroup>
+
+  <UsingTask TaskName="ThriftMSBuildTask.ThriftBuild" AssemblyFile="$(TaskAssembly)" />
+</Project>

@@ -175,6 +175,7 @@ project.lock.json
 /lib/c_glib/thrift_c_glib.pc
 /lib/csharp/**/bin/
 /lib/csharp/**/obj/
+/lib/csharp/artifacts/
 /lib/csharp/src/packages
 /lib/d/test/*.pem
 /lib/d/libthriftd*.a

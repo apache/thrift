@@ -19,6 +19,8 @@
  *
  */
 
+#if (HAS_SYSTEM_WEB)
+
 using System;
 using System.Web;
 using System.Net;
@@ -100,3 +102,5 @@ namespace Thrift.Transport
         }
     }
 }
+
+#endif
