@@ -103,8 +103,8 @@ private:
   /**
    * Output xsd/php file
    */
-  std::ofstream f_xsd_;
-  std::ofstream f_php_;
+  ofstream_with_content_based_conditional_update f_xsd_;
+  ofstream_with_content_based_conditional_update f_php_;
 
   /**
    * Output string stream

@@ -21,6 +21,7 @@
 #define T_GENERATOR_H
 #define MSC_2015_VER 1900
 
+#include <cstring>
 #include <string>
 #include <iomanip>
 #include <iostream>
@@ -28,6 +29,7 @@
 #include <limits>
 #include <sstream>
 #include "thrift/common.h"
+#include "thrift/logging.h"
 #include "thrift/version.h"
 #include "thrift/generate/t_generator_registry.h"
 #include "thrift/parse/t_program.h"
@@ -186,7 +188,6 @@ protected:
     }
   }
 
-
   /**
    * Indentation print function
    */
@@ -227,6 +228,7 @@ protected:
     }
     return in;
   }
+
   /**
    * Transforms a camel case string to an equivalent one separated by underscores
    * e.g. aMultiWord -> a_multi_word
@@ -245,6 +247,7 @@ protected:
     }
     return in;
   }
+
   /**
     * Transforms a string with words separated by underscores to a camel case equivalent
     * e.g. a_multi_word -> aMultiWord
@@ -345,5 +348,78 @@ private:
    */
   int tmp_;
 };
+
+template<typename _CharT, typename _Traits = std::char_traits<_CharT> >
+class template_ofstream_with_content_based_conditional_update : public std::ostringstream {
+public:
+  template_ofstream_with_content_based_conditional_update(): contents_written(false) {}
+
+  template_ofstream_with_content_based_conditional_update(std::string const& output_file_path_)
+  : output_file_path(output_file_path_), contents_written(false) {}
+
+  ~template_ofstream_with_content_based_conditional_update() {
+    if (!contents_written) {
+      close();
+    }
+  }
+
+  void open(std::string const& output_file_path_) {
+    output_file_path = output_file_path_;
+    clear_buf();
+    contents_written = false;
+  }
+
+  void close() {
+    if (contents_written || output_file_path == "")
+      return;
+
+    if (!is_readable(output_file_path)) {
+      dump();
+      return;
+    }
+
+    std::ifstream old_file;
+    old_file.exceptions(old_file.exceptions() | std::ifstream::badbit | std::ifstream::failbit);
+    old_file.open(output_file_path.c_str(), std::ios::in);
+
+    if (old_file) {
+      std::string const old_file_contents(static_cast<std::ostringstream const&>(std::ostringstream() << old_file.rdbuf()).str());
+      old_file.close();
+
+      if (old_file_contents != str()) {
+        dump();
+      }
+    }
+  }
+
+protected:
+  void dump() {
+    std::ofstream out_file;
+    out_file.exceptions(out_file.exceptions() | std::ofstream::badbit | std::ofstream::failbit);
+    try {
+      out_file.open(output_file_path.c_str(), std::ios::out);
+    }
+    catch (const std::ios_base::failure& e) {
+      ::failure("failed to write the output to the file '%s', details: '%s'", output_file_path.c_str(), e.what());
+    }
+    out_file << str();
+    out_file.close();
+    clear_buf();
+    contents_written = true;
+  }
+
+  void clear_buf() {
+    str(std::string());
+  }
+
+  static bool is_readable(std::string const& file_name) {
+    return static_cast<bool>(std::ifstream(file_name.c_str()));
+  }
+
+private:
+  std::string output_file_path;
+  bool contents_written;
+};
+typedef template_ofstream_with_content_based_conditional_update<char> ofstream_with_content_based_conditional_update;
 
 #endif

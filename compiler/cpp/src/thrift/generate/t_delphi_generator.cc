@@ -786,7 +786,7 @@ void t_delphi_generator::close_generator() {
   unitname = normalize_name(unitname);
   
   std::string f_name = get_out_dir() + "/" + unitname + ".pas";
-  std::ofstream f_all;
+  ofstream_with_content_based_conditional_update f_all;
 
   f_all.open(f_name.c_str());
 

@@ -65,11 +65,11 @@ public:
     return package + type->get_name();
   }
 
-  virtual void generate_java_docstring_comment(std::ofstream& out, std::string contents) {
+  virtual void generate_java_docstring_comment(std::ostream& out, std::string contents) {
     generate_docstring_comment(out, "/**\n", " * ", contents, " */\n");
   }
 
-  virtual void generate_java_doc(std::ofstream& out, t_field* field) {
+  virtual void generate_java_doc(std::ostream& out, t_field* field) {
     if (field->get_type()->is_enum()) {
       std::string combined_message = field->get_doc() + "\n@see "
                                      + get_enum_class_name(field->get_type());
@@ -82,7 +82,7 @@ public:
   /**
    * Emits a JavaDoc comment if the provided object has a doc in Thrift
    */
-  virtual void generate_java_doc(std::ofstream& out, t_doc* tdoc) {
+  virtual void generate_java_doc(std::ostream& out, t_doc* tdoc) {
     if (tdoc->has_doc()) {
       generate_java_docstring_comment(out, tdoc->get_doc());
     }
@@ -91,7 +91,7 @@ public:
   /**
    * Emits a JavaDoc comment if the provided function object has a doc in Thrift
    */
-  virtual void generate_java_doc(std::ofstream& out, t_function* tfunction) {
+  virtual void generate_java_doc(std::ostream& out, t_function* tfunction) {
     if (tfunction->has_doc()) {
       std::stringstream ss;
       ss << tfunction->get_doc();

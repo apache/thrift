@@ -93,8 +93,8 @@ public:
    * Struct generation code
    */
 
-  void generate_st_struct(std::ofstream& out, t_struct* tstruct, bool is_exception);
-  void generate_accessors(std::ofstream& out, t_struct* tstruct);
+  void generate_st_struct(std::ostream& out, t_struct* tstruct, bool is_exception);
+  void generate_accessors(std::ostream& out, t_struct* tstruct);
 
   /**
    * Service-level generation functions
@@ -124,15 +124,15 @@ public:
 
   std::string st_autogen_comment();
 
-  void st_class_def(std::ofstream& out, std::string name);
-  void st_method(std::ofstream& out, std::string cls, std::string name);
-  void st_method(std::ofstream& out, std::string cls, std::string name, std::string category);
-  void st_close_method(std::ofstream& out);
-  void st_class_method(std::ofstream& out, std::string cls, std::string name);
-  void st_class_method(std::ofstream& out, std::string cls, std::string name, std::string category);
-  void st_setter(std::ofstream& out, std::string cls, std::string name, std::string type);
-  void st_getter(std::ofstream& out, std::string cls, std::string name);
-  void st_accessors(std::ofstream& out, std::string cls, std::string name, std::string type);
+  void st_class_def(std::ostream& out, std::string name);
+  void st_method(std::ostream& out, std::string cls, std::string name);
+  void st_method(std::ostream& out, std::string cls, std::string name, std::string category);
+  void st_close_method(std::ostream& out);
+  void st_class_method(std::ostream& out, std::string cls, std::string name);
+  void st_class_method(std::ostream& out, std::string cls, std::string name, std::string category);
+  void st_setter(std::ostream& out, std::string cls, std::string name, std::string type);
+  void st_getter(std::ostream& out, std::string cls, std::string name);
+  void st_accessors(std::ostream& out, std::string cls, std::string name, std::string type);
 
   std::string class_name();
   static bool is_valid_namespace(const std::string& sub_namespace);
@@ -156,7 +156,7 @@ private:
    * File streams
    */
   int temporary_var;
-  std::ofstream f_;
+  ofstream_with_content_based_conditional_update f_;
 };
 
 /**
@@ -250,7 +250,7 @@ void t_st_generator::generate_typedef(t_typedef* ttypedef) {
   (void)ttypedef;
 }
 
-void t_st_generator::st_class_def(std::ofstream& out, string name) {
+void t_st_generator::st_class_def(std::ostream& out, string name) {
   out << "Object subclass: #" << prefix(name) << endl;
   indent_up();
   out << indent() << "instanceVariableNames: ''" << endl << indent() << "classVariableNames: ''"
@@ -258,19 +258,19 @@ void t_st_generator::st_class_def(std::ofstream& out, string name) {
       << generated_category() << "'!" << endl << endl;
 }
 
-void t_st_generator::st_method(std::ofstream& out, string cls, string name) {
+void t_st_generator::st_method(std::ostream& out, string cls, string name) {
   st_method(out, cls, name, "as yet uncategorized");
 }
 
-void t_st_generator::st_class_method(std::ofstream& out, string cls, string name) {
+void t_st_generator::st_class_method(std::ostream& out, string cls, string name) {
   st_method(out, cls + " class", name);
 }
 
-void t_st_generator::st_class_method(std::ofstream& out, string cls, string name, string category) {
+void t_st_generator::st_class_method(std::ostream& out, string cls, string name, string category) {
   st_method(out, cls, name, category);
 }
 
-void t_st_generator::st_method(std::ofstream& out, string cls, string name, string category) {
+void t_st_generator::st_method(std::ostream& out, string cls, string name, string category) {
   char timestr[50];
   time_t rawtime;
   struct tm* tinfo;
@@ -286,12 +286,12 @@ void t_st_generator::st_method(std::ofstream& out, string cls, string name, stri
   out << indent();
 }
 
-void t_st_generator::st_close_method(std::ofstream& out) {
+void t_st_generator::st_close_method(std::ostream& out) {
   out << "! !" << endl << endl;
   indent_down();
 }
 
-void t_st_generator::st_setter(std::ofstream& out,
+void t_st_generator::st_setter(std::ostream& out,
                                string cls,
                                string name,
                                string type = "anObject") {
@@ -300,13 +300,13 @@ void t_st_generator::st_setter(std::ofstream& out,
   st_close_method(out);
 }
 
-void t_st_generator::st_getter(std::ofstream& out, string cls, string name) {
+void t_st_generator::st_getter(std::ostream& out, string cls, string name) {
   st_method(out, cls, name + "");
   out << "^ " << name;
   st_close_method(out);
 }
 
-void t_st_generator::st_accessors(std::ofstream& out,
+void t_st_generator::st_accessors(std::ostream& out,
                                   string cls,
                                   string name,
                                   string type = "anObject") {
@@ -490,7 +490,7 @@ void t_st_generator::generate_xception(t_struct* txception) {
 /**
  * Generates a smalltalk class to represent a struct
  */
-void t_st_generator::generate_st_struct(std::ofstream& out,
+void t_st_generator::generate_st_struct(std::ostream& out,
                                         t_struct* tstruct,
                                         bool is_exception = false) {
   const vector<t_field*>& members = tstruct->get_members();
@@ -542,7 +542,7 @@ string t_st_generator::a_type(t_type* type) {
   return prefix + capitalize(type_name(type));
 }
 
-void t_st_generator::generate_accessors(std::ofstream& out, t_struct* tstruct) {
+void t_st_generator::generate_accessors(std::ostream& out, t_struct* tstruct) {
   const vector<t_field*>& members = tstruct->get_members();
   vector<t_field*>::const_iterator m_iter;
   string type;
