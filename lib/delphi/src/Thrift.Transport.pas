@@ -1156,7 +1156,7 @@ end;
 
 procedure TBufferedTransportImpl.Open;
 begin
-  FTransport.Open
+  FTransport.Open;
   InitBuffers;  // we need to get the buffers to match FTransport substreams again
 end;
 
