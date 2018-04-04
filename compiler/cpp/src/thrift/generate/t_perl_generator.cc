@@ -31,7 +31,7 @@
 #include "thrift/generate/t_oop_generator.h"
 
 using std::map;
-using std::ofstream;
+using std::ostream;
 using std::ostringstream;
 using std::string;
 using std::stringstream;
@@ -87,11 +87,11 @@ public:
    */
 
   void generate_perl_struct(t_struct* tstruct, bool is_exception);
-  void generate_perl_struct_definition(std::ofstream& out,
+  void generate_perl_struct_definition(std::ostream& out,
                                        t_struct* tstruct,
                                        bool is_xception = false);
-  void generate_perl_struct_reader(std::ofstream& out, t_struct* tstruct);
-  void generate_perl_struct_writer(std::ofstream& out, t_struct* tstruct);
+  void generate_perl_struct_reader(std::ostream& out, t_struct* tstruct);
+  void generate_perl_struct_writer(std::ostream& out, t_struct* tstruct);
   void generate_perl_function_helpers(t_function* tfunction);
 
   /**
@@ -110,37 +110,37 @@ public:
    * Serialization constructs
    */
 
-  void generate_deserialize_field(std::ofstream& out,
+  void generate_deserialize_field(std::ostream& out,
                                   t_field* tfield,
                                   std::string prefix = "",
                                   bool inclass = false);
 
-  void generate_deserialize_struct(std::ofstream& out, t_struct* tstruct, std::string prefix = "");
+  void generate_deserialize_struct(std::ostream& out, t_struct* tstruct, std::string prefix = "");
 
-  void generate_deserialize_container(std::ofstream& out, t_type* ttype, std::string prefix = "");
+  void generate_deserialize_container(std::ostream& out, t_type* ttype, std::string prefix = "");
 
-  void generate_deserialize_set_element(std::ofstream& out, t_set* tset, std::string prefix = "");
+  void generate_deserialize_set_element(std::ostream& out, t_set* tset, std::string prefix = "");
 
-  void generate_deserialize_map_element(std::ofstream& out, t_map* tmap, std::string prefix = "");
+  void generate_deserialize_map_element(std::ostream& out, t_map* tmap, std::string prefix = "");
 
-  void generate_deserialize_list_element(std::ofstream& out,
+  void generate_deserialize_list_element(std::ostream& out,
                                          t_list* tlist,
                                          std::string prefix = "");
 
-  void generate_serialize_field(std::ofstream& out, t_field* tfield, std::string prefix = "");
+  void generate_serialize_field(std::ostream& out, t_field* tfield, std::string prefix = "");
 
-  void generate_serialize_struct(std::ofstream& out, t_struct* tstruct, std::string prefix = "");
+  void generate_serialize_struct(std::ostream& out, t_struct* tstruct, std::string prefix = "");
 
-  void generate_serialize_container(std::ofstream& out, t_type* ttype, std::string prefix = "");
+  void generate_serialize_container(std::ostream& out, t_type* ttype, std::string prefix = "");
 
-  void generate_serialize_map_element(std::ofstream& out,
+  void generate_serialize_map_element(std::ostream& out,
                                       t_map* tmap,
                                       std::string kiter,
                                       std::string viter);
 
-  void generate_serialize_set_element(std::ofstream& out, t_set* tmap, std::string iter);
+  void generate_serialize_set_element(std::ostream& out, t_set* tmap, std::string iter);
 
-  void generate_serialize_list_element(std::ofstream& out, t_list* tlist, std::string iter);
+  void generate_serialize_list_element(std::ostream& out, t_list* tlist, std::string iter);
 
   /**
    * Helper rendering functions
@@ -208,10 +208,10 @@ private:
   /**
    * File streams
    */
-  std::ofstream f_types_;
-  std::ofstream f_consts_;
-  std::ofstream f_helpers_;
-  std::ofstream f_service_;
+  ofstream_with_content_based_conditional_update f_types_;
+  ofstream_with_content_based_conditional_update f_consts_;
+  ofstream_with_content_based_conditional_update f_helpers_;
+  ofstream_with_content_based_conditional_update f_service_;
 
   bool f_types_use_includes_emitted_;
 };
@@ -453,7 +453,7 @@ void t_perl_generator::generate_perl_struct(t_struct* tstruct, bool is_exception
  *
  * @param tstruct The struct definition
  */
-void t_perl_generator::generate_perl_struct_definition(ofstream& out,
+void t_perl_generator::generate_perl_struct_definition(ostream& out,
                                                        t_struct* tstruct,
                                                        bool is_exception) {
   const vector<t_field*>& members = tstruct->get_members();
@@ -531,7 +531,7 @@ void t_perl_generator::generate_perl_struct_definition(ofstream& out,
 /**
  * Generates the read() method for a struct
  */
-void t_perl_generator::generate_perl_struct_reader(ofstream& out, t_struct* tstruct) {
+void t_perl_generator::generate_perl_struct_reader(ostream& out, t_struct* tstruct) {
   const vector<t_field*>& fields = tstruct->get_members();
   vector<t_field*>::const_iterator f_iter;
 
@@ -601,7 +601,7 @@ void t_perl_generator::generate_perl_struct_reader(ofstream& out, t_struct* tstr
 /**
  * Generates the write() method for a struct
  */
-void t_perl_generator::generate_perl_struct_writer(ofstream& out, t_struct* tstruct) {
+void t_perl_generator::generate_perl_struct_writer(ostream& out, t_struct* tstruct) {
   string name = tstruct->get_name();
   const vector<t_field*>& fields = tstruct->get_sorted_members();
   vector<t_field*>::const_iterator f_iter;
@@ -1183,7 +1183,7 @@ void t_perl_generator::generate_service_client(t_service* tservice) {
 /**
  * Deserializes a field of any type.
  */
-void t_perl_generator::generate_deserialize_field(ofstream& out,
+void t_perl_generator::generate_deserialize_field(ostream& out,
                                                   t_field* tfield,
                                                   string prefix,
                                                   bool inclass) {
@@ -1256,7 +1256,7 @@ void t_perl_generator::generate_deserialize_field(ofstream& out,
  * buffer for deserialization, and that there is a variable protocol which
  * is a reference to a TProtocol serialization object.
  */
-void t_perl_generator::generate_deserialize_struct(ofstream& out,
+void t_perl_generator::generate_deserialize_struct(ostream& out,
                                                    t_struct* tstruct,
                                                    string prefix) {
   out << indent() << "$" << prefix << " = " << perl_namespace(tstruct->get_program())
@@ -1264,7 +1264,7 @@ void t_perl_generator::generate_deserialize_struct(ofstream& out,
       << "->read($input);" << endl;
 }
 
-void t_perl_generator::generate_deserialize_container(ofstream& out, t_type* ttype, string prefix) {
+void t_perl_generator::generate_deserialize_container(ostream& out, t_type* ttype, string prefix) {
   scope_up(out);
 
   string size = tmp("_size");
@@ -1332,7 +1332,7 @@ void t_perl_generator::generate_deserialize_container(ofstream& out, t_type* tty
 /**
  * Generates code to deserialize a map
  */
-void t_perl_generator::generate_deserialize_map_element(ofstream& out, t_map* tmap, string prefix) {
+void t_perl_generator::generate_deserialize_map_element(ostream& out, t_map* tmap, string prefix) {
   string key = tmp("key");
   string val = tmp("val");
   t_field fkey(tmap->get_key_type(), key);
@@ -1347,7 +1347,7 @@ void t_perl_generator::generate_deserialize_map_element(ofstream& out, t_map* tm
   indent(out) << "$" << prefix << "->{$" << key << "} = $" << val << ";" << endl;
 }
 
-void t_perl_generator::generate_deserialize_set_element(ofstream& out, t_set* tset, string prefix) {
+void t_perl_generator::generate_deserialize_set_element(ostream& out, t_set* tset, string prefix) {
   string elem = tmp("elem");
   t_field felem(tset->get_elem_type(), elem);
 
@@ -1358,7 +1358,7 @@ void t_perl_generator::generate_deserialize_set_element(ofstream& out, t_set* ts
   indent(out) << "$" << prefix << "->{$" << elem << "} = 1;" << endl;
 }
 
-void t_perl_generator::generate_deserialize_list_element(ofstream& out,
+void t_perl_generator::generate_deserialize_list_element(ostream& out,
                                                          t_list* tlist,
                                                          string prefix) {
   string elem = tmp("elem");
@@ -1377,7 +1377,7 @@ void t_perl_generator::generate_deserialize_list_element(ofstream& out,
  * @param tfield The field to serialize
  * @param prefix Name to prepend to field name
  */
-void t_perl_generator::generate_serialize_field(ofstream& out, t_field* tfield, string prefix) {
+void t_perl_generator::generate_serialize_field(ostream& out, t_field* tfield, string prefix) {
   t_type* type = get_true_type(tfield->get_type());
 
   // Do nothing for void types
@@ -1448,7 +1448,7 @@ void t_perl_generator::generate_serialize_field(ofstream& out, t_field* tfield, 
  * @param tstruct The struct to serialize
  * @param prefix  String prefix to attach to all fields
  */
-void t_perl_generator::generate_serialize_struct(ofstream& out, t_struct* tstruct, string prefix) {
+void t_perl_generator::generate_serialize_struct(ostream& out, t_struct* tstruct, string prefix) {
   (void)tstruct;
   indent(out) << "$xfer += $" << prefix << "->write($output);" << endl;
 }
@@ -1456,7 +1456,7 @@ void t_perl_generator::generate_serialize_struct(ofstream& out, t_struct* tstruc
 /**
  * Writes out a container
  */
-void t_perl_generator::generate_serialize_container(ofstream& out, t_type* ttype, string prefix) {
+void t_perl_generator::generate_serialize_container(ostream& out, t_type* ttype, string prefix) {
   scope_up(out);
 
   if (ttype->is_map()) {
@@ -1520,7 +1520,7 @@ void t_perl_generator::generate_serialize_container(ofstream& out, t_type* ttype
  * Serializes the members of a map.
  *
  */
-void t_perl_generator::generate_serialize_map_element(ofstream& out,
+void t_perl_generator::generate_serialize_map_element(ostream& out,
                                                       t_map* tmap,
                                                       string kiter,
                                                       string viter) {
@@ -1534,7 +1534,7 @@ void t_perl_generator::generate_serialize_map_element(ofstream& out,
 /**
  * Serializes the members of a set.
  */
-void t_perl_generator::generate_serialize_set_element(ofstream& out, t_set* tset, string iter) {
+void t_perl_generator::generate_serialize_set_element(ostream& out, t_set* tset, string iter) {
   t_field efield(tset->get_elem_type(), iter);
   generate_serialize_field(out, &efield);
 }
@@ -1542,7 +1542,7 @@ void t_perl_generator::generate_serialize_set_element(ofstream& out, t_set* tset
 /**
  * Serializes the members of a list.
  */
-void t_perl_generator::generate_serialize_list_element(ofstream& out, t_list* tlist, string iter) {
+void t_perl_generator::generate_serialize_list_element(ostream& out, t_list* tlist, string iter) {
   t_field efield(tlist->get_elem_type(), iter);
   generate_serialize_field(out, &efield);
 }

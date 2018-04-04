@@ -34,7 +34,7 @@
 #include "thrift/version.h"
 
 using std::map;
-using std::ofstream;
+using std::ostream;
 using std::ostringstream;
 using std::string;
 using std::stringstream;
@@ -135,12 +135,12 @@ public:
    * Structs!
    */
   void generate_js_struct(t_struct* tstruct, bool is_exception);
-  void generate_js_struct_definition(std::ofstream& out,
+  void generate_js_struct_definition(std::ostream& out,
                                      t_struct* tstruct,
                                      bool is_xception = false,
                                      bool is_exported = true);
-  void generate_js_struct_reader(std::ofstream& out, t_struct* tstruct);
-  void generate_js_struct_writer(std::ofstream& out, t_struct* tstruct);
+  void generate_js_struct_reader(std::ostream& out, t_struct* tstruct);
+  void generate_js_struct_writer(std::ostream& out, t_struct* tstruct);
   void generate_js_function_helpers(t_function* tfunction);
 
   /**
@@ -157,37 +157,37 @@ public:
    * Serialization constructs
    */
 
-  void generate_deserialize_field(std::ofstream& out,
+  void generate_deserialize_field(std::ostream& out,
                                   t_field* tfield,
                                   std::string prefix = "",
                                   bool inclass = false);
 
-  void generate_deserialize_struct(std::ofstream& out, t_struct* tstruct, std::string prefix = "");
+  void generate_deserialize_struct(std::ostream& out, t_struct* tstruct, std::string prefix = "");
 
-  void generate_deserialize_container(std::ofstream& out, t_type* ttype, std::string prefix = "");
+  void generate_deserialize_container(std::ostream& out, t_type* ttype, std::string prefix = "");
 
-  void generate_deserialize_set_element(std::ofstream& out, t_set* tset, std::string prefix = "");
+  void generate_deserialize_set_element(std::ostream& out, t_set* tset, std::string prefix = "");
 
-  void generate_deserialize_map_element(std::ofstream& out, t_map* tmap, std::string prefix = "");
+  void generate_deserialize_map_element(std::ostream& out, t_map* tmap, std::string prefix = "");
 
-  void generate_deserialize_list_element(std::ofstream& out,
+  void generate_deserialize_list_element(std::ostream& out,
                                          t_list* tlist,
                                          std::string prefix = "");
 
-  void generate_serialize_field(std::ofstream& out, t_field* tfield, std::string prefix = "");
+  void generate_serialize_field(std::ostream& out, t_field* tfield, std::string prefix = "");
 
-  void generate_serialize_struct(std::ofstream& out, t_struct* tstruct, std::string prefix = "");
+  void generate_serialize_struct(std::ostream& out, t_struct* tstruct, std::string prefix = "");
 
-  void generate_serialize_container(std::ofstream& out, t_type* ttype, std::string prefix = "");
+  void generate_serialize_container(std::ostream& out, t_type* ttype, std::string prefix = "");
 
-  void generate_serialize_map_element(std::ofstream& out,
+  void generate_serialize_map_element(std::ostream& out,
                                       t_map* tmap,
                                       std::string kiter,
                                       std::string viter);
 
-  void generate_serialize_set_element(std::ofstream& out, t_set* tmap, std::string iter);
+  void generate_serialize_set_element(std::ostream& out, t_set* tmap, std::string iter);
 
-  void generate_serialize_list_element(std::ofstream& out, t_list* tlist, std::string iter);
+  void generate_serialize_list_element(std::ostream& out, t_list* tlist, std::string iter);
 
   /**
    * Helper rendering functions
@@ -354,10 +354,10 @@ private:
   /**
    * File streams
    */
-  std::ofstream f_types_;
-  std::ofstream f_service_;
-  std::ofstream f_types_ts_;
-  std::ofstream f_service_ts_;
+  ofstream_with_content_based_conditional_update f_types_;
+  ofstream_with_content_based_conditional_update f_service_;
+  ofstream_with_content_based_conditional_update f_types_ts_;
+  ofstream_with_content_based_conditional_update f_service_ts_;
 };
 
 /**
@@ -686,7 +686,7 @@ t_type* t_js_generator::get_contained_type(t_type* t) {
  *
  * @param tstruct The struct definition
  */
-void t_js_generator::generate_js_struct_definition(ofstream& out,
+void t_js_generator::generate_js_struct_definition(ostream& out,
                                                    t_struct* tstruct,
                                                    bool is_exception,
                                                    bool is_exported) {
@@ -848,7 +848,7 @@ void t_js_generator::generate_js_struct_definition(ofstream& out,
 /**
  * Generates the read() method for a struct
  */
-void t_js_generator::generate_js_struct_reader(ofstream& out, t_struct* tstruct) {
+void t_js_generator::generate_js_struct_reader(ostream& out, t_struct* tstruct) {
   const vector<t_field*>& fields = tstruct->get_members();
   vector<t_field*>::const_iterator f_iter;
 
@@ -927,7 +927,7 @@ void t_js_generator::generate_js_struct_reader(ofstream& out, t_struct* tstruct)
 /**
  * Generates the write() method for a struct
  */
-void t_js_generator::generate_js_struct_writer(ofstream& out, t_struct* tstruct) {
+void t_js_generator::generate_js_struct_writer(ostream& out, t_struct* tstruct) {
   string name = tstruct->get_name();
   const vector<t_field*>& fields = tstruct->get_members();
   vector<t_field*>::const_iterator f_iter;
@@ -1712,7 +1712,7 @@ std::string t_js_generator::render_recv_return(std::string var) {
 /**
  * Deserializes a field of any type.
  */
-void t_js_generator::generate_deserialize_field(ofstream& out,
+void t_js_generator::generate_deserialize_field(ostream& out,
                                                 t_field* tfield,
                                                 string prefix,
                                                 bool inclass) {
@@ -1784,12 +1784,12 @@ void t_js_generator::generate_deserialize_field(ofstream& out,
  * buffer for deserialization, and that there is a variable protocol which
  * is a reference to a TProtocol serialization object.
  */
-void t_js_generator::generate_deserialize_struct(ofstream& out, t_struct* tstruct, string prefix) {
+void t_js_generator::generate_deserialize_struct(ostream& out, t_struct* tstruct, string prefix) {
   out << indent() << prefix << " = new " << js_type_namespace(tstruct->get_program())
       << tstruct->get_name() << "();" << endl << indent() << prefix << ".read(input);" << endl;
 }
 
-void t_js_generator::generate_deserialize_container(ofstream& out, t_type* ttype, string prefix) {
+void t_js_generator::generate_deserialize_container(ostream& out, t_type* ttype, string prefix) {
   string size = tmp("_size");
   string ktype = tmp("_ktype");
   string vtype = tmp("_vtype");
@@ -1863,7 +1863,7 @@ void t_js_generator::generate_deserialize_container(ofstream& out, t_type* ttype
 /**
  * Generates code to deserialize a map
  */
-void t_js_generator::generate_deserialize_map_element(ofstream& out, t_map* tmap, string prefix) {
+void t_js_generator::generate_deserialize_map_element(ostream& out, t_map* tmap, string prefix) {
   string key = tmp("key");
   string val = tmp("val");
   t_field fkey(tmap->get_key_type(), key);
@@ -1878,7 +1878,7 @@ void t_js_generator::generate_deserialize_map_element(ofstream& out, t_map* tmap
   indent(out) << prefix << "[" << key << "] = " << val << ";" << endl;
 }
 
-void t_js_generator::generate_deserialize_set_element(ofstream& out, t_set* tset, string prefix) {
+void t_js_generator::generate_deserialize_set_element(ostream& out, t_set* tset, string prefix) {
   string elem = tmp("elem");
   t_field felem(tset->get_elem_type(), elem);
 
@@ -1889,7 +1889,7 @@ void t_js_generator::generate_deserialize_set_element(ofstream& out, t_set* tset
   indent(out) << prefix << ".push(" << elem << ");" << endl;
 }
 
-void t_js_generator::generate_deserialize_list_element(ofstream& out,
+void t_js_generator::generate_deserialize_list_element(ostream& out,
                                                        t_list* tlist,
                                                        string prefix) {
   string elem = tmp("elem");
@@ -1908,7 +1908,7 @@ void t_js_generator::generate_deserialize_list_element(ofstream& out,
  * @param tfield The field to serialize
  * @param prefix Name to prepend to field name
  */
-void t_js_generator::generate_serialize_field(ofstream& out, t_field* tfield, string prefix) {
+void t_js_generator::generate_serialize_field(ostream& out, t_field* tfield, string prefix) {
   t_type* type = get_true_type(tfield->get_type());
 
   // Do nothing for void types
@@ -1979,7 +1979,7 @@ void t_js_generator::generate_serialize_field(ofstream& out, t_field* tfield, st
  * @param tstruct The struct to serialize
  * @param prefix  String prefix to attach to all fields
  */
-void t_js_generator::generate_serialize_struct(ofstream& out, t_struct* tstruct, string prefix) {
+void t_js_generator::generate_serialize_struct(ostream& out, t_struct* tstruct, string prefix) {
   (void)tstruct;
   indent(out) << prefix << ".write(output);" << endl;
 }
@@ -1987,7 +1987,7 @@ void t_js_generator::generate_serialize_struct(ofstream& out, t_struct* tstruct,
 /**
  * Writes out a container
  */
-void t_js_generator::generate_serialize_container(ofstream& out, t_type* ttype, string prefix) {
+void t_js_generator::generate_serialize_container(ostream& out, t_type* ttype, string prefix) {
   if (ttype->is_map()) {
     indent(out) << "output.writeMapBegin(" << type_to_enum(((t_map*)ttype)->get_key_type()) << ", "
                 << type_to_enum(((t_map*)ttype)->get_val_type()) << ", "
@@ -2050,7 +2050,7 @@ void t_js_generator::generate_serialize_container(ofstream& out, t_type* ttype, 
  * Serializes the members of a map.
  *
  */
-void t_js_generator::generate_serialize_map_element(ofstream& out,
+void t_js_generator::generate_serialize_map_element(ostream& out,
                                                     t_map* tmap,
                                                     string kiter,
                                                     string viter) {
@@ -2064,7 +2064,7 @@ void t_js_generator::generate_serialize_map_element(ofstream& out,
 /**
  * Serializes the members of a set.
  */
-void t_js_generator::generate_serialize_set_element(ofstream& out, t_set* tset, string iter) {
+void t_js_generator::generate_serialize_set_element(ostream& out, t_set* tset, string iter) {
   t_field efield(tset->get_elem_type(), iter);
   generate_serialize_field(out, &efield);
 }
@@ -2072,7 +2072,7 @@ void t_js_generator::generate_serialize_set_element(ofstream& out, t_set* tset, 
 /**
  * Serializes the members of a list.
  */
-void t_js_generator::generate_serialize_list_element(ofstream& out, t_list* tlist, string iter) {
+void t_js_generator::generate_serialize_list_element(ostream& out, t_list* tlist, string iter) {
   t_field efield(tlist->get_elem_type(), iter);
   generate_serialize_field(out, &efield);
 }

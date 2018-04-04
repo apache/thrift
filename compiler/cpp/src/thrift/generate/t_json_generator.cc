@@ -89,7 +89,7 @@ public:
 private:
   bool should_merge_includes_;
 
-  std::ofstream f_json_;
+  ofstream_with_content_based_conditional_update f_json_;
   std::stack<bool> comma_needed_;
 
   template <typename T>

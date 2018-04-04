@@ -118,7 +118,7 @@ protected:
   virtual void generate_consts(std::vector<t_const*> consts) {
     if (!consts.empty()) {
       string f_consts_name = package_dir_ + program_name_ + "_constants.d";
-      ofstream f_consts;
+      ofstream_with_content_based_conditional_update f_consts;
       f_consts.open(f_consts_name.c_str());
 
       f_consts << autogen_comment() << "module " << render_package(*program_) << program_name_
@@ -201,7 +201,7 @@ protected:
 
     // Service implementation file includes
     string f_servicename = package_dir_ + svc_name + ".d";
-    std::ofstream f_service;
+    ofstream_with_content_based_conditional_update f_service;
     f_service.open(f_servicename.c_str());
     f_service << autogen_comment() << "module " << render_package(*program_) << svc_name << ";"
               << endl << endl;
@@ -339,13 +339,13 @@ protected:
 
     // Server skeleton generation.
     string f_skeletonname = package_dir_ + svc_name + "_server.skeleton.d";
-    std::ofstream f_skeleton;
+    ofstream_with_content_based_conditional_update f_skeleton;
     f_skeleton.open(f_skeletonname.c_str());
     print_server_skeleton(f_skeleton, tservice);
     f_skeleton.close();
   }
 
-  void emit_doc(t_doc *doc, std::ofstream& out) {
+  void emit_doc(t_doc *doc, std::ostream& out) {
     if (!doc->has_doc()) {
       return;
     }
@@ -733,8 +733,8 @@ private:
    * File streams, stored here to avoid passing them as parameters to every
    * function.
    */
-  ofstream f_types_;
-  ofstream f_header_;
+  ofstream_with_content_based_conditional_update f_types_;
+  ofstream_with_content_based_conditional_update f_header_;
 
   string package_dir_;
 };
