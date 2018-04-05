@@ -56,5 +56,5 @@ pip.exe ^
             tornado ^
             twisted                       || EXIT /B
 
-:: Haskell (GHC) and cabal
-cinst -c "%BUILDCACHE%" -y ghc            || EXIT /B
+:: Haskell (GHC) and cabal (disabled: see Jira THRIFT-4545)
+:: cinst -c "%BUILDCACHE%" -y ghc            || EXIT /B
