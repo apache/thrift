@@ -33,6 +33,9 @@ typedef NS_ENUM (int, TApplicationError) {
   TApplicationErrorInvalidTransform       = 8,
   TApplicationErrorInvalidProtocol        = 9,
   TApplicationErrorUnsupportedClientType  = 10,
+  TApplicationErrorLoadshedding           = 11,
+  TApplicationErrorTimeout                = 12,
+  TApplicationErrorInjectedFailure        = 13,
 };
 
 

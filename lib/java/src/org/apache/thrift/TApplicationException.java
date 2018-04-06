@@ -48,6 +48,9 @@ public class TApplicationException extends TException implements TSerializable {
   public static final int INVALID_TRANSFORM = 8;
   public static final int INVALID_PROTOCOL = 9;
   public static final int UNSUPPORTED_CLIENT_TYPE = 10;
+  public static final int LOADSHEDDING = 11;
+  public static final int TIMEOUT = 12;
+  public static final int INJECTED_FAILURE = 13;
 
   protected int type_ = UNKNOWN;
   private String message_ = null;

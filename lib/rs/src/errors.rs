@@ -656,6 +656,9 @@ pub enum ApplicationErrorKind {
     InvalidProtocol = 9, // ??
     /// Thrift endpoint requested, or is using, an unsupported auto-generated client type.
     UnsupportedClientType = 10, // ??
+    Loadshedding = 11, // ??
+    Timeout = 12, // ??
+    InjectedFailure = 13, // ??
 }
 
 impl ApplicationError {
@@ -672,6 +675,9 @@ impl ApplicationError {
             ApplicationErrorKind::InvalidTransform => "invalid transform",
             ApplicationErrorKind::InvalidProtocol => "invalid protocol requested",
             ApplicationErrorKind::UnsupportedClientType => "unsupported protocol client",
+            ApplicationErrorKind::Loadshedding => "loadshedding",
+            ApplicationErrorKind::Timeout => "timeout",
+            ApplicationErrorKind::InjectedFailure => "injected failure",
         }
     }
 }
@@ -697,6 +703,9 @@ impl TryFrom<i32> for ApplicationErrorKind {
             8 => Ok(ApplicationErrorKind::InvalidTransform),
             9 => Ok(ApplicationErrorKind::InvalidProtocol),
             10 => Ok(ApplicationErrorKind::UnsupportedClientType),
+            11 => Ok(ApplicationErrorKind::Loadshedding),
+            12 => Ok(ApplicationErrorKind::Timeout),
+            13 => Ok(ApplicationErrorKind::InjectedFailure),
             _ => {
                 Err(
                     Error::Application(

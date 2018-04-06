@@ -45,6 +45,9 @@ package org.apache.thrift {
     public static const INVALID_TRANSFORM:int = 8;
     public static const INVALID_PROTOCOL:int = 9;
     public static const UNSUPPORTED_CLIENT_TYPE:int = 10;
+    public static const LOADSHEDDING:int = 11;
+    public static const TIMEOUT:int = 12;
+    public static const INJECTED_FAILURE:int = 13;
 
     public function TApplicationError(type:int = UNKNOWN, message:String = "") {
       super(message, type);

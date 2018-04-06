@@ -57,6 +57,9 @@
 -define(TApplicationException_INVALID_TRANSFORM, 8).
 -define(TApplicationException_INVALID_PROTOCOL, 9).
 -define(TApplicationException_UNSUPPORTED_CLIENT_TYPE, 10).
+-define(TApplicationException_LOADSHEDDING, 11).
+-define(TApplicationException_TIMEOUT, 12).
+-define(TApplicationException_INJECTED_FAILURE, 13).
 
 -define (MULTIPLEXED_SERVICE_SEPARATOR, ":").
 -define (MULTIPLEXED_ERROR_HANDLER_KEY, "error_handler").

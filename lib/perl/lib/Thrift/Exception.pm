@@ -58,6 +58,9 @@ use constant PROTOCOL_ERROR          => 7;
 use constant INVALID_TRANSFORM       => 8;
 use constant INVALID_PROTOCOL        => 9;
 use constant UNSUPPORTED_CLIENT_TYPE => 10;
+use constant LOADSHEDDING            => 11;
+use constant TIMEOUT                 => 12;
+use constant INJECTED_FAILURE        => 13;
 
 sub new {
     my $classname = shift;
