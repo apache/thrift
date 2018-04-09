@@ -1,17 +1,19 @@
-#### Instructions for Apache Thrift Pull Requests ####
+Some helpful tips for a successful Apache Thrift PR:
 
-* All code changes require an Apache Jira THRIFT Issue
-  (http://issues.apache.org/jira/browse/THRIFT)
-* Pull requests should contain a single commit per issue, or we will ask you to squash it.
-* The pull request title must begin with the Jira THRIFT ticket identifier, for example:
+* Did you test your changes locally or using CI in your fork?
+* Is the Apache Jira THRIFT ticket identifier in the PR title?
+* Is the Apache Jira THRIFT ticket identifier in the commit message?
+* Did you squash your changes to a single commit?
+* Are these changes backwards compatible? (please say so in PR description)
+* Do you need to update the language-specific README?
+
+Example ideal pull request title:
 
         THRIFT-9999: an example pull request title
 
-* Commit messages must follow this pattern for code changes (deviations will not be merged):
+Example ideal commit message:
 
         THRIFT-9999: [summary of fix, one line if possible]
         Client: [language(s) affected, comma separated, use lib/ directory names please]
-
-* Remove these instructions from any pull request description.
 
 For more information about committing, see CONTRIBUTING.md
