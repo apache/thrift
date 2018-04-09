@@ -119,7 +119,7 @@ public:
   void generate_xception(t_struct* txception);
   void generate_service(t_service* tservice);
 
-  std::string render_const_value(t_type* type, t_const_value* value, const string& name);
+  std::string render_const_value(t_type* type, t_const_value* value, const string& name, bool opt = false);
 
   /**
    * Struct generation code
@@ -377,7 +377,6 @@ bool t_go_generator::is_pointer_field(t_field* tfield, bool in_container_value) 
   if (!(tfield->get_req() == t_field::T_OPTIONAL)) {
     return false;
   }
-
   bool has_default = tfield->get_value();
   if (type->is_base_type()) {
     t_base_type::t_base tbase = ((t_base_type*)type)->get_base();
@@ -1034,7 +1033,6 @@ void t_go_generator::generate_const(t_const* tconst) {
   t_type* type = tconst->get_type();
   string name = publicize(tconst->get_name());
   t_const_value* value = tconst->get_value();
-
   if (type->is_base_type() || type->is_enum()) {
     indent(f_consts_) << "const " << name << " = " << render_const_value(type, value, name) << endl;
   } else {
@@ -1050,45 +1048,96 @@ void t_go_generator::generate_const(t_const* tconst) {
  * is NOT performed in this function as it is always run beforehand using the
  * validate_types method in main.cc
  */
-string t_go_generator::render_const_value(t_type* type, t_const_value* value, const string& name) {
+string t_go_generator::render_const_value(t_type* type, t_const_value* value, const string& name, bool opt) {
   type = get_true_type(type);
   std::ostringstream out;
 
   if (type->is_base_type()) {
     t_base_type::t_base tbase = ((t_base_type*)type)->get_base();
 
-    switch (tbase) {
-    case t_base_type::TYPE_STRING:
-      if (type->is_binary()) {
-        out << "[]byte(\"" << get_escaped_string(value) << "\")";
-      } else {
-        out << '"' << get_escaped_string(value) << '"';
+    if (opt) {
+      out << "&(&struct{x ";
+      switch (tbase) {
+        case t_base_type::TYPE_BOOL:
+          out << "bool}{";
+          out << (value->get_integer() > 0 ? "true" : "false");
+          break;
+
+        case t_base_type::TYPE_I8:
+          out << "int8}{";
+          out << value->get_integer();
+          break;
+        case t_base_type::TYPE_I16:
+          out << "int16}{";
+          out << value->get_integer();
+          break;
+        case t_base_type::TYPE_I32:
+          out << "int32}{";
+          out << value->get_integer();
+          break;
+        case t_base_type::TYPE_I64:
+          out << "int64}{";
+          out << value->get_integer();
+          break;
+
+        case t_base_type::TYPE_DOUBLE:
+          out << "float64}{";
+          if (value->get_type() == t_const_value::CV_INTEGER) {
+            out << value->get_integer();
+          } else {
+            out << value->get_double();
+          }
+          break;
+
+        case t_base_type::TYPE_STRING:
+          out << "string}{";
+          out << '"' + get_escaped_string(value) + '"';
+          break;
+
+        default:
+          throw "compiler error: no const of base type " + t_base_type::t_base_name(tbase);
       }
+      out << "}).x";
+    } else {
+      switch (tbase) {
+        case t_base_type::TYPE_STRING:
+          if (type->is_binary()) {
+            out << "[]byte(\"" << get_escaped_string(value) << "\")";
+          } else {
+            out << '"' << get_escaped_string(value) << '"';
+          }
 
-      break;
+          break;
 
-    case t_base_type::TYPE_BOOL:
-      out << (value->get_integer() > 0 ? "true" : "false");
-      break;
+        case t_base_type::TYPE_BOOL:
+          out << (value->get_integer() > 0 ? "true" : "false");
+          break;
 
-    case t_base_type::TYPE_I8:
-    case t_base_type::TYPE_I16:
-    case t_base_type::TYPE_I32:
-    case t_base_type::TYPE_I64:
-      out << value->get_integer();
-      break;
+        case t_base_type::TYPE_I8:
+        case t_base_type::TYPE_I16:
+        case t_base_type::TYPE_I32:
+        case t_base_type::TYPE_I64:
+          if (opt) {
+            out << "&(&struct{x int}{";
+          }
+          out << value->get_integer();
+          if (opt) {
+            out << "}).x";
+          }
+          break;
 
-    case t_base_type::TYPE_DOUBLE:
-      if (value->get_type() == t_const_value::CV_INTEGER) {
-        out << value->get_integer();
-      } else {
-        out << value->get_double();
+        case t_base_type::TYPE_DOUBLE:
+          if (value->get_type() == t_const_value::CV_INTEGER) {
+            out << value->get_integer();
+          } else {
+            out << value->get_double();
+          }
+
+          break;
+
+        default:
+          throw "compiler error: no const of base type " + t_base_type::t_base_name(tbase);
       }
-
-      break;
-
-    default:
-      throw "compiler error: no const of base type " + t_base_type::t_base_name(tbase);
     }
   } else if (type->is_enum()) {
     indent(out) << value->get_integer();
@@ -1102,19 +1151,19 @@ string t_go_generator::render_const_value(t_type* type, t_const_value* value, co
 
     for (v_iter = val.begin(); v_iter != val.end(); ++v_iter) {
       t_type* field_type = NULL;
-
+      bool is_optional = false;
       for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
         if ((*f_iter)->get_name() == v_iter->first->get_string()) {
           field_type = (*f_iter)->get_type();
+          is_optional = is_pointer_field(*f_iter);
         }
       }
 
       if (field_type == NULL) {
         throw "type error: " + type->get_name() + " has no field " + v_iter->first->get_string();
       }
-
       out << endl << indent() << publicize(v_iter->first->get_string()) << ": "
-          << render_const_value(field_type, v_iter->second, name) << "," << endl;
+          << render_const_value(field_type, v_iter->second, name, is_optional) << "," << endl;
     }
 
     indent_down();
