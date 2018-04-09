@@ -26,6 +26,7 @@ uses
   Multiplex.Server.Main in 'Multiplex.Server.Main.pas',
   ConsoleHelper in '..\ConsoleHelper.pas',
   Thrift in '..\..\src\Thrift.pas',
+  Thrift.Exception in '..\..\src\Thrift.Exception.pas',
   Thrift.Socket in '..\..\src\Thrift.Socket.pas',
   Thrift.Transport in '..\..\src\Thrift.Transport.pas',
   Thrift.Transport.Pipes in '..\..\src\Thrift.Transport.Pipes.pas',

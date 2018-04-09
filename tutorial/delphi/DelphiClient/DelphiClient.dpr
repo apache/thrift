@@ -26,7 +26,7 @@ uses
   Generics.Collections,
   Thrift in '..\..\..\lib\delphi\src\Thrift.pas',
   Thrift.Collections in '..\..\..\lib\delphi\src\Thrift.Collections.pas',
-  Thrift.Console in '..\..\..\lib\delphi\src\Thrift.Console.pas',
+  Thrift.Exception in '..\..\..\lib\delphi\src\Thrift.Exception.pas',
   Thrift.Utils in '..\..\..\lib\delphi\src\Thrift.Utils.pas',
   Thrift.Stream in '..\..\..\lib\delphi\src\Thrift.Stream.pas',
   Thrift.Protocol in '..\..\..\lib\delphi\src\Thrift.Protocol.pas',
@@ -62,10 +62,10 @@ begin
     transport.Open;
 
     client.ping;
-    Console.WriteLine('ping()');
+    WriteLn('ping()');
 
     sum := client.add( 1, 1);
-    Console.WriteLine( Format( '1+1=%d', [sum]));
+    WriteLn( Format( '1+1=%d', [sum]));
 
     work := TWorkImpl.Create;
 
@@ -74,11 +74,11 @@ begin
     work.Num2 := 0;
     try
       quotient := client.calculate(1, work);
-      Console.WriteLine( 'Whoa we can divide by 0');
-      Console.WriteLine( Format('1/0=%d',[quotient]));
+      WriteLn( 'Whoa we can divide by 0');
+      WriteLn( Format('1/0=%d',[quotient]));
     except
       on io: TInvalidOperation
-      do Console.WriteLine( 'Invalid operation: ' + io.Why);
+      do WriteLn( 'Invalid operation: ' + io.Why);
     end;
 
     work.Op   := TOperation.SUBTRACT;
@@ -86,20 +86,20 @@ begin
     work.Num2 := 10;
     try
       diff := client.calculate( 1, work);
-      Console.WriteLine( Format('15-10=%d', [diff]));
+      WriteLn( Format('15-10=%d', [diff]));
     except
       on io: TInvalidOperation
-      do Console.WriteLine( 'Invalid operation: ' + io.Why);
+      do WriteLn( 'Invalid operation: ' + io.Why);
     end;
 
     log := client.getStruct(1);
-    Console.WriteLine( Format( 'Check log: %s', [log.Value]));
+    WriteLn( Format( 'Check log: %s', [log.Value]));
 
     transport.Close();
 
   except
     on e : Exception
-    do Console.WriteLine( e.ClassName+': '+e.Message);
+    do WriteLn( e.ClassName+': '+e.Message);
   end;
 end;
 

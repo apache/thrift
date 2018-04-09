@@ -28,7 +28,7 @@ uses
   Generics.Collections,
   Thrift in '..\..\..\lib\delphi\src\Thrift.pas',
   Thrift.Collections in '..\..\..\lib\delphi\src\Thrift.Collections.pas',
-  Thrift.Console in '..\..\..\lib\delphi\src\Thrift.Console.pas',
+  Thrift.Exception in '..\..\..\lib\delphi\src\Thrift.Exception.pas',
   Thrift.Utils in '..\..\..\lib\delphi\src\Thrift.Utils.pas',
   Thrift.Stream in '..\..\..\lib\delphi\src\Thrift.Stream.pas',
   Thrift.Protocol in '..\..\..\lib\delphi\src\Thrift.Protocol.pas',
@@ -86,13 +86,13 @@ end;
 
 procedure TCalculatorHandler.ping;
 begin
-  Console.WriteLine( 'ping()');
+  WriteLn( 'ping()');
 end;
 
 
 function TCalculatorHandler.add(num1: Integer; num2: Integer): Integer;
 begin
-  Console.WriteLine( Format( 'add( %d, %d)', [num1, num2]));
+  WriteLn( Format( 'add( %d, %d)', [num1, num2]));
   result := num1 + num2;
 end;
 
@@ -101,7 +101,7 @@ function TCalculatorHandler.calculate(logid: Integer; const w: IWork): Integer;
 var entry : ISharedStruct;
 begin
   try
-    Console.WriteLine( Format('calculate( %d, [%d,%d,%d])', [logid, Ord(w.Op), w.Num1, w.Num2]));
+    WriteLn( Format('calculate( %d, [%d,%d,%d])', [logid, Ord(w.Op), w.Num1, w.Num2]));
 
     case w.Op of
       TOperation.ADD      :  result := w.Num1 + w.Num2;
@@ -126,14 +126,14 @@ end;
 
 function TCalculatorHandler.getStruct(key: Integer): ISharedStruct;
 begin
-  Console.WriteLine( Format( 'getStruct(%d)', [key]));
+  WriteLn( Format( 'getStruct(%d)', [key]));
   result := FLog[key];
 end;
 
 
 procedure TCalculatorHandler.zip;
 begin
-  Console.WriteLine( 'zip()');
+  WriteLn( 'zip()');
 end;
 
 
@@ -152,14 +152,14 @@ begin
     transport := TServerSocketImpl.Create( 9090);
     server    := TSimpleServer.Create( processor, transport);
 
-    Console.WriteLine( 'Starting the server...');
+    WriteLn( 'Starting the server...');
     server.Serve();
 
   except
-    on e: Exception do Console.WriteLine( e.Message);
+    on e: Exception do WriteLn( e.Message);
   end;
 
-  Console.WriteLine('done.');
+  WriteLn('done.');
 end;
 
 

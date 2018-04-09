@@ -27,6 +27,7 @@ uses
   Classes,
   SysUtils,
   Contnrs,
+  Thrift.Exception,
   Thrift.Stream,
   Thrift.Collections,
   Thrift.Transport;
@@ -116,7 +117,7 @@ type
     function Append(const Value: IThriftContainer): TStringBuilder; overload;
   end;
 
-  TProtocolException = class( Exception )
+  TProtocolException = class( TException)
   public
     const // TODO(jensg): change into enum
       UNKNOWN = 0;

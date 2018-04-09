@@ -27,6 +27,7 @@ uses
   TestServerEvents in 'TestServerEvents.pas',
   Thrift.Test,  // in gen-delphi folder
   Thrift in '..\src\Thrift.pas',
+  Thrift.Exception in '..\src\Thrift.Exception.pas',
   Thrift.Transport in '..\src\Thrift.Transport.pas',
   Thrift.Socket in '..\src\Thrift.Socket.pas',
   Thrift.Transport.Pipes in '..\src\Thrift.Transport.Pipes.pas',

@@ -25,6 +25,7 @@ uses
   Classes, Windows, SysUtils,
   Skiptest.Two,
   Thrift in '..\..\src\Thrift.pas',
+  Thrift.Exception in '..\..\src\Thrift.Exception.pas',
   Thrift.Socket in '..\..\src\Thrift.Socket.pas',
   Thrift.Transport in '..\..\src\Thrift.Transport.pas',
   Thrift.Protocol in '..\..\src\Thrift.Protocol.pas',

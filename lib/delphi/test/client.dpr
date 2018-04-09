@@ -29,6 +29,7 @@ uses
   Thrift in '..\src\Thrift.pas',
   Thrift.Transport in '..\src\Thrift.Transport.pas',
   Thrift.Socket in '..\src\Thrift.Socket.pas',
+  Thrift.Exception in '..\src\Thrift.Exception.pas',
   Thrift.Transport.Pipes in '..\src\Thrift.Transport.Pipes.pas',
   Thrift.Protocol in '..\src\Thrift.Protocol.pas',
   Thrift.Protocol.JSON in '..\src\Thrift.Protocol.JSON.pas',

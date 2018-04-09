@@ -39,6 +39,7 @@ uses
     {$ENDIF}
   {$ENDIF}
   Thrift.Collections,
+  Thrift.Exception,
   Thrift.Utils,
   Thrift.Stream;
 
@@ -79,7 +80,7 @@ type
     procedure Flush; virtual;
   end;
 
-  TTransportException = class( Exception )
+  TTransportException = class( TException)
   public
     type
       TExceptionType = (

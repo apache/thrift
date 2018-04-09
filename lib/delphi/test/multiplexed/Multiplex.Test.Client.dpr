@@ -27,6 +27,7 @@ uses
   Multiplex.Client.Main in 'Multiplex.Client.Main.pas',
   Thrift in '..\..\src\Thrift.pas',
   Thrift.Socket in '..\..\src\Thrift.Socket.pas',
+  Thrift.Exception in '..\..\src\Thrift.Exception.pas',
   Thrift.Transport in '..\..\src\Thrift.Transport.pas',
   Thrift.Transport.Pipes in '..\..\src\Thrift.Transport.Pipes.pas',
   Thrift.Protocol in '..\..\src\Thrift.Protocol.pas',
