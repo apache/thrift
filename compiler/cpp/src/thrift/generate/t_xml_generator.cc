@@ -101,7 +101,7 @@ private:
   bool should_use_default_ns_;
   bool should_use_namespaces_;
 
-  std::ofstream f_xml_;
+  ofstream_with_content_based_conditional_update f_xml_;
 
   std::set<string> programs_;
   std::stack<string> elements_;

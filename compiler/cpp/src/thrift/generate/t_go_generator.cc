@@ -42,7 +42,7 @@
 #include "thrift/generate/t_generator.h"
 
 using std::map;
-using std::ofstream;
+using std::ostream;
 using std::ostringstream;
 using std::string;
 using std::stringstream;
@@ -126,27 +126,27 @@ public:
    */
 
   void generate_go_struct(t_struct* tstruct, bool is_exception);
-  void generate_go_struct_definition(std::ofstream& out,
+  void generate_go_struct_definition(std::ostream& out,
                                      t_struct* tstruct,
                                      bool is_xception = false,
                                      bool is_result = false,
                                      bool is_args = false);
-  void generate_go_struct_initializer(std::ofstream& out,
+  void generate_go_struct_initializer(std::ostream& out,
                                       t_struct* tstruct,
                                       bool is_args_or_result = false);
-  void generate_isset_helpers(std::ofstream& out,
+  void generate_isset_helpers(std::ostream& out,
                               t_struct* tstruct,
                               const string& tstruct_name,
                               bool is_result = false);
-  void generate_countsetfields_helper(std::ofstream& out,
+  void generate_countsetfields_helper(std::ostream& out,
                                       t_struct* tstruct,
                                       const string& tstruct_name,
                                       bool is_result = false);
-  void generate_go_struct_reader(std::ofstream& out,
+  void generate_go_struct_reader(std::ostream& out,
                                  t_struct* tstruct,
                                  const string& tstruct_name,
                                  bool is_result = false);
-  void generate_go_struct_writer(std::ofstream& out,
+  void generate_go_struct_writer(std::ostream& out,
                                  t_struct* tstruct,
                                  const string& tstruct_name,
                                  bool is_result = false,
@@ -171,7 +171,7 @@ public:
    * Serialization constructs
    */
 
-  void generate_deserialize_field(std::ofstream& out,
+  void generate_deserialize_field(std::ostream& out,
                                   t_field* tfield,
                                   bool declare,
                                   std::string prefix = "",
@@ -180,64 +180,64 @@ public:
                                   bool inkey = false,
                                   bool in_container = false);
 
-  void generate_deserialize_struct(std::ofstream& out,
+  void generate_deserialize_struct(std::ostream& out,
                                    t_struct* tstruct,
                                    bool is_pointer_field,
                                    bool declare,
                                    std::string prefix = "");
 
-  void generate_deserialize_container(std::ofstream& out,
+  void generate_deserialize_container(std::ostream& out,
                                       t_type* ttype,
                                       bool pointer_field,
                                       bool declare,
                                       std::string prefix = "");
 
-  void generate_deserialize_set_element(std::ofstream& out,
+  void generate_deserialize_set_element(std::ostream& out,
                                         t_set* tset,
                                         bool declare,
                                         std::string prefix = "");
 
-  void generate_deserialize_map_element(std::ofstream& out,
+  void generate_deserialize_map_element(std::ostream& out,
                                         t_map* tmap,
                                         bool declare,
                                         std::string prefix = "");
 
-  void generate_deserialize_list_element(std::ofstream& out,
+  void generate_deserialize_list_element(std::ostream& out,
                                          t_list* tlist,
                                          bool declare,
                                          std::string prefix = "");
 
-  void generate_serialize_field(std::ofstream& out,
+  void generate_serialize_field(std::ostream& out,
                                 t_field* tfield,
                                 std::string prefix = "",
                                 bool inkey = false);
 
-  void generate_serialize_struct(std::ofstream& out, t_struct* tstruct, std::string prefix = "");
+  void generate_serialize_struct(std::ostream& out, t_struct* tstruct, std::string prefix = "");
 
-  void generate_serialize_container(std::ofstream& out,
+  void generate_serialize_container(std::ostream& out,
                                     t_type* ttype,
                                     bool pointer_field,
                                     std::string prefix = "");
 
-  void generate_serialize_map_element(std::ofstream& out,
+  void generate_serialize_map_element(std::ostream& out,
                                       t_map* tmap,
                                       std::string kiter,
                                       std::string viter);
 
-  void generate_serialize_set_element(std::ofstream& out, t_set* tmap, std::string iter);
+  void generate_serialize_set_element(std::ostream& out, t_set* tmap, std::string iter);
 
-  void generate_serialize_list_element(std::ofstream& out, t_list* tlist, std::string iter);
+  void generate_serialize_list_element(std::ostream& out, t_list* tlist, std::string iter);
 
-  void generate_go_docstring(std::ofstream& out, t_struct* tstruct);
+  void generate_go_docstring(std::ostream& out, t_struct* tstruct);
 
-  void generate_go_docstring(std::ofstream& out, t_function* tfunction);
+  void generate_go_docstring(std::ostream& out, t_function* tfunction);
 
-  void generate_go_docstring(std::ofstream& out,
+  void generate_go_docstring(std::ostream& out,
                              t_doc* tdoc,
                              t_struct* tstruct,
                              const char* subheader);
 
-  void generate_go_docstring(std::ofstream& out, t_doc* tdoc);
+  void generate_go_docstring(std::ostream& out, t_doc* tdoc);
 
   /**
    * Helper rendering functions
@@ -290,9 +290,9 @@ private:
    * File streams
    */
 
-  std::ofstream f_types_;
+  ofstream_with_content_based_conditional_update f_types_;
   std::string f_types_name_;
-  std::ofstream f_consts_;
+  ofstream_with_content_based_conditional_update f_consts_;
   std::string f_consts_name_;
   std::stringstream f_const_values_;
 
@@ -758,7 +758,7 @@ void t_go_generator::init_generator() {
 
   // Create file for the GoUnusedProtection__ variable
   string f_unused_prot_name_ = package_dir_ + "/" + "GoUnusedProtection__.go";
-  ofstream f_unused_prot_;
+  ofstream_with_content_based_conditional_update f_unused_prot_;
   f_unused_prot_.open(f_unused_prot_name_.c_str());
   f_unused_prot_ << go_autogen_comment() << go_package() << render_import_protection();
   f_unused_prot_.close();
@@ -1201,7 +1201,7 @@ void t_go_generator::get_publicized_name_and_def_value(t_field* tfield,
   *OUT_def_value = tfield->get_value();
 }
 
-void t_go_generator::generate_go_struct_initializer(ofstream& out,
+void t_go_generator::generate_go_struct_initializer(ostream& out,
                                                     t_struct* tstruct,
                                                     bool is_args_or_result) {
   out << publicize(type_name(tstruct), is_args_or_result) << "{";
@@ -1227,7 +1227,7 @@ void t_go_generator::generate_go_struct_initializer(ofstream& out,
  *
  * @param tstruct The struct definition
  */
-void t_go_generator::generate_go_struct_definition(ofstream& out,
+void t_go_generator::generate_go_struct_definition(ostream& out,
                                                    t_struct* tstruct,
                                                    bool is_exception,
                                                    bool is_result,
@@ -1384,7 +1384,7 @@ void t_go_generator::generate_go_struct_definition(ofstream& out,
 /**
  * Generates the IsSet helper methods for a struct
  */
-void t_go_generator::generate_isset_helpers(ofstream& out,
+void t_go_generator::generate_isset_helpers(ostream& out,
                                             t_struct* tstruct,
                                             const string& tstruct_name,
                                             bool is_result) {
@@ -1423,7 +1423,7 @@ void t_go_generator::generate_isset_helpers(ofstream& out,
 /**
  * Generates the CountSetFields helper method for a struct
  */
-void t_go_generator::generate_countsetfields_helper(ofstream& out,
+void t_go_generator::generate_countsetfields_helper(ostream& out,
                                                     t_struct* tstruct,
                                                     const string& tstruct_name,
                                                     bool is_result) {
@@ -1462,7 +1462,7 @@ void t_go_generator::generate_countsetfields_helper(ofstream& out,
 /**
  * Generates the read method for a struct
  */
-void t_go_generator::generate_go_struct_reader(ofstream& out,
+void t_go_generator::generate_go_struct_reader(ostream& out,
                                                t_struct* tstruct,
                                                const string& tstruct_name,
                                                bool is_result) {
@@ -1615,7 +1615,7 @@ void t_go_generator::generate_go_struct_reader(ofstream& out,
   }
 }
 
-void t_go_generator::generate_go_struct_writer(ofstream& out,
+void t_go_generator::generate_go_struct_writer(ostream& out,
                                                t_struct* tstruct,
                                                const string& tstruct_name,
                                                bool is_result,
@@ -2048,7 +2048,7 @@ void t_go_generator::generate_service_remote(t_service* tservice) {
   vector<t_function*>::iterator f_iter;
   string f_remote_name = f_remote_dir + "/"
                          + underscore(service_name_) + "-remote.go";
-  ofstream f_remote;
+  ofstream_with_content_based_conditional_update f_remote;
   f_remote.open(f_remote_name.c_str());
   string service_module = get_real_go_module(program_);
   string::size_type loc;
@@ -2777,7 +2777,7 @@ void t_go_generator::generate_process_function(t_service* tservice, t_function* 
 /**
  * Deserializes a field of any type.
  */
-void t_go_generator::generate_deserialize_field(ofstream& out,
+void t_go_generator::generate_deserialize_field(ostream& out,
                                                 t_field* tfield,
                                                 bool declare,
                                                 string prefix,
@@ -2893,7 +2893,7 @@ void t_go_generator::generate_deserialize_field(ofstream& out,
 /**
  * Generates an unserializer for a struct, calling read()
  */
-void t_go_generator::generate_deserialize_struct(ofstream& out,
+void t_go_generator::generate_deserialize_struct(ostream& out,
                                                  t_struct* tstruct,
                                                  bool pointer_field,
                                                  bool declare,
@@ -2912,7 +2912,7 @@ void t_go_generator::generate_deserialize_struct(ofstream& out,
  * Serialize a container by writing out the header followed by
  * data and then a footer.
  */
-void t_go_generator::generate_deserialize_container(ofstream& out,
+void t_go_generator::generate_deserialize_container(ostream& out,
                                                     t_type* orig_type,
                                                     bool pointer_field,
                                                     bool declare,
@@ -2988,7 +2988,7 @@ void t_go_generator::generate_deserialize_container(ofstream& out,
 /**
  * Generates code to deserialize a map
  */
-void t_go_generator::generate_deserialize_map_element(ofstream& out,
+void t_go_generator::generate_deserialize_map_element(ostream& out,
                                                       t_map* tmap,
                                                       bool declare,
                                                       string prefix) {
@@ -3007,7 +3007,7 @@ void t_go_generator::generate_deserialize_map_element(ofstream& out,
 /**
  * Write a set element
  */
-void t_go_generator::generate_deserialize_set_element(ofstream& out,
+void t_go_generator::generate_deserialize_set_element(ostream& out,
                                                       t_set* tset,
                                                       bool declare,
                                                       string prefix) {
@@ -3022,7 +3022,7 @@ void t_go_generator::generate_deserialize_set_element(ofstream& out,
 /**
  * Write a list element
  */
-void t_go_generator::generate_deserialize_list_element(ofstream& out,
+void t_go_generator::generate_deserialize_list_element(ostream& out,
                                                        t_list* tlist,
                                                        bool declare,
                                                        string prefix) {
@@ -3040,7 +3040,7 @@ void t_go_generator::generate_deserialize_list_element(ofstream& out,
  * @param tfield The field to serialize
  * @param prefix Name to prepend to field name
  */
-void t_go_generator::generate_serialize_field(ofstream& out,
+void t_go_generator::generate_serialize_field(ostream& out,
                                               t_field* tfield,
                                               string prefix,
                                               bool inkey) {
@@ -3127,7 +3127,7 @@ void t_go_generator::generate_serialize_field(ofstream& out,
  * @param tstruct The struct to serialize
  * @param prefix  String prefix to attach to all fields
  */
-void t_go_generator::generate_serialize_struct(ofstream& out, t_struct* tstruct, string prefix) {
+void t_go_generator::generate_serialize_struct(ostream& out, t_struct* tstruct, string prefix) {
   (void)tstruct;
   out << indent() << "if err := " << prefix << "." << write_method_name_ << "(oprot); err != nil {" << endl;
   out << indent() << "  return thrift.PrependError(fmt.Sprintf(\"%T error writing struct: \", "
@@ -3135,7 +3135,7 @@ void t_go_generator::generate_serialize_struct(ofstream& out, t_struct* tstruct,
   out << indent() << "}" << endl;
 }
 
-void t_go_generator::generate_serialize_container(ofstream& out,
+void t_go_generator::generate_serialize_container(ostream& out,
                                                   t_type* ttype,
                                                   bool pointer_field,
                                                   string prefix) {
@@ -3216,7 +3216,7 @@ void t_go_generator::generate_serialize_container(ofstream& out,
  * Serializes the members of a map.
  *
  */
-void t_go_generator::generate_serialize_map_element(ofstream& out,
+void t_go_generator::generate_serialize_map_element(ostream& out,
                                                     t_map* tmap,
                                                     string kiter,
                                                     string viter) {
@@ -3231,7 +3231,7 @@ void t_go_generator::generate_serialize_map_element(ofstream& out,
 /**
  * Serializes the members of a set.
  */
-void t_go_generator::generate_serialize_set_element(ofstream& out, t_set* tset, string prefix) {
+void t_go_generator::generate_serialize_set_element(ostream& out, t_set* tset, string prefix) {
   t_field efield(tset->get_elem_type(), "");
   efield.set_req(t_field::T_OPT_IN_REQ_OUT);
   generate_serialize_field(out, &efield, prefix);
@@ -3240,7 +3240,7 @@ void t_go_generator::generate_serialize_set_element(ofstream& out, t_set* tset, 
 /**
  * Serializes the members of a list.
  */
-void t_go_generator::generate_serialize_list_element(ofstream& out, t_list* tlist, string prefix) {
+void t_go_generator::generate_serialize_list_element(ostream& out, t_list* tlist, string prefix) {
   t_field efield(tlist->get_elem_type(), "");
   efield.set_req(t_field::T_OPT_IN_REQ_OUT);
   generate_serialize_field(out, &efield, prefix);
@@ -3249,21 +3249,21 @@ void t_go_generator::generate_serialize_list_element(ofstream& out, t_list* tlis
 /**
  * Generates the docstring for a given struct.
  */
-void t_go_generator::generate_go_docstring(ofstream& out, t_struct* tstruct) {
+void t_go_generator::generate_go_docstring(ostream& out, t_struct* tstruct) {
   generate_go_docstring(out, tstruct, tstruct, "Attributes");
 }
 
 /**
  * Generates the docstring for a given function.
  */
-void t_go_generator::generate_go_docstring(ofstream& out, t_function* tfunction) {
+void t_go_generator::generate_go_docstring(ostream& out, t_function* tfunction) {
   generate_go_docstring(out, tfunction, tfunction->get_arglist(), "Parameters");
 }
 
 /**
  * Generates the docstring for a struct or function.
  */
-void t_go_generator::generate_go_docstring(ofstream& out,
+void t_go_generator::generate_go_docstring(ostream& out,
                                            t_doc* tdoc,
                                            t_struct* tstruct,
                                            const char* subheader) {
@@ -3306,7 +3306,7 @@ void t_go_generator::generate_go_docstring(ofstream& out,
 /**
  * Generates the docstring for a generic object.
  */
-void t_go_generator::generate_go_docstring(ofstream& out, t_doc* tdoc) {
+void t_go_generator::generate_go_docstring(ostream& out, t_doc* tdoc) {
   if (tdoc->has_doc()) {
     generate_docstring_comment(out, "", "//", tdoc->get_doc(), "");
   }

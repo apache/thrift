@@ -31,7 +31,7 @@
 #include "thrift/generate/t_oop_generator.h"
 
 using std::map;
-using std::ofstream;
+using std::ostream;
 using std::ostringstream;
 using std::string;
 using std::stringstream;
@@ -83,13 +83,13 @@ public:
   void generate_xception(t_struct* txception);
   void generate_service(t_service* tservice);
 
-  void print_const_value(std::ofstream& out,
+  void print_const_value(std::ostream& out,
                          std::string name,
                          t_type* type,
                          t_const_value* value,
                          bool in_static,
                          bool defval = false);
-  std::string render_const_value(ofstream& out,
+  std::string render_const_value(ostream& out,
                                  std::string name,
                                  t_type* type,
                                  t_const_value* value);
@@ -100,19 +100,19 @@ public:
 
   void generate_as3_struct(t_struct* tstruct, bool is_exception);
 
-  void generate_as3_struct_definition(std::ofstream& out,
+  void generate_as3_struct_definition(std::ostream& out,
                                       t_struct* tstruct,
                                       bool is_xception = false,
                                       bool in_class = false,
                                       bool is_result = false);
   // removed -- equality,compare_to
-  void generate_as3_struct_reader(std::ofstream& out, t_struct* tstruct);
-  void generate_as3_validator(std::ofstream& out, t_struct* tstruct);
-  void generate_as3_struct_result_writer(std::ofstream& out, t_struct* tstruct);
-  void generate_as3_struct_writer(std::ofstream& out, t_struct* tstruct);
-  void generate_as3_struct_tostring(std::ofstream& out, t_struct* tstruct, bool bindable);
-  void generate_as3_meta_data_map(std::ofstream& out, t_struct* tstruct);
-  void generate_field_value_meta_data(std::ofstream& out, t_type* type);
+  void generate_as3_struct_reader(std::ostream& out, t_struct* tstruct);
+  void generate_as3_validator(std::ostream& out, t_struct* tstruct);
+  void generate_as3_struct_result_writer(std::ostream& out, t_struct* tstruct);
+  void generate_as3_struct_writer(std::ostream& out, t_struct* tstruct);
+  void generate_as3_struct_tostring(std::ostream& out, t_struct* tstruct, bool bindable);
+  void generate_as3_meta_data_map(std::ostream& out, t_struct* tstruct);
+  void generate_field_value_meta_data(std::ostream& out, t_type* type);
   std::string get_as3_type_string(t_type* type);
   void generate_reflection_setters(std::ostringstream& out,
                                    t_type* type,
@@ -122,15 +122,15 @@ public:
                                    t_type* type,
                                    std::string field_name,
                                    std::string cap_name);
-  void generate_generic_field_getters_setters(std::ofstream& out, t_struct* tstruct);
-  void generate_generic_isset_method(std::ofstream& out, t_struct* tstruct);
-  void generate_as3_bean_boilerplate(std::ofstream& out, t_struct* tstruct, bool bindable);
+  void generate_generic_field_getters_setters(std::ostream& out, t_struct* tstruct);
+  void generate_generic_isset_method(std::ostream& out, t_struct* tstruct);
+  void generate_as3_bean_boilerplate(std::ostream& out, t_struct* tstruct, bool bindable);
 
   void generate_function_helpers(t_function* tfunction);
   std::string get_cap_name(std::string name);
   std::string generate_isset_check(t_field* field);
   std::string generate_isset_check(std::string field);
-  void generate_isset_set(ofstream& out, t_field* field);
+  void generate_isset_set(ostream& out, t_field* field);
   // removed std::string isset_field_id(t_field* field);
 
   void generate_service_interface(t_service* tservice);
@@ -143,38 +143,38 @@ public:
    * Serialization constructs
    */
 
-  void generate_deserialize_field(std::ofstream& out, t_field* tfield, std::string prefix = "");
+  void generate_deserialize_field(std::ostream& out, t_field* tfield, std::string prefix = "");
 
-  void generate_deserialize_struct(std::ofstream& out, t_struct* tstruct, std::string prefix = "");
+  void generate_deserialize_struct(std::ostream& out, t_struct* tstruct, std::string prefix = "");
 
-  void generate_deserialize_container(std::ofstream& out, t_type* ttype, std::string prefix = "");
+  void generate_deserialize_container(std::ostream& out, t_type* ttype, std::string prefix = "");
 
-  void generate_deserialize_set_element(std::ofstream& out, t_set* tset, std::string prefix = "");
+  void generate_deserialize_set_element(std::ostream& out, t_set* tset, std::string prefix = "");
 
-  void generate_deserialize_map_element(std::ofstream& out, t_map* tmap, std::string prefix = "");
+  void generate_deserialize_map_element(std::ostream& out, t_map* tmap, std::string prefix = "");
 
-  void generate_deserialize_list_element(std::ofstream& out,
+  void generate_deserialize_list_element(std::ostream& out,
                                          t_list* tlist,
                                          std::string prefix = "");
 
-  void generate_serialize_field(std::ofstream& out, t_field* tfield, std::string prefix = "");
+  void generate_serialize_field(std::ostream& out, t_field* tfield, std::string prefix = "");
 
-  void generate_serialize_struct(std::ofstream& out, t_struct* tstruct, std::string prefix = "");
+  void generate_serialize_struct(std::ostream& out, t_struct* tstruct, std::string prefix = "");
 
-  void generate_serialize_container(std::ofstream& out, t_type* ttype, std::string prefix = "");
+  void generate_serialize_container(std::ostream& out, t_type* ttype, std::string prefix = "");
 
-  void generate_serialize_map_element(std::ofstream& out,
+  void generate_serialize_map_element(std::ostream& out,
                                       t_map* tmap,
                                       std::string iter,
                                       std::string map);
 
-  void generate_serialize_set_element(std::ofstream& out, t_set* tmap, std::string iter);
+  void generate_serialize_set_element(std::ostream& out, t_set* tmap, std::string iter);
 
-  void generate_serialize_list_element(std::ofstream& out, t_list* tlist, std::string iter);
+  void generate_serialize_list_element(std::ostream& out, t_list* tlist, std::string iter);
 
-  void generate_as3_doc(std::ofstream& out, t_doc* tdoc);
+  void generate_as3_doc(std::ostream& out, t_doc* tdoc);
 
-  void generate_as3_doc(std::ofstream& out, t_function* tdoc);
+  void generate_as3_doc(std::ostream& out, t_function* tdoc);
 
   /**
    * Helper rendering functions
@@ -208,7 +208,7 @@ private:
    */
 
   std::string package_name_;
-  std::ofstream f_service_;
+  ofstream_with_content_based_conditional_update f_service_;
   std::string package_dir_;
 
   bool bindable_;
@@ -353,8 +353,8 @@ void t_as3_generator::generate_typedef(t_typedef* ttypedef) {
 void t_as3_generator::generate_enum(t_enum* tenum) {
   // Make output file
   string f_enum_name = package_dir_ + "/" + (tenum->get_name()) + ".as";
-  ofstream f_enum;
-  f_enum.open(f_enum_name.c_str());
+  ofstream_with_content_based_conditional_update f_enum;
+  f_enum.open(f_enum_name);
 
   // Comment and package it
   f_enum << autogen_comment() << as3_package() << endl;
@@ -416,8 +416,8 @@ void t_as3_generator::generate_consts(std::vector<t_const*> consts) {
   }
 
   string f_consts_name = package_dir_ + "/" + program_name_ + "Constants.as";
-  ofstream f_consts;
-  f_consts.open(f_consts_name.c_str());
+  ofstream_with_content_based_conditional_update f_consts;
+  f_consts.open(f_consts_name);
 
   // Print header
   f_consts << autogen_comment() << as3_package();
@@ -443,7 +443,7 @@ void t_as3_generator::generate_consts(std::vector<t_const*> consts) {
   f_consts.close();
 }
 
-void t_as3_generator::print_const_value(std::ofstream& out,
+void t_as3_generator::print_const_value(std::ostream& out,
                                         string name,
                                         t_type* type,
                                         t_const_value* value,
@@ -567,7 +567,7 @@ void t_as3_generator::print_const_value(std::ofstream& out,
   }
 }
 
-string t_as3_generator::render_const_value(ofstream& out,
+string t_as3_generator::render_const_value(ostream& out,
                                            string name,
                                            t_type* type,
                                            t_const_value* value) {
@@ -644,7 +644,7 @@ void t_as3_generator::generate_xception(t_struct* txception) {
 void t_as3_generator::generate_as3_struct(t_struct* tstruct, bool is_exception) {
   // Make output file
   string f_struct_name = package_dir_ + "/" + (tstruct->get_name()) + ".as";
-  ofstream f_struct;
+  ofstream_with_content_based_conditional_update f_struct;
   f_struct.open(f_struct_name.c_str());
 
   f_struct << autogen_comment() << as3_package();
@@ -678,7 +678,7 @@ void t_as3_generator::generate_as3_struct(t_struct* tstruct, bool is_exception) 
  * @param in_class     If inside a class, needs to be static class
  * @param is_result    If this is a result it needs a different writer
  */
-void t_as3_generator::generate_as3_struct_definition(ofstream& out,
+void t_as3_generator::generate_as3_struct_definition(ostream& out,
                                                      t_struct* tstruct,
                                                      bool is_exception,
                                                      bool in_class,
@@ -782,7 +782,7 @@ void t_as3_generator::generate_as3_struct_definition(ofstream& out,
  *
  * @param tstruct The struct definition
  */
-void t_as3_generator::generate_as3_struct_reader(ofstream& out, t_struct* tstruct) {
+void t_as3_generator::generate_as3_struct_reader(ostream& out, t_struct* tstruct) {
   out << indent() << "public function read(iprot:TProtocol):void {" << endl;
   indent_up();
 
@@ -862,7 +862,7 @@ void t_as3_generator::generate_as3_struct_reader(ofstream& out, t_struct* tstruc
 
 // generates as3 method to perform various checks
 // (e.g. check that all required fields are set)
-void t_as3_generator::generate_as3_validator(ofstream& out, t_struct* tstruct) {
+void t_as3_generator::generate_as3_validator(ostream& out, t_struct* tstruct) {
   indent(out) << "public function validate():void {" << endl;
   indent_up();
 
@@ -912,7 +912,7 @@ void t_as3_generator::generate_as3_validator(ofstream& out, t_struct* tstruct) {
  *
  * @param tstruct The struct definition
  */
-void t_as3_generator::generate_as3_struct_writer(ofstream& out, t_struct* tstruct) {
+void t_as3_generator::generate_as3_struct_writer(ostream& out, t_struct* tstruct) {
   out << indent() << "public function write(oprot:TProtocol):void {" << endl;
   indent_up();
 
@@ -971,7 +971,7 @@ void t_as3_generator::generate_as3_struct_writer(ofstream& out, t_struct* tstruc
  *
  * @param tstruct The struct definition
  */
-void t_as3_generator::generate_as3_struct_result_writer(ofstream& out, t_struct* tstruct) {
+void t_as3_generator::generate_as3_struct_result_writer(ostream& out, t_struct* tstruct) {
   out << indent() << "public function write(oprot:TProtocol):void {" << endl;
   indent_up();
 
@@ -1044,7 +1044,7 @@ void t_as3_generator::generate_reflection_setters(ostringstream& out,
   indent_down();
 }
 
-void t_as3_generator::generate_generic_field_getters_setters(std::ofstream& out,
+void t_as3_generator::generate_generic_field_getters_setters(std::ostream& out,
                                                              t_struct* tstruct) {
 
   std::ostringstream getter_stream;
@@ -1100,7 +1100,7 @@ void t_as3_generator::generate_generic_field_getters_setters(std::ofstream& out,
 }
 
 // Creates a generic isSet method that takes the field number as argument
-void t_as3_generator::generate_generic_isset_method(std::ofstream& out, t_struct* tstruct) {
+void t_as3_generator::generate_generic_isset_method(std::ostream& out, t_struct* tstruct) {
   const vector<t_field*>& fields = tstruct->get_members();
   vector<t_field*>::const_iterator f_iter;
 
@@ -1134,7 +1134,7 @@ void t_as3_generator::generate_generic_isset_method(std::ofstream& out, t_struct
  *
  * @param tstruct The struct definition
  */
-void t_as3_generator::generate_as3_bean_boilerplate(ofstream& out,
+void t_as3_generator::generate_as3_bean_boilerplate(ostream& out,
                                                     t_struct* tstruct,
                                                     bool bindable) {
   const vector<t_field*>& fields = tstruct->get_members();
@@ -1216,7 +1216,7 @@ void t_as3_generator::generate_as3_bean_boilerplate(ofstream& out,
  *
  * @param tstruct The struct definition
  */
-void t_as3_generator::generate_as3_struct_tostring(ofstream& out,
+void t_as3_generator::generate_as3_struct_tostring(ostream& out,
                                                    t_struct* tstruct,
                                                    bool bindable) {
   // If it's bindable, it extends EventDispatcher so toString is an override.
@@ -1293,7 +1293,7 @@ void t_as3_generator::generate_as3_struct_tostring(ofstream& out,
  *
  * @param tstruct The struct definition
  */
-void t_as3_generator::generate_as3_meta_data_map(ofstream& out, t_struct* tstruct) {
+void t_as3_generator::generate_as3_meta_data_map(ostream& out, t_struct* tstruct) {
   const vector<t_field*>& fields = tstruct->get_members();
   vector<t_field*>::const_iterator f_iter;
 
@@ -1381,7 +1381,7 @@ std::string t_as3_generator::get_as3_type_string(t_type* type) {
   }
 }
 
-void t_as3_generator::generate_field_value_meta_data(std::ofstream& out, t_type* type) {
+void t_as3_generator::generate_field_value_meta_data(std::ostream& out, t_type* type) {
   out << endl;
   indent_up();
   indent_up();
@@ -1960,7 +1960,7 @@ void t_as3_generator::generate_process_function(t_service* tservice, t_function*
  * @param tfield The field
  * @param prefix The variable name or container for this field
  */
-void t_as3_generator::generate_deserialize_field(ofstream& out, t_field* tfield, string prefix) {
+void t_as3_generator::generate_deserialize_field(ostream& out, t_field* tfield, string prefix) {
   t_type* type = get_true_type(tfield->get_type());
 
   if (type->is_void()) {
@@ -2025,7 +2025,7 @@ void t_as3_generator::generate_deserialize_field(ofstream& out, t_field* tfield,
 /**
  * Generates an unserializer for a struct, invokes read()
  */
-void t_as3_generator::generate_deserialize_struct(ofstream& out, t_struct* tstruct, string prefix) {
+void t_as3_generator::generate_deserialize_struct(ostream& out, t_struct* tstruct, string prefix) {
   out << indent() << prefix << " = new " << type_name(tstruct) << "();" << endl << indent()
       << prefix << ".read(iprot);" << endl;
 }
@@ -2033,7 +2033,7 @@ void t_as3_generator::generate_deserialize_struct(ofstream& out, t_struct* tstru
 /**
  * Deserializes a container by reading its size and then iterating
  */
-void t_as3_generator::generate_deserialize_container(ofstream& out, t_type* ttype, string prefix) {
+void t_as3_generator::generate_deserialize_container(ostream& out, t_type* ttype, string prefix) {
   scope_up(out);
 
   string obj;
@@ -2093,7 +2093,7 @@ void t_as3_generator::generate_deserialize_container(ofstream& out, t_type* ttyp
 /**
  * Generates code to deserialize a map
  */
-void t_as3_generator::generate_deserialize_map_element(ofstream& out, t_map* tmap, string prefix) {
+void t_as3_generator::generate_deserialize_map_element(ostream& out, t_map* tmap, string prefix) {
   string key = tmp("_key");
   string val = tmp("_val");
   t_field fkey(tmap->get_key_type(), key);
@@ -2111,7 +2111,7 @@ void t_as3_generator::generate_deserialize_map_element(ofstream& out, t_map* tma
 /**
  * Deserializes a set element
  */
-void t_as3_generator::generate_deserialize_set_element(ofstream& out, t_set* tset, string prefix) {
+void t_as3_generator::generate_deserialize_set_element(ostream& out, t_set* tset, string prefix) {
   string elem = tmp("_elem");
   t_field felem(tset->get_elem_type(), elem);
 
@@ -2125,7 +2125,7 @@ void t_as3_generator::generate_deserialize_set_element(ofstream& out, t_set* tse
 /**
  * Deserializes a list element
  */
-void t_as3_generator::generate_deserialize_list_element(ofstream& out,
+void t_as3_generator::generate_deserialize_list_element(ostream& out,
                                                         t_list* tlist,
                                                         string prefix) {
   string elem = tmp("_elem");
@@ -2144,7 +2144,7 @@ void t_as3_generator::generate_deserialize_list_element(ofstream& out,
  * @param tfield The field to serialize
  * @param prefix Name to prepend to field name
  */
-void t_as3_generator::generate_serialize_field(ofstream& out, t_field* tfield, string prefix) {
+void t_as3_generator::generate_serialize_field(ostream& out, t_field* tfield, string prefix) {
   t_type* type = get_true_type(tfield->get_type());
 
   // Do nothing for void types
@@ -2213,7 +2213,7 @@ void t_as3_generator::generate_serialize_field(ofstream& out, t_field* tfield, s
  * @param tstruct The struct to serialize
  * @param prefix  String prefix to attach to all fields
  */
-void t_as3_generator::generate_serialize_struct(ofstream& out, t_struct* tstruct, string prefix) {
+void t_as3_generator::generate_serialize_struct(ostream& out, t_struct* tstruct, string prefix) {
   (void)tstruct;
   out << indent() << prefix << ".write(oprot);" << endl;
 }
@@ -2224,7 +2224,7 @@ void t_as3_generator::generate_serialize_struct(ofstream& out, t_struct* tstruct
  * @param ttype  The type of container
  * @param prefix String prefix for fields
  */
-void t_as3_generator::generate_serialize_container(ofstream& out, t_type* ttype, string prefix) {
+void t_as3_generator::generate_serialize_container(ostream& out, t_type* ttype, string prefix) {
   scope_up(out);
 
   if (ttype->is_map()) {
@@ -2282,7 +2282,7 @@ void t_as3_generator::generate_serialize_container(ofstream& out, t_type* ttype,
 /**
  * Serializes the members of a map.
  */
-void t_as3_generator::generate_serialize_map_element(ofstream& out,
+void t_as3_generator::generate_serialize_map_element(ostream& out,
                                                      t_map* tmap,
                                                      string iter,
                                                      string map) {
@@ -2295,7 +2295,7 @@ void t_as3_generator::generate_serialize_map_element(ofstream& out,
 /**
  * Serializes the members of a set.
  */
-void t_as3_generator::generate_serialize_set_element(ofstream& out, t_set* tset, string iter) {
+void t_as3_generator::generate_serialize_set_element(ostream& out, t_set* tset, string iter) {
   t_field efield(tset->get_elem_type(), iter);
   generate_serialize_field(out, &efield, "");
 }
@@ -2303,7 +2303,7 @@ void t_as3_generator::generate_serialize_set_element(ofstream& out, t_set* tset,
 /**
  * Serializes the members of a list.
  */
-void t_as3_generator::generate_serialize_list_element(ofstream& out, t_list* tlist, string iter) {
+void t_as3_generator::generate_serialize_list_element(ostream& out, t_list* tlist, string iter) {
   t_field efield(tlist->get_elem_type(), iter);
   generate_serialize_field(out, &efield, "");
 }
@@ -2390,7 +2390,7 @@ string t_as3_generator::declare_field(t_field* tfield, bool init) {
   if (init) {
     t_type* ttype = get_true_type(tfield->get_type());
     if (ttype->is_base_type() && tfield->get_value() != NULL) {
-      ofstream dummy;
+      std::ofstream dummy;
       result += " = " + render_const_value(dummy, tfield->get_name(), ttype, tfield->get_value());
     } else if (ttype->is_base_type()) {
       t_base_type::t_base tbase = ((t_base_type*)ttype)->get_base();
@@ -2539,7 +2539,7 @@ string t_as3_generator::constant_name(string name) {
 /**
  * Emits a As3Doc comment if the provided object has a doc in Thrift
  */
-void t_as3_generator::generate_as3_doc(ofstream& out, t_doc* tdoc) {
+void t_as3_generator::generate_as3_doc(ostream& out, t_doc* tdoc) {
   if (tdoc->has_doc()) {
     generate_docstring_comment(out, "/**\n", " * ", tdoc->get_doc(), " */\n");
   }
@@ -2548,7 +2548,7 @@ void t_as3_generator::generate_as3_doc(ofstream& out, t_doc* tdoc) {
 /**
  * Emits a As3Doc comment if the provided function object has a doc in Thrift
  */
-void t_as3_generator::generate_as3_doc(ofstream& out, t_function* tfunction) {
+void t_as3_generator::generate_as3_doc(ostream& out, t_function* tfunction) {
   if (tfunction->has_doc()) {
     stringstream ss;
     ss << tfunction->get_doc();
@@ -2573,7 +2573,7 @@ std::string t_as3_generator::generate_isset_check(std::string field_name) {
   return "is" + get_cap_name("set") + get_cap_name(field_name) + "()";
 }
 
-void t_as3_generator::generate_isset_set(ofstream& out, t_field* field) {
+void t_as3_generator::generate_isset_set(ostream& out, t_field* field) {
   if (!type_can_be_null(field->get_type())) {
     indent(out) << "this.__isset_" << field->get_name() << " = true;" << endl;
   }

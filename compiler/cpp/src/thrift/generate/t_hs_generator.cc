@@ -33,7 +33,7 @@
 #include "thrift/generate/t_oop_generator.h"
 
 using std::map;
-using std::ofstream;
+using std::ostream;
 using std::ostringstream;
 using std::string;
 using std::stringstream;
@@ -87,22 +87,22 @@ public:
 
   void generate_hs_struct(t_struct* tstruct, bool is_exception);
 
-  void generate_hs_struct_definition(ofstream& out,
+  void generate_hs_struct_definition(ostream& out,
                                      t_struct* tstruct,
                                      bool is_xception = false,
                                      bool helper = false);
 
-  void generate_hs_struct_reader(ofstream& out, t_struct* tstruct);
+  void generate_hs_struct_reader(ostream& out, t_struct* tstruct);
 
-  void generate_hs_struct_writer(ofstream& out, t_struct* tstruct);
+  void generate_hs_struct_writer(ostream& out, t_struct* tstruct);
 
-  void generate_hs_struct_arbitrary(ofstream& out, t_struct* tstruct);
+  void generate_hs_struct_arbitrary(ostream& out, t_struct* tstruct);
 
   void generate_hs_function_helpers(t_function* tfunction);
 
-  void generate_hs_typemap(ofstream& out, t_struct* tstruct);
+  void generate_hs_typemap(ostream& out, t_struct* tstruct);
 
-  void generate_hs_default(ofstream& out, t_struct* tstruct);
+  void generate_hs_default(ostream& out, t_struct* tstruct);
 
   /**
    * Service-level generation functions
@@ -118,29 +118,29 @@ public:
    * Serialization constructs
    */
 
-  void generate_deserialize_field(ofstream& out, t_field* tfield, string prefix);
+  void generate_deserialize_field(ostream& out, t_field* tfield, string prefix);
 
-  void generate_deserialize_struct(ofstream& out, t_struct* tstruct, string name = "");
+  void generate_deserialize_struct(ostream& out, t_struct* tstruct, string name = "");
 
-  void generate_deserialize_container(ofstream& out, t_type* ttype, string arg = "");
+  void generate_deserialize_container(ostream& out, t_type* ttype, string arg = "");
 
-  void generate_deserialize_set_element(ofstream& out, t_set* tset);
+  void generate_deserialize_set_element(ostream& out, t_set* tset);
 
-  void generate_deserialize_list_element(ofstream& out, t_list* tlist, string prefix = "");
+  void generate_deserialize_list_element(ostream& out, t_list* tlist, string prefix = "");
 
-  void generate_deserialize_type(ofstream& out, t_type* type, string arg = "");
+  void generate_deserialize_type(ostream& out, t_type* type, string arg = "");
 
-  void generate_serialize_type(ofstream& out, t_type* type, string name = "");
+  void generate_serialize_type(ostream& out, t_type* type, string name = "");
 
-  void generate_serialize_struct(ofstream& out, t_struct* tstruct, string prefix = "");
+  void generate_serialize_struct(ostream& out, t_struct* tstruct, string prefix = "");
 
-  void generate_serialize_container(ofstream& out, t_type* ttype, string prefix = "");
+  void generate_serialize_container(ostream& out, t_type* ttype, string prefix = "");
 
-  void generate_serialize_map_element(ofstream& out, t_map* tmap, string kiter, string viter);
+  void generate_serialize_map_element(ostream& out, t_map* tmap, string kiter, string viter);
 
-  void generate_serialize_set_element(ofstream& out, t_set* tmap, string iter);
+  void generate_serialize_set_element(ostream& out, t_set* tmap, string iter);
 
-  void generate_serialize_list_element(ofstream& out, t_list* tlist, string iter);
+  void generate_serialize_list_element(ostream& out, t_list* tlist, string iter);
 
   /**
    * Helper rendering functions
@@ -170,11 +170,11 @@ public:
   string render_hs_type_for_function_name(t_type* type);
 
 private:
-  ofstream f_types_;
-  ofstream f_consts_;
-  ofstream f_service_;
-  ofstream f_iface_;
-  ofstream f_client_;
+  ofstream_with_content_based_conditional_update f_types_;
+  ofstream_with_content_based_conditional_update f_consts_;
+  ofstream_with_content_based_conditional_update f_service_;
+  ofstream_with_content_based_conditional_update f_iface_;
+  ofstream_with_content_based_conditional_update f_client_;
 };
 
 /**
@@ -530,7 +530,7 @@ void t_hs_generator::generate_hs_struct(t_struct* tstruct, bool is_exception) {
  *
  * @param tstruct The struct definition
  */
-void t_hs_generator::generate_hs_struct_definition(ofstream& out,
+void t_hs_generator::generate_hs_struct_definition(ostream& out,
                                                    t_struct* tstruct,
                                                    bool is_exception,
                                                    bool helper) {
@@ -586,7 +586,7 @@ void t_hs_generator::generate_hs_struct_definition(ofstream& out,
   generate_hs_default(out, tstruct);
 }
 
-void t_hs_generator::generate_hs_struct_arbitrary(ofstream& out, t_struct* tstruct) {
+void t_hs_generator::generate_hs_struct_arbitrary(ostream& out, t_struct* tstruct) {
   string tname = type_name(tstruct);
   string name = tstruct->get_name();
   const vector<t_field*>& members = tstruct->get_members();
@@ -652,7 +652,7 @@ void t_hs_generator::generate_hs_struct_arbitrary(ofstream& out, t_struct* tstru
 /**
  * Generates the read method for a struct
  */
-void t_hs_generator::generate_hs_struct_reader(ofstream& out, t_struct* tstruct) {
+void t_hs_generator::generate_hs_struct_reader(ostream& out, t_struct* tstruct) {
   const vector<t_field*>& fields = tstruct->get_members();
   vector<t_field*>::const_iterator f_iter;
 
@@ -722,7 +722,7 @@ void t_hs_generator::generate_hs_struct_reader(ofstream& out, t_struct* tstruct)
   out << "T.deserializeVal iprot (T.T_STRUCT " << tmap << ") bs" << endl;
 }
 
-void t_hs_generator::generate_hs_struct_writer(ofstream& out, t_struct* tstruct) {
+void t_hs_generator::generate_hs_struct_writer(ostream& out, t_struct* tstruct) {
   string name = type_name(tstruct);
   const vector<t_field*>& fields = tstruct->get_sorted_members();
   vector<t_field*>::const_iterator f_iter;
@@ -906,7 +906,7 @@ void t_hs_generator::generate_hs_function_helpers(t_function* tfunction) {
  * Generate the map from field names to (type, id)
  * @param tstruct the Struct
  */
-void t_hs_generator::generate_hs_typemap(ofstream& out, t_struct* tstruct) {
+void t_hs_generator::generate_hs_typemap(ostream& out, t_struct* tstruct) {
   string name = type_name(tstruct);
   const vector<t_field*>& fields = tstruct->get_sorted_members();
   vector<t_field*>::const_iterator f_iter;
@@ -932,7 +932,7 @@ void t_hs_generator::generate_hs_typemap(ofstream& out, t_struct* tstruct) {
  * generate the struct with default values filled in
  * @param tstruct the Struct
  */
-void t_hs_generator::generate_hs_default(ofstream& out, t_struct* tstruct) {
+void t_hs_generator::generate_hs_default(ostream& out, t_struct* tstruct) {
   string name = type_name(tstruct);
   string fname = type_name(tstruct, "default_");
   const vector<t_field*>& fields = tstruct->get_sorted_members();
@@ -1342,7 +1342,7 @@ void t_hs_generator::generate_process_function(t_service* tservice, t_function* 
 /**
  * Deserializes a field of any type.
  */
-void t_hs_generator::generate_deserialize_field(ofstream& out, t_field* tfield, string prefix) {
+void t_hs_generator::generate_deserialize_field(ostream& out, t_field* tfield, string prefix) {
   (void)prefix;
   t_type* type = tfield->get_type();
   generate_deserialize_type(out, type, prefix);
@@ -1351,7 +1351,7 @@ void t_hs_generator::generate_deserialize_field(ofstream& out, t_field* tfield, 
 /**
  * Deserializes a field of any type.
  */
-void t_hs_generator::generate_deserialize_type(ofstream& out, t_type* type, string arg) {
+void t_hs_generator::generate_deserialize_type(ostream& out, t_type* type, string arg) {
   type = get_true_type(type);
   string val = tmp("_val");
   out << "(case " << arg << " of {" << type_to_constructor(type) << " " << val << " -> ";
@@ -1388,7 +1388,7 @@ void t_hs_generator::generate_deserialize_type(ofstream& out, t_type* type, stri
 /**
  * Generates an unserializer for a struct, calling read()
  */
-void t_hs_generator::generate_deserialize_struct(ofstream& out, t_struct* tstruct, string name) {
+void t_hs_generator::generate_deserialize_struct(ostream& out, t_struct* tstruct, string name) {
 
   out << "(" << type_name(tstruct, "to_") << " (T.TStruct " << name << "))";
 }
@@ -1397,7 +1397,7 @@ void t_hs_generator::generate_deserialize_struct(ofstream& out, t_struct* tstruc
  * Serialize a container by writing out the header followed by
  * data and then a footer.
  */
-void t_hs_generator::generate_deserialize_container(ofstream& out, t_type* ttype, string arg) {
+void t_hs_generator::generate_deserialize_container(ostream& out, t_type* ttype, string arg) {
 
   string val = tmp("_v");
   // Declare variables, read header
@@ -1429,7 +1429,7 @@ void t_hs_generator::generate_deserialize_container(ofstream& out, t_type* ttype
  * @param tfield The field to serialize
  * @param prefix Name to prepend to field name
  */
-void t_hs_generator::generate_serialize_type(ofstream& out, t_type* type, string name) {
+void t_hs_generator::generate_serialize_type(ostream& out, t_type* type, string name) {
 
   type = get_true_type(type);
   // Do nothing for void types
@@ -1467,11 +1467,11 @@ void t_hs_generator::generate_serialize_type(ofstream& out, t_type* type, string
  * @param tstruct The struct to serialize
  * @param prefix  String prefix to attach to all fields
  */
-void t_hs_generator::generate_serialize_struct(ofstream& out, t_struct* tstruct, string prefix) {
+void t_hs_generator::generate_serialize_struct(ostream& out, t_struct* tstruct, string prefix) {
   out << type_name(tstruct, "from_") << " " << prefix;
 }
 
-void t_hs_generator::generate_serialize_container(ofstream& out, t_type* ttype, string prefix) {
+void t_hs_generator::generate_serialize_container(ostream& out, t_type* ttype, string prefix) {
   string k = tmp("_k");
   string v = tmp("_v");
 

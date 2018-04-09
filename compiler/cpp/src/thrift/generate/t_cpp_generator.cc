@@ -112,8 +112,8 @@ public:
 
   void generate_typedef(t_typedef* ttypedef);
   void generate_enum(t_enum* tenum);
-  void generate_enum_ostream_operator_decl(std::ofstream& out, t_enum* tenum);
-  void generate_enum_ostream_operator(std::ofstream& out, t_enum* tenum);
+  void generate_enum_ostream_operator_decl(std::ostream& out, t_enum* tenum);
+  void generate_enum_ostream_operator(std::ostream& out, t_enum* tenum);
   void generate_forward_declaration(t_struct* tstruct);
   void generate_struct(t_struct* tstruct) { generate_cpp_struct(tstruct, false); }
   void generate_xception(t_struct* txception) { generate_cpp_struct(txception, true); }
@@ -121,13 +121,13 @@ public:
 
   void generate_service(t_service* tservice);
 
-  void print_const_value(std::ofstream& out, std::string name, t_type* type, t_const_value* value);
-  std::string render_const_value(std::ofstream& out,
+  void print_const_value(std::ostream& out, std::string name, t_type* type, t_const_value* value);
+  std::string render_const_value(std::ostream& out,
                                  std::string name,
                                  t_type* type,
                                  t_const_value* value);
 
-  void generate_struct_declaration(std::ofstream& out,
+  void generate_struct_declaration(std::ostream& out,
                                    t_struct* tstruct,
                                    bool is_exception = false,
                                    bool pointers = false,
@@ -135,26 +135,26 @@ public:
                                    bool write = true,
                                    bool swap = false,
                                    bool is_user_struct = false);
-  void generate_struct_definition(std::ofstream& out,
-                                  std::ofstream& force_cpp_out,
+  void generate_struct_definition(std::ostream& out,
+                                  std::ostream& force_cpp_out,
                                   t_struct* tstruct,
                                   bool setters = true,
                                   bool is_user_struct = false);
-  void generate_copy_constructor(std::ofstream& out, t_struct* tstruct, bool is_exception);
-  void generate_move_constructor(std::ofstream& out, t_struct* tstruct, bool is_exception);
-  void generate_constructor_helper(std::ofstream& out,
+  void generate_copy_constructor(std::ostream& out, t_struct* tstruct, bool is_exception);
+  void generate_move_constructor(std::ostream& out, t_struct* tstruct, bool is_exception);
+  void generate_constructor_helper(std::ostream& out,
                                    t_struct* tstruct,
                                    bool is_excpetion,
                                    bool is_move);
-  void generate_assignment_operator(std::ofstream& out, t_struct* tstruct);
-  void generate_move_assignment_operator(std::ofstream& out, t_struct* tstruct);
-  void generate_assignment_helper(std::ofstream& out, t_struct* tstruct, bool is_move);
-  void generate_struct_reader(std::ofstream& out, t_struct* tstruct, bool pointers = false);
-  void generate_struct_writer(std::ofstream& out, t_struct* tstruct, bool pointers = false);
-  void generate_struct_result_writer(std::ofstream& out, t_struct* tstruct, bool pointers = false);
-  void generate_struct_swap(std::ofstream& out, t_struct* tstruct);
-  void generate_struct_print_method(std::ofstream& out, t_struct* tstruct);
-  void generate_exception_what_method(std::ofstream& out, t_struct* tstruct);
+  void generate_assignment_operator(std::ostream& out, t_struct* tstruct);
+  void generate_move_assignment_operator(std::ostream& out, t_struct* tstruct);
+  void generate_assignment_helper(std::ostream& out, t_struct* tstruct, bool is_move);
+  void generate_struct_reader(std::ostream& out, t_struct* tstruct, bool pointers = false);
+  void generate_struct_writer(std::ostream& out, t_struct* tstruct, bool pointers = false);
+  void generate_struct_result_writer(std::ostream& out, t_struct* tstruct, bool pointers = false);
+  void generate_struct_swap(std::ostream& out, t_struct* tstruct);
+  void generate_struct_print_method(std::ostream& out, t_struct* tstruct);
+  void generate_exception_what_method(std::ostream& out, t_struct* tstruct);
 
   /**
    * Service-level generation functions
@@ -179,45 +179,45 @@ public:
    * Serialization constructs
    */
 
-  void generate_deserialize_field(std::ofstream& out,
+  void generate_deserialize_field(std::ostream& out,
                                   t_field* tfield,
                                   std::string prefix = "",
                                   std::string suffix = "");
 
-  void generate_deserialize_struct(std::ofstream& out,
+  void generate_deserialize_struct(std::ostream& out,
                                    t_struct* tstruct,
                                    std::string prefix = "",
                                    bool pointer = false);
 
-  void generate_deserialize_container(std::ofstream& out, t_type* ttype, std::string prefix = "");
+  void generate_deserialize_container(std::ostream& out, t_type* ttype, std::string prefix = "");
 
-  void generate_deserialize_set_element(std::ofstream& out, t_set* tset, std::string prefix = "");
+  void generate_deserialize_set_element(std::ostream& out, t_set* tset, std::string prefix = "");
 
-  void generate_deserialize_map_element(std::ofstream& out, t_map* tmap, std::string prefix = "");
+  void generate_deserialize_map_element(std::ostream& out, t_map* tmap, std::string prefix = "");
 
-  void generate_deserialize_list_element(std::ofstream& out,
+  void generate_deserialize_list_element(std::ostream& out,
                                          t_list* tlist,
                                          std::string prefix,
                                          bool push_back,
                                          std::string index);
 
-  void generate_serialize_field(std::ofstream& out,
+  void generate_serialize_field(std::ostream& out,
                                 t_field* tfield,
                                 std::string prefix = "",
                                 std::string suffix = "");
 
-  void generate_serialize_struct(std::ofstream& out,
+  void generate_serialize_struct(std::ostream& out,
                                  t_struct* tstruct,
                                  std::string prefix = "",
                                  bool pointer = false);
 
-  void generate_serialize_container(std::ofstream& out, t_type* ttype, std::string prefix = "");
+  void generate_serialize_container(std::ostream& out, t_type* ttype, std::string prefix = "");
 
-  void generate_serialize_map_element(std::ofstream& out, t_map* tmap, std::string iter);
+  void generate_serialize_map_element(std::ostream& out, t_map* tmap, std::string iter);
 
-  void generate_serialize_set_element(std::ofstream& out, t_set* tmap, std::string iter);
+  void generate_serialize_set_element(std::ostream& out, t_set* tmap, std::string iter);
 
-  void generate_serialize_list_element(std::ofstream& out, t_list* tlist, std::string iter);
+  void generate_serialize_list_element(std::ostream& out, t_list* tlist, std::string iter);
 
   void generate_function_call(ostream& out,
                               t_function* tfunction,
@@ -248,16 +248,16 @@ public:
   std::string argument_list(t_struct* tstruct, bool name_params = true, bool start_comma = false);
   std::string type_to_enum(t_type* ttype);
 
-  void generate_enum_constant_list(std::ofstream& f,
+  void generate_enum_constant_list(std::ostream& f,
                                    const vector<t_enum_value*>& constants,
                                    const char* prefix,
                                    const char* suffix,
                                    bool include_values);
 
-  void generate_struct_ostream_operator_decl(std::ofstream& f, t_struct* tstruct);
-  void generate_struct_ostream_operator(std::ofstream& f, t_struct* tstruct);
-  void generate_struct_print_method_decl(std::ofstream& f, t_struct* tstruct);
-  void generate_exception_what_method_decl(std::ofstream& f,
+  void generate_struct_ostream_operator_decl(std::ostream& f, t_struct* tstruct);
+  void generate_struct_ostream_operator(std::ostream& f, t_struct* tstruct);
+  void generate_struct_print_method_decl(std::ostream& f, t_struct* tstruct);
+  void generate_exception_what_method_decl(std::ostream& f,
                                            t_struct* tstruct,
                                            bool external = false);
 
@@ -360,12 +360,12 @@ private:
    * function.
    */
 
-  std::ofstream f_types_;
-  std::ofstream f_types_impl_;
-  std::ofstream f_types_tcc_;
-  std::ofstream f_header_;
-  std::ofstream f_service_;
-  std::ofstream f_service_tcc_;
+  ofstream_with_content_based_conditional_update f_types_;
+  ofstream_with_content_based_conditional_update f_types_impl_;
+  ofstream_with_content_based_conditional_update f_types_tcc_;
+  ofstream_with_content_based_conditional_update f_header_;
+  ofstream_with_content_based_conditional_update f_service_;
+  ofstream_with_content_based_conditional_update f_service_tcc_;
 
   // The ProcessorGenerator is used to generate parts of the code,
   // so it needs access to many of our protected members and methods.
@@ -386,7 +386,7 @@ void t_cpp_generator::init_generator() {
 
   // Make output file
   string f_types_name = get_out_dir() + program_name_ + "_types.h";
-  f_types_.open(f_types_name.c_str());
+  f_types_.open(f_types_name);
 
   string f_types_impl_name = get_out_dir() + program_name_ + "_types.cpp";
   f_types_impl_.open(f_types_impl_name.c_str());
@@ -505,7 +505,7 @@ void t_cpp_generator::generate_typedef(t_typedef* ttypedef) {
            << ttypedef->get_symbolic() << ";" << endl << endl;
 }
 
-void t_cpp_generator::generate_enum_constant_list(std::ofstream& f,
+void t_cpp_generator::generate_enum_constant_list(std::ostream& f,
                                                   const vector<t_enum_value*>& constants,
                                                   const char* prefix,
                                                   const char* suffix,
@@ -585,7 +585,7 @@ void t_cpp_generator::generate_enum(t_enum* tenum) {
   generate_enum_ostream_operator(f_types_impl_, tenum);
 }
 
-void t_cpp_generator::generate_enum_ostream_operator_decl(std::ofstream& out, t_enum* tenum) {
+void t_cpp_generator::generate_enum_ostream_operator_decl(std::ostream& out, t_enum* tenum) {
 
   out << "std::ostream& operator<<(std::ostream& out, const ";
   if (gen_pure_enums_) {
@@ -597,7 +597,7 @@ void t_cpp_generator::generate_enum_ostream_operator_decl(std::ofstream& out, t_
   out << endl;
 }
 
-void t_cpp_generator::generate_enum_ostream_operator(std::ofstream& out, t_enum* tenum) {
+void t_cpp_generator::generate_enum_ostream_operator(std::ostream& out, t_enum* tenum) {
 
   // If we've been told the consuming application will provide an ostream
   // operator definition then we only make a declaration:
@@ -635,12 +635,12 @@ void t_cpp_generator::generate_enum_ostream_operator(std::ofstream& out, t_enum*
  */
 void t_cpp_generator::generate_consts(std::vector<t_const*> consts) {
   string f_consts_name = get_out_dir() + program_name_ + "_constants.h";
-  ofstream f_consts;
-  f_consts.open(f_consts_name.c_str());
+  ofstream_with_content_based_conditional_update f_consts;
+  f_consts.open(f_consts_name);
 
   string f_consts_impl_name = get_out_dir() + program_name_ + "_constants.cpp";
-  ofstream f_consts_impl;
-  f_consts_impl.open(f_consts_impl_name.c_str());
+  ofstream_with_content_based_conditional_update f_consts_impl;
+  f_consts_impl.open(f_consts_impl_name);
 
   // Print header
   f_consts << autogen_comment();
@@ -684,6 +684,7 @@ void t_cpp_generator::generate_consts(std::vector<t_const*> consts) {
   f_consts.close();
 
   f_consts_impl << endl << ns_close_ << endl << endl;
+  f_consts_impl.close();
 }
 
 /**
@@ -691,7 +692,7 @@ void t_cpp_generator::generate_consts(std::vector<t_const*> consts) {
  * is NOT performed in this function as it is always run beforehand using the
  * validate_types method in main.cc
  */
-void t_cpp_generator::print_const_value(ofstream& out,
+void t_cpp_generator::print_const_value(ostream& out,
                                         string name,
                                         t_type* type,
                                         t_const_value* value) {
@@ -764,7 +765,7 @@ void t_cpp_generator::print_const_value(ofstream& out,
 /**
  *
  */
-string t_cpp_generator::render_const_value(ofstream& out,
+string t_cpp_generator::render_const_value(ostream& out,
                                            string name,
                                            t_type* type,
                                            t_const_value* value) {
@@ -826,7 +827,7 @@ void t_cpp_generator::generate_cpp_struct(t_struct* tstruct, bool is_exception) 
   generate_struct_declaration(f_types_, tstruct, is_exception, false, true, true, true, true);
   generate_struct_definition(f_types_impl_, f_types_impl_, tstruct, true, true);
 
-  std::ofstream& out = (gen_templates_ ? f_types_tcc_ : f_types_impl_);
+  std::ostream& out = (gen_templates_ ? f_types_tcc_ : f_types_impl_);
   generate_struct_reader(out, tstruct);
   generate_struct_writer(out, tstruct);
   generate_struct_swap(f_types_impl_, tstruct);
@@ -848,13 +849,13 @@ void t_cpp_generator::generate_cpp_struct(t_struct* tstruct, bool is_exception) 
   }
 }
 
-void t_cpp_generator::generate_copy_constructor(ofstream& out,
+void t_cpp_generator::generate_copy_constructor(ostream& out,
                                                 t_struct* tstruct,
                                                 bool is_exception) {
   generate_constructor_helper(out, tstruct, is_exception, /*is_move=*/false);
 }
 
-void t_cpp_generator::generate_move_constructor(ofstream& out,
+void t_cpp_generator::generate_move_constructor(ostream& out,
                                                 t_struct* tstruct,
                                                 bool is_exception) {
   generate_constructor_helper(out, tstruct, is_exception, /*is_move=*/true);
@@ -870,7 +871,7 @@ std::string maybeMove(std::string const& other, bool move) {
 }
 }
 
-void t_cpp_generator::generate_constructor_helper(ofstream& out,
+void t_cpp_generator::generate_constructor_helper(ostream& out,
                                                   t_struct* tstruct,
                                                   bool is_exception,
                                                   bool is_move) {
@@ -913,15 +914,15 @@ void t_cpp_generator::generate_constructor_helper(ofstream& out,
   indent(out) << "}" << endl;
 }
 
-void t_cpp_generator::generate_assignment_operator(ofstream& out, t_struct* tstruct) {
+void t_cpp_generator::generate_assignment_operator(ostream& out, t_struct* tstruct) {
   generate_assignment_helper(out, tstruct, /*is_move=*/false);
 }
 
-void t_cpp_generator::generate_move_assignment_operator(ofstream& out, t_struct* tstruct) {
+void t_cpp_generator::generate_move_assignment_operator(ostream& out, t_struct* tstruct) {
   generate_assignment_helper(out, tstruct, /*is_move=*/true);
 }
 
-void t_cpp_generator::generate_assignment_helper(ofstream& out, t_struct* tstruct, bool is_move) {
+void t_cpp_generator::generate_assignment_helper(ostream& out, t_struct* tstruct, bool is_move) {
   std::string tmp_name = tmp("other");
 
   indent(out) << tstruct->get_name() << "& " << tstruct->get_name() << "::operator=(";
@@ -964,7 +965,7 @@ void t_cpp_generator::generate_assignment_helper(ofstream& out, t_struct* tstruc
  * @param out Output stream
  * @param tstruct The struct
  */
-void t_cpp_generator::generate_struct_declaration(ofstream& out,
+void t_cpp_generator::generate_struct_declaration(ostream& out,
                                                   t_struct* tstruct,
                                                   bool is_exception,
                                                   bool pointers,
@@ -1213,8 +1214,8 @@ void t_cpp_generator::generate_struct_declaration(ofstream& out,
   }
 }
 
-void t_cpp_generator::generate_struct_definition(ofstream& out,
-                                                 ofstream& force_cpp_out,
+void t_cpp_generator::generate_struct_definition(ostream& out,
+                                                 ostream& force_cpp_out,
                                                  t_struct* tstruct,
                                                  bool setters,
                                                  bool is_user_struct) {
@@ -1271,7 +1272,7 @@ void t_cpp_generator::generate_struct_definition(ofstream& out,
  * @param out Stream to write to
  * @param tstruct The struct
  */
-void t_cpp_generator::generate_struct_reader(ofstream& out, t_struct* tstruct, bool pointers) {
+void t_cpp_generator::generate_struct_reader(ostream& out, t_struct* tstruct, bool pointers) {
   if (gen_templates_) {
     out << indent() << "template <class Protocol_>" << endl << indent() << "uint32_t "
         << tstruct->get_name() << "::read(Protocol_* iprot) {" << endl;
@@ -1394,7 +1395,7 @@ void t_cpp_generator::generate_struct_reader(ofstream& out, t_struct* tstruct, b
  * @param out Stream to write to
  * @param tstruct The struct
  */
-void t_cpp_generator::generate_struct_writer(ofstream& out, t_struct* tstruct, bool pointers) {
+void t_cpp_generator::generate_struct_writer(ostream& out, t_struct* tstruct, bool pointers) {
   string name = tstruct->get_name();
   const vector<t_field*>& fields = tstruct->get_sorted_members();
   vector<t_field*>::const_iterator f_iter;
@@ -1460,7 +1461,7 @@ void t_cpp_generator::generate_struct_writer(ofstream& out, t_struct* tstruct, b
  * @param out Output stream
  * @param tstruct The result struct
  */
-void t_cpp_generator::generate_struct_result_writer(ofstream& out,
+void t_cpp_generator::generate_struct_result_writer(ostream& out,
                                                     t_struct* tstruct,
                                                     bool pointers) {
   string name = tstruct->get_name();
@@ -1524,7 +1525,7 @@ void t_cpp_generator::generate_struct_result_writer(ofstream& out,
  * @param out Stream to write to
  * @param tstruct The struct
  */
-void t_cpp_generator::generate_struct_swap(ofstream& out, t_struct* tstruct) {
+void t_cpp_generator::generate_struct_swap(ostream& out, t_struct* tstruct) {
   out << indent() << "void swap(" << tstruct->get_name() << " &a, " << tstruct->get_name()
       << " &b) {" << endl;
   indent_up();
@@ -1561,14 +1562,14 @@ void t_cpp_generator::generate_struct_swap(ofstream& out, t_struct* tstruct) {
   out << endl;
 }
 
-void t_cpp_generator::generate_struct_ostream_operator_decl(std::ofstream& out, t_struct* tstruct) {
+void t_cpp_generator::generate_struct_ostream_operator_decl(std::ostream& out, t_struct* tstruct) {
   out << "std::ostream& operator<<(std::ostream& out, const "
       << tstruct->get_name()
       << "& obj);" << endl;
   out << endl;
 }
 
-void t_cpp_generator::generate_struct_ostream_operator(std::ofstream& out, t_struct* tstruct) {
+void t_cpp_generator::generate_struct_ostream_operator(std::ostream& out, t_struct* tstruct) {
   if (!has_custom_ostream(tstruct)) {
     // thrift defines this behavior
     out << "std::ostream& operator<<(std::ostream& out, const "
@@ -1582,7 +1583,7 @@ void t_cpp_generator::generate_struct_ostream_operator(std::ofstream& out, t_str
   }
 }
 
-void t_cpp_generator::generate_struct_print_method_decl(std::ofstream& out, t_struct* tstruct) {
+void t_cpp_generator::generate_struct_print_method_decl(std::ostream& out, t_struct* tstruct) {
   out << "void ";
   if (tstruct) {
     out << tstruct->get_name() << "::";
@@ -1590,7 +1591,7 @@ void t_cpp_generator::generate_struct_print_method_decl(std::ofstream& out, t_st
   out << "printTo(std::ostream& out) const";
 }
 
-void t_cpp_generator::generate_exception_what_method_decl(std::ofstream& out,
+void t_cpp_generator::generate_exception_what_method_decl(std::ostream& out,
                                                           t_struct* tstruct,
                                                           bool external) {
   out << "const char* ";
@@ -1601,33 +1602,33 @@ void t_cpp_generator::generate_exception_what_method_decl(std::ofstream& out,
 }
 
 namespace struct_ostream_operator_generator {
-void generate_required_field_value(std::ofstream& out, const t_field* field) {
+void generate_required_field_value(std::ostream& out, const t_field* field) {
   out << " << to_string(" << field->get_name() << ")";
 }
 
-void generate_optional_field_value(std::ofstream& out, const t_field* field) {
+void generate_optional_field_value(std::ostream& out, const t_field* field) {
   out << "; (__isset." << field->get_name() << " ? (out";
   generate_required_field_value(out, field);
   out << ") : (out << \"<null>\"))";
 }
 
-void generate_field_value(std::ofstream& out, const t_field* field) {
+void generate_field_value(std::ostream& out, const t_field* field) {
   if (field->get_req() == t_field::T_OPTIONAL)
     generate_optional_field_value(out, field);
   else
     generate_required_field_value(out, field);
 }
 
-void generate_field_name(std::ofstream& out, const t_field* field) {
+void generate_field_name(std::ostream& out, const t_field* field) {
   out << "\"" << field->get_name() << "=\"";
 }
 
-void generate_field(std::ofstream& out, const t_field* field) {
+void generate_field(std::ostream& out, const t_field* field) {
   generate_field_name(out, field);
   generate_field_value(out, field);
 }
 
-void generate_fields(std::ofstream& out,
+void generate_fields(std::ostream& out,
                      const vector<t_field*>& fields,
                      const std::string& indent) {
   const vector<t_field*>::const_iterator beg = fields.begin();
@@ -1649,7 +1650,7 @@ void generate_fields(std::ofstream& out,
 /**
  * Generates operator<<
  */
-void t_cpp_generator::generate_struct_print_method(std::ofstream& out, t_struct* tstruct) {
+void t_cpp_generator::generate_struct_print_method(std::ostream& out, t_struct* tstruct) {
   out << indent();
   generate_struct_print_method_decl(out, tstruct);
   out << " {" << endl;
@@ -1668,7 +1669,7 @@ void t_cpp_generator::generate_struct_print_method(std::ofstream& out, t_struct*
 /**
  * Generates what() method for exceptions
  */
-void t_cpp_generator::generate_exception_what_method(std::ofstream& out, t_struct* tstruct) {
+void t_cpp_generator::generate_exception_what_method(std::ostream& out, t_struct* tstruct) {
   out << indent();
   generate_exception_what_method_decl(out, tstruct, true);
   out << " {" << endl;
@@ -1835,7 +1836,7 @@ void t_cpp_generator::generate_service(t_service* tservice) {
 void t_cpp_generator::generate_service_helpers(t_service* tservice) {
   vector<t_function*> functions = tservice->get_functions();
   vector<t_function*>::iterator f_iter;
-  std::ofstream& out = (gen_templates_ ? f_service_tcc_ : f_service_);
+  std::ostream& out = (gen_templates_ ? f_service_tcc_ : f_service_);
 
   for (f_iter = functions.begin(); f_iter != functions.end(); ++f_iter) {
     t_struct* ts = (*f_iter)->get_arglist();
@@ -2071,7 +2072,7 @@ void t_cpp_generator::generate_service_async_skeleton(t_service* tservice) {
 
   string ns = namespace_prefix(tservice->get_program()->get_namespace("cpp"));
 
-  ofstream f_skeleton;
+  ofstream_with_content_based_conditional_update f_skeleton;
   f_skeleton.open(f_skeleton_name.c_str());
   f_skeleton << "// This autogenerated skeleton file illustrates one way to adapt a synchronous"
              << endl << "// interface into an asynchronous interface. You should copy it to another"
@@ -2239,7 +2240,7 @@ void t_cpp_generator::generate_service_client(t_service* tservice, string style)
     ifstyle = "CobCl";
   }
 
-  std::ofstream& out = (gen_templates_ ? f_service_tcc_ : f_service_);
+  std::ostream& out = (gen_templates_ ? f_service_tcc_ : f_service_);
   string template_header, template_suffix, short_suffix, protocol_type, _this;
   string const prot_factory_type = "::apache::thrift::protocol::TProtocolFactory";
   if (gen_templates_) {
@@ -2830,8 +2831,8 @@ protected:
 
   t_cpp_generator* generator_;
   t_service* service_;
-  std::ofstream& f_header_;
-  std::ofstream& f_out_;
+  std::ostream& f_header_;
+  std::ostream& f_out_;
   string service_name_;
   string style_;
   string pstyle_;
@@ -3205,7 +3206,7 @@ void t_cpp_generator::generate_function_helpers(t_service* tservice, t_function*
     return;
   }
 
-  std::ofstream& out = (gen_templates_ ? f_service_tcc_ : f_service_);
+  std::ostream& out = (gen_templates_ ? f_service_tcc_ : f_service_);
 
   t_struct result(program_, tservice->get_name() + "_" + tfunction->get_name() + "_result");
   t_field success(tfunction->get_returntype(), "success", 0);
@@ -3252,7 +3253,7 @@ void t_cpp_generator::generate_process_function(t_service* tservice,
   vector<t_field*>::const_iterator x_iter;
   string service_func_name = "\"" + tservice->get_name() + "." + tfunction->get_name() + "\"";
 
-  std::ofstream& out = (gen_templates_ ? f_service_tcc_ : f_service_);
+  std::ostream& out = (gen_templates_ ? f_service_tcc_ : f_service_);
 
   string prot_type = (specialized ? "Protocol_" : "::apache::thrift::protocol::TProtocol");
   string class_suffix;
@@ -3664,7 +3665,7 @@ void t_cpp_generator::generate_service_skeleton(t_service* tservice) {
 
   string ns = namespace_prefix(tservice->get_program()->get_namespace("cpp"));
 
-  ofstream f_skeleton;
+  ofstream_with_content_based_conditional_update f_skeleton;
   f_skeleton.open(f_skeleton_name.c_str());
   f_skeleton << "// This autogenerated skeleton file illustrates how to build a server." << endl
              << "// You should copy it to another filename to avoid overwriting it." << endl << endl
@@ -3726,7 +3727,7 @@ void t_cpp_generator::generate_service_skeleton(t_service* tservice) {
 /**
  * Deserializes a field of any type.
  */
-void t_cpp_generator::generate_deserialize_field(ofstream& out,
+void t_cpp_generator::generate_deserialize_field(ostream& out,
                                                  t_field* tfield,
                                                  string prefix,
                                                  string suffix) {
@@ -3795,7 +3796,7 @@ void t_cpp_generator::generate_deserialize_field(ofstream& out,
  * buffer for deserialization, and that there is a variable protocol which
  * is a reference to a TProtocol serialization object.
  */
-void t_cpp_generator::generate_deserialize_struct(ofstream& out,
+void t_cpp_generator::generate_deserialize_struct(ostream& out,
                                                   t_struct* tstruct,
                                                   string prefix,
                                                   bool pointer) {
@@ -3819,7 +3820,7 @@ void t_cpp_generator::generate_deserialize_struct(ofstream& out,
   }
 }
 
-void t_cpp_generator::generate_deserialize_container(ofstream& out, t_type* ttype, string prefix) {
+void t_cpp_generator::generate_deserialize_container(ostream& out, t_type* ttype, string prefix) {
   scope_up(out);
 
   string size = tmp("_size");
@@ -3880,7 +3881,7 @@ void t_cpp_generator::generate_deserialize_container(ofstream& out, t_type* ttyp
 /**
  * Generates code to deserialize a map
  */
-void t_cpp_generator::generate_deserialize_map_element(ofstream& out, t_map* tmap, string prefix) {
+void t_cpp_generator::generate_deserialize_map_element(ostream& out, t_map* tmap, string prefix) {
   string key = tmp("_key");
   string val = tmp("_val");
   t_field fkey(tmap->get_key_type(), key);
@@ -3895,7 +3896,7 @@ void t_cpp_generator::generate_deserialize_map_element(ofstream& out, t_map* tma
   generate_deserialize_field(out, &fval);
 }
 
-void t_cpp_generator::generate_deserialize_set_element(ofstream& out, t_set* tset, string prefix) {
+void t_cpp_generator::generate_deserialize_set_element(ostream& out, t_set* tset, string prefix) {
   string elem = tmp("_elem");
   t_field felem(tset->get_elem_type(), elem);
 
@@ -3906,7 +3907,7 @@ void t_cpp_generator::generate_deserialize_set_element(ofstream& out, t_set* tse
   indent(out) << prefix << ".insert(" << elem << ");" << endl;
 }
 
-void t_cpp_generator::generate_deserialize_list_element(ofstream& out,
+void t_cpp_generator::generate_deserialize_list_element(ostream& out,
                                                         t_list* tlist,
                                                         string prefix,
                                                         bool use_push,
@@ -3929,7 +3930,7 @@ void t_cpp_generator::generate_deserialize_list_element(ofstream& out,
  * @param tfield The field to serialize
  * @param prefix Name to prepend to field name
  */
-void t_cpp_generator::generate_serialize_field(ofstream& out,
+void t_cpp_generator::generate_serialize_field(ostream& out,
                                                t_field* tfield,
                                                string prefix,
                                                string suffix) {
@@ -4002,7 +4003,7 @@ void t_cpp_generator::generate_serialize_field(ofstream& out,
  * @param tstruct The struct to serialize
  * @param prefix  String prefix to attach to all fields
  */
-void t_cpp_generator::generate_serialize_struct(ofstream& out,
+void t_cpp_generator::generate_serialize_struct(ostream& out,
                                                 t_struct* tstruct,
                                                 string prefix,
                                                 bool pointer) {
@@ -4019,7 +4020,7 @@ void t_cpp_generator::generate_serialize_struct(ofstream& out,
   }
 }
 
-void t_cpp_generator::generate_serialize_container(ofstream& out, t_type* ttype, string prefix) {
+void t_cpp_generator::generate_serialize_container(ostream& out, t_type* ttype, string prefix) {
   scope_up(out);
 
   if (ttype->is_map()) {
@@ -4065,7 +4066,7 @@ void t_cpp_generator::generate_serialize_container(ofstream& out, t_type* ttype,
  * Serializes the members of a map.
  *
  */
-void t_cpp_generator::generate_serialize_map_element(ofstream& out, t_map* tmap, string iter) {
+void t_cpp_generator::generate_serialize_map_element(ostream& out, t_map* tmap, string iter) {
   t_field kfield(tmap->get_key_type(), iter + "->first");
   generate_serialize_field(out, &kfield, "");
 
@@ -4076,7 +4077,7 @@ void t_cpp_generator::generate_serialize_map_element(ofstream& out, t_map* tmap,
 /**
  * Serializes the members of a set.
  */
-void t_cpp_generator::generate_serialize_set_element(ofstream& out, t_set* tset, string iter) {
+void t_cpp_generator::generate_serialize_set_element(ostream& out, t_set* tset, string iter) {
   t_field efield(tset->get_elem_type(), "(*" + iter + ")");
   generate_serialize_field(out, &efield, "");
 }
@@ -4084,7 +4085,7 @@ void t_cpp_generator::generate_serialize_set_element(ofstream& out, t_set* tset,
 /**
  * Serializes the members of a list.
  */
-void t_cpp_generator::generate_serialize_list_element(ofstream& out, t_list* tlist, string iter) {
+void t_cpp_generator::generate_serialize_list_element(ostream& out, t_list* tlist, string iter) {
   t_field efield(tlist->get_elem_type(), "(*" + iter + ")");
   generate_serialize_field(out, &efield, "");
 }
