@@ -76,22 +76,22 @@ thrift_server_set_property (GObject *object, guint property_id,
   switch (property_id)
   {
     case PROP_THRIFT_SERVER_PROCESSOR:
-      server->processor = g_value_get_object (value);
+      server->processor = g_value_dup_object (value);
       break;
     case PROP_THRIFT_SERVER_SERVER_TRANSPORT:
-      server->server_transport = g_value_get_object (value);
+      server->server_transport = g_value_dup_object (value);
       break;
     case PROP_THRIFT_SERVER_INPUT_TRANSPORT_FACTORY:
-      server->input_transport_factory = g_value_get_object (value);
+      server->input_transport_factory = g_value_dup_object (value);
       break;
     case PROP_THRIFT_SERVER_OUTPUT_TRANSPORT_FACTORY:
-      server->output_transport_factory = g_value_get_object (value);
+      server->output_transport_factory = g_value_dup_object (value);
       break;
     case PROP_THRIFT_SERVER_INPUT_PROTOCOL_FACTORY:
-      server->input_protocol_factory = g_value_get_object (value);
+      server->input_protocol_factory = g_value_dup_object (value);
       break;
     case PROP_THRIFT_SERVER_OUTPUT_PROTOCOL_FACTORY:
-      server->output_protocol_factory = g_value_get_object (value);
+      server->output_protocol_factory = g_value_dup_object (value);
       break;
   }
 }
@@ -120,7 +120,27 @@ thrift_server_init (ThriftServer *server)
   server->output_protocol_factory = NULL;
 }
 
-/* class initializer for ThriftServer
+static void
+thrift_server_dispose (GObject *gobject)
+{
+  ThriftServer *self = THRIFT_SERVER (gobject);
+
+  g_clear_object(&self->output_protocol_factory);
+  g_clear_object(&self->input_protocol_factory);
+  g_clear_object(&self->output_transport_factory);
+  g_clear_object(&self->input_transport_factory);
+  g_clear_object(&self->server_transport);
+  g_clear_object(&self->processor);
+
+  /* Always chain up to the parent class; there is no need to check if
+   * the parent class implements the dispose() virtual function: it is
+   * always guaranteed to do so
+   */
+  G_OBJECT_CLASS (thrift_server_parent_class)->dispose(gobject);
+}
+
+/*
+ * class initializer for ThriftServer
  * TODO: implement ServerEventHandler as a GClosure
  */
 static void
@@ -130,6 +150,7 @@ thrift_server_class_init (ThriftServerClass *cls)
 
   gobject_class->get_property = thrift_server_get_property;
   gobject_class->set_property = thrift_server_set_property;
+  gobject_class->dispose = thrift_server_dispose;
 
   g_object_class_install_property (gobject_class,
       PROP_THRIFT_SERVER_PROCESSOR,

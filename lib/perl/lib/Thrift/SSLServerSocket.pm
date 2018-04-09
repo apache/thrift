@@ -17,24 +17,24 @@
 # under the License.
 #
 
-require 5.6.0;
+use 5.10.0;
 use strict;
 use warnings;
 
 use Thrift;
 use Thrift::SSLSocket;
+use Thrift::ServerSocket;
 
 use IO::Socket::SSL;
-use IO::Select;
 
 package Thrift::SSLServerSocket;
-
 use base qw( Thrift::ServerSocket );
+use version 0.77; our $VERSION = version->declare("$Thrift::VERSION");
 
 #
 # Constructor.
 # Takes a hash:
-# See Thirft::Socket for base class parameters.
+# See Thrift::Socket for base class parameters.
 # @param[in]  ca     certificate authority filename - not required
 # @param[in]  cert   certificate filename; may contain key in which case key is not required
 # @param[in]  key    private key filename for the certificate if it is not inside the cert file
@@ -48,21 +48,29 @@ sub new
 
 sub __client
 {
-	return new Thrift::SSLSocket();
+  return new Thrift::SSLSocket();
 }
 
 sub __listen
 {
     my $self = shift;
-    return IO::Socket::SSL->new(LocalAddr     => $self->{host},
-                                LocalPort     => $self->{port},
-                                Proto         => 'tcp',
-                                Listen        => $self->{queue},
-                                ReuseAddr     => 1,
-                                SSL_cert_file => $self->{cert},
-                                SSL_key_file  => $self->{key},
-                                SSL_ca_file   => $self->{ca});
-}
+    my $opts = {Listen        => $self->{queue},
+                LocalAddr     => $self->{host},
+                LocalPort     => $self->{port},
+                Proto         => 'tcp',
+                ReuseAddr     => 1};
 
+    my $verify = IO::Socket::SSL::SSL_VERIFY_PEER | IO::Socket::SSL::SSL_VERIFY_FAIL_IF_NO_PEER_CERT | IO::Socket::SSL::SSL_VERIFY_CLIENT_ONCE;
+
+    $opts->{SSL_ca_file}      = $self->{ca}      if defined $self->{ca};
+    $opts->{SSL_cert_file}    = $self->{cert}    if defined $self->{cert};
+    $opts->{SSL_cipher_list}  = $self->{ciphers} if defined $self->{ciphers};
+    $opts->{SSL_key_file}     = $self->{key}     if defined $self->{key};
+    $opts->{SSL_use_cert}     = (defined $self->{cert}) ? 1 : 0;
+    $opts->{SSL_verify_mode}  = (defined $self->{ca}) ? $verify : IO::Socket::SSL::SSL_VERIFY_NONE;
+    $opts->{SSL_version}      = (defined $self->{version}) ? $self->{version} : 'SSLv23:!SSLv3:!SSLv2';
+
+    return IO::Socket::SSL->new(%$opts);
+}
 
 1;

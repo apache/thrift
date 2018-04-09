@@ -28,8 +28,6 @@ namespace apache {
 namespace thrift {
 namespace transport {
 
-using namespace std;
-
 /**
 * TPipe implementation.
 */
@@ -160,7 +158,8 @@ uint32_t TWaitableNamedPipeImpl::read(uint8_t* buf, uint32_t len) {
     end_unread_idx_ = endAsyncRead();
   }
 
-  uint32_t bytes_to_copy = (std::min)(len, end_unread_idx_ - begin_unread_idx_);
+  uint32_t __idxsize = end_unread_idx_ - begin_unread_idx_;
+  uint32_t bytes_to_copy = (len < __idxsize) ? len : __idxsize;
   memcpy(buf, &buffer_[begin_unread_idx_], bytes_to_copy);
   begin_unread_idx_ += bytes_to_copy;
   if (begin_unread_idx_ != end_unread_idx_) {
@@ -341,12 +340,12 @@ void pipe_write(HANDLE pipe, const uint8_t* buf, uint32_t len) {
 // Accessors
 //---------------------------------------------------------
 
-string TPipe::getPipename() {
+std::string TPipe::getPipename() {
   return pipename_;
 }
 
 void TPipe::setPipename(const std::string& pipename) {
-  if (pipename.find("\\\\") == -1)
+  if (pipename.find("\\\\") == std::string::npos)
     pipename_ = "\\\\.\\pipe\\" + pipename;
   else
     pipename_ = pipename;

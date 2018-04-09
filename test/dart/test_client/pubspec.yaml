@@ -20,8 +20,10 @@ version: 1.0.0-dev
 description: A client integration test for the Dart Thrift library
 author: Apache Thrift Developers <dev@thrift.apache.org>
 homepage: http://thrift.apache.org
+
 environment:
-  sdk: ^1.12.0
+  sdk: ">=1.13.0 <2.0.0"
+
 dependencies:
   args: ^0.13.0
   http: ^0.11.0
@@ -29,5 +31,6 @@ dependencies:
     path: ../../../lib/dart
   thrift_test:
     path: ../gen-dart/thrift_test
+
 dev_dependencies:
   test: "^0.12.0"

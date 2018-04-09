@@ -35,16 +35,21 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="src\thrift\async\TAsyncProtocolProcessor.cpp"/>
-    <ClCompile Include="src\thrift\async\TEvhttpClientChannel.cpp"/>
-    <ClCompile Include="src\thrift\async\TEvhttpServer.cpp"/>
-    <ClCompile Include="src\thrift\server\TNonblockingServer.cpp"/>
+    <ClCompile Include="src\thrift\async\TAsyncProtocolProcessor.cpp" />
+    <ClCompile Include="src\thrift\async\TEvhttpClientChannel.cpp" />
+    <ClCompile Include="src\thrift\async\TEvhttpServer.cpp" />
+    <ClCompile Include="src\thrift\server\TNonblockingServer.cpp" />
+    <ClCompile Include="src\thrift\transport\TNonblockingServerSocket.cpp" />
+    <ClCompile Include="src\thrift\transport\TNonblockingSSLServerSocket.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\thrift\async\TAsyncProtocolProcessor.h" />
     <ClInclude Include="src\thrift\async\TEvhttpClientChannel.h" />
     <ClInclude Include="src\thrift\async\TEvhttpServer.h" />
     <ClInclude Include="src\thrift\server\TNonblockingServer.h" />
+    <ClInclude Include="src\thrift\transport\TNonblockingServerSocket.h" />
+    <ClInclude Include="src\thrift\transport\TNonblockingServerTransport.h" />
+    <ClInclude Include="src\thrift\transport\TNonblockingSSLServerSocket.h" />
     <ClInclude Include="src\thrift\windows\config.h" />
     <ClInclude Include="src\thrift\windows\force_inc.h" />
     <ClInclude Include="src\thrift\windows\TargetVersion.h" />

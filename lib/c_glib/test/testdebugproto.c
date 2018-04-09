@@ -17,7 +17,6 @@
  * under the License.
  */
 
-#include <assert.h>
 #include <math.h>
 #include <string.h>
 #include <glib-object.h>
@@ -838,11 +837,11 @@ test_services_inherited (void)
                                    NULL);
 
   /* TTestInheritedClient inherits from TTestSrvClient */
-  assert (g_type_is_a (T_TEST_TYPE_INHERITED_CLIENT,
+  g_assert (g_type_is_a (T_TEST_TYPE_INHERITED_CLIENT,
                        T_TEST_TYPE_SRV_CLIENT));
 
   /* TTestInheritedClient implements TTestSrvClient's interface */
-  assert (g_type_is_a (T_TEST_TYPE_INHERITED_CLIENT,
+  g_assert (g_type_is_a (T_TEST_TYPE_INHERITED_CLIENT,
                        T_TEST_TYPE_SRV_IF));
 
   /* TTestInheritedClient's inherited properties can be set and retrieved */
@@ -856,8 +855,8 @@ test_services_inherited (void)
                 "output_protocol", &output_protocol,
                 NULL);
 
-  assert (input_protocol == G_OBJECT(protocol));
-  assert (output_protocol == G_OBJECT(protocol));
+  g_assert (input_protocol == G_OBJECT(protocol));
+  g_assert (output_protocol == G_OBJECT(protocol));
 
   g_object_unref (output_protocol);
   g_object_unref (input_protocol);

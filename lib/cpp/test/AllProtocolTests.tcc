@@ -28,7 +28,7 @@
 
 #include "GenericHelpers.h"
 
-using boost::shared_ptr;
+using apache::thrift::stdcxx::shared_ptr;
 using namespace apache::thrift;
 using namespace apache::thrift::protocol;
 using namespace apache::thrift::transport;
@@ -190,14 +190,14 @@ void testProtocol(const char* protoname) {
 
     testNaked<TProto, int64_t>(0);
     for (int64_t i = 0; i < 62; i++) {
-      testNaked<TProto, int64_t>(1L << i);
-      testNaked<TProto, int64_t>(-(1L << i));
+      testNaked<TProto, int64_t>(1LL << i);
+      testNaked<TProto, int64_t>(-(1LL << i));
     }
 
     testField<TProto, T_I64, int64_t>(0);
     for (int i = 0; i < 62; i++) {
-      testField<TProto, T_I64, int64_t>(1L << i);
-      testField<TProto, T_I64, int64_t>(-(1L << i));
+      testField<TProto, T_I64, int64_t>(1LL << i);
+      testField<TProto, T_I64, int64_t>(-(1LL << i));
     }
 
     testNaked<TProto, double>(123.456);

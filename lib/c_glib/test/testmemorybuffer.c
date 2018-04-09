@@ -17,7 +17,6 @@
  * under the License.
  */
 
-#include <assert.h>
 #include <netdb.h>
 
 #include <thrift/c_glib/transport/thrift_transport.h>
@@ -37,7 +36,7 @@ test_create_and_destroy (void)
   object = g_object_new (THRIFT_TYPE_MEMORY_BUFFER,
                          "buf_size", 10,
                          NULL);
-  assert (object != NULL);
+  g_assert (object != NULL);
   g_object_unref (object);
 }
 
@@ -48,7 +47,7 @@ test_create_and_destroy_large (void)
   object = g_object_new (THRIFT_TYPE_MEMORY_BUFFER,
                          "buf_size", 10 * 1024 * 1024,
                          NULL);
-  assert (object != NULL);
+  g_assert (object != NULL);
   g_object_unref (object);
 }
 
@@ -57,7 +56,7 @@ test_create_and_destroy_default (void)
 {
   GObject *object = NULL;
   object = g_object_new (THRIFT_TYPE_MEMORY_BUFFER, NULL);
-  assert (object != NULL);
+  g_assert (object != NULL);
   g_object_unref (object);
 }
 
@@ -66,11 +65,11 @@ test_create_and_destroy_external (void)
 {
   GObject *object = NULL;
   GByteArray *buf = g_byte_array_new ();
-  assert (buf != NULL);
+  g_assert (buf != NULL);
   object = g_object_new (THRIFT_TYPE_MEMORY_BUFFER,
                          "buf", buf,
                          NULL);
-  assert (object != NULL);
+  g_assert (object != NULL);
   g_object_unref (object);
 }
 
@@ -84,12 +83,12 @@ test_create_and_destroy_unowned (void)
   object = g_object_new (THRIFT_TYPE_MEMORY_BUFFER,
                          "owner", FALSE,
                          NULL);
-  assert (object != NULL);
+  g_assert (object != NULL);
 
   g_value_init (&val, G_TYPE_POINTER);
   g_object_get_property (object, "buf", &val);
   buf = (GByteArray*) g_value_get_pointer (&val);
-  assert (buf != NULL);
+  g_assert (buf != NULL);
 
   g_byte_array_unref (buf);
   g_value_unset (&val);
@@ -105,9 +104,9 @@ test_open_and_close (void)
   tbuffer = g_object_new (THRIFT_TYPE_MEMORY_BUFFER, NULL);
 
   /* no-ops */
-  assert (thrift_memory_buffer_open (THRIFT_TRANSPORT (tbuffer), NULL) == TRUE);
-  assert (thrift_memory_buffer_is_open (THRIFT_TRANSPORT (tbuffer)) == TRUE);
-  assert (thrift_memory_buffer_close (THRIFT_TRANSPORT (tbuffer), NULL) == TRUE);
+  g_assert (thrift_memory_buffer_open (THRIFT_TRANSPORT (tbuffer), NULL) == TRUE);
+  g_assert (thrift_memory_buffer_is_open (THRIFT_TRANSPORT (tbuffer)) == TRUE);
+  g_assert (thrift_memory_buffer_close (THRIFT_TRANSPORT (tbuffer), NULL) == TRUE);
 
   g_object_unref (tbuffer);
 }
@@ -122,18 +121,18 @@ test_read_and_write (void)
   GError *error = NULL;
 
   tbuffer = g_object_new (THRIFT_TYPE_MEMORY_BUFFER, "buf_size", 5, NULL);
-  assert (thrift_memory_buffer_write (THRIFT_TRANSPORT (tbuffer),
+  g_assert (thrift_memory_buffer_write (THRIFT_TRANSPORT (tbuffer),
                                       (gpointer) TEST_DATA,
                                       10, &error) == FALSE);
-  assert (error != NULL);
+  g_assert (error != NULL);
   g_error_free (error);
   error = NULL;
   g_object_unref (tbuffer);
 
   tbuffer = g_object_new (THRIFT_TYPE_MEMORY_BUFFER, "buf_size", 15, NULL);
-  assert (thrift_memory_buffer_write (THRIFT_TRANSPORT (tbuffer),
+  g_assert (thrift_memory_buffer_write (THRIFT_TRANSPORT (tbuffer),
                                       (gpointer) TEST_DATA, 10, &error) == TRUE);
-  assert (error == NULL);
+  g_assert (error == NULL);
 
   memset(read, 0, 10);
   b = read;
@@ -141,12 +140,12 @@ test_read_and_write (void)
   while (want > 0) {
     got = thrift_memory_buffer_read (THRIFT_TRANSPORT (tbuffer),
                                      (gpointer) b, want, &error);
-    assert (got > 0 && got <= want);
-    assert (error == NULL);
+    g_assert (got > 0 && got <= want);
+    g_assert (error == NULL);
     b += got;
     want -= got;
   }
-  assert (memcmp (read, TEST_DATA, 10) == 0);
+  g_assert (memcmp (read, TEST_DATA, 10) == 0);
   g_object_unref (tbuffer);
 }
 
@@ -161,9 +160,9 @@ test_read_and_write_default (void)
 
   tbuffer = g_object_new (THRIFT_TYPE_MEMORY_BUFFER, NULL);
   for (i = 0; i < 100; ++i) {
-    assert (thrift_memory_buffer_write (THRIFT_TRANSPORT (tbuffer),
+    g_assert (thrift_memory_buffer_write (THRIFT_TRANSPORT (tbuffer),
                                         (gpointer) TEST_DATA, 10, &error) == TRUE);
-    assert (error == NULL);
+    g_assert (error == NULL);
   }
 
   for (i = 0; i < 100; ++i) {
@@ -173,12 +172,12 @@ test_read_and_write_default (void)
     while (want > 0) {
       got = thrift_memory_buffer_read (THRIFT_TRANSPORT (tbuffer),
                                        (gpointer) b, want, &error);
-      assert (got > 0 && got <= want);
-      assert (error == NULL);
+      g_assert (got > 0 && got <= want);
+      g_assert (error == NULL);
       b += got;
       want -= got;
     }
-    assert (memcmp (read, TEST_DATA, 10) == 0);
+    g_assert (memcmp (read, TEST_DATA, 10) == 0);
   }
   g_object_unref (tbuffer);
 }
@@ -190,14 +189,14 @@ test_read_and_write_external (void)
   gchar *b;
   GError *error = NULL;
   GByteArray *buf = g_byte_array_new ();
-  assert (buf != NULL);
+  g_assert (buf != NULL);
 
   tbuffer = g_object_new (THRIFT_TYPE_MEMORY_BUFFER, "buf", buf, NULL);
-  assert (thrift_memory_buffer_write (THRIFT_TRANSPORT (tbuffer),
+  g_assert (thrift_memory_buffer_write (THRIFT_TRANSPORT (tbuffer),
                                       (gpointer) TEST_DATA, 10, &error) == TRUE);
-  assert (error == NULL);
+  g_assert (error == NULL);
 
-  assert (memcmp (buf->data, TEST_DATA, 10) == 0);
+  g_assert (memcmp (buf->data, TEST_DATA, 10) == 0);
   g_object_unref (tbuffer);
 }
 

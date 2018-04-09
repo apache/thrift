@@ -20,9 +20,9 @@
 #ifndef _THRIFT_TRANSPORT_TZLIBTRANSPORT_H_
 #define _THRIFT_TRANSPORT_TZLIBTRANSPORT_H_ 1
 
-#include <boost/lexical_cast.hpp>
 #include <thrift/transport/TTransport.h>
 #include <thrift/transport/TVirtualTransport.h>
+#include <thrift/TToString.h>
 #include <zlib.h>
 
 struct z_stream_s;
@@ -51,7 +51,7 @@ public:
       rv += "(no message)";
     }
     rv += " (status = ";
-    rv += boost::lexical_cast<std::string>(status);
+    rv += to_string(status);
     rv += ")";
     return rv;
   }
@@ -78,7 +78,7 @@ public:
    * @param cwbuf_size   Compressed buffer size for writing.
    * @param comp_level   Compression level (0=none[fast], 6=default, 9=max[slow]).
    */
-  TZlibTransport(boost::shared_ptr<TTransport> transport,
+  TZlibTransport(stdcxx::shared_ptr<TTransport> transport,
                  int urbuf_size = DEFAULT_URBUF_SIZE,
                  int crbuf_size = DEFAULT_CRBUF_SIZE,
                  int uwbuf_size = DEFAULT_UWBUF_SIZE,
@@ -105,7 +105,7 @@ public:
       int minimum = MIN_DIRECT_DEFLATE_SIZE;
       throw TTransportException(TTransportException::BAD_ARGS,
                                 "TZLibTransport: uncompressed write buffer must be at least"
-                                + boost::lexical_cast<std::string>(minimum) + ".");
+                                + to_string(minimum) + ".");
     }
 
     try {
@@ -180,6 +180,8 @@ public:
   static const int DEFAULT_UWBUF_SIZE = 128;
   static const int DEFAULT_CWBUF_SIZE = 1024;
 
+  stdcxx::shared_ptr<TTransport> getUnderlyingTransport() const { return transport_; }
+
 protected:
   inline void checkZlibRv(int status, const char* msg);
   inline void checkZlibRvNothrow(int status, const char* msg);
@@ -193,7 +195,7 @@ protected:
   // Larger (or equal) writes are dumped straight to zlib.
   static const uint32_t MIN_DIRECT_DEFLATE_SIZE = 32;
 
-  boost::shared_ptr<TTransport> transport_;
+  stdcxx::shared_ptr<TTransport> transport_;
 
   int urpos_;
   int uwpos_;
@@ -229,8 +231,8 @@ public:
 
   virtual ~TZlibTransportFactory() {}
 
-  virtual boost::shared_ptr<TTransport> getTransport(boost::shared_ptr<TTransport> trans) {
-    return boost::shared_ptr<TTransport>(new TZlibTransport(trans));
+  virtual stdcxx::shared_ptr<TTransport> getTransport(stdcxx::shared_ptr<TTransport> trans) {
+    return stdcxx::shared_ptr<TTransport>(new TZlibTransport(trans));
   }
 };
 }

@@ -121,5 +121,9 @@ module Thrift
       end
       out.join(" ")
     end
+    
+    def to_s
+      "memory"
+    end
   end
 end

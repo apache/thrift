@@ -17,7 +17,7 @@
  * under the License.
  */
 
-#include <boost/bind.hpp>
+#include <algorithm>
 #include <stdexcept>
 #include <stdint.h>
 #include <thrift/server/TServerFramework.h>
@@ -27,14 +27,14 @@ namespace thrift {
 namespace server {
 
 using apache::thrift::concurrency::Synchronized;
+using apache::thrift::protocol::TProtocol;
+using apache::thrift::protocol::TProtocolFactory;
+using apache::thrift::stdcxx::bind;
+using apache::thrift::stdcxx::shared_ptr;
 using apache::thrift::transport::TServerTransport;
 using apache::thrift::transport::TTransport;
 using apache::thrift::transport::TTransportException;
 using apache::thrift::transport::TTransportFactory;
-using apache::thrift::protocol::TProtocol;
-using apache::thrift::protocol::TProtocolFactory;
-using boost::bind;
-using boost::shared_ptr;
 using std::string;
 
 TServerFramework::TServerFramework(const shared_ptr<TProcessorFactory>& processorFactory,
@@ -161,7 +161,7 @@ void TServerFramework::serve() {
                                outputProtocol,
                                eventHandler_,
                                client),
-          bind(&TServerFramework::disposeConnectedClient, this, _1)));
+          bind(&TServerFramework::disposeConnectedClient, this, stdcxx::placeholders::_1)));
 
     } catch (TTransportException& ttx) {
       releaseOneDescriptor("inputTransport", inputTransport);
@@ -214,30 +214,32 @@ void TServerFramework::setConcurrentClientLimit(int64_t newLimit) {
 }
 
 void TServerFramework::stop() {
-  serverTransport_->interrupt();
+  // Order is important because serve() releases serverTransport_ when it is
+  // interrupted, which closes the socket that interruptChildren uses.
   serverTransport_->interruptChildren();
+  serverTransport_->interrupt();
 }
 
-void TServerFramework::newlyConnectedClient(const boost::shared_ptr<TConnectedClient>& pClient) {
-  onClientConnected(pClient);
+void TServerFramework::newlyConnectedClient(const shared_ptr<TConnectedClient>& pClient) {
+  {
+    Synchronized sync(mon_);
+    ++clients_;
+    hwm_ = (std::max)(hwm_, clients_);
+  }
 
-  // Count a concurrent client added.
-  Synchronized sync(mon_);
-  ++clients_;
-  hwm_ = (std::max)(hwm_, clients_);
+  onClientConnected(pClient);
 }
 
 void TServerFramework::disposeConnectedClient(TConnectedClient* pClient) {
-  {
-    // Count a concurrent client removed.
-    Synchronized sync(mon_);
-    if (limit_ - --clients_ > 0) {
-      mon_.notify();
-    }
-  }
   onClientDisconnected(pClient);
   delete pClient;
+
+  Synchronized sync(mon_);
+  if (limit_ - --clients_ > 0) {
+    mon_.notify();
+  }
 }
+
 }
 }
 } // apache::thrift::server

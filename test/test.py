@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 #
 # Licensed to the Apache Software Foundation (ASF) under one
 # or more contributor license agreements. See the NOTICE file
@@ -18,12 +18,13 @@
 # under the License.
 #
 
-# Apache Thrift - integration test suite
+#
+# Apache Thrift - integration (cross) test suite
 #
 # tests different server-client, protocol and transport combinations
 #
-# This script supports python 2.7 and later.
-# python 3.x is recommended for better stability.
+# This script requires python 3.x due to the improvements in
+# subprocess management that are needed for reliability.
 #
 
 from __future__ import print_function
@@ -38,6 +39,12 @@ import sys
 import crossrunner
 from crossrunner.compat import path_join
 
+# 3.3 introduced subprocess timeouts on waiting for child
+req_version = (3, 3)
+cur_version = sys.version_info
+assert (cur_version >= req_version), "Python 3.3 or later is required for proper operation."
+
+
 ROOT_DIR = os.path.dirname(os.path.realpath(os.path.dirname(__file__)))
 TEST_DIR_RELATIVE = 'test'
 TEST_DIR = path_join(ROOT_DIR, TEST_DIR_RELATIVE)
@@ -45,7 +52,7 @@ FEATURE_DIR_RELATIVE = path_join(TEST_DIR_RELATIVE, 'features')
 CONFIG_FILE = 'tests.json'
 
 
-def run_cross_tests(server_match, client_match, jobs, skip_known_failures, retry_count, regex):
+def run_cross_tests(server_match, client_match, jobs, skip_known_failures, only_known_failures, retry_count, regex):
     logger = multiprocessing.get_logger()
     logger.debug('Collecting tests')
     with open(path_join(TEST_DIR, CONFIG_FILE), 'r') as fp:
@@ -56,6 +63,10 @@ def run_cross_tests(server_match, client_match, jobs, skip_known_failures, retry
         print('  servers: %s' % server_match, file=sys.stderr)
         print('  clients: %s' % client_match, file=sys.stderr)
         return False
+    if only_known_failures:
+        logger.debug('Only running known failures')
+        known = crossrunner.load_known_failures(TEST_DIR)
+        tests = list(filter(lambda t: crossrunner.test_name(**t) in known, tests))
     if skip_known_failures:
         logger.debug('Skipping known failures')
         known = crossrunner.load_known_failures(TEST_DIR)
@@ -74,7 +85,7 @@ def run_cross_tests(server_match, client_match, jobs, skip_known_failures, retry
         return False
 
 
-def run_feature_tests(server_match, feature_match, jobs, skip_known_failures, retry_count, regex):
+def run_feature_tests(server_match, feature_match, jobs, skip_known_failures, only_known_failures, retry_count, regex):
     basedir = path_join(ROOT_DIR, FEATURE_DIR_RELATIVE)
     logger = multiprocessing.get_logger()
     logger.debug('Collecting tests')
@@ -88,6 +99,10 @@ def run_feature_tests(server_match, feature_match, jobs, skip_known_failures, re
         print('  servers: %s' % server_match, file=sys.stderr)
         print('  features: %s' % feature_match, file=sys.stderr)
         return False
+    if only_known_failures:
+        logger.debug('Only running known failures')
+        known = crossrunner.load_known_failures(basedir)
+        tests = list(filter(lambda t: crossrunner.test_name(**t) in known, tests))
     if skip_known_failures:
         logger.debug('Skipping known failures')
         known = crossrunner.load_known_failures(basedir)
@@ -123,6 +138,8 @@ def main(argv):
     parser.add_argument('-F', '--features', nargs='*', default=None,
                         help='run server feature tests instead of cross language tests')
     parser.add_argument('-R', '--regex', help='test name pattern to run')
+    parser.add_argument('-o', '--only-known_failures', action='store_true', dest='only_known_failures',
+                        help='only execute tests that are known to fail')
     parser.add_argument('-s', '--skip-known-failures', action='store_true', dest='skip_known_failures',
                         help='do not execute tests that are known to fail')
     parser.add_argument('-r', '--retry-count', type=int,
@@ -161,10 +178,15 @@ def main(argv):
             options.update_failures, options.print_failures)
     elif options.features is not None:
         features = options.features or ['.*']
-        res = run_feature_tests(server_match, features, options.jobs, options.skip_known_failures, options.retry_count, options.regex)
+        res = run_feature_tests(server_match, features, options.jobs,
+                                options.skip_known_failures, options.only_known_failures,
+                                options.retry_count, options.regex)
     else:
-        res = run_cross_tests(server_match, client_match, options.jobs, options.skip_known_failures, options.retry_count, options.regex)
+        res = run_cross_tests(server_match, client_match, options.jobs,
+                              options.skip_known_failures, options.only_known_failures,
+                              options.retry_count, options.regex)
     return 0 if res else 1
+
 
 if __name__ == '__main__':
     sys.exit(main(sys.argv[1:]))

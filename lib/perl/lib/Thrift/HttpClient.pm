@@ -17,26 +17,25 @@
 # under the License.
 #
 
-require 5.6.0;
+use 5.10.0;
 use strict;
 use warnings;
 
+use HTTP::Request;
+use IO::String;
+use LWP::UserAgent;
 use Thrift;
+use Thrift::Exception;
 use Thrift::Transport;
 
-use HTTP::Request;
-use LWP::UserAgent;
-use IO::String;
-
 package Thrift::HttpClient;
-
 use base('Thrift::Transport');
+use version 0.77; our $VERSION = version->declare("$Thrift::VERSION");
 
 sub new
 {
     my $classname = shift;
     my $url       = shift || 'http://localhost:9090';
-    my $debugHandler = shift;
 
     my $out = IO::String->new;
     binmode($out);
@@ -44,14 +43,26 @@ sub new
     my $self = {
         url          => $url,
         out          => $out,
-        debugHandler => $debugHandler,
-        debug        => 0,
-        sendTimeout  => 100,
-        recvTimeout  => 750,
+        timeout      => 100,
         handle       => undef,
+        headers      => {},
     };
 
     return bless($self,$classname);
+}
+
+sub setTimeout
+{
+    my $self    = shift;
+    my $timeout = shift;
+
+    $self->{timeout} = $timeout;
+}
+
+sub setRecvTimeout
+{
+    warn "setRecvTimeout is deprecated - use setTimeout instead";
+    # note: recvTimeout was never used so we do not need to do anything here
 }
 
 sub setSendTimeout
@@ -59,29 +70,17 @@ sub setSendTimeout
     my $self    = shift;
     my $timeout = shift;
 
-    $self->{sendTimeout} = $timeout;
+    warn "setSendTimeout is deprecated - use setTimeout instead";
+
+    $self->setTimeout($timeout);
 }
 
-sub setRecvTimeout
+sub setHeader
 {
-    my $self    = shift;
-    my $timeout = shift;
+    my $self = shift;
+    my ($name, $value) = @_;
 
-    $self->{recvTimeout} = $timeout;
-}
-
-
-#
-#Sets debugging output on or off
-#
-# @param bool $debug
-#
-sub setDebug
-{
-    my $self  = shift;
-    my $debug = shift;
-
-    $self->{debug} = $debug;
+    $self->{headers}->{$name} = $value;
 }
 
 #
@@ -122,7 +121,8 @@ sub readAll
     my $buf = $self->read($len);
 
     if (!defined($buf)) {
-      die new Thrift::TException('TSocket: Could not read '.$len.' bytes from input buffer');
+      die new Thrift::TTransportException("TSocket: Could not read $len bytes from input buffer",
+                                          Thrift::TTransportException::END_OF_FILE);
     }
     return $buf;
 }
@@ -140,15 +140,17 @@ sub read
     my $in = $self->{in};
 
     if (!defined($in)) {
-      die new Thrift::TException("Response buffer is empty, no request.");
+      die new Thrift::TTransportException("Response buffer is empty, no request.",
+                                          Thrift::TTransportException::END_OF_FILE);
     }
     eval {
       my $ret = sysread($in, $buf, $len);
       if (! defined($ret)) {
-        die new Thrift::TException("No more data available.");
+        die new Thrift::TTransportException("No more data available.",
+                                            Thrift::TTransportException::TIMED_OUT);
       }
     }; if($@){
-      die new Thrift::TException($@);
+      die new Thrift::TTransportException("$@", Thrift::TTransportException::UNKNOWN);
     }
 
     return $buf;
@@ -171,7 +173,7 @@ sub flush
 {
     my $self = shift;
 
-    my $ua = LWP::UserAgent->new('timeout' => ($self->{sendTimeout} / 1000),
+    my $ua = LWP::UserAgent->new('timeout' => ($self->{timeout} / 1000),
       'agent' => 'Perl/THttpClient'
      );
     $ua->default_header('Accept' => 'application/x-thrift');
@@ -183,6 +185,7 @@ sub flush
     my $buf = join('', <$out>);
 
     my $request = new HTTP::Request(POST => $self->{url}, undef, $buf);
+    map { $request->header($_ => $self->{headers}->{$_}) } keys %{$self->{headers}};
     my $response = $ua->request($request);
     my $content_ref = $response->content_ref;
 

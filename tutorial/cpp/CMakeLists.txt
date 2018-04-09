@@ -17,7 +17,6 @@
 # under the License.
 #
 
-find_package(Boost 1.53.0 REQUIRED)
 include_directories(SYSTEM "${Boost_INCLUDE_DIRS}")
 
 #Make sure gen-cpp files can be included
@@ -27,7 +26,7 @@ include_directories("${PROJECT_SOURCE_DIR}/lib/cpp/src")
 
 include(ThriftMacros)
 
-set(tutorialgencpp_SOURCES 
+set(tutorialgencpp_SOURCES
     gen-cpp/Calculator.cpp
     gen-cpp/SharedService.cpp
     gen-cpp/shared_constants.cpp
@@ -45,9 +44,13 @@ add_custom_command(OUTPUT gen-cpp/Calculator.cpp gen-cpp/SharedService.cpp gen-c
 add_executable(TutorialServer CppServer.cpp)
 target_link_libraries(TutorialServer tutorialgencpp)
 LINK_AGAINST_THRIFT_LIBRARY(TutorialServer thrift)
-target_link_libraries(TutorialServer ${ZLIB_LIBRARIES})
+if (ZLIB_FOUND)
+  target_link_libraries(TutorialServer ${ZLIB_LIBRARIES})
+endif ()
 
 add_executable(TutorialClient CppClient.cpp)
 target_link_libraries(TutorialClient tutorialgencpp)
 LINK_AGAINST_THRIFT_LIBRARY(TutorialClient thrift)
-target_link_libraries(TutorialClient ${ZLIB_LIBRARIES})
+if (ZLIB_FOUND)
+  target_link_libraries(TutorialClient ${ZLIB_LIBRARIES})
+endif ()

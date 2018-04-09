@@ -176,8 +176,8 @@ describe 'NonblockingServer' do
 
     it "should handle basic message passing" do
       client = setup_client
-      client.greeting(true).should == SpecNamespace::Hello.new
-      client.greeting(false).should == SpecNamespace::Hello.new(:greeting => 'Aloha!')
+      expect(client.greeting(true)).to eq(SpecNamespace::Hello.new)
+      expect(client.greeting(false)).to eq(SpecNamespace::Hello.new(:greeting => 'Aloha!'))
       @server.shutdown
     end
 
@@ -195,7 +195,7 @@ describe 'NonblockingServer' do
       end
       4.times { trans_queue.pop }
       setup_client.unblock(4)
-      4.times { queue.pop.should be_true }
+      4.times { expect(queue.pop).to be_truthy }
       @server.shutdown
     end
 
@@ -212,15 +212,15 @@ describe 'NonblockingServer' do
       queues[4] << :hello
       queues[5] << :hello
       queues[6] << :hello
-      3.times { result.pop.should == SpecNamespace::Hello.new }
-      client.greeting(true).should == SpecNamespace::Hello.new
+      3.times { expect(result.pop).to eq(SpecNamespace::Hello.new) }
+      expect(client.greeting(true)).to eq(SpecNamespace::Hello.new)
       queues[5] << [:unblock, 4]
-      4.times { result.pop.should be_true }
+      4.times { expect(result.pop).to be_truthy }
       queues[2] << :hello
-      result.pop.should == SpecNamespace::Hello.new
-      client.greeting(false).should == SpecNamespace::Hello.new(:greeting => 'Aloha!')
+      expect(result.pop).to eq(SpecNamespace::Hello.new)
+      expect(client.greeting(false)).to eq(SpecNamespace::Hello.new(:greeting => 'Aloha!'))
       7.times { queues.shift << :exit }
-      client.greeting(true).should == SpecNamespace::Hello.new
+      expect(client.greeting(true)).to eq(SpecNamespace::Hello.new)
       @server.shutdown
     end
 
@@ -229,7 +229,7 @@ describe 'NonblockingServer' do
       client = setup_client
       client.greeting(false) # force a message pass
       @server.shutdown
-      @server_thread.join(2).should be_an_instance_of(Thread)
+      expect(@server_thread.join(2)).to be_an_instance_of(Thread)
     end
 
     it "should continue processing active messages when shutting down" do
@@ -238,8 +238,8 @@ describe 'NonblockingServer' do
       client << :sleep
       sleep 0.1 # give the server time to start processing the client's message
       @server.shutdown
-      @server_thread.join(2).should be_an_instance_of(Thread)
-      result.pop.should == :slept
+      expect(@server_thread.join(2)).to be_an_instance_of(Thread)
+      expect(result.pop).to eq(:slept)
     end
 
     it "should kill active messages when they don't expire while shutting down" do
@@ -249,15 +249,15 @@ describe 'NonblockingServer' do
       sleep 0.1 # start processing the client's message
       @server.shutdown(1)
       @catch_exceptions = true
-      @server_thread.join(3).should_not be_nil
-      result.should be_empty
+      expect(@server_thread.join(3)).not_to be_nil
+      expect(result).to be_empty
     end
 
     it "should allow shutting down in response to a message" do
       client = setup_client
-      client.greeting(true).should == SpecNamespace::Hello.new
+      expect(client.greeting(true)).to eq(SpecNamespace::Hello.new)
       client.shutdown
-      @server_thread.join(2).should_not be_nil
+      expect(@server_thread.join(2)).not_to be_nil
     end
   end
 end

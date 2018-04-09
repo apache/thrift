@@ -20,7 +20,7 @@
 #ifndef _THRIFT_CONCURRENCY_MUTEX_H_
 #define _THRIFT_CONCURRENCY_MUTEX_H_ 1
 
-#include <boost/shared_ptr.hpp>
+#include <thrift/stdcxx.h>
 #include <boost/noncopyable.hpp>
 #include <stdint.h>
 
@@ -54,6 +54,11 @@ void enableMutexProfiling(int32_t profilingSampleRate, MutexWaitCallback callbac
 #endif
 
 /**
+ * NOTE: All mutex implementations throw an exception on failure.  See each
+ *       specific implementation to understand the exception type(s) used.
+ */
+
+/**
  * A simple mutex class
  *
  * @version $Id:$
@@ -64,6 +69,7 @@ public:
 
   Mutex(Initializer init = DEFAULT_INITIALIZER);
   virtual ~Mutex() {}
+
   virtual void lock() const;
   virtual bool trylock() const;
   virtual bool timedlock(int64_t milliseconds) const;
@@ -71,13 +77,16 @@ public:
 
   void* getUnderlyingImpl() const;
 
-  static void DEFAULT_INITIALIZER(void*);
+  // If you attempt to use one of these and it fails to link, it means
+  // your version of pthreads does not support it - try another one.
   static void ADAPTIVE_INITIALIZER(void*);
+  static void DEFAULT_INITIALIZER(void*);
+  static void ERRORCHECK_INITIALIZER(void*);
   static void RECURSIVE_INITIALIZER(void*);
 
 private:
   class impl;
-  boost::shared_ptr<impl> impl_;
+  stdcxx::shared_ptr<impl> impl_;
 };
 
 class ReadWriteMutex {
@@ -98,7 +107,7 @@ public:
 
 private:
   class impl;
-  boost::shared_ptr<impl> impl_;
+  stdcxx::shared_ptr<impl> impl_;
 };
 
 /**

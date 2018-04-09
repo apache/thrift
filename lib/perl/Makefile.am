@@ -38,12 +38,14 @@ clean-local:
 
 EXTRA_DIST = \
 	coding_standards.md \
+	build-cpan-dist.sh \
 	Makefile.PL \
 	test.pl \
 	lib/Thrift.pm \
 	lib/Thrift.pm \
 	lib/Thrift/BinaryProtocol.pm \
 	lib/Thrift/BufferedTransport.pm \
+	lib/Thrift/Exception.pm \
 	lib/Thrift/FramedTransport.pm \
 	lib/Thrift/HttpClient.pm \
 	lib/Thrift/MemoryBuffer.pm \
@@ -59,6 +61,7 @@ EXTRA_DIST = \
 	lib/Thrift/SSLServerSocket.pm \
 	lib/Thrift/UnixServerSocket.pm \
 	lib/Thrift/UnixSocket.pm \
+	lib/Thrift/Type.pm \
 	lib/Thrift/Transport.pm \
 	README.md
 

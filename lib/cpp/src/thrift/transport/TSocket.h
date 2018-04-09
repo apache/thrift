@@ -84,7 +84,9 @@ public:
   virtual bool isOpen();
 
   /**
-   * Calls select on the socket to see if there is more data available.
+   * Checks whether there is more data available in the socket to read.
+   *
+   * This call blocks until at least one byte is available or the socket is closed.
    */
   virtual bool peek();
 
@@ -99,6 +101,17 @@ public:
    * Shuts down communications on the socket.
    */
   virtual void close();
+
+  /**
+   * Determines whether there is pending data to read or not.
+   *
+   * This call does not block.
+   * \throws TTransportException of types:
+   *           NOT_OPEN means the socket has been closed
+   *           UNKNOWN means something unexpected happened
+   * \returns true if there is pending data to read, false otherwise
+   */
+  virtual bool hasPendingDataToRead();
 
   /**
    * Reads from the underlying socket.
@@ -120,7 +133,7 @@ public:
   /**
    * Writes to the underlying socket.  Does single send() and returns result.
    */
-  uint32_t write_partial(const uint8_t* buf, uint32_t len);
+  virtual uint32_t write_partial(const uint8_t* buf, uint32_t len);
 
   /**
    * Get the host that the socket is connected to
@@ -257,7 +270,7 @@ public:
    * Constructor to create socket from file descriptor that
    * can be interrupted safely.
    */
-  TSocket(THRIFT_SOCKET socket, boost::shared_ptr<THRIFT_SOCKET> interruptListener);
+  TSocket(THRIFT_SOCKET socket, stdcxx::shared_ptr<THRIFT_SOCKET> interruptListener);
 
   /**
    * Set a cache of the peer address (used when trivially available: e.g.
@@ -272,15 +285,6 @@ protected:
   /** Host to connect to */
   std::string host_;
 
-  /** Peer hostname */
-  std::string peerHost_;
-
-  /** Peer address */
-  std::string peerAddress_;
-
-  /** Peer port */
-  int peerPort_;
-
   /** Port number to connect on */
   int port_;
 
@@ -290,11 +294,20 @@ protected:
   /** Underlying socket handle */
   THRIFT_SOCKET socket_;
 
+  /** Peer hostname */
+  std::string peerHost_;
+
+  /** Peer address */
+  std::string peerAddress_;
+
+  /** Peer port */
+  int peerPort_;
+
   /**
    * A shared socket pointer that will interrupt a blocking read if data
    * becomes available on it
    */
-  boost::shared_ptr<THRIFT_SOCKET> interruptListener_;
+  stdcxx::shared_ptr<THRIFT_SOCKET> interruptListener_;
 
   /** Connect timeout in ms */
   int connTimeout_;

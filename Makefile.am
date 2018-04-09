@@ -19,7 +19,15 @@
 
 ACLOCAL_AMFLAGS = -I ./aclocal
 
+if WITH_PLUGIN
+# To enable bootstrap, build order is lib/cpp -> compiler -> others
+SUBDIRS = lib/cpp compiler/cpp lib
+if WITH_TESTS
+SUBDIRS += lib/cpp/test
+endif
+else
 SUBDIRS = compiler/cpp lib
+endif
 
 if WITH_TESTS
 SUBDIRS += test
@@ -35,7 +43,7 @@ dist-hook:
 	find $(distdir) -type d \( -iname ".svn" -or -iname ".git" \) | xargs rm -rf
 
 print-version:
-	@echo $(VERSION)
+	@echo $(PACKAGE_VERSION)
 
 .PHONY: precross cross
 precross-%: all
@@ -46,7 +54,7 @@ empty :=
 space := $(empty) $(empty)
 comma := ,
 
-CROSS_LANGS = @MAYBE_CPP@ @MAYBE_C_GLIB@ @MAYBE_D@ @MAYBE_JAVA@ @MAYBE_CSHARP@ @MAYBE_PYTHON@ @MAYBE_PY3@ @MAYBE_RUBY@ @MAYBE_HASKELL@ @MAYBE_PERL@ @MAYBE_PHP@ @MAYBE_GO@ @MAYBE_NODEJS@ @MAYBE_DART@ @MAYBE_ERLANG@ @MAYBE_LUA@
+CROSS_LANGS = @MAYBE_CPP@ @MAYBE_C_GLIB@ @MAYBE_CL@ @MAYBE_D@ @MAYBE_JAVA@ @MAYBE_CSHARP@ @MAYBE_PYTHON@ @MAYBE_PY3@ @MAYBE_RUBY@ @MAYBE_HASKELL@ @MAYBE_PERL@ @MAYBE_PHP@ @MAYBE_GO@ @MAYBE_NODEJS@ @MAYBE_DART@ @MAYBE_ERLANG@ @MAYBE_LUA@ @MAYBE_RS@ @MAYBE_DOTNETCORE@
 CROSS_LANGS_COMMA_SEPARATED = $(subst $(space),$(comma),$(CROSS_LANGS))
 
 if WITH_PY3
@@ -56,14 +64,17 @@ CROSS_PY=$(PYTHON)
 endif
 
 if WITH_PYTHON
-cross: precross
-	$(CROSS_PY) test/test.py --retry-count 3 --features .* --skip-known-failures --server $(CROSS_LANGS_COMMA_SEPARATED)
-	$(CROSS_PY) test/test.py --retry-count 3 --skip-known-failures --server $(CROSS_LANGS_COMMA_SEPARATED) --client $(CROSS_LANGS_COMMA_SEPARATED)
+crossfeature: precross
+	$(CROSS_PY) test/test.py --retry-count 5 --features .* --skip-known-failures --server $(CROSS_LANGS_COMMA_SEPARATED)
 else
 # feature test needs python build
-cross: precross
-	$(CROSS_PY) test/test.py -s --server $(CROSS_LANGS_COMMA_SEPARATED) --client $(CROSS_LANGS_COMMA_SEPARATED)
+crossfeature:
 endif
+
+cross-%: precross crossfeature
+	$(CROSS_PY) test/test.py --retry-count 5 --skip-known-failures --server $(CROSS_LANGS_COMMA_SEPARATED) --client $(CROSS_LANGS_COMMA_SEPARATED) --regex "$*"
+
+cross: cross-.*
 
 TIMES = 1 2 3
 fail: precross
@@ -100,9 +111,13 @@ EXTRA_DIST = \
 	.clang-format \
 	.editorconfig \
 	.travis.yml \
+	.rustfmt.toml \
+	.dockerignore \
 	appveyor.yml \
 	bower.json \
 	build \
+	bootstrap.sh \
+	cleanup.sh \
 	CMakeLists.txt \
 	composer.json \
 	contrib \
@@ -112,7 +127,7 @@ EXTRA_DIST = \
 	doap.rdf \
 	package.json \
 	sonar-project.properties \
-	Dockerfile \
+	LANGUAGES.md \
 	LICENSE \
 	CHANGES \
 	NOTICE \

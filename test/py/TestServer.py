@@ -21,6 +21,7 @@
 from __future__ import division
 import logging
 import os
+import signal
 import sys
 import time
 from optparse import OptionParser
@@ -180,11 +181,11 @@ class TestHandler(object):
 def main(options):
     # set up the protocol factory form the --protocol option
     prot_factories = {
-        'binary': TBinaryProtocol.TBinaryProtocolFactory,
         'accel': TBinaryProtocol.TBinaryProtocolAcceleratedFactory,
-        'compact': TCompactProtocol.TCompactProtocolFactory,
         'accelc': TCompactProtocol.TCompactProtocolAcceleratedFactory,
-        'json': TJSONProtocol.TJSONProtocolFactory,
+        'binary': TBinaryProtocol.TBinaryProtocolFactory,
+        'compact': TCompactProtocol.TCompactProtocolFactory,
+        'json': TJSONProtocol.TJSONProtocolFactory
     }
     pfactory_cls = prot_factories.get(options.proto, None)
     if pfactory_cls is None:
@@ -193,7 +194,7 @@ def main(options):
     try:
         pfactory.string_length_limit = options.string_limit
         pfactory.container_length_limit = options.container_limit
-    except:
+    except Exception:
         # Ignore errors for those protocols that does not support length limit
         pass
 
@@ -201,14 +202,23 @@ def main(options):
     if len(args) > 1:
         raise AssertionError('Only one server type may be specified, not multiple types.')
     server_type = args[0]
+    if options.trans == 'http':
+        server_type = 'THttpServer'
 
     # Set up the handler and processor objects
     handler = TestHandler()
     processor = ThriftTest.Processor(handler)
 
+    global server
+
     # Handle THttpServer as a special case
     if server_type == 'THttpServer':
-        server = THttpServer.THttpServer(processor, ('', options.port), pfactory)
+        if options.ssl:
+            __certfile = os.path.join(os.path.dirname(SCRIPT_DIR), "keys", "server.crt")
+            __keyfile = os.path.join(os.path.dirname(SCRIPT_DIR), "keys", "server.key")
+            server = THttpServer.THttpServer(processor, ('', options.port), pfactory, cert_file=__certfile, key_file=__keyfile)
+        else:
+            server = THttpServer.THttpServer(processor, ('', options.port), pfactory)
         server.serve()
         sys.exit(0)
 
@@ -255,7 +265,7 @@ def main(options):
                     logging.info('Requesting server to stop()')
                 try:
                     server.stop()
-                except:
+                except Exception:
                     pass
             signal.signal(signal.SIGALRM, clean_shutdown)
             signal.alarm(4)
@@ -267,7 +277,16 @@ def main(options):
     # enter server main loop
     server.serve()
 
+
+def exit_gracefully(signum, frame):
+    print("SIGINT received\n")
+    server.shutdown()   # doesn't work properly, yet
+    sys.exit(0)
+
+
 if __name__ == '__main__':
+    signal.signal(signal.SIGINT, exit_gracefully)
+
     parser = OptionParser()
     parser.add_option('--libpydir', type='string', dest='libpydir',
                       help='include this directory to sys.path for locating library code')
@@ -287,12 +306,12 @@ if __name__ == '__main__':
                       dest="verbose", const=0,
                       help="minimal output")
     parser.add_option('--protocol', dest="proto", type="string",
-                      help="protocol to use, one of: accel, binary, compact, json")
+                      help="protocol to use, one of: accel, accelc, binary, compact, json")
     parser.add_option('--transport', dest="trans", type="string",
-                      help="transport to use, one of: buffered, framed")
+                      help="transport to use, one of: buffered, framed, http")
     parser.add_option('--container-limit', dest='container_limit', type='int', default=None)
     parser.add_option('--string-limit', dest='string_limit', type='int', default=None)
-    parser.set_defaults(port=9090, verbose=1, proto='binary')
+    parser.set_defaults(port=9090, verbose=1, proto='binary', transport='buffered')
     options, args = parser.parse_args()
 
     # Print TServer log to stdout so that the test-runner can redirect it to log files

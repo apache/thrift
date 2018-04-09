@@ -22,20 +22,21 @@
  */
 
 #include "gen-cpp/Recursive_types.h"
-#include <thrift/transport/TBufferTransports.h>
 #include <thrift/protocol/TBinaryProtocol.h>
+#include <thrift/stdcxx.h>
+#include <thrift/transport/TBufferTransports.h>
 
 #define BOOST_TEST_MODULE RecursiveTest
 #include <boost/test/unit_test.hpp>
 
 using apache::thrift::transport::TMemoryBuffer;
 using apache::thrift::protocol::TBinaryProtocol;
-using boost::shared_ptr;
+using apache::thrift::stdcxx::shared_ptr;
 
 BOOST_AUTO_TEST_CASE(test_recursive_1) {
   shared_ptr<TMemoryBuffer> buf(new TMemoryBuffer());
   shared_ptr<TBinaryProtocol> prot(new TBinaryProtocol(buf));
-  
+
   RecTree tree;
   RecTree child;
   tree.children.push_back(child);
@@ -50,9 +51,9 @@ BOOST_AUTO_TEST_CASE(test_recursive_1) {
 BOOST_AUTO_TEST_CASE(test_recursive_2) {
   shared_ptr<TMemoryBuffer> buf(new TMemoryBuffer());
   shared_ptr<TBinaryProtocol> prot(new TBinaryProtocol(buf));
-  
+
   RecList l;
-  boost::shared_ptr<RecList> l2(new RecList);
+  shared_ptr<RecList> l2(new RecList);
   l.nextitem = l2;
 
   l.write(prot.get());
@@ -68,7 +69,7 @@ BOOST_AUTO_TEST_CASE(test_recursive_3) {
   shared_ptr<TBinaryProtocol> prot(new TBinaryProtocol(buf));
 
   CoRec c;
-  boost::shared_ptr<CoRec2> r(new CoRec2);
+  shared_ptr<CoRec2> r(new CoRec2);
   c.other = r;
 
   c.write(prot.get());
@@ -82,7 +83,7 @@ BOOST_AUTO_TEST_CASE(test_recursive_4) {
   shared_ptr<TMemoryBuffer> buf(new TMemoryBuffer());
   shared_ptr<TBinaryProtocol> prot(new TBinaryProtocol(buf));
 
-  boost::shared_ptr<RecList> depthLimit(new RecList);
+  shared_ptr<RecList> depthLimit(new RecList);
   depthLimit->nextitem = depthLimit;
   BOOST_CHECK_THROW(depthLimit->write(prot.get()),
     apache::thrift::protocol::TProtocolException);

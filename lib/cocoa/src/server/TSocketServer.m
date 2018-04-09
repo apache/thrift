@@ -25,7 +25,7 @@
 
 #import <sys/socket.h>
 #include <netinet/in.h>
-
+#include <sys/un.h>
 
 
 NSString *const TSocketServerClientConnectionFinished = @"TSocketServerClientConnectionFinished";
@@ -40,13 +40,14 @@ NSString *const TSockerServerTransportKey = @"TSockerServerTransport";
 @property(strong, nonatomic) id<TProcessorFactory> processorFactory;
 @property(strong, nonatomic) NSFileHandle *socketFileHandle;
 @property(strong, nonatomic) dispatch_queue_t processingQueue;
+@property(strong, nonatomic) NSString *domainSocketPath;
 
 @end
 
 
 @implementation TSocketServer
 
--(instancetype) initWithPort:(int)port
+-(instancetype) initWithSocket:(CFSocketRef)socket
              protocolFactory:(id <TProtocolFactory>)protocolFactory
             processorFactory:(id <TProcessorFactory>)processorFactory;
 {
@@ -62,32 +63,7 @@ NSString *const TSockerServerTransportKey = @"TSockerServerTransport";
   _processingQueue = dispatch_queue_create("TSocketServer.processing", processingQueueAttr);
 
   // create a socket.
-  int fd = -1;
-  CFSocketRef socket = CFSocketCreate(kCFAllocatorDefault, PF_INET, SOCK_STREAM, IPPROTO_TCP, 0, NULL, NULL);
-  if (socket) {
-    CFSocketSetSocketFlags(socket, CFSocketGetSocketFlags(socket) & ~kCFSocketCloseOnInvalidate);
-    fd = CFSocketGetNative(socket);
-    int yes = 1;
-    setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, (void *)&yes, sizeof(yes));
-
-    struct sockaddr_in addr;
-    memset(&addr, 0, sizeof(addr));
-    addr.sin_len = sizeof(addr);
-    addr.sin_family = AF_INET;
-    addr.sin_port = htons(port);
-    addr.sin_addr.s_addr = htonl(INADDR_ANY);
-    NSData *address = [NSData dataWithBytes:&addr length:sizeof(addr)];
-    if (CFSocketSetAddress(socket, (__bridge CFDataRef)address) != kCFSocketSuccess) {
-      CFSocketInvalidate(socket);
-      CFRelease(socket);
-      NSLog(@"TSocketServer: Could not bind to address");
-      return nil;
-    }
-  }
-  else {
-    NSLog(@"TSocketServer: No server socket");
-    return nil;
-  }
+  int fd = CFSocketGetNative(socket);
 
   // wrap it in a file handle so we can get messages from it
   _socketFileHandle = [[NSFileHandle alloc] initWithFileDescriptor:fd
@@ -106,15 +82,114 @@ NSString *const TSockerServerTransportKey = @"TSockerServerTransport";
   // tell socket to listen
   [_socketFileHandle acceptConnectionInBackgroundAndNotify];
 
-  NSLog(@"TSocketServer: Listening on TCP port %d", port);
+  return self;
+}
 
+- (id) initWithPort: (int) port
+    protocolFactory: (id <TProtocolFactory>) protocolFactory
+   processorFactory: (id <TProcessorFactory>) processorFactory
+{
+  CFSocketRef socket = [[self class] createSocketWithPort:port];
+  if (socket == NULL) {
+    return nil;
+  }
+
+  if (self = [self initWithSocket:socket protocolFactory:protocolFactory processorFactory:processorFactory]) {
+    NSLog(@"TSocketServer: Listening on TCP port %d", port);
+  }
   return self;
 }
 
 
++(CFSocketRef) createSocketWithPort:(int)port
+{
+  CFSocketRef socket = CFSocketCreate(kCFAllocatorDefault, PF_INET, SOCK_STREAM, IPPROTO_TCP, 0, NULL, NULL);
+  if (socket) {
+    CFSocketSetSocketFlags(socket, CFSocketGetSocketFlags(socket) & ~kCFSocketCloseOnInvalidate);
+    int fd = CFSocketGetNative(socket);
+    int yes = 1;
+    setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, (void *)&yes, sizeof(yes));
+
+    struct sockaddr_in addr;
+    memset(&addr, 0, sizeof(addr));
+    addr.sin_len = sizeof(addr);
+    addr.sin_family = AF_INET;
+    addr.sin_port = htons(port);
+    addr.sin_addr.s_addr = htonl(INADDR_ANY);
+    NSData *address = [NSData dataWithBytes:&addr length:sizeof(addr)];
+    if (CFSocketSetAddress(socket, (__bridge CFDataRef)address) != kCFSocketSuccess) {
+      CFSocketInvalidate(socket);
+      CFRelease(socket);
+      NSLog(@"TSocketServer: Could not bind to address");
+      return NULL;
+    }
+
+    return socket;
+  }
+  else {
+    NSLog(@"TSocketServer: No server socket");
+    return NULL;
+  }
+}
+
+- (id) initWithPath: (NSString *) path
+    protocolFactory: (id <TProtocolFactory>) protocolFactory
+   processorFactory: (id <TProcessorFactory>) processorFactory
+{
+  _domainSocketPath = path;
+  CFSocketRef socket = [[self class] createSocketWithPath:path];
+  if (socket == NULL) {
+    return nil;
+  }
+
+  if (self = [self initWithSocket:socket protocolFactory:protocolFactory processorFactory:processorFactory]) {
+    NSLog(@"TSocketServer: Listening on path %@", path);
+  }
+  return self;
+}
+
++ (CFSocketRef) createSocketWithPath: (NSString *) path
+{
+  CFSocketRef socket = CFSocketCreate(kCFAllocatorDefault, PF_LOCAL, SOCK_STREAM, IPPROTO_IP, 0, NULL, NULL);
+  if (socket) {
+    CFSocketSetSocketFlags(socket,  CFSocketGetSocketFlags(socket) & ~kCFSocketCloseOnInvalidate);
+    int fd = CFSocketGetNative(socket);
+    int yes = 1;
+    setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, (void *)&yes, sizeof(yes));
+
+    size_t nullTerminatedPathLength = path.length + 1;
+    struct sockaddr_un addr;
+    if (nullTerminatedPathLength> sizeof(addr.sun_path)) {
+      NSLog(@"TSocketServer: Unable to create socket at path %@. Path is too long.", path);
+      return NULL;
+    }
+
+    addr.sun_family = AF_LOCAL;
+    memcpy(addr.sun_path, path.UTF8String, nullTerminatedPathLength);
+    addr.sun_len = SUN_LEN(&addr);
+
+    NSData *address = [NSData dataWithBytes:&addr length:sizeof(addr)];
+    if (CFSocketSetAddress(socket, (__bridge CFDataRef)address) != kCFSocketSuccess) {
+      CFSocketInvalidate(socket);
+      CFRelease(socket);
+      NSLog(@"TSocketServer: Could not bind to address");
+      return NULL;
+    }
+
+    return socket;
+  } else {
+    NSLog(@"TSocketServer: No server socket");
+    return NULL;
+  }
+}
+
 -(void) dealloc
 {
   [[NSNotificationCenter defaultCenter] removeObserver:self];
+
+  if (_domainSocketPath != nil) {
+    unlink(_domainSocketPath.UTF8String);
+  }
 }
 
 

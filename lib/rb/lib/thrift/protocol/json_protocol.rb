@@ -333,7 +333,7 @@ module Thrift
     # "NaN" or "Infinity" or "-Infinity".
     def write_json_double(num)
       @context.write(trans)
-      # Normalize output of boost::lexical_cast for NaNs and Infinities
+      # Normalize output of thrift::to_string for NaNs and Infinities
       special = false;
       if (num.nan?)
         special = true;
@@ -768,11 +768,19 @@ module Thrift
     def read_binary
       read_json_base64
     end
+
+    def to_s
+      "json(#{super.to_s})"
+    end
   end
 
   class JsonProtocolFactory < BaseProtocolFactory
     def get_protocol(trans)
       return Thrift::JsonProtocol.new(trans)
+    end
+
+    def to_s
+      "json"
     end
   end
 end

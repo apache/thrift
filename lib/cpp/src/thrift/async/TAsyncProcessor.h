@@ -20,9 +20,8 @@
 #ifndef _THRIFT_TASYNCPROCESSOR_H_
 #define _THRIFT_TASYNCPROCESSOR_H_ 1
 
-#include <thrift/cxxfunctional.h>
-#include <boost/shared_ptr.hpp>
 #include <thrift/protocol/TProtocol.h>
+#include <thrift/stdcxx.h>
 #include <thrift/TProcessor.h>
 
 namespace apache {
@@ -38,25 +37,25 @@ class TAsyncProcessor {
 public:
   virtual ~TAsyncProcessor() {}
 
-  virtual void process(apache::thrift::stdcxx::function<void(bool success)> _return,
-                       boost::shared_ptr<protocol::TProtocol> in,
-                       boost::shared_ptr<protocol::TProtocol> out) = 0;
+  virtual void process(stdcxx::function<void(bool success)> _return,
+                       stdcxx::shared_ptr<protocol::TProtocol> in,
+                       stdcxx::shared_ptr<protocol::TProtocol> out) = 0;
 
-  void process(apache::thrift::stdcxx::function<void(bool success)> _return,
-               boost::shared_ptr<apache::thrift::protocol::TProtocol> io) {
+  void process(stdcxx::function<void(bool success)> _return,
+               stdcxx::shared_ptr<protocol::TProtocol> io) {
     return process(_return, io, io);
   }
 
-  boost::shared_ptr<TProcessorEventHandler> getEventHandler() const { return eventHandler_; }
+  stdcxx::shared_ptr<TProcessorEventHandler> getEventHandler() const { return eventHandler_; }
 
-  void setEventHandler(boost::shared_ptr<TProcessorEventHandler> eventHandler) {
+  void setEventHandler(stdcxx::shared_ptr<TProcessorEventHandler> eventHandler) {
     eventHandler_ = eventHandler;
   }
 
 protected:
   TAsyncProcessor() {}
 
-  boost::shared_ptr<TProcessorEventHandler> eventHandler_;
+  stdcxx::shared_ptr<TProcessorEventHandler> eventHandler_;
 };
 
 class TAsyncProcessorFactory {
@@ -70,16 +69,15 @@ public:
    * accepted on.  This generally means that this call does not need to be
    * thread safe, as it will always be invoked from a single thread.
    */
-  virtual boost::shared_ptr<TAsyncProcessor> getProcessor(const TConnectionInfo& connInfo) = 0;
+  virtual stdcxx::shared_ptr<TAsyncProcessor> getProcessor(const TConnectionInfo& connInfo) = 0;
 };
 }
 }
 } // apache::thrift::async
 
-// XXX I'm lazy for now
 namespace apache {
 namespace thrift {
-using apache::thrift::async::TAsyncProcessor;
+  using apache::thrift::async::TAsyncProcessor;
 }
 }
 

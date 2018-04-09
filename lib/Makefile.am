@@ -17,11 +17,14 @@
 # under the License.
 #
 
-SUBDIRS = json xml 
+SUBDIRS = json xml
 PRECROSS_TARGET =
 
 if WITH_CPP
+# cpp dir is picked directly by plugin build
+if !WITH_PLUGIN
 SUBDIRS += cpp
+endif
 endif
 
 if WITH_C_GLIB
@@ -30,7 +33,6 @@ endif
 
 if WITH_MONO
 SUBDIRS += csharp
-PRECROSS_TARGET += precross-csharp
 endif
 
 if WITH_JAVA
@@ -38,7 +40,7 @@ SUBDIRS += java
 PRECROSS_TARGET += precross-java
 # JavaScript unit test depends on java
 # so test only if java, ant & co is available
-SUBDIRS += js/test
+SUBDIRS += js
 endif
 
 if WITH_PYTHON
@@ -69,6 +71,10 @@ if WITH_DART
 SUBDIRS += dart
 endif
 
+if WITH_DOTNETCORE
+SUBDIRS += netcore
+endif
+
 if WITH_GO
 SUBDIRS += go
 endif
@@ -85,6 +91,14 @@ endif
 
 if WITH_LUA
 SUBDIRS += lua
+endif
+
+if WITH_RS
+SUBDIRS += rs
+endif
+
+if WITH_CL
+SUBDIRS += cl
 endif
 
 # All of the libs that don't use Automake need to go in here

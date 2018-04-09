@@ -29,56 +29,56 @@ namespace Thrift.Transport
 {
     public class TServerSocket : TServerTransport
     {
-        /**
-        * Underlying server with socket
-        */
+        /// <summary>
+        /// Underlying server with socket.
+        /// </summary>
         private TcpListener server = null;
 
-        /**
-         * Port to listen on
-         */
+        /// <summary>
+        /// Port to listen on.
+        /// </summary>
         private int port = 0;
 
-        /**
-         * Timeout for client sockets from accept
-         */
+        /// <summary>
+        /// Timeout for client sockets from accept.
+        /// </summary>
         private int clientTimeout = 0;
 
-        /**
-         * Whether or not to wrap new TSocket connections in buffers
-         */
+        /// <summary>
+        /// Whether or not to wrap new TSocket connections in buffers.
+        /// </summary>
         private bool useBufferedSockets = false;
 
-        /**
-         * Creates a server socket from underlying socket object
-         */
+        /// <summary>
+        /// Creates a server socket from underlying socket object.
+        /// </summary>
         public TServerSocket(TcpListener listener)
-            :this(listener, 0)
+            : this(listener, 0)
         {
         }
 
-        /**
-         * Creates a server socket from underlying socket object
-         */
+        /// <summary>
+        /// Creates a server socket from underlying socket object.
+        /// </summary>
         public TServerSocket(TcpListener listener, int clientTimeout)
         {
             this.server = listener;
             this.clientTimeout = clientTimeout;
         }
 
-        /**
-         * Creates just a port listening server socket
-         */
+        /// <summary>
+        /// Creates just a port listening server socket.
+        /// </summary>
         public TServerSocket(int port)
             : this(port, 0)
         {
         }
 
-        /**
-         * Creates just a port listening server socket
-         */
+        /// <summary>
+        /// Creates just a port listening server socket.
+        /// </summary>
         public TServerSocket(int port, int clientTimeout)
-            :this(port, clientTimeout, false)
+            : this(port, clientTimeout, false)
         {
         }
 
@@ -90,13 +90,13 @@ namespace Thrift.Transport
             try
             {
                 // Make server socket
-                server = new TcpListener(System.Net.IPAddress.Any, this.port);
-                server.Server.NoDelay = true;
+                this.server = TSocketVersionizer.CreateTcpListener(this.port);
+                this.server.Server.NoDelay = true;
             }
             catch (Exception)
             {
                 server = null;
-                throw new TTransportException("Could not create ServerSocket on port " + port + ".");
+                throw new TTransportException("Could not create ServerSocket on port " + this.port + ".");
             }
         }
 

@@ -17,7 +17,6 @@
  * under the License.
  */
 
-#include <assert.h>
 #include <glib.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -89,7 +88,7 @@ test_server (void)
 
   /* run the server in a child process */
   pid = fork ();
-  assert (pid >= 0);
+  g_assert (pid >= 0);
 
   if (pid == 0)
   {
@@ -103,8 +102,8 @@ test_server (void)
     g_object_unref (ss);
     g_object_unref (tss);
     g_object_unref (p);
-    assert (wait (&status) == pid);
-    assert (status == SIGINT);
+    g_assert (wait (&status) == pid);
+    g_assert (status == SIGINT);
   }
 }
 

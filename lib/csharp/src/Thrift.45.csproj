@@ -17,8 +17,7 @@
   specific language governing permissions and limitations
   under the License.
 -->
-<Project ToolsVersion="12.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
@@ -35,7 +34,7 @@
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
     <OutputPath>bin\Debug\</OutputPath>
-    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <DefineConstants>TRACE;DEBUG;NET45</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
@@ -43,7 +42,7 @@
     <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
     <OutputPath>bin\Release\</OutputPath>
-    <DefineConstants>TRACE</DefineConstants>
+    <DefineConstants>TRACE;NET45</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
@@ -88,17 +87,17 @@
     <Compile Include="Server\TThreadedServer.cs" />
     <Compile Include="Server\TThreadPoolServer.cs" />
     <Compile Include="TApplicationException.cs" />
+    <Compile Include="TAsyncProcessor.cs" />
     <Compile Include="TControllingHandler.cs" />
     <Compile Include="TException.cs" />
-    <Compile Include="TAsyncProcessor.cs" />
     <Compile Include="TProcessor.cs" />
     <Compile Include="TProcessorFactory.cs" />
     <Compile Include="TPrototypeProcessorFactory.cs" />
     <Compile Include="Transport\TBufferedTransport.cs" />
     <Compile Include="Transport\TFramedTransport.cs" />
-    <Compile Include="Transport\THttpTaskAsyncHandler.cs" />
     <Compile Include="Transport\THttpClient.cs" />
     <Compile Include="Transport\THttpHandler.cs" />
+    <Compile Include="Transport\THttpTaskAsyncHandler.cs" />
     <Compile Include="Transport\TMemoryBuffer.cs" />
     <Compile Include="Transport\TNamedPipeClientTransport.cs" />
     <Compile Include="Transport\TNamedPipeServerTransport.cs" />
@@ -106,6 +105,7 @@
     <Compile Include="Transport\TServerTransport.cs" />
     <Compile Include="Transport\TSilverlightSocket.cs" />
     <Compile Include="Transport\TSocket.cs" />
+    <Compile Include="Transport\TSocketVersionizer.cs" />
     <Compile Include="Transport\TStreamTransport.cs" />
     <Compile Include="Transport\TTLSServerSocket.cs" />
     <Compile Include="Transport\TTLSSocket.cs" />

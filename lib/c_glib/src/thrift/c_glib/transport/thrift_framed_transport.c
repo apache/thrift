@@ -17,7 +17,6 @@
  * under the License.
  */
 
-#include <assert.h>
 #include <netdb.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -120,7 +119,7 @@ thrift_framed_transport_read_slow (ThriftTransport *transport, gpointer buf,
   gint32 result = -1;
 
   /* we shouldn't hit this unless the buffer doesn't have enough to read */
-  assert (t->r_buf->len < want);
+  g_assert (t->r_buf->len < want);
 
   /* first copy what we have in our buffer, if there is anything left */
   if (have > 0)

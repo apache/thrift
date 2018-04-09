@@ -17,26 +17,28 @@
 # under the License.
 #
 
-require 5.6.0;
+use 5.10.0;
 use strict;
 use warnings;
 
 use Thrift;
+use Thrift::Exception;
+use Thrift::Type;
 
 #
 # Protocol exceptions
 #
-package TProtocolException;
+package Thrift::TProtocolException;
 use base('Thrift::TException');
+use version 0.77; our $VERSION = version->declare("$Thrift::VERSION");
 
-use constant UNKNOWN       => 0;
-use constant INVALID_DATA  => 1;
-use constant NEGATIVE_SIZE => 2;
-use constant SIZE_LIMIT    => 3;
-use constant BAD_VERSION   => 4;
+use constant UNKNOWN         => 0;
+use constant INVALID_DATA    => 1;
+use constant NEGATIVE_SIZE   => 2;
+use constant SIZE_LIMIT      => 3;
+use constant BAD_VERSION     => 4;
 use constant NOT_IMPLEMENTED => 5;
-use constant DEPTH_LIMIT   => 6;
-
+use constant DEPTH_LIMIT     => 6;
 
 sub new {
     my $classname = shift;
@@ -50,6 +52,7 @@ sub new {
 # Protocol base class module.
 #
 package Thrift::Protocol;
+use version 0.77; our $VERSION = version->declare("$Thrift::VERSION");
 
 sub new {
     my $classname = shift;
@@ -92,7 +95,7 @@ sub writeMessageEnd {
 # Writes a struct header.
 #
 # @param string     $name Struct name
-# @throws TException on write error
+# @throws TProtocolException on write error
 # @return int How many bytes written
 #
 sub writeStructBegin {
@@ -104,7 +107,7 @@ sub writeStructBegin {
 #
 # Close a struct.
 #
-# @throws TException on write error
+# @throws TProtocolException on write error
 # @return int How many bytes written
 #
 sub writeStructEnd {
@@ -117,7 +120,7 @@ sub writeStructEnd {
 # @param string     $name Field name
 # @param int        $type Field type
 # @param int        $fid  Field id
-# @throws TException on write error
+# @throws TProtocolException on write error
 # @return int How many bytes written
 #
 sub writeFieldBegin {
@@ -332,36 +335,36 @@ sub skip
     my $result;
     my $i;
 
-    if($type == TType::BOOL)
+    if($type == Thrift::TType::BOOL)
     {
         return $self->readBool(\$ref);
     }
-    elsif($type == TType::BYTE){
+    elsif($type == Thrift::TType::BYTE){
         return $self->readByte(\$ref);
     }
-    elsif($type == TType::I16){
+    elsif($type == Thrift::TType::I16){
         return $self->readI16(\$ref);
     }
-    elsif($type == TType::I32){
+    elsif($type == Thrift::TType::I32){
         return $self->readI32(\$ref);
     }
-    elsif($type == TType::I64){
+    elsif($type == Thrift::TType::I64){
         return $self->readI64(\$ref);
     }
-    elsif($type == TType::DOUBLE){
+    elsif($type == Thrift::TType::DOUBLE){
         return $self->readDouble(\$ref);
     }
-    elsif($type == TType::STRING)
+    elsif($type == Thrift::TType::STRING)
     {
         return $self->readString(\$ref);
     }
-    elsif($type == TType::STRUCT)
+    elsif($type == Thrift::TType::STRUCT)
     {
         $result = $self->readStructBegin(\$ref);
         while (1) {
             my ($ftype,$fid);
             $result += $self->readFieldBegin(\$ref, \$ftype, \$fid);
-            if ($ftype == TType::STOP) {
+            if ($ftype == Thrift::TType::STOP) {
                 last;
             }
             $result += $self->skip($ftype);
@@ -370,7 +373,7 @@ sub skip
         $result += $self->readStructEnd();
         return $result;
     }
-    elsif($type == TType::MAP)
+    elsif($type == Thrift::TType::MAP)
     {
         my($keyType,$valType,$size);
         $result = $self->readMapBegin(\$keyType, \$valType, \$size);
@@ -381,7 +384,7 @@ sub skip
         $result += $self->readMapEnd();
         return $result;
     }
-    elsif($type == TType::SET)
+    elsif($type == Thrift::TType::SET)
     {
         my ($elemType,$size);
         $result = $self->readSetBegin(\$elemType, \$size);
@@ -391,7 +394,7 @@ sub skip
         $result += $self->readSetEnd();
         return $result;
     }
-    elsif($type == TType::LIST)
+    elsif($type == Thrift::TType::LIST)
     {
         my ($elemType,$size);
         $result = $self->readListBegin(\$elemType, \$size);
@@ -402,7 +405,8 @@ sub skip
         return $result;
     }
 
-    die new Thrift::TException("Type $type not recognised --- corrupt data?");
+    die new Thrift::TProtocolException("Type $type not recognized --- corrupt data?",
+                                       Thrift::TProtocolException::INVALID_DATA);
 
   }
 
@@ -418,31 +422,31 @@ sub skipBinary
     my $itrans = shift;
     my $type   = shift;
 
-    if($type == TType::BOOL)
+    if($type == Thrift::TType::BOOL)
     {
       return $itrans->readAll(1);
     }
-    elsif($type == TType::BYTE)
+    elsif($type == Thrift::TType::BYTE)
     {
         return $itrans->readAll(1);
     }
-    elsif($type == TType::I16)
+    elsif($type == Thrift::TType::I16)
     {
         return $itrans->readAll(2);
     }
-    elsif($type == TType::I32)
+    elsif($type == Thrift::TType::I32)
     {
         return $itrans->readAll(4);
     }
-    elsif($type == TType::I64)
+    elsif($type == Thrift::TType::I64)
     {
         return $itrans->readAll(8);
     }
-    elsif($type == TType::DOUBLE)
+    elsif($type == Thrift::TType::DOUBLE)
     {
         return $itrans->readAll(8);
     }
-    elsif( $type == TType::STRING )
+    elsif( $type == Thrift::TType::STRING )
     {
         my @len = unpack('N', $itrans->readAll(4));
         my $len = $len[0];
@@ -451,7 +455,7 @@ sub skipBinary
         }
         return 4 + $itrans->readAll($len);
     }
-    elsif( $type == TType::STRUCT )
+    elsif( $type == Thrift::TType::STRUCT )
     {
         my $result = 0;
         while (1) {
@@ -460,7 +464,7 @@ sub skipBinary
           my $data = $itrans->readAll(1);
           my @arr = unpack('c', $data);
           $ftype = $arr[0];
-          if ($ftype == TType::STOP) {
+          if ($ftype == Thrift::TType::STOP) {
             last;
           }
           # I16 field id
@@ -469,7 +473,7 @@ sub skipBinary
         }
         return $result;
     }
-    elsif($type == TType::MAP)
+    elsif($type == Thrift::TType::MAP)
     {
         # Ktype
         my $data = $itrans->readAll(1);
@@ -493,7 +497,7 @@ sub skipBinary
         }
         return $result;
     }
-    elsif($type == TType::SET || $type == TType::LIST)
+    elsif($type == Thrift::TType::SET || $type == Thrift::TType::LIST)
     {
         # Vtype
         my $data = $itrans->readAll(1);
@@ -513,14 +517,15 @@ sub skipBinary
         return $result;
     }
 
-    die new Thrift::TException("Type $type not recognised --- corrupt data?");
+    die new Thrift::TProtocolException("Type $type not recognized --- corrupt data?",
+                                       Thrift::TProtocolException::INVALID_DATA);
 }
 
 #
 # Protocol factory creates protocol objects from transports
 #
-package TProtocolFactory;
-
+package Thrift::TProtocolFactory;
+use version 0.77; our $VERSION = version->declare("$Thrift::VERSION");
 
 sub new {
     my $classname = shift;

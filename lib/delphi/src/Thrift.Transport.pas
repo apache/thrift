@@ -44,16 +44,20 @@ uses
 
 type
   ITransport = interface
-    ['{A4A9FC37-D620-44DC-AD21-662D16364CE4}']
+    ['{DB84961E-8BB3-4532-99E1-A8C7AC2300F7}']
     function GetIsOpen: Boolean;
     property IsOpen: Boolean read GetIsOpen;
     function Peek: Boolean;
     procedure Open;
     procedure Close;
-    function Read(var buf: TBytes; off: Integer; len: Integer): Integer;
-    function ReadAll(var buf: TBytes; off: Integer; len: Integer): Integer;
+    function Read(var buf: TBytes; off: Integer; len: Integer): Integer; overload;
+    function Read(const pBuf : Pointer; const buflen : Integer; off: Integer; len: Integer): Integer; overload;
+    function ReadAll(var buf: TBytes; off: Integer; len: Integer): Integer; overload;
+    function ReadAll(const pBuf : Pointer; const buflen : Integer; off: Integer; len: Integer): Integer; overload;
     procedure Write( const buf: TBytes); overload;
     procedure Write( const buf: TBytes; off: Integer; len: Integer); overload;
+    procedure Write( const pBuf : Pointer; off, len : Integer); overload;
+    procedure Write( const pBuf : Pointer; len : Integer); overload;
     procedure Flush;
   end;
 
@@ -64,10 +68,14 @@ type
     function Peek: Boolean; virtual;
     procedure Open(); virtual; abstract;
     procedure Close(); virtual; abstract;
-    function Read(var buf: TBytes; off: Integer; len: Integer): Integer; virtual; abstract;
-    function ReadAll(var buf: TBytes; off: Integer; len: Integer): Integer; virtual;
-    procedure Write( const buf: TBytes); overload; virtual;
-    procedure Write( const buf: TBytes; off: Integer; len: Integer); overload; virtual; abstract;
+    function Read(var buf: TBytes; off: Integer; len: Integer): Integer; overload; inline;
+    function Read(const pBuf : Pointer; const buflen : Integer; off: Integer; len: Integer): Integer; overload; virtual; abstract;
+    function ReadAll(var buf: TBytes; off: Integer; len: Integer): Integer;  overload; inline;
+    function ReadAll(const pBuf : Pointer; const buflen : Integer; off: Integer; len: Integer): Integer; overload; virtual;
+    procedure Write( const buf: TBytes); overload; inline;
+    procedure Write( const buf: TBytes; off: Integer; len: Integer); overload; inline;
+    procedure Write( const pBuf : Pointer; len : Integer); overload; inline;
+    procedure Write( const pBuf : Pointer; off, len : Integer); overload; virtual; abstract;
     procedure Flush; virtual;
   end;
 
@@ -135,8 +143,8 @@ type
     function GetIsOpen: Boolean; override;
     procedure Open(); override;
     procedure Close(); override;
-    function Read( var buf: TBytes; off: Integer; len: Integer): Integer; override;
-    procedure Write( const buf: TBytes; off: Integer; len: Integer); override;
+    function  Read( const pBuf : Pointer; const buflen : Integer; off: Integer; len: Integer): Integer; override;
+    procedure Write( const pBuf : Pointer; off, len : Integer); override;
     procedure Flush; override;
 
     procedure SetConnectionTimeout(const Value: Integer);
@@ -193,8 +201,8 @@ type
     SLEEP_TIME = 200;
 {$ENDIF}
   protected
-    procedure Write( const buffer: TBytes; offset: Integer; count: Integer); override;
-    function Read( var buffer: TBytes; offset: Integer; count: Integer): Integer; override;
+    procedure Write( const pBuf : Pointer; offset, count: Integer); override;
+    function Read( const pBuf : Pointer; const buflen : Integer; offset: Integer; count: Integer): Integer; override;
     procedure Open; override;
     procedure Close; override;
     procedure Flush; override;
@@ -233,8 +241,8 @@ type
     procedure Open; override;
     procedure Close; override;
     procedure Flush; override;
-    function Read(var buf: TBytes; off: Integer; len: Integer): Integer; override;
-    procedure Write( const buf: TBytes; off: Integer; len: Integer); override;
+    function  Read( const pBuf : Pointer; const buflen : Integer; off: Integer; len: Integer): Integer; override;
+    procedure Write( const pBuf : Pointer; off, len : Integer); override;
     constructor Create( const AInputStream : IThriftStream; const AOutputStream : IThriftStream);
     destructor Destroy; override;
   end;
@@ -246,8 +254,8 @@ type
     FReadBuffer : TMemoryStream;
     FWriteBuffer : TMemoryStream;
   protected
-    procedure Write( const buffer: TBytes; offset: Integer; count: Integer); override;
-    function Read( var buffer: TBytes; offset: Integer; count: Integer): Integer; override;
+    procedure Write( const pBuf : Pointer; offset: Integer; count: Integer); override;
+    function Read( const pBuf : Pointer; const buflen : Integer; offset: Integer; count: Integer): Integer; override;
     procedure Open;  override;
     procedure Close; override;
     procedure Flush; override;
@@ -299,8 +307,8 @@ type
   public
     procedure Open(); override;
     procedure Close(); override;
-    function Read(var buf: TBytes; off: Integer; len: Integer): Integer; override;
-    procedure Write( const buf: TBytes; off: Integer; len: Integer); override;
+    function  Read( const pBuf : Pointer; const buflen : Integer; off: Integer; len: Integer): Integer; override;
+    procedure Write( const pBuf : Pointer; off, len : Integer); override;
     constructor Create( const ATransport : IStreamTransport ); overload;
     constructor Create( const ATransport : IStreamTransport; ABufSize: Integer); overload;
     property UnderlyingTransport: ITransport read GetUnderlyingTransport;
@@ -377,8 +385,8 @@ type
     function GetIsOpen: Boolean; override;
 
     procedure Close(); override;
-    function Read(var buf: TBytes; off: Integer; len: Integer): Integer; override;
-    procedure Write( const buf: TBytes; off: Integer; len: Integer); override;
+    function  Read( const pBuf : Pointer; const buflen : Integer; off: Integer; len: Integer): Integer; override;
+    procedure Write( const pBuf : Pointer; off, len : Integer); override;
     procedure Flush; override;
   end;
 
@@ -404,24 +412,47 @@ begin
   Result := IsOpen;
 end;
 
-function TTransportImpl.ReadAll( var buf: TBytes; off, len: Integer): Integer;
-var
-  got : Integer;
-  ret : Integer;
+function TTransportImpl.Read(var buf: TBytes; off: Integer; len: Integer): Integer;
 begin
-  got := 0;
-  while got < len do begin
-    ret := Read( buf, off + got, len - got);
-    if ret > 0 
-    then Inc( got, ret)
-    else raise TTransportExceptionNotOpen.Create( 'Cannot read, Remote side has closed' );
-  end;
-  Result := got;
+  if Length(buf) > 0
+  then result := Read( @buf[0], Length(buf), off, len)
+  else result := 0;
+end;
+
+function TTransportImpl.ReadAll(var buf: TBytes; off: Integer; len: Integer): Integer;
+begin
+  if Length(buf) > 0
+  then result := ReadAll( @buf[0], Length(buf), off, len)
+  else result := 0;
 end;
 
 procedure TTransportImpl.Write( const buf: TBytes);
 begin
-  Self.Write( buf, 0, Length(buf) );
+  if Length(buf) > 0
+  then Write( @buf[0], 0, Length(buf));
+end;
+
+procedure TTransportImpl.Write( const buf: TBytes; off: Integer; len: Integer);
+begin
+  if Length(buf) > 0
+  then Write( @buf[0], off, len);
+end;
+
+function TTransportImpl.ReadAll(const pBuf : Pointer; const buflen : Integer; off: Integer; len: Integer): Integer;
+var ret : Integer;
+begin
+  result := 0;
+  while result < len do begin
+    ret := Read( pBuf, buflen, off + result, len - result);
+    if ret > 0
+    then Inc( result, ret)
+    else raise TTransportExceptionNotOpen.Create( 'Cannot read, Remote side has closed' );
+  end;
+end;
+
+procedure TTransportImpl.Write( const pBuf : Pointer; len : Integer);
+begin
+  Self.Write( pBuf, 0, len);
 end;
 
 { THTTPClientImpl }
@@ -501,14 +532,14 @@ begin
   // nothing to do
 end;
 
-function THTTPClientImpl.Read( var buf: TBytes; off, len: Integer): Integer;
+function THTTPClientImpl.Read( const pBuf : Pointer; const buflen : Integer; off: Integer; len: Integer): Integer;
 begin
   if FInputStream = nil then begin
     raise TTransportExceptionNotOpen.Create('No request has been sent');
   end;
 
   try
-    Result := FInputStream.Read( buf, off, len )
+    Result := FInputStream.Read( pBuf, buflen, off, len)
   except
     on E: Exception
     do raise TTransportExceptionUnknown.Create(E.Message);
@@ -550,9 +581,9 @@ begin
   FReadTimeout := Value
 end;
 
-procedure THTTPClientImpl.Write( const buf: TBytes; off, len: Integer);
+procedure THTTPClientImpl.Write( const pBuf : Pointer; off, len : Integer);
 begin
-  FOutputStream.Write( buf, off, len);
+  FOutputStream.Write( pBuf, off, len);
 end;
 
 { TTransportException }
@@ -811,8 +842,13 @@ end;
 procedure TSocketImpl.Close;
 begin
   inherited Close;
+
+  FInputStream := nil;
+  FOutputStream := nil;
+
   if FOwnsClient
-  then FreeAndNil( FClient);
+  then FreeAndNil( FClient)
+  else FClient := nil;
 end;
 
 function TSocketImpl.GetIsOpen: Boolean;
@@ -923,22 +959,24 @@ function TBufferedStreamImpl.IsOpen: Boolean;
 begin
   Result := (FWriteBuffer <> nil)
         and (FReadBuffer <> nil)
-        and (FStream <> nil);
+        and (FStream <> nil)
+        and FStream.IsOpen;
 end;
 
 procedure TBufferedStreamImpl.Open;
 begin
-  // nothing to do
+  FStream.Open;
 end;
 
-function TBufferedStreamImpl.Read( var buffer: TBytes; offset: Integer; count: Integer): Integer;
+function TBufferedStreamImpl.Read( const pBuf : Pointer; const buflen : Integer; offset: Integer; count: Integer): Integer;
 var
   nRead : Integer;
   tempbuf : TBytes;
+  pTmp : PByte;
 begin
   inherited;
   Result := 0;
-  
+
   if IsOpen then begin
     while count > 0 do begin
 
@@ -953,8 +991,10 @@ begin
       end;
 
       if FReadBuffer.Position < FReadBuffer.Size then begin
-        nRead  := Min( FReadBuffer.Size - FReadBuffer.Position, count);
-        Inc( Result, FReadBuffer.Read( Pointer(@buffer[offset])^, nRead));
+        nRead := Min( FReadBuffer.Size - FReadBuffer.Position, count);
+        pTmp  := pBuf;
+        Inc( pTmp, offset);
+        Inc( Result, FReadBuffer.Read( pTmp^, nRead));
         Dec( count, nRead);
         Inc( offset, nRead);
       end;
@@ -979,12 +1019,15 @@ begin
   end;
 end;
 
-procedure TBufferedStreamImpl.Write( const buffer: TBytes; offset: Integer; count: Integer);
+procedure TBufferedStreamImpl.Write( const pBuf : Pointer; offset: Integer; count: Integer);
+var pTmp : PByte;
 begin
   inherited;
   if count > 0 then begin
     if IsOpen then begin
-      FWriteBuffer.Write( Pointer(@buffer[offset])^, count );
+      pTmp := pBuf;
+      Inc( pTmp, offset);
+      FWriteBuffer.Write( pTmp^, count );
       if FWriteBuffer.Size > FBufSize then begin
         Flush;
       end;
@@ -1035,7 +1078,7 @@ end;
 
 function TStreamTransportImpl.GetOutputStream: IThriftStream;
 begin
-  Result := FInputStream;
+  Result := FOutputStream;
 end;
 
 procedure TStreamTransportImpl.Open;
@@ -1043,22 +1086,22 @@ begin
 
 end;
 
-function TStreamTransportImpl.Read(var buf: TBytes; off, len: Integer): Integer;
+function TStreamTransportImpl.Read( const pBuf : Pointer; const buflen : Integer; off: Integer; len: Integer): Integer;
 begin
   if FInputStream = nil then begin
     raise TTransportExceptionNotOpen.Create('Cannot read from null inputstream' );
   end;
 
-  Result := FInputStream.Read( buf, off, len );
+  Result := FInputStream.Read( pBuf,buflen, off, len );
 end;
 
-procedure TStreamTransportImpl.Write(const buf: TBytes; off, len: Integer);
+procedure TStreamTransportImpl.Write( const pBuf : Pointer; off, len : Integer);
 begin
   if FOutputStream = nil then begin
     raise TTransportExceptionNotOpen.Create('Cannot write to null outputstream' );
   end;
 
-  FOutputStream.Write( buf, off, len );
+  FOutputStream.Write( pBuf, off, len );
 end;
 
 { TBufferedTransportImpl }
@@ -1069,17 +1112,19 @@ begin
   Create( ATransport, 1024 );
 end;
 
-procedure TBufferedTransportImpl.Close;
-begin
-  FTransport.Close;
-end;
-
 constructor TBufferedTransportImpl.Create( const ATransport: IStreamTransport;  ABufSize: Integer);
 begin
   inherited Create;
   FTransport := ATransport;
   FBufSize := ABufSize;
   InitBuffers;
+end;
+
+procedure TBufferedTransportImpl.Close;
+begin
+  FTransport.Close;
+  FInputBuffer := nil;
+  FOutputBuffer := nil;  
 end;
 
 procedure TBufferedTransportImpl.Flush;
@@ -1111,21 +1156,22 @@ end;
 
 procedure TBufferedTransportImpl.Open;
 begin
-  FTransport.Open
+  FTransport.Open;
+  InitBuffers;  // we need to get the buffers to match FTransport substreams again
 end;
 
-function TBufferedTransportImpl.Read(var buf: TBytes; off, len: Integer): Integer;
+function TBufferedTransportImpl.Read( const pBuf : Pointer; const buflen : Integer; off: Integer; len: Integer): Integer;
 begin
   Result := 0;
   if FInputBuffer <> nil then begin
-    Result := FInputBuffer.Read( buf, off, len );
+    Result := FInputBuffer.Read( pBuf,buflen, off, len );
   end;
 end;
 
-procedure TBufferedTransportImpl.Write(const buf: TBytes; off, len: Integer);
+procedure TBufferedTransportImpl.Write( const pBuf : Pointer; off, len : Integer);
 begin
   if FOutputBuffer <> nil then begin
-    FOutputBuffer.Write( buf, off, len );
+    FOutputBuffer.Write( pBuf, off, len );
   end;
 end;
 
@@ -1222,24 +1268,25 @@ begin
   FTransport.Open;
 end;
 
-function TFramedTransportImpl.Read(var buf: TBytes; off, len: Integer): Integer;
-var
-  got : Integer;
+function TFramedTransportImpl.Read( const pBuf : Pointer; const buflen : Integer; off: Integer; len: Integer): Integer;
+var pTmp : PByte;
 begin
-  if FReadBuffer <> nil then begin
-    if len > 0
-    then got := FReadBuffer.Read( Pointer(@buf[off])^, len )
-    else got := 0;
-	
-    if got > 0 then begin
-      Result := got;
+  if len > (buflen-off)
+  then len := buflen-off;
+
+  pTmp := pBuf;
+  Inc( pTmp, off);
+
+  if (FReadBuffer <> nil) and (len > 0) then begin
+    result := FReadBuffer.Read( pTmp^, len);
+    if result > 0 then begin
       Exit;
     end;
   end;
 
   ReadFrame;
   if len > 0
-  then Result := FReadBuffer.Read( Pointer(@buf[off])^, len)
+  then Result := FReadBuffer.Read( pTmp^, len)
   else Result := 0;
 end;
 
@@ -1260,14 +1307,20 @@ begin
   FTransport.ReadAll( buff, 0, size );
   FReadBuffer.Free;
   FReadBuffer := TMemoryStream.Create;
-  FReadBuffer.Write( Pointer(@buff[0])^, size );
+  if Length(buff) > 0
+  then FReadBuffer.Write( Pointer(@buff[0])^, size );
   FReadBuffer.Position := 0;
 end;
 
-procedure TFramedTransportImpl.Write(const buf: TBytes; off, len: Integer);
+procedure TFramedTransportImpl.Write( const pBuf : Pointer; off, len : Integer);
+var pTmp : PByte;
 begin
-  if len > 0
-  then FWriteBuffer.Write( Pointer(@buf[off])^, len );
+  if len > 0 then begin
+    pTmp := pBuf;
+    Inc( pTmp, off);
+
+    FWriteBuffer.Write( pTmp^, len );
+  end;
 end;
 
 { TFramedTransport.TFactory }
@@ -1447,13 +1500,13 @@ end;
 {$ENDIF}
 
 {$IFDEF OLD_SOCKETS}
-function TTcpSocketStreamImpl.Read(var buffer: TBytes; offset, count: Integer): Integer;
+function TTcpSocketStreamImpl.Read( const pBuf : Pointer; const buflen : Integer; offset: Integer; count: Integer): Integer;
 // old sockets version
 var wfd : TWaitForData;
     wsaError,
     msecs : Integer;
     nBytes : Integer;
-    pDest : PByte;
+    pTmp : PByte;
 begin
   inherited;
 
@@ -1462,11 +1515,12 @@ begin
   else msecs := DEFAULT_THRIFT_TIMEOUT;
 
   result := 0;
-  pDest := Pointer(@buffer[offset]);
+  pTmp   := pBuf;
+  Inc( pTmp, offset);
   while count > 0 do begin
 
     while TRUE do begin
-      wfd := WaitForData( msecs, pDest, count, wsaError, nBytes);
+      wfd := WaitForData( msecs, pTmp, count, wsaError, nBytes);
       case wfd of
         TWaitForData.wfd_Error    :  Exit;
         TWaitForData.wfd_HaveData :  Break;
@@ -1490,8 +1544,8 @@ begin
     msecs := Max( msecs, 200);
 
     ASSERT( nBytes <= count);
-    nBytes := FTcpClient.ReceiveBuf( pDest^, nBytes);
-    Inc( pDest, nBytes);
+    nBytes := FTcpClient.ReceiveBuf( pTmp^, nBytes);
+    Inc( pTmp, nBytes);
     Dec( count, nBytes);
     Inc( result, nBytes);
   end;
@@ -1513,10 +1567,11 @@ begin
   end;
 end;
 
-procedure TTcpSocketStreamImpl.Write(const buffer: TBytes; offset, count: Integer);
+procedure TTcpSocketStreamImpl.Write( const pBuf : Pointer; offset, count: Integer);
 // old sockets version
 var bCanWrite, bError : Boolean;
     retval, wsaError : Integer;
+    pTmp : PByte;
 begin
   inherited;
 
@@ -1537,24 +1592,27 @@ begin
   if bError or not bCanWrite
   then raise TTransportExceptionUnknown.Create('unknown error');
 
-  FTcpClient.SendBuf( Pointer(@buffer[offset])^, count);
+  pTmp := pBuf;
+  Inc( pTmp, offset);
+  FTcpClient.SendBuf( pTmp^, count);
 end;
 
 {$ELSE}
 
-function TTcpSocketStreamImpl.Read(var buffer: TBytes; offset, count: Integer): Integer;
+function TTcpSocketStreamImpl.Read( const pBuf : Pointer; const buflen : Integer; offset: Integer; count: Integer): Integer;
 // new sockets version
 var nBytes : Integer;
-    pDest : PByte;
+    pTmp : PByte;
 begin
   inherited;
 
   result := 0;
-  pDest := Pointer(@buffer[offset]);
+  pTmp   := pBuf;
+  Inc( pTmp, offset);
   while count > 0 do begin
-    nBytes := FTcpClient.Read(pDest^, count);
+    nBytes := FTcpClient.Read( pTmp^, count);
     if nBytes = 0 then Exit;
-    Inc( pDest, nBytes);
+    Inc( pTmp, nBytes);
     Dec( count, nBytes);
     Inc( result, nBytes);
   end;
@@ -1579,15 +1637,18 @@ begin
     SetLength(Result, Length(Result) - 1024 + len);
 end;
 
-procedure TTcpSocketStreamImpl.Write(const buffer: TBytes; offset, count: Integer);
+procedure TTcpSocketStreamImpl.Write( const pBuf : Pointer; offset, count: Integer);
 // new sockets version
+var pTmp : PByte;
 begin
   inherited;
 
   if not FTcpClient.IsOpen
   then raise TTransportExceptionNotOpen.Create('not open');
 
-  FTcpClient.Write(buffer[offset], count);
+  pTmp := pBuf;
+  Inc( pTmp, offset);
+  FTcpClient.Write( pTmp^, count);
 end;
 
 {$ENDIF}

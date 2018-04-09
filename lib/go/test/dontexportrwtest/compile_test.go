@@ -20,7 +20,6 @@
 package dontexportrwtest
 
 import (
-	"fmt"
 	"testing"
 )
 
@@ -29,10 +28,10 @@ import (
 func TestReadWriteMethodsArePrivate(t *testing.T) {
 	// This will only compile if read/write methods exist
 	s := NewTestStruct()
-	fmt.Sprintf("%v", s.read)
-	fmt.Sprintf("%v", s.write)
+	_ = s.read
+	_ = s.write
 
 	is := NewInnerStruct()
-	fmt.Sprintf("%v", is.read)
-	fmt.Sprintf("%v", is.write)
+	_ = is.read
+	_ = is.write
 }

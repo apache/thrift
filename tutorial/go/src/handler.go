@@ -20,6 +20,7 @@ package main
  */
 
 import (
+	"context"
 	"fmt"
 	"shared"
 	"strconv"
@@ -34,17 +35,17 @@ func NewCalculatorHandler() *CalculatorHandler {
 	return &CalculatorHandler{log: make(map[int]*shared.SharedStruct)}
 }
 
-func (p *CalculatorHandler) Ping() (err error) {
+func (p *CalculatorHandler) Ping(ctx context.Context) (err error) {
 	fmt.Print("ping()\n")
 	return nil
 }
 
-func (p *CalculatorHandler) Add(num1 int32, num2 int32) (retval17 int32, err error) {
+func (p *CalculatorHandler) Add(ctx context.Context, num1 int32, num2 int32) (retval17 int32, err error) {
 	fmt.Print("add(", num1, ",", num2, ")\n")
 	return num1 + num2, nil
 }
 
-func (p *CalculatorHandler) Calculate(logid int32, w *tutorial.Work) (val int32, err error) {
+func (p *CalculatorHandler) Calculate(ctx context.Context, logid int32, w *tutorial.Work) (val int32, err error) {
 	fmt.Print("calculate(", logid, ", {", w.Op, ",", w.Num1, ",", w.Num2, "})\n")
 	switch w.Op {
 	case tutorial.Operation_ADD:
@@ -89,13 +90,13 @@ func (p *CalculatorHandler) Calculate(logid int32, w *tutorial.Work) (val int32,
 	return val, err
 }
 
-func (p *CalculatorHandler) GetStruct(key int32) (*shared.SharedStruct, error) {
+func (p *CalculatorHandler) GetStruct(ctx context.Context, key int32) (*shared.SharedStruct, error) {
 	fmt.Print("getStruct(", key, ")\n")
 	v, _ := p.log[int(key)]
 	return v, nil
 }
 
-func (p *CalculatorHandler) Zip() (err error) {
+func (p *CalculatorHandler) Zip(ctx context.Context) (err error) {
 	fmt.Print("zip()\n")
 	return nil
 }

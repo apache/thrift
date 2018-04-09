@@ -22,9 +22,9 @@
  */
 
 using System;
-using System.Collections.Generic;
 using System.IO.Pipes;
 using System.Threading;
+using System.Security.Principal;
 
 namespace Thrift.Transport
 {
@@ -68,23 +68,32 @@ namespace Thrift.Transport
             if (stream == null)
             {
                 var direction = PipeDirection.InOut;
-                var maxconn = 254;
+                var maxconn = NamedPipeServerStream.MaxAllowedServerInstances;
                 var mode = PipeTransmissionMode.Byte;
                 var options = asyncMode ? PipeOptions.Asynchronous : PipeOptions.None;
-                var inbuf = 4096;
-                var outbuf = 4096;
-                // TODO: security
+                const int INBUF_SIZE = 4096;
+                const int OUTBUF_SIZE = 4096;
+
+                // security
+                var security = new PipeSecurity();
+                security.AddAccessRule(
+                    new PipeAccessRule(
+                        new SecurityIdentifier(WellKnownSidType.WorldSid, null),
+                        PipeAccessRights.Read | PipeAccessRights.Write | PipeAccessRights.Synchronize | PipeAccessRights.CreateNewInstance,
+                        System.Security.AccessControl.AccessControlType.Allow
+                    )
+                );
 
                 try
                 {
-                    stream = new NamedPipeServerStream(pipeAddress, direction, maxconn, mode, options, inbuf, outbuf);
+                    stream = new NamedPipeServerStream(pipeAddress, direction, maxconn, mode, options, INBUF_SIZE, OUTBUF_SIZE, security);
                 }
                 catch (NotImplementedException)  // Mono still does not support async, fallback to sync
                 {
                     if (asyncMode)
                     {
                         options &= (~PipeOptions.Asynchronous);
-                        stream = new NamedPipeServerStream(pipeAddress, direction, maxconn, mode, options, inbuf, outbuf);
+                        stream = new NamedPipeServerStream(pipeAddress, direction, maxconn, mode, options, INBUF_SIZE, OUTBUF_SIZE, security);
                         asyncMode = false;
                     }
                     else
@@ -230,40 +239,51 @@ namespace Thrift.Transport
                     throw new TTransportException(TTransportException.ExceptionType.NotOpen);
                 }
 
-                if (asyncMode)
+                // if necessary, send the data in chunks
+                // there's a system limit around 0x10000 bytes that we hit otherwise
+                // MSDN: "Pipe write operations across a network are limited to 65,535 bytes per write. For more information regarding pipes, see the Remarks section."
+                var nBytes = Math.Min(len, 15 * 4096);  // 16 would exceed the limit
+                while (nBytes > 0)
                 {
-                    Exception eOuter = null;
-                    var evt = new ManualResetEvent(false);
 
-                    stream.BeginWrite(buf, off, len, asyncResult =>
+                    if (asyncMode)
                     {
-                        try
+                        Exception eOuter = null;
+                        var evt = new ManualResetEvent(false);
+
+                        stream.BeginWrite(buf, off, nBytes, asyncResult =>
                         {
-                            if (stream != null)
-                                stream.EndWrite(asyncResult);
-                            else
-                                eOuter = new TTransportException(TTransportException.ExceptionType.Interrupted);
-                        }
-                        catch (Exception e)
-                        {
-                            if (stream != null)
-                                eOuter = e;
-                            else
-                                eOuter = new TTransportException(TTransportException.ExceptionType.Interrupted, e.Message);
-                        }
-                        evt.Set();
-                    }, null);
+                            try
+                            {
+                                if (stream != null)
+                                    stream.EndWrite(asyncResult);
+                                else
+                                    eOuter = new TTransportException(TTransportException.ExceptionType.Interrupted);
+                            }
+                            catch (Exception e)
+                            {
+                                if (stream != null)
+                                    eOuter = e;
+                                else
+                                    eOuter = new TTransportException(TTransportException.ExceptionType.Interrupted, e.Message);
+                            }
+                            evt.Set();
+                        }, null);
 
-                    evt.WaitOne();
+                        evt.WaitOne();
 
-                    if (eOuter != null)
-                        throw eOuter; // rethrow exception
+                        if (eOuter != null)
+                            throw eOuter; // rethrow exception
+                    }
+                    else
+                    {
+                        stream.Write(buf, off, nBytes);
+                    }
+
+                    off += nBytes;
+                    len -= nBytes;
+                    nBytes = Math.Min(len, nBytes);
                 }
-                else
-                {
-                    stream.Write(buf, off, len);
-                }
-
             }
 
             protected override void Dispose(bool disposing)

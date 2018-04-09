@@ -36,7 +36,7 @@ using apache::thrift::transport::TTransport;
  */
 class TProtocolTap : public TVirtualProtocol<TProtocolTap> {
 public:
-  TProtocolTap(boost::shared_ptr<TProtocol> source, boost::shared_ptr<TProtocol> sink)
+  TProtocolTap(stdcxx::shared_ptr<TProtocol> source, stdcxx::shared_ptr<TProtocol> sink)
     : TVirtualProtocol<TProtocolTap>(source->getTransport()), source_(source), sink_(sink) {}
 
   uint32_t readMessageBegin(std::string& name, TMessageType& messageType, int32_t& seqid) {
@@ -167,8 +167,8 @@ public:
   }
 
 private:
-  boost::shared_ptr<TProtocol> source_;
-  boost::shared_ptr<TProtocol> sink_;
+  stdcxx::shared_ptr<TProtocol> source_;
+  stdcxx::shared_ptr<TProtocol> sink_;
 };
 }
 }

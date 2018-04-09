@@ -28,7 +28,11 @@ moc__%.cpp: %.h
 SUBDIRS = .
 
 if WITH_TESTS
+# This file is needed by compiler with plugin, while test/Makefile.am needs compiler
+# So test directory is directly picked by top level Makefile.am for plugin build
+if !WITH_PLUGIN
 SUBDIRS += test
+endif
 endif
 
 pkgconfigdir = $(libdir)/pkgconfig
@@ -58,7 +62,7 @@ pkgconfig_DATA += thrift-qt5.pc
 endif
 
 AM_CXXFLAGS = -Wall -Wextra -pedantic
-AM_CPPFLAGS = $(BOOST_CPPFLAGS) $(OPENSSL_INCLUDES) -I$(srcdir)/src -D__STDC_LIMIT_MACROS
+AM_CPPFLAGS = $(BOOST_CPPFLAGS) $(OPENSSL_INCLUDES) -I$(srcdir)/src -D__STDC_FORMAT_MACROS -D__STDC_LIMIT_MACROS
 
 # Define the source files for the module
 
@@ -90,6 +94,8 @@ libthrift_la_SOURCES = src/thrift/TApplicationException.cpp \
                        src/thrift/transport/TSocketPool.cpp \
                        src/thrift/transport/TServerSocket.cpp \
                        src/thrift/transport/TSSLServerSocket.cpp \
+                       src/thrift/transport/TNonblockingServerSocket.cpp \
+                       src/thrift/transport/TNonblockingSSLServerSocket.cpp \
                        src/thrift/transport/TTransportUtils.cpp \
                        src/thrift/transport/TBufferTransports.cpp \
                        src/thrift/server/TConnectedClient.cpp \
@@ -116,7 +122,7 @@ libthriftnb_la_SOURCES = src/thrift/server/TNonblockingServer.cpp \
 
 libthriftz_la_SOURCES = src/thrift/transport/TZlibTransport.cpp \
                         src/thrift/transport/THeaderTransport.cpp \
-                        src/thrift/protocol/THeaderProtocol.cpp 
+                        src/thrift/protocol/THeaderProtocol.cpp
 
 
 libthriftqt_la_MOC = src/thrift/qt/moc_TQTcpServer.cpp
@@ -144,7 +150,7 @@ libthriftz_la_CXXFLAGS  = $(AM_CXXFLAGS)
 libthriftqt_la_CXXFLAGS  = $(AM_CXXFLAGS)
 libthriftqt5_la_CXXFLAGS  = $(AM_CXXFLAGS)
 libthriftnb_la_LDFLAGS  = -release $(VERSION) $(BOOST_LDFLAGS)
-libthriftz_la_LDFLAGS   = -release $(VERSION) $(BOOST_LDFLAGS)
+libthriftz_la_LDFLAGS   = -release $(VERSION) $(BOOST_LDFLAGS) $(ZLIB_LIBS)
 libthriftqt_la_LDFLAGS   = -release $(VERSION) $(BOOST_LDFLAGS) $(QT_LIBS)
 libthriftqt5_la_LDFLAGS   = -release $(VERSION) $(BOOST_LDFLAGS) $(QT5_LIBS)
 
@@ -158,8 +164,8 @@ include_thrift_HEADERS = \
                          src/thrift/TProcessor.h \
                          src/thrift/TApplicationException.h \
                          src/thrift/TLogging.h \
-                         src/thrift/cxxfunctional.h \
                          src/thrift/TToString.h \
+                         src/thrift/stdcxx.h \
                          src/thrift/TBase.h
 
 include_concurrencydir = $(include_thriftdir)/concurrency
@@ -208,6 +214,9 @@ include_transport_HEADERS = \
                          src/thrift/transport/TServerSocket.h \
                          src/thrift/transport/TSSLServerSocket.h \
                          src/thrift/transport/TServerTransport.h \
+                         src/thrift/transport/TNonblockingServerTransport.h \
+                         src/thrift/transport/TNonblockingServerSocket.h \
+                         src/thrift/transport/TNonblockingSSLServerSocket.h \
                          src/thrift/transport/THttpTransport.h \
                          src/thrift/transport/THttpClient.h \
                          src/thrift/transport/THttpServer.h \
@@ -255,8 +264,6 @@ include_qtdir = $(include_thriftdir)/qt
 include_qt_HEADERS = \
                   src/thrift/qt/TQIODeviceTransport.h \
                   src/thrift/qt/TQTcpServer.h
-
-THRIFT = $(top_builddir)/compiler/cpp/thrift
 
 WINDOWS_DIST = \
              src/thrift/windows \

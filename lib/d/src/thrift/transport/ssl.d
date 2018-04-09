@@ -249,7 +249,9 @@ class TSSLContext {
     }
     count_++;
 
-    ctx_ = SSL_CTX_new(TLSv1_method());
+    ctx_ = SSL_CTX_new(SSLv23_method());
+    SSL_CTX_set_options(ctx_, SSL_OP_NO_SSLv2);
+    SSL_CTX_set_options(ctx_, SSL_OP_NO_SSLv3);   // THRIFT-3164
     enforce(ctx_, getSSLException("SSL_CTX_new"));
     SSL_CTX_set_mode(ctx_, SSL_MODE_AUTO_RETRY);
   }

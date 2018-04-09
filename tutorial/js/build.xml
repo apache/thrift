@@ -31,11 +31,13 @@
   <property name="thrift.java.dir" location="${thrift.dir}/lib/java" />
 
   <path id="libs.classpath">
-    <fileset dir="../../lib/java/build">
-      <include name="*.jar" />
-      <exclude name="-test.jar" />
+    <fileset dir="${thrift.java.dir}/build/libs">
+      <include name="libthrift*.jar" />
+      <exclude name="libthrift*test.jar" />
+      <exclude name="libthrift*javadoc.jar" />
+      <exclude name="libthrift*sources.jar" />
     </fileset>
-    <fileset dir="../../lib/java/build/lib">
+    <fileset dir="${thrift.java.dir}/build/deps">
       <include name="*.jar" />
     </fileset>
   </path>
@@ -51,13 +53,13 @@
   </target>
 
   <target name="compile" depends="init">
-    <javac includeantruntime="false" srcdir="${gen}" destdir="${build}" classpathref="libs.classpath" />
-    <javac includeantruntime="false" srcdir="${javasrc}" destdir="${build}" classpathref="build.classpath">
+    <javac compiler="modern" includeantruntime="false" srcdir="${gen}" destdir="${build}" classpathref="libs.classpath" />
+    <javac compiler="modern" includeantruntime="false" srcdir="${javasrc}" destdir="${build}" classpathref="build.classpath">
       <exclude name="JavaClient.java"/>
       <exclude name="JavaServer.java"/>
       <include name="CalculatorHandler.java"/>
     </javac>
-    <javac includeantruntime="false" srcdir="${src}" destdir="${build}" classpathref="build.classpath">
+    <javac compiler="modern" includeantruntime="false" srcdir="${src}" destdir="${build}" classpathref="build.classpath">
       <compilerarg value="-Xlint:all"/>
     </javac>
   </target>
@@ -80,7 +82,7 @@
       <arg line="--gen js -r  ../tutorial.thrift"/>
     </exec>
   </target>
-  
+
   <target name="clean">
     <delete dir="${build}" />
     <delete dir="gen-js"/>

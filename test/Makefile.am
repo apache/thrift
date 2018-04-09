@@ -25,6 +25,16 @@ SUBDIRS += c_glib
 PRECROSS_TARGET += precross-c_glib
 endif
 
+if WITH_CL
+SUBDIRS += cl
+PRECROSS_TARGET += precross-cl
+endif
+
+if WITH_MONO
+SUBDIRS += csharp
+PRECROSS_TARGET += precross-csharp
+endif
+
 if WITH_CPP
 SUBDIRS += cpp
 PRECROSS_TARGET += precross-cpp
@@ -48,8 +58,10 @@ endif
 if WITH_PYTHON
 SUBDIRS += py
 PRECROSS_TARGET += precross-py
-SUBDIRS += py.twisted
 SUBDIRS += py.tornado
+if WITH_TWISTED_TEST
+SUBDIRS += py.twisted
+endif
 endif
 
 if WITH_RUBY
@@ -63,6 +75,10 @@ endif
 
 if WITH_HAXE
 SUBDIRS += haxe
+endif
+
+if WITH_DOTNETCORE
+SUBDIRS += netcore
 endif
 
 if WITH_GO
@@ -80,6 +96,11 @@ SUBDIRS += lua
 PRECROSS_TARGET += precross-lua
 endif
 
+if WITH_RS
+SUBDIRS += rs
+PRECROSS_TARGET += precross-rs
+endif
+
 #
 # generate html for ThriftTest.thrift
 #
@@ -94,6 +115,7 @@ EXTRA_DIST = \
 	crossrunner \
 	keys \
 	c_glib \
+	cl \
 	cpp \
 	dart \
 	erl \
@@ -106,17 +128,21 @@ EXTRA_DIST = \
 	py.twisted \
 	py.tornado \
 	rb \
+	rs \
 	threads \
 	AnnotationTest.thrift \
 	BrokenConstants.thrift \
 	ConstantsDemo.thrift \
 	DebugProtoTest.thrift \
+	DoubleConstantsTest.thrift \
 	DenseLinkingTest.thrift \
 	DocTest.thrift \
 	EnumTest.thrift \
 	FullCamelTest.thrift \
 	Include.thrift \
 	JavaBeansTest.thrift \
+	JavaDeepCopyTest.thrift \
+	JavaTypes.thrift \
 	JsDeepConstructorTest.thrift \
 	ManyOptionals.thrift \
 	ManyTypedefs.thrift \
@@ -124,6 +150,7 @@ EXTRA_DIST = \
 	OptionalRequiredTest.thrift \
 	Recursive.thrift \
 	ReuseObjects.thrift \
+	EnumContainersTest.thrift \
 	SmallTest.thrift \
 	StressTest.thrift \
 	ThriftTest.thrift \

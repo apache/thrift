@@ -19,14 +19,27 @@
 
 #define BOOST_TEST_MODULE TNonblockingServerTest
 #include <boost/test/unit_test.hpp>
-#include <boost/smart_ptr.hpp>
 
+#include "thrift/concurrency/Monitor.h"
 #include "thrift/concurrency/Thread.h"
 #include "thrift/server/TNonblockingServer.h"
+#include "thrift/transport/TNonblockingServerSocket.h"
+#include "thrift/stdcxx.h"
 
 #include "gen-cpp/ParentService.h"
 
 #include <event.h>
+
+using apache::thrift::concurrency::Guard;
+using apache::thrift::concurrency::Monitor;
+using apache::thrift::concurrency::Mutex;
+using apache::thrift::concurrency::PlatformThreadFactory;
+using apache::thrift::concurrency::Runnable;
+using apache::thrift::concurrency::Thread;
+using apache::thrift::concurrency::ThreadFactory;
+using apache::thrift::server::TServerEventHandler;
+using apache::thrift::stdcxx::make_shared;
+using apache::thrift::stdcxx::shared_ptr;
 
 using namespace apache::thrift;
 
@@ -46,15 +59,63 @@ struct Handler : public test::ParentServiceIf {
 
 class Fixture {
 private:
-  struct Runner : public apache::thrift::concurrency::Runnable {
-    boost::shared_ptr<server::TNonblockingServer> server;
-    bool error;
+  struct ListenEventHandler : public TServerEventHandler {
+    public:
+      ListenEventHandler(Mutex* mutex) : listenMonitor_(mutex), ready_(false) {}
+
+      void preServe() /* override */ {
+        Guard g(listenMonitor_.mutex());
+        ready_ = true;
+        listenMonitor_.notify();
+      }
+
+      Monitor listenMonitor_;
+      bool ready_;
+  };
+
+  struct Runner : public Runnable {
+    int port;
+    shared_ptr<event_base> userEventBase;
+    shared_ptr<TProcessor> processor;
+    shared_ptr<server::TNonblockingServer> server;
+    shared_ptr<ListenEventHandler> listenHandler;
+    shared_ptr<transport::TNonblockingServerSocket> socket;
+    Mutex mutex_;
+
+    Runner() {
+      listenHandler.reset(new ListenEventHandler(&mutex_));
+    }
+
     virtual void run() {
-      error = false;
+      // When binding to explicit port, allow retrying to workaround bind failures on ports in use
+      int retryCount = port ? 10 : 0;
+      startServer(retryCount);
+    }
+
+    void readyBarrier() {
+      // block until server is listening and ready to accept connections
+      Guard g(mutex_);
+      while (!listenHandler->ready_) {
+        listenHandler->listenMonitor_.wait();
+      }
+    }
+  private:
+    void startServer(int retry_count) {
       try {
+        socket.reset(new transport::TNonblockingServerSocket(port));
+        server.reset(new server::TNonblockingServer(processor, socket));
+        server->setServerEventHandler(listenHandler);
+        if (userEventBase) {
+          server->registerEvents(userEventBase.get());
+        }
         server->serve();
-      } catch (const TException&) {
-        error = true;
+      } catch (const transport::TTransportException&) {
+        if (retry_count > 0) {
+          ++port;
+          startServer(retry_count - 1);
+        } else {
+          throw;
+        }
       }
     }
   };
@@ -64,7 +125,7 @@ private:
   };
 
 protected:
-  Fixture() : processor(new test::ParentServiceProcessor(boost::make_shared<Handler>())) {}
+  Fixture() : processor(new test::ParentServiceProcessor(make_shared<Handler>())) {}
 
   ~Fixture() {
     if (server) {
@@ -80,45 +141,31 @@ protected:
   }
 
   int startServer(int port) {
-    boost::scoped_ptr<apache::thrift::concurrency::ThreadFactory> threadFactory(
-      new apache::thrift::concurrency::PlatformThreadFactory(
+    shared_ptr<Runner> runner(new Runner);
+    runner->port = port;
+    runner->processor = processor;
+    runner->userEventBase = userEventBase_;
+
+    shared_ptr<ThreadFactory> threadFactory(
+        new PlatformThreadFactory(
 #if !USE_BOOST_THREAD && !USE_STD_THREAD
-            concurrency::PlatformThreadFactory::OTHER,
-            concurrency::PlatformThreadFactory::NORMAL,
+            PlatformThreadFactory::OTHER, PlatformThreadFactory::NORMAL,
             1,
 #endif
-            true));
+            false));
+    thread = threadFactory->newThread(runner);
+    thread->start();
+    runner->readyBarrier();
 
-    int retry_count = port ? 10 : 0;
-    for (int p = port; p <= port + retry_count; p++) {
-      server.reset(new server::TNonblockingServer(processor, p));
-      if (userEventBase_) {
-        try {
-          server->registerEvents(userEventBase_.get());
-        } catch (const TException&) {
-          // retry with next port
-          continue;
-        }
-      }
-      boost::shared_ptr<Runner> runner(new Runner);
-      runner->server = server;
-      thread = threadFactory->newThread(runner);
-      thread->start();
-      // wait 50ms for the server to begin listening
-      THRIFT_SLEEP_USEC(50000);
-      if (!runner->error) {
-        return p;
-      }
-    }
-    throw transport::TTransportException(transport::TTransportException::NOT_OPEN,
-                                         "Failed to start server.");
+    server = runner->server;
+    return runner->port;
   }
 
   bool canCommunicate(int serverPort) {
-    boost::shared_ptr<transport::TSocket> socket(new transport::TSocket("localhost", serverPort));
+    shared_ptr<transport::TSocket> socket(new transport::TSocket("localhost", serverPort));
     socket->open();
-    test::ParentServiceClient client(boost::make_shared<protocol::TBinaryProtocol>(
-        boost::make_shared<transport::TFramedTransport>(socket)));
+    test::ParentServiceClient client(make_shared<protocol::TBinaryProtocol>(
+        make_shared<transport::TFramedTransport>(socket)));
     client.addString("foo");
     std::vector<std::string> strings;
     client.getStrings(strings);
@@ -126,12 +173,13 @@ protected:
   }
 
 private:
-  boost::shared_ptr<event_base> userEventBase_;
-  boost::shared_ptr<test::ParentServiceProcessor> processor;
-  boost::shared_ptr<apache::thrift::concurrency::Thread> thread;
-
+  shared_ptr<event_base> userEventBase_;
+  shared_ptr<test::ParentServiceProcessor> processor;
 protected:
-  boost::shared_ptr<server::TNonblockingServer> server;
+  shared_ptr<server::TNonblockingServer> server;
+private:
+  shared_ptr<apache::thrift::concurrency::Thread> thread;
+
 };
 
 BOOST_AUTO_TEST_SUITE(TNonblockingServerTest)
@@ -143,7 +191,6 @@ BOOST_FIXTURE_TEST_CASE(get_specified_port, Fixture) {
   BOOST_CHECK(canCommunicate(specified_port));
 
   server->stop();
-  BOOST_CHECK_EQUAL(server->getListenPort(), specified_port);
 }
 
 BOOST_FIXTURE_TEST_CASE(get_assigned_port, Fixture) {
@@ -154,7 +201,6 @@ BOOST_FIXTURE_TEST_CASE(get_assigned_port, Fixture) {
   BOOST_CHECK(canCommunicate(assigned_port));
 
   server->stop();
-  BOOST_CHECK_EQUAL(server->getListenPort(), 0);
 }
 
 BOOST_FIXTURE_TEST_CASE(provide_event_base, Fixture) {

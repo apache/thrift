@@ -20,9 +20,15 @@
 #include <boost/test/unit_test.hpp>
 #include "gen-cpp/EnumTest_types.h"
 
+std::ostream& operator <<(std::ostream& os, const MyEnumWithCustomOstream::type& val)
+{
+  os << "{" << (int)val << ":CUSTOM!" << "}";
+  return os;
+}
+
 BOOST_AUTO_TEST_SUITE(EnumTest)
 
-BOOST_AUTO_TEST_CASE(test_enum) {
+BOOST_AUTO_TEST_CASE(test_enum_value) {
   // Check that all the enum values match what we expect
   BOOST_CHECK_EQUAL(MyEnum1::ME1_0, 0);
   BOOST_CHECK_EQUAL(MyEnum1::ME1_1, 1);
@@ -47,9 +53,34 @@ BOOST_AUTO_TEST_CASE(test_enum) {
   BOOST_CHECK_EQUAL(MyEnum4::ME4_A, 0x7ffffffd);
   BOOST_CHECK_EQUAL(MyEnum4::ME4_B, 0x7ffffffe);
   BOOST_CHECK_EQUAL(MyEnum4::ME4_C, 0x7fffffff);
+
+  BOOST_CHECK_EQUAL(MyEnum5::e1, 0);
+  BOOST_CHECK_EQUAL(MyEnum5::e2, 42);
 }
 
-BOOST_AUTO_TEST_CASE(test_enum_constant) {
+template <class _T>
+std::string EnumToString(_T e)
+{
+  std::stringstream ss;
+  ss << e;
+  return ss.str();
+}
+
+
+BOOST_AUTO_TEST_CASE(test_enum_ostream)
+{
+  BOOST_CHECK_EQUAL(EnumToString(MyEnum1::ME1_0), "ME1_0");
+  BOOST_CHECK_EQUAL(EnumToString(MyEnum5::e2), "e2");
+  BOOST_CHECK_EQUAL(EnumToString(MyEnum3::ME3_N1), "ME3_N1");
+  BOOST_CHECK_EQUAL(EnumToString(MyEnumWithCustomOstream::CustoM2), "{2:CUSTOM!}");
+
+  // some invalid or unknown value
+  MyEnum5::type uut = (MyEnum5::type)44;
+  BOOST_CHECK_EQUAL(EnumToString(uut), "44");
+}
+
+BOOST_AUTO_TEST_CASE(test_enum_constant)
+{
   MyStruct ms;
   BOOST_CHECK_EQUAL(ms.me2_2, 2);
   BOOST_CHECK_EQUAL(ms.me3_n2, -2);

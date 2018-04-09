@@ -17,6 +17,8 @@
 # under the License.
 #
 
+import ssl
+
 from six.moves import BaseHTTPServer
 
 from thrift.server import TServer
@@ -47,11 +49,17 @@ class THttpServer(TServer.TServer):
                  server_address,
                  inputProtocolFactory,
                  outputProtocolFactory=None,
-                 server_class=BaseHTTPServer.HTTPServer):
-        """Set up protocol factories and HTTP server.
+                 server_class=BaseHTTPServer.HTTPServer,
+                 **kwargs):
+        """Set up protocol factories and HTTP (or HTTPS) server.
 
         See BaseHTTPServer for server_address.
         See TServer for protocol factories.
+
+        To make a secure server, provide the named arguments:
+        * cafile    - to validate clients [optional]
+        * cert_file - the server cert
+        * key_file  - the server's key
         """
         if outputProtocolFactory is None:
             outputProtocolFactory = inputProtocolFactory
@@ -83,5 +91,16 @@ class THttpServer(TServer.TServer):
 
         self.httpd = server_class(server_address, RequestHander)
 
+        if (kwargs.get('cafile') or kwargs.get('cert_file') or kwargs.get('key_file')):
+            context = ssl.create_default_context(cafile=kwargs.get('cafile'))
+            context.check_hostname = False
+            context.load_cert_chain(kwargs.get('cert_file'), kwargs.get('key_file'))
+            context.verify_mode = ssl.CERT_REQUIRED if kwargs.get('cafile') else ssl.CERT_NONE
+            self.httpd.socket = context.wrap_socket(self.httpd.socket, server_side=True)
+
     def serve(self):
         self.httpd.serve_forever()
+
+    def shutdown(self):
+        self.httpd.socket.close()
+        # self.httpd.shutdown() # hangs forever, python doesn't handle POLLNVAL properly!

@@ -54,13 +54,13 @@ import thrift.test.Xtruct2;
 public abstract class ServerTestBase extends TestCase {
 
   public static class TestHandler implements ThriftTest.Iface {
-  
+
     public TestHandler() {}
-  
+
     public void testVoid() {
       System.out.print("testVoid()\n");
     }
-  
+
     public String testString(String thing) {
       System.out.print("testString(\"" + thing + "\")\n");
       return thing;
@@ -70,22 +70,22 @@ public abstract class ServerTestBase extends TestCase {
       System.out.print("testBool(" + thing + ")\n");
       return thing;
     }
-  
+
     public byte testByte(byte thing) {
       System.out.print("testByte(" + thing + ")\n");
       return thing;
     }
-  
+
     public int testI32(int thing) {
       System.out.print("testI32(" + thing + ")\n");
       return thing;
     }
-  
+
     public long testI64(long thing) {
       System.out.print("testI64(" + thing + ")\n");
       return thing;
     }
-  
+
     public double testDouble(double thing) {
       System.out.print("testDouble(" + thing + ")\n");
       return thing;
@@ -110,7 +110,7 @@ public abstract class ServerTestBase extends TestCase {
                        thing.i64_thing + "})\n");
       return thing;
     }
-  
+
     public Xtruct2 testNest(Xtruct2 nest) {
       Xtruct thing = nest.struct_thing;
       System.out.print("testNest({" +
@@ -122,7 +122,7 @@ public abstract class ServerTestBase extends TestCase {
                        nest.i32_thing + "})\n");
       return nest;
     }
-  
+
     public Map<Integer,Integer> testMap(Map<Integer,Integer> thing) {
       System.out.print("testMap({");
       System.out.print(thing);
@@ -136,7 +136,7 @@ public abstract class ServerTestBase extends TestCase {
       System.out.print("})\n");
       return thing;
     }
-  
+
     public Set<Integer> testSet(Set<Integer> thing) {
       System.out.print("testSet({");
       boolean first = true;
@@ -151,7 +151,7 @@ public abstract class ServerTestBase extends TestCase {
       System.out.print("})\n");
       return thing;
     }
-  
+
     public List<Integer> testList(List<Integer> thing) {
       System.out.print("testList({");
       boolean first = true;
@@ -166,58 +166,58 @@ public abstract class ServerTestBase extends TestCase {
       System.out.print("})\n");
       return thing;
     }
-  
+
     public Numberz testEnum(Numberz thing) {
       System.out.print("testEnum(" + thing + ")\n");
       return thing;
     }
-  
+
     public long testTypedef(long thing) {
       System.out.print("testTypedef(" + thing + ")\n");
       return thing;
     }
-  
+
     public Map<Integer,Map<Integer,Integer>> testMapMap(int hello) {
       System.out.print("testMapMap(" + hello + ")\n");
       Map<Integer,Map<Integer,Integer>> mapmap =
         new HashMap<Integer,Map<Integer,Integer>>();
-  
+
       HashMap<Integer,Integer> pos = new HashMap<Integer,Integer>();
       HashMap<Integer,Integer> neg = new HashMap<Integer,Integer>();
       for (int i = 1; i < 5; i++) {
         pos.put(i, i);
         neg.put(-i, -i);
       }
-  
+
       mapmap.put(4, pos);
       mapmap.put(-4, neg);
-  
+
       return mapmap;
     }
-  
+
     public Map<Long, Map<Numberz,Insanity>> testInsanity(Insanity argument) {
       System.out.print("testInsanity()\n");
-  
+
       HashMap<Numberz,Insanity> first_map = new HashMap<Numberz, Insanity>();
       HashMap<Numberz,Insanity> second_map = new HashMap<Numberz, Insanity>();;
-  
+
       first_map.put(Numberz.TWO, argument);
       first_map.put(Numberz.THREE, argument);
-  
+
       Insanity looney = new Insanity();
       second_map.put(Numberz.SIX, looney);
-  
+
       Map<Long,Map<Numberz,Insanity>> insane =
         new HashMap<Long, Map<Numberz,Insanity>>();
       insane.put((long)1, first_map);
       insane.put((long)2, second_map);
-  
+
       return insane;
     }
-  
+
     public Xtruct testMulti(byte arg0, int arg1, long arg2, Map<Short,String> arg3, Numberz arg4, long arg5) {
       System.out.print("testMulti()\n");
-  
+
       Xtruct hello = new Xtruct();;
       hello.string_thing = "Hello2";
       hello.byte_thing = arg0;
@@ -225,7 +225,7 @@ public abstract class ServerTestBase extends TestCase {
       hello.i64_thing = arg2;
       return hello;
     }
-  
+
     public void testException(String arg) throws Xception, TException {
       System.out.print("testException("+arg+")\n");
       if ("Xception".equals(arg)) {
@@ -234,14 +234,15 @@ public abstract class ServerTestBase extends TestCase {
         x.message = arg;
         throw x;
       } else if ("TException".equals(arg)) {
-        throw new TException(arg);
+        // Unspecified exception should yield a TApplicationException on client side
+        throw new RuntimeException(arg);
       } else {
         Xtruct result = new Xtruct();
         result.string_thing = arg;
       }
       return;
     }
-  
+
     public Xtruct testMultiException(String arg0, String arg1) throws Xception, Xception2 {
       System.out.print("testMultiException(" + arg0 + ", " + arg1 + ")\n");
       if (arg0.equals("Xception")) {
@@ -256,17 +257,17 @@ public abstract class ServerTestBase extends TestCase {
         x.struct_thing.string_thing = "This is an Xception2";
         throw x;
       }
-  
+
       Xtruct result = new Xtruct();
       result.string_thing = arg1;
       return result;
     }
-  
+
     public void testOneway(int sleepFor) {
       System.out.println("testOneway(" + Integer.toString(sleepFor) +
                          ") => sleeping...");
       try {
-        Thread.sleep(sleepFor * 1000);
+        Thread.sleep(sleepFor * SLEEP_DELAY);
         System.out.println("Done sleeping!");
       } catch (InterruptedException ie) {
         throw new RuntimeException(ie);
@@ -281,6 +282,7 @@ public abstract class ServerTestBase extends TestCase {
   public static final String HOST = "localhost";
   public static final int PORT = Integer.valueOf(
     System.getProperty("test.port", "9090"));
+  protected static final int SLEEP_DELAY = 1000;
   protected static final int SOCKET_TIMEOUT = 1500;
   private static final Xtruct XSTRUCT = new Xtruct("Zero", (byte) 1, -3, -5);
   private static final Xtruct2 XSTRUCT2 = new Xtruct2((byte)1, XSTRUCT, 5);
@@ -333,7 +335,7 @@ public abstract class ServerTestBase extends TestCase {
   // todo: add assertions
   private void testInsanity(ThriftTest.Client testClient) throws TException {
     Insanity insane;
-  
+
     insane = new Insanity();
     insane.userMap = new HashMap<Numberz, Long>();
     insane.userMap.put(Numberz.FIVE, (long)5000);
@@ -351,7 +353,7 @@ public abstract class ServerTestBase extends TestCase {
     for (long key : whoa.keySet()) {
       Map<Numberz,Insanity> val = whoa.get(key);
       System.out.print(key + " => {");
-  
+
       for (Numberz k2 : val.keySet()) {
         Insanity v2 = val.get(k2);
         System.out.print(k2 + " => {");
@@ -363,7 +365,7 @@ public abstract class ServerTestBase extends TestCase {
           }
         }
         System.out.print("}, ");
-  
+
         List<Xtruct> xtructs = v2.xtructs;
         System.out.print("{");
         if (xtructs != null) {
@@ -372,7 +374,7 @@ public abstract class ServerTestBase extends TestCase {
           }
         }
         System.out.print("}");
-  
+
         System.out.print("}, ");
       }
       System.out.print("}, ");
@@ -387,7 +389,7 @@ public abstract class ServerTestBase extends TestCase {
   public void testIt() throws Exception {
 
     for (TProtocolFactory protoFactory : getProtocols()) {
-      TProcessor processor = useAsyncProcessor() ? new ThriftTest.AsyncProcessor(new AsyncTestHandler()) : new ThriftTest.Processor(new TestHandler());
+      TProcessor processor = useAsyncProcessor() ? new ThriftTest.AsyncProcessor<AsyncTestHandler>(new AsyncTestHandler()) : new ThriftTest.Processor<TestHandler>(new TestHandler());
 
       startServer(processor, protoFactory);
 
@@ -420,6 +422,7 @@ public abstract class ServerTestBase extends TestCase {
       testOneway(testClient);
       testI32(testClient);
       transport.close();
+      socket.close();
 
       stopServer();
     }
@@ -430,7 +433,7 @@ public abstract class ServerTestBase extends TestCase {
   }
 
   public List<TProtocolFactory> getProtocols() {
-    return PROTOCOLS;  
+    return PROTOCOLS;
   }
 
   private void testList(ThriftTest.Client testClient) throws TException {
@@ -466,14 +469,14 @@ public abstract class ServerTestBase extends TestCase {
       testClient.testMapMap(1);
     Map<Integer,Map<Integer,Integer>> mapmap =
       new HashMap<Integer,Map<Integer,Integer>>();
-  
+
     HashMap<Integer,Integer> pos = new HashMap<Integer,Integer>();
     HashMap<Integer,Integer> neg = new HashMap<Integer,Integer>();
     for (int i = 1; i < 5; i++) {
       pos.put(i, i);
       neg.put(-i, -i);
     }
-  
+
     mapmap.put(4, pos);
     mapmap.put(-4, neg);
     assertEquals(mapmap, mm);
@@ -535,7 +538,7 @@ public abstract class ServerTestBase extends TestCase {
   public void testTransportFactory() throws Exception {
     for (TProtocolFactory protoFactory : getProtocols()) {
       TestHandler handler = new TestHandler();
-      ThriftTest.Processor processor = new ThriftTest.Processor(handler);
+      ThriftTest.Processor<TestHandler> processor = new ThriftTest.Processor<TestHandler>(handler);
 
       final CallCountingTransportFactory factory = new CallCountingTransportFactory(new TFramedTransport.Factory());
 
@@ -551,6 +554,7 @@ public abstract class ServerTestBase extends TestCase {
       ThriftTest.Client testClient = new ThriftTest.Client(protocol);
       assertEquals(0, testClient.testByte((byte) 0));
       assertEquals(2, factory.count);
+      socket.close();
       stopServer();
     }
   }
@@ -679,13 +683,15 @@ public abstract class ServerTestBase extends TestCase {
         x.errorCode = 1001;
         x.message = arg;
         // throw and onError yield the same result.
-        // resultHandler.onError(x);
-        // return;
-        throw x;
-      } else if ("TException".equals(arg)) {
-        // throw new TException(arg);
-        resultHandler.onError(new TException(arg));
+        // throw x;
+        resultHandler.onError(x);
         return;
+      } else if ("TException".equals(arg)) {
+        // throw and onError yield the same result.
+        // resultHandler.onError(new TException(arg));
+        // return;
+        // Unspecified exception should yield a TApplicationException on client side
+        throw new RuntimeException(arg);
       }
       resultHandler.onComplete(null);
     }

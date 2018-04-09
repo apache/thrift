@@ -345,6 +345,10 @@ module Thrift
       size = read_varint32()
       trans.read_all(size)
     end
+    
+    def to_s
+      "compact(#{super.to_s})"
+    end
 
     private
     
@@ -430,6 +434,10 @@ module Thrift
   class CompactProtocolFactory < BaseProtocolFactory
     def get_protocol(trans)
       CompactProtocol.new(trans)
+    end
+    
+    def to_s
+      "compact"
     end
   end
 end

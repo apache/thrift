@@ -52,4 +52,49 @@ enum keywords {
 }
 
 
+struct Struct_lists {
+  1: list<Struct_simple> init;
+  2: list<Struct_simple> struc;
+  3: list<Struct_simple> field;
+  4: list<Struct_simple> field_;
+  5: list<Struct_simple> tracker;
+  6: list<Struct_simple> Self;
+}
+
+struct Struct_structs {
+  1: Struct_simple init;
+  2: Struct_simple struc;
+  3: Struct_simple field;
+  4: Struct_simple field_;
+  5: Struct_simple tracker;
+  6: Struct_simple Self;
+}
+
+struct Struct_simple {
+  1: bool init;
+  2: bool struc;
+  3: bool field;
+  4: bool field_;
+  5: bool tracker;
+  6: bool Self;
+}
+
+struct Struct_strings {
+  1: string init;
+  2: string struc;
+  3: string field;
+  4: string field_;
+  5: string tracker;
+  6: string Self;
+}
+
+struct Struct_binary {
+  1: binary init;
+  2: binary struc;
+  3: binary field;
+  4: binary field_;
+  5: binary tracker;
+  6: binary Self;
+}
+
 

@@ -41,6 +41,10 @@ extern NSString *const TSockerServerTransportKey;
              protocolFactory:(id <TProtocolFactory>)protocolFactory
             processorFactory:(id <TProcessorFactory>)processorFactory;
 
+- (instancetype) initWithPath: (NSString *) path
+              protocolFactory: (id <TProtocolFactory>) protocolFactory
+             processorFactory: (id <TProcessorFactory>) processorFactory;
+
 @end
 
 

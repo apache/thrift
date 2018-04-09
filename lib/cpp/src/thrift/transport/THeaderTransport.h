@@ -21,13 +21,20 @@
 #define THRIFT_TRANSPORT_THEADERTRANSPORT_H_ 1
 
 #include <bitset>
+#include <limits>
 #include <vector>
 #include <stdexcept>
 #include <string>
 #include <map>
 
+#ifdef HAVE_STDINT_H
+#include <stdint.h>
+#elif HAVE_INTTYPES_H
+#include <inttypes.h>
+#endif
+
 #include <boost/scoped_array.hpp>
-#include <boost/shared_ptr.hpp>
+#include <thrift/stdcxx.h>
 
 #include <thrift/protocol/TProtocolTypes.h>
 #include <thrift/transport/TBufferTransports.h>
@@ -68,7 +75,7 @@ public:
   static const int THRIFT_MAX_VARINT32_BYTES = 5;
 
   /// Use default buffer sizes.
-  explicit THeaderTransport(const boost::shared_ptr<TTransport>& transport)
+  explicit THeaderTransport(const stdcxx::shared_ptr<TTransport>& transport)
     : TVirtualTransport(transport),
       outTransport_(transport),
       protoId(T_COMPACT_PROTOCOL),
@@ -81,8 +88,8 @@ public:
     initBuffers();
   }
 
-  THeaderTransport(const boost::shared_ptr<TTransport> inTransport,
-                   const boost::shared_ptr<TTransport> outTransport)
+  THeaderTransport(const stdcxx::shared_ptr<TTransport> inTransport,
+                   const stdcxx::shared_ptr<TTransport> outTransport)
     : TVirtualTransport(inTransport),
       outTransport_(outTransport),
       protoId(T_COMPACT_PROTOCOL),
@@ -135,8 +142,7 @@ public:
   void transform(uint8_t* ptr, uint32_t sz);
 
   uint16_t getNumTransforms() const {
-    int trans = writeTrans_.size();
-    return trans;
+    return safe_numeric_cast<uint16_t>(writeTrans_.size());
   }
 
   void setTransform(uint16_t transId) { writeTrans_.push_back(transId); }
@@ -180,7 +186,7 @@ protected:
     setWriteBuffer(wBuf_.get(), wBufSize_);
   }
 
-  boost::shared_ptr<TTransport> outTransport_;
+  stdcxx::shared_ptr<TTransport> outTransport_;
 
   // 0 and 16th bits must be 0 to differentiate from framed & unframed
   static const uint32_t HEADER_MAGIC = 0x0FFF0000;
@@ -204,7 +210,7 @@ protected:
   /**
    * Returns the maximum number of bytes that write k/v headers can take
    */
-  size_t getMaxWriteHeadersSize() const;
+  uint32_t getMaxWriteHeadersSize() const;
 
   struct infoIdType {
     enum idType {
@@ -259,8 +265,8 @@ public:
   /**
    * Wraps the transport into a header one.
    */
-  virtual boost::shared_ptr<TTransport> getTransport(boost::shared_ptr<TTransport> trans) {
-    return boost::shared_ptr<TTransport>(new THeaderTransport(trans));
+  virtual stdcxx::shared_ptr<TTransport> getTransport(stdcxx::shared_ptr<TTransport> trans) {
+    return stdcxx::shared_ptr<TTransport>(new THeaderTransport(trans));
   }
 };
 }

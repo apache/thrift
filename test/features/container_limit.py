@@ -61,7 +61,7 @@ def main(argv):
     print('[OK]: just limit')
     try:
         test_list(proto, list(range(args.limit + 1)))
-    except:
+    except Exception:
         print('[OK]: limit + 1')
     else:
         print('[ERROR]: limit + 1')

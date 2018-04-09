@@ -24,7 +24,6 @@ fi
 DIR="$( cd "$( dirname "$0" )" && pwd )"
 
 ISTANBUL="$DIR/../../../node_modules/istanbul/lib/cli.js"
-RUNBROWSER="$DIR/../../../node_modules/run-browser/bin/cli.js"
 
 REPORT_PREFIX="${DIR}/../coverage/report"
 
@@ -43,7 +42,7 @@ testServer()
     node ${DIR}/server.js --type $1 -p $2 -t $3 $4 &
   fi
   SERVERPID=$!
-  sleep 1
+  sleep 0.1
   if [ -n "${COVER}" ]; then
     ${ISTANBUL} cover ${DIR}/client.js --dir ${REPORT_PREFIX}${COUNT} -- --type $1 -p $2 -t $3 $4 || RET=1
     COUNT=$((COUNT+1))
@@ -51,20 +50,10 @@ testServer()
     node ${DIR}/client.js --type $1 -p $2 -t $3 $4 || RET=1
   fi
   kill -2 $SERVERPID || RET=1
+  wait $SERVERPID
   return $RET
 }
 
-testBrowser()
-{
-  echo "   Testing browser client with http server with json protocol and buffered transport";
-  RET=0
-  node ${DIR}/server.js --type http -p json -t buffered &
-  SERVERPID=$!
-  sleep 1
-  ${RUNBROWSER} ${DIR}/browser_client.js --phantom || RET=1
-  kill -2 $SERVERPID || RET=1
-  return $RET
-}
 
 TESTOK=0
 
@@ -95,8 +84,6 @@ do
   done
 done
 
-# XHR only until phantomjs 2 is released.
-testBrowser
 
 if [ -n "${COVER}" ]; then
   ${ISTANBUL} report --dir "${DIR}/../coverage" --include "${DIR}/../coverage/report*/coverage.json" lcov cobertura html

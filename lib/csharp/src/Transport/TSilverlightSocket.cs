@@ -112,7 +112,7 @@ namespace Thrift.Transport
                 throw new TTransportException(TTransportException.ExceptionType.AlreadyOpen, "Socket already connected");
             }
 
-            if (String.IsNullOrEmpty(host))
+            if (string.IsNullOrEmpty(host))
             {
                 throw new TTransportException(TTransportException.ExceptionType.NotOpen, "Cannot open null host");
             }
@@ -282,9 +282,9 @@ namespace Thrift.Transport
             private volatile Boolean _isCompleted;
             private ManualResetEvent _evt;
             private readonly AsyncCallback _cbMethod;
-            private readonly Object _state;
+            private readonly object _state;
 
-            public FlushAsyncResult(AsyncCallback cbMethod, Object state)
+            public FlushAsyncResult(AsyncCallback cbMethod, object state)
             {
                 _cbMethod = cbMethod;
                 _state = state;
@@ -314,7 +314,7 @@ namespace Thrift.Transport
                 get { return _isCompleted; }
             }
 
-            private readonly Object _locker = new Object();
+            private readonly object _locker = new object();
 
             private ManualResetEvent GetEvtHandle()
             {
@@ -362,7 +362,7 @@ namespace Thrift.Transport
             }
         }
 
-        #region " IDisposable Support "
+#region " IDisposable Support "
         private bool _IsDisposed;
 
         // IDisposable
@@ -385,7 +385,7 @@ namespace Thrift.Transport
             }
             _IsDisposed = true;
         }
-        #endregion
+#endregion
     }
 }
 

@@ -21,18 +21,19 @@
 #include <thrift/concurrency/Thread.h>
 #include <thrift/concurrency/PlatformThreadFactory.h>
 #include <thrift/concurrency/Monitor.h>
+#include <thrift/concurrency/Mutex.h>
 #include <thrift/concurrency/Util.h>
 
 #include <assert.h>
 #include <iostream>
-#include <set>
+#include <vector>
 
 namespace apache {
 namespace thrift {
 namespace concurrency {
 namespace test {
 
-using boost::shared_ptr;
+using stdcxx::shared_ptr;
 using namespace apache::thrift::concurrency;
 
 /**
@@ -43,36 +44,6 @@ using namespace apache::thrift::concurrency;
 class ThreadFactoryTests {
 
 public:
-  static const double TEST_TOLERANCE;
-
-  class Task : public Runnable {
-
-  public:
-    Task() {}
-
-    void run() { std::cout << "\t\t\tHello World" << std::endl; }
-  };
-
-  /**
-   * Hello world test
-   */
-  bool helloWorldTest() {
-
-    PlatformThreadFactory threadFactory = PlatformThreadFactory();
-
-    shared_ptr<Task> task = shared_ptr<Task>(new ThreadFactoryTests::Task());
-
-    shared_ptr<Thread> thread = threadFactory.newThread(task);
-
-    thread->start();
-
-    thread->join();
-
-    std::cout << "\t\t\tSuccess!" << std::endl;
-
-    return true;
-  }
-
   /**
    * Reap N threads
    */
@@ -83,39 +54,33 @@ public:
 
     void run() {
       Synchronized s(_monitor);
-
-      _count--;
-
-      // std::cout << "\t\t\tthread count: " << _count << std::endl;
-
-      if (_count == 0) {
+      
+      if (--_count == 0) {
         _monitor.notify();
       }
     }
 
     Monitor& _monitor;
-
     int& _count;
   };
 
   bool reapNThreads(int loop = 1, int count = 10) {
 
     PlatformThreadFactory threadFactory = PlatformThreadFactory();
-
-    Monitor* monitor = new Monitor();
+    shared_ptr<Monitor> monitor(new Monitor);
 
     for (int lix = 0; lix < loop; lix++) {
 
-      int* activeCount = new int(count);
+      int activeCount = 0;
 
-      std::set<shared_ptr<Thread> > threads;
-
+      std::vector<shared_ptr<Thread> > threads;
       int tix;
 
       for (tix = 0; tix < count; tix++) {
         try {
-          threads.insert(
-              threadFactory.newThread(shared_ptr<Runnable>(new ReapNTask(*monitor, *activeCount))));
+          ++activeCount;
+          threads.push_back(
+              threadFactory.newThread(shared_ptr<Runnable>(new ReapNTask(*monitor, activeCount))));
         } catch (SystemResourceException& e) {
           std::cout << "\t\t\tfailed to create " << lix* count + tix << " thread " << e.what()
                     << std::endl;
@@ -124,7 +89,7 @@ public:
       }
 
       tix = 0;
-      for (std::set<shared_ptr<Thread> >::const_iterator thread = threads.begin();
+      for (std::vector<shared_ptr<Thread> >::const_iterator thread = threads.begin();
            thread != threads.end();
            tix++, ++thread) {
 
@@ -139,16 +104,15 @@ public:
 
       {
         Synchronized s(*monitor);
-        while (*activeCount > 0) {
+        while (activeCount > 0) {
           monitor->wait(1000);
         }
       }
-      delete activeCount;
+      
       std::cout << "\t\t\treaped " << lix* count << " threads" << std::endl;
     }
 
     std::cout << "\t\t\tSuccess!" << std::endl;
-
     return true;
   }
 
@@ -244,15 +208,22 @@ public:
     return true;
   }
 
-  /** See how accurate monitor timeout is. */
+  /**
+   * The only guarantee a monitor timeout can give you is that
+   * it will take "at least" as long as the timeout, no less.
+   * There is absolutely no guarantee around regaining execution
+   * near the timeout.  On a busy system (like inside a third party
+   * CI environment) it could take quite a bit longer than the
+   * requested timeout, and that's ok.
+   */
 
-  bool monitorTimeoutTest(size_t count = 1000, int64_t timeout = 10) {
+  bool monitorTimeoutTest(int64_t count = 1000, int64_t timeout = 2) {
 
     Monitor monitor;
 
     int64_t startTime = Util::currentTime();
 
-    for (size_t ix = 0; ix < count; ix++) {
+    for (int64_t ix = 0; ix < count; ix++) {
       {
         Synchronized s(monitor);
         try {
@@ -264,18 +235,11 @@ public:
 
     int64_t endTime = Util::currentTime();
 
-    double error = ((endTime - startTime) - (count * timeout)) / (double)(count * timeout);
-
-    if (error < 0.0) {
-
-      error *= 1.0;
-    }
-
-    bool success = error < ThreadFactoryTests::TEST_TOLERANCE;
+  bool success = (endTime - startTime) >= (count * timeout);
 
     std::cout << "\t\t\t" << (success ? "Success" : "Failure")
-              << "! expected time: " << count * timeout
-              << "ms elapsed time: " << endTime - startTime << "ms error%: " << error * 100.0
+              << ": minimum required time to elapse " << count * timeout
+              << "ms; actual elapsed time " << endTime - startTime << "ms"
               << std::endl;
 
     return success;
@@ -283,21 +247,22 @@ public:
 
   class FloodTask : public Runnable {
   public:
-    FloodTask(const size_t id) : _id(id) {}
+    FloodTask(const size_t id, Monitor& mon) : _id(id), _mon(mon) {}
     ~FloodTask() {
-      if (_id % 1000 == 0) {
+      if (_id % 10000 == 0) {
+		Synchronized sync(_mon);
         std::cout << "\t\tthread " << _id << " done" << std::endl;
       }
     }
 
     void run() {
-      if (_id % 1000 == 0) {
+      if (_id % 10000 == 0) {
+		Synchronized sync(_mon);
         std::cout << "\t\tthread " << _id << " started" << std::endl;
       }
-
-      THRIFT_SLEEP_USEC(1);
     }
     const size_t _id;
+    Monitor& _mon;
   };
 
   void foo(PlatformThreadFactory* tf) { (void)tf; }
@@ -305,7 +270,8 @@ public:
   bool floodNTest(size_t loop = 1, size_t count = 100000) {
 
     bool success = false;
-
+    Monitor mon;
+	
     for (size_t lix = 0; lix < loop; lix++) {
 
       PlatformThreadFactory threadFactory = PlatformThreadFactory();
@@ -315,13 +281,9 @@ public:
 
         try {
 
-          shared_ptr<FloodTask> task(new FloodTask(lix * count + tix));
-
+          shared_ptr<FloodTask> task(new FloodTask(lix * count + tix, mon));
           shared_ptr<Thread> thread = threadFactory.newThread(task);
-
           thread->start();
-
-          THRIFT_SLEEP_USEC(1);
 
         } catch (TException& e) {
 
@@ -332,8 +294,8 @@ public:
         }
       }
 
+      Synchronized sync(mon);
       std::cout << "\t\t\tflooded " << (lix + 1) * count << " threads" << std::endl;
-
       success = true;
     }
 
@@ -341,7 +303,6 @@ public:
   }
 };
 
-const double ThreadFactoryTests::TEST_TOLERANCE = .20;
 }
 }
 }

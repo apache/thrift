@@ -17,17 +17,19 @@
 # under the License.
 #
 
-require 5.6.0;
+use 5.10.0;
 use strict;
 use warnings;
 
 use Thrift;
+use Thrift::Exception;
 
 #
 # Transport exceptions
 #
-package TTransportException;
+package Thrift::TTransportException;
 use base('Thrift::TException');
+use version 0.77; our $VERSION = version->declare("$Thrift::VERSION");
 
 use constant UNKNOWN      => 0;
 use constant NOT_OPEN     => 1;
@@ -35,7 +37,7 @@ use constant ALREADY_OPEN => 2;
 use constant TIMED_OUT    => 3;
 use constant END_OF_FILE  => 4;
 
-sub new{
+sub new {
     my $classname = shift;
     my $self      = $classname->SUPER::new(@_);
 
@@ -43,6 +45,7 @@ sub new{
 }
 
 package Thrift::Transport;
+use version 0.77; our $VERSION = version->declare("$Thrift::VERSION");
 
 #
 # Whether this transport is open.
@@ -81,8 +84,7 @@ sub close
 #
 sub read
 {
-    my ($len);
-    die("abstract");
+    die "abstract";
 }
 
 #
@@ -114,7 +116,6 @@ sub readAll
 #
 sub write
 {
-    my ($buf);
     die "abstract";
 }
 
@@ -130,6 +131,7 @@ sub flush {}
 # TransportFactory creates transport objects from transports
 #
 package Thrift::TransportFactory;
+use version 0.77; our $VERSION = version->declare("$Thrift::VERSION");
 
 sub new {
     my $classname = shift;
@@ -156,6 +158,7 @@ sub getTransport
 #  ServerTransport base class module
 #
 package Thrift::ServerTransport;
+use version 0.77; our $VERSION = version->declare("$Thrift::VERSION");
 
 sub listen
 {

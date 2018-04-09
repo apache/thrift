@@ -41,9 +41,8 @@ namespace ThriftMVCTest.Controllers
             SecondService.IAsync asyncService =
                 new SecondService.Client(new TBinaryProtocol(new THttpClient(new Uri(baseUri, "Async.thrift"))));
 
-            await asyncService.blahBlahAsync();
             var result = await asyncService.secondtestStringAsync("TestString");
-            if (result != "TestString")
+            if (result != "testString(\"TestString\")")
             {
                 throw new Exception("The wrong result was returned");
             }
@@ -59,9 +58,8 @@ namespace ThriftMVCTest.Controllers
             SecondService.ISync service =
                 new SecondService.Client(new TBinaryProtocol(new THttpClient(new Uri(baseUri, "Sync.thrift"))));
 
-            service.blahBlah();
             var result = service.secondtestString("TestString");
-            if (result != "TestString")
+            if (result != "testString(\"TestString\")")
             {
                 throw new Exception("The wrong result was returned");
             }

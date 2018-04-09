@@ -27,7 +27,7 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyDescription("A web project for testing the thrift ASP.NET features.")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("The Apache Software Foundation")]
-[assembly: AssemblyProduct("ThriftMVCTest")]
+[assembly: AssemblyProduct("Thrift")]
 [assembly: AssemblyCopyright("The Apache Software Foundation")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]

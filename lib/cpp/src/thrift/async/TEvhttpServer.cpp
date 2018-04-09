@@ -20,10 +20,10 @@
 #include <thrift/async/TEvhttpServer.h>
 #include <thrift/async/TAsyncBufferProcessor.h>
 #include <thrift/transport/TBufferTransports.h>
+#include <thrift/stdcxx.h>
 #include <evhttp.h>
 #include <event2/buffer.h>
 #include <event2/buffer_compat.h>
-
 #include <iostream>
 
 #ifndef HTTP_INTERNAL // libevent < 2
@@ -31,6 +31,8 @@
 #endif
 
 using apache::thrift::transport::TMemoryBuffer;
+using apache::thrift::stdcxx::scoped_ptr;
+using apache::thrift::stdcxx::shared_ptr;
 
 namespace apache {
 namespace thrift {
@@ -38,17 +40,17 @@ namespace async {
 
 struct TEvhttpServer::RequestContext {
   struct evhttp_request* req;
-  boost::shared_ptr<apache::thrift::transport::TMemoryBuffer> ibuf;
-  boost::shared_ptr<apache::thrift::transport::TMemoryBuffer> obuf;
+  stdcxx::shared_ptr<apache::thrift::transport::TMemoryBuffer> ibuf;
+  stdcxx::shared_ptr<apache::thrift::transport::TMemoryBuffer> obuf;
 
   RequestContext(struct evhttp_request* req);
 };
 
-TEvhttpServer::TEvhttpServer(boost::shared_ptr<TAsyncBufferProcessor> processor)
+TEvhttpServer::TEvhttpServer(stdcxx::shared_ptr<TAsyncBufferProcessor> processor)
   : processor_(processor), eb_(NULL), eh_(NULL) {
 }
 
-TEvhttpServer::TEvhttpServer(boost::shared_ptr<TAsyncBufferProcessor> processor, int port)
+TEvhttpServer::TEvhttpServer(stdcxx::shared_ptr<TAsyncBufferProcessor> processor, int port)
   : processor_(processor), eb_(NULL), eh_(NULL) {
   // Create event_base and evhttp.
   eb_ = event_base_new();
@@ -118,7 +120,7 @@ void TEvhttpServer::process(struct evhttp_request* req) {
 
 void TEvhttpServer::complete(RequestContext* ctx, bool success) {
   (void)success;
-  std::auto_ptr<RequestContext> ptr(ctx);
+  scoped_ptr<RequestContext> ptr(ctx);
 
   int code = success ? 200 : 400;
   const char* reason = success ? "OK" : "Bad Request";

@@ -116,8 +116,8 @@ namespace Thrift.Transport
             byte[] buf = writeBuffer.GetBuffer();
             int len = (int)writeBuffer.Length;
             int data_len = len - HeaderSize;
-            if ( data_len < 0 )
-                throw new System.InvalidOperationException (); // logic error actually
+            if (data_len < 0)
+                throw new System.InvalidOperationException(); // logic error actually
 
             // Inject message header into the reserved buffer space
             EncodeFrameSize(data_len, buf);
@@ -130,7 +130,7 @@ namespace Thrift.Transport
             transport.Flush();
         }
 
-        private void InitWriteBuffer ()
+        private void InitWriteBuffer()
         {
             // Reserve space for message header to be put right before sending it out
             writeBuffer.SetLength(HeaderSize);
@@ -150,7 +150,7 @@ namespace Thrift.Transport
             return
                 ((buf[0] & 0xff) << 24) |
                 ((buf[1] & 0xff) << 16) |
-                ((buf[2] & 0xff) <<  8) |
+                ((buf[2] & 0xff) << 8) |
                 ((buf[3] & 0xff));
         }
 
@@ -171,8 +171,12 @@ namespace Thrift.Transport
             {
                 if (disposing)
                 {
-                    readBuffer.Dispose();
-                    writeBuffer.Dispose();
+                    if (readBuffer != null)
+                        readBuffer.Dispose();
+                    if (writeBuffer != null)
+                        writeBuffer.Dispose();
+                    if (transport != null)
+                        transport.Dispose();
                 }
             }
             _IsDisposed = true;

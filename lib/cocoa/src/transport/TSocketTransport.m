@@ -24,21 +24,21 @@
 #import <CFNetwork/CFNetwork.h>
 #endif
 
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <sys/un.h>
+
 @interface TSocketTransport () <NSStreamDelegate>
 @end
 
 
 @implementation TSocketTransport
 
--(id) initWithHostname:(NSString *)hostname
-                  port:(int)port
+- (id) initWithReadStream: (CFReadStreamRef) readStream writeStream: (CFWriteStreamRef) writeStream
 {
   NSInputStream *inputStream = nil;
   NSOutputStream *outputStream = nil;
 
-  CFReadStreamRef readStream = NULL;
-  CFWriteStreamRef writeStream = NULL;
-  CFStreamCreatePairWithSocketToHost(kCFAllocatorDefault, (__bridge CFStringRef)hostname, port, &readStream, &writeStream);
   if (readStream && writeStream) {
 
     CFReadStreamSetProperty(readStream, kCFStreamPropertyShouldCloseNativeSocket, kCFBooleanTrue);
@@ -69,5 +69,63 @@
 
   return [super initWithInputStream:inputStream outputStream:outputStream];
 }
+
+- (id) initWithHostname: (NSString *) hostname
+                   port: (int) port
+{
+  CFReadStreamRef readStream = NULL;
+  CFWriteStreamRef writeStream = NULL;
+  CFStreamCreatePairWithSocketToHost(kCFAllocatorDefault, (__bridge CFStringRef)hostname, port, &readStream, &writeStream);
+  return [self initWithReadStream:readStream writeStream:writeStream];
+}
+
+- (id) initWithPath: (NSString *) path
+{
+  CFSocketNativeHandle sockfd = socket(AF_LOCAL, SOCK_STREAM, IPPROTO_IP);
+  int yes = 1;
+  if (setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(yes)) < 0)
+  {
+    NSLog(@"TSocketTransport: Unable to set REUSEADDR property of socket.");
+    return nil;
+  }
+
+  NSData *serverAddress = [[self class] createAddressWithPath:path];
+
+  CFReadStreamRef readStream = NULL;
+  CFWriteStreamRef writeStream = NULL;
+  CFStreamCreatePairWithSocket(kCFAllocatorDefault, sockfd, &readStream, &writeStream);
+  if (!readStream || !writeStream)
+  {
+    NSLog(@"TSocketTransport: Unable to create read/write stream pair for socket.");
+    return nil;
+  }
+
+  if (connect(sockfd, (struct sockaddr *)serverAddress.bytes, (socklen_t) serverAddress.length) < 0)
+  {
+    NSLog(@"TSocketTransport: Connect error: %s\n", strerror(errno));
+    return nil;
+  }
+
+  return [self initWithReadStream:readStream writeStream:writeStream];
+}
+
++ (NSData *) createAddressWithPath: (NSString *)path
+{
+  struct sockaddr_un servaddr;
+
+  size_t nullTerminatedPathLength = path.length + 1;
+  if (nullTerminatedPathLength> sizeof(servaddr.sun_path)) {
+    NSLog(@"TSocketTransport: Unable to create socket at path %@. Path is too long.", path);
+    return nil;
+  }
+
+  bzero(&servaddr,sizeof(servaddr));
+  servaddr.sun_family = AF_LOCAL;
+  memcpy(servaddr.sun_path, path.UTF8String, nullTerminatedPathLength);
+  servaddr.sun_len = SUN_LEN(&servaddr);
+
+  return [NSData dataWithBytes:&servaddr length:sizeof(servaddr)];
+}
+
 
 @end

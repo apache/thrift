@@ -29,18 +29,18 @@ namespace Thrift.Protocol
 {
     /// <summary>
     /// JSON protocol implementation for thrift.
-    ///
+    /// <para/>
     /// This is a full-featured protocol supporting Write and Read.
-    ///
+    /// <para/>
     /// Please see the C++ class header for a detailed description of the
     /// protocol's wire format.
-    ///
+    /// <para/>
     /// Adapted from the Java version.
     /// </summary>
     public class TJSONProtocol : TProtocol
     {
         /// <summary>
-        /// Factory for JSON protocol objects
+        /// Factory for JSON protocol objects.
         /// </summary>
         public class Factory : TProtocolFactory
         {
@@ -179,11 +179,11 @@ namespace Thrift.Protocol
             return result;
         }
 
-        ///<summary>
+        /// <summary>
         /// Base class for tracking JSON contexts that may require
         /// inserting/Reading additional JSON syntax characters
         /// This base context does nothing.
-        ///</summary>
+        /// </summary>
         protected class JSONBaseContext
         {
             protected TJSONProtocol proto;
@@ -200,10 +200,10 @@ namespace Thrift.Protocol
             public virtual bool EscapeNumbers() { return false; }
         }
 
-        ///<summary>
+        /// <summary>
         /// Context for JSON lists. Will insert/Read commas before each item except
         /// for the first one
-        ///</summary>
+        /// </summary>
         protected class JSONListContext : JSONBaseContext
         {
             public JSONListContext(TJSONProtocol protocol)
@@ -239,12 +239,12 @@ namespace Thrift.Protocol
             }
         }
 
-        ///<summary>
+        /// <summary>
         /// Context for JSON records. Will insert/Read colons before the value portion
         /// of each record pair, and commas before each key except the first. In
         /// addition, will indicate that numbers in the key position need to be
         /// escaped in quotes (since JSON keys must be strings).
-        ///</summary>
+        /// </summary>
         protected class JSONPairContext : JSONBaseContext
         {
             public JSONPairContext(TJSONProtocol proto)
@@ -290,9 +290,9 @@ namespace Thrift.Protocol
             }
         }
 
-        ///<summary>
+        /// <summary>
         /// Holds up to one byte from the transport
-        ///</summary>
+        /// </summary>
         protected class LookaheadReader
         {
             protected TJSONProtocol proto;
@@ -305,10 +305,10 @@ namespace Thrift.Protocol
             private bool hasData;
             private byte[] data = new byte[1];
 
-            ///<summary>
+            /// <summary>
             /// Return and consume the next byte to be Read, either taking it from the
             /// data buffer if present or getting it from the transport otherwise.
-            ///</summary>
+            /// </summary>
             public byte Read()
             {
                 if (hasData)
@@ -322,10 +322,10 @@ namespace Thrift.Protocol
                 return data[0];
             }
 
-            ///<summary>
+            /// <summary>
             /// Return the next byte to be Read without consuming, filling the data
             /// buffer if it has not been filled alReady.
-            ///</summary>
+            /// </summary>
             public byte Peek()
             {
                 if (!hasData)
@@ -349,26 +349,26 @@ namespace Thrift.Protocol
         // Reader that manages a 1-byte buffer
         protected LookaheadReader reader;
 
-        ///<summary>
+        /// <summary>
         /// Push a new JSON context onto the stack.
-        ///</summary>
+        /// </summary>
         protected void PushContext(JSONBaseContext c)
         {
             contextStack.Push(context);
             context = c;
         }
 
-        ///<summary>
+        /// <summary>
         /// Pop the last JSON context off the stack
-        ///</summary>
+        /// </summary>
         protected void PopContext()
         {
             context = contextStack.Pop();
         }
 
-        ///<summary>
+        /// <summary>
         /// TJSONProtocol Constructor
-        ///</summary>
+        /// </summary>
         public TJSONProtocol(TTransport trans)
             : base(trans)
         {
@@ -379,11 +379,11 @@ namespace Thrift.Protocol
         // Temporary buffer used by several methods
         private byte[] tempBuffer = new byte[4];
 
-        ///<summary>
+        /// <summary>
         /// Read a byte that must match b[0]; otherwise an exception is thrown.
         /// Marked protected to avoid synthetic accessor in JSONListContext.Read
         /// and JSONPairContext.Read
-        ///</summary>
+        /// </summary>
         protected void ReadJSONSyntaxChar(byte[] b)
         {
             byte ch = reader.Read();
@@ -394,10 +394,10 @@ namespace Thrift.Protocol
             }
         }
 
-        ///<summary>
+        /// <summary>
         /// Convert a byte containing a hex char ('0'-'9' or 'a'-'f') into its
         /// corresponding hex value
-        ///</summary>
+        /// </summary>
         private static byte HexVal(byte ch)
         {
             if ((ch >= '0') && (ch <= '9'))
@@ -416,9 +416,9 @@ namespace Thrift.Protocol
             }
         }
 
-        ///<summary>
+        /// <summary>
         /// Convert a byte containing a hex value to its corresponding hex character
-        ///</summary>
+        /// </summary>
         private static byte HexChar(byte val)
         {
             val &= 0x0F;
@@ -433,9 +433,9 @@ namespace Thrift.Protocol
             }
         }
 
-        ///<summary>
+        /// <summary>
         /// Write the bytes in array buf as a JSON characters, escaping as needed
-        ///</summary>
+        /// </summary>
         private void WriteJSONString(byte[] b)
         {
             context.Write();
@@ -479,14 +479,14 @@ namespace Thrift.Protocol
             trans.Write(QUOTE);
         }
 
-        ///<summary>
+        /// <summary>
         /// Write out number as a JSON value. If the context dictates so, it will be
         /// wrapped in quotes to output as a JSON string.
-        ///</summary>
+        /// </summary>
         private void WriteJSONInteger(long num)
         {
             context.Write();
-            String str = num.ToString();
+            string str = num.ToString();
 
             bool escapeNum = context.EscapeNumbers();
             if (escapeNum)
@@ -498,14 +498,14 @@ namespace Thrift.Protocol
                 trans.Write(QUOTE);
         }
 
-        ///<summary>
+        /// <summary>
         /// Write out a double as a JSON value. If it is NaN or infinity or if the
         /// context dictates escaping, Write out as JSON string.
-        ///</summary>
+        /// </summary>
         private void WriteJSONDouble(double num)
         {
             context.Write();
-            String str = num.ToString("G17", CultureInfo.InvariantCulture);
+            string str = num.ToString("G17", CultureInfo.InvariantCulture);
             bool special = false;
 
             switch (str[0])
@@ -532,10 +532,10 @@ namespace Thrift.Protocol
             if (escapeNum)
                 trans.Write(QUOTE);
         }
-        ///<summary>
+        /// <summary>
         /// Write out contents of byte array b as a JSON string with base-64 encoded
         /// data
-        ///</summary>
+        /// </summary>
         private void WriteJSONBase64(byte[] b)
         {
             context.Write();
@@ -544,11 +544,6 @@ namespace Thrift.Protocol
             int len = b.Length;
             int off = 0;
 
-            // Ignore padding
-            int bound = len >= 2 ? len - 2 : 0;
-            for (int i = len - 1; i >= bound && b[i] == '='; --i) {
-                --len;
-            }
             while (len >= 3)
             {
                 // Encode 3 bytes at a time
@@ -703,7 +698,7 @@ namespace Thrift.Protocol
             WriteJSONDouble(dub);
         }
 
-        public override void WriteString(String str)
+        public override void WriteString(string str)
         {
             byte[] b = utf8Encoding.GetBytes(str);
             WriteJSONString(b);
@@ -718,10 +713,10 @@ namespace Thrift.Protocol
          * Reading methods.
          */
 
-        ///<summary>
+        /// <summary>
         /// Read in a JSON string, unescaping as appropriate.. Skip Reading from the
         /// context if skipContext is true.
-        ///</summary>
+        /// </summary>
         private byte[] ReadJSONString(bool skipContext)
         {
             MemoryStream buffer = new MemoryStream();
@@ -808,9 +803,9 @@ namespace Thrift.Protocol
             return buffer.ToArray();
         }
 
-        ///<summary>
+        /// <summary>
         /// Return true if the given byte could be a valid part of a JSON number.
-        ///</summary>
+        /// </summary>
         private bool IsJSONNumeric(byte b)
         {
             switch (b)
@@ -835,11 +830,11 @@ namespace Thrift.Protocol
             return false;
         }
 
-        ///<summary>
+        /// <summary>
         /// Read in a sequence of characters that are all valid in JSON numbers. Does
         /// not do a complete regex check to validate that this is actually a number.
-        ////</summary>
-        private String ReadJSONNumericChars()
+        /// </summary>
+        private string ReadJSONNumericChars()
         {
             StringBuilder strbld = new StringBuilder();
             while (true)
@@ -854,9 +849,9 @@ namespace Thrift.Protocol
             return strbld.ToString();
         }
 
-        ///<summary>
+        /// <summary>
         /// Read in a JSON number. If the context dictates, Read in enclosing quotes.
-        ///</summary>
+        /// </summary>
         private long ReadJSONInteger()
         {
             context.Read();
@@ -864,7 +859,7 @@ namespace Thrift.Protocol
             {
                 ReadJSONSyntaxChar(QUOTE);
             }
-            String str = ReadJSONNumericChars();
+            string str = ReadJSONNumericChars();
             if (context.EscapeNumbers())
             {
                 ReadJSONSyntaxChar(QUOTE);
@@ -880,17 +875,17 @@ namespace Thrift.Protocol
             }
         }
 
-        ///<summary>
+        /// <summary>
         /// Read in a JSON double value. Throw if the value is not wrapped in quotes
         /// when expected or if wrapped in quotes when not expected.
-        ///</summary>
+        /// </summary>
         private double ReadJSONDouble()
         {
             context.Read();
             if (reader.Peek() == QUOTE[0])
             {
                 byte[] arr = ReadJSONString(true);
-                double dub = Double.Parse(utf8Encoding.GetString(arr,0,arr.Length), CultureInfo.InvariantCulture);
+                double dub = Double.Parse(utf8Encoding.GetString(arr, 0, arr.Length), CultureInfo.InvariantCulture);
 
                 if (!context.EscapeNumbers() && !Double.IsNaN(dub) &&
                     !Double.IsInfinity(dub))
@@ -920,9 +915,9 @@ namespace Thrift.Protocol
             }
         }
 
-        //<summary>
+        /// <summary>
         /// Read in a JSON string containing base-64 encoded data and decode it.
-        ///</summary>
+        /// </summary>
         private byte[] ReadJSONBase64()
         {
             byte[] b = ReadJSONString(false);
@@ -994,7 +989,7 @@ namespace Thrift.Protocol
             }
 
             var buf = ReadJSONString(false);
-            message.Name = utf8Encoding.GetString(buf,0,buf.Length);
+            message.Name = utf8Encoding.GetString(buf, 0, buf.Length);
             message.Type = (TMessageType)ReadJSONInteger();
             message.SeqID = (int)ReadJSONInteger();
             return message;
@@ -1113,10 +1108,10 @@ namespace Thrift.Protocol
             return ReadJSONDouble();
         }
 
-        public override String ReadString()
+        public override string ReadString()
         {
             var buf = ReadJSONString(false);
-            return utf8Encoding.GetString(buf,0,buf.Length);
+            return utf8Encoding.GetString(buf, 0, buf.Length);
         }
 
         public override byte[] ReadBinary()

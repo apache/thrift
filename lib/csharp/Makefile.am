@@ -17,9 +17,9 @@
 # under the License.
 #
 
-SUBDIRS = . test/ThriftTest
+SUBDIRS = . test/Multiplex
 
-THRIFTCODE= \
+THRIFTCODE = \
             src/Collections/THashSet.cs \
             src/Collections/TCollections.cs \
             src/Properties/AssemblyInfo.cs \
@@ -52,6 +52,7 @@ THRIFTCODE= \
             src/Transport/TBufferedTransport.cs \
             src/Transport/TTransport.cs \
             src/Transport/TSocket.cs \
+            src/Transport/TSocketVersionizer.cs \
             src/Transport/TTransportException.cs \
             src/Transport/TStreamTransport.cs \
             src/Transport/TFramedTransport.cs \
@@ -74,40 +75,37 @@ THRIFTCODE= \
             src/TApplicationException.cs
 
 if MONO_MCS
-CSC=mcs
+export CSC = mcs
 else
-CSC=gmcs
+export CSC = gmcs
 endif
 
 if NET_2_0
-MONO_DEFINES=/d:NET_2_0
+export CSC_DEFINES = -d:NET_2_0
 endif
 
-all-local: Thrift.dll
+all-local: Thrift.dll Thrift.45.dll
 
 Thrift.dll: $(THRIFTCODE)
-	$(CSC) $(THRIFTCODE) /out:Thrift.dll /target:library /reference:System.Web $(MONO_DEFINES)
+	$(CSC) $(CSC_DEFINES) -out:$@ -target:library -reference:System.Web $(THRIFTCODE)
+
+Thrift.45.dll: $(THRIFTCODE)
+	$(CSC) $(CSC_DEFINES) -out:$@ -target:library -reference:System.Web $(THRIFTCODE)
 
 clean-local:
-	$(RM) Thrift.dll
-
-precross: all-local
-	$(MAKE) -C test/ThriftTest precross
-
-# run csharp tests?
-# check:
-# 	cd test/ThriftTest && ./maketest.sh
-# 	cd test/Multiplex && ./maketest.sh
+	$(RM) Thrift.dll  \
+	$(RM) Thrift.45.dll
 
 EXTRA_DIST = \
-             $(THRIFTCODE) \
-             ThriftMSBuildTask \
-             src/Thrift.csproj \
-             src/Thrift.45.csproj \
-             src/Thrift.sln \
-             src/Transport/TSilverlightSocket.cs \
-             src/Transport/THttpTaskAsyncHandler.cs \
-             src/TAsyncProcessor.cs \
-             test \
-             coding_standards.md \
-             README.md
+	$(THRIFTCODE) \
+	ThriftMSBuildTask \
+	src/Thrift.csproj \
+	src/Thrift.45.csproj \
+	src/Thrift.sln \
+	src/Net35/ExtensionsNet35.cs \
+	src/Transport/TSilverlightSocket.cs \
+	src/Transport/THttpTaskAsyncHandler.cs \
+	src/TAsyncProcessor.cs \
+	test \
+	coding_standards.md \
+	README.md

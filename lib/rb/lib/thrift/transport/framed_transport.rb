@@ -99,6 +99,10 @@ module Thrift
       @wbuf = Bytes.empty_byte_buffer
     end
 
+    def to_s
+      "framed(#{@transport.to_s})"
+    end
+
     private
 
     def read_frame
@@ -112,6 +116,10 @@ module Thrift
   class FramedTransportFactory < BaseTransportFactory
     def get_transport(transport)
       return FramedTransport.new(transport)
+    end
+    
+    def to_s
+      "framed"
     end
   end
 end

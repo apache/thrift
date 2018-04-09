@@ -17,7 +17,6 @@
  * under the License.
  */
 
-#include <assert.h>
 #include <netdb.h>
 #include <stdlib.h>
 #include <stdio.h>

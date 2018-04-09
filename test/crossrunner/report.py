@@ -104,7 +104,7 @@ class TestReporter(object):
 
     def _print_bar(self, out=None):
         print(
-            '==========================================================================',
+            '===============================================================================',
             file=(out or self.out))
 
     def _print_exec_time(self):
@@ -157,9 +157,14 @@ class ExecReporter(TestReporter):
         ])),
         'client': list(map(re.compile, [
             '[Cc]onnection refused',
-            'Could not connect to localhost',
+            'Could not connect to',
+            'Could not open UNIX ',       # domain socket (rb)
             'ECONNREFUSED',
+            'econnrefused',               # erl
+            'CONNECTION-REFUSED-ERROR',   # cl
+            'connect ENOENT',             # nodejs domain socket
             'No such file or directory',  # domain socket
+            'Sockets.TcpClient.Connect',  # csharp
         ])),
     }
 
@@ -174,6 +179,7 @@ class ExecReporter(TestReporter):
             def match(line):
                 for expr in exprs:
                     if expr.search(line):
+                        self._log.info("maybe false positive: %s" % line)
                         return True
 
             with logfile_open(self.logpath, 'r') as fp:
@@ -204,7 +210,7 @@ class ExecReporter(TestReporter):
     def _print_footer(self, returncode=None):
         self._print_bar()
         if returncode is not None:
-            print('Return code: %d' % returncode, file=self.out)
+            print('Return code: %d (negative values indicate kill by signal)' % returncode, file=self.out)
         else:
             print('Process is killed.', file=self.out)
         self._print_exec_time()
@@ -259,14 +265,15 @@ class SummaryReporter(TestReporter):
         name = '%s-%s' % (test.server.name, test.client.name)
         trans = '%s-%s' % (test.transport, test.socket)
         if not with_result:
-            return '{:24s}{:13s}{:25s}'.format(name[:23], test.protocol[:12], trans[:24])
+            return '{:24s}{:18s}{:25s}'.format(name[:23], test.protocol[:17], trans[:24])
         else:
-            return '{:24s}{:13s}{:25s}{:s}\n'.format(name[:23], test.protocol[:12], trans[:24], self._result_string(test))
+            return '{:24s}{:18s}{:25s}{:s}\n'.format(name[:23], test.protocol[:17],
+                                                     trans[:24], self._result_string(test))
 
     def _print_test_header(self):
         self._print_bar()
         print(
-            '{:24s}{:13s}{:25s}{:s}'.format('server-client:', 'protocol:', 'transport:', 'result:'),
+            '{:24s}{:18s}{:25s}{:s}'.format('server-client:', 'protocol:', 'transport:', 'result:'),
             file=self.out)
 
     def _print_header(self):
@@ -332,8 +339,8 @@ class SummaryReporter(TestReporter):
             '# then browse:\n',
             '# \thttp://localhost:%d/%s/\n' % (8001, self._testdir_rel),
             'Full log for each test is here:\n',
-            '\ttest/log/client_server_protocol_transport_client.log\n',
-            '\ttest/log/client_server_protocol_transport_server.log\n',
+            '\ttest/log/server_client_protocol_transport_client.log\n',
+            '\ttest/log/server_client_protocol_transport_server.log\n',
             '%d failed of %d tests in total.\n' % (fail_count, len(self._tests)),
         ])
         self._print_exec_time()

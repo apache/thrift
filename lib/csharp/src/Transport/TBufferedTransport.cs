@@ -76,19 +76,23 @@ namespace Thrift.Transport
             ValidateBufferArgs(buf, off, len);
             if (!IsOpen)
                 throw new TTransportException(TTransportException.ExceptionType.NotOpen);
+
             if (inputBuffer.Capacity < bufSize)
                 inputBuffer.Capacity = bufSize;
-            int got = inputBuffer.Read(buf, off, len);
-            if (got > 0)
-                return got;
 
-            inputBuffer.Seek(0, SeekOrigin.Begin);
-            inputBuffer.SetLength(inputBuffer.Capacity);
-            int filled = transport.Read(inputBuffer.GetBuffer(), 0, (int)inputBuffer.Length);
-            inputBuffer.SetLength(filled);
-            if (filled == 0)
-                return 0;
-            return Read(buf, off, len);
+            while (true)
+            { 
+                int got = inputBuffer.Read(buf, off, len);
+                if (got > 0)
+                    return got;
+
+                inputBuffer.Seek(0, SeekOrigin.Begin);
+                inputBuffer.SetLength(inputBuffer.Capacity);
+                int filled = transport.Read(inputBuffer.GetBuffer(), 0, (int)inputBuffer.Length);
+                inputBuffer.SetLength(filled);
+                if (filled == 0)
+                    return 0;
+            }
         }
 
         public override void Write(byte[] buf, int off, int len)
@@ -138,14 +142,14 @@ namespace Thrift.Transport
             transport.Flush();
         }
 
-        private void CheckNotDisposed()
+        protected void CheckNotDisposed()
         {
             if (_IsDisposed)
                 throw new ObjectDisposedException("TBufferedTransport");
         }
 
         #region " IDisposable Support "
-        private bool _IsDisposed;
+        protected bool _IsDisposed { get; private set; }
 
         // IDisposable
         protected override void Dispose(bool disposing)
@@ -154,8 +158,12 @@ namespace Thrift.Transport
             {
                 if (disposing)
                 {
-                    inputBuffer.Dispose();
-                    outputBuffer.Dispose();
+                    if (inputBuffer != null)
+                        inputBuffer.Dispose();
+                    if (outputBuffer != null)
+                        outputBuffer.Dispose();
+                    if (transport != null)
+                        transport.Dispose();
                 }
             }
             _IsDisposed = true;

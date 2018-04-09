@@ -32,20 +32,22 @@
   },
   "main": "./lib/nodejs/lib/thrift",
   "engines": {
-    "node": ">= 0.2.4"
+    "node": ">= 4.1.0"
   },
   "dependencies": {
-    "node-int64": "~0.3.0",
-    "q": "1.0.x",
-    "ws": "~0.4.32"
+    "node-int64": "^0.4.0",
+    "q": "^1.5.0",
+    "ws": "^5.0.0"
   },
   "devDependencies": {
-    "buffer-equals": "^1.0.3",
-    "commander": "2.1.x",
-    "connect": "2.7.x",
-    "istanbul": "^0.3.5",
-    "run-browser": "^2.0.1",
-    "tape": "~3.5.0"
+    "buffer-equals": "^1.0.4",
+    "commander": "^2.14.1",
+    "connect": "^3.6.6",
+    "istanbul": "^0.4.5",
+    "jsdoc": "^3.5.5",
+    "phantomjs-prebuilt": "^2.1.16",
+    "tape": "^4.9.0",
+    "utf-8-validate": "^4.0.0"
   },
   "scripts": {
     "cover": "lib/nodejs/test/testAll.sh COVER",

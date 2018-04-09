@@ -37,6 +37,7 @@ namespace delphi Thrift.Test
 namespace cocoa ThriftTest
 namespace lua ThriftTest
 namespace xsd test (uri = 'http://thrift.apache.org/ns/ThriftTest')
+namespace netcore ThriftTest
 
 // Presence of namespaces and sub-namespaces for which there is
 // no generator should compile with warnings only
@@ -113,6 +114,14 @@ struct CrazyNesting {
   // Do not insert line break as test/go/Makefile.am is removing this line with pattern match
   3: required list<map<set<i32> (python.immutable = ""), map<i32,set<list<map<Insanity,string>(python.immutable = "")> (python.immutable = "")>>>> list_field,
   4: binary binary_field
+}
+
+union SomeUnion {
+  1: map<Numberz, UserId> map_thing,
+  2: string string_thing,
+  3: i32 i32_thing,
+  4: Xtruct3 xtruct_thing,
+  5: Insanity insanity_thing
 }
 
 exception Xception {
@@ -312,13 +321,12 @@ service ThriftTest
 
 service SecondService
 {
-  void blahBlah()
   /**
    * Prints 'testString("%s")' with thing as '%s'
    * @param string thing - the string to print
    * @return string - returns the string 'thing'
    */
-  string       secondtestString(1: string thing),
+  string secondtestString(1: string thing)
 }
 
 struct VersioningTestV1 {

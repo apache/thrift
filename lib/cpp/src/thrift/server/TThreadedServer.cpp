@@ -17,6 +17,8 @@
  * under the License.
  */
 
+#include <string>
+#include <thrift/stdcxx.h>
 #include <thrift/concurrency/PlatformThreadFactory.h>
 #include <thrift/server/TThreadedServer.h>
 
@@ -24,17 +26,18 @@ namespace apache {
 namespace thrift {
 namespace server {
 
+using apache::thrift::concurrency::Runnable;
 using apache::thrift::concurrency::Synchronized;
 using apache::thrift::concurrency::Thread;
 using apache::thrift::concurrency::ThreadFactory;
 using apache::thrift::protocol::TProtocol;
 using apache::thrift::protocol::TProtocolFactory;
+using apache::thrift::stdcxx::make_shared;
+using apache::thrift::stdcxx::shared_ptr;
 using apache::thrift::transport::TServerTransport;
 using apache::thrift::transport::TTransport;
 using apache::thrift::transport::TTransportException;
 using apache::thrift::transport::TTransportFactory;
-using boost::shared_ptr;
-using std::string;
 
 TThreadedServer::TThreadedServer(const shared_ptr<TProcessorFactory>& processorFactory,
                                  const shared_ptr<TServerTransport>& serverTransport,
@@ -92,29 +95,57 @@ TThreadedServer::~TThreadedServer() {
 void TThreadedServer::serve() {
   TServerFramework::serve();
 
-  // Drain all clients - no more will arrive
-  try {
-    Synchronized s(clientsMonitor_);
-    while (getConcurrentClientCount() > 0) {
-      clientsMonitor_.wait();
-    }
-  } catch (TException& tx) {
-    string errStr = string("TThreadedServer: Exception joining workers: ") + tx.what();
-    GlobalOutput(errStr.c_str());
+  // Ensure post-condition of no active clients
+  Synchronized s(clientMonitor_);
+  while (!activeClientMap_.empty()) {
+    clientMonitor_.wait();
+  }
+
+  drainDeadClients();
+}
+
+void TThreadedServer::drainDeadClients() {
+  // we're in a monitor here
+  while (!deadClientMap_.empty()) {
+    ClientMap::iterator it = deadClientMap_.begin();
+    it->second->join();
+    deadClientMap_.erase(it);
   }
 }
 
 void TThreadedServer::onClientConnected(const shared_ptr<TConnectedClient>& pClient) {
-  threadFactory_->newThread(pClient)->start();
+  Synchronized sync(clientMonitor_);
+  shared_ptr<TConnectedClientRunner> pRunnable = make_shared<TConnectedClientRunner>(pClient);
+  shared_ptr<Thread> pThread = threadFactory_->newThread(pRunnable);
+  pRunnable->thread(pThread);
+  activeClientMap_.insert(ClientMap::value_type(pClient.get(), pThread));
+  pThread->start();
 }
 
 void TThreadedServer::onClientDisconnected(TConnectedClient* pClient) {
-  THRIFT_UNUSED_VARIABLE(pClient);
-  Synchronized s(clientsMonitor_);
-  if (getConcurrentClientCount() == 0) {
-    clientsMonitor_.notify();
+  Synchronized sync(clientMonitor_);
+  drainDeadClients(); // use the outgoing thread to do some maintenance on our dead client backlog
+  ClientMap::iterator it = activeClientMap_.find(pClient);
+  ClientMap::iterator end = it;
+  deadClientMap_.insert(it, ++end);
+  activeClientMap_.erase(it);
+  if (activeClientMap_.empty()) {
+    clientMonitor_.notify();
   }
 }
+
+TThreadedServer::TConnectedClientRunner::TConnectedClientRunner(const shared_ptr<TConnectedClient>& pClient)
+  : pClient_(pClient) {
+}
+
+TThreadedServer::TConnectedClientRunner::~TConnectedClientRunner() {
+}
+
+void TThreadedServer::TConnectedClientRunner::run() /* override */ {
+  pClient_->run();  // Run the client
+  pClient_.reset(); // The client is done - release it here rather than in the destructor for safety
+}
+
 }
 }
 } // apache::thrift::server

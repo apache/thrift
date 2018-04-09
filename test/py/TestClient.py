@@ -32,8 +32,18 @@ SCRIPT_DIR = os.path.abspath(os.path.dirname(__file__))
 
 class AbstractTest(unittest.TestCase):
     def setUp(self):
-        if options.http_path:
-            self.transport = THttpClient.THttpClient(options.host, port=options.port, path=options.http_path)
+        if options.trans == 'http':
+            uri = '{0}://{1}:{2}{3}'.format(('https' if options.ssl else 'http'),
+                                            options.host,
+                                            options.port,
+                                            (options.http_path if options.http_path else '/'))
+            if options.ssl:
+                __cafile = os.path.join(os.path.dirname(SCRIPT_DIR), "keys", "CA.pem")
+                __certfile = os.path.join(os.path.dirname(SCRIPT_DIR), "keys", "client.crt")
+                __keyfile = os.path.join(os.path.dirname(SCRIPT_DIR), "keys", "client.key")
+                self.transport = THttpClient.THttpClient(uri, cafile=__cafile, cert_file=__certfile, key_file=__keyfile)
+            else:
+                self.transport = THttpClient.THttpClient(uri)
         else:
             if options.ssl:
                 from thrift.transport import TSSLSocket
@@ -301,6 +311,7 @@ class OwnArgsTestProgram(unittest.TestProgram):
             self.testNames = ([self.defaultTest])
         self.createTests()
 
+
 if __name__ == "__main__":
     parser = OptionParser()
     parser.add_option('--libpydir', type='string', dest='libpydir',
@@ -324,15 +335,18 @@ if __name__ == "__main__":
                       dest="verbose", const=0,
                       help="minimal output")
     parser.add_option('--protocol', dest="proto", type="string",
-                      help="protocol to use, one of: accel, binary, compact, json")
+                      help="protocol to use, one of: accel, accelc, binary, compact, json")
     parser.add_option('--transport', dest="trans", type="string",
-                      help="transport to use, one of: buffered, framed")
+                      help="transport to use, one of: buffered, framed, http")
     parser.set_defaults(framed=False, http_path=None, verbose=1, host='localhost', port=9090, proto='binary')
     options, args = parser.parse_args()
 
     if options.genpydir:
         sys.path.insert(0, os.path.join(SCRIPT_DIR, options.genpydir))
     sys.path.insert(0, local_libpath())
+
+    if options.http_path:
+        options.trans = 'http'
 
     from ThriftTest import ThriftTest
     from ThriftTest.ttypes import Xtruct, Xtruct2, Numberz, Xception, Xception2

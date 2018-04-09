@@ -20,8 +20,6 @@
 # Contains the thrift specific LINK_AGAINST_THRIFT_LIBRARY
 include(ThriftMacros)
 
-set(Boost_USE_STATIC_LIBS ON)
-find_package(Boost 1.53.0 REQUIRED COMPONENTS program_options system filesystem)
 include_directories(SYSTEM "${Boost_INCLUDE_DIRS}")
 
 find_package(OpenSSL REQUIRED)
@@ -35,8 +33,8 @@ include_directories("${CMAKE_CURRENT_BINARY_DIR}")
 include_directories("${CMAKE_CURRENT_BINARY_DIR}/gen-cpp")
 include_directories("${PROJECT_SOURCE_DIR}/lib/cpp/src")
 
-
 set(crosstestgencpp_SOURCES
+    gen-cpp/SecondService.cpp
     gen-cpp/ThriftTest.cpp
     gen-cpp/ThriftTest_types.cpp
     gen-cpp/ThriftTest_constants.cpp
@@ -47,7 +45,7 @@ LINK_AGAINST_THRIFT_LIBRARY(crosstestgencpp thrift)
 
 set(crossstressgencpp_SOURCES
     gen-cpp/Service.cpp
-    #gen-cpp/StressTest_types.cpp #basically empty, so omitting
+    gen-cpp/StressTest_types.cpp
     gen-cpp/StressTest_constants.cpp
 )
 add_library(crossstressgencpp STATIC ${crossstressgencpp_SOURCES})
@@ -82,7 +80,7 @@ add_test(NAME StressTestNonBlocking COMMAND StressTestNonBlocking)
 # Common thrift code generation rules
 #
 
-add_custom_command(OUTPUT gen-cpp/ThriftTest.cpp gen-cpp/ThriftTest_types.cpp gen-cpp/ThriftTest_constants.cpp
+add_custom_command(OUTPUT gen-cpp/SecondService.cpp gen-cpp/SecondService.h gen-cpp/ThriftTest.cpp gen-cpp/ThriftTest.h gen-cpp/ThriftTest_types.cpp gen-cpp/ThriftTest_constants.cpp
     COMMAND ${THRIFT_COMPILER} --gen cpp:templates,cob_style -r ${PROJECT_SOURCE_DIR}/test/ThriftTest.thrift
 )
 
