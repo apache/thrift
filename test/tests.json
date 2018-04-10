@@ -250,6 +250,13 @@
         "--verbose",
         "--host=localhost",
         "--genpydir=gen-py"
+      ],
+      "protocols": [
+        "multi",
+        "multi:multia",
+        "multic",
+        "multic:multiac",
+        "multij"
       ]
     },
     "transports": [
@@ -289,6 +296,13 @@
         "TestClient.py",
         "--host=localhost",
         "--genpydir=gen-py"
+      ],
+      "protocols": [
+        "multi",
+        "multi:multia",
+        "multic",
+        "multic:multiac",
+        "multij"
       ]
     },
     "transports": [

@@ -31,11 +31,11 @@ class TMultiplexedProcessor(TProcessor):
     def process(self, iprot, oprot):
         (name, type, seqid) = iprot.readMessageBegin()
         if type != TMessageType.CALL and type != TMessageType.ONEWAY:
-            raise TException("TMultiplex protocol only supports CALL & ONEWAY")
+            raise TException("TMultiplexed protocol only supports CALL & ONEWAY")
 
         index = name.find(TMultiplexedProtocol.SEPARATOR)
         if index < 0:
-            raise TException("Service name not found in message name: " + name + ". Did you forget to use TMultiplexProtocol in your client?")
+            raise TException("Service name not found in message name: " + name + ". Did you forget to use TMultiplexedProtocol in your client?")
 
         serviceName = name[0:index]
         call = name[index + len(TMultiplexedProtocol.SEPARATOR):]
