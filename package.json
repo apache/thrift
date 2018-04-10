@@ -46,11 +46,13 @@
     "istanbul": "^0.4.5",
     "jsdoc": "^3.5.5",
     "phantomjs-prebuilt": "^2.1.16",
+    "prettier": "1.11.1",
     "tape": "^4.9.0",
     "utf-8-validate": "^4.0.0"
   },
   "scripts": {
     "cover": "lib/nodejs/test/testAll.sh COVER",
-    "test": "lib/nodejs/test/testAll.sh"
+    "test": "lib/nodejs/test/testAll.sh",
+    "prettier": "prettier --write '**/*.js'"
   }
 }
