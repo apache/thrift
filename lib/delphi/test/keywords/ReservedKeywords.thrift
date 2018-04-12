@@ -18,7 +18,9 @@
  */
 
 // make sure generated code does not produce name collisions with predefined keywords
+namespace delphi System
 
+include "ReservedIncluded.thrift"
 
 
 typedef i32 Cardinal
@@ -98,3 +100,39 @@ struct Struct_binary {
 }
 
 
+typedef i32 IProtocol 
+typedef i32 ITransport
+typedef i32 IFace
+typedef i32 IAsync
+typedef i32 System
+typedef i32 SysUtils
+typedef i32 Generics
+typedef i32 Thrift
+
+struct Struct_Thrift_Names {
+  1: IProtocol   IProtocol
+  2: ITransport  ITransport
+  3: IFace       IFace
+  4: IAsync      IAsync
+  5: System      System
+  6: SysUtils    SysUtils
+  7: Generics    Generics
+  8: Thrift      Thrift
+}
+
+
+enum Thrift4554_Enum {
+  Foo = 0,
+  Bar = 1,
+  Baz = 2,
+}
+
+struct Thrift4554_Struct {
+  1 : optional double MinValue
+  2 : optional double MaxValue
+  3 : optional bool Integer  // causes issue
+  4 : optional Thrift4554_Enum Foo
+}
+
+
+// EOF
