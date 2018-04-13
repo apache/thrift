@@ -34,7 +34,6 @@ import (
 type TSimpleServer struct {
 	closed int32
 	wg     sync.WaitGroup
-	mu     sync.Mutex
 
 	processorFactory       TProcessorFactory
 	serverTransport        TServerTransport
@@ -127,8 +126,6 @@ func (p *TSimpleServer) Listen() error {
 
 func (p *TSimpleServer) innerAccept() (int32, error) {
 	client, err := p.serverTransport.Accept()
-	p.mu.Lock()
-	defer p.mu.Unlock()
 	closed := atomic.LoadInt32(&p.closed)
 	if closed != 0 {
 		return closed, nil
@@ -139,10 +136,10 @@ func (p *TSimpleServer) innerAccept() (int32, error) {
 	if client != nil {
 		p.wg.Add(1)
 		go func() {
-			defer p.wg.Done()
 			if err := p.processRequests(client); err != nil {
 				log.Println("error processing request:", err)
 			}
+			p.wg.Done()
 		}()
 	}
 	return 0, nil
@@ -170,12 +167,9 @@ func (p *TSimpleServer) Serve() error {
 }
 
 func (p *TSimpleServer) Stop() error {
-	p.mu.Lock()
-	defer p.mu.Unlock()
-	if atomic.LoadInt32(&p.closed) != 0 {
+	if swapped := atomic.CompareAndSwapInt32(&p.closed, 0, 1); !swapped {
 		return nil
 	}
-	atomic.StoreInt32(&p.closed, 1)
 	p.serverTransport.Interrupt()
 	p.wg.Wait()
 	return nil
