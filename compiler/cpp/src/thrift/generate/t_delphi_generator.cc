@@ -642,10 +642,21 @@ void t_delphi_generator::create_keywords() {
 
   // reserved/predefined variables and types (lowercase!)
   delphi_keywords["result"] = 1;
+  delphi_keywords["system"] = 1;
+  delphi_keywords["sysutils"] = 1;
+  delphi_keywords["thrift"] = 1;
   delphi_keywords["tbytes"] = 1;
   delphi_keywords["tobject"] = 1;
   delphi_keywords["tclass"] = 1;
   delphi_keywords["tinterfacedobject"] = 1;
+  delphi_keywords["ansistring"] = 1;
+  delphi_keywords["string"] = 1;
+  delphi_keywords["boolean"] = 1;
+  delphi_keywords["shortint"] = 1;
+  delphi_keywords["smallint"] = 1;
+  delphi_keywords["integer"] = 1;
+  delphi_keywords["int64"] = 1;
+  delphi_keywords["double"] = 1;
 
   delphi_reserved_method["create"] = 1;
   delphi_reserved_method["free"] = 1;
@@ -752,7 +763,7 @@ void t_delphi_generator::init_generator() {
     unitname = includes[i]->get_name();
     nsname = includes[i]->get_namespace("delphi");
     if ("" != nsname) {
-      unitname = nsname;
+      unitname = normalize_name(nsname);
     }
     add_delphi_uses_list(unitname);
   }
@@ -772,6 +783,8 @@ void t_delphi_generator::close_generator() {
     }
   }
 
+  unitname = normalize_name(unitname);
+  
   std::string f_name = get_out_dir() + "/" + unitname + ".pas";
   std::ofstream f_all;
 
@@ -1702,7 +1715,7 @@ void t_delphi_generator::generate_delphi_struct_definition(ostream& out,
       for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
         if ((*m_iter)->get_req() != t_field::T_REQUIRED) {
           isset_name = "__isset_" + prop_name(*m_iter, is_exception);
-          indent(out) << "property " << isset_name << ": Boolean read Get" << isset_name << ";"
+          indent(out) << "property " << isset_name << ": System.Boolean read Get" << isset_name << ";"
                       << endl;
         }
       }
@@ -1751,7 +1764,7 @@ void t_delphi_generator::generate_delphi_struct_definition(ostream& out,
     for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
       if ((*m_iter)->get_req() != t_field::T_REQUIRED) {
         isset_name = "F__isset_" + prop_name(*m_iter, is_exception);
-        indent(out) << isset_name << ": Boolean;" << endl;
+        indent(out) << isset_name << ": System.Boolean;" << endl;
       }
     }
   }
@@ -1774,7 +1787,7 @@ void t_delphi_generator::generate_delphi_struct_definition(ostream& out,
     for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
       if ((*m_iter)->get_req() != t_field::T_REQUIRED) {
         isset_name = "__isset_" + prop_name(*m_iter, is_exception);
-        indent(out) << "function Get" << isset_name << ": Boolean;" << endl;
+        indent(out) << "function Get" << isset_name << ": System.Boolean;" << endl;
       }
     }
   }
@@ -1831,7 +1844,7 @@ void t_delphi_generator::generate_delphi_struct_definition(ostream& out,
     for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
       if ((*m_iter)->get_req() != t_field::T_REQUIRED) {
         isset_name = "__isset_" + prop_name(*m_iter, is_exception);
-        indent(out) << "property " << isset_name << ": Boolean read Get" << isset_name << ";"
+        indent(out) << "property " << isset_name << ": System.Boolean read Get" << isset_name << ";"
                     << endl;
       }
     }
@@ -1959,7 +1972,7 @@ void t_delphi_generator::generate_service_client(t_service* tservice) {
     indent_up();
     indent(s_service) << "iprot_: IProtocol;" << endl;
     indent(s_service) << "oprot_: IProtocol;" << endl;
-    indent(s_service) << "seqid_: Integer;" << endl;
+    indent(s_service) << "seqid_: System.Integer;" << endl;
     indent_down();
 
     indent(s_service) << "public" << endl;
@@ -2020,7 +2033,7 @@ void t_delphi_generator::generate_service_client(t_service* tservice) {
       if( for_async) {
         if (is_void(ttype)) {
            // Delphi forces us to specify a type with IFuture<T>, so we use Integer=0 for void methods
-          indent_impl(s_service_impl) << "result := TTask.Future<Integer>(function: Integer" << endl;
+          indent_impl(s_service_impl) << "result := TTask.Future<System.Integer>(function: System.Integer" << endl;
         } else {
           string rettype = type_name(ttype, false, true, false, true);
           indent_impl(s_service_impl) << "result := TTask.Future<" << rettype << ">(function: " << rettype << endl;
@@ -2262,7 +2275,7 @@ void t_delphi_generator::generate_service_server(t_service* tservice) {
     indent_up();
     indent(s_service) << "type" << endl;
     indent_up();
-    indent(s_service) << "TProcessFunction = reference to procedure( seqid: Integer; const iprot: "
+    indent(s_service) << "TProcessFunction = reference to procedure( seqid: System.Integer; const iprot: "
                          "IProtocol; const oprot: IProtocol"
                       << (events_ ? "; const events : IRequestEvents" : "") << ");" << endl;
     indent_down();
@@ -2277,15 +2290,15 @@ void t_delphi_generator::generate_service_server(t_service* tservice) {
   indent_up();
   if (extends.empty()) {
     indent(s_service) << "function Process( const iprot: IProtocol; const oprot: IProtocol; const "
-                         "events : IProcessorEvents): Boolean;" << endl;
+                         "events : IProcessorEvents): System.Boolean;" << endl;
   } else {
     indent(s_service) << "function Process( const iprot: IProtocol; const oprot: IProtocol; const "
-                         "events : IProcessorEvents): Boolean; reintroduce;" << endl;
+                         "events : IProcessorEvents): System.Boolean; reintroduce;" << endl;
   }
 
   indent_impl(s_service_impl) << "function " << full_cls << ".Process( const iprot: IProtocol; "
                                                             "const oprot: IProtocol; const events "
-                                                            ": IProcessorEvents): Boolean;" << endl;
+                                                            ": IProcessorEvents): System.Boolean;" << endl;
   ;
   indent_impl(s_service_impl) << "var" << endl;
   indent_up_impl();
@@ -2411,7 +2424,7 @@ void t_delphi_generator::generate_process_function(t_service* tservice, t_functi
   string result_intfnm = normalize_clsnm(org_resultname, "I");
 
   indent(s_service) << "procedure " << funcname
-                    << "_Process( seqid: Integer; const iprot: IProtocol; const oprot: IProtocol"
+                    << "_Process( seqid: System.Integer; const iprot: IProtocol; const oprot: IProtocol"
                     << (events_ ? "; const events : IRequestEvents" : "") << ");" << endl;
 
   if (tfunction->is_oneway()) {
@@ -2422,7 +2435,7 @@ void t_delphi_generator::generate_process_function(t_service* tservice, t_functi
 
   indent_impl(s_service_impl)
       << "procedure " << full_cls << "." << funcname
-      << "_Process( seqid: Integer; const iprot: IProtocol; const oprot: IProtocol"
+      << "_Process( seqid: System.Integer; const iprot: IProtocol; const oprot: IProtocol"
       << (events_ ? "; const events : IRequestEvents" : "") << ");" << endl;
   indent_impl(s_service_impl) << "var" << endl;
   indent_up_impl();
@@ -2682,7 +2695,7 @@ void t_delphi_generator::generate_deserialize_container(ostream& out,
   }
   local_vars << "  " << local_var << endl;
   counter = tmp("_i");
-  local_var = counter + ": Integer;";
+  local_var = counter + ": System.Integer;";
   local_vars << "  " << local_var << endl;
 
   indent_impl(out) << name << " := " << type_name(ttype, true) << ".Create;" << endl;
@@ -2830,7 +2843,7 @@ void t_delphi_generator::generate_serialize_field(ostream& out,
         throw "compiler error: no Delphi name for base type " + t_base_type::t_base_name(tbase);
       }
     } else if (type->is_enum()) {
-      out << "WriteI32(Integer(" << name << "));";
+      out << "WriteI32(System.Integer(" << name << "));";
     }
     out << endl;
   } else {
@@ -3141,25 +3154,25 @@ string t_delphi_generator::base_type_name(t_base_type* tbase) {
   case t_base_type::TYPE_STRING:
     if (tbase->is_binary()) {
       if (ansistr_binary_) {
-        return "AnsiString";
+        return "System.AnsiString";
       } else {
-        return "TBytes";
+        return "SysUtils.TBytes";
       }
     } else {
-      return "string";
+      return "System.string";
     }
   case t_base_type::TYPE_BOOL:
-    return "Boolean";
+    return "System.Boolean";
   case t_base_type::TYPE_I8:
-    return "ShortInt";
+    return "System.ShortInt";
   case t_base_type::TYPE_I16:
-    return "SmallInt";
+    return "System.SmallInt";
   case t_base_type::TYPE_I32:
-    return "Integer";
+    return "System.Integer";
   case t_base_type::TYPE_I64:
-    return "Int64";
+    return "System.Int64";
   case t_base_type::TYPE_DOUBLE:
-    return "Double";
+    return "System.Double";
   default:
     throw "compiler error: no Delphi name for base type "
         + t_base_type::t_base_name(tbase->get_base());
@@ -3394,7 +3407,7 @@ void t_delphi_generator::generate_delphi_property_reader_definition(ostream& out
 void t_delphi_generator::generate_delphi_isset_reader_definition(ostream& out,
                                                                  t_field* tfield,
                                                                  bool is_xception) {
-  indent(out) << "function Get__isset_" << prop_name(tfield, is_xception) << ": Boolean;" << endl;
+  indent(out) << "function Get__isset_" << prop_name(tfield, is_xception) << ": System.Boolean;" << endl;
 }
 
 void t_delphi_generator::generate_delphi_clear_union_value(ostream& out,
@@ -3500,7 +3513,7 @@ void t_delphi_generator::generate_delphi_isset_reader_impl(ostream& out,
 
   string isset_name = "__isset_" + prop_name(tfield, is_xception);
   indent_impl(out) << "function " << cls_prefix << name << "."
-                   << "Get" << isset_name << ": Boolean;" << endl;
+                   << "Get" << isset_name << ": System.Boolean;" << endl;
   indent_impl(out) << "begin" << endl;
   indent_up_impl();
   indent_impl(out) << "Result := " << fieldPrefix << isset_name << ";" << endl;
@@ -3572,7 +3585,7 @@ void t_delphi_generator::generate_delphi_struct_reader_impl(ostream& out,
   // local bools for required fields
   for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
     if ((*f_iter)->get_req() == t_field::T_REQUIRED) {
-      indent_impl(local_vars) << "_req_isset_" << prop_name(*f_iter, is_exception) << " : Boolean;"
+      indent_impl(local_vars) << "_req_isset_" << prop_name(*f_iter, is_exception) << " : System.Boolean;"
                               << endl;
       indent_impl(code_block) << "_req_isset_" << prop_name(*f_iter, is_exception) << " := FALSE;"
                               << endl;
@@ -3870,7 +3883,7 @@ void t_delphi_generator::generate_delphi_struct_tostring_impl(ostream& out,
   for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
     bool is_optional = ((*f_iter)->get_req() != t_field::T_REQUIRED);
     if (is_optional) {
-      indent_impl(out) << tmp_first << " : Boolean;" << endl;
+      indent_impl(out) << tmp_first << " : System.Boolean;" << endl;
       useFirstFlag = true;
     }
     break;
@@ -3929,7 +3942,7 @@ void t_delphi_generator::generate_delphi_struct_tostring_impl(ostream& out,
                        << ".Append('<null>') else " << tmp_sb << ".Append( Self."
                        << prop_name((*f_iter), is_exception) << ".ToString());" << endl;
     } else if (ttype->is_enum()) {
-      indent_impl(out) << tmp_sb << ".Append(Integer( Self." << prop_name((*f_iter), is_exception)
+      indent_impl(out) << tmp_sb << ".Append(System.Integer( Self." << prop_name((*f_iter), is_exception)
                        << "));" << endl;
     } else {
       indent_impl(out) << tmp_sb << ".Append( Self." << prop_name((*f_iter), is_exception) << ");"
