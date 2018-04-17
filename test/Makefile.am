@@ -155,6 +155,7 @@ EXTRA_DIST = \
 	StressTest.thrift \
 	ThriftTest.thrift \
 	TypedefTest.thrift \
+	UnsafeTypes.thrift \
 	known_failures_Linux.json \
 	test.py \
 	tests.json \
