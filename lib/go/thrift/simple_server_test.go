@@ -20,9 +20,9 @@
 package thrift
 
 import (
-	"testing"
 	"errors"
 	"runtime"
+	"testing"
 )
 
 type mockServerTransport struct {

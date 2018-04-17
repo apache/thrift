@@ -40,7 +40,7 @@ func runServer(transportFactory thrift.TTransportFactory, protocolFactory thrift
 	} else {
 		transport, err = thrift.NewTServerSocket(addr)
 	}
-	
+
 	if err != nil {
 		return err
 	}
