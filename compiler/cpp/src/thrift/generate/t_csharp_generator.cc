@@ -843,7 +843,7 @@ void t_csharp_generator::generate_csharp_struct_definition(ofstream& out,
         } else {
           out << ", ";
         }
-        out << type_name((*m_iter)->get_type()) << " " << (*m_iter)->get_name();
+        out << type_name((*m_iter)->get_type()) << " " << normalize_name((*m_iter)->get_name());
       }
     }
     out << ") : this() {" << endl;
@@ -851,7 +851,7 @@ void t_csharp_generator::generate_csharp_struct_definition(ofstream& out,
 
     for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
       if (field_is_required((*m_iter))) {
-        indent(out) << "this." << prop_name((*m_iter)) << " = " << (*m_iter)->get_name() << ";"
+        indent(out) << "this." << prop_name((*m_iter)) << " = " << normalize_name((*m_iter)->get_name()) << ";"
                     << endl;
       }
     }
