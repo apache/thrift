@@ -70,8 +70,7 @@ public:
     use_option_type_ = false;
     undated_generated_annotations_  = false;
     suppress_generated_annotations_ = false;
-    rethrow_uncaught_exceptions_ = false;
-    unsafe_binaries_ = false;
+    rethrow_unhandled_exceptions_ = false;
     for( iter = parsed_options.begin(); iter != parsed_options.end(); ++iter) {
       if( iter->first.compare("beans") == 0) {
         bean_style_ = true;
@@ -93,8 +92,8 @@ public:
         reuse_objects_ = true;
       } else if( iter->first.compare("option_type") == 0) {
         use_option_type_ = true;
-      } else if( iter->first.compare("rethrow_uncaught_exceptions") == 0) {
-        rethrow_uncaught_exceptions_ = true;
+      } else if( iter->first.compare("rethrow_unhandled_exceptions") == 0) {
+        rethrow_unhandled_exceptions_ = true;
       } else if( iter->first.compare("generated_annotations") == 0) {
         if( iter->second.compare("undated") == 0) {
           undated_generated_annotations_  = true;
@@ -103,8 +102,6 @@ public:
         } else {
           throw "unknown option java:" + iter->first + "=" + iter->second;
         }
-      } else if( iter->first.compare("unsafe_binaries") == 0) {
-        unsafe_binaries_ = true;
       } else {
         throw "unknown option java:" + iter->first;
       }
@@ -412,8 +409,7 @@ private:
   bool use_option_type_;
   bool undated_generated_annotations_;
   bool suppress_generated_annotations_;
-  bool rethrow_uncaught_exceptions_;
-  bool unsafe_binaries_;
+  bool rethrow_unhandled_exceptions_;
 
 };
 
@@ -937,12 +933,8 @@ void t_java_generator::generate_union_constructor(ofstream& out, t_struct* tstru
                   << "(byte[] value) {" << endl;
       indent(out) << "  " << type_name(tstruct) << " x = new " << type_name(tstruct) << "();"
                   << endl;
-      indent(out) << "  x.set" << get_cap_name((*m_iter)->get_name());
-      if(unsafe_binaries_) {
-        indent(out) << "(java.nio.ByteBuffer.wrap(value));" << endl;
-      }else{
-        indent(out) << "(java.nio.ByteBuffer.wrap(value.clone()));" << endl;
-      }
+      indent(out) << "  x.set" << get_cap_name((*m_iter)->get_name())
+                  << "(java.nio.ByteBuffer.wrap(value.clone()));" << endl;
       indent(out) << "  return x;" << endl;
       indent(out) << "}" << endl << endl;
     }
@@ -984,17 +976,9 @@ void t_java_generator::generate_union_getters_and_setters(ofstream& out, t_struc
                   << get_cap_name(field->get_name()) << "() {" << endl;
       indent(out) << "  if (getSetField() == _Fields." << constant_name(field->get_name()) << ") {"
                   << endl;
-
-      if(unsafe_binaries_){
-        indent(out)
-          << "    return (java.nio.ByteBuffer)getFieldValue();"
-          << endl;
-      }else{
-        indent(out)
+      indent(out)
           << "    return org.apache.thrift.TBaseHelper.copyBinary((java.nio.ByteBuffer)getFieldValue());"
           << endl;
-      }
-
       indent(out) << "  } else {" << endl;
       indent(out) << "    throw new java.lang.RuntimeException(\"Cannot get field '" << field->get_name()
                   << "' because union is currently set to \" + getFieldDesc(getSetField()).name);"
@@ -1028,14 +1012,8 @@ void t_java_generator::generate_union_getters_and_setters(ofstream& out, t_struc
       }
       indent(out) << "public void set" << get_cap_name(field->get_name()) << "(byte[] value) {"
                   << endl;
-      indent(out) << "  set" << get_cap_name(field->get_name());
-
-      if(unsafe_binaries_){
-        indent(out) << "(java.nio.ByteBuffer.wrap(value));" << endl;
-      }else{
-        indent(out) << "(java.nio.ByteBuffer.wrap(value.clone()));" << endl;
-      }
-
+      indent(out) << "  set" << get_cap_name(field->get_name())
+                  << "(java.nio.ByteBuffer.wrap(value.clone()));" << endl;
       indent(out) << "}" << endl;
 
       out << endl;
@@ -1565,15 +1543,9 @@ void t_java_generator::generate_java_struct_definition(ofstream& out,
       if ((*m_iter)->get_req() != t_field::T_OPTIONAL) {
         t_type* type = get_true_type((*m_iter)->get_type());
         if (type->is_binary()) {
-          if(unsafe_binaries_){
-            indent(out) << "this." << (*m_iter)->get_name()
-                        << " = " << (*m_iter)->get_name()
-                        << ";" << endl;
-          }else{
-            indent(out) << "this." << (*m_iter)->get_name()
-                        << " = org.apache.thrift.TBaseHelper.copyBinary(" << (*m_iter)->get_name()
-                        << ");" << endl;
-          }
+          indent(out) << "this." << (*m_iter)->get_name()
+                      << " = org.apache.thrift.TBaseHelper.copyBinary(" << (*m_iter)->get_name()
+                      << ");" << endl;
         } else {
           indent(out) << "this." << (*m_iter)->get_name() << " = " << (*m_iter)->get_name() << ";"
                       << endl;
@@ -2433,13 +2405,8 @@ void t_java_generator::generate_java_bean_boilerplate(ofstream& out, t_struct* t
 
       indent(out) << "public java.nio.ByteBuffer buffer" << get_cap_name("for") << cap_name << "() {"
                   << endl;
-      if(unsafe_binaries_){
-        indent(out) << "  return " << field_name << ";"
-                    << endl;
-      }else {
-        indent(out) << "  return org.apache.thrift.TBaseHelper.copyBinary(" << field_name << ");"
-                    << endl;
-      }
+      indent(out) << "  return org.apache.thrift.TBaseHelper.copyBinary(" << field_name << ");"
+                  << endl;
       indent(out) << "}" << endl << endl;
     } else {
       if (optional) {
@@ -2500,14 +2467,8 @@ void t_java_generator::generate_java_bean_boilerplate(ofstream& out, t_struct* t
         out << type_name(tstruct);
       }
       out << " set" << cap_name << "(byte[] " << field_name << ") {" << endl;
-      indent(out) << "  this." << field_name << " = " << field_name << " == null ? (java.nio.ByteBuffer)null";
-
-      if(unsafe_binaries_){
-        indent(out) << " : java.nio.ByteBuffer.wrap(" << field_name << ");" << endl;
-      }else{
-        indent(out) << " : java.nio.ByteBuffer.wrap(" << field_name << ".clone());" << endl;
-      }
-                 
+      indent(out) << "  this." << field_name << " = " << field_name << " == null ? (java.nio.ByteBuffer)null"
+                  << " : java.nio.ByteBuffer.wrap(" << field_name << ".clone());" << endl;
       if (!bean_style_) {
         indent(out) << "  return this;" << endl;
       }
@@ -2526,7 +2487,7 @@ void t_java_generator::generate_java_bean_boilerplate(ofstream& out, t_struct* t
         << type_name(type) << " " << field_name << ") {" << endl;
     indent_up();
     indent(out) << "this." << field_name << " = ";
-    if (type->is_binary() && !unsafe_binaries_) {
+    if (type->is_binary()) {
       out << "org.apache.thrift.TBaseHelper.copyBinary(" << field_name << ")";
     } else {
       out << field_name;
@@ -3633,8 +3594,8 @@ void t_java_generator::generate_process_function(t_service* tservice, t_function
   indent(f_service_) << "}" << endl << endl;
 
   indent(f_service_) << "@Override" << endl;
-  indent(f_service_) << "protected boolean rethrowUncaughtExceptions() {" << endl;
-  indent(f_service_) << "  return " << ((rethrow_uncaught_exceptions_) ? "true" : "false") << ";" << endl;
+  indent(f_service_) << "protected boolean rethrowUnhandledExceptions() {" << endl;
+  indent(f_service_) << "  return " << ((rethrow_unhandled_exceptions_) ? "true" : "false") << ";" << endl;
   indent(f_service_) << "}" << endl << endl;
 
   indent(f_service_) << "public " << resultname << " getResult(I iface, " << argsname
@@ -5427,8 +5388,8 @@ THRIFT_REGISTER_GENERATOR(
     "    android_legacy:  Do not use java.io.IOException(throwable) (available for Android 2.3 and "
     "above).\n"
     "    option_type:     Wrap optional fields in an Option type.\n"
-    "    rethrow_uncaught_exceptions:\n"
-    "                     Rethrow uncaught exceptions and let them propabate further."
+    "    rethrow_unhandled_exceptions:\n"
+    "                     Rethrow unhandled exceptions and let them propabate further."
     " (Default behavior is to swallow and log it.)\n"
     "    java5:           Generate Java 1.5 compliant code (includes android_legacy flag).\n"
     "    reuse-objects:   Data objects will not be allocated, but existing instances will be used "
@@ -5438,5 +5399,4 @@ THRIFT_REGISTER_GENERATOR(
     "set/map.\n"
     "    generated_annotations=[undated|suppress]:\n"
     "                     undated: suppress the date at @Generated annotations\n"
-    "                     suppress: suppress @Generated annotations entirely\n"
-    "    unsafe_binaries: Do not copy ByteBuffers in constructors, getters, and setters.\n")
+    "                     suppress: suppress @Generated annotations entirely\n")
