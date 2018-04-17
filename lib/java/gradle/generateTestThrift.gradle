@@ -24,10 +24,11 @@ ext.genSrc = file("$buildDir/gen-java")
 ext.genBeanSrc = file("$buildDir/gen-javabean")
 ext.genReuseSrc = file("$buildDir/gen-javareuse")
 ext.genFullCamelSrc = file("$buildDir/gen-fullcamel")
+ext.genUnsafeSrc = file("$buildDir/gen-unsafe")
 
 // Add the generated code directories to the test source set
 sourceSets {
-    test.java.srcDirs genSrc, genBeanSrc, genReuseSrc, genFullCamelSrc
+    test.java.srcDirs genSrc, genBeanSrc, genReuseSrc, genFullCamelSrc, genUnsafeSrc
 }
 
 // ----------------------------------------------------------------------------
@@ -106,4 +107,13 @@ task generateFullCamelJava(group: 'Build') {
     ext.outputBuffer = new ByteArrayOutputStream()
 
     thriftCompile(it, 'ReuseObjects.thrift', 'java:reuse-objects', genReuseSrc)
+}
+
+task generateUnsafeBinariesJava(group: 'Build') {
+    description = 'Generate the thrift gen-unsafebinaries source'
+    generate.dependsOn it
+
+    ext.outputBuffer = new ByteArrayOutputStream()
+
+    thriftCompile(it, 'UnsafeTypes.thrift', 'java:unsafe_binaries', genUnsafeSrc)
 }

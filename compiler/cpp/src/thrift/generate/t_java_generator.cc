@@ -71,6 +71,7 @@ public:
     undated_generated_annotations_  = false;
     suppress_generated_annotations_ = false;
     rethrow_uncaught_exceptions_ = false;
+    unsafe_binaries_ = false;
     for( iter = parsed_options.begin(); iter != parsed_options.end(); ++iter) {
       if( iter->first.compare("beans") == 0) {
         bean_style_ = true;
@@ -102,6 +103,8 @@ public:
         } else {
           throw "unknown option java:" + iter->first + "=" + iter->second;
         }
+      } else if( iter->first.compare("unsafe_binaries") == 0) {
+        unsafe_binaries_ = true;
       } else {
         throw "unknown option java:" + iter->first;
       }
@@ -410,6 +413,7 @@ private:
   bool undated_generated_annotations_;
   bool suppress_generated_annotations_;
   bool rethrow_uncaught_exceptions_;
+  bool unsafe_binaries_;
 
 };
 
@@ -933,8 +937,12 @@ void t_java_generator::generate_union_constructor(ofstream& out, t_struct* tstru
                   << "(byte[] value) {" << endl;
       indent(out) << "  " << type_name(tstruct) << " x = new " << type_name(tstruct) << "();"
                   << endl;
-      indent(out) << "  x.set" << get_cap_name((*m_iter)->get_name())
-                  << "(java.nio.ByteBuffer.wrap(value.clone()));" << endl;
+      indent(out) << "  x.set" << get_cap_name((*m_iter)->get_name());
+      if(unsafe_binaries_) {
+        indent(out) << "(java.nio.ByteBuffer.wrap(value));" << endl;
+      }else{
+        indent(out) << "(java.nio.ByteBuffer.wrap(value.clone()));" << endl;
+      }
       indent(out) << "  return x;" << endl;
       indent(out) << "}" << endl << endl;
     }
@@ -976,9 +984,17 @@ void t_java_generator::generate_union_getters_and_setters(ofstream& out, t_struc
                   << get_cap_name(field->get_name()) << "() {" << endl;
       indent(out) << "  if (getSetField() == _Fields." << constant_name(field->get_name()) << ") {"
                   << endl;
-      indent(out)
+
+      if(unsafe_binaries_){
+        indent(out)
+          << "    return (java.nio.ByteBuffer)getFieldValue();"
+          << endl;
+      }else{
+        indent(out)
           << "    return org.apache.thrift.TBaseHelper.copyBinary((java.nio.ByteBuffer)getFieldValue());"
           << endl;
+      }
+
       indent(out) << "  } else {" << endl;
       indent(out) << "    throw new java.lang.RuntimeException(\"Cannot get field '" << field->get_name()
                   << "' because union is currently set to \" + getFieldDesc(getSetField()).name);"
@@ -1012,8 +1028,14 @@ void t_java_generator::generate_union_getters_and_setters(ofstream& out, t_struc
       }
       indent(out) << "public void set" << get_cap_name(field->get_name()) << "(byte[] value) {"
                   << endl;
-      indent(out) << "  set" << get_cap_name(field->get_name())
-                  << "(java.nio.ByteBuffer.wrap(value.clone()));" << endl;
+      indent(out) << "  set" << get_cap_name(field->get_name());
+
+      if(unsafe_binaries_){
+        indent(out) << "(java.nio.ByteBuffer.wrap(value));" << endl;
+      }else{
+        indent(out) << "(java.nio.ByteBuffer.wrap(value.clone()));" << endl;
+      }
+
       indent(out) << "}" << endl;
 
       out << endl;
@@ -1543,9 +1565,15 @@ void t_java_generator::generate_java_struct_definition(ofstream& out,
       if ((*m_iter)->get_req() != t_field::T_OPTIONAL) {
         t_type* type = get_true_type((*m_iter)->get_type());
         if (type->is_binary()) {
-          indent(out) << "this." << (*m_iter)->get_name()
-                      << " = org.apache.thrift.TBaseHelper.copyBinary(" << (*m_iter)->get_name()
-                      << ");" << endl;
+          if(unsafe_binaries_){
+            indent(out) << "this." << (*m_iter)->get_name()
+                        << " = " << (*m_iter)->get_name()
+                        << ";" << endl;
+          }else{
+            indent(out) << "this." << (*m_iter)->get_name()
+                        << " = org.apache.thrift.TBaseHelper.copyBinary(" << (*m_iter)->get_name()
+                        << ");" << endl;
+          }
         } else {
           indent(out) << "this." << (*m_iter)->get_name() << " = " << (*m_iter)->get_name() << ";"
                       << endl;
@@ -2405,8 +2433,13 @@ void t_java_generator::generate_java_bean_boilerplate(ofstream& out, t_struct* t
 
       indent(out) << "public java.nio.ByteBuffer buffer" << get_cap_name("for") << cap_name << "() {"
                   << endl;
-      indent(out) << "  return org.apache.thrift.TBaseHelper.copyBinary(" << field_name << ");"
-                  << endl;
+      if(unsafe_binaries_){
+        indent(out) << "  return " << field_name << ";"
+                    << endl;
+      }else {
+        indent(out) << "  return org.apache.thrift.TBaseHelper.copyBinary(" << field_name << ");"
+                    << endl;
+      }
       indent(out) << "}" << endl << endl;
     } else {
       if (optional) {
@@ -2467,8 +2500,14 @@ void t_java_generator::generate_java_bean_boilerplate(ofstream& out, t_struct* t
         out << type_name(tstruct);
       }
       out << " set" << cap_name << "(byte[] " << field_name << ") {" << endl;
-      indent(out) << "  this." << field_name << " = " << field_name << " == null ? (java.nio.ByteBuffer)null"
-                  << " : java.nio.ByteBuffer.wrap(" << field_name << ".clone());" << endl;
+      indent(out) << "  this." << field_name << " = " << field_name << " == null ? (java.nio.ByteBuffer)null";
+
+      if(unsafe_binaries_){
+        indent(out) << " : java.nio.ByteBuffer.wrap(" << field_name << ");" << endl;
+      }else{
+        indent(out) << " : java.nio.ByteBuffer.wrap(" << field_name << ".clone());" << endl;
+      }
+                 
       if (!bean_style_) {
         indent(out) << "  return this;" << endl;
       }
@@ -2487,7 +2526,7 @@ void t_java_generator::generate_java_bean_boilerplate(ofstream& out, t_struct* t
         << type_name(type) << " " << field_name << ") {" << endl;
     indent_up();
     indent(out) << "this." << field_name << " = ";
-    if (type->is_binary()) {
+    if (type->is_binary() && !unsafe_binaries_) {
       out << "org.apache.thrift.TBaseHelper.copyBinary(" << field_name << ")";
     } else {
       out << field_name;
@@ -5399,4 +5438,5 @@ THRIFT_REGISTER_GENERATOR(
     "set/map.\n"
     "    generated_annotations=[undated|suppress]:\n"
     "                     undated: suppress the date at @Generated annotations\n"
-    "                     suppress: suppress @Generated annotations entirely\n")
+    "                     suppress: suppress @Generated annotations entirely\n"
+    "    unsafe_binaries: Do not copy ByteBuffers in constructors, getters, and setters.\n")

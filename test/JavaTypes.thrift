@@ -96,3 +96,8 @@ service AsyncNonblockingService {
     7: Map somemap,
   ) throws (1:Exception ex);
 }
+
+struct SafeBytes {
+  1: binary bytes;
+}
+
