@@ -72,7 +72,7 @@ public abstract class ProcessFunction<I, T extends TBase> {
     }
   }
 
-  protected boolean rethrowUncaughtException(){
+  protected boolean rethrowUncaughtExceptions(){
     return false;
   }
 
