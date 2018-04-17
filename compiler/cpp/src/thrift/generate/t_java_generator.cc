@@ -16,7 +16,6 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-
 #include <cassert>
 #include <ctime>
 
@@ -71,7 +70,7 @@ public:
     use_option_type_ = false;
     undated_generated_annotations_  = false;
     suppress_generated_annotations_ = false;
-    handle_runtime_exceptions_ = false;
+    rethrow_uncaught_exceptions_ = false;
     for( iter = parsed_options.begin(); iter != parsed_options.end(); ++iter) {
       if( iter->first.compare("beans") == 0) {
         bean_style_ = true;
@@ -93,8 +92,8 @@ public:
         reuse_objects_ = true;
       } else if( iter->first.compare("option_type") == 0) {
         use_option_type_ = true;
-      } else if( iter->first.compare("handle_runtime_exceptions") == 0) {
-        handle_runtime_exceptions_ = true;
+      } else if( iter->first.compare("rethrow_uncaught_exceptions") == 0) {
+        rethrow_uncaught_exceptions_ = true;
       } else if( iter->first.compare("generated_annotations") == 0) {
         if( iter->second.compare("undated") == 0) {
           undated_generated_annotations_  = true;
@@ -410,7 +409,7 @@ private:
   bool use_option_type_;
   bool undated_generated_annotations_;
   bool suppress_generated_annotations_;
-  bool handle_runtime_exceptions_;
+  bool rethrow_uncaught_exceptions_;
 
 };
 
@@ -3595,8 +3594,8 @@ void t_java_generator::generate_process_function(t_service* tservice, t_function
   indent(f_service_) << "}" << endl << endl;
 
   indent(f_service_) << "@Override" << endl;
-  indent(f_service_) << "protected boolean handleRuntimeExceptions() {" << endl;
-  indent(f_service_) << "  return " << ((handle_runtime_exceptions_) ? "true" : "false") << ";" << endl;
+  indent(f_service_) << "protected boolean rethrowUncaughtExceptions() {" << endl;
+  indent(f_service_) << "  return " << ((rethrow_uncaught_exceptions_) ? "true" : "false") << ";" << endl;
   indent(f_service_) << "}" << endl << endl;
 
   indent(f_service_) << "public " << resultname << " getResult(I iface, " << argsname
@@ -5389,9 +5388,9 @@ THRIFT_REGISTER_GENERATOR(
     "    android_legacy:  Do not use java.io.IOException(throwable) (available for Android 2.3 and "
     "above).\n"
     "    option_type:     Wrap optional fields in an Option type.\n"
-    "    handle_runtime_exceptions:\n"
-    "                     Send TApplicationException to the client when RuntimeException occurs on "
-    "the server. (Default behavior is to close the connection instead.)\n"
+    "    rethrow_uncaught_exceptions:\n"
+    "                     Rethrow uncaught exceptions and let them propabate further."
+    " (Default behavior is to swallow and log it.)\n"
     "    java5:           Generate Java 1.5 compliant code (includes android_legacy flag).\n"
     "    reuse-objects:   Data objects will not be allocated, but existing instances will be used "
     "(read and write).\n"
