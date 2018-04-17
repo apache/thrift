@@ -48,7 +48,6 @@ class TMultiplexedProcessor(TProcessor):
 
 class StoredMessageProtocol(TProtocolDecorator.TProtocolDecorator):
     def __init__(self, protocol, messageBegin):
-        TProtocolDecorator.TProtocolDecorator.__init__(self, protocol)
         self.messageBegin = messageBegin
 
     def readMessageBegin(self):
