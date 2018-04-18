@@ -48,20 +48,20 @@ var server = thrift.createServer(Calculator, {
       if (work.num2 === 0) {
         var x = new ttypes.InvalidOperation();
         x.whatOp = work.op;
-        x.why = 'Cannot divide by 0';
-		throw x;
+        x.why = "Cannot divide by 0";
+        throw x;
       }
       val = work.num1 / work.num2;
     } else {
       var x = new ttypes.InvalidOperation();
       x.whatOp = work.op;
-      x.why = 'Invalid operation';
+      x.why = "Invalid operation";
       throw x;
     }
 
     var entry = new SharedStruct();
     entry.key = logid;
-    entry.value = ""+val;
+    entry.value = "" + val;
     data[logid] = entry;
     return val;
   },
@@ -74,7 +74,6 @@ var server = thrift.createServer(Calculator, {
   zip: function() {
     console.log("zip()");
   }
-
 });
 
 server.listen(9090);
