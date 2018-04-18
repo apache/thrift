@@ -34,7 +34,7 @@ import (
 type TSimpleServer struct {
 	closed int32
 	wg     sync.WaitGroup
-	mu     sync.Mutex
+	mu     sync.RWMutex
 
 	processorFactory       TProcessorFactory
 	serverTransport        TServerTransport
@@ -127,8 +127,8 @@ func (p *TSimpleServer) Listen() error {
 
 func (p *TSimpleServer) innerAccept() (int32, error) {
 	client, err := p.serverTransport.Accept()
-	p.mu.Lock()
-	defer p.mu.Unlock()
+	p.mu.RLock()
+	defer p.mu.RUnlock()
 	closed := atomic.LoadInt32(&p.closed)
 	if closed != 0 {
 		return closed, nil
