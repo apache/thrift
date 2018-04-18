@@ -30,10 +30,10 @@ class TMultiplexedProtocol(TProtocolDecorator.TProtocolDecorator):
     def writeMessageBegin(self, name, type, seqid):
         if (type == TMessageType.CALL or
                 type == TMessageType.ONEWAY):
-            super().writeMessageBegin(
+            super(TMultiplexedProtocol, self).writeMessageBegin(
                 self.serviceName + SEPARATOR + name,
                 type,
                 seqid
             )
         else:
-            super().writeMessageBegin(name, type, seqid)
+            super(TMultiplexedProtocol, self).writeMessageBegin(name, type, seqid)
