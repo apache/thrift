@@ -164,7 +164,7 @@ begin
 
   if (arg = 'TException') then
   begin
-    raise TException.Create('');
+    raise TException.Create('TException');
   end;
 
   // else do not throw anything
