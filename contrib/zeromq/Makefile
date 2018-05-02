@@ -26,7 +26,7 @@ test-client.o test-server.o test-sender.o test-receiver.o: $(GENSRCS)
 
 storage/__init__.py: storage.thrift
 	$(RM) $(dir $@)
-	$(THRIFT) --gen py:newstyle $<
+	$(THRIFT) --gen py $<
 	mv gen-py/$(dir $@) .
 
 $(GENSRCS): storage.thrift
