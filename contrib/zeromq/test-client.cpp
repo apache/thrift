@@ -17,7 +17,7 @@ int main(int argc, char** argv) {
   if (argc > 1) {
     incr = atoi(argv[1]);
     if (incr) {
-      socktype = ZMQ_DOWNSTREAM;
+      socktype = ZMQ_PUSH;
       endpoint = "tcp://127.0.0.1:9091";
     }
   }

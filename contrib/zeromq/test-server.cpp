@@ -33,7 +33,7 @@ int main(int argc, char *argv[]) {
 
   zmq::context_t ctx(1);
   TZmqServer reqrep_server(processor, ctx, "tcp://0.0.0.0:9090", ZMQ_REP);
-  TZmqServer oneway_server(processor, ctx, "tcp://0.0.0.0:9091", ZMQ_UPSTREAM);
+  TZmqServer oneway_server(processor, ctx, "tcp://0.0.0.0:9091", ZMQ_PULL);
   TZmqMultiServer multiserver;
   multiserver.servers().push_back(&reqrep_server);
   multiserver.servers().push_back(&oneway_server);
