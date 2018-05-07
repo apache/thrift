@@ -44,6 +44,7 @@ process({_Server, Proto, Service, Handler}) ->
                  			thrift_protocol:close_transport(Proto1),
                  			ok
     			end
+    end.
 
 init({_Server, ProtoGen, Service, Handler}) when is_function(ProtoGen, 0) ->
     {ok, Proto} = ProtoGen(),
