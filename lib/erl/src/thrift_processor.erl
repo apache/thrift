@@ -19,12 +19,31 @@
 
 -module(thrift_processor).
 
--export([init/1]).
+-export([init/1, process/1]).
 
 -include("thrift_constants.hrl").
 -include("thrift_protocol.hrl").
 
 -record(thrift_processor, {handler, protocol, service}).
+
+% Instead of a loop, do a single-shot processing of a packet
+process({_Server, Proto, Service, Handler}) ->
+    State0 = #thrift_processor{ protocol = Proto,
+                                service = Service,
+                                handler = Handler},
+    {Proto1, MessageBegin} = thrift_protocol:read(Proto, message_begin),
+    State1 = State0#thrift_processor{protocol = Proto1},
+    case MessageBegin of
+        #protocol_message_begin{name = Function,
+                                type = Type,
+                                seqid = Seqid} when Type =:= ?tMessageType_CALL; Type =:= ?tMessageType_ONEWAY ->
+    			case handle_function(State1, list_to_atom(Function), Seqid) of
+       				{State2, ok} -> {ok, State2};
+       				{_State2, {error, Reason}} ->
+                 			apply(Handler, handle_error, [list_to_atom(Function), Reason]),
+                 			thrift_protocol:close_transport(Proto1),
+                 			ok
+    			end
 
 init({_Server, ProtoGen, Service, Handler}) when is_function(ProtoGen, 0) ->
     {ok, Proto} = ProtoGen(),
