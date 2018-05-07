@@ -27,6 +27,8 @@
 -record(thrift_processor, {handler, protocol, service}).
 
 % Instead of a loop, do a single-shot processing of a packet
+% allows user to control how the bytes are sent and received
+% see: [https://github.com/apache/thrift/blob/master/lib/rb/lib/thrift/server/mongrel_http_server.rb]
 process({_Server, Proto, Service, Handler}) ->
     State0 = #thrift_processor{ protocol = Proto,
                                 service = Service,
