@@ -28,7 +28,7 @@ struct RecList {
 }
 
 struct CoRec {
-  1: optional CoRec2 & other
+  1:  CoRec2 & other
 }
 
 struct CoRec2 {

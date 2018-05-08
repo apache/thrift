@@ -38,15 +38,7 @@ encode_decode_recursive_test() ->
 encode_decode_recursive_2_test() ->
   {ok, Transport} = thrift_memory_buffer:new(),
   {ok, Protocol0} = thrift_binary_protocol:new(Transport),
-  TestData = #'RecTree'{
-    item = 42,
-    children = [
-      #'RecTree'{item = 43, children = []},
-      #'RecTree'{item = 31337, children = [
-        #'RecTree'{item = 32767, children = []}
-      ]}
-    ]
-  },
+  TestData = #'RecTree'{item = 42, children = [#'RecTree'{}, #'RecTree'{item = 31337, children = [#'RecTree'{}]}]},
   {Protocol1, ok} = thrift_protocol:write(Protocol0,
     {{struct, struct, {recursive_thrift, 'RecTree'}},
       TestData}),

@@ -27,7 +27,7 @@
 
 constant_test_() ->
   [
-    {"myNumberz equals 1", ?_assertEqual('ONE', ?MYNUMBERZ)}
+    {"myNumberz equals 1", ?_assertEqual(1, ?MYNUMBERZ)}
   ].
 
 record_generation_test_() ->
@@ -159,74 +159,74 @@ struct_info_test_() ->
   [
     {"Bonk definition", ?_assertEqual(
       {struct, struct, [
-        {1, {optional, required}, string, message, undefined},
-        {2, {optional, required}, i32, type, undefined}
+        {1, undefined, string, message, undefined},
+        {2, undefined, i32, type, undefined}
       ]},
       thrift_test_thrift:struct_info('Bonk')
     )},
     {"Bools definition", ?_assertEqual(
       {struct, struct, [
-        {1, {optional, required}, bool, im_true, undefined},
-        {2, {optional, required}, bool, im_false, undefined}
+        {1, undefined, bool, im_true, undefined},
+        {2, undefined, bool, im_false, undefined}
       ]},
       thrift_test_thrift:struct_info('Bools')
     )},
     {"Xtruct definition", ?_assertEqual(
       {struct, struct, [
-        {1, {optional, required}, string, string_thing, undefined},
-        {4, {optional, required}, byte, byte_thing, undefined},
-        {9, {optional, required}, i32, i32_thing, undefined},
-        {11, {optional, required}, i64, i64_thing, undefined}
+        {1, undefined, string, string_thing, undefined},
+        {4, undefined, byte, byte_thing, undefined},
+        {9, undefined, i32, i32_thing, undefined},
+        {11, undefined, i64, i64_thing, undefined}
       ]},
       thrift_test_thrift:struct_info('Xtruct')
     )},
     {"Xtruct2 definition", ?_assertEqual(
       {struct, struct, [
-        {1, {optional, required}, byte, byte_thing, undefined},
-        {2, {optional, required}, {struct, struct, {'thrift_test_thrift', 'Xtruct'}}, struct_thing, undefined},
-        {3, {optional, required}, i32, i32_thing, undefined}
+        {1, undefined, byte, byte_thing, undefined},
+        {2, undefined, {struct, struct, {'thrift_test_thrift', 'Xtruct'}}, struct_thing, undefined},
+        {3, undefined, i32, i32_thing, undefined}
       ]},
       thrift_test_thrift:struct_info('Xtruct2')
     )},
     {"Xtruct3 definition", ?_assertEqual(
       {struct, struct, [
-        {1, {optional, required}, string, string_thing, undefined},
-        {4, {optional, required}, i32, changed, undefined},
-        {9, {optional, required}, i32, i32_thing, undefined},
-        {11, {optional, required}, i64, i64_thing, undefined}
+        {1, undefined, string, string_thing, undefined},
+        {4, undefined, i32, changed, undefined},
+        {9, undefined, i32, i32_thing, undefined},
+        {11, undefined, i64, i64_thing, undefined}
       ]},
       thrift_test_thrift:struct_info('Xtruct3')
     )},
     {"Insanity definition", ?_assertEqual(
       {struct, struct, [
-        {1, {optional, required}, {map, {enum, {'thrift_test_thrift', 'Numberz'}}, i64}, userMap, undefined},
-        {2, {optional, required}, {list, {struct, struct, {'thrift_test_thrift', 'Xtruct'}}}, xtructs, undefined}
+        {1, undefined, {map, {enum, {'thrift_test_thrift', 'Numberz'}}, i64}, userMap, undefined},
+        {2, undefined, {list, {struct, struct, {'thrift_test_thrift', 'Xtruct'}}}, xtructs, undefined}
       ]},
       thrift_test_thrift:struct_info('Insanity')
     )},
     {"CrazyNesting definition", ?_assertEqual(
       {struct, struct, [
-        {1, {optional, required}, string, string_field, undefined},
+        {1, undefined, string, string_field, undefined},
         {2, optional, {set, {struct, struct, {'thrift_test_thrift', 'Insanity'}}}, set_field, undefined},
         {3, required, {list, {map,
           {set, i32},
           {map, i32, {set, {list, {map, {struct, struct, {'thrift_test_thrift', 'Insanity'}}, string}}}}
         }}, list_field, undefined},
-        {4, {optional, required}, string, binary_field, undefined}
+        {4, undefined, string, binary_field, undefined}
       ]},
       thrift_test_thrift:struct_info('CrazyNesting')
     )},
     {"Xception definition", ?_assertEqual(
       {struct, exception, [
-        {1, {optional, required}, i32, errorCode, undefined},
-        {2, {optional, required}, string, message, undefined}
+        {1, undefined, i32, errorCode, undefined},
+        {2, undefined, string, message, undefined}
       ]},
       thrift_test_thrift:struct_info('Xception')
     )},
     {"Xception2 definition", ?_assertEqual(
       {struct, exception, [
-        {1, {optional, required}, i32, errorCode, undefined},
-        {2, {optional, required}, {struct, struct, {'thrift_test_thrift', 'Xtruct'}}, struct_thing, undefined}
+        {1, undefined, i32, errorCode, undefined},
+        {2, undefined, {struct, struct, {'thrift_test_thrift', 'Xtruct'}}, struct_thing, undefined}
       ]},
       thrift_test_thrift:struct_info('Xception2')
     )},
@@ -236,99 +236,99 @@ struct_info_test_() ->
     )},
     {"OneField definition", ?_assertEqual(
       {struct, struct, [
-        {1, {optional, required}, {struct, struct, {'thrift_test_thrift', 'EmptyStruct'}}, field, undefined}
+        {1, undefined, {struct, struct, {'thrift_test_thrift', 'EmptyStruct'}}, field, undefined}
       ]},
       thrift_test_thrift:struct_info('OneField')
     )},
     {"VersioningTestV1 definition", ?_assertEqual(
       {struct, struct, [
-        {1, {optional, required}, i32, begin_in_both, undefined},
-        {3, {optional, required}, string, old_string, undefined},
-        {12, {optional, required}, i32, end_in_both, undefined}
+        {1, undefined, i32, begin_in_both, undefined},
+        {3, undefined, string, old_string, undefined},
+        {12, undefined, i32, end_in_both, undefined}
       ]},
       thrift_test_thrift:struct_info('VersioningTestV1')
     )},
     {"VersioningTestV2 definition", ?_assertEqual(
       {struct, struct, [
-        {1, {optional, required}, i32, begin_in_both, undefined},
-        {2, {optional, required}, i32, newint, undefined},
-        {3, {optional, required}, byte, newbyte, undefined},
-        {4, {optional, required}, i16, newshort, undefined},
-        {5, {optional, required}, i64, newlong, undefined},
-        {6, {optional, required}, double, newdouble, undefined},
-        {7, {optional, required}, {struct, struct, {thrift_test_thrift, 'Bonk'}}, newstruct, undefined},
-        {8, {optional, required}, {list, i32}, newlist, undefined},
-        {9, {optional, required}, {set, i32}, newset, undefined},
-        {10, {optional, required}, {map, i32, i32}, newmap, undefined},
-        {11, {optional, required}, string, newstring, undefined},
-        {12, {optional, required}, i32, end_in_both, undefined}
+        {1, undefined, i32, begin_in_both, undefined},
+        {2, undefined, i32, newint, undefined},
+        {3, undefined, byte, newbyte, undefined},
+        {4, undefined, i16, newshort, undefined},
+        {5, undefined, i64, newlong, undefined},
+        {6, undefined, double, newdouble, undefined},
+        {7, undefined, {struct, struct, {thrift_test_thrift, 'Bonk'}}, newstruct, undefined},
+        {8, undefined, {list, i32}, newlist, undefined},
+        {9, undefined, {set, i32}, newset, undefined},
+        {10, undefined, {map, i32, i32}, newmap, undefined},
+        {11, undefined, string, newstring, undefined},
+        {12, undefined, i32, end_in_both, undefined}
       ]},
       thrift_test_thrift:struct_info('VersioningTestV2')
     )},
     {"ListTypeVersioningV1 definition", ?_assertEqual(
       {struct, struct, [
-        {1, {optional, required}, {list, i32}, myints, undefined},
-        {2, {optional, required}, string, hello, undefined}
+        {1, undefined, {list, i32}, myints, undefined},
+        {2, undefined, string, hello, undefined}
       ]},
       thrift_test_thrift:struct_info('ListTypeVersioningV1')
     )},
     {"ListTypeVersioningV2 definition", ?_assertEqual(
       {struct, struct, [
-        {1, {optional, required}, {list, string}, strings, undefined},
-        {2, {optional, required}, string, hello, undefined}
+        {1, undefined, {list, string}, strings, undefined},
+        {2, undefined, string, hello, undefined}
       ]},
       thrift_test_thrift:struct_info('ListTypeVersioningV2')
     )},
     {"GuessProtocolStruct definition", ?_assertEqual(
       {struct, struct, [
-        {7, {optional, required}, {map, string, string}, map_field, undefined}
+        {7, undefined, {map, string, string}, map_field, undefined}
       ]},
       thrift_test_thrift:struct_info('GuessProtocolStruct')
     )},
     {"LargeDeltas definition", ?_assertEqual(
       {struct, struct, [
-        {1, {optional, required}, {struct, struct, {thrift_test_thrift, 'Bools'}}, b1, undefined},
-        {10, {optional, required}, {struct, struct, {thrift_test_thrift, 'Bools'}}, b10, undefined},
-        {100, {optional, required}, {struct, struct, {thrift_test_thrift, 'Bools'}}, b100, undefined},
-        {500, {optional, required}, bool, check_true, undefined},
-        {1000, {optional, required}, {struct, struct, {thrift_test_thrift, 'Bools'}}, b1000, undefined},
-        {1500, {optional, required}, bool, check_false, undefined},
-        {2000, {optional, required}, {struct, struct, {thrift_test_thrift, 'VersioningTestV2'}}, vertwo2000, undefined},
-        {2500, {optional, required}, {set, string}, a_set2500, undefined},
-        {3000, {optional, required}, {struct, struct, {thrift_test_thrift, 'VersioningTestV2'}}, vertwo3000, undefined},
-        {4000, {optional, required}, {list, i32}, big_numbers, undefined}
+        {1, undefined, {struct, struct, {thrift_test_thrift, 'Bools'}}, b1, undefined},
+        {10, undefined, {struct, struct, {thrift_test_thrift, 'Bools'}}, b10, undefined},
+        {100, undefined, {struct, struct, {thrift_test_thrift, 'Bools'}}, b100, undefined},
+        {500, undefined, bool, check_true, undefined},
+        {1000, undefined, {struct, struct, {thrift_test_thrift, 'Bools'}}, b1000, undefined},
+        {1500, undefined, bool, check_false, undefined},
+        {2000, undefined, {struct, struct, {thrift_test_thrift, 'VersioningTestV2'}}, vertwo2000, undefined},
+        {2500, undefined, {set, string}, a_set2500, undefined},
+        {3000, undefined, {struct, struct, {thrift_test_thrift, 'VersioningTestV2'}}, vertwo3000, undefined},
+        {4000, undefined, {list, i32}, big_numbers, undefined}
       ]},
       thrift_test_thrift:struct_info('LargeDeltas')
     )},
     {"NestedListsI32x2 definition", ?_assertEqual(
       {struct, struct, [
-        {1, {optional, required}, {list, {list, i32}}, integerlist, undefined}
+        {1, undefined, {list, {list, i32}}, integerlist, undefined}
       ]},
       thrift_test_thrift:struct_info('NestedListsI32x2')
     )},
     {"NestedListsI32x3 definition", ?_assertEqual(
       {struct, struct, [
-        {1, {optional, required}, {list, {list, {list, i32}}}, integerlist, undefined}
+        {1, undefined, {list, {list, {list, i32}}}, integerlist, undefined}
       ]},
       thrift_test_thrift:struct_info('NestedListsI32x3')
     )},
     {"NestedMixedx2 definition", ?_assertEqual(
       {struct, struct, [
-        {1, {optional, required}, {list, {set, i32}}, int_set_list, undefined},
-        {2, {optional, required}, {map, i32, {set, string}}, map_int_strset, undefined},
-        {3, {optional, required}, {list, {map, i32, {set, string}}}, map_int_strset_list, undefined}
+        {1, undefined, {list, {set, i32}}, int_set_list, undefined},
+        {2, undefined, {map, i32, {set, string}}, map_int_strset, undefined},
+        {3, undefined, {list, {map, i32, {set, string}}}, map_int_strset_list, undefined}
       ]},
       thrift_test_thrift:struct_info('NestedMixedx2')
     )},
     {"ListBonks definition", ?_assertEqual(
       {struct, struct, [
-        {1, {optional, required}, {list, {struct, struct, {thrift_test_thrift, 'Bonk'}}}, bonk, undefined}
+        {1, undefined, {list, {struct, struct, {thrift_test_thrift, 'Bonk'}}}, bonk, undefined}
       ]},
       thrift_test_thrift:struct_info('ListBonks')
     )},
     {"NestedListsBonk definition", ?_assertEqual(
       {struct, struct, [
-        {1, {optional, required}, {list, {list, {list, {struct, struct, {thrift_test_thrift, 'Bonk'}}}}}, bonk, undefined}
+        {1, undefined, {list, {list, {list, {struct, struct, {thrift_test_thrift, 'Bonk'}}}}}, bonk, undefined}
       ]},
       thrift_test_thrift:struct_info('NestedListsBonk')
     )},
@@ -367,7 +367,7 @@ service_info_test_() ->
       thrift_test_thrift:function_info('ThriftTest', testVoid, exceptions)
     )},
     {"testString params", ?_assertEqual(
-      {struct, struct, [{1, {optional, required}, string, 'thing', undefined}]},
+      {struct, struct, [{1, undefined, string, 'thing', undefined}]},
       thrift_test_thrift:function_info('ThriftTest', testString, params_type)
     )},
     {"testString reply", ?_assertEqual(
@@ -379,7 +379,7 @@ service_info_test_() ->
       thrift_test_thrift:function_info('ThriftTest', testString, exceptions)
     )},
     {"testByte params", ?_assertEqual(
-      {struct, struct, [{1, {optional, required}, byte, 'thing', undefined}]},
+      {struct, struct, [{1, undefined, byte, 'thing', undefined}]},
       thrift_test_thrift:function_info('ThriftTest', testByte, params_type)
     )},
     {"testByte reply", ?_assertEqual(
@@ -391,7 +391,7 @@ service_info_test_() ->
       thrift_test_thrift:function_info('ThriftTest', testByte, exceptions)
     )},
     {"testI32 params", ?_assertEqual(
-      {struct, struct, [{1, {optional, required}, i32, 'thing', undefined}]},
+      {struct, struct, [{1, undefined, i32, 'thing', undefined}]},
       thrift_test_thrift:function_info('ThriftTest', testI32, params_type)
     )},
     {"testI32 reply", ?_assertEqual(
@@ -403,7 +403,7 @@ service_info_test_() ->
       thrift_test_thrift:function_info('ThriftTest', testI32, exceptions)
     )},
     {"testI64 params", ?_assertEqual(
-      {struct, struct, [{1, {optional, required}, i64, 'thing', undefined}]},
+      {struct, struct, [{1, undefined, i64, 'thing', undefined}]},
       thrift_test_thrift:function_info('ThriftTest', testI64, params_type)
     )},
     {"testI64 reply", ?_assertEqual(
@@ -415,7 +415,7 @@ service_info_test_() ->
       thrift_test_thrift:function_info('ThriftTest', testI64, exceptions)
     )},
     {"testDouble params", ?_assertEqual(
-      {struct, struct, [{1, {optional, required}, double, 'thing', undefined}]},
+      {struct, struct, [{1, undefined, double, 'thing', undefined}]},
       thrift_test_thrift:function_info('ThriftTest', testDouble, params_type)
     )},
     {"testDouble reply", ?_assertEqual(
@@ -428,7 +428,7 @@ service_info_test_() ->
     )},
     {"testStruct params", ?_assertEqual(
       {struct, struct, [
-        {1, {optional, required}, {struct, struct, {thrift_test_thrift, 'Xtruct'}}, 'thing', undefined}
+        {1, undefined, {struct, struct, {thrift_test_thrift, 'Xtruct'}}, 'thing', undefined}
       ]},
       thrift_test_thrift:function_info('ThriftTest', testStruct, params_type)
     )},
@@ -442,7 +442,7 @@ service_info_test_() ->
     )},
     {"testNest params", ?_assertEqual(
       {struct, struct, [
-        {1, {optional, required}, {struct, struct, {thrift_test_thrift, 'Xtruct2'}}, 'thing', undefined}
+        {1, undefined, {struct, struct, {thrift_test_thrift, 'Xtruct2'}}, 'thing', undefined}
       ]},
       thrift_test_thrift:function_info('ThriftTest', testNest, params_type)
     )},
@@ -456,7 +456,7 @@ service_info_test_() ->
     )},
     {"testMap params", ?_assertEqual(
       {struct, struct, [
-        {1, {optional, required}, {map, i32, i32}, 'thing', undefined}
+        {1, undefined, {map, i32, i32}, 'thing', undefined}
       ]},
       thrift_test_thrift:function_info('ThriftTest', testMap, params_type)
     )},
@@ -470,7 +470,7 @@ service_info_test_() ->
     )},
     {"testStringMap params", ?_assertEqual(
       {struct, struct, [
-        {1, {optional, required}, {map, string, string}, 'thing', undefined}
+        {1, undefined, {map, string, string}, 'thing', undefined}
       ]},
       thrift_test_thrift:function_info('ThriftTest', testStringMap, params_type)
     )},
@@ -484,7 +484,7 @@ service_info_test_() ->
     )},
     {"testSet params", ?_assertEqual(
       {struct, struct, [
-        {1, {optional, required}, {set, i32}, 'thing', undefined}
+        {1, undefined, {set, i32}, 'thing', undefined}
       ]},
       thrift_test_thrift:function_info('ThriftTest', testSet, params_type)
     )},
@@ -498,7 +498,7 @@ service_info_test_() ->
     )},
     {"testList params", ?_assertEqual(
       {struct, struct, [
-        {1, {optional, required}, {list, i32}, 'thing', undefined}
+        {1, undefined, {list, i32}, 'thing', undefined}
       ]},
       thrift_test_thrift:function_info('ThriftTest', testList, params_type)
     )},
@@ -512,7 +512,7 @@ service_info_test_() ->
     )},
     {"testEnum params", ?_assertEqual(
       {struct, struct, [
-        {1, {optional, required}, {enum, {thrift_test_thrift, 'Numberz'}}, 'thing', undefined}
+        {1, undefined, {enum, {thrift_test_thrift, 'Numberz'}}, 'thing', undefined}
       ]},
       thrift_test_thrift:function_info('ThriftTest', testEnum, params_type)
     )},
@@ -525,7 +525,7 @@ service_info_test_() ->
       thrift_test_thrift:function_info('ThriftTest', testEnum, exceptions)
     )},
     {"testTypedef params", ?_assertEqual(
-      {struct, struct, [{1, {optional, required}, i64, 'thing', undefined}]},
+      {struct, struct, [{1, undefined, i64, 'thing', undefined}]},
       thrift_test_thrift:function_info('ThriftTest', testTypedef, params_type)
     )},
     {"testTypedef reply", ?_assertEqual(
@@ -538,7 +538,7 @@ service_info_test_() ->
     )},
     {"testMapMap params", ?_assertEqual(
       {struct, struct, [
-        {1, {optional, required}, i32, 'hello', undefined}
+        {1, undefined, i32, 'hello', undefined}
       ]},
       thrift_test_thrift:function_info('ThriftTest', testMapMap, params_type)
     )},
@@ -552,7 +552,7 @@ service_info_test_() ->
     )},
     {"testInsanity params", ?_assertEqual(
       {struct, struct, [
-        {1, {optional, required}, {struct, struct, {thrift_test_thrift, 'Insanity'}}, 'argument', undefined}
+        {1, undefined, {struct, struct, {thrift_test_thrift, 'Insanity'}}, 'argument', undefined}
       ]},
       thrift_test_thrift:function_info('ThriftTest', testInsanity, params_type)
     )},
@@ -569,12 +569,12 @@ service_info_test_() ->
     )},
     {"testMulti params", ?_assertEqual(
       {struct, struct, [
-        {1, {optional, required}, byte, 'arg0', undefined},
-        {2, {optional, required}, i32, 'arg1', undefined},
-        {3, {optional, required}, i64, 'arg2', undefined},
-        {4, {optional, required}, {map, i16, string}, 'arg3', undefined},
-        {5, {optional, required}, {enum, {thrift_test_thrift, 'Numberz'}}, 'arg4', undefined},
-        {6, {optional, required}, i64, 'arg5', undefined}
+        {1, undefined, byte, 'arg0', undefined},
+        {2, undefined, i32, 'arg1', undefined},
+        {3, undefined, i64, 'arg2', undefined},
+        {4, undefined, {map, i16, string}, 'arg3', undefined},
+        {5, undefined, {enum, {thrift_test_thrift, 'Numberz'}}, 'arg4', undefined},
+        {6, undefined, i64, 'arg5', undefined}
       ]},
       thrift_test_thrift:function_info('ThriftTest', testMulti, params_type)
     )},
@@ -587,7 +587,7 @@ service_info_test_() ->
       thrift_test_thrift:function_info('ThriftTest', testMulti, exceptions)
     )},
     {"testException params", ?_assertEqual(
-      {struct, struct, [{1, {optional, required}, string, 'arg', undefined}]},
+      {struct, struct, [{1, undefined, string, 'arg', undefined}]},
       thrift_test_thrift:function_info('ThriftTest', testException, params_type)
     )},
     {"testException reply", ?_assertEqual(
@@ -596,14 +596,14 @@ service_info_test_() ->
     )},
     {"testException exceptions", ?_assertEqual(
       {struct, struct, [
-        {1, {optional, required}, {struct, exception, {thrift_test_thrift, 'Xception'}}, 'err1', undefined}
+        {1, undefined, {struct, exception, {thrift_test_thrift, 'Xception'}}, 'err1', undefined}
       ]},
       thrift_test_thrift:function_info('ThriftTest', testException, exceptions)
     )},
     {"testMultiException params", ?_assertEqual(
       {struct, struct, [
-        {1, {optional, required}, string, 'arg0', undefined},
-        {2, {optional, required}, string, 'arg1', undefined}
+        {1, undefined, string, 'arg0', undefined},
+        {2, undefined, string, 'arg1', undefined}
       ]},
       thrift_test_thrift:function_info('ThriftTest', testMultiException, params_type)
     )},
@@ -613,13 +613,13 @@ service_info_test_() ->
     )},
     {"testMultiException exceptions", ?_assertEqual(
       {struct, struct, [
-        {1, {optional, required}, {struct, exception, {thrift_test_thrift, 'Xception'}}, 'err1', undefined},
-        {2, {optional, required}, {struct, exception, {thrift_test_thrift, 'Xception2'}}, 'err2', undefined}
+        {1, undefined, {struct, exception, {thrift_test_thrift, 'Xception'}}, 'err1', undefined},
+        {2, undefined, {struct, exception, {thrift_test_thrift, 'Xception2'}}, 'err2', undefined}
       ]},
       thrift_test_thrift:function_info('ThriftTest', testMultiException, exceptions)
     )},
     {"testOneway params", ?_assertEqual(
-      {struct, struct, [{1, {optional, required}, i32, 'secondsToSleep', undefined}]},
+      {struct, struct, [{1, undefined, i32, 'secondsToSleep', undefined}]},
       thrift_test_thrift:function_info('ThriftTest', testOneway, params_type)
     )},
     {"testOneway reply", ?_assertEqual(
@@ -643,7 +643,7 @@ service_info_test_() ->
       thrift_test_thrift:function_info('SecondService', blahBlah, exceptions)
     )},
     {"secondtestString params", ?_assertEqual(
-      {struct, struct, [{1, {optional, required}, string, 'thing', undefined}]},
+      {struct, struct, [{1, undefined, string, 'thing', undefined}]},
       thrift_test_thrift:function_info('SecondService', secondtestString, params_type)
     )},
     {"secondtestString reply", ?_assertEqual(

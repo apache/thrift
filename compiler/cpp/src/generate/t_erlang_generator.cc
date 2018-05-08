@@ -370,10 +370,9 @@ void t_erlang_generator::generate_typespecs(std::ostream& os) {
   generate_typespec_service_function_types(os);
   os << endl
      << "-type struct_flavour() :: struct | exception | union." << endl
-     << "-type requiredness() :: required | optional." << endl
      << "-type field_num() :: pos_integer()." << endl
      << "-type field_name() :: atom()." << endl
-     << "-type field_req() :: requiredness() | {In :: requiredness(), Out :: requiredness()}." << endl
+     << "-type field_req() :: required | optional | undefined." << endl
      << endl
      << "-type type_ref() :: {module(), atom()}." << endl
      << "-type field_type() ::" << i.nlup()
@@ -887,8 +886,8 @@ string t_erlang_generator::render_member_requiredness(t_field* field) {
     return "required";
   case t_field::T_OPTIONAL:
     return "optional";
-  case t_field::T_OPT_IN_REQ_OUT:
-    return "{optional, required}";
+  default:
+    return "undefined";
   }
 }
 
@@ -941,6 +940,7 @@ void t_erlang_generator::generate_record_metadata(std::ostream& erl) {
 
   vec structs;
   gather_struct_types(get_program(), structs);
+  std::string const& ns = get_program()->get_namespace("erlang");
 
   indenter i;
   if (structs.size() > 0) {
