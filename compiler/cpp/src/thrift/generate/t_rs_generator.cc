@@ -2505,7 +2505,7 @@ void t_rs_generator::render_sync_processor_definition_and_impl(t_service *tservi
   indent_up();
   f_gen_ << indent() << service_processor_name << " {" << endl;
   indent_up();
-  f_gen_ << indent() << "handler: handler," << endl;
+  f_gen_ << indent() << "handler," << endl;
   indent_down();
   f_gen_ << indent() << "}" << endl;
   indent_down();
