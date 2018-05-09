@@ -90,7 +90,7 @@ public:
   std::string escape_html(std::string const& str);
   std::string escape_html_tags(std::string const& str);
   void generate_css();
-  void generate_css_content(std::ofstream& f_target);
+  void generate_css_content(std::ostream& f_target);
   void generate_style_tag();
   std::string make_file_link(std::string name);
   bool is_utf8_sequence(std::string const& str, size_t firstpos);
@@ -114,7 +114,7 @@ public:
   void print_fn_args_doc(t_function* tfunction);
 
 private:
-  std::ofstream f_out_;
+  ofstream_with_content_based_conditional_update f_out_;
   std::string current_file_;
   input_type input_type_;
   std::map<std::string, int> allowed_markup;
@@ -359,7 +359,7 @@ void t_html_generator::generate_css() {
   }
 }
 
-void t_html_generator::generate_css_content(std::ofstream& f_target) {
+void t_html_generator::generate_css_content(std::ostream& f_target) {
   f_target << BOOTSTRAP_CSS() << endl;
   f_target << "/* Auto-generated CSS for generated Thrift docs */" << endl;
   f_target << "h3, h4 { margin-bottom: 6px; }" << endl;

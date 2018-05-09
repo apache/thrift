@@ -45,6 +45,7 @@ public abstract class ProcessFunction<I, T extends TBase> {
       msgType = TMessageType.EXCEPTION;
     } catch (Exception ex) {
       LOGGER.error("Internal error processing " + getMethodName(), ex);
+      if(rethrowUnhandledExceptions()) throw new RuntimeException(ex);
       if(!isOneway()) {
         result = new TApplicationException(TApplicationException.INTERNAL_ERROR,
             "Internal error processing " + getMethodName());
@@ -71,7 +72,7 @@ public abstract class ProcessFunction<I, T extends TBase> {
     }
   }
 
-  protected boolean handleRuntimeExceptions() {
+  protected boolean rethrowUnhandledExceptions(){
     return false;
   }
 

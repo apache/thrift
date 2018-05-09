@@ -131,7 +131,7 @@ public:
                                             bool is_xception_class,
                                             bool is_union,
                                             bool is_xception_factory,
-                                            std::string xception_factroy_name);
+                                            std::string xception_factory_name);
   void generate_delphi_clear_union_value(ostream& out,
                                          std::string cls_prefix,
                                          std::string name,
@@ -141,7 +141,7 @@ public:
                                          bool is_xception_class,
                                          bool is_union,
                                          bool is_xception_factory,
-                                         std::string xception_factroy_name);
+                                         std::string xception_factory_name);
   void generate_delphi_isset_reader_impl(ostream& out,
                                          std::string cls_prefix,
                                          std::string name,
@@ -786,7 +786,7 @@ void t_delphi_generator::close_generator() {
   unitname = normalize_name(unitname);
   
   std::string f_name = get_out_dir() + "/" + unitname + ".pas";
-  std::ofstream f_all;
+  ofstream_with_content_based_conditional_update f_all;
 
   f_all.open(f_name.c_str());
 
@@ -1483,8 +1483,6 @@ void t_delphi_generator::generate_delphi_struct_impl(ostream& out,
   indent_up_impl();
   if (is_exception && (!is_x_factory)) {
     indent_impl(out) << "inherited Create('');" << endl;
-    indent_impl(out) << "F" << exception_factory_name << " := T" << exception_factory_name
-                     << "Impl.Create;" << endl;
   } else {
     indent_impl(out) << "inherited;" << endl;
   }
@@ -1529,6 +1527,19 @@ void t_delphi_generator::generate_delphi_struct_impl(ostream& out,
   indent_impl(out) << "inherited;" << endl;
   indent_down_impl();
   indent_impl(out) << "end;" << endl << endl;
+
+  if (is_exception && (!is_x_factory)) {
+    indent_impl(out) << "function " << cls_prefix << cls_nm << "." << exception_factory_name
+                     << ": I" << exception_factory_name << ";" << endl;
+    indent_impl(out) << "begin" << endl;
+    indent_up_impl();
+    indent_impl(out) << "if F" << exception_factory_name << " = nil" << endl;
+    indent_impl(out) << "then F" << exception_factory_name << " := T" << exception_factory_name << "Impl.Create;" << endl;
+    indent_impl(out) << endl;
+    indent_impl(out) << "result := F" << exception_factory_name << ";" << endl;
+    indent_down_impl();
+    indent_impl(out) << "end;" << endl << endl;
+  }
 
   if (tstruct->is_union()) {
     indent_impl(out) << "procedure " << cls_prefix << cls_nm << "."
@@ -1813,8 +1824,7 @@ void t_delphi_generator::generate_delphi_struct_definition(ostream& out,
   if (is_exception && (!is_x_factory)) {
     out << endl;
     indent(out) << "// Exception Factory" << endl;
-    indent(out) << "property " << exception_factory_name << ": " << struct_intf_name << " read F"
-                << exception_factory_name << " write F" << exception_factory_name << ";" << endl;
+    indent(out) << "function " << exception_factory_name << ": " << struct_intf_name << ";" << endl;
   }
 
   if ((!is_exception) || is_x_factory) {
@@ -3450,7 +3460,7 @@ void t_delphi_generator::generate_delphi_property_writer_impl(ostream& out,
                                                               bool is_xception_class,
                                                               bool is_union,
                                                               bool is_xception_factory,
-                                                              std::string xception_factroy_name) {
+                                                              std::string xception_factory_name) {
   (void)type;
 
   t_type* ftype = tfield->get_type();
@@ -3471,7 +3481,7 @@ void t_delphi_generator::generate_delphi_property_writer_impl(ostream& out,
   indent_impl(out) << fieldPrefix << prop_name(tfield, is_xception_class) << " := Value;" << endl;
 
   if (is_xception_class && (!is_xception_factory)) {
-    indent_impl(out) << "F" << xception_factroy_name << "." << prop_name(tfield, is_xception_class)
+    indent_impl(out) << xception_factory_name << "." << prop_name(tfield, is_xception_class)
                      << " := Value;" << endl;
   }
 
@@ -3538,7 +3548,7 @@ void t_delphi_generator::generate_delphi_create_exception_impl(ostream& out,
 
   indent_impl(out) << "Result := " << exception_cls_nm << ".Create;" << endl;
   string factory_name = normalize_clsnm(tstruct->get_name(), "", true) + "Factory";
-  indent_impl(out) << "Result." << factory_name << " := Self;" << endl;
+  indent_impl(out) << "Result.F" << factory_name << " := Self;" << endl;
 
   const vector<t_field*>& fields = tstruct->get_members();
   vector<t_field*>::const_iterator f_iter;
@@ -3548,8 +3558,7 @@ void t_delphi_generator::generate_delphi_create_exception_impl(ostream& out,
   for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
     propname = prop_name(*f_iter, is_exception);
     if ((*f_iter)->get_req() != t_field::T_REQUIRED) {
-      indent_impl(out) << "if __isset_" << propname << " then" << endl;
-      indent_impl(out) << "begin" << endl;
+      indent_impl(out) << "if __isset_" << propname << " then begin" << endl;
       indent_up_impl();
     }
     indent_impl(out) << "Result." << propname << " := " << propname << ";" << endl;

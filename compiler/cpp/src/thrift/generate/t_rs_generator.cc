@@ -100,7 +100,7 @@ private:
   string gen_dir_;
 
   // File to which generated code is written.
-  std::ofstream f_gen_;
+  ofstream_with_content_based_conditional_update f_gen_;
 
   // Write the common compiler attributes and module includes to the top of the auto-generated file.
   void render_attributes_and_includes();

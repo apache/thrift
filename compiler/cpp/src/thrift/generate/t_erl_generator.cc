@@ -220,15 +220,15 @@ private:
   std::ostringstream f_info_;
   std::ostringstream f_info_ext_;
 
-  std::ofstream f_types_file_;
-  std::ofstream f_types_hrl_file_;
+  ofstream_with_content_based_conditional_update f_types_file_;
+  ofstream_with_content_based_conditional_update f_types_hrl_file_;
 
-  std::ofstream f_consts_file_;
-  std::ofstream f_consts_hrl_file_;
+  ofstream_with_content_based_conditional_update f_consts_file_;
+  ofstream_with_content_based_conditional_update f_consts_hrl_file_;
 
   std::ostringstream f_service_;
-  std::ofstream f_service_file_;
-  std::ofstream f_service_hrl_;
+  ofstream_with_content_based_conditional_update f_service_file_;
+  ofstream_with_content_based_conditional_update f_service_hrl_;
 
   /**
    * Metadata containers

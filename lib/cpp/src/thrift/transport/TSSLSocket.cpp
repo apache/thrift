@@ -403,11 +403,16 @@ uint32_t TSSLSocket::read(uint8_t* buf, uint32_t len) {
       break;
     }
     unsigned int waitEventReturn;
+    bool breakout = false;
     switch (error) {
       case SSL_ERROR_ZERO_RETURN:
         throw TTransportException(TTransportException::END_OF_FILE, "client disconnected");
 
       case SSL_ERROR_SYSCALL:
+        if (errno_copy == 0 && ERR_peek_error() == 0) {
+          breakout = true;
+          break;
+        }
         if ((errno_copy != THRIFT_EINTR)
             && (errno_copy != THRIFT_EAGAIN)) {
               break;
@@ -449,6 +454,9 @@ uint32_t TSSLSocket::read(uint8_t* buf, uint32_t len) {
         }
         throw TTransportException(TTransportException::INTERNAL_ERROR, "unkown waitForEvent return value");
       default:;// do nothing
+    }
+    if (breakout) {
+      break;
     }
     string errors;
     buildErrors(errors, errno_copy, error);
@@ -1024,6 +1032,14 @@ void buildErrors(string& errors, int errno_copy, int sslerrno) {
   }
   if (sslerrno) {
     errors += " (SSL_error_code = " + to_string(sslerrno) + ")";
+    if (sslerrno == SSL_ERROR_SYSCALL) {
+      char buf[4096];
+      int err;
+      while ((err = ERR_get_error()) != 0) {
+        errors += " ";
+        errors += ERR_error_string(err, buf);
+      }
+    }
   }
 }
 

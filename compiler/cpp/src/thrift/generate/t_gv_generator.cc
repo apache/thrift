@@ -87,7 +87,7 @@ protected:
   void print_const_value(t_type* type, t_const_value* tvalue);
 
 private:
-  std::ofstream f_out_;
+  ofstream_with_content_based_conditional_update f_out_;
   std::list<string> edges;
   bool exception_arrows;
 };

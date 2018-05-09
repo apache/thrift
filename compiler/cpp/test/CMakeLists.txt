@@ -75,3 +75,6 @@ if(${WITH_PLUGIN})
                  -DSRCDIR=${CMAKE_CURRENT_SOURCE_DIR}
                  -P ${CMAKE_CURRENT_SOURCE_DIR}/cpp_plugin_test.cmake)
 endif()
+
+find_package(PythonInterp REQUIRED)
+add_test(NAME StalenessCheckTest COMMAND ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/compiler/staleness_check.py ${THRIFT_COMPILER})
