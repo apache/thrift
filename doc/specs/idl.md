@@ -156,7 +156,7 @@ Most language implementations use the recommended pratice of so-called "isset" f
 - Read: Like optional, the field may, or may not be part of the input stream. 
 - Default values: may not be written (see next section)
 
-Default requiredess is a good starting point. The desired behaviour is a mix of optional and required, hence the internal name "opt-in, req-out". Although in theory these fields are supposed to be written ("req-out"), in reality unset fields are not always written. This is especially the case, when the field contains a <null> value, which by definition cannot be transported through thrift. The only way to achieve this is by not writing that field at all, and that's what most languages do.
+Default requiredness is a good starting point. The desired behaviour is a mix of optional and required, hence the internal name "opt-in, req-out". Although in theory these fields are supposed to be written ("req-out"), in reality unset fields are not always written. This is especially the case, when the field contains a <null> value, which by definition cannot be transported through thrift. The only way to achieve this is by not writing that field at all, and that's what most languages do.
 	
 #### Semantics of Default Values
 
