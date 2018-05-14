@@ -28,7 +28,7 @@ namespace apache { namespace thrift { namespace server {
 class TZmqServer : public TServer {
  public:
   TZmqServer(
-      boost::shared_ptr<TProcessor> processor,
+      apache::thrift::stdcxx::shared_ptr<TProcessor> processor,
       zmq::context_t& ctx, const std::string& endpoint, int type)
     : TServer(processor)
     , processor_(processor)
@@ -56,7 +56,7 @@ class TZmqServer : public TServer {
   }
 
  private:
-  boost::shared_ptr<TProcessor> processor_;
+  apache::thrift::stdcxx::shared_ptr<TProcessor> processor_;
   int zmq_type_;
   zmq::socket_t sock_;
 };

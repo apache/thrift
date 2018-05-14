@@ -22,7 +22,7 @@ def main():
 
     ctx = zmq.Context()
     reqrep_server = TZmqServer.TZmqServer(processor, ctx, "tcp://0.0.0.0:9090", zmq.REP)
-    oneway_server = TZmqServer.TZmqServer(processor, ctx, "tcp://0.0.0.0:9091", zmq.UPSTREAM)
+    oneway_server = TZmqServer.TZmqServer(processor, ctx, "tcp://0.0.0.0:9091", zmq.PULL)
     multiserver = TZmqServer.TZmqMultiServer()
     multiserver.servers.append(reqrep_server)
     multiserver.servers.append(oneway_server)

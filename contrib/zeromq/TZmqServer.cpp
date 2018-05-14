@@ -21,7 +21,7 @@
 #include <thrift/transport/TBufferTransports.h>
 #include <boost/scoped_ptr.hpp>
 
-using boost::shared_ptr;
+using apache::thrift::stdcxx::shared_ptr;
 using apache::thrift::transport::TMemoryBuffer;
 using apache::thrift::protocol::TProtocol;
 

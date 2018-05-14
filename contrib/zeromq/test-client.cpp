@@ -6,7 +6,7 @@
 #include "TZmqClient.h"
 #include "Storage.h"
 
-using boost::shared_ptr;
+using apache::thrift::stdcxx::shared_ptr;
 using apache::thrift::transport::TZmqClient;
 using apache::thrift::protocol::TBinaryProtocol;
 
@@ -17,7 +17,7 @@ int main(int argc, char** argv) {
   if (argc > 1) {
     incr = atoi(argv[1]);
     if (incr) {
-      socktype = ZMQ_DOWNSTREAM;
+      socktype = ZMQ_PUSH;
       endpoint = "tcp://127.0.0.1:9091";
     }
   }
