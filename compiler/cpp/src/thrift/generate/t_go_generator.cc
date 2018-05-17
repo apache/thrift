@@ -1387,6 +1387,14 @@ void t_go_generator::generate_go_struct_definition(ostream& out,
       }
       out << endl;
     }
+
+    // num_setable is used for deciding if Count* methods will be generated for union fields.
+    // This applies to all nullable fields including slices (used for set, list and binary) and maps, not just pointers.
+    t_type* type = fieldType->get_true_type();
+    if (is_pointer_field(*m_iter)|| type->is_map() || type->is_set() || type->is_list() || type->is_binary()) {
+      num_setable += 1;
+    }
+
     if (is_pointer_field(*m_iter)) {
       string goOptType = type_to_go_type_with_opt(fieldType, true);
       string maybepointer = goOptType != goType ? "*" : "";
@@ -1397,7 +1405,6 @@ void t_go_generator::generate_go_struct_definition(ostream& out,
       out << indent() << "  }" << endl;
       out << indent() << "return " << maybepointer << "p." << publicized_name << endl;
       out << indent() << "}" << endl;
-      num_setable += 1;
     } else {
       out << endl;
       out << indent() << "func (p *" << tstruct_name << ") Get" << publicized_name << "() "
@@ -1491,7 +1498,7 @@ void t_go_generator::generate_countsetfields_helper(ostream& out,
 
     t_type* type = (*f_iter)->get_type()->get_true_type();
 
-    if (!(is_pointer_field(*f_iter) || type->is_map() || type->is_set() || type->is_list()))
+    if (!(is_pointer_field(*f_iter) || type->is_map() || type->is_set() || type->is_list() || type->is_binary()))
       continue;
 
     const string field_name(publicize(escape_string((*f_iter)->get_name())));
