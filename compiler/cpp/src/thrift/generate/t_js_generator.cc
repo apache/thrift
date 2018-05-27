@@ -1529,16 +1529,7 @@ void t_js_generator::generate_service_client(t_service* tservice) {
 
     std::string messageType = (*f_iter)->is_oneway() ? "Thrift.MessageType.ONEWAY"
                                                      : "Thrift.MessageType.CALL";
-
-    // Serialize the request header
-    if (gen_node_) {
-      f_service_ << indent() << outputVar << ".writeMessageBegin('" << (*f_iter)->get_name()
-                 << "', " << messageType << ", this.seqid());" << endl;
-    } else {
-      f_service_ << indent() << outputVar << ".writeMessageBegin('" << (*f_iter)->get_name()
-                 << "', " << messageType << ", this.seqid);" << endl;
-    }
-
+    // Build args
     if (fields.size() > 0){
       f_service_ << indent() << "var params = {" << endl;
       for (fld_iter = fields.begin(); fld_iter != fields.end(); ++fld_iter) {
@@ -1554,6 +1545,20 @@ void t_js_generator::generate_service_client(t_service* tservice) {
     } else {
       f_service_ << indent() << "var args = new " << argsname << "();" << endl;
     }
+
+
+    // Serialize the request header within try/catch
+    f_service_ << indent() << "try {" << endl;
+    indent_up();
+
+    if (gen_node_) {
+      f_service_ << indent() << outputVar << ".writeMessageBegin('" << (*f_iter)->get_name()
+                 << "', " << messageType << ", this.seqid());" << endl;
+    } else {
+      f_service_ << indent() << outputVar << ".writeMessageBegin('" << (*f_iter)->get_name()
+                 << "', " << messageType << ", this.seqid);" << endl;
+    }
+
 
     // Write to the stream
     f_service_ << indent() << "args.write(" << outputVar << ");" << endl << indent() << outputVar
@@ -1604,6 +1609,25 @@ void t_js_generator::generate_service_client(t_service* tservice) {
         f_service_ << indent() << "}" << endl;
       }
     }
+
+    indent_down();
+    f_service_ << indent() << "}" << endl;
+
+    // Reset the transport if there was a serialization error
+    f_service_ << indent() << "catch (e) {" << endl;
+    indent_up();
+    if (gen_node_) {
+      f_service_ << indent() << "if (typeof " << outputVar << ".reset === 'function') {" << endl;
+      f_service_ << indent() << "  " << outputVar << ".reset();" << endl;
+      f_service_ << indent() << "}" << endl;
+    } else {
+      f_service_ << indent() << "if (typeof " << outputVar << ".getTransport().reset === 'function') {" << endl;
+      f_service_ << indent() << "  " << outputVar << ".getTransport().reset();" << endl;
+      f_service_ << indent() << "}" << endl;
+    }
+    f_service_ << indent() << "throw e;" << endl;
+    indent_down();
+    f_service_ << indent() << "}" << endl;
 
     indent_down();
 
