@@ -18,8 +18,8 @@
 # - dart: does not come with Ubuntu
 # - dotnet: does not come with Ubuntu
 # - haxe: version 3.4.2 that comes with Ubuntu cores in our CI build
-# - go: xenial comes with 1.8, we want the latest (supported)
-# - nodejs: want v8, Ubuntu comes with v6
+# - go: artful comes with 1.9, we want the latest (supported)
+# - nodejs: want v8, artful comes with v6
 #
 
 FROM buildpack-deps:artful-scm
@@ -103,8 +103,8 @@ RUN \
     sbcl --version && \
     rm -rf sbcl*
 
-ENV D_VERSION     2.077.1
-ENV DMD_DEB       dmd_2.077.1-0_amd64.deb
+ENV D_VERSION     2.080.0
+ENV DMD_DEB       dmd_2.080.0-0_amd64.deb
 RUN \
 `# D dependencies` \
     wget -q http://downloads.dlang.org/releases/2.x/${D_VERSION}/${DMD_DEB} && \
