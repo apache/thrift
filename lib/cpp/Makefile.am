@@ -70,6 +70,7 @@ libthrift_la_SOURCES = src/thrift/TApplicationException.cpp \
                        src/thrift/TOutput.cpp \
                        src/thrift/VirtualProfiling.cpp \
                        src/thrift/async/TAsyncChannel.cpp \
+                       src/thrift/async/TAsyncProtocolProcessor.cpp \
                        src/thrift/async/TConcurrentClientSyncInfo.cpp \
                        src/thrift/concurrency/ThreadManager.cpp \
                        src/thrift/concurrency/TimerManager.cpp \
@@ -116,7 +117,6 @@ libthrift_la_SOURCES += src/thrift/concurrency/Mutex.cpp \
 endif
 
 libthriftnb_la_SOURCES = src/thrift/server/TNonblockingServer.cpp \
-                         src/thrift/async/TAsyncProtocolProcessor.cpp \
                          src/thrift/async/TEvhttpServer.cpp \
                          src/thrift/async/TEvhttpClientChannel.cpp
 
