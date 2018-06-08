@@ -409,8 +409,8 @@ void asyncAggregatorTest(const(ushort)[] ports, ExTestHandler[] handlers) {
     )();
     Thread.sleep(dur!"msecs"(20));
     auto resultTuple = partialResult.finishGet();
-    enforce(resultTuple._0 == ports[0 .. 2]);
-    enforce(equal(map!"a.port"(cast(TestServiceException[])resultTuple._1),
+    enforce(resultTuple[0] == ports[0 .. 2]);
+    enforce(equal(map!"a.port"(cast(TestServiceException[])resultTuple[1]),
       ports[3 .. $ - 1]));
   }
 }

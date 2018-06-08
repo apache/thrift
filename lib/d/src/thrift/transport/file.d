@@ -37,7 +37,8 @@ import std.array : empty;
 import std.algorithm : min, max;
 import std.concurrency;
 import std.conv : to;
-import std.datetime : AutoStart, dur, Duration, StopWatch;
+import std.datetime : dur, Duration;
+import std.datetime.stopwatch : AutoStart, StopWatch;
 import std.exception;
 import std.stdio : File;
 import thrift.base;
@@ -1076,15 +1077,15 @@ unittest {
 
       // If any attempt takes more than 500ms, treat that as a fatal failure to
       // avoid looping over a potentially very slow operation.
-      enforce(sw.peek().msecs < 1500,
-        text("close() took ", sw.peek().msecs, "ms."));
+      enforce(sw.peek().total!"msecs" < 1500,
+        text("close() took ", sw.peek().total!"msecs", "ms."));
 
       // Normally, it takes less than 5ms on my dev box.
       // However, if the box is heavily loaded, some of the test runs can take
       // longer. Additionally, on a Windows Server 2008 instance running in
       // a VirtualBox VM, it has been observed that about a quarter of the runs
       // takes (217 ± 1) ms, for reasons not yet known.
-      if (sw.peek().msecs > 50) {
+      if (sw.peek().total!"msecs" > 50) {
         ++numOver;
       }
 

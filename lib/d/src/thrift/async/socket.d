@@ -18,6 +18,7 @@
  */
 module thrift.async.socket;
 
+import core.stdc.errno: ECONNRESET;
 import core.thread : Fiber;
 import core.time : dur, Duration;
 import std.array : empty;
