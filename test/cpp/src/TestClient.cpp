@@ -946,7 +946,7 @@ int main(int argc, char** argv) {
         failed = true;
       } else {
         map<Numberz::type, Insanity>::const_iterator it26 = it2->second.find(Numberz::SIX);
-        if (it26 == it1->second.end() || it26->second != Insanity()) {
+        if (it26 == it2->second.end() || it26->second != Insanity()) {
           failed = true;
         }
       }

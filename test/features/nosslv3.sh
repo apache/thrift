@@ -32,6 +32,13 @@ function nosslv3
 {
   local nego
   local negodenied
+  local opensslv
+
+  opensslv=$(openssl version | cut -d' ' -f2)
+  if [[ $opensslv > "1.0" ]]; then
+    echo "[pass] OpenSSL 1.1 or later - no need to check ssl3"
+    return 0
+  fi
 
   # echo "openssl s_client -connect $THRIFTHOST:$THRIFTPORT -CAfile ../keys/CA.pem -ssl3 2>&1 < /dev/null"
   nego=$(openssl s_client -connect $THRIFTHOST:$THRIFTPORT -CAfile ../keys/CA.pem -ssl3 2>&1 < /dev/null)

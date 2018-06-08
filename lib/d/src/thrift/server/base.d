@@ -112,12 +112,12 @@ protected:
     outputProtocolFactory_ = outputProtocolFactory;
   }
 
-  TProcessorFactory processorFactory_;
-  TServerTransport serverTransport_;
-  TTransportFactory inputTransportFactory_;
-  TTransportFactory outputTransportFactory_;
-  TProtocolFactory inputProtocolFactory_;
-  TProtocolFactory outputProtocolFactory_;
+  public TProcessorFactory processorFactory_;
+  public TServerTransport serverTransport_;
+  public TTransportFactory inputTransportFactory_;
+  public TTransportFactory outputTransportFactory_;
+  public TProtocolFactory inputProtocolFactory_;
+  public TProtocolFactory outputProtocolFactory_;
 }
 
 /**

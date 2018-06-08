@@ -368,7 +368,7 @@ class TSSLServerSocket(TSocket.TServerSocket, TSSLBase):
         plain_client, addr = self.handle.accept()
         try:
             client = self._wrap_socket(plain_client)
-        except (ssl.SSLError, OSError):
+        except (ssl.SSLError, socket.error, OSError):
             logger.exception('Error while accepting from %s', addr)
             # failed handshake/ssl wrap, close socket to client
             plain_client.close()
