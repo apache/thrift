@@ -18,7 +18,7 @@
 #
 
 from thrift.Thrift import TProcessor, TMessageType, TException
-from thrift.protocol import TProtocolDecorator, TMultiplexedProtocol
+from thrift.protocol import TMultiplexedProtocol
 
 
 class TMultiplexedProcessor(TProcessor):
@@ -43,13 +43,5 @@ class TMultiplexedProcessor(TProcessor):
             raise TException("Service name not found: " + serviceName + ". Did you forget to call registerProcessor()?")
 
         standardMessage = (call, type, seqid)
-        return self.services[serviceName].process(StoredMessageProtocol(iprot, standardMessage), oprot)
-
-
-class StoredMessageProtocol(TProtocolDecorator.TProtocolDecorator):
-    def __init__(self, protocol, messageBegin):
-        TProtocolDecorator.TProtocolDecorator.__init__(self, protocol)
-        self.messageBegin = messageBegin
-
-    def readMessageBegin(self):
-        return self.messageBegin
+        iprot.readMessageBegin = lambda: standardMessage
+        return self.services[serviceName].process(iprot, oprot)
