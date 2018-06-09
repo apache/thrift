@@ -122,8 +122,9 @@ project.lock.json
 /lib/cpp/test/OptionalRequiredTest
 /lib/cpp/test/SecurityTest
 /lib/cpp/test/SpecializationTest
-/lib/cpp/test/ReflectionTest
 /lib/cpp/test/RecursiveTest
+/lib/cpp/test/ReflectionTest
+/lib/cpp/test/RenderedDoubleConstantsTest
 /lib/cpp/test/TFDTransportTest
 /lib/cpp/test/TFileTransportTest
 /lib/cpp/test/TInterruptTest
@@ -241,6 +242,7 @@ project.lock.json
 /lib/php/src/ext/thrift_protocol/build/
 /lib/php/src/ext/thrift_protocol/config.*
 /lib/php/src/ext/thrift_protocol/configure
+/lib/php/src/ext/thrift_protocol/configure.ac
 /lib/php/src/ext/thrift_protocol/configure.in
 /lib/php/src/ext/thrift_protocol/install-sh
 /lib/php/src/ext/thrift_protocol/libtool

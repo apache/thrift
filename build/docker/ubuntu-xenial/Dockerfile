@@ -104,7 +104,7 @@ RUN apt-get install -y --allow-unauthenticated --no-install-recommends \
 `# D dependencies` \
       dmd-bin=$D_VERSION \
       libphobos2-dev=$D_VERSION \
-      dub \
+      dub=1.6.0-0 \
       dfmt \
       dscanner \
       libevent-dev \
