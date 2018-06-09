@@ -144,6 +144,7 @@ describe 'Server' do
         exception_q.push(StandardError.new('ERROR'))
       end
       expect { @server.rescuable_serve }.to(raise_error('ERROR'))
+      sleep(0.15)
     end
 
     it "should avoid running the server twice when retrying rescuable_serve" do
