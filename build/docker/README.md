@@ -143,7 +143,7 @@ Last updated: October 1, 2017
 | c_glib    | 2.48.2        | 2.54.0        |       |
 | cl (sbcl) |               | 1.4.5         |       |
 | cocoa     |               |               | Not in CI |
-| d         | 2.073.2       | 2.080.0       |       |
+| d         | 2.075.1       | 2.080.0       |       |
 | dart      | 1.22.1        | 1.24.3        |       |
 | delphi    |               |               | Not in CI |
 | dotnet    | 2.1.4         | 2.1.4         | v2.1.4 SDK uses v2.0.5 Runtime |
