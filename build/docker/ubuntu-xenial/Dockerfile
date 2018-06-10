@@ -13,7 +13,7 @@
 #
 # Apache Thrift Docker build environment for Ubuntu Xenial
 # Using all stock Ubuntu Xenial packaging except for:
-# - d: does not come with Ubuntu so we're installing 2.073.2 for coverage
+# - d: does not come with Ubuntu so we're installing 2.075.1 for coverage
 # - dart: does not come with Ubuntu so we're installing 1.22.1 for coverage
 # - dotnet: does not come with Ubuntu
 # - go: Xenial comes with 1.6, but we need 1.7 or later
@@ -45,7 +45,6 @@ RUN apt-get update && \
 RUN apt-key adv --keyserver keyserver.ubuntu.com --recv-keys EBCF975E5BA24D5E && \
     wget http://master.dl.sourceforge.net/project/d-apt/files/d-apt.list -O /etc/apt/sources.list.d/d-apt.list && \
     wget -qO - https://dlang.org/d-keyring.gpg | apt-key add -
-ENV D_VERSION 2.073.2-0
 
 # Dart
 RUN curl https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - && \
@@ -100,11 +99,12 @@ RUN apt-get install -y --no-install-recommends \
 `# csharp (mono) dependencies` \
       mono-devel
 
+ENV D_VERSION 2.075.1-0
 RUN apt-get install -y --allow-unauthenticated --no-install-recommends \
 `# D dependencies` \
       dmd-bin=$D_VERSION \
       libphobos2-dev=$D_VERSION \
-      dub \
+      dub=1.6.0-0 \
       dfmt \
       dscanner \
       libevent-dev \
