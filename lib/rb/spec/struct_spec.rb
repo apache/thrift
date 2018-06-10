@@ -227,7 +227,7 @@ describe 'Struct' do
     it "should support optional type-checking in Thrift::Struct.new" do
       Thrift.type_checking = true
       begin
-        expect { SpecNamespace::Hello.new(:greeting => 3) }.to raise_error(Thrift::TypeError, "Expected Types::STRING, received Fixnum for field greeting")
+        expect { SpecNamespace::Hello.new(:greeting => 3) }.to raise_error(Thrift::TypeError, /Expected Types::STRING, received (Integer|Fixnum) for field greeting/)
       ensure
         Thrift.type_checking = false
       end
@@ -238,7 +238,7 @@ describe 'Struct' do
       Thrift.type_checking = true
       begin
         hello = SpecNamespace::Hello.new
-        expect { hello.greeting = 3 }.to raise_error(Thrift::TypeError, "Expected Types::STRING, received Fixnum for field greeting")
+        expect { hello.greeting = 3 }.to raise_error(Thrift::TypeError, /Expected Types::STRING, received (Integer|Fixnum) for field greeting/)
       ensure
         Thrift.type_checking = false
       end

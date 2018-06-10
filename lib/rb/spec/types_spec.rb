@@ -100,9 +100,9 @@ describe Thrift::Types do
     end
 
     it "should give the Thrift::TypeError a readable message" do
-      msg = "Expected Types::STRING, received Fixnum for field foo"
+      msg = /Expected Types::STRING, received (Integer|Fixnum) for field foo/
       expect { Thrift.check_type(3, {:type => Thrift::Types::STRING}, :foo) }.to raise_error(Thrift::TypeError, msg)
-      msg = "Expected Types::STRING, received Fixnum for field foo.element"
+      msg = /Expected Types::STRING, received (Integer|Fixnum) for field foo.element/
       field = {:type => Thrift::Types::LIST, :element => {:type => Thrift::Types::STRING}}
       expect { Thrift.check_type([3], field, :foo) }.to raise_error(Thrift::TypeError, msg)
       msg = "Expected Types::I32, received NilClass for field foo.element.key"
