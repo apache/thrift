@@ -313,6 +313,7 @@
   "nodejs-cpp_compact_http-domain",
   "nodejs-cpp_compact_http-ip",
   "nodejs-cpp_compact_http-ip-ssl",
+  "nodejs-cpp_json_buffered-ip-ssl",
   "nodejs-cpp_json_http-domain",
   "nodejs-cpp_json_http-ip",
   "nodejs-cpp_json_http-ip-ssl",
