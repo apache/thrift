@@ -238,6 +238,12 @@ public:
   std::string getter_name(string field_name);
   std::string setter_name(string field_name);
 
+  bool type_can_be_copy(t_type* ttype) {
+    ttype = get_true_type(ttype);
+    
+    return ttype->is_string();
+  }
+  
   bool type_can_be_null(t_type* ttype) {
     ttype = get_true_type(ttype);
 
@@ -3011,7 +3017,9 @@ string t_cocoa_generator::declare_property(t_field* tfield) {
   std::ostringstream render;
   render << "@property (";
 
-  if (type_can_be_null(tfield->get_type())) {
+  if (type_can_be_copy(tfield->get_type())) {
+    render << "copy, ";
+  } else if (type_can_be_null(tfield->get_type())) {
     render << "strong, ";
   } else {
     render << "assign, ";
