@@ -51,9 +51,8 @@ public:
   t_py_generator(t_program* program,
                  const std::map<std::string, std::string>& parsed_options,
                  const std::string& option_string)
-    : t_generator(program) {
+    : t_generator (program) {
     std::map<std::string, std::string>::const_iterator iter;
-
 
     gen_newstyle_ = true;
     gen_utf8strings_ = true;
@@ -334,6 +333,15 @@ private:
 
   std::string package_dir_;
   std::string module_;
+
+protected:
+  virtual std::set<std::string> lang_keywords() {
+    std::string keywords[] = { "False", "None", "True", "and", "as", "assert", "break", "class",
+          "continue", "def", "del", "elif", "else", "except", "exec", "finally", "for", "from",
+          "global", "if", "import", "in", "is", "lambda", "nonlocal", "not", "or", "pass", "print",
+          "raise", "return", "try", "while", "with", "yield" };
+    return std::set<std::string>(keywords, keywords + sizeof(keywords)/sizeof(keywords[0]) );
+  }
 };
 
 /**
