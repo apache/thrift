@@ -1613,10 +1613,11 @@ void t_js_generator::generate_service_client(t_service* tservice) {
     indent_down();
     f_service_ << indent() << "}" << endl;
 
-    // Reset the transport if there was a serialization error
+    // Reset the transport and delete registered callback if there was a serialization error
     f_service_ << indent() << "catch (e) {" << endl;
     indent_up();
     if (gen_node_) {
+      f_service_ << indent() << "delete this._reqs[this.seqid()];" << endl;
       f_service_ << indent() << "if (typeof " << outputVar << ".reset === 'function') {" << endl;
       f_service_ << indent() << "  " << outputVar << ".reset();" << endl;
       f_service_ << indent() << "}" << endl;
