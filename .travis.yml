@@ -118,6 +118,19 @@ jobs:
         - SCRIPT="ubsan.sh"
         - BUILD_ARG="--without-python --without-py3"
 
+    # ------------------------- phase: autotools --------------------
+    # TODO: Remove them once migrated to CMake
+    - script: build/docker/run.sh
+      env:
+        - JOB="Autotools (Ubuntu Bionic)"
+        - SCRIPT="autotools.sh"
+
+    - script: build/docker/run.sh
+      env:
+        - JOB="Autotools (Ubuntu Xenial)"
+        - DISTRO=ubuntu-xenial
+        - SCRIPT="autotools.sh"
+
     # ------------------------- phase: cmake ------------------------
     - script: build/docker/run.sh
       env:
@@ -139,19 +152,6 @@ jobs:
         - BUILD_LIBS="CPP TESTING TUTORIALS"
         - BUILD_ARG="-DWITH_PLUGIN=ON -DWITH_STDTHREADS=ON -DWITH_PYTHON=OFF -DWITH_C_GLIB=OFF -DWITH_JAVA=OFF -DWITH_HASKELL=OFF"
         - BUILD_ENV="-e CC=clang -e CXX=clang++"
-
-    # ------------------------- phase: autotools --------------------
-    # TODO: Remove them once migrated to CMake
-    - script: build/docker/run.sh
-      env:
-        - JOB="Autotools (Ubuntu Bionic)"
-        - SCRIPT="autotools.sh"
-
-    - script: build/docker/run.sh
-      env:
-        - JOB="Autotools (Ubuntu Xenial)"
-        - DISTRO=ubuntu-xenial
-        - SCRIPT="autotools.sh"
 
     # ------------------------- phase: dist -------------------------
     - script: build/docker/run.sh
