@@ -164,7 +164,16 @@ jobs:
         - JOB="Debian Packages"
         - SCRIPT="dpkg.sh"
 
-  ### ------------------------- phase: osx -------------------------
+    # ------------------------- phase: coverity ---------------------
+    # We build the coverity scan build once monthly using a travis cron job
+    - if: (env(COVERITY_SCAN_NOTIFICATION_EMAIL) IS present) AND (branch IN (master)) AND (type IN (cron))
+      script: build/docker/run.sh
+      env:
+        - JOB="Coverity Scan"
+        - SCRIPT="covscan.sh"
+     
+
+  ### ------------------------- phase: osx --------------------------
   # disabled due to the time delays it imposes on build jobs
   # - os: osx
   #   osx_image: xcode9
