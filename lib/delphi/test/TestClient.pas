@@ -32,7 +32,7 @@ unit TestClient;
 interface
 
 uses
-  Windows, SysUtils, Classes, Math,
+  Windows, SysUtils, Classes, Math, ComObj, ActiveX,
   {$IFDEF SupportsAsync} System.Threading, {$ENDIF}
   DateUtils,
   Generics.Collections,
@@ -59,6 +59,17 @@ type
     constructor Create( AThread: TThread);
   end;
 
+  TTestSetup = record
+    protType  : TKnownProtocol;
+    endpoint  : TEndpointTransport;
+    layered   : TLayeredTransports;
+    useSSL    : Boolean; // include where appropriate (TLayeredTransport?)
+    host      : string;
+    port      : Integer;
+    sPipeName : string;
+    hAnonRead, hAnonWrite : THandle;
+  end;
+
   TClientThread = class( TThread )
   private type
     TTestGroup = (
@@ -79,6 +90,7 @@ type
     );
 
   private
+    FSetup : TTestSetup;
     FTransport : ITransport;
     FProtocol : IProtocol;
     FNumIteration : Integer;
@@ -101,18 +113,21 @@ type
     procedure ClientAsyncTest;
     {$ENDIF}
 
+    procedure InitializeProtocolTransportStack;
+    procedure ShutdownProtocolTransportStack;
+
     procedure JSONProtocolReadWriteTest;
     function  PrepareBinaryData( aRandomDist : Boolean; aSize : TTestSize) : TBytes;
     {$IFDEF StressTest}
     procedure StressTest(const client : TThriftTest.Iface);
     {$ENDIF}
     {$IFDEF Win64}
-	procedure UseInterlockedExchangeAdd64;
+    procedure UseInterlockedExchangeAdd64;
     {$ENDIF}
   protected
     procedure Execute; override;
   public
-    constructor Create( const ATransport: ITransport; const AProtocol : IProtocol; ANumIteration: Integer);
+    constructor Create( const aSetup : TTestSetup; const aNumIteration: Integer);
     destructor Destroy; override;
   end;
 
@@ -194,38 +209,26 @@ class function TTestClient.Execute(const args: array of string) : Byte;
 var
   i : Integer;
   threadExitCode : Byte;
-  host : string;
-  port : Integer;
-  sPipeName : string;
-  hAnonRead, hAnonWrite : THandle;
   s : string;
   threads : array of TThread;
   dtStart : TDateTime;
   test : Integer;
   thread : TThread;
-  trans : ITransport;
-  prot : IProtocol;
-  streamtrans : IStreamTransport;
-  http : IHTTPClient;
-  protType : TKnownProtocol;
-  endpoint : TEndpointTransport;
-  layered : TLayeredTransports;
-  UseSSL : Boolean; // include where appropriate (TLayeredTransport?)
-const
-  // pipe timeouts to be used
-  DEBUG_TIMEOUT   = 30 * 1000;
-  RELEASE_TIMEOUT = DEFAULT_THRIFT_TIMEOUT;
-  TIMEOUT         = RELEASE_TIMEOUT;
+  setup : TTestSetup;
 begin
-  protType := prot_Binary;
-  endpoint := trns_Sockets;
-  layered := [];
-  UseSSL := FALSE;
-  host := 'localhost';
-  port := 9090;
-  sPipeName := '';
-  hAnonRead := INVALID_HANDLE_VALUE;
-  hAnonWrite := INVALID_HANDLE_VALUE;
+  // init record
+  with setup do begin
+    protType   := prot_Binary;
+    endpoint   := trns_Sockets;
+    layered    := [];
+    useSSL     := FALSE;
+    host       := 'localhost';
+    port       := 9090;
+    sPipeName  := '';
+    hAnonRead  := INVALID_HANDLE_VALUE;
+    hAnonWrite := INVALID_HANDLE_VALUE;
+  end;
+
   try
     i := 0;
     while ( i < Length(args) ) do begin
@@ -240,15 +243,15 @@ begin
       end
       else if s = '--host' then begin
         // --host arg (=localhost)     Host to connect
-        host := args[i];
+        setup.host := args[i];
         Inc( i);
       end
       else if s = '--port' then begin
         // --port arg (=9090)          Port number to connect
         s := args[i];
         Inc( i);
-        port := StrToIntDef(s,0);
-        if port <= 0 then InvalidArgs;
+        setup.port := StrToIntDef(s,0);
+        if setup.port <= 0 then InvalidArgs;
       end
       else if s = '--domain-socket' then begin
         // --domain-socket arg         Domain Socket (e.g. /tmp/ThriftTest.thrift), instead of host and port
@@ -256,27 +259,29 @@ begin
       end
       else if s = '--named-pipe' then begin
         // --named-pipe arg            Windows Named Pipe (e.g. MyThriftPipe)
-        endpoint := trns_NamedPipes;
-        sPipeName := args[i];
+        setup.endpoint := trns_NamedPipes;
+        setup.sPipeName := args[i];
         Inc( i);
+        Console.WriteLine('Using named pipe ('+setup.sPipeName+')');
       end
       else if s = '--anon-pipes' then begin
         // --anon-pipes hRead hWrite   Windows Anonymous Pipes pair (handles)
-        endpoint := trns_AnonPipes;
-        hAnonRead := THandle( StrToIntDef( args[i], Integer(INVALID_HANDLE_VALUE)));
+        setup.endpoint := trns_AnonPipes;
+        setup.hAnonRead := THandle( StrToIntDef( args[i], Integer(INVALID_HANDLE_VALUE)));
         Inc( i);
-        hAnonWrite := THandle( StrToIntDef( args[i], Integer(INVALID_HANDLE_VALUE)));
+        setup.hAnonWrite := THandle( StrToIntDef( args[i], Integer(INVALID_HANDLE_VALUE)));
         Inc( i);
+        Console.WriteLine('Using anonymous pipes ('+IntToStr(Integer(setup.hAnonRead))+' and '+IntToStr(Integer(setup.hAnonWrite))+')');
       end
       else if s = '--transport' then begin
         // --transport arg (=sockets)  Transport: buffered, framed, http, evhttp
         s := args[i];
         Inc( i);
 
-        if      s = 'buffered' then Include( layered, trns_Buffered)
-        else if s = 'framed'   then Include( layered, trns_Framed)
-        else if s = 'http'     then endpoint := trns_Http
-        else if s = 'evhttp'   then endpoint := trns_EvHttp
+        if      s = 'buffered' then Include( setup.layered, trns_Buffered)
+        else if s = 'framed'   then Include( setup.layered, trns_Framed)
+        else if s = 'http'     then setup.endpoint := trns_Http
+        else if s = 'evhttp'   then setup.endpoint := trns_EvHttp
         else InvalidArgs;
       end
       else if s = '--protocol' then begin
@@ -284,14 +289,14 @@ begin
         s := args[i];
         Inc( i);
 
-        if      s = 'binary'   then protType := prot_Binary
-        else if s = 'compact'  then protType := prot_Compact
-        else if s = 'json'     then protType := prot_JSON
+        if      s = 'binary'   then setup.protType := prot_Binary
+        else if s = 'compact'  then setup.protType := prot_Compact
+        else if s = 'json'     then setup.protType := prot_JSON
         else InvalidArgs;
       end
       else if s = '--ssl' then begin
         // --ssl                       Encrypted Transport using SSL
-        UseSSL := TRUE;
+        setup.useSSL := TRUE;
 
       end
       else if (s = '-n') or (s = '--testloops') then begin
@@ -317,7 +322,7 @@ begin
 
     // In the anonymous pipes mode the client is launched by the test server
     // -> behave nicely and allow for attaching a debugger to this process
-    if (endpoint = trns_AnonPipes) and not IsDebuggerPresent
+    if (setup.endpoint = trns_AnonPipes) and not IsDebuggerPresent
     then MessageBox( 0, 'Attach Debugger and/or click OK to continue.',
                         'Thrift TestClient (Delphi)',
                         MB_OK or MB_ICONEXCLAMATION);
@@ -325,66 +330,18 @@ begin
     SetLength( threads, FNumThread);
     dtStart := Now;
 
-    for test := 0 to FNumThread - 1 do
-    begin
-      case endpoint of
-        trns_Sockets: begin
-          Console.WriteLine('Using sockets ('+host+' port '+IntToStr(port)+')');
-          streamtrans := TSocketImpl.Create( host, port );
-        end;
+    // layered transports are not really meant to be stacked upon each other
+    if (trns_Framed in setup.layered) then begin
+      Console.WriteLine('Using framed transport');
+    end
+    else if (trns_Buffered in setup.layered) then begin
+      Console.WriteLine('Using buffered transport');
+    end;
 
-        trns_Http: begin
-          Console.WriteLine('Using HTTPClient');
-          http := THTTPClientImpl.Create( host);
-          trans := http;
-        end;
+    Console.WriteLine(THRIFT_PROTOCOLS[setup.protType]+' protocol');
 
-        trns_EvHttp: begin
-          raise Exception.Create(ENDPOINT_TRANSPORTS[endpoint]+' transport not implemented');
-        end;
-
-        trns_NamedPipes: begin
-          Console.WriteLine('Using named pipe ('+sPipeName+')');
-          streamtrans := TNamedPipeTransportClientEndImpl.Create( sPipeName, 0, nil, TIMEOUT, TIMEOUT);
-        end;
-
-        trns_AnonPipes: begin
-          Console.WriteLine('Using anonymous pipes ('+IntToStr(Integer(hAnonRead))+' and '+IntToStr(Integer(hAnonWrite))+')');
-          streamtrans := TAnonymousPipeTransportImpl.Create( hAnonRead, hAnonWrite, FALSE);
-        end;
-
-      else
-        raise Exception.Create('Unhandled endpoint transport');
-      end;
-      trans := streamtrans;
-      ASSERT( trans <> nil);
-
-      if (trns_Buffered in layered) then begin
-        trans := TBufferedTransportImpl.Create( streamtrans, 32);  // small buffer to test read()
-        Console.WriteLine('Using buffered transport');
-      end;
-
-      if (trns_Framed in layered) then begin
-        trans := TFramedTransportImpl.Create( trans );
-        Console.WriteLine('Using framed transport');
-      end;
-
-      if UseSSL then begin
-        raise Exception.Create('SSL not implemented');
-      end;
-
-      // create protocol instance, default to BinaryProtocol
-      case protType of
-        prot_Binary  :  prot := TBinaryProtocolImpl.Create( trans, BINARY_STRICT_READ, BINARY_STRICT_WRITE);
-        prot_JSON    :  prot := TJSONProtocolImpl.Create( trans);
-        prot_Compact :  prot := TCompactProtocolImpl.Create( trans);
-      else
-        raise Exception.Create('Unhandled protocol');
-      end;
-      ASSERT( trans <> nil);
-      Console.WriteLine(THRIFT_PROTOCOLS[protType]+' protocol');
-
-      thread := TClientThread.Create( trans, prot, FNumIteration);
+    for test := 0 to FNumThread - 1 do begin
+      thread := TClientThread.Create( setup, FNumIteration);
       threads[test] := thread;
       thread.Start;
     end;
@@ -393,10 +350,8 @@ begin
     for test := 0 to FNumThread - 1 do begin
       threadExitCode := threads[test].WaitFor;
       result := result or threadExitCode;
-    end;
-
-    for test := 0 to FNumThread - 1 do begin
       threads[test].Free;
+      threads[test] := nil;
     end;
 
     Console.Write('Total time: ' + IntToStr( MilliSecondsBetween(Now, dtStart)));
@@ -500,7 +455,7 @@ begin
       Console.WriteLine( ' = ' + IntToStr(e.ErrorCode) + ', ' + e.Message_ );
     end;
     on e:TTransportException do Expect( FALSE, 'Unexpected : "'+e.ToString+'"');
-    on e:Exception do Expect( FALSE, 'Unexpected exception type "'+e.ClassName+'"');
+    on e:Exception do Expect( FALSE, 'Unexpected exception "'+e.ClassName+'": '+e.Message);
   end;
 
   // case 2: exception type NOT declared in IDL at the function call
@@ -515,8 +470,8 @@ begin
     on e:TApplicationException do begin
       Console.WriteLine( e.ClassName+' = '+e.Message); // this is what we get
     end;
-    on e:TException do Expect( FALSE, 'Unexpected exception type "'+e.ClassName+'"');
-    on e:Exception do Expect( FALSE, 'Unexpected exception type "'+e.ClassName+'"');
+    on e:TException do Expect( FALSE, 'Unexpected exception "'+e.ClassName+'": '+e.Message);
+    on e:Exception do Expect( FALSE, 'Unexpected exception "'+e.ClassName+'": '+e.Message);
   end;
 
 
@@ -530,7 +485,7 @@ begin
     Expect( TRUE, 'testException(''something''): must not trow an exception');
   except
     on e:TTransportException do Expect( FALSE, 'Unexpected : "'+e.ToString+'"');
-    on e:Exception do Expect( FALSE, 'Unexpected exception "'+e.ClassName+'"');
+    on e:Exception do Expect( FALSE, 'Unexpected exception "'+e.ClassName+'": '+e.Message);
   end;
   {$ENDIF Exceptions}
 
@@ -941,7 +896,7 @@ begin
     Expect( not i.__isset_I64_thing, 'i.__isset_I64_thing = '+BoolToString(i.__isset_I64_thing));
     }
   except
-    on e:Exception do Expect( FALSE, 'Unexpected exception "'+e.ClassName+'"');
+    on e:Exception do Expect( FALSE, 'Unexpected exception "'+e.ClassName+'": '+e.Message);
   end;
 
   StartTestGroup( 'testMultiException(Xception)', test_Exceptions);
@@ -955,7 +910,7 @@ begin
       Expect( x.ErrorCode = 1001, 'x.ErrorCode = '+IntToStr(x.ErrorCode));
       Expect( x.Message_ = 'This is an Xception', 'x.Message = "'+x.Message_+'"');
     end;
-    on e:Exception do Expect( FALSE, 'Unexpected exception "'+e.ClassName+'"');
+    on e:Exception do Expect( FALSE, 'Unexpected exception "'+e.ClassName+'": '+e.Message);
   end;
 
   StartTestGroup( 'testMultiException(Xception2)', test_Exceptions);
@@ -975,7 +930,7 @@ begin
       Expect( not x.Struct_thing.__isset_I64_thing, 'x.Struct_thing.__isset_I64_thing = '+BoolToString(x.Struct_thing.__isset_I64_thing));
       }
     end;
-    on e:Exception do Expect( FALSE, 'Unexpected exception "'+e.ClassName+'"');
+    on e:Exception do Expect( FALSE, 'Unexpected exception "'+e.ClassName+'": '+e.Message);
   end;
 
 
@@ -1302,12 +1257,11 @@ begin
 end;
 
 
-constructor TClientThread.Create( const ATransport: ITransport; const AProtocol : IProtocol; ANumIteration: Integer);
+constructor TClientThread.Create( const aSetup : TTestSetup; const aNumIteration: Integer);
 begin
-  inherited Create( True );
+  FSetup := aSetup;
   FNumIteration := ANumIteration;
-  FTransport := ATransport;
-  FProtocol := AProtocol;
+
   FConsole := TThreadConsole.Create( Self );
   FCurrentTest := test_Unknown;
 
@@ -1315,6 +1269,8 @@ begin
   FErrors := TStringList.Create;
   FErrors.Sorted := FALSE;
   FErrors.Duplicates := dupAccept;
+
+  inherited Create( TRUE);
 end;
 
 destructor TClientThread.Destroy;
@@ -1327,41 +1283,136 @@ end;
 procedure TClientThread.Execute;
 var
   i : Integer;
-  proc : TThreadProcedure;
 begin
   // perform all tests
   try
-    {$IFDEF Win64}  
+    {$IFDEF Win64}
     UseInterlockedExchangeAdd64;
     {$ENDIF}
     JSONProtocolReadWriteTest;
-	
-    for i := 0 to FNumIteration - 1 do
-    begin
-      ClientTest;
-      {$IFDEF SupportsAsync}
-      ClientAsyncTest;
-      {$ENDIF}
+
+    // must be run in the context of the thread
+    InitializeProtocolTransportStack;
+    try
+      for i := 0 to FNumIteration - 1 do begin
+        ClientTest;
+        {$IFDEF SupportsAsync}
+        ClientAsyncTest;
+        {$ENDIF}
+      end;
+
+      // report the outcome
+      ReportResults;
+      SetReturnValue( CalculateExitCode);
+
+    finally
+      ShutdownProtocolTransportStack;
     end;
+
   except
     on e:Exception do Expect( FALSE, 'unexpected exception: "'+e.message+'"');
   end;
+end;
 
-  // report the outcome
-  ReportResults;
-  SetReturnValue( CalculateExitCode);
 
-  // shutdown
-  proc := procedure
-  begin
-    if FTransport <> nil then
-    begin
+procedure TClientThread.InitializeProtocolTransportStack;
+var
+  streamtrans : IStreamTransport;
+  http : IHTTPClient;
+  sUrl : string;
+const
+  DEBUG_TIMEOUT   = 30 * 1000;
+  RELEASE_TIMEOUT = DEFAULT_THRIFT_TIMEOUT;
+  PIPE_TIMEOUT    = RELEASE_TIMEOUT;
+  HTTP_TIMEOUTS   = 10 * 1000;
+begin
+  // needed for HTTP clients as they utilize the MSXML COM components
+  OleCheck( CoInitialize( nil));
+
+  case FSetup.endpoint of
+    trns_Sockets: begin
+      Console.WriteLine('Using sockets ('+FSetup.host+' port '+IntToStr(FSetup.port)+')');
+      streamtrans := TSocketImpl.Create( FSetup.host, FSetup.port );
+      FTransport := streamtrans;
+    end;
+
+    trns_Http: begin
+      Console.WriteLine('Using HTTPClient');
+      if FSetup.useSSL
+      then sUrl := 'http://'
+      else sUrl := 'https://';
+      sUrl := sUrl + FSetup.host;
+      case FSetup.port of
+        80  : if FSetup.useSSL then sUrl := sUrl + ':'+ IntToStr(FSetup.port);
+        443 : if not FSetup.useSSL then sUrl := sUrl + ':'+ IntToStr(FSetup.port);
+      else
+        if FSetup.port > 0 then sUrl := sUrl + ':'+ IntToStr(FSetup.port);
+      end;
+      http := THTTPClientImpl.Create( sUrl);
+      http.DnsResolveTimeout := HTTP_TIMEOUTS;
+      http.ConnectionTimeout := HTTP_TIMEOUTS;
+      http.SendTimeout       := HTTP_TIMEOUTS;
+      http.ReadTimeout       := HTTP_TIMEOUTS;
+      FTransport := http;
+    end;
+
+    trns_EvHttp: begin
+      raise Exception.Create(ENDPOINT_TRANSPORTS[FSetup.endpoint]+' transport not implemented');
+    end;
+
+    trns_NamedPipes: begin
+      streamtrans := TNamedPipeTransportClientEndImpl.Create( FSetup.sPipeName, 0, nil, PIPE_TIMEOUT, PIPE_TIMEOUT);
+      FTransport := streamtrans;
+    end;
+
+    trns_AnonPipes: begin
+      streamtrans := TAnonymousPipeTransportImpl.Create( FSetup.hAnonRead, FSetup.hAnonWrite, FALSE);
+      FTransport := streamtrans;
+    end;
+
+  else
+    raise Exception.Create('Unhandled endpoint transport');
+  end;
+  ASSERT( FTransport <> nil);
+
+  // layered transports are not really meant to be stacked upon each other
+  if (trns_Framed in FSetup.layered) then begin
+    FTransport := TFramedTransportImpl.Create( FTransport);
+  end
+  else if (trns_Buffered in FSetup.layered) and (streamtrans <> nil) then begin
+    FTransport := TBufferedTransportImpl.Create( streamtrans, 32);  // small buffer to test read()
+  end;
+
+  if FSetup.useSSL then begin
+    raise Exception.Create('SSL/TLS not implemented');
+  end;
+
+  // create protocol instance, default to BinaryProtocol
+  case FSetup.protType of
+    prot_Binary  :  FProtocol := TBinaryProtocolImpl.Create( FTransport, BINARY_STRICT_READ, BINARY_STRICT_WRITE);
+    prot_JSON    :  FProtocol := TJSONProtocolImpl.Create( FTransport);
+    prot_Compact :  FProtocol := TCompactProtocolImpl.Create( FTransport);
+  else
+    raise Exception.Create('Unhandled protocol');
+  end;
+
+  ASSERT( (FTransport <> nil) and (FProtocol <> nil));
+end;
+
+
+procedure TClientThread.ShutdownProtocolTransportStack;
+begin
+  try
+    FProtocol := nil;
+
+    if FTransport <> nil then begin
       FTransport.Close;
       FTransport := nil;
     end;
-  end;
 
-  Synchronize( proc );
+  finally
+    CoUninitialize;
+  end;
 end;
 
 
