@@ -18,11 +18,11 @@
 # - dotnet: does not come with Ubuntu
 # - go: want latest
 # - nodejs: want v8, bionic comes with v6
-# - openssl: to support dlang and the deimos for openssl, need to use 1.0 not 1.1
 #
 
 FROM buildpack-deps:bionic-scm
 MAINTAINER Apache Thrift <dev@thrift.apache.org>
+ENV CONTAINER_USER=thrift
 ENV DEBIAN_FRONTEND noninteractive
 
 ### Add apt repos
@@ -71,11 +71,11 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
       llvm \
       ninja-build \
       pkg-config \
+      sudo \
       valgrind \
       vim
 ENV PATH /usr/lib/llvm-6.0/bin:$PATH
 
-# boost-1.62 has a terrible bug in boost::test, see https://svn.boost.org/trac10/ticket/12507
 RUN apt-get install -y --no-install-recommends \
 `# C++ dependencies` \
       libboost-all-dev \
@@ -265,3 +265,17 @@ ENV THRIFT_ROOT /thrift
 RUN mkdir -p $THRIFT_ROOT/src
 COPY Dockerfile $THRIFT_ROOT/
 WORKDIR $THRIFT_ROOT/src
+
+#################################################################
+# Build as a regular user
+# Credit: https://github.com/delcypher/docker-ubuntu-cxx-dev/blob/master/Dockerfile
+# License: None specified at time of import
+# Add non-root user for container but give it sudo access.
+# Password is the same as the username
+RUN useradd -m ${CONTAINER_USER} && \
+    echo ${CONTAINER_USER}:${CONTAINER_USER} | chpasswd && \
+    echo "${CONTAINER_USER}  ALL=(root) ALL" >> /etc/sudoers
+RUN chsh --shell /bin/bash ${CONTAINER_USER}
+USER ${CONTAINER_USER}
+#################################################################
+
