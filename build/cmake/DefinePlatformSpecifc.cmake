@@ -20,8 +20,8 @@
 # Uncomment this to show some basic cmake variables about platforms
 # include (NewPlatformDebug)
 
-# For Debug build types, append a "d" to the library names.
-set(CMAKE_DEBUG_POSTFIX "d" CACHE STRING "Set debug library postfix" FORCE)
+# For Debug build types, default to "d"-suffix in library names.
+set(CMAKE_DEBUG_POSTFIX "d" CACHE STRING "Set debug library postfix")
 
 # basic options
 foreach(lang IN ITEMS C CXX)
