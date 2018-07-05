@@ -100,7 +100,7 @@ function TFramedTransport:flush()
   local tmp = self.wBuf
   self.wBuf = ''
   local frame_len_buf = libluabpack.bpack("i", string.len(tmp))
-  self.trans:write(frame_len_buf)
+  tmp = frame_len_buf .. tmp
   self.trans:write(tmp)
   self.trans:flush()
 end
