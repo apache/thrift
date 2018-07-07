@@ -167,26 +167,26 @@ Last updated: October 1, 2017
 
 | Language  | ubuntu-xenial | ubuntu-bionic | Notes |
 | :-------- | :------------ | :------------ | :---- |
-| as of     | Mar 06, 2018  | Jun 6, 2018   |       |
+| as of     | Mar 06, 2018  | Jul 6, 2018   |       |
 | as3       |               |               | Not in CI |
 | C++ gcc   | 5.4.0         | 7.3.0         |       |
 | C++ clang | 3.8           | 6.0           |       |
 | C# (mono) | 4.2.1.0       | 4.6.2.7       |       |
 | c_glib    | 2.48.2        | 2.56.0        |       |
-| cl (sbcl) |               | 1.4.8         |       |
+| cl (sbcl) |               | 1.4.9         |       |
 | cocoa     |               |               | Not in CI |
-| d         | 2.075.1       | 2.080.0       |       |
+| d         | 2.075.1       | 2.081.0       |       |
 | dart      | 1.22.1        | 1.24.3        |       |
 | delphi    |               |               | Not in CI |
-| dotnet    | 2.1.4         | 2.1.300       |       |
+| dotnet    | 2.1.4         | 2.1.301       |       |
 | erlang    | 18.3          | 20.2.2        |       |
-| go        | 1.7.6         | 1.10.2        |       |
+| go        | 1.7.6         | 1.10.3        |       |
 | haskell   | 7.10.3        | 8.0.2         |       |
 | haxe      | 3.2.1         | 3.4.4         | THRIFT-4352: avoid 3.4.2 |
 | java      | 1.8.0_151     | 1.8.0_171     |       |
 | js        |               |               | Unsure how to look for version info? |
 | lua       | 5.2.4         | 5.2.4         | Lua 5.3: see THRIFT-4386 |
-| nodejs    | 6.13.0        | 8.11.2        |       |
+| nodejs    | 6.13.0        | 8.11.3        |       |
 | ocaml     |               | 4.05.0        | THRIFT-4517: ocaml 4.02.3 on xenial appears broken |
 | perl      | 5.22.1        | 5.26.1        |       |
 | php       | 7.0.22        | 7.2.5         |       |

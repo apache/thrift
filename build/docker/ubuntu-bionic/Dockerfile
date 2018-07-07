@@ -13,12 +13,12 @@
 #
 # Apache Thrift Docker build environment for Ubuntu Bionic
 # Using all stock Ubuntu Bionic packaging except for:
+# - cl: want latest
 # - d: dmd does not come with Ubuntu
 # - dart: does not come with Ubuntu
 # - dotnet: does not come with Ubuntu
 # - go: want latest
 # - nodejs: want v8, bionic comes with v6
-# - openssl: to support dlang and the deimos for openssl, need to use 1.0 not 1.1
 #
 
 FROM buildpack-deps:bionic-scm
@@ -75,7 +75,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
       vim
 ENV PATH /usr/lib/llvm-6.0/bin:$PATH
 
-# boost-1.62 has a terrible bug in boost::test, see https://svn.boost.org/trac10/ticket/12507
 RUN apt-get install -y --no-install-recommends \
 `# C++ dependencies` \
       libboost-all-dev \
@@ -89,7 +88,7 @@ RUN apt-get install -y --no-install-recommends \
 `# csharp (mono) dependencies` \
       mono-devel
 
-ENV SBCL_VERSION 1.4.8
+ENV SBCL_VERSION 1.4.9
 RUN \
 `# Common Lisp (sbcl) dependencies` \
     curl --version && \
@@ -101,8 +100,8 @@ RUN \
     cd .. && \
     rm -rf sbcl*
 
-ENV D_VERSION     2.080.0
-ENV DMD_DEB       dmd_2.080.0-0_amd64.deb
+ENV D_VERSION     2.081.0
+ENV DMD_DEB       dmd_2.081.0-0_amd64.deb
 RUN \
 `# D dependencies` \
     wget -q http://downloads.dlang.org/releases/2.x/${D_VERSION}/${DMD_DEB} && \
@@ -140,9 +139,9 @@ RUN apt-get install -y --no-install-recommends \
       libglib2.0-dev
 
 # golang
-ENV GOLANG_VERSION 1.10.2
+ENV GOLANG_VERSION 1.10.3
 ENV GOLANG_DOWNLOAD_URL https://golang.org/dl/go$GOLANG_VERSION.linux-amd64.tar.gz
-ENV GOLANG_DOWNLOAD_SHA256 4b677d698c65370afa33757b6954ade60347aaca310ea92a63ed717d7cb0c2ff
+ENV GOLANG_DOWNLOAD_SHA256 fa1b0e45d3b647c252f51f5e1204aba049cde4af177ef9f2181f43004f901035
 RUN curl -fsSL "$GOLANG_DOWNLOAD_URL" -o golang.tar.gz && \
       echo "$GOLANG_DOWNLOAD_SHA256  golang.tar.gz" | sha256sum -c - && \
             tar -C /usr/local -xzf golang.tar.gz && \
