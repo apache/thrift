@@ -145,10 +145,6 @@ class THttpClient(TTransportBase):
         return _f
 
     def flush(self):
-        if self.isOpen():
-            self.close()
-        self.open()
-
         # Pull data out of buffer
         data = self.__wbuf.getvalue()
         self.__wbuf = BytesIO()
