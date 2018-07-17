@@ -1565,7 +1565,14 @@ void t_js_generator::generate_service_client(t_service* tservice) {
                << ".writeMessageEnd();" << endl;
 
     if (gen_node_) {
-      f_service_ << indent() << "return this.output.flush();" << endl;
+      if((*f_iter)->is_oneway()) {
+        f_service_ << indent() << "this.output.flush();" << endl;
+        f_service_ << indent() << "var callback = this._reqs[this.seqid()] || function() {};" << endl;
+        f_service_ << indent() << "delete this._reqs[this.seqid()];" << endl;
+        f_service_ << indent() << "callback(null);" << endl;
+      } else {
+        f_service_ << indent() << "return this.output.flush();" << endl;
+      }
     } else {
       if (gen_jquery_) {
         f_service_ << indent() << "return this.output.getTransport().flush(callback);" << endl;
