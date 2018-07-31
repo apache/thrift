@@ -38,10 +38,14 @@ else
   exit 1
 fi
 
+format_version () {
+    printf "%03d%03d%03d%03d" $(echo $1 | tr '.' ' ');
+}
+
 # we require automake 1.13 or later
 # check must happen externally due to use of newer macro
 AUTOMAKE_VERSION=`automake --version | grep automake | egrep -o '([0-9]{1,}\.)+[0-9]{1,}'`
-if [ "$AUTOMAKE_VERSION" \< "1.13" ]; then
+if  [ $(format_version $AUTOMAKE_VERSION) -lt $(format_version 1.13) ]; then
   echo >&2 "automake version $AUTOMAKE_VERSION is too old (need 1.13 or later)"
   exit 1
 fi
