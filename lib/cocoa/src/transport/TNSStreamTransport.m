@@ -94,7 +94,7 @@
 
 -(BOOL) write:(const UInt8 *)data offset:(UInt32)offset length:(UInt32)length error:(NSError *__autoreleasing *)error
 {
-  int got = 0;
+  UInt32 got = 0;
   NSInteger total = 0;
   while (got < length) {
 
