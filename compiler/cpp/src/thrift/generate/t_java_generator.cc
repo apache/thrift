@@ -2359,6 +2359,7 @@ void t_java_generator::generate_java_bean_boilerplate(ostream& out, t_struct* ts
         if (is_deprecated) {
           indent(out) << "@Deprecated" << endl;
         }
+        indent(out) << java_nullable_annotation() << endl;
         indent(out) << "public java.util.Iterator<" << type_name(element_type, true, false)
                     << "> get" << cap_name;
         out << get_cap_name("iterator() {") << endl;
