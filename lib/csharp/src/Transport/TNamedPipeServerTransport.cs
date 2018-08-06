@@ -130,7 +130,7 @@ namespace Thrift.Transport
                             if (stream != null)
                                 eOuter = e;
                             else
-                                eOuter = new TTransportException(TTransportException.ExceptionType.Interrupted, e.Message);
+                                eOuter = new TTransportException(TTransportException.ExceptionType.Interrupted, e.Message, e);
                         }
                         evt.Set();
                     }, null);
@@ -157,7 +157,7 @@ namespace Thrift.Transport
             catch (Exception e)
             {
                 Close();
-                throw new TTransportException(TTransportException.ExceptionType.NotOpen, e.Message);
+                throw new TTransportException(TTransportException.ExceptionType.NotOpen, e.Message, e);
             }
         }
 
@@ -214,7 +214,7 @@ namespace Thrift.Transport
                             if (stream != null)
                                 eOuter = e;
                             else
-                                eOuter = new TTransportException(TTransportException.ExceptionType.Interrupted, e.Message);
+                                eOuter = new TTransportException(TTransportException.ExceptionType.Interrupted, e.Message, e);
                         }
                         evt.Set();
                     }, null);
@@ -265,7 +265,7 @@ namespace Thrift.Transport
                                 if (stream != null)
                                     eOuter = e;
                                 else
-                                    eOuter = new TTransportException(TTransportException.ExceptionType.Interrupted, e.Message);
+                                    eOuter = new TTransportException(TTransportException.ExceptionType.Interrupted, e.Message, e);
                             }
                             evt.Set();
                         }, null);

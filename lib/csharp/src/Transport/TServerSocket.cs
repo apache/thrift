@@ -93,10 +93,10 @@ namespace Thrift.Transport
                 this.server = TSocketVersionizer.CreateTcpListener(this.port);
                 this.server.Server.NoDelay = true;
             }
-            catch (Exception)
+            catch (Exception ex)
             {
                 server = null;
-                throw new TTransportException("Could not create ServerSocket on port " + this.port + ".");
+                throw new TTransportException("Could not create ServerSocket on port " + this.port + ".", ex);
             }
         }
 
@@ -111,7 +111,7 @@ namespace Thrift.Transport
                 }
                 catch (SocketException sx)
                 {
-                    throw new TTransportException("Could not accept on listening socket: " + sx.Message);
+                    throw new TTransportException("Could not accept on listening socket: " + sx.Message, sx);
                 }
             }
         }
@@ -153,7 +153,7 @@ namespace Thrift.Transport
             }
             catch (Exception ex)
             {
-                throw new TTransportException(ex.ToString());
+                throw new TTransportException(ex.ToString(), ex);
             }
         }
 
@@ -167,7 +167,7 @@ namespace Thrift.Transport
                 }
                 catch (Exception ex)
                 {
-                    throw new TTransportException("WARNING: Could not close server socket: " + ex);
+                    throw new TTransportException("WARNING: Could not close server socket: " + ex, ex);
                 }
                 server = null;
             }
