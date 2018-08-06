@@ -48,14 +48,14 @@ namespace Thrift.Protocol
             type_ = type;
         }
 
-        public TProtocolException(int type, string message)
-            : base(message)
+        public TProtocolException(int type, string message, Exception inner = null)
+            : base(message, inner)
         {
             type_ = type;
         }
 
-        public TProtocolException(string message)
-            : base(message)
+        public TProtocolException(string message, Exception inner = null)
+            : base(message, inner)
         {
         }
 

@@ -859,19 +859,21 @@ namespace Thrift.Protocol
             {
                 ReadJSONSyntaxChar(QUOTE);
             }
+
             string str = ReadJSONNumericChars();
             if (context.EscapeNumbers())
             {
                 ReadJSONSyntaxChar(QUOTE);
             }
+
             try
             {
                 return Int64.Parse(str);
             }
-            catch (FormatException)
+            catch (FormatException fex)
             {
                 throw new TProtocolException(TProtocolException.INVALID_DATA,
-                                             "Bad data encounted in numeric data");
+                                             "Bad data encounted in numeric data", fex);
             }
         }
 
@@ -887,8 +889,7 @@ namespace Thrift.Protocol
                 byte[] arr = ReadJSONString(true);
                 double dub = Double.Parse(utf8Encoding.GetString(arr, 0, arr.Length), CultureInfo.InvariantCulture);
 
-                if (!context.EscapeNumbers() && !Double.IsNaN(dub) &&
-                    !Double.IsInfinity(dub))
+                if (!context.EscapeNumbers() && !Double.IsNaN(dub) && !Double.IsInfinity(dub))
                 {
                     // Throw exception -- we should not be in a string in this case
                     throw new TProtocolException(TProtocolException.INVALID_DATA,
@@ -907,10 +908,10 @@ namespace Thrift.Protocol
                 {
                     return Double.Parse(ReadJSONNumericChars(), CultureInfo.InvariantCulture);
                 }
-                catch (FormatException)
+                catch (FormatException fex)
                 {
                     throw new TProtocolException(TProtocolException.INVALID_DATA,
-                                                 "Bad data encounted in numeric data");
+                                                 "Bad data encounted in numeric data", fex);
                 }
             }
         }
