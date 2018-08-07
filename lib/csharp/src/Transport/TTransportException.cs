@@ -40,14 +40,14 @@ namespace Thrift.Transport
             this.type = type;
         }
 
-        public TTransportException(ExceptionType type, string message)
-            : base(message)
+        public TTransportException(ExceptionType type, string message, Exception inner = null)
+            : base(message, inner)
         {
             this.type = type;
         }
 
-        public TTransportException(string message)
-            : base(message)
+        public TTransportException(string message, Exception inner = null)
+            : base(message, inner)
         {
         }
 
