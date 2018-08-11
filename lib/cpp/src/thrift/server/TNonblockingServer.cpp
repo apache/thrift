@@ -28,7 +28,11 @@
 #include <algorithm>
 #include <iostream>
 
-#ifdef HAVE_SYS_SELECT_H
+#ifdef HAVE_POLL_H
+#include <poll.h>
+#elif HAVE_SYS_POLL_H
+#include <sys/poll.h>
+#elif HAVE_SYS_SELECT_H
 #include <sys/select.h>
 #endif
 
@@ -1291,10 +1295,44 @@ bool TNonblockingIOThread::notify(TNonblockingServer::TConnection* conn) {
     return false;
   }
 
-  fd_set wfds, efds;
-  long ret = -1;
+  int ret = -1;
   long kSize = sizeof(conn);
-  const char* pos = reinterpret_cast<const char*>(&conn);
+  const char * pos = (const char *)const_cast_sockopt(&conn);
+
+#if defined(HAVE_POLL_H) || defined(HAVE_SYS_POLL_H)
+  struct pollfd pfd = {fd, POLLOUT, 0};
+
+  while (kSize > 0) {
+    pfd.revents = 0;
+    ret = poll(&pfd, 1, -1);
+    if (ret < 0) {
+      return false;
+    } else if (ret == 0) {
+      continue;
+    }
+
+    if (pfd.revents & POLLHUP || pfd.revents & POLLERR) {
+      ::THRIFT_CLOSESOCKET(fd);
+      return false;
+    }
+
+    if (pfd.revents & POLLOUT) {
+      ret = send(fd, pos, kSize, 0);
+      if (ret < 0) {
+        if (errno == EAGAIN) {
+          continue;
+        }
+
+        ::THRIFT_CLOSESOCKET(fd);
+        return false;
+      }
+
+      kSize -= ret;
+      pos += ret;
+    }
+  }
+#else
+  fd_set wfds, efds;
 
   while (kSize > 0) {
     FD_ZERO(&wfds);
@@ -1328,6 +1366,7 @@ bool TNonblockingIOThread::notify(TNonblockingServer::TConnection* conn) {
       pos += ret;
     }
   }
+#endif
 
   return true;
 }
