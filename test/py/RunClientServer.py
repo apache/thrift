@@ -56,6 +56,7 @@ PROTOS = [
     'binary',
     'compact',
     'json',
+    'header',
 ]
 
 
