@@ -32,6 +32,7 @@ class TTransportException(TException):
     END_OF_FILE = 4
     NEGATIVE_SIZE = 5
     SIZE_LIMIT = 6
+    INVALID_CLIENT_TYPE = 7
 
     def __init__(self, type=UNKNOWN, message=None):
         TException.__init__(self, message)

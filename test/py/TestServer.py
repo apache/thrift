@@ -181,16 +181,22 @@ class TestHandler(object):
 def main(options):
     # set up the protocol factory form the --protocol option
     prot_factories = {
-        'accel': TBinaryProtocol.TBinaryProtocolAcceleratedFactory,
-        'accelc': TCompactProtocol.TCompactProtocolAcceleratedFactory,
-        'binary': TBinaryProtocol.TBinaryProtocolFactory,
-        'compact': TCompactProtocol.TCompactProtocolFactory,
-        'json': TJSONProtocol.TJSONProtocolFactory
+        'accel': TBinaryProtocol.TBinaryProtocolAcceleratedFactory(),
+        'accelc': TCompactProtocol.TCompactProtocolAcceleratedFactory(),
+        'binary': TBinaryProtocol.TBinaryProtocolFactory(),
+        'compact': TCompactProtocol.TCompactProtocolFactory(),
+        'header': THeaderProtocol.THeaderProtocolFactory(allowed_client_types=[
+            THeaderTransport.THeaderClientType.HEADERS,
+            THeaderTransport.THeaderClientType.FRAMED_BINARY,
+            THeaderTransport.THeaderClientType.UNFRAMED_BINARY,
+            THeaderTransport.THeaderClientType.FRAMED_COMPACT,
+            THeaderTransport.THeaderClientType.UNFRAMED_COMPACT,
+        ]),
+        'json': TJSONProtocol.TJSONProtocolFactory(),
     }
-    pfactory_cls = prot_factories.get(options.proto, None)
-    if pfactory_cls is None:
+    pfactory = prot_factories.get(options.proto, None)
+    if pfactory is None:
         raise AssertionError('Unknown --protocol option: %s' % options.proto)
-    pfactory = pfactory_cls()
     try:
         pfactory.string_length_limit = options.string_limit
         pfactory.container_length_limit = options.container_limit
@@ -323,11 +329,13 @@ if __name__ == '__main__':
     from ThriftTest import ThriftTest
     from ThriftTest.ttypes import Xtruct, Xception, Xception2, Insanity
     from thrift.Thrift import TException
+    from thrift.transport import THeaderTransport
     from thrift.transport import TTransport
     from thrift.transport import TSocket
     from thrift.transport import TZlibTransport
     from thrift.protocol import TBinaryProtocol
     from thrift.protocol import TCompactProtocol
+    from thrift.protocol import THeaderProtocol
     from thrift.protocol import TJSONProtocol
     from thrift.server import TServer, TNonblockingServer, THttpServer
 

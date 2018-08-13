@@ -348,6 +348,12 @@ class MultiplexedJSONTest(MultiplexedOptionalTest):
         return TMultiplexedProtocol.TMultiplexedProtocol(wrapped_proto, "SecondService")
 
 
+class HeaderTest(MultiplexedOptionalTest):
+    def get_protocol(self, transport):
+        factory = THeaderProtocol.THeaderProtocolFactory()
+        return factory.getProtocol(transport)
+
+
 def suite():
     suite = unittest.TestSuite()
     loader = unittest.TestLoader()
@@ -359,6 +365,8 @@ def suite():
         suite.addTest(loader.loadTestsFromTestCase(AcceleratedCompactTest))
     elif options.proto == 'compact':
         suite.addTest(loader.loadTestsFromTestCase(CompactTest))
+    elif options.proto == 'header':
+        suite.addTest(loader.loadTestsFromTestCase(HeaderTest))
     elif options.proto == 'json':
         suite.addTest(loader.loadTestsFromTestCase(JSONTest))
     elif options.proto == 'multi':
@@ -408,7 +416,7 @@ if __name__ == "__main__":
                       dest="verbose", const=0,
                       help="minimal output")
     parser.add_option('--protocol', dest="proto", type="string",
-                      help="protocol to use, one of: accel, accelc, binary, compact, json, multi, multia, multiac, multic, multij")
+                      help="protocol to use, one of: accel, accelc, binary, compact, header, json, multi, multia, multiac, multic, multij")
     parser.add_option('--transport', dest="trans", type="string",
                       help="transport to use, one of: buffered, framed, http")
     parser.set_defaults(framed=False, http_path=None, verbose=1, host='localhost', port=9090, proto='binary')
@@ -431,6 +439,7 @@ if __name__ == "__main__":
     from thrift.transport import TZlibTransport
     from thrift.protocol import TBinaryProtocol
     from thrift.protocol import TCompactProtocol
+    from thrift.protocol import THeaderProtocol
     from thrift.protocol import TJSONProtocol
     from thrift.protocol import TMultiplexedProtocol
 

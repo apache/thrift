@@ -37,6 +37,7 @@ class TProtocolException(TException):
     BAD_VERSION = 4
     NOT_IMPLEMENTED = 5
     DEPTH_LIMIT = 6
+    INVALID_PROTOCOL = 7
 
     def __init__(self, type=UNKNOWN, message=None):
         TException.__init__(self, message)

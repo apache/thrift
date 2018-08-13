@@ -273,7 +273,8 @@
       "binary",
       "json",
       "binary:accel",
-      "compact:accelc"
+      "compact:accelc",
+      "header"
     ],
     "workdir": "py"
   },
@@ -319,7 +320,8 @@
       "binary",
       "json",
       "binary:accel",
-      "compact:accelc"
+      "compact:accelc",
+      "header"
     ],
     "workdir": "py"
   },
