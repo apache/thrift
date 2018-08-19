@@ -579,7 +579,7 @@ string t_c_glib_generator::type_name(t_type* ttype, bool in_typedef, bool is_con
       // TODO: discuss whether or not to implement TSet, THashSet or GHashSet
       cname = "GHashTable";
     } else if (ttype->is_list()) {
-      t_type* etype = ((t_list*)ttype)->get_elem_type();
+      t_type* etype = get_true_type(((t_list*)ttype)->get_elem_type());
       if (etype->is_void()) {
         throw std::runtime_error("compiler error: list element type cannot be void");
       }
