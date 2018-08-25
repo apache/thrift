@@ -53,18 +53,18 @@ loop(State0 = #thrift_processor{protocol  = Proto0,
                 [ServiceName, FunctionName] ->
                     ServiceModule  = thrift_multiplexed_map_wrapper:fetch(ServiceName, Service),
                     ServiceHandler = thrift_multiplexed_map_wrapper:fetch(ServiceName, Handler),
-                    case handle_function(State1#thrift_processor{service=ServiceModule, handler=ServiceHandler}, list_to_atom(FunctionName), Seqid) of
+                    case handle_function(State1#thrift_processor{service=ServiceModule, handler=ServiceHandler}, list_to_existing_atom(FunctionName), Seqid) of
                         {State2, ok} -> loop(State2#thrift_processor{service=Service, handler=Handler});
                         {_State2, {error, Reason}} ->
-							apply(ErrorHandler(Handler), handle_error, [list_to_atom(Function), Reason]),
+							apply(ErrorHandler(Handler), handle_error, [list_to_existing_atom(Function), Reason]),
                             thrift_protocol:close_transport(Proto1),
                             ok
                     end;
                 _ ->
-                    case handle_function(State1, list_to_atom(Function), Seqid) of
+                    case handle_function(State1, list_to_existing_atom(Function), Seqid) of
                         {State2, ok} -> loop(State2);
                         {_State2, {error, Reason}} ->
-							apply(ErrorHandler(Handler), handle_error, [list_to_atom(Function), Reason]),
+							apply(ErrorHandler(Handler), handle_error, [list_to_existing_atom(Function), Reason]),
                             thrift_protocol:close_transport(Proto1),
                             ok
                     end

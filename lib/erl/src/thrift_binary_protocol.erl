@@ -35,7 +35,8 @@
 
 -record(binary_protocol, {transport,
                           strict_read=true,
-                          strict_write=true
+                          strict_write=true,
+                          clone_binaries=true
                          }).
 -type state() :: #binary_protocol{}.
 -include("thrift_protocol_behaviour.hrl").
@@ -57,7 +58,9 @@ parse_options([], State) ->
 parse_options([{strict_read, Bool} | Rest], State) when is_boolean(Bool) ->
     parse_options(Rest, State#binary_protocol{strict_read=Bool});
 parse_options([{strict_write, Bool} | Rest], State) when is_boolean(Bool) ->
-    parse_options(Rest, State#binary_protocol{strict_write=Bool}).
+    parse_options(Rest, State#binary_protocol{strict_write=Bool});
+parse_options([{clone_binaries, Bool} | Rest], State) when is_boolean(Bool) ->
+    parse_options(Rest, State#binary_protocol{clone_binaries=Bool}).
 
 
 flush_transport(This = #binary_protocol{transport = Transport}) ->
@@ -172,6 +175,7 @@ write(This = #binary_protocol{transport = Trans}, Data) ->
 %%
 
 read(This0, message_begin) ->
+    Clone = This0#binary_protocol.clone_binaries,
     {This1, Initial} = read(This0, ui32),
     case Initial of
         {ok, Sz} when Sz band ?VERSION_MASK =:= ?VERSION_1 ->
@@ -193,7 +197,7 @@ read(This0, message_begin) ->
 
         {ok, Sz} when This1#binary_protocol.strict_read =:= false ->
             %% strict_read is false, so just read the old way
-            {This2, {ok, Name}}  = read_data(This1, Sz),
+            {This2, {ok, Name}}  = read_data(This1, Sz, Clone),
             {This3, {ok, Type}}  = read(This2, byte),
             {This4, {ok, SeqId}} = read(This3, i32),
             {This4, #protocol_message_begin{name  = binary_to_list(Name),
@@ -259,21 +263,21 @@ read(This0, bool) ->
     end;
 
 read(This0, byte) ->
-    {This1, Bytes} = read_data(This0, 1),
+    {This1, Bytes} = read_data(This0, 1, false),
     case Bytes of
         {ok, <<Val:8/integer-signed-big, _/binary>>} -> {This1, {ok, Val}};
         Else -> {This1, Else}
     end;
 
 read(This0, i16) ->
-    {This1, Bytes} = read_data(This0, 2),
+    {This1, Bytes} = read_data(This0, 2, false),
     case Bytes of
         {ok, <<Val:16/integer-signed-big, _/binary>>} -> {This1, {ok, Val}};
         Else -> {This1, Else}
     end;
 
 read(This0, i32) ->
-    {This1, Bytes} = read_data(This0, 4),
+    {This1, Bytes} = read_data(This0, 4, false),
     case Bytes of
         {ok, <<Val:32/integer-signed-big, _/binary>>} -> {This1, {ok, Val}};
         Else -> {This1, Else}
@@ -283,21 +287,21 @@ read(This0, i32) ->
 %% of the packet version header. Without this special function BEAM works fine
 %% but hipe thinks it received a bad version header.
 read(This0, ui32) ->
-    {This1, Bytes} = read_data(This0, 4),
+    {This1, Bytes} = read_data(This0, 4, false),
     case Bytes of
         {ok, <<Val:32/integer-unsigned-big, _/binary>>} -> {This1, {ok, Val}};
         Else -> {This1, Else}
     end;
 
 read(This0, i64) ->
-    {This1, Bytes} = read_data(This0, 8),
+    {This1, Bytes} = read_data(This0, 8, false),
     case Bytes of
         {ok, <<Val:64/integer-signed-big, _/binary>>} -> {This1, {ok, Val}};
         Else -> {This1, Else}
     end;
 
 read(This0, double) ->
-    {This1, Bytes} = read_data(This0, 8),
+    {This1, Bytes} = read_data(This0, 8, false),
     case Bytes of
         {ok, <<Val:64/float-signed-big, _/binary>>} -> {This1, {ok, Val}};
         Else -> {This1, Else}
@@ -306,28 +310,36 @@ read(This0, double) ->
 % returns a binary directly, call binary_to_list if necessary
 read(This0, string) ->
     {This1, {ok, Sz}}  = read(This0, i32),
-    read_data(This1, Sz).
+    read_data(This1, Sz, This0#binary_protocol.clone_binaries).
 
--spec read_data(#binary_protocol{}, non_neg_integer()) ->
+-spec read_data(#binary_protocol{}, non_neg_integer(), boolean()) ->
     {#binary_protocol{}, {ok, binary()} | {error, _Reason}}.
-read_data(This, 0) -> {This, {ok, <<>>}};
-read_data(This = #binary_protocol{transport = Trans}, Len) when is_integer(Len) andalso Len > 0 ->
-    {NewTransport, Result} = thrift_transport:read(Trans, Len),
+read_data(This, 0, _) -> {This, {ok, <<>>}};
+read_data(This = #binary_protocol{transport = Trans}, Len, Clone) when is_integer(Len) andalso Len > 0 ->
+    {NewTransport, Result0} = thrift_transport:read(Trans, Len),
+    Result = case Result0 of
+                 {ok, Bin} when is_binary(Bin), Clone ->
+                     {ok, binary:copy(Bin)};
+                 _ ->
+                     Result0
+             end,
     {This#binary_protocol{transport = NewTransport}, Result}.
 
 
 %%%% FACTORY GENERATION %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 -record(tbp_opts, {strict_read = true,
-                   strict_write = true}).
+                   strict_write = true,
+                   clone_binaries = true}).
 
 parse_factory_options([], Opts) ->
     Opts;
 parse_factory_options([{strict_read, Bool} | Rest], Opts) when is_boolean(Bool) ->
     parse_factory_options(Rest, Opts#tbp_opts{strict_read=Bool});
 parse_factory_options([{strict_write, Bool} | Rest], Opts) when is_boolean(Bool) ->
-    parse_factory_options(Rest, Opts#tbp_opts{strict_write=Bool}).
-
+    parse_factory_options(Rest, Opts#tbp_opts{strict_write=Bool});
+parse_factory_options([{clone_binaries, Bool} | Rest], Opts) when is_boolean(Bool) ->
+    parse_factory_options(Rest, Opts#tbp_opts{clone_binaries=Bool}).
 
 %% returns a (fun() -> thrift_protocol())
 new_protocol_factory(TransportFactory, Options) ->
@@ -337,11 +349,11 @@ new_protocol_factory(TransportFactory, Options) ->
                     {ok, Transport} ->
                         thrift_binary_protocol:new(
                             Transport,
-                            [{strict_read,  ParsedOpts#tbp_opts.strict_read},
-                             {strict_write, ParsedOpts#tbp_opts.strict_write}]);
+                            [{strict_read,    ParsedOpts#tbp_opts.strict_read},
+                             {strict_write,   ParsedOpts#tbp_opts.strict_write},
+                             {clone_binaries, ParsedOpts#tbp_opts.clone_binaries}]);
                     {error, Error} ->
                         {error, Error}
                 end
         end,
     {ok, F}.
-

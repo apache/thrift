@@ -42,7 +42,8 @@
                            read_stack=[],
                            read_value=?CBOOL_NONE,
                            write_stack=[],
-                           write_id=?ID_NONE
+                           write_id=?ID_NONE,
+                           clone_binaries=true
                           }).
 -type state() :: #t_compact{}.
 -include("thrift_protocol_behaviour.hrl").
@@ -87,7 +88,8 @@ cbool_to_bool(Value) -> Value =:= ?CBOOL_TRUE.
 
 new(Transport) -> new(Transport, _Options = []).
 
-new(Transport, _Options) ->
+new(Transport, Options) ->
+  CloneBinaries = proplists:get_value(clone_binaries, Options, true),
   State  = #t_compact{transport = Transport},
   thrift_protocol:new(?MODULE, State).
 
@@ -329,11 +331,11 @@ read(This0 = #t_compact{read_value = Bool}, bool) ->
   {This0#t_compact{read_value = ?CBOOL_NONE}, {ok, Bool}};
 
 read(This0, ubyte) ->
-  {This1, {ok, <<Val:8/integer-unsigned-big, _/binary>>}} = read_data(This0, 1),
+  {This1, {ok, <<Val:8/integer-unsigned-big, _/binary>>}} = read_data(This0, 1, false),
   {This1, {ok, Val}};
 
 read(This0, byte) ->
-  {This1, Bytes} = read_data(This0, 1),
+  {This1, Bytes} = read_data(This0, 1, false),
   case Bytes of
     {ok, <<Val:8/integer-signed-big, _/binary>>} -> {This1, {ok, Val}};
     Else -> {This1, Else}
@@ -354,7 +356,7 @@ read(This0, i64) ->
   {This1, {ok, from_zigzag(Zigzag)}};
 
 read(This0, double) ->
-  {This1, Bytes} = read_data(This0, 8),
+  {This1, Bytes} = read_data(This0, 8, false),
   case Bytes of
     {ok, <<Val:64/float-signed-little, _/binary>>} -> {This1, {ok, Val}};
     Else -> {This1, Else}
@@ -363,26 +365,32 @@ read(This0, double) ->
 % returns a binary directly, call binary_to_list if necessary
 read(This0, string) ->
   {This1, {ok, Sz}}  = read(This0, ui32),
-  read_data(This1, Sz).
+  read_data(This1, Sz, This0#t_compact.clone_binaries).
 
--spec read_data(#t_compact{}, non_neg_integer()) ->
+-spec read_data(#t_compact{}, non_neg_integer(), boolean()) ->
     {#t_compact{}, {ok, binary()} | {error, _Reason}}.
-read_data(This, 0) -> {This, {ok, <<>>}};
-read_data(This = #t_compact{transport = Trans}, Len) when is_integer(Len) andalso Len > 0 ->
-    {NewTransport, Result} = thrift_transport:read(Trans, Len),
+read_data(This, 0, _) -> {This, {ok, <<>>}};
+read_data(This, Len, Clone) when is_integer(Len) andalso Len > 0 ->
+    #t_compact{transport = Trans} = This,
+    {NewTransport, Result0} = thrift_transport:read(Trans, Len),
+    Result = case Result0 of
+                 {ok, Bin} when is_binary(Bin), Clone ->
+                     {ok, binary:copy(Bin)};
+                 _ ->
+                     Result0
+             end,
     {This#t_compact{transport = NewTransport}, Result}.
-
 
 %%%% FACTORY GENERATION %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %% returns a (fun() -> thrift_protocol())
-new_protocol_factory(TransportFactory, _Options) ->
+new_protocol_factory(TransportFactory, Options) ->
   F = fun() ->
           case TransportFactory() of
             {ok, Transport} ->
               thrift_compact_protocol:new(
                 Transport,
-                []);
+                Options);
             {error, Error} ->
               {error, Error}
           end
