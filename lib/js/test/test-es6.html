@@ -23,11 +23,8 @@
   <title>Thrift Javascript Bindings: Unit Test</title>
 
   <script src="build/js/thrift.js"         type="text/javascript" charset="utf-8"></script>
-  <script src="gen-js/ThriftTest_types.js" type="text/javascript" charset="utf-8"></script>
-  <script src="gen-js/ThriftTest.js"       type="text/javascript" charset="utf-8"></script>
-
-  <!-- ES6 Promise Polyfill -->
-  <script type="text/javascript" src="build/js/lib/es6-promise.js" charset="utf-8"></script>
+  <script src="gen-js-es6/ThriftTest_types.js" type="text/javascript" charset="utf-8"></script>
+  <script src="gen-js-es6/ThriftTest.js"       type="text/javascript" charset="utf-8"></script>
 
   <!-- jQuery -->
   <script type="text/javascript" src="build/js/lib/jquery.js" charset="utf-8"></script>
@@ -38,12 +35,12 @@
 
   <!-- the Test Suite-->
   <script>
-    var loc = window.location;
-    var ws_uri = ((loc.protocol === "https:") ? "wss://" : "ws://") +
+    const loc = window.location;
+    const ws_uri = ((loc.protocol === "https:") ? "wss://" : "ws://") +
                    loc.hostname + ":" + loc.port + loc.pathname;
-    var transport = new Thrift.TWebSocketTransport(ws_uri);
-    var protocol  = new Thrift.Protocol(transport);
-    var client    = new ThriftTest.ThriftTestClient(protocol);
+    const transport = new Thrift.TWebSocketTransport(ws_uri);
+    const protocol  = new Thrift.Protocol(transport);
+    const client    = new ThriftTest.ThriftTestClient(protocol);
     transport.open();
   </script>
   <script type="text/javascript" src="test-es6.js" charset="utf-8"></script>

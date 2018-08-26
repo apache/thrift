@@ -38,19 +38,12 @@ This reads the package.json and pulls in the appropriate
 sources from the internet. To build the JavaScript branch
 of Apache Thrift execute the command:
 
-    grunt
+    npx grunt
     
-This runs the grunt build tool, linting all of the source
-files, setting up and running the tests, concatenating and
-minifying the main libraries and generating the html 
-documentation.
-
-If grunt is not installed you can install it with npm
-like this:
-
-   sudo npm install -g grunt-cli
-   npm install grunt --save-dev
-
+This runs the grunt build tool (from within `./node_modules/.bin/`),
+linting all of the source files, setting up and running the
+tests, concatenating and minifying the main libraries and
+generating the html documentation.
 
 Tree
 ----

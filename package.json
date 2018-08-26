@@ -45,7 +45,6 @@
     "connect": "^3.6.6",
     "istanbul": "^0.4.5",
     "jsdoc": "^3.5.5",
-    "phantomjs-prebuilt": "^2.1.16",
     "prettier": "1.11.1",
     "tape": "^4.9.0",
     "utf-8-validate": "^4.0.0"

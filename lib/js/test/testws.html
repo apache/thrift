@@ -35,12 +35,12 @@
 
   <!-- the Test Suite-->
   <script>
-    var loc = window.location;
-    var ws_uri = ((loc.protocol === "https:") ? "wss://" : "ws://") +
+    const loc = window.location;
+    const ws_uri = ((loc.protocol === "https:") ? "wss://" : "ws://") +
                    loc.hostname + ":" + loc.port + loc.pathname;
-    var transport = new Thrift.TWebSocketTransport(ws_uri);
-    var protocol  = new Thrift.Protocol(transport);
-    var client    = new ThriftTest.ThriftTestClient(protocol);
+    const transport = new Thrift.TWebSocketTransport(ws_uri);
+    const protocol  = new Thrift.Protocol(transport);
+    const client    = new ThriftTest.ThriftTestClient(protocol);
     transport.open();
   </script>
   <script type="text/javascript" src="test-async.js" charset="utf-8"></script>

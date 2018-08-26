@@ -6,7 +6,7 @@
     "grunt-cli": "^1.2.0",
     "grunt-contrib-concat": "^1.0.1",
     "grunt-contrib-jshint": "^1.0.0",
-    "grunt-contrib-qunit": "^1.2.0",
+    "grunt-contrib-qunit": "^3.0.1",
     "grunt-contrib-uglify": "^1.0.1",
     "grunt-jsdoc": "^2.2.1",
     "grunt-shell-spawn": "^0.3.10",
