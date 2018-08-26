@@ -23,8 +23,8 @@
   <title>Thrift Javascript Bindings: Unit Test</title>
 
   <script src="build/js/thrift.js"         type="text/javascript" charset="utf-8"></script>
-  <script src="gen-js/ThriftTest_types.js" type="text/javascript" charset="utf-8"></script>
-  <script src="gen-js/ThriftTest.js"       type="text/javascript" charset="utf-8"></script>
+  <script src="gen-js-jquery/ThriftTest_types.js" type="text/javascript" charset="utf-8"></script>
+  <script src="gen-js-jquery/ThriftTest.js"       type="text/javascript" charset="utf-8"></script>
 
   <!-- jQuery -->
   <script type="text/javascript" src="build/js/lib/jquery.js" charset="utf-8"></script>
@@ -34,11 +34,6 @@
   <link rel="stylesheet" href="build/js/lib/qunit.css" type="text/css" media="screen" />
 
   <!-- the Test Suite-->
-  <script>
-    var transport = new Thrift.Transport("/service");
-    var protocol  = new Thrift.Protocol(transport);
-    var client    = new ThriftTest.ThriftTestClient(protocol);
-  </script>
   <script type="text/javascript" src="test.js" charset="utf-8"></script>
   <script type="text/javascript" src="test-jq.js" charset="utf-8"></script>
 </head>

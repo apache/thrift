@@ -181,6 +181,11 @@ RUN apt-get install -y --no-install-recommends \
 `# Node.js dependencies` \
       nodejs
 
+# Test dependencies for running puppeteer
+RUN apt-get install -y --no-install-recommends \
+`# JS dependencies` \
+      libxss1
+
 RUN apt-get install -y --no-install-recommends \
 `# OCaml dependencies` \
       ocaml \

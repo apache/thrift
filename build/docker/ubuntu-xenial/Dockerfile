@@ -60,7 +60,7 @@ RUN curl https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor > /et
 # node.js
 RUN curl -sL https://deb.nodesource.com/gpgkey/nodesource.gpg.key | apt-key add - && \
     echo "deb https://deb.nodesource.com/node_6.x xenial main" | tee /etc/apt/sources.list.d/nodesource.list
-    
+
 ### install general dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
 `# General dependencies` \
@@ -189,6 +189,13 @@ RUN apt-get install -y --no-install-recommends \
 RUN apt-get install -y --no-install-recommends \
 `# Node.js dependencies` \
       nodejs
+
+# Test dependencies for running puppeteer
+RUN apt-get install -y --no-install-recommends \
+`# JS dependencies` \
+      libxss1 \
+      libatk-bridge2.0-0 \
+      libgtk-3-0
 
 # THRIFT-4517: causes stack overflows; version too old; skip ocaml in xenial
 # RUN apt-get install -y --no-install-recommends \
