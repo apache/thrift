@@ -350,8 +350,8 @@ private:
   void render_sync_handler_failed_default_exception_branch(t_function *tfunc);
   void render_sync_handler_send_exception_response(t_function *tfunc, const string &err_var);
   void render_service_call_structs(t_service* tservice);
-  void render_args_struct(t_function* tfunc);
-  void render_result_value_struct(t_function* tfunc);
+  void render_service_call_args_struct(t_function* tfunc);
+  void render_service_call_result_value_struct(t_function* tfunc);
 
   string handler_successful_return_struct(t_function* tfunc);
 
@@ -2054,9 +2054,9 @@ void t_rs_generator::render_service_call_structs(t_service* tservice) {
   // contains the exceptions as well
   for(func_iter = functions.begin(); func_iter != functions.end(); ++func_iter) {
     t_function* tfunc = (*func_iter);
-    render_args_struct(tfunc);
+    render_service_call_args_struct(tfunc);
     if (!tfunc->is_oneway()) {
-      render_result_value_struct(tfunc);
+      render_service_call_result_value_struct(tfunc);
     }
   }
 }
@@ -2415,12 +2415,12 @@ string t_rs_generator::struct_to_invocation(t_struct* tstruct, const string& fie
   return args.str();
 }
 
-void t_rs_generator::render_args_struct(t_function* tfunc) {
-    string args_struct_name = service_call_args_struct_name(tfunc);
+void t_rs_generator::render_service_call_args_struct(t_function* tfunc) {
+    string args_struct_name(service_call_args_struct_name(tfunc));
     render_struct(args_struct_name, tfunc->get_arglist(), t_rs_generator::T_ARGS);
 }
 
-void t_rs_generator::render_result_value_struct(t_function* tfunc) {
+void t_rs_generator::render_service_call_result_value_struct(t_function* tfunc) {
   string result_struct_name = service_call_result_struct_name(tfunc);
   t_struct result(program_, result_struct_name);
 
@@ -3222,6 +3222,7 @@ string t_rs_generator::service_call_handler_function_name(t_function* tfunc) {
 }
 
 string t_rs_generator::service_call_args_struct_name(t_function* tfunc) {
+  // Thrift automatically appends `Args` to the arglist name. No need to do it here.
   return rust_camel_case(service_name_) + rust_camel_case(tfunc->get_arglist()->get_name());
 }
 
