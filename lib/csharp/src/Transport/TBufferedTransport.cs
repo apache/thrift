@@ -142,6 +142,25 @@ namespace Thrift.Transport
             transport.Flush();
         }
 
+        public override IAsyncResult BeginFlush(AsyncCallback callback, object state)
+        {
+            CheckNotDisposed();
+            if (!IsOpen)
+                throw new TTransportException(TTransportException.ExceptionType.NotOpen);
+            if (outputBuffer.Length > 0)
+            {
+                transport.Write(outputBuffer.GetBuffer(), 0, (int)outputBuffer.Length);
+                outputBuffer.SetLength(0);
+            }
+
+            return transport.BeginFlush(callback, state);
+        }
+
+        public override void EndFlush(IAsyncResult asyncResult)
+        {
+            transport.EndFlush(asyncResult);
+        }
+
         protected void CheckNotDisposed()
         {
             if (_IsDisposed)

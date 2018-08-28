@@ -104,6 +104,16 @@ namespace Thrift.Transport
             outputStream.Flush();
         }
 
+        public override IAsyncResult BeginFlush(AsyncCallback callback, object state)
+        {
+            return outputStream.FlushAsync();
+        }
+
+        public override void EndFlush(IAsyncResult asyncResult)
+        {
+            outputStream.FlushAsync();
+        }
+
 
         #region " IDisposable Support "
         private bool _IsDisposed;
