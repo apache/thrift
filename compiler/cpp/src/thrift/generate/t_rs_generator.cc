@@ -350,7 +350,8 @@ private:
   void render_sync_handler_failed_default_exception_branch(t_function *tfunc);
   void render_sync_handler_send_exception_response(t_function *tfunc, const string &err_var);
   void render_service_call_structs(t_service* tservice);
-  void render_result_value_struct(t_function* tfunc);
+  void render_service_call_args_struct(t_function* tfunc);
+  void render_service_call_result_value_struct(t_function* tfunc);
 
   string handler_successful_return_struct(t_function* tfunc);
 
@@ -472,6 +473,9 @@ private:
 
   // Return the name of the function that users will have to implement to handle incoming service calls.
   string service_call_handler_function_name(t_function* tfunc);
+
+  // Return the name of the struct used to pack the arguments for the thrift service call.
+  string service_call_args_struct_name(t_function* tfunc);
 
   // Return the name of the struct used to pack the return value
   // and user-defined exceptions for the thrift service call.
@@ -2050,9 +2054,9 @@ void t_rs_generator::render_service_call_structs(t_service* tservice) {
   // contains the exceptions as well
   for(func_iter = functions.begin(); func_iter != functions.end(); ++func_iter) {
     t_function* tfunc = (*func_iter);
-    render_struct(rust_struct_name(tfunc->get_arglist()), tfunc->get_arglist(), t_rs_generator::T_ARGS);
+    render_service_call_args_struct(tfunc);
     if (!tfunc->is_oneway()) {
-      render_result_value_struct(tfunc);
+      render_service_call_result_value_struct(tfunc);
     }
   }
 }
@@ -2297,7 +2301,7 @@ void t_rs_generator::render_sync_send(t_function* tfunc) {
   f_gen_
     << indent()
     << "let call_args = "
-    << rust_struct_name(tfunc->get_arglist())
+    << service_call_args_struct_name(tfunc)
     << " { "
     << struct_fields
     << " };"
@@ -2411,7 +2415,12 @@ string t_rs_generator::struct_to_invocation(t_struct* tstruct, const string& fie
   return args.str();
 }
 
-void t_rs_generator::render_result_value_struct(t_function* tfunc) {
+void t_rs_generator::render_service_call_args_struct(t_function* tfunc) {
+    string args_struct_name(service_call_args_struct_name(tfunc));
+    render_struct(args_struct_name, tfunc->get_arglist(), t_rs_generator::T_ARGS);
+}
+
+void t_rs_generator::render_service_call_result_value_struct(t_function* tfunc) {
   string result_struct_name = service_call_result_struct_name(tfunc);
   t_struct result(program_, result_struct_name);
 
@@ -2668,7 +2677,7 @@ void t_rs_generator::render_sync_process_function(t_function *tfunc, const strin
     << "let "
     << (has_non_void_args(tfunc) ? "args" : "_")
     << " = "
-    << rust_struct_name(tfunc->get_arglist())
+    << service_call_args_struct_name(tfunc)
     << "::read_from_in_protocol(i_prot)?;"
     << endl;
 
@@ -3212,8 +3221,13 @@ string t_rs_generator::service_call_handler_function_name(t_function* tfunc) {
   return "handle_" + rust_snake_case(tfunc->get_name());
 }
 
+string t_rs_generator::service_call_args_struct_name(t_function* tfunc) {
+  // Thrift automatically appends `Args` to the arglist name. No need to do it here.
+  return rust_camel_case(service_name_) + rust_camel_case(tfunc->get_arglist()->get_name());
+}
+
 string t_rs_generator::service_call_result_struct_name(t_function* tfunc) {
-  return rust_camel_case(tfunc->get_name()) + RESULT_STRUCT_SUFFIX;
+  return rust_camel_case(service_name_) + rust_camel_case(tfunc->get_name()) + RESULT_STRUCT_SUFFIX;
 }
 
 string t_rs_generator::rust_sync_client_marker_trait_name(t_service* tservice) {
