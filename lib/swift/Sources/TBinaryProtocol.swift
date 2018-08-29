@@ -79,7 +79,7 @@ public class TBinaryProtocol: TProtocol {
       messageName = try read()
     } else {
       if strictRead {
-        let errorMessage = "Missing message version, old client? Message Name: \(currentMessageName)"
+        let errorMessage = "Missing message version, old client? Message Name: \(currentMessageName ?? "")"
         throw TProtocolError(error: .invalidData,
                              message: errorMessage)
       }
@@ -233,7 +233,7 @@ public class TBinaryProtocol: TProtocol {
   
   public func read() throws -> Double {
     let val = try read() as Int64
-    return unsafeBitCast(val, to: Double.self)
+    return Double(bitPattern: UInt64(bitPattern: val))
   }
   
   public func read() throws -> Data {
@@ -371,7 +371,7 @@ public class TBinaryProtocol: TProtocol {
   
   public func write(_ value: Double) throws {
     // Notably unsafe, since Double and Int64 are the same size, this should work fine
-    try self.write(unsafeBitCast(value, to: Int64.self))
+    try self.write(Int64(bitPattern: value.bitPattern))
   }
   
   public func write(_ data: Data) throws {
