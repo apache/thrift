@@ -21,7 +21,7 @@ import Foundation
 
 public struct TSet<Element : TSerializable & Hashable> : SetAlgebra, Hashable, Collection, ExpressibleByArrayLiteral, TSerializable {
   /// Typealias for Storage type
-  typealias Storage = Set<Element>
+  public typealias Storage = Set<Element>
   
   
   /// Internal Storage used for TSet (Set\<Element\>)

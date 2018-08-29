@@ -222,11 +222,11 @@ public class TCompactProtocol: TProtocol {
   ///
   /// - returns: zigzaged UInt32
   func i32ToZigZag(_ n : Int32) -> UInt32 {
-    return UInt32(n << 1) ^ UInt32(n >> 31)
+    return UInt32(bitPattern: Int32(n << 1) ^ Int32(n >> 31))
   }
 
   func i64ToZigZag(_ n : Int64) -> UInt64 {
-    return UInt64(n << 1) ^ UInt64(n >> 63)
+    return UInt64(bitPattern: Int64(n << 1) ^ Int64(n >> 63))
   }
 
   func zigZagToi32(_ n: UInt32) -> Int32 {
@@ -379,7 +379,7 @@ public class TCompactProtocol: TProtocol {
       return UnsafePointer<UInt64>(OpaquePointer(ptr)).pointee
     }
     let bits = CFSwapInt64LittleToHost(i64)
-    return unsafeBitCast(bits, to: Double.self)
+    return Double(bitPattern: bits)
   }
   
   public func read() throws -> Data {
@@ -557,7 +557,7 @@ public class TCompactProtocol: TProtocol {
   }
   
   public func write(_ value: Double) throws {
-    var bits = CFSwapInt64HostToLittle(unsafeBitCast(value, to: UInt64.self))
+    var bits = CFSwapInt64HostToLittle(value.bitPattern)
     let data = withUnsafePointer(to: &bits) {
       return Data(bytes: UnsafePointer<UInt8>(OpaquePointer($0)), count: MemoryLayout<UInt64>.size)
     }

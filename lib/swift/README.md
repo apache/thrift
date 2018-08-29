@@ -20,6 +20,8 @@ KIND, either express or implied. See the License for the
 specific language governing permissions and limitations
 under the License.
 
+Brought to you by [FiscalNote, Inc](http://www.fiscalnote.com/)
+
 
 ## Build
 
@@ -88,10 +90,11 @@ func write(_ val: String) throws
 #### Generator Flags
 | Flag          | Description           |
 | ------------- |:-------------:|
-| async_clients | Generate clients which invoke asynchronously via block syntax.Asynchronous classes are appended with `_Async` |
+| async_clients | Generate clients which invoke asynchronously via block syntax. Asynchronous classes are appended with `_Async` |
 | no_strict*    | Generates non-strict structs      |
 | debug_descriptions | Allow use of debugDescription so the app can add description via a cateogory/extension      |
 | log_unexpected | Log every time an unexpected field ID or type is encountered. |
+| safe_enums     | Generate enum types with an unknown case to handle unspecified values rather than throw a serialization error  |
 
 
 
