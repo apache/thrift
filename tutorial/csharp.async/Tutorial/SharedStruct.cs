@@ -17,40 +17,37 @@ using Thrift.Protocol;
 using Thrift.Transport;
 
 
-/// <summary>
-/// Structs can also be exceptions, if they are nasty.
-/// </summary>
 #if !SILVERLIGHT
 [Serializable]
 #endif
-public partial class InvalidOperation : TException, TBase
+public partial class SharedStruct : TBase
 {
-  private int _whatOp;
-  private string _why;
+  private int _key;
+  private string _value;
 
-  public int WhatOp
+  public int Key
   {
     get
     {
-      return _whatOp;
+      return _key;
     }
     set
     {
-      __isset.whatOp = true;
-      this._whatOp = value;
+      __isset.key = true;
+      this._key = value;
     }
   }
 
-  public string Why
+  public string Value
   {
     get
     {
-      return _why;
+      return _value;
     }
     set
     {
-      __isset.why = true;
-      this._why = value;
+      __isset.@value = true;
+      this._value = value;
     }
   }
 
@@ -60,11 +57,11 @@ public partial class InvalidOperation : TException, TBase
   [Serializable]
   #endif
   public struct Isset {
-    public bool whatOp;
-    public bool why;
+    public bool key;
+    public bool @value;
   }
 
-  public InvalidOperation() {
+  public SharedStruct() {
   }
 
   public void Read (TProtocol iprot)
@@ -84,14 +81,14 @@ public partial class InvalidOperation : TException, TBase
         {
           case 1:
             if (field.Type == TType.I32) {
-              WhatOp = iprot.ReadI32();
+              Key = iprot.ReadI32();
             } else { 
               TProtocolUtil.Skip(iprot, field.Type);
             }
             break;
           case 2:
             if (field.Type == TType.String) {
-              Why = iprot.ReadString();
+              Value = iprot.ReadString();
             } else { 
               TProtocolUtil.Skip(iprot, field.Type);
             }
@@ -114,23 +111,23 @@ public partial class InvalidOperation : TException, TBase
     oprot.IncrementRecursionDepth();
     try
     {
-      TStruct struc = new TStruct("InvalidOperation");
+      TStruct struc = new TStruct("SharedStruct");
       oprot.WriteStructBegin(struc);
       TField field = new TField();
-      if (__isset.whatOp) {
-        field.Name = "whatOp";
+      if (__isset.key) {
+        field.Name = "key";
         field.Type = TType.I32;
         field.ID = 1;
         oprot.WriteFieldBegin(field);
-        oprot.WriteI32(WhatOp);
+        oprot.WriteI32(Key);
         oprot.WriteFieldEnd();
       }
-      if (Why != null && __isset.why) {
-        field.Name = "why";
+      if (Value != null && __isset.@value) {
+        field.Name = "value";
         field.Type = TType.String;
         field.ID = 2;
         oprot.WriteFieldBegin(field);
-        oprot.WriteString(Why);
+        oprot.WriteString(Value);
         oprot.WriteFieldEnd();
       }
       oprot.WriteFieldStop();
@@ -143,19 +140,19 @@ public partial class InvalidOperation : TException, TBase
   }
 
   public override string ToString() {
-    StringBuilder __sb = new StringBuilder("InvalidOperation(");
+    StringBuilder __sb = new StringBuilder("SharedStruct(");
     bool __first = true;
-    if (__isset.whatOp) {
+    if (__isset.key) {
       if(!__first) { __sb.Append(", "); }
       __first = false;
-      __sb.Append("WhatOp: ");
-      __sb.Append(WhatOp);
+      __sb.Append("Key: ");
+      __sb.Append(Key);
     }
-    if (Why != null && __isset.why) {
+    if (Value != null && __isset.@value) {
       if(!__first) { __sb.Append(", "); }
       __first = false;
-      __sb.Append("Why: ");
-      __sb.Append(Why);
+      __sb.Append("Value: ");
+      __sb.Append(Value);
     }
     __sb.Append(")");
     return __sb.ToString();

@@ -44,6 +44,8 @@
     <Compile Include="InvalidOperation.cs" />
     <Compile Include="Operation.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="SharedService.cs" />
+    <Compile Include="SharedStruct.cs" />
     <Compile Include="tutorial.Constants.cs" />
     <Compile Include="Work.cs" />
   </ItemGroup>

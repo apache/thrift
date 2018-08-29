@@ -56,14 +56,21 @@
  * Included objects are accessed using the name of the .thrift file as a
  * prefix. i.e. shared.SharedObject
  */
+include "shared.thrift"
 
 /**
  * Thrift files can namespace, package, or prefix their output in various
  * target languages.
  */
 
+namespace cpp tutorial
+namespace d tutorial
+namespace dart tutorial
+namespace java tutorial
+namespace php tutorial
+namespace perl tutorial
+namespace haxe tutorial
 namespace netcore tutorial
-namespace csharp tutorial
 
 /**
  * Thrift lets you do typedefs to get pretty names for your types. Standard
@@ -117,7 +124,7 @@ exception InvalidOperation {
  * Ahh, now onto the cool part, defining a service. Services just need a name
  * and can optionally inherit from another service using the extends keyword.
  */
-service Calculator {
+service Calculator extends shared.SharedService {
 
   /**
    * A method definition looks like C code. It has a return type, arguments,

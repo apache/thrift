@@ -3,7 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using tutorial;
+using Thrift.Server;
+using Thrift.Transport;
 
 namespace CSharpAsyncTutorial.Server
 {
@@ -16,7 +17,7 @@ namespace CSharpAsyncTutorial.Server
                 CalculatorHandler handler = new CalculatorHandler();
                 Calculator.Processor processor = new Calculator.Processor(handler);
                 TServerTransport serverTransport = new TServerSocket(9090);
-                TServer server = new TSimpleServer(processor, serverTransport);
+                TServer server = new TSimpleServer(processor, serverTransport,(str)=>Console.WriteLine($"Thrift Log:{str}"));
 
                 // Use this for a multithreaded server
                 // server = new TThreadPoolServer(processor, serverTransport);
@@ -32,7 +33,7 @@ namespace CSharpAsyncTutorial.Server
         }
     }
 
-    public class CalculatorHandler : Calculator.IAsync,Calculator.ISync
+    public class CalculatorHandler :Calculator.ISync
     {
         public CalculatorHandler()
         {
@@ -45,31 +46,25 @@ namespace CSharpAsyncTutorial.Server
 
         public int add(int n1, int n2)
         {
-            Console.WriteLine("add({0},{1})", n1, n2);
+            //Console.WriteLine("add({0},{1})", n1, n2);
             return n1 + n2;
         }
 
         public void zip()
         {
             Console.WriteLine("zip()");
+            throw new InvalidOperation();
         }
 
-        public Task pingAsync()
+        public int calculate(int logid, Work w)
         {
-            throw new NotImplementedException();
+            var ex = new InvalidOperation();
+            ex.WhatOp =(int)Operation.ADD;
+            ex.Why = "Invalid calculate";
+            throw ex;
         }
 
-        public Task<int> addAsync(int num1, int num2)
-        {
-            throw new NotImplementedException();
-        }
-
-        public Task<int> calculateAsync(int logid, Work w)
-        {
-            throw new NotImplementedException();
-        }
-
-        public Task zipAsync()
+        public SharedStruct getStruct(int key)
         {
             throw new NotImplementedException();
         }

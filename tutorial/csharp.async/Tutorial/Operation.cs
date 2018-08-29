@@ -5,17 +5,14 @@
  *  @generated
  */
 
-namespace tutorial
+/// <summary>
+/// You can define enums, which are just 32 bit integers. Values are optional
+/// and start at 1 if not supplied, C style again.
+/// </summary>
+public enum Operation
 {
-  /// <summary>
-  /// You can define enums, which are just 32 bit integers. Values are optional
-  /// and start at 1 if not supplied, C style again.
-  /// </summary>
-  public enum Operation
-  {
-    ADD = 1,
-    SUBTRACT = 2,
-    MULTIPLY = 3,
-    DIVIDE = 4,
-  }
+  ADD = 1,
+  SUBTRACT = 2,
+  MULTIPLY = 3,
+  DIVIDE = 4,
 }

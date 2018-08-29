@@ -14,20 +14,17 @@ using Thrift;
 using Thrift.Collections;
 using System.Runtime.Serialization;
 
-namespace tutorial
+public static class tutorialConstants
 {
-  public static class tutorialConstants
+  /// <summary>
+  /// Thrift also lets you define constants for use across languages. Complex
+  /// types and structs are specified using JSON notation.
+  /// </summary>
+  public const int INT32CONSTANT = 9853;
+  public static Dictionary<string, string> MAPCONSTANT = new Dictionary<string, string>();
+  static tutorialConstants()
   {
-    /// <summary>
-    /// Thrift also lets you define constants for use across languages. Complex
-    /// types and structs are specified using JSON notation.
-    /// </summary>
-    public const int INT32CONSTANT = 9853;
-    public static Dictionary<string, string> MAPCONSTANT = new Dictionary<string, string>();
-    static tutorialConstants()
-    {
-      MAPCONSTANT["hello"] = "world";
-      MAPCONSTANT["goodnight"] = "moon";
-    }
+    MAPCONSTANT["hello"] = "world";
+    MAPCONSTANT["goodnight"] = "moon";
   }
 }
