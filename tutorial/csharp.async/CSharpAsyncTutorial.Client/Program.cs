@@ -24,6 +24,7 @@ namespace CSharpAsyncTutorial.Client
             try
             {
                 string host = "localhost";
+                //string host = "thrift.service.consul";
                 int port = 9090;
 
                 var transport = new TSocket(host, port, 100000);
@@ -35,7 +36,7 @@ namespace CSharpAsyncTutorial.Client
                 Console.WriteLine($"run Client host:{transport.Host},port:{transport.Port}");
                 await client.pingAsync();
 
-                int testCount = 100;
+                int testCount = 100000;
                 var sw = Stopwatch.StartNew();
                 foreach (var m in Enumerable.Range(0, testCount))
                 {
