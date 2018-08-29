@@ -1,3 +1,5 @@
 # Tutorial Async
 
-thrift -gen csharp:async tutorial.thrift
+
+1. thrift -gen csharp:async shared.thrift
+2. thrift -r -gen csharp:async tutorial.thrift
