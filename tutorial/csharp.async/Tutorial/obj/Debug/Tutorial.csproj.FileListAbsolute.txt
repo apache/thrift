@@ -1,9 +1,0 @@
-F:\thrift\2\thrift\tutorial\csharp.async\Tutorial\obj\Debug\Tutorial.csprojAssemblyReference.cache
-F:\thrift\2\thrift\tutorial\csharp.async\Tutorial\obj\Debug\Tutorial.csproj.CoreCompileInputs.cache
-F:\thrift\2\thrift\tutorial\csharp.async\Tutorial\bin\Debug\Tutorial.dll
-F:\thrift\2\thrift\tutorial\csharp.async\Tutorial\bin\Debug\Tutorial.pdb
-F:\thrift\2\thrift\tutorial\csharp.async\Tutorial\bin\Debug\Thrift45.dll
-F:\thrift\2\thrift\tutorial\csharp.async\Tutorial\bin\Debug\Thrift45.pdb
-F:\thrift\2\thrift\tutorial\csharp.async\Tutorial\obj\Debug\Tutorial.csproj.CopyComplete
-F:\thrift\2\thrift\tutorial\csharp.async\Tutorial\obj\Debug\Tutorial.dll
-F:\thrift\2\thrift\tutorial\csharp.async\Tutorial\obj\Debug\Tutorial.pdb
