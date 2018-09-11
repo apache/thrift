@@ -17,16 +17,25 @@
 # under the License.
 #
 
-stubs: $(THRIFT) ../ThriftTest.thrift ../SmallTest.thrift
-	$(THRIFT) --gen rb ../ThriftTest.thrift
-	$(THRIFT) --gen rb ../SmallTest.thrift
-	$(THRIFT) --gen rb ../Recursive.thrift
+require File.join(File.dirname(__FILE__), '../test_helper')
+require 'recursive_types'
 
-precross: stubs
+class TestRecursiveGeneration < Test::Unit::TestCase
+  CHILD_ITEM = "child item"
+  PARENT_ITEM = "parent item"
 
-check: stubs
-if HAVE_BUNDLER
-	$(BUNDLER) install
-	$(BUNDLER) exec $(RUBY) -I. test_suite.rb
-endif
+  def test_can_create_recursive_tree
 
+    child_tree = RecTree.new
+    child_tree.item = CHILD_ITEM
+
+    parent_tree = RecTree.new
+    parent_tree.item = PARENT_ITEM
+    parent_tree.children = [child_tree]
+
+    assert_equal(PARENT_ITEM, parent_tree.item)
+    assert_equal(1, parent_tree.children.length)
+    assert_equal(CHILD_ITEM, parent_tree.children.first.item)
+    assert_nil(parent_tree.children.first.children)
+  end
+end
