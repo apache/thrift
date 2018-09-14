@@ -25,6 +25,7 @@ tags
 
 .*project
 .classpath
+.dub
 .settings
 .checkstyle
 junit*.properties
@@ -37,8 +38,11 @@ Makefile
 Makefile.in
 aclocal.m4
 acinclude.m4
+apache-thrift-test-library
 autom4te.cache
 cmake-*
+dub.selections.json
+libapache-thrift.a
 node_modules
 compile
 test-driver
