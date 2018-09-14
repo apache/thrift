@@ -151,10 +151,16 @@ RUN curl -fsSL "$GOLANG_DOWNLOAD_URL" -o golang.tar.gz && \
       ln -s /usr/local/go/bin/go /usr/local/bin && \
       rm golang.tar.gz
 
+# due to a bug in cabal in xenial (cabal-install package) we pull in another:
 RUN apt-get install -y --no-install-recommends \
 `# Haskell dependencies` \
-      ghc \
-      cabal-install
+      ghc && \
+    cd /tmp && \
+    wget -q https://www.haskell.org/cabal/release/cabal-install-1.24.0.2/cabal-install-1.24.0.2-x86_64-unknown-linux.tar.gz && \
+    tar xzf cabal-install-1.24.0.2-x86_64-unknown-linux.tar.gz && \
+    find dist-newstyle/ -type f -name cabal -exec mv {} /usr/bin \; && \
+    rm -rf /tmp/cabal* && \
+    cabal --version
 
 RUN apt-get install -y --no-install-recommends \
 `# Haxe dependencies` \

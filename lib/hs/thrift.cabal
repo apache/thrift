@@ -19,7 +19,7 @@
 
 Name:           thrift
 Version:        1.0.0-dev
-Cabal-Version:  >= 1.8
+Cabal-Version:  >= 1.24
 License:        OtherLicense
 Category:       Foreign
 Build-Type:     Simple
@@ -63,7 +63,9 @@ Library
     Thrift.Transport.IOBuffer,
     Thrift.Transport.Memory,
     Thrift.Types
-  Extensions:
+  Default-Language:
+    Haskell2010
+  Default-Extensions:
     DeriveDataTypeable,
     ExistentialQuantification,
     FlexibleInstances,
