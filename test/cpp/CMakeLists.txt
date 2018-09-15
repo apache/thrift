@@ -28,6 +28,9 @@ include_directories(SYSTEM "${OPENSSL_INCLUDE_DIR}")
 find_package(Libevent REQUIRED)  # Libevent comes with CMake support from upstream
 include_directories(SYSTEM ${LIBEVENT_INCLUDE_DIRS})
 
+find_package(ZLIB REQUIRED)
+include_directories(SYSTEM ${ZLIB_INCLUDE_DIRS})
+
 #Make sure gen-cpp files can be included
 include_directories("${CMAKE_CURRENT_BINARY_DIR}")
 include_directories("${CMAKE_CURRENT_BINARY_DIR}/gen-cpp")

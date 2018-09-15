@@ -105,7 +105,8 @@
     "transports": [
       "buffered",
       "framed",
-      "http"
+      "http",
+      "zlib"
     ],
     "sockets": [
       "ip",
@@ -262,7 +263,8 @@
     "transports": [
       "buffered",
       "framed",
-      "http"
+      "http",
+      "zlib"
     ],
     "sockets": [
       "ip",
@@ -309,7 +311,8 @@
     "transports": [
       "buffered",
       "framed",
-      "http"
+      "http",
+      "zlib"
     ],
     "sockets": [
       "ip",
@@ -353,7 +356,8 @@
     "transports": [
       "buffered",
       "http",
-      "framed"
+      "framed",
+      "zlib"
     ],
     "sockets": [
       "ip",
