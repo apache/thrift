@@ -2049,7 +2049,7 @@ void t_csharp_generator::generate_service_server_async(t_service* tservice) {
   string extends_processor = "";
   if (tservice->get_extends() != NULL) {
     extends = type_name(tservice->get_extends());
-    extends_processor = extends + ".Processor, ";
+    extends_processor = extends + ".AsyncProcessor, ";
   }
 
   indent(f_service_) << "public class AsyncProcessor : " << extends_processor << "TAsyncProcessor {" << endl;
