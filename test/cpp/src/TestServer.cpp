@@ -39,6 +39,7 @@
 #include <thrift/transport/TSSLSocket.h>
 #include <thrift/transport/TServerSocket.h>
 #include <thrift/transport/TTransportUtils.h>
+#include <thrift/transport/TZlibTransport.h>
 
 #include "SecondService.h"
 #include "ThriftTest.h"
@@ -571,6 +572,7 @@ int main(int argc, char** argv) {
 #endif
   int port = 9090;
   bool ssl = false;
+  bool zlib = false;
   string transport_type = "buffered";
   string protocol_type = "binary";
   string server_type = "simple";
@@ -587,9 +589,10 @@ int main(int argc, char** argv) {
     ("domain-socket", po::value<string>(&domain_socket) ->default_value(domain_socket), "Unix Domain Socket (e.g. /tmp/ThriftTest.thrift)")
     ("abstract-namespace", "Create the domain socket in the Abstract Namespace (no connection with filesystem pathnames)")
     ("server-type", po::value<string>(&server_type)->default_value(server_type), "type of server, \"simple\", \"thread-pool\", \"threaded\", or \"nonblocking\"")
-    ("transport", po::value<string>(&transport_type)->default_value(transport_type), "transport: buffered, framed, http")
+    ("transport", po::value<string>(&transport_type)->default_value(transport_type), "transport: buffered, framed, http, zlib")
     ("protocol", po::value<string>(&protocol_type)->default_value(protocol_type), "protocol: binary, compact, header, json, multi, multic, multih, multij")
     ("ssl", "Encrypted Transport using SSL")
+    ("zlib", "Wrapped Transport using Zlib")
     ("processor-events", "processor-events")
     ("workers,n", po::value<size_t>(&workers)->default_value(workers), "Number of thread pools workers. Only valid for thread-pool server type")
     ("string-limit", po::value<int>(&string_limit))
@@ -633,6 +636,8 @@ int main(int argc, char** argv) {
       if (transport_type == "buffered") {
       } else if (transport_type == "framed") {
       } else if (transport_type == "http") {
+      } else if (transport_type == "zlib") {
+        // crosstester will pass zlib as a flag and a transport right now...
       } else {
         throw invalid_argument("Unknown transport type " + transport_type);
       }
@@ -646,6 +651,10 @@ int main(int argc, char** argv) {
 
   if (vm.count("ssl")) {
     ssl = true;
+  }
+
+  if (vm.count("zlib")) {
+    zlib = true;
   }
 
 #if defined(HAVE_SIGNAL_H) && defined(SIGPIPE)
@@ -719,14 +728,16 @@ int main(int argc, char** argv) {
   stdcxx::shared_ptr<TTransportFactory> transportFactory;
 
   if (transport_type == "http" && server_type != "nonblocking") {
-    stdcxx::shared_ptr<TTransportFactory> httpTransportFactory(new THttpServerTransportFactory());
-    transportFactory = httpTransportFactory;
+    transportFactory = stdcxx::make_shared<THttpServerTransportFactory>();
   } else if (transport_type == "framed") {
-    stdcxx::shared_ptr<TTransportFactory> framedTransportFactory(new TFramedTransportFactory());
-    transportFactory = framedTransportFactory;
+    transportFactory = stdcxx::make_shared<TFramedTransportFactory>();
   } else {
-    stdcxx::shared_ptr<TTransportFactory> bufferedTransportFactory(new TBufferedTransportFactory());
-    transportFactory = bufferedTransportFactory;
+    transportFactory = stdcxx::make_shared<TBufferedTransportFactory>();
+  }
+
+  if (zlib) {
+    // hmm.. doesn't seem to be a way to make it wrap the others...
+    transportFactory = stdcxx::make_shared<TZlibTransportFactory>();
   }
 
   // Server Info

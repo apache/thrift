@@ -31,6 +31,7 @@
 #include <thrift/transport/TTransportUtils.h>
 #include <thrift/transport/TSocket.h>
 #include <thrift/transport/TSSLSocket.h>
+#include <thrift/transport/TZlibTransport.h>
 #include <thrift/async/TEvhttpClientChannel.h>
 #include <thrift/server/TNonblockingServer.h> // <event.h>
 
@@ -154,6 +155,7 @@ int main(int argc, char** argv) {
   int port = 9090;
   int numTests = 1;
   bool ssl = false;
+  bool zlib = false;
   string transport_type = "buffered";
   string protocol_type = "binary";
   string domain_socket = "";
@@ -179,12 +181,14 @@ int main(int argc, char** argv) {
           " (no connection with filesystem pathnames)")
       ("transport",
           boost::program_options::value<string>(&transport_type)->default_value(transport_type),
-          "Transport: buffered, framed, http, evhttp")
+          "Transport: buffered, framed, http, evhttp, zlib")
       ("protocol",
           boost::program_options::value<string>(&protocol_type)->default_value(protocol_type),
           "Protocol: binary, compact, header, json, multi, multic, multih, multij")
       ("ssl",
           "Encrypted Transport using SSL")
+      ("zlib",
+          "Wrap Transport with Zlib")
       ("testloops,n",
           boost::program_options::value<int>(&numTests)->default_value(numTests),
           "Number of Tests")
@@ -220,6 +224,8 @@ int main(int argc, char** argv) {
       } else if (transport_type == "framed") {
       } else if (transport_type == "http") {
       } else if (transport_type == "evhttp") {
+      } else if (transport_type == "zlib") {
+        // crosstest will pass zlib as a transport and as a flag right now..
       } else {
         throw invalid_argument("Unknown transport type " + transport_type);
       }
@@ -233,6 +239,10 @@ int main(int argc, char** argv) {
 
   if (vm.count("ssl")) {
     ssl = true;
+  }
+
+  if (vm.count("zlib")) {
+    zlib = true;
   }
 
   if (vm.count("abstract-namespace")) {
@@ -278,14 +288,15 @@ int main(int argc, char** argv) {
   }
 
   if (transport_type.compare("http") == 0) {
-    stdcxx::shared_ptr<TTransport> httpSocket(new THttpClient(socket, host, "/service"));
-    transport = httpSocket;
+    transport = stdcxx::make_shared<THttpClient>(socket, host, "/service");
   } else if (transport_type.compare("framed") == 0) {
-    stdcxx::shared_ptr<TFramedTransport> framedSocket(new TFramedTransport(socket));
-    transport = framedSocket;
+    transport = stdcxx::make_shared<TFramedTransport>(socket);
   } else {
-    stdcxx::shared_ptr<TBufferedTransport> bufferedSocket(new TBufferedTransport(socket));
-    transport = bufferedSocket;
+    transport = stdcxx::make_shared<TBufferedTransport>(socket);
+  }
+
+  if (zlib) {
+    transport = stdcxx::make_shared<TZlibTransport>(transport);
   }
 
   if (protocol_type == "json" || protocol_type == "multij") {
