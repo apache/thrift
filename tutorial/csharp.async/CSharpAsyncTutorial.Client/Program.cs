@@ -42,11 +42,7 @@ namespace CSharpAsyncTutorial.Client
         {
             try
             {
-                string host = "localhost";
-                //string host = "thrift.service.consul";
-                int port = 9090;
-
-                var transport = new TSocket(host, port, 100000);
+                var transport = new TSocket("localhost", 9090, 100000);
                 TBufferedTransport transportBuff = new TBufferedTransport(transport, 2048);
                 TProtocol protocol = new TBinaryProtocol(transportBuff);
                 transport.Open();
@@ -72,8 +68,7 @@ namespace CSharpAsyncTutorial.Client
                 sw.Stop();
                 Console.WriteLine($"TBufferedTransport Execute client.addAsync(1, 1) do:{testCount} ms:{sw.ElapsedMilliseconds}");
 
-
-                //await client.calculateAsync(1,new Work() { Op=Operation.ADD,Comment="add Comment"});//InvalidOperation
+                await client.calculateAsync(1,new Work() { Op=Operation.ADD,Comment="add Comment"});//InvalidOperation
 
                 transport.Close();
             }

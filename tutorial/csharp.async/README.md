@@ -1,8 +1,8 @@
 # Tutorial Frameword 4.5+ Clent Async
 
-## Setp
+## Step
 1. thrift -gen csharp:async shared.thrift
-2. thrift -r -gen csharp:async tutorial.thrift
-3. Put it in Tutorial folder
-4. Generated && Run
+2. thrift -gen csharp:async tutorial.thrift
+3. copy generated directories for sample code to "Tutorial" folder
+4. generate && run
 
