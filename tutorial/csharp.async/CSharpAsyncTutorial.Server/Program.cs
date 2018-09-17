@@ -17,6 +17,7 @@
  * under the License.
  */
 
+using shared;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -24,6 +25,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Thrift.Server;
 using Thrift.Transport;
+using tutorial;
 
 namespace CSharpAsyncTutorial.Server
 {

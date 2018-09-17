@@ -26,6 +26,7 @@ using System.Threading.Tasks;
 using Thrift;
 using Thrift.Protocol;
 using Thrift.Transport;
+using tutorial;
 
 namespace CSharpAsyncTutorial.Client
 {
