@@ -288,7 +288,7 @@ void TServerSocket::listen() {
 
   if (!path_.empty()) {
     serverSocket_ = socket(PF_UNIX, SOCK_STREAM, IPPROTO_IP);
-  } else {
+  } else if (res != NULL) {
     serverSocket_ = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
   }
 
