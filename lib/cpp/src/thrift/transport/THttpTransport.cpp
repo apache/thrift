@@ -202,10 +202,11 @@ void THttpTransport::refill() {
   uint32_t avail = httpBufSize_ - httpBufLen_;
   if (avail <= (httpBufSize_ / 4)) {
     httpBufSize_ *= 2;
-    httpBuf_ = (char*)std::realloc(httpBuf_, httpBufSize_ + 1);
-    if (httpBuf_ == NULL) {
+    char* tmpBuf = (char*)std::realloc(httpBuf_, httpBufSize_ + 1);
+    if (tmpBuf == NULL) {
       throw std::bad_alloc();
     }
+    httpBuf_ = tmpBuf;
   }
 
   // Read more data
