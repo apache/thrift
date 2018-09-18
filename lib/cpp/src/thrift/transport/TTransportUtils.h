@@ -119,7 +119,11 @@ public:
       // Double the size of the underlying buffer if it is full
       if (rLen_ == rBufSize_) {
         rBufSize_ *= 2;
-        rBuf_ = (uint8_t*)std::realloc(rBuf_, sizeof(uint8_t) * rBufSize_);
+        uint8_t * tmpBuf = (uint8_t*)std::realloc(rBuf_, sizeof(uint8_t) * rBufSize_);
+	if (tmpBuf == NULL) {
+	  throw std::bad_alloc();
+	}
+	rBuf_ = tmpBuf;
       }
 
       // try to fill up the buffer
