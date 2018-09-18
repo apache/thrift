@@ -217,7 +217,7 @@ void TSocketPool::open() {
       for (int j = 0; j < numRetries_; ++j) {
         try {
           TSocket::open();
-        } catch (TException e) {
+        } catch (const TException &e) {
           string errStr = "TSocketPool::open failed " + getSocketInfo() + ": " + e.what();
           GlobalOutput(errStr.c_str());
           socket_ = THRIFT_INVALID_SOCKET;
