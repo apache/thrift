@@ -451,15 +451,11 @@ private:
 
     maxBufferSize_ = std::numeric_limits<uint32_t>::max();
 
-    if (buf == NULL) {
-      if( size != 0) {
-	assert(owner);
-	buf = (uint8_t*)std::malloc(size);
-	if (buf == NULL) {
-	  throw std::bad_alloc();
-	}
-      } else {
-	  throw std::invalid_argument("buf is null");
+    if (buf == NULL && size != 0) {
+      assert(owner);
+      buf = (uint8_t*)std::malloc(size);
+      if (buf == NULL) {
+	throw std::bad_alloc();
       }
     }
 
