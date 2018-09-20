@@ -41,7 +41,11 @@ uint32_t TPipedTransport::read(uint8_t* buf, uint32_t len) {
     // Double the size of the underlying buffer if it is full
     if (rLen_ == rBufSize_) {
       rBufSize_ *= 2;
-      rBuf_ = (uint8_t*)std::realloc(rBuf_, sizeof(uint8_t) * rBufSize_);
+      uint8_t *tmpBuf = (uint8_t*)std::realloc(rBuf_, sizeof(uint8_t) * rBufSize_);
+      if (tmpBuf == NULL) {
+       throw std::bad_alloc();
+      }
+      rBuf_ = tmpBuf;
     }
 
     // try to fill up the buffer
@@ -73,7 +77,12 @@ void TPipedTransport::write(const uint8_t* buf, uint32_t len) {
     while ((len + wLen_) >= newBufSize) {
       newBufSize *= 2;
     }
-    wBuf_ = (uint8_t*)std::realloc(wBuf_, sizeof(uint8_t) * newBufSize);
+    uint8_t *tmpBuf= (uint8_t*)std::realloc(wBuf_, sizeof(uint8_t) * newBufSize);
+    if (tmpBuf == NULL) {
+      throw std::bad_alloc();
+    }
+    wBuf_ = tmpBuf;
+
     wBufSize_ = newBufSize;
   }
 

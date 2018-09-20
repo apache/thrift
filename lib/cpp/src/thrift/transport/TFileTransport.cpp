@@ -383,7 +383,7 @@ void TFileTransport::writerThread() {
 
         while (hasIOError) {
           T_ERROR(
-              "TFileTransport: writer thread going to sleep for %d microseconds due to IO errors",
+              "TFileTransport: writer thread going to sleep for %u microseconds due to IO errors",
               writerThreadIOErrorSleepTime_);
           THRIFT_SLEEP_USEC(writerThreadIOErrorSleepTime_);
           if (closing_) {

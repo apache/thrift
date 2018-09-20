@@ -455,7 +455,7 @@ private:
       assert(owner);
       buf = (uint8_t*)std::malloc(size);
       if (buf == NULL) {
-        throw std::bad_alloc();
+	throw std::bad_alloc();
       }
     }
 
