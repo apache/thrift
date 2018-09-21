@@ -66,6 +66,7 @@ public:
     gen_templates_ = false;
     gen_templates_only_ = false;
     gen_moveable_ = false;
+    gen_noexcept_ = false;
     gen_no_ostream_operators_ = false;
     gen_no_skeleton_ = false;
 
@@ -85,6 +86,8 @@ public:
         gen_templates_only_ = (iter->second == "only");
       } else if( iter->first.compare("moveable_types") == 0) {
         gen_moveable_ = true;
+      } else if( iter->first.compare("noexcept") == 0) {
+        gen_noexcept_ = true;
       } else if ( iter->first.compare("no_ostream_operators") == 0) {
         gen_no_ostream_operators_ = true;
       } else if ( iter->first.compare("no_skeleton") == 0) {
@@ -316,6 +319,11 @@ private:
    * True if we should generate move constructors & assignment operators.
    */
   bool gen_moveable_;
+
+  /**
+   * True if we should use noexcept exception specifier.
+   */
+  bool gen_noexcept_;
 
   /**
    * True if we should generate ostream definitions
@@ -1097,7 +1105,12 @@ void t_cpp_generator::generate_struct_declaration(ostream& out,
   }
 
   if (tstruct->annotations_.find("final") == tstruct->annotations_.end()) {
-    out << endl << indent() << "virtual ~" << tstruct->get_name() << "() throw();" << endl;
+    out << endl << indent() << "virtual ~" << tstruct->get_name();
+    if (gen_noexcept_) {
+      out << "() noexcept;" << endl;
+    } else {
+      out << "() throw();" << endl;
+    }
   }
 
   // Declare all fields
@@ -1225,8 +1238,12 @@ void t_cpp_generator::generate_struct_definition(ostream& out,
 
   // Destructor
   if (tstruct->annotations_.find("final") == tstruct->annotations_.end()) {
-    force_cpp_out << endl << indent() << tstruct->get_name() << "::~" << tstruct->get_name()
-                  << "() throw() {" << endl;
+    force_cpp_out << endl << indent() << tstruct->get_name() << "::~" << tstruct->get_name();
+    if (gen_noexcept_) {
+      force_cpp_out << "() noexcept {" << endl;
+    } else {
+      force_cpp_out << "() throw() {" << endl;
+    }
     indent_up();
 
     indent_down();
@@ -1598,7 +1615,12 @@ void t_cpp_generator::generate_exception_what_method_decl(std::ostream& out,
   if (external) {
     out << tstruct->get_name() << "::";
   }
-  out << "what() const throw()";
+  out << "what() const";
+  if (gen_noexcept_) {
+    out << " noexcept";
+  } else {
+    out << " throw()";
+  }
 }
 
 namespace struct_ostream_operator_generator {
@@ -4484,6 +4506,7 @@ THRIFT_REGISTER_GENERATOR(
     "    pure_enums:      Generate pure enums instead of wrapper classes.\n"
     "    include_prefix:  Use full include paths in generated files.\n"
     "    moveable_types:  Generate move constructors and assignment operators.\n"
+    "    noexcept:        Use noexcept exception specifier.\n"
     "    no_ostream_operators:\n"
     "                     Omit generation of ostream definitions.\n"
     "    no_skeleton:     Omits generation of skeleton.\n")
