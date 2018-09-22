@@ -15,7 +15,7 @@
 # Using all stock Ubuntu Bionic packaging except for:
 # - cl: want latest
 # - d: dmd does not come with Ubuntu
-# - dart: does not come with Ubuntu
+# - dart: does not come with Ubuntu. Pinned to last 1.x release
 # - dotnet: does not come with Ubuntu
 # - go: want latest
 # - nodejs: want v8, bionic comes with v6
@@ -46,6 +46,7 @@ RUN apt-get update && \
 RUN curl https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - && \
     curl https://storage.googleapis.com/download.dartlang.org/linux/debian/dart_stable.list > \
       /etc/apt/sources.list.d/dart_stable.list
+ENV DART_VERSION 1.24.3-1
 
 # dotnet (netcore)
 RUN curl https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor > /etc/apt/trusted.gpg.d/microsoft.gpg && \
@@ -119,7 +120,7 @@ RUN \
 
 RUN apt-get install -y --no-install-recommends \
       `# Dart dependencies` \
-      dart/stable
+      dart=$DART_VERSION
 ENV PATH /usr/lib/dart/bin:$PATH
 
 RUN apt-get install -y --no-install-recommends \
