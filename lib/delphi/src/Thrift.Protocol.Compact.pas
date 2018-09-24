@@ -1088,11 +1088,29 @@ end;
 {$ENDIF}
 
 
+{$IFDEF Debug}
+procedure UnitTest;
+var w : WORD;
+const FPU_CW_DENORMALIZED = $0002;
+begin
+  w := Get8087CW;
+  try
+    Set8087CW( w or FPU_CW_DENORMALIZED);
+
+    TestDoubleToInt64Bits;
+    TestZigZag;
+    TestLongBytes;
+
+  finally
+    Set8087CW( w);
+  end;
+end;
+{$ENDIF}
+
+
 initialization
   {$IFDEF Debug}
-  TestDoubleToInt64Bits;
-  TestZigZag;
-  TestLongBytes;
+  UnitTest;
   {$ENDIF}
 
 end.
