@@ -115,10 +115,10 @@ RUN mkdir -p /usr/include/dmd/druntime/import/deimos /usr/include/dmd/druntime/i
     mv libevent-master/deimos/* /usr/include/dmd/druntime/import/deimos/ && \
     mv libevent-master/C/* /usr/include/dmd/druntime/import/C/ && \
     rm -rf libevent-master
-RUN curl -sSL https://github.com/D-Programming-Deimos/openssl/archive/master.tar.gz| tar xz && \
-    mv openssl-master/deimos/* /usr/include/dmd/druntime/import/deimos/ && \
-    mv openssl-master/C/* /usr/include/dmd/druntime/import/C/ && \
-    rm -rf openssl-master
+RUN curl -sSL https://github.com/D-Programming-Deimos/openssl/archive/v1.1.6+1.0.1g.tar.gz | tar xz && \
+    mv openssl-1.1.6-1.0.1g/deimos/* /usr/include/dmd/druntime/import/deimos/ && \
+    mv openssl-1.1.6-1.0.1g/C/* /usr/include/dmd/druntime/import/C/ && \
+    rm -rf openssl-1.1.6-1.0.1g
 
 RUN apt-get install -y --no-install-recommends \
 `# Dart dependencies` \
