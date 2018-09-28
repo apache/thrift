@@ -76,5 +76,17 @@ if(${WITH_PLUGIN})
                  -P ${CMAKE_CURRENT_SOURCE_DIR}/cpp_plugin_test.cmake)
 endif()
 
+file(GLOB KEYWORD_SAMPLES "${CMAKE_CURRENT_SOURCE_DIR}/keyword-samples/*.thrift")
+foreach(LANG ${thrift_compiler_LANGS})
+    foreach(SAMPLE ${KEYWORD_SAMPLES})
+        get_filename_component(FILENAME ${SAMPLE} NAME_WE)
+        add_test(NAME "${LANG}_${FILENAME}"
+            COMMAND thrift-compiler --gen ${LANG} ${SAMPLE})
+        set_tests_properties("${LANG}_${FILENAME}" PROPERTIES
+            PASS_REGULAR_EXPRESSION "Cannot use reserved language keyword")
+    endforeach()
+endforeach()
+
+
 find_package(PythonInterp REQUIRED)
 add_test(NAME StalenessCheckTest COMMAND ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/compiler/staleness_check.py ${THRIFT_COMPILER})

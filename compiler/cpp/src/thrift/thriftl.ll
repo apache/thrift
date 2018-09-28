@@ -76,11 +76,6 @@
 #include "thrift/thrifty.hh"
 #endif
 
-void thrift_reserved_keyword(char* keyword) {
-  yyerror("Cannot use reserved language keyword: \"%s\"\n", keyword);
-  exit(1);
-}
-
 void integer_overflow(char* text) {
   yyerror("This integer is too big: \"%s\"\n", text);
   exit(1);
@@ -268,111 +263,6 @@ literal_begin (['\"])
   return tok_oneway;
 }
 "&"                  { return tok_reference;            }
-
-
-"BEGIN"              { thrift_reserved_keyword(yytext); }
-"END"                { thrift_reserved_keyword(yytext); }
-"__CLASS__"          { thrift_reserved_keyword(yytext); }
-"__DIR__"            { thrift_reserved_keyword(yytext); }
-"__FILE__"           { thrift_reserved_keyword(yytext); }
-"__FUNCTION__"       { thrift_reserved_keyword(yytext); }
-"__LINE__"           { thrift_reserved_keyword(yytext); }
-"__METHOD__"         { thrift_reserved_keyword(yytext); }
-"__NAMESPACE__"      { thrift_reserved_keyword(yytext); }
-"abstract"           { thrift_reserved_keyword(yytext); }
-"alias"              { thrift_reserved_keyword(yytext); }
-"and"                { thrift_reserved_keyword(yytext); }
-"args"               { thrift_reserved_keyword(yytext); }
-"as"                 { thrift_reserved_keyword(yytext); }
-"assert"             { thrift_reserved_keyword(yytext); }
-"begin"              { thrift_reserved_keyword(yytext); }
-"break"              { thrift_reserved_keyword(yytext); }
-"case"               { thrift_reserved_keyword(yytext); }
-"catch"              { thrift_reserved_keyword(yytext); }
-"class"              { thrift_reserved_keyword(yytext); }
-"clone"              { thrift_reserved_keyword(yytext); }
-"continue"           { thrift_reserved_keyword(yytext); }
-"declare"            { thrift_reserved_keyword(yytext); }
-"def"                { thrift_reserved_keyword(yytext); }
-"default"            { thrift_reserved_keyword(yytext); }
-"del"                { thrift_reserved_keyword(yytext); }
-"delete"             { thrift_reserved_keyword(yytext); }
-"do"                 { thrift_reserved_keyword(yytext); }
-"dynamic"            { thrift_reserved_keyword(yytext); }
-"elif"               { thrift_reserved_keyword(yytext); }
-"else"               { thrift_reserved_keyword(yytext); }
-"elseif"             { thrift_reserved_keyword(yytext); }
-"elsif"              { thrift_reserved_keyword(yytext); }
-"end"                { thrift_reserved_keyword(yytext); }
-"enddeclare"         { thrift_reserved_keyword(yytext); }
-"endfor"             { thrift_reserved_keyword(yytext); }
-"endforeach"         { thrift_reserved_keyword(yytext); }
-"endif"              { thrift_reserved_keyword(yytext); }
-"endswitch"          { thrift_reserved_keyword(yytext); }
-"endwhile"           { thrift_reserved_keyword(yytext); }
-"ensure"             { thrift_reserved_keyword(yytext); }
-"except"             { thrift_reserved_keyword(yytext); }
-"exec"               { thrift_reserved_keyword(yytext); }
-"finally"            { thrift_reserved_keyword(yytext); }
-"float"              { thrift_reserved_keyword(yytext); }
-"for"                { thrift_reserved_keyword(yytext); }
-"foreach"            { thrift_reserved_keyword(yytext); }
-"from"               { thrift_reserved_keyword(yytext); }
-"function"           { thrift_reserved_keyword(yytext); }
-"global"             { thrift_reserved_keyword(yytext); }
-"goto"               { thrift_reserved_keyword(yytext); }
-"if"                 { thrift_reserved_keyword(yytext); }
-"implements"         { thrift_reserved_keyword(yytext); }
-"import"             { thrift_reserved_keyword(yytext); }
-"in"                 { thrift_reserved_keyword(yytext); }
-"inline"             { thrift_reserved_keyword(yytext); }
-"instanceof"         { thrift_reserved_keyword(yytext); }
-"interface"          { thrift_reserved_keyword(yytext); }
-"is"                 { thrift_reserved_keyword(yytext); }
-"lambda"             { thrift_reserved_keyword(yytext); }
-"module"             { thrift_reserved_keyword(yytext); }
-"native"             { thrift_reserved_keyword(yytext); }
-"new"                { thrift_reserved_keyword(yytext); }
-"next"               { thrift_reserved_keyword(yytext); }
-"nil"                { thrift_reserved_keyword(yytext); }
-"not"                { thrift_reserved_keyword(yytext); }
-"or"                 { thrift_reserved_keyword(yytext); }
-"package"            { thrift_reserved_keyword(yytext); }
-"pass"               { thrift_reserved_keyword(yytext); }
-"public"             { thrift_reserved_keyword(yytext); }
-"print"              { thrift_reserved_keyword(yytext); }
-"private"            { thrift_reserved_keyword(yytext); }
-"protected"          { thrift_reserved_keyword(yytext); }
-"raise"              { thrift_reserved_keyword(yytext); }
-"redo"               { thrift_reserved_keyword(yytext); }
-"rescue"             { thrift_reserved_keyword(yytext); }
-"retry"              { thrift_reserved_keyword(yytext); }
-"register"           { thrift_reserved_keyword(yytext); }
-"return"             { thrift_reserved_keyword(yytext); }
-"self"               { thrift_reserved_keyword(yytext); }
-"sizeof"             { thrift_reserved_keyword(yytext); }
-"static"             { thrift_reserved_keyword(yytext); }
-"super"              { thrift_reserved_keyword(yytext); }
-"switch"             { thrift_reserved_keyword(yytext); }
-"synchronized"       { thrift_reserved_keyword(yytext); }
-"then"               { thrift_reserved_keyword(yytext); }
-"this"               { thrift_reserved_keyword(yytext); }
-"throw"              { thrift_reserved_keyword(yytext); }
-"transient"          { thrift_reserved_keyword(yytext); }
-"try"                { thrift_reserved_keyword(yytext); }
-"undef"              { thrift_reserved_keyword(yytext); }
-"unless"             { thrift_reserved_keyword(yytext); }
-"unsigned"           { thrift_reserved_keyword(yytext); }
-"until"              { thrift_reserved_keyword(yytext); }
-"use"                { thrift_reserved_keyword(yytext); }
-"var"                { thrift_reserved_keyword(yytext); }
-"virtual"            { thrift_reserved_keyword(yytext); }
-"volatile"           { thrift_reserved_keyword(yytext); }
-"when"               { thrift_reserved_keyword(yytext); }
-"while"              { thrift_reserved_keyword(yytext); }
-"with"               { thrift_reserved_keyword(yytext); }
-"xor"                { thrift_reserved_keyword(yytext); }
-"yield"              { thrift_reserved_keyword(yytext); }
 
 {intconstant} {
   errno = 0;
