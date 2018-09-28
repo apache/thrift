@@ -27,6 +27,7 @@ describe 'Processor' do
 
   describe Thrift::Processor do
     before(:each) do
+      @handler = mock("MockHandler")
       @processor = ProcessorSpec.new(double("MockHandler"))
       @prot = double("MockProtocol")
     end
@@ -54,6 +55,7 @@ describe 'Processor' do
       expect(e).to receive(:write).with(@prot).ordered
       expect(Thrift::ApplicationException).to receive(:new).with(Thrift::ApplicationException::UNKNOWN_METHOD, "Unknown function testMessage").and_return(e)
       expect(@prot).to receive(:write_message_end).ordered
+      expect(@handler).to receive(:on_error).with(e)
       mock_trans(@prot)
       @processor.process(@prot, @prot)
     end
