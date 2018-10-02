@@ -335,7 +335,7 @@ private:
   std::string module_;
 
 protected:
-  virtual std::set<std::string> lang_keywords() {
+  virtual std::set<std::string> lang_keywords() const {
     std::string keywords[] = { "False", "None", "True", "and", "as", "assert", "break", "class",
           "continue", "def", "del", "elif", "else", "except", "exec", "finally", "for", "from",
           "global", "if", "import", "in", "is", "lambda", "nonlocal", "not", "or", "pass", "print",
