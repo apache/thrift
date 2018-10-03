@@ -219,15 +219,19 @@ class TCurlClient extends TTransport
 
         curl_setopt(self::$curlHandle, CURLOPT_URL, $fullUrl);
         $this->response_ = curl_exec(self::$curlHandle);
+        $responseError = curl_error(self::$curlHandle);
 
         $code = curl_getinfo(self::$curlHandle, CURLINFO_HTTP_CODE);
 
         // Handle non 200 status code / connect failure
-        if (!$this->response_ || $code !== 200) {
+        if ($this->response_ === false || $code !== 200) {
             curl_close(self::$curlHandle);
             self::$curlHandle = null;
             $this->response_ = null;
             $error = 'TCurlClient: Could not connect to ' . $fullUrl;
+            if ($responseError) {
+                $error .= ', ' . $responseError;
+            }
             if ($code) {
                 $error .= ', HTTP status code: ' . $code;
             }
