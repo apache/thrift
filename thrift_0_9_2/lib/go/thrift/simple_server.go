@@ -86,7 +86,7 @@ func NewTSimpleServerFactory6(processorFactory TProcessorFactory, serverTranspor
 		outputTransportFactory: outputTransportFactory,
 		inputProtocolFactory:   inputProtocolFactory,
 		outputProtocolFactory:  outputProtocolFactory,
-		quit: make(chan struct{}, 1),
+		quit:                   make(chan struct{}, 1),
 	}
 }
 
