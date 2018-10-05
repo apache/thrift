@@ -80,8 +80,8 @@ public class TSocket extends TIOStreamTransport {
 
     if (isOpen()) {
       try {
-        inputStream_ = new BufferedInputStream(socket_.getInputStream(), 1024);
-        outputStream_ = new BufferedOutputStream(socket_.getOutputStream(), 1024);
+        inputStream_ = new BufferedInputStream(socket_.getInputStream());
+        outputStream_ = new BufferedOutputStream(socket_.getOutputStream());
       } catch (IOException iox) {
         close();
         throw new TTransportException(TTransportException.NOT_OPEN, iox);
@@ -219,8 +219,8 @@ public class TSocket extends TIOStreamTransport {
 
     try {
       socket_.connect(new InetSocketAddress(host_, port_), connectTimeout_);
-      inputStream_ = new BufferedInputStream(socket_.getInputStream(), 1024);
-      outputStream_ = new BufferedOutputStream(socket_.getOutputStream(), 1024);
+      inputStream_ = new BufferedInputStream(socket_.getInputStream());
+      outputStream_ = new BufferedOutputStream(socket_.getOutputStream());
     } catch (IOException iox) {
       close();
       throw new TTransportException(TTransportException.NOT_OPEN, iox);
