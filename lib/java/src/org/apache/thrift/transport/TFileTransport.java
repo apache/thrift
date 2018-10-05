@@ -366,7 +366,7 @@ public class TFileTransport extends TTransport {
       currentEvent_ = new Event(new byte [256]);
 
       if(!readOnly_)
-        outputStream_ = new BufferedOutputStream(inputFile_.getOutputStream(), 8192);
+        outputStream_ = new BufferedOutputStream(inputFile_.getOutputStream());
     } catch (IOException iox) {
       throw new TTransportException(TTransportException.NOT_OPEN, iox);
     }
