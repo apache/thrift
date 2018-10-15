@@ -20,6 +20,7 @@
 package tests
 
 import (
+	"context"
 	"github.com/golang/mock/gomock"
 	"optionalfieldstest"
 	"requiredfieldtest"
@@ -30,7 +31,7 @@ import (
 func TestRequiredField_SucecssWhenSet(t *testing.T) {
 	// create a new RequiredField instance with the required field set
 	source := &requiredfieldtest.RequiredField{Name: "this is a test"}
-	sourceData, err := thrift.NewTSerializer().Write(source)
+	sourceData, err := thrift.NewTSerializer().Write(context.Background(), source)
 	if err != nil {
 		t.Fatalf("failed to serialize %T: %v", source, err)
 	}
@@ -38,18 +39,19 @@ func TestRequiredField_SucecssWhenSet(t *testing.T) {
 	d := thrift.NewTDeserializer()
 	err = d.Read(&requiredfieldtest.RequiredField{}, sourceData)
 	if err != nil {
-		t.Fatal("Did not expect an error when trying to deserialize the requiredfieldtest.RequiredField: %v", err)
+		t.Fatalf("Did not expect an error when trying to deserialize the requiredfieldtest.RequiredField: %v", err)
 	}
 }
 
 func TestRequiredField_ErrorWhenMissing(t *testing.T) {
-	// create a new RequiredField instance, without setting the required field
-	source := &requiredfieldtest.RequiredField{}
-	sourceData, err := thrift.NewTSerializer().Write(source)
+	// create a new OtherThing instance, without setting the required field
+	source := &requiredfieldtest.OtherThing{}
+	sourceData, err := thrift.NewTSerializer().Write(context.Background(), source)
 	if err != nil {
 		t.Fatalf("failed to serialize %T: %v", source, err)
 	}
 
+	// attempt to deserialize into a different type (which should fail)
 	d := thrift.NewTDeserializer()
 	err = d.Read(&requiredfieldtest.RequiredField{}, sourceData)
 	if err == nil {
