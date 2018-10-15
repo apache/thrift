@@ -1591,17 +1591,19 @@ void t_go_generator::generate_go_struct_reader(ostream& out,
         << endl;
     out << indent() << "    return err" << endl;
     out << indent() << "  }" << endl;
+
+    // Mark required field as read
+    if ((*f_iter)->get_req() == t_field::T_REQUIRED) {
+      const string field_name(publicize(escape_string((*f_iter)->get_name())));
+      out << indent() << "  isset" << field_name << " = true" << endl;
+    }
+
     out << indent() << "} else {" << endl;
     out << indent() << "  if err := iprot.Skip(fieldTypeId); err != nil {" << endl;
     out << indent() << "    return err" << endl;
     out << indent() << "  }" << endl;
     out << indent() << "}" << endl;
 
-    // Mark required field as read
-    if ((*f_iter)->get_req() == t_field::T_REQUIRED) {
-      const string field_name(publicize(escape_string((*f_iter)->get_name())));
-      out << indent() << "isset" << field_name << " = true" << endl;
-    }
 
     indent_down();
   }
