@@ -22,9 +22,40 @@ package tests
 import (
 	"github.com/golang/mock/gomock"
 	"optionalfieldstest"
+	"requiredfieldtest"
 	"testing"
 	"thrift"
 )
+
+func TestRequiredField_SucecssWhenSet(t *testing.T) {
+	// create a new RequiredField instance with the required field set
+	source := &requiredfieldtest.RequiredField{Name: "this is a test"}
+	sourceData, err := thrift.NewTSerializer().Write(source)
+	if err != nil {
+		t.Fatalf("failed to serialize %T: %v", source, err)
+	}
+
+	d := thrift.NewTDeserializer()
+	err = d.Read(&requiredfieldtest.RequiredField{}, sourceData)
+	if err != nil {
+		t.Fatal("Did not expect an error when trying to deserialize the requiredfieldtest.RequiredField: %v", err)
+	}
+}
+
+func TestRequiredField_ErrorWhenMissing(t *testing.T) {
+	// create a new RequiredField instance, without setting the required field
+	source := &requiredfieldtest.RequiredField{}
+	sourceData, err := thrift.NewTSerializer().Write(source)
+	if err != nil {
+		t.Fatalf("failed to serialize %T: %v", source, err)
+	}
+
+	d := thrift.NewTDeserializer()
+	err = d.Read(&requiredfieldtest.RequiredField{}, sourceData)
+	if err == nil {
+		t.Fatal("Expected an error when trying to deserialize an object which is missing a required field")
+	}
+}
 
 func TestStructReadRequiredFields(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
