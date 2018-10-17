@@ -354,7 +354,7 @@ string t_perl_generator::render_const_value(t_type* type, t_const_value* value) 
   } else if (type->is_enum()) {
     out << value->get_integer();
   } else if (type->is_struct() || type->is_xception()) {
-    out << "new " << perl_namespace(type->get_program()) << type->get_name() << "({" << endl;
+    out << perl_namespace(type->get_program()) << type->get_name() << "->new({" << endl;
     indent_up();
 
     const vector<t_field*>& fields = ((t_struct*)type)->get_members();
@@ -546,7 +546,7 @@ void t_perl_generator::generate_perl_struct_reader(ostream& out, t_struct* tstru
   indent(out) << "$xfer += $input->readStructBegin(\\$fname);" << endl;
 
   // Loop over reading in fields
-  indent(out) << "while (1) " << endl;
+  indent(out) << "while (1)" << endl;
 
   scope_up(out);
 
@@ -758,7 +758,7 @@ void t_perl_generator::generate_service_processor(t_service* tservice) {
 
   f_service_ << indent() << "$input->skip(Thrift::TType::STRUCT);" << endl << indent()
              << "$input->readMessageEnd();" << endl << indent()
-             << "my $x = new Thrift::TApplicationException('Function '.$fname.' not implemented.', "
+             << "my $x = Thrift::TApplicationException->new('Function '.$fname.' not implemented.', "
                 "Thrift::TApplicationException::UNKNOWN_METHOD);" << endl << indent()
              << "$output->writeMessageBegin($fname, Thrift::TMessageType::EXCEPTION, $rseqid);" << endl
              << indent() << "$x->write($output);" << endl << indent()
@@ -798,7 +798,7 @@ void t_perl_generator::generate_process_function(t_service* tservice, t_function
   string resultname = perl_namespace(tservice->get_program()) + service_name_ + "_"
                       + tfunction->get_name() + "_result";
 
-  f_service_ << indent() << "my $args = new " << argsname << "();" << endl << indent()
+  f_service_ << indent() << "my $args = " << argsname << "->new();" << endl << indent()
              << "$args->read($input);" << endl;
 
   f_service_ << indent() << "$input->readMessageEnd();" << endl;
@@ -809,7 +809,7 @@ void t_perl_generator::generate_process_function(t_service* tservice, t_function
 
   // Declare result for non oneway function
   if (!tfunction->is_oneway()) {
-    f_service_ << indent() << "my $result = new " << resultname << "();" << endl;
+    f_service_ << indent() << "my $result = " << resultname << "->new();" << endl;
   }
 
   // Try block for a function with exceptions
@@ -858,7 +858,7 @@ void t_perl_generator::generate_process_function(t_service* tservice, t_function
     f_service_ << indent() << "if ($@) {" << endl;
     indent_up();
     f_service_ << indent() << "$@ =~ s/^\\s+|\\s+$//g;" << endl
-               << indent() << "my $err = new Thrift::TApplicationException(\"Unexpected Exception: \" . $@, Thrift::TApplicationException::INTERNAL_ERROR);" << endl
+               << indent() << "my $err = Thrift::TApplicationException->new(\"Unexpected Exception: \" . $@, Thrift::TApplicationException::INTERNAL_ERROR);" << endl
                << indent() << "$output->writeMessageBegin('" << tfunction->get_name() << "', Thrift::TMessageType::EXCEPTION, $seqid);" << endl
                << indent() << "$err->write($output);" << endl
                << indent() << "$output->writeMessageEnd();" << endl
@@ -1106,7 +1106,7 @@ void t_perl_generator::generate_service_client(t_service* tservice) {
                << "', " << ((*f_iter)->is_oneway() ? "Thrift::TMessageType::ONEWAY" : "Thrift::TMessageType::CALL")
                << ", $self->{seqid});" << endl;
 
-    f_service_ << indent() << "my $args = new " << argsname << "();" << endl;
+    f_service_ << indent() << "my $args = " << argsname << "->new();" << endl;
 
     for (fld_iter = fields.begin(); fld_iter != fields.end(); ++fld_iter) {
       f_service_ << indent() << "$args->{" << (*fld_iter)->get_name() << "} = $"
@@ -1140,12 +1140,12 @@ void t_perl_generator::generate_service_client(t_service* tservice) {
 
       f_service_ << indent() << "$self->{input}->readMessageBegin(\\$fname, \\$mtype, \\$rseqid);"
                  << endl << indent() << "if ($mtype == Thrift::TMessageType::EXCEPTION) {" << endl
-                 << indent() << "  my $x = new Thrift::TApplicationException();" << endl << indent()
+                 << indent() << "  my $x = Thrift::TApplicationException->new();" << endl << indent()
                  << "  $x->read($self->{input});" << endl << indent()
                  << "  $self->{input}->readMessageEnd();" << endl << indent() << "  die $x;" << endl
                  << indent() << "}" << endl;
 
-      f_service_ << indent() << "my $result = new " << resultname << "();" << endl << indent()
+      f_service_ << indent() << "my $result = " << resultname << "->new();" << endl << indent()
                  << "$result->read($self->{input});" << endl;
 
       f_service_ << indent() << "$self->{input}->readMessageEnd();" << endl << endl;
@@ -1586,7 +1586,7 @@ string t_perl_generator::declare_field(t_field* tfield, bool init, bool obj) {
       result += " = []";
     } else if (type->is_struct() || type->is_xception()) {
       if (obj) {
-        result += " = new " + perl_namespace(type->get_program()) + type->get_name() + "()";
+        result += " = " + perl_namespace(type->get_program()) + type->get_name() + "->new()";
       } else {
         result += " = undef";
       }

@@ -34,7 +34,7 @@ use version 0.77; our $VERSION = version->declare("$Thrift::VERSION");
 # Construction and usage
 #
 # my $opts = {}
-# my $socket = new Thrift::SSLSocket(\%opts);
+# my $socket = Thrift::SSLSocket->new(\%opts);
 #
 # options:
 #

@@ -37,10 +37,10 @@ use tutorial::Types;
 
 use Data::Dumper;
 
-my $socket    = new Thrift::Socket('localhost',9090);
-my $transport = new Thrift::BufferedTransport($socket,1024,1024);
-my $protocol  = new Thrift::BinaryProtocol($transport);
-my $client    = new tutorial::CalculatorClient($protocol);
+my $socket    = Thrift::Socket->new('localhost',9090);
+my $transport = Thrift::BufferedTransport->new($socket,1024,1024);
+my $protocol  = Thrift::BinaryProtocol->new($transport);
+my $client    = tutorial::CalculatorClient->new($protocol);
 
 
 eval{
@@ -53,7 +53,7 @@ eval{
     my $sum = $client->add(1,1);
     print "1+1=$sum\n";
 
-    my $work = new tutorial::Work();
+    my $work = tutorial::Work->new();
 
     $work->op(tutorial::Operation::DIVIDE);
     $work->num1(1);
@@ -63,7 +63,7 @@ eval{
         $client->calculate(1, $work);
         print "Whoa! We can divide by zero?\n";
     }; if($@) {
-        warn "InvalidOperation: ".Dumper($@);
+        warn 'InvalidOperation: '.Dumper($@);
     }
 
     $work->op(tutorial::Operation::SUBTRACT);

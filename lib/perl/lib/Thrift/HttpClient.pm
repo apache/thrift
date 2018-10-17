@@ -61,7 +61,7 @@ sub setTimeout
 
 sub setRecvTimeout
 {
-    warn "setRecvTimeout is deprecated - use setTimeout instead";
+    warn 'setRecvTimeout is deprecated - use setTimeout instead';
     # note: recvTimeout was never used so we do not need to do anything here
 }
 
@@ -70,7 +70,7 @@ sub setSendTimeout
     my $self    = shift;
     my $timeout = shift;
 
-    warn "setSendTimeout is deprecated - use setTimeout instead";
+    warn 'setSendTimeout is deprecated - use setTimeout instead';
 
     $self->setTimeout($timeout);
 }
@@ -102,8 +102,8 @@ sub close
 {
     my $self = shift;
     if (defined($self->{io})) {
-      close($self->{io});
-      $self->{io} = undef;
+        close($self->{io});
+        $self->{io} = undef;
     }
 }
 
@@ -121,7 +121,7 @@ sub readAll
     my $buf = $self->read($len);
 
     if (!defined($buf)) {
-      die new Thrift::TTransportException("TSocket: Could not read $len bytes from input buffer",
+        die Thrift::TTransportException->new("TSocket: Could not read $len bytes from input buffer",
                                           Thrift::TTransportException::END_OF_FILE);
     }
     return $buf;
@@ -140,17 +140,18 @@ sub read
     my $in = $self->{in};
 
     if (!defined($in)) {
-      die new Thrift::TTransportException("Response buffer is empty, no request.",
+        die Thrift::TTransportException->new('Response buffer is empty, no request.',
                                           Thrift::TTransportException::END_OF_FILE);
     }
     eval {
-      my $ret = sysread($in, $buf, $len);
-      if (! defined($ret)) {
-        die new Thrift::TTransportException("No more data available.",
+        my $ret = sysread($in, $buf, $len);
+        if (! defined($ret)) {
+            die Thrift::TTransportException->new('No more data available.',
                                             Thrift::TTransportException::TIMED_OUT);
-      }
-    }; if($@){
-      die new Thrift::TTransportException("$@", Thrift::TTransportException::UNKNOWN);
+        }
+    };
+    if($@){
+        die Thrift::TTransportException->new("$@", Thrift::TTransportException::UNKNOWN);
     }
 
     return $buf;
@@ -173,8 +174,9 @@ sub flush
 {
     my $self = shift;
 
-    my $ua = LWP::UserAgent->new('timeout' => ($self->{timeout} / 1000),
-      'agent' => 'Perl/THttpClient'
+    my $ua = LWP::UserAgent->new(
+        'timeout' => ($self->{timeout} / 1000),
+        'agent'   => 'Perl/THttpClient'
      );
     $ua->default_header('Accept' => 'application/x-thrift');
     $ua->default_header('Content-Type' => 'application/x-thrift');
@@ -184,8 +186,7 @@ sub flush
     $out->setpos(0); # rewind
     my $buf = join('', <$out>);
 
-    my $request = new HTTP::Request(POST => $self->{url}, undef, $buf);
-    map { $request->header($_ => $self->{headers}->{$_}) } keys %{$self->{headers}};
+    my $request = HTTP::Request->new(POST => $self->{url}, ($self->{headers} || undef), $buf);
     my $response = $ua->request($request);
     my $content_ref = $response->content_ref;
 
