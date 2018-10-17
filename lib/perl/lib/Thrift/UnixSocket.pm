@@ -35,7 +35,7 @@ use version 0.77; our $VERSION = version->declare("$Thrift::VERSION");
 # Takes a unix domain socket filename.
 # See Thrift::Socket for base class parameters.
 # @param[in]  path   path to unix socket file
-# @example    my $sock = new Thrift::UnixSocket($path);
+# @example    my $sock = Thrift::UnixSocket->new($path);
 #
 sub new
 {
@@ -58,7 +58,7 @@ sub __open
         if ($self->{debug}) {
             $self->{debugHandler}->($error);
         }
-        die new Thrift::TTransportException($error, Thrift::TTransportException::NOT_OPEN);
+        die Thrift::TTransportException->new($error, Thrift::TTransportException::NOT_OPEN);
     };
 
     return $sock;

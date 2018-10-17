@@ -70,7 +70,7 @@ sub close
     my $self = shift;
 
     if (defined $self->{transport}) {
-      $self->{transport}->close();
+        $self->{transport}->close();
     }
 }
 

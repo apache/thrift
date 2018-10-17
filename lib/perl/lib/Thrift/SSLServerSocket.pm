@@ -48,7 +48,7 @@ sub new
 
 sub __client
 {
-  return new Thrift::SSLSocket();
+  return Thrift::SSLSocket->new();
 }
 
 sub __listen

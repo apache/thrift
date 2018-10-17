@@ -35,10 +35,10 @@ sub new
     my $bufferSize= shift || 1024;
 
     my $self = {
-        buffer    => '',
-        bufferSize=> $bufferSize,
-        wPos      => 0,
-        rPos      => 0,
+        buffer     => '',
+        bufferSize => $bufferSize,
+        wPos       => 0,
+        rPos       => 0,
     };
 
     return bless($self,$classname);
@@ -117,7 +117,7 @@ sub readAll
 
     my $avail = ($self->{wPos} - $self->{rPos});
     if ($avail < $len) {
-        die new TTransportException("Attempt to readAll($len) found only $avail available",
+        die TTransportException->new("Attempt to readAll($len) found only $avail available",
                                     Thrift::TTransportException::END_OF_FILE);
     }
 

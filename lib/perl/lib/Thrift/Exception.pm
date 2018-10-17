@@ -29,11 +29,10 @@ use version 0.77; our $VERSION = version->declare("$Thrift::VERSION");
 
 use overload '""' => sub {
     return
-          ref( $_[0] )
-        . " error: "
-        . ( $_[0]->{message} || 'empty message' )
-        . " (code "
-        . ( defined $_[0]->{code} ? $_[0]->{code} : 'undefined' ) . ")";
+        sprintf '%s error: %s (code %s)',
+          ref( $_[0] ),
+          ( $_[0]->{message} || 'empty message' ),
+          ( defined $_[0]->{code} ? $_[0]->{code} : 'undefined' );
     };
 
 sub new {
@@ -91,7 +90,8 @@ sub read {
 
               if ($ftype == Thrift::TType::STRING) {
                   $xfer += $input->readString(\$self->{message});
-              } else {
+              }
+              else {
                   $xfer += $input->skip($ftype);
               }
 
@@ -101,7 +101,8 @@ sub read {
           /2/ && do{
               if ($ftype == Thrift::TType::I32) {
                   $xfer += $input->readI32(\$self->{code});
-              } else {
+              }
+              else {
                   $xfer += $input->skip($ftype);
               }
               last;

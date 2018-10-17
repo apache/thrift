@@ -36,7 +36,7 @@ use version 0.77; our $VERSION = version->declare("$Thrift::VERSION");
 # Construction and usage
 #
 # my $opts = {}
-# my $socket = new Thrift::Socket(\%opts);
+# my $socket = Thrift::Socket->new(\%opts);
 #
 # options:
 #
@@ -120,10 +120,10 @@ sub open
 
     my $sock = $self->__open() || do {
         my $error = ref($self).': Could not connect to '.$self->{host}.':'.$self->{port}.' ('.$!.')';
-        die new Thrift::TTransportException($error, Thrift::TTransportException::NOT_OPEN);
+        die Thrift::TTransportException->new($error, Thrift::TTransportException::NOT_OPEN);
     };
 
-    $self->{handle} = new IO::Select( $sock );
+    $self->{handle} = IO::Select->new( $sock );
 }
 
 #
@@ -159,15 +159,17 @@ sub readAll
 
         if (!defined $buf || $buf eq '') {
 
-            die new Thrift::TTransportException(ref($self).': Could not read '.$len.' bytes from '.
+            die Thrift::TTransportException->new(ref($self).': Could not read '.$len.' bytes from '.
                                $self->{host}.':'.$self->{port}, Thrift::TTransportException::END_OF_FILE);
 
-        } elsif ((my $sz = length($buf)) < $len) {
+        }
+        elsif ((my $sz = length($buf)) < $len) {
 
             $pre .= $buf;
             $len -= $sz;
 
-        } else {
+        }
+        else {
             return $pre.$buf;
         }
     }
@@ -191,7 +193,7 @@ sub read
 
     if (!defined $buf || $buf eq '') {
 
-        die new Thrift::TTransportException(ref($self).': Could not read '.$len.' bytes from '.
+        die Thrift::TTransportException->new(ref($self).': Could not read '.$len.' bytes from '.
                            $self->{host}.':'.$self->{port}, Thrift::TTransportException::END_OF_FILE);
 
     }
@@ -217,7 +219,7 @@ sub write
         my @sockets = $self->{handle}->can_write( $self->{sendTimeout} / 1000 );
 
         if(@sockets == 0){
-            die new Thrift::TTransportException(ref($self).': timed out writing to bytes from '.
+            die Thrift::TTransportException->new(ref($self).': timed out writing to bytes from '.
                                        $self->{host}.':'.$self->{port}, Thrift::TTransportException::TIMED_OUT);
         }
 
@@ -225,7 +227,7 @@ sub write
 
         if (!defined $sent || $sent == 0 ) {
 
-            die new Thrift::TTransportException(ref($self).': Could not write '.length($buf).' bytes '.
+            die Thrift::TTransportException->new(ref($self).': Could not write '.length($buf).' bytes '.
                                  $self->{host}.':'.$self->{host}, Thrift::TTransportException::END_OF_FILE);
 
         }
@@ -314,7 +316,7 @@ sub __wait
     my @sockets = $self->{handle}->can_read( $self->{recvTimeout} / 1000 );
 
     if (@sockets == 0) {
-        die new Thrift::TTransportException(ref($self).': timed out reading from '.
+        die Thrift::TTransportException->new(ref($self).': timed out reading from '.
                                    $self->{host}.':'.$self->{port}, Thrift::TTransportException::TIMED_OUT);
     }
 
