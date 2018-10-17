@@ -1,7 +1,7 @@
 [package]
 name = "thrift"
 description = "Rust bindings for the Apache Thrift RPC system"
-version = "1.0.0"
+version = "0.12.0"
 license = "Apache-2.0"
 authors = ["Apache Thrift Developers <dev@thrift.apache.org>"]
 homepage = "http://thrift.apache.org"

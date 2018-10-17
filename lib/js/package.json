@@ -1,6 +1,6 @@
 {
   "name": "thrift",
-  "version": "1.0.0",
+  "version": "0.12.0",
   "devDependencies": {
     "grunt": "^1.0.2",
     "grunt-cli": "^1.2.0",

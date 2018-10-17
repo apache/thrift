@@ -1,9 +1,11 @@
 {
     "name": "apache/thrift",
     "description": "Apache Thrift RPC system",
-    "homepage": "http://thrift.apache.org/",
+    "homepage": "https://thrift.apache.org/",
     "type": "library",
+    "keywords": ["RPC"],
     "license": "Apache-2.0",
+    "readme": "README.md",
     "authors": [
         {
             "name": "Apache Thrift Developers",
@@ -28,10 +30,10 @@
     "autoload-dev": {
         "psr-4": {"Test\\Thrift\\": "lib/php/test/"}
     },
-    "minimum-stability": "dev",
+    "minimum-stability": "stable",
     "extra": {
         "branch-alias": {
-            "dev-master": "1.0.0-dev"
+            "dev-master": "1.0.x-dev"
         }
     }
 }

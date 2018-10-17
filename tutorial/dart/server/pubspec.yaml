@@ -16,7 +16,7 @@
 # under the License.
 
 name: tutorial_server
-version: 1.0.0-dev
+version: 0.12.0
 description: A Dart server to support the Apache Thrift tutorial
 author: Apache Thrift Developers <dev@thrift.apache.org>
 homepage: http://thrift.apache.org

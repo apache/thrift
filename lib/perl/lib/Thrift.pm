@@ -31,6 +31,6 @@ use warnings;
 #
 
 package Thrift;
-use version 0.77; our $VERSION = version->declare("v1.0_0");
+use version 0.77; our $VERSION = version->declare("v0.12.0_0");
 
 1;

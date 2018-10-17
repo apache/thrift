@@ -35,7 +35,7 @@ set(CMAKE_INCLUDE_DIRECTORIES_PROJECT_BEFORE ON)
 set(CMAKE_COLOR_MAKEFILE ON)
 
 # Define the generic version of the libraries here
-set(GENERIC_LIB_VERSION "0.1.0")
+set(GENERIC_LIB_VERSION "0.12.0")
 set(GENERIC_LIB_SOVERSION "0")
 
 # Set the default build type to release with debug info

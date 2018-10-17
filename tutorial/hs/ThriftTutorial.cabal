@@ -18,7 +18,7 @@
 --
 
 Name:           ThriftTutorial
-Version:        0.1.0
+Version:        0.12.0
 Cabal-Version:  >= 1.4
 License:        OtherLicense
 Category:       Foreign
