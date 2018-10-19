@@ -18,7 +18,7 @@
 library thrift.src.browser;
 
 import 'dart:async';
-import 'dart:convert' show BASE64;
+import 'package:dart2_constant/convert.dart' show base64;
 import 'dart:html' show CloseEvent;
 import 'dart:html' show Event;
 import 'dart:html' show MessageEvent;
@@ -90,7 +90,7 @@ class TWebSocket implements TSocket {
   void _sendRequests() {
     while (isOpen && _requests.isNotEmpty) {
       Uint8List data = _requests.removeAt(0);
-      _socket.sendString(BASE64.encode(data));
+      _socket.sendString(base64.encode(data));
     }
   }
 
@@ -113,8 +113,7 @@ class TWebSocket implements TSocket {
 
   void _onMessage(MessageEvent message) {
     try {
-      Uint8List data =
-          new Uint8List.fromList(BASE64.decode(message.data));
+      Uint8List data = new Uint8List.fromList(base64.decode(message.data));
       _onMessageController.add(data);
     } on FormatException catch (_) {
       var error = new TProtocolError(TProtocolErrorType.INVALID_DATA,
