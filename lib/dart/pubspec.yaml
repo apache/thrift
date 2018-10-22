@@ -24,7 +24,7 @@ homepage: http://thrift.apache.org
 documentation: http://thrift.apache.org
 
 environment:
-  sdk: '>=1.24.3<3.0.0'
+  sdk: ">=1.24.3 <3.0.0"
 
 dependencies:
   dart2_constant: ^1.0.0
