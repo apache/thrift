@@ -28,7 +28,7 @@ func TestHttpClient(t *testing.T) {
 	if l != nil {
 		defer l.Close()
 	}
-	trans, err := NewTHttpPostClient("http://" + addr.String())
+	trans, err := NewTHttpPostClient("http://"+addr.String(), 0)
 	if err != nil {
 		l.Close()
 		t.Fatalf("Unable to connect to %s: %s", addr.String(), err)
@@ -41,7 +41,7 @@ func TestHttpClientHeaders(t *testing.T) {
 	if l != nil {
 		defer l.Close()
 	}
-	trans, err := NewTHttpPostClient("http://" + addr.String())
+	trans, err := NewTHttpPostClient("http://"+addr.String(), 0)
 	if err != nil {
 		l.Close()
 		t.Fatalf("Unable to connect to %s: %s", addr.String(), err)

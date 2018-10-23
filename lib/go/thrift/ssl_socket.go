@@ -20,9 +20,9 @@
 package thrift
 
 import (
+	"crypto/tls"
 	"net"
 	"time"
-	"crypto/tls"
 )
 
 type TSSLSocket struct {

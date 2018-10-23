@@ -69,7 +69,7 @@ type TSimpleJSONProtocol struct {
 	trans TTransport
 
 	parseContextStack []int
-	dumpContext []int
+	dumpContext       []int
 
 	writer *bufio.Writer
 	reader *bufio.Reader
@@ -330,9 +330,9 @@ func (p *TSimpleJSONProtocol) ReadFieldBegin() (string, TType, int16, error) {
 		case JSON_QUOTE:
 			p.reader.ReadByte()
 			name, err := p.ParseStringBody()
-            // simplejson is not meant to be read back into thrift 
-            // - see http://wiki.apache.org/thrift/ThriftUsageJava
-            // - use JSON instead
+			// simplejson is not meant to be read back into thrift
+			// - see http://wiki.apache.org/thrift/ThriftUsageJava
+			// - use JSON instead
 			if err != nil {
 				return name, STOP, 0, err
 			}
@@ -824,59 +824,32 @@ func (p *TSimpleJSONProtocol) readNonSignificantWhitespace() error {
 }
 
 func (p *TSimpleJSONProtocol) ParseStringBody() (string, error) {
-	line, err := p.reader.ReadString(JSON_QUOTE)
-	if err != nil {
-		return "", NewTProtocolException(err)
-	}
-	l := len(line)
-	// count number of escapes to see if we need to keep going
-	i := 1
-	for ; i < l; i++ {
-		if line[l-i-1] != '\\' {
+	var buf bytes.Buffer
+	buf.WriteByte(JSON_QUOTE)
+	for {
+		line, err := p.reader.ReadString(JSON_QUOTE)
+		if err != nil {
+			return "", NewTProtocolException(err)
+		}
+		buf.WriteString(line)
+		l := len(line)
+		// count number of escapes to see if we need to keep going
+		i := 1
+		for ; i < l; i++ {
+			if line[l-i-1] != '\\' {
+				break
+			}
+		}
+		if i&0x01 == 1 {
 			break
 		}
 	}
-	if i&0x01 == 1 {
-		v, ok := jsonUnquote(string(JSON_QUOTE) + line)
-		if !ok {
-			return "", NewTProtocolException(err)
-		}
-		return v, nil
-	}
-	s, err := p.ParseQuotedStringBody()
-	if err != nil {
-		return "", NewTProtocolException(err)
-	}
-	str := string(JSON_QUOTE) + line + s
+	str := buf.String()
 	v, ok := jsonUnquote(str)
 	if !ok {
 		e := fmt.Errorf("Unable to parse as JSON string %s", str)
 		return "", NewTProtocolExceptionWithType(INVALID_DATA, e)
 	}
-	return v, nil
-}
-
-func (p *TSimpleJSONProtocol) ParseQuotedStringBody() (string, error) {
-	line, err := p.reader.ReadString(JSON_QUOTE)
-	if err != nil {
-		return "", NewTProtocolException(err)
-	}
-	l := len(line)
-	// count number of escapes to see if we need to keep going
-	i := 1
-	for ; i < l; i++ {
-		if line[l-i-1] != '\\' {
-			break
-		}
-	}
-	if i&0x01 == 1 {
-		return line, nil
-	}
-	s, err := p.ParseQuotedStringBody()
-	if err != nil {
-		return "", NewTProtocolException(err)
-	}
-	v := line + s
 	return v, nil
 }
 
