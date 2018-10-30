@@ -170,6 +170,24 @@ class TCurlClient extends TTransport
     }
 
     /**
+     * Guarantees that the full amount of data is read. Since TCurlClient gets entire payload at
+     * once, parent readAll cannot be used.
+     *
+     * @return string The data, of exact length
+     * @throws TTransportException if cannot read data
+     */
+    public function readAll($len)
+    {
+        $data = $this->read($len);
+
+        if (TStringFuncFactory::create()->strlen($data) !== $len) {
+            throw new TTransportException('TCurlClient could not read '.$len.' bytes');
+        }
+
+        return $data;
+    }
+
+    /**
      * Writes some data into the pending buffer
      *
      * @param string $buf The data to write
