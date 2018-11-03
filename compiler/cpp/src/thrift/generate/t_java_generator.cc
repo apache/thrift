@@ -827,6 +827,10 @@ void t_java_generator::generate_java_union(t_struct* tstruct) {
   bool is_final = (tstruct->annotations_.find("final") != tstruct->annotations_.end());
   bool is_deprecated = this->is_deprecated(tstruct->annotations_);
 
+  if (!suppress_generated_annotations_) {
+    generate_javax_generated_annotation(f_struct);
+  }
+
   if (is_deprecated) {
     indent(f_struct) << "@Deprecated" << endl;
   }
