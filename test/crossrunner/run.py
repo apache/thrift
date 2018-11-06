@@ -152,7 +152,7 @@ def exec_context(port, logdir, test, prog, is_server):
     return ExecutionContext(prog.command, prog.workdir, prog.env, prog.stop_signal, is_server, report)
 
 
-def run_test(testdir, logdir, test_dict, max_retry, async=True):
+def run_test(testdir, logdir, test_dict, max_retry, async_mode=True):
     logger = multiprocessing.get_logger()
 
     def ensure_socket_open(sv, port, test):
@@ -255,13 +255,13 @@ def run_test(testdir, logdir, test_dict, max_retry, async=True):
                     logger.info('[%s-%s]: test failed, retrying...', test.server.name, test.client.name)
                     retry_count += 1
     except Exception:
-        if not async:
+        if not async_mode:
             raise
         logger.warn('Error executing [%s]', test.name, exc_info=True)
         return (retry_count, RESULT_ERROR)
     except:
         logger.info('Interrupted execution', exc_info=True)
-        if not async:
+        if not async_mode:
             raise
         stop.set()
         return (retry_count, RESULT_ERROR)
@@ -385,7 +385,7 @@ class TestDispatcher(object):
         ports = m.ports()
 
     def _dispatch_sync(self, test, cont, max_retry):
-        r = run_test(self.testdir, self.logdir, test, max_retry, False)
+        r = run_test(self.testdir, self.logdir, test, max_retry, async_mode=False)
         cont(r)
         return NonAsyncResult(r)
 
