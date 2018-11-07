@@ -127,7 +127,7 @@ private:
   void render_const_value_holder(const string& name, t_type* ttype, t_const_value* tvalue);
 
   // Write the actual const value - the right side of a const definition.
-  void render_const_value(t_type* ttype, t_const_value* tvalue);
+  void render_const_value(t_type* ttype, t_const_value* tvalue, bool is_owned = true);
 
   // Write a const struct (returned from `const_value` method).
   void render_const_struct(t_type* ttype, t_const_value* tvalue);
@@ -411,6 +411,9 @@ private:
   // Return a string representing the rust type given a `t_type`.
   string to_rust_type(t_type* ttype, bool ordered_float = true);
 
+  // Return a string representing the `const` rust type given a `t_type`
+  string to_rust_const_type(t_type* ttype, bool ordered_float = true);
+
   // Return a string representing the rift `protocol::TType` given a `t_type`.
   string to_rust_field_type_enum(t_type* ttype);
 
@@ -645,8 +648,8 @@ void t_rs_generator::render_const_value(const string& name, t_type* ttype, t_con
     throw "cannot generate simple rust constant for " + ttype->get_name();
   }
 
-  f_gen_ << "pub const " << rust_upper_case(name) << ": " << to_rust_type(ttype) << " = ";
-  render_const_value(ttype, tvalue);
+  f_gen_ << "pub const " << rust_upper_case(name) << ": " << to_rust_const_type(ttype) << " = ";
+  render_const_value(ttype, tvalue, false);
   f_gen_ << ";" << endl;
   f_gen_ << endl;
 }
@@ -673,15 +676,22 @@ void t_rs_generator::render_const_value_holder(const string& name, t_type* ttype
   f_gen_ << endl;
 }
 
-void t_rs_generator::render_const_value(t_type* ttype, t_const_value* tvalue) {
+void t_rs_generator::render_const_value(t_type* ttype, t_const_value* tvalue, bool is_owned) {
   if (ttype->is_base_type()) {
     t_base_type* tbase_type = (t_base_type*)ttype;
     switch (tbase_type->get_base()) {
     case t_base_type::TYPE_STRING:
       if (tbase_type->is_binary()) {
-        f_gen_ << "\"" << tvalue->get_string() << "\""<<  ".to_owned().into_bytes()";
+        if (is_owned) {
+          f_gen_ << "\"" << tvalue->get_string() << "\""<<  ".to_owned().into_bytes()";
+        } else {
+          f_gen_ << "b\"" << tvalue->get_string() << "\"";
+        }
       } else {
-        f_gen_ << "\"" << tvalue->get_string() << "\""<<  ".to_owned()";
+        f_gen_ << "\"" << tvalue->get_string() << "\"";
+        if (is_owned) {
+          f_gen_ << ".to_owned()";
+        }
       }
       break;
     case t_base_type::TYPE_BOOL:
@@ -3037,6 +3047,21 @@ string t_rs_generator::to_rust_type(t_type* ttype, bool ordered_float) {
   }
 
   throw "cannot find rust type for " + ttype->get_name();
+}
+
+string t_rs_generator::to_rust_const_type(t_type* ttype, bool ordered_float) {
+  if (ttype->is_base_type()) {
+    t_base_type* tbase_type = ((t_base_type*)ttype);
+    if (tbase_type->get_base() == t_base_type::TYPE_STRING) {
+      if (tbase_type->is_binary()) {
+        return "&[u8]";
+      } else {
+        return "&str";
+      }
+    }
+  }
+
+  return to_rust_type(ttype, ordered_float);
 }
 
 string t_rs_generator::to_rust_field_type_enum(t_type* ttype) {
