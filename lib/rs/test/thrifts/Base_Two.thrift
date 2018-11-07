@@ -23,9 +23,15 @@
 
 const i32 WaterWeight = 200
 
+enum brothType {
+  Miso,
+  shouyu,
+}
+
 struct Ramen {
   1: optional string ramenType
   2: required i32 noodleCount
+  3: brothType broth
 }
 
 struct Napkin {

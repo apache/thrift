@@ -22,7 +22,7 @@ extern crate kitchen_sink;
 extern crate thrift;
 
 use kitchen_sink::base_one::Noodle;
-use kitchen_sink::base_two::{Napkin, NapkinServiceSyncHandler, Ramen, RamenServiceSyncHandler};
+use kitchen_sink::base_two::{BrothType, Napkin, NapkinServiceSyncHandler, Ramen, RamenServiceSyncHandler};
 use kitchen_sink::midlayer::{Dessert, Meal, MealServiceSyncHandler, MealServiceSyncProcessor};
 use kitchen_sink::recursive;
 use kitchen_sink::ultimate::{Drink, FullMeal, FullMealAndDrinks,
@@ -252,7 +252,7 @@ fn noodle() -> Noodle {
 }
 
 fn ramen() -> Ramen {
-    Ramen::new("Mr Ramen".to_owned(), 72)
+    Ramen::new("Mr Ramen".to_owned(), 72, BrothType::MISO)
 }
 
 fn napkin() -> Napkin {
