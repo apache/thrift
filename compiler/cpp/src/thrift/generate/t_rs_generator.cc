@@ -3022,7 +3022,7 @@ string t_rs_generator::to_rust_type(t_type* ttype, bool ordered_float) {
     rust_type =  ttypedef->is_forward_typedef() ? "Box<" + rust_type + ">" : rust_type;
     return rust_type;
   } else if (ttype->is_enum()) {
-    return rust_namespace(ttype) + ttype->get_name();
+    return rust_namespace(ttype) + rust_camel_case(ttype->get_name());
   } else if (ttype->is_struct() || ttype->is_xception()) {
     return rust_namespace(ttype) + rust_camel_case(ttype->get_name());
   } else if (ttype->is_map()) {
