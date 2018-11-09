@@ -499,6 +499,9 @@ private:
   // the server half of a Thrift service.
   string rust_sync_processor_impl_name(t_service *tservice);
 
+  // Return the variant name for an enum variant
+  string rust_enum_variant_name(const string& name);
+
   // Properly uppercase names for use in Rust.
   string rust_upper_case(const string& name);
 
@@ -873,7 +876,7 @@ void t_rs_generator::render_enum_definition(t_enum* tenum, const string& enum_na
     render_rustdoc((t_doc*) val);
     f_gen_
       << indent()
-      << uppercase(val->get_name())
+      << rust_enum_variant_name(val->get_name())
       << " = "
       << val->get_value()
       << ","
@@ -934,7 +937,7 @@ void t_rs_generator::render_enum_conversion(t_enum* tenum, const string& enum_na
     f_gen_
       << indent()
       << val->get_value()
-      << " => Ok(" << enum_name << "::" << uppercase(val->get_name()) << "),"
+      << " => Ok(" << enum_name << "::" << rust_enum_variant_name(val->get_name()) << "),"
       << endl;
   }
   f_gen_ << indent() << "_ => {" << endl;
@@ -3252,6 +3255,23 @@ string t_rs_generator::rust_sync_processor_name(t_service* tservice) {
 
 string t_rs_generator::rust_sync_processor_impl_name(t_service *tservice) {
   return "T" + rust_camel_case(tservice->get_name()) + "ProcessFunctions";
+}
+
+string t_rs_generator::rust_enum_variant_name(const string &name) {
+  bool all_uppercase = true;
+
+  for (size_t i = 0; i < name.size(); i++) {
+    if (isalnum(name[i]) && islower(name[i])) {
+      all_uppercase = false;
+      break;
+    }
+  }
+
+  if (all_uppercase) {
+    return capitalize(camelcase(lowercase(name)));
+  } else {
+    return capitalize(camelcase(name));
+  }
 }
 
 string t_rs_generator::rust_upper_case(const string& name) {

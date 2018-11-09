@@ -17,23 +17,23 @@
 
 #[macro_use]
 extern crate clap;
-
 extern crate kitchen_sink;
 extern crate thrift;
 
+use thrift::protocol::{TBinaryInputProtocolFactory, TBinaryOutputProtocolFactory,
+                       TCompactInputProtocolFactory, TCompactOutputProtocolFactory,
+                       TInputProtocolFactory, TOutputProtocolFactory};
+use thrift::server::TServer;
+use thrift::transport::{TFramedReadTransportFactory, TFramedWriteTransportFactory,
+                        TReadTransportFactory, TWriteTransportFactory};
+
 use kitchen_sink::base_one::Noodle;
 use kitchen_sink::base_two::{BrothType, Napkin, NapkinServiceSyncHandler, Ramen, RamenServiceSyncHandler};
-use kitchen_sink::midlayer::{Dessert, Meal, MealServiceSyncHandler, MealServiceSyncProcessor};
+use kitchen_sink::midlayer::{Dessert, Meal, MealServiceSyncHandler, MealServiceSyncProcessor, Pie};
 use kitchen_sink::recursive;
 use kitchen_sink::ultimate::{Drink, FullMeal, FullMealAndDrinks,
                              FullMealAndDrinksServiceSyncProcessor, FullMealServiceSyncHandler};
 use kitchen_sink::ultimate::FullMealAndDrinksServiceSyncHandler;
-use thrift::protocol::{TBinaryInputProtocolFactory, TBinaryOutputProtocolFactory,
-                       TCompactInputProtocolFactory, TCompactOutputProtocolFactory,
-                       TInputProtocolFactory, TOutputProtocolFactory};
-use thrift::transport::{TFramedReadTransportFactory, TFramedWriteTransportFactory,
-                        TReadTransportFactory, TWriteTransportFactory};
-use thrift::server::TServer;
 
 fn main() {
     match run() {
@@ -207,7 +207,13 @@ struct FullHandler;
 
 impl FullMealAndDrinksServiceSyncHandler for FullHandler {
     fn handle_full_meal_and_drinks(&self) -> thrift::Result<FullMealAndDrinks> {
-        Ok(FullMealAndDrinks::new(full_meal(), Drink::WHISKEY))
+        println!("full_meal_and_drinks: handling full meal and drinks call");
+        Ok(FullMealAndDrinks::new(full_meal(), Drink::CanadianWhisky))
+    }
+
+    fn handle_best_pie(&self) -> thrift::Result<Pie> {
+        println!("full_meal_and_drinks: handling pie call");
+        Ok(Pie::MississippiMud) // I prefer Pie::Pumpkin, but I have to check that casing works
     }
 }
 
@@ -252,7 +258,7 @@ fn noodle() -> Noodle {
 }
 
 fn ramen() -> Ramen {
-    Ramen::new("Mr Ramen".to_owned(), 72, BrothType::MISO)
+    Ramen::new("Mr Ramen".to_owned(), 72, BrothType::Miso)
 }
 
 fn napkin() -> Napkin {

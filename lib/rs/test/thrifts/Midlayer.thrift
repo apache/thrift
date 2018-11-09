@@ -46,6 +46,15 @@ const set<set<i32>> MyConstNestedSet = [
   [6, 7, 8]
 ]
 
+enum Pie {
+  PUMPKIN,
+  apple, // intentionally poorly cased
+  STRAWBERRY_RHUBARB,
+  Key_Lime, // intentionally poorly cased
+  coconut_Cream, // intentionally poorly cased
+  mississippi_mud, // intentionally poorly cased
+}
+
 struct Meal {
   1: Base_One.Noodle noodle
   2: Base_Two.Ramen ramen

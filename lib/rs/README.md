@@ -37,6 +37,57 @@ Thrift compiler you're using.
 
 Full [Rustdoc](https://docs.rs/thrift/)
 
+## Compatibility
+
+The Rust library and auto-generated code targets Rust versions 1.28+.
+It does not currently use any Rust 2018 features.
+
+### Breaking Changes
+
+Breaking changes are minimized. When they are made they will be outlined below with transition guidelines.
+
+##### Thrift 0.12.0
+
+* **[THRIFT-4529]** - Rust enum variants are now camel-cased instead of uppercased to conform to Rust naming conventions
+
+    Previously, enum variants were uppercased in the auto-generated code.
+    For example, the following thrift enum:
+
+    ```thrift
+    // THRIFT
+    enum Operation {
+      ADD,
+      SUBTRACT,
+      MULTIPLY,
+      DIVIDE,
+    }
+    ```
+    
+    used to generate:
+    
+    ```rust
+    // OLD AUTO-GENERATED RUST
+    pub enum Operation {
+       ADD,
+       SUBTRACT,
+       MULTIPLY,
+       DIVIDE,
+     }
+    ```
+    It *now* generates:
+    ```rust
+    // NEW AUTO-GENERATED RUST
+    pub enum Operation {
+       Add,
+       Subtract,
+       Multiply,
+       Divide,
+     }
+    ```
+    
+    You will have to change all enum variants in your code to use camel-cased names.
+    This should be a search and replace.
+
 ## Contributing
 
 Bug reports and PRs are always welcome! Please see the
