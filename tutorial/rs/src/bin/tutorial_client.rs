@@ -71,7 +71,7 @@ fn run() -> thrift::Result<()> {
 
     // let's do...a multiply!
     let res = client
-        .calculate(logid, Work::new(7, 8, Operation::MULTIPLY, None))?;
+        .calculate(logid, Work::new(7, 8, Operation::Multiply, None))?;
     println!("multiplied 7 and 8 and got {}", res);
 
     // let's get the log for it
@@ -81,7 +81,7 @@ fn run() -> thrift::Result<()> {
     // ok - let's be bad :(
     // do a divide by 0
     // logid doesn't matter; won't be recorded
-    let res = client.calculate(77, Work::new(2, 0, Operation::DIVIDE, "we bad".to_owned()));
+    let res = client.calculate(77, Work::new(2, 0, Operation::Divide, "we bad".to_owned()));
 
     // we should have gotten an exception back
     match res {

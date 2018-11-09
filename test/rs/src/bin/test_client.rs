@@ -216,7 +216,7 @@ fn make_thrift_calls(
 
     info!("testEnum");
     {
-        verify_expected_result(thrift_test_client.test_enum(Numberz::TWO), Numberz::TWO)?;
+        verify_expected_result(thrift_test_client.test_enum(Numberz::Two), Numberz::Two)?;
     }
 
     info!("testBinary");
@@ -391,7 +391,7 @@ fn make_thrift_calls(
         };
 
         verify_expected_result(
-            thrift_test_client.test_multi(1, -123948, -19234123981, m_snd, Numberz::EIGHT, 81),
+            thrift_test_client.test_multi(1, -123948, -19234123981, m_snd, Numberz::Eight, 81),
             s_cmp,
         )?;
     }
@@ -405,8 +405,8 @@ fn make_thrift_calls(
     // }
     {
         let mut arg_map_usermap: BTreeMap<Numberz, i64> = BTreeMap::new();
-        arg_map_usermap.insert(Numberz::ONE, 4289);
-        arg_map_usermap.insert(Numberz::EIGHT, 19);
+        arg_map_usermap.insert(Numberz::One, 4289);
+        arg_map_usermap.insert(Numberz::Eight, 19);
 
         let mut arg_vec_xtructs: Vec<Xtruct> = Vec::new();
         arg_vec_xtructs.push(
@@ -439,15 +439,15 @@ fn make_thrift_calls(
             user_map: Some(arg_map_usermap),
             xtructs: Some(arg_vec_xtructs),
         };
-        s_cmp_nested_1.insert(Numberz::TWO, insanity.clone());
-        s_cmp_nested_1.insert(Numberz::THREE, insanity.clone());
+        s_cmp_nested_1.insert(Numberz::Two, insanity.clone());
+        s_cmp_nested_1.insert(Numberz::Three, insanity.clone());
 
         let mut s_cmp_nested_2: BTreeMap<Numberz, Insanity> = BTreeMap::new();
         let empty_insanity = Insanity {
             user_map: Some(BTreeMap::new()),
             xtructs: Some(Vec::new()),
         };
-        s_cmp_nested_2.insert(Numberz::SIX, empty_insanity);
+        s_cmp_nested_2.insert(Numberz::Six, empty_insanity);
 
         let mut s_cmp: BTreeMap<UserId, BTreeMap<Numberz, Insanity>> = BTreeMap::new();
         s_cmp.insert(1 as UserId, s_cmp_nested_1);
