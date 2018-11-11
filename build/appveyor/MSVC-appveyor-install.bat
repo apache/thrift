@@ -31,14 +31,14 @@ choco feature enable -n allowGlobalConfirmation || EXIT /B
 :: Things to install when NOT running in appveyor:
 IF "%APPVEYOR_BUILD_ID%" == "" (
     cup -y chocolatey                     || EXIT /B
-    cinst -c "%BUILDCACHE%" -y curl       || EXIT /B
-    cinst -c "%BUILDCACHE%" -y 7zip       || EXIT /B
-    cinst -c "%BUILDCACHE%" -y python3    || EXIT /B
-    cinst -c "%BUILDCACHE%" -y openssl.light || EXIT /B
+    cinst -y curl                         || EXIT /B
+    cinst -y 7zip                         || EXIT /B
+    cinst -y python3                      || EXIT /B
+    cinst -y openssl.light                || EXIT /B
 )
 
-cinst -c "%BUILDCACHE%" -y jdk8           || EXIT /B
-cinst -c "%BUILDCACHE%" -y winflexbison3  || EXIT /B
+cinst -y jdk8                             || EXIT /B
+cinst -y winflexbison3                    || EXIT /B
 
 :: zlib - not available through chocolatey
 CD "%APPVEYOR_SCRIPTS%"                   || EXIT /B
@@ -56,5 +56,4 @@ pip.exe ^
             tornado ^
             twisted                       || EXIT /B
 
-:: Haskell (GHC) and cabal (disabled: see Jira THRIFT-4545)
-:: cinst -c "%BUILDCACHE%" -y ghc            || EXIT /B
+cinst -y ghc                              || EXIT /B
