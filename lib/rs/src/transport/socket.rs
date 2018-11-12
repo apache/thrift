@@ -133,8 +133,9 @@ impl TIoChannel for TTcpChannel {
             .and_then(|s| s.try_clone().ok())
             .map(
                 |cloned| {
-                    (ReadHalf { handle: TTcpChannel { stream: s.stream.take() } },
-                     WriteHalf { handle: TTcpChannel { stream: Some(cloned) } })
+                    let read_half = ReadHalf::new( TTcpChannel { stream: s.stream.take() } );
+                    let write_half = WriteHalf::new( TTcpChannel { stream: Some(cloned) } );
+                    (read_half, write_half)
                 },
             )
             .ok_or_else(
