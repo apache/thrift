@@ -143,6 +143,26 @@ where
     handle: C,
 }
 
+impl<C> ReadHalf<C>
+where
+    C: Read,
+{
+    /// Create a `ReadHalf` associated with readable `handle`
+    pub fn new(handle: C) -> ReadHalf<C> {
+        ReadHalf { handle }
+    }
+}
+
+impl<C> WriteHalf<C>
+where
+    C: Write,
+{
+    /// Create a `WriteHalf` associated with writable `handle`
+    pub fn new(handle: C) -> WriteHalf<C> {
+        WriteHalf { handle }
+    }
+}
+
 impl<C> Read for ReadHalf<C>
 where
     C: Read,
