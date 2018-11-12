@@ -355,8 +355,8 @@ private:
 
   string handler_successful_return_struct(t_function* tfunc);
 
-  // Writes the result of `render_rift_error_struct` wrapped in an `Err(thrift::Error(...))`.
-  void render_rift_error(
+  // Writes the result of `render_thrift_error_struct` wrapped in an `Err(thrift::Error(...))`.
+  void render_thrift_error(
     const string& error_kind,
     const string& error_struct,
     const string& sub_error_kind,
@@ -377,7 +377,7 @@ private:
   //    message: "This is some error message",
   //  }
   // ```
-  void render_rift_error_struct(
+  void render_thrift_error_struct(
     const string& error_struct,
     const string& sub_error_kind,
     const string& error_message
@@ -952,7 +952,7 @@ void t_rs_generator::render_enum_conversion(t_enum* tenum, const string& enum_na
   }
   f_gen_ << indent() << "_ => {" << endl;
   indent_up();
-  render_rift_error(
+  render_thrift_error(
     "Protocol",
     "ProtocolError",
     "ProtocolErrorKind::InvalidData",
@@ -1333,7 +1333,7 @@ void t_rs_generator::render_result_struct_to_result_method(t_struct* tstruct) {
     indent_up();
     // if we haven't found a valid return value *or* a user exception
     // then we're in trouble; return a default error
-    render_rift_error(
+    render_thrift_error(
       "Application",
       "ApplicationError",
       "ApplicationErrorKind::MissingResult",
@@ -1867,7 +1867,7 @@ void t_rs_generator::render_union_sync_read(const string &union_name, t_struct *
   // return the value or an error
   f_gen_ << indent() << "if received_field_count == 0 {" << endl;
   indent_up();
-  render_rift_error(
+  render_thrift_error(
     "Protocol",
     "ProtocolError",
     "ProtocolErrorKind::InvalidData",
@@ -1876,7 +1876,7 @@ void t_rs_generator::render_union_sync_read(const string &union_name, t_struct *
   indent_down();
   f_gen_ << indent() << "} else if received_field_count > 1 {" << endl;
   indent_up();
-  render_rift_error(
+  render_thrift_error(
     "Protocol",
     "ProtocolError",
     "ProtocolErrorKind::InvalidData",
@@ -2578,7 +2578,7 @@ void t_rs_generator::render_sync_processor_definition_and_impl(t_service *tservi
   render_process_match_statements(tservice);
   f_gen_ << indent() << "method => {" << endl;
   indent_up();
-  render_rift_error(
+  render_thrift_error(
     "Application",
     "ApplicationError",
     "ApplicationErrorKind::UnknownMethod",
@@ -2857,7 +2857,7 @@ void t_rs_generator::render_sync_handler_failed_user_exception_branch(t_function
 
   f_gen_ << indent() << "let ret_err = {" << endl;
   indent_up();
-  render_rift_error_struct("ApplicationError", "ApplicationErrorKind::Unknown", "usr_err.description()");
+  render_thrift_error_struct("ApplicationError", "ApplicationErrorKind::Unknown", "usr_err.description()");
   indent_down();
   f_gen_ << indent() << "};" << endl;
   render_sync_handler_send_exception_response(tfunc, "ret_err");
@@ -2880,7 +2880,7 @@ void t_rs_generator::render_sync_handler_failed_application_exception_branch(
 void t_rs_generator::render_sync_handler_failed_default_exception_branch(t_function *tfunc) {
   f_gen_ << indent() << "let ret_err = {" << endl;
   indent_up();
-  render_rift_error_struct("ApplicationError", "ApplicationErrorKind::Unknown", "e.description()");
+  render_thrift_error_struct("ApplicationError", "ApplicationErrorKind::Unknown", "e.description()");
   indent_down();
   f_gen_ << indent() << "};" << endl;
   if (tfunc->is_oneway()) {
@@ -2957,7 +2957,7 @@ void t_rs_generator::render_rustdoc(t_doc* tdoc) {
   generate_docstring_comment(f_gen_, "", "/// ", tdoc->get_doc(), "");
 }
 
-void t_rs_generator::render_rift_error(
+void t_rs_generator::render_thrift_error(
   const string& error_kind,
   const string& error_struct,
   const string& sub_error_kind,
@@ -2967,14 +2967,14 @@ void t_rs_generator::render_rift_error(
   indent_up();
   f_gen_ << indent() << "thrift::Error::" << error_kind << "(" << endl;
   indent_up();
-  render_rift_error_struct(error_struct, sub_error_kind, error_message);
+  render_thrift_error_struct(error_struct, sub_error_kind, error_message);
   indent_down();
   f_gen_ << indent() << ")" << endl;
   indent_down();
   f_gen_ << indent() << ")" << endl;
 }
 
-void t_rs_generator::render_rift_error_struct(
+void t_rs_generator::render_thrift_error_struct(
   const string& error_struct,
   const string& sub_error_kind,
   const string& error_message
