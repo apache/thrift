@@ -159,6 +159,15 @@ class TServerSocket(TSocketBase, TServerTransportBase):
         self._unix_socket = unix_socket
         self._socket_family = socket_family
         self.handle = None
+        self._backlog = 128
+
+    def setBacklog(self, backlog=None):
+        if not self.handle:
+            self._backlog = backlog
+        else:
+            # We cann't update backlog when it is already listening, since the
+            # handle has been created.
+            logger.warn('You have to set backlog before listen.')
 
     def listen(self):
         res0 = self._resolveAddr()
@@ -183,7 +192,7 @@ class TServerSocket(TSocketBase, TServerTransportBase):
         if hasattr(self.handle, 'settimeout'):
             self.handle.settimeout(None)
         self.handle.bind(res[4])
-        self.handle.listen(128)
+        self.handle.listen(self._backlog)
 
     def accept(self):
         client, addr = self.handle.accept()
