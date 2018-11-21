@@ -1961,8 +1961,10 @@ void t_py_generator::generate_process_function(t_service* tservice, t_function* 
       indent(f_service_) << "def write_results_success_" << tfunction->get_name()
                          << "(self, success, result, seqid, oprot):" << endl;
       indent_up();
-      f_service_ << indent() << "result.success = success" << endl
-                 << indent() << "oprot.writeMessageBegin(\"" << tfunction->get_name()
+      if (!tfunction->get_returntype()->is_void()) {
+        f_service_ << indent() << "result.success = success" << endl;
+      }
+      f_service_ << indent() << "oprot.writeMessageBegin(\"" << tfunction->get_name()
                  << "\", TMessageType.REPLY, seqid)" << endl
                  << indent() << "result.write(oprot)" << endl
                  << indent() << "oprot.writeMessageEnd()" << endl
