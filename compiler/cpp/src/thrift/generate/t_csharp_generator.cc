@@ -1690,6 +1690,7 @@ void t_csharp_generator::generate_service_client(t_service* tservice) {
 
     if (!async_) {
       indent(f_service_) << "#if SILVERLIGHT" << endl;
+      indent(f_service_) << endl;
     }
     // Begin_
     indent(f_service_) << "public " << function_signature_async_begin(*f_iter, "Begin_") << endl;
@@ -1766,51 +1767,52 @@ void t_csharp_generator::generate_service_client(t_service* tservice) {
       indent(f_service_) << "#endif" << endl << endl;
     }
 
-    // "Normal" Synchronous invoke
     generate_csharp_doc(f_service_, *f_iter);
     indent(f_service_) << "public " << function_signature(*f_iter) << endl;
     scope_up(f_service_);
 
+    // silverlight invoke
     if (!async_) {
-      indent(f_service_) << "#if !SILVERLIGHT" << endl;
-      indent(f_service_) << "send_" << funname << "(";
+      indent(f_service_) << "#if SILVERLIGHT" << endl;
 
-      first = true;
+      indent(f_service_) << "var asyncResult = Begin_" << funname << "(null, null";
       for (fld_iter = fields.begin(); fld_iter != fields.end(); ++fld_iter) {
-        if (first) {
-          first = false;
-        } else {
-          f_service_ << ", ";
-        }
-        f_service_ << normalize_name((*fld_iter)->get_name());
+        f_service_ << ", " << normalize_name((*fld_iter)->get_name());
       }
       f_service_ << ");" << endl;
-
+      
       if (!(*f_iter)->is_oneway()) {
         f_service_ << indent();
         if (!(*f_iter)->get_returntype()->is_void()) {
           f_service_ << "return ";
         }
-        f_service_ << "recv_" << funname << "();" << endl;
+        f_service_ << "End_" << funname << "(asyncResult);" << endl;
       }
       f_service_ << endl;
 
       indent(f_service_) << "#else" << endl;
     }
 
-    // Silverlight synchronous invoke
-    indent(f_service_) << "var asyncResult = Begin_" << funname << "(null, null";
+    // synchronous invoke
+    indent(f_service_) << "send_" << funname << "(";
+  
+    first = true;
     for (fld_iter = fields.begin(); fld_iter != fields.end(); ++fld_iter) {
-      f_service_ << ", " << normalize_name((*fld_iter)->get_name());
+      if (first) {
+        first = false;
+      } else {
+        f_service_ << ", ";
+      }
+      f_service_ << normalize_name((*fld_iter)->get_name());
     }
     f_service_ << ");" << endl;
-
+  
     if (!(*f_iter)->is_oneway()) {
       f_service_ << indent();
       if (!(*f_iter)->get_returntype()->is_void()) {
         f_service_ << "return ";
       }
-      f_service_ << "End_" << funname << "(asyncResult);" << endl;
+      f_service_ << "recv_" << funname << "();" << endl;
     }
     f_service_ << endl;
 
@@ -1829,12 +1831,8 @@ void t_csharp_generator::generate_service_client(t_service* tservice) {
     if (!async_) {
       indent(f_service_) << "#if SILVERLIGHT" << endl;
     }
+
     indent(f_service_) << "public " << function_signature_async_begin(&send_function) << endl;
-    if (!async_) {
-      indent(f_service_) << "#else" << endl;
-      indent(f_service_) << "public " << function_signature(&send_function) << endl;
-      indent(f_service_) << "#endif" << endl;
-    }
     scope_up(f_service_);
 
     f_service_ << indent() << "oprot_.WriteMessageBegin(new TMessage(\"" << funname << "\", "
@@ -1849,20 +1847,40 @@ void t_csharp_generator::generate_service_client(t_service* tservice) {
 
     f_service_ << indent() << "args.Write(oprot_);" << endl << indent()
                << "oprot_.WriteMessageEnd();" << endl;
-    ;
+    indent(f_service_) << "return oprot_.Transport.BeginFlush(callback, state);" << endl;
+      
+    scope_down(f_service_);
+    f_service_ << endl;
 
     if (!async_) {
-      indent(f_service_) << "#if SILVERLIGHT" << endl;
-    }
-    indent(f_service_) << "return oprot_.Transport.BeginFlush(callback, state);" << endl;
-    if (!async_) {
       indent(f_service_) << "#else" << endl;
-      indent(f_service_) << "oprot_.Transport.Flush();" << endl;
+      f_service_ << endl;
+    }
+
+    indent(f_service_) << "public " << function_signature(&send_function) << endl;
+    scope_up(f_service_);
+
+    f_service_ << indent() << "oprot_.WriteMessageBegin(new TMessage(\"" << funname << "\", "
+               << ((*f_iter)->is_oneway() ? "TMessageType.Oneway" : "TMessageType.Call")
+               << ", seqid_));" << endl << indent() << argsname << " args = new " << argsname
+               << "();" << endl;
+
+    for (fld_iter = fields.begin(); fld_iter != fields.end(); ++fld_iter) {
+      f_service_ << indent() << "args." << prop_name(*fld_iter) << " = "
+                 << normalize_name((*fld_iter)->get_name()) << ";" << endl;
+    }
+
+    f_service_ << indent() << "args.Write(oprot_);" << endl << indent()
+               << "oprot_.WriteMessageEnd();" << endl;
+
+    indent(f_service_) << "oprot_.Transport.Flush();" << endl;
+    cleanup_member_name_mapping(arg_struct);
+    scope_down(f_service_);
+
+    if (!async_) {
       indent(f_service_) << "#endif" << endl;
     }
 
-    cleanup_member_name_mapping(arg_struct);
-    scope_down(f_service_);
     f_service_ << endl;
 
     if (!(*f_iter)->is_oneway()) {
