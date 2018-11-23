@@ -89,13 +89,22 @@ class THttpClient extends TTransport
     protected $headers_;
 
     /**
+     * Context additional options
+     *
+     * @var array
+     */
+    protected $context_;
+
+    /**
      * Make a new HTTP client.
      *
      * @param string $host
-     * @param int $port
+     * @param int    $port
      * @param string $uri
+     * @param string $scheme
+     * @param array  $context
      */
-    public function __construct($host, $port = 80, $uri = '', $scheme = 'http')
+    public function __construct($host, $port = 80, $uri = '', $scheme = 'http', array $context = array())
     {
         if ((TStringFuncFactory::create()->strlen($uri) > 0) && ($uri{0} != '/')) {
             $uri = '/' . $uri;
@@ -108,6 +117,7 @@ class THttpClient extends TTransport
         $this->handle_ = null;
         $this->timeout_ = null;
         $this->headers_ = array();
+        $this->context_ = $context;
     }
 
     /**
@@ -211,16 +221,21 @@ class THttpClient extends TTransport
             $headers[] = "$key: $value";
         }
 
-        $options = array('method' => 'POST',
+        $options = $this->context_;
+
+        $baseHttpOptions = isset($options["http"]) ? $options["http"] : array();
+
+        $httpOptions = $baseHttpOptions + array('method' => 'POST',
             'header' => implode("\r\n", $headers),
             'max_redirects' => 1,
             'content' => $this->buf_);
         if ($this->timeout_ > 0) {
-            $options['timeout'] = $this->timeout_;
+            $httpOptions['timeout'] = $this->timeout_;
         }
         $this->buf_ = '';
 
-        $contextid = stream_context_create(array('http' => $options));
+        $options["http"] = $httpOptions;
+        $contextid = stream_context_create($options);
         $this->handle_ = @fopen(
             $this->scheme_ . '://' . $host . $this->uri_,
             'r',
