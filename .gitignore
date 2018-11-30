@@ -339,8 +339,17 @@ project.lock.json
 /test/rs/target/
 /test/rs/*.iml
 /test/rs/**/*.iml
+/lib/cl/backport-update.zip
+/lib/cl/lib
+/tutorial/cl/quicklisp.lisp
+/tutorial/cl/externals/
+/tutorial/cl/quicklisp/
 /tutorial/cl/TutorialClient
 /tutorial/cl/TutorialServer
+/tutorial/cl/backport-update.zip
+/tutorial/cl/lib/
+/tutorial/cl/shared-implementation.fasl
+/tutorial/cl/tutorial-implementation.fasl
 /tutorial/cpp/TutorialClient
 /tutorial/cpp/TutorialServer
 /tutorial/c_glib/tutorial_client

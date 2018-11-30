@@ -12,18 +12,11 @@
 ;;;; See the License for the specific language governing permissions and
 ;;;; limitations under the License.
 
+;;;; Just a script for loading the library itself, using bundled dependencies.
+;;;; This is an identical copy of the file in lib/cl.
+
 (require "asdf")
-(load (merge-pathnames "load-locally.lisp" *load-truename*))
-(asdf:load-system :net.didierverna.clon)
-(asdf:load-asd (merge-pathnames "gen-cl/shared/thrift-gen-shared.asd" *load-truename*))
-(asdf:load-asd (merge-pathnames "gen-cl/tutorial/thrift-gen-tutorial.asd" *load-truename*))
-(asdf:load-asd (merge-pathnames "thrift-tutorial.asd" *load-truename*))
-(asdf:load-system :thrift-tutorial)
 
-(net.didierverna.clon:nickname-package)
-
-(defun main ()
-  "Entry point for the binary."
-  (thrift:serve #u"thrift://127.0.0.1:9090" tutorial:calculator))
-
-(clon:dump "TutorialServer" main)
+(load (merge-pathnames "externals/bundle.lisp" *load-truename*))
+(asdf:load-asd (merge-pathnames "lib/de.setf.thrift-backport-update/thrift.asd" *load-truename*))
+(asdf:load-system :thrift)
