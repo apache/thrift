@@ -56,7 +56,7 @@ runTests();
 function runTests() {
   testDriver(client, function (status: string) {
     console.log(status);
-    connection.end();
+    process.exit(0);
   });
 }
 
