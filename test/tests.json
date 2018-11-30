@@ -730,7 +730,7 @@
       ]
     },
     "client": {
-      "timeout": 5,
+      "timeout": 6,
       "command": [
         "runClient.sh"
       ]
