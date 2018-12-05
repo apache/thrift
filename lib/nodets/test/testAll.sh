@@ -11,7 +11,9 @@ compile()
 {
   #generating thrift code
   ${DIR}/../../../compiler/cpp/thrift -o ${DIR} --gen js:node,ts ${DIR}/../../../test/ThriftTest.thrift
+  ${DIR}/../../../compiler/cpp/thrift -o ${DIR} --gen js:node,ts ${DIR}/../../../test/Int64Test.thrift
   ${DIR}/../../../compiler/cpp/thrift -o ${COMPILEDDIR} --gen js:node,ts ${DIR}/../../../test/ThriftTest.thrift
+  ${DIR}/../../../compiler/cpp/thrift -o ${COMPILEDDIR} --gen js:node,ts ${DIR}/../../../test/Int64Test.thrift
 
   tsc --outDir $COMPILEDDIR --project $DIR/tsconfig.json
 }
@@ -29,6 +31,8 @@ testServer()
   kill -2 $SERVERPID || RET=1
   return $RET
 }
+
+node ${COMPILEDDIR}/int64.test.js || TESTOK=1
 
 #integration tests
 

@@ -831,6 +831,7 @@ AC_CONFIG_FILES([
   lib/rs/test/Makefile
   lib/lua/Makefile
   lib/swift/Makefile
+  lib/ts/Makefile
   lib/xml/Makefile
   lib/xml/test/Makefile
   test/Makefile

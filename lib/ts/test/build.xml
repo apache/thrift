@@ -102,6 +102,8 @@
     <get src="http://code.jquery.com/jquery-1.11.3.min.js" dest="${build}/js/lib/jquery.js" usetimestamp="true"/>
     <get src="http://code.jquery.com/qunit/qunit-2.6.2.js" dest="${build}/js/lib/qunit.js" usetimestamp="true"/>
     <get src="http://code.jquery.com/qunit/qunit-2.6.2.css" dest="${build}/js/lib/qunit.css" usetimestamp="true"/>
+    <get src="http://code.jquery.com/qunit/qunit-2.6.2.js" dest="${build}/ts/qunit.js" usetimestamp="true"/>
+    <get src="http://code.jquery.com/qunit/qunit-2.6.2.css" dest="${build}/ts/qunit.css" usetimestamp="true"/>
   </target>
 
   <target name="jslibs" depends="init, proxy, download_jslibs">

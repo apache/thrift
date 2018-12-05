@@ -61,13 +61,16 @@ TESTOK=0
 
 ${DIR}/../../../compiler/cpp/thrift -o ${DIR} --gen js:node ${DIR}/../../../test/ThriftTest.thrift
 ${DIR}/../../../compiler/cpp/thrift -o ${DIR} --gen js:node ${DIR}/../../../test/JsDeepConstructorTest.thrift
+${DIR}/../../../compiler/cpp/thrift -o ${DIR} --gen js:node ${DIR}/../../../test/Int64Test.thrift
 mkdir ${DIR}/gen-nodejs-es6
 ${DIR}/../../../compiler/cpp/thrift -out ${DIR}/gen-nodejs-es6 --gen js:node,es6 ${DIR}/../../../test/ThriftTest.thrift
 ${DIR}/../../../compiler/cpp/thrift -out ${DIR}/gen-nodejs-es6 --gen js:node,es6 ${DIR}/../../../test/JsDeepConstructorTest.thrift
+${DIR}/../../../compiler/cpp/thrift -out ${DIR}/gen-nodejs-es6 --gen js:node,es6 ${DIR}/../../../test/Int64Test.thrift
 
 #unit tests
 
 node ${DIR}/binary.test.js || TESTOK=1
+node ${DIR}/int64.test.js || TESTOK=1
 node ${DIR}/deep-constructor.test.js || TESTOK=1
 
 #integration tests
