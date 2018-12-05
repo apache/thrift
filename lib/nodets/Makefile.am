@@ -20,6 +20,7 @@
 stubs: $(top_srcdir)/test/ThriftTest.thrift
 	mkdir -p test-compiled
 	$(THRIFT) --gen js:node,ts -o test/ $(top_srcdir)/test/ThriftTest.thrift && $(THRIFT) --gen js:node,ts -o test-compiled $(top_srcdir)/test/ThriftTest.thrift
+	$(THRIFT) --gen js:node,ts -o test/ $(top_srcdir)/test/Int64Test.thrift && $(THRIFT) --gen js:node,ts -o test-compiled $(top_srcdir)/test/Int64Test.thrift
 
 ts-compile: stubs
 	mkdir -p test-compiled

@@ -1,6 +1,7 @@
 'use strict';
 
 import ttypes = require('./gen-nodejs/ThriftTest_types');
+import Int64 = require('node-int64');
 
 //all Languages in UTF-8
 /*jshint -W100 */
@@ -84,7 +85,7 @@ export var out = new ttypes.Xtruct({
   string_thing: 'Zero',
   byte_thing: 1,
   i32_thing: -3,
-  i64_thing: 1000000
+  i64_thing: new Int64(1000000)
 });
 
 export var out2 = new ttypes.Xtruct2();
@@ -93,17 +94,17 @@ out2.struct_thing = out;
 out2.i32_thing = 5;
 
 export var crazy = new ttypes.Insanity({
-  "userMap":{ "5":5, "8":8 },
+  "userMap":{ "5":new Int64(5), "8":new Int64(8) },
   "xtructs":[new ttypes.Xtruct({
       "string_thing":"Goodbye4",
       "byte_thing":4,
       "i32_thing":4,
-      "i64_thing":4
+      "i64_thing":new Int64(4)
     }), new ttypes.Xtruct({
       "string_thing":"Hello2",
       "byte_thing":2,
       "i32_thing":2,
-      "i64_thing":2
+      "i64_thing":new Int64(2)
     })]
 });
 

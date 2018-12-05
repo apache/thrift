@@ -24,6 +24,7 @@ import ttypes = require("./gen-nodejs/ThriftTest_types");
 import thrift = require("thrift");
 import Thrift = thrift.Thrift;
 import Q = require("q");
+import Int64 = require("node-int64");
 
 
 export class SyncThriftTestHandler {
@@ -62,7 +63,7 @@ export class SyncThriftTestHandler {
 
     return Q.resolve(insane);
   }
-  testMulti(arg0: any, arg1: number, arg2: number, arg3: { [k: number]: string; }, arg4: ttypes.Numberz, arg5: number) {
+  testMulti(arg0: any, arg1: number, arg2: Int64, arg3: { [k: number]: string; }, arg4: ttypes.Numberz, arg5: number) {
     var hello = new ttypes.Xtruct();
     hello.string_thing = 'Hello2';
     hello.byte_thing = arg0;
@@ -196,7 +197,7 @@ export class AsyncThriftTestHandler {
     }
     return Q.resolve();
   }
-  testMulti(arg0: any, arg1: number, arg2: number, arg3: { [k: number]: string; }, arg4: ttypes.Numberz, arg5: number, result: Function): Q.IPromise<ttypes.Xtruct> {
+  testMulti(arg0: any, arg1: number, arg2: Int64, arg3: { [k: number]: string; }, arg4: ttypes.Numberz, arg5: number, result: Function): Q.IPromise<ttypes.Xtruct> {
     var hello = this.syncHandler.testMulti(arg0, arg1, arg2, arg3, arg4, arg5);
     hello.then(hello => result(null, hello));
     return Q.resolve();

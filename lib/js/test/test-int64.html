@@ -1,4 +1,4 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
++<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <!--
   Licensed to the Apache Software Foundation (ASF) under one
   or more contributor license agreements. See the NOTICE file
@@ -19,26 +19,27 @@
 -->
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
 <head>
-  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-  <title>Thrift Javascript Bindings: Unit Test</title>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+      <title>Int64 Constants in JS: Unit Test</title>
 
-  <script src="build/js/lib/Int64.js" type="text/javascript" charset="utf-8"></script>
-  <script src="build/js/lib/Int64Util.js" type="text/javascript" charset="utf-8"></script>
-  <script src="build/js/lib/JSONInt64.js" type="text/javascript" charset="utf-8"></script>
-  <script src="build/js/thrift.js"         type="text/javascript" charset="utf-8"></script>
-  <script src="gen-js/ThriftTest_types.js" type="text/javascript" charset="utf-8"></script>
-  <script src="gen-js/ThriftTest.js"       type="text/javascript" charset="utf-8"></script>
+      <script src="build/js/thrift.js" type="text/javascript" charset="utf-8"></script>
+      <!-- browserified node-int64 -->
+      <script src="build/js/lib/Int64.js" type="text/javascript" charset="utf-8"></script>
+      <!-- int64 constants to check -->
+      <script src="gen-js/Int64Test_types.js" type="text/javascript" charset="utf-8"></script>
 
-  <!-- QUnit Test framework-->
-  <script type="text/javascript" src="build/js/lib/qunit.js" charset="utf-8"></script>
-  <link rel="stylesheet" href="build/js/lib/qunit.css" type="text/css" media="screen" />
+      <!-- jQuery -->
+      <script type="text/javascript" src="build/js/lib/jquery.js" charset="utf-8"></script>
 
-  <!-- the Test Suite-->
-  <script type="text/javascript" src="test.js" charset="utf-8"></script>
-  <script type="text/javascript" src="test-nojq.js" charset="utf-8"></script>
-</head>
+      <!-- QUnit Test framework-->
+      <script type="text/javascript" src="build/js/lib/qunit.js" charset="utf-8"></script>
+      <link rel="stylesheet" href="build/js/lib/qunit.css" type="text/css" media="screen" />
+
+      <!-- the Test Suite-->
+      <script type="text/javascript" src="test-int64.js" charset="utf-8"></script>
+    </head>
 <body>
-  <h1 id="qunit-header">Thrift Javascript Bindings: Unit Test (<a href="https://github.com/apache/thrift/blob/master/test/ThriftTest.thrift">ThriftTest.thrift</a>)</h1>
+  <h1 id="qunit-header">Int64 Constants in JS: Unit Test</h1>
   <h2 id="qunit-banner"></h2>
   <div id="qunit-testrunner-toolbar"></div>
   <h2 id="qunit-userAgent"></h2>
@@ -52,4 +53,3 @@
   -->
 </body>
 </html>
-
