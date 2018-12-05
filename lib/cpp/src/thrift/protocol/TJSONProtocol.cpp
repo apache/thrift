@@ -899,7 +899,7 @@ uint32_t TJSONProtocol::readJSONDouble(double& num) {
       }
       try {
         num = fromString<double>(str);
-      } catch (std::runtime_error e) {
+      } catch (std::runtime_error& e) {
         throw TProtocolException(TProtocolException::INVALID_DATA,
                                      "Expected numeric value; got \"" + str + "\"");
       }
@@ -912,7 +912,7 @@ uint32_t TJSONProtocol::readJSONDouble(double& num) {
     result += readJSONNumericChars(str);
     try {
       num = fromString<double>(str);
-    } catch (std::runtime_error e) {
+    } catch (std::runtime_error& e) {
       throw TProtocolException(TProtocolException::INVALID_DATA,
                                    "Expected numeric value; got \"" + str + "\"");
     }
