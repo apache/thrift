@@ -335,7 +335,7 @@ public:
   TSSLException(const std::string& message)
     : TTransportException(TTransportException::INTERNAL_ERROR, message) {}
 
-  virtual const char* what() const throw() {
+  virtual const char* what() const BOOST_NOEXCEPT_OR_NOTHROW {
     if (message_.empty()) {
       return "TSSLException";
     } else {
@@ -386,7 +386,7 @@ public:
    * @param  sa Peer IP address
    * @return True if the peer is trusted, false otherwise
    */
-  virtual Decision verify(const sockaddr_storage& /* sa */) throw() { return DENY; }
+  virtual Decision verify(const sockaddr_storage& /* sa */) BOOST_NOEXCEPT_OR_NOTHROW { return DENY; }
   /**
    * Determine whether the peer should be granted access or not. It's called
    * every time a DNS subjectAltName/common name is extracted from peer's
@@ -402,7 +402,7 @@ public:
    */
   virtual Decision verify(const std::string& /* host */,
                           const char* /* name */,
-                          int /* size */) throw() {
+                          int /* size */) BOOST_NOEXCEPT_OR_NOTHROW {
     return DENY;
   }
   /**
@@ -416,7 +416,7 @@ public:
    */
   virtual Decision verify(const sockaddr_storage& /* sa */,
                           const char* /* data */,
-                          int /* size */) throw() {
+                          int /* size */) BOOST_NOEXCEPT_OR_NOTHROW {
     return DENY;
   }
 };
@@ -426,9 +426,9 @@ typedef AccessManager::Decision Decision;
 class DefaultClientAccessManager : public AccessManager {
 public:
   // AccessManager interface
-  Decision verify(const sockaddr_storage& sa) throw();
-  Decision verify(const std::string& host, const char* name, int size) throw();
-  Decision verify(const sockaddr_storage& sa, const char* data, int size) throw();
+  Decision verify(const sockaddr_storage& sa) BOOST_NOEXCEPT_OR_NOTHROW;
+  Decision verify(const std::string& host, const char* name, int size) BOOST_NOEXCEPT_OR_NOTHROW;
+  Decision verify(const sockaddr_storage& sa, const char* data, int size) BOOST_NOEXCEPT_OR_NOTHROW;
 };
 }
 }

@@ -82,9 +82,9 @@ public:
 
   TException(const std::string& message) : message_(message) {}
 
-  virtual ~TException() throw() {}
+  virtual ~TException() BOOST_NOEXCEPT_OR_NOTHROW {}
 
-  virtual const char* what() const throw() {
+  virtual const char* what() const BOOST_NOEXCEPT_OR_NOTHROW {
     if (message_.empty()) {
       return "Default TException.";
     } else {

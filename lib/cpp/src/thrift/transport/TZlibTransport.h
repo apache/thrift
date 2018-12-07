@@ -38,7 +38,7 @@ public:
       zlib_status_(status),
       zlib_msg_(msg == NULL ? "(null)" : msg) {}
 
-  virtual ~TZlibTransportException() throw() {}
+  virtual ~TZlibTransportException() BOOST_NOEXCEPT_OR_NOTHROW {}
 
   int getZlibStatus() { return zlib_status_; }
   std::string getZlibMessage() { return zlib_msg_; }
