@@ -21,7 +21,9 @@
 
 #include <algorithm>
 #include <iostream>
+#if __cplusplus >= 201703L
 #include <random>
+#endif
 
 #include <thrift/transport/TSocketPool.h>
 
