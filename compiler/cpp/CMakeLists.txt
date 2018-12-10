@@ -113,7 +113,7 @@ THRIFT_ADD_COMPILER(xml     "Enable compiler for XML" ON)
 # we also add the current binary directory for generated files
 include_directories(${CMAKE_CURRENT_BINARY_DIR} src)
 
-if(NOT ${WITH_PLUGIN})
+if(NOT DEFINED WITH_PLUGIN OR NOT ${WITH_PLUGIN})
     list(APPEND thrift-compiler_SOURCES ${compiler_core})
 endif()
 
