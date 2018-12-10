@@ -189,7 +189,7 @@ void TSocketPool::open() {
   }
 
   if (randomize_ && numServers > 1) {
-#if __cplusplus >= 201500L // c++17
+#if __cplusplus >= 201703L
     std::random_device rng;
     std::mt19937 urng(rng());
     std::shuffle(servers_.begin(), servers_.end(), urng);
