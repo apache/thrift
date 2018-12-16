@@ -201,8 +201,7 @@ where
         if let 0 = message_size {
             return Ok(());
         } else {
-            self.channel
-                .write_i32::<BigEndian>(message_size as i32)?;
+            self.channel.write_i32::<BigEndian>(message_size as i32)?;
         }
 
         // will spin if the underlying channel can't be written to
@@ -240,7 +239,7 @@ impl TWriteTransportFactory for TFramedWriteTransportFactory {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use ::transport::mem::TBufferChannel;
+    use transport::mem::TBufferChannel;
 
     // FIXME: test a forced reserve
 
@@ -249,12 +248,10 @@ mod tests {
         let c = TBufferChannel::with_capacity(10, 10);
         let mut t = TFramedReadTransport::with_capacity(8, c);
 
-        t.chan.set_readable_bytes(
-            &[
-                0x00, 0x00, 0x00, 0x04, /* message size */
-                0x00, 0x01, 0x02, 0x03  /* message body */
-            ]
-        );
+        t.chan.set_readable_bytes(&[
+            0x00, 0x00, 0x00, 0x04, /* message size */
+            0x00, 0x01, 0x02, 0x03, /* message body */
+        ]);
 
         let mut buf = vec![0; 8];
 
@@ -268,12 +265,10 @@ mod tests {
         let c = TBufferChannel::with_capacity(10, 10);
         let mut t = TFramedReadTransport::with_capacity(2, c);
 
-        t.chan.set_readable_bytes(
-            &[
-                0x00, 0x00, 0x00, 0x04, /* message size */
-                0x00, 0x01, 0x02, 0x03  /* message body */
-            ]
-        );
+        t.chan.set_readable_bytes(&[
+            0x00, 0x00, 0x00, 0x04, /* message size */
+            0x00, 0x01, 0x02, 0x03, /* message body */
+        ]);
 
         let mut buf = vec![0; 8];
 
@@ -291,12 +286,10 @@ mod tests {
         // 1st message
         //
 
-        t.chan.set_readable_bytes(
-            &[
-                0x00, 0x00, 0x00, 0x04, /* message size */
-                0x00, 0x01, 0x02, 0x03  /* message body */
-            ]
-        );
+        t.chan.set_readable_bytes(&[
+            0x00, 0x00, 0x00, 0x04, /* message size */
+            0x00, 0x01, 0x02, 0x03, /* message body */
+        ]);
 
         let mut buf = vec![0; 8];
 
@@ -308,12 +301,10 @@ mod tests {
         // 2nd message
         //
 
-        t.chan.set_readable_bytes(
-            &[
-                0x00, 0x00, 0x00, 0x01, /* message size */
-                0x04                    /* message body */
-            ]
-        );
+        t.chan.set_readable_bytes(&[
+            0x00, 0x00, 0x00, 0x01, /* message size */
+            0x04, /* message body */
+        ]);
 
         let mut buf = vec![0; 8];
 
@@ -356,8 +347,8 @@ mod tests {
         assert!(t.flush().is_ok());
 
         let expected_bytes = [
-            0x00, 0x00, 0x00, 0x05,      /* message size */
-            0x00, 0x01, 0x02, 0x03, 0x04 /* message body */
+            0x00, 0x00, 0x00, 0x05, /* message size */
+            0x00, 0x01, 0x02, 0x03, 0x04, /* message body */
         ];
 
         assert_eq_transport_written_bytes!(t, expected_bytes);
@@ -382,8 +373,8 @@ mod tests {
         assert!(t.flush().is_ok());
 
         let expected_bytes = [
-            0x00, 0x00, 0x00, 0x03,      /* message size */
-            0x00, 0x01, 0x02             /* message body */
+            0x00, 0x00, 0x00, 0x03, /* message size */
+            0x00, 0x01, 0x02, /* message body */
         ];
 
         assert_eq_transport_written_bytes!(t, expected_bytes);
@@ -408,8 +399,8 @@ mod tests {
         assert!(t.flush().is_ok());
 
         let expected_bytes = [
-            0x00, 0x00, 0x00, 0x03,      /* message size */
-            0x00, 0x01, 0x02             /* message body */
+            0x00, 0x00, 0x00, 0x03, /* message size */
+            0x00, 0x01, 0x02, /* message body */
         ];
 
         assert_eq_transport_written_bytes!(t, expected_bytes);

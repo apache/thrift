@@ -63,13 +63,11 @@ extern crate log;
 /// return the value contained in the result, i.e. `expr.unwrap()`.
 #[cfg(test)]
 macro_rules! assert_success {
-    ($e: expr) => {
-        {
-            let res = $e;
-            assert!(res.is_ok());
-            res.unwrap()
-        }
-    }
+    ($e: expr) => {{
+        let res = $e;
+        assert!(res.is_ok());
+        res.unwrap()
+    }};
 }
 
 pub mod protocol;

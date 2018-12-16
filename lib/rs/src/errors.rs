@@ -198,8 +198,9 @@ impl Error {
     /// Create an `ApplicationError` from its wire representation.
     ///
     /// Application code **should never** call this method directly.
-    pub fn read_application_error_from_in_protocol(i: &mut TInputProtocol,)
-        -> ::Result<ApplicationError> {
+    pub fn read_application_error_from_in_protocol(
+        i: &mut TInputProtocol,
+    ) -> ::Result<ApplicationError> {
         let mut message = "general remote error".to_owned();
         let mut kind = ApplicationErrorKind::Unknown;
 
@@ -224,9 +225,8 @@ impl Error {
                 }
                 2 => {
                     let remote_type_as_int = i.read_i32()?;
-                    let remote_kind: ApplicationErrorKind =
-                        TryFrom::try_from(remote_type_as_int)
-                            .unwrap_or(ApplicationErrorKind::Unknown);
+                    let remote_kind: ApplicationErrorKind = TryFrom::try_from(remote_type_as_int)
+                        .unwrap_or(ApplicationErrorKind::Unknown);
                     i.read_field_end()?;
                     kind = remote_kind;
                 }
@@ -238,12 +238,10 @@ impl Error {
 
         i.read_struct_end()?;
 
-        Ok(
-            ApplicationError {
-                kind: kind,
-                message: message,
-            },
-        )
+        Ok(ApplicationError {
+            kind: kind,
+            message: message,
+        })
     }
 
     /// Convert an `ApplicationError` into its wire representation and write
@@ -254,7 +252,9 @@ impl Error {
         e: &ApplicationError,
         o: &mut TOutputProtocol,
     ) -> ::Result<()> {
-        o.write_struct_begin(&TStructIdentifier { name: "TApplicationException".to_owned() },)?;
+        o.write_struct_begin(&TStructIdentifier {
+            name: "TApplicationException".to_owned(),
+        })?;
 
         let message_field = TFieldIdentifier::new("message", TType::String, 1);
         let type_field = TFieldIdentifier::new("type", TType::I32, 2);
@@ -309,23 +309,19 @@ impl Display for Error {
 
 impl From<String> for Error {
     fn from(s: String) -> Self {
-        Error::Application(
-            ApplicationError {
-                kind: ApplicationErrorKind::Unknown,
-                message: s,
-            },
-        )
+        Error::Application(ApplicationError {
+            kind: ApplicationErrorKind::Unknown,
+            message: s,
+        })
     }
 }
 
 impl<'a> From<&'a str> for Error {
     fn from(s: &'a str) -> Self {
-        Error::Application(
-            ApplicationError {
-                kind: ApplicationErrorKind::Unknown,
-                message: String::from(s),
-            },
-        )
+        Error::Application(ApplicationError {
+            kind: ApplicationErrorKind::Unknown,
+            message: String::from(s),
+        })
     }
 }
 
@@ -427,16 +423,10 @@ impl TryFrom<i32> for TransportErrorKind {
             4 => Ok(TransportErrorKind::EndOfFile),
             5 => Ok(TransportErrorKind::NegativeSize),
             6 => Ok(TransportErrorKind::SizeLimit),
-            _ => {
-                Err(
-                    Error::Protocol(
-                        ProtocolError {
-                            kind: ProtocolErrorKind::Unknown,
-                            message: format!("cannot convert {} to TransportErrorKind", from),
-                        },
-                    ),
-                )
-            }
+            _ => Err(Error::Protocol(ProtocolError {
+                kind: ProtocolErrorKind::Unknown,
+                message: format!("cannot convert {} to TransportErrorKind", from),
+            })),
         }
     }
 }
@@ -444,47 +434,29 @@ impl TryFrom<i32> for TransportErrorKind {
 impl From<io::Error> for Error {
     fn from(err: io::Error) -> Self {
         match err.kind() {
-            io::ErrorKind::ConnectionReset |
-            io::ErrorKind::ConnectionRefused |
-            io::ErrorKind::NotConnected => {
-                Error::Transport(
-                    TransportError {
-                        kind: TransportErrorKind::NotOpen,
-                        message: err.description().to_owned(),
-                    },
-                )
-            }
-            io::ErrorKind::AlreadyExists => {
-                Error::Transport(
-                    TransportError {
-                        kind: TransportErrorKind::AlreadyOpen,
-                        message: err.description().to_owned(),
-                    },
-                )
-            }
-            io::ErrorKind::TimedOut => {
-                Error::Transport(
-                    TransportError {
-                        kind: TransportErrorKind::TimedOut,
-                        message: err.description().to_owned(),
-                    },
-                )
-            }
-            io::ErrorKind::UnexpectedEof => {
-                Error::Transport(
-                    TransportError {
-                        kind: TransportErrorKind::EndOfFile,
-                        message: err.description().to_owned(),
-                    },
-                )
-            }
+            io::ErrorKind::ConnectionReset
+            | io::ErrorKind::ConnectionRefused
+            | io::ErrorKind::NotConnected => Error::Transport(TransportError {
+                kind: TransportErrorKind::NotOpen,
+                message: err.description().to_owned(),
+            }),
+            io::ErrorKind::AlreadyExists => Error::Transport(TransportError {
+                kind: TransportErrorKind::AlreadyOpen,
+                message: err.description().to_owned(),
+            }),
+            io::ErrorKind::TimedOut => Error::Transport(TransportError {
+                kind: TransportErrorKind::TimedOut,
+                message: err.description().to_owned(),
+            }),
+            io::ErrorKind::UnexpectedEof => Error::Transport(TransportError {
+                kind: TransportErrorKind::EndOfFile,
+                message: err.description().to_owned(),
+            }),
             _ => {
-                Error::Transport(
-                    TransportError {
-                        kind: TransportErrorKind::Unknown,
-                        message: err.description().to_owned(), // FIXME: use io error's debug string
-                    },
-                )
+                Error::Transport(TransportError {
+                    kind: TransportErrorKind::Unknown,
+                    message: err.description().to_owned(), // FIXME: use io error's debug string
+                })
             }
         }
     }
@@ -492,12 +464,10 @@ impl From<io::Error> for Error {
 
 impl From<string::FromUtf8Error> for Error {
     fn from(err: string::FromUtf8Error) -> Self {
-        Error::Protocol(
-            ProtocolError {
-                kind: ProtocolErrorKind::InvalidData,
-                message: err.description().to_owned(), // FIXME: use fmt::Error's debug string
-            },
-        )
+        Error::Protocol(ProtocolError {
+            kind: ProtocolErrorKind::InvalidData,
+            message: err.description().to_owned(), // FIXME: use fmt::Error's debug string
+        })
     }
 }
 
@@ -583,16 +553,10 @@ impl TryFrom<i32> for ProtocolErrorKind {
             4 => Ok(ProtocolErrorKind::BadVersion),
             5 => Ok(ProtocolErrorKind::NotImplemented),
             6 => Ok(ProtocolErrorKind::DepthLimit),
-            _ => {
-                Err(
-                    Error::Protocol(
-                        ProtocolError {
-                            kind: ProtocolErrorKind::Unknown,
-                            message: format!("cannot convert {} to ProtocolErrorKind", from),
-                        },
-                    ),
-                )
-            }
+            _ => Err(Error::Protocol(ProtocolError {
+                kind: ProtocolErrorKind::Unknown,
+                message: format!("cannot convert {} to ProtocolErrorKind", from),
+            })),
         }
     }
 }
@@ -697,16 +661,10 @@ impl TryFrom<i32> for ApplicationErrorKind {
             8 => Ok(ApplicationErrorKind::InvalidTransform),
             9 => Ok(ApplicationErrorKind::InvalidProtocol),
             10 => Ok(ApplicationErrorKind::UnsupportedClientType),
-            _ => {
-                Err(
-                    Error::Application(
-                        ApplicationError {
-                            kind: ApplicationErrorKind::Unknown,
-                            message: format!("cannot convert {} to ApplicationErrorKind", from),
-                        },
-                    ),
-                )
-            }
+            _ => Err(Error::Application(ApplicationError {
+                kind: ApplicationErrorKind::Unknown,
+                message: format!("cannot convert {} to ApplicationErrorKind", from),
+            })),
         }
     }
 }
