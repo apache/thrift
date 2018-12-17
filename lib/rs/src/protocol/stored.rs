@@ -17,9 +17,11 @@
 
 use std::convert::Into;
 
+use super::{
+    TFieldIdentifier, TInputProtocol, TListIdentifier, TMapIdentifier, TMessageIdentifier,
+    TSetIdentifier, TStructIdentifier,
+};
 use ProtocolErrorKind;
-use super::{TFieldIdentifier, TInputProtocol, TListIdentifier, TMapIdentifier, TMessageIdentifier,
-            TSetIdentifier, TStructIdentifier};
 
 /// `TInputProtocol` required to use a `TMultiplexedProcessor`.
 ///
@@ -101,16 +103,12 @@ impl<'a> TStoredInputProtocol<'a> {
 
 impl<'a> TInputProtocol for TStoredInputProtocol<'a> {
     fn read_message_begin(&mut self) -> ::Result<TMessageIdentifier> {
-        self.message_ident
-            .take()
-            .ok_or_else(
-                || {
-                    ::errors::new_protocol_error(
-                        ProtocolErrorKind::Unknown,
-                        "message identifier already read",
-                    )
-                },
+        self.message_ident.take().ok_or_else(|| {
+            ::errors::new_protocol_error(
+                ProtocolErrorKind::Unknown,
+                "message identifier already read",
             )
+        })
     }
 
     fn read_message_end(&mut self) -> ::Result<()> {

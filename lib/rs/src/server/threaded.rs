@@ -19,9 +19,9 @@ use std::net::{TcpListener, TcpStream};
 use std::sync::Arc;
 use threadpool::ThreadPool;
 
-use {ApplicationError, ApplicationErrorKind};
 use protocol::{TInputProtocol, TInputProtocolFactory, TOutputProtocol, TOutputProtocolFactory};
 use transport::{TIoChannel, TReadTransportFactory, TTcpChannel, TWriteTransportFactory};
+use {ApplicationError, ApplicationErrorKind};
 
 use super::TProcessor;
 
@@ -129,11 +129,13 @@ where
 }
 
 impl<PRC, RTF, IPF, WTF, OPF> TServer<PRC, RTF, IPF, WTF, OPF>
-    where PRC: TProcessor + Send + Sync + 'static,
-          RTF: TReadTransportFactory + 'static,
-          IPF: TInputProtocolFactory + 'static,
-          WTF: TWriteTransportFactory + 'static,
-          OPF: TOutputProtocolFactory + 'static {
+where
+    PRC: TProcessor + Send + Sync + 'static,
+    RTF: TReadTransportFactory + 'static,
+    IPF: TInputProtocolFactory + 'static,
+    WTF: TWriteTransportFactory + 'static,
+    OPF: TOutputProtocolFactory + 'static,
+{
     /// Create a `TServer`.
     ///
     /// Each accepted connection has an input and output half, each of which
@@ -155,10 +157,7 @@ impl<PRC, RTF, IPF, WTF, OPF> TServer<PRC, RTF, IPF, WTF, OPF>
             w_trans_factory: write_transport_factory,
             o_proto_factory: output_protocol_factory,
             processor: Arc::new(processor),
-            worker_pool: ThreadPool::with_name(
-                "Thrift service processor".to_owned(),
-                num_workers,
-            ),
+            worker_pool: ThreadPool::with_name("Thrift service processor".to_owned(), num_workers),
         }
     }
 
@@ -179,7 +178,7 @@ impl<PRC, RTF, IPF, WTF, OPF> TServer<PRC, RTF, IPF, WTF, OPF>
                     let (i_prot, o_prot) = self.new_protocols_for_connection(s)?;
                     let processor = self.processor.clone();
                     self.worker_pool
-                        .execute(move || handle_incoming_connection(processor, i_prot, o_prot),);
+                        .execute(move || handle_incoming_connection(processor, i_prot, o_prot));
                 }
                 Err(e) => {
                     warn!("failed to accept remote connection with error {:?}", e);
@@ -187,16 +186,11 @@ impl<PRC, RTF, IPF, WTF, OPF> TServer<PRC, RTF, IPF, WTF, OPF>
             }
         }
 
-        Err(
-            ::Error::Application(
-                ApplicationError {
-                    kind: ApplicationErrorKind::Unknown,
-                    message: "aborted listen loop".into(),
-                },
-            ),
-        )
+        Err(::Error::Application(ApplicationError {
+            kind: ApplicationErrorKind::Unknown,
+            message: "aborted listen loop".into(),
+        }))
     }
-
 
     fn new_protocols_for_connection(
         &mut self,

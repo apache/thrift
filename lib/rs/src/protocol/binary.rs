@@ -19,11 +19,13 @@ use byteorder::{BigEndian, ByteOrder, ReadBytesExt, WriteBytesExt};
 use std::convert::From;
 use try_from::TryFrom;
 
-use {ProtocolError, ProtocolErrorKind};
-use transport::{TReadTransport, TWriteTransport};
-use super::{TFieldIdentifier, TInputProtocol, TInputProtocolFactory, TListIdentifier,
-            TMapIdentifier, TMessageIdentifier, TMessageType};
+use super::{
+    TFieldIdentifier, TInputProtocol, TInputProtocolFactory, TListIdentifier, TMapIdentifier,
+    TMessageIdentifier, TMessageType,
+};
 use super::{TOutputProtocol, TOutputProtocolFactory, TSetIdentifier, TStructIdentifier, TType};
+use transport::{TReadTransport, TWriteTransport};
+use {ProtocolError, ProtocolErrorKind};
 
 const BINARY_PROTOCOL_VERSION_1: u32 = 0x80010000;
 
@@ -90,14 +92,10 @@ where
             // apparently we got a protocol-version header - check
             // it, and if it matches, read the rest of the fields
             if first_bytes[0..2] != [0x80, 0x01] {
-                Err(
-                    ::Error::Protocol(
-                        ProtocolError {
-                            kind: ProtocolErrorKind::BadVersion,
-                            message: format!("received bad version: {:?}", &first_bytes[0..2]),
-                        },
-                    ),
-                )
+                Err(::Error::Protocol(ProtocolError {
+                    kind: ProtocolErrorKind::BadVersion,
+                    message: format!("received bad version: {:?}", &first_bytes[0..2]),
+                }))
             } else {
                 let message_type: TMessageType = TryFrom::try_from(first_bytes[3])?;
                 let name = self.read_string()?;
@@ -110,14 +108,10 @@ where
             if self.strict {
                 // we're in strict mode however, and that always
                 // requires the protocol-version header to be written first
-                Err(
-                    ::Error::Protocol(
-                        ProtocolError {
-                            kind: ProtocolErrorKind::BadVersion,
-                            message: format!("received bad version: {:?}", &first_bytes[0..2]),
-                        },
-                    ),
-                )
+                Err(::Error::Protocol(ProtocolError {
+                    kind: ProtocolErrorKind::BadVersion,
+                    message: format!("received bad version: {:?}", &first_bytes[0..2]),
+                }))
             } else {
                 // in the non-strict version the first message field
                 // is the message name. strings (byte arrays) are length-prefixed,
@@ -154,7 +148,9 @@ where
             TType::Stop => Ok(0),
             _ => self.read_i16(),
         }?;
-        Ok(TFieldIdentifier::new::<Option<String>, String, i16>(None, field_type, id),)
+        Ok(TFieldIdentifier::new::<Option<String>, String, i16>(
+            None, field_type, id,
+        ))
     }
 
     fn read_field_end(&mut self) -> ::Result<()> {
@@ -183,27 +179,19 @@ where
     }
 
     fn read_i16(&mut self) -> ::Result<i16> {
-        self.transport
-            .read_i16::<BigEndian>()
-            .map_err(From::from)
+        self.transport.read_i16::<BigEndian>().map_err(From::from)
     }
 
     fn read_i32(&mut self) -> ::Result<i32> {
-        self.transport
-            .read_i32::<BigEndian>()
-            .map_err(From::from)
+        self.transport.read_i32::<BigEndian>().map_err(From::from)
     }
 
     fn read_i64(&mut self) -> ::Result<i64> {
-        self.transport
-            .read_i64::<BigEndian>()
-            .map_err(From::from)
+        self.transport.read_i64::<BigEndian>().map_err(From::from)
     }
 
     fn read_double(&mut self) -> ::Result<f64> {
-        self.transport
-            .read_f64::<BigEndian>()
-            .map_err(From::from)
+        self.transport.read_f64::<BigEndian>().map_err(From::from)
     }
 
     fn read_string(&mut self) -> ::Result<String> {
@@ -346,17 +334,13 @@ where
 
     fn write_field_begin(&mut self, identifier: &TFieldIdentifier) -> ::Result<()> {
         if identifier.id.is_none() && identifier.field_type != TType::Stop {
-            return Err(
-                ::Error::Protocol(
-                    ProtocolError {
-                        kind: ProtocolErrorKind::Unknown,
-                        message: format!(
-                            "cannot write identifier {:?} without sequence number",
-                            &identifier
-                        ),
-                    },
+            return Err(::Error::Protocol(ProtocolError {
+                kind: ProtocolErrorKind::Unknown,
+                message: format!(
+                    "cannot write identifier {:?} without sequence number",
+                    &identifier
                 ),
-            );
+            }));
         }
 
         self.write_byte(field_type_to_u8(identifier.field_type))?;
@@ -393,27 +377,19 @@ where
     }
 
     fn write_i16(&mut self, i: i16) -> ::Result<()> {
-        self.transport
-            .write_i16::<BigEndian>(i)
-            .map_err(From::from)
+        self.transport.write_i16::<BigEndian>(i).map_err(From::from)
     }
 
     fn write_i32(&mut self, i: i32) -> ::Result<()> {
-        self.transport
-            .write_i32::<BigEndian>(i)
-            .map_err(From::from)
+        self.transport.write_i32::<BigEndian>(i).map_err(From::from)
     }
 
     fn write_i64(&mut self, i: i64) -> ::Result<()> {
-        self.transport
-            .write_i64::<BigEndian>(i)
-            .map_err(From::from)
+        self.transport.write_i64::<BigEndian>(i).map_err(From::from)
     }
 
     fn write_double(&mut self, d: f64) -> ::Result<()> {
-        self.transport
-            .write_f64::<BigEndian>(d)
-            .map_err(From::from)
+        self.transport.write_f64::<BigEndian>(d).map_err(From::from)
     }
 
     fn write_string(&mut self, s: &str) -> ::Result<()> {
@@ -520,25 +496,20 @@ fn field_type_from_u8(b: u8) -> ::Result<TType> {
         0x0F => Ok(TType::List),
         0x10 => Ok(TType::Utf8),
         0x11 => Ok(TType::Utf16),
-        unkn => {
-            Err(
-                ::Error::Protocol(
-                    ProtocolError {
-                        kind: ProtocolErrorKind::InvalidData,
-                        message: format!("cannot convert {} to TType", unkn),
-                    },
-                ),
-            )
-        }
+        unkn => Err(::Error::Protocol(ProtocolError {
+            kind: ProtocolErrorKind::InvalidData,
+            message: format!("cannot convert {} to TType", unkn),
+        })),
     }
 }
 
 #[cfg(test)]
 mod tests {
 
-    use protocol::{TFieldIdentifier, TInputProtocol, TListIdentifier, TMapIdentifier,
-                   TMessageIdentifier, TMessageType, TOutputProtocol, TSetIdentifier,
-                   TStructIdentifier, TType};
+    use protocol::{
+        TFieldIdentifier, TInputProtocol, TListIdentifier, TMapIdentifier, TMessageIdentifier,
+        TMessageType, TOutputProtocol, TSetIdentifier, TStructIdentifier, TType,
+    };
     use transport::{ReadHalf, TBufferChannel, TIoChannel, WriteHalf};
 
     use super::*;
@@ -550,6 +521,7 @@ mod tests {
         let ident = TMessageIdentifier::new("test", TMessageType::Call, 1);
         assert!(o_prot.write_message_begin(&ident).is_ok());
 
+        #[cfg_attr(rustfmt, rustfmt::skip)]
         let expected: [u8; 16] = [
             0x80,
             0x01,
@@ -579,6 +551,7 @@ mod tests {
         let ident = TMessageIdentifier::new("test", TMessageType::Call, 1);
         assert!(o_prot.write_message_begin(&ident).is_ok());
 
+        #[cfg_attr(rustfmt, rustfmt::skip)]
         let expected: [u8; 13] = [
             0x00,
             0x00,
@@ -605,6 +578,7 @@ mod tests {
         let ident = TMessageIdentifier::new("test", TMessageType::Reply, 10);
         assert!(o_prot.write_message_begin(&ident).is_ok());
 
+        #[cfg_attr(rustfmt, rustfmt::skip)]
         let expected: [u8; 16] = [
             0x80,
             0x01,
@@ -634,6 +608,7 @@ mod tests {
         let ident = TMessageIdentifier::new("test", TMessageType::Reply, 10);
         assert!(o_prot.write_message_begin(&ident).is_ok());
 
+        #[cfg_attr(rustfmt, rustfmt::skip)]
         let expected: [u8; 13] = [
             0x00,
             0x00,
@@ -686,7 +661,10 @@ mod tests {
 
     #[test]
     fn must_write_struct_begin() {
-        assert_no_write(|o| o.write_struct_begin(&TStructIdentifier::new("foo")), true);
+        assert_no_write(
+            |o| o.write_struct_begin(&TStructIdentifier::new("foo")),
+            true,
+        );
     }
 
     #[test]
@@ -698,11 +676,9 @@ mod tests {
     fn must_write_field_begin() {
         let (_, mut o_prot) = test_objects(true);
 
-        assert!(
-            o_prot
-                .write_field_begin(&TFieldIdentifier::new("some_field", TType::String, 22))
-                .is_ok()
-        );
+        assert!(o_prot
+            .write_field_begin(&TFieldIdentifier::new("some_field", TType::String, 22))
+            .is_ok());
 
         let expected: [u8; 3] = [0x0B, 0x00, 0x16];
         assert_eq_written_bytes!(o_prot, expected);
@@ -763,11 +739,9 @@ mod tests {
     fn must_write_list_begin() {
         let (_, mut o_prot) = test_objects(true);
 
-        assert!(
-            o_prot
-                .write_list_begin(&TListIdentifier::new(TType::Bool, 5))
-                .is_ok()
-        );
+        assert!(o_prot
+            .write_list_begin(&TListIdentifier::new(TType::Bool, 5))
+            .is_ok());
 
         let expected: [u8; 5] = [0x02, 0x00, 0x00, 0x00, 0x05];
         assert_eq_written_bytes!(o_prot, expected);
@@ -795,11 +769,9 @@ mod tests {
     fn must_write_set_begin() {
         let (_, mut o_prot) = test_objects(true);
 
-        assert!(
-            o_prot
-                .write_set_begin(&TSetIdentifier::new(TType::I16, 7))
-                .is_ok()
-        );
+        assert!(o_prot
+            .write_set_begin(&TSetIdentifier::new(TType::I16, 7))
+            .is_ok());
 
         let expected: [u8; 5] = [0x06, 0x00, 0x00, 0x00, 0x07];
         assert_eq_written_bytes!(o_prot, expected);
@@ -828,11 +800,9 @@ mod tests {
     fn must_write_map_begin() {
         let (_, mut o_prot) = test_objects(true);
 
-        assert!(
-            o_prot
-                .write_map_begin(&TMapIdentifier::new(TType::I64, TType::Struct, 32))
-                .is_ok()
-        );
+        assert!(o_prot
+            .write_map_begin(&TMapIdentifier::new(TType::I64, TType::Struct, 32))
+            .is_ok());
 
         let expected: [u8; 6] = [0x0A, 0x0C, 0x00, 0x00, 0x00, 0x20];
         assert_eq_written_bytes!(o_prot, expected);
@@ -923,6 +893,7 @@ mod tests {
     fn must_round_trip_bytes() {
         let (mut i_prot, mut o_prot) = test_objects(true);
 
+        #[cfg_attr(rustfmt, rustfmt::skip)]
         let bytes: [u8; 25] = [
             0x20,
             0xFD,
@@ -959,10 +930,12 @@ mod tests {
         assert_eq!(&received_bytes, &bytes);
     }
 
-    fn test_objects(strict: bool)
-        -> (TBinaryInputProtocol<ReadHalf<TBufferChannel>>,
-            TBinaryOutputProtocol<WriteHalf<TBufferChannel>>)
-    {
+    fn test_objects(
+        strict: bool,
+    ) -> (
+        TBinaryInputProtocol<ReadHalf<TBufferChannel>>,
+        TBinaryOutputProtocol<WriteHalf<TBufferChannel>>,
+    ) {
         let mem = TBufferChannel::with_capacity(40, 40);
 
         let (r_mem, w_mem) = mem.split().unwrap();
