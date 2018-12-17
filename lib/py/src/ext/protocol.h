@@ -33,8 +33,8 @@ class ProtocolBase {
 
 public:
   ProtocolBase()
-    : stringLimit_(std::numeric_limits<int32_t>::max()),
-      containerLimit_(std::numeric_limits<int32_t>::max()),
+    : stringLimit_((std::numeric_limits<int32_t>::max)()),
+      containerLimit_((std::numeric_limits<int32_t>::max)()),
       output_(NULL) {}
   inline virtual ~ProtocolBase();
 

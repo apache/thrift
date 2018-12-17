@@ -61,9 +61,6 @@ if(MSVC)
         set(STATIC_POSTFIX "md" CACHE STRING "Set static library postfix" FORCE)
     endif(WITH_MT)
 
-    # Disable Windows.h definition of macros for min and max
-    add_definitions("-DNOMINMAX")
-
     # Disable boost auto linking pragmas - cmake includes the right files
     add_definitions("-DBOOST_ALL_NO_LIB")
 

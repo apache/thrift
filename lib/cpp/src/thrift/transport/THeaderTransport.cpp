@@ -511,7 +511,7 @@ void THeaderTransport::flush() {
 
     // Pkt size
     ptrdiff_t szHbp = (headerStart - pktStart - 4);
-    if (static_cast<uint64_t>(szHbp) > static_cast<uint64_t>(std::numeric_limits<uint32_t>().max()) - (headerSize + haveBytes)) {
+    if (static_cast<uint64_t>(szHbp) > static_cast<uint64_t>((std::numeric_limits<uint32_t>().max)()) - (headerSize + haveBytes)) {
       throw TTransportException(TTransportException::CORRUPTED_DATA,
                                 "Header section size is unreasonable");
     }

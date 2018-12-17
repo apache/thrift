@@ -305,7 +305,7 @@ public:
 
   void skip(size_t len) {
     while (len) {
-      size_t chunk_size = std::min(len, buffer_used);
+      size_t chunk_size = (std::min)(len, buffer_used);
       if (chunk_size) {
         buffer_ptr = reinterpret_cast<char*>(buffer_ptr) + chunk_size;
         buffer_used -= chunk_size;
@@ -318,7 +318,7 @@ public:
 
   void readBytes(void* buf, size_t len) {
     while (len) {
-      size_t chunk_size = std::min(len, buffer_used);
+      size_t chunk_size = (std::min)(len, buffer_used);
       if (chunk_size) {
         memcpy(buf, buffer_ptr, chunk_size);
         buffer_ptr = reinterpret_cast<char*>(buffer_ptr) + chunk_size;

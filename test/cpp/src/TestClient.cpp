@@ -516,8 +516,8 @@ int main(int argc, char** argv) {
     BASETYPE_IDENTITY_TEST(testI32, -1);
     BASETYPE_IDENTITY_TEST(testI32, 190000013);
     BASETYPE_IDENTITY_TEST(testI32, -190000013);
-    BASETYPE_IDENTITY_TEST(testI32, numeric_limits<int32_t>::max());
-    BASETYPE_IDENTITY_TEST(testI32, numeric_limits<int32_t>::min());
+    BASETYPE_IDENTITY_TEST(testI32, (numeric_limits<int32_t>::max)());
+    BASETYPE_IDENTITY_TEST(testI32, (numeric_limits<int32_t>::min)());
 
     /**
      * I64 TEST
@@ -530,8 +530,8 @@ int main(int argc, char** argv) {
     BASETYPE_IDENTITY_TEST(testI64, (int64_t)-pow(static_cast<double>(2LL), 32));
     BASETYPE_IDENTITY_TEST(testI64, (int64_t)pow(static_cast<double>(2LL), 32) + 1);
     BASETYPE_IDENTITY_TEST(testI64, (int64_t)-pow(static_cast<double>(2LL), 32) - 1);
-    BASETYPE_IDENTITY_TEST(testI64, numeric_limits<int64_t>::max());
-    BASETYPE_IDENTITY_TEST(testI64, numeric_limits<int64_t>::min());
+    BASETYPE_IDENTITY_TEST(testI64, (numeric_limits<int64_t>::max)());
+    BASETYPE_IDENTITY_TEST(testI64, (numeric_limits<int64_t>::min)());
 
     /**
      * DOUBLE TEST

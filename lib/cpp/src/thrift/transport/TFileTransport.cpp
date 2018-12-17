@@ -65,7 +65,6 @@ using stdcxx::shared_ptr;
 using std::cerr;
 using std::cout;
 using std::endl;
-using std::min;
 using std::string;
 using namespace apache::thrift::protocol;
 using namespace apache::thrift::concurrency;
@@ -705,8 +704,8 @@ eventInfo* TFileTransport::readEvent() {
           readState_.event_->eventBuffPos_ = 0;
         }
         // take either the entire event or the remaining bytes in the buffer
-        int reclaimBuffer = min((uint32_t)(readState_.bufferLen_ - readState_.bufferPtr_),
-                                readState_.event_->eventSize_ - readState_.event_->eventBuffPos_);
+        int reclaimBuffer = (std::min)((uint32_t)(readState_.bufferLen_ - readState_.bufferPtr_),
+                                       readState_.event_->eventSize_ - readState_.event_->eventBuffPos_);
 
         // copy data from read buffer into event buffer
         memcpy(readState_.event_->eventBuff_ + readState_.event_->eventBuffPos_,
