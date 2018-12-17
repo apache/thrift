@@ -91,7 +91,7 @@ uint32_t TQIODeviceTransport::read(uint8_t* buf, uint32_t len) {
                               "read(): underlying QIODevice is not open");
   }
 
-  actualSize = (uint32_t)std::min((qint64)len, dev_->bytesAvailable());
+  actualSize = (uint32_t)(std::min)((qint64)len, dev_->bytesAvailable());
   readSize = dev_->read(reinterpret_cast<char*>(buf), actualSize);
 
   if (readSize < 0) {

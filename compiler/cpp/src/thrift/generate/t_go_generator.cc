@@ -1323,7 +1323,7 @@ void t_go_generator::generate_go_struct_definition(ostream& out,
       if (tstruct->is_union())
         (*m_iter)->set_req(t_field::T_OPTIONAL);
       if (sorted_keys_pos != (*m_iter)->get_key()) {
-        int first_unused = std::max(1, sorted_keys_pos++);
+        int first_unused = (std::max)(1, sorted_keys_pos++);
         while (sorted_keys_pos != (*m_iter)->get_key()) {
           ++sorted_keys_pos;
         }

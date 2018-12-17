@@ -144,7 +144,7 @@ inline int read_buffer(PyObject* buf, char** output, int len) {
   *output = PyBytes_AS_STRING(buf2->buf) + buf2->pos;
 #endif
   Py_ssize_t pos0 = buf2->pos;
-  buf2->pos = std::min(buf2->pos + static_cast<Py_ssize_t>(len), buf2->string_size);
+  buf2->pos = (std::min)(buf2->pos + static_cast<Py_ssize_t>(len), buf2->string_size);
   return static_cast<int>(buf2->pos - pos0);
 }
 }
@@ -212,7 +212,7 @@ inline bool check_ssize_t_32(Py_ssize_t len) {
   if (INT_CONV_ERROR_OCCURRED(len)) {
     return false;
   }
-  if (!CHECK_RANGE(len, 0, std::numeric_limits<int32_t>::max())) {
+  if (!CHECK_RANGE(len, 0, (std::numeric_limits<int32_t>::max)())) {
     PyErr_SetString(PyExc_OverflowError, "size out of range: exceeded INT32_MAX");
     return false;
   }
@@ -360,8 +360,8 @@ bool ProtocolBase<Impl>::encodeValue(PyObject* value, TType type, PyObject* type
   case T_I08: {
     int8_t val;
 
-    if (!parse_pyint(value, &val, std::numeric_limits<int8_t>::min(),
-                     std::numeric_limits<int8_t>::max())) {
+    if (!parse_pyint(value, &val, (std::numeric_limits<int8_t>::min)(),
+                     (std::numeric_limits<int8_t>::max)())) {
       return false;
     }
 
@@ -371,8 +371,8 @@ bool ProtocolBase<Impl>::encodeValue(PyObject* value, TType type, PyObject* type
   case T_I16: {
     int16_t val;
 
-    if (!parse_pyint(value, &val, std::numeric_limits<int16_t>::min(),
-                     std::numeric_limits<int16_t>::max())) {
+    if (!parse_pyint(value, &val, (std::numeric_limits<int16_t>::min)(),
+                     (std::numeric_limits<int16_t>::max)())) {
       return false;
     }
 
@@ -382,8 +382,8 @@ bool ProtocolBase<Impl>::encodeValue(PyObject* value, TType type, PyObject* type
   case T_I32: {
     int32_t val;
 
-    if (!parse_pyint(value, &val, std::numeric_limits<int32_t>::min(),
-                     std::numeric_limits<int32_t>::max())) {
+    if (!parse_pyint(value, &val, (std::numeric_limits<int32_t>::min)(),
+                     (std::numeric_limits<int32_t>::max)())) {
       return false;
     }
 
@@ -397,8 +397,8 @@ bool ProtocolBase<Impl>::encodeValue(PyObject* value, TType type, PyObject* type
       return false;
     }
 
-    if (!CHECK_RANGE(nval, std::numeric_limits<int64_t>::min(),
-                     std::numeric_limits<int64_t>::max())) {
+    if (!CHECK_RANGE(nval, (std::numeric_limits<int64_t>::min)(),
+                     (std::numeric_limits<int64_t>::max)())) {
       PyErr_SetString(PyExc_OverflowError, "int out of range");
       return false;
     }

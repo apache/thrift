@@ -111,7 +111,7 @@ BOOST_AUTO_TEST_CASE(test_exceptions) {
 
 BOOST_AUTO_TEST_CASE(test_default_maximum_buffer_size)
 {
-  BOOST_CHECK_EQUAL(std::numeric_limits<uint32_t>::max(), TMemoryBuffer().getMaxBufferSize());
+  BOOST_CHECK_EQUAL((std::numeric_limits<uint32_t>::max)(), TMemoryBuffer().getMaxBufferSize());
 }
 
 BOOST_AUTO_TEST_CASE(test_default_buffer_size)
