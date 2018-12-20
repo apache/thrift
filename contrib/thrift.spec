@@ -178,6 +178,19 @@ export RUBYLIB=${PWD}/lib/rb/lib
   --without-csharp \
   --without-erlang \
 
+%if 0%{!?without_ruby:1}
+eval $(grep "^WITH_RUBY_TRUE" config.log)
+if [[ "${WITH_RUBY_TRUE}" != "" ]]; then
+  set +x
+  echo ""
+  echo "configure determined that ruby requirements are missing (bundler gem?), either install missing components" >&2
+  echo "or disable the ruby sub-packages as follows:"                                                              >&2
+  echo "     rpmbuild -D'%without_ruby 1' ..."                                                                     >&2
+  echo ""
+  exit 1
+fi
+%endif
+
 make %{?_smp_mflags}
 
 %if 0%{!?without_java:1}
