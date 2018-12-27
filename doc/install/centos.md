@@ -64,7 +64,7 @@ If you will be developing Apache Thrift clients/servers in C++ you will also nee
 
 ## Build and Install the Apache Thrift IDL Compiler
 
-	git clone https://git-wip-us.apache.org/repos/asf/thrift.git
+	git clone https://github.com/apache/thrift.git
 	cd thrift
 	./bootstrap.sh
 	./configure --with-lua=no

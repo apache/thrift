@@ -126,8 +126,8 @@
     </release>
     <repository>
       <GitRepository>
-        <location rdf:resource="https://git-wip-us.apache.org/repos/asf/thrift.git"/>
-        <browse rdf:resource="https://git-wip-us.apache.org/repos/asf?p=thrift.git"/>
+        <location rdf:resource="https://github.com/apache/thrift.git"/>
+        <browse rdf:resource="https://github.com/apache/thrift"/>
       </GitRepository>
     </repository>
     <maintainer>

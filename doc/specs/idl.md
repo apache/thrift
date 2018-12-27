@@ -242,9 +242,9 @@ Here are some examples of Thrift definitions, using the Thrift IDL:
  * [Apache Cassandra's][] Thrift IDL: [cassandra.thrift][]
  * [Evernote API][]
 
- [ThriftTest.thrift]:  https://git-wip-us.apache.org/repos/asf?p=thrift.git;a=blob_plain;f=test/ThriftTest.thrift;hb=HEAD
+ [ThriftTest.thrift]:  https://raw.githubusercontent.com/apache/thrift/master/test/ThriftTest.thrift
  [tutorial]:           /tutorial/
- [fb303.thrift]:       https://git-wip-us.apache.org/repos/asf?p=thrift.git;a=blob_plain;f=contrib/fb303/if/fb303.thrift;hb=HEAD
+ [fb303.thrift]:       https://raw.githubusercontent.com/apache/thrift/master/contrib/fb303/if/fb303.thrift
  [Apache Cassandra's]: http://cassandra.apache.org/
  [cassandra.thrift]:   http://svn.apache.org/viewvc/cassandra/trunk/interface/cassandra.thrift?view=co
  [Evernote API]:       http://www.evernote.com/about/developer/api/
