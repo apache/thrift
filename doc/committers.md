@@ -4,7 +4,7 @@
 
 1. Check out the latest version of the source code
 
-  * git clone https://git-wip-us.apache.org/repos/asf/thrift.git thrift
+  * git clone https://github.com/apache/thrift.git thrift
 
 1. Apply the patch
 
