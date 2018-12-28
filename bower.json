@@ -11,6 +11,5 @@
     "thrift"
   ],
   "license": "Apache v2",
-  "ignore": [
-  ]
+  "ignore": []
 }

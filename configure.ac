@@ -158,7 +158,7 @@ if test "$with_cpp" = "yes";  then
     have_cpp="yes"
   fi
 
-  AX_LIB_EVENT([1.0])
+  AX_LIB_EVENT([2.0])
   have_libevent=$success
 
   AX_LIB_ZLIB([1.2.3])
