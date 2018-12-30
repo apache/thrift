@@ -113,10 +113,10 @@ RUN \
     mv libevent-master/deimos/* /usr/include/dmd/druntime/import/deimos/ && \
     mv libevent-master/C/* /usr/include/dmd/druntime/import/C/ && \
     rm -rf libevent-master && \
-    curl -sSL https://github.com/jeking3/openssl/archive/tls_method.tar.gz| tar xz && \
-    mv openssl-tls_method/deimos/* /usr/include/dmd/druntime/import/deimos/ && \
-    mv openssl-tls_method/C/* /usr/include/dmd/druntime/import/C/ && \
-    rm -rf openssl-tls_method
+    git clone -b 'v2.0.0+1.1.0h' https://github.com/D-Programming-Deimos/openssl.git deimos-openssl-1.1.0h && \
+    mv deimos-openssl-1.1.0h/deimos/* /usr/include/dmd/druntime/import/deimos/ && \
+    mv deimos-openssl-1.1.0h/C/* /usr/include/dmd/druntime/import/C/ && \
+    rm -rf deimos-openssl-1.1.0h
 
 RUN apt-get install -y --no-install-recommends \
       `# Dart dependencies` \
