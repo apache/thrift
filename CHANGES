@@ -1,14 +1,262 @@
 Apache Thrift Changelog
 
-Breaking Changes since 0.11.0 [for 0.12.0]:
+================================================================================
+Thrift 0.12.0
 --------------------------------------------------------------------------------
+## New Languages
+    * Common LISP (cl)
+    * Swift
+    * Typescript (nodets)
+
+## Deprecated Languages
+    * Cocoa
+
+## Breaking Changes (since 0.11.0)
     * [THRIFT-4529] - Rust enum variants are now camel-cased instead of uppercased to conform to Rust naming conventions
     * [THRIFT-4448] - Support for golang 1.6 and earlier has been dropped.
     * [THRIFT-4474] - PHP now uses the PSR-4 loader by default instead of class maps.
     * [THRIFT-4532] - method signatures changed in the compiler's t_oop_generator.
     * [THRIFT-4648] - The C (GLib) compiler's handling of namespaces has been improved.
 
+## Known Issues (Blocker or Critical)
+    * [THRIFT-4037] - build: use a single build system for thrift
+    * [THRIFT-4119] - build: bootstrap.sh is missing from source tarball
+    * [THRIFT-3289] - csharp: socket exhaustion in csharp implementation
+    * [THRIFT-3029] - cocoa: Getters for fields defined with uppercase names do not work
+    * [THRIFT-3325] - cocoa: Extended services aren't subclasses in generated Cocoa
+    * [THRIFT-4116] - cocoa: Thrift de-capitalizes the name of IsSet property in Cocoa
+    * [THRIFT-3877] - cpp: the http implementation is not standard; interop with other languages is spotty at best
+    * [THRIFT-4180] - cpp: Impossible to build Thrift C++ library for Android (NDK)
+    * [THRIFT-4384] - cpp: Using multiple async services simultaneously is not thread-safe
+    * [THRIFT-3108] - haskell: Defaulted struct parameters on a service generates invalid Haskell
+    * [THRIFT-3990] - nodejs: Exception swallowed by deserialization function
+    * [THRIFT-4214] - nodejs: map<i64,value> key treated as hex value in JavaScript
+    * [THRIFT-4602] - nodejs: ERROR in ./node_modules/thrift/lib/nodejs/lib/thrift/connection.js Module not found: Error: Can't resolve 'child_process'
+    * [THRIFT-4639] - nodejs: Sequence numbering for multiplexed protocol broken
+    * [THRIFT-1310] - php: sequence and reconnection management issues
+    * [THRIFT-1538] - php: Error during deserialization int64 on 32-bit architecture
+    * [THRIFT-1580] - php: thrift type i64 java to php serialize/deserealize not working
+    * [THRIFT-1950] - php: PHP gets stuck in infinite loop
+    * [THRIFT-2954] - python: sending int or float in a double field breaks the connection
+    * [THRIFT-4080] - python: unix sockets can get stuck forever
+    * [THRIFT-4281] - python: generated code is out of order and causes load issues
+    * [THRIFT-4677] - py3: UnicodeDecideError in Python3
 
+## Build Process
+    * [THRIFT-4308] - D language docker images need demios for libevent and openssl fixed to re-enable make cross on dlang
+    * [THRIFT-4579] - Use Ubuntu Bionic (18.04 LTS) for CI builds instead of Artful (17.10)
+    * [THRIFT-4508] - Define CI operating system coverage rules for the project and (hopefully) simplify CI a little more
+    * [THRIFT-4397] - ubuntu install instructions broken on 16.04
+    * [THRIFT-4545] - Appveyor builds are failing due to a haskell / cabal update in chocolatey
+    * [THRIFT-4452] - optimize Dockerfile (only onetime apt-get update)
+    * [THRIFT-4440] - rm `build/docker/ubuntu-trusty/Dockerfile.orig`
+    * [THRIFT-4352] - Ubuntu Artful doesn't appear to be compatible with Thrift and Haxe 3.4.2
+    * [THRIFT-4666] - DLang Client Pool Test fails sporadically
+    * [THRIFT-4676] - CL tutorial build fails sporadically
+    * [THRIFT-4456] - Make haxelib download quiet so it doesn't blow up the build log
+    * [THRIFT-4605] - bootstrap.sh fails if automake=1.16.1
+
+## c_glib
+    * [THRIFT-4648] - The C (GLib) compiler's handling of namespaces has been improved.
+    * [THRIFT-4622] - glibC compilation issue
+    * [THRIFT-4671] - c glib is unable to handle client close unexpectedly
+
+## cl (new language support in 0.12.0)
+    * [THRIFT-82] - Common Lisp support
+
+## csharp
+    * [THRIFT-4558] - reserved Csharp keywords are not escaped in some cases
+    * [THRIFT-4637] - C# async mode generates incorrect code with inherited services
+    * [THRIFT-4672] - IAsyncResult style methods not being supported by certain transports leads to issues in mixed ISync/IAsync use cases
+    * [THRIFT-4539] - Allow TBufferedTransport to be used as base class
+    * [THRIFT-4535] - XML docs; code cleanup (tabs->spaces; String->string)
+    * [THRIFT-4492] - protected ExceptionType type member of TApplicationException cannot be accessed
+    * [THRIFT-4446] - JSONProtocol Base64 Encoding Trims Padding
+    * [THRIFT-4455] - Missing dispose calls in ThreadedServer & ThreadpoolServer
+    * [THRIFT-4609] - keep InnerException wherever appropriate
+    * [THRIFT-4673] - IAsyncResult not supported by layered transports (buffered/framed)
+
+## cpp
+    * [THRIFT-4476] - Typecasting problem on list items
+    * [THRIFT-4465] - TNonblockingServer throwing THRIFT LOGGER: TConnection::workSocket(): THRIFT_EAGAIN (unavailable resources)
+    * [THRIFT-4680] - TBufferTransports.h does not compile under Visual Studio 2017
+    * [THRIFT-4618] - TNonblockingServer crash because of limitation of select()
+    * [THRIFT-4620] - TZlibTransport.cpp doesn't ensure that there is enough space for the zlib flush marker in the buffer.
+    * [THRIFT-4571] - ZeroMQ contrib library needs a refresh
+    * [THRIFT-4559] - TSSLServerSocket incorrectly prints errors
+    * [THRIFT-4578] - Move `TAsyncProtocolProcessor` into main thrift library
+    * [THRIFT-4418] - evhttp_connection_new is deprecated; use evhttp_connection_base_new
+
+## compiler
+    * [THRIFT-4644] - Compiler cannot be compiled on macOS(maybe also on other platforms with clang)
+    * [THRIFT-4531] - Thrift generates wrong Python code for immutable structures with optional members
+    * [THRIFT-4513] - thrift generated code is not stable for constants
+    * [THRIFT-4532] - Avoid updating Thrift compiler generated code if the output has not changed
+    * [THRIFT-4400] - Visual Studio Compiler project should link runtime statically in release builds
+    * [THRIFT-4399] - plugin.thrift t_const_value is not used as a union in C++ code -- fix this
+    * [THRIFT-4496] - Dealing with language keywords in Thrift (e.g. service method names)
+    * [THRIFT-4393] - repeated runs of compiler produce different binary output at plugin interface
+
+## dlang
+    * [THRIFT-4478] - Thrift will not build with dlang 2.078 or later
+    * [THRIFT-4503] - dlang servers logError on normal client disconnection
+    * [THRIFT-4308] - D language docker images need demios for libevent and openssl fixed to re-enable make cross on dlang
+
+## dart
+    * [THRIFT-4646] - Effective Dart and Exceptions
+    * [THRIFT-4439] - Shouldn't download dart.deb directly.
+
+## delphi
+    * [THRIFT-4562] - Calling wrong exception CTOR leads to "call failed: unknown result" instead of the real exception being thrown
+    * [THRIFT-4554] - uncompileable code with member names that are also types under specific conditions
+    * [THRIFT-4422] - Add Async implementation via IFuture
+    * [THRIFT-4485] - Possible invalid ptr AV with overlapped read/write on pipes
+    * [THRIFT-4549] - Thrift exceptions should derive from TException
+    * [THRIFT-4540] - buffered transport broken when trying to re-open a formerly closed transport
+    * [THRIFT-4473] - Move Thrift.Console.pas out of the Library
+    * [THRIFT-4490] - Allow a default service as fallback for multiplex processors connected by old clients
+    * [THRIFT-4454] - Large writes/reads may cause range check errors in debug mode
+    * [THRIFT-4461] - Compiler directive should match Delphi XE4
+    * [THRIFT-4462] - First line in Console duplicated
+    * [THRIFT-4642] - FPU ctrl word settings may cause an unexpected "denormalized" error
+
+## erlang
+    * [THRIFT-4497] - Erlang records should use map() for map type
+    * [THRIFT-4495] - Erlang records should allow 'undefined' for non-required fields
+    * [THRIFT-4580] - Fix erlang tutorial unpack on Windows
+    * [THRIFT-4582] - Ubuntu Xenial erlang 18.3 "make check" fails
+
+## golang
+    * [THRIFT-4448] - Support for golang 1.6 and earlier has been dropped.
+    * [THRIFT-4253] - Go generator assigns strings to field in const instead of pointers.
+    * [THRIFT-4573] - Unions Field Count Does Not Consider Binary
+    * [THRIFT-4447] - Golang: Panic on p.c.Call when using deprecated initializers
+    * [THRIFT-4650] - Required field incorrectly marked as set when fieldType does not match
+    * [THRIFT-4486] - Golang: -remote.go client cleanup
+    * [THRIFT-4537] - TSimpleServer can exit Accept loop with lock still acquired
+    * [THRIFT-4516] - Add support for go 1.10
+    * [THRIFT-4421] - golang tests rely on gomock, which has change behaviour, causing tests to fail
+    * [THRIFT-4626] - Communication crash when using binary/compact protocol and zlib transport
+    * [THRIFT-4659] - golang race detected when closing listener socket
+
+## haskell
+    * [THRIFT-4634] - Haskell builds with older cabal cannot reconcile complex version requirements
+
+## java
+    * [THRIFT-4259] - Thrift does not compile due to Ant Maven task errors
+    * [THRIFT-1418] - Compiling Thrift from source: Class org.apache.tools.ant.taskdefs.ConditionTask doesn't support the nested "typefound" element
+    * [THRIFT-4530] - proposal: add nullability annotations to generated Java code
+    * [THRIFT-4614] - Generate missing @Nullable annotations for Java iterator getters
+    * [THRIFT-4555] - Getter of binary field in Java creates unnecessary copy
+    * [THRIFT-3983] - libthrift is deployed on central with pom packaging instead of jar
+    * [THRIFT-4294] - Java Configure Fails for Ant >= 1.10
+    * [THRIFT-4178] - Java libraries missing from package when using cmake
+    * [THRIFT-4120] - pom files are not generated or provided in the build
+    * [THRIFT-1507] - Maven can't download resource from central when behind a proxy and won't use local repository
+    * [THRIFT-4556] - Optional rethrow of unhandled exceptions in java processor
+    * [THRIFT-4337] - Able to set keyStore and trustStore as InputStream in the TSSLTransportFactory.TSSLTransportParameters
+    * [THRIFT-4566] - Pass message of unhandled exception to optional rethrow.
+    * [THRIFT-4506] - Remove assertion in Java SASL code that would be ignored in release builds
+    * [THRIFT-4470] - Include popular IDE file templates to gitignore
+    * [THRIFT-4429] - Make TThreadPoolServer.executorService_ available in inherited classes and refactor methods to be able customization
+    * [THRIFT-3769] - Fix logic of THRIFT-2268
+    * [THRIFT-4494] - Increase Java Socket Buffer Size
+    * [THRIFT-4499] - Remove Magic Number In TFIleTransport
+
+## js
+    * [THRIFT-4406] - JavaScript: Use modern Promise implementations
+    * [THRIFT-4625] - let / const variable decorators for es6 compiler
+    * [THRIFT-4653] - ES6 Classes
+    * [THRIFT-4592] - JS: readI32 performance on large arrays is very poor in Chrome
+    * [THRIFT-4509] - js and nodejs libraries need to be refreshed with current libraries
+    * [THRIFT-4403] - thrift.js: Incorrect usage of 'this' in TWebSocketTransport.__onOpen
+    * [THRIFT-4436] - Deserialization of nested list discards content
+    * [THRIFT-4437] - JS WebSocket client callbacks invoked twice on parallel requests
+    * [THRIFT-4679] - Duplicate declaration of InputBufferUnderrunError in lib/nodejs/lib/thrift/json_protocol.js
+    * [THRIFT-4551] - Add prettier for consistent JS code formatting
+
+## lua
+    * [THRIFT-4591] - lua client uses two write() calls per framed message send
+    * [THRIFT-3863] - Can't "make install" Lua Library
+
+## netcore
+    * [THRIFT-4524] - .NET Core Server doesn't close properly when cancelled
+    * [THRIFT-4434] - Update .NET Core components, add tests for .Net Core library and .Net Core compiler, fix bugs and build process
+    * [THRIFT-4446] - JSONProtocol Base64 Encoding Trims Padding
+
+## node.js
+    * [THRIFT-4225] - Error handling malformed arguments leaks memory, corrupts transport buffers causing next RPC to fail
+    * [THRIFT-3950] - Memory leak while calling oneway method
+    * [THRIFT-3143] - add typescript directory support
+    * [THRIFT-4564] - TBufferedTransport can leave corrupt data in the buffer
+    * [THRIFT-4647] - Node.js Fileserver webroot path
+    * [THRIFT-4489] - Unix domain socket support for NodeJS client
+    * [THRIFT-4443] - node.js json_protocol throws error in skip function
+    * [THRIFT-4604] - NodeJS: Expose Int64 from browser.js for consumption by browser
+    * [THRIFT-4480] - NodeJS warning on binary_protocol writeMessageEnd when seqid = 0
+
+## perl
+    * [THRIFT-4382] - Replace the use of Perl Indirect Object Syntax calls to new()
+    * [THRIFT-4471] - Thrift CPAN release is missing Makefile.PL and the clients are unable to build the module
+    * [THRIFT-4416] - Perl CPAN Packaging Improvements
+
+## php
+    * [THRIFT-4474] - PHP generator use PSR-4 default
+    * [THRIFT-4463] - PHP generated code match PSR-2
+    * [THRIFT-4373] - Extending Thrift class results in "Attempt serialize from non-Thrift object"
+    * [THRIFT-4354] - TSocket block on read
+    * [THRIFT-4423] - migrate php library to psr-4
+    * [THRIFT-4656] - infinite loop in latest PHP library
+    * [THRIFT-4477] - TBufferedTransport must have underlying transport
+    * [THRIFT-4475] - lib/php/test should be checked for PSR-2
+    * [THRIFT-4498] - add phpcs back
+    * [THRIFT-4460] - php library use PSR-2
+    * [THRIFT-4641] - TCurlClient doesn't check for HTTP status code
+    * [THRIFT-4645] - TCurlClient: show actual error message when throwing TTransportException
+    * [THRIFT-4674] - Add stream context support into PHP/THttpClient
+    * [THRIFT-4459] - reduce php library directory depth
+
+## python
+    * [THRIFT-4670] - Twisted, slots, and void method fails with "object has no attribute 'success'"
+    * [THRIFT-4464] - Potentially server-crashing typo in Python TNonblockingServer
+    * [THRIFT-4548] - Supporting TBinaryProtocolAccelerated protocol when using TMultiplexedProcessor in Python
+    * [THRIFT-4577] - Outdated cipher string in python unit test
+    * [THRIFT-4505] - python build on Vagrant Windows boxes fails
+    * [THRIFT-4621] - THeader for Python
+    * [THRIFT-4668] - make socket backlog configurable for python
+    * [THRIFT-4561] - Python: cleanup socket timeout settings
+
+## ruby
+    * [THRIFT-4289] - Thrift RSpec test suite fails with Ruby 2.4.x due to Fixnum deprecation
+    * [THRIFT-4342] - Support ruby rspec 3
+    * [THRIFT-4525] - Add ssl socket option to ruby cross tests
+    * [THRIFT-4450] - Add seek support to TCompactInputProtocol in Rust
+    * [THRIFT-4631] - Codegen Creates Invalid Ruby for Recursive Structs
+    * [THRIFT-4472] - Fix the genspec for ruby so it does not complain about an invalid license
+
+## rust
+    * [THRIFT-4662] - Rust const string calls function at compile time
+    * [THRIFT-4661] - Rust enum name wrong case in generated structs
+    * [THRIFT-4617] - Avoid generating conflicting struct names in Rust code
+    * [THRIFT-4529] - Rust generation should include #![allow(non_snake_case)] or force conform to Rust style guidelines
+    * [THRIFT-4390] - Rust binary protocol and buffered transport cannot handle writes above 4096 bytes
+    * [THRIFT-4419] - Rust framed transport cannot handle writes above 4096 bytes
+    * [THRIFT-4658] - Rust's TBinaryInputProtocol fails when strict is false
+    * [THRIFT-4187] - Dart -> Rust Framed cross tests fail
+    * [THRIFT-4664] - Rust cannot create ReadHalf/WriteHalf to implement custom tranports
+
+## swift (new language support in 0.12.0)
+    * [THRIFT-3773] - Swift Library
+
+## test suite
+    * [THRIFT-4515] - Gracefully shutdown cross-test servers to fully test teardown
+    * [THRIFT-4085] - Add .NET Core to the make cross standard test suite
+    * [THRIFT-4358] - Add unix domain sockets in ruby to cross test - code exists
+
+## typescript (new language support in 0.12.0)
+    * [THRIFT-3143] - add typescript directory support
+
+================================================================================
 Thrift 0.11.0
 --------------------------------------------------------------------------------
 ## Sub-task

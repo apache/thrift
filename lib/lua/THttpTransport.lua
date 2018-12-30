@@ -25,7 +25,7 @@ THttpTransport = TTransportBase:new{
   wBuf = '',
   rBuf = '',
   CRLF = '\r\n',
-  VERSION = '1.0.0',
+  VERSION = version,
   isServer = true
 }
 
