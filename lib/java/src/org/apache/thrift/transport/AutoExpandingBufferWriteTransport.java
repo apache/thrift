@@ -26,8 +26,8 @@ public final class AutoExpandingBufferWriteTransport extends TTransport {
   private final AutoExpandingBuffer buf;
   private int pos;
 
-  public AutoExpandingBufferWriteTransport(int initialCapacity, double growthCoefficient) {
-    this.buf = new AutoExpandingBuffer(initialCapacity, growthCoefficient);
+  public AutoExpandingBufferWriteTransport(int initialCapacity) {
+    this.buf = new AutoExpandingBuffer(initialCapacity);
     this.pos = 0;
   }
 

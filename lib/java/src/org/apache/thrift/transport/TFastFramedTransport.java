@@ -106,8 +106,8 @@ public class TFastFramedTransport extends TTransport {
     this.underlying = underlying;
     this.maxLength = maxLength;
     this.initialBufferCapacity = initialBufferCapacity;
-    writeBuffer = new AutoExpandingBufferWriteTransport(initialBufferCapacity, 1.5);
-    readBuffer = new AutoExpandingBufferReadTransport(initialBufferCapacity, 1.5);
+    writeBuffer = new AutoExpandingBufferWriteTransport(initialBufferCapacity);
+    readBuffer = new AutoExpandingBufferReadTransport(initialBufferCapacity);
   }
 
   @Override
@@ -167,7 +167,7 @@ public class TFastFramedTransport extends TTransport {
   }
 
   public void clear() {
-    readBuffer = new AutoExpandingBufferReadTransport(initialBufferCapacity, 1.5);
+    readBuffer = new AutoExpandingBufferReadTransport(initialBufferCapacity);
   }
 
   @Override
