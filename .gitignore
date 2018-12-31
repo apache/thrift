@@ -285,6 +285,7 @@ project.lock.json
 /lib/rs/test/src/ultimate.rs
 /lib/rs/*.iml
 /lib/rs/**/*.iml
+/lib/swift/.build
 /libtool
 /ltmain.sh
 /missing
