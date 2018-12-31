@@ -20,6 +20,7 @@
 package org.apache.thrift.transport;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -332,12 +333,8 @@ public class TestTSaslTransports extends TestCase {
         throw new SaslException("Already complete!");
       }
 
-      try {
-        hasProvidedInitialResponse = true;
-        return username.getBytes("UTF-8");
-      } catch (IOException e) {
-        throw new SaslException(e.toString());
-      }
+      hasProvidedInitialResponse = true;
+      return username.getBytes(StandardCharsets.UTF_8);
     }
     public boolean isComplete() { return hasProvidedInitialResponse; }
     public byte[] unwrap(byte[] incoming, int offset, int len) {
@@ -354,11 +351,7 @@ public class TestTSaslTransports extends TestCase {
     private String user;
     public String getMechanismName() { return "ANONYMOUS"; }
     public byte[] evaluateResponse(byte[] response) throws SaslException {
-      try {
-        this.user = new String(response, "UTF-8");
-      } catch (IOException e) {
-        throw new SaslException(e.toString());
-      }
+      this.user = new String(response, StandardCharsets.UTF_8);
       return null;
     }
     public boolean isComplete() { return user != null; }

@@ -19,8 +19,8 @@
 
 package org.apache.thrift.protocol;
 
-import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
 import java.util.Stack;
 
 import org.apache.thrift.TException;
@@ -262,12 +262,8 @@ public class TSimpleJSONProtocol extends TProtocol {
   }
 
   public void _writeStringData(String s) throws TException {
-    try {
-      byte[] b = s.getBytes("UTF-8");
-      trans_.write(b);
-    } catch (UnsupportedEncodingException uex) {
-      throw new TException("JVM DOES NOT SUPPORT UTF-8");
-    }
+    byte[] b = s.getBytes(StandardCharsets.UTF_8);
+    trans_.write(b);
   }
 
   public void writeI64(long i64) throws TException {
@@ -342,12 +338,10 @@ public class TSimpleJSONProtocol extends TProtocol {
   }
 
   public void writeBinary(ByteBuffer bin) throws TException {
-    try {
-      // TODO(mcslee): Fix this
-      writeString(new String(bin.array(), bin.position() + bin.arrayOffset(), bin.limit() - bin.position() - bin.arrayOffset(), "UTF-8"));
-    } catch (UnsupportedEncodingException uex) {
-      throw new TException("JVM DOES NOT SUPPORT UTF-8");
-    }
+    // TODO(mcslee): Fix this
+    writeString(new String(bin.array(), bin.position() + bin.arrayOffset(),
+        bin.limit() - bin.position() - bin.arrayOffset(),
+        StandardCharsets.UTF_8));
   }
 
   /**

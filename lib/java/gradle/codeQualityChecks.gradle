@@ -28,7 +28,6 @@ pmd {
     ignoreFailures = true
     toolVersion = '6.0.0'
     sourceSets = [ sourceSets.main ]
-    targetJdk = sourceCompatibility
     ruleSets = [ 'java-basic' ]
 }
 

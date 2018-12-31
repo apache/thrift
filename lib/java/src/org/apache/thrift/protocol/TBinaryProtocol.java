@@ -19,8 +19,8 @@
 
 package org.apache.thrift.protocol;
 
-import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
 
 import org.apache.thrift.TException;
 import org.apache.thrift.transport.TTransport;
@@ -202,13 +202,9 @@ public class TBinaryProtocol extends TProtocol {
   }
 
   public void writeString(String str) throws TException {
-    try {
-      byte[] dat = str.getBytes("UTF-8");
-      writeI32(dat.length);
-      trans_.write(dat, 0, dat.length);
-    } catch (UnsupportedEncodingException uex) {
-      throw new TException("JVM DOES NOT SUPPORT UTF-8");
-    }
+    byte[] dat = str.getBytes(StandardCharsets.UTF_8);
+    writeI32(dat.length);
+    trans_.write(dat, 0, dat.length);
   }
 
   public void writeBinary(ByteBuffer bin) throws TException {
@@ -360,13 +356,10 @@ public class TBinaryProtocol extends TProtocol {
     checkStringReadLength(size);
 
     if (trans_.getBytesRemainingInBuffer() >= size) {
-      try {
-        String s = new String(trans_.getBuffer(), trans_.getBufferPosition(), size, "UTF-8");
-        trans_.consumeBuffer(size);
-        return s;
-      } catch (UnsupportedEncodingException e) {
-        throw new TException("JVM DOES NOT SUPPORT UTF-8");
-      }
+      String s = new String(trans_.getBuffer(), trans_.getBufferPosition(),
+          size, StandardCharsets.UTF_8);
+      trans_.consumeBuffer(size);
+      return s;
     }
 
     return readStringBody(size);
@@ -374,13 +367,9 @@ public class TBinaryProtocol extends TProtocol {
 
   public String readStringBody(int size) throws TException {
     checkStringReadLength(size);
-    try {
-      byte[] buf = new byte[size];
-      trans_.readAll(buf, 0, size);
-      return new String(buf, "UTF-8");
-    } catch (UnsupportedEncodingException uex) {
-      throw new TException("JVM DOES NOT SUPPORT UTF-8");
-    }
+    byte[] buf = new byte[size];
+    trans_.readAll(buf, 0, size);
+    return new String(buf, StandardCharsets.UTF_8);
   }
 
   public ByteBuffer readBinary() throws TException {
