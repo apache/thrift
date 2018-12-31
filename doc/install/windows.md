@@ -145,7 +145,7 @@ Run bootstrap.sh:
 
 Make sure you have java in your $PATH variable, if not do(adjust path if necessary):
 
-	export PATH=$PATH:"/cygdrive/c/program files/java/jre1.6.0_05/bin"
+	export PATH=$PATH:"/cygdrive/c/program files/java/jre1.8.0_191/bin"
 
 Run configure - using CXXFLAGS to work around an issue with an old pthreads define (untested on MinGW - works on Cygwin):
 
