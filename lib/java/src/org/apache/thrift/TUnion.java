@@ -79,7 +79,7 @@ public abstract class TUnion<T extends TUnion<T,F>, F extends TFieldIdEnum> impl
   }
 
   private static Map deepCopyMap(Map<Object, Object> map) {
-    Map copy = new HashMap();
+    Map copy = new HashMap(map.size());
     for (Map.Entry<Object, Object> entry : map.entrySet()) {
       copy.put(deepCopyObject(entry.getKey()), deepCopyObject(entry.getValue()));
     }
@@ -87,7 +87,7 @@ public abstract class TUnion<T extends TUnion<T,F>, F extends TFieldIdEnum> impl
   }
 
   private static Set deepCopySet(Set set) {
-    Set copy = new HashSet();
+    Set copy = new HashSet(set.size());
     for (Object o : set) {
       copy.add(deepCopyObject(o));
     }
