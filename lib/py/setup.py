@@ -90,9 +90,9 @@ def run_setup(with_binary):
     twisted_deps = ['twisted']
 
     setup(name='thrift',
-          version='1.0.0-dev',
+          version='1.0.0',
           description='Python bindings for the Apache Thrift RPC system',
-          author='Thrift Developers',
+          author='Apache Thrift Developers',
           author_email='dev@thrift.apache.org',
           url='http://thrift.apache.org',
           license='Apache License 2.0',
