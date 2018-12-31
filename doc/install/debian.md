@@ -19,7 +19,7 @@ If you would like to build Apache Thrift libraries for other programming languag
 
  * Java
 	* packages: ant  
-	* You will also need Java JDK v1.7 or higher. Type **javac** to see a list of available packages, pick the one you prefer and **apt-get install** it (e.g. default-jdk).
+	* You will also need Java JDK v1.8 or higher. Type **javac** to see a list of available packages, pick the one you prefer and **apt-get install** it (e.g. default-jdk).
  * Ruby
 	* ruby-full ruby-dev ruby-rspec rake rubygems bundler
  * Python
