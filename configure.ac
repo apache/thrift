@@ -141,6 +141,7 @@ if test "$enable_libs" = "no"; then
   with_nodets="no"
   with_lua="no"
   with_rs="no"
+  with_swift="no"
 fi
 
 AX_THRIFT_LIB(cpp, [C++], yes)
@@ -444,6 +445,16 @@ if test "$with_go" = "yes";  then
 fi
 AM_CONDITIONAL(WITH_GO, [test "$have_go" = "yes"])
 AM_CONDITIONAL([GOVERSION_LT_17], [test "$go_version_lt_17" = "yes"])
+
+AX_THRIFT_LIB(swift, [Swift], yes)
+have_swift="no"
+if test "$with_swift" = "yes"; then
+  AC_PATH_PROG([SWIFT], [swift])
+  if test "x$SWIFT" != "x" -a "x$SWIFT" != "x"; then
+    have_swift="yes"
+  fi
+fi
+AM_CONDITIONAL([WITH_SWIFT], [test "$have_swift" = "yes"])
 
 AX_THRIFT_LIB(rs, [Rust], yes)
 have_rs="no"
@@ -851,6 +862,7 @@ AC_CONFIG_FILES([
   lib/rs/Makefile
   lib/rs/test/Makefile
   lib/lua/Makefile
+  lib/swift/Makefile
   lib/xml/Makefile
   lib/xml/test/Makefile
   test/Makefile
@@ -929,6 +941,8 @@ if test "$have_lua" = "yes" ; then MAYBE_LUA="lua" ; else MAYBE_LUA="" ; fi
 AC_SUBST([MAYBE_LUA])
 if test "$have_rs" = "yes" ; then MAYBE_RS="rs" ; else MAYBE_RS="" ; fi
 AC_SUBST([MAYBE_RS])
+if test "$have_swift" = "yes" ; then MAYBE_SWIFT="swift" ; else MAYBE_SWIFT="" ; fi
+AC_SUBST([MAYBE_SWIFT])
 if test "$have_dotnetcore" = "yes" ; then MAYBE_DOTNETCORE="netcore" ; else MAYBE_DOTNETCORE="" ; fi
 AC_SUBST([MAYBE_DOTNETCORE])
 if test "$have_cl" = "yes" ; then MAYBE_CL="cl" ; else MAYBE_CL="" ; fi
@@ -961,6 +975,7 @@ echo "Building Python Library ...... : $have_python"
 echo "Building Py3 Library ......... : $have_py3"
 echo "Building Ruby Library ........ : $have_ruby"
 echo "Building Rust Library ........ : $have_rs"
+echo "Building Swift Library ....... : $have_swift"
 
 if test "$have_csharp" = "yes" ; then
   echo
@@ -1089,6 +1104,12 @@ if test "$have_rs" = "yes" ; then
   echo "   Using Cargo................ : $CARGO"
   echo "   Using rustc................ : $RUSTC"
   echo "   Using Rust version......... : $($RUSTC --version)"
+fi
+if test "$have_swift" = "yes" ; then
+  echo
+  echo "Swift Library:"
+  echo "   Using Swift ............... : $SWIFT"
+  echo "   Using Swift version ....... : $($SWIFT --version | head -1)"
 fi
 echo
 echo "If something is missing that you think should be present,"
