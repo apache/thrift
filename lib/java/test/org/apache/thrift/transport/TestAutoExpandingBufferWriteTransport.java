@@ -25,7 +25,7 @@ import junit.framework.TestCase;
 public class TestAutoExpandingBufferWriteTransport extends TestCase {
 
   public void testIt() throws Exception {
-    AutoExpandingBufferWriteTransport t = new AutoExpandingBufferWriteTransport(1, 1.5);
+    AutoExpandingBufferWriteTransport t = new AutoExpandingBufferWriteTransport(1);
     assertEquals(1, t.getBuf().array().length);
     byte[] b1 = new byte[]{1,2,3};
     t.write(b1);

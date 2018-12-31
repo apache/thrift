@@ -32,7 +32,7 @@ public class TestAutoExpandingBufferReadTransport extends TestCase {
   }
 
   public void testIt() throws Exception {
-    AutoExpandingBufferReadTransport t = new AutoExpandingBufferReadTransport(150, 1.5);
+    AutoExpandingBufferReadTransport t = new AutoExpandingBufferReadTransport(150);
 
     TMemoryInputTransport membuf = new TMemoryInputTransport(HUNDRED_BYTES);
 
