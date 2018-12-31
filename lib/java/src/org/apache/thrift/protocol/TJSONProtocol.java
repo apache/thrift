@@ -20,8 +20,8 @@
 package org.apache.thrift.protocol;
 
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Stack;
 
@@ -418,12 +418,8 @@ public class TJSONProtocol extends TProtocol {
     if (escapeNum) {
       trans_.write(QUOTE);
     }
-    try {
-      byte[] buf = str.getBytes("UTF-8");
-      trans_.write(buf);
-    } catch (UnsupportedEncodingException uex) {
-      throw new TException("JVM DOES NOT SUPPORT UTF-8");
-    }
+    byte[] buf = str.getBytes(StandardCharsets.UTF_8);
+    trans_.write(buf);
     if (escapeNum) {
       trans_.write(QUOTE);
     }
@@ -453,12 +449,8 @@ public class TJSONProtocol extends TProtocol {
     if (escapeNum) {
       trans_.write(QUOTE);
     }
-    try {
-      byte[] b = str.getBytes("UTF-8");
-      trans_.write(b, 0, b.length);
-    } catch (UnsupportedEncodingException uex) {
-      throw new TException("JVM DOES NOT SUPPORT UTF-8");
-    }
+    byte[] b = str.getBytes(StandardCharsets.UTF_8);
+    trans_.write(b, 0, b.length);
     if (escapeNum) {
       trans_.write(QUOTE);
     }
@@ -513,12 +505,8 @@ public class TJSONProtocol extends TProtocol {
     resetContext(); // THRIFT-3743
     writeJSONArrayStart();
     writeJSONInteger(VERSION);
-    try {
-      byte[] b = message.name.getBytes("UTF-8");
-      writeJSONString(b);
-    } catch (UnsupportedEncodingException uex) {
-      throw new TException("JVM DOES NOT SUPPORT UTF-8");
-    }
+    byte[] b = message.name.getBytes(StandardCharsets.UTF_8);
+    writeJSONString(b);
     writeJSONInteger(message.type);
     writeJSONInteger(message.seqid);
   }
@@ -628,12 +616,8 @@ public class TJSONProtocol extends TProtocol {
 
   @Override
   public void writeString(String str) throws TException {
-    try {
-      byte[] b = str.getBytes("UTF-8");
-      writeJSONString(b);
-    } catch (UnsupportedEncodingException uex) {
-      throw new TException("JVM DOES NOT SUPPORT UTF-8");
-    }
+    byte[] b = str.getBytes(StandardCharsets.UTF_8);
+    writeJSONString(b);
   }
 
   @Override
@@ -684,19 +668,17 @@ public class TJSONProtocol extends TProtocol {
               }
 
               codeunits.add((char)cu);
-              arr.write((new String(new int[] { codeunits.get(0), codeunits.get(1) }, 0, 2)).getBytes("UTF-8"));
+              arr.write(
+                  (new String(new int[] { codeunits.get(0), codeunits.get(1) },
+                      0, 2)).getBytes(StandardCharsets.UTF_8));
               codeunits.clear();
             }
             else {
-              arr.write((new String(new int[] { cu }, 0, 1)).getBytes("UTF-8"));
+              arr.write((new String(new int[] { cu }, 0, 1))
+                  .getBytes(StandardCharsets.UTF_8));
             }
             continue;
-          }
-          catch (UnsupportedEncodingException ex) {
-            throw new TProtocolException(TProtocolException.NOT_IMPLEMENTED,
-                "JVM does not support UTF-8");
-          }
-          catch (IOException ex) {
+          } catch (IOException ex) {
             throw new TProtocolException(TProtocolException.INVALID_DATA,
                 "Invalid unicode sequence");
           }
@@ -777,19 +759,14 @@ public class TJSONProtocol extends TProtocol {
     context_.read();
     if (reader_.peek() == QUOTE[0]) {
       TByteArrayOutputStream arr = readJSONString(true);
-      try {
-        double dub = Double.valueOf(arr.toString("UTF-8"));
-        if (!context_.escapeNum() && !Double.isNaN(dub) &&
-            !Double.isInfinite(dub)) {
-          // Throw exception -- we should not be in a string in this case
-          throw new TProtocolException(TProtocolException.INVALID_DATA,
-                                       "Numeric data unexpectedly quoted");
-        }
-        return dub;
+      double dub = Double.valueOf(arr.toString(StandardCharsets.UTF_8));
+      if (!context_.escapeNum() && !Double.isNaN(dub)
+          && !Double.isInfinite(dub)) {
+        // Throw exception -- we should not be in a string in this case
+        throw new TProtocolException(TProtocolException.INVALID_DATA,
+            "Numeric data unexpectedly quoted");
       }
-      catch (UnsupportedEncodingException ex) {
-        throw new TException("JVM DOES NOT SUPPORT UTF-8");
-      }
+      return dub;
     }
     else {
       if (context_.escapeNum()) {
@@ -868,13 +845,7 @@ public class TJSONProtocol extends TProtocol {
       throw new TProtocolException(TProtocolException.BAD_VERSION,
                                    "Message contained bad version.");
     }
-    String name;
-    try {
-      name = readJSONString(false).toString("UTF-8");
-    }
-    catch (UnsupportedEncodingException ex) {
-      throw new TException("JVM DOES NOT SUPPORT UTF-8");
-    }
+    String name = readJSONString(false).toString(StandardCharsets.UTF_8);
     byte type = (byte) readJSONInteger();
     int seqid = (int) readJSONInteger();
     return new TMessage(name, type, seqid);
@@ -991,12 +962,7 @@ public class TJSONProtocol extends TProtocol {
 
   @Override
   public String readString() throws TException {
-    try {
-      return readJSONString(false).toString("UTF-8");
-    }
-    catch (UnsupportedEncodingException ex) {
-      throw new TException("JVM DOES NOT SUPPORT UTF-8");
-    }
+    return readJSONString(false).toString(StandardCharsets.UTF_8);
   }
 
   @Override

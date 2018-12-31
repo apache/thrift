@@ -20,7 +20,7 @@
 package org.apache.thrift.transport;
 
 import org.apache.thrift.TByteArrayOutputStream;
-import java.io.UnsupportedEncodingException;
+import java.nio.charset.Charset;
 
 /**
  * Memory buffer-based implementation of the TTransport interface.
@@ -30,6 +30,8 @@ public class TMemoryBuffer extends TTransport {
    * Create a TMemoryBuffer with an initial buffer size of <i>size</i>. The
    * internal buffer will grow as necessary to accommodate the size of the data
    * being written to it.
+   *
+   * @param size the initial size of the buffer
    */
   public TMemoryBuffer(int size) {
     arr_ = new TByteArrayOutputStream(size);
@@ -69,11 +71,11 @@ public class TMemoryBuffer extends TTransport {
   /**
    * Output the contents of the memory buffer as a String, using the supplied
    * encoding
-   * @param enc  the encoding to use
+   * @param charset the encoding to use
    * @return the contents of the memory buffer as a String
    */
-  public String toString(String enc) throws UnsupportedEncodingException {
-    return arr_.toString(enc);
+  public String toString(Charset charset) {
+    return arr_.toString(charset);
   }
 
   public String inspect() {

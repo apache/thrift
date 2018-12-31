@@ -20,6 +20,7 @@
 package org.apache.thrift;
 
 import java.io.ByteArrayOutputStream;
+import java.nio.charset.Charset;
 
 /**
  * Class that allows access to the underlying buf without doing deep
@@ -52,5 +53,9 @@ public class TByteArrayOutputStream extends ByteArrayOutputStream {
 
   public int len() {
     return count;
+  }
+
+  public String toString(Charset charset) {
+    return new String(buf, 0, count, charset);
   }
 }
