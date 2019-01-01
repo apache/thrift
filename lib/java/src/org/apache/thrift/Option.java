@@ -24,6 +24,9 @@ package org.apache.thrift;
  */
 public abstract class Option<T> {
 
+    @SuppressWarnings("rawtypes")
+    private static final Option NONE = new None();
+
     /**
      * Whether the Option is defined or not
      * @return
@@ -87,7 +90,7 @@ public abstract class Option<T> {
         }
 
         public String toString() {
-            return "Some("+value.toString()+")";
+            return "Some(" + value + ")";
         }
     }
 
@@ -99,9 +102,9 @@ public abstract class Option<T> {
      */
     public static <T> Option<T> fromNullable(T value) {
         if (value != null) {
-            return new Some<T>(value);
+            return some(value);
         } else {
-            return new None<T>();
+            return none();
         }
     }
 
@@ -115,7 +118,8 @@ public abstract class Option<T> {
         return new Some<T>(value);
     }
 
+    @SuppressWarnings("unchecked")
     public static <T> None<T> none() {
-        return new None<T>();
+        return (None<T>) NONE;
     }
 }
