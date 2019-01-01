@@ -16,45 +16,43 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.apache.thrift;
+package org.apache.thrift.protocol;
+
+import java.util.Arrays;
 
 /**
  * ShortStack is a short-specific Stack implementation written for the express
  * purpose of very fast operations on TCompactProtocol's field id stack. This
  * implementation performs at least 10x faster than java.util.Stack.
  */
-public class ShortStack {
+class ShortStack {
 
   private short[] vector;
-  private int top = -1;
+
+  /** Always points to the next location */
+  private int top = 0;
 
   public ShortStack(int initialCapacity) {
     vector = new short[initialCapacity];
   }
 
   public short pop() {
-    return vector[top--];
+    return vector[--top];
   }
 
   public void push(short pushed) {
-    if (vector.length == top + 1) {
+    if (vector.length == top) {
       grow();
     }
-    vector[++top] = pushed;
+    vector[top++] = pushed;
   }
 
   private void grow() {
-    short[] newVector = new short[vector.length * 2];
-    System.arraycopy(vector, 0, newVector, 0, vector.length);
-    vector = newVector;
-  }
-
-  public short peek() {
-    return vector[top];
+    vector = Arrays.copyOf(vector, vector.length << 1);
   }
 
   public void clear() {
-    top = -1;
+    top = 0;
   }
 
   @Override
@@ -62,18 +60,15 @@ public class ShortStack {
     StringBuilder sb = new StringBuilder();
     sb.append("<ShortStack vector:[");
     for (int i = 0; i < vector.length; i++) {
+      boolean isTop = (i == (top - 1));
+      short value = vector[i];
       if (i != 0) {
-        sb.append(" ");
+        sb.append(' ');
       }
-
-      if (i == top) {
-        sb.append(">>");
-      }
-
-      sb.append(vector[i]);
-
-      if (i == top) {
-        sb.append("<<");
+      if (isTop) {
+        sb.append(">>").append(value).append("<<");
+      } else {
+        sb.append(value);
       }
     }
     sb.append("]>");

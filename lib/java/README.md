@@ -170,3 +170,7 @@ The access modifier of the AutoExpandingBuffer class has been changed from
 public to default (package) and will no longer be accessible by third-party
 libraries.
 
+The access modifier of the ShortStack class has been changed from
+public to default (package) and will no longer be accessible by third-party
+libraries.
+
