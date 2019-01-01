@@ -24,7 +24,6 @@ import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 
-import org.apache.thrift.ShortStack;
 import org.apache.thrift.TException;
 import org.apache.thrift.transport.TTransport;
 
