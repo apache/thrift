@@ -25,10 +25,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.SortedMap;
-import java.util.SortedSet;
 import java.util.TreeMap;
-import java.util.TreeSet;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 
 public final class TBaseHelper {
 
@@ -53,57 +54,27 @@ public final class TBaseHelper {
   }
 
   public static int compareTo(boolean a, boolean b) {
-    return Boolean.valueOf(a).compareTo(b);
+    return Boolean.compare(a, b);
   }
 
   public static int compareTo(byte a, byte b) {
-    if (a < b) {
-      return -1;
-    } else if (b < a) {
-      return 1;
-    } else {
-      return 0;
-    }
+    return Byte.compare(a, b);
   }
 
   public static int compareTo(short a, short b) {
-    if (a < b) {
-      return -1;
-    } else if (b < a) {
-      return 1;
-    } else {
-      return 0;
-    }
+    return Short.compare(a,b);
   }
 
   public static int compareTo(int a, int b) {
-    if (a < b) {
-      return -1;
-    } else if (b < a) {
-      return 1;
-    } else {
-      return 0;
-    }
+    return Integer.compare(a, b);
   }
 
   public static int compareTo(long a, long b) {
-    if (a < b) {
-      return -1;
-    } else if (b < a) {
-      return 1;
-    } else {
-      return 0;
-    }
+    return Long.compare(a, b);
   }
 
   public static int compareTo(double a, double b) {
-    if (a < b) {
-      return -1;
-    } else if (b < a) {
-      return 1;
-    } else {
-      return 0;
-    }
+    return Double.compare(a, b);
   }
 
   public static int compareTo(String a, String b) {
@@ -111,17 +82,16 @@ public final class TBaseHelper {
   }
 
   public static int compareTo(byte[] a, byte[] b) {
-    int sizeCompare = compareTo(a.length, b.length);
-    if (sizeCompare != 0) {
-      return sizeCompare;
-    }
-    for (int i = 0; i < a.length; i++) {
-      int byteCompare = compareTo(a[i], b[i]);
-      if (byteCompare != 0) {
-        return byteCompare;
+    int compare = compareTo(a.length, b.length);
+    if (compare == 0) {
+      for (int i = 0; i < a.length; i++) {
+        compare = compareTo(a[i], b[i]);
+        if (compare != 0) {
+          break;
+        }
       }
     }
-    return 0;
+    return compare;
   }
 
   public static int compareTo(Comparable a, Comparable b) {
@@ -129,41 +99,39 @@ public final class TBaseHelper {
   }
 
   public static int compareTo(List a, List b) {
-    int lastComparison = compareTo(a.size(), b.size());
-    if (lastComparison != 0) {
-      return lastComparison;
-    }
-    for (int i = 0; i < a.size(); i++) {
-      lastComparison = comparator.compare(a.get(i), b.get(i));
-      if (lastComparison != 0) {
-        return lastComparison;
+    int compare = compareTo(a.size(), b.size());
+    if (compare == 0) {
+      for (int i = 0; i < a.size(); i++) {
+        compare = comparator.compare(a.get(i), b.get(i));
+        if (compare != 0) {
+          break;
+        }
       }
     }
-    return 0;
+    return compare;
   }
 
   public static int compareTo(Set a, Set b) {
-    int lastComparison = compareTo(a.size(), b.size());
-    if (lastComparison != 0) {
-      return lastComparison;
-    }
-    SortedSet sortedA = new TreeSet(comparator);
-    sortedA.addAll(a);
-    SortedSet sortedB = new TreeSet(comparator);
-    sortedB.addAll(b);
+    int compare = compareTo(a.size(), b.size());
+    if (compare == 0) {
+      ArrayList sortedA = new ArrayList(a);
+      ArrayList sortedB = new ArrayList(b);
 
-    Iterator iterA = sortedA.iterator();
-    Iterator iterB = sortedB.iterator();
+      Collections.sort(sortedA, comparator);
+      Collections.sort(sortedB, comparator);
 
-    // Compare each item.
-    while (iterA.hasNext() && iterB.hasNext()) {
-      lastComparison = comparator.compare(iterA.next(), iterB.next());
-      if (lastComparison != 0) {
-        return lastComparison;
+      Iterator iterA = sortedA.iterator();
+      Iterator iterB = sortedB.iterator();
+
+      // Compare each item.
+      while (iterA.hasNext() && iterB.hasNext()) {
+        compare = comparator.compare(iterA.next(), iterB.next());
+        if (compare != 0) {
+          break;
+        }
       }
     }
-
-    return 0;
+    return compare;
   }
 
   public static int compareTo(Map a, Map b) {
@@ -316,22 +284,14 @@ public final class TBaseHelper {
   }
 
   public static byte[] copyBinary(final byte[] orig) {
-    if (orig == null) {
-      return null;
-    }
-
-    byte[] copy = new byte[orig.length];
-    System.arraycopy(orig, 0, copy, 0, orig.length);
-    return copy;
+    return (orig == null) ? null : Arrays.copyOf(orig, orig.length);
   }
 
   public static int hashCode(long value) {
-    int low = (int) value;
-    int high = (int) (value >>> 32);
-    return high * 127 + low;
+    return Long.hashCode(value);
   }
 
   public static int hashCode(double value) {
-    return hashCode(Double.doubleToRawLongBits(value));
+    return Double.hashCode(value);
   }
 }
