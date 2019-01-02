@@ -325,10 +325,13 @@ AM_CONDITIONAL(WITH_TWISTED_TEST, [test "$have_trial" = "yes"])
 # It's distro specific and far from ideal but needed to cross test py2-3 at once.
 # TODO: find "python2" if it's 3.x
 have_py3="no"
-if python --version 2>&1 | grep -q "Python 2"; then
-  AC_PATH_PROGS([PYTHON3], [python3 python3.5 python35 python3.4 python34])
-  if test -n "$PYTHON3"; then
-    have_py3="yes"
+AX_THRIFT_LIB(py3, [Py3], yes)
+if test "$with_py3" = "yes"; then
+  if $PYTHON --version 2>&1 | grep -q "Python 2"; then
+    AC_PATH_PROGS([PYTHON3], [python3 python3.7 python37 python3.6 python36 python3.5 python35 python3.4 python34])
+    if test -n "$PYTHON3"; then
+      have_py3="yes"
+    fi
   fi
 fi
 AM_CONDITIONAL(WITH_PY3, [test "$have_py3" = "yes"])
