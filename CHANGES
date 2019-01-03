@@ -43,6 +43,7 @@ Thrift 0.12.0
     * [THRIFT-4677] - py3: UnicodeDecideError in Python3
 
 ## Build Process
+    * [THRIFT-4067] - Windows thrift compiler distributed on the apache web site has runtime dependencies
     * [THRIFT-4308] - D language docker images need demios for libevent and openssl fixed to re-enable make cross on dlang
     * [THRIFT-4579] - Use Ubuntu Bionic (18.04 LTS) for CI builds instead of Artful (17.10)
     * [THRIFT-4508] - Define CI operating system coverage rules for the project and (hopefully) simplify CI a little more
@@ -119,6 +120,8 @@ Thrift 0.12.0
     * [THRIFT-4461] - Compiler directive should match Delphi XE4
     * [THRIFT-4462] - First line in Console duplicated
     * [THRIFT-4642] - FPU ctrl word settings may cause an unexpected "denormalized" error
+    * [THRIFT-4589] - HTTP client timeouts are a) incomplete and b) not used at all
+    * [THRIFT-4590] - running the test client using HTTP transport leads to "CoInitialize not called"
 
 ## erlang
     * [THRIFT-4497] - Erlang records should use map() for map type
@@ -244,6 +247,7 @@ Thrift 0.12.0
     * [THRIFT-4658] - Rust's TBinaryInputProtocol fails when strict is false
     * [THRIFT-4187] - Dart -> Rust Framed cross tests fail
     * [THRIFT-4664] - Rust cannot create ReadHalf/WriteHalf to implement custom tranports
+    * [THRIFT-4665] - Keep Rust library up-to-date on crates.io
 
 ## swift (new language support in 0.12.0)
     * [THRIFT-3773] - Swift Library
@@ -436,6 +440,7 @@ Thrift 0.11.0
     * [THRIFT-4370] - Ubuntu Artful cppcheck and flake8 are more stringent and causing SCA build job failures
     * [THRIFT-4372] - Pipe write operations across a network are limited to 65,535 bytes per write. 
     * [THRIFT-4374] - cannot load thrift_protocol due to undefined symbol: _ZTVN10__cxxabiv120__si_class_type_infoE
+    * [THRIFT-4375] - TMemory throw bad_alloc due to counter overflow
     * [THRIFT-4376] - Coverity high impact issue resolution
     * [THRIFT-4377] - haxe. socket handles leak in TSimpleServer
     * [THRIFT-4381] - Wrong isset bitfield value after transmission
