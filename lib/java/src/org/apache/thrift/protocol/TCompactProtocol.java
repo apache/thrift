@@ -203,6 +203,7 @@ public class TCompactProtocol extends TProtocol {
    * Write a message header to the wire. Compact Protocol messages contain the
    * protocol version so we can migrate forwards in the future if need be.
    */
+  @Override
   public void writeMessageBegin(TMessage message) throws TException {
     writeByteDirect(PROTOCOL_ID);
     writeByteDirect((VERSION & VERSION_MASK) | ((message.type << TYPE_SHIFT_AMOUNT) & TYPE_MASK));
@@ -215,6 +216,7 @@ public class TCompactProtocol extends TProtocol {
    * use it as an opportunity to put special placeholder markers on the field
    * stack so we can get the field id deltas correct.
    */
+  @Override
   public void writeStructBegin(TStruct struct) throws TException {
     lastField_.push(lastFieldId_);
     lastFieldId_ = 0;
