@@ -125,11 +125,11 @@ public class TestTFramedTransport extends TestCase {
     assertEquals(0, countingTrans.writeCount);
 
     trans.flush();
-    assertEquals(2, countingTrans.writeCount);
+    assertEquals(1, countingTrans.writeCount);
 
     trans.write(byteSequence(0, 245));
     trans.flush();
-    assertEquals(4, countingTrans.writeCount);
+    assertEquals(2, countingTrans.writeCount);
 
     DataInputStream din = new DataInputStream(new ByteArrayInputStream(baos.toByteArray()));
     assertEquals(256, din.readInt());
