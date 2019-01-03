@@ -28,6 +28,8 @@ namespace cpp thrift.test
 
 // C++ comment
 /* c style comment */
+/**THRIFT-891 describes how early thrift compilers failed without a space **/
+/**           at the beginning of the comment with two asterisks.          */
 
 # the new unix comment
 
