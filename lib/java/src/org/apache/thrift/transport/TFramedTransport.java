@@ -66,16 +66,25 @@ public class TFramedTransport extends TTransport {
   }
 
   /**
+   * Something to fill in the first four bytes of the buffer
+   * to make room for the frame size.  This allows the
+   * implementation to write once instead of twice.
+   */
+  private static final byte[] sizeFiller_ = new byte[] { 0x00, 0x00, 0x00, 0x00 };
+
+  /**
    * Constructor wraps around another transport
    */
   public TFramedTransport(TTransport transport, int maxLength) {
     transport_ = transport;
     maxLength_ = maxLength;
+    writeBuffer_.write(sizeFiller_, 0, 4);
   }
 
   public TFramedTransport(TTransport transport) {
     transport_ = transport;
     maxLength_ = TFramedTransport.DEFAULT_MAX_LENGTH;
+    writeBuffer_.write(sizeFiller_, 0, 4);
   }
 
   public void open() throws TTransportException {
@@ -155,12 +164,12 @@ public class TFramedTransport extends TTransport {
   @Override
   public void flush() throws TTransportException {
     byte[] buf = writeBuffer_.get();
-    int len = writeBuffer_.len();
+    int len = writeBuffer_.len() - 4;       // account for the prepended frame size
     writeBuffer_.reset();
+    writeBuffer_.write(sizeFiller_, 0, 4);  // make room for the next frame's size data
 
-    encodeFrameSize(len, i32buf);
-    transport_.write(i32buf, 0, 4);
-    transport_.write(buf, 0, len);
+    encodeFrameSize(len, buf);              // this is the frame length without the filler
+    transport_.write(buf, 0, len + 4);      // we have to write the frame size and frame data
     transport_.flush();
   }
 
