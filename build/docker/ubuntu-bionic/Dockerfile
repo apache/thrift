@@ -89,11 +89,11 @@ RUN apt-get install -y --no-install-recommends \
 `# csharp (mono) dependencies` \
       mono-devel
 
-ENV SBCL_VERSION 1.4.12
+ENV SBCL_VERSION 1.4.15
 RUN \
 `# Common Lisp (sbcl) dependencies` \
     curl --version && \
-    curl -O -J -L https://kent.dl.sourceforge.net/project/sbcl/sbcl/${SBCL_VERSION}/sbcl-${SBCL_VERSION}-x86-64-linux-binary.tar.bz2 && \
+    curl -o sbcl-${SBCL_VERSION}-x86-64-linux-binary.tar.bz2 -J -L https://sourceforge.net/projects/sbcl/files/sbcl/${SBCL_VERSION}/sbcl-${SBCL_VERSION}-x86-64-linux-binary.tar.bz2/download?use_mirror=managedway# && \
     tar xjf sbcl-${SBCL_VERSION}-x86-64-linux-binary.tar.bz2 && \
     cd sbcl-${SBCL_VERSION}-x86-64-linux && \
     ./install.sh && \
@@ -101,18 +101,18 @@ RUN \
     cd .. && \
     rm -rf sbcl*
 
-ENV D_VERSION     2.082.1
-ENV DMD_DEB       dmd_2.082.1-0_amd64.deb
+ENV D_VERSION     2.083.1
+ENV DMD_DEB       dmd_2.083.1-0_amd64.deb
 RUN \
 `# D dependencies` \
     wget -q http://downloads.dlang.org/releases/2.x/${D_VERSION}/${DMD_DEB} && \
     dpkg --install ${DMD_DEB} && \
     rm -f ${DMD_DEB} && \
     mkdir -p /usr/include/dmd/druntime/import/deimos /usr/include/dmd/druntime/import/C && \
-    curl -sSL https://github.com/D-Programming-Deimos/libevent/archive/master.tar.gz| tar xz && \
-    mv libevent-master/deimos/* /usr/include/dmd/druntime/import/deimos/ && \
-    mv libevent-master/C/* /usr/include/dmd/druntime/import/C/ && \
-    rm -rf libevent-master && \
+    git clone -b 'v2.0.2+2.0.16' https://github.com/D-Programming-Deimos/libevent.git deimos-libevent-2.0 && \
+    mv deimos-libevent-2.0/deimos/* /usr/include/dmd/druntime/import/deimos/ && \
+    mv deimos-libevent-2.0/C/* /usr/include/dmd/druntime/import/C/ && \
+    rm -rf deimos-libevent-2.0 && \
     git clone -b 'v2.0.0+1.1.0h' https://github.com/D-Programming-Deimos/openssl.git deimos-openssl-1.1.0h && \
     mv deimos-openssl-1.1.0h/deimos/* /usr/include/dmd/druntime/import/deimos/ && \
     mv deimos-openssl-1.1.0h/C/* /usr/include/dmd/druntime/import/C/ && \
@@ -125,7 +125,7 @@ ENV PATH /usr/lib/dart/bin:$PATH
 
 RUN apt-get install -y --no-install-recommends \
 `# dotnet core dependencies` \
-      dotnet-sdk-2.1
+      dotnet-sdk-2.2
 
 RUN apt-get install -y --no-install-recommends \
 `# Erlang dependencies` \
@@ -140,9 +140,9 @@ RUN apt-get install -y --no-install-recommends \
       libglib2.0-dev
 
 # golang
-ENV GOLANG_VERSION 1.11.1
+ENV GOLANG_VERSION 1.11.4
 ENV GOLANG_DOWNLOAD_URL https://golang.org/dl/go$GOLANG_VERSION.linux-amd64.tar.gz
-ENV GOLANG_DOWNLOAD_SHA256 2871270d8ff0c8c69f161aaae42f9f28739855ff5c5204752a8d92a1c9f63993
+ENV GOLANG_DOWNLOAD_SHA256 fb26c30e6a04ad937bbc657a1b5bba92f80096af1e8ee6da6430c045a8db3a5b
 RUN curl -fsSL "$GOLANG_DOWNLOAD_URL" -o golang.tar.gz && \
       echo "$GOLANG_DOWNLOAD_SHA256  golang.tar.gz" | sha256sum -c - && \
             tar -C /usr/local -xzf golang.tar.gz && \
