@@ -127,6 +127,7 @@ if test "$enable_libs" = "no"; then
   with_haskell="no"
   with_haxe="no"
   with_dotnetcore="no"
+  with_netstd="no"
   with_perl="no"
   with_php="no"
   with_php_extension="no"
@@ -818,6 +819,7 @@ AC_CONFIG_FILES([
   lib/json/Makefile
   lib/json/test/Makefile
   lib/netcore/Makefile
+  lib/netstd/Makefile
   lib/nodejs/Makefile
   lib/nodets/Makefile
   lib/perl/Makefile
@@ -846,6 +848,7 @@ AC_CONFIG_FILES([
   test/hs/Makefile
   test/lua/Makefile
   test/netcore/Makefile
+  test/netstd/Makefile
   test/php/Makefile
   test/dart/Makefile
   test/perl/Makefile
@@ -865,6 +868,7 @@ AC_CONFIG_FILES([
   tutorial/java/Makefile
   tutorial/js/Makefile
   tutorial/netcore/Makefile
+  tutorial/netstd/Makefile
   tutorial/nodejs/Makefile
   tutorial/dart/Makefile
   tutorial/py/Makefile
@@ -930,6 +934,7 @@ echo "Building Common Lisp Library.. : $have_cl"
 echo "Building D Library ........... : $have_d"
 echo "Building Dart Library ........ : $have_dart"
 echo "Building dotnetcore Library .. : $have_dotnetcore"
+echo "Building .NET Standard Library : $have_dotnetcore"
 echo "Building Erlang Library ...... : $have_erlang"
 echo "Building Go Library .......... : $have_go"
 echo "Building Haskell Library ..... : $have_haskell"
@@ -987,6 +992,12 @@ if test "$have_dotnetcore" = "yes" ; then
   echo ".NET Core Library:"
   echo "   Using .NET Core ........... : $DOTNETCORE"
   echo "   Using .NET Core version ... : $DOTNETCORE_VERSION"
+fi
+if test "$have_dotnetcore" = "yes" ; then
+  echo
+  echo ".NET Standard Library:"
+  echo "   Using dotnet .............. : $DOTNETCORE"
+  echo "   Using dotnet version ...... : $DOTNETCORE_VERSION"
 fi
 if test "$have_erlang" = "yes" ; then
   echo

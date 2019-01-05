@@ -230,6 +230,10 @@ project.lock.json
 /lib/js/test/build
 /lib/netcore/**/bin
 /lib/netcore/**/obj
+/lib/netstd/**/bin
+/lib/netstd/**/obj
+/lib/netstd/**/FacebookService.cs
+/lib/netstd/**/fb_status.cs
 /lib/nodejs/coverage
 /lib/nodejs/node_modules/
 /lib/perl/MANIFEST
@@ -335,6 +339,9 @@ project.lock.json
 /test/netcore/**/bin
 /test/netcore/**/obj
 /test/netcore/Thrift
+/test/netstd/**/bin
+/test/netstd/**/obj
+/test/netstd/Thrift
 /test/php/php_ext_dir/
 /test/rs/Cargo.lock
 /test/rs/src/thrift_test.rs
@@ -388,6 +395,9 @@ project.lock.json
 /tutorial/netcore/**/bin
 /tutorial/netcore/**/obj
 /tutorial/netcore/Thrift
+/tutorial/netstd/**/bin
+/tutorial/netstd/**/obj
+/tutorial/netstd/Interfaces
 /tutorial/rs/*.iml
 /tutorial/rs/src/shared.rs
 /tutorial/rs/src/tutorial.rs

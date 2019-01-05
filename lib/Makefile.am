@@ -73,6 +73,7 @@ endif
 
 if WITH_DOTNETCORE
 SUBDIRS += netcore
+SUBDIRS += netstd
 endif
 
 if WITH_GO

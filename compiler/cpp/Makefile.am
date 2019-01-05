@@ -100,9 +100,8 @@ thrift_SOURCES += src/thrift/generate/t_as3_generator.cc \
                   src/thrift/generate/t_lua_generator.cc \
                   src/thrift/generate/t_netcore_generator.cc \
                   src/thrift/generate/t_netcore_generator.h \
-                  src/thrift/generate/t_ocaml_generator.cc \
-                  src/thrift/generate/t_perl_generator.cc \
-                  src/thrift/generate/t_php_generator.cc \
+                  src/thrift/generate/t_netstd_generator.cc \
+                  src/thrift/generate/t_netstd_generator.h \
                   src/thrift/generate/t_py_generator.cc \
                   src/thrift/generate/t_rb_generator.cc \
                   src/thrift/generate/t_rs_generator.cc \
