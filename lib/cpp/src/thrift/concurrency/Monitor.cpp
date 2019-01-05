@@ -34,7 +34,7 @@
 namespace apache {
 namespace thrift {
 
-using std::scoped_ptr;
+using std::unique_ptr;
 using std::shared_ptr;
 
 namespace concurrency {
@@ -163,7 +163,7 @@ private:
     }
   }
 
-  scoped_ptr<Mutex> ownedMutex_;
+  unique_ptr<Mutex> ownedMutex_;
   Mutex* mutex_;
 
   mutable pthread_cond_t pthread_cond_;
