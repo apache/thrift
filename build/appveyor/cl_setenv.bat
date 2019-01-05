@@ -14,9 +14,7 @@
 
 @ECHO OFF
 
-       IF "%PROFILE%" == "MSVC2010" (
-  CALL "C:\Program Files (x86)\Microsoft Visual Studio 10.0\VC\vcvarsall.bat" %PLATFORM%
-) ELSE IF "%PROFILE%" == "MSVC2012" (
+IF "%PROFILE%" == "MSVC2012" (
   CALL "C:\Program Files (x86)\Microsoft Visual Studio 11.0\VC\vcvarsall.bat" %PLATFORM%
 ) ELSE IF "%PROFILE%" == "MSVC2013" (
   CALL "C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\vcvarsall.bat" %PLATFORM%
@@ -54,12 +52,7 @@ IF "%PROFILE:~0,4%" == "MSVC" (
   SET OPENSSL_ROOT=C:\OpenSSL-Win%NORM_PLATFORM%
   SET WIN3P=%APPVEYOR_BUILD_FOLDER%\thirdparty
 
-  :: MSVC2010 doesn't "do" std::thread
-  IF "%COMPILER%" == "vc100" (
-    SET THREADMODEL=BOOST
-  ) ELSE (
-    SET THREADMODEL=STD
-  )
+  SET THREADMODEL=STD
 
   IF "%PYTHON_VERSION%" == "" (
     SET WITH_PYTHON=OFF
