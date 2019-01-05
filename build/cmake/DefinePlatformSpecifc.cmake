@@ -125,7 +125,5 @@ if (WITH_PLUGIN)
   if (CMAKE_CXX_COMPILER_ID MATCHES "GNU" AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS "4.8")
     message(SEND_ERROR "Thrift compiler plug-in support is not possible with older gcc ( < 4.8 ) compiler")
   endif()
-  message(STATUS "Forcing use of boost::smart_ptr to build WITH_PLUGIN")
-  add_definitions("-DFORCE_BOOST_SMART_PTR=1")
 endif()
 
