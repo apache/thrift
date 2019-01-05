@@ -148,7 +148,7 @@ protected:
 
     shared_ptr<ThreadFactory> threadFactory(
         new PlatformThreadFactory(
-#if !USE_BOOST_THREAD && !USE_STD_THREAD
+#if !USE_STD_THREAD
             PlatformThreadFactory::OTHER, PlatformThreadFactory::NORMAL,
             1,
 #endif

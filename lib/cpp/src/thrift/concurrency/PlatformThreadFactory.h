@@ -22,9 +22,7 @@
 
 // clang-format off
 #include <thrift/thrift-config.h>
-#if USE_BOOST_THREAD
-#  include <thrift/concurrency/BoostThreadFactory.h>
-#elif USE_STD_THREAD
+#if USE_STD_THREAD
 #  include <thrift/concurrency/StdThreadFactory.h>
 #else
 #  include <thrift/concurrency/PosixThreadFactory.h>
@@ -36,9 +34,7 @@ namespace thrift {
 namespace concurrency {
 
 // clang-format off
-#if USE_BOOST_THREAD
-  typedef BoostThreadFactory PlatformThreadFactory;
-#elif USE_STD_THREAD
+#if USE_STD_THREAD
   typedef StdThreadFactory PlatformThreadFactory;
 #else
   typedef PosixThreadFactory PlatformThreadFactory;

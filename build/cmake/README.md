@@ -30,7 +30,7 @@ or on Windows
     cmake -G "Visual Studio 12 2013 Win64" \
     -DBOOST_ROOT=C:/3rdparty/boost_1_58_0 \
     -DZLIB_ROOT=C:/3rdparty/zlib128-dll \
-    -DWITH_SHARED_LIB=off -DWITH_BOOSTTHREADS=ON ..
+    -DWITH_SHARED_LIB=off ..
 
 and open the development environment you like with the solution or do this:
 

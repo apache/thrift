@@ -43,7 +43,7 @@ Use cmake to create a MinGW makefile, out of tree (assumes you are in the top le
     cmake -G"MinGW Makefiles" -DCMAKE_MAKE_PROGRAM=/mingw64/bin/mingw32-make \
        -DCMAKE_C_COMPILER=x86_64-w64-mingw32-gcc.exe \
        -DCMAKE_CXX_COMPILER=x86_64-w64-mingw32-g++.exe \
-       -DWITH_BOOSTTHREADS=ON -DWITH_LIBEVENT=OFF \
+       -DWITH_LIBEVENT=OFF \
        -DWITH_SHARED_LIB=OFF -DWITH_STATIC_LIB=ON \
        -DWITH_JAVA=OFF -DWITH_PYTHON=OFF -DWITH_PERL=OFF \
        ../thrift
