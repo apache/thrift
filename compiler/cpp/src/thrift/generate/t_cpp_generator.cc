@@ -1097,7 +1097,7 @@ void t_cpp_generator::generate_struct_declaration(ostream& out,
   }
 
   if (tstruct->annotations_.find("final") == tstruct->annotations_.end()) {
-    out << endl << indent() << "virtual ~" << tstruct->get_name() << "() throw();" << endl;
+    out << endl << indent() << "virtual ~" << tstruct->get_name() << "() noexcept;" << endl;
   }
 
   // Declare all fields
@@ -1226,7 +1226,7 @@ void t_cpp_generator::generate_struct_definition(ostream& out,
   // Destructor
   if (tstruct->annotations_.find("final") == tstruct->annotations_.end()) {
     force_cpp_out << endl << indent() << tstruct->get_name() << "::~" << tstruct->get_name()
-                  << "() throw() {" << endl;
+                  << "() noexcept {" << endl;
     indent_up();
 
     indent_down();
@@ -1598,7 +1598,7 @@ void t_cpp_generator::generate_exception_what_method_decl(std::ostream& out,
   if (external) {
     out << tstruct->get_name() << "::";
   }
-  out << "what() const throw()";
+  out << "what() const noexcept";
 }
 
 namespace struct_ostream_operator_generator {
