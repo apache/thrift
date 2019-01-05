@@ -25,7 +25,7 @@
 #include <thrift/protocol/TBinaryProtocol.h>
 #include <thrift/protocol/TDebugProtocol.h>
 #include <thrift/server/TSimpleServer.h>
-#include <thrift/stdcxx.h>
+#include <memory>
 #include <thrift/transport/TServerSocket.h>
 #include "ThriftTest.h"
 #include "ThriftTest_types.h"
@@ -618,11 +618,11 @@ main (void)
 
   if (pid == 0) /* child */
   {
-    stdcxx::shared_ptr<TProtocolFactory> protocolFactory(new TBinaryProtocolFactory());
-    stdcxx::shared_ptr<TestHandler> testHandler(new TestHandler());
-    stdcxx::shared_ptr<ThriftTestProcessor> testProcessor(new ThriftTestProcessor(testHandler));
-    stdcxx::shared_ptr<TServerSocket> serverSocket(new TServerSocket(TEST_PORT));
-    stdcxx::shared_ptr<TTransportFactory> transportFactory(new TBufferedTransportFactory());
+    std::shared_ptr<TProtocolFactory> protocolFactory(new TBinaryProtocolFactory());
+    std::shared_ptr<TestHandler> testHandler(new TestHandler());
+    std::shared_ptr<ThriftTestProcessor> testProcessor(new ThriftTestProcessor(testHandler));
+    std::shared_ptr<TServerSocket> serverSocket(new TServerSocket(TEST_PORT));
+    std::shared_ptr<TTransportFactory> transportFactory(new TBufferedTransportFactory());
     TSimpleServer simpleServer(testProcessor, serverSocket, transportFactory, protocolFactory);
     signal (SIGALRM, bailout);
     alarm (60);

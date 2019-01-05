@@ -2,7 +2,7 @@
 #include "TZmqServer.h"
 #include "Storage.h"
 
-using apache::thrift::stdcxx::shared_ptr;
+using apache::thrift::std::shared_ptr;
 using apache::thrift::TProcessor;
 using apache::thrift::server::TZmqServer;
 using apache::thrift::server::TZmqMultiServer;

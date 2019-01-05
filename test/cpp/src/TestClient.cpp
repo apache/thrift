@@ -46,7 +46,6 @@
 #include <boost/filesystem.hpp>
 #include <boost/program_options.hpp>
 #include <boost/random/random_device.hpp>
-#include <thrift/stdcxx.h>
 #if _WIN32
 #include <thrift/windows/TWinsockSingleton.h>
 #endif
@@ -98,10 +97,10 @@ static void testVoid_clientReturn(event_base* base, ThriftTestCobClient* client)
     for (int testNr = 0; testNr < 10; ++testNr) {
       std::ostringstream os;
       os << "test" << testNr;
-      client->testString(stdcxx::bind(testString_clientReturn,
+      client->testString(std::bind(testString_clientReturn,
                                     base,
                                     testNr,
-                                    stdcxx::placeholders::_1),
+                                    std::placeholders::_1),
                        os.str());
     }
   } catch (TException& exn) {
@@ -254,18 +253,18 @@ int main(int argc, char** argv) {
   }
 
   // THRIFT-4164: The factory MUST outlive any sockets it creates for correct behavior!
-  stdcxx::shared_ptr<TSSLSocketFactory> factory;
-  stdcxx::shared_ptr<TSocket> socket;
-  stdcxx::shared_ptr<TTransport> transport;
-  stdcxx::shared_ptr<TProtocol> protocol;
-  stdcxx::shared_ptr<TProtocol> protocol2;  // SecondService for multiplexed
+  std::shared_ptr<TSSLSocketFactory> factory;
+  std::shared_ptr<TSocket> socket;
+  std::shared_ptr<TTransport> transport;
+  std::shared_ptr<TProtocol> protocol;
+  std::shared_ptr<TProtocol> protocol2;  // SecondService for multiplexed
 
   if (ssl) {
     cout << "Client Certificate File: " << certPath << endl;
     cout << "Client Key         File: " << keyPath << endl;
     cout << "CA                 File: " << caPath << endl;
 
-    factory = stdcxx::shared_ptr<TSSLSocketFactory>(new TSSLSocketFactory());
+    factory = std::shared_ptr<TSSLSocketFactory>(new TSSLSocketFactory());
     factory->ciphers("ALL:!ADH:!LOW:!EXP:!MD5:@STRENGTH");
     factory->loadTrustedCertificates(caPath.c_str());
     factory->loadCertificate(certPath.c_str());
@@ -277,42 +276,42 @@ int main(int argc, char** argv) {
       if (abstract_namespace) {
         std::string abstract_socket("\0", 1);
         abstract_socket += domain_socket;
-        socket = stdcxx::shared_ptr<TSocket>(new TSocket(abstract_socket));
+        socket = std::shared_ptr<TSocket>(new TSocket(abstract_socket));
       } else {
-        socket = stdcxx::shared_ptr<TSocket>(new TSocket(domain_socket));
+        socket = std::shared_ptr<TSocket>(new TSocket(domain_socket));
       }
       port = 0;
     } else {
-      socket = stdcxx::shared_ptr<TSocket>(new TSocket(host, port));
+      socket = std::shared_ptr<TSocket>(new TSocket(host, port));
     }
   }
 
   if (transport_type.compare("http") == 0) {
-    transport = stdcxx::make_shared<THttpClient>(socket, host, "/service");
+    transport = std::make_shared<THttpClient>(socket, host, "/service");
   } else if (transport_type.compare("framed") == 0) {
-    transport = stdcxx::make_shared<TFramedTransport>(socket);
+    transport = std::make_shared<TFramedTransport>(socket);
   } else {
-    transport = stdcxx::make_shared<TBufferedTransport>(socket);
+    transport = std::make_shared<TBufferedTransport>(socket);
   }
 
   if (zlib) {
-    transport = stdcxx::make_shared<TZlibTransport>(transport);
+    transport = std::make_shared<TZlibTransport>(transport);
   }
 
   if (protocol_type == "json" || protocol_type == "multij") {
-    protocol = stdcxx::make_shared<TJSONProtocol>(transport);
+    protocol = std::make_shared<TJSONProtocol>(transport);
   } else if (protocol_type == "compact" || protocol_type == "multic") {
-    protocol = stdcxx::make_shared<TCompactProtocol>(transport);
+    protocol = std::make_shared<TCompactProtocol>(transport);
   } else if (protocol_type == "header" || protocol_type == "multih") {
-    protocol = stdcxx::make_shared<THeaderProtocol>(transport);
+    protocol = std::make_shared<THeaderProtocol>(transport);
   } else {
-    protocol = stdcxx::make_shared<TBinaryProtocol>(transport);
+    protocol = std::make_shared<TBinaryProtocol>(transport);
   }
 
   if (boost::starts_with(protocol_type, "multi")) {
-  protocol2 = stdcxx::make_shared<TMultiplexedProtocol>(protocol, "SecondService");
+  protocol2 = std::make_shared<TMultiplexedProtocol>(protocol, "SecondService");
   // we don't need access to the original protocol any more, so...
-  protocol = stdcxx::make_shared<TMultiplexedProtocol>(protocol, "ThriftTest");
+  protocol = std::make_shared<TMultiplexedProtocol>(protocol, "ThriftTest");
   }
 
   // Connection info
@@ -334,14 +333,14 @@ int main(int argc, char** argv) {
     cout << "Libevent Features: 0x" << hex << event_base_get_features(base) << endl;
 #endif
 
-    stdcxx::shared_ptr<TProtocolFactory> protocolFactory(new TBinaryProtocolFactory());
+    std::shared_ptr<TProtocolFactory> protocolFactory(new TBinaryProtocolFactory());
 
-    stdcxx::shared_ptr<TAsyncChannel> channel(
+    std::shared_ptr<TAsyncChannel> channel(
         new TEvhttpClientChannel(host.c_str(), "/", host.c_str(), port, base));
     ThriftTestCobClient* client = new ThriftTestCobClient(channel, protocolFactory.get());
-    client->testVoid(stdcxx::bind(testVoid_clientReturn,
+    client->testVoid(std::bind(testVoid_clientReturn,
                                 base,
-                                stdcxx::placeholders::_1));
+                                std::placeholders::_1));
 
     event_base_loop(base, 0);
     return 0;

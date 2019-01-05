@@ -20,7 +20,7 @@
 #include <thrift/async/TEvhttpServer.h>
 #include <thrift/async/TAsyncBufferProcessor.h>
 #include <thrift/transport/TBufferTransports.h>
-#include <thrift/stdcxx.h>
+#include <memory>
 #include <evhttp.h>
 #include <event2/buffer.h>
 #include <event2/buffer_compat.h>
@@ -31,8 +31,7 @@
 #endif
 
 using apache::thrift::transport::TMemoryBuffer;
-using apache::thrift::stdcxx::scoped_ptr;
-using apache::thrift::stdcxx::shared_ptr;
+using std::shared_ptr;
 
 namespace apache {
 namespace thrift {
@@ -40,17 +39,17 @@ namespace async {
 
 struct TEvhttpServer::RequestContext {
   struct evhttp_request* req;
-  stdcxx::shared_ptr<apache::thrift::transport::TMemoryBuffer> ibuf;
-  stdcxx::shared_ptr<apache::thrift::transport::TMemoryBuffer> obuf;
+  std::shared_ptr<apache::thrift::transport::TMemoryBuffer> ibuf;
+  std::shared_ptr<apache::thrift::transport::TMemoryBuffer> obuf;
 
   RequestContext(struct evhttp_request* req);
 };
 
-TEvhttpServer::TEvhttpServer(stdcxx::shared_ptr<TAsyncBufferProcessor> processor)
+TEvhttpServer::TEvhttpServer(std::shared_ptr<TAsyncBufferProcessor> processor)
   : processor_(processor), eb_(NULL), eh_(NULL) {
 }
 
-TEvhttpServer::TEvhttpServer(stdcxx::shared_ptr<TAsyncBufferProcessor> processor, int port)
+TEvhttpServer::TEvhttpServer(std::shared_ptr<TAsyncBufferProcessor> processor, int port)
   : processor_(processor), eb_(NULL), eh_(NULL) {
   // Create event_base and evhttp.
   eb_ = event_base_new();
@@ -110,17 +109,17 @@ void TEvhttpServer::request(struct evhttp_request* req, void* self) {
 
 void TEvhttpServer::process(struct evhttp_request* req) {
   RequestContext* ctx = new RequestContext(req);
-  return processor_->process(apache::thrift::stdcxx::bind(&TEvhttpServer::complete,
+  return processor_->process(std::bind(&TEvhttpServer::complete,
                                                           this,
                                                           ctx,
-                                                          apache::thrift::stdcxx::placeholders::_1),
+                                                          std::placeholders::_1),
                              ctx->ibuf,
                              ctx->obuf);
 }
 
 void TEvhttpServer::complete(RequestContext* ctx, bool success) {
   (void)success;
-  scoped_ptr<RequestContext> ptr(ctx);
+  std::unique_ptr<RequestContext> ptr(ctx);
 
   int code = success ? 200 : 400;
   const char* reason = success ? "OK" : "Bad Request";

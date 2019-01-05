@@ -213,33 +213,33 @@ SSL* SSLContext::createSSL() {
 }
 
 // TSSLSocket implementation
-TSSLSocket::TSSLSocket(stdcxx::shared_ptr<SSLContext> ctx)
+TSSLSocket::TSSLSocket(std::shared_ptr<SSLContext> ctx)
   : TSocket(), server_(false), ssl_(NULL), ctx_(ctx) {
   init();
 }
 
-TSSLSocket::TSSLSocket(stdcxx::shared_ptr<SSLContext> ctx, stdcxx::shared_ptr<THRIFT_SOCKET> interruptListener)
+TSSLSocket::TSSLSocket(std::shared_ptr<SSLContext> ctx, std::shared_ptr<THRIFT_SOCKET> interruptListener)
         : TSocket(), server_(false), ssl_(NULL), ctx_(ctx) {
   init();
   interruptListener_ = interruptListener;
 }
 
-TSSLSocket::TSSLSocket(stdcxx::shared_ptr<SSLContext> ctx, THRIFT_SOCKET socket)
+TSSLSocket::TSSLSocket(std::shared_ptr<SSLContext> ctx, THRIFT_SOCKET socket)
   : TSocket(socket), server_(false), ssl_(NULL), ctx_(ctx) {
   init();
 }
 
-TSSLSocket::TSSLSocket(stdcxx::shared_ptr<SSLContext> ctx, THRIFT_SOCKET socket, stdcxx::shared_ptr<THRIFT_SOCKET> interruptListener)
+TSSLSocket::TSSLSocket(std::shared_ptr<SSLContext> ctx, THRIFT_SOCKET socket, std::shared_ptr<THRIFT_SOCKET> interruptListener)
         : TSocket(socket, interruptListener), server_(false), ssl_(NULL), ctx_(ctx) {
   init();
 }
 
-TSSLSocket::TSSLSocket(stdcxx::shared_ptr<SSLContext> ctx, string host, int port)
+TSSLSocket::TSSLSocket(std::shared_ptr<SSLContext> ctx, string host, int port)
   : TSocket(host, port), server_(false), ssl_(NULL), ctx_(ctx) {
   init();
 }
 
-TSSLSocket::TSSLSocket(stdcxx::shared_ptr<SSLContext> ctx, string host, int port, stdcxx::shared_ptr<THRIFT_SOCKET> interruptListener)
+TSSLSocket::TSSLSocket(std::shared_ptr<SSLContext> ctx, string host, int port, std::shared_ptr<THRIFT_SOCKET> interruptListener)
         : TSocket(host, port), server_(false), ssl_(NULL), ctx_(ctx) {
   init();
   interruptListener_ = interruptListener;
@@ -857,7 +857,7 @@ TSSLSocketFactory::TSSLSocketFactory(SSLProtocol protocol) : server_(false) {
     randomize();
   }
   count_++;
-  ctx_ = stdcxx::shared_ptr<SSLContext>(new SSLContext(protocol));
+  ctx_ = std::shared_ptr<SSLContext>(new SSLContext(protocol));
 }
 
 TSSLSocketFactory::~TSSLSocketFactory() {
@@ -869,47 +869,47 @@ TSSLSocketFactory::~TSSLSocketFactory() {
   }
 }
 
-stdcxx::shared_ptr<TSSLSocket> TSSLSocketFactory::createSocket() {
-  stdcxx::shared_ptr<TSSLSocket> ssl(new TSSLSocket(ctx_));
+std::shared_ptr<TSSLSocket> TSSLSocketFactory::createSocket() {
+  std::shared_ptr<TSSLSocket> ssl(new TSSLSocket(ctx_));
   setup(ssl);
   return ssl;
 }
 
-stdcxx::shared_ptr<TSSLSocket> TSSLSocketFactory::createSocket(stdcxx::shared_ptr<THRIFT_SOCKET> interruptListener) {
-  stdcxx::shared_ptr<TSSLSocket> ssl(new TSSLSocket(ctx_, interruptListener));
+std::shared_ptr<TSSLSocket> TSSLSocketFactory::createSocket(std::shared_ptr<THRIFT_SOCKET> interruptListener) {
+  std::shared_ptr<TSSLSocket> ssl(new TSSLSocket(ctx_, interruptListener));
   setup(ssl);
   return ssl;
 }
 
-stdcxx::shared_ptr<TSSLSocket> TSSLSocketFactory::createSocket(THRIFT_SOCKET socket) {
-  stdcxx::shared_ptr<TSSLSocket> ssl(new TSSLSocket(ctx_, socket));
+std::shared_ptr<TSSLSocket> TSSLSocketFactory::createSocket(THRIFT_SOCKET socket) {
+  std::shared_ptr<TSSLSocket> ssl(new TSSLSocket(ctx_, socket));
   setup(ssl);
   return ssl;
 }
 
-stdcxx::shared_ptr<TSSLSocket> TSSLSocketFactory::createSocket(THRIFT_SOCKET socket, stdcxx::shared_ptr<THRIFT_SOCKET> interruptListener) {
-  stdcxx::shared_ptr<TSSLSocket> ssl(new TSSLSocket(ctx_, socket, interruptListener));
+std::shared_ptr<TSSLSocket> TSSLSocketFactory::createSocket(THRIFT_SOCKET socket, std::shared_ptr<THRIFT_SOCKET> interruptListener) {
+  std::shared_ptr<TSSLSocket> ssl(new TSSLSocket(ctx_, socket, interruptListener));
   setup(ssl);
   return ssl;
 }
 
-stdcxx::shared_ptr<TSSLSocket> TSSLSocketFactory::createSocket(const string& host, int port) {
-  stdcxx::shared_ptr<TSSLSocket> ssl(new TSSLSocket(ctx_, host, port));
+std::shared_ptr<TSSLSocket> TSSLSocketFactory::createSocket(const string& host, int port) {
+  std::shared_ptr<TSSLSocket> ssl(new TSSLSocket(ctx_, host, port));
   setup(ssl);
   return ssl;
 }
 
-stdcxx::shared_ptr<TSSLSocket> TSSLSocketFactory::createSocket(const string& host, int port, stdcxx::shared_ptr<THRIFT_SOCKET> interruptListener) {
-  stdcxx::shared_ptr<TSSLSocket> ssl(new TSSLSocket(ctx_, host, port, interruptListener));
+std::shared_ptr<TSSLSocket> TSSLSocketFactory::createSocket(const string& host, int port, std::shared_ptr<THRIFT_SOCKET> interruptListener) {
+  std::shared_ptr<TSSLSocket> ssl(new TSSLSocket(ctx_, host, port, interruptListener));
   setup(ssl);
   return ssl;
 }
 
 
-void TSSLSocketFactory::setup(stdcxx::shared_ptr<TSSLSocket> ssl) {
+void TSSLSocketFactory::setup(std::shared_ptr<TSSLSocket> ssl) {
   ssl->server(server());
   if (access_ == NULL && !server()) {
-    access_ = stdcxx::shared_ptr<AccessManager>(new DefaultClientAccessManager);
+    access_ = std::shared_ptr<AccessManager>(new DefaultClientAccessManager);
   }
   if (access_ != NULL) {
     ssl->access(access_);

@@ -33,7 +33,6 @@
 #include <thrift/transport/TTransportUtils.h>
 #include <thrift/transport/TFileTransport.h>
 #include <thrift/TLogging.h>
-#include <thrift/stdcxx.h>
 
 #include "Service.h"
 
@@ -109,8 +108,8 @@ private:
 
 class ClientThread : public Runnable {
 public:
-  ClientThread(stdcxx::shared_ptr<TTransport> transport,
-               stdcxx::shared_ptr<ServiceClient> client,
+  ClientThread(std::shared_ptr<TTransport> transport,
+               std::shared_ptr<ServiceClient> client,
                Monitor& monitor,
                size_t& workerCount,
                size_t loopCount,
@@ -221,8 +220,8 @@ public:
     }
   }
 
-  stdcxx::shared_ptr<TTransport> _transport;
-  stdcxx::shared_ptr<ServiceClient> _client;
+  std::shared_ptr<TTransport> _transport;
+  std::shared_ptr<ServiceClient> _client;
   Monitor& _monitor;
   size_t& _workerCount;
   size_t _loopCount;
@@ -344,24 +343,24 @@ int main(int argc, char** argv) {
     cerr << usage.str();
   }
 
-  stdcxx::shared_ptr<PlatformThreadFactory> threadFactory
-      = stdcxx::shared_ptr<PlatformThreadFactory>(new PlatformThreadFactory());
+  std::shared_ptr<PlatformThreadFactory> threadFactory
+      = std::shared_ptr<PlatformThreadFactory>(new PlatformThreadFactory());
 
   // Dispatcher
-  stdcxx::shared_ptr<Server> serviceHandler(new Server());
+  std::shared_ptr<Server> serviceHandler(new Server());
 
   if (replayRequests) {
-    stdcxx::shared_ptr<Server> serviceHandler(new Server());
-    stdcxx::shared_ptr<ServiceProcessor> serviceProcessor(new ServiceProcessor(serviceHandler));
+    std::shared_ptr<Server> serviceHandler(new Server());
+    std::shared_ptr<ServiceProcessor> serviceProcessor(new ServiceProcessor(serviceHandler));
 
     // Transports
-    stdcxx::shared_ptr<TFileTransport> fileTransport(new TFileTransport(requestLogPath));
+    std::shared_ptr<TFileTransport> fileTransport(new TFileTransport(requestLogPath));
     fileTransport->setChunkSize(2 * 1024 * 1024);
     fileTransport->setMaxEventSize(1024 * 16);
     fileTransport->seekToEnd();
 
     // Protocol Factory
-    stdcxx::shared_ptr<TProtocolFactory> protocolFactory(new TBinaryProtocolFactory());
+    std::shared_ptr<TProtocolFactory> protocolFactory(new TBinaryProtocolFactory());
 
     TFileProcessor fileProcessor(serviceProcessor, protocolFactory, fileTransport);
 
@@ -371,50 +370,50 @@ int main(int argc, char** argv) {
 
   if (runServer) {
 
-    stdcxx::shared_ptr<ServiceProcessor> serviceProcessor(new ServiceProcessor(serviceHandler));
+    std::shared_ptr<ServiceProcessor> serviceProcessor(new ServiceProcessor(serviceHandler));
 
     // Protocol Factory
-    stdcxx::shared_ptr<TProtocolFactory> protocolFactory(new TBinaryProtocolFactory());
+    std::shared_ptr<TProtocolFactory> protocolFactory(new TBinaryProtocolFactory());
 
     // Transport Factory
-    stdcxx::shared_ptr<TTransportFactory> transportFactory;
+    std::shared_ptr<TTransportFactory> transportFactory;
 
     if (logRequests) {
       // initialize the log file
-      stdcxx::shared_ptr<TFileTransport> fileTransport(new TFileTransport(requestLogPath));
+      std::shared_ptr<TFileTransport> fileTransport(new TFileTransport(requestLogPath));
       fileTransport->setChunkSize(2 * 1024 * 1024);
       fileTransport->setMaxEventSize(1024 * 16);
 
       transportFactory
-          = stdcxx::shared_ptr<TTransportFactory>(new TPipedTransportFactory(fileTransport));
+          = std::shared_ptr<TTransportFactory>(new TPipedTransportFactory(fileTransport));
     }
 
-    stdcxx::shared_ptr<Thread> serverThread;
-    stdcxx::shared_ptr<Thread> serverThread2;
-    stdcxx::shared_ptr<transport::TNonblockingServerSocket> nbSocket1;
-    stdcxx::shared_ptr<transport::TNonblockingServerSocket> nbSocket2;
+    std::shared_ptr<Thread> serverThread;
+    std::shared_ptr<Thread> serverThread2;
+    std::shared_ptr<transport::TNonblockingServerSocket> nbSocket1;
+    std::shared_ptr<transport::TNonblockingServerSocket> nbSocket2;
 
     if (serverType == "simple") {
 
       nbSocket1.reset(new transport::TNonblockingServerSocket(port));
-      serverThread = threadFactory->newThread(stdcxx::shared_ptr<TServer>(
+      serverThread = threadFactory->newThread(std::shared_ptr<TServer>(
           new TNonblockingServer(serviceProcessor, protocolFactory, nbSocket1)));
       nbSocket2.reset(new transport::TNonblockingServerSocket(port + 1));
-      serverThread2 = threadFactory->newThread(stdcxx::shared_ptr<TServer>(
+      serverThread2 = threadFactory->newThread(std::shared_ptr<TServer>(
           new TNonblockingServer(serviceProcessor, protocolFactory, nbSocket2)));
 
     } else if (serverType == "thread-pool") {
 
-      stdcxx::shared_ptr<ThreadManager> threadManager
+      std::shared_ptr<ThreadManager> threadManager
           = ThreadManager::newSimpleThreadManager(workerCount);
 
       threadManager->threadFactory(threadFactory);
       threadManager->start();
       nbSocket1.reset(new transport::TNonblockingServerSocket(port));
-      serverThread = threadFactory->newThread(stdcxx::shared_ptr<TServer>(
+      serverThread = threadFactory->newThread(std::shared_ptr<TServer>(
           new TNonblockingServer(serviceProcessor, protocolFactory, nbSocket1, threadManager)));
       nbSocket2.reset(new transport::TNonblockingServerSocket(port + 1));
-      serverThread2 = threadFactory->newThread(stdcxx::shared_ptr<TServer>(
+      serverThread2 = threadFactory->newThread(std::shared_ptr<TServer>(
           new TNonblockingServer(serviceProcessor, protocolFactory, nbSocket2, threadManager)));
     }
 
@@ -437,7 +436,7 @@ int main(int argc, char** argv) {
 
     size_t threadCount = 0;
 
-    set<stdcxx::shared_ptr<Thread> > clientThreads;
+    set<std::shared_ptr<Thread> > clientThreads;
 
     if (callName == "echoVoid") {
       loopType = T_VOID;
@@ -455,16 +454,16 @@ int main(int argc, char** argv) {
 
     for (uint32_t ix = 0; ix < clientCount; ix++) {
 
-      stdcxx::shared_ptr<TSocket> socket(new TSocket("127.0.0.1", port + (ix % 2)));
-      stdcxx::shared_ptr<TFramedTransport> framedSocket(new TFramedTransport(socket));
-      stdcxx::shared_ptr<TProtocol> protocol(new TBinaryProtocol(framedSocket));
-      stdcxx::shared_ptr<ServiceClient> serviceClient(new ServiceClient(protocol));
+      std::shared_ptr<TSocket> socket(new TSocket("127.0.0.1", port + (ix % 2)));
+      std::shared_ptr<TFramedTransport> framedSocket(new TFramedTransport(socket));
+      std::shared_ptr<TProtocol> protocol(new TBinaryProtocol(framedSocket));
+      std::shared_ptr<ServiceClient> serviceClient(new ServiceClient(protocol));
 
-      clientThreads.insert(threadFactory->newThread(stdcxx::shared_ptr<ClientThread>(
+      clientThreads.insert(threadFactory->newThread(std::shared_ptr<ClientThread>(
           new ClientThread(socket, serviceClient, monitor, threadCount, loopCount, loopType))));
     }
 
-    for (std::set<stdcxx::shared_ptr<Thread> >::const_iterator thread = clientThreads.begin();
+    for (std::set<std::shared_ptr<Thread> >::const_iterator thread = clientThreads.begin();
          thread != clientThreads.end();
          thread++) {
       (*thread)->start();
@@ -497,12 +496,12 @@ int main(int argc, char** argv) {
     int64_t minTime = 9223372036854775807LL;
     int64_t maxTime = 0;
 
-    for (set<stdcxx::shared_ptr<Thread> >::iterator ix = clientThreads.begin();
+    for (set<std::shared_ptr<Thread> >::iterator ix = clientThreads.begin();
          ix != clientThreads.end();
          ix++) {
 
-      stdcxx::shared_ptr<ClientThread> client
-          = stdcxx::dynamic_pointer_cast<ClientThread>((*ix)->runnable());
+      std::shared_ptr<ClientThread> client
+          = std::dynamic_pointer_cast<ClientThread>((*ix)->runnable());
 
       int64_t delta = client->_endTime - client->_startTime;
 

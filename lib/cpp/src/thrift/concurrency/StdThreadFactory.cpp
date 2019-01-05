@@ -24,7 +24,7 @@
 #include <thrift/concurrency/Exception.h>
 #include <thrift/concurrency/Monitor.h>
 #include <thrift/concurrency/StdThreadFactory.h>
-#include <thrift/stdcxx.h>
+#include <memory>
 
 #include <cassert>
 #include <thread>
@@ -42,11 +42,11 @@ namespace concurrency {
  *
  * @version $Id:$
  */
-class StdThread : public Thread, public stdcxx::enable_shared_from_this<StdThread> {
+class StdThread : public Thread, public std::enable_shared_from_this<StdThread> {
 public:
   enum STATE { uninitialized, starting, started, stopping, stopped };
 
-  static void threadMain(stdcxx::shared_ptr<StdThread> thread);
+  static void threadMain(std::shared_ptr<StdThread> thread);
 
 private:
   std::unique_ptr<std::thread> thread_;
@@ -55,7 +55,7 @@ private:
   bool detached_;
 
 public:
-  StdThread(bool detached, stdcxx::shared_ptr<Runnable> runnable)
+  StdThread(bool detached, std::shared_ptr<Runnable> runnable)
     : state_(uninitialized), detached_(detached) {
     this->Thread::runnable(runnable);
   }
@@ -93,7 +93,7 @@ public:
       return;
     }
 
-    stdcxx::shared_ptr<StdThread> selfRef = shared_from_this();
+    std::shared_ptr<StdThread> selfRef = shared_from_this();
     setState(starting);
 
     Synchronized sync(monitor_);
@@ -116,12 +116,12 @@ public:
 
   Thread::id_t getId() { return thread_.get() ? thread_->get_id() : std::thread::id(); }
 
-  stdcxx::shared_ptr<Runnable> runnable() const { return Thread::runnable(); }
+  std::shared_ptr<Runnable> runnable() const { return Thread::runnable(); }
 
-  void runnable(stdcxx::shared_ptr<Runnable> value) { Thread::runnable(value); }
+  void runnable(std::shared_ptr<Runnable> value) { Thread::runnable(value); }
 };
 
-void StdThread::threadMain(stdcxx::shared_ptr<StdThread> thread) {
+void StdThread::threadMain(std::shared_ptr<StdThread> thread) {
 #if GOOGLE_PERFTOOLS_REGISTER_THREAD
   ProfilerRegisterThread();
 #endif
@@ -137,8 +137,8 @@ void StdThread::threadMain(stdcxx::shared_ptr<StdThread> thread) {
 StdThreadFactory::StdThreadFactory(bool detached) : ThreadFactory(detached) {
 }
 
-stdcxx::shared_ptr<Thread> StdThreadFactory::newThread(stdcxx::shared_ptr<Runnable> runnable) const {
-  stdcxx::shared_ptr<StdThread> result = stdcxx::shared_ptr<StdThread>(new StdThread(isDetached(), runnable));
+std::shared_ptr<Thread> StdThreadFactory::newThread(std::shared_ptr<Runnable> runnable) const {
+  std::shared_ptr<StdThread> result = std::shared_ptr<StdThread>(new StdThread(isDetached(), runnable));
   runnable->thread(result);
   return result;
 }

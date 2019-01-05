@@ -31,7 +31,6 @@
 #include <thrift/transport/TTransportUtils.h>
 #include <thrift/transport/TFileTransport.h>
 #include <thrift/TLogging.h>
-#include <thrift/stdcxx.h>
 
 #include "Service.h"
 #include <iostream>
@@ -108,8 +107,8 @@ enum TransportOpenCloseBehavior {
 };
 class ClientThread : public Runnable {
 public:
-  ClientThread(stdcxx::shared_ptr<TTransport> transport,
-               stdcxx::shared_ptr<ServiceIf> client,
+  ClientThread(std::shared_ptr<TTransport> transport,
+               std::shared_ptr<ServiceIf> client,
                Monitor& monitor,
                size_t& workerCount,
                size_t loopCount,
@@ -225,8 +224,8 @@ public:
     }
   }
 
-  stdcxx::shared_ptr<TTransport> _transport;
-  stdcxx::shared_ptr<ServiceIf> _client;
+  std::shared_ptr<TTransport> _transport;
+  std::shared_ptr<ServiceIf> _client;
   Monitor& _monitor;
   size_t& _workerCount;
   size_t _loopCount;
@@ -391,24 +390,24 @@ int main(int argc, char** argv) {
     cerr << usage.str();
   }
 
-  stdcxx::shared_ptr<PlatformThreadFactory> threadFactory
-      = stdcxx::shared_ptr<PlatformThreadFactory>(new PlatformThreadFactory());
+  std::shared_ptr<PlatformThreadFactory> threadFactory
+      = std::shared_ptr<PlatformThreadFactory>(new PlatformThreadFactory());
 
   // Dispatcher
-  stdcxx::shared_ptr<Server> serviceHandler(new Server());
+  std::shared_ptr<Server> serviceHandler(new Server());
 
   if (replayRequests) {
-    stdcxx::shared_ptr<Server> serviceHandler(new Server());
-    stdcxx::shared_ptr<ServiceProcessor> serviceProcessor(new ServiceProcessor(serviceHandler));
+    std::shared_ptr<Server> serviceHandler(new Server());
+    std::shared_ptr<ServiceProcessor> serviceProcessor(new ServiceProcessor(serviceHandler));
 
     // Transports
-    stdcxx::shared_ptr<TFileTransport> fileTransport(new TFileTransport(requestLogPath));
+    std::shared_ptr<TFileTransport> fileTransport(new TFileTransport(requestLogPath));
     fileTransport->setChunkSize(2 * 1024 * 1024);
     fileTransport->setMaxEventSize(1024 * 16);
     fileTransport->seekToEnd();
 
     // Protocol Factory
-    stdcxx::shared_ptr<TProtocolFactory> protocolFactory(new TBinaryProtocolFactory());
+    std::shared_ptr<TProtocolFactory> protocolFactory(new TBinaryProtocolFactory());
 
     TFileProcessor fileProcessor(serviceProcessor, protocolFactory, fileTransport);
 
@@ -418,28 +417,28 @@ int main(int argc, char** argv) {
 
   if (runServer) {
 
-    stdcxx::shared_ptr<ServiceProcessor> serviceProcessor(new ServiceProcessor(serviceHandler));
+    std::shared_ptr<ServiceProcessor> serviceProcessor(new ServiceProcessor(serviceHandler));
 
     // Transport
-    stdcxx::shared_ptr<TServerSocket> serverSocket(new TServerSocket(port));
+    std::shared_ptr<TServerSocket> serverSocket(new TServerSocket(port));
 
     // Transport Factory
-    stdcxx::shared_ptr<TTransportFactory> transportFactory(new TBufferedTransportFactory());
+    std::shared_ptr<TTransportFactory> transportFactory(new TBufferedTransportFactory());
 
     // Protocol Factory
-    stdcxx::shared_ptr<TProtocolFactory> protocolFactory(new TBinaryProtocolFactory());
+    std::shared_ptr<TProtocolFactory> protocolFactory(new TBinaryProtocolFactory());
 
     if (logRequests) {
       // initialize the log file
-      stdcxx::shared_ptr<TFileTransport> fileTransport(new TFileTransport(requestLogPath));
+      std::shared_ptr<TFileTransport> fileTransport(new TFileTransport(requestLogPath));
       fileTransport->setChunkSize(2 * 1024 * 1024);
       fileTransport->setMaxEventSize(1024 * 16);
 
       transportFactory
-          = stdcxx::shared_ptr<TTransportFactory>(new TPipedTransportFactory(fileTransport));
+          = std::shared_ptr<TTransportFactory>(new TPipedTransportFactory(fileTransport));
     }
 
-    stdcxx::shared_ptr<TServer> server;
+    std::shared_ptr<TServer> server;
 
     if (serverType == "simple") {
 
@@ -453,7 +452,7 @@ int main(int argc, char** argv) {
 
     } else if (serverType == "thread-pool") {
 
-      stdcxx::shared_ptr<ThreadManager> threadManager
+      std::shared_ptr<ThreadManager> threadManager
           = ThreadManager::newSimpleThreadManager(workerCount);
 
       threadManager->threadFactory(threadFactory);
@@ -465,9 +464,9 @@ int main(int argc, char** argv) {
                                          threadManager));
     }
 
-    stdcxx::shared_ptr<TStartObserver> observer(new TStartObserver);
+    std::shared_ptr<TStartObserver> observer(new TStartObserver);
     server->setServerEventHandler(observer);
-    stdcxx::shared_ptr<Thread> serverThread = threadFactory->newThread(server);
+    std::shared_ptr<Thread> serverThread = threadFactory->newThread(server);
 
     cerr << "Starting the server on port " << port << endl;
 
@@ -486,7 +485,7 @@ int main(int argc, char** argv) {
 
     size_t threadCount = 0;
 
-    set<stdcxx::shared_ptr<Thread> > clientThreads;
+    set<std::shared_ptr<Thread> > clientThreads;
 
     if (callName == "echoVoid") {
       loopType = T_VOID;
@@ -505,28 +504,28 @@ int main(int argc, char** argv) {
     if(clientType == "regular") {
       for (size_t ix = 0; ix < clientCount; ix++) {
 
-        stdcxx::shared_ptr<TSocket> socket(new TSocket("127.0.0.1", port));
-        stdcxx::shared_ptr<TBufferedTransport> bufferedSocket(new TBufferedTransport(socket, 2048));
-        stdcxx::shared_ptr<TProtocol> protocol(new TBinaryProtocol(bufferedSocket));
-        stdcxx::shared_ptr<ServiceClient> serviceClient(new ServiceClient(protocol));
+        std::shared_ptr<TSocket> socket(new TSocket("127.0.0.1", port));
+        std::shared_ptr<TBufferedTransport> bufferedSocket(new TBufferedTransport(socket, 2048));
+        std::shared_ptr<TProtocol> protocol(new TBinaryProtocol(bufferedSocket));
+        std::shared_ptr<ServiceClient> serviceClient(new ServiceClient(protocol));
 
-        clientThreads.insert(threadFactory->newThread(stdcxx::shared_ptr<ClientThread>(
+        clientThreads.insert(threadFactory->newThread(std::shared_ptr<ClientThread>(
             new ClientThread(socket, serviceClient, monitor, threadCount, loopCount, loopType, OpenAndCloseTransportInThread))));
       }
     } else if(clientType == "concurrent") {
-      stdcxx::shared_ptr<TSocket> socket(new TSocket("127.0.0.1", port));
-      stdcxx::shared_ptr<TBufferedTransport> bufferedSocket(new TBufferedTransport(socket, 2048));
-      stdcxx::shared_ptr<TProtocol> protocol(new TBinaryProtocol(bufferedSocket));
-      //stdcxx::shared_ptr<ServiceClient> serviceClient(new ServiceClient(protocol));
-      stdcxx::shared_ptr<ServiceConcurrentClient> serviceClient(new ServiceConcurrentClient(protocol));
+      std::shared_ptr<TSocket> socket(new TSocket("127.0.0.1", port));
+      std::shared_ptr<TBufferedTransport> bufferedSocket(new TBufferedTransport(socket, 2048));
+      std::shared_ptr<TProtocol> protocol(new TBinaryProtocol(bufferedSocket));
+      //std::shared_ptr<ServiceClient> serviceClient(new ServiceClient(protocol));
+      std::shared_ptr<ServiceConcurrentClient> serviceClient(new ServiceConcurrentClient(protocol));
       socket->open();
       for (size_t ix = 0; ix < clientCount; ix++) {
-        clientThreads.insert(threadFactory->newThread(stdcxx::shared_ptr<ClientThread>(
+        clientThreads.insert(threadFactory->newThread(std::shared_ptr<ClientThread>(
             new ClientThread(socket, serviceClient, monitor, threadCount, loopCount, loopType, DontOpenAndCloseTransportInThread))));
       }
     }
 
-    for (std::set<stdcxx::shared_ptr<Thread> >::const_iterator thread = clientThreads.begin();
+    for (std::set<std::shared_ptr<Thread> >::const_iterator thread = clientThreads.begin();
          thread != clientThreads.end();
          thread++) {
       (*thread)->start();
@@ -559,12 +558,12 @@ int main(int argc, char** argv) {
     int64_t minTime = 9223372036854775807LL;
     int64_t maxTime = 0;
 
-    for (set<stdcxx::shared_ptr<Thread> >::iterator ix = clientThreads.begin();
+    for (set<std::shared_ptr<Thread> >::iterator ix = clientThreads.begin();
          ix != clientThreads.end();
          ix++) {
 
-      stdcxx::shared_ptr<ClientThread> client
-          = stdcxx::dynamic_pointer_cast<ClientThread>((*ix)->runnable());
+      std::shared_ptr<ClientThread> client
+          = std::dynamic_pointer_cast<ClientThread>((*ix)->runnable());
 
       int64_t delta = client->_endTime - client->_startTime;
 

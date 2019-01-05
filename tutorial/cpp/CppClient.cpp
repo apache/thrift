@@ -22,7 +22,6 @@
 #include <thrift/protocol/TBinaryProtocol.h>
 #include <thrift/transport/TSocket.h>
 #include <thrift/transport/TTransportUtils.h>
-#include <thrift/stdcxx.h>
 
 #include "../gen-cpp/Calculator.h"
 
@@ -35,9 +34,9 @@ using namespace tutorial;
 using namespace shared;
 
 int main() {
-  stdcxx::shared_ptr<TTransport> socket(new TSocket("localhost", 9090));
-  stdcxx::shared_ptr<TTransport> transport(new TBufferedTransport(socket));
-  stdcxx::shared_ptr<TProtocol> protocol(new TBinaryProtocol(transport));
+  std::shared_ptr<TTransport> socket(new TSocket("localhost", 9090));
+  std::shared_ptr<TTransport> transport(new TBufferedTransport(socket));
+  std::shared_ptr<TProtocol> protocol(new TBinaryProtocol(transport));
   CalculatorClient client(protocol);
 
   try {

@@ -74,7 +74,7 @@ namespace thrift {
 namespace transport {
 
 using std::string;
-using stdcxx::shared_ptr;
+using std::shared_ptr;
 
 TNonblockingServerSocket::TNonblockingServerSocket(int port)
   : port_(port),

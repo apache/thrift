@@ -24,7 +24,7 @@
 #include <boost/thread/thread.hpp>
 #include <boost/filesystem.hpp>
 #include <boost/format.hpp>
-#include <thrift/stdcxx.h>
+#include <memory>
 #include <thrift/transport/TSSLSocket.h>
 #include <thrift/transport/TSSLServerSocket.h>
 #ifdef __linux__
@@ -37,8 +37,8 @@ using apache::thrift::transport::TTransport;
 using apache::thrift::transport::TTransportException;
 using apache::thrift::transport::TSSLSocketFactory;
 
-using apache::thrift::stdcxx::static_pointer_cast;
-using apache::thrift::stdcxx::shared_ptr;
+using std::static_pointer_cast;
+using std::shared_ptr;
 
 BOOST_AUTO_TEST_SUITE(TSSLSocketInterruptTest)
 
@@ -146,7 +146,7 @@ BOOST_AUTO_TEST_CASE(test_ssl_interruptable_child_read_while_handshaking) {
   shared_ptr<TSSLSocket> clientSock = pClientSocketFactory->createSocket("localhost", port);
   clientSock->open();
   shared_ptr<TTransport> accepted = sock1.accept();
-  boost::thread readThread(apache::thrift::stdcxx::bind(readerWorkerMustThrow, accepted));
+  boost::thread readThread(std::bind(readerWorkerMustThrow, accepted));
   boost::this_thread::sleep(boost::posix_time::milliseconds(50));
   // readThread is practically guaranteed to be blocking now
   sock1.interruptChildren();
@@ -166,7 +166,7 @@ BOOST_AUTO_TEST_CASE(test_ssl_interruptable_child_read) {
   shared_ptr<TSSLSocket> clientSock = pClientSocketFactory->createSocket("localhost", port);
   clientSock->open();
   shared_ptr<TTransport> accepted = sock1.accept();
-  boost::thread readThread(apache::thrift::stdcxx::bind(readerWorkerMustThrow, accepted));
+  boost::thread readThread(std::bind(readerWorkerMustThrow, accepted));
   clientSock->write((const uint8_t*)"0", 1);
   boost::this_thread::sleep(boost::posix_time::milliseconds(50));
   // readThread is practically guaranteed to be blocking now
@@ -189,7 +189,7 @@ BOOST_AUTO_TEST_CASE(test_ssl_non_interruptable_child_read) {
   clientSock->open();
   shared_ptr<TTransport> accepted = sock1.accept();
   static_pointer_cast<TSSLSocket>(accepted)->setRecvTimeout(1000);
-  boost::thread readThread(apache::thrift::stdcxx::bind(readerWorker, accepted, 0));
+  boost::thread readThread(std::bind(readerWorker, accepted, 0));
   clientSock->write((const uint8_t*)"0", 1);
   boost::this_thread::sleep(boost::posix_time::milliseconds(50));
   // readThread is practically guaranteed to be blocking here
@@ -241,7 +241,7 @@ BOOST_AUTO_TEST_CASE(test_ssl_interruptable_child_peek) {
   shared_ptr<TSSLSocket> clientSock = pClientSocketFactory->createSocket("localhost", port);
   clientSock->open();
   shared_ptr<TTransport> accepted = sock1.accept();
-  boost::thread peekThread(apache::thrift::stdcxx::bind(peekerWorkerInterrupt, accepted));
+  boost::thread peekThread(std::bind(peekerWorkerInterrupt, accepted));
   clientSock->write((const uint8_t*)"0", 1);
   boost::this_thread::sleep(boost::posix_time::milliseconds(50));
   // peekThread is practically guaranteed to be blocking now
@@ -264,7 +264,7 @@ BOOST_AUTO_TEST_CASE(test_ssl_non_interruptable_child_peek) {
   clientSock->open();
   shared_ptr<TTransport> accepted = sock1.accept();
   static_pointer_cast<TSSLSocket>(accepted)->setRecvTimeout(1000);
-  boost::thread peekThread(apache::thrift::stdcxx::bind(peekerWorker, accepted, false));
+  boost::thread peekThread(std::bind(peekerWorker, accepted, false));
   clientSock->write((const uint8_t*)"0", 1);
   boost::this_thread::sleep(boost::posix_time::milliseconds(50));
   // peekThread is practically guaranteed to be blocking now

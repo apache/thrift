@@ -23,9 +23,9 @@
 
 #include "thrift/concurrency/Mutex.h"
 #include "thrift/concurrency/PosixThreadFactory.h"
-#include <thrift/stdcxx.h>
+#include <memory>
 
-using apache::thrift::stdcxx::shared_ptr;
+using std::shared_ptr;
 using boost::unit_test::test_suite;
 using boost::unit_test::framework::master_test_suite;
 

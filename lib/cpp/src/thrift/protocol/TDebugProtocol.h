@@ -22,7 +22,7 @@
 
 #include <thrift/protocol/TVirtualProtocol.h>
 
-#include <thrift/stdcxx.h>
+#include <memory>
 
 namespace apache {
 namespace thrift {
@@ -51,7 +51,7 @@ private:
   enum write_state_t { UNINIT, STRUCT, LIST, SET, MAP_KEY, MAP_VALUE };
 
 public:
-  TDebugProtocol(stdcxx::shared_ptr<TTransport> trans)
+  TDebugProtocol(std::shared_ptr<TTransport> trans)
     : TVirtualProtocol<TDebugProtocol>(trans),
       trans_(trans.get()),
       string_limit_(DEFAULT_STRING_LIMIT),
@@ -141,8 +141,8 @@ public:
   TDebugProtocolFactory() {}
   virtual ~TDebugProtocolFactory() {}
 
-  stdcxx::shared_ptr<TProtocol> getProtocol(stdcxx::shared_ptr<TTransport> trans) {
-    return stdcxx::shared_ptr<TProtocol>(new TDebugProtocol(trans));
+  std::shared_ptr<TProtocol> getProtocol(std::shared_ptr<TTransport> trans) {
+    return std::shared_ptr<TProtocol>(new TDebugProtocol(trans));
   }
 };
 }
@@ -160,7 +160,7 @@ std::string ThriftDebugString(const ThriftStruct& ts) {
   using namespace apache::thrift::transport;
   using namespace apache::thrift::protocol;
   TMemoryBuffer* buffer = new TMemoryBuffer;
-  stdcxx::shared_ptr<TTransport> trans(buffer);
+  std::shared_ptr<TTransport> trans(buffer);
   TDebugProtocol protocol(trans);
 
   ts.write(&protocol);
@@ -178,7 +178,7 @@ std::string DebugString(const std::vector<Object>& vec) {
   using namespace apache::thrift::transport;
   using namespace apache::thrift::protocol;
   TMemoryBuffer* buffer = new TMemoryBuffer;
-  stdcxx::shared_ptr<TTransport> trans(buffer);
+  std::shared_ptr<TTransport> trans(buffer);
   TDebugProtocol protocol(trans);
 
   // I am gross!

@@ -95,7 +95,7 @@ public:
   HANDLE getNativeWaitHandle();
 
 private:
-  stdcxx::shared_ptr<TPipeImpl> impl_;
+  std::shared_ptr<TPipeImpl> impl_;
 
   std::string pipename_;
 

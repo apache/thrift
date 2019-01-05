@@ -26,23 +26,23 @@ namespace apache {
 namespace thrift {
 namespace async {
 
-void TAsyncProtocolProcessor::process(apache::thrift::stdcxx::function<void(bool healthy)> _return,
-                                      stdcxx::shared_ptr<TBufferBase> ibuf,
-                                      stdcxx::shared_ptr<TBufferBase> obuf) {
-  stdcxx::shared_ptr<TProtocol> iprot(pfact_->getProtocol(ibuf));
-  stdcxx::shared_ptr<TProtocol> oprot(pfact_->getProtocol(obuf));
+void TAsyncProtocolProcessor::process(std::function<void(bool healthy)> _return,
+                                      std::shared_ptr<TBufferBase> ibuf,
+                                      std::shared_ptr<TBufferBase> obuf) {
+  std::shared_ptr<TProtocol> iprot(pfact_->getProtocol(ibuf));
+  std::shared_ptr<TProtocol> oprot(pfact_->getProtocol(obuf));
   return underlying_
-      ->process(apache::thrift::stdcxx::bind(&TAsyncProtocolProcessor::finish,
+      ->process(std::bind(&TAsyncProtocolProcessor::finish,
                                              _return,
                                              oprot,
-                                             apache::thrift::stdcxx::placeholders::_1),
+                                             std::placeholders::_1),
                 iprot,
                 oprot);
 }
 
 /* static */ void TAsyncProtocolProcessor::finish(
-    apache::thrift::stdcxx::function<void(bool healthy)> _return,
-    stdcxx::shared_ptr<TProtocol> oprot,
+    std::function<void(bool healthy)> _return,
+    std::shared_ptr<TProtocol> oprot,
     bool healthy) {
   (void)oprot;
   // This is a stub function to hold a reference to oprot.

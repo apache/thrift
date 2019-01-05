@@ -26,7 +26,6 @@
 #endif
 #include <sstream>
 #include <fstream>
-#include <thrift/stdcxx.h>
 
 #include <boost/mpl/list.hpp>
 #include <boost/shared_array.hpp>
@@ -114,7 +113,7 @@ public:
   std::string describe() const { return generator_->describe(); }
 
 private:
-  stdcxx::shared_ptr<SizeGenerator> generator_;
+  std::shared_ptr<SizeGenerator> generator_;
 };
 
 /**************************************************************************
@@ -137,8 +136,8 @@ public:
 
   CoupledTransports() : in(), out() {}
 
-  stdcxx::shared_ptr<Transport_> in;
-  stdcxx::shared_ptr<Transport_> out;
+  std::shared_ptr<Transport_> in;
+  std::shared_ptr<Transport_> out;
 
 private:
   CoupledTransports(const CoupledTransports&);
@@ -155,7 +154,7 @@ public:
     out = buf;
   }
 
-  stdcxx::shared_ptr<TMemoryBuffer> buf;
+  std::shared_ptr<TMemoryBuffer> buf;
 };
 
 /**
@@ -341,11 +340,11 @@ public:
  **************************************************************************/
 
 struct TriggerInfo {
-  TriggerInfo(int seconds, const stdcxx::shared_ptr<TTransport>& transport, uint32_t writeLength)
+  TriggerInfo(int seconds, const std::shared_ptr<TTransport>& transport, uint32_t writeLength)
     : timeoutSeconds(seconds), transport(transport), writeLength(writeLength), next(NULL) {}
 
   int timeoutSeconds;
-  stdcxx::shared_ptr<TTransport> transport;
+  std::shared_ptr<TTransport> transport;
   uint32_t writeLength;
   TriggerInfo* next;
 };
@@ -420,7 +419,7 @@ void alarm_handler_wrapper() {
  * to the end.)
  */
 void add_trigger(unsigned int seconds,
-                 const stdcxx::shared_ptr<TTransport>& transport,
+                 const std::shared_ptr<TTransport>& transport,
                  uint32_t write_len) {
   TriggerInfo* info = new TriggerInfo(seconds, transport, write_len);
   {
@@ -460,7 +459,7 @@ void clear_triggers() {
 }
 
 void set_trigger(unsigned int seconds,
-                 const stdcxx::shared_ptr<TTransport>& transport,
+                 const std::shared_ptr<TTransport>& transport,
                  uint32_t write_len) {
   clear_triggers();
   add_trigger(seconds, transport, write_len);
@@ -976,11 +975,11 @@ private:
          << rChunkSizeGen.describe() << ", " << maxOutstanding << ")";
 
 #if (BOOST_VERSION >= 105900)
-    stdcxx::function<void ()> test_func
+    std::function<void ()> test_func
 #else
     boost::unit_test::callback0<> test_func
 #endif
-        = stdcxx::bind(test_rw<CoupledTransports>,
+        = std::bind(test_rw<CoupledTransports>,
                                        totalSize,
                                        wSizeGen,
                                        rSizeGen,
@@ -1026,7 +1025,7 @@ private:
  **************************************************************************/
 
 struct global_fixture {
-  stdcxx::shared_ptr<apache::thrift::concurrency::Thread> alarmThread_;
+  std::shared_ptr<apache::thrift::concurrency::Thread> alarmThread_;
   global_fixture() {
 #if _WIN32
     apache::thrift::transport::TWinsockSingleton::create();

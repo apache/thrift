@@ -6,7 +6,7 @@
 #include "TZmqClient.h"
 #include "Storage.h"
 
-using apache::thrift::stdcxx::shared_ptr;
+using apache::thrift::std::shared_ptr;
 using apache::thrift::transport::TZmqClient;
 using apache::thrift::protocol::TBinaryProtocol;
 
