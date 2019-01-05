@@ -82,7 +82,7 @@ set(UnitTest_SOURCES
     TServerTransportTest.cpp
 )
 
-if(NOT WITH_BOOSTTHREADS AND NOT WITH_STDTHREADS AND NOT MSVC AND NOT MINGW)
+if(NOT WITH_STDTHREADS AND NOT MSVC AND NOT MINGW)
     list(APPEND UnitTest_SOURCES concurrency/MutexTest.cpp)
     list(APPEND UnitTest_SOURCES concurrency/RWMutexStarveTest.cpp)
 endif()

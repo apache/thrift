@@ -25,9 +25,7 @@
 
 #include <thrift/thrift-config.h>
 
-#if USE_BOOST_THREAD
-#include <boost/thread.hpp>
-#elif USE_STD_THREAD
+#if USE_STD_THREAD
 #include <thread>
 #else
 #ifdef HAVE_PTHREAD_H
@@ -80,12 +78,7 @@ private:
 class Thread {
 
 public:
-#if USE_BOOST_THREAD
-  typedef boost::thread::id id_t;
-
-  static inline bool is_current(id_t t) { return t == boost::this_thread::get_id(); }
-  static inline id_t get_current() { return boost::this_thread::get_id(); }
-#elif USE_STD_THREAD
+#if USE_STD_THREAD
   typedef std::thread::id id_t;
 
   static inline bool is_current(id_t t) { return t == std::this_thread::get_id(); }

@@ -90,9 +90,7 @@ add_definitions("-D__STDC_FORMAT_MACROS")
 add_definitions("-D__STDC_LIMIT_MACROS")
 
 # WITH_*THREADS selects which threading library to use
-if(WITH_BOOSTTHREADS)
-  add_definitions("-DUSE_BOOST_THREAD=1")
-elseif(WITH_STDTHREADS)
+if(WITH_STDTHREADS)
   add_definitions("-DUSE_STD_THREAD=1")
 endif()
 

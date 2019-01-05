@@ -111,7 +111,7 @@ public:
     shared_ptr<PlatformThreadFactory> threadFactory
         = shared_ptr<PlatformThreadFactory>(new PlatformThreadFactory(false));
 
-#if !USE_BOOST_THREAD && !USE_STD_THREAD
+#if !USE_STD_THREAD
     threadFactory->setPriority(PosixThreadFactory::HIGHEST);
 #endif
     threadManager->threadFactory(threadFactory);
@@ -260,7 +260,7 @@ public:
       shared_ptr<PlatformThreadFactory> threadFactory
           = shared_ptr<PlatformThreadFactory>(new PlatformThreadFactory());
 
-#if !USE_BOOST_THREAD && !USE_STD_THREAD
+#if !USE_STD_THREAD
       threadFactory->setPriority(PosixThreadFactory::HIGHEST);
 #endif
       threadManager->threadFactory(threadFactory);
@@ -401,7 +401,7 @@ public:
       return false;
     }
 
-#if !USE_BOOST_THREAD && !USE_STD_THREAD
+#if !USE_STD_THREAD
     // test once with a detached thread factory and once with a joinable thread factory
 
     shared_ptr<PosixThreadFactory> threadFactory
@@ -426,7 +426,7 @@ public:
     shared_ptr<ThreadManager> threadManager = ThreadManager::newSimpleThreadManager(1);
     threadManager->threadFactory(threadFactory);
 
-#if !USE_BOOST_THREAD && !USE_STD_THREAD
+#if !USE_STD_THREAD
     threadFactory->setPriority(PosixThreadFactory::HIGHEST);
 
     // verify we cannot change the thread factory to one with the opposite detached setting

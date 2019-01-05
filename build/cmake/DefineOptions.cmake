@@ -88,9 +88,7 @@ if(WITH_CPP)
     find_package(OpenSSL QUIET)
     CMAKE_DEPENDENT_OPTION(WITH_OPENSSL "Build with OpenSSL support" ON
                            "OPENSSL_FOUND" OFF)
-    option(WITH_STDTHREADS "Build with C++ std::thread support" OFF)
-    CMAKE_DEPENDENT_OPTION(WITH_BOOSTTHREADS "Build with Boost threads support" OFF
-        "NOT WITH_STDTHREADS;Boost_FOUND" OFF)
+    option(WITH_STDTHREADS "Build with C++ std::thread support" ON)
 endif()
 CMAKE_DEPENDENT_OPTION(BUILD_CPP "Build C++ library" ON
                        "BUILD_LIBRARIES;WITH_CPP;Boost_FOUND" OFF)
@@ -107,7 +105,7 @@ CMAKE_DEPENDENT_OPTION(BUILD_C_GLIB "Build C (GLib) library" ON
 
 if(BUILD_CPP)
     set(boost_components)
-    if(WITH_BOOSTTHREADS OR BUILD_TESTING)
+    if(BUILD_TESTING)
         list(APPEND boost_components system thread)
     endif()
     if(BUILD_TESTING)
@@ -206,7 +204,6 @@ message(STATUS " Library features:")
 message(STATUS "  Build shared libraries:                     ${WITH_SHARED_LIB}")
 message(STATUS "  Build static libraries:                     ${WITH_STATIC_LIB}")
 message(STATUS "  Build with Boost static link library:       ${WITH_BOOST_STATIC}")
-message(STATUS "  Build with Boost thread support:            ${WITH_BOOSTTHREADS}")
 message(STATUS "  Build with boost/tr1/functional (forced)    ${WITH_BOOST_FUNCTIONAL}")
 message(STATUS "  Build with boost/smart_ptr (forced)         ${WITH_BOOST_SMART_PTR}")
 message(STATUS "  Build with C++ std::thread support:         ${WITH_STDTHREADS}")

@@ -33,13 +33,7 @@
 // boost
 #include <boost/noncopyable.hpp>
 
-#if USE_BOOST_THREAD
-#include <boost/thread/once.hpp>
-#elif USE_STD_THREAD
 #include <mutex>
-#else
-#error For windows you must choose USE_BOOST_THREAD or USE_STD_THREAD
-#endif
 
 #include <thrift/stdcxx.h>
 
@@ -70,13 +64,7 @@ private:
 
 private:
   static instance_ptr instance_ptr_;
-#if USE_BOOST_THREAD
-  static boost::once_flag flags_;
-#elif USE_STD_THREAD
   static std::once_flag flags_;
-#else
-#error Need a non-Boost non-C++11 way to track single initialization here.
-#endif
 };
 }
 }
