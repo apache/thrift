@@ -159,7 +159,6 @@ include_thrift_HEADERS = \
                          src/thrift/TApplicationException.h \
                          src/thrift/TLogging.h \
                          src/thrift/TToString.h \
-                         src/thrift/stdcxx.h \
                          src/thrift/TBase.h
 
 include_concurrencydir = $(include_thriftdir)/concurrency
