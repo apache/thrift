@@ -29,57 +29,25 @@
 //
 ///////////////////////////////////////////////////////////////////
 
-#if defined(BOOST_NO_CXX11_HDR_FUNCTIONAL) || (defined(_MSC_VER) && _MSC_VER < 1800) || defined(FORCE_BOOST_FUNCTIONAL)
-#if (BOOST_VERSION <= 106500)
-#include <boost/tr1/functional.hpp>
-#else
-#include <tr1/functional>
-#endif
-#define _THRIFT_FUNCTIONAL_TR1_ 1
-#endif
+#include <functional>
 
-#if _THRIFT_FUNCTIONAL_TR1_
+namespace apache { namespace thrift { namespace stdcxx {
+  using ::std::bind;
+  using ::std::function;
 
-  namespace apache { namespace thrift { namespace stdcxx {
+  namespace placeholders {
+    using ::std::placeholders::_1;
+    using ::std::placeholders::_2;
+    using ::std::placeholders::_3;
+    using ::std::placeholders::_4;
+    using ::std::placeholders::_5;
+    using ::std::placeholders::_6;
+    using ::std::placeholders::_7;
+    using ::std::placeholders::_8;
+    using ::std::placeholders::_9;
+  } // apache::thrift::stdcxx::placeholders
+}}} // apache::thrift::stdcxx
 
-    using ::std::tr1::bind;
-    using ::std::tr1::function;
-
-    namespace placeholders {
-      using ::std::tr1::placeholders::_1;
-      using ::std::tr1::placeholders::_2;
-      using ::std::tr1::placeholders::_3;
-      using ::std::tr1::placeholders::_4;
-      using ::std::tr1::placeholders::_5;
-      using ::std::tr1::placeholders::_6;
-      using ::std::tr1::placeholders::_7;
-      using ::std::tr1::placeholders::_8;
-      using ::std::tr1::placeholders::_9;
-    } // apache::thrift::stdcxx::placeholders
-  }}} // apache::thrift::stdcxx
-
-#else
-
-  #include <functional>
-
-  namespace apache { namespace thrift { namespace stdcxx {
-    using ::std::bind;
-    using ::std::function;
-
-    namespace placeholders {
-      using ::std::placeholders::_1;
-      using ::std::placeholders::_2;
-      using ::std::placeholders::_3;
-      using ::std::placeholders::_4;
-      using ::std::placeholders::_5;
-      using ::std::placeholders::_6;
-      using ::std::placeholders::_7;
-      using ::std::placeholders::_8;
-      using ::std::placeholders::_9;
-    } // apache::thrift::stdcxx::placeholders
-  }}} // apache::thrift::stdcxx
-
-#endif
 
 ///////////////////////////////////////////////////////////////////
 //
