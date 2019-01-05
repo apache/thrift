@@ -97,14 +97,25 @@ elseif(WITH_STDTHREADS)
 endif()
 
 # C++ Language Level
-set(CMAKE_CXX_STANDARD 11)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_CXX_EXTENSIONS OFF)
-if ((CMAKE_CXX_COMPILER_ID MATCHES "GNU" OR CMAKE_CXX_COMPILER_ID MATCHES "Clang") AND NOT MINGW)
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-variadic-macros -Wno-long-long")
+if (NOT CMAKE_CXX_STANDARD)
+  set(CMAKE_CXX_STANDARD 11)
+elseif (CMAKE_CXX_STANDARD EQUAL 98)
+  message(FATAL_ERROR "only C++11 or above C++ standard is supported")
 endif()
-if ((CMAKE_CXX_COMPILER_ID MATCHES "Clang") AND NOT MINGW)
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-c++11-long-long")
+
+if (CMAKE_CXX_STANDARD EQUAL 11)
+  # should not fallback to C++98
+  set(CMAKE_CXX_STANDARD_REQUIRED ON)
+endif()
+
+set(CXX_LANGUAGE_LEVEL "C++${CMAKE_CXX_STANDARD}")
+if (CMAKE_CXX_STANDARD_REQUIRED)
+  string(CONCAT CXX_LANGUAGE_LEVEL "${CXX_LANGUAGE_LEVEL} [compiler must support it]")
+else()
+  string(CONCAT CXX_LANGUAGE_LEVEL "${CXX_LANGUAGE_LEVEL} [fallback to earlier if compiler does not support it]")
+endif()
+if (CMAKE_CXX_EXTENSIONS)
+  string(CONCAT CXX_LANGUAGE_LEVEL "${CXX_LANGUAGE_LEVEL} [with compiler-specific extensions]")
 endif()
 
 if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
