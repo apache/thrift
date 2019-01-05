@@ -89,19 +89,19 @@ public:
     if (obj_)
       Py_DECREF(obj_);
   }
-  PyObject* get() noexcept { return obj_; }
+  PyObject* get() throw() { return obj_; }
   operator bool() { return obj_; }
-  void reset(PyObject* py_object) noexcept {
+  void reset(PyObject* py_object) throw() {
     if (obj_)
       Py_DECREF(obj_);
     obj_ = py_object;
   }
-  PyObject* release() noexcept {
+  PyObject* release() throw() {
     PyObject* tmp = obj_;
     obj_ = NULL;
     return tmp;
   }
-  void swap(ScopedPyObject& other) noexcept {
+  void swap(ScopedPyObject& other) throw() {
     ScopedPyObject tmp(other.release());
     other.reset(release());
     reset(tmp.release());
