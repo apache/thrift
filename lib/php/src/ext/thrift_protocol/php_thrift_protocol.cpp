@@ -111,23 +111,23 @@ ZEND_GET_MODULE(thrift_protocol)
 
 class PHPExceptionWrapper : public std::exception {
 public:
-  PHPExceptionWrapper(zval* _ex) noexcept {
+  PHPExceptionWrapper(zval* _ex) throw() {
     ZVAL_COPY(&ex, _ex);
     snprintf(_what, 40, "PHP exception zval=%p", _ex);
   }
 
-  PHPExceptionWrapper(zend_object* _exobj) noexcept {
+  PHPExceptionWrapper(zend_object* _exobj) throw() {
     ZVAL_OBJ(&ex, _exobj);
     snprintf(_what, 40, "PHP exception zval=%p", _exobj);
   }
-  ~PHPExceptionWrapper() noexcept {
+  ~PHPExceptionWrapper() throw() {
     zval_dtor(&ex);
   }
 
-  const char* what() const noexcept {
+  const char* what() const throw() {
     return _what;
   }
-  operator zval*() const noexcept {
+  operator zval*() const throw() {
     return const_cast<zval*>(&ex);
   } // Zend API doesn't do 'const'...
 protected:
