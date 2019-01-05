@@ -40,11 +40,6 @@ option(BUILD_LIBRARIES "Build Thrift libraries" ON)
 # and enables the library if all are found. This means the default is to build as
 # much as possible but leaving out libraries if their dependencies are not met.
 
-option(WITH_BOOST_FUNCTIONAL "Use boost/tr1/functional.hpp even under C++11 or later" OFF)
-if (WITH_BOOST_FUNCTIONAL)
-    add_definitions(-DFORCE_BOOST_FUNCTIONAL)
-endif()
-
 option(WITH_BOOST_STATIC "Build with Boost static link library" OFF)
 set(Boost_USE_STATIC_LIBS ${WITH_BOOST_STATIC})
 if (NOT WITH_BOOST_STATIC)
@@ -199,7 +194,6 @@ message(STATUS " Library features:")
 message(STATUS "  Build shared libraries:                     ${WITH_SHARED_LIB}")
 message(STATUS "  Build static libraries:                     ${WITH_STATIC_LIB}")
 message(STATUS "  Build with Boost static link library:       ${WITH_BOOST_STATIC}")
-message(STATUS "  Build with boost/tr1/functional (forced)    ${WITH_BOOST_FUNCTIONAL}")
 message(STATUS "  Build with C++ std::thread support:         ${WITH_STDTHREADS}")
 message(STATUS "  Build with libevent support:                ${WITH_LIBEVENT}")
 message(STATUS "  Build with OpenSSL support:                 ${WITH_OPENSSL}")
