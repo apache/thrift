@@ -31,6 +31,8 @@ namespace perl shared
 namespace php shared
 namespace haxe shared
 namespace netcore shared
+namespace netstd shared
+
 
 struct SharedStruct {
   1: i32 key

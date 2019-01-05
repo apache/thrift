@@ -72,6 +72,7 @@ namespace php tutorial
 namespace perl tutorial
 namespace haxe tutorial
 namespace netcore tutorial
+namespace netstd tutorial
 
 /**
  * Thrift lets you do typedefs to get pretty names for your types. Standard
