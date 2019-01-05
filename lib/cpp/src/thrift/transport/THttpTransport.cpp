@@ -31,7 +31,7 @@ namespace transport {
 const char* THttpTransport::CRLF = "\r\n";
 const int THttpTransport::CRLF_LEN = 2;
 
-THttpTransport::THttpTransport(stdcxx::shared_ptr<TTransport> transport)
+THttpTransport::THttpTransport(std::shared_ptr<TTransport> transport)
   : transport_(transport),
     origin_(""),
     readHeaders_(true),

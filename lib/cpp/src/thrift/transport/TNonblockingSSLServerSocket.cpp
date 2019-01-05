@@ -27,14 +27,14 @@ namespace transport {
 /**
  * Nonblocking SSL server socket implementation.
  */
-TNonblockingSSLServerSocket::TNonblockingSSLServerSocket(int port, stdcxx::shared_ptr<TSSLSocketFactory> factory)
+TNonblockingSSLServerSocket::TNonblockingSSLServerSocket(int port, std::shared_ptr<TSSLSocketFactory> factory)
   : TNonblockingServerSocket(port), factory_(factory) {
   factory_->server(true);
 }
 
 TNonblockingSSLServerSocket::TNonblockingSSLServerSocket(const std::string& address,
                                    int port,
-                                   stdcxx::shared_ptr<TSSLSocketFactory> factory)
+                                   std::shared_ptr<TSSLSocketFactory> factory)
   : TNonblockingServerSocket(address, port), factory_(factory) {
   factory_->server(true);
 }
@@ -42,13 +42,13 @@ TNonblockingSSLServerSocket::TNonblockingSSLServerSocket(const std::string& addr
 TNonblockingSSLServerSocket::TNonblockingSSLServerSocket(int port,
                                    int sendTimeout,
                                    int recvTimeout,
-                                   stdcxx::shared_ptr<TSSLSocketFactory> factory)
+                                   std::shared_ptr<TSSLSocketFactory> factory)
   : TNonblockingServerSocket(port, sendTimeout, recvTimeout), factory_(factory) {
   factory_->server(true);
 }
 
-stdcxx::shared_ptr<TSocket> TNonblockingSSLServerSocket::createSocket(THRIFT_SOCKET client) {
-  stdcxx::shared_ptr<TSSLSocket> tSSLSocket;
+std::shared_ptr<TSocket> TNonblockingSSLServerSocket::createSocket(THRIFT_SOCKET client) {
+  std::shared_ptr<TSSLSocket> tSSLSocket;
   tSSLSocket = factory_->createSocket(client);
   tSSLSocket->setLibeventSafe();
   return tSSLSocket;

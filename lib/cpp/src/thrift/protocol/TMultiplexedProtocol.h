@@ -25,7 +25,7 @@
 namespace apache {
 namespace thrift {
 namespace protocol {
-using stdcxx::shared_ptr;
+using std::shared_ptr;
 
 /**
  * <code>TMultiplexedProtocol</code> is a protocol-independent concrete decorator

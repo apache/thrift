@@ -30,7 +30,7 @@
 #include <thrift/transport/THttpClient.h>
 #include <thrift/transport/TServerSocket.h>
 #include <thrift/transport/TSocket.h>
-#include <thrift/stdcxx.h>
+#include <memory>
 #include <thrift/transport/TBufferTransports.h>
 #include "gen-cpp/OneWayService.h"
 
@@ -54,7 +54,7 @@ using apache::thrift::transport::TMemoryBuffer;
 using apache::thrift::transport::TServerSocket;
 using apache::thrift::transport::TSocket;
 using apache::thrift::transport::TTransportException;
-using apache::thrift::stdcxx::shared_ptr;
+using std::shared_ptr;
 using std::cout;
 using std::cerr;
 using std::endl;
@@ -138,7 +138,7 @@ private:
 
 class TBlockableBufferedTransport : public TBufferedTransport {
  public:
-  TBlockableBufferedTransport(stdcxx::shared_ptr<TTransport> transport)
+  TBlockableBufferedTransport(std::shared_ptr<TTransport> transport)
     : TBufferedTransport(transport, 10240),
     blocked_(false) {
   }
@@ -176,14 +176,14 @@ class TBlockableBufferedTransport : public TBufferedTransport {
 
 BOOST_AUTO_TEST_CASE( JSON_BufferedHTTP )
 {
-  stdcxx::shared_ptr<TServerSocket> ss = stdcxx::make_shared<TServerSocket>(0) ;
+  std::shared_ptr<TServerSocket> ss = std::make_shared<TServerSocket>(0) ;
   TThreadedServer server(
-    stdcxx::make_shared<onewaytest::OneWayServiceProcessorFactory>(stdcxx::make_shared<OneWayServiceCloneFactory>()),
+    std::make_shared<onewaytest::OneWayServiceProcessorFactory>(std::make_shared<OneWayServiceCloneFactory>()),
     ss, //port
-    stdcxx::make_shared<THttpServerTransportFactory>(),
-    stdcxx::make_shared<TJSONProtocolFactory>());
+    std::make_shared<THttpServerTransportFactory>(),
+    std::make_shared<TJSONProtocolFactory>());
 
-  stdcxx::shared_ptr<TServerReadyEventHandler> pEventHandler(new TServerReadyEventHandler) ;
+  std::shared_ptr<TServerReadyEventHandler> pEventHandler(new TServerReadyEventHandler) ;
   server.setServerEventHandler(pEventHandler);
 
 #ifdef ENABLE_STDERR_LOGGING
@@ -205,11 +205,11 @@ BOOST_AUTO_TEST_CASE( JSON_BufferedHTTP )
 #endif
 
   {
-    stdcxx::shared_ptr<TSocket> socket(new TSocket("localhost", port));
+    std::shared_ptr<TSocket> socket(new TSocket("localhost", port));
     socket->setRecvTimeout(10000) ; // 1000msec should be enough
-    stdcxx::shared_ptr<TBlockableBufferedTransport> blockable_transport(new TBlockableBufferedTransport(socket));
-    stdcxx::shared_ptr<TTransport> transport(new THttpClient(blockable_transport, "localhost", "/service"));
-    stdcxx::shared_ptr<TProtocol> protocol(new TJSONProtocol(transport));
+    std::shared_ptr<TBlockableBufferedTransport> blockable_transport(new TBlockableBufferedTransport(socket));
+    std::shared_ptr<TTransport> transport(new THttpClient(blockable_transport, "localhost", "/service"));
+    std::shared_ptr<TProtocol> protocol(new TJSONProtocol(transport));
     onewaytest::OneWayServiceClient client(protocol);
 
 

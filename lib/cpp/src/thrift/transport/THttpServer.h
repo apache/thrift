@@ -28,7 +28,7 @@ namespace transport {
 
 class THttpServer : public THttpTransport {
 public:
-  THttpServer(stdcxx::shared_ptr<TTransport> transport);
+  THttpServer(std::shared_ptr<TTransport> transport);
 
   virtual ~THttpServer();
 
@@ -53,8 +53,8 @@ public:
   /**
    * Wraps the transport into a buffered one.
    */
-  virtual stdcxx::shared_ptr<TTransport> getTransport(stdcxx::shared_ptr<TTransport> trans) {
-    return stdcxx::shared_ptr<TTransport>(new THttpServer(trans));
+  virtual std::shared_ptr<TTransport> getTransport(std::shared_ptr<TTransport> trans) {
+    return std::shared_ptr<TTransport>(new THttpServer(trans));
   }
 };
 }

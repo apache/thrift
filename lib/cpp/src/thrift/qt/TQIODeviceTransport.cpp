@@ -23,12 +23,12 @@
 #include <QIODevice>
 
 #include <thrift/transport/TBufferTransports.h>
-#include <thrift/stdcxx.h>
+#include <memory>
 
 namespace apache {
 namespace thrift {
 
-using stdcxx::shared_ptr;
+using std::shared_ptr;
 
 namespace transport {
 

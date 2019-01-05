@@ -21,8 +21,8 @@
 #define _THRIFT_TRANSPORT_TTRANSPORT_H_ 1
 
 #include <thrift/Thrift.h>
-#include <thrift/stdcxx.h>
 #include <thrift/transport/TTransportException.h>
+#include <memory>
 #include <string>
 
 namespace apache {
@@ -260,7 +260,7 @@ public:
   /**
    * Default implementation does nothing, just returns the transport given.
    */
-  virtual stdcxx::shared_ptr<TTransport> getTransport(stdcxx::shared_ptr<TTransport> trans) {
+  virtual std::shared_ptr<TTransport> getTransport(std::shared_ptr<TTransport> trans) {
     return trans;
   }
 };

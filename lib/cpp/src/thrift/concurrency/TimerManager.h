@@ -24,7 +24,7 @@
 #include <thrift/concurrency/Monitor.h>
 #include <thrift/concurrency/Thread.h>
 
-#include <thrift/stdcxx.h>
+#include <memory>
 #include <map>
 #include <time.h>
 
@@ -43,15 +43,15 @@ class TimerManager {
 
 public:
   class Task;
-  typedef stdcxx::weak_ptr<Task> Timer;
+  typedef std::weak_ptr<Task> Timer;
 
   TimerManager();
 
   virtual ~TimerManager();
 
-  virtual stdcxx::shared_ptr<const ThreadFactory> threadFactory() const;
+  virtual std::shared_ptr<const ThreadFactory> threadFactory() const;
 
-  virtual void threadFactory(stdcxx::shared_ptr<const ThreadFactory> value);
+  virtual void threadFactory(std::shared_ptr<const ThreadFactory> value);
 
   /**
    * Starts the timer manager service
@@ -74,7 +74,7 @@ public:
    * @param timeout Time in milliseconds to delay before executing task
    * @return Handle of the timer, which can be used to remove the timer.
    */
-  virtual Timer add(stdcxx::shared_ptr<Runnable> task, int64_t timeout);
+  virtual Timer add(std::shared_ptr<Runnable> task, int64_t timeout);
 
   /**
    * Adds a task to be executed at some time in the future by a worker thread.
@@ -83,7 +83,7 @@ public:
    * @param timeout Absolute time in the future to execute task.
    * @return Handle of the timer, which can be used to remove the timer.
    */
-  virtual Timer add(stdcxx::shared_ptr<Runnable> task, const struct THRIFT_TIMESPEC& timeout);
+  virtual Timer add(std::shared_ptr<Runnable> task, const struct THRIFT_TIMESPEC& timeout);
 
   /**
    * Adds a task to be executed at some time in the future by a worker thread.
@@ -92,7 +92,7 @@ public:
    * @param timeout Absolute time in the future to execute task.
    * @return Handle of the timer, which can be used to remove the timer.
    */
-  virtual Timer add(stdcxx::shared_ptr<Runnable> task, const struct timeval& timeout);
+  virtual Timer add(std::shared_ptr<Runnable> task, const struct timeval& timeout);
 
   /**
    * Removes a pending task
@@ -106,7 +106,7 @@ public:
    * @throws UncancellableTaskException Specified task is already being
    *                                    executed or has completed execution.
    */
-  virtual void remove(stdcxx::shared_ptr<Runnable> task);
+  virtual void remove(std::shared_ptr<Runnable> task);
 
   /**
    * Removes a single pending task
@@ -127,17 +127,17 @@ public:
   virtual STATE state() const;
 
 private:
-  stdcxx::shared_ptr<const ThreadFactory> threadFactory_;
+  std::shared_ptr<const ThreadFactory> threadFactory_;
   friend class Task;
-  std::multimap<int64_t, stdcxx::shared_ptr<Task> > taskMap_;
+  std::multimap<int64_t, std::shared_ptr<Task> > taskMap_;
   size_t taskCount_;
   Monitor monitor_;
   STATE state_;
   class Dispatcher;
   friend class Dispatcher;
-  stdcxx::shared_ptr<Dispatcher> dispatcher_;
-  stdcxx::shared_ptr<Thread> dispatcherThread_;
-  typedef std::multimap<int64_t, stdcxx::shared_ptr<TimerManager::Task> >::iterator task_iterator;
+  std::shared_ptr<Dispatcher> dispatcher_;
+  std::shared_ptr<Thread> dispatcherThread_;
+  typedef std::multimap<int64_t, std::shared_ptr<TimerManager::Task> >::iterator task_iterator;
   typedef std::pair<task_iterator, task_iterator> task_range;
 };
 }

@@ -96,12 +96,12 @@ class TJSONContext;
  */
 class TJSONProtocol : public TVirtualProtocol<TJSONProtocol> {
 public:
-  TJSONProtocol(stdcxx::shared_ptr<TTransport> ptrans);
+  TJSONProtocol(std::shared_ptr<TTransport> ptrans);
 
   ~TJSONProtocol();
 
 private:
-  void pushContext(stdcxx::shared_ptr<TJSONContext> c);
+  void pushContext(std::shared_ptr<TJSONContext> c);
 
   void popContext();
 
@@ -276,8 +276,8 @@ public:
 private:
   TTransport* trans_;
 
-  std::stack<stdcxx::shared_ptr<TJSONContext> > contexts_;
-  stdcxx::shared_ptr<TJSONContext> context_;
+  std::stack<std::shared_ptr<TJSONContext> > contexts_;
+  std::shared_ptr<TJSONContext> context_;
   LookaheadReader reader_;
 };
 
@@ -290,8 +290,8 @@ public:
 
   virtual ~TJSONProtocolFactory() {}
 
-  stdcxx::shared_ptr<TProtocol> getProtocol(stdcxx::shared_ptr<TTransport> trans) {
-    return stdcxx::shared_ptr<TProtocol>(new TJSONProtocol(trans));
+  std::shared_ptr<TProtocol> getProtocol(std::shared_ptr<TTransport> trans) {
+    return std::shared_ptr<TProtocol>(new TJSONProtocol(trans));
   }
 };
 }
@@ -309,7 +309,7 @@ std::string ThriftJSONString(const ThriftStruct& ts) {
   using namespace apache::thrift::transport;
   using namespace apache::thrift::protocol;
   TMemoryBuffer* buffer = new TMemoryBuffer;
-  stdcxx::shared_ptr<TTransport> trans(buffer);
+  std::shared_ptr<TTransport> trans(buffer);
   TJSONProtocol protocol(trans);
 
   ts.write(&protocol);

@@ -270,7 +270,7 @@ public:
    * Constructor to create socket from file descriptor that
    * can be interrupted safely.
    */
-  TSocket(THRIFT_SOCKET socket, stdcxx::shared_ptr<THRIFT_SOCKET> interruptListener);
+  TSocket(THRIFT_SOCKET socket, std::shared_ptr<THRIFT_SOCKET> interruptListener);
 
   /**
    * Set a cache of the peer address (used when trivially available: e.g.
@@ -307,7 +307,7 @@ protected:
    * A shared socket pointer that will interrupt a blocking read if data
    * becomes available on it
    */
-  stdcxx::shared_ptr<THRIFT_SOCKET> interruptListener_;
+  std::shared_ptr<THRIFT_SOCKET> interruptListener_;
 
   /** Connect timeout in ms */
   int connTimeout_;

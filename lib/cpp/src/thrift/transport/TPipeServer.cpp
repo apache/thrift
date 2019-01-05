@@ -22,7 +22,6 @@
 
 #include <thrift/transport/TPipe.h>
 #include <thrift/transport/TPipeServer.h>
-#include <thrift/stdcxx.h>
 #include <boost/noncopyable.hpp>
 
 #ifdef _WIN32
@@ -37,14 +36,14 @@ namespace transport {
 
 #ifdef _WIN32
 
-using stdcxx::shared_ptr;
+using std::shared_ptr;
 
 class TPipeServerImpl : boost::noncopyable {
 public:
   TPipeServerImpl() {}
   virtual ~TPipeServerImpl() {}
   virtual void interrupt() = 0;
-  virtual stdcxx::shared_ptr<TTransport> acceptImpl() = 0;
+  virtual std::shared_ptr<TTransport> acceptImpl() = 0;
 
   virtual HANDLE getPipeHandle() = 0;
   virtual HANDLE getWrtPipeHandle() = 0;
@@ -75,7 +74,7 @@ public:
 
   virtual void interrupt() {} // not currently implemented
 
-  virtual stdcxx::shared_ptr<TTransport> acceptImpl();
+  virtual std::shared_ptr<TTransport> acceptImpl();
 
   virtual HANDLE getPipeHandle() { return PipeR_.h; }
   virtual HANDLE getWrtPipeHandle() { return PipeW_.h; }
@@ -117,7 +116,7 @@ public:
     }
   }
 
-  virtual stdcxx::shared_ptr<TTransport> acceptImpl();
+  virtual std::shared_ptr<TTransport> acceptImpl();
 
   virtual HANDLE getPipeHandle() { return Pipe_.h; }
   virtual HANDLE getWrtPipeHandle() { return INVALID_HANDLE_VALUE; }
@@ -141,7 +140,7 @@ private:
 
   TCriticalSection pipe_protect_;
   // only read or write these variables underneath a locked pipe_protect_
-  stdcxx::shared_ptr<TPipe> cached_client_;
+  std::shared_ptr<TPipe> cached_client_;
   TAutoHandle Pipe_;
 };
 

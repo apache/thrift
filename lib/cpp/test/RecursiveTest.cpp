@@ -23,7 +23,7 @@
 
 #include "gen-cpp/Recursive_types.h"
 #include <thrift/protocol/TBinaryProtocol.h>
-#include <thrift/stdcxx.h>
+#include <memory>
 #include <thrift/transport/TBufferTransports.h>
 
 #define BOOST_TEST_MODULE RecursiveTest
@@ -31,7 +31,7 @@
 
 using apache::thrift::transport::TMemoryBuffer;
 using apache::thrift::protocol::TBinaryProtocol;
-using apache::thrift::stdcxx::shared_ptr;
+using std::shared_ptr;
 
 BOOST_AUTO_TEST_CASE(test_recursive_1) {
   shared_ptr<TMemoryBuffer> buf(new TMemoryBuffer());

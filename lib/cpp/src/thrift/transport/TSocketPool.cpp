@@ -35,7 +35,7 @@ namespace apache {
 namespace thrift {
 namespace transport {
 
-using stdcxx::shared_ptr;
+using std::shared_ptr;
 
 /**
  * TSocketPoolServer implementation

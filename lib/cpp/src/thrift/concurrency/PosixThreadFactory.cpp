@@ -32,7 +32,7 @@
 
 #include <iostream>
 
-#include <thrift/stdcxx.h>
+#include <memory>
 
 namespace apache {
 namespace thrift {
@@ -58,7 +58,7 @@ private:
   int policy_;
   int priority_;
   int stackSize_;
-  stdcxx::weak_ptr<PthreadThread> self_;
+  std::weak_ptr<PthreadThread> self_;
   bool detached_;
 
 public:
@@ -66,7 +66,7 @@ public:
                 int priority,
                 int stackSize,
                 bool detached,
-                stdcxx::shared_ptr<Runnable> runnable)
+                std::shared_ptr<Runnable> runnable)
     :
 
 #ifndef _WIN32
@@ -155,7 +155,7 @@ public:
     }
 
     // Create reference
-    stdcxx::shared_ptr<PthreadThread>* selfRef = new stdcxx::shared_ptr<PthreadThread>();
+    std::shared_ptr<PthreadThread>* selfRef = new std::shared_ptr<PthreadThread>();
     *selfRef = self_.lock();
 
     setState(starting);
@@ -201,19 +201,19 @@ public:
 #endif // _WIN32
   }
 
-  stdcxx::shared_ptr<Runnable> runnable() const { return Thread::runnable(); }
+  std::shared_ptr<Runnable> runnable() const { return Thread::runnable(); }
 
-  void runnable(stdcxx::shared_ptr<Runnable> value) { Thread::runnable(value); }
+  void runnable(std::shared_ptr<Runnable> value) { Thread::runnable(value); }
 
-  void weakRef(stdcxx::shared_ptr<PthreadThread> self) {
+  void weakRef(std::shared_ptr<PthreadThread> self) {
     assert(self.get() == this);
-    self_ = stdcxx::weak_ptr<PthreadThread>(self);
+    self_ = std::weak_ptr<PthreadThread>(self);
   }
 };
 
 void* PthreadThread::threadMain(void* arg) {
-  stdcxx::shared_ptr<PthreadThread> thread = *(stdcxx::shared_ptr<PthreadThread>*)arg;
-  delete reinterpret_cast<stdcxx::shared_ptr<PthreadThread>*>(arg);
+  std::shared_ptr<PthreadThread> thread = *(std::shared_ptr<PthreadThread>*)arg;
+  delete reinterpret_cast<std::shared_ptr<PthreadThread>*>(arg);
 
 #if GOOGLE_PERFTOOLS_REGISTER_THREAD
   ProfilerRegisterThread();
@@ -294,9 +294,9 @@ PosixThreadFactory::PosixThreadFactory(bool detached)
     stackSize_(1) {
 }
 
-stdcxx::shared_ptr<Thread> PosixThreadFactory::newThread(stdcxx::shared_ptr<Runnable> runnable) const {
-  stdcxx::shared_ptr<PthreadThread> result
-      = stdcxx::shared_ptr<PthreadThread>(new PthreadThread(toPthreadPolicy(policy_),
+std::shared_ptr<Thread> PosixThreadFactory::newThread(std::shared_ptr<Runnable> runnable) const {
+  std::shared_ptr<PthreadThread> result
+      = std::shared_ptr<PthreadThread>(new PthreadThread(toPthreadPolicy(policy_),
                                                     toPthreadPriority(policy_, priority_),
                                                     stackSize_,
                                                     isDetached(),

@@ -19,12 +19,12 @@
 
 #define BOOST_TEST_MODULE TNonblockingServerTest
 #include <boost/test/unit_test.hpp>
+#include <memory>
 
 #include "thrift/concurrency/Monitor.h"
 #include "thrift/concurrency/Thread.h"
 #include "thrift/server/TNonblockingServer.h"
 #include "thrift/transport/TNonblockingServerSocket.h"
-#include "thrift/stdcxx.h"
 
 #include "gen-cpp/ParentService.h"
 
@@ -38,8 +38,8 @@ using apache::thrift::concurrency::Runnable;
 using apache::thrift::concurrency::Thread;
 using apache::thrift::concurrency::ThreadFactory;
 using apache::thrift::server::TServerEventHandler;
-using apache::thrift::stdcxx::make_shared;
-using apache::thrift::stdcxx::shared_ptr;
+using std::make_shared;
+using std::shared_ptr;
 
 using namespace apache::thrift;
 

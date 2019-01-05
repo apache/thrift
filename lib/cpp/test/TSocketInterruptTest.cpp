@@ -25,7 +25,7 @@
 #include <boost/thread/thread.hpp>
 #include <thrift/transport/TSocket.h>
 #include <thrift/transport/TServerSocket.h>
-#include <thrift/stdcxx.h>
+#include <memory>
 
 using apache::thrift::transport::TServerSocket;
 using apache::thrift::transport::TSocket;
@@ -35,12 +35,12 @@ using namespace apache::thrift;
 
 BOOST_AUTO_TEST_SUITE(TSocketInterruptTest)
 
-void readerWorker(stdcxx::shared_ptr<TTransport> tt, uint32_t expectedResult) {
+void readerWorker(std::shared_ptr<TTransport> tt, uint32_t expectedResult) {
   uint8_t buf[4];
   BOOST_CHECK_EQUAL(expectedResult, tt->read(buf, 4));
 }
 
-void readerWorkerMustThrow(stdcxx::shared_ptr<TTransport> tt) {
+void readerWorkerMustThrow(std::shared_ptr<TTransport> tt) {
   try {
     uint8_t buf[4];
     tt->read(buf, 4);
@@ -56,8 +56,8 @@ BOOST_AUTO_TEST_CASE(test_interruptable_child_read) {
   int port = sock1.getPort();
   TSocket clientSock("localhost", port);
   clientSock.open();
-  stdcxx::shared_ptr<TTransport> accepted = sock1.accept();
-  boost::thread readThread(stdcxx::bind(readerWorkerMustThrow, accepted));
+  std::shared_ptr<TTransport> accepted = sock1.accept();
+  boost::thread readThread(std::bind(readerWorkerMustThrow, accepted));
   boost::this_thread::sleep(boost::posix_time::milliseconds(50));
   // readThread is practically guaranteed to be blocking now
   sock1.interruptChildren();
@@ -75,8 +75,8 @@ BOOST_AUTO_TEST_CASE(test_non_interruptable_child_read) {
   int port = sock1.getPort();
   TSocket clientSock("localhost", port);
   clientSock.open();
-  stdcxx::shared_ptr<TTransport> accepted = sock1.accept();
-  boost::thread readThread(stdcxx::bind(readerWorker, accepted, 0));
+  std::shared_ptr<TTransport> accepted = sock1.accept();
+  boost::thread readThread(std::bind(readerWorker, accepted, 0));
   boost::this_thread::sleep(boost::posix_time::milliseconds(50));
   // readThread is practically guaranteed to be blocking here
   sock1.interruptChildren();
@@ -97,7 +97,7 @@ BOOST_AUTO_TEST_CASE(test_cannot_change_after_listen) {
   sock1.close();
 }
 
-void peekerWorker(stdcxx::shared_ptr<TTransport> tt, bool expectedResult) {
+void peekerWorker(std::shared_ptr<TTransport> tt, bool expectedResult) {
   BOOST_CHECK_EQUAL(expectedResult, tt->peek());
 }
 
@@ -107,9 +107,9 @@ BOOST_AUTO_TEST_CASE(test_interruptable_child_peek) {
   int port = sock1.getPort();
   TSocket clientSock("localhost", port);
   clientSock.open();
-  stdcxx::shared_ptr<TTransport> accepted = sock1.accept();
+  std::shared_ptr<TTransport> accepted = sock1.accept();
   // peek() will return false if child is interrupted
-  boost::thread peekThread(stdcxx::bind(peekerWorker, accepted, false));
+  boost::thread peekThread(std::bind(peekerWorker, accepted, false));
   boost::this_thread::sleep(boost::posix_time::milliseconds(50));
   // peekThread is practically guaranteed to be blocking now
   sock1.interruptChildren();
@@ -127,9 +127,9 @@ BOOST_AUTO_TEST_CASE(test_non_interruptable_child_peek) {
   int port = sock1.getPort();
   TSocket clientSock("localhost", port);
   clientSock.open();
-  stdcxx::shared_ptr<TTransport> accepted = sock1.accept();
+  std::shared_ptr<TTransport> accepted = sock1.accept();
   // peek() will return false when remote side is closed
-  boost::thread peekThread(stdcxx::bind(peekerWorker, accepted, false));
+  boost::thread peekThread(std::bind(peekerWorker, accepted, false));
   boost::this_thread::sleep(boost::posix_time::milliseconds(50));
   // peekThread is practically guaranteed to be blocking now
   sock1.interruptChildren();

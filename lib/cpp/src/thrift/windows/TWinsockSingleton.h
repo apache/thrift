@@ -33,9 +33,9 @@
 // boost
 #include <boost/noncopyable.hpp>
 
+#include <memory>
 #include <mutex>
 
-#include <thrift/stdcxx.h>
 
 namespace apache {
 namespace thrift {
@@ -48,7 +48,7 @@ namespace transport {
 class TWinsockSingleton : private boost::noncopyable {
 
 public:
-  typedef stdcxx::shared_ptr<TWinsockSingleton> instance_ptr;
+  typedef std::shared_ptr<TWinsockSingleton> instance_ptr;
 
 private:
   TWinsockSingleton(void);

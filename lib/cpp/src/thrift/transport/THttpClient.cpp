@@ -32,14 +32,14 @@ namespace apache {
 namespace thrift {
 namespace transport {
 
-THttpClient::THttpClient(stdcxx::shared_ptr<TTransport> transport,
+THttpClient::THttpClient(std::shared_ptr<TTransport> transport,
                          std::string host,
                          std::string path)
   : THttpTransport(transport), host_(host), path_(path) {
 }
 
 THttpClient::THttpClient(string host, int port, string path)
-  : THttpTransport(stdcxx::shared_ptr<TTransport>(new TSocket(host, port))),
+  : THttpTransport(std::shared_ptr<TTransport>(new TSocket(host, port))),
     host_(host),
     path_(path) {
 }

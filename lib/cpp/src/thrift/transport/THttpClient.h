@@ -28,7 +28,7 @@ namespace transport {
 
 class THttpClient : public THttpTransport {
 public:
-  THttpClient(stdcxx::shared_ptr<TTransport> transport, std::string host, std::string path = "");
+  THttpClient(std::shared_ptr<TTransport> transport, std::string host, std::string path = "");
 
   THttpClient(std::string host, int port, std::string path = "");
 

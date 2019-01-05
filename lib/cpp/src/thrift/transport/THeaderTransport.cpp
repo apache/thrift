@@ -22,7 +22,6 @@
 #include <thrift/protocol/TProtocolTypes.h>
 #include <thrift/protocol/TBinaryProtocol.h>
 #include <thrift/protocol/TCompactProtocol.h>
-#include <thrift/stdcxx.h>
 
 #include <limits>
 #include <utility>
@@ -37,7 +36,7 @@ using std::vector;
 namespace apache {
 namespace thrift {
 
-using stdcxx::shared_ptr;
+using std::shared_ptr;
 
 namespace transport {
 
