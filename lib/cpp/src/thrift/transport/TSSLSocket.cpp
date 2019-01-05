@@ -1046,14 +1046,14 @@ void buildErrors(string& errors, int errno_copy, int sslerrno) {
 /**
  * Default implementation of AccessManager
  */
-Decision DefaultClientAccessManager::verify(const sockaddr_storage& sa) throw() {
+Decision DefaultClientAccessManager::verify(const sockaddr_storage& sa) noexcept {
   (void)sa;
   return SKIP;
 }
 
 Decision DefaultClientAccessManager::verify(const string& host,
                                             const char* name,
-                                            int size) throw() {
+                                            int size) noexcept {
   if (host.empty() || name == NULL || size <= 0) {
     return SKIP;
   }
@@ -1062,7 +1062,7 @@ Decision DefaultClientAccessManager::verify(const string& host,
 
 Decision DefaultClientAccessManager::verify(const sockaddr_storage& sa,
                                             const char* data,
-                                            int size) throw() {
+                                            int size) noexcept {
   bool match = false;
   if (sa.ss_family == AF_INET && size == sizeof(in_addr)) {
     match = (memcmp(&((sockaddr_in*)&sa)->sin_addr, data, size) == 0);
