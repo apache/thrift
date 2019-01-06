@@ -24,10 +24,9 @@
 #include <thrift/Thrift.h>
 #include <thrift/TProcessor.h>
 
+#include <atomic>
 #include <string>
 #include <stdio.h>
-
-#include <boost/atomic.hpp>
 
 #include <thrift/concurrency/Mutex.h>
 #include <thrift/concurrency/Monitor.h>
@@ -347,11 +346,11 @@ private:
 
   // conditions used to block when the buffer is full or empty
   Monitor notFull_, notEmpty_;
-  boost::atomic<bool> closing_;
+  std::atomic<bool> closing_;
 
   // To keep track of whether the buffer has been flushed
   Monitor flushed_;
-  boost::atomic<bool> forceFlush_;
+  std::atomic<bool> forceFlush_;
 
   // Mutex that is grabbed when enqueueing and swapping the read/write buffers
   Mutex mutex_;
