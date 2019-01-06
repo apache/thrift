@@ -47,7 +47,7 @@
 // http://cellperformance.beyond3d.com/articles/2006/06/understanding-strict-aliasing.html
 template <typename To, typename From>
 static inline To bitwise_cast(From from) {
-  static_assert(sizeof(From) == sizeof(To));
+  static_assert(sizeof(From) == sizeof(To), "sizeof(From) == sizeof(To)");
 
   // BAD!!!  These are all broken with -O2.
   //return *reinterpret_cast<To*>(&from);  // BAD!!!
