@@ -49,7 +49,6 @@ static const uint8_t kJSONPairSeparator = ':';
 static const uint8_t kJSONElemSeparator = ',';
 static const uint8_t kJSONBackslash = '\\';
 static const uint8_t kJSONStringDelimiter = '"';
-static const uint8_t kJSONZeroChar = '0';
 static const uint8_t kJSONEscapeChar = 'u';
 
 static const std::string kJSONEscapePrefix("\\u00");
