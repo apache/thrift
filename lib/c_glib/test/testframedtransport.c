@@ -249,11 +249,8 @@ test_read_after_peer_close(void)
 static void
 thrift_socket_server_open (const int port, int times)
 {
-  int bytes = 0;
   ThriftServerTransport *transport = NULL;
   ThriftTransport *client = NULL;
-  guchar buf[10]; /* a buffer */
-  guchar match[10] = TEST_DATA;
   int i;
 
   ThriftServerSocket *tsocket = g_object_new (THRIFT_TYPE_SERVER_SOCKET,
