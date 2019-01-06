@@ -25,13 +25,6 @@
 #include <thrift/concurrency/FunctionRunner.h>
 
 #include <boost/version.hpp>
-#if (BOOST_VERSION >= 105700)
-#include <boost/move/unique_ptr.hpp>
-using boost::movelib::unique_ptr;
-#else
-#include <boost/interprocess/smart_ptr/unique_ptr.hpp>
-using boost::interprocess::unique_ptr;
-#endif
 
 #ifdef HAVE_SYS_TIME_H
 #include <sys/time.h>
@@ -49,6 +42,7 @@ using boost::interprocess::unique_ptr;
 #include <cstring>
 #include <iostream>
 #include <limits>
+#include <memory>
 #ifdef HAVE_SYS_STAT_H
 #include <sys/stat.h>
 #endif
@@ -203,8 +197,6 @@ void TFileTransport::write(const uint8_t* buf, uint32_t len) {
   enqueueEvent(buf, len);
 }
 
-// this is needed until boost 1.57 as the older unique_ptr implementation
-// has no default deleter in interprocess
 template <class _T>
 struct uniqueDeleter
 {
@@ -228,7 +220,7 @@ void TFileTransport::enqueueEvent(const uint8_t* buf, uint32_t eventLen) {
     return;
   }
 
-  unique_ptr<eventInfo, uniqueDeleter<eventInfo> > toEnqueue(new eventInfo());
+  std::unique_ptr<eventInfo, uniqueDeleter<eventInfo> > toEnqueue(new eventInfo());
   toEnqueue->eventBuff_ = new uint8_t[(sizeof(uint8_t) * eventLen) + 4];
 
   // first 4 bytes is the event length
