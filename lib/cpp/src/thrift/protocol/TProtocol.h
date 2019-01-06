@@ -29,7 +29,6 @@
 #include <thrift/protocol/TProtocolException.h>
 
 #include <memory>
-#include <boost/static_assert.hpp>
 
 #ifdef HAVE_NETINET_IN_H
 #include <netinet/in.h>
@@ -48,7 +47,7 @@
 // http://cellperformance.beyond3d.com/articles/2006/06/understanding-strict-aliasing.html
 template <typename To, typename From>
 static inline To bitwise_cast(From from) {
-  BOOST_STATIC_ASSERT(sizeof(From) == sizeof(To));
+  static_assert(sizeof(From) == sizeof(To));
 
   // BAD!!!  These are all broken with -O2.
   //return *reinterpret_cast<To*>(&from);  // BAD!!!
