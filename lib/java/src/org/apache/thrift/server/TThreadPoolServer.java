@@ -320,11 +320,9 @@ public class TThreadPoolServer extends TServer {
         // Ignore err-logging all transport-level/type exceptions
         if ((realCause != null && realCause instanceof TTransportException)
             || (x instanceof TTransportException)) {
-          if (LOGGER.isDebugEnabled()) {
-            // Write to debug, just in case the exception gets required
-            LOGGER
-                .debug("Received TTransportException during processing of message, ignoring: ", x);
-          }
+          LOGGER.debug(
+              "Received TTransportException during processing of message. Ignoring.",
+              x);
         } else {
           // Log the exception at error level and continue
           LOGGER.error("Error occurred during processing of message.", x);
