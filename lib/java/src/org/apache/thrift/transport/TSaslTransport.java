@@ -158,9 +158,9 @@ abstract class TSaslTransport extends TTransport {
     messageHeader[0] = status.getValue();
     EncodingUtils.encodeBigEndian(payload.length, messageHeader, STATUS_BYTES);
 
-    if (LOGGER.isDebugEnabled())
-      LOGGER.debug(getRole() + ": Writing message with status {} and payload length {}",
-                   status, payload.length);
+    LOGGER.debug("{}: Writing message with status {} and payload length {}",
+        getRole(), status, payload.length);
+
     underlyingTransport.write(messageHeader);
     underlyingTransport.write(payload);
     underlyingTransport.flush();
@@ -197,10 +197,8 @@ abstract class TSaslTransport extends TTransport {
       String remoteMessage = new String(payload, StandardCharsets.UTF_8);
       throw new TTransportException("Peer indicated failure: " + remoteMessage);
     }
-
-    if (LOGGER.isDebugEnabled())
-      LOGGER.debug(getRole() + ": Received message with status {} and payload length {}",
-                   status, payload.length);
+    LOGGER.debug("{}: Received message with status {} and payload length {}",
+        getRole(), status, payload.length);
     return new SaslResponse(status, payload);
   }
 
