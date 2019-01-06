@@ -95,17 +95,6 @@ if(WITH_STDTHREADS)
 endif()
 
 # C++ Language Level
-if (NOT CMAKE_CXX_STANDARD)
-  set(CMAKE_CXX_STANDARD 11)
-elseif (CMAKE_CXX_STANDARD EQUAL 98)
-  message(FATAL_ERROR "only C++11 or above C++ standard is supported")
-endif()
-
-if (CMAKE_CXX_STANDARD EQUAL 11)
-  # should not fallback to C++98
-  set(CMAKE_CXX_STANDARD_REQUIRED ON)
-endif()
-
 set(CXX_LANGUAGE_LEVEL "C++${CMAKE_CXX_STANDARD}")
 if (CMAKE_CXX_STANDARD_REQUIRED)
   string(CONCAT CXX_LANGUAGE_LEVEL "${CXX_LANGUAGE_LEVEL} [compiler must support it]")
