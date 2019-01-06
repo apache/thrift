@@ -18,8 +18,8 @@
  */
 
 #define BOOST_TEST_MODULE TServerIntegrationTest
+#include <atomic>
 #include <boost/test/auto_unit_test.hpp>
-#include <boost/atomic.hpp>
 #include <boost/date_time/posix_time/ptime.hpp>
 #include <boost/foreach.hpp>
 #include <boost/format.hpp>
@@ -310,10 +310,10 @@ public:
       shared_ptr<TProtocol> pProtocol(new TBinaryProtocol(pSocket));
       ParentServiceClient client(pProtocol);
       pSocket->open();
-      bStressConnectionCount.fetch_add(1, boost::memory_order_relaxed);
+      bStressConnectionCount.fetch_add(1, std::memory_order_relaxed);
       for (int i = 0; i < rand() % 1000; ++i) {
       client.incrementGeneration();
-        bStressRequestCount.fetch_add(1, boost::memory_order_relaxed);
+        bStressRequestCount.fetch_add(1, std::memory_order_relaxed);
       }
     }
   }
@@ -321,9 +321,9 @@ public:
   shared_ptr<TServerType> pServer;
   shared_ptr<TServerReadyEventHandler> pEventHandler;
   shared_ptr<boost::thread> pServerThread;
-  boost::atomic<bool> bStressDone;
-  boost::atomic_int64_t bStressConnectionCount;
-  boost::atomic_int64_t bStressRequestCount;
+  std::atomic<bool> bStressDone;
+  std::atomic<int64_t> bStressConnectionCount;
+  std::atomic<int64_t> bStressRequestCount;
 };
 
 template <class TServerType>
