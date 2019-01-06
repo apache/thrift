@@ -165,8 +165,8 @@ uint32_t TBinaryProtocolT<Transport_, ByteOrder_>::writeI64(const int64_t i64) {
 
 template <class Transport_, class ByteOrder_>
 uint32_t TBinaryProtocolT<Transport_, ByteOrder_>::writeDouble(const double dub) {
-  static_assert(sizeof(double) == sizeof(uint64_t));
-  static_assert(std::numeric_limits<double>::is_iec559);
+  static_assert(sizeof(double) == sizeof(uint64_t), "sizeof(double) == sizeof(uint64_t)");
+  static_assert(std::numeric_limits<double>::is_iec559, "std::numeric_limits<double>::is_iec559");
 
   uint64_t bits = bitwise_cast<uint64_t>(dub);
   bits = ByteOrder_::toWire64(bits);
@@ -388,8 +388,8 @@ uint32_t TBinaryProtocolT<Transport_, ByteOrder_>::readI64(int64_t& i64) {
 
 template <class Transport_, class ByteOrder_>
 uint32_t TBinaryProtocolT<Transport_, ByteOrder_>::readDouble(double& dub) {
-  static_assert(sizeof(double) == sizeof(uint64_t));
-  static_assert(std::numeric_limits<double>::is_iec559);
+  static_assert(sizeof(double) == sizeof(uint64_t), "sizeof(double) == sizeof(uint64_t)");
+  static_assert(std::numeric_limits<double>::is_iec559, "std::numeric_limits<double>::is_iec559");
 
   union bytes {
     uint8_t b[8];
