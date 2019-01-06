@@ -73,19 +73,16 @@ set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
 # C++ Language Level Defaults - this depends on the compiler capabilities
 #
 if (NOT DEFINED CMAKE_CXX_STANDARD)
-  if (MSVC AND MSVC_VERSION LESS 1800)
-    # MSVC 2012 and earlier don't support template aliases so you have to use C++98
-    set(CMAKE_CXX_STANDARD 98) 
-    message(STATUS "Setting C++98 as the default language level (for an older MSVC compiler).")
-  else()
-    set(CMAKE_CXX_STANDARD 11) # C++11
-    message(STATUS "Setting C++11 as the default language level.")
-  endif()
+  set(CMAKE_CXX_STANDARD 11) # C++11
+  message(STATUS "Setting C++11 as the default language level.")
   message(STATUS "To specify a different C++ language level, set CMAKE_CXX_STANDARD")
 endif()
 
-if (NOT DEFINED CMAKE_CXX_STANDARD_REQUIRED)
-  set(CMAKE_CXX_STANDARD_REQUIRED OFF) # can degrade to C++98 if compiler does not support C++11
+if (CMAKE_CXX_STANDARD EQUAL 98)
+  message(FATAL_ERROR "only C++11 or above C++ standard is supported")
+elseif (CMAKE_CXX_STANDARD EQUAL 11)
+  # should not fallback to C++98
+  set(CMAKE_CXX_STANDARD_REQUIRED ON)
 endif()
 
 if (NOT DEFINED CMAKE_CXX_EXTENSIONS)
