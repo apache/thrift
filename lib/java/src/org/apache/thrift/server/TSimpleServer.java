@@ -77,9 +77,7 @@ public class TSimpleServer extends TServer {
             if (eventHandler_ != null) {
               eventHandler_.processContext(connectionContext, inputTransport, outputTransport);
             }
-            if(!processor.process(inputProtocol, outputProtocol)) {
-              break;
-            }
+            processor.process(inputProtocol, outputProtocol);
           }
         }
       } catch (TTransportException ttx) {

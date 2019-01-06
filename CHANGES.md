@@ -19,6 +19,7 @@
 - [THRIFT-4730](https://issues.apache.org/jira/browse/THRIFT-4730) - C++: BoostThreadFactory, PosixThreadFactory, StdThreadFactory removed
 - [THRIFT-4732](https://issues.apache.org/jira/browse/THRIFT-4732) - C++: CMake build changed to use BUILD_SHARED_LIBS
 - [THRIFT-4735](https://issues.apache.org/jira/browse/THRIFT-4735) - C++: Removed Qt4 support
+- [THRIFT-4725](https://issues.apache.org/jira/browse/THRIFT-4725) - Java change return type signature of 'process' methods
 
 ### Known Isues (Blocker or Critical)
 

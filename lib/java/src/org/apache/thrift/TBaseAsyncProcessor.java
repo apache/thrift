@@ -43,7 +43,7 @@ public class TBaseAsyncProcessor<I> implements TAsyncProcessor, TProcessor {
         return Collections.unmodifiableMap(processMap);
     }
 
-    public boolean process(final AsyncFrameBuffer fb) throws TException {
+    public void process(final AsyncFrameBuffer fb) throws TException {
 
         final TProtocol in = fb.getInputProtocol();
         final TProtocol out = fb.getOutputProtocol();
@@ -67,7 +67,7 @@ public class TBaseAsyncProcessor<I> implements TAsyncProcessor, TProcessor {
               out.getTransport().flush();
             }
             fb.responseReady();
-            return true;
+            return;
         }
 
         //Get Args
@@ -89,7 +89,7 @@ public class TBaseAsyncProcessor<I> implements TAsyncProcessor, TProcessor {
               out.getTransport().flush();
             }
             fb.responseReady();
-            return true;
+            return;
         }
         in.readMessageEnd();
 
@@ -105,11 +105,10 @@ public class TBaseAsyncProcessor<I> implements TAsyncProcessor, TProcessor {
           LOGGER.debug("Exception handling function", e);
           resultHandler.onError(e);
         }
-        return true;
+        return;
     }
 
     @Override
-    public boolean process(TProtocol in, TProtocol out) throws TException {
-        return false;
+    public void process(TProtocol in, TProtocol out) throws TException {
     }
 }
