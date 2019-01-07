@@ -129,7 +129,7 @@ EXTRA_DIST = \
 	sonar-project.properties \
 	LANGUAGES.md \
 	LICENSE \
-	CHANGES \
+	CHANGES.md \
 	NOTICE \
 	README.md \
 	Thrift.podspec

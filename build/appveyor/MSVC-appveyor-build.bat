@@ -25,6 +25,7 @@ CD "%BUILDDIR%"                             || EXIT /B
   cmake "%SRCDIR%" ^
     -G"%GENERATOR%" ^
 	-DBISON_EXECUTABLE=C:\ProgramData\chocolatey\lib\winflexbison3\tools\win_bison.exe ^
+    -DBoost_ARCHITECTURE="-%PLATFORM%" ^
     -DBOOST_ROOT="%BOOST_ROOT%" ^
     -DBOOST_LIBRARYDIR="%BOOST_LIBRARYDIR%" ^
     -DCMAKE_BUILD_TYPE="%CONFIGURATION%" ^

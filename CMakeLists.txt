@@ -17,33 +17,25 @@
 # under the License.
 #
 
-cmake_minimum_required(VERSION 3.1)
+cmake_minimum_required(VERSION 3.3)
 
-# CMake 3.1 supports C++ standards selection with CMAKE_CXX_STANDARD
-# If you need CMake 3.1+ for Ubuntu 14.04, try
-#   https://launchpad.net/~george-edison55/+archive/ubuntu/cmake-3.x
-# If you need CMake 3.1+ for debian "jessie", get it from jessie-backports
-# Otherwise
-#   http://cmake.org
+if(POLICY CMP0048)
+  cmake_policy(SET CMP0048 NEW)  # package version behavior added in cmake 3.0
+endif()
+if(POLICY CMP0074)
+  cmake_policy(SET CMP0074 NEW)  # find_package behavior added in cmake 3.12
+endif()
 
-project("Apache Thrift")
+# PACKAGE_VERSION is used by cpack scripts currently
+# Both thrift_VERSION and PACKAGE_VERSION should be the same for now
+set(thrift_VERSION "1.0.0")
+set(PACKAGE_VERSION ${thrift_VERSION})
+
+project("thrift" VERSION ${PACKAGE_VERSION})
+message(STATUS "Configuring ${CMAKE_PROJECT_NAME} ${thrift_VERSION}")
+
 
 set(CMAKE_MODULE_PATH "${CMAKE_MODULE_PATH}" "${CMAKE_CURRENT_SOURCE_DIR}/build/cmake")
-
-# TODO: add `git rev-parse --short HEAD`
-# Read the version information from the Autoconf file
-file (STRINGS "${CMAKE_CURRENT_SOURCE_DIR}/configure.ac" CONFIGURE_AC REGEX "AC_INIT\\(.*\\)" )
-
-# The following variable is used in the version.h.in file
-string(REGEX REPLACE "AC_INIT\\(\\[.*\\], \\[([0-9]+\\.[0-9]+\\.[0-9]+(-dev)?)\\]\\)" "\\1" PACKAGE_VERSION ${CONFIGURE_AC})
-message(STATUS "Parsed Thrift package version: ${PACKAGE_VERSION}")
-
-# These are internal to CMake
-string(REGEX REPLACE "([0-9]+\\.[0-9]+\\.[0-9]+)(-dev)?" "\\1" thrift_VERSION ${PACKAGE_VERSION})
-string(REGEX REPLACE "([0-9]+)\\.[0-9]+\\.[0-9]+" "\\1" thrift_VERSION_MAJOR ${thrift_VERSION})
-string(REGEX REPLACE "[0-9]+\\.([0-9])+\\.[0-9]+" "\\1" thrift_VERSION_MINOR ${thrift_VERSION})
-string(REGEX REPLACE "[0-9]+\\.[0-9]+\\.([0-9]+)" "\\1" thrift_VERSION_PATCH ${thrift_VERSION})
-message(STATUS "Parsed Thrift version: ${thrift_VERSION} (${thrift_VERSION_MAJOR}.${thrift_VERSION_MINOR}.${thrift_VERSION_PATCH})")
 
 # Some default settings
 include(DefineCMakeDefaults)
@@ -58,7 +50,7 @@ include(DefinePlatformSpecifc)
 # Generate the config.h file
 include(ConfigureChecks)
 
-# Package it
+# Packaging
 include(CPackConfig)
 
 

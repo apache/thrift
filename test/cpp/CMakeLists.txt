@@ -17,10 +17,13 @@
 # under the License.
 #
 
+# The test executables still depend on Boost
+include(BoostMacros)
+set(BOOST_COMPONENTS filesystem program_options random)
+REQUIRE_BOOST(BOOST_COMPONENTS)
+
 # Contains the thrift specific LINK_AGAINST_THRIFT_LIBRARY
 include(ThriftMacros)
-
-include_directories(SYSTEM "${Boost_INCLUDE_DIRS}")
 
 find_package(OpenSSL REQUIRED)
 include_directories(SYSTEM "${OPENSSL_INCLUDE_DIR}")
