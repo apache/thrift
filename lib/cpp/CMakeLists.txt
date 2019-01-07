@@ -17,7 +17,10 @@
 # under the License.
 #
 
-include_directories(SYSTEM "${Boost_INCLUDE_DIRS}")
+# Remove the following once lib/cpp no longer depends on boost headers:
+include(BoostMacros)
+REQUIRE_BOOST_HEADERS()
+
 include_directories(src)
 
 # SYSLIBS contains libraries that need to be linked to all lib targets

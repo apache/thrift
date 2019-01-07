@@ -49,11 +49,11 @@ FILES[doap.rdf]=manual
 
 # These files can be updated automatically:
 FILES[ApacheThrift.nuspec]=simpleReplace
+FILES[CMakeLists.txt]=simpleReplace
 FILES[Thrift-swift3.podspec]=simpleReplace
 FILES[Thrift.podspec]=simpleReplace
 FILES[appveyor.yml]=simpleReplace
 FILES[bower.json]=jsonReplace
-FILES[build/cmake/DefineCMakeDefaults.cmake]=simpleReplace
 FILES[configure.ac]=configureReplace
 FILES[contrib/thrift.spec]=simpleReplace
 FILES[lib/cocoa/src/Thrift.h]=simpleReplace
@@ -100,7 +100,7 @@ FILES[tutorial/delphi/DelphiServer/DelphiServer.dproj]=simpleReplace
 FILES[tutorial/hs/ThriftTutorial.cabal]=simpleReplace
 FILES[tutorial/ocaml/_oasis]=simpleReplace
 
-if [ ! -f "CHANGES" ]; then
+if [ ! -f "CHANGES.md" ]; then
     >&2 echo "error: run veralign.sh while in the thrift root directory"
     exit 1
 fi

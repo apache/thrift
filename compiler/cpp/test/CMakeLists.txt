@@ -17,10 +17,13 @@
 # under the License.
 #
 
+# Unit tests for the compiler still require boost
+include(BoostMacros)
+REQUIRE_BOOST_HEADERS()
+set(BOOST_COMPONENTS unit_test_framework)
+REQUIRE_BOOST_LIBRARIES(BOOST_COMPONENTS)
 
 if(${WITH_PLUGIN})
-    include_directories(SYSTEM "${Boost_INCLUDE_DIRS}")
-
     # Make sure gen-cpp files can be included
     include_directories("${CMAKE_CURRENT_BINARY_DIR}")
 
