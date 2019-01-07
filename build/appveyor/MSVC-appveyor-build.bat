@@ -21,6 +21,21 @@ CALL cl_setenv.bat                          || EXIT /B
 MKDIR "%BUILDDIR%"                          || EXIT /B
 CD "%BUILDDIR%"                             || EXIT /B
 
+:: When libraries cannot be found, things might have been updated
+:: so uncomment this and submit a pull request to see what's there
+:: now...
+:: DIR C:\Libraries
+:: DIR C:\Libraries\boost_1_69_0\lib*
+:: DIR C:\Libraries\boost_1_68_0\lib*
+:: DIR C:\Libraries\boost_1_67_0\lib*
+:: DIR C:\Libraries\boost_1_66_0\lib*
+:: DIR C:\Libraries\boost_1_65_0\lib*
+:: DIR C:\Libraries\boost_1_64_0\lib*
+:: DIR C:\Libraries\boost_1_63_0\lib*
+:: DIR C:\Libraries\boost_1_62_0\lib*
+:: DIR C:\Libraries\boost_1_61_0\lib*
+:: DIR C:\Libraries\boost_1_60_0\lib*
+
 @ECHO ON
   cmake "%SRCDIR%" ^
     -G"%GENERATOR%" ^
