@@ -43,7 +43,7 @@
 declare -A FILES
 
 # These files require a manual touch:
-FILES[CHANGES]=manual
+FILES[CHANGES.md]=manual
 FILES[debian/changelog]=manual
 FILES[doap.rdf]=manual
 
