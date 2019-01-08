@@ -19,8 +19,6 @@
 
 #include <thrift/thrift-config.h>
 
-#if USE_STD_THREAD
-
 #include <thrift/concurrency/Exception.h>
 #include <thrift/concurrency/Monitor.h>
 #include <thrift/concurrency/StdThreadFactory.h>
@@ -149,5 +147,3 @@ Thread::id_t StdThreadFactory::getCurrentThreadId() const {
 }
 }
 } // apache::thrift::concurrency
-
-#endif // USE_STD_THREAD

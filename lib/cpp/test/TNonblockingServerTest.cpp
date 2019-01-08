@@ -147,12 +147,7 @@ protected:
     runner->userEventBase = userEventBase_;
 
     shared_ptr<ThreadFactory> threadFactory(
-        new PlatformThreadFactory(
-#if !USE_STD_THREAD
-            PlatformThreadFactory::OTHER, PlatformThreadFactory::NORMAL,
-            1,
-#endif
-            false));
+        new PlatformThreadFactory(false));
     thread = threadFactory->newThread(runner);
     thread->start();
     runner->readyBarrier();

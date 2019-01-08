@@ -142,7 +142,7 @@ jobs:
         - JOB="C++ (Std Thread) and Plugin"
         - SCRIPT="cmake.sh"
         - BUILD_LIBS="CPP TESTING TUTORIALS"
-        - BUILD_ARG="-DWITH_PLUGIN=ON -DWITH_STDTHREADS=ON -DWITH_PYTHON=OFF -DWITH_C_GLIB=OFF -DWITH_JAVA=OFF -DWITH_HASKELL=OFF"
+        - BUILD_ARG="-DWITH_PLUGIN=ON -DWITH_PYTHON=OFF -DWITH_C_GLIB=OFF -DWITH_JAVA=OFF -DWITH_HASKELL=OFF"
         - BUILD_ENV="-e CC=clang -e CXX=clang++"
 
     # ------------------------- phase: dist -------------------------

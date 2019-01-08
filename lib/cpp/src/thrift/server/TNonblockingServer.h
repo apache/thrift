@@ -386,9 +386,7 @@ public:
 
   /**
    * Sets the number of IO threads used by this server. Can only be used before
-   * the call to serve() and has no effect afterwards.  We always use a
-   * PosixThreadFactory for the IO worker threads, because they must joinable
-   * for clean shutdown.
+   * the call to serve() and has no effect afterwards.
    */
   void setNumIOThreads(size_t numThreads) {
     numIOThreads_ = numThreads;

@@ -82,9 +82,9 @@ set(UnitTest_SOURCES
     TServerTransportTest.cpp
 )
 
-if(NOT WITH_STDTHREADS AND NOT MSVC AND NOT MINGW)
-    list(APPEND UnitTest_SOURCES concurrency/MutexTest.cpp)
-    list(APPEND UnitTest_SOURCES concurrency/RWMutexStarveTest.cpp)
+if(NOT MSVC AND NOT MINGW)
+  #list(APPEND UnitTest_SOURCES concurrency/MutexTest.cpp)
+  #list(APPEND UnitTest_SOURCES concurrency/RWMutexStarveTest.cpp)
 endif()
 
 add_executable(UnitTests ${UnitTest_SOURCES})

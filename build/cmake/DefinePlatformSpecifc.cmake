@@ -89,11 +89,6 @@ endif()
 add_definitions("-D__STDC_FORMAT_MACROS")
 add_definitions("-D__STDC_LIMIT_MACROS")
 
-# WITH_*THREADS selects which threading library to use
-if(WITH_STDTHREADS)
-  add_definitions("-DUSE_STD_THREAD=1")
-endif()
-
 # C++ Language Level
 set(CXX_LANGUAGE_LEVEL "C++${CMAKE_CXX_STANDARD}")
 if (CMAKE_CXX_STANDARD_REQUIRED)

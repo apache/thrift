@@ -64,9 +64,6 @@
    see: aclocal/ac_prog_bison.m4 */
 #cmakedefine BISON_USE_PARSER_H_EXTENSION 1
 
-/* replaces POSIX pthread by std::thread */
-#cmakedefine USE_STD_THREAD 1
-
 /* Define to 1 if strerror_r returns char *. */
 #cmakedefine STRERROR_R_CHAR_P 1
 

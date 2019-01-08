@@ -22,16 +22,9 @@
 
 #include <stdint.h>
 #include <memory>
+#include <thread>
 
 #include <thrift/thrift-config.h>
-
-#if USE_STD_THREAD
-#include <thread>
-#else
-#ifdef HAVE_PTHREAD_H
-#include <pthread.h>
-#endif
-#endif
 
 namespace apache {
 namespace thrift {
@@ -78,17 +71,10 @@ private:
 class Thread {
 
 public:
-#if USE_STD_THREAD
   typedef std::thread::id id_t;
 
   static inline bool is_current(id_t t) { return t == std::this_thread::get_id(); }
   static inline id_t get_current() { return std::this_thread::get_id(); }
-#else
-  typedef pthread_t id_t;
-
-  static inline bool is_current(id_t t) { return pthread_equal(pthread_self(), t); }
-  static inline id_t get_current() { return pthread_self(); }
-#endif
 
   virtual ~Thread(){};
 

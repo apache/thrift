@@ -107,8 +107,7 @@ libthrift_la_SOURCES = src/thrift/TApplicationException.cpp \
                        src/thrift/server/TThreadedServer.cpp
 
 libthrift_la_SOURCES += src/thrift/concurrency/Mutex.cpp \
-                        src/thrift/concurrency/Monitor.cpp \
-                        src/thrift/concurrency/PosixThreadFactory.cpp
+                        src/thrift/concurrency/Monitor.cpp
 
 libthriftnb_la_SOURCES = src/thrift/server/TNonblockingServer.cpp \
                          src/thrift/async/TEvhttpServer.cpp \
@@ -167,7 +166,6 @@ include_concurrency_HEADERS = \
                          src/thrift/concurrency/Mutex.h \
                          src/thrift/concurrency/Monitor.h \
                          src/thrift/concurrency/PlatformThreadFactory.h \
-                         src/thrift/concurrency/PosixThreadFactory.h \
                          src/thrift/concurrency/StdMonitor.cpp \
                          src/thrift/concurrency/StdMutex.cpp \
                          src/thrift/concurrency/StdThreadFactory.cpp \

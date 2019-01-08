@@ -111,9 +111,6 @@ public:
     shared_ptr<PlatformThreadFactory> threadFactory
         = shared_ptr<PlatformThreadFactory>(new PlatformThreadFactory(false));
 
-#if !USE_STD_THREAD
-    threadFactory->setPriority(PosixThreadFactory::HIGHEST);
-#endif
     threadManager->threadFactory(threadFactory);
 
     threadManager->start();
@@ -260,9 +257,6 @@ public:
       shared_ptr<PlatformThreadFactory> threadFactory
           = shared_ptr<PlatformThreadFactory>(new PlatformThreadFactory());
 
-#if !USE_STD_THREAD
-      threadFactory->setPriority(PosixThreadFactory::HIGHEST);
-#endif
       threadManager->threadFactory(threadFactory);
 
       threadManager->start();
@@ -401,23 +395,7 @@ public:
       return false;
     }
 
-#if !USE_STD_THREAD
-    // test once with a detached thread factory and once with a joinable thread factory
-
-    shared_ptr<PosixThreadFactory> threadFactory
-        = shared_ptr<PosixThreadFactory>(new PosixThreadFactory(false));
-
-    std::cout << "\t\t\tapiTest with joinable thread factory" << std::endl;
-    if (!apiTestWithThreadFactory(threadFactory)) {
-      return false;
-    }
-
-    threadFactory.reset(new PosixThreadFactory(true));
-    std::cout << "\t\t\tapiTest with detached thread factory" << std::endl;
-    return apiTestWithThreadFactory(threadFactory);
-#else
     return apiTestWithThreadFactory(shared_ptr<PlatformThreadFactory>(new PlatformThreadFactory()));
-#endif
 
   }
 
@@ -425,29 +403,6 @@ public:
   {
     shared_ptr<ThreadManager> threadManager = ThreadManager::newSimpleThreadManager(1);
     threadManager->threadFactory(threadFactory);
-
-#if !USE_STD_THREAD
-    threadFactory->setPriority(PosixThreadFactory::HIGHEST);
-
-    // verify we cannot change the thread factory to one with the opposite detached setting
-    shared_ptr<PlatformThreadFactory> threadFactory2
-        = shared_ptr<PosixThreadFactory>(new PlatformThreadFactory(
-          PosixThreadFactory::ROUND_ROBIN,
-          PosixThreadFactory::NORMAL,
-          1,
-          !threadFactory->isDetached()));
-    try {
-      threadManager->threadFactory(threadFactory2);
-      // if the call succeeded we changed the thread factory to one that had the opposite setting for "isDetached()".
-      // this is bad, because the thread manager checks with the thread factory to see if it should join threads
-      // as they are leaving - so the detached status of new threads cannot change while there are existing threads.
-      std::cerr << "\t\t\tShould not be able to change thread factory detached disposition" << std::endl;
-      return false;
-    }
-    catch (InvalidArgumentException& ex) {
-      /* expected */
-    }
-#endif
 
     std::cout << "\t\t\t\tstarting.. " << std::endl;
 

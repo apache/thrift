@@ -22,11 +22,7 @@
 
 // clang-format off
 #include <thrift/thrift-config.h>
-#if USE_STD_THREAD
-#  include <thrift/concurrency/StdThreadFactory.h>
-#else
-#  include <thrift/concurrency/PosixThreadFactory.h>
-#endif
+#include <thrift/concurrency/StdThreadFactory.h>
 // clang-format on
 
 namespace apache {
@@ -34,11 +30,7 @@ namespace thrift {
 namespace concurrency {
 
 // clang-format off
-#if USE_STD_THREAD
-  typedef StdThreadFactory PlatformThreadFactory;
-#else
-  typedef PosixThreadFactory PlatformThreadFactory;
-#endif
+using PlatformThreadFactory = StdThreadFactory;
 // clang-format on
 
 }
