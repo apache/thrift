@@ -39,8 +39,7 @@ namespace concurrency {
  */
 class Mutex::impl : public std::timed_mutex {};
 
-Mutex::Mutex(Initializer init) : impl_(new Mutex::impl()) {
-  ((void)init);
+Mutex::Mutex() : impl_(new Mutex::impl()) {
 }
 
 void* Mutex::getUnderlyingImpl() const {
@@ -63,9 +62,6 @@ void Mutex::unlock() const {
   impl_->unlock();
 }
 
-void Mutex::DEFAULT_INITIALIZER(void* arg) {
-  ((void)arg);
-}
 }
 }
 } // apache::thrift::concurrency
