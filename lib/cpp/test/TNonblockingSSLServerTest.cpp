@@ -218,7 +218,7 @@ protected:
     runner->userEventBase = userEventBase_;
 
     std::unique_ptr<apache::thrift::concurrency::ThreadFactory> threadFactory(
-        new apache::thrift::concurrency::PlatformThreadFactory(false));
+        new apache::thrift::concurrency::ThreadFactory(false));
     thread = threadFactory->newThread(runner);
     thread->start();
     runner->readyBarrier();

@@ -17,45 +17,21 @@
  * under the License.
  */
 
-#ifndef _THRIFT_CONCURRENCY_STDTHREADFACTORY_H_
-#define _THRIFT_CONCURRENCY_STDTHREADFACTORY_H_ 1
-
 #include <thrift/concurrency/Thread.h>
-
-#include <memory>
 
 namespace apache {
 namespace thrift {
 namespace concurrency {
 
-/**
- * A thread factory to create std::threads.
- *
- * @version $Id:$
- */
-class StdThreadFactory : public ThreadFactory {
+void Thread::threadMain(std::shared_ptr<Thread> thread) {
+  thread->setState(started);
+  thread->runnable()->run();
 
-public:
-  /**
-   * Std thread factory.  All threads created by a factory are reference-counted
-   * via std::shared_ptr.  The factory guarantees that threads and the Runnable tasks
-   * they host will be properly cleaned up once the last strong reference
-   * to both is given up.
-   *
-   * By default threads are not joinable.
-   */
-
-  StdThreadFactory(bool detached = true);
-
-  // From ThreadFactory;
-  std::shared_ptr<Thread> newThread(std::shared_ptr<Runnable> runnable) const;
-
-  // From ThreadFactory;
-  Thread::id_t getCurrentThreadId() const;
-};
+  if (thread->getState() != stopping && thread->getState() != stopped) {
+    thread->setState(stopping);
+  }
+}
 
 }
 }
 } // apache::thrift::concurrency
-
-#endif // #ifndef _THRIFT_CONCURRENCY_STDTHREADFACTORY_H_

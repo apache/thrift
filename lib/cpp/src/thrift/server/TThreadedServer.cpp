@@ -19,7 +19,7 @@
 
 #include <string>
 #include <memory>
-#include <thrift/concurrency/PlatformThreadFactory.h>
+#include <thrift/concurrency/ThreadFactory.h>
 #include <thrift/server/TThreadedServer.h>
 
 namespace apache {

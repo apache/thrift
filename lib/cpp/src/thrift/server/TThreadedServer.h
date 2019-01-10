@@ -22,7 +22,7 @@
 
 #include <map>
 #include <thrift/concurrency/Monitor.h>
-#include <thrift/concurrency/PlatformThreadFactory.h>
+#include <thrift/concurrency/ThreadFactory.h>
 #include <thrift/concurrency/Thread.h>
 #include <thrift/server/TServerFramework.h>
 
@@ -44,7 +44,7 @@ public:
       const std::shared_ptr<apache::thrift::protocol::TProtocolFactory>& protocolFactory,
       const std::shared_ptr<apache::thrift::concurrency::ThreadFactory>& threadFactory
       = std::shared_ptr<apache::thrift::concurrency::ThreadFactory>(
-          new apache::thrift::concurrency::PlatformThreadFactory(false)));
+          new apache::thrift::concurrency::ThreadFactory(false)));
 
   TThreadedServer(
       const std::shared_ptr<apache::thrift::TProcessor>& processor,
@@ -53,7 +53,7 @@ public:
       const std::shared_ptr<apache::thrift::protocol::TProtocolFactory>& protocolFactory,
       const std::shared_ptr<apache::thrift::concurrency::ThreadFactory>& threadFactory
       = std::shared_ptr<apache::thrift::concurrency::ThreadFactory>(
-          new apache::thrift::concurrency::PlatformThreadFactory(false)));
+          new apache::thrift::concurrency::ThreadFactory(false)));
 
   TThreadedServer(
       const std::shared_ptr<apache::thrift::TProcessorFactory>& processorFactory,
@@ -64,7 +64,7 @@ public:
       const std::shared_ptr<apache::thrift::protocol::TProtocolFactory>& outputProtocolFactory,
       const std::shared_ptr<apache::thrift::concurrency::ThreadFactory>& threadFactory
       = std::shared_ptr<apache::thrift::concurrency::ThreadFactory>(
-          new apache::thrift::concurrency::PlatformThreadFactory(false)));
+          new apache::thrift::concurrency::ThreadFactory(false)));
 
   TThreadedServer(
       const std::shared_ptr<apache::thrift::TProcessor>& processor,
@@ -75,7 +75,7 @@ public:
       const std::shared_ptr<apache::thrift::protocol::TProtocolFactory>& outputProtocolFactory,
       const std::shared_ptr<apache::thrift::concurrency::ThreadFactory>& threadFactory
       = std::shared_ptr<apache::thrift::concurrency::ThreadFactory>(
-          new apache::thrift::concurrency::PlatformThreadFactory(false)));
+          new apache::thrift::concurrency::ThreadFactory(false)));
 
   virtual ~TThreadedServer();
 

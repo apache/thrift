@@ -135,10 +135,6 @@ UnitTests_SOURCES = \
 	TServerTransportTest.cpp \
 	TTransportCheckThrow.h
 
-UnitTests_SOURCES += \
-  concurrency/MutexTest.cpp \
-  concurrency/RWMutexStarveTest.cpp
-
 UnitTests_LDADD = \
   libtestgencpp.la \
   $(BOOST_TEST_LDADD) \

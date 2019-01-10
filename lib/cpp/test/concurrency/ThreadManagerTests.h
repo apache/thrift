@@ -19,7 +19,7 @@
 
 #include <thrift/thrift-config.h>
 #include <thrift/concurrency/ThreadManager.h>
-#include <thrift/concurrency/PlatformThreadFactory.h>
+#include <thrift/concurrency/ThreadFactory.h>
 #include <thrift/concurrency/Monitor.h>
 #include <thrift/concurrency/Util.h>
 
@@ -108,8 +108,8 @@ public:
 
     shared_ptr<ThreadManager> threadManager = ThreadManager::newSimpleThreadManager(workerCount);
 
-    shared_ptr<PlatformThreadFactory> threadFactory
-        = shared_ptr<PlatformThreadFactory>(new PlatformThreadFactory(false));
+    shared_ptr<ThreadFactory> threadFactory
+        = shared_ptr<ThreadFactory>(new ThreadFactory(false));
 
     threadManager->threadFactory(threadFactory);
 
@@ -254,8 +254,8 @@ public:
       shared_ptr<ThreadManager> threadManager
           = ThreadManager::newSimpleThreadManager(workerCount, pendingTaskMaxCount);
 
-      shared_ptr<PlatformThreadFactory> threadFactory
-          = shared_ptr<PlatformThreadFactory>(new PlatformThreadFactory());
+      shared_ptr<ThreadFactory> threadFactory
+          = shared_ptr<ThreadFactory>(new ThreadFactory());
 
       threadManager->threadFactory(threadFactory);
 
@@ -395,11 +395,11 @@ public:
       return false;
     }
 
-    return apiTestWithThreadFactory(shared_ptr<PlatformThreadFactory>(new PlatformThreadFactory()));
+    return apiTestWithThreadFactory(shared_ptr<ThreadFactory>(new ThreadFactory()));
 
   }
 
-  bool apiTestWithThreadFactory(shared_ptr<PlatformThreadFactory> threadFactory)
+  bool apiTestWithThreadFactory(shared_ptr<ThreadFactory> threadFactory)
   {
     shared_ptr<ThreadManager> threadManager = ThreadManager::newSimpleThreadManager(1);
     threadManager->threadFactory(threadFactory);

@@ -18,7 +18,7 @@
  */
 
 #include <thrift/concurrency/ThreadManager.h>
-#include <thrift/concurrency/PlatformThreadFactory.h>
+#include <thrift/concurrency/ThreadFactory.h>
 #include <thrift/concurrency/Monitor.h>
 #include <thrift/concurrency/Util.h>
 #include <thrift/concurrency/Mutex.h>
@@ -390,8 +390,8 @@ int main(int argc, char** argv) {
     cerr << usage.str();
   }
 
-  std::shared_ptr<PlatformThreadFactory> threadFactory
-      = std::shared_ptr<PlatformThreadFactory>(new PlatformThreadFactory());
+  std::shared_ptr<ThreadFactory> threadFactory
+      = std::shared_ptr<ThreadFactory>(new ThreadFactory());
 
   // Dispatcher
   std::shared_ptr<Server> serviceHandler(new Server());

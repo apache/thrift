@@ -107,6 +107,8 @@ libthrift_la_SOURCES = src/thrift/TApplicationException.cpp \
                        src/thrift/server/TThreadedServer.cpp
 
 libthrift_la_SOURCES += src/thrift/concurrency/Mutex.cpp \
+						src/thrift/concurrency/ThreadFactory.cpp \
+						src/thrift/concurrency/Thread.cpp \
                         src/thrift/concurrency/Monitor.cpp
 
 libthriftnb_la_SOURCES = src/thrift/server/TNonblockingServer.cpp \
@@ -165,11 +167,7 @@ include_concurrency_HEADERS = \
                          src/thrift/concurrency/Exception.h \
                          src/thrift/concurrency/Mutex.h \
                          src/thrift/concurrency/Monitor.h \
-                         src/thrift/concurrency/PlatformThreadFactory.h \
-                         src/thrift/concurrency/StdMonitor.cpp \
-                         src/thrift/concurrency/StdMutex.cpp \
-                         src/thrift/concurrency/StdThreadFactory.cpp \
-                         src/thrift/concurrency/StdThreadFactory.h \
+                         src/thrift/concurrency/ThreadFactory.h \
                          src/thrift/concurrency/Thread.h \
                          src/thrift/concurrency/ThreadManager.h \
                          src/thrift/concurrency/TimerManager.h \

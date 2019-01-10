@@ -21,7 +21,7 @@
 
 #include "ServerThread.h"
 
-#include <thrift/concurrency/PlatformThreadFactory.h>
+#include <thrift/concurrency/ThreadFactory.h>
 #include <thrift/concurrency/ThreadManager.h>
 #include <thrift/server/TThreadPoolServer.h>
 #include <thrift/transport/TBufferTransports.h>
@@ -38,7 +38,7 @@ void ServerThread::start() {
   helper_.reset(new Helper(this));
 
   // Start the other thread
-  concurrency::PlatformThreadFactory threadFactory;
+  concurrency::ThreadFactory threadFactory;
   threadFactory.setDetached(false);
   thread_ = threadFactory.newThread(helper_);
 

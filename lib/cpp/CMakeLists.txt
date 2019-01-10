@@ -110,9 +110,10 @@ if(UNIX)
     endif()
 endif()
 set( thriftcpp_threads_SOURCES
-    src/thrift/concurrency/StdThreadFactory.cpp
-    src/thrift/concurrency/StdMutex.cpp
-    src/thrift/concurrency/StdMonitor.cpp
+    src/thrift/concurrency/ThreadFactory.cpp
+    src/thrift/concurrency/Thread.cpp
+    src/thrift/concurrency/Monitor.cpp
+    src/thrift/concurrency/Mutex.cpp
 )
 
 # Thrift non blocking server
