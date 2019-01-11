@@ -30,7 +30,7 @@
 
 #include <thrift/concurrency/Mutex.h>
 #include <thrift/concurrency/Monitor.h>
-#include <thrift/concurrency/PlatformThreadFactory.h>
+#include <thrift/concurrency/ThreadFactory.h>
 #include <thrift/concurrency/Thread.h>
 
 namespace apache {
@@ -336,7 +336,7 @@ private:
   static const uint32_t DEFAULT_WRITER_THREAD_SLEEP_TIME_US = 60 * 1000 * 1000;
 
   // writer thread
-  apache::thrift::concurrency::PlatformThreadFactory threadFactory_;
+  apache::thrift::concurrency::ThreadFactory threadFactory_;
   std::shared_ptr<apache::thrift::concurrency::Thread> writerThread_;
 
   // buffers to hold data before it is flushed. Each element of the buffer stores a msg that

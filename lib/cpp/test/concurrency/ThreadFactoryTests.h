@@ -19,7 +19,7 @@
 
 #include <thrift/thrift-config.h>
 #include <thrift/concurrency/Thread.h>
-#include <thrift/concurrency/PlatformThreadFactory.h>
+#include <thrift/concurrency/ThreadFactory.h>
 #include <thrift/concurrency/Monitor.h>
 #include <thrift/concurrency/Mutex.h>
 #include <thrift/concurrency/Util.h>
@@ -66,7 +66,7 @@ public:
 
   bool reapNThreads(int loop = 1, int count = 10) {
 
-    PlatformThreadFactory threadFactory = PlatformThreadFactory();
+    ThreadFactory threadFactory = ThreadFactory();
     shared_ptr<Monitor> monitor(new Monitor);
 
     for (int lix = 0; lix < loop; lix++) {
@@ -159,7 +159,7 @@ public:
     shared_ptr<SynchStartTask> task
         = shared_ptr<SynchStartTask>(new SynchStartTask(monitor, state));
 
-    PlatformThreadFactory threadFactory = PlatformThreadFactory();
+    ThreadFactory threadFactory = ThreadFactory();
 
     shared_ptr<Thread> thread = threadFactory.newThread(task);
 
@@ -265,7 +265,7 @@ public:
     Monitor& _mon;
   };
 
-  void foo(PlatformThreadFactory* tf) { (void)tf; }
+  void foo(ThreadFactory* tf) { (void)tf; }
 
   bool floodNTest(size_t loop = 1, size_t count = 100000) {
 
@@ -274,7 +274,7 @@ public:
 	
     for (size_t lix = 0; lix < loop; lix++) {
 
-      PlatformThreadFactory threadFactory = PlatformThreadFactory();
+      ThreadFactory threadFactory = ThreadFactory();
       threadFactory.setDetached(true);
 
       for (size_t tix = 0; tix < count; tix++) {

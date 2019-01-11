@@ -379,7 +379,7 @@ BOOST_FIXTURE_TEST_CASE(test_threadpool_factory,
                         TServerIntegrationProcessorFactoryTestFixture<TThreadPoolServer>) {
   pServer->getThreadManager()->threadFactory(
       shared_ptr<apache::thrift::concurrency::ThreadFactory>(
-          new apache::thrift::concurrency::PlatformThreadFactory));
+          new apache::thrift::concurrency::ThreadFactory));
   pServer->getThreadManager()->start();
 
   // thread factory has 4 threads as a default
@@ -394,7 +394,7 @@ BOOST_FIXTURE_TEST_CASE(test_threadpool,
                         TServerIntegrationProcessorTestFixture<TThreadPoolServer>) {
   pServer->getThreadManager()->threadFactory(
       shared_ptr<apache::thrift::concurrency::ThreadFactory>(
-          new apache::thrift::concurrency::PlatformThreadFactory));
+          new apache::thrift::concurrency::ThreadFactory));
   pServer->getThreadManager()->start();
 
   // thread factory has 4 threads as a default
@@ -409,7 +409,7 @@ BOOST_FIXTURE_TEST_CASE(test_threadpool_bound,
                         TServerIntegrationProcessorTestFixture<TThreadPoolServer>) {
   pServer->getThreadManager()->threadFactory(
       shared_ptr<apache::thrift::concurrency::ThreadFactory>(
-          new apache::thrift::concurrency::PlatformThreadFactory));
+          new apache::thrift::concurrency::ThreadFactory));
   pServer->getThreadManager()->start();
   pServer->setConcurrentClientLimit(4);
 
@@ -420,7 +420,7 @@ BOOST_FIXTURE_TEST_CASE(test_threadpool_stress,
                         TServerIntegrationProcessorTestFixture<TThreadPoolServer>) {
   pServer->getThreadManager()->threadFactory(
       shared_ptr<apache::thrift::concurrency::ThreadFactory>(
-          new apache::thrift::concurrency::PlatformThreadFactory));
+          new apache::thrift::concurrency::ThreadFactory));
   pServer->getThreadManager()->start();
 
   stress(10, boost::posix_time::seconds(3));

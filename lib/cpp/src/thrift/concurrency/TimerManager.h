@@ -22,7 +22,7 @@
 
 #include <thrift/concurrency/Exception.h>
 #include <thrift/concurrency/Monitor.h>
-#include <thrift/concurrency/Thread.h>
+#include <thrift/concurrency/ThreadFactory.h>
 
 #include <memory>
 #include <map>

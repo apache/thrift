@@ -17,32 +17,24 @@
  * under the License.
  */
 
-#ifndef _THRIFT_CONCURRENCY_PLATFORMTHREADFACTORY_H_
-#define _THRIFT_CONCURRENCY_PLATFORMTHREADFACTORY_H_ 1
-
-// clang-format off
 #include <thrift/thrift-config.h>
-#if USE_STD_THREAD
-#  include <thrift/concurrency/StdThreadFactory.h>
-#else
-#  include <thrift/concurrency/PosixThreadFactory.h>
-#endif
-// clang-format on
+
+#include <thrift/concurrency/ThreadFactory.h>
+#include <memory>
 
 namespace apache {
 namespace thrift {
 namespace concurrency {
 
-// clang-format off
-#if USE_STD_THREAD
-  typedef StdThreadFactory PlatformThreadFactory;
-#else
-  typedef PosixThreadFactory PlatformThreadFactory;
-#endif
-// clang-format on
+std::shared_ptr<Thread> ThreadFactory::newThread(std::shared_ptr<Runnable> runnable) const {
+  std::shared_ptr<Thread> result = std::shared_ptr<Thread>(new Thread(isDetached(), runnable));
+  runnable->thread(result);
+  return result;
+}
 
+Thread::id_t ThreadFactory::getCurrentThreadId() const {
+  return std::this_thread::get_id();
+}
 }
 }
 } // apache::thrift::concurrency
-
-#endif // #ifndef _THRIFT_CONCURRENCY_PLATFORMTHREADFACTORY_H_

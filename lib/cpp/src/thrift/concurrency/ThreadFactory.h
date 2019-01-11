@@ -17,45 +17,65 @@
  * under the License.
  */
 
-#ifndef _THRIFT_CONCURRENCY_STDTHREADFACTORY_H_
-#define _THRIFT_CONCURRENCY_STDTHREADFACTORY_H_ 1
+#ifndef _THRIFT_CONCURRENCY_THREADFACTORY_H_
+#define _THRIFT_CONCURRENCY_THREADFACTORY_H_ 1
 
 #include <thrift/concurrency/Thread.h>
 
 #include <memory>
-
 namespace apache {
 namespace thrift {
 namespace concurrency {
 
 /**
- * A thread factory to create std::threads.
- *
- * @version $Id:$
+ * Factory to create thread object and bind them to Runnable
+ * object for execution
  */
-class StdThreadFactory : public ThreadFactory {
-
+class ThreadFactory final {
 public:
   /**
-   * Std thread factory.  All threads created by a factory are reference-counted
+   * All threads created by a factory are reference-counted
    * via std::shared_ptr.  The factory guarantees that threads and the Runnable tasks
    * they host will be properly cleaned up once the last strong reference
    * to both is given up.
    *
    * By default threads are not joinable.
    */
+  ThreadFactory(bool detached = true) : detached_(detached) { }
 
-  StdThreadFactory(bool detached = true);
+  ~ThreadFactory() = default;
 
-  // From ThreadFactory;
+  /**
+   * Gets current detached mode
+   */
+  bool isDetached() const { return detached_; }
+
+  /**
+   * Sets the detached disposition of newly created threads.
+   */
+  void setDetached(bool detached) { detached_ = detached; }
+
+  /**
+   * Create a new thread.
+   */
   std::shared_ptr<Thread> newThread(std::shared_ptr<Runnable> runnable) const;
 
-  // From ThreadFactory;
+  /**
+   * Gets the current thread id or unknown_thread_id if the current thread is not a thrift thread
+   */
   Thread::id_t getCurrentThreadId() const;
+
+  /**
+   * For code readability define the unknown/undefined thread id
+   */
+  static const Thread::id_t unknown_thread_id;
+
+private:
+  bool detached_;
 };
 
 }
 }
 } // apache::thrift::concurrency
 
-#endif // #ifndef _THRIFT_CONCURRENCY_STDTHREADFACTORY_H_
+#endif // #ifndef _THRIFT_CONCURRENCY_THREADFACTORY_H_

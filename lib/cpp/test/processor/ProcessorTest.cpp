@@ -25,7 +25,7 @@
 
 #include <boost/test/unit_test.hpp>
 
-#include <thrift/concurrency/PlatformThreadFactory.h>
+#include <thrift/concurrency/ThreadFactory.h>
 #include <thrift/concurrency/Monitor.h>
 #include <thrift/protocol/TBinaryProtocol.h>
 #include <thrift/server/TThreadedServer.h>
@@ -94,7 +94,7 @@ public:
       const std::shared_ptr<TProtocolFactory>& protocolFactory) {
     std::shared_ptr<TServerSocket> socket(new TServerSocket(port));
 
-    std::shared_ptr<PlatformThreadFactory> threadFactory(new PlatformThreadFactory);
+    std::shared_ptr<ThreadFactory> threadFactory(new ThreadFactory);
     std::shared_ptr<ThreadManager> threadManager = ThreadManager::newSimpleThreadManager(8);
     threadManager->threadFactory(threadFactory);
     threadManager->start();
@@ -123,7 +123,7 @@ public:
     }
 
     std::shared_ptr<TNonblockingServerSocket> socket(new TNonblockingServerSocket(port));
-    std::shared_ptr<PlatformThreadFactory> threadFactory(new PlatformThreadFactory);
+    std::shared_ptr<ThreadFactory> threadFactory(new ThreadFactory);
     std::shared_ptr<ThreadManager> threadManager = ThreadManager::newSimpleThreadManager(8);
     threadManager->threadFactory(threadFactory);
     threadManager->start();

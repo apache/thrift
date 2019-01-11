@@ -30,7 +30,7 @@
 #include <thrift/concurrency/ThreadManager.h>
 #include <climits>
 #include <thrift/concurrency/Thread.h>
-#include <thrift/concurrency/PlatformThreadFactory.h>
+#include <thrift/concurrency/ThreadFactory.h>
 #include <thrift/concurrency/Mutex.h>
 #include <stack>
 #include <vector>
@@ -53,7 +53,7 @@ using apache::thrift::transport::TNonblockingServerTransport;
 using apache::thrift::protocol::TProtocol;
 using apache::thrift::concurrency::Runnable;
 using apache::thrift::concurrency::ThreadManager;
-using apache::thrift::concurrency::PlatformThreadFactory;
+using apache::thrift::concurrency::ThreadFactory;
 using apache::thrift::concurrency::ThreadFactory;
 using apache::thrift::concurrency::Thread;
 using apache::thrift::concurrency::Mutex;
@@ -166,7 +166,7 @@ private:
   bool threadPoolProcessing_;
 
   // Factory to create the IO threads
-  std::shared_ptr<PlatformThreadFactory> ioThreadFactory_;
+  std::shared_ptr<ThreadFactory> ioThreadFactory_;
 
   // Vector of IOThread objects that will handle our IO
   std::vector<std::shared_ptr<TNonblockingIOThread> > ioThreads_;
@@ -386,9 +386,7 @@ public:
 
   /**
    * Sets the number of IO threads used by this server. Can only be used before
-   * the call to serve() and has no effect afterwards.  We always use a
-   * PosixThreadFactory for the IO worker threads, because they must joinable
-   * for clean shutdown.
+   * the call to serve() and has no effect afterwards.
    */
   void setNumIOThreads(size_t numThreads) {
     numIOThreads_ = numThreads;

@@ -28,8 +28,7 @@ SET CMAKEARGS=^
   -DCMAKE_CXX_STANDARD=11 ^
   -DWITH_PYTHON=OFF ^
   -DWITH_SHARED_LIB=OFF ^
-  -DWITH_STATIC_LIB=ON ^
-  -DWITH_STDTHREADS=ON
+  -DWITH_STATIC_LIB=ON
 
 @ECHO ON
 %BASH% -lc "mkdir -p %BUILDDIR% && cd %BUILDDIR% && cmake.exe %SRCDIR% %CMAKEARGS% && cmake --build . --config %CONFIGURATION% --target install" || EXIT /B

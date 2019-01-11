@@ -22,7 +22,7 @@
 #include <thrift/server/TNonblockingServer.h>
 #include <thrift/concurrency/Exception.h>
 #include <thrift/transport/TSocket.h>
-#include <thrift/concurrency/PlatformThreadFactory.h>
+#include <thrift/concurrency/ThreadFactory.h>
 #include <thrift/transport/PlatformSocket.h>
 
 #include <algorithm>
@@ -1118,12 +1118,7 @@ void TNonblockingServer::registerEvents(event_base* user_event_base) {
 
   // Launch all the secondary IO threads in separate threads
   if (ioThreads_.size() > 1) {
-    ioThreadFactory_.reset(new PlatformThreadFactory(
-#if !USE_STD_THREAD
-        PlatformThreadFactory::OTHER,  // scheduler
-        PlatformThreadFactory::NORMAL, // priority
-        1,                             // stack size (MB)
-#endif
+    ioThreadFactory_.reset(new ThreadFactory(
         false // detached
         ));
 

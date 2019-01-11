@@ -1031,7 +1031,7 @@ struct global_fixture {
     apache::thrift::transport::TWinsockSingleton::create();
 #endif
 
-    apache::thrift::concurrency::PlatformThreadFactory factory;
+    apache::thrift::concurrency::ThreadFactory factory;
     factory.setDetached(false);
 
     alarmThread_ = factory.newThread(

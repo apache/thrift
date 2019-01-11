@@ -20,7 +20,7 @@
 #include <thrift/async/TAsyncBufferProcessor.h>
 #include <thrift/async/TAsyncProtocolProcessor.h>
 #include <thrift/async/TEvhttpServer.h>
-#include <thrift/concurrency/PlatformThreadFactory.h>
+#include <thrift/concurrency/ThreadFactory.h>
 #include <thrift/concurrency/ThreadManager.h>
 #include <thrift/processor/TMultiplexedProcessor.h>
 #include <thrift/protocol/TBinaryProtocol.h>
@@ -770,8 +770,8 @@ int main(int argc, char** argv) {
     server.reset(new TSimpleServer(testProcessor, serverSocket, transportFactory, protocolFactory));
   } else if (server_type == "thread-pool") {
 
-    std::shared_ptr<PlatformThreadFactory> threadFactory
-        = std::shared_ptr<PlatformThreadFactory>(new PlatformThreadFactory());
+    std::shared_ptr<ThreadFactory> threadFactory
+        = std::shared_ptr<ThreadFactory>(new ThreadFactory());
 
     std::shared_ptr<ThreadManager> threadManager = ThreadManager::newSimpleThreadManager(workers);
     threadManager->threadFactory(threadFactory);
@@ -817,7 +817,7 @@ int main(int argc, char** argv) {
       server->setOutputProtocolFactory(std::shared_ptr<TProtocolFactory>());
     }
     
-    apache::thrift::concurrency::PlatformThreadFactory factory;
+    apache::thrift::concurrency::ThreadFactory factory;
     factory.setDetached(false);
     std::shared_ptr<apache::thrift::concurrency::Runnable> serverThreadRunner(server);
     std::shared_ptr<apache::thrift::concurrency::Thread> thread

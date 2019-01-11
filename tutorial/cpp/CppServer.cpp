@@ -18,7 +18,7 @@
  */
 
 #include <thrift/concurrency/ThreadManager.h>
-#include <thrift/concurrency/PlatformThreadFactory.h>
+#include <thrift/concurrency/ThreadFactory.h>
 #include <thrift/protocol/TBinaryProtocol.h>
 #include <thrift/server/TSimpleServer.h>
 #include <thrift/server/TThreadPoolServer.h>
@@ -160,7 +160,7 @@ int main() {
   std::shared_ptr<ThreadManager> threadManager =
     ThreadManager::newSimpleThreadManager(workerCount);
   threadManager->threadFactory(
-    std::make_shared<PlatformThreadFactory>());
+    std::make_shared<ThreadFactory>());
   threadManager->start();
 
   // This server allows "workerCount" connection at a time, and reuses threads

@@ -23,7 +23,7 @@
 #include <functional>
 #include <memory>
 #include <sys/types.h>
-#include <thrift/concurrency/Thread.h>
+#include <thrift/concurrency/ThreadFactory.h>
 
 namespace apache {
 namespace thrift {

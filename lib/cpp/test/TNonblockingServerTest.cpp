@@ -33,7 +33,7 @@
 using apache::thrift::concurrency::Guard;
 using apache::thrift::concurrency::Monitor;
 using apache::thrift::concurrency::Mutex;
-using apache::thrift::concurrency::PlatformThreadFactory;
+using apache::thrift::concurrency::ThreadFactory;
 using apache::thrift::concurrency::Runnable;
 using apache::thrift::concurrency::Thread;
 using apache::thrift::concurrency::ThreadFactory;
@@ -147,12 +147,7 @@ protected:
     runner->userEventBase = userEventBase_;
 
     shared_ptr<ThreadFactory> threadFactory(
-        new PlatformThreadFactory(
-#if !USE_STD_THREAD
-            PlatformThreadFactory::OTHER, PlatformThreadFactory::NORMAL,
-            1,
-#endif
-            false));
+        new ThreadFactory(false));
     thread = threadFactory->newThread(runner);
     thread->start();
     runner->readyBarrier();

@@ -25,7 +25,7 @@
 // Required Includes
 //'server' side #includes
 #include <thrift/concurrency/ThreadManager.h>
-#include <thrift/concurrency/PlatformThreadFactory.h>
+#include <thrift/concurrency/ThreadFactory.h>
 #include <thrift/server/TThreadPoolServer.h>
 #include <thrift/server/TSimpleServer.h>
 //'client' side #includes
@@ -87,7 +87,7 @@ namespace thriftcommon
 		else
 		{	//Multi-threaded server
 			boost::shared_ptr<ThreadManager> threadManager = ThreadManager::newSimpleThreadManager(NumThreads);
-			boost::shared_ptr<PlatformThreadFactory> threadFactory = boost::shared_ptr<PlatformThreadFactory>(new PlatformThreadFactory());
+			boost::shared_ptr<ThreadFactory> threadFactory = boost::shared_ptr<ThreadFactory>(new ThreadFactory());
 			threadManager->threadFactory(threadFactory);
 			threadManager->start();
 			server.reset(new TThreadPoolServer(processor, transport, tfactory, pfactory, threadManager));

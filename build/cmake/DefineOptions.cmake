@@ -77,8 +77,6 @@ if(WITH_CPP)
     find_package(OpenSSL QUIET)
     CMAKE_DEPENDENT_OPTION(WITH_OPENSSL "Build with OpenSSL support" ON
                            "OPENSSL_FOUND" OFF)
-    # if disabled, builds with posix thread class - deprecated and will be removed...
-    option(WITH_STDTHREADS "Build with C++ std::thread support" ON)
 endif()
 CMAKE_DEPENDENT_OPTION(BUILD_CPP "Build C++ library" ON
                        "BUILD_LIBRARIES;WITH_CPP" OFF)
@@ -182,7 +180,6 @@ message(STATUS " Library features:")
 message(STATUS "  Build shared libraries:                     ${WITH_SHARED_LIB}")
 message(STATUS "  Build static libraries:                     ${WITH_STATIC_LIB}")
 message(STATUS "  Build with Boost static link library:       ${WITH_BOOST_STATIC}")
-message(STATUS "  Build with C++ std::thread support:         ${WITH_STDTHREADS}")
 message(STATUS "  Build with libevent support:                ${WITH_LIBEVENT}")
 message(STATUS "  Build with OpenSSL support:                 ${WITH_OPENSSL}")
 message(STATUS "  Build with Qt4 support:                     ${WITH_QT4}")

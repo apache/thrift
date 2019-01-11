@@ -105,32 +105,19 @@ if(OPENSSL_FOUND AND WITH_OPENSSL)
     list(APPEND SYSLIBS "${OPENSSL_LIBRARIES}")
 endif()
 
-# WITH_*THREADS selects which threading library to use
-if(UNIX AND NOT WITH_STDTHREADS)
+if(UNIX)
     if(ANDROID)
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread")
     else()
         list(APPEND SYSLIBS pthread)
     endif()
-    set( thriftcpp_threads_SOURCES
-        src/thrift/concurrency/PosixThreadFactory.cpp
-        src/thrift/concurrency/Mutex.cpp
-        src/thrift/concurrency/Monitor.cpp
-    )
-else()
-    if(UNIX)
-        if(ANDROID)
-            set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread")
-        else()
-            list(APPEND SYSLIBS pthread)
-        endif()
-    endif()
-    set( thriftcpp_threads_SOURCES
-        src/thrift/concurrency/StdThreadFactory.cpp
-        src/thrift/concurrency/StdMutex.cpp
-        src/thrift/concurrency/StdMonitor.cpp
-    )
 endif()
+set( thriftcpp_threads_SOURCES
+    src/thrift/concurrency/ThreadFactory.cpp
+    src/thrift/concurrency/Thread.cpp
+    src/thrift/concurrency/Monitor.cpp
+    src/thrift/concurrency/Mutex.cpp
+)
 
 # Thrift non blocking server
 set( thriftcppnb_SOURCES

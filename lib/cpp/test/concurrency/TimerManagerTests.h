@@ -18,7 +18,7 @@
  */
 
 #include <thrift/concurrency/TimerManager.h>
-#include <thrift/concurrency/PlatformThreadFactory.h>
+#include <thrift/concurrency/ThreadFactory.h>
 #include <thrift/concurrency/Monitor.h>
 #include <thrift/concurrency/Util.h>
 
@@ -80,7 +80,7 @@ public:
 
     {
       TimerManager timerManager;
-      timerManager.threadFactory(shared_ptr<PlatformThreadFactory>(new PlatformThreadFactory()));
+      timerManager.threadFactory(shared_ptr<ThreadFactory>(new ThreadFactory()));
       timerManager.start();
       if (timerManager.state() != TimerManager::STARTED) {
         std::cerr << "timerManager is not in the STARTED state, but should be" << std::endl;
@@ -125,7 +125,7 @@ public:
    */
   bool test01(int64_t timeout = 1000LL) {
     TimerManager timerManager;
-    timerManager.threadFactory(shared_ptr<PlatformThreadFactory>(new PlatformThreadFactory()));
+    timerManager.threadFactory(shared_ptr<ThreadFactory>(new ThreadFactory()));
     timerManager.start();
     assert(timerManager.state() == TimerManager::STARTED);
 
@@ -158,7 +158,7 @@ public:
    */
   bool test02(int64_t timeout = 1000LL) {
     TimerManager timerManager;
-    timerManager.threadFactory(shared_ptr<PlatformThreadFactory>(new PlatformThreadFactory()));
+    timerManager.threadFactory(shared_ptr<ThreadFactory>(new ThreadFactory()));
     timerManager.start();
     assert(timerManager.state() == TimerManager::STARTED);
 
@@ -191,7 +191,7 @@ public:
    */
   bool test03(int64_t timeout = 1000LL) {
     TimerManager timerManager;
-    timerManager.threadFactory(shared_ptr<PlatformThreadFactory>(new PlatformThreadFactory()));
+    timerManager.threadFactory(shared_ptr<ThreadFactory>(new ThreadFactory()));
     timerManager.start();
     assert(timerManager.state() == TimerManager::STARTED);
 
@@ -228,7 +228,7 @@ public:
    */
   bool test04(int64_t timeout = 1000LL) {
     TimerManager timerManager;
-    timerManager.threadFactory(shared_ptr<PlatformThreadFactory>(new PlatformThreadFactory()));
+    timerManager.threadFactory(shared_ptr<ThreadFactory>(new ThreadFactory()));
     timerManager.start();
     assert(timerManager.state() == TimerManager::STARTED);
 
