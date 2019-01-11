@@ -28,8 +28,8 @@ option(BUILD_COMPILER "Build Thrift compiler" ON)
 if(BUILD_COMPILER OR EXISTS ${THRIFT_COMPILER})
     set(HAVE_COMPILER ON)
 endif()
-CMAKE_DEPENDENT_OPTION(BUILD_TESTING "Build with unit tests" ON "HAVE_COMPILER" OFF)
 CMAKE_DEPENDENT_OPTION(BUILD_EXAMPLES "Build examples" ON "HAVE_COMPILER" OFF)
+CMAKE_DEPENDENT_OPTION(BUILD_TESTING "Build with unit tests" ON "HAVE_COMPILER" OFF)
 CMAKE_DEPENDENT_OPTION(BUILD_TUTORIALS "Build Thrift tutorials" ON "HAVE_COMPILER" OFF)
 option(BUILD_LIBRARIES "Build Thrift libraries" ON)
 
@@ -40,9 +40,7 @@ option(BUILD_LIBRARIES "Build Thrift libraries" ON)
 # and enables the library if all are found. This means the default is to build as
 # much as possible but leaving out libraries if their dependencies are not met.
 
-option(WITH_BOOST_STATIC "Build with Boost static link library" OFF)
-set(Boost_USE_STATIC_LIBS ${WITH_BOOST_STATIC})
-if (NOT WITH_BOOST_STATIC)
+if (NOT Boost_USE_STATIC_LIBS)
     add_definitions(-DBOOST_ALL_DYN_LINK)
     add_definitions(-DBOOST_TEST_DYN_LINK)
 endif()
@@ -113,7 +111,7 @@ option(WITH_PYTHON "Build Python Thrift library" ON)
 find_package(PythonInterp QUIET) # for Python executable
 find_package(PythonLibs QUIET) # for Python.h
 CMAKE_DEPENDENT_OPTION(BUILD_PYTHON "Build Python library" ON
-                       "BUILD_LIBRARIES;WITH_PYTHON;PYTHONLIBS_FOUND" OFF)
+                       "BUILD_LIBRARIES;WITH_PYTHON;PYTHONINTERP_FOUND;PYTHONLIBS_FOUND" OFF)
 
 # Haskell
 option(WITH_HASKELL "Build Haskell Thrift library" ON)
@@ -123,22 +121,29 @@ CMAKE_DEPENDENT_OPTION(BUILD_HASKELL "Build GHC library" ON
                        "BUILD_LIBRARIES;WITH_HASKELL;GHC_FOUND;CABAL_FOUND" OFF)
 
 # Common library options
-option(WITH_SHARED_LIB "Build shared libraries" ON)
-option(WITH_STATIC_LIB "Build static libraries" ON)
-if (NOT WITH_SHARED_LIB AND NOT WITH_STATIC_LIB)
-    message(FATAL_ERROR "Cannot build with both shared and static outputs disabled!")
-endif()
+# https://cmake.org/cmake/help/latest/variable/BUILD_SHARED_LIBS.html
+# Default on Windows is static, shared mode library support needs work...
+CMAKE_DEPENDENT_OPTION(BUILD_SHARED_LIBS "Build shared libraries" OFF "WIN32" ON)
 
-#NOTE: C++ compiler options are defined in the lib/cpp/CMakeLists.txt
+if (WITH_SHARED_LIB)
+    message(WARNING "WITH_SHARED_LIB is deprecated; use -DBUILD_SHARED_LIBS=ON instead")
+    set(BUILD_SHARED_LIBS ON)
+elseif (WITH_STATIC_LIB)
+    if (WITH_SHARED_LIB)
+        message(FATAL_ERROR "Cannot build shared and static together; set BUILD_SHARED_LIBS instead.")
+    endif ()
+    message(WARNING "WITH_STATIC_LIB is deprecated; use -DBUILD_SHARED_LIBS=OFF instead")
+    set(BUILD_SHARED_LIBS OFF)
+endif ()
 
 # Visual Studio only options
 if(MSVC)
-option(WITH_MT "Build using MT instead of MD (MSVC only)" OFF)
+    option(WITH_MT "Build using MT instead of MD (MSVC only)" OFF)
 endif(MSVC)
 
 macro(MESSAGE_DEP flag summary)
 if(NOT ${flag})
-  message(STATUS "   - ${summary}")
+    message(STATUS "   - ${summary}")
 endif()
 endmacro(MESSAGE_DEP flag summary)
 
@@ -176,14 +181,13 @@ message(STATUS "  Build Haskell library:                      ${BUILD_HASKELL}")
 MESSAGE_DEP(WITH_HASKELL "Disabled by WITH_HASKELL=OFF")
 MESSAGE_DEP(GHC_FOUND "GHC missing")
 MESSAGE_DEP(CABAL_FOUND "Cabal missing")
-message(STATUS " Library features:")
-message(STATUS "  Build shared libraries:                     ${WITH_SHARED_LIB}")
-message(STATUS "  Build static libraries:                     ${WITH_STATIC_LIB}")
-message(STATUS "  Build with Boost static link library:       ${WITH_BOOST_STATIC}")
-message(STATUS "  Build with libevent support:                ${WITH_LIBEVENT}")
-message(STATUS "  Build with OpenSSL support:                 ${WITH_OPENSSL}")
-message(STATUS "  Build with Qt4 support:                     ${WITH_QT4}")
-message(STATUS "  Build with Qt5 support:                     ${WITH_QT5}")
-message(STATUS "  Build with ZLIB support:                    ${WITH_ZLIB}")
+if (BUILD_CPP)
+    message(STATUS " Library features:")
+    message(STATUS "  Build shared libraries:                     ${BUILD_SHARED_LIBS}")
+    message(STATUS "  Build with libevent support:                ${WITH_LIBEVENT}")
+    message(STATUS "  Build with Qt4 support:                     ${WITH_QT4}")
+    message(STATUS "  Build with Qt5 support:                     ${WITH_QT5}")
+    message(STATUS "  Build with ZLIB support:                    ${WITH_ZLIB}")
+endif ()
 message(STATUS "----------------------------------------------------------")
 endmacro(PRINT_CONFIG_SUMMARY)

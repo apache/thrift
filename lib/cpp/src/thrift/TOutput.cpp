@@ -29,6 +29,8 @@ namespace thrift {
 
 TOutput GlobalOutput;
 
+TOutput::TOutput() : f_(&errorTimeWrapper) {}
+
 void TOutput::printf(const char* message, ...) {
 #ifndef THRIFT_SQUELCH_CONSOLE_OUTPUT
   // Try to reduce heap usage, even if printf is called rarely.

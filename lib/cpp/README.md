@@ -240,8 +240,13 @@ run the tests.  This means the header thrift/stdcxx.h has been removed and
 anything that relied on it has been changed to directly use C++11 concepts.
 
 The classes BoostThreadFactory, PosixThreadFactory, StdThreadFactory, and
-PlatformThreadFactory will all be removed, and we will use a ThreadFactory
-based on C++11.
+PlatformThreadFactory have been removed, and we will use a ThreadFactory
+based on C++11 (essentially StdThreadFactory was renamed ThreadFactory).
+
+The CMake build options WITH_SHARED_LIBS and WITH_STATIC_LIBS are deprecated.
+The project no longer performs a side-by-side static and shared build; you
+tell CMake through BUILD_SHARED_LIBS whether to make shared or static
+libraries now.  This is CMake standard behavior.
 
 ## 0.11.0
 
