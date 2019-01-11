@@ -4507,23 +4507,21 @@ string t_c_glib_generator::generate_new_array_from_type(t_type* ttype) {
  ***************************************/
 
 /**
- * Upper case a string.  Wraps boost's string utility.
+ * Upper case a string.
  */
 string to_upper_case(string name) {
   string s(name);
   std::transform(s.begin(), s.end(), s.begin(), ::toupper);
   return s;
-  //  return boost::to_upper_copy (name);
 }
 
 /**
- * Lower case a string.  Wraps boost's string utility.
+ * Lower case a string.
  */
 string to_lower_case(string name) {
   string s(name);
   std::transform(s.begin(), s.end(), s.begin(), ::tolower);
   return s;
-  //  return boost::to_lower_copy (name);
 }
 
 /**

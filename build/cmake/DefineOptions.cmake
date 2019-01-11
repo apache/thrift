@@ -50,7 +50,6 @@ endif()
 # C++
 option(WITH_CPP "Build C++ Thrift library" ON)
 if(WITH_CPP)
-    find_package(Boost 1.53 QUIET)
     # NOTE: Currently the following options are C++ specific,
     # but in future other libraries might reuse them.
     # So they are not dependent on WITH_CPP but setting them without WITH_CPP currently
@@ -80,7 +79,7 @@ if(WITH_CPP)
                            "OPENSSL_FOUND" OFF)
 endif()
 CMAKE_DEPENDENT_OPTION(BUILD_CPP "Build C++ library" ON
-                       "BUILD_LIBRARIES;WITH_CPP;Boost_FOUND" OFF)
+                       "BUILD_LIBRARIES;WITH_CPP" OFF)
 CMAKE_DEPENDENT_OPTION(WITH_PLUGIN "Build compiler plugin support" OFF
                        "BUILD_COMPILER;BUILD_CPP" OFF)
 
@@ -92,20 +91,9 @@ endif()
 CMAKE_DEPENDENT_OPTION(BUILD_C_GLIB "Build C (GLib) library" ON
                        "BUILD_LIBRARIES;WITH_C_GLIB;GLIB_FOUND" OFF)
 
-if(BUILD_CPP)
-    set(boost_components)
-    if(BUILD_TESTING)
-        list(APPEND boost_components system thread)
-    endif()
-    if(BUILD_TESTING)
-        list(APPEND boost_components unit_test_framework filesystem chrono program_options)
-    endif()
-    if(boost_components)
-        find_package(Boost 1.53 REQUIRED COMPONENTS ${boost_components})
-    endif()
-elseif(BUILD_C_GLIB AND BUILD_TESTING)
-    find_package(Boost 1.53 REQUIRED)
-endif()
+	       #if(BUILD_C_GLIB AND BUILD_TESTING)
+	       #    find_package(Boost 1.53 REQUIRED)
+	       #endif()
 
 # Java
 option(WITH_JAVA "Build Java Thrift library" ON)
@@ -169,7 +157,6 @@ message(STATUS "  Build Thrift libraries:                     ${BUILD_LIBRARIES}
 message(STATUS " Language libraries:")
 message(STATUS "  Build C++ library:                          ${BUILD_CPP}")
 MESSAGE_DEP(WITH_CPP "Disabled by WITH_CPP=OFF")
-MESSAGE_DEP(Boost_FOUND "Boost headers missing")
 message(STATUS "    C++ Language Level:                       ${CXX_LANGUAGE_LEVEL}")
 message(STATUS "  Build C (GLib) library:                     ${BUILD_C_GLIB}")
 MESSAGE_DEP(WITH_C_GLIB "Disabled by WITH_C_GLIB=OFF")

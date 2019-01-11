@@ -36,17 +36,17 @@ environment:
    - PROFILE: MSVC2017
      PLATFORM: x64
      CONFIGURATION: Release
-     BOOST_VERSION: 1.65.1
+     BOOST_VERSION: 1.67.0
      LIBEVENT_VERSION: 2.1.8
      PYTHON_VERSION: 3.6
      QT_VERSION: 5.10
      ZLIB_VERSION: 1.2.11
      DISABLED_TESTS: StressTestNonBlocking
 
-   - PROFILE: MSVC2013
+   - PROFILE: MSVC2015
      PLATFORM: x86
      CONFIGURATION: Release
-     BOOST_VERSION: 1.58.0
+     BOOST_VERSION: 1.62.0
      LIBEVENT_VERSION: 2.0.22
      PYTHON_VERSION: 3.5
      QT_VERSION: 5.8
@@ -102,8 +102,8 @@ test_script:
 #
 # enables RDP at the end of the build job so you can login and re-run
 # commands to see why something failed...
-#on_finish:
-#  - ps: $blockRdp = $true; iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
+# on_finish:
+#   - ps: $blockRdp = $true; iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
 #
 # also need:
 # environment:

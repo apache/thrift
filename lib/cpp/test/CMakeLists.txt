@@ -17,11 +17,13 @@
 # under the License.
 #
 
-include_directories(SYSTEM "${Boost_INCLUDE_DIRS}")
+# Unit tests still require boost
+include(BoostMacros)
+REQUIRE_BOOST_HEADERS()
+set(BOOST_COMPONENTS chrono date_time filesystem random thread unit_test_framework)
+REQUIRE_BOOST_LIBRARIES(BOOST_COMPONENTS)
 
-if (WITH_DYN_LINK_TEST)
-    add_definitions( -DBOOST_TEST_DYN_LINK )
-endif()
+include(ThriftMacros)
 
 # Make sure gen-cpp files can be included
 include_directories("${CMAKE_CURRENT_BINARY_DIR}")
