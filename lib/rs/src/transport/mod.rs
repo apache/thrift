@@ -29,32 +29,31 @@ use std::ops::{Deref, DerefMut};
 
 #[cfg(test)]
 macro_rules! assert_eq_transport_num_written_bytes {
-    ($transport:ident, $num_written_bytes:expr) => {
-        {
-            assert_eq!($transport.channel.write_bytes().len(), $num_written_bytes);
-        }
-    };
+    ($transport:ident, $num_written_bytes:expr) => {{
+        assert_eq!($transport.channel.write_bytes().len(), $num_written_bytes);
+    }};
 }
-
 
 #[cfg(test)]
 macro_rules! assert_eq_transport_written_bytes {
-    ($transport:ident, $expected_bytes:ident) => {
-        {
-            assert_eq!($transport.channel.write_bytes(), &$expected_bytes);
-        }
-    };
+    ($transport:ident, $expected_bytes:ident) => {{
+        assert_eq!($transport.channel.write_bytes(), &$expected_bytes);
+    }};
 }
 
 mod buffered;
 mod framed;
-mod socket;
 mod mem;
+mod socket;
 
-pub use self::buffered::{TBufferedReadTransport, TBufferedReadTransportFactory,
-                         TBufferedWriteTransport, TBufferedWriteTransportFactory};
-pub use self::framed::{TFramedReadTransport, TFramedReadTransportFactory, TFramedWriteTransport,
-                       TFramedWriteTransportFactory};
+pub use self::buffered::{
+    TBufferedReadTransport, TBufferedReadTransportFactory, TBufferedWriteTransport,
+    TBufferedWriteTransportFactory,
+};
+pub use self::framed::{
+    TFramedReadTransport, TFramedReadTransportFactory, TFramedWriteTransport,
+    TFramedWriteTransportFactory,
+};
 pub use self::mem::TBufferChannel;
 pub use self::socket::TTcpChannel;
 
@@ -78,17 +77,9 @@ pub trait TWriteTransportFactory {
     fn create(&self, channel: Box<Write + Send>) -> Box<TWriteTransport + Send>;
 }
 
-impl<T> TReadTransport for T
-where
-    T: Read,
-{
-}
+impl<T> TReadTransport for T where T: Read {}
 
-impl<T> TWriteTransport for T
-where
-    T: Write,
-{
-}
+impl<T> TWriteTransport for T where T: Write {}
 
 // FIXME: implement the Debug trait for boxed transports
 
@@ -141,6 +132,26 @@ where
     C: Write,
 {
     handle: C,
+}
+
+impl<C> ReadHalf<C>
+where
+    C: Read,
+{
+    /// Create a `ReadHalf` associated with readable `handle`
+    pub fn new(handle: C) -> ReadHalf<C> {
+        ReadHalf { handle }
+    }
+}
+
+impl<C> WriteHalf<C>
+where
+    C: Write,
+{
+    /// Create a `WriteHalf` associated with writable `handle`
+    pub fn new(handle: C) -> WriteHalf<C> {
+        WriteHalf { handle }
+    }
 }
 
 impl<C> Read for ReadHalf<C>

@@ -87,6 +87,7 @@ endif
 if WITH_NODEJS
 SUBDIRS += nodejs
 PRECROSS_TARGET += precross-nodejs
+SUBDIRS += nodets
 endif
 
 if WITH_LUA
@@ -99,6 +100,10 @@ endif
 
 if WITH_CL
 SUBDIRS += cl
+endif
+
+if WITH_SWIFT
+SUBDIRS += swift
 endif
 
 # All of the libs that don't use Automake need to go in here

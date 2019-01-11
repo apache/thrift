@@ -20,6 +20,7 @@
 stubs: $(THRIFT) ../ThriftTest.thrift ../SmallTest.thrift
 	$(THRIFT) --gen rb ../ThriftTest.thrift
 	$(THRIFT) --gen rb ../SmallTest.thrift
+	$(THRIFT) --gen rb ../Recursive.thrift
 
 precross: stubs
 

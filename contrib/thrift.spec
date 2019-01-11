@@ -28,7 +28,7 @@ Name:           thrift
 License:        Apache License v2.0
 Group:          Development
 Summary:        RPC and serialization framework
-Version:        0.11.0
+Version:        1.0.0
 Release:        0
 URL:            http://thrift.apache.org
 Packager:       Thrift Developers <dev@thrift.apache.org>
@@ -178,6 +178,19 @@ export RUBYLIB=${PWD}/lib/rb/lib
   --without-csharp \
   --without-erlang \
 
+%if 0%{!?without_ruby:1}
+eval $(grep "^WITH_RUBY_TRUE" config.log)
+if [[ "${WITH_RUBY_TRUE}" != "" ]]; then
+  set +x
+  echo ""
+  echo "configure determined that ruby requirements are missing (bundler gem?), either install missing components" >&2
+  echo "or disable the ruby sub-packages as follows:"                                                              >&2
+  echo "     rpmbuild -D'%without_ruby 1' ..."                                                                     >&2
+  echo ""
+  exit 1
+fi
+%endif
+
 make %{?_smp_mflags}
 
 %if 0%{!?without_java:1}
@@ -234,5 +247,7 @@ umask 007
 /sbin/ldconfig > /dev/null 2>&1
 
 %changelog
+* Wed Aug 21 2013 Thrift Dev <dev@thrift.apache.org>
+- Thrift 0.9.1 release.
 * Wed Oct 10 2012 Thrift Dev <dev@thrift.apache.org> 
 - Thrift 0.9.0 release.

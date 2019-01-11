@@ -18,13 +18,15 @@
 use byteorder::{BigEndian, ReadBytesExt, WriteBytesExt};
 use integer_encoding::{VarIntReader, VarIntWriter};
 use std::convert::From;
-use try_from::TryFrom;
 use std::io;
+use try_from::TryFrom;
 
-use transport::{TReadTransport, TWriteTransport};
-use super::{TFieldIdentifier, TInputProtocol, TInputProtocolFactory, TListIdentifier,
-            TMapIdentifier, TMessageIdentifier, TMessageType};
+use super::{
+    TFieldIdentifier, TInputProtocol, TInputProtocolFactory, TListIdentifier, TMapIdentifier,
+    TMessageIdentifier, TMessageType,
+};
 use super::{TOutputProtocol, TOutputProtocolFactory, TSetIdentifier, TStructIdentifier, TType};
+use transport::{TReadTransport, TWriteTransport};
 
 const COMPACT_PROTOCOL_ID: u8 = 0x82;
 const COMPACT_VERSION: u8 = 0x01;
@@ -103,14 +105,10 @@ where
     fn read_message_begin(&mut self) -> ::Result<TMessageIdentifier> {
         let compact_id = self.read_byte()?;
         if compact_id != COMPACT_PROTOCOL_ID {
-            Err(
-                ::Error::Protocol(
-                    ::ProtocolError {
-                        kind: ::ProtocolErrorKind::BadVersion,
-                        message: format!("invalid compact protocol header {:?}", compact_id),
-                    },
-                ),
-            )
+            Err(::Error::Protocol(::ProtocolError {
+                kind: ::ProtocolErrorKind::BadVersion,
+                message: format!("invalid compact protocol header {:?}", compact_id),
+            }))
         } else {
             Ok(())
         }?;
@@ -118,17 +116,13 @@ where
         let type_and_byte = self.read_byte()?;
         let received_version = type_and_byte & COMPACT_VERSION_MASK;
         if received_version != COMPACT_VERSION {
-            Err(
-                ::Error::Protocol(
-                    ::ProtocolError {
-                        kind: ::ProtocolErrorKind::BadVersion,
-                        message: format!(
-                            "cannot process compact protocol version {:?}",
-                            received_version
-                        ),
-                    },
+            Err(::Error::Protocol(::ProtocolError {
+                kind: ::ProtocolErrorKind::BadVersion,
+                message: format!(
+                    "cannot process compact protocol version {:?}",
+                    received_version
                 ),
-            )
+            }))
         } else {
             Ok(())
         }?;
@@ -140,7 +134,11 @@ where
 
         self.last_read_field_id = 0;
 
-        Ok(TMessageIdentifier::new(service_call_name, message_type, sequence_number),)
+        Ok(TMessageIdentifier::new(
+            service_call_name,
+            message_type,
+            sequence_number,
+        ))
     }
 
     fn read_message_end(&mut self) -> ::Result<()> {
@@ -154,7 +152,8 @@ where
     }
 
     fn read_struct_end(&mut self) -> ::Result<()> {
-        self.last_read_field_id = self.read_field_id_stack
+        self.last_read_field_id = self
+            .read_field_id_stack
             .pop()
             .expect("should have previous field ids");
         Ok(())
@@ -179,15 +178,13 @@ where
         }?;
 
         match field_type {
-            TType::Stop => {
-                Ok(
-                    TFieldIdentifier::new::<Option<String>, String, Option<i16>>(
-                        None,
-                        TType::Stop,
-                        None,
-                    ),
-                )
-            }
+            TType::Stop => Ok(
+                TFieldIdentifier::new::<Option<String>, String, Option<i16>>(
+                    None,
+                    TType::Stop,
+                    None,
+                ),
+            ),
             _ => {
                 if field_delta != 0 {
                     self.last_read_field_id += field_delta as i16;
@@ -195,13 +192,11 @@ where
                     self.last_read_field_id = self.read_i16()?;
                 };
 
-                Ok(
-                    TFieldIdentifier {
-                        name: None,
-                        field_type: field_type,
-                        id: Some(self.last_read_field_id),
-                    },
-                )
+                Ok(TFieldIdentifier {
+                    name: None,
+                    field_type: field_type,
+                    id: Some(self.last_read_field_id),
+                })
             }
         }
     }
@@ -218,16 +213,10 @@ where
                 match b {
                     0x01 => Ok(true),
                     0x02 => Ok(false),
-                    unkn => {
-                        Err(
-                            ::Error::Protocol(
-                                ::ProtocolError {
-                                    kind: ::ProtocolErrorKind::InvalidData,
-                                    message: format!("cannot convert {} into bool", unkn),
-                                },
-                            ),
-                        )
-                    }
+                    unkn => Err(::Error::Protocol(::ProtocolError {
+                        kind: ::ProtocolErrorKind::InvalidData,
+                        message: format!("cannot convert {} into bool", unkn),
+                    })),
                 }
             }
         }
@@ -259,9 +248,7 @@ where
     }
 
     fn read_double(&mut self) -> ::Result<f64> {
-        self.transport
-            .read_f64::<BigEndian>()
-            .map_err(From::from)
+        self.transport.read_f64::<BigEndian>().map_err(From::from)
     }
 
     fn read_string(&mut self) -> ::Result<String> {
@@ -314,7 +301,6 @@ where
             .map(|_| buf[0])
     }
 }
-
 
 impl<T> io::Seek for TCompactInputProtocol<T>
 where
@@ -450,7 +436,8 @@ where
 
     fn write_struct_end(&mut self) -> ::Result<()> {
         self.assert_no_pending_bool_write();
-        self.last_write_field_id = self.write_field_id_stack
+        self.last_write_field_id = self
+            .write_field_id_stack
             .pop()
             .expect("should have previous field ids");
         Ok(())
@@ -462,7 +449,7 @@ where
                 if self.pending_write_bool_field_identifier.is_some() {
                     panic!(
                         "should not have a pending bool while writing another bool with id: \
-                            {:?}",
+                         {:?}",
                         identifier
                     )
                 }
@@ -471,9 +458,7 @@ where
             }
             _ => {
                 let field_type = type_to_u8(identifier.field_type);
-                let field_id = identifier
-                    .id
-                    .expect("non-stop field should have field id");
+                let field_id = identifier.id.expect("non-stop field should have field id");
                 self.write_field_header(field_type, field_id)
             }
         }
@@ -537,9 +522,7 @@ where
     }
 
     fn write_double(&mut self, d: f64) -> ::Result<()> {
-        self.transport
-            .write_f64::<BigEndian>(d)
-            .map_err(From::from)
+        self.transport.write_f64::<BigEndian>(d).map_err(From::from)
     }
 
     fn write_string(&mut self, s: &str) -> ::Result<()> {
@@ -595,10 +578,7 @@ where
     //
 
     fn write_byte(&mut self, b: u8) -> ::Result<()> {
-        self.transport
-            .write(&[b])
-            .map_err(From::from)
-            .map(|_| ())
+        self.transport.write(&[b]).map_err(From::from).map(|_| ())
     }
 }
 
@@ -639,7 +619,10 @@ fn type_to_u8(field_type: TType) -> u8 {
         TType::Set => 0x0A,
         TType::Map => 0x0B,
         TType::Struct => 0x0C,
-        _ => panic!(format!("should not have attempted to convert {} to u8", field_type)),
+        _ => panic!(format!(
+            "should not have attempted to convert {} to u8",
+            field_type
+        )),
     }
 }
 
@@ -663,25 +646,20 @@ fn u8_to_type(b: u8) -> ::Result<TType> {
         0x0A => Ok(TType::Set),
         0x0B => Ok(TType::Map),
         0x0C => Ok(TType::Struct),
-        unkn => {
-            Err(
-                ::Error::Protocol(
-                    ::ProtocolError {
-                        kind: ::ProtocolErrorKind::InvalidData,
-                        message: format!("cannot convert {} into TType", unkn),
-                    },
-                ),
-            )
-        }
+        unkn => Err(::Error::Protocol(::ProtocolError {
+            kind: ::ProtocolErrorKind::InvalidData,
+            message: format!("cannot convert {} into TType", unkn),
+        })),
     }
 }
 
 #[cfg(test)]
 mod tests {
 
-    use protocol::{TFieldIdentifier, TInputProtocol, TListIdentifier, TMapIdentifier,
-                   TMessageIdentifier, TMessageType, TOutputProtocol, TSetIdentifier,
-                   TStructIdentifier, TType};
+    use protocol::{
+        TFieldIdentifier, TInputProtocol, TListIdentifier, TMapIdentifier, TMessageIdentifier,
+        TMessageType, TOutputProtocol, TSetIdentifier, TStructIdentifier, TType,
+    };
     use transport::{ReadHalf, TBufferChannel, TIoChannel, WriteHalf};
 
     use super::*;
@@ -690,8 +668,13 @@ mod tests {
     fn must_write_message_begin_0() {
         let (_, mut o_prot) = test_objects();
 
-        assert_success!(o_prot.write_message_begin(&TMessageIdentifier::new("foo", TMessageType::Call, 431)));
+        assert_success!(o_prot.write_message_begin(&TMessageIdentifier::new(
+            "foo",
+            TMessageType::Call,
+            431
+        )));
 
+        #[cfg_attr(rustfmt, rustfmt::skip)]
         let expected: [u8; 8] = [
             0x82, /* protocol ID */
             0x21, /* message type | protocol version */
@@ -710,10 +693,13 @@ mod tests {
     fn must_write_message_begin_1() {
         let (_, mut o_prot) = test_objects();
 
-        assert_success!(
-            o_prot.write_message_begin(&TMessageIdentifier::new("bar", TMessageType::Reply, 991828))
-        );
+        assert_success!(o_prot.write_message_begin(&TMessageIdentifier::new(
+            "bar",
+            TMessageType::Reply,
+            991828
+        )));
 
+        #[cfg_attr(rustfmt, rustfmt::skip)]
         let expected: [u8; 9] = [
             0x82, /* protocol ID */
             0x41, /* message type | protocol version */
@@ -777,6 +763,7 @@ mod tests {
         assert_success!(o_prot.write_field_stop());
         assert_success!(o_prot.write_struct_end());
 
+        #[cfg_attr(rustfmt, rustfmt::skip)]
         let expected: [u8; 5] = [
             0x03, /* field type */
             0x00, /* first field id */
@@ -891,6 +878,7 @@ mod tests {
         assert_success!(o_prot.write_field_stop());
         assert_success!(o_prot.write_struct_end());
 
+        #[cfg_attr(rustfmt, rustfmt::skip)]
         let expected: [u8; 4] = [
             0x15, /* field delta (1) | field type */
             0x1A, /* field delta (1) | field type */
@@ -1003,6 +991,7 @@ mod tests {
         assert_success!(o_prot.write_field_stop());
         assert_success!(o_prot.write_struct_end());
 
+        #[cfg_attr(rustfmt, rustfmt::skip)]
         let expected: [u8; 8] = [
             0x05, /* field type */
             0x00, /* first field id */
@@ -1126,6 +1115,7 @@ mod tests {
         assert_success!(o_prot.write_field_stop());
         assert_success!(o_prot.write_struct_end());
 
+        #[cfg_attr(rustfmt, rustfmt::skip)]
         let expected: [u8; 10] = [
             0x16, /* field delta (1) | field type */
             0x85, /* field delta (8) | field type */
@@ -1290,6 +1280,7 @@ mod tests {
         assert_success!(o_prot.write_field_stop());
         assert_success!(o_prot.write_struct_end());
 
+        #[cfg_attr(rustfmt, rustfmt::skip)]
         let expected: [u8; 7] = [
             0x16, /* field delta (1) | field type */
             0x85, /* field delta (8) | field type */
@@ -1462,6 +1453,7 @@ mod tests {
         assert_success!(o_prot.write_field_stop());
         assert_success!(o_prot.write_struct_end());
 
+        #[cfg_attr(rustfmt, rustfmt::skip)]
         let expected: [u8; 7] = [
             0x16, /* field delta (1) | field type */
             0x85, /* field delta (8) | field type */
@@ -1634,6 +1626,7 @@ mod tests {
         assert_success!(o_prot.write_field_stop());
         assert_success!(o_prot.write_struct_end());
 
+        #[cfg_attr(rustfmt, rustfmt::skip)]
         let expected: [u8; 7] = [
             0x16, /* field delta (1) | field type */
             0x08, /* field type */
@@ -1803,6 +1796,7 @@ mod tests {
         assert_success!(o_prot.write_field_stop());
         assert_success!(o_prot.write_struct_end());
 
+        #[cfg_attr(rustfmt, rustfmt::skip)]
         let expected: [u8; 8] = [
             0x16, /* field delta (1) | field type */
             0x08, /* field type */
@@ -1968,6 +1962,7 @@ mod tests {
         assert_success!(o_prot.write_field_stop());
         assert_success!(o_prot.write_struct_end());
 
+        #[cfg_attr(rustfmt, rustfmt::skip)]
         let expected: [u8; 7] = [
             0x11, /* field delta (1) | true */
             0x82, /* field delta (8) | false */
@@ -2158,8 +2153,7 @@ mod tests {
 
         let expected: [u8; 3] = [
             0xF9, /* 0xF0 | elem_type */
-            0x8F,
-            0x4E /* size as varint */,
+            0x8F, 0x4E, /* size as varint */
         ];
 
         assert_eq_written_bytes!(o_prot, expected);
@@ -2217,9 +2211,7 @@ mod tests {
 
         let expected: [u8; 4] = [
             0xF7, /* 0xF0 | elem_type */
-            0xD3,
-            0xBA,
-            0x01 /* size as varint */,
+            0xD3, 0xBA, 0x01, /* size as varint */
         ];
 
         assert_eq_written_bytes!(o_prot, expected);
@@ -2267,10 +2259,10 @@ mod tests {
         assert_eq!(
             &res,
             &TMapIdentifier {
-                 key_type: None,
-                 value_type: None,
-                 size: 0,
-             }
+                key_type: None,
+                value_type: None,
+                size: 0,
+            }
         );
     }
 
@@ -2278,12 +2270,15 @@ mod tests {
     fn must_write_map_begin() {
         let (_, mut o_prot) = test_objects();
 
-        assert_success!(o_prot.write_map_begin(&TMapIdentifier::new(TType::Double, TType::String, 238)));
+        assert_success!(o_prot.write_map_begin(&TMapIdentifier::new(
+            TType::Double,
+            TType::String,
+            238
+        )));
 
         let expected: [u8; 3] = [
-            0xEE,
-            0x01, /* size as varint */
-            0x78 /* key type | val type */,
+            0xEE, 0x01, /* size as varint */
+            0x78, /* key type | val type */
         ];
 
         assert_eq_written_bytes!(o_prot, expected);
@@ -2321,7 +2316,7 @@ mod tests {
             0x01, /* size as varint */
             0x11, /* key type | val type */
             0x01, /* key: true */
-            0x02 /* val: false */,
+            0x02, /* val: false */
         ];
 
         assert_eq_written_bytes!(o_prot, expected);
@@ -2366,10 +2361,10 @@ mod tests {
         assert!(i_prot.read_map_end().is_ok()); // will blow up if we try to read from empty buffer
     }
 
-    fn test_objects()
-        -> (TCompactInputProtocol<ReadHalf<TBufferChannel>>,
-            TCompactOutputProtocol<WriteHalf<TBufferChannel>>)
-    {
+    fn test_objects() -> (
+        TCompactInputProtocol<ReadHalf<TBufferChannel>>,
+        TCompactOutputProtocol<WriteHalf<TBufferChannel>>,
+    ) {
         let mem = TBufferChannel::with_capacity(80, 80);
 
         let (r_mem, w_mem) = mem.split().unwrap();

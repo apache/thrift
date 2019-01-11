@@ -18,7 +18,7 @@
  */
 
 public struct TList<Element : TSerializable> : RandomAccessCollection, MutableCollection, ExpressibleByArrayLiteral, TSerializable, Hashable {
-  typealias Storage = Array<Element>
+  public typealias Storage = Array<Element>
   public typealias Indices = Storage.Indices
 
   internal var storage = Storage()

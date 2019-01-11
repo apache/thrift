@@ -57,38 +57,34 @@
 //! protocol.write_field_end().unwrap();
 //! ```
 
+use std::convert::From;
 use std::fmt;
 use std::fmt::{Display, Formatter};
-use std::convert::From;
 use try_from::TryFrom;
 
-use {ProtocolError, ProtocolErrorKind};
 use transport::{TReadTransport, TWriteTransport};
+use {ProtocolError, ProtocolErrorKind};
 
 #[cfg(test)]
 macro_rules! assert_eq_written_bytes {
-    ($o_prot:ident, $expected_bytes:ident) => {
-        {
-            assert_eq!($o_prot.transport.write_bytes(), &$expected_bytes);
-        }
-    };
+    ($o_prot:ident, $expected_bytes:ident) => {{
+        assert_eq!($o_prot.transport.write_bytes(), &$expected_bytes);
+    }};
 }
 
 // FIXME: should take both read and write
 #[cfg(test)]
 macro_rules! copy_write_buffer_to_read_buffer {
-    ($o_prot:ident) => {
-        {
-            $o_prot.transport.copy_write_buffer_to_read_buffer();
-        }
-    };
+    ($o_prot:ident) => {{
+        $o_prot.transport.copy_write_buffer_to_read_buffer();
+    }};
 }
 
 #[cfg(test)]
 macro_rules! set_readable_bytes {
     ($i_prot:ident, $bytes:expr) => {
         $i_prot.transport.set_readable_bytes($bytes);
-    }
+    };
 }
 
 mod binary;
@@ -96,10 +92,14 @@ mod compact;
 mod multiplexed;
 mod stored;
 
-pub use self::binary::{TBinaryInputProtocol, TBinaryInputProtocolFactory, TBinaryOutputProtocol,
-                       TBinaryOutputProtocolFactory};
-pub use self::compact::{TCompactInputProtocol, TCompactInputProtocolFactory,
-                        TCompactOutputProtocol, TCompactOutputProtocolFactory};
+pub use self::binary::{
+    TBinaryInputProtocol, TBinaryInputProtocolFactory, TBinaryOutputProtocol,
+    TBinaryOutputProtocolFactory,
+};
+pub use self::compact::{
+    TCompactInputProtocol, TCompactInputProtocolFactory, TCompactOutputProtocol,
+    TCompactOutputProtocolFactory,
+};
 pub use self::multiplexed::TMultiplexedOutputProtocol;
 pub use self::stored::TStoredInputProtocol;
 
@@ -186,14 +186,10 @@ pub trait TInputProtocol {
     /// Skip a field with type `field_type` recursively up to `depth` levels.
     fn skip_till_depth(&mut self, field_type: TType, depth: i8) -> ::Result<()> {
         if depth == 0 {
-            return Err(
-                ::Error::Protocol(
-                    ProtocolError {
-                        kind: ProtocolErrorKind::DepthLimit,
-                        message: format!("cannot parse past {:?}", field_type),
-                    },
-                ),
-            );
+            return Err(::Error::Protocol(ProtocolError {
+                kind: ProtocolErrorKind::DepthLimit,
+                message: format!("cannot parse past {:?}", field_type),
+            }));
         }
 
         match field_type {
@@ -243,16 +239,10 @@ pub trait TInputProtocol {
                 }
                 self.read_map_end()
             }
-            u => {
-                Err(
-                    ::Error::Protocol(
-                        ProtocolError {
-                            kind: ProtocolErrorKind::Unknown,
-                            message: format!("cannot skip field type {:?}", &u),
-                        },
-                    ),
-                )
-            }
+            u => Err(::Error::Protocol(ProtocolError {
+                kind: ProtocolErrorKind::Unknown,
+                message: format!("cannot skip field type {:?}", &u),
+            })),
         }
     }
 
@@ -787,16 +777,10 @@ impl TryFrom<u8> for TMessageType {
             0x02 => Ok(TMessageType::Reply),
             0x03 => Ok(TMessageType::Exception),
             0x04 => Ok(TMessageType::OneWay),
-            unkn => {
-                Err(
-                    ::Error::Protocol(
-                        ProtocolError {
-                            kind: ProtocolErrorKind::InvalidData,
-                            message: format!("cannot convert {} to TMessageType", unkn),
-                        },
-                    ),
-                )
-            }
+            unkn => Err(::Error::Protocol(ProtocolError {
+                kind: ProtocolErrorKind::InvalidData,
+                message: format!("cannot convert {} to TMessageType", unkn),
+            })),
         }
     }
 }
@@ -869,14 +853,10 @@ pub fn verify_expected_sequence_number(expected: i32, actual: i32) -> ::Result<(
     if expected == actual {
         Ok(())
     } else {
-        Err(
-            ::Error::Application(
-                ::ApplicationError {
-                    kind: ::ApplicationErrorKind::BadSequenceId,
-                    message: format!("expected {} got {}", expected, actual),
-                },
-            ),
-        )
+        Err(::Error::Application(::ApplicationError {
+            kind: ::ApplicationErrorKind::BadSequenceId,
+            message: format!("expected {} got {}", expected, actual),
+        }))
     }
 }
 
@@ -888,14 +868,10 @@ pub fn verify_expected_service_call(expected: &str, actual: &str) -> ::Result<()
     if expected == actual {
         Ok(())
     } else {
-        Err(
-            ::Error::Application(
-                ::ApplicationError {
-                    kind: ::ApplicationErrorKind::WrongMethodName,
-                    message: format!("expected {} got {}", expected, actual),
-                },
-            ),
-        )
+        Err(::Error::Application(::ApplicationError {
+            kind: ::ApplicationErrorKind::WrongMethodName,
+            message: format!("expected {} got {}", expected, actual),
+        }))
     }
 }
 
@@ -907,14 +883,10 @@ pub fn verify_expected_message_type(expected: TMessageType, actual: TMessageType
     if expected == actual {
         Ok(())
     } else {
-        Err(
-            ::Error::Application(
-                ::ApplicationError {
-                    kind: ::ApplicationErrorKind::InvalidMessageType,
-                    message: format!("expected {} got {}", expected, actual),
-                },
-            ),
-        )
+        Err(::Error::Application(::ApplicationError {
+            kind: ::ApplicationErrorKind::InvalidMessageType,
+            message: format!("expected {} got {}", expected, actual),
+        }))
     }
 }
 
@@ -924,16 +896,10 @@ pub fn verify_expected_message_type(expected: TMessageType, actual: TMessageType
 pub fn verify_required_field_exists<T>(field_name: &str, field: &Option<T>) -> ::Result<()> {
     match *field {
         Some(_) => Ok(()),
-        None => {
-            Err(
-                ::Error::Protocol(
-                    ::ProtocolError {
-                        kind: ::ProtocolErrorKind::Unknown,
-                        message: format!("missing required field {}", field_name),
-                    },
-                ),
-            )
-        }
+        None => Err(::Error::Protocol(::ProtocolError {
+            kind: ::ProtocolErrorKind::Unknown,
+            message: format!("missing required field {}", field_name),
+        })),
     }
 }
 
@@ -943,18 +909,12 @@ pub fn verify_required_field_exists<T>(field_name: &str, field: &Option<T>) -> :
 ///
 /// Return `TFieldIdentifier.id` if an id exists, `Err` otherwise.
 pub fn field_id(field_ident: &TFieldIdentifier) -> ::Result<i16> {
-    field_ident
-        .id
-        .ok_or_else(
-            || {
-                ::Error::Protocol(
-                    ::ProtocolError {
-                        kind: ::ProtocolErrorKind::Unknown,
-                        message: format!("missing field in in {:?}", field_ident),
-                    },
-                )
-            },
-        )
+    field_ident.id.ok_or_else(|| {
+        ::Error::Protocol(::ProtocolError {
+            kind: ::ProtocolErrorKind::Unknown,
+            message: format!("missing field in in {:?}", field_ident),
+        })
+    })
 }
 
 #[cfg(test)]

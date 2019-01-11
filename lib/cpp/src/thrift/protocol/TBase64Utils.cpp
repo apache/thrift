@@ -19,8 +19,6 @@
 
 #include <thrift/protocol/TBase64Utils.h>
 
-#include <boost/static_assert.hpp>
-
 using std::string;
 
 namespace apache {

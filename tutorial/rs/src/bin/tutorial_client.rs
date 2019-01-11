@@ -22,8 +22,9 @@ extern crate thrift;
 extern crate thrift_tutorial;
 
 use thrift::protocol::{TCompactInputProtocol, TCompactOutputProtocol};
-use thrift::transport::{ReadHalf, TFramedReadTransport, TFramedWriteTransport, TIoChannel,
-                        TTcpChannel, WriteHalf};
+use thrift::transport::{
+    ReadHalf, TFramedReadTransport, TFramedWriteTransport, TIoChannel, TTcpChannel, WriteHalf,
+};
 
 use thrift_tutorial::shared::TSharedServiceSyncClient;
 use thrift_tutorial::tutorial::{CalculatorSyncClient, Operation, TCalculatorSyncClient, Work};
@@ -70,8 +71,7 @@ fn run() -> thrift::Result<()> {
     let logid = 32;
 
     // let's do...a multiply!
-    let res = client
-        .calculate(logid, Work::new(7, 8, Operation::MULTIPLY, None))?;
+    let res = client.calculate(logid, Work::new(7, 8, Operation::Multiply, None))?;
     println!("multiplied 7 and 8 and got {}", res);
 
     // let's get the log for it
@@ -81,7 +81,7 @@ fn run() -> thrift::Result<()> {
     // ok - let's be bad :(
     // do a divide by 0
     // logid doesn't matter; won't be recorded
-    let res = client.calculate(77, Work::new(2, 0, Operation::DIVIDE, "we bad".to_owned()));
+    let res = client.calculate(77, Work::new(2, 0, Operation::Divide, "we bad".to_owned()));
 
     // we should have gotten an exception back
     match res {
@@ -103,8 +103,7 @@ fn run() -> thrift::Result<()> {
 type ClientInputProtocol = TCompactInputProtocol<TFramedReadTransport<ReadHalf<TTcpChannel>>>;
 type ClientOutputProtocol = TCompactOutputProtocol<TFramedWriteTransport<WriteHalf<TTcpChannel>>>;
 
-fn new_client
-    (
+fn new_client(
     host: &str,
     port: u16,
 ) -> thrift::Result<CalculatorSyncClient<ClientInputProtocol, ClientOutputProtocol>> {

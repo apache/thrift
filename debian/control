@@ -11,8 +11,8 @@ Build-Depends: debhelper (>= 9), build-essential, mono-mcs, python-dev, ant,
     php (>= 5), php-dev (>= 5), libglib2.0-dev, qtchooser, qtbase5-dev-tools
 Maintainer: Thrift Developer's <dev@thrift.apache.org>
 Homepage: http://thrift.apache.org/
-Vcs-Git: https://git-wip-us.apache.org/repos/asf/thrift.git
-Vcs-Browser: https://git-wip-us.apache.org/repos/asf?p=thrift.git
+Vcs-Git: https://github.com/apache/thrift.git
+Vcs-Browser: https://github.com/apache/thrift
 Standards-Version: 3.9.7
 X-Python-Version: >= 2.6
 X-Python3-Version: >= 3.3

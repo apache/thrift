@@ -893,14 +893,14 @@ private {
       callsSinceResize_ = 0;
 
       factoryInputTransport_ =
-        server_.inputTransportFactory_.getTransport(inputTransport_);
+        server_.inputTransportFactory.getTransport(inputTransport_);
       factoryOutputTransport_ =
-        server_.outputTransportFactory_.getTransport(outputTransport_);
+        server_.outputTransportFactory.getTransport(outputTransport_);
 
       inputProtocol_ =
-        server_.inputProtocolFactory_.getProtocol(factoryInputTransport_);
+        server_.inputProtocolFactory.getProtocol(factoryInputTransport_);
       outputProtocol_ =
-        server_.outputProtocolFactory_.getProtocol(factoryOutputTransport_);
+        server_.outputProtocolFactory.getProtocol(factoryOutputTransport_);
 
       if (server_.eventHandler) {
         connectionContext_ =
@@ -908,7 +908,7 @@ private {
       }
 
       auto info = TConnectionInfo(inputProtocol_, outputProtocol_, socket_);
-      processor_ = server_.processorFactory_.getProcessor(info);
+      processor_ = server_.processorFactory.getProcessor(info);
     }
 
     ~this() {

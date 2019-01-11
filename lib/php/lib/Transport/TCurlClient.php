@@ -170,6 +170,24 @@ class TCurlClient extends TTransport
     }
 
     /**
+     * Guarantees that the full amount of data is read. Since TCurlClient gets entire payload at
+     * once, parent readAll cannot be used.
+     *
+     * @return string The data, of exact length
+     * @throws TTransportException if cannot read data
+     */
+    public function readAll($len)
+    {
+        $data = $this->read($len);
+
+        if (TStringFuncFactory::create()->strlen($data) !== $len) {
+            throw new TTransportException('TCurlClient could not read '.$len.' bytes');
+        }
+
+        return $data;
+    }
+
+    /**
      * Writes some data into the pending buffer
      *
      * @param string $buf The data to write
@@ -219,13 +237,23 @@ class TCurlClient extends TTransport
 
         curl_setopt(self::$curlHandle, CURLOPT_URL, $fullUrl);
         $this->response_ = curl_exec(self::$curlHandle);
+        $responseError = curl_error(self::$curlHandle);
 
-        // Connect failed?
-        if (!$this->response_) {
+        $code = curl_getinfo(self::$curlHandle, CURLINFO_HTTP_CODE);
+
+        // Handle non 200 status code / connect failure
+        if ($this->response_ === false || $code !== 200) {
             curl_close(self::$curlHandle);
             self::$curlHandle = null;
+            $this->response_ = null;
             $error = 'TCurlClient: Could not connect to ' . $fullUrl;
-            throw new TTransportException($error, TTransportException::NOT_OPEN);
+            if ($responseError) {
+                $error .= ', ' . $responseError;
+            }
+            if ($code) {
+                $error .= ', HTTP status code: ' . $code;
+            }
+            throw new TTransportException($error, TTransportException::UNKNOWN);
         }
     }
 

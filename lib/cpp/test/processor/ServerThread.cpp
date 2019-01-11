@@ -130,7 +130,7 @@ void ServerThread::preServe() {
   serverState_->bindSuccessful(port_);
 
   // Set the real server event handler (replacing ourself)
-  stdcxx::shared_ptr<server::TServerEventHandler> serverEventHandler
+  std::shared_ptr<server::TServerEventHandler> serverEventHandler
       = serverState_->getServerEventHandler();
   server_->setServerEventHandler(serverEventHandler);
 

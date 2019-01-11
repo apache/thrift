@@ -54,7 +54,7 @@ use version 0.77; our $VERSION = version->declare("$Thrift::VERSION");
 #
 sub isOpen
 {
-    die "abstract";
+    die 'abstract';
 }
 
 #
@@ -64,7 +64,7 @@ sub isOpen
 #
 sub open
 {
-    die "abstract";
+    die 'abstract';
 }
 
 #
@@ -72,7 +72,7 @@ sub open
 #
 sub close
 {
-    die "abstract";
+    die 'abstract';
 }
 
 #
@@ -84,7 +84,7 @@ sub close
 #
 sub read
 {
-    die "abstract";
+    die 'abstract';
 }
 
 #
@@ -116,7 +116,7 @@ sub readAll
 #
 sub write
 {
-    die "abstract";
+    die 'abstract';
 }
 
 #
@@ -162,17 +162,17 @@ use version 0.77; our $VERSION = version->declare("$Thrift::VERSION");
 
 sub listen
 {
-    die "abstract";
+    die 'abstract';
 }
 
 sub accept
 {
-    die "abstract";
+    die 'abstract';
 }
 
 sub close
 {
-    die "abstract";
+    die 'abstract';
 }
 
 

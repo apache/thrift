@@ -21,9 +21,9 @@
 #include <boost/test/auto_unit_test.hpp>
 #include <thrift/transport/TBufferTransports.h>
 #include <thrift/transport/TShortReadTransport.h>
-#include <thrift/stdcxx.h>
+#include <memory>
 
-using apache::thrift::stdcxx::shared_ptr;
+using std::shared_ptr;
 using apache::thrift::transport::TMemoryBuffer;
 using apache::thrift::transport::TBufferedTransport;
 using apache::thrift::transport::TFramedTransport;

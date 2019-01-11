@@ -57,25 +57,17 @@ impl TBufferChannel {
     /// read buffer capacity and write buffer capacity.
     pub fn with_capacity(read_capacity: usize, write_capacity: usize) -> TBufferChannel {
         TBufferChannel {
-            read: Arc::new(
-                Mutex::new(
-                    ReadData {
-                        buf: vec![0; read_capacity].into_boxed_slice(),
-                        idx: 0,
-                        pos: 0,
-                        cap: read_capacity,
-                    },
-                ),
-            ),
-            write: Arc::new(
-                Mutex::new(
-                    WriteData {
-                        buf: vec![0; write_capacity].into_boxed_slice(),
-                        pos: 0,
-                        cap: write_capacity,
-                    },
-                ),
-            ),
+            read: Arc::new(Mutex::new(ReadData {
+                buf: vec![0; read_capacity].into_boxed_slice(),
+                idx: 0,
+                pos: 0,
+                cap: read_capacity,
+            })),
+            write: Arc::new(Mutex::new(WriteData {
+                buf: vec![0; write_capacity].into_boxed_slice(),
+                pos: 0,
+                cap: write_capacity,
+            })),
         }
     }
 
@@ -151,20 +143,20 @@ impl TIoChannel for TBufferChannel {
     where
         Self: Sized,
     {
-        Ok(
-            (ReadHalf {
-                 handle: TBufferChannel {
-                     read: self.read.clone(),
-                     write: self.write.clone(),
-                 },
-             },
-             WriteHalf {
-                 handle: TBufferChannel {
-                     read: self.read.clone(),
-                     write: self.write.clone(),
-                 },
-             }),
-        )
+        Ok((
+            ReadHalf {
+                handle: TBufferChannel {
+                    read: self.read.clone(),
+                    write: self.write.clone(),
+                },
+            },
+            WriteHalf {
+                handle: TBufferChannel {
+                    read: self.read.clone(),
+                    write: self.write.clone(),
+                },
+            },
+        ))
     }
 }
 

@@ -34,7 +34,7 @@ namespace apache {
 namespace thrift {
 namespace transport {
 
-THttpServer::THttpServer(stdcxx::shared_ptr<TTransport> transport) : THttpTransport(transport) {
+THttpServer::THttpServer(std::shared_ptr<TTransport> transport) : THttpTransport(transport) {
 }
 
 THttpServer::~THttpServer() {

@@ -21,14 +21,14 @@
 #include <cmath>
 #include "gen-cpp/DebugProtoTest_types.h"
 #include <thrift/protocol/TDebugProtocol.h>
-#include <thrift/stdcxx.h>
+#include <memory>
 
 #define BOOST_TEST_MODULE DebugProtoTest
 #include <boost/test/unit_test.hpp>
 
 using namespace thrift::test::debug;
 
-static ::apache::thrift::stdcxx::shared_ptr<OneOfEach> ooe;
+static ::std::shared_ptr<OneOfEach> ooe;
 
 void testCaseSetup_1() {
   ooe.reset(new OneOfEach);
@@ -81,7 +81,7 @@ BOOST_AUTO_TEST_CASE(test_debug_proto_1) {
     "Expected:\n" << expected_result << "\nGotten:\n" << result);
 }
 
-static ::apache::thrift::stdcxx::shared_ptr<Nesting> n;
+static ::std::shared_ptr<Nesting> n;
 
 void testCaseSetup_2() {
   testCaseSetup_1();
@@ -149,7 +149,7 @@ BOOST_AUTO_TEST_CASE(test_debug_proto_2) {
     "Expected:\n" << expected_result << "\nGotten:\n" << result);
 }
 
-static ::apache::thrift::stdcxx::shared_ptr<HolyMoley> hm;
+static ::std::shared_ptr<HolyMoley> hm;
 
 void testCaseSetup_3() {
   testCaseSetup_2();

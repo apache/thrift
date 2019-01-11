@@ -49,7 +49,6 @@ static const uint8_t kJSONPairSeparator = ':';
 static const uint8_t kJSONElemSeparator = ',';
 static const uint8_t kJSONBackslash = '\\';
 static const uint8_t kJSONStringDelimiter = '"';
-static const uint8_t kJSONZeroChar = '0';
 static const uint8_t kJSONEscapeChar = 'u';
 
 static const std::string kJSONEscapePrefix("\\u00");
@@ -398,7 +397,7 @@ private:
   bool first_;
 };
 
-TJSONProtocol::TJSONProtocol(stdcxx::shared_ptr<TTransport> ptrans)
+TJSONProtocol::TJSONProtocol(std::shared_ptr<TTransport> ptrans)
   : TVirtualProtocol<TJSONProtocol>(ptrans),
     trans_(ptrans.get()),
     context_(new TJSONContext()),
@@ -408,7 +407,7 @@ TJSONProtocol::TJSONProtocol(stdcxx::shared_ptr<TTransport> ptrans)
 TJSONProtocol::~TJSONProtocol() {
 }
 
-void TJSONProtocol::pushContext(stdcxx::shared_ptr<TJSONContext> c) {
+void TJSONProtocol::pushContext(std::shared_ptr<TJSONContext> c) {
   contexts_.push(context_);
   context_ = c;
 }
@@ -576,7 +575,7 @@ uint32_t TJSONProtocol::writeJSONDouble(double num) {
 uint32_t TJSONProtocol::writeJSONObjectStart() {
   uint32_t result = context_->write(*trans_);
   trans_->write(&kJSONObjectStart, 1);
-  pushContext(stdcxx::shared_ptr<TJSONContext>(new JSONPairContext()));
+  pushContext(std::shared_ptr<TJSONContext>(new JSONPairContext()));
   return result + 1;
 }
 
@@ -589,7 +588,7 @@ uint32_t TJSONProtocol::writeJSONObjectEnd() {
 uint32_t TJSONProtocol::writeJSONArrayStart() {
   uint32_t result = context_->write(*trans_);
   trans_->write(&kJSONArrayStart, 1);
-  pushContext(stdcxx::shared_ptr<TJSONContext>(new JSONListContext()));
+  pushContext(std::shared_ptr<TJSONContext>(new JSONListContext()));
   return result + 1;
 }
 
@@ -899,7 +898,7 @@ uint32_t TJSONProtocol::readJSONDouble(double& num) {
       }
       try {
         num = fromString<double>(str);
-      } catch (std::runtime_error e) {
+      } catch (std::runtime_error& e) {
         throw TProtocolException(TProtocolException::INVALID_DATA,
                                      "Expected numeric value; got \"" + str + "\"");
       }
@@ -912,7 +911,7 @@ uint32_t TJSONProtocol::readJSONDouble(double& num) {
     result += readJSONNumericChars(str);
     try {
       num = fromString<double>(str);
-    } catch (std::runtime_error e) {
+    } catch (std::runtime_error& e) {
       throw TProtocolException(TProtocolException::INVALID_DATA,
                                    "Expected numeric value; got \"" + str + "\"");
     }
@@ -923,7 +922,7 @@ uint32_t TJSONProtocol::readJSONDouble(double& num) {
 uint32_t TJSONProtocol::readJSONObjectStart() {
   uint32_t result = context_->read(reader_);
   result += readJSONSyntaxChar(kJSONObjectStart);
-  pushContext(stdcxx::shared_ptr<TJSONContext>(new JSONPairContext()));
+  pushContext(std::shared_ptr<TJSONContext>(new JSONPairContext()));
   return result;
 }
 
@@ -936,7 +935,7 @@ uint32_t TJSONProtocol::readJSONObjectEnd() {
 uint32_t TJSONProtocol::readJSONArrayStart() {
   uint32_t result = context_->read(reader_);
   result += readJSONSyntaxChar(kJSONArrayStart);
-  pushContext(stdcxx::shared_ptr<TJSONContext>(new JSONListContext()));
+  pushContext(std::shared_ptr<TJSONContext>(new JSONListContext()));
   return result;
 }
 

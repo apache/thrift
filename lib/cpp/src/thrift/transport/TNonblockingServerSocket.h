@@ -22,7 +22,6 @@
 
 #include <thrift/transport/TNonblockingServerTransport.h>
 #include <thrift/transport/PlatformSocket.h>
-#include <thrift/stdcxx.h>
 
 namespace apache {
 namespace thrift {
@@ -37,7 +36,7 @@ class TSocket;
  */
 class TNonblockingServerSocket : public TNonblockingServerTransport {
 public:
-  typedef apache::thrift::stdcxx::function<void(THRIFT_SOCKET fd)> socket_func_t;
+  typedef std::function<void(THRIFT_SOCKET fd)> socket_func_t;
 
   const static int DEFAULT_BACKLOG = 1024;
 
@@ -108,8 +107,8 @@ public:
   void close();
 
 protected:
-  apache::thrift::stdcxx::shared_ptr<TSocket> acceptImpl();
-  virtual apache::thrift::stdcxx::shared_ptr<TSocket> createSocket(THRIFT_SOCKET client);
+  std::shared_ptr<TSocket> acceptImpl();
+  virtual std::shared_ptr<TSocket> createSocket(THRIFT_SOCKET client);
 
 private:
   int port_;

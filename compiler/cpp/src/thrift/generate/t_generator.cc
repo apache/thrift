@@ -76,6 +76,77 @@ void t_generator::generate_program() {
   close_generator();
 }
 
+std::set<std::string> t_generator::lang_keywords() const {
+  std::string keywords[] = { "BEGIN", "END", "__CLASS__", "__DIR__", "__FILE__", "__FUNCTION__",
+      "__LINE__", "__METHOD__", "__NAMESPACE__", "abstract", "alias", "and", "args", "as",
+      "assert", "begin", "break", "case", "catch", "class", "clone", "continue", "declare",
+      "def", "default", "del", "delete", "do", "dynamic", "elif", "else", "elseif", "elsif",
+      "end", "enddeclare", "endfor", "endforeach", "endif", "endswitch", "endwhile", "ensure",
+      "except", "exec", "finally", "float", "for", "foreach", "from", "function", "global",
+      "goto", "if", "implements", "import", "in", "inline", "instanceof", "interface", "is",
+      "lambda", "module", "native", "new", "next", "nil", "not", "or", "package", "pass",
+      "public", "print", "private", "protected", "raise", "redo", "rescue", "retry", "register",
+      "return", "self", "sizeof", "static", "super", "switch", "synchronized", "then", "this",
+      "throw", "transient", "try", "undef", "unless", "unsigned", "until", "use", "var",
+      "virtual", "volatile", "when", "while", "with", "xor", "yield" };
+  return std::set<std::string>(keywords, keywords + sizeof(keywords)/sizeof(keywords[0]) );
+}
+
+void t_generator::validate_input() const {
+  validate(program_->get_enums());
+  validate(program_->get_typedefs());
+  validate(program_->get_objects());
+  validate(program_->get_consts());
+  validate(program_->get_services());
+}
+
+template <typename T>
+void t_generator::validate(const vector<T>& list) const{
+  typename vector<T>::const_iterator it;
+  for(it=list.begin(); it != list.end(); ++it) {
+      validate(*it);
+  }
+}
+
+void t_generator::validate(t_function const* f) const {
+  validate_id(f->get_name());
+  validate(f->get_arglist());
+  validate(f->get_xceptions());
+}
+
+void t_generator::validate(t_service const* s) const {
+  validate_id(s->get_name());
+  validate(s->get_functions());
+}
+
+void t_generator::validate(t_enum const* en) const {
+  validate_id(en->get_name());
+  validate(en->get_constants());
+}
+void t_generator::validate(t_struct const* s) const {
+  validate_id(s->get_name());
+  validate(s->get_members());
+}
+
+void t_generator::validate(t_enum_value const* en_val) const {
+  validate_id(en_val->get_name());
+}
+void t_generator::validate(t_typedef const* td) const {
+  validate_id(td->get_name());
+}
+void t_generator::validate(t_const const* c) const {
+  validate_id(c->get_name());
+}
+void t_generator::validate(t_field const* f) const {
+  validate_id(f->get_name());
+}
+
+void t_generator::validate_id(const string& id) const {
+  if (keywords_.find(id) != keywords_.end()) {
+    failure("Cannot use reserved language keyword: \"%s\"", id.c_str());
+  }
+}
+
 string t_generator::escape_string(const string& in) const {
   string result = "";
   for (string::const_iterator it = in.begin(); it < in.end(); it++) {

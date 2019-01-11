@@ -38,7 +38,7 @@ namespace test {
  */
 class TShortReadTransport : public TVirtualTransport<TShortReadTransport> {
 public:
-  TShortReadTransport(stdcxx::shared_ptr<TTransport> transport, double full_prob)
+  TShortReadTransport(std::shared_ptr<TTransport> transport, double full_prob)
     : transport_(transport), fullProb_(full_prob) {}
 
   bool isOpen() { return transport_->isOpen(); }
@@ -68,10 +68,10 @@ public:
 
   void consume(uint32_t len) { return transport_->consume(len); }
 
-  stdcxx::shared_ptr<TTransport> getUnderlyingTransport() { return transport_; }
+  std::shared_ptr<TTransport> getUnderlyingTransport() { return transport_; }
 
 protected:
-  stdcxx::shared_ptr<TTransport> transport_;
+  std::shared_ptr<TTransport> transport_;
   double fullProb_;
 };
 }

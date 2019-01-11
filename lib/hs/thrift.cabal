@@ -18,8 +18,8 @@
 --
 
 Name:           thrift
-Version:        1.0.0-dev
-Cabal-Version:  >= 1.8
+Version:        1.0.0
+Cabal-Version:  1.24
 License:        OtherLicense
 Category:       Foreign
 Build-Type:     Simple
@@ -63,7 +63,8 @@ Library
     Thrift.Transport.IOBuffer,
     Thrift.Transport.Memory,
     Thrift.Types
-  Extensions:
+  Default-Language: Haskell2010
+  Default-Extensions:
     DeriveDataTypeable,
     ExistentialQuantification,
     FlexibleInstances,
@@ -80,3 +81,4 @@ Test-Suite spec
   Ghc-Options: -Wall
   main-is: Spec.hs
   Build-Depends: base, thrift, hspec, QuickCheck >= 2.8.2, bytestring >= 0.10, unordered-containers >= 0.2.6
+  Default-Language: Haskell2010

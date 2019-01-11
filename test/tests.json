@@ -105,7 +105,8 @@
     "transports": [
       "buffered",
       "framed",
-      "http"
+      "http",
+      "zlib"
     ],
     "sockets": [
       "ip",
@@ -262,7 +263,8 @@
     "transports": [
       "buffered",
       "framed",
-      "http"
+      "http",
+      "zlib"
     ],
     "sockets": [
       "ip",
@@ -273,7 +275,8 @@
       "binary",
       "json",
       "binary:accel",
-      "compact:accelc"
+      "compact:accelc",
+      "header"
     ],
     "workdir": "py"
   },
@@ -308,7 +311,8 @@
     "transports": [
       "buffered",
       "framed",
-      "http"
+      "http",
+      "zlib"
     ],
     "sockets": [
       "ip",
@@ -319,7 +323,8 @@
       "binary",
       "json",
       "binary:accel",
-      "compact:accelc"
+      "compact:accelc",
+      "header"
     ],
     "workdir": "py"
   },
@@ -351,7 +356,8 @@
     "transports": [
       "buffered",
       "http",
-      "framed"
+      "framed",
+      "zlib"
     ],
     "sockets": [
       "ip",
@@ -712,5 +718,32 @@
       "multic"
     ],
     "workdir": "rs/bin"
+  },
+  {
+    "name": "nodets",
+    "env": {
+      "NODE_PATH": "../lib"
+    },
+    "server": {
+      "command": [
+        "runServer.sh"
+      ]
+    },
+    "client": {
+      "timeout": 6,
+      "command": [
+        "runClient.sh"
+      ]
+    },
+    "protocols": [
+      "binary"
+    ],
+    "sockets": [
+      "ip"
+    ],
+    "transports": [
+      "buffered"
+    ],
+    "workdir": "../lib/nodets/test"
   }
 ]

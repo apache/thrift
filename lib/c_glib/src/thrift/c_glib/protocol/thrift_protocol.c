@@ -465,7 +465,7 @@ thrift_protocol_skip (ThriftProtocol *protocol, ThriftType type, GError **error)
       }
     case T_STRUCT:
       {
-        guint32 result = 0;
+        gint32 result = 0;
         gchar *name;
         gint16 fid;
         ThriftType ftype;
@@ -475,6 +475,10 @@ thrift_protocol_skip (ThriftProtocol *protocol, ThriftType type, GError **error)
         {
           result += thrift_protocol_read_field_begin (protocol, &name, &ftype,
                                                       &fid, error);
+          if (result < 0)
+          {
+            return result;  
+          }
           if (ftype == T_STOP)
           {
             break;
@@ -487,7 +491,7 @@ thrift_protocol_skip (ThriftProtocol *protocol, ThriftType type, GError **error)
       }
     case T_SET:
       {
-        guint32 result = 0;
+        gint32 result = 0;
         ThriftType elem_type;
         guint32 i, size;
         result += thrift_protocol_read_set_begin (protocol, &elem_type, &size,
@@ -501,7 +505,7 @@ thrift_protocol_skip (ThriftProtocol *protocol, ThriftType type, GError **error)
       }
     case T_MAP:
       {
-        guint32 result = 0;
+        gint32 result = 0;
         ThriftType elem_type;
         ThriftType key_type;
         guint32 i, size;
@@ -517,7 +521,7 @@ thrift_protocol_skip (ThriftProtocol *protocol, ThriftType type, GError **error)
       }
     case T_LIST:
       {
-        guint32 result = 0;
+        gint32 result = 0;
         ThriftType elem_type;
         guint32 i, size;
         result += thrift_protocol_read_list_begin (protocol, &elem_type, &size,

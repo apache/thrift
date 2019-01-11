@@ -123,7 +123,7 @@ public abstract class TServer {
    */
   protected TProtocolFactory outputProtocolFactory_;
 
-  private boolean isServing;
+  private volatile boolean isServing;
 
   protected TServerEventHandler eventHandler_;
 

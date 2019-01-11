@@ -31,9 +31,6 @@
 // use std::thread in MSVC11 (2012) or newer and in MinGW
 #if (_MSC_VER >= 1700) || defined(__MINGW32__)
 #define USE_STD_THREAD 1
-#else
-// otherwise use boost threads
-#define USE_BOOST_THREAD 1
 #endif
 
 // Something that defines PRId64 is required to build

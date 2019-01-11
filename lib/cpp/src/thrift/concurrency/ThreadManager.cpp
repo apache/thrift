@@ -24,7 +24,7 @@
 #include <thrift/concurrency/Monitor.h>
 #include <thrift/concurrency/Util.h>
 
-#include <thrift/stdcxx.h>
+#include <memory>
 
 #include <stdexcept>
 #include <deque>
@@ -34,8 +34,8 @@ namespace apache {
 namespace thrift {
 namespace concurrency {
 
-using stdcxx::shared_ptr;
-using stdcxx::dynamic_pointer_cast;
+using std::shared_ptr;
+using std::dynamic_pointer_cast;
 
 /**
  * ThreadManager class
@@ -504,7 +504,7 @@ void ThreadManager::Impl::remove(shared_ptr<Runnable> task) {
   }
 }
 
-stdcxx::shared_ptr<Runnable> ThreadManager::Impl::removeNextPending() {
+std::shared_ptr<Runnable> ThreadManager::Impl::removeNextPending() {
   Guard g(mutex_);
   if (state_ != ThreadManager::STARTED) {
     throw IllegalStateException(
@@ -513,7 +513,7 @@ stdcxx::shared_ptr<Runnable> ThreadManager::Impl::removeNextPending() {
   }
 
   if (tasks_.empty()) {
-    return stdcxx::shared_ptr<Runnable>();
+    return std::shared_ptr<Runnable>();
   }
 
   shared_ptr<ThreadManager::Task> task = tasks_.front();

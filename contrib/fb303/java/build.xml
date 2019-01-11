@@ -136,9 +136,9 @@
       <remoteRepository refid="central"/>
       <remoteRepository refid="apache"/>
       <license name="The Apache Software License, Version 2.0" url="${license}"/>
-      <scm connection="scm:git:https://git-wip-us.apache.org/repos/asf/thrift.git"
-      developerConnection="scm:git:https://git-wip-us.apache.org/repos/asf/thrift.git"
-      url="https://git-wip-us.apache.org/repos/asf?p=thrift.git"
+      <scm connection="scm:git:https://github.com/apache/thrift.git"
+      developerConnection="scm:git:https://github.com/apache/thrift.git"
+      url="https://github.com/apache/thrift"
     />
       <!-- Thrift Developers -->
       <developer id="mcslee" name="Mark Slee"/>

@@ -21,7 +21,20 @@ CALL cl_setenv.bat                          || EXIT /B
 MKDIR "%BUILDDIR%"                          || EXIT /B
 CD "%BUILDDIR%"                             || EXIT /B
 
-:: Haskell is disabled for cmake (Windows), see Jira THRIFT-4545
+:: When libraries cannot be found, things might have been updated
+:: so uncomment this and submit a pull request to see what's there
+:: now...
+:: DIR C:\Libraries
+:: DIR C:\Libraries\boost_1_69_0\lib*
+:: DIR C:\Libraries\boost_1_68_0\lib*
+:: DIR C:\Libraries\boost_1_67_0\lib*
+:: DIR C:\Libraries\boost_1_66_0\lib*
+:: DIR C:\Libraries\boost_1_65_0\lib*
+:: DIR C:\Libraries\boost_1_64_0\lib*
+:: DIR C:\Libraries\boost_1_63_0\lib*
+:: DIR C:\Libraries\boost_1_62_0\lib*
+:: DIR C:\Libraries\boost_1_61_0\lib*
+:: DIR C:\Libraries\boost_1_60_0\lib*
 
 @ECHO ON
   cmake "%SRCDIR%" ^
@@ -38,7 +51,6 @@ CD "%BUILDDIR%"                             || EXIT /B
     -DOPENSSL_USE_STATIC_LIBS=OFF ^
     -DZLIB_LIBRARY="%WIN3P%\zlib-inst\lib\zlib%ZLIB_LIB_SUFFIX%.lib" ^
     -DZLIB_ROOT="%WIN3P%\zlib-inst" ^
-    -DWITH_HASKELL=OFF ^
     -DWITH_PYTHON=%WITH_PYTHON% ^
     -DWITH_%THREADMODEL%THREADS=ON ^
     -DWITH_SHARED_LIB=OFF ^

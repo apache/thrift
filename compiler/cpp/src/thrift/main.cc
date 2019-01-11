@@ -1028,6 +1028,7 @@ void generate(t_program* program, const vector<string>& generator_strings) {
         g_generator_failure = true;
 #endif
       } else if (generator) {
+        generator->validate_input();
         pverbose("Generating \"%s\"\n", iter->c_str());
         generator->generate_program();
         delete generator;

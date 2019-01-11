@@ -27,6 +27,21 @@ enum Drink {
   WATER,
   WHISKEY,
   WINE,
+  scotch, // intentionally poorly cased
+  LATE_HARVEST_WINE,
+  India_Pale_Ale, // intentionally poorly cased
+  apple_cider, // intentially poorly cased
+  belgian_Ale, // intentionally poorly cased
+  Canadian_whisky, // intentionally poorly cased
+}
+
+const map<i8, Midlayer.Pie> RankedPies = {
+  1: Midlayer.Pie.PUMPKIN,
+  2: Midlayer.Pie.STRAWBERRY_RHUBARB,
+  3: Midlayer.Pie.apple,
+  4: Midlayer.Pie.mississippi_mud,
+  5: Midlayer.Pie.coconut_Cream,
+  6: Midlayer.Pie.Key_Lime,
 }
 
 struct FullMeal {
@@ -45,5 +60,7 @@ service FullMealService extends Midlayer.MealService {
 
 service FullMealAndDrinksService extends FullMealService {
   FullMealAndDrinks fullMealAndDrinks()
+
+  Midlayer.Pie bestPie()
 }
 

@@ -22,7 +22,7 @@
 
 #include <thrift/concurrency/Thread.h>
 
-#include <thrift/stdcxx.h>
+#include <memory>
 
 namespace apache {
 namespace thrift {
@@ -63,7 +63,7 @@ public:
 
   /**
    * Posix thread (pthread) factory.  All threads created by a factory are reference-counted
-   * via stdcxx::shared_ptr.  The factory guarantees that threads and the Runnable tasks 
+   * via std::shared_ptr.  The factory guarantees that threads and the Runnable tasks 
    * they host will be properly cleaned up once the last strong reference to both is
    * given up.
    *
@@ -88,7 +88,7 @@ public:
   PosixThreadFactory(bool detached);
 
   // From ThreadFactory;
-  stdcxx::shared_ptr<Thread> newThread(stdcxx::shared_ptr<Runnable> runnable) const;
+  std::shared_ptr<Thread> newThread(std::shared_ptr<Runnable> runnable) const;
 
   // From ThreadFactory;
   Thread::id_t getCurrentThreadId() const;

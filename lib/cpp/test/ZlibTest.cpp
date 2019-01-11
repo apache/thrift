@@ -36,7 +36,7 @@
 #include <cstddef>
 #include <fstream>
 #include <iostream>
-#include <thrift/stdcxx.h>
+#include <memory>
 
 #include <boost/random.hpp>
 #include <boost/shared_array.hpp>
@@ -47,7 +47,7 @@
 #include <thrift/transport/TZlibTransport.h>
 
 using namespace apache::thrift::transport;
-using apache::thrift::stdcxx::shared_ptr;
+using std::shared_ptr;
 using std::string;
 
 boost::mt19937 rng;
@@ -347,8 +347,8 @@ void test_get_underlying_transport() {
   do {                                                                                             \
     ::std::ostringstream name_ss;                                                                  \
     name_ss << name << "-" << BOOST_STRINGIZE(_FUNC);                                              \
-    ::apache::thrift::stdcxx::function<void ()> test_func =                                        \
-        ::apache::thrift::stdcxx::bind(_FUNC, ##__VA_ARGS__);                                      \
+    ::std::function<void ()> test_func =                                        \
+        ::std::bind(_FUNC, ##__VA_ARGS__);                                      \
     ::boost::unit_test::test_case* tc                                                              \
         = ::boost::unit_test::make_test_case(test_func, name_ss.str(), __FILE__, __LINE__);        \
     (suite)->add(tc);                                                                              \
@@ -359,7 +359,7 @@ void test_get_underlying_transport() {
     ::std::ostringstream name_ss;                                                                  \
     name_ss << name << "-" << BOOST_STRINGIZE(_FUNC);                                              \
     ::boost::unit_test::test_case* tc                                                              \
-        = ::boost::unit_test::make_test_case(::apache::thrift::stdcxx::bind(_FUNC,                 \
+        = ::boost::unit_test::make_test_case(::std::bind(_FUNC,                 \
                                                                             ##__VA_ARGS__),        \
                                              name_ss.str());                                       \
     (suite)->add(tc);                                                                              \

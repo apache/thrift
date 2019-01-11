@@ -51,9 +51,8 @@ public:
   t_py_generator(t_program* program,
                  const std::map<std::string, std::string>& parsed_options,
                  const std::string& option_string)
-    : t_generator(program) {
+    : t_generator (program) {
     std::map<std::string, std::string>::const_iterator iter;
-
 
     gen_newstyle_ = true;
     gen_utf8strings_ = true;
@@ -334,6 +333,15 @@ private:
 
   std::string package_dir_;
   std::string module_;
+
+protected:
+  virtual std::set<std::string> lang_keywords() const {
+    std::string keywords[] = { "False", "None", "True", "and", "as", "assert", "break", "class",
+          "continue", "def", "del", "elif", "else", "except", "exec", "finally", "for", "from",
+          "global", "if", "import", "in", "is", "lambda", "nonlocal", "not", "or", "pass", "print",
+          "raise", "return", "try", "while", "with", "yield" };
+    return std::set<std::string>(keywords, keywords + sizeof(keywords)/sizeof(keywords[0]) );
+  }
 };
 
 /**
@@ -1616,7 +1624,6 @@ void t_py_generator::generate_service_remote(t_service* tservice) {
              << (*f_iter)->get_name() << "(";
     t_struct* arg_struct = (*f_iter)->get_arglist();
     const std::vector<t_field*>& args = arg_struct->get_members();
-    vector<t_field*>::const_iterator a_iter;
     std::vector<t_field*>::size_type num_args = args.size();
     bool first = true;
     for (std::vector<t_field*>::size_type i = 0; i < num_args; ++i) {
@@ -1722,7 +1729,6 @@ void t_py_generator::generate_service_remote(t_service* tservice) {
 
     t_struct* arg_struct = (*f_iter)->get_arglist();
     const std::vector<t_field*>& args = arg_struct->get_members();
-    vector<t_field*>::const_iterator a_iter;
     std::vector<t_field*>::size_type num_args = args.size();
 
     f_remote << "if cmd == '" << (*f_iter)->get_name() << "':" << endl;
@@ -1953,8 +1959,10 @@ void t_py_generator::generate_process_function(t_service* tservice, t_function* 
       indent(f_service_) << "def write_results_success_" << tfunction->get_name()
                          << "(self, success, result, seqid, oprot):" << endl;
       indent_up();
-      f_service_ << indent() << "result.success = success" << endl
-                 << indent() << "oprot.writeMessageBegin(\"" << tfunction->get_name()
+      if (!tfunction->get_returntype()->is_void()) {
+        f_service_ << indent() << "result.success = success" << endl;
+      }
+      f_service_ << indent() << "oprot.writeMessageBegin(\"" << tfunction->get_name()
                  << "\", TMessageType.REPLY, seqid)" << endl
                  << indent() << "result.write(oprot)" << endl
                  << indent() << "oprot.writeMessageEnd()" << endl

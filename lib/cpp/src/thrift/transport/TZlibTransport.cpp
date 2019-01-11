@@ -255,6 +255,15 @@ void TZlibTransport::flush() {
     throw TTransportException(TTransportException::BAD_ARGS, "flush() called after finish()");
   }
 
+  flushToZlib(uwbuf_, uwpos_, Z_BLOCK);
+  uwpos_ = 0;
+
+  if(wstream_->avail_out < 6){
+    transport_->write(cwbuf_, cwbuf_size_ - wstream_->avail_out);
+    wstream_->next_out = cwbuf_;
+    wstream_->avail_out = cwbuf_size_;
+  }
+
   flushToTransport(Z_FULL_FLUSH);
 }
 
@@ -285,7 +294,7 @@ void TZlibTransport::flushToZlib(const uint8_t* buf, int len, int flush) {
   wstream_->avail_in = len;
 
   while (true) {
-    if (flush == Z_NO_FLUSH && wstream_->avail_in == 0) {
+    if ((flush == Z_NO_FLUSH || flush == Z_BLOCK) && wstream_->avail_in == 0) {
       break;
     }
 

@@ -32,7 +32,6 @@ import (
 const PROTOCOL_BINARY_DATA_SIZE = 155
 
 var (
-	data           string // test data for writing
 	protocol_bdata []byte // test data for writing; same as data
 	BOOL_VALUES    []bool
 	BYTE_VALUES    []int8
@@ -48,7 +47,6 @@ func init() {
 	for i := 0; i < PROTOCOL_BINARY_DATA_SIZE; i++ {
 		protocol_bdata[i] = byte((i + 'a') % 255)
 	}
-	data = string(protocol_bdata)
 	BOOL_VALUES = []bool{false, true, false, false, true}
 	BYTE_VALUES = []int8{117, 0, 1, 32, 127, -128, -1}
 	INT16_VALUES = []int16{459, 0, 1, -1, -128, 127, 32767, -32768}
@@ -121,6 +119,9 @@ func ReadWriteProtocolTest(t *testing.T, protocolFactory TProtocolFactory) {
 		NewTMemoryBufferTransportFactory(1024),
 		NewStreamTransportFactory(buf, buf, true),
 		NewTFramedTransportFactory(NewTMemoryBufferTransportFactory(1024)),
+		NewTZlibTransportFactoryWithFactory(0, NewTMemoryBufferTransportFactory(1024)),
+		NewTZlibTransportFactoryWithFactory(6, NewTMemoryBufferTransportFactory(1024)),
+		NewTZlibTransportFactoryWithFactory(9, NewTFramedTransportFactory(NewTMemoryBufferTransportFactory(1024))),
 		NewTHttpPostClientTransportFactory("http://" + addr.String()),
 	}
 	for _, tf := range transports {

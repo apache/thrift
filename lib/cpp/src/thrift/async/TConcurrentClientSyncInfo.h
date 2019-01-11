@@ -22,7 +22,7 @@
 #include <thrift/protocol/TProtocol.h>
 #include <thrift/concurrency/Mutex.h>
 #include <thrift/concurrency/Monitor.h>
-#include <thrift/stdcxx.h>
+#include <memory>
 #include <vector>
 #include <string>
 #include <map>
@@ -60,7 +60,7 @@ private:
 
 class TConcurrentClientSyncInfo {
 private: // typedefs
-  typedef stdcxx::shared_ptr< ::apache::thrift::concurrency::Monitor> MonitorPtr;
+  typedef std::shared_ptr< ::apache::thrift::concurrency::Monitor> MonitorPtr;
   typedef std::map<int32_t, MonitorPtr> MonitorMap;
 
 public:

@@ -61,7 +61,7 @@ static const string endl = "\n"; // avoid ostream << std::endl flushes
  */
 bool format_go_output(const string& file_path);
 
-const string DEFAULT_THRIFT_IMPORT = "git.apache.org/thrift.git/lib/go/thrift";
+const string DEFAULT_THRIFT_IMPORT = "github.com/apache/thrift/lib/go/thrift";
 static std::string package_flag;
 
 /**
@@ -1323,7 +1323,7 @@ void t_go_generator::generate_go_struct_definition(ostream& out,
       if (tstruct->is_union())
         (*m_iter)->set_req(t_field::T_OPTIONAL);
       if (sorted_keys_pos != (*m_iter)->get_key()) {
-        int first_unused = std::max(1, sorted_keys_pos++);
+        int first_unused = (std::max)(1, sorted_keys_pos++);
         while (sorted_keys_pos != (*m_iter)->get_key()) {
           ++sorted_keys_pos;
         }
@@ -1591,17 +1591,19 @@ void t_go_generator::generate_go_struct_reader(ostream& out,
         << endl;
     out << indent() << "    return err" << endl;
     out << indent() << "  }" << endl;
+
+    // Mark required field as read
+    if ((*f_iter)->get_req() == t_field::T_REQUIRED) {
+      const string field_name(publicize(escape_string((*f_iter)->get_name())));
+      out << indent() << "  isset" << field_name << " = true" << endl;
+    }
+
     out << indent() << "} else {" << endl;
     out << indent() << "  if err := iprot.Skip(fieldTypeId); err != nil {" << endl;
     out << indent() << "    return err" << endl;
     out << indent() << "  }" << endl;
     out << indent() << "}" << endl;
 
-    // Mark required field as read
-    if ((*f_iter)->get_req() == t_field::T_REQUIRED) {
-      const string field_name(publicize(escape_string((*f_iter)->get_name())));
-      out << indent() << "isset" << field_name << " = true" << endl;
-    }
 
     indent_down();
   }
@@ -2151,7 +2153,6 @@ void t_go_generator::generate_service_remote(t_service* tservice) {
              << (*f_iter)->get_name() << "(";
     t_struct* arg_struct = (*f_iter)->get_arglist();
     const std::vector<t_field*>& args = arg_struct->get_members();
-    vector<t_field*>::const_iterator a_iter;
     std::vector<t_field*>::size_type num_args = args.size();
     bool first = true;
 
@@ -2306,7 +2307,6 @@ void t_go_generator::generate_service_remote(t_service* tservice) {
   for (f_iter = functions.begin(); f_iter != functions.end(); ++f_iter) {
     t_struct* arg_struct = (*f_iter)->get_arglist();
     const std::vector<t_field*>& args = arg_struct->get_members();
-    vector<t_field*>::const_iterator a_iter;
     std::vector<t_field*>::size_type num_args = args.size();
     string funcName((*f_iter)->get_name());
     string pubName(publicize(funcName));
@@ -2691,7 +2691,6 @@ void t_go_generator::generate_process_function(t_service* tservice, t_function* 
 
   // t_struct* xs = tfunction->get_xceptions();
   // const std::vector<t_field*>& xceptions = xs->get_members();
-  vector<t_field*>::const_iterator x_iter;
   f_types_ << indent() << "type " << processorName << " struct {" << endl;
   f_types_ << indent() << "  handler " << publicize(tservice->get_name()) << endl;
   f_types_ << indent() << "}" << endl << endl;

@@ -57,7 +57,7 @@ public:
   TApplicationException(TApplicationExceptionType type, const std::string& message)
     : TException(message), type_(type) {}
 
-  virtual ~TApplicationException() throw() {}
+  virtual ~TApplicationException() noexcept {}
 
   /**
    * Returns an error code that provides information about the type of error
@@ -67,7 +67,7 @@ public:
    */
   TApplicationExceptionType getType() const { return type_; }
 
-  virtual const char* what() const throw() {
+  virtual const char* what() const noexcept {
     if (message_.empty()) {
       switch (type_) {
       case UNKNOWN:

@@ -18,7 +18,7 @@
  */
 package org.apache.thrift.protocol;
 
-import java.io.UnsupportedEncodingException;
+import java.nio.charset.StandardCharsets;
 
 import junit.framework.TestCase;
 
@@ -40,11 +40,7 @@ public class TestTSimpleJSONProtocol extends TestCase {
   }
 
   private String bufToString() {
-    try {
-      return buf.toString("UTF-8");
-    } catch (UnsupportedEncodingException e) {
-      throw new RuntimeException(e);
-    }
+    return buf.toString(StandardCharsets.UTF_8);
   }
 
   public void testHolyMoley() throws TException {

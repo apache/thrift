@@ -273,15 +273,15 @@ impl ThriftTestSyncHandler for ThriftTestSyncHandlerImpl {
     ) -> thrift::Result<BTreeMap<UserId, BTreeMap<Numberz, Insanity>>> {
         info!("testInsanity({:?})", argument);
         let mut map_0: BTreeMap<Numberz, Insanity> = BTreeMap::new();
-        map_0.insert(Numberz::TWO, argument.clone());
-        map_0.insert(Numberz::THREE, argument.clone());
+        map_0.insert(Numberz::Two, argument.clone());
+        map_0.insert(Numberz::Three, argument.clone());
 
         let mut map_1: BTreeMap<Numberz, Insanity> = BTreeMap::new();
         let insanity = Insanity {
             user_map: None,
             xtructs: None,
         };
-        map_1.insert(Numberz::SIX, insanity);
+        map_1.insert(Numberz::Six, insanity);
 
         let mut ret: BTreeMap<UserId, BTreeMap<Numberz, Insanity>> = BTreeMap::new();
         ret.insert(1, map_0);

@@ -54,8 +54,13 @@ public class TBaseAsyncProcessor<I> implements TAsyncProcessor, TProcessor {
         if (fn == null) {
             TProtocolUtil.skip(in, TType.STRUCT);
             in.readMessageEnd();
-            if (!fn.isOneway()) {
-              TApplicationException x = new TApplicationException(TApplicationException.UNKNOWN_METHOD, "Invalid method name: '"+msg.name+"'");
+
+            TApplicationException x = new TApplicationException(TApplicationException.UNKNOWN_METHOD,
+                "Invalid method name: '" + msg.name + "'");
+            LOGGER.debug("Invalid method name", x);
+
+            // this means it is a two-way request, so we can send a reply
+            if (msg.type == TMessageType.CALL) {
               out.writeMessageBegin(new TMessage(msg.name, TMessageType.EXCEPTION, msg.seqid));
               x.write(out);
               out.writeMessageEnd();
@@ -72,8 +77,12 @@ public class TBaseAsyncProcessor<I> implements TAsyncProcessor, TProcessor {
             args.read(in);
         } catch (TProtocolException e) {
             in.readMessageEnd();
+
+            TApplicationException x = new TApplicationException(TApplicationException.PROTOCOL_ERROR,
+                e.getMessage());
+            LOGGER.debug("Could not retrieve function arguments", x);
+
             if (!fn.isOneway()) {
-              TApplicationException x = new TApplicationException(TApplicationException.PROTOCOL_ERROR, e.getMessage());
               out.writeMessageBegin(new TMessage(msg.name, TMessageType.EXCEPTION, msg.seqid));
               x.write(out);
               out.writeMessageEnd();
@@ -93,6 +102,7 @@ public class TBaseAsyncProcessor<I> implements TAsyncProcessor, TProcessor {
         try {
           fn.start(iface, args, resultHandler);
         } catch (Exception e) {
+          LOGGER.debug("Exception handling function", e);
           resultHandler.onError(e);
         }
         return true;

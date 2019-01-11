@@ -109,3 +109,7 @@ EXTRA_DIST = \
 	test \
 	coding_standards.md \
 	README.md
+
+MAINTAINERCLEANFILES = \
+	Makefile \
+	Makefile.in

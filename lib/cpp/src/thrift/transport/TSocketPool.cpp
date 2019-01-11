@@ -21,6 +21,9 @@
 
 #include <algorithm>
 #include <iostream>
+#if __cplusplus >= 201703L
+#include <random>
+#endif
 
 #include <thrift/transport/TSocketPool.h>
 
@@ -32,7 +35,7 @@ namespace apache {
 namespace thrift {
 namespace transport {
 
-using stdcxx::shared_ptr;
+using std::shared_ptr;
 
 /**
  * TSocketPoolServer implementation
@@ -188,7 +191,13 @@ void TSocketPool::open() {
   }
 
   if (randomize_ && numServers > 1) {
-    random_shuffle(servers_.begin(), servers_.end());
+#if __cplusplus >= 201703L
+    std::random_device rng;
+    std::mt19937 urng(rng());
+    std::shuffle(servers_.begin(), servers_.end(), urng);
+#else
+    std::random_shuffle(servers_.begin(), servers_.end());
+#endif
   }
 
   for (size_t i = 0; i < numServers; ++i) {
@@ -217,7 +226,7 @@ void TSocketPool::open() {
       for (int j = 0; j < numRetries_; ++j) {
         try {
           TSocket::open();
-        } catch (TException e) {
+        } catch (const TException &e) {
           string errStr = "TSocketPool::open failed " + getSocketInfo() + ": " + e.what();
           GlobalOutput(errStr.c_str());
           socket_ = THRIFT_INVALID_SOCKET;

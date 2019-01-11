@@ -498,6 +498,11 @@ void t_java_generator::generate_enum(t_enum* tenum) {
   f_enum << autogen_comment() << java_package() << endl;
 
   generate_java_doc(f_enum, tenum);
+
+  if (!suppress_generated_annotations_) {
+    generate_javax_generated_annotation(f_enum);
+  }
+
   if (is_deprecated) {
     indent(f_enum) << "@Deprecated" << endl;
   }
@@ -544,6 +549,7 @@ void t_java_generator::generate_enum(t_enum* tenum) {
                  << endl;
   indent(f_enum) << " * @return null if the value is not found." << endl;
   indent(f_enum) << " */" << endl;
+  indent(f_enum) << java_nullable_annotation() << endl;
   indent(f_enum) << "public static " + tenum->get_name() + " findByValue(int value) { " << endl;
 
   indent_up();
@@ -826,6 +832,10 @@ void t_java_generator::generate_java_union(t_struct* tstruct) {
 
   bool is_final = (tstruct->annotations_.find("final") != tstruct->annotations_.end());
   bool is_deprecated = this->is_deprecated(tstruct->annotations_);
+
+  if (!suppress_generated_annotations_) {
+    generate_javax_generated_annotation(f_struct);
+  }
 
   if (is_deprecated) {
     indent(f_struct) << "@Deprecated" << endl;

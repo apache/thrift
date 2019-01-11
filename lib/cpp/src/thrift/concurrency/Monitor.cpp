@@ -23,7 +23,7 @@
 #include <thrift/concurrency/Exception.h>
 #include <thrift/concurrency/Util.h>
 #include <thrift/transport/PlatformSocket.h>
-#include <thrift/stdcxx.h>
+#include <memory>
 
 #include <assert.h>
 
@@ -34,8 +34,8 @@
 namespace apache {
 namespace thrift {
 
-using stdcxx::scoped_ptr;
-using stdcxx::shared_ptr;
+using std::unique_ptr;
+using std::shared_ptr;
 
 namespace concurrency {
 
@@ -163,7 +163,7 @@ private:
     }
   }
 
-  scoped_ptr<Mutex> ownedMutex_;
+  unique_ptr<Mutex> ownedMutex_;
   Mutex* mutex_;
 
   mutable pthread_cond_t pthread_cond_;

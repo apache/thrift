@@ -61,9 +61,6 @@ if(MSVC)
         set(STATIC_POSTFIX "md" CACHE STRING "Set static library postfix" FORCE)
     endif(WITH_MT)
 
-    # Disable Windows.h definition of macros for min and max
-    add_definitions("-DNOMINMAX")
-
     # Disable boost auto linking pragmas - cmake includes the right files
     add_definitions("-DBOOST_ALL_NO_LIB")
 
@@ -93,9 +90,7 @@ add_definitions("-D__STDC_FORMAT_MACROS")
 add_definitions("-D__STDC_LIMIT_MACROS")
 
 # WITH_*THREADS selects which threading library to use
-if(WITH_BOOSTTHREADS)
-  add_definitions("-DUSE_BOOST_THREAD=1")
-elseif(WITH_STDTHREADS)
+if(WITH_STDTHREADS)
   add_definitions("-DUSE_STD_THREAD=1")
 endif()
 
@@ -108,13 +103,6 @@ else()
 endif()
 if (CMAKE_CXX_EXTENSIONS)
   string(CONCAT CXX_LANGUAGE_LEVEL "${CXX_LANGUAGE_LEVEL} [with compiler-specific extensions]")
-else()
-  if ((CMAKE_CXX_COMPILER_ID MATCHES "GNU" OR CMAKE_CXX_COMPILER_ID MATCHES "Clang") AND NOT MINGW)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-variadic-macros -Wno-long-long")
-  endif()
-  if ((CMAKE_CXX_COMPILER_ID MATCHES "Clang") AND NOT MINGW)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-c++11-long-long")
-  endif()
 endif()
 
 if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
@@ -126,7 +114,5 @@ if (WITH_PLUGIN)
   if (CMAKE_CXX_COMPILER_ID MATCHES "GNU" AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS "4.8")
     message(SEND_ERROR "Thrift compiler plug-in support is not possible with older gcc ( < 4.8 ) compiler")
   endif()
-  message(STATUS "Forcing use of boost::smart_ptr to build WITH_PLUGIN")
-  add_definitions("-DFORCE_BOOST_SMART_PTR=1")
 endif()
 

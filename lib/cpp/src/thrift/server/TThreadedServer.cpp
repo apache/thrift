@@ -18,7 +18,7 @@
  */
 
 #include <string>
-#include <thrift/stdcxx.h>
+#include <memory>
 #include <thrift/concurrency/PlatformThreadFactory.h>
 #include <thrift/server/TThreadedServer.h>
 
@@ -32,8 +32,8 @@ using apache::thrift::concurrency::Thread;
 using apache::thrift::concurrency::ThreadFactory;
 using apache::thrift::protocol::TProtocol;
 using apache::thrift::protocol::TProtocolFactory;
-using apache::thrift::stdcxx::make_shared;
-using apache::thrift::stdcxx::shared_ptr;
+using std::make_shared;
+using std::shared_ptr;
 using apache::thrift::transport::TServerTransport;
 using apache::thrift::transport::TTransport;
 using apache::thrift::transport::TTransportException;
@@ -126,9 +126,11 @@ void TThreadedServer::onClientDisconnected(TConnectedClient* pClient) {
   Synchronized sync(clientMonitor_);
   drainDeadClients(); // use the outgoing thread to do some maintenance on our dead client backlog
   ClientMap::iterator it = activeClientMap_.find(pClient);
-  ClientMap::iterator end = it;
-  deadClientMap_.insert(it, ++end);
-  activeClientMap_.erase(it);
+  if (it != activeClientMap_.end()) {
+    ClientMap::iterator end = it;
+    deadClientMap_.insert(it, ++end);
+    activeClientMap_.erase(it);
+  }
   if (activeClientMap_.empty()) {
     clientMonitor_.notify();
   }

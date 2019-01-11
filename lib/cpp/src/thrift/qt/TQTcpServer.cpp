@@ -17,13 +17,14 @@
  * under the License.
  */
 
+#include <functional>
+#include <memory>
+
 #include <thrift/qt/TQTcpServer.h>
 #include <thrift/qt/TQIODeviceTransport.h>
 
 #include <QMetaType>
 #include <QTcpSocket>
-
-#include <thrift/stdcxx.h>
 
 #include <thrift/protocol/TProtocol.h>
 #include <thrift/async/TAsyncProcessor.h>
@@ -33,10 +34,10 @@ using apache::thrift::protocol::TProtocolFactory;
 using apache::thrift::transport::TTransport;
 using apache::thrift::transport::TTransportException;
 using apache::thrift::transport::TQIODeviceTransport;
-using apache::thrift::stdcxx::bind;
-using apache::thrift::stdcxx::function;
-using apache::thrift::stdcxx::placeholders::_1;
-using apache::thrift::stdcxx::shared_ptr;
+using std::bind;
+using std::function;
+using std::placeholders::_1;
+using std::shared_ptr;
 
 QT_USE_NAMESPACE
 

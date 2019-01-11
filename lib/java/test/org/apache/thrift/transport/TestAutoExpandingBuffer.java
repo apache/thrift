@@ -23,7 +23,7 @@ import junit.framework.TestCase;
 public class TestAutoExpandingBuffer extends TestCase {
   public void testExpands() throws Exception {
     // has expected initial capacity
-    AutoExpandingBuffer b = new AutoExpandingBuffer(10, 1.5);
+    AutoExpandingBuffer b = new AutoExpandingBuffer(10);
     assertEquals(10, b.array().length);
 
     // doesn't shrink

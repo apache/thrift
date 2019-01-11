@@ -22,7 +22,6 @@
 #include <thrift/protocol/TProtocolTypes.h>
 #include <thrift/protocol/TBinaryProtocol.h>
 #include <thrift/protocol/TCompactProtocol.h>
-#include <thrift/stdcxx.h>
 
 #include <limits>
 #include <utility>
@@ -37,7 +36,7 @@ using std::vector;
 namespace apache {
 namespace thrift {
 
-using stdcxx::shared_ptr;
+using std::shared_ptr;
 
 namespace transport {
 
@@ -511,7 +510,7 @@ void THeaderTransport::flush() {
 
     // Pkt size
     ptrdiff_t szHbp = (headerStart - pktStart - 4);
-    if (static_cast<uint64_t>(szHbp) > static_cast<uint64_t>(std::numeric_limits<uint32_t>().max()) - (headerSize + haveBytes)) {
+    if (static_cast<uint64_t>(szHbp) > static_cast<uint64_t>((std::numeric_limits<uint32_t>().max)()) - (headerSize + haveBytes)) {
       throw TTransportException(TTransportException::CORRUPTED_DATA,
                                 "Header section size is unreasonable");
     }

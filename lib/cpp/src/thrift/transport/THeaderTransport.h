@@ -34,7 +34,6 @@
 #endif
 
 #include <boost/scoped_array.hpp>
-#include <thrift/stdcxx.h>
 
 #include <thrift/protocol/TProtocolTypes.h>
 #include <thrift/transport/TBufferTransports.h>
@@ -75,7 +74,7 @@ public:
   static const int THRIFT_MAX_VARINT32_BYTES = 5;
 
   /// Use default buffer sizes.
-  explicit THeaderTransport(const stdcxx::shared_ptr<TTransport>& transport)
+  explicit THeaderTransport(const std::shared_ptr<TTransport>& transport)
     : TVirtualTransport(transport),
       outTransport_(transport),
       protoId(T_COMPACT_PROTOCOL),
@@ -88,8 +87,8 @@ public:
     initBuffers();
   }
 
-  THeaderTransport(const stdcxx::shared_ptr<TTransport> inTransport,
-                   const stdcxx::shared_ptr<TTransport> outTransport)
+  THeaderTransport(const std::shared_ptr<TTransport> inTransport,
+                   const std::shared_ptr<TTransport> outTransport)
     : TVirtualTransport(inTransport),
       outTransport_(outTransport),
       protoId(T_COMPACT_PROTOCOL),
@@ -186,7 +185,7 @@ protected:
     setWriteBuffer(wBuf_.get(), wBufSize_);
   }
 
-  stdcxx::shared_ptr<TTransport> outTransport_;
+  std::shared_ptr<TTransport> outTransport_;
 
   // 0 and 16th bits must be 0 to differentiate from framed & unframed
   static const uint32_t HEADER_MAGIC = 0x0FFF0000;
@@ -265,8 +264,8 @@ public:
   /**
    * Wraps the transport into a header one.
    */
-  virtual stdcxx::shared_ptr<TTransport> getTransport(stdcxx::shared_ptr<TTransport> trans) {
-    return stdcxx::shared_ptr<TTransport>(new THeaderTransport(trans));
+  virtual std::shared_ptr<TTransport> getTransport(std::shared_ptr<TTransport> trans) {
+    return std::shared_ptr<TTransport>(new THeaderTransport(trans));
   }
 };
 }

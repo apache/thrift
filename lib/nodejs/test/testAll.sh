@@ -33,21 +33,21 @@ export NODE_PATH="${DIR}:${DIR}/../lib:${NODE_PATH}"
 
 testServer()
 {
-  echo "   Testing $1 Client/Server with protocol $2 and transport $3 $4";
+  echo "  [ECMA $1] Testing $2 Client/Server with protocol $3 and transport $4 $5";
   RET=0
   if [ -n "${COVER}" ]; then
-    ${ISTANBUL} cover ${DIR}/server.js --dir ${REPORT_PREFIX}${COUNT} --handle-sigint -- --type $1 -p $2 -t $3 $4 &
+    ${ISTANBUL} cover ${DIR}/server.js --dir ${REPORT_PREFIX}${COUNT} --handle-sigint -- --type $2 -p $3 -t $4 $5 &
     COUNT=$((COUNT+1))
   else
-    node ${DIR}/server.js --type $1 -p $2 -t $3 $4 &
+    node ${DIR}/server.js --${1} --type $2 -p $3 -t $4 $5 &
   fi
   SERVERPID=$!
   sleep 0.1
   if [ -n "${COVER}" ]; then
-    ${ISTANBUL} cover ${DIR}/client.js --dir ${REPORT_PREFIX}${COUNT} -- --type $1 -p $2 -t $3 $4 || RET=1
+    ${ISTANBUL} cover ${DIR}/client.js --dir ${REPORT_PREFIX}${COUNT} -- --${1} --type $2 -p $3 -t $4 $5 || RET=1
     COUNT=$((COUNT+1))
   else
-    node ${DIR}/client.js --type $1 -p $2 -t $3 $4 || RET=1
+    node ${DIR}/client.js --${1} --type $2 -p $3 -t $4 $5 || RET=1
   fi
   kill -2 $SERVERPID || RET=1
   wait $SERVERPID
@@ -61,6 +61,9 @@ TESTOK=0
 
 ${DIR}/../../../compiler/cpp/thrift -o ${DIR} --gen js:node ${DIR}/../../../test/ThriftTest.thrift
 ${DIR}/../../../compiler/cpp/thrift -o ${DIR} --gen js:node ${DIR}/../../../test/JsDeepConstructorTest.thrift
+mkdir ${DIR}/gen-nodejs-es6
+${DIR}/../../../compiler/cpp/thrift -out ${DIR}/gen-nodejs-es6 --gen js:node,es6 ${DIR}/../../../test/ThriftTest.thrift
+${DIR}/../../../compiler/cpp/thrift -out ${DIR}/gen-nodejs-es6 --gen js:node,es6 ${DIR}/../../../test/JsDeepConstructorTest.thrift
 
 #unit tests
 
@@ -71,15 +74,16 @@ node ${DIR}/deep-constructor.test.js || TESTOK=1
 
 for type in tcp multiplex websocket http
 do
-
   for protocol in compact binary json
   do
-
     for transport in buffered framed
     do
-      testServer $type $protocol $transport || TESTOK=1
-      testServer $type $protocol $transport --ssl || TESTOK=1
-      testServer $type $protocol $transport --promise || TESTOK=1
+      for ecma_version in es5 es6
+      do
+        testServer $ecma_version $type $protocol $transport || TESTOK=1
+        testServer $ecma_version $type $protocol $transport --ssl || TESTOK=1
+        testServer $ecma_version $type $protocol $transport --callback || TESTOK=1
+      done
     done
   done
 done

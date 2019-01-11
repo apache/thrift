@@ -7,7 +7,7 @@ authors = ["Apache Thrift Developers <dev@thrift.apache.org>"]
 homepage = "http://thrift.apache.org"
 documentation = "https://thrift.apache.org"
 readme = "README.md"
-exclude = ["Makefile*", "test/**"]
+exclude = ["Makefile*", "test/**", "*.iml"]
 keywords = ["thrift"]
 
 [dependencies]

@@ -18,8 +18,8 @@
  */
 
 #define BOOST_TEST_MODULE TServerIntegrationTest
+#include <atomic>
 #include <boost/test/auto_unit_test.hpp>
-#include <boost/atomic.hpp>
 #include <boost/date_time/posix_time/ptime.hpp>
 #include <boost/foreach.hpp>
 #include <boost/format.hpp>
@@ -27,7 +27,7 @@
 #include <thrift/server/TSimpleServer.h>
 #include <thrift/server/TThreadPoolServer.h>
 #include <thrift/server/TThreadedServer.h>
-#include <thrift/stdcxx.h>
+#include <memory>
 #include <thrift/protocol/TBinaryProtocol.h>
 #include <thrift/transport/TServerSocket.h>
 #include <thrift/transport/TSocket.h>
@@ -55,9 +55,9 @@ using apache::thrift::server::TServerEventHandler;
 using apache::thrift::server::TSimpleServer;
 using apache::thrift::server::TThreadPoolServer;
 using apache::thrift::server::TThreadedServer;
-using apache::thrift::stdcxx::dynamic_pointer_cast;
-using apache::thrift::stdcxx::make_shared;
-using apache::thrift::stdcxx::shared_ptr;
+using std::dynamic_pointer_cast;
+using std::make_shared;
+using std::shared_ptr;
 using apache::thrift::test::ParentServiceClient;
 using apache::thrift::test::ParentServiceIf;
 using apache::thrift::test::ParentServiceIfFactory;
@@ -177,7 +177,7 @@ public:
   }
 
   void startServer() {
-    pServerThread.reset(new boost::thread(apache::thrift::stdcxx::bind(&TServerType::serve, pServer.get())));
+    pServerThread.reset(new boost::thread(std::bind(&TServerType::serve, pServer.get())));
 
     // block until listen() completes so clients will be able to connect
     Synchronized sync(*(pEventHandler.get()));
@@ -235,7 +235,7 @@ public:
       pClientSock->open();
       client.incrementGeneration();
       holdThreads.push_back(shared_ptr<boost::thread>(
-          new boost::thread(apache::thrift::stdcxx::bind(&TServerIntegrationTestFixture::delayClose,
+          new boost::thread(std::bind(&TServerIntegrationTestFixture::delayClose,
                                         this,
                                         pClientSock,
                                         milliseconds(10 * numToMake)))));
@@ -284,7 +284,7 @@ public:
     std::vector<shared_ptr<boost::thread> > holdThreads;
     for (int64_t i = 0; i < numToMake; ++i) {
       holdThreads.push_back(shared_ptr<boost::thread>(
-        new boost::thread(apache::thrift::stdcxx::bind(&TServerIntegrationTestFixture::stressor, this))));
+        new boost::thread(std::bind(&TServerIntegrationTestFixture::stressor, this))));
     }
 
     boost::this_thread::sleep(duration);
@@ -310,10 +310,10 @@ public:
       shared_ptr<TProtocol> pProtocol(new TBinaryProtocol(pSocket));
       ParentServiceClient client(pProtocol);
       pSocket->open();
-      bStressConnectionCount.fetch_add(1, boost::memory_order_relaxed);
+      bStressConnectionCount.fetch_add(1, std::memory_order_relaxed);
       for (int i = 0; i < rand() % 1000; ++i) {
       client.incrementGeneration();
-        bStressRequestCount.fetch_add(1, boost::memory_order_relaxed);
+        bStressRequestCount.fetch_add(1, std::memory_order_relaxed);
       }
     }
   }
@@ -321,9 +321,9 @@ public:
   shared_ptr<TServerType> pServer;
   shared_ptr<TServerReadyEventHandler> pEventHandler;
   shared_ptr<boost::thread> pServerThread;
-  boost::atomic<bool> bStressDone;
-  boost::atomic_int64_t bStressConnectionCount;
-  boost::atomic_int64_t bStressRequestCount;
+  std::atomic<bool> bStressDone;
+  std::atomic<int64_t> bStressConnectionCount;
+  std::atomic<int64_t> bStressRequestCount;
 };
 
 template <class TServerType>
@@ -479,11 +479,11 @@ BOOST_AUTO_TEST_CASE(test_stop_with_uninterruptable_clients_connected) {
   // Ensure they have been accepted
   blockUntilAccepted(2);
 
-  boost::thread t1(apache::thrift::stdcxx::bind(&TServerIntegrationTestFixture::delayClose,
+  boost::thread t1(std::bind(&TServerIntegrationTestFixture::delayClose,
                                this,
                                pClientSock1,
                                milliseconds(250)));
-  boost::thread t2(apache::thrift::stdcxx::bind(&TServerIntegrationTestFixture::delayClose,
+  boost::thread t2(std::bind(&TServerIntegrationTestFixture::delayClose,
                                this,
                                pClientSock2,
                                milliseconds(250)));
@@ -517,7 +517,7 @@ BOOST_AUTO_TEST_CASE(test_concurrent_client_limit) {
   BOOST_CHECK_EQUAL(2, pServer->getConcurrentClientCount());
 
   // a third client cannot connect until one of the other two closes
-  boost::thread t2(apache::thrift::stdcxx::bind(&TServerIntegrationTestFixture::delayClose,
+  boost::thread t2(std::bind(&TServerIntegrationTestFixture::delayClose,
                                this,
                                pClientSock2,
                                milliseconds(250)));

@@ -777,10 +777,10 @@ void t_dart_generator::generate_dart_struct_definition(ostream& out,
   }
   indent(out) << "class " << class_name << " ";
 
-  if (is_exception) {
-    out << "extends Error ";
-  }
   out << "implements TBase";
+  if (is_exception) {
+    out << ", Exception ";
+  }
   scope_up(out);
 
   indent(out) << "static final TStruct _STRUCT_DESC = new TStruct(\"" << class_name

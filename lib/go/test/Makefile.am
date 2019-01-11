@@ -27,6 +27,7 @@ gopath: $(THRIFT) $(THRIFTTEST) \
 				MultiplexedProtocolTest.thrift \
 				OnewayTest.thrift \
 				OptionalFieldsTest.thrift \
+				RequiredFieldTest.thrift \
 				ServicesTest.thrift \
 				GoTagTest.thrift \
 				TypedefFieldTest.thrift \
@@ -46,6 +47,7 @@ gopath: $(THRIFT) $(THRIFTTEST) \
 	$(THRIFT) $(THRIFTARGS) MultiplexedProtocolTest.thrift
 	$(THRIFT) $(THRIFTARGS) OnewayTest.thrift
 	$(THRIFT) $(THRIFTARGS) OptionalFieldsTest.thrift
+	$(THRIFT) $(THRIFTARGS) RequiredFieldTest.thrift
 	$(THRIFT) $(THRIFTARGS) ServicesTest.thrift
 	$(THRIFT) $(THRIFTARGS) GoTagTest.thrift
 	$(THRIFT) $(THRIFTARGS) TypedefFieldTest.thrift
@@ -96,6 +98,7 @@ EXTRA_DIST = \
 	NamespacedTest.thrift \
 	OnewayTest.thrift \
 	OptionalFieldsTest.thrift \
+	RequiredFieldTest.thrift \
 	RefAnnotationFieldsTest.thrift \
 	UnionDefaultValueTest.thrift \
 	UnionBinaryTest.thrift \

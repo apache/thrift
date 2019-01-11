@@ -106,8 +106,8 @@ public class TFastFramedTransport extends TTransport {
     this.underlying = underlying;
     this.maxLength = maxLength;
     this.initialBufferCapacity = initialBufferCapacity;
-    writeBuffer = new AutoExpandingBufferWriteTransport(initialBufferCapacity, 1.5);
-    readBuffer = new AutoExpandingBufferReadTransport(initialBufferCapacity, 1.5);
+    readBuffer = new AutoExpandingBufferReadTransport(initialBufferCapacity);
+    writeBuffer = new AutoExpandingBufferWriteTransport(initialBufferCapacity, 4);
   }
 
   @Override
@@ -166,16 +166,19 @@ public class TFastFramedTransport extends TTransport {
     readBuffer.consumeBuffer(len);
   }
 
+  /**
+   * Only clears the read buffer!
+   */
   public void clear() {
-    readBuffer = new AutoExpandingBufferReadTransport(initialBufferCapacity, 1.5);
+    readBuffer = new AutoExpandingBufferReadTransport(initialBufferCapacity);
   }
 
   @Override
   public void flush() throws TTransportException {
-    int length = writeBuffer.getPos();
-    TFramedTransport.encodeFrameSize(length, i32buf);
-    underlying.write(i32buf, 0, 4);
-    underlying.write(writeBuffer.getBuf().array(), 0, length);
+    int payloadLength = writeBuffer.getLength() - 4;        
+    byte[] data = writeBuffer.getBuf().array();
+    TFramedTransport.encodeFrameSize(payloadLength, data);
+    underlying.write(data, 0, payloadLength + 4);
     writeBuffer.reset();
     underlying.flush();
   }

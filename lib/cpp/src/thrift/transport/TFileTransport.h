@@ -24,11 +24,9 @@
 #include <thrift/Thrift.h>
 #include <thrift/TProcessor.h>
 
+#include <atomic>
 #include <string>
 #include <stdio.h>
-
-#include <boost/atomic.hpp>
-#include <thrift/stdcxx.h>
 
 #include <thrift/concurrency/Mutex.h>
 #include <thrift/concurrency/Monitor.h>
@@ -339,7 +337,7 @@ private:
 
   // writer thread
   apache::thrift::concurrency::PlatformThreadFactory threadFactory_;
-  stdcxx::shared_ptr<apache::thrift::concurrency::Thread> writerThread_;
+  std::shared_ptr<apache::thrift::concurrency::Thread> writerThread_;
 
   // buffers to hold data before it is flushed. Each element of the buffer stores a msg that
   // needs to be written to the file.  The buffers are swapped by the writer thread.
@@ -348,11 +346,11 @@ private:
 
   // conditions used to block when the buffer is full or empty
   Monitor notFull_, notEmpty_;
-  boost::atomic<bool> closing_;
+  std::atomic<bool> closing_;
 
   // To keep track of whether the buffer has been flushed
   Monitor flushed_;
-  boost::atomic<bool> forceFlush_;
+  std::atomic<bool> forceFlush_;
 
   // Mutex that is grabbed when enqueueing and swapping the read/write buffers
   Mutex mutex_;
@@ -390,14 +388,14 @@ public:
    * @param protocolFactory protocol factory
    * @param inputTransport file transport
    */
-  TFileProcessor(stdcxx::shared_ptr<TProcessor> processor,
-                 stdcxx::shared_ptr<TProtocolFactory> protocolFactory,
-                 stdcxx::shared_ptr<TFileReaderTransport> inputTransport);
+  TFileProcessor(std::shared_ptr<TProcessor> processor,
+                 std::shared_ptr<TProtocolFactory> protocolFactory,
+                 std::shared_ptr<TFileReaderTransport> inputTransport);
 
-  TFileProcessor(stdcxx::shared_ptr<TProcessor> processor,
-                 stdcxx::shared_ptr<TProtocolFactory> inputProtocolFactory,
-                 stdcxx::shared_ptr<TProtocolFactory> outputProtocolFactory,
-                 stdcxx::shared_ptr<TFileReaderTransport> inputTransport);
+  TFileProcessor(std::shared_ptr<TProcessor> processor,
+                 std::shared_ptr<TProtocolFactory> inputProtocolFactory,
+                 std::shared_ptr<TProtocolFactory> outputProtocolFactory,
+                 std::shared_ptr<TFileReaderTransport> inputTransport);
 
   /**
    * Constructor
@@ -407,10 +405,10 @@ public:
    * @param inputTransport input file transport
    * @param output output transport
    */
-  TFileProcessor(stdcxx::shared_ptr<TProcessor> processor,
-                 stdcxx::shared_ptr<TProtocolFactory> protocolFactory,
-                 stdcxx::shared_ptr<TFileReaderTransport> inputTransport,
-                 stdcxx::shared_ptr<TTransport> outputTransport);
+  TFileProcessor(std::shared_ptr<TProcessor> processor,
+                 std::shared_ptr<TProtocolFactory> protocolFactory,
+                 std::shared_ptr<TFileReaderTransport> inputTransport,
+                 std::shared_ptr<TTransport> outputTransport);
 
   /**
    * processes events from the file
@@ -427,11 +425,11 @@ public:
   void processChunk();
 
 private:
-  stdcxx::shared_ptr<TProcessor> processor_;
-  stdcxx::shared_ptr<TProtocolFactory> inputProtocolFactory_;
-  stdcxx::shared_ptr<TProtocolFactory> outputProtocolFactory_;
-  stdcxx::shared_ptr<TFileReaderTransport> inputTransport_;
-  stdcxx::shared_ptr<TTransport> outputTransport_;
+  std::shared_ptr<TProcessor> processor_;
+  std::shared_ptr<TProtocolFactory> inputProtocolFactory_;
+  std::shared_ptr<TProtocolFactory> outputProtocolFactory_;
+  std::shared_ptr<TFileReaderTransport> inputTransport_;
+  std::shared_ptr<TTransport> outputTransport_;
 };
 }
 }

@@ -65,7 +65,9 @@ fn run() -> thrift::Result<()> {
     let o_prot_fact = TCompactOutputProtocolFactory::new();
 
     // demux incoming messages
-    let processor = CalculatorSyncProcessor::new(CalculatorServer { ..Default::default() });
+    let processor = CalculatorSyncProcessor::new(CalculatorServer {
+        ..Default::default()
+    });
 
     // create the server and start listening
     let mut server = TServer::new(
@@ -87,7 +89,9 @@ struct CalculatorServer {
 
 impl Default for CalculatorServer {
     fn default() -> CalculatorServer {
-        CalculatorServer { log: Mutex::new(HashMap::new()) }
+        CalculatorServer {
+            log: Mutex::new(HashMap::new()),
+        }
     }
 }
 
@@ -122,29 +126,25 @@ impl CalculatorSyncHandler for CalculatorServer {
 
         let res = if let Some(ref op) = w.op {
             if w.num1.is_none() || w.num2.is_none() {
-                Err(
-                    InvalidOperation {
-                        what_op: Some(*op as i32),
-                        why: Some("no operands specified".to_owned()),
-                    },
-                )
+                Err(InvalidOperation {
+                    what_op: Some(*op as i32),
+                    why: Some("no operands specified".to_owned()),
+                })
             } else {
                 // so that I don't have to call unwrap() multiple times below
                 let num1 = w.num1.as_ref().expect("operands checked");
                 let num2 = w.num2.as_ref().expect("operands checked");
 
                 match *op {
-                    Operation::ADD => Ok(num1 + num2),
-                    Operation::SUBTRACT => Ok(num1 - num2),
-                    Operation::MULTIPLY => Ok(num1 * num2),
-                    Operation::DIVIDE => {
+                    Operation::Add => Ok(num1 + num2),
+                    Operation::Subtract => Ok(num1 - num2),
+                    Operation::Multiply => Ok(num1 * num2),
+                    Operation::Divide => {
                         if *num2 == 0 {
-                            Err(
-                                InvalidOperation {
-                                    what_op: Some(*op as i32),
-                                    why: Some("divide by 0".to_owned()),
-                                },
-                            )
+                            Err(InvalidOperation {
+                                what_op: Some(*op as i32),
+                                why: Some("divide by 0".to_owned()),
+                            })
                         } else {
                             Ok(num1 / num2)
                         }
@@ -152,7 +152,10 @@ impl CalculatorSyncHandler for CalculatorServer {
                 }
             }
         } else {
-            Err(InvalidOperation::new(None, "no operation specified".to_owned()),)
+            Err(InvalidOperation::new(
+                None,
+                "no operation specified".to_owned(),
+            ))
         };
 
         // if the operation was successful log it

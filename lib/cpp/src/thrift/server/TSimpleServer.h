@@ -34,37 +34,37 @@ namespace server {
 class TSimpleServer : public TServerFramework {
 public:
   TSimpleServer(
-      const stdcxx::shared_ptr<apache::thrift::TProcessorFactory>& processorFactory,
-      const stdcxx::shared_ptr<apache::thrift::transport::TServerTransport>& serverTransport,
-      const stdcxx::shared_ptr<apache::thrift::transport::TTransportFactory>& transportFactory,
-      const stdcxx::shared_ptr<apache::thrift::protocol::TProtocolFactory>& protocolFactory);
+      const std::shared_ptr<apache::thrift::TProcessorFactory>& processorFactory,
+      const std::shared_ptr<apache::thrift::transport::TServerTransport>& serverTransport,
+      const std::shared_ptr<apache::thrift::transport::TTransportFactory>& transportFactory,
+      const std::shared_ptr<apache::thrift::protocol::TProtocolFactory>& protocolFactory);
 
   TSimpleServer(
-      const stdcxx::shared_ptr<apache::thrift::TProcessor>& processor,
-      const stdcxx::shared_ptr<apache::thrift::transport::TServerTransport>& serverTransport,
-      const stdcxx::shared_ptr<apache::thrift::transport::TTransportFactory>& transportFactory,
-      const stdcxx::shared_ptr<apache::thrift::protocol::TProtocolFactory>& protocolFactory);
+      const std::shared_ptr<apache::thrift::TProcessor>& processor,
+      const std::shared_ptr<apache::thrift::transport::TServerTransport>& serverTransport,
+      const std::shared_ptr<apache::thrift::transport::TTransportFactory>& transportFactory,
+      const std::shared_ptr<apache::thrift::protocol::TProtocolFactory>& protocolFactory);
 
   TSimpleServer(
-      const stdcxx::shared_ptr<apache::thrift::TProcessorFactory>& processorFactory,
-      const stdcxx::shared_ptr<apache::thrift::transport::TServerTransport>& serverTransport,
-      const stdcxx::shared_ptr<apache::thrift::transport::TTransportFactory>& inputTransportFactory,
-      const stdcxx::shared_ptr<apache::thrift::transport::TTransportFactory>& outputTransportFactory,
-      const stdcxx::shared_ptr<apache::thrift::protocol::TProtocolFactory>& inputProtocolFactory,
-      const stdcxx::shared_ptr<apache::thrift::protocol::TProtocolFactory>& outputProtocolFactory);
+      const std::shared_ptr<apache::thrift::TProcessorFactory>& processorFactory,
+      const std::shared_ptr<apache::thrift::transport::TServerTransport>& serverTransport,
+      const std::shared_ptr<apache::thrift::transport::TTransportFactory>& inputTransportFactory,
+      const std::shared_ptr<apache::thrift::transport::TTransportFactory>& outputTransportFactory,
+      const std::shared_ptr<apache::thrift::protocol::TProtocolFactory>& inputProtocolFactory,
+      const std::shared_ptr<apache::thrift::protocol::TProtocolFactory>& outputProtocolFactory);
 
   TSimpleServer(
-      const stdcxx::shared_ptr<apache::thrift::TProcessor>& processor,
-      const stdcxx::shared_ptr<apache::thrift::transport::TServerTransport>& serverTransport,
-      const stdcxx::shared_ptr<apache::thrift::transport::TTransportFactory>& inputTransportFactory,
-      const stdcxx::shared_ptr<apache::thrift::transport::TTransportFactory>& outputTransportFactory,
-      const stdcxx::shared_ptr<apache::thrift::protocol::TProtocolFactory>& inputProtocolFactory,
-      const stdcxx::shared_ptr<apache::thrift::protocol::TProtocolFactory>& outputProtocolFactory);
+      const std::shared_ptr<apache::thrift::TProcessor>& processor,
+      const std::shared_ptr<apache::thrift::transport::TServerTransport>& serverTransport,
+      const std::shared_ptr<apache::thrift::transport::TTransportFactory>& inputTransportFactory,
+      const std::shared_ptr<apache::thrift::transport::TTransportFactory>& outputTransportFactory,
+      const std::shared_ptr<apache::thrift::protocol::TProtocolFactory>& inputProtocolFactory,
+      const std::shared_ptr<apache::thrift::protocol::TProtocolFactory>& outputProtocolFactory);
 
   virtual ~TSimpleServer();
 
 protected:
-  virtual void onClientConnected(const stdcxx::shared_ptr<TConnectedClient>& pClient) /* override */;
+  virtual void onClientConnected(const std::shared_ptr<TConnectedClient>& pClient) /* override */;
   virtual void onClientDisconnected(TConnectedClient* pClient) /* override */;
 
 private:

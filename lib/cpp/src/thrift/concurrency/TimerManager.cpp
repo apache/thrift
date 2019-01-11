@@ -29,8 +29,8 @@ namespace apache {
 namespace thrift {
 namespace concurrency {
 
-using stdcxx::shared_ptr;
-using stdcxx::weak_ptr;
+using std::shared_ptr;
+using std::weak_ptr;
 
 /**
  * TimerManager class

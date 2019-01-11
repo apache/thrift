@@ -18,7 +18,7 @@
  */
 
 public struct TMap<Key : TSerializable & Hashable, Value : TSerializable>: Collection, ExpressibleByDictionaryLiteral, Hashable, TSerializable {
-  typealias Storage = Dictionary<Key, Value>
+  public typealias Storage = Dictionary<Key, Value>
   public typealias Element = Storage.Element
   public typealias Index = Storage.Index
   public typealias IndexDistance = Storage.IndexDistance

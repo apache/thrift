@@ -15,7 +15,7 @@
 # Using all stock Ubuntu Bionic packaging except for:
 # - cl: want latest
 # - d: dmd does not come with Ubuntu
-# - dart: does not come with Ubuntu
+# - dart: does not come with Ubuntu. Pinned to last 1.x release
 # - dotnet: does not come with Ubuntu
 # - go: want latest
 # - nodejs: want v8, bionic comes with v6
@@ -46,6 +46,7 @@ RUN apt-get update && \
 RUN curl https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - && \
     curl https://storage.googleapis.com/download.dartlang.org/linux/debian/dart_stable.list > \
       /etc/apt/sources.list.d/dart_stable.list
+ENV DART_VERSION 1.24.3-1
 
 # dotnet (netcore)
 RUN curl https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor > /etc/apt/trusted.gpg.d/microsoft.gpg && \
@@ -88,11 +89,11 @@ RUN apt-get install -y --no-install-recommends \
 `# csharp (mono) dependencies` \
       mono-devel
 
-ENV SBCL_VERSION 1.4.9
+ENV SBCL_VERSION 1.4.15
 RUN \
 `# Common Lisp (sbcl) dependencies` \
     curl --version && \
-    curl -O -J -L https://kent.dl.sourceforge.net/project/sbcl/sbcl/${SBCL_VERSION}/sbcl-${SBCL_VERSION}-x86-64-linux-binary.tar.bz2 && \
+    curl -o sbcl-${SBCL_VERSION}-x86-64-linux-binary.tar.bz2 -J -L https://sourceforge.net/projects/sbcl/files/sbcl/${SBCL_VERSION}/sbcl-${SBCL_VERSION}-x86-64-linux-binary.tar.bz2/download?use_mirror=managedway# && \
     tar xjf sbcl-${SBCL_VERSION}-x86-64-linux-binary.tar.bz2 && \
     cd sbcl-${SBCL_VERSION}-x86-64-linux && \
     ./install.sh && \
@@ -100,31 +101,31 @@ RUN \
     cd .. && \
     rm -rf sbcl*
 
-ENV D_VERSION     2.081.0
-ENV DMD_DEB       dmd_2.081.0-0_amd64.deb
+ENV D_VERSION     2.083.1
+ENV DMD_DEB       dmd_2.083.1-0_amd64.deb
 RUN \
 `# D dependencies` \
     wget -q http://downloads.dlang.org/releases/2.x/${D_VERSION}/${DMD_DEB} && \
     dpkg --install ${DMD_DEB} && \
     rm -f ${DMD_DEB} && \
     mkdir -p /usr/include/dmd/druntime/import/deimos /usr/include/dmd/druntime/import/C && \
-    curl -sSL https://github.com/D-Programming-Deimos/libevent/archive/master.tar.gz| tar xz && \
-    mv libevent-master/deimos/* /usr/include/dmd/druntime/import/deimos/ && \
-    mv libevent-master/C/* /usr/include/dmd/druntime/import/C/ && \
-    rm -rf libevent-master && \
-    curl -sSL https://github.com/jeking3/openssl/archive/tls_method.tar.gz| tar xz && \
-    mv openssl-tls_method/deimos/* /usr/include/dmd/druntime/import/deimos/ && \
-    mv openssl-tls_method/C/* /usr/include/dmd/druntime/import/C/ && \
-    rm -rf openssl-tls_method
+    git clone -b 'v2.0.2+2.0.16' https://github.com/D-Programming-Deimos/libevent.git deimos-libevent-2.0 && \
+    mv deimos-libevent-2.0/deimos/* /usr/include/dmd/druntime/import/deimos/ && \
+    mv deimos-libevent-2.0/C/* /usr/include/dmd/druntime/import/C/ && \
+    rm -rf deimos-libevent-2.0 && \
+    git clone -b 'v2.0.0+1.1.0h' https://github.com/D-Programming-Deimos/openssl.git deimos-openssl-1.1.0h && \
+    mv deimos-openssl-1.1.0h/deimos/* /usr/include/dmd/druntime/import/deimos/ && \
+    mv deimos-openssl-1.1.0h/C/* /usr/include/dmd/druntime/import/C/ && \
+    rm -rf deimos-openssl-1.1.0h
 
 RUN apt-get install -y --no-install-recommends \
       `# Dart dependencies` \
-      dart/stable
+      dart=$DART_VERSION
 ENV PATH /usr/lib/dart/bin:$PATH
 
 RUN apt-get install -y --no-install-recommends \
 `# dotnet core dependencies` \
-      dotnet-sdk-2.1
+      dotnet-sdk-2.2
 
 RUN apt-get install -y --no-install-recommends \
 `# Erlang dependencies` \
@@ -139,9 +140,9 @@ RUN apt-get install -y --no-install-recommends \
       libglib2.0-dev
 
 # golang
-ENV GOLANG_VERSION 1.10.3
+ENV GOLANG_VERSION 1.11.4
 ENV GOLANG_DOWNLOAD_URL https://golang.org/dl/go$GOLANG_VERSION.linux-amd64.tar.gz
-ENV GOLANG_DOWNLOAD_SHA256 fa1b0e45d3b647c252f51f5e1204aba049cde4af177ef9f2181f43004f901035
+ENV GOLANG_DOWNLOAD_SHA256 fb26c30e6a04ad937bbc657a1b5bba92f80096af1e8ee6da6430c045a8db3a5b
 RUN curl -fsSL "$GOLANG_DOWNLOAD_URL" -o golang.tar.gz && \
       echo "$GOLANG_DOWNLOAD_SHA256  golang.tar.gz" | sha256sum -c - && \
             tar -C /usr/local -xzf golang.tar.gz && \
@@ -180,6 +181,11 @@ RUN apt-get install -y --no-install-recommends \
 RUN apt-get install -y --no-install-recommends \
 `# Node.js dependencies` \
       nodejs
+
+# Test dependencies for running puppeteer
+RUN apt-get install -y --no-install-recommends \
+`# JS dependencies` \
+      libxss1
 
 RUN apt-get install -y --no-install-recommends \
 `# OCaml dependencies` \
@@ -243,6 +249,13 @@ RUN apt-get install -y --no-install-recommends \
 `# Rust dependencies` \
       cargo \
       rustc
+
+# Swift on Linux for cross tests
+RUN cd / && \
+    wget --quiet https://swift.org/builds/swift-4.2.1-release/ubuntu1804/swift-4.2.1-RELEASE/swift-4.2.1-RELEASE-ubuntu18.04.tar.gz && \
+    tar xf swift-4.2.1-RELEASE-ubuntu18.04.tar.gz --strip-components=1 && \
+    rm swift-4.2.1-RELEASE-ubuntu18.04.tar.gz && \
+    swift --version
 
 # cppcheck-1.82 has a nasty cpp parser bug, so we're using something newer
 RUN apt-get install -y --no-install-recommends \

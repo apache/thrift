@@ -33,7 +33,7 @@ namespace thrift {
 namespace concurrency {
 namespace test {
 
-using stdcxx::shared_ptr;
+using std::shared_ptr;
 using namespace apache::thrift::concurrency;
 
 /**

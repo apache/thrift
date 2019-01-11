@@ -39,11 +39,12 @@
 #include "thrift/plugin/plugin.h"
 #include "thrift/plugin/type_util.h"
 #include "thrift/protocol/TBinaryProtocol.h"
-#include "thrift/stdcxx.h"
 #include "thrift/transport/TBufferTransports.h"
 #include "thrift/transport/TFDTransport.h"
 
 #include "thrift/plugin/plugin_types.h"
+
+#include <memory>
 
 namespace plugin_output {
 
@@ -55,8 +56,8 @@ typename apache::thrift::plugin::ToType<From>::type convert(From* from) {
 }
 
 using apache::thrift::protocol::TBinaryProtocol;
-using apache::thrift::stdcxx::make_shared;
-using apache::thrift::stdcxx::shared_ptr;
+using std::make_shared;
+using std::shared_ptr;
 using apache::thrift::transport::TFDTransport;
 using apache::thrift::transport::TFramedTransport;
 

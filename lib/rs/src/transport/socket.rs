@@ -20,8 +20,8 @@ use std::io;
 use std::io::{ErrorKind, Read, Write};
 use std::net::{Shutdown, TcpStream};
 
-use {TransportErrorKind, new_transport_error};
 use super::{ReadHalf, TIoChannel, WriteHalf};
+use {new_transport_error, TransportErrorKind};
 
 /// Bidirectional TCP/IP channel.
 ///
@@ -76,18 +76,18 @@ impl TTcpChannel {
     /// The passed-in stream is assumed to have been opened before being wrapped
     /// by the created `TTcpChannel` instance.
     pub fn with_stream(stream: TcpStream) -> TTcpChannel {
-        TTcpChannel { stream: Some(stream) }
+        TTcpChannel {
+            stream: Some(stream),
+        }
     }
 
     /// Connect to `remote_address`, which should have the form `host:port`.
     pub fn open(&mut self, remote_address: &str) -> ::Result<()> {
         if self.stream.is_some() {
-            Err(
-                new_transport_error(
-                    TransportErrorKind::AlreadyOpen,
-                    "tcp connection previously opened",
-                ),
-            )
+            Err(new_transport_error(
+                TransportErrorKind::AlreadyOpen,
+                "tcp connection previously opened",
+            ))
         } else {
             match TcpStream::connect(&remote_address) {
                 Ok(s) => {
@@ -112,11 +112,13 @@ impl TTcpChannel {
     where
         F: FnMut(&mut TcpStream) -> io::Result<T>,
     {
-
         if let Some(ref mut s) = self.stream {
             stream_operation(s)
         } else {
-            Err(io::Error::new(ErrorKind::NotConnected, "tcp endpoint not connected"),)
+            Err(io::Error::new(
+                ErrorKind::NotConnected,
+                "tcp endpoint not connected",
+            ))
         }
     }
 }
@@ -131,20 +133,21 @@ impl TIoChannel for TTcpChannel {
         s.stream
             .as_mut()
             .and_then(|s| s.try_clone().ok())
-            .map(
-                |cloned| {
-                    (ReadHalf { handle: TTcpChannel { stream: s.stream.take() } },
-                     WriteHalf { handle: TTcpChannel { stream: Some(cloned) } })
-                },
-            )
-            .ok_or_else(
-                || {
-                    new_transport_error(
-                        TransportErrorKind::Unknown,
-                        "cannot clone underlying tcp stream",
-                    )
-                },
-            )
+            .map(|cloned| {
+                let read_half = ReadHalf::new(TTcpChannel {
+                    stream: s.stream.take(),
+                });
+                let write_half = WriteHalf::new(TTcpChannel {
+                    stream: Some(cloned),
+                });
+                (read_half, write_half)
+            })
+            .ok_or_else(|| {
+                new_transport_error(
+                    TransportErrorKind::Unknown,
+                    "cannot clone underlying tcp stream",
+                )
+            })
     }
 }
 

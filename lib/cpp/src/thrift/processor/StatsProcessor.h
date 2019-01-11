@@ -20,7 +20,7 @@
 #ifndef STATSPROCESSOR_H
 #define STATSPROCESSOR_H
 
-#include <thrift/stdcxx.h>
+#include <memory>
 #include <thrift/transport/TTransport.h>
 #include <thrift/protocol/TProtocol.h>
 #include <TProcessor.h>
@@ -38,8 +38,8 @@ public:
   StatsProcessor(bool print, bool frequency) : print_(print), frequency_(frequency) {}
   virtual ~StatsProcessor(){};
 
-  virtual bool process(stdcxx::shared_ptr<apache::thrift::protocol::TProtocol> piprot,
-                       stdcxx::shared_ptr<apache::thrift::protocol::TProtocol> poprot,
+  virtual bool process(std::shared_ptr<apache::thrift::protocol::TProtocol> piprot,
+                       std::shared_ptr<apache::thrift::protocol::TProtocol> poprot,
                        void* serverContext) {
 
     piprot_ = piprot;
@@ -229,7 +229,7 @@ protected:
     }
   }
 
-  stdcxx::shared_ptr<apache::thrift::protocol::TProtocol> piprot_;
+  std::shared_ptr<apache::thrift::protocol::TProtocol> piprot_;
   std::map<std::string, int64_t> frequency_map_;
 
   bool print_;

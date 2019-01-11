@@ -20,12 +20,12 @@
 #include <boost/test/auto_unit_test.hpp>
 #include <thrift/transport/TSocket.h>
 #include <thrift/transport/TServerTransport.h>
-#include <thrift/stdcxx.h>
+#include <memory>
 
 using apache::thrift::transport::TServerTransport;
 using apache::thrift::transport::TTransport;
 using apache::thrift::transport::TTransportException;
-using apache::thrift::stdcxx::shared_ptr;
+using std::shared_ptr;
 
 BOOST_AUTO_TEST_SUITE(TServerTransportTest)
 

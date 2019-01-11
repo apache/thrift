@@ -1,5 +1,4 @@
-#!/bin/sh
-
+#
 # Licensed to the Apache Software Foundation (ASF) under one
 # or more contributor license agreements. See the NOTICE file
 # distributed with this work for additional information
@@ -16,14 +15,32 @@
 # KIND, either express or implied. See the License for the
 # specific language governing permissions and limitations
 # under the License.
+#
 
+SUBDIRS = .
 
-# Mainly aiming Travis CI's Ubuntu machines for now
-# see what we need: http://thrift.apache.org/docs/install/ubuntu
+all-local:
+	swift build --configuration release
 
-# General dependencies
-sudo apt-add-repository "deb http://archive.ubuntu.com/ubuntu/ trusty main restricted" -y
-sudo apt-get update -qq
+install-exec-hook:
+	swift install
 
-sudo apt-get install -qq libpango-1.0-0 libqt4-dev qtbase5-dev qtbase5-dev-tools qt5-default libboost-dev libboost-test-dev libboost-program-options-dev libboost-system-dev libboost-filesystem-dev libboost-thread-dev libevent-dev automake libtool flex bison pkg-config g++ libssl-dev make cmake git debhelper bc nsis ninja-build
-dpkg -S /usr/include/boost/version.hpp
+clean-local:
+	swift package clean
+	rm -rf .build
+
+precross:
+	swift
+
+check-local:
+	swift test
+
+EXTRA_DIST = \
+	Package.swift \
+	Sources \
+	Tests \
+	README.md
+
+MAINTAINERCLEANFILES = \
+	Makefile \
+	Makefile.in

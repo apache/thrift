@@ -22,7 +22,6 @@
 
 #include <thrift/transport/TTransport.h>
 #include <thrift/transport/TTransportException.h>
-#include <thrift/stdcxx.h>
 
 namespace apache {
 namespace thrift {
@@ -56,8 +55,8 @@ public:
    * @return A new TTransport object
    * @throws TTransportException if there is an error
    */
-  stdcxx::shared_ptr<TTransport> accept() {
-    stdcxx::shared_ptr<TTransport> result = acceptImpl();
+  std::shared_ptr<TTransport> accept() {
+    std::shared_ptr<TTransport> result = acceptImpl();
     if (!result) {
       throw TTransportException("accept() may not return NULL");
     }
@@ -105,7 +104,7 @@ protected:
    * @return A newly allocated TTransport object
    * @throw TTransportException If an error occurs
    */
-  virtual stdcxx::shared_ptr<TTransport> acceptImpl() = 0;
+  virtual std::shared_ptr<TTransport> acceptImpl() = 0;
 };
 }
 }

@@ -29,8 +29,8 @@ namespace server {
 using apache::thrift::concurrency::Synchronized;
 using apache::thrift::protocol::TProtocol;
 using apache::thrift::protocol::TProtocolFactory;
-using apache::thrift::stdcxx::bind;
-using apache::thrift::stdcxx::shared_ptr;
+using std::bind;
+using std::shared_ptr;
 using apache::thrift::transport::TServerTransport;
 using apache::thrift::transport::TTransport;
 using apache::thrift::transport::TTransportException;
@@ -161,7 +161,7 @@ void TServerFramework::serve() {
                                outputProtocol,
                                eventHandler_,
                                client),
-          bind(&TServerFramework::disposeConnectedClient, this, stdcxx::placeholders::_1)));
+          bind(&TServerFramework::disposeConnectedClient, this, std::placeholders::_1)));
 
     } catch (TTransportException& ttx) {
       releaseOneDescriptor("inputTransport", inputTransport);

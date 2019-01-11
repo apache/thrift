@@ -36,7 +36,7 @@ namespace transport {
  */
 class THttpTransport : public TVirtualTransport<THttpTransport> {
 public:
-  THttpTransport(stdcxx::shared_ptr<TTransport> transport);
+  THttpTransport(std::shared_ptr<TTransport> transport);
 
   virtual ~THttpTransport();
 
@@ -59,7 +59,7 @@ public:
   virtual const std::string getOrigin();
 
 protected:
-  stdcxx::shared_ptr<TTransport> transport_;
+  std::shared_ptr<TTransport> transport_;
   std::string origin_;
 
   TMemoryBuffer writeBuffer_;

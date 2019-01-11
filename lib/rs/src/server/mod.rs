@@ -17,8 +17,8 @@
 
 //! Types used to implement a Thrift server.
 
-use {ApplicationError, ApplicationErrorKind};
 use protocol::{TInputProtocol, TMessageIdentifier, TMessageType, TOutputProtocol};
+use {ApplicationError, ApplicationErrorKind};
 
 mod multiplexed;
 mod threaded;

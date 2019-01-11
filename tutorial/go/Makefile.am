@@ -22,15 +22,15 @@ gen-go/tutorial/calculator.go gen-go/shared/shared_service.go: $(top_srcdir)/tut
 
 all-local: gen-go/tutorial/calculator.go
 
-check: src/git.apache.org/thrift.git/lib/go/thrift thirdparty-dep
+check: src/github.com/apache/thrift/lib/go/thrift thirdparty-dep
 	$(THRIFT) -r --gen go$(COMPILER_EXTRAFLAG) $(top_srcdir)/tutorial/tutorial.thrift
 	cp -r gen-go/* src/
 	GOPATH=`pwd` $(GO) build -o go-tutorial ./src
 	GOPATH=`pwd` $(GO) build -o calculator-remote src/tutorial/calculator-remote/calculator-remote.go
 
-src/git.apache.org/thrift.git/lib/go/thrift:
-	mkdir -p src/git.apache.org/thrift.git/lib/go
-	ln -sf $(realpath $(top_srcdir)/lib/go/thrift) src/git.apache.org/thrift.git/lib/go/thrift
+src/github.com/apache/thrift/lib/go/thrift:
+	mkdir -p src/github.com/apache/thrift/lib/go
+	ln -sf $(realpath $(top_srcdir)/lib/go/thrift) src/github.com/apache/thrift/lib/go/thrift
 
 thirdparty-dep:
 

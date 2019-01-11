@@ -16,8 +16,6 @@
 //
 
 #ifdef _WIN32 //thrift is crashing when using boost threads on Mac OSX
-#  define USE_BOOST_THREAD 1
-#  include <boost/thread.hpp>
 #else
 #  include <sys/socket.h>
 #  include <netinet/in.h>

@@ -64,9 +64,6 @@
    see: aclocal/ac_prog_bison.m4 */
 #cmakedefine BISON_USE_PARSER_H_EXTENSION 1
 
-/* replaces POSIX pthread by boost::thread */
-#cmakedefine USE_BOOST_THREAD 1
-
 /* replaces POSIX pthread by std::thread */
 #cmakedefine USE_STD_THREAD 1
 
@@ -120,6 +117,9 @@
 
 /* Define to 1 if you have the <sys/un.h> header file. */
 #cmakedefine HAVE_SYS_UN_H 1
+
+/* Define to 1 if you have the <poll.h> header file. */
+#cmakedefine HAVE_POLL_H 1
 
 /* Define to 1 if you have the <sys/poll.h> header file. */
 #cmakedefine HAVE_SYS_POLL_H 1

@@ -108,7 +108,7 @@ namespace Thrift.Transport
             writeBuffer.Write(buf, off, len);
         }
 
-        public override void Flush()
+        private void InternalFlush()
         {
             CheckNotDisposed();
             if (!IsOpen)
@@ -126,8 +126,27 @@ namespace Thrift.Transport
             transport.Write(buf, 0, len);
 
             InitWriteBuffer();
+        }
+
+        public override void Flush()
+        {
+            CheckNotDisposed();
+            InternalFlush();
 
             transport.Flush();
+        }
+
+        public override IAsyncResult BeginFlush(AsyncCallback callback, object state)
+        {
+            CheckNotDisposed();
+            InternalFlush();
+
+            return transport.BeginFlush( callback, state);
+        }
+
+        public override void EndFlush(IAsyncResult asyncResult)
+        {
+            transport.EndFlush( asyncResult);
         }
 
         private void InitWriteBuffer()

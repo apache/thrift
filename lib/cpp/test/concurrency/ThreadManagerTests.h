@@ -36,8 +36,8 @@ namespace test {
 
 using namespace apache::thrift::concurrency;
 
-static std::deque<stdcxx::shared_ptr<Runnable> > m_expired;
-static void expiredNotifier(stdcxx::shared_ptr<Runnable> runnable)
+static std::deque<std::shared_ptr<Runnable> > m_expired;
+static void expiredNotifier(std::shared_ptr<Runnable> runnable)
 {
   m_expired.push_back(runnable);
 }
@@ -111,7 +111,7 @@ public:
     shared_ptr<PlatformThreadFactory> threadFactory
         = shared_ptr<PlatformThreadFactory>(new PlatformThreadFactory(false));
 
-#if !USE_BOOST_THREAD && !USE_STD_THREAD
+#if !USE_STD_THREAD
     threadFactory->setPriority(PosixThreadFactory::HIGHEST);
 #endif
     threadManager->threadFactory(threadFactory);
@@ -260,7 +260,7 @@ public:
       shared_ptr<PlatformThreadFactory> threadFactory
           = shared_ptr<PlatformThreadFactory>(new PlatformThreadFactory());
 
-#if !USE_BOOST_THREAD && !USE_STD_THREAD
+#if !USE_STD_THREAD
       threadFactory->setPriority(PosixThreadFactory::HIGHEST);
 #endif
       threadManager->threadFactory(threadFactory);
@@ -401,7 +401,7 @@ public:
       return false;
     }
 
-#if !USE_BOOST_THREAD && !USE_STD_THREAD
+#if !USE_STD_THREAD
     // test once with a detached thread factory and once with a joinable thread factory
 
     shared_ptr<PosixThreadFactory> threadFactory
@@ -426,7 +426,7 @@ public:
     shared_ptr<ThreadManager> threadManager = ThreadManager::newSimpleThreadManager(1);
     threadManager->threadFactory(threadFactory);
 
-#if !USE_BOOST_THREAD && !USE_STD_THREAD
+#if !USE_STD_THREAD
     threadFactory->setPriority(PosixThreadFactory::HIGHEST);
 
     // verify we cannot change the thread factory to one with the opposite detached setting
@@ -452,7 +452,7 @@ public:
     std::cout << "\t\t\t\tstarting.. " << std::endl;
 
     threadManager->start();
-    threadManager->setExpireCallback(expiredNotifier); // apache::thrift::stdcxx::bind(&ThreadManagerTests::expiredNotifier, this));
+    threadManager->setExpireCallback(expiredNotifier); // std::bind(&ThreadManagerTests::expiredNotifier, this));
 
 #define EXPECT(FUNC, COUNT) { size_t c = FUNC; if (c != COUNT) { std::cerr << "expected " #FUNC" to be " #COUNT ", but was " << c << std::endl; return false; } }
 
