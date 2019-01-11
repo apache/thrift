@@ -23,6 +23,11 @@ version: '1.0.0.{build}'
 
 shallow_clone: true
 
+branches:
+  only:
+    - master
+    - /^(release/)?\d+\.\d+\.\d+$/
+
 os:
   - Visual Studio 2017
 
@@ -36,6 +41,7 @@ environment:
    - PROFILE: MSVC2017
      PLATFORM: x64
      CONFIGURATION: Release
+     BUILD_SHARED_LIBS: OFF
      BOOST_VERSION: 1.67.0
      LIBEVENT_VERSION: 2.1.8
      PYTHON_VERSION: 3.6
@@ -46,6 +52,7 @@ environment:
    - PROFILE: MSVC2015
      PLATFORM: x86
      CONFIGURATION: Release
+     BUILD_SHARED_LIBS: OFF
      BOOST_VERSION: 1.62.0
      LIBEVENT_VERSION: 2.0.22
      PYTHON_VERSION: 3.5

@@ -17,89 +17,31 @@
 # under the License.
 #
 
-
-set(CMAKE_DEBUG_POSTFIX "d" CACHE STRING "Set debug library postfix" FORCE)
-
-
 macro(ADD_LIBRARY_THRIFT name)
-
-if(WITH_SHARED_LIB)
-    add_library(${name} SHARED ${ARGN})
+    add_library(${name} ${ARGN})
     set_target_properties(${name} PROPERTIES
-        OUTPUT_NAME ${name}
-        VERSION ${thrift_VERSION}
-        SOVERSION ${thrift_VERSION} )
-    #set_target_properties(${name} PROPERTIES PUBLIC_HEADER "${thriftcpp_HEADERS}")
+        OUTPUT_NAME ${name}${THRIFT_RUNTIME_POSTFIX}   # windows link variants (/MT, /MD, /MTd, /MDd) get different names
+        VERSION ${thrift_VERSION} )
+    # set_target_properties(${name} PROPERTIES PUBLIC_HEADER "${thriftcpp_HEADERS}")
     install(TARGETS ${name}
         RUNTIME DESTINATION "${BIN_INSTALL_DIR}"
         LIBRARY DESTINATION "${LIB_INSTALL_DIR}"
         ARCHIVE DESTINATION "${LIB_INSTALL_DIR}"
         PUBLIC_HEADER DESTINATION "${INCLUDE_INSTALL_DIR}")
-endif()
-
-if(WITH_STATIC_LIB)
-    add_library(${name}_static STATIC ${ARGN})
-    set_target_properties(${name}_static PROPERTIES
-        OUTPUT_NAME ${name}${STATIC_POSTFIX}
-        VERSION ${thrift_VERSION}
-        SOVERSION ${thrift_VERSION} )
-    install(TARGETS ${name}_static
-        RUNTIME DESTINATION "${BIN_INSTALL_DIR}"
-        LIBRARY DESTINATION "${LIB_INSTALL_DIR}"
-        ARCHIVE DESTINATION "${LIB_INSTALL_DIR}"
-        PUBLIC_HEADER DESTINATION "${INCLUDE_INSTALL_DIR}")
-endif()
-
-endmacro(ADD_LIBRARY_THRIFT)
-
+endmacro()
 
 macro(TARGET_INCLUDE_DIRECTORIES_THRIFT name)
-
-if(WITH_SHARED_LIB)
     target_include_directories(${name} ${ARGN})
-endif()
-
-if(WITH_STATIC_LIB)
-    target_include_directories(${name}_static ${ARGN})
-endif()
-
-endmacro(TARGET_INCLUDE_DIRECTORIES_THRIFT)
-
+endmacro()
 
 macro(TARGET_LINK_LIBRARIES_THRIFT name)
-
-if(WITH_SHARED_LIB)
     target_link_libraries(${name} ${ARGN})
-endif()
-
-if(WITH_STATIC_LIB)
-    target_link_libraries(${name}_static ${ARGN})
-endif()
-
-endmacro(TARGET_LINK_LIBRARIES_THRIFT)
-
+endmacro()
 
 macro(LINK_AGAINST_THRIFT_LIBRARY target libname)
-
-if (WITH_SHARED_LIB)
     target_link_libraries(${target} ${libname})
-elseif (WITH_STATIC_LIB)
-    target_link_libraries(${target} ${libname}_static)
-else()
-    message(FATAL "Not linking with shared or static libraries?")
-endif()
-
-endmacro(LINK_AGAINST_THRIFT_LIBRARY)
-
+endmacro()
 
 macro(TARGET_LINK_LIBRARIES_THRIFT_AGAINST_THRIFT_LIBRARY target libname)
-
-if(WITH_SHARED_LIB)
     target_link_libraries(${target} ${ARGN} ${libname})
-endif()
-
-if(WITH_STATIC_LIB)
-    target_link_libraries(${target}_static ${ARGN} ${libname}_static)
-endif()
-
-endmacro(TARGET_LINK_LIBRARIES_THRIFT_AGAINST_THRIFT_LIBRARY)
+endmacro()

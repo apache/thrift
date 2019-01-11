@@ -25,7 +25,7 @@ namespace thrift {
 
 class TOutput {
 public:
-  TOutput() : f_(&errorTimeWrapper) {}
+  TOutput();
 
   inline void setOutputFunction(void (*function)(const char*)) { f_ = function; }
 

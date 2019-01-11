@@ -31,18 +31,10 @@ if(${WITH_PLUGIN})
         plugin/conversion_test.cc
     )
     add_executable(plugintest ${plugintest_SOURCES})
-    if(WITH_SHARED_LIB AND NOT MSVC)
-        target_link_libraries(plugintest
-            thriftc
-            ${Boost_LIBRARIES}
-        )
-    else()
-        target_link_libraries(plugintest
-            thriftc_static
-            thrift_static
-            ${Boost_LIBRARIES}
-        )
-    endif()
+    target_link_libraries(plugintest
+        thriftc
+        ${Boost_LIBRARIES}
+    )
     add_test(NAME PluginUnitTest COMMAND plugintest)
 
     set(thrift-gen-mycpp_SOURCES
@@ -50,11 +42,7 @@ if(${WITH_PLUGIN})
         plugin/cpp_plugin.cc
     )
     add_executable(thrift-gen-mycpp ${thrift-gen-mycpp_SOURCES})
-    if(WITH_SHARED_LIB AND NOT MSVC)
-        target_link_libraries(thrift-gen-mycpp thriftc)
-    else()
-        target_link_libraries(thrift-gen-mycpp thriftc_static thrift_static)
-    endif()
+    target_link_libraries(thrift-gen-mycpp thriftc)
 
     if(CMAKE_BUILD_TYPE STREQUAL "Debug")
         set(BUILDTYPE "Debug")
@@ -91,5 +79,9 @@ foreach(LANG ${thrift_compiler_LANGS})
 endforeach()
 
 
-find_package(PythonInterp REQUIRED)
-add_test(NAME StalenessCheckTest COMMAND ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/compiler/staleness_check.py ${THRIFT_COMPILER})
+find_package(PythonInterp QUIET)
+if(PYTHONINTERP_FOUND)
+  add_test(NAME StalenessCheckTest COMMAND ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/compiler/staleness_check.py ${THRIFT_COMPILER})
+else()
+  message(WARNING "Skipping StalenessCheckTest as there is no python interpreter available.")
+endif()
