@@ -213,6 +213,7 @@ class TSSLSocketTest(unittest.TestCase):
             return
         fd, path = tempfile.mkstemp()
         os.close(fd)
+        os.unlink(path)
         try:
             server = self._server_socket(unix_socket=path, keyfile=SERVER_KEY, certfile=SERVER_CERT)
             self._assert_connection_success(server, path=path, cert_reqs=ssl.CERT_NONE)
