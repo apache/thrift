@@ -32,8 +32,6 @@ os:
   - Visual Studio 2017
 
 matrix:
-  allow_failures:
-      - PROFILE: CYGWIN
   fast_finish: true
 
 environment:
@@ -51,7 +49,7 @@ environment:
 
    - PROFILE: MSVC2015
      PLATFORM: x86
-     CONFIGURATION: Release
+     CONFIGURATION: Debug
      BUILD_SHARED_LIBS: OFF
      BOOST_VERSION: 1.62.0
      LIBEVENT_VERSION: 2.0.22
@@ -67,14 +65,9 @@ environment:
      DISABLED_TESTS: StressTestNonBlocking
 
    - PROFILE: CYGWIN
-     PLATFORM: x86
+     PLATFORM: x64
      CONFIGURATION: RelWithDebInfo
      DISABLED_TESTS: (ZlibTest|OpenSSLManualInitTest|TNonblockingServerTest|StressTestNonBlocking)
-
-#  - PROFILE: CYGWIN
-#    PLATFORM: x64
-#    CONFIGURATION: RelWithDebInfo
-#    DISABLED_TESTS: (ZlibTest|OpenSSLManualInitTest|TNonblockingServerTest|StressTestNonBlocking)
 
 install:
   - cd %APPVEYOR_BUILD_FOLDER%
