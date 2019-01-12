@@ -20,7 +20,6 @@
 #ifndef _THRIFT_CONCURRENCY_TIMERMANAGER_H_
 #define _THRIFT_CONCURRENCY_TIMERMANAGER_H_ 1
 
-#include <thrift/concurrency/Exception.h>
 #include <thrift/concurrency/Monitor.h>
 #include <thrift/concurrency/ThreadFactory.h>
 

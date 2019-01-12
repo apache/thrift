@@ -20,11 +20,9 @@
 #ifndef _THRIFT_CONCURRENCY_THREAD_H_
 #define _THRIFT_CONCURRENCY_THREAD_H_ 1
 
-#include <stdint.h>
 #include <memory>
 #include <thread>
 
-#include <thrift/thrift-config.h>
 #include <thrift/concurrency/Monitor.h>
 
 namespace apache {

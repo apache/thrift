@@ -20,14 +20,8 @@
 #ifndef _THRIFT_CONCURRENCY_MONITOR_H_
 #define _THRIFT_CONCURRENCY_MONITOR_H_ 1
 
-#ifdef HAVE_SYS_TIME_H
-#include <sys/time.h>
-#endif
-
 #include <thrift/concurrency/Exception.h>
 #include <thrift/concurrency/Mutex.h>
-
-#include <boost/utility.hpp>
 
 namespace apache {
 namespace thrift {
