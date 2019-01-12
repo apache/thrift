@@ -65,11 +65,6 @@ public:
    */
   Thread::id_t getCurrentThreadId() const;
 
-  /**
-   * For code readability define the unknown/undefined thread id
-   */
-  static const Thread::id_t unknown_thread_id;
-
 private:
   bool detached_;
 };

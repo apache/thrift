@@ -26,7 +26,6 @@
 
 #include <memory>
 #include <map>
-#include <time.h>
 
 namespace apache {
 namespace thrift {

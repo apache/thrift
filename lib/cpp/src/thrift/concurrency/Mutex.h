@@ -22,7 +22,6 @@
 
 #include <memory>
 #include <boost/noncopyable.hpp>
-#include <stdint.h>
 
 namespace apache {
 namespace thrift {
