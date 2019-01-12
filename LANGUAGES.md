@@ -331,9 +331,9 @@ The Language/Library Levels indicate the minimum and maximum versions that are u
 <td align=left><a href="https://issues.apache.org/jira/issues/?jql=project%20%3D%20THRIFT%20AND%20component%20in%20(%22Smalltalk%20-%20Compiler%22%2C%20%22Smalltalk%20-%20Library%22)%20and%20status%20not%20in%20(fixed%2C%20resolved%2C%20closed)">Smalltalk</a></td>
 </tr>
 <tr align=center>
-<td align=left><a href="lib/swift/README.md">Cocoa</a></td>
+<td align=left><a href="lib/swift/README.md">Swift</a></td>
 <!-- Since -----------------><td>0.12.0</td>
-<!-- Build Systems ---------><td><img src="doc/images/w.png" alt="Yes"/></td><td><img src="doc/images/cred.png" alt=""/></td>
+<!-- Build Systems ---------><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cred.png" alt=""/></td>
 <!-- Language Levels -------><td colspan=2>4.2.1</td>
 <!-- Low-Level Transports --><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td>
 <!-- Transport Wrappers ----><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cred.png" alt=""/></td>
@@ -363,4 +363,5 @@ The Language/Library Levels indicate the minimum and maximum versions that are u
 <th colspan=5 align=center>Servers</th>
 </tr>
 </tfoot>
-</table>
+</ft
+table>
