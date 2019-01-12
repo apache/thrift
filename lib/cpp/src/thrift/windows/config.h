@@ -31,19 +31,6 @@
 // Something that defines PRId64 is required to build
 #define HAVE_INTTYPES_H 1
 
-#ifndef TARGET_WIN_XP
-#define TARGET_WIN_XP 1
-#endif
-
-#if TARGET_WIN_XP
-#ifndef WINVER
-#define WINVER 0x0501
-#endif
-#ifndef _WIN32_WINNT
-#define _WIN32_WINNT 0x0501
-#endif
-#endif
-
 #ifndef _WIN32_WINNT
 #define _WIN32_WINNT 0x0601
 #endif
