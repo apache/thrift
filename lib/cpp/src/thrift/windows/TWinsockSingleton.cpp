@@ -20,7 +20,6 @@
 #include <thrift/windows/TWinsockSingleton.h>
 
 // boost
-#include <boost/assert.hpp>
 #include <stdexcept>
 
 namespace apache {
@@ -37,7 +36,6 @@ TWinsockSingleton::TWinsockSingleton(void) {
 
   int error(WSAStartup(version, &data));
   if (error != 0) {
-    BOOST_ASSERT(false);
     throw std::runtime_error("Failed to initialise Winsock.");
   }
 }
