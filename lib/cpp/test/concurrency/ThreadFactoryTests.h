@@ -22,7 +22,6 @@
 #include <thrift/concurrency/ThreadFactory.h>
 #include <thrift/concurrency/Monitor.h>
 #include <thrift/concurrency/Mutex.h>
-#include <thrift/concurrency/Util.h>
 
 #include <assert.h>
 #include <iostream>
@@ -221,7 +220,7 @@ public:
 
     Monitor monitor;
 
-    int64_t startTime = Util::currentTime();
+    int64_t startTime = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch()).count();
 
     for (int64_t ix = 0; ix < count; ix++) {
       {
@@ -233,7 +232,7 @@ public:
       }
     }
 
-    int64_t endTime = Util::currentTime();
+    int64_t endTime = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch()).count();
 
   bool success = (endTime - startTime) >= (count * timeout);
 

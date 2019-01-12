@@ -20,7 +20,6 @@
 #include <thrift/concurrency/TimerManager.h>
 #include <thrift/concurrency/ThreadFactory.h>
 #include <thrift/concurrency/Monitor.h>
-#include <thrift/concurrency/Util.h>
 
 #include <assert.h>
 #include <iostream>
@@ -39,7 +38,7 @@ public:
   public:
     Task(Monitor& monitor, int64_t timeout)
       : _timeout(timeout),
-        _startTime(Util::currentTime()),
+        _startTime(std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch()).count()),
         _endTime(0),
         _monitor(monitor),
         _success(false),
@@ -49,7 +48,7 @@ public:
 
     void run() {
 
-      _endTime = Util::currentTime();
+      _endTime = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch()).count();
       _success = (_endTime - _startTime) >= _timeout;
 
       {

@@ -264,7 +264,7 @@ void TFileTransport::enqueueEvent(const uint8_t* buf, uint32_t eventLen) {
   // it is probably a non-factor for the time being
 }
 
-bool TFileTransport::swapEventBuffers(struct timeval* deadline) {
+bool TFileTransport::swapEventBuffers(const std::chrono::time_point<std::chrono::steady_clock> *deadline) {
   bool swap;
   Guard g(mutex_);
 
@@ -277,7 +277,7 @@ bool TFileTransport::swapEventBuffers(struct timeval* deadline) {
   } else {
     if (deadline != NULL) {
       // if we were handed a deadline time struct, do a timed wait
-      notEmpty_.waitForTime(deadline);
+      notEmpty_.waitForTime(*deadline);
     } else {
       // just wait until the buffer gets an item
       notEmpty_.wait();
@@ -336,8 +336,7 @@ void TFileTransport::writerThread() {
   }
 
   // Figure out the next time by which a flush must take place
-  struct timeval ts_next_flush;
-  getNextFlushTime(&ts_next_flush);
+  auto ts_next_flush = getNextFlushTime();
   uint32_t unflushed = 0;
 
   while (1) {
@@ -492,15 +491,13 @@ void TFileTransport::writerThread() {
     } else {
       struct timeval current_time;
       THRIFT_GETTIMEOFDAY(&current_time, NULL);
-      if (current_time.tv_sec > ts_next_flush.tv_sec
-          || (current_time.tv_sec == ts_next_flush.tv_sec
-              && current_time.tv_usec > ts_next_flush.tv_usec)) {
+      if (std::chrono::steady_clock::now() > ts_next_flush) {
         if (unflushed > 0) {
           flush = true;
         } else {
           // If there is no new data since the last fsync,
           // don't perform the fsync, but do reset the timer.
-          getNextFlushTime(&ts_next_flush);
+          ts_next_flush = getNextFlushTime();
         }
       }
     }
@@ -509,7 +506,7 @@ void TFileTransport::writerThread() {
       // sync (force flush) file to disk
       THRIFT_FSYNC(fd_);
       unflushed = 0;
-      getNextFlushTime(&ts_next_flush);
+      ts_next_flush = getNextFlushTime();
 
       // notify anybody waiting for flush completion
       if (forced_flush) {
@@ -908,15 +905,8 @@ void TFileTransport::openLogFile() {
   }
 }
 
-void TFileTransport::getNextFlushTime(struct timeval* ts_next_flush) {
-  THRIFT_GETTIMEOFDAY(ts_next_flush, NULL);
-
-  ts_next_flush->tv_usec += flushMaxUs_;
-  if (ts_next_flush->tv_usec > 1000000) {
-    long extra_secs = ts_next_flush->tv_usec / 1000000;
-    ts_next_flush->tv_usec %= 1000000;
-    ts_next_flush->tv_sec += extra_secs;
-  }
+std::chrono::time_point<std::chrono::steady_clock> TFileTransport::getNextFlushTime() {
+  return std::chrono::steady_clock::now() + std::chrono::microseconds(flushMaxUs_);
 }
 
 TFileTransportBuffer::TFileTransportBuffer(uint32_t size)

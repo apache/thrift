@@ -267,7 +267,7 @@ public:
 private:
   // helper functions for writing to a file
   void enqueueEvent(const uint8_t* buf, uint32_t eventLen);
-  bool swapEventBuffers(struct timeval* deadline);
+  bool swapEventBuffers(const std::chrono::time_point<std::chrono::steady_clock> *deadline);
   bool initBufferAndWriteThread();
 
   // control for writer thread
@@ -286,7 +286,7 @@ private:
 
   // Utility functions
   void openLogFile();
-  void getNextFlushTime(struct timeval* ts_next_flush);
+  std::chrono::time_point<std::chrono::steady_clock> getNextFlushTime();
 
   // Class variables
   readState readState_;

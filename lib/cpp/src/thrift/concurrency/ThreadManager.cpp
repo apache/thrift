@@ -22,7 +22,6 @@
 #include <thrift/concurrency/ThreadManager.h>
 #include <thrift/concurrency/Exception.h>
 #include <thrift/concurrency/Monitor.h>
-#include <thrift/concurrency/Util.h>
 
 #include <memory>
 
@@ -35,6 +34,7 @@ namespace thrift {
 namespace concurrency {
 
 using std::shared_ptr;
+using std::unique_ptr;
 using std::dynamic_pointer_cast;
 
 /**
@@ -180,10 +180,13 @@ class ThreadManager::Task : public Runnable {
 public:
   enum STATE { WAITING, EXECUTING, TIMEDOUT, COMPLETE };
 
-  Task(shared_ptr<Runnable> runnable, int64_t expiration = 0LL)
+  Task(shared_ptr<Runnable> runnable, uint64_t expiration = 0ULL)
     : runnable_(runnable),
-      state_(WAITING),
-      expireTime_(expiration != 0LL ? Util::currentTime() + expiration : 0LL) {}
+      state_(WAITING) {
+        if (expiration != 0ULL) {
+          expireTime_.reset(new std::chrono::steady_clock::time_point(std::chrono::steady_clock::now() + std::chrono::milliseconds(expiration)));
+        }
+    }
 
   ~Task() {}
 
@@ -196,13 +199,13 @@ public:
 
   shared_ptr<Runnable> getRunnable() { return runnable_; }
 
-  int64_t getExpireTime() const { return expireTime_; }
+  const unique_ptr<std::chrono::steady_clock::time_point> & getExpireTime() const { return expireTime_; }
 
 private:
   shared_ptr<Runnable> runnable_;
   friend class ThreadManager::Worker;
   STATE state_;
-  int64_t expireTime_;
+  unique_ptr<std::chrono::steady_clock::time_point> expireTime_;
 };
 
 class ThreadManager::Worker : public Runnable {
@@ -280,7 +283,7 @@ public:
             // If the state is changed to anything other than EXECUTING or TIMEDOUT here
             // then the execution loop needs to be changed below.
             task->state_ =
-                (task->getExpireTime() && task->getExpireTime() < Util::currentTime()) ?
+                (task->getExpireTime() && *(task->getExpireTime()) < std::chrono::steady_clock::now()) ?
                     ThreadManager::Task::TIMEDOUT :
                     ThreadManager::Task::EXECUTING;
           }
@@ -524,15 +527,14 @@ std::shared_ptr<Runnable> ThreadManager::Impl::removeNextPending() {
 
 void ThreadManager::Impl::removeExpired(bool justOne) {
   // this is always called under a lock
-  int64_t now = 0LL;
+  if (tasks_.empty()) {
+    return;
+  }
+  auto now = std::chrono::steady_clock::now();
 
   for (TaskQueue::iterator it = tasks_.begin(); it != tasks_.end(); )
   {
-    if (now == 0LL) {
-      now = Util::currentTime();
-    }
-
-    if ((*it)->getExpireTime() > 0LL && (*it)->getExpireTime() < now) {
+    if ((*it)->getExpireTime() && *((*it)->getExpireTime()) < now) {
       if (expireCallback_) {
         expireCallback_((*it)->getRunnable());
       }
