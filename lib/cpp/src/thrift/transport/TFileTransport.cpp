@@ -489,8 +489,6 @@ void TFileTransport::writerThread() {
     if (forced_flush || unflushed > flushMaxBytes_) {
       flush = true;
     } else {
-      struct timeval current_time;
-      THRIFT_GETTIMEOFDAY(&current_time, NULL);
       if (std::chrono::steady_clock::now() > ts_next_flush) {
         if (unflushed > 0) {
           flush = true;
