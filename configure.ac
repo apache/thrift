@@ -161,18 +161,6 @@ if test "$with_cpp" = "yes";  then
   AX_LIB_ZLIB([1.2.3])
   have_zlib=$success
 
-  AX_THRIFT_LIB(qt4, [Qt], yes)
-  have_qt=no
-  if test "$with_qt4" = "yes";  then
-    PKG_CHECK_MODULES([QT], [QtCore >= 4.3, QtNetwork >= 4.3], have_qt=yes, have_qt=no)
-  fi
-  if test "$have_qt" = "yes"; then
-    AC_PATH_PROGS([QT_MOC], [moc-qt4 moc], "fail")
-    if test "$QT_MOC" = "fail"; then
-      have_qt=no
-    fi
-  fi
-
   AX_THRIFT_LIB(qt5, [Qt5], yes)
   have_qt5=no
   qt_reduce_reloc=""
@@ -191,7 +179,6 @@ fi
 AM_CONDITIONAL([WITH_CPP], [test "$have_cpp" = "yes"])
 AM_CONDITIONAL([AMX_HAVE_LIBEVENT], [test "$have_libevent" = "yes"])
 AM_CONDITIONAL([AMX_HAVE_ZLIB], [test "$have_zlib" = "yes"])
-AM_CONDITIONAL([AMX_HAVE_QT], [test "$have_qt" = "yes"])
 AM_CONDITIONAL([AMX_HAVE_QT5], [test "$have_qt5" = "yes"])
 AM_CONDITIONAL([QT5_REDUCE_RELOCATIONS], [test "x$qt_reduce_reloc" != "x"])
 
@@ -811,7 +798,6 @@ AC_CONFIG_FILES([
   lib/cpp/test/Makefile
   lib/cpp/thrift-nb.pc
   lib/cpp/thrift-z.pc
-  lib/cpp/thrift-qt.pc
   lib/cpp/thrift-qt5.pc
   lib/cpp/thrift.pc
   lib/c_glib/Makefile
@@ -971,7 +957,6 @@ if test "$have_cpp" = "yes" ; then
   echo "   C++ compiler .............. : $CXX"
   echo "   Build TZlibTransport ...... : $have_zlib"
   echo "   Build TNonblockingServer .. : $have_libevent"
-  echo "   Build TQTcpServer (Qt4) ... : $have_qt"
   echo "   Build TQTcpServer (Qt5) ... : $have_qt5"
   echo "   C++ compiler version ...... : $($CXX --version | head -1)"
 fi

@@ -231,6 +231,7 @@ Support for Boost at runtime was deprecated.
 
 ## 1.0.0
 
+THRIFT-4720:
 Support for C++03/C++98 has been dropped.  Use version 0.12.0 to support that
 language level.  As a consequence, boost is no longer required as a runtime
 library depenedency, but is is still required to build the runtime library
@@ -239,14 +240,19 @@ build dependency for folks who just want to build the runtime and not
 run the tests.  This means the header thrift/stdcxx.h has been removed and
 anything that relied on it has been changed to directly use C++11 concepts.
 
+THRIFT-4730:
 The classes BoostThreadFactory, PosixThreadFactory, StdThreadFactory, and
 PlatformThreadFactory have been removed, and we will use a ThreadFactory
 based on C++11 (essentially StdThreadFactory was renamed ThreadFactory).
 
+THRIFT-4732:
 The CMake build options WITH_SHARED_LIBS and WITH_STATIC_LIBS are deprecated.
 The project no longer performs a side-by-side static and shared build; you
 tell CMake through BUILD_SHARED_LIBS whether to make shared or static
 libraries now.  This is CMake standard behavior.
+
+THRIFT-4735:
+Qt4 support was removed.
 
 ## 0.11.0
 

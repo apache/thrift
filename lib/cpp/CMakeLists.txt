@@ -94,8 +94,7 @@ else()
     )
 endif()
 
-# If OpenSSL is not found just ignore the OpenSSL stuff
-find_package(OpenSSL)
+# If OpenSSL is not found or disabled just ignore the OpenSSL stuff
 if(OPENSSL_FOUND AND WITH_OPENSSL)
     list( APPEND thriftcpp_SOURCES
        src/thrift/transport/TSSLSocket.cpp
@@ -128,19 +127,13 @@ set( thriftcppnb_SOURCES
     src/thrift/async/TEvhttpClientChannel.cpp
 )
 
-# Thrift zlib server
+# Thrift zlib transport
 set( thriftcppz_SOURCES
     src/thrift/transport/TZlibTransport.cpp
     src/thrift/protocol/THeaderProtocol.cpp
     src/thrift/transport/THeaderTransport.cpp
     src/thrift/protocol/THeaderProtocol.cpp
     src/thrift/transport/THeaderTransport.cpp
-)
-
-# Thrift Qt4 server
-set( thriftcppqt_SOURCES
-    src/thrift/qt/TQIODeviceTransport.cpp
-    src/thrift/qt/TQTcpServer.cpp
 )
 
 # Contains the thrift specific ADD_LIBRARY_THRIFT and TARGET_LINK_LIBRARIES_THRIFT
@@ -171,24 +164,13 @@ if(WITH_ZLIB)
     TARGET_LINK_LIBRARIES_THRIFT_AGAINST_THRIFT_LIBRARY(thriftz thrift)
 endif()
 
-if(WITH_QT4)
-    set(CMAKE_AUTOMOC ON)
-    find_package(Qt4 REQUIRED COMPONENTS QtCore QtNetwork)
-    ADD_LIBRARY_THRIFT(thriftqt ${thriftcppqt_SOURCES})
-    TARGET_LINK_LIBRARIES_THRIFT(thriftqt ${SYSLIBS} Qt4::QtCore Qt4::QtNetwork)
-    TARGET_LINK_LIBRARIES_THRIFT_AGAINST_THRIFT_LIBRARY(thriftqt thrift)
-endif()
-
 if(WITH_QT5)
-    # Qt5 has its own directory to avoid conflict with Qt4 caused by CMAKE_AUTOMOC
     add_subdirectory(src/thrift/qt)
 endif()
 
 if(MSVC)
     add_definitions("-DUNICODE -D_UNICODE")
 endif()
-
-add_definitions("-D__STDC_LIMIT_MACROS")
 
 # Install the headers
 install(DIRECTORY "src/thrift" DESTINATION "${INCLUDE_INSTALL_DIR}"

@@ -171,7 +171,7 @@ char* saferealpath(const char* path, char* resolved_path) {
 #ifdef _WIN32
   char buf[MAX_PATH];
   char* basename;
-  DWORD len = GetFullPathName(path, MAX_PATH, buf, &basename);
+  DWORD len = GetFullPathNameA(path, MAX_PATH, buf, &basename);
   if (len == 0 || len > MAX_PATH - 1) {
     strcpy(resolved_path, path);
   } else {

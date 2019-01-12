@@ -336,18 +336,6 @@ add_test(NAME SecurityTest COMMAND SecurityTest -- "${CMAKE_CURRENT_SOURCE_DIR}/
 
 endif()
 
-if(WITH_QT4)
-set(CMAKE_AUTOMOC ON)
-find_package(Qt4 REQUIRED COMPONENTS QtTest)
-set(TQTcpServerTest_SOURCES
-    qt/TQTcpServerTest.cpp
-)
-add_executable(TQTcpServerTest ${TQTcpServerTest_SOURCES})
-target_link_libraries(TQTcpServerTest testgencpp_cob thriftqt Qt4::QtTest)
-LINK_AGAINST_THRIFT_LIBRARY(TQTcpServerTest thrift)
-add_test(NAME TQTcpServerTest COMMAND TQTcpServerTest)
-endif()
-
 if(WITH_QT5)
 add_subdirectory(qt)
 endif()

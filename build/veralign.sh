@@ -85,6 +85,7 @@ FILES[lib/rb/thrift.gemspec]=simpleReplace
 FILES[lib/rs/Cargo.toml]=simpleReplace
 FILES[lib/st/package.xml]=simpleReplace
 FILES[lib/swift/Sources/Thrift.swift]=simpleReplace
+FILES[lib/swift/Tests/ThriftTests/ThriftTests.swift]=simpleReplace
 FILES[package.json]=jsonReplace
 FILES[sonar-project.properties]=simpleReplace
 FILES[test/csharp/Properties/AssemblyInfo.cs]=simpleReplace

@@ -59,22 +59,18 @@ if(MSVC)
         foreach(CompilerFlag ${CompilerFlags})
           string(REPLACE "/MD" "/MT" ${CompilerFlag} "${${CompilerFlag}}")
         endforeach()
-        set(THRIFT_RUNTIME_POSTFIX "mt" CACHE STRING "Set static library postfix" FORCE)
+        set(THRIFT_RUNTIME_POSTFIX "mt" CACHE STRING "Set runtime library postfix" FORCE)
     else(WITH_MT)
-        set(THRIFT_RUNTIME_POSTFIX "md" CACHE STRING "Set static library postfix" FORCE)
+        set(THRIFT_RUNTIME_POSTFIX "md" CACHE STRING "Set runtime library postfix" FORCE)
     endif(WITH_MT)
 
     # Disable boost auto linking pragmas - cmake includes the right files
     add_definitions("-DBOOST_ALL_NO_LIB")
 
-    # Windows build does not know how to make a shared library yet
-    # as there are no __declspec(dllexport) or exports files in the project.
-    if (WITH_SHARED_LIB)
-      message (FATAL_ERROR "Windows build does not support shared library output yet, please set -DWITH_SHARED_LIB=off")
-    endif()
-
     add_definitions("/MP") # parallel build
     add_definitions("/W3") # warning level 3
+
+    add_definitions("-DUNICODE -D_UNICODE")
 elseif(UNIX)
   find_program( MEMORYCHECK_COMMAND valgrind )
   set( MEMORYCHECK_COMMAND_OPTIONS "--gen-suppressions=all --leak-check=full" )
