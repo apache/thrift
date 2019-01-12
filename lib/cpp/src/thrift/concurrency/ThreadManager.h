@@ -22,7 +22,6 @@
 
 #include <functional>
 #include <memory>
-#include <sys/types.h>
 #include <thrift/concurrency/ThreadFactory.h>
 
 namespace apache {
@@ -141,7 +140,7 @@ public:
    * Gets the number of tasks which have been expired without being run
    * since start() was called.
    */
-  virtual size_t expiredTaskCount() = 0;
+  virtual size_t expiredTaskCount() const = 0;
 
   /**
    * Adds a task to be executed at some time in the future by a worker thread.

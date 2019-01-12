@@ -63,7 +63,7 @@ public:
   /**
    * Whether this transport is open.
    */
-  virtual bool isOpen() { return false; }
+  virtual bool isOpen() const { return false; }
 
   /**
    * Tests whether there is more data to read or if the remote side is
@@ -73,7 +73,7 @@ public:
    * This is used by a server to check if it should listen for another
    * request.
    */
-  virtual bool peek() { return isOpen(); }
+  virtual bool peek() const { return isOpen(); }
 
   /**
    * Opens the transport for communications.
