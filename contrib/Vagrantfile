@@ -37,7 +37,7 @@ sudo DEBIAN_FRONTEND=noninteractive apt-get upgrade -qq -y
 # Install Dependencies
 # ---
 # General dependencies
-sudo apt-get install -qq automake libtool flex bison pkg-config g++ libssl-dev make libqt4-dev git debhelper
+sudo apt-get install -qq automake libtool flex bison pkg-config g++ libssl-dev make git debhelper
 
 # C++ dependencies
 sudo apt-get install -qq libboost-dev libboost-test-dev libboost-program-options-dev libboost-filesystem-dev libboost-system-dev libevent-dev 

@@ -62,16 +62,9 @@ if(WITH_CPP)
     find_package(Libevent QUIET)
     CMAKE_DEPENDENT_OPTION(WITH_LIBEVENT "Build with libevent support" ON
                            "Libevent_FOUND" OFF)
-    find_package(Qt4 QUIET COMPONENTS QtCore QtNetwork)
-    CMAKE_DEPENDENT_OPTION(WITH_QT4 "Build with Qt4 support" ON
-                           "QT4_FOUND" OFF)
     find_package(Qt5 QUIET COMPONENTS Core Network)
     CMAKE_DEPENDENT_OPTION(WITH_QT5 "Build with Qt5 support" ON
                            "Qt5_FOUND" OFF)
-    if(${WITH_QT4} AND ${WITH_QT5} AND ${CMAKE_MAJOR_VERSION} LESS 3)
-      # cmake < 3.0.0 causes conflict when building both Qt4 and Qt5
-      set(WITH_QT4 OFF)
-    endif()
     find_package(OpenSSL QUIET)
     CMAKE_DEPENDENT_OPTION(WITH_OPENSSL "Build with OpenSSL support" ON
                            "OPENSSL_FOUND" OFF)
@@ -185,7 +178,6 @@ if (BUILD_CPP)
     message(STATUS " Library features:")
     message(STATUS "  Build shared libraries:                     ${BUILD_SHARED_LIBS}")
     message(STATUS "  Build with libevent support:                ${WITH_LIBEVENT}")
-    message(STATUS "  Build with Qt4 support:                     ${WITH_QT4}")
     message(STATUS "  Build with Qt5 support:                     ${WITH_QT5}")
     message(STATUS "  Build with ZLIB support:                    ${WITH_ZLIB}")
 endif ()
