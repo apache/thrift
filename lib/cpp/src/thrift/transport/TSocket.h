@@ -81,26 +81,26 @@ public:
    *
    * @return Is the socket alive?
    */
-  virtual bool isOpen();
+  bool isOpen() const override;
 
   /**
    * Checks whether there is more data available in the socket to read.
    *
    * This call blocks until at least one byte is available or the socket is closed.
    */
-  virtual bool peek();
+  bool peek() override;
 
   /**
    * Creates and opens the UNIX socket.
    *
    * @throws TTransportException If the socket could not connect
    */
-  virtual void open();
+  void open() override;
 
   /**
    * Shuts down communications on the socket.
    */
-  virtual void close();
+  void close() override;
 
   /**
    * Determines whether there is pending data to read or not.

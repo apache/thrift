@@ -190,7 +190,7 @@ try_again:
   return numBytesAvailable > 0;
 }
 
-bool TSocket::isOpen() {
+bool TSocket::isOpen() const {
   return (socket_ != THRIFT_INVALID_SOCKET);
 }
 

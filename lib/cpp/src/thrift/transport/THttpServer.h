@@ -32,7 +32,7 @@ public:
 
   virtual ~THttpServer();
 
-  virtual void flush();
+  void flush() override;
 
 protected:
   void readHeaders();
@@ -53,7 +53,7 @@ public:
   /**
    * Wraps the transport into a buffered one.
    */
-  virtual std::shared_ptr<TTransport> getTransport(std::shared_ptr<TTransport> trans) {
+  std::shared_ptr<TTransport> getTransport(std::shared_ptr<TTransport> trans) override {
     return std::shared_ptr<TTransport>(new THttpServer(trans));
   }
 };

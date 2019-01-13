@@ -73,7 +73,7 @@ public:
    * This is used by a server to check if it should listen for another
    * request.
    */
-  virtual bool peek() const { return isOpen(); }
+  virtual bool peek() { return isOpen(); }
 
   /**
    * Opens the transport for communications.

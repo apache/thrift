@@ -60,9 +60,9 @@ public:
   virtual ~TPipeServer();
 
   // Standard transport callbacks
-  virtual void interrupt();
-  virtual void close();
-  virtual void listen();
+  void interrupt() override;
+  void close() override;
+  void listen() override;
 
   // Accessors
   std::string getPipename();
