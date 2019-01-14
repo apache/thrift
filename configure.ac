@@ -842,7 +842,7 @@ AC_CONFIG_FILES([
   lib/nodejs/Makefile
   lib/nodets/Makefile
   lib/perl/Makefile
-  lib/perl/test/Makefile
+  lib/perl/t/Makefile
   lib/php/Makefile
   lib/php/test/Makefile
   lib/dart/Makefile
