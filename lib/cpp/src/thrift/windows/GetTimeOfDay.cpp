@@ -25,12 +25,6 @@
   #include <sys/time.h>
 #endif
 
-#if defined(_MSC_VER) || defined(_MSC_EXTENSIONS)
-#define DELTA_EPOCH_IN_MICROSECS 11644473600000000Ui64
-#else
-#define DELTA_EPOCH_IN_MICROSECS 11644473600000000ULL
-#endif
-
 #if !defined(__MINGW32__)
 struct timezone {
   int tz_minuteswest; /* minutes W of Greenwich */
@@ -43,50 +37,45 @@ int thrift_gettimeofday(struct timeval* tv, struct timezone* tz) {
   return gettimeofday(tv,tz);
 }
 #else
-int thrift_gettimeofday(struct timeval* tv, struct timezone* tz) {
-  FILETIME ft;
-  unsigned __int64 tmpres(0);
-  static int tzflag;
+#define WIN32_LEAN_AND_MEAN
+#include <Winsock2.h>
+#include <cstdint>
+#include <sstream>
+#include <thrift/transport/TTransportException.h>
 
-  if (NULL != tv) {
-    GetSystemTimeAsFileTime(&ft);
+// This code started from a "FREE implementation" posted to Stack Overflow at:
+// https://stackoverflow.com/questions/10905892/equivalent-of-gettimeday-for-windows
+// added: assert
+// added: error handling
+// added: C++ style casts
+int thrift_gettimeofday(struct timeval * tp, struct timezone * tzp)
+{
+    // We don't fill it in so prove nobody is looking for the data
+    assert(tzp == NULL);
 
-    tmpres |= ft.dwHighDateTime;
-    tmpres <<= 32;
-    tmpres |= ft.dwLowDateTime;
+    // Note: some broken versions only have 8 trailing zero's, the correct epoch has 9 trailing zero's
+    // This magic number is the number of 100 nanosecond intervals since January 1, 1601 (UTC)
+    // until 00:00:00 January 1, 1970 
+    static const uint64_t EPOCH = static_cast<uint64_t>(116444736000000000ULL);
 
-    /*converting file time to unix epoch*/
-    tmpres -= DELTA_EPOCH_IN_MICROSECS;
-    tmpres /= 10; /*convert into microseconds*/
-    tv->tv_sec = (long)(tmpres / 1000000UL);
-    tv->tv_usec = (long)(tmpres % 1000000UL);
-  }
+    SYSTEMTIME  system_time;
+    FILETIME    file_time;
+    uint64_t    time;
 
-  if (NULL != tz) {
-    if (!tzflag) {
-      _tzset();
-      tzflag++;
+    GetSystemTime( &system_time );
+    if (!SystemTimeToFileTime( &system_time, &file_time )) {
+      DWORD lastError = GetLastError();
+      std::stringstream ss;
+      ss << "SystemTimeToFileTime failed: 0x" << std::hex << lastError;
+      using apache::thrift::transport::TTransportException;
+      throw TTransportException(TTransportException::INTERNAL_ERROR, ss.str());
     }
+    time =  static_cast<uint64_t>(file_time.dwLowDateTime )      ;
+    time += static_cast<uint64_t>(file_time.dwHighDateTime) << 32;
 
-    long time_zone(0);
-    errno_t err(_get_timezone(&time_zone));
-    if (err == NO_ERROR) {
-      tz->tz_minuteswest = time_zone / 60;
-    } else {
-      return -1;
-    }
-
-    int day_light(0);
-    err = (_get_daylight(&day_light));
-    if (err == NO_ERROR) {
-      tz->tz_dsttime = day_light;
-      return 0;
-    } else {
-      return -1;
-    }
-  }
-
-  return 0;
+    tp->tv_sec  = static_cast<long>((time - EPOCH) / 10000000L);
+    tp->tv_usec = static_cast<long>(system_time.wMilliseconds * 1000);
+    return 0;
 }
 #endif
 
