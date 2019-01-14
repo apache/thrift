@@ -28,7 +28,6 @@ the Thrift Software License (see doc/old-thrift-license.txt), and relicensed
 under the Apache 2.0 License:
 
   compiler/cpp/Makefile.am
-  compiler/cpp/src/generate/t_cocoa_generator.cc
   compiler/cpp/src/generate/t_cpp_generator.cc
   compiler/cpp/src/generate/t_csharp_generator.cc
   compiler/cpp/src/generate/t_erl_generator.cc
