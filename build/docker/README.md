@@ -174,7 +174,6 @@ Last updated: October 1, 2017
 | C# (mono) | 4.2.1.0       | 4.6.2.7       |       |
 | c_glib    | 2.48.2        | 2.56.0        |       |
 | cl (sbcl) |               | 1.4.15        |       |
-| cocoa     |               |               | Not in CI |
 | d         | 2.075.1       | 2.083.1       |       |
 | dart      | 1.22.1        | 1.24.3        |       |
 | delphi    |               |               | Not in CI |

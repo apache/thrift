@@ -58,8 +58,8 @@ BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 Thrift is a software framework for scalable cross-language services
 development. It combines a powerful software stack with a code generation
 engine to build services that work efficiently and seamlessly between C++,
-Java, C#, Python, Ruby, Perl, PHP, Objective C/Cocoa, Smalltalk, Erlang,
-Objective Caml, and Haskell.
+Java, C#, Python, Ruby, Perl, PHP, Smalltalk, Erlang, OCaml, Haskell, and
+other languages.
 
 %files
 %defattr(-,root,root)

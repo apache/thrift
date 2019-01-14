@@ -110,7 +110,6 @@ endif
 # so they will end up in our release tarballs.
 EXTRA_DIST = \
 	as3 \
-	cocoa \
 	d \
 	dart \
 	delphi \
