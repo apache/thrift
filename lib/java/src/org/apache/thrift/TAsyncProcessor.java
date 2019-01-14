@@ -21,8 +21,13 @@ package org.apache.thrift;
 import org.apache.thrift.server.AbstractNonblockingServer.AsyncFrameBuffer;
 
 public interface TAsyncProcessor {
-    /**
-     * Implementations must call fb.responseReady() once processing is complete
-     */
-    public boolean process(final AsyncFrameBuffer fb) throws TException;
+  /**
+   * Process a single frame.
+   
+   * <b>Note:</b> Implementations must call fb.responseReady() once processing
+   * is complete
+   *
+   * @throws TException if the frame cannot be processed
+   */
+  public void process(final AsyncFrameBuffer fb) throws TException;
 }

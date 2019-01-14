@@ -164,6 +164,11 @@ http://gradle.org/
 
 # Breaking Changes
 
+## 1.0
+
+The signature of the 'process' method in TAsyncProcessor and TProcessor has
+changed to remove a boolean return type and to instead rely on Exceptions.
+
 ## 0.12.0
 
 The access modifier of the AutoExpandingBuffer class has been changed from

@@ -307,9 +307,10 @@ public class TThreadPoolServer extends TServer {
               eventHandler.processContext(connectionContext, inputTransport, outputTransport);
             }
 
-            if(stopped_ || !processor.process(inputProtocol, outputProtocol)) {
+            if (stopped_) {
               break;
             }
+            processor.process(inputProtocol, outputProtocol);
         }
       } catch (TException tx) {
         LOGGER.error("Thrift error occurred during processing of message.", tx);
