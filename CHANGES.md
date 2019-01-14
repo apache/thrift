@@ -3,18 +3,25 @@
 ## 1.0.0
 
 ### New Languages
+
 ### Deprecated Languages
+
 ### Removed Languages
+
+- [THRIFT-4719](https://issues.apache.org/jira/browse/THRIFT-4719) - Cocoa language was removed - use swift instead.
+
 ### Breaking Changes
+
 - [THRIFT-4702](https://issues.apache.org/jira/browse/THRIFT-4702) - Java class org.apache.thrift.AutoExpandingBuffer is no longer public
 - [THRIFT-4709](https://issues.apache.org/jira/browse/THRIFT-4709) - Java changes to UTF-8 handling require JDK 1.7 at a minimum
 - [THRIFT-4712](https://issues.apache.org/jira/browse/THRIFT-4712) - Java class org.apache.thrift.ShortStack is no longer public
 - [THRIFT-4720](https://issues.apache.org/jira/browse/THRIFT-4720) - C++03/C++98 support has been removed; also removed boost as a runtime dependency
 - [THRIFT-4730](https://issues.apache.org/jira/browse/THRIFT-4730) - C++: BoostThreadFactory, PosixThreadFactory, StdThreadFactory removed
 - [THRIFT-4732](https://issues.apache.org/jira/browse/THRIFT-4732) - C++: CMake build changed to use BUILD_SHARED_LIBS
-- [THRIFT-4735](https://issues.apache.org/jira/browse/THRIFT-4735] - C++: Removed Qt4 support
+- [THRIFT-4735](https://issues.apache.org/jira/browse/THRIFT-4735) - C++: Removed Qt4 support
 
 ### Known Isues (Blocker or Critical)
+
 
 ## 0.12.0
 
