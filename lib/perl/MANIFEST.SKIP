@@ -8,6 +8,7 @@ Makefile
 Makefile.am
 Makefile.in
 pm_to_blib
-test/Makefile.am
-test/Makefile.in
+t/Makefile
+t/Makefile.am
+t/Makefile.in
 tools/FixupDist.pl
