@@ -17,7 +17,7 @@
 # under the License.
 #
 
-SUBDIRS = test
+SUBDIRS = t
 
 Makefile-perl.mk : Makefile.PL
 	$(PERL) Makefile.PL MAKEFILE=Makefile-perl.mk INSTALLDIRS=$(INSTALLDIRS) INSTALL_BASE=$(PERL_PREFIX)
@@ -95,7 +95,7 @@ BUILT_SOURCES = $(PERL_GEN)
 
 check-local: $(PERL_GEN)
 	$(PERL) -Iblib/lib -I@abs_srcdir@ -I@builddir@/gen-perl2 -I@builddir@/gen-perl \
-		@abs_srcdir@/test.pl @abs_srcdir@/test/*.t
+		@abs_srcdir@/test.pl @abs_srcdir@/t/*.t
 
 $(THRIFTTEST_GEN): $(THRIFT_IF) $(THRIFT)
 	$(THRIFT) --gen perl $<

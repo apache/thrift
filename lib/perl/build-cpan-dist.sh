@@ -12,9 +12,10 @@ rm -rf Thrift-*
 
 # setup cpan without a prompt
 echo | cpan
-cpan install HTTP::Date
+cpan install HTTP::Date Log::Log4perl
 cpan install CPAN
 cpan install CPAN::Meta ExtUtils::MakeMaker JSON::PP
+# cpan install Module::Signature
 
 perl Makefile.PL
 rm MYMETA.yml
@@ -47,6 +48,8 @@ if [[ "$DISTDIR" != "$NEWDIR" ]]; then
 fi
 cd $DISTDIR
 cp -p ../Makefile.PL .
+cp -pr ../gen-perl .
+cp -pr ../gen-perl2 .
 perl ../tools/FixupDist.pl
 cd ..
 tar cvzf $DISTFILE $DISTDIR

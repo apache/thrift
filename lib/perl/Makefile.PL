@@ -33,4 +33,17 @@ WriteMakefile( ABSTRACT => 'Apache Thrift is a software framework for scalable c
                    'Bit::Vector'     => 0,
                    'Class::Accessor' => 0
                },
+#              SIGN => 1,
                VERSION_FROM => 'lib/Thrift.pm' );
+
+# THRIFT-4691
+package MY; # so that "SUPER" works right
+sub test {
+    # Adds gen-perl and gen-perl2 to the test execution as include paths
+    # Could not find anything in MakeMaker that would do this...
+    my @result;
+    for (@result = shift->SUPER::test(@_)) {
+        s/\$\(TEST_FILES\)/-Igen-perl -Igen-perl2 \$(TEST_FILES)/ig;
+    }
+    @result;
+}
