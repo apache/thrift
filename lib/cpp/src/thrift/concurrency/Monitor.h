@@ -74,7 +74,7 @@ public:
    */
   int waitForTimeRelative(const std::chrono::milliseconds &timeout) const;
 
-  int waitForTimeRelative(int64_t timeout_ms) const { return waitForTimeRelative(std::chrono::milliseconds(timeout_ms)); }
+  int waitForTimeRelative(uint64_t timeout_ms) const { return waitForTimeRelative(std::chrono::milliseconds(timeout_ms)); }
 
   /**
    * Waits until the absolute time specified by abstime.
@@ -97,7 +97,7 @@ public:
    */
   void wait(const std::chrono::milliseconds &timeout) const;
 
-  void wait(int64_t timeout_ms = 0LL) const { this->wait(std::chrono::milliseconds(timeout_ms)); }
+  void wait(uint64_t timeout_ms = 0ULL) const { this->wait(std::chrono::milliseconds(timeout_ms)); }
 
   /** Wakes up one thread waiting on this monitor. */
   virtual void notify() const;
