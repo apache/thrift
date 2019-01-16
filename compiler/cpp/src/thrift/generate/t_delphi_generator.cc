@@ -670,9 +670,7 @@ void t_delphi_generator::create_keywords() {
   delphi_reserved_method["instancesize"] = 1;
   delphi_reserved_method["inheritsfrom"] = 1;
   delphi_reserved_method["methodaddress"] = 1;
-  delphi_reserved_method["methodaddress"] = 1;
   delphi_reserved_method["methodname"] = 1;
-  delphi_reserved_method["fieldaddress"] = 1;
   delphi_reserved_method["fieldaddress"] = 1;
   delphi_reserved_method["getinterface"] = 1;
   delphi_reserved_method["getinterfaceentry"] = 1;

@@ -1285,7 +1285,7 @@ void TNonblockingIOThread::registerEvents() {
 }
 
 bool TNonblockingIOThread::notify(TNonblockingServer::TConnection* conn) {
-  THRIFT_SOCKET fd = getNotificationSendFD();
+  auto fd = getNotificationSendFD();
   if (fd < 0) {
     return false;
   }

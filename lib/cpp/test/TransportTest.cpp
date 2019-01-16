@@ -726,9 +726,7 @@ void test_read_none_available() {
   BOOST_REQUIRE(transports.in != NULL);
   BOOST_REQUIRE(transports.out != NULL);
 
-  uint8_t write_buf[16];
   uint8_t read_buf[16];
-  memset(write_buf, 'a', sizeof(write_buf));
 
   // Attempting to read when no data is available should either block until
   // some data is available, or fail immediately.  (e.g., TSocket blocks,
