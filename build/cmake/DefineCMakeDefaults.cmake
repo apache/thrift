@@ -34,16 +34,11 @@ set(CMAKE_INCLUDE_DIRECTORIES_PROJECT_BEFORE ON)
 # since cmake 2.4.0
 set(CMAKE_COLOR_MAKEFILE ON)
 
-# Set the default build type to release with debug info
-if (NOT CMAKE_BUILD_TYPE)
-  set(CMAKE_BUILD_TYPE RelWithDebInfo
-    CACHE STRING
-      "Choose the type of build, options are: None Debug Release RelWithDebInfo MinSizeRel."
-  )
-endif (NOT CMAKE_BUILD_TYPE)
-
 # Create the compile command database for clang by default
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
+# Set the CMAKE_BUILD_TYPE if it is not already defined
+include(BuildType)
 
 # Put the libraries and binaries that get built into directories at the
 # top of the build tree rather than in hard-to-find leaf

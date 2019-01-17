@@ -60,7 +60,7 @@ endforeach()
 
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
     set(hs_optimize -O0)
-elseif(CMAKE_BUILD_TYPE STREQUAL "Release")
+else()
     set(hs_optimize -O1)
 endif()
 
