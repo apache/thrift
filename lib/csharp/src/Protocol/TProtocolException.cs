@@ -43,7 +43,7 @@ namespace Thrift.Protocol
         }
 
         public TProtocolException(int type, Exception inner = null)
-            : base(inner)
+            : base(string.Empty,inner)
         {
             type_ = type;
         }
