@@ -562,7 +562,7 @@
   {
     "name": "dart",
     "client": {
-      "timeout": 15,
+      "timeout": 20,
       "transports": [
         "buffered",
         "framed",
@@ -578,8 +578,9 @@
       ],
       "command": [
         "dart",
-	"--enable-asserts",
-        "test_client/bin/main.dart"
+	"--checked",
+        "test_client/bin/main.dart",
+	"--verbose"
       ]
     },
     "workdir": "dart"

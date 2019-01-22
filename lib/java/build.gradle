@@ -20,13 +20,14 @@
 // Using the legacy plugin classpath for Clover so it can be loaded optionally
 buildscript {
     repositories {
+        mavenCentral()
         google()
         jcenter()
         gradlePluginPortal()
     }
 
     dependencies {
-        classpath 'com.bmuschko:gradle-clover-plugin:2.2.0'
+        classpath 'com.bmuschko:gradle-clover-plugin:2.2.1'
     }
 }
 
@@ -34,7 +35,7 @@ plugins {
     id 'java'
     id 'maven'
     id 'signing'
-    id 'com.github.johnrengelman.shadow' version '2.0.2'
+    id 'com.github.johnrengelman.shadow' version '4.0.4'
 }
 
 description = 'Apache Thrift Java Library'
@@ -44,12 +45,10 @@ defaultTasks 'build'
 // Version components for this project
 group = property('thrift.groupid')
 
-// Drop the -dev suffix, we use the SNAPSHOT suffix for non-release versions
-def parsedVersion = property('thrift.version').toString().replace('-dev', '')
 if (Boolean.parseBoolean(project.release)) {
-    version = parsedVersion
+    version = property('thrift.version')
 } else {
-    version = parsedVersion + '-SNAPSHOT'
+    version = property('thrift.version') + '-SNAPSHOT'
 }
 
 // Keeping the rest of the build logic in functional named scripts for clarity

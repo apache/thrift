@@ -120,7 +120,7 @@ ArgResults _parseArgs(List<String> args) {
         'compact': 'TCompactProtocol',
         'json': 'TJsonProtocol'
       });
-  parser.addFlag('verbose', defaultsTo: false);
+  parser.addFlag('verbose', defaultsTo: true);
 
   ArgResults results;
   try {
