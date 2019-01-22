@@ -1254,10 +1254,10 @@ void t_csharp_generator::generate_csharp_union_definition(std::ostream& out, t_s
   indent_up();
 
   indent(out) << "public abstract void Write(TProtocol protocol);" << endl;
-  indent(out) << "public readonly bool Isset;" << endl;
+  indent(out) << "public readonly int Isset;" << endl;
   indent(out) << "public abstract object Data { get; }" << endl;
 
-  indent(out) << "protected " << tunion->get_name() << "(bool isset) {" << endl;
+  indent(out) << "protected " << tunion->get_name() << "(int isset) {" << endl;
   indent_up();
   indent(out) << "Isset = isset;" << endl;
   indent_down();
@@ -1268,7 +1268,7 @@ void t_csharp_generator::generate_csharp_union_definition(std::ostream& out, t_s
 
   indent(out) << "public override object Data { get { return null; } }" << endl;
 
-  indent(out) << "public ___undefined() : base(false) {}" << endl << endl;
+  indent(out) << "public ___undefined() : base(0) {}" << endl << endl;
 
   indent(out) << "public override void Write(TProtocol protocol) {" << endl;
   indent_up();
@@ -1298,13 +1298,27 @@ void t_csharp_generator::generate_csharp_union_definition(std::ostream& out, t_s
 void t_csharp_generator::generate_csharp_union_class(std::ostream& out,
                                                      t_struct* tunion,
                                                      t_field* tfield) {
+  indent(out) << "public " << type_name(tfield->get_type()) << " As_" << tfield->get_name() << endl;
+  indent(out) << "{" << endl;
+  indent_up();
+  indent(out) << "get" << endl;
+  indent(out) << "{" << endl;
+  indent_up();
+  indent(out) << "return (" << tfield->get_key() << " == Isset) ? (" << type_name(tfield->get_type()) << ")Data : default(" << type_name(tfield->get_type()) << ");" << endl;
+  indent_down();
+  indent(out) << "}" << endl;
+  indent_down();
+  indent(out) << "}" << endl
+      << endl;
+	
+	
   indent(out) << "public class " << tfield->get_name() << " : " << tunion->get_name() << " {"
               << endl;
   indent_up();
   indent(out) << "private " << type_name(tfield->get_type()) << " _data;" << endl;
   indent(out) << "public override object Data { get { return _data; } }" << endl;
   indent(out) << "public " << tfield->get_name() << "(" << type_name(tfield->get_type())
-              << " data) : base(true) {" << endl;
+              << " data) : base("<< tfield->get_key() <<") {" << endl;
   indent_up();
   indent(out) << "this._data = data;" << endl;
   indent_down();
