@@ -70,7 +70,6 @@ jobs:
     # ------------------------- phase: cross ------------------------
     - stage: thrift
       script: build/docker/run.sh
-      if: repo != apache/thrift
       env:
         - JOB="Cross Language Tests (Binary Protocol)"
         - SCRIPT="cross-test.sh"
@@ -78,7 +77,6 @@ jobs:
 
     - stage: thrift
       script: build/docker/run.sh
-      if: repo != apache/thrift
       env:
         - JOB="Cross Language Tests (Header, JSON Protocols)"
         - SCRIPT="cross-test.sh"
@@ -86,7 +84,6 @@ jobs:
 
     - stage: thrift
       script: build/docker/run.sh
-      if: repo != apache/thrift
       env:
         - JOB="Cross Language Tests (Compact and Multiplexed Protocols)"
         - SCRIPT="cross-test.sh"
