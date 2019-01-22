@@ -19,6 +19,7 @@
  /* jshint -W100 */
 
 var Int64 = require("node-int64");
+var JSONInt64 = require("json-int64");
 import { Int64Test } from "./gen-js/Int64Test_types";
 
 
@@ -89,6 +90,12 @@ QUnit.module('Int64');
     for (let i = 0; i < EXPECTED_INT64_LIST.length; ++i) {
       assert.ok(EXPECTED_INT64_LIST[i].equals(Int64Test.INT64_LIST[i]));
     }
+
+    for (let i = 0; i < EXPECTED_INT64_LIST.length; ++i){
+      let int64Object = EXPECTED_INT64_LIST[i];
+      assert.ok(Int64Test.INT64_2_INT64_MAP[JSONInt64.toDecimalString(int64Object)].equals(int64Object));
+    }
+
     console.log('Int64 test -- ends');
   });
 

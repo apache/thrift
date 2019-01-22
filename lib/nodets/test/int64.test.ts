@@ -18,6 +18,7 @@
  */
 
 import Int64 = require("node-int64");
+import JSONInt64 = require('json-int64');
 import i64types = require("./gen-nodejs/Int64Test_types");
 import test = require("tape");
 
@@ -72,6 +73,12 @@ const cases = {
     for (let i = 0; i < EXPECTED_INT64_LIST.length; ++i) {
       assert.ok(EXPECTED_INT64_LIST[i].equals(i64types.INT64_LIST[i]));
     }
+
+    for (let i = 0; i < EXPECTED_INT64_LIST.length; ++i){
+      let int64Object = EXPECTED_INT64_LIST[i];
+      assert.ok(i64types.INT64_2_INT64_MAP[JSONInt64.toDecimalString(int64Object)].equals(int64Object));
+    }
+
     assert.end();
   }
 };
