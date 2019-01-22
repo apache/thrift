@@ -18,6 +18,7 @@
 #
 
 if(ANDROID)
+
     set(THRIFT_AAR outputs/aar/thrift-debug.aar outputs/aar/thrift-release.aar)
     add_custom_command(
         OUTPUT ${THRIFT_AAR}
@@ -27,7 +28,7 @@ if(ANDROID)
     )
     add_custom_target(thrift_aar ALL DEPENDS ${THRIFT_AAR})
 
-else(ANDROID)
+else()
 
     if(IS_ABSOLUTE "${LIB_INSTALL_DIR}")
         set(JAVA_INSTALL_DIR "${LIB_INSTALL_DIR}/java")
@@ -41,11 +42,16 @@ else(ANDROID)
         set(JAVA_DOC_INSTALL_DIR "${CMAKE_INSTALL_PREFIX}/${DOC_INSTALL_DIR}/java")
     endif()
 
+    set(PRELEASE "true")
+    if (CMAKE_BUILD_TYPE MATCHES DEBUG)
+        set(PRELEASE "false")
+    endif ()
+
     add_custom_target(ThriftJava ALL
         COMMENT "Building Java library using Gradle Wrapper"
         COMMAND ${GRADLEW_EXECUTABLE} ${GRADLE_OPTS} assemble
             --console=plain --no-daemon
-            -Prelease=true
+            -Prelease=${PRELEASE}
             -Pthrift.version=${thrift_VERSION}
             "-Pbuild.dir=${CMAKE_CURRENT_BINARY_DIR}/build"
         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
@@ -56,7 +62,7 @@ else(ANDROID)
         COMMENT "Publishing Java Library to Apache Maven staging"
         COMMAND ${GRADLEW_EXECUTABLE} ${GRADLE_OPTS} clean uploadArchives
             --console=plain --no-daemon
-            -Prelease=true
+            -Prelease=${PRELEASE}
             -Pthrift.version=${thrift_VERSION}
             "-Pbuild.dir=${CMAKE_CURRENT_BINARY_DIR}/build"
         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
@@ -78,10 +84,11 @@ else(ANDROID)
         add_test(NAME JavaTest
                 COMMAND ${GRADLEW_EXECUTABLE} ${GRADLE_OPTS} test
                     --console=plain --no-daemon
-                    -Prelease=true
+                    -Prelease=${PRELEASE}
                     -Pthrift.version=${thrift_VERSION}
                     "-Pbuild.dir=${CMAKE_CURRENT_BINARY_DIR}/build"
                     "-Pthrift.compiler=${THRIFT_COMPILER}"
                 WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
     endif()
-endif(ANDROID)
+
+endif()
