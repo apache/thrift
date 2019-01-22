@@ -51,3 +51,12 @@ func TestOptionalTag(t *testing.T) {
 		t.Error("Unexpected default tag value for optional field")
 	}
 }
+
+func TestOptionalTagWithDefaultValue(t *testing.T) {
+	s := gotagtest.Tagged{}
+	st := reflect.TypeOf(s)
+	field, ok := st.FieldByName("OptionalBoolThing")
+	if !ok || field.Tag.Get("json") != "optional_bool_thing" {
+		t.Error("Unexpected default tag value for optional field that has a default value")
+	}
+}

@@ -1338,7 +1338,13 @@ void t_go_generator::generate_go_struct_definition(ostream& out,
       t_type* fieldType = (*m_iter)->get_type();
       string goType = type_to_go_type_with_opt(fieldType, is_pointer_field(*m_iter));
       string gotag = "db:\"" + escape_string((*m_iter)->get_name())  + "\" ";
-      if ((*m_iter)->get_req() == t_field::T_OPTIONAL) {
+
+      // Only add the `omitempty` tag if this field is optional and has no default value.
+      // Otherwise a proper value like `false` for a bool field will be ommitted from
+      // the JSON output since Go Marshal won't output `zero values`.
+      bool has_default = (*m_iter)->get_value();
+      bool is_optional = (*m_iter)->get_req() == t_field::T_OPTIONAL;
+      if (is_optional && !has_default) {
         gotag += "json:\"" + escape_string((*m_iter)->get_name()) + ",omitempty\"";
       } else {
         gotag += "json:\"" + escape_string((*m_iter)->get_name()) + "\"";
