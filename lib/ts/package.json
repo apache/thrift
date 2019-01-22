@@ -23,7 +23,7 @@
   "dependencies": {
     "bufferutil": "^4.0.1",
     "jsdoc": "^3.5.5",
-    "json-int64": "^0.0.3",
+    "json-int64": "^1.0.0",
     "nopt": "^4.0.1"
   },
   "types": "./thrift.d.ts"

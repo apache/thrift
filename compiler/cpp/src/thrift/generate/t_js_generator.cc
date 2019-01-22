@@ -676,8 +676,12 @@ string t_js_generator::render_const_value(t_type* type, t_const_value* value) {
     for (v_iter = val.begin(); v_iter != val.end(); ++v_iter) {
       if (v_iter != val.begin())
         out << "," << endl;
-
-      out << indent() << render_const_value(ktype, v_iter->first);
+      
+      if (ktype->is_base_type() && ((t_base_type*)get_true_type(ktype))->get_base() == t_base_type::TYPE_I64){
+        out << indent() << "\"" << v_iter->first->get_integer() << "\"";
+      } else {
+        out << indent() << render_const_value(ktype, v_iter->first);
+      }
 
       out << " : ";
       out << render_const_value(vtype, v_iter->second);
