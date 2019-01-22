@@ -196,6 +196,7 @@ project.lock.json
 /lib/d/test/transport_test
 /lib/d/unittest/
 /lib/dart/coverage
+/lib/dart/**/.dart_tool
 /lib/dart/**/.packages
 /lib/dart/**/packages
 /lib/dart/**/.pub/
@@ -305,6 +306,7 @@ project.lock.json
 /test/cpp/TestServer
 /test/csharp/obj
 /test/csharp/bin
+/test/dart/**/.dart_tool
 /test/dart/**/.packages
 /test/dart/**/packages
 /test/dart/**/.pub/

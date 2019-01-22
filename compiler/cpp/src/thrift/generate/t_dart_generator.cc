@@ -423,7 +423,7 @@ void t_dart_generator::generate_dart_pubspec() {
 
   indent(f_pubspec) << "environment:" << endl;
   indent_up();
-  indent(f_pubspec) << "sdk: ^1.12.0" << endl;
+  indent(f_pubspec) << "sdk: '>=1.24.3 <3.0.0'" << endl;
   indent_down();
   f_pubspec << endl;
 

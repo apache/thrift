@@ -26,7 +26,7 @@ class TDeserializer {
     this.transport = new TBufferedTransport();
     
     if (protocolFactory == null) {
-        protocolFactory = new TBinaryProtocolFactory();
+      protocolFactory = new TBinaryProtocolFactory();
     }
     
     this.protocol = protocolFactory.getProtocol(this.transport);
@@ -41,8 +41,8 @@ class TDeserializer {
   }
 
   void readString(TBase base, String data) {
-    transport.writeAll(BASE64.decode(data));
     
+    transport.writeAll(base64.decode(data));
     transport.flush();
 
     base.read(protocol);

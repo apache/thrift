@@ -43,6 +43,6 @@ class TSerializer {
     
     Uint8List bytes = transport.consumeWriteBuffer();
     
-    return BASE64.encode(bytes);
+    return base64.encode(bytes);
   }
 }

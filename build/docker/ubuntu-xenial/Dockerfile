@@ -14,7 +14,7 @@
 # Apache Thrift Docker build environment for Ubuntu Xenial
 # Using all stock Ubuntu Xenial packaging except for:
 # - d: does not come with Ubuntu so we're installing 2.075.1 for coverage
-# - dart: does not come with Ubuntu so we're installing 1.22.1 for coverage
+# - dart: does not come with Ubuntu so we're installing 1.24.3 for coverage
 # - dotnet: does not come with Ubuntu
 # - go: Xenial comes with 1.6, but we need 1.7 or later
 # - nodejs: Xenial comes with 4.2.6 which exits LTS April 2018, so we're installing 6.x
@@ -50,7 +50,6 @@ RUN apt-key adv --keyserver keyserver.ubuntu.com --recv-keys EBCF975E5BA24D5E &&
 RUN curl https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - && \
     curl https://storage.googleapis.com/download.dartlang.org/linux/debian/dart_stable.list > \
       /etc/apt/sources.list.d/dart_stable.list
-ENV DART_VERSION 1.22.1-1
 
 # dotnet (core)
 RUN curl https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor > /etc/apt/trusted.gpg.d/microsoft.gpg && \
@@ -120,6 +119,7 @@ RUN curl -sSL https://github.com/D-Programming-Deimos/openssl/archive/v1.1.6+1.0
     mv openssl-1.1.6-1.0.1g/C/* /usr/include/dmd/druntime/import/C/ && \
     rm -rf openssl-1.1.6-1.0.1g
 
+ENV DART_VERSION 1.24.3-1
 RUN apt-get install -y --no-install-recommends \
 `# Dart dependencies` \
       dart=$DART_VERSION
@@ -127,7 +127,7 @@ ENV PATH /usr/lib/dart/bin:$PATH
 
 RUN apt-get install -y --no-install-recommends \
 `# dotnet core dependencies` \
-      dotnet-sdk-2.1.4
+      dotnet-sdk-2.1
 
 RUN apt-get install -y --no-install-recommends \
 `# Erlang dependencies` \
