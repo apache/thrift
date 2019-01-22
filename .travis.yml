@@ -68,15 +68,6 @@ jobs:
 
     # ========================= stage: thrift =======================
     # ------------------------- phase: cross ------------------------
-    # apache/thrift official PR builds can exceed 50 minutes per job so combine all cross tests
-    - stage: thrift
-      script: build/docker/run.sh
-      if: repo = apache/thrift
-      env:
-        - JOB="Cross Language Tests"
-        - SCRIPT="cross-test.sh"
-
-    # fork based PR builds cannot exceed 50 minutes per job
     - stage: thrift
       script: build/docker/run.sh
       if: repo != apache/thrift
