@@ -103,8 +103,8 @@ public:
   
   int getListenPort();
 
-  void listen();
-  void close();
+  void listen() override;
+  void close() override;
 
 protected:
   std::shared_ptr<TSocket> acceptImpl();

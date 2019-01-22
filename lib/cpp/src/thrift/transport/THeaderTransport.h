@@ -103,7 +103,7 @@ public:
   }
 
   virtual uint32_t readSlow(uint8_t* buf, uint32_t len);
-  virtual void flush();
+  void flush() override;
 
   void resizeTransformBuffer(uint32_t additionalSize = 0);
 
@@ -264,7 +264,7 @@ public:
   /**
    * Wraps the transport into a header one.
    */
-  virtual std::shared_ptr<TTransport> getTransport(std::shared_ptr<TTransport> trans) {
+  std::shared_ptr<TTransport> getTransport(std::shared_ptr<TTransport> trans) override {
     return std::shared_ptr<TTransport>(new THeaderTransport(trans));
   }
 };

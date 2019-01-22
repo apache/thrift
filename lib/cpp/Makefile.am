@@ -67,7 +67,6 @@ libthrift_la_SOURCES = src/thrift/TApplicationException.cpp \
                        src/thrift/async/TConcurrentClientSyncInfo.cpp \
                        src/thrift/concurrency/ThreadManager.cpp \
                        src/thrift/concurrency/TimerManager.cpp \
-                       src/thrift/concurrency/Util.cpp \
                        src/thrift/processor/PeekProcessor.cpp \
                        src/thrift/protocol/TDebugProtocol.cpp \
                        src/thrift/protocol/TJSONProtocol.cpp \
@@ -155,8 +154,7 @@ include_concurrency_HEADERS = \
                          src/thrift/concurrency/Thread.h \
                          src/thrift/concurrency/ThreadManager.h \
                          src/thrift/concurrency/TimerManager.h \
-                         src/thrift/concurrency/FunctionRunner.h \
-                         src/thrift/concurrency/Util.h
+                         src/thrift/concurrency/FunctionRunner.h
 
 include_protocoldir = $(include_thriftdir)/protocol
 include_protocol_HEADERS = \

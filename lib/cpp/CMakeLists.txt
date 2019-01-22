@@ -36,7 +36,6 @@ set( thriftcpp_SOURCES
    src/thrift/async/TConcurrentClientSyncInfo.cpp
    src/thrift/concurrency/ThreadManager.cpp
    src/thrift/concurrency/TimerManager.cpp
-   src/thrift/concurrency/Util.cpp
    src/thrift/processor/PeekProcessor.cpp
    src/thrift/protocol/TBase64Utils.cpp
    src/thrift/protocol/TDebugProtocol.cpp

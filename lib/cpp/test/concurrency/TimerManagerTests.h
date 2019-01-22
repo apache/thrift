@@ -20,7 +20,6 @@
 #include <thrift/concurrency/TimerManager.h>
 #include <thrift/concurrency/ThreadFactory.h>
 #include <thrift/concurrency/Monitor.h>
-#include <thrift/concurrency/Util.h>
 
 #include <assert.h>
 #include <iostream>
@@ -37,9 +36,9 @@ class TimerManagerTests {
 public:
   class Task : public Runnable {
   public:
-    Task(Monitor& monitor, int64_t timeout)
+    Task(Monitor& monitor, uint64_t timeout)
       : _timeout(timeout),
-        _startTime(Util::currentTime()),
+        _startTime(std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch()).count()),
         _endTime(0),
         _monitor(monitor),
         _success(false),
@@ -49,7 +48,7 @@ public:
 
     void run() {
 
-      _endTime = Util::currentTime();
+      _endTime = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch()).count();
       _success = (_endTime - _startTime) >= _timeout;
 
       {
@@ -73,7 +72,7 @@ public:
    * properly clean up itself and the remaining orphaned timeout task when the
    * manager goes out of scope and its destructor is called.
    */
-  bool test00(int64_t timeout = 1000LL) {
+  bool test00(uint64_t timeout = 1000LL) {
 
     shared_ptr<TimerManagerTests::Task> orphanTask
         = shared_ptr<TimerManagerTests::Task>(new TimerManagerTests::Task(_monitor, 10 * timeout));
@@ -95,7 +94,7 @@ public:
         Synchronized s(_monitor);
         timerManager.add(orphanTask, 10 * timeout);
 
-        THRIFT_SLEEP_USEC(timeout * 1000);
+        std::this_thread::sleep_for(std::chrono::milliseconds(timeout));
 
         task.reset(new TimerManagerTests::Task(_monitor, timeout));
         timerManager.add(task, timeout);
@@ -123,7 +122,7 @@ public:
    * verifies that the timer manager properly clean up itself and the remaining orphaned timeout
    * task when the manager goes out of scope and its destructor is called.
    */
-  bool test01(int64_t timeout = 1000LL) {
+  bool test01(uint64_t timeout = 1000LL) {
     TimerManager timerManager;
     timerManager.threadFactory(shared_ptr<ThreadFactory>(new ThreadFactory()));
     timerManager.start();
@@ -156,7 +155,7 @@ public:
    * clean up itself and the remaining orphaned timeout task when the manager goes out of scope
    * and its destructor is called.
    */
-  bool test02(int64_t timeout = 1000LL) {
+  bool test02(uint64_t timeout = 1000LL) {
     TimerManager timerManager;
     timerManager.threadFactory(shared_ptr<ThreadFactory>(new ThreadFactory()));
     timerManager.start();
@@ -189,7 +188,7 @@ public:
    * verifies that the timer manager properly clean up itself and the remaining orphaned timeout
    * task when the manager goes out of scope and its destructor is called.
    */
-  bool test03(int64_t timeout = 1000LL) {
+  bool test03(uint64_t timeout = 1000LL) {
     TimerManager timerManager;
     timerManager.threadFactory(shared_ptr<ThreadFactory>(new ThreadFactory()));
     timerManager.start();
@@ -226,7 +225,7 @@ public:
   /**
    * This test creates one tasks, and tries to remove it after it has expired.
    */
-  bool test04(int64_t timeout = 1000LL) {
+  bool test04(uint64_t timeout = 1000LL) {
     TimerManager timerManager;
     timerManager.threadFactory(shared_ptr<ThreadFactory>(new ThreadFactory()));
     timerManager.start();

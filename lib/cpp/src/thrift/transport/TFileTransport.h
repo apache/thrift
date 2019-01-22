@@ -178,14 +178,14 @@ public:
 
   // TODO: what is the correct behaviour for this?
   // the log file is generally always open
-  bool isOpen() { return true; }
+  bool isOpen() const override { return true; }
 
   void write(const uint8_t* buf, uint32_t len);
   void flush();
 
   uint32_t readAll(uint8_t* buf, uint32_t len);
   uint32_t read(uint8_t* buf, uint32_t len);
-  bool peek();
+  bool peek() override;
 
   // log-file specific functions
   void seekToChunk(int32_t chunk);
@@ -260,14 +260,14 @@ public:
    * We cannot use TVirtualTransport to provide these, since we need to inherit
    * virtually from TTransport.
    */
-  virtual uint32_t read_virt(uint8_t* buf, uint32_t len) { return this->read(buf, len); }
-  virtual uint32_t readAll_virt(uint8_t* buf, uint32_t len) { return this->readAll(buf, len); }
-  virtual void write_virt(const uint8_t* buf, uint32_t len) { this->write(buf, len); }
+  uint32_t read_virt(uint8_t* buf, uint32_t len) override { return this->read(buf, len); }
+  uint32_t readAll_virt(uint8_t* buf, uint32_t len) override { return this->readAll(buf, len); }
+  void write_virt(const uint8_t* buf, uint32_t len) override { this->write(buf, len); }
 
 private:
   // helper functions for writing to a file
   void enqueueEvent(const uint8_t* buf, uint32_t eventLen);
-  bool swapEventBuffers(struct timeval* deadline);
+  bool swapEventBuffers(const std::chrono::time_point<std::chrono::steady_clock> *deadline);
   bool initBufferAndWriteThread();
 
   // control for writer thread
@@ -286,7 +286,7 @@ private:
 
   // Utility functions
   void openLogFile();
-  void getNextFlushTime(struct timeval* ts_next_flush);
+  std::chrono::time_point<std::chrono::steady_clock> getNextFlushTime();
 
   // Class variables
   readState readState_;

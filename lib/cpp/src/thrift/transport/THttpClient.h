@@ -34,7 +34,7 @@ public:
 
   virtual ~THttpClient();
 
-  virtual void flush();
+  void flush() override;
 
 protected:
   std::string host_;

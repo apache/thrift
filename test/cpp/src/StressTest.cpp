@@ -20,7 +20,6 @@
 #include <thrift/concurrency/ThreadManager.h>
 #include <thrift/concurrency/ThreadFactory.h>
 #include <thrift/concurrency/Monitor.h>
-#include <thrift/concurrency/Util.h>
 #include <thrift/concurrency/Mutex.h>
 #include <thrift/protocol/TBinaryProtocol.h>
 #include <thrift/server/TSimpleServer.h>
@@ -133,7 +132,7 @@ public:
       }
     }
 
-    _startTime = Util::currentTime();
+    _startTime = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch()).count();
     if(_behavior == OpenAndCloseTransportInThread) {
       _transport->open();
     }
@@ -159,7 +158,7 @@ public:
       break;
     }
 
-    _endTime = Util::currentTime();
+    _endTime = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch()).count();
 
     if(_behavior == OpenAndCloseTransportInThread) {
       _transport->close();
@@ -540,7 +539,7 @@ int main(int argc, char** argv) {
 
       cerr << "Launch " << clientCount << " " << clientType << " client threads" << endl;
 
-      time00 = Util::currentTime();
+      time00 = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch()).count();
 
       monitor.notifyAll();
 
@@ -548,7 +547,7 @@ int main(int argc, char** argv) {
         monitor.wait();
       }
 
-      time01 = Util::currentTime();
+      time01 = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch()).count();
     }
 
     int64_t firstTime = 9223372036854775807LL;

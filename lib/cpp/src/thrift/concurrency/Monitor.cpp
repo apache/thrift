@@ -21,7 +21,6 @@
 
 #include <thrift/concurrency/Monitor.h>
 #include <thrift/concurrency/Exception.h>
-#include <thrift/concurrency/Util.h>
 #include <thrift/transport/PlatformSocket.h>
 #include <assert.h>
 
@@ -61,8 +60,8 @@ public:
    * If the condition occurs,  this function returns cleanly; on timeout or
    * error an exception is thrown.
    */
-  void wait(int64_t timeout_ms) {
-    int result = waitForTimeRelative(timeout_ms);
+  void wait(const std::chrono::milliseconds &timeout) {
+    int result = waitForTimeRelative(timeout);
     if (result == THRIFT_ETIMEDOUT) {
       throw TimedOutException();
     } else if (result != 0) {
@@ -72,12 +71,12 @@ public:
 
   /**
    * Waits until the specified timeout in milliseconds for the condition to
-   * occur, or waits forever if timeout_ms == 0.
+   * occur, or waits forever if timeout is zero.
    *
    * Returns 0 if condition occurs, THRIFT_ETIMEDOUT on timeout, or an error code.
    */
-  int waitForTimeRelative(int64_t timeout_ms) {
-    if (timeout_ms == 0LL) {
+  int waitForTimeRelative(const std::chrono::milliseconds &timeout) {
+    if (timeout.count() == 0) {
       return waitForever();
     }
 
@@ -86,46 +85,23 @@ public:
     assert(mutexImpl);
 
     std::unique_lock<std::timed_mutex> lock(*mutexImpl, std::adopt_lock);
-    bool timedout = (conditionVariable_.wait_for(lock, std::chrono::milliseconds(timeout_ms))
+    bool timedout = (conditionVariable_.wait_for(lock, timeout)
                      == std::cv_status::timeout);
     lock.release();
     return (timedout ? THRIFT_ETIMEDOUT : 0);
   }
 
   /**
-   * Waits until the absolute time specified using struct THRIFT_TIMESPEC.
+   * Waits until the absolute time specified by abstime.
    * Returns 0 if condition occurs, THRIFT_ETIMEDOUT on timeout, or an error code.
    */
-  int waitForTime(const THRIFT_TIMESPEC* abstime) {
-    struct timeval temp;
-    temp.tv_sec = static_cast<long>(abstime->tv_sec);
-    temp.tv_usec = static_cast<long>(abstime->tv_nsec) / 1000;
-    return waitForTime(&temp);
-  }
-
-  /**
-   * Waits until the absolute time specified using struct timeval.
-   * Returns 0 if condition occurs, THRIFT_ETIMEDOUT on timeout, or an error code.
-   */
-  int waitForTime(const struct timeval* abstime) {
+  int waitForTime(const std::chrono::time_point<std::chrono::steady_clock>& abstime) {
     assert(mutex_);
     std::timed_mutex* mutexImpl = static_cast<std::timed_mutex*>(mutex_->getUnderlyingImpl());
     assert(mutexImpl);
 
-    struct timeval currenttime;
-    Util::toTimeval(currenttime, Util::currentTime());
-
-    long tv_sec = static_cast<long>(abstime->tv_sec - currenttime.tv_sec);
-    long tv_usec = static_cast<long>(abstime->tv_usec - currenttime.tv_usec);
-    if (tv_sec < 0)
-      tv_sec = 0;
-    if (tv_usec < 0)
-      tv_usec = 0;
-
     std::unique_lock<std::timed_mutex> lock(*mutexImpl, std::adopt_lock);
-    bool timedout = (conditionVariable_.wait_for(lock,
-                                                 std::chrono::seconds(tv_sec)
-                                                 + std::chrono::microseconds(tv_usec))
+    bool timedout = (conditionVariable_.wait_until(lock, abstime)
                      == std::cv_status::timeout);
     lock.release();
     return (timedout ? THRIFT_ETIMEDOUT : 0);
@@ -181,20 +157,16 @@ void Monitor::unlock() const {
   const_cast<Monitor::Impl*>(impl_)->unlock();
 }
 
-void Monitor::wait(int64_t timeout) const {
+void Monitor::wait(const std::chrono::milliseconds &timeout) const {
   const_cast<Monitor::Impl*>(impl_)->wait(timeout);
 }
 
-int Monitor::waitForTime(const THRIFT_TIMESPEC* abstime) const {
+int Monitor::waitForTime(const std::chrono::time_point<std::chrono::steady_clock>& abstime) const {
   return const_cast<Monitor::Impl*>(impl_)->waitForTime(abstime);
 }
 
-int Monitor::waitForTime(const timeval* abstime) const {
-  return const_cast<Monitor::Impl*>(impl_)->waitForTime(abstime);
-}
-
-int Monitor::waitForTimeRelative(int64_t timeout_ms) const {
-  return const_cast<Monitor::Impl*>(impl_)->waitForTimeRelative(timeout_ms);
+int Monitor::waitForTimeRelative(const std::chrono::milliseconds &timeout) const {
+  return const_cast<Monitor::Impl*>(impl_)->waitForTimeRelative(timeout);
 }
 
 int Monitor::waitForever() const {

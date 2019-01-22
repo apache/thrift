@@ -21,7 +21,6 @@
 #include <thrift/concurrency/ThreadManager.h>
 #include <thrift/concurrency/ThreadFactory.h>
 #include <thrift/concurrency/Monitor.h>
-#include <thrift/concurrency/Util.h>
 
 #include <assert.h>
 #include <deque>
@@ -66,11 +65,11 @@ public:
 
     void run() {
 
-      _startTime = Util::currentTime();
+      _startTime = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch()).count();
 
       sleep_(_timeout);
 
-      _endTime = Util::currentTime();
+      _endTime = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch()).count();
 
       _done = true;
 
@@ -123,7 +122,7 @@ public:
           new ThreadManagerTests::Task(monitor, activeCount, timeout)));
     }
 
-    int64_t time00 = Util::currentTime();
+    int64_t time00 = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch()).count();
 
     for (std::set<shared_ptr<ThreadManagerTests::Task> >::iterator ix = tasks.begin();
          ix != tasks.end();
@@ -143,7 +142,7 @@ public:
       }
     }
 
-    int64_t time01 = Util::currentTime();
+    int64_t time01 = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch()).count();
 
     int64_t firstTime = 9223372036854775807LL;
     int64_t lastTime = 0;
@@ -387,9 +386,9 @@ public:
   bool apiTest() {
 
     // prove currentTime has milliseconds granularity since many other things depend on it
-    int64_t a = Util::currentTime();
+    int64_t a = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch()).count();
     sleep_(100);
-    int64_t b = Util::currentTime();
+    int64_t b = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch()).count();
     if (b - a < 50 || b - a > 150) {
       std::cerr << "\t\t\texpected 100ms gap, found " << (b-a) << "ms gap instead." << std::endl;
       return false;

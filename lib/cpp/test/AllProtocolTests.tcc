@@ -216,7 +216,7 @@ void testProtocol(const char* protoname) {
     testMessage<TProto>();
 
     printf("%s => OK\n", protoname);
-  } catch (TException e) {
+  } catch (const TException &e) {
     THRIFT_SNPRINTF(errorMessage, ERR_LEN, "%s => Test FAILED: %s", protoname, e.what());
     throw TException(errorMessage);
   }

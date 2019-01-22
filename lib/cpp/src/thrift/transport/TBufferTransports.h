@@ -235,7 +235,7 @@ public:
 
   virtual void writeSlow(const uint8_t* buf, uint32_t len);
 
-  void flush();
+  void flush() override;
 
   /**
    * Returns the origin of the underlying transport
@@ -291,7 +291,7 @@ public:
   /**
    * Wraps the transport into a buffered one.
    */
-  virtual std::shared_ptr<TTransport> getTransport(std::shared_ptr<TTransport> trans) {
+  std::shared_ptr<TTransport> getTransport(std::shared_ptr<TTransport> trans) override {
     return std::shared_ptr<TTransport>(new TBufferedTransport(trans));
   }
 };
@@ -354,11 +354,11 @@ public:
     transport_->close();
   }
 
-  virtual uint32_t readSlow(uint8_t* buf, uint32_t len);
+  uint32_t readSlow(uint8_t* buf, uint32_t len) override;
 
-  virtual void writeSlow(const uint8_t* buf, uint32_t len);
+  void writeSlow(const uint8_t* buf, uint32_t len) override;
 
-  virtual void flush();
+  void flush() override;
 
   uint32_t readEnd();
 
@@ -430,7 +430,7 @@ public:
   /**
    * Wraps the transport into a framed one.
    */
-  virtual std::shared_ptr<TTransport> getTransport(std::shared_ptr<TTransport> trans) {
+  std::shared_ptr<TTransport> getTransport(std::shared_ptr<TTransport> trans) override {
     return std::shared_ptr<TTransport>(new TFramedTransport(trans));
   }
 };

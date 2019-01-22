@@ -84,23 +84,23 @@ public:
    * Implementations of the *_virt() functions, to call the subclass's
    * non-virtual implementation function.
    */
-  virtual uint32_t read_virt(uint8_t* buf, uint32_t len) {
+  uint32_t read_virt(uint8_t* buf, uint32_t len) override {
     return static_cast<Transport_*>(this)->read(buf, len);
   }
 
-  virtual uint32_t readAll_virt(uint8_t* buf, uint32_t len) {
+  uint32_t readAll_virt(uint8_t* buf, uint32_t len) override {
     return static_cast<Transport_*>(this)->readAll(buf, len);
   }
 
-  virtual void write_virt(const uint8_t* buf, uint32_t len) {
+  void write_virt(const uint8_t* buf, uint32_t len) override {
     static_cast<Transport_*>(this)->write(buf, len);
   }
 
-  virtual const uint8_t* borrow_virt(uint8_t* buf, uint32_t* len) {
+  const uint8_t* borrow_virt(uint8_t* buf, uint32_t* len) override {
     return static_cast<Transport_*>(this)->borrow(buf, len);
   }
 
-  virtual void consume_virt(uint32_t len) { static_cast<Transport_*>(this)->consume(len); }
+  void consume_virt(uint32_t len) override { static_cast<Transport_*>(this)->consume(len); }
 
   /*
    * Provide a default readAll() implementation that invokes

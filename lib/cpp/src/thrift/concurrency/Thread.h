@@ -20,11 +20,9 @@
 #ifndef _THRIFT_CONCURRENCY_THREAD_H_
 #define _THRIFT_CONCURRENCY_THREAD_H_ 1
 
-#include <stdint.h>
 #include <memory>
 #include <thread>
 
-#include <thrift/thrift-config.h>
 #include <thrift/concurrency/Monitor.h>
 
 namespace apache {
@@ -153,7 +151,7 @@ public:
   /**
    * Gets the thread's platform-specific ID
    */
-  Thread::id_t getId() { return thread_.get() ? thread_->get_id() : std::thread::id(); }
+  Thread::id_t getId() const { return thread_.get() ? thread_->get_id() : std::thread::id(); }
 
   /**
    * Gets the runnable object this thread is hosting

@@ -227,7 +227,7 @@ BOOST_AUTO_TEST_CASE( JSON_BufferedHTTP )
     blockable_transport->flush() ;
     try {
       client.recv_roundTripRPC() ;
-    } catch (TTransportException e) {
+    } catch (const TTransportException &e) {
       BOOST_ERROR( "we should not get a transport exception -- this means we failed: " + std::string(e.what()) ) ;
     }
     transport->close();

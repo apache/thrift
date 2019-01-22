@@ -231,7 +231,7 @@ public:
 
   virtual ~TZlibTransportFactory() {}
 
-  virtual std::shared_ptr<TTransport> getTransport(std::shared_ptr<TTransport> trans) {
+  std::shared_ptr<TTransport> getTransport(std::shared_ptr<TTransport> trans) override {
     return std::shared_ptr<TTransport>(new TZlibTransport(trans));
   }
 };

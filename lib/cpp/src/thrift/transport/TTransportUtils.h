@@ -112,9 +112,9 @@ public:
     std::free(wBuf_);
   }
 
-  bool isOpen() { return srcTrans_->isOpen(); }
+  bool isOpen() const override { return srcTrans_->isOpen(); }
 
-  bool peek() {
+  bool peek() override {
     if (rPos_ >= rLen_) {
       // Double the size of the underlying buffer if it is full
       if (rLen_ == rBufSize_) {
@@ -132,9 +132,9 @@ public:
     return (rLen_ > rPos_);
   }
 
-  void open() { srcTrans_->open(); }
+  void open() override { srcTrans_->open(); }
 
-  void close() { srcTrans_->close(); }
+  void close() override { srcTrans_->close(); }
 
   void setPipeOnRead(bool pipeVal) { pipeOnRead_ = pipeVal; }
 
@@ -181,8 +181,8 @@ public:
    * We cannot use TVirtualTransport to provide these, since we need to inherit
    * virtually from TTransport.
    */
-  virtual uint32_t read_virt(uint8_t* buf, uint32_t len) { return this->read(buf, len); }
-  virtual void write_virt(const uint8_t* buf, uint32_t len) { this->write(buf, len); }
+  uint32_t read_virt(uint8_t* buf, uint32_t len) override { return this->read(buf, len); }
+  void write_virt(const uint8_t* buf, uint32_t len) override { this->write(buf, len); }
 
 protected:
   std::shared_ptr<TTransport> srcTrans_;
@@ -216,7 +216,7 @@ public:
   /**
    * Wraps the base transport into a piped transport.
    */
-  virtual std::shared_ptr<TTransport> getTransport(std::shared_ptr<TTransport> srcTrans) {
+  std::shared_ptr<TTransport> getTransport(std::shared_ptr<TTransport> srcTrans) override {
     return std::shared_ptr<TTransport>(new TPipedTransport(srcTrans, dstTrans_));
   }
 
@@ -246,10 +246,10 @@ public:
   ~TPipedFileReaderTransport();
 
   // TTransport functions
-  bool isOpen();
-  bool peek();
-  void open();
-  void close();
+  bool isOpen() const override;
+  bool peek() override;
+  void open() override;
+  void close() override;
   uint32_t read(uint8_t* buf, uint32_t len);
   uint32_t readAll(uint8_t* buf, uint32_t len);
   uint32_t readEnd();
@@ -270,9 +270,9 @@ public:
    * We cannot use TVirtualTransport to provide these, since we need to inherit
    * virtually from TTransport.
    */
-  virtual uint32_t read_virt(uint8_t* buf, uint32_t len) { return this->read(buf, len); }
-  virtual uint32_t readAll_virt(uint8_t* buf, uint32_t len) { return this->readAll(buf, len); }
-  virtual void write_virt(const uint8_t* buf, uint32_t len) { this->write(buf, len); }
+  uint32_t read_virt(uint8_t* buf, uint32_t len) override { return this->read(buf, len); }
+  uint32_t readAll_virt(uint8_t* buf, uint32_t len) override { return this->readAll(buf, len); }
+  void write_virt(const uint8_t* buf, uint32_t len) override { this->write(buf, len); }
 
 protected:
   // shouldn't be used

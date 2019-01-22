@@ -31,24 +31,6 @@
 // Something that defines PRId64 is required to build
 #define HAVE_INTTYPES_H 1
 
-// VS2010 or later has stdint.h as does MinGW
-#if (_MSC_VER >= 1600) || defined(__MINGW32__)
-#define HAVE_STDINT_H 1
-#endif
-
-#ifndef TARGET_WIN_XP
-#define TARGET_WIN_XP 1
-#endif
-
-#if TARGET_WIN_XP
-#ifndef WINVER
-#define WINVER 0x0501
-#endif
-#ifndef _WIN32_WINNT
-#define _WIN32_WINNT 0x0501
-#endif
-#endif
-
 #ifndef _WIN32_WINNT
 #define _WIN32_WINNT 0x0601
 #endif
@@ -65,21 +47,7 @@
 #define HAVE_GETTIMEOFDAY 1
 #define HAVE_SYS_STAT_H 1
 
-// Must be using VS2010 or later, or boost, so that C99 types are defined in the global namespace
-#ifdef HAVE_STDINT_H
 #include <stdint.h>
-#else
-#include <boost/cstdint.hpp>
-
-typedef boost::int64_t int64_t;
-typedef boost::uint64_t uint64_t;
-typedef boost::int32_t int32_t;
-typedef boost::uint32_t uint32_t;
-typedef boost::int16_t int16_t;
-typedef boost::uint16_t uint16_t;
-typedef boost::int8_t int8_t;
-typedef boost::uint8_t uint8_t;
-#endif
 
 #include <thrift/transport/PlatformSocket.h>
 #include <thrift/windows/GetTimeOfDay.h>

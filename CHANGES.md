@@ -12,6 +12,7 @@
 
 ### Breaking Changes
 
+- [THRIFT-4740](https://issues.apache.org/jira/browse/THRIFT-4740) - Uses std::chrono::duration for timeouts in C++ runtime library.
 - [THRIFT-4702](https://issues.apache.org/jira/browse/THRIFT-4702) - Java class org.apache.thrift.AutoExpandingBuffer is no longer public
 - [THRIFT-4709](https://issues.apache.org/jira/browse/THRIFT-4709) - Java changes to UTF-8 handling require JDK 1.7 at a minimum
 - [THRIFT-4712](https://issues.apache.org/jira/browse/THRIFT-4712) - Java class org.apache.thrift.ShortStack is no longer public

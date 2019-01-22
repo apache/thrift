@@ -96,13 +96,7 @@ http://monkey.org/~provos/libevent/
 
 ## Windows version compatibility
 
-The Thrift library targets Windows XP for broadest compatbility. A notable
-difference is in the Windows-specific implementation of the socket poll
-function. To target Vista, Win7 or other versions, comment out the line
-
-    #define TARGET_WIN_XP.
-
-See Apache Jira THRIFT-2798 for more about TARGET_WIN_XP.
+The Thrift library targets Windows 7 or latter versions. The supports for windows XP and Vista are avaiable until 0.12.0.
 
 ## Named Pipes
 
@@ -232,6 +226,10 @@ Support for Boost at runtime was deprecated.
 ## 1.0.0
 
 THRIFT-4720:
+The classes Monitor and TimerManager now use std::chrono::milliseconds for timeout, the methods and functions involving THRIFT_TIMESPEC and timeval have been removed, the related tests have been modified.
+
+Support for Windows XP/Vista has been dropped.
+
 Support for C++03/C++98 has been dropped.  Use version 0.12.0 to support that
 language level.  As a consequence, boost is no longer required as a runtime
 library depenedency, but is is still required to build the runtime library
