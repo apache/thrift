@@ -167,7 +167,7 @@ Last updated: October 1, 2017
 
 | Language  | ubuntu-xenial | ubuntu-bionic | Notes |
 | :-------- | :------------ | :------------ | :---- |
-| as of     | Mar 06, 2018  | Jan 4, 2019   |       |
+| as of     | Mar 06, 2018  | Jan 21, 2019  |       |
 | as3       |               |               | Not in CI |
 | C++ gcc   | 5.4.0         | 7.3.0         |       |
 | C++ clang | 3.8           | 6.0           |       |
@@ -175,23 +175,23 @@ Last updated: October 1, 2017
 | c_glib    | 2.48.2        | 2.56.0        |       |
 | cl (sbcl) |               | 1.4.15        |       |
 | d         | 2.075.1       | 2.083.1       |       |
-| dart      | 1.22.1        | 1.24.3        |       |
+| dart      | 1.24.3        | 2.1.0         |       |
 | delphi    |               |               | Not in CI |
-| dotnet    | 2.1.4         | 2.2.101       |       |
+| dotnet    | 2.1.503       | 2.2.103       |       |
 | erlang    | 18.3          | 20.2.2        |       |
 | go        | 1.7.6         | 1.11.4        |       |
 | haskell   | 7.10.3        | 8.0.2         |       |
 | haxe      | 3.2.1         | 3.4.4         | THRIFT-4352: avoid 3.4.2 |
-| java      | 1.8.0_151     | 1.8.0_191     |       |
+| java      | 1.8.0_191     | 1.8.0_191     |       |
 | js        |               |               | Unsure how to look for version info? |
 | lua       | 5.2.4         | 5.2.4         | Lua 5.3: see THRIFT-4386 |
-| nodejs    | 6.13.0        | 8.15.0        |       |
+| nodejs    | 6.16.0        | 8.15.0        |       |
 | ocaml     |               | 4.05.0        | THRIFT-4517: ocaml 4.02.3 on xenial appears broken |
 | perl      | 5.22.1        | 5.26.1        |       |
-| php       | 7.0.22        | 7.2.10        |       |
+| php       | 7.0.32        | 7.2.10        |       |
 | python    | 2.7.12        | 2.7.15rc1     |       |
 | python3   | 3.5.2         | 3.6.7         |       |
 | ruby      | 2.3.1p112     | 2.5.1p57      |       |
-| rust      | 1.17.0        | 1.30.0        |       |
+| rust      | 1.30.0        | 1.30.0        |       |
 | smalltalk |               |               | Not in CI |
 | swift     |               | 4.2.1         |       |
