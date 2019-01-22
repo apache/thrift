@@ -56,6 +56,7 @@ FILES[bower.json]=jsonReplace
 FILES[configure.ac]=configureReplace
 FILES[contrib/thrift.spec]=simpleReplace
 FILES[doc/specs/idl.md]=simpleReplace
+FILES[lib/as3/gradle.properties]=simpleReplace
 FILES[lib/csharp/ThriftMSBuildTask/Properties/AssemblyInfo.cs]=simpleReplace
 FILES[lib/csharp/ThriftMSBuildTask/ThriftMSBuildTask.csproj]=simpleReplace
 FILES[lib/csharp/src/Properties/AssemblyInfo.cs]=simpleReplace

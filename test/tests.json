@@ -562,7 +562,7 @@
   {
     "name": "dart",
     "client": {
-      "timeout": 20,
+      "timeout": 30,
       "transports": [
         "buffered",
         "framed",
