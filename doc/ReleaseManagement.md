@@ -176,7 +176,7 @@ All Apache Thrift releases go through a 72-hour final release candidate voting p
         1. Install chocolatey and install winflexbison with chocolatey.
         1. Run cmake to generate an out-of-tree build environment:
             ```cmd
-            C:\build> cmake ..\thrift -DBISON_EXECUTABLE=c:\ProgramData\chocolatey\lib\winflexbison\tools\win_bison.exe -DFLEX_EXECUTABLE=c:\ProgramData\chocolatey\lib\winflexbison\tools\win_flex.exe -DWITH_MT=ON -DWITH_SHARED_LIB=OFF -DWITH_CPP=OFF -DWITH_JAVA=OFF -DWITH_HASKELL=OFF -DWITH_PYTHON=OFF -DWITH_C_GLIB=OFF -DBUILD_TESTING=OFF -DBUILD_EXAMPLES=OFF -DBUILD_TUTORIALS=OFF -DBUILD_COMPILER=ON
+            C:\build> cmake ..\thrift -DBISON_EXECUTABLE=c:\ProgramData\chocolatey\lib\winflexbison\tools\win_bison.exe -DFLEX_EXECUTABLE=c:\ProgramData\chocolatey\lib\winflexbison\tools\win_flex.exe -DWITH_MT=ON -DWITH_SHARED_LIB=OFF -DWITH_CPP=OFF -DWITH_JAVA=OFF -DWITH_HASKELL=OFF -DWITH_PYTHON=OFF -DWITH_C_GLIB=OFF -DBUILD_TESTING=OFF -DBUILD_TUTORIALS=OFF -DBUILD_COMPILER=ON
             C:\build> cmake --build . --config Release
             ```
 

@@ -168,7 +168,7 @@ Last updated: October 1, 2017
 | Language  | ubuntu-xenial | ubuntu-bionic | Notes |
 | :-------- | :------------ | :------------ | :---- |
 | as of     | Mar 06, 2018  | Jan 21, 2019  |       |
-| as3       |               |               | Not in CI |
+| as3       |               | 4.6.0         |       |
 | C++ gcc   | 5.4.0         | 7.3.0         |       |
 | C++ clang | 3.8           | 6.0           |       |
 | C# (mono) | 4.2.1.0       | 4.6.2.7       |       |
