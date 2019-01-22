@@ -135,6 +135,12 @@ jobs:
     - script: build/docker/run.sh
       env:
         - JOB="CMake"
+        - BUILD_ARG="-DCMAKE_BUILD_TYPE=Debug"
+
+    - script: build/docker/run.sh
+      env:
+        - JOB="CMake"
+        - BUILD_ARG="-DCMAKE_BUILD_TYPE=Release"
 
     # C++ specific options: compiler plug-in, threading model
     - script: build/docker/run.sh

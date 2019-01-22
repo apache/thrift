@@ -138,11 +138,15 @@ properties to it.
     mavenUser=meMyselfAndI
     mavenPassword=MySuperAwesomeSecretPassword
 
+NOTE: If you do not have a secring.gpg file, see the
+[gradle signing docs](https://docs.gradle.org/current/userguide/signing_plugin.html)
+for instructions on how to generate it.
+
 It is also possible to manually publish using the Gradle build directly.
 With the key information and credentials in place the following will generate
 if needed the build artifacts and proceed to publish the results.
 
-    ./gradlew -Prelease=true -Pthrift.version=0.11.0 uploadArchives
+    ./gradlew -Prelease=true uploadArchives
 
 It is also possible to override the target repository for the Maven Publication
 by using a Gradle property, for example you can publish signed JAR files to your

@@ -20,6 +20,7 @@
 // Using the legacy plugin classpath for Clover so it can be loaded optionally
 buildscript {
     repositories {
+        mavenCentral()
         google()
         jcenter()
         gradlePluginPortal()
