@@ -20,6 +20,10 @@
 SUBDIRS = json xml
 PRECROSS_TARGET =
 
+if WITH_AS3
+SUBDIRS += as3
+endif
+
 if WITH_CPP
 # cpp dir is picked directly by plugin build
 if !WITH_PLUGIN

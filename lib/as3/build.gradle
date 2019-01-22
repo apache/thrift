@@ -17,48 +17,40 @@
  * under the License.
  */
 
-// Using the legacy plugin classpath for Clover so it can be loaded optionally
 buildscript {
     repositories {
+        mavenLocal()
         mavenCentral()
-        google()
-        jcenter()
-        gradlePluginPortal()
     }
-
     dependencies {
-        classpath 'com.bmuschko:gradle-clover-plugin:2.2.0'
+        classpath group: 'org.gradlefx', name: 'gradlefx', version: '1.5.0'
     }
 }
 
 plugins {
-    id 'java'
-    id 'maven'
+    id 'maven-publish'
     id 'signing'
-    id 'com.github.johnrengelman.shadow' version '2.0.2'
 }
 
-description = 'Apache Thrift Java Library'
+apply plugin: 'gradlefx'
 
-defaultTasks 'build'
-
-// Version components for this project
+description = 'Apache Thrift ActionScript Library'
+frameworkLinkage = 'none'
 group = property('thrift.groupid')
+srcDirs = ['src']
+type = 'swc'
 
-// Drop the -dev suffix, we use the SNAPSHOT suffix for non-release versions
+// We use the SNAPSHOT suffix for non-release versions
 if (Boolean.parseBoolean(project.release)) {
-    version = parsedVersion
+    additionalCompilerOptions = ['-compiler.debug=false', '-compiler.strict=true']
+    version = property('thrift.version')
 } else {
-    version = parsedVersion + '-SNAPSHOT'
+    additionalCompilerOptions = ['-compiler.debug=true', '-compiler.strict=true']
+    version = property('thrift.version') + '-SNAPSHOT'
 }
+
+defaultTasks 'compile'
 
 // Keeping the rest of the build logic in functional named scripts for clarity
-apply from: 'gradle/environment.gradle'
-apply from: 'gradle/sourceConfiguration.gradle'
-apply from: 'gradle/additionalArtifacts.gradle'
-apply from: 'gradle/generateTestThrift.gradle'
-apply from: 'gradle/unitTests.gradle'
-apply from: 'gradle/cloverCoverage.gradle'
-apply from: 'gradle/functionalTests.gradle'
 apply from: 'gradle/publishing.gradle'
-apply from: 'gradle/codeQualityChecks.gradle'
+

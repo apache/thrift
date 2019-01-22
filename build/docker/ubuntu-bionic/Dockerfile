@@ -72,9 +72,17 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
       llvm \
       ninja-build \
       pkg-config \
+      unzip \
       valgrind \
       vim
 ENV PATH /usr/lib/llvm-6.0/bin:$PATH
+
+# lib/as3 (ActionScript)
+RUN mkdir -p /usr/local/adobe/flex/4.6 && \
+    cd /usr/local/adobe/flex/4.6 && \
+    wget -q "http://download.macromedia.com/pub/flex/sdk/flex_sdk_4.6.zip" && \
+    unzip flex_sdk_4.6.zip
+ENV FLEX_HOME /usr/local/adobe/flex/4.6
 
 RUN apt-get install -y --no-install-recommends \
 `# C++ dependencies` \
