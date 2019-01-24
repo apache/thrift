@@ -33,10 +33,20 @@ precross: stubs
 check: stubs
 
 clean-local:
-	$(RM) -r gen-dart test_client/.pub
+	$(RM) -r gen-dart/ test_client/.pub
+	find . -type d -name ".dart_tool" | xargs $(RM) -r
 	find . -type d -name "packages" | xargs $(RM) -r
 	find . -type f -name ".packages" | xargs $(RM)
 	find . -type f -name "pubspec.lock" | xargs $(RM)
 
+dist-hook:
+	$(RM) -r $(distdir)/gen-dart/ $(distdir)/test_client/.pub
+	find $(distdir) -type d -name ".dart_tool" | xargs $(RM) -r
+	find $(distdir) -type d -name "packages" | xargs $(RM) -r
+	find $(distdir) -type f -name ".packages" | xargs $(RM)
+
 client: stubs
 	${DART} test_client/bin/main.dart
+
+EXTRA_DIST = \
+	test_client

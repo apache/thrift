@@ -141,9 +141,13 @@ all-local: $(all_targets)
 install-exec-local:
 	$(INSTALL_PROGRAM) $(all_targets) $(DESTDIR)$(libdir)
 
-
 clean-local:
-	$(RM) -rf docs $(D_LIB_NAME) $(D_EVENT_LIB_NAME) $(D_SSL_LIB_NAME) unittest
+	$(RM) -r docs
+	$(RM) $(D_LIB_NAME)
+	$(RM) $(D_EVENT_LIB_NAME)
+	$(RM) $(D_SSL_LIB_NAME)
+	$(RM) -r test/gen-d
+	$(RM) -r unittest
 
 
 #

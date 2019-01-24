@@ -30,3 +30,8 @@ if HAVE_BUNDLER
 	$(BUNDLER) exec $(RUBY) -I. test_suite.rb
 endif
 
+clean-local:
+	$(RM) -r gen-rb/
+
+dist-hook:
+	$(RM) -r $(distdir)/gen-rb/

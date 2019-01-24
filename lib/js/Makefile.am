@@ -18,13 +18,45 @@
 #
 
 # Make sure this doesn't fail if ant is not configured.
-# We call install twice to work around npm issues
+# We call npm install twice to work around older npm issues
+# (note these issues may no longer be present, but it is ok)
 #
+
 if HAVE_NPM
+
 SUBDIRS = test
 
-check-local: all
+prereq:
 	$(NPM) install || $(NPM) install
 	$(NPM) list
+
+check-local: prereq all
 	./node_modules/.bin/grunt
+
+doc: prereq
+	./node_modules/.bin/grunt jsdoc
+
 endif
+
+clean-local:
+	$(RM) -r dist
+	$(RM) -r doc
+	$(RM) -r node_modules
+	$(RM) -r test/build/
+	$(RM) -r test/gen-*/
+
+dist-hook:
+	$(RM) -r $(distdir)/dist/
+	$(RM) -r $(distdir)/doc/
+	$(RM) -r $(distdir)/node_modules/
+	$(RM) -r $(distdir)/test/build/
+	$(RM) -r $(distdir)/test/gen-*/
+
+EXTRA_DIST = \
+	coding_standards.md \
+	Gruntfile.js \
+	package.json \
+	package-lock.json \
+	README.md \
+	src \
+	test

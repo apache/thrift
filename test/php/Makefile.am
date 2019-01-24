@@ -33,7 +33,12 @@ precross: stubs php_ext_dir
 check: stubs php_ext_dir
 
 clean-local:
-	$(RM) -r gen-php gen-phpi gen-php-classmap php_ext_dir
+	$(RM) -r gen-*/
+	$(RM) -r php_ext_dir
+
+dist-hook:
+	$(RM) -r $(distdir)/gen-*/
+	$(RM) -r $(distdir)/php_ext_dir/
 
 client: stubs php_ext_dir
 	php TestClient.php

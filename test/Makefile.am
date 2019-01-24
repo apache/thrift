@@ -108,25 +108,32 @@ check-local:
 	$(top_builddir)/compiler/cpp/thrift --gen html -r $(top_srcdir)/test/ThriftTest.thrift
 
 clean-local:
-	rm -rf $(top_srcdir)/test/gen-html
+	$(RM) -r $(top_srcdir)/test/gen-html/
+	find . -type d -name "__pycache__" | xargs rm -rf
+	find . -type f -name "*.pyc" | xargs rm -f
+
+dist-hook:
+	$(RM) -r $(distdir)/gen-html/
+	find $(distdir) -type d -name "__pycache__" | xargs rm -rf
+	find $(distdir) -type f -name "*.pyc" | xargs rm -f
 
 EXTRA_DIST = \
 	audit \
-	crossrunner \
-	keys \
 	c_glib \
 	cl \
 	cpp \
+	crossrunner \
 	dart \
 	erl \
 	hs \
+	keys \
 	lua \
 	ocaml \
 	perl \
 	php \
 	py \
-	py.twisted \
 	py.tornado \
+	py.twisted \
 	rb \
 	rs \
 	threads \
@@ -134,12 +141,14 @@ EXTRA_DIST = \
 	BrokenConstants.thrift \
 	ConstantsDemo.thrift \
 	DebugProtoTest.thrift \
-	DoubleConstantsTest.thrift \
 	DenseLinkingTest.thrift \
 	DocTest.thrift \
+	DoubleConstantsTest.thrift \
+	EnumContainersTest.thrift \
 	EnumTest.thrift \
 	FullCamelTest.thrift \
 	Include.thrift \
+	Int64Test.thrift \
 	JavaBeansTest.thrift \
 	JavaDeepCopyTest.thrift \
 	JavaTypes.thrift \
@@ -150,7 +159,6 @@ EXTRA_DIST = \
 	OptionalRequiredTest.thrift \
 	Recursive.thrift \
 	ReuseObjects.thrift \
-	EnumContainersTest.thrift \
 	SmallTest.thrift \
 	StressTest.thrift \
 	ThriftTest.thrift \

@@ -34,7 +34,7 @@ clean-local:
 
 EXTRA_DIST = \
 	Cargo.toml \
-        src/lib.rs \
+	src/lib.rs \
 	src/bin/test_server.rs \
 	src/bin/test_client.rs
 

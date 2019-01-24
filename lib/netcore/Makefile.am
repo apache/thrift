@@ -17,18 +17,35 @@
 # under the License.
 #
 
-SUBDIRS = . 
-
 all-local:
 	$(DOTNETCORE) build
 
 check-local:
 	$(DOTNETCORE) test Tests/Thrift.Tests/Thrift.Tests.csproj
-	${DOTNETCORE} test Tests/Thrift.IntegrationTests/Thrift.IntegrationTests.csproj
+	$(DOTNETCORE) test Tests/Thrift.IntegrationTests/Thrift.IntegrationTests.csproj
 
 clean-local:
 	$(RM) -r Thrift/bin
 	$(RM) -r Thrift/obj
+	$(RM) -r Tests/Thrift.Tests/bin
+	$(RM) -r Tests/Thrift.Tests/obj
+	$(RM) -r Tests/Thrift.IntegrationTests/bin
+	$(RM) -r Tests/Thrift.IntegrationTests/obj
+	$(RM) -r Tests/Thrift.PublicInterfaces.Compile.Tests/bin
+	$(RM) -r Tests/Thrift.PublicInterfaces.Compile.Tests/obj
+
+dist-hook:
+	$(RM) -r $(distdir)/Thrift/bin
+	$(RM) -r $(distdir)/Thrift/obj
+	$(RM) -r $(distdir)/Tests/Thrift.Tests/bin
+	$(RM) -r $(distdir)/Tests/Thrift.Tests/obj
+	$(RM) -r $(distdir)/Tests/Thrift.IntegrationTests/bin
+	$(RM) -r $(distdir)/Tests/Thrift.IntegrationTests/obj
+	$(RM) -r $(distdir)/Tests/Thrift.PublicInterfaces.Compile.Tests/bin
+	$(RM) -r $(distdir)/Tests/Thrift.PublicInterfaces.Compile.Tests/obj
+
+DISTCLEANFILES = \
+	Makefile.in
 
 EXTRA_DIST = \
 	README.md \

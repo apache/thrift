@@ -94,4 +94,12 @@ gen-py-dynamicslots/%/__init__.py: ../%.thrift $(THRIFT)
 	$(THRIFT) --gen py:dynamic,slots -out gen-py-dynamicslots $<
 
 clean-local:
-	$(RM) -r gen-py gen-py-slots gen-py-default gen-py-oldstyle gen-py-no_utf8strings gen-py-dynamic gen-py-dynamicslots
+	$(RM) -r build
+	find . -type f \( -iname "*.pyc" \) | xargs rm -f
+	find . -type d \( -iname "__pycache__" -or -iname "_trial_temp" \) | xargs rm -rf
+	$(RM) -r gen-py*/
+
+dist-hook:
+	find $(distdir) -type f \( -iname "*.pyc" \) | xargs rm -f
+	find $(distdir) -type d \( -iname "__pycache__" -or -iname "_trial_temp" \) | xargs rm -rf
+	$(RM) -r $(distdir)/gen-py*/

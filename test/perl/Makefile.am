@@ -25,5 +25,7 @@ precross: stubs
 check: stubs
 
 clean-local:
-	$(RM) -r gen-perl
+	$(RM) -r gen-perl/
 
+dist-hook:
+	$(RM) -r $(distdir)/gen-perl/

@@ -31,12 +31,16 @@ install-exec-hook:
 clean-local:
 	$(BUNDLER) install
 	$(BUNDLER) exec rake clean
+	$(RM) -r spec/gen-rb/
 
 check-local: all
 	$(BUNDLER) install
 	$(BUNDLER) exec rake
 
 endif
+
+dist-hook:
+	$(RM) -r $(distdir)/spec/gen-rb/
 
 EXTRA_DIST = \
 	coding_standards.md \

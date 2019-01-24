@@ -44,3 +44,10 @@ all-local: $(PROGS)
 
 clean:
 	$(RM) -f $(PROGS)
+	$(RM) -r gen-d/
+	find . -type f -name '*.o' | xargs rm -f
+
+dist-hook:
+	$(RM) -f $(distdir)/$(PROGS)
+	$(RM) -r $(distdir)/gen-d/
+	find $(destdir) -type f -name '*.o' | xargs rm -f
