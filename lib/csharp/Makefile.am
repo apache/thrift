@@ -92,9 +92,12 @@ Thrift.dll: $(THRIFTCODE)
 Thrift.45.dll: $(THRIFTCODE)
 	$(CSC) $(CSC_DEFINES) -out:$@ -target:library -reference:System.Web $(THRIFTCODE)
 
-clean-local:
-	$(RM) Thrift.dll  \
-	$(RM) Thrift.45.dll
+CLEANFILES = \
+	Thrift.dll \
+	Thrift.45.dll
+
+DISTCLEANFILES = \
+	Makefile.in
 
 EXTRA_DIST = \
 	$(THRIFTCODE) \
@@ -109,7 +112,3 @@ EXTRA_DIST = \
 	test \
 	coding_standards.md \
 	README.md
-
-MAINTAINERCLEANFILES = \
-	Makefile \
-	Makefile.in

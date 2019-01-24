@@ -31,6 +31,15 @@ clean-local:
 	$(RM) -r Interfaces/bin
 	$(RM) -r Interfaces/obj
 
+dist-hook:
+	$(RM) $(distdir)/Interfaces.dll
+	$(RM) -r $(distdir)/Client/bin
+	$(RM) -r $(distdir)/Client/obj
+	$(RM) -r $(distdir)/Server/bin
+	$(RM) -r $(distdir)/Server/obj
+	$(RM) -r $(distdir)/Interfaces/bin
+	$(RM) -r $(distdir)/Interfaces/obj
+
 EXTRA_DIST = \
 	Client \
 	Interfaces \

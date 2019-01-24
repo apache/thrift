@@ -96,8 +96,6 @@ clean:
 	# Add here commands to clean up after the build process.
 	-$(MAKE) clean
 
-	$(CURDIR)/cleanup.sh
-
 	dh_clean
 
 install: install-indep install-arch

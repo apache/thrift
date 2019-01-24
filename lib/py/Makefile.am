@@ -40,12 +40,18 @@ all-local: py3-build
 install-exec-hook:
 	$(PYTHON) setup.py install --root=$(DESTDIR) --prefix=$(PY_PREFIX) $(PYTHON_SETUPUTIL_ARGS)
 
-clean-local:
-	$(RM) -r build
-
 check-local: all py3-test
 	$(PYTHON) test/thrift_json.py
 	$(PYTHON) test/test_sslsocket.py
+
+clean-local:
+	$(RM) -r build
+	find . -type f \( -iname "*.pyc" \) | xargs rm -f
+	find . -type d \( -iname "__pycache__" -or -iname "_trial_temp" \) | xargs rm -rf
+
+dist-hook:
+	find $(distdir) -type f \( -iname "*.pyc" \) | xargs rm -f
+	find $(distdir) -type d \( -iname "__pycache__" -or -iname "_trial_temp" \) | xargs rm -rf
 
 EXTRA_DIST = \
 	CMakeLists.txt \

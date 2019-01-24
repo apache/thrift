@@ -113,7 +113,7 @@ AM_CXXFLAGS = -Wall -Wextra -pedantic -D__STDC_FORMAT_MACROS -D__STDC_LIMIT_MACR
 AM_LDFLAGS = $(BOOST_LDFLAGS) $(LIBEVENT_LDFLAGS) $(ZLIB_LIBS)
 
 clean-local:
-	$(RM) gen-cpp/*
+	$(RM) -r gen-cpp/
 
 style-local:
 	$(CPPSTYLE_CMD)

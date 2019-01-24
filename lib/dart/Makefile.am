@@ -22,11 +22,17 @@ all-local:
 
 clean-local:
 	$(RM) -r .pub
-	find . -type d -name "packages" | xargs $(RM) -r
+	find . -type d -name ".dart_tool" | xargs $(RM) -r
 	find . -type f -name ".packages" | xargs $(RM)
-	find . -type f -name "pubspec.lock" | xargs $(RM)
+	find . -type d -name "packages" | xargs $(RM) -r
 
 check-local: all
+
+dist-hook:
+	$(RM) -r $(distdir)/.pub
+	find $(distdir) -type d -name ".dart_tool" | xargs $(RM) -r
+	find $(distdir) -type f -name ".packages" | xargs $(RM)
+	find $(distdir) -type d -name "packages" | xargs $(RM) -r
 
 EXTRA_DIST = \
 	.analysis_options

@@ -41,8 +41,19 @@ MultiplexClient.exe: Client/Multiplex.Test.Client.cs ThriftImpl.dll
 MultiplexServer.exe: Server/Multiplex.Test.Server.cs ThriftImpl.dll
 	$(CSC) $(CSC_DEFINES) -out:$@ -reference:../../Thrift.dll -reference:ThriftImpl.dll $<
 
+CLEANFILES = \
+	MultiplexClient.exe \
+	MultiplexServer.exe \
+	ThriftImpl.dll
+
+DISTCLEANFILES = \
+	Makefile.in
+
 clean-local:
-	$(RM) -rf gen-csharp *.exe *.dll
+	$(RM) -rf gen-csharp
+
+dist-hook:
+	$(RM) -r $(distdir)/gen-csharp/
 
 TESTPORT = 9501
 check-local: MultiplexServer.exe MultiplexClient.exe

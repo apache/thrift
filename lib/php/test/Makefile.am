@@ -48,6 +48,8 @@ check: deps stubs \
   check-validator \
   check-json-serializer
 
+distclean-local:
+
 clean-local:
 	$(RM) -r ./packages
 	$(RM) TEST-*.xml

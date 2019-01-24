@@ -31,6 +31,7 @@ clean-local:
 	./gradlew $(GRADLE_OPTS) clean \
 		-Prelease=true \
                 --console=plain
+	$(RM) -r .gradle
 
 check-local: $(THRIFT)
 	./gradlew $(GRADLE_OPTS) test \
@@ -42,6 +43,9 @@ maven-publish:
 		-Prelease=true \
                 -Psign=true \
 		--console=plain
+
+dist-hook:
+	$(RM) -r $(distdir)/.gradle/
 
 EXTRA_DIST = \
 	CMakeLists.txt \
