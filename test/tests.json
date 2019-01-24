@@ -11,7 +11,8 @@
       ],
       "protocols": [
         "binary:multi",
-        "compact:multic"
+        "compact:multic",
+        "header"
       ]
     },
     "client": {
@@ -21,7 +22,8 @@
       ],
       "protocols": [
         "multi:binary",
-        "multic:compact"
+        "multic:compact",
+        "multi:header"
       ],
       "sockets": [
         "ip-ssl"
@@ -199,7 +201,8 @@
     "protocols": [
       "compact",
       "binary",
-      "json"
+      "json",
+      "header"
     ],
     "workdir": "../lib/nodejs/test"
   },
