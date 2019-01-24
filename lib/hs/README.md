@@ -97,3 +97,17 @@ Processor
 
 Just a function that takes a handler label, protocols. It calls the
 superclasses process if there is a superclass.
+
+Releasing to Hackage
+====================
+
+Using the [Docker Container for Ubuntu Bionic](../../build/docker/README.md), run:
+
+    root@e941f5311545:/thrift/src# ./bootstrap.sh && ./configure
+    root@e941f5311545:/thrift/src# cd lib/hs && make dist-local
+
+This will produce a `lib/hs/dist/thrift-<version>.tar.gz` file.  Take this
+file and upload it as a Haskell Hackage
+[package candidate](https://hackage.haskell.org/upload#candidates) and 
+check to make sure all the information is correct.  Assuming all is satisfactory,
+you can upload the package as official using the link at the top of the page.
