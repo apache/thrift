@@ -20,7 +20,7 @@
 Name:           thrift
 Version:        0.12.0
 Cabal-Version:  1.24
-License:        OtherLicense
+License:        Apache
 Category:       Foreign
 Build-Type:     Simple
 Synopsis:       Haskell bindings for the Apache Thrift RPC system
