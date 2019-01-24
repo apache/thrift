@@ -28,13 +28,8 @@ macro(ADD_LIBRARY_THRIFT name)
     add_library(${name} ${ARGN})
     set_target_properties(${name} PROPERTIES
         OUTPUT_NAME ${name}${THRIFT_RUNTIME_POSTFIX}   # windows link variants (/MT, /MD, /MTd, /MDd) get different names
-        VERSION ${thrift_VERSION} )
-    # set_target_properties(${name} PROPERTIES PUBLIC_HEADER "${thriftcpp_HEADERS}")
-    install(TARGETS ${name}
-        RUNTIME DESTINATION "${BIN_INSTALL_DIR}"
-        LIBRARY DESTINATION "${LIB_INSTALL_DIR}"
-        ARCHIVE DESTINATION "${LIB_INSTALL_DIR}"
-        PUBLIC_HEADER DESTINATION "${INCLUDE_INSTALL_DIR}")
+        VERSION ${thrift_VERSION})
+    list(APPEND thrift_lib_targets ${name})
 endmacro()
 
 macro(TARGET_INCLUDE_DIRECTORIES_THRIFT name)

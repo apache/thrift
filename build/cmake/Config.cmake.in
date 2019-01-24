@@ -1,0 +1,14 @@
+@PACKAGE_INIT@
+
+set(package_deps @package_deps@)
+foreach(dep IN LISTS package_deps)
+    find_package(${dep} REQUIRED)
+endforeach()
+
+check_required_components("@PROJECT_NAME@")
+
+if(@BUILD_COMPILER@)
+    set(THRIFT_COMPILER "@CMAKE_INSTALL_FULL_BINDIR@/thrift@CMAKE_EXECUTABLE_SUFFIX@")
+endif()
+
+include("${CMAKE_CURRENT_LIST_DIR}/@TARGETS_EXPORT_NAME@.cmake")
