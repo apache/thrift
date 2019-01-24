@@ -22,6 +22,8 @@
 
 namespace Thrift\Protocol;
 
+use Thrift\Exception\TException;
+use Thrift\Transport\TTransport;
 use Thrift\Type\TType;
 use Thrift\Exception\TProtocolException;
 
@@ -38,7 +40,7 @@ abstract class TProtocol
     protected $trans_;
 
     /**
-     * Constructor
+     * @param TTransport $trans
      */
     protected function __construct($trans)
     {
