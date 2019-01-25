@@ -32,10 +32,27 @@ clean-local:
 
 EXTRA_DIST = \
 	README.md \
-	Tests \
-	Thrift \
+	Tests/Thrift.IntegrationTests/Protocols \
+	Tests/Thrift.IntegrationTests/Thrift.IntegrationTests.csproj \
+	Tests/Thrift.PublicInterfaces.Compile.Tests/Thrift.PublicInterfaces.Compile.Tests.csproj \
+	Tests/Thrift.PublicInterfaces.Compile.Tests/Properties/AssemblyInfo.cs \
+	Tests/Thrift.PublicInterfaces.Compile.Tests/CassandraTest.thrift \
+	Tests/Thrift.Tests/Thrift.Tests.csproj \
+	Tests/Thrift.Tests/Protocols \
+	Tests/Thrift.Tests/Collections \
+	Thrift/TApplicationException.cs \
+	Thrift/TBaseClient.cs \
+	Thrift/TException.cs \
+	Thrift/Thrift.csproj \
+	Thrift/Collections \
+	Thrift/Processor \
+	Thrift/Properties \
+	Thrift/Protocol \
+	Thrift/Server \
+	Thrift/Transport \
 	Thrift.sln \
 	build.cmd \
 	build.sh \
 	runtests.cmd \
 	runtests.sh
+	
