@@ -1,6 +1,15 @@
 {
   "name": "thrift",
-  "version": "1.0.0",
+  "version": "0.13.0",
+  "description": "Thrift is a software framework for scalable cross-language services development.",
+  "author": {
+    "name": "Apache Thrift Developers",
+    "email": "dev@thrift.apache.org"
+  },
+  "bugs": "https://issues.apache.org/jira/projects/THRIFT/summary",
+  "homepage": "http://thrift.apache.org",
+  "repository": "https://github.com/apache/thrift",
+  "license": "Apache-2.0",
   "devDependencies": {
     "browserify": "^16.2.3",
     "grunt": "^1.0.2",
