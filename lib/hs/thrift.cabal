@@ -18,7 +18,7 @@
 --
 
 Name:           thrift
-Version:        1.0.0
+Version:        0.13.0
 Cabal-Version:  1.24
 License:        OtherLicense
 Category:       Foreign
