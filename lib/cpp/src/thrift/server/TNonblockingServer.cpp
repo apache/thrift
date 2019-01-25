@@ -327,7 +327,7 @@ public:
       serverEventHandler_(connection_->getServerEventHandler()),
       connectionContext_(connection_->getConnectionContext()) {}
 
-  void run() {
+  void run() override {
     try {
       for (;;) {
         if (serverEventHandler_) {

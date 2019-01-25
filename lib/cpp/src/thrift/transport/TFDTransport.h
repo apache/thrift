@@ -43,7 +43,7 @@ public:
   TFDTransport(int fd, ClosePolicy close_policy = NO_CLOSE_ON_DESTROY)
     : fd_(fd), close_policy_(close_policy) {}
 
-  ~TFDTransport() {
+  ~TFDTransport() override {
     if (close_policy_ == CLOSE_ON_DESTROY) {
       try {
         close();
@@ -55,9 +55,9 @@ public:
 
   bool isOpen() { return fd_ >= 0; }
 
-  void open() {}
+  void open() override {}
 
-  void close();
+  void close() override;
 
   uint32_t read(uint8_t* buf, uint32_t len);
 

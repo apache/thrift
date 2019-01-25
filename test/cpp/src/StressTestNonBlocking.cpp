@@ -75,7 +75,7 @@ public:
     counts_[method] = ++ct;
   }
 
-  void echoVoid() {
+  void echoVoid() override {
     count("echoVoid");
     // Sleep to simulate work
     THRIFT_SLEEP_USEC(1);
@@ -87,18 +87,18 @@ public:
     return counts_;
   }
 
-  int8_t echoByte(const int8_t arg) { return arg; }
-  int32_t echoI32(const int32_t arg) { return arg; }
-  int64_t echoI64(const int64_t arg) { return arg; }
-  void echoString(string& out, const string& arg) {
+  int8_t echoByte(const int8_t arg) override { return arg; }
+  int32_t echoI32(const int32_t arg) override { return arg; }
+  int64_t echoI64(const int64_t arg) override { return arg; }
+  void echoString(string& out, const string& arg) override {
     if (arg != "hello") {
       T_ERROR_ABORT("WRONG STRING (%s)!!!!", arg.c_str());
     }
     out = arg;
   }
-  void echoList(vector<int8_t>& out, const vector<int8_t>& arg) { out = arg; }
-  void echoSet(set<int8_t>& out, const set<int8_t>& arg) { out = arg; }
-  void echoMap(map<int8_t, int8_t>& out, const map<int8_t, int8_t>& arg) { out = arg; }
+  void echoList(vector<int8_t>& out, const vector<int8_t>& arg) override { out = arg; }
+  void echoSet(set<int8_t>& out, const set<int8_t>& arg) override { out = arg; }
+  void echoMap(map<int8_t, int8_t>& out, const map<int8_t, int8_t>& arg) override { out = arg; }
 
 private:
   count_map counts_;
@@ -120,7 +120,7 @@ public:
       _loopCount(loopCount),
       _loopType(loopType) {}
 
-  void run() {
+  void run() override {
 
     // Wait for all worker threads to start
 

@@ -37,12 +37,12 @@ class TQIODeviceTransport
     : public apache::thrift::transport::TVirtualTransport<TQIODeviceTransport> {
 public:
   explicit TQIODeviceTransport(std::shared_ptr<QIODevice> dev);
-  virtual ~TQIODeviceTransport();
+  ~TQIODeviceTransport() override;
 
-  void open();
+  void open() override;
   bool isOpen();
-  bool peek();
-  void close();
+  bool peek() override;
+  void close() override;
 
   uint32_t readAll(uint8_t* buf, uint32_t len);
   uint32_t read(uint8_t* buf, uint32_t len);
@@ -50,7 +50,7 @@ public:
   void write(const uint8_t* buf, uint32_t len);
   uint32_t write_partial(const uint8_t* buf, uint32_t len);
 
-  void flush();
+  void flush() override;
 
   uint8_t* borrow(uint8_t* buf, uint32_t* len);
   void consume(uint32_t len);

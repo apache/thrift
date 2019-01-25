@@ -162,7 +162,7 @@ protected:
     wBound_ = buf + len;
   }
 
-  virtual ~TBufferBase() {}
+  ~TBufferBase() override {}
 
   /// Reads begin here.
   uint8_t* rBase_;
@@ -215,32 +215,32 @@ public:
     initPointers();
   }
 
-  void open() { transport_->open(); }
+  void open() override { transport_->open(); }
 
   bool isOpen() { return transport_->isOpen(); }
 
-  bool peek() {
+  bool peek() override {
     if (rBase_ == rBound_) {
       setReadBuffer(rBuf_.get(), transport_->read(rBuf_.get(), rBufSize_));
     }
     return (rBound_ > rBase_);
   }
 
-  void close() {
+  void close() override {
     flush();
     transport_->close();
   }
 
-  virtual uint32_t readSlow(uint8_t* buf, uint32_t len);
+  uint32_t readSlow(uint8_t* buf, uint32_t len) override;
 
-  virtual void writeSlow(const uint8_t* buf, uint32_t len);
+  void writeSlow(const uint8_t* buf, uint32_t len) override;
 
   void flush() override;
 
   /**
    * Returns the origin of the underlying transport
    */
-  virtual const std::string getOrigin() { return transport_->getOrigin(); }
+  const std::string getOrigin() override { return transport_->getOrigin(); }
 
   /**
    * The following behavior is currently implemented by TBufferedTransport,
@@ -253,7 +253,7 @@ public:
    *    will ever have to be copied again.  For optimial performance,
    *    stay under this limit.
    */
-  virtual const uint8_t* borrowSlow(uint8_t* buf, uint32_t* len);
+  const uint8_t* borrowSlow(uint8_t* buf, uint32_t* len) override;
 
   std::shared_ptr<TTransport> getUnderlyingTransport() { return transport_; }
 
@@ -286,7 +286,7 @@ class TBufferedTransportFactory : public TTransportFactory {
 public:
   TBufferedTransportFactory() {}
 
-  virtual ~TBufferedTransportFactory() {}
+  ~TBufferedTransportFactory() override {}
 
   /**
    * Wraps the transport into a buffered one.
@@ -343,13 +343,13 @@ public:
     initPointers();
   }
 
-  void open() { transport_->open(); }
+  void open() override { transport_->open(); }
 
   bool isOpen() { return transport_->isOpen(); }
 
-  bool peek() { return (rBase_ < rBound_) || transport_->peek(); }
+  bool peek() override { return (rBase_ < rBound_) || transport_->peek(); }
 
-  void close() {
+  void close() override {
     flush();
     transport_->close();
   }
@@ -360,11 +360,11 @@ public:
 
   void flush() override;
 
-  uint32_t readEnd();
+  uint32_t readEnd() override;
 
-  uint32_t writeEnd();
+  uint32_t writeEnd() override;
 
-  const uint8_t* borrowSlow(uint8_t* buf, uint32_t* len);
+  const uint8_t* borrowSlow(uint8_t* buf, uint32_t* len) override;
 
   std::shared_ptr<TTransport> getUnderlyingTransport() { return transport_; }
 
@@ -377,7 +377,7 @@ public:
   /**
    * Returns the origin of the underlying transport
    */
-  virtual const std::string getOrigin() { return transport_->getOrigin(); }
+  const std::string getOrigin() override { return transport_->getOrigin(); }
 
   /**
    * Set the maximum size of the frame at read
@@ -425,7 +425,7 @@ class TFramedTransportFactory : public TTransportFactory {
 public:
   TFramedTransportFactory() {}
 
-  virtual ~TFramedTransportFactory() {}
+  ~TFramedTransportFactory() override {}
 
   /**
    * Wraps the transport into a framed one.
@@ -544,7 +544,7 @@ public:
     }
   }
 
-  ~TMemoryBuffer() {
+  ~TMemoryBuffer() override {
     if (owner_) {
       std::free(buffer_);
     }
@@ -552,11 +552,11 @@ public:
 
   bool isOpen() { return true; }
 
-  bool peek() { return (rBase_ < wBase_); }
+  bool peek() override { return (rBase_ < wBase_); }
 
-  void open() {}
+  void open() override {}
 
-  void close() {}
+  void close() override {}
 
   // TODO(dreiss): Make bufPtr const.
   void getBuffer(uint8_t** bufPtr, uint32_t* sz) {
@@ -634,7 +634,7 @@ public:
   uint32_t readAppendToString(std::string& str, uint32_t len);
 
   // return number of bytes read
-  uint32_t readEnd() {
+  uint32_t readEnd() override {
     // This cast should be safe, because buffer_'s size is a uint32_t
     uint32_t bytes = static_cast<uint32_t>(rBase_ - buffer_);
     if (rBase_ == wBase_) {
@@ -644,7 +644,7 @@ public:
   }
 
   // Return number of bytes written
-  uint32_t writeEnd() {
+  uint32_t writeEnd() override {
     // This cast should be safe, because buffer_'s size is a uint32_t
     return static_cast<uint32_t>(wBase_ - buffer_);
   }
@@ -719,11 +719,11 @@ protected:
   // Compute the position and available data for reading.
   void computeRead(uint32_t len, uint8_t** out_start, uint32_t* out_give);
 
-  uint32_t readSlow(uint8_t* buf, uint32_t len);
+  uint32_t readSlow(uint8_t* buf, uint32_t len) override;
 
-  void writeSlow(const uint8_t* buf, uint32_t len);
+  void writeSlow(const uint8_t* buf, uint32_t len) override;
 
-  const uint8_t* borrowSlow(uint8_t* buf, uint32_t* len);
+  const uint8_t* borrowSlow(uint8_t* buf, uint32_t* len) override;
 
   // Data buffer
   uint8_t* buffer_;

@@ -73,7 +73,7 @@ public:
     cerr << "roundTripRPC()" << endl;
 #endif
   }
-  void oneWayRPC() {
+  void oneWayRPC() override {
 #ifdef ENABLE_STDERR_LOGGING
     cerr << "oneWayRPC()" << std::endl ;
 #endif
@@ -82,13 +82,13 @@ public:
 
 class OneWayServiceCloneFactory : virtual public onewaytest::OneWayServiceIfFactory {
  public:
-  virtual ~OneWayServiceCloneFactory() {}
-  virtual onewaytest::OneWayServiceIf* getHandler(const ::apache::thrift::TConnectionInfo& connInfo)
+  ~OneWayServiceCloneFactory() override {}
+  onewaytest::OneWayServiceIf* getHandler(const ::apache::thrift::TConnectionInfo& connInfo) override
   {
     (void)connInfo ;
     return new OneWayServiceHandler;
   }
-  virtual void releaseHandler( onewaytest::OneWayServiceIf* handler) {
+  void releaseHandler( onewaytest::OneWayServiceIf* handler) override {
     delete handler;
   }
 };
@@ -112,14 +112,14 @@ using apache::thrift::concurrency::Synchronized;
 class TServerReadyEventHandler : public TServerEventHandler, public Monitor {
 public:
   TServerReadyEventHandler() : isListening_(false), accepted_(0) {}
-  virtual ~TServerReadyEventHandler() {}
-  virtual void preServe() {
+  ~TServerReadyEventHandler() override {}
+  void preServe() override {
     Synchronized sync(*this);
     isListening_ = true;
     notify();
   }
-  virtual void* createContext(shared_ptr<TProtocol> input,
-                              shared_ptr<TProtocol> output) {
+  void* createContext(shared_ptr<TProtocol> input,
+                              shared_ptr<TProtocol> output) override {
     Synchronized sync(*this);
     ++accepted_;
     notify();

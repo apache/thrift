@@ -33,7 +33,7 @@ class t_enum : public t_type {
 public:
   t_enum(t_program* program) : t_type(program) {}
 
-  void set_name(const std::string& name) { name_ = name; }
+  void set_name(const std::string& name) override { name_ = name; }
 
   void append(t_enum_value* constant) { constants_.push_back(constant); }
 
@@ -101,7 +101,7 @@ public:
     return max_value;
   }
 
-  bool is_enum() const { return true; }
+  bool is_enum() const override { return true; }
 
 private:
   std::vector<t_enum_value*> constants_;

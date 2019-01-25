@@ -65,7 +65,7 @@ public:
     scope_ = new t_scope();
   }
 
-  ~t_program() {
+  ~t_program() override {
     if (scope_) {
       delete scope_;
       scope_ = NULL;

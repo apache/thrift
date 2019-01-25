@@ -47,7 +47,7 @@ public:
       forward_(forward)
   {}
 
-  ~t_typedef() {}
+  ~t_typedef() override {}
 
   t_type* get_type() const;
 
@@ -55,7 +55,7 @@ public:
 
   bool is_forward_typedef() const { return forward_; }
 
-  bool is_typedef() const { return true; }
+  bool is_typedef() const override { return true; }
 
 private:
   t_type* type_;

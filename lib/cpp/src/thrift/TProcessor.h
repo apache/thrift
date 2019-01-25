@@ -218,7 +218,7 @@ class TSingletonProcessorFactory : public TProcessorFactory {
 public:
   TSingletonProcessorFactory(std::shared_ptr<TProcessor> processor) : processor_(processor) {}
 
-  std::shared_ptr<TProcessor> getProcessor(const TConnectionInfo&) { return processor_; }
+  std::shared_ptr<TProcessor> getProcessor(const TConnectionInfo&) override { return processor_; }
 
 private:
   std::shared_ptr<TProcessor> processor_;

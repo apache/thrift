@@ -42,7 +42,7 @@ public:
                         const int32_t _seqid)
     : TProtocolDecorator(_protocol), name(_name), type(_type), seqid(_seqid) {}
 
-  uint32_t readMessageBegin_virt(std::string& _name, TMessageType& _type, int32_t& _seqid) {
+  uint32_t readMessageBegin_virt(std::string& _name, TMessageType& _type, int32_t& _seqid) override {
 
     _name = name;
     _type = type;
@@ -149,7 +149,7 @@ public:
    */
   bool process(std::shared_ptr<protocol::TProtocol> in,
                std::shared_ptr<protocol::TProtocol> out,
-               void* connectionContext) {
+               void* connectionContext) override {
     std::string name;
     protocol::TMessageType type;
     int32_t seqid;

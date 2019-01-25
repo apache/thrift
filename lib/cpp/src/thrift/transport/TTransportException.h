@@ -65,7 +65,7 @@ public:
   TTransportException(TTransportExceptionType type, const std::string& message, int errno_copy)
     : apache::thrift::TException(message + ": " + TOutput::strerror_s(errno_copy)), type_(type) {}
 
-  virtual ~TTransportException() noexcept {}
+  ~TTransportException() noexcept override {}
 
   /**
    * Returns an error code that provides information about the type of error
@@ -75,7 +75,7 @@ public:
    */
   TTransportExceptionType getType() const noexcept { return type_; }
 
-  virtual const char* what() const noexcept;
+  const char* what() const noexcept override;
 
 protected:
   /** Just like strerror_r but returns a C++ string object. */

@@ -105,7 +105,7 @@ public:
   /**
    * Destroyes the socket object, closing it if necessary.
    */
-  virtual ~TSocketPool();
+  ~TSocketPool() override;
 
   /**
    * Add a server to the pool
@@ -155,12 +155,12 @@ public:
   /**
    * Creates and opens the UNIX socket.
    */
-  void open();
+  void open() override;
 
   /*
    * Closes the UNIX socket
    */
-  void close();
+  void close() override;
 
 protected:
   void setCurrentServer(const std::shared_ptr<TSocketPoolServer>& server);

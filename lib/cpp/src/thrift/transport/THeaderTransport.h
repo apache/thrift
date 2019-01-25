@@ -102,7 +102,7 @@ public:
     initBuffers();
   }
 
-  virtual uint32_t readSlow(uint8_t* buf, uint32_t len);
+  uint32_t readSlow(uint8_t* buf, uint32_t len) override;
   void flush() override;
 
   void resizeTransformBuffer(uint32_t additionalSize = 0);
@@ -175,7 +175,7 @@ protected:
    * Returns true if a frame was read successfully, or false on EOF.
    * (Raises a TTransportException if EOF occurs after a partial frame.)
    */
-  virtual bool readFrame();
+  bool readFrame() override;
 
   void ensureReadBuffer(uint32_t sz);
   uint32_t getWriteBytes();
@@ -259,7 +259,7 @@ class THeaderTransportFactory : public TTransportFactory {
 public:
   THeaderTransportFactory() {}
 
-  virtual ~THeaderTransportFactory() {}
+  ~THeaderTransportFactory() override {}
 
   /**
    * Wraps the transport into a header one.

@@ -74,7 +74,7 @@ public:
   /**
    * Destroyes the socket object, closing it if necessary.
    */
-  virtual ~TSocket();
+  ~TSocket() override;
 
   /**
    * Whether the socket is alive.
@@ -259,7 +259,7 @@ public:
    *
    * @return string peer host identifier and port
    */
-  virtual const std::string getOrigin();
+  const std::string getOrigin() override;
 
   /**
    * Constructor to create socket from file descriptor.

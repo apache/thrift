@@ -32,31 +32,31 @@ public:
   ParentHandler(const std::shared_ptr<EventLog>& log)
     : triggerMonitor(&mutex_), generation_(0), wait_(false), log_(log) {}
 
-  int32_t incrementGeneration() {
+  int32_t incrementGeneration() override {
     concurrency::Guard g(mutex_);
     log_->append(EventLog::ET_CALL_INCREMENT_GENERATION, 0, 0);
     return ++generation_;
   }
 
-  int32_t getGeneration() {
+  int32_t getGeneration() override {
     concurrency::Guard g(mutex_);
     log_->append(EventLog::ET_CALL_GET_GENERATION, 0, 0);
     return generation_;
   }
 
-  void addString(const std::string& s) {
+  void addString(const std::string& s) override {
     concurrency::Guard g(mutex_);
     log_->append(EventLog::ET_CALL_ADD_STRING, 0, 0);
     strings_.push_back(s);
   }
 
-  void getStrings(std::vector<std::string>& _return) {
+  void getStrings(std::vector<std::string>& _return) override {
     concurrency::Guard g(mutex_);
     log_->append(EventLog::ET_CALL_GET_STRINGS, 0, 0);
     _return = strings_;
   }
 
-  void getDataWait(std::string& _return, const int32_t length) {
+  void getDataWait(std::string& _return, const int32_t length) override {
     concurrency::Guard g(mutex_);
     log_->append(EventLog::ET_CALL_GET_DATA_WAIT, 0, 0);
 
@@ -65,14 +65,14 @@ public:
     _return.append(length, 'a');
   }
 
-  void onewayWait() {
+  void onewayWait() override {
     concurrency::Guard g(mutex_);
     log_->append(EventLog::ET_CALL_ONEWAY_WAIT, 0, 0);
 
     blockUntilTriggered();
   }
 
-  void exceptionWait(const std::string& message) {
+  void exceptionWait(const std::string& message) override {
     concurrency::Guard g(mutex_);
     log_->append(EventLog::ET_CALL_EXCEPTION_WAIT, 0, 0);
 
@@ -83,7 +83,7 @@ public:
     throw e;
   }
 
-  void unexpectedExceptionWait(const std::string& message) {
+  void unexpectedExceptionWait(const std::string& message) override {
     concurrency::Guard g(mutex_);
     log_->append(EventLog::ET_CALL_UNEXPECTED_EXCEPTION_WAIT, 0, 0);
 
@@ -148,7 +148,7 @@ class ChildHandler : public ParentHandler, virtual public ChildServiceIf {
 public:
   ChildHandler(const std::shared_ptr<EventLog>& log) : ParentHandler(log), value_(0) {}
 
-  int32_t setValue(const int32_t value) {
+  int32_t setValue(const int32_t value) override {
     concurrency::Guard g(mutex_);
     log_->append(EventLog::ET_CALL_SET_VALUE, 0, 0);
 
@@ -157,7 +157,7 @@ public:
     return oldValue;
   }
 
-  int32_t getValue() {
+  int32_t getValue() override {
     concurrency::Guard g(mutex_);
     log_->append(EventLog::ET_CALL_GET_VALUE, 0, 0);
 
@@ -198,19 +198,19 @@ class ServerEventHandler : public server::TServerEventHandler {
 public:
   ServerEventHandler(const std::shared_ptr<EventLog>& log) : nextId_(1), log_(log) {}
 
-  virtual void preServe() {}
+  void preServe() override {}
 
-  virtual void* createContext(std::shared_ptr<protocol::TProtocol> input,
-                              std::shared_ptr<protocol::TProtocol> output) {
+  void* createContext(std::shared_ptr<protocol::TProtocol> input,
+                              std::shared_ptr<protocol::TProtocol> output) override {
     ConnContext* context = new ConnContext(input, output, nextId_);
     ++nextId_;
     log_->append(EventLog::ET_CONN_CREATED, context->id, 0);
     return context;
   }
 
-  virtual void deleteContext(void* serverContext,
+  void deleteContext(void* serverContext,
                              std::shared_ptr<protocol::TProtocol> input,
-                             std::shared_ptr<protocol::TProtocol> output) {
+                             std::shared_ptr<protocol::TProtocol> output) override {
     ConnContext* context = reinterpret_cast<ConnContext*>(serverContext);
 
     if (input != context->input) {
@@ -225,8 +225,8 @@ public:
     delete context;
   }
 
-  virtual void processContext(void* serverContext,
-                              std::shared_ptr<transport::TTransport> transport) {
+  void processContext(void* serverContext,
+                              std::shared_ptr<transport::TTransport> transport) override {
 // TODO: We currently don't test the behavior of the processContext()
 // calls.  The various server implementations call processContext() at
 // slightly different times, and it is too annoying to try and account for
@@ -258,7 +258,7 @@ class ProcessorEventHandler : public TProcessorEventHandler {
 public:
   ProcessorEventHandler(const std::shared_ptr<EventLog>& log) : nextId_(1), log_(log) {}
 
-  void* getContext(const char* fnName, void* serverContext) {
+  void* getContext(const char* fnName, void* serverContext) override {
     ConnContext* connContext = reinterpret_cast<ConnContext*>(serverContext);
 
     CallContext* context = new CallContext(connContext, nextId_, fnName);
@@ -268,46 +268,46 @@ public:
     return context;
   }
 
-  void freeContext(void* ctx, const char* fnName) {
+  void freeContext(void* ctx, const char* fnName) override {
     CallContext* context = reinterpret_cast<CallContext*>(ctx);
     checkName(context, fnName);
     log_->append(EventLog::ET_CALL_FINISHED, context->connContext->id, context->id, fnName);
     delete context;
   }
 
-  void preRead(void* ctx, const char* fnName) {
+  void preRead(void* ctx, const char* fnName) override {
     CallContext* context = reinterpret_cast<CallContext*>(ctx);
     checkName(context, fnName);
     log_->append(EventLog::ET_PRE_READ, context->connContext->id, context->id, fnName);
   }
 
-  void postRead(void* ctx, const char* fnName, uint32_t bytes) {
+  void postRead(void* ctx, const char* fnName, uint32_t bytes) override {
     THRIFT_UNUSED_VARIABLE(bytes);
     CallContext* context = reinterpret_cast<CallContext*>(ctx);
     checkName(context, fnName);
     log_->append(EventLog::ET_POST_READ, context->connContext->id, context->id, fnName);
   }
 
-  void preWrite(void* ctx, const char* fnName) {
+  void preWrite(void* ctx, const char* fnName) override {
     CallContext* context = reinterpret_cast<CallContext*>(ctx);
     checkName(context, fnName);
     log_->append(EventLog::ET_PRE_WRITE, context->connContext->id, context->id, fnName);
   }
 
-  void postWrite(void* ctx, const char* fnName, uint32_t bytes) {
+  void postWrite(void* ctx, const char* fnName, uint32_t bytes) override {
     THRIFT_UNUSED_VARIABLE(bytes);
     CallContext* context = reinterpret_cast<CallContext*>(ctx);
     checkName(context, fnName);
     log_->append(EventLog::ET_POST_WRITE, context->connContext->id, context->id, fnName);
   }
 
-  void asyncComplete(void* ctx, const char* fnName) {
+  void asyncComplete(void* ctx, const char* fnName) override {
     CallContext* context = reinterpret_cast<CallContext*>(ctx);
     checkName(context, fnName);
     log_->append(EventLog::ET_ASYNC_COMPLETE, context->connContext->id, context->id, fnName);
   }
 
-  void handlerError(void* ctx, const char* fnName) {
+  void handlerError(void* ctx, const char* fnName) override {
     CallContext* context = reinterpret_cast<CallContext*>(ctx);
     checkName(context, fnName);
     log_->append(EventLog::ET_HANDLER_ERROR, context->connContext->id, context->id, fnName);

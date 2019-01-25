@@ -43,9 +43,9 @@ public:
 
   Task(shared_ptr<Runnable> runnable) : runnable_(runnable), state_(WAITING) {}
 
-  ~Task() {}
+  ~Task() override {}
 
-  void run() {
+  void run() override {
     if (state_ == EXECUTING) {
       runnable_->run();
       state_ = COMPLETE;
@@ -67,7 +67,7 @@ class TimerManager::Dispatcher : public Runnable {
 public:
   Dispatcher(TimerManager* manager) : manager_(manager) {}
 
-  ~Dispatcher() {}
+  ~Dispatcher() override {}
 
   /**
    * Dispatcher entry point
@@ -75,7 +75,7 @@ public:
    * As long as dispatcher thread is running, pull tasks off the task taskMap_
    * and execute.
    */
-  void run() {
+  void run() override {
     {
       Synchronized s(manager_->monitor_);
       if (manager_->state_ == TimerManager::STARTING) {

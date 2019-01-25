@@ -63,7 +63,7 @@ public:
     resetProtocol();
   }
 
-  ~THeaderProtocol() {}
+  ~THeaderProtocol() override {}
 
   /**
    * Functions to work with headers by calling into THeaderTransport
@@ -190,15 +190,15 @@ protected:
 
 class THeaderProtocolFactory : public TProtocolFactory {
 public:
-  virtual std::shared_ptr<TProtocol> getProtocol(std::shared_ptr<transport::TTransport> trans) {
+  std::shared_ptr<TProtocol> getProtocol(std::shared_ptr<transport::TTransport> trans) override {
     THeaderProtocol* headerProtocol
         = new THeaderProtocol(trans, trans, T_BINARY_PROTOCOL);
     return std::shared_ptr<TProtocol>(headerProtocol);
   }
 
-  virtual std::shared_ptr<TProtocol> getProtocol(
+  std::shared_ptr<TProtocol> getProtocol(
       std::shared_ptr<transport::TTransport> inTrans,
-      std::shared_ptr<transport::TTransport> outTrans) {
+      std::shared_ptr<transport::TTransport> outTrans) override {
     THeaderProtocol* headerProtocol = new THeaderProtocol(inTrans, outTrans, T_BINARY_PROTOCOL);
     return std::shared_ptr<TProtocol>(headerProtocol);
   }

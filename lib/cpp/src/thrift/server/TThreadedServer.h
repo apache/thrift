@@ -77,13 +77,13 @@ public:
       = std::shared_ptr<apache::thrift::concurrency::ThreadFactory>(
           new apache::thrift::concurrency::ThreadFactory(false)));
 
-  virtual ~TThreadedServer();
+  ~TThreadedServer() override;
 
   /**
    * Post-conditions (return guarantees):
    *   There will be no clients connected.
    */
-  virtual void serve();
+  void serve() override;
 
 protected:
   /**
@@ -95,12 +95,12 @@ protected:
   /**
    * Implementation of TServerFramework::onClientConnected
    */
-  virtual void onClientConnected(const std::shared_ptr<TConnectedClient>& pClient) /* override */;
+  void onClientConnected(const std::shared_ptr<TConnectedClient>& pClient) override /* override */;
 
   /**
    * Implementation of TServerFramework::onClientDisconnected
    */
-  virtual void onClientDisconnected(TConnectedClient *pClient) /* override */;
+  void onClientDisconnected(TConnectedClient *pClient) override /* override */;
 
   std::shared_ptr<apache::thrift::concurrency::ThreadFactory> threadFactory_;
 
@@ -115,8 +115,8 @@ protected:
   {
   public:
     TConnectedClientRunner(const std::shared_ptr<TConnectedClient>& pClient);
-    virtual ~TConnectedClientRunner();
-    void run() /* override */;
+    ~TConnectedClientRunner() override;
+    void run() override /* override */;
   private:
     std::shared_ptr<TConnectedClient> pClient_;
   };

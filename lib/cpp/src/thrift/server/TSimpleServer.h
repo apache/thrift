@@ -61,14 +61,14 @@ public:
       const std::shared_ptr<apache::thrift::protocol::TProtocolFactory>& inputProtocolFactory,
       const std::shared_ptr<apache::thrift::protocol::TProtocolFactory>& outputProtocolFactory);
 
-  virtual ~TSimpleServer();
+  ~TSimpleServer() override;
 
 protected:
-  virtual void onClientConnected(const std::shared_ptr<TConnectedClient>& pClient) /* override */;
-  virtual void onClientDisconnected(TConnectedClient* pClient) /* override */;
+  void onClientConnected(const std::shared_ptr<TConnectedClient>& pClient) override /* override */;
+  void onClientDisconnected(TConnectedClient* pClient) override /* override */;
 
 private:
-  void setConcurrentClientLimit(int64_t newLimit); // hide
+  void setConcurrentClientLimit(int64_t newLimit) override; // hide
 };
 }
 }

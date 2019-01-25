@@ -44,9 +44,9 @@ public:
         _success(false),
         _done(false) {}
 
-    ~Task() { std::cerr << this << std::endl; }
+    ~Task() override { std::cerr << this << std::endl; }
 
-    void run() {
+    void run() override {
 
       _endTime = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch()).count();
       _success = (_endTime - _startTime) >= _timeout;

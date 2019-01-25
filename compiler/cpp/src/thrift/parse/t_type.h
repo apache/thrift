@@ -38,7 +38,7 @@ class t_program;
  */
 class t_type : public t_doc {
 public:
-  virtual ~t_type() {}
+  ~t_type() override {}
 
   virtual void set_name(const std::string& name) { name_ = name; }
 

@@ -51,7 +51,7 @@ public:
               std::shared_ptr<TAsyncProcessor> processor,
               std::shared_ptr<apache::thrift::protocol::TProtocolFactory> protocolFactory,
               QObject* parent = NULL);
-  virtual ~TQTcpServer();
+  ~TQTcpServer() override;
 
 private Q_SLOTS:
   void processIncoming();

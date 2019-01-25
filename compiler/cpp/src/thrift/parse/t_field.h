@@ -58,7 +58,7 @@ public:
       xsd_attrs_(NULL),
       reference_(false) {}
 
-  ~t_field() {}
+  ~t_field() override {}
 
   t_type* get_type() { return type_; }
 

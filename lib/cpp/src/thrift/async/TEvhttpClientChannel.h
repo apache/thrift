@@ -53,23 +53,23 @@ public:
                        int port,
                        struct event_base* eb,
                        struct evdns_base *dnsbase = 0);
-  ~TEvhttpClientChannel();
+  ~TEvhttpClientChannel() override;
 
-  virtual void sendAndRecvMessage(const VoidCallback& cob,
+  void sendAndRecvMessage(const VoidCallback& cob,
                                   apache::thrift::transport::TMemoryBuffer* sendBuf,
-                                  apache::thrift::transport::TMemoryBuffer* recvBuf);
+                                  apache::thrift::transport::TMemoryBuffer* recvBuf) override;
 
-  virtual void sendMessage(const VoidCallback& cob,
-                           apache::thrift::transport::TMemoryBuffer* message);
-  virtual void recvMessage(const VoidCallback& cob,
-                           apache::thrift::transport::TMemoryBuffer* message);
+  void sendMessage(const VoidCallback& cob,
+                           apache::thrift::transport::TMemoryBuffer* message) override;
+  void recvMessage(const VoidCallback& cob,
+                           apache::thrift::transport::TMemoryBuffer* message) override;
 
   void finish(struct evhttp_request* req);
 
   // XXX
-  virtual bool good() const { return true; }
-  virtual bool error() const { return false; }
-  virtual bool timedOut() const { return false; }
+  bool good() const override { return true; }
+  bool error() const override { return false; }
+  bool timedOut() const override { return false; }
 
 private:
   static void response(struct evhttp_request* req, void* arg);

@@ -100,7 +100,7 @@ public:
     boolValue_.hasBoolValue = false;
   }
 
-  ~TCompactProtocolT() { free(string_buf_); }
+  ~TCompactProtocolT() override { free(string_buf_); }
 
   /**
    * Writing functions
@@ -233,13 +233,13 @@ public:
   TCompactProtocolFactoryT(int32_t string_limit, int32_t container_limit)
     : string_limit_(string_limit), container_limit_(container_limit) {}
 
-  virtual ~TCompactProtocolFactoryT() {}
+  ~TCompactProtocolFactoryT() override {}
 
   void setStringSizeLimit(int32_t string_limit) { string_limit_ = string_limit; }
 
   void setContainerSizeLimit(int32_t container_limit) { container_limit_ = container_limit; }
 
-  std::shared_ptr<TProtocol> getProtocol(std::shared_ptr<TTransport> trans) {
+  std::shared_ptr<TProtocol> getProtocol(std::shared_ptr<TTransport> trans) override {
     std::shared_ptr<Transport_> specific_trans = std::dynamic_pointer_cast<Transport_>(trans);
     TProtocol* prot;
     if (specific_trans) {

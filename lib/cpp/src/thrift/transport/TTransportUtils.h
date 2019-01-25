@@ -44,11 +44,11 @@ class TNullTransport : public TVirtualTransport<TNullTransport> {
 public:
   TNullTransport() {}
 
-  ~TNullTransport() {}
+  ~TNullTransport() override {}
 
   bool isOpen() { return true; }
 
-  void open() {}
+  void open() override {}
 
   void write(const uint8_t* /* buf */, uint32_t /* len */) { return; }
 };
@@ -107,7 +107,7 @@ public:
     }
   }
 
-  ~TPipedTransport() {
+  ~TPipedTransport() override {
     std::free(rBuf_);
     std::free(wBuf_);
   }
@@ -142,7 +142,7 @@ public:
 
   uint32_t read(uint8_t* buf, uint32_t len);
 
-  uint32_t readEnd() {
+  uint32_t readEnd() override {
 
     if (pipeOnRead_) {
       dstTrans_->write(rBuf_, rPos_);
@@ -164,7 +164,7 @@ public:
 
   void write(const uint8_t* buf, uint32_t len);
 
-  uint32_t writeEnd() {
+  uint32_t writeEnd() override {
     if (pipeOnWrite_) {
       dstTrans_->write(wBuf_, wLen_);
       dstTrans_->flush();
@@ -172,7 +172,7 @@ public:
     return wLen_;
   }
 
-  void flush();
+  void flush() override;
 
   std::shared_ptr<TTransport> getTargetTransport() { return dstTrans_; }
 
@@ -211,7 +211,7 @@ public:
   TPipedTransportFactory(std::shared_ptr<TTransport> dstTrans) {
     initializeTargetTransport(dstTrans);
   }
-  virtual ~TPipedTransportFactory() {}
+  ~TPipedTransportFactory() override {}
 
   /**
    * Wraps the base transport into a piped transport.
@@ -243,7 +243,7 @@ public:
   TPipedFileReaderTransport(std::shared_ptr<TFileReaderTransport> srcTrans,
                             std::shared_ptr<TTransport> dstTrans);
 
-  ~TPipedFileReaderTransport();
+  ~TPipedFileReaderTransport() override;
 
   // TTransport functions
   bool isOpen() const override;
@@ -252,18 +252,18 @@ public:
   void close() override;
   uint32_t read(uint8_t* buf, uint32_t len);
   uint32_t readAll(uint8_t* buf, uint32_t len);
-  uint32_t readEnd();
+  uint32_t readEnd() override;
   void write(const uint8_t* buf, uint32_t len);
-  uint32_t writeEnd();
-  void flush();
+  uint32_t writeEnd() override;
+  void flush() override;
 
   // TFileReaderTransport functions
-  int32_t getReadTimeout();
-  void setReadTimeout(int32_t readTimeout);
-  uint32_t getNumChunks();
-  uint32_t getCurChunk();
-  void seekToChunk(int32_t chunk);
-  void seekToEnd();
+  int32_t getReadTimeout() override;
+  void setReadTimeout(int32_t readTimeout) override;
+  uint32_t getNumChunks() override;
+  uint32_t getCurChunk() override;
+  void seekToChunk(int32_t chunk) override;
+  void seekToEnd() override;
 
   /*
    * Override TTransport *_virt() functions to invoke our implementations.
@@ -289,9 +289,9 @@ public:
   TPipedFileReaderTransportFactory() {}
   TPipedFileReaderTransportFactory(std::shared_ptr<TTransport> dstTrans)
     : TPipedTransportFactory(dstTrans) {}
-  virtual ~TPipedFileReaderTransportFactory() {}
+  ~TPipedFileReaderTransportFactory() override {}
 
-  std::shared_ptr<TTransport> getTransport(std::shared_ptr<TTransport> srcTrans) {
+  std::shared_ptr<TTransport> getTransport(std::shared_ptr<TTransport> srcTrans) override {
     std::shared_ptr<TFileReaderTransport> pFileReaderTransport
         = std::dynamic_pointer_cast<TFileReaderTransport>(srcTrans);
     if (pFileReaderTransport.get() != NULL) {

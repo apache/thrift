@@ -244,14 +244,14 @@ public:
     processor_->setEventHandler(processorEventHandler_);
   }
 
-  std::shared_ptr<TServer> createServer(uint16_t port) {
+  std::shared_ptr<TServer> createServer(uint16_t port) override {
     ServerTraits_ serverTraits;
     return serverTraits.createServer(processor_, port, transportFactory_, protocolFactory_);
   }
 
-  std::shared_ptr<TServerEventHandler> getServerEventHandler() { return serverEventHandler_; }
+  std::shared_ptr<TServerEventHandler> getServerEventHandler() override { return serverEventHandler_; }
 
-  void bindSuccessful(uint16_t port) { port_ = port; }
+  void bindSuccessful(uint16_t port) override { port_ = port; }
 
   uint16_t getPort() const { return port_; }
 

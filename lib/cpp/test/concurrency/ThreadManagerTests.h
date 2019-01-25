@@ -63,7 +63,7 @@ public:
     Task(Monitor& monitor, size_t& count, int64_t timeout)
       : _monitor(monitor), _count(count), _timeout(timeout), _startTime(0), _endTime(0), _done(false) {}
 
-    void run() {
+    void run() override {
 
       _startTime = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch()).count();
 
@@ -201,7 +201,7 @@ public:
     BlockTask(Monitor& entryMonitor, Monitor& blockMonitor, bool& blocked, Monitor& doneMonitor, size_t& count)
       : _entryMonitor(entryMonitor), _entered(false), _blockMonitor(blockMonitor), _blocked(blocked), _doneMonitor(doneMonitor), _count(count) {}
 
-    void run() {
+    void run() override {
       {
         Synchronized s(_entryMonitor);
         _entered = true;

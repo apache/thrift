@@ -174,24 +174,24 @@ public:
 class TFileTransport : public TFileReaderTransport, public TFileWriterTransport {
 public:
   TFileTransport(std::string path, bool readOnly = false);
-  ~TFileTransport();
+  ~TFileTransport() override;
 
   // TODO: what is the correct behaviour for this?
   // the log file is generally always open
   bool isOpen() const override { return true; }
 
   void write(const uint8_t* buf, uint32_t len);
-  void flush();
+  void flush() override;
 
   uint32_t readAll(uint8_t* buf, uint32_t len);
   uint32_t read(uint8_t* buf, uint32_t len);
   bool peek() override;
 
   // log-file specific functions
-  void seekToChunk(int32_t chunk);
-  void seekToEnd();
-  uint32_t getNumChunks();
-  uint32_t getCurChunk();
+  void seekToChunk(int32_t chunk) override;
+  void seekToEnd() override;
+  uint32_t getNumChunks() override;
+  uint32_t getCurChunk() override;
 
   // for changing the output file
   void resetOutputFile(int fd, std::string filename, off_t offset);
@@ -206,15 +206,15 @@ public:
 
   static const int32_t TAIL_READ_TIMEOUT = -1;
   static const int32_t NO_TAIL_READ_TIMEOUT = 0;
-  void setReadTimeout(int32_t readTimeout) { readTimeout_ = readTimeout; }
-  int32_t getReadTimeout() { return readTimeout_; }
+  void setReadTimeout(int32_t readTimeout) override { readTimeout_ = readTimeout; }
+  int32_t getReadTimeout() override { return readTimeout_; }
 
-  void setChunkSize(uint32_t chunkSize) {
+  void setChunkSize(uint32_t chunkSize) override {
     if (chunkSize) {
       chunkSize_ = chunkSize;
     }
   }
-  uint32_t getChunkSize() { return chunkSize_; }
+  uint32_t getChunkSize() override { return chunkSize_; }
 
   void setEventBufferSize(uint32_t bufferSize) {
     if (bufferAndThreadInitialized_) {

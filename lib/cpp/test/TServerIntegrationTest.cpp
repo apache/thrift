@@ -74,14 +74,14 @@ using boost::posix_time::milliseconds;
 class TServerReadyEventHandler : public TServerEventHandler, public Monitor {
 public:
   TServerReadyEventHandler() : isListening_(false), accepted_(0) {}
-  virtual ~TServerReadyEventHandler() {}
-  virtual void preServe() {
+  ~TServerReadyEventHandler() override {}
+  void preServe() override {
     Synchronized sync(*this);
     isListening_ = true;
     notify();
   }
-  virtual void* createContext(shared_ptr<TProtocol> input,
-                              shared_ptr<TProtocol> output) {
+  void* createContext(shared_ptr<TProtocol> input,
+                              shared_ptr<TProtocol> output) override {
     Synchronized sync(*this);
     ++accepted_;
     notify();
@@ -105,36 +105,36 @@ class ParentHandler : public ParentServiceIf {
 public:
   ParentHandler() : generation_(0) {}
 
-  int32_t incrementGeneration() {
+  int32_t incrementGeneration() override {
     Guard g(mutex_);
     return ++generation_;
   }
 
-  int32_t getGeneration() {
+  int32_t getGeneration() override {
     Guard g(mutex_);
     return generation_;
   }
 
-  void addString(const std::string& s) {
+  void addString(const std::string& s) override {
     Guard g(mutex_);
     strings_.push_back(s);
   }
 
-  void getStrings(std::vector<std::string>& _return) {
+  void getStrings(std::vector<std::string>& _return) override {
     Guard g(mutex_);
     _return = strings_;
   }
 
-  void getDataWait(std::string& _return, const int32_t length) {
+  void getDataWait(std::string& _return, const int32_t length) override {
     THRIFT_UNUSED_VARIABLE(_return);
     THRIFT_UNUSED_VARIABLE(length);
   }
 
-  void onewayWait() {}
+  void onewayWait() override {}
 
-  void exceptionWait(const std::string& message) { THRIFT_UNUSED_VARIABLE(message); }
+  void exceptionWait(const std::string& message) override { THRIFT_UNUSED_VARIABLE(message); }
 
-  void unexpectedExceptionWait(const std::string& message) { THRIFT_UNUSED_VARIABLE(message); }
+  void unexpectedExceptionWait(const std::string& message) override { THRIFT_UNUSED_VARIABLE(message); }
 
 protected:
   Mutex mutex_;

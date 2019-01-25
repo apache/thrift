@@ -79,9 +79,9 @@ public:
 
   TException(const std::string& message) : message_(message) {}
 
-  virtual ~TException() noexcept {}
+  ~TException() noexcept override {}
 
-  virtual const char* what() const noexcept {
+  const char* what() const noexcept override {
     if (message_.empty()) {
       return "Default TException.";
     } else {
@@ -105,7 +105,7 @@ template <class E>
 class TExceptionWrapper : public TDelayedException {
 public:
   TExceptionWrapper(const E& e) : e_(e) {}
-  virtual void throw_it() {
+  void throw_it() override {
     E temp(e_);
     delete this;
     throw temp;

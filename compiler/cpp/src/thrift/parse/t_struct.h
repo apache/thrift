@@ -56,7 +56,7 @@ public:
       members_with_value(0),
       xsd_all_(false) {}
 
-  void set_name(const std::string& name) {
+  void set_name(const std::string& name) override {
     name_ = name;
     validate_union_members();
   }
@@ -131,9 +131,9 @@ public:
 
   const members_type& get_sorted_members() { return members_in_id_order_; }
 
-  bool is_struct() const { return !is_xception_; }
+  bool is_struct() const override { return !is_xception_; }
 
-  bool is_xception() const { return is_xception_; }
+  bool is_xception() const override { return is_xception_; }
 
   bool is_union() const { return is_union_; }
 

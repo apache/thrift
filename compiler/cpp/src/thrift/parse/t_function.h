@@ -64,7 +64,7 @@ public:
     }
   }
 
-  ~t_function() {
+  ~t_function() override {
     if (own_xceptions_)
       delete xceptions_;
   }

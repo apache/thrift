@@ -33,9 +33,9 @@ namespace thrift {
 template <class Protocol_>
 class TDispatchProcessorT : public TProcessor {
 public:
-  virtual bool process(std::shared_ptr<protocol::TProtocol> in,
+  bool process(std::shared_ptr<protocol::TProtocol> in,
                        std::shared_ptr<protocol::TProtocol> out,
-                       void* connectionContext) {
+                       void* connectionContext) override {
     protocol::TProtocol* inRaw = in.get();
     protocol::TProtocol* outRaw = out.get();
 
@@ -105,9 +105,9 @@ protected:
  */
 class TDispatchProcessor : public TProcessor {
 public:
-  virtual bool process(std::shared_ptr<protocol::TProtocol> in,
+  bool process(std::shared_ptr<protocol::TProtocol> in,
                        std::shared_ptr<protocol::TProtocol> out,
-                       void* connectionContext) {
+                       void* connectionContext) override {
     std::string fname;
     protocol::TMessageType mtype;
     int32_t seqid;

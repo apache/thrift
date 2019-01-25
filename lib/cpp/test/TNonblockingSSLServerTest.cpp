@@ -39,17 +39,17 @@ using apache::thrift::transport::TSSLSocketFactory;
 using apache::thrift::transport::TSSLSocket;
 
 struct Handler : public test::ParentServiceIf {
-  void addString(const std::string& s) { strings_.push_back(s); }
-  void getStrings(std::vector<std::string>& _return) { _return = strings_; }
+  void addString(const std::string& s) override { strings_.push_back(s); }
+  void getStrings(std::vector<std::string>& _return) override { _return = strings_; }
   std::vector<std::string> strings_;
 
   // dummy overrides not used in this test
-  int32_t incrementGeneration() { return 0; }
-  int32_t getGeneration() { return 0; }
-  void getDataWait(std::string&, const int32_t) {}
-  void onewayWait() {}
-  void exceptionWait(const std::string&) {}
-  void unexpectedExceptionWait(const std::string&) {}
+  int32_t incrementGeneration() override { return 0; }
+  int32_t getGeneration() override { return 0; }
+  void getDataWait(std::string&, const int32_t) override {}
+  void onewayWait() override {}
+  void exceptionWait(const std::string&) override {}
+  void unexpectedExceptionWait(const std::string&) override {}
 };
 
 boost::filesystem::path keyDir;
@@ -131,7 +131,7 @@ private:
     public:
       ListenEventHandler(Mutex* mutex) : listenMonitor_(mutex), ready_(false) {}
 
-      void preServe() /* override */ {
+      void preServe() override /* override */ {
         Guard g(listenMonitor_.mutex());
         ready_ = true;
         listenMonitor_.notify();
@@ -155,7 +155,7 @@ private:
       listenHandler.reset(new ListenEventHandler(&mutex_));
     }
 
-    virtual void run() {
+    void run() override {
       // When binding to explicit port, allow retrying to workaround bind failures on ports in use
       int retryCount = port ? 10 : 0;
       pServerSocketFactory = createServerSocketFactory();  

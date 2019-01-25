@@ -65,7 +65,7 @@ public:
 class ConstantSizeGenerator : public SizeGenerator {
 public:
   ConstantSizeGenerator(unsigned int value) : value_(value) {}
-  virtual unsigned int getSize() { return value_; }
+  unsigned int getSize() override { return value_; }
 
 private:
   unsigned int value_;
@@ -76,7 +76,7 @@ public:
   LogNormalSizeGenerator(double mean, double std_dev)
     : gen_(rng, boost::lognormal_distribution<double>(mean, std_dev)) {}
 
-  virtual unsigned int getSize() {
+  unsigned int getSize() override {
     // Loop until we get a size of 1 or more
     while (true) {
       unsigned int value = static_cast<unsigned int>(gen_());
