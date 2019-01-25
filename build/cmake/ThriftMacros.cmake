@@ -17,6 +17,13 @@
 # under the License.
 #
 
+macro(ADD_PKGCONFIG_THRIFT name)
+    configure_file("${name}.pc.in" "${CMAKE_CURRENT_BINARY_DIR}/${name}.pc" @ONLY)
+    install(FILES "${CMAKE_CURRENT_BINARY_DIR}/${name}.pc"
+        DESTINATION "${PKGCONFIG_INSTALL_DIR}")
+endmacro(ADD_PKGCONFIG_THRIFT)
+
+
 macro(ADD_LIBRARY_THRIFT name)
     add_library(${name} ${ARGN})
     set_target_properties(${name} PROPERTIES

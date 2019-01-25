@@ -144,6 +144,7 @@ if(WIN32)
 else()
     TARGET_LINK_LIBRARIES_THRIFT(thrift ${SYSLIBS})
 endif()
+ADD_PKGCONFIG_THRIFT(thrift)
 
 if(WITH_LIBEVENT)
     find_package(Libevent REQUIRED)  # Libevent comes with CMake support form upstream
@@ -152,6 +153,7 @@ if(WITH_LIBEVENT)
     ADD_LIBRARY_THRIFT(thriftnb ${thriftcppnb_SOURCES})
     LINK_AGAINST_THRIFT_LIBRARY(thriftnb thrift)
     TARGET_LINK_LIBRARIES_THRIFT(thriftnb ${SYSLIBS} ${LIBEVENT_LIBRARIES})
+    ADD_PKGCONFIG_THRIFT(thrift-nb)
 endif()
 
 if(WITH_ZLIB)
@@ -161,10 +163,12 @@ if(WITH_ZLIB)
     ADD_LIBRARY_THRIFT(thriftz ${thriftcppz_SOURCES})
     TARGET_LINK_LIBRARIES_THRIFT(thriftz ${SYSLIBS} ${ZLIB_LIBRARIES})
     TARGET_LINK_LIBRARIES_THRIFT_AGAINST_THRIFT_LIBRARY(thriftz thrift)
+    ADD_PKGCONFIG_THRIFT(thrift-z)
 endif()
 
 if(WITH_QT5)
     add_subdirectory(src/thrift/qt)
+    ADD_PKGCONFIG_THRIFT(thrift-qt5)
 endif()
 
 if(MSVC)
