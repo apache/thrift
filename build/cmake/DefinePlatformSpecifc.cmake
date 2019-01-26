@@ -94,11 +94,3 @@ endif()
 if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-deprecated-register")
 endif()
-
-# Building WITH_PLUGIN requires boost memory operations, for now, and gcc >= 4.8
-if (WITH_PLUGIN)
-  if (CMAKE_CXX_COMPILER_ID MATCHES "GNU" AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS "4.8")
-    message(SEND_ERROR "Thrift compiler plug-in support is not possible with older gcc ( < 4.8 ) compiler")
-  endif()
-endif()
-

@@ -25,10 +25,7 @@ SUBDIRS += as3
 endif
 
 if WITH_CPP
-# cpp dir is picked directly by plugin build
-if !WITH_PLUGIN
 SUBDIRS += cpp
-endif
 endif
 
 if WITH_C_GLIB

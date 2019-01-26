@@ -53,9 +53,6 @@
 #include "thrift/parse/t_scope.h"
 #include "thrift/generate/t_generator.h"
 #include "thrift/audit/t_audit.h"
-#ifdef THRIFT_ENABLE_PLUGIN
-#include "thrift/plugin/plugin_output.h"
-#endif
 
 #include "thrift/version.h"
 
@@ -1007,26 +1004,8 @@ void generate(t_program* program, const vector<string>& generator_strings) {
       t_generator* generator = t_generator_registry::get_generator(program, *iter);
 
       if (generator == NULL) {
-#ifdef THRIFT_ENABLE_PLUGIN
-        switch (plugin_output::delegateToPlugin(program, *iter)) {
-          case plugin_output::PLUGIN_NOT_FOUND:
-            pwarning(1, "Unable to get a generator for \"%s\".\n", iter->c_str());
-            g_generator_failure = true;
-            break;
-          case plugin_output::PLUGIN_FAILURE:
-            pwarning(1, "Plugin generator for \"%s\" failed.\n", iter->c_str());
-            g_generator_failure = true;
-            break;
-          case plugin_output::PLUGIN_SUCCEESS:
-            break;
-          default:
-            assert(false);
-            break;
-        }
-#else
         pwarning(1, "Unable to get a generator for \"%s\".\n", iter->c_str());
         g_generator_failure = true;
-#endif
       } else if (generator) {
         generator->validate_input();
         pverbose("Generating \"%s\"\n", iter->c_str());

@@ -26,11 +26,6 @@
 #include <vector>
 #include <string>
 
-namespace plugin_output {
-template <typename From, typename To>
-void convert(From*, To&);
-}
-
 /**
  * A const value is something parsed that could be a map, set, list, struct
  * or whatever.
@@ -204,10 +199,6 @@ private:
   t_enum* enum_;
 
   t_const_value_type valType_;
-
-  // to read enum_
-  template <typename From, typename To>
-  friend void plugin_output::convert(From*, To&);
 };
 
 #endif
