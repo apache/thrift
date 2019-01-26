@@ -58,10 +58,6 @@ void clearGlobals() {
 }
 
 /**
- * Those are not really needed for plugins but causes link errors without
- */
-
-/**
  * The location of the last parsed doctext comment.
  */
 int g_doctext_lineno;

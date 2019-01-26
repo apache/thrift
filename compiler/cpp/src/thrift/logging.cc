@@ -17,17 +17,12 @@
  * under the License.
  */
 
-/**
- * Logging functions copied from main.cc to avoid link errors for plugins
- */
-
 #include "thrift/logging.h"
 #include "thrift/globals.h"
 #include <cstdarg>
 #include <cstdio>
 #include <cstdlib>
 
-// TODO: make plugins accept log options from main compiler
 int g_debug = 0;
 int g_warn = 1;
 int g_verbose = 0;

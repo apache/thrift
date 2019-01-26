@@ -106,50 +106,9 @@ THRIFT_ADD_COMPILER(xsd     "Enable compiler for XSD" ON)
 # we also add the current binary directory for generated files
 include_directories(${CMAKE_CURRENT_BINARY_DIR} src)
 
-if(NOT DEFINED WITH_PLUGIN OR NOT ${WITH_PLUGIN})
-    list(APPEND thrift-compiler_SOURCES ${compiler_core})
-endif()
+list(APPEND thrift-compiler_SOURCES ${compiler_core})
 
 add_executable(thrift-compiler ${thrift-compiler_SOURCES})
-
-if(${WITH_PLUGIN})
-    add_executable(thrift-bootstrap ${compiler_core}
-        src/thrift/main.cc
-        src/thrift/audit/t_audit.cpp
-        src/thrift/generate/t_cpp_generator.cc
-    )
-    target_link_libraries(thrift-bootstrap parse)
-
-    set(PLUGIN_GEN_SOURCES
-        ${CMAKE_CURRENT_BINARY_DIR}/thrift/plugin/plugin_types.h
-        ${CMAKE_CURRENT_BINARY_DIR}/thrift/plugin/plugin_types.cpp
-        ${CMAKE_CURRENT_BINARY_DIR}/thrift/plugin/plugin_constants.h
-        ${CMAKE_CURRENT_BINARY_DIR}/thrift/plugin/plugin_constants.cpp
-    )
-
-    file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/thrift/plugin)
-    add_custom_command(OUTPUT ${PLUGIN_GEN_SOURCES}
-        DEPENDS thrift-bootstrap src/thrift/plugin/plugin.thrift
-        COMMAND thrift-bootstrap -gen cpp
-        -out ${CMAKE_CURRENT_BINARY_DIR}/thrift/plugin
-        ${CMAKE_CURRENT_SOURCE_DIR}/src/thrift/plugin/plugin.thrift
-    )
-
-    include_directories(../../lib/cpp/src)
-
-    include(ThriftMacros)
-    ADD_LIBRARY_THRIFT(thriftc
-        ${compiler_core}
-        ${PLUGIN_GEN_SOURCES}
-        src/thrift/logging.cc
-        src/thrift/plugin/plugin_output.cc
-        src/thrift/plugin/plugin.cc
-    )
-    TARGET_INCLUDE_DIRECTORIES_THRIFT(thriftc PUBLIC ${Boost_INCLUDE_DIRS})
-    TARGET_LINK_LIBRARIES_THRIFT_AGAINST_THRIFT_LIBRARY(thriftc thrift PUBLIC)
-    target_compile_definitions(thrift-compiler PUBLIC THRIFT_ENABLE_PLUGIN)
-    LINK_AGAINST_THRIFT_LIBRARY(thrift-compiler thriftc)
-endif()
 
 set_target_properties(thrift-compiler PROPERTIES RUNTIME_OUTPUT_DIRECTORY bin/)
 set_target_properties(thrift-compiler PROPERTIES OUTPUT_NAME thrift)
@@ -157,57 +116,6 @@ set_target_properties(thrift-compiler PROPERTIES OUTPUT_NAME thrift)
 target_link_libraries(thrift-compiler parse)
 
 install(TARGETS thrift-compiler DESTINATION bin)
-
-if(${WITH_PLUGIN})
-  # Install the headers
-  install(FILES
-      "src/thrift/common.h"
-      "src/thrift/globals.h"
-      "src/thrift/logging.h"
-      "src/thrift/main.h"
-      "src/thrift/platform.h"
-      "${CMAKE_BINARY_DIR}/compiler/cpp/thrift/version.h"
-      DESTINATION "${INCLUDE_INSTALL_DIR}/thrift")
-  install(FILES
-      "src/thrift/audit/t_audit.h"
-      DESTINATION "${INCLUDE_INSTALL_DIR}/thrift/audit")
-  install(FILES
-      "src/thrift/generate/t_generator.h"
-      "src/thrift/generate/t_generator_registry.h"
-      "src/thrift/generate/t_html_generator.h"
-      "src/thrift/generate/t_oop_generator.h"
-      DESTINATION "${INCLUDE_INSTALL_DIR}/thrift/generate")
-  install(FILES
-      "src/thrift/parse/t_base_type.h"
-      "src/thrift/parse/t_const.h"
-      "src/thrift/parse/t_const_value.h"
-      "src/thrift/parse/t_container.h"
-      "src/thrift/parse/t_doc.h"
-      "src/thrift/parse/t_enum.h"
-      "src/thrift/parse/t_enum_value.h"
-      "src/thrift/parse/t_field.h"
-      "src/thrift/parse/t_function.h"
-      "src/thrift/parse/t_list.h"
-      "src/thrift/parse/t_map.h"
-      "src/thrift/parse/t_program.h"
-      "src/thrift/parse/t_scope.h"
-      "src/thrift/parse/t_service.h"
-      "src/thrift/parse/t_set.h"
-      "src/thrift/parse/t_struct.h"
-      "src/thrift/parse/t_typedef.h"
-      "src/thrift/parse/t_type.h"
-      DESTINATION "${INCLUDE_INSTALL_DIR}/thrift/parse")
-  install(FILES
-      "src/thrift/plugin/plugin.h"
-      "src/thrift/plugin/plugin_output.h"
-      "src/thrift/plugin/type_util.h"
-      DESTINATION "${INCLUDE_INSTALL_DIR}/thrift/plugin")
-if(MSVC)
-  install(FILES
-      "src/thrift/windows/config.h"
-      DESTINATION "${INCLUDE_INSTALL_DIR}/thrift/windows")
-endif()
-endif()
 
 if(BUILD_TESTING)
     add_subdirectory(test)

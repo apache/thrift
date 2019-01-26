@@ -67,7 +67,7 @@ brew install bison
 
 ```
 mkdir cmake-build && cd cmake-build
-cmake -G "Xcode" -DWITH_PLUGIN=OFF ..
+cmake -G "Xcode" ..
 cmake --build .
 ```
 
@@ -107,7 +107,7 @@ cmake --build .
 ```
 mkdir cmake-vs
 cd cmake-vs
-cmake -G "Visual Studio 15 2017" -DWITH_PLUGIN=OFF ..
+cmake -G "Visual Studio 15 2017" ..
 ```
 - Now open the folder cmake-vs using Visual Studio.
 

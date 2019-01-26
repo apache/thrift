@@ -607,20 +607,6 @@ if test "$enable_tests" = "no"; then
 fi
 AM_CONDITIONAL(WITH_TESTS, [test "$have_tests" = "yes"])
 
-AC_ARG_ENABLE([plugin],
-  AS_HELP_STRING([--enable-plugin], [build compiler plugin support [default=no]]),
-  [], enable_plugin=no
-)
-have_plugin=yes
-if test "$have_cpp" = "no" ; then
-  have_plugin="no"
-fi
-if test "$enable_plugin" = "no"; then
-  have_plugin="no"
-fi
-AC_CONFIG_LINKS([compiler/cpp/test/plugin/t_cpp_generator.cc:compiler/cpp/src/thrift/generate/t_cpp_generator.cc])
-AM_CONDITIONAL(WITH_PLUGIN, [test "$have_plugin" = "yes"])
-
 AC_ARG_ENABLE([tutorial],
   AS_HELP_STRING([--enable-tutorial], [build tutorial [default=yes]]),
   [], enable_tutorial=yes
@@ -803,7 +789,6 @@ AC_CONFIG_FILES([
   Makefile
   compiler/cpp/Makefile
   compiler/cpp/src/Makefile
-  compiler/cpp/src/thrift/plugin/Makefile
   compiler/cpp/test/Makefile
   compiler/cpp/src/thrift/version.h
   lib/Makefile
@@ -957,7 +942,6 @@ echo "Building Lua Library ......... : $have_lua"
 echo "Building NodeJS Library ...... : $have_nodejs"
 echo "Building Perl Library ........ : $have_perl"
 echo "Building PHP Library ......... : $have_php"
-echo "Building Plugin Support ...... : $have_plugin"
 echo "Building Python Library ...... : $have_python"
 echo "Building Py3 Library ......... : $have_py3"
 echo "Building Ruby Library ........ : $have_ruby"
