@@ -263,6 +263,15 @@ class TSSLSocket(TSocket.TSocket, TSSLBase):
         TSSLBase.__init__(self, False, host, kwargs)
         TSocket.TSocket.__init__(self, host, port, unix_socket)
 
+    def close(self):
+        try:
+            self.handle.settimeout(0.001)
+            self.handle = self.handle.unwrap()
+        except (ssl.SSLError, socket.error, OSError):
+            # could not complete shutdown in a reasonable amount of time.  bail.
+            pass
+        TSocket.TSocket.close(self)
+
     @property
     def validate(self):
         warnings.warn('validate is deprecated. please use cert_reqs instead',
