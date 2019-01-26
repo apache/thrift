@@ -35,8 +35,9 @@ include_directories(SYSTEM ${LIBEVENT_INCLUDE_DIRS})
 find_package(ZLIB REQUIRED)
 include_directories(SYSTEM ${ZLIB_INCLUDE_DIRS})
 
-#Make sure gen-cpp files can be included
+# Make sure gen-cpp files and cmake-generated cpp headers can be included
 include_directories("${CMAKE_CURRENT_BINARY_DIR}")
+include_directories("${CMAKE_BINARY_DIR}/lib/cpp")
 include_directories("${CMAKE_CURRENT_BINARY_DIR}/gen-cpp")
 include_directories("${PROJECT_SOURCE_DIR}/lib/cpp/src")
 

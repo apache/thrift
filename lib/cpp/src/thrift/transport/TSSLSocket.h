@@ -27,6 +27,8 @@
 #include <string>
 #include <thrift/concurrency/Mutex.h>
 
+#include <thrift/thrift_export.h>
+
 namespace apache {
 namespace thrift {
 namespace transport {
@@ -199,7 +201,7 @@ private:
  * guarantee is unnecessary if manualOpenSSLInitialization_ is true,
  * however, since it would be up to the consuming application instead.
  */
-class TSSLSocketFactory {
+class THRIFT_EXPORT TSSLSocketFactory {
 public:
   /**
    * Constructor/Destructor

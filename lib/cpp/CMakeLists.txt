@@ -22,6 +22,7 @@ include(BoostMacros)
 REQUIRE_BOOST_HEADERS()
 
 include_directories(src)
+include_directories("${CMAKE_CURRENT_BINARY_DIR}")
 
 # SYSLIBS contains libraries that need to be linked to all lib targets
 set(SYSLIBS "")
@@ -170,6 +171,11 @@ endif()
 if(MSVC)
     add_definitions("-DUNICODE -D_UNICODE")
 endif()
+
+# generate the export headers (dllimport/-export on MSVC, and visibility on Unix)
+include(GenerateExportHeader)
+generate_export_header(${PROJECT_NAME} EXPORT_FILE_NAME "thrift/thrift_export.h")
+install(FILES "${CMAKE_CURRENT_BINARY_DIR}/thrift/thrift_export.h" DESTINATION include)
 
 # Install the headers
 install(DIRECTORY "src/thrift" DESTINATION "${INCLUDE_INSTALL_DIR}"
