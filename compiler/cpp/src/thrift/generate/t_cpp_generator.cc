@@ -1720,7 +1720,6 @@ void t_cpp_generator::generate_service(t_service* tservice) {
   if (gen_cob_style_) {
     f_header_ << "#include <thrift/transport/TBufferTransports.h>" << endl // TMemoryBuffer
               << "#include <functional>" << endl 
-              << "#include <memory>" << endl
               << "namespace apache { namespace thrift { namespace async {" << endl
               << "class TAsyncChannel;" << endl << "}}}" << endl;
   }
@@ -1729,6 +1728,7 @@ void t_cpp_generator::generate_service(t_service* tservice) {
     f_header_ << "#include <thrift/async/TAsyncDispatchProcessor.h>" << endl;
   }
   f_header_ << "#include <thrift/async/TConcurrentClientSyncInfo.h>" << endl;
+  f_header_ << "#include <memory>" << endl;
   f_header_ << "#include \"" << get_include_prefix(*get_program()) << program_name_ << "_types.h\""
             << endl;
 
@@ -2284,27 +2284,49 @@ void t_cpp_generator::generate_service_client(t_service* tservice, string style)
   indent_up();
   if (style != "Cob") {
     f_header_ << indent() << service_name_ << style << "Client" << short_suffix << "(" << prot_ptr
-              << " prot) ";
+		<< " prot";
+	if (style == "Concurrent") {
+		f_header_ << ", std::shared_ptr<::apache::thrift::async::TConcurrentClientSyncInfo> sync";
+	}
+	f_header_ << ") ";
 
     if (extends.empty()) {
+      if (style == "Concurrent") {
+        f_header_ << ": sync_(sync)" << endl;
+      }
       f_header_ << "{" << endl;
       f_header_ << indent() << "  setProtocol" << short_suffix << "(prot);" << endl << indent()
                 << "}" << endl;
     } else {
       f_header_ << ":" << endl;
-      f_header_ << indent() << "  " << extends << style << client_suffix << "(prot, prot) {}"
-                << endl;
+      f_header_ << indent() << "  " << extends << style << client_suffix << "(prot, prot";
+      if (style == "Concurrent") {
+          f_header_ << ", sync";
+      }
+      f_header_ << ") {}" << endl;
     }
 
     f_header_ << indent() << service_name_ << style << "Client" << short_suffix << "(" << prot_ptr
-              << " iprot, " << prot_ptr << " oprot) ";
+		<< " iprot, " << prot_ptr << " oprot";
+	if (style == "Concurrent") {
+		f_header_ << ", std::shared_ptr<::apache::thrift::async::TConcurrentClientSyncInfo> sync";
+	}
+	f_header_ << ") ";
+	
     if (extends.empty()) {
+      if (style == "Concurrent") {
+        f_header_ << ": sync_(sync)" << endl;
+      }
       f_header_ << "{" << endl;
       f_header_ << indent() << "  setProtocol" << short_suffix << "(iprot,oprot);" << endl
                 << indent() << "}" << endl;
     } else {
       f_header_ << ":" << indent() << "  " << extends << style << client_suffix
-                << "(iprot, oprot) {}" << endl;
+                << "(iprot, oprot";
+      if (style == "Concurrent") {
+          f_header_ << ", sync";
+      }
+      f_header_ << ") {}" << endl;
     }
 
     // create the setProtocol methods
@@ -2443,7 +2465,7 @@ void t_cpp_generator::generate_service_client(t_service* tservice, string style)
 
     if (style == "Concurrent") {
       f_header_ <<
-        indent() << "::apache::thrift::async::TConcurrentClientSyncInfo sync_;"<<endl;
+        indent() << "std::shared_ptr<::apache::thrift::async::TConcurrentClientSyncInfo> sync_;"<<endl;
     }
     indent_down();
   }
@@ -2549,7 +2571,7 @@ void t_cpp_generator::generate_service_client(t_service* tservice, string style)
       string cseqidVal = "0";
       if (style == "Concurrent") {
         if (!(*f_iter)->is_oneway()) {
-          cseqidVal = "this->sync_.generateSeqId()";
+          cseqidVal = "this->sync_->generateSeqId()";
         }
       }
       // Serialize the request
@@ -2557,7 +2579,7 @@ void t_cpp_generator::generate_service_client(t_service* tservice, string style)
         indent() << "int32_t cseqid = " << cseqidVal << ";" << endl;
       if(style == "Concurrent") {
         out <<
-          indent() << "::apache::thrift::async::TConcurrentSendSentry sentry(&this->sync_);" << endl;
+          indent() << "::apache::thrift::async::TConcurrentSendSentry sentry(this->sync_.get());" << endl;
       }
       if (style == "Cob") {
         out <<
@@ -2622,7 +2644,7 @@ void t_cpp_generator::generate_service_client(t_service* tservice, string style)
             endl <<
             indent() << "// the read mutex gets dropped and reacquired as part of waitForWork()" << endl <<
             indent() << "// The destructor of this sentry wakes up other clients" << endl <<
-            indent() << "::apache::thrift::async::TConcurrentRecvSentry sentry(&this->sync_, seqid);" << endl;
+            indent() << "::apache::thrift::async::TConcurrentRecvSentry sentry(this->sync_.get(), seqid);" << endl;
         }
         if (style == "Cob" && !gen_no_client_completion_) {
           out << indent() << "bool completed = false;" << endl << endl << indent() << "try {";
@@ -2632,7 +2654,7 @@ void t_cpp_generator::generate_service_client(t_service* tservice, string style)
         if (style == "Concurrent") {
           out <<
             indent() << "while(true) {" << endl <<
-            indent() << "  if(!this->sync_.getPending(fname, mtype, rseqid)) {" << endl;
+            indent() << "  if(!this->sync_->getPending(fname, mtype, rseqid)) {" << endl;
           indent_up();
           indent_up();
         }
@@ -2776,10 +2798,10 @@ void t_cpp_generator::generate_service_client(t_service* tservice, string style)
           out <<
             indent() << "  }" << endl <<
             indent() << "  // seqid != rseqid" << endl <<
-            indent() << "  this->sync_.updatePending(fname, mtype, rseqid);" << endl <<
+            indent() << "  this->sync_->updatePending(fname, mtype, rseqid);" << endl <<
             endl <<
             indent() << "  // this will temporarily unlock the readMutex, and let other clients get work done" << endl <<
-            indent() << "  this->sync_.waitForWork(seqid);" << endl <<
+            indent() << "  this->sync_->waitForWork(seqid);" << endl <<
             indent() << "} // end while(true)" << endl;
         }
         if (style == "Cob" && !gen_no_client_completion_) {
