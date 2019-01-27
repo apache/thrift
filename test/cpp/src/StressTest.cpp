@@ -44,6 +44,7 @@
 using namespace std;
 
 using namespace apache::thrift;
+using namespace apache::thrift::async;
 using namespace apache::thrift::protocol;
 using namespace apache::thrift::transport;
 using namespace apache::thrift::server;
@@ -264,8 +265,8 @@ int main(int argc, char** argv) {
   string clientType = "regular";
   string serverType = "thread-pool";
   string protocolType = "binary";
-  size_t workerCount = 4;
-  size_t clientCount = 20;
+  size_t workerCount = 8;
+  size_t clientCount = 4;
   size_t loopCount = 50000;
   TType loopType = T_VOID;
   string callName = "echoVoid";
@@ -515,8 +516,8 @@ int main(int argc, char** argv) {
       std::shared_ptr<TSocket> socket(new TSocket("127.0.0.1", port));
       std::shared_ptr<TBufferedTransport> bufferedSocket(new TBufferedTransport(socket, 2048));
       std::shared_ptr<TProtocol> protocol(new TBinaryProtocol(bufferedSocket));
-      //std::shared_ptr<ServiceClient> serviceClient(new ServiceClient(protocol));
-      std::shared_ptr<ServiceConcurrentClient> serviceClient(new ServiceConcurrentClient(protocol));
+      auto sync = std::make_shared<TConcurrentClientSyncInfo>();
+      std::shared_ptr<ServiceConcurrentClient> serviceClient(new ServiceConcurrentClient(protocol, sync));
       socket->open();
       for (size_t ix = 0; ix < clientCount; ix++) {
         clientThreads.insert(threadFactory->newThread(std::shared_ptr<ClientThread>(

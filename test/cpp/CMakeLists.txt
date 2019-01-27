@@ -75,6 +75,7 @@ target_link_libraries(StressTest crossstressgencpp ${Boost_LIBRARIES} ${LIBEVENT
 LINK_AGAINST_THRIFT_LIBRARY(StressTest thrift)
 LINK_AGAINST_THRIFT_LIBRARY(StressTest thriftnb)
 add_test(NAME StressTest COMMAND StressTest)
+add_test(NAME StressTestConcurrent COMMAND StressTest --client-type=concurrent)
 
 add_executable(StressTestNonBlocking src/StressTestNonBlocking.cpp)
 target_link_libraries(StressTestNonBlocking crossstressgencpp ${Boost_LIBRARIES} ${LIBEVENT_LIB})
