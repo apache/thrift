@@ -10,6 +10,10 @@
 
 - [THRIFT-4719](https://issues.apache.org/jira/browse/THRIFT-4719) - Cocoa language was removed - use swift instead.
 
+### Deprecated Languages
+
+- [THRIFT-4723](https://issues.apache.org/jira/browse/THRIFT-4723) - CSharp and Netcore targets are deprecated and will be removed with the next release - use NetStd instead.
+	
 ### Breaking Changes
 
 - [THRIFT-4740](https://issues.apache.org/jira/browse/THRIFT-4740) - Uses std::chrono::duration for timeouts in C++ runtime library.
@@ -22,7 +26,7 @@
 - [THRIFT-4735](https://issues.apache.org/jira/browse/THRIFT-4735) - C++: Removed Qt4 support
 - [THRIFT-4725](https://issues.apache.org/jira/browse/THRIFT-4725) - Java change return type signature of 'process' methods
 
-### Known Isues (Blocker or Critical)
+### Known Issues (Blocker or Critical)
 
 
 ## 0.12.0
