@@ -10,6 +10,10 @@
 
 - [THRIFT-4719](https://issues.apache.org/jira/browse/THRIFT-4719) - Cocoa language was removed - use swift instead.
 
+### Deprecated Languages
+
+- [THRIFT-4723](https://issues.apache.org/jira/browse/THRIFT-4723) - CSharp and Netcore targets are deprecated and will be removed with the next release - use NetStd instead.
+	
 ### Breaking Changes
 
 - [THRIFT-4743](https://issues.apache.org/jira/browse/THRIFT-4743) - compiler: remove plug-in mechanism
@@ -24,7 +28,7 @@
 - [THRIFT-4725](https://issues.apache.org/jira/browse/THRIFT-4725) - java: change return type signature of 'process' methods
 - [THRIFT-4675](https://issues.apache.org/jira/browse/THRIFT-4675) - js: now uses node-int64 for 64 bit integer constants
 
-### Known Isues (Blocker or Critical)
+### Known Issues (Blocker or Critical)
 
 
 ## 0.12.0

@@ -72,8 +72,9 @@ if WITH_DART
 SUBDIRS += dart
 endif
 
-if WITH_DOTNETCORE
+if WITH_DOTNET
 SUBDIRS += netcore
+SUBDIRS += netstd
 endif
 
 if WITH_GO

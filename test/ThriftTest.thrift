@@ -30,6 +30,7 @@ namespace java thrift.test
 namespace js ThriftTest
 namespace lua ThriftTest
 namespace netcore ThriftTest
+namespace netstd ThriftTest
 namespace perl ThriftTest
 namespace php ThriftTest
 namespace py ThriftTest
