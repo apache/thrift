@@ -21,9 +21,13 @@
 #include "thrift/parse/t_typedef.h"
 #include "thrift/parse/t_program.h"
 
-t_type* t_typedef::get_type() const {
+t_type* t_typedef::get_type() {
+  return const_cast<t_type*>(const_cast<const t_typedef*>(this)->get_type());
+}
+
+const t_type* t_typedef::get_type() const {
   if (type_ == NULL) {
-    t_type* type = get_program()->scope()->get_type(symbolic_);
+    const t_type* type = get_program()->scope()->get_type(symbolic_);
     if (type == NULL) {
       printf("Type \"%s\" not defined\n", symbolic_.c_str());
       exit(1);

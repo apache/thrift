@@ -129,7 +129,7 @@ public:
 
   const members_type& get_members() const { return members_; }
 
-  const members_type& get_sorted_members() { return members_in_id_order_; }
+  const members_type& get_sorted_members() const { return members_in_id_order_; }
 
   bool is_struct() const override { return !is_xception_; }
 
@@ -138,13 +138,7 @@ public:
   bool is_union() const { return is_union_; }
 
   t_field* get_field_by_name(std::string field_name) {
-    members_type::const_iterator m_iter;
-    for (m_iter = members_in_id_order_.begin(); m_iter != members_in_id_order_.end(); ++m_iter) {
-      if ((*m_iter)->get_name() == field_name) {
-        return *m_iter;
-      }
-    }
-    return NULL;
+    return const_cast<t_field*>(const_cast<const t_struct&>(*this).get_field_by_name(field_name));
   }
 
   const t_field* get_field_by_name(std::string field_name) const {

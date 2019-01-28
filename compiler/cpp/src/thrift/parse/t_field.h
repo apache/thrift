@@ -92,6 +92,8 @@ public:
 
   t_struct* get_xsd_attrs() { return xsd_attrs_; }
 
+  const t_struct* get_xsd_attrs() const { return xsd_attrs_; }
+
   /**
    * Comparator to sort fields in ascending order by key.
    * Make this a functor instead of a function to help GCC inline it.
@@ -105,7 +107,7 @@ public:
 
   std::map<std::string, std::string> annotations_;
 
-  bool get_reference() { return reference_; }
+  bool get_reference() const { return reference_; }
 
   void set_reference(bool reference) { reference_ = reference; }
 

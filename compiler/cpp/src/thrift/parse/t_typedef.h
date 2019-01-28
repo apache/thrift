@@ -49,7 +49,9 @@ public:
 
   ~t_typedef() override {}
 
-  t_type* get_type() const;
+  t_type* get_type();
+
+  const t_type* get_type() const;
 
   const std::string& get_symbolic() const { return symbolic_; }
 

@@ -115,6 +115,8 @@ public:
   void add_service(t_service* ts) { services_.push_back(ts); }
 
   // Programs to include
+  std::vector<t_program*>& get_includes() { return includes_; }
+
   const std::vector<t_program*>& get_includes() const { return includes_; }
 
   void set_out_path(std::string out_path, bool out_path_is_absolute) {
@@ -133,9 +135,9 @@ public:
    * @param t    the type to test for collisions
    * @return     true if a certain collision was found, otherwise false
    */
-  bool is_unique_typename(t_type* t) {
+  bool is_unique_typename(const t_type* t) const {
     int occurrences = program_typename_count(this, t);
-    for (std::vector<t_program*>::iterator it = includes_.begin(); it != includes_.end(); ++it) {
+    for (std::vector<t_program*>::const_iterator it = includes_.cbegin(); it != includes_.cend(); ++it) {
       occurrences += program_typename_count(*it, t);
     }
     return 0 == occurrences;
@@ -147,7 +149,7 @@ public:
    * @param t    the type to test for collisions
    * @return     the number of certain typename collisions
    */
-  int program_typename_count(t_program* prog, t_type* t) {
+  int program_typename_count(const t_program* prog, const t_type* t) const {
     int occurrences = 0;
     occurrences += collection_typename_count(prog, prog->typedefs_, t);
     occurrences += collection_typename_count(prog, prog->enums_, t);
@@ -164,9 +166,9 @@ public:
    * @return                the number of certain typename collisions
    */
   template <class T>
-  int collection_typename_count(t_program* prog, T type_collection, t_type* t) {
+  int collection_typename_count(const t_program* prog, const T type_collection, const t_type* t) const {
     int occurrences = 0;
-    for (typename T::iterator it = type_collection.begin(); it != type_collection.end(); ++it)
+    for (typename T::const_iterator it = type_collection.cbegin(); it != type_collection.cend(); ++it)
       if (t != *it && 0 == t->get_name().compare((*it)->get_name()) && is_common_namespace(prog, t))
         ++occurrences;
     return occurrences;
@@ -184,7 +186,7 @@ public:
    * @param t    the type containing the typename match
    * @return     true if a collision within namespaces is found, otherwise false
    */
-  bool is_common_namespace(t_program* prog, t_type* t) {
+  bool is_common_namespace(const t_program* prog, const t_type* t) const {
     // Case 1: Typenames are in the same program [collision]
     if (prog == t->get_program()) {
       pwarning(1,
@@ -196,8 +198,8 @@ public:
 
     // Case 2: Both programs have identical namespace scope/name declarations [collision]
     bool match = true;
-    for (std::map<std::string, std::string>::iterator it = prog->namespaces_.begin();
-         it != prog->namespaces_.end();
+    for (auto it = prog->namespaces_.cbegin();
+         it != prog->namespaces_.cend();
          ++it) {
       if (0 == it->second.compare(t->get_program()->get_namespace(it->first))) {
         pwarning(1,
@@ -213,8 +215,8 @@ public:
         match = false;
       }
     }
-    for (std::map<std::string, std::string>::iterator it = t->get_program()->namespaces_.begin();
-         it != t->get_program()->namespaces_.end();
+    for (auto it = t->get_program()->namespaces_.cbegin();
+         it != t->get_program()->namespaces_.cend();
          ++it) {
       if (0 == it->second.compare(prog->get_namespace(it->first))) {
         pwarning(1,
@@ -244,7 +246,9 @@ public:
   void set_namespace(std::string name) { namespace_ = name; }
 
   // Scope accessor
-  t_scope* scope() const { return scope_; }
+  t_scope* scope() { return scope_; }
+
+  const t_scope* scope() const { return scope_; }
 
   // Includes
 
@@ -266,8 +270,6 @@ public:
     program->set_include_prefix(include_prefix);
     includes_.push_back(program);
   }
-
-  std::vector<t_program*>& get_includes() { return includes_; }
 
   void set_include_prefix(std::string include_prefix) {
     include_prefix_ = include_prefix;
@@ -323,7 +325,7 @@ public:
     return std::string();
   }
 
-  const std::map<std::string, std::string>& get_all_namespaces(){
+  const std::map<std::string, std::string>& get_all_namespaces() const {
      return namespaces_;
   }
 
@@ -331,7 +333,16 @@ public:
     namespace_annotations_[language] = annotations;
   }
 
-  const std::map<std::string, std::string>& get_namespace_annotations(std::string language) {
+  const std::map<std::string, std::string>& get_namespace_annotations(const std::string& language) const {
+    auto it = namespace_annotations_.find(language);
+    if (namespace_annotations_.end() != it) {
+      return it->second;
+    }
+    static const std::map<std::string, std::string> emptyMap;
+    return emptyMap;
+  }
+
+  std::map<std::string, std::string>& get_namespace_annotations(const std::string& language) {
     return namespace_annotations_[language];
   }
 
@@ -339,11 +350,11 @@ public:
 
   void add_cpp_include(std::string path) { cpp_includes_.push_back(path); }
 
-  const std::vector<std::string>& get_cpp_includes() { return cpp_includes_; }
+  const std::vector<std::string>& get_cpp_includes() const { return cpp_includes_; }
 
   void add_c_include(std::string path) { c_includes_.push_back(path); }
 
-  const std::vector<std::string>& get_c_includes() { return c_includes_; }
+  const std::vector<std::string>& get_c_includes() const { return c_includes_; }
 
 private:
   // File path

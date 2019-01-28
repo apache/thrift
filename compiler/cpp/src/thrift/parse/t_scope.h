@@ -48,9 +48,27 @@ public:
 
   t_type* get_type(std::string name) { return types_[name]; }
 
+  const t_type* get_type(std::string name) const {
+    const auto it = types_.find(name);
+    if (types_.end() != it)
+    {
+       return it->second;
+    }
+    return nullptr;
+  }
+
   void add_service(std::string name, t_service* service) { services_[name] = service; }
 
   t_service* get_service(std::string name) { return services_[name]; }
+
+  const t_service* get_service(std::string name) const { 
+    const auto it = services_.find(name);
+    if (services_.end() != it)
+    {
+       return it->second;
+    }
+    return nullptr;
+  }
 
   void add_constant(std::string name, t_const* constant) {
     if (constants_.find(name) != constants_.end()) {
@@ -61,6 +79,15 @@ public:
   }
 
   t_const* get_constant(std::string name) { return constants_[name]; }
+
+  const t_const* get_constant(std::string name) const { 
+    const auto it = constants_.find(name);
+    if (constants_.end() != it)
+    {
+       return it->second;
+    }
+    return nullptr;
+  }
 
   void print() {
     std::map<std::string, t_type*>::iterator iter;

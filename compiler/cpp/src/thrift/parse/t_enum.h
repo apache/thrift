@@ -39,7 +39,7 @@ public:
 
   const std::vector<t_enum_value*>& get_constants() const { return constants_; }
 
-  t_enum_value* get_constant_by_name(const std::string& name) {
+  t_enum_value* get_constant_by_name(const std::string& name) const {
     const std::vector<t_enum_value*>& enum_values = get_constants();
     std::vector<t_enum_value*>::const_iterator c_iter;
     for (c_iter = enum_values.begin(); c_iter != enum_values.end(); ++c_iter) {
@@ -50,7 +50,7 @@ public:
     return NULL;
   }
 
-  t_enum_value* get_constant_by_value(int64_t value) {
+  t_enum_value* get_constant_by_value(int64_t value) const {
     const std::vector<t_enum_value*>& enum_values = get_constants();
     std::vector<t_enum_value*>::const_iterator c_iter;
     for (c_iter = enum_values.begin(); c_iter != enum_values.end(); ++c_iter) {
@@ -61,7 +61,7 @@ public:
     return NULL;
   }
 
-  t_enum_value* get_min_value() {
+  t_enum_value* get_min_value() const {
     const std::vector<t_enum_value*>& enum_values = get_constants();
     std::vector<t_enum_value*>::const_iterator c_iter;
     t_enum_value* min_value;
@@ -81,7 +81,7 @@ public:
     return min_value;
   }
 
-  t_enum_value* get_max_value() {
+  t_enum_value* get_max_value() const {
     const std::vector<t_enum_value*>& enum_values = get_constants();
     std::vector<t_enum_value*>::const_iterator c_iter;
     t_enum_value* max_value;
