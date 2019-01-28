@@ -308,7 +308,7 @@ template <typename ThriftStruct>
 std::string ThriftJSONString(const ThriftStruct& ts) {
   using namespace apache::thrift::transport;
   using namespace apache::thrift::protocol;
-  TMemoryBuffer* buffer = new TMemoryBuffer;
+  auto* buffer = new TMemoryBuffer;
   std::shared_ptr<TTransport> trans(buffer);
   TJSONProtocol protocol(trans);
 

@@ -422,9 +422,9 @@ void TFileTransport::writerThread() {
           if (chunk1 != chunk2) {
             // refetch the offset to keep in sync
             offset_ = THRIFT_LSEEK(fd_, 0, SEEK_CUR);
-            int32_t padding = (int32_t)((offset_ / chunkSize_ + 1) * chunkSize_ - offset_);
+            auto padding = (int32_t)((offset_ / chunkSize_ + 1) * chunkSize_ - offset_);
 
-            uint8_t* zeros = new uint8_t[padding];
+            auto* zeros = new uint8_t[padding];
             memset(zeros, '\0', padding);
             boost::scoped_array<uint8_t> array(zeros);
             if (-1 == ::write(fd_, zeros, padding)) {

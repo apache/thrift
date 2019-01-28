@@ -377,7 +377,7 @@ void alarm_handler() {
   }
 
   // Write some data to the transport to hopefully unblock it.
-  uint8_t* buf = new uint8_t[info->writeLength];
+  auto* buf = new uint8_t[info->writeLength];
   memset(buf, 'b', info->writeLength);
   boost::scoped_array<uint8_t> array(buf);
   info->transport->write(buf, info->writeLength);
@@ -421,7 +421,7 @@ void alarm_handler_wrapper() {
 void add_trigger(unsigned int seconds,
                  const std::shared_ptr<TTransport>& transport,
                  uint32_t write_len) {
-  TriggerInfo* info = new TriggerInfo(seconds, transport, write_len);
+  auto* info = new TriggerInfo(seconds, transport, write_len);
   {
     apache::thrift::concurrency::Synchronized s(g_alarm_monitor);
     if (g_triggerInfo == NULL) {

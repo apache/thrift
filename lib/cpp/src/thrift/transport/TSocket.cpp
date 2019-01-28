@@ -334,7 +334,7 @@ void TSocket::openConnection(struct addrinfo* res) {
     address.sun_family = AF_UNIX;
     memcpy(address.sun_path, path_.c_str(), len);
 
-    socklen_t structlen = static_cast<socklen_t>(sizeof(address));
+    auto structlen = static_cast<socklen_t>(sizeof(address));
 
     if (!address.sun_path[0]) { // abstract namespace socket
 #ifdef __linux__
@@ -593,7 +593,7 @@ try_again:
       // check if this is the lack of resources or timeout case
       struct timeval end;
       THRIFT_GETTIMEOFDAY(&end, NULL);
-      uint32_t readElapsedMicros = static_cast<uint32_t>(((end.tv_sec - begin.tv_sec) * 1000 * 1000)
+      auto readElapsedMicros = static_cast<uint32_t>(((end.tv_sec - begin.tv_sec) * 1000 * 1000)
                                                          + (end.tv_usec - begin.tv_usec));
 
       if (!eagainThresholdMicros || (readElapsedMicros < eagainThresholdMicros)) {

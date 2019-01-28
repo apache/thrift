@@ -174,7 +174,7 @@ public:
     // name and the name of the method to call.
     if (tokens.size() == 2) {
       // Search for a processor associated with this service name.
-      services_t::iterator it = services.find(tokens[0]);
+      auto it = services.find(tokens[0]);
 
       if (it != services.end()) {
         std::shared_ptr<TProcessor> processor = it->second;

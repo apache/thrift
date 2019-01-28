@@ -687,7 +687,7 @@ void TNonblockingServer::TConnection::transition() {
       socketState_ = SOCKET_SEND;
 
       // Put the frame size into the write buffer
-      int32_t frameSize = (int32_t)htonl(writeBufferSize_ - 4);
+      auto frameSize = (int32_t)htonl(writeBufferSize_ - 4);
       memcpy(writeBuffer_, &frameSize, 4);
 
       // Socket into write mode
@@ -749,7 +749,7 @@ void TNonblockingServer::TConnection::transition() {
         newSize *= 2;
       }
 
-      uint8_t* newBuffer = (uint8_t*)std::realloc(readBuffer_, newSize);
+      auto* newBuffer = (uint8_t*)std::realloc(readBuffer_, newSize);
       if (newBuffer == NULL) {
         // nothing else to be done...
         throw std::bad_alloc();
@@ -1368,7 +1368,7 @@ bool TNonblockingIOThread::notify(TNonblockingServer::TConnection* conn) {
 
 /* static */
 void TNonblockingIOThread::notifyHandler(evutil_socket_t fd, short which, void* v) {
-  TNonblockingIOThread* ioThread = (TNonblockingIOThread*)v;
+  auto* ioThread = (TNonblockingIOThread*)v;
   assert(ioThread);
   (void)which;
 

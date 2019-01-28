@@ -142,7 +142,7 @@ void TEvhttpClientChannel::finish(struct evhttp_request* req) {
 }
 
 /* static */ void TEvhttpClientChannel::response(struct evhttp_request* req, void* arg) {
-  TEvhttpClientChannel* self = (TEvhttpClientChannel*)arg;
+  auto* self = (TEvhttpClientChannel*)arg;
   try {
     self->finish(req);
   } catch (std::exception& e) {

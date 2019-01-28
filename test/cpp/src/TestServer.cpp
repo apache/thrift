@@ -672,7 +672,7 @@ int main(int argc, char** argv) {
     std::shared_ptr<TProtocolFactory> jsonProtocolFactory(new TJSONProtocolFactory());
     protocolFactory = jsonProtocolFactory;
   } else if (protocol_type == "compact" || protocol_type == "multic") {
-    TCompactProtocolFactoryT<TBufferBase> *compactProtocolFactory = new TCompactProtocolFactoryT<TBufferBase>();
+    auto *compactProtocolFactory = new TCompactProtocolFactoryT<TBufferBase>();
     compactProtocolFactory->setContainerSizeLimit(container_limit);
     compactProtocolFactory->setStringSizeLimit(string_limit);
     protocolFactory.reset(compactProtocolFactory);
@@ -680,7 +680,7 @@ int main(int argc, char** argv) {
     std::shared_ptr<TProtocolFactory> headerProtocolFactory(new THeaderProtocolFactory());
     protocolFactory = headerProtocolFactory;
   } else {
-    TBinaryProtocolFactoryT<TBufferBase>* binaryProtocolFactory = new TBinaryProtocolFactoryT<TBufferBase>();
+    auto* binaryProtocolFactory = new TBinaryProtocolFactoryT<TBufferBase>();
     binaryProtocolFactory->setContainerSizeLimit(container_limit);
     binaryProtocolFactory->setStringSizeLimit(string_limit);
     protocolFactory.reset(binaryProtocolFactory);

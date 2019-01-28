@@ -144,7 +144,7 @@ class TBlockableBufferedTransport : public TBufferedTransport {
   }
 
   uint32_t write_buffer_length() {
-    uint32_t have_bytes = static_cast<uint32_t>(wBase_ - wBuf_.get());
+    auto have_bytes = static_cast<uint32_t>(wBase_ - wBuf_.get());
     return have_bytes ;
   }
 

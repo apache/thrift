@@ -79,7 +79,7 @@ public:
   unsigned int getSize() override {
     // Loop until we get a size of 1 or more
     while (true) {
-      unsigned int value = static_cast<unsigned int>(gen_());
+      auto value = static_cast<unsigned int>(gen_());
       if (value >= 1) {
         return value;
       }
@@ -91,13 +91,13 @@ private:
 };
 
 boost::shared_array<uint8_t> gen_uniform_buffer(uint32_t buf_len, uint8_t c) {
-  uint8_t* buf = new uint8_t[buf_len];
+  auto* buf = new uint8_t[buf_len];
   memset(buf, c, buf_len);
   return boost::shared_array<uint8_t>(buf);
 }
 
 boost::shared_array<uint8_t> gen_compressible_buffer(uint32_t buf_len) {
-  uint8_t* buf = new uint8_t[buf_len];
+  auto* buf = new uint8_t[buf_len];
 
   // Generate small runs of alternately increasing and decreasing bytes
   boost::uniform_smallint<uint32_t> run_length_distribution(1, 64);
@@ -129,7 +129,7 @@ boost::shared_array<uint8_t> gen_compressible_buffer(uint32_t buf_len) {
 }
 
 boost::shared_array<uint8_t> gen_random_buffer(uint32_t buf_len) {
-  uint8_t* buf = new uint8_t[buf_len];
+  auto* buf = new uint8_t[buf_len];
 
   boost::uniform_smallint<uint8_t> distribution(0, UINT8_MAX);
   boost::variate_generator<boost::mt19937, boost::uniform_smallint<uint8_t> >
@@ -427,7 +427,7 @@ void print_usage(FILE* f, const char* argv0) {
 
 #ifdef BOOST_TEST_DYN_LINK
 bool init_unit_test_suite() {
-  uint32_t seed = static_cast<uint32_t>(time(NULL));
+  auto seed = static_cast<uint32_t>(time(NULL));
 #ifdef HAVE_INTTYPES_H
   printf("seed: %" PRIu32 "\n", seed);
 #endif

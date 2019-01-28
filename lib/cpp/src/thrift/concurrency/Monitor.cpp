@@ -81,7 +81,7 @@ public:
     }
 
     assert(mutex_);
-    std::timed_mutex* mutexImpl = static_cast<std::timed_mutex*>(mutex_->getUnderlyingImpl());
+    auto* mutexImpl = static_cast<std::timed_mutex*>(mutex_->getUnderlyingImpl());
     assert(mutexImpl);
 
     std::unique_lock<std::timed_mutex> lock(*mutexImpl, std::adopt_lock);
@@ -97,7 +97,7 @@ public:
    */
   int waitForTime(const std::chrono::time_point<std::chrono::steady_clock>& abstime) {
     assert(mutex_);
-    std::timed_mutex* mutexImpl = static_cast<std::timed_mutex*>(mutex_->getUnderlyingImpl());
+    auto* mutexImpl = static_cast<std::timed_mutex*>(mutex_->getUnderlyingImpl());
     assert(mutexImpl);
 
     std::unique_lock<std::timed_mutex> lock(*mutexImpl, std::adopt_lock);
@@ -113,7 +113,7 @@ public:
    */
   int waitForever() {
     assert(mutex_);
-    std::timed_mutex* mutexImpl = static_cast<std::timed_mutex*>(mutex_->getUnderlyingImpl());
+    auto* mutexImpl = static_cast<std::timed_mutex*>(mutex_->getUnderlyingImpl());
     assert(mutexImpl);
 
     std::unique_lock<std::timed_mutex> lock(*mutexImpl, std::adopt_lock);

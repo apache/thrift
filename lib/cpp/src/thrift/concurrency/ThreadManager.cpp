@@ -352,7 +352,7 @@ void ThreadManager::Impl::addWorker(size_t value) {
   workerMaxCount_ += value;
   workers_.insert(newThreads.begin(), newThreads.end());
 
-  for (std::set<shared_ptr<Thread> >::iterator ix = newThreads.begin(); ix != newThreads.end();
+  for (auto ix = newThreads.begin(); ix != newThreads.end();
        ++ix) {
     shared_ptr<ThreadManager::Worker> worker
         = dynamic_pointer_cast<ThreadManager::Worker, Runnable>((*ix)->runnable());
@@ -430,7 +430,7 @@ void ThreadManager::Impl::removeWorkersUnderLock(size_t value) {
     workerMonitor_.wait();
   }
 
-  for (std::set<shared_ptr<Thread> >::iterator ix = deadWorkers_.begin();
+  for (auto ix = deadWorkers_.begin();
        ix != deadWorkers_.end();
        ++ix) {
 
@@ -497,7 +497,7 @@ void ThreadManager::Impl::remove(shared_ptr<Runnable> task) {
         "started");
   }
 
-  for (TaskQueue::iterator it = tasks_.begin(); it != tasks_.end(); ++it)
+  for (auto it = tasks_.begin(); it != tasks_.end(); ++it)
   {
     if ((*it)->getRunnable() == task)
     {
@@ -532,7 +532,7 @@ void ThreadManager::Impl::removeExpired(bool justOne) {
   }
   auto now = std::chrono::steady_clock::now();
 
-  for (TaskQueue::iterator it = tasks_.begin(); it != tasks_.end(); )
+  for (auto it = tasks_.begin(); it != tasks_.end(); )
   {
     if ((*it)->getExpireTime() && *((*it)->getExpireTime()) < now) {
       if (expireCallback_) {

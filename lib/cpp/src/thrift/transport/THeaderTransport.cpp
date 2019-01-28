@@ -197,7 +197,7 @@ void THeaderTransport::readHeaderFormat(uint16_t headerSize, uint32_t sz) {
   readHeaders_.clear(); // Clear out any previous headers.
 
   // skip over already processed magic(4), seqId(4), headerSize(2)
-  uint8_t* ptr = reinterpret_cast<uint8_t*>(rBuf_.get() + 10);
+  auto* ptr = reinterpret_cast<uint8_t*>(rBuf_.get() + 10);
 
   // Catch integer overflow, check for reasonable header size
   if (headerSize >= 16384) {
@@ -317,7 +317,7 @@ void THeaderTransport::untransform(uint8_t* ptr, uint32_t sz) {
 void THeaderTransport::resizeTransformBuffer(uint32_t additionalSize) {
   if (tBufSize_ < wBufSize_ + DEFAULT_BUFFER_SIZE) {
     uint32_t new_size = wBufSize_ + DEFAULT_BUFFER_SIZE + additionalSize;
-    uint8_t* new_buf = new uint8_t[new_size];
+    auto* new_buf = new uint8_t[new_size];
     tBuf_.reset(new_buf);
     tBufSize_ = new_size;
   }
@@ -389,7 +389,7 @@ uint32_t THeaderTransport::getWriteBytes() {
  * Automatically advances ptr to after the written portion
  */
 void THeaderTransport::writeString(uint8_t*& ptr, const string& str) {
-  int32_t strLen = safe_numeric_cast<int32_t>(str.length());
+  auto strLen = safe_numeric_cast<int32_t>(str.length());
   ptr += writeVarint32(strLen, ptr);
   memcpy(ptr, str.c_str(), strLen); // no need to write \0
   ptr += strLen;
@@ -484,7 +484,7 @@ void THeaderTransport::flush() {
     // write info headers
 
     // for now only write kv-headers
-    int32_t headerCount = safe_numeric_cast<int32_t>(writeHeaders_.size());
+    auto headerCount = safe_numeric_cast<int32_t>(writeHeaders_.size());
     if (headerCount > 0) {
       pkt += writeVarint32(infoIdType::KEYVALUE, pkt);
       // Write key-value headers count
@@ -526,7 +526,7 @@ void THeaderTransport::flush() {
     outTransport_->write(pktStart, szHbo - haveBytes + 4);
     outTransport_->write(wBuf_.get(), haveBytes);
   } else if (clientType == THRIFT_FRAMED_BINARY || clientType == THRIFT_FRAMED_COMPACT) {
-    uint32_t szHbo = (uint32_t)haveBytes;
+    auto szHbo = (uint32_t)haveBytes;
     uint32_t szNbo = htonl(szHbo);
 
     outTransport_->write(reinterpret_cast<uint8_t*>(&szNbo), 4);

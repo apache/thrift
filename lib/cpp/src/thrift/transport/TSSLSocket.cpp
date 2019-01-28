@@ -720,7 +720,7 @@ void TSSLSocket::authorize() {
   }
 
   // extract subjectAlternativeName
-  STACK_OF(GENERAL_NAME)* alternatives
+  auto* alternatives
       = (STACK_OF(GENERAL_NAME)*)X509_get_ext_d2i(cert, NID_subject_alt_name, NULL, NULL);
   if (alternatives != NULL) {
     const int count = sk_GENERAL_NAME_num(alternatives);
@@ -993,7 +993,7 @@ void TSSLSocketFactory::overrideDefaultPasswordCallback() {
 }
 
 int TSSLSocketFactory::passwordCallback(char* password, int size, int, void* data) {
-  TSSLSocketFactory* factory = (TSSLSocketFactory*)data;
+  auto* factory = (TSSLSocketFactory*)data;
   string userPassword;
   factory->getPassword(userPassword, size);
   int length = static_cast<int>(userPassword.size());

@@ -117,7 +117,7 @@ public:
         resolve_const_value((*v_iter), ((t_set*)ttype)->get_elem_type());
       }
     } else if (ttype->is_struct()) {
-      t_struct* tstruct = (t_struct*)ttype;
+      auto* tstruct = (t_struct*)ttype;
       const std::map<t_const_value*, t_const_value*, t_const_value::value_compare>& map = const_val->get_map();
       std::map<t_const_value*, t_const_value*, t_const_value::value_compare>::const_iterator v_iter;
       for (v_iter = map.begin(); v_iter != map.end(); ++v_iter) {
@@ -179,7 +179,7 @@ public:
     } else if (ttype->is_enum()) {
       // enum constant with non-identifier value. set the enum and find the
       // value's name.
-      t_enum* tenum = (t_enum*)ttype;
+      auto* tenum = (t_enum*)ttype;
       t_enum_value* enum_value = tenum->get_constant_by_value(const_val->get_integer());
       if (enum_value == NULL) {
         std::ostringstream valstm;

@@ -75,7 +75,7 @@ BOOST_AUTO_TEST_CASE(test_enum_ostream)
   BOOST_CHECK_EQUAL(EnumToString(MyEnumWithCustomOstream::CustoM2), "{2:CUSTOM!}");
 
   // some invalid or unknown value
-  MyEnum5::type uut = (MyEnum5::type)44;
+  auto uut = (MyEnum5::type)44;
   BOOST_CHECK_EQUAL(EnumToString(uut), "44");
 }
 

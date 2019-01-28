@@ -211,7 +211,7 @@ public:
   void deleteContext(void* serverContext,
                              std::shared_ptr<protocol::TProtocol> input,
                              std::shared_ptr<protocol::TProtocol> output) override {
-    ConnContext* context = reinterpret_cast<ConnContext*>(serverContext);
+    auto* context = reinterpret_cast<ConnContext*>(serverContext);
 
     if (input != context->input) {
       abort();
@@ -259,7 +259,7 @@ public:
   ProcessorEventHandler(const std::shared_ptr<EventLog>& log) : nextId_(1), log_(log) {}
 
   void* getContext(const char* fnName, void* serverContext) override {
-    ConnContext* connContext = reinterpret_cast<ConnContext*>(serverContext);
+    auto* connContext = reinterpret_cast<ConnContext*>(serverContext);
 
     CallContext* context = new CallContext(connContext, nextId_, fnName);
     ++nextId_;
@@ -269,46 +269,46 @@ public:
   }
 
   void freeContext(void* ctx, const char* fnName) override {
-    CallContext* context = reinterpret_cast<CallContext*>(ctx);
+    auto* context = reinterpret_cast<CallContext*>(ctx);
     checkName(context, fnName);
     log_->append(EventLog::ET_CALL_FINISHED, context->connContext->id, context->id, fnName);
     delete context;
   }
 
   void preRead(void* ctx, const char* fnName) override {
-    CallContext* context = reinterpret_cast<CallContext*>(ctx);
+    auto* context = reinterpret_cast<CallContext*>(ctx);
     checkName(context, fnName);
     log_->append(EventLog::ET_PRE_READ, context->connContext->id, context->id, fnName);
   }
 
   void postRead(void* ctx, const char* fnName, uint32_t bytes) override {
     THRIFT_UNUSED_VARIABLE(bytes);
-    CallContext* context = reinterpret_cast<CallContext*>(ctx);
+    auto* context = reinterpret_cast<CallContext*>(ctx);
     checkName(context, fnName);
     log_->append(EventLog::ET_POST_READ, context->connContext->id, context->id, fnName);
   }
 
   void preWrite(void* ctx, const char* fnName) override {
-    CallContext* context = reinterpret_cast<CallContext*>(ctx);
+    auto* context = reinterpret_cast<CallContext*>(ctx);
     checkName(context, fnName);
     log_->append(EventLog::ET_PRE_WRITE, context->connContext->id, context->id, fnName);
   }
 
   void postWrite(void* ctx, const char* fnName, uint32_t bytes) override {
     THRIFT_UNUSED_VARIABLE(bytes);
-    CallContext* context = reinterpret_cast<CallContext*>(ctx);
+    auto* context = reinterpret_cast<CallContext*>(ctx);
     checkName(context, fnName);
     log_->append(EventLog::ET_POST_WRITE, context->connContext->id, context->id, fnName);
   }
 
   void asyncComplete(void* ctx, const char* fnName) override {
-    CallContext* context = reinterpret_cast<CallContext*>(ctx);
+    auto* context = reinterpret_cast<CallContext*>(ctx);
     checkName(context, fnName);
     log_->append(EventLog::ET_ASYNC_COMPLETE, context->connContext->id, context->id, fnName);
   }
 
   void handlerError(void* ctx, const char* fnName) override {
-    CallContext* context = reinterpret_cast<CallContext*>(ctx);
+    auto* context = reinterpret_cast<CallContext*>(ctx);
     checkName(context, fnName);
     log_->append(EventLog::ET_HANDLER_ERROR, context->connContext->id, context->id, fnName);
   }

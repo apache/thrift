@@ -191,7 +191,7 @@ protected:
 class THeaderProtocolFactory : public TProtocolFactory {
 public:
   std::shared_ptr<TProtocol> getProtocol(std::shared_ptr<transport::TTransport> trans) override {
-    THeaderProtocol* headerProtocol
+    auto* headerProtocol
         = new THeaderProtocol(trans, trans, T_BINARY_PROTOCOL);
     return std::shared_ptr<TProtocol>(headerProtocol);
   }
@@ -199,7 +199,7 @@ public:
   std::shared_ptr<TProtocol> getProtocol(
       std::shared_ptr<transport::TTransport> inTrans,
       std::shared_ptr<transport::TTransport> outTrans) override {
-    THeaderProtocol* headerProtocol = new THeaderProtocol(inTrans, outTrans, T_BINARY_PROTOCOL);
+    auto* headerProtocol = new THeaderProtocol(inTrans, outTrans, T_BINARY_PROTOCOL);
     return std::shared_ptr<TProtocol>(headerProtocol);
   }
 };

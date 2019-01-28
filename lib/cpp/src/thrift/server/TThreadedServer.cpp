@@ -107,7 +107,7 @@ void TThreadedServer::serve() {
 void TThreadedServer::drainDeadClients() {
   // we're in a monitor here
   while (!deadClientMap_.empty()) {
-    ClientMap::iterator it = deadClientMap_.begin();
+    auto it = deadClientMap_.begin();
     it->second->join();
     deadClientMap_.erase(it);
   }
@@ -125,9 +125,9 @@ void TThreadedServer::onClientConnected(const shared_ptr<TConnectedClient>& pCli
 void TThreadedServer::onClientDisconnected(TConnectedClient* pClient) {
   Synchronized sync(clientMonitor_);
   drainDeadClients(); // use the outgoing thread to do some maintenance on our dead client backlog
-  ClientMap::iterator it = activeClientMap_.find(pClient);
+  auto it = activeClientMap_.find(pClient);
   if (it != activeClientMap_.end()) {
-    ClientMap::iterator end = it;
+    auto end = it;
     deadClientMap_.insert(it, ++end);
     activeClientMap_.erase(it);
   }

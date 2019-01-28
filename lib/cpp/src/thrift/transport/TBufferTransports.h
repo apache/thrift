@@ -636,7 +636,7 @@ public:
   // return number of bytes read
   uint32_t readEnd() override {
     // This cast should be safe, because buffer_'s size is a uint32_t
-    uint32_t bytes = static_cast<uint32_t>(rBase_ - buffer_);
+    auto bytes = static_cast<uint32_t>(rBase_ - buffer_);
     if (rBase_ == wBase_) {
       resetBuffer();
     }

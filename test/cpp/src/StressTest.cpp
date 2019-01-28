@@ -524,7 +524,7 @@ int main(int argc, char** argv) {
       }
     }
 
-    for (std::set<std::shared_ptr<Thread> >::const_iterator thread = clientThreads.begin();
+    for (auto thread = clientThreads.begin();
          thread != clientThreads.end();
          thread++) {
       (*thread)->start();
@@ -557,7 +557,7 @@ int main(int argc, char** argv) {
     int64_t minTime = 9223372036854775807LL;
     int64_t maxTime = 0;
 
-    for (set<std::shared_ptr<Thread> >::iterator ix = clientThreads.begin();
+    for (auto ix = clientThreads.begin();
          ix != clientThreads.end();
          ix++) {
 

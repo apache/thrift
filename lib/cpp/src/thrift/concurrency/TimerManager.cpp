@@ -108,7 +108,7 @@ public:
         }
 
         if (manager_->state_ == TimerManager::STARTED) {
-          for (task_iterator ix = manager_->taskMap_.begin(); ix != expiredTaskEnd; ix++) {
+          for (auto ix = manager_->taskMap_.begin(); ix != expiredTaskEnd; ix++) {
             shared_ptr<TimerManager::Task> task = ix->second;
             expiredTasks.insert(task);
             task->it_ = manager_->taskMap_.end();
@@ -121,7 +121,7 @@ public:
         }
       }
 
-      for (std::set<shared_ptr<Task> >::iterator ix = expiredTasks.begin();
+      for (auto ix = expiredTasks.begin();
            ix != expiredTasks.end();
            ++ix) {
         (*ix)->run();
@@ -280,7 +280,7 @@ void TimerManager::remove(shared_ptr<Runnable> task) {
     throw IllegalStateException();
   }
   bool found = false;
-  for (task_iterator ix = taskMap_.begin(); ix != taskMap_.end();) {
+  for (auto ix = taskMap_.begin(); ix != taskMap_.end();) {
     if (*ix->second == task) {
       found = true;
       taskCount_--;

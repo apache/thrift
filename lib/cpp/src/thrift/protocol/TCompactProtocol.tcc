@@ -256,7 +256,7 @@ uint32_t TCompactProtocolT<Transport_>::writeDouble(const double dub) {
   static_assert(sizeof(double) == sizeof(uint64_t), "sizeof(double) == sizeof(uint64_t)");
   static_assert(std::numeric_limits<double>::is_iec559, "std::numeric_limits<double>::is_iec559");
 
-  uint64_t bits = bitwise_cast<uint64_t>(dub);
+  auto bits = bitwise_cast<uint64_t>(dub);
   bits = THRIFT_htolell(bits);
   trans_->write((uint8_t*)&bits, 8);
   return 8;
@@ -274,7 +274,7 @@ template <class Transport_>
 uint32_t TCompactProtocolT<Transport_>::writeBinary(const std::string& str) {
   if(str.size() > (std::numeric_limits<uint32_t>::max)())
     throw TProtocolException(TProtocolException::SIZE_LIMIT);
-  uint32_t ssize = static_cast<uint32_t>(str.size());
+  auto ssize = static_cast<uint32_t>(str.size());
   uint32_t wsize = writeVarint32(ssize) ;
   // checking ssize + wsize > uint_max, but we don't want to overflow while checking for overflows.
   // transforming the check to ssize > uint_max - wsize
@@ -488,7 +488,7 @@ uint32_t TCompactProtocolT<Transport_>::readFieldBegin(std::string& name,
   }
 
   // mask off the 4 MSB of the type header. it could contain a field id delta.
-  int16_t modifier = (int16_t)(((uint8_t)byte & 0xf0) >> 4);
+  auto modifier = (int16_t)(((uint8_t)byte & 0xf0) >> 4);
   if (modifier == 0) {
     // not a delta, look ahead for the zigzag varint field id.
     rsize += readI16(fieldId);

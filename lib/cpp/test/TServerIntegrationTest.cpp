@@ -264,7 +264,7 @@ public:
    * \returns  the server port number
    */
   int getServerPort() {
-    TServerSocket* pSock = dynamic_cast<TServerSocket*>(pServer->getServerTransport().get());
+    auto* pSock = dynamic_cast<TServerSocket*>(pServer->getServerTransport().get());
     if (!pSock) { throw std::logic_error("how come?"); }
     return pSock->getPort();
   }

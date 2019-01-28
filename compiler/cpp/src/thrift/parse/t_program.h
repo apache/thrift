@@ -137,7 +137,7 @@ public:
    */
   bool is_unique_typename(const t_type* t) const {
     int occurrences = program_typename_count(this, t);
-    for (std::vector<t_program*>::const_iterator it = includes_.cbegin(); it != includes_.cend(); ++it) {
+    for (auto it = includes_.cbegin(); it != includes_.cend(); ++it) {
       occurrences += program_typename_count(*it, t);
     }
     return 0 == occurrences;
@@ -168,7 +168,7 @@ public:
   template <class T>
   int collection_typename_count(const t_program* prog, const T type_collection, const t_type* t) const {
     int occurrences = 0;
-    for (typename T::const_iterator it = type_collection.cbegin(); it != type_collection.cend(); ++it)
+    for (auto it = type_collection.cbegin(); it != type_collection.cend(); ++it)
       if (t != *it && 0 == t->get_name().compare((*it)->get_name()) && is_common_namespace(prog, t))
         ++occurrences;
     return occurrences;

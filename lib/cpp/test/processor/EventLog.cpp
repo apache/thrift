@@ -110,7 +110,7 @@ Event EventLog::waitForEvent(int64_t timeout) {
 Event EventLog::waitForConnEvent(uint32_t connId, int64_t timeout) {
   Synchronized s(monitor_);
 
-  EventList::iterator it = events_.begin();
+  auto it = events_.begin();
   while (true) {
     try {
       // TODO: it would be nicer to honor timeout for the duration of this

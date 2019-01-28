@@ -942,11 +942,11 @@ int main(int argc, char** argv) {
       if (it1 == whoa.end()) {
         failed = true;
       } else {
-        map<Numberz::type, Insanity>::const_iterator it12 = it1->second.find(Numberz::TWO);
+        auto it12 = it1->second.find(Numberz::TWO);
         if (it12 == it1->second.end() || it12->second != insane) {
           failed = true;
         }
-        map<Numberz::type, Insanity>::const_iterator it13 = it1->second.find(Numberz::THREE);
+        auto it13 = it1->second.find(Numberz::THREE);
         if (it13 == it1->second.end() || it13->second != insane) {
           failed = true;
         }
@@ -955,7 +955,7 @@ int main(int argc, char** argv) {
       if (it2 == whoa.end()) {
         failed = true;
       } else {
-        map<Numberz::type, Insanity>::const_iterator it26 = it2->second.find(Numberz::SIX);
+        auto it26 = it2->second.find(Numberz::SIX);
         if (it26 == it2->second.end() || it26->second != Insanity()) {
           failed = true;
         }

@@ -40,8 +40,8 @@ public:
     protocol::TProtocol* outRaw = out.get();
 
     // Try to dynamic cast to the template protocol type
-    Protocol_* specificIn = dynamic_cast<Protocol_*>(inRaw);
-    Protocol_* specificOut = dynamic_cast<Protocol_*>(outRaw);
+    auto* specificIn = dynamic_cast<Protocol_*>(inRaw);
+    auto* specificOut = dynamic_cast<Protocol_*>(outRaw);
     if (specificIn && specificOut) {
       return processFast(specificIn, specificOut, connectionContext);
     }

@@ -54,11 +54,11 @@ void compare_namespace(t_program* newProgram, t_program* oldProgram)
    const std::map<std::string, std::string>& newNamespaceMap = newProgram->get_all_namespaces();
    const std::map<std::string, std::string>& oldNamespaceMap = oldProgram->get_all_namespaces();
 
-   for(std::map<std::string, std::string>::const_iterator oldNamespaceMapIt = oldNamespaceMap.begin();
+   for(auto oldNamespaceMapIt = oldNamespaceMap.begin();
          oldNamespaceMapIt != oldNamespaceMap.end();
          oldNamespaceMapIt++)
    {
-      std::map<std::string, std::string>::const_iterator newNamespaceMapIt = newNamespaceMap.find(oldNamespaceMapIt->first);
+      auto newNamespaceMapIt = newNamespaceMap.find(oldNamespaceMapIt->first);
       if(newNamespaceMapIt == newNamespaceMap.end())
       {
          thrift_audit_warning(1, "Language %s not found in new thrift file\n", (oldNamespaceMapIt->first).c_str());
@@ -73,7 +73,7 @@ void compare_namespace(t_program* newProgram, t_program* oldProgram)
 void compare_enum_values(t_enum* newEnum,t_enum* oldEnum)
 {
    const std::vector<t_enum_value*>& oldEnumValues = oldEnum->get_constants();
-   for(std::vector<t_enum_value*>::const_iterator oldEnumValuesIt = oldEnumValues.begin();
+   for(auto oldEnumValuesIt = oldEnumValues.begin();
          oldEnumValuesIt != oldEnumValues.end();
          oldEnumValuesIt++)
    {
@@ -255,8 +255,8 @@ void compare_single_struct(t_struct* newStruct, t_struct* oldStruct, const std::
    std::string structName = oldStructName.empty() ? oldStruct->get_name() : oldStructName;
    const std::vector<t_field*>& oldStructMembersInIdOrder = oldStruct->get_sorted_members();
    const std::vector<t_field*>& newStructMembersInIdOrder = newStruct->get_sorted_members();
-   std::vector<t_field*>::const_iterator oldStructMemberIt = oldStructMembersInIdOrder.begin();
-   std::vector<t_field*>::const_iterator newStructMemberIt = newStructMembersInIdOrder.begin();
+   auto oldStructMemberIt = oldStructMembersInIdOrder.begin();
+   auto newStructMemberIt = newStructMembersInIdOrder.begin();
 
    // Since we have the struct members in their ID order, comparing their IDs can be done by traversing the two member
    // lists together.
@@ -352,14 +352,14 @@ void compare_functions(const std::vector<t_function*>& newFunctionList, const st
 {
    std::map<std::string, t_function*> newFunctionMap;
    std::map<std::string, t_function*>::iterator newFunctionMapIt;
-   for(std::vector<t_function*>::const_iterator newFunctionIt = newFunctionList.begin();
+   for(auto newFunctionIt = newFunctionList.begin();
          newFunctionIt != newFunctionList.end();
          newFunctionIt++)
    {
       newFunctionMap[(*newFunctionIt)->get_name()] = *newFunctionIt;
    }
 
-   for(std::vector<t_function*>::const_iterator oldFunctionIt = oldFunctionList.begin();
+   for(auto oldFunctionIt = oldFunctionList.begin();
          oldFunctionIt != oldFunctionList.end();
          oldFunctionIt++)
    {
@@ -383,7 +383,7 @@ void compare_services(const std::vector<t_service*>& newServices, const std::vec
    std::vector<t_service*>::const_iterator oldServiceIt;
 
    std::map<std::string, t_service*> newServiceMap;
-   for(std::vector<t_service*>::const_iterator newServiceIt = newServices.begin();
+   for(auto newServiceIt = newServices.begin();
          newServiceIt != newServices.end();
          newServiceIt++)
    {
@@ -394,7 +394,7 @@ void compare_services(const std::vector<t_service*>& newServices, const std::vec
    for(oldServiceIt = oldServices.begin(); oldServiceIt != oldServices.end(); oldServiceIt++)
    {
       const std::string oldServiceName = (*oldServiceIt)->get_name();
-      std::map<std::string, t_service*>::iterator newServiceMapIt = newServiceMap.find(oldServiceName);
+      auto newServiceMapIt = newServiceMap.find(oldServiceName);
 
       if(newServiceMapIt == newServiceMap.end())
       {

@@ -484,7 +484,7 @@ public:
    * correct parent implementation, if desired.
    */
   uint32_t skip(TType type) {
-    Protocol_* const prot = static_cast<Protocol_*>(this);
+    auto* const prot = static_cast<Protocol_*>(this);
     return ::apache::thrift::protocol::skip(*prot, type);
   }
 

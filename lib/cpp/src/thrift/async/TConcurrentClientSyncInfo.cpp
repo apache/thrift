@@ -75,7 +75,7 @@ void TConcurrentClientSyncInfo::updatePending(
   MonitorPtr monitor;
   {
     Guard seqidGuard(seqidMutex_);
-    MonitorMap::iterator i = seqidToMonitorMap_.find(rseqid);
+    auto i = seqidToMonitorMap_.find(rseqid);
     if(i == seqidToMonitorMap_.end())
       throwBadSeqId_();
     monitor = i->second;
@@ -140,7 +140,7 @@ void TConcurrentClientSyncInfo::markBad_(const Guard &)
 {
   wakeupSomeone_ = true;
   stop_ = true;
-  for(MonitorMap::iterator i = seqidToMonitorMap_.begin(); i != seqidToMonitorMap_.end(); ++i)
+  for(auto i = seqidToMonitorMap_.begin(); i != seqidToMonitorMap_.end(); ++i)
     i->second->notify();
 }
 

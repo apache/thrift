@@ -124,7 +124,7 @@ public:
 
     int64_t time00 = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch()).count();
 
-    for (std::set<shared_ptr<ThreadManagerTests::Task> >::iterator ix = tasks.begin();
+    for (auto ix = tasks.begin();
          ix != tasks.end();
          ix++) {
 
@@ -151,7 +151,7 @@ public:
     int64_t minTime = 9223372036854775807LL;
     int64_t maxTime = 0;
 
-    for (std::set<shared_ptr<ThreadManagerTests::Task> >::iterator ix = tasks.begin();
+    for (auto ix = tasks.begin();
          ix != tasks.end();
          ix++) {
 
@@ -275,7 +275,7 @@ public:
             new ThreadManagerTests::BlockTask(entryMonitor, blockMonitor, blocked[1], doneMonitor, activeCounts[1])));
       }
 
-      for (std::vector<shared_ptr<ThreadManagerTests::BlockTask> >::iterator ix = tasks.begin();
+      for (auto ix = tasks.begin();
            ix != tasks.end();
            ix++) {
         threadManager->add(*ix);

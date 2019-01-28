@@ -446,7 +446,7 @@ void TServerSocket::listen() {
     address.sun_family = AF_UNIX;
     memcpy(address.sun_path, path_.c_str(), len);
 
-    socklen_t structlen = static_cast<socklen_t>(sizeof(address));
+    auto structlen = static_cast<socklen_t>(sizeof(address));
 
     if (!address.sun_path[0]) { // abstract namespace socket
 #ifdef __linux__
@@ -490,10 +490,10 @@ void TServerSocket::listen() {
         GlobalOutput.perror("TServerSocket::getPort() getsockname() ", errno_copy);
       } else {
         if (sa.ss_family == AF_INET6) {
-          const struct sockaddr_in6* sin = reinterpret_cast<const struct sockaddr_in6*>(&sa);
+          const auto* sin = reinterpret_cast<const struct sockaddr_in6*>(&sa);
           port_ = ntohs(sin->sin6_port);
         } else {
-          const struct sockaddr_in* sin = reinterpret_cast<const struct sockaddr_in*>(&sa);
+          const auto* sin = reinterpret_cast<const struct sockaddr_in*>(&sa);
           port_ = ntohs(sin->sin_port);
         }
       }
