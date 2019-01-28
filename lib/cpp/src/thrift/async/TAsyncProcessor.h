@@ -35,7 +35,7 @@ namespace async {
 
 class TAsyncProcessor {
 public:
-  virtual ~TAsyncProcessor() {}
+  virtual ~TAsyncProcessor() = default;
 
   virtual void process(std::function<void(bool success)> _return,
                        std::shared_ptr<protocol::TProtocol> in,
@@ -53,14 +53,14 @@ public:
   }
 
 protected:
-  TAsyncProcessor() {}
+  TAsyncProcessor() = default;
 
   std::shared_ptr<TProcessorEventHandler> eventHandler_;
 };
 
 class TAsyncProcessorFactory {
 public:
-  virtual ~TAsyncProcessorFactory() {}
+  virtual ~TAsyncProcessorFactory() = default;
 
   /**
    * Get the TAsyncProcessor to use for a particular connection.

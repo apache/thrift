@@ -201,7 +201,7 @@ public:
       strict_read_(strict_read),
       strict_write_(strict_write) {}
 
-  ~TBinaryProtocolFactoryT() override {}
+  ~TBinaryProtocolFactoryT() override = default;
 
   void setStringSizeLimit(int32_t string_limit) { string_limit_ = string_limit; }
 

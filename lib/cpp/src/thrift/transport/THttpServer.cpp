@@ -37,8 +37,7 @@ namespace transport {
 THttpServer::THttpServer(std::shared_ptr<TTransport> transport) : THttpTransport(transport) {
 }
 
-THttpServer::~THttpServer() {
-}
+THttpServer::~THttpServer() = default;
 
 #if defined(_MSC_VER) || defined(__MINGW32__)
   #define THRIFT_GMTIME(TM, TIME)             gmtime_s(&TM, &TIME)

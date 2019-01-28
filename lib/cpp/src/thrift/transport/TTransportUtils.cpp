@@ -108,8 +108,7 @@ TPipedFileReaderTransport::TPipedFileReaderTransport(
   : TPipedTransport(srcTrans, dstTrans), srcTrans_(srcTrans) {
 }
 
-TPipedFileReaderTransport::~TPipedFileReaderTransport() {
-}
+TPipedFileReaderTransport::~TPipedFileReaderTransport() = default;
 
 bool TPipedFileReaderTransport::isOpen() const {
   return TPipedTransport::isOpen();

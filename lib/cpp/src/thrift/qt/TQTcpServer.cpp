@@ -67,8 +67,7 @@ TQTcpServer::TQTcpServer(shared_ptr<QTcpServer> server,
   connect(server.get(), SIGNAL(newConnection()), SLOT(processIncoming()));
 }
 
-TQTcpServer::~TQTcpServer() {
-}
+TQTcpServer::~TQTcpServer() = default;
 
 void TQTcpServer::processIncoming() {
   while (server_->hasPendingConnections()) {

@@ -69,7 +69,7 @@ public:
    */
   TMultiplexedProtocol(shared_ptr<TProtocol> _protocol, const std::string& _serviceName)
     : TProtocolDecorator(_protocol), serviceName(_serviceName), separator(":") {}
-  ~TMultiplexedProtocol() override {}
+  ~TMultiplexedProtocol() override = default;
 
   /**
    * Prepends the service name to the function name, separated by TMultiplexedProtocol::SEPARATOR.

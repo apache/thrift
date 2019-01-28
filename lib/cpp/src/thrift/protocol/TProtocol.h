@@ -583,7 +583,7 @@ protected:
   std::shared_ptr<TTransport> ptrans_;
 
 private:
-  TProtocol() {}
+  TProtocol() = default;
   uint32_t input_recursion_depth_;
   uint32_t output_recursion_depth_;
   uint32_t recursion_limit_;
@@ -594,7 +594,7 @@ private:
  */
 class TProtocolFactory {
 public:
-  TProtocolFactory() {}
+  TProtocolFactory() = default;
 
   virtual ~TProtocolFactory();
 

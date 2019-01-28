@@ -38,7 +38,7 @@ public:
                        std::shared_ptr<apache::thrift::transport::TBufferBase> ibuf,
                        std::shared_ptr<apache::thrift::transport::TBufferBase> obuf) override;
 
-  ~TAsyncProtocolProcessor() override {}
+  ~TAsyncProtocolProcessor() override = default;
 
 private:
   static void finish(std::function<void(bool healthy)> _return,

@@ -188,7 +188,7 @@ public:
         }
     }
 
-  ~Task() override {}
+  ~Task() override = default;
 
   void run() override {
     if (state_ == EXECUTING) {
@@ -214,7 +214,7 @@ class ThreadManager::Worker : public Runnable {
 public:
   Worker(ThreadManager::Impl* manager) : manager_(manager), state_(UNINITIALIZED) {}
 
-  ~Worker() override {}
+  ~Worker() override = default;
 
 private:
   bool isActive() const {

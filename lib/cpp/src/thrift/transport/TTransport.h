@@ -58,7 +58,7 @@ public:
   /**
    * Virtual deconstructor.
    */
-  virtual ~TTransport() {}
+  virtual ~TTransport() = default;
 
   /**
    * Whether this transport is open.
@@ -242,7 +242,7 @@ protected:
   /**
    * Simple constructor.
    */
-  TTransport() {}
+  TTransport() = default;
 };
 
 /**
@@ -253,9 +253,9 @@ protected:
  */
 class TTransportFactory {
 public:
-  TTransportFactory() {}
+  TTransportFactory() = default;
 
-  virtual ~TTransportFactory() {}
+  virtual ~TTransportFactory() = default;
 
   /**
    * Default implementation does nothing, just returns the transport given.

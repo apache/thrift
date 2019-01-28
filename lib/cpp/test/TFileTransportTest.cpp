@@ -64,7 +64,7 @@ public:
   };
   typedef std::list<FsyncCall> CallList;
 
-  FsyncLog() {}
+  FsyncLog() = default;
 
   void fsync(int fd) {
     (void)fd;

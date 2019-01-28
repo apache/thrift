@@ -35,7 +35,7 @@ namespace thrift {
  */
 class TProcessorEventHandler {
 public:
-  virtual ~TProcessorEventHandler() {}
+  virtual ~TProcessorEventHandler() = default;
 
   /**
    * Called before calling other callback methods.
@@ -108,7 +108,7 @@ public:
   }
 
 protected:
-  TProcessorEventHandler() {}
+  TProcessorEventHandler() = default;
 };
 
 /**
@@ -139,7 +139,7 @@ private:
  */
 class TProcessor {
 public:
-  virtual ~TProcessor() {}
+  virtual ~TProcessor() = default;
 
   virtual bool process(std::shared_ptr<protocol::TProtocol> in,
                        std::shared_ptr<protocol::TProtocol> out,
@@ -156,7 +156,7 @@ public:
   }
 
 protected:
-  TProcessor() {}
+  TProcessor() = default;
 
   std::shared_ptr<TProcessorEventHandler> eventHandler_;
 };
@@ -202,7 +202,7 @@ struct TConnectionInfo {
 
 class TProcessorFactory {
 public:
-  virtual ~TProcessorFactory() {}
+  virtual ~TProcessorFactory() = default;
 
   /**
    * Get the TProcessor to use for a particular connection.

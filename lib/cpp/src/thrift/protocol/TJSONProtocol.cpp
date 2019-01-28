@@ -303,9 +303,9 @@ static bool isLowSurrogate(uint16_t val) {
 class TJSONContext {
 
 public:
-  TJSONContext(){};
+  TJSONContext()= default;;
 
-  virtual ~TJSONContext(){};
+  virtual ~TJSONContext()= default;;
 
   /**
    * Write context data to the transport. Default is to do nothing.
@@ -404,8 +404,7 @@ TJSONProtocol::TJSONProtocol(std::shared_ptr<TTransport> ptrans)
     reader_(*ptrans) {
 }
 
-TJSONProtocol::~TJSONProtocol() {
-}
+TJSONProtocol::~TJSONProtocol() = default;
 
 void TJSONProtocol::pushContext(std::shared_ptr<TJSONContext> c) {
   contexts_.push(context_);

@@ -162,7 +162,7 @@ protected:
     wBound_ = buf + len;
   }
 
-  ~TBufferBase() override {}
+  ~TBufferBase() override = default;
 
   /// Reads begin here.
   uint8_t* rBase_;
@@ -284,9 +284,9 @@ protected:
  */
 class TBufferedTransportFactory : public TTransportFactory {
 public:
-  TBufferedTransportFactory() {}
+  TBufferedTransportFactory() = default;
 
-  ~TBufferedTransportFactory() override {}
+  ~TBufferedTransportFactory() override = default;
 
   /**
    * Wraps the transport into a buffered one.
@@ -423,9 +423,9 @@ protected:
  */
 class TFramedTransportFactory : public TTransportFactory {
 public:
-  TFramedTransportFactory() {}
+  TFramedTransportFactory() = default;
 
-  ~TFramedTransportFactory() override {}
+  ~TFramedTransportFactory() override = default;
 
   /**
    * Wraps the transport into a framed one.

@@ -42,7 +42,7 @@
  */
 class t_scope {
 public:
-  t_scope() {}
+  t_scope() = default;
 
   void add_type(std::string name, t_type* type) { types_[name] = type; }
 

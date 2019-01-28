@@ -40,7 +40,7 @@ namespace concurrency {
 class Mutex {
 public:
   Mutex();
-  virtual ~Mutex() {}
+  virtual ~Mutex() = default;
 
   virtual void lock() const;
   virtual bool trylock() const;

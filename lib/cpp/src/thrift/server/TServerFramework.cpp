@@ -91,8 +91,7 @@ TServerFramework::TServerFramework(const shared_ptr<TProcessor>& processor,
     limit_(INT64_MAX) {
 }
 
-TServerFramework::~TServerFramework() {
-}
+TServerFramework::~TServerFramework() = default;
 
 template <typename T>
 static void releaseOneDescriptor(const string& name, T& pTransport) {

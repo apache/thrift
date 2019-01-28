@@ -45,8 +45,7 @@ TConnectedClient::TConnectedClient(const shared_ptr<TProcessor>& processor,
     opaqueContext_(nullptr) {
 }
 
-TConnectedClient::~TConnectedClient() {
-}
+TConnectedClient::~TConnectedClient() = default;
 
 void TConnectedClient::run() {
   if (eventHandler_) {

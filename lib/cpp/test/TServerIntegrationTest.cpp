@@ -74,7 +74,7 @@ using boost::posix_time::milliseconds;
 class TServerReadyEventHandler : public TServerEventHandler, public Monitor {
 public:
   TServerReadyEventHandler() : isListening_(false), accepted_(0) {}
-  ~TServerReadyEventHandler() override {}
+  ~TServerReadyEventHandler() override = default;
   void preServe() override {
     Synchronized sync(*this);
     isListening_ = true;

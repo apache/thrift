@@ -57,7 +57,7 @@ void initrand(unsigned int seed) {
 
 class SizeGenerator {
 public:
-  virtual ~SizeGenerator() {}
+  virtual ~SizeGenerator() = default;
   virtual uint32_t nextSize() = 0;
   virtual std::string describe() const = 0;
 };
@@ -131,7 +131,7 @@ private:
 template <class Transport_>
 class CoupledTransports {
 public:
-  virtual ~CoupledTransports() {}
+  virtual ~CoupledTransports() = default;
   typedef Transport_ TransportType;
 
   CoupledTransports() : in(), out() {}

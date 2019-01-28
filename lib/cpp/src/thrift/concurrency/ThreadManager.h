@@ -55,12 +55,12 @@ class ThreadManager;
 class ThreadManager {
 
 protected:
-  ThreadManager() {}
+  ThreadManager() = default;
 
 public:
   typedef std::function<void(std::shared_ptr<Runnable>)> ExpireCallback;
 
-  virtual ~ThreadManager() {}
+  virtual ~ThreadManager() = default;
 
   /**
    * Starts the thread manager. Verifies all attributes have been properly

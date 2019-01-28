@@ -58,7 +58,7 @@ boost::mt19937 rng;
 
 class SizeGenerator {
 public:
-  virtual ~SizeGenerator() {}
+  virtual ~SizeGenerator() = default;
   virtual unsigned int getSize() = 0;
 };
 

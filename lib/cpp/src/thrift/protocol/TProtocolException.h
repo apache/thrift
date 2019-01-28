@@ -59,7 +59,7 @@ public:
   TProtocolException(TProtocolExceptionType type, const std::string& message)
     : apache::thrift::TException(message), type_(type) {}
 
-  ~TProtocolException() noexcept override {}
+  ~TProtocolException() noexcept override = default;
 
   /**
    * Returns an error code that provides information about the type of error

@@ -66,7 +66,7 @@ namespace utf = boost::unit_test;
 
 class OneWayServiceHandler : public onewaytest::OneWayServiceIf {
 public:
-  OneWayServiceHandler() {}
+  OneWayServiceHandler() = default;
 
   void roundTripRPC() override {
 #ifdef ENABLE_STDERR_LOGGING
@@ -82,7 +82,7 @@ public:
 
 class OneWayServiceCloneFactory : virtual public onewaytest::OneWayServiceIfFactory {
  public:
-  ~OneWayServiceCloneFactory() override {}
+  ~OneWayServiceCloneFactory() override = default;
   onewaytest::OneWayServiceIf* getHandler(const ::apache::thrift::TConnectionInfo& connInfo) override
   {
     (void)connInfo ;
@@ -96,7 +96,7 @@ class OneWayServiceCloneFactory : virtual public onewaytest::OneWayServiceIfFact
 class RPC0ThreadClass {
 public:
   RPC0ThreadClass(TThreadedServer& server) : server_(server) { } // Constructor
-~RPC0ThreadClass() { } // Destructor
+~RPC0ThreadClass() = default; // Destructor
 
 void Run() {
   server_.serve() ;
@@ -112,7 +112,7 @@ using apache::thrift::concurrency::Synchronized;
 class TServerReadyEventHandler : public TServerEventHandler, public Monitor {
 public:
   TServerReadyEventHandler() : isListening_(false), accepted_(0) {}
-  ~TServerReadyEventHandler() override {}
+  ~TServerReadyEventHandler() override = default;
   void preServe() override {
     Synchronized sync(*this);
     isListening_ = true;

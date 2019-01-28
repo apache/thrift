@@ -35,7 +35,7 @@ public:
                       const std::string& long_name,
                       const std::string& documentation);
 
-  virtual ~t_generator_factory() {}
+  virtual ~t_generator_factory() = default;
 
   virtual t_generator* get_generator(
       // The program to generate.

@@ -38,7 +38,7 @@ public:
       zlib_status_(status),
       zlib_msg_(msg == nullptr ? "(null)" : msg) {}
 
-  ~TZlibTransportException() noexcept override {}
+  ~TZlibTransportException() noexcept override = default;
 
   int getZlibStatus() { return zlib_status_; }
   std::string getZlibMessage() { return zlib_msg_; }
@@ -227,9 +227,9 @@ protected:
  */
 class TZlibTransportFactory : public TTransportFactory {
 public:
-  TZlibTransportFactory() {}
+  TZlibTransportFactory() = default;
 
-  ~TZlibTransportFactory() override {}
+  ~TZlibTransportFactory() override = default;
 
   std::shared_ptr<TTransport> getTransport(std::shared_ptr<TTransport> trans) override {
     return std::shared_ptr<TTransport>(new TZlibTransport(trans));

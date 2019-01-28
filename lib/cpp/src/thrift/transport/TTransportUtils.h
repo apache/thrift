@@ -42,9 +42,9 @@ namespace transport {
  */
 class TNullTransport : public TVirtualTransport<TNullTransport> {
 public:
-  TNullTransport() {}
+  TNullTransport() = default;
 
-  ~TNullTransport() override {}
+  ~TNullTransport() override = default;
 
   bool isOpen() { return true; }
 
@@ -207,11 +207,11 @@ protected:
  */
 class TPipedTransportFactory : public TTransportFactory {
 public:
-  TPipedTransportFactory() {}
+  TPipedTransportFactory() = default;
   TPipedTransportFactory(std::shared_ptr<TTransport> dstTrans) {
     initializeTargetTransport(dstTrans);
   }
-  ~TPipedTransportFactory() override {}
+  ~TPipedTransportFactory() override = default;
 
   /**
    * Wraps the base transport into a piped transport.
@@ -286,10 +286,10 @@ protected:
  */
 class TPipedFileReaderTransportFactory : public TPipedTransportFactory {
 public:
-  TPipedFileReaderTransportFactory() {}
+  TPipedFileReaderTransportFactory() = default;
   TPipedFileReaderTransportFactory(std::shared_ptr<TTransport> dstTrans)
     : TPipedTransportFactory(dstTrans) {}
-  ~TPipedFileReaderTransportFactory() override {}
+  ~TPipedFileReaderTransportFactory() override = default;
 
   std::shared_ptr<TTransport> getTransport(std::shared_ptr<TTransport> srcTrans) override {
     std::shared_ptr<TFileReaderTransport> pFileReaderTransport

@@ -67,7 +67,7 @@ typedef map<const char*, int, ltstr> count_map;
 
 class Server : public ServiceIf {
 public:
-  Server() {}
+  Server() = default;
 
   void count(const char* method) {
     Guard m(lock_);

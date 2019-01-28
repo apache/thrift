@@ -44,8 +44,7 @@ THttpClient::THttpClient(string host, int port, string path)
     path_(path) {
 }
 
-THttpClient::~THttpClient() {
-}
+THttpClient::~THttpClient() = default;
 
 void THttpClient::parseHeader(char* header) {
   char* colon = strchr(header, ':');

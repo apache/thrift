@@ -43,7 +43,7 @@ public:
 
   Task(shared_ptr<Runnable> runnable) : runnable_(runnable), state_(WAITING) {}
 
-  ~Task() override {}
+  ~Task() override = default;
 
   void run() override {
     if (state_ == EXECUTING) {
@@ -67,7 +67,7 @@ class TimerManager::Dispatcher : public Runnable {
 public:
   Dispatcher(TimerManager* manager) : manager_(manager) {}
 
-  ~Dispatcher() override {}
+  ~Dispatcher() override = default;
 
   /**
    * Dispatcher entry point

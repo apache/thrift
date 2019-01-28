@@ -57,7 +57,7 @@ public:
   void consume(uint32_t len) { this->TTransport::consume_virt(len); }
 
 protected:
-  TTransportDefaults() {}
+  TTransportDefaults() = default;
 };
 
 /**
@@ -118,7 +118,7 @@ public:
   }
 
 protected:
-  TVirtualTransport() {}
+  TVirtualTransport() = default;
 
   /*
    * Templatized constructors, to allow arguments to be passed to the Super_

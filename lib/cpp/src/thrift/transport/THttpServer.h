@@ -46,9 +46,9 @@ protected:
  */
 class THttpServerTransportFactory : public TTransportFactory {
 public:
-  THttpServerTransportFactory() {}
+  THttpServerTransportFactory() = default;
 
-  ~THttpServerTransportFactory() override {}
+  ~THttpServerTransportFactory() override = default;
 
   /**
    * Wraps the transport into a buffered one.

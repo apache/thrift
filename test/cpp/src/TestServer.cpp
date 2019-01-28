@@ -90,7 +90,7 @@ void signal_handler(int signum)
 
 class TestHandler : public ThriftTestIf {
 public:
-  TestHandler() {}
+  TestHandler() = default;
 
   void testVoid() override { printf("testVoid()\n"); }
 
@@ -395,7 +395,7 @@ class TestProcessorEventHandler : public TProcessorEventHandler {
 class TestHandlerAsync : public ThriftTestCobSvIf {
 public:
   TestHandlerAsync(std::shared_ptr<TestHandler>& handler) : _delegate(handler) {}
-  ~TestHandlerAsync() override {}
+  ~TestHandlerAsync() override = default;
 
   void testVoid(std::function<void()> cob) override {
     _delegate->testVoid();

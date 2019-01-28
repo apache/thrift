@@ -46,7 +46,7 @@ using namespace shared;
 
 class CalculatorHandler : public CalculatorIf {
 public:
-  CalculatorHandler() {}
+  CalculatorHandler() = default;
 
   void ping() override { cout << "ping()" << endl; }
 
@@ -113,7 +113,7 @@ protected:
 */
 class CalculatorCloneFactory : virtual public CalculatorIfFactory {
  public:
-  ~CalculatorCloneFactory() override {}
+  ~CalculatorCloneFactory() override = default;
   CalculatorIf* getHandler(const ::apache::thrift::TConnectionInfo& connInfo) override
   {
     std::shared_ptr<TSocket> sock = std::dynamic_pointer_cast<TSocket>(connInfo.transport);

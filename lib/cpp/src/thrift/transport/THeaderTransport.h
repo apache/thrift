@@ -257,9 +257,9 @@ protected:
  */
 class THeaderTransportFactory : public TTransportFactory {
 public:
-  THeaderTransportFactory() {}
+  THeaderTransportFactory() = default;
 
-  ~THeaderTransportFactory() override {}
+  ~THeaderTransportFactory() override = default;
 
   /**
    * Wraps the transport into a header one.

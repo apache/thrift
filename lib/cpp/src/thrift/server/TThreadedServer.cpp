@@ -89,8 +89,7 @@ TThreadedServer::TThreadedServer(const shared_ptr<TProcessor>& processor,
     threadFactory_(threadFactory) {
 }
 
-TThreadedServer::~TThreadedServer() {
-}
+TThreadedServer::~TThreadedServer() = default;
 
 void TThreadedServer::serve() {
   TServerFramework::serve();
@@ -140,8 +139,7 @@ TThreadedServer::TConnectedClientRunner::TConnectedClientRunner(const shared_ptr
   : pClient_(pClient) {
 }
 
-TThreadedServer::TConnectedClientRunner::~TConnectedClientRunner() {
-}
+TThreadedServer::TConnectedClientRunner::~TConnectedClientRunner() = default;
 
 void TThreadedServer::TConnectedClientRunner::run() /* override */ {
   pClient_->run();  // Run the client

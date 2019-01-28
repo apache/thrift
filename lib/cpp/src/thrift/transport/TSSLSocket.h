@@ -373,7 +373,7 @@ public:
   /**
    * Destructor
    */
-  virtual ~AccessManager() {}
+  virtual ~AccessManager() = default;
   /**
    * Determine whether the peer should be granted access or not. It's called
    * once after the SSL handshake completes successfully, before peer certificate

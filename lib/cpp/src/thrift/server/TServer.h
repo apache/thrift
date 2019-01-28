@@ -48,7 +48,7 @@ using apache::thrift::transport::TTransportFactory;
  */
 class TServerEventHandler {
 public:
-  virtual ~TServerEventHandler() {}
+  virtual ~TServerEventHandler() = default;
 
   /**
    * Called before the server begins.
@@ -89,7 +89,7 @@ protected:
   /**
    * Prevent direct instantiation.
    */
-  TServerEventHandler() {}
+  TServerEventHandler() = default;
 };
 
 /**
@@ -98,7 +98,7 @@ protected:
  */
 class TServer : public concurrency::Runnable {
 public:
-  ~TServer() override {}
+  ~TServer() override = default;
 
   virtual void serve() = 0;
 

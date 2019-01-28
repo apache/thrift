@@ -67,7 +67,7 @@ bool Insanity::operator<(thrift::test::Insanity const& other) const {
 
 class TestHandler : public ThriftTestIf {
   public:
-  TestHandler() {}
+  TestHandler() = default;
 
   void testVoid() override {
     cout << "[C -> C++] testVoid()" << endl;

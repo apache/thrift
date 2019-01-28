@@ -286,9 +286,9 @@ private:
  */
 class TJSONProtocolFactory : public TProtocolFactory {
 public:
-  TJSONProtocolFactory() {}
+  TJSONProtocolFactory() = default;
 
-  ~TJSONProtocolFactory() override {}
+  ~TJSONProtocolFactory() override = default;
 
   std::shared_ptr<TProtocol> getProtocol(std::shared_ptr<TTransport> trans) override {
     return std::shared_ptr<TProtocol>(new TJSONProtocol(trans));

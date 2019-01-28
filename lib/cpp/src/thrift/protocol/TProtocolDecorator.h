@@ -39,7 +39,7 @@ using std::shared_ptr;
  */
 class TProtocolDecorator : public TProtocol {
 public:
-  ~TProtocolDecorator() override {}
+  ~TProtocolDecorator() override = default;
 
   // Desc: Initializes the protocol decorator object.
   TProtocolDecorator(shared_ptr<TProtocol> proto)

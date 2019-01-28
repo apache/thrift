@@ -35,7 +35,7 @@ namespace test {
  */
 class ServerState {
 public:
-  virtual ~ServerState() {}
+  virtual ~ServerState() = default;
 
   /**
    * Create a server to listen on the specified port.

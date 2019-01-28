@@ -57,7 +57,7 @@ public:
   TApplicationException(TApplicationExceptionType type, const std::string& message)
     : TException(message), type_(type) {}
 
-  ~TApplicationException() noexcept override {}
+  ~TApplicationException() noexcept override = default;
 
   /**
    * Returns an error code that provides information about the type of error

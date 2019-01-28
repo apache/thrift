@@ -79,7 +79,7 @@ public:
 
   TException(const std::string& message) : message_(message) {}
 
-  ~TException() noexcept override {}
+  ~TException() noexcept override = default;
 
   const char* what() const noexcept override {
     if (message_.empty()) {
@@ -98,7 +98,7 @@ public:
   template <class E>
   static TDelayedException* delayException(const E& e);
   virtual void throw_it() = 0;
-  virtual ~TDelayedException(){};
+  virtual ~TDelayedException()= default;;
 };
 
 template <class E>

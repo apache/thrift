@@ -58,7 +58,7 @@ public:
       xsd_attrs_(nullptr),
       reference_(false) {}
 
-  ~t_field() override {}
+  ~t_field() override = default;
 
   t_type* get_type() { return type_; }
 

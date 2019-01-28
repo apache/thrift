@@ -47,7 +47,7 @@ public:
       forward_(forward)
   {}
 
-  ~t_typedef() override {}
+  ~t_typedef() override = default;
 
   t_type* get_type();
 

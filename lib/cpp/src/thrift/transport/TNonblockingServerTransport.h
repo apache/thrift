@@ -35,7 +35,7 @@ namespace transport {
  */
 class TNonblockingServerTransport {
 public:
-  virtual ~TNonblockingServerTransport() {}
+  virtual ~TNonblockingServerTransport() = default;
 
   /**
    * Starts the server transport listening for new connections. Prior to this
@@ -82,7 +82,7 @@ public:
   virtual void close() = 0;
 
 protected:
-  TNonblockingServerTransport() {}
+  TNonblockingServerTransport() = default;
 
   /**
    * Subclasses should implement this function for accept.
