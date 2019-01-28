@@ -240,7 +240,7 @@ void t_html_generator::generate_program_toc_row(t_program* tprog) {
       f_out_ << con_iter->second << "<br/>" << endl;
     }
   }
-  f_out_ << "</code></td>" << endl << "</tr>";
+  f_out_ << "</td>" << endl << "</tr>";
 }
 
 /**
