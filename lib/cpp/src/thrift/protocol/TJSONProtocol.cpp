@@ -303,9 +303,9 @@ static bool isLowSurrogate(uint16_t val) {
 class TJSONContext {
 
 public:
-  TJSONContext()= default;;
+  TJSONContext() = default;
 
-  virtual ~TJSONContext()= default;;
+  virtual ~TJSONContext() = default;
 
   /**
    * Write context data to the transport. Default is to do nothing.
