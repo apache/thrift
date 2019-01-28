@@ -807,7 +807,7 @@ void TSocket::setMaxRecvRetries(int maxRecvRetries) {
   maxRecvRetries_ = maxRecvRetries;
 }
 
-string TSocket::getSocketInfo() {
+string TSocket::getSocketInfo() const {
   std::ostringstream oss;
   if (path_.empty()) {
     if (host_.empty() || port_ == 0) {
@@ -822,7 +822,7 @@ string TSocket::getSocketInfo() {
   return oss.str();
 }
 
-std::string TSocket::getPeerHost() {
+std::string TSocket::getPeerHost() const {
   if (peerHost_.empty() && path_.empty()) {
     struct sockaddr_storage addr;
     struct sockaddr* addrPtr;
@@ -841,7 +841,7 @@ std::string TSocket::getPeerHost() {
       }
       addrPtr = (sockaddr*)&addr;
 
-      setCachedAddress(addrPtr, addrLen);
+      const_cast<TSocket&>(*this).setCachedAddress(addrPtr, addrLen);
     }
 
     char clienthost[NI_MAXHOST];
@@ -860,7 +860,7 @@ std::string TSocket::getPeerHost() {
   return peerHost_;
 }
 
-std::string TSocket::getPeerAddress() {
+std::string TSocket::getPeerAddress() const {
   if (peerAddress_.empty() && path_.empty()) {
     struct sockaddr_storage addr;
     struct sockaddr* addrPtr;
@@ -879,7 +879,7 @@ std::string TSocket::getPeerAddress() {
       }
       addrPtr = (sockaddr*)&addr;
 
-      setCachedAddress(addrPtr, addrLen);
+      const_cast<TSocket&>(*this).setCachedAddress(addrPtr, addrLen);
     }
 
     char clienthost[NI_MAXHOST];
@@ -899,7 +899,7 @@ std::string TSocket::getPeerAddress() {
   return peerAddress_;
 }
 
-int TSocket::getPeerPort() {
+int TSocket::getPeerPort() const {
   getPeerAddress();
   return peerPort_;
 }
@@ -949,7 +949,7 @@ bool TSocket::getUseLowMinRto() {
   return useLowMinRto_;
 }
 
-const std::string TSocket::getOrigin() {
+const std::string TSocket::getOrigin() const {
   std::ostringstream oss;
   oss << getPeerHost() << ":" << getPeerPort();
   return oss.str();

@@ -236,7 +236,7 @@ public:
    *
    * The returned value can be used in a log message for example
    */
-  virtual const std::string getOrigin() { return "Unknown"; }
+  virtual const std::string getOrigin() const { return "Unknown"; }
 
 protected:
   /**

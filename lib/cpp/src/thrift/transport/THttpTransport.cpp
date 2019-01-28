@@ -257,7 +257,7 @@ void THttpTransport::write(const uint8_t* buf, uint32_t len) {
   writeBuffer_.write(buf, len);
 }
 
-const std::string THttpTransport::getOrigin() {
+const std::string THttpTransport::getOrigin() const {
   std::ostringstream oss;
   if (!origin_.empty()) {
     oss << origin_ << ", ";

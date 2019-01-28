@@ -240,7 +240,7 @@ public:
   /**
    * Returns the origin of the underlying transport
    */
-  const std::string getOrigin() override { return transport_->getOrigin(); }
+  const std::string getOrigin() const override { return transport_->getOrigin(); }
 
   /**
    * The following behavior is currently implemented by TBufferedTransport,
@@ -377,7 +377,7 @@ public:
   /**
    * Returns the origin of the underlying transport
    */
-  const std::string getOrigin() override { return transport_->getOrigin(); }
+  const std::string getOrigin() const override { return transport_->getOrigin(); }
 
   /**
    * Set the maximum size of the frame at read

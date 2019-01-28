@@ -56,7 +56,7 @@ public:
 
   void flush() override = 0;
 
-  const std::string getOrigin() override;
+  const std::string getOrigin() const override;
 
 protected:
   std::shared_ptr<TTransport> transport_;
