@@ -43,6 +43,7 @@ CLEANFILES = \
 DISTCLEANFILES = \
 	Makefile \
 	Makefile.in \
+	aclocal.m4 \
 	apache-thrift-test-library \
 	autoscan.log \
 	compile \

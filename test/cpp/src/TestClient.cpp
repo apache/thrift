@@ -60,6 +60,53 @@ using namespace apache::thrift::protocol;
 using namespace apache::thrift::transport;
 using namespace thrift::test;
 
+//
+// A pedantic protocol that checks to make sure the response sequence ID
+// is the same as the sent sequence ID.  lib/cpp always sends zero for
+// synchronous clients, so this bumps the number to make sure it gets
+// returned properly from the remote server.  Any server that does not
+// respond with the same sequence number is violating the sequence ID
+// agreement between client and server.
+//
+
+template<class _P>
+class TPedanticProtocol : public _P
+{
+    public:
+        TPedanticProtocol(std::shared_ptr<TTransport>& transport)
+          : _P(transport), m_last_seqid(std::numeric_limits<int32_t>::max() - 10) { }
+
+        virtual uint32_t writeMessageBegin_virt(const std::string& name,
+                                           const TMessageType messageType,
+                                           const int32_t in_seqid) override
+        {
+            int32_t seqid = in_seqid;
+            if (!seqid) { // this is typical for normal cpp generated code
+                seqid = ++m_last_seqid;
+            }
+
+            return _P::writeMessageBegin_virt(name, messageType, seqid);
+        }
+
+        virtual uint32_t readMessageBegin_virt(std::string& name,
+                                          TMessageType& messageType,
+                                          int32_t& seqid) override
+        {
+            uint32_t result = _P::readMessageBegin_virt(name, messageType, seqid);
+            if (seqid != m_last_seqid) {
+                std::stringstream ss;
+                ss << "ERROR: send request with seqid " << m_last_seqid << " and got reply with seqid " << seqid;
+                throw std::logic_error(ss.str());
+            } /* else {
+                std::cout << "verified seqid " << m_last_seqid << " round trip OK" << std::endl;
+            } */
+            return result;
+        }
+
+    private:
+        int32_t m_last_seqid;
+};
+
 // Current time, microseconds since the epoch
 uint64_t now() {
   int64_t ret;
@@ -299,19 +346,23 @@ int main(int argc, char** argv) {
   }
 
   if (protocol_type == "json" || protocol_type == "multij") {
-    protocol = std::make_shared<TJSONProtocol>(transport);
+    typedef TPedanticProtocol<TJSONProtocol> TPedanticJSONProtocol;
+    protocol = std::make_shared<TPedanticJSONProtocol>(transport);
   } else if (protocol_type == "compact" || protocol_type == "multic") {
-    protocol = std::make_shared<TCompactProtocol>(transport);
+    typedef TPedanticProtocol<TCompactProtocol> TPedanticCompactProtocol;
+    protocol = std::make_shared<TPedanticCompactProtocol>(transport);
   } else if (protocol_type == "header" || protocol_type == "multih") {
-    protocol = std::make_shared<THeaderProtocol>(transport);
+    typedef TPedanticProtocol<THeaderProtocol> TPedanticHeaderProtocol;
+    protocol = std::make_shared<TPedanticHeaderProtocol>(transport);
   } else {
-    protocol = std::make_shared<TBinaryProtocol>(transport);
+    typedef TPedanticProtocol<TBinaryProtocol> TPedanticBinaryProtocol;
+    protocol = std::make_shared<TPedanticBinaryProtocol>(transport);
   }
 
   if (boost::starts_with(protocol_type, "multi")) {
-  protocol2 = std::make_shared<TMultiplexedProtocol>(protocol, "SecondService");
-  // we don't need access to the original protocol any more, so...
-  protocol = std::make_shared<TMultiplexedProtocol>(protocol, "ThriftTest");
+    protocol2 = std::make_shared<TMultiplexedProtocol>(protocol, "SecondService");
+    // we don't need access to the original protocol any more, so...
+    protocol = std::make_shared<TMultiplexedProtocol>(protocol, "ThriftTest");
   }
 
   // Connection info

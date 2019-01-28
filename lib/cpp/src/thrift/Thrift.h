@@ -98,7 +98,7 @@ public:
   template <class E>
   static TDelayedException* delayException(const E& e);
   virtual void throw_it() = 0;
-  virtual ~TDelayedException()= default;;
+  virtual ~TDelayedException() = default;
 };
 
 template <class E>

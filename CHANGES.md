@@ -16,18 +16,18 @@
 	
 ### Breaking Changes
 
-- [THRIFT-4743](https://issues.apache.org/jira/browse/THRIFT-4743) - compiler: remove plug-in mechanism
+- [THRIFT-4743](https://issues.apache.org/jira/browse/THRIFT-4743) - compiler: removed the plug-in mechanism
 - [THRIFT-4720](https://issues.apache.org/jira/browse/THRIFT-4720) - cpp: C++03/C++98 support has been removed; also removed boost as a runtime dependency
 - [THRIFT-4730](https://issues.apache.org/jira/browse/THRIFT-4730) - cpp: BoostThreadFactory, PosixThreadFactory, StdThreadFactory removed
 - [THRIFT-4732](https://issues.apache.org/jira/browse/THRIFT-4732) - cpp: CMake build changed to use BUILD_SHARED_LIBS
 - [THRIFT-4735](https://issues.apache.org/jira/browse/THRIFT-4735) - cpp: Removed Qt4 support
 - [THRIFT-4740](https://issues.apache.org/jira/browse/THRIFT-4740) - cpp: Use std::chrono::duration for timeouts
+- [THRIFT-4672](https://issues.apache.org/jira/browse/THRIFT-4672) - cpp: TTransport::getOrigin() is now const
 - [THRIFT-4702](https://issues.apache.org/jira/browse/THRIFT-4702) - java: class org.apache.thrift.AutoExpandingBuffer is no longer public
 - [THRIFT-4709](https://issues.apache.org/jira/browse/THRIFT-4709) - java: changes to UTF-8 handling require JDK 1.7 at a minimum
 - [THRIFT-4712](https://issues.apache.org/jira/browse/THRIFT-4712) - java: class org.apache.thrift.ShortStack is no longer public
 - [THRIFT-4725](https://issues.apache.org/jira/browse/THRIFT-4725) - java: change return type signature of 'process' methods
 - [THRIFT-4675](https://issues.apache.org/jira/browse/THRIFT-4675) - js: now uses node-int64 for 64 bit integer constants
-- [THRIFT-4672](https://issues.apache.org/jira/browse/THRIFT-4672) - C++: TTransport::getOrigin() is now const
 
 ### Known Issues (Blocker or Critical)
 
