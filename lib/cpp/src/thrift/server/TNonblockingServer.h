@@ -280,7 +280,7 @@ private:
     numIOThreads_ = DEFAULT_IO_THREADS;
     nextIOThread_ = 0;
     useHighPriorityIOThreads_ = false;
-    userEventBase_ = NULL;
+    userEventBase_ = nullptr;
     threadPoolProcessing_ = false;
     numTConnections_ = 0;
     numActiveProcessors_ = 0;

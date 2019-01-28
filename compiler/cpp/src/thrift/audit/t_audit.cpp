@@ -79,7 +79,7 @@ void compare_enum_values(t_enum* newEnum,t_enum* oldEnum)
    {
       int enumValue = (*oldEnumValuesIt)->get_value();
       t_enum_value* newEnumValue = newEnum->get_constant_by_value(enumValue);
-      if(newEnumValue != NULL)
+      if(newEnumValue != nullptr)
       {
          std::string enumName = (*oldEnumValuesIt)->get_name();
          if(enumName != newEnumValue->get_name())
@@ -175,9 +175,9 @@ bool compare_pair(std::pair<t_const_value*, t_const_value*> newMapPair, std::pai
 // This function returns 'true' if the default values are same. Returns false if they are different.
 bool compare_defaults(t_const_value* newStructDefault, t_const_value* oldStructDefault)
 {
-   if(newStructDefault == NULL && oldStructDefault == NULL) return true;
-   else if(newStructDefault == NULL && oldStructDefault != NULL) return false;
-   else if (newStructDefault != NULL && oldStructDefault == NULL) return false;
+   if(newStructDefault == nullptr && oldStructDefault == nullptr) return true;
+   else if(newStructDefault == nullptr && oldStructDefault != nullptr) return false;
+   else if (newStructDefault != nullptr && oldStructDefault == nullptr) return false;
 
    if(newStructDefault->get_type() != oldStructDefault->get_type())
    {
@@ -405,12 +405,12 @@ void compare_services(const std::vector<t_service*>& newServices, const std::vec
          t_service* oldServiceExtends = (*oldServiceIt)->get_extends();
          t_service* newServiceExtends = (newServiceMapIt->second)->get_extends();
 
-         if(oldServiceExtends == NULL)
+         if(oldServiceExtends == nullptr)
          {
             // It is fine to add extends. So if service in older thrift did not have any extends, we are fine.
             // DO Nothing
          }
-         else if(oldServiceExtends != NULL && newServiceExtends == NULL)
+         else if(oldServiceExtends != nullptr && newServiceExtends == nullptr)
          {
             thrift_audit_failure("Change in Service inheritance for %s\n", oldServiceName.c_str());
          }

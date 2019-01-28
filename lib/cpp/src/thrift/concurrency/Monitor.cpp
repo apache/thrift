@@ -41,11 +41,11 @@ namespace concurrency {
 class Monitor::Impl {
 
 public:
-  Impl() : ownedMutex_(new Mutex()), conditionVariable_(), mutex_(NULL) { init(ownedMutex_.get()); }
+  Impl() : ownedMutex_(new Mutex()), conditionVariable_(), mutex_(nullptr) { init(ownedMutex_.get()); }
 
-  Impl(Mutex* mutex) : ownedMutex_(), conditionVariable_(), mutex_(NULL) { init(mutex); }
+  Impl(Mutex* mutex) : ownedMutex_(), conditionVariable_(), mutex_(nullptr) { init(mutex); }
 
-  Impl(Monitor* monitor) : ownedMutex_(), conditionVariable_(), mutex_(NULL) {
+  Impl(Monitor* monitor) : ownedMutex_(), conditionVariable_(), mutex_(nullptr) {
     init(&(monitor->mutex()));
   }
 

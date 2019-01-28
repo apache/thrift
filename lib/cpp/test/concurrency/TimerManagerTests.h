@@ -215,7 +215,7 @@ public:
     // Verify behavior when removing the removed task
     try {
       timerManager.remove(timer);
-      assert(0 == "ERROR: This remove should send a NoSuchTaskException exception.");
+      assert(nullptr == "ERROR: This remove should send a NoSuchTaskException exception.");
     } catch (NoSuchTaskException&) {
     }
 
@@ -244,7 +244,7 @@ public:
     // Verify behavior when removing the expired task
     try {
       timerManager.remove(timer);
-      assert(0 == "ERROR: This remove should send a NoSuchTaskException exception.");
+      assert(nullptr == "ERROR: This remove should send a NoSuchTaskException exception.");
     } catch (NoSuchTaskException&) {
     }
 

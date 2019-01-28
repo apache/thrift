@@ -48,7 +48,7 @@ typedef struct eventInfo {
   uint32_t eventSize_;
   uint32_t eventBuffPos_;
 
-  eventInfo() : eventBuff_(NULL), eventSize_(0), eventBuffPos_(0){};
+  eventInfo() : eventBuff_(nullptr), eventSize_(0), eventBuffPos_(0){};
   ~eventInfo() {
     if (eventBuff_) {
       delete[] eventBuff_;
@@ -85,7 +85,7 @@ typedef struct readState {
     if (event_) {
       delete (event_);
     }
-    event_ = 0;
+    event_ = nullptr;
   }
 
   inline uint32_t getEventSize() {
@@ -94,7 +94,7 @@ typedef struct readState {
   }
 
   readState() {
-    event_ = 0;
+    event_ = nullptr;
     resetAllValues();
   }
 
@@ -273,7 +273,7 @@ private:
   // control for writer thread
   static void* startWriterThread(void* ptr) {
     static_cast<TFileTransport*>(ptr)->writerThread();
-    return NULL;
+    return nullptr;
   }
   void writerThread();
 

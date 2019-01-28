@@ -118,7 +118,7 @@ public:
     // TFramedTransportFactory
     auto* framedFactory
         = dynamic_cast<TFramedTransportFactory*>(transportFactory.get());
-    if (framedFactory == NULL) {
+    if (framedFactory == nullptr) {
       throw TException("TNonblockingServer must use TFramedTransport");
     }
 
@@ -147,7 +147,7 @@ public:
     // TFramedTransportFactory
     auto* framedFactory
         = dynamic_cast<TFramedTransportFactory*>(transportFactory.get());
-    if (framedFactory == NULL) {
+    if (framedFactory == nullptr) {
       throw TException("TNonblockingServer must use TFramedTransport");
     }
 
@@ -524,7 +524,7 @@ void testEventSequencing() {
   // can test the timing for the preRead() call.
   string requestName = "getDataWait";
   string eventName = "ParentService.getDataWait";
-  auto seqid = int32_t(time(NULL));
+  auto seqid = int32_t(time(nullptr));
   TBinaryProtocol protocol(socket);
   protocol.writeMessageBegin(requestName, T_CALL, seqid);
   socket->flush();

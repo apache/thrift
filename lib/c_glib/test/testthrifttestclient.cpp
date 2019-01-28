@@ -350,12 +350,12 @@ extern "C" {
 static void
 test_thrift_client (void)
 {
-  ThriftSocket *tsocket = NULL;
-  ThriftBinaryProtocol *protocol = NULL;
-  TTestThriftTestClient *client = NULL;
-  TTestThriftTestIf *iface = NULL;
-  GError *error = NULL;
-  gchar *string = NULL;
+  ThriftSocket *tsocket = nullptr;
+  ThriftBinaryProtocol *protocol = nullptr;
+  TTestThriftTestClient *client = nullptr;
+  TTestThriftTestIf *iface = nullptr;
+  GError *error = nullptr;
+  gchar *string = nullptr;
   gint8 byte = 0;
   gint16 i16 = 0;
   gint32 i32 = 0, another_i32 = 56789;
@@ -363,18 +363,18 @@ test_thrift_client (void)
   double dbl = 0.0;
   TTestXtruct *xtruct_in, *xtruct_out;
   TTestXtruct2 *xtruct2_in, *xtruct2_out;
-  GHashTable *map_in = NULL, *map_out = NULL;
-  GHashTable *set_in = NULL, *set_out = NULL;
-  GArray *list_in = NULL, *list_out = NULL;
+  GHashTable *map_in = nullptr, *map_out = nullptr;
+  GHashTable *set_in = nullptr, *set_out = nullptr;
+  GArray *list_in = nullptr, *list_out = nullptr;
   TTestNumberz enum_in, enum_out;
   TTestUserId user_id_in, user_id_out;
-  GHashTable *insanity_in = NULL;
+  GHashTable *insanity_in = nullptr;
   TTestXtruct *xtruct1, *xtruct2;
-  TTestInsanity *insanity_out = NULL;
-  TTestXtruct *multi_in = NULL;
-  GHashTable *multi_map_out = NULL;
-  TTestXception *xception = NULL;
-  TTestXception2 *xception2 = NULL;
+  TTestInsanity *insanity_out = nullptr;
+  TTestXtruct *multi_in = nullptr;
+  GHashTable *multi_map_out = nullptr;
+  TTestXception *xception = nullptr;
+  TTestXception2 *xception2 = nullptr;
 
 #if (!GLIB_CHECK_VERSION (2, 36, 0))
   // initialize gobject
@@ -392,33 +392,33 @@ test_thrift_client (void)
   iface = T_TEST_THRIFT_TEST_IF (client);
 
   // open and send
-  thrift_transport_open (THRIFT_TRANSPORT(tsocket), NULL);
+  thrift_transport_open (THRIFT_TRANSPORT(tsocket), nullptr);
 
   assert (t_test_thrift_test_client_test_void (iface, &error) == TRUE);
-  assert (error == NULL);
+  assert (error == nullptr);
 
   assert (t_test_thrift_test_client_test_string (iface, &string, "test123", &error) == TRUE);
   assert (strcmp (string, "test123") == 0);
   g_free (string);
-  assert (error == NULL);
+  assert (error == nullptr);
 
   assert (t_test_thrift_test_client_test_byte (iface, &byte, (gint8) 5, &error) == TRUE);
   assert (byte == 5);
-  assert (error == NULL);
+  assert (error == nullptr);
 
   assert (t_test_thrift_test_client_test_i32 (iface, &i32, 123, &error) == TRUE);
   assert (i32 == 123);
-  assert (error == NULL);
+  assert (error == nullptr);
 
   assert (t_test_thrift_test_client_test_i64 (iface, &i64, 12345, &error) == TRUE);
   assert (i64 == 12345);
-  assert (error == NULL);
+  assert (error == nullptr);
 
   assert (t_test_thrift_test_client_test_double (iface, &dbl, 5.6, &error) == TRUE);
   assert (dbl == 5.6);
-  assert (error == NULL);
+  assert (error == nullptr);
 
-  xtruct_out = (TTestXtruct *) g_object_new (T_TEST_TYPE_XTRUCT, NULL);
+  xtruct_out = (TTestXtruct *) g_object_new (T_TEST_TYPE_XTRUCT, nullptr);
   xtruct_out->byte_thing = 1;
   xtruct_out->__isset_byte_thing = TRUE;
   xtruct_out->i32_thing = 15;
@@ -427,50 +427,50 @@ test_thrift_client (void)
   xtruct_out->__isset_i64_thing = TRUE;
   xtruct_out->string_thing = g_strdup ("abc123");
   xtruct_out->__isset_string_thing = TRUE;
-  xtruct_in = (TTestXtruct *) g_object_new(T_TEST_TYPE_XTRUCT, NULL);
+  xtruct_in = (TTestXtruct *) g_object_new(T_TEST_TYPE_XTRUCT, nullptr);
   assert (t_test_thrift_test_client_test_struct (iface, &xtruct_in, xtruct_out, &error) == TRUE);
-  assert (error == NULL);
+  assert (error == nullptr);
 
-  xtruct2_out = (TTestXtruct2 *) g_object_new (T_TEST_TYPE_XTRUCT2, NULL);
+  xtruct2_out = (TTestXtruct2 *) g_object_new (T_TEST_TYPE_XTRUCT2, nullptr);
   xtruct2_out->byte_thing = 1;
   xtruct2_out->__isset_byte_thing = TRUE;
-  if (xtruct2_out->struct_thing != NULL)
+  if (xtruct2_out->struct_thing != nullptr)
     g_object_unref(xtruct2_out->struct_thing);
   xtruct2_out->struct_thing = xtruct_out;
   xtruct2_out->__isset_struct_thing = TRUE;
   xtruct2_out->i32_thing = 123;
   xtruct2_out->__isset_i32_thing = TRUE;
-  xtruct2_in = (TTestXtruct2 *) g_object_new (T_TEST_TYPE_XTRUCT2, NULL);
+  xtruct2_in = (TTestXtruct2 *) g_object_new (T_TEST_TYPE_XTRUCT2, nullptr);
   assert (t_test_thrift_test_client_test_nest (iface, &xtruct2_in, xtruct2_out, &error) == TRUE);
-  assert (error == NULL);
+  assert (error == nullptr);
 
   g_object_unref (xtruct2_out);
   g_object_unref (xtruct2_in);
   g_object_unref (xtruct_in);
 
-  map_out = g_hash_table_new (NULL, NULL);
-  map_in = g_hash_table_new (NULL, NULL);  g_hash_table_insert (map_out, &i32, &i32);
+  map_out = g_hash_table_new (nullptr, nullptr);
+  map_in = g_hash_table_new (nullptr, nullptr);  g_hash_table_insert (map_out, &i32, &i32);
   assert (t_test_thrift_test_client_test_map (iface, &map_in, map_out, &error) == TRUE);
-  assert (error == NULL);
+  assert (error == nullptr);
   g_hash_table_destroy (map_out);
   g_hash_table_destroy (map_in);
 
-  map_out = g_hash_table_new (NULL, NULL);
-  map_in = g_hash_table_new (NULL, NULL);
+  map_out = g_hash_table_new (nullptr, nullptr);
+  map_in = g_hash_table_new (nullptr, nullptr);
   g_hash_table_insert (map_out, g_strdup ("a"), g_strdup ("123"));
   g_hash_table_insert (map_out, g_strdup ("a b"), g_strdup ("with spaces "));
   g_hash_table_insert (map_out, g_strdup ("same"), g_strdup ("same"));
   g_hash_table_insert (map_out, g_strdup ("0"), g_strdup ("numeric key"));
   assert (t_test_thrift_test_client_test_string_map (iface, &map_in, map_out, &error) == TRUE);
-  assert (error == NULL);
+  assert (error == nullptr);
   g_hash_table_destroy (map_out);
   g_hash_table_destroy (map_in);
 
-  set_out = g_hash_table_new (NULL, NULL);
-  set_in = g_hash_table_new (NULL, NULL);
+  set_out = g_hash_table_new (nullptr, nullptr);
+  set_in = g_hash_table_new (nullptr, nullptr);
   g_hash_table_insert (set_out, &i32, &i32);
   assert (t_test_thrift_test_client_test_set (iface, &set_in, set_out, &error) == TRUE);
-  assert (error == NULL);
+  assert (error == nullptr);
   g_hash_table_destroy (set_out);
   g_hash_table_destroy (set_in);
 
@@ -480,31 +480,31 @@ test_thrift_client (void)
   g_array_append_val (list_out, i32);
   g_array_append_val (list_out, another_i32);
   assert (t_test_thrift_test_client_test_list (iface, &list_in, list_out, &error) == TRUE);
-  assert (error == NULL);
+  assert (error == nullptr);
   g_array_free (list_out, TRUE);
   g_array_free (list_in, TRUE);
 
   enum_out = T_TEST_NUMBERZ_ONE;
   assert (t_test_thrift_test_client_test_enum (iface, &enum_in, enum_out, &error) == TRUE);
   assert (enum_in == enum_out);
-  assert (error == NULL);
+  assert (error == nullptr);
 
   user_id_out = 12345;
   assert (t_test_thrift_test_client_test_typedef (iface, &user_id_in, user_id_out, &error) == TRUE);
   assert (user_id_in == user_id_out);
-  assert (error == NULL);
+  assert (error == nullptr);
 
-  map_in = g_hash_table_new (NULL, NULL);
+  map_in = g_hash_table_new (nullptr, nullptr);
   assert (t_test_thrift_test_client_test_map_map (iface, &map_in, i32, &error) == TRUE);
-  assert (error == NULL);
+  assert (error == nullptr);
   g_hash_table_destroy (map_in);
 
   // insanity
-  insanity_out = (TTestInsanity *) g_object_new (T_TEST_TYPE_INSANITY, NULL);
-  insanity_out->userMap = g_hash_table_new (NULL, NULL);
+  insanity_out = (TTestInsanity *) g_object_new (T_TEST_TYPE_INSANITY, nullptr);
+  insanity_out->userMap = g_hash_table_new (nullptr, nullptr);
   g_hash_table_insert (insanity_out->userMap, GINT_TO_POINTER (enum_out), &user_id_out);
 
-  xtruct1 = (TTestXtruct *) g_object_new (T_TEST_TYPE_XTRUCT, NULL);
+  xtruct1 = (TTestXtruct *) g_object_new (T_TEST_TYPE_XTRUCT, nullptr);
   xtruct1->byte_thing = 1;
   xtruct1->__isset_byte_thing = TRUE;
   xtruct1->i32_thing = 15;
@@ -513,7 +513,7 @@ test_thrift_client (void)
   xtruct1->__isset_i64_thing = TRUE;
   xtruct1->string_thing = g_strdup ("abc123");
   xtruct1->__isset_string_thing = TRUE;
-  xtruct2 = (TTestXtruct *) g_object_new (T_TEST_TYPE_XTRUCT, NULL);
+  xtruct2 = (TTestXtruct *) g_object_new (T_TEST_TYPE_XTRUCT, nullptr);
   xtruct2->byte_thing = 1;
   xtruct2->__isset_byte_thing = TRUE;
   xtruct2->i32_thing = 15;
@@ -523,7 +523,7 @@ test_thrift_client (void)
   xtruct2->string_thing = g_strdup ("abc123");
   xtruct2->__isset_string_thing = TRUE;
 
-  insanity_in = g_hash_table_new (NULL, NULL);
+  insanity_in = g_hash_table_new (nullptr, nullptr);
   g_ptr_array_add (insanity_out->xtructs, xtruct1);
   g_ptr_array_add (insanity_out->xtructs, xtruct2);
   assert (t_test_thrift_test_client_test_insanity (iface, &insanity_in, insanity_out, &error) == TRUE);
@@ -531,10 +531,10 @@ test_thrift_client (void)
   g_hash_table_unref (insanity_in);
   g_ptr_array_free (insanity_out->xtructs, TRUE);
 
-  multi_map_out = g_hash_table_new (NULL, NULL);
+  multi_map_out = g_hash_table_new (nullptr, nullptr);
   string = g_strdup ("abc123");
   g_hash_table_insert (multi_map_out, &i16, string);
-  multi_in = (TTestXtruct *) g_object_new (T_TEST_TYPE_XTRUCT, NULL);
+  multi_in = (TTestXtruct *) g_object_new (T_TEST_TYPE_XTRUCT, nullptr);
   assert (t_test_thrift_test_client_test_multi (iface, &multi_in, byte, i32, i64, multi_map_out, enum_out, user_id_out, &error) == TRUE);
   assert (multi_in->i32_thing == i32);
   assert (multi_in->i64_thing == i64);
@@ -545,53 +545,53 @@ test_thrift_client (void)
   assert (t_test_thrift_test_client_test_exception (iface, "Xception", &xception, &error) == FALSE);
   assert (xception->errorCode == 1001);
   g_error_free (error);
-  error = NULL;
+  error = nullptr;
   g_object_unref (xception);
-  xception = NULL;
+  xception = nullptr;
 
   assert (t_test_thrift_test_client_test_exception (iface, "ApplicationException", &xception, &error) == FALSE);
   g_error_free (error);
-  error = NULL;
-  assert (xception == NULL);
+  error = nullptr;
+  assert (xception == nullptr);
 
   assert (t_test_thrift_test_client_test_exception (iface, "Test", &xception, &error) == TRUE);
-  assert (error == NULL);
+  assert (error == nullptr);
 
-  multi_in = (TTestXtruct*) g_object_new (T_TEST_TYPE_XTRUCT, NULL);
-  assert (t_test_thrift_test_client_test_multi_exception (iface, &multi_in, "Xception", NULL, &xception, &xception2, &error) == FALSE);
+  multi_in = (TTestXtruct*) g_object_new (T_TEST_TYPE_XTRUCT, nullptr);
+  assert (t_test_thrift_test_client_test_multi_exception (iface, &multi_in, "Xception", nullptr, &xception, &xception2, &error) == FALSE);
   assert (xception->errorCode == 1001);
-  assert (xception2 == NULL);
+  assert (xception2 == nullptr);
   g_error_free (error);
-  error = NULL;
+  error = nullptr;
   g_object_unref (xception);
   g_object_unref (multi_in);
-  xception = NULL;
-  multi_in = NULL;
+  xception = nullptr;
+  multi_in = nullptr;
 
-  multi_in = (TTestXtruct*) g_object_new (T_TEST_TYPE_XTRUCT, NULL);
-  assert (t_test_thrift_test_client_test_multi_exception (iface, &multi_in, "Xception2", NULL, &xception, &xception2, &error) == FALSE);
+  multi_in = (TTestXtruct*) g_object_new (T_TEST_TYPE_XTRUCT, nullptr);
+  assert (t_test_thrift_test_client_test_multi_exception (iface, &multi_in, "Xception2", nullptr, &xception, &xception2, &error) == FALSE);
   assert (xception2->errorCode == 2002);
-  assert (xception == NULL);
+  assert (xception == nullptr);
   g_error_free (error);
-  error = NULL;
+  error = nullptr;
   g_object_unref (xception2);
   g_object_unref (multi_in);
-  xception2 = NULL;
-  multi_in = NULL;
+  xception2 = nullptr;
+  multi_in = nullptr;
 
-  multi_in = (TTestXtruct*) g_object_new (T_TEST_TYPE_XTRUCT, NULL);
-  assert (t_test_thrift_test_client_test_multi_exception (iface, &multi_in, NULL , NULL, &xception, &xception2, &error) == TRUE);
-  assert (error == NULL);
+  multi_in = (TTestXtruct*) g_object_new (T_TEST_TYPE_XTRUCT, nullptr);
+  assert (t_test_thrift_test_client_test_multi_exception (iface, &multi_in, nullptr , nullptr, &xception, &xception2, &error) == TRUE);
+  assert (error == nullptr);
   g_object_unref(multi_in);
-  multi_in = NULL;
+  multi_in = nullptr;
 
   assert (t_test_thrift_test_client_test_oneway (iface, 1, &error) == TRUE);
-  assert (error == NULL);
+  assert (error == nullptr);
 
   /* sleep to let the oneway call go through */
   sleep (5);
 
-  thrift_transport_close (THRIFT_TRANSPORT(tsocket), NULL);
+  thrift_transport_close (THRIFT_TRANSPORT(tsocket), nullptr);
   g_object_unref (client);
   g_object_unref (protocol);
   g_object_unref (tsocket);

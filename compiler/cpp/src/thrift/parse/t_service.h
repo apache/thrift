@@ -31,7 +31,7 @@ class t_program;
  */
 class t_service : public t_type {
 public:
-  t_service(t_program* program) : t_type(program), extends_(NULL) {}
+  t_service(t_program* program) : t_type(program), extends_(nullptr) {}
 
   bool is_service() const override { return true; }
 

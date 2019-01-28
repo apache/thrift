@@ -62,7 +62,7 @@ public:
                               std::shared_ptr<TProtocol> output) {
     (void)input;
     (void)output;
-    return NULL;
+    return nullptr;
   }
 
   /**

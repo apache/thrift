@@ -157,7 +157,7 @@ void TQIODeviceTransport::flush() {
 uint8_t* TQIODeviceTransport::borrow(uint8_t* buf, uint32_t* len) {
   (void)buf;
   (void)len;
-  return NULL;
+  return nullptr;
 }
 
 void TQIODeviceTransport::consume(uint32_t len) {

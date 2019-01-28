@@ -198,7 +198,7 @@ template <class Transport_>
 uint32_t TCompactProtocolT<Transport_>::writeBool(const bool value) {
   uint32_t wsize = 0;
 
-  if (booleanField_.name != NULL) {
+  if (booleanField_.name != nullptr) {
     // we haven't written the field header yet
     wsize
       += writeFieldBeginInternal(booleanField_.name,
@@ -207,7 +207,7 @@ uint32_t TCompactProtocolT<Transport_>::writeBool(const bool value) {
                                  static_cast<int8_t>(value
                                                      ? detail::compact::CT_BOOLEAN_TRUE
                                                      : detail::compact::CT_BOOLEAN_FALSE));
-    booleanField_.name = NULL;
+    booleanField_.name = nullptr;
   } else {
     // we're not part of a field, so just write the value
     wsize
@@ -695,9 +695,9 @@ uint32_t TCompactProtocolT<Transport_>::readBinary(std::string& str) {
   }
 
   // Use the heap here to prevent stack overflow for v. large strings
-  if (size > string_buf_size_ || string_buf_ == NULL) {
+  if (size > string_buf_size_ || string_buf_ == nullptr) {
     void* new_string_buf = std::realloc(string_buf_, (uint32_t)size);
-    if (new_string_buf == NULL) {
+    if (new_string_buf == nullptr) {
       throw std::bad_alloc();
     }
     string_buf_ = (uint8_t*)new_string_buf;
@@ -735,7 +735,7 @@ uint32_t TCompactProtocolT<Transport_>::readVarint64(int64_t& i64) {
   const uint8_t* borrowed = trans_->borrow(buf, &buf_size);
 
   // Fast path.
-  if (borrowed != NULL) {
+  if (borrowed != nullptr) {
     while (true) {
       uint8_t byte = borrowed[rsize];
       rsize++;

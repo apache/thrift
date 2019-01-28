@@ -65,7 +65,7 @@ uint64_t now() {
   int64_t ret;
   struct timeval tv;
 
-  THRIFT_GETTIMEOFDAY(&tv, NULL);
+  THRIFT_GETTIMEOFDAY(&tv, nullptr);
   ret = tv.tv_sec;
   ret = ret * 1000 * 1000 + tv.tv_usec;
   return ret;

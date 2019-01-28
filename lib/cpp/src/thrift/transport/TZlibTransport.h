@@ -36,7 +36,7 @@ public:
   TZlibTransportException(int status, const char* msg)
     : TTransportException(TTransportException::INTERNAL_ERROR, errorMessage(status, msg)),
       zlib_status_(status),
-      zlib_msg_(msg == NULL ? "(null)" : msg) {}
+      zlib_msg_(msg == nullptr ? "(null)" : msg) {}
 
   ~TZlibTransportException() noexcept override {}
 
@@ -93,12 +93,12 @@ public:
       crbuf_size_(crbuf_size),
       uwbuf_size_(uwbuf_size),
       cwbuf_size_(cwbuf_size),
-      urbuf_(NULL),
-      crbuf_(NULL),
-      uwbuf_(NULL),
-      cwbuf_(NULL),
-      rstream_(NULL),
-      wstream_(NULL),
+      urbuf_(nullptr),
+      crbuf_(nullptr),
+      uwbuf_(nullptr),
+      cwbuf_(nullptr),
+      rstream_(nullptr),
+      wstream_(nullptr),
       comp_level_(comp_level) {
     if (uwbuf_size_ < MIN_DIRECT_DEFLATE_SIZE) {
       // Have to copy this into a local because of a linking issue.

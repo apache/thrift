@@ -79,10 +79,10 @@ public:
       trans_(trans.get()),
       lastFieldId_(0),
       string_limit_(0),
-      string_buf_(NULL),
+      string_buf_(nullptr),
       string_buf_size_(0),
       container_limit_(0) {
-    booleanField_.name = NULL;
+    booleanField_.name = nullptr;
     boolValue_.hasBoolValue = false;
   }
 
@@ -93,10 +93,10 @@ public:
       trans_(trans.get()),
       lastFieldId_(0),
       string_limit_(string_limit),
-      string_buf_(NULL),
+      string_buf_(nullptr),
       string_buf_size_(0),
       container_limit_(container_limit) {
-    booleanField_.name = NULL;
+    booleanField_.name = nullptr;
     boolValue_.hasBoolValue = false;
   }
 

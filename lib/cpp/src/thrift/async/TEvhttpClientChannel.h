@@ -52,7 +52,7 @@ public:
                        const char* address,
                        int port,
                        struct event_base* eb,
-                       struct evdns_base *dnsbase = 0);
+                       struct evdns_base *dnsbase = nullptr);
   ~TEvhttpClientChannel() override;
 
   void sendAndRecvMessage(const VoidCallback& cob,

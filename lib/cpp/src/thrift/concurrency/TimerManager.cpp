@@ -221,7 +221,7 @@ void TimerManager::stop() {
     taskMap_.clear();
 
     // Remove dispatcher's reference to us.
-    dispatcher_->manager_ = NULL;
+    dispatcher_->manager_ = nullptr;
   }
 }
 

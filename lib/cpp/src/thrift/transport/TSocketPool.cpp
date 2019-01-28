@@ -216,7 +216,7 @@ void TSocketPool::open() {
 
     if (server->lastFailTime_ > 0) {
       // The server was marked as down, so check if enough time has elapsed to retry
-      time_t elapsedTime = time(NULL) - server->lastFailTime_;
+      time_t elapsedTime = time(nullptr) - server->lastFailTime_;
       if (elapsedTime > retryInterval_) {
         retryIntervalPassed = true;
       }
@@ -245,7 +245,7 @@ void TSocketPool::open() {
       if (server->consecutiveFailures_ > maxConsecutiveFailures_) {
         // Mark server as down
         server->consecutiveFailures_ = 0;
-        server->lastFailTime_ = time(NULL);
+        server->lastFailTime_ = time(nullptr);
       }
     }
   }

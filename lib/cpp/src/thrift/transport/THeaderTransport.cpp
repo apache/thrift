@@ -275,9 +275,9 @@ void THeaderTransport::untransform(uint8_t* ptr, uint32_t sz) {
       stream.avail_in = sz;
 
       // Setting these to 0 means use the default free/alloc functions
-      stream.zalloc = (alloc_func)0;
-      stream.zfree = (free_func)0;
-      stream.opaque = (voidpf)0;
+      stream.zalloc = (alloc_func)nullptr;
+      stream.zfree = (free_func)nullptr;
+      stream.opaque = (voidpf)nullptr;
       err = inflateInit(&stream);
       if (err != Z_OK) {
         throw TApplicationException(TApplicationException::MISSING_RESULT,
@@ -337,9 +337,9 @@ void THeaderTransport::transform(uint8_t* ptr, uint32_t sz) {
       stream.next_in = ptr;
       stream.avail_in = sz;
 
-      stream.zalloc = (alloc_func)0;
-      stream.zfree = (free_func)0;
-      stream.opaque = (voidpf)0;
+      stream.zalloc = (alloc_func)nullptr;
+      stream.zfree = (free_func)nullptr;
+      stream.opaque = (voidpf)nullptr;
       err = deflateInit(&stream, Z_DEFAULT_COMPRESSION);
       if (err != Z_OK) {
         throw TTransportException(TTransportException::CORRUPTED_DATA,

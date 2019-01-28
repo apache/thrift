@@ -324,7 +324,7 @@ void TSocket::openConnection(struct addrinfo* res) {
 
 #ifndef _WIN32
     size_t len = path_.size() + 1;
-    if (len > sizeof(((sockaddr_un*)NULL)->sun_path)) {
+    if (len > sizeof(((sockaddr_un*)nullptr)->sun_path)) {
       int errno_copy = THRIFT_GET_SOCKET_ERROR;
       GlobalOutput.perror("TSocket::open() Unix Domain socket path too long", errno_copy);
       throw TTransportException(TTransportException::NOT_OPEN, " Unix Domain socket path too long");
@@ -433,7 +433,7 @@ void TSocket::open() {
 void TSocket::unix_open() {
   if (!path_.empty()) {
     // Unix Domain SOcket does not need addrinfo struct, so we pass NULL
-    openConnection(NULL);
+    openConnection(nullptr);
   }
 }
 
@@ -453,8 +453,8 @@ void TSocket::local_open() {
   }
 
   struct addrinfo hints, *res, *res0;
-  res = NULL;
-  res0 = NULL;
+  res = nullptr;
+  res0 = nullptr;
   int error;
   char port[sizeof("65535")];
   std::memset(&hints, 0, sizeof(hints));
@@ -540,7 +540,7 @@ try_again:
   // Read from the socket
   struct timeval begin;
   if (recvTimeout_ > 0) {
-    THRIFT_GETTIMEOFDAY(&begin, NULL);
+    THRIFT_GETTIMEOFDAY(&begin, nullptr);
   } else {
     // if there is no read timeout we don't need the TOD to determine whether
     // an THRIFT_EAGAIN is due to a timeout or an out-of-resource condition.
@@ -592,7 +592,7 @@ try_again:
       }
       // check if this is the lack of resources or timeout case
       struct timeval end;
-      THRIFT_GETTIMEOFDAY(&end, NULL);
+      THRIFT_GETTIMEOFDAY(&end, nullptr);
       auto readElapsedMicros = static_cast<uint32_t>(((end.tv_sec - begin.tv_sec) * 1000 * 1000)
                                                          + (end.tv_usec - begin.tv_usec));
 
@@ -834,7 +834,7 @@ std::string TSocket::getPeerHost() const {
 
     addrPtr = getCachedAddress(&addrLen);
 
-    if (addrPtr == NULL) {
+    if (addrPtr == nullptr) {
       addrLen = sizeof(addr);
       if (getpeername(socket_, (sockaddr*)&addr, &addrLen) != 0) {
         return peerHost_;
@@ -872,7 +872,7 @@ std::string TSocket::getPeerAddress() const {
 
     addrPtr = getCachedAddress(&addrLen);
 
-    if (addrPtr == NULL) {
+    if (addrPtr == nullptr) {
       addrLen = sizeof(addr);
       if (getpeername(socket_, (sockaddr*)&addr, &addrLen) != 0) {
         return peerAddress_;
@@ -937,7 +937,7 @@ sockaddr* TSocket::getCachedAddress(socklen_t* len) const {
     return (sockaddr*)&cachedPeerAddr_.ipv6;
 
   default:
-    return NULL;
+    return nullptr;
   }
 }
 

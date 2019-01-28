@@ -88,7 +88,7 @@ public:
 
     (void)input;
     (void)output;
-    return NULL;
+    return nullptr;
   }
   bool isListening() const { return isListening_; }
   uint64_t acceptedCount() const { return accepted_; }

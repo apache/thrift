@@ -77,11 +77,11 @@ public:
     pipeOnWrite_ = false;
 
     rBuf_ = (uint8_t*)std::malloc(sizeof(uint8_t) * rBufSize_);
-    if (rBuf_ == NULL) {
+    if (rBuf_ == nullptr) {
       throw std::bad_alloc();
     }
     wBuf_ = (uint8_t*)std::malloc(sizeof(uint8_t) * wBufSize_);
-    if (wBuf_ == NULL) {
+    if (wBuf_ == nullptr) {
       throw std::bad_alloc();
     }
   }
@@ -98,11 +98,11 @@ public:
       wLen_(0) {
 
     rBuf_ = (uint8_t*)std::malloc(sizeof(uint8_t) * rBufSize_);
-    if (rBuf_ == NULL) {
+    if (rBuf_ == nullptr) {
       throw std::bad_alloc();
     }
     wBuf_ = (uint8_t*)std::malloc(sizeof(uint8_t) * wBufSize_);
-    if (wBuf_ == NULL) {
+    if (wBuf_ == nullptr) {
       throw std::bad_alloc();
     }
   }
@@ -120,7 +120,7 @@ public:
       if (rLen_ == rBufSize_) {
         rBufSize_ *= 2;
         auto * tmpBuf = (uint8_t*)std::realloc(rBuf_, sizeof(uint8_t) * rBufSize_);
-	if (tmpBuf == NULL) {
+	if (tmpBuf == nullptr) {
 	  throw std::bad_alloc();
 	}
 	rBuf_ = tmpBuf;
@@ -221,7 +221,7 @@ public:
   }
 
   virtual void initializeTargetTransport(std::shared_ptr<TTransport> dstTrans) {
-    if (dstTrans_.get() == NULL) {
+    if (dstTrans_.get() == nullptr) {
       dstTrans_ = dstTrans;
     } else {
       throw TException("Target transport already initialized");
@@ -294,7 +294,7 @@ public:
   std::shared_ptr<TTransport> getTransport(std::shared_ptr<TTransport> srcTrans) override {
     std::shared_ptr<TFileReaderTransport> pFileReaderTransport
         = std::dynamic_pointer_cast<TFileReaderTransport>(srcTrans);
-    if (pFileReaderTransport.get() != NULL) {
+    if (pFileReaderTransport.get() != nullptr) {
       return getFileReaderTransport(pFileReaderTransport);
     } else {
       return std::shared_ptr<TTransport>();

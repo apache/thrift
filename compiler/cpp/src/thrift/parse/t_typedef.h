@@ -42,7 +42,7 @@ public:
    */
   t_typedef(t_program* program, const std::string& symbolic, bool forward)
     : t_type(program, symbolic),
-      type_(NULL),
+      type_(nullptr),
       symbolic_(symbolic),
       forward_(forward)
   {}

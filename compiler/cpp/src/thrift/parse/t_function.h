@@ -37,7 +37,7 @@ public:
     : returntype_(returntype),
       name_(name),
       arglist_(arglist),
-      xceptions_(new t_struct(NULL)),
+      xceptions_(new t_struct(nullptr)),
       own_xceptions_(true),
       oneway_(oneway) {
     if (oneway_ && (!returntype_->is_void())) {

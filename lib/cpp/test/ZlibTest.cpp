@@ -427,7 +427,7 @@ void print_usage(FILE* f, const char* argv0) {
 
 #ifdef BOOST_TEST_DYN_LINK
 bool init_unit_test_suite() {
-  auto seed = static_cast<uint32_t>(time(NULL));
+  auto seed = static_cast<uint32_t>(time(nullptr));
 #ifdef HAVE_INTTYPES_H
   printf("seed: %" PRIu32 "\n", seed);
 #endif

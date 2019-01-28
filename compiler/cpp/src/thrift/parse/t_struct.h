@@ -80,7 +80,7 @@ public:
       }
 
       // unions may have up to one member defaulted, but not more
-      if (field->get_value() != NULL) {
+      if (field->get_value() != nullptr) {
         if (1 < ++members_with_value) {
           throw "Error: Field " + field->get_name() + " provides another default value for union "
               + name_;
@@ -118,7 +118,7 @@ public:
       return false;
     }
     // returns false when there is a conflict of field names
-    if (get_field_by_name(elem->get_name()) != NULL) {
+    if (get_field_by_name(elem->get_name()) != nullptr) {
       return false;
     }
     members_.push_back(elem);
@@ -148,7 +148,7 @@ public:
         return *m_iter;
       }
     }
-    return NULL;
+    return nullptr;
   }
 
 private:

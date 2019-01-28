@@ -209,7 +209,7 @@ public:
     T_VIRTUAL_CALL();
     return borrow_virt(buf, len);
   }
-  virtual const uint8_t* borrow_virt(uint8_t* /* buf */, uint32_t* /* len */) { return NULL; }
+  virtual const uint8_t* borrow_virt(uint8_t* /* buf */, uint32_t* /* len */) { return nullptr; }
 
   /**
    * Remove len bytes from the transport.  This should always follow a borrow

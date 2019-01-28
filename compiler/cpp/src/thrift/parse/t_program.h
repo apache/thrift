@@ -68,7 +68,7 @@ public:
   ~t_program() override {
     if (scope_) {
       delete scope_;
-      scope_ = NULL;
+      scope_ = nullptr;
     }
   }
 

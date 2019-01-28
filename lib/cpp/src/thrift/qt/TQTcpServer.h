@@ -50,7 +50,7 @@ public:
   TQTcpServer(std::shared_ptr<QTcpServer> server,
               std::shared_ptr<TAsyncProcessor> processor,
               std::shared_ptr<apache::thrift::protocol::TProtocolFactory> protocolFactory,
-              QObject* parent = NULL);
+              QObject* parent = nullptr);
   ~TQTcpServer() override;
 
 private Q_SLOTS:

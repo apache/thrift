@@ -122,7 +122,7 @@ public:
       std::map<t_const_value*, t_const_value*, t_const_value::value_compare>::const_iterator v_iter;
       for (v_iter = map.begin(); v_iter != map.end(); ++v_iter) {
         t_field* field = tstruct->get_field_by_name(v_iter->first->get_string());
-        if (field == NULL) {
+        if (field == nullptr) {
           throw "No field named \"" + v_iter->first->get_string()
               + "\" was found in struct of type \"" + tstruct->get_name() + "\"";
         }
@@ -133,7 +133,7 @@ public:
         const_val->set_enum((t_enum*)ttype);
       } else {
         t_const* constant = get_constant(const_val->get_identifier());
-        if (constant == NULL) {
+        if (constant == nullptr) {
           throw "No enum value or constant found named \"" + const_val->get_identifier() + "\"!";
         }
 
@@ -181,7 +181,7 @@ public:
       // value's name.
       auto* tenum = (t_enum*)ttype;
       t_enum_value* enum_value = tenum->get_constant_by_value(const_val->get_integer());
-      if (enum_value == NULL) {
+      if (enum_value == nullptr) {
         std::ostringstream valstm;
         valstm << const_val->get_integer();
         throw "Couldn't find a named value in enum " + tenum->get_name() + " for value "

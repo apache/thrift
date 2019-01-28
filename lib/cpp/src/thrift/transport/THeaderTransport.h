@@ -82,7 +82,7 @@ public:
       seqId(0),
       flags(0),
       tBufSize_(0),
-      tBuf_(NULL) {
+      tBuf_(nullptr) {
     if (!transport_) throw std::invalid_argument("transport is empty");
     initBuffers();
   }
@@ -96,7 +96,7 @@ public:
       seqId(0),
       flags(0),
       tBufSize_(0),
-      tBuf_(NULL) {
+      tBuf_(nullptr) {
     if (!transport_) throw std::invalid_argument("inTransport is empty");
     if (!outTransport_) throw std::invalid_argument("outTransport is empty");
     initBuffers();
@@ -181,7 +181,7 @@ protected:
   uint32_t getWriteBytes();
 
   void initBuffers() {
-    setReadBuffer(NULL, 0);
+    setReadBuffer(nullptr, 0);
     setWriteBuffer(wBuf_.get(), wBufSize_);
   }
 

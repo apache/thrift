@@ -273,7 +273,7 @@ public:
    *
    * @param path Path to trusted certificate file
    */
-  virtual void loadTrustedCertificates(const char* path, const char* capath = NULL);
+  virtual void loadTrustedCertificates(const char* path, const char* capath = nullptr);
   /**
    * Default randomize method.
    */

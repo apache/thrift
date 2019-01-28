@@ -46,7 +46,7 @@ public:
   virtual void* getContext(const char* fn_name, void* serverContext) {
     (void)fn_name;
     (void)serverContext;
-    return NULL;
+    return nullptr;
   }
 
   /**
@@ -119,10 +119,10 @@ public:
   TProcessorContextFreer(TProcessorEventHandler* handler, void* context, const char* method)
     : handler_(handler), context_(context), method_(method) {}
   ~TProcessorContextFreer() {
-    if (handler_ != NULL)
+    if (handler_ != nullptr)
       handler_->freeContext(context_, method_);
   }
-  void unregister() { handler_ = NULL; }
+  void unregister() { handler_ = nullptr; }
 
 private:
   apache::thrift::TProcessorEventHandler* handler_;

@@ -341,7 +341,7 @@ public:
 
 struct TriggerInfo {
   TriggerInfo(int seconds, const std::shared_ptr<TTransport>& transport, uint32_t writeLength)
-    : timeoutSeconds(seconds), transport(transport), writeLength(writeLength), next(NULL) {}
+    : timeoutSeconds(seconds), transport(transport), writeLength(writeLength), next(nullptr) {}
 
   int timeoutSeconds;
   std::shared_ptr<TTransport> transport;
@@ -355,7 +355,7 @@ unsigned int g_numTriggersFired;
 bool g_teardown = false;
 
 void alarm_handler() {
-  TriggerInfo* info = NULL;
+  TriggerInfo* info = nullptr;
   {
     apache::thrift::concurrency::Synchronized s(g_alarm_monitor);
     // The alarm timed out, which almost certainly means we're stuck
@@ -366,7 +366,7 @@ void alarm_handler() {
     // tools/test/runner only records stdout messages in the failure messages for
     // boost tests.  (boost prints its test info to stdout.)
     printf("Timeout alarm expired; attempting to unblock transport\n");
-    if (g_triggerInfo == NULL) {
+    if (g_triggerInfo == nullptr) {
       printf("  trigger stack is empty!\n");
     }
 
@@ -395,7 +395,7 @@ void alarm_handler_wrapper() {
       if (g_teardown)
         return;
       // calculate timeout
-      if (g_triggerInfo == NULL) {
+      if (g_triggerInfo == nullptr) {
         timeout = 0;
       } else {
         timeout = g_triggerInfo->timeoutSeconds * 1000;
@@ -424,7 +424,7 @@ void add_trigger(unsigned int seconds,
   auto* info = new TriggerInfo(seconds, transport, write_len);
   {
     apache::thrift::concurrency::Synchronized s(g_alarm_monitor);
-    if (g_triggerInfo == NULL) {
+    if (g_triggerInfo == nullptr) {
       // This is the first trigger.
       // Set g_triggerInfo, and schedule the alarm
       g_triggerInfo = info;
@@ -441,17 +441,17 @@ void add_trigger(unsigned int seconds,
 }
 
 void clear_triggers() {
-  TriggerInfo* info = NULL;
+  TriggerInfo* info = nullptr;
 
   {
     apache::thrift::concurrency::Synchronized s(g_alarm_monitor);
     info = g_triggerInfo;
-    g_triggerInfo = NULL;
+    g_triggerInfo = nullptr;
     g_numTriggersFired = 0;
     g_alarm_monitor.notify();
   }
 
-  while (info != NULL) {
+  while (info != nullptr) {
     TriggerInfo* next = info->next;
     delete info;
     info = next;
@@ -500,8 +500,8 @@ void test_rw(uint32_t totalSize,
              SizeGenerator& rChunkGenerator,
              uint32_t maxOutstanding) {
   CoupledTransports transports;
-  BOOST_REQUIRE(transports.in != NULL);
-  BOOST_REQUIRE(transports.out != NULL);
+  BOOST_REQUIRE(transports.in != nullptr);
+  BOOST_REQUIRE(transports.out != nullptr);
 
   boost::shared_array<uint8_t> wbuf = boost::shared_array<uint8_t>(new uint8_t[totalSize]);
   boost::shared_array<uint8_t> rbuf = boost::shared_array<uint8_t>(new uint8_t[totalSize]);
@@ -593,8 +593,8 @@ void test_rw(uint32_t totalSize,
 template <class CoupledTransports>
 void test_read_part_available() {
   CoupledTransports transports;
-  BOOST_REQUIRE(transports.in != NULL);
-  BOOST_REQUIRE(transports.out != NULL);
+  BOOST_REQUIRE(transports.in != nullptr);
+  BOOST_REQUIRE(transports.out != nullptr);
 
   uint8_t write_buf[16];
   uint8_t read_buf[16];
@@ -615,8 +615,8 @@ void test_read_part_available() {
 template <class CoupledTransports>
 void test_read_part_available_in_chunks() {
   CoupledTransports transports;
-  BOOST_REQUIRE(transports.in != NULL);
-  BOOST_REQUIRE(transports.out != NULL);
+  BOOST_REQUIRE(transports.in != nullptr);
+  BOOST_REQUIRE(transports.out != nullptr);
 
   uint8_t write_buf[16];
   uint8_t read_buf[16];
@@ -642,8 +642,8 @@ void test_read_part_available_in_chunks() {
 template <class CoupledTransports>
 void test_read_partial_midframe() {
   CoupledTransports transports;
-  BOOST_REQUIRE(transports.in != NULL);
-  BOOST_REQUIRE(transports.out != NULL);
+  BOOST_REQUIRE(transports.in != nullptr);
+  BOOST_REQUIRE(transports.out != nullptr);
 
   uint8_t write_buf[16];
   uint8_t read_buf[16];
@@ -700,8 +700,8 @@ void test_read_partial_midframe() {
 template <class CoupledTransports>
 void test_borrow_part_available() {
   CoupledTransports transports;
-  BOOST_REQUIRE(transports.in != NULL);
-  BOOST_REQUIRE(transports.out != NULL);
+  BOOST_REQUIRE(transports.in != nullptr);
+  BOOST_REQUIRE(transports.out != nullptr);
 
   uint8_t write_buf[16];
   uint8_t read_buf[16];
@@ -715,7 +715,7 @@ void test_borrow_part_available() {
   uint32_t borrow_len = 10;
   const uint8_t* borrowed_buf = transports.in->borrow(read_buf, &borrow_len);
   BOOST_CHECK_EQUAL(g_numTriggersFired, (unsigned int)0);
-  BOOST_CHECK(borrowed_buf == NULL);
+  BOOST_CHECK(borrowed_buf == nullptr);
 
   clear_triggers();
 }
@@ -723,8 +723,8 @@ void test_borrow_part_available() {
 template <class CoupledTransports>
 void test_read_none_available() {
   CoupledTransports transports;
-  BOOST_REQUIRE(transports.in != NULL);
-  BOOST_REQUIRE(transports.out != NULL);
+  BOOST_REQUIRE(transports.in != nullptr);
+  BOOST_REQUIRE(transports.out != nullptr);
 
   uint8_t read_buf[16];
 
@@ -751,8 +751,8 @@ void test_read_none_available() {
 template <class CoupledTransports>
 void test_borrow_none_available() {
   CoupledTransports transports;
-  BOOST_REQUIRE(transports.in != NULL);
-  BOOST_REQUIRE(transports.out != NULL);
+  BOOST_REQUIRE(transports.in != nullptr);
+  BOOST_REQUIRE(transports.out != nullptr);
 
   uint8_t write_buf[16];
   memset(write_buf, 'a', sizeof(write_buf));
@@ -760,8 +760,8 @@ void test_borrow_none_available() {
   // Attempting to borrow when no data is available should fail immediately
   set_trigger(1, transports.out, 10);
   uint32_t borrow_len = 10;
-  const uint8_t* borrowed_buf = transports.in->borrow(NULL, &borrow_len);
-  BOOST_CHECK(borrowed_buf == NULL);
+  const uint8_t* borrowed_buf = transports.in->borrow(nullptr, &borrow_len);
+  BOOST_CHECK(borrowed_buf == nullptr);
   BOOST_CHECK_EQUAL(g_numTriggersFired, (unsigned int)0);
 
   clear_triggers();
@@ -1055,7 +1055,7 @@ BOOST_GLOBAL_FIXTURE(global_fixture)
 #ifdef BOOST_TEST_DYN_LINK
 bool init_unit_test_suite() {
   struct timeval tv;
-  THRIFT_GETTIMEOFDAY(&tv, NULL);
+  THRIFT_GETTIMEOFDAY(&tv, nullptr);
   int seed = tv.tv_sec ^ tv.tv_usec;
 
   initrand(seed);

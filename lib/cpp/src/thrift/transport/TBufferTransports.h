@@ -148,7 +148,7 @@ protected:
    * performance-sensitive operation, so it is okay to just leave it to
    * the concrete class to set up pointers correctly.
    */
-  TBufferBase() : rBase_(NULL), rBound_(NULL), wBase_(NULL), wBound_(NULL) {}
+  TBufferBase() : rBase_(nullptr), rBound_(nullptr), wBase_(nullptr), wBound_(nullptr) {}
 
   /// Convenience mutator for setting the read buffer.
   void setReadBuffer(uint8_t* buf, uint32_t len) {
@@ -399,7 +399,7 @@ protected:
   virtual bool readFrame();
 
   void initPointers() {
-    setReadBuffer(NULL, 0);
+    setReadBuffer(nullptr, 0);
     setWriteBuffer(wBuf_.get(), wBufSize_);
 
     // Pad the buffer so we can insert the size later.
@@ -451,10 +451,10 @@ private:
 
     maxBufferSize_ = (std::numeric_limits<uint32_t>::max)();
 
-    if (buf == NULL && size != 0) {
+    if (buf == nullptr && size != 0) {
       assert(owner);
       buf = (uint8_t*)std::malloc(size);
-      if (buf == NULL) {
+      if (buf == nullptr) {
 	throw std::bad_alloc();
       }
     }
@@ -503,7 +503,7 @@ public:
    * Construct a TMemoryBuffer with a default-sized buffer,
    * owned by the TMemoryBuffer object.
    */
-  TMemoryBuffer() { initCommon(NULL, defaultSize, true, 0); }
+  TMemoryBuffer() { initCommon(nullptr, defaultSize, true, 0); }
 
   /**
    * Construct a TMemoryBuffer with a buffer of a specified size,
@@ -511,7 +511,7 @@ public:
    *
    * @param sz  The initial size of the buffer.
    */
-  TMemoryBuffer(uint32_t sz) { initCommon(NULL, sz, true, 0); }
+  TMemoryBuffer(uint32_t sz) { initCommon(nullptr, sz, true, 0); }
 
   /**
    * Construct a TMemoryBuffer with buf as its initial contents.
@@ -524,7 +524,7 @@ public:
    * @param policy See @link MemoryPolicy @endlink .
    */
   TMemoryBuffer(uint8_t* buf, uint32_t sz, MemoryPolicy policy = OBSERVE) {
-    if (buf == NULL && sz != 0) {
+    if (buf == nullptr && sz != 0) {
       throw TTransportException(TTransportException::BAD_ARGS,
                                 "TMemoryBuffer given null buffer with non-zero size.");
     }
@@ -535,7 +535,7 @@ public:
       initCommon(buf, sz, policy == TAKE_OWNERSHIP, sz);
       break;
     case COPY:
-      initCommon(NULL, sz, true, 0);
+      initCommon(nullptr, sz, true, 0);
       this->write(buf, sz);
       break;
     default:
@@ -565,7 +565,7 @@ public:
   }
 
   std::string getBufferAsString() {
-    if (buffer_ == NULL) {
+    if (buffer_ == nullptr) {
       return "";
     }
     uint8_t* buf;
@@ -575,7 +575,7 @@ public:
   }
 
   void appendBufferToString(std::string& str) {
-    if (buffer_ == NULL) {
+    if (buffer_ == nullptr) {
       return;
     }
     uint8_t* buf;

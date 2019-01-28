@@ -41,7 +41,7 @@ int main(int argc, char** argv) {
     args[ix - 1] = std::string(argv[ix]);
   }
 
-  if (getenv("VALGRIND") != 0) {
+  if (getenv("VALGRIND") != nullptr) {
 	  // lower the scale of every test
 	  WEIGHT = 1;
   }

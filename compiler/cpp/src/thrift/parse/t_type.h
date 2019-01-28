@@ -85,13 +85,13 @@ public:
   std::map<std::string, std::string> annotations_;
 
 protected:
-  t_type() : program_(NULL) { ; }
+  t_type() : program_(nullptr) { ; }
 
   t_type(t_program* program) : program_(program) { ; }
 
   t_type(t_program* program, std::string name) : program_(program), name_(name) { ; }
 
-  t_type(std::string name) : program_(NULL), name_(name) { ; }
+  t_type(std::string name) : program_(nullptr), name_(name) { ; }
 
   t_program* program_;
   std::string name_;

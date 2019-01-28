@@ -47,7 +47,7 @@ public:
         return *c_iter;
       }
     }
-    return NULL;
+    return nullptr;
   }
 
   t_enum_value* get_constant_by_value(int64_t value) const {
@@ -58,7 +58,7 @@ public:
         return *c_iter;
       }
     }
-    return NULL;
+    return nullptr;
   }
 
   t_enum_value* get_min_value() const {
@@ -66,7 +66,7 @@ public:
     std::vector<t_enum_value*>::const_iterator c_iter;
     t_enum_value* min_value;
     if (enum_values.size() == 0) {
-      min_value = NULL;
+      min_value = nullptr;
     } else {
       int min_value_value;
       min_value = enum_values.front();
@@ -86,7 +86,7 @@ public:
     std::vector<t_enum_value*>::const_iterator c_iter;
     t_enum_value* max_value;
     if (enum_values.size() == 0) {
-      max_value = NULL;
+      max_value = nullptr;
     } else {
       int max_value_value;
       max_value = enum_values.back();

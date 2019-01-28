@@ -114,7 +114,7 @@ const uint8_t* TBufferedTransport::borrowSlow(uint8_t* buf, uint32_t* len) {
   (void)len;
   // Simply return NULL.  We don't know if there is actually data available on
   // the underlying transport, so calling read() might block.
-  return NULL;
+  return nullptr;
 }
 
 void TBufferedTransport::flush() {
@@ -292,7 +292,7 @@ const uint8_t* TFramedTransport::borrowSlow(uint8_t* buf, uint32_t* len) {
   // Don't try to be clever with shifting buffers.
   // If the fast path failed let the protocol use its slow path.
   // Besides, who is going to try to borrow across messages?
-  return NULL;
+  return nullptr;
 }
 
 uint32_t TFramedTransport::readEnd() {
@@ -335,7 +335,7 @@ uint32_t TMemoryBuffer::readSlow(uint8_t* buf, uint32_t len) {
 
 uint32_t TMemoryBuffer::readAppendToString(std::string& str, uint32_t len) {
   // Don't get some stupid assertion failure.
-  if (buffer_ == NULL) {
+  if (buffer_ == nullptr) {
     return 0;
   }
 
@@ -373,7 +373,7 @@ void TMemoryBuffer::ensureCanWrite(uint32_t len) {
 
   // Allocate into a new pointer so we don't bork ours if it fails.
   auto* new_buffer = static_cast<uint8_t*>(std::realloc(buffer_, new_size));
-  if (new_buffer == NULL) {
+  if (new_buffer == nullptr) {
     throw std::bad_alloc();
   }
 
@@ -408,7 +408,7 @@ const uint8_t* TMemoryBuffer::borrowSlow(uint8_t* buf, uint32_t* len) {
     *len = available_read();
     return rBase_;
   }
-  return NULL;
+  return nullptr;
 }
 }
 }
