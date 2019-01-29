@@ -66,14 +66,14 @@ namespace utf = boost::unit_test;
 
 class OneWayServiceHandler : public onewaytest::OneWayServiceIf {
 public:
-  OneWayServiceHandler() {}
+  OneWayServiceHandler() = default;
 
   void roundTripRPC() override {
 #ifdef ENABLE_STDERR_LOGGING
     cerr << "roundTripRPC()" << endl;
 #endif
   }
-  void oneWayRPC() {
+  void oneWayRPC() override {
 #ifdef ENABLE_STDERR_LOGGING
     cerr << "oneWayRPC()" << std::endl ;
 #endif
@@ -82,13 +82,13 @@ public:
 
 class OneWayServiceCloneFactory : virtual public onewaytest::OneWayServiceIfFactory {
  public:
-  virtual ~OneWayServiceCloneFactory() {}
-  virtual onewaytest::OneWayServiceIf* getHandler(const ::apache::thrift::TConnectionInfo& connInfo)
+  ~OneWayServiceCloneFactory() override = default;
+  onewaytest::OneWayServiceIf* getHandler(const ::apache::thrift::TConnectionInfo& connInfo) override
   {
     (void)connInfo ;
     return new OneWayServiceHandler;
   }
-  virtual void releaseHandler( onewaytest::OneWayServiceIf* handler) {
+  void releaseHandler( onewaytest::OneWayServiceIf* handler) override {
     delete handler;
   }
 };
@@ -96,7 +96,7 @@ class OneWayServiceCloneFactory : virtual public onewaytest::OneWayServiceIfFact
 class RPC0ThreadClass {
 public:
   RPC0ThreadClass(TThreadedServer& server) : server_(server) { } // Constructor
-~RPC0ThreadClass() { } // Destructor
+~RPC0ThreadClass() = default; // Destructor
 
 void Run() {
   server_.serve() ;
@@ -112,21 +112,21 @@ using apache::thrift::concurrency::Synchronized;
 class TServerReadyEventHandler : public TServerEventHandler, public Monitor {
 public:
   TServerReadyEventHandler() : isListening_(false), accepted_(0) {}
-  virtual ~TServerReadyEventHandler() {}
-  virtual void preServe() {
+  ~TServerReadyEventHandler() override = default;
+  void preServe() override {
     Synchronized sync(*this);
     isListening_ = true;
     notify();
   }
-  virtual void* createContext(shared_ptr<TProtocol> input,
-                              shared_ptr<TProtocol> output) {
+  void* createContext(shared_ptr<TProtocol> input,
+                              shared_ptr<TProtocol> output) override {
     Synchronized sync(*this);
     ++accepted_;
     notify();
 
     (void)input;
     (void)output;
-    return NULL;
+    return nullptr;
   }
   bool isListening() const { return isListening_; }
   uint64_t acceptedCount() const { return accepted_; }
@@ -144,7 +144,7 @@ class TBlockableBufferedTransport : public TBufferedTransport {
   }
 
   uint32_t write_buffer_length() {
-    uint32_t have_bytes = static_cast<uint32_t>(wBase_ - wBuf_.get());
+    auto have_bytes = static_cast<uint32_t>(wBase_ - wBuf_.get());
     return have_bytes ;
   }
 

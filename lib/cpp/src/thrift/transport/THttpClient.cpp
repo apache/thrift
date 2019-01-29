@@ -44,12 +44,11 @@ THttpClient::THttpClient(string host, int port, string path)
     path_(path) {
 }
 
-THttpClient::~THttpClient() {
-}
+THttpClient::~THttpClient() = default;
 
 void THttpClient::parseHeader(char* header) {
   char* colon = strchr(header, ':');
-  if (colon == NULL) {
+  if (colon == nullptr) {
     return;
   }
   char* value = colon + 1;
@@ -68,7 +67,7 @@ bool THttpClient::parseStatusLine(char* status) {
   char* http = status;
 
   char* code = strchr(http, ' ');
-  if (code == NULL) {
+  if (code == nullptr) {
     throw TTransportException(string("Bad Status: ") + status);
   }
 
@@ -77,7 +76,7 @@ bool THttpClient::parseStatusLine(char* status) {
   };
 
   char* msg = strchr(code, ' ');
-  if (msg == NULL) {
+  if (msg == nullptr) {
     throw TTransportException(string("Bad Status: ") + status);
   }
   *msg = '\0';

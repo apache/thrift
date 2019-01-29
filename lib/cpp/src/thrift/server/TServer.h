@@ -48,7 +48,7 @@ using apache::thrift::transport::TTransportFactory;
  */
 class TServerEventHandler {
 public:
-  virtual ~TServerEventHandler() {}
+  virtual ~TServerEventHandler() = default;
 
   /**
    * Called before the server begins.
@@ -62,7 +62,7 @@ public:
                               std::shared_ptr<TProtocol> output) {
     (void)input;
     (void)output;
-    return NULL;
+    return nullptr;
   }
 
   /**
@@ -89,7 +89,7 @@ protected:
   /**
    * Prevent direct instantiation.
    */
-  TServerEventHandler() {}
+  TServerEventHandler() = default;
 };
 
 /**
@@ -98,14 +98,14 @@ protected:
  */
 class TServer : public concurrency::Runnable {
 public:
-  virtual ~TServer() {}
+  ~TServer() override = default;
 
   virtual void serve() = 0;
 
   virtual void stop() {}
 
   // Allows running the server as a Runnable thread
-  virtual void run() { serve(); }
+  void run() override { serve(); }
 
   std::shared_ptr<TProcessorFactory> getProcessorFactory() { return processorFactory_; }
 

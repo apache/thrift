@@ -32,7 +32,7 @@ public:
 
   THttpClient(std::string host, int port, std::string path = "");
 
-  virtual ~THttpClient();
+  ~THttpClient() override;
 
   void flush() override;
 
@@ -40,8 +40,8 @@ protected:
   std::string host_;
   std::string path_;
 
-  virtual void parseHeader(char* header);
-  virtual bool parseStatusLine(char* status);
+  void parseHeader(char* header) override;
+  bool parseStatusLine(char* status) override;
 };
 }
 }

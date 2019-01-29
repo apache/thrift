@@ -27,6 +27,7 @@
 - [THRIFT-4712](https://issues.apache.org/jira/browse/THRIFT-4712) - java: class org.apache.thrift.ShortStack is no longer public
 - [THRIFT-4725](https://issues.apache.org/jira/browse/THRIFT-4725) - java: change return type signature of 'process' methods
 - [THRIFT-4675](https://issues.apache.org/jira/browse/THRIFT-4675) - js: now uses node-int64 for 64 bit integer constants
+- [THRIFT-4672](https://issues.apache.org/jira/browse/THRIFT-4672) - C++: TTransport::getOrigin() is now const
 
 ### Known Issues (Blocker or Critical)
 

@@ -78,8 +78,7 @@ TSimpleServer::TSimpleServer(const shared_ptr<TProcessor>& processor,
   TServerFramework::setConcurrentClientLimit(1);
 }
 
-TSimpleServer::~TSimpleServer() {
-}
+TSimpleServer::~TSimpleServer() = default;
 
 /**
  * The main body of customized implementation for TSimpleServer is quite simple:

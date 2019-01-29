@@ -23,11 +23,11 @@ namespace apache {
 namespace thrift {
 namespace protocol {
 
-TProtocol::~TProtocol() {}
+TProtocol::~TProtocol() = default;
 uint32_t TProtocol::skip_virt(TType type) {
   return ::apache::thrift::protocol::skip(*this, type);
 }
 
-TProtocolFactory::~TProtocolFactory() {}
+TProtocolFactory::~TProtocolFactory() = default;
 
 }}} // apache::thrift::protocol

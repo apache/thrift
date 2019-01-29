@@ -85,15 +85,15 @@ using std::shared_ptr;
 TGetAddrInfoWrapper::TGetAddrInfoWrapper(const char* node,
                                          const char* service,
                                          const struct addrinfo* hints)
-  : node_(node), service_(service), hints_(hints), res_(NULL) {}
+  : node_(node), service_(service), hints_(hints), res_(nullptr) {}
 
 TGetAddrInfoWrapper::~TGetAddrInfoWrapper() {
-  if (this->res_ != NULL)
+  if (this->res_ != nullptr)
     freeaddrinfo(this->res_);
 }
 
 int TGetAddrInfoWrapper::init() {
-  if (this->res_ == NULL)
+  if (this->res_ == nullptr)
     return getaddrinfo(this->node_, this->service_, this->hints_, &(this->res_));
   return 0;
 }
@@ -268,7 +268,7 @@ void TServerSocket::listen() {
   hints.ai_flags = AI_PASSIVE | AI_ADDRCONFIG;
 
   // If address is not specified use wildcard address (NULL)
-  TGetAddrInfoWrapper info(address_.empty() ? NULL : &address_[0], port, &hints);
+  TGetAddrInfoWrapper info(address_.empty() ? nullptr : &address_[0], port, &hints);
 
   error = info.init();
   if (error) {
@@ -281,13 +281,13 @@ void TServerSocket::listen() {
   // Pick the ipv6 address first since ipv4 addresses can be mapped
   // into ipv6 space.
   for (res = info.res(); res; res = res->ai_next) {
-    if (res->ai_family == AF_INET6 || res->ai_next == NULL)
+    if (res->ai_family == AF_INET6 || res->ai_next == nullptr)
       break;
   }
 
   if (!path_.empty()) {
     serverSocket_ = socket(PF_UNIX, SOCK_STREAM, IPPROTO_IP);
-  } else if (res != NULL) {
+  } else if (res != nullptr) {
     serverSocket_ = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
   }
 
@@ -434,7 +434,7 @@ void TServerSocket::listen() {
 
     // Unix Domain Socket
     size_t len = path_.size() + 1;
-    if (len > sizeof(((sockaddr_un*)NULL)->sun_path)) {
+    if (len > sizeof(((sockaddr_un*)nullptr)->sun_path)) {
       errno_copy = THRIFT_GET_SOCKET_ERROR;
       GlobalOutput.perror("TSocket::listen() Unix Domain socket path too long", errno_copy);
       throw TTransportException(TTransportException::NOT_OPEN,
@@ -446,7 +446,7 @@ void TServerSocket::listen() {
     address.sun_family = AF_UNIX;
     memcpy(address.sun_path, path_.c_str(), len);
 
-    socklen_t structlen = static_cast<socklen_t>(sizeof(address));
+    auto structlen = static_cast<socklen_t>(sizeof(address));
 
     if (!address.sun_path[0]) { // abstract namespace socket
 #ifdef __linux__
@@ -490,10 +490,10 @@ void TServerSocket::listen() {
         GlobalOutput.perror("TServerSocket::getPort() getsockname() ", errno_copy);
       } else {
         if (sa.ss_family == AF_INET6) {
-          const struct sockaddr_in6* sin = reinterpret_cast<const struct sockaddr_in6*>(&sa);
+          const auto* sin = reinterpret_cast<const struct sockaddr_in6*>(&sa);
           port_ = ntohs(sin->sin6_port);
         } else {
-          const struct sockaddr_in* sin = reinterpret_cast<const struct sockaddr_in*>(&sa);
+          const auto* sin = reinterpret_cast<const struct sockaddr_in*>(&sa);
           port_ = ntohs(sin->sin_port);
         }
       }

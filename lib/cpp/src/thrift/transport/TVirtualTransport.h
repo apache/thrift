@@ -57,7 +57,7 @@ public:
   void consume(uint32_t len) { this->TTransport::consume_virt(len); }
 
 protected:
-  TTransportDefaults() {}
+  TTransportDefaults() = default;
 };
 
 /**
@@ -113,12 +113,12 @@ public:
    * the correct parent implementation, if desired.
    */
   uint32_t readAll(uint8_t* buf, uint32_t len) {
-    Transport_* trans = static_cast<Transport_*>(this);
+    auto* trans = static_cast<Transport_*>(this);
     return ::apache::thrift::transport::readAll(*trans, buf, len);
   }
 
 protected:
-  TVirtualTransport() {}
+  TVirtualTransport() = default;
 
   /*
    * Templatized constructors, to allow arguments to be passed to the Super_

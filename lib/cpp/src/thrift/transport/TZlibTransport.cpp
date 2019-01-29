@@ -331,7 +331,7 @@ const uint8_t* TZlibTransport::borrow(uint8_t* buf, uint32_t* len) {
     *len = (uint32_t)readAvail();
     return urbuf_ + urpos_;
   }
-  return NULL;
+  return nullptr;
 }
 
 void TZlibTransport::consume(uint32_t len) {

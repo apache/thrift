@@ -201,7 +201,7 @@ public:
       strict_read_(strict_read),
       strict_write_(strict_write) {}
 
-  virtual ~TBinaryProtocolFactoryT() {}
+  ~TBinaryProtocolFactoryT() override = default;
 
   void setStringSizeLimit(int32_t string_limit) { string_limit_ = string_limit; }
 
@@ -212,7 +212,7 @@ public:
     strict_write_ = strict_write;
   }
 
-  std::shared_ptr<TProtocol> getProtocol(std::shared_ptr<TTransport> trans) {
+  std::shared_ptr<TProtocol> getProtocol(std::shared_ptr<TTransport> trans) override {
     std::shared_ptr<Transport_> specific_trans = std::dynamic_pointer_cast<Transport_>(trans);
     TProtocol* prot;
     if (specific_trans) {

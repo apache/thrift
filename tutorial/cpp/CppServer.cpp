@@ -46,16 +46,16 @@ using namespace shared;
 
 class CalculatorHandler : public CalculatorIf {
 public:
-  CalculatorHandler() {}
+  CalculatorHandler() = default;
 
-  void ping() { cout << "ping()" << endl; }
+  void ping() override { cout << "ping()" << endl; }
 
-  int32_t add(const int32_t n1, const int32_t n2) {
+  int32_t add(const int32_t n1, const int32_t n2) override {
     cout << "add(" << n1 << ", " << n2 << ")" << endl;
     return n1 + n2;
   }
 
-  int32_t calculate(const int32_t logid, const Work& work) {
+  int32_t calculate(const int32_t logid, const Work& work) override {
     cout << "calculate(" << logid << ", " << work << ")" << endl;
     int32_t val;
 
@@ -94,12 +94,12 @@ public:
     return val;
   }
 
-  void getStruct(SharedStruct& ret, const int32_t logid) {
+  void getStruct(SharedStruct& ret, const int32_t logid) override {
     cout << "getStruct(" << logid << ")" << endl;
     ret = log[logid];
   }
 
-  void zip() { cout << "zip()" << endl; }
+  void zip() override { cout << "zip()" << endl; }
 
 protected:
   map<int32_t, SharedStruct> log;
@@ -113,8 +113,8 @@ protected:
 */
 class CalculatorCloneFactory : virtual public CalculatorIfFactory {
  public:
-  virtual ~CalculatorCloneFactory() {}
-  virtual CalculatorIf* getHandler(const ::apache::thrift::TConnectionInfo& connInfo)
+  ~CalculatorCloneFactory() override = default;
+  CalculatorIf* getHandler(const ::apache::thrift::TConnectionInfo& connInfo) override
   {
     std::shared_ptr<TSocket> sock = std::dynamic_pointer_cast<TSocket>(connInfo.transport);
     cout << "Incoming connection\n";
@@ -124,7 +124,7 @@ class CalculatorCloneFactory : virtual public CalculatorIfFactory {
     cout << "\tPeerPort: "    << sock->getPeerPort() << "\n";
     return new CalculatorHandler;
   }
-  virtual void releaseHandler( ::shared::SharedServiceIf* handler) {
+  void releaseHandler( ::shared::SharedServiceIf* handler) override {
     delete handler;
   }
 };

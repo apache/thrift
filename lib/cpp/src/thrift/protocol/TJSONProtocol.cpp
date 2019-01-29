@@ -303,9 +303,9 @@ static bool isLowSurrogate(uint16_t val) {
 class TJSONContext {
 
 public:
-  TJSONContext(){};
+  TJSONContext()= default;;
 
-  virtual ~TJSONContext(){};
+  virtual ~TJSONContext()= default;;
 
   /**
    * Write context data to the transport. Default is to do nothing.
@@ -336,7 +336,7 @@ class JSONPairContext : public TJSONContext {
 public:
   JSONPairContext() : first_(true), colon_(true) {}
 
-  uint32_t write(TTransport& trans) {
+  uint32_t write(TTransport& trans) override {
     if (first_) {
       first_ = false;
       colon_ = true;
@@ -348,7 +348,7 @@ public:
     }
   }
 
-  uint32_t read(TJSONProtocol::LookaheadReader& reader) {
+  uint32_t read(TJSONProtocol::LookaheadReader& reader) override {
     if (first_) {
       first_ = false;
       colon_ = true;
@@ -361,7 +361,7 @@ public:
   }
 
   // Numbers must be turned into strings if they are the key part of a pair
-  virtual bool escapeNum() { return colon_; }
+  bool escapeNum() override { return colon_; }
 
 private:
   bool first_;
@@ -374,7 +374,7 @@ class JSONListContext : public TJSONContext {
 public:
   JSONListContext() : first_(true) {}
 
-  uint32_t write(TTransport& trans) {
+  uint32_t write(TTransport& trans) override {
     if (first_) {
       first_ = false;
       return 0;
@@ -384,7 +384,7 @@ public:
     }
   }
 
-  uint32_t read(TJSONProtocol::LookaheadReader& reader) {
+  uint32_t read(TJSONProtocol::LookaheadReader& reader) override {
     if (first_) {
       first_ = false;
       return 0;
@@ -404,8 +404,7 @@ TJSONProtocol::TJSONProtocol(std::shared_ptr<TTransport> ptrans)
     reader_(*ptrans) {
 }
 
-TJSONProtocol::~TJSONProtocol() {
-}
+TJSONProtocol::~TJSONProtocol() = default;
 
 void TJSONProtocol::pushContext(std::shared_ptr<TJSONContext> c) {
   contexts_.push(context_);
@@ -477,10 +476,10 @@ uint32_t TJSONProtocol::writeJSONBase64(const std::string& str) {
   result += 2; // For quotes
   trans_->write(&kJSONStringDelimiter, 1);
   uint8_t b[4];
-  const uint8_t* bytes = (const uint8_t*)str.c_str();
+  const auto* bytes = (const uint8_t*)str.c_str();
   if (str.length() > (std::numeric_limits<uint32_t>::max)())
     throw TProtocolException(TProtocolException::SIZE_LIMIT);
-  uint32_t len = static_cast<uint32_t>(str.length());
+  auto len = static_cast<uint32_t>(str.length());
   while (len >= 3) {
     // Encode 3 bytes at a time
     base64_encode(bytes, 3, b);
@@ -798,10 +797,10 @@ uint32_t TJSONProtocol::readJSONString(std::string& str, bool skipContext) {
 uint32_t TJSONProtocol::readJSONBase64(std::string& str) {
   std::string tmp;
   uint32_t result = readJSONString(tmp);
-  uint8_t* b = (uint8_t*)tmp.c_str();
+  auto* b = (uint8_t*)tmp.c_str();
   if (tmp.length() > (std::numeric_limits<uint32_t>::max)())
     throw TProtocolException(TProtocolException::SIZE_LIMIT);
-  uint32_t len = static_cast<uint32_t>(tmp.length());
+  auto len = static_cast<uint32_t>(tmp.length());
   str.clear();
   // Ignore padding
   if (len >= 2)  {
@@ -1065,7 +1064,7 @@ uint32_t TJSONProtocol::readBool(bool& value) {
 // readByte() must be handled properly because boost::lexical cast sees int8_t
 // as a text type instead of an integer type
 uint32_t TJSONProtocol::readByte(int8_t& byte) {
-  int16_t tmp = (int16_t)byte;
+  auto tmp = (int16_t)byte;
   uint32_t result = readJSONInteger(tmp);
   assert(tmp < 256);
   byte = (int8_t)tmp;

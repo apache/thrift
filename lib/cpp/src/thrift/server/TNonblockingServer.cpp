@@ -215,7 +215,7 @@ public:
   /// Constructor
   TConnection(std::shared_ptr<TSocket> socket,
               TNonblockingIOThread* ioThread) {
-    readBuffer_ = NULL;
+    readBuffer_ = nullptr;
     readBufferSize_ = 0;
 
     ioThread_ = ioThread;
@@ -327,7 +327,7 @@ public:
       serverEventHandler_(connection_->getServerEventHandler()),
       connectionContext_(connection_->getConnectionContext()) {}
 
-  void run() {
+  void run() override {
     try {
       for (;;) {
         if (serverEventHandler_) {
@@ -380,7 +380,7 @@ void TNonblockingServer::TConnection::init(TNonblockingIOThread* ioThread) {
   readBufferPos_ = 0;
   readWant_ = 0;
 
-  writeBuffer_ = NULL;
+  writeBuffer_ = nullptr;
   writeBufferSize_ = 0;
   writeBufferPos_ = 0;
   largestWriteBufferSize_ = 0;
@@ -407,7 +407,7 @@ void TNonblockingServer::TConnection::init(TNonblockingIOThread* ioThread) {
   if (serverEventHandler_) {
     connectionContext_ = serverEventHandler_->createContext(inputProtocol_, outputProtocol_);
   } else {
-    connectionContext_ = NULL;
+    connectionContext_ = nullptr;
   }
 
   // Get the processor
@@ -570,7 +570,7 @@ bool TNonblockingServer::getHeaderTransport() {
   // Currently if there is no output protocol factory,
   // we assume header transport (without having to create
   // a new transport and check)
-  return getOutputProtocolFactory() == NULL;
+  return getOutputProtocolFactory() == nullptr;
 }
 
 /**
@@ -687,7 +687,7 @@ void TNonblockingServer::TConnection::transition() {
       socketState_ = SOCKET_SEND;
 
       // Put the frame size into the write buffer
-      int32_t frameSize = (int32_t)htonl(writeBufferSize_ - 4);
+      auto frameSize = (int32_t)htonl(writeBufferSize_ - 4);
       memcpy(writeBuffer_, &frameSize, 4);
 
       // Socket into write mode
@@ -720,7 +720,7 @@ void TNonblockingServer::TConnection::transition() {
   case APP_INIT:
 
     // Clear write buffer variables
-    writeBuffer_ = NULL;
+    writeBuffer_ = nullptr;
     writeBufferPos_ = 0;
     writeBufferSize_ = 0;
 
@@ -749,8 +749,8 @@ void TNonblockingServer::TConnection::transition() {
         newSize *= 2;
       }
 
-      uint8_t* newBuffer = (uint8_t*)std::realloc(readBuffer_, newSize);
-      if (newBuffer == NULL) {
+      auto* newBuffer = (uint8_t*)std::realloc(readBuffer_, newSize);
+      if (newBuffer == nullptr) {
         // nothing else to be done...
         throw std::bad_alloc();
       }
@@ -829,7 +829,7 @@ void TNonblockingServer::TConnection::setFlags(short eventFlags) {
   event_base_set(ioThread_->getEventBase(), &event_);
 
   // Add the event
-  if (event_add(&event_, 0) == -1) {
+  if (event_add(&event_, nullptr) == -1) {
     GlobalOutput.perror("TConnection::setFlags(): could not event_add", THRIFT_GET_SOCKET_ERROR);
   }
 }
@@ -843,7 +843,7 @@ void TNonblockingServer::TConnection::close() {
   if (serverEventHandler_) {
     serverEventHandler_->deleteContext(connectionContext_, inputProtocol_, outputProtocol_);
   }
-  ioThread_ = NULL;
+  ioThread_ = nullptr;
 
   // Close the socket
   tSocket_->close();
@@ -862,7 +862,7 @@ void TNonblockingServer::TConnection::close() {
 void TNonblockingServer::TConnection::checkIdleBufferMemLimit(size_t readLimit, size_t writeLimit) {
   if (readLimit > 0 && readBufferSize_ > readLimit) {
     free(readBuffer_);
-    readBuffer_ = NULL;
+    readBuffer_ = nullptr;
     readBufferSize_ = 0;
   }
 
@@ -910,7 +910,7 @@ TNonblockingServer::TConnection* TNonblockingServer::createConnection(std::share
   TNonblockingIOThread* ioThread = ioThreads_[selectedThreadIdx].get();
 
   // Check the connection stack to see if we can re-use
-  TConnection* result = NULL;
+  TConnection* result = nullptr;
   if (connectionStack_.empty()) {
     result = new TConnection(socket, ioThread);
     ++numTConnections_;
@@ -979,7 +979,7 @@ void TNonblockingServer::handleEvent(THRIFT_SOCKET fd, short which) {
     TConnection* clientConnection = createConnection(clientSocket);
 
     // Fail fast if we could not create a TConnection object
-    if (clientConnection == NULL) {
+    if (clientConnection == nullptr) {
       GlobalOutput.printf("thriftServerEventHandler: failed TConnection factory");
       clientSocket->close();
       return;
@@ -1143,7 +1143,7 @@ void TNonblockingServer::registerEvents(event_base* user_event_base) {
 void TNonblockingServer::serve() {
 
   if (ioThreads_.empty())
-    registerEvents(NULL);
+    registerEvents(nullptr);
 
   // Run the primary (listener) IO thread loop in our main thread; this will
   // only return when the server is shutting down.
@@ -1164,7 +1164,7 @@ TNonblockingIOThread::TNonblockingIOThread(TNonblockingServer* server,
     number_(number),
     listenSocket_(listenSocket),
     useHighPriority_(useHighPriority),
-    eventBase_(NULL),
+    eventBase_(nullptr),
     ownEventBase_(false) {
   notificationPipeFDs_[0] = -1;
   notificationPipeFDs_[1] = -1;
@@ -1231,9 +1231,9 @@ void TNonblockingIOThread::createNotificationPipe() {
 void TNonblockingIOThread::registerEvents() {
   threadId_ = Thread::get_current();
 
-  assert(eventBase_ == 0);
+  assert(eventBase_ == nullptr);
   eventBase_ = getServer()->getUserEventBase();
-  if (eventBase_ == NULL) {
+  if (eventBase_ == nullptr) {
     eventBase_ = event_base_new();
     ownEventBase_ = true;
   }
@@ -1255,7 +1255,7 @@ void TNonblockingIOThread::registerEvents() {
     event_base_set(eventBase_, &serverEvent_);
 
     // Add the event and start up the server
-    if (-1 == event_add(&serverEvent_, 0)) {
+    if (-1 == event_add(&serverEvent_, nullptr)) {
       throw TException(
           "TNonblockingServer::serve(): "
           "event_add() failed on server listen event");
@@ -1276,7 +1276,7 @@ void TNonblockingIOThread::registerEvents() {
   event_base_set(eventBase_, &notificationEvent_);
 
   // Add the event and start up the server
-  if (-1 == event_add(&notificationEvent_, 0)) {
+  if (-1 == event_add(&notificationEvent_, nullptr)) {
     throw TException(
         "TNonblockingServer::serve(): "
         "event_add() failed on task-done notification event");
@@ -1368,16 +1368,16 @@ bool TNonblockingIOThread::notify(TNonblockingServer::TConnection* conn) {
 
 /* static */
 void TNonblockingIOThread::notifyHandler(evutil_socket_t fd, short which, void* v) {
-  TNonblockingIOThread* ioThread = (TNonblockingIOThread*)v;
+  auto* ioThread = (TNonblockingIOThread*)v;
   assert(ioThread);
   (void)which;
 
   while (true) {
-    TNonblockingServer::TConnection* connection = 0;
+    TNonblockingServer::TConnection* connection = nullptr;
     const int kSize = sizeof(connection);
     long nBytes = recv(fd, cast_sockopt(&connection), kSize, 0);
     if (nBytes == kSize) {
-      if (connection == NULL) {
+      if (connection == nullptr) {
         // this is the command to stop our thread, exit the handler!
         ioThread->breakLoop(false);
         return;
@@ -1420,7 +1420,7 @@ void TNonblockingIOThread::breakLoop(bool error) {
   // same thread, this means the thread can't be blocking in the event
   // loop either.
   if (!Thread::is_current(threadId_)) {
-    notify(NULL);
+    notify(nullptr);
   } else {
     // cause the loop to stop ASAP - even if it has things to do in it
     event_base_loopbreak(eventBase_);
@@ -1457,14 +1457,14 @@ void TNonblockingIOThread::setCurrentThreadHighPriority(bool value) {
 }
 
 void TNonblockingIOThread::run() {
-  if (eventBase_ == NULL) {
+  if (eventBase_ == nullptr) {
     registerEvents();
   }
   if (useHighPriority_) {
     setCurrentThreadHighPriority(true);
   }
 
-  if (eventBase_ != NULL)
+  if (eventBase_ != nullptr)
   {
     GlobalOutput.printf("TNonblockingServer: IO thread #%d entering loop...", number_);
     // Run libevent engine, never returns, invokes calls to eventHandler

@@ -34,15 +34,15 @@ namespace async {
 template <class Protocol_>
 class TAsyncDispatchProcessorT : public TAsyncProcessor {
 public:
-  virtual void process(std::function<void(bool success)> _return,
+  void process(std::function<void(bool success)> _return,
                        std::shared_ptr<protocol::TProtocol> in,
-                       std::shared_ptr<protocol::TProtocol> out) {
+                       std::shared_ptr<protocol::TProtocol> out) override {
     protocol::TProtocol* inRaw = in.get();
     protocol::TProtocol* outRaw = out.get();
 
     // Try to dynamic cast to the template protocol type
-    Protocol_* specificIn = dynamic_cast<Protocol_*>(inRaw);
-    Protocol_* specificOut = dynamic_cast<Protocol_*>(outRaw);
+    auto* specificIn = dynamic_cast<Protocol_*>(inRaw);
+    auto* specificOut = dynamic_cast<Protocol_*>(outRaw);
     if (specificIn && specificOut) {
       return processFast(_return, specificIn, specificOut);
     }
@@ -106,9 +106,9 @@ public:
  */
 class TAsyncDispatchProcessor : public TAsyncProcessor {
 public:
-  virtual void process(std::function<void(bool success)> _return,
+  void process(std::function<void(bool success)> _return,
                        std::shared_ptr<protocol::TProtocol> in,
-                       std::shared_ptr<protocol::TProtocol> out) {
+                       std::shared_ptr<protocol::TProtocol> out) override {
     protocol::TProtocol* inRaw = in.get();
     protocol::TProtocol* outRaw = out.get();
 

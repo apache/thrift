@@ -148,7 +148,7 @@ protected:
    * performance-sensitive operation, so it is okay to just leave it to
    * the concrete class to set up pointers correctly.
    */
-  TBufferBase() : rBase_(NULL), rBound_(NULL), wBase_(NULL), wBound_(NULL) {}
+  TBufferBase() : rBase_(nullptr), rBound_(nullptr), wBase_(nullptr), wBound_(nullptr) {}
 
   /// Convenience mutator for setting the read buffer.
   void setReadBuffer(uint8_t* buf, uint32_t len) {
@@ -162,7 +162,7 @@ protected:
     wBound_ = buf + len;
   }
 
-  virtual ~TBufferBase() {}
+  ~TBufferBase() override = default;
 
   /// Reads begin here.
   uint8_t* rBase_;
@@ -215,32 +215,32 @@ public:
     initPointers();
   }
 
-  void open() { transport_->open(); }
+  void open() override { transport_->open(); }
 
   bool isOpen() { return transport_->isOpen(); }
 
-  bool peek() {
+  bool peek() override {
     if (rBase_ == rBound_) {
       setReadBuffer(rBuf_.get(), transport_->read(rBuf_.get(), rBufSize_));
     }
     return (rBound_ > rBase_);
   }
 
-  void close() {
+  void close() override {
     flush();
     transport_->close();
   }
 
-  virtual uint32_t readSlow(uint8_t* buf, uint32_t len);
+  uint32_t readSlow(uint8_t* buf, uint32_t len) override;
 
-  virtual void writeSlow(const uint8_t* buf, uint32_t len);
+  void writeSlow(const uint8_t* buf, uint32_t len) override;
 
   void flush() override;
 
   /**
    * Returns the origin of the underlying transport
    */
-  virtual const std::string getOrigin() { return transport_->getOrigin(); }
+  const std::string getOrigin() const override { return transport_->getOrigin(); }
 
   /**
    * The following behavior is currently implemented by TBufferedTransport,
@@ -253,7 +253,7 @@ public:
    *    will ever have to be copied again.  For optimial performance,
    *    stay under this limit.
    */
-  virtual const uint8_t* borrowSlow(uint8_t* buf, uint32_t* len);
+  const uint8_t* borrowSlow(uint8_t* buf, uint32_t* len) override;
 
   std::shared_ptr<TTransport> getUnderlyingTransport() { return transport_; }
 
@@ -284,9 +284,9 @@ protected:
  */
 class TBufferedTransportFactory : public TTransportFactory {
 public:
-  TBufferedTransportFactory() {}
+  TBufferedTransportFactory() = default;
 
-  virtual ~TBufferedTransportFactory() {}
+  ~TBufferedTransportFactory() override = default;
 
   /**
    * Wraps the transport into a buffered one.
@@ -343,13 +343,13 @@ public:
     initPointers();
   }
 
-  void open() { transport_->open(); }
+  void open() override { transport_->open(); }
 
   bool isOpen() { return transport_->isOpen(); }
 
-  bool peek() { return (rBase_ < rBound_) || transport_->peek(); }
+  bool peek() override { return (rBase_ < rBound_) || transport_->peek(); }
 
-  void close() {
+  void close() override {
     flush();
     transport_->close();
   }
@@ -360,11 +360,11 @@ public:
 
   void flush() override;
 
-  uint32_t readEnd();
+  uint32_t readEnd() override;
 
-  uint32_t writeEnd();
+  uint32_t writeEnd() override;
 
-  const uint8_t* borrowSlow(uint8_t* buf, uint32_t* len);
+  const uint8_t* borrowSlow(uint8_t* buf, uint32_t* len) override;
 
   std::shared_ptr<TTransport> getUnderlyingTransport() { return transport_; }
 
@@ -377,7 +377,7 @@ public:
   /**
    * Returns the origin of the underlying transport
    */
-  virtual const std::string getOrigin() { return transport_->getOrigin(); }
+  const std::string getOrigin() const override { return transport_->getOrigin(); }
 
   /**
    * Set the maximum size of the frame at read
@@ -399,7 +399,7 @@ protected:
   virtual bool readFrame();
 
   void initPointers() {
-    setReadBuffer(NULL, 0);
+    setReadBuffer(nullptr, 0);
     setWriteBuffer(wBuf_.get(), wBufSize_);
 
     // Pad the buffer so we can insert the size later.
@@ -423,9 +423,9 @@ protected:
  */
 class TFramedTransportFactory : public TTransportFactory {
 public:
-  TFramedTransportFactory() {}
+  TFramedTransportFactory() = default;
 
-  virtual ~TFramedTransportFactory() {}
+  ~TFramedTransportFactory() override = default;
 
   /**
    * Wraps the transport into a framed one.
@@ -451,10 +451,10 @@ private:
 
     maxBufferSize_ = (std::numeric_limits<uint32_t>::max)();
 
-    if (buf == NULL && size != 0) {
+    if (buf == nullptr && size != 0) {
       assert(owner);
       buf = (uint8_t*)std::malloc(size);
-      if (buf == NULL) {
+      if (buf == nullptr) {
 	throw std::bad_alloc();
       }
     }
@@ -503,7 +503,7 @@ public:
    * Construct a TMemoryBuffer with a default-sized buffer,
    * owned by the TMemoryBuffer object.
    */
-  TMemoryBuffer() { initCommon(NULL, defaultSize, true, 0); }
+  TMemoryBuffer() { initCommon(nullptr, defaultSize, true, 0); }
 
   /**
    * Construct a TMemoryBuffer with a buffer of a specified size,
@@ -511,7 +511,7 @@ public:
    *
    * @param sz  The initial size of the buffer.
    */
-  TMemoryBuffer(uint32_t sz) { initCommon(NULL, sz, true, 0); }
+  TMemoryBuffer(uint32_t sz) { initCommon(nullptr, sz, true, 0); }
 
   /**
    * Construct a TMemoryBuffer with buf as its initial contents.
@@ -524,7 +524,7 @@ public:
    * @param policy See @link MemoryPolicy @endlink .
    */
   TMemoryBuffer(uint8_t* buf, uint32_t sz, MemoryPolicy policy = OBSERVE) {
-    if (buf == NULL && sz != 0) {
+    if (buf == nullptr && sz != 0) {
       throw TTransportException(TTransportException::BAD_ARGS,
                                 "TMemoryBuffer given null buffer with non-zero size.");
     }
@@ -535,7 +535,7 @@ public:
       initCommon(buf, sz, policy == TAKE_OWNERSHIP, sz);
       break;
     case COPY:
-      initCommon(NULL, sz, true, 0);
+      initCommon(nullptr, sz, true, 0);
       this->write(buf, sz);
       break;
     default:
@@ -544,7 +544,7 @@ public:
     }
   }
 
-  ~TMemoryBuffer() {
+  ~TMemoryBuffer() override {
     if (owner_) {
       std::free(buffer_);
     }
@@ -552,11 +552,11 @@ public:
 
   bool isOpen() { return true; }
 
-  bool peek() { return (rBase_ < wBase_); }
+  bool peek() override { return (rBase_ < wBase_); }
 
-  void open() {}
+  void open() override {}
 
-  void close() {}
+  void close() override {}
 
   // TODO(dreiss): Make bufPtr const.
   void getBuffer(uint8_t** bufPtr, uint32_t* sz) {
@@ -565,7 +565,7 @@ public:
   }
 
   std::string getBufferAsString() {
-    if (buffer_ == NULL) {
+    if (buffer_ == nullptr) {
       return "";
     }
     uint8_t* buf;
@@ -575,7 +575,7 @@ public:
   }
 
   void appendBufferToString(std::string& str) {
-    if (buffer_ == NULL) {
+    if (buffer_ == nullptr) {
       return;
     }
     uint8_t* buf;
@@ -634,9 +634,9 @@ public:
   uint32_t readAppendToString(std::string& str, uint32_t len);
 
   // return number of bytes read
-  uint32_t readEnd() {
+  uint32_t readEnd() override {
     // This cast should be safe, because buffer_'s size is a uint32_t
-    uint32_t bytes = static_cast<uint32_t>(rBase_ - buffer_);
+    auto bytes = static_cast<uint32_t>(rBase_ - buffer_);
     if (rBase_ == wBase_) {
       resetBuffer();
     }
@@ -644,7 +644,7 @@ public:
   }
 
   // Return number of bytes written
-  uint32_t writeEnd() {
+  uint32_t writeEnd() override {
     // This cast should be safe, because buffer_'s size is a uint32_t
     return static_cast<uint32_t>(wBase_ - buffer_);
   }
@@ -719,11 +719,11 @@ protected:
   // Compute the position and available data for reading.
   void computeRead(uint32_t len, uint8_t** out_start, uint32_t* out_give);
 
-  uint32_t readSlow(uint8_t* buf, uint32_t len);
+  uint32_t readSlow(uint8_t* buf, uint32_t len) override;
 
-  void writeSlow(const uint8_t* buf, uint32_t len);
+  void writeSlow(const uint8_t* buf, uint32_t len) override;
 
-  const uint8_t* borrowSlow(uint8_t* buf, uint32_t* len);
+  const uint8_t* borrowSlow(uint8_t* buf, uint32_t* len) override;
 
   // Data buffer
   uint8_t* buffer_;

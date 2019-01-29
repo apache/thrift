@@ -34,7 +34,7 @@ class t_enum_value : public t_doc {
 public:
   t_enum_value(std::string name, int value) : name_(name), value_(value) {}
 
-  ~t_enum_value() {}
+  ~t_enum_value() override = default;
 
   const std::string& get_name() const { return name_; }
 

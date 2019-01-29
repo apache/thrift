@@ -44,9 +44,9 @@ public:
         _success(false),
         _done(false) {}
 
-    ~Task() { std::cerr << this << std::endl; }
+    ~Task() override { std::cerr << this << std::endl; }
 
-    void run() {
+    void run() override {
 
       _endTime = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch()).count();
       _success = (_endTime - _startTime) >= _timeout;
@@ -215,7 +215,7 @@ public:
     // Verify behavior when removing the removed task
     try {
       timerManager.remove(timer);
-      assert(0 == "ERROR: This remove should send a NoSuchTaskException exception.");
+      assert(nullptr == "ERROR: This remove should send a NoSuchTaskException exception.");
     } catch (NoSuchTaskException&) {
     }
 
@@ -244,7 +244,7 @@ public:
     // Verify behavior when removing the expired task
     try {
       timerManager.remove(timer);
-      assert(0 == "ERROR: This remove should send a NoSuchTaskException exception.");
+      assert(nullptr == "ERROR: This remove should send a NoSuchTaskException exception.");
     } catch (NoSuchTaskException&) {
     }
 

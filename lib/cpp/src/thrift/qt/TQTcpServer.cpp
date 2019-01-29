@@ -67,8 +67,7 @@ TQTcpServer::TQTcpServer(shared_ptr<QTcpServer> server,
   connect(server.get(), SIGNAL(newConnection()), SLOT(processIncoming()));
 }
 
-TQTcpServer::~TQTcpServer() {
-}
+TQTcpServer::~TQTcpServer() = default;
 
 void TQTcpServer::processIncoming() {
   while (server_->hasPendingConnections()) {
@@ -100,7 +99,7 @@ void TQTcpServer::processIncoming() {
 }
 
 void TQTcpServer::beginDecode() {
-  QTcpSocket* connection(qobject_cast<QTcpSocket*>(sender()));
+  auto* connection(qobject_cast<QTcpSocket*>(sender()));
   Q_ASSERT(connection);
 
   if (ctxMap_.find(connection) == ctxMap_.end()) {
@@ -125,7 +124,7 @@ void TQTcpServer::beginDecode() {
 }
 
 void TQTcpServer::socketClosed() {
-  QTcpSocket* connection(qobject_cast<QTcpSocket*>(sender()));
+  auto* connection(qobject_cast<QTcpSocket*>(sender()));
   Q_ASSERT(connection);
   scheduleDeleteConnectionContext(connection);
 }

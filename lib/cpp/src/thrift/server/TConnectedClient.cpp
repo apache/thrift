@@ -42,11 +42,10 @@ TConnectedClient::TConnectedClient(const shared_ptr<TProcessor>& processor,
     outputProtocol_(outputProtocol),
     eventHandler_(eventHandler),
     client_(client),
-    opaqueContext_(0) {
+    opaqueContext_(nullptr) {
 }
 
-TConnectedClient::~TConnectedClient() {
-}
+TConnectedClient::~TConnectedClient() = default;
 
 void TConnectedClient::run() {
   if (eventHandler_) {

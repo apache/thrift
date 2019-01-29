@@ -41,11 +41,11 @@ namespace concurrency {
 class Monitor::Impl {
 
 public:
-  Impl() : ownedMutex_(new Mutex()), conditionVariable_(), mutex_(NULL) { init(ownedMutex_.get()); }
+  Impl() : ownedMutex_(new Mutex()), conditionVariable_(), mutex_(nullptr) { init(ownedMutex_.get()); }
 
-  Impl(Mutex* mutex) : ownedMutex_(), conditionVariable_(), mutex_(NULL) { init(mutex); }
+  Impl(Mutex* mutex) : ownedMutex_(), conditionVariable_(), mutex_(nullptr) { init(mutex); }
 
-  Impl(Monitor* monitor) : ownedMutex_(), conditionVariable_(), mutex_(NULL) {
+  Impl(Monitor* monitor) : ownedMutex_(), conditionVariable_(), mutex_(nullptr) {
     init(&(monitor->mutex()));
   }
 
@@ -81,7 +81,7 @@ public:
     }
 
     assert(mutex_);
-    std::timed_mutex* mutexImpl = static_cast<std::timed_mutex*>(mutex_->getUnderlyingImpl());
+    auto* mutexImpl = static_cast<std::timed_mutex*>(mutex_->getUnderlyingImpl());
     assert(mutexImpl);
 
     std::unique_lock<std::timed_mutex> lock(*mutexImpl, std::adopt_lock);
@@ -97,7 +97,7 @@ public:
    */
   int waitForTime(const std::chrono::time_point<std::chrono::steady_clock>& abstime) {
     assert(mutex_);
-    std::timed_mutex* mutexImpl = static_cast<std::timed_mutex*>(mutex_->getUnderlyingImpl());
+    auto* mutexImpl = static_cast<std::timed_mutex*>(mutex_->getUnderlyingImpl());
     assert(mutexImpl);
 
     std::unique_lock<std::timed_mutex> lock(*mutexImpl, std::adopt_lock);
@@ -113,7 +113,7 @@ public:
    */
   int waitForever() {
     assert(mutex_);
-    std::timed_mutex* mutexImpl = static_cast<std::timed_mutex*>(mutex_->getUnderlyingImpl());
+    auto* mutexImpl = static_cast<std::timed_mutex*>(mutex_->getUnderlyingImpl());
     assert(mutexImpl);
 
     std::unique_lock<std::timed_mutex> lock(*mutexImpl, std::adopt_lock);

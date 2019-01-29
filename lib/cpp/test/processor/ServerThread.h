@@ -35,7 +35,7 @@ namespace test {
  */
 class ServerState {
 public:
-  virtual ~ServerState() {}
+  virtual ~ServerState() = default;
 
   /**
    * Create a server to listen on the specified port.
@@ -105,9 +105,9 @@ protected:
   public:
     Helper(ServerThread* serverThread) : serverThread_(serverThread) {}
 
-    void run() { serverThread_->run(); }
+    void run() override { serverThread_->run(); }
 
-    void preServe() { serverThread_->preServe(); }
+    void preServe() override { serverThread_->preServe(); }
 
   private:
     ServerThread* serverThread_;

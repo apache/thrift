@@ -75,7 +75,7 @@ public:
       const std::shared_ptr<apache::thrift::protocol::TProtocolFactory>& inputProtocolFactory,
       const std::shared_ptr<apache::thrift::protocol::TProtocolFactory>& outputProtocolFactory);
 
-  virtual ~TServerFramework();
+  ~TServerFramework() override;
 
   /**
    * Accept clients from the TServerTransport and add them for processing.
@@ -84,12 +84,12 @@ public:
    * Post-conditions (return guarantees):
    *   The serverTransport will be closed.
    */
-  virtual void serve();
+  void serve() override;
 
   /**
    * Interrupt serve() so that it meets post-conditions and returns.
    */
-  virtual void stop();
+  void stop() override;
 
   /**
    * Get the concurrent client limit.

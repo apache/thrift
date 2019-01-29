@@ -58,7 +58,7 @@ public:
   /**
    * Destructor.
    */
-  virtual ~TConnectedClient();
+  ~TConnectedClient() override;
 
   /**
    * Drive the client until it is done.
@@ -76,7 +76,7 @@ public:
    *              handle unexpected exceptions by logging
    *            cleanup()
    */
-  virtual void run() /* override */;
+  void run() override /* override */;
 
 protected:
   /**

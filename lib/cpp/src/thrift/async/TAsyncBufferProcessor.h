@@ -37,7 +37,7 @@ public:
   virtual void process(std::function<void(bool healthy)> _return,
                        std::shared_ptr<transport::TBufferBase> ibuf,
                        std::shared_ptr<transport::TBufferBase> obuf) = 0;
-  virtual ~TAsyncBufferProcessor() {}
+  virtual ~TAsyncBufferProcessor() = default;
 };
 }
 }

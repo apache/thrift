@@ -63,7 +63,7 @@ public:
     Task(Monitor& monitor, size_t& count, int64_t timeout)
       : _monitor(monitor), _count(count), _timeout(timeout), _startTime(0), _endTime(0), _done(false) {}
 
-    void run() {
+    void run() override {
 
       _startTime = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch()).count();
 
@@ -124,7 +124,7 @@ public:
 
     int64_t time00 = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch()).count();
 
-    for (std::set<shared_ptr<ThreadManagerTests::Task> >::iterator ix = tasks.begin();
+    for (auto ix = tasks.begin();
          ix != tasks.end();
          ix++) {
 
@@ -151,7 +151,7 @@ public:
     int64_t minTime = 9223372036854775807LL;
     int64_t maxTime = 0;
 
-    for (std::set<shared_ptr<ThreadManagerTests::Task> >::iterator ix = tasks.begin();
+    for (auto ix = tasks.begin();
          ix != tasks.end();
          ix++) {
 
@@ -201,7 +201,7 @@ public:
     BlockTask(Monitor& entryMonitor, Monitor& blockMonitor, bool& blocked, Monitor& doneMonitor, size_t& count)
       : _entryMonitor(entryMonitor), _entered(false), _blockMonitor(blockMonitor), _blocked(blocked), _doneMonitor(doneMonitor), _count(count) {}
 
-    void run() {
+    void run() override {
       {
         Synchronized s(_entryMonitor);
         _entered = true;
@@ -275,7 +275,7 @@ public:
             new ThreadManagerTests::BlockTask(entryMonitor, blockMonitor, blocked[1], doneMonitor, activeCounts[1])));
       }
 
-      for (std::vector<shared_ptr<ThreadManagerTests::BlockTask> >::iterator ix = tasks.begin();
+      for (auto ix = tasks.begin();
            ix != tasks.end();
            ix++) {
         threadManager->add(*ix);

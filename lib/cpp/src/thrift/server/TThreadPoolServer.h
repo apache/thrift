@@ -69,13 +69,13 @@ public:
       const std::shared_ptr<apache::thrift::concurrency::ThreadManager>& threadManager
       = apache::thrift::concurrency::ThreadManager::newSimpleThreadManager());
 
-  virtual ~TThreadPoolServer();
+  ~TThreadPoolServer() override;
 
   /**
    * Post-conditions (return guarantees):
    *   There will be no clients connected.
    */
-  virtual void serve();
+  void serve() override;
 
   virtual int64_t getTimeout() const;
   virtual void setTimeout(int64_t value);
@@ -86,8 +86,8 @@ public:
   virtual std::shared_ptr<apache::thrift::concurrency::ThreadManager> getThreadManager() const;
 
 protected:
-  virtual void onClientConnected(const std::shared_ptr<TConnectedClient>& pClient) /* override */;
-  virtual void onClientDisconnected(TConnectedClient* pClient) /* override */;
+  void onClientConnected(const std::shared_ptr<TConnectedClient>& pClient) override /* override */;
+  void onClientDisconnected(TConnectedClient* pClient) override /* override */;
 
   std::shared_ptr<apache::thrift::concurrency::ThreadManager> threadManager_;
   std::atomic<int64_t> timeout_;

@@ -58,7 +58,7 @@ public:
   /**
    * Virtual deconstructor.
    */
-  virtual ~TTransport() {}
+  virtual ~TTransport() = default;
 
   /**
    * Whether this transport is open.
@@ -209,7 +209,7 @@ public:
     T_VIRTUAL_CALL();
     return borrow_virt(buf, len);
   }
-  virtual const uint8_t* borrow_virt(uint8_t* /* buf */, uint32_t* /* len */) { return NULL; }
+  virtual const uint8_t* borrow_virt(uint8_t* /* buf */, uint32_t* /* len */) { return nullptr; }
 
   /**
    * Remove len bytes from the transport.  This should always follow a borrow
@@ -236,13 +236,13 @@ public:
    *
    * The returned value can be used in a log message for example
    */
-  virtual const std::string getOrigin() { return "Unknown"; }
+  virtual const std::string getOrigin() const { return "Unknown"; }
 
 protected:
   /**
    * Simple constructor.
    */
-  TTransport() {}
+  TTransport() = default;
 };
 
 /**
@@ -253,9 +253,9 @@ protected:
  */
 class TTransportFactory {
 public:
-  TTransportFactory() {}
+  TTransportFactory() = default;
 
-  virtual ~TTransportFactory() {}
+  virtual ~TTransportFactory() = default;
 
   /**
    * Default implementation does nothing, just returns the transport given.

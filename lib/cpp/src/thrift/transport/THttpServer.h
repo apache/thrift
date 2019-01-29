@@ -30,14 +30,14 @@ class THttpServer : public THttpTransport {
 public:
   THttpServer(std::shared_ptr<TTransport> transport);
 
-  virtual ~THttpServer();
+  ~THttpServer() override;
 
   void flush() override;
 
 protected:
   void readHeaders();
-  virtual void parseHeader(char* header);
-  virtual bool parseStatusLine(char* status);
+  void parseHeader(char* header) override;
+  bool parseStatusLine(char* status) override;
   std::string getTimeRFC1123();
 };
 
@@ -46,9 +46,9 @@ protected:
  */
 class THttpServerTransportFactory : public TTransportFactory {
 public:
-  THttpServerTransportFactory() {}
+  THttpServerTransportFactory() = default;
 
-  virtual ~THttpServerTransportFactory() {}
+  ~THttpServerTransportFactory() override = default;
 
   /**
    * Wraps the transport into a buffered one.

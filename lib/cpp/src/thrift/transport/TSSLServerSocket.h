@@ -66,7 +66,7 @@ public:
                    std::shared_ptr<TSSLSocketFactory> factory);
 
 protected:
-  std::shared_ptr<TSocket> createSocket(THRIFT_SOCKET socket);
+  std::shared_ptr<TSocket> createSocket(THRIFT_SOCKET socket) override;
   std::shared_ptr<TSSLSocketFactory> factory_;
 };
 }

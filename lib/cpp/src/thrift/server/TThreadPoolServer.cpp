@@ -91,8 +91,7 @@ TThreadPoolServer::TThreadPoolServer(const shared_ptr<TProcessor>& processor,
     taskExpiration_(0) {
 }
 
-TThreadPoolServer::~TThreadPoolServer() {
-}
+TThreadPoolServer::~TThreadPoolServer() = default;
 
 void TThreadPoolServer::serve() {
   TServerFramework::serve();

@@ -36,12 +36,12 @@ class Timer {
 public:
   timeval vStart;
 
-  Timer() { THRIFT_GETTIMEOFDAY(&vStart, 0); }
-  void start() { THRIFT_GETTIMEOFDAY(&vStart, 0); }
+  Timer() { THRIFT_GETTIMEOFDAY(&vStart, nullptr); }
+  void start() { THRIFT_GETTIMEOFDAY(&vStart, nullptr); }
 
   double frame() {
     timeval vEnd;
-    THRIFT_GETTIMEOFDAY(&vEnd, 0);
+    THRIFT_GETTIMEOFDAY(&vEnd, nullptr);
     double dstart = vStart.tv_sec + ((double)vStart.tv_usec / 1000000.0);
     double dend = vEnd.tv_sec + ((double)vEnd.tv_usec / 1000000.0);
     return dend - dstart;
@@ -70,7 +70,7 @@ int main() {
   int num = 100000;
   std::shared_ptr<TMemoryBuffer> buf(new TMemoryBuffer(num*1000));
 
-  uint8_t* data = NULL;
+  uint8_t* data = nullptr;
   uint32_t datasize = 0;
 
   {
@@ -157,7 +157,7 @@ int main() {
   }
 
 
-  data = NULL;
+  data = nullptr;
   datasize = 0;
   num = 10000000;
 

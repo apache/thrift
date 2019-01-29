@@ -31,8 +31,7 @@ PeekProcessor::PeekProcessor() {
   memoryBuffer_.reset(new TMemoryBuffer());
   targetTransport_ = memoryBuffer_;
 }
-PeekProcessor::~PeekProcessor() {
-}
+PeekProcessor::~PeekProcessor() = default;
 
 void PeekProcessor::initialize(std::shared_ptr<TProcessor> actualProcessor,
                                std::shared_ptr<TProtocolFactory> protocolFactory,

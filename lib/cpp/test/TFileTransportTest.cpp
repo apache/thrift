@@ -64,12 +64,12 @@ public:
   };
   typedef std::list<FsyncCall> CallList;
 
-  FsyncLog() {}
+  FsyncLog() = default;
 
   void fsync(int fd) {
     (void)fd;
     FsyncCall call;
-    THRIFT_GETTIMEOFDAY(&call.time, NULL);
+    THRIFT_GETTIMEOFDAY(&call.time, nullptr);
     calls_.push_back(call);
   }
 
@@ -123,7 +123,7 @@ public:
     if (path_) {
       ::unlink(path_);
       delete[] path_;
-      path_ = NULL;
+      path_ = nullptr;
     }
   }
 
@@ -195,9 +195,9 @@ BOOST_AUTO_TEST_CASE(test_destructor) {
     struct timeval start;
     struct timeval end;
 
-    THRIFT_GETTIMEOFDAY(&start, NULL);
+    THRIFT_GETTIMEOFDAY(&start, nullptr);
     delete transport;
-    THRIFT_GETTIMEOFDAY(&end, NULL);
+    THRIFT_GETTIMEOFDAY(&end, nullptr);
 
     int delta = time_diff(&start, &end);
 
@@ -264,7 +264,7 @@ void test_flush_max_us_impl(uint32_t flush_us, uint32_t write_us, uint32_t test_
   delete transport;
 
   // Stop logging new fsync() calls
-  fsync_log = NULL;
+  fsync_log = nullptr;
 
   // Examine the fsync() log
   //
@@ -278,8 +278,8 @@ void test_flush_max_us_impl(uint32_t flush_us, uint32_t write_us, uint32_t test_
   // Make sure TFileTransport called fsync at least once
   BOOST_WARN_GE(calls->size(), static_cast<FsyncLog::CallList::size_type>(1));
 
-  const struct timeval* prev_time = NULL;
-  for (FsyncLog::CallList::const_iterator it = calls->begin(); it != calls->end(); ++it) {
+  const struct timeval* prev_time = nullptr;
+  for (auto it = calls->begin(); it != calls->end(); ++it) {
     if (prev_time) {
       int delta = time_diff(prev_time, &it->time);
       BOOST_WARN( delta < max_allowed_delta );
@@ -318,13 +318,13 @@ BOOST_AUTO_TEST_CASE(test_noop_flush) {
   transport.write(buf, 1);
 
   struct timeval start;
-  THRIFT_GETTIMEOFDAY(&start, NULL);
+  THRIFT_GETTIMEOFDAY(&start, nullptr);
 
   for (unsigned int n = 0; n < 10; ++n) {
     transport.flush();
 
     struct timeval now;
-    THRIFT_GETTIMEOFDAY(&now, NULL);
+    THRIFT_GETTIMEOFDAY(&now, nullptr);
 
     // Fail if at any point we've been running for longer than half a second.
     // (With the buggy code, TFileTransport used to take 3 seconds per flush())
@@ -349,11 +349,11 @@ void print_usage(FILE* f, const char* argv0) {
 
 void parse_args(int argc, char* argv[]) {
   struct option long_opts[]
-      = {{"help", false, NULL, 'h'}, {"tmp-dir", true, NULL, 't'}, {NULL, 0, NULL, 0}};
+      = {{"help", false, nullptr, 'h'}, {"tmp-dir", true, nullptr, 't'}, {nullptr, 0, nullptr, 0}};
 
   while (true) {
     optopt = 1;
-    int optchar = getopt_long(argc, argv, "ht:", long_opts, NULL);
+    int optchar = getopt_long(argc, argv, "ht:", long_opts, nullptr);
     if (optchar == -1) {
       break;
     }
@@ -378,7 +378,7 @@ void parse_args(int argc, char* argv[]) {
 
 #ifdef BOOST_TEST_DYN_LINK
 static int myArgc = 0;
-static char **myArgv = NULL;
+static char **myArgv = nullptr;
 
 bool init_unit_test_suite() {
   boost::unit_test::framework::master_test_suite().p_name.value = "TFileTransportTest";

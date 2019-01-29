@@ -34,11 +34,11 @@ class TestTTransport : public TTransport {};
 class TestTServerTransport : public TServerTransport {
 public:
   TestTServerTransport() : valid_(true) {}
-  void close() {}
+  void close() override {}
   bool valid_;
 
 protected:
-  shared_ptr<TTransport> acceptImpl() {
+  shared_ptr<TTransport> acceptImpl() override {
     return valid_ ? shared_ptr<TestTTransport>(new TestTTransport)
                   : shared_ptr<TestTTransport>();
   }

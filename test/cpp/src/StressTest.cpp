@@ -64,7 +64,7 @@ typedef map<const char*, int, ltstr> count_map;
 
 class Server : public ServiceIf {
 public:
-  Server() {}
+  Server() = default;
 
   void count(const char* method) {
     Guard m(lock_);
@@ -72,7 +72,7 @@ public:
     counts_[method] = ++ct;
   }
 
-  void echoVoid() {
+  void echoVoid() override {
     count("echoVoid");
     return;
   }
@@ -82,18 +82,18 @@ public:
     return counts_;
   }
 
-  int8_t echoByte(const int8_t arg) { return arg; }
-  int32_t echoI32(const int32_t arg) { return arg; }
-  int64_t echoI64(const int64_t arg) { return arg; }
-  void echoString(string& out, const string& arg) {
+  int8_t echoByte(const int8_t arg) override { return arg; }
+  int32_t echoI32(const int32_t arg) override { return arg; }
+  int64_t echoI64(const int64_t arg) override { return arg; }
+  void echoString(string& out, const string& arg) override {
     if (arg != "hello") {
       T_ERROR_ABORT("WRONG STRING (%s)!!!!", arg.c_str());
     }
     out = arg;
   }
-  void echoList(vector<int8_t>& out, const vector<int8_t>& arg) { out = arg; }
-  void echoSet(set<int8_t>& out, const set<int8_t>& arg) { out = arg; }
-  void echoMap(map<int8_t, int8_t>& out, const map<int8_t, int8_t>& arg) { out = arg; }
+  void echoList(vector<int8_t>& out, const vector<int8_t>& arg) override { out = arg; }
+  void echoSet(set<int8_t>& out, const set<int8_t>& arg) override { out = arg; }
+  void echoMap(map<int8_t, int8_t>& out, const map<int8_t, int8_t>& arg) override { out = arg; }
 
 private:
   count_map counts_;
@@ -121,7 +121,7 @@ public:
       _loopType(loopType),
       _behavior(behavior) {}
 
-  void run() {
+  void run() override {
 
     // Wait for all worker threads to start
 
@@ -239,7 +239,7 @@ public:
 class TStartObserver : public apache::thrift::server::TServerEventHandler {
 public:
   TStartObserver() : awake_(false) {}
-  virtual void preServe() {
+  void preServe() override {
     apache::thrift::concurrency::Synchronized s(m_);
     awake_ = true;
     m_.notifyAll();
@@ -524,7 +524,7 @@ int main(int argc, char** argv) {
       }
     }
 
-    for (std::set<std::shared_ptr<Thread> >::const_iterator thread = clientThreads.begin();
+    for (auto thread = clientThreads.begin();
          thread != clientThreads.end();
          thread++) {
       (*thread)->start();
@@ -557,7 +557,7 @@ int main(int argc, char** argv) {
     int64_t minTime = 9223372036854775807LL;
     int64_t maxTime = 0;
 
-    for (set<std::shared_ptr<Thread> >::iterator ix = clientThreads.begin();
+    for (auto ix = clientThreads.begin();
          ix != clientThreads.end();
          ix++) {
 

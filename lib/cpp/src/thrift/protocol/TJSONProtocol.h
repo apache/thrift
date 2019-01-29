@@ -98,7 +98,7 @@ class TJSONProtocol : public TVirtualProtocol<TJSONProtocol> {
 public:
   TJSONProtocol(std::shared_ptr<TTransport> ptrans);
 
-  ~TJSONProtocol();
+  ~TJSONProtocol() override;
 
 private:
   void pushContext(std::shared_ptr<TJSONContext> c);
@@ -286,11 +286,11 @@ private:
  */
 class TJSONProtocolFactory : public TProtocolFactory {
 public:
-  TJSONProtocolFactory() {}
+  TJSONProtocolFactory() = default;
 
-  virtual ~TJSONProtocolFactory() {}
+  ~TJSONProtocolFactory() override = default;
 
-  std::shared_ptr<TProtocol> getProtocol(std::shared_ptr<TTransport> trans) {
+  std::shared_ptr<TProtocol> getProtocol(std::shared_ptr<TTransport> trans) override {
     return std::shared_ptr<TProtocol>(new TJSONProtocol(trans));
   }
 };
@@ -308,7 +308,7 @@ template <typename ThriftStruct>
 std::string ThriftJSONString(const ThriftStruct& ts) {
   using namespace apache::thrift::transport;
   using namespace apache::thrift::protocol;
-  TMemoryBuffer* buffer = new TMemoryBuffer;
+  auto* buffer = new TMemoryBuffer;
   std::shared_ptr<TTransport> trans(buffer);
   TJSONProtocol protocol(trans);
 

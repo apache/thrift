@@ -89,8 +89,7 @@ TThreadedServer::TThreadedServer(const shared_ptr<TProcessor>& processor,
     threadFactory_(threadFactory) {
 }
 
-TThreadedServer::~TThreadedServer() {
-}
+TThreadedServer::~TThreadedServer() = default;
 
 void TThreadedServer::serve() {
   TServerFramework::serve();
@@ -107,7 +106,7 @@ void TThreadedServer::serve() {
 void TThreadedServer::drainDeadClients() {
   // we're in a monitor here
   while (!deadClientMap_.empty()) {
-    ClientMap::iterator it = deadClientMap_.begin();
+    auto it = deadClientMap_.begin();
     it->second->join();
     deadClientMap_.erase(it);
   }
@@ -125,9 +124,9 @@ void TThreadedServer::onClientConnected(const shared_ptr<TConnectedClient>& pCli
 void TThreadedServer::onClientDisconnected(TConnectedClient* pClient) {
   Synchronized sync(clientMonitor_);
   drainDeadClients(); // use the outgoing thread to do some maintenance on our dead client backlog
-  ClientMap::iterator it = activeClientMap_.find(pClient);
+  auto it = activeClientMap_.find(pClient);
   if (it != activeClientMap_.end()) {
-    ClientMap::iterator end = it;
+    auto end = it;
     deadClientMap_.insert(it, ++end);
     activeClientMap_.erase(it);
   }
@@ -140,8 +139,7 @@ TThreadedServer::TConnectedClientRunner::TConnectedClientRunner(const shared_ptr
   : pClient_(pClient) {
 }
 
-TThreadedServer::TConnectedClientRunner::~TConnectedClientRunner() {
-}
+TThreadedServer::TConnectedClientRunner::~TConnectedClientRunner() = default;
 
 void TThreadedServer::TConnectedClientRunner::run() /* override */ {
   pClient_->run();  // Run the client

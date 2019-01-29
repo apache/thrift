@@ -41,7 +41,7 @@ class TAsyncChannel {
 public:
   typedef std::function<void()> VoidCallback;
 
-  virtual ~TAsyncChannel() {}
+  virtual ~TAsyncChannel() = default;
 
   // is the channel in a good state?
   virtual bool good() const = 0;

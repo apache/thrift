@@ -34,11 +34,11 @@ public:
                           std::shared_ptr<apache::thrift::protocol::TProtocolFactory> pfact)
     : underlying_(underlying), pfact_(pfact) {}
 
-  virtual void process(std::function<void(bool healthy)> _return,
+  void process(std::function<void(bool healthy)> _return,
                        std::shared_ptr<apache::thrift::transport::TBufferBase> ibuf,
-                       std::shared_ptr<apache::thrift::transport::TBufferBase> obuf);
+                       std::shared_ptr<apache::thrift::transport::TBufferBase> obuf) override;
 
-  virtual ~TAsyncProtocolProcessor() {}
+  ~TAsyncProtocolProcessor() override = default;
 
 private:
   static void finish(std::function<void(bool healthy)> _return,

@@ -35,7 +35,7 @@ public:
 
   t_type* get_val_type() const { return val_type_; }
 
-  bool is_map() const { return true; }
+  bool is_map() const override { return true; }
 
 private:
   t_type* key_type_;

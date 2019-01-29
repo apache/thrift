@@ -96,7 +96,7 @@ public:
    */
   TServerSocket(const std::string& path);
 
-  virtual ~TServerSocket();
+  ~TServerSocket() override;
 
   void setSendTimeout(int sendTimeout);
   void setRecvTimeout(int recvTimeout);
@@ -136,17 +136,17 @@ public:
   // \throws std::logic_error if listen() has been called
   void setInterruptableChildren(bool enable);
 
-  THRIFT_SOCKET getSocketFD() { return serverSocket_; }
+  THRIFT_SOCKET getSocketFD() override { return serverSocket_; }
 
   int getPort();
 
-  void listen();
-  void interrupt();
-  void interruptChildren();
-  void close();
+  void listen() override;
+  void interrupt() override;
+  void interruptChildren() override;
+  void close() override;
 
 protected:
-  std::shared_ptr<TTransport> acceptImpl();
+  std::shared_ptr<TTransport> acceptImpl() override;
   virtual std::shared_ptr<TSocket> createSocket(THRIFT_SOCKET client);
   bool interruptableChildren_;
   std::shared_ptr<THRIFT_SOCKET> pChildInterruptSockReader_; // if interruptableChildren_ this is shared with child TSockets

@@ -46,11 +46,11 @@ public:
 
   enum t_const_value_type { CV_INTEGER, CV_DOUBLE, CV_STRING, CV_MAP, CV_LIST, CV_IDENTIFIER, CV_UNKNOWN };
 
-  t_const_value() : intVal_(0), doubleVal_(0.0f), enum_((t_enum*)0), valType_(CV_UNKNOWN) {}
+  t_const_value() : intVal_(0), doubleVal_(0.0f), enum_((t_enum*)nullptr), valType_(CV_UNKNOWN) {}
 
-  t_const_value(int64_t val) : doubleVal_(0.0f), enum_((t_enum*)0), valType_(CV_UNKNOWN) { set_integer(val); }
+  t_const_value(int64_t val) : doubleVal_(0.0f), enum_((t_enum*)nullptr), valType_(CV_UNKNOWN) { set_integer(val); }
 
-  t_const_value(std::string val) : intVal_(0), doubleVal_(0.0f), enum_((t_enum*)0), valType_(CV_UNKNOWN) { set_string(val); }
+  t_const_value(std::string val) : intVal_(0), doubleVal_(0.0f), enum_((t_enum*)nullptr), valType_(CV_UNKNOWN) { set_string(val); }
 
   void set_string(std::string val) {
     valType_ = CV_STRING;
@@ -66,7 +66,7 @@ public:
 
   int64_t get_integer() const {
     if (valType_ == CV_IDENTIFIER) {
-      if (enum_ == NULL) {
+      if (enum_ == nullptr) {
         throw "have identifier \"" + get_identifier() + "\", but unset enum on line!";
       }
       std::string identifier = get_identifier();
@@ -75,7 +75,7 @@ public:
         identifier = identifier.substr(dot + 1);
       }
       t_enum_value* val = enum_->get_constant_by_name(identifier);
-      if (val == NULL) {
+      if (val == nullptr) {
         throw "Unable to find enum value \"" + identifier + "\" in enum \"" + enum_->get_name()
             + "\"";
       }

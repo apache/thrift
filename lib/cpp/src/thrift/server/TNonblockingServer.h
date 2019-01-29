@@ -280,7 +280,7 @@ private:
     numIOThreads_ = DEFAULT_IO_THREADS;
     nextIOThread_ = 0;
     useHighPriorityIOThreads_ = false;
-    userEventBase_ = NULL;
+    userEventBase_ = nullptr;
     threadPoolProcessing_ = false;
     numTConnections_ = 0;
     numActiveProcessors_ = 0;
@@ -376,7 +376,7 @@ public:
     setThreadManager(threadManager);
   }
 
-  ~TNonblockingServer();
+  ~TNonblockingServer() override;
 
   void setThreadManager(std::shared_ptr<ThreadManager> threadManager);
 
@@ -669,12 +669,12 @@ public:
    * Main workhorse function, starts up the server listening on a port and
    * loops over the libevent handler.
    */
-  void serve();
+  void serve() override;
 
   /**
    * Causes the server to terminate gracefully (can be called from any thread).
    */
-  void stop();
+  void stop() override;
 
   /// Creates a socket to listen on and binds it to the local port.
   void createAndListenOnSocket();
@@ -741,7 +741,7 @@ public:
                        THRIFT_SOCKET listenSocket,
                        bool useHighPriority);
 
-  ~TNonblockingIOThread();
+  ~TNonblockingIOThread() override;
 
   // Returns the event-base for this thread.
   event_base* getEventBase() const { return eventBase_; }
@@ -772,7 +772,7 @@ public:
   bool notify(TNonblockingServer::TConnection* conn);
 
   // Enters the event loop and does not return until a call to stop().
-  virtual void run();
+  void run() override;
 
   // Exits the event loop as soon as possible.
   void stop();

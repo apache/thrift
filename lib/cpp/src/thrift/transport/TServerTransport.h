@@ -35,7 +35,7 @@ namespace transport {
  */
 class TServerTransport {
 public:
-  virtual ~TServerTransport() {}
+  virtual ~TServerTransport() = default;
 
   /**
    * Starts the server transport listening for new connections. Prior to this
@@ -96,7 +96,7 @@ public:
   virtual void close() = 0;
 
 protected:
-  TServerTransport() {}
+  TServerTransport() = default;
 
   /**
    * Subclasses should implement this function for accept.

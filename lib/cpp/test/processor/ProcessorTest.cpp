@@ -116,9 +116,9 @@ public:
     // TNonblockingServer automatically uses TFramedTransport.
     // Raise an exception if the supplied transport factory is not a
     // TFramedTransportFactory
-    TFramedTransportFactory* framedFactory
+    auto* framedFactory
         = dynamic_cast<TFramedTransportFactory*>(transportFactory.get());
-    if (framedFactory == NULL) {
+    if (framedFactory == nullptr) {
       throw TException("TNonblockingServer must use TFramedTransport");
     }
 
@@ -145,9 +145,9 @@ public:
     // TNonblockingServer automatically uses TFramedTransport.
     // Raise an exception if the supplied transport factory is not a
     // TFramedTransportFactory
-    TFramedTransportFactory* framedFactory
+    auto* framedFactory
         = dynamic_cast<TFramedTransportFactory*>(transportFactory.get());
-    if (framedFactory == NULL) {
+    if (framedFactory == nullptr) {
       throw TException("TNonblockingServer must use TFramedTransport");
     }
 
@@ -244,14 +244,14 @@ public:
     processor_->setEventHandler(processorEventHandler_);
   }
 
-  std::shared_ptr<TServer> createServer(uint16_t port) {
+  std::shared_ptr<TServer> createServer(uint16_t port) override {
     ServerTraits_ serverTraits;
     return serverTraits.createServer(processor_, port, transportFactory_, protocolFactory_);
   }
 
-  std::shared_ptr<TServerEventHandler> getServerEventHandler() { return serverEventHandler_; }
+  std::shared_ptr<TServerEventHandler> getServerEventHandler() override { return serverEventHandler_; }
 
-  void bindSuccessful(uint16_t port) { port_ = port; }
+  void bindSuccessful(uint16_t port) override { port_ = port; }
 
   uint16_t getPort() const { return port_; }
 
@@ -524,7 +524,7 @@ void testEventSequencing() {
   // can test the timing for the preRead() call.
   string requestName = "getDataWait";
   string eventName = "ParentService.getDataWait";
-  int32_t seqid = int32_t(time(NULL));
+  auto seqid = int32_t(time(nullptr));
   TBinaryProtocol protocol(socket);
   protocol.writeMessageBegin(requestName, T_CALL, seqid);
   socket->flush();

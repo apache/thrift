@@ -35,7 +35,7 @@ namespace thrift {
  */
 class TProcessorEventHandler {
 public:
-  virtual ~TProcessorEventHandler() {}
+  virtual ~TProcessorEventHandler() = default;
 
   /**
    * Called before calling other callback methods.
@@ -46,7 +46,7 @@ public:
   virtual void* getContext(const char* fn_name, void* serverContext) {
     (void)fn_name;
     (void)serverContext;
-    return NULL;
+    return nullptr;
   }
 
   /**
@@ -108,7 +108,7 @@ public:
   }
 
 protected:
-  TProcessorEventHandler() {}
+  TProcessorEventHandler() = default;
 };
 
 /**
@@ -119,10 +119,10 @@ public:
   TProcessorContextFreer(TProcessorEventHandler* handler, void* context, const char* method)
     : handler_(handler), context_(context), method_(method) {}
   ~TProcessorContextFreer() {
-    if (handler_ != NULL)
+    if (handler_ != nullptr)
       handler_->freeContext(context_, method_);
   }
-  void unregister() { handler_ = NULL; }
+  void unregister() { handler_ = nullptr; }
 
 private:
   apache::thrift::TProcessorEventHandler* handler_;
@@ -139,7 +139,7 @@ private:
  */
 class TProcessor {
 public:
-  virtual ~TProcessor() {}
+  virtual ~TProcessor() = default;
 
   virtual bool process(std::shared_ptr<protocol::TProtocol> in,
                        std::shared_ptr<protocol::TProtocol> out,
@@ -156,7 +156,7 @@ public:
   }
 
 protected:
-  TProcessor() {}
+  TProcessor() = default;
 
   std::shared_ptr<TProcessorEventHandler> eventHandler_;
 };
@@ -202,7 +202,7 @@ struct TConnectionInfo {
 
 class TProcessorFactory {
 public:
-  virtual ~TProcessorFactory() {}
+  virtual ~TProcessorFactory() = default;
 
   /**
    * Get the TProcessor to use for a particular connection.
@@ -218,7 +218,7 @@ class TSingletonProcessorFactory : public TProcessorFactory {
 public:
   TSingletonProcessorFactory(std::shared_ptr<TProcessor> processor) : processor_(processor) {}
 
-  std::shared_ptr<TProcessor> getProcessor(const TConnectionInfo&) { return processor_; }
+  std::shared_ptr<TProcessor> getProcessor(const TConnectionInfo&) override { return processor_; }
 
 private:
   std::shared_ptr<TProcessor> processor_;

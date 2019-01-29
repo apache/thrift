@@ -69,19 +69,19 @@ void cleanupOpenSSL();
  */
 class TSSLSocket : public TSocket {
 public:
-  ~TSSLSocket();
+  ~TSSLSocket() override;
   /**
    * TTransport interface.
    */
   bool isOpen();
-  bool peek();
-  void open();
-  void close();
-  bool hasPendingDataToRead();
-  uint32_t read(uint8_t* buf, uint32_t len);
-  void write(const uint8_t* buf, uint32_t len);
-  uint32_t write_partial(const uint8_t* buf, uint32_t len);
-  void flush();
+  bool peek() override;
+  void open() override;
+  void close() override;
+  bool hasPendingDataToRead() override;
+  uint32_t read(uint8_t* buf, uint32_t len) override;
+  void write(const uint8_t* buf, uint32_t len) override;
+  uint32_t write_partial(const uint8_t* buf, uint32_t len) override;
+  void flush() override;
   /**
   * Set whether to use client or server side SSL handshake protocol.
   *
@@ -273,7 +273,7 @@ public:
    *
    * @param path Path to trusted certificate file
    */
-  virtual void loadTrustedCertificates(const char* path, const char* capath = NULL);
+  virtual void loadTrustedCertificates(const char* path, const char* capath = nullptr);
   /**
    * Default randomize method.
    */
@@ -334,7 +334,7 @@ public:
   TSSLException(const std::string& message)
     : TTransportException(TTransportException::INTERNAL_ERROR, message) {}
 
-  virtual const char* what() const noexcept {
+  const char* what() const noexcept override {
     if (message_.empty()) {
       return "TSSLException";
     } else {
@@ -373,7 +373,7 @@ public:
   /**
    * Destructor
    */
-  virtual ~AccessManager() {}
+  virtual ~AccessManager() = default;
   /**
    * Determine whether the peer should be granted access or not. It's called
    * once after the SSL handshake completes successfully, before peer certificate
@@ -425,9 +425,9 @@ typedef AccessManager::Decision Decision;
 class DefaultClientAccessManager : public AccessManager {
 public:
   // AccessManager interface
-  Decision verify(const sockaddr_storage& sa) noexcept;
-  Decision verify(const std::string& host, const char* name, int size) noexcept;
-  Decision verify(const sockaddr_storage& sa, const char* data, int size) noexcept;
+  Decision verify(const sockaddr_storage& sa) noexcept override;
+  Decision verify(const std::string& host, const char* name, int size) noexcept override;
+  Decision verify(const sockaddr_storage& sa, const char* data, int size) noexcept override;
 };
 }
 }

@@ -138,10 +138,10 @@ private:
  */
 class TDebugProtocolFactory : public TProtocolFactory {
 public:
-  TDebugProtocolFactory() {}
-  virtual ~TDebugProtocolFactory() {}
+  TDebugProtocolFactory() = default;
+  ~TDebugProtocolFactory() override = default;
 
-  std::shared_ptr<TProtocol> getProtocol(std::shared_ptr<TTransport> trans) {
+  std::shared_ptr<TProtocol> getProtocol(std::shared_ptr<TTransport> trans) override {
     return std::shared_ptr<TProtocol>(new TDebugProtocol(trans));
   }
 };
@@ -159,7 +159,7 @@ template <typename ThriftStruct>
 std::string ThriftDebugString(const ThriftStruct& ts) {
   using namespace apache::thrift::transport;
   using namespace apache::thrift::protocol;
-  TMemoryBuffer* buffer = new TMemoryBuffer;
+  auto* buffer = new TMemoryBuffer;
   std::shared_ptr<TTransport> trans(buffer);
   TDebugProtocol protocol(trans);
 

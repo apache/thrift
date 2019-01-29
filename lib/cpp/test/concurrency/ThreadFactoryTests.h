@@ -51,7 +51,7 @@ public:
   public:
     ReapNTask(Monitor& monitor, int& activeCount) : _monitor(monitor), _count(activeCount) {}
 
-    void run() {
+    void run() override {
       Synchronized s(_monitor);
       
       if (--_count == 0) {
@@ -122,7 +122,7 @@ public:
 
     SynchStartTask(Monitor& monitor, volatile STATE& state) : _monitor(monitor), _state(state) {}
 
-    void run() {
+    void run() override {
       {
         Synchronized s(_monitor);
         if (_state == SynchStartTask::STARTING) {
@@ -247,14 +247,14 @@ public:
   class FloodTask : public Runnable {
   public:
     FloodTask(const size_t id, Monitor& mon) : _id(id), _mon(mon) {}
-    ~FloodTask() {
+    ~FloodTask() override {
       if (_id % 10000 == 0) {
 		Synchronized sync(_mon);
         std::cout << "\t\tthread " << _id << " done" << std::endl;
       }
     }
 
-    void run() {
+    void run() override {
       if (_id % 10000 == 0) {
 		Synchronized sync(_mon);
         std::cout << "\t\tthread " << _id << " started" << std::endl;

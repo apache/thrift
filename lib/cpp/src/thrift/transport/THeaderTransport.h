@@ -82,7 +82,7 @@ public:
       seqId(0),
       flags(0),
       tBufSize_(0),
-      tBuf_(NULL) {
+      tBuf_(nullptr) {
     if (!transport_) throw std::invalid_argument("transport is empty");
     initBuffers();
   }
@@ -96,13 +96,13 @@ public:
       seqId(0),
       flags(0),
       tBufSize_(0),
-      tBuf_(NULL) {
+      tBuf_(nullptr) {
     if (!transport_) throw std::invalid_argument("inTransport is empty");
     if (!outTransport_) throw std::invalid_argument("outTransport is empty");
     initBuffers();
   }
 
-  virtual uint32_t readSlow(uint8_t* buf, uint32_t len);
+  uint32_t readSlow(uint8_t* buf, uint32_t len) override;
   void flush() override;
 
   void resizeTransformBuffer(uint32_t additionalSize = 0);
@@ -175,13 +175,13 @@ protected:
    * Returns true if a frame was read successfully, or false on EOF.
    * (Raises a TTransportException if EOF occurs after a partial frame.)
    */
-  virtual bool readFrame();
+  bool readFrame() override;
 
   void ensureReadBuffer(uint32_t sz);
   uint32_t getWriteBytes();
 
   void initBuffers() {
-    setReadBuffer(NULL, 0);
+    setReadBuffer(nullptr, 0);
     setWriteBuffer(wBuf_.get(), wBufSize_);
   }
 
@@ -257,9 +257,9 @@ protected:
  */
 class THeaderTransportFactory : public TTransportFactory {
 public:
-  THeaderTransportFactory() {}
+  THeaderTransportFactory() = default;
 
-  virtual ~THeaderTransportFactory() {}
+  ~THeaderTransportFactory() override = default;
 
   /**
    * Wraps the transport into a header one.

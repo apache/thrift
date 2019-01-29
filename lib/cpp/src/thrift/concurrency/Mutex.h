@@ -40,7 +40,7 @@ namespace concurrency {
 class Mutex {
 public:
   Mutex();
-  virtual ~Mutex() {}
+  virtual ~Mutex() = default;
 
   virtual void lock() const;
   virtual bool trylock() const;
@@ -62,11 +62,11 @@ public:
       value.lock();
     } else if (timeout < 0) {
       if (!value.trylock()) {
-        mutex_ = NULL;
+        mutex_ = nullptr;
       }
     } else {
       if (!value.timedlock(timeout)) {
-        mutex_ = NULL;
+        mutex_ = nullptr;
       }
     }
   }
@@ -76,7 +76,7 @@ public:
     }
   }
 
-  operator bool() const { return (mutex_ != NULL); }
+  operator bool() const { return (mutex_ != nullptr); }
 
 private:
   const Mutex* mutex_;

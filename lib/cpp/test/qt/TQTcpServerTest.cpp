@@ -20,25 +20,25 @@ using namespace apache::thrift;
 
 struct AsyncHandler : public test::ParentServiceCobSvIf {
   std::vector<std::string> strings;
-  virtual void addString(std::function<void()> cob, const std::string& s) {
+  void addString(std::function<void()> cob, const std::string& s) override {
     strings.push_back(s);
     cob();
   }
-  virtual void getStrings(std::function<void(std::vector<std::string> const& _return)> cob) {
+  void getStrings(std::function<void(std::vector<std::string> const& _return)> cob) override {
     cob(strings);
   }
 
   // Overrides not used in this test
-  virtual void incrementGeneration(std::function<void(int32_t const& _return)> cob) {}
-  virtual void getGeneration(std::function<void(int32_t const& _return)> cob) {}
-  virtual void getDataWait(std::function<void(std::string const& _return)> cob,
-                           const int32_t length) {}
-  virtual void onewayWait(std::function<void()> cob) {}
-  virtual void exceptionWait(
+  void incrementGeneration(std::function<void(int32_t const& _return)> cob) override {}
+  void getGeneration(std::function<void(int32_t const& _return)> cob) override {}
+  void getDataWait(std::function<void(std::string const& _return)> cob,
+                           const int32_t length) override {}
+  void onewayWait(std::function<void()> cob) override {}
+  void exceptionWait(
       std::function<void()> cob,
       std::function<void(::apache::thrift::TDelayedException* _throw)> /* exn_cob */,
-      const std::string& message) {}
-  virtual void unexpectedExceptionWait(std::function<void()> cob, const std::string& message) {}
+      const std::string& message) override {}
+  void unexpectedExceptionWait(std::function<void()> cob, const std::string& message) override {}
 };
 
 class TQTcpServerTest : public QObject {

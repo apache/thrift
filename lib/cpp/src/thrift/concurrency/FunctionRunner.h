@@ -96,7 +96,7 @@ public:
    */
   FunctionRunner(const BoolFunc& cob, int intervalMs) : repFunc_(cob), intervalMs_(intervalMs) {}
 
-  void run() {
+  void run() override {
     if (repFunc_) {
       while (repFunc_()) {
         THRIFT_SLEEP_USEC(intervalMs_ * 1000);

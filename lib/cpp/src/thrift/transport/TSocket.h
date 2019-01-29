@@ -74,7 +74,7 @@ public:
   /**
    * Destroyes the socket object, closing it if necessary.
    */
-  virtual ~TSocket();
+  ~TSocket() override;
 
   /**
    * Whether the socket is alive.
@@ -208,22 +208,22 @@ public:
   /**
    * Get socket information formatted as a string <Host: x Port: x>
    */
-  std::string getSocketInfo();
+  std::string getSocketInfo() const;
 
   /**
    * Returns the DNS name of the host to which the socket is connected
    */
-  std::string getPeerHost();
+  std::string getPeerHost() const;
 
   /**
    * Returns the address of the host to which the socket is connected
    */
-  std::string getPeerAddress();
+  std::string getPeerAddress() const;
 
   /**
    * Returns the port of the host to which the socket is connected
    **/
-  int getPeerPort();
+  int getPeerPort() const;
 
   /**
    * Returns the underlying socket file descriptor.
@@ -259,7 +259,7 @@ public:
    *
    * @return string peer host identifier and port
    */
-  virtual const std::string getOrigin();
+  const std::string getOrigin() const override;
 
   /**
    * Constructor to create socket from file descriptor.
@@ -295,13 +295,13 @@ protected:
   THRIFT_SOCKET socket_;
 
   /** Peer hostname */
-  std::string peerHost_;
+  mutable std::string peerHost_;
 
   /** Peer address */
-  std::string peerAddress_;
+  mutable std::string peerAddress_;
 
   /** Peer port */
-  int peerPort_;
+  mutable int peerPort_;
 
   /**
    * A shared socket pointer that will interrupt a blocking read if data
