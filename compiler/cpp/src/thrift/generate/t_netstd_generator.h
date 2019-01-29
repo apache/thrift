@@ -109,7 +109,7 @@ public:
   void generate_deserialize_set_element(ostream& out, t_set* tset, string prefix = "");
   void generate_deserialize_map_element(ostream& out, t_map* tmap, string prefix = "");
   void generate_deserialize_list_element(ostream& out, t_list* list, string prefix = "");
-  void generate_serialize_field(ostream& out, t_field* tfield, string prefix = "", bool is_element = false, bool is_propertyless = false);
+  void generate_serialize_field(ostream& out, t_field* tfield, string prefix = "", bool is_propertyless = false);
   void generate_serialize_struct(ostream& out, t_struct* tstruct, string prefix = "");
   void generate_serialize_container(ostream& out, t_type* ttype, string prefix = "");
   void generate_serialize_map_element(ostream& out, t_map* tmap, string iter, string map);
@@ -126,8 +126,8 @@ public:
   string netstd_type_usings() const;
   string netstd_thrift_usings() const;
 
-  string type_name(t_type* ttype, bool in_countainer = false, bool in_init = false, bool in_param = false, bool is_required = false);
-  string base_type_name(t_base_type* tbase, bool in_container = false, bool in_param = false, bool is_required = false);
+  string type_name(t_type* ttype);
+  string base_type_name(t_base_type* tbase);
   string declare_field(t_field* tfield, bool init = false, string prefix = "");
   string function_signature_async(t_function* tfunction, string prefix = "");
   string function_signature(t_function* tfunction, string prefix = "");

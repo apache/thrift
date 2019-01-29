@@ -140,8 +140,6 @@ static bool type_can_be_null(t_type* ttype)
 
 bool t_netstd_generator::is_wcf_enabled() const { return wcf_; }
 
-bool t_netstd_generator::is_nullable_enabled() const { return false; }
-
 bool t_netstd_generator::is_serialize_enabled() const { return serialize_; }
 
 bool t_netstd_generator::is_union_enabled() const { return union_; }
@@ -186,8 +184,7 @@ void t_netstd_generator::init_generator()
         cleanup_member_name_mapping(member_mapping_scopes.back().scope_member);
     }
 
-    pverbose(".NET Core options:\n");
-    //pverbose("- nullable ... %s\n", (is_nullable_enabled() ? "ON" : "off"));  -- deprecated, removal candidate
+    pverbose(".NET Standard options:\n");
     pverbose("- union ...... %s\n", (is_union_enabled() ? "ON" : "off"));
     pverbose("- serialize .. %s\n", (is_serialize_enabled() ? "ON" : "off"));
     pverbose("- wcf ........ %s\n", (is_wcf_enabled() ? "ON" : "off"));
@@ -579,7 +576,7 @@ bool t_netstd_generator::print_const_value(ostream& out, string name, t_type* ty
     }
     else if (type->is_enum())
     {
-        out << name << " = " << type_name(type, false, true) << "." << value->get_identifier_name() << ";" << endl;
+        out << name << " = " << type_name(type) << "." << value->get_identifier_name() << ";" << endl;
         need_static_construction = false;
     }
     else if (type->is_struct() || type->is_xception())
@@ -588,7 +585,7 @@ bool t_netstd_generator::print_const_value(ostream& out, string name, t_type* ty
     }
     else if (type->is_map())
     {
-        out << name << " = new " << type_name(type, true, true) << "();" << endl;
+        out << name << " = new " << type_name(type) << "();" << endl;
     }
     else if (type->is_list() || type->is_set())
     {
@@ -727,7 +724,7 @@ void t_netstd_generator::generate_netstd_struct_definition(ostream& out, t_struc
     for (m_iter = members.begin(); m_iter != members.end(); ++m_iter)
     {
         // if the field is required, then we use auto-properties
-        if (!field_is_required((*m_iter)) && (!is_nullable_enabled() || field_has_default((*m_iter))))
+        if (!field_is_required((*m_iter)))
         {
             out << indent() << "private " << declare_field(*m_iter, false, "_") << endl;
         }
@@ -735,29 +732,23 @@ void t_netstd_generator::generate_netstd_struct_definition(ostream& out, t_struc
     out << endl;
 
     bool has_non_required_fields = false;
-    bool has_non_required_default_value_fields = false;
     bool has_required_fields = false;
     for (m_iter = members.begin(); m_iter != members.end(); ++m_iter)
     {
         generate_netstd_doc(out, *m_iter);
         generate_property(out, *m_iter, true, true);
         bool is_required = field_is_required((*m_iter));
-        bool has_default = field_has_default((*m_iter));
         if (is_required)
         {
             has_required_fields = true;
         }
         else
         {
-            if (has_default)
-            {
-                has_non_required_default_value_fields = true;
-            }
             has_non_required_fields = true;
         }
     }
 
-    bool generate_isset = (is_nullable_enabled() && has_non_required_default_value_fields) || (!is_nullable_enabled() && has_non_required_fields);
+    bool generate_isset = has_non_required_fields;
     if (generate_isset)
     {
         out << endl;
@@ -778,11 +769,9 @@ void t_netstd_generator::generate_netstd_struct_definition(ostream& out, t_struc
         for (m_iter = members.begin(); m_iter != members.end(); ++m_iter)
         {
             bool is_required = field_is_required((*m_iter));
-            bool has_default = field_has_default((*m_iter));
             // if it is required, don't need Isset for that variable
             // if it is not required, if it has a default value, we need to generate Isset
-            // if we are not nullable, then we generate Isset
-            if (!is_required && (!is_nullable_enabled() || has_default))
+            if (!is_required)
             {
                 if (is_serialize_enabled() || is_wcf_enabled())
                 {
@@ -802,11 +791,9 @@ void t_netstd_generator::generate_netstd_struct_definition(ostream& out, t_struc
             for (m_iter = members.begin(); m_iter != members.end(); ++m_iter)
             {
                 bool is_required = field_is_required(*m_iter);
-                bool has_default = field_has_default(*m_iter);
                 // if it is required, don't need Isset for that variable
                 // if it is not required, if it has a default value, we need to generate Isset
-                // if we are not nullable, then we generate Isset
-                if (!is_required && (!is_nullable_enabled() || has_default))
+                if (!is_required)
                 {
                     out << indent() << "public bool ShouldSerialize" << prop_name(*m_iter) << "()" << endl
                         << indent() << "{" << endl;
@@ -1072,14 +1059,7 @@ void t_netstd_generator::generate_netstd_struct_writer(ostream& out, t_struct* t
         for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter)
         {
             bool is_required = field_is_required(*f_iter);
-            bool has_default = field_has_default(*f_iter);
-            if (is_nullable_enabled() && !has_default && !is_required)
-            {
-                out << indent() << "if (" << prop_name(*f_iter) << " != null)" << endl
-                    << indent() << "{" << endl;
-                indent_up();
-            }
-            else if (!is_required)
+            if (!is_required)
             {
                 bool null_allowed = type_can_be_null((*f_iter)->get_type());
                 if (null_allowed)
@@ -1159,19 +1139,11 @@ void t_netstd_generator::generate_netstd_struct_result_writer(ostream& out, t_st
                 out << indent() << "else if";
             }
 
-            if (is_nullable_enabled())
-            {
-                out << "(this." << prop_name((*f_iter)) << " != null)" << endl
-                    << indent() << "{" << endl;
-            }
-            else
-            {
-                out << "(this.__isset." << normalize_name((*f_iter)->get_name()) << ")" << endl
-                    << indent() << "{" << endl;
-            }
+            out << "(this.__isset." << normalize_name((*f_iter)->get_name()) << ")" << endl
+                << indent() << "{" << endl;
             indent_up();
 
-            bool null_allowed = !is_nullable_enabled() && type_can_be_null((*f_iter)->get_type());
+            bool null_allowed = type_can_be_null((*f_iter)->get_type());
             if (null_allowed)
             {
                 out << indent() << "if (" << prop_name(*f_iter) << " != null)" << endl
@@ -1239,14 +1211,7 @@ void t_netstd_generator::generate_netstd_struct_tostring(ostream& out, t_struct*
     for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter)
     {
         bool is_required = field_is_required((*f_iter));
-        bool has_default = field_has_default((*f_iter));
-        if (is_nullable_enabled() && !has_default && !is_required)
-        {
-            out << indent() << "if (" << prop_name((*f_iter)) << " != null)" << endl
-                << indent() << "{" << endl;
-            indent_up();
-        }
-        else if (!is_required)
+        if (!is_required)
         {
             bool null_allowed = type_can_be_null((*f_iter)->get_type());
             if (null_allowed)
@@ -1419,7 +1384,7 @@ void t_netstd_generator::generate_netstd_union_class(ostream& out, t_struct* tun
         << indent() << "field.ID = " << tfield->get_key() << ";" << endl
         << indent() << "await oprot.WriteFieldBeginAsync(field, cancellationToken);" << endl;
 
-    generate_serialize_field(out, tfield, "_data", true, true);
+    generate_serialize_field(out, tfield, "_data", true);
 
     out << indent() << "await oprot.WriteFieldEndAsync(cancellationToken);" << endl
         << indent() << "await oprot.WriteFieldStopAsync(cancellationToken);" << endl
@@ -1464,7 +1429,7 @@ void t_netstd_generator::generate_netstd_struct_equals(ostream& out, t_struct* t
             out << endl;
             out << indent() << "&& ";
         }
-        if (!field_is_required((*f_iter)) && !(is_nullable_enabled() && !field_has_default((*f_iter))))
+        if (!field_is_required((*f_iter)))
         {
             out << "((__isset." << normalize_name((*f_iter)->get_name()) << " == other.__isset."
                 << normalize_name((*f_iter)->get_name()) << ") && ((!__isset."
@@ -1480,7 +1445,7 @@ void t_netstd_generator::generate_netstd_struct_equals(ostream& out, t_struct* t
             out << "System.Object.Equals(";
         }
         out << prop_name((*f_iter)) << ", other." << prop_name((*f_iter)) << ")";
-        if (!field_is_required((*f_iter)) && !(is_nullable_enabled() && !field_has_default((*f_iter))))
+        if (!field_is_required((*f_iter)))
         {
             out << ")))";
         }
@@ -1518,10 +1483,6 @@ void t_netstd_generator::generate_netstd_struct_hashcode(ostream& out, t_struct*
         if (field_is_required((*f_iter)))
         {
             out << "(";
-        }
-        else if (is_nullable_enabled())
-        {
-            out << "(" << prop_name((*f_iter)) << " == null ? 0 : ";
         }
         else
         {
@@ -1614,7 +1575,7 @@ void t_netstd_generator::generate_service_interface(ostream& out, t_service* tse
             vector<t_field*>::const_iterator x_iter;
             for (x_iter = xceptions.begin(); x_iter != xceptions.end(); ++x_iter)
             {
-                out << indent() << "[FaultContract(typeof(" + type_name((*x_iter)->get_type(), false, false) + "Fault))]" << endl;
+                out << indent() << "[FaultContract(typeof(" + type_name((*x_iter)->get_type()) + "Fault))]" << endl;
             }
         }
 
@@ -1727,60 +1688,24 @@ void t_netstd_generator::generate_service_client(ostream& out, t_service* tservi
 
             if (!(*functions_iterator)->get_returntype()->is_void())
             {
-                if (is_nullable_enabled())
-                {
-                    if (type_can_be_null((*functions_iterator)->get_returntype()))
-                    {
-                        out << indent() << "if (result.Success != null)" << endl
-                            << indent() << "{" << endl;
-                        indent_up();
-                        out << indent() << "return result.Success;" << endl;
-                        indent_down();
-                        out << indent() << "}" << endl;
-                    }
-                    else
-                    {
-                        out << indent() << "if (result.Success.HasValue)" << endl
-                            << indent() << "{" << endl;
-                        indent_up();
-                        out << indent() << "return result.Success.Value;" << endl;
-                        indent_down();
-                        out << indent() << "}" << endl;
-                    }
-                }
-                else
-                {
-                    out << indent() << "if (result.__isset.success)" << endl
-                        << indent() << "{" << endl;
-                    indent_up();
-                    out << indent() << "return result.Success;" << endl;
-                    indent_down();
-                    out << indent() << "}" << endl;
-                }
+                out << indent() << "if (result.__isset.success)" << endl
+                    << indent() << "{" << endl;
+                indent_up();
+                out << indent() << "return result.Success;" << endl;
+                indent_down();
+                out << indent() << "}" << endl;
             }
 
             const vector<t_field*>& xceptions = xs->get_members();
             vector<t_field*>::const_iterator x_iter;
             for (x_iter = xceptions.begin(); x_iter != xceptions.end(); ++x_iter)
             {
-                if (is_nullable_enabled())
-                {
-                    out << indent() << "if (result." << prop_name(*x_iter) << " != null)" << endl
-                        << indent() << "{" << endl;
-                    indent_up();
-                    out << indent() << "throw result." << prop_name(*x_iter) << ";" << endl;
-                    indent_down();
-                    out << indent() << "}" << endl;
-                }
-                else
-                {
-                    out << indent() << "if (result.__isset." << normalize_name((*x_iter)->get_name()) << ")" << endl
-                        << indent() << "{" << endl;
-                    indent_up();
-                    out << indent() << "throw result." << prop_name(*x_iter) << ";" << endl;
-                    indent_down();
-                    out << indent() << "}" << endl;
-                }
+                out << indent() << "if (result.__isset." << normalize_name((*x_iter)->get_name()) << ")" << endl
+                    << indent() << "{" << endl;
+                indent_up();
+                out << indent() << "throw result." << prop_name(*x_iter) << ";" << endl;
+                indent_down();
+                out << indent() << "}" << endl;
             }
 
             if ((*functions_iterator)->get_returntype()->is_void())
@@ -2021,10 +1946,6 @@ void t_netstd_generator::generate_process_function_async(ostream& out, t_service
         }
 
         out << "args." << prop_name(*f_iter);
-        if (is_nullable_enabled() && !type_can_be_null((*f_iter)->get_type()))
-        {
-            out << ".Value";
-        }
     }
 
     cleanup_member_name_mapping(arg_struct);
@@ -2046,7 +1967,7 @@ void t_netstd_generator::generate_process_function_async(ostream& out, t_service
 
         for (x_iter = xceptions.begin(); x_iter != xceptions.end(); ++x_iter)
         {
-            out << indent() << "catch (" << type_name((*x_iter)->get_type(), false, false) << " " << (*x_iter)->get_name() << ")" << endl
+            out << indent() << "catch (" << type_name((*x_iter)->get_type()) << " " << (*x_iter)->get_name() << ")" << endl
                 << indent() << "{" << endl;
 
             if (!tfunction->is_oneway())
@@ -2208,7 +2129,7 @@ void t_netstd_generator::generate_deserialize_field(ostream& out, t_field* tfiel
 
         if (type->is_enum())
         {
-            out << "(" << type_name(type, false, true) << ")";
+            out << "(" << type_name(type) << ")";
         }
 
         out << "await iprot.";
@@ -2298,7 +2219,7 @@ void t_netstd_generator::generate_deserialize_container(ostream& out, t_type* tt
         obj = tmp("_list");
     }
 
-    out << indent() << prefix << " = new " << type_name(ttype, false, true) << "();" << endl;
+    out << indent() << prefix << " = new " << type_name(ttype) << "();" << endl;
     if (ttype->is_map())
     {
         out << indent() << "TMap " << obj << " = await iprot.ReadMapBeginAsync(cancellationToken);" << endl;
@@ -2391,7 +2312,7 @@ void t_netstd_generator::generate_deserialize_list_element(ostream& out, t_list*
     out << indent() << prefix << ".Add(" << elem << ");" << endl;
 }
 
-void t_netstd_generator::generate_serialize_field(ostream& out, t_field* tfield, string prefix, bool is_element, bool is_propertyless)
+void t_netstd_generator::generate_serialize_field(ostream& out, t_field* tfield, string prefix, bool is_propertyless)
 {
     t_type* type = tfield->get_type();
     while (type->is_typedef())
@@ -2418,7 +2339,7 @@ void t_netstd_generator::generate_serialize_field(ostream& out, t_field* tfield,
     {
         out << indent() << "await oprot.";
 
-        string nullable_name = is_nullable_enabled() && !is_element && !field_is_required(tfield) ? name + ".Value" : name;
+        string nullable_name = name;
 
         if (type->is_base_type())
         {
@@ -2558,21 +2479,21 @@ void t_netstd_generator::generate_serialize_container(ostream& out, t_type* ttyp
 void t_netstd_generator::generate_serialize_map_element(ostream& out, t_map* tmap, string iter, string map)
 {
     t_field kfield(tmap->get_key_type(), iter);
-    generate_serialize_field(out, &kfield, "", true);
+    generate_serialize_field(out, &kfield, "");
     t_field vfield(tmap->get_val_type(), map + "[" + iter + "]");
-    generate_serialize_field(out, &vfield, "", true);
+    generate_serialize_field(out, &vfield, "");
 }
 
 void t_netstd_generator::generate_serialize_set_element(ostream& out, t_set* tset, string iter)
 {
     t_field efield(tset->get_elem_type(), iter);
-    generate_serialize_field(out, &efield, "", true);
+    generate_serialize_field(out, &efield, "");
 }
 
 void t_netstd_generator::generate_serialize_list_element(ostream& out, t_list* tlist, string iter)
 {
     t_field efield(tlist->get_elem_type(), iter);
-    generate_serialize_field(out, &efield, "", true);
+    generate_serialize_field(out, &efield, "");
 }
 
 void t_netstd_generator::generate_property(ostream& out, t_field* tfield, bool isPublic, bool generateIsset)
@@ -2586,15 +2507,14 @@ void t_netstd_generator::generate_netstd_property(ostream& out, t_field* tfield,
     {
         out << indent() << "[DataMember(Order = 0)]" << endl;
     }
-    bool has_default = field_has_default(tfield);
     bool is_required = field_is_required(tfield);
-    if ((is_nullable_enabled() && !has_default) || is_required)
+    if (is_required)
     {
-        out << indent() << (isPublic ? "public " : "private ") << type_name(tfield->get_type(), false, false, true, is_required) << " " << prop_name(tfield) << " { get; set; }" << endl;
+        out << indent() << (isPublic ? "public " : "private ") << type_name(tfield->get_type()) << " " << prop_name(tfield) << " { get; set; }" << endl;
     }
     else
     {
-        out << indent() << (isPublic ? "public " : "private ")  << type_name(tfield->get_type(), false, false, true) << " " << prop_name(tfield) << endl
+        out << indent() << (isPublic ? "public " : "private ")  << type_name(tfield->get_type()) << " " << prop_name(tfield) << endl
             << indent() << "{" << endl;
         indent_up();
 
@@ -2603,18 +2523,6 @@ void t_netstd_generator::generate_netstd_property(ostream& out, t_field* tfield,
         indent_up();
 
         bool use_nullable = false;
-        if (is_nullable_enabled())
-        {
-            t_type* ttype = tfield->get_type();
-            while (ttype->is_typedef())
-            {
-                ttype = static_cast<t_typedef*>(ttype)->get_type();
-            }
-            if (ttype->is_base_type())
-            {
-                use_nullable = static_cast<t_base_type*>(ttype)->get_base() != t_base_type::TYPE_STRING;
-            }
-        }
 
         out << indent() << "return " << fieldPrefix + tfield->get_name() << ";" << endl;
         indent_down();
@@ -2774,10 +2682,8 @@ string t_netstd_generator::prop_name(t_field* tfield, bool suppress_mapping)
     return name;
 }
 
-string t_netstd_generator::type_name(t_type* ttype, bool in_container, bool in_init, bool in_param, bool is_required)
+string t_netstd_generator::type_name(t_type* ttype)
 {
-    (void)in_init;
-
     while (ttype->is_typedef())
     {
         ttype = static_cast<t_typedef*>(ttype)->get_type();
@@ -2785,45 +2691,42 @@ string t_netstd_generator::type_name(t_type* ttype, bool in_container, bool in_i
 
     if (ttype->is_base_type())
     {
-        return base_type_name(static_cast<t_base_type*>(ttype), in_container, in_param, is_required);
+        return base_type_name(static_cast<t_base_type*>(ttype));
     }
 
     if (ttype->is_map())
     {
         t_map* tmap = static_cast<t_map*>(ttype);
-        return "Dictionary<" + type_name(tmap->get_key_type(), true) + ", " + type_name(tmap->get_val_type(), true) + ">";
+        return "Dictionary<" + type_name(tmap->get_key_type()) + ", " + type_name(tmap->get_val_type()) + ">";
     }
 
     if (ttype->is_set())
     {
         t_set* tset = static_cast<t_set*>(ttype);
-        return "THashSet<" + type_name(tset->get_elem_type(), true) + ">";
+        return "THashSet<" + type_name(tset->get_elem_type()) + ">";
     }
 
     if (ttype->is_list())
     {
         t_list* tlist = static_cast<t_list*>(ttype);
-        return "List<" + type_name(tlist->get_elem_type(), true) + ">";
+        return "List<" + type_name(tlist->get_elem_type()) + ">";
     }
 
     t_program* program = ttype->get_program();
-    string postfix = (!is_required && is_nullable_enabled() && in_param && ttype->is_enum()) ? "?" : "";
     if (program != NULL && program != program_)
     {
         string ns = program->get_namespace("netstd");
         if (!ns.empty())
         {
-            return ns + "." + normalize_name(ttype->get_name()) + postfix;
+            return ns + "." + normalize_name(ttype->get_name());
         }
     }
 
-    return normalize_name(ttype->get_name()) + postfix;
+    return normalize_name(ttype->get_name());
 }
 
-string t_netstd_generator::base_type_name(t_base_type* tbase, bool in_container, bool in_param, bool is_required)
+string t_netstd_generator::base_type_name(t_base_type* tbase)
 {
-    (void)in_container;
-    string postfix = (!is_required && is_nullable_enabled() && in_param) ? "?" : "";
     switch (tbase->get_base())
     {
     case t_base_type::TYPE_VOID:
@@ -2837,17 +2740,17 @@ string t_netstd_generator::base_type_name(t_base_type* tbase, bool in_container,
             return "string";
         }
     case t_base_type::TYPE_BOOL:
-        return "bool" + postfix;
+        return "bool";
     case t_base_type::TYPE_I8:
-        return "sbyte" + postfix;
+        return "sbyte";
     case t_base_type::TYPE_I16:
-        return "short" + postfix;
+        return "short";
     case t_base_type::TYPE_I32:
-        return "int" + postfix;
+        return "int";
     case t_base_type::TYPE_I64:
-        return "long" + postfix;
+        return "long";
     case t_base_type::TYPE_DOUBLE:
-        return "double" + postfix;
+        return "double";
     default:
         throw "compiler error: no C# name for base type " + t_base_type::t_base_name(tbase->get_base());
     }
@@ -2894,15 +2797,15 @@ string t_netstd_generator::declare_field(t_field* tfield, bool init, string pref
         }
         else if (ttype->is_enum())
         {
-            result += " = (" + type_name(ttype, false, true) + ")0";
+            result += " = (" + type_name(ttype) + ")0";
         }
         else if (ttype->is_container())
         {
-            result += " = new " + type_name(ttype, false, true) + "()";
+            result += " = new " + type_name(ttype) + "()";
         }
         else
         {
-            result += " = new " + type_name(ttype, false, true) + "()";
+            result += " = new " + type_name(ttype) + "()";
         }
     }
     return result + ";";
@@ -3110,6 +3013,5 @@ THRIFT_REGISTER_GENERATOR(
     "C#",
     "    wcf:             Adds bindings for WCF to generated classes.\n"
     "    serial:          Add serialization support to generated classes.\n"
-    //"    nullable:        Use nullable types for properties.\n"
     "    union:           Use new union typing, which includes a static read function for union types.\n"
 )
