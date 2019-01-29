@@ -252,6 +252,10 @@ libraries now.  This is CMake standard behavior.
 THRIFT-4735:
 Qt4 support was removed.
 
+THRIFT-4762:
+Added `const` specifier to `TTransport::getOrigin()`. This changes its function signature.
+It's recommended to add the `override` specifier in implementations derived from `TTransport`.
+
 ## 0.11.0
 
 Older versions of thrift depended on the <boost/smart_ptr.hpp> classes which
