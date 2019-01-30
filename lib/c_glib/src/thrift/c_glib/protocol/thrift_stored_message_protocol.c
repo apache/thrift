@@ -172,7 +172,7 @@ thrift_stored_message_protocol_class_init (ThriftStoredMessageProtocolClass *kla
       g_param_spec_int ("seqid",
 			"Sequence id type in the wire",
 			"Set the Sequence id in the wire",
-			0, G_MAXINT,
+			G_MININT, G_MAXINT,
 			0,
 			(G_PARAM_CONSTRUCT_ONLY | G_PARAM_READWRITE));
 
