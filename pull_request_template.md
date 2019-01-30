@@ -1,37 +1,48 @@
-### Pull Request Guidance ###
+### Pull Request ###
 
-Review the following items to ensure a smooth pull request experience.
+The [Contributing Guide](https://github.com/apache/thrift/blob/master/CONTRIBUTING.md) has more details and tips for
+committing properly.
 
-- [ ] Did you make a breaking change?  If so:
+<!-- Explain the changes in the pull request below. -->
 
-  - [ ] Add (or reference) an [Apache Jira](https://issues.apache.org/jira/projects/THRIFT/issues/) THRIFT ticket.
-  - [ ] Add a `Breaking-Change` label to the Jira ticket.
-  - [ ] Add a note to the `lib/<language>/README.md` file.
-  - [ ] Add a line to the `CHANGES.md` file.
 
-- [ ] Is this change significant enough to be in release notes?
 
-    All release-note worthy changes require an [Apache Jira](https://issues.apache.org/jira/projects/THRIFT/issues/) THRIFT ticket.
-    For example:
-    - Breaking Changes
-    - New, Deprecated, or Removed Languages
-    - Security Fix
-    - Significant Refactoring
-
-- [ ] If there is an [Apache Jira](https://issues.apache.org/jira/projects/THRIFT/issues/) ticket: 
-
-  - [ ] Is the [Apache Jira](https://issues.apache.org/jira/projects/THRIFT/issues/) THRIFT ticket identifier in the PR title?
-
-        THRIFT-9999: an example pull request title
-
-  - [ ] Is the [Apache Jira](https://issues.apache.org/jira/projects/THRIFT/issues/) THRIFT ticket identifier and affected languages in the commit message?
-
-        THRIFT-9999: [summary of fix, one line if possible]
-        Client: [language(s) affected, comma separated, use lib/ directory names please]
+<!-- We recommend you review the checklist before submitting a pull request. -->
+Review the following checklist to ensure a smooth pull request experience.
 
 - [ ] Did you squash your changes to a single commit?
 
-        Committers can squash when they merge, but sometimes we forget, and it makes the history
-        pretty dirty.  Please squash your pull requests to a single commit if you can.
+- [ ] Do you need an [Apache Jira](https://issues.apache.org/jira/projects/THRIFT/issues/) ticket?<details><summary>Expand for guidance...</summary>
+    - `Yes` if your change requires a release note.
+    - `Yes` if your change is a breaking change.
+    - `No` if you change is trivial, such as fixing a typo.
+</details>
+ 
+- [ ] Is this change worthy of a release note? <details><summary>Examples of Release Note-worthy examples...</summary>
+    - Breaking Changes
+    - New, Deprecated, or Removed Languages
+    - Security Fixes
+    - Significant Refactoring
+    - Changing how the product is built
+</details>
 
-For more information about committing, see CONTRIBUTING.md
+- [ ] Breaking changes have additional requirements: <details><summary>Expand for instructions...</summary>
+    - Add or reference an existing Apache Jira THRIFT ticket.
+    - Add a `Breaking-Change` label to the Jira ticket.
+    - Add a note to the `lib/<language>/README.md` file.
+    - Add a line to the `CHANGES.md` file.
+</details>
+
+- [ ] Does this change require a build? <details><summary>Expand for guidance...</summary>
+    - `Yes` for any code change
+    - `Yes` for any build script change
+    - `Yes` for any docker build environment change
+    - `Yes` for any change affecting the cross test suite
+    - `No` for documentation-only changes
+    - `No` for trivial changes, for example fixing a typo.
+    <br/>
+    If your change does not require a build, you can add [ci skip] to the end of your commit message.<br/>
+    This will avoid costly and unnecessary builds in both the pull request and once it is merged.
+</details>
+
+For more information about committing, see the [Contributing Guide](https://github.com/apache/thrift/blob/master/CONTRIBUTING.md).
