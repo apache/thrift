@@ -26,6 +26,12 @@ CALL cl_setenv.bat                         || EXIT /B
 CALL cl_showenv.bat                        || EXIT /B
 
 ::
+:: Upgrades cygwin to the latest, if you want...
+::
+:: appveyor DownloadFile "https://cygwin.com/setup-x86_64.exe"
+:: setup-x86_64.exe --quiet-mode --wait --upgrade-also --packages="gcc-g++"
+
+::
 :: Install apt-cyg for package management
 ::
 

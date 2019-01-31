@@ -1,0 +1,5 @@
+[flake8]
+exclude = .git,__pycache__,**/gen-*/**,contrib/**,docs/source/conf.py,old,build,dist
+ignore = W504,E402,E501
+max-complexity = 30
+max-line-length = 120

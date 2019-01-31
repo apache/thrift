@@ -26,9 +26,7 @@ import unittest
 
 from optparse import OptionParser
 from util import local_libpath
-
 sys.path.insert(0, local_libpath())
-
 from thrift.protocol import TProtocolDecorator
 from thrift.protocol import TProtocol
 
@@ -277,6 +275,7 @@ class AbstractTest(unittest.TestCase):
 # running on it (when multiplexec)
 LAST_SEQID = None
 
+
 class TPedanticSequenceIdProtocolWrapper(TProtocolDecorator.TProtocolDecorator):
     """
     Wraps any protocol with sequence ID checking: looks for outbound
@@ -289,7 +288,8 @@ class TPedanticSequenceIdProtocolWrapper(TProtocolDecorator.TProtocolDecorator):
     def writeMessageBegin(self, name, type, seqid):
         global LAST_SEQID
         if LAST_SEQID and LAST_SEQID == seqid:
-            raise TProtocol.TProtocolException(INVALID_DATA,
+            raise TProtocol.TProtocolException(
+                TProtocol.TProtocolException.INVALID_DATA,
                 "Python client reused sequence ID {0}".format(seqid))
         LAST_SEQID = seqid
         super(TPedanticSequenceIdProtocolWrapper, self).writeMessageBegin(
@@ -300,7 +300,8 @@ class TPedanticSequenceIdProtocolWrapper(TProtocolDecorator.TProtocolDecorator):
         (name, type, seqid) =\
             super(TPedanticSequenceIdProtocolWrapper, self).readMessageBegin()
         if LAST_SEQID != seqid:
-            raise TProtocol.TProtocolException(INVALID_DATA,
+            raise TProtocol.TProtocolException(
+                TProtocol.TProtocolException.INVALID_DATA,
                 "We sent seqid {0} and server returned seqid {1}".format(
                     self.last, seqid))
         return (name, type, seqid)
@@ -309,6 +310,7 @@ class TPedanticSequenceIdProtocolWrapper(TProtocolDecorator.TProtocolDecorator):
 def make_pedantic(proto):
     """ Wrap a protocol in the pedantic sequence ID wrapper. """
     return TPedanticSequenceIdProtocolWrapper(proto)
+
 
 class MultiplexedOptionalTest(AbstractTest):
     def get_protocol2(self, transport):
