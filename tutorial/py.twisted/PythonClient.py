@@ -67,6 +67,7 @@ def main(client):
     print(('Check log: %s' % (log.value)))
     reactor.stop()
 
+
 if __name__ == '__main__':
     d = ClientCreator(reactor,
                       TTwisted.ThriftClientProtocol,

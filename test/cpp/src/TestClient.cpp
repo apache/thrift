@@ -69,12 +69,12 @@ using namespace thrift::test;
 // agreement between client and server.
 //
 
-template<class _P>
-class TPedanticProtocol : public _P
+template<typename Proto>
+class TPedanticProtocol : public Proto 
 {
     public:
         TPedanticProtocol(std::shared_ptr<TTransport>& transport)
-          : _P(transport), m_last_seqid((std::numeric_limits<int32_t>::max)() - 10) { }
+          : Proto(transport), m_last_seqid((std::numeric_limits<int32_t>::max)() - 10) { }
 
         virtual uint32_t writeMessageBegin_virt(const std::string& name,
                                            const TMessageType messageType,
@@ -85,14 +85,14 @@ class TPedanticProtocol : public _P
                 seqid = ++m_last_seqid;
             }
 
-            return _P::writeMessageBegin_virt(name, messageType, seqid);
+            return Proto::writeMessageBegin_virt(name, messageType, seqid);
         }
 
         virtual uint32_t readMessageBegin_virt(std::string& name,
                                           TMessageType& messageType,
                                           int32_t& seqid) override
         {
-            uint32_t result = _P::readMessageBegin_virt(name, messageType, seqid);
+            uint32_t result = Proto::readMessageBegin_virt(name, messageType, seqid);
             if (seqid != m_last_seqid) {
                 std::stringstream ss;
                 ss << "ERROR: send request with seqid " << m_last_seqid << " and got reply with seqid " << seqid;

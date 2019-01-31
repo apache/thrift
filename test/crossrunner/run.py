@@ -259,7 +259,7 @@ def run_test(testdir, logdir, test_dict, max_retry, async_mode=True):
             raise
         logger.warn('Error executing [%s]', test.name, exc_info=True)
         return (retry_count, RESULT_ERROR)
-    except:
+    except Exception:
         logger.info('Interrupted execution', exc_info=True)
         if not async_mode:
             raise
