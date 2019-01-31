@@ -42,9 +42,9 @@ using std::vector;
 
 static const string endl = "\n"; // avoid ostream << std::endl flushes
 // largest consecutive integer representable by a double (2 ^ 53 - 1)
-static const long max_safe_integer = 0x1fffffffffffff;
+static const int64_t max_safe_integer = 0x1fffffffffffff;
 // smallest consecutive number representable by a double (-2 ^ 53 + 1)
-static const long min_safe_integer = -max_safe_integer;
+static const int64_t min_safe_integer = -max_safe_integer;
 
 #include "thrift/generate/t_oop_generator.h"
 
