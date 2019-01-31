@@ -948,7 +948,7 @@ uint32_t TJSONProtocol::readMessageBegin(std::string& name,
                                          TMessageType& messageType,
                                          int32_t& seqid) {
   uint32_t result = readJSONArrayStart();
-  uint64_t tmpVal = 0;
+  int64_t tmpVal = 0;
   result += readJSONInteger(tmpVal);
   if (tmpVal != kThriftVersion1) {
     throw TProtocolException(TProtocolException::BAD_VERSION, "Message contained bad version.");
@@ -957,8 +957,9 @@ uint32_t TJSONProtocol::readMessageBegin(std::string& name,
   result += readJSONInteger(tmpVal);
   messageType = (TMessageType)tmpVal;
   result += readJSONInteger(tmpVal);
-  if (tmpVal > static_cast<uint64_t>((std::numeric_limits<int32_t>::max)()))
-    throw TProtocolException(TProtocolException::SIZE_LIMIT);
+  if (tmpVal > (std::numeric_limits<int32_t>::max)() ||
+      tmpVal < (std::numeric_limits<int32_t>::min)())
+    throw TProtocolException(TProtocolException::INVALID_DATA, "sequence id is not int32_t");
   seqid = static_cast<int32_t>(tmpVal);
   return result;
 }
