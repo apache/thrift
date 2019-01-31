@@ -47,6 +47,7 @@
     "eslint": "^5.7.0",
     "eslint-config-prettier": "^3.1.0",
     "eslint-plugin-prettier": "^3.0.0",
+    "html-validator-cli": "^4.1.4",
     "istanbul": "^0.4.5",
     "jsdoc": "^3.5.5",
     "json-int64": "^1.0.0",
