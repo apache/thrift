@@ -161,7 +161,7 @@ class TCompactProtocol(TProtocolBase):
         # writes this out as a "var int" which is always positive, and attempting
         # to write a negative number results in an infinite loop, so we may
         # need to do some conversion here...
-        tseqid = seqid;
+        tseqid = seqid
         if tseqid < 0:
             tseqid = 2147483648 + (2147483648 + tseqid)
         self.__writeVarint(tseqid)

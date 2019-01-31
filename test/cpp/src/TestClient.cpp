@@ -74,7 +74,7 @@ class TPedanticProtocol : public _P
 {
     public:
         TPedanticProtocol(std::shared_ptr<TTransport>& transport)
-          : _P(transport), m_last_seqid(std::numeric_limits<int32_t>::max() - 10) { }
+          : _P(transport), m_last_seqid((std::numeric_limits<int32_t>::max)() - 10) { }
 
         virtual uint32_t writeMessageBegin_virt(const std::string& name,
                                            const TMessageType messageType,
