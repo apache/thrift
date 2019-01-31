@@ -175,7 +175,7 @@ RUN apt-get install -y --no-install-recommends \
       ant \
       ant-optional \
       maven \
-      openjdk-11-jdk-headless
+      openjdk-11-jdk
 
 RUN apt-get install -y --no-install-recommends \
 `# Lua dependencies` \
