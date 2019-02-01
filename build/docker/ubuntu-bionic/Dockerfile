@@ -70,6 +70,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
       gdb \
       libasound2 \
       libatk-bridge2.0-0 \
+      libgtk-3-0 \
       llvm \
       ninja-build \
       pkg-config \
