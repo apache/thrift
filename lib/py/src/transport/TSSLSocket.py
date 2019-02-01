@@ -232,6 +232,7 @@ class TSSLSocket(TSocket.TSocket, TSSLBase):
           ``validate_callback`` (cert, hostname) -> None:
               Called after SSL handshake. Can raise when hostname does not
               match the cert.
+          ``socket_keepalive`` enable TCP keepalive, default off.
         """
         self.is_valid = False
         self.peercert = None
@@ -259,9 +260,11 @@ class TSSLSocket(TSocket.TSocket, TSSLBase):
             kwargs['cert_reqs'] = ssl.CERT_REQUIRED if validate else ssl.CERT_NONE
 
         unix_socket = kwargs.pop('unix_socket', None)
+        socket_keepalive = kwargs.pop('socket_keepalive', False)
         self._validate_callback = kwargs.pop('validate_callback', _match_hostname)
         TSSLBase.__init__(self, False, host, kwargs)
-        TSocket.TSocket.__init__(self, host, port, unix_socket)
+        TSocket.TSocket.__init__(self, host, port, unix_socket,
+                                 socket_keepalive=socket_keepalive)
 
     def close(self):
         try:
