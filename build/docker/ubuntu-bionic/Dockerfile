@@ -69,6 +69,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
       flex \
       gdb \
       libasound2 \
+      libatk-bridge2.0-0 \
       llvm \
       ninja-build \
       pkg-config \
