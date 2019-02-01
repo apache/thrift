@@ -68,6 +68,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
       debhelper \
       flex \
       gdb \
+      libasound2 \
+      libatk-bridge2.0-0 \
+      libgtk-3-0 \
       llvm \
       ninja-build \
       pkg-config \
@@ -174,9 +177,8 @@ RUN apt-get install -y --no-install-recommends \
 `# Java dependencies` \
       ant \
       ant-optional \
-      openjdk-8-jdk \
-      maven && \
-    update-alternatives --set java /usr/lib/jvm/java-8-openjdk-amd64/jre/bin/java
+      maven \
+      openjdk-11-jdk-headless
 
 RUN apt-get install -y --no-install-recommends \
 `# Lua dependencies` \
