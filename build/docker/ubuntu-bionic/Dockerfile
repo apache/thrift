@@ -68,6 +68,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
       debhelper \
       flex \
       gdb \
+      libasound2 \
       llvm \
       ninja-build \
       pkg-config \
@@ -175,7 +176,7 @@ RUN apt-get install -y --no-install-recommends \
       ant \
       ant-optional \
       maven \
-      openjdk-11-jdk
+      openjdk-11-jdk-headless
 
 RUN apt-get install -y --no-install-recommends \
 `# Lua dependencies` \
