@@ -22,6 +22,8 @@
 #include <thrift/concurrency/Monitor.h>
 
 #include <assert.h>
+#include <chrono>
+#include <thread>
 #include <iostream>
 
 namespace apache {
@@ -223,7 +225,7 @@ public:
   }
 
   /**
-   * This test creates one tasks, and tries to remove it after it has expired.
+   * This test creates one task, and tries to remove it after it has expired.
    */
   bool test04(uint64_t timeout = 1000LL) {
     TimerManager timerManager;
@@ -237,15 +239,24 @@ public:
     shared_ptr<TimerManagerTests::Task> task
       = shared_ptr<TimerManagerTests::Task>(new TimerManagerTests::Task(_monitor, timeout / 10));
     TimerManager::Timer timer = timerManager.add(task, task->_timeout);
+    task.reset();
 
     // Wait until the task has completed
     _monitor.wait(timeout);
 
     // Verify behavior when removing the expired task
-    try {
-      timerManager.remove(timer);
-      assert(nullptr == "ERROR: This remove should send a NoSuchTaskException exception.");
-    } catch (NoSuchTaskException&) {
+    // notify is called inside the task so the task may still
+    // be running when we get here, so we need to loop...
+    for (;;) {
+      try {
+        timerManager.remove(timer);
+        assert(nullptr == "ERROR: This remove should throw NoSuchTaskException, or UncancellableTaskException.");
+      } catch (const NoSuchTaskException&) {
+          break;
+      } catch (const UncancellableTaskException&) {
+          // the thread was still exiting; try again...
+          std::this_thread::sleep_for(std::chrono::milliseconds(1));
+      }
     }
 
     return true;
