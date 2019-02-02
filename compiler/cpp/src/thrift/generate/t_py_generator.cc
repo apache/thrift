@@ -52,6 +52,12 @@ public:
                  const std::map<std::string, std::string>& parsed_options,
                  const std::string& option_string)
     : t_generator (program) {
+
+    if (program->get_name().find_first_of(" -") != std::string::npos) {
+      throw std::string("space or dash detected in thrift filename '")
+          + program->get_name() + std::string(".thrift' - invalid for python modules");
+    }
+
     std::map<std::string, std::string>::const_iterator iter;
 
     gen_newstyle_ = true;
