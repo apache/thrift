@@ -45,7 +45,7 @@ environment:
      PYTHON_VERSION: 3.6
      QT_VERSION: 5.10
      ZLIB_VERSION: 1.2.11
-     DISABLED_TESTS: (concurrency_test|StressTestNonBlocking)
+     DISABLED_TESTS: (StressTestNonBlocking)
 
    - PROFILE: MSVC2015
      PLATFORM: x86
@@ -56,18 +56,18 @@ environment:
      PYTHON_VERSION: 3.5
      QT_VERSION: 5.8
      ZLIB_VERSION: 1.2.8
-     DISABLED_TESTS: (concurrency_test|StressTestNonBlocking)
+     DISABLED_TESTS: (StressTestNonBlocking)
      APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015
 
    - PROFILE: MINGW
      PLATFORM: x64
      CONFIGURATION: RelWithDebInfo
-     DISABLED_TESTS: (concurrency_test|StressTestNonBlocking)
+     DISABLED_TESTS: (StressTestNonBlocking)
 
    - PROFILE: CYGWIN
      PLATFORM: x64
      CONFIGURATION: RelWithDebInfo
-     DISABLED_TESTS: (concurrency_test|ZlibTest|OpenSSLManualInitTest|TNonblockingServerTest|StressTestNonBlocking)
+     DISABLED_TESTS: (ZlibTest|OpenSSLManualInitTest|TNonblockingServerTest|StressTestNonBlocking)
 
 install:
   - cd %APPVEYOR_BUILD_FOLDER%
