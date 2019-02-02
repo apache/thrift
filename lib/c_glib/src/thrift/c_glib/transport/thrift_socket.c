@@ -163,7 +163,7 @@ thrift_socket_open (ThriftTransport *transport, GError **error)
   /* open a connection */
   if (connect (tsocket->sd, (struct sockaddr *) &pin, sizeof(pin)) == -1)
   {
-      thrift_socket_close(tsocket, NULL);
+      thrift_socket_close(transport, NULL);
       g_set_error (error, THRIFT_TRANSPORT_ERROR, THRIFT_TRANSPORT_ERROR_CONNECT,
                  "failed to connect to host %s:%d - %s",
                  tsocket->hostname, tsocket->port, strerror(errno));
