@@ -132,6 +132,7 @@ include_thriftdir = $(includedir)/thrift
 include_thrift_HEADERS = \
                          $(top_builddir)/config.h \
                          src/thrift/thrift-config.h \
+                         src/thrift/thrift_export.h \
                          src/thrift/TDispatchProcessor.h \
                          src/thrift/Thrift.h \
                          src/thrift/TOutput.h \

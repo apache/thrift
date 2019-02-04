@@ -23,6 +23,10 @@ REQUIRE_BOOST_HEADERS()
 
 include_directories(src)
 
+if(NOT BUILD_SHARED_LIBS)
+  add_definitions("-DTHRIFT_STATIC_DEFINE")
+endif()
+
 # SYSLIBS contains libraries that need to be linked to all lib targets
 set(SYSLIBS "")
 

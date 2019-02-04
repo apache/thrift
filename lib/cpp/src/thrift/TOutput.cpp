@@ -27,7 +27,7 @@
 namespace apache {
 namespace thrift {
 
-TOutput GlobalOutput;
+THRIFT_EXPORT TOutput GlobalOutput;
 
 TOutput::TOutput() : f_(&errorTimeWrapper) {}
 
