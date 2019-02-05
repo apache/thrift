@@ -45,8 +45,8 @@ namespace Thrift.Server
         {
             ProcessorFactory = processorFactory ?? throw new ArgumentNullException(nameof(processorFactory));
             ServerTransport = serverTransport;
-            InputTransportFactory = inputTransportFactory ?? throw new ArgumentNullException(nameof(inputTransportFactory));
-            OutputTransportFactory = outputTransportFactory ?? throw new ArgumentNullException(nameof(outputTransportFactory));
+            InputTransportFactory = inputTransportFactory ?? new TTransportFactory();
+            OutputTransportFactory = outputTransportFactory ?? new TTransportFactory();
             InputProtocolFactory = inputProtocolFactory ?? throw new ArgumentNullException(nameof(inputProtocolFactory));
             OutputProtocolFactory = outputProtocolFactory ?? throw new ArgumentNullException(nameof(outputProtocolFactory));
             Logger = logger; // null is absolutely legal

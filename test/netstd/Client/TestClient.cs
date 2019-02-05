@@ -35,6 +35,29 @@ using Thrift.Transport.Client;
 
 namespace ThriftTest
 {
+    internal enum ProtocolChoice
+    {
+        Binary,
+        Compact,
+        Json
+    }
+
+    // it does not make much sense to use buffered when we already use framed
+    internal enum LayeredChoice
+    {
+        None,
+        Buffered,
+        Framed
+    }
+
+
+    internal enum TransportChoice
+    {
+        Socket,
+        TlsSocket,
+        NamedPipe
+    }
+
     public class TestClient
     {
         private class TestParams
@@ -45,10 +68,9 @@ namespace ThriftTest
             public int numThreads = 1;
             public string url;
             public string pipe;
-            public bool buffered;
-            public bool framed;
-            public string protocol;
-            public bool encrypted = false;
+            public LayeredChoice layered = LayeredChoice.None;
+            public ProtocolChoice protocol = ProtocolChoice.Binary;
+            public TransportChoice transport = TransportChoice.Socket;
 
             internal void Parse( List<string> args)
             {
@@ -65,26 +87,28 @@ namespace ThriftTest
                     else if (args[i].StartsWith("--pipe="))
                     {
                         pipe = args[i].Substring(args[i].IndexOf("=") + 1);
-                        Console.WriteLine("Using named pipes transport");
+                        transport = TransportChoice.NamedPipe;
                     }
                     else if (args[i].StartsWith("--host="))
                     {
                         // check there for ipaddress
                         host = new IPAddress(Encoding.Unicode.GetBytes(args[i].Substring(args[i].IndexOf("=") + 1)));
+                        if (transport != TransportChoice.TlsSocket)
+                            transport = TransportChoice.Socket;
                     }
                     else if (args[i].StartsWith("--port="))
                     {
                         port = int.Parse(args[i].Substring(args[i].IndexOf("=") + 1));
+                        if (transport != TransportChoice.TlsSocket)
+                            transport = TransportChoice.Socket;
                     }
                     else if (args[i] == "-b" || args[i] == "--buffered" || args[i] == "--transport=buffered")
                     {
-                        buffered = true;
-                        Console.WriteLine("Using buffered sockets");
+                        layered = LayeredChoice.Buffered;
                     }
                     else if (args[i] == "-f" || args[i] == "--framed" || args[i] == "--transport=framed")
                     {
-                        framed = true;
-                        Console.WriteLine("Using framed transport");
+                        layered = LayeredChoice.Framed;
                     }
                     else if (args[i] == "-t")
                     {
@@ -92,28 +116,76 @@ namespace ThriftTest
                     }
                     else if (args[i] == "--binary" || args[i] == "--protocol=binary")
                     {
-                        protocol = "binary";
-                        Console.WriteLine("Using binary protocol");
+                        protocol = ProtocolChoice.Binary;
                     }
                     else if (args[i] == "--compact" || args[i] == "--protocol=compact")
                     {
-                        protocol = "compact";
-                        Console.WriteLine("Using compact protocol");
+                        protocol = ProtocolChoice.Compact;
                     }
                     else if (args[i] == "--json" || args[i] == "--protocol=json")
                     {
-                        protocol = "json";
-                        Console.WriteLine("Using JSON protocol");
+                        protocol = ProtocolChoice.Json;
                     }
                     else if (args[i] == "--ssl")
                     {
-                        encrypted = true;
-                        Console.WriteLine("Using encrypted transport");
+                        transport = TransportChoice.TlsSocket;
+                    }
+                    else if (args[i] == "--help")
+                    {
+                        PrintOptionsHelp();
+                        return;
                     }
                     else
                     {
-                        //throw new ArgumentException(args[i]);
+                        Console.WriteLine("Invalid argument: {0}", args[i]);
+                        PrintOptionsHelp();
+                        return;
                     }
+                }
+
+                switch (transport)
+                {
+                    case TransportChoice.Socket:
+                        Console.WriteLine("Using socket transport");
+                        break;
+                    case TransportChoice.TlsSocket:
+                        Console.WriteLine("Using encrypted transport");
+                        break;
+                    case TransportChoice.NamedPipe:
+                        Console.WriteLine("Using named pipes transport");
+                        break;
+                    default:  // unhandled case
+                        Debug.Assert(false);
+                        break;
+                }
+
+                switch (layered)
+                {
+                    case LayeredChoice.Framed:
+                        Console.WriteLine("Using framed transport");
+                        break;
+                    case LayeredChoice.Buffered:
+                        Console.WriteLine("Using buffered transport");
+                        break;
+                    default:  // unhandled case?
+                        Debug.Assert(layered == LayeredChoice.None);
+                        break;
+                }
+
+                switch (protocol)
+                {
+                    case ProtocolChoice.Binary:
+                        Console.WriteLine("Using binary protocol");
+                        break;
+                    case ProtocolChoice.Compact:
+                        Console.WriteLine("Using compact protocol");
+                        break;
+                    case ProtocolChoice.Json:
+                        Console.WriteLine("Using JSON protocol");
+                        break;
+                    default:  // unhandled case?
+                        Debug.Assert(false);
+                        break;
                 }
             }
 
@@ -156,16 +228,15 @@ namespace ThriftTest
                     // endpoint transport
                     TTransport trans = null;
 
-                    if (pipe != null)
+                    switch(transport)
                     {
-                        trans = new TNamedPipeTransport(pipe);
-                    }
-                    else
-                    {
-                        if (encrypted)
-                        {
+                        case TransportChoice.NamedPipe:
+                            Debug.Assert(pipe != null);
+                            trans = new TNamedPipeTransport(pipe);
+                            break;
+
+                        case TransportChoice.TlsSocket:
                            var cert = GetClientCert();
-                        
                             if (cert == null || !cert.HasPrivateKey)
                             {
                                 throw new InvalidOperationException("Certificate doesn't contain private key");
@@ -174,22 +245,27 @@ namespace ThriftTest
                             trans = new TTlsSocketTransport(host, port, 0, cert, 
                                 (sender, certificate, chain, errors) => true,
                                 null, SslProtocols.Tls | SslProtocols.Tls11 | SslProtocols.Tls12);
-                        }
-                        else
-                        {
+                            break;
+
+                        case TransportChoice.Socket:
+                        default:
                             trans = new TSocketTransport(host, port);
-                        }
+                            break;
                     }
+
 
                     // layered transport
-                    if (buffered)
+                    switch(layered)
                     {
-                        trans = new TBufferedTransport(trans);
-                    }
-
-                    if (framed)
-                    {
-                        trans = new TFramedTransport(trans);
+                        case LayeredChoice.Buffered:
+                            trans = new TBufferedTransport(trans);
+                            break;
+                        case LayeredChoice.Framed:
+                            trans = new TFramedTransport(trans);
+                            break;
+                        default:
+                            Debug.Assert(layered == LayeredChoice.None);
+                            break;
                     }
 
                     return trans;
@@ -200,17 +276,16 @@ namespace ThriftTest
 
             public TProtocol CreateProtocol(TTransport transport)
             {
-                if (protocol == "compact")
+                switch (protocol)
                 {
-                    return new TCompactProtocol(transport);
+                    case ProtocolChoice.Compact:
+                        return new TCompactProtocol(transport);
+                    case ProtocolChoice.Json:
+                        return new TJsonProtocol(transport);
+                    case ProtocolChoice.Binary:
+                    default:
+                        return new TBinaryProtocol(transport);
                 }
-
-                if (protocol == "json")
-                {
-                    return new TJsonProtocol(transport);
-                }
-
-                return new TBinaryProtocol(transport);
             }
         }
 

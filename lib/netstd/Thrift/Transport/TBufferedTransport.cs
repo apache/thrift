@@ -20,7 +20,7 @@ using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Thrift.Transport.Client
+namespace Thrift.Transport
 {
     // ReSharper disable once InconsistentNaming
     public class TBufferedTransport : TTransport
@@ -30,6 +30,14 @@ namespace Thrift.Transport.Client
         private readonly MemoryStream _outputBuffer = new MemoryStream(0);
         private readonly TTransport _transport;
         private bool _isDisposed;
+
+        public class Factory : TTransportFactory
+        {
+            public override TTransport GetTransport(TTransport trans)
+            {
+                return new TBufferedTransport(trans);
+            }
+        }
 
         //TODO: should support only specified input transport?
         public TBufferedTransport(TTransport transport, int bufSize = 1024)

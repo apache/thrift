@@ -20,7 +20,7 @@ using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Thrift.Transport.Client
+namespace Thrift.Transport
 {
     //TODO: check for correct implementation 
 
@@ -34,6 +34,14 @@ namespace Thrift.Transport.Client
         private readonly MemoryStream _writeBuffer = new MemoryStream(1024);
 
         private bool _isDisposed;
+
+        public class Factory : TTransportFactory
+        {
+            public override TTransport GetTransport(TTransport trans)
+            {
+                return new TFramedTransport(trans);
+            }
+        }
 
         public TFramedTransport(TTransport transport)
         {

@@ -52,6 +52,7 @@ namespace Client
                     PrintHelp();
                     return 0;
                 default:
+                    Console.WriteLine("Invalid argument: {0}", firstArg);
                     PrintHelp();
                     return -1;
             }
