@@ -17,6 +17,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Security.Authentication;
@@ -35,13 +36,34 @@ using Thrift.Transport.Server;
 
 namespace ThriftTest
 {
+    internal enum ProtocolChoice
+    {
+        Binary,
+        Compact,
+        Json
+    }
+
+    // it does not make much sense to use buffered when we already use framed
+    internal enum LayeredChoice
+    {
+        None,
+        Buffered,
+        Framed
+    }
+
+
+    internal enum TransportChoice
+    {
+        Socket,
+        TlsSocket,
+        NamedPipe
+    }
+
     internal class ServerParam
     {
-        internal bool useBufferedSockets = false;
-        internal bool useFramed = false;
-        internal bool useEncryption = false;
-        internal bool compact = false;
-        internal bool json = false;
+        internal LayeredChoice layered = LayeredChoice.None;
+        internal ProtocolChoice protocol = ProtocolChoice.Binary;
+        internal TransportChoice transport = TransportChoice.Socket;
         internal int port = 9090;
         internal string pipe = null;
 
@@ -52,30 +74,33 @@ namespace ThriftTest
                 if (args[i].StartsWith("--pipe="))
                 {
                     pipe = args[i].Substring(args[i].IndexOf("=") + 1);
+                    transport = TransportChoice.NamedPipe;
                 }
                 else if (args[i].StartsWith("--port="))
                 {
                     port = int.Parse(args[i].Substring(args[i].IndexOf("=") + 1));
+                    if(transport != TransportChoice.TlsSocket)
+                        transport = TransportChoice.Socket;
                 }
                 else if (args[i] == "-b" || args[i] == "--buffered" || args[i] == "--transport=buffered")
                 {
-                    useBufferedSockets = true;
+                    layered = LayeredChoice.Buffered;
                 }
                 else if (args[i] == "-f" || args[i] == "--framed" || args[i] == "--transport=framed")
                 {
-                    useFramed = true;
+                    layered = LayeredChoice.Framed;
                 }
                 else if (args[i] == "--binary" || args[i] == "--protocol=binary")
                 {
-                    // nothing needed
+                    protocol = ProtocolChoice.Binary;
                 }
                 else if (args[i] == "--compact" || args[i] == "--protocol=compact")
                 {
-                    compact = true;
+                    protocol = ProtocolChoice.Compact;
                 }
                 else if (args[i] == "--json" || args[i] == "--protocol=json")
                 {
-                    json = true;
+                    protocol = ProtocolChoice.Json;
                 }
                 else if (args[i] == "--threaded" || args[i] == "--server-type=threaded")
                 {
@@ -91,14 +116,34 @@ namespace ThriftTest
                 }
                 else if (args[i] == "--ssl")
                 {
-                    useEncryption = true;
+                    transport = TransportChoice.TlsSocket;
+                }
+                else if (args[i] == "--help")
+                {
+                    PrintOptionsHelp();
+                    return;
                 }
                 else
                 {
-                    //throw new ArgumentException(args[i]);
+                    Console.WriteLine("Invalid argument: {0}", args[i]);
+                    PrintOptionsHelp();
+                    return;
                 }
             }
 
+        }
+
+        internal static void PrintOptionsHelp()
+        {
+            Console.WriteLine("Server options:");
+            Console.WriteLine("  --pipe=<pipe name>");
+            Console.WriteLine("  --port=<port number>");
+            Console.WriteLine("  --transport=<transport name>    one of buffered,framed  (defaults to none)");
+            Console.WriteLine("  --protocol=<protocol name>      one of compact,json  (defaults to binary)");
+            Console.WriteLine("  --server-type=<type>            one of threaded,threadpool  (defaults to simple)");
+            Console.WriteLine("  --processor=<prototype>");
+            Console.WriteLine("  --ssl");
+            Console.WriteLine();
         }
     }
 
@@ -448,18 +493,6 @@ namespace ThriftTest
             }
         }
 
-        internal static void PrintOptionsHelp()
-        {
-            Console.WriteLine("Server options:");
-            Console.WriteLine("  --pipe=<pipe name>");
-            Console.WriteLine("  --port=<port number>");
-            Console.WriteLine("  --transport=<transport name>    one of buffered,framed  (defaults to none)");
-            Console.WriteLine("  --protocol=<protocol name>      one of compact,json  (defaults to binary)");
-            Console.WriteLine("  --server-type=<type>            one of threaded,threadpool  (defaults to simple)");
-            Console.WriteLine("  --processor=<prototype>");
-            Console.WriteLine("  --ssl");
-            Console.WriteLine();
-        }
 
         private static X509Certificate2 GetServerCert()
         {
@@ -515,53 +548,74 @@ namespace ThriftTest
                 }
 
 
+                TTransportFactory transFactory = null;
+
                 // Transport
                 TServerTransport trans;
-                if (param.pipe != null)
+                var useBuffered = (param.layered == LayeredChoice.Buffered);
+                var useFramed = (param.layered == LayeredChoice.Framed);
+                switch (param.transport)
                 {
-                    trans = new TNamedPipeServerTransport(param.pipe);
-                }
-//                else if (param.useFramed)
-//                {
-//                    trans = new TServerFramedTransport(param.port);
-//                }
-                else
-                {
-                    if (param.useEncryption)
-                    {
+                    case TransportChoice.NamedPipe:
+                        Debug.Assert(param.pipe != null);
+                        trans = new TNamedPipeServerTransport(param.pipe);
+                        break;
+
+
+                    case TransportChoice.TlsSocket:
                         var cert = GetServerCert();
-                        
                         if (cert == null || !cert.HasPrivateKey)
                         {
                             throw new InvalidOperationException("Certificate doesn't contain private key");
                         }
-                        
-                        trans = new TTlsServerSocketTransport(param.port, param.useBufferedSockets, param.useFramed, cert, 
+
+                        transFactory = new TTransportFactory(); // framed/buffered is built into socket transports
+                        trans = new TTlsServerSocketTransport( param.port, useBuffered, useFramed, cert,
                             (sender, certificate, chain, errors) => true, 
                             null, SslProtocols.Tls | SslProtocols.Tls11 | SslProtocols.Tls12);
-                    }
-                    else
+                        break;
+
+                    case TransportChoice.Socket:
+                    default:  
+                        transFactory = new TTransportFactory(); // framed/buffered is built into socket transports
+                        trans = new TServerSocketTransport(param.port, 0, useBuffered, useFramed);
+                        break;
+                }
+
+                // add layered transport, if not already set above
+                if (transFactory == null)
+                {
+                    switch (param.layered)
                     {
-                        trans = new TServerSocketTransport(param.port, 0, param.useBufferedSockets, param.useFramed);
+                        case LayeredChoice.Framed:
+                            transFactory = new TFramedTransport.Factory();
+                            break;
+                        case LayeredChoice.Buffered:
+                            transFactory = new TBufferedTransport.Factory();
+                            break;
                     }
                 }
 
+                // Protocol
                 ITProtocolFactory proto;
-                if (param.compact)
-                    proto = new TCompactProtocol.Factory();
-                else if (param.json)
-                    proto = new TJsonProtocol.Factory();
-                else
-                    proto = new TBinaryProtocol.Factory();
-
-                ITProcessorFactory processorFactory;
+                switch (param.protocol)
+                {
+                    case ProtocolChoice.Compact:
+                        proto = new TCompactProtocol.Factory();
+                        break;
+                    case ProtocolChoice.Json:
+                        proto = new TJsonProtocol.Factory();
+                        break;
+                    case ProtocolChoice.Binary:
+                    default:
+                        proto = new TBinaryProtocol.Factory();
+                        break;
+                }
 
                 // Processor
                 var testHandler = new TestHandlerAsync();
                 var testProcessor = new ThriftTest.AsyncProcessor(testHandler);
-                processorFactory = new TSingletonProcessorFactory(testProcessor);
-
-                TTransportFactory transFactory = new TTransportFactory(); 
+                var processorFactory = new TSingletonProcessorFactory(testProcessor);
 
                 TServer serverEngine = new TSimpleAsyncServer(processorFactory, trans, transFactory, transFactory, proto, proto, logger);
 
@@ -573,11 +627,11 @@ namespace ThriftTest
                 var where = (! string.IsNullOrEmpty(param.pipe)) ? "on pipe " + param.pipe : "on port " + param.port;
                 Console.WriteLine("Starting the AsyncBaseServer " + where +
                                   " with processor TPrototypeProcessorFactory prototype factory " +
-                                  (param.useBufferedSockets ? " with buffered socket" : "") +
-                                  (param.useFramed ? " with framed transport" : "") +
-                                  (param.useEncryption ? " with encryption" : "") +
-                                  (param.compact ? " with compact protocol" : "") +
-                                  (param.json ? " with json protocol" : "") +
+                                  (param.layered == LayeredChoice.Buffered ? " with buffered transport" : "") +
+                                  (param.layered == LayeredChoice.Framed ? " with framed transport" : "") +
+                                  (param.transport == TransportChoice.TlsSocket ? " with encryption" : "") +
+                                  (param.protocol == ProtocolChoice.Compact ? " with compact protocol" : "") +
+                                  (param.protocol == ProtocolChoice.Json ? " with json protocol" : "") +
                                   "...");
                 serverEngine.ServeAsync(CancellationToken.None).GetAwaiter().GetResult();
                 Console.ReadLine();

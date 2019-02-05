@@ -32,7 +32,7 @@ namespace Thrift.Transport
             Interrupted
         }
 
-        protected ExceptionType ExType;
+        public ExceptionType ExType { get; private set; }
 
         public TTransportException()
         {

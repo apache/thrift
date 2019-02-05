@@ -52,6 +52,7 @@ namespace Server
                     PrintHelp();
                     return 0;
                 default:
+                    Console.WriteLine("Invalid argument: {0}", firstArg);
                     PrintHelp();
                     return -1;
             }
@@ -64,7 +65,7 @@ namespace Server
             Console.WriteLine("  Server  --help");
             Console.WriteLine("");
 
-            TestServer.PrintOptionsHelp();
+            ServerParam.PrintOptionsHelp();
         }
     }
 }
