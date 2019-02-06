@@ -317,7 +317,7 @@ abstract class TSaslTransport extends TTransport {
       if (!readSaslHeader && e.getType() == TTransportException.END_OF_FILE) {
         underlyingTransport.close();
         LOGGER.debug("No data or no sasl data in the stream");
-        throw new TSaslTransportException("No data or no sasl data in the stream");
+        throw new TSaslTransportException("No data or no sasl data in the stream during negotiation", e);
       }
       throw e;
     }
