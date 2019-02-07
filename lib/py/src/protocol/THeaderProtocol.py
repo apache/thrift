@@ -19,7 +19,7 @@
 
 from thrift.protocol.TBinaryProtocol import TBinaryProtocolAccelerated
 from thrift.protocol.TCompactProtocol import TCompactProtocolAccelerated
-from thrift.protocol.TProtocol import TProtocolBase, TProtocolException
+from thrift.protocol.TProtocol import TProtocolBase, TProtocolException, TProtocolFactory
 from thrift.Thrift import TApplicationException, TMessageType
 from thrift.transport.THeaderTransport import THeaderTransport, THeaderSubprotocolID, THeaderClientType
 
@@ -217,7 +217,7 @@ class THeaderProtocol(TProtocolBase):
         return self._protocol.readBinary()
 
 
-class THeaderProtocolFactory(object):
+class THeaderProtocolFactory(TProtocolFactory):
     def __init__(self, allowed_client_types=(THeaderClientType.HEADERS,)):
         self.allowed_client_types = allowed_client_types
 
