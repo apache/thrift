@@ -251,13 +251,6 @@
         "--verbose",
         "--host=localhost",
         "--genpydir=gen-py"
-      ],
-      "protocols": [
-        "multi",
-        "multi:multia",
-        "multic",
-        "multic:multiac",
-        "multij"
       ]
     },
     "transports": [
@@ -271,12 +264,20 @@
       "ip-ssl"
     ],
     "protocols": [
-      "compact",
       "binary",
-      "json",
       "binary:accel",
+      "compact",
       "compact:accelc",
-      "header"
+      "header",
+      "json",
+      "multi",
+      "multi:multia",
+      "multia",
+      "multiac",
+      "multic",
+      "multic:multiac",
+      "multih",
+      "multij"
     ],
     "workdir": "py"
   },
@@ -299,13 +300,6 @@
         "TestClient.py",
         "--host=localhost",
         "--genpydir=gen-py"
-      ],
-      "protocols": [
-        "multi",
-        "multi:multia",
-        "multic",
-        "multic:multiac",
-        "multij"
       ]
     },
     "transports": [
@@ -319,12 +313,20 @@
       "ip-ssl"
     ],
     "protocols": [
-      "compact",
       "binary",
-      "json",
       "binary:accel",
+      "compact",
       "compact:accelc",
-      "header"
+      "header",
+      "json",
+      "multi",
+      "multi:multia",
+      "multia",
+      "multiac",
+      "multic",
+      "multic:multiac",
+      "multih",
+      "multij"
     ],
     "workdir": "py"
   },

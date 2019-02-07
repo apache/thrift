@@ -27,8 +27,7 @@ import unittest
 from optparse import OptionParser
 from util import local_libpath
 sys.path.insert(0, local_libpath())
-from thrift.protocol import TProtocolDecorator
-from thrift.protocol import TProtocol
+from thrift.protocol import TProtocol, TProtocolDecorator
 
 SCRIPT_DIR = os.path.abspath(os.path.dirname(__file__))
 
@@ -272,7 +271,7 @@ class AbstractTest(unittest.TestCase):
 
 
 # LAST_SEQID is a global because we have one transport and multiple protocols
-# running on it (when multiplexec)
+# running on it (when multiplexed)
 LAST_SEQID = None
 
 
@@ -398,6 +397,16 @@ class HeaderTest(MultiplexedOptionalTest):
         return make_pedantic(factory.getProtocol(transport))
 
 
+class MultiplexedHeaderTest(MultiplexedOptionalTest):
+    def get_protocol(self, transport):
+        wrapped_proto = make_pedantic(THeaderProtocol.THeaderProtocolFactory().getProtocol(transport))
+        return TMultiplexedProtocol.TMultiplexedProtocol(wrapped_proto, "ThriftTest")
+
+    def get_protocol2(self, transport):
+        wrapped_proto = make_pedantic(THeaderProtocol.THeaderProtocolFactory().getProtocol(transport))
+        return TMultiplexedProtocol.TMultiplexedProtocol(wrapped_proto, "SecondService")
+
+
 def suite():
     suite = unittest.TestSuite()
     loader = unittest.TestLoader()
@@ -421,6 +430,8 @@ def suite():
         suite.addTest(loader.loadTestsFromTestCase(MultiplexedAcceleratedCompactTest))
     elif options.proto == 'multic':
         suite.addTest(loader.loadTestsFromTestCase(MultiplexedCompactTest))
+    elif options.proto == 'multih':
+        suite.addTest(loader.loadTestsFromTestCase(MultiplexedHeaderTest))
     elif options.proto == 'multij':
         suite.addTest(loader.loadTestsFromTestCase(MultiplexedJSONTest))
     else:
@@ -460,7 +471,7 @@ if __name__ == "__main__":
                       dest="verbose", const=0,
                       help="minimal output")
     parser.add_option('--protocol', dest="proto", type="string",
-                      help="protocol to use, one of: accel, accelc, binary, compact, header, json, multi, multia, multiac, multic, multij")
+                      help="protocol to use, one of: accel, accelc, binary, compact, header, json, multi, multia, multiac, multic, multih, multij")
     parser.add_option('--transport', dest="trans", type="string",
                       help="transport to use, one of: buffered, framed, http")
     parser.set_defaults(framed=False, http_path=None, verbose=1, host='localhost', port=9090, proto='binary')
