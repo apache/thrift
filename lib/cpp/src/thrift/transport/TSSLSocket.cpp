@@ -19,9 +19,10 @@
 
 #include <thrift/thrift-config.h>
 
-#include <errno.h>
-#include <string>
 #include <cstring>
+#include <errno.h>
+#include <memory>
+#include <string>
 #ifdef HAVE_ARPA_INET_H
 #include <arpa/inet.h>
 #endif
@@ -857,7 +858,7 @@ TSSLSocketFactory::TSSLSocketFactory(SSLProtocol protocol) : server_(false) {
     randomize();
   }
   count_++;
-  ctx_ = std::shared_ptr<SSLContext>(new SSLContext(protocol));
+  ctx_ = std::make_shared<SSLContext>(protocol);
 }
 
 TSSLSocketFactory::~TSSLSocketFactory() {

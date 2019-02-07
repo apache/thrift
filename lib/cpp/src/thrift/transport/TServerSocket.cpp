@@ -20,6 +20,7 @@
 #include <thrift/thrift-config.h>
 
 #include <cstring>
+#include <memory>
 #include <stdexcept>
 #include <sys/types.h>
 #ifdef HAVE_SYS_SOCKET_H
@@ -641,9 +642,9 @@ shared_ptr<TTransport> TServerSocket::acceptImpl() {
 
 shared_ptr<TSocket> TServerSocket::createSocket(THRIFT_SOCKET clientSocket) {
   if (interruptableChildren_) {
-    return shared_ptr<TSocket>(new TSocket(clientSocket, pChildInterruptSockReader_));
+    return std::make_shared<TSocket>(clientSocket, pChildInterruptSockReader_);
   } else {
-    return shared_ptr<TSocket>(new TSocket(clientSocket));
+    return std::make_shared<TSocket>(clientSocket);
   }
 }
 

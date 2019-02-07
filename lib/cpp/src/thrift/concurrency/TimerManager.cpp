@@ -22,6 +22,7 @@
 
 #include <assert.h>
 #include <iostream>
+#include <memory>
 #include <set>
 
 namespace apache {
@@ -152,7 +153,7 @@ private:
 TimerManager::TimerManager()
   : taskCount_(0),
     state_(TimerManager::UNINITIALIZED),
-    dispatcher_(shared_ptr<Dispatcher>(new Dispatcher(this))) {
+    dispatcher_(std::make_shared<Dispatcher>(this)) {
 }
 
 #if defined(_MSC_VER)

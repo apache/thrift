@@ -21,6 +21,7 @@
 
 #include <algorithm>
 #include <iostream>
+#include <memory>
 #if __cplusplus >= 201703L
 #include <random>
 #endif
@@ -129,7 +130,7 @@ TSocketPool::~TSocketPool() {
 }
 
 void TSocketPool::addServer(const string& host, int port) {
-  servers_.push_back(shared_ptr<TSocketPoolServer>(new TSocketPoolServer(host, port)));
+  servers_.push_back(std::make_shared<TSocketPoolServer>(host, port));
 }
 
 void TSocketPool::addServer(shared_ptr<TSocketPoolServer>& server) {

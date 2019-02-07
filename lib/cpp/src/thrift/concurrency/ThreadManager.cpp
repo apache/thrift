@@ -344,7 +344,7 @@ void ThreadManager::Impl::addWorker(size_t value) {
   std::set<shared_ptr<Thread> > newThreads;
   for (size_t ix = 0; ix < value; ix++) {
     shared_ptr<ThreadManager::Worker> worker
-        = shared_ptr<ThreadManager::Worker>(new ThreadManager::Worker(this));
+        = std::make_shared<ThreadManager::Worker>(this);
     newThreads.insert(threadFactory_->newThread(worker));
   }
 
@@ -480,7 +480,7 @@ void ThreadManager::Impl::add(shared_ptr<Runnable> value, int64_t timeout, int64
     }
   }
 
-  tasks_.push_back(shared_ptr<ThreadManager::Task>(new ThreadManager::Task(value, expiration)));
+  tasks_.push_back(std::make_shared<ThreadManager::Task>(value, expiration));
 
   // If idle thread is available notify it, otherwise all worker threads are
   // running and will get around to this task in time.
