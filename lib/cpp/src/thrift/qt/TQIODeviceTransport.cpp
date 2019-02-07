@@ -46,7 +46,7 @@ void TQIODeviceTransport::open() {
   }
 }
 
-bool TQIODeviceTransport::isOpen() {
+bool TQIODeviceTransport::isOpen() const {
   return dev_->isOpen();
 }
 

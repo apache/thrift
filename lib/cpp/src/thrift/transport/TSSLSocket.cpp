@@ -266,7 +266,7 @@ void TSSLSocket::init() {
   eventSafe_ = false;
 }
 
-bool TSSLSocket::isOpen() {
+bool TSSLSocket::isOpen() const {
   if (ssl_ == nullptr || !TSocket::isOpen()) {
     return false;
   }

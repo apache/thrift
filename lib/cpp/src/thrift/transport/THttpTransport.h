@@ -42,7 +42,7 @@ public:
 
   void open() override { transport_->open(); }
 
-  bool isOpen() { return transport_->isOpen(); }
+  bool isOpen() const override { return transport_->isOpen(); }
 
   bool peek() override { return transport_->peek(); }
 
