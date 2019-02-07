@@ -122,10 +122,8 @@ public:
         }
       }
 
-      for (auto ix = expiredTasks.begin();
-           ix != expiredTasks.end();
-           ++ix) {
-        (*ix)->run();
+      for (const auto & expiredTask : expiredTasks) {
+        expiredTask->run();
       }
 
     } while (manager_->state_ == TimerManager::STARTED);

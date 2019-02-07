@@ -415,8 +415,8 @@ void t_py_generator::init_generator() {
 string t_py_generator::render_includes() {
   const vector<t_program*>& includes = program_->get_includes();
   string result = "";
-  for (size_t i = 0; i < includes.size(); ++i) {
-    result += "import " + get_real_py_module(includes[i], gen_twisted_, package_prefix_) + ".ttypes\n";
+  for (auto include : includes) {
+    result += "import " + get_real_py_module(include, gen_twisted_, package_prefix_) + ".ttypes\n";
   }
   return result;
 }

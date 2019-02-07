@@ -54,18 +54,16 @@ void compare_namespace(t_program* newProgram, t_program* oldProgram)
    const std::map<std::string, std::string>& newNamespaceMap = newProgram->get_all_namespaces();
    const std::map<std::string, std::string>& oldNamespaceMap = oldProgram->get_all_namespaces();
 
-   for(auto oldNamespaceMapIt = oldNamespaceMap.begin();
-         oldNamespaceMapIt != oldNamespaceMap.end();
-         oldNamespaceMapIt++)
+   for(const auto & oldNamespaceMapIt : oldNamespaceMap)
    {
-      auto newNamespaceMapIt = newNamespaceMap.find(oldNamespaceMapIt->first);
+      auto newNamespaceMapIt = newNamespaceMap.find(oldNamespaceMapIt.first);
       if(newNamespaceMapIt == newNamespaceMap.end())
       {
-         thrift_audit_warning(1, "Language %s not found in new thrift file\n", (oldNamespaceMapIt->first).c_str());
+         thrift_audit_warning(1, "Language %s not found in new thrift file\n", (oldNamespaceMapIt.first).c_str());
       }
-      else if((newNamespaceMapIt->second) != oldNamespaceMapIt->second)
+      else if((newNamespaceMapIt->second) != oldNamespaceMapIt.second)
       {
-         thrift_audit_warning(1, "Namespace %s changed in new thrift file\n", (oldNamespaceMapIt->second).c_str());
+         thrift_audit_warning(1, "Namespace %s changed in new thrift file\n", (oldNamespaceMapIt.second).c_str());
       }
    }
 }
@@ -73,15 +71,13 @@ void compare_namespace(t_program* newProgram, t_program* oldProgram)
 void compare_enum_values(t_enum* newEnum,t_enum* oldEnum)
 {
    const std::vector<t_enum_value*>& oldEnumValues = oldEnum->get_constants();
-   for(auto oldEnumValuesIt = oldEnumValues.begin();
-         oldEnumValuesIt != oldEnumValues.end();
-         oldEnumValuesIt++)
+   for(auto oldEnumValue : oldEnumValues)
    {
-      int enumValue = (*oldEnumValuesIt)->get_value();
+      int enumValue = oldEnumValue->get_value();
       t_enum_value* newEnumValue = newEnum->get_constant_by_value(enumValue);
       if(newEnumValue != nullptr)
       {
-         std::string enumName = (*oldEnumValuesIt)->get_name();
+         std::string enumName = oldEnumValue->get_name();
          if(enumName != newEnumValue->get_name())
          {
             thrift_audit_warning(1, "Name of the value %d changed in enum %s\n", enumValue, oldEnum->get_name().c_str());
@@ -352,27 +348,23 @@ void compare_functions(const std::vector<t_function*>& newFunctionList, const st
 {
    std::map<std::string, t_function*> newFunctionMap;
    std::map<std::string, t_function*>::iterator newFunctionMapIt;
-   for(auto newFunctionIt = newFunctionList.begin();
-         newFunctionIt != newFunctionList.end();
-         newFunctionIt++)
+   for(auto newFunctionIt : newFunctionList)
    {
-      newFunctionMap[(*newFunctionIt)->get_name()] = *newFunctionIt;
+      newFunctionMap[newFunctionIt->get_name()] = newFunctionIt;
    }
 
-   for(auto oldFunctionIt = oldFunctionList.begin();
-         oldFunctionIt != oldFunctionList.end();
-         oldFunctionIt++)
+   for(auto oldFunctionIt : oldFunctionList)
    {
-      newFunctionMapIt = newFunctionMap.find((*oldFunctionIt)->get_name());
+      newFunctionMapIt = newFunctionMap.find(oldFunctionIt->get_name());
       if(newFunctionMapIt == newFunctionMap.end())
       {
-         thrift_audit_failure("New Thrift File has missing function %s\n",(*oldFunctionIt)->get_name().c_str());
+         thrift_audit_failure("New Thrift File has missing function %s\n",oldFunctionIt->get_name().c_str());
          continue;
       }
       else
       {
          //Function is found in both thrift files. Compare return type and argument list
-         compare_single_function(newFunctionMapIt->second, *oldFunctionIt);
+         compare_single_function(newFunctionMapIt->second, oldFunctionIt);
       }
    }
 
@@ -383,11 +375,9 @@ void compare_services(const std::vector<t_service*>& newServices, const std::vec
    std::vector<t_service*>::const_iterator oldServiceIt;
 
    std::map<std::string, t_service*> newServiceMap;
-   for(auto newServiceIt = newServices.begin();
-         newServiceIt != newServices.end();
-         newServiceIt++)
+   for(auto newService : newServices)
    {
-      newServiceMap[(*newServiceIt)->get_name()] = *newServiceIt;
+      newServiceMap[newService->get_name()] = newService;
    }
 
 

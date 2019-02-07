@@ -79,7 +79,7 @@ public:
     out_dir_base_ = "gen-xml";
   }
 
-  ~t_xml_generator() override {}
+  ~t_xml_generator() override = default;
 
   void init_generator() override;
   void close_generator() override;
@@ -245,8 +245,8 @@ void t_xml_generator::write_element_string(string name, string val) {
 
 string t_xml_generator::escape_xml_string(const string& input) {
   std::ostringstream ss;
-  for (std::string::const_iterator iter = input.begin(); iter != input.end(); iter++) {
-    switch (*iter) {
+  for (char iter : input) {
+    switch (iter) {
     case '&':
       ss << "&amp;";
       break;
@@ -263,7 +263,7 @@ string t_xml_generator::escape_xml_string(const string& input) {
       ss << "&gt;";
       break;
     default:
-      ss << *iter;
+      ss << iter;
       break;
     }
   }

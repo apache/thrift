@@ -499,8 +499,8 @@ string t_js_generator::render_includes() {
 
   if (gen_node_) {
     const vector<t_program*>& includes = program_->get_includes();
-    for (size_t i = 0; i < includes.size(); ++i) {
-      result += js_const_type_ + make_valid_nodeJs_identifier(includes[i]->get_name()) + "_ttypes = require('./" + includes[i]->get_name()
+    for (auto include : includes) {
+      result += js_const_type_ + make_valid_nodeJs_identifier(include->get_name()) + "_ttypes = require('./" + include->get_name()
                 + "_types');\n";
     }
     if (includes.size() > 0) {
@@ -521,8 +521,8 @@ string t_js_generator::render_ts_includes() {
     return result;
   }
   const vector<t_program*>& includes = program_->get_includes();
-  for (size_t i = 0; i < includes.size(); ++i) {
-    result += "import " + make_valid_nodeJs_identifier(includes[i]->get_name()) + "_ttypes = require('./" + includes[i]->get_name()
+  for (auto include : includes) {
+    result += "import " + make_valid_nodeJs_identifier(include->get_name()) + "_ttypes = require('./" + include->get_name()
               + "_types');\n";
   }
   if (includes.size() > 0) {
@@ -1440,8 +1440,8 @@ void t_js_generator::generate_process_function(t_service* tservice, t_function* 
   t_struct* exceptions = tfunction->get_xceptions();
   if (exceptions) {
     const vector<t_field*>& members = exceptions->get_members();
-    for (vector<t_field*>::const_iterator it = members.begin(); it != members.end(); ++it) {
-      t_type* t = get_true_type((*it)->get_type());
+    for (auto member : members) {
+      t_type* t = get_true_type(member->get_type());
       if (t->is_xception()) {
         if (!has_exception) {
           has_exception = true;
@@ -1504,8 +1504,8 @@ void t_js_generator::generate_process_function(t_service* tservice, t_function* 
   indent(f_service_) << "if ((err === null || typeof err === 'undefined')";
   if (has_exception) {
     const vector<t_field*>& members = exceptions->get_members();
-    for (vector<t_field*>::const_iterator it = members.begin(); it != members.end(); ++it) {
-      t_type* t = get_true_type((*it)->get_type());
+    for (auto member : members) {
+      t_type* t = get_true_type(member->get_type());
       if (t->is_xception()) {
         f_service_ << " || err instanceof " << js_type_namespace(t->get_program()) << t->get_name();
       }

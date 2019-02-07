@@ -125,7 +125,7 @@ private:
   };
 
 protected:
-  Fixture() : processor(new test::ParentServiceProcessor(make_shared<Handler>())) {}
+  Fixture() : processor(new test::ParentServiceProcessor(make_shared<Handler>())) = default;
 
   ~Fixture() {
     if (server) {

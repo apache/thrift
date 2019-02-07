@@ -347,8 +347,8 @@ string t_swift_generator::swift_imports() {
 
   if (namespaced_) {
     const vector<t_program*>& program_includes = program_->get_includes();
-    for (size_t i = 0; i < program_includes.size(); ++i) {
-      includes << ("import " + get_real_swift_module(program_includes[i])) << endl;
+    for (auto program_include : program_includes) {
+      includes << ("import " + get_real_swift_module(program_include)) << endl;
     }
   }
   includes << endl;

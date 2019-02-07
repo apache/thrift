@@ -424,24 +424,24 @@ void t_cpp_generator::init_generator() {
 
   // Include other Thrift includes
   const vector<t_program*>& includes = program_->get_includes();
-  for (size_t i = 0; i < includes.size(); ++i) {
-    f_types_ << "#include \"" << get_include_prefix(*(includes[i])) << includes[i]->get_name()
+  for (auto include : includes) {
+    f_types_ << "#include \"" << get_include_prefix(*include) << include->get_name()
              << "_types.h\"" << endl;
 
     // XXX(simpkins): If gen_templates_ is enabled, we currently assume all
     // included files were also generated with templates enabled.
-    f_types_tcc_ << "#include \"" << get_include_prefix(*(includes[i])) << includes[i]->get_name()
+    f_types_tcc_ << "#include \"" << get_include_prefix(*include) << include->get_name()
                  << "_types.tcc\"" << endl;
   }
   f_types_ << endl;
 
   // Include custom headers
   const vector<string>& cpp_includes = program_->get_cpp_includes();
-  for (size_t i = 0; i < cpp_includes.size(); ++i) {
-    if (cpp_includes[i][0] == '<') {
-      f_types_ << "#include " << cpp_includes[i] << endl;
+  for (const auto & cpp_include : cpp_includes) {
+    if (cpp_include[0] == '<') {
+      f_types_ << "#include " << cpp_include << endl;
     } else {
-      f_types_ << "#include \"" << cpp_includes[i] << "\"" << endl;
+      f_types_ << "#include \"" << cpp_include << "\"" << endl;
     }
   }
   f_types_ << endl;
@@ -1538,9 +1538,7 @@ void t_cpp_generator::generate_struct_swap(ostream& out, t_struct* tstruct) {
 
   bool has_nonrequired_fields = false;
   const vector<t_field*>& fields = tstruct->get_members();
-  for (vector<t_field*>::const_iterator f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
-    t_field* tfield = *f_iter;
-
+  for (auto tfield : fields) {
     if (tfield->get_req() != t_field::T_REQUIRED) {
       has_nonrequired_fields = true;
     }

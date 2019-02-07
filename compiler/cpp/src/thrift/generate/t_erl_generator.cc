@@ -310,8 +310,8 @@ void t_erl_generator::hrl_footer(ostream& out, string name) {
 string t_erl_generator::render_includes() {
   const vector<t_program*>& includes = program_->get_includes();
   string result = "";
-  for (size_t i = 0; i < includes.size(); ++i) {
-    result += "-include(\"" + make_safe_for_module_name(includes[i]->get_name())
+  for (auto include : includes) {
+    result += "-include(\"" + make_safe_for_module_name(include->get_name())
               + "_types.hrl\").\n";
   }
   if (includes.size() > 0) {

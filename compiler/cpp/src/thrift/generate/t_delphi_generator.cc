@@ -757,9 +757,9 @@ void t_delphi_generator::init_generator() {
 
   string unitname, nsname;
   const vector<t_program*>& includes = program_->get_includes();
-  for (size_t i = 0; i < includes.size(); ++i) {
-    unitname = includes[i]->get_name();
-    nsname = includes[i]->get_namespace("delphi");
+  for (auto include : includes) {
+    unitname = include->get_name();
+    nsname = include->get_namespace("delphi");
     if ("" != nsname) {
       unitname = normalize_name(nsname);
     }

@@ -1074,8 +1074,8 @@ void TNonblockingServer::expireClose(std::shared_ptr<Runnable> task) {
 
 void TNonblockingServer::stop() {
   // Breaks the event loop in all threads so that they end ASAP.
-  for (uint32_t i = 0; i < ioThreads_.size(); ++i) {
-    ioThreads_[i]->stop();
+  for (auto & ioThread : ioThreads_) {
+    ioThread->stop();
   }
 }
 
@@ -1186,13 +1186,13 @@ TNonblockingIOThread::~TNonblockingIOThread() {
     listenSocket_ = THRIFT_INVALID_SOCKET;
   }
 
-  for (int i = 0; i < 2; ++i) {
-    if (notificationPipeFDs_[i] >= 0) {
-      if (0 != ::THRIFT_CLOSESOCKET(notificationPipeFDs_[i])) {
+  for (int & notificationPipeFD : notificationPipeFDs_) {
+    if (notificationPipeFD >= 0) {
+      if (0 != ::THRIFT_CLOSESOCKET(notificationPipeFD)) {
         GlobalOutput.perror("TNonblockingIOThread notificationPipe close(): ",
                             THRIFT_GET_SOCKET_ERROR);
       }
-      notificationPipeFDs_[i] = THRIFT_INVALID_SOCKET;
+      notificationPipeFD = THRIFT_INVALID_SOCKET;
     }
   }
 }
@@ -1208,13 +1208,13 @@ void TNonblockingIOThread::createNotificationPipe() {
     ::THRIFT_CLOSESOCKET(notificationPipeFDs_[1]);
     throw TException("TNonblockingServer::createNotificationPipe() THRIFT_O_NONBLOCK");
   }
-  for (int i = 0; i < 2; ++i) {
+  for (int notificationPipeFD : notificationPipeFDs_) {
 #if LIBEVENT_VERSION_NUMBER < 0x02000000
     int flags;
     if ((flags = THRIFT_FCNTL(notificationPipeFDs_[i], F_GETFD, 0)) < 0
         || THRIFT_FCNTL(notificationPipeFDs_[i], F_SETFD, flags | FD_CLOEXEC) < 0) {
 #else
-    if (evutil_make_socket_closeonexec(notificationPipeFDs_[i]) < 0) {
+    if (evutil_make_socket_closeonexec(notificationPipeFD) < 0) {
 #endif
       ::THRIFT_CLOSESOCKET(notificationPipeFDs_[0]);
       ::THRIFT_CLOSESOCKET(notificationPipeFDs_[1]);

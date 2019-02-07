@@ -59,7 +59,7 @@ public:
     out_dir_base_ = "gen-xsd";
   }
 
-  ~t_xsd_generator() override {}
+  ~t_xsd_generator() override = default;
 
   /**
    * Init and close methods
