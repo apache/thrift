@@ -369,8 +369,6 @@ gboolean
 thrift_ssl_socket_flush (ThriftTransport *transport, GError **error)
 {
   ThriftSSLSocket *ssl_socket = THRIFT_SSL_SOCKET (transport);
-  gint ret = 0;
-  guint sent = 0;
 
   ThriftSocket *socket = THRIFT_SOCKET (transport);
   g_return_val_if_fail (socket->sd != THRIFT_INVALID_SOCKET && ssl_socket->ssl!=NULL, FALSE);

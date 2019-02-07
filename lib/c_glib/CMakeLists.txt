@@ -39,6 +39,7 @@ set(thrift_c_glib_SOURCES
     src/thrift/c_glib/protocol/thrift_protocol_decorator.c
     src/thrift/c_glib/protocol/thrift_binary_protocol.c
     src/thrift/c_glib/protocol/thrift_stored_message_protocol.c
+    src/thrift/c_glib/protocol/thrift_multiplexed_protocol.c
     src/thrift/c_glib/protocol/thrift_binary_protocol_factory.c
     src/thrift/c_glib/protocol/thrift_compact_protocol.c
     src/thrift/c_glib/protocol/thrift_compact_protocol_factory.c
@@ -60,7 +61,7 @@ set(thrift_c_glib_SOURCES
 # If OpenSSL is not found just ignore the OpenSSL stuff
 find_package(OpenSSL)
 if(OPENSSL_FOUND AND WITH_OPENSSL)
-    list( APPEND thriftcpp_SOURCES
+    list( APPEND thrift_c_glib_SOURCES
 	    src/thrift/c_glib/transport/thrift_ssl_socket.c
     )
     include_directories(SYSTEM "${OPENSSL_INCLUDE_DIR}")
