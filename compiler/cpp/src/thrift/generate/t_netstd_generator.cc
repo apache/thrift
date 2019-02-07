@@ -2719,7 +2719,7 @@ void t_netstd_generator::prepare_member_name_mapping(t_struct* tstruct)
 void t_netstd_generator::prepare_member_name_mapping(void* scope, const vector<t_field*>& members, const string& structname)
 {
     // begin new scope
-    member_mapping_scopes.push_back(member_mapping_scope());
+    member_mapping_scopes.emplace_back();
     member_mapping_scope& active = member_mapping_scopes.back();
     active.scope_member = scope;
 

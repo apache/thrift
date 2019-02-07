@@ -2607,7 +2607,7 @@ string t_py_generator::function_signature(t_function* tfunction, bool interface)
   string signature = tfunction->get_name() + "(";
 
   if (!(gen_zope_interface_ && interface)) {
-    pre.push_back("self");
+    pre.emplace_back("self");
   }
 
   signature += argument_list(tfunction->get_arglist(), &pre, &post) + ")";

@@ -336,7 +336,7 @@ void t_swift_generator::init_generator() {
 string t_swift_generator::swift_imports() {
 
   vector<string> includes_list;
-  includes_list.push_back("Foundation");
+  includes_list.emplace_back("Foundation");
 
   ostringstream includes;
 
@@ -364,10 +364,10 @@ string t_swift_generator::swift_imports() {
 string t_swift_generator::swift_thrift_imports() {
 
   vector<string> includes_list;
-  includes_list.push_back("Thrift");
+  includes_list.emplace_back("Thrift");
 
   if (gen_cocoa_ && promise_kit_) {
-    includes_list.push_back("PromiseKit");
+    includes_list.emplace_back("PromiseKit");
   }
 
   ostringstream includes;
