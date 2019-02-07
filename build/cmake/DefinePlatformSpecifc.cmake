@@ -23,6 +23,31 @@
 # For Debug build types, append a "d" to the library names.
 set(CMAKE_DEBUG_POSTFIX "d" CACHE STRING "Set debug library postfix" FORCE)
 
+# basic options
+foreach(lang IN ITEMS C CXX)
+  if(CMAKE_${lang}_COMPILER_ID STREQUAL "Clang")
+    set(CMAKE_${lang}_FLAGS "${CMAKE_${lang}_FLAGS} -Wall")
+    set(CMAKE_${lang}_FLAGS "${CMAKE_${lang}_FLAGS} -ferror-limit=1")
+  elseif(CMAKE_${lang}_COMPILER_ID STREQUAL "GNU")
+    set(CMAKE_${lang}_FLAGS "${CMAKE_${lang}_FLAGS} -Wall -Wextra")
+    set(CMAKE_${lang}_FLAGS "${CMAKE_${lang}_FLAGS} -fmax-errors=1")
+  elseif(CMAKE_${lang}_COMPILER_ID STREQUAL "MSVC")
+    set(CMAKE_${lang}_FLAGS "${CMAKE_${lang}_FLAGS} /MP") # parallel build
+    set(CMAKE_${lang}_FLAGS "${CMAKE_${lang}_FLAGS} /W3") # warning level 3
+    include(CheckCXXCompilerFlag)
+    set(CMAKE_REQUIRED_QUIET ON)
+    check_cxx_compiler_flag("/source-charset:utf-8" res_var)
+    if (res_var)
+      set(CMAKE_${lang}_FLAGS "${CMAKE_${lang}_FLAGS} /source-charset:utf-8")
+    endif()
+    check_cxx_compiler_flag("/execution-charset:utf-8" res_var)
+    if (res_var)
+      set(CMAKE_${lang}_FLAGS "${CMAKE_${lang}_FLAGS} /execution-charset:utf-8")
+    endif()
+    add_definitions("-DUNICODE -D_UNICODE")
+  endif()
+endforeach()
+
 # Visual Studio specific options
 if(MSVC)
     # Allow for shared library builds
@@ -66,11 +91,6 @@ if(MSVC)
 
     # Disable boost auto linking pragmas - cmake includes the right files
     add_definitions("-DBOOST_ALL_NO_LIB")
-
-    add_definitions("/MP") # parallel build
-    add_definitions("/W3") # warning level 3
-
-    add_definitions("-DUNICODE -D_UNICODE")
 elseif(UNIX)
   find_program( MEMORYCHECK_COMMAND valgrind )
   set( MEMORYCHECK_COMMAND_OPTIONS "--gen-suppressions=all --leak-check=full" )
