@@ -1110,7 +1110,7 @@ int main(int argc, char** argv) {
           fprintf(stderr, "Missing generator specification\n");
           usage();
         }
-        generator_strings.push_back(arg);
+        generator_strings.emplace_back(arg);
       } else if (strcmp(arg, "-I") == 0) {
         // An argument of "-I\ asdf" is invalid and has unknown results
         arg = argv[++i];
@@ -1119,7 +1119,7 @@ int main(int argc, char** argv) {
           fprintf(stderr, "Missing Include directory\n");
           usage();
         }
-        g_incl_searchpath.push_back(arg);
+        g_incl_searchpath.emplace_back(arg);
       } else if ((strcmp(arg, "-o") == 0) || (strcmp(arg, "-out") == 0)) {
         out_path_is_absolute = (strcmp(arg, "-out") == 0) ? true : false;
         arg = argv[++i];
