@@ -152,8 +152,8 @@ string t_cl_generator::render_includes() {
   const vector<t_program*>& includes = program_->get_includes();
   string result = "";
   result += ":depends-on (:thrift";
-  for (size_t i = 0; i < includes.size(); ++i) {
-    result += " :" + system_prefix + underscore(includes[i]->get_name());
+  for (auto include : includes) {
+    result += " :" + system_prefix + underscore(include->get_name());
   }
   result += ")\n";
   return result;
@@ -215,8 +215,8 @@ void t_cl_generator::package_def(std::ostream &out) {
   out << "(thrift:def-package :" << package();
   if ( includes.size() > 0 ) {
     out << " :use (";
-    for (size_t i = 0; i < includes.size(); ++i) {
-      out << " :" << includes[i]->get_name();
+    for (auto include : includes) {
+      out << " :" << include->get_name();
     }
     out << ")";
   }

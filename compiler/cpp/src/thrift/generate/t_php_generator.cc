@@ -284,9 +284,9 @@ public:
     }
 
     // Transform the java-style namespace into a path.
-    for (std::string::iterator it = ns.begin(); it != ns.end(); ++it) {
-      if (*it == '.') {
-        *it = '/';
+    for (char & n : ns) {
+      if (n == '.') {
+        n = '/';
       }
     }
 
@@ -304,8 +304,8 @@ public:
 
     vector<string> x = split(str, '_');
 
-    for (size_t i = 0; i < x.size(); ++i) {
-      classe = classe + capitalize(x[i]);
+    for (const auto & i : x) {
+      classe = classe + capitalize(i);
     }
 
     return classe;
@@ -420,8 +420,8 @@ void t_php_generator::init_generator() {
   vector<string> NSx = split(php_namespace_suffix(get_program()), '\\');
   package_dir_ = get_out_dir();
 
-  for (size_t i = 0; i < NSx.size(); ++i) {
-    package_dir_ = package_dir_ + "/" + NSx[i] + "/";
+  for (const auto & i : NSx) {
+    package_dir_ = package_dir_ + "/" + i + "/";
     MKDIR(package_dir_.c_str());
   }
 

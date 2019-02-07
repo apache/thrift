@@ -233,9 +233,9 @@ string t_st_generator::generated_category() {
   string cat = program_->get_namespace("smalltalk.category");
   // For compatibility with the Thrift grammar, the category must
   // be punctuated by dots.  Replaces them with dashes here.
-  for (string::iterator iter = cat.begin(); iter != cat.end(); ++iter) {
-    if (*iter == '.') {
-      *iter = '-';
+  for (char & iter : cat) {
+    if (iter == '.') {
+      iter = '-';
     }
   }
   return cat.size() ? cat : "Generated-" + class_name();

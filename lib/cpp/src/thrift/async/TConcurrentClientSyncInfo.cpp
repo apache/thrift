@@ -141,8 +141,8 @@ void TConcurrentClientSyncInfo::markBad_(const Guard &)
 {
   wakeupSomeone_ = true;
   stop_ = true;
-  for(auto i = seqidToMonitorMap_.begin(); i != seqidToMonitorMap_.end(); ++i)
-    i->second->notify();
+  for(auto & i : seqidToMonitorMap_)
+    i.second->notify();
 }
 
 TConcurrentClientSyncInfo::MonitorPtr

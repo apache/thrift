@@ -2519,9 +2519,7 @@ string t_as3_generator::constant_name(string name) {
 
   bool is_first = true;
   bool was_previous_char_upper = false;
-  for (string::iterator iter = name.begin(); iter != name.end(); ++iter) {
-    string::value_type character = (*iter);
-
+  for (char character : name) {
     bool is_upper = isupper(character);
 
     if (is_upper && !is_first && !was_previous_char_upper) {

@@ -95,8 +95,8 @@ TSocketPool::TSocketPool(const vector<pair<string, int> >& servers)
     maxConsecutiveFailures_(1),
     randomize_(true),
     alwaysTryLast_(true) {
-  for (unsigned i = 0; i < servers.size(); ++i) {
-    addServer(servers[i].first, servers[i].second);
+  for (const auto & server : servers) {
+    addServer(server.first, server.second);
   }
 }
 

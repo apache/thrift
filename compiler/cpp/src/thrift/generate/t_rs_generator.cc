@@ -3285,8 +3285,8 @@ string t_rs_generator::rust_sync_processor_impl_name(t_service *tservice) {
 string t_rs_generator::rust_enum_variant_name(const string &name) {
   bool all_uppercase = true;
 
-  for (size_t i = 0; i < name.size(); i++) {
-    if (isalnum(name[i]) && islower(name[i])) {
+  for (char i : name) {
+    if (isalnum(i) && islower(i)) {
       all_uppercase = false;
       break;
     }

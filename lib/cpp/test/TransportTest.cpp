@@ -140,8 +140,8 @@ public:
   std::shared_ptr<Transport_> out;
 
 private:
-  CoupledTransports(const CoupledTransports&);
-  CoupledTransports& operator=(const CoupledTransports&);
+  CoupledTransports(const CoupledTransports&) = delete;
+  CoupledTransports& operator=(const CoupledTransports&) = delete;
 };
 
 /**

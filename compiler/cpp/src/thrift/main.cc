@@ -983,11 +983,11 @@ void generate(t_program* program, const vector<string>& generator_strings) {
   // Oooohh, recursive code generation, hot!!
   if (gen_recurse) {
     const vector<t_program*>& includes = program->get_includes();
-    for (size_t i = 0; i < includes.size(); ++i) {
+    for (auto include : includes) {
       // Propagate output path from parent to child programs
-      includes[i]->set_out_path(program->get_out_path(), program->is_out_path_absolute());
+      include->set_out_path(program->get_out_path(), program->is_out_path_absolute());
 
-      generate(includes[i], generator_strings);
+      generate(include, generator_strings);
     }
   }
 

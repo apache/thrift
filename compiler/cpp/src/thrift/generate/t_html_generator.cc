@@ -140,16 +140,16 @@ void t_html_generator::generate_program_toc() {
  */
 void t_html_generator::generate_program_toc_rows(t_program* tprog,
                                                  std::vector<t_program*>& finished) {
-  for (vector<t_program*>::iterator iter = finished.begin(); iter != finished.end(); iter++) {
-    if (tprog->get_path() == (*iter)->get_path()) {
+  for (auto & iter : finished) {
+    if (tprog->get_path() == iter->get_path()) {
       return;
     }
   }
   finished.push_back(tprog);
   generate_program_toc_row(tprog);
   vector<t_program*> includes = tprog->get_includes();
-  for (vector<t_program*>::iterator iter = includes.begin(); iter != includes.end(); iter++) {
-    generate_program_toc_rows(*iter, finished);
+  for (auto & include : includes) {
+    generate_program_toc_rows(include, finished);
   }
 }
 
@@ -176,9 +176,8 @@ void t_html_generator::generate_program_toc_row(t_program* tprog) {
                       + "\">" + fn_name + "</a></li>";
         fn_html.insert(pair<string, string>(fn_name, html));
       }
-      for (map<string, string>::iterator html_iter = fn_html.begin(); html_iter != fn_html.end();
-           html_iter++) {
-        f_out_ << html_iter->second << endl;
+      for (auto & html_iter : fn_html) {
+        f_out_ << html_iter.second << endl;
       }
       f_out_ << "</ul>" << endl;
     }
@@ -220,9 +219,8 @@ void t_html_generator::generate_program_toc_row(t_program* tprog) {
       data_types.insert(pair<string, string>(name, html));
     }
   }
-  for (map<string, string>::iterator dt_iter = data_types.begin(); dt_iter != data_types.end();
-       dt_iter++) {
-    f_out_ << dt_iter->second << "<br/>" << endl;
+  for (auto & data_type : data_types) {
+    f_out_ << data_type.second << "<br/>" << endl;
   }
   f_out_ << "</td>" << endl << "<td>";
   if (!tprog->get_consts().empty()) {
@@ -235,9 +233,8 @@ void t_html_generator::generate_program_toc_row(t_program* tprog) {
                     + "</a></code>";
       const_html.insert(pair<string, string>(name, html));
     }
-    for (map<string, string>::iterator con_iter = const_html.begin(); con_iter != const_html.end();
-         con_iter++) {
-      f_out_ << con_iter->second << "<br/>" << endl;
+    for (auto & con_iter : const_html) {
+      f_out_ << con_iter.second << "<br/>" << endl;
     }
   }
   f_out_ << "</td>" << endl << "</tr>";
@@ -572,8 +569,8 @@ std::string t_html_generator::escape_html_tags(std::string const& str) {
     if (first_white != string::npos) {
       tag_key.erase(first_white);
     }
-    for (std::string::size_type i = 0; i < tag_key.length(); ++i) {
-      tag_key[i] = tolower(tag_key[i]);
+    for (char & i : tag_key) {
+      i = tolower(i);
     }
     if (allowed_markup.find(tag_key) != allowed_markup.end()) {
       result << "<" << tag_content << ">";
