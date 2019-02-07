@@ -90,7 +90,7 @@ void TQTcpServer::processIncoming() {
     }
 
     ctxMap_[connection.get()]
-        = shared_ptr<ConnectionContext>(new ConnectionContext(connection, transport, iprot, oprot));
+        = std::make_shared<ConnectionContext>(connection, transport, iprot, oprot);
 
     connect(connection.get(), SIGNAL(readyRead()), SLOT(beginDecode()));
 

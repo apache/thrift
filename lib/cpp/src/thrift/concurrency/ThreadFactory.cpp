@@ -27,7 +27,7 @@ namespace thrift {
 namespace concurrency {
 
 std::shared_ptr<Thread> ThreadFactory::newThread(std::shared_ptr<Runnable> runnable) const {
-  std::shared_ptr<Thread> result = std::shared_ptr<Thread>(new Thread(isDetached(), runnable));
+  std::shared_ptr<Thread> result = std::make_shared<Thread>(isDetached(), runnable);
   runnable->thread(result);
   return result;
 }

@@ -39,7 +39,7 @@ public:
 
 protected:
   shared_ptr<TTransport> acceptImpl() override {
-    return valid_ ? shared_ptr<TestTTransport>(new TestTTransport)
+    return valid_ ? std::make_shared<TestTTransport>()
                   : shared_ptr<TestTTransport>();
   }
 };

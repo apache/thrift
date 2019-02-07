@@ -17,10 +17,11 @@
  * under the License.
  */
 
-#include <thrift/async/TConcurrentClientSyncInfo.h>
-#include <thrift/TApplicationException.h>
-#include <thrift/transport/TTransportException.h>
 #include <limits>
+#include <memory>
+#include <thrift/TApplicationException.h>
+#include <thrift/async/TConcurrentClientSyncInfo.h>
+#include <thrift/transport/TTransportException.h>
 
 namespace apache { namespace thrift { namespace async {
 
@@ -148,7 +149,7 @@ TConcurrentClientSyncInfo::MonitorPtr
 TConcurrentClientSyncInfo::newMonitor_(const Guard &)
 {
   if(freeMonitors_.empty())
-    return MonitorPtr(new Monitor(&readMutex_));
+    return std::make_shared<Monitor>(&readMutex_);
   MonitorPtr retval;
   //swapping to avoid an atomic operation
   retval.swap(freeMonitors_.back());
