@@ -17,7 +17,7 @@
 # under the License.
 #
 
-from .TProtocol import TType, TProtocolBase, TProtocolException, checkIntegerLimits
+from .TProtocol import TType, TProtocolBase, TProtocolException, TProtocolFactory, checkIntegerLimits
 from struct import pack, unpack
 
 from ..compat import binary_to_str, str_to_binary
@@ -428,7 +428,7 @@ class TCompactProtocol(TProtocolBase):
         return TTYPES[byte & 0x0f]
 
 
-class TCompactProtocolFactory(object):
+class TCompactProtocolFactory(TProtocolFactory):
     def __init__(self,
                  string_length_limit=None,
                  container_length_limit=None):
@@ -470,7 +470,7 @@ class TCompactProtocolAccelerated(TCompactProtocol):
             self._fast_encode = fastbinary.encode_compact
 
 
-class TCompactProtocolAcceleratedFactory(object):
+class TCompactProtocolAcceleratedFactory(TProtocolFactory):
     def __init__(self,
                  string_length_limit=None,
                  container_length_limit=None,

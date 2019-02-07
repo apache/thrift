@@ -18,7 +18,7 @@
 #
 
 from .TProtocol import (TType, TProtocolBase, TProtocolException,
-                        checkIntegerLimits)
+                        TProtocolFactory, checkIntegerLimits)
 import base64
 import math
 import sys
@@ -577,7 +577,7 @@ class TJSONProtocol(TJSONProtocolBase):
         self.writeJSONBase64(binary)
 
 
-class TJSONProtocolFactory(object):
+class TJSONProtocolFactory(TProtocolFactory):
     def getProtocol(self, trans):
         return TJSONProtocol(trans)
 
@@ -671,7 +671,7 @@ class TSimpleJSONProtocol(TJSONProtocolBase):
         self.writeJSONBase64(binary)
 
 
-class TSimpleJSONProtocolFactory(object):
+class TSimpleJSONProtocolFactory(TProtocolFactory):
 
     def getProtocol(self, trans):
         return TSimpleJSONProtocol(trans)
