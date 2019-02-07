@@ -68,23 +68,23 @@ public:
     out_dir_base_ = "gen-json";
   }
 
-  virtual ~t_json_generator() {}
+  ~t_json_generator() override {}
 
   /**
   * Init and close methods
   */
 
-  void init_generator();
-  void close_generator();
+  void init_generator() override;
+  void close_generator() override;
 
-  void generate_typedef(t_typedef* ttypedef);
-  void generate_enum(t_enum* tenum);
-  void generate_program();
+  void generate_typedef(t_typedef* ttypedef) override;
+  void generate_enum(t_enum* tenum) override;
+  void generate_program() override;
   void generate_function(t_function* tfunc);
   void generate_field(t_field* field);
 
-  void generate_service(t_service* tservice);
-  void generate_struct(t_struct* tstruct);
+  void generate_service(t_service* tservice) override;
+  void generate_struct(t_struct* tstruct) override;
 
 private:
   bool should_merge_includes_;

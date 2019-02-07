@@ -103,16 +103,16 @@ public:
   }
 
   /* initialization and destruction */
-  void init_generator();
-  void close_generator();
+  void init_generator() override;
+  void close_generator() override;
 
   /* generation functions */
-  void generate_typedef(t_typedef* ttypedef);
-  void generate_enum(t_enum* tenum);
-  void generate_consts(vector<t_const*> consts);
-  void generate_struct(t_struct* tstruct);
-  void generate_service(t_service* tservice);
-  void generate_xception(t_struct* tstruct);
+  void generate_typedef(t_typedef* ttypedef) override;
+  void generate_enum(t_enum* tenum) override;
+  void generate_consts(vector<t_const*> consts) override;
+  void generate_struct(t_struct* tstruct) override;
+  void generate_service(t_service* tservice) override;
+  void generate_xception(t_struct* tstruct) override;
 
 private:
   /* file streams */

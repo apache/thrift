@@ -89,17 +89,17 @@ public:
 
     out_dir_base_ = "gen-csharp";
   }
-  void init_generator();
-  void close_generator();
+  void init_generator() override;
+  void close_generator() override;
 
-  void generate_consts(std::vector<t_const*> consts);
+  void generate_consts(std::vector<t_const*> consts) override;
 
-  void generate_typedef(t_typedef* ttypedef);
-  void generate_enum(t_enum* tenum);
-  void generate_struct(t_struct* tstruct);
+  void generate_typedef(t_typedef* ttypedef) override;
+  void generate_enum(t_enum* tenum) override;
+  void generate_struct(t_struct* tstruct) override;
   void generate_union(t_struct* tunion);
-  void generate_xception(t_struct* txception);
-  void generate_service(t_service* tservice);
+  void generate_xception(t_struct* txception) override;
+  void generate_service(t_service* tservice) override;
   void generate_property(ostream& out, t_field* tfield, bool isPublic, bool generateIsset);
   void generate_csharp_property(ostream& out,
                                 t_field* tfield,
@@ -207,7 +207,7 @@ public:
   std::string argument_list(t_struct* tstruct);
   std::string type_to_enum(t_type* ttype);
   std::string prop_name(t_field* tfield, bool suppress_mapping = false);
-  std::string get_enum_class_name(t_type* type);
+  std::string get_enum_class_name(t_type* type) override;
 
   bool field_has_default(t_field* tfield) { return tfield->get_value() != NULL; }
 

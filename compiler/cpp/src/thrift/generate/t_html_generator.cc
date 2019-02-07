@@ -82,7 +82,7 @@ public:
     init_allowed__markup();
   }
 
-  void generate_program();
+  void generate_program() override;
   void generate_program_toc();
   void generate_program_toc_row(t_program* tprog);
   void generate_program_toc_rows(t_program* tprog, std::vector<t_program*>& finished);
@@ -101,12 +101,12 @@ public:
    * Program-level generation functions
    */
 
-  void generate_typedef(t_typedef* ttypedef);
-  void generate_enum(t_enum* tenum);
-  void generate_const(t_const* tconst);
-  void generate_struct(t_struct* tstruct);
-  void generate_service(t_service* tservice);
-  void generate_xception(t_struct* txception);
+  void generate_typedef(t_typedef* ttypedef) override;
+  void generate_enum(t_enum* tenum) override;
+  void generate_const(t_const* tconst) override;
+  void generate_struct(t_struct* tstruct) override;
+  void generate_service(t_service* tservice) override;
+  void generate_xception(t_struct* txception) override;
 
   void print_doc(t_doc* tdoc);
   int print_type(t_type* ttype);

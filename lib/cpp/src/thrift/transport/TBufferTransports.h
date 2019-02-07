@@ -217,7 +217,7 @@ public:
 
   void open() override { transport_->open(); }
 
-  bool isOpen() { return transport_->isOpen(); }
+  bool isOpen() const override { return transport_->isOpen(); }
 
   bool peek() override {
     if (rBase_ == rBound_) {
@@ -345,7 +345,7 @@ public:
 
   void open() override { transport_->open(); }
 
-  bool isOpen() { return transport_->isOpen(); }
+  bool isOpen() const override { return transport_->isOpen(); }
 
   bool peek() override { return (rBase_ < rBound_) || transport_->peek(); }
 
@@ -550,7 +550,7 @@ public:
     }
   }
 
-  bool isOpen() { return true; }
+  bool isOpen() const override { return true; }
 
   bool peek() override { return (rBase_ < wBase_); }
 
