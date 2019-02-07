@@ -1,14 +1,8 @@
-### Pull Request ###
-
-The [Contributing Guide](https://github.com/apache/thrift/blob/master/CONTRIBUTING.md) has more details and tips for
-committing properly.
-
-<!-- Explain the changes in the pull request below. -->
-
+<!-- Explain the changes in the pull request below: -->
+  
 
 
 <!-- We recommend you review the checklist before submitting a pull request. -->
-Review the following checklist to ensure a smooth pull request experience.
 
 - [ ] Did you squash your changes to a single commit?
 
@@ -45,4 +39,8 @@ Review the following checklist to ensure a smooth pull request experience.
     This will avoid costly and unnecessary builds in both the pull request and once it is merged.
 </details>
 
-For more information about committing, see the [Contributing Guide](https://github.com/apache/thrift/blob/master/CONTRIBUTING.md).
+<!--
+  The Contributing Guide at:
+  https://github.com/apache/thrift/blob/master/CONTRIBUTING.md
+  has more details and tips for committing properly.
+-->
