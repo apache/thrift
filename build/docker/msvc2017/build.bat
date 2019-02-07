@@ -28,6 +28,7 @@ cd c:\build
 cmake^
   -DBOOST_ROOT=C:\Libraries\boost_1_69_0^
   -DBOOST_LIBRARYDIR=C:\Libraries\boost_1_69_0\lib64-msvc-14.1^
+  -DFLEX_HOME=C:\Adobe\Flex\SDK\4.6^
   -DLIBEVENT_ROOT=C:\Libraries\libevent-2.1.8^
   -DZLIB_ROOT=C:\Libraries\zlib-1.2.11^
   -DCMAKE_BUILD_TYPE=Release^

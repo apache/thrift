@@ -31,7 +31,7 @@ RUN C:\TEMP\vs_buildtools.exe --quiet --wait --norestart --nocache `
 RUN DEL C:\TEMP\vs_buildtools.exe
 
 # Install CMake
-ADD https://github.com/Kitware/CMake/releases/download/v3.13.2/cmake-3.13.2-win64-x64.msi C:\TEMP\cmake.msi
+ADD https://github.com/Kitware/CMake/releases/download/v3.13.4/cmake-3.13.4-win64-x64.msi C:\TEMP\cmake.msi
 RUN msiexec.exe /i C:\TEMP\cmake.msi /qn && `
     SETX PATH "%PATH%;C:\Program Files\CMake\bin" && `
     DEL C:\TEMP\cmake.msi
@@ -88,6 +88,13 @@ RUN choco install ghc -y
 
 # Install python3
 RUN choco install python3 -y
+
+# Install Adobe Flex 4.6 SDK and set FLEX_HOME so it can be found
+ADD http://download.macromedia.com/pub/flex/sdk/flex_sdk_4.6.zip C:\Adobe\Flex\SDK\4.6\SDK.zip
+RUN CD C:\Adobe\Flex\SDK\4.6 && `
+    7z x SDK.zip && `
+    DEL SDK.zip && `
+    SETX FLEX_HOME "C:\Adobe\Flex\SDK\4.6"
 
 # Start developer command prompt with any other commands specified.
 ENTRYPOINT C:\BuildTools\Common7\Tools\VsDevCmd.bat -arch=amd64 &&
