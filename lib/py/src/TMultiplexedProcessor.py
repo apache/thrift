@@ -24,7 +24,17 @@ from thrift.protocol.TProtocol import TProtocolException
 
 class TMultiplexedProcessor(TProcessor):
     def __init__(self):
+        self.defaultProcessor = None
         self.services = {}
+
+    def registerDefault(self, processor):
+        """
+        If a non-multiplexed processor connects to the server and wants to
+        communicate, use the given processor to handle it.  This mechanism
+        allows servers to upgrade from non-multiplexed to multiplexed in a
+        backwards-compatible way and still handle old clients.
+        """
+        self.defaultProcessor = processor
 
     def registerProcessor(self, serviceName, processor):
         self.services[serviceName] = processor
@@ -38,10 +48,14 @@ class TMultiplexedProcessor(TProcessor):
 
         index = name.find(TMultiplexedProtocol.SEPARATOR)
         if index < 0:
-            raise TProtocolException(
-                TProtocolException.NOT_IMPLEMENTED,
-                "Service name not found in message name: " + name + ".  " +
-                "Did you forget to use TMultiplexedProtocol in your client?")
+            if self.defaultProcessor:
+                return self.defaultProcessor.process(
+                    StoredMessageProtocol(iprot, (name, type, seqid)), oprot)
+            else:
+                raise TProtocolException(
+                    TProtocolException.NOT_IMPLEMENTED,
+                    "Service name not found in message name: " + name + ".  " +
+                    "Did you forget to use TMultiplexedProtocol in your client?")
 
         serviceName = name[0:index]
         call = name[index + len(TMultiplexedProtocol.SEPARATOR):]
