@@ -1186,7 +1186,7 @@ TNonblockingIOThread::~TNonblockingIOThread() {
     listenSocket_ = THRIFT_INVALID_SOCKET;
   }
 
-  for (int & notificationPipeFD : notificationPipeFDs_) {
+  for (auto notificationPipeFD : notificationPipeFDs_) {
     if (notificationPipeFD >= 0) {
       if (0 != ::THRIFT_CLOSESOCKET(notificationPipeFD)) {
         GlobalOutput.perror("TNonblockingIOThread notificationPipe close(): ",
@@ -1208,11 +1208,11 @@ void TNonblockingIOThread::createNotificationPipe() {
     ::THRIFT_CLOSESOCKET(notificationPipeFDs_[1]);
     throw TException("TNonblockingServer::createNotificationPipe() THRIFT_O_NONBLOCK");
   }
-  for (int notificationPipeFD : notificationPipeFDs_) {
+  for (auto notificationPipeFD : notificationPipeFDs_) {
 #if LIBEVENT_VERSION_NUMBER < 0x02000000
     int flags;
-    if ((flags = THRIFT_FCNTL(notificationPipeFDs_[i], F_GETFD, 0)) < 0
-        || THRIFT_FCNTL(notificationPipeFDs_[i], F_SETFD, flags | FD_CLOEXEC) < 0) {
+    if ((flags = THRIFT_FCNTL(notificationPipeFD, F_GETFD, 0)) < 0
+        || THRIFT_FCNTL(notificationPipeFD, F_SETFD, flags | FD_CLOEXEC) < 0) {
 #else
     if (evutil_make_socket_closeonexec(notificationPipeFD) < 0) {
 #endif

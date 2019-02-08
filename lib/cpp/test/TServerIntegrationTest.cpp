@@ -333,7 +333,7 @@ public:
   TServerIntegrationProcessorFactoryTestFixture()
     : TServerIntegrationTestFixture<TServerType>(make_shared<ParentServiceProcessorFactory>(
           make_shared<ParentServiceIfSingletonFactory>(
-              make_shared<ParentHandler>()))) = default;
+              make_shared<ParentHandler>()))) {}
 };
 
 template <class TServerType>
@@ -341,7 +341,7 @@ class TServerIntegrationProcessorTestFixture : public TServerIntegrationTestFixt
 public:
   TServerIntegrationProcessorTestFixture()
     : TServerIntegrationTestFixture<TServerType>(
-          make_shared<ParentServiceProcessor>(make_shared<ParentHandler>())) = default;
+          make_shared<ParentServiceProcessor>(make_shared<ParentHandler>())) {}
 };
 
 BOOST_AUTO_TEST_SUITE(constructors)
