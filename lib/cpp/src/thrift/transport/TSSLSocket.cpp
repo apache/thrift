@@ -292,11 +292,10 @@ bool TSSLSocket::peek() {
   if (!checkHandshake())
     throw TSSLException("SSL_peek: Handshake is not completed");
   int rc;
-  uint8_t byte;
   do {
+    uint8_t byte;
     rc = SSL_peek(ssl_, &byte, 1);
     if (rc < 0) {
-
       int errno_copy = THRIFT_GET_SOCKET_ERROR;
       int error = SSL_get_error(ssl_, rc);
       switch (error) {
@@ -318,6 +317,8 @@ bool TSSLSocket::peek() {
       throw TSSLException("SSL_peek: " + errors);
     } else if (rc == 0) {
       ERR_clear_error();
+      break;
+    } else {
       break;
     }
   } while (true);
