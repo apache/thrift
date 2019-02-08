@@ -17,8 +17,9 @@
 # under the License.
 #
 
-from thrift.Thrift import TProcessor, TMessageType, TException
+from thrift.Thrift import TProcessor, TMessageType
 from thrift.protocol import TProtocolDecorator, TMultiplexedProtocol
+from thrift.protocol.TProtocol import TProtocolException
 
 
 class TMultiplexedProcessor(TProcessor):
@@ -31,19 +32,28 @@ class TMultiplexedProcessor(TProcessor):
     def process(self, iprot, oprot):
         (name, type, seqid) = iprot.readMessageBegin()
         if type != TMessageType.CALL and type != TMessageType.ONEWAY:
-            raise TException("TMultiplexed protocol only supports CALL & ONEWAY")
+            raise TProtocolException(
+                TProtocolException.NOT_IMPLEMENTED,
+                "TMultiplexedProtocol only supports CALL & ONEWAY")
 
         index = name.find(TMultiplexedProtocol.SEPARATOR)
         if index < 0:
-            raise TException("Service name not found in message name: " + name + ". Did you forget to use TMultiplexedProtocol in your client?")
+            raise TProtocolException(
+                TProtocolException.NOT_IMPLEMENTED,
+                "Service name not found in message name: " + name + ".  " +
+                "Did you forget to use TMultiplexedProtocol in your client?")
 
         serviceName = name[0:index]
         call = name[index + len(TMultiplexedProtocol.SEPARATOR):]
         if serviceName not in self.services:
-            raise TException("Service name not found: " + serviceName + ". Did you forget to call registerProcessor()?")
+            raise TProtocolException(
+                TProtocolException.NOT_IMPLEMENTED,
+                "Service name not found: " + serviceName + ".  " +
+                "Did you forget to call registerProcessor()?")
 
         standardMessage = (call, type, seqid)
-        return self.services[serviceName].process(StoredMessageProtocol(iprot, standardMessage), oprot)
+        return self.services[serviceName].process(
+            StoredMessageProtocol(iprot, standardMessage), oprot)
 
 
 class StoredMessageProtocol(TProtocolDecorator.TProtocolDecorator):

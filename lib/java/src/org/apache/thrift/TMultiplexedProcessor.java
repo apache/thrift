@@ -87,7 +87,7 @@ public class TMultiplexedProcessor implements TProcessor {
      *         that allows readMessageBegin() to return the original TMessage.</li>
      * </ol>
      *
-     * @throws TException If the message type is not CALL or ONEWAY, if
+     * @throws TProtocolException If the message type is not CALL or ONEWAY, if
      * the service name was not found in the message, or if the service
      * name was not found in the service map.  You called {@link #registerProcessor(String, TProcessor) registerProcessor}
      * during initialization, right? :)
@@ -101,7 +101,8 @@ public class TMultiplexedProcessor implements TProcessor {
         TMessage message = iprot.readMessageBegin();
 
         if (message.type != TMessageType.CALL && message.type != TMessageType.ONEWAY) {
-            throw new TException("This should not have happened!?");
+            throw new TProtocolException(TProtocolException.NOT_IMPLEMENTED,
+                "This should not have happened!?");
         }
 
         // Extract the service name
@@ -112,16 +113,18 @@ public class TMultiplexedProcessor implements TProcessor {
                 defaultProcessor.process(new StoredMessageProtocol(iprot, message), oprot);
                 return;
           }
-            throw new TException("Service name not found in message name: " + message.name + ".  Did you " +
-                    "forget to use a TMultiplexProtocol in your client?");
+            throw new TProtocolException(TProtocolException.NOT_IMPLEMENTED,
+                "Service name not found in message name: " + message.name + ".  Did you " +
+                "forget to use a TMultiplexProtocol in your client?");
         }
 
         // Create a new TMessage, something that can be consumed by any TProtocol
         String serviceName = message.name.substring(0, index);
         TProcessor actualProcessor = SERVICE_PROCESSOR_MAP.get(serviceName);
         if (actualProcessor == null) {
-            throw new TException("Service name not found: " + serviceName + ".  Did you forget " +
-                    "to call registerProcessor()?");
+            throw new TProtocolException(TProtocolException.NOT_IMPLEMENTED,
+                "Service name not found: " + serviceName + ".  Did you forget " +
+                "to call registerProcessor()?");
         }
 
         // Create a new TMessage, removing the service name
