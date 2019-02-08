@@ -81,9 +81,9 @@ BOOST_AUTO_TEST_CASE(test_roundtrip) {
 }
 
 BOOST_AUTO_TEST_CASE(test_readAppendToString) {
-  string* str1 = new string("abcd1234");
-  TMemoryBuffer buf((uint8_t*)str1->data(),
-                    static_cast<uint32_t>(str1->length()),
+  string str1 = "abcd1234";
+  TMemoryBuffer buf((uint8_t*)str1.data(),
+                    static_cast<uint32_t>(str1.length()),
                     TMemoryBuffer::COPY);
 
   string str3 = "wxyz", str4 = "6789";

@@ -286,7 +286,6 @@ public:
     if (language != "*") {
       size_t sub_index = language.find('.');
       std::string base_language = language.substr(0, sub_index);
-      std::string sub_namespace;
 
       if (base_language == "smalltalk") {
         pwarning(1, "Namespace 'smalltalk' is deprecated. Use 'st' instead");

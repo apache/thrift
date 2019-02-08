@@ -128,9 +128,9 @@ void t_cl_generator::init_generator() {
   string f_types_name = program_dir + "/" + program_name_ + "-types.lisp";
   string f_vars_name = program_dir + "/" + program_name_ + "-vars.lisp";
 
-  f_types_.open(f_types_name.c_str());
+  f_types_.open(f_types_name);
   f_types_ << cl_autogen_comment() << endl;
-  f_vars_.open(f_vars_name.c_str());
+  f_vars_.open(f_vars_name);
   f_vars_ << cl_autogen_comment() << endl;
 
   package_def(f_types_);
@@ -139,7 +139,7 @@ void t_cl_generator::init_generator() {
 
   if (!no_asd) {
     string f_asd_name = program_dir + "/" + system_prefix + program_name_ + ".asd";
-    f_asd_.open(f_asd_name.c_str());
+    f_asd_.open(f_asd_name);
     f_asd_ << cl_autogen_comment() << endl;
     asdf_def(f_asd_);
   }

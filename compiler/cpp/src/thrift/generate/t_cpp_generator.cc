@@ -1238,7 +1238,6 @@ void t_cpp_generator::generate_struct_definition(ostream& out,
   if (setters) {
     for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
       if (is_reference((*m_iter))) {
-        std::string type = type_name((*m_iter)->get_type());
         out << endl << indent() << "void " << tstruct->get_name() << "::__set_"
             << (*m_iter)->get_name() << "(::std::shared_ptr<"
             << type_name((*m_iter)->get_type(), false, false) << ">";

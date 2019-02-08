@@ -1162,10 +1162,13 @@ TNonblockingIOThread::TNonblockingIOThread(TNonblockingServer* server,
                                            bool useHighPriority)
   : server_(server),
     number_(number),
+    threadId_{},
     listenSocket_(listenSocket),
     useHighPriority_(useHighPriority),
     eventBase_(nullptr),
-    ownEventBase_(false) {
+    ownEventBase_(false),
+    serverEvent_{},
+    notificationEvent_{} {
   notificationPipeFDs_[0] = -1;
   notificationPipeFDs_[1] = -1;
 }

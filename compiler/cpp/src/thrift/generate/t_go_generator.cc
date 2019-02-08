@@ -743,10 +743,10 @@ void t_go_generator::init_generator() {
 
   // Make output files
   f_types_name_ = package_dir_ + "/" + program_name_ + ".go";
-  f_types_.open(f_types_name_.c_str());
+  f_types_.open(f_types_name_);
 
   f_consts_name_ = package_dir_ + "/" + program_name_ + "-consts.go";
-  f_consts_.open(f_consts_name_.c_str());
+  f_consts_.open(f_consts_name_);
 
   // Print header
   f_types_ << go_autogen_comment() << go_package() << render_includes(false);
