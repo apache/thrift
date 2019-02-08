@@ -333,8 +333,22 @@ bool TNamedPipeServer::createNamedPipe(const TAutoCrit & /*lockProof*/) {
   SetEntriesInAcl(1, &ea, NULL, &acl);
 
   PSECURITY_DESCRIPTOR sd = (PSECURITY_DESCRIPTOR)LocalAlloc(LPTR, SECURITY_DESCRIPTOR_MIN_LENGTH);
-  InitializeSecurityDescriptor(sd, SECURITY_DESCRIPTOR_REVISION);
-  SetSecurityDescriptorDacl(sd, TRUE, acl, FALSE);
+  if (!InitializeSecurityDescriptor(sd, SECURITY_DESCRIPTOR_REVISION)) {
+    auto lastError = GetLastError();
+    LocalFree(sd);
+    LocalFree(acl);
+    GlobalOutput.perror("TPipeServer::InitializeSecurityDescriptor() GLE=", lastError);
+    throw TTransportException(TTransportException::NOT_OPEN, "InitializeSecurityDescriptor() failed",
+                              lastError);
+  }
+  if (!SetSecurityDescriptorDacl(sd, TRUE, acl, FALSE)) {
+    auto lastError = GetLastError();
+    LocalFree(sd);
+    LocalFree(acl);
+    GlobalOutput.perror("TPipeServer::SetSecurityDescriptorDacl() GLE=", lastError);
+    throw TTransportException(TTransportException::NOT_OPEN,
+                              "SetSecurityDescriptorDacl() failed", lastError);
+  }
 
   SECURITY_ATTRIBUTES sa;
   sa.nLength = sizeof(SECURITY_ATTRIBUTES);
@@ -353,7 +367,7 @@ bool TNamedPipeServer::createNamedPipe(const TAutoCrit & /*lockProof*/) {
                                      0,                    // client time-out
                                      &sa));                // security attributes
 
-  DWORD lastError = GetLastError();
+  auto lastError = GetLastError();
   LocalFree(sd);
   LocalFree(acl);
   FreeSid(everyone_sid);
@@ -364,7 +378,6 @@ bool TNamedPipeServer::createNamedPipe(const TAutoCrit & /*lockProof*/) {
     throw TTransportException(TTransportException::NOT_OPEN,
                               "TCreateNamedPipe() failed",
                 lastError);
-    return false;
   }
 
   Pipe_.reset(hPipe.release());
@@ -375,8 +388,17 @@ bool TAnonPipeServer::createAnonPipe() {
   SECURITY_ATTRIBUTES sa;
   SECURITY_DESCRIPTOR sd; // security information for pipes
 
-  InitializeSecurityDescriptor(&sd, SECURITY_DESCRIPTOR_REVISION);
-  SetSecurityDescriptorDacl(&sd, true, NULL, false);
+  if (!InitializeSecurityDescriptor(&sd, SECURITY_DESCRIPTOR_REVISION))
+  {
+    GlobalOutput.perror("TPipeServer InitializeSecurityDescriptor (anon) failed, GLE=", GetLastError());
+    return false;
+  }
+  if (!SetSecurityDescriptorDacl(&sd, true, NULL, false))
+  {
+    GlobalOutput.perror("TPipeServer SetSecurityDescriptorDacl (anon) failed, GLE=",
+                        GetLastError());
+    return false;
+  }
   sa.lpSecurityDescriptor = &sd;
   sa.nLength = sizeof(SECURITY_ATTRIBUTES);
   sa.bInheritHandle = true; // allow passing handle to child
