@@ -41,7 +41,7 @@ public:
   TShortReadTransport(std::shared_ptr<TTransport> transport, double full_prob)
     : transport_(transport), fullProb_(full_prob) {}
 
-  bool isOpen() { return transport_->isOpen(); }
+  bool isOpen() const override { return transport_->isOpen(); }
 
   bool peek() override { return transport_->peek(); }
 
