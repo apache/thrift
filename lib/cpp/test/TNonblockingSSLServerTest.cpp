@@ -151,7 +151,7 @@ private:
     std::shared_ptr<transport::TNonblockingSSLServerSocket> socket;
     Mutex mutex_;
 
-    Runner() {
+    Runner():port(0) {
       listenHandler.reset(new ListenEventHandler(&mutex_));
     }
 
