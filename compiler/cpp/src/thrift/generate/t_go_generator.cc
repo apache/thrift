@@ -105,19 +105,19 @@ public:
    * Init and close methods
    */
 
-  void init_generator();
-  void close_generator();
+  void init_generator() override;
+  void close_generator() override;
 
   /**
    * Program-level generation functions
    */
 
-  void generate_typedef(t_typedef* ttypedef);
-  void generate_enum(t_enum* tenum);
-  void generate_const(t_const* tconst);
-  void generate_struct(t_struct* tstruct);
-  void generate_xception(t_struct* txception);
-  void generate_service(t_service* tservice);
+  void generate_typedef(t_typedef* ttypedef) override;
+  void generate_enum(t_enum* tenum) override;
+  void generate_const(t_const* tconst) override;
+  void generate_struct(t_struct* tstruct) override;
+  void generate_xception(t_struct* txception) override;
+  void generate_service(t_service* tservice) override;
 
   std::string render_const_value(t_type* type, t_const_value* value, const string& name, bool opt = false);
 
@@ -743,10 +743,10 @@ void t_go_generator::init_generator() {
 
   // Make output files
   f_types_name_ = package_dir_ + "/" + program_name_ + ".go";
-  f_types_.open(f_types_name_.c_str());
+  f_types_.open(f_types_name_);
 
   f_consts_name_ = package_dir_ + "/" + program_name_ + "-consts.go";
-  f_consts_.open(f_consts_name_.c_str());
+  f_consts_.open(f_consts_name_);
 
   // Print header
   f_types_ << go_autogen_comment() << go_package() << render_includes(false);
@@ -771,12 +771,12 @@ string t_go_generator::render_included_programs(string& unused_protection) {
   unused_protection = "";
 
   string local_namespace = program_->get_namespace("go");
-  for (size_t i = 0; i < includes.size(); ++i) {
-    if (!local_namespace.empty() && local_namespace == includes[i]->get_namespace("go")) {
+  for (auto include : includes) {
+    if (!local_namespace.empty() && local_namespace == include->get_namespace("go")) {
       continue;
     }
 
-    string go_module = get_real_go_module(includes[i]);
+    string go_module = get_real_go_module(include);
     size_t found = 0;
     for (size_t j = 0; j < go_module.size(); j++) {
       // Import statement uses slashes ('/') in namespace
@@ -803,12 +803,12 @@ string t_go_generator::render_includes(bool consts) {
   string unused_prot = "";
 
   string local_namespace = program_->get_namespace("go");
-  for (size_t i = 0; i < includes.size(); ++i) {
-    if (!local_namespace.empty() && local_namespace == includes[i]->get_namespace("go")) {
+  for (auto include : includes) {
+    if (!local_namespace.empty() && local_namespace == include->get_namespace("go")) {
       continue;
     }
 
-    string go_module = get_real_go_module(includes[i]);
+    string go_module = get_real_go_module(include);
     size_t found = 0;
     for (size_t j = 0; j < go_module.size(); j++) {
       // Import statement uses slashes ('/') in namespace
@@ -1255,15 +1255,14 @@ void t_go_generator::generate_go_struct_initializer(ostream& out,
                                                     bool is_args_or_result) {
   out << publicize(type_name(tstruct), is_args_or_result) << "{";
   const vector<t_field*>& members = tstruct->get_members();
-  for (vector<t_field*>::const_iterator m_iter = members.begin(); m_iter != members.end();
-       ++m_iter) {
-    bool pointer_field = is_pointer_field(*m_iter);
+  for (auto member : members) {
+    bool pointer_field = is_pointer_field(member);
     string publicized_name;
     t_const_value* def_value;
-    get_publicized_name_and_def_value(*m_iter, &publicized_name, &def_value);
-    if (!pointer_field && def_value != NULL && !omit_initialization(*m_iter)) {
+    get_publicized_name_and_def_value(member, &publicized_name, &def_value);
+    if (!pointer_field && def_value != NULL && !omit_initialization(member)) {
       out << endl << indent() << publicized_name << ": "
-          << render_field_initial_value(*m_iter, (*m_iter)->get_name(), pointer_field) << ","
+          << render_field_initial_value(member, member->get_name(), pointer_field) << ","
           << endl;
     }
   }

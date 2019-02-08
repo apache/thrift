@@ -83,19 +83,19 @@ public:
    * Init and close methods
    */
 
-  void init_generator();
-  void close_generator();
+  void init_generator() override;
+  void close_generator() override;
 
   /**
    * Program-level generation functions
    */
 
-  void generate_typedef(t_typedef* ttypedef);
-  void generate_enum(t_enum* tenum);
-  void generate_const(t_const* tconst);
-  void generate_struct(t_struct* tstruct);
-  void generate_xception(t_struct* txception);
-  void generate_service(t_service* tservice);
+  void generate_typedef(t_typedef* ttypedef) override;
+  void generate_enum(t_enum* tenum) override;
+  void generate_const(t_const* tconst) override;
+  void generate_struct(t_struct* tstruct) override;
+  void generate_xception(t_struct* txception) override;
+  void generate_service(t_service* tservice) override;
   void generate_member_type(std::ostream& out, t_type* type);
   void generate_member_value(std::ostream& out, t_type* type, t_const_value* value);
 
@@ -310,8 +310,8 @@ void t_erl_generator::hrl_footer(ostream& out, string name) {
 string t_erl_generator::render_includes() {
   const vector<t_program*>& includes = program_->get_includes();
   string result = "";
-  for (size_t i = 0; i < includes.size(); ++i) {
-    result += "-include(\"" + make_safe_for_module_name(includes[i]->get_name())
+  for (auto include : includes) {
+    result += "-include(\"" + make_safe_for_module_name(include->get_name())
               + "_types.hrl\").\n";
   }
   if (includes.size() > 0) {

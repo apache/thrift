@@ -46,7 +46,7 @@ public:
 
   ~TNullTransport() override = default;
 
-  bool isOpen() { return true; }
+  bool isOpen() const override { return true; }
 
   void open() override {}
 

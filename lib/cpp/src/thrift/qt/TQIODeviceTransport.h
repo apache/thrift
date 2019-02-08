@@ -40,7 +40,7 @@ public:
   ~TQIODeviceTransport() override;
 
   void open() override;
-  bool isOpen();
+  bool isOpen() const override;
   bool peek() override;
   void close() override;
 

@@ -20,6 +20,7 @@
 #include <thrift/thrift-config.h>
 
 #include <cstring>
+#include <memory>
 #include <stdexcept>
 #include <sys/types.h>
 #ifdef HAVE_SYS_SOCKET_H
@@ -532,7 +533,7 @@ shared_ptr<TSocket> TNonblockingServerSocket::acceptImpl() {
 }
 
 shared_ptr<TSocket> TNonblockingServerSocket::createSocket(THRIFT_SOCKET clientSocket) {
-  return shared_ptr<TSocket>(new TSocket(clientSocket));
+  return std::make_shared<TSocket>(clientSocket);
 }
 
 void TNonblockingServerSocket::close() {

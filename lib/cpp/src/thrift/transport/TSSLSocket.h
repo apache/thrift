@@ -73,7 +73,7 @@ public:
   /**
    * TTransport interface.
    */
-  bool isOpen();
+  bool isOpen() const override;
   bool peek() override;
   void open() override;
   void close() override;

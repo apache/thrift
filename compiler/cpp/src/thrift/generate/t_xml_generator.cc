@@ -79,20 +79,20 @@ public:
     out_dir_base_ = "gen-xml";
   }
 
-  virtual ~t_xml_generator() {}
+  ~t_xml_generator() override = default;
 
-  void init_generator();
-  void close_generator();
-  void generate_program();
+  void init_generator() override;
+  void close_generator() override;
+  void generate_program() override;
 
   void iterate_program(t_program* program);
-  void generate_typedef(t_typedef* ttypedef);
-  void generate_enum(t_enum* tenum);
+  void generate_typedef(t_typedef* ttypedef) override;
+  void generate_enum(t_enum* tenum) override;
   void generate_function(t_function* tfunc);
   void generate_field(t_field* field);
 
-  void generate_service(t_service* tservice);
-  void generate_struct(t_struct* tstruct);
+  void generate_service(t_service* tservice) override;
+  void generate_struct(t_struct* tstruct) override;
 
   void generate_annotations(std::map<std::string, std::string> annotations);
 
@@ -245,8 +245,8 @@ void t_xml_generator::write_element_string(string name, string val) {
 
 string t_xml_generator::escape_xml_string(const string& input) {
   std::ostringstream ss;
-  for (std::string::const_iterator iter = input.begin(); iter != input.end(); iter++) {
-    switch (*iter) {
+  for (char iter : input) {
+    switch (iter) {
     case '&':
       ss << "&amp;";
       break;
@@ -263,7 +263,7 @@ string t_xml_generator::escape_xml_string(const string& input) {
       ss << "&gt;";
       break;
     default:
-      ss << *iter;
+      ss << iter;
       break;
     }
   }

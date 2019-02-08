@@ -103,16 +103,16 @@ public:
   }
 
   /* initialization and destruction */
-  void init_generator();
-  void close_generator();
+  void init_generator() override;
+  void close_generator() override;
 
   /* generation functions */
-  void generate_typedef(t_typedef* ttypedef);
-  void generate_enum(t_enum* tenum);
-  void generate_consts(vector<t_const*> consts);
-  void generate_struct(t_struct* tstruct);
-  void generate_service(t_service* tservice);
-  void generate_xception(t_struct* tstruct);
+  void generate_typedef(t_typedef* ttypedef) override;
+  void generate_enum(t_enum* tenum) override;
+  void generate_consts(vector<t_const*> consts) override;
+  void generate_struct(t_struct* tstruct) override;
+  void generate_service(t_service* tservice) override;
+  void generate_xception(t_struct* tstruct) override;
 
 private:
   /* file streams */
@@ -253,15 +253,13 @@ void t_c_glib_generator::init_generator() {
   if (!includes.empty()) {
     f_types_ << "/* other thrift includes */" << endl;
 
-    for (vector<t_program*>::const_iterator iter = includes.begin();
-         iter != includes.end();
-         ++iter) {
-      const std::string& include_nspace = (*iter)->get_namespace("c_glib");
+    for (auto include : includes) {
+      const std::string& include_nspace = include->get_namespace("c_glib");
       std::string include_nspace_prefix =
         include_nspace.empty() ? "" : initial_caps_to_underscores(include_nspace) + "_";
 
       f_types_ << "#include \"" << include_nspace_prefix
-               << initial_caps_to_underscores((*iter)->get_name()) << "_types.h\"" << endl;
+               << initial_caps_to_underscores(include->get_name()) << "_types.h\"" << endl;
     }
     f_types_ << endl;
   }
@@ -269,11 +267,11 @@ void t_c_glib_generator::init_generator() {
   /* include custom headers */
   const vector<string>& c_includes = program_->get_c_includes();
   f_types_ << "/* custom thrift includes */" << endl;
-  for (size_t i = 0; i < c_includes.size(); ++i) {
-    if (c_includes[i][0] == '<') {
-      f_types_ << "#include " << c_includes[i] << endl;
+  for (const auto & c_include : c_includes) {
+    if (c_include[0] == '<') {
+      f_types_ << "#include " << c_include << endl;
     } else {
-      f_types_ << "#include \"" << c_includes[i] << "\"" << endl;
+      f_types_ << "#include \"" << c_include << "\"" << endl;
     }
   }
   f_types_ << endl;

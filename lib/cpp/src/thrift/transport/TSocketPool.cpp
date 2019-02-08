@@ -21,6 +21,7 @@
 
 #include <algorithm>
 #include <iostream>
+#include <memory>
 #if __cplusplus >= 201703L
 #include <random>
 #endif
@@ -94,8 +95,8 @@ TSocketPool::TSocketPool(const vector<pair<string, int> >& servers)
     maxConsecutiveFailures_(1),
     randomize_(true),
     alwaysTryLast_(true) {
-  for (unsigned i = 0; i < servers.size(); ++i) {
-    addServer(servers[i].first, servers[i].second);
+  for (const auto & server : servers) {
+    addServer(server.first, server.second);
   }
 }
 
@@ -129,7 +130,7 @@ TSocketPool::~TSocketPool() {
 }
 
 void TSocketPool::addServer(const string& host, int port) {
-  servers_.push_back(shared_ptr<TSocketPoolServer>(new TSocketPoolServer(host, port)));
+  servers_.push_back(std::make_shared<TSocketPoolServer>(host, port));
 }
 
 void TSocketPool::addServer(shared_ptr<TSocketPoolServer>& server) {

@@ -121,25 +121,25 @@ public:
    * Init and close methods
    */
 
-  void init_generator();
-  void close_generator();
+  void init_generator() override;
+  void close_generator() override;
 
   void export_class_to_library(string file_name, string class_name);
 
   void generate_dart_library();
   void generate_dart_pubspec();
 
-  void generate_consts(std::vector<t_const*> consts);
+  void generate_consts(std::vector<t_const*> consts) override;
 
   /**
    * Program-level generation functions
    */
 
-  void generate_typedef(t_typedef* ttypedef);
-  void generate_enum(t_enum* tenum);
-  void generate_struct(t_struct* tstruct);
-  void generate_xception(t_struct* txception);
-  void generate_service(t_service* tservice);
+  void generate_typedef(t_typedef* ttypedef) override;
+  void generate_enum(t_enum* tenum) override;
+  void generate_struct(t_struct* tstruct) override;
+  void generate_xception(t_struct* txception) override;
+  void generate_service(t_service* tservice) override;
 
   void print_const_value(std::ostream& out,
                          std::string name,
@@ -359,8 +359,8 @@ string t_dart_generator::dart_thrift_imports() {
 
   // add imports for included thrift files
   const vector<t_program*>& includes = program_->get_includes();
-  for (size_t i = 0; i < includes.size(); ++i) {
-    string include_name = find_library_name(includes[i]);
+  for (auto include : includes) {
+    string include_name = find_library_name(include);
     string named_import = "t_" + include_name;
     if (package_prefix_.empty()) {
       imports += "import 'package:" + include_name + "/" + include_name + ".dart' as " + named_import + ";" + endl;
@@ -438,15 +438,15 @@ void t_dart_generator::generate_dart_pubspec() {
     indent_down();
   } else {
     const vector<std::string> lines = split(pubspec_lib_, '|');
-    for (size_t line_index = 0; line_index < lines.size(); line_index++) {
-      indent(f_pubspec) << lines[line_index] << endl;
+    for (const auto & line : lines) {
+      indent(f_pubspec) << line << endl;
     }
   }
 
   // add included thrift files as dependencies
   const vector<t_program*>& includes = program_->get_includes();
-  for (size_t i = 0; i < includes.size(); ++i) {
-    string include_name = find_library_name(includes[i]);
+  for (auto include : includes) {
+    string include_name = find_library_name(include);
     indent(f_pubspec) << include_name << ":" << endl;
     indent_up();
     indent(f_pubspec) << "path: ../" << include_name << endl;
@@ -2432,9 +2432,7 @@ string t_dart_generator::constant_name(string name) {
 
   bool is_first = true;
   bool was_previous_char_upper = false;
-  for (string::iterator iter = name.begin(); iter != name.end(); ++iter) {
-    string::value_type character = (*iter);
-
+  for (char character : name) {
     bool is_upper = isupper(character);
 
     if (is_upper && !is_first && !was_previous_char_upper) {

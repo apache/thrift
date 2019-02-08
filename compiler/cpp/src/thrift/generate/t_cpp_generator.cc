@@ -101,25 +101,25 @@ public:
    * Init and close methods
    */
 
-  void init_generator();
-  void close_generator();
+  void init_generator() override;
+  void close_generator() override;
 
-  void generate_consts(std::vector<t_const*> consts);
+  void generate_consts(std::vector<t_const*> consts) override;
 
   /**
    * Program-level generation functions
    */
 
-  void generate_typedef(t_typedef* ttypedef);
-  void generate_enum(t_enum* tenum);
+  void generate_typedef(t_typedef* ttypedef) override;
+  void generate_enum(t_enum* tenum) override;
   void generate_enum_ostream_operator_decl(std::ostream& out, t_enum* tenum);
   void generate_enum_ostream_operator(std::ostream& out, t_enum* tenum);
-  void generate_forward_declaration(t_struct* tstruct);
-  void generate_struct(t_struct* tstruct) { generate_cpp_struct(tstruct, false); }
-  void generate_xception(t_struct* txception) { generate_cpp_struct(txception, true); }
+  void generate_forward_declaration(t_struct* tstruct) override;
+  void generate_struct(t_struct* tstruct) override { generate_cpp_struct(tstruct, false); }
+  void generate_xception(t_struct* txception) override { generate_cpp_struct(txception, true); }
   void generate_cpp_struct(t_struct* tstruct, bool is_exception);
 
-  void generate_service(t_service* tservice);
+  void generate_service(t_service* tservice) override;
 
   void print_const_value(std::ostream& out, std::string name, t_type* type, t_const_value* value);
   std::string render_const_value(std::ostream& out,
@@ -424,24 +424,24 @@ void t_cpp_generator::init_generator() {
 
   // Include other Thrift includes
   const vector<t_program*>& includes = program_->get_includes();
-  for (size_t i = 0; i < includes.size(); ++i) {
-    f_types_ << "#include \"" << get_include_prefix(*(includes[i])) << includes[i]->get_name()
+  for (auto include : includes) {
+    f_types_ << "#include \"" << get_include_prefix(*include) << include->get_name()
              << "_types.h\"" << endl;
 
     // XXX(simpkins): If gen_templates_ is enabled, we currently assume all
     // included files were also generated with templates enabled.
-    f_types_tcc_ << "#include \"" << get_include_prefix(*(includes[i])) << includes[i]->get_name()
+    f_types_tcc_ << "#include \"" << get_include_prefix(*include) << include->get_name()
                  << "_types.tcc\"" << endl;
   }
   f_types_ << endl;
 
   // Include custom headers
   const vector<string>& cpp_includes = program_->get_cpp_includes();
-  for (size_t i = 0; i < cpp_includes.size(); ++i) {
-    if (cpp_includes[i][0] == '<') {
-      f_types_ << "#include " << cpp_includes[i] << endl;
+  for (const auto & cpp_include : cpp_includes) {
+    if (cpp_include[0] == '<') {
+      f_types_ << "#include " << cpp_include << endl;
     } else {
-      f_types_ << "#include \"" << cpp_includes[i] << "\"" << endl;
+      f_types_ << "#include \"" << cpp_include << "\"" << endl;
     }
   }
   f_types_ << endl;
@@ -1238,7 +1238,6 @@ void t_cpp_generator::generate_struct_definition(ostream& out,
   if (setters) {
     for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
       if (is_reference((*m_iter))) {
-        std::string type = type_name((*m_iter)->get_type());
         out << endl << indent() << "void " << tstruct->get_name() << "::__set_"
             << (*m_iter)->get_name() << "(::std::shared_ptr<"
             << type_name((*m_iter)->get_type(), false, false) << ">";
@@ -1538,9 +1537,7 @@ void t_cpp_generator::generate_struct_swap(ostream& out, t_struct* tstruct) {
 
   bool has_nonrequired_fields = false;
   const vector<t_field*>& fields = tstruct->get_members();
-  for (vector<t_field*>::const_iterator f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
-    t_field* tfield = *f_iter;
-
+  for (auto tfield : fields) {
     if (tfield->get_req() != t_field::T_REQUIRED) {
       has_nonrequired_fields = true;
     }

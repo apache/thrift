@@ -31,8 +31,6 @@ static int WEIGHT = 10;
 
 int main(int argc, char** argv) {
 
-  std::string arg;
-
   std::vector<std::string> args(argc - 1 > 1 ? argc - 1 : 1);
 
   args[0] = "all";

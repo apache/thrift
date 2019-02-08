@@ -279,12 +279,12 @@ void test_flush_max_us_impl(uint32_t flush_us, uint32_t write_us, uint32_t test_
   BOOST_WARN_GE(calls->size(), static_cast<FsyncLog::CallList::size_type>(1));
 
   const struct timeval* prev_time = nullptr;
-  for (auto it = calls->begin(); it != calls->end(); ++it) {
+  for (const auto & call : *calls) {
     if (prev_time) {
-      int delta = time_diff(prev_time, &it->time);
+      int delta = time_diff(prev_time, &call.time);
       BOOST_WARN( delta < max_allowed_delta );
     }
-    prev_time = &it->time;
+    prev_time = &call.time;
   }
 }
 

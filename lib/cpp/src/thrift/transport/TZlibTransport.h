@@ -138,7 +138,7 @@ public:
    */
   ~TZlibTransport() override;
 
-  bool isOpen();
+  bool isOpen() const override;
   bool peek() override;
 
   void open() override { transport_->open(); }
@@ -185,7 +185,7 @@ public:
 protected:
   inline void checkZlibRv(int status, const char* msg);
   inline void checkZlibRvNothrow(int status, const char* msg);
-  inline int readAvail();
+  inline int readAvail() const;
   void flushToTransport(int flush);
   void flushToZlib(const uint8_t* buf, int len, int flush);
   bool readFromZlib();

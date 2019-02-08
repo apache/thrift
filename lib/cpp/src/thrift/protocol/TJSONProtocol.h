@@ -248,7 +248,7 @@ public:
   class LookaheadReader {
 
   public:
-    LookaheadReader(TTransport& trans) : trans_(&trans), hasData_(false) {}
+    LookaheadReader(TTransport& trans) : trans_(&trans), hasData_(false), data_(0) {}
 
     uint8_t read() {
       if (hasData_) {

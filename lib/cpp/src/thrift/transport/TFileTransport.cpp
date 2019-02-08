@@ -977,7 +977,7 @@ TFileProcessor::TFileProcessor(shared_ptr<TProcessor> processor,
     inputTransport_(inputTransport) {
 
   // default the output transport to a null transport (common case)
-  outputTransport_ = shared_ptr<TNullTransport>(new TNullTransport());
+  outputTransport_ = std::make_shared<TNullTransport>();
 }
 
 TFileProcessor::TFileProcessor(shared_ptr<TProcessor> processor,
@@ -990,7 +990,7 @@ TFileProcessor::TFileProcessor(shared_ptr<TProcessor> processor,
     inputTransport_(inputTransport) {
 
   // default the output transport to a null transport (common case)
-  outputTransport_ = shared_ptr<TNullTransport>(new TNullTransport());
+  outputTransport_ = std::make_shared<TNullTransport>();
 }
 
 TFileProcessor::TFileProcessor(shared_ptr<TProcessor> processor,

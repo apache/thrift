@@ -19,9 +19,10 @@
 
 #include <thrift/thrift-config.h>
 
-#include <errno.h>
-#include <string>
 #include <cstring>
+#include <errno.h>
+#include <memory>
+#include <string>
 #ifdef HAVE_ARPA_INET_H
 #include <arpa/inet.h>
 #endif
@@ -266,7 +267,7 @@ void TSSLSocket::init() {
   eventSafe_ = false;
 }
 
-bool TSSLSocket::isOpen() {
+bool TSSLSocket::isOpen() const {
   if (ssl_ == nullptr || !TSocket::isOpen()) {
     return false;
   }
@@ -291,11 +292,10 @@ bool TSSLSocket::peek() {
   if (!checkHandshake())
     throw TSSLException("SSL_peek: Handshake is not completed");
   int rc;
-  uint8_t byte;
   do {
+    uint8_t byte;
     rc = SSL_peek(ssl_, &byte, 1);
     if (rc < 0) {
-
       int errno_copy = THRIFT_GET_SOCKET_ERROR;
       int error = SSL_get_error(ssl_, rc);
       switch (error) {
@@ -317,6 +317,8 @@ bool TSSLSocket::peek() {
       throw TSSLException("SSL_peek: " + errors);
     } else if (rc == 0) {
       ERR_clear_error();
+      break;
+    } else {
       break;
     }
   } while (true);
@@ -857,7 +859,7 @@ TSSLSocketFactory::TSSLSocketFactory(SSLProtocol protocol) : server_(false) {
     randomize();
   }
   count_++;
-  ctx_ = std::shared_ptr<SSLContext>(new SSLContext(protocol));
+  ctx_ = std::make_shared<SSLContext>(protocol);
 }
 
 TSSLSocketFactory::~TSSLSocketFactory() {

@@ -74,19 +74,19 @@ public:
    * Init and close methods
    */
 
-  void init_generator();
-  void close_generator();
+  void init_generator() override;
+  void close_generator() override;
 
   /**
    * Program-level generation functions
    */
 
-  void generate_typedef(t_typedef* ttypedef);
-  void generate_enum(t_enum* tenum);
-  void generate_const(t_const* tconst);
-  void generate_struct(t_struct* tstruct);
-  void generate_xception(t_struct* txception);
-  void generate_service(t_service* tservice);
+  void generate_typedef(t_typedef* ttypedef) override;
+  void generate_enum(t_enum* tenum) override;
+  void generate_const(t_const* tconst) override;
+  void generate_struct(t_struct* tstruct) override;
+  void generate_xception(t_struct* txception) override;
+  void generate_service(t_service* tservice) override;
 
 private:
   // struct type
@@ -3285,8 +3285,8 @@ string t_rs_generator::rust_sync_processor_impl_name(t_service *tservice) {
 string t_rs_generator::rust_enum_variant_name(const string &name) {
   bool all_uppercase = true;
 
-  for (size_t i = 0; i < name.size(); i++) {
-    if (isalnum(name[i]) && islower(name[i])) {
+  for (char i : name) {
+    if (isalnum(i) && islower(i)) {
       all_uppercase = false;
       break;
     }

@@ -20,8 +20,6 @@
 #include <thrift/protocol/TJSONProtocol.h>
 
 #include <boost/locale.hpp>
-#include <boost/math/special_functions/fpclassify.hpp>
-#include <boost/math/special_functions/sign.hpp>
 
 #include <cmath>
 #include <limits>
@@ -537,9 +535,9 @@ uint32_t TJSONProtocol::writeJSONDouble(double num) {
   std::string val;
 
   bool special = false;
-  switch (boost::math::fpclassify(num)) {
+  switch (std::fpclassify(num)) {
   case FP_INFINITE:
-    if (boost::math::signbit(num)) {
+    if (std::signbit(num)) {
       val = kThriftNegativeInfinity;
     } else {
       val = kThriftInfinity;

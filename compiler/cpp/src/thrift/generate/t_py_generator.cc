@@ -136,7 +136,7 @@ public:
     }
   }
 
-  virtual std::string indent_str() const {
+  std::string indent_str() const override {
     return "    ";
   }
 
@@ -144,20 +144,20 @@ public:
    * Init and close methods
    */
 
-  void init_generator();
-  void close_generator();
+  void init_generator() override;
+  void close_generator() override;
 
   /**
    * Program-level generation functions
    */
 
-  void generate_typedef(t_typedef* ttypedef);
-  void generate_enum(t_enum* tenum);
-  void generate_const(t_const* tconst);
-  void generate_struct(t_struct* tstruct);
-  void generate_forward_declaration(t_struct* tstruct);
-  void generate_xception(t_struct* txception);
-  void generate_service(t_service* tservice);
+  void generate_typedef(t_typedef* ttypedef) override;
+  void generate_enum(t_enum* tenum) override;
+  void generate_const(t_const* tconst) override;
+  void generate_struct(t_struct* tstruct) override;
+  void generate_forward_declaration(t_struct* tstruct) override;
+  void generate_xception(t_struct* txception) override;
+  void generate_service(t_service* tservice) override;
 
   std::string render_const_value(t_type* type, t_const_value* value);
 
@@ -335,7 +335,7 @@ private:
   std::string module_;
 
 protected:
-  virtual std::set<std::string> lang_keywords() const {
+  std::set<std::string> lang_keywords() const override {
     std::string keywords[] = { "False", "None", "True", "and", "as", "assert", "break", "class",
           "continue", "def", "del", "elif", "else", "except", "exec", "finally", "for", "from",
           "global", "if", "import", "in", "is", "lambda", "nonlocal", "not", "or", "pass", "print",
@@ -415,8 +415,8 @@ void t_py_generator::init_generator() {
 string t_py_generator::render_includes() {
   const vector<t_program*>& includes = program_->get_includes();
   string result = "";
-  for (size_t i = 0; i < includes.size(); ++i) {
-    result += "import " + get_real_py_module(includes[i], gen_twisted_, package_prefix_) + ".ttypes\n";
+  for (auto include : includes) {
+    result += "import " + get_real_py_module(include, gen_twisted_, package_prefix_) + ".ttypes\n";
   }
   return result;
 }
@@ -2607,7 +2607,7 @@ string t_py_generator::function_signature(t_function* tfunction, bool interface)
   string signature = tfunction->get_name() + "(";
 
   if (!(gen_zope_interface_ && interface)) {
-    pre.push_back("self");
+    pre.emplace_back("self");
   }
 
   signature += argument_list(tfunction->get_arglist(), &pre, &post) + ")";

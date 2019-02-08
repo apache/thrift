@@ -344,7 +344,7 @@ void ThreadManager::Impl::addWorker(size_t value) {
   std::set<shared_ptr<Thread> > newThreads;
   for (size_t ix = 0; ix < value; ix++) {
     shared_ptr<ThreadManager::Worker> worker
-        = shared_ptr<ThreadManager::Worker>(new ThreadManager::Worker(this));
+        = std::make_shared<ThreadManager::Worker>(this);
     newThreads.insert(threadFactory_->newThread(worker));
   }
 
@@ -352,13 +352,12 @@ void ThreadManager::Impl::addWorker(size_t value) {
   workerMaxCount_ += value;
   workers_.insert(newThreads.begin(), newThreads.end());
 
-  for (auto ix = newThreads.begin(); ix != newThreads.end();
-       ++ix) {
+  for (const auto & newThread : newThreads) {
     shared_ptr<ThreadManager::Worker> worker
-        = dynamic_pointer_cast<ThreadManager::Worker, Runnable>((*ix)->runnable());
+        = dynamic_pointer_cast<ThreadManager::Worker, Runnable>(newThread->runnable());
     worker->state_ = ThreadManager::Worker::STARTING;
-    (*ix)->start();
-    idMap_.insert(std::pair<const Thread::id_t, shared_ptr<Thread> >((*ix)->getId(), *ix));
+    newThread->start();
+    idMap_.insert(std::pair<const Thread::id_t, shared_ptr<Thread> >(newThread->getId(), newThread));
   }
 
   while (workerCount_ != workerMaxCount_) {
@@ -430,17 +429,15 @@ void ThreadManager::Impl::removeWorkersUnderLock(size_t value) {
     workerMonitor_.wait();
   }
 
-  for (auto ix = deadWorkers_.begin();
-       ix != deadWorkers_.end();
-       ++ix) {
+  for (const auto & deadWorker : deadWorkers_) {
 
     // when used with a joinable thread factory, we join the threads as we remove them
     if (!threadFactory_->isDetached()) {
-      (*ix)->join();
+      deadWorker->join();
     }
 
-    idMap_.erase((*ix)->getId());
-    workers_.erase(*ix);
+    idMap_.erase(deadWorker->getId());
+    workers_.erase(deadWorker);
   }
 
   deadWorkers_.clear();
@@ -480,7 +477,7 @@ void ThreadManager::Impl::add(shared_ptr<Runnable> value, int64_t timeout, int64
     }
   }
 
-  tasks_.push_back(shared_ptr<ThreadManager::Task>(new ThreadManager::Task(value, expiration)));
+  tasks_.push_back(std::make_shared<ThreadManager::Task>(value, expiration));
 
   // If idle thread is available notify it, otherwise all worker threads are
   // running and will get around to this task in time.

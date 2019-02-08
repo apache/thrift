@@ -83,6 +83,7 @@ private:
     Mutex mutex_;
 
     Runner() {
+      port = 0;
       listenHandler.reset(new ListenEventHandler(&mutex_));
     }
 

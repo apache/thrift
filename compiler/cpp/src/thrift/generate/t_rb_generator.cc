@@ -102,21 +102,21 @@ public:
    * Init and close methods
    */
 
-  void init_generator();
-  void close_generator();
+  void init_generator() override;
+  void close_generator() override;
 
   /**
    * Program-level generation functions
    */
 
-  void generate_typedef(t_typedef* ttypedef);
-  void generate_enum(t_enum* tenum);
-  void generate_const(t_const* tconst);
-  void generate_struct(t_struct* tstruct);
-  void generate_forward_declaration(t_struct* tstruct);
+  void generate_typedef(t_typedef* ttypedef) override;
+  void generate_enum(t_enum* tenum) override;
+  void generate_const(t_const* tconst) override;
+  void generate_struct(t_struct* tstruct) override;
+  void generate_forward_declaration(t_struct* tstruct) override;
   void generate_union(t_struct* tunion);
-  void generate_xception(t_struct* txception);
-  void generate_service(t_service* tservice);
+  void generate_xception(t_struct* txception) override;
+  void generate_service(t_service* tservice) override;
 
   t_rb_ofstream& render_const_value(t_rb_ofstream& out, t_type* type, t_const_value* value);
 
@@ -307,15 +307,15 @@ string t_rb_generator::render_require_thrift() {
 string t_rb_generator::render_includes() {
   const vector<t_program*>& includes = program_->get_includes();
   string result = "";
-  for (size_t i = 0; i < includes.size(); ++i) {
+  for (auto include : includes) {
     if (namespaced_) {
-      t_program* included = includes[i];
+      t_program* included = include;
       std::string included_require_prefix
           = rb_namespace_to_path_prefix(included->get_namespace("rb"));
       std::string included_name = included->get_name();
       result += "require '" + included_require_prefix + underscore(included_name) + "_types'\n";
     } else {
-      result += "require '" + underscore(includes[i]->get_name()) + "_types'\n";
+      result += "require '" + underscore(include->get_name()) + "_types'\n";
     }
   }
   if (includes.size() > 0) {
@@ -763,8 +763,8 @@ void t_rb_generator::generate_field_data(t_rb_ofstream& out,
 }
 
 void t_rb_generator::begin_namespace(t_rb_ofstream& out, vector<std::string> modules) {
-  for (vector<std::string>::iterator m_iter = modules.begin(); m_iter != modules.end(); ++m_iter) {
-    out.indent() << "module " << *m_iter << endl;
+  for (auto & module : modules) {
+    out.indent() << "module " << module << endl;
     out.indent_up();
   }
 }
@@ -1140,8 +1140,8 @@ string t_rb_generator::type_name(const t_type* ttype) {
 string t_rb_generator::full_type_name(const t_type* ttype) {
   string prefix = "::";
   vector<std::string> modules = ruby_modules(ttype->get_program());
-  for (vector<std::string>::iterator m_iter = modules.begin(); m_iter != modules.end(); ++m_iter) {
-    prefix += *m_iter + "::";
+  for (auto & module : modules) {
+    prefix += module + "::";
   }
   return prefix + type_name(ttype);
 }

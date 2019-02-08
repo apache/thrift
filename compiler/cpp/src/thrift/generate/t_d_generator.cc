@@ -71,7 +71,7 @@ public:
   }
 
 protected:
-  virtual void init_generator() {
+  void init_generator() override {
     // Make output directory
     MKDIR(get_out_dir().c_str());
 
@@ -102,20 +102,20 @@ protected:
 
     // Include type modules from other imported programs.
     const vector<t_program*>& includes = program_->get_includes();
-    for (size_t i = 0; i < includes.size(); ++i) {
-      f_types_ << "public import " << render_package(*(includes[i])) << includes[i]->get_name()
+    for (auto include : includes) {
+      f_types_ << "public import " << render_package(*include) << include->get_name()
                << "_types;" << endl;
     }
     if (!includes.empty())
       f_types_ << endl;
   }
 
-  virtual void close_generator() {
+  void close_generator() override {
     // Close output file
     f_types_.close();
   }
 
-  virtual void generate_consts(std::vector<t_const*> consts) {
+  void generate_consts(std::vector<t_const*> consts) override {
     if (!consts.empty()) {
       string f_consts_name = package_dir_ + program_name_ + "_constants.d";
       ofstream_with_content_based_conditional_update f_consts;
@@ -159,13 +159,13 @@ protected:
     }
   }
 
-  virtual void generate_typedef(t_typedef* ttypedef) {
+  void generate_typedef(t_typedef* ttypedef) override {
     this->emit_doc(ttypedef, f_types_);
     f_types_ << indent() << "alias " << render_type_name(ttypedef->get_type()) << " "
              << ttypedef->get_symbolic() << ";" << endl << endl;
   }
 
-  virtual void generate_enum(t_enum* tenum) {
+  void generate_enum(t_enum* tenum) override {
     vector<t_enum_value*> constants = tenum->get_constants();
 
     this->emit_doc(tenum, f_types_);
@@ -188,15 +188,15 @@ protected:
     f_types_ << endl;
   }
 
-  virtual void generate_struct(t_struct* tstruct) {
+  void generate_struct(t_struct* tstruct) override {
     print_struct_definition(f_types_, tstruct, false);
   }
 
-  virtual void generate_xception(t_struct* txception) {
+  void generate_xception(t_struct* txception) override {
     print_struct_definition(f_types_, txception, true);
   }
 
-  virtual void generate_service(t_service* tservice) {
+  void generate_service(t_service* tservice) override {
     string svc_name = tservice->get_name();
 
     // Service implementation file includes
