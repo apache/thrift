@@ -1831,6 +1831,13 @@ void t_py_generator::generate_service_server(t_service* tservice) {
     f_service_ << indent() << "self._processMap[\"" << (*f_iter)->get_name()
                << "\"] = Processor.process_" << (*f_iter)->get_name() << endl;
   }
+  f_service_ << indent() << "self._on_message_begin = None" << endl;
+  indent_down();
+  f_service_ << endl;
+
+  f_service_ << indent() << "def on_message_begin(self, func):" << endl;
+  indent_up();
+    f_service_ << indent() << "self._on_message_begin = func" << endl;
   indent_down();
   f_service_ << endl;
 
@@ -1839,6 +1846,10 @@ void t_py_generator::generate_service_server(t_service* tservice) {
   indent_up();
 
   f_service_ << indent() << "(name, type, seqid) = iprot.readMessageBegin()" << endl;
+  f_service_ << indent() << "if self._on_message_begin:" << endl;
+  indent_up();
+    f_service_ << indent() << "self._on_message_begin(name, type, seqid)" << endl;
+  indent_down();
 
   // TODO(mcslee): validate message
 
