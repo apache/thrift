@@ -107,9 +107,7 @@ function TProtocolBase:readDouble() end
 function TProtocolBase:readString() end
 
 function TProtocolBase:skip(ttype)
-  if type == TType.STOP then
-    return
-  elseif ttype == TType.BOOL then
+  if ttype == TType.BOOL then
     self:readBool()
   elseif ttype == TType.BYTE then
     self:readByte()
@@ -153,6 +151,10 @@ function TProtocolBase:skip(ttype)
       self:skip(ettype)
     end
     self:readListEnd()
+  else
+    terror(TProtocolException:new{
+      message = 'Invalid data'
+    })
   end
 end
 
