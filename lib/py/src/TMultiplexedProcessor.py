@@ -39,6 +39,10 @@ class TMultiplexedProcessor(TProcessor):
     def registerProcessor(self, serviceName, processor):
         self.services[serviceName] = processor
 
+    def on_message_begin(self, func):
+        for key in self.services.keys():
+            self.services[key].on_message_begin(func)
+
     def process(self, iprot, oprot):
         (name, type, seqid) = iprot.readMessageBegin()
         if type != TMessageType.CALL and type != TMessageType.ONEWAY:

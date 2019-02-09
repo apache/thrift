@@ -752,13 +752,18 @@ public class TestClient {
         testClient.testOneway(3);
         long onewayElapsedMillis = (System.nanoTime() - startOneway) / 1000000;
         if (onewayElapsedMillis > 200) {
-          System.out.println("Oneway test failed: took " +
+          System.out.println("Oneway test took too long to execute failed: took " +
                              Long.toString(onewayElapsedMillis) +
                              "ms");
-          System.out.printf("*** FAILURE ***\n");
+          System.out.println("oneway calls are 'fire and forget' and therefore should not cause blocking.");
+          System.out.println("Some transports (HTTP) have a required response, and typically this failure");
+          System.out.println("means the transport response was delayed until after the execution");
+          System.out.println("of the RPC.  The server should post the transport response immediately and");
+          System.out.println("before executing the RPC.");
+          System.out.println("*** FAILURE ***");
           returnCode |= ERR_BASETYPES;
         } else {
-          System.out.println("Success - took " +
+          System.out.println("Success - fire and forget only took " +
                              Long.toString(onewayElapsedMillis) +
                              "ms");
         }
