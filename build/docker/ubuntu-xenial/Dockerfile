@@ -218,6 +218,7 @@ RUN apt-get install -y --no-install-recommends \
       php7.0 \
       php7.0-cli \
       php7.0-dev \
+      php-json \
       php-pear \
       re2c \
       composer
