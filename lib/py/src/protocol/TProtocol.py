@@ -191,9 +191,7 @@ class TProtocolBase(object):
         return self.readString().decode('utf8')
 
     def skip(self, ttype):
-        if ttype == TType.STOP:
-            return
-        elif ttype == TType.BOOL:
+        if ttype == TType.BOOL:
             self.readBool()
         elif ttype == TType.BYTE:
             self.readByte()
@@ -232,6 +230,9 @@ class TProtocolBase(object):
             for i in range(size):
                 self.skip(etype)
             self.readListEnd()
+        else:
+            raise TProtocolException(TProtocolException.INVALID_DATA,
+                                     "invalid TType")
 
     # tuple of: ( 'reader method' name, is_container bool, 'writer_method' name )
     _TTYPE_HANDLERS = (
