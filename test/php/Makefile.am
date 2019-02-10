@@ -26,6 +26,7 @@ stubs: ../ThriftTest.thrift
 php_ext_dir:
 	mkdir -p php_ext_dir
 	ln -s ../../../lib/php/src/ext/thrift_protocol/modules/thrift_protocol.so php_ext_dir/
+	ln -s "$$(php-config --extension-dir)/json.so" php_ext_dir/
 	ln -s "$$(php-config --extension-dir)/sockets.so" php_ext_dir/
 
 precross: stubs php_ext_dir

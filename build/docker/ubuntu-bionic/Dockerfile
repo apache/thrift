@@ -217,6 +217,7 @@ RUN apt-get install -y --no-install-recommends \
       php \
       php-cli \
       php-dev \
+      php-json \
       php-pear \
       re2c \
       composer

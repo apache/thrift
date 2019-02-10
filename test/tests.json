@@ -545,8 +545,9 @@
       ],
       "protocols": [
         "binary",
+        "binary:accel",
         "compact",
-        "binary:accel"
+        "json"
       ],
       "command": [
         "php",
