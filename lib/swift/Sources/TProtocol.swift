@@ -175,8 +175,9 @@ public extension TProtocol {
         try skip(type: elemType)
       }
       try readListEnd()
+      
     default:
-      return
+      throw TProtocolError(error: .invalidData, message: "Invalid data")
     }
   }
 }

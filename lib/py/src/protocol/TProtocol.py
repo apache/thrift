@@ -231,8 +231,9 @@ class TProtocolBase(object):
                 self.skip(etype)
             self.readListEnd()
         else:
-            raise TProtocolException(TProtocolException.INVALID_DATA,
-                                     "invalid TType")
+            raise TProtocolException(
+                TProtocolException.INVALID_DATA,
+                "invalid TType")
 
     # tuple of: ( 'reader method' name, is_container bool, 'writer_method' name )
     _TTYPE_HANDLERS = (
