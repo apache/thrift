@@ -323,6 +323,8 @@
   "hs-csharp_binary_framed-ip",
   "hs-csharp_compact_buffered-ip",
   "hs-csharp_compact_framed-ip",
+  "hs-csharp_json_buffered-ip",
+  "hs-csharp_json_framed-ip",
   "nodejs-cpp_binary_http-domain",
   "nodejs-cpp_binary_http-ip",
   "nodejs-cpp_binary_http-ip-ssl",
