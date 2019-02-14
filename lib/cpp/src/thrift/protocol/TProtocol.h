@@ -747,16 +747,12 @@ uint32_t skip(Protocol_& prot, TType type) {
     result += prot.readListEnd();
     return result;
   }
-  case T_STOP:
-  case T_VOID:
-  case T_U64:
-  case T_UTF8:
-  case T_UTF16:
-    break;
   default:
-    throw TProtocolException(TProtocolException::INVALID_DATA);
+    break;
   }
-  return 0;
+
+  throw TProtocolException(TProtocolException::INVALID_DATA,
+                           "invalid TType");
 }
 
 }}} // apache::thrift::protocol

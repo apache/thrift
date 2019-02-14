@@ -163,7 +163,6 @@ describe 'BaseProtocol' do
       @prot.skip(Thrift::Types::I64)
       @prot.skip(Thrift::Types::DOUBLE)
       @prot.skip(Thrift::Types::STRING)
-      @prot.skip(Thrift::Types::STOP) # should do absolutely nothing
     end
 
     it "should skip structs" do
