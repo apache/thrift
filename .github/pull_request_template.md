@@ -1,43 +1,12 @@
 <!-- Explain the changes in the pull request below: -->
   
 
-
 <!-- We recommend you review the checklist before submitting a pull request. -->
 
+- [ ] Did you create an [Apache Jira](https://issues.apache.org/jira/projects/THRIFT/issues/) ticket?  (not required for trivial changes)
+- [ ] Does your pull request title follow the pattern "THRIFT-NNNN: describe my issue"?  (not required for trivial changes)
 - [ ] Did you squash your changes to a single commit?
-
-- [ ] Do you need an [Apache Jira](https://issues.apache.org/jira/projects/THRIFT/issues/) ticket?<details><summary>Expand for guidance...</summary>
-    - `Yes` if your change requires a release note.
-    - `Yes` if your change is a breaking change.
-    - `No` if you change is trivial, such as fixing a typo.
-</details>
- 
-- [ ] Is this change worthy of a release note? <details><summary>Examples of Release Note-worthy examples...</summary>
-    - Breaking Changes
-    - New, Deprecated, or Removed Languages
-    - Security Fixes
-    - Significant Refactoring
-    - Changing how the product is built
-</details>
-
-- [ ] Breaking changes have additional requirements: <details><summary>Expand for instructions...</summary>
-    - Add or reference an existing Apache Jira THRIFT ticket.
-    - Add a `Breaking-Change` label to the Jira ticket.
-    - Add a note to the `lib/<language>/README.md` file.
-    - Add a line to the `CHANGES.md` file.
-</details>
-
-- [ ] Does this change require a build? <details><summary>Expand for guidance...</summary>
-    - `Yes` for any code change
-    - `Yes` for any build script change
-    - `Yes` for any docker build environment change
-    - `Yes` for any change affecting the cross test suite
-    - `No` for documentation-only changes
-    - `No` for trivial changes, for example fixing a typo.
-    <br/>
-    If your change does not require a build, you can add [ci skip] to the end of your commit message.<br/>
-    This will avoid costly and unnecessary builds in both the pull request and once it is merged.
-</details>
+- [ ] Did you do your best to avoid breaking changes?  If one was needed, did you label the Jira ticket with "Breaking-Change"
 
 <!--
   The Contributing Guide at:
