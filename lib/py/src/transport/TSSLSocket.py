@@ -79,8 +79,8 @@ class TSSLBase(object):
     SSL_VERSION = _default_protocol
     """
   Default SSL version.
-  For backword compatibility, it can be modified.
-  Use __init__ keywoard argument "ssl_version" instead.
+  For backwards compatibility, it can be modified.
+  Use __init__ keyword argument "ssl_version" instead.
   """
 
     def _deprecated_arg(self, args, kwargs, pos, key):
@@ -89,12 +89,12 @@ class TSSLBase(object):
         real_pos = pos + 3
         warnings.warn(
             '%dth positional argument is deprecated.'
-            'please use keyward argument insteand.'
+            'please use keyword argument instead.'
             % real_pos, DeprecationWarning, stacklevel=3)
 
         if key in kwargs:
             raise TypeError(
-                'Duplicate argument: %dth argument and %s keyward argument.'
+                'Duplicate argument: %dth argument and %s keyword argument.'
                 % (real_pos, key))
         kwargs[key] = args[pos]
 
@@ -118,7 +118,7 @@ class TSSLBase(object):
         if TSSLBase.SSL_VERSION != self._default_protocol:
             warnings.warn(
                 'SSL_VERSION is deprecated.'
-                'please use ssl_version keyward argument instead.',
+                'please use ssl_version keyword argument instead.',
                 DeprecationWarning, stacklevel=2)
         self._context = ssl_opts.pop('ssl_context', None)
         self._server_hostname = None
