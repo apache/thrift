@@ -206,8 +206,6 @@ struct
         (* skippage *)
     method skip typ =
       match typ with
-        | T_STOP -> ()
-        | T_VOID -> ()
         | T_BOOL -> ignore self#readBool
         | T_BYTE
         | T_I08 -> ignore self#readByte
@@ -248,6 +246,7 @@ struct
                               self#readListEnd)
         | T_UTF8 -> ()
         | T_UTF16 -> ()
+        | _ -> raise (Protocol.E (Protocol.INVALID_DATA, "Invalid data"))
   end
 
   class virtual factory =
