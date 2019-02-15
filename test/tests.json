@@ -11,8 +11,7 @@
       ],
       "protocols": [
         "binary:multi",
-        "compact:multic",
-        "header"
+        "compact:multic"
       ]
     },
     "client": {
