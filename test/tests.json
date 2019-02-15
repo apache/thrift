@@ -21,8 +21,7 @@
       ],
       "protocols": [
         "multi:binary",
-        "multic:compact",
-        "multi:header"
+        "multic:compact"
       ],
       "sockets": [
         "ip-ssl"
