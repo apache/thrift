@@ -427,6 +427,18 @@ abstract class TSaslTransport extends TTransport {
       readFrame();
     } catch (SaslException e) {
       throw new TTransportException(e);
+    } catch (TTransportException transportException) {
+      /*
+       * If there is no-data or no-sasl header in the stream, throw a different
+       * type of exception so we can handle this scenario differently.
+       */
+      if (transportException.getType() == TTransportException.END_OF_FILE) {
+        if (LOGGER.isDebugEnabled()) {
+          LOGGER.debug("No data or no sasl data in the stream");
+        }
+        throw new TSaslTransportException("No data or no sasl data in the stream");
+      }
+      throw transportException;
     }
 
     return readBuffer.read(buf, off, len);

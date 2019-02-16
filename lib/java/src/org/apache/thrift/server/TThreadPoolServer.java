@@ -312,21 +312,17 @@ public class TThreadPoolServer extends TServer {
             }
             processor.process(inputProtocol, outputProtocol);
         }
-      } catch (TException tx) {
-        LOGGER.error("Thrift error occurred during processing of message.", tx);
       } catch (Exception x) {
         // We'll usually receive RuntimeException types here
         // Need to unwrap to ascertain real causing exception before we choose to ignore
-        Throwable realCause = x.getCause();
         // Ignore err-logging all transport-level/type exceptions
-        if ((realCause != null && realCause instanceof TTransportException)
-            || (x instanceof TTransportException)) {
+        if (isIgnorableTSaslTransportException(x)) {
           LOGGER.debug(
               "Received TTransportException during processing of message. Ignoring.",
               x);
         } else {
           // Log the exception at error level and continue
-          LOGGER.error("Error occurred during processing of message.", x);
+          LOGGER.error((x instanceof TException? "Thrift " : "") + "Error occurred during processing of message.", x);
         }
       } finally {
         if (eventHandler != null) {
@@ -342,6 +338,11 @@ public class TThreadPoolServer extends TServer {
           client_.close();
         }
       }
+    }
+
+    private boolean isIgnorableTSaslTransportException(Exception x) {
+      return (x instanceof TSaslTransportException && "No data or no sasl data in the stream".equals(x.getMessage()))
+          || (x.getCause() instanceof TSaslTransportException && "No data or no sasl data in the stream".equals(x.getCause().getMessage()));
     }
   }
 }
