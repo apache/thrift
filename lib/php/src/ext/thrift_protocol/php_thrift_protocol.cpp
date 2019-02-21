@@ -1013,7 +1013,7 @@ void binary_serialize_spec(zval* zthis, PHPOutputTransport& transport, HashTable
     zval* prop = zend_read_property(Z_OBJCE_P(zthis), zthis, varname, strlen(varname), false, &rv);
 
     if (Z_TYPE_P(prop) == IS_REFERENCE){
-      ZVAL_UNREF(prop);
+      ZVAL_DEREF(prop);
     }
     if (Z_TYPE_P(prop) != IS_NULL) {
       transport.writeI8(ttype);
