@@ -60,7 +60,7 @@ func (p _ParseContext) String() string {
 	return "UNKNOWN-PARSE-CONTEXT"
 }
 
-// JSON protocol implementation for thrift.
+// Simple JSON protocol implementation for thrift.
 //
 // This protocol produces/consumes a simple output format
 // suitable for parsing by scripting languages.  It should not be
@@ -1316,7 +1316,7 @@ func (p *TSimpleJSONProtocol) readNumeric() (Numeric, error) {
 func (p *TSimpleJSONProtocol) safePeekContains(b []byte) bool {
 	for i := 0; i < len(b); i++ {
 		a, _ := p.reader.Peek(i + 1)
-		if len(a) == 0 || a[i] != b[i] {
+		if len(a) < (i+1) || a[i] != b[i] {
 			return false
 		}
 	}

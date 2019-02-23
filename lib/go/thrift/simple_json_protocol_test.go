@@ -714,3 +714,25 @@ func TestWriteSimpleJSONProtocolMap(t *testing.T) {
 	}
 	trans.Close()
 }
+
+func TestWriteSimpleJSONProtocolSafePeek(t *testing.T) {
+	trans := NewTMemoryBuffer()
+	p := NewTSimpleJSONProtocol(trans)
+	trans.Write([]byte{'a', 'b'})
+	trans.Flush(context.Background())
+	
+	test1 := p.safePeekContains([]byte{'a', 'b'})
+	if !test1 {
+		t.Fatalf("Should match at test 1")
+	}
+	
+	test2 := p.safePeekContains([]byte{'a', 'b', 'c', 'd'})
+	if test2 {
+		t.Fatalf("Should not match at test 2")
+	}
+	
+	test3 := p.safePeekContains([]byte{'x', 'y'})
+	if test3 {
+		t.Fatalf("Should not match at test 3")
+	}
+}
