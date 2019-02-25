@@ -35,7 +35,7 @@ http://www.gtk.org/
 Breaking Changes
 ================
 
-0.12.0
+0.12.x
 ------
 
 The compiler's handling of namespaces when generating the name of types,

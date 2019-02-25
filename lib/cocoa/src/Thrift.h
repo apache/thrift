@@ -17,4 +17,4 @@
  * under the License.
  */
 
-#define ThriftVersion @"0.12.0"
+#define ThriftVersion @"0.12.1"

@@ -1,6 +1,6 @@
 Pod::Spec.new do |s|
   s.name          = "Thrift-swift3"
-  s.version       = "0.12.0"
+  s.version       = "0.12.1"
   s.summary       = "Apache Thrift is a lightweight, language-independent software stack with an associated code generation mechanism for RPC."
   s.description   = <<-DESC
 The Apache Thrift software framework, for scalable cross-language services development, combines a software stack with a code generation engine to build services that work efficiently and seamlessly between C++, Java, Python, PHP, Ruby, Erlang, Perl, Haskell, C#, Cocoa, JavaScript, Node.js, Smalltalk, OCaml and Delphi and other languages.
@@ -11,6 +11,6 @@ The Apache Thrift software framework, for scalable cross-language services devel
   s.ios.deployment_target = '9.0'
   s.osx.deployment_target = '10.10'
   s.requires_arc  = true
-  s.source        = { :git => "https://github.com/apache/thrift.git", :tag => "0.12.0" }
+  s.source        = { :git => "https://github.com/apache/thrift.git", :tag => "v0.12.1" }
   s.source_files  = "lib/swift/Sources/*.swift"
 end

@@ -96,7 +96,7 @@
 					<VersionInfoKeys>
 						<VersionInfoKeys Name="CompanyName"/>
 						<VersionInfoKeys Name="FileDescription">Thrift Tutorial</VersionInfoKeys>
-						<VersionInfoKeys Name="FileVersion">0.12.0.0</VersionInfoKeys>
+						<VersionInfoKeys Name="FileVersion">0.12.1.0</VersionInfoKeys>
 						<VersionInfoKeys Name="InternalName">DelphiServer</VersionInfoKeys>
 						<VersionInfoKeys Name="LegalCopyright">Copyright © 2012 The Apache Software Foundation</VersionInfoKeys>
 						<VersionInfoKeys Name="LegalTrademarks"/>

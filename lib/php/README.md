@@ -53,7 +53,7 @@ apc_fetch(), apc_store()
 
 # Breaking Changes
 
-## 0.12.0
+## 0.12.x
 
 1. [PSR-4](https://www.php-fig.org/psr/psr-4/) loader is now the default. If you want to use class maps instead, use `-gen php:classmap`.
 

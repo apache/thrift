@@ -1,6 +1,21 @@
 Apache Thrift Changelog
 
 ================================================================================
+Thrift 0.12.1
+--------------------------------------------------------------------------------
+
+## Bug fixes
+	* [THRIFT-4024] - Skip() should throw on unknown data types
+	* [THRIFT-4783] - Thrift should throw when skipping over unexpected data
+	* [THRIFT-4784] - Thrift should throw when skipping over unexpected data
+	* additional test for TSimpleJSONProtocol
+    * [THRIFT-4698] - add haskell hackage sdist target and fix cabal file
+    * [THRIFT-4750] - as3 changes to build and publish to maven central
+    * [THRIFT-4746] - changes for publishing to maven; fix java debug vs. release build with cmake
+    * [THRIFT-4691] - ensure CPAN module runs unit tests
+
+
+================================================================================
 Thrift 0.12.0
 --------------------------------------------------------------------------------
 ## New Languages

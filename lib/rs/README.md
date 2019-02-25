@@ -46,7 +46,7 @@ It does not currently use any Rust 2018 features.
 
 Breaking changes are minimized. When they are made they will be outlined below with transition guidelines.
 
-##### Thrift 0.12.0
+##### Thrift 0.12.x
 
 * **[THRIFT-4529]** - Rust enum variants are now camel-cased instead of uppercased to conform to Rust naming conventions
 

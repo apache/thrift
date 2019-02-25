@@ -11,7 +11,7 @@ This will download and launch the base box VM under VirtualBox and run the Apach
    $ vagrant ssh
    [vagrant@thrift ~]$ cd /thrift
    [vagrant@thrift thrift]$ compiler/cpp/thrift --version
-   Thrift version 0.12.0
+   Thrift version 0.12.1
 
 The provisioning script (inside the Vagrantfile) runs ./bootstrap.sh, ./configure, make and make check, but does not install thrift. To install thrift run "make install".
 

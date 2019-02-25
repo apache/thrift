@@ -22,7 +22,7 @@
   {description, "Thrift bindings"},
 
   % The version of the applicaton
-  {vsn, "0.12.0"},
+  {vsn, "0.12.1"},
 
   % All modules used by the application.
   {modules, [
