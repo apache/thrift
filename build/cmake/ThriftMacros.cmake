@@ -23,18 +23,30 @@ macro(ADD_PKGCONFIG_THRIFT name)
         DESTINATION "${PKGCONFIG_INSTALL_DIR}")
 endmacro(ADD_PKGCONFIG_THRIFT)
 
-
 macro(ADD_LIBRARY_THRIFT name)
     add_library(${name} ${ARGN})
     set_target_properties(${name} PROPERTIES
         OUTPUT_NAME ${name}${THRIFT_RUNTIME_POSTFIX}   # windows link variants (/MT, /MD, /MTd, /MDd) get different names
         VERSION ${thrift_VERSION} )
     # set_target_properties(${name} PROPERTIES PUBLIC_HEADER "${thriftcpp_HEADERS}")
-    install(TARGETS ${name}
+    install(TARGETS ${name} EXPORT "${name}Targets"
         RUNTIME DESTINATION "${BIN_INSTALL_DIR}"
         LIBRARY DESTINATION "${LIB_INSTALL_DIR}"
         ARCHIVE DESTINATION "${LIB_INSTALL_DIR}"
         PUBLIC_HEADER DESTINATION "${INCLUDE_INSTALL_DIR}")
+	
+	export(EXPORT "${name}Targets"
+		FILE "${CMAKE_CURRENT_BINARY_DIR}/${name}/${name}Targets.cmake"
+		NAMESPACE "${name}::")
+
+	install(EXPORT "${name}Targets"
+		FILE "${name}Targets.cmake"
+		NAMESPACE "${name}::"
+		DESTINATION "${CMAKE_INSTALL_DIR}/thrift")
+#	install(EXPORT "${name}Targets"
+#		FILE "${name}Targets.cmake"
+#		NAMESPACE "${name}::"
+#		DESTINATION "${CMAKE_INSTALL_DIR}/${name}")
 endmacro()
 
 macro(TARGET_INCLUDE_DIRECTORIES_THRIFT name)
