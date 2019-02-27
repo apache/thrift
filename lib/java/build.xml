@@ -325,10 +325,10 @@
       <remoteRepository refid="central"/>
       <remoteRepository refid="apache"/>
       <license name="The Apache Software License, Version 2.0" url="${license}"/>
-      <scm connection="scm:git:https://git-wip-us.apache.org/repos/asf/thrift.git"
-      developerConnection="scm:git:https://git-wip-us.apache.org/repos/asf/thrift.git"
-      url="https://git-wip-us.apache.org/repos/asf?p=thrift.git"
-      />
+      <scm connection="scm:git:https://github.com/apache/thrift.git"
+           developerConnection="scm:git:https://github.com/apache/thrift.git"
+           url="https://github.com/apache/thrift" />
+
       <!-- Thrift Developers -->
       <developer id="mcslee" name="Mark Slee"/>
       <developer id="dreiss" name="David Reiss"/>
@@ -390,7 +390,8 @@
     <attribute name="packaging" default="jar"/>
     <attribute name="pom" default=""/>
     <sequential>
-      <artifact:mvn fork="true">
+        <artifact:mvn fork="true" mavenHome="/usr/local/apache-maven-3.6.0">
+        <jvmarg value="-Dmaven.multiModuleProjectDirectory=/usr/local/apache-maven-3.6.0"/>
         <arg value="org.apache.maven.plugins:maven-gpg-plugin:1.6:sign-and-deploy-file"/>
         <arg value="-DrepositoryId=${maven-repository-id}"/>
         <arg value="-Durl=${maven-repository-url}"/>
@@ -403,7 +404,7 @@
     </sequential>
   </macrodef>
 
-  <target name="publish" depends="clean,init,test,dist,javadoc,pack.src">
+  <target name="publish" depends="clean,init,compile,dist,javadoc,pack.src">
     <!-- Compile, package, test and then send release to apache maven repo -->
     <!-- run with: ant -Drelease=true publish-->
     <signAndDeploy file="${pom.xml}" packaging="pom" classifier="" pom="${pom.xml}"/>
