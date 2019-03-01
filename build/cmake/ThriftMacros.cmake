@@ -43,10 +43,6 @@ macro(ADD_LIBRARY_THRIFT name)
 		FILE "${name}Targets.cmake"
 		NAMESPACE "${name}::"
 		DESTINATION "${CMAKE_INSTALL_DIR}/thrift")
-#	install(EXPORT "${name}Targets"
-#		FILE "${name}Targets.cmake"
-#		NAMESPACE "${name}::"
-#		DESTINATION "${CMAKE_INSTALL_DIR}/${name}")
 endmacro()
 
 macro(TARGET_INCLUDE_DIRECTORIES_THRIFT name)

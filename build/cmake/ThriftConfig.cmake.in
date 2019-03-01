@@ -23,6 +23,7 @@ set(THRIFT_VERSION ${thrift_VERSION})
 
 set_and_check(THRIFT_INCLUDE_DIR "@PACKAGE_INCLUDE_INSTALL_DIR@")
 set_and_check(THRIFT_CMAKE_DIR "@PACKAGE_CMAKE_INSTALL_DIR@")
+set_and_check(THRIFT_BIN_DIR "@PACKAGE_BIN_INSTALL_DIR@")
 
 if (NOT TARGET thrift::thrift)
   include("${THRIFT_CMAKE_DIR}/thriftTargets.cmake")
@@ -31,7 +32,8 @@ endif()
 set(THRIFT_LIBRARIES thrift::thrift)
 
 if ("${THRIFT_LIBRARIES}" STREQUAL "")
-	message(FATAL_ERROR "thrif does not found!")
+	message(FATAL_ERROR "thrift does not found! make sure thrift installation is done correctly, if you still encounter
+	this problem please reinstall thrift library")
 endif()
 
 if (NOT thrift_FIND_QUIETLY)
