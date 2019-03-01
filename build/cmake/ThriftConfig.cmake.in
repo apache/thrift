@@ -33,10 +33,9 @@ set(THRIFT_LIBRARIES thrift::thrift)
 
 if ("${THRIFT_LIBRARIES}" STREQUAL "")
 	message(FATAL_ERROR "thrift libraries were not found")
-	this problem please reinstall thrift library")
 endif()
 
-if (NOT thrift_FIND_QUIETLY)
+if (NOT Thrift_FIND_QUIETLY)
   message(STATUS "Found thrift: ${PACKAGE_PREFIX_DIR}")
 endif()
 
