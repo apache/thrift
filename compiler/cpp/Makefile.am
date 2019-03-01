@@ -65,7 +65,7 @@ thrift_SOURCES = src/thrift/audit/t_audit.cpp \
                  src/thrift/parse/t_type.h \
                  src/thrift/parse/t_typedef.cc \
                  src/thrift/parse/t_typedef.h \
-                 src/thrift/platform.h 
+                 src/thrift/platform.h
 
 # Specific client generator source
 thrift_SOURCES += src/thrift/generate/t_as3_generator.cc \
