@@ -34,7 +34,7 @@ macro(ADD_LIBRARY_THRIFT name)
         LIBRARY DESTINATION "${LIB_INSTALL_DIR}"
         ARCHIVE DESTINATION "${LIB_INSTALL_DIR}"
         PUBLIC_HEADER DESTINATION "${INCLUDE_INSTALL_DIR}")
-	
+
 	export(EXPORT "${name}Targets"
 		FILE "${CMAKE_CURRENT_BINARY_DIR}/${name}/${name}Targets.cmake"
 		NAMESPACE "${name}::")
