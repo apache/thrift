@@ -23,6 +23,12 @@ fi
 
 DIR="$( cd "$( dirname "$0" )" && pwd )"
 
+EPISODIC_DIR=${DIR}/episodic-code-generation-test
+
+THRIFT_FILES_DIR=${DIR}/../../../test
+
+THRIFT_COMPILER=${DIR}/../../../compiler/cpp/thrift
+
 ISTANBUL="$DIR/../../../node_modules/istanbul/lib/cli.js"
 
 REPORT_PREFIX="${DIR}/../coverage/report"
@@ -54,26 +60,68 @@ testServer()
   return $RET
 }
 
+testEpisodicCompilation()
+{
+  RET=0
+  if [ -n "${COVER}" ]; then
+    ${ISTANBUL} cover ${EPISODIC_DIR}/server.js --dir ${REPORT_PREFIX}${COUNT} --handle-sigint &
+    COUNT=$((COUNT+1))
+  else
+    node ${EPISODIC_DIR}/server.js &
+  fi
+  SERVERPID=$!
+  sleep 0.1
+  if [ -n "${COVER}" ]; then
+    ${ISTANBUL} cover ${EPISODIC_DIR}/client.js --dir ${REPORT_PREFIX}${COUNT} || RET=1
+    COUNT=$((COUNT+1))
+  else
+    node ${EPISODIC_DIR}/client.js || RET=1
+  fi
+  kill -2 $SERVERPID || RET=1
+  wait $SERVERPID
+  return $RET
+}
+
 
 TESTOK=0
 
-#generating thrift code
+# generating Thrift code
 
-${DIR}/../../../compiler/cpp/thrift -o ${DIR} --gen js:node ${DIR}/../../../test/ThriftTest.thrift
-${DIR}/../../../compiler/cpp/thrift -o ${DIR} --gen js:node ${DIR}/../../../test/JsDeepConstructorTest.thrift
-${DIR}/../../../compiler/cpp/thrift -o ${DIR} --gen js:node ${DIR}/../../../test/Int64Test.thrift
+${THRIFT_COMPILER} -o ${DIR} --gen js:node ${THRIFT_FILES_DIR}/ThriftTest.thrift
+${THRIFT_COMPILER} -o ${DIR} --gen js:node ${THRIFT_FILES_DIR}/JsDeepConstructorTest.thrift
+${THRIFT_COMPILER} -o ${DIR} --gen js:node ${THRIFT_FILES_DIR}/Int64Test.thrift
 mkdir ${DIR}/gen-nodejs-es6
-${DIR}/../../../compiler/cpp/thrift -out ${DIR}/gen-nodejs-es6 --gen js:node,es6 ${DIR}/../../../test/ThriftTest.thrift
-${DIR}/../../../compiler/cpp/thrift -out ${DIR}/gen-nodejs-es6 --gen js:node,es6 ${DIR}/../../../test/JsDeepConstructorTest.thrift
-${DIR}/../../../compiler/cpp/thrift -out ${DIR}/gen-nodejs-es6 --gen js:node,es6 ${DIR}/../../../test/Int64Test.thrift
+${THRIFT_COMPILER} -out ${DIR}/gen-nodejs-es6 --gen js:node,es6 ${THRIFT_FILES_DIR}/ThriftTest.thrift
+${THRIFT_COMPILER} -out ${DIR}/gen-nodejs-es6 --gen js:node,es6 ${THRIFT_FILES_DIR}/JsDeepConstructorTest.thrift
+${THRIFT_COMPILER} -out ${DIR}/gen-nodejs-es6 --gen js:node,es6 ${THRIFT_FILES_DIR}/Int64Test.thrift
 
-#unit tests
+# generate episodic compilation test code
+TYPES_PACKAGE=${EPISODIC_DIR}/node_modules/types-package
+
+# generate the first episode
+mkdir --parents ${EPISODIC_DIR}/gen-1/first-episode
+${THRIFT_COMPILER} -o ${EPISODIC_DIR}/gen-1/first-episode --gen js:node,thrift_package_output_directory=first-episode ${THRIFT_FILES_DIR}/Types.thrift
+
+# create a "package" from the first episode and "install" it, the episode file must be at the module root
+mkdir --parents ${TYPES_PACKAGE}/first-episode
+cp --force ${EPISODIC_DIR}/episodic_compilation.package.json ${TYPES_PACKAGE}/package.json
+cp --force ${EPISODIC_DIR}/gen-1/first-episode/gen-nodejs/Types_types.js ${TYPES_PACKAGE}/first-episode/
+cp --force ${EPISODIC_DIR}/gen-1/first-episode/gen-nodejs/thrift.js.episode ${TYPES_PACKAGE}
+
+# generate the second episode
+mkdir --parents ${EPISODIC_DIR}/gen-2/second-episode
+${THRIFT_COMPILER} -o ${EPISODIC_DIR}/gen-2/second-episode --gen js:node,imports=${TYPES_PACKAGE} ${THRIFT_FILES_DIR}/Service.thrift
+if [ -f ${EPISODIC_DIR}/gen-2/second-episode/Types_types.js ]; then
+  TESTOK=1
+fi
+
+# unit tests
 
 node ${DIR}/binary.test.js || TESTOK=1
 node ${DIR}/int64.test.js || TESTOK=1
 node ${DIR}/deep-constructor.test.js || TESTOK=1
 
-#integration tests
+# integration tests
 
 for type in tcp multiplex websocket http
 do
@@ -91,6 +139,8 @@ do
   done
 done
 
+# episodic compilation test
+testEpisodicCompilation
 
 if [ -n "${COVER}" ]; then
   ${ISTANBUL} report --dir "${DIR}/../coverage" --include "${DIR}/../coverage/report*/coverage.json" lcov cobertura html

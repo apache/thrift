@@ -982,6 +982,7 @@ void parse(t_program* program, t_program* parent_program) {
 void generate(t_program* program, const vector<string>& generator_strings) {
   // Oooohh, recursive code generation, hot!!
   if (gen_recurse) {
+    program->set_recursive(true);
     const vector<t_program*>& includes = program->get_includes();
     for (auto include : includes) {
       // Propagate output path from parent to child programs
@@ -1017,6 +1018,8 @@ void generate(t_program* program, const vector<string>& generator_strings) {
     failure("Error: %s\n", s.c_str());
   } catch (const char* exc) {
     failure("Error: %s\n", exc);
+  } catch (const std::invalid_argument& invalid_argument_exception) {
+    failure("Error: %s\n", invalid_argument_exception.what());
   }
 }
 

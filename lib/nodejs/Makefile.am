@@ -34,6 +34,8 @@ check: deps
 clean-local:
 	$(RM) -r test/gen-*
 	$(RM) -r $(top_srcdir)/node_modules
+	$(RM) -r test/episodic-code-generation-test/gen*
+	$(RM) -r test/episodic-code-generation-test/node_modules
 
 EXTRA_DIST = \
 	examples \
