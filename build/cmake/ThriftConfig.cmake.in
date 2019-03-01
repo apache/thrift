@@ -32,7 +32,7 @@ endif()
 set(THRIFT_LIBRARIES thrift::thrift)
 
 if ("${THRIFT_LIBRARIES}" STREQUAL "")
-	message(FATAL_ERROR "thrift does not found! make sure thrift installation is done correctly, if you still encounter
+	message(FATAL_ERROR "thrift libraries were not found")
 	this problem please reinstall thrift library")
 endif()
 
