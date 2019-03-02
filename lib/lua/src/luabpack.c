@@ -40,6 +40,17 @@ static int64_t T_ntohll(uint64_t data) {
   return ((uint64_t)d1 << 32) + (uint64_t)d2;
 }
 
+// network order to host order (64-bit)
+static double T_htond(double x){
+  int *Double_Overlay;
+  int Holding_Buffer;
+  Double_Overlay = (int *) &x;
+  Holding_Buffer = Double_Overlay [0];
+  Double_Overlay [0] = htonl (Double_Overlay [1]);
+  Double_Overlay [1] = htonl (Holding_Buffer);
+  return x;
+}
+
 /**
  * bpack(type, data)
  *  c - Signed Byte
@@ -80,6 +91,7 @@ static int l_bpack(lua_State *L) {
     }
     case 'd': {
       double data = luaL_checknumber(L, 2);
+      data = (double)T_htond(data);
       luaL_addlstring(&buf, (void*)&data, sizeof(data));
       break;
     }
