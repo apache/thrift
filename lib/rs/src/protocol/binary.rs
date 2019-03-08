@@ -16,8 +16,7 @@
 // under the License.
 
 use byteorder::{BigEndian, ByteOrder, ReadBytesExt, WriteBytesExt};
-use std::convert::From;
-use try_from::TryFrom;
+use std::convert::{From, TryFrom};
 
 use super::{
     TFieldIdentifier, TInputProtocol, TInputProtocolFactory, TListIdentifier, TMapIdentifier,
