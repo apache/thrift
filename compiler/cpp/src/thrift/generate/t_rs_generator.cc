@@ -550,20 +550,17 @@ void t_rs_generator::render_attributes_and_includes() {
   f_gen_ << endl;
 
   // add standard includes
-  f_gen_ << "extern crate ordered_float;" << endl;
   f_gen_ << "extern crate thrift;" << endl;
-  f_gen_ << "extern crate try_from;" << endl;
   f_gen_ << endl;
-  f_gen_ << "use ordered_float::OrderedFloat;" << endl;
+  f_gen_ << "use thrift::OrderedFloat;" << endl;
   f_gen_ << "use std::cell::RefCell;" << endl;
   f_gen_ << "use std::collections::{BTreeMap, BTreeSet};" << endl;
-  f_gen_ << "use std::convert::From;" << endl;
+  f_gen_ << "use std::convert::{From, TryFrom};" << endl;
   f_gen_ << "use std::default::Default;" << endl;
   f_gen_ << "use std::error::Error;" << endl;
   f_gen_ << "use std::fmt;" << endl;
   f_gen_ << "use std::fmt::{Display, Formatter};" << endl;
   f_gen_ << "use std::rc::Rc;" << endl;
-  f_gen_ << "use try_from::TryFrom;" << endl;
   f_gen_ << endl;
   f_gen_ << "use thrift::{ApplicationError, ApplicationErrorKind, ProtocolError, ProtocolErrorKind, TThriftClient};" << endl;
   f_gen_ << "use thrift::protocol::{TFieldIdentifier, TListIdentifier, TMapIdentifier, TMessageIdentifier, TMessageType, TInputProtocol, TOutputProtocol, TSetIdentifier, TStructIdentifier, TType};" << endl;
@@ -932,9 +929,9 @@ void t_rs_generator::render_enum_conversion(t_enum* tenum, const string& enum_na
   f_gen_ << "impl TryFrom<i32> for " << enum_name << " {" << endl;
   indent_up();
 
-  f_gen_ << indent() << "type Err = thrift::Error;";
+  f_gen_ << indent() << "type Error = thrift::Error;";
 
-  f_gen_ << indent() << "fn try_from(i: i32) -> Result<Self, Self::Err> {" << endl;
+  f_gen_ << indent() << "fn try_from(i: i32) -> Result<Self, Self::Error> {" << endl;
   indent_up();
 
   f_gen_ << indent() << "match i {" << endl;

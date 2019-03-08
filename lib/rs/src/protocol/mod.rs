@@ -57,10 +57,9 @@
 //! protocol.write_field_end().unwrap();
 //! ```
 
-use std::convert::From;
+use std::convert::{From, TryFrom};
 use std::fmt;
 use std::fmt::{Display, Formatter};
-use try_from::TryFrom;
 
 use transport::{TReadTransport, TWriteTransport};
 use {ProtocolError, ProtocolErrorKind};
@@ -770,8 +769,8 @@ impl From<TMessageType> for u8 {
 }
 
 impl TryFrom<u8> for TMessageType {
-    type Err = ::Error;
-    fn try_from(b: u8) -> ::Result<Self> {
+    type Error = ::Error;
+    fn try_from(b: u8) -> Result<Self, Self::Error> {
         match b {
             0x01 => Ok(TMessageType::Call),
             0x02 => Ok(TMessageType::Reply),

@@ -17,9 +17,8 @@
 
 use byteorder::{BigEndian, ReadBytesExt, WriteBytesExt};
 use integer_encoding::{VarIntReader, VarIntWriter};
-use std::convert::From;
+use std::convert::{From, TryFrom};
 use std::io;
-use try_from::TryFrom;
 
 use super::{
     TFieldIdentifier, TInputProtocol, TInputProtocolFactory, TListIdentifier, TMapIdentifier,

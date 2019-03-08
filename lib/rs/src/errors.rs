@@ -19,7 +19,7 @@ use std::convert::{From, Into};
 use std::error::Error as StdError;
 use std::fmt::{Debug, Display, Formatter};
 use std::{error, fmt, io, string};
-use try_from::TryFrom;
+use std::convert::TryFrom;
 
 use protocol::{TFieldIdentifier, TInputProtocol, TOutputProtocol, TStructIdentifier, TType};
 
@@ -413,8 +413,8 @@ impl Display for TransportError {
 }
 
 impl TryFrom<i32> for TransportErrorKind {
-    type Err = Error;
-    fn try_from(from: i32) -> Result<Self, Self::Err> {
+    type Error = Error;
+    fn try_from(from: i32) -> Result<Self, Self::Error> {
         match from {
             0 => Ok(TransportErrorKind::Unknown),
             1 => Ok(TransportErrorKind::NotOpen),
@@ -543,8 +543,8 @@ impl Display for ProtocolError {
 }
 
 impl TryFrom<i32> for ProtocolErrorKind {
-    type Err = Error;
-    fn try_from(from: i32) -> Result<Self, Self::Err> {
+    type Error = Error;
+    fn try_from(from: i32) -> Result<Self, Self::Error> {
         match from {
             0 => Ok(ProtocolErrorKind::Unknown),
             1 => Ok(ProtocolErrorKind::InvalidData),
@@ -647,8 +647,8 @@ impl Display for ApplicationError {
 }
 
 impl TryFrom<i32> for ApplicationErrorKind {
-    type Err = Error;
-    fn try_from(from: i32) -> Result<Self, Self::Err> {
+    type Error = Error;
+    fn try_from(from: i32) -> Result<Self, Self::Error> {
         match from {
             0 => Ok(ApplicationErrorKind::Unknown),
             1 => Ok(ApplicationErrorKind::UnknownMethod),
