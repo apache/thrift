@@ -1,5 +1,11 @@
 Apache Thrift Changelog
 
+Thrift 0.9.3.1
+--------------------------------------------------------------------------------
+## Bug
+    * [THRIFT-4506] - CVE-2018-1320 for Java SASL backported from 0.12.0
+
+
 Thrift 0.9.3
 --------------------------------------------------------------------------------
 ## Bug
@@ -249,7 +255,7 @@ Thrift 0.9.3
     * [THRIFT-3176] - Union incorrectly implements ==
     * [THRIFT-3177] - Fails to run rake test
     * [THRIFT-3180] - lua plugin: framed transport do not work
-    * [THRIFT-3179] - lua plugin cant connect to remote server because function l_socket_create_and_connect always bind socket to localhost
+    * [THRIFT-3179] - lua plugin cant connect to remote server because function l_socket_create_and_connect always bind socket to localhost 
     * [THRIFT-3248] - TypeScript: additional comma in method signature without parameters
     * [THRIFT-3302] - Go JSON protocol should encode Thrift byte type as signed integer string
     * [THRIFT-3297] - c_glib: an abstract base class is not generated
