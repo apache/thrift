@@ -208,7 +208,7 @@ All Apache Thrift releases go through a 72-hour final release candidate voting p
     ```bash
     ~/dist/dev/thrift$ svn status
     # verify everything is correct
-    ~/dist/dev/thrift$ svn add 1.0.0-rc0 -m "apache thrift 1.0.0-rc0 in dist dev" \
+    ~/dist/dev/thrift$ svn commit -m "Apache Thrift 1.0.0-rc0 in dist dev" \
         --username <apache-username> --password <apache-password>
     ```
 
@@ -293,7 +293,7 @@ All Apache Thrift releases go through a 72-hour final release candidate voting p
     ~/dist/release/thrift$ cp -p ../../dev/thrift/1.0.0-rc0/* 1.0.0/
     ~/dist/release/thrift$ svn status
     # verify everything is correct
-    ~/dist/release/thrift$ svn add 1.0.0 -m "Apache Thrift 1.0.0 official release" \
+    ~/dist/release/thrift$ svn commit -m "Apache Thrift 1.0.0 official release" \
         --username <apache-username> --password <apache-password>
     ```
 
