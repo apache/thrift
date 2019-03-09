@@ -45,11 +45,10 @@ defaultTasks 'build'
 // Version components for this project
 group = property('thrift.groupid')
 
-// Drop the -dev suffix, we use the SNAPSHOT suffix for non-release versions
 if (Boolean.parseBoolean(project.release)) {
-    version = parsedVersion
+    version = property('thrift.version')
 } else {
-    version = parsedVersion + '-SNAPSHOT'
+    version = property('thrift.version') + '-SNAPSHOT'
 }
 
 // Keeping the rest of the build logic in functional named scripts for clarity
