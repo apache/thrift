@@ -63,7 +63,7 @@ namespace ThriftTest
         private class TestParams
         {
             public int numIterations = 1;
-            public IPAddress host = IPAddress.Any;
+            public string host = "localhost";
             public int port = 9090;
             public int numThreads = 1;
             public string url;
@@ -92,7 +92,7 @@ namespace ThriftTest
                     else if (args[i].StartsWith("--host="))
                     {
                         // check there for ipaddress
-                        host = new IPAddress(Encoding.Unicode.GetBytes(args[i].Substring(args[i].IndexOf("=") + 1)));
+                        host = args[i].Substring(args[i].IndexOf("=") + 1);
                         if (transport != TransportChoice.TlsSocket)
                             transport = TransportChoice.Socket;
                     }
