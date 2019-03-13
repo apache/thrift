@@ -267,6 +267,11 @@ All Apache Thrift releases go through a 72-hour final release candidate voting p
 
 1. If any issues are brought up with the release candidate, you will need to package another and reset the voting clock.
 
+Voting on the development mailing list provides additional benefits (wisdom from [Christopher Tubbs](https://issues.apache.org/jira/browse/THRIFT-4506?focusedCommentId=16791902&page=com.atlassian.jira.plugin.system.issuetabpanels:comment-tabpanel#comment-16791902)):
+- It creates a public record for the vote,
+- It allows for participation/evaluation from our wider user audience (more diversity in evaluators improves quality), and
+- It provides more entry points for potential future committers/PMC members to earn merit through participation.
+
 ### Official Release
 
 1. Send a message to `dev@thrift.apache.org` with the voting results.  Use this template as a guide:
@@ -303,13 +308,17 @@ All Apache Thrift releases go through a 72-hour final release candidate voting p
 
     **NOTE:** All new releases must have the "v" prefix to satisfy third  party package managers (dlang dub, golang, etc..)
 
+    **NOTE:** You **should** [sign the release tag](https://git-scm.com/book/en/v2/Git-Tools-Signing-Your-Work).  Since you already have a GPG signing key for publishing the Apache Release, you want to [upload that key to your GitHub account](https://help.github.com/en/articles/adding-a-new-gpg-key-to-your-github-account).  Once the key is known by GitHub you can sign the tag.
+
     ```bash
     ~/thrift$ # make sure you are on the release branch
     ~/thrift$ git checkout release/1.0.0
     ~/thrift$ git pull
-    ~/thrift$ git tag v1.0.0
+    ~/thrift$ git tag -s v1.0.0 -m "Version 1.0.0"
     ~/thrift$ git push --tags
     ```
+
+    **NOTE:** If you get the error "gpg failed to sign the data" when tagging, try this fix: "export GPG_TTY=$(tty)"
 
 1. Create a new release from the [GitHub Tags Page](https://github.com/apache/thrift/tags).  Attach the statically built Windows thrift compiler as a binary here.
 
@@ -361,13 +370,15 @@ All Apache Thrift releases go through a 72-hour final release candidate voting p
 1. **FIXME** Ask someone with admin access to Apache Jira to change the fixVersion in question from unreleased to released, for example:
     https://issues.apache.org/jira/browse/THRIFT-4686
 
-1. Ensure that the [Jira release page](https://issues.apache.org/jira/projects/THRIFT?selectedItem=com.atlassian.jira.jira-projects-plugin%3Arelease-page&status=unreleased) for the version has the same number of issues in the version as issues done, and that there are no issues in progress and no issues to do, and no warnings.
+1. Ensure that the [Jira release page](https://issues.apache.org/jira/projects/THRIFT?selectedItem=com.atlassian.jira.jira-projects-plugin%3Arelease-page&status=unreleased) for the version has the same number of issues in the version as issues done, and that there are no issues in progress and no issues to do, and no warnings.  Finally, mark it as released and set the date of the release.
   
 * [Report any CVEs](https://apache.org/security/committers.html) that were fixed.  You can email `security@apache.org` if you are not sure if there are any CVEs to report.
 
 #### Third Party Package Managers
 
 See https://thrift.apache.org/lib/ for the current status of each external package manager's distribution.  Information below is from the 0.12.0 release:
+
+  > This section needs to be updated with detailed instructions for each language, or pointers to the README.md files in each language directory with detailed release instructions for the given package management system.
 
 * [dart] Releasing this requires a google account.
   * You will need to install the same version of dart that is used in the docker image.
