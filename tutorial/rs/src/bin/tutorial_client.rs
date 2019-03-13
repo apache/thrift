@@ -75,7 +75,7 @@ fn run() -> thrift::Result<()> {
     println!("multiplied 7 and 8 and got {}", res);
 
     // let's get the log for it
-    let res = client.get_struct(32)?;
+    let res = client.get_struct(logid /* 32 */)?;
     println!("got log {:?} for operation {}", res, logid);
 
     // ok - let's be bad :(
