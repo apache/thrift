@@ -1171,6 +1171,13 @@ Released 2017-DEC-27
 - [THRIFT-3923](https://issues.apache.org/jira/browse/THRIFT-3923) - Maybe remove Aereo from the "Powered by" list
 - [THRIFT-2149](https://issues.apache.org/jira/browse/THRIFT-2149) - Add an option to disable the generation of default operators
 
+## 0.9.3.1
+
+Released March 13, 2019 to backport a CVE fix to the popular 0.9.3 release.
+
+### Bug
+- [THRIFT-4506](https://issues.apache.org/jira/browse/THRIFT-4506) - CVE-2018-1320 for Java SASL backported from 0.12.0
+
 ## 0.9.3
 
 ### Bug
