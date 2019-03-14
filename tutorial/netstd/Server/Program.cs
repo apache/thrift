@@ -143,13 +143,13 @@ Sample:
                     serverTransport = new TServerSocketTransport(9090);
                     break;
                 case Transport.TcpBuffered:
-                    serverTransport = new TServerSocketTransport(port: 9090, clientTimeout: 10000, useBufferedSockets: true);
+                    serverTransport = new TServerSocketTransport(port: 9090, clientTimeout: 10000, buffering: Buffering.BufferedTransport);
                     break;
                 case Transport.NamedPipe:
                     serverTransport = new TNamedPipeServerTransport(".test");
                     break;
                 case Transport.TcpTls:
-                    serverTransport = new TTlsServerSocketTransport(9090, false, GetCertificate(), ClientCertValidator, LocalCertificateSelectionCallback);
+                    serverTransport = new TTlsServerSocketTransport(9090, Buffering.None, GetCertificate(), ClientCertValidator, LocalCertificateSelectionCallback);
                     break;
                 case Transport.Framed:
                     serverTransport = new TServerFramedTransport(9090);

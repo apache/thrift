@@ -1,4 +1,4 @@
-﻿// Licensed to the Apache Software Foundation(ASF) under one
+// Licensed to the Apache Software Foundation(ASF) under one
 // or more contributor license agreements.See the NOTICE file
 // distributed with this work for additional information
 // regarding copyright ownership.The ASF licenses this file
@@ -22,7 +22,14 @@ using System.Threading.Tasks;
 
 namespace Thrift.Transport
 {
-    //TODO: check for correct implementation 
+    // it does not make much sense to use buffered when we already use framed
+    public enum Buffering
+    {
+        None,
+        BufferedTransport,
+        FramedTransport
+    }
+
 
     // ReSharper disable once InconsistentNaming
     public class TFramedTransport : TTransport
