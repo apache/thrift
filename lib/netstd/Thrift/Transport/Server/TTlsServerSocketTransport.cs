@@ -16,6 +16,7 @@
 // under the License.
 
 using System;
+using System.Diagnostics;
 using System.Net;
 using System.Net.Security;
 using System.Net.Sockets;
@@ -36,31 +37,17 @@ namespace Thrift.Transport.Server
         private readonly int _port;
         private readonly X509Certificate2 _serverCertificate;
         private readonly SslProtocols _sslProtocols;
-        private readonly bool _useBufferedSockets;
-        private readonly bool _useFramedTransport;
+        private readonly Buffering _buffering;
         private TcpListener _server;
 
         public TTlsServerSocketTransport(int port, X509Certificate2 certificate)
-            : this(port, false, certificate)
+            : this(port, Buffering.None, certificate)
         {
         }
 
         public TTlsServerSocketTransport(
             int port,
-            bool useBufferedSockets,
-            X509Certificate2 certificate,
-            RemoteCertificateValidationCallback clientCertValidator = null,
-            LocalCertificateSelectionCallback localCertificateSelectionCallback = null,
-            SslProtocols sslProtocols = SslProtocols.Tls12) 
-            : this(port, useBufferedSockets, false, certificate,
-                clientCertValidator, localCertificateSelectionCallback, sslProtocols)
-        {
-        }
-        
-        public TTlsServerSocketTransport(
-            int port,
-            bool useBufferedSockets,
-            bool useFramedTransport,
+            Buffering buffering,
             X509Certificate2 certificate,
             RemoteCertificateValidationCallback clientCertValidator = null,
             LocalCertificateSelectionCallback localCertificateSelectionCallback = null,
@@ -74,8 +61,7 @@ namespace Thrift.Transport.Server
 
             _port = port;
             _serverCertificate = certificate;
-            _useBufferedSockets = useBufferedSockets;
-            _useFramedTransport = useFramedTransport;
+            _buffering = buffering;
             _clientCertValidator = clientCertValidator;
             _localCertificateSelectionCallback = localCertificateSelectionCallback;
             _sslProtocols = sslProtocols;
@@ -138,15 +124,20 @@ namespace Thrift.Transport.Server
                 await tTlsSocket.SetupTlsAsync();
 
                 TTransport trans = tTlsSocket;
-                
-                if (_useBufferedSockets)
-                {
-                    trans = new TBufferedTransport(trans);
-                }
 
-                if (_useFramedTransport)
+                switch(_buffering)
                 {
-                    trans = new TFramedTransport(trans);
+                    case Buffering.BufferedTransport:
+                        trans = new TBufferedTransport(trans);
+                        break;
+
+                    case Buffering.FramedTransport:
+                        trans = new TFramedTransport(trans);
+                        break;
+
+                    default:
+                        Debug.Assert(_buffering == Buffering.None);
+                        break;
                 }
                 
                 return trans;

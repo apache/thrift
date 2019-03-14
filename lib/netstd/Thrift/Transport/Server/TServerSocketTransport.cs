@@ -16,6 +16,7 @@
 // under the License.
 
 using System;
+using System.Diagnostics;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading;
@@ -24,27 +25,25 @@ using Thrift.Transport.Client;
 
 namespace Thrift.Transport.Server
 {
+
     // ReSharper disable once InconsistentNaming
     public class TServerSocketTransport : TServerTransport
     {
         private readonly int _clientTimeout;
-        private readonly bool _useBufferedSockets;
-        private readonly bool _useFramedTransport;
+        private readonly Buffering _buffering;
         private TcpListener _server;
 
-        public TServerSocketTransport(TcpListener listener, int clientTimeout = 0, bool useBufferedSockets = false, bool useFramedTransport = false)
+        public TServerSocketTransport(TcpListener listener, int clientTimeout = 0, Buffering buffering = Buffering.None)
         {
             _server = listener;
             _clientTimeout = clientTimeout;
-            _useBufferedSockets = useBufferedSockets;
-            _useFramedTransport = useFramedTransport;
+            _buffering = buffering;
         }
 
-        public TServerSocketTransport(int port, int clientTimeout = 0, bool useBufferedSockets = false, bool useFramedTransport = false)
+        public TServerSocketTransport(int port, int clientTimeout = 0, Buffering buffering = Buffering.None)
         {
             _clientTimeout = clientTimeout;
-            _useBufferedSockets = useBufferedSockets;
-            _useFramedTransport = useFramedTransport;
+            _buffering = buffering;
             try
             {
                 // Make server socket
@@ -103,14 +102,19 @@ namespace Thrift.Transport.Server
                         Timeout = _clientTimeout
                     };
 
-                    if (_useBufferedSockets)
+                    switch (_buffering)
                     {
-                        tSocketTransport = new TBufferedTransport(tSocketTransport);
-                    }
+                        case Buffering.BufferedTransport:
+                            tSocketTransport = new TBufferedTransport(tSocketTransport);
+                            break;
 
-                    if (_useFramedTransport)
-                    {
-                        tSocketTransport = new TFramedTransport(tSocketTransport);
+                        case Buffering.FramedTransport:
+                            tSocketTransport = new TFramedTransport(tSocketTransport);
+                            break;
+
+                        default:
+                            Debug.Assert(_buffering == Buffering.None);
+                            break;
                     }
 
                     return tSocketTransport;

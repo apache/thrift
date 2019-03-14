@@ -43,15 +43,6 @@ namespace ThriftTest
         Json
     }
 
-    // it does not make much sense to use buffered when we already use framed
-    internal enum LayeredChoice
-    {
-        None,
-        Buffered,
-        Framed
-    }
-
-
     internal enum TransportChoice
     {
         Socket,
@@ -61,7 +52,7 @@ namespace ThriftTest
 
     internal class ServerParam
     {
-        internal LayeredChoice layered = LayeredChoice.None;
+        internal Buffering buffering = Buffering.None;
         internal ProtocolChoice protocol = ProtocolChoice.Binary;
         internal TransportChoice transport = TransportChoice.Socket;
         internal int port = 9090;
@@ -84,11 +75,11 @@ namespace ThriftTest
                 }
                 else if (args[i] == "-b" || args[i] == "--buffered" || args[i] == "--transport=buffered")
                 {
-                    layered = LayeredChoice.Buffered;
+                    buffering = Buffering.BufferedTransport;
                 }
                 else if (args[i] == "-f" || args[i] == "--framed" || args[i] == "--transport=framed")
                 {
-                    layered = LayeredChoice.Framed;
+                    buffering = Buffering.FramedTransport;
                 }
                 else if (args[i] == "--binary" || args[i] == "--protocol=binary")
                 {
@@ -552,8 +543,7 @@ namespace ThriftTest
 
                 // Transport
                 TServerTransport trans;
-                var useBuffered = (param.layered == LayeredChoice.Buffered);
-                var useFramed = (param.layered == LayeredChoice.Framed);
+
                 switch (param.transport)
                 {
                     case TransportChoice.NamedPipe:
@@ -570,7 +560,7 @@ namespace ThriftTest
                         }
 
                         transFactory = new TTransportFactory(); // framed/buffered is built into socket transports
-                        trans = new TTlsServerSocketTransport( param.port, useBuffered, useFramed, cert,
+                        trans = new TTlsServerSocketTransport( param.port, param.buffering, cert,
                             (sender, certificate, chain, errors) => true, 
                             null, SslProtocols.Tls | SslProtocols.Tls11 | SslProtocols.Tls12);
                         break;
@@ -578,19 +568,19 @@ namespace ThriftTest
                     case TransportChoice.Socket:
                     default:  
                         transFactory = new TTransportFactory(); // framed/buffered is built into socket transports
-                        trans = new TServerSocketTransport(param.port, 0, useBuffered, useFramed);
+                        trans = new TServerSocketTransport(param.port, 0, param.buffering);
                         break;
                 }
 
                 // add layered transport, if not already set above
                 if (transFactory == null)
                 {
-                    switch (param.layered)
+                    switch (param.buffering)
                     {
-                        case LayeredChoice.Framed:
+                        case Buffering.FramedTransport:
                             transFactory = new TFramedTransport.Factory();
                             break;
-                        case LayeredChoice.Buffered:
+                        case Buffering.BufferedTransport:
                             transFactory = new TBufferedTransport.Factory();
                             break;
                     }
@@ -627,8 +617,8 @@ namespace ThriftTest
                 var where = (! string.IsNullOrEmpty(param.pipe)) ? "on pipe " + param.pipe : "on port " + param.port;
                 Console.WriteLine("Starting the AsyncBaseServer " + where +
                                   " with processor TPrototypeProcessorFactory prototype factory " +
-                                  (param.layered == LayeredChoice.Buffered ? " with buffered transport" : "") +
-                                  (param.layered == LayeredChoice.Framed ? " with framed transport" : "") +
+                                  (param.buffering == Buffering.BufferedTransport ? " with buffered transport" : "") +
+                                  (param.buffering == Buffering.FramedTransport ? " with framed transport" : "") +
                                   (param.transport == TransportChoice.TlsSocket ? " with encryption" : "") +
                                   (param.protocol == ProtocolChoice.Compact ? " with compact protocol" : "") +
                                   (param.protocol == ProtocolChoice.Json ? " with json protocol" : "") +
