@@ -1,4 +1,4 @@
-﻿// Licensed to the Apache Software Foundation(ASF) under one
+// Licensed to the Apache Software Foundation(ASF) under one
 // or more contributor license agreements.See the NOTICE file
 // distributed with this work for additional information
 // regarding copyright ownership.The ASF licenses this file
@@ -123,7 +123,7 @@ namespace Thrift.Transport.Client
 
                 var addr = entry.AddressList[0];
 
-                _host = new IPAddress(addr.GetAddressBytes(), addr.ScopeId); ;
+                _host = new IPAddress(addr.GetAddressBytes(), addr.ScopeId);
                 _port = port;
                 _timeout = timeout;
                 _certificate = certificate;

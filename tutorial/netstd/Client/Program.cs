@@ -31,12 +31,14 @@ using Thrift.Transport;
 using Thrift.Transport.Client;
 using tutorial;
 using shared;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Client
 {
     public class Program
     {
-        private static readonly ILogger Logger = new LoggerFactory().AddConsole().AddDebug().CreateLogger(nameof(Client));
+        private static ServiceCollection ServiceCollection = new ServiceCollection();
+        private static ILogger Logger;
 
         private static void DisplayHelp()
         {
@@ -75,6 +77,9 @@ Sample:
         {
             args = args ?? new string[0];
 
+            ServiceCollection.AddLogging(logging => ConfigureLogging(logging));
+            Logger = ServiceCollection.BuildServiceProvider().GetService<ILoggerFactory>().CreateLogger(nameof(Client));
+
             if (args.Any(x => x.StartsWith("-help", StringComparison.OrdinalIgnoreCase)))
             {
                 DisplayHelp();
@@ -87,6 +92,13 @@ Sample:
             {
                 RunAsync(args, source.Token).GetAwaiter().GetResult();
             }
+        }
+
+        private static void ConfigureLogging(ILoggingBuilder logging)
+        {
+            logging.SetMinimumLevel(LogLevel.Trace);
+            logging.AddConsole();
+            logging.AddDebug();
         }
 
         private static async Task RunAsync(string[] args, CancellationToken cancellationToken)

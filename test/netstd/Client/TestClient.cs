@@ -994,9 +994,9 @@ namespace ThriftTest
                 Console.WriteLine(ex.Message + " ST: " + ex.StackTrace);
             }
 
+            Console.WriteLine("Test Oneway(1)");
             var sw = new Stopwatch();
             sw.Start();
-            Console.WriteLine("Test Oneway(1)");
             await client.testOnewayAsync(1, MakeTimeoutToken());
             sw.Stop();
             if (sw.ElapsedMilliseconds > 1000)
