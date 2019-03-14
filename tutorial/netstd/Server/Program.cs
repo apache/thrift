@@ -41,11 +41,16 @@ namespace Server
 {
     public class Program
     {
-        private static readonly ILogger Logger = new LoggerFactory().AddConsole(LogLevel.Trace).AddDebug(LogLevel.Trace).CreateLogger(nameof(Server));
+        private static ServiceCollection ServiceCollection = new ServiceCollection();
+        private static ILogger Logger;
 
         public static void Main(string[] args)
         {
             args = args ?? new string[0];
+
+            ServiceCollection.AddLogging(logging => ConfigureLogging(logging));
+            Logger = ServiceCollection.BuildServiceProvider().GetService<ILoggerFactory>().CreateLogger(nameof(Server));             
+
 
             if (args.Any(x => x.StartsWith("-help", StringComparison.OrdinalIgnoreCase)))
             {
@@ -64,6 +69,13 @@ namespace Server
             }
 
             Logger.LogInformation("Server stopped");
+        }
+
+        private static void ConfigureLogging(ILoggingBuilder logging)
+        {
+            logging.SetMinimumLevel(LogLevel.Trace);
+            logging.AddConsole();
+            logging.AddDebug();
         }
 
         private static void DisplayHelp()
@@ -131,12 +143,10 @@ Sample:
 
         private static async Task RunSelectedConfigurationAsync(Transport transport, Protocol protocol, CancellationToken cancellationToken)
         {
-            var fabric = new LoggerFactory().AddConsole(LogLevel.Trace).AddDebug(LogLevel.Trace);
             var handler = new CalculatorAsyncHandler();
             ITAsyncProcessor processor = null;
 
             TServerTransport serverTransport = null;
-
             switch (transport)
             {
                 case Transport.Tcp:
@@ -209,6 +219,7 @@ Sample:
                 Logger.LogInformation(
                     $"Selected TAsyncServer with {serverTransport} transport, {processor} processor and {inputProtocolFactory} protocol factories");
 
+                var fabric = ServiceCollection.BuildServiceProvider().GetService<ILoggerFactory>();
                 var server = new TSimpleAsyncServer(processor, serverTransport, inputProtocolFactory, outputProtocolFactory, fabric);
 
                 Logger.LogInformation("Starting the server...");
@@ -288,8 +299,11 @@ Sample:
                     .UseUrls("http://localhost:9090")
                     .UseContentRoot(Directory.GetCurrentDirectory())
                     .UseStartup<Startup>()
+                    .ConfigureLogging((ctx,logging) => ConfigureLogging(logging))
                     .Build();
 
+                Logger.LogTrace("test");
+                Logger.LogCritical("test");
                 host.RunAsync(cancellationToken).GetAwaiter().GetResult();
             }
 
@@ -315,8 +329,7 @@ Sample:
                 }
 
                 // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-                public void Configure(IApplicationBuilder app, IHostingEnvironment env,
-                    ILoggerFactory loggerFactory)
+                public void Configure(IApplicationBuilder app, IHostingEnvironment env, ILoggerFactory loggerFactory)
                 {
                     app.UseMiddleware<THttpServerTransport>();
                 }
