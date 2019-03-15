@@ -53,6 +53,9 @@ include(StaticCodeAnalysis)
 # Generate the config.h file
 include(ConfigureChecks)
 
+# Generate the ThriftConfig.cmake module
+include(GenerateConfigModule)
+
 # Packaging
 include(CPackConfig)
 
