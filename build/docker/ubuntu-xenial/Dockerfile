@@ -16,7 +16,7 @@
 # - d: does not come with Ubuntu so we're installing 2.075.1 for coverage
 # - dart: does not come with Ubuntu so we're installing 1.24.3 for coverage
 # - dotnet: does not come with Ubuntu
-# - go: Xenial comes with 1.6, but we need 1.7 or later
+# - go: Xenial comes with 1.6, but we need 1.10 or later
 # - nodejs: Xenial comes with 4.2.6 which exits LTS April 2018, so we're installing 6.x
 # - ocaml: causes stack overflow error, just started March 2018 not sure why
 #
@@ -142,9 +142,9 @@ RUN apt-get install -y --no-install-recommends \
       libglib2.0-dev
 
 # golang
-ENV GOLANG_VERSION 1.7.6
+ENV GOLANG_VERSION 1.10.8
 ENV GOLANG_DOWNLOAD_URL https://golang.org/dl/go$GOLANG_VERSION.linux-amd64.tar.gz
-ENV GOLANG_DOWNLOAD_SHA256 ad5808bf42b014c22dd7646458f631385003049ded0bb6af2efc7f1f79fa29ea
+ENV GOLANG_DOWNLOAD_SHA256 d8626fb6f9a3ab397d88c483b576be41fa81eefcec2fd18562c87626dbb3c39e
 RUN curl -fsSL "$GOLANG_DOWNLOAD_URL" -o golang.tar.gz && \
       echo "$GOLANG_DOWNLOAD_SHA256  golang.tar.gz" | sha256sum -c - && \
       tar -C /usr/local -xzf golang.tar.gz && \
