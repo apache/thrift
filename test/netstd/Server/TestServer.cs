@@ -560,7 +560,7 @@ namespace ThriftTest
                         }
 
                         transFactory = new TTransportFactory(); // framed/buffered is built into socket transports
-                        trans = new TTlsServerSocketTransport( param.port, param.buffering, cert,
+                        trans = new TTlsServerSocketTransport( param.port, cert, param.buffering,
                             (sender, certificate, chain, errors) => true, 
                             null, SslProtocols.Tls | SslProtocols.Tls11 | SslProtocols.Tls12);
                         break;

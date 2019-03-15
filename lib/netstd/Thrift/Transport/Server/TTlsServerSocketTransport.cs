@@ -34,21 +34,15 @@ namespace Thrift.Transport.Server
         private readonly RemoteCertificateValidationCallback _clientCertValidator;
         private readonly int _clientTimeout = 0;
         private readonly LocalCertificateSelectionCallback _localCertificateSelectionCallback;
-        private readonly int _port;
         private readonly X509Certificate2 _serverCertificate;
         private readonly SslProtocols _sslProtocols;
         private readonly Buffering _buffering;
         private TcpListener _server;
-
-        public TTlsServerSocketTransport(int port, X509Certificate2 certificate)
-            : this(port, Buffering.None, certificate)
-        {
-        }
-
+               
         public TTlsServerSocketTransport(
-            int port,
-            Buffering buffering,
+            TcpListener listener,
             X509Certificate2 certificate,
+            Buffering buffering = Buffering.None,
             RemoteCertificateValidationCallback clientCertValidator = null,
             LocalCertificateSelectionCallback localCertificateSelectionCallback = null,
             SslProtocols sslProtocols = SslProtocols.Tls12)
@@ -59,7 +53,28 @@ namespace Thrift.Transport.Server
                     "Your server-certificate needs to have a private key");
             }
 
-            _port = port;
+            _serverCertificate = certificate;
+            _buffering = buffering;
+            _clientCertValidator = clientCertValidator;
+            _localCertificateSelectionCallback = localCertificateSelectionCallback;
+            _sslProtocols = sslProtocols;
+            _server = listener;
+        }
+
+        public TTlsServerSocketTransport(
+            int port,
+            X509Certificate2 certificate,
+            Buffering buffering = Buffering.None,
+            RemoteCertificateValidationCallback clientCertValidator = null,
+            LocalCertificateSelectionCallback localCertificateSelectionCallback = null,
+            SslProtocols sslProtocols = SslProtocols.Tls12)
+        {
+            if (!certificate.HasPrivateKey)
+            {
+                throw new TTransportException(TTransportException.ExceptionType.Unknown,
+                    "Your server-certificate needs to have a private key");
+            }
+
             _serverCertificate = certificate;
             _buffering = buffering;
             _clientCertValidator = clientCertValidator;
@@ -69,7 +84,7 @@ namespace Thrift.Transport.Server
             try
             {
                 // Create server socket
-                _server = new TcpListener(IPAddress.Any, _port);
+                _server = new TcpListener(IPAddress.Any, port);
                 _server.Server.NoDelay = true;
             }
             catch (Exception)

@@ -159,7 +159,7 @@ Sample:
                     serverTransport = new TNamedPipeServerTransport(".test");
                     break;
                 case Transport.TcpTls:
-                    serverTransport = new TTlsServerSocketTransport(9090, Buffering.None, GetCertificate(), ClientCertValidator, LocalCertificateSelectionCallback);
+                    serverTransport = new TTlsServerSocketTransport(9090, GetCertificate(), Buffering.None, ClientCertValidator, LocalCertificateSelectionCallback);
                     break;
                 case Transport.Framed:
                     serverTransport = new TServerFramedTransport(9090);
