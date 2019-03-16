@@ -252,6 +252,18 @@ All Apache Thrift releases go through a 72-hour final release candidate voting p
     sha1: 
     sha256: 
 
+    
+    The source tree as ZIP file to be published via Github releases:
+    https://dist.apache.org/repos/dist/dev/thrift/1.0.0-rc0/thrift-1.0.0-rc0.zip
+
+    ZIP source tree GPG signature:
+    https://dist.apache.org/repos/dist/dev/thrift/1.0.0-rc0/thrift-1.0.0-rc0.zip.asc
+
+    ZIP source tree checksums are:
+    md5: 
+    sha1: 
+    sha256: 
+    
     The CHANGES list for this release is available at:
     https://github.com/apache/thrift/blob/release/1.0.0/CHANGES.md
 
