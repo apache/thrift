@@ -93,6 +93,8 @@ Options:
         tcp - (default) tcp transport will be used (host - ""localhost"", port - 9090)
         tcpbuffered - tcp buffered transport will be used (host - ""localhost"", port - 9090)
         namedpipe - namedpipe transport will be used (pipe address - "".test"")
+        namedpipebuffered - buffered namedpipe transport will be used (pipe address - "".test"")
+        namedpipeframed - framed namedpipe transport will be used (pipe address - "".test"")
         http - http transport will be used (http address - ""localhost:9090"")
         tcptls - tcp transport with tls will be used (host - ""localhost"", port - 9090)
         framed - tcp framed transport will be used (host - ""localhost"", port - 9090)
@@ -157,6 +159,12 @@ Sample:
                     break;
                 case Transport.NamedPipe:
                     serverTransport = new TNamedPipeServerTransport(".test");
+                    break;
+                case Transport.NamedPipeBuffered:
+                    serverTransport = new TNamedPipeServerTransport(".test", buffering: Buffering.BufferedTransport);
+                    break;
+                case Transport.NamedPipeFramed:
+                    serverTransport = new TNamedPipeServerTransport(".test", buffering: Buffering.FramedTransport);
                     break;
                 case Transport.TcpTls:
                     serverTransport = new TTlsServerSocketTransport(9090, GetCertificate(), Buffering.None, ClientCertValidator, LocalCertificateSelectionCallback);
@@ -272,6 +280,8 @@ Sample:
             Tcp,
             TcpBuffered,
             NamedPipe,
+            NamedPipeBuffered,
+            NamedPipeFramed,
             Http,
             TcpTls,
             Framed

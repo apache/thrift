@@ -24,6 +24,7 @@ using System.Threading.Tasks;
 using System.ComponentModel;
 using System.Security.AccessControl;
 using System.Security.Principal;
+using System.Diagnostics;
 
 namespace Thrift.Transport.Server
 {
@@ -34,15 +35,16 @@ namespace Thrift.Transport.Server
         ///     This is the address of the Pipe on the localhost.
         /// </summary>
         private readonly string _pipeAddress;
-
+        private readonly Buffering _buffering;
         private bool _asyncMode = true;
         private volatile bool _isPending = true;
 
         private NamedPipeServerStream _stream = null;
 
-        public TNamedPipeServerTransport(string pipeAddress)
+        public TNamedPipeServerTransport(string pipeAddress, Buffering buffering = Buffering.None)
         {
             _pipeAddress = pipeAddress;
+            _buffering = buffering;
         }
 
         public override void Listen()
@@ -220,7 +222,23 @@ namespace Thrift.Transport.Server
 
                 await _stream.WaitForConnectionAsync(cancellationToken);
 
-                var trans = new ServerTransport(_stream);
+                TTransport trans = new ServerTransport(_stream);
+
+                switch (_buffering)
+                {
+                    case Buffering.BufferedTransport:
+                        trans = new TBufferedTransport(trans);
+                        break;
+
+                    case Buffering.FramedTransport:
+                        trans = new TFramedTransport(trans);
+                        break;
+
+                    default:
+                        Debug.Assert(_buffering == Buffering.None);
+                        break;
+                }
+
                 _stream = null; // pass ownership to ServerTransport
 
                 //_isPending = false;
