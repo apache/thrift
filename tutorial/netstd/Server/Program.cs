@@ -166,34 +166,30 @@ Sample:
                     break;
             }
 
-            ITProtocolFactory inputProtocolFactory;
-            ITProtocolFactory outputProtocolFactory;
+            TProtocolFactory inputProtocolFactory;
+            TProtocolFactory outputProtocolFactory;
 
             switch (protocol)
             {
                 case Protocol.Binary:
-                {
                     inputProtocolFactory = new TBinaryProtocol.Factory();
                     outputProtocolFactory = new TBinaryProtocol.Factory();
                     processor = new Calculator.AsyncProcessor(handler);
-                }
                     break;
+
                 case Protocol.Compact:
-                {
                     inputProtocolFactory = new TCompactProtocol.Factory();
                     outputProtocolFactory = new TCompactProtocol.Factory();
                     processor = new Calculator.AsyncProcessor(handler);
-                }
                     break;
+
                 case Protocol.Json:
-                {
                     inputProtocolFactory = new TJsonProtocol.Factory();
                     outputProtocolFactory = new TJsonProtocol.Factory();
                     processor = new Calculator.AsyncProcessor(handler);
-                }
                     break;
+
                 case Protocol.Multiplexed:
-                {
                     inputProtocolFactory = new TBinaryProtocol.Factory();
                     outputProtocolFactory = new TBinaryProtocol.Factory();
 
@@ -208,8 +204,8 @@ Sample:
                     multiplexedProcessor.RegisterProcessor(nameof(SharedService), sharedServiceProcessor);
 
                     processor = multiplexedProcessor;
-                }
                     break;
+
                 default:
                     throw new ArgumentOutOfRangeException(nameof(protocol), protocol, null);
             }
