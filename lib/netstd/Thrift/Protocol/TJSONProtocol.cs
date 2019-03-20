@@ -785,9 +785,9 @@ namespace Thrift.Protocol
         /// <summary>
         ///     Factory for JSON protocol objects
         /// </summary>
-        public class Factory : ITProtocolFactory
+        public class Factory : TProtocolFactory
         {
-            public TProtocol GetProtocol(TTransport trans)
+            public override TProtocol GetProtocol(TTransport trans)
             {
                 return new TJsonProtocol(trans);
             }

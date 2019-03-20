@@ -29,10 +29,10 @@ namespace Thrift.Server
     public abstract class TServer
     {
         protected readonly ILogger Logger;
-        protected ITProtocolFactory InputProtocolFactory;
+        protected TProtocolFactory InputProtocolFactory;
         protected TTransportFactory InputTransportFactory;
         protected ITProcessorFactory ProcessorFactory;
-        protected ITProtocolFactory OutputProtocolFactory;
+        protected TProtocolFactory OutputProtocolFactory;
         protected TTransportFactory OutputTransportFactory;
 
         protected TServerEventHandler ServerEventHandler;
@@ -40,7 +40,7 @@ namespace Thrift.Server
 
         protected TServer(ITProcessorFactory processorFactory, TServerTransport serverTransport,
             TTransportFactory inputTransportFactory, TTransportFactory outputTransportFactory,
-            ITProtocolFactory inputProtocolFactory, ITProtocolFactory outputProtocolFactory,
+            TProtocolFactory inputProtocolFactory, TProtocolFactory outputProtocolFactory,
             ILogger logger = null)
         {
             ProcessorFactory = processorFactory ?? throw new ArgumentNullException(nameof(processorFactory));

@@ -587,7 +587,7 @@ namespace ThriftTest
                 }
 
                 // Protocol
-                ITProtocolFactory proto;
+                TProtocolFactory proto;
                 switch (param.protocol)
                 {
                     case ProtocolChoice.Compact:

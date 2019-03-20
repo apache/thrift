@@ -1,4 +1,4 @@
-﻿// Licensed to the Apache Software Foundation(ASF) under one
+// Licensed to the Apache Software Foundation(ASF) under one
 // or more contributor license agreements.See the NOTICE file
 // distributed with this work for additional information
 // regarding copyright ownership.The ASF licenses this file
@@ -588,7 +588,7 @@ namespace Thrift.Protocol
             return Encoding.UTF8.GetString(buf, 0, buf.Length);
         }
 
-        public class Factory : ITProtocolFactory
+        public class Factory : TProtocolFactory
         {
             protected bool StrictRead;
             protected bool StrictWrite;
@@ -604,7 +604,7 @@ namespace Thrift.Protocol
                 StrictWrite = strictWrite;
             }
 
-            public TProtocol GetProtocol(TTransport trans)
+            public override TProtocol GetProtocol(TTransport trans)
             {
                 return new TBinaryProtocol(trans, StrictRead, StrictWrite);
             }

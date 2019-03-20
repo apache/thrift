@@ -77,7 +77,7 @@ namespace Thrift.Server
         public TThreadPoolAsyncServer(ITAsyncProcessor processor,
          TServerTransport serverTransport,
          TTransportFactory transportFactory,
-         ITProtocolFactory protocolFactory)
+         TProtocolFactory protocolFactory)
             : this(new TSingletonProcessorFactory(processor), serverTransport,
                transportFactory, transportFactory,
                protocolFactory, protocolFactory,
@@ -88,7 +88,7 @@ namespace Thrift.Server
         public TThreadPoolAsyncServer(ITProcessorFactory processorFactory,
                      TServerTransport serverTransport,
                      TTransportFactory transportFactory,
-                     ITProtocolFactory protocolFactory)
+                     TProtocolFactory protocolFactory)
             : this(processorFactory, serverTransport,
              transportFactory, transportFactory,
              protocolFactory, protocolFactory,
@@ -100,8 +100,8 @@ namespace Thrift.Server
                      TServerTransport serverTransport,
                      TTransportFactory inputTransportFactory,
                      TTransportFactory outputTransportFactory,
-                     ITProtocolFactory inputProtocolFactory,
-                     ITProtocolFactory outputProtocolFactory,
+                     TProtocolFactory inputProtocolFactory,
+                     TProtocolFactory outputProtocolFactory,
                      int minThreadPoolThreads, int maxThreadPoolThreads, ILogger logger= null)
             : this(processorFactory, serverTransport, inputTransportFactory, outputTransportFactory,
              inputProtocolFactory, outputProtocolFactory,
@@ -114,8 +114,8 @@ namespace Thrift.Server
                      TServerTransport serverTransport,
                      TTransportFactory inputTransportFactory,
                      TTransportFactory outputTransportFactory,
-                     ITProtocolFactory inputProtocolFactory,
-                     ITProtocolFactory outputProtocolFactory,
+                     TProtocolFactory inputProtocolFactory,
+                     TProtocolFactory outputProtocolFactory,
                      Configuration threadConfig,
                      ILogger logger = null)
             : base(processorFactory, serverTransport, inputTransportFactory, outputTransportFactory,

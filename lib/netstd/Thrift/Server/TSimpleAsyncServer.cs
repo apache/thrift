@@ -34,7 +34,7 @@ namespace Thrift.Server
         private volatile Task _serverTask;
 
         public TSimpleAsyncServer(ITAsyncProcessor processor, TServerTransport serverTransport,
-            ITProtocolFactory inputProtocolFactory, ITProtocolFactory outputProtocolFactory,
+            TProtocolFactory inputProtocolFactory, TProtocolFactory outputProtocolFactory,
             ILoggerFactory loggerFactory, int clientWaitingDelay = 10)
             : this(new TSingletonProcessorFactory(processor), serverTransport,
                 new TTransportFactory(), new TTransportFactory(),
@@ -45,7 +45,7 @@ namespace Thrift.Server
 
         public TSimpleAsyncServer(ITProcessorFactory itProcessorFactory, TServerTransport serverTransport,
             TTransportFactory inputTransportFactory, TTransportFactory outputTransportFactory,
-            ITProtocolFactory inputProtocolFactory, ITProtocolFactory outputProtocolFactory,
+            TProtocolFactory inputProtocolFactory, TProtocolFactory outputProtocolFactory,
             ILogger logger, int clientWaitingDelay = 10)
             : base(itProcessorFactory, serverTransport, inputTransportFactory, outputTransportFactory,
                 inputProtocolFactory, outputProtocolFactory, logger)

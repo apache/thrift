@@ -35,8 +35,8 @@ namespace Thrift.Transport.Server
         private readonly RequestDelegate _next;
         protected Encoding Encoding = Encoding.UTF8;
 
-        protected ITProtocolFactory InputProtocolFactory;
-        protected ITProtocolFactory OutputProtocolFactory;
+        protected TProtocolFactory InputProtocolFactory;
+        protected TProtocolFactory OutputProtocolFactory;
 
         protected TTransportFactory InputTransportFactory;
         protected TTransportFactory OutputTransportFactory;
@@ -50,7 +50,7 @@ namespace Thrift.Transport.Server
 
         public THttpServerTransport(
             ITAsyncProcessor processor, 
-            ITProtocolFactory protocolFactory, 
+            TProtocolFactory protocolFactory, 
             TTransportFactory transFactory = null, 
             RequestDelegate next = null,
             ILoggerFactory loggerFactory = null)
@@ -60,8 +60,8 @@ namespace Thrift.Transport.Server
 
         public THttpServerTransport(
             ITAsyncProcessor processor, 
-            ITProtocolFactory inputProtocolFactory,
-            ITProtocolFactory outputProtocolFactory,
+            TProtocolFactory inputProtocolFactory,
+            TProtocolFactory outputProtocolFactory,
             TTransportFactory inputTransFactory = null,
             TTransportFactory outputTransFactory = null,
             RequestDelegate next = null, 

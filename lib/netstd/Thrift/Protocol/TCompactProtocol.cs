@@ -1,4 +1,4 @@
-﻿// Licensed to the Apache Software Foundation(ASF) under one
+// Licensed to the Apache Software Foundation(ASF) under one
 // or more contributor license agreements.See the NOTICE file
 // distributed with this work for additional information
 // regarding copyright ownership.The ASF licenses this file
@@ -891,9 +891,9 @@ namespace Thrift.Protocol
             buf[off + 7] = (byte) ((n >> 56) & 0xff);
         }
 
-        public class Factory : ITProtocolFactory
+        public class Factory : TProtocolFactory
         {
-            public TProtocol GetProtocol(TTransport trans)
+            public override TProtocol GetProtocol(TTransport trans)
             {
                 return new TCompactProtocol(trans);
             }
