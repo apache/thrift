@@ -918,7 +918,11 @@ void t_netstd_generator::generate_netstd_wcffault(ostream& out, t_struct* tstruc
     // make private members with public Properties
     for (m_iter = members.begin(); m_iter != members.end(); ++m_iter)
     {
-        out << indent() << "private " << declare_field(*m_iter, false, "_") << endl;
+        // if the field is required, then we use auto-properties
+        if (!field_is_required((*m_iter)))
+        {
+            out << indent() << "private " << declare_field(*m_iter, false, "_") << endl;
+        }
     }
     out << endl;
 
