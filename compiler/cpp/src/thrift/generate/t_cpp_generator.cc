@@ -663,7 +663,7 @@ void t_cpp_generator::generate_enum_to_string_helper_function(std::ostream& out,
              << tenum->get_name() << "_VALUES_TO_NAMES.find(val);" << endl;
     out << indent() << "if (it != _" << tenum->get_name() << "_VALUES_TO_NAMES.end()) {" << endl;
     indent_up();
-    out << indent() << "out = std::to_string(it->second);" << endl;
+    out << indent() << "out = std::string(it->second);" << endl;
     indent_down();
     out << indent() << "} else {" << endl;
     indent_up();
