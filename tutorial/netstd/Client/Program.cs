@@ -47,17 +47,20 @@ Usage:
     Client.exe -help
         will diplay help information 
 
-    Client.exe -tr:<transport> -pr:<protocol> -mc:<numClients>
+    Client.exe -tr:<transport> -bf:<buffering> -pr:<protocol> -mc:<numClients>
         will run client with specified arguments (tcp transport and binary protocol by default) and with 1 client
 
 Options:
     -tr (transport): 
         tcp - (default) tcp transport will be used (host - ""localhost"", port - 9090)
-        tcpbuffered - buffered transport over tcp will be used (host - ""localhost"", port - 9090)
         namedpipe - namedpipe transport will be used (pipe address - "".test"")
         http - http transport will be used (address - ""http://localhost:9090"")        
         tcptls - tcp tls transport will be used (host - ""localhost"", port - 9090)
-        framed - tcp framed transport will be used (host - ""localhost"", port - 9090)
+
+    -bf (buffering): 
+        none - (default) no buffering will be used
+        buffered - buffered transport will be used
+        framed - framed transport will be used
 
     -pr (protocol): 
         binary - (default) binary protocol will be used
@@ -139,29 +142,49 @@ Sample:
 
         private static TTransport GetTransport(string[] args)
         {
-            var transport = args.FirstOrDefault(x => x.StartsWith("-tr"))?.Split(':')?[1];
+            TTransport transport = new TSocketTransport(IPAddress.Loopback, 9090);
 
-            Transport selectedTransport;
-            if (Enum.TryParse(transport, true, out selectedTransport))
+            var transportArg = args.FirstOrDefault(x => x.StartsWith("-tr"))?.Split(':')?[1];
+
+            if (Enum.TryParse(transportArg, true, out Transport selectedTransport))
             {
                 switch (selectedTransport)
                 {
                     case Transport.Tcp:
-                        return new TSocketTransport(IPAddress.Loopback, 9090);
+                        transport = new TSocketTransport(IPAddress.Loopback, 9090);
+                        break;
+
                     case Transport.NamedPipe:
-                        return new TNamedPipeTransport(".test");
+                        transport = new TNamedPipeTransport(".test");
+                        break;
+
                     case Transport.Http:
-                        return new THttpTransport(new Uri("http://localhost:9090"), null);
-                    case Transport.TcpBuffered:
-                        return new TBufferedTransport(new TSocketTransport(IPAddress.Loopback, 9090));
+                        transport = new THttpTransport(new Uri("http://localhost:9090"), null);
+                        break;
+
                     case Transport.TcpTls:
-                        return new TTlsSocketTransport(IPAddress.Loopback, 9090, GetCertificate(), CertValidator, LocalCertificateSelectionCallback);
-                    case Transport.Framed:
-                        return new TFramedTransport(new TSocketTransport(IPAddress.Loopback, 9090));
+                        transport = new TTlsSocketTransport(IPAddress.Loopback, 9090, GetCertificate(), CertValidator, LocalCertificateSelectionCallback);
+                        break;
                 }
             }
 
-            return new TSocketTransport(IPAddress.Loopback, 9090);
+            var bufferingArg = args.FirstOrDefault(x => x.StartsWith("-bf"))?.Split(':')?[1];
+
+            if (Enum.TryParse<Buffering>(bufferingArg, out var selectedBuffering))
+            {
+                switch (selectedBuffering)
+                {
+                    case Buffering.Buffered:
+                        transport = new TBufferedTransport(transport);
+                        break;
+
+                    case Buffering.Framed:
+                        transport = new TFramedTransport(transport);
+                        break;
+                }
+            }
+
+            return transport;
         }
 
         private static int GetNumberOfClients(string[] args)
@@ -362,6 +385,13 @@ Sample:
             Compact,
             Json,
             Multiplexed
+        }
+
+        private enum Buffering
+        {
+            None,
+            Buffered,
+            Framed
         }
     }
 }

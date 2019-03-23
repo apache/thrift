@@ -85,17 +85,20 @@ Usage:
     Server.exe -help
         will diplay help information 
 
-    Server.exe -tr:<transport> -pr:<protocol>
-        will run server with specified arguments (tcp transport and binary protocol by default)
+    Server.exe -tr:<transport> -bf:<buffering> -pr:<protocol>
+        will run server with specified arguments (tcp transport, no buffering, and binary protocol by default)
 
 Options:
     -tr (transport): 
         tcp - (default) tcp transport will be used (host - ""localhost"", port - 9090)
-        tcpbuffered - tcp buffered transport will be used (host - ""localhost"", port - 9090)
         namedpipe - namedpipe transport will be used (pipe address - "".test"")
         http - http transport will be used (http address - ""localhost:9090"")
         tcptls - tcp transport with tls will be used (host - ""localhost"", port - 9090)
-        framed - tcp framed transport will be used (host - ""localhost"", port - 9090)
+
+    -bf (buffering): 
+        none - (default) no buffering will be used
+        buffered - buffered transport will be used
+        framed - framed transport will be used
 
     -pr (protocol): 
         binary - (default) binary protocol will be used
@@ -111,6 +114,7 @@ Sample:
         private static async Task RunAsync(string[] args, CancellationToken cancellationToken)
         {
             var selectedTransport = GetTransport(args);
+            var selectedBuffering = GetBuffering(args);
             var selectedProtocol = GetProtocol(args);
 
             if (selectedTransport == Transport.Http)
@@ -119,7 +123,7 @@ Sample:
             }
             else
             {
-                await RunSelectedConfigurationAsync(selectedTransport, selectedProtocol, cancellationToken);
+                await RunSelectedConfigurationAsync(selectedTransport, selectedBuffering, selectedProtocol, cancellationToken);
             }
         }
 
@@ -132,6 +136,15 @@ Sample:
             return selectedProtocol;
         }
 
+        private static Buffering GetBuffering(string[] args)
+        {
+            var buffering = args.FirstOrDefault(x => x.StartsWith("-bf"))?.Split(":")?[1];
+
+            Enum.TryParse<Buffering>(buffering, out var selectedBuffering);
+
+            return selectedBuffering;
+        }
+
         private static Transport GetTransport(string[] args)
         {
             var transport = args.FirstOrDefault(x => x.StartsWith("-tr"))?.Split(':')?[1];
@@ -141,10 +154,9 @@ Sample:
             return selectedTransport;
         }
 
-        private static async Task RunSelectedConfigurationAsync(Transport transport, Protocol protocol, CancellationToken cancellationToken)
+        private static async Task RunSelectedConfigurationAsync(Transport transport, Buffering buffering, Protocol protocol, CancellationToken cancellationToken)
         {
             var handler = new CalculatorAsyncHandler();
-            ITAsyncProcessor processor = null;
 
             TServerTransport serverTransport = null;
             switch (transport)
@@ -152,23 +164,37 @@ Sample:
                 case Transport.Tcp:
                     serverTransport = new TServerSocketTransport(9090);
                     break;
-                case Transport.TcpBuffered:
-                    serverTransport = new TServerSocketTransport(port: 9090, clientTimeout: 10000, buffering: Buffering.BufferedTransport);
-                    break;
                 case Transport.NamedPipe:
                     serverTransport = new TNamedPipeServerTransport(".test");
                     break;
                 case Transport.TcpTls:
-                    serverTransport = new TTlsServerSocketTransport(9090, GetCertificate(), Buffering.None, ClientCertValidator, LocalCertificateSelectionCallback);
-                    break;
-                case Transport.Framed:
-                    serverTransport = new TServerFramedTransport(9090);
+                    serverTransport = new TTlsServerSocketTransport(9090, GetCertificate(), ClientCertValidator, LocalCertificateSelectionCallback);
                     break;
             }
 
-            TProtocolFactory inputProtocolFactory;
-            TProtocolFactory outputProtocolFactory;
+            TTransportFactory inputTransportFactory = null;
+            TTransportFactory outputTransportFactory = null;
+            switch (buffering)
+            {
+                case Buffering.Buffered:
+                    inputTransportFactory = new TBufferedTransport.Factory();
+                    outputTransportFactory = new TBufferedTransport.Factory();
+                    break;
 
+                case Buffering.Framed:
+                    inputTransportFactory = new TFramedTransport.Factory();
+                    outputTransportFactory = new TFramedTransport.Factory();
+                    break;
+
+                default:
+                    inputTransportFactory = new TTransportFactory();
+                    outputTransportFactory = new TTransportFactory();
+                    break;
+            }
+
+            TProtocolFactory inputProtocolFactory = null;
+            TProtocolFactory outputProtocolFactory = null;
+            ITAsyncProcessor processor = null;
             switch (protocol)
             {
                 case Protocol.Binary:
@@ -210,15 +236,25 @@ Sample:
                     throw new ArgumentOutOfRangeException(nameof(protocol), protocol, null);
             }
 
+
             try
             {
                 Logger.LogInformation(
                     $"Selected TAsyncServer with {serverTransport} transport, {processor} processor and {inputProtocolFactory} protocol factories");
 
-                var fabric = ServiceCollection.BuildServiceProvider().GetService<ILoggerFactory>();
-                var server = new TSimpleAsyncServer(processor, serverTransport, inputProtocolFactory, outputProtocolFactory, fabric);
+                var loggerFactory = ServiceCollection.BuildServiceProvider().GetService<ILoggerFactory>();
+
+                var server = new TSimpleAsyncServer(
+                    itProcessorFactory: new TSingletonProcessorFactory(processor),
+                    serverTransport: serverTransport,
+                    inputTransportFactory: inputTransportFactory,
+                    outputTransportFactory: outputTransportFactory,
+                    inputProtocolFactory: inputProtocolFactory,
+                    outputProtocolFactory: outputProtocolFactory,
+                    logger: loggerFactory.CreateLogger<TSimpleAsyncServer>());
 
                 Logger.LogInformation("Starting the server...");
+
                 await server.ServeAsync(cancellationToken);
             }
             catch (Exception x)
@@ -266,11 +302,16 @@ Sample:
         private enum Transport
         {
             Tcp,
-            TcpBuffered,
             NamedPipe,
             Http,
             TcpTls,
-            Framed
+        }
+
+        private enum Buffering
+        {
+            None,
+            Buffered,
+            Framed,
         }
 
         private enum Protocol
