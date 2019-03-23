@@ -33,24 +33,58 @@ namespace Thrift.Server
         private readonly int _clientWaitingDelay;
         private volatile Task _serverTask;
 
-        public TSimpleAsyncServer(ITAsyncProcessor processor, TServerTransport serverTransport,
-            TProtocolFactory inputProtocolFactory, TProtocolFactory outputProtocolFactory,
-            ILoggerFactory loggerFactory, int clientWaitingDelay = 10)
-            : this(new TSingletonProcessorFactory(processor), serverTransport,
-                new TTransportFactory(), new TTransportFactory(),
-                inputProtocolFactory, outputProtocolFactory,
-                loggerFactory.CreateLogger(nameof(TSimpleAsyncServer)), clientWaitingDelay)
+        public TSimpleAsyncServer(ITProcessorFactory itProcessorFactory,
+            TServerTransport serverTransport,
+            TTransportFactory inputTransportFactory,
+            TTransportFactory outputTransportFactory,
+            TProtocolFactory inputProtocolFactory,
+            TProtocolFactory outputProtocolFactory,
+            ILogger logger,
+            int clientWaitingDelay = 10)
+            : base(itProcessorFactory,
+                  serverTransport,
+                  inputTransportFactory,
+                  outputTransportFactory,
+                  inputProtocolFactory,
+                  outputProtocolFactory,
+                  logger)
+        {
+            _clientWaitingDelay = clientWaitingDelay;
+        }
+
+        public TSimpleAsyncServer(ITProcessorFactory itProcessorFactory,
+            TServerTransport serverTransport,
+            TTransportFactory inputTransportFactory,
+            TTransportFactory outputTransportFactory,
+            TProtocolFactory inputProtocolFactory,
+            TProtocolFactory outputProtocolFactory,
+            ILoggerFactory loggerFactory,
+            int clientWaitingDelay = 10)
+            : this(itProcessorFactory,
+                  serverTransport,
+                  inputTransportFactory,
+                  outputTransportFactory,
+                  inputProtocolFactory,
+                  outputProtocolFactory,
+                  loggerFactory.CreateLogger<TSimpleAsyncServer>())
         {
         }
 
-        public TSimpleAsyncServer(ITProcessorFactory itProcessorFactory, TServerTransport serverTransport,
-            TTransportFactory inputTransportFactory, TTransportFactory outputTransportFactory,
-            TProtocolFactory inputProtocolFactory, TProtocolFactory outputProtocolFactory,
-            ILogger logger, int clientWaitingDelay = 10)
-            : base(itProcessorFactory, serverTransport, inputTransportFactory, outputTransportFactory,
-                inputProtocolFactory, outputProtocolFactory, logger)
+        public TSimpleAsyncServer(ITAsyncProcessor processor,
+            TServerTransport serverTransport,
+            TProtocolFactory inputProtocolFactory,
+            TProtocolFactory outputProtocolFactory,
+            ILoggerFactory loggerFactory,
+            int clientWaitingDelay = 10)
+            : this(new TSingletonProcessorFactory(processor),
+                  serverTransport,
+                  null, // defaults to TTransportFactory()
+                  null, // defaults to TTransportFactory()
+                  inputProtocolFactory,
+                  outputProtocolFactory,
+                  loggerFactory.CreateLogger(nameof(TSimpleAsyncServer)),
+                  clientWaitingDelay)
         {
-            _clientWaitingDelay = clientWaitingDelay;
         }
 
         public override async Task ServeAsync(CancellationToken cancellationToken)

@@ -34,10 +34,8 @@ namespace Thrift.Transport.Server
         ///     This is the address of the Pipe on the localhost.
         /// </summary>
         private readonly string _pipeAddress;
-
         private bool _asyncMode = true;
         private volatile bool _isPending = true;
-
         private NamedPipeServerStream _stream = null;
 
         public TNamedPipeServerTransport(string pipeAddress)

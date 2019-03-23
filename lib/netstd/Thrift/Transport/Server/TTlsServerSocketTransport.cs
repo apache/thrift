@@ -16,7 +16,6 @@
 // under the License.
 
 using System;
-using System.Diagnostics;
 using System.Net;
 using System.Net.Security;
 using System.Net.Sockets;
@@ -36,13 +35,11 @@ namespace Thrift.Transport.Server
         private readonly LocalCertificateSelectionCallback _localCertificateSelectionCallback;
         private readonly X509Certificate2 _serverCertificate;
         private readonly SslProtocols _sslProtocols;
-        private readonly Buffering _buffering;
         private TcpListener _server;
                
         public TTlsServerSocketTransport(
             TcpListener listener,
             X509Certificate2 certificate,
-            Buffering buffering = Buffering.None,
             RemoteCertificateValidationCallback clientCertValidator = null,
             LocalCertificateSelectionCallback localCertificateSelectionCallback = null,
             SslProtocols sslProtocols = SslProtocols.Tls12)
@@ -54,7 +51,6 @@ namespace Thrift.Transport.Server
             }
 
             _serverCertificate = certificate;
-            _buffering = buffering;
             _clientCertValidator = clientCertValidator;
             _localCertificateSelectionCallback = localCertificateSelectionCallback;
             _sslProtocols = sslProtocols;
@@ -64,23 +60,11 @@ namespace Thrift.Transport.Server
         public TTlsServerSocketTransport(
             int port,
             X509Certificate2 certificate,
-            Buffering buffering = Buffering.None,
             RemoteCertificateValidationCallback clientCertValidator = null,
             LocalCertificateSelectionCallback localCertificateSelectionCallback = null,
             SslProtocols sslProtocols = SslProtocols.Tls12)
+            : this(null, certificate, clientCertValidator, localCertificateSelectionCallback)
         {
-            if (!certificate.HasPrivateKey)
-            {
-                throw new TTransportException(TTransportException.ExceptionType.Unknown,
-                    "Your server-certificate needs to have a private key");
-            }
-
-            _serverCertificate = certificate;
-            _buffering = buffering;
-            _clientCertValidator = clientCertValidator;
-            _localCertificateSelectionCallback = localCertificateSelectionCallback;
-            _sslProtocols = sslProtocols;
-
             try
             {
                 // Create server socket
@@ -137,25 +121,8 @@ namespace Thrift.Transport.Server
                     _localCertificateSelectionCallback, _sslProtocols);
 
                 await tTlsSocket.SetupTlsAsync();
-
-                TTransport trans = tTlsSocket;
-
-                switch(_buffering)
-                {
-                    case Buffering.BufferedTransport:
-                        trans = new TBufferedTransport(trans);
-                        break;
-
-                    case Buffering.FramedTransport:
-                        trans = new TFramedTransport(trans);
-                        break;
-
-                    default:
-                        Debug.Assert(_buffering == Buffering.None);
-                        break;
-                }
                 
-                return trans;
+                return tTlsSocket;
             }
             catch (Exception ex)
             {

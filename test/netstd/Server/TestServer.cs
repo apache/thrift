@@ -50,9 +50,16 @@ namespace ThriftTest
         NamedPipe
     }
 
+    internal enum BufferChoice
+    {
+        None,
+        Buffered,
+        Framed
+    }
+
     internal class ServerParam
     {
-        internal Buffering buffering = Buffering.None;
+        internal BufferChoice buffering = BufferChoice.None;
         internal ProtocolChoice protocol = ProtocolChoice.Binary;
         internal TransportChoice transport = TransportChoice.Socket;
         internal int port = 9090;
@@ -75,11 +82,11 @@ namespace ThriftTest
                 }
                 else if (args[i] == "-b" || args[i] == "--buffered" || args[i] == "--transport=buffered")
                 {
-                    buffering = Buffering.BufferedTransport;
+                    buffering = BufferChoice.Buffered;
                 }
                 else if (args[i] == "-f" || args[i] == "--framed" || args[i] == "--transport=framed")
                 {
-                    buffering = Buffering.FramedTransport;
+                    buffering = BufferChoice.Framed;
                 }
                 else if (args[i] == "--binary" || args[i] == "--protocol=binary")
                 {
@@ -539,11 +546,8 @@ namespace ThriftTest
                 }
 
 
-                TTransportFactory transFactory = null;
-
-                // Transport
+                // Endpoint transport (mandatory)
                 TServerTransport trans;
-
                 switch (param.transport)
                 {
                     case TransportChoice.NamedPipe:
@@ -559,34 +563,34 @@ namespace ThriftTest
                             throw new InvalidOperationException("Certificate doesn't contain private key");
                         }
 
-                        transFactory = new TTransportFactory(); // framed/buffered is built into socket transports
-                        trans = new TTlsServerSocketTransport( param.port, cert, param.buffering,
+                        trans = new TTlsServerSocketTransport( param.port, cert,
                             (sender, certificate, chain, errors) => true, 
                             null, SslProtocols.Tls | SslProtocols.Tls11 | SslProtocols.Tls12);
                         break;
 
                     case TransportChoice.Socket:
                     default:  
-                        transFactory = new TTransportFactory(); // framed/buffered is built into socket transports
-                        trans = new TServerSocketTransport(param.port, 0, param.buffering);
+                        trans = new TServerSocketTransport(param.port, 0);
                         break;
                 }
 
-                // add layered transport, if not already set above
-                if (transFactory == null)
+                // Layered transport (mandatory)
+                TTransportFactory transFactory = null;
+                switch (param.buffering)
                 {
-                    switch (param.buffering)
-                    {
-                        case Buffering.FramedTransport:
-                            transFactory = new TFramedTransport.Factory();
-                            break;
-                        case Buffering.BufferedTransport:
-                            transFactory = new TBufferedTransport.Factory();
-                            break;
-                    }
+                    case BufferChoice.Framed:
+                        transFactory = new TFramedTransport.Factory();
+                        break;
+                    case BufferChoice.Buffered:
+                        transFactory = new TBufferedTransport.Factory();
+                        break;
+                    default:
+                        Debug.Assert(param.buffering == BufferChoice.None, "unhandled case");
+                        transFactory = null;  // no layered transprt
+                        break;
                 }
 
-                // Protocol
+                // Protocol (mandatory)
                 TProtocolFactory proto;
                 switch (param.protocol)
                 {
@@ -617,8 +621,8 @@ namespace ThriftTest
                 var where = (! string.IsNullOrEmpty(param.pipe)) ? "on pipe " + param.pipe : "on port " + param.port;
                 Console.WriteLine("Starting the AsyncBaseServer " + where +
                                   " with processor TPrototypeProcessorFactory prototype factory " +
-                                  (param.buffering == Buffering.BufferedTransport ? " with buffered transport" : "") +
-                                  (param.buffering == Buffering.FramedTransport ? " with framed transport" : "") +
+                                  (param.buffering == BufferChoice.Buffered ? " with buffered transport" : "") +
+                                  (param.buffering == BufferChoice.Framed ? " with framed transport" : "") +
                                   (param.transport == TransportChoice.TlsSocket ? " with encryption" : "") +
                                   (param.protocol == ProtocolChoice.Compact ? " with compact protocol" : "") +
                                   (param.protocol == ProtocolChoice.Json ? " with json protocol" : "") +

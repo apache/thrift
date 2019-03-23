@@ -68,7 +68,7 @@ namespace Thrift.Server
 
         public TThreadPoolAsyncServer(ITAsyncProcessor processor, TServerTransport serverTransport, ILogger logger = null)
             : this(new TSingletonProcessorFactory(processor), serverTransport,
-             new TTransportFactory(), new TTransportFactory(),
+             null, null, // defaults to TTransportFactory()
              new TBinaryProtocol.Factory(), new TBinaryProtocol.Factory(),
              new Configuration(), logger)
         {

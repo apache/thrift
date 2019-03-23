@@ -16,7 +16,6 @@
 // under the License.
 
 using System;
-using System.Diagnostics;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading;
@@ -30,20 +29,17 @@ namespace Thrift.Transport.Server
     public class TServerSocketTransport : TServerTransport
     {
         private readonly int _clientTimeout;
-        private readonly Buffering _buffering;
         private TcpListener _server;
 
-        public TServerSocketTransport(TcpListener listener, int clientTimeout = 0, Buffering buffering = Buffering.None)
+        public TServerSocketTransport(TcpListener listener, int clientTimeout = 0)
         {
             _server = listener;
             _clientTimeout = clientTimeout;
-            _buffering = buffering;
         }
 
-        public TServerSocketTransport(int port, int clientTimeout = 0, Buffering buffering = Buffering.None)
+        public TServerSocketTransport(int port, int clientTimeout = 0)
+            : this(null, clientTimeout)
         {
-            _clientTimeout = clientTimeout;
-            _buffering = buffering;
             try
             {
                 // Make server socket
@@ -101,21 +97,6 @@ namespace Thrift.Transport.Server
                     {
                         Timeout = _clientTimeout
                     };
-
-                    switch (_buffering)
-                    {
-                        case Buffering.BufferedTransport:
-                            tSocketTransport = new TBufferedTransport(tSocketTransport);
-                            break;
-
-                        case Buffering.FramedTransport:
-                            tSocketTransport = new TFramedTransport(tSocketTransport);
-                            break;
-
-                        default:
-                            Debug.Assert(_buffering == Buffering.None);
-                            break;
-                    }
 
                     return tSocketTransport;
                 }

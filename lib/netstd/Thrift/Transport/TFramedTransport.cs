@@ -22,15 +22,6 @@ using System.Threading.Tasks;
 
 namespace Thrift.Transport
 {
-    // it does not make much sense to use buffered when we already use framed
-    public enum Buffering
-    {
-        None,
-        BufferedTransport,
-        FramedTransport
-    }
-
-
     // ReSharper disable once InconsistentNaming
     public class TFramedTransport : TTransport
     {
