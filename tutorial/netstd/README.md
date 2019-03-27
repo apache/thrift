@@ -43,11 +43,14 @@ Options:
 
     -tr (transport): 
         tcp - (default) tcp transport will be used (host - ""localhost"", port - 9090)
-        tcpbuffered - tcp buffered transport will be used (host - ""localhost"", port - 9090)
         namedpipe - namedpipe transport will be used (pipe address - "".test"")
         http - http transport will be used (http address - ""localhost:9090"")
         tcptls - tcp transport with tls will be used (host - ""localhost"", port - 9090)
-        framed - tcp framed transport will be used (host - ""localhost"", port - 9090)
+
+    -bf (buffering): 
+        none - (default) no transport factory will be used
+        buffered - buffered transport factory will be used
+        framed - framed transport factory will be used (this must match the client)
 
     -pr (protocol): 
         binary - (default) binary protocol will be used
@@ -79,11 +82,14 @@ Options:
 
     -tr (transport): 
         tcp - (default) tcp transport will be used (host - ""localhost"", port - 9090)
-        tcpbuffered - buffered transport over tcp will be used (host - ""localhost"", port - 9090)
         namedpipe - namedpipe transport will be used (pipe address - "".test"")
         http - http transport will be used (address - ""http://localhost:9090"")        
         tcptls - tcp tls transport will be used (host - ""localhost"", port - 9090)
-        framed - tcp framed transport will be used (host - ""localhost"", port - 9090)
+
+    -bf (buffering): 
+        none - (default) no transport factory will be used
+        buffered - buffered transport factory will be used
+        framed - framed transport factory will be used (this must match the client)
 
     -pr (protocol): 
         binary - (default) binary protocol will be used
