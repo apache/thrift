@@ -57,6 +57,7 @@
 			<DCCReference Include="..\..\..\lib\delphi\src\Thrift.Protocol.pas"/>
 			<DCCReference Include="..\..\..\lib\delphi\src\Thrift.Server.pas"/>
 			<DCCReference Include="..\..\..\lib\delphi\src\Thrift.Transport.pas"/>
+			<DCCReference Include="..\..\..\lib\delphi\src\Thrift.WinHTTP.pas"/>
 			<DCCReference Include="..\..\gen-delphi\Shared.pas"/>
 			<DCCReference Include="..\..\gen-delphi\Tutorial.pas"/>
 			<BuildConfiguration Include="Release">

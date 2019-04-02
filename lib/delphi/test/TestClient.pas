@@ -43,6 +43,8 @@ uses
   Thrift.Protocol.JSON,
   Thrift.Protocol,
   Thrift.Transport.Pipes,
+  Thrift.Transport.WinHTTP,
+  Thrift.Transport.MsxmlHTTP,
   Thrift.Transport,
   Thrift.Stream,
   Thrift.Test,
@@ -115,6 +117,7 @@ type
 
     procedure InitializeProtocolTransportStack;
     procedure ShutdownProtocolTransportStack;
+    function  InitializeHttpTransport( const aTimeoutSetting : Integer) : IHTTPClient;
 
     procedure JSONProtocolReadWriteTest;
     function  PrepareBinaryData( aRandomDist : Boolean; aSize : TTestSize) : TBytes;
@@ -188,7 +191,7 @@ const HELPTEXT = ' [options]'#10
                + '                              instead of host and port'#10
                + '  --named-pipe arg            Windows Named Pipe (e.g. MyThriftPipe)'#10
                + '  --anon-pipes hRead hWrite   Windows Anonymous Pipes pair (handles)'#10
-               + '  --transport arg (=sockets)  Transport: buffered, framed, http, evhttp'#10
+               + '  --transport arg (=sockets)  Transport: buffered, framed, http, winhttp'#10
                + '  --protocol arg (=binary)    Protocol: binary, compact, json'#10
                + '  --ssl                       Encrypted Transport using SSL'#10
                + '  -n [ --testloops ] arg (=1) Number of Tests'#10
@@ -274,14 +277,15 @@ begin
         Console.WriteLine('Using anonymous pipes ('+IntToStr(Integer(setup.hAnonRead))+' and '+IntToStr(Integer(setup.hAnonWrite))+')');
       end
       else if s = '--transport' then begin
-        // --transport arg (=sockets)  Transport: buffered, framed, http, evhttp
+        // --transport arg (=sockets)  Transport: buffered, framed, http, winhttp, evhttp
         s := args[i];
         Inc( i);
 
         if      s = 'buffered' then Include( setup.layered, trns_Buffered)
         else if s = 'framed'   then Include( setup.layered, trns_Framed)
-        else if s = 'http'     then setup.endpoint := trns_Http
-        else if s = 'evhttp'   then setup.endpoint := trns_EvHttp
+        else if s = 'http'     then setup.endpoint := trns_MsXmlHttp
+        else if s = 'winhttp'  then setup.endpoint := trns_WinHttp
+        else if s = 'evhttp'   then setup.endpoint := trns_EvHttp  // recognized, but not supported
         else InvalidArgs;
       end
       else if s = '--protocol' then begin
@@ -1315,11 +1319,41 @@ begin
 end;
 
 
+function TClientThread.InitializeHttpTransport( const aTimeoutSetting : Integer) : IHTTPClient;
+var sUrl : string;
+begin
+  ASSERT( FSetup.endpoint in [trns_MsxmlHttp, trns_WinHttp]);
+
+  if FSetup.useSSL
+  then sUrl := 'https://'
+  else sUrl := 'http://';
+
+  sUrl := sUrl + FSetup.host;
+
+  case FSetup.port of
+    80  : if FSetup.useSSL then sUrl := sUrl + ':'+ IntToStr(FSetup.port);
+    443 : if not FSetup.useSSL then sUrl := sUrl + ':'+ IntToStr(FSetup.port);
+  else
+    if FSetup.port > 0 then sUrl := sUrl + ':'+ IntToStr(FSetup.port);
+  end;
+
+  Console.WriteLine('Target URL: '+sUrl);
+  case FSetup.endpoint of
+    trns_MsxmlHttp :  result := TMsxmlHTTPClientImpl.Create( sUrl);
+    trns_WinHttp   :  result := TWinHTTPClientImpl.Create( sUrl);
+  else
+    raise Exception.Create(ENDPOINT_TRANSPORTS[FSetup.endpoint]+' unhandled case');
+  end;
+
+  result.DnsResolveTimeout := aTimeoutSetting;
+  result.ConnectionTimeout := aTimeoutSetting;
+  result.SendTimeout       := aTimeoutSetting;
+  result.ReadTimeout       := aTimeoutSetting;
+end;
+
+
 procedure TClientThread.InitializeProtocolTransportStack;
-var
-  streamtrans : IStreamTransport;
-  http : IHTTPClient;
-  sUrl : string;
+var streamtrans : IStreamTransport;
 const
   DEBUG_TIMEOUT   = 30 * 1000;
   RELEASE_TIMEOUT = DEFAULT_THRIFT_TIMEOUT;
@@ -1336,24 +1370,10 @@ begin
       FTransport := streamtrans;
     end;
 
-    trns_Http: begin
+    trns_MsxmlHttp,
+    trns_WinHttp: begin
       Console.WriteLine('Using HTTPClient');
-      if FSetup.useSSL
-      then sUrl := 'https://'
-      else sUrl := 'http://';
-      sUrl := sUrl + FSetup.host;
-      case FSetup.port of
-        80  : if FSetup.useSSL then sUrl := sUrl + ':'+ IntToStr(FSetup.port);
-        443 : if not FSetup.useSSL then sUrl := sUrl + ':'+ IntToStr(FSetup.port);
-      else
-        if FSetup.port > 0 then sUrl := sUrl + ':'+ IntToStr(FSetup.port);
-      end;
-      http := THTTPClientImpl.Create( sUrl);
-      http.DnsResolveTimeout := HTTP_TIMEOUTS;
-      http.ConnectionTimeout := HTTP_TIMEOUTS;
-      http.SendTimeout       := HTTP_TIMEOUTS;
-      http.ReadTimeout       := HTTP_TIMEOUTS;
-      FTransport := http;
+      FTransport := InitializeHttpTransport( HTTP_TIMEOUTS);
     end;
 
     trns_EvHttp: begin
