@@ -592,7 +592,8 @@ begin
 
         if      s = 'buffered' then Include( layered, trns_Buffered)
         else if s = 'framed'   then Include( layered, trns_Framed)
-        else if s = 'http'     then endpoint := trns_Http
+        else if s = 'http'     then endpoint := trns_MsxmlHttp
+        else if s = 'winhttp'  then endpoint := trns_WinHttp
         else if s = 'anonpipe' then endpoint := trns_AnonPipes
         else InvalidArgs;
       end
@@ -650,8 +651,9 @@ begin
         servertrans := TServerSocketImpl.Create( Port, 0, (trns_Buffered in layered));
       end;
 
-      trns_Http : begin
-        raise Exception.Create(ENDPOINT_TRANSPORTS[endpoint]+' server transport not implemented');
+      trns_MsxmlHttp,
+      trns_WinHttp : begin
+        raise Exception.Create('HTTP server transport not implemented');
       end;
 
       trns_NamedPipes : begin

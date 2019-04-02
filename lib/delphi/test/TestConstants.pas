@@ -39,7 +39,8 @@ type
 
   TEndpointTransport = (
     trns_Sockets,
-    trns_Http,
+    trns_MsxmlHttp,
+    trns_WinHttp,
     trns_NamedPipes,
     trns_AnonPipes,
     trns_EvHttp  // as listed on http://thrift.apache.org/test
@@ -63,7 +64,7 @@ const
                   = ('Buffered', 'Framed');
 
   ENDPOINT_TRANSPORTS : array[TEndpointTransport] of string
-                  = ('Sockets', 'Http', 'Named Pipes','Anon Pipes', 'EvHttp');
+                  = ('Sockets', 'Http', 'WinHttp', 'Named Pipes','Anon Pipes', 'EvHttp');
 
   // defaults are: read=false, write=true
   BINARY_STRICT_READ  = FALSE;

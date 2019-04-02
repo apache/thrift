@@ -40,6 +40,7 @@ uses
   Thrift.Server in '..\src\Thrift.Server.pas',
   Thrift.TypeRegistry in '..\src\Thrift.TypeRegistry.pas',
   Thrift.Utils in '..\src\Thrift.Utils.pas',
+  Thrift.WinHTTP in '..\src\Thrift.WinHTTP.pas',
   Thrift.Stream in '..\src\Thrift.Stream.pas';
 
 var
