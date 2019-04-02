@@ -29,9 +29,9 @@ uses
   Math,
   Generics.Collections,
   {$IFDEF OLD_UNIT_NAMES}
-    ActiveX, msxml, WinSock, Sockets,
+    WinSock, Sockets,
   {$ELSE}
-    Winapi.ActiveX, Winapi.msxml, Winapi.WinSock,
+    Winapi.WinSock,
     {$IFDEF OLD_SOCKETS}
       Web.Win.Sockets,
     {$ELSE}
@@ -41,6 +41,7 @@ uses
   Thrift.Collections,
   Thrift.Exception,
   Thrift.Utils,
+  Thrift.WinHTTP,
   Thrift.Stream;
 
 type
@@ -141,14 +142,32 @@ type
   private
     FUri : string;
     FInputStream : IThriftStream;
-    FOutputStream : IThriftStream;
+    FOutputMemoryStream : TMemoryStream;
     FDnsResolveTimeout : Integer;
     FConnectionTimeout : Integer;
     FSendTimeout : Integer;
     FReadTimeout : Integer;
     FCustomHeaders : IThriftDictionary<string,string>;
 
-    function CreateRequest: IXMLHTTPRequest;
+    function CreateRequest: IWinHTTPRequest;
+
+  private type
+      THTTPResponseStream = class( TThriftStreamImpl)
+      private
+        FRequest : IWinHTTPRequest;
+      protected
+        procedure Write( const pBuf : Pointer; offset: Integer; count: Integer); override;
+        function Read( const pBuf : Pointer; const buflen : Integer; offset: Integer; count: Integer): Integer; override;
+        procedure Open; override;
+        procedure Close; override;
+        procedure Flush; override;
+        function IsOpen: Boolean; override;
+        function ToArray: TBytes; override;
+      public
+        constructor Create( const aRequest : IWinHTTPRequest);
+        destructor Destroy; override;
+      end;
+
   protected
     function GetIsOpen: Boolean; override;
     procedure Open(); override;
@@ -486,38 +505,40 @@ begin
   FReadTimeout       := 30 * 1000;
 
   FCustomHeaders := TThriftDictionaryImpl<string,string>.Create;
-  FOutputStream := TThriftStreamAdapterDelphi.Create( TMemoryStream.Create, True);
-end;
-
-function THTTPClientImpl.CreateRequest: IXMLHTTPRequest;
-var
-  pair : TPair<string,string>;
-  srvHttp : IServerXMLHTTPRequest;
-begin
-  {$IF CompilerVersion >= 21.0}
-  Result := CoServerXMLHTTP.Create;
-  {$ELSE}
-  Result := CoXMLHTTPRequest.Create;
-  {$IFEND}
-
-  // setting a timeout value to 0 (zero) means "no timeout" for that setting
-  if Supports( result, IServerXMLHTTPRequest, srvHttp)
-  then srvHttp.setTimeouts( DnsResolveTimeout, ConnectionTimeout, SendTimeout, ReadTimeout);
-
-  Result.open('POST', FUri, False, '', '');
-  Result.setRequestHeader( 'Content-Type', 'application/x-thrift');
-  Result.setRequestHeader( 'Accept', 'application/x-thrift');
-  Result.setRequestHeader( 'User-Agent', 'Delphi/IHTTPClient');
-
-  for pair in FCustomHeaders do begin
-    Result.setRequestHeader( pair.Key, pair.Value );
-  end;
+  FOutputMemoryStream := TMemoryStream.Create;
 end;
 
 destructor THTTPClientImpl.Destroy;
 begin
   Close;
+  FreeAndNil( FOutputMemoryStream);
   inherited;
+end;
+
+function THTTPClientImpl.CreateRequest: IWinHTTPRequest;
+var
+  pair : TPair<string,string>;
+  session : IWinHTTPSession;
+  connect : IWinHTTPConnection;
+  url     : IWinHTTPUrl;
+  sPath   : string;
+begin
+  url := TWinHTTPUrlImpl.Create( FUri);
+
+  session := TWinHTTPSessionImpl.Create('Apache Thrift Delphi Client');
+  connect := session.Connect( url.HostName, url.Port);
+
+  sPath   := url.UrlPath + url.ExtraInfo;
+  result  := connect.OpenRequest( (url.Scheme = 'https'), 'POST', sPath, 'application/x-thrift');
+
+  // setting a timeout value to 0 (zero) means "no timeout" for that setting
+  result.SetTimeouts( DnsResolveTimeout, ConnectionTimeout, SendTimeout, ReadTimeout);
+
+  result.AddRequestHeader( 'Content-Type: application/x-thrift', WINHTTP_ADDREQ_FLAG_ADD);
+
+  for pair in FCustomHeaders do begin
+    Result.AddRequestHeader( pair.Key +': '+ pair.Value, WINHTTP_ADDREQ_FLAG_ADD);
+  end;
 end;
 
 function THTTPClientImpl.GetDnsResolveTimeout: Integer;
@@ -572,13 +593,14 @@ end;
 
 procedure THTTPClientImpl.Open;
 begin
-  FOutputStream := TThriftStreamAdapterDelphi.Create( TMemoryStream.Create, True);
+  FreeAndNil( FOutputMemoryStream);
+  FOutputMemoryStream := TMemoryStream.Create;
 end;
 
 procedure THTTPClientImpl.Close;
 begin
   FInputStream := nil;
-  FOutputStream := nil;
+  FreeAndNil( FOutputMemoryStream);
 end;
 
 procedure THTTPClientImpl.Flush;
@@ -586,9 +608,9 @@ begin
   try
     SendRequest;
   finally
-    FOutputStream := nil;
-    FOutputStream := TThriftStreamAdapterDelphi.Create( TMemoryStream.Create, True);
-    ASSERT( FOutputStream <> nil);
+    FreeAndNil( FOutputMemoryStream);
+    FOutputMemoryStream := TMemoryStream.Create;
+    ASSERT( FOutputMemoryStream <> nil);
   end;
 end;
 
@@ -608,33 +630,100 @@ end;
 
 procedure THTTPClientImpl.SendRequest;
 var
-  xmlhttp : IXMLHTTPRequest;
-  ms : TMemoryStream;
-  a : TBytes;
+  http : IWinHTTPRequest;
+  pData : PByte;
   len : Integer;
 begin
-  xmlhttp := CreateRequest;
+  http := CreateRequest;
 
-  ms := TMemoryStream.Create;
-  try
-    a := FOutputStream.ToArray;
-    len := Length(a);
-    if len > 0 then begin
-      ms.WriteBuffer( Pointer(@a[0])^, len);
-    end;
-    ms.Position := 0;
-    xmlhttp.send( IUnknown( TStreamAdapter.Create( ms, soReference )));
-    FInputStream := nil;
-    FInputStream := TThriftStreamAdapterCOM.Create( IUnknown( xmlhttp.responseStream) as IStream);
-  finally
-    ms.Free;
-  end;
+  pData := FOutputMemoryStream.Memory;
+  len   := FOutputMemoryStream.Size;
+
+  // send all data immediately, since we have it in memory
+  if not http.SendRequest( pData, len, 0)
+  then raise TTransportExceptionUnknown.Create('send request error');
+
+  // end request and start receiving
+  if not http.FlushAndReceiveResponse
+  then raise TTransportExceptionInterrupted.Create('flush/receive error');
+
+  FInputStream := THTTPResponseStream.Create(http);
 end;
 
 procedure THTTPClientImpl.Write( const pBuf : Pointer; off, len : Integer);
+var pTmp : PByte;
 begin
-  FOutputStream.Write( pBuf, off, len);
+  pTmp := pBuf;
+  Inc(pTmp,off);
+  FOutputMemoryStream.Write( pTmp^, len);
 end;
+
+
+{ THTTPClientImpl.THTTPResponseStream }
+
+constructor THTTPClientImpl.THTTPResponseStream.Create( const aRequest : IWinHTTPRequest);
+begin
+  inherited Create;
+  FRequest := aRequest;
+end;
+
+destructor THTTPClientImpl.THTTPResponseStream.Destroy;
+begin
+  try
+    Close;
+  finally
+    inherited Destroy;
+  end;
+end;
+
+procedure THTTPClientImpl.THTTPResponseStream.Close;
+begin
+  FRequest := nil;
+end;
+
+procedure THTTPClientImpl.THTTPResponseStream.Flush;
+begin
+  raise ENotImplemented(ClassName+'.Flush');
+end;
+
+function THTTPClientImpl.THTTPResponseStream.IsOpen: Boolean;
+begin
+  Result := FRequest <> nil;
+end;
+
+procedure THTTPClientImpl.THTTPResponseStream.Open;
+begin
+  // nothing to do
+end;
+
+procedure THTTPClientImpl.THTTPResponseStream.Write(const pBuf : Pointer; offset, count: Integer);
+begin
+  inherited;  // check pointers
+  raise ENotImplemented(ClassName+'.Write');
+end;
+
+function THTTPClientImpl.THTTPResponseStream.Read(const pBuf : Pointer; const buflen : Integer; offset, count: Integer): Integer;
+var pTmp : PByte;
+begin
+  inherited;  // check pointers
+
+  if count >= buflen-offset
+  then count := buflen-offset;
+
+  if count > 0 then begin
+    pTmp   := pBuf;
+    Inc( pTmp, offset);
+    Result := FRequest.ReadData( pTmp, count);
+    ASSERT( Result >= 0);
+  end
+  else Result := 0;
+end;
+
+function THTTPClientImpl.THTTPResponseStream.ToArray: TBytes;
+begin
+  raise ENotImplemented(ClassName+'.ToArray');
+end;
+
 
 { TTransportException }
 
