@@ -1339,8 +1339,8 @@ begin
     trns_Http: begin
       Console.WriteLine('Using HTTPClient');
       if FSetup.useSSL
-      then sUrl := 'http://'
-      else sUrl := 'https://';
+      then sUrl := 'https://'
+      else sUrl := 'http://';
       sUrl := sUrl + FSetup.host;
       case FSetup.port of
         80  : if FSetup.useSSL then sUrl := sUrl + ':'+ IntToStr(FSetup.port);
