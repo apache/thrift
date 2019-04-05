@@ -18,7 +18,93 @@
  */
 
 #include "thrift/generate/t_generator.h"
+
+#include <cassert>
+#include <unordered_set>
+
 using namespace std;
+
+
+namespace {
+
+// Utility class for topologically sorting structs so that
+// contained structs are emitted after the structs that
+// contain them.
+struct Toposorter {
+  explicit Toposorter(const t_program* program)
+    : program_(program) {
+  }
+
+  void process() {
+    const vector<t_struct*>& objects = program_->get_objects();
+    assert(output.empty());
+    output.reserve(objects.size());
+    for (t_struct* s : objects) {
+      visit_struct(s, "");
+    }
+    assert(output.size() == objects.size());
+    assert(visited.size() == objects.size());
+    assert(stack.empty());
+  }
+
+  void visit_struct(t_struct* s, const string& field_name) {
+    // A struct may have members which are included from another thrift file.
+    // We don't need to visit these, since we can't have circular includes,
+    // and thus we know that this included struct can't refer back to anything
+    // in our main program.
+    if (s->get_program() != program_) {
+      return;
+    }
+
+    stack.emplace_back(s, field_name);
+    if (on_stack.find(s) != on_stack.end()) {
+      // Already visited on our stack -> there's a cycle.
+      found_cycle();
+      stack.pop_back();
+      return;
+    }
+    if (!visited.insert(s).second) {
+      // Already visited.
+      stack.pop_back();
+      return;
+    }
+    on_stack.insert(s);
+    for (auto* member : s->get_members()) {
+      t_struct* member_struct = dynamic_cast<t_struct*>(member->get_type()->get_true_type());
+      if (member_struct && !member->get_reference()) {
+        visit_struct(member_struct, member->get_name());
+      }
+    }
+    output.push_back(s);
+    stack.pop_back();
+    on_stack.erase(s);
+  }
+
+  void found_cycle() {
+    // Stack looks like:
+    //    (A, "")
+    //    (B, "field_in_a")
+    //    (A, "field_in_b")
+    // And we want to output: "A.field_in_a -> B.field_in_b -> A"
+    string err;
+    for (int i = 1; i < (int)stack.size(); i++) {
+      err += stack[i - 1].first->get_name() + "." + stack[i].second + " -> ";
+    }
+    err += stack.back().first->get_name();
+    pwarning(1, "Found cycle in structs: %s", err.c_str());
+    has_cycles = true;
+  }
+
+  const t_program* const program_;
+  unordered_set<t_struct*> visited;
+  unordered_set<t_struct*> on_stack;
+  vector<pair<t_struct*, string>> stack;
+
+  bool has_cycles = false;
+  vector<t_struct*> output;
+};
+
+} // anonymous namespace
 
 /**
  * Top level program generation function. Calls the generator subclass methods
@@ -45,18 +131,30 @@ void t_generator::generate_program() {
     generate_typedef(*td_iter);
   }
 
-  // Generate structs, exceptions, and unions in declared order
-  vector<t_struct*> objects = program_->get_objects();
-
-  vector<t_struct*>::iterator o_iter;
-  for (o_iter = objects.begin(); o_iter != objects.end(); ++o_iter) {
-    generate_forward_declaration(*o_iter);
+  // Generate structs, exceptions, and unions in an order which
+  // respects dependencies.
+  Toposorter s(program_);
+  s.process();
+  if (s.has_cycles) {
+    static int emitted_warning = 0;
+    if (emitted_warning++ == 0) {
+      pwarning(1, "Thrift file contains struct cycles, which may not be supported in all "
+                  "languages. Consider using reference fields. For example:\n"
+                  "  1: Foo& my_field;\n");
+    }
+    if (strict_definition_order()) {
+      failure("Cyclic references not supported by target language");
+    }
   }
-  for (o_iter = objects.begin(); o_iter != objects.end(); ++o_iter) {
-    if ((*o_iter)->is_xception()) {
-      generate_xception(*o_iter);
+  vector<t_struct*> sorted_objs = std::move(s.output);
+  for (auto* obj : sorted_objs) {
+    generate_forward_declaration(obj);
+  }
+  for (auto* obj : sorted_objs) {
+    if (obj->is_xception()) {
+      generate_xception(obj);
     } else {
-      generate_struct(*o_iter);
+      generate_struct(obj);
     }
   }
 

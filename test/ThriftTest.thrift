@@ -401,15 +401,21 @@ struct BoolTest {
   2: optional string s = "true";
 }
 
-struct StructA {
-  1: required string s;
+struct ListOfStructB {
+  // Reference StructB which is defined later.
+  1: list<StructB> list_of_structs;
 }
 
 struct StructB {
+  // Reference StructA which is defined below this.
   1: optional StructA aa;
   2: required StructA ab;
 }
 
 struct OptionalSetDefaultTest {
   1: optional set<string> with_default = [ "test" ]
+}
+
+struct StructA {
+  1: required string s;
 }

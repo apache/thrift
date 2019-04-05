@@ -104,12 +104,14 @@ public:
   void init_generator() override;
   void close_generator() override;
 
-  void generate_consts(std::vector<t_const*> consts) override;
+  bool strict_definition_order() const override {
+    return true;
+  }
 
   /**
    * Program-level generation functions
    */
-
+  void generate_consts(std::vector<t_const*> consts) override;
   void generate_typedef(t_typedef* ttypedef) override;
   void generate_enum(t_enum* tenum) override;
   void generate_enum_ostream_operator_decl(std::ostream& out, t_enum* tenum);

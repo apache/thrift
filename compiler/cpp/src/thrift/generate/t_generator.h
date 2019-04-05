@@ -124,6 +124,12 @@ protected:
   template <typename T>
   void validate(const std::vector<T>& list) const;
 
+  // Return true if the target language requires that contained structs
+  // be defined after their containing structs.
+  virtual bool strict_definition_order() const {
+    return false;
+  }
+
   /**
    * Optional methods that may be implemented by subclasses to take necessary
    * steps at the beginning or end of code generation.

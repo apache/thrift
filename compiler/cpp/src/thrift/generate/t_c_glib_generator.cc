@@ -106,6 +106,10 @@ public:
   void init_generator() override;
   void close_generator() override;
 
+  bool strict_definition_order() const override {
+    return true;
+  }
+
   /* generation functions */
   void generate_typedef(t_typedef* ttypedef) override;
   void generate_enum(t_enum* tenum) override;
