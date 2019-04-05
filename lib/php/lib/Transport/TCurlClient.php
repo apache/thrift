@@ -230,7 +230,12 @@ class TCurlClient extends TTransport
         curl_setopt(self::$curlHandle, CURLOPT_HTTPHEADER, $headers);
 
         if ($this->timeout_ > 0) {
-            curl_setopt(self::$curlHandle, CURLOPT_TIMEOUT, $this->timeout_);
+            if ($this->timeout_ < 1.0) {
+                // Timestamps smaller than 1 second are ignored when CURLOPT_TIMEOUT is used
+                curl_setopt(self::$curlHandle, CURLOPT_TIMEOUT_MS, 1000 * $this->timeout_);
+            } else {
+                curl_setopt(self::$curlHandle, CURLOPT_TIMEOUT, $this->timeout_);
+            }
         }
         curl_setopt(self::$curlHandle, CURLOPT_POSTFIELDS, $this->request_);
         $this->request_ = '';
