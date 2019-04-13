@@ -413,6 +413,11 @@ AC_SUBST(CABAL)
 AC_SUBST(RUNHASKELL)
 AM_CONDITIONAL(WITH_HASKELL, [test "$have_haskell" = "yes"])
 
+dnl TODO remove after THRIFT-4834 CI error at Haskell: Failed to load interface for `Network' is solved
+have_haskell=no
+RUNHASKELL=true
+CABAL=true
+
 AX_THRIFT_LIB(go, [Go], yes)
 if test "$with_go" = "yes";  then
   AC_PATH_PROG([GO], [go])
