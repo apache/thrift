@@ -254,10 +254,8 @@ RUN apt-get install -y --no-install-recommends \
       ruby-dev \
       ruby-bundler
 
-RUN apt-get install -y --no-install-recommends \
-`# Rust dependencies` \
-      cargo \
-      rustc
+# Rust dependencies
+RUN curl https://sh.rustup.rs -sSf | sh -s -- --default-toolchain stable -y
 
 # Clean up
 RUN rm -rf /var/cache/apt/* && \
