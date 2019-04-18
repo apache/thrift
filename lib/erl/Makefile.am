@@ -49,13 +49,10 @@ $(THRIFT_OMIT_FILE): test/Thrift_omit_with.thrift
 	touch .generated
 
 all: .generated
-	$(REBAR) get-deps
 	$(REBAR) compile
 
 check: .generated
-	$(REBAR) -C rebar.test.config get-deps
-	$(REBAR) -C rebar.test.config compile
-	$(REBAR) -C rebar.test.config skip_deps=true eunit
+	$(REBAR) eunit
 
 install: all
 	mkdir -p $(DESTDIR)$(ERLANG_INSTALL_LIB_DIR_thrift) ; \
@@ -73,7 +70,7 @@ clean-local:
 	$(REBAR) clean
 	$(RM)    .generated
 	$(RM) -r .rebar/
-	$(RM) -r deps/
+	$(RM) -r _build/
 	$(RM) -r test/gen-erl/
 	$(RM)    $(THRIFT_OMIT_FILE)
 
@@ -83,7 +80,7 @@ maintainer-clean-local:
 dist-hook:
 	$(RM)    $(distdir)/.generated
 	$(RM) -r $(distdir)/.rebar/
-	$(RM) -r $(distdir)/deps/
+	$(RM) -r $(distdir)/_build/
 	$(RM) -r $(distdir)/ebin/
 	$(RM) -r $(distdir)/test/gen-erl/
 	$(RM)    $(distdir)/$(THRIFT_OMIT_FILE)
@@ -94,7 +91,6 @@ EXTRA_DIST = \
 	coding_standards.md \
 	rebar.config \
 	rebar.config.script \
-	rebar.test.config \
 	test \
 	README.md
 
