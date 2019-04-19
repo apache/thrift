@@ -46,6 +46,14 @@ It does not currently use any Rust 2018 features.
 
 Breaking changes are minimized. When they are made they will be outlined below with transition guidelines.
 
+##### Thrift 0.13.0
+* **[THRIFT-4536]** - Use TryFrom from std, required rust 1.34.0 or higher
+
+    Previously TryFrom was from try_from crate, it is now from the std library,
+    but this functionality is only available in rust 1.34.0. Additionally, 
+    ordered-float is now re-exported under the thrift module to reduce 
+    possible dependency mismatches.
+
 ##### Thrift 0.12.0
 
 * **[THRIFT-4529]** - Rust enum variants are now camel-cased instead of uppercased to conform to Rust naming conventions
