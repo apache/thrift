@@ -96,7 +96,7 @@ A service provides the interface for a set of functionality provided by a Thrift
 
 ## Field
 
-    [16] Field           ::=  FieldID? FieldReq? FieldType Identifier ('= ConstValue)? XsdFieldOptions ListSeparator?
+    [16] Field           ::=  FieldID? FieldReq? FieldType Identifier ('=' ConstValue)? XsdFieldOptions ListSeparator?
 
 ### Field ID
 
