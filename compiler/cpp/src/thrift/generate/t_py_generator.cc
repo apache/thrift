@@ -69,7 +69,9 @@ public:
     import_dynbase_ = "";
     package_prefix_ = "";
     for( iter = parsed_options.begin(); iter != parsed_options.end(); ++iter) {
-      if( iter->first.compare("new_style") == 0) {
+      if( iter->first.compare("enum") == 0) {
+        gen_enum_ = true;
+      } else if( iter->first.compare("new_style") == 0) {
         pwarning(0, "new_style is enabled by default, so the option will be removed in the near future.\n");
       } else if( iter->first.compare("old_style") == 0) {
         gen_newstyle_ = false;
@@ -278,6 +280,7 @@ private:
    * True if we should generate new-style classes.
    */
   bool gen_newstyle_;
+  bool gen_enum_;
 
   /**
   * True if we should generate dynamic style classes.
@@ -445,6 +448,8 @@ string t_py_generator::py_imports() {
      << "from thrift.protocol.TProtocol import TProtocolException"
      << endl
      << "from thrift.TRecursive import fix_spec"
+     << endl
+     << (gen_enum_ ? "from enum import IntEnum" : "")
      << endl;
 
   if (gen_utf8strings_) {
@@ -484,9 +489,22 @@ void t_py_generator::generate_typedef(t_typedef* ttypedef) {
  */
 void t_py_generator::generate_enum(t_enum* tenum) {
   std::ostringstream to_string_mapping, from_string_mapping;
+  std::string base_class;
 
-  f_types_ << endl << endl << "class " << tenum->get_name() << (gen_newstyle_ ? "(object)" : "")
-           << (gen_dynamic_ ? "(" + gen_dynbaseclass_ + ")" : "") << ":" << endl;
+  if (gen_enum_) {
+    base_class = "IntEnum";
+  } else if (gen_newstyle_) {
+    base_class = "object";
+  } else if (gen_dynamic_) {
+    base_class = gen_dynbaseclass_;
+  }
+
+  f_types_ << endl
+           << endl
+           << "class " << tenum->get_name()
+           << (base_class.empty() ? "" : "(" + base_class + ")")
+           << ":"
+           << endl;
   indent_up();
   generate_python_docstring(f_types_, tenum);
 
@@ -510,7 +528,9 @@ void t_py_generator::generate_enum(t_enum* tenum) {
 
   indent_down();
   f_types_ << endl;
-  f_types_ << to_string_mapping.str() << endl << from_string_mapping.str();
+  if (!gen_enum_) {
+    f_types_ << to_string_mapping.str() << endl << from_string_mapping.str();
+  }
 }
 
 /**
@@ -560,7 +580,14 @@ string t_py_generator::render_const_value(t_type* type, t_const_value* value) {
       throw "compiler error: no const of base type " + t_base_type::t_base_name(tbase);
     }
   } else if (type->is_enum()) {
-    out << value->get_integer();
+    out << indent();
+    int int_val = value->get_integer();
+    if (gen_enum_) {
+      t_enum_value* enum_val = ((t_enum*)type)->get_constant_by_value(int_val);
+      out << type->get_name() << "." << enum_val->get_name();
+    } else {
+      out << int_val;
+    }
   } else if (type->is_struct() || type->is_xception()) {
     out << type_name(type) << "(**{" << endl;
     indent_up();
@@ -2191,7 +2218,7 @@ void t_py_generator::generate_deserialize_field(ostream& out,
     generate_deserialize_struct(out, (t_struct*)type, name);
   } else if (type->is_container()) {
     generate_deserialize_container(out, type, name);
-  } else if (type->is_base_type() || type->is_enum()) {
+  } else if (type->is_base_type()) {
     indent(out) << name << " = iprot.";
 
     if (type->is_base_type()) {
@@ -2229,11 +2256,15 @@ void t_py_generator::generate_deserialize_field(ostream& out,
       default:
         throw "compiler error: no Python name for base type " + t_base_type::t_base_name(tbase);
       }
-    } else if (type->is_enum()) {
-      out << "readI32()";
     }
     out << endl;
-
+  } else if (type->is_enum()) {
+    if (gen_enum_) {
+      indent(out) << name << " = " << type_name(type) << "(iprot.readI32()).name";
+    } else {
+      out << "readI32()";
+    }      
+    out << endl;
   } else {
     printf("DO NOT KNOW HOW TO DESERIALIZE FIELD '%s' TYPE '%s'\n",
            tfield->get_name().c_str(),
@@ -2418,7 +2449,11 @@ void t_py_generator::generate_serialize_field(ostream& out, t_field* tfield, str
         throw "compiler error: no Python name for base type " + t_base_type::t_base_name(tbase);
       }
     } else if (type->is_enum()) {
-      out << "writeI32(" << name << ")";
+      if (gen_enum_){
+        out << "writeI32(" << type_name(type) << "[" << name << "].value)";
+      } else {
+        out << "writeI32(" << name << ")";
+      }
     }
     out << endl;
   } else {
@@ -2775,4 +2810,5 @@ THRIFT_REGISTER_GENERATOR(
     "                     Add an import line to generated code to find the dynbase class.\n"
     "    package_prefix='top.package.'\n"
     "                     Package prefix for generated files.\n"
-    "    old_style:       Deprecated. Generate old-style classes.\n")
+    "    old_style:       Deprecated. Generate old-style classes.\n"
+    "    enum:            Generates Python's IntEnum, connects thrift to python enums . Python 3.4 and higher.\n")
