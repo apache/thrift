@@ -100,12 +100,13 @@ namespace Thrift.Transport.Server
 
                 while (await Processor.ProcessAsync(input, output, cancellationToken))
                 {
+                    if (!context.Response.HasStarted)  // oneway method called
+                        await context.Response.Body.FlushAsync(cancellationToken);
                 }
             }
             catch (TTransportException)
             {
-                // Client died, just move on
-                if (!context.Response.HasStarted)
+                if (!context.Response.HasStarted)  // if something goes bust, let the client know
                     context.Response.StatusCode = 500;
             }
             finally
