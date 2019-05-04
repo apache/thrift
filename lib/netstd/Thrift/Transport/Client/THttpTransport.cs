@@ -1,4 +1,4 @@
-﻿// Licensed to the Apache Software Foundation(ASF) under one
+// Licensed to the Apache Software Foundation(ASF) under one
 // or more contributor license agreements.See the NOTICE file
 // distributed with this work for additional information
 // regarding copyright ownership.The ASF licenses this file
@@ -41,22 +41,28 @@ namespace Thrift.Transport.Client
         private bool _isDisposed;
         private MemoryStream _outputStream = new MemoryStream();
 
-        public THttpTransport(Uri u, IDictionary<string, string> customHeaders = null)
-            : this(u, Enumerable.Empty<X509Certificate>(), customHeaders)
+        public THttpTransport(Uri u, IDictionary<string, string> customHeaders = null, string userAgent = null)
+            : this(u, Enumerable.Empty<X509Certificate>(), customHeaders, userAgent)
         {
         }
 
         public THttpTransport(Uri u, IEnumerable<X509Certificate> certificates,
-            IDictionary<string, string> customHeaders)
+            IDictionary<string, string> customHeaders, string userAgent = null)
         {
             _uri = u;
             _certificates = (certificates ?? Enumerable.Empty<X509Certificate>()).ToArray();
             CustomHeaders = customHeaders;
 
+            if (!string.IsNullOrEmpty(userAgent))
+                UserAgent = userAgent;
+
             // due to current bug with performance of Dispose in netcore https://github.com/dotnet/corefx/issues/8809
             // this can be switched to default way (create client->use->dispose per flush) later
             _httpClient = CreateClient();
         }
+
+        // According to RFC 2616 section 3.8, the "User-Agent" header may not carry a version number
+        public readonly string UserAgent = "Thrift netstd THttpClient";
 
         public IDictionary<string, string> CustomHeaders { get; }
 
@@ -149,7 +155,7 @@ namespace Thrift.Transport.Client
             }
 
             httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/x-thrift"));
-            httpClient.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("THttpTransport", "1.0.0"));
+            httpClient.DefaultRequestHeaders.UserAgent.TryParseAdd(UserAgent);
 
             if (CustomHeaders != null)
             {
