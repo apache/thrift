@@ -88,15 +88,18 @@ static inline To bitwise_cast(From from) {
 #  define __THRIFT_LITTLE_ENDIAN LITTLE_ENDIAN
 #  define __THRIFT_BIG_ENDIAN BIG_ENDIAN
 # else
-#  include <boost/config.hpp>
-#  include <boost/detail/endian.hpp>
-#  define __THRIFT_BYTE_ORDER BOOST_BYTE_ORDER
+#  include <boost/predef/other/endian.h>
+#  if BOOST_ENDIAN_BIG_BYTE
+#    define __THRIFT_BYTE_ORDER 4321
+#    define __THRIFT_LITTLE_ENDIAN 0
+#    define __THRIFT_BIG_ENDIAN __THRIFT_BYTE_ORDER
+#  elif BOOST_ENDIAN_LITTLE_BYTE
+#    define __THRIFT_BYTE_ORDER 1234
+#    define __THRIFT_LITTLE_ENDIAN __THRIFT_BYTE_ORDER
+#    define __THRIFT_BIG_ENDIAN 0
+#  endif
 #  ifdef BOOST_LITTLE_ENDIAN
-#   define __THRIFT_LITTLE_ENDIAN __THRIFT_BYTE_ORDER
-#   define __THRIFT_BIG_ENDIAN 0
 #  else
-#   define __THRIFT_LITTLE_ENDIAN 0
-#   define __THRIFT_BIG_ENDIAN __THRIFT_BYTE_ORDER
 #  endif
 # endif
 #endif

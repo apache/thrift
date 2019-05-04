@@ -3,7 +3,7 @@
 * A relatively POSIX-compliant *NIX system
     * Cygwin or MinGW can be used on Windows (but there are better options, see below)
 * g++ 4.2
-* boost 1.53.0
+* boost 1.56.0
 * Runtime libraries for lex and yacc might be needed for the compiler.
 
 ## Requirements for building from source
@@ -23,7 +23,7 @@
 These are only required if you choose to build the libraries for the given language
 
 * C++
-    * Boost 1.53.0
+    * Boost 1.56.0
     * libevent (optional, to build the nonblocking server)
     * zlib (optional)
 * Java

@@ -17,7 +17,7 @@
 # under the License.
 #
 
-set(BOOST_MINREV 1.53)
+set(BOOST_MINREV 1.56)
 
 # we are not ready for the new style link targets introduced in
 # boost 1.70.0 and cmake 3.14.2 which showed up on appveyor in
