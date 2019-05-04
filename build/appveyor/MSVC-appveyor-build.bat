@@ -51,8 +51,7 @@ CD "%BUILDDIR%"                             || EXIT /B
     -DOPENSSL_USE_STATIC_LIBS=OFF ^
     -DZLIB_LIBRARY="%WIN3P%\zlib-inst\lib\zlib%ZLIB_LIB_SUFFIX%.lib" ^
     -DZLIB_ROOT="%WIN3P%\zlib-inst" ^
-    -DWITH_PYTHON=%WITH_PYTHON% ^
-    -DWITH_%THREADMODEL%THREADS=ON          || EXIT /B
+    -DWITH_PYTHON=%WITH_PYTHON%             || EXIT /B
 @ECHO OFF
 
 cmake --build . ^
