@@ -1743,7 +1743,7 @@ void t_delphi_generator::generate_delphi_struct_definition(ostream& out,
   if (is_exception && (!is_x_factory)) {
     out << "TException";
   } else {
-    out << "TInterfacedObject, IBase, " << struct_intf_name;
+    out << "TInterfacedObject, IBase, ISupportsToString, " << struct_intf_name;
   }
   out << ")" << endl;
 
@@ -3949,8 +3949,10 @@ void t_delphi_generator::generate_delphi_struct_tostring_impl(ostream& out,
                        << ".Append('<null>') else " << tmp_sb << ".Append( Self."
                        << prop_name((*f_iter), is_exception) << ".ToString());" << endl;
     } else if (ttype->is_enum()) {
-      indent_impl(out) << tmp_sb << ".Append(System.Integer( Self." << prop_name((*f_iter), is_exception)
-                       << "));" << endl;
+      indent_impl(out) << tmp_sb << ".Append(EnumUtils<" 
+                       << type_name(ttype, false, true, is_exception, true) 
+                       << ">.ToString( System.Ord( Self." 
+                       << prop_name((*f_iter), is_exception) << ")));" << endl;
     } else {
       indent_impl(out) << tmp_sb << ".Append( Self." << prop_name((*f_iter), is_exception) << ");"
                        << endl;
