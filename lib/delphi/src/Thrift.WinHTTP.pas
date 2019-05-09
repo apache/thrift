@@ -497,6 +497,7 @@ begin
                          PWideChar(Pointer(aProxy)),        // may be nil
                          PWideChar(Pointer(aProxyBypass)),  // may be nil
                          aFlags);
+  if handle = nil then RaiseLastOSError;
   inherited Create( handle);
 end;
 
@@ -527,6 +528,7 @@ var handle : HINTERNET;
 begin
   FSession := aSession;
   handle   := WinHttpConnect( FSession.Handle, PWideChar(aHostName), aPort, 0);
+  if handle = nil then RaiseLastOSError;
   inherited Create( handle);
 end;
 
@@ -572,6 +574,7 @@ begin
                                      PWideChar(aReferrer),
                                      @accept,
                                      aFlags);
+  if handle = nil then RaiseLastOSError;
   inherited Create( handle);
 end;
 
