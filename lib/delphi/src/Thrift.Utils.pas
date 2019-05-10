@@ -295,15 +295,18 @@ end;
 { StringUtils<T> }
 
 class function StringUtils<T>.ToString(const value : T) : string;
+type PInterface = ^IInterface;
 var pType : PTypeInfo;
-    base  : ISupportsToString;
+    stos  : ISupportsToString;
+    pIntf : PInterface;  // Workaround: Rio does not allow the direct typecast
 begin
   pType := PTypeInfo(TypeInfo(T));
   if Assigned(pType) then begin
     case pType^.Kind of
       tkInterface : begin
-        if Supports(IInterface(value), ISupportsToString, base) then begin
-          result := base.toString;
+        pIntf := PInterface(@value);
+        if Supports( pIntf^, ISupportsToString, stos) then begin
+          result := stos.toString;
           Exit;
         end;
       end;

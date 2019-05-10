@@ -3950,7 +3950,7 @@ void t_delphi_generator::generate_delphi_struct_tostring_impl(ostream& out,
                        << prop_name((*f_iter), is_exception) << ".ToString());" << endl;
     } else if (ttype->is_enum()) {
       indent_impl(out) << tmp_sb << ".Append(EnumUtils<" 
-                       << type_name(ttype, false, true, is_exception, true) 
+                       << type_name(ttype, false, true, false, false) 
                        << ">.ToString( System.Ord( Self." 
                        << prop_name((*f_iter), is_exception) << ")));" << endl;
     } else {
