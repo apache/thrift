@@ -295,7 +295,8 @@ void t_erl_generator::init_generator() {
  * Boilerplate at beginning and end of header files
  */
 void t_erl_generator::hrl_header(ostream& out, string name) {
-  out << "-ifndef(_" << name << "_included)." << endl << "-define(_" << name << "_included, yeah)."
+  out << erl_autogen_comment() << endl
+      << "-ifndef(_" << name << "_included)." << endl << "-define(_" << name << "_included, yeah)."
       << endl;
 }
 
