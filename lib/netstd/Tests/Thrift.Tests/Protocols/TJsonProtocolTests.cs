@@ -36,7 +36,7 @@ namespace Thrift.Tests.Protocols
         [TestMethod]
         public void TJSONProtocol_Can_Create_Instance_Test()
         {
-            var httpClientTransport = Substitute.For<THttpTransport>(new Uri("http://localhost"), null);
+            var httpClientTransport = Substitute.For<THttpTransport>(new Uri("http://localhost"), null, null);
 
             var result = new TJSONProtocolWrapper(httpClientTransport);
 
