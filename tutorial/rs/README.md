@@ -84,14 +84,14 @@ fn run() -> thrift::Result<()> {
     // two-way with some return
     let res = client.calculate(
         72,
-        Work::new(7, 8, Operation::MULTIPLY, None)
+        Work::new(7, 8, Operation::Multiply, None)
     )?;
     println!("multiplied 7 and 8, got {}", res);
 
     // two-way and returns a Thrift-defined exception
     let res = client.calculate(
         77,
-        Work::new(2, 0, Operation::DIVIDE, None)
+        Work::new(2, 0, Operation::Divide, None)
     );
     match res {
         Ok(v) => panic!("shouldn't have succeeded with result {}", v),
