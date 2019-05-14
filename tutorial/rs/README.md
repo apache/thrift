@@ -35,12 +35,13 @@ extern crate thrift;
 extern crate try_from;
 
 // generated Rust module
-use tutorial;
+mod tutorial;
 
 use thrift::protocol::{TCompactInputProtocol, TCompactOutputProtocol};
 use thrift::protocol::{TInputProtocol, TOutputProtocol};
 use thrift::transport::{TFramedReadTransport, TFramedWriteTransport};
 use thrift::transport::{TIoChannel, TTcpChannel};
+
 use tutorial::{CalculatorSyncClient, TCalculatorSyncClient};
 use tutorial::{Operation, Work};
 
@@ -60,7 +61,7 @@ fn run() -> thrift::Result<()> {
     //
 
     println!("connect to server on 127.0.0.1:9090");
-    let mut c = TTcpTransport::new();
+    let mut c = TTcpChannel::new();
     c.open("127.0.0.1:9090")?;
 
     let (i_chan, o_chan) = c.split()?;
@@ -72,7 +73,7 @@ fn run() -> thrift::Result<()> {
         TFramedWriteTransport::new(o_chan)
     );
 
-    let client = CalculatorSyncClient::new(i_prot, o_prot);
+    let mut client = CalculatorSyncClient::new(i_prot, o_prot);
 
     //
     // alright! - let's make some calls
