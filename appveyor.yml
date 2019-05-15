@@ -62,7 +62,7 @@ environment:
    - PROFILE: MINGW
      PLATFORM: x64
      CONFIGURATION: RelWithDebInfo
-     DISABLED_TESTS: (StressTestNonBlocking)
+     DISABLED_TESTS: (StalenessCheckTest|StressTestNonBlocking)
 
    - PROFILE: CYGWIN
      PLATFORM: x64

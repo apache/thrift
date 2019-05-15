@@ -103,7 +103,7 @@ public class TNonblockingServerSocket extends TNonblockingServerTransport {
       try {
         serverSocket_.setSoTimeout(0);
       } catch (SocketException sx) {
-        sx.printStackTrace();
+        LOGGER.error("Socket exception while setting socket timeout", sx);
       }
     }
   }

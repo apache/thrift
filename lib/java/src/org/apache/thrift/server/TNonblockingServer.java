@@ -239,7 +239,6 @@ public class TNonblockingServer extends AbstractNonblockingServer {
       } catch (TTransportException tte) {
         // something went wrong accepting.
         LOGGER.warn("Exception trying to accept!", tte);
-        tte.printStackTrace();
         if (clientKey != null) cleanupSelectionKey(clientKey);
         if (client != null) client.close();
       }

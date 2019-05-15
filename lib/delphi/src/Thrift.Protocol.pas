@@ -29,6 +29,7 @@ uses
   Contnrs,
   Thrift.Exception,
   Thrift.Stream,
+  Thrift.Utils,
   Thrift.Collections,
   Thrift.Transport;
 
@@ -109,12 +110,6 @@ type
   IProtocolFactory = interface
     ['{7CD64A10-4E9F-4E99-93BF-708A31F4A67B}']
     function GetProtocol( const trans: ITransport): IProtocol;
-  end;
-
-  TThriftStringBuilder = class( TStringBuilder)
-  public
-    function Append(const Value: TBytes): TStringBuilder; overload;
-    function Append(const Value: IThriftContainer): TStringBuilder; overload;
   end;
 
   TProtocolException = class( TException)
@@ -292,9 +287,8 @@ type
     constructor Create( trans: ITransport );
   end;
 
-  IBase = interface
-    ['{08D9BAA8-5EAA-410F-B50B-AC2E6E5E4155}']
-    function ToString: string;
+  IBase = interface( ISupportsToString)
+    ['{AFF6CECA-5200-4540-950E-9B89E0C1C00C}']
     procedure Read( const iprot: IProtocol);
     procedure Write( const iprot: IProtocol);
   end;
@@ -1032,19 +1026,6 @@ end;
 constructor TProtocolExceptionSpecialized.Create(const Msg: string);
 begin
   inherited HiddenCreate(Msg);
-end;
-
-{ TThriftStringBuilder }
-
-function TThriftStringBuilder.Append(const Value: TBytes): TStringBuilder;
-begin
-  Result := Append( string( RawByteString(Value)) );
-end;
-
-function TThriftStringBuilder.Append(
-  const Value: IThriftContainer): TStringBuilder;
-begin
-  Result := Append( Value.ToString );
 end;
 
 { TBinaryProtocolImpl.TFactory }

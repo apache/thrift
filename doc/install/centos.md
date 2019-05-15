@@ -54,11 +54,11 @@ If you will be developing Apache Thrift clients/servers in C++ you will also nee
 
 	sudo yum -y install libevent-devel zlib-devel openssl-devel
 
-### Upgrade Boost >= 1.53
+### Upgrade Boost >= 1.56
 
-	wget http://sourceforge.net/projects/boost/files/boost/1.53.0/boost_1_53_0.tar.gz
-	tar xvf boost_1_53_0.tar.gz
-	cd boost_1_53_0
+	wget http://sourceforge.net/projects/boost/files/boost/1.56.0/boost_1_56_0.tar.gz
+	tar xvf boost_1_56_0.tar.gz
+	cd boost_1_56_0
 	./bootstrap.sh
 	sudo ./b2 install
 

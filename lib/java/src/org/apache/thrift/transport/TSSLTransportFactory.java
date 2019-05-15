@@ -37,11 +37,17 @@ import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
 import javax.net.ssl.TrustManagerFactory;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 /**
  *  A Factory for providing and setting up Client and Server SSL wrapped
  *  TSocket and TServerSocket
  */
 public class TSSLTransportFactory {
+  
+  private static final Logger LOGGER =
+      LoggerFactory.getLogger(TSSLTransportFactory.class);
 
   /**
    * Get a SSL wrapped TServerSocket bound to the specified port. In this
@@ -225,14 +231,14 @@ public class TSSLTransportFactory {
         try {
           in.close();
         } catch (IOException e) {
-          e.printStackTrace();
+          LOGGER.warn("Unable to close stream", e);
         }
       }
       if (is != null) {
         try {
           is.close();
         } catch (IOException e) {
-          e.printStackTrace();
+          LOGGER.warn("Unable to close stream", e);
         }
       }
     }

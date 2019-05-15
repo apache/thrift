@@ -21,7 +21,7 @@ package org.apache.thrift.protocol;
 
 /**
  * Helper class that encapsulates field metadata.
- *
+ * <p>Two fields are considered equal if they have the same type and id.</p>
  */
 public class TField {
   public TField() {
@@ -47,7 +47,6 @@ public class TField {
     final int prime = 31;
     int result = 1;
     result = prime * result + id;
-    result = prime * result + ((name == null) ? 0 : name.hashCode());
     result = prime * result + type;
     return result;
   }

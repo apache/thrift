@@ -25,12 +25,19 @@ interface
 
 uses
   {$IFDEF OLD_UNIT_NAMES}
-  Classes, Windows, SysUtils, Character, SyncObjs;
+  Classes, Windows, SysUtils, Character, SyncObjs, TypInfo, Rtti;
   {$ELSE}
-  System.Classes, Winapi.Windows, System.SysUtils, System.Character, System.SyncObjs;
+  System.Classes, Winapi.Windows, System.SysUtils, System.Character,
+  System.SyncObjs, System.TypInfo, System.Rtti;
   {$ENDIF}
 
 type
+  ISupportsToString = interface
+    ['{AF71C350-E0CD-4E94-B77C-0310DC8227FF}']
+    function ToString : string;
+  end;
+
+
   IOverlappedHelper = interface
     ['{A1832EFA-2E02-4884-8F09-F0A0277157FA}']
     function Overlapped : TOverlapped;
@@ -55,6 +62,13 @@ type
   end;
 
 
+  TThriftStringBuilder = class( TStringBuilder)
+  public
+    function Append(const Value: TBytes): TStringBuilder; overload;
+    function Append(const Value: ISupportsToString): TStringBuilder; overload;
+  end;
+
+
   Base64Utils = class sealed
   public
     class function Encode( const src : TBytes; srcOff, len : Integer; dst : TBytes; dstOff : Integer) : Integer; static;
@@ -66,6 +80,16 @@ type
   public
     class function IsHighSurrogate( const c : Char) : Boolean; static; inline;
     class function IsLowSurrogate( const c : Char) : Boolean; static; inline;
+  end;
+
+  EnumUtils<T> = class sealed
+  public
+    class function ToString(const value : Integer) : string;  reintroduce; static; inline;
+  end;
+
+  StringUtils<T> = class sealed
+  public
+    class function ToString(const value : T) : string;  reintroduce; static; inline;
   end;
 
 
@@ -254,6 +278,56 @@ begin
 end;
 
 {$ENDIF}
+
+
+{ EnumUtils<T> }
+
+class function EnumUtils<T>.ToString(const value : Integer) : string;
+var pType : PTypeInfo;
+begin
+  pType := PTypeInfo(TypeInfo(T));
+  if Assigned(pType) and (pType^.Kind = tkEnumeration)
+  then result := GetEnumName(pType,value)
+  else result := IntToStr(Ord(value));
+end;
+
+
+{ StringUtils<T> }
+
+class function StringUtils<T>.ToString(const value : T) : string;
+type PInterface = ^IInterface;
+var pType : PTypeInfo;
+    stos  : ISupportsToString;
+    pIntf : PInterface;  // Workaround: Rio does not allow the direct typecast
+begin
+  pType := PTypeInfo(TypeInfo(T));
+  if Assigned(pType) then begin
+    case pType^.Kind of
+      tkInterface : begin
+        pIntf := PInterface(@value);
+        if Supports( pIntf^, ISupportsToString, stos) then begin
+          result := stos.toString;
+          Exit;
+        end;
+      end;
+    end;
+  end;
+
+  result := TValue.From<T>(value).ToString;
+end;
+
+
+{ TThriftStringBuilder }
+
+function TThriftStringBuilder.Append(const Value: TBytes): TStringBuilder;
+begin
+  Result := Append( string( RawByteString(Value)) );
+end;
+
+function TThriftStringBuilder.Append( const Value: ISupportsToString): TStringBuilder;
+begin
+  Result := Append( Value.ToString );
+end;
 
 
 end.
