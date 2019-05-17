@@ -3237,8 +3237,12 @@ void t_go_generator::generate_serialize_container(ostream& out,
     t_set* tset = (t_set*)ttype;
     out << indent() << "for i := 0; i<len(" << prefix << "); i++ {" << endl;
     out << indent() << "  for j := i+1; j<len(" << prefix << "); j++ {" << endl;
-    out << indent() << "    if reflect.DeepEqual(" << prefix << "[i]," << prefix << "[j]) { " << endl;
-    out << indent() << "      return thrift.PrependError(\"\", fmt.Errorf(\"%T error writing set field: slice is not unique\", " << prefix << "[i]))" << endl;
+    string wrapped_prefix = prefix;
+    if (pointer_field) {
+      wrapped_prefix = "(" + prefix + ")";
+    }
+    out << indent() << "    if reflect.DeepEqual(" << wrapped_prefix << "[i]," << wrapped_prefix << "[j]) { " << endl;
+    out << indent() << "      return thrift.PrependError(\"\", fmt.Errorf(\"%T error writing set field: slice is not unique\", " << wrapped_prefix << "[i]))" << endl;
     out << indent() << "    }" << endl;
     out << indent() << "  }" << endl;
     out << indent() << "}" << endl;

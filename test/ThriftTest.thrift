@@ -409,3 +409,7 @@ struct StructB {
   1: optional StructA aa;
   2: required StructA ab;
 }
+
+struct OptionalSetDefaultTest {
+  1: optional set<string> with_default = [ "test" ]
+}
