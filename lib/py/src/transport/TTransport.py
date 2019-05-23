@@ -376,7 +376,7 @@ class TSaslClientTransport(TTransportBase, CReadableTransport):
         if not self.transport.isOpen():
             self.transport.open()
 
-        self.send_sasl_msg(self.START, self.sasl.mechanism)
+        self.send_sasl_msg(self.START, bytes(self.sasl.mechanism, 'ascii'))
         self.send_sasl_msg(self.OK, self.sasl.process())
 
         while True:
@@ -417,7 +417,7 @@ class TSaslClientTransport(TTransportBase, CReadableTransport):
     def flush(self):
         data = self.__wbuf.getvalue()
         encoded = self.sasl.wrap(data)
-        self.transport.write(''.join((pack("!i", len(encoded)), encoded)))
+        self.transport.write(pack("!i", len(encoded)) + encoded)
         self.transport.flush()
         self.__wbuf = BufferIO()
 
