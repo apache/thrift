@@ -39,6 +39,9 @@ install-exec-hook:
 clean-local:
 	$(CABAL) clean
 
+dist-local:
+	$(CABAL) sdist
+
 maintainer-clean-local:
 	$(CABAL) clean
 
