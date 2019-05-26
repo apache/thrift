@@ -396,7 +396,7 @@ namespace Thrift.Protocol
         ///     Read in a JSON string, unescaping as appropriate.. Skip Reading from the
         ///     context if skipContext is true.
         /// </summary>
-        private async Task<byte[]> ReadJsonStringAsync(bool skipContext, CancellationToken cancellationToken)
+        private async ValueTask<byte[]> ReadJsonStringAsync(bool skipContext, CancellationToken cancellationToken)
         {
             using (var buffer = new MemoryStream())
             {
@@ -487,7 +487,7 @@ namespace Thrift.Protocol
         ///     Read in a sequence of characters that are all valid in JSON numbers. Does
         ///     not do a complete regex check to validate that this is actually a number.
         /// </summary>
-        private async Task<string> ReadJsonNumericCharsAsync(CancellationToken cancellationToken)
+        private async ValueTask<string> ReadJsonNumericCharsAsync(CancellationToken cancellationToken)
         {
             var strbld = new StringBuilder();
             while (true)
@@ -514,7 +514,7 @@ namespace Thrift.Protocol
         /// <summary>
         ///     Read in a JSON number. If the context dictates, Read in enclosing quotes.
         /// </summary>
-        private async Task<long> ReadJsonIntegerAsync(CancellationToken cancellationToken)
+        private async ValueTask<long> ReadJsonIntegerAsync(CancellationToken cancellationToken)
         {
             await Context.ReadConditionalDelimiterAsync(cancellationToken);
             if (Context.EscapeNumbers())
@@ -542,7 +542,7 @@ namespace Thrift.Protocol
         ///     Read in a JSON double value. Throw if the value is not wrapped in quotes
         ///     when expected or if wrapped in quotes when not expected.
         /// </summary>
-        private async Task<double> ReadJsonDoubleAsync(CancellationToken cancellationToken)
+        private async ValueTask<double> ReadJsonDoubleAsync(CancellationToken cancellationToken)
         {
             await Context.ReadConditionalDelimiterAsync(cancellationToken);
             if (await Reader.PeekAsync(cancellationToken) == TJSONProtocolConstants.Quote[0])
@@ -578,7 +578,7 @@ namespace Thrift.Protocol
         /// <summary>
         ///     Read in a JSON string containing base-64 encoded data and decode it.
         /// </summary>
-        private async Task<byte[]> ReadJsonBase64Async(CancellationToken cancellationToken)
+        private async ValueTask<byte[]> ReadJsonBase64Async(CancellationToken cancellationToken)
         {
             var b = await ReadJsonStringAsync(false, cancellationToken);
             var len = b.Length;
@@ -642,7 +642,7 @@ namespace Thrift.Protocol
             PopContext();
         }
 
-        public override async Task<TMessage> ReadMessageBeginAsync(CancellationToken cancellationToken)
+        public override async ValueTask<TMessage> ReadMessageBeginAsync(CancellationToken cancellationToken)
         {
             var message = new TMessage();
             await ReadJsonArrayStartAsync(cancellationToken);
@@ -663,7 +663,7 @@ namespace Thrift.Protocol
             await ReadJsonArrayEndAsync(cancellationToken);
         }
 
-        public override async Task<TStruct> ReadStructBeginAsync(CancellationToken cancellationToken)
+        public override async ValueTask<TStruct> ReadStructBeginAsync(CancellationToken cancellationToken)
         {
             await ReadJsonObjectStartAsync(cancellationToken);
             return new TStruct();
@@ -674,7 +674,7 @@ namespace Thrift.Protocol
             await ReadJsonObjectEndAsync(cancellationToken);
         }
 
-        public override async Task<TField> ReadFieldBeginAsync(CancellationToken cancellationToken)
+        public override async ValueTask<TField> ReadFieldBeginAsync(CancellationToken cancellationToken)
         {
             var field = new TField();
             var ch = await Reader.PeekAsync(cancellationToken);
@@ -696,7 +696,7 @@ namespace Thrift.Protocol
             await ReadJsonObjectEndAsync(cancellationToken);
         }
 
-        public override async Task<TMap> ReadMapBeginAsync(CancellationToken cancellationToken)
+        public override async ValueTask<TMap> ReadMapBeginAsync(CancellationToken cancellationToken)
         {
             var map = new TMap();
             await ReadJsonArrayStartAsync(cancellationToken);
@@ -713,7 +713,7 @@ namespace Thrift.Protocol
             await ReadJsonArrayEndAsync(cancellationToken);
         }
 
-        public override async Task<TList> ReadListBeginAsync(CancellationToken cancellationToken)
+        public override async ValueTask<TList> ReadListBeginAsync(CancellationToken cancellationToken)
         {
             var list = new TList();
             await ReadJsonArrayStartAsync(cancellationToken);
@@ -727,7 +727,7 @@ namespace Thrift.Protocol
             await ReadJsonArrayEndAsync(cancellationToken);
         }
 
-        public override async Task<TSet> ReadSetBeginAsync(CancellationToken cancellationToken)
+        public override async ValueTask<TSet> ReadSetBeginAsync(CancellationToken cancellationToken)
         {
             var set = new TSet();
             await ReadJsonArrayStartAsync(cancellationToken);
@@ -741,43 +741,43 @@ namespace Thrift.Protocol
             await ReadJsonArrayEndAsync(cancellationToken);
         }
 
-        public override async Task<bool> ReadBoolAsync(CancellationToken cancellationToken)
+        public override async ValueTask<bool> ReadBoolAsync(CancellationToken cancellationToken)
         {
             return await ReadJsonIntegerAsync(cancellationToken) != 0;
         }
 
-        public override async Task<sbyte> ReadByteAsync(CancellationToken cancellationToken)
+        public override async ValueTask<sbyte> ReadByteAsync(CancellationToken cancellationToken)
         {
             return (sbyte) await ReadJsonIntegerAsync(cancellationToken);
         }
 
-        public override async Task<short> ReadI16Async(CancellationToken cancellationToken)
+        public override async ValueTask<short> ReadI16Async(CancellationToken cancellationToken)
         {
             return (short) await ReadJsonIntegerAsync(cancellationToken);
         }
 
-        public override async Task<int> ReadI32Async(CancellationToken cancellationToken)
+        public override async ValueTask<int> ReadI32Async(CancellationToken cancellationToken)
         {
             return (int) await ReadJsonIntegerAsync(cancellationToken);
         }
 
-        public override async Task<long> ReadI64Async(CancellationToken cancellationToken)
+        public override async ValueTask<long> ReadI64Async(CancellationToken cancellationToken)
         {
             return await ReadJsonIntegerAsync(cancellationToken);
         }
 
-        public override async Task<double> ReadDoubleAsync(CancellationToken cancellationToken)
+        public override async ValueTask<double> ReadDoubleAsync(CancellationToken cancellationToken)
         {
             return await ReadJsonDoubleAsync(cancellationToken);
         }
 
-        public override async Task<string> ReadStringAsync(CancellationToken cancellationToken)
+        public override async ValueTask<string> ReadStringAsync(CancellationToken cancellationToken)
         {
             var buf = await ReadJsonStringAsync(false, cancellationToken);
             return Utf8Encoding.GetString(buf, 0, buf.Length);
         }
 
-        public override async Task<byte[]> ReadBinaryAsync(CancellationToken cancellationToken)
+        public override async ValueTask<byte[]> ReadBinaryAsync(CancellationToken cancellationToken)
         {
             return await ReadJsonBase64Async(cancellationToken);
         }
@@ -938,7 +938,7 @@ namespace Thrift.Protocol
             ///     Return and consume the next byte to be Read, either taking it from the
             ///     data buffer if present or getting it from the transport otherwise.
             /// </summary>
-            public async Task<byte> ReadAsync(CancellationToken cancellationToken)
+            public async ValueTask<byte> ReadAsync(CancellationToken cancellationToken)
             {
                 if (cancellationToken.IsCancellationRequested)
                 {
@@ -961,7 +961,7 @@ namespace Thrift.Protocol
             ///     Return the next byte to be Read without consuming, filling the data
             ///     buffer if it has not been filled alReady.
             /// </summary>
-            public async Task<byte> PeekAsync(CancellationToken cancellationToken)
+            public async ValueTask<byte> PeekAsync(CancellationToken cancellationToken)
             {
                 if (cancellationToken.IsCancellationRequested)
                 {
@@ -972,8 +972,8 @@ namespace Thrift.Protocol
                 {
                     // find more easy way to avoid exception on reading primitive types
                     await Proto.Trans.ReadAllAsync(_data, 0, 1, cancellationToken);
+                    _hasData = true;
                 }
-                _hasData = true;
                 return _data[0];
             }
         }

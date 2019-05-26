@@ -344,6 +344,10 @@ project.lock.json
 /test/netcore/Thrift
 /test/netstd/**/bin
 /test/netstd/**/obj
+/test/netstd/*.psess
+/test/netstd/*.vspx
+/test/netstd/*.vsp
+/test/netstd/*.diagsession
 /test/netstd/Thrift
 /test/php/php_ext_dir/
 /test/rs/Cargo.lock

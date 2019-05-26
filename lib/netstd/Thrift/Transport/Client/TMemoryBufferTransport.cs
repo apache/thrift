@@ -15,6 +15,8 @@
 // specific language governing permissions and limitations
 // under the License.
 
+using System;
+using System.Diagnostics;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
@@ -24,17 +26,59 @@ namespace Thrift.Transport.Client
     // ReSharper disable once InconsistentNaming
     public class TMemoryBufferTransport : TTransport
     {
-        private readonly MemoryStream _byteStream;
-        private bool _isDisposed;
+        private bool IsDisposed;
+        private byte[] Bytes;
+        private int _bytesUsed;
 
         public TMemoryBufferTransport()
         {
-            _byteStream = new MemoryStream();
+            Bytes = new byte[2048];  // default size
+        }
+
+        public TMemoryBufferTransport(int initialCapacity)
+        {
+            Bytes = new byte[initialCapacity];  // default size
         }
 
         public TMemoryBufferTransport(byte[] buf)
         {
-            _byteStream = new MemoryStream(buf);
+            Bytes = (byte[])buf.Clone();
+            _bytesUsed = Bytes.Length;
+        }
+
+        public int Position { get; set; }
+
+        public int Capacity
+        {
+            get
+            {
+                Debug.Assert(_bytesUsed <= Bytes.Length);
+                return Bytes.Length;
+            }
+            set
+            {
+                Array.Resize(ref Bytes, value);
+                _bytesUsed = value;
+            }
+        }
+
+        public int Length
+        {
+            get {
+                Debug.Assert(_bytesUsed <= Bytes.Length);
+                return _bytesUsed;
+            }
+            set {
+                if ((Bytes.Length < value) || (Bytes.Length > (10 * value)))
+                    Array.Resize(ref Bytes, Math.Max(2048, (int)(value * 1.25)));
+                _bytesUsed = value;
+            }
+        }
+
+        public void SetLength(int value)
+        {
+            Length = value;
+            Position = Math.Min(Position, value);
         }
 
         public override bool IsOpen => true;
@@ -52,20 +96,49 @@ namespace Thrift.Transport.Client
             /** do nothing **/
         }
 
-        public override async Task<int> ReadAsync(byte[] buffer, int offset, int length,
-            CancellationToken cancellationToken)
+        public void Seek(int delta, SeekOrigin origin)
         {
-            return await _byteStream.ReadAsync(buffer, offset, length, cancellationToken);
+            int newPos;
+            switch (origin)
+            {
+                case SeekOrigin.Begin:
+                    newPos = delta;
+                    break;
+                case SeekOrigin.Current:
+                    newPos = Position + delta;
+                    break;
+                case SeekOrigin.End:
+                    newPos = _bytesUsed + delta;
+                    break;
+                default:
+                    throw new ArgumentException(nameof(origin));
+            }
+
+            if ((0 > newPos) || (newPos > _bytesUsed))
+                throw new ArgumentException(nameof(origin));
+            Position = newPos;
         }
 
-        public override async Task WriteAsync(byte[] buffer, CancellationToken cancellationToken)
+        public override ValueTask<int> ReadAsync(byte[] buffer, int offset, int length, CancellationToken cancellationToken)
         {
-            await _byteStream.WriteAsync(buffer, 0, buffer.Length, cancellationToken);
+            var count = Math.Min(Length - Position, length);
+            Buffer.BlockCopy(Bytes, Position, buffer, offset, count);
+            Position += count;
+            return new ValueTask<int>(count);
         }
 
-        public override async Task WriteAsync(byte[] buffer, int offset, int length, CancellationToken cancellationToken)
+        public override Task WriteAsync(byte[] buffer, CancellationToken cancellationToken)
         {
-            await _byteStream.WriteAsync(buffer, offset, length, cancellationToken);
+            return WriteAsync(buffer, 0, buffer.Length, cancellationToken);
+        }
+
+        public override Task WriteAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken)
+        {
+            var free = Length - Position;
+            Length = Length + count - free;
+            Buffer.BlockCopy(buffer, offset, Bytes, Position, count);
+            Position += count;
+            return Task.CompletedTask;
         }
 
         public override async Task FlushAsync(CancellationToken cancellationToken)
@@ -78,20 +151,29 @@ namespace Thrift.Transport.Client
 
         public byte[] GetBuffer()
         {
-            return _byteStream.ToArray();
+            var retval = new byte[Length];
+            Buffer.BlockCopy(Bytes, 0, retval, 0, Length);
+            return retval;
         }
+
+        internal bool TryGetBuffer(out ArraySegment<byte> bufSegment)
+        {
+            bufSegment = new ArraySegment<byte>(Bytes, 0, _bytesUsed);
+            return true;
+        }
+
 
         // IDisposable
         protected override void Dispose(bool disposing)
         {
-            if (!_isDisposed)
+            if (!IsDisposed)
             {
                 if (disposing)
                 {
-                    _byteStream?.Dispose();
+                    // nothing to do
                 }
             }
-            _isDisposed = true;
+            IsDisposed = true;
         }
     }
 }

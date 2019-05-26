@@ -61,7 +61,7 @@ namespace Thrift
             Type = type;
         }
 
-        public static async Task<TApplicationException> ReadAsync(TProtocol inputProtocol, CancellationToken cancellationToken)
+        public static async ValueTask<TApplicationException> ReadAsync(TProtocol inputProtocol, CancellationToken cancellationToken)
         {
             string message = null;
             var type = ExceptionType.Unknown;

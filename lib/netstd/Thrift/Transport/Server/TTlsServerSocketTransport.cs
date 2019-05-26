@@ -99,7 +99,7 @@ namespace Thrift.Transport.Server
             return _server.Pending();
         }
 
-        protected override async Task<TTransport> AcceptImplementationAsync(CancellationToken cancellationToken)
+        protected override async ValueTask<TTransport> AcceptImplementationAsync(CancellationToken cancellationToken)
         {
             if (cancellationToken.IsCancellationRequested)
             {

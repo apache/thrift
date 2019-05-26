@@ -1473,7 +1473,7 @@ void t_netstd_generator::generate_netstd_struct_hashcode(ostream& out, t_struct*
     out << indent() << "public override int GetHashCode() {" << endl;
     indent_up();
 
-    out << indent() << "int hashcode = 0;" << endl;
+    out << indent() << "int hashcode = 157;" << endl;
     out << indent() << "unchecked {" << endl;
     indent_up();
 
@@ -1483,24 +1483,26 @@ void t_netstd_generator::generate_netstd_struct_hashcode(ostream& out, t_struct*
     for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter)
     {
         t_type* ttype = (*f_iter)->get_type();
-        out << indent() << "hashcode = (hashcode * 397) ^ ";
-        if (field_is_required((*f_iter)))
+        if (!field_is_required((*f_iter)))
         {
-            out << "(";
+            out << indent() << "if(__isset." << normalize_name((*f_iter)->get_name()) << ")" << endl;
+            indent_up();
         }
-        else
-        {
-            out << "(!__isset." << normalize_name((*f_iter)->get_name()) << " ? 0 : ";
-        }
+        out << indent() << "hashcode = (hashcode * 397) + ";
         if (ttype->is_container())
         {
-            out << "(TCollections.GetHashCode(" << prop_name((*f_iter)) << "))";
+            out << "TCollections.GetHashCode(" << prop_name((*f_iter)) << ")";
         }
         else
         {
-            out << "(" << prop_name((*f_iter)) << ".GetHashCode())";
+            out << prop_name((*f_iter)) << ".GetHashCode()";
+        }	
+        out << ";" << endl;
+
+        if (!field_is_required((*f_iter)))
+        {
+            indent_down();
         }
-        out << ");" << endl;
     }
 
     indent_down();
@@ -2223,7 +2225,6 @@ void t_netstd_generator::generate_deserialize_container(ostream& out, t_type* tt
         obj = tmp("_list");
     }
 
-    out << indent() << prefix << " = new " << type_name(ttype) << "();" << endl;
     if (ttype->is_map())
     {
         out << indent() << "TMap " << obj << " = await iprot.ReadMapBeginAsync(cancellationToken);" << endl;
@@ -2237,6 +2238,7 @@ void t_netstd_generator::generate_deserialize_container(ostream& out, t_type* tt
         out << indent() << "TList " << obj << " = await iprot.ReadListBeginAsync(cancellationToken);" << endl;
     }
 
+    out << indent() << prefix << " = new " << type_name(ttype) << "(" << obj << ".Count);" << endl;
     string i = tmp("_i");
     out << indent() << "for(int " << i << " = 0; " << i << " < " << obj << ".Count; ++" << i << ")" << endl
         << indent() << "{" << endl;

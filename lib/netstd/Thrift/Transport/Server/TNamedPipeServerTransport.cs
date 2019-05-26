@@ -210,7 +210,7 @@ namespace Thrift.Transport.Server
 
         #endregion
 
-        protected override async Task<TTransport> AcceptImplementationAsync(CancellationToken cancellationToken)
+        protected override async ValueTask<TTransport> AcceptImplementationAsync(CancellationToken cancellationToken)
         {
             try
             {
@@ -261,8 +261,7 @@ namespace Thrift.Transport.Server
                 _stream?.Dispose();
             }
 
-            public override async Task<int> ReadAsync(byte[] buffer, int offset, int length,
-                CancellationToken cancellationToken)
+            public override async ValueTask<int> ReadAsync(byte[] buffer, int offset, int length, CancellationToken cancellationToken)
             {
                 if (_stream == null)
                 {
@@ -272,8 +271,7 @@ namespace Thrift.Transport.Server
                 return await _stream.ReadAsync(buffer, offset, length, cancellationToken);
             }
 
-            public override async Task WriteAsync(byte[] buffer, int offset, int length,
-                CancellationToken cancellationToken)
+            public override async Task WriteAsync(byte[] buffer, int offset, int length, CancellationToken cancellationToken)
             {
                 if (_stream == null)
                 {

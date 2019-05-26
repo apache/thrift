@@ -49,6 +49,7 @@
     <PackageReference Include="System.Net.NameResolution" Version="[4.3,)" />
     <PackageReference Include="System.Net.Requests" Version="[4.3,)" />
     <PackageReference Include="System.Net.Security" Version="4.3.2" />
+    <PackageReference Include="System.Threading.Tasks.Extensions" Version="4.5.2" />
   </ItemGroup>
 
 </Project>

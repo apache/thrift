@@ -27,19 +27,19 @@ namespace Thrift.Transport
         public abstract void Close();
         public abstract bool IsClientPending();
 
-        protected virtual async Task<TTransport> AcceptImplementationAsync()
+        protected virtual async ValueTask<TTransport> AcceptImplementationAsync()
         {
             return await AcceptImplementationAsync(CancellationToken.None);
         }
 
-        protected abstract Task<TTransport> AcceptImplementationAsync(CancellationToken cancellationToken);
+        protected abstract ValueTask<TTransport> AcceptImplementationAsync(CancellationToken cancellationToken);
 
-        public async Task<TTransport> AcceptAsync()
+        public async ValueTask<TTransport> AcceptAsync()
         {
             return await AcceptAsync(CancellationToken.None);
         }
 
-        public async Task<TTransport> AcceptAsync(CancellationToken cancellationToken)
+        public async ValueTask<TTransport> AcceptAsync(CancellationToken cancellationToken)
         {
             var transport = await AcceptImplementationAsync(cancellationToken);
 
