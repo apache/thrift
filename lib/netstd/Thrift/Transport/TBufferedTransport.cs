@@ -1,4 +1,4 @@
-﻿// Licensed to the Apache Software Foundation(ASF) under one
+// Licensed to the Apache Software Foundation(ASF) under one
 // or more contributor license agreements.See the NOTICE file
 // distributed with this work for additional information
 // regarding copyright ownership.The ASF licenses this file
@@ -16,6 +16,7 @@
 // under the License.
 
 using System;
+using System.Diagnostics;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
@@ -25,11 +26,11 @@ namespace Thrift.Transport
     // ReSharper disable once InconsistentNaming
     public class TBufferedTransport : TTransport
     {
-        private readonly int _bufSize;
-        private readonly MemoryStream _inputBuffer = new MemoryStream(0);
-        private readonly MemoryStream _outputBuffer = new MemoryStream(0);
-        private readonly TTransport _transport;
-        private bool _isDisposed;
+        private readonly int DesiredBufferSize;
+        private readonly Client.TMemoryBufferTransport ReadBuffer = new Client.TMemoryBufferTransport(1024);
+        private readonly Client.TMemoryBufferTransport WriteBuffer = new Client.TMemoryBufferTransport(1024);
+        private readonly TTransport InnerTransport;
+        private bool IsDisposed;
 
         public class Factory : TTransportFactory
         {
@@ -47,8 +48,13 @@ namespace Thrift.Transport
                 throw new ArgumentOutOfRangeException(nameof(bufSize), "Buffer size must be a positive number.");
             }
 
-            _transport = transport ?? throw new ArgumentNullException(nameof(transport));
-            _bufSize = bufSize;
+            InnerTransport = transport ?? throw new ArgumentNullException(nameof(transport));
+            DesiredBufferSize = bufSize;
+
+            if (DesiredBufferSize != ReadBuffer.Capacity)
+                ReadBuffer.Capacity = DesiredBufferSize;
+            if (DesiredBufferSize != WriteBuffer.Capacity)
+                WriteBuffer.Capacity = DesiredBufferSize;
         }
 
         public TTransport UnderlyingTransport
@@ -57,32 +63,29 @@ namespace Thrift.Transport
             {
                 CheckNotDisposed();
 
-                return _transport;
+                return InnerTransport;
             }
         }
 
-        public override bool IsOpen => !_isDisposed && _transport.IsOpen;
+        public override bool IsOpen => !IsDisposed && InnerTransport.IsOpen;
 
         public override async Task OpenAsync(CancellationToken cancellationToken)
         {
             CheckNotDisposed();
 
-            await _transport.OpenAsync(cancellationToken);
+            await InnerTransport.OpenAsync(cancellationToken);
         }
 
         public override void Close()
         {
             CheckNotDisposed();
 
-            _transport.Close();
+            InnerTransport.Close();
         }
 
-        public override async Task<int> ReadAsync(byte[] buffer, int offset, int length,
-            CancellationToken cancellationToken)
+        public override async ValueTask<int> ReadAsync(byte[] buffer, int offset, int length, CancellationToken cancellationToken)
         {
-            //TODO: investigate how it should work correctly
             CheckNotDisposed();
-
             ValidateBufferArgs(buffer, offset, length);
 
             if (!IsOpen)
@@ -90,39 +93,36 @@ namespace Thrift.Transport
                 throw new TTransportException(TTransportException.ExceptionType.NotOpen);
             }
 
-            if (_inputBuffer.Capacity < _bufSize)
+
+            // do we have something buffered?
+            var count = ReadBuffer.Length - ReadBuffer.Position;
+            if (count > 0)
             {
-                _inputBuffer.Capacity = _bufSize;
+                return await ReadBuffer.ReadAsync(buffer, offset, length, cancellationToken);
             }
 
-            var got = await _inputBuffer.ReadAsync(buffer, offset, length, cancellationToken);
-            if (got > 0)
+            // does the request even fit into the buffer?
+            // Note we test for >= instead of > to avoid nonsense buffering
+            if (length >= ReadBuffer.Capacity)
             {
-                return got;
+                return await InnerTransport.ReadAsync(buffer, offset, length, cancellationToken);
             }
 
-            _inputBuffer.Seek(0, SeekOrigin.Begin);
-            _inputBuffer.SetLength(_inputBuffer.Capacity);
-
+            // buffer a new chunk of bytes from the underlying transport
+            ReadBuffer.Length = ReadBuffer.Capacity;
             ArraySegment<byte> bufSegment;
-            _inputBuffer.TryGetBuffer(out bufSegment);
+            ReadBuffer.TryGetBuffer(out bufSegment);
+            ReadBuffer.Length = await InnerTransport.ReadAsync(bufSegment.Array, 0, bufSegment.Count, cancellationToken);
+            ReadBuffer.Position = 0;
 
-            // investigate
-            var filled = await _transport.ReadAsync(bufSegment.Array, 0, (int) _inputBuffer.Length, cancellationToken);
-            _inputBuffer.SetLength(filled);
-
-            if (filled == 0)
-            {
-                return 0;
-            }
-
-            return await ReadAsync(buffer, offset, length, cancellationToken);
+            // deliver the bytes
+            return await ReadBuffer.ReadAsync(buffer, offset, length, cancellationToken);
         }
+
 
         public override async Task WriteAsync(byte[] buffer, int offset, int length, CancellationToken cancellationToken)
         {
             CheckNotDisposed();
-
             ValidateBufferArgs(buffer, offset, length);
 
             if (!IsOpen)
@@ -130,41 +130,26 @@ namespace Thrift.Transport
                 throw new TTransportException(TTransportException.ExceptionType.NotOpen);
             }
 
-            // Relative offset from "off" argument
-            var writtenCount = 0;
-            if (_outputBuffer.Length > 0)
+            // enough space left in buffer?
+            var free = WriteBuffer.Capacity - WriteBuffer.Length;
+            if (length > free)
             {
-                var capa = (int) (_outputBuffer.Capacity - _outputBuffer.Length);
-                var writeSize = capa <= length ? capa : length;
-                await _outputBuffer.WriteAsync(buffer, offset, writeSize, cancellationToken);
-
-                writtenCount += writeSize;
-                if (writeSize == capa)
-                {
-                    //ArraySegment<byte> bufSegment;
-                    //_outputBuffer.TryGetBuffer(out bufSegment);
-                    var data = _outputBuffer.ToArray();
-                    //await _transport.WriteAsync(bufSegment.Array, cancellationToken);
-                    await _transport.WriteAsync(data, cancellationToken);
-                    _outputBuffer.SetLength(0);
-                }
+                ArraySegment<byte> bufSegment;
+                WriteBuffer.TryGetBuffer(out bufSegment);
+                await InnerTransport.WriteAsync(bufSegment.Array, 0, bufSegment.Count, cancellationToken);
+                WriteBuffer.SetLength(0);
             }
 
-            while (length - writtenCount >= _bufSize)
+            // do the data even fit into the buffer?
+            // Note we test for < instead of <= to avoid nonsense buffering
+            if (length < WriteBuffer.Capacity)
             {
-                await _transport.WriteAsync(buffer, offset + writtenCount, _bufSize, cancellationToken);
-                writtenCount += _bufSize;
+                await WriteBuffer.WriteAsync(buffer, offset, length, cancellationToken);
+                return;
             }
 
-            var remain = length - writtenCount;
-            if (remain > 0)
-            {
-                if (_outputBuffer.Capacity < _bufSize)
-                {
-                    _outputBuffer.Capacity = _bufSize;
-                }
-                await _outputBuffer.WriteAsync(buffer, offset + writtenCount, remain, cancellationToken);
-            }
+            // write thru
+            await InnerTransport.WriteAsync(buffer, offset, length, cancellationToken);
         }
 
         public override async Task FlushAsync(CancellationToken cancellationToken)
@@ -176,38 +161,38 @@ namespace Thrift.Transport
                 throw new TTransportException(TTransportException.ExceptionType.NotOpen);
             }
 
-            if (_outputBuffer.Length > 0)
+            if (WriteBuffer.Length > 0)
             {
-                var data = _outputBuffer.ToArray(); 
-
-                await _transport.WriteAsync(data /*bufSegment.Array*/, cancellationToken);
-                _outputBuffer.SetLength(0);
+                ArraySegment<byte> bufSegment;
+                WriteBuffer.TryGetBuffer(out bufSegment);
+                await InnerTransport.WriteAsync(bufSegment.Array, 0, bufSegment.Count, cancellationToken);
+                WriteBuffer.SetLength(0);
             }
 
-            await _transport.FlushAsync(cancellationToken);
+            await InnerTransport.FlushAsync(cancellationToken);
         }
 
         private void CheckNotDisposed()
         {
-            if (_isDisposed)
+            if (IsDisposed)
             {
-                throw new ObjectDisposedException(nameof(_transport));
+                throw new ObjectDisposedException(nameof(InnerTransport));
             }
         }
 
         // IDisposable
         protected override void Dispose(bool disposing)
         {
-            if (!_isDisposed)
+            if (!IsDisposed)
             {
                 if (disposing)
                 {
-                    _inputBuffer?.Dispose();
-                    _outputBuffer?.Dispose();
-                    _transport?.Dispose();
+                    ReadBuffer?.Dispose();
+                    WriteBuffer?.Dispose();
+                    InnerTransport?.Dispose();
                 }
             }
-            _isDisposed = true;
+            IsDisposed = true;
         }
     }
 }

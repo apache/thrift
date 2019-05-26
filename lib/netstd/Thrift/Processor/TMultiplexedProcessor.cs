@@ -129,7 +129,7 @@ namespace Thrift.Processor
                 _msgBegin = messageBegin;
             }
 
-            public override async Task<TMessage> ReadMessageBeginAsync(CancellationToken cancellationToken)
+            public override async ValueTask<TMessage> ReadMessageBeginAsync(CancellationToken cancellationToken)
             {
                 if (cancellationToken.IsCancellationRequested)
                 {

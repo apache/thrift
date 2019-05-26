@@ -48,6 +48,8 @@ namespace Client
             {
                 case "client":
                     return TestClient.Execute(subArgs);
+                case "performance":
+                    return Tests.PerformanceTests.Execute();
                 case "--help":
                     PrintHelp();
                     return 0;
@@ -61,7 +63,8 @@ namespace Client
         private static void PrintHelp()
         {
             Console.WriteLine("Usage:");
-            Console.WriteLine("  Client  client  [options]'");
+            Console.WriteLine("  Client  client  [options]");
+            Console.WriteLine("  Client  performance");
             Console.WriteLine("  Client  --help");
             Console.WriteLine("");
 

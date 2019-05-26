@@ -1,4 +1,4 @@
-﻿// Licensed to the Apache Software Foundation(ASF) under one
+// Licensed to the Apache Software Foundation(ASF) under one
 // or more contributor license agreements.See the NOTICE file
 // distributed with this work for additional information
 // regarding copyright ownership.The ASF licenses this file
@@ -229,12 +229,12 @@ namespace Thrift.Protocol
 
         public abstract Task WriteBinaryAsync(byte[] bytes, CancellationToken cancellationToken);
 
-        public virtual async Task<TMessage> ReadMessageBeginAsync()
+        public virtual async ValueTask<TMessage> ReadMessageBeginAsync()
         {
             return await ReadMessageBeginAsync(CancellationToken.None);
         }
 
-        public abstract Task<TMessage> ReadMessageBeginAsync(CancellationToken cancellationToken);
+        public abstract ValueTask<TMessage> ReadMessageBeginAsync(CancellationToken cancellationToken);
 
         public virtual async Task ReadMessageEndAsync()
         {
@@ -243,12 +243,12 @@ namespace Thrift.Protocol
 
         public abstract Task ReadMessageEndAsync(CancellationToken cancellationToken);
 
-        public virtual async Task<TStruct> ReadStructBeginAsync()
+        public virtual async ValueTask<TStruct> ReadStructBeginAsync()
         {
             return await ReadStructBeginAsync(CancellationToken.None);
         }
 
-        public abstract Task<TStruct> ReadStructBeginAsync(CancellationToken cancellationToken);
+        public abstract ValueTask<TStruct> ReadStructBeginAsync(CancellationToken cancellationToken);
 
         public virtual async Task ReadStructEndAsync()
         {
@@ -257,12 +257,12 @@ namespace Thrift.Protocol
 
         public abstract Task ReadStructEndAsync(CancellationToken cancellationToken);
 
-        public virtual async Task<TField> ReadFieldBeginAsync()
+        public virtual async ValueTask<TField> ReadFieldBeginAsync()
         {
             return await ReadFieldBeginAsync(CancellationToken.None);
         }
 
-        public abstract Task<TField> ReadFieldBeginAsync(CancellationToken cancellationToken);
+        public abstract ValueTask<TField> ReadFieldBeginAsync(CancellationToken cancellationToken);
 
         public virtual async Task ReadFieldEndAsync()
         {
@@ -271,12 +271,12 @@ namespace Thrift.Protocol
 
         public abstract Task ReadFieldEndAsync(CancellationToken cancellationToken);
 
-        public virtual async Task<TMap> ReadMapBeginAsync()
+        public virtual async ValueTask<TMap> ReadMapBeginAsync()
         {
             return await ReadMapBeginAsync(CancellationToken.None);
         }
 
-        public abstract Task<TMap> ReadMapBeginAsync(CancellationToken cancellationToken);
+        public abstract ValueTask<TMap> ReadMapBeginAsync(CancellationToken cancellationToken);
 
         public virtual async Task ReadMapEndAsync()
         {
@@ -285,12 +285,12 @@ namespace Thrift.Protocol
 
         public abstract Task ReadMapEndAsync(CancellationToken cancellationToken);
 
-        public virtual async Task<TList> ReadListBeginAsync()
+        public virtual async ValueTask<TList> ReadListBeginAsync()
         {
             return await ReadListBeginAsync(CancellationToken.None);
         }
 
-        public abstract Task<TList> ReadListBeginAsync(CancellationToken cancellationToken);
+        public abstract ValueTask<TList> ReadListBeginAsync(CancellationToken cancellationToken);
 
         public virtual async Task ReadListEndAsync()
         {
@@ -299,12 +299,12 @@ namespace Thrift.Protocol
 
         public abstract Task ReadListEndAsync(CancellationToken cancellationToken);
 
-        public virtual async Task<TSet> ReadSetBeginAsync()
+        public virtual async ValueTask<TSet> ReadSetBeginAsync()
         {
             return await ReadSetBeginAsync(CancellationToken.None);
         }
 
-        public abstract Task<TSet> ReadSetBeginAsync(CancellationToken cancellationToken);
+        public abstract ValueTask<TSet> ReadSetBeginAsync(CancellationToken cancellationToken);
 
         public virtual async Task ReadSetEndAsync()
         {
@@ -313,64 +313,64 @@ namespace Thrift.Protocol
 
         public abstract Task ReadSetEndAsync(CancellationToken cancellationToken);
 
-        public virtual async Task<bool> ReadBoolAsync()
+        public virtual async ValueTask<bool> ReadBoolAsync()
         {
             return await ReadBoolAsync(CancellationToken.None);
         }
 
-        public abstract Task<bool> ReadBoolAsync(CancellationToken cancellationToken);
+        public abstract ValueTask<bool> ReadBoolAsync(CancellationToken cancellationToken);
 
-        public virtual async Task<sbyte> ReadByteAsync()
+        public virtual async ValueTask<sbyte> ReadByteAsync()
         {
             return await ReadByteAsync(CancellationToken.None);
         }
 
-        public abstract Task<sbyte> ReadByteAsync(CancellationToken cancellationToken);
+        public abstract ValueTask<sbyte> ReadByteAsync(CancellationToken cancellationToken);
 
-        public virtual async Task<short> ReadI16Async()
+        public virtual async ValueTask<short> ReadI16Async()
         {
             return await ReadI16Async(CancellationToken.None);
         }
 
-        public abstract Task<short> ReadI16Async(CancellationToken cancellationToken);
+        public abstract ValueTask<short> ReadI16Async(CancellationToken cancellationToken);
 
-        public virtual async Task<int> ReadI32Async()
+        public virtual async ValueTask<int> ReadI32Async()
         {
             return await ReadI32Async(CancellationToken.None);
         }
 
-        public abstract Task<int> ReadI32Async(CancellationToken cancellationToken);
+        public abstract ValueTask<int> ReadI32Async(CancellationToken cancellationToken);
 
-        public virtual async Task<long> ReadI64Async()
+        public virtual async ValueTask<long> ReadI64Async()
         {
             return await ReadI64Async(CancellationToken.None);
         }
 
-        public abstract Task<long> ReadI64Async(CancellationToken cancellationToken);
+        public abstract ValueTask<long> ReadI64Async(CancellationToken cancellationToken);
 
-        public virtual async Task<double> ReadDoubleAsync()
+        public virtual async ValueTask<double> ReadDoubleAsync()
         {
             return await ReadDoubleAsync(CancellationToken.None);
         }
 
-        public abstract Task<double> ReadDoubleAsync(CancellationToken cancellationToken);
+        public abstract ValueTask<double> ReadDoubleAsync(CancellationToken cancellationToken);
 
-        public virtual async Task<string> ReadStringAsync()
+        public virtual async ValueTask<string> ReadStringAsync()
         {
             return await ReadStringAsync(CancellationToken.None);
         }
 
-        public virtual async Task<string> ReadStringAsync(CancellationToken cancellationToken)
+        public virtual async ValueTask<string> ReadStringAsync(CancellationToken cancellationToken)
         {
             var buf = await ReadBinaryAsync(cancellationToken);
             return Encoding.UTF8.GetString(buf, 0, buf.Length);
         }
 
-        public virtual async Task<byte[]> ReadBinaryAsync()
+        public virtual async ValueTask<byte[]> ReadBinaryAsync()
         {
             return await ReadBinaryAsync(CancellationToken.None);
         }
 
-        public abstract Task<byte[]> ReadBinaryAsync(CancellationToken cancellationToken);
+        public abstract ValueTask<byte[]> ReadBinaryAsync(CancellationToken cancellationToken);
     }
 }

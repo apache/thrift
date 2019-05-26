@@ -102,8 +102,7 @@ namespace Thrift.Transport.Client
             }
         }
 
-        public override async Task<int> ReadAsync(byte[] buffer, int offset, int length,
-            CancellationToken cancellationToken)
+        public override async ValueTask<int> ReadAsync(byte[] buffer, int offset, int length, CancellationToken cancellationToken)
         {
             if (cancellationToken.IsCancellationRequested)
             {

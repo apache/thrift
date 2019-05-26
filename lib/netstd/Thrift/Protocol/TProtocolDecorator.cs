@@ -1,4 +1,4 @@
-﻿// Licensed to the Apache Software Foundation(ASF) under one
+// Licensed to the Apache Software Foundation(ASF) under one
 // or more contributor license agreements.See the NOTICE file
 // distributed with this work for additional information
 // regarding copyright ownership.The ASF licenses this file
@@ -144,7 +144,7 @@ namespace Thrift.Protocol
             await _wrappedProtocol.WriteBinaryAsync(bytes, cancellationToken);
         }
 
-        public override async Task<TMessage> ReadMessageBeginAsync(CancellationToken cancellationToken)
+        public override async ValueTask<TMessage> ReadMessageBeginAsync(CancellationToken cancellationToken)
         {
             return await _wrappedProtocol.ReadMessageBeginAsync(cancellationToken);
         }
@@ -154,7 +154,7 @@ namespace Thrift.Protocol
             await _wrappedProtocol.ReadMessageEndAsync(cancellationToken);
         }
 
-        public override async Task<TStruct> ReadStructBeginAsync(CancellationToken cancellationToken)
+        public override async ValueTask<TStruct> ReadStructBeginAsync(CancellationToken cancellationToken)
         {
             return await _wrappedProtocol.ReadStructBeginAsync(cancellationToken);
         }
@@ -164,7 +164,7 @@ namespace Thrift.Protocol
             await _wrappedProtocol.ReadStructEndAsync(cancellationToken);
         }
 
-        public override async Task<TField> ReadFieldBeginAsync(CancellationToken cancellationToken)
+        public override async ValueTask<TField> ReadFieldBeginAsync(CancellationToken cancellationToken)
         {
             return await _wrappedProtocol.ReadFieldBeginAsync(cancellationToken);
         }
@@ -174,7 +174,7 @@ namespace Thrift.Protocol
             await _wrappedProtocol.ReadFieldEndAsync(cancellationToken);
         }
 
-        public override async Task<TMap> ReadMapBeginAsync(CancellationToken cancellationToken)
+        public override async ValueTask<TMap> ReadMapBeginAsync(CancellationToken cancellationToken)
         {
             return await _wrappedProtocol.ReadMapBeginAsync(cancellationToken);
         }
@@ -184,7 +184,7 @@ namespace Thrift.Protocol
             await _wrappedProtocol.ReadMapEndAsync(cancellationToken);
         }
 
-        public override async Task<TList> ReadListBeginAsync(CancellationToken cancellationToken)
+        public override async ValueTask<TList> ReadListBeginAsync(CancellationToken cancellationToken)
         {
             return await _wrappedProtocol.ReadListBeginAsync(cancellationToken);
         }
@@ -194,7 +194,7 @@ namespace Thrift.Protocol
             await _wrappedProtocol.ReadListEndAsync(cancellationToken);
         }
 
-        public override async Task<TSet> ReadSetBeginAsync(CancellationToken cancellationToken)
+        public override async ValueTask<TSet> ReadSetBeginAsync(CancellationToken cancellationToken)
         {
             return await _wrappedProtocol.ReadSetBeginAsync(cancellationToken);
         }
@@ -204,42 +204,42 @@ namespace Thrift.Protocol
             await _wrappedProtocol.ReadSetEndAsync(cancellationToken);
         }
 
-        public override async Task<bool> ReadBoolAsync(CancellationToken cancellationToken)
+        public override async ValueTask<bool> ReadBoolAsync(CancellationToken cancellationToken)
         {
             return await _wrappedProtocol.ReadBoolAsync(cancellationToken);
         }
 
-        public override async Task<sbyte> ReadByteAsync(CancellationToken cancellationToken)
+        public override async ValueTask<sbyte> ReadByteAsync(CancellationToken cancellationToken)
         {
             return await _wrappedProtocol.ReadByteAsync(cancellationToken);
         }
 
-        public override async Task<short> ReadI16Async(CancellationToken cancellationToken)
+        public override async ValueTask<short> ReadI16Async(CancellationToken cancellationToken)
         {
             return await _wrappedProtocol.ReadI16Async(cancellationToken);
         }
 
-        public override async Task<int> ReadI32Async(CancellationToken cancellationToken)
+        public override async ValueTask<int> ReadI32Async(CancellationToken cancellationToken)
         {
             return await _wrappedProtocol.ReadI32Async(cancellationToken);
         }
 
-        public override async Task<long> ReadI64Async(CancellationToken cancellationToken)
+        public override async ValueTask<long> ReadI64Async(CancellationToken cancellationToken)
         {
             return await _wrappedProtocol.ReadI64Async(cancellationToken);
         }
 
-        public override async Task<double> ReadDoubleAsync(CancellationToken cancellationToken)
+        public override async ValueTask<double> ReadDoubleAsync(CancellationToken cancellationToken)
         {
             return await _wrappedProtocol.ReadDoubleAsync(cancellationToken);
         }
 
-        public override async Task<string> ReadStringAsync(CancellationToken cancellationToken)
+        public override async ValueTask<string> ReadStringAsync(CancellationToken cancellationToken)
         {
             return await _wrappedProtocol.ReadStringAsync(cancellationToken);
         }
 
-        public override async Task<byte[]> ReadBinaryAsync(CancellationToken cancellationToken)
+        public override async ValueTask<byte[]> ReadBinaryAsync(CancellationToken cancellationToken)
         {
             return await _wrappedProtocol.ReadBinaryAsync(cancellationToken);
         }
