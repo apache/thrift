@@ -221,7 +221,11 @@ public:
 
   void generate_serialize_list_element(std::ostream& out, t_list* tlist, std::string iter);
 
+  void insert_blanks_for_lines(std::ostream& out, const std::string& contents);
+
   void generate_python_docstring(std::ostream& out, t_struct* tstruct);
+
+  void generate_python_docstring(std::ostream& out, t_enum* tenum);
 
   void generate_python_docstring(std::ostream& out, t_function* tfunction);
 
@@ -2516,6 +2520,59 @@ void t_py_generator::generate_serialize_list_element(ostream& out, t_list* tlist
 }
 
 /**
+ * insert 2 blanks before each line in string.
+ */
+void t_py_generator::insert_blanks_for_lines(ostream& out, const string& contents)
+{
+  stringstream docs(contents, std::ios_base::in);
+
+  while (!(docs.eof() || docs.fail())) {
+    char line[1024];
+    docs.getline(line, 1024);
+
+    if (strlen(line) > 0) {
+      out << "  " << line << endl;
+    }
+  }
+}
+
+/**
+ * Generates the docstring for a given enum.
+ */
+void t_py_generator::generate_python_docstring(ostream& out, t_enum* tenum) {
+  bool has_doc = false;
+  stringstream ss;
+  if (tenum->has_doc()) {
+    has_doc = true;
+    ss << tenum->get_doc();
+  }
+
+  const vector<t_enum_value*>& constants = tenum->get_constants();
+  if (constants.size() > 0) {
+    if (has_doc) {
+      ss << endl;
+    }
+    has_doc = true;
+    ss << "Attributes:\n";
+    stringstream constant_ss;
+    vector<t_enum_value*>::const_iterator p_iter;
+    for (p_iter = constants.begin(); p_iter != constants.end(); ++p_iter) {
+      t_enum_value* p = *p_iter;
+
+      constant_ss << p->get_name() << ": " << p->get_value();
+      if (p->has_doc()) {
+          insert_blanks_for_lines(constant_ss, p->get_doc());
+      }
+    }
+    insert_blanks_for_lines(ss, constant_ss.str());
+  }
+
+  if (has_doc) {
+    generate_docstring_comment(out, "\"\"\"\n", "", ss.str(), "\"\"\"\n");
+  }
+}
+
+/**
  * Generates the docstring for a given struct.
  */
 void t_py_generator::generate_python_docstring(ostream& out, t_struct* tstruct) {
@@ -2526,7 +2583,7 @@ void t_py_generator::generate_python_docstring(ostream& out, t_struct* tstruct) 
  * Generates the docstring for a given function.
  */
 void t_py_generator::generate_python_docstring(ostream& out, t_function* tfunction) {
-  generate_python_docstring(out, tfunction, tfunction->get_arglist(), "Parameters");
+  generate_python_docstring(out, tfunction, tfunction->get_arglist(), "Args");
 }
 
 /**
@@ -2550,16 +2607,28 @@ void t_py_generator::generate_python_docstring(ostream& out,
     }
     has_doc = true;
     ss << subheader << ":\n";
+    stringstream field_ss;
     vector<t_field*>::const_iterator p_iter;
     for (p_iter = fields.begin(); p_iter != fields.end(); ++p_iter) {
       t_field* p = *p_iter;
-      ss << " - " << p->get_name();
-      if (p->has_doc()) {
-        ss << ": " << p->get_doc();
+      string type;
+      t_type* p_type = get_true_type(p->get_type());
+      if (p_type->is_list()) {
+          type = ((t_list *)p_type)->get_elem_type()->get_name();
+      } else if (p_type->is_set()) {
+          type = ((t_set *)p_type)->get_elem_type()->get_name();
       } else {
-        ss << endl;
+          type = p_type->get_name();
+      }
+
+      field_ss << p->get_name() << " (" << type << "):";
+      if (p->has_doc()) {
+        insert_blanks_for_lines(field_ss, p->get_doc());
+      } else {
+        field_ss << endl;
       }
     }
+    insert_blanks_for_lines(ss, field_ss.str());
   }
 
   if (has_doc) {
