@@ -51,6 +51,7 @@ struct _ThriftSocket
   /* private */
   gchar *hostname;
   guint port;
+  gchar *path;
   int sd;
 };
 

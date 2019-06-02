@@ -23,6 +23,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <sys/socket.h>
+#include <sys/un.h>
 #include <netinet/in.h>
 
 #include <thrift/c_glib/thrift.h>
@@ -34,7 +35,8 @@ enum _ThriftSocketProperties
 {
   PROP_0,
   PROP_THRIFT_SOCKET_HOSTNAME,
-  PROP_THRIFT_SOCKET_PORT
+  PROP_THRIFT_SOCKET_PORT,
+  PROP_THRIFT_SOCKET_PATH
 };
 
 G_DEFINE_TYPE(ThriftSocket, thrift_socket, THRIFT_TYPE_TRANSPORT)
@@ -128,6 +130,35 @@ thrift_socket_open (ThriftTransport *transport, GError **error)
 
   ThriftSocket *tsocket = THRIFT_SOCKET (transport);
   g_return_val_if_fail (tsocket->sd == THRIFT_INVALID_SOCKET, FALSE);
+  
+  if (tsocket->path) {
+    /* create a socket structure */
+    struct sockaddr_un pin;
+    memset (&pin, 0, sizeof(pin));
+    pin.sun_family = AF_UNIX;
+    memcpy(pin.sun_path, tsocket->path, strlen(tsocket->path) + 1);
+
+    /* create the socket */
+    if ((tsocket->sd = socket (PF_UNIX, SOCK_STREAM, 0)) == -1)
+    {
+      g_set_error (error, THRIFT_TRANSPORT_ERROR, THRIFT_TRANSPORT_ERROR_SOCKET,
+                   "failed to create socket for path %s: - %s",
+                   tsocket->path,
+                   strerror(errno));
+      return FALSE;
+    }
+
+    /* open a connection */
+    if (connect (tsocket->sd, (struct sockaddr *) &pin, sizeof(pin)) == -1)
+    {
+        thrift_socket_close(tsocket, NULL);
+        g_set_error (error, THRIFT_TRANSPORT_ERROR, THRIFT_TRANSPORT_ERROR_CONNECT,
+                   "failed to connect to path %s: - %s",
+                   tsocket->path, strerror(errno));
+      return FALSE;
+    }
+    return TRUE;
+  }
 
   /* lookup the destination host */
 #if defined(HAVE_GETHOSTBYNAME_R)
@@ -278,6 +309,10 @@ thrift_socket_finalize (GObject *object)
     g_free (socket->hostname);
   }
   socket->hostname = NULL;
+  if (socket->path != NULL)
+  {
+    g_free (socket->path);
+  }
 
   if (socket->sd != THRIFT_INVALID_SOCKET)
   {
@@ -303,6 +338,9 @@ thrift_socket_get_property (GObject *object, guint property_id,
     case PROP_THRIFT_SOCKET_PORT:
       g_value_set_uint (value, socket->port);
       break;
+    case PROP_THRIFT_SOCKET_PATH:
+      g_value_set_string (value, socket->path);
+      break;
   }
 }
 
@@ -325,6 +363,12 @@ thrift_socket_set_property (GObject *object, guint property_id,
       break;
     case PROP_THRIFT_SOCKET_PORT:
       socket->port = g_value_get_uint (value);
+      break;
+    case PROP_THRIFT_SOCKET_PATH:
+      if (socket->path) {
+        g_free(socket->path);
+      }
+      socket->path = g_strdup (g_value_get_string (value));
       break;
   }
 }
@@ -359,6 +403,15 @@ thrift_socket_class_init (ThriftSocketClass *cls)
                                   G_PARAM_CONSTRUCT_ONLY |
                                   G_PARAM_READWRITE);
   g_object_class_install_property (gobject_class, PROP_THRIFT_SOCKET_PORT,
+                                   param_spec);
+
+  param_spec = g_param_spec_string ("path",
+                                    "path (construct)",
+                                    "Set the path of the remote host",
+                                    NULL, /* default value */
+                                    G_PARAM_CONSTRUCT_ONLY |
+                                    G_PARAM_READWRITE);
+  g_object_class_install_property (gobject_class, PROP_THRIFT_SOCKET_PATH,
                                    param_spec);
 
   gobject_class->finalize = thrift_socket_finalize;
