@@ -47,6 +47,7 @@ type
   );
 
   TLayeredTransport = (
+    trns_None,
     trns_Buffered,
     trns_Framed
   );
@@ -61,7 +62,7 @@ const
                   = ('Binary', 'JSON', 'Compact');
 
   LAYERED_TRANSPORTS : array[TLayeredTransport] of string
-                  = ('Buffered', 'Framed');
+                  = ('None', 'Buffered', 'Framed');
 
   ENDPOINT_TRANSPORTS : array[TEndpointTransport] of string
                   = ('Sockets', 'Http', 'WinHttp', 'Named Pipes','Anon Pipes', 'EvHttp');

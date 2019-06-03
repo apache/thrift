@@ -24,6 +24,8 @@ program client;
 
 uses
   SysUtils,
+  DataFactory in 'Performance\DataFactory.pas',
+  PerfTests in 'Performance\PerfTests.pas',
   TestClient in 'TestClient.pas',
   Thrift.Test, // in 'gen-delphi\Thrift.Test.pas',
   Thrift in '..\src\Thrift.pas',

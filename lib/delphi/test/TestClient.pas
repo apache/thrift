@@ -40,6 +40,7 @@ uses
   Generics.Collections,
   TestConstants,
   ConsoleHelper,
+  PerfTests,
   Thrift,
   Thrift.Protocol.Compact,
   Thrift.Protocol.JSON,
@@ -199,6 +200,7 @@ const HELPTEXT = ' [options]'#10
                + '  --ssl                       Encrypted Transport using SSL'#10
                + '  -n [ --testloops ] arg (=1) Number of Tests'#10
                + '  -t [ --threads ] arg (=1)   Number of Test threads'#10
+               + '  --performance               Run the built-in performance test (no other arguments)'#10
                ;
 begin
   Writeln( ChangeFileExt(ExtractFileName(ParamStr(0)),'') + HELPTEXT);
@@ -320,6 +322,10 @@ begin
         Inc( i);
         if FNumThread <= 0
         then InvalidArgs;
+      end
+      else if (s = '--performance') then begin
+        result := TPerformanceTests.Execute;
+        Exit;
       end
       else begin
         InvalidArgs;
