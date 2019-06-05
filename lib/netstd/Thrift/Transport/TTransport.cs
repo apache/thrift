@@ -134,7 +134,6 @@ namespace Thrift.Transport
                 _hasPeekByte = false;
                 if (1 == length)
                 {
-                    Debug.Assert(totalBytes == 1);  // what else?
                     return 1; // we're done
                 }
                 ++totalBytes;
