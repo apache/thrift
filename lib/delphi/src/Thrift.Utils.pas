@@ -93,6 +93,9 @@ type
   end;
 
 
+const
+  THRIFT_MIMETYPE = 'application/x-thrift';
+
 {$IFDEF Win64}
 function InterlockedExchangeAdd64( var Addend : Int64; Value : Int64) : Int64;  
 {$ENDIF}

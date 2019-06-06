@@ -50,6 +50,7 @@ uses
   Thrift.Transport,
   Thrift.Stream,
   Thrift.Test,
+  Thrift.WinHTTP,
   Thrift.Utils,
   Thrift.Collections;
 
@@ -1322,7 +1323,9 @@ end;
 
 
 function TClientThread.InitializeHttpTransport( const aTimeoutSetting : Integer) : IHTTPClient;
-var sUrl : string;
+var sUrl    : string;
+    comps   : URL_COMPONENTS;
+    dwChars : DWORD;
 begin
   ASSERT( FSetup.endpoint in [trns_MsxmlHttp, trns_WinHttp]);
 
@@ -1332,12 +1335,27 @@ begin
 
   sUrl := sUrl + FSetup.host;
 
+  // add the port number if necessary and at the right place
+  FillChar( comps, SizeOf(comps), 0);
+  comps.dwStructSize := SizeOf(comps);
+  comps.dwSchemeLength    := MAXINT;
+  comps.dwHostNameLength  := MAXINT;
+  comps.dwUserNameLength  := MAXINT;
+  comps.dwPasswordLength  := MAXINT;
+  comps.dwUrlPathLength   := MAXINT;
+  comps.dwExtraInfoLength := MAXINT;
+  Win32Check( WinHttpCrackUrl( PChar(sUrl), Length(sUrl), 0, comps));
   case FSetup.port of
-    80  : if FSetup.useSSL then sUrl := sUrl + ':'+ IntToStr(FSetup.port);
-    443 : if not FSetup.useSSL then sUrl := sUrl + ':'+ IntToStr(FSetup.port);
+    80  : if FSetup.useSSL then comps.nPort := FSetup.port;
+    443 : if not FSetup.useSSL then comps.nPort := FSetup.port;
   else
-    if FSetup.port > 0 then sUrl := sUrl + ':'+ IntToStr(FSetup.port);
+    if FSetup.port > 0 then comps.nPort := FSetup.port;
   end;
+  dwChars := Length(sUrl) + 64;
+  SetLength( sUrl, dwChars);
+  Win32Check( WinHttpCreateUrl( comps, 0, @sUrl[1], dwChars));
+  SetLength( sUrl, dwChars);
+
 
   Console.WriteLine('Target URL: '+sUrl);
   case FSetup.endpoint of

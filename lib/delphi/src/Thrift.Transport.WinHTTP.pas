@@ -139,22 +139,25 @@ var
 begin
   url := TWinHTTPUrlImpl.Create( FUri);
 
-  session := TWinHTTPSessionImpl.Create('Apache Thrift Delphi Client');
+  session := TWinHTTPSessionImpl.Create('Apache Thrift Delphi WinHTTP');
   session.EnableSecureProtocols( SecureProtocolsAsWinHTTPFlags);
 
   connect := session.Connect( url.HostName, url.Port);
 
   sPath   := url.UrlPath + url.ExtraInfo;
-  result  := connect.OpenRequest( (url.Scheme = 'https'), 'POST', sPath, 'application/x-thrift');
+  result  := connect.OpenRequest( (url.Scheme = 'https'), 'POST', sPath, THRIFT_MIMETYPE);
 
   // setting a timeout value to 0 (zero) means "no timeout" for that setting
   result.SetTimeouts( DnsResolveTimeout, ConnectionTimeout, SendTimeout, ReadTimeout);
 
-  result.AddRequestHeader( 'Content-Type: application/x-thrift', WINHTTP_ADDREQ_FLAG_ADD);
-
+  // headers
+  result.AddRequestHeader( 'Content-Type: '+THRIFT_MIMETYPE, WINHTTP_ADDREQ_FLAG_ADD);
   for pair in FCustomHeaders do begin
     Result.AddRequestHeader( pair.Key +': '+ pair.Value, WINHTTP_ADDREQ_FLAG_ADD);
   end;
+
+  // AutoProxy support
+  result.TryAutoProxy( FUri);
 end;
 
 
@@ -290,11 +293,11 @@ begin
 
   // send all data immediately, since we have it in memory
   if not http.SendRequest( pData, len, 0)
-  then raise TTransportExceptionUnknown.Create('send request error');
+  then raise TTransportExceptionUnknown.Create('send request error '+IntToStr(GetLastError));
 
   // end request and start receiving
   if not http.FlushAndReceiveResponse
-  then raise TTransportExceptionInterrupted.Create('flush/receive error');
+  then raise TTransportExceptionInterrupted.Create('flush/receive error '+IntToStr(GetLastError));
 
   FInputStream := THTTPResponseStream.Create(http);
 end;

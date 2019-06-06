@@ -121,8 +121,8 @@ begin
   then srvHttp.setTimeouts( DnsResolveTimeout, ConnectionTimeout, SendTimeout, ReadTimeout);
 
   Result.open('POST', FUri, False, '', '');
-  Result.setRequestHeader( 'Content-Type', 'application/x-thrift');
-  Result.setRequestHeader( 'Accept', 'application/x-thrift');
+  Result.setRequestHeader( 'Content-Type', THRIFT_MIMETYPE);
+  Result.setRequestHeader( 'Accept', THRIFT_MIMETYPE);
   Result.setRequestHeader( 'User-Agent', 'Delphi/IHTTPClient');
 
   for pair in FCustomHeaders do begin

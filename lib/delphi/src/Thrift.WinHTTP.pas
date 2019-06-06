@@ -63,6 +63,40 @@ type
   LPURL_COMPONENTSW = LPURL_COMPONENTS;
 
 
+  // When retrieving proxy data, an application must free the lpszProxy and
+  // lpszProxyBypass strings contained in this structure (if they are non-NULL)
+  // using the GlobalFree function.
+  LPWINHTTP_PROXY_INFO = ^WINHTTP_PROXY_INFO;
+  WINHTTP_PROXY_INFO = record
+    dwAccessType    : DWORD;      // see WINHTTP_ACCESS_* types below
+    lpszProxy       : LPWSTR;     // proxy server list
+    lpszProxyBypass : LPWSTR;     // proxy bypass list
+  end;
+
+  LPWINHTTP_PROXY_INFOW = ^WINHTTP_PROXY_INFOW;
+  WINHTTP_PROXY_INFOW   = WINHTTP_PROXY_INFO;
+
+
+  WINHTTP_AUTOPROXY_OPTIONS = record
+    dwFlags                : DWORD;
+    dwAutoDetectFlags      : DWORD;
+    lpszAutoConfigUrl      : LPCWSTR;
+    lpvReserved            : LPVOID;
+    dwReserved             : DWORD;
+    fAutoLogonIfChallenged : BOOL;
+  end;
+
+
+  WINHTTP_CURRENT_USER_IE_PROXY_CONFIG = record
+    fAutoDetect       : BOOL;
+    lpszAutoConfigUrl : LPWSTR;
+    lpszProxy         : LPWSTR;
+    lpszProxyBypass   : LPWSTR;
+  end;
+
+
+
+
 function WinHttpCloseHandle( aHandle : HINTERNET) : BOOL;  stdcall;
 
 function WinHttpOpen( const pszAgentW       : LPCWSTR;
@@ -103,6 +137,16 @@ function WinHttpAddRequestHeaders( const hRequest : HINTERNET;
                                    const dwHeadersLengthInChars : DWORD;
                                    const dwModifiers : DWORD
                                    ) : BOOL;  stdcall;
+
+function WinHttpGetProxyForUrl( const hSession  : HINTERNET;
+                                const lpcwszUrl : LPCWSTR;
+                                const options   : WINHTTP_AUTOPROXY_OPTIONS;
+                                const info      : WINHTTP_PROXY_INFO
+                                ) : BOOL;  stdcall;
+
+function WinHttpGetIEProxyConfigForCurrentUser( var config : WINHTTP_CURRENT_USER_IE_PROXY_CONFIG
+                                                ) : BOOL;  stdcall;
+
 
 function WinHttpSendRequest( const hRequest : HINTERNET;
                              const lpszHeaders : LPCWSTR;
@@ -353,6 +397,17 @@ const
                                      or WINHTTP_FLAG_SECURE_PROTOCOL_SSL3
                                      or WINHTTP_FLAG_SECURE_PROTOCOL_TLS1;
 
+  // AutoProxy
+  WINHTTP_AUTOPROXY_AUTO_DETECT           = $00000001;
+  WINHTTP_AUTOPROXY_CONFIG_URL            = $00000002;
+  WINHTTP_AUTOPROXY_HOST_KEEPCASE         = $00000004;
+  WINHTTP_AUTOPROXY_HOST_LOWERCASE        = $00000008;
+  WINHTTP_AUTOPROXY_RUN_INPROCESS         = $00010000;
+  WINHTTP_AUTOPROXY_RUN_OUTPROCESS_ONLY   = $00020000;
+
+  // Flags for dwAutoDetectFlags
+  WINHTTP_AUTO_DETECT_TYPE_DHCP           = $00000001;
+  WINHTTP_AUTO_DETECT_TYPE_DNS_A          = $00000002;
 
 const
   WINHTTP_ERROR_BASE                      = 12000;
@@ -417,11 +472,16 @@ const
 
 
 type
+  IWinHTTPSession = interface;
+  IWinHTTPConnection = interface;
+
   IWinHTTPRequest = interface
-    ['{35C6D9D4-FDCE-42C6-B84C-9294E6FB904C}']
+    ['{0B7D095E-BB3D-4444-8686-5536E7D6437B}']
     function  Handle : HINTERNET;
+    function  Connection : IWinHTTPConnection;
     function  AddRequestHeader( const aHeader : string; const addflag : DWORD = WINHTTP_ADDREQ_FLAG_ADD) : Boolean;
     function  SetTimeouts( const aResolveTimeout, aConnectTimeout, aSendTimeout, aReceiveTimeout : Int32) : Boolean;
+    procedure TryAutoProxy( const aUrl : string);
     function  SendRequest( const pBuf : Pointer; const dwBytes : DWORD; const dwExtra : DWORD = 0) : Boolean;
     function  WriteExtraData( const pBuf : Pointer; const dwBytes : DWORD) : DWORD;
     function  FlushAndReceiveResponse : Boolean;
@@ -430,8 +490,9 @@ type
   end;
 
   IWinHTTPConnection = interface
-    ['{1C4F78B5-1525-4788-B638-A0E41BCF4D43}']
+    ['{ED5BCA49-84D6-4CFE-BF18-3238B1FF2AFB}']
     function  Handle : HINTERNET;
+    function  Session : IWinHTTPSession;
     function  OpenRequest( const secure : Boolean; const aVerb, aObjName, aAcceptTypes : UnicodeString) : IWinHTTPRequest;
   end;
 
@@ -519,6 +580,7 @@ type
 
     // IWinHTTPConnection
     function  OpenRequest( const secure : Boolean; const aVerb, aObjName, aAcceptTypes : UnicodeString) : IWinHTTPRequest;
+    function  Session : IWinHTTPSession;
 
   public
     constructor Create( const aSession : IWinHTTPSession; const aHostName : UnicodeString; const aPort : INTERNET_PORT);
@@ -533,8 +595,10 @@ type
     FConnection : IWinHTTPConnection;
 
     // IWinHTTPRequest
+    function  Connection : IWinHTTPConnection;
     function  AddRequestHeader( const aHeader : string; const addflag : DWORD = WINHTTP_ADDREQ_FLAG_ADD) : Boolean;
     function  SetTimeouts( const aResolveTimeout, aConnectTimeout, aSendTimeout, aReceiveTimeout : Int32) : Boolean;
+    procedure TryAutoProxy( const aUrl : string);
     function  SendRequest( const pBuf : Pointer; const dwBytes : DWORD; const dwExtra : DWORD = 0) : Boolean;
     function  WriteExtraData( const pBuf : Pointer; const dwBytes : DWORD) : DWORD;
     function  FlushAndReceiveResponse : Boolean;
@@ -595,6 +659,18 @@ type
   end;
 
 
+  WINHTTP_PROXY_INFO_Helper = record helper for WINHTTP_PROXY_INFO
+    procedure Initialize;
+    procedure FreeAllocatedResources;
+  end;
+
+
+  WINHTTP_CURRENT_USER_IE_PROXY_CONFIG_Helper = record helper for WINHTTP_CURRENT_USER_IE_PROXY_CONFIG
+    procedure Initialize;
+    procedure FreeAllocatedResources;
+  end;
+
+
   EWinHTTPException = class(Exception);
 
 implementation
@@ -610,6 +686,8 @@ function WinHttpSetTimeouts; stdcall; external WINHTTP_DLL;
 function WinHttpQueryOption; stdcall; external WINHTTP_DLL;
 function WinHttpSetOption; stdcall; external WINHTTP_DLL;
 function WinHttpAddRequestHeaders; stdcall; external WINHTTP_DLL;
+function WinHttpGetProxyForUrl; stdcall; external WINHTTP_DLL;
+function WinHttpGetIEProxyConfigForCurrentUser; stdcall; external WINHTTP_DLL;
 function WinHttpWriteData; stdcall; external WINHTTP_DLL;
 function WinHttpReceiveResponse; stdcall; external WINHTTP_DLL;
 function WinHttpQueryHeaders; stdcall; external WINHTTP_DLL;
@@ -617,6 +695,51 @@ function WinHttpQueryDataAvailable; stdcall; external WINHTTP_DLL;
 function WinHttpReadData; stdcall; external WINHTTP_DLL;
 function WinHttpCrackUrl; stdcall; external WINHTTP_DLL;
 function WinHttpCreateUrl; stdcall; external WINHTTP_DLL;
+
+
+{ misc. record helper }
+
+
+procedure GlobalFreeAndNil( var p : LPWSTR);
+begin
+  if p <> nil then begin
+    GlobalFree( HGLOBAL( p));
+    p := nil;
+  end;
+end;
+
+
+procedure WINHTTP_PROXY_INFO_Helper.Initialize;
+begin
+  FillChar( Self, SizeOf(Self), 0);
+end;
+
+
+procedure WINHTTP_PROXY_INFO_Helper.FreeAllocatedResources;
+// The caller must free the lpszProxy and lpszProxyBypass strings
+// if they are non-NULL. Use GlobalFree to free the strings.
+begin
+  GlobalFreeAndNil( lpszProxy);
+  GlobalFreeAndNil( lpszProxyBypass);
+  Initialize;
+end;
+
+
+procedure WINHTTP_CURRENT_USER_IE_PROXY_CONFIG_Helper.Initialize;
+begin
+  FillChar( Self, SizeOf(Self), 0);
+end;
+
+
+procedure WINHTTP_CURRENT_USER_IE_PROXY_CONFIG_Helper.FreeAllocatedResources;
+// The caller must free the lpszProxy, lpszProxyBypass and lpszAutoConfigUrl strings
+// if they are non-NULL. Use GlobalFree to free the strings.
+begin
+  GlobalFreeAndNil( lpszProxy);
+  GlobalFreeAndNil( lpszProxyBypass);
+  GlobalFreeAndNil( lpszAutoConfigUrl);
+  Initialize;
+end;
 
 
 { TWinHTTPHandleObjectImpl }
@@ -713,6 +836,12 @@ begin
 end;
 
 
+function TWinHTTPConnectionImpl.Session : IWinHTTPSession;
+begin
+  result := FSession;
+end;
+
+
 function TWinHTTPConnectionImpl.OpenRequest( const secure : Boolean; const aVerb, aObjName, aAcceptTypes : UnicodeString) : IWinHTTPRequest;
 var dwFlags : DWORD;
 begin
@@ -759,6 +888,12 @@ begin
 end;
 
 
+function TWinHTTPRequestImpl.Connection : IWinHTTPConnection;
+begin
+  result := FConnection;
+end;
+
+
 function TWinHTTPRequestImpl.SetTimeouts( const aResolveTimeout, aConnectTimeout, aSendTimeout, aReceiveTimeout : Int32) : Boolean;
 begin
   result := WinHttpSetTimeouts( FHandle, aResolveTimeout, aConnectTimeout, aSendTimeout, aReceiveTimeout);
@@ -769,6 +904,85 @@ function TWinHTTPRequestImpl.AddRequestHeader( const aHeader : string; const add
 begin
   result := WinHttpAddRequestHeaders( FHandle, PWideChar(aHeader), DWORD(-1), addflag);
 end;
+
+
+procedure TWinHTTPRequestImpl.TryAutoProxy( const aUrl : string);
+// From MSDN:
+//    AutoProxy support is not fully integrated into the HTTP stack in WinHTTP.
+//    Before sending a request, the application must call WinHttpGetProxyForUrl
+//    to obtain the name of a proxy server and then call WinHttpSetOption using
+//    WINHTTP_OPTION_PROXY to set the proxy configuration on the WinHTTP request
+//    handle created by WinHttpOpenRequest.
+//    See https://docs.microsoft.com/en-us/windows/desktop/winhttp/winhttp-autoproxy-api
+var
+  options : WINHTTP_AUTOPROXY_OPTIONS;
+  proxy   : WINHTTP_PROXY_INFO;
+  ieProxy : WINHTTP_CURRENT_USER_IE_PROXY_CONFIG;
+  dwSize  : DWORD;
+begin
+  // try AutoProxy via PAC first
+  proxy.Initialize;
+  try
+    FillChar( options, SizeOf(options), 0);
+    options.dwFlags                := WINHTTP_AUTOPROXY_AUTO_DETECT;
+    options.dwAutoDetectFlags      := WINHTTP_AUTO_DETECT_TYPE_DHCP or WINHTTP_AUTO_DETECT_TYPE_DNS_A;
+    options.fAutoLogonIfChallenged := TRUE;
+    if WinHttpGetProxyForUrl( FConnection.Session.Handle, PChar(aUrl), options, proxy) then begin
+      dwSize  := SizeOf(proxy);
+      WinHttpSetOption( Handle, WINHTTP_OPTION_PROXY, @proxy, dwSize);
+      Exit;
+    end;
+
+  finally
+    proxy.FreeAllocatedResources;
+  end;
+
+  // Use IE settings as a fallback, useful in client (i.e. non-server) environments
+  ieProxy.Initialize;
+  try
+    if WinHttpGetIEProxyConfigForCurrentUser( ieProxy)
+    then begin
+
+      // lpszAutoConfigUrl = "Use automatic proxy configuration"
+      if ieProxy.lpszAutoConfigUrl <> nil then begin
+        options.lpszAutoConfigUrl := ieProxy.lpszAutoConfigUrl;
+        options.dwFlags := options.dwFlags or WINHTTP_AUTOPROXY_CONFIG_URL;
+
+        proxy.Initialize;
+        try
+          if WinHttpGetProxyForUrl( FConnection.Session.Handle, PChar(aUrl), options, proxy) then begin
+            dwSize := SizeOf(proxy);
+            WinHttpSetOption( Handle, WINHTTP_OPTION_PROXY, @proxy, dwSize);
+            Exit;
+          end;
+        finally
+          proxy.FreeAllocatedResources;
+        end;
+      end;
+
+      // lpszProxy = "use a proxy server"
+      if ieProxy.lpszProxy <> nil then begin
+        proxy.Initialize;
+        try
+          proxy.dwAccessType    := WINHTTP_ACCESS_TYPE_NAMED_PROXY;
+          proxy.lpszProxy       := ieProxy.lpszProxy;
+          proxy.lpszProxyBypass := ieProxy.lpszProxyBypass;
+          dwSize := SizeOf(proxy);
+          WinHttpSetOption( Handle, WINHTTP_OPTION_PROXY, @proxy, dwSize);
+          Exit;
+        finally
+          proxy.Initialize; // not FreeAllocatedResources, we only hold pointer copies!
+        end;
+      end;
+
+    end;
+
+  finally
+    ieProxy.FreeAllocatedResources;
+  end;
+end;
+
+
 
 
 function TWinHTTPRequestImpl.SendRequest( const pBuf : Pointer; const dwBytes, dwExtra : DWORD) : Boolean;
@@ -978,4 +1192,5 @@ end;
 
 
 end.
+
 
