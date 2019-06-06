@@ -68,9 +68,12 @@ type
     function GetSendTimeout: Integer;
     procedure SetReadTimeout(const Value: Integer);
     function GetReadTimeout: Integer;
+    function GetSecureProtocols : TSecureProtocols;
+    procedure SetSecureProtocols( const value : TSecureProtocols);
 
     function GetCustomHeaders: IThriftDictionary<string,string>;
     procedure SendRequest;
+
     property DnsResolveTimeout: Integer read GetDnsResolveTimeout write SetDnsResolveTimeout;
     property ConnectionTimeout: Integer read GetConnectionTimeout write SetConnectionTimeout;
     property SendTimeout: Integer read GetSendTimeout write SetSendTimeout;
@@ -171,6 +174,16 @@ end;
 procedure TMsxmlHTTPClientImpl.SetReadTimeout(const Value: Integer);
 begin
   FReadTimeout := Value;
+end;
+
+function TMsxmlHTTPClientImpl.GetSecureProtocols : TSecureProtocols;
+begin
+  Result := [];
+end;
+
+procedure TMsxmlHTTPClientImpl.SetSecureProtocols( const value : TSecureProtocols);
+begin
+  raise TTransportExceptionBadArgs.Create('SetSecureProtocols: Not supported with '+ClassName);
 end;
 
 function TMsxmlHTTPClientImpl.GetCustomHeaders: IThriftDictionary<string,string>;

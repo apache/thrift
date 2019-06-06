@@ -29,6 +29,8 @@ unit TestClient;
 {$DEFINE SupportsAsync}
 {$ifend}
 
+{$WARN SYMBOL_PLATFORM OFF}  // Win32Check
+
 interface
 
 uses
@@ -1354,6 +1356,7 @@ end;
 
 procedure TClientThread.InitializeProtocolTransportStack;
 var streamtrans : IStreamTransport;
+    canSSL : Boolean;
 const
   DEBUG_TIMEOUT   = 30 * 1000;
   RELEASE_TIMEOUT = DEFAULT_THRIFT_TIMEOUT;
@@ -1363,6 +1366,7 @@ begin
   // needed for HTTP clients as they utilize the MSXML COM components
   OleCheck( CoInitialize( nil));
 
+  canSSL := FALSE;
   case FSetup.endpoint of
     trns_Sockets: begin
       Console.WriteLine('Using sockets ('+FSetup.host+' port '+IntToStr(FSetup.port)+')');
@@ -1374,6 +1378,7 @@ begin
     trns_WinHttp: begin
       Console.WriteLine('Using HTTPClient');
       FTransport := InitializeHttpTransport( HTTP_TIMEOUTS);
+      canSSL := TRUE;
     end;
 
     trns_EvHttp: begin
@@ -1403,7 +1408,7 @@ begin
     FTransport := TBufferedTransportImpl.Create( streamtrans, 32);  // small buffer to test read()
   end;
 
-  if FSetup.useSSL then begin
+  if FSetup.useSSL and not canSSL then begin
     raise Exception.Create('SSL/TLS not implemented');
   end;
 

@@ -46,8 +46,10 @@ type
     FSendTimeout : Integer;
     FReadTimeout : Integer;
     FCustomHeaders : IThriftDictionary<string,string>;
+    FSecureProtocols : TSecureProtocols;
 
     function CreateRequest: IWinHTTPRequest;
+    function SecureProtocolsAsWinHTTPFlags : Cardinal;
 
   private type
       THTTPResponseStream = class( TThriftStreamImpl)
@@ -82,9 +84,12 @@ type
     function GetSendTimeout: Integer;
     procedure SetReadTimeout(const Value: Integer);
     function GetReadTimeout: Integer;
+    function GetSecureProtocols : TSecureProtocols;
+    procedure SetSecureProtocols( const value : TSecureProtocols);
 
     function GetCustomHeaders: IThriftDictionary<string,string>;
     procedure SendRequest;
+
     property DnsResolveTimeout: Integer read GetDnsResolveTimeout write SetDnsResolveTimeout;
     property ConnectionTimeout: Integer read GetConnectionTimeout write SetConnectionTimeout;
     property SendTimeout: Integer read GetSendTimeout write SetSendTimeout;
@@ -111,6 +116,8 @@ begin
   FSendTimeout       := 30 * 1000;
   FReadTimeout       := 30 * 1000;
 
+  FSecureProtocols := DEFAULT_THRIFT_SECUREPROTOCOLS;
+
   FCustomHeaders := TThriftDictionaryImpl<string,string>.Create;
   FOutputMemoryStream := TMemoryStream.Create;
 end;
@@ -133,6 +140,8 @@ begin
   url := TWinHTTPUrlImpl.Create( FUri);
 
   session := TWinHTTPSessionImpl.Create('Apache Thrift Delphi Client');
+  session.EnableSecureProtocols( SecureProtocolsAsWinHTTPFlags);
+
   connect := session.Connect( url.HostName, url.Port);
 
   sPath   := url.UrlPath + url.ExtraInfo;
@@ -147,6 +156,29 @@ begin
     Result.AddRequestHeader( pair.Key +': '+ pair.Value, WINHTTP_ADDREQ_FLAG_ADD);
   end;
 end;
+
+
+function TWinHTTPClientImpl.SecureProtocolsAsWinHTTPFlags : Cardinal;
+const
+  PROTOCOL_MAPPING : array[TSecureProtocol] of Cardinal = (
+    WINHTTP_FLAG_SECURE_PROTOCOL_SSL2,
+    WINHTTP_FLAG_SECURE_PROTOCOL_SSL3,
+    WINHTTP_FLAG_SECURE_PROTOCOL_TLS1,
+    WINHTTP_FLAG_SECURE_PROTOCOL_TLS1_1,
+    WINHTTP_FLAG_SECURE_PROTOCOL_TLS1_2
+  );
+var
+  prot : TSecureProtocol;
+  protos : TSecureProtocols;
+begin
+  result := 0;
+  protos := GetSecureProtocols;
+  for prot := Low(TSecureProtocol) to High(TSecureProtocol) do begin
+    if prot in protos
+    then result := result or PROTOCOL_MAPPING[prot];
+  end;
+end;
+
 
 function TWinHTTPClientImpl.GetDnsResolveTimeout: Integer;
 begin
@@ -186,6 +218,16 @@ end;
 procedure TWinHTTPClientImpl.SetReadTimeout(const Value: Integer);
 begin
   FReadTimeout := Value;
+end;
+
+function TWinHTTPClientImpl.GetSecureProtocols : TSecureProtocols;
+begin
+  Result := FSecureProtocols;
+end;
+
+procedure TWinHTTPClientImpl.SetSecureProtocols( const value : TSecureProtocols);
+begin
+  FSecureProtocols := Value;
 end;
 
 function TWinHTTPClientImpl.GetCustomHeaders: IThriftDictionary<string,string>;

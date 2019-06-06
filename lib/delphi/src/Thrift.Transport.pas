@@ -118,8 +118,15 @@ type
   TTransportExceptionBadArgs = class (TTransportExceptionSpecialized);
   TTransportExceptionInterrupted = class (TTransportExceptionSpecialized);
 
+  TSecureProtocol = (
+    SSL_2, SSL_3, TLS_1,   // outdated, for compatibilty only
+    TLS_1_1, TLS_1_2       // secure (as of today)
+  );
+
+  TSecureProtocols = set of TSecureProtocol;
+
   IHTTPClient = interface( ITransport )
-    ['{BA142D12-8AE6-4B50-9E33-6B7843B21D73}']
+    ['{7BF615DD-8680-4004-A5B2-88947BA3BA3D}']
     procedure SetDnsResolveTimeout(const Value: Integer);
     function GetDnsResolveTimeout: Integer;
     procedure SetConnectionTimeout(const Value: Integer);
@@ -130,12 +137,15 @@ type
     function GetReadTimeout: Integer;
     function GetCustomHeaders: IThriftDictionary<string,string>;
     procedure SendRequest;
+    function GetSecureProtocols : TSecureProtocols;
+    procedure SetSecureProtocols( const value : TSecureProtocols);
 
     property DnsResolveTimeout: Integer read GetDnsResolveTimeout write SetDnsResolveTimeout;
     property ConnectionTimeout: Integer read GetConnectionTimeout write SetConnectionTimeout;
     property SendTimeout: Integer read GetSendTimeout write SetSendTimeout;
     property ReadTimeout: Integer read GetReadTimeout write SetReadTimeout;
     property CustomHeaders: IThriftDictionary<string,string> read GetCustomHeaders;
+    property SecureProtocols : TSecureProtocols read GetSecureProtocols write SetSecureProtocols;
   end;
 
   IServerTransport = interface
@@ -373,6 +383,8 @@ procedure TFramedTransportImpl_Initialize;
 
 const
   DEFAULT_THRIFT_TIMEOUT = 5 * 1000; // ms
+  DEFAULT_THRIFT_SECUREPROTOCOLS = [ TSecureProtocol.TLS_1_1, TSecureProtocol.TLS_1_2];
+
 
 
 implementation
