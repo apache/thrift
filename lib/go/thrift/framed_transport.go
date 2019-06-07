@@ -93,7 +93,21 @@ func (p *TFramedTransport) Read(buf []byte) (l int, err error) {
 		l, err = p.Read(tmp)
 		copy(buf, tmp)
 		if err == nil {
-			err = NewTTransportExceptionFromError(fmt.Errorf("Not enough frame size %d to read %d bytes", frameSize, len(buf)))
+			// Note: It's important to only return an error when l
+			// is zero.
+			// In io.Reader.Read interface, it's perfectly fine to
+			// return partial data and nil error, which means
+			// "This is all the data we have right now without
+			// blocking. If you need the full data, call Read again
+			// or use io.ReadFull instead".
+			// Returning partial data with an error actually means
+			// there's no more data after the partial data just
+			// returned, which is not true in this case
+			// (it might be that the other end just haven't written
+			// them yet).
+			if l == 0 {
+				err = NewTTransportExceptionFromError(fmt.Errorf("Not enough frame size %d to read %d bytes", frameSize, len(buf)))
+			}
 			return
 		}
 	}
