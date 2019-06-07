@@ -101,7 +101,7 @@ __TObject = {
 }
 function __TObject:new(init_obj)
   local obj = {}
-  if ttype(obj) == 'table' then
+  if ttype(init_obj) == 'table' then
     obj = init_obj
   end
 
