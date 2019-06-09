@@ -172,24 +172,13 @@ namespace Thrift.Transport.Client
                 {
                     contentStream.Headers.ContentType = ContentType ?? new MediaTypeHeaderValue(@"application/x-thrift");
 
-                    try
-                    {
-                        var response = (await _httpClient.PostAsync(_uri, contentStream, cancellationToken)).EnsureSuccessStatusCode();
+                    var response = (await _httpClient.PostAsync(_uri, contentStream, cancellationToken)).EnsureSuccessStatusCode();
 
-                        _inputStream?.Dispose();
-                        _inputStream = await response.Content.ReadAsStreamAsync();                        
-                        if (_inputStream.CanSeek)
-                        {
-                            _inputStream.Seek(0, SeekOrigin.Begin);
-                        }
-                    }
-                    catch (HttpRequestException rex)
+                    _inputStream?.Dispose();
+                    _inputStream = await response.Content.ReadAsStreamAsync();
+                    if (_inputStream.CanSeek)
                     {
-                        throw new TTransportException(TTransportException.ExceptionType.Unknown, $"Failed to connect: {rex.Message}");
-                    }
-                    catch (Exception ex)
-                    {
-                        throw new TTransportException(TTransportException.ExceptionType.Unknown, ex.Message);
+                        _inputStream.Seek(0, SeekOrigin.Begin);
                     }
                 }
             }
@@ -201,6 +190,10 @@ namespace Thrift.Transport.Client
             {
                 throw new TTransportException(TTransportException.ExceptionType.Unknown,
                     "Couldn't connect to server: " + wx);
+            }
+            catch (Exception ex)
+            {
+                throw new TTransportException(TTransportException.ExceptionType.Unknown, ex.Message);
             }
             finally
             {
