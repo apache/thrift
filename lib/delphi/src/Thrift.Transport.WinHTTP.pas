@@ -51,7 +51,10 @@ type
     function CreateRequest: IWinHTTPRequest;
     function SecureProtocolsAsWinHTTPFlags : Cardinal;
 
-  private type
+  private
+    type
+      TErrorInfo = ( SplitUrl, WinHTTPSession, WinHTTPConnection, WinHTTPRequest, RequestSetup, AutoProxy );
+
       THTTPResponseStream = class( TThriftStreamImpl)
       private
         FRequest : IWinHTTPRequest;
@@ -131,33 +134,45 @@ end;
 
 function TWinHTTPClientImpl.CreateRequest: IWinHTTPRequest;
 var
-  pair : TPair<string,string>;
+  pair    : TPair<string,string>;
   session : IWinHTTPSession;
   connect : IWinHTTPConnection;
   url     : IWinHTTPUrl;
   sPath   : string;
+  info    : TErrorInfo;
 begin
-  url := TWinHTTPUrlImpl.Create( FUri);
+  info := TErrorInfo.SplitUrl;
+  try
+    url := TWinHTTPUrlImpl.Create( FUri);
 
-  session := TWinHTTPSessionImpl.Create('Apache Thrift Delphi WinHTTP');
-  session.EnableSecureProtocols( SecureProtocolsAsWinHTTPFlags);
+    info := TErrorInfo.WinHTTPSession;
+    session := TWinHTTPSessionImpl.Create('Apache Thrift Delphi WinHTTP');
+    session.EnableSecureProtocols( SecureProtocolsAsWinHTTPFlags);
 
-  connect := session.Connect( url.HostName, url.Port);
+    info := TErrorInfo.WinHTTPConnection;
+    connect := session.Connect( url.HostName, url.Port);
 
-  sPath   := url.UrlPath + url.ExtraInfo;
-  result  := connect.OpenRequest( (url.Scheme = 'https'), 'POST', sPath, THRIFT_MIMETYPE);
+    info := TErrorInfo.WinHTTPRequest;
+    sPath   := url.UrlPath + url.ExtraInfo;
+    result  := connect.OpenRequest( (url.Scheme = 'https'), 'POST', sPath, THRIFT_MIMETYPE);
 
-  // setting a timeout value to 0 (zero) means "no timeout" for that setting
-  result.SetTimeouts( DnsResolveTimeout, ConnectionTimeout, SendTimeout, ReadTimeout);
+    // setting a timeout value to 0 (zero) means "no timeout" for that setting
+    info := TErrorInfo.RequestSetup;
+    result.SetTimeouts( DnsResolveTimeout, ConnectionTimeout, SendTimeout, ReadTimeout);
 
-  // headers
-  result.AddRequestHeader( 'Content-Type: '+THRIFT_MIMETYPE, WINHTTP_ADDREQ_FLAG_ADD);
-  for pair in FCustomHeaders do begin
-    Result.AddRequestHeader( pair.Key +': '+ pair.Value, WINHTTP_ADDREQ_FLAG_ADD);
+    // headers
+    result.AddRequestHeader( 'Content-Type: '+THRIFT_MIMETYPE, WINHTTP_ADDREQ_FLAG_ADD);
+    for pair in FCustomHeaders do begin
+      Result.AddRequestHeader( pair.Key +': '+ pair.Value, WINHTTP_ADDREQ_FLAG_ADD);
+    end;
+
+    // AutoProxy support
+    info := TErrorInfo.AutoProxy;
+    result.TryAutoProxy( FUri);
+  except
+    on e:TException do raise;
+    on e:Exception do raise TTransportExceptionUnknown.Create( e.Message+' (at '+EnumUtils<TErrorInfo>.ToString(Ord(info))+')');
   end;
-
-  // AutoProxy support
-  result.TryAutoProxy( FUri);
 end;
 
 
