@@ -29,6 +29,7 @@
 #include <iostream>
 #include <limits>
 #include <string>
+#include <unordered_map>
 #include <vector>
 
 #include <stdlib.h>
@@ -249,6 +250,7 @@ public:
   std::string go_imports_end();
   std::string render_includes(bool consts);
   std::string render_included_programs(string& unused_protection);
+  std::string render_system_packages(std::vector<string> &system_packages);
   std::string render_import_protection();
   std::string render_fastbinary_includes();
   std::string declare_argument(t_field* tfield);
@@ -298,6 +300,8 @@ private:
 
   std::string package_name_;
   std::string package_dir_;
+  std::unordered_map<std::string, std::string> package_identifiers_;
+  std::set<std::string> package_identifiers_set_;
   std::string read_method_name_;
   std::string write_method_name_;
 
@@ -763,13 +767,9 @@ void t_go_generator::init_generator() {
   f_unused_prot_.close();
 }
 
-
-string t_go_generator::render_included_programs(string& unused_protection) {
+string t_go_generator::render_included_programs(string& unused_prot) {
   const vector<t_program*>& includes = program_->get_includes();
   string result = "";
-
-  unused_protection = "";
-
   string local_namespace = program_->get_namespace("go");
   for (auto include : includes) {
     if (!local_namespace.empty() && local_namespace == include->get_namespace("go")) {
@@ -777,19 +777,54 @@ string t_go_generator::render_included_programs(string& unused_protection) {
     }
 
     string go_module = get_real_go_module(include);
+    string go_path = go_module;
     size_t found = 0;
     for (size_t j = 0; j < go_module.size(); j++) {
       // Import statement uses slashes ('/') in namespace
       if (go_module[j] == '.') {
-        go_module[j] = '/';
+        go_path[j] = '/';
         found = j + 1;
       }
     }
 
-    result += "\t\"" + gen_package_prefix_ + go_module + "\"\n";
-    unused_protection += "var _ = " + go_module.substr(found) + ".GoUnusedProtection__\n";
+    auto it = package_identifiers_.find(go_module);
+    auto last_component = go_module.substr(found);
+    if (it == package_identifiers_.end()) {
+      auto value = last_component;
+      // This final path component has already been used, let's construct a more unique alias
+      if (package_identifiers_set_.find(value) != package_identifiers_set_.end()) {
+        // TODO: This would produce more readable code if it appended trailing go_module
+        // path components to generate a more readable name unique identifier (e.g. use
+        // packageacommon as the alias for packagea/common instead of common=). But just
+        // appending an integer is much simpler code
+        value = tmp(value);
+      }
+      package_identifiers_set_.insert(value);
+      it = package_identifiers_.emplace(go_module, std::move(value)).first;
+    }
+    auto const& package_identifier = it->second;
+    result += "\t";
+    // if the package_identifier is different than final path component we need an alias
+    if (last_component.compare(package_identifier) != 0) {
+      result += package_identifier + " ";
+    }
+    result += "\"" + gen_package_prefix_ + go_path + "\"\n";
+    unused_prot += "var _ = " + package_identifier + ".GoUnusedProtection__\n";
   }
+  return result;
+}
 
+string t_go_generator::render_system_packages(std::vector<string>& system_packages) {
+  string result = "";
+
+  for (vector<string>::iterator iter = system_packages.begin(); iter != system_packages.end(); ++iter) {
+    string package = *iter;
+    result += "\t\""+ package +"\"\n";
+
+    // Reserve these package names in case the collide with imported Thrift packages
+    package_identifiers_set_.insert(package);
+    package_identifiers_.emplace(package, package);
+  }
   return result;
 }
 
@@ -801,32 +836,14 @@ string t_go_generator::render_includes(bool consts) {
   const vector<t_program*>& includes = program_->get_includes();
   string result = "";
   string unused_prot = "";
-
-  string local_namespace = program_->get_namespace("go");
-  for (auto include : includes) {
-    if (!local_namespace.empty() && local_namespace == include->get_namespace("go")) {
-      continue;
-    }
-
-    string go_module = get_real_go_module(include);
-    size_t found = 0;
-    for (size_t j = 0; j < go_module.size(); j++) {
-      // Import statement uses slashes ('/') in namespace
-      if (go_module[j] == '.') {
-        go_module[j] = '/';
-        found = j + 1;
-      }
-    }
-
-    result += "\t\"" + gen_package_prefix_ + go_module + "\"\n";
-    unused_prot += "var _ = " + go_module.substr(found) + ".GoUnusedProtection__\n";
-  }
+  result += go_imports_begin(consts);
+  result += render_included_programs(unused_prot);
 
   if (includes.size() > 0) {
     result += "\n";
   }
 
-  return go_imports_begin(consts) + result + go_imports_end() + unused_prot;
+  return result + go_imports_end() + unused_prot;
 }
 
 string t_go_generator::render_import_protection() {
@@ -862,22 +879,18 @@ string t_go_generator::go_package() {
  * If consts include the additional imports.
  */
 string t_go_generator::go_imports_begin(bool consts) {
-  string extra;
-
+  std::vector<string> system_packages;
+  system_packages.push_back("bytes");
+  system_packages.push_back("context");
+  system_packages.push_back("reflect");
   // If not writing constants, and there are enums, need extra imports.
   if (!consts && get_program()->get_enums().size() > 0) {
-    extra +=
-      "\t\"database/sql/driver\"\n"
-      "\t\"errors\"\n";
+    system_packages.push_back("database/sql/driver");
+    system_packages.push_back("errors");
   }
-  return string(
-      "import (\n"
-      "\t\"bytes\"\n"
-      "\t\"context\"\n"
-      "\t\"reflect\"\n"
-      + extra +
-      "\t\"fmt\"\n"
-      "\t\"" + gen_thrift_import_ + "\"\n");
+  system_packages.push_back("fmt");
+  system_packages.push_back(gen_thrift_import_);
+  return "import(\n" + render_system_packages(system_packages);
 }
 
 /**
@@ -2125,20 +2138,21 @@ void t_go_generator::generate_service_remote(t_service* tservice) {
 
   string unused_protection;
 
-  string ctxPackage = "context";
+  std::vector<string> system_packages;
+  system_packages.push_back("context");
+  system_packages.push_back("flag");
+  system_packages.push_back("fmt");
+  system_packages.push_back("math");
+  system_packages.push_back("net");
+  system_packages.push_back("net/url");
+  system_packages.push_back("os");
+  system_packages.push_back("strconv");
+  system_packages.push_back("strings");
 
   f_remote << go_autogen_comment();
   f_remote << indent() << "package main" << endl << endl;
   f_remote << indent() << "import (" << endl;
-  f_remote << indent() << "        \"" << ctxPackage << "\"" << endl;
-  f_remote << indent() << "        \"flag\"" << endl;
-  f_remote << indent() << "        \"fmt\"" << endl;
-  f_remote << indent() << "        \"math\"" << endl;
-  f_remote << indent() << "        \"net\"" << endl;
-  f_remote << indent() << "        \"net/url\"" << endl;
-  f_remote << indent() << "        \"os\"" << endl;
-  f_remote << indent() << "        \"strconv\"" << endl;
-  f_remote << indent() << "        \"strings\"" << endl;
+  f_remote << render_system_packages(system_packages);
   f_remote << indent() << "        \"" + gen_thrift_import_ + "\"" << endl;
   f_remote << indent() << render_included_programs(unused_protection);
   f_remote << indent() << "        \"" << service_module << "\"" << endl;
@@ -3504,12 +3518,7 @@ string t_go_generator::module_name(t_type* ttype) {
         program_->get_namespace("go").empty() ||
         program->get_namespace("go") != program_->get_namespace("go")) {
       string module(get_real_go_module(program));
-      // for namespaced includes, only keep part after dot.
-      size_t dot = module.rfind('.');
-      if (dot != string::npos) {
-        module = module.substr(dot + 1);
-      }
-      return module;
+      return package_identifiers_[module];
     }
   }
 
