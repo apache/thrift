@@ -62,9 +62,8 @@ public final class TByteBuffer extends TTransport {
   /**
    * Convenience method to call clear() on the underlying NIO ByteBuffer.
    */
-  public TByteBuffer clear() {
+  public void clear() {
     byteBuffer.clear();
-    return this;
   }
 
   /**

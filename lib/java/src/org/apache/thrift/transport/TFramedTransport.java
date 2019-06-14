@@ -131,7 +131,8 @@ public class TFramedTransport extends TTransport {
     readBuffer_.consumeBuffer(len);
   }
 
-  public void clear() {
+  @Override
+  protected void clear() {
     readBuffer_.clear();
   }
 
