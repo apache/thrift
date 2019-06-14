@@ -98,7 +98,7 @@ Event EventLog::waitForEvent(int64_t timeout) {
     while (events_.empty()) {
       monitor_.wait(timeout);
     }
-  } catch (TimedOutException ex) {
+  } catch (const TimedOutException &) {
     return Event(ET_LOG_END, 0, 0, "");
   }
 
@@ -119,7 +119,7 @@ Event EventLog::waitForConnEvent(uint32_t connId, int64_t timeout) {
       while (it == events_.end()) {
         monitor_.wait(timeout);
       }
-    } catch (TimedOutException ex) {
+    } catch (const TimedOutException &) {
       return Event(ET_LOG_END, 0, 0, "");
     }
 
