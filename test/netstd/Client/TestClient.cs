@@ -55,6 +55,7 @@ namespace ThriftTest
     {
         Socket,
         TlsSocket,
+        Http,
         NamedPipe
     }
 
@@ -79,6 +80,7 @@ namespace ThriftTest
                     if (args[i] == "-u")
                     {
                         url = args[++i];
+                        transport = TransportChoice.Http;
                     }
                     else if (args[i] == "-n")
                     {
@@ -150,6 +152,9 @@ namespace ThriftTest
                         break;
                     case TransportChoice.TlsSocket:
                         Console.WriteLine("Using encrypted transport");
+                        break;
+                    case TransportChoice.Http:
+                        Console.WriteLine("Using HTTP transport");
                         break;
                     case TransportChoice.NamedPipe:
                         Console.WriteLine("Using named pipes transport");
@@ -223,55 +228,55 @@ namespace ThriftTest
             
             public TTransport CreateTransport()
             {
-                if (url == null)
+                // endpoint transport
+                TTransport trans = null;
+
+                switch(transport)
                 {
-                    // endpoint transport
-                    TTransport trans = null;
+                    case TransportChoice.Http:
+                        Debug.Assert(url != null);
+                        trans = new THttpTransport(new Uri(url), null);
+                        break;
 
-                    switch(transport)
-                    {
-                        case TransportChoice.NamedPipe:
-                            Debug.Assert(pipe != null);
-                            trans = new TNamedPipeTransport(pipe);
-                            break;
+                    case TransportChoice.NamedPipe:
+                        Debug.Assert(pipe != null);
+                        trans = new TNamedPipeTransport(pipe);
+                        break;
 
-                        case TransportChoice.TlsSocket:
-                           var cert = GetClientCert();
-                            if (cert == null || !cert.HasPrivateKey)
-                            {
-                                throw new InvalidOperationException("Certificate doesn't contain private key");
-                            }
+                    case TransportChoice.TlsSocket:
+                        var cert = GetClientCert();
+                        if (cert == null || !cert.HasPrivateKey)
+                        {
+                            throw new InvalidOperationException("Certificate doesn't contain private key");
+                        }
                             
-                            trans = new TTlsSocketTransport(host, port, 0, cert, 
-                                (sender, certificate, chain, errors) => true,
-                                null, SslProtocols.Tls | SslProtocols.Tls11 | SslProtocols.Tls12);
-                            break;
+                        trans = new TTlsSocketTransport(host, port, 0, cert, 
+                            (sender, certificate, chain, errors) => true,
+                            null, SslProtocols.Tls | SslProtocols.Tls11 | SslProtocols.Tls12);
+                        break;
 
-                        case TransportChoice.Socket:
-                        default:
-                            trans = new TSocketTransport(host, port);
-                            break;
-                    }
-
-
-                    // layered transport
-                    switch(layered)
-                    {
-                        case LayeredChoice.Buffered:
-                            trans = new TBufferedTransport(trans);
-                            break;
-                        case LayeredChoice.Framed:
-                            trans = new TFramedTransport(trans);
-                            break;
-                        default:
-                            Debug.Assert(layered == LayeredChoice.None);
-                            break;
-                    }
-
-                    return trans;
+                    case TransportChoice.Socket:
+                    default:
+                        trans = new TSocketTransport(host, port);
+                        break;
                 }
 
-                return new THttpTransport(new Uri(url), null);
+
+                // layered transport
+                switch(layered)
+                {
+                    case LayeredChoice.Buffered:
+                        trans = new TBufferedTransport(trans);
+                        break;
+                    case LayeredChoice.Framed:
+                        trans = new TFramedTransport(trans);
+                        break;
+                    default:
+                        Debug.Assert(layered == LayeredChoice.None);
+                        break;
+                }
+
+                return trans;
             }
 
             public TProtocol CreateProtocol(TTransport transport)
