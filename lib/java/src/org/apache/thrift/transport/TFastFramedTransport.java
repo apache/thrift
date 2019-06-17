@@ -169,7 +169,8 @@ public class TFastFramedTransport extends TTransport {
   /**
    * Only clears the read buffer!
    */
-  public void clear() {
+  @Override
+  protected void clear() {
     readBuffer = new AutoExpandingBufferReadTransport(initialBufferCapacity);
   }
 

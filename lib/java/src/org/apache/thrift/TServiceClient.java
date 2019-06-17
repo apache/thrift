@@ -85,7 +85,11 @@ public abstract class TServiceClient {
       throw new TApplicationException(TApplicationException.BAD_SEQUENCE_ID,
           String.format("%s failed: out of sequence response: expected %d but got %d", methodName, seqid_, msg.seqid));
     }
-    result.read(iprot_);
+    try {
+      result.read(iprot_);
+    } finally {
+      iprot_.getTransport().safeClear();
+    }
     iprot_.readMessageEnd();
   }
 }

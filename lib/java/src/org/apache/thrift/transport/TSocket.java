@@ -245,4 +245,15 @@ public class TSocket extends TIOStreamTransport {
     }
   }
 
+  @Override
+  protected void clear() {
+    try {
+      int len = this.inputStream_.available();
+      if (len > 0) {
+        this.inputStream_.skip(len);
+      }
+    } catch (IOException e) {
+      LOGGER.warn("Could not clear inputstream: {}", e.getMessage());
+    }
+  }
 }

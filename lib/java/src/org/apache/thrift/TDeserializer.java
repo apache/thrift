@@ -80,7 +80,7 @@ public class TDeserializer {
       trans_.reset(bytes, offset, length);
       base.read(protocol_);
     } finally {
-      trans_.clear();
+      trans_.safeClear();
       protocol_.reset();
     }
   }
@@ -121,7 +121,7 @@ public class TDeserializer {
     } catch (Exception e) {
       throw new TException(e);
     } finally {
-      trans_.clear();
+      trans_.safeClear();
       protocol_.reset();
     }
   }
@@ -242,7 +242,7 @@ public class TDeserializer {
     } catch (Exception e) {
       throw new TException(e);
     } finally {
-      trans_.clear();
+      trans_.safeClear();
       protocol_.reset();
     }
   }
@@ -282,7 +282,7 @@ public class TDeserializer {
     } catch (Exception e) {
       throw new TException(e);
     } finally {
-      trans_.clear();
+      trans_.safeClear();
       protocol_.reset();
     }
   }

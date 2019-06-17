@@ -19,6 +19,9 @@
 
 package org.apache.thrift.transport;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.Closeable;
 
 /**
@@ -27,6 +30,7 @@ import java.io.Closeable;
  *
  */
 public abstract class TTransport implements Closeable {
+  private static final Logger LOGGER = LoggerFactory.getLogger(TTransport.class.getName());
 
   /**
    * Queries whether the transport is open.
@@ -57,6 +61,22 @@ public abstract class TTransport implements Closeable {
    */
   public abstract void close();
 
+  /**
+   * Safe clear transport on necessary, will log warn message if error occurs
+   */
+  public void safeClear(){
+    try {
+      this.clear();
+    } catch(Exception e){
+      LOGGER.warn("Could not clear inputstream: {}", e.getMessage());
+    }
+  }
+
+  /**
+   * Clear transport when necessary
+   */
+  protected void clear(){
+  }
   /**
    * Reads up to len bytes into buffer buf, starting at offset off.
    *
