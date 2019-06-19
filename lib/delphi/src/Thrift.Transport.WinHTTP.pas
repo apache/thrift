@@ -297,9 +297,11 @@ end;
 
 procedure TWinHTTPClientImpl.SendRequest;
 var
-  http : IWinHTTPRequest;
+  http  : IWinHTTPRequest;
   pData : PByte;
-  len : Integer;
+  len   : Integer;
+  error : Cardinal;
+  sMsg  : string;
 begin
   http := CreateRequest;
 
@@ -307,12 +309,20 @@ begin
   len   := FOutputMemoryStream.Size;
 
   // send all data immediately, since we have it in memory
-  if not http.SendRequest( pData, len, 0)
-  then raise TTransportExceptionUnknown.Create('send request error '+IntToStr(GetLastError));
+  if not http.SendRequest( pData, len, 0) then begin
+    error := Cardinal( GetLastError);
+    sMsg  := 'WinHTTP send error '+IntToStr(Int64(error))+' '+WinHttpSysErrorMessage(error);
+    raise TTransportExceptionUnknown.Create(sMsg);
+  end;
 
   // end request and start receiving
-  if not http.FlushAndReceiveResponse
-  then raise TTransportExceptionInterrupted.Create('flush/receive error '+IntToStr(GetLastError));
+  if not http.FlushAndReceiveResponse then begin
+    error := Cardinal( GetLastError);
+    sMsg  := 'WinHTTP recv error '+IntToStr(Int64(error))+' '+WinHttpSysErrorMessage(error);
+    if error = ERROR_WINHTTP_TIMEOUT
+    then raise TTransportExceptionTimedOut.Create( sMsg)
+    else raise TTransportExceptionInterrupted.Create( sMsg);
+  end;
 
   FInputStream := THTTPResponseStream.Create(http);
 end;

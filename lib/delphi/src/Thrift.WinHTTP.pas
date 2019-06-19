@@ -463,6 +463,8 @@ const
   ERROR_WINHTTP_CLIENT_CERT_NO_PRIVATE_KEY            = WINHTTP_ERROR_BASE + 185;
   ERROR_WINHTTP_CLIENT_CERT_NO_ACCESS_PRIVATE_KEY     = WINHTTP_ERROR_BASE + 186;
 
+  WINHTTP_ERROR_LAST                                  = WINHTTP_ERROR_BASE + 186;
+
 
 const
   WINHTTP_THRIFT_DEFAULTS = WINHTTP_FLAG_NULL_CODEPAGE
@@ -673,6 +675,12 @@ type
 
   EWinHTTPException = class(Exception);
 
+{ helper functions }
+
+function WinHttpSysErrorMessage( const error : Cardinal): string;
+procedure RaiseLastWinHttpError;
+
+
 implementation
 
 const WINHTTP_DLL = 'WinHTTP.dll';
@@ -695,6 +703,48 @@ function WinHttpQueryDataAvailable; stdcall; external WINHTTP_DLL;
 function WinHttpReadData; stdcall; external WINHTTP_DLL;
 function WinHttpCrackUrl; stdcall; external WINHTTP_DLL;
 function WinHttpCreateUrl; stdcall; external WINHTTP_DLL;
+
+
+{ helper functions }
+
+function WinHttpSysErrorMessage( const error : Cardinal): string;
+const FLAGS = FORMAT_MESSAGE_ALLOCATE_BUFFER
+           or FORMAT_MESSAGE_IGNORE_INSERTS
+           or FORMAT_MESSAGE_FROM_SYSTEM
+           or FORMAT_MESSAGE_FROM_HMODULE;
+var pBuffer : PChar;
+    nChars : Cardinal;
+begin
+  if (error < WINHTTP_ERROR_BASE)
+  or (error > WINHTTP_ERROR_LAST)
+  then Exit( SysUtils.SysErrorMessage( error));
+
+  pBuffer := nil;
+  try
+    nChars := FormatMessage( FLAGS,
+                             Pointer( GetModuleHandle( WINHTTP_DLL)),
+                             error,
+                             MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), // default language
+                             @pBuffer, 0,
+                             nil);
+    SetString( result, pBuffer, nChars);
+  finally
+    LocalFree( Cardinal( pBuffer));
+  end;
+end;
+
+
+procedure RaiseLastWinHttpError;
+var error : Cardinal;
+    sMsg  : string;
+begin
+  error := Cardinal( GetLastError);
+  if error <> NOERROR then begin
+    sMSg := IntToStr(Integer(error))+' '+WinHttpSysErrorMessage(error);
+    raise EWinHTTPException.Create( sMsg);
+  end;
+end;
+
 
 
 { misc. record helper }
@@ -785,7 +835,7 @@ begin
                          PWideChar(Pointer(aProxy)),        // may be nil
                          PWideChar(Pointer(aProxyBypass)),  // may be nil
                          aFlags);
-  if handle = nil then RaiseLastOSError;
+  if handle = nil then RaiseLastWinHttpError;
   inherited Create( handle);
 end;
 
@@ -824,7 +874,7 @@ var handle : HINTERNET;
 begin
   FSession := aSession;
   handle   := WinHttpConnect( FSession.Handle, PWideChar(aHostName), aPort, 0);
-  if handle = nil then RaiseLastOSError;
+  if handle = nil then RaiseLastWinHttpError;
   inherited Create( handle);
 end;
 
@@ -876,7 +926,7 @@ begin
                                      PWideChar(aReferrer),
                                      @accept,
                                      aFlags);
-  if handle = nil then RaiseLastOSError;
+  if handle = nil then RaiseLastWinHttpError;
   inherited Create( handle);
 end;
 
@@ -1190,6 +1240,9 @@ begin
   FUserName := value;
 end;
 
+
+initialization
+  OutputDebugString( PChar( SysErrorMessage( 12002)));
 
 end.
 
