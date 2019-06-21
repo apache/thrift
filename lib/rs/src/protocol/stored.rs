@@ -42,7 +42,6 @@ use ProtocolErrorKind;
 /// Create and use a `TStoredInputProtocol`.
 ///
 /// ```no_run
-/// use thrift;
 /// use thrift::protocol::{TInputProtocol, TMessageIdentifier, TMessageType, TOutputProtocol};
 /// use thrift::protocol::{TBinaryInputProtocol, TBinaryOutputProtocol, TStoredInputProtocol};
 /// use thrift::server::TProcessor;
