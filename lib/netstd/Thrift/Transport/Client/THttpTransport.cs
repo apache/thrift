@@ -139,6 +139,7 @@ namespace Thrift.Transport.Client
         {
             var handler = new HttpClientHandler();
             handler.ClientCertificates.AddRange(_certificates);
+            handler.AutomaticDecompression = System.Net.DecompressionMethods.Deflate | System.Net.DecompressionMethods.GZip;
 
             var httpClient = new HttpClient(handler);
 
@@ -149,7 +150,10 @@ namespace Thrift.Transport.Client
 
             httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/x-thrift"));
             httpClient.DefaultRequestHeaders.UserAgent.TryParseAdd(UserAgent);
-            
+
+            httpClient.DefaultRequestHeaders.AcceptEncoding.Add(new StringWithQualityHeaderValue("deflate"));
+            httpClient.DefaultRequestHeaders.AcceptEncoding.Add(new StringWithQualityHeaderValue("gzip"));
+
             if (customRequestHeaders != null)
             {
                 foreach (var item in customRequestHeaders)
