@@ -32,6 +32,7 @@ declare -A EXPECT_NEGOTIATE
 EXPECT_NEGOTIATE[tls1]=1
 EXPECT_NEGOTIATE[tls1_1]=1
 EXPECT_NEGOTIATE[tls1_2]=1
+EXPECT_NEGOTIATE[tls1_3]=1
 
 failures=0
 
@@ -62,10 +63,10 @@ function tls
 
 tls
 
-if [[ $failures -eq 3 ]]; then
-  echo "[fail] At least one of TLSv1.0, TLSv1.1, or TLSv1.2 needs to work, but does not"
+if [[ $failures -eq 4 ]]; then
+  echo "[fail] At least one of TLSv1.0, TLSv1.1, TLSv1.2, or TLSv1.3 needs to work, but does not"
   exit $failures
 fi
 
-echo "[pass] At least one of TLSv1.0, TLSv1.1, or TLSv1.2 worked"
+echo "[pass] At least one of TLSv1.0, TLSv1.1, TLSv1.2, or TLSv1.3 worked"
 exit 0

@@ -39,7 +39,6 @@ pub use self::threaded::TServer;
 /// a Thrift service `SimpleService`.
 ///
 /// ```no_run
-/// use thrift;
 /// use thrift::protocol::{TInputProtocol, TOutputProtocol};
 /// use thrift::server::TProcessor;
 ///

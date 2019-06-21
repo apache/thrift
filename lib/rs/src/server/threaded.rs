@@ -43,7 +43,6 @@ use super::TProcessor;
 /// service code.
 ///
 /// ```no_run
-/// use thrift;
 /// use thrift::protocol::{TInputProtocolFactory, TOutputProtocolFactory};
 /// use thrift::protocol::{TBinaryInputProtocolFactory, TBinaryOutputProtocolFactory};
 /// use thrift::protocol::{TInputProtocol, TOutputProtocol};
