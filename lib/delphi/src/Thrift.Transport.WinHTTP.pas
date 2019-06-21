@@ -166,6 +166,9 @@ begin
       Result.AddRequestHeader( pair.Key +': '+ pair.Value, WINHTTP_ADDREQ_FLAG_ADD);
     end;
 
+    // enable automatic gzip,deflate decompression
+    result.EnableAutomaticContentDecompression(TRUE);
+
     // AutoProxy support
     info := TErrorInfo.AutoProxy;
     result.TryAutoProxy( FUri);

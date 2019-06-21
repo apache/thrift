@@ -305,9 +305,11 @@ const
   WINHTTP_OPTION_SERVER_SPN_USED = 106;
   WINHTTP_OPTION_PROXY_SPN_USED = 107;
   WINHTTP_OPTION_SERVER_CBT = 108;
+  // options for newer WinHTTP versions
+  WINHTTP_OPTION_DECOMPRESSION = 118;
   //
   WINHTTP_FIRST_OPTION = WINHTTP_OPTION_CALLBACK;
-  WINHTTP_LAST_OPTION = WINHTTP_OPTION_SERVER_CBT;
+  //WINHTTP_LAST_OPTION = WINHTTP_OPTION_SERVER_CBT;
 
   WINHTTP_OPTION_USERNAME = $1000;
   WINHTTP_OPTION_PASSWORD = $1001;
@@ -367,6 +369,12 @@ const
   // WinHttp supported Authentication Targets
   WINHTTP_AUTH_TARGET_SERVER     = $00000000;
   WINHTTP_AUTH_TARGET_PROXY      = $00000001;
+
+  // options for WINHTTP_OPTION_DECOMPRESSION
+  WINHTTP_DECOMPRESSION_FLAG_GZIP    = $00000001;
+  WINHTTP_DECOMPRESSION_FLAG_DEFLATE = $00000002;
+  WINHTTP_DECOMPRESSION_FLAG_ALL     = WINHTTP_DECOMPRESSION_FLAG_GZIP
+                                    or WINHTTP_DECOMPRESSION_FLAG_DEFLATE;
 
   // values for WINHTTP_OPTION_SECURITY_FLAGS
 
@@ -478,12 +486,13 @@ type
   IWinHTTPConnection = interface;
 
   IWinHTTPRequest = interface
-    ['{0B7D095E-BB3D-4444-8686-5536E7D6437B}']
+    ['{F65952F2-2F3B-47DC-B524-F1694E6D2AD7}']
     function  Handle : HINTERNET;
     function  Connection : IWinHTTPConnection;
     function  AddRequestHeader( const aHeader : string; const addflag : DWORD = WINHTTP_ADDREQ_FLAG_ADD) : Boolean;
     function  SetTimeouts( const aResolveTimeout, aConnectTimeout, aSendTimeout, aReceiveTimeout : Int32) : Boolean;
     procedure TryAutoProxy( const aUrl : string);
+    procedure EnableAutomaticContentDecompression( const aEnable : Boolean);
     function  SendRequest( const pBuf : Pointer; const dwBytes : DWORD; const dwExtra : DWORD = 0) : Boolean;
     function  WriteExtraData( const pBuf : Pointer; const dwBytes : DWORD) : DWORD;
     function  FlushAndReceiveResponse : Boolean;
@@ -601,6 +610,7 @@ type
     function  AddRequestHeader( const aHeader : string; const addflag : DWORD = WINHTTP_ADDREQ_FLAG_ADD) : Boolean;
     function  SetTimeouts( const aResolveTimeout, aConnectTimeout, aSendTimeout, aReceiveTimeout : Int32) : Boolean;
     procedure TryAutoProxy( const aUrl : string);
+    procedure EnableAutomaticContentDecompression( const aEnable : Boolean);
     function  SendRequest( const pBuf : Pointer; const dwBytes : DWORD; const dwExtra : DWORD = 0) : Boolean;
     function  WriteExtraData( const pBuf : Pointer; const dwBytes : DWORD) : DWORD;
     function  FlushAndReceiveResponse : Boolean;
@@ -1033,6 +1043,20 @@ begin
 end;
 
 
+procedure TWinHTTPRequestImpl.EnableAutomaticContentDecompression( const aEnable : Boolean);
+// Enable automatic gzip,deflate decompression on systems that support this option
+// From the docs: WinHTTP will automatically set an appropriate Accept-Encoding header,
+// overriding any value supplied by the caller -> we don't have to do this
+// Available on Win 8.1 or higher
+var value : DWORD;
+begin
+  if aEnable
+  then value := WINHTTP_DECOMPRESSION_FLAG_ALL
+  else value := 0;
+
+  // ignore returned value, the option is not supported with older WinHTTP versions
+  WinHttpSetOption( Handle, WINHTTP_OPTION_DECOMPRESSION, @value, SizeOf(DWORD));
+end;
 
 
 function TWinHTTPRequestImpl.SendRequest( const pBuf : Pointer; const dwBytes, dwExtra : DWORD) : Boolean;
