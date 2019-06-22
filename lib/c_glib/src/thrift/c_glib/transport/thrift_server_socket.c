@@ -23,6 +23,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <sys/socket.h>
+#include <sys/un.h>
 #include <netinet/in.h>
 
 #include <thrift/c_glib/thrift.h>
@@ -36,6 +37,7 @@ enum _ThriftServerSocketProperties
 {
   PROP_0,
   PROP_THRIFT_SERVER_SOCKET_PORT,
+  PROP_THRIFT_SERVER_SOCKET_PATH,
   PROP_THRIFT_SERVER_SOCKET_BACKLOG
 };
 
@@ -48,17 +50,12 @@ gboolean
 thrift_server_socket_listen (ThriftServerTransport *transport, GError **error)
 {
   int enabled = 1; /* for setsockopt() */
-  struct sockaddr_in pin;
   ThriftServerSocket *tsocket = THRIFT_SERVER_SOCKET (transport);
 
-  /* create a address structure */
-  memset (&pin, 0, sizeof(pin));
-  pin.sin_family = AF_INET;
-  pin.sin_addr.s_addr = INADDR_ANY;
-  pin.sin_port = htons(tsocket->port);
+  const int socket_domain = tsocket->path ? PF_UNIX : AF_INET;
 
   /* create a socket */
-  if ((tsocket->sd = socket (AF_INET, SOCK_STREAM, 0)) == -1)
+  if ((tsocket->sd = socket (socket_domain, SOCK_STREAM, 0)) == -1)
   {
     g_set_error (error, THRIFT_SERVER_SOCKET_ERROR,
                  THRIFT_SERVER_SOCKET_ERROR_SOCKET,
@@ -76,22 +73,60 @@ thrift_server_socket_listen (ThriftServerTransport *transport, GError **error)
   }
 
   /* bind to the socket */
-  if (bind(tsocket->sd, (struct sockaddr *) &pin, sizeof(pin)) == -1)
+  if (tsocket->path)
   {
-    g_set_error (error, THRIFT_SERVER_SOCKET_ERROR,
-                 THRIFT_SERVER_SOCKET_ERROR_BIND,
-                 "failed to bind to port %d - %s",
-                 tsocket->port, strerror(errno));
-    return FALSE;
+    /* create a socket structure */
+    struct sockaddr_un pin;
+    memset (&pin, 0, sizeof(pin));
+    pin.sun_family = AF_UNIX;
+    memcpy(pin.sun_path, tsocket->path, strlen(tsocket->path) + 1);
+
+    if (bind(tsocket->sd, (struct sockaddr *) &pin, sizeof(pin)) == -1)
+    {
+      g_set_error (error, THRIFT_SERVER_SOCKET_ERROR,
+                   THRIFT_SERVER_SOCKET_ERROR_BIND,
+                   "failed to bind to path %s",
+                   tsocket->path, strerror(errno));
+      return FALSE;
+    }
+  }
+  else
+  {
+    /* create a address structure */
+    struct sockaddr_in pin;
+    memset (&pin, 0, sizeof(pin));
+    pin.sin_family = AF_INET;
+    pin.sin_addr.s_addr = INADDR_ANY;
+    pin.sin_port = htons(tsocket->port);
+
+    if (bind(tsocket->sd, (struct sockaddr *) &pin, sizeof(pin)) == -1)
+    {
+      g_set_error (error, THRIFT_SERVER_SOCKET_ERROR,
+                   THRIFT_SERVER_SOCKET_ERROR_BIND,
+                   "failed to bind to port %d - %s",
+                   tsocket->port, strerror(errno));
+      return FALSE;
+    }
   }
 
   if (listen(tsocket->sd, tsocket->backlog) == -1)
   {
-    g_set_error (error, THRIFT_SERVER_SOCKET_ERROR,
-                 THRIFT_SERVER_SOCKET_ERROR_LISTEN,
-                 "failed to listen to port %d - %s",
-                 tsocket->port, strerror(errno));
-    return FALSE;
+    if (tsocket->path)
+    {
+      g_set_error (error, THRIFT_SERVER_SOCKET_ERROR,
+                   THRIFT_SERVER_SOCKET_ERROR_BIND,
+                   "failed to bind to path %s",
+                   tsocket->path, strerror(errno));
+      return FALSE;
+    }
+    else
+    {
+      g_set_error (error, THRIFT_SERVER_SOCKET_ERROR,
+                   THRIFT_SERVER_SOCKET_ERROR_LISTEN,
+                   "failed to listen to port %d - %s",
+                   tsocket->port, strerror(errno));
+      return FALSE;
+    }
   }
 
   return TRUE;
@@ -178,6 +213,9 @@ thrift_server_socket_get_property (GObject *object, guint property_id,
     case PROP_THRIFT_SERVER_SOCKET_PORT:
       g_value_set_uint (value, socket->port);
       break;
+    case PROP_THRIFT_SERVER_SOCKET_PATH:
+      g_value_set_string (value, socket->path);
+      break;
     case PROP_THRIFT_SERVER_SOCKET_BACKLOG:
       g_value_set_uint (value, socket->backlog);
       break;
@@ -198,6 +236,12 @@ thrift_server_socket_set_property (GObject *object, guint property_id,
   {
     case PROP_THRIFT_SERVER_SOCKET_PORT:
       socket->port = g_value_get_uint (value);
+      break;
+    case PROP_THRIFT_SERVER_SOCKET_PATH:
+      if (socket->path) {
+        g_free(socket->path);
+      }
+      socket->path = g_strdup (g_value_get_string (value));
       break;
     case PROP_THRIFT_SERVER_SOCKET_BACKLOG:
       socket->backlog = g_value_get_uint (value);
@@ -230,6 +274,16 @@ thrift_server_socket_class_init (ThriftServerSocketClass *cls)
                                   G_PARAM_READWRITE);
   g_object_class_install_property (gobject_class,
                                    PROP_THRIFT_SERVER_SOCKET_PORT,
+                                   param_spec);
+
+  param_spec = g_param_spec_string ("path",
+                                    "path (construct)",
+                                    "Set the path to listen to",
+                                    NULL, /* default value */
+                                    G_PARAM_CONSTRUCT_ONLY |
+                                    G_PARAM_READWRITE);
+  g_object_class_install_property (gobject_class,
+                                   PROP_THRIFT_SERVER_SOCKET_PATH,
                                    param_spec);
 
   param_spec = g_param_spec_uint ("backlog",
