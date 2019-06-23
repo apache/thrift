@@ -395,6 +395,11 @@ private:
   unordered_map<string, string> module_name_2_import_path;
 
   /**
+   * Cache for TypeScript includes to generated import name.
+   */
+  unordered_map<t_program*, string> include_2_import_name;
+
+  /**
    * The prefix to use when generating the episode file.
    */
   string thrift_package_output_directory_;
@@ -464,7 +469,7 @@ void t_js_generator::init_generator() {
   f_types_ << js_includes() << endl << render_includes() << endl;
 
   if (gen_ts_) {
-    f_types_ts_ << autogen_comment() << ts_includes() << endl;
+    f_types_ts_ << autogen_comment() << ts_includes() << endl << render_ts_includes() << endl;
   }
 
   if (gen_node_) {
@@ -567,7 +572,9 @@ string t_js_generator::render_ts_includes() {
   }
   const vector<t_program*>& includes = program_->get_includes();
   for (auto include : includes) {
-    result += "import " + make_valid_nodeJs_identifier(include->get_name()) + "_ttypes = require('" + get_import_path(include) + "');\n";
+    string include_name = make_valid_nodeJs_identifier(include->get_name()) + "_ttypes";
+    include_2_import_name.insert({include, include_name});
+    result += "import " + include_name + " = require('" + get_import_path(include) + "');\n";
   }
   if (includes.size() > 0) {
     result += "\n";
@@ -2719,9 +2726,22 @@ string t_js_generator::ts_get_type(t_type* type) {
     }
   } else if (type->is_enum() || type->is_struct() || type->is_xception()) {
     std::string type_name;
+    
     if (type->get_program()) {
       type_name = js_namespace(type->get_program());
+
+      // If the type is not defined within the current program, we need to prefix it with the same name as
+      // the generated "import" statement for the types containing program
+      if(type->get_program() != program_)  {
+        auto prefix = include_2_import_name.find(type->get_program());
+
+        if(prefix != include_2_import_name.end()) {
+          type_name.append(prefix->second);
+          type_name.append(".");
+        }
+      }
     }
+
     type_name.append(type->get_name());
     ts_type = type_name;
   } else if (type->is_list() || type->is_set()) {
