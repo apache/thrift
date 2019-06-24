@@ -17,7 +17,7 @@
 # under the License.
 #
 
-AUTOMAKE_OPTIONS = subdir-objects
+AUTOMAKE_OPTIONS = subdir-objects nostdinc
 
 moc__%.cpp: %.h
 	$(QT5_MOC) $(QT5_CFLAGS) $< -o $@

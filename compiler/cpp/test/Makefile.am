@@ -21,7 +21,7 @@
 # Please see doc/old-thrift-license.txt in the Thrift distribution for
 # details.
 
-AUTOMAKE_OPTIONS = subdir-objects serial-tests
+AUTOMAKE_OPTIONS = subdir-objects serial-tests nostdinc
 
 AM_CPPFLAGS = $(BOOST_CPPFLAGS) -I$(top_srcdir)/compiler/cpp/src
 AM_LDFLAGS = $(BOOST_LDFLAGS)

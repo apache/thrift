@@ -776,7 +776,7 @@ AC_SUBST(GCOV_LDFLAGS)
 AC_CONFIG_HEADERS(config.h:config.hin)
 AC_CONFIG_HEADERS(lib/cpp/src/thrift/config.h:config.hin)
 AC_CONFIG_HEADERS(lib/c_glib/src/thrift/config.h:config.hin)
-# gruard against pre defined config.h
+# guard against pre defined config.h
 AH_TOP([
 #ifndef CONFIG_H
 #define CONFIG_H
