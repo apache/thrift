@@ -239,14 +239,14 @@ namespace Thrift.Transport.Server
 
         private class ServerTransport : TTransport
         {
-            private readonly NamedPipeServerStream _stream;
+            private readonly NamedPipeServerStream PipeStream;
 
             public ServerTransport(NamedPipeServerStream stream)
             {
-                _stream = stream;
+                PipeStream = stream;
             }
 
-            public override bool IsOpen => _stream != null && _stream.IsConnected;
+            public override bool IsOpen => PipeStream != null && PipeStream.IsConnected;
 
             public override async Task OpenAsync(CancellationToken cancellationToken)
             {
@@ -258,27 +258,37 @@ namespace Thrift.Transport.Server
 
             public override void Close()
             {
-                _stream?.Dispose();
+                PipeStream?.Dispose();
             }
 
             public override async ValueTask<int> ReadAsync(byte[] buffer, int offset, int length, CancellationToken cancellationToken)
             {
-                if (_stream == null)
+                if (PipeStream == null)
                 {
                     throw new TTransportException(TTransportException.ExceptionType.NotOpen);
                 }
 
-                return await _stream.ReadAsync(buffer, offset, length, cancellationToken);
+                return await PipeStream.ReadAsync(buffer, offset, length, cancellationToken);
             }
 
             public override async Task WriteAsync(byte[] buffer, int offset, int length, CancellationToken cancellationToken)
             {
-                if (_stream == null)
+                if (PipeStream == null)
                 {
                     throw new TTransportException(TTransportException.ExceptionType.NotOpen);
                 }
 
-                await _stream.WriteAsync(buffer, offset, length, cancellationToken);
+                // if necessary, send the data in chunks
+                // there's a system limit around 0x10000 bytes that we hit otherwise
+                // MSDN: "Pipe write operations across a network are limited to 65,535 bytes per write. For more information regarding pipes, see the Remarks section."
+                var nBytes = Math.Min(15 * 4096, length); // 16 would exceed the limit
+                while (nBytes > 0)
+                {
+                    await PipeStream.WriteAsync(buffer, offset, nBytes, cancellationToken);
+                    offset += nBytes;
+                    length -= nBytes;
+                    nBytes = Math.Min(nBytes, length);
+                }
             }
 
             public override async Task FlushAsync(CancellationToken cancellationToken)
@@ -291,7 +301,7 @@ namespace Thrift.Transport.Server
 
             protected override void Dispose(bool disposing)
             {
-                _stream?.Dispose();
+                PipeStream?.Dispose();
             }
         }
     }

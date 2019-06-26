@@ -92,7 +92,8 @@ type
       Empty,           // Edge case: the zero-length empty binary
       Normal,          // Fairly small array of usual size (256 bytes)
       ByteArrayTest,   // THRIFT-4454 Large writes/reads may cause range check errors in debug mode
-      PipeWriteLimit   // THRIFT-4372 Pipe write operations across a network are limited to 65,535 bytes per write.
+      PipeWriteLimit,  // THRIFT-4372 Pipe write operations across a network are limited to 65,535 bytes per write.
+      TwentyMB         // that's quite a bit of data
     );
 
   private
@@ -537,12 +538,12 @@ begin
   // random binary small
   for testsize := Low(TTestSize) to High(TTestSize) do begin
     binOut := PrepareBinaryData( TRUE, testsize);
-    Console.WriteLine('testBinary('+BytesToHex(binOut)+')');
+    Console.WriteLine('testBinary('+IntToStr(Length(binOut))+' bytes)');
     try
       binIn := client.testBinary(binOut);
-      Expect( Length(binOut) = Length(binIn), 'testBinary(): length '+IntToStr(Length(binOut))+' = '+IntToStr(Length(binIn)));
+      Expect( Length(binOut) = Length(binIn), 'testBinary('+IntToStr(Length(binOut))+' bytes): '+IntToStr(Length(binIn))+' bytes received');
       i32 := Min( Length(binOut), Length(binIn));
-      Expect( CompareMem( binOut, binIn, i32), 'testBinary('+BytesToHex(binOut)+') = '+BytesToHex(binIn));
+      Expect( CompareMem( binOut, binIn, i32), 'testBinary('+IntToStr(Length(binOut))+' bytes): validating received data');
     except
       on e:TApplicationException do Console.WriteLine('testBinary(): '+e.Message);
       on e:Exception do Expect( FALSE, 'testBinary(): Unexpected exception "'+e.ClassName+'": '+e.Message);
@@ -1023,6 +1024,7 @@ begin
     Normal         : SetLength( result, $100);
     ByteArrayTest  : SetLength( result, SizeOf(TByteArray) + 128);
     PipeWriteLimit : SetLength( result, 65535 + 128);
+    TwentyMB       : SetLength( result, 20 * 1024 * 1024);
   else
     raise EArgumentException.Create('aSize');
   end;

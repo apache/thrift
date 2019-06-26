@@ -144,7 +144,7 @@ end;
 
 function TTestServer.TTestHandlerImpl.testBinary(const thing: TBytes): TBytes;
 begin
-  Console.WriteLine('testBinary("' + BytesToHex( thing ) + '")');
+  Console.WriteLine('testBinary('+IntToStr(Length(thing)) + ' bytes)');
   Result := thing;
 end;
 
