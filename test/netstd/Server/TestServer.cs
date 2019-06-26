@@ -246,8 +246,7 @@ namespace ThriftTest
 
             public Task<byte[]> testBinaryAsync(byte[] thing, CancellationToken cancellationToken)
             {
-                var hex = BitConverter.ToString(thing).Replace("-", string.Empty);
-                logger.Invoke("testBinary({0:X})", hex);
+                logger.Invoke("testBinary({0} bytes)", thing.Length);
                 return Task.FromResult(thing);
             }
 

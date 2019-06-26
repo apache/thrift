@@ -73,7 +73,7 @@ namespace ThriftTest
             public ProtocolChoice protocol = ProtocolChoice.Binary;
             public TransportChoice transport = TransportChoice.Socket;
 
-            internal void Parse( List<string> args)
+            internal void Parse(List<string> args)
             {
                 for (var i = 0; i < args.Count; ++i)
                 {
@@ -220,18 +220,18 @@ namespace ThriftTest
                 {
                     throw new FileNotFoundException($"Cannot find file: {clientCertName}");
                 }
-            
+
                 var cert = new X509Certificate2(existingPath, "thrift");
 
                 return cert;
             }
-            
+
             public TTransport CreateTransport()
             {
                 // endpoint transport
                 TTransport trans = null;
 
-                switch(transport)
+                switch (transport)
                 {
                     case TransportChoice.Http:
                         Debug.Assert(url != null);
@@ -249,8 +249,8 @@ namespace ThriftTest
                         {
                             throw new InvalidOperationException("Certificate doesn't contain private key");
                         }
-                            
-                        trans = new TTlsSocketTransport(host, port, 0, cert, 
+
+                        trans = new TTlsSocketTransport(host, port, 0, cert,
                             (sender, certificate, chain, errors) => true,
                             null, SslProtocols.Tls | SslProtocols.Tls11 | SslProtocols.Tls12);
                         break;
@@ -263,7 +263,7 @@ namespace ThriftTest
 
 
                 // layered transport
-                switch(layered)
+                switch (layered)
                 {
                     case LayeredChoice.Buffered:
                         trans = new TBufferedTransport(trans);
@@ -436,15 +436,46 @@ namespace ThriftTest
             return BitConverter.ToString(data).Replace("-", string.Empty);
         }
 
-        public static byte[] PrepareTestData(bool randomDist)
+
+        public enum BinaryTestSize
         {
-            var retval = new byte[0x100];
-            var initLen = Math.Min(0x100, retval.Length);
+            Empty,           // Edge case: the zero-length empty binary
+            Normal,          // Fairly small array of usual size (256 bytes)
+            Large,           // Large writes/reads may cause range check errors
+            PipeWriteLimit,  // Windows Limit: Pipe write operations across a network are limited to 65,535 bytes per write.
+            TwentyMB         // that's quite a bit of data
+        };
+
+        public static byte[] PrepareTestData(bool randomDist, BinaryTestSize testcase)
+        {
+            int amount = -1;
+            switch (testcase)
+            {
+                case BinaryTestSize.Empty:
+                    amount = 0;
+                    break;
+                case BinaryTestSize.Normal:
+                    amount = 0x100;
+                    break;
+                case BinaryTestSize.Large:
+                    amount = 0x8000 + 128;
+                    break;
+                case BinaryTestSize.PipeWriteLimit:
+                    amount = 0xFFFF + 128;
+                    break;
+                case BinaryTestSize.TwentyMB:
+                    amount = 20 * 1024 * 1024;
+                    break;
+                default:
+                    throw new ArgumentException(nameof(testcase));
+            }
+
+            var retval = new byte[amount];
 
             // linear distribution, unless random is requested
             if (!randomDist)
             {
-                for (var i = 0; i < initLen; ++i)
+                for (var i = 0; i < retval.Length; ++i)
                 {
                     retval[i] = (byte)i;
                 }
@@ -452,22 +483,10 @@ namespace ThriftTest
             }
 
             // random distribution
-            for (var i = 0; i < initLen; ++i)
-            {
-                retval[i] = (byte)0;
-            }
             var rnd = new Random();
-            for (var i = 1; i < initLen; ++i)
+            for (var i = 1; i < retval.Length; ++i)
             {
-                while (true)
-                {
-                    var nextPos = rnd.Next() % initLen;
-                    if (retval[nextPos] == 0)
-                    {
-                        retval[nextPos] = (byte)i;
-                        break;
-                    }
-                }
+                retval[i] = (byte)rnd.Next(0x100);
             }
             return retval;
         }
@@ -557,32 +576,39 @@ namespace ThriftTest
                 returnCode |= ErrorBaseTypes;
             }
 
-            var binOut = PrepareTestData(true);
-            Console.Write("testBinary(" + BytesToHex(binOut) + ")");
-            try
+            // testBinary()
+            foreach(BinaryTestSize binTestCase in Enum.GetValues(typeof(BinaryTestSize)))
             {
-                var binIn = await client.testBinaryAsync(binOut, MakeTimeoutToken());
-                Console.WriteLine(" = " + BytesToHex(binIn));
-                if (binIn.Length != binOut.Length)
+                var binOut = PrepareTestData(true, binTestCase);
+
+                Console.Write("testBinary({0} bytes)", binOut.Length);
+                try
                 {
-                    Console.WriteLine("*** FAILED ***");
-                    returnCode |= ErrorBaseTypes;
-                }
-                for (var ofs = 0; ofs < Math.Min(binIn.Length, binOut.Length); ++ofs)
-                    if (binIn[ofs] != binOut[ofs])
+                    var binIn = await client.testBinaryAsync(binOut, MakeTimeoutToken());
+                    Console.WriteLine(" = {0} bytes", binIn.Length);
+                    if (binIn.Length != binOut.Length)
                     {
                         Console.WriteLine("*** FAILED ***");
                         returnCode |= ErrorBaseTypes;
                     }
-            }
-            catch (Thrift.TApplicationException ex)
-            {
-                Console.WriteLine("*** FAILED ***");
-                returnCode |= ErrorBaseTypes;
-                Console.WriteLine(ex.Message + " ST: " + ex.StackTrace);
+                    for (var ofs = 0; ofs < Math.Min(binIn.Length, binOut.Length); ++ofs)
+                    {
+                        if (binIn[ofs] != binOut[ofs])
+                        {
+                            Console.WriteLine("*** FAILED ***");
+                            returnCode |= ErrorBaseTypes;
+                        }
+                    }
+                }
+                catch (Thrift.TApplicationException ex)
+                {
+                    Console.WriteLine("*** FAILED ***");
+                    returnCode |= ErrorBaseTypes;
+                    Console.WriteLine(ex.Message + " ST: " + ex.StackTrace);
+                }
             }
 
-            // binary equals? 
+            // CrazyNesting 
             Console.WriteLine("Test CrazyNesting");
             var one = new CrazyNesting();
             var two = new CrazyNesting();
