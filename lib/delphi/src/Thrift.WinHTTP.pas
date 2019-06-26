@@ -739,7 +739,7 @@ begin
                              nil);
     SetString( result, pBuffer, nChars);
   finally
-    LocalFree( Cardinal( pBuffer));
+    LocalFree( NativeUInt( pBuffer));
   end;
 end;
 
