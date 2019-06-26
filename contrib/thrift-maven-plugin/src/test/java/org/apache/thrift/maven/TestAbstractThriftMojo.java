@@ -59,7 +59,7 @@ public class TestAbstractThriftMojo {
         // used by other tests. It's used here to represent a dependency of the project maven is building,
         // one that is contributing .thrift IDL files as well as any other artifacts.
         final Iterable<File> classpathElementFiles = Lists.newArrayList(
-                new File("src/test/resources/dependency-jar-test/SharedIdl.jar")
+                new File("target/SharedIdl.jar")
         );
 
         final Set<File> thriftDirectories = mojo.makeThriftPathFromJars(temporaryThriftFileDirectory, classpathElementFiles);
@@ -70,7 +70,7 @@ public class TestAbstractThriftMojo {
         // means it points to the directory containing the "idl" hierarchy rather than to the idl directory
         // itself.
         final Set<File> expected = Sets.newHashSet(
-                new File(testRootDir, "src/test/resources/dependency-jar-test/SharedIdl.jar")
+                new File(testRootDir, "target/SharedIdl.jar")
         );
 
         assertEquals("makeThriftPathFromJars should return thrift IDL base path from within JAR", expected, thriftDirectories);
