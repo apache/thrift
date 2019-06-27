@@ -76,9 +76,7 @@ thrift_multiplexed_protocol_set_property (GObject      *object,
   switch (property_id)
   {
   case PROP_THRIFT_MULTIPLEXED_PROTOCOL_SERVICE_NAME:
-    if(self->service_name){
-      g_free(self->service_name);
-    }
+    g_free(self->service_name);
     self->service_name = g_value_dup_string (value);
     break;
 
