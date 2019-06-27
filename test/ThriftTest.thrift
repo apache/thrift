@@ -212,7 +212,7 @@ service ThriftTest
   Xtruct2      testNest(1: Xtruct2 thing),
 
   /**
-   * Prints 'testMap("{%s")' where thing has been formatted into a string of  'key => value' pairs
+   * Prints 'testMap("{%s")' where thing has been formatted into a string of 'key => value' pairs
    *  separated by commas and new lines
    * @param map<i32,i32> thing - the map<i32,i32> to print
    * @return map<i32,i32> - returns the map<i32,i32> 'thing'
@@ -220,7 +220,7 @@ service ThriftTest
   map<i32,i32> testMap(1: map<i32,i32> thing),
 
   /**
-   * Prints 'testStringMap("{%s}")' where thing has been formatted into a string of  'key => value' pairs
+   * Prints 'testStringMap("{%s}")' where thing has been formatted into a string of 'key => value' pairs
    *  separated by commas and new lines
    * @param map<string,string> thing - the map<string,string> to print
    * @return map<string,string> - returns the map<string,string> 'thing'
@@ -228,7 +228,7 @@ service ThriftTest
   map<string,string> testStringMap(1: map<string,string> thing),
 
   /**
-   * Prints 'testSet("{%s}")' where thing has been formatted into a string of  values
+   * Prints 'testSet("{%s}")' where thing has been formatted into a string of values
    *  separated by commas and new lines
    * @param set<i32> thing - the set<i32> to print
    * @return set<i32> - returns the set<i32> 'thing'
@@ -236,7 +236,7 @@ service ThriftTest
   set<i32>     testSet(1: set<i32> thing),
 
   /**
-   * Prints 'testList("{%s}")' where thing has been formatted into a string of  values
+   * Prints 'testList("{%s}")' where thing has been formatted into a string of values
    *  separated by commas and new lines
    * @param list<i32> thing - the list<i32> to print
    * @return list<i32> - returns the list<i32> 'thing'
@@ -244,7 +244,7 @@ service ThriftTest
   list<i32>    testList(1: list<i32> thing),
 
   /**
-   * Prints 'testEnum("%d")' where thing has been formatted into it's numeric value
+   * Prints 'testEnum("%d")' where thing has been formatted into its numeric value
    * @param Numberz thing - the Numberz to print
    * @return Numberz - returns the Numberz 'thing'
    */
@@ -266,9 +266,9 @@ service ThriftTest
   map<i32,map<i32,i32>> testMapMap(1: i32 hello),
 
   /**
-   * So you think you've got this all worked, out eh?
+   * So you think you've got this all worked out, eh?
    *
-   * Creates a the returned map with these values and prints it out:
+   * Creates a map with these values and prints it out:
    *   { 1 => { 2 => argument,
    *            3 => argument,
    *          },
@@ -295,16 +295,16 @@ service ThriftTest
    * Print 'testException(%s)' with arg as '%s'
    * @param string arg - a string indication what type of exception to throw
    * if arg == "Xception" throw Xception with errorCode = 1001 and message = arg
-   * elsen if arg == "TException" throw TException
+   * else if arg == "TException" throw TException
    * else do not throw anything
    */
   void testException(1: string arg) throws(1: Xception err1),
 
   /**
    * Print 'testMultiException(%s, %s)' with arg0 as '%s' and arg1 as '%s'
-   * @param string arg - a string indication what type of exception to throw
+   * @param string arg - a string indicating what type of exception to throw
    * if arg0 == "Xception" throw Xception with errorCode = 1001 and message = "This is an Xception"
-   * elsen if arg0 == "Xception2" throw Xception2 with errorCode = 2002 and struct_thing.string_thing = "This is an Xception2"
+   * else if arg0 == "Xception2" throw Xception2 with errorCode = 2002 and struct_thing.string_thing = "This is an Xception2"
    * else do not throw anything
    * @return Xtruct - an Xtruct with string_thing = arg1
    */
