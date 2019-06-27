@@ -51,42 +51,20 @@
       </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-jar-plugin</artifactId>
-        <version>3.1.2</version>
+        <artifactId>maven-antrun-plugin</artifactId>
+        <version>1.8</version>
         <executions>
           <execution>
             <id>generate-jar-for-test</id>
-            <phase>process-test-classes</phase>
-            <goals>
-              <goal>test-jar</goal>
-            </goals>
+            <phase>generate-test-resources</phase>
             <configuration>
-              <classifier>idl</classifier>
-              <excludes>
-                <exclude>**/*.class</exclude>
-              </excludes>
-              <includes>
-                <include>**/*.thrift</include>
-              </includes>
+              <target>
+                <jar destfile="${project.build.directory}/SharedIdl.jar" basedir="${basedir}/src/test/resources" includes="**/*.thrift" />
+              </target>
             </configuration>
-          </execution>
-        </executions>
-      </plugin>
-      <plugin>
-        <groupId>com.coderplus.maven.plugins</groupId>
-        <artifactId>copy-rename-maven-plugin</artifactId>
-        <version>1.0</version>
-        <executions>
-          <execution>
-            <id>rename-jar-for-test</id>
-            <phase>process-test-classes</phase>
             <goals>
-              <goal>rename</goal>
+              <goal>run</goal>
             </goals>
-            <configuration>
-              <sourceFile>${project.build.directory}/${project.artifactId}-${project.version}-idl.jar</sourceFile>
-              <destinationFile>${project.build.directory}/SharedIdl.jar</destinationFile>
-            </configuration>
           </execution>
         </executions>
       </plugin>
