@@ -658,20 +658,18 @@ void t_cpp_generator::generate_enum_to_string_helper_function(std::ostream& out,
     out << " val) " ;
 	scope_up(out);
 
-    out << indent() << "std::string out;" << endl;
     out << indent() << "std::map<int, const char*>::const_iterator it = _"
              << tenum->get_name() << "_VALUES_TO_NAMES.find(val);" << endl;
     out << indent() << "if (it != _" << tenum->get_name() << "_VALUES_TO_NAMES.end()) {" << endl;
     indent_up();
-    out << indent() << "out = std::string(it->second);" << endl;
+    out << indent() << "return std::string(it->second);" << endl;
     indent_down();
     out << indent() << "} else {" << endl;
     indent_up();
-    out << indent() << "out = std::to_string(static_cast<int>(val));" << endl;
+    out << indent() << "return std::to_string(static_cast<int>(val));" << endl;
     indent_down();
     out << indent() << "}" << endl;
 
-    out << indent() << "return out;" << endl;
     scope_down(out);
     out << endl;
   }
