@@ -39,7 +39,13 @@ gopath: $(THRIFT) $(THRIFTTEST) \
 				InitialismsTest.thrift \
 				DontExportRWTest.thrift \
 				dontexportrwtest/compile_test.go \
-				IgnoreInitialismsTest.thrift
+				IgnoreInitialismsTest.thrift \
+				ConflictNamespaceTestA.thrift \
+				ConflictNamespaceTestB.thrift \
+				ConflictNamespaceTestC.thrift \
+				ConflictNamespaceTestD.thrift \
+				ConflictNamespaceTestSuperThing.thrift \
+				ConflictNamespaceServiceTest.thrift
 	mkdir -p gopath/src
 	grep -v list.*map.*list.*map $(THRIFTTEST) | grep -v 'set<Insanity>' > ThriftTest.thrift
 	$(THRIFT) $(THRIFTARGS) -r IncludesTest.thrift
@@ -59,6 +65,12 @@ gopath: $(THRIFT) $(THRIFTTEST) \
 	$(THRIFT) $(THRIFTARGS) InitialismsTest.thrift
 	$(THRIFT) $(THRIFTARGS),read_write_private DontExportRWTest.thrift
 	$(THRIFT) $(THRIFTARGS),ignore_initialisms IgnoreInitialismsTest.thrift
+	$(THRIFT) $(THRIFTARGS) ConflictNamespaceTestA.thrift
+	$(THRIFT) $(THRIFTARGS) ConflictNamespaceTestB.thrift
+	$(THRIFT) $(THRIFTARGS) ConflictNamespaceTestC.thrift
+	$(THRIFT) $(THRIFTARGS) ConflictNamespaceTestD.thrift
+	$(THRIFT) $(THRIFTARGS) ConflictNamespaceTestSuperThing.thrift
+	$(THRIFT) $(THRIFTARGS) ConflictNamespaceServiceTest.thrift
 	GOPATH=`pwd`/gopath $(GO) get github.com/golang/mock/gomock || true
 	sed -i 's/\"context\"/\"golang.org\/x\/net\/context\"/g' gopath/src/github.com/golang/mock/gomock/controller.go || true
 	GOPATH=`pwd`/gopath $(GO) get github.com/golang/mock/gomock
@@ -79,7 +91,9 @@ check: gopath
 				initialismstest \
 				dontexportrwtest \
 				ignoreinitialismstest \
-				unionbinarytest
+				unionbinarytest \
+				conflictnamespacetestsuperthing \
+				conflict/context/conflict_service-remote
 	GOPATH=`pwd`/gopath $(GO) test thrift tests dontexportrwtest
 
 clean-local:
@@ -108,4 +122,10 @@ EXTRA_DIST = \
 	NamesTest.thrift \
 	InitialismsTest.thrift \
 	DontExportRWTest.thrift \
-	IgnoreInitialismsTest.thrift
+	IgnoreInitialismsTest.thrift \
+	ConflictNamespaceTestA.thrift \
+	ConflictNamespaceTestB.thrift \
+	ConflictNamespaceTestC.thrift \
+	ConflictNamespaceTestD.thrift \
+	ConflictNamespaceTestSuperThing.thrift
+	ConflictNamespaceServiceTest.thrift
