@@ -17,7 +17,7 @@
 
   1. Open Thrift.sln in lib\csharp\src and build the release version
      of the "Thrift" and "Thrift.45" projects.
-  2. Open Thrift.sln in lib\netcore and build the release version of
+  2. Open Thrift.sln in lib\netstd and build the release version of
      the "Thrift" project.
   3. nuget setApiKey <your-api-key>
   3. nuget pack ApacheThrift.nuspec -Symbols -SymbolPackageFormat snupkg
@@ -37,7 +37,7 @@
     <summary>Apache Thrift .NET Library</summary>
     <description>
       Contains runtime libraries from lib/csharp for net35 and net45 frameworks, 
-      and from lib/netcore for netstandard2.0 framework development.
+      and from lib/netstd for netstandard2.0 framework development.
     </description>
     <repository type="GitHub" url="https://github.com/apache/thrift" branch="release/0.13.0" />
     <tags>Apache Thrift RPC</tags>
@@ -45,6 +45,6 @@
   <files>
     <file src="lib\csharp\src\bin\Release\Thrift.*" target="lib\net35" />
     <file src="lib\csharp\src\bin\Release\Thrift45.*" target="lib\net45" />
-    <file src="lib\netcore\Thrift\bin\Release\netstandard2.0\*.*" target="lib\netstandard2.0" />
+    <file src="lib\netstd\Thrift\bin\Release\netstandard2.0\*.*" target="lib\netstandard2.0" />
   </files>
 </package>
