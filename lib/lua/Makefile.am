@@ -17,7 +17,7 @@
 # under the License.
 #
 
-AUTOMAKE_OPTIONS = subdir-objects
+AUTOMAKE_OPTIONS = subdir-objects nostdinc
 
 SUBDIRS = .
 

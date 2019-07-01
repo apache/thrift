@@ -21,7 +21,7 @@
 # Please see doc/old-thrift-license.txt in the Thrift distribution for
 # details.
 
-AUTOMAKE_OPTIONS = subdir-objects
+AUTOMAKE_OPTIONS = subdir-objects nostdinc
 
 AM_YFLAGS = -d
 

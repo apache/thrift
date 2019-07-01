@@ -16,7 +16,7 @@
 # specific language governing permissions and limitations
 # under the License.
 #
-AUTOMAKE_OPTIONS = subdir-objects serial-tests
+AUTOMAKE_OPTIONS = subdir-objects serial-tests nostdinc
 
 noinst_LTLIBRARIES = libtestcglib.la
 nodist_libtestcglib_la_SOURCES = \
@@ -61,7 +61,7 @@ gen-c_glib/t_test_second_service.c  gen-c_glib/t_test_second_service.h  gen-c_gl
 
 AM_CFLAGS = -g -Wall -Wextra $(GLIB_CFLAGS) $(GOBJECT_CFLAGS)
 AM_CXXFLAGS = $(AM_CFLAGS)
-AM_CPPFLAGS = -I$(top_srcdir)/lib/c_glib/src -Igen-c_glib
+AM_CPPFLAGS = -I$(top_srcdir)/lib/c_glib/src -Igen-c_glib -I$(top_builddir)/lib/c_glib/src/thrift
 AM_LDFLAGS = $(GLIB_LIBS) $(GOBJECT_LIBS) @GCOV_LDFLAGS@
 
 clean-local:
