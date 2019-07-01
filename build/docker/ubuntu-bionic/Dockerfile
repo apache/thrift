@@ -257,7 +257,7 @@ RUN apt-get install -y --no-install-recommends \
       ruby-bundler
 
 # Rust dependencies
-RUN curl https://sh.rustup.rs -sSf | sh -s -- --default-toolchain stable -y
+RUN curl https://sh.rustup.rs -sSf | sh -s -- --default-toolchain 1.35.0 -y
 
 # Swift on Linux for cross tests
 RUN cd / && \
