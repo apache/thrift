@@ -114,6 +114,8 @@ public:
   void generate_enum(t_enum* tenum) override;
   void generate_enum_ostream_operator_decl(std::ostream& out, t_enum* tenum);
   void generate_enum_ostream_operator(std::ostream& out, t_enum* tenum);
+  void generate_enum_to_string_helper_function_decl(std::ostream& out, t_enum* tenum);
+  void generate_enum_to_string_helper_function(std::ostream& out, t_enum* tenum);
   void generate_forward_declaration(t_struct* tstruct) override;
   void generate_struct(t_struct* tstruct) override { generate_cpp_struct(tstruct, false); }
   void generate_xception(t_struct* txception) override { generate_cpp_struct(txception, true); }
@@ -584,6 +586,9 @@ void t_cpp_generator::generate_enum(t_enum* tenum) {
 
   generate_enum_ostream_operator_decl(f_types_, tenum);
   generate_enum_ostream_operator(f_types_impl_, tenum);
+
+  generate_enum_to_string_helper_function_decl(f_types_, tenum);
+  generate_enum_to_string_helper_function(f_types_impl_, tenum);
 }
 
 void t_cpp_generator::generate_enum_ostream_operator_decl(std::ostream& out, t_enum* tenum) {
@@ -626,6 +631,45 @@ void t_cpp_generator::generate_enum_ostream_operator(std::ostream& out, t_enum* 
     out << indent() << "}" << endl;
 
     out << indent() << "return out;" << endl;
+    scope_down(out);
+    out << endl;
+  }
+}
+
+void t_cpp_generator::generate_enum_to_string_helper_function_decl(std::ostream& out, t_enum* tenum) {
+  out << "std::string to_string(const ";
+  if (gen_pure_enums_) {
+    out << tenum->get_name();
+  } else {
+    out << tenum->get_name() << "::type&";
+  }
+  out << " val);" << endl;
+  out << endl;
+}
+
+void t_cpp_generator::generate_enum_to_string_helper_function(std::ostream& out, t_enum* tenum) {
+  if (!has_custom_ostream(tenum)) {
+    out << "std::string to_string(const ";
+    if (gen_pure_enums_) {
+      out << tenum->get_name();
+    } else {
+      out << tenum->get_name() << "::type&";
+    }
+    out << " val) " ;
+	scope_up(out);
+
+    out << indent() << "std::map<int, const char*>::const_iterator it = _"
+             << tenum->get_name() << "_VALUES_TO_NAMES.find(val);" << endl;
+    out << indent() << "if (it != _" << tenum->get_name() << "_VALUES_TO_NAMES.end()) {" << endl;
+    indent_up();
+    out << indent() << "return std::string(it->second);" << endl;
+    indent_down();
+    out << indent() << "} else {" << endl;
+    indent_up();
+    out << indent() << "return std::to_string(static_cast<int>(val));" << endl;
+    indent_down();
+    out << indent() << "}" << endl;
+
     scope_down(out);
     out << endl;
   }

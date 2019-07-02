@@ -26,6 +26,13 @@ std::ostream& operator <<(std::ostream& os, const MyEnumWithCustomOstream::type&
   return os;
 }
 
+std::string to_string(const MyEnumWithCustomOstream::type& val)
+{
+  std::ostringstream os;
+  os << val;
+  return os.str();
+}
+
 BOOST_AUTO_TEST_SUITE(EnumTest)
 
 BOOST_AUTO_TEST_CASE(test_enum_value) {
@@ -66,7 +73,6 @@ std::string EnumToString(_T e)
   return ss.str();
 }
 
-
 BOOST_AUTO_TEST_CASE(test_enum_ostream)
 {
   BOOST_CHECK_EQUAL(EnumToString(MyEnum1::ME1_0), "ME1_0");
@@ -75,8 +81,20 @@ BOOST_AUTO_TEST_CASE(test_enum_ostream)
   BOOST_CHECK_EQUAL(EnumToString(MyEnumWithCustomOstream::CustoM2), "{2:CUSTOM!}");
 
   // some invalid or unknown value
-  auto uut = (MyEnum5::type)44;
+  auto uut = static_cast<MyEnum5::type>(44);
   BOOST_CHECK_EQUAL(EnumToString(uut), "44");
+}
+
+BOOST_AUTO_TEST_CASE(test_enum_to_string)
+{
+  BOOST_CHECK_EQUAL(::to_string(MyEnum1::ME1_0), "ME1_0");
+  BOOST_CHECK_EQUAL(::to_string(MyEnum5::e2), "e2");
+  BOOST_CHECK_EQUAL(::to_string(MyEnum3::ME3_N1), "ME3_N1");
+  BOOST_CHECK_EQUAL(::to_string(MyEnumWithCustomOstream::CustoM2), "{2:CUSTOM!}");
+
+  // some invalid or unknown value
+  auto uut = static_cast<MyEnum5::type>(44);
+  BOOST_CHECK_EQUAL(::to_string(uut), "44");
 }
 
 BOOST_AUTO_TEST_CASE(test_enum_constant)
