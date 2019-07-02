@@ -94,13 +94,13 @@ class TSocket(TSocketBase):
 
     def open(self):
         if self.handle:
-            raise TTransportException(TTransportException.ALREADY_OPEN)
+            raise TTransportException(type=TTransportException.ALREADY_OPEN, message="already open")
         try:
             addrs = self._resolveAddr()
-        except socket.gaierror:
+        except socket.gaierror as gai:
             msg = 'failed to resolve sockaddr for ' + str(self._address)
             logger.exception(msg)
-            raise TTransportException(TTransportException.NOT_OPEN, msg)
+            raise TTransportException(type=TTransportException.NOT_OPEN, message=msg, inner=gai)
         for family, socktype, _, _, sockaddr in addrs:
             handle = self._do_open(family, socktype)
 
@@ -119,7 +119,7 @@ class TSocket(TSocketBase):
         msg = 'Could not connect to any of %s' % list(map(lambda a: a[4],
                                                           addrs))
         logger.error(msg)
-        raise TTransportException(TTransportException.NOT_OPEN, msg)
+        raise TTransportException(type=TTransportException.NOT_OPEN, message=msg)
 
     def read(self, sz):
         try:
@@ -134,8 +134,10 @@ class TSocket(TSocketBase):
                 self.close()
                 # Trigger the check to raise the END_OF_FILE exception below.
                 buff = ''
+            elif e.args[0] == errno.ETIMEDOUT:
+                raise TTransportException(type=TTransportException.TIMED_OUT, message="read timeout", inner=e)
             else:
-                raise
+                raise TTransportException(message="unexpected exception", inner=e)
         if len(buff) == 0:
             raise TTransportException(type=TTransportException.END_OF_FILE,
                                       message='TSocket read 0 bytes')
@@ -148,12 +150,15 @@ class TSocket(TSocketBase):
         sent = 0
         have = len(buff)
         while sent < have:
-            plus = self.handle.send(buff)
-            if plus == 0:
-                raise TTransportException(type=TTransportException.END_OF_FILE,
-                                          message='TSocket sent 0 bytes')
-            sent += plus
-            buff = buff[plus:]
+            try:
+                plus = self.handle.send(buff)
+                if plus == 0:
+                    raise TTransportException(type=TTransportException.END_OF_FILE,
+                                              message='TSocket sent 0 bytes')
+                sent += plus
+                buff = buff[plus:]
+            except socket.error as e:
+                raise TTransportException(message="unexpected exception", inner=e)
 
     def flush(self):
         pass
