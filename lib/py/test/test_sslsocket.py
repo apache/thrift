@@ -75,6 +75,9 @@ class ServerAcceptor(threading.Thread):
 
         try:
             self._client = self._server.accept()
+            if self._client:
+                self._client.read(5)  # hello
+                self._client.write(b"there")
         except Exception:
             logging.exception('error on server side (%s):' % self.name)
             if not self._expect_failure:
@@ -141,7 +144,8 @@ class TSSLSocketTest(unittest.TestCase):
                 client.setTimeout(20)
                 with self._assert_raises(TTransportException):
                     client.open()
-                self.assertTrue(acc.client is None)
+                    client.write(b"hello")
+                    client.read(5)  # b"there"
         finally:
             logging.disable(logging.NOTSET)
 
@@ -153,8 +157,10 @@ class TSSLSocketTest(unittest.TestCase):
 
     def _assert_connection_success(self, server, path=None, **client_args):
         with self._connectable_client(server, path=path, **client_args) as (acc, client):
-            client.open()
             try:
+                client.open()
+                client.write(b"hello")
+                self.assertEqual(client.read(5), b"there")
                 self.assertTrue(acc.client is not None)
             finally:
                 client.close()
