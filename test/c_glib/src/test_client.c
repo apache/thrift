@@ -113,6 +113,7 @@ main (int argc, char **argv)
 {
   static gchar *  host = NULL;
   static gint     port = 9090;
+  static gchar *  path = NULL;
   static gboolean ssl  = FALSE;
   static gchar *  transport_option = NULL;
   static gchar *  protocol_option = NULL;
@@ -124,6 +125,8 @@ main (int argc, char **argv)
       "Host to connect (=localhost)", NULL },
     { "port",            'p', 0, G_OPTION_ARG_INT,      &port,
       "Port number to connect (=9090)", NULL },
+    { "domain-socket",    0, 0, G_OPTION_ARG_STRING,   &path,
+      "Unix socket domain path to connect", NULL },
     { "ssl",             's', 0, G_OPTION_ARG_NONE,     &ssl,
       "Enable SSL", NULL },
     { "transport",       't', 0, G_OPTION_ARG_STRING,   &transport_option,
@@ -227,12 +230,20 @@ main (int argc, char **argv)
   if (!options_valid)
     return 254;
 
-  printf ("Connecting (%s/%s) to: %s/%s:%d\n",
-          transport_name,
-          protocol_name,
-          socket_name,
-          host,
-          port);
+  if (path) {
+    printf ("Connecting (%s/%s) to: %s/%s\n",
+            transport_name,
+            protocol_name,
+            socket_name,
+            path);
+  } else {
+    printf ("Connecting (%s/%s) to: %s/%s:%d\n",
+            transport_name,
+            protocol_name,
+            socket_name,
+            host,
+            port);
+  }
 
   /* Install our SIGPIPE handler, which outputs an error message to
      standard error before exiting so testers can know what
@@ -247,10 +258,16 @@ main (int argc, char **argv)
   }
 
   /* Establish all our connection objects */
-  socket = g_object_new (socket_type,
-                         "hostname", host,
-                         "port",     port,
-                         NULL);
+  if (path) {
+    socket = g_object_new (socket_type,
+                           "path", path,
+                           NULL);
+  } else {
+    socket = g_object_new (socket_type,
+                           "hostname", host,
+                           "port",     port,
+                           NULL);
+  }
 
   if (ssl && !thrift_ssl_load_cert_from_file(THRIFT_SSL_SOCKET(socket), "../keys/CA.pem")) {
     fprintf(stderr, "Unable to load validation certificate ../keys/CA.pem - did you run in the test/c_glib directory?\n");
@@ -336,7 +353,11 @@ main (int argc, char **argv)
       gboolean first;
       gint32 i, j;
 
-      printf ("Test #%d, connect %s:%d\n", test_num + 1, host, port);
+      if (path) {
+        printf ("Test #%d, connect %s\n", test_num + 1, path);
+      } else {
+        printf ("Test #%d, connect %s:%d\n", test_num + 1, host, port);
+      }
       gettimeofday (&time_start, NULL);
 
       /* These test routines have been ported from the C++ test

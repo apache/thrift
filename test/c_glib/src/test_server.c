@@ -69,6 +69,7 @@ int
 main (int argc, char **argv)
 {
   static gint   port = 9090;
+  static gchar *path_option = NULL;
   static gchar *server_type_option = NULL;
   static gchar *transport_option = NULL;
   static gchar *protocol_option = NULL;
@@ -79,6 +80,8 @@ main (int argc, char **argv)
     GOptionEntry option_entries[] = {
     { "port",            0, 0, G_OPTION_ARG_INT,      &port,
       "Port number to connect (=9090)", NULL },
+    { "domain-socket",   0, 0, G_OPTION_ARG_STRING,   &path_option,
+      "Unix socket domain path to connect", NULL },
     { "server-type",     0, 0, G_OPTION_ARG_STRING,   &server_type_option,
       "Type of server: simple (=simple)", NULL },
     { "transport",       0, 0, G_OPTION_ARG_STRING,   &transport_option,
@@ -218,9 +221,15 @@ main (int argc, char **argv)
                                         "handler", handler,
                                         NULL);
   }
-  server_transport  = g_object_new (THRIFT_TYPE_SERVER_SOCKET,
-                                    "port", port,
-                                    NULL);
+  if (path_option) {
+    server_transport  = g_object_new (THRIFT_TYPE_SERVER_SOCKET,
+                                      "path", path_option,
+                                      NULL);
+  } else {
+    server_transport  = g_object_new (THRIFT_TYPE_SERVER_SOCKET,
+                                      "port", port,
+                                      NULL);
+  }
   transport_factory = g_object_new (transport_factory_type,
                                     NULL);
 
@@ -250,11 +259,19 @@ main (int argc, char **argv)
   sigint_action.sa_flags = SA_RESETHAND;
   sigaction (SIGINT, &sigint_action, NULL);
 
-  printf ("Starting \"%s\" server (%s/%s) listen on: %d\n",
-          server_name,
-          transport_name,
-          protocol_name,
-          port);
+  if (path_option) {
+    printf ("Starting \"%s\" server (%s/%s) listen on: %s\n",
+            server_name,
+            transport_name,
+            protocol_name,
+            path_option);
+  } else {
+    printf ("Starting \"%s\" server (%s/%s) listen on: %d\n",
+            server_name,
+            transport_name,
+            protocol_name,
+            port);
+  }
   fflush (stdout);
 
   /* Serve clients until SIGINT is received (Ctrl-C is pressed) */

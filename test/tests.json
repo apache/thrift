@@ -32,7 +32,8 @@
       "framed"
     ],
     "sockets": [
-      "ip"
+      "ip",
+      "domain"
     ],
     "protocols": [
       "binary",

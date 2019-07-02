@@ -50,6 +50,7 @@ struct _ThriftServerSocket
 
   /* private */
   guint port;
+  gchar *path;
   gshort backlog;
   int sd;
   guint8 *buf;
