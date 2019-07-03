@@ -148,7 +148,28 @@ jobs:
       env:
         - JOB="Coverity Scan"
         - SCRIPT="covscan.sh"
-     
+
+    # ------------------------- phase: swift ------------------------
+    # We lint the podspec
+    - os: osx
+      osx_image: xcode10.1
+      language: swift
+      script:
+        - gem update cocoapods
+        - pod lib lint --allow-warnings --swift-version=3
+      env:
+        - JOB="pod lib lint"
+
+    - os: osx
+      osx_image: xcode10.2
+      language: swift
+      script:
+        - gem update cocoapods
+        - pod lib lint --allow-warnings --swift-version=4.0
+        - pod lib lint --allow-warnings --swift-version=4.2
+        - pod lib lint --allow-warnings --swift-version=5.0
+      env:
+        - JOB="pod lib lint"
 
   ### ------------------------- phase: osx --------------------------
   # disabled due to the time delays it imposes on build jobs
