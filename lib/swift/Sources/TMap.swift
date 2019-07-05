@@ -36,12 +36,6 @@ public struct TMap<Key : TSerializable & Hashable, Value : TSerializable>: Colle
     return storage.updateValue(value, forKey: key)
   }
   
-  /*
-  public mutating func removeAtIndex(_ index: DictionaryIndex<Key, Value>) -> (Key, Value) {
-    return storage.removeAtIndex(index)
-  }
-  */
-  
   public mutating func removeValueForKey(_ key: Key) -> Value? {
     return storage.removeValue(forKey: key)
   }
