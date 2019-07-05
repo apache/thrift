@@ -28,6 +28,7 @@ include_directories(SYSTEM "${GLIBCONFIG_INCLUDE_DIR}")
 include_directories("${CMAKE_CURRENT_BINARY_DIR}")
 include_directories("${CMAKE_CURRENT_BINARY_DIR}/gen-c_glib")
 include_directories("${PROJECT_SOURCE_DIR}/lib/c_glib/src")
+include_directories(SYSTEM "${OPENSSL_INCLUDE_DIR}")
 
 set(crosstestgencglib_SOURCES
 	gen-c_glib/t_test_second_service.c
@@ -44,7 +45,7 @@ add_executable(test_server src/test_server.c src/thrift_test_handler.c src/thrif
 target_link_libraries(test_server crosstestgencglib)
 
 add_executable(test_client src/test_client.c)
-target_link_libraries(test_client crosstestgencglib)
+target_link_libraries(test_client crosstestgencglib "${OPENSSL_LIBRARIES}")
 
 #
 # Common thrift code generation rules
