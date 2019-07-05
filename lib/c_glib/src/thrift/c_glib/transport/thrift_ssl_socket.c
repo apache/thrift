@@ -26,6 +26,7 @@
 #include <netinet/in.h>
 #include <openssl/ssl.h>
 #include <pthread.h>
+#include <inttypes.h>
 
 #include <glib-object.h>
 #include <glib.h>
@@ -65,6 +66,8 @@ static gboolean thrift_ssl_socket_openssl_initialized=FALSE;
 /* This array will store all of the mutexes available to OpenSSL. */
 static MUTEX_TYPE *thrift_ssl_socket_global_mutex_buf=NULL;
 
+gboolean thrift_ssl_socket_authorize(ThriftTransport * transport, GError **error);
+gboolean thrift_ssl_socket_close (ThriftTransport *transport, GError **error);
 
 /**
  * OpenSSL uniq id function.
@@ -151,7 +154,7 @@ G_DEFINE_TYPE(ThriftSSLSocket, thrift_ssl_socket, THRIFT_TYPE_SOCKET)
  * @param error
  */
 static
-void thrift_ssl_socket_get_ssl_error(ThriftSSLSocket *socket, const guchar *error_msg, guint thrift_error_no, int ssl_error, GError **error)
+void thrift_ssl_socket_get_ssl_error(ThriftSSLSocket *socket, const gchar *error_msg, guint thrift_error_no, int ssl_error, GError **error)
 {
   unsigned long error_code;
   char buffer[1024];
@@ -175,15 +178,15 @@ void thrift_ssl_socket_get_ssl_error(ThriftSSLSocket *socket, const guchar *erro
 	  break;
 	case SSL_ERROR_SYSCALL:
 	  buffer_size-=snprintf(buffer, buffer_size, "%s: ", error_msg);
-	  buffer_size-=snprintf(buffer+(1024-buffer_size), buffer_size, "%lX -> %s", errno, strerror(errno));
+	  buffer_size-=snprintf(buffer+(1024-buffer_size), buffer_size, "%" PRId32 " -> %s", errno, strerror(errno));
 	  break;
 	case SSL_ERROR_WANT_READ:
 	  buffer_size-=snprintf(buffer, buffer_size, "%s: ", error_msg);
-	  buffer_size-=snprintf(buffer+(1024-buffer_size), buffer_size, "%lX -> %s", ssl_error_type, "Error while reading from underlaying layer");
+	  buffer_size-=snprintf(buffer+(1024-buffer_size), buffer_size, "%" PRId32 " -> %s", ssl_error_type, "Error while reading from underlaying layer");
 	  break;
 	case SSL_ERROR_WANT_WRITE:
 	  buffer_size-=snprintf(buffer, buffer_size, "%s: ", error_msg);
-	  buffer_size-=snprintf(buffer+(1024-buffer_size), buffer_size, "%lX -> %s", ssl_error_type, "Error while writting to underlaying layer");
+	  buffer_size-=snprintf(buffer+(1024-buffer_size), buffer_size, "%" PRId32 " -> %s", ssl_error_type, "Error while writting to underlaying layer");
 	  break;
 
       }
@@ -199,7 +202,7 @@ void thrift_ssl_socket_get_ssl_error(ThriftSSLSocket *socket, const guchar *erro
  * @param error
  */
 static
-void thrift_ssl_socket_get_error(const guchar *error_msg, guint thrift_error_no, GError **error)
+void thrift_ssl_socket_get_error(const gchar *error_msg, guint thrift_error_no, GError **error)
 {
   unsigned long error_code;
   while ((error_code = ERR_get_error()) != 0) {
@@ -270,13 +273,9 @@ thrift_ssl_socket_open (ThriftTransport *transport, GError **error)
 gboolean
 thrift_ssl_socket_close (ThriftTransport *transport, GError **error)
 {
-  gboolean retval = FALSE;
   ThriftSSLSocket *ssl_socket = THRIFT_SSL_SOCKET(transport);
   if(ssl_socket!=NULL && ssl_socket->ssl) {
-      int rc = SSL_shutdown(ssl_socket->ssl);
-/*      if (rc < 0) {
-	  int errno_copy = THRIFT_SSL_SOCKET_ERROR_SSL;
-      }*/
+      SSL_shutdown(ssl_socket->ssl);
       SSL_free(ssl_socket->ssl);
       ssl_socket->ssl = NULL;
       ERR_remove_state(0);
