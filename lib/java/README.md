@@ -168,10 +168,10 @@ http://gradle.org/
 
 # Breaking Changes
 
-## 1.0
+## 0.13.0
 
 * The signature of the 'process' method in TAsyncProcessor and TProcessor has
-changed to remove a boolean return type and to instead rely on Exceptions.
+changed to remove the boolean return type and instead rely on Exceptions.
 
 * Per THRIFT-4805, TSaslTransportException has been removed. The same condition
 is now covered by TTansportException, where `TTransportException.getType() == END_OF_FILE`.
