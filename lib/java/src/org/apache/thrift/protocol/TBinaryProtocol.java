@@ -33,8 +33,8 @@ public class TBinaryProtocol extends TProtocol {
   private static final TStruct ANONYMOUS_STRUCT = new TStruct();
   private static final long NO_LENGTH_LIMIT = -1;
 
-  protected static final int VERSION_MASK = 0xffff0000;
-  protected static final int VERSION_1 = 0x80010000;
+  public static final int VERSION_MASK = 0xffff0000;
+  public static final int VERSION_1 = 0x80010000;
 
   /**
    * The maximum number of bytes to read from the transport for

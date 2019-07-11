@@ -87,12 +87,12 @@ public class TCompactProtocol extends TProtocol {
     }
   }
 
-  private static final byte PROTOCOL_ID = (byte)0x82;
+  public static final byte PROTOCOL_ID = (byte)0x82;
   private static final byte VERSION = 1;
   private static final byte VERSION_MASK = 0x1f; // 0001 1111
   private static final byte TYPE_MASK = (byte)0xE0; // 1110 0000
   private static final byte TYPE_BITS = 0x07; // 0000 0111
-  private static final int  TYPE_SHIFT_AMOUNT = 5;
+  public static final int  TYPE_SHIFT_AMOUNT = 5;
 
   /**
    * All of the on-wire type codes.
