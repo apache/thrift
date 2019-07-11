@@ -8,12 +8,13 @@ It is important to note here that Apache Thrift is designed for version interope
 
 ### Versioning
 
-Apache Thrift and the vast majority of package management systems out there conform to the [SemVer 2.0](https://semver.org/spec/v2.0.0.html) version numbering specification.
+Apache Thrift and the vast majority of package management systems out there conform to the [SemVer 2.0](https://semver.org/spec/v2.0.0.html) version numbering specification.  Apache Thrift uses the following versioning rules:
 
-In terms of releases, the important version numbers for Apache Thrift are the major and minor.  The patch number is used in the following cases:
+- *major* is currently always zero;
+- *minor* is increased for each release cycle;
+- *patch* is increased for patch builds between release cycles to address critical defect, security, or packaging issues
 
-1. There were language-specific critical defects or packaging issues.
-1. There was something horribly and fundamentally wrong with a x.x.0 release.
+Further, if there are only packaging changes for a single third-party distribution point to correct an issue, the major.minor.patch may remain the same while adding a suffix compatible with that distribution point, for example "0.12.0.1" for nuget, or "0.12.0-1" for maven.
 
 #### External Package Patches
 
