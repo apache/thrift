@@ -22,6 +22,7 @@ package org.apache.thrift.server;
 import org.apache.thrift.TAsyncProcessor;
 import org.apache.thrift.TByteArrayOutputStream;
 import org.apache.thrift.TException;
+import org.apache.thrift.protocol.THeaderProtocol;
 import org.apache.thrift.protocol.TProtocol;
 import org.apache.thrift.transport.TFramedTransport;
 import org.apache.thrift.transport.TIOStreamTransport;
@@ -33,6 +34,7 @@ import org.apache.thrift.transport.TTransportException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.SelectionKey;
@@ -313,10 +315,20 @@ public abstract class AbstractNonblockingServer extends TServer {
 
       frameTrans_ = new TMemoryInputTransport();
       response_ = new TByteArrayOutputStream();
-      inTrans_ = inputTransportFactory_.getTransport(frameTrans_);
-      outTrans_ = outputTransportFactory_.getTransport(new TIOStreamTransport(response_));
-      inProt_ = inputProtocolFactory_.getProtocol(inTrans_);
-      outProt_ = outputProtocolFactory_.getProtocol(outTrans_);
+
+      // For THeader inProt and outProt must be the same object
+      if (inputProtocolFactory_ instanceof THeaderProtocol.Factory) {
+        inTrans_ = inputTransportFactory_.getTransport(
+                new TIOStreamTransport(new ByteArrayInputStream(buffer_.array()), response_));
+        inProt_ = inputProtocolFactory_.getProtocol(inTrans_);
+        outTrans_ = null;
+        outProt_ = inProt_;
+      } else {
+        inTrans_ = inputTransportFactory_.getTransport(frameTrans_);
+        outTrans_ = outputTransportFactory_.getTransport(new TIOStreamTransport(response_));
+        inProt_ = inputProtocolFactory_.getProtocol(inTrans_);
+        outProt_ = outputProtocolFactory_.getProtocol(outTrans_);
+      }
 
       if (eventHandler_ != null) {
         context_ = eventHandler_.createContext(inProt_, outProt_);

@@ -30,6 +30,7 @@ import java.util.concurrent.TimeUnit;
 
 import org.apache.thrift.TException;
 import org.apache.thrift.TProcessor;
+import org.apache.thrift.protocol.THeaderProtocol;
 import org.apache.thrift.protocol.TProtocol;
 import org.apache.thrift.transport.TServerTransport;
 import org.apache.thrift.transport.TTransport;
@@ -291,9 +292,14 @@ public class TThreadPoolServer extends TServer {
       try {
         processor = processorFactory_.getProcessor(client_);
         inputTransport = inputTransportFactory_.getTransport(client_);
-        outputTransport = outputTransportFactory_.getTransport(client_);
         inputProtocol = inputProtocolFactory_.getProtocol(inputTransport);
-        outputProtocol = outputProtocolFactory_.getProtocol(outputTransport);
+        // THeaderProtocol must be the same instance for both input and output
+        if (inputProtocol instanceof THeaderProtocol) {
+          outputProtocol = inputProtocol;
+        } else {
+          outputTransport = outputTransportFactory_.getTransport(client_);
+          outputProtocol = outputProtocolFactory_.getProtocol(outputTransport);
+        }
 
         eventHandler = getEventHandler();
         if (eventHandler != null) {
