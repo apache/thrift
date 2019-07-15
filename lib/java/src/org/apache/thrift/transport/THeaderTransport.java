@@ -269,11 +269,6 @@ public class THeaderTransport extends TFramedTransport {
         readFrame(0);
     }
 
-    //@Override
-    protected void readFrame() throws TTransportException {
-        throw new TTransportException("You must use readFrame(int reqLen)");
-    }
-
     /**
      * Reads another frame
      *
