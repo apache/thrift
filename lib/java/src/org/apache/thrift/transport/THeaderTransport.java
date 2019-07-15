@@ -415,8 +415,8 @@ public class THeaderTransport extends TFramedTransport {
             int transId = readVarint32Buf(frame);
             if (transId == Transforms.ZLIB_TRANSFORM.getValue()) {
                 readTransforms.add(transId);
-            } else if (transId == Transforms.SNAPPY_TRANSFORM.getValue()) {
-                readTransforms.add(transId);
+//            } else if (transId == Transforms.SNAPPY_TRANSFORM.getValue()) {
+//                readTransforms.add(transId);
             } else if (transId == Transforms.HMAC_TRANSFORM.getValue()) {
                 throw new THeaderException("Hmac transform no longer supported");
             } else {
@@ -455,6 +455,8 @@ public class THeaderTransport extends TFramedTransport {
 
         frame = untransform(frame);
         readBuffer_.reset(frame.array(), frame.position(), frame.remaining());
+        // adjust for 4 bytes sizeFiller_ in TFramedTransport
+        readBuffer_.consumeBuffer(4);
     }
 
     private ByteBuffer untransform(ByteBuffer data) throws TTransportException {
@@ -574,7 +576,7 @@ public class THeaderTransport extends TFramedTransport {
         flushImpl(false);
     }
 
-    //@Override
+    @Override
     public void onewayFlush() throws TTransportException {
         flushImpl(true);
     }
@@ -710,8 +712,7 @@ public class THeaderTransport extends TFramedTransport {
         }
 
         if (oneway) {
-            // for now it's same
-            transport_.flush();
+            transport_.onewayFlush();
         } else {
             transport_.flush();
         }

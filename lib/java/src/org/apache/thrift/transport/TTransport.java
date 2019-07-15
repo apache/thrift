@@ -160,4 +160,13 @@ public abstract class TTransport implements Closeable {
    * @param len
    */
   public void consumeBuffer(int len) {}
+
+  /**
+   * Flush any pending data out of a transport buffer for a oneway call.
+   *
+   * @throws TTransportException if there was an error writing out data.
+   */
+  public void onewayFlush() throws TTransportException {
+    flush();
+  }
 }
