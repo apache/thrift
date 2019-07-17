@@ -82,7 +82,7 @@ namespace Thrift.Transports.Client
             if (OutputStream == null)
             {
                 throw new TTransportException(TTransportException.ExceptionType.NotOpen,
-                    "Cannot read from null inputstream");
+                    "Cannot write to null outputstream");
             }
 
             await OutputStream.WriteAsync(buffer, offset, length, cancellationToken);

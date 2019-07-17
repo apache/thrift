@@ -35,7 +35,7 @@ public:
                       const std::string& long_name,
                       const std::string& documentation);
 
-  virtual ~t_generator_factory() {}
+  virtual ~t_generator_factory() = default;
 
   virtual t_generator* get_generator(
       // The program to generate.
@@ -65,13 +65,13 @@ public:
                            const std::string& documentation)
     : t_generator_factory(short_name, long_name, documentation) {}
 
-  virtual t_generator* get_generator(t_program* program,
+  t_generator* get_generator(t_program* program,
                                      const std::map<std::string, std::string>& parsed_options,
-                                     const std::string& option_string) {
+                                     const std::string& option_string) override {
     return new generator(program, parsed_options, option_string);
   }
 
-  virtual bool is_valid_namespace(const std::string& sub_namespace) {
+  bool is_valid_namespace(const std::string& sub_namespace) override {
     return generator::is_valid_namespace(sub_namespace);
   }
 };

@@ -79,6 +79,10 @@
 #include <byteswap.h>
 #define ntohll(n) bswap_64(n)
 #define htonll(n) bswap_64(n)
+#elif defined(_MSC_VER)
+#include <stdlib.h>
+#define ntohll(n) _byteswap_uint64(n)
+#define htonll(n) _byteswap_uint64(n)
 #else /* GNUC & GLIBC */
 #define ntohll(n) ((((unsigned long long)ntohl(n)) << 32) + ntohl(n >> 32))
 #define htonll(n) ((((unsigned long long)htonl(n)) << 32) + htonl(n >> 32))

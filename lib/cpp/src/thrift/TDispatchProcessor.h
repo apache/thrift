@@ -33,15 +33,15 @@ namespace thrift {
 template <class Protocol_>
 class TDispatchProcessorT : public TProcessor {
 public:
-  virtual bool process(stdcxx::shared_ptr<protocol::TProtocol> in,
-                       stdcxx::shared_ptr<protocol::TProtocol> out,
-                       void* connectionContext) {
+  bool process(std::shared_ptr<protocol::TProtocol> in,
+                       std::shared_ptr<protocol::TProtocol> out,
+                       void* connectionContext) override {
     protocol::TProtocol* inRaw = in.get();
     protocol::TProtocol* outRaw = out.get();
 
     // Try to dynamic cast to the template protocol type
-    Protocol_* specificIn = dynamic_cast<Protocol_*>(inRaw);
-    Protocol_* specificOut = dynamic_cast<Protocol_*>(outRaw);
+    auto* specificIn = dynamic_cast<Protocol_*>(inRaw);
+    auto* specificOut = dynamic_cast<Protocol_*>(outRaw);
     if (specificIn && specificOut) {
       return processFast(specificIn, specificOut, connectionContext);
     }
@@ -105,9 +105,9 @@ protected:
  */
 class TDispatchProcessor : public TProcessor {
 public:
-  virtual bool process(stdcxx::shared_ptr<protocol::TProtocol> in,
-                       stdcxx::shared_ptr<protocol::TProtocol> out,
-                       void* connectionContext) {
+  bool process(std::shared_ptr<protocol::TProtocol> in,
+                       std::shared_ptr<protocol::TProtocol> out,
+                       void* connectionContext) override {
     std::string fname;
     protocol::TMessageType mtype;
     int32_t seqid;

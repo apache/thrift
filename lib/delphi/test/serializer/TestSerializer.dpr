@@ -34,6 +34,7 @@ uses
   Thrift.Utils in '..\..\src\Thrift.Utils.pas',
   Thrift.Serializer in '..\..\src\Thrift.Serializer.pas',
   Thrift.Stream in '..\..\src\Thrift.Stream.pas',
+  Thrift.WinHTTP in '..\..\src\Thrift.WinHTTP.pas',
   Thrift.TypeRegistry in '..\..\src\Thrift.TypeRegistry.pas',
   System_,
   DebugProtoTest,

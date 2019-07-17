@@ -19,9 +19,10 @@
 
 #include <thrift/thrift-config.h>
 
-#include <errno.h>
-#include <string>
 #include <cstring>
+#include <errno.h>
+#include <memory>
+#include <string>
 #ifdef HAVE_ARPA_INET_H
 #include <arpa/inet.h>
 #endif
@@ -95,7 +96,7 @@ static CRYPTO_dynlock_value* dyn_create(const char*, int) {
 }
 
 static void dyn_lock(int mode, struct CRYPTO_dynlock_value* lock, const char*, int) {
-  if (lock != NULL) {
+  if (lock != nullptr) {
     if (mode & CRYPTO_LOCK) {
       lock->mutex.lock();
     } else {
@@ -180,7 +181,7 @@ SSLContext::SSLContext(const SSLProtocol& protocol) {
     throw TSSLException("SSL_CTX_new: Unknown protocol");
   }
 
-  if (ctx_ == NULL) {
+  if (ctx_ == nullptr) {
     string errors;
     buildErrors(errors);
     throw TSSLException("SSL_CTX_new: " + errors);
@@ -196,15 +197,15 @@ SSLContext::SSLContext(const SSLProtocol& protocol) {
 }
 
 SSLContext::~SSLContext() {
-  if (ctx_ != NULL) {
+  if (ctx_ != nullptr) {
     SSL_CTX_free(ctx_);
-    ctx_ = NULL;
+    ctx_ = nullptr;
   }
 }
 
 SSL* SSLContext::createSSL() {
   SSL* ssl = SSL_new(ctx_);
-  if (ssl == NULL) {
+  if (ssl == nullptr) {
     string errors;
     buildErrors(errors);
     throw TSSLException("SSL_new: " + errors);
@@ -213,34 +214,34 @@ SSL* SSLContext::createSSL() {
 }
 
 // TSSLSocket implementation
-TSSLSocket::TSSLSocket(stdcxx::shared_ptr<SSLContext> ctx)
-  : TSocket(), server_(false), ssl_(NULL), ctx_(ctx) {
+TSSLSocket::TSSLSocket(std::shared_ptr<SSLContext> ctx)
+  : TSocket(), server_(false), ssl_(nullptr), ctx_(ctx) {
   init();
 }
 
-TSSLSocket::TSSLSocket(stdcxx::shared_ptr<SSLContext> ctx, stdcxx::shared_ptr<THRIFT_SOCKET> interruptListener)
-        : TSocket(), server_(false), ssl_(NULL), ctx_(ctx) {
+TSSLSocket::TSSLSocket(std::shared_ptr<SSLContext> ctx, std::shared_ptr<THRIFT_SOCKET> interruptListener)
+        : TSocket(), server_(false), ssl_(nullptr), ctx_(ctx) {
   init();
   interruptListener_ = interruptListener;
 }
 
-TSSLSocket::TSSLSocket(stdcxx::shared_ptr<SSLContext> ctx, THRIFT_SOCKET socket)
-  : TSocket(socket), server_(false), ssl_(NULL), ctx_(ctx) {
+TSSLSocket::TSSLSocket(std::shared_ptr<SSLContext> ctx, THRIFT_SOCKET socket)
+  : TSocket(socket), server_(false), ssl_(nullptr), ctx_(ctx) {
   init();
 }
 
-TSSLSocket::TSSLSocket(stdcxx::shared_ptr<SSLContext> ctx, THRIFT_SOCKET socket, stdcxx::shared_ptr<THRIFT_SOCKET> interruptListener)
-        : TSocket(socket, interruptListener), server_(false), ssl_(NULL), ctx_(ctx) {
+TSSLSocket::TSSLSocket(std::shared_ptr<SSLContext> ctx, THRIFT_SOCKET socket, std::shared_ptr<THRIFT_SOCKET> interruptListener)
+        : TSocket(socket, interruptListener), server_(false), ssl_(nullptr), ctx_(ctx) {
   init();
 }
 
-TSSLSocket::TSSLSocket(stdcxx::shared_ptr<SSLContext> ctx, string host, int port)
-  : TSocket(host, port), server_(false), ssl_(NULL), ctx_(ctx) {
+TSSLSocket::TSSLSocket(std::shared_ptr<SSLContext> ctx, string host, int port)
+  : TSocket(host, port), server_(false), ssl_(nullptr), ctx_(ctx) {
   init();
 }
 
-TSSLSocket::TSSLSocket(stdcxx::shared_ptr<SSLContext> ctx, string host, int port, stdcxx::shared_ptr<THRIFT_SOCKET> interruptListener)
-        : TSocket(host, port), server_(false), ssl_(NULL), ctx_(ctx) {
+TSSLSocket::TSSLSocket(std::shared_ptr<SSLContext> ctx, string host, int port, std::shared_ptr<THRIFT_SOCKET> interruptListener)
+        : TSocket(host, port), server_(false), ssl_(nullptr), ctx_(ctx) {
   init();
   interruptListener_ = interruptListener;
 }
@@ -266,8 +267,8 @@ void TSSLSocket::init() {
   eventSafe_ = false;
 }
 
-bool TSSLSocket::isOpen() {
-  if (ssl_ == NULL || !TSocket::isOpen()) {
+bool TSSLSocket::isOpen() const {
+  if (ssl_ == nullptr || !TSocket::isOpen()) {
     return false;
   }
   int shutdown = SSL_get_shutdown(ssl_);
@@ -291,11 +292,10 @@ bool TSSLSocket::peek() {
   if (!checkHandshake())
     throw TSSLException("SSL_peek: Handshake is not completed");
   int rc;
-  uint8_t byte;
   do {
+    uint8_t byte;
     rc = SSL_peek(ssl_, &byte, 1);
     if (rc < 0) {
-
       int errno_copy = THRIFT_GET_SOCKET_ERROR;
       int error = SSL_get_error(ssl_, rc);
       switch (error) {
@@ -318,6 +318,8 @@ bool TSSLSocket::peek() {
     } else if (rc == 0) {
       ERR_clear_error();
       break;
+    } else {
+      break;
     }
   } while (true);
   return (rc > 0);
@@ -334,7 +336,7 @@ void TSSLSocket::open() {
  * Note: This method is not libevent safe.
 */
 void TSSLSocket::close() {
-  if (ssl_ != NULL) {
+  if (ssl_ != nullptr) {
     try {
       int rc;
       int errno_copy = 0;
@@ -375,7 +377,7 @@ void TSSLSocket::close() {
       GlobalOutput.printf("SSL_shutdown: %s", te.what());
     }
     SSL_free(ssl_);
-    ssl_ = NULL;
+    ssl_ = nullptr;
     handshakeCompleted_ = false;
     ERR_remove_state(0);
   }
@@ -552,14 +554,14 @@ uint32_t TSSLSocket::write_partial(const uint8_t* buf, uint32_t len) {
 
 void TSSLSocket::flush() {
   // Don't throw exception if not open. Thrift servers close socket twice.
-  if (ssl_ == NULL) {
+  if (ssl_ == nullptr) {
     return;
   }
   initializeHandshake();
   if (!checkHandshake())
     throw TSSLException("BIO_flush: Handshake is not completed");
   BIO* bio = SSL_get_wbio(ssl_);
-  if (bio == NULL) {
+  if (bio == nullptr) {
     throw TSSLException("SSL_get_wbio returns NULL");
   }
   if (BIO_flush(bio) != 1) {
@@ -597,7 +599,7 @@ void TSSLSocket::initializeHandshake() {
     return;
   }
 
-  if (ssl_ == NULL) {
+  if (ssl_ == nullptr) {
     initializeHandshakeParams();
   }
 
@@ -683,19 +685,19 @@ void TSSLSocket::authorize() {
   }
 
   X509* cert = SSL_get_peer_certificate(ssl_);
-  if (cert == NULL) {
+  if (cert == nullptr) {
     // certificate is not present
     if (SSL_get_verify_mode(ssl_) & SSL_VERIFY_FAIL_IF_NO_PEER_CERT) {
       throw TSSLException("authorize: required certificate not present");
     }
     // certificate was optional: didn't intend to authorize remote
-    if (server() && access_ != NULL) {
+    if (server() && access_ != nullptr) {
       throw TSSLException("authorize: certificate required for authorization");
     }
     return;
   }
   // certificate is present
-  if (access_ == NULL) {
+  if (access_ == nullptr) {
     X509_free(cert);
     return;
   }
@@ -720,13 +722,13 @@ void TSSLSocket::authorize() {
   }
 
   // extract subjectAlternativeName
-  STACK_OF(GENERAL_NAME)* alternatives
-      = (STACK_OF(GENERAL_NAME)*)X509_get_ext_d2i(cert, NID_subject_alt_name, NULL, NULL);
-  if (alternatives != NULL) {
+  auto* alternatives
+      = (STACK_OF(GENERAL_NAME)*)X509_get_ext_d2i(cert, NID_subject_alt_name, nullptr, nullptr);
+  if (alternatives != nullptr) {
     const int count = sk_GENERAL_NAME_num(alternatives);
     for (int i = 0; decision == AccessManager::SKIP && i < count; i++) {
       const GENERAL_NAME* name = sk_GENERAL_NAME_value(alternatives, i);
-      if (name == NULL) {
+      if (name == nullptr) {
         continue;
       }
       char* data = (char*)ASN1_STRING_data(name->d.ia5);
@@ -756,7 +758,7 @@ void TSSLSocket::authorize() {
 
   // extract commonName
   X509_NAME* name = X509_get_subject_name(cert);
-  if (name != NULL) {
+  if (name != nullptr) {
     X509_NAME_ENTRY* entry;
     unsigned char* utf8;
     int last = -1;
@@ -765,7 +767,7 @@ void TSSLSocket::authorize() {
       if (last == -1)
         break;
       entry = X509_NAME_get_entry(name, last);
-      if (entry == NULL)
+      if (entry == nullptr)
         continue;
       ASN1_STRING* common = X509_NAME_ENTRY_get_data(entry);
       int size = ASN1_STRING_to_UTF8(&utf8, common);
@@ -795,7 +797,7 @@ unsigned int TSSLSocket::waitForEvent(bool wantRead) {
     bio = SSL_get_wbio(ssl_);
   }
 
-  if (bio == NULL) {
+  if (bio == nullptr) {
     throw TSSLException("SSL_get_?bio returned NULL");
   }
 
@@ -857,7 +859,7 @@ TSSLSocketFactory::TSSLSocketFactory(SSLProtocol protocol) : server_(false) {
     randomize();
   }
   count_++;
-  ctx_ = stdcxx::shared_ptr<SSLContext>(new SSLContext(protocol));
+  ctx_ = std::make_shared<SSLContext>(protocol);
 }
 
 TSSLSocketFactory::~TSSLSocketFactory() {
@@ -869,49 +871,49 @@ TSSLSocketFactory::~TSSLSocketFactory() {
   }
 }
 
-stdcxx::shared_ptr<TSSLSocket> TSSLSocketFactory::createSocket() {
-  stdcxx::shared_ptr<TSSLSocket> ssl(new TSSLSocket(ctx_));
+std::shared_ptr<TSSLSocket> TSSLSocketFactory::createSocket() {
+  std::shared_ptr<TSSLSocket> ssl(new TSSLSocket(ctx_));
   setup(ssl);
   return ssl;
 }
 
-stdcxx::shared_ptr<TSSLSocket> TSSLSocketFactory::createSocket(stdcxx::shared_ptr<THRIFT_SOCKET> interruptListener) {
-  stdcxx::shared_ptr<TSSLSocket> ssl(new TSSLSocket(ctx_, interruptListener));
+std::shared_ptr<TSSLSocket> TSSLSocketFactory::createSocket(std::shared_ptr<THRIFT_SOCKET> interruptListener) {
+  std::shared_ptr<TSSLSocket> ssl(new TSSLSocket(ctx_, interruptListener));
   setup(ssl);
   return ssl;
 }
 
-stdcxx::shared_ptr<TSSLSocket> TSSLSocketFactory::createSocket(THRIFT_SOCKET socket) {
-  stdcxx::shared_ptr<TSSLSocket> ssl(new TSSLSocket(ctx_, socket));
+std::shared_ptr<TSSLSocket> TSSLSocketFactory::createSocket(THRIFT_SOCKET socket) {
+  std::shared_ptr<TSSLSocket> ssl(new TSSLSocket(ctx_, socket));
   setup(ssl);
   return ssl;
 }
 
-stdcxx::shared_ptr<TSSLSocket> TSSLSocketFactory::createSocket(THRIFT_SOCKET socket, stdcxx::shared_ptr<THRIFT_SOCKET> interruptListener) {
-  stdcxx::shared_ptr<TSSLSocket> ssl(new TSSLSocket(ctx_, socket, interruptListener));
+std::shared_ptr<TSSLSocket> TSSLSocketFactory::createSocket(THRIFT_SOCKET socket, std::shared_ptr<THRIFT_SOCKET> interruptListener) {
+  std::shared_ptr<TSSLSocket> ssl(new TSSLSocket(ctx_, socket, interruptListener));
   setup(ssl);
   return ssl;
 }
 
-stdcxx::shared_ptr<TSSLSocket> TSSLSocketFactory::createSocket(const string& host, int port) {
-  stdcxx::shared_ptr<TSSLSocket> ssl(new TSSLSocket(ctx_, host, port));
+std::shared_ptr<TSSLSocket> TSSLSocketFactory::createSocket(const string& host, int port) {
+  std::shared_ptr<TSSLSocket> ssl(new TSSLSocket(ctx_, host, port));
   setup(ssl);
   return ssl;
 }
 
-stdcxx::shared_ptr<TSSLSocket> TSSLSocketFactory::createSocket(const string& host, int port, stdcxx::shared_ptr<THRIFT_SOCKET> interruptListener) {
-  stdcxx::shared_ptr<TSSLSocket> ssl(new TSSLSocket(ctx_, host, port, interruptListener));
+std::shared_ptr<TSSLSocket> TSSLSocketFactory::createSocket(const string& host, int port, std::shared_ptr<THRIFT_SOCKET> interruptListener) {
+  std::shared_ptr<TSSLSocket> ssl(new TSSLSocket(ctx_, host, port, interruptListener));
   setup(ssl);
   return ssl;
 }
 
 
-void TSSLSocketFactory::setup(stdcxx::shared_ptr<TSSLSocket> ssl) {
+void TSSLSocketFactory::setup(std::shared_ptr<TSSLSocket> ssl) {
   ssl->server(server());
-  if (access_ == NULL && !server()) {
-    access_ = stdcxx::shared_ptr<AccessManager>(new DefaultClientAccessManager);
+  if (access_ == nullptr && !server()) {
+    access_ = std::shared_ptr<AccessManager>(new DefaultClientAccessManager);
   }
-  if (access_ != NULL) {
+  if (access_ != nullptr) {
     ssl->access(access_);
   }
 }
@@ -935,11 +937,11 @@ void TSSLSocketFactory::authenticate(bool required) {
   } else {
     mode = SSL_VERIFY_NONE;
   }
-  SSL_CTX_set_verify(ctx_->get(), mode, NULL);
+  SSL_CTX_set_verify(ctx_->get(), mode, nullptr);
 }
 
 void TSSLSocketFactory::loadCertificate(const char* path, const char* format) {
-  if (path == NULL || format == NULL) {
+  if (path == nullptr || format == nullptr) {
     throw TTransportException(TTransportException::BAD_ARGS,
                               "loadCertificateChain: either <path> or <format> is NULL");
   }
@@ -956,7 +958,7 @@ void TSSLSocketFactory::loadCertificate(const char* path, const char* format) {
 }
 
 void TSSLSocketFactory::loadPrivateKey(const char* path, const char* format) {
-  if (path == NULL || format == NULL) {
+  if (path == nullptr || format == nullptr) {
     throw TTransportException(TTransportException::BAD_ARGS,
                               "loadPrivateKey: either <path> or <format> is NULL");
   }
@@ -971,7 +973,7 @@ void TSSLSocketFactory::loadPrivateKey(const char* path, const char* format) {
 }
 
 void TSSLSocketFactory::loadTrustedCertificates(const char* path, const char* capath) {
-  if (path == NULL) {
+  if (path == nullptr) {
     throw TTransportException(TTransportException::BAD_ARGS,
                               "loadTrustedCertificates: <path> is NULL");
   }
@@ -993,7 +995,7 @@ void TSSLSocketFactory::overrideDefaultPasswordCallback() {
 }
 
 int TSSLSocketFactory::passwordCallback(char* password, int size, int, void* data) {
-  TSSLSocketFactory* factory = (TSSLSocketFactory*)data;
+  auto* factory = (TSSLSocketFactory*)data;
   string userPassword;
   factory->getPassword(userPassword, size);
   int length = static_cast<int>(userPassword.size());
@@ -1016,7 +1018,7 @@ void buildErrors(string& errors, int errno_copy, int sslerrno) {
       errors += "; ";
     }
     const char* reason = ERR_reason_error_string(errorCode);
-    if (reason == NULL) {
+    if (reason == nullptr) {
       THRIFT_SNPRINTF(message, sizeof(message) - 1, "SSL error # %lu", errorCode);
       reason = message;
     }
@@ -1046,15 +1048,15 @@ void buildErrors(string& errors, int errno_copy, int sslerrno) {
 /**
  * Default implementation of AccessManager
  */
-Decision DefaultClientAccessManager::verify(const sockaddr_storage& sa) throw() {
+Decision DefaultClientAccessManager::verify(const sockaddr_storage& sa) noexcept {
   (void)sa;
   return SKIP;
 }
 
 Decision DefaultClientAccessManager::verify(const string& host,
                                             const char* name,
-                                            int size) throw() {
-  if (host.empty() || name == NULL || size <= 0) {
+                                            int size) noexcept {
+  if (host.empty() || name == nullptr || size <= 0) {
     return SKIP;
   }
   return (matchName(host.c_str(), name, size) ? ALLOW : SKIP);
@@ -1062,7 +1064,7 @@ Decision DefaultClientAccessManager::verify(const string& host,
 
 Decision DefaultClientAccessManager::verify(const sockaddr_storage& sa,
                                             const char* data,
-                                            int size) throw() {
+                                            int size) noexcept {
   bool match = false;
   if (sa.ss_family == AF_INET && size == sizeof(in_addr)) {
     match = (memcmp(&((sockaddr_in*)&sa)->sin_addr, data, size) == 0);

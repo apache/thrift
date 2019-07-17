@@ -2,6 +2,11 @@
 
 Thrift client library ported to Microsoft .Net Core 
 
+# Deprecation notice
+
+Per [THRIFT-4723](https://issues.apache.org/jira/browse/THRIFT-4723), both CSharp and Netcore targets are deprecated 
+and will be removed with the next release. Migrate to the [NetStd language target](../netstd/README.md) instead.
+
 # Content
 - Tests/Thrift.PublicInterfaces.Compile.Tests - project for checking public interfaces during adding changes to Thrift library
 - Thrift - Thrift library 

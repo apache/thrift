@@ -42,20 +42,22 @@ public:
    */
   t_typedef(t_program* program, const std::string& symbolic, bool forward)
     : t_type(program, symbolic),
-      type_(NULL),
+      type_(nullptr),
       symbolic_(symbolic),
       forward_(forward)
   {}
 
-  ~t_typedef() {}
+  ~t_typedef() override = default;
 
-  t_type* get_type() const;
+  t_type* get_type();
+
+  const t_type* get_type() const;
 
   const std::string& get_symbolic() const { return symbolic_; }
 
   bool is_forward_typedef() const { return forward_; }
 
-  bool is_typedef() const { return true; }
+  bool is_typedef() const override { return true; }
 
 private:
   t_type* type_;

@@ -1,9 +1,10 @@
 ## Thrift interface description language
+
+For Thrift version 0.13.0.
+
 The Thrift interface definition language (IDL) allows for the definition of [Thrift Types](/docs/types). A Thrift IDL file is processed by the Thrift code generator to produce code for the various target languages to support the defined structs and services in the IDL file.
 
 ## Description
-
-*Under construction*
 
 Here is a description of the Thrift IDL.
 
@@ -35,32 +36,9 @@ A C++ include adds a custom C++ include to the output of the C++ code generator 
 
 A namespace declares which namespaces/package/module/etc. the type definitions in this file will be declared in for the target languages. The namespace scope indicates which language the namespace applies to; a scope of '*' indicates that the namespace applies to all target languages.
 
-    [5]  Namespace       ::=  ( 'namespace' ( NamespaceScope Identifier ) |
-                                            ( 'smalltalk.category' STIdentifier ) |
-                                            ( 'smalltalk.prefix' Identifier ) ) |
-                              ( 'php_namespace' Literal ) |
-                              ( 'xsd_namespace' Literal )
+    [5]  Namespace       ::=  ( 'namespace' ( NamespaceScope Identifier ) )
 
-    [6]  NamespaceScope  ::=  '*' | 'cpp' | 'java' | 'py' | 'perl' | 'rb' | 'cocoa' | 'csharp'
-
-N.B.: Smalltalk has two distinct types of namespace commands:
-
-- smalltalk.prefix: Prepended to generated classnames.
-  - Smalltalk does not have namespaces for classes, so prefixes
-    are used to avoid class-name collisions.
-    Often, the prefix is the author's initials, like "KB" or "JWS",
-    or an abbreviation of the package name, like "MC" for "Monticello".
-- smalltalk.category: Determines the category for generated classes.
-  Any dots in the identifier will be replaced with hyphens when generating
-  the category name.
-  If not provided, defaults to "Generated-" + the program name.
-  Methods will not be categorized beyond "as yet uncategorized".
-  - Smalltalk allows filing both classes and methods within classes into named
-    groups. These named groups of methods are called categories.
-
-N.B.: The `php_namespace` directive will be deprecated at some point in the future in favor of the scoped syntax, but the scoped syntax is not yet supported for PHP.
-
-N.B.: The `xsd_namespace` directive has some purpose internal to Facebook but serves no purpose in Thrift itself. Use of this feature is strongly discouraged
+    [6]  NamespaceScope  ::=  '*' | 'c_glib' | 'cpp' | 'csharp' | 'delphi' | 'go' | 'java' | 'js' | 'lua' | 'netcore' | 'perl' | 'php' | 'py' | 'py.twisted' | 'rb' | 'st' | 'xsd'
 
 ## Definition
 
@@ -118,7 +96,7 @@ A service provides the interface for a set of functionality provided by a Thrift
 
 ## Field
 
-    [16] Field           ::=  FieldID? FieldReq? FieldType Identifier ('= ConstValue)? XsdFieldOptions ListSeparator?
+    [16] Field           ::=  FieldID? FieldReq? FieldType Identifier ('=' ConstValue)? XsdFieldOptions ListSeparator?
 
 ### Field ID
 
@@ -242,9 +220,9 @@ Here are some examples of Thrift definitions, using the Thrift IDL:
  * [Apache Cassandra's][] Thrift IDL: [cassandra.thrift][]
  * [Evernote API][]
 
- [ThriftTest.thrift]:  https://git-wip-us.apache.org/repos/asf?p=thrift.git;a=blob_plain;f=test/ThriftTest.thrift;hb=HEAD
+ [ThriftTest.thrift]:  https://raw.githubusercontent.com/apache/thrift/master/test/ThriftTest.thrift
  [tutorial]:           /tutorial/
- [fb303.thrift]:       https://git-wip-us.apache.org/repos/asf?p=thrift.git;a=blob_plain;f=contrib/fb303/if/fb303.thrift;hb=HEAD
+ [fb303.thrift]:       https://raw.githubusercontent.com/apache/thrift/master/contrib/fb303/if/fb303.thrift
  [Apache Cassandra's]: http://cassandra.apache.org/
  [cassandra.thrift]:   http://svn.apache.org/viewvc/cassandra/trunk/interface/cassandra.thrift?view=co
  [Evernote API]:       http://www.evernote.com/about/developer/api/

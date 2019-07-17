@@ -110,7 +110,7 @@ TZlibTransport::~TZlibTransport() {
   delete wstream_;
 }
 
-bool TZlibTransport::isOpen() {
+bool TZlibTransport::isOpen() const {
   return (readAvail() > 0) || (rstream_->avail_in > 0) || transport_->isOpen();
 }
 
@@ -131,7 +131,7 @@ bool TZlibTransport::peek() {
 // In standalone objects, we set input_ended_ to true when inflate returns
 // Z_STREAM_END.  This allows to make sure that a checksum was verified.
 
-inline int TZlibTransport::readAvail() {
+inline int TZlibTransport::readAvail() const {
   return urbuf_size_ - rstream_->avail_out - urpos_;
 }
 
@@ -331,7 +331,7 @@ const uint8_t* TZlibTransport::borrow(uint8_t* buf, uint32_t* len) {
     *len = (uint32_t)readAvail();
     return urbuf_ + urpos_;
   }
-  return NULL;
+  return nullptr;
 }
 
 void TZlibTransport::consume(uint32_t len) {

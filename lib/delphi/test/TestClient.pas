@@ -29,6 +29,8 @@ unit TestClient;
 {$DEFINE SupportsAsync}
 {$ifend}
 
+{$WARN SYMBOL_PLATFORM OFF}  // Win32Check
+
 interface
 
 uses
@@ -38,14 +40,18 @@ uses
   Generics.Collections,
   TestConstants,
   ConsoleHelper,
+  PerfTests,
   Thrift,
   Thrift.Protocol.Compact,
   Thrift.Protocol.JSON,
   Thrift.Protocol,
   Thrift.Transport.Pipes,
+  Thrift.Transport.WinHTTP,
+  Thrift.Transport.MsxmlHTTP,
   Thrift.Transport,
   Thrift.Stream,
   Thrift.Test,
+  Thrift.WinHTTP,
   Thrift.Utils,
   Thrift.Collections;
 
@@ -86,7 +92,8 @@ type
       Empty,           // Edge case: the zero-length empty binary
       Normal,          // Fairly small array of usual size (256 bytes)
       ByteArrayTest,   // THRIFT-4454 Large writes/reads may cause range check errors in debug mode
-      PipeWriteLimit   // THRIFT-4372 Pipe write operations across a network are limited to 65,535 bytes per write.
+      PipeWriteLimit,  // THRIFT-4372 Pipe write operations across a network are limited to 65,535 bytes per write.
+      TwentyMB         // that's quite a bit of data
     );
 
   private
@@ -115,6 +122,7 @@ type
 
     procedure InitializeProtocolTransportStack;
     procedure ShutdownProtocolTransportStack;
+    function  InitializeHttpTransport( const aTimeoutSetting : Integer) : IHTTPClient;
 
     procedure JSONProtocolReadWriteTest;
     function  PrepareBinaryData( aRandomDist : Boolean; aSize : TTestSize) : TBytes;
@@ -188,11 +196,12 @@ const HELPTEXT = ' [options]'#10
                + '                              instead of host and port'#10
                + '  --named-pipe arg            Windows Named Pipe (e.g. MyThriftPipe)'#10
                + '  --anon-pipes hRead hWrite   Windows Anonymous Pipes pair (handles)'#10
-               + '  --transport arg (=sockets)  Transport: buffered, framed, http, evhttp'#10
+               + '  --transport arg (=sockets)  Transport: buffered, framed, http, winhttp'#10
                + '  --protocol arg (=binary)    Protocol: binary, compact, json'#10
                + '  --ssl                       Encrypted Transport using SSL'#10
                + '  -n [ --testloops ] arg (=1) Number of Tests'#10
                + '  -t [ --threads ] arg (=1)   Number of Test threads'#10
+               + '  --performance               Run the built-in performance test (no other arguments)'#10
                ;
 begin
   Writeln( ChangeFileExt(ExtractFileName(ParamStr(0)),'') + HELPTEXT);
@@ -274,14 +283,15 @@ begin
         Console.WriteLine('Using anonymous pipes ('+IntToStr(Integer(setup.hAnonRead))+' and '+IntToStr(Integer(setup.hAnonWrite))+')');
       end
       else if s = '--transport' then begin
-        // --transport arg (=sockets)  Transport: buffered, framed, http, evhttp
+        // --transport arg (=sockets)  Transport: buffered, framed, http, winhttp, evhttp
         s := args[i];
         Inc( i);
 
         if      s = 'buffered' then Include( setup.layered, trns_Buffered)
         else if s = 'framed'   then Include( setup.layered, trns_Framed)
-        else if s = 'http'     then setup.endpoint := trns_Http
-        else if s = 'evhttp'   then setup.endpoint := trns_EvHttp
+        else if s = 'http'     then setup.endpoint := trns_MsXmlHttp
+        else if s = 'winhttp'  then setup.endpoint := trns_WinHttp
+        else if s = 'evhttp'   then setup.endpoint := trns_EvHttp  // recognized, but not supported
         else InvalidArgs;
       end
       else if s = '--protocol' then begin
@@ -313,6 +323,10 @@ begin
         Inc( i);
         if FNumThread <= 0
         then InvalidArgs;
+      end
+      else if (s = '--performance') then begin
+        result := TPerformanceTests.Execute;
+        Exit;
       end
       else begin
         InvalidArgs;
@@ -524,12 +538,12 @@ begin
   // random binary small
   for testsize := Low(TTestSize) to High(TTestSize) do begin
     binOut := PrepareBinaryData( TRUE, testsize);
-    Console.WriteLine('testBinary('+BytesToHex(binOut)+')');
+    Console.WriteLine('testBinary('+IntToStr(Length(binOut))+' bytes)');
     try
       binIn := client.testBinary(binOut);
-      Expect( Length(binOut) = Length(binIn), 'testBinary(): length '+IntToStr(Length(binOut))+' = '+IntToStr(Length(binIn)));
+      Expect( Length(binOut) = Length(binIn), 'testBinary('+IntToStr(Length(binOut))+' bytes): '+IntToStr(Length(binIn))+' bytes received');
       i32 := Min( Length(binOut), Length(binIn));
-      Expect( CompareMem( binOut, binIn, i32), 'testBinary('+BytesToHex(binOut)+') = '+BytesToHex(binIn));
+      Expect( CompareMem( binOut, binIn, i32), 'testBinary('+IntToStr(Length(binOut))+' bytes): validating received data');
     except
       on e:TApplicationException do Console.WriteLine('testBinary(): '+e.Message);
       on e:Exception do Expect( FALSE, 'testBinary(): Unexpected exception "'+e.ClassName+'": '+e.Message);
@@ -1010,6 +1024,7 @@ begin
     Normal         : SetLength( result, $100);
     ByteArrayTest  : SetLength( result, SizeOf(TByteArray) + 128);
     PipeWriteLimit : SetLength( result, 65535 + 128);
+    TwentyMB       : SetLength( result, 20 * 1024 * 1024);
   else
     raise EArgumentException.Create('aSize');
   end;
@@ -1315,11 +1330,59 @@ begin
 end;
 
 
+function TClientThread.InitializeHttpTransport( const aTimeoutSetting : Integer) : IHTTPClient;
+var sUrl    : string;
+    comps   : URL_COMPONENTS;
+    dwChars : DWORD;
+begin
+  ASSERT( FSetup.endpoint in [trns_MsxmlHttp, trns_WinHttp]);
+
+  if FSetup.useSSL
+  then sUrl := 'https://'
+  else sUrl := 'http://';
+
+  sUrl := sUrl + FSetup.host;
+
+  // add the port number if necessary and at the right place
+  FillChar( comps, SizeOf(comps), 0);
+  comps.dwStructSize := SizeOf(comps);
+  comps.dwSchemeLength    := MAXINT;
+  comps.dwHostNameLength  := MAXINT;
+  comps.dwUserNameLength  := MAXINT;
+  comps.dwPasswordLength  := MAXINT;
+  comps.dwUrlPathLength   := MAXINT;
+  comps.dwExtraInfoLength := MAXINT;
+  Win32Check( WinHttpCrackUrl( PChar(sUrl), Length(sUrl), 0, comps));
+  case FSetup.port of
+    80  : if FSetup.useSSL then comps.nPort := FSetup.port;
+    443 : if not FSetup.useSSL then comps.nPort := FSetup.port;
+  else
+    if FSetup.port > 0 then comps.nPort := FSetup.port;
+  end;
+  dwChars := Length(sUrl) + 64;
+  SetLength( sUrl, dwChars);
+  Win32Check( WinHttpCreateUrl( comps, 0, @sUrl[1], dwChars));
+  SetLength( sUrl, dwChars);
+
+
+  Console.WriteLine('Target URL: '+sUrl);
+  case FSetup.endpoint of
+    trns_MsxmlHttp :  result := TMsxmlHTTPClientImpl.Create( sUrl);
+    trns_WinHttp   :  result := TWinHTTPClientImpl.Create( sUrl);
+  else
+    raise Exception.Create(ENDPOINT_TRANSPORTS[FSetup.endpoint]+' unhandled case');
+  end;
+
+  result.DnsResolveTimeout := aTimeoutSetting;
+  result.ConnectionTimeout := aTimeoutSetting;
+  result.SendTimeout       := aTimeoutSetting;
+  result.ReadTimeout       := aTimeoutSetting;
+end;
+
+
 procedure TClientThread.InitializeProtocolTransportStack;
-var
-  streamtrans : IStreamTransport;
-  http : IHTTPClient;
-  sUrl : string;
+var streamtrans : IStreamTransport;
+    canSSL : Boolean;
 const
   DEBUG_TIMEOUT   = 30 * 1000;
   RELEASE_TIMEOUT = DEFAULT_THRIFT_TIMEOUT;
@@ -1329,6 +1392,7 @@ begin
   // needed for HTTP clients as they utilize the MSXML COM components
   OleCheck( CoInitialize( nil));
 
+  canSSL := FALSE;
   case FSetup.endpoint of
     trns_Sockets: begin
       Console.WriteLine('Using sockets ('+FSetup.host+' port '+IntToStr(FSetup.port)+')');
@@ -1336,24 +1400,11 @@ begin
       FTransport := streamtrans;
     end;
 
-    trns_Http: begin
+    trns_MsxmlHttp,
+    trns_WinHttp: begin
       Console.WriteLine('Using HTTPClient');
-      if FSetup.useSSL
-      then sUrl := 'http://'
-      else sUrl := 'https://';
-      sUrl := sUrl + FSetup.host;
-      case FSetup.port of
-        80  : if FSetup.useSSL then sUrl := sUrl + ':'+ IntToStr(FSetup.port);
-        443 : if not FSetup.useSSL then sUrl := sUrl + ':'+ IntToStr(FSetup.port);
-      else
-        if FSetup.port > 0 then sUrl := sUrl + ':'+ IntToStr(FSetup.port);
-      end;
-      http := THTTPClientImpl.Create( sUrl);
-      http.DnsResolveTimeout := HTTP_TIMEOUTS;
-      http.ConnectionTimeout := HTTP_TIMEOUTS;
-      http.SendTimeout       := HTTP_TIMEOUTS;
-      http.ReadTimeout       := HTTP_TIMEOUTS;
-      FTransport := http;
+      FTransport := InitializeHttpTransport( HTTP_TIMEOUTS);
+      canSSL := TRUE;
     end;
 
     trns_EvHttp: begin
@@ -1383,7 +1434,7 @@ begin
     FTransport := TBufferedTransportImpl.Create( streamtrans, 32);  // small buffer to test read()
   end;
 
-  if FSetup.useSSL then begin
+  if FSetup.useSSL and not canSSL then begin
     raise Exception.Create('SSL/TLS not implemented');
   end;
 

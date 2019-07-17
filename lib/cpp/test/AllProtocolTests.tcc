@@ -28,7 +28,7 @@
 
 #include "GenericHelpers.h"
 
-using apache::thrift::stdcxx::shared_ptr;
+using std::shared_ptr;
 using namespace apache::thrift;
 using namespace apache::thrift::protocol;
 using namespace apache::thrift::transport;
@@ -216,7 +216,7 @@ void testProtocol(const char* protoname) {
     testMessage<TProto>();
 
     printf("%s => OK\n", protoname);
-  } catch (TException e) {
+  } catch (const TException &e) {
     THRIFT_SNPRINTF(errorMessage, ERR_LEN, "%s => Test FAILED: %s", protoname, e.what());
     throw TException(errorMessage);
   }

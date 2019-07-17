@@ -67,7 +67,7 @@ brew install bison
 
 ```
 mkdir cmake-build && cd cmake-build
-cmake -G "Xcode" -DWITH_PLUGIN=OFF ..
+cmake -G "Xcode" ..
 cmake --build .
 ```
 
@@ -107,7 +107,7 @@ cmake --build .
 ```
 mkdir cmake-vs
 cd cmake-vs
-cmake -G "Visual Studio 15 2017" -DWITH_PLUGIN=OFF ..
+cmake -G "Visual Studio 15 2017" ..
 ```
 - Now open the folder cmake-vs using Visual Studio.
 
@@ -115,7 +115,7 @@ cmake -G "Visual Studio 15 2017" -DWITH_PLUGIN=OFF ..
 
 ```
 mkdir cmake-mingw32 && cd cmake-mingw32
-cmake -DCMAKE_TOOLCHAIN_FILE=../build/cmake/mingw32-toolchain.cmake -DBUILD_COMPILER=ON -DBUILD_LIBRARIES=OFF -DBUILD_TESTING=OFF -DBUILD_EXAMPLES=OFF ..
+cmake -DCMAKE_TOOLCHAIN_FILE=../build/cmake/mingw32-toolchain.cmake -DBUILD_COMPILER=ON -DBUILD_LIBRARIES=OFF -DBUILD_TESTING=OFF ..
 cpack
 ```
 

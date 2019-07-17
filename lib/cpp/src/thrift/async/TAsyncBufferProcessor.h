@@ -20,7 +20,7 @@
 #ifndef _THRIFT_TASYNC_BUFFER_PROCESSOR_H_
 #define _THRIFT_TASYNC_BUFFER_PROCESSOR_H_ 1
 
-#include <thrift/stdcxx.h>
+#include <memory>
 #include <thrift/transport/TBufferTransports.h>
 
 namespace apache {
@@ -34,10 +34,10 @@ public:
   // forcefully close the connection (if applicable).
   // "in" and "out" should be TMemoryBuffer or similar,
   // not a wrapper around a socket.
-  virtual void process(stdcxx::function<void(bool healthy)> _return,
-                       stdcxx::shared_ptr<transport::TBufferBase> ibuf,
-                       stdcxx::shared_ptr<transport::TBufferBase> obuf) = 0;
-  virtual ~TAsyncBufferProcessor() {}
+  virtual void process(std::function<void(bool healthy)> _return,
+                       std::shared_ptr<transport::TBufferBase> ibuf,
+                       std::shared_ptr<transport::TBufferBase> obuf) = 0;
+  virtual ~TAsyncBufferProcessor() = default;
 };
 }
 }

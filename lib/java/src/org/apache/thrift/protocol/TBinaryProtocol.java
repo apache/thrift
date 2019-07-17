@@ -19,8 +19,8 @@
 
 package org.apache.thrift.protocol;
 
-import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
 
 import org.apache.thrift.TException;
 import org.apache.thrift.transport.TTransport;
@@ -110,6 +110,7 @@ public class TBinaryProtocol extends TProtocol {
     strictWrite_ = strictWrite;
   }
 
+  @Override
   public void writeMessageBegin(TMessage message) throws TException {
     if (strictWrite_) {
       int version = VERSION_1 | message.type;
@@ -123,60 +124,76 @@ public class TBinaryProtocol extends TProtocol {
     }
   }
 
-  public void writeMessageEnd() {}
+  @Override
+  public void writeMessageEnd() throws TException {}
 
-  public void writeStructBegin(TStruct struct) {}
+  @Override
+  public void writeStructBegin(TStruct struct) throws TException {}
 
-  public void writeStructEnd() {}
+  @Override
+  public void writeStructEnd() throws TException {}
 
+  @Override
   public void writeFieldBegin(TField field) throws TException {
     writeByte(field.type);
     writeI16(field.id);
   }
 
-  public void writeFieldEnd() {}
+  @Override
+  public void writeFieldEnd() throws TException {}
 
+  @Override
   public void writeFieldStop() throws TException {
     writeByte(TType.STOP);
   }
 
+  @Override
   public void writeMapBegin(TMap map) throws TException {
     writeByte(map.keyType);
     writeByte(map.valueType);
     writeI32(map.size);
   }
 
-  public void writeMapEnd() {}
+  @Override
+  public void writeMapEnd() throws TException {}
 
+  @Override
   public void writeListBegin(TList list) throws TException {
     writeByte(list.elemType);
     writeI32(list.size);
   }
 
-  public void writeListEnd() {}
+  @Override
+  public void writeListEnd() throws TException {}
 
+  @Override
   public void writeSetBegin(TSet set) throws TException {
     writeByte(set.elemType);
     writeI32(set.size);
   }
 
-  public void writeSetEnd() {}
+  @Override
+  public void writeSetEnd() throws TException {}
 
+  @Override
   public void writeBool(boolean b) throws TException {
     writeByte(b ? (byte)1 : (byte)0);
   }
 
+  @Override
   public void writeByte(byte b) throws TException {
     inoutTemp[0] = b;
     trans_.write(inoutTemp, 0, 1);
   }
 
+  @Override
   public void writeI16(short i16) throws TException {
     inoutTemp[0] = (byte)(0xff & (i16 >> 8));
     inoutTemp[1] = (byte)(0xff & (i16));
     trans_.write(inoutTemp, 0, 2);
   }
 
+  @Override
   public void writeI32(int i32) throws TException {
     inoutTemp[0] = (byte)(0xff & (i32 >> 24));
     inoutTemp[1] = (byte)(0xff & (i32 >> 16));
@@ -185,6 +202,7 @@ public class TBinaryProtocol extends TProtocol {
     trans_.write(inoutTemp, 0, 4);
   }
 
+  @Override
   public void writeI64(long i64) throws TException {
     inoutTemp[0] = (byte)(0xff & (i64 >> 56));
     inoutTemp[1] = (byte)(0xff & (i64 >> 48));
@@ -197,20 +215,19 @@ public class TBinaryProtocol extends TProtocol {
     trans_.write(inoutTemp, 0, 8);
   }
 
+  @Override
   public void writeDouble(double dub) throws TException {
     writeI64(Double.doubleToLongBits(dub));
   }
 
+  @Override
   public void writeString(String str) throws TException {
-    try {
-      byte[] dat = str.getBytes("UTF-8");
-      writeI32(dat.length);
-      trans_.write(dat, 0, dat.length);
-    } catch (UnsupportedEncodingException uex) {
-      throw new TException("JVM DOES NOT SUPPORT UTF-8");
-    }
+    byte[] dat = str.getBytes(StandardCharsets.UTF_8);
+    writeI32(dat.length);
+    trans_.write(dat, 0, dat.length);
   }
 
+  @Override
   public void writeBinary(ByteBuffer bin) throws TException {
     int length = bin.limit() - bin.position();
     writeI32(length);
@@ -221,6 +238,7 @@ public class TBinaryProtocol extends TProtocol {
    * Reading methods.
    */
 
+  @Override
   public TMessage readMessageBegin() throws TException {
     int size = readI32();
     if (size < 0) {
@@ -237,50 +255,63 @@ public class TBinaryProtocol extends TProtocol {
     }
   }
 
-  public void readMessageEnd() {}
+  @Override
+  public void readMessageEnd() throws TException {}
 
-  public TStruct readStructBegin() {
+  @Override
+  public TStruct readStructBegin() throws TException {
     return ANONYMOUS_STRUCT;
   }
 
-  public void readStructEnd() {}
+  @Override
+  public void readStructEnd() throws TException {}
 
+  @Override
   public TField readFieldBegin() throws TException {
     byte type = readByte();
     short id = type == TType.STOP ? 0 : readI16();
     return new TField("", type, id);
   }
 
-  public void readFieldEnd() {}
+  @Override
+  public void readFieldEnd() throws TException {}
 
+  @Override
   public TMap readMapBegin() throws TException {
     TMap map = new TMap(readByte(), readByte(), readI32());
     checkContainerReadLength(map.size);
     return map;
   }
 
-  public void readMapEnd() {}
+  @Override
+  public void readMapEnd() throws TException {}
 
+  @Override
   public TList readListBegin() throws TException {
     TList list = new TList(readByte(), readI32());
     checkContainerReadLength(list.size);
     return list;
   }
 
-  public void readListEnd() {}
+  @Override
+  public void readListEnd() throws TException {}
 
+  @Override
   public TSet readSetBegin() throws TException {
     TSet set = new TSet(readByte(), readI32());
     checkContainerReadLength(set.size);
     return set;
   }
 
-  public void readSetEnd() {}
+  @Override
+  public void readSetEnd() throws TException {}
 
+  @Override
   public boolean readBool() throws TException {
     return (readByte() == 1);
   }
 
+  @Override
   public byte readByte() throws TException {
     if (trans_.getBytesRemainingInBuffer() >= 1) {
       byte b = trans_.getBuffer()[trans_.getBufferPosition()];
@@ -291,6 +322,7 @@ public class TBinaryProtocol extends TProtocol {
     return inoutTemp[0];
   }
 
+  @Override
   public short readI16() throws TException {
     byte[] buf = inoutTemp;
     int off = 0;
@@ -309,6 +341,7 @@ public class TBinaryProtocol extends TProtocol {
        ((buf[off+1] & 0xff)));
   }
 
+  @Override
   public int readI32() throws TException {
     byte[] buf = inoutTemp;
     int off = 0;
@@ -327,6 +360,7 @@ public class TBinaryProtocol extends TProtocol {
       ((buf[off+3] & 0xff));
   }
 
+  @Override
   public long readI64() throws TException {
     byte[] buf = inoutTemp;
     int off = 0;
@@ -350,23 +384,22 @@ public class TBinaryProtocol extends TProtocol {
       ((long)(buf[off+7] & 0xff));
   }
 
+  @Override
   public double readDouble() throws TException {
     return Double.longBitsToDouble(readI64());
   }
 
+  @Override
   public String readString() throws TException {
     int size = readI32();
 
     checkStringReadLength(size);
 
     if (trans_.getBytesRemainingInBuffer() >= size) {
-      try {
-        String s = new String(trans_.getBuffer(), trans_.getBufferPosition(), size, "UTF-8");
-        trans_.consumeBuffer(size);
-        return s;
-      } catch (UnsupportedEncodingException e) {
-        throw new TException("JVM DOES NOT SUPPORT UTF-8");
-      }
+      String s = new String(trans_.getBuffer(), trans_.getBufferPosition(),
+          size, StandardCharsets.UTF_8);
+      trans_.consumeBuffer(size);
+      return s;
     }
 
     return readStringBody(size);
@@ -374,15 +407,12 @@ public class TBinaryProtocol extends TProtocol {
 
   public String readStringBody(int size) throws TException {
     checkStringReadLength(size);
-    try {
-      byte[] buf = new byte[size];
-      trans_.readAll(buf, 0, size);
-      return new String(buf, "UTF-8");
-    } catch (UnsupportedEncodingException uex) {
-      throw new TException("JVM DOES NOT SUPPORT UTF-8");
-    }
+    byte[] buf = new byte[size];
+    trans_.readAll(buf, 0, size);
+    return new String(buf, StandardCharsets.UTF_8);
   }
 
+  @Override
   public ByteBuffer readBinary() throws TException {
     int size = readI32();
 

@@ -68,23 +68,23 @@ public:
     out_dir_base_ = "gen-json";
   }
 
-  virtual ~t_json_generator() {}
+  ~t_json_generator() override = default;
 
   /**
   * Init and close methods
   */
 
-  void init_generator();
-  void close_generator();
+  void init_generator() override;
+  void close_generator() override;
 
-  void generate_typedef(t_typedef* ttypedef);
-  void generate_enum(t_enum* tenum);
-  void generate_program();
+  void generate_typedef(t_typedef* ttypedef) override;
+  void generate_enum(t_enum* tenum) override;
+  void generate_program() override;
   void generate_function(t_function* tfunc);
   void generate_field(t_field* field);
 
-  void generate_service(t_service* tservice);
-  void generate_struct(t_struct* tstruct);
+  void generate_service(t_service* tservice) override;
+  void generate_struct(t_struct* tstruct) override;
 
 private:
   bool should_merge_includes_;
@@ -147,8 +147,8 @@ void t_json_generator::init_generator() {
 
 string t_json_generator::escape_json_string(const string& input) {
   std::ostringstream ss;
-  for (std::string::const_iterator iter = input.begin(); iter != input.end(); iter++) {
-    switch (*iter) {
+  for (char iter : input) {
+    switch (iter) {
     case '\\':
       ss << "\\\\";
       break;
@@ -174,7 +174,7 @@ string t_json_generator::escape_json_string(const string& input) {
       ss << "\\t";
       break;
     default:
-      ss << *iter;
+      ss << iter;
       break;
     }
   }
@@ -267,8 +267,8 @@ void t_json_generator::write_type_spec(t_type* ttype) {
   if (ttype->annotations_.size() > 0) {
     write_key_and("annotations");
     start_object();
-    for (map<string, string>::iterator it = ttype->annotations_.begin(); it != ttype->annotations_.end(); ++it) {
-      write_key_and_string(it->first, it->second);
+    for (auto & annotation : ttype->annotations_) {
+      write_key_and_string(annotation.first, annotation.second);
     }
     end_object();
   }
@@ -457,8 +457,8 @@ void t_json_generator::generate_typedef(t_typedef* ttypedef) {
   if (ttypedef->annotations_.size() > 0) {
     write_key_and("annotations");
     start_object();
-    for (map<string, string>::iterator it = ttypedef->annotations_.begin(); it != ttypedef->annotations_.end(); ++it) {
-      write_key_and_string(it->first, it->second);
+    for (auto & annotation : ttypedef->annotations_) {
+      write_key_and_string(annotation.first, annotation.second);
     }
     end_object();
   }
@@ -564,8 +564,8 @@ void t_json_generator::generate_enum(t_enum* tenum) {
   if (tenum->annotations_.size() > 0) {
       write_key_and("annotations");
       start_object();
-      for (map<string, string>::iterator it = tenum->annotations_.begin(); it != tenum->annotations_.end(); ++it) {
-        write_key_and_string(it->first, it->second);
+      for (auto & annotation : tenum->annotations_) {
+        write_key_and_string(annotation.first, annotation.second);
       }
       end_object();
   }
@@ -603,8 +603,8 @@ void t_json_generator::generate_struct(t_struct* tstruct) {
   if (tstruct->annotations_.size() > 0) {
     write_key_and("annotations");
     start_object();
-    for (map<string, string>::iterator it = tstruct->annotations_.begin(); it != tstruct->annotations_.end(); ++it) {
-      write_key_and_string(it->first, it->second);
+    for (auto & annotation : tstruct->annotations_) {
+      write_key_and_string(annotation.first, annotation.second);
     }
     end_object();
   }
@@ -643,8 +643,8 @@ void t_json_generator::generate_service(t_service* tservice) {
   if (tservice->annotations_.size() > 0) {
     write_key_and("annotations");
     start_object();
-    for (map<string, string>::iterator it = tservice->annotations_.begin(); it != tservice->annotations_.end(); ++it) {
-      write_key_and_string(it->first, it->second);
+    for (auto & annotation : tservice->annotations_) {
+      write_key_and_string(annotation.first, annotation.second);
     }
     end_object();
   }
@@ -680,8 +680,8 @@ void t_json_generator::generate_function(t_function* tfunc) {
   if (tfunc->annotations_.size() > 0) {
     write_key_and("annotations");
     start_object();
-    for (map<string, string>::iterator it = tfunc->annotations_.begin(); it != tfunc->annotations_.end(); ++it) {
-      write_key_and_string(it->first, it->second);
+    for (auto & annotation : tfunc->annotations_) {
+      write_key_and_string(annotation.first, annotation.second);
     }
     end_object();
   }
@@ -726,8 +726,8 @@ void t_json_generator::generate_field(t_field* field) {
   if (field->annotations_.size() > 0) {
     write_key_and("annotations");
     start_object();
-    for (map<string, string>::iterator it = field->annotations_.begin(); it != field->annotations_.end(); ++it) {
-      write_key_and_string(it->first, it->second);
+    for (auto & annotation : field->annotations_) {
+      write_key_and_string(annotation.first, annotation.second);
     }
     end_object();
   }

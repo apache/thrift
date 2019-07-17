@@ -31,8 +31,6 @@ static int WEIGHT = 10;
 
 int main(int argc, char** argv) {
 
-  std::string arg;
-
   std::vector<std::string> args(argc - 1 > 1 ? argc - 1 : 1);
 
   args[0] = "all";
@@ -41,7 +39,7 @@ int main(int argc, char** argv) {
     args[ix - 1] = std::string(argv[ix]);
   }
 
-  if (getenv("VALGRIND") != 0) {
+  if (getenv("VALGRIND") != nullptr) {
 	  // lower the scale of every test
 	  WEIGHT = 1;
   }
@@ -94,18 +92,18 @@ int main(int argc, char** argv) {
 
     std::cout << "\t\tUtil minimum time" << std::endl;
 
-    int64_t time00 = Util::currentTime();
-    int64_t time01 = Util::currentTime();
+    int64_t time00 = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch()).count();
+    int64_t time01 = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch()).count();
 
     std::cout << "\t\t\tMinimum time: " << time01 - time00 << "ms" << std::endl;
 
-    time00 = Util::currentTime();
+    time00 = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch()).count();
     time01 = time00;
     size_t count = 0;
 
     while (time01 < time00 + 10) {
       count++;
-      time01 = Util::currentTime();
+      time01 = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch()).count();
     }
 
     std::cout << "\t\t\tscall per ms: " << count / (time01 - time00) << std::endl;

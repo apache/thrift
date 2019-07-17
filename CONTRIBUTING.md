@@ -13,17 +13,17 @@ it activates the continuous integration (CI) build systems at Appveyor and Travi
 on a variety of Linux and Windows configurations and run all the test suites.  Follow these requirements 
 for a successful pull request:
 
- 1. All code changes require an [Apache Jira THRIFT Issue](http://issues.apache.org/jira/browse/THRIFT) ticket.
+ 1. All significant changes require an [Apache Jira THRIFT Issue](http://issues.apache.org/jira/browse/THRIFT) ticket.  Trivial changes such as fixing a typo or a compiler warning do not.
 
  1. All pull requests should contain a single commit per issue, or we will ask you to squash it.
- 1. The pull request title must begin with the Jira THRIFT ticket identifier, for example:
+ 1. The pull request title must begin with the Jira THRIFT ticket identifier if it has an associated ticket, for example:
 
         THRIFT-9999: an example pull request title
         
  1. Commit messages must follow this pattern for code changes (deviations will not be merged):
         
         THRIFT-9999: [summary of fix, one line if possible]
-        Client: [language(s) affected, comma separated, use lib/ directory names please]
+        Client: [language(s) affected, comma separated, for example: "cpp,erl,perl"]
 
 Instructions:
 
@@ -64,11 +64,11 @@ For unix systems, see our detailed instructions on the [Docker README](/build/do
 
 ## Contributing via Patch ##
 
-Some changes do not require a build, for example in documentation.  For changes that are not code or build related, you can submit a patch on Jira for review.  To create a patch from changes in your local directory:
+To create a patch from changes in your local directory:
 
     git diff > ../THRIFT-NNNN.patch
 
-then wait for contributors or committers to review your changes, and then for a committer to apply your patch.
+then wait for contributors or committers to review your changes, and then for a committer to apply your patch.  This is not the preferred way to submit changes and incurs additional overhead for committers who must then create a pull request for you.
 
 ## GitHub recipes for Pull Requests ##
 

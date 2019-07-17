@@ -33,11 +33,6 @@
 #include "thrift/parse/t_list.h"
 #include "thrift/parse/t_set.h"
 
-namespace plugin_output {
-template <typename From, typename To>
-void convert(From*, To&);
-}
-
 /**
  * This represents a variable scope used for looking up predefined types and
  * services. Typically, a scope is associated with a t_program. Scopes are not
@@ -47,15 +42,33 @@ void convert(From*, To&);
  */
 class t_scope {
 public:
-  t_scope() {}
+  t_scope() = default;
 
   void add_type(std::string name, t_type* type) { types_[name] = type; }
 
   t_type* get_type(std::string name) { return types_[name]; }
 
+  const t_type* get_type(std::string name) const {
+    const auto it = types_.find(name);
+    if (types_.end() != it)
+    {
+       return it->second;
+    }
+    return nullptr;
+  }
+
   void add_service(std::string name, t_service* service) { services_[name] = service; }
 
   t_service* get_service(std::string name) { return services_[name]; }
+
+  const t_service* get_service(std::string name) const { 
+    const auto it = services_.find(name);
+    if (services_.end() != it)
+    {
+       return it->second;
+    }
+    return nullptr;
+  }
 
   void add_constant(std::string name, t_const* constant) {
     if (constants_.find(name) != constants_.end()) {
@@ -66,6 +79,15 @@ public:
   }
 
   t_const* get_constant(std::string name) { return constants_[name]; }
+
+  const t_const* get_constant(std::string name) const { 
+    const auto it = constants_.find(name);
+    if (constants_.end() != it)
+    {
+       return it->second;
+    }
+    return nullptr;
+  }
 
   void print() {
     std::map<std::string, t_type*>::iterator iter;
@@ -95,12 +117,12 @@ public:
         resolve_const_value((*v_iter), ((t_set*)ttype)->get_elem_type());
       }
     } else if (ttype->is_struct()) {
-      t_struct* tstruct = (t_struct*)ttype;
+      auto* tstruct = (t_struct*)ttype;
       const std::map<t_const_value*, t_const_value*, t_const_value::value_compare>& map = const_val->get_map();
       std::map<t_const_value*, t_const_value*, t_const_value::value_compare>::const_iterator v_iter;
       for (v_iter = map.begin(); v_iter != map.end(); ++v_iter) {
         t_field* field = tstruct->get_field_by_name(v_iter->first->get_string());
-        if (field == NULL) {
+        if (field == nullptr) {
           throw "No field named \"" + v_iter->first->get_string()
               + "\" was found in struct of type \"" + tstruct->get_name() + "\"";
         }
@@ -111,7 +133,7 @@ public:
         const_val->set_enum((t_enum*)ttype);
       } else {
         t_const* constant = get_constant(const_val->get_identifier());
-        if (constant == NULL) {
+        if (constant == nullptr) {
           throw "No enum value or constant found named \"" + const_val->get_identifier() + "\"!";
         }
 
@@ -157,9 +179,9 @@ public:
     } else if (ttype->is_enum()) {
       // enum constant with non-identifier value. set the enum and find the
       // value's name.
-      t_enum* tenum = (t_enum*)ttype;
+      auto* tenum = (t_enum*)ttype;
       t_enum_value* enum_value = tenum->get_constant_by_value(const_val->get_integer());
-      if (enum_value == NULL) {
+      if (enum_value == nullptr) {
         std::ostringstream valstm;
         valstm << const_val->get_integer();
         throw "Couldn't find a named value in enum " + tenum->get_name() + " for value "
@@ -179,10 +201,6 @@ private:
 
   // Map of names to services
   std::map<std::string, t_service*> services_;
-
-  // to list map entries
-  template <typename From, typename To>
-    friend void plugin_output::convert(From*, To&);
 };
 
 #endif

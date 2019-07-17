@@ -68,18 +68,8 @@ jobs:
 
     # ========================= stage: thrift =======================
     # ------------------------- phase: cross ------------------------
-    # apache/thrift official PR builds can exceed 50 minutes per job so combine all cross tests
     - stage: thrift
       script: build/docker/run.sh
-      if: repo = apache/thrift
-      env:
-        - JOB="Cross Language Tests"
-        - SCRIPT="cross-test.sh"
-
-    # fork based PR builds cannot exceed 50 minutes per job
-    - stage: thrift
-      script: build/docker/run.sh
-      if: repo != apache/thrift
       env:
         - JOB="Cross Language Tests (Binary Protocol)"
         - SCRIPT="cross-test.sh"
@@ -87,7 +77,6 @@ jobs:
 
     - stage: thrift
       script: build/docker/run.sh
-      if: repo != apache/thrift
       env:
         - JOB="Cross Language Tests (Header, JSON Protocols)"
         - SCRIPT="cross-test.sh"
@@ -95,7 +84,6 @@ jobs:
 
     - stage: thrift
       script: build/docker/run.sh
-      if: repo != apache/thrift
       env:
         - JOB="Cross Language Tests (Compact and Multiplexed Protocols)"
         - SCRIPT="cross-test.sh"
@@ -135,23 +123,12 @@ jobs:
     - script: build/docker/run.sh
       env:
         - JOB="CMake"
-
-    # C++ specific options: compiler plug-in, threading model
-    - script: build/docker/run.sh
-      env:
-        - JOB="C++98 (Boost Thread)"
-        - SCRIPT="cmake.sh"
-        - BUILD_LIBS="CPP TESTING TUTORIALS"
-        - BUILD_ARG="-DCMAKE_CXX_STANDARD=98 -DCMAKE_CXX_STANDARD_REQUIRED=ON -DCMAKE_CXX_EXTENSIONS=OFF --DWITH_BOOSTTHREADS=ON -DWITH_PYTHON=OFF -DWITH_C_GLIB=OFF -DWITH_JAVA=OFF -DWITH_HASKELL=OFF"
-        - BUILD_ENV="-e CC=clang -e CXX=clang++"
+        - BUILD_ARG="-DCMAKE_BUILD_TYPE=Debug"
 
     - script: build/docker/run.sh
       env:
-        - JOB="C++ (Std Thread) and Plugin"
-        - SCRIPT="cmake.sh"
-        - BUILD_LIBS="CPP TESTING TUTORIALS"
-        - BUILD_ARG="-DWITH_PLUGIN=ON -DWITH_STDTHREADS=ON -DWITH_PYTHON=OFF -DWITH_C_GLIB=OFF -DWITH_JAVA=OFF -DWITH_HASKELL=OFF"
-        - BUILD_ENV="-e CC=clang -e CXX=clang++"
+        - JOB="CMake"
+        - BUILD_ARG="-DCMAKE_BUILD_TYPE=Release"
 
     # ------------------------- phase: dist -------------------------
     - script: build/docker/run.sh
@@ -171,7 +148,28 @@ jobs:
       env:
         - JOB="Coverity Scan"
         - SCRIPT="covscan.sh"
-     
+
+    # ------------------------- phase: swift ------------------------
+    # We lint the podspec
+    - os: osx
+      osx_image: xcode10.1
+      language: swift
+      script:
+        - gem update cocoapods
+        - pod lib lint --allow-warnings --swift-version=3
+      env:
+        - JOB="pod lib lint"
+
+    - os: osx
+      osx_image: xcode10.2
+      language: swift
+      script:
+        - gem update cocoapods
+        - pod lib lint --allow-warnings --swift-version=4.0
+        - pod lib lint --allow-warnings --swift-version=4.2
+        - pod lib lint --allow-warnings --swift-version=5.0
+      env:
+        - JOB="pod lib lint"
 
   ### ------------------------- phase: osx --------------------------
   # disabled due to the time delays it imposes on build jobs

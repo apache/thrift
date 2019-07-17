@@ -19,15 +19,7 @@
 
 ACLOCAL_AMFLAGS = -I ./aclocal
 
-if WITH_PLUGIN
-# To enable bootstrap, build order is lib/cpp -> compiler -> others
-SUBDIRS = lib/cpp compiler/cpp lib
-if WITH_TESTS
-SUBDIRS += lib/cpp/test
-endif
-else
 SUBDIRS = compiler/cpp lib
-endif
 
 if WITH_TESTS
 SUBDIRS += test
@@ -37,8 +29,40 @@ if WITH_TUTORIAL
 SUBDIRS += tutorial
 endif
 
+clean-local:
+	$(RM) -r vendor/
+
+distclean-local:
+	$(RM) -r .dub/
+	$(RM) -r autom4te.cache/
+
+CLEANFILES = \
+	composer.lock \
+	dub.selections.json
+
+DISTCLEANFILES = \
+	Makefile \
+	Makefile.in \
+	aclocal.m4 \
+	apache-thrift-test-library \
+	autoscan.log \
+	compile \
+	config.guess \
+	config.hin \
+	config.hin~ \
+	config.log \
+	config.status \
+	config.sub \
+	configure \
+	configure.scan \
+    debcomp \
+    install-sh \
+    ltmain.sh \
+    missing \
+    ylwrap
+
 dist-hook:
-	find $(distdir) -type f \( -iname ".DS_Store" -or -iname "._*" -or -iname ".gitignore" \) | xargs rm -rf
+	find $(distdir) -type f \( -iname ".DS_Store" -or -iname "._*" -or -iname ".gitignore" \) | xargs rm -f
 	find $(distdir) -type d \( -iname ".deps" -or -iname ".libs" \) | xargs rm -rf
 	find $(distdir) -type d \( -iname ".svn" -or -iname ".git" \) | xargs rm -rf
 
@@ -54,7 +78,7 @@ empty :=
 space := $(empty) $(empty)
 comma := ,
 
-CROSS_LANGS = @MAYBE_CPP@ @MAYBE_C_GLIB@ @MAYBE_CL@ @MAYBE_D@ @MAYBE_JAVA@ @MAYBE_CSHARP@ @MAYBE_PYTHON@ @MAYBE_PY3@ @MAYBE_RUBY@ @MAYBE_HASKELL@ @MAYBE_PERL@ @MAYBE_PHP@ @MAYBE_GO@ @MAYBE_NODEJS@ @MAYBE_DART@ @MAYBE_ERLANG@ @MAYBE_LUA@ @MAYBE_RS@ @MAYBE_DOTNETCORE@
+CROSS_LANGS = @MAYBE_CPP@ @MAYBE_C_GLIB@ @MAYBE_CL@ @MAYBE_D@ @MAYBE_JAVA@ @MAYBE_CSHARP@ @MAYBE_PYTHON@ @MAYBE_PY3@ @MAYBE_RUBY@ @MAYBE_HASKELL@ @MAYBE_PERL@ @MAYBE_PHP@ @MAYBE_GO@ @MAYBE_NODEJS@ @MAYBE_DART@ @MAYBE_ERLANG@ @MAYBE_LUA@ @MAYBE_RS@ @MAYBE_DOTNETCORE@ @MAYBE_NODETS@
 CROSS_LANGS_COMMA_SEPARATED = $(subst $(space),$(comma),$(CROSS_LANGS))
 
 if WITH_PY3
@@ -109,27 +133,30 @@ style-local:
 
 EXTRA_DIST = \
 	.clang-format \
+	.dockerignore \
 	.editorconfig \
 	.travis.yml \
 	.rustfmt.toml \
-	.dockerignore \
+	ApacheThrift.nuspec \
 	appveyor.yml \
+	bootstrap.sh \
 	bower.json \
 	build \
-	bootstrap.sh \
-	cleanup.sh \
+	CHANGES.md \
 	CMakeLists.txt \
 	composer.json \
 	contrib \
 	CONTRIBUTING.md \
 	debian \
-	doc \
 	doap.rdf \
-	package.json \
-	sonar-project.properties \
+	doc \
+	dub.json \
+	jitpack.yml \
 	LANGUAGES.md \
 	LICENSE \
-	CHANGES \
 	NOTICE \
+	package.json \
+	phpcs.xml.dist \
 	README.md \
+	sonar-project.properties \
 	Thrift.podspec

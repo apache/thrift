@@ -16,16 +16,15 @@
 # under the License.
 
 name: tutorial_client
-version: 1.0.0-dev
+version: 0.13.0
 description: A Dart client implementation of the Apache Thrift tutorial
 author: Apache Thrift Developers <dev@thrift.apache.org>
 homepage: http://thrift.apache.org
 
 environment:
-  sdk: ">=1.13.0 <2.0.0"
+  sdk: ">=1.13.0 <3.0.0"
 
 dependencies:
-  browser: ^0.10.0
   shared:
     path: ../gen-dart/shared
   thrift:

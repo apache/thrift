@@ -54,18 +54,16 @@ void compare_namespace(t_program* newProgram, t_program* oldProgram)
    const std::map<std::string, std::string>& newNamespaceMap = newProgram->get_all_namespaces();
    const std::map<std::string, std::string>& oldNamespaceMap = oldProgram->get_all_namespaces();
 
-   for(std::map<std::string, std::string>::const_iterator oldNamespaceMapIt = oldNamespaceMap.begin();
-         oldNamespaceMapIt != oldNamespaceMap.end();
-         oldNamespaceMapIt++)
+   for(const auto & oldNamespaceMapIt : oldNamespaceMap)
    {
-      std::map<std::string, std::string>::const_iterator newNamespaceMapIt = newNamespaceMap.find(oldNamespaceMapIt->first);
+      auto newNamespaceMapIt = newNamespaceMap.find(oldNamespaceMapIt.first);
       if(newNamespaceMapIt == newNamespaceMap.end())
       {
-         thrift_audit_warning(1, "Language %s not found in new thrift file\n", (oldNamespaceMapIt->first).c_str());
+         thrift_audit_warning(1, "Language %s not found in new thrift file\n", (oldNamespaceMapIt.first).c_str());
       }
-      else if((newNamespaceMapIt->second) != oldNamespaceMapIt->second)
+      else if((newNamespaceMapIt->second) != oldNamespaceMapIt.second)
       {
-         thrift_audit_warning(1, "Namespace %s changed in new thrift file\n", (oldNamespaceMapIt->second).c_str());
+         thrift_audit_warning(1, "Namespace %s changed in new thrift file\n", (oldNamespaceMapIt.second).c_str());
       }
    }
 }
@@ -73,15 +71,13 @@ void compare_namespace(t_program* newProgram, t_program* oldProgram)
 void compare_enum_values(t_enum* newEnum,t_enum* oldEnum)
 {
    const std::vector<t_enum_value*>& oldEnumValues = oldEnum->get_constants();
-   for(std::vector<t_enum_value*>::const_iterator oldEnumValuesIt = oldEnumValues.begin();
-         oldEnumValuesIt != oldEnumValues.end();
-         oldEnumValuesIt++)
+   for(auto oldEnumValue : oldEnumValues)
    {
-      int enumValue = (*oldEnumValuesIt)->get_value();
+      int enumValue = oldEnumValue->get_value();
       t_enum_value* newEnumValue = newEnum->get_constant_by_value(enumValue);
-      if(newEnumValue != NULL)
+      if(newEnumValue != nullptr)
       {
-         std::string enumName = (*oldEnumValuesIt)->get_name();
+         std::string enumName = oldEnumValue->get_name();
          if(enumName != newEnumValue->get_name())
          {
             thrift_audit_warning(1, "Name of the value %d changed in enum %s\n", enumValue, oldEnum->get_name().c_str());
@@ -175,9 +171,9 @@ bool compare_pair(std::pair<t_const_value*, t_const_value*> newMapPair, std::pai
 // This function returns 'true' if the default values are same. Returns false if they are different.
 bool compare_defaults(t_const_value* newStructDefault, t_const_value* oldStructDefault)
 {
-   if(newStructDefault == NULL && oldStructDefault == NULL) return true;
-   else if(newStructDefault == NULL && oldStructDefault != NULL) return false;
-   else if (newStructDefault != NULL && oldStructDefault == NULL) return false;
+   if(newStructDefault == nullptr && oldStructDefault == nullptr) return true;
+   else if(newStructDefault == nullptr && oldStructDefault != nullptr) return false;
+   else if (newStructDefault != nullptr && oldStructDefault == nullptr) return false;
 
    if(newStructDefault->get_type() != oldStructDefault->get_type())
    {
@@ -255,8 +251,8 @@ void compare_single_struct(t_struct* newStruct, t_struct* oldStruct, const std::
    std::string structName = oldStructName.empty() ? oldStruct->get_name() : oldStructName;
    const std::vector<t_field*>& oldStructMembersInIdOrder = oldStruct->get_sorted_members();
    const std::vector<t_field*>& newStructMembersInIdOrder = newStruct->get_sorted_members();
-   std::vector<t_field*>::const_iterator oldStructMemberIt = oldStructMembersInIdOrder.begin();
-   std::vector<t_field*>::const_iterator newStructMemberIt = newStructMembersInIdOrder.begin();
+   auto oldStructMemberIt = oldStructMembersInIdOrder.begin();
+   auto newStructMemberIt = newStructMembersInIdOrder.begin();
 
    // Since we have the struct members in their ID order, comparing their IDs can be done by traversing the two member
    // lists together.
@@ -352,27 +348,23 @@ void compare_functions(const std::vector<t_function*>& newFunctionList, const st
 {
    std::map<std::string, t_function*> newFunctionMap;
    std::map<std::string, t_function*>::iterator newFunctionMapIt;
-   for(std::vector<t_function*>::const_iterator newFunctionIt = newFunctionList.begin();
-         newFunctionIt != newFunctionList.end();
-         newFunctionIt++)
+   for(auto newFunctionIt : newFunctionList)
    {
-      newFunctionMap[(*newFunctionIt)->get_name()] = *newFunctionIt;
+      newFunctionMap[newFunctionIt->get_name()] = newFunctionIt;
    }
 
-   for(std::vector<t_function*>::const_iterator oldFunctionIt = oldFunctionList.begin();
-         oldFunctionIt != oldFunctionList.end();
-         oldFunctionIt++)
+   for(auto oldFunctionIt : oldFunctionList)
    {
-      newFunctionMapIt = newFunctionMap.find((*oldFunctionIt)->get_name());
+      newFunctionMapIt = newFunctionMap.find(oldFunctionIt->get_name());
       if(newFunctionMapIt == newFunctionMap.end())
       {
-         thrift_audit_failure("New Thrift File has missing function %s\n",(*oldFunctionIt)->get_name().c_str());
+         thrift_audit_failure("New Thrift File has missing function %s\n",oldFunctionIt->get_name().c_str());
          continue;
       }
       else
       {
          //Function is found in both thrift files. Compare return type and argument list
-         compare_single_function(newFunctionMapIt->second, *oldFunctionIt);
+         compare_single_function(newFunctionMapIt->second, oldFunctionIt);
       }
    }
 
@@ -383,18 +375,16 @@ void compare_services(const std::vector<t_service*>& newServices, const std::vec
    std::vector<t_service*>::const_iterator oldServiceIt;
 
    std::map<std::string, t_service*> newServiceMap;
-   for(std::vector<t_service*>::const_iterator newServiceIt = newServices.begin();
-         newServiceIt != newServices.end();
-         newServiceIt++)
+   for(auto newService : newServices)
    {
-      newServiceMap[(*newServiceIt)->get_name()] = *newServiceIt;
+      newServiceMap[newService->get_name()] = newService;
    }
 
 
    for(oldServiceIt = oldServices.begin(); oldServiceIt != oldServices.end(); oldServiceIt++)
    {
       const std::string oldServiceName = (*oldServiceIt)->get_name();
-      std::map<std::string, t_service*>::iterator newServiceMapIt = newServiceMap.find(oldServiceName);
+      auto newServiceMapIt = newServiceMap.find(oldServiceName);
 
       if(newServiceMapIt == newServiceMap.end())
       {
@@ -405,12 +395,12 @@ void compare_services(const std::vector<t_service*>& newServices, const std::vec
          t_service* oldServiceExtends = (*oldServiceIt)->get_extends();
          t_service* newServiceExtends = (newServiceMapIt->second)->get_extends();
 
-         if(oldServiceExtends == NULL)
+         if(oldServiceExtends == nullptr)
          {
             // It is fine to add extends. So if service in older thrift did not have any extends, we are fine.
             // DO Nothing
          }
-         else if(oldServiceExtends != NULL && newServiceExtends == NULL)
+         else if(oldServiceExtends != nullptr && newServiceExtends == nullptr)
          {
             thrift_audit_failure("Change in Service inheritance for %s\n", oldServiceName.c_str());
          }

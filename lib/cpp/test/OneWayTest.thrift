@@ -34,7 +34,6 @@ namespace py.twisted OneWayTest
 namespace go onewaytest
 namespace php OneWayTest
 namespace delphi Onewaytest
-namespace cocoa OneWayTest
 namespace lua OneWayTest
 namespace xsd test (uri = 'http://thrift.apache.org/ns/OneWayTest')
 namespace netcore ThriftAsync.OneWayTest

@@ -19,7 +19,10 @@
 # under the License.
 #
 
-./cleanup.sh
+echo -n "make distclean... "
+make -k distclean >/dev/null 2>&1
+echo "ok"
+
 if test -d lib/php/src/ext/thrift_protocol ; then
     if phpize -v >/dev/null 2>/dev/null ; then
         (cd lib/php/src/ext/thrift_protocol && phpize)

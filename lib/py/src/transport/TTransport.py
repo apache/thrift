@@ -34,9 +34,10 @@ class TTransportException(TException):
     SIZE_LIMIT = 6
     INVALID_CLIENT_TYPE = 7
 
-    def __init__(self, type=UNKNOWN, message=None):
+    def __init__(self, type=UNKNOWN, message=None, inner=None):
         TException.__init__(self, message)
         self.type = type
+        self.inner = inner
 
 
 class TTransportBase(object):
@@ -376,7 +377,7 @@ class TSaslClientTransport(TTransportBase, CReadableTransport):
         if not self.transport.isOpen():
             self.transport.open()
 
-        self.send_sasl_msg(self.START, self.sasl.mechanism)
+        self.send_sasl_msg(self.START, bytes(self.sasl.mechanism, 'ascii'))
         self.send_sasl_msg(self.OK, self.sasl.process())
 
         while True:
@@ -417,7 +418,7 @@ class TSaslClientTransport(TTransportBase, CReadableTransport):
     def flush(self):
         data = self.__wbuf.getvalue()
         encoded = self.sasl.wrap(data)
-        self.transport.write(''.join((pack("!i", len(encoded)), encoded)))
+        self.transport.write(pack("!i", len(encoded)) + encoded)
         self.transport.flush()
         self.__wbuf = BufferIO()
 

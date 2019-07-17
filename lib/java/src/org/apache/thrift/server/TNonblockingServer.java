@@ -86,8 +86,8 @@ public class TNonblockingServer extends AbstractNonblockingServer {
     try {
       selectAcceptThread_.join();
     } catch (InterruptedException e) {
-      // for now, just silently ignore. technically this means we'll have less of
-      // a graceful shutdown as a result.
+      LOGGER.debug("Interrupted while waiting for accept thread", e);
+      Thread.currentThread().interrupt();
     }
   }
 
@@ -239,7 +239,6 @@ public class TNonblockingServer extends AbstractNonblockingServer {
       } catch (TTransportException tte) {
         // something went wrong accepting.
         LOGGER.warn("Exception trying to accept!", tte);
-        tte.printStackTrace();
         if (clientKey != null) cleanupSelectionKey(clientKey);
         if (client != null) client.close();
       }

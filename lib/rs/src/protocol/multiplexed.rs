@@ -15,8 +15,10 @@
 // specific language governing permissions and limitations
 // under the License.
 
-use super::{TFieldIdentifier, TListIdentifier, TMapIdentifier, TMessageIdentifier, TMessageType,
-            TOutputProtocol, TSetIdentifier, TStructIdentifier};
+use super::{
+    TFieldIdentifier, TListIdentifier, TMapIdentifier, TMessageIdentifier, TMessageType,
+    TOutputProtocol, TSetIdentifier, TStructIdentifier,
+};
 
 /// `TOutputProtocol` that prefixes the service name to all outgoing Thrift
 /// messages.
@@ -81,7 +83,8 @@ where
     P: TOutputProtocol,
 {
     fn write_message_begin(&mut self, identifier: &TMessageIdentifier) -> ::Result<()> {
-        match identifier.message_type { // FIXME: is there a better way to override identifier here?
+        match identifier.message_type {
+            // FIXME: is there a better way to override identifier here?
             TMessageType::Call | TMessageType::OneWay => {
                 let identifier = TMessageIdentifier {
                     name: format!("{}:{}", self.service_name, identifier.name),
@@ -200,6 +203,7 @@ mod tests {
         let ident = TMessageIdentifier::new("bar", TMessageType::Call, 2);
         assert_success!(o_prot.write_message_begin(&ident));
 
+        #[cfg_attr(rustfmt, rustfmt::skip)]
         let expected: [u8; 19] = [
             0x80,
             0x01, /* protocol identifier */
@@ -225,9 +229,7 @@ mod tests {
         assert_eq!(o_prot.inner.transport.write_bytes(), expected);
     }
 
-    fn test_objects
-        ()
-        -> TMultiplexedOutputProtocol<TBinaryOutputProtocol<WriteHalf<TBufferChannel>>>
+    fn test_objects() -> TMultiplexedOutputProtocol<TBinaryOutputProtocol<WriteHalf<TBufferChannel>>>
     {
         let c = TBufferChannel::with_capacity(40, 40);
         let (_, w_chan) = c.split().unwrap();

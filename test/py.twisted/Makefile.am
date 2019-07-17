@@ -27,4 +27,12 @@ check: stubs
 	$(TRIAL) ./test_suite.py
 
 clean-local:
-	$(RM) -r gen-py.twisted
+	$(RM) -r build
+	find . -type f \( -iname "*.pyc" \) | xargs rm -f
+	find . -type d \( -iname "__pycache__" -or -iname "_trial_temp" \) | xargs rm -rf
+	$(RM) -r gen-py*/
+
+dist-hook:
+	find $(distdir) -type f \( -iname "*.pyc" \) | xargs rm -f
+	find $(distdir) -type d \( -iname "__pycache__" -or -iname "_trial_temp" \) | xargs rm -rf
+	$(RM) -r $(distdir)/gen-py*/

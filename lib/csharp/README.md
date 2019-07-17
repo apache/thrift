@@ -1,5 +1,11 @@
 Thrift C# Software Library
 
+Deprecation notice
+=======
+
+Per [THRIFT-4723](https://issues.apache.org/jira/browse/THRIFT-4723), both CSharp and Netcore targets are deprecated 
+and will be removed with the next release. Migrate to the [NetStd language target](../netstd/README.md) instead.
+
 License
 =======
 

@@ -17,11 +17,13 @@
 # under the License.
 #
 
-include_directories(SYSTEM "${Boost_INCLUDE_DIRS}")
+# Unit tests still require boost
+include(BoostMacros)
+REQUIRE_BOOST_HEADERS()
+set(BOOST_COMPONENTS chrono date_time filesystem random thread unit_test_framework)
+REQUIRE_BOOST_LIBRARIES(BOOST_COMPONENTS)
 
-if (WITH_DYN_LINK_TEST)
-    add_definitions( -DBOOST_TEST_DYN_LINK )
-endif()
+include(ThriftMacros)
 
 # Make sure gen-cpp files can be included
 include_directories("${CMAKE_CURRENT_BINARY_DIR}")
@@ -81,11 +83,6 @@ set(UnitTest_SOURCES
     TServerSocketTest.cpp
     TServerTransportTest.cpp
 )
-
-if(NOT WITH_BOOSTTHREADS AND NOT WITH_STDTHREADS AND NOT MSVC AND NOT MINGW)
-    list(APPEND UnitTest_SOURCES concurrency/MutexTest.cpp)
-    list(APPEND UnitTest_SOURCES concurrency/RWMutexStarveTest.cpp)
-endif()
 
 add_executable(UnitTests ${UnitTest_SOURCES})
 target_link_libraries(UnitTests testgencpp ${Boost_LIBRARIES})
@@ -337,18 +334,6 @@ target_link_libraries(SecurityTest -lrt)
 endif ()
 add_test(NAME SecurityTest COMMAND SecurityTest -- "${CMAKE_CURRENT_SOURCE_DIR}/../../../test/keys")
 
-endif()
-
-if(WITH_QT4)
-set(CMAKE_AUTOMOC ON)
-find_package(Qt4 REQUIRED COMPONENTS QtTest)
-set(TQTcpServerTest_SOURCES
-    qt/TQTcpServerTest.cpp
-)
-add_executable(TQTcpServerTest ${TQTcpServerTest_SOURCES})
-target_link_libraries(TQTcpServerTest testgencpp_cob thriftqt Qt4::QtTest)
-LINK_AGAINST_THRIFT_LIBRARY(TQTcpServerTest thrift)
-add_test(NAME TQTcpServerTest COMMAND TQTcpServerTest)
 endif()
 
 if(WITH_QT5)

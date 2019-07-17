@@ -20,20 +20,10 @@
 #ifndef _THRIFT_CONCURRENCY_THREAD_H_
 #define _THRIFT_CONCURRENCY_THREAD_H_ 1
 
-#include <stdint.h>
-#include <thrift/stdcxx.h>
-
-#include <thrift/thrift-config.h>
-
-#if USE_BOOST_THREAD
-#include <boost/thread.hpp>
-#elif USE_STD_THREAD
+#include <memory>
 #include <thread>
-#else
-#ifdef HAVE_PTHREAD_H
-#include <pthread.h>
-#endif
-#endif
+
+#include <thrift/concurrency/Monitor.h>
 
 namespace apache {
 namespace thrift {
@@ -49,23 +39,23 @@ class Thread;
 class Runnable {
 
 public:
-  virtual ~Runnable(){};
+  virtual ~Runnable() = default;
   virtual void run() = 0;
 
   /**
    * Gets the thread object that is hosting this runnable object  - can return
    * an empty boost::shared pointer if no references remain on that thread object
    */
-  virtual stdcxx::shared_ptr<Thread> thread() { return thread_.lock(); }
+  virtual std::shared_ptr<Thread> thread() { return thread_.lock(); }
 
   /**
    * Sets the thread that is executing this object.  This is only meant for
    * use by concrete implementations of Thread.
    */
-  virtual void thread(stdcxx::shared_ptr<Thread> value) { thread_ = value; }
+  virtual void thread(std::shared_ptr<Thread> value) { thread_ = value; }
 
 private:
-  stdcxx::weak_ptr<Thread> thread_;
+  std::weak_ptr<Thread> thread_;
 };
 
 /**
@@ -77,98 +67,105 @@ private:
  *
  * @see apache::thrift::concurrency::ThreadFactory)
  */
-class Thread {
+class Thread final : public std::enable_shared_from_this<Thread> {
 
 public:
-#if USE_BOOST_THREAD
-  typedef boost::thread::id id_t;
-
-  static inline bool is_current(id_t t) { return t == boost::this_thread::get_id(); }
-  static inline id_t get_current() { return boost::this_thread::get_id(); }
-#elif USE_STD_THREAD
   typedef std::thread::id id_t;
+
+  enum STATE { uninitialized, starting, started, stopping, stopped };
+
+  static void threadMain(std::shared_ptr<Thread> thread);
 
   static inline bool is_current(id_t t) { return t == std::this_thread::get_id(); }
   static inline id_t get_current() { return std::this_thread::get_id(); }
-#else
-  typedef pthread_t id_t;
 
-  static inline bool is_current(id_t t) { return pthread_equal(pthread_self(), t); }
-  static inline id_t get_current() { return pthread_self(); }
-#endif
+  Thread(bool detached, std::shared_ptr<Runnable> runnable)
+    : state_(uninitialized), detached_(detached) {
+    this->_runnable = runnable;
+  }
 
-  virtual ~Thread(){};
+  ~Thread() {
+    if (!detached_ && thread_->joinable()) {
+      try {
+        join();
+      } catch (...) {
+        // We're really hosed.
+      }
+    }
+  }
+
+  STATE getState() const
+  {
+    Synchronized sync(monitor_);
+    return state_;
+  }
+
+  void setState(STATE newState)
+  {
+    Synchronized sync(monitor_);
+    state_ = newState;
+
+    // unblock start() with the knowledge that the thread has actually
+    // started running, which avoids a race in detached threads.
+    if (newState == started) {
+	  monitor_.notify();
+    }
+  }
 
   /**
    * Starts the thread. Does platform specific thread creation and
    * configuration then invokes the run method of the Runnable object bound
    * to this thread.
    */
-  virtual void start() = 0;
+  void start() {
+    if (getState() != uninitialized) {
+      return;
+    }
+
+    std::shared_ptr<Thread> selfRef = shared_from_this();
+    setState(starting);
+
+    Synchronized sync(monitor_);
+    thread_ = std::unique_ptr<std::thread>(new std::thread(threadMain, selfRef));
+
+    if (detached_)
+      thread_->detach();
+    
+    // Wait for the thread to start and get far enough to grab everything
+    // that it needs from the calling context, thus absolving the caller
+    // from being required to hold on to runnable indefinitely.
+    monitor_.wait();
+  }
 
   /**
    * Join this thread. If this thread is joinable, the calling thread blocks
    * until this thread completes.  If the target thread is not joinable, then
    * nothing happens.
    */
-  virtual void join() = 0;
+  void join() {
+    if (!detached_ && state_ != uninitialized) {
+      thread_->join();
+    }
+  }
 
   /**
    * Gets the thread's platform-specific ID
    */
-  virtual id_t getId() = 0;
+  Thread::id_t getId() const { return thread_.get() ? thread_->get_id() : std::thread::id(); }
 
   /**
    * Gets the runnable object this thread is hosting
    */
-  virtual stdcxx::shared_ptr<Runnable> runnable() const { return _runnable; }
-
-protected:
-  virtual void runnable(stdcxx::shared_ptr<Runnable> value) { _runnable = value; }
+  std::shared_ptr<Runnable> runnable() const { return _runnable; }
 
 private:
-  stdcxx::shared_ptr<Runnable> _runnable;
-};
-
-/**
- * Factory to create platform-specific thread object and bind them to Runnable
- * object for execution
- */
-class ThreadFactory {
-protected:
-  ThreadFactory(bool detached) : detached_(detached) { }
-
-public:
-  virtual ~ThreadFactory() { }
-
-  /**
-   * Gets current detached mode
-   */
-  bool isDetached() const { return detached_; }
-
-  /**
-   * Sets the detached disposition of newly created threads.
-   */
-  void setDetached(bool detached) { detached_ = detached; }
-
-  /**
-   * Create a new thread.
-   */
-  virtual stdcxx::shared_ptr<Thread> newThread(stdcxx::shared_ptr<Runnable> runnable) const = 0;
-
-  /**
-   * Gets the current thread id or unknown_thread_id if the current thread is not a thrift thread
-   */
-  virtual Thread::id_t getCurrentThreadId() const = 0;
-
-  /**
-   * For code readability define the unknown/undefined thread id
-   */
-  static const Thread::id_t unknown_thread_id;
-
-private:
+  std::shared_ptr<Runnable> _runnable;
+  std::unique_ptr<std::thread> thread_;
+  Monitor monitor_;
+  STATE state_;
   bool detached_;
 };
+
 
 }
 }

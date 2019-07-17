@@ -58,6 +58,9 @@
 			<DCCReference Include="..\..\..\lib\delphi\src\Thrift.Protocol.pas"/>
 			<DCCReference Include="..\..\..\lib\delphi\src\Thrift.Server.pas"/>
 			<DCCReference Include="..\..\..\lib\delphi\src\Thrift.Transport.pas"/>
+			<DCCReference Include="..\..\..\lib\delphi\src\Thrift.Transport.WinHTTP.pas"/>
+			<DCCReference Include="..\..\..\lib\delphi\src\Thrift.Transport.MsxmlHTTP.pas"/>
+			<DCCReference Include="..\..\..\lib\delphi\src\Thrift.WinHTTP.pas"/>
 			<DCCReference Include="..\..\gen-delphi\Shared.pas"/>
 			<DCCReference Include="..\..\gen-delphi\Tutorial.pas"/>
 			<BuildConfiguration Include="Release">
@@ -82,8 +85,8 @@
 					<VersionInfo>
 						<VersionInfo Name="IncludeVerInfo">True</VersionInfo>
 						<VersionInfo Name="AutoIncBuild">False</VersionInfo>
-						<VersionInfo Name="MajorVer">1</VersionInfo>
-						<VersionInfo Name="MinorVer">0</VersionInfo>
+						<VersionInfo Name="MajorVer">0</VersionInfo>
+						<VersionInfo Name="MinorVer">12</VersionInfo>
 						<VersionInfo Name="Release">0</VersionInfo>
 						<VersionInfo Name="Build">0</VersionInfo>
 						<VersionInfo Name="Debug">False</VersionInfo>
@@ -97,13 +100,13 @@
 					<VersionInfoKeys>
 						<VersionInfoKeys Name="CompanyName"/>
 						<VersionInfoKeys Name="FileDescription">Thrift Tutorial</VersionInfoKeys>
-						<VersionInfoKeys Name="FileVersion">1.0.0.0</VersionInfoKeys>
+						<VersionInfoKeys Name="FileVersion">0.13.0.0</VersionInfoKeys>
 						<VersionInfoKeys Name="InternalName">DelphiClient</VersionInfoKeys>
 						<VersionInfoKeys Name="LegalCopyright">Copyright © 2012 The Apache Software Foundation</VersionInfoKeys>
 						<VersionInfoKeys Name="LegalTrademarks"/>
 						<VersionInfoKeys Name="OriginalFilename">DelphiClient.exe</VersionInfoKeys>
 						<VersionInfoKeys Name="ProductName">Thrift</VersionInfoKeys>
-						<VersionInfoKeys Name="ProductVersion">1.0.0.0</VersionInfoKeys>
+						<VersionInfoKeys Name="ProductVersion">0.13.0.0</VersionInfoKeys>
 						<VersionInfoKeys Name="Comments"/>
 					</VersionInfoKeys>
 					<Source>

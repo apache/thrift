@@ -17,10 +17,7 @@
 # under the License.
 #
 
-AUTOMAKE_OPTIONS = subdir-objects
-
-moc_%.cpp: %.h
-	$(QT_MOC) $(QT_CFLAGS) $< -o $@
+AUTOMAKE_OPTIONS = subdir-objects nostdinc
 
 moc__%.cpp: %.h
 	$(QT5_MOC) $(QT5_CFLAGS) $< -o $@
@@ -28,11 +25,7 @@ moc__%.cpp: %.h
 SUBDIRS = .
 
 if WITH_TESTS
-# This file is needed by compiler with plugin, while test/Makefile.am needs compiler
-# So test directory is directly picked by top level Makefile.am for plugin build
-if !WITH_PLUGIN
 SUBDIRS += test
-endif
 endif
 
 pkgconfigdir = $(libdir)/pkgconfig
@@ -52,10 +45,6 @@ if AMX_HAVE_ZLIB
 lib_LTLIBRARIES += libthriftz.la
 pkgconfig_DATA += thrift-z.pc
 endif
-if AMX_HAVE_QT
-lib_LTLIBRARIES += libthriftqt.la
-pkgconfig_DATA += thrift-qt.pc
-endif
 if AMX_HAVE_QT5
 lib_LTLIBRARIES += libthriftqt5.la
 pkgconfig_DATA += thrift-qt5.pc
@@ -74,7 +63,6 @@ libthrift_la_SOURCES = src/thrift/TApplicationException.cpp \
                        src/thrift/async/TConcurrentClientSyncInfo.cpp \
                        src/thrift/concurrency/ThreadManager.cpp \
                        src/thrift/concurrency/TimerManager.cpp \
-                       src/thrift/concurrency/Util.cpp \
                        src/thrift/processor/PeekProcessor.cpp \
                        src/thrift/protocol/TDebugProtocol.cpp \
                        src/thrift/protocol/TJSONProtocol.cpp \
@@ -106,15 +94,10 @@ libthrift_la_SOURCES = src/thrift/TApplicationException.cpp \
                        src/thrift/server/TThreadPoolServer.cpp \
                        src/thrift/server/TThreadedServer.cpp
 
-if WITH_BOOSTTHREADS
-libthrift_la_SOURCES += src/thrift/concurrency/BoostThreadFactory.cpp \
-                        src/thrift/concurrency/BoostMonitor.cpp \
-                        src/thrift/concurrency/BoostMutex.cpp
-else
 libthrift_la_SOURCES += src/thrift/concurrency/Mutex.cpp \
-                        src/thrift/concurrency/Monitor.cpp \
-                        src/thrift/concurrency/PosixThreadFactory.cpp
-endif
+						src/thrift/concurrency/ThreadFactory.cpp \
+						src/thrift/concurrency/Thread.cpp \
+                        src/thrift/concurrency/Monitor.cpp
 
 libthriftnb_la_SOURCES = src/thrift/server/TNonblockingServer.cpp \
                          src/thrift/async/TEvhttpServer.cpp \
@@ -125,39 +108,31 @@ libthriftz_la_SOURCES = src/thrift/transport/TZlibTransport.cpp \
                         src/thrift/protocol/THeaderProtocol.cpp
 
 
-libthriftqt_la_MOC = src/thrift/qt/moc_TQTcpServer.cpp
-nodist_libthriftqt_la_SOURCES = $(libthriftqt_la_MOC)
-libthriftqt_la_SOURCES = src/thrift/qt/TQIODeviceTransport.cpp \
-                         src/thrift/qt/TQTcpServer.cpp
-CLEANFILES = $(libthriftqt_la_MOC)
-
 libthriftqt5_la_MOC = src/thrift/qt/moc__TQTcpServer.cpp
 nodist_libthriftqt5_la_SOURCES = $(libthriftqt5_la_MOC)
 libthriftqt5_la_SOURCES = src/thrift/qt/TQIODeviceTransport.cpp \
                           src/thrift/qt/TQTcpServer.cpp
-CLEANFILES += $(libthriftqt5_la_MOC)
+CLEANFILES = $(libthriftqt5_la_MOC)
 
 # Flags for the various libraries
 libthriftnb_la_CPPFLAGS = $(AM_CPPFLAGS) $(LIBEVENT_CPPFLAGS)
 libthriftz_la_CPPFLAGS  = $(AM_CPPFLAGS) $(ZLIB_CPPFLAGS)
-libthriftqt_la_CPPFLAGS = $(AM_CPPFLAGS) $(QT_CFLAGS)
 libthriftqt5_la_CPPFLAGS = $(AM_CPPFLAGS) $(QT5_CFLAGS)
 if QT5_REDUCE_RELOCATIONS
 libthriftqt5_la_CPPFLAGS += -fPIC
 endif
 libthriftnb_la_CXXFLAGS = $(AM_CXXFLAGS)
 libthriftz_la_CXXFLAGS  = $(AM_CXXFLAGS)
-libthriftqt_la_CXXFLAGS  = $(AM_CXXFLAGS)
 libthriftqt5_la_CXXFLAGS  = $(AM_CXXFLAGS)
 libthriftnb_la_LDFLAGS  = -release $(VERSION) $(BOOST_LDFLAGS)
 libthriftz_la_LDFLAGS   = -release $(VERSION) $(BOOST_LDFLAGS) $(ZLIB_LIBS)
-libthriftqt_la_LDFLAGS   = -release $(VERSION) $(BOOST_LDFLAGS) $(QT_LIBS)
 libthriftqt5_la_LDFLAGS   = -release $(VERSION) $(BOOST_LDFLAGS) $(QT5_LIBS)
 
 include_thriftdir = $(includedir)/thrift
 include_thrift_HEADERS = \
                          $(top_builddir)/config.h \
                          src/thrift/thrift-config.h \
+                         src/thrift/thrift_export.h \
                          src/thrift/TDispatchProcessor.h \
                          src/thrift/Thrift.h \
                          src/thrift/TOutput.h \
@@ -165,26 +140,18 @@ include_thrift_HEADERS = \
                          src/thrift/TApplicationException.h \
                          src/thrift/TLogging.h \
                          src/thrift/TToString.h \
-                         src/thrift/stdcxx.h \
                          src/thrift/TBase.h
 
 include_concurrencydir = $(include_thriftdir)/concurrency
 include_concurrency_HEADERS = \
-                         src/thrift/concurrency/BoostThreadFactory.h \
                          src/thrift/concurrency/Exception.h \
                          src/thrift/concurrency/Mutex.h \
                          src/thrift/concurrency/Monitor.h \
-                         src/thrift/concurrency/PlatformThreadFactory.h \
-                         src/thrift/concurrency/PosixThreadFactory.h \
-                         src/thrift/concurrency/StdMonitor.cpp \
-                         src/thrift/concurrency/StdMutex.cpp \
-                         src/thrift/concurrency/StdThreadFactory.cpp \
-                         src/thrift/concurrency/StdThreadFactory.h \
+                         src/thrift/concurrency/ThreadFactory.h \
                          src/thrift/concurrency/Thread.h \
                          src/thrift/concurrency/ThreadManager.h \
                          src/thrift/concurrency/TimerManager.h \
-                         src/thrift/concurrency/FunctionRunner.h \
-                         src/thrift/concurrency/Util.h
+                         src/thrift/concurrency/FunctionRunner.h
 
 include_protocoldir = $(include_thriftdir)/protocol
 include_protocol_HEADERS = \
@@ -281,7 +248,6 @@ EXTRA_DIST = \
              thrift-nb.pc.in \
              thrift.pc.in \
              thrift-z.pc.in \
-             thrift-qt.pc.in \
              thrift-qt5.pc.in \
              src/thrift/qt/CMakeLists.txt \
              $(WINDOWS_DIST)

@@ -26,7 +26,6 @@
 #endif
 #include <sstream>
 #include <fstream>
-#include <thrift/stdcxx.h>
 
 #include <boost/mpl/list.hpp>
 #include <boost/shared_array.hpp>
@@ -58,7 +57,7 @@ void initrand(unsigned int seed) {
 
 class SizeGenerator {
 public:
-  virtual ~SizeGenerator() {}
+  virtual ~SizeGenerator() = default;
   virtual uint32_t nextSize() = 0;
   virtual std::string describe() const = 0;
 };
@@ -66,8 +65,8 @@ public:
 class ConstantSizeGenerator : public SizeGenerator {
 public:
   ConstantSizeGenerator(uint32_t value) : value_(value) {}
-  uint32_t nextSize() { return value_; }
-  std::string describe() const {
+  uint32_t nextSize() override { return value_; }
+  std::string describe() const override {
     std::ostringstream desc;
     desc << value_;
     return desc.str();
@@ -82,9 +81,9 @@ public:
   RandomSizeGenerator(uint32_t min, uint32_t max)
     : generator_(rng, boost::uniform_int<int>(min, max)) {}
 
-  uint32_t nextSize() { return generator_(); }
+  uint32_t nextSize() override { return generator_(); }
 
-  std::string describe() const {
+  std::string describe() const override {
     std::ostringstream desc;
     desc << "rand(" << getMin() << ", " << getMax() << ")";
     return desc.str();
@@ -110,11 +109,11 @@ public:
   GenericSizeGenerator(uint32_t min, uint32_t max)
     : generator_(new RandomSizeGenerator(min, max)) {}
 
-  uint32_t nextSize() { return generator_->nextSize(); }
-  std::string describe() const { return generator_->describe(); }
+  uint32_t nextSize() override { return generator_->nextSize(); }
+  std::string describe() const override { return generator_->describe(); }
 
 private:
-  stdcxx::shared_ptr<SizeGenerator> generator_;
+  std::shared_ptr<SizeGenerator> generator_;
 };
 
 /**************************************************************************
@@ -132,17 +131,17 @@ private:
 template <class Transport_>
 class CoupledTransports {
 public:
-  virtual ~CoupledTransports() {}
+  virtual ~CoupledTransports() = default;
   typedef Transport_ TransportType;
 
   CoupledTransports() : in(), out() {}
 
-  stdcxx::shared_ptr<Transport_> in;
-  stdcxx::shared_ptr<Transport_> out;
+  std::shared_ptr<Transport_> in;
+  std::shared_ptr<Transport_> out;
 
 private:
-  CoupledTransports(const CoupledTransports&);
-  CoupledTransports& operator=(const CoupledTransports&);
+  CoupledTransports(const CoupledTransports&) = delete;
+  CoupledTransports& operator=(const CoupledTransports&) = delete;
 };
 
 /**
@@ -155,7 +154,7 @@ public:
     out = buf;
   }
 
-  stdcxx::shared_ptr<TMemoryBuffer> buf;
+  std::shared_ptr<TMemoryBuffer> buf;
 };
 
 /**
@@ -283,7 +282,7 @@ public:
     out.reset(new TFileTransport(filename));
   }
 
-  ~CoupledFileTransports() { remove(filename.c_str()); }
+  ~CoupledFileTransports() override { remove(filename.c_str()); }
 
   std::string filename;
 };
@@ -341,11 +340,11 @@ public:
  **************************************************************************/
 
 struct TriggerInfo {
-  TriggerInfo(int seconds, const stdcxx::shared_ptr<TTransport>& transport, uint32_t writeLength)
-    : timeoutSeconds(seconds), transport(transport), writeLength(writeLength), next(NULL) {}
+  TriggerInfo(int seconds, const std::shared_ptr<TTransport>& transport, uint32_t writeLength)
+    : timeoutSeconds(seconds), transport(transport), writeLength(writeLength), next(nullptr) {}
 
   int timeoutSeconds;
-  stdcxx::shared_ptr<TTransport> transport;
+  std::shared_ptr<TTransport> transport;
   uint32_t writeLength;
   TriggerInfo* next;
 };
@@ -356,7 +355,7 @@ unsigned int g_numTriggersFired;
 bool g_teardown = false;
 
 void alarm_handler() {
-  TriggerInfo* info = NULL;
+  TriggerInfo* info = nullptr;
   {
     apache::thrift::concurrency::Synchronized s(g_alarm_monitor);
     // The alarm timed out, which almost certainly means we're stuck
@@ -367,7 +366,7 @@ void alarm_handler() {
     // tools/test/runner only records stdout messages in the failure messages for
     // boost tests.  (boost prints its test info to stdout.)
     printf("Timeout alarm expired; attempting to unblock transport\n");
-    if (g_triggerInfo == NULL) {
+    if (g_triggerInfo == nullptr) {
       printf("  trigger stack is empty!\n");
     }
 
@@ -378,7 +377,7 @@ void alarm_handler() {
   }
 
   // Write some data to the transport to hopefully unblock it.
-  uint8_t* buf = new uint8_t[info->writeLength];
+  auto* buf = new uint8_t[info->writeLength];
   memset(buf, 'b', info->writeLength);
   boost::scoped_array<uint8_t> array(buf);
   info->transport->write(buf, info->writeLength);
@@ -396,7 +395,7 @@ void alarm_handler_wrapper() {
       if (g_teardown)
         return;
       // calculate timeout
-      if (g_triggerInfo == NULL) {
+      if (g_triggerInfo == nullptr) {
         timeout = 0;
       } else {
         timeout = g_triggerInfo->timeoutSeconds * 1000;
@@ -420,12 +419,12 @@ void alarm_handler_wrapper() {
  * to the end.)
  */
 void add_trigger(unsigned int seconds,
-                 const stdcxx::shared_ptr<TTransport>& transport,
+                 const std::shared_ptr<TTransport>& transport,
                  uint32_t write_len) {
-  TriggerInfo* info = new TriggerInfo(seconds, transport, write_len);
+  auto* info = new TriggerInfo(seconds, transport, write_len);
   {
     apache::thrift::concurrency::Synchronized s(g_alarm_monitor);
-    if (g_triggerInfo == NULL) {
+    if (g_triggerInfo == nullptr) {
       // This is the first trigger.
       // Set g_triggerInfo, and schedule the alarm
       g_triggerInfo = info;
@@ -442,17 +441,17 @@ void add_trigger(unsigned int seconds,
 }
 
 void clear_triggers() {
-  TriggerInfo* info = NULL;
+  TriggerInfo* info = nullptr;
 
   {
     apache::thrift::concurrency::Synchronized s(g_alarm_monitor);
     info = g_triggerInfo;
-    g_triggerInfo = NULL;
+    g_triggerInfo = nullptr;
     g_numTriggersFired = 0;
     g_alarm_monitor.notify();
   }
 
-  while (info != NULL) {
+  while (info != nullptr) {
     TriggerInfo* next = info->next;
     delete info;
     info = next;
@@ -460,7 +459,7 @@ void clear_triggers() {
 }
 
 void set_trigger(unsigned int seconds,
-                 const stdcxx::shared_ptr<TTransport>& transport,
+                 const std::shared_ptr<TTransport>& transport,
                  uint32_t write_len) {
   clear_triggers();
   add_trigger(seconds, transport, write_len);
@@ -501,8 +500,8 @@ void test_rw(uint32_t totalSize,
              SizeGenerator& rChunkGenerator,
              uint32_t maxOutstanding) {
   CoupledTransports transports;
-  BOOST_REQUIRE(transports.in != NULL);
-  BOOST_REQUIRE(transports.out != NULL);
+  BOOST_REQUIRE(transports.in != nullptr);
+  BOOST_REQUIRE(transports.out != nullptr);
 
   boost::shared_array<uint8_t> wbuf = boost::shared_array<uint8_t>(new uint8_t[totalSize]);
   boost::shared_array<uint8_t> rbuf = boost::shared_array<uint8_t>(new uint8_t[totalSize]);
@@ -594,8 +593,8 @@ void test_rw(uint32_t totalSize,
 template <class CoupledTransports>
 void test_read_part_available() {
   CoupledTransports transports;
-  BOOST_REQUIRE(transports.in != NULL);
-  BOOST_REQUIRE(transports.out != NULL);
+  BOOST_REQUIRE(transports.in != nullptr);
+  BOOST_REQUIRE(transports.out != nullptr);
 
   uint8_t write_buf[16];
   uint8_t read_buf[16];
@@ -616,8 +615,8 @@ void test_read_part_available() {
 template <class CoupledTransports>
 void test_read_part_available_in_chunks() {
   CoupledTransports transports;
-  BOOST_REQUIRE(transports.in != NULL);
-  BOOST_REQUIRE(transports.out != NULL);
+  BOOST_REQUIRE(transports.in != nullptr);
+  BOOST_REQUIRE(transports.out != nullptr);
 
   uint8_t write_buf[16];
   uint8_t read_buf[16];
@@ -643,8 +642,8 @@ void test_read_part_available_in_chunks() {
 template <class CoupledTransports>
 void test_read_partial_midframe() {
   CoupledTransports transports;
-  BOOST_REQUIRE(transports.in != NULL);
-  BOOST_REQUIRE(transports.out != NULL);
+  BOOST_REQUIRE(transports.in != nullptr);
+  BOOST_REQUIRE(transports.out != nullptr);
 
   uint8_t write_buf[16];
   uint8_t read_buf[16];
@@ -701,8 +700,8 @@ void test_read_partial_midframe() {
 template <class CoupledTransports>
 void test_borrow_part_available() {
   CoupledTransports transports;
-  BOOST_REQUIRE(transports.in != NULL);
-  BOOST_REQUIRE(transports.out != NULL);
+  BOOST_REQUIRE(transports.in != nullptr);
+  BOOST_REQUIRE(transports.out != nullptr);
 
   uint8_t write_buf[16];
   uint8_t read_buf[16];
@@ -716,7 +715,7 @@ void test_borrow_part_available() {
   uint32_t borrow_len = 10;
   const uint8_t* borrowed_buf = transports.in->borrow(read_buf, &borrow_len);
   BOOST_CHECK_EQUAL(g_numTriggersFired, (unsigned int)0);
-  BOOST_CHECK(borrowed_buf == NULL);
+  BOOST_CHECK(borrowed_buf == nullptr);
 
   clear_triggers();
 }
@@ -724,12 +723,10 @@ void test_borrow_part_available() {
 template <class CoupledTransports>
 void test_read_none_available() {
   CoupledTransports transports;
-  BOOST_REQUIRE(transports.in != NULL);
-  BOOST_REQUIRE(transports.out != NULL);
+  BOOST_REQUIRE(transports.in != nullptr);
+  BOOST_REQUIRE(transports.out != nullptr);
 
-  uint8_t write_buf[16];
   uint8_t read_buf[16];
-  memset(write_buf, 'a', sizeof(write_buf));
 
   // Attempting to read when no data is available should either block until
   // some data is available, or fail immediately.  (e.g., TSocket blocks,
@@ -754,8 +751,8 @@ void test_read_none_available() {
 template <class CoupledTransports>
 void test_borrow_none_available() {
   CoupledTransports transports;
-  BOOST_REQUIRE(transports.in != NULL);
-  BOOST_REQUIRE(transports.out != NULL);
+  BOOST_REQUIRE(transports.in != nullptr);
+  BOOST_REQUIRE(transports.out != nullptr);
 
   uint8_t write_buf[16];
   memset(write_buf, 'a', sizeof(write_buf));
@@ -763,8 +760,8 @@ void test_borrow_none_available() {
   // Attempting to borrow when no data is available should fail immediately
   set_trigger(1, transports.out, 10);
   uint32_t borrow_len = 10;
-  const uint8_t* borrowed_buf = transports.in->borrow(NULL, &borrow_len);
-  BOOST_CHECK(borrowed_buf == NULL);
+  const uint8_t* borrowed_buf = transports.in->borrow(nullptr, &borrow_len);
+  BOOST_CHECK(borrowed_buf == nullptr);
   BOOST_CHECK_EQUAL(g_numTriggersFired, (unsigned int)0);
 
   clear_triggers();
@@ -976,11 +973,11 @@ private:
          << rChunkSizeGen.describe() << ", " << maxOutstanding << ")";
 
 #if (BOOST_VERSION >= 105900)
-    stdcxx::function<void ()> test_func
+    std::function<void ()> test_func
 #else
     boost::unit_test::callback0<> test_func
 #endif
-        = stdcxx::bind(test_rw<CoupledTransports>,
+        = std::bind(test_rw<CoupledTransports>,
                                        totalSize,
                                        wSizeGen,
                                        rSizeGen,
@@ -1026,13 +1023,13 @@ private:
  **************************************************************************/
 
 struct global_fixture {
-  stdcxx::shared_ptr<apache::thrift::concurrency::Thread> alarmThread_;
+  std::shared_ptr<apache::thrift::concurrency::Thread> alarmThread_;
   global_fixture() {
 #if _WIN32
     apache::thrift::transport::TWinsockSingleton::create();
 #endif
 
-    apache::thrift::concurrency::PlatformThreadFactory factory;
+    apache::thrift::concurrency::ThreadFactory factory;
     factory.setDetached(false);
 
     alarmThread_ = factory.newThread(
@@ -1058,7 +1055,7 @@ BOOST_GLOBAL_FIXTURE(global_fixture)
 #ifdef BOOST_TEST_DYN_LINK
 bool init_unit_test_suite() {
   struct timeval tv;
-  THRIFT_GETTIMEOFDAY(&tv, NULL);
+  THRIFT_GETTIMEOFDAY(&tv, nullptr);
   int seed = tv.tv_sec ^ tv.tv_usec;
 
   initrand(seed);

@@ -81,14 +81,14 @@ sub getTransport
 sub writeMessageBegin
 {
     my ($name, $type, $seqid);
-    die "abstract";
+    die 'abstract';
 }
 
 #
 # Close the message
 #
 sub writeMessageEnd {
-    die "abstract";
+    die 'abstract';
 }
 
 #
@@ -101,7 +101,7 @@ sub writeMessageEnd {
 sub writeStructBegin {
     my ($name);
 
-    die "abstract";
+    die 'abstract';
 }
 
 #
@@ -111,7 +111,7 @@ sub writeStructBegin {
 # @return int How many bytes written
 #
 sub writeStructEnd {
-    die "abstract";
+    die 'abstract';
 }
 
 #
@@ -126,79 +126,79 @@ sub writeStructEnd {
 sub writeFieldBegin {
     my ($fieldName, $fieldType, $fieldId);
 
-    die "abstract";
+    die 'abstract';
 }
 
 sub writeFieldEnd {
-    die "abstract";
+    die 'abstract';
 }
 
 sub writeFieldStop {
-    die "abstract";
+    die 'abstract';
 }
 
 sub writeMapBegin {
     my ($keyType, $valType, $size);
 
-    die "abstract";
+    die 'abstract';
 }
 
 sub writeMapEnd {
-    die "abstract";
+    die 'abstract';
 }
 
 sub writeListBegin {
     my ($elemType, $size);
-    die "abstract";
+    die 'abstract';
 }
 
 sub writeListEnd {
-    die "abstract";
+    die 'abstract';
 }
 
 sub writeSetBegin {
     my ($elemType, $size);
-    die "abstract";
+    die 'abstract';
 }
 
 sub writeSetEnd {
-    die "abstract";
+    die 'abstract';
 }
 
 sub writeBool {
     my ($bool);
-    die "abstract";
+    die 'abstract';
 }
 
 sub writeByte {
     my ($byte);
-    die "abstract";
+    die 'abstract';
 }
 
 sub writeI16 {
     my ($i16);
-    die "abstract";
+    die 'abstract';
 }
 
 sub writeI32 {
     my ($i32);
-    die "abstract";
+    die 'abstract';
 }
 
 sub writeI64 {
     my ($i64);
-    die "abstract";
+    die 'abstract';
 }
 
 sub writeDouble {
     my ($dub);
-    die "abstract";
+    die 'abstract';
 }
 
 sub writeString
 {
     my ($str);
-    die "abstract";
+    die 'abstract';
 }
 
 #
@@ -211,7 +211,7 @@ sub writeString
 sub readMessageBegin
 {
     my ($name, $type, $seqid);
-    die "abstract";
+    die 'abstract';
 }
 
 #
@@ -219,105 +219,105 @@ sub readMessageBegin
 #
 sub readMessageEnd
 {
-    die "abstract";
+    die 'abstract';
 }
 
 sub readStructBegin
 {
     my($name);
 
-    die "abstract";
+    die 'abstract';
 }
 
 sub readStructEnd
 {
-    die "abstract";
+    die 'abstract';
 }
 
 sub readFieldBegin
 {
     my ($name, $fieldType, $fieldId);
-    die "abstract";
+    die 'abstract';
 }
 
 sub readFieldEnd
 {
-    die "abstract";
+    die 'abstract';
 }
 
 sub readMapBegin
 {
     my ($keyType, $valType, $size);
-    die "abstract";
+    die 'abstract';
 }
 
 sub readMapEnd
 {
-    die "abstract";
+    die 'abstract';
 }
 
 sub readListBegin
 {
     my ($elemType, $size);
-    die "abstract";
+    die 'abstract';
 }
 
 sub readListEnd
 {
-    die "abstract";
+    die 'abstract';
 }
 
 sub readSetBegin
 {
     my ($elemType, $size);
-    die "abstract";
+    die 'abstract';
 }
 
 sub readSetEnd
 {
-    die "abstract";
+    die 'abstract';
 }
 
 sub readBool
 {
     my ($bool);
-    die "abstract";
+    die 'abstract';
 }
 
 sub readByte
 {
     my ($byte);
-    die "abstract";
+    die 'abstract';
 }
 
 sub readI16
 {
     my ($i16);
-    die "abstract";
+    die 'abstract';
 }
 
 sub readI32
 {
     my ($i32);
-    die "abstract";
+    die 'abstract';
 }
 
 sub readI64
 {
     my ($i64);
-    die "abstract";
+    die 'abstract';
 }
 
 sub readDouble
 {
     my ($dub);
-    die "abstract";
+    die 'abstract';
 }
 
 sub readString
 {
     my ($str);
-    die "abstract";
+    die 'abstract';
 }
 
 #
@@ -405,7 +405,7 @@ sub skip
         return $result;
     }
 
-    die new Thrift::TProtocolException("Type $type not recognized --- corrupt data?",
+    die Thrift::TProtocolException->new("Type $type not recognized --- corrupt data?",
                                        Thrift::TProtocolException::INVALID_DATA);
 
   }
@@ -424,7 +424,7 @@ sub skipBinary
 
     if($type == Thrift::TType::BOOL)
     {
-      return $itrans->readAll(1);
+        return $itrans->readAll(1);
     }
     elsif($type == Thrift::TType::BYTE)
     {
@@ -459,17 +459,17 @@ sub skipBinary
     {
         my $result = 0;
         while (1) {
-          my $ftype = 0;
-          my $fid = 0;
-          my $data = $itrans->readAll(1);
-          my @arr = unpack('c', $data);
-          $ftype = $arr[0];
-          if ($ftype == Thrift::TType::STOP) {
-            last;
-          }
-          # I16 field id
-          $result += $itrans->readAll(2);
-          $result += $self->skipBinary($itrans, $ftype);
+            my $ftype = 0;
+            my $fid = 0;
+            my $data = $itrans->readAll(1);
+            my @arr = unpack('c', $data);
+            $ftype = $arr[0];
+            if ($ftype == Thrift::TType::STOP) {
+                last;
+            }
+            # I16 field id
+            $result += $itrans->readAll(2);
+            $result += $self->skipBinary($itrans, $ftype);
         }
         return $result;
     }
@@ -517,7 +517,7 @@ sub skipBinary
         return $result;
     }
 
-    die new Thrift::TProtocolException("Type $type not recognized --- corrupt data?",
+    die Thrift::TProtocolException->new("Type $type not recognized --- corrupt data?",
                                        Thrift::TProtocolException::INVALID_DATA);
 }
 
@@ -542,7 +542,7 @@ sub new {
 sub getProtocol
 {
     my ($trans);
-    die "interface";
+    die 'interface';
 }
 
 

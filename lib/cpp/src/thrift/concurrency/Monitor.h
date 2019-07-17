@@ -20,14 +20,9 @@
 #ifndef _THRIFT_CONCURRENCY_MONITOR_H_
 #define _THRIFT_CONCURRENCY_MONITOR_H_ 1
 
-#ifdef HAVE_SYS_TIME_H
-#include <sys/time.h>
-#endif
-
+#include <chrono>
 #include <thrift/concurrency/Exception.h>
 #include <thrift/concurrency/Mutex.h>
-
-#include <boost/utility.hpp>
 
 namespace apache {
 namespace thrift {
@@ -73,23 +68,19 @@ public:
 
   /**
    * Waits a maximum of the specified timeout in milliseconds for the condition
-   * to occur, or waits forever if timeout_ms == 0.
+   * to occur, or waits forever if timeout is zero.
    *
    * Returns 0 if condition occurs, THRIFT_ETIMEDOUT on timeout, or an error code.
    */
-  int waitForTimeRelative(int64_t timeout_ms) const;
+  int waitForTimeRelative(const std::chrono::milliseconds &timeout) const;
+
+  int waitForTimeRelative(uint64_t timeout_ms) const { return waitForTimeRelative(std::chrono::milliseconds(timeout_ms)); }
 
   /**
-   * Waits until the absolute time specified using struct THRIFT_TIMESPEC.
+   * Waits until the absolute time specified by abstime.
    * Returns 0 if condition occurs, THRIFT_ETIMEDOUT on timeout, or an error code.
    */
-  int waitForTime(const THRIFT_TIMESPEC* abstime) const;
-
-  /**
-   * Waits until the absolute time specified using struct timeval.
-   * Returns 0 if condition occurs, THRIFT_ETIMEDOUT on timeout, or an error code.
-   */
-  int waitForTime(const struct timeval* abstime) const;
+  int waitForTime(const std::chrono::time_point<std::chrono::steady_clock>& abstime) const;
 
   /**
    * Waits forever until the condition occurs.
@@ -99,12 +90,14 @@ public:
 
   /**
    * Exception-throwing version of waitForTimeRelative(), called simply
-   * wait(int64) for historical reasons.  Timeout is in milliseconds.
+   * wait(std::chrono::milliseconds) for historical reasons.  Timeout is in milliseconds.
    *
-   * If the condition occurs,  this function returns cleanly; on timeout or
+   * If the condition occurs, this function returns cleanly; on timeout or
    * error an exception is thrown.
    */
-  void wait(int64_t timeout_ms = 0LL) const;
+  void wait(const std::chrono::milliseconds &timeout) const;
+
+  void wait(uint64_t timeout_ms = 0ULL) const { this->wait(std::chrono::milliseconds(timeout_ms)); }
 
   /** Wakes up one thread waiting on this monitor. */
   virtual void notify() const;

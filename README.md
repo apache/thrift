@@ -4,22 +4,27 @@ Apache Thrift
 Introduction
 ============
 
-Thrift is a lightweight, language-independent software stack with an
-associated code generation mechanism for point-to-point RPC. Thrift provides 
-clean abstractions for data transport, data serialization, and application
-level processing. The code generation system takes a simple definition
-language as input and generates code across programming languages that
-uses the abstracted stack to build interoperable RPC clients and servers.
+Thrift is a lightweight, language-independent software stack for
+point-to-point RPC implementation.
+Thrift provides clean abstractions and implementations for data transport,
+data serialization, and application level processing. The code generation
+system takes a simple definition language as input and generates code
+across programming languages that uses the abstracted stack to build
+interoperable RPC clients and servers.
 
 ![Apache Thrift Layered Architecture](doc/images/thrift-layers.png)
 
 Thrift makes it easy for programs written in different programming
 languages to share data and call remote procedures.  With support 
-for [25 programming languages](LANGUAGES.md), chances are Thrift 
+for [28 programming languages](LANGUAGES.md), chances are Thrift 
 supports the languages that you currently use.
 
 Thrift is specifically designed to support non-atomic version changes
-across client and server code.
+across client and server code.  This allows you to upgrade your
+server while still being able service older clients; or have newer
+clients issue requests to older servers.  An excellent community-provided
+write-up about thrift and compatibility when versioning an API can be
+found in the [Thrift Missing Guide](https://diwakergupta.github.io/thrift-missing-guide/#_versioning_compatibility).
 
 For more details on Thrift's design and implementation, see the Thrift
 whitepaper included in this distribution, or at the README.md file
@@ -30,7 +35,8 @@ Status
 
 | Branch | Travis | Appveyor | Coverity Scan | codecov.io | Website |
 | :----- | :----- | :------- | :------------ | :--------- | :------ |
-| [`master`](https://github.com/apache/thrift/tree/master) | [![Build Status](https://travis-ci.org/apache/thrift.svg?branch=master)](https://travis-ci.org/apache/thrift) | [![Build status](https://ci.appveyor.com/api/projects/status/github/apache/thrift?branch=master&svg=true)](https://ci.appveyor.com/project/ApacheSoftwareFoundation/thrift/history) | [![Coverity Scan Build Status](https://scan.coverity.com/projects/1345/badge.svg)](https://scan.coverity.com/projects/thrift) | | [![Website](https://img.shields.io/badge/official-website-brightgreen.svg)](https://thrift.apache.org/) |
+| [`master`](https://github.com/apache/thrift/tree/master) | [![Build Status](https://travis-ci.org/apache/thrift.svg?branch=master)](https://travis-ci.org/apache/thrift/branches) | [![Build status](https://ci.appveyor.com/api/projects/status/github/apache/thrift?branch=master&svg=true)](https://ci.appveyor.com/project/ApacheSoftwareFoundation/thrift/history) | [![Coverity Scan Build Status](https://scan.coverity.com/projects/1345/badge.svg)](https://scan.coverity.com/projects/thrift) | | [![Website](https://img.shields.io/badge/official-website-brightgreen.svg)](https://thrift.apache.org/) |
+| [`0.12.0`](https://github.com/apache/thrift/tree/0.12.0) | [![Build Status](https://travis-ci.org/apache/thrift.svg?branch=0.12.0)](https://travis-ci.org/apache/thrift/branches) | | | | |
 
 Releases
 ========

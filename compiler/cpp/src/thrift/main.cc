@@ -53,9 +53,6 @@
 #include "thrift/parse/t_scope.h"
 #include "thrift/generate/t_generator.h"
 #include "thrift/audit/t_audit.h"
-#ifdef THRIFT_ENABLE_PLUGIN
-#include "thrift/plugin/plugin_output.h"
-#endif
 
 #include "thrift/version.h"
 
@@ -171,7 +168,7 @@ char* saferealpath(const char* path, char* resolved_path) {
 #ifdef _WIN32
   char buf[MAX_PATH];
   char* basename;
-  DWORD len = GetFullPathName(path, MAX_PATH, buf, &basename);
+  DWORD len = GetFullPathNameA(path, MAX_PATH, buf, &basename);
   if (len == 0 || len > MAX_PATH - 1) {
     strcpy(resolved_path, path);
   } else {
@@ -985,12 +982,13 @@ void parse(t_program* program, t_program* parent_program) {
 void generate(t_program* program, const vector<string>& generator_strings) {
   // Oooohh, recursive code generation, hot!!
   if (gen_recurse) {
+    program->set_recursive(true);
     const vector<t_program*>& includes = program->get_includes();
-    for (size_t i = 0; i < includes.size(); ++i) {
+    for (auto include : includes) {
       // Propagate output path from parent to child programs
-      includes[i]->set_out_path(program->get_out_path(), program->is_out_path_absolute());
+      include->set_out_path(program->get_out_path(), program->is_out_path_absolute());
 
-      generate(includes[i], generator_strings);
+      generate(include, generator_strings);
     }
   }
 
@@ -1007,27 +1005,10 @@ void generate(t_program* program, const vector<string>& generator_strings) {
       t_generator* generator = t_generator_registry::get_generator(program, *iter);
 
       if (generator == NULL) {
-#ifdef THRIFT_ENABLE_PLUGIN
-        switch (plugin_output::delegateToPlugin(program, *iter)) {
-          case plugin_output::PLUGIN_NOT_FOUND:
-            pwarning(1, "Unable to get a generator for \"%s\".\n", iter->c_str());
-            g_generator_failure = true;
-            break;
-          case plugin_output::PLUGIN_FAILURE:
-            pwarning(1, "Plugin generator for \"%s\" failed.\n", iter->c_str());
-            g_generator_failure = true;
-            break;
-          case plugin_output::PLUGIN_SUCCEESS:
-            break;
-          default:
-            assert(false);
-            break;
-        }
-#else
         pwarning(1, "Unable to get a generator for \"%s\".\n", iter->c_str());
         g_generator_failure = true;
-#endif
       } else if (generator) {
+        generator->validate_input();
         pverbose("Generating \"%s\"\n", iter->c_str());
         generator->generate_program();
         delete generator;
@@ -1037,6 +1018,8 @@ void generate(t_program* program, const vector<string>& generator_strings) {
     failure("Error: %s\n", s.c_str());
   } catch (const char* exc) {
     failure("Error: %s\n", exc);
+  } catch (const std::invalid_argument& invalid_argument_exception) {
+    failure("Error: %s\n", invalid_argument_exception.what());
   }
 }
 
@@ -1130,7 +1113,7 @@ int main(int argc, char** argv) {
           fprintf(stderr, "Missing generator specification\n");
           usage();
         }
-        generator_strings.push_back(arg);
+        generator_strings.emplace_back(arg);
       } else if (strcmp(arg, "-I") == 0) {
         // An argument of "-I\ asdf" is invalid and has unknown results
         arg = argv[++i];
@@ -1139,7 +1122,7 @@ int main(int argc, char** argv) {
           fprintf(stderr, "Missing Include directory\n");
           usage();
         }
-        g_incl_searchpath.push_back(arg);
+        g_incl_searchpath.emplace_back(arg);
       } else if ((strcmp(arg, "-o") == 0) || (strcmp(arg, "-out") == 0)) {
         out_path_is_absolute = (strcmp(arg, "-out") == 0) ? true : false;
         arg = argv[++i];

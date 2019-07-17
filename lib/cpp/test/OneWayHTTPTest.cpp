@@ -30,7 +30,7 @@
 #include <thrift/transport/THttpClient.h>
 #include <thrift/transport/TServerSocket.h>
 #include <thrift/transport/TSocket.h>
-#include <thrift/stdcxx.h>
+#include <memory>
 #include <thrift/transport/TBufferTransports.h>
 #include "gen-cpp/OneWayService.h"
 
@@ -54,7 +54,7 @@ using apache::thrift::transport::TMemoryBuffer;
 using apache::thrift::transport::TServerSocket;
 using apache::thrift::transport::TSocket;
 using apache::thrift::transport::TTransportException;
-using apache::thrift::stdcxx::shared_ptr;
+using std::shared_ptr;
 using std::cout;
 using std::cerr;
 using std::endl;
@@ -66,14 +66,14 @@ namespace utf = boost::unit_test;
 
 class OneWayServiceHandler : public onewaytest::OneWayServiceIf {
 public:
-  OneWayServiceHandler() {}
+  OneWayServiceHandler() = default;
 
   void roundTripRPC() override {
 #ifdef ENABLE_STDERR_LOGGING
     cerr << "roundTripRPC()" << endl;
 #endif
   }
-  void oneWayRPC() {
+  void oneWayRPC() override {
 #ifdef ENABLE_STDERR_LOGGING
     cerr << "oneWayRPC()" << std::endl ;
 #endif
@@ -82,13 +82,13 @@ public:
 
 class OneWayServiceCloneFactory : virtual public onewaytest::OneWayServiceIfFactory {
  public:
-  virtual ~OneWayServiceCloneFactory() {}
-  virtual onewaytest::OneWayServiceIf* getHandler(const ::apache::thrift::TConnectionInfo& connInfo)
+  ~OneWayServiceCloneFactory() override = default;
+  onewaytest::OneWayServiceIf* getHandler(const ::apache::thrift::TConnectionInfo& connInfo) override
   {
     (void)connInfo ;
     return new OneWayServiceHandler;
   }
-  virtual void releaseHandler( onewaytest::OneWayServiceIf* handler) {
+  void releaseHandler( onewaytest::OneWayServiceIf* handler) override {
     delete handler;
   }
 };
@@ -96,7 +96,7 @@ class OneWayServiceCloneFactory : virtual public onewaytest::OneWayServiceIfFact
 class RPC0ThreadClass {
 public:
   RPC0ThreadClass(TThreadedServer& server) : server_(server) { } // Constructor
-~RPC0ThreadClass() { } // Destructor
+~RPC0ThreadClass() = default; // Destructor
 
 void Run() {
   server_.serve() ;
@@ -112,21 +112,21 @@ using apache::thrift::concurrency::Synchronized;
 class TServerReadyEventHandler : public TServerEventHandler, public Monitor {
 public:
   TServerReadyEventHandler() : isListening_(false), accepted_(0) {}
-  virtual ~TServerReadyEventHandler() {}
-  virtual void preServe() {
+  ~TServerReadyEventHandler() override = default;
+  void preServe() override {
     Synchronized sync(*this);
     isListening_ = true;
     notify();
   }
-  virtual void* createContext(shared_ptr<TProtocol> input,
-                              shared_ptr<TProtocol> output) {
+  void* createContext(shared_ptr<TProtocol> input,
+                              shared_ptr<TProtocol> output) override {
     Synchronized sync(*this);
     ++accepted_;
     notify();
 
     (void)input;
     (void)output;
-    return NULL;
+    return nullptr;
   }
   bool isListening() const { return isListening_; }
   uint64_t acceptedCount() const { return accepted_; }
@@ -138,13 +138,13 @@ private:
 
 class TBlockableBufferedTransport : public TBufferedTransport {
  public:
-  TBlockableBufferedTransport(stdcxx::shared_ptr<TTransport> transport)
+  TBlockableBufferedTransport(std::shared_ptr<TTransport> transport)
     : TBufferedTransport(transport, 10240),
     blocked_(false) {
   }
 
   uint32_t write_buffer_length() {
-    uint32_t have_bytes = static_cast<uint32_t>(wBase_ - wBuf_.get());
+    auto have_bytes = static_cast<uint32_t>(wBase_ - wBuf_.get());
     return have_bytes ;
   }
 
@@ -176,14 +176,14 @@ class TBlockableBufferedTransport : public TBufferedTransport {
 
 BOOST_AUTO_TEST_CASE( JSON_BufferedHTTP )
 {
-  stdcxx::shared_ptr<TServerSocket> ss = stdcxx::make_shared<TServerSocket>(0) ;
+  std::shared_ptr<TServerSocket> ss = std::make_shared<TServerSocket>(0) ;
   TThreadedServer server(
-    stdcxx::make_shared<onewaytest::OneWayServiceProcessorFactory>(stdcxx::make_shared<OneWayServiceCloneFactory>()),
+    std::make_shared<onewaytest::OneWayServiceProcessorFactory>(std::make_shared<OneWayServiceCloneFactory>()),
     ss, //port
-    stdcxx::make_shared<THttpServerTransportFactory>(),
-    stdcxx::make_shared<TJSONProtocolFactory>());
+    std::make_shared<THttpServerTransportFactory>(),
+    std::make_shared<TJSONProtocolFactory>());
 
-  stdcxx::shared_ptr<TServerReadyEventHandler> pEventHandler(new TServerReadyEventHandler) ;
+  std::shared_ptr<TServerReadyEventHandler> pEventHandler(new TServerReadyEventHandler) ;
   server.setServerEventHandler(pEventHandler);
 
 #ifdef ENABLE_STDERR_LOGGING
@@ -205,11 +205,11 @@ BOOST_AUTO_TEST_CASE( JSON_BufferedHTTP )
 #endif
 
   {
-    stdcxx::shared_ptr<TSocket> socket(new TSocket("localhost", port));
+    std::shared_ptr<TSocket> socket(new TSocket("localhost", port));
     socket->setRecvTimeout(10000) ; // 1000msec should be enough
-    stdcxx::shared_ptr<TBlockableBufferedTransport> blockable_transport(new TBlockableBufferedTransport(socket));
-    stdcxx::shared_ptr<TTransport> transport(new THttpClient(blockable_transport, "localhost", "/service"));
-    stdcxx::shared_ptr<TProtocol> protocol(new TJSONProtocol(transport));
+    std::shared_ptr<TBlockableBufferedTransport> blockable_transport(new TBlockableBufferedTransport(socket));
+    std::shared_ptr<TTransport> transport(new THttpClient(blockable_transport, "localhost", "/service"));
+    std::shared_ptr<TProtocol> protocol(new TJSONProtocol(transport));
     onewaytest::OneWayServiceClient client(protocol);
 
 
@@ -227,7 +227,7 @@ BOOST_AUTO_TEST_CASE( JSON_BufferedHTTP )
     blockable_transport->flush() ;
     try {
       client.recv_roundTripRPC() ;
-    } catch (TTransportException e) {
+    } catch (const TTransportException &e) {
       BOOST_ERROR( "we should not get a transport exception -- this means we failed: " + std::string(e.what()) ) ;
     }
     transport->close();

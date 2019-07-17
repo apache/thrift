@@ -83,19 +83,19 @@ public:
    * Init and close methods
    */
 
-  void init_generator();
-  void close_generator();
+  void init_generator() override;
+  void close_generator() override;
 
   /**
    * Program-level generation functions
    */
 
-  void generate_typedef(t_typedef* ttypedef);
-  void generate_enum(t_enum* tenum);
-  void generate_const(t_const* tconst);
-  void generate_struct(t_struct* tstruct);
-  void generate_xception(t_struct* txception);
-  void generate_service(t_service* tservice);
+  void generate_typedef(t_typedef* ttypedef) override;
+  void generate_enum(t_enum* tenum) override;
+  void generate_const(t_const* tconst) override;
+  void generate_struct(t_struct* tstruct) override;
+  void generate_xception(t_struct* txception) override;
+  void generate_service(t_service* tservice) override;
   void generate_member_type(std::ostream& out, t_type* type);
   void generate_member_value(std::ostream& out, t_type* type, t_const_value* value);
 
@@ -295,7 +295,8 @@ void t_erl_generator::init_generator() {
  * Boilerplate at beginning and end of header files
  */
 void t_erl_generator::hrl_header(ostream& out, string name) {
-  out << "-ifndef(_" << name << "_included)." << endl << "-define(_" << name << "_included, yeah)."
+  out << erl_autogen_comment() << endl
+      << "-ifndef(_" << name << "_included)." << endl << "-define(_" << name << "_included, yeah)."
       << endl;
 }
 
@@ -310,8 +311,8 @@ void t_erl_generator::hrl_footer(ostream& out, string name) {
 string t_erl_generator::render_includes() {
   const vector<t_program*>& includes = program_->get_includes();
   string result = "";
-  for (size_t i = 0; i < includes.size(); ++i) {
-    result += "-include(\"" + make_safe_for_module_name(includes[i]->get_name())
+  for (auto include : includes) {
+    result += "-include(\"" + make_safe_for_module_name(include->get_name())
               + "_types.hrl\").\n";
   }
   if (includes.size() > 0) {
@@ -415,7 +416,6 @@ const std::string emit_double_as_string(const double value) {
 }
 
 void t_erl_generator::generate_type_metadata(std::string function_name, vector<string> names) {
-  vector<string>::iterator s_iter;
   size_t num_structs = names.size();
 
   indent(f_types_file_) << function_name << "() ->\n";
@@ -947,7 +947,6 @@ void t_erl_generator::generate_service(t_service* tservice) {
 void t_erl_generator::generate_service_metadata(t_service* tservice) {
   export_string("function_names", 0);
   vector<t_function*> functions = tservice->get_functions();
-  vector<t_function*>::iterator f_iter;
   size_t num_functions = functions.size();
 
   indent(f_service_) << "function_names() -> " << endl;
@@ -1278,6 +1277,6 @@ std::string t_erl_generator::type_module(t_type* ttype) {
 THRIFT_REGISTER_GENERATOR(
     erl,
     "Erlang",
-    "    legacynames: Output files retain naming conventions of Thrift 0.9.1 and earlier.\n"
-    "    maps:        Generate maps instead of dicts.\n"
-    "    otp16:       Generate non-namespaced dict and set instead of dict:dict and sets:set.\n")
+    "    legacynames:     Output files retain naming conventions of Thrift 0.9.1 and earlier.\n"
+    "    maps:            Generate maps instead of dicts.\n"
+    "    otp16:           Generate non-namespaced dict and set instead of dict:dict and sets:set.\n")

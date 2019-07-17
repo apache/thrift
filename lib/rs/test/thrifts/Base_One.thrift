@@ -37,6 +37,9 @@ const list<double> CommonTemperatures = [300.0, 450.0]
 
 const double MealsPerDay = 2.5;
 
+const string DefaultRecipeName = "Soup-rise of the Day"
+const binary DefaultRecipeBinary = "Soup-rise of the 01010101"
+
 struct Noodle {
   1: string flourType
   2: Temperature cookTemp

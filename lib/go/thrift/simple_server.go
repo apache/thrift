@@ -187,12 +187,24 @@ func (p *TSimpleServer) processRequests(client TTransport) error {
 	if err != nil {
 		return err
 	}
-	outputTransport, err := p.outputTransportFactory.GetTransport(client)
-	if err != nil {
-		return err
-	}
 	inputProtocol := p.inputProtocolFactory.GetProtocol(inputTransport)
-	outputProtocol := p.outputProtocolFactory.GetProtocol(outputTransport)
+	var outputTransport TTransport
+	var outputProtocol TProtocol
+
+	// for THeaderProtocol, we must use the same protocol instance for
+	// input and output so that the response is in the same dialect that
+	// the server detected the request was in.
+	if _, ok := inputProtocol.(*THeaderProtocol); ok {
+		outputProtocol = inputProtocol
+	} else {
+		oTrans, err := p.outputTransportFactory.GetTransport(client)
+		if err != nil {
+			return err
+		}
+		outputTransport = oTrans
+		outputProtocol = p.outputProtocolFactory.GetProtocol(outputTransport)
+	}
+
 	defer func() {
 		if e := recover(); e != nil {
 			log.Printf("panic in processor: %s: %s", e, debug.Stack())

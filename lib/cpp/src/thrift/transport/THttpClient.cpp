@@ -32,24 +32,23 @@ namespace apache {
 namespace thrift {
 namespace transport {
 
-THttpClient::THttpClient(stdcxx::shared_ptr<TTransport> transport,
+THttpClient::THttpClient(std::shared_ptr<TTransport> transport,
                          std::string host,
                          std::string path)
   : THttpTransport(transport), host_(host), path_(path) {
 }
 
 THttpClient::THttpClient(string host, int port, string path)
-  : THttpTransport(stdcxx::shared_ptr<TTransport>(new TSocket(host, port))),
+  : THttpTransport(std::shared_ptr<TTransport>(new TSocket(host, port))),
     host_(host),
     path_(path) {
 }
 
-THttpClient::~THttpClient() {
-}
+THttpClient::~THttpClient() = default;
 
 void THttpClient::parseHeader(char* header) {
   char* colon = strchr(header, ':');
-  if (colon == NULL) {
+  if (colon == nullptr) {
     return;
   }
   char* value = colon + 1;
@@ -68,7 +67,7 @@ bool THttpClient::parseStatusLine(char* status) {
   char* http = status;
 
   char* code = strchr(http, ' ');
-  if (code == NULL) {
+  if (code == nullptr) {
     throw TTransportException(string("Bad Status: ") + status);
   }
 
@@ -77,7 +76,7 @@ bool THttpClient::parseStatusLine(char* status) {
   };
 
   char* msg = strchr(code, ' ');
-  if (msg == NULL) {
+  if (msg == nullptr) {
     throw TTransportException(string("Bad Status: ") + status);
   }
   *msg = '\0';

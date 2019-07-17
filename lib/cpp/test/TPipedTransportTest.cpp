@@ -18,7 +18,7 @@
  */
 
 #include <thrift/Thrift.h>
-#include <thrift/stdcxx.h>
+#include <memory>
 #include <thrift/transport/TTransportUtils.h>
 #include <thrift/transport/TBufferTransports.h>
 
@@ -31,9 +31,9 @@ using apache::thrift::transport::TMemoryBuffer;
 using namespace apache::thrift;
 
 BOOST_AUTO_TEST_CASE(test_read_write) {
-  stdcxx::shared_ptr<TMemoryBuffer> underlying(new TMemoryBuffer);
-  stdcxx::shared_ptr<TMemoryBuffer> pipe(new TMemoryBuffer);
-  stdcxx::shared_ptr<TPipedTransport> trans(new TPipedTransport(underlying, pipe));
+  std::shared_ptr<TMemoryBuffer> underlying(new TMemoryBuffer);
+  std::shared_ptr<TMemoryBuffer> pipe(new TMemoryBuffer);
+  std::shared_ptr<TPipedTransport> trans(new TPipedTransport(underlying, pipe));
 
   uint8_t buffer[4];
 

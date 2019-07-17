@@ -19,18 +19,18 @@
 
 #include <thrift/concurrency/TimerManager.h>
 #include <thrift/concurrency/Exception.h>
-#include <thrift/concurrency/Util.h>
 
 #include <assert.h>
 #include <iostream>
+#include <memory>
 #include <set>
 
 namespace apache {
 namespace thrift {
 namespace concurrency {
 
-using stdcxx::shared_ptr;
-using stdcxx::weak_ptr;
+using std::shared_ptr;
+using std::weak_ptr;
 
 /**
  * TimerManager class
@@ -44,9 +44,9 @@ public:
 
   Task(shared_ptr<Runnable> runnable) : runnable_(runnable), state_(WAITING) {}
 
-  ~Task() {}
+  ~Task() override = default;
 
-  void run() {
+  void run() override {
     if (state_ == EXECUTING) {
       runnable_->run();
       state_ = COMPLETE;
@@ -68,7 +68,7 @@ class TimerManager::Dispatcher : public Runnable {
 public:
   Dispatcher(TimerManager* manager) : manager_(manager) {}
 
-  ~Dispatcher() {}
+  ~Dispatcher() override = default;
 
   /**
    * Dispatcher entry point
@@ -76,7 +76,7 @@ public:
    * As long as dispatcher thread is running, pull tasks off the task taskMap_
    * and execute.
    */
-  void run() {
+  void run() override {
     {
       Synchronized s(manager_->monitor_);
       if (manager_->state_ == TimerManager::STARTING) {
@@ -90,25 +90,26 @@ public:
       {
         Synchronized s(manager_->monitor_);
         task_iterator expiredTaskEnd;
-        int64_t now = Util::currentTime();
+        auto now = std::chrono::steady_clock::now();
         while (manager_->state_ == TimerManager::STARTED
                && (expiredTaskEnd = manager_->taskMap_.upper_bound(now))
                   == manager_->taskMap_.begin()) {
-          int64_t timeout = 0LL;
+          std::chrono::milliseconds timeout(0);
           if (!manager_->taskMap_.empty()) {
-            timeout = manager_->taskMap_.begin()->first - now;
+            timeout = std::chrono::duration_cast<std::chrono::milliseconds>(manager_->taskMap_.begin()->first - now);
+            //because the unit of steady_clock is smaller than millisecond,timeout may be 0.
+            if (timeout.count() == 0) {
+              timeout = std::chrono::milliseconds(1);
+            }
+            manager_->monitor_.waitForTimeRelative(timeout);
+          } else {
+            manager_->monitor_.waitForTimeRelative(0);
           }
-          assert((timeout != 0 && manager_->taskCount_ > 0)
-                 || (timeout == 0 && manager_->taskCount_ == 0));
-          try {
-            manager_->monitor_.wait(timeout);
-          } catch (TimedOutException&) {
-          }
-          now = Util::currentTime();
+          now = std::chrono::steady_clock::now();
         }
 
         if (manager_->state_ == TimerManager::STARTED) {
-          for (task_iterator ix = manager_->taskMap_.begin(); ix != expiredTaskEnd; ix++) {
+          for (auto ix = manager_->taskMap_.begin(); ix != expiredTaskEnd; ix++) {
             shared_ptr<TimerManager::Task> task = ix->second;
             expiredTasks.insert(task);
             task->it_ = manager_->taskMap_.end();
@@ -121,10 +122,8 @@ public:
         }
       }
 
-      for (std::set<shared_ptr<Task> >::iterator ix = expiredTasks.begin();
-           ix != expiredTasks.end();
-           ++ix) {
-        (*ix)->run();
+      for (const auto & expiredTask : expiredTasks) {
+        expiredTask->run();
       }
 
     } while (manager_->state_ == TimerManager::STARTED);
@@ -152,7 +151,7 @@ private:
 TimerManager::TimerManager()
   : taskCount_(0),
     state_(TimerManager::UNINITIALIZED),
-    dispatcher_(shared_ptr<Dispatcher>(new Dispatcher(this))) {
+    dispatcher_(std::make_shared<Dispatcher>(this)) {
 }
 
 #if defined(_MSC_VER)
@@ -221,7 +220,7 @@ void TimerManager::stop() {
     taskMap_.clear();
 
     // Remove dispatcher's reference to us.
-    dispatcher_->manager_ = NULL;
+    dispatcher_->manager_ = nullptr;
   }
 }
 
@@ -239,64 +238,39 @@ size_t TimerManager::taskCount() const {
   return taskCount_;
 }
 
-TimerManager::Timer TimerManager::add(shared_ptr<Runnable> task, int64_t timeout) {
-  int64_t now = Util::currentTime();
-  timeout += now;
-
-  {
-    Synchronized s(monitor_);
-    if (state_ != TimerManager::STARTED) {
-      throw IllegalStateException();
-    }
-
-    // If the task map is empty, we will kick the dispatcher for sure. Otherwise, we kick him
-    // if the expiration time is shorter than the current value. Need to test before we insert,
-    // because the new task might insert at the front.
-    bool notifyRequired = (taskCount_ == 0) ? true : timeout < taskMap_.begin()->first;
-
-    shared_ptr<Task> timer(new Task(task));
-    taskCount_++;
-    timer->it_ = taskMap_.insert(std::pair<int64_t, shared_ptr<Task> >(timeout, timer));
-
-    // If the task map was empty, or if we have an expiration that is earlier
-    // than any previously seen, kick the dispatcher so it can update its
-    // timeout
-    if (notifyRequired) {
-      monitor_.notify();
-    }
-
-    return timer;
-  }
+TimerManager::Timer TimerManager::add(shared_ptr<Runnable> task, const std::chrono::milliseconds &timeout) {
+  return add(task, std::chrono::steady_clock::now() + timeout);
 }
 
 TimerManager::Timer TimerManager::add(shared_ptr<Runnable> task,
-    const struct THRIFT_TIMESPEC& value) {
+    const std::chrono::time_point<std::chrono::steady_clock>& abstime) {
+  auto now = std::chrono::steady_clock::now();
 
-  int64_t expiration;
-  Util::toMilliseconds(expiration, value);
-
-  int64_t now = Util::currentTime();
-
-  if (expiration < now) {
+  if (abstime < now) {
     throw InvalidArgumentException();
   }
-
-  return add(task, expiration - now);
-}
-
-TimerManager::Timer TimerManager::add(shared_ptr<Runnable> task,
-    const struct timeval& value) {
-
-  int64_t expiration;
-  Util::toMilliseconds(expiration, value);
-
-  int64_t now = Util::currentTime();
-
-  if (expiration < now) {
-    throw InvalidArgumentException();
+  Synchronized s(monitor_);
+  if (state_ != TimerManager::STARTED) {
+    throw IllegalStateException();
   }
 
-  return add(task, expiration - now);
+  // If the task map is empty, we will kick the dispatcher for sure. Otherwise, we kick him
+  // if the expiration time is shorter than the current value. Need to test before we insert,
+  // because the new task might insert at the front.
+  bool notifyRequired = (taskCount_ == 0) ? true : abstime < taskMap_.begin()->first;
+
+  shared_ptr<Task> timer(new Task(task));
+  taskCount_++;
+  timer->it_ = taskMap_.emplace(abstime, timer);
+
+  // If the task map was empty, or if we have an expiration that is earlier
+  // than any previously seen, kick the dispatcher so it can update its
+  // timeout
+  if (notifyRequired) {
+    monitor_.notify();
+  }
+
+  return timer;
 }
 
 void TimerManager::remove(shared_ptr<Runnable> task) {
@@ -305,7 +279,7 @@ void TimerManager::remove(shared_ptr<Runnable> task) {
     throw IllegalStateException();
   }
   bool found = false;
-  for (task_iterator ix = taskMap_.begin(); ix != taskMap_.end();) {
+  for (auto ix = taskMap_.begin(); ix != taskMap_.end();) {
     if (*ix->second == task) {
       found = true;
       taskCount_--;

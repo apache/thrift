@@ -42,7 +42,8 @@
  */
 class t_generator {
 public:
-  t_generator(t_program* program) {
+  t_generator(t_program* program)
+    : keywords_(lang_keywords()){
     tmp_ = 0;
     indent_ = 0;
     program_ = program;
@@ -96,7 +97,33 @@ public:
     return escape_string(constval->get_string());
   }
 
+  /**
+   * Check if all identifiers are valid for the target language
+   */
+  virtual void validate_input() const;
+
 protected:
+  virtual std::set<std::string> lang_keywords() const;
+
+  /**
+   * A list of reserved words that cannot be used as identifiers.
+   */
+  const std::set<std::string> keywords_;
+
+  virtual void validate_id(const std::string& id) const;
+
+  virtual void validate(t_enum const* en) const;
+  virtual void validate(t_enum_value const* en_val) const;
+  virtual void validate(t_typedef const* td) const;
+  virtual void validate(t_const const* c) const;
+  virtual void validate(t_service const* s) const;
+  virtual void validate(t_struct const* c) const;
+  virtual void validate(t_field const* f) const;
+  virtual void validate(t_function const* f) const;
+
+  template <typename T>
+  void validate(const std::vector<T>& list) const;
+
   /**
    * Optional methods that may be implemented by subclasses to take necessary
    * steps at the beginning or end of code generation.

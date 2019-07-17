@@ -30,7 +30,7 @@ using apache::thrift::transport::TServerTransport;
 using apache::thrift::transport::TTransport;
 using apache::thrift::transport::TTransportException;
 using apache::thrift::transport::TTransportFactory;
-using stdcxx::shared_ptr;
+using std::shared_ptr;
 using std::string;
 
 TThreadPoolServer::TThreadPoolServer(const shared_ptr<TProcessorFactory>& processorFactory,
@@ -91,8 +91,7 @@ TThreadPoolServer::TThreadPoolServer(const shared_ptr<TProcessor>& processor,
     taskExpiration_(0) {
 }
 
-TThreadPoolServer::~TThreadPoolServer() {
-}
+TThreadPoolServer::~TThreadPoolServer() = default;
 
 void TThreadPoolServer::serve() {
   TServerFramework::serve();
@@ -115,7 +114,7 @@ void TThreadPoolServer::setTaskExpiration(int64_t value) {
   taskExpiration_ = value;
 }
 
-stdcxx::shared_ptr<apache::thrift::concurrency::ThreadManager>
+std::shared_ptr<apache::thrift::concurrency::ThreadManager>
 TThreadPoolServer::getThreadManager() const {
   return threadManager_;
 }

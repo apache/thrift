@@ -17,23 +17,32 @@
 
 #[macro_use]
 extern crate clap;
-
 extern crate kitchen_sink;
 extern crate thrift;
 
-use kitchen_sink::base_one::Noodle;
-use kitchen_sink::base_two::{Napkin, NapkinServiceSyncHandler, Ramen, RamenServiceSyncHandler};
-use kitchen_sink::midlayer::{Dessert, Meal, MealServiceSyncHandler, MealServiceSyncProcessor};
-use kitchen_sink::recursive;
-use kitchen_sink::ultimate::{Drink, FullMeal, FullMealAndDrinks,
-                             FullMealAndDrinksServiceSyncProcessor, FullMealServiceSyncHandler};
-use kitchen_sink::ultimate::FullMealAndDrinksServiceSyncHandler;
-use thrift::protocol::{TBinaryInputProtocolFactory, TBinaryOutputProtocolFactory,
-                       TCompactInputProtocolFactory, TCompactOutputProtocolFactory,
-                       TInputProtocolFactory, TOutputProtocolFactory};
-use thrift::transport::{TFramedReadTransportFactory, TFramedWriteTransportFactory,
-                        TReadTransportFactory, TWriteTransportFactory};
+use thrift::protocol::{
+    TBinaryInputProtocolFactory, TBinaryOutputProtocolFactory, TCompactInputProtocolFactory,
+    TCompactOutputProtocolFactory, TInputProtocolFactory, TOutputProtocolFactory,
+};
 use thrift::server::TServer;
+use thrift::transport::{
+    TFramedReadTransportFactory, TFramedWriteTransportFactory, TReadTransportFactory,
+    TWriteTransportFactory,
+};
+
+use kitchen_sink::base_one::Noodle;
+use kitchen_sink::base_two::{
+    BrothType, Napkin, NapkinServiceSyncHandler, Ramen, RamenServiceSyncHandler,
+};
+use kitchen_sink::midlayer::{
+    Dessert, Meal, MealServiceSyncHandler, MealServiceSyncProcessor, Pie,
+};
+use kitchen_sink::recursive;
+use kitchen_sink::ultimate::FullMealAndDrinksServiceSyncHandler;
+use kitchen_sink::ultimate::{
+    Drink, FullMeal, FullMealAndDrinks, FullMealAndDrinksServiceSyncProcessor,
+    FullMealServiceSyncHandler,
+};
 
 fn main() {
     match run() {
@@ -46,7 +55,6 @@ fn main() {
 }
 
 fn run() -> thrift::Result<()> {
-
     let matches = clap_app!(rust_kitchen_sink_server =>
         (version: "0.1.0")
         (author: "Apache Thrift Developers <dev@thrift.apache.org>")
@@ -67,21 +75,22 @@ fn run() -> thrift::Result<()> {
     let r_transport_factory = TFramedReadTransportFactory::new();
     let w_transport_factory = TFramedWriteTransportFactory::new();
 
-    let (i_protocol_factory, o_protocol_factory): (Box<TInputProtocolFactory>,
-                                                   Box<TOutputProtocolFactory>) =
-        match &*protocol {
-            "binary" => {
-                (Box::new(TBinaryInputProtocolFactory::new()),
-                 Box::new(TBinaryOutputProtocolFactory::new()))
-            }
-            "compact" => {
-                (Box::new(TCompactInputProtocolFactory::new()),
-                 Box::new(TCompactOutputProtocolFactory::new()))
-            }
-            unknown => {
-                return Err(format!("unsupported transport type {}", unknown).into());
-            }
-        };
+    let (i_protocol_factory, o_protocol_factory): (
+        Box<TInputProtocolFactory>,
+        Box<TOutputProtocolFactory>,
+    ) = match &*protocol {
+        "binary" => (
+            Box::new(TBinaryInputProtocolFactory::new()),
+            Box::new(TBinaryOutputProtocolFactory::new()),
+        ),
+        "compact" => (
+            Box::new(TCompactInputProtocolFactory::new()),
+            Box::new(TCompactOutputProtocolFactory::new()),
+        ),
+        unknown => {
+            return Err(format!("unsupported transport type {}", unknown).into());
+        }
+    };
 
     // FIXME: should processor be boxed as well?
     //
@@ -94,33 +103,27 @@ fn run() -> thrift::Result<()> {
     //
     // Since what I'm doing is uncommon I'm just going to duplicate the code
     match &*service {
-        "part" => {
-            run_meal_server(
-                &listen_address,
-                r_transport_factory,
-                i_protocol_factory,
-                w_transport_factory,
-                o_protocol_factory,
-            )
-        }
-        "full" => {
-            run_full_meal_server(
-                &listen_address,
-                r_transport_factory,
-                i_protocol_factory,
-                w_transport_factory,
-                o_protocol_factory,
-            )
-        }
-        "recursive" => {
-            run_recursive_server(
-                &listen_address,
-                r_transport_factory,
-                i_protocol_factory,
-                w_transport_factory,
-                o_protocol_factory,
-            )
-        }
+        "part" => run_meal_server(
+            &listen_address,
+            r_transport_factory,
+            i_protocol_factory,
+            w_transport_factory,
+            o_protocol_factory,
+        ),
+        "full" => run_full_meal_server(
+            &listen_address,
+            r_transport_factory,
+            i_protocol_factory,
+            w_transport_factory,
+            o_protocol_factory,
+        ),
+        "recursive" => run_recursive_server(
+            &listen_address,
+            r_transport_factory,
+            i_protocol_factory,
+            w_transport_factory,
+            o_protocol_factory,
+        ),
         unknown => Err(format!("unsupported service type {}", unknown).into()),
     }
 }
@@ -207,7 +210,13 @@ struct FullHandler;
 
 impl FullMealAndDrinksServiceSyncHandler for FullHandler {
     fn handle_full_meal_and_drinks(&self) -> thrift::Result<FullMealAndDrinks> {
-        Ok(FullMealAndDrinks::new(full_meal(), Drink::WHISKEY))
+        println!("full_meal_and_drinks: handling full meal and drinks call");
+        Ok(FullMealAndDrinks::new(full_meal(), Drink::CanadianWhisky))
+    }
+
+    fn handle_best_pie(&self) -> thrift::Result<Pie> {
+        println!("full_meal_and_drinks: handling pie call");
+        Ok(Pie::MississippiMud) // I prefer Pie::Pumpkin, but I have to check that casing works
     }
 }
 
@@ -252,7 +261,7 @@ fn noodle() -> Noodle {
 }
 
 fn ramen() -> Ramen {
-    Ramen::new("Mr Ramen".to_owned(), 72)
+    Ramen::new("Mr Ramen".to_owned(), 72, BrothType::Miso)
 }
 
 fn napkin() -> Napkin {

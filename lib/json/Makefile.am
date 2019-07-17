@@ -17,12 +17,16 @@
 # under the License.
 #
 
-SUBDIRS =
-
 if WITH_JAVA
 # Schema validation test depends on java
-SUBDIRS += test
+SUBDIRS = test
 endif
+
+clean-local:
+	$(RM) -r test/build/
+
+dist-hook:
+	$(RM) -r $(distdir)/test/build/
 
 EXTRA_DIST = \
     schema.json \

@@ -4,9 +4,9 @@
   "homepage": "http://thrift.apache.org/",
   "repository": {
     "type": "git",
-    "url": "https://git-wip-us.apache.org/repos/asf/thrift.git"
+    "url": "https://github.com/apache/thrift.git"
   },
-  "version": "1.0.0-dev",
+  "version": "0.13.0",
   "author": {
     "name": "Apache Thrift Developers",
     "email": "dev@thrift.apache.org",
@@ -30,6 +30,7 @@
   "directories": {
     "lib": "./lib/nodejs/lib/thrift"
   },
+  "browser": "./lib/nodejs/lib/thrift/browser.js",
   "main": "./lib/nodejs/lib/thrift",
   "engines": {
     "node": ">= 4.1.0"
@@ -43,16 +44,27 @@
     "buffer-equals": "^1.0.4",
     "commander": "^2.14.1",
     "connect": "^3.6.6",
+    "eslint": "^5.7.0",
+    "eslint-config-prettier": "^3.1.0",
+    "eslint-plugin-prettier": "^3.0.0",
+    "html-validator-cli": "^4.1.4",
     "istanbul": "^0.4.5",
     "jsdoc": "^3.5.5",
-    "phantomjs-prebuilt": "^2.1.16",
-    "prettier": "1.11.1",
+    "json-int64": "^1.0.0",
+    "prettier": "^1.14.3",
     "tape": "^4.9.0",
-    "utf-8-validate": "^4.0.0"
+    "utf-8-validate": "^4.0.0",
+    "typescript": "^3.1.6",
+    "@types/node": "^10.12.6",
+    "@types/node-int64": "^0.4.29",
+    "@types/q": "^1.5.1"
   },
   "scripts": {
     "cover": "lib/nodejs/test/testAll.sh COVER",
     "test": "lib/nodejs/test/testAll.sh",
-    "prettier": "prettier --write '**/*.js'"
+    "test-ts": "lib/nodets/test/testAll.sh",
+    "prettier": "prettier --write '**/*.js'",
+    "lint": "eslint lib/nodejs/. --ext .js",
+    "lint-tests": "eslint lib/nodejs/test/. --ext .js"
   }
 }

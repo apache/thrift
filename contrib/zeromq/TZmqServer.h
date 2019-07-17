@@ -20,6 +20,7 @@
 #ifndef _THRIFT_SERVER_TZMQSERVER_H_
 #define _THRIFT_SERVER_TZMQSERVER_H_ 1
 
+#include <memory>
 #include <zmq.hpp>
 #include <thrift/server/TServer.h>
 
@@ -28,7 +29,7 @@ namespace apache { namespace thrift { namespace server {
 class TZmqServer : public TServer {
  public:
   TZmqServer(
-      apache::thrift::stdcxx::shared_ptr<TProcessor> processor,
+      std::shared_ptr<TProcessor> processor,
       zmq::context_t& ctx, const std::string& endpoint, int type)
     : TServer(processor)
     , processor_(processor)
@@ -56,7 +57,7 @@ class TZmqServer : public TServer {
   }
 
  private:
-  apache::thrift::stdcxx::shared_ptr<TProcessor> processor_;
+  std::shared_ptr<TProcessor> processor_;
   int zmq_type_;
   zmq::socket_t sock_;
 };

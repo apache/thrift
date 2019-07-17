@@ -1,0 +1,39 @@
+{
+  "name": "thrift",
+  "version": "0.13.0",
+  "description": "Thrift is a software framework for scalable cross-language services development.",
+  "author": {
+    "name": "Apache Thrift Developers",
+    "email": "dev@thrift.apache.org"
+  },
+  "bugs": "https://issues.apache.org/jira/projects/THRIFT/summary",
+  "homepage": "http://thrift.apache.org",
+  "repository": "https://github.com/apache/thrift",
+  "license": "Apache-2.0",
+  "devDependencies": {
+    "@types/node-int64": "^0.4.29",
+    "@types/phantom": "^3.2.5",
+    "@types/qunit": "^2.5.4",
+    "browserify": "^16.2.3",
+    "bufferutil": "^4.0.1",
+    "grunt": "^1.0.3",
+    "grunt-cli": "^1.2.0",
+    "grunt-contrib-concat": "^1.0.1",
+    "grunt-contrib-jshint": "^1.0.0",
+    "grunt-contrib-qunit": "^3.1.0",
+    "grunt-contrib-uglify": "^1.0.1",
+    "grunt-jsdoc": "^2.2.1",
+    "grunt-shell-spawn": "^0.3.12",
+    "jslint": "^0.12.0",
+    "node-int64": "^0.4.0",
+    "phantom": "^6.0.3",
+    "typescript": "^3.2.4"
+  },
+  "dependencies": {
+    "bufferutil": "^4.0.1",
+    "jsdoc": "^3.5.5",
+    "json-int64": "^1.0.0",
+    "nopt": "^4.0.1"
+  },
+  "types": "./thrift.d.ts"
+}

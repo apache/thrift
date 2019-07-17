@@ -92,7 +92,7 @@ public:
    *
    * @param servers list of TSocketPoolServers
    */
-  TSocketPool(const std::vector<stdcxx::shared_ptr<TSocketPoolServer> >& servers);
+  TSocketPool(const std::vector<std::shared_ptr<TSocketPoolServer> >& servers);
 
   /**
    * Socket pool constructor
@@ -105,7 +105,7 @@ public:
   /**
    * Destroyes the socket object, closing it if necessary.
    */
-  virtual ~TSocketPool();
+  ~TSocketPool() override;
 
   /**
    * Add a server to the pool
@@ -115,17 +115,17 @@ public:
   /**
    * Add a server to the pool
    */
-  void addServer(stdcxx::shared_ptr<TSocketPoolServer>& server);
+  void addServer(std::shared_ptr<TSocketPoolServer>& server);
 
   /**
    * Set list of servers in this pool
    */
-  void setServers(const std::vector<stdcxx::shared_ptr<TSocketPoolServer> >& servers);
+  void setServers(const std::vector<std::shared_ptr<TSocketPoolServer> >& servers);
 
   /**
    * Get list of servers in this pool
    */
-  void getServers(std::vector<stdcxx::shared_ptr<TSocketPoolServer> >& servers);
+  void getServers(std::vector<std::shared_ptr<TSocketPoolServer> >& servers);
 
   /**
    * Sets how many times to keep retrying a host in the connect function.
@@ -155,21 +155,21 @@ public:
   /**
    * Creates and opens the UNIX socket.
    */
-  void open();
+  void open() override;
 
   /*
    * Closes the UNIX socket
    */
-  void close();
+  void close() override;
 
 protected:
-  void setCurrentServer(const stdcxx::shared_ptr<TSocketPoolServer>& server);
+  void setCurrentServer(const std::shared_ptr<TSocketPoolServer>& server);
 
   /** List of servers to connect to */
-  std::vector<stdcxx::shared_ptr<TSocketPoolServer> > servers_;
+  std::vector<std::shared_ptr<TSocketPoolServer> > servers_;
 
   /** Current server */
-  stdcxx::shared_ptr<TSocketPoolServer> currentServer_;
+  std::shared_ptr<TSocketPoolServer> currentServer_;
 
   /** How many times to retry each host in connect */
   int numRetries_;

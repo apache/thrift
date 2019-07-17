@@ -53,12 +53,9 @@
     <ClCompile Include="src\thrift\server\TSimpleServer.cpp"/>
     <ClCompile Include="src\thrift\server\TThreadPoolServer.cpp"/>
     <ClCompile Include="src\thrift\server\TThreadedServer.cpp"/>
-	<ClCompile Include="src\thrift\server\TConnectedClient.cpp"/>
-	<ClCompile Include="src\thrift\server\TNonblockingServer.cpp"/>
-	<ClCompile Include="src\thrift\server\TServerFramework.cpp"/>
-	<ClCompile Include="src\thrift\server\TSimpleServer.cpp"/>
-	<ClCompile Include="src\thrift\server\TThreadedServer.cpp"/>
-	<ClCompile Include="src\thrift\server\TThreadPoolServer.cpp"/>
+    <ClCompile Include="src\thrift\server\TConnectedClient.cpp"/>
+    <ClCompile Include="src\thrift\server\TNonblockingServer.cpp"/>
+    <ClCompile Include="src\thrift\server\TServerFramework.cpp"/>
     <ClCompile Include="src\thrift\TApplicationException.cpp"/>
     <ClCompile Include="src\thrift\TOutput.cpp"/>
     <ClCompile Include="src\thrift\transport\TBufferTransports.cpp"/>

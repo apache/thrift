@@ -50,7 +50,9 @@ class TSocketBase(TTransportBase):
 class TSocket(TSocketBase):
     """Socket implementation of TTransport base."""
 
-    def __init__(self, host='localhost', port=9090, unix_socket=None, socket_family=socket.AF_UNSPEC):
+    def __init__(self, host='localhost', port=9090, unix_socket=None,
+                 socket_family=socket.AF_UNSPEC,
+                 socket_keepalive=False):
         """Initialize a TSocket
 
         @param host(str)  The host to connect to.
@@ -58,6 +60,7 @@ class TSocket(TSocketBase):
         @param unix_socket(str)  The filename of a unix socket to connect to.
                                  (host and port will be ignored.)
         @param socket_family(int)  The socket family to use with this socket.
+        @param socket_keepalive(bool) enable TCP keepalive, default off.
         """
         self.host = host
         self.port = port
@@ -65,6 +68,7 @@ class TSocket(TSocketBase):
         self._unix_socket = unix_socket
         self._timeout = None
         self._socket_family = socket_family
+        self._socket_keepalive = socket_keepalive
 
     def setHandle(self, h):
         self.handle = h
@@ -90,15 +94,20 @@ class TSocket(TSocketBase):
 
     def open(self):
         if self.handle:
-            raise TTransportException(TTransportException.ALREADY_OPEN)
+            raise TTransportException(type=TTransportException.ALREADY_OPEN, message="already open")
         try:
             addrs = self._resolveAddr()
-        except socket.gaierror:
+        except socket.gaierror as gai:
             msg = 'failed to resolve sockaddr for ' + str(self._address)
             logger.exception(msg)
-            raise TTransportException(TTransportException.NOT_OPEN, msg)
+            raise TTransportException(type=TTransportException.NOT_OPEN, message=msg, inner=gai)
         for family, socktype, _, _, sockaddr in addrs:
             handle = self._do_open(family, socktype)
+
+            # TCP_KEEPALIVE
+            if self._socket_keepalive:
+                handle.setsockopt(socket.IPPROTO_TCP, socket.SO_KEEPALIVE, 1)
+
             handle.settimeout(self._timeout)
             try:
                 handle.connect(sockaddr)
@@ -110,7 +119,7 @@ class TSocket(TSocketBase):
         msg = 'Could not connect to any of %s' % list(map(lambda a: a[4],
                                                           addrs))
         logger.error(msg)
-        raise TTransportException(TTransportException.NOT_OPEN, msg)
+        raise TTransportException(type=TTransportException.NOT_OPEN, message=msg)
 
     def read(self, sz):
         try:
@@ -125,8 +134,10 @@ class TSocket(TSocketBase):
                 self.close()
                 # Trigger the check to raise the END_OF_FILE exception below.
                 buff = ''
+            elif e.args[0] == errno.ETIMEDOUT:
+                raise TTransportException(type=TTransportException.TIMED_OUT, message="read timeout", inner=e)
             else:
-                raise
+                raise TTransportException(message="unexpected exception", inner=e)
         if len(buff) == 0:
             raise TTransportException(type=TTransportException.END_OF_FILE,
                                       message='TSocket read 0 bytes')
@@ -139,12 +150,15 @@ class TSocket(TSocketBase):
         sent = 0
         have = len(buff)
         while sent < have:
-            plus = self.handle.send(buff)
-            if plus == 0:
-                raise TTransportException(type=TTransportException.END_OF_FILE,
-                                          message='TSocket sent 0 bytes')
-            sent += plus
-            buff = buff[plus:]
+            try:
+                plus = self.handle.send(buff)
+                if plus == 0:
+                    raise TTransportException(type=TTransportException.END_OF_FILE,
+                                              message='TSocket sent 0 bytes')
+                sent += plus
+                buff = buff[plus:]
+            except socket.error as e:
+                raise TTransportException(message="unexpected exception", inner=e)
 
     def flush(self):
         pass
@@ -159,6 +173,15 @@ class TServerSocket(TSocketBase, TServerTransportBase):
         self._unix_socket = unix_socket
         self._socket_family = socket_family
         self.handle = None
+        self._backlog = 128
+
+    def setBacklog(self, backlog=None):
+        if not self.handle:
+            self._backlog = backlog
+        else:
+            # We cann't update backlog when it is already listening, since the
+            # handle has been created.
+            logger.warn('You have to set backlog before listen.')
 
     def listen(self):
         res0 = self._resolveAddr()
@@ -183,7 +206,7 @@ class TServerSocket(TSocketBase, TServerTransportBase):
         if hasattr(self.handle, 'settimeout'):
             self.handle.settimeout(None)
         self.handle.bind(res[4])
-        self.handle.listen(128)
+        self.handle.listen(self._backlog)
 
     def accept(self):
         client, addr = self.handle.accept()

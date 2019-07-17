@@ -39,13 +39,15 @@ type
 
   TEndpointTransport = (
     trns_Sockets,
-    trns_Http,
+    trns_MsxmlHttp,
+    trns_WinHttp,
     trns_NamedPipes,
     trns_AnonPipes,
     trns_EvHttp  // as listed on http://thrift.apache.org/test
   );
 
   TLayeredTransport = (
+    trns_None,
     trns_Buffered,
     trns_Framed
   );
@@ -60,10 +62,10 @@ const
                   = ('Binary', 'JSON', 'Compact');
 
   LAYERED_TRANSPORTS : array[TLayeredTransport] of string
-                  = ('Buffered', 'Framed');
+                  = ('None', 'Buffered', 'Framed');
 
   ENDPOINT_TRANSPORTS : array[TEndpointTransport] of string
-                  = ('Sockets', 'Http', 'Named Pipes','Anon Pipes', 'EvHttp');
+                  = ('Sockets', 'Http', 'WinHttp', 'Named Pipes','Anon Pipes', 'EvHttp');
 
   // defaults are: read=false, write=true
   BINARY_STRICT_READ  = FALSE;

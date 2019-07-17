@@ -21,7 +21,7 @@
 # Please see doc/old-thrift-license.txt in the Thrift distribution for
 # details.
 
-AUTOMAKE_OPTIONS = subdir-objects
+AUTOMAKE_OPTIONS = subdir-objects nostdinc
 
 AM_YFLAGS = -d
 
@@ -37,51 +37,3 @@ thrift_libparse_a_SOURCES = thrift/thrifty.yy \
 
 clean-local:
 	$(RM) thrift/thriftl.cc thrift/thrifty.cc thrift/thrifty.h thrift/thrifty.hh
-
-if WITH_PLUGIN
-noinst_PROGRAMS = thrift/thrift-bootstrap
-
-thrift_thrift_bootstrap_SOURCES = \
-                 thrift/common.h \
-                 thrift/common.cc \
-                 thrift/audit/t_audit.h \
-                 thrift/audit/t_audit.cpp \
-                 thrift/generate/t_generator.cc \
-                 thrift/generate/t_generator_registry.h \
-                 thrift/globals.h \
-                 thrift/platform.h \
-                 thrift/logging.h \
-                 thrift/parse/t_doc.h \
-                 thrift/parse/t_type.h \
-                 thrift/parse/t_base_type.h \
-                 thrift/parse/t_enum.h \
-                 thrift/parse/t_enum_value.h \
-                 thrift/parse/t_typedef.h \
-                 thrift/parse/t_typedef.cc \
-                 thrift/parse/t_container.h \
-                 thrift/parse/t_list.h \
-                 thrift/parse/t_set.h \
-                 thrift/parse/t_map.h \
-                 thrift/parse/t_struct.h \
-                 thrift/parse/t_field.h \
-                 thrift/parse/t_service.h \
-                 thrift/parse/t_function.h \
-                 thrift/parse/t_program.h \
-                 thrift/parse/t_scope.h \
-                 thrift/parse/t_const.h \
-                 thrift/parse/t_const_value.h \
-                 thrift/parse/parse.cc \
-                 thrift/generate/t_generator.h \
-                 thrift/generate/t_oop_generator.h \
-                 thrift/generate/t_html_generator.h \
-                 thrift/windows/config.h \
-                 thrift/version.h \
-                 thrift/generate/t_cpp_generator.cc \
-                 thrift/main.h \
-                 thrift/main.cc
-
-main.cc: version.h
-
-thrift_thrift_bootstrap_CXXFLAGS = -Wall -Wextra -pedantic
-thrift_thrift_bootstrap_LDADD = @LEXLIB@ thrift/libparse.a
-endif

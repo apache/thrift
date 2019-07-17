@@ -21,12 +21,12 @@
 #define THRIFT_TPROTOCOLDECORATOR_H_ 1
 
 #include <thrift/protocol/TProtocol.h>
-#include <thrift/stdcxx.h>
+#include <memory>
 
 namespace apache {
 namespace thrift {
 namespace protocol {
-using stdcxx::shared_ptr;
+using std::shared_ptr;
 
 /**
  * <code>TProtocolDecorator</code> forwards all requests to an enclosed
@@ -39,107 +39,107 @@ using stdcxx::shared_ptr;
  */
 class TProtocolDecorator : public TProtocol {
 public:
-  virtual ~TProtocolDecorator() {}
+  ~TProtocolDecorator() override = default;
 
   // Desc: Initializes the protocol decorator object.
   TProtocolDecorator(shared_ptr<TProtocol> proto)
     : TProtocol(proto->getTransport()), protocol(proto) {}
 
-  virtual uint32_t writeMessageBegin_virt(const std::string& name,
+  uint32_t writeMessageBegin_virt(const std::string& name,
                                           const TMessageType messageType,
-                                          const int32_t seqid) {
+                                          const int32_t seqid) override {
     return protocol->writeMessageBegin(name, messageType, seqid);
   }
-  virtual uint32_t writeMessageEnd_virt() { return protocol->writeMessageEnd(); }
-  virtual uint32_t writeStructBegin_virt(const char* name) {
+  uint32_t writeMessageEnd_virt() override { return protocol->writeMessageEnd(); }
+  uint32_t writeStructBegin_virt(const char* name) override {
     return protocol->writeStructBegin(name);
   }
-  virtual uint32_t writeStructEnd_virt() { return protocol->writeStructEnd(); }
+  uint32_t writeStructEnd_virt() override { return protocol->writeStructEnd(); }
 
-  virtual uint32_t writeFieldBegin_virt(const char* name,
+  uint32_t writeFieldBegin_virt(const char* name,
                                         const TType fieldType,
-                                        const int16_t fieldId) {
+                                        const int16_t fieldId) override {
     return protocol->writeFieldBegin(name, fieldType, fieldId);
   }
 
-  virtual uint32_t writeFieldEnd_virt() { return protocol->writeFieldEnd(); }
-  virtual uint32_t writeFieldStop_virt() { return protocol->writeFieldStop(); }
+  uint32_t writeFieldEnd_virt() override { return protocol->writeFieldEnd(); }
+  uint32_t writeFieldStop_virt() override { return protocol->writeFieldStop(); }
 
-  virtual uint32_t writeMapBegin_virt(const TType keyType,
+  uint32_t writeMapBegin_virt(const TType keyType,
                                       const TType valType,
-                                      const uint32_t size) {
+                                      const uint32_t size) override {
     return protocol->writeMapBegin(keyType, valType, size);
   }
 
-  virtual uint32_t writeMapEnd_virt() { return protocol->writeMapEnd(); }
+  uint32_t writeMapEnd_virt() override { return protocol->writeMapEnd(); }
 
-  virtual uint32_t writeListBegin_virt(const TType elemType, const uint32_t size) {
+  uint32_t writeListBegin_virt(const TType elemType, const uint32_t size) override {
     return protocol->writeListBegin(elemType, size);
   }
-  virtual uint32_t writeListEnd_virt() { return protocol->writeListEnd(); }
+  uint32_t writeListEnd_virt() override { return protocol->writeListEnd(); }
 
-  virtual uint32_t writeSetBegin_virt(const TType elemType, const uint32_t size) {
+  uint32_t writeSetBegin_virt(const TType elemType, const uint32_t size) override {
     return protocol->writeSetBegin(elemType, size);
   }
-  virtual uint32_t writeSetEnd_virt() { return protocol->writeSetEnd(); }
+  uint32_t writeSetEnd_virt() override { return protocol->writeSetEnd(); }
 
-  virtual uint32_t writeBool_virt(const bool value) { return protocol->writeBool(value); }
-  virtual uint32_t writeByte_virt(const int8_t byte) { return protocol->writeByte(byte); }
-  virtual uint32_t writeI16_virt(const int16_t i16) { return protocol->writeI16(i16); }
-  virtual uint32_t writeI32_virt(const int32_t i32) { return protocol->writeI32(i32); }
-  virtual uint32_t writeI64_virt(const int64_t i64) { return protocol->writeI64(i64); }
+  uint32_t writeBool_virt(const bool value) override { return protocol->writeBool(value); }
+  uint32_t writeByte_virt(const int8_t byte) override { return protocol->writeByte(byte); }
+  uint32_t writeI16_virt(const int16_t i16) override { return protocol->writeI16(i16); }
+  uint32_t writeI32_virt(const int32_t i32) override { return protocol->writeI32(i32); }
+  uint32_t writeI64_virt(const int64_t i64) override { return protocol->writeI64(i64); }
 
-  virtual uint32_t writeDouble_virt(const double dub) { return protocol->writeDouble(dub); }
-  virtual uint32_t writeString_virt(const std::string& str) { return protocol->writeString(str); }
-  virtual uint32_t writeBinary_virt(const std::string& str) { return protocol->writeBinary(str); }
+  uint32_t writeDouble_virt(const double dub) override { return protocol->writeDouble(dub); }
+  uint32_t writeString_virt(const std::string& str) override { return protocol->writeString(str); }
+  uint32_t writeBinary_virt(const std::string& str) override { return protocol->writeBinary(str); }
 
-  virtual uint32_t readMessageBegin_virt(std::string& name,
+  uint32_t readMessageBegin_virt(std::string& name,
                                          TMessageType& messageType,
-                                         int32_t& seqid) {
+                                         int32_t& seqid) override {
     return protocol->readMessageBegin(name, messageType, seqid);
   }
-  virtual uint32_t readMessageEnd_virt() { return protocol->readMessageEnd(); }
+  uint32_t readMessageEnd_virt() override { return protocol->readMessageEnd(); }
 
-  virtual uint32_t readStructBegin_virt(std::string& name) {
+  uint32_t readStructBegin_virt(std::string& name) override {
     return protocol->readStructBegin(name);
   }
-  virtual uint32_t readStructEnd_virt() { return protocol->readStructEnd(); }
+  uint32_t readStructEnd_virt() override { return protocol->readStructEnd(); }
 
-  virtual uint32_t readFieldBegin_virt(std::string& name, TType& fieldType, int16_t& fieldId) {
+  uint32_t readFieldBegin_virt(std::string& name, TType& fieldType, int16_t& fieldId) override {
     return protocol->readFieldBegin(name, fieldType, fieldId);
   }
-  virtual uint32_t readFieldEnd_virt() { return protocol->readFieldEnd(); }
+  uint32_t readFieldEnd_virt() override { return protocol->readFieldEnd(); }
 
-  virtual uint32_t readMapBegin_virt(TType& keyType, TType& valType, uint32_t& size) {
+  uint32_t readMapBegin_virt(TType& keyType, TType& valType, uint32_t& size) override {
     return protocol->readMapBegin(keyType, valType, size);
   }
-  virtual uint32_t readMapEnd_virt() { return protocol->readMapEnd(); }
+  uint32_t readMapEnd_virt() override { return protocol->readMapEnd(); }
 
-  virtual uint32_t readListBegin_virt(TType& elemType, uint32_t& size) {
+  uint32_t readListBegin_virt(TType& elemType, uint32_t& size) override {
     return protocol->readListBegin(elemType, size);
   }
-  virtual uint32_t readListEnd_virt() { return protocol->readListEnd(); }
+  uint32_t readListEnd_virt() override { return protocol->readListEnd(); }
 
-  virtual uint32_t readSetBegin_virt(TType& elemType, uint32_t& size) {
+  uint32_t readSetBegin_virt(TType& elemType, uint32_t& size) override {
     return protocol->readSetBegin(elemType, size);
   }
-  virtual uint32_t readSetEnd_virt() { return protocol->readSetEnd(); }
+  uint32_t readSetEnd_virt() override { return protocol->readSetEnd(); }
 
-  virtual uint32_t readBool_virt(bool& value) { return protocol->readBool(value); }
-  virtual uint32_t readBool_virt(std::vector<bool>::reference value) {
+  uint32_t readBool_virt(bool& value) override { return protocol->readBool(value); }
+  uint32_t readBool_virt(std::vector<bool>::reference value) override {
     return protocol->readBool(value);
   }
 
-  virtual uint32_t readByte_virt(int8_t& byte) { return protocol->readByte(byte); }
+  uint32_t readByte_virt(int8_t& byte) override { return protocol->readByte(byte); }
 
-  virtual uint32_t readI16_virt(int16_t& i16) { return protocol->readI16(i16); }
-  virtual uint32_t readI32_virt(int32_t& i32) { return protocol->readI32(i32); }
-  virtual uint32_t readI64_virt(int64_t& i64) { return protocol->readI64(i64); }
+  uint32_t readI16_virt(int16_t& i16) override { return protocol->readI16(i16); }
+  uint32_t readI32_virt(int32_t& i32) override { return protocol->readI32(i32); }
+  uint32_t readI64_virt(int64_t& i64) override { return protocol->readI64(i64); }
 
-  virtual uint32_t readDouble_virt(double& dub) { return protocol->readDouble(dub); }
+  uint32_t readDouble_virt(double& dub) override { return protocol->readDouble(dub); }
 
-  virtual uint32_t readString_virt(std::string& str) { return protocol->readString(str); }
-  virtual uint32_t readBinary_virt(std::string& str) { return protocol->readBinary(str); }
+  uint32_t readString_virt(std::string& str) override { return protocol->readString(str); }
+  uint32_t readBinary_virt(std::string& str) override { return protocol->readBinary(str); }
 
 private:
   shared_ptr<TProtocol> protocol;

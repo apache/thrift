@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements. See the NOTICE file
  * distributed with this work for additional information
@@ -43,6 +43,7 @@ namespace Thrift.Transport
         private int readTimeout = 30000;
 
         private IDictionary<string, string> customHeaders = new Dictionary<string, string>();
+        private string userAgent = "C#/THttpClient";
 
 #if !SILVERLIGHT
         private IWebProxy proxy = WebRequest.DefaultWebProxy;
@@ -52,10 +53,20 @@ namespace Thrift.Transport
             : this(u, Enumerable.Empty<X509Certificate>())
         {
         }
+        public THttpClient(Uri u, string userAgent)
+            : this(u, userAgent, Enumerable.Empty<X509Certificate>())
+        {
+        }
 
         public THttpClient(Uri u, IEnumerable<X509Certificate> certificates)
         {
             uri = u;
+            this.certificates = (certificates ?? Enumerable.Empty<X509Certificate>()).ToArray();
+        }
+        public THttpClient(Uri u, string userAgent, IEnumerable<X509Certificate> certificates)
+        {
+            uri = u;
+            this.userAgent = userAgent;
             this.certificates = (certificates ?? Enumerable.Empty<X509Certificate>()).ToArray();
         }
 
@@ -271,7 +282,7 @@ namespace Thrift.Transport
             // Make the request
             connection.ContentType = "application/x-thrift";
             connection.Accept = "application/x-thrift";
-            connection.UserAgent = "C#/THttpClient";
+            connection.UserAgent = userAgent;
             connection.Method = "POST";
 #if !SILVERLIGHT
             connection.ProtocolVersion = HttpVersion.Version10;

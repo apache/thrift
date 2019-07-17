@@ -19,10 +19,9 @@
 
 #include <thrift/thrift-config.h>
 #include <thrift/concurrency/Thread.h>
-#include <thrift/concurrency/PlatformThreadFactory.h>
+#include <thrift/concurrency/ThreadFactory.h>
 #include <thrift/concurrency/Monitor.h>
 #include <thrift/concurrency/Mutex.h>
-#include <thrift/concurrency/Util.h>
 
 #include <assert.h>
 #include <iostream>
@@ -33,7 +32,7 @@ namespace thrift {
 namespace concurrency {
 namespace test {
 
-using stdcxx::shared_ptr;
+using std::shared_ptr;
 using namespace apache::thrift::concurrency;
 
 /**
@@ -52,7 +51,7 @@ public:
   public:
     ReapNTask(Monitor& monitor, int& activeCount) : _monitor(monitor), _count(activeCount) {}
 
-    void run() {
+    void run() override {
       Synchronized s(_monitor);
       
       if (--_count == 0) {
@@ -66,7 +65,7 @@ public:
 
   bool reapNThreads(int loop = 1, int count = 10) {
 
-    PlatformThreadFactory threadFactory = PlatformThreadFactory();
+    ThreadFactory threadFactory = ThreadFactory();
     shared_ptr<Monitor> monitor(new Monitor);
 
     for (int lix = 0; lix < loop; lix++) {
@@ -123,7 +122,7 @@ public:
 
     SynchStartTask(Monitor& monitor, volatile STATE& state) : _monitor(monitor), _state(state) {}
 
-    void run() {
+    void run() override {
       {
         Synchronized s(_monitor);
         if (_state == SynchStartTask::STARTING) {
@@ -159,7 +158,7 @@ public:
     shared_ptr<SynchStartTask> task
         = shared_ptr<SynchStartTask>(new SynchStartTask(monitor, state));
 
-    PlatformThreadFactory threadFactory = PlatformThreadFactory();
+    ThreadFactory threadFactory = ThreadFactory();
 
     shared_ptr<Thread> thread = threadFactory.newThread(task);
 
@@ -221,7 +220,7 @@ public:
 
     Monitor monitor;
 
-    int64_t startTime = Util::currentTime();
+    int64_t startTime = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch()).count();
 
     for (int64_t ix = 0; ix < count; ix++) {
       {
@@ -233,7 +232,7 @@ public:
       }
     }
 
-    int64_t endTime = Util::currentTime();
+    int64_t endTime = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch()).count();
 
   bool success = (endTime - startTime) >= (count * timeout);
 
@@ -248,14 +247,14 @@ public:
   class FloodTask : public Runnable {
   public:
     FloodTask(const size_t id, Monitor& mon) : _id(id), _mon(mon) {}
-    ~FloodTask() {
+    ~FloodTask() override {
       if (_id % 10000 == 0) {
 		Synchronized sync(_mon);
         std::cout << "\t\tthread " << _id << " done" << std::endl;
       }
     }
 
-    void run() {
+    void run() override {
       if (_id % 10000 == 0) {
 		Synchronized sync(_mon);
         std::cout << "\t\tthread " << _id << " started" << std::endl;
@@ -265,7 +264,7 @@ public:
     Monitor& _mon;
   };
 
-  void foo(PlatformThreadFactory* tf) { (void)tf; }
+  void foo(ThreadFactory* tf) { (void)tf; }
 
   bool floodNTest(size_t loop = 1, size_t count = 100000) {
 
@@ -274,7 +273,7 @@ public:
 	
     for (size_t lix = 0; lix < loop; lix++) {
 
-      PlatformThreadFactory threadFactory = PlatformThreadFactory();
+      ThreadFactory threadFactory = ThreadFactory();
       threadFactory.setDetached(true);
 
       for (size_t tix = 0; tix < count; tix++) {

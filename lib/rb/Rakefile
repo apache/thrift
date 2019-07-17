@@ -71,6 +71,7 @@ end
 
 desc "Build the native library"
 task :build_ext => :'gen-rb' do
+   next if defined?(RUBY_ENGINE) && RUBY_ENGINE =~ /jruby/
    Dir::chdir(File::dirname('ext/extconf.rb')) do
       unless sh "ruby #{File::basename('ext/extconf.rb')}"
         $stderr.puts "Failed to run extconf"

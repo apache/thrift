@@ -94,20 +94,20 @@ public:
    * Init and close methods
    */
 
-  void init_generator();
-  void close_generator();
+  void init_generator() override;
+  void close_generator() override;
 
-  void generate_consts(vector<t_const*> consts);
+  void generate_consts(vector<t_const*> consts) override;
 
   /**
    * Program-level generation functions
    */
 
-  void generate_typedef(t_typedef* ttypedef);
-  void generate_enum(t_enum* tenum);
-  void generate_struct(t_struct* tstruct);
-  void generate_xception(t_struct* txception);
-  void generate_service(t_service* tservice);
+  void generate_typedef(t_typedef* ttypedef) override;
+  void generate_enum(t_enum* tenum) override;
+  void generate_struct(t_struct* tstruct) override;
+  void generate_xception(t_struct* txception) override;
+  void generate_service(t_service* tservice) override;
 
 
   void render_const_value(ostream& out,
@@ -336,7 +336,7 @@ void t_swift_generator::init_generator() {
 string t_swift_generator::swift_imports() {
 
   vector<string> includes_list;
-  includes_list.push_back("Foundation");
+  includes_list.emplace_back("Foundation");
 
   ostringstream includes;
 
@@ -347,8 +347,8 @@ string t_swift_generator::swift_imports() {
 
   if (namespaced_) {
     const vector<t_program*>& program_includes = program_->get_includes();
-    for (size_t i = 0; i < program_includes.size(); ++i) {
-      includes << ("import " + get_real_swift_module(program_includes[i])) << endl;
+    for (auto program_include : program_includes) {
+      includes << ("import " + get_real_swift_module(program_include)) << endl;
     }
   }
   includes << endl;
@@ -364,10 +364,10 @@ string t_swift_generator::swift_imports() {
 string t_swift_generator::swift_thrift_imports() {
 
   vector<string> includes_list;
-  includes_list.push_back("Thrift");
+  includes_list.emplace_back("Thrift");
 
   if (gen_cocoa_ && promise_kit_) {
-    includes_list.push_back("PromiseKit");
+    includes_list.emplace_back("PromiseKit");
   }
 
   ostringstream includes;

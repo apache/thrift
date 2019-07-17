@@ -36,9 +36,9 @@ public:
   TZlibTransportException(int status, const char* msg)
     : TTransportException(TTransportException::INTERNAL_ERROR, errorMessage(status, msg)),
       zlib_status_(status),
-      zlib_msg_(msg == NULL ? "(null)" : msg) {}
+      zlib_msg_(msg == nullptr ? "(null)" : msg) {}
 
-  virtual ~TZlibTransportException() throw() {}
+  ~TZlibTransportException() noexcept override = default;
 
   int getZlibStatus() { return zlib_status_; }
   std::string getZlibMessage() { return zlib_msg_; }
@@ -78,7 +78,7 @@ public:
    * @param cwbuf_size   Compressed buffer size for writing.
    * @param comp_level   Compression level (0=none[fast], 6=default, 9=max[slow]).
    */
-  TZlibTransport(stdcxx::shared_ptr<TTransport> transport,
+  TZlibTransport(std::shared_ptr<TTransport> transport,
                  int urbuf_size = DEFAULT_URBUF_SIZE,
                  int crbuf_size = DEFAULT_CRBUF_SIZE,
                  int uwbuf_size = DEFAULT_UWBUF_SIZE,
@@ -93,12 +93,12 @@ public:
       crbuf_size_(crbuf_size),
       uwbuf_size_(uwbuf_size),
       cwbuf_size_(cwbuf_size),
-      urbuf_(NULL),
-      crbuf_(NULL),
-      uwbuf_(NULL),
-      cwbuf_(NULL),
-      rstream_(NULL),
-      wstream_(NULL),
+      urbuf_(nullptr),
+      crbuf_(nullptr),
+      uwbuf_(nullptr),
+      cwbuf_(nullptr),
+      rstream_(nullptr),
+      wstream_(nullptr),
       comp_level_(comp_level) {
     if (uwbuf_size_ < MIN_DIRECT_DEFLATE_SIZE) {
       // Have to copy this into a local because of a linking issue.
@@ -136,20 +136,20 @@ public:
    * unflushed data.  You must explicitly call flush() or finish() to ensure
    * that data is actually written and flushed to the underlying transport.
    */
-  ~TZlibTransport();
+  ~TZlibTransport() override;
 
-  bool isOpen();
-  bool peek();
+  bool isOpen() const override;
+  bool peek() override;
 
-  void open() { transport_->open(); }
+  void open() override { transport_->open(); }
 
-  void close() { transport_->close(); }
+  void close() override { transport_->close(); }
 
   uint32_t read(uint8_t* buf, uint32_t len);
 
   void write(const uint8_t* buf, uint32_t len);
 
-  void flush();
+  void flush() override;
 
   /**
    * Finalize the zlib stream.
@@ -180,12 +180,12 @@ public:
   static const int DEFAULT_UWBUF_SIZE = 128;
   static const int DEFAULT_CWBUF_SIZE = 1024;
 
-  stdcxx::shared_ptr<TTransport> getUnderlyingTransport() const { return transport_; }
+  std::shared_ptr<TTransport> getUnderlyingTransport() const { return transport_; }
 
 protected:
   inline void checkZlibRv(int status, const char* msg);
   inline void checkZlibRvNothrow(int status, const char* msg);
-  inline int readAvail();
+  inline int readAvail() const;
   void flushToTransport(int flush);
   void flushToZlib(const uint8_t* buf, int len, int flush);
   bool readFromZlib();
@@ -195,7 +195,7 @@ protected:
   // Larger (or equal) writes are dumped straight to zlib.
   static const uint32_t MIN_DIRECT_DEFLATE_SIZE = 32;
 
-  stdcxx::shared_ptr<TTransport> transport_;
+  std::shared_ptr<TTransport> transport_;
 
   int urpos_;
   int uwpos_;
@@ -227,12 +227,12 @@ protected:
  */
 class TZlibTransportFactory : public TTransportFactory {
 public:
-  TZlibTransportFactory() {}
+  TZlibTransportFactory() = default;
 
-  virtual ~TZlibTransportFactory() {}
+  ~TZlibTransportFactory() override = default;
 
-  virtual stdcxx::shared_ptr<TTransport> getTransport(stdcxx::shared_ptr<TTransport> trans) {
-    return stdcxx::shared_ptr<TTransport>(new TZlibTransport(trans));
+  std::shared_ptr<TTransport> getTransport(std::shared_ptr<TTransport> trans) override {
+    return std::shared_ptr<TTransport>(new TZlibTransport(trans));
   }
 };
 }

@@ -26,9 +26,8 @@ SET CMAKEARGS=^
   -DCMAKE_MAKE_PROGRAM=/mingw%NORM_PLATFORM%/bin/mingw32-make ^
   -DCMAKE_C_COMPILER=/mingw%NORM_PLATFORM%/bin/gcc.exe ^
   -DCMAKE_CXX_COMPILER=/mingw%NORM_PLATFORM%/bin/g++.exe ^
-  -DWITH_PYTHON=OFF ^
-  -DWITH_SHARED_LIB=OFF ^
-  -DWITH_STATIC_LIB=ON
+  -DOPENSSL_ROOT_DIR=/mingw%NORM_PLATFORM% ^
+  -DWITH_PYTHON=OFF
 
 @ECHO ON
 %BASH% -lc "mkdir -p %BUILDDIR% && cd %BUILDDIR% && cmake.exe %SRCDIR% %CMAKEARGS% && cmake --build . --config %CONFIGURATION% --target install" || EXIT /B

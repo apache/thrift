@@ -18,9 +18,9 @@
 library thrift.test.transport.t_json_protocol_test;
 
 import 'dart:async';
-import 'dart:convert' show UTF8;
 import 'dart:typed_data' show Uint8List;
 
+import 'package:dart2_constant/convert.dart' show utf8;
 import 'package:test/test.dart';
 import 'package:thrift/thrift.dart';
 
@@ -362,7 +362,7 @@ void main() {
            UTF-8:  0xF0 0x9D 0x84 0x9E
            UTF-16: 0xD834 0xDD1E
        */
-      var buffer = UTF8.encode(r'"\u0001\u0e01 \ud834\udd1e"');
+      var buffer = utf8.encode(r'"\u0001\u0e01 \ud834\udd1e"');
       var transport = new TBufferedTransport();
       transport.writeAll(buffer);
 
@@ -372,7 +372,7 @@ void main() {
 
       var subject = protocol.readString();
       expect(subject,
-          UTF8.decode([0x01, 0xE0, 0xB8, 0x81, 0x20, 0xF0, 0x9D, 0x84, 0x9E]));
+          utf8.decode([0x01, 0xE0, 0xB8, 0x81, 0x20, 0xF0, 0x9D, 0x84, 0x9E]));
     });
 
     group('shared tests', sharedTests);

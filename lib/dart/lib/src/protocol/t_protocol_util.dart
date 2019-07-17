@@ -101,7 +101,7 @@ class TProtocolUtil {
         break;
 
       default:
-        break;
+        throw new TProtocolError(TProtocolErrorType.INVALID_DATA, "Invalid data");
     }
   }
 }

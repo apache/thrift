@@ -28,6 +28,9 @@ const (
 	MISSING_RESULT                 = 5
 	INTERNAL_ERROR                 = 6
 	PROTOCOL_ERROR                 = 7
+	INVALID_TRANSFORM              = 8
+	INVALID_PROTOCOL               = 9
+	UNSUPPORTED_CLIENT_TYPE        = 10
 )
 
 var defaultApplicationExceptionMessage = map[int32]string{
@@ -39,6 +42,9 @@ var defaultApplicationExceptionMessage = map[int32]string{
 	MISSING_RESULT:                 "missing result",
 	INTERNAL_ERROR:                 "unknown internal error",
 	PROTOCOL_ERROR:                 "unknown protocol error",
+	INVALID_TRANSFORM:              "Invalid transform",
+	INVALID_PROTOCOL:               "Invalid protocol",
+	UNSUPPORTED_CLIENT_TYPE:        "Unsupported client type",
 }
 
 // Application level Thrift exception

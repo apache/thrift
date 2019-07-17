@@ -32,7 +32,8 @@
       "framed"
     ],
     "sockets": [
-      "ip"
+      "ip",
+      "domain"
     ],
     "protocols": [
       "binary",
@@ -115,7 +116,8 @@
     "protocols": [
       "binary",
       "compact",
-      "json"
+      "json",
+      "header"
     ],
     "workdir": "go/bin"
   },
@@ -199,7 +201,8 @@
     "protocols": [
       "compact",
       "binary",
-      "json"
+      "json",
+      "header"
     ],
     "workdir": "../lib/nodejs/test"
   },
@@ -251,13 +254,6 @@
         "--verbose",
         "--host=localhost",
         "--genpydir=gen-py"
-      ],
-      "protocols": [
-        "multi",
-        "multi:multia",
-        "multic",
-        "multic:multiac",
-        "multij"
       ]
     },
     "transports": [
@@ -271,12 +267,20 @@
       "ip-ssl"
     ],
     "protocols": [
-      "compact",
       "binary",
-      "json",
       "binary:accel",
+      "compact",
       "compact:accelc",
-      "header"
+      "header",
+      "json",
+      "multi",
+      "multi:multia",
+      "multia",
+      "multiac",
+      "multic",
+      "multic:multiac",
+      "multih",
+      "multij"
     ],
     "workdir": "py"
   },
@@ -299,13 +303,6 @@
         "TestClient.py",
         "--host=localhost",
         "--genpydir=gen-py"
-      ],
-      "protocols": [
-        "multi",
-        "multi:multia",
-        "multic",
-        "multic:multiac",
-        "multij"
       ]
     },
     "transports": [
@@ -319,12 +316,20 @@
       "ip-ssl"
     ],
     "protocols": [
-      "compact",
       "binary",
-      "json",
       "binary:accel",
+      "compact",
       "compact:accelc",
-      "header"
+      "header",
+      "json",
+      "multi",
+      "multi:multia",
+      "multia",
+      "multiac",
+      "multic",
+      "multic:multiac",
+      "multih",
+      "multij"
     ],
     "workdir": "py"
   },
@@ -385,7 +390,7 @@
       ]
     },
     "client": {
-      "timeout": 5,
+      "timeout": 10,
       "command": [
         "ruby",
         "../integration/TestClient.rb",
@@ -543,8 +548,9 @@
       ],
       "protocols": [
         "binary",
+        "binary:accel",
         "compact",
-        "binary:accel"
+        "json"
       ],
       "command": [
         "php",
@@ -562,6 +568,7 @@
   {
     "name": "dart",
     "client": {
+      "timeout": 30,
       "transports": [
         "buffered",
         "framed",
@@ -577,7 +584,9 @@
       ],
       "command": [
         "dart",
-        "test_client/bin/main.dart"
+	    "--enable-asserts",
+        "test_client/bin/main.dart",
+	    "--verbose"
       ]
     },
     "workdir": "dart"
@@ -603,9 +612,9 @@
         "true",
         "-noshell",
         "-pa",
-        "../../lib/erl/ebin/",
+        "../../lib/erl/_build/default/lib/thrift/ebin/",
         "-pa",
-        "./ebin",
+        "./_build/default/lib/thrift_test/ebin",
         "-s",
         "test_client",
         "-s",
@@ -621,9 +630,9 @@
         "true",
         "-noshell",
         "-pa",
-        "../../lib/erl/ebin/",
+        "../../lib/erl/_build/default/lib/thrift/ebin/",
         "-pa",
-        "./ebin",
+        "./_build/default/lib/thrift_test/ebin",
         "-s",
         "test_thrift_server",
         "-extra"
@@ -718,5 +727,32 @@
       "multic"
     ],
     "workdir": "rs/bin"
+  },
+  {
+    "name": "nodets",
+    "env": {
+      "NODE_PATH": "../lib"
+    },
+    "server": {
+      "command": [
+        "runServer.sh"
+      ]
+    },
+    "client": {
+      "timeout": 6,
+      "command": [
+        "runClient.sh"
+      ]
+    },
+    "protocols": [
+      "binary"
+    ],
+    "sockets": [
+      "ip"
+    ],
+    "transports": [
+      "buffered"
+    ],
+    "workdir": "../lib/nodets/test"
   }
 ]

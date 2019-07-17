@@ -37,13 +37,13 @@ sudo DEBIAN_FRONTEND=noninteractive apt-get upgrade -qq -y
 # Install Dependencies
 # ---
 # General dependencies
-sudo apt-get install -qq automake libtool flex bison pkg-config g++ libssl-dev make libqt4-dev git debhelper
+sudo apt-get install -qq automake libtool flex bison pkg-config g++ libssl-dev make git debhelper
 
 # C++ dependencies
 sudo apt-get install -qq libboost-dev libboost-test-dev libboost-program-options-dev libboost-filesystem-dev libboost-system-dev libevent-dev 
 
 # Java dependencies
-sudo apt-get install -qq ant openjdk-7-jdk maven
+sudo apt-get install -qq ant openjdk-8-jdk maven
 
 # Python dependencies
 sudo apt-get install -qq python-all python-all-dev python-all-dbg python-setuptools python-support python-six python3-six
@@ -89,8 +89,8 @@ sudo apt-get install -qq xdg-utils dmd-bin
 
 # Customize the system
 # ---
-# Default java to latest 1.7 version
-update-java-alternatives -s java-1.7.0-openjdk-amd64 
+# Default java to latest 1.8 version
+update-java-alternatives -s java-1.8.0-openjdk-amd64 
 
 # PHPUnit package broken in ubuntu. see https://bugs.launchpad.net/ubuntu/+source/phpunit/+bug/701544
 sudo apt-get upgrade pear

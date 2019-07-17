@@ -33,6 +33,7 @@ phpmoduledir = `php-config --extension-dir`
 phpmodule_SCRIPTS = src/ext/thrift_protocol/modules/thrift_protocol.so
 
 distclean-local:
+	if [ -f src/ext/thrift_protocol/Makefile ]; then cd src/ext/thrift_protocol/ && $(MAKE) distclean; fi
 	cd $(phpmodule_SCRIPTS) && $(PHPIZE) --clean
 
 endif
@@ -128,6 +129,10 @@ phptype_DATA = \
   lib/Type/TType.php \
   lib/Type/TConstant.php
 
+clean-local:
+	if [ -f src/ext/thrift_protocol/Makefile ]; then cd src/ext/thrift_protocol/ && $(MAKE) clean; fi
+
+
 EXTRA_DIST = \
   lib \
   src/autoload.php \
@@ -144,6 +149,5 @@ EXTRA_DIST = \
   README.md
 
 MAINTAINERCLEANFILES = \
-  Makefile \
   Makefile.in
 

@@ -53,7 +53,7 @@ sub new {
 #
 sub writeMessageBegin
 {
-  my $self = shift;
+    my $self = shift;
     my ($name, $type, $seqid) = @_;
 
     if ($type == Thrift::TMessageType::CALL || $type == Thrift::TMessageType::ONEWAY) {

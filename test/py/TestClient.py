@@ -23,9 +23,11 @@ import os
 import sys
 import time
 import unittest
-from optparse import OptionParser
 
+from optparse import OptionParser
 from util import local_libpath
+sys.path.insert(0, local_libpath())
+from thrift.protocol import TProtocol, TProtocolDecorator
 
 SCRIPT_DIR = os.path.abspath(os.path.dirname(__file__))
 
@@ -268,6 +270,47 @@ class AbstractTest(unittest.TestCase):
         self.assertEqual(self.client.testString('Python'), 'Python')
 
 
+# LAST_SEQID is a global because we have one transport and multiple protocols
+# running on it (when multiplexed)
+LAST_SEQID = None
+
+
+class TPedanticSequenceIdProtocolWrapper(TProtocolDecorator.TProtocolDecorator):
+    """
+    Wraps any protocol with sequence ID checking: looks for outbound
+    uniqueness as well as request/response alignment.
+    """
+    def __init__(self, protocol):
+        # TProtocolDecorator.__new__ does all the heavy lifting
+        pass
+
+    def writeMessageBegin(self, name, type, seqid):
+        global LAST_SEQID
+        if LAST_SEQID and LAST_SEQID == seqid:
+            raise TProtocol.TProtocolException(
+                TProtocol.TProtocolException.INVALID_DATA,
+                "Python client reused sequence ID {0}".format(seqid))
+        LAST_SEQID = seqid
+        super(TPedanticSequenceIdProtocolWrapper, self).writeMessageBegin(
+            name, type, seqid)
+
+    def readMessageBegin(self):
+        global LAST_SEQID
+        (name, type, seqid) =\
+            super(TPedanticSequenceIdProtocolWrapper, self).readMessageBegin()
+        if LAST_SEQID != seqid:
+            raise TProtocol.TProtocolException(
+                TProtocol.TProtocolException.INVALID_DATA,
+                "We sent seqid {0} and server returned seqid {1}".format(
+                    self.last, seqid))
+        return (name, type, seqid)
+
+
+def make_pedantic(proto):
+    """ Wrap a protocol in the pedantic sequence ID wrapper. """
+    return TPedanticSequenceIdProtocolWrapper(proto)
+
+
 class MultiplexedOptionalTest(AbstractTest):
     def get_protocol2(self, transport):
         return None
@@ -275,83 +318,93 @@ class MultiplexedOptionalTest(AbstractTest):
 
 class BinaryTest(MultiplexedOptionalTest):
     def get_protocol(self, transport):
-        return TBinaryProtocol.TBinaryProtocolFactory().getProtocol(transport)
+        return make_pedantic(TBinaryProtocol.TBinaryProtocolFactory().getProtocol(transport))
 
 
 class MultiplexedBinaryTest(MultiplexedOptionalTest):
     def get_protocol(self, transport):
-        wrapped_proto = TBinaryProtocol.TBinaryProtocolFactory().getProtocol(transport)
+        wrapped_proto = make_pedantic(TBinaryProtocol.TBinaryProtocolFactory().getProtocol(transport))
         return TMultiplexedProtocol.TMultiplexedProtocol(wrapped_proto, "ThriftTest")
 
     def get_protocol2(self, transport):
-        wrapped_proto = TBinaryProtocol.TBinaryProtocolFactory().getProtocol(transport)
+        wrapped_proto = make_pedantic(TBinaryProtocol.TBinaryProtocolFactory().getProtocol(transport))
         return TMultiplexedProtocol.TMultiplexedProtocol(wrapped_proto, "SecondService")
 
 
 class AcceleratedBinaryTest(MultiplexedOptionalTest):
     def get_protocol(self, transport):
-        return TBinaryProtocol.TBinaryProtocolAcceleratedFactory(fallback=False).getProtocol(transport)
+        return make_pedantic(TBinaryProtocol.TBinaryProtocolAcceleratedFactory(fallback=False).getProtocol(transport))
 
 
 class MultiplexedAcceleratedBinaryTest(MultiplexedOptionalTest):
     def get_protocol(self, transport):
-        wrapped_proto = TBinaryProtocol.TBinaryProtocolAcceleratedFactory(fallback=False).getProtocol(transport)
+        wrapped_proto = make_pedantic(TBinaryProtocol.TBinaryProtocolAcceleratedFactory(fallback=False).getProtocol(transport))
         return TMultiplexedProtocol.TMultiplexedProtocol(wrapped_proto, "ThriftTest")
 
     def get_protocol2(self, transport):
-        wrapped_proto = TBinaryProtocol.TBinaryProtocolAcceleratedFactory(fallback=False).getProtocol(transport)
+        wrapped_proto = make_pedantic(TBinaryProtocol.TBinaryProtocolAcceleratedFactory(fallback=False).getProtocol(transport))
         return TMultiplexedProtocol.TMultiplexedProtocol(wrapped_proto, "SecondService")
 
 
 class CompactTest(MultiplexedOptionalTest):
     def get_protocol(self, transport):
-        return TCompactProtocol.TCompactProtocolFactory().getProtocol(transport)
+        return make_pedantic(TCompactProtocol.TCompactProtocolFactory().getProtocol(transport))
 
 
 class MultiplexedCompactTest(MultiplexedOptionalTest):
     def get_protocol(self, transport):
-        wrapped_proto = TCompactProtocol.TCompactProtocolFactory().getProtocol(transport)
+        wrapped_proto = make_pedantic(TCompactProtocol.TCompactProtocolFactory().getProtocol(transport))
         return TMultiplexedProtocol.TMultiplexedProtocol(wrapped_proto, "ThriftTest")
 
     def get_protocol2(self, transport):
-        wrapped_proto = TCompactProtocol.TCompactProtocolFactory().getProtocol(transport)
+        wrapped_proto = make_pedantic(TCompactProtocol.TCompactProtocolFactory().getProtocol(transport))
         return TMultiplexedProtocol.TMultiplexedProtocol(wrapped_proto, "SecondService")
 
 
 class AcceleratedCompactTest(MultiplexedOptionalTest):
     def get_protocol(self, transport):
-        return TCompactProtocol.TCompactProtocolAcceleratedFactory(fallback=False).getProtocol(transport)
+        return make_pedantic(TCompactProtocol.TCompactProtocolAcceleratedFactory(fallback=False).getProtocol(transport))
 
 
 class MultiplexedAcceleratedCompactTest(MultiplexedOptionalTest):
     def get_protocol(self, transport):
-        wrapped_proto = TCompactProtocol.TCompactProtocolAcceleratedFactory(fallback=False).getProtocol(transport)
+        wrapped_proto = make_pedantic(TCompactProtocol.TCompactProtocolAcceleratedFactory(fallback=False).getProtocol(transport))
         return TMultiplexedProtocol.TMultiplexedProtocol(wrapped_proto, "ThriftTest")
 
     def get_protocol2(self, transport):
-        wrapped_proto = TCompactProtocol.TCompactProtocolAcceleratedFactory(fallback=False).getProtocol(transport)
+        wrapped_proto = make_pedantic(TCompactProtocol.TCompactProtocolAcceleratedFactory(fallback=False).getProtocol(transport))
         return TMultiplexedProtocol.TMultiplexedProtocol(wrapped_proto, "SecondService")
 
 
 class JSONTest(MultiplexedOptionalTest):
     def get_protocol(self, transport):
-        return TJSONProtocol.TJSONProtocolFactory().getProtocol(transport)
+        return make_pedantic(TJSONProtocol.TJSONProtocolFactory().getProtocol(transport))
 
 
 class MultiplexedJSONTest(MultiplexedOptionalTest):
     def get_protocol(self, transport):
-        wrapped_proto = TJSONProtocol.TJSONProtocolFactory().getProtocol(transport)
+        wrapped_proto = make_pedantic(TJSONProtocol.TJSONProtocolFactory().getProtocol(transport))
         return TMultiplexedProtocol.TMultiplexedProtocol(wrapped_proto, "ThriftTest")
 
     def get_protocol2(self, transport):
-        wrapped_proto = TJSONProtocol.TJSONProtocolFactory().getProtocol(transport)
+        wrapped_proto = make_pedantic(TJSONProtocol.TJSONProtocolFactory().getProtocol(transport))
         return TMultiplexedProtocol.TMultiplexedProtocol(wrapped_proto, "SecondService")
 
 
 class HeaderTest(MultiplexedOptionalTest):
     def get_protocol(self, transport):
         factory = THeaderProtocol.THeaderProtocolFactory()
-        return factory.getProtocol(transport)
+        return make_pedantic(factory.getProtocol(transport))
+
+
+class MultiplexedHeaderTest(MultiplexedOptionalTest):
+    def get_protocol(self, transport):
+        wrapped_proto = make_pedantic(THeaderProtocol.THeaderProtocolFactory().getProtocol(transport))
+        return TMultiplexedProtocol.TMultiplexedProtocol(wrapped_proto, "ThriftTest")
+
+    def get_protocol2(self, transport):
+        wrapped_proto = make_pedantic(THeaderProtocol.THeaderProtocolFactory().getProtocol(transport))
+        return TMultiplexedProtocol.TMultiplexedProtocol(wrapped_proto, "SecondService")
 
 
 def suite():
@@ -377,6 +430,8 @@ def suite():
         suite.addTest(loader.loadTestsFromTestCase(MultiplexedAcceleratedCompactTest))
     elif options.proto == 'multic':
         suite.addTest(loader.loadTestsFromTestCase(MultiplexedCompactTest))
+    elif options.proto == 'multih':
+        suite.addTest(loader.loadTestsFromTestCase(MultiplexedHeaderTest))
     elif options.proto == 'multij':
         suite.addTest(loader.loadTestsFromTestCase(MultiplexedJSONTest))
     else:
@@ -416,7 +471,7 @@ if __name__ == "__main__":
                       dest="verbose", const=0,
                       help="minimal output")
     parser.add_option('--protocol', dest="proto", type="string",
-                      help="protocol to use, one of: accel, accelc, binary, compact, header, json, multi, multia, multiac, multic, multij")
+                      help="protocol to use, one of: accel, accelc, binary, compact, header, json, multi, multia, multiac, multic, multih, multij")
     parser.add_option('--transport', dest="trans", type="string",
                       help="transport to use, one of: buffered, framed, http")
     parser.set_defaults(framed=False, http_path=None, verbose=1, host='localhost', port=9090, proto='binary')
@@ -424,7 +479,6 @@ if __name__ == "__main__":
 
     if options.genpydir:
         sys.path.insert(0, os.path.join(SCRIPT_DIR, options.genpydir))
-    sys.path.insert(0, local_libpath())
 
     if options.http_path:
         options.trans = 'http'

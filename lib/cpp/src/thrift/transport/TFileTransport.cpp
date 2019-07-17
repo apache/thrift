@@ -25,13 +25,6 @@
 #include <thrift/concurrency/FunctionRunner.h>
 
 #include <boost/version.hpp>
-#if (BOOST_VERSION >= 105700)
-#include <boost/move/unique_ptr.hpp>
-using boost::movelib::unique_ptr;
-#else
-#include <boost/interprocess/smart_ptr/unique_ptr.hpp>
-using boost::interprocess::unique_ptr;
-#endif
 
 #ifdef HAVE_SYS_TIME_H
 #include <sys/time.h>
@@ -49,6 +42,7 @@ using boost::interprocess::unique_ptr;
 #include <cstring>
 #include <iostream>
 #include <limits>
+#include <memory>
 #ifdef HAVE_SYS_STAT_H
 #include <sys/stat.h>
 #endif
@@ -61,19 +55,18 @@ namespace apache {
 namespace thrift {
 namespace transport {
 
-using stdcxx::shared_ptr;
+using std::shared_ptr;
 using std::cerr;
 using std::cout;
 using std::endl;
-using std::min;
 using std::string;
 using namespace apache::thrift::protocol;
 using namespace apache::thrift::concurrency;
 
 TFileTransport::TFileTransport(string path, bool readOnly)
   : readState_(),
-    readBuff_(NULL),
-    currentEvent_(NULL),
+    readBuff_(nullptr),
+    currentEvent_(nullptr),
     readBuffSize_(DEFAULT_READ_BUFF_SIZE),
     readTimeout_(NO_TAIL_READ_TIMEOUT),
     chunkSize_(DEFAULT_CHUNK_SIZE),
@@ -85,8 +78,8 @@ TFileTransport::TFileTransport(string path, bool readOnly)
     eofSleepTime_(DEFAULT_EOF_SLEEP_TIME_US),
     corruptedEventSleepTime_(DEFAULT_CORRUPTED_SLEEP_TIME_US),
     writerThreadIOErrorSleepTime_(DEFAULT_WRITER_THREAD_SLEEP_TIME_US),
-    dequeueBuffer_(NULL),
-    enqueueBuffer_(NULL),
+    dequeueBuffer_(nullptr),
+    enqueueBuffer_(nullptr),
     notFull_(&mutex_),
     notEmpty_(&mutex_),
     closing_(false),
@@ -148,22 +141,22 @@ TFileTransport::~TFileTransport() {
 
   if (dequeueBuffer_) {
     delete dequeueBuffer_;
-    dequeueBuffer_ = NULL;
+    dequeueBuffer_ = nullptr;
   }
 
   if (enqueueBuffer_) {
     delete enqueueBuffer_;
-    enqueueBuffer_ = NULL;
+    enqueueBuffer_ = nullptr;
   }
 
   if (readBuff_) {
     delete[] readBuff_;
-    readBuff_ = NULL;
+    readBuff_ = nullptr;
   }
 
   if (currentEvent_) {
     delete currentEvent_;
-    currentEvent_ = NULL;
+    currentEvent_ = nullptr;
   }
 
   // close logfile
@@ -204,8 +197,6 @@ void TFileTransport::write(const uint8_t* buf, uint32_t len) {
   enqueueEvent(buf, len);
 }
 
-// this is needed until boost 1.57 as the older unique_ptr implementation
-// has no default deleter in interprocess
 template <class _T>
 struct uniqueDeleter
 {
@@ -229,7 +220,7 @@ void TFileTransport::enqueueEvent(const uint8_t* buf, uint32_t eventLen) {
     return;
   }
 
-  unique_ptr<eventInfo, uniqueDeleter<eventInfo> > toEnqueue(new eventInfo());
+  std::unique_ptr<eventInfo, uniqueDeleter<eventInfo> > toEnqueue(new eventInfo());
   toEnqueue->eventBuff_ = new uint8_t[(sizeof(uint8_t) * eventLen) + 4];
 
   // first 4 bytes is the event length
@@ -273,7 +264,7 @@ void TFileTransport::enqueueEvent(const uint8_t* buf, uint32_t eventLen) {
   // it is probably a non-factor for the time being
 }
 
-bool TFileTransport::swapEventBuffers(struct timeval* deadline) {
+bool TFileTransport::swapEventBuffers(const std::chrono::time_point<std::chrono::steady_clock> *deadline) {
   bool swap;
   Guard g(mutex_);
 
@@ -284,9 +275,9 @@ bool TFileTransport::swapEventBuffers(struct timeval* deadline) {
     // return immediately if the transport is closing
     swap = false;
   } else {
-    if (deadline != NULL) {
+    if (deadline != nullptr) {
       // if we were handed a deadline time struct, do a timed wait
-      notEmpty_.waitForTime(deadline);
+      notEmpty_.waitForTime(*deadline);
     } else {
       // just wait until the buffer gets an item
       notEmpty_.wait();
@@ -345,8 +336,7 @@ void TFileTransport::writerThread() {
   }
 
   // Figure out the next time by which a flush must take place
-  struct timeval ts_next_flush;
-  getNextFlushTime(&ts_next_flush);
+  auto ts_next_flush = getNextFlushTime();
   uint32_t unflushed = 0;
 
   while (1) {
@@ -372,7 +362,7 @@ void TFileTransport::writerThread() {
 
     if (swapEventBuffers(&ts_next_flush)) {
       eventInfo* outEvent;
-      while (NULL != (outEvent = dequeueBuffer_->getNext())) {
+      while (nullptr != (outEvent = dequeueBuffer_->getNext())) {
         // Remove an event from the buffer and write it out to disk. If there is any IO error, for
         // instance,
         // the output file is unmounted or deleted, then this event is dropped. However, the writer
@@ -432,12 +422,12 @@ void TFileTransport::writerThread() {
           if (chunk1 != chunk2) {
             // refetch the offset to keep in sync
             offset_ = THRIFT_LSEEK(fd_, 0, SEEK_CUR);
-            int32_t padding = (int32_t)((offset_ / chunkSize_ + 1) * chunkSize_ - offset_);
+            auto padding = (int32_t)((offset_ / chunkSize_ + 1) * chunkSize_ - offset_);
 
-            uint8_t* zeros = new uint8_t[padding];
+            auto* zeros = new uint8_t[padding];
             memset(zeros, '\0', padding);
             boost::scoped_array<uint8_t> array(zeros);
-            if (-1 == ::write(fd_, zeros, padding)) {
+            if (-1 == ::THRIFT_WRITE(fd_, zeros, padding)) {
               int errno_copy = THRIFT_ERRNO;
               GlobalOutput.perror("TFileTransport: writerThread() error while padding zeros ",
                                   errno_copy);
@@ -499,17 +489,13 @@ void TFileTransport::writerThread() {
     if (forced_flush || unflushed > flushMaxBytes_) {
       flush = true;
     } else {
-      struct timeval current_time;
-      THRIFT_GETTIMEOFDAY(&current_time, NULL);
-      if (current_time.tv_sec > ts_next_flush.tv_sec
-          || (current_time.tv_sec == ts_next_flush.tv_sec
-              && current_time.tv_usec > ts_next_flush.tv_usec)) {
+      if (std::chrono::steady_clock::now() > ts_next_flush) {
         if (unflushed > 0) {
           flush = true;
         } else {
           // If there is no new data since the last fsync,
           // don't perform the fsync, but do reset the timer.
-          getNextFlushTime(&ts_next_flush);
+          ts_next_flush = getNextFlushTime();
         }
       }
     }
@@ -518,7 +504,7 @@ void TFileTransport::writerThread() {
       // sync (force flush) file to disk
       THRIFT_FSYNC(fd_);
       unflushed = 0;
-      getNextFlushTime(&ts_next_flush);
+      ts_next_flush = getNextFlushTime();
 
       // notify anybody waiting for flush completion
       if (forced_flush) {
@@ -601,7 +587,7 @@ uint32_t TFileTransport::read(uint8_t* buf, uint32_t len) {
       memcpy(buf, currentEvent_->eventBuff_ + currentEvent_->eventBuffPos_, remaining);
     }
     delete (currentEvent_);
-    currentEvent_ = NULL;
+    currentEvent_ = nullptr;
     return remaining;
   }
 
@@ -644,12 +630,12 @@ eventInfo* TFileTransport::readEvent() {
         } else if (readTimeout_ == NO_TAIL_READ_TIMEOUT) {
           // reset state
           readState_.resetState(0);
-          return NULL;
+          return nullptr;
         } else if (readTimeout_ > 0) {
           // timeout already expired once
           if (readTries > 0) {
             readState_.resetState(0);
-            return NULL;
+            return nullptr;
           } else {
             THRIFT_SLEEP_USEC(readTimeout_ * 1000);
             readTries++;
@@ -705,8 +691,8 @@ eventInfo* TFileTransport::readEvent() {
           readState_.event_->eventBuffPos_ = 0;
         }
         // take either the entire event or the remaining bytes in the buffer
-        int reclaimBuffer = min((uint32_t)(readState_.bufferLen_ - readState_.bufferPtr_),
-                                readState_.event_->eventSize_ - readState_.event_->eventBuffPos_);
+        int reclaimBuffer = (std::min)((uint32_t)(readState_.bufferLen_ - readState_.bufferPtr_),
+                                       readState_.event_->eventSize_ - readState_.event_->eventBuffPos_);
 
         // copy data from read buffer into event buffer
         memcpy(readState_.event_->eventBuff_ + readState_.event_->eventBuffPos_,
@@ -723,7 +709,7 @@ eventInfo* TFileTransport::readEvent() {
           eventInfo* completeEvent = readState_.event_;
           completeEvent->eventBuffPos_ = 0;
 
-          readState_.event_ = NULL;
+          readState_.event_ = nullptr;
           readState_.resetState(readState_.bufferPtr_);
 
           // exit criteria
@@ -792,7 +778,7 @@ void TFileTransport::performRecovery() {
       // pretty hosed at this stage, rewind the file back to the last successful
       // point and punt on the error
       readState_.resetState(readState_.lastDispatchPtr_);
-      currentEvent_ = NULL;
+      currentEvent_ = nullptr;
       char errorMsg[1024];
       sprintf(errorMsg,
               "TFileTransport: log file corrupted at offset: %lu",
@@ -841,7 +827,7 @@ void TFileTransport::seekToChunk(int32_t chunk) {
   off_t newOffset = off_t(chunk) * chunkSize_;
   offset_ = ::THRIFT_LSEEK(fd_, newOffset, SEEK_SET);
   readState_.resetAllValues();
-  currentEvent_ = NULL;
+  currentEvent_ = nullptr;
   if (offset_ == -1) {
     GlobalOutput("TFileTransport: lseek error in seekToChunk");
     throw TTransportException("TFileTransport: lseek error in seekToChunk");
@@ -855,7 +841,7 @@ void TFileTransport::seekToChunk(int32_t chunk) {
     shared_ptr<eventInfo> event;
     while ((offset_ + readState_.bufferPtr_) < minEndOffset) {
       event.reset(readEvent());
-      if (event.get() == NULL) {
+      if (event.get() == nullptr) {
         break;
       }
     }
@@ -917,15 +903,8 @@ void TFileTransport::openLogFile() {
   }
 }
 
-void TFileTransport::getNextFlushTime(struct timeval* ts_next_flush) {
-  THRIFT_GETTIMEOFDAY(ts_next_flush, NULL);
-
-  ts_next_flush->tv_usec += flushMaxUs_;
-  if (ts_next_flush->tv_usec > 1000000) {
-    long extra_secs = ts_next_flush->tv_usec / 1000000;
-    ts_next_flush->tv_usec %= 1000000;
-    ts_next_flush->tv_sec += extra_secs;
-  }
+std::chrono::time_point<std::chrono::steady_clock> TFileTransport::getNextFlushTime() {
+  return std::chrono::steady_clock::now() + std::chrono::microseconds(flushMaxUs_);
 }
 
 TFileTransportBuffer::TFileTransportBuffer(uint32_t size)
@@ -939,7 +918,7 @@ TFileTransportBuffer::~TFileTransportBuffer() {
       delete buffer_[i];
     }
     delete[] buffer_;
-    buffer_ = NULL;
+    buffer_ = nullptr;
   }
 }
 
@@ -964,7 +943,7 @@ eventInfo* TFileTransportBuffer::getNext() {
     return buffer_[readPoint_++];
   } else {
     // no more entries
-    return NULL;
+    return nullptr;
   }
 }
 
@@ -998,7 +977,7 @@ TFileProcessor::TFileProcessor(shared_ptr<TProcessor> processor,
     inputTransport_(inputTransport) {
 
   // default the output transport to a null transport (common case)
-  outputTransport_ = shared_ptr<TNullTransport>(new TNullTransport());
+  outputTransport_ = std::make_shared<TNullTransport>();
 }
 
 TFileProcessor::TFileProcessor(shared_ptr<TProcessor> processor,
@@ -1011,7 +990,7 @@ TFileProcessor::TFileProcessor(shared_ptr<TProcessor> processor,
     inputTransport_(inputTransport) {
 
   // default the output transport to a null transport (common case)
-  outputTransport_ = shared_ptr<TNullTransport>(new TNullTransport());
+  outputTransport_ = std::make_shared<TNullTransport>();
 }
 
 TFileProcessor::TFileProcessor(shared_ptr<TProcessor> processor,
@@ -1041,7 +1020,7 @@ void TFileProcessor::process(uint32_t numEvents, bool tail) {
     // bad form to use exceptions for flow control but there is really
     // no other way around it
     try {
-      processor_->process(inputProtocol, outputProtocol, NULL);
+      processor_->process(inputProtocol, outputProtocol, nullptr);
       numProcessed++;
       if ((numEvents > 0) && (numProcessed == numEvents)) {
         return;
@@ -1072,7 +1051,7 @@ void TFileProcessor::processChunk() {
     // bad form to use exceptions for flow control but there is really
     // no other way around it
     try {
-      processor_->process(inputProtocol, outputProtocol, NULL);
+      processor_->process(inputProtocol, outputProtocol, nullptr);
       if (curChunk != inputTransport_->getCurChunk()) {
         break;
       }

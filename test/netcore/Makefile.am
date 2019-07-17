@@ -27,10 +27,19 @@ precross:
 
 clean-local:
 	$(RM) -r Client/bin
-	$(RM) -r Server/bin
 	$(RM) -r Client/obj
+	$(RM) -r Client/ThriftTest
+	$(RM) -r Server/bin
 	$(RM) -r Server/obj
-	$(RM) -r ThriftTest/ThriftTest
+	$(RM) -r Server/ThriftTest
+
+dist-hook:
+	$(RM) -r $(distdir)/Client/bin
+	$(RM) -r $(distdir)/Client/obj
+	$(RM) -r $(distdir)/Client/ThriftTest
+	$(RM) -r $(distdir)/Server/bin
+	$(RM) -r $(distdir)/Server/obj
+	$(RM) -r $(distdir)/Server/ThriftTest
 
 EXTRA_DIST = \
 	Client \

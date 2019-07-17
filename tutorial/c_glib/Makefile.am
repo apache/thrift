@@ -16,7 +16,7 @@
 # specific language governing permissions and limitations
 # under the License.
 #
-AUTOMAKE_OPTIONS = subdir-objects serial-tests
+AUTOMAKE_OPTIONS = subdir-objects serial-tests nostdinc
 
 BUILT_SOURCES = \
 	gen-c_glib/calculator.h \
@@ -24,7 +24,7 @@ BUILT_SOURCES = \
 	gen-c_glib/shared_types.h \
 	gen-c_glib/tutorial_types.h
 
-AM_CFLAGS = -g -Wall -Wextra -pedantic $(GLIB_CFLAGS) $(GOBJECT_CFLAGS) $(OPENSSL_INCLUDES) @GCOV_CFLAGS@
+AM_CFLAGS = -g -Wall -Wextra -pedantic $(GLIB_CFLAGS) $(GOBJECT_CFLAGS) $(OPENSSL_INCLUDES) @GCOV_CFLAGS@ -I$(top_builddir)/lib/c_glib/src/thrift
 AM_CPPFLAGS = -I$(top_srcdir)/lib/c_glib/src -Igen-c_glib
 AM_LDFLAGS = $(GLIB_LIBS) $(GOBJECT_LIBS) $(OPENSSL_LDFLAGS) $(OPENSSL_LIBS) @GCOV_LDFLAGS@
 

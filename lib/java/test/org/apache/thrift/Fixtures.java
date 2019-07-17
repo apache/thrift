@@ -20,6 +20,7 @@
 package org.apache.thrift;
 
 import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -267,7 +268,7 @@ public class Fixtures {
       oneOfEach.setInteger64((long) 6000 * 1000 * 1000);
       oneOfEach.setDouble_precision(Math.PI);
       oneOfEach.setSome_characters("JSON THIS! \"\1");
-      oneOfEach.setZomg_unicode(new String(kUnicodeBytes, "UTF-8"));
+      oneOfEach.setZomg_unicode(new String(kUnicodeBytes, StandardCharsets.UTF_8));
       oneOfEach.setBase64(ByteBuffer.wrap("base64".getBytes()));
       // byte, i16, and i64 lists are populated by default constructor
 

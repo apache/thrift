@@ -19,12 +19,12 @@
 
 #define BOOST_TEST_MODULE TNonblockingServerTest
 #include <boost/test/unit_test.hpp>
+#include <memory>
 
 #include "thrift/concurrency/Monitor.h"
 #include "thrift/concurrency/Thread.h"
 #include "thrift/server/TNonblockingServer.h"
 #include "thrift/transport/TNonblockingServerSocket.h"
-#include "thrift/stdcxx.h"
 
 #include "gen-cpp/ParentService.h"
 
@@ -33,28 +33,28 @@
 using apache::thrift::concurrency::Guard;
 using apache::thrift::concurrency::Monitor;
 using apache::thrift::concurrency::Mutex;
-using apache::thrift::concurrency::PlatformThreadFactory;
+using apache::thrift::concurrency::ThreadFactory;
 using apache::thrift::concurrency::Runnable;
 using apache::thrift::concurrency::Thread;
 using apache::thrift::concurrency::ThreadFactory;
 using apache::thrift::server::TServerEventHandler;
-using apache::thrift::stdcxx::make_shared;
-using apache::thrift::stdcxx::shared_ptr;
+using std::make_shared;
+using std::shared_ptr;
 
 using namespace apache::thrift;
 
 struct Handler : public test::ParentServiceIf {
-  void addString(const std::string& s) { strings_.push_back(s); }
-  void getStrings(std::vector<std::string>& _return) { _return = strings_; }
+  void addString(const std::string& s) override { strings_.push_back(s); }
+  void getStrings(std::vector<std::string>& _return) override { _return = strings_; }
   std::vector<std::string> strings_;
 
   // dummy overrides not used in this test
-  int32_t incrementGeneration() { return 0; }
-  int32_t getGeneration() { return 0; }
-  void getDataWait(std::string&, const int32_t) {}
-  void onewayWait() {}
-  void exceptionWait(const std::string&) {}
-  void unexpectedExceptionWait(const std::string&) {}
+  int32_t incrementGeneration() override { return 0; }
+  int32_t getGeneration() override { return 0; }
+  void getDataWait(std::string&, const int32_t) override {}
+  void onewayWait() override {}
+  void exceptionWait(const std::string&) override {}
+  void unexpectedExceptionWait(const std::string&) override {}
 };
 
 class Fixture {
@@ -63,7 +63,7 @@ private:
     public:
       ListenEventHandler(Mutex* mutex) : listenMonitor_(mutex), ready_(false) {}
 
-      void preServe() /* override */ {
+      void preServe() override /* override */ {
         Guard g(listenMonitor_.mutex());
         ready_ = true;
         listenMonitor_.notify();
@@ -83,10 +83,11 @@ private:
     Mutex mutex_;
 
     Runner() {
+      port = 0;
       listenHandler.reset(new ListenEventHandler(&mutex_));
     }
 
-    virtual void run() {
+    void run() override {
       // When binding to explicit port, allow retrying to workaround bind failures on ports in use
       int retryCount = port ? 10 : 0;
       startServer(retryCount);
@@ -147,12 +148,7 @@ protected:
     runner->userEventBase = userEventBase_;
 
     shared_ptr<ThreadFactory> threadFactory(
-        new PlatformThreadFactory(
-#if !USE_BOOST_THREAD && !USE_STD_THREAD
-            PlatformThreadFactory::OTHER, PlatformThreadFactory::NORMAL,
-            1,
-#endif
-            false));
+        new ThreadFactory(false));
     thread = threadFactory->newThread(runner);
     thread->start();
     runner->readyBarrier();

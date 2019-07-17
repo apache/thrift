@@ -17,64 +17,27 @@
 # under the License.
 #
 
+# Unit tests for the compiler still require boost
+include(BoostMacros)
+REQUIRE_BOOST_HEADERS()
+set(BOOST_COMPONENTS unit_test_framework)
+REQUIRE_BOOST_LIBRARIES(BOOST_COMPONENTS)
 
-if(${WITH_PLUGIN})
-    include_directories(SYSTEM "${Boost_INCLUDE_DIRS}")
+file(GLOB KEYWORD_SAMPLES "${CMAKE_CURRENT_SOURCE_DIR}/keyword-samples/*.thrift")
+foreach(LANG ${thrift_compiler_LANGS})
+    foreach(SAMPLE ${KEYWORD_SAMPLES})
+        get_filename_component(FILENAME ${SAMPLE} NAME_WE)
+        add_test(NAME "${LANG}_${FILENAME}"
+            COMMAND thrift-compiler --gen ${LANG} ${SAMPLE})
+        set_tests_properties("${LANG}_${FILENAME}" PROPERTIES
+            PASS_REGULAR_EXPRESSION "Cannot use reserved language keyword")
+    endforeach()
+endforeach()
 
-    # Make sure gen-cpp files can be included
-    include_directories("${CMAKE_CURRENT_BINARY_DIR}")
 
-    set(plugintest_SOURCES
-        plugin/conversion_test.cc
-    )
-    add_executable(plugintest ${plugintest_SOURCES})
-    if(WITH_SHARED_LIB AND NOT MSVC)
-        target_link_libraries(plugintest
-            thriftc
-            ${Boost_LIBRARIES}
-        )
-    else()
-        target_link_libraries(plugintest
-            thriftc_static
-            thrift_static
-            ${Boost_LIBRARIES}
-        )
-    endif()
-    add_test(NAME PluginUnitTest COMMAND plugintest)
-
-    set(thrift-gen-mycpp_SOURCES
-        ../src/thrift/generate/t_cpp_generator.cc
-        plugin/cpp_plugin.cc
-    )
-    add_executable(thrift-gen-mycpp ${thrift-gen-mycpp_SOURCES})
-    if(WITH_SHARED_LIB AND NOT MSVC)
-        target_link_libraries(thrift-gen-mycpp thriftc)
-    else()
-        target_link_libraries(thrift-gen-mycpp thriftc_static thrift_static)
-    endif()
-
-    if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-        set(BUILDTYPE "Debug")
-    else()
-        # RelWithDebInfo generates binaries in "Release" directory too
-        set(BUILDTYPE "Release")
-    endif()
-
-    set_directory_properties(PROPERTIES
-        ADDITIONAL_MAKE_CLEAN_FILES gen-cpp
-        ADDITIONAL_MAKE_CLEAN_FILES gen-mycpp)
-
-    file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/gen-cpp)
-    file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/gen-mycpp)
-    add_test(NAME PluginIntegrationTest
-             COMMAND ${CMAKE_COMMAND}
-                 -DTHRIFT_COMPILER=${THRIFT_COMPILER}
-                 -DBINDIR=${CMAKE_RUNTIME_OUTPUT_DIRECTORY}
-                 -DBUILDTYPE=${BUILDTYPE}
-                 -DCURDIR=${CMAKE_CURRENT_BINARY_DIR}
-                 -DSRCDIR=${CMAKE_CURRENT_SOURCE_DIR}
-                 -P ${CMAKE_CURRENT_SOURCE_DIR}/cpp_plugin_test.cmake)
+find_package(PythonInterp QUIET)
+if(PYTHONINTERP_FOUND)
+  add_test(NAME StalenessCheckTest COMMAND ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/compiler/staleness_check.py ${THRIFT_COMPILER})
+else()
+  message(WARNING "Skipping StalenessCheckTest as there is no python interpreter available.")
 endif()
-
-find_package(PythonInterp REQUIRED)
-add_test(NAME StalenessCheckTest COMMAND ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/compiler/staleness_check.py ${THRIFT_COMPILER})

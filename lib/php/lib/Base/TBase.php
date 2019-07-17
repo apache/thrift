@@ -33,7 +33,7 @@ use Thrift\Type\TType;
  */
 abstract class TBase
 {
-    static public $tmethod = array(
+    public static $tmethod = array(
         TType::BOOL => 'Bool',
         TType::BYTE => 'Byte',
         TType::I16 => 'I16',

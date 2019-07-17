@@ -24,6 +24,8 @@ program client;
 
 uses
   SysUtils,
+  DataFactory in 'Performance\DataFactory.pas',
+  PerfTests in 'Performance\PerfTests.pas',
   TestClient in 'TestClient.pas',
   Thrift.Test, // in 'gen-delphi\Thrift.Test.pas',
   Thrift in '..\src\Thrift.pas',
@@ -31,6 +33,8 @@ uses
   Thrift.Socket in '..\src\Thrift.Socket.pas',
   Thrift.Exception in '..\src\Thrift.Exception.pas',
   Thrift.Transport.Pipes in '..\src\Thrift.Transport.Pipes.pas',
+  Thrift.Transport.WinHTTP in '..\src\Thrift.Transport.WinHTTP.pas',
+  Thrift.Transport.MsxmlHTTP in '..\src\Thrift.Transport.MsxmlHTTP.pas',
   Thrift.Protocol in '..\src\Thrift.Protocol.pas',
   Thrift.Protocol.JSON in '..\src\Thrift.Protocol.JSON.pas',
   Thrift.Protocol.Compact in '..\src\Thrift.Protocol.Compact.pas',
@@ -39,6 +43,7 @@ uses
   Thrift.Server in '..\src\Thrift.Server.pas',
   Thrift.Stream in '..\src\Thrift.Stream.pas',
   Thrift.TypeRegistry in '..\src\Thrift.TypeRegistry.pas',
+  Thrift.WinHTTP in '..\src\Thrift.WinHTTP.pas',
   Thrift.Utils in '..\src\Thrift.Utils.pas';
 
 var

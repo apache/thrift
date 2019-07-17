@@ -435,17 +435,23 @@ public abstract class AbstractNonblockingServer extends TServer {
      * has come in.
      */
     public void changeSelectInterests() {
-      if (state_ == FrameBufferState.AWAITING_REGISTER_WRITE) {
+      switch (state_) {
+      case AWAITING_REGISTER_WRITE:
         // set the OP_WRITE interest
         selectionKey_.interestOps(SelectionKey.OP_WRITE);
         state_ = FrameBufferState.WRITING;
-      } else if (state_ == FrameBufferState.AWAITING_REGISTER_READ) {
+        break;
+      case AWAITING_REGISTER_READ:
         prepareRead();
-      } else if (state_ == FrameBufferState.AWAITING_CLOSE) {
+        break;
+      case AWAITING_CLOSE:
         close();
         selectionKey_.cancel();
-      } else {
-        LOGGER.error("changeSelectInterest was called, but state is invalid (" + state_ + ")");
+        break;
+      default:
+        LOGGER.error(
+            "changeSelectInterest was called, but state is invalid ({})",
+            state_);
       }
     }
 

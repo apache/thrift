@@ -28,8 +28,8 @@ public class AutoExpandingBufferReadTransport extends TTransport {
   private int pos = 0;
   private int limit = 0;
 
-  public AutoExpandingBufferReadTransport(int initialCapacity, double overgrowthCoefficient) {
-    this.buf = new AutoExpandingBuffer(initialCapacity, overgrowthCoefficient);
+  public AutoExpandingBufferReadTransport(int initialCapacity) {
+    this.buf = new AutoExpandingBuffer(initialCapacity);
   }
 
   public void fill(TTransport inTrans, int length) throws TTransportException {

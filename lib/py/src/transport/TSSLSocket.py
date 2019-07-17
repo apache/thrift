@@ -79,8 +79,8 @@ class TSSLBase(object):
     SSL_VERSION = _default_protocol
     """
   Default SSL version.
-  For backword compatibility, it can be modified.
-  Use __init__ keywoard argument "ssl_version" instead.
+  For backwards compatibility, it can be modified.
+  Use __init__ keyword argument "ssl_version" instead.
   """
 
     def _deprecated_arg(self, args, kwargs, pos, key):
@@ -89,12 +89,12 @@ class TSSLBase(object):
         real_pos = pos + 3
         warnings.warn(
             '%dth positional argument is deprecated.'
-            'please use keyward argument insteand.'
+            'please use keyword argument instead.'
             % real_pos, DeprecationWarning, stacklevel=3)
 
         if key in kwargs:
             raise TypeError(
-                'Duplicate argument: %dth argument and %s keyward argument.'
+                'Duplicate argument: %dth argument and %s keyword argument.'
                 % (real_pos, key))
         kwargs[key] = args[pos]
 
@@ -118,7 +118,7 @@ class TSSLBase(object):
         if TSSLBase.SSL_VERSION != self._default_protocol:
             warnings.warn(
                 'SSL_VERSION is deprecated.'
-                'please use ssl_version keyward argument instead.',
+                'please use ssl_version keyword argument instead.',
                 DeprecationWarning, stacklevel=2)
         self._context = ssl_opts.pop('ssl_context', None)
         self._server_hostname = None
@@ -232,6 +232,7 @@ class TSSLSocket(TSocket.TSocket, TSSLBase):
           ``validate_callback`` (cert, hostname) -> None:
               Called after SSL handshake. Can raise when hostname does not
               match the cert.
+          ``socket_keepalive`` enable TCP keepalive, default off.
         """
         self.is_valid = False
         self.peercert = None
@@ -259,9 +260,20 @@ class TSSLSocket(TSocket.TSocket, TSSLBase):
             kwargs['cert_reqs'] = ssl.CERT_REQUIRED if validate else ssl.CERT_NONE
 
         unix_socket = kwargs.pop('unix_socket', None)
+        socket_keepalive = kwargs.pop('socket_keepalive', False)
         self._validate_callback = kwargs.pop('validate_callback', _match_hostname)
         TSSLBase.__init__(self, False, host, kwargs)
-        TSocket.TSocket.__init__(self, host, port, unix_socket)
+        TSocket.TSocket.__init__(self, host, port, unix_socket,
+                                 socket_keepalive=socket_keepalive)
+
+    def close(self):
+        try:
+            self.handle.settimeout(0.001)
+            self.handle = self.handle.unwrap()
+        except (ssl.SSLError, socket.error, OSError):
+            # could not complete shutdown in a reasonable amount of time.  bail.
+            pass
+        TSocket.TSocket.close(self)
 
     @property
     def validate(self):
@@ -279,11 +291,11 @@ class TSSLSocket(TSocket.TSocket, TSSLBase):
         plain_sock = socket.socket(family, socktype)
         try:
             return self._wrap_socket(plain_sock)
-        except Exception:
+        except Exception as ex:
             plain_sock.close()
             msg = 'failed to initialize SSL'
             logger.exception(msg)
-            raise TTransportException(TTransportException.NOT_OPEN, msg)
+            raise TTransportException(type=TTransportException.NOT_OPEN, message=msg, inner=ex)
 
     def open(self):
         super(TSSLSocket, self).open()
@@ -295,7 +307,7 @@ class TSSLSocket(TSocket.TSocket, TSSLBase):
             except TTransportException:
                 raise
             except Exception as ex:
-                raise TTransportException(TTransportException.UNKNOWN, str(ex))
+                raise TTransportException(message=str(ex), inner=ex)
 
 
 class TSSLServerSocket(TSocket.TServerSocket, TSSLBase):

@@ -51,9 +51,8 @@ public:
   t_py_generator(t_program* program,
                  const std::map<std::string, std::string>& parsed_options,
                  const std::string& option_string)
-    : t_generator(program) {
+    : t_generator (program) {
     std::map<std::string, std::string>::const_iterator iter;
-
 
     gen_newstyle_ = true;
     gen_utf8strings_ = true;
@@ -137,7 +136,7 @@ public:
     }
   }
 
-  virtual std::string indent_str() const {
+  std::string indent_str() const override {
     return "    ";
   }
 
@@ -145,20 +144,20 @@ public:
    * Init and close methods
    */
 
-  void init_generator();
-  void close_generator();
+  void init_generator() override;
+  void close_generator() override;
 
   /**
    * Program-level generation functions
    */
 
-  void generate_typedef(t_typedef* ttypedef);
-  void generate_enum(t_enum* tenum);
-  void generate_const(t_const* tconst);
-  void generate_struct(t_struct* tstruct);
-  void generate_forward_declaration(t_struct* tstruct);
-  void generate_xception(t_struct* txception);
-  void generate_service(t_service* tservice);
+  void generate_typedef(t_typedef* ttypedef) override;
+  void generate_enum(t_enum* tenum) override;
+  void generate_const(t_const* tconst) override;
+  void generate_struct(t_struct* tstruct) override;
+  void generate_forward_declaration(t_struct* tstruct) override;
+  void generate_xception(t_struct* txception) override;
+  void generate_service(t_service* tservice) override;
 
   std::string render_const_value(t_type* type, t_const_value* value);
 
@@ -334,6 +333,15 @@ private:
 
   std::string package_dir_;
   std::string module_;
+
+protected:
+  std::set<std::string> lang_keywords() const override {
+    std::string keywords[] = { "False", "None", "True", "and", "as", "assert", "break", "class",
+          "continue", "def", "del", "elif", "else", "except", "exec", "finally", "for", "from",
+          "global", "if", "import", "in", "is", "lambda", "nonlocal", "not", "or", "pass", "print",
+          "raise", "return", "try", "while", "with", "yield" };
+    return std::set<std::string>(keywords, keywords + sizeof(keywords)/sizeof(keywords[0]) );
+  }
 };
 
 /**
@@ -407,8 +415,8 @@ void t_py_generator::init_generator() {
 string t_py_generator::render_includes() {
   const vector<t_program*>& includes = program_->get_includes();
   string result = "";
-  for (size_t i = 0; i < includes.size(); ++i) {
-    result += "import " + get_real_py_module(includes[i], gen_twisted_, package_prefix_) + ".ttypes\n";
+  for (auto include : includes) {
+    result += "import " + get_real_py_module(include, gen_twisted_, package_prefix_) + ".ttypes\n";
   }
   return result;
 }
@@ -1616,7 +1624,6 @@ void t_py_generator::generate_service_remote(t_service* tservice) {
              << (*f_iter)->get_name() << "(";
     t_struct* arg_struct = (*f_iter)->get_arglist();
     const std::vector<t_field*>& args = arg_struct->get_members();
-    vector<t_field*>::const_iterator a_iter;
     std::vector<t_field*>::size_type num_args = args.size();
     bool first = true;
     for (std::vector<t_field*>::size_type i = 0; i < num_args; ++i) {
@@ -1722,7 +1729,6 @@ void t_py_generator::generate_service_remote(t_service* tservice) {
 
     t_struct* arg_struct = (*f_iter)->get_arglist();
     const std::vector<t_field*>& args = arg_struct->get_members();
-    vector<t_field*>::const_iterator a_iter;
     std::vector<t_field*>::size_type num_args = args.size();
 
     f_remote << "if cmd == '" << (*f_iter)->get_name() << "':" << endl;
@@ -1825,6 +1831,13 @@ void t_py_generator::generate_service_server(t_service* tservice) {
     f_service_ << indent() << "self._processMap[\"" << (*f_iter)->get_name()
                << "\"] = Processor.process_" << (*f_iter)->get_name() << endl;
   }
+  f_service_ << indent() << "self._on_message_begin = None" << endl;
+  indent_down();
+  f_service_ << endl;
+
+  f_service_ << indent() << "def on_message_begin(self, func):" << endl;
+  indent_up();
+    f_service_ << indent() << "self._on_message_begin = func" << endl;
   indent_down();
   f_service_ << endl;
 
@@ -1833,6 +1846,10 @@ void t_py_generator::generate_service_server(t_service* tservice) {
   indent_up();
 
   f_service_ << indent() << "(name, type, seqid) = iprot.readMessageBegin()" << endl;
+  f_service_ << indent() << "if self._on_message_begin:" << endl;
+  indent_up();
+    f_service_ << indent() << "self._on_message_begin(name, type, seqid)" << endl;
+  indent_down();
 
   // TODO(mcslee): validate message
 
@@ -1953,8 +1970,10 @@ void t_py_generator::generate_process_function(t_service* tservice, t_function* 
       indent(f_service_) << "def write_results_success_" << tfunction->get_name()
                          << "(self, success, result, seqid, oprot):" << endl;
       indent_up();
-      f_service_ << indent() << "result.success = success" << endl
-                 << indent() << "oprot.writeMessageBegin(\"" << tfunction->get_name()
+      if (!tfunction->get_returntype()->is_void()) {
+        f_service_ << indent() << "result.success = success" << endl;
+      }
+      f_service_ << indent() << "oprot.writeMessageBegin(\"" << tfunction->get_name()
                  << "\", TMessageType.REPLY, seqid)" << endl
                  << indent() << "result.write(oprot)" << endl
                  << indent() << "oprot.writeMessageEnd()" << endl
@@ -2599,7 +2618,7 @@ string t_py_generator::function_signature(t_function* tfunction, bool interface)
   string signature = tfunction->get_name() + "(";
 
   if (!(gen_zope_interface_ && interface)) {
-    pre.push_back("self");
+    pre.emplace_back("self");
   }
 
   signature += argument_list(tfunction->get_arglist(), &pre, &post) + ")";

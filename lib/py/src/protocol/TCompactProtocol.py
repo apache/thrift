@@ -17,7 +17,7 @@
 # under the License.
 #
 
-from .TProtocol import TType, TProtocolBase, TProtocolException, checkIntegerLimits
+from .TProtocol import TType, TProtocolBase, TProtocolException, TProtocolFactory, checkIntegerLimits
 from struct import pack, unpack
 
 from ..compat import binary_to_str, str_to_binary
@@ -58,6 +58,7 @@ def fromZigZag(n):
 
 
 def writeVarint(trans, n):
+    assert n >= 0, "Input to TCompactProtocol writeVarint cannot be negative!"
     out = bytearray()
     while True:
         if n & ~0x7f == 0:
@@ -156,7 +157,14 @@ class TCompactProtocol(TProtocolBase):
         assert self.state == CLEAR
         self.__writeUByte(self.PROTOCOL_ID)
         self.__writeUByte(self.VERSION | (type << self.TYPE_SHIFT_AMOUNT))
-        self.__writeVarint(seqid)
+        # The sequence id is a signed 32-bit integer but the compact protocol
+        # writes this out as a "var int" which is always positive, and attempting
+        # to write a negative number results in an infinite loop, so we may
+        # need to do some conversion here...
+        tseqid = seqid
+        if tseqid < 0:
+            tseqid = 2147483648 + (2147483648 + tseqid)
+        self.__writeVarint(tseqid)
         self.__writeBinary(str_to_binary(name))
         self.state = VALUE_WRITE
 
@@ -334,6 +342,10 @@ class TCompactProtocol(TProtocolBase):
             raise TProtocolException(TProtocolException.BAD_VERSION,
                                      'Bad version: %d (expect %d)' % (version, self.VERSION))
         seqid = self.__readVarint()
+        # the sequence is a compact "var int" which is treaded as unsigned,
+        # however the sequence is actually signed...
+        if seqid > 2147483647:
+            seqid = -2147483648 - (2147483648 - seqid)
         name = binary_to_str(self.__readBinary())
         return (name, type, seqid)
 
@@ -416,7 +428,7 @@ class TCompactProtocol(TProtocolBase):
         return TTYPES[byte & 0x0f]
 
 
-class TCompactProtocolFactory(object):
+class TCompactProtocolFactory(TProtocolFactory):
     def __init__(self,
                  string_length_limit=None,
                  container_length_limit=None):
@@ -458,7 +470,7 @@ class TCompactProtocolAccelerated(TCompactProtocol):
             self._fast_encode = fastbinary.encode_compact
 
 
-class TCompactProtocolAcceleratedFactory(object):
+class TCompactProtocolAcceleratedFactory(TProtocolFactory):
     def __init__(self,
                  string_length_limit=None,
                  container_length_limit=None,

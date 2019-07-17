@@ -19,9 +19,8 @@
 
 #include <thrift/thrift-config.h>
 #include <thrift/concurrency/ThreadManager.h>
-#include <thrift/concurrency/PlatformThreadFactory.h>
+#include <thrift/concurrency/ThreadFactory.h>
 #include <thrift/concurrency/Monitor.h>
-#include <thrift/concurrency/Util.h>
 
 #include <assert.h>
 #include <deque>
@@ -36,8 +35,8 @@ namespace test {
 
 using namespace apache::thrift::concurrency;
 
-static std::deque<stdcxx::shared_ptr<Runnable> > m_expired;
-static void expiredNotifier(stdcxx::shared_ptr<Runnable> runnable)
+static std::deque<std::shared_ptr<Runnable> > m_expired;
+static void expiredNotifier(std::shared_ptr<Runnable> runnable)
 {
   m_expired.push_back(runnable);
 }
@@ -64,13 +63,13 @@ public:
     Task(Monitor& monitor, size_t& count, int64_t timeout)
       : _monitor(monitor), _count(count), _timeout(timeout), _startTime(0), _endTime(0), _done(false) {}
 
-    void run() {
+    void run() override {
 
-      _startTime = Util::currentTime();
+      _startTime = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch()).count();
 
       sleep_(_timeout);
 
-      _endTime = Util::currentTime();
+      _endTime = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch()).count();
 
       _done = true;
 
@@ -108,12 +107,9 @@ public:
 
     shared_ptr<ThreadManager> threadManager = ThreadManager::newSimpleThreadManager(workerCount);
 
-    shared_ptr<PlatformThreadFactory> threadFactory
-        = shared_ptr<PlatformThreadFactory>(new PlatformThreadFactory(false));
+    shared_ptr<ThreadFactory> threadFactory
+        = shared_ptr<ThreadFactory>(new ThreadFactory(false));
 
-#if !USE_BOOST_THREAD && !USE_STD_THREAD
-    threadFactory->setPriority(PosixThreadFactory::HIGHEST);
-#endif
     threadManager->threadFactory(threadFactory);
 
     threadManager->start();
@@ -126,9 +122,9 @@ public:
           new ThreadManagerTests::Task(monitor, activeCount, timeout)));
     }
 
-    int64_t time00 = Util::currentTime();
+    int64_t time00 = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch()).count();
 
-    for (std::set<shared_ptr<ThreadManagerTests::Task> >::iterator ix = tasks.begin();
+    for (auto ix = tasks.begin();
          ix != tasks.end();
          ix++) {
 
@@ -146,7 +142,7 @@ public:
       }
     }
 
-    int64_t time01 = Util::currentTime();
+    int64_t time01 = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch()).count();
 
     int64_t firstTime = 9223372036854775807LL;
     int64_t lastTime = 0;
@@ -155,7 +151,7 @@ public:
     int64_t minTime = 9223372036854775807LL;
     int64_t maxTime = 0;
 
-    for (std::set<shared_ptr<ThreadManagerTests::Task> >::iterator ix = tasks.begin();
+    for (auto ix = tasks.begin();
          ix != tasks.end();
          ix++) {
 
@@ -205,7 +201,7 @@ public:
     BlockTask(Monitor& entryMonitor, Monitor& blockMonitor, bool& blocked, Monitor& doneMonitor, size_t& count)
       : _entryMonitor(entryMonitor), _entered(false), _blockMonitor(blockMonitor), _blocked(blocked), _doneMonitor(doneMonitor), _count(count) {}
 
-    void run() {
+    void run() override {
       {
         Synchronized s(_entryMonitor);
         _entered = true;
@@ -257,12 +253,9 @@ public:
       shared_ptr<ThreadManager> threadManager
           = ThreadManager::newSimpleThreadManager(workerCount, pendingTaskMaxCount);
 
-      shared_ptr<PlatformThreadFactory> threadFactory
-          = shared_ptr<PlatformThreadFactory>(new PlatformThreadFactory());
+      shared_ptr<ThreadFactory> threadFactory
+          = shared_ptr<ThreadFactory>(new ThreadFactory());
 
-#if !USE_BOOST_THREAD && !USE_STD_THREAD
-      threadFactory->setPriority(PosixThreadFactory::HIGHEST);
-#endif
       threadManager->threadFactory(threadFactory);
 
       threadManager->start();
@@ -282,7 +275,7 @@ public:
             new ThreadManagerTests::BlockTask(entryMonitor, blockMonitor, blocked[1], doneMonitor, activeCounts[1])));
       }
 
-      for (std::vector<shared_ptr<ThreadManagerTests::BlockTask> >::iterator ix = tasks.begin();
+      for (auto ix = tasks.begin();
            ix != tasks.end();
            ix++) {
         threadManager->add(*ix);
@@ -393,66 +386,27 @@ public:
   bool apiTest() {
 
     // prove currentTime has milliseconds granularity since many other things depend on it
-    int64_t a = Util::currentTime();
+    int64_t a = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch()).count();
     sleep_(100);
-    int64_t b = Util::currentTime();
+    int64_t b = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch()).count();
     if (b - a < 50 || b - a > 150) {
       std::cerr << "\t\t\texpected 100ms gap, found " << (b-a) << "ms gap instead." << std::endl;
       return false;
     }
 
-#if !USE_BOOST_THREAD && !USE_STD_THREAD
-    // test once with a detached thread factory and once with a joinable thread factory
-
-    shared_ptr<PosixThreadFactory> threadFactory
-        = shared_ptr<PosixThreadFactory>(new PosixThreadFactory(false));
-
-    std::cout << "\t\t\tapiTest with joinable thread factory" << std::endl;
-    if (!apiTestWithThreadFactory(threadFactory)) {
-      return false;
-    }
-
-    threadFactory.reset(new PosixThreadFactory(true));
-    std::cout << "\t\t\tapiTest with detached thread factory" << std::endl;
-    return apiTestWithThreadFactory(threadFactory);
-#else
-    return apiTestWithThreadFactory(shared_ptr<PlatformThreadFactory>(new PlatformThreadFactory()));
-#endif
+    return apiTestWithThreadFactory(shared_ptr<ThreadFactory>(new ThreadFactory()));
 
   }
 
-  bool apiTestWithThreadFactory(shared_ptr<PlatformThreadFactory> threadFactory)
+  bool apiTestWithThreadFactory(shared_ptr<ThreadFactory> threadFactory)
   {
     shared_ptr<ThreadManager> threadManager = ThreadManager::newSimpleThreadManager(1);
     threadManager->threadFactory(threadFactory);
 
-#if !USE_BOOST_THREAD && !USE_STD_THREAD
-    threadFactory->setPriority(PosixThreadFactory::HIGHEST);
-
-    // verify we cannot change the thread factory to one with the opposite detached setting
-    shared_ptr<PlatformThreadFactory> threadFactory2
-        = shared_ptr<PosixThreadFactory>(new PlatformThreadFactory(
-          PosixThreadFactory::ROUND_ROBIN,
-          PosixThreadFactory::NORMAL,
-          1,
-          !threadFactory->isDetached()));
-    try {
-      threadManager->threadFactory(threadFactory2);
-      // if the call succeeded we changed the thread factory to one that had the opposite setting for "isDetached()".
-      // this is bad, because the thread manager checks with the thread factory to see if it should join threads
-      // as they are leaving - so the detached status of new threads cannot change while there are existing threads.
-      std::cerr << "\t\t\tShould not be able to change thread factory detached disposition" << std::endl;
-      return false;
-    }
-    catch (InvalidArgumentException& ex) {
-      /* expected */
-    }
-#endif
-
     std::cout << "\t\t\t\tstarting.. " << std::endl;
 
     threadManager->start();
-    threadManager->setExpireCallback(expiredNotifier); // apache::thrift::stdcxx::bind(&ThreadManagerTests::expiredNotifier, this));
+    threadManager->setExpireCallback(expiredNotifier); // std::bind(&ThreadManagerTests::expiredNotifier, this));
 
 #define EXPECT(FUNC, COUNT) { size_t c = FUNC; if (c != COUNT) { std::cerr << "expected " #FUNC" to be " #COUNT ", but was " << c << std::endl; return false; } }
 

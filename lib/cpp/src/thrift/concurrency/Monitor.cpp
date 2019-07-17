@@ -21,45 +21,37 @@
 
 #include <thrift/concurrency/Monitor.h>
 #include <thrift/concurrency/Exception.h>
-#include <thrift/concurrency/Util.h>
 #include <thrift/transport/PlatformSocket.h>
-#include <thrift/stdcxx.h>
-
 #include <assert.h>
 
-#include <iostream>
-
-#include <pthread.h>
+#include <condition_variable>
+#include <chrono>
+#include <thread>
+#include <mutex>
 
 namespace apache {
 namespace thrift {
-
-using stdcxx::scoped_ptr;
-using stdcxx::shared_ptr;
-
 namespace concurrency {
 
 /**
- * Monitor implementation using the POSIX pthread library
+ * Monitor implementation using the std thread library
  *
  * @version $Id:$
  */
 class Monitor::Impl {
 
 public:
-  Impl() : ownedMutex_(new Mutex()), mutex_(NULL), condInitialized_(false) {
-    init(ownedMutex_.get());
+  Impl() : ownedMutex_(new Mutex()), conditionVariable_(), mutex_(nullptr) { init(ownedMutex_.get()); }
+
+  Impl(Mutex* mutex) : ownedMutex_(), conditionVariable_(), mutex_(nullptr) { init(mutex); }
+
+  Impl(Monitor* monitor) : ownedMutex_(), conditionVariable_(), mutex_(nullptr) {
+    init(&(monitor->mutex()));
   }
 
-  Impl(Mutex* mutex) : mutex_(NULL), condInitialized_(false) { init(mutex); }
-
-  Impl(Monitor* monitor) : mutex_(NULL), condInitialized_(false) { init(&(monitor->mutex())); }
-
-  ~Impl() { cleanup(); }
-
   Mutex& mutex() { return *mutex_; }
-  void lock() { mutex().lock(); }
-  void unlock() { mutex().unlock(); }
+  void lock() { mutex_->lock(); }
+  void unlock() { mutex_->unlock(); }
 
   /**
    * Exception-throwing version of waitForTimeRelative(), called simply
@@ -68,106 +60,78 @@ public:
    * If the condition occurs,  this function returns cleanly; on timeout or
    * error an exception is thrown.
    */
-  void wait(int64_t timeout_ms) const {
-    int result = waitForTimeRelative(timeout_ms);
+  void wait(const std::chrono::milliseconds &timeout) {
+    int result = waitForTimeRelative(timeout);
     if (result == THRIFT_ETIMEDOUT) {
-      // pthread_cond_timedwait has been observed to return early on
-      // various platforms, so comment out this assert.
-      // assert(Util::currentTime() >= (now + timeout));
       throw TimedOutException();
     } else if (result != 0) {
-      throw TException("pthread_cond_wait() or pthread_cond_timedwait() failed");
+      throw TException("Monitor::wait() failed");
     }
   }
 
   /**
    * Waits until the specified timeout in milliseconds for the condition to
-   * occur, or waits forever if timeout_ms == 0.
+   * occur, or waits forever if timeout is zero.
    *
    * Returns 0 if condition occurs, THRIFT_ETIMEDOUT on timeout, or an error code.
    */
-  int waitForTimeRelative(int64_t timeout_ms) const {
-    if (timeout_ms == 0LL) {
+  int waitForTimeRelative(const std::chrono::milliseconds &timeout) {
+    if (timeout.count() == 0) {
       return waitForever();
     }
 
-    struct THRIFT_TIMESPEC abstime;
-    Util::toTimespec(abstime, Util::currentTime() + timeout_ms);
-    return waitForTime(&abstime);
+    assert(mutex_);
+    auto* mutexImpl = static_cast<std::timed_mutex*>(mutex_->getUnderlyingImpl());
+    assert(mutexImpl);
+
+    std::unique_lock<std::timed_mutex> lock(*mutexImpl, std::adopt_lock);
+    bool timedout = (conditionVariable_.wait_for(lock, timeout)
+                     == std::cv_status::timeout);
+    lock.release();
+    return (timedout ? THRIFT_ETIMEDOUT : 0);
   }
 
   /**
-   * Waits until the absolute time specified using struct THRIFT_TIMESPEC.
+   * Waits until the absolute time specified by abstime.
    * Returns 0 if condition occurs, THRIFT_ETIMEDOUT on timeout, or an error code.
    */
-  int waitForTime(const THRIFT_TIMESPEC* abstime) const {
+  int waitForTime(const std::chrono::time_point<std::chrono::steady_clock>& abstime) {
     assert(mutex_);
-    pthread_mutex_t* mutexImpl = reinterpret_cast<pthread_mutex_t*>(mutex_->getUnderlyingImpl());
+    auto* mutexImpl = static_cast<std::timed_mutex*>(mutex_->getUnderlyingImpl());
     assert(mutexImpl);
 
-    // XXX Need to assert that caller owns mutex
-    return pthread_cond_timedwait(&pthread_cond_, mutexImpl, abstime);
+    std::unique_lock<std::timed_mutex> lock(*mutexImpl, std::adopt_lock);
+    bool timedout = (conditionVariable_.wait_until(lock, abstime)
+                     == std::cv_status::timeout);
+    lock.release();
+    return (timedout ? THRIFT_ETIMEDOUT : 0);
   }
 
-  int waitForTime(const struct timeval* abstime) const {
-    struct THRIFT_TIMESPEC temp;
-    temp.tv_sec = abstime->tv_sec;
-    temp.tv_nsec = abstime->tv_usec * 1000;
-    return waitForTime(&temp);
-  }
   /**
    * Waits forever until the condition occurs.
    * Returns 0 if condition occurs, or an error code otherwise.
    */
-  int waitForever() const {
+  int waitForever() {
     assert(mutex_);
-    pthread_mutex_t* mutexImpl = reinterpret_cast<pthread_mutex_t*>(mutex_->getUnderlyingImpl());
+    auto* mutexImpl = static_cast<std::timed_mutex*>(mutex_->getUnderlyingImpl());
     assert(mutexImpl);
-    return pthread_cond_wait(&pthread_cond_, mutexImpl);
+
+    std::unique_lock<std::timed_mutex> lock(*mutexImpl, std::adopt_lock);
+    conditionVariable_.wait(lock);
+    lock.release();
+    return 0;
   }
 
-  void notify() {
-    // XXX Need to assert that caller owns mutex
-    int iret = pthread_cond_signal(&pthread_cond_);
-    THRIFT_UNUSED_VARIABLE(iret);
-    assert(iret == 0);
-  }
+  void notify() { conditionVariable_.notify_one(); }
 
-  void notifyAll() {
-    // XXX Need to assert that caller owns mutex
-    int iret = pthread_cond_broadcast(&pthread_cond_);
-    THRIFT_UNUSED_VARIABLE(iret);
-    assert(iret == 0);
-  }
+  void notifyAll() { conditionVariable_.notify_all(); }
 
 private:
-  void init(Mutex* mutex) {
-    mutex_ = mutex;
+  void init(Mutex* mutex) { mutex_ = mutex; }
 
-    if (pthread_cond_init(&pthread_cond_, NULL) == 0) {
-      condInitialized_ = true;
-    }
-
-    if (!condInitialized_) {
-      cleanup();
-      throw SystemResourceException();
-    }
-  }
-
-  void cleanup() {
-    if (condInitialized_) {
-      condInitialized_ = false;
-      int iret = pthread_cond_destroy(&pthread_cond_);
-      THRIFT_UNUSED_VARIABLE(iret);
-      assert(iret == 0);
-    }
-  }
-
-  scoped_ptr<Mutex> ownedMutex_;
+  const std::unique_ptr<Mutex> ownedMutex_;
+  std::condition_variable_any conditionVariable_;
   Mutex* mutex_;
-
-  mutable pthread_cond_t pthread_cond_;
-  mutable bool condInitialized_;
 };
 
 Monitor::Monitor() : impl_(new Monitor::Impl()) {
@@ -182,43 +146,39 @@ Monitor::~Monitor() {
 }
 
 Mutex& Monitor::mutex() const {
-  return impl_->mutex();
+  return const_cast<Monitor::Impl*>(impl_)->mutex();
 }
 
 void Monitor::lock() const {
-  impl_->lock();
+  const_cast<Monitor::Impl*>(impl_)->lock();
 }
 
 void Monitor::unlock() const {
-  impl_->unlock();
+  const_cast<Monitor::Impl*>(impl_)->unlock();
 }
 
-void Monitor::wait(int64_t timeout) const {
-  impl_->wait(timeout);
+void Monitor::wait(const std::chrono::milliseconds &timeout) const {
+  const_cast<Monitor::Impl*>(impl_)->wait(timeout);
 }
 
-int Monitor::waitForTime(const THRIFT_TIMESPEC* abstime) const {
-  return impl_->waitForTime(abstime);
+int Monitor::waitForTime(const std::chrono::time_point<std::chrono::steady_clock>& abstime) const {
+  return const_cast<Monitor::Impl*>(impl_)->waitForTime(abstime);
 }
 
-int Monitor::waitForTime(const timeval* abstime) const {
-  return impl_->waitForTime(abstime);
-}
-
-int Monitor::waitForTimeRelative(int64_t timeout_ms) const {
-  return impl_->waitForTimeRelative(timeout_ms);
+int Monitor::waitForTimeRelative(const std::chrono::milliseconds &timeout) const {
+  return const_cast<Monitor::Impl*>(impl_)->waitForTimeRelative(timeout);
 }
 
 int Monitor::waitForever() const {
-  return impl_->waitForever();
+  return const_cast<Monitor::Impl*>(impl_)->waitForever();
 }
 
 void Monitor::notify() const {
-  impl_->notify();
+  const_cast<Monitor::Impl*>(impl_)->notify();
 }
 
 void Monitor::notifyAll() const {
-  impl_->notifyAll();
+  const_cast<Monitor::Impl*>(impl_)->notifyAll();
 }
 }
 }

@@ -20,7 +20,7 @@
 #ifndef _THRIFT_SERVER_TCONNECTEDCLIENT_H_
 #define _THRIFT_SERVER_TCONNECTEDCLIENT_H_ 1
 
-#include <thrift/stdcxx.h>
+#include <memory>
 #include <thrift/TProcessor.h>
 #include <thrift/protocol/TProtocol.h>
 #include <thrift/server/TServer.h>
@@ -49,16 +49,16 @@ public:
    * @param[in] client         the TTransport representing the client
    */
   TConnectedClient(
-      const stdcxx::shared_ptr<apache::thrift::TProcessor>& processor,
-      const stdcxx::shared_ptr<apache::thrift::protocol::TProtocol>& inputProtocol,
-      const stdcxx::shared_ptr<apache::thrift::protocol::TProtocol>& outputProtocol,
-      const stdcxx::shared_ptr<apache::thrift::server::TServerEventHandler>& eventHandler,
-      const stdcxx::shared_ptr<apache::thrift::transport::TTransport>& client);
+      const std::shared_ptr<apache::thrift::TProcessor>& processor,
+      const std::shared_ptr<apache::thrift::protocol::TProtocol>& inputProtocol,
+      const std::shared_ptr<apache::thrift::protocol::TProtocol>& outputProtocol,
+      const std::shared_ptr<apache::thrift::server::TServerEventHandler>& eventHandler,
+      const std::shared_ptr<apache::thrift::transport::TTransport>& client);
 
   /**
    * Destructor.
    */
-  virtual ~TConnectedClient();
+  ~TConnectedClient() override;
 
   /**
    * Drive the client until it is done.
@@ -76,7 +76,7 @@ public:
    *              handle unexpected exceptions by logging
    *            cleanup()
    */
-  virtual void run() /* override */;
+  void run() override /* override */;
 
 protected:
   /**
@@ -92,11 +92,11 @@ protected:
   virtual void cleanup();
 
 private:
-  stdcxx::shared_ptr<apache::thrift::TProcessor> processor_;
-  stdcxx::shared_ptr<apache::thrift::protocol::TProtocol> inputProtocol_;
-  stdcxx::shared_ptr<apache::thrift::protocol::TProtocol> outputProtocol_;
-  stdcxx::shared_ptr<apache::thrift::server::TServerEventHandler> eventHandler_;
-  stdcxx::shared_ptr<apache::thrift::transport::TTransport> client_;
+  std::shared_ptr<apache::thrift::TProcessor> processor_;
+  std::shared_ptr<apache::thrift::protocol::TProtocol> inputProtocol_;
+  std::shared_ptr<apache::thrift::protocol::TProtocol> outputProtocol_;
+  std::shared_ptr<apache::thrift::server::TServerEventHandler> eventHandler_;
+  std::shared_ptr<apache::thrift::transport::TTransport> client_;
 
   /**
    * Context acquired from the eventHandler_ if one exists.

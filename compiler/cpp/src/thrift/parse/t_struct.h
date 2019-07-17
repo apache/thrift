@@ -56,7 +56,7 @@ public:
       members_with_value(0),
       xsd_all_(false) {}
 
-  void set_name(const std::string& name) {
+  void set_name(const std::string& name) override {
     name_ = name;
     validate_union_members();
   }
@@ -80,7 +80,7 @@ public:
       }
 
       // unions may have up to one member defaulted, but not more
-      if (field->get_value() != NULL) {
+      if (field->get_value() != nullptr) {
         if (1 < ++members_with_value) {
           throw "Error: Field " + field->get_name() + " provides another default value for union "
               + name_;
@@ -118,7 +118,7 @@ public:
       return false;
     }
     // returns false when there is a conflict of field names
-    if (get_field_by_name(elem->get_name()) != NULL) {
+    if (get_field_by_name(elem->get_name()) != nullptr) {
       return false;
     }
     members_.push_back(elem);
@@ -129,22 +129,16 @@ public:
 
   const members_type& get_members() const { return members_; }
 
-  const members_type& get_sorted_members() { return members_in_id_order_; }
+  const members_type& get_sorted_members() const { return members_in_id_order_; }
 
-  bool is_struct() const { return !is_xception_; }
+  bool is_struct() const override { return !is_xception_; }
 
-  bool is_xception() const { return is_xception_; }
+  bool is_xception() const override { return is_xception_; }
 
   bool is_union() const { return is_union_; }
 
   t_field* get_field_by_name(std::string field_name) {
-    members_type::const_iterator m_iter;
-    for (m_iter = members_in_id_order_.begin(); m_iter != members_in_id_order_.end(); ++m_iter) {
-      if ((*m_iter)->get_name() == field_name) {
-        return *m_iter;
-      }
-    }
-    return NULL;
+    return const_cast<t_field*>(const_cast<const t_struct&>(*this).get_field_by_name(field_name));
   }
 
   const t_field* get_field_by_name(std::string field_name) const {
@@ -154,7 +148,7 @@ public:
         return *m_iter;
       }
     }
-    return NULL;
+    return nullptr;
   }
 
 private:

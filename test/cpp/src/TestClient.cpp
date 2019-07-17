@@ -46,7 +46,6 @@
 #include <boost/filesystem.hpp>
 #include <boost/program_options.hpp>
 #include <boost/random/random_device.hpp>
-#include <thrift/stdcxx.h>
 #if _WIN32
 #include <thrift/windows/TWinsockSingleton.h>
 #endif
@@ -61,12 +60,59 @@ using namespace apache::thrift::protocol;
 using namespace apache::thrift::transport;
 using namespace thrift::test;
 
+//
+// A pedantic protocol that checks to make sure the response sequence ID
+// is the same as the sent sequence ID.  lib/cpp always sends zero for
+// synchronous clients, so this bumps the number to make sure it gets
+// returned properly from the remote server.  Any server that does not
+// respond with the same sequence number is violating the sequence ID
+// agreement between client and server.
+//
+
+template<typename Proto>
+class TPedanticProtocol : public Proto 
+{
+    public:
+        TPedanticProtocol(std::shared_ptr<TTransport>& transport)
+          : Proto(transport), m_last_seqid((std::numeric_limits<int32_t>::max)() - 10) { }
+
+        virtual uint32_t writeMessageBegin_virt(const std::string& name,
+                                           const TMessageType messageType,
+                                           const int32_t in_seqid) override
+        {
+            int32_t seqid = in_seqid;
+            if (!seqid) { // this is typical for normal cpp generated code
+                seqid = ++m_last_seqid;
+            }
+
+            return Proto::writeMessageBegin_virt(name, messageType, seqid);
+        }
+
+        virtual uint32_t readMessageBegin_virt(std::string& name,
+                                          TMessageType& messageType,
+                                          int32_t& seqid) override
+        {
+            uint32_t result = Proto::readMessageBegin_virt(name, messageType, seqid);
+            if (seqid != m_last_seqid) {
+                std::stringstream ss;
+                ss << "ERROR: send request with seqid " << m_last_seqid << " and got reply with seqid " << seqid;
+                throw std::logic_error(ss.str());
+            } /* else {
+                std::cout << "verified seqid " << m_last_seqid << " round trip OK" << std::endl;
+            } */
+            return result;
+        }
+
+    private:
+        int32_t m_last_seqid;
+};
+
 // Current time, microseconds since the epoch
 uint64_t now() {
   int64_t ret;
   struct timeval tv;
 
-  THRIFT_GETTIMEOFDAY(&tv, NULL);
+  THRIFT_GETTIMEOFDAY(&tv, nullptr);
   ret = tv.tv_sec;
   ret = ret * 1000 * 1000 + tv.tv_usec;
   return ret;
@@ -98,10 +144,10 @@ static void testVoid_clientReturn(event_base* base, ThriftTestCobClient* client)
     for (int testNr = 0; testNr < 10; ++testNr) {
       std::ostringstream os;
       os << "test" << testNr;
-      client->testString(stdcxx::bind(testString_clientReturn,
+      client->testString(std::bind(testString_clientReturn,
                                     base,
                                     testNr,
-                                    stdcxx::placeholders::_1),
+                                    std::placeholders::_1),
                        os.str());
     }
   } catch (TException& exn) {
@@ -254,18 +300,18 @@ int main(int argc, char** argv) {
   }
 
   // THRIFT-4164: The factory MUST outlive any sockets it creates for correct behavior!
-  stdcxx::shared_ptr<TSSLSocketFactory> factory;
-  stdcxx::shared_ptr<TSocket> socket;
-  stdcxx::shared_ptr<TTransport> transport;
-  stdcxx::shared_ptr<TProtocol> protocol;
-  stdcxx::shared_ptr<TProtocol> protocol2;  // SecondService for multiplexed
+  std::shared_ptr<TSSLSocketFactory> factory;
+  std::shared_ptr<TSocket> socket;
+  std::shared_ptr<TTransport> transport;
+  std::shared_ptr<TProtocol> protocol;
+  std::shared_ptr<TProtocol> protocol2;  // SecondService for multiplexed
 
   if (ssl) {
     cout << "Client Certificate File: " << certPath << endl;
     cout << "Client Key         File: " << keyPath << endl;
     cout << "CA                 File: " << caPath << endl;
 
-    factory = stdcxx::shared_ptr<TSSLSocketFactory>(new TSSLSocketFactory());
+    factory = std::shared_ptr<TSSLSocketFactory>(new TSSLSocketFactory());
     factory->ciphers("ALL:!ADH:!LOW:!EXP:!MD5:@STRENGTH");
     factory->loadTrustedCertificates(caPath.c_str());
     factory->loadCertificate(certPath.c_str());
@@ -277,42 +323,46 @@ int main(int argc, char** argv) {
       if (abstract_namespace) {
         std::string abstract_socket("\0", 1);
         abstract_socket += domain_socket;
-        socket = stdcxx::shared_ptr<TSocket>(new TSocket(abstract_socket));
+        socket = std::shared_ptr<TSocket>(new TSocket(abstract_socket));
       } else {
-        socket = stdcxx::shared_ptr<TSocket>(new TSocket(domain_socket));
+        socket = std::shared_ptr<TSocket>(new TSocket(domain_socket));
       }
       port = 0;
     } else {
-      socket = stdcxx::shared_ptr<TSocket>(new TSocket(host, port));
+      socket = std::shared_ptr<TSocket>(new TSocket(host, port));
     }
   }
 
   if (transport_type.compare("http") == 0) {
-    transport = stdcxx::make_shared<THttpClient>(socket, host, "/service");
+    transport = std::make_shared<THttpClient>(socket, host, "/service");
   } else if (transport_type.compare("framed") == 0) {
-    transport = stdcxx::make_shared<TFramedTransport>(socket);
+    transport = std::make_shared<TFramedTransport>(socket);
   } else {
-    transport = stdcxx::make_shared<TBufferedTransport>(socket);
+    transport = std::make_shared<TBufferedTransport>(socket);
   }
 
   if (zlib) {
-    transport = stdcxx::make_shared<TZlibTransport>(transport);
+    transport = std::make_shared<TZlibTransport>(transport);
   }
 
   if (protocol_type == "json" || protocol_type == "multij") {
-    protocol = stdcxx::make_shared<TJSONProtocol>(transport);
+    typedef TPedanticProtocol<TJSONProtocol> TPedanticJSONProtocol;
+    protocol = std::make_shared<TPedanticJSONProtocol>(transport);
   } else if (protocol_type == "compact" || protocol_type == "multic") {
-    protocol = stdcxx::make_shared<TCompactProtocol>(transport);
+    typedef TPedanticProtocol<TCompactProtocol> TPedanticCompactProtocol;
+    protocol = std::make_shared<TPedanticCompactProtocol>(transport);
   } else if (protocol_type == "header" || protocol_type == "multih") {
-    protocol = stdcxx::make_shared<THeaderProtocol>(transport);
+    typedef TPedanticProtocol<THeaderProtocol> TPedanticHeaderProtocol;
+    protocol = std::make_shared<TPedanticHeaderProtocol>(transport);
   } else {
-    protocol = stdcxx::make_shared<TBinaryProtocol>(transport);
+    typedef TPedanticProtocol<TBinaryProtocol> TPedanticBinaryProtocol;
+    protocol = std::make_shared<TPedanticBinaryProtocol>(transport);
   }
 
   if (boost::starts_with(protocol_type, "multi")) {
-  protocol2 = stdcxx::make_shared<TMultiplexedProtocol>(protocol, "SecondService");
-  // we don't need access to the original protocol any more, so...
-  protocol = stdcxx::make_shared<TMultiplexedProtocol>(protocol, "ThriftTest");
+    protocol2 = std::make_shared<TMultiplexedProtocol>(protocol, "SecondService");
+    // we don't need access to the original protocol any more, so...
+    protocol = std::make_shared<TMultiplexedProtocol>(protocol, "ThriftTest");
   }
 
   // Connection info
@@ -334,14 +384,14 @@ int main(int argc, char** argv) {
     cout << "Libevent Features: 0x" << hex << event_base_get_features(base) << endl;
 #endif
 
-    stdcxx::shared_ptr<TProtocolFactory> protocolFactory(new TBinaryProtocolFactory());
+    std::shared_ptr<TProtocolFactory> protocolFactory(new TBinaryProtocolFactory());
 
-    stdcxx::shared_ptr<TAsyncChannel> channel(
+    std::shared_ptr<TAsyncChannel> channel(
         new TEvhttpClientChannel(host.c_str(), "/", host.c_str(), port, base));
     ThriftTestCobClient* client = new ThriftTestCobClient(channel, protocolFactory.get());
-    client->testVoid(stdcxx::bind(testVoid_clientReturn,
+    client->testVoid(std::bind(testVoid_clientReturn,
                                 base,
-                                stdcxx::placeholders::_1));
+                                std::placeholders::_1));
 
     event_base_loop(base, 0);
     return 0;
@@ -516,8 +566,8 @@ int main(int argc, char** argv) {
     BASETYPE_IDENTITY_TEST(testI32, -1);
     BASETYPE_IDENTITY_TEST(testI32, 190000013);
     BASETYPE_IDENTITY_TEST(testI32, -190000013);
-    BASETYPE_IDENTITY_TEST(testI32, numeric_limits<int32_t>::max());
-    BASETYPE_IDENTITY_TEST(testI32, numeric_limits<int32_t>::min());
+    BASETYPE_IDENTITY_TEST(testI32, (numeric_limits<int32_t>::max)());
+    BASETYPE_IDENTITY_TEST(testI32, (numeric_limits<int32_t>::min)());
 
     /**
      * I64 TEST
@@ -530,8 +580,8 @@ int main(int argc, char** argv) {
     BASETYPE_IDENTITY_TEST(testI64, (int64_t)-pow(static_cast<double>(2LL), 32));
     BASETYPE_IDENTITY_TEST(testI64, (int64_t)pow(static_cast<double>(2LL), 32) + 1);
     BASETYPE_IDENTITY_TEST(testI64, (int64_t)-pow(static_cast<double>(2LL), 32) - 1);
-    BASETYPE_IDENTITY_TEST(testI64, numeric_limits<int64_t>::max());
-    BASETYPE_IDENTITY_TEST(testI64, numeric_limits<int64_t>::min());
+    BASETYPE_IDENTITY_TEST(testI64, (numeric_limits<int64_t>::max)());
+    BASETYPE_IDENTITY_TEST(testI64, (numeric_limits<int64_t>::min)());
 
     /**
      * DOUBLE TEST
@@ -943,11 +993,11 @@ int main(int argc, char** argv) {
       if (it1 == whoa.end()) {
         failed = true;
       } else {
-        map<Numberz::type, Insanity>::const_iterator it12 = it1->second.find(Numberz::TWO);
+        auto it12 = it1->second.find(Numberz::TWO);
         if (it12 == it1->second.end() || it12->second != insane) {
           failed = true;
         }
-        map<Numberz::type, Insanity>::const_iterator it13 = it1->second.find(Numberz::THREE);
+        auto it13 = it1->second.find(Numberz::THREE);
         if (it13 == it1->second.end() || it13->second != insane) {
           failed = true;
         }
@@ -956,7 +1006,7 @@ int main(int argc, char** argv) {
       if (it2 == whoa.end()) {
         failed = true;
       } else {
-        map<Numberz::type, Insanity>::const_iterator it26 = it2->second.find(Numberz::SIX);
+        auto it26 = it2->second.find(Numberz::SIX);
         if (it26 == it2->second.end() || it26->second != Insanity()) {
           failed = true;
         }

@@ -16,7 +16,7 @@
 # under the License.
 
 name: thrift
-version: 1.0.0-dev
+version: 0.13.0
 description: >
   A Dart library for Apache Thrift
 author: Apache Thrift Developers <dev@thrift.apache.org>
@@ -24,20 +24,15 @@ homepage: http://thrift.apache.org
 documentation: http://thrift.apache.org
 
 environment:
-  sdk: ">=1.13.0 <2.0.0"
+  sdk: ">=1.24.3 <3.0.0"
 
 dependencies:
+  dart2_constant: ^1.0.0
   fixnum: ^0.10.2
   http: ^0.11.3
   logging: ^0.11.0
 
 dev_dependencies:
-  # test
-  mockito: ^1.0.0
-  test: ^0.12.0
-
-  # dart_dev - https://github.com/Workiva/dart_dev
-  dart_dev: ^1.5.0
-  coverage: ^0.7.3
-  dart_style: ">=0.2.4 <0.3.0"
-  dartdoc: ^0.9.0
+  dart_dev: ^2.0.0
+  mockito: ">=2.2.2 <4.0.0"
+  test: ">=0.12.30 <2.0.0"

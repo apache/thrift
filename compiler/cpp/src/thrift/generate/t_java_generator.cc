@@ -122,21 +122,21 @@ public:
    * Init and close methods
    */
 
-  void init_generator();
-  void close_generator();
+  void init_generator() override;
+  void close_generator() override;
 
-  void generate_consts(std::vector<t_const*> consts);
+  void generate_consts(std::vector<t_const*> consts) override;
 
   /**
    * Program-level generation functions
    */
 
-  void generate_typedef(t_typedef* ttypedef);
-  void generate_enum(t_enum* tenum);
-  void generate_struct(t_struct* tstruct);
+  void generate_typedef(t_typedef* ttypedef) override;
+  void generate_enum(t_enum* tenum) override;
+  void generate_struct(t_struct* tstruct) override;
   void generate_union(t_struct* tunion);
-  void generate_xception(t_struct* txception);
-  void generate_service(t_service* tservice);
+  void generate_xception(t_struct* txception) override;
+  void generate_service(t_service* tservice) override;
 
   void print_const_value(std::ostream& out,
                          std::string name,
@@ -498,6 +498,11 @@ void t_java_generator::generate_enum(t_enum* tenum) {
   f_enum << autogen_comment() << java_package() << endl;
 
   generate_java_doc(f_enum, tenum);
+
+  if (!suppress_generated_annotations_) {
+    generate_javax_generated_annotation(f_enum);
+  }
+
   if (is_deprecated) {
     indent(f_enum) << "@Deprecated" << endl;
   }
@@ -544,6 +549,7 @@ void t_java_generator::generate_enum(t_enum* tenum) {
                  << endl;
   indent(f_enum) << " * @return null if the value is not found." << endl;
   indent(f_enum) << " */" << endl;
+  indent(f_enum) << java_nullable_annotation() << endl;
   indent(f_enum) << "public static " + tenum->get_name() + " findByValue(int value) { " << endl;
 
   indent_up();
@@ -826,6 +832,10 @@ void t_java_generator::generate_java_union(t_struct* tstruct) {
 
   bool is_final = (tstruct->annotations_.find("final") != tstruct->annotations_.end());
   bool is_deprecated = this->is_deprecated(tstruct->annotations_);
+
+  if (!suppress_generated_annotations_) {
+    generate_javax_generated_annotation(f_struct);
+  }
 
   if (is_deprecated) {
     indent(f_struct) << "@Deprecated" << endl;
@@ -4642,9 +4652,7 @@ string t_java_generator::constant_name(string name) {
 
   bool is_first = true;
   bool was_previous_char_upper = false;
-  for (string::iterator iter = name.begin(); iter != name.end(); ++iter) {
-    string::value_type character = (*iter);
-
+  for (char character : name) {
     bool is_upper = isupper(character);
 
     if (is_upper && !is_first && !was_previous_char_upper) {

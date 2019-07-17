@@ -1,4 +1,4 @@
-#!/usr/bin/perl
+#!/usr/bin/env perl
 
 #
 # Licensed to the Apache Software Foundation (ASF) under one
@@ -67,20 +67,20 @@ sub calculate
   } elsif ($op == tutorial::Operation::DIVIDE) {
     if ($num2 == 0)
     {
-      my $x = new tutorial::InvalidOperation;
+      my $x = tutorial::InvalidOperation->new();
       $x->whatOp($op);
       $x->why('Cannot divide by 0');
       die $x;
     }
     $val = $num1 / $num2;
   } else {
-    my $x = new tutorial::InvalidOperation;
+    my $x = tutorial::InvalidOperation->new();
     $x->whatOp($op);
     $x->why('Invalid operation');
     die $x;
   }
 
-  my $log = new shared::SharedStruct;
+  my $log = shared::SharedStruct->new();
   $log->key($logid);
   $log->value(int($val));
   $self->{log}->{$logid} = $log;
@@ -104,10 +104,10 @@ sub zip
 
 
 eval {
-  my $handler       = new CalculatorHandler;
-  my $processor     = new tutorial::CalculatorProcessor($handler);
-  my $serversocket  = new Thrift::ServerSocket(9090);
-  my $forkingserver = new Thrift::ForkingServer($processor, $serversocket);
+  my $handler       = CalculatorHandler->new();
+  my $processor     = tutorial::CalculatorProcessor->new($handler);
+  my $serversocket  = Thrift::ServerSocket->new(9090);
+  my $forkingserver = Thrift::ForkingServer->new($processor, $serversocket);
   print "Starting the server...\n";
   $forkingserver->serve();
   print "done.\n";

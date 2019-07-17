@@ -36,13 +36,13 @@ namespace protocol {
  */
 class StoredMessageProtocol : public TProtocolDecorator {
 public:
-  StoredMessageProtocol(stdcxx::shared_ptr<protocol::TProtocol> _protocol,
+  StoredMessageProtocol(std::shared_ptr<protocol::TProtocol> _protocol,
                         const std::string& _name,
                         const TMessageType _type,
                         const int32_t _seqid)
     : TProtocolDecorator(_protocol), name(_name), type(_type), seqid(_seqid) {}
 
-  uint32_t readMessageBegin_virt(std::string& _name, TMessageType& _type, int32_t& _seqid) {
+  uint32_t readMessageBegin_virt(std::string& _name, TMessageType& _type, int32_t& _seqid) override {
 
     _name = name;
     _type = type;
@@ -65,19 +65,19 @@ public:
  * processors with it, as shown in the following example:</p>
  *
  * <blockquote><code>
- *     stdcxx::shared_ptr<TMultiplexedProcessor> processor(new TMultiplexedProcessor());
+ *     std::shared_ptr<TMultiplexedProcessor> processor(new TMultiplexedProcessor());
  *
  *     processor->registerProcessor(
  *         "Calculator",
- *         stdcxx::shared_ptr<TProcessor>( new CalculatorProcessor(
- *             stdcxx::shared_ptr<CalculatorHandler>( new CalculatorHandler()))));
+ *         std::shared_ptr<TProcessor>( new CalculatorProcessor(
+ *             std::shared_ptr<CalculatorHandler>( new CalculatorHandler()))));
  *
  *     processor->registerProcessor(
  *         "WeatherReport",
- *         stdcxx::shared_ptr<TProcessor>( new WeatherReportProcessor(
- *             stdcxx::shared_ptr<WeatherReportHandler>( new WeatherReportHandler()))));
+ *         std::shared_ptr<TProcessor>( new WeatherReportProcessor(
+ *             std::shared_ptr<WeatherReportHandler>( new WeatherReportHandler()))));
  *
- *     stdcxx::shared_ptr<TServerTransport> transport(new TServerSocket(9090));
+ *     std::shared_ptr<TServerTransport> transport(new TServerSocket(9090));
  *     TSimpleServer server(processor, transport);
  *
  *     server.serve();
@@ -85,7 +85,7 @@ public:
  */
 class TMultiplexedProcessor : public TProcessor {
 public:
-  typedef std::map<std::string, stdcxx::shared_ptr<TProcessor> > services_t;
+  typedef std::map<std::string, std::shared_ptr<TProcessor> > services_t;
 
   /**
     * 'Register' a service with this <code>TMultiplexedProcessor</code>.  This
@@ -98,7 +98,7 @@ public:
     *                         as "handlers", e.g. WeatherReportHandler,
     *                         implementing WeatherReportIf interface.
     */
-  void registerProcessor(const std::string& serviceName, stdcxx::shared_ptr<TProcessor> processor) {
+  void registerProcessor(const std::string& serviceName, std::shared_ptr<TProcessor> processor) {
     services[serviceName] = processor;
   }
 
@@ -106,15 +106,15 @@ public:
    * Register a service to be called to process queries without service name
    * \param [in] processor   Implementation of a service.
    */
-  void registerDefault(const stdcxx::shared_ptr<TProcessor>& processor) {
+  void registerDefault(const std::shared_ptr<TProcessor>& processor) {
     defaultProcessor = processor;
   }
 
   /**
    * Chew up invalid input and return an exception to throw.
    */
-  TException protocol_error(stdcxx::shared_ptr<protocol::TProtocol> in,
-                            stdcxx::shared_ptr<protocol::TProtocol> out,
+  TException protocol_error(std::shared_ptr<protocol::TProtocol> in,
+                            std::shared_ptr<protocol::TProtocol> out,
                             const std::string& name, 
                             int32_t seqid, 
                             const std::string& msg) const {
@@ -147,9 +147,9 @@ public:
    * the service name was not found in the message, or if the service
    * name was not found in the service map.
    */
-  bool process(stdcxx::shared_ptr<protocol::TProtocol> in,
-               stdcxx::shared_ptr<protocol::TProtocol> out,
-               void* connectionContext) {
+  bool process(std::shared_ptr<protocol::TProtocol> in,
+               std::shared_ptr<protocol::TProtocol> out,
+               void* connectionContext) override {
     std::string name;
     protocol::TMessageType type;
     int32_t seqid;
@@ -174,14 +174,14 @@ public:
     // name and the name of the method to call.
     if (tokens.size() == 2) {
       // Search for a processor associated with this service name.
-      services_t::iterator it = services.find(tokens[0]);
+      auto it = services.find(tokens[0]);
 
       if (it != services.end()) {
-        stdcxx::shared_ptr<TProcessor> processor = it->second;
+        std::shared_ptr<TProcessor> processor = it->second;
         // Let the processor registered for this service name
         // process the message.
         return processor
-            ->process(stdcxx::shared_ptr<protocol::TProtocol>(
+            ->process(std::shared_ptr<protocol::TProtocol>(
                           new protocol::StoredMessageProtocol(in, tokens[1], type, seqid)),
                       out,
                       connectionContext);
@@ -195,7 +195,7 @@ public:
 	  if (defaultProcessor) {
         // non-multiplexed client forwards to default processor
         return defaultProcessor            
-            ->process(stdcxx::shared_ptr<protocol::TProtocol>(
+            ->process(std::shared_ptr<protocol::TProtocol>(
                           new protocol::StoredMessageProtocol(in, tokens[0], type, seqid)),
                       out,
                       connectionContext);
@@ -216,7 +216,7 @@ private:
   
   //! If a non-multi client requests something, it goes to the
   //! default processor (if one is defined) for backwards compatibility.
-  stdcxx::shared_ptr<TProcessor> defaultProcessor;
+  std::shared_ptr<TProcessor> defaultProcessor;
 };
 }
 }

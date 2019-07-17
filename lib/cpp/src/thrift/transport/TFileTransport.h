@@ -24,15 +24,13 @@
 #include <thrift/Thrift.h>
 #include <thrift/TProcessor.h>
 
+#include <atomic>
 #include <string>
 #include <stdio.h>
 
-#include <boost/atomic.hpp>
-#include <thrift/stdcxx.h>
-
 #include <thrift/concurrency/Mutex.h>
 #include <thrift/concurrency/Monitor.h>
-#include <thrift/concurrency/PlatformThreadFactory.h>
+#include <thrift/concurrency/ThreadFactory.h>
 #include <thrift/concurrency/Thread.h>
 
 namespace apache {
@@ -50,7 +48,7 @@ typedef struct eventInfo {
   uint32_t eventSize_;
   uint32_t eventBuffPos_;
 
-  eventInfo() : eventBuff_(NULL), eventSize_(0), eventBuffPos_(0){};
+  eventInfo() : eventBuff_(nullptr), eventSize_(0), eventBuffPos_(0){};
   ~eventInfo() {
     if (eventBuff_) {
       delete[] eventBuff_;
@@ -87,7 +85,7 @@ typedef struct readState {
     if (event_) {
       delete (event_);
     }
-    event_ = 0;
+    event_ = nullptr;
   }
 
   inline uint32_t getEventSize() {
@@ -96,7 +94,7 @@ typedef struct readState {
   }
 
   readState() {
-    event_ = 0;
+    event_ = nullptr;
     resetAllValues();
   }
 
@@ -176,24 +174,24 @@ public:
 class TFileTransport : public TFileReaderTransport, public TFileWriterTransport {
 public:
   TFileTransport(std::string path, bool readOnly = false);
-  ~TFileTransport();
+  ~TFileTransport() override;
 
   // TODO: what is the correct behaviour for this?
   // the log file is generally always open
-  bool isOpen() { return true; }
+  bool isOpen() const override { return true; }
 
   void write(const uint8_t* buf, uint32_t len);
-  void flush();
+  void flush() override;
 
   uint32_t readAll(uint8_t* buf, uint32_t len);
   uint32_t read(uint8_t* buf, uint32_t len);
-  bool peek();
+  bool peek() override;
 
   // log-file specific functions
-  void seekToChunk(int32_t chunk);
-  void seekToEnd();
-  uint32_t getNumChunks();
-  uint32_t getCurChunk();
+  void seekToChunk(int32_t chunk) override;
+  void seekToEnd() override;
+  uint32_t getNumChunks() override;
+  uint32_t getCurChunk() override;
 
   // for changing the output file
   void resetOutputFile(int fd, std::string filename, off_t offset);
@@ -208,15 +206,15 @@ public:
 
   static const int32_t TAIL_READ_TIMEOUT = -1;
   static const int32_t NO_TAIL_READ_TIMEOUT = 0;
-  void setReadTimeout(int32_t readTimeout) { readTimeout_ = readTimeout; }
-  int32_t getReadTimeout() { return readTimeout_; }
+  void setReadTimeout(int32_t readTimeout) override { readTimeout_ = readTimeout; }
+  int32_t getReadTimeout() override { return readTimeout_; }
 
-  void setChunkSize(uint32_t chunkSize) {
+  void setChunkSize(uint32_t chunkSize) override {
     if (chunkSize) {
       chunkSize_ = chunkSize;
     }
   }
-  uint32_t getChunkSize() { return chunkSize_; }
+  uint32_t getChunkSize() override { return chunkSize_; }
 
   void setEventBufferSize(uint32_t bufferSize) {
     if (bufferAndThreadInitialized_) {
@@ -262,20 +260,20 @@ public:
    * We cannot use TVirtualTransport to provide these, since we need to inherit
    * virtually from TTransport.
    */
-  virtual uint32_t read_virt(uint8_t* buf, uint32_t len) { return this->read(buf, len); }
-  virtual uint32_t readAll_virt(uint8_t* buf, uint32_t len) { return this->readAll(buf, len); }
-  virtual void write_virt(const uint8_t* buf, uint32_t len) { this->write(buf, len); }
+  uint32_t read_virt(uint8_t* buf, uint32_t len) override { return this->read(buf, len); }
+  uint32_t readAll_virt(uint8_t* buf, uint32_t len) override { return this->readAll(buf, len); }
+  void write_virt(const uint8_t* buf, uint32_t len) override { this->write(buf, len); }
 
 private:
   // helper functions for writing to a file
   void enqueueEvent(const uint8_t* buf, uint32_t eventLen);
-  bool swapEventBuffers(struct timeval* deadline);
+  bool swapEventBuffers(const std::chrono::time_point<std::chrono::steady_clock> *deadline);
   bool initBufferAndWriteThread();
 
   // control for writer thread
   static void* startWriterThread(void* ptr) {
     static_cast<TFileTransport*>(ptr)->writerThread();
-    return NULL;
+    return nullptr;
   }
   void writerThread();
 
@@ -288,7 +286,7 @@ private:
 
   // Utility functions
   void openLogFile();
-  void getNextFlushTime(struct timeval* ts_next_flush);
+  std::chrono::time_point<std::chrono::steady_clock> getNextFlushTime();
 
   // Class variables
   readState readState_;
@@ -338,8 +336,8 @@ private:
   static const uint32_t DEFAULT_WRITER_THREAD_SLEEP_TIME_US = 60 * 1000 * 1000;
 
   // writer thread
-  apache::thrift::concurrency::PlatformThreadFactory threadFactory_;
-  stdcxx::shared_ptr<apache::thrift::concurrency::Thread> writerThread_;
+  apache::thrift::concurrency::ThreadFactory threadFactory_;
+  std::shared_ptr<apache::thrift::concurrency::Thread> writerThread_;
 
   // buffers to hold data before it is flushed. Each element of the buffer stores a msg that
   // needs to be written to the file.  The buffers are swapped by the writer thread.
@@ -348,11 +346,11 @@ private:
 
   // conditions used to block when the buffer is full or empty
   Monitor notFull_, notEmpty_;
-  boost::atomic<bool> closing_;
+  std::atomic<bool> closing_;
 
   // To keep track of whether the buffer has been flushed
   Monitor flushed_;
-  boost::atomic<bool> forceFlush_;
+  std::atomic<bool> forceFlush_;
 
   // Mutex that is grabbed when enqueueing and swapping the read/write buffers
   Mutex mutex_;
@@ -390,14 +388,14 @@ public:
    * @param protocolFactory protocol factory
    * @param inputTransport file transport
    */
-  TFileProcessor(stdcxx::shared_ptr<TProcessor> processor,
-                 stdcxx::shared_ptr<TProtocolFactory> protocolFactory,
-                 stdcxx::shared_ptr<TFileReaderTransport> inputTransport);
+  TFileProcessor(std::shared_ptr<TProcessor> processor,
+                 std::shared_ptr<TProtocolFactory> protocolFactory,
+                 std::shared_ptr<TFileReaderTransport> inputTransport);
 
-  TFileProcessor(stdcxx::shared_ptr<TProcessor> processor,
-                 stdcxx::shared_ptr<TProtocolFactory> inputProtocolFactory,
-                 stdcxx::shared_ptr<TProtocolFactory> outputProtocolFactory,
-                 stdcxx::shared_ptr<TFileReaderTransport> inputTransport);
+  TFileProcessor(std::shared_ptr<TProcessor> processor,
+                 std::shared_ptr<TProtocolFactory> inputProtocolFactory,
+                 std::shared_ptr<TProtocolFactory> outputProtocolFactory,
+                 std::shared_ptr<TFileReaderTransport> inputTransport);
 
   /**
    * Constructor
@@ -407,10 +405,10 @@ public:
    * @param inputTransport input file transport
    * @param output output transport
    */
-  TFileProcessor(stdcxx::shared_ptr<TProcessor> processor,
-                 stdcxx::shared_ptr<TProtocolFactory> protocolFactory,
-                 stdcxx::shared_ptr<TFileReaderTransport> inputTransport,
-                 stdcxx::shared_ptr<TTransport> outputTransport);
+  TFileProcessor(std::shared_ptr<TProcessor> processor,
+                 std::shared_ptr<TProtocolFactory> protocolFactory,
+                 std::shared_ptr<TFileReaderTransport> inputTransport,
+                 std::shared_ptr<TTransport> outputTransport);
 
   /**
    * processes events from the file
@@ -427,11 +425,11 @@ public:
   void processChunk();
 
 private:
-  stdcxx::shared_ptr<TProcessor> processor_;
-  stdcxx::shared_ptr<TProtocolFactory> inputProtocolFactory_;
-  stdcxx::shared_ptr<TProtocolFactory> outputProtocolFactory_;
-  stdcxx::shared_ptr<TFileReaderTransport> inputTransport_;
-  stdcxx::shared_ptr<TTransport> outputTransport_;
+  std::shared_ptr<TProcessor> processor_;
+  std::shared_ptr<TProtocolFactory> inputProtocolFactory_;
+  std::shared_ptr<TProtocolFactory> outputProtocolFactory_;
+  std::shared_ptr<TFileReaderTransport> inputTransport_;
+  std::shared_ptr<TTransport> outputTransport_;
 };
 }
 }

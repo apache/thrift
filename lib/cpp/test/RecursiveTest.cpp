@@ -23,7 +23,7 @@
 
 #include "gen-cpp/Recursive_types.h"
 #include <thrift/protocol/TBinaryProtocol.h>
-#include <thrift/stdcxx.h>
+#include <memory>
 #include <thrift/transport/TBufferTransports.h>
 
 #define BOOST_TEST_MODULE RecursiveTest
@@ -31,7 +31,7 @@
 
 using apache::thrift::transport::TMemoryBuffer;
 using apache::thrift::protocol::TBinaryProtocol;
-using apache::thrift::stdcxx::shared_ptr;
+using std::shared_ptr;
 
 BOOST_AUTO_TEST_CASE(test_recursive_1) {
   shared_ptr<TMemoryBuffer> buf(new TMemoryBuffer());
@@ -60,8 +60,8 @@ BOOST_AUTO_TEST_CASE(test_recursive_2) {
 
   RecList resultlist;
   resultlist.read(prot.get());
-  BOOST_CHECK(resultlist.nextitem != NULL);
-  BOOST_CHECK(resultlist.nextitem->nextitem == NULL);
+  BOOST_CHECK(resultlist.nextitem != nullptr);
+  BOOST_CHECK(resultlist.nextitem->nextitem == nullptr);
 }
 
 BOOST_AUTO_TEST_CASE(test_recursive_3) {
@@ -75,8 +75,8 @@ BOOST_AUTO_TEST_CASE(test_recursive_3) {
   c.write(prot.get());
 
   c.read(prot.get());
-  BOOST_CHECK(c.other != NULL);
-  BOOST_CHECK(c.other->other.other == NULL);
+  BOOST_CHECK(c.other != nullptr);
+  BOOST_CHECK(c.other->other.other == nullptr);
 }
 
 BOOST_AUTO_TEST_CASE(test_recursive_4) {

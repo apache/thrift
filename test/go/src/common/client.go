@@ -55,6 +55,8 @@ func StartClient(
 		protocolFactory = thrift.NewTJSONProtocolFactory()
 	case "binary":
 		protocolFactory = thrift.NewTBinaryProtocolFactoryDefault()
+	case "header":
+		protocolFactory = thrift.NewTHeaderProtocolFactory()
 	default:
 		return nil, nil, fmt.Errorf("Invalid protocol specified %s", protocol)
 	}

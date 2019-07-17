@@ -34,11 +34,10 @@ namespace apache {
 namespace thrift {
 namespace transport {
 
-THttpServer::THttpServer(stdcxx::shared_ptr<TTransport> transport) : THttpTransport(transport) {
+THttpServer::THttpServer(std::shared_ptr<TTransport> transport) : THttpTransport(transport) {
 }
 
-THttpServer::~THttpServer() {
-}
+THttpServer::~THttpServer() = default;
 
 #if defined(_MSC_VER) || defined(__MINGW32__)
   #define THRIFT_GMTIME(TM, TIME)             gmtime_s(&TM, &TIME)
@@ -52,14 +51,14 @@ THttpServer::~THttpServer() {
 
 void THttpServer::parseHeader(char* header) {
   char* colon = strchr(header, ':');
-  if (colon == NULL) {
+  if (colon == nullptr) {
     return;
   }
   size_t sz = colon - header;
   char* value = colon + 1;
 
   if (THRIFT_strncasecmp(header, "Transfer-Encoding", sz) == 0) {
-    if (THRIFT_strcasestr(value, "chunked") != NULL) {
+    if (THRIFT_strcasestr(value, "chunked") != nullptr) {
       chunked_ = true;
     }
   } else if (THRIFT_strncasecmp(header, "Content-length", sz) == 0) {
@@ -74,7 +73,7 @@ bool THttpServer::parseStatusLine(char* status) {
   char* method = status;
 
   char* path = strchr(method, ' ');
-  if (path == NULL) {
+  if (path == nullptr) {
     throw TTransportException(string("Bad Status: ") + status);
   }
 
@@ -83,7 +82,7 @@ bool THttpServer::parseStatusLine(char* status) {
   };
 
   char* http = strchr(path, ' ');
-  if (http == NULL) {
+  if (http == nullptr) {
     throw TTransportException(string("Bad Status: ") + status);
   }
   *http = '\0';
@@ -149,7 +148,7 @@ std::string THttpServer::getTimeRFC1123() {
       = {"Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
   char buff[128];
 
-  time_t t = time(NULL);
+  time_t t = time(nullptr);
   struct tm tmb;
   THRIFT_GMTIME(tmb, t);
 

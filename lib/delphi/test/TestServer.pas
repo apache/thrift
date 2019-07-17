@@ -144,13 +144,13 @@ end;
 
 function TTestServer.TTestHandlerImpl.testBinary(const thing: TBytes): TBytes;
 begin
-  Console.WriteLine('testBinary("' + BytesToHex( thing ) + '")');
+  Console.WriteLine('testBinary('+IntToStr(Length(thing)) + ' bytes)');
   Result := thing;
 end;
 
 function TTestServer.TTestHandlerImpl.testEnum(thing: TNumberz): TNumberz;
 begin
-  Console.WriteLine('testEnum(' + IntToStr( Integer( thing)) + ')');
+  Console.WriteLine('testEnum(' + EnumUtils<TNumberz>.ToString(Ord(thing)) + ')');
   Result := thing;
 end;
 
@@ -191,7 +191,10 @@ var
   insane : IThriftDictionary<Int64, IThriftDictionary<TNumberz, IInsanity>>;
 
 begin
-  Console.WriteLine('testInsanity()');
+  Console.Write('testInsanity(');
+  if argument <> nil then Console.Write(argument.ToString);
+  Console.WriteLine(')');
+
 
   (**
    * So you think you've got this all worked, out eh?
@@ -222,49 +225,20 @@ begin
   Result := insane;
 end;
 
-function TTestServer.TTestHandlerImpl.testList(
-  const thing: IThriftList<Integer>): IThriftList<Integer>;
-var
-  first : Boolean;
-  elem : Integer;
+function TTestServer.TTestHandlerImpl.testList( const thing: IThriftList<Integer>): IThriftList<Integer>;
 begin
-  Console.Write('testList({');
-  first := True;
-  for elem in thing do
-  begin
-    if first then
-    begin
-      first := False;
-    end else
-    begin
-      Console.Write(', ');
-    end;
-    Console.Write( IntToStr( elem));
-  end;
-  Console.WriteLine('})');
+  Console.Write('testList(');
+  if thing <> nil then Console.Write(thing.ToString);
+  Console.WriteLine(')');
   Result := thing;
 end;
 
 function TTestServer.TTestHandlerImpl.testMap(
   const thing: IThriftDictionary<Integer, Integer>): IThriftDictionary<Integer, Integer>;
-var
-  first : Boolean;
-  key : Integer;
 begin
-  Console.Write('testMap({');
-  first := True;
-  for key in thing.Keys do
-  begin
-    if (first) then
-    begin
-      first := false;
-    end else
-    begin
-      Console.Write(', ');
-    end;
-    Console.Write(IntToStr(key) + ' => ' + IntToStr( thing[key]));
-  end;
-  Console.WriteLine('})');
+  Console.Write('testMap(');
+  if thing <> nil then Console.Write(thing.ToString);
+  Console.WriteLine(')');
   Result := thing;
 end;
 
@@ -313,12 +287,11 @@ var
   x2 : TXception2;
 begin
   Console.WriteLine('testMultiException(' + arg0 + ', ' + arg1 + ')');
-  if ( arg0 = 'Xception') then
-  begin
+  if ( arg0 = 'Xception') then begin
     raise TXception.Create( 1001, 'This is an Xception');  // test the new rich CTOR
-  end else
-  if ( arg0 = 'Xception2') then
-  begin
+  end;
+
+  if ( arg0 = 'Xception2') then begin
     x2 := TXception2.Create;  // the old way still works too?
     x2.ErrorCode := 2002;
     x2.Struct_thing := TXtructImpl.Create;
@@ -332,17 +305,11 @@ begin
 end;
 
 function TTestServer.TTestHandlerImpl.testNest( const thing: IXtruct2): IXtruct2;
-var
-  temp : IXtruct;
 begin
-  temp := thing.Struct_thing;
-  Console.WriteLine('testNest({' +
-         IntToStr( thing.Byte_thing) + ', {' +
-         '"' + temp.String_thing + '", ' +
-         IntToStr( temp.Byte_thing) + ', ' +
-         IntToStr( temp.I32_thing) + ', ' +
-         IntToStr( temp.I64_thing) + '}, ' +
-         IntToStr( temp.I32_thing) + '})');
+  Console.Write('testNest(');
+  if thing <> nil then Console.Write(thing.ToString);
+  Console.WriteLine(')');
+
   Result := thing;
 end;
 
@@ -353,34 +320,18 @@ begin
   Console.WriteLine('testOneway finished');
 end;
 
-function TTestServer.TTestHandlerImpl.testSet(
-  const thing: IHashSet<Integer>):IHashSet<Integer>;
-var
-  first : Boolean;
-  elem : Integer;
+function TTestServer.TTestHandlerImpl.testSet( const thing: IHashSet<Integer>):IHashSet<Integer>;
 begin
-  Console.Write('testSet({');
-  first := True;
+  Console.Write('testSet(');
+  if thing <> nil then Console.Write(thing.ToString);
+  Console.WriteLine(')');;
 
-  for elem in thing do
-  begin
-    if first then
-    begin
-      first := False;
-    end else
-    begin
-      Console.Write( ', ');
-    end;
-    Console.Write( IntToStr( elem));
-  end;
-  Console.WriteLine('})');
   Result := thing;
 end;
 
 procedure TTestServer.TTestHandlerImpl.testStop;
 begin
-  if FServer <> nil then
-  begin
+  if FServer <> nil then begin
     FServer.Stop;
   end;
 end;
@@ -399,24 +350,11 @@ end;
 
 function TTestServer.TTestHandlerImpl.testStringMap(
   const thing: IThriftDictionary<string, string>): IThriftDictionary<string, string>;
-var
-  first : Boolean;
-  key : string;
 begin
-  Console.Write('testStringMap({');
-  first := True;
-  for key in thing.Keys do
-  begin
-    if (first) then
-    begin
-      first := false;
-    end else
-    begin
-      Console.Write(', ');
-    end;
-    Console.Write(key + ' => ' + thing[key]);
-  end;
-  Console.WriteLine('})');
+  Console.Write('testStringMap(');
+  if thing <> nil then Console.Write(thing.ToString);
+  Console.WriteLine(')');
+
   Result := thing;
 end;
 
@@ -433,11 +371,10 @@ end;
 
 function TTestServer.TTestHandlerImpl.testStruct( const thing: IXtruct): IXtruct;
 begin
-  Console.WriteLine('testStruct({' +
-    '"' + thing.String_thing + '", ' +
-      IntToStr( thing.Byte_thing) + ', ' +
-      IntToStr( thing.I32_thing) + ', ' +
-      IntToStr( thing.I64_thing));
+  Console.Write('testStruct(');
+  if thing <> nil then Console.Write(thing.ToString);
+  Console.WriteLine(')');
+
   Result := thing;
 end;
 
@@ -592,7 +529,8 @@ begin
 
         if      s = 'buffered' then Include( layered, trns_Buffered)
         else if s = 'framed'   then Include( layered, trns_Framed)
-        else if s = 'http'     then endpoint := trns_Http
+        else if s = 'http'     then endpoint := trns_MsxmlHttp
+        else if s = 'winhttp'  then endpoint := trns_WinHttp
         else if s = 'anonpipe' then endpoint := trns_AnonPipes
         else InvalidArgs;
       end
@@ -650,8 +588,9 @@ begin
         servertrans := TServerSocketImpl.Create( Port, 0, (trns_Buffered in layered));
       end;
 
-      trns_Http : begin
-        raise Exception.Create(ENDPOINT_TRANSPORTS[endpoint]+' server transport not implemented');
+      trns_MsxmlHttp,
+      trns_WinHttp : begin
+        raise Exception.Create('HTTP server transport not implemented');
       end;
 
       trns_NamedPipes : begin

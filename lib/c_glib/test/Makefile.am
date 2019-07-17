@@ -16,7 +16,7 @@
 # specific language governing permissions and limitations
 # under the License.
 #
-AUTOMAKE_OPTIONS = subdir-objects serial-tests
+AUTOMAKE_OPTIONS = subdir-objects serial-tests nostdinc
 
 SUBDIRS =
 
@@ -36,7 +36,7 @@ BUILT_SOURCES = \
         gen-c_glib/t_test_thrift_test.h \
         gen-c_glib/t_test_thrift_test_types.h
 
-AM_CPPFLAGS = -I../src -I./gen-c_glib
+AM_CPPFLAGS = -I../src -I./gen-c_glib -I$(top_builddir)/lib/c_glib/src/thrift
 AM_CFLAGS = -g -Wall -Wextra -pedantic $(GLIB_CFLAGS) $(GOBJECT_CFLAGS) $(OPENSSL_INCLUDES) \
 	@GCOV_CFLAGS@
 AM_CXXFLAGS = $(AM_CFLAGS)

@@ -29,6 +29,7 @@
 #include <iostream>
 #include <limits>
 #include <string>
+#include <unordered_map>
 #include <vector>
 
 #include <stdlib.h>
@@ -61,7 +62,7 @@ static const string endl = "\n"; // avoid ostream << std::endl flushes
  */
 bool format_go_output(const string& file_path);
 
-const string DEFAULT_THRIFT_IMPORT = "git.apache.org/thrift.git/lib/go/thrift";
+const string DEFAULT_THRIFT_IMPORT = "github.com/apache/thrift/lib/go/thrift";
 static std::string package_flag;
 
 /**
@@ -105,19 +106,19 @@ public:
    * Init and close methods
    */
 
-  void init_generator();
-  void close_generator();
+  void init_generator() override;
+  void close_generator() override;
 
   /**
    * Program-level generation functions
    */
 
-  void generate_typedef(t_typedef* ttypedef);
-  void generate_enum(t_enum* tenum);
-  void generate_const(t_const* tconst);
-  void generate_struct(t_struct* tstruct);
-  void generate_xception(t_struct* txception);
-  void generate_service(t_service* tservice);
+  void generate_typedef(t_typedef* ttypedef) override;
+  void generate_enum(t_enum* tenum) override;
+  void generate_const(t_const* tconst) override;
+  void generate_struct(t_struct* tstruct) override;
+  void generate_xception(t_struct* txception) override;
+  void generate_service(t_service* tservice) override;
 
   std::string render_const_value(t_type* type, t_const_value* value, const string& name, bool opt = false);
 
@@ -249,6 +250,8 @@ public:
   std::string go_imports_end();
   std::string render_includes(bool consts);
   std::string render_included_programs(string& unused_protection);
+  std::string render_program_import(const t_program* program, string& unused_protection);
+  std::string render_system_packages(std::vector<string> &system_packages);
   std::string render_import_protection();
   std::string render_fastbinary_includes();
   std::string declare_argument(t_field* tfield);
@@ -298,6 +301,8 @@ private:
 
   std::string package_name_;
   std::string package_dir_;
+  std::unordered_map<std::string, std::string> package_identifiers_;
+  std::set<std::string> package_identifiers_set_;
   std::string read_method_name_;
   std::string write_method_name_;
 
@@ -743,10 +748,10 @@ void t_go_generator::init_generator() {
 
   // Make output files
   f_types_name_ = package_dir_ + "/" + program_name_ + ".go";
-  f_types_.open(f_types_name_.c_str());
+  f_types_.open(f_types_name_);
 
   f_consts_name_ = package_dir_ + "/" + program_name_ + "-consts.go";
-  f_consts_.open(f_consts_name_.c_str());
+  f_consts_.open(f_consts_name_);
 
   // Print header
   f_types_ << go_autogen_comment() << go_package() << render_includes(false);
@@ -763,33 +768,81 @@ void t_go_generator::init_generator() {
   f_unused_prot_.close();
 }
 
-
-string t_go_generator::render_included_programs(string& unused_protection) {
+string t_go_generator::render_included_programs(string& unused_prot) {
   const vector<t_program*>& includes = program_->get_includes();
   string result = "";
-
-  unused_protection = "";
-
   string local_namespace = program_->get_namespace("go");
-  for (size_t i = 0; i < includes.size(); ++i) {
-    if (!local_namespace.empty() && local_namespace == includes[i]->get_namespace("go")) {
+  for (auto include : includes) {
+    if (!local_namespace.empty() && local_namespace == include->get_namespace("go")) {
       continue;
     }
 
-    string go_module = get_real_go_module(includes[i]);
-    size_t found = 0;
-    for (size_t j = 0; j < go_module.size(); j++) {
-      // Import statement uses slashes ('/') in namespace
-      if (go_module[j] == '.') {
-        go_module[j] = '/';
-        found = j + 1;
-      }
-    }
+    result += render_program_import(include, unused_prot);
+  }
+  return result;
+}
 
-    result += "\t\"" + gen_package_prefix_ + go_module + "\"\n";
-    unused_protection += "var _ = " + go_module.substr(found) + ".GoUnusedProtection__\n";
+string t_go_generator::render_program_import(const t_program* program, string& unused_protection) {
+  string result = "";
+
+  string go_module = get_real_go_module(program);
+  string go_path = go_module;
+  size_t found = 0;
+  for (size_t j = 0; j < go_module.size(); j++) {
+    // Import statement uses slashes ('/') in namespace
+    if (go_module[j] == '.') {
+      go_path[j] = '/';
+      found = j + 1;
+    }
   }
 
+  auto it = package_identifiers_.find(go_module);
+  auto last_component = go_module.substr(found);
+  if (it == package_identifiers_.end()) {
+    auto value = last_component;
+    // This final path component has already been used, let's construct a more unique alias
+    if (package_identifiers_set_.find(value) != package_identifiers_set_.end()) {
+      // TODO: This would produce more readable code if it appended trailing go_module
+      // path components to generate a more readable name unique identifier (e.g. use
+      // packageacommon as the alias for packagea/common instead of common=). But just
+      // appending an integer is much simpler code
+      value = tmp(value);
+    }
+    package_identifiers_set_.insert(value);
+    it = package_identifiers_.emplace(go_module, std::move(value)).first;
+  }
+  auto const& package_identifier = it->second;
+  result += "\t";
+  // if the package_identifier is different than final path component we need an alias
+  if (last_component.compare(package_identifier) != 0) {
+    result += package_identifier + " ";
+  }
+  string s;
+
+  for (auto const& e : package_identifiers_set_)
+  {
+      s += e;
+      s += ',';
+  }
+
+  s.pop_back();
+
+  result += "\"" + gen_package_prefix_ + go_path + "\"\n";
+  unused_protection += "var _ = " + package_identifier + ".GoUnusedProtection__\n";
+  return result;
+}
+
+string t_go_generator::render_system_packages(std::vector<string>& system_packages) {
+  string result = "";
+
+  for (vector<string>::iterator iter = system_packages.begin(); iter != system_packages.end(); ++iter) {
+    string package = *iter;
+    result += "\t\""+ package +"\"\n";
+
+    // Reserve these package names in case the collide with imported Thrift packages
+    package_identifiers_set_.insert(package);
+    package_identifiers_.emplace(package, package);
+  }
   return result;
 }
 
@@ -801,32 +854,14 @@ string t_go_generator::render_includes(bool consts) {
   const vector<t_program*>& includes = program_->get_includes();
   string result = "";
   string unused_prot = "";
-
-  string local_namespace = program_->get_namespace("go");
-  for (size_t i = 0; i < includes.size(); ++i) {
-    if (!local_namespace.empty() && local_namespace == includes[i]->get_namespace("go")) {
-      continue;
-    }
-
-    string go_module = get_real_go_module(includes[i]);
-    size_t found = 0;
-    for (size_t j = 0; j < go_module.size(); j++) {
-      // Import statement uses slashes ('/') in namespace
-      if (go_module[j] == '.') {
-        go_module[j] = '/';
-        found = j + 1;
-      }
-    }
-
-    result += "\t\"" + gen_package_prefix_ + go_module + "\"\n";
-    unused_prot += "var _ = " + go_module.substr(found) + ".GoUnusedProtection__\n";
-  }
+  result += go_imports_begin(consts);
+  result += render_included_programs(unused_prot);
 
   if (includes.size() > 0) {
     result += "\n";
   }
 
-  return go_imports_begin(consts) + result + go_imports_end() + unused_prot;
+  return result + go_imports_end() + unused_prot;
 }
 
 string t_go_generator::render_import_protection() {
@@ -862,22 +897,18 @@ string t_go_generator::go_package() {
  * If consts include the additional imports.
  */
 string t_go_generator::go_imports_begin(bool consts) {
-  string extra;
-
+  std::vector<string> system_packages;
+  system_packages.push_back("bytes");
+  system_packages.push_back("context");
+  system_packages.push_back("reflect");
   // If not writing constants, and there are enums, need extra imports.
   if (!consts && get_program()->get_enums().size() > 0) {
-    extra +=
-      "\t\"database/sql/driver\"\n"
-      "\t\"errors\"\n";
+    system_packages.push_back("database/sql/driver");
+    system_packages.push_back("errors");
   }
-  return string(
-      "import (\n"
-      "\t\"bytes\"\n"
-      "\t\"context\"\n"
-      "\t\"reflect\"\n"
-      + extra +
-      "\t\"fmt\"\n"
-      "\t\"" + gen_thrift_import_ + "\"\n");
+  system_packages.push_back("fmt");
+  system_packages.push_back(gen_thrift_import_);
+  return "import(\n" + render_system_packages(system_packages);
 }
 
 /**
@@ -1255,15 +1286,14 @@ void t_go_generator::generate_go_struct_initializer(ostream& out,
                                                     bool is_args_or_result) {
   out << publicize(type_name(tstruct), is_args_or_result) << "{";
   const vector<t_field*>& members = tstruct->get_members();
-  for (vector<t_field*>::const_iterator m_iter = members.begin(); m_iter != members.end();
-       ++m_iter) {
-    bool pointer_field = is_pointer_field(*m_iter);
+  for (auto member : members) {
+    bool pointer_field = is_pointer_field(member);
     string publicized_name;
     t_const_value* def_value;
-    get_publicized_name_and_def_value(*m_iter, &publicized_name, &def_value);
-    if (!pointer_field && def_value != NULL && !omit_initialization(*m_iter)) {
+    get_publicized_name_and_def_value(member, &publicized_name, &def_value);
+    if (!pointer_field && def_value != NULL && !omit_initialization(member)) {
       out << endl << indent() << publicized_name << ": "
-          << render_field_initial_value(*m_iter, (*m_iter)->get_name(), pointer_field) << ","
+          << render_field_initial_value(member, member->get_name(), pointer_field) << ","
           << endl;
     }
   }
@@ -1323,7 +1353,7 @@ void t_go_generator::generate_go_struct_definition(ostream& out,
       if (tstruct->is_union())
         (*m_iter)->set_req(t_field::T_OPTIONAL);
       if (sorted_keys_pos != (*m_iter)->get_key()) {
-        int first_unused = std::max(1, sorted_keys_pos++);
+        int first_unused = (std::max)(1, sorted_keys_pos++);
         while (sorted_keys_pos != (*m_iter)->get_key()) {
           ++sorted_keys_pos;
         }
@@ -1338,7 +1368,13 @@ void t_go_generator::generate_go_struct_definition(ostream& out,
       t_type* fieldType = (*m_iter)->get_type();
       string goType = type_to_go_type_with_opt(fieldType, is_pointer_field(*m_iter));
       string gotag = "db:\"" + escape_string((*m_iter)->get_name())  + "\" ";
-      if ((*m_iter)->get_req() == t_field::T_OPTIONAL) {
+
+      // Only add the `omitempty` tag if this field is optional and has no default value.
+      // Otherwise a proper value like `false` for a bool field will be ommitted from
+      // the JSON output since Go Marshal won't output `zero values`.
+      bool has_default = (*m_iter)->get_value();
+      bool is_optional = (*m_iter)->get_req() == t_field::T_OPTIONAL;
+      if (is_optional && !has_default) {
         gotag += "json:\"" + escape_string((*m_iter)->get_name()) + ",omitempty\"";
       } else {
         gotag += "json:\"" + escape_string((*m_iter)->get_name()) + "\"";
@@ -1591,17 +1627,19 @@ void t_go_generator::generate_go_struct_reader(ostream& out,
         << endl;
     out << indent() << "    return err" << endl;
     out << indent() << "  }" << endl;
+
+    // Mark required field as read
+    if ((*f_iter)->get_req() == t_field::T_REQUIRED) {
+      const string field_name(publicize(escape_string((*f_iter)->get_name())));
+      out << indent() << "  isset" << field_name << " = true" << endl;
+    }
+
     out << indent() << "} else {" << endl;
     out << indent() << "  if err := iprot.Skip(fieldTypeId); err != nil {" << endl;
     out << indent() << "    return err" << endl;
     out << indent() << "  }" << endl;
     out << indent() << "}" << endl;
 
-    // Mark required field as read
-    if ((*f_iter)->get_req() == t_field::T_REQUIRED) {
-      const string field_name(publicize(escape_string((*f_iter)->get_name())));
-      out << indent() << "isset" << field_name << " = true" << endl;
-    }
 
     indent_down();
   }
@@ -2106,35 +2144,27 @@ void t_go_generator::generate_service_remote(t_service* tservice) {
                          + underscore(service_name_) + "-remote.go";
   ofstream_with_content_based_conditional_update f_remote;
   f_remote.open(f_remote_name.c_str());
-  string service_module = get_real_go_module(program_);
-  string::size_type loc;
-
-  while ((loc = service_module.find(".")) != string::npos) {
-    service_module.replace(loc, 1, 1, '/');
-  }
-  if (!gen_package_prefix_.empty()) {
-    service_module = gen_package_prefix_ + service_module;
-  }
 
   string unused_protection;
 
-  string ctxPackage = "context";
+  std::vector<string> system_packages;
+  system_packages.push_back("context");
+  system_packages.push_back("flag");
+  system_packages.push_back("fmt");
+  system_packages.push_back("math");
+  system_packages.push_back("net");
+  system_packages.push_back("net/url");
+  system_packages.push_back("os");
+  system_packages.push_back("strconv");
+  system_packages.push_back("strings");
 
   f_remote << go_autogen_comment();
   f_remote << indent() << "package main" << endl << endl;
   f_remote << indent() << "import (" << endl;
-  f_remote << indent() << "        \"" << ctxPackage << "\"" << endl;
-  f_remote << indent() << "        \"flag\"" << endl;
-  f_remote << indent() << "        \"fmt\"" << endl;
-  f_remote << indent() << "        \"math\"" << endl;
-  f_remote << indent() << "        \"net\"" << endl;
-  f_remote << indent() << "        \"net/url\"" << endl;
-  f_remote << indent() << "        \"os\"" << endl;
-  f_remote << indent() << "        \"strconv\"" << endl;
-  f_remote << indent() << "        \"strings\"" << endl;
-  f_remote << indent() << "        \"" + gen_thrift_import_ + "\"" << endl;
+  f_remote << render_system_packages(system_packages);
+  f_remote << indent() << "\t\"" + gen_thrift_import_ + "\"" << endl;
   f_remote << indent() << render_included_programs(unused_protection);
-  f_remote << indent() << "        \"" << service_module << "\"" << endl;
+  f_remote << render_program_import(program_, unused_protection);
   f_remote << indent() << ")" << endl;
   f_remote << indent() << endl;
   f_remote << indent() << unused_protection; // filled in render_included_programs()
@@ -2146,12 +2176,13 @@ void t_go_generator::generate_service_remote(t_service* tservice) {
   f_remote << indent() << "  flag.PrintDefaults()" << endl;
   f_remote << indent() << "  fmt.Fprintln(os.Stderr, \"\\nFunctions:\")" << endl;
 
+  string package_name_aliased = package_identifiers_[get_real_go_module(program_)];
+
   for (f_iter = functions.begin(); f_iter != functions.end(); ++f_iter) {
     f_remote << "  fmt.Fprintln(os.Stderr, \"  " << (*f_iter)->get_returntype()->get_name() << " "
              << (*f_iter)->get_name() << "(";
     t_struct* arg_struct = (*f_iter)->get_arglist();
     const std::vector<t_field*>& args = arg_struct->get_members();
-    vector<t_field*>::const_iterator a_iter;
     std::vector<t_field*>::size_type num_args = args.size();
     bool first = true;
 
@@ -2293,7 +2324,7 @@ void t_go_generator::generate_service_remote(t_service* tservice) {
   f_remote << indent() << "}" << endl;
   f_remote << indent() << "iprot := protocolFactory.GetProtocol(trans)" << endl;
   f_remote << indent() << "oprot := protocolFactory.GetProtocol(trans)" << endl;
-  f_remote << indent() << "client := " << package_name_ << ".New" << publicize(service_name_)
+  f_remote << indent() << "client := " << package_name_aliased << ".New" << publicize(service_name_)
            << "Client(thrift.NewTStandardClient(iprot, oprot))" << endl;
   f_remote << indent() << "if err := trans.Open(); err != nil {" << endl;
   f_remote << indent() << "  fmt.Fprintln(os.Stderr, \"Error opening socket to \", "
@@ -2306,7 +2337,6 @@ void t_go_generator::generate_service_remote(t_service* tservice) {
   for (f_iter = functions.begin(); f_iter != functions.end(); ++f_iter) {
     t_struct* arg_struct = (*f_iter)->get_arglist();
     const std::vector<t_field*>& args = arg_struct->get_members();
-    vector<t_field*>::const_iterator a_iter;
     std::vector<t_field*>::size_type num_args = args.size();
     string funcName((*f_iter)->get_name());
     string pubName(publicize(funcName));
@@ -2331,7 +2361,7 @@ void t_go_generator::generate_service_remote(t_service* tservice) {
         f_remote << indent() << "  Usage()" << endl;
         f_remote << indent() << " return" << endl;
         f_remote << indent() << "}" << endl;
-        f_remote << indent() << "argvalue" << i << " := " << package_name_ << "."
+        f_remote << indent() << "argvalue" << i << " := " << package_name_aliased << "."
                  << publicize(the_type->get_name()) << "(tmp" << i << ")" << endl;
       } else if (the_type2->is_base_type()) {
         t_base_type::t_base e = ((t_base_type*)the_type2)->get_base();
@@ -2419,7 +2449,7 @@ void t_go_generator::generate_service_remote(t_service* tservice) {
         std::string tstruct_name(publicize(the_type->get_name()));
         std::string tstruct_module( module_name(the_type));
         if(tstruct_module.empty()) {
-          tstruct_module = package_name_;
+          tstruct_module = package_name_aliased;
         }
 
         f_remote << indent() << arg << " := flag.Arg(" << flagArg << ")" << endl;
@@ -2463,7 +2493,7 @@ void t_go_generator::generate_service_remote(t_service* tservice) {
         f_remote << indent() << factory << " := thrift.NewTJSONProtocolFactory()" << endl;
         f_remote << indent() << jsProt << " := " << factory << ".GetProtocol(" << mbTrans << ")"
                  << endl;
-        f_remote << indent() << "containerStruct" << i << " := " << package_name_ << ".New"
+        f_remote << indent() << "containerStruct" << i << " := " << package_name_aliased << ".New"
                  << argumentsName << "()" << endl;
         f_remote << indent() << err2 << " := containerStruct" << i << ".ReadField" << (i + 1) << "("
                  << jsProt << ")" << endl;
@@ -2478,9 +2508,9 @@ void t_go_generator::generate_service_remote(t_service* tservice) {
       }
 
       if (the_type->is_typedef()) {
-        std::string typedef_module( module_name(the_type));
+        std::string typedef_module(module_name(the_type));
         if(typedef_module.empty()) {
-          typedef_module = package_name_;
+          typedef_module = package_name_aliased;
         }
         f_remote << indent() << "value" << i << " := " << typedef_module << "."
                  << publicize(the_type->get_name()) << "(argvalue" << i << ")" << endl;
@@ -2691,7 +2721,6 @@ void t_go_generator::generate_process_function(t_service* tservice, t_function* 
 
   // t_struct* xs = tfunction->get_xceptions();
   // const std::vector<t_field*>& xceptions = xs->get_members();
-  vector<t_field*>::const_iterator x_iter;
   f_types_ << indent() << "type " << processorName << " struct {" << endl;
   f_types_ << indent() << "  handler " << publicize(tservice->get_name()) << endl;
   f_types_ << indent() << "}" << endl << endl;
@@ -3233,8 +3262,12 @@ void t_go_generator::generate_serialize_container(ostream& out,
     t_set* tset = (t_set*)ttype;
     out << indent() << "for i := 0; i<len(" << prefix << "); i++ {" << endl;
     out << indent() << "  for j := i+1; j<len(" << prefix << "); j++ {" << endl;
-    out << indent() << "    if reflect.DeepEqual(" << prefix << "[i]," << prefix << "[j]) { " << endl;
-    out << indent() << "      return thrift.PrependError(\"\", fmt.Errorf(\"%T error writing set field: slice is not unique\", " << prefix << "[i]))" << endl;
+    string wrapped_prefix = prefix;
+    if (pointer_field) {
+      wrapped_prefix = "(" + prefix + ")";
+    }
+    out << indent() << "    if reflect.DeepEqual(" << wrapped_prefix << "[i]," << wrapped_prefix << "[j]) { " << endl;
+    out << indent() << "      return thrift.PrependError(\"\", fmt.Errorf(\"%T error writing set field: slice is not unique\", " << wrapped_prefix << "[i]))" << endl;
     out << indent() << "    }" << endl;
     out << indent() << "  }" << endl;
     out << indent() << "}" << endl;
@@ -3496,12 +3529,7 @@ string t_go_generator::module_name(t_type* ttype) {
         program_->get_namespace("go").empty() ||
         program->get_namespace("go") != program_->get_namespace("go")) {
       string module(get_real_go_module(program));
-      // for namespaced includes, only keep part after dot.
-      size_t dot = module.rfind('.');
-      if (dot != string::npos) {
-        module = module.substr(dot + 1);
-      }
-      return module;
+      return package_identifiers_[module];
     }
   }
 

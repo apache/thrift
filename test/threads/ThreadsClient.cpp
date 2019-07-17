@@ -27,7 +27,7 @@
 #include <thrift/transport/TTransportUtils.h>
 #include <thrift/concurrency/Monitor.h>
 #include <thrift/concurrency/ThreadManager.h>
-#include <thrift/concurrency/PlatformThreadFactory.h>
+#include <thrift/concurrency/ThreadFactory.h>
 #if _WIN32
    #include <thrift/windows/TWinsockSingleton.h>
 #endif

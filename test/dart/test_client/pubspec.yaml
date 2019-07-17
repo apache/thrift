@@ -16,16 +16,16 @@
 # under the License.
 
 name: thrift_test_client
-version: 1.0.0-dev
+version: 0.13.0
 description: A client integration test for the Dart Thrift library
 author: Apache Thrift Developers <dev@thrift.apache.org>
 homepage: http://thrift.apache.org
 
 environment:
-  sdk: ">=1.13.0 <2.0.0"
+  sdk: ">=1.24.3 <3.0.0"
 
 dependencies:
-  args: ^0.13.0
+  args: ">=0.13.0 <2.0.0"
   http: ^0.11.0
   thrift:
     path: ../../../lib/dart
@@ -33,4 +33,4 @@ dependencies:
     path: ../gen-dart/thrift_test
 
 dev_dependencies:
-  test: "^0.12.0"
+  test: ">=0.12.30 <2.0.0"

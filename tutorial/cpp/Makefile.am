@@ -16,7 +16,7 @@
 # specific language governing permissions and limitations
 # under the License.
 #
-AUTOMAKE_OPTIONS = subdir-objects serial-tests
+AUTOMAKE_OPTIONS = subdir-objects serial-tests nostdinc
 
 BUILT_SOURCES = gen-cpp/shared_types.cpp \
                 gen-cpp/tutorial_types.cpp

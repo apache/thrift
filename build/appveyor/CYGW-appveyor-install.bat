@@ -26,9 +26,25 @@ CALL cl_setenv.bat                         || EXIT /B
 CALL cl_showenv.bat                        || EXIT /B
 
 ::
+:: Upgrades cygwin to the latest, if you want...
+::
+:: appveyor DownloadFile "https://cygwin.com/setup-x86_64.exe"
+:: setup-x86_64.exe --quiet-mode --wait --upgrade-also --packages="gcc-g++"
+
+::
 :: Install apt-cyg for package management
 ::
 
 %BASH% -lc "wget rawgit.com/transcode-open/apt-cyg/master/apt-cyg && install apt-cyg /bin && rm -f apt-cyg" || EXIT /B
 %BASH% -lc "apt-cyg update" || EXIT /B
-%BASH% -lc "apt-cyg install bison cmake flex gcc-g++ libboost-devel libevent-devel make openssl-devel zlib-devel"
+%BASH% -lc "apt-cyg install bison cmake flex gcc-g++ libboost-devel libevent-devel make openssl-devel xz zlib-devel"
+
+::
+:: We need a newer version of cmake, the one cygwin provides is too old
+:: to recognize the version of boost.  Luckily there is a pre-release
+:: one available, however cygwin's own setup program has no command line
+:: option to allow access to test packages!
+::
+
+%BASH% -lc "apt-cyg remove cmake"
+%BASH% -lc "cd / && wget http://mirror.clarkson.edu/cygwin/x86_64/release/cmake/cmake-3.13.1-1.tar.xz && tar xJf cmake-3.13.1-1.tar.xz && hash -r && cmake --version"

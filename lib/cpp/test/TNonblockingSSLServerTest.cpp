@@ -19,8 +19,6 @@
 
 #define BOOST_TEST_MODULE TNonblockingSSLServerTest
 #include <boost/test/unit_test.hpp>
-#include <boost/smart_ptr.hpp>
-#include <boost/shared_ptr.hpp>
 #include <boost/filesystem.hpp>
 #include <boost/format.hpp>
 
@@ -41,17 +39,17 @@ using apache::thrift::transport::TSSLSocketFactory;
 using apache::thrift::transport::TSSLSocket;
 
 struct Handler : public test::ParentServiceIf {
-  void addString(const std::string& s) { strings_.push_back(s); }
-  void getStrings(std::vector<std::string>& _return) { _return = strings_; }
+  void addString(const std::string& s) override { strings_.push_back(s); }
+  void getStrings(std::vector<std::string>& _return) override { _return = strings_; }
   std::vector<std::string> strings_;
 
   // dummy overrides not used in this test
-  int32_t incrementGeneration() { return 0; }
-  int32_t getGeneration() { return 0; }
-  void getDataWait(std::string&, const int32_t) {}
-  void onewayWait() {}
-  void exceptionWait(const std::string&) {}
-  void unexpectedExceptionWait(const std::string&) {}
+  int32_t incrementGeneration() override { return 0; }
+  int32_t getGeneration() override { return 0; }
+  void getDataWait(std::string&, const int32_t) override {}
+  void onewayWait() override {}
+  void exceptionWait(const std::string&) override {}
+  void unexpectedExceptionWait(const std::string&) override {}
 };
 
 boost::filesystem::path keyDir;
@@ -105,8 +103,8 @@ BOOST_GLOBAL_FIXTURE(GlobalFixtureSSL);
 BOOST_GLOBAL_FIXTURE(GlobalFixtureSSL)
 #endif
 
-stdcxx::shared_ptr<TSSLSocketFactory> createServerSocketFactory() {
-  stdcxx::shared_ptr<TSSLSocketFactory> pServerSocketFactory;
+std::shared_ptr<TSSLSocketFactory> createServerSocketFactory() {
+  std::shared_ptr<TSSLSocketFactory> pServerSocketFactory;
 
   pServerSocketFactory.reset(new TSSLSocketFactory());
   pServerSocketFactory->ciphers("ALL:!ADH:!LOW:!EXP:!MD5:@STRENGTH");
@@ -116,8 +114,8 @@ stdcxx::shared_ptr<TSSLSocketFactory> createServerSocketFactory() {
   return pServerSocketFactory;
 }
 
-stdcxx::shared_ptr<TSSLSocketFactory> createClientSocketFactory() {
-  stdcxx::shared_ptr<TSSLSocketFactory> pClientSocketFactory;
+std::shared_ptr<TSSLSocketFactory> createClientSocketFactory() {
+  std::shared_ptr<TSSLSocketFactory> pClientSocketFactory;
 
   pClientSocketFactory.reset(new TSSLSocketFactory());
   pClientSocketFactory->authenticate(true);
@@ -133,7 +131,7 @@ private:
     public:
       ListenEventHandler(Mutex* mutex) : listenMonitor_(mutex), ready_(false) {}
 
-      void preServe() /* override */ {
+      void preServe() override /* override */ {
         Guard g(listenMonitor_.mutex());
         ready_ = true;
         listenMonitor_.notify();
@@ -145,19 +143,19 @@ private:
 
   struct Runner : public apache::thrift::concurrency::Runnable {
     int port;
-    stdcxx::shared_ptr<event_base> userEventBase;
-    stdcxx::shared_ptr<TProcessor> processor;
-    stdcxx::shared_ptr<server::TNonblockingServer> server;
-    stdcxx::shared_ptr<ListenEventHandler> listenHandler;
-    stdcxx::shared_ptr<TSSLSocketFactory> pServerSocketFactory;
-    stdcxx::shared_ptr<transport::TNonblockingSSLServerSocket> socket;
+    std::shared_ptr<event_base> userEventBase;
+    std::shared_ptr<TProcessor> processor;
+    std::shared_ptr<server::TNonblockingServer> server;
+    std::shared_ptr<ListenEventHandler> listenHandler;
+    std::shared_ptr<TSSLSocketFactory> pServerSocketFactory;
+    std::shared_ptr<transport::TNonblockingSSLServerSocket> socket;
     Mutex mutex_;
 
-    Runner() {
+    Runner():port(0) {
       listenHandler.reset(new ListenEventHandler(&mutex_));
     }
 
-    virtual void run() {
+    void run() override {
       // When binding to explicit port, allow retrying to workaround bind failures on ports in use
       int retryCount = port ? 10 : 0;
       pServerSocketFactory = createServerSocketFactory();  
@@ -198,7 +196,7 @@ private:
   };
 
 protected:
-  Fixture() : processor(new test::ParentServiceProcessor(stdcxx::make_shared<Handler>())) {}
+  Fixture() : processor(new test::ParentServiceProcessor(std::make_shared<Handler>())) {}
 
   ~Fixture() {
     if (server) {
@@ -214,18 +212,13 @@ protected:
   }
 
   int startServer(int port) {
-    stdcxx::shared_ptr<Runner> runner(new Runner);
+    std::shared_ptr<Runner> runner(new Runner);
     runner->port = port;
     runner->processor = processor;
     runner->userEventBase = userEventBase_;
 
-    apache::thrift::stdcxx::scoped_ptr<apache::thrift::concurrency::ThreadFactory> threadFactory(
-        new apache::thrift::concurrency::PlatformThreadFactory(
-#if !USE_BOOST_THREAD && !USE_STD_THREAD
-            concurrency::PlatformThreadFactory::OTHER, concurrency::PlatformThreadFactory::NORMAL,
-            1,
-#endif
-            false));
+    std::unique_ptr<apache::thrift::concurrency::ThreadFactory> threadFactory(
+        new apache::thrift::concurrency::ThreadFactory(false));
     thread = threadFactory->newThread(runner);
     thread->start();
     runner->readyBarrier();
@@ -235,11 +228,11 @@ protected:
   }
 
   bool canCommunicate(int serverPort) {
-    stdcxx::shared_ptr<TSSLSocketFactory> pClientSocketFactory = createClientSocketFactory();
-    stdcxx::shared_ptr<TSSLSocket> socket = pClientSocketFactory->createSocket("localhost", serverPort);
+    std::shared_ptr<TSSLSocketFactory> pClientSocketFactory = createClientSocketFactory();
+    std::shared_ptr<TSSLSocket> socket = pClientSocketFactory->createSocket("localhost", serverPort);
     socket->open();
-    test::ParentServiceClient client(stdcxx::make_shared<protocol::TBinaryProtocol>(
-        stdcxx::make_shared<transport::TFramedTransport>(socket)));
+    test::ParentServiceClient client(std::make_shared<protocol::TBinaryProtocol>(
+        std::make_shared<transport::TFramedTransport>(socket)));
     client.addString("foo");
     std::vector<std::string> strings;
     client.getStrings(strings);
@@ -247,12 +240,12 @@ protected:
   }
 
 private:
-  stdcxx::shared_ptr<event_base> userEventBase_;
-  stdcxx::shared_ptr<test::ParentServiceProcessor> processor;
+  std::shared_ptr<event_base> userEventBase_;
+  std::shared_ptr<test::ParentServiceProcessor> processor;
 protected:
-  stdcxx::shared_ptr<server::TNonblockingServer> server;
+  std::shared_ptr<server::TNonblockingServer> server;
 private:
-  stdcxx::shared_ptr<apache::thrift::concurrency::Thread> thread;
+  std::shared_ptr<apache::thrift::concurrency::Thread> thread;
 
 };
 

@@ -22,9 +22,8 @@
 #include <thrift/concurrency/ThreadManager.h>
 #include <thrift/concurrency/Exception.h>
 #include <thrift/concurrency/Monitor.h>
-#include <thrift/concurrency/Util.h>
 
-#include <thrift/stdcxx.h>
+#include <memory>
 
 #include <stdexcept>
 #include <deque>
@@ -34,8 +33,9 @@ namespace apache {
 namespace thrift {
 namespace concurrency {
 
-using stdcxx::shared_ptr;
-using stdcxx::dynamic_pointer_cast;
+using std::shared_ptr;
+using std::unique_ptr;
+using std::dynamic_pointer_cast;
 
 /**
  * ThreadManager class
@@ -64,19 +64,19 @@ public:
       maxMonitor_(&mutex_),
       workerMonitor_(&mutex_) {}
 
-  ~Impl() { stop(); }
+  ~Impl() override { stop(); }
 
-  void start();
-  void stop();
+  void start() override;
+  void stop() override;
 
-  ThreadManager::STATE state() const { return state_; }
+  ThreadManager::STATE state() const override { return state_; }
 
-  shared_ptr<ThreadFactory> threadFactory() const {
+  shared_ptr<ThreadFactory> threadFactory() const override {
     Guard g(mutex_);
     return threadFactory_;
   }
 
-  void threadFactory(shared_ptr<ThreadFactory> value) {
+  void threadFactory(shared_ptr<ThreadFactory> value) override {
     Guard g(mutex_);
     if (threadFactory_ && threadFactory_->isDetached() != value->isDetached()) {
       throw InvalidArgumentException();
@@ -84,33 +84,33 @@ public:
     threadFactory_ = value;
   }
 
-  void addWorker(size_t value);
+  void addWorker(size_t value) override;
 
-  void removeWorker(size_t value);
+  void removeWorker(size_t value) override;
 
-  size_t idleWorkerCount() const { return idleCount_; }
+  size_t idleWorkerCount() const override { return idleCount_; }
 
-  size_t workerCount() const {
+  size_t workerCount() const override {
     Guard g(mutex_);
     return workerCount_;
   }
 
-  size_t pendingTaskCount() const {
+  size_t pendingTaskCount() const override {
     Guard g(mutex_);
     return tasks_.size();
   }
 
-  size_t totalTaskCount() const {
+  size_t totalTaskCount() const override {
     Guard g(mutex_);
     return tasks_.size() + workerCount_ - idleCount_;
   }
 
-  size_t pendingTaskCountMax() const {
+  size_t pendingTaskCountMax() const override {
     Guard g(mutex_);
     return pendingTaskCountMax_;
   }
 
-  size_t expiredTaskCount() {
+  size_t expiredTaskCount() const override {
     Guard g(mutex_);
     return expiredCount_;
   }
@@ -120,17 +120,17 @@ public:
     pendingTaskCountMax_ = value;
   }
 
-  void add(shared_ptr<Runnable> value, int64_t timeout, int64_t expiration);
+  void add(shared_ptr<Runnable> value, int64_t timeout, int64_t expiration) override;
 
-  void remove(shared_ptr<Runnable> task);
+  void remove(shared_ptr<Runnable> task) override;
 
-  shared_ptr<Runnable> removeNextPending();
+  shared_ptr<Runnable> removeNextPending() override;
 
-  void removeExpiredTasks() {
+  void removeExpiredTasks() override {
     removeExpired(false);
   }
 
-  void setExpireCallback(ExpireCallback expireCallback);
+  void setExpireCallback(ExpireCallback expireCallback) override;
 
 private:
   /**
@@ -180,14 +180,17 @@ class ThreadManager::Task : public Runnable {
 public:
   enum STATE { WAITING, EXECUTING, TIMEDOUT, COMPLETE };
 
-  Task(shared_ptr<Runnable> runnable, int64_t expiration = 0LL)
+  Task(shared_ptr<Runnable> runnable, uint64_t expiration = 0ULL)
     : runnable_(runnable),
-      state_(WAITING),
-      expireTime_(expiration != 0LL ? Util::currentTime() + expiration : 0LL) {}
+      state_(WAITING) {
+        if (expiration != 0ULL) {
+          expireTime_.reset(new std::chrono::steady_clock::time_point(std::chrono::steady_clock::now() + std::chrono::milliseconds(expiration)));
+        }
+    }
 
-  ~Task() {}
+  ~Task() override = default;
 
-  void run() {
+  void run() override {
     if (state_ == EXECUTING) {
       runnable_->run();
       state_ = COMPLETE;
@@ -196,13 +199,13 @@ public:
 
   shared_ptr<Runnable> getRunnable() { return runnable_; }
 
-  int64_t getExpireTime() const { return expireTime_; }
+  const unique_ptr<std::chrono::steady_clock::time_point> & getExpireTime() const { return expireTime_; }
 
 private:
   shared_ptr<Runnable> runnable_;
   friend class ThreadManager::Worker;
   STATE state_;
-  int64_t expireTime_;
+  unique_ptr<std::chrono::steady_clock::time_point> expireTime_;
 };
 
 class ThreadManager::Worker : public Runnable {
@@ -211,7 +214,7 @@ class ThreadManager::Worker : public Runnable {
 public:
   Worker(ThreadManager::Impl* manager) : manager_(manager), state_(UNINITIALIZED) {}
 
-  ~Worker() {}
+  ~Worker() override = default;
 
 private:
   bool isActive() const {
@@ -226,7 +229,7 @@ public:
    * As long as worker thread is running, pull tasks off the task queue and
    * execute.
    */
-  void run() {
+  void run() override {
     Guard g(manager_->mutex_);
 
     /**
@@ -280,7 +283,7 @@ public:
             // If the state is changed to anything other than EXECUTING or TIMEDOUT here
             // then the execution loop needs to be changed below.
             task->state_ =
-                (task->getExpireTime() && task->getExpireTime() < Util::currentTime()) ?
+                (task->getExpireTime() && *(task->getExpireTime()) < std::chrono::steady_clock::now()) ?
                     ThreadManager::Task::TIMEDOUT :
                     ThreadManager::Task::EXECUTING;
           }
@@ -341,7 +344,7 @@ void ThreadManager::Impl::addWorker(size_t value) {
   std::set<shared_ptr<Thread> > newThreads;
   for (size_t ix = 0; ix < value; ix++) {
     shared_ptr<ThreadManager::Worker> worker
-        = shared_ptr<ThreadManager::Worker>(new ThreadManager::Worker(this));
+        = std::make_shared<ThreadManager::Worker>(this);
     newThreads.insert(threadFactory_->newThread(worker));
   }
 
@@ -349,13 +352,12 @@ void ThreadManager::Impl::addWorker(size_t value) {
   workerMaxCount_ += value;
   workers_.insert(newThreads.begin(), newThreads.end());
 
-  for (std::set<shared_ptr<Thread> >::iterator ix = newThreads.begin(); ix != newThreads.end();
-       ++ix) {
+  for (const auto & newThread : newThreads) {
     shared_ptr<ThreadManager::Worker> worker
-        = dynamic_pointer_cast<ThreadManager::Worker, Runnable>((*ix)->runnable());
+        = dynamic_pointer_cast<ThreadManager::Worker, Runnable>(newThread->runnable());
     worker->state_ = ThreadManager::Worker::STARTING;
-    (*ix)->start();
-    idMap_.insert(std::pair<const Thread::id_t, shared_ptr<Thread> >((*ix)->getId(), *ix));
+    newThread->start();
+    idMap_.insert(std::pair<const Thread::id_t, shared_ptr<Thread> >(newThread->getId(), newThread));
   }
 
   while (workerCount_ != workerMaxCount_) {
@@ -427,17 +429,15 @@ void ThreadManager::Impl::removeWorkersUnderLock(size_t value) {
     workerMonitor_.wait();
   }
 
-  for (std::set<shared_ptr<Thread> >::iterator ix = deadWorkers_.begin();
-       ix != deadWorkers_.end();
-       ++ix) {
+  for (const auto & deadWorker : deadWorkers_) {
 
     // when used with a joinable thread factory, we join the threads as we remove them
     if (!threadFactory_->isDetached()) {
-      (*ix)->join();
+      deadWorker->join();
     }
 
-    idMap_.erase((*ix)->getId());
-    workers_.erase(*ix);
+    idMap_.erase(deadWorker->getId());
+    workers_.erase(deadWorker);
   }
 
   deadWorkers_.clear();
@@ -477,7 +477,7 @@ void ThreadManager::Impl::add(shared_ptr<Runnable> value, int64_t timeout, int64
     }
   }
 
-  tasks_.push_back(shared_ptr<ThreadManager::Task>(new ThreadManager::Task(value, expiration)));
+  tasks_.push_back(std::make_shared<ThreadManager::Task>(value, expiration));
 
   // If idle thread is available notify it, otherwise all worker threads are
   // running and will get around to this task in time.
@@ -494,7 +494,7 @@ void ThreadManager::Impl::remove(shared_ptr<Runnable> task) {
         "started");
   }
 
-  for (TaskQueue::iterator it = tasks_.begin(); it != tasks_.end(); ++it)
+  for (auto it = tasks_.begin(); it != tasks_.end(); ++it)
   {
     if ((*it)->getRunnable() == task)
     {
@@ -504,7 +504,7 @@ void ThreadManager::Impl::remove(shared_ptr<Runnable> task) {
   }
 }
 
-stdcxx::shared_ptr<Runnable> ThreadManager::Impl::removeNextPending() {
+std::shared_ptr<Runnable> ThreadManager::Impl::removeNextPending() {
   Guard g(mutex_);
   if (state_ != ThreadManager::STARTED) {
     throw IllegalStateException(
@@ -513,7 +513,7 @@ stdcxx::shared_ptr<Runnable> ThreadManager::Impl::removeNextPending() {
   }
 
   if (tasks_.empty()) {
-    return stdcxx::shared_ptr<Runnable>();
+    return std::shared_ptr<Runnable>();
   }
 
   shared_ptr<ThreadManager::Task> task = tasks_.front();
@@ -524,15 +524,14 @@ stdcxx::shared_ptr<Runnable> ThreadManager::Impl::removeNextPending() {
 
 void ThreadManager::Impl::removeExpired(bool justOne) {
   // this is always called under a lock
-  int64_t now = 0LL;
+  if (tasks_.empty()) {
+    return;
+  }
+  auto now = std::chrono::steady_clock::now();
 
-  for (TaskQueue::iterator it = tasks_.begin(); it != tasks_.end(); )
+  for (auto it = tasks_.begin(); it != tasks_.end(); )
   {
-    if (now == 0LL) {
-      now = Util::currentTime();
-    }
-
-    if ((*it)->getExpireTime() > 0LL && (*it)->getExpireTime() < now) {
+    if ((*it)->getExpireTime() && *((*it)->getExpireTime()) < now) {
       if (expireCallback_) {
         expireCallback_((*it)->getRunnable());
       }
@@ -560,7 +559,7 @@ public:
   SimpleThreadManager(size_t workerCount = 4, size_t pendingTaskCountMax = 0)
     : workerCount_(workerCount), pendingTaskCountMax_(pendingTaskCountMax) {}
 
-  void start() {
+  void start() override {
     ThreadManager::Impl::pendingTaskCountMax(pendingTaskCountMax_);
     ThreadManager::Impl::start();
     addWorker(workerCount_);

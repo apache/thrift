@@ -57,13 +57,12 @@ public class TestMultiplexedProcessor {
 
   static class StubProcessor implements TProcessor {
     @Override
-    public boolean process(TProtocol in, TProtocol out) throws TException {
+    public void process(TProtocol in, TProtocol out) throws TException {
       TMessage msg = in.readMessageBegin();
       if (!"func".equals(msg.name) || msg.type!=TMessageType.CALL || msg.seqid!=42) {
         throw new TException("incorrect parameters");
       }
       out.writeMessageBegin(new TMessage("func", TMessageType.REPLY, 42));
-      return true;
     }
   }
 

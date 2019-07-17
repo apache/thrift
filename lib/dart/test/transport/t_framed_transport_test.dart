@@ -18,9 +18,9 @@
 library thrift.test.transport.t_framed_transport_test;
 
 import 'dart:async';
-import 'dart:convert';
 import 'dart:typed_data' show Uint8List;
 
+import 'package:dart2_constant/convert.dart' show utf8;
 import 'package:test/test.dart';
 import 'package:thrift/thrift.dart';
 
@@ -66,14 +66,14 @@ void main() {
       expectNoReadableBytes();
 
       // write first batch of body
-      socket.messageController.add(new Uint8List.fromList(UTF8.encode("He")));
+      socket.messageController.add(new Uint8List.fromList(utf8.encode("He")));
 
       // you shouldn't be able to get any bytes from the read,
       // because the frame has been consumed internally
       expectNoReadableBytes();
 
       // write second batch of body
-      socket.messageController.add(new Uint8List.fromList(UTF8.encode("llo!")));
+      socket.messageController.add(new Uint8List.fromList(utf8.encode("llo!")));
 
       // have to wait for the flush to complete,
       // because it's only then that the frame is available for reading
@@ -83,7 +83,7 @@ void main() {
       // at this point the frame is complete, so we expect the read to complete
       readBytes = transport.read(readBuffer, 0, readBuffer.lengthInBytes);
       expect(readBytes, 6);
-      expect(readBuffer.sublist(0, 6), UTF8.encode("Hello!"));
+      expect(readBuffer.sublist(0, 6), utf8.encode("Hello!"));
     });
 
     test('Test transport reads messages where header is sent in pieces '
@@ -112,14 +112,14 @@ void main() {
       readBytes = expectNoReadableBytes();
 
       // write first batch of body
-      socket.messageController.add(new Uint8List.fromList(UTF8.encode("H")));
+      socket.messageController.add(new Uint8List.fromList(utf8.encode("H")));
 
       // you shouldn't be able to get any bytes from the read,
       // because the frame has been consumed internally
       expectNoReadableBytes();
 
       // write second batch of body
-      socket.messageController.add(new Uint8List.fromList(UTF8.encode("i!")));
+      socket.messageController.add(new Uint8List.fromList(utf8.encode("i!")));
 
       // have to wait for the flush to complete,
       // because it's only then that the frame is available for reading
@@ -129,7 +129,7 @@ void main() {
       // at this point the frame is complete, so we expect the read to complete
       readBytes = transport.read(readBuffer, 0, readBuffer.lengthInBytes);
       expect(readBytes, 3);
-      expect(readBuffer.sublist(0, 3), UTF8.encode("Hi!"));
+      expect(readBuffer.sublist(0, 3), utf8.encode("Hi!"));
     });
   });
 }

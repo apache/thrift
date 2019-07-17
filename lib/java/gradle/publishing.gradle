@@ -61,9 +61,9 @@ def configurePom(pom) {
         url 'http://thrift.apache.org'
 
         scm {
-            url 'https://git-wip-us.apache.org/repos/asf?p=thrift.git'
-            connection 'scm:git:https://git-wip-us.apache.org/repos/asf/thrift.git'
-            developerConnection 'scm:git:https://git-wip-us.apache.org/repos/asf/thrift.git'
+            url 'https://github.com/apache/thrift'
+            connection 'scm:git:https://github.com/apache/thrift.git'
+            developerConnection 'scm:git:git@github.com:apache/thrift.git'
         }
 
         licenses {

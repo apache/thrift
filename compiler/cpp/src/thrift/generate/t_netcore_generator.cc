@@ -1347,9 +1347,9 @@ void t_netcore_generator::generate_netcore_union_definition(ostream& out, t_stru
     indent_up();
 
     out << indent() << "public abstract Task WriteAsync(TProtocol tProtocol, CancellationToken cancellationToken);" << endl
-        << indent() << "public readonly bool Isset;" << endl
+        << indent() << "public readonly int Isset;" << endl
         << indent() << "public abstract object Data { get; }" << endl
-        << indent() << "protected " << tunion->get_name() << "(bool isset)" << endl
+        << indent() << "protected " << tunion->get_name() << "(int isset)" << endl
         << indent() << "{" << endl;
     indent_up();
     out << indent() << "Isset = isset;" << endl;
@@ -1361,7 +1361,7 @@ void t_netcore_generator::generate_netcore_union_definition(ostream& out, t_stru
     indent_up();
 
     out << indent() << "public override object Data { get { return null; } }" << endl
-        << indent() << "public ___undefined() : base(false) {}" << endl << endl;
+        << indent() << "public ___undefined() : base(0) {}" << endl << endl;
 
     out << indent() << "public override Task WriteAsync(TProtocol oprot, CancellationToken cancellationToken)" << endl
         << indent() << "{" << endl;
@@ -1390,13 +1390,27 @@ void t_netcore_generator::generate_netcore_union_definition(ostream& out, t_stru
 
 void t_netcore_generator::generate_netcore_union_class(ostream& out, t_struct* tunion, t_field* tfield)
 {
+    out << indent() << "public " << type_name(tfield->get_type()) << " As_" << tfield->get_name() << endl;
+    out << indent() << "{" << endl;
+    indent_up();
+    out << indent() << "get" << endl;
+    out << indent() << "{" << endl;
+    indent_up();
+    out << indent() << "return (" << tfield->get_key() << " == Isset) ? (" << type_name(tfield->get_type()) << ")Data : default(" << type_name(tfield->get_type()) << ");" << endl;
+    indent_down();
+    out << indent() << "}" << endl;
+    indent_down();
+    out << indent() << "}" << endl
+		<< endl;
+	
+	
     out << indent() << "public class " << tfield->get_name() << " : " << tunion->get_name() << endl
         << indent() << "{" << endl;
     indent_up();
 
     out << indent() << "private " << type_name(tfield->get_type()) << " _data;" << endl
         << indent() << "public override object Data { get { return _data; } }" << endl
-        << indent() << "public " << tfield->get_name() << "(" << type_name(tfield->get_type()) << " data) : base(true)" << endl
+        << indent() << "public " << tfield->get_name() << "(" << type_name(tfield->get_type()) << " data) : base("<< tfield->get_key() <<")" << endl
         << indent() << "{" << endl;
     indent_up();
     out << indent() << "this._data = data;" << endl;
@@ -2720,7 +2734,7 @@ void t_netcore_generator::prepare_member_name_mapping(t_struct* tstruct)
 void t_netcore_generator::prepare_member_name_mapping(void* scope, const vector<t_field*>& members, const string& structname)
 {
     // begin new scope
-    member_mapping_scopes.push_back(member_mapping_scope());
+    member_mapping_scopes.emplace_back();
     member_mapping_scope& active = member_mapping_scopes.back();
     active.scope_member = scope;
 

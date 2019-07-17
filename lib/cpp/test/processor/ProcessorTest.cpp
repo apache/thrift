@@ -25,7 +25,7 @@
 
 #include <boost/test/unit_test.hpp>
 
-#include <thrift/concurrency/PlatformThreadFactory.h>
+#include <thrift/concurrency/ThreadFactory.h>
 #include <thrift/concurrency/Monitor.h>
 #include <thrift/protocol/TBinaryProtocol.h>
 #include <thrift/server/TThreadedServer.h>
@@ -57,13 +57,13 @@ class TSimpleServerTraits {
 public:
   typedef TSimpleServer ServerType;
 
-  stdcxx::shared_ptr<TSimpleServer> createServer(
-      const stdcxx::shared_ptr<TProcessor>& processor,
+  std::shared_ptr<TSimpleServer> createServer(
+      const std::shared_ptr<TProcessor>& processor,
       uint16_t port,
-      const stdcxx::shared_ptr<TTransportFactory>& transportFactory,
-      const stdcxx::shared_ptr<TProtocolFactory>& protocolFactory) {
-    stdcxx::shared_ptr<TServerSocket> socket(new TServerSocket(port));
-    return stdcxx::shared_ptr<TSimpleServer>(
+      const std::shared_ptr<TTransportFactory>& transportFactory,
+      const std::shared_ptr<TProtocolFactory>& protocolFactory) {
+    std::shared_ptr<TServerSocket> socket(new TServerSocket(port));
+    return std::shared_ptr<TSimpleServer>(
         new TSimpleServer(processor, socket, transportFactory, protocolFactory));
   }
 };
@@ -72,13 +72,13 @@ class TThreadedServerTraits {
 public:
   typedef TThreadedServer ServerType;
 
-  stdcxx::shared_ptr<TThreadedServer> createServer(
-      const stdcxx::shared_ptr<TProcessor>& processor,
+  std::shared_ptr<TThreadedServer> createServer(
+      const std::shared_ptr<TProcessor>& processor,
       uint16_t port,
-      const stdcxx::shared_ptr<TTransportFactory>& transportFactory,
-      const stdcxx::shared_ptr<TProtocolFactory>& protocolFactory) {
-    stdcxx::shared_ptr<TServerSocket> socket(new TServerSocket(port));
-    return stdcxx::shared_ptr<TThreadedServer>(
+      const std::shared_ptr<TTransportFactory>& transportFactory,
+      const std::shared_ptr<TProtocolFactory>& protocolFactory) {
+    std::shared_ptr<TServerSocket> socket(new TServerSocket(port));
+    return std::shared_ptr<TThreadedServer>(
         new TThreadedServer(processor, socket, transportFactory, protocolFactory));
   }
 };
@@ -87,19 +87,19 @@ class TThreadPoolServerTraits {
 public:
   typedef TThreadPoolServer ServerType;
 
-  stdcxx::shared_ptr<TThreadPoolServer> createServer(
-      const stdcxx::shared_ptr<TProcessor>& processor,
+  std::shared_ptr<TThreadPoolServer> createServer(
+      const std::shared_ptr<TProcessor>& processor,
       uint16_t port,
-      const stdcxx::shared_ptr<TTransportFactory>& transportFactory,
-      const stdcxx::shared_ptr<TProtocolFactory>& protocolFactory) {
-    stdcxx::shared_ptr<TServerSocket> socket(new TServerSocket(port));
+      const std::shared_ptr<TTransportFactory>& transportFactory,
+      const std::shared_ptr<TProtocolFactory>& protocolFactory) {
+    std::shared_ptr<TServerSocket> socket(new TServerSocket(port));
 
-    stdcxx::shared_ptr<PlatformThreadFactory> threadFactory(new PlatformThreadFactory);
-    stdcxx::shared_ptr<ThreadManager> threadManager = ThreadManager::newSimpleThreadManager(8);
+    std::shared_ptr<ThreadFactory> threadFactory(new ThreadFactory);
+    std::shared_ptr<ThreadManager> threadManager = ThreadManager::newSimpleThreadManager(8);
     threadManager->threadFactory(threadFactory);
     threadManager->start();
 
-    return stdcxx::shared_ptr<TThreadPoolServer>(
+    return std::shared_ptr<TThreadPoolServer>(
         new TThreadPoolServer(processor, socket, transportFactory, protocolFactory, threadManager));
   }
 };
@@ -108,27 +108,27 @@ class TNonblockingServerTraits {
 public:
   typedef TNonblockingServer ServerType;
 
-  stdcxx::shared_ptr<TNonblockingServer> createServer(
-      const stdcxx::shared_ptr<TProcessor>& processor,
+  std::shared_ptr<TNonblockingServer> createServer(
+      const std::shared_ptr<TProcessor>& processor,
       uint16_t port,
-      const stdcxx::shared_ptr<TTransportFactory>& transportFactory,
-      const stdcxx::shared_ptr<TProtocolFactory>& protocolFactory) {
+      const std::shared_ptr<TTransportFactory>& transportFactory,
+      const std::shared_ptr<TProtocolFactory>& protocolFactory) {
     // TNonblockingServer automatically uses TFramedTransport.
     // Raise an exception if the supplied transport factory is not a
     // TFramedTransportFactory
-    TFramedTransportFactory* framedFactory
+    auto* framedFactory
         = dynamic_cast<TFramedTransportFactory*>(transportFactory.get());
-    if (framedFactory == NULL) {
+    if (framedFactory == nullptr) {
       throw TException("TNonblockingServer must use TFramedTransport");
     }
 
-    stdcxx::shared_ptr<TNonblockingServerSocket> socket(new TNonblockingServerSocket(port));
-    stdcxx::shared_ptr<PlatformThreadFactory> threadFactory(new PlatformThreadFactory);
-    stdcxx::shared_ptr<ThreadManager> threadManager = ThreadManager::newSimpleThreadManager(8);
+    std::shared_ptr<TNonblockingServerSocket> socket(new TNonblockingServerSocket(port));
+    std::shared_ptr<ThreadFactory> threadFactory(new ThreadFactory);
+    std::shared_ptr<ThreadManager> threadManager = ThreadManager::newSimpleThreadManager(8);
     threadManager->threadFactory(threadFactory);
     threadManager->start();
 
-    return stdcxx::shared_ptr<TNonblockingServer>(
+    return std::shared_ptr<TNonblockingServer>(
         new TNonblockingServer(processor, protocolFactory, socket, threadManager));
   }
 };
@@ -137,24 +137,24 @@ class TNonblockingServerNoThreadsTraits {
 public:
   typedef TNonblockingServer ServerType;
 
-  stdcxx::shared_ptr<TNonblockingServer> createServer(
-      const stdcxx::shared_ptr<TProcessor>& processor,
+  std::shared_ptr<TNonblockingServer> createServer(
+      const std::shared_ptr<TProcessor>& processor,
       uint16_t port,
-      const stdcxx::shared_ptr<TTransportFactory>& transportFactory,
-      const stdcxx::shared_ptr<TProtocolFactory>& protocolFactory) {
+      const std::shared_ptr<TTransportFactory>& transportFactory,
+      const std::shared_ptr<TProtocolFactory>& protocolFactory) {
     // TNonblockingServer automatically uses TFramedTransport.
     // Raise an exception if the supplied transport factory is not a
     // TFramedTransportFactory
-    TFramedTransportFactory* framedFactory
+    auto* framedFactory
         = dynamic_cast<TFramedTransportFactory*>(transportFactory.get());
-    if (framedFactory == NULL) {
+    if (framedFactory == nullptr) {
       throw TException("TNonblockingServer must use TFramedTransport");
     }
 
-    stdcxx::shared_ptr<TNonblockingServerSocket> socket(new TNonblockingServerSocket(port));
+    std::shared_ptr<TNonblockingServerSocket> socket(new TNonblockingServerSocket(port));
     // Use a NULL ThreadManager
-    stdcxx::shared_ptr<ThreadManager> threadManager;
-    return stdcxx::shared_ptr<TNonblockingServer>(
+    std::shared_ptr<ThreadManager> threadManager;
+    return std::shared_ptr<TNonblockingServer>(
         new TNonblockingServer(processor, protocolFactory, socket, threadManager));
   }
 };
@@ -244,48 +244,48 @@ public:
     processor_->setEventHandler(processorEventHandler_);
   }
 
-  stdcxx::shared_ptr<TServer> createServer(uint16_t port) {
+  std::shared_ptr<TServer> createServer(uint16_t port) override {
     ServerTraits_ serverTraits;
     return serverTraits.createServer(processor_, port, transportFactory_, protocolFactory_);
   }
 
-  stdcxx::shared_ptr<TServerEventHandler> getServerEventHandler() { return serverEventHandler_; }
+  std::shared_ptr<TServerEventHandler> getServerEventHandler() override { return serverEventHandler_; }
 
-  void bindSuccessful(uint16_t port) { port_ = port; }
+  void bindSuccessful(uint16_t port) override { port_ = port; }
 
   uint16_t getPort() const { return port_; }
 
-  const stdcxx::shared_ptr<EventLog>& getLog() const { return log_; }
+  const std::shared_ptr<EventLog>& getLog() const { return log_; }
 
-  const stdcxx::shared_ptr<Handler>& getHandler() const { return handler_; }
+  const std::shared_ptr<Handler>& getHandler() const { return handler_; }
 
-  stdcxx::shared_ptr<Client> createClient() {
+  std::shared_ptr<Client> createClient() {
     typedef typename ServiceTraits_::Protocol Protocol;
 
-    stdcxx::shared_ptr<TSocket> socket(new TSocket("127.0.0.1", port_));
-    stdcxx::shared_ptr<Transport_> transport(new Transport_(socket));
-    stdcxx::shared_ptr<Protocol> protocol(new Protocol(transport));
+    std::shared_ptr<TSocket> socket(new TSocket("127.0.0.1", port_));
+    std::shared_ptr<Transport_> transport(new Transport_(socket));
+    std::shared_ptr<Protocol> protocol(new Protocol(transport));
     transport->open();
 
-    stdcxx::shared_ptr<Client> client(new Client(protocol));
+    std::shared_ptr<Client> client(new Client(protocol));
     return client;
   }
 
 private:
   uint16_t port_;
-  stdcxx::shared_ptr<EventLog> log_;
-  stdcxx::shared_ptr<Handler> handler_;
-  stdcxx::shared_ptr<Processor> processor_;
-  stdcxx::shared_ptr<TTransportFactory> transportFactory_;
-  stdcxx::shared_ptr<TProtocolFactory> protocolFactory_;
-  stdcxx::shared_ptr<TServerEventHandler> serverEventHandler_;
-  stdcxx::shared_ptr<TProcessorEventHandler> processorEventHandler_;
+  std::shared_ptr<EventLog> log_;
+  std::shared_ptr<Handler> handler_;
+  std::shared_ptr<Processor> processor_;
+  std::shared_ptr<TTransportFactory> transportFactory_;
+  std::shared_ptr<TProtocolFactory> protocolFactory_;
+  std::shared_ptr<TServerEventHandler> serverEventHandler_;
+  std::shared_ptr<TProcessorEventHandler> processorEventHandler_;
 };
 
 /**
  * Check that there are no more events in the log
  */
-void checkNoEvents(const stdcxx::shared_ptr<EventLog>& log) {
+void checkNoEvents(const std::shared_ptr<EventLog>& log) {
   // Wait for an event with a very short timeout period.  We don't expect
   // anything to be present, so we will normally wait for the full timeout.
   // On the other hand, a non-zero timeout is nice since it does give a short
@@ -299,7 +299,7 @@ void checkNoEvents(const stdcxx::shared_ptr<EventLog>& log) {
  *
  * Returns the connection ID allocated by the server.
  */
-uint32_t checkNewConnEvents(const stdcxx::shared_ptr<EventLog>& log) {
+uint32_t checkNewConnEvents(const std::shared_ptr<EventLog>& log) {
   // Check for an ET_CONN_CREATED event
   Event event = log->waitForEvent(2500);
   BOOST_CHECK_EQUAL(EventLog::ET_CONN_CREATED, event.type);
@@ -314,7 +314,7 @@ uint32_t checkNewConnEvents(const stdcxx::shared_ptr<EventLog>& log) {
 /**
  * Check for the events that should be logged when a connection is closed.
  */
-void checkCloseEvents(const stdcxx::shared_ptr<EventLog>& log, uint32_t connId) {
+void checkCloseEvents(const std::shared_ptr<EventLog>& log, uint32_t connId) {
   // Check for an ET_CONN_DESTROYED event
   Event event = log->waitForEvent();
   BOOST_CHECK_EQUAL(EventLog::ET_CONN_DESTROYED, event.type);
@@ -332,7 +332,7 @@ void checkCloseEvents(const stdcxx::shared_ptr<EventLog>& log, uint32_t connId) 
  *
  * Returns the call ID allocated by the server.
  */
-uint32_t checkCallHandlerEvents(const stdcxx::shared_ptr<EventLog>& log,
+uint32_t checkCallHandlerEvents(const std::shared_ptr<EventLog>& log,
                                 uint32_t connId,
                                 EventType callType,
                                 const string& callName) {
@@ -369,7 +369,7 @@ uint32_t checkCallHandlerEvents(const stdcxx::shared_ptr<EventLog>& log,
 /**
  * Check for the events that should be after a handler returns.
  */
-void checkCallPostHandlerEvents(const stdcxx::shared_ptr<EventLog>& log,
+void checkCallPostHandlerEvents(const std::shared_ptr<EventLog>& log,
                                 uint32_t connId,
                                 uint32_t callId,
                                 const string& callName) {
@@ -409,7 +409,7 @@ void checkCallPostHandlerEvents(const stdcxx::shared_ptr<EventLog>& log,
  *
  * Returns the call ID allocated by the server.
  */
-uint32_t checkCallEvents(const stdcxx::shared_ptr<EventLog>& log,
+uint32_t checkCallEvents(const std::shared_ptr<EventLog>& log,
                          uint32_t connId,
                          EventType callType,
                          const string& callName) {
@@ -424,8 +424,8 @@ uint32_t checkCallEvents(const stdcxx::shared_ptr<EventLog>& log,
  */
 
 template <typename State_>
-void testParentService(const stdcxx::shared_ptr<State_>& state) {
-  stdcxx::shared_ptr<typename State_::Client> client = state->createClient();
+void testParentService(const std::shared_ptr<State_>& state) {
+  std::shared_ptr<typename State_::Client> client = state->createClient();
 
   int32_t gen = client->getGeneration();
   int32_t newGen = client->incrementGeneration();
@@ -446,8 +446,8 @@ void testParentService(const stdcxx::shared_ptr<State_>& state) {
 }
 
 template <typename State_>
-void testChildService(const stdcxx::shared_ptr<State_>& state) {
-  stdcxx::shared_ptr<typename State_::Client> client = state->createClient();
+void testChildService(const std::shared_ptr<State_>& state) {
+  std::shared_ptr<typename State_::Client> client = state->createClient();
 
   // Test calling some of the parent methids via the a child client
   int32_t gen = client->getGeneration();
@@ -468,7 +468,7 @@ void testBasicService() {
   typedef ServiceState<ServerTraits, ParentServiceTraits<TemplateTraits> > State;
 
   // Start the server
-  stdcxx::shared_ptr<State> state(new State);
+  std::shared_ptr<State> state(new State);
   ServerThread serverThread(state, true);
 
   testParentService(state);
@@ -479,7 +479,7 @@ void testInheritedService() {
   typedef ServiceState<ServerTraits, ChildServiceTraits<TemplateTraits> > State;
 
   // Start the server
-  stdcxx::shared_ptr<State> state(new State);
+  std::shared_ptr<State> state(new State);
   ServerThread serverThread(state, true);
 
   testParentService(state);
@@ -502,10 +502,10 @@ void testEventSequencing() {
                        TBufferedTransport> State;
 
   // Start the server
-  stdcxx::shared_ptr<State> state(new State);
+  std::shared_ptr<State> state(new State);
   ServerThread serverThread(state, true);
 
-  const stdcxx::shared_ptr<EventLog>& log = state->getLog();
+  const std::shared_ptr<EventLog>& log = state->getLog();
 
   // Make sure we're at the end of the log
   checkNoEvents(log);
@@ -514,7 +514,7 @@ void testEventSequencing() {
 
   // Make sure createContext() is called after a connection has been
   // established.  We open a plain socket instead of creating a client.
-  stdcxx::shared_ptr<TSocket> socket(new TSocket("127.0.0.1", state->getPort()));
+  std::shared_ptr<TSocket> socket(new TSocket("127.0.0.1", state->getPort()));
   socket->open();
 
   // Make sure the proper events occurred after a new connection
@@ -524,7 +524,7 @@ void testEventSequencing() {
   // can test the timing for the preRead() call.
   string requestName = "getDataWait";
   string eventName = "ParentService.getDataWait";
-  int32_t seqid = int32_t(time(NULL));
+  auto seqid = int32_t(time(nullptr));
   TBinaryProtocol protocol(socket);
   protocol.writeMessageBegin(requestName, T_CALL, seqid);
   socket->flush();
@@ -635,19 +635,19 @@ void testSeparateConnections() {
   typedef ServiceState<ServerTraits, ChildServiceTraits<TemplateTraits> > State;
 
   // Start the server
-  stdcxx::shared_ptr<State> state(new State);
+  std::shared_ptr<State> state(new State);
   ServerThread serverThread(state, true);
 
-  const stdcxx::shared_ptr<EventLog>& log = state->getLog();
+  const std::shared_ptr<EventLog>& log = state->getLog();
 
   // Create a client
-  stdcxx::shared_ptr<typename State::Client> client1 = state->createClient();
+  std::shared_ptr<typename State::Client> client1 = state->createClient();
 
   // Make sure the expected events were logged
   uint32_t client1Id = checkNewConnEvents(log);
 
   // Create a second client
-  stdcxx::shared_ptr<typename State::Client> client2 = state->createClient();
+  std::shared_ptr<typename State::Client> client2 = state->createClient();
 
   // Make sure the expected events were logged
   uint32_t client2Id = checkNewConnEvents(log);
@@ -683,13 +683,13 @@ void testOnewayCall() {
   typedef ServiceState<ServerTraits, ChildServiceTraits<TemplateTraits> > State;
 
   // Start the server
-  stdcxx::shared_ptr<State> state(new State);
+  std::shared_ptr<State> state(new State);
   ServerThread serverThread(state, true);
 
-  const stdcxx::shared_ptr<EventLog>& log = state->getLog();
+  const std::shared_ptr<EventLog>& log = state->getLog();
 
   // Create a client
-  stdcxx::shared_ptr<typename State::Client> client = state->createClient();
+  std::shared_ptr<typename State::Client> client = state->createClient();
   uint32_t connId = checkNewConnEvents(log);
 
   // Make a oneway call
@@ -735,13 +735,13 @@ void testExpectedError() {
   typedef ServiceState<ServerTraits, ChildServiceTraits<TemplateTraits> > State;
 
   // Start the server
-  stdcxx::shared_ptr<State> state(new State);
+  std::shared_ptr<State> state(new State);
   ServerThread serverThread(state, true);
 
-  const stdcxx::shared_ptr<EventLog>& log = state->getLog();
+  const std::shared_ptr<EventLog>& log = state->getLog();
 
   // Create a client
-  stdcxx::shared_ptr<typename State::Client> client = state->createClient();
+  std::shared_ptr<typename State::Client> client = state->createClient();
   uint32_t connId = checkNewConnEvents(log);
 
   // Send the exceptionWait() call
@@ -790,13 +790,13 @@ void testUnexpectedError() {
   typedef ServiceState<ServerTraits, ChildServiceTraits<TemplateTraits> > State;
 
   // Start the server
-  stdcxx::shared_ptr<State> state(new State);
+  std::shared_ptr<State> state(new State);
   ServerThread serverThread(state, true);
 
-  const stdcxx::shared_ptr<EventLog>& log = state->getLog();
+  const std::shared_ptr<EventLog>& log = state->getLog();
 
   // Create a client
-  stdcxx::shared_ptr<typename State::Client> client = state->createClient();
+  std::shared_ptr<typename State::Client> client = state->createClient();
   uint32_t connId = checkNewConnEvents(log);
 
   // Send the unexpectedExceptionWait() call

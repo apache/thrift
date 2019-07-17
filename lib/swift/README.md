@@ -22,7 +22,6 @@ under the License.
 
 
 ## Build
-
     swift build
 
 ## Test

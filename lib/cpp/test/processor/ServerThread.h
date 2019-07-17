@@ -35,7 +35,7 @@ namespace test {
  */
 class ServerState {
 public:
-  virtual ~ServerState() {}
+  virtual ~ServerState() = default;
 
   /**
    * Create a server to listen on the specified port.
@@ -43,7 +43,7 @@ public:
    * If the server returned fails to bind to the specified port when serve() is
    * called on it, createServer() may be called again on a different port.
    */
-  virtual stdcxx::shared_ptr<server::TServer> createServer(uint16_t port) = 0;
+  virtual std::shared_ptr<server::TServer> createServer(uint16_t port) = 0;
 
   /**
    * Get the TServerEventHandler to set on the server.
@@ -52,8 +52,8 @@ public:
    * start serving traffic.  It is invoked from the server thread, rather than
    * the main thread.
    */
-  virtual stdcxx::shared_ptr<server::TServerEventHandler> getServerEventHandler() {
-    return stdcxx::shared_ptr<server::TServerEventHandler>();
+  virtual std::shared_ptr<server::TServerEventHandler> getServerEventHandler() {
+    return std::shared_ptr<server::TServerEventHandler>();
   }
 
   /**
@@ -70,7 +70,7 @@ public:
  */
 class ServerThread {
 public:
-  ServerThread(const stdcxx::shared_ptr<ServerState>& state, bool autoStart)
+  ServerThread(const std::shared_ptr<ServerState>& state, bool autoStart)
     : port_(0),
       running_(false),
       serving_(false),
@@ -105,9 +105,9 @@ protected:
   public:
     Helper(ServerThread* serverThread) : serverThread_(serverThread) {}
 
-    void run() { serverThread_->run(); }
+    void run() override { serverThread_->run(); }
 
-    void preServe() { serverThread_->preServe(); }
+    void preServe() override { serverThread_->preServe(); }
 
   private:
     ServerThread* serverThread_;
@@ -116,7 +116,7 @@ protected:
   void run();
   void preServe();
 
-  stdcxx::shared_ptr<Helper> helper_;
+  std::shared_ptr<Helper> helper_;
 
   uint16_t port_;
   bool running_;
@@ -124,9 +124,9 @@ protected:
   bool error_;
   concurrency::Monitor serverMonitor_;
 
-  stdcxx::shared_ptr<ServerState> serverState_;
-  stdcxx::shared_ptr<server::TServer> server_;
-  stdcxx::shared_ptr<concurrency::Thread> thread_;
+  std::shared_ptr<ServerState> serverState_;
+  std::shared_ptr<server::TServer> server_;
+  std::shared_ptr<concurrency::Thread> thread_;
 };
 }
 }

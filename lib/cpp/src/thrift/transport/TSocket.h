@@ -74,33 +74,33 @@ public:
   /**
    * Destroyes the socket object, closing it if necessary.
    */
-  virtual ~TSocket();
+  ~TSocket() override;
 
   /**
    * Whether the socket is alive.
    *
    * @return Is the socket alive?
    */
-  virtual bool isOpen();
+  bool isOpen() const override;
 
   /**
    * Checks whether there is more data available in the socket to read.
    *
    * This call blocks until at least one byte is available or the socket is closed.
    */
-  virtual bool peek();
+  bool peek() override;
 
   /**
    * Creates and opens the UNIX socket.
    *
    * @throws TTransportException If the socket could not connect
    */
-  virtual void open();
+  void open() override;
 
   /**
    * Shuts down communications on the socket.
    */
-  virtual void close();
+  void close() override;
 
   /**
    * Determines whether there is pending data to read or not.
@@ -208,22 +208,22 @@ public:
   /**
    * Get socket information formatted as a string <Host: x Port: x>
    */
-  std::string getSocketInfo();
+  std::string getSocketInfo() const;
 
   /**
    * Returns the DNS name of the host to which the socket is connected
    */
-  std::string getPeerHost();
+  std::string getPeerHost() const;
 
   /**
    * Returns the address of the host to which the socket is connected
    */
-  std::string getPeerAddress();
+  std::string getPeerAddress() const;
 
   /**
    * Returns the port of the host to which the socket is connected
    **/
-  int getPeerPort();
+  int getPeerPort() const;
 
   /**
    * Returns the underlying socket file descriptor.
@@ -259,7 +259,7 @@ public:
    *
    * @return string peer host identifier and port
    */
-  virtual const std::string getOrigin();
+  const std::string getOrigin() const override;
 
   /**
    * Constructor to create socket from file descriptor.
@@ -270,7 +270,7 @@ public:
    * Constructor to create socket from file descriptor that
    * can be interrupted safely.
    */
-  TSocket(THRIFT_SOCKET socket, stdcxx::shared_ptr<THRIFT_SOCKET> interruptListener);
+  TSocket(THRIFT_SOCKET socket, std::shared_ptr<THRIFT_SOCKET> interruptListener);
 
   /**
    * Set a cache of the peer address (used when trivially available: e.g.
@@ -295,19 +295,19 @@ protected:
   THRIFT_SOCKET socket_;
 
   /** Peer hostname */
-  std::string peerHost_;
+  mutable std::string peerHost_;
 
   /** Peer address */
-  std::string peerAddress_;
+  mutable std::string peerAddress_;
 
   /** Peer port */
-  int peerPort_;
+  mutable int peerPort_;
 
   /**
    * A shared socket pointer that will interrupt a blocking read if data
    * becomes available on it
    */
-  stdcxx::shared_ptr<THRIFT_SOCKET> interruptListener_;
+  std::shared_ptr<THRIFT_SOCKET> interruptListener_;
 
   /** Connect timeout in ms */
   int connTimeout_;

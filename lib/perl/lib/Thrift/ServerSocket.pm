@@ -38,7 +38,7 @@ use version 0.77; our $VERSION = version->declare("$Thrift::VERSION");
 # @param[in]  host   host interface to listen on (undef = all interfaces)
 # @param[in]  port   port number to listen on (required)
 # @param[in]  queue  the listen queue size (default if not specified is 128)
-# @example    my $serversock = new Thrift::ServerSocket(host => undef, port => port)
+# @example    my $serversock = Thrift::ServerSocket->new(host => undef, port => port)
 #
 sub new
 {
@@ -49,7 +49,8 @@ sub new
     # Support both old-style "port number" construction and newer...
     if (ref($args) eq 'HASH') {
         $self = $args;
-    } else {
+    }
+    else {
         $self = { port => $args };
     }
 
@@ -71,7 +72,7 @@ sub listen
             $self->{debugHandler}->($error);
         }
 
-        die new Thrift::TTransportException($error, Thrift::TTransportException::NOT_OPEN);
+        die Thrift::TTransportException->new($error, Thrift::TTransportException::NOT_OPEN);
     };
 
     $self->{handle} = $sock;
@@ -84,7 +85,7 @@ sub accept
     if ( exists $self->{handle} and defined $self->{handle} ) {
         my $client        = $self->{handle}->accept();
         my $result        = $self->__client();
-        $result->{handle} = new IO::Select($client);
+        $result->{handle} = IO::Select->new($client);
         return $result;
     }
 
@@ -93,12 +94,12 @@ sub accept
 
 sub close
 {
-	my $self = shift;
-	
+    my $self = shift;
+
     if ( exists $self->{handle} and defined $self->{handle} )
     {
         $self->{handle}->close();
-	}
+    }
 }
 
 ###
@@ -107,7 +108,7 @@ sub close
 
 sub __client
 {
-  return new Thrift::Socket();
+  return Thrift::Socket->new();
 }
 
 sub __listen

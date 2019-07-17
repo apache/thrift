@@ -17,8 +17,8 @@
 
 //! Types used to implement a Thrift server.
 
-use {ApplicationError, ApplicationErrorKind};
 use protocol::{TInputProtocol, TMessageIdentifier, TMessageType, TOutputProtocol};
+use {ApplicationError, ApplicationErrorKind};
 
 mod multiplexed;
 mod threaded;
@@ -39,7 +39,6 @@ pub use self::threaded::TServer;
 /// a Thrift service `SimpleService`.
 ///
 /// ```no_run
-/// use thrift;
 /// use thrift::protocol::{TInputProtocol, TOutputProtocol};
 /// use thrift::server::TProcessor;
 ///

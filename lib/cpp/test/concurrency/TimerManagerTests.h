@@ -18,11 +18,12 @@
  */
 
 #include <thrift/concurrency/TimerManager.h>
-#include <thrift/concurrency/PlatformThreadFactory.h>
+#include <thrift/concurrency/ThreadFactory.h>
 #include <thrift/concurrency/Monitor.h>
-#include <thrift/concurrency/Util.h>
 
 #include <assert.h>
+#include <chrono>
+#include <thread>
 #include <iostream>
 
 namespace apache {
@@ -37,19 +38,19 @@ class TimerManagerTests {
 public:
   class Task : public Runnable {
   public:
-    Task(Monitor& monitor, int64_t timeout)
+    Task(Monitor& monitor, uint64_t timeout)
       : _timeout(timeout),
-        _startTime(Util::currentTime()),
+        _startTime(std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch()).count()),
         _endTime(0),
         _monitor(monitor),
         _success(false),
         _done(false) {}
 
-    ~Task() { std::cerr << this << std::endl; }
+    ~Task() override { std::cerr << this << std::endl; }
 
-    void run() {
+    void run() override {
 
-      _endTime = Util::currentTime();
+      _endTime = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch()).count();
       _success = (_endTime - _startTime) >= _timeout;
 
       {
@@ -73,14 +74,14 @@ public:
    * properly clean up itself and the remaining orphaned timeout task when the
    * manager goes out of scope and its destructor is called.
    */
-  bool test00(int64_t timeout = 1000LL) {
+  bool test00(uint64_t timeout = 1000LL) {
 
     shared_ptr<TimerManagerTests::Task> orphanTask
         = shared_ptr<TimerManagerTests::Task>(new TimerManagerTests::Task(_monitor, 10 * timeout));
 
     {
       TimerManager timerManager;
-      timerManager.threadFactory(shared_ptr<PlatformThreadFactory>(new PlatformThreadFactory()));
+      timerManager.threadFactory(shared_ptr<ThreadFactory>(new ThreadFactory()));
       timerManager.start();
       if (timerManager.state() != TimerManager::STARTED) {
         std::cerr << "timerManager is not in the STARTED state, but should be" << std::endl;
@@ -95,7 +96,7 @@ public:
         Synchronized s(_monitor);
         timerManager.add(orphanTask, 10 * timeout);
 
-        THRIFT_SLEEP_USEC(timeout * 1000);
+        std::this_thread::sleep_for(std::chrono::milliseconds(timeout));
 
         task.reset(new TimerManagerTests::Task(_monitor, timeout));
         timerManager.add(task, timeout);
@@ -123,9 +124,9 @@ public:
    * verifies that the timer manager properly clean up itself and the remaining orphaned timeout
    * task when the manager goes out of scope and its destructor is called.
    */
-  bool test01(int64_t timeout = 1000LL) {
+  bool test01(uint64_t timeout = 1000LL) {
     TimerManager timerManager;
-    timerManager.threadFactory(shared_ptr<PlatformThreadFactory>(new PlatformThreadFactory()));
+    timerManager.threadFactory(shared_ptr<ThreadFactory>(new ThreadFactory()));
     timerManager.start();
     assert(timerManager.state() == TimerManager::STARTED);
 
@@ -156,9 +157,9 @@ public:
    * clean up itself and the remaining orphaned timeout task when the manager goes out of scope
    * and its destructor is called.
    */
-  bool test02(int64_t timeout = 1000LL) {
+  bool test02(uint64_t timeout = 1000LL) {
     TimerManager timerManager;
-    timerManager.threadFactory(shared_ptr<PlatformThreadFactory>(new PlatformThreadFactory()));
+    timerManager.threadFactory(shared_ptr<ThreadFactory>(new ThreadFactory()));
     timerManager.start();
     assert(timerManager.state() == TimerManager::STARTED);
 
@@ -189,9 +190,9 @@ public:
    * verifies that the timer manager properly clean up itself and the remaining orphaned timeout
    * task when the manager goes out of scope and its destructor is called.
    */
-  bool test03(int64_t timeout = 1000LL) {
+  bool test03(uint64_t timeout = 1000LL) {
     TimerManager timerManager;
-    timerManager.threadFactory(shared_ptr<PlatformThreadFactory>(new PlatformThreadFactory()));
+    timerManager.threadFactory(shared_ptr<ThreadFactory>(new ThreadFactory()));
     timerManager.start();
     assert(timerManager.state() == TimerManager::STARTED);
 
@@ -216,7 +217,7 @@ public:
     // Verify behavior when removing the removed task
     try {
       timerManager.remove(timer);
-      assert(0 == "ERROR: This remove should send a NoSuchTaskException exception.");
+      assert(nullptr == "ERROR: This remove should send a NoSuchTaskException exception.");
     } catch (NoSuchTaskException&) {
     }
 
@@ -224,11 +225,11 @@ public:
   }
 
   /**
-   * This test creates one tasks, and tries to remove it after it has expired.
+   * This test creates one task, and tries to remove it after it has expired.
    */
-  bool test04(int64_t timeout = 1000LL) {
+  bool test04(uint64_t timeout = 1000LL) {
     TimerManager timerManager;
-    timerManager.threadFactory(shared_ptr<PlatformThreadFactory>(new PlatformThreadFactory()));
+    timerManager.threadFactory(shared_ptr<ThreadFactory>(new ThreadFactory()));
     timerManager.start();
     assert(timerManager.state() == TimerManager::STARTED);
 
@@ -238,15 +239,24 @@ public:
     shared_ptr<TimerManagerTests::Task> task
       = shared_ptr<TimerManagerTests::Task>(new TimerManagerTests::Task(_monitor, timeout / 10));
     TimerManager::Timer timer = timerManager.add(task, task->_timeout);
+    task.reset();
 
     // Wait until the task has completed
     _monitor.wait(timeout);
 
     // Verify behavior when removing the expired task
-    try {
-      timerManager.remove(timer);
-      assert(0 == "ERROR: This remove should send a NoSuchTaskException exception.");
-    } catch (NoSuchTaskException&) {
+    // notify is called inside the task so the task may still
+    // be running when we get here, so we need to loop...
+    for (;;) {
+      try {
+        timerManager.remove(timer);
+        assert(nullptr == "ERROR: This remove should throw NoSuchTaskException, or UncancellableTaskException.");
+      } catch (const NoSuchTaskException&) {
+          break;
+      } catch (const UncancellableTaskException&) {
+          // the thread was still exiting; try again...
+          std::this_thread::sleep_for(std::chrono::milliseconds(1));
+      }
     }
 
     return true;

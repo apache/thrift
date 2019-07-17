@@ -16,7 +16,7 @@
 # specific language governing permissions and limitations
 # under the License.
 #
-AUTOMAKE_OPTIONS = subdir-objects serial-tests
+AUTOMAKE_OPTIONS = subdir-objects serial-tests nostdinc
 
 BUILT_SOURCES = gen-cpp/AnnotationTest_types.h \
                 gen-cpp/DebugProtoTest_types.h \
@@ -134,12 +134,6 @@ UnitTests_SOURCES = \
 	TServerSocketTest.cpp \
 	TServerTransportTest.cpp \
 	TTransportCheckThrow.h
-
-if !WITH_BOOSTTHREADS
-UnitTests_SOURCES += \
-  concurrency/MutexTest.cpp \
-  concurrency/RWMutexStarveTest.cpp
-endif
 
 UnitTests_LDADD = \
   libtestgencpp.la \
@@ -414,7 +408,7 @@ gen-cpp/OneWayService.cpp gen-cpp/OneWayTest_constants.cpp gen-cpp/OneWayTest_ty
 gen-cpp/ChildService.cpp gen-cpp/ChildService.h gen-cpp/ParentService.cpp gen-cpp/ParentService.h gen-cpp/proc_types.cpp gen-cpp/proc_types.h: processor/proc.thrift
 	$(THRIFT) --gen cpp:templates,cob_style $<
 
-AM_CPPFLAGS = $(BOOST_CPPFLAGS) -I$(top_srcdir)/lib/cpp/src -D__STDC_FORMAT_MACROS -D__STDC_LIMIT_MACROS -I.
+AM_CPPFLAGS = $(BOOST_CPPFLAGS) -I$(top_srcdir)/lib/cpp/src -I$(top_srcdir)/lib/cpp/src/thrift -D__STDC_FORMAT_MACROS -D__STDC_LIMIT_MACROS -I.
 AM_LDFLAGS = $(BOOST_LDFLAGS)
 AM_CXXFLAGS = -Wall -Wextra -pedantic
 

@@ -41,10 +41,10 @@ public:
     : type_(type),
       name_(name),
       key_(0),
-      value_(NULL),
+      value_(nullptr),
       xsd_optional_(false),
       xsd_nillable_(false),
-      xsd_attrs_(NULL),
+      xsd_attrs_(nullptr),
       reference_(false) {}
 
   t_field(t_type* type, std::string name, int32_t key)
@@ -52,13 +52,13 @@ public:
       name_(name),
       key_(key),
       req_(T_OPT_IN_REQ_OUT),
-      value_(NULL),
+      value_(nullptr),
       xsd_optional_(false),
       xsd_nillable_(false),
-      xsd_attrs_(NULL),
+      xsd_attrs_(nullptr),
       reference_(false) {}
 
-  ~t_field() {}
+  ~t_field() override = default;
 
   t_type* get_type() { return type_; }
 
@@ -92,6 +92,8 @@ public:
 
   t_struct* get_xsd_attrs() { return xsd_attrs_; }
 
+  const t_struct* get_xsd_attrs() const { return xsd_attrs_; }
+
   /**
    * Comparator to sort fields in ascending order by key.
    * Make this a functor instead of a function to help GCC inline it.
@@ -105,7 +107,7 @@ public:
 
   std::map<std::string, std::string> annotations_;
 
-  bool get_reference() { return reference_; }
+  bool get_reference() const { return reference_; }
 
   void set_reference(bool reference) { reference_ = reference; }
 

@@ -18,7 +18,7 @@
 library thrift.src.console.t_web_socket;
 
 import 'dart:async';
-import 'dart:convert' show BASE64;
+import 'package:dart2_constant/convert.dart' show base64;
 import 'dart:io';
 import 'dart:typed_data' show Uint8List;
 
@@ -67,13 +67,12 @@ class TWebSocket implements TSocket {
   }
 
   void send(Uint8List data) {
-    _socket.add(BASE64.encode(data));
+    _socket.add(base64.encode(data));
   }
 
   void _onMessage(String message) {
     try {
-      Uint8List data =
-          new Uint8List.fromList(BASE64.decode(message));
+      Uint8List data = new Uint8List.fromList(base64.decode(message));
       _onMessageController.add(data);
     } on FormatException catch (_) {
       var error = new TProtocolError(TProtocolErrorType.INVALID_DATA,

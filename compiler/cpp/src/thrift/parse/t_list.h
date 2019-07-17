@@ -32,7 +32,7 @@ public:
 
   t_type* get_elem_type() const { return elem_type_; }
 
-  bool is_list() const { return true; }
+  bool is_list() const override { return true; }
 
 private:
   t_type* elem_type_;

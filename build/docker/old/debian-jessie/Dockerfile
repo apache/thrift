@@ -79,6 +79,7 @@ RUN apt-get install -y --no-install-recommends \
 RUN apt-get install -y --no-install-recommends \
 `# Ruby dependencies` \
       ruby \
+      ruby-bundler \
       ruby-dev \
 `# Perl dependencies` \
       libbit-vector-perl \

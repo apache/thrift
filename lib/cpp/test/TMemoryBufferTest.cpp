@@ -22,7 +22,7 @@
 #include <climits>
 #include <vector>
 #include <thrift/protocol/TBinaryProtocol.h>
-#include <thrift/stdcxx.h>
+#include <memory>
 #include <thrift/transport/TBufferTransports.h>
 #include "gen-cpp/ThriftTest_types.h"
 
@@ -31,7 +31,7 @@ BOOST_AUTO_TEST_SUITE(TMemoryBufferTest)
 using apache::thrift::protocol::TBinaryProtocol;
 using apache::thrift::transport::TMemoryBuffer;
 using apache::thrift::transport::TTransportException;
-using apache::thrift::stdcxx::shared_ptr;
+using std::shared_ptr;
 using std::cout;
 using std::endl;
 using std::string;
@@ -81,9 +81,9 @@ BOOST_AUTO_TEST_CASE(test_roundtrip) {
 }
 
 BOOST_AUTO_TEST_CASE(test_readAppendToString) {
-  string* str1 = new string("abcd1234");
-  TMemoryBuffer buf((uint8_t*)str1->data(),
-                    static_cast<uint32_t>(str1->length()),
+  string str1 = "abcd1234";
+  TMemoryBuffer buf((uint8_t*)str1.data(),
+                    static_cast<uint32_t>(str1.length()),
                     TMemoryBuffer::COPY);
 
   string str3 = "wxyz", str4 = "6789";
@@ -111,7 +111,7 @@ BOOST_AUTO_TEST_CASE(test_exceptions) {
 
 BOOST_AUTO_TEST_CASE(test_default_maximum_buffer_size)
 {
-  BOOST_CHECK_EQUAL(std::numeric_limits<uint32_t>::max(), TMemoryBuffer().getMaxBufferSize());
+  BOOST_CHECK_EQUAL((std::numeric_limits<uint32_t>::max)(), TMemoryBuffer().getMaxBufferSize());
 }
 
 BOOST_AUTO_TEST_CASE(test_default_buffer_size)

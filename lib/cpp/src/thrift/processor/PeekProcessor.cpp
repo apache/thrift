@@ -31,29 +31,28 @@ PeekProcessor::PeekProcessor() {
   memoryBuffer_.reset(new TMemoryBuffer());
   targetTransport_ = memoryBuffer_;
 }
-PeekProcessor::~PeekProcessor() {
-}
+PeekProcessor::~PeekProcessor() = default;
 
-void PeekProcessor::initialize(stdcxx::shared_ptr<TProcessor> actualProcessor,
-                               stdcxx::shared_ptr<TProtocolFactory> protocolFactory,
-                               stdcxx::shared_ptr<TPipedTransportFactory> transportFactory) {
+void PeekProcessor::initialize(std::shared_ptr<TProcessor> actualProcessor,
+                               std::shared_ptr<TProtocolFactory> protocolFactory,
+                               std::shared_ptr<TPipedTransportFactory> transportFactory) {
   actualProcessor_ = actualProcessor;
   pipedProtocol_ = protocolFactory->getProtocol(targetTransport_);
   transportFactory_ = transportFactory;
   transportFactory_->initializeTargetTransport(targetTransport_);
 }
 
-stdcxx::shared_ptr<TTransport> PeekProcessor::getPipedTransport(stdcxx::shared_ptr<TTransport> in) {
+std::shared_ptr<TTransport> PeekProcessor::getPipedTransport(std::shared_ptr<TTransport> in) {
   return transportFactory_->getTransport(in);
 }
 
-void PeekProcessor::setTargetTransport(stdcxx::shared_ptr<TTransport> targetTransport) {
+void PeekProcessor::setTargetTransport(std::shared_ptr<TTransport> targetTransport) {
   targetTransport_ = targetTransport;
-  if (stdcxx::dynamic_pointer_cast<TMemoryBuffer>(targetTransport_)) {
-    memoryBuffer_ = stdcxx::dynamic_pointer_cast<TMemoryBuffer>(targetTransport);
-  } else if (stdcxx::dynamic_pointer_cast<TPipedTransport>(targetTransport_)) {
-    memoryBuffer_ = stdcxx::dynamic_pointer_cast<TMemoryBuffer>(
-        stdcxx::dynamic_pointer_cast<TPipedTransport>(targetTransport_)->getTargetTransport());
+  if (std::dynamic_pointer_cast<TMemoryBuffer>(targetTransport_)) {
+    memoryBuffer_ = std::dynamic_pointer_cast<TMemoryBuffer>(targetTransport);
+  } else if (std::dynamic_pointer_cast<TPipedTransport>(targetTransport_)) {
+    memoryBuffer_ = std::dynamic_pointer_cast<TMemoryBuffer>(
+        std::dynamic_pointer_cast<TPipedTransport>(targetTransport_)->getTargetTransport());
   }
 
   if (!memoryBuffer_) {
@@ -62,8 +61,8 @@ void PeekProcessor::setTargetTransport(stdcxx::shared_ptr<TTransport> targetTran
   }
 }
 
-bool PeekProcessor::process(stdcxx::shared_ptr<TProtocol> in,
-                            stdcxx::shared_ptr<TProtocol> out,
+bool PeekProcessor::process(std::shared_ptr<TProtocol> in,
+                            std::shared_ptr<TProtocol> out,
                             void* connectionContext) {
 
   std::string fname;
@@ -120,7 +119,7 @@ void PeekProcessor::peekBuffer(uint8_t* buffer, uint32_t size) {
   (void)size;
 }
 
-void PeekProcessor::peek(stdcxx::shared_ptr<TProtocol> in, TType ftype, int16_t fid) {
+void PeekProcessor::peek(std::shared_ptr<TProtocol> in, TType ftype, int16_t fid) {
   (void)fid;
   in->skip(ftype);
 }

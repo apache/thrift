@@ -23,7 +23,7 @@
 #include <boost/foreach.hpp>
 #include <boost/format.hpp>
 #include <boost/thread.hpp>
-#include <thrift/stdcxx.h>
+#include <memory>
 #include <thrift/transport/TSSLServerSocket.h>
 #include <thrift/transport/TSSLSocket.h>
 #include <thrift/transport/TTransport.h>
@@ -40,8 +40,8 @@ using apache::thrift::transport::TTransport;
 using apache::thrift::transport::TTransportException;
 using apache::thrift::transport::TTransportFactory;
 
-using apache::thrift::stdcxx::bind;
-using apache::thrift::stdcxx::shared_ptr;
+using std::bind;
+using std::shared_ptr;
 
 boost::filesystem::path keyDir;
 boost::filesystem::path certFile(const std::string& filename)

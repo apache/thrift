@@ -105,6 +105,8 @@ project.lock.json
 /contrib/fb303/py/fb303/ttypes.py
 /depcomp
 /install-sh
+/lib/as3/.gradle/
+/lib/as3/build/
 /lib/cl/backport-update.zip
 /lib/cl/lib
 /lib/cl/run-tests
@@ -196,6 +198,7 @@ project.lock.json
 /lib/d/test/transport_test
 /lib/d/unittest/
 /lib/dart/coverage
+/lib/dart/**/.dart_tool
 /lib/dart/**/.packages
 /lib/dart/**/packages
 /lib/dart/**/.pub/
@@ -208,11 +211,13 @@ project.lock.json
 /lib/delphi/**/*.2007
 /lib/delphi/**/*.dproj
 /lib/delphi/**/codegen/*.bat
+/lib/erl/_build/
 /lib/erl/.eunit
 /lib/erl/.generated
 /lib/erl/.rebar/
-/lib/erl/deps/
+/lib/erl/_build/
 /lib/erl/ebin
+/lib/erl/rebar.lock
 /lib/erl/src/thrift.app.src
 /lib/erl/test/*.beam
 /lib/erl/test/*.hrl
@@ -229,6 +234,8 @@ project.lock.json
 /lib/js/test/build
 /lib/netcore/**/bin
 /lib/netcore/**/obj
+/lib/netstd/**/bin
+/lib/netstd/**/obj
 /lib/nodejs/coverage
 /lib/nodejs/node_modules/
 /lib/perl/MANIFEST
@@ -285,6 +292,7 @@ project.lock.json
 /lib/rs/test/src/ultimate.rs
 /lib/rs/*.iml
 /lib/rs/**/*.iml
+/lib/swift/.build
 /libtool
 /ltmain.sh
 /missing
@@ -304,6 +312,7 @@ project.lock.json
 /test/cpp/TestServer
 /test/csharp/obj
 /test/csharp/bin
+/test/dart/**/.dart_tool
 /test/dart/**/.packages
 /test/dart/**/packages
 /test/dart/**/.pub/
@@ -313,6 +322,8 @@ project.lock.json
 /test/erl/.generated
 /test/erl/.rebar
 /test/erl/ebin
+/test/erl/_build/
+/test/erl/rebar.lock
 /test/go/bin/
 /test/go/ThriftTest.thrift
 /test/go/gopath
@@ -332,6 +343,13 @@ project.lock.json
 /test/netcore/**/bin
 /test/netcore/**/obj
 /test/netcore/Thrift
+/test/netstd/**/bin
+/test/netstd/**/obj
+/test/netstd/*.psess
+/test/netstd/*.vspx
+/test/netstd/*.vsp
+/test/netstd/*.diagsession
+/test/netstd/Thrift
 /test/php/php_ext_dir/
 /test/rs/Cargo.lock
 /test/rs/src/thrift_test.rs
@@ -339,8 +357,17 @@ project.lock.json
 /test/rs/target/
 /test/rs/*.iml
 /test/rs/**/*.iml
+/lib/cl/backport-update.zip
+/lib/cl/lib
+/tutorial/cl/quicklisp.lisp
+/tutorial/cl/externals/
+/tutorial/cl/quicklisp/
 /tutorial/cl/TutorialClient
 /tutorial/cl/TutorialServer
+/tutorial/cl/backport-update.zip
+/tutorial/cl/lib/
+/tutorial/cl/shared-implementation.fasl
+/tutorial/cl/tutorial-implementation.fasl
 /tutorial/cpp/TutorialClient
 /tutorial/cpp/TutorialServer
 /tutorial/c_glib/tutorial_client
@@ -376,6 +403,9 @@ project.lock.json
 /tutorial/netcore/**/bin
 /tutorial/netcore/**/obj
 /tutorial/netcore/Thrift
+/tutorial/netstd/**/bin
+/tutorial/netstd/**/obj
+/tutorial/netstd/Interfaces
 /tutorial/rs/*.iml
 /tutorial/rs/src/shared.rs
 /tutorial/rs/src/tutorial.rs

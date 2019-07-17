@@ -21,7 +21,7 @@
 #define _THRIFT_CONCURRENCY_FUNCTION_RUNNER_H 1
 
 #include <thrift/concurrency/Thread.h>
-#include <thrift/stdcxx.h>
+#include <memory>
 
 namespace apache {
 namespace thrift {
@@ -44,7 +44,7 @@ namespace concurrency {
  *  A* a = new A();
  *  // To create a thread that executes a.foo() every 100 milliseconds:
  *  factory->newThread(FunctionRunner::create(
- *    apache::thrift::stdcxx::bind(&A::foo, a), 100))->start();
+ *    std::bind(&A::foo, a), 100))->start();
  *
  */
 
@@ -53,20 +53,20 @@ public:
   // This is the type of callback 'pthread_create()' expects.
   typedef void* (*PthreadFuncPtr)(void* arg);
   // This a fully-generic void(void) callback for custom bindings.
-  typedef stdcxx::function<void()> VoidFunc;
+  typedef std::function<void()> VoidFunc;
 
-  typedef stdcxx::function<bool()> BoolFunc;
+  typedef std::function<bool()> BoolFunc;
 
   /**
    * Syntactic sugar to make it easier to create new FunctionRunner
    * objects wrapped in shared_ptr.
    */
-  static stdcxx::shared_ptr<FunctionRunner> create(const VoidFunc& cob) {
-    return stdcxx::shared_ptr<FunctionRunner>(new FunctionRunner(cob));
+  static std::shared_ptr<FunctionRunner> create(const VoidFunc& cob) {
+    return std::shared_ptr<FunctionRunner>(new FunctionRunner(cob));
   }
 
-  static stdcxx::shared_ptr<FunctionRunner> create(PthreadFuncPtr func, void* arg) {
-    return stdcxx::shared_ptr<FunctionRunner>(new FunctionRunner(func, arg));
+  static std::shared_ptr<FunctionRunner> create(PthreadFuncPtr func, void* arg) {
+    return std::shared_ptr<FunctionRunner>(new FunctionRunner(func, arg));
   }
 
 private:
@@ -81,7 +81,7 @@ public:
    * execute the given callback.  Note that the 'void*' return value is ignored.
    */
   FunctionRunner(PthreadFuncPtr func, void* arg)
-    : func_(stdcxx::bind(pthread_func_wrapper, func, arg)), intervalMs_(-1) {}
+    : func_(std::bind(pthread_func_wrapper, func, arg)), intervalMs_(-1) {}
 
   /**
    * Given a generic callback, this FunctionRunner will execute it.
@@ -96,7 +96,7 @@ public:
    */
   FunctionRunner(const BoolFunc& cob, int intervalMs) : repFunc_(cob), intervalMs_(intervalMs) {}
 
-  void run() {
+  void run() override {
     if (repFunc_) {
       while (repFunc_()) {
         THRIFT_SLEEP_USEC(intervalMs_ * 1000);

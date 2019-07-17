@@ -17,6 +17,7 @@
  * under the License.
  */
 
+#include <thrift/thrift_export.h>
 #include <thrift/transport/TSSLServerSocket.h>
 #include <thrift/transport/TSSLSocket.h>
 
@@ -27,14 +28,14 @@ namespace transport {
 /**
  * SSL server socket implementation.
  */
-TSSLServerSocket::TSSLServerSocket(int port, stdcxx::shared_ptr<TSSLSocketFactory> factory)
+TSSLServerSocket::TSSLServerSocket(int port, std::shared_ptr<TSSLSocketFactory> factory)
   : TServerSocket(port), factory_(factory) {
   factory_->server(true);
 }
 
 TSSLServerSocket::TSSLServerSocket(const std::string& address,
                                    int port,
-                                   stdcxx::shared_ptr<TSSLSocketFactory> factory)
+                                   std::shared_ptr<TSSLSocketFactory> factory)
   : TServerSocket(address, port), factory_(factory) {
   factory_->server(true);
 }
@@ -42,12 +43,12 @@ TSSLServerSocket::TSSLServerSocket(const std::string& address,
 TSSLServerSocket::TSSLServerSocket(int port,
                                    int sendTimeout,
                                    int recvTimeout,
-                                   stdcxx::shared_ptr<TSSLSocketFactory> factory)
+                                   std::shared_ptr<TSSLSocketFactory> factory)
   : TServerSocket(port, sendTimeout, recvTimeout), factory_(factory) {
   factory_->server(true);
 }
 
-stdcxx::shared_ptr<TSocket> TSSLServerSocket::createSocket(THRIFT_SOCKET client) {
+std::shared_ptr<TSocket> TSSLServerSocket::createSocket(THRIFT_SOCKET client) {
   if (interruptableChildren_) {
       return factory_->createSocket(client, pChildInterruptSockReader_);
 

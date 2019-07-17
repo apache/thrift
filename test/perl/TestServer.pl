@@ -27,7 +27,7 @@ use Getopt::Long qw(GetOptions);
 use Time::HiRes qw(gettimeofday);
 
 $SIG{INT} = \&sigint_handler;
- 
+
 use lib '../../lib/perl/lib';
 use lib 'gen-perl';
 
@@ -48,7 +48,7 @@ use ThriftTest::Types;
 $|++;
 
 sub usage {
-    print <<EOF;
+    print <<"EOF";
 Usage: $0 [OPTIONS]
 
 Options:                          (default)
@@ -99,54 +99,60 @@ if ($opts{ssl} and not defined $opts{cert}) {
     exit 1;
 }
 
-my $handler = new ThriftTestHandler();
-my $handler2 = new SecondServiceHandler();
-my $processor = new ThriftTest::ThriftTestProcessor($handler);
-my $processor2 = new ThriftTest::SecondServiceProcessor($handler2);
+my $handler    = ThriftTestHandler->new();
+my $handler2   = SecondServiceHandler->new();
+my $processor  = ThriftTest::ThriftTestProcessor->new($handler);
+my $processor2 = ThriftTest::SecondServiceProcessor->new($handler2);
+
 my $serversocket;
-if ($opts{"domain-socket"}) {
-    unlink($opts{"domain-socket"});
-    $serversocket = new Thrift::UnixServerSocket($opts{"domain-socket"});
-} elsif ($opts{ssl}) {
-    $serversocket = new Thrift::SSLServerSocket(\%opts);
-} else {
-    $serversocket = new Thrift::ServerSocket(\%opts);
+if ($opts{'domain-socket'}) {
+    unlink($opts{'domain-socket'});
+    $serversocket = Thrift::UnixServerSocket->new($opts{'domain-socket'});
+}
+elsif ($opts{ssl}) {
+    $serversocket = Thrift::SSLServerSocket->new(\%opts);
+}
+else {
+    $serversocket = Thrift::ServerSocket->new(\%opts);
 }
 my $transport;
 if ($opts{transport} eq 'buffered') {
-    $transport = new Thrift::BufferedTransportFactory();
-} elsif ($opts{transport} eq 'framed') {
-    $transport = new Thrift::FramedTransportFactory();
-} else {
+    $transport = Thrift::BufferedTransportFactory->new();
+}
+elsif ($opts{transport} eq 'framed') {
+    $transport = Thrift::FramedTransportFactory->new();
+}
+else {
     usage();
     exit 1;
 }
 my $protocol;
 if ($opts{protocol} eq 'binary' || $opts{protocol} eq 'multi') {
-    $protocol = new Thrift::BinaryProtocolFactory();
-} else {
+    $protocol = Thrift::BinaryProtocolFactory->new();
+}
+else {
     usage();
     exit 1;
 }
 
 if (index($opts{protocol}, 'multi') == 0) {
-  my $newProcessor = new Thrift::MultiplexedProcessor($protocol);
+  my $newProcessor = Thrift::MultiplexedProcessor->new($protocol);
   $newProcessor->defaultProcessor($processor);
-  $newProcessor->registerProcessor("ThriftTest", $processor);
-  $newProcessor->registerProcessor("SecondService", $processor2);
+  $newProcessor->registerProcessor('ThriftTest', $processor);
+  $newProcessor->registerProcessor('SecondService', $processor2);
   $processor = $newProcessor;
 }
 
 my $ssltag = '';
 if ($opts{ssl}) {
-    $ssltag = "(SSL)";
+    $ssltag = '(SSL)';
 }
 my $listening_on = "$opts{port} $ssltag";
-if ($opts{"domain-socket"}) {
-    $listening_on = $opts{"domain-socket"};
+if ($opts{'domain-socket'}) {
+    $listening_on = $opts{'domain-socket'};
 }
-my $server = new Thrift::SimpleServer($processor, $serversocket, $transport, $protocol);
-print "Starting \"simple\" server ($opts{transport}/$opts{protocol}) listen on: $listening_on\n";
+my $server = Thrift::SimpleServer->new($processor, $serversocket, $transport, $protocol);
+print qq|Starting "simple" server ($opts{transport}/$opts{protocol}) listen on: $listening_on\n|;
 $server->serve();
 print "done.\n";
 
@@ -169,70 +175,67 @@ sub new {
     return bless($self, $classname);
 }
 
-sub testVoid() {
+sub testVoid {
   print("testVoid()\n");
 }
 
-sub testString() {
+sub testString {
   my $self = shift;
   my $thing = shift;
   print("testString($thing)\n");
   return $thing;
 }
 
-sub testBool() {
+sub testBool {
   my $self = shift;
   my $thing = shift;
-  my $str = $thing ? "true" : "false";
+  my $str = $thing ? 'true' : 'false';
   print("testBool($str)\n");
   return $thing;
 }
 
-sub testByte() {
+sub testByte {
   my $self = shift;
   my $thing = shift;
   print("testByte($thing)\n");
   return $thing;
 }
 
-sub testI32() {
+sub testI32 {
   my $self = shift;
   my $thing = shift;
   print("testI32($thing)\n");
   return $thing;
 }
 
-sub testI64() {
+sub testI64 {
   my $self = shift;
   my $thing = shift;
   print("testI64($thing)\n");
   return $thing;
 }
 
-sub testDouble() {
+sub testDouble {
   my $self = shift;
   my $thing = shift;
   print("testDouble($thing)\n");
   return $thing;
 }
 
-sub testBinary() {
+sub testBinary {
     my $self = shift;
     my $thing = shift;
     my @bytes = split //, $thing;
-    print("testBinary(");
-    foreach (@bytes)
-    {
-        printf "%02lx", ord $_;
-    }
-    print(")\n");
+    print 'testBinary(';
+    printf( '%02lx', ord $_ ) foreach (@bytes);
+    print ")\n";
     return $thing;
 }
 
-sub testStruct() {
+sub testStruct {
   my $self = shift;
   my $thing = shift;
-  printf("testStruct({\"%s\", %d, %d, %lld})\n",
+  printf(qq|testStruct({"%s", %d, %d, %lld})\n|,
            $thing->{string_thing},
            $thing->{byte_thing},
            $thing->{i32_thing},
@@ -240,11 +243,11 @@ sub testStruct() {
   return $thing;
 }
 
-sub testNest() {
+sub testNest {
   my $self = shift;
   my $nest = shift;
   my $thing = $nest->{struct_thing};
-  printf("testNest({%d, {\"%s\", %d, %d, %lld}, %d})\n",
+  printf(qq|testNest({%d, {"%s", %d, %d, %lld}, %d})\n|,
            $nest->{byte_thing},
            $thing->{string_thing},
            $thing->{byte_thing},
@@ -254,92 +257,58 @@ sub testNest() {
   return $nest;
 }
 
-sub testMap() {
+sub testMap {
   my $self = shift;
   my $thing = shift;
-  print("testMap({");
-  my $first = 1;
-  foreach my $key (keys %$thing) {
-    if ($first) {
-        $first = 0;
-    } else {
-        print(", ");
-    }
-    print("$key => $thing->{$key}");
-  }
-  print("})\n");
+  printf "testMap({%s})\n",
+    join( ', ',
+          map { $_ . ' => ' . $thing->{$_} }
+          sort keys %$thing
+    );
   return $thing;
 }
 
-sub testStringMap() {
+sub testStringMap {
   my $self = shift;
   my $thing = shift;
-  print("testStringMap({");
-  my $first = 1;
-  foreach my $key (keys %$thing) {
-    if ($first) {
-        $first = 0;
-    } else {
-        print(", ");
-    }
-    print("$key => $thing->{$key}");
-  }
-  print("})\n");
+  printf "testStringMap({%s})\n",
+    join( ', ',
+          map { $_ . ' => ' . $thing->{$_} }
+          sort keys %$thing
+    );
   return $thing;
 }
 
-sub testSet() {
+sub testSet {
   my $self = shift;
   my $thing = shift;
-  my @arr;
-  my $result = \@arr;
-  print("testSet({");
-  my $first = 1;
-  foreach my $key (keys %$thing) {
-    if ($first) {
-        $first = 0;
-    } else {
-        print(", ");
-    }
-    print("$key");
-    push(@arr, $key);
-  }
-  print("})\n");
-  return $result;
+  my @result = sort keys %$thing;
+  printf "testSet({%s})\n", join(', ', @result );
+  return \@result;
 }
 
-sub testList() {
+sub testList {
   my $self = shift;
   my $thing = shift;
-  print("testList({");
-  my $first = 1;
-  foreach my $key (@$thing) {
-    if ($first) {
-        $first = 0;
-    } else {
-        print(", ");
-    }
-    print("$key");
-  }
-  print("})\n");
+  print "testList({%s})\n", join(', ', @$thing);
   return $thing;
 }
 
-sub testEnum() {
+sub testEnum {
   my $self = shift;
   my $thing = shift;
-  print("testEnum($thing)\n");
+  print "testEnum($thing)\n";
   return $thing;
 }
 
-sub testTypedef() {
+sub testTypedef {
   my $self = shift;
   my $thing = shift;
   print("testTypedef($thing)\n");
   return $thing;
 }
 
-sub testMapMap() {
+sub testMapMap {
   my $self = shift;
   my $hello = shift;
 
@@ -348,25 +317,25 @@ sub testMapMap() {
   return $result;
 }
 
-sub testInsanity() {
+sub testInsanity {
   my $self = shift;
   my $argument = shift;
   print("testInsanity()\n");
 
-  my $hello = new ThriftTest::Xtruct({string_thing => "Hello2", byte_thing => 2, i32_thing => 2, i64_thing => 2});
+  my $hello = ThriftTest::Xtruct->new({string_thing => 'Hello2', byte_thing => 2, i32_thing => 2, i64_thing => 2});
   my @hellos;
   push(@hellos, $hello);
-  my $goodbye = new ThriftTest::Xtruct({string_thing => "Goodbye4", byte_thing => 4, i32_thing => 4, i64_thing => 4});
+  my $goodbye = ThriftTest::Xtruct->new({string_thing => 'Goodbye4', byte_thing => 4, i32_thing => 4, i64_thing => 4});
   my @goodbyes;
   push(@goodbyes, $goodbye);
-  my $crazy = new ThriftTest::Insanity({userMap => { ThriftTest::Numberz::EIGHT => 8 }, xtructs => \@goodbyes});
-  my $loony = new ThriftTest::Insanity();
+  my $crazy = ThriftTest::Insanity->new({userMap => { ThriftTest::Numberz::EIGHT => 8 }, xtructs => \@goodbyes});
+  my $loony = ThriftTest::Insanity->new();
   my $result = { 1 => { ThriftTest::Numberz::TWO => $argument, ThriftTest::Numberz::THREE => $argument },
                  2 => { ThriftTest::Numberz::SIX => $loony } };
   return $result;
 }
 
-sub testMulti() {
+sub testMulti {
   my $self = shift;
   my $arg0 = shift;
   my $arg1 = shift;
@@ -376,39 +345,43 @@ sub testMulti() {
   my $arg5 = shift;
 
   print("testMulti()\n");
-  return new ThriftTest::Xtruct({string_thing => "Hello2", byte_thing => $arg0, i32_thing => $arg1, i64_thing => $arg2});
+  return ThriftTest::Xtruct->new({string_thing => 'Hello2', byte_thing => $arg0, i32_thing => $arg1, i64_thing => $arg2});
 }
 
-sub testException() {
+sub testException {
   my $self = shift;
   my $arg = shift;
   print("testException($arg)\n");
-  if ($arg eq "Xception") {
-    die new ThriftTest::Xception({errorCode => 1001, message => $arg});
-  } elsif ($arg eq "TException") {
-    die "astring"; # all unhandled exceptions become TExceptions
-  } else {
-    return new ThriftTest::Xtruct({string_thing => $arg});
+  if ($arg eq 'Xception') {
+      die ThriftTest::Xception->new({errorCode => 1001, message => $arg});
+  }
+  elsif ($arg eq 'TException') {
+      die 'astring'; # all unhandled exceptions become TExceptions
+  }
+  else {
+      return ThriftTest::Xtruct->new({string_thing => $arg});
   }
 }
 
-sub testMultiException() {
+sub testMultiException {
   my $self = shift;
   my $arg0 = shift;
   my $arg1 = shift;
 
   printf("testMultiException(%s, %s)\n", $arg0, $arg1);
-  if ($arg0 eq "Xception") {
-    die new ThriftTest::Xception({errorCode => 1001, message => "This is an Xception"});
-  } elsif ($arg0 eq "Xception2") {
-    my $struct_thing = new ThriftTest::Xtruct({string_thing => "This is an Xception2"});
-    die new ThriftTest::Xception2({errorCode => 2002, struct_thing => $struct_thing});
-  } else {
-    return new ThriftTest::Xtruct({string_thing => $arg1});
+  if ($arg0 eq 'Xception') {
+    die ThriftTest::Xception->new({errorCode => 1001, message => 'This is an Xception'});
+  }
+  elsif ($arg0 eq 'Xception2') {
+    my $struct_thing = ThriftTest::Xtruct->new({string_thing => 'This is an Xception2'});
+    die ThriftTest::Xception2->new({errorCode => 2002, struct_thing => $struct_thing});
+  }
+  else {
+    return ThriftTest::Xtruct->new({string_thing => $arg1});
   }
 }
 
-sub testOneway() {
+sub testOneway {
   my $self = shift;
   my $num = shift;
   print("testOneway($num): received\n");
@@ -428,11 +401,11 @@ sub new {
     return bless($self, $classname);
 }
 
-sub secondtestString() {
+sub secondtestString {
   my $self = shift;
   my $thing = shift;
   print("testString($thing)\n");
-  return "testString(\"" . $thing . "\")";
+  return qq|testString("$thing")|;
 }
 
 1;

@@ -28,13 +28,13 @@
   <property name="build" location="build" />
   <property name="jar.file" location="${build}/jstest.jar" />
 
-  <!-- the root directory, where you unpack thrift distibution (e.g. thrift-0.x.x.tar.gz) -->
+  <!-- the root directory, where you unpack thrift distibution (e.g.: thrift-0.x.x.tar.gz) -->
   <property name="thrift.dir" location="../../../" />
   <property name="thrift.java.dir" location="${thrift.dir}/lib/java" />
   <property name="build.tools.dir" location="${thrift.java.dir}/build/tools/"/>
   <property file="${basedir}/build.properties"/>
 
-  <!-- Include the base java properties file -->
+  <!-- Include the base Java properties file -->
   <property file="${thrift.java.dir}/gradle.properties" />
 
   <property name="thrift.compiler" location="${thrift.dir}/compiler/cpp/thrift" />
@@ -73,7 +73,7 @@
       </condition>
       You need libthrift*.jar and libthrift*test.jar located at
       ${thrift.java.dir}/build/libs
-      Did you compile Thrift Java library and its test suite by "ant compile-test"?
+      Did you compile Thrift Java library and its test suite by "make check"?
     </fail>
     <fail>
       <condition>
@@ -100,9 +100,8 @@
 
   <target name="download_jslibs">
     <get src="http://code.jquery.com/jquery-1.11.3.min.js" dest="${build}/js/lib/jquery.js" usetimestamp="true"/>
-    <get src="http://code.jquery.com/qunit/qunit-1.18.0.js" dest="${build}/js/lib/qunit.js" usetimestamp="true"/>
-    <get src="http://code.jquery.com/qunit/qunit-1.18.0.css" dest="${build}/js/lib/qunit.css" usetimestamp="true"/>
-    <get src="https://cdn.jsdelivr.net/npm/es6-promise@4/dist/es6-promise.auto.js" dest="${build}/js/lib/es6-promise.js" usetimestamp="true"/>
+    <get src="http://code.jquery.com/qunit/qunit-2.6.2.js" dest="${build}/js/lib/qunit.js" usetimestamp="true"/>
+    <get src="http://code.jquery.com/qunit/qunit-2.6.2.css" dest="${build}/js/lib/qunit.css" usetimestamp="true"/>
   </target>
 
   <target name="jslibs" depends="init, proxy, download_jslibs">
@@ -188,7 +187,6 @@
     -->
     <jsl:jslint options="evil,forin,browser,bitwise,regexp,newcap,immed" encoding="UTF-8">
       <formatter type="plain" />
-      <fileset dir="${genjs}" includes="**/*.js" />
       <fileset dir="../src" includes="thrift.js" />
 
       <!-- issues with unsafe character -->

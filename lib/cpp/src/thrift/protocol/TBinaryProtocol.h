@@ -23,7 +23,7 @@
 #include <thrift/protocol/TProtocol.h>
 #include <thrift/protocol/TVirtualProtocol.h>
 
-#include <thrift/stdcxx.h>
+#include <memory>
 
 namespace apache {
 namespace thrift {
@@ -41,7 +41,7 @@ public:
   static const int32_t VERSION_1 = ((int32_t)0x80010000);
   // VERSION_2 (0x80020000) was taken by TDenseProtocol (which has since been removed)
 
-  TBinaryProtocolT(stdcxx::shared_ptr<Transport_> trans)
+  TBinaryProtocolT(std::shared_ptr<Transport_> trans)
     : TVirtualProtocol<TBinaryProtocolT<Transport_, ByteOrder_> >(trans),
       trans_(trans.get()),
       string_limit_(0),
@@ -49,7 +49,7 @@ public:
       strict_read_(false),
       strict_write_(true) {}
 
-  TBinaryProtocolT(stdcxx::shared_ptr<Transport_> trans,
+  TBinaryProtocolT(std::shared_ptr<Transport_> trans,
                    int32_t string_limit,
                    int32_t container_limit,
                    bool strict_read,
@@ -201,7 +201,7 @@ public:
       strict_read_(strict_read),
       strict_write_(strict_write) {}
 
-  virtual ~TBinaryProtocolFactoryT() {}
+  ~TBinaryProtocolFactoryT() override = default;
 
   void setStringSizeLimit(int32_t string_limit) { string_limit_ = string_limit; }
 
@@ -212,8 +212,8 @@ public:
     strict_write_ = strict_write;
   }
 
-  stdcxx::shared_ptr<TProtocol> getProtocol(stdcxx::shared_ptr<TTransport> trans) {
-    stdcxx::shared_ptr<Transport_> specific_trans = stdcxx::dynamic_pointer_cast<Transport_>(trans);
+  std::shared_ptr<TProtocol> getProtocol(std::shared_ptr<TTransport> trans) override {
+    std::shared_ptr<Transport_> specific_trans = std::dynamic_pointer_cast<Transport_>(trans);
     TProtocol* prot;
     if (specific_trans) {
       prot = new TBinaryProtocolT<Transport_, ByteOrder_>(specific_trans,
@@ -229,7 +229,7 @@ public:
                                                           strict_write_);
     }
 
-    return stdcxx::shared_ptr<TProtocol>(prot);
+    return std::shared_ptr<TProtocol>(prot);
   }
 
 private:

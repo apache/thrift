@@ -26,6 +26,7 @@ stubs: ../ThriftTest.thrift
 php_ext_dir:
 	mkdir -p php_ext_dir
 	ln -s ../../../lib/php/src/ext/thrift_protocol/modules/thrift_protocol.so php_ext_dir/
+	ln -s "$$(php-config --extension-dir)/json.so" php_ext_dir/
 	ln -s "$$(php-config --extension-dir)/sockets.so" php_ext_dir/
 
 precross: stubs php_ext_dir
@@ -33,7 +34,12 @@ precross: stubs php_ext_dir
 check: stubs php_ext_dir
 
 clean-local:
-	$(RM) -r gen-php gen-phpi gen-php-classmap php_ext_dir
+	$(RM) -r gen-*/
+	$(RM) -r php_ext_dir
+
+dist-hook:
+	$(RM) -r $(distdir)/gen-*/
+	$(RM) -r $(distdir)/php_ext_dir/
 
 client: stubs php_ext_dir
 	php TestClient.php

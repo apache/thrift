@@ -21,7 +21,6 @@
 #define _THRIFT_TRANSPORT_TSERVERSOCKET_H_ 1
 
 #include <thrift/concurrency/Mutex.h>
-#include <thrift/stdcxx.h>
 #include <thrift/transport/PlatformSocket.h>
 #include <thrift/transport/TServerTransport.h>
 
@@ -62,7 +61,7 @@ private:
  */
 class TServerSocket : public TServerTransport {
 public:
-  typedef apache::thrift::stdcxx::function<void(THRIFT_SOCKET fd)> socket_func_t;
+  typedef std::function<void(THRIFT_SOCKET fd)> socket_func_t;
 
   const static int DEFAULT_BACKLOG = 1024;
 
@@ -97,7 +96,7 @@ public:
    */
   TServerSocket(const std::string& path);
 
-  virtual ~TServerSocket();
+  ~TServerSocket() override;
 
   void setSendTimeout(int sendTimeout);
   void setRecvTimeout(int recvTimeout);
@@ -137,20 +136,20 @@ public:
   // \throws std::logic_error if listen() has been called
   void setInterruptableChildren(bool enable);
 
-  THRIFT_SOCKET getSocketFD() { return serverSocket_; }
+  THRIFT_SOCKET getSocketFD() override { return serverSocket_; }
 
   int getPort();
 
-  void listen();
-  void interrupt();
-  void interruptChildren();
-  void close();
+  void listen() override;
+  void interrupt() override;
+  void interruptChildren() override;
+  void close() override;
 
 protected:
-  stdcxx::shared_ptr<TTransport> acceptImpl();
-  virtual stdcxx::shared_ptr<TSocket> createSocket(THRIFT_SOCKET client);
+  std::shared_ptr<TTransport> acceptImpl() override;
+  virtual std::shared_ptr<TSocket> createSocket(THRIFT_SOCKET client);
   bool interruptableChildren_;
-  stdcxx::shared_ptr<THRIFT_SOCKET> pChildInterruptSockReader_; // if interruptableChildren_ this is shared with child TSockets
+  std::shared_ptr<THRIFT_SOCKET> pChildInterruptSockReader_; // if interruptableChildren_ this is shared with child TSockets
 
 private:
   void notify(THRIFT_SOCKET notifySock);

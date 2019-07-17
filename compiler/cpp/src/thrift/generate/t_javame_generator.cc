@@ -65,21 +65,21 @@ public:
    * Init and close methods
    */
 
-  void init_generator();
-  void close_generator();
+  void init_generator() override;
+  void close_generator() override;
 
-  void generate_consts(std::vector<t_const*> consts);
+  void generate_consts(std::vector<t_const*> consts) override;
 
   /**
    * Program-level generation functions
    */
 
-  void generate_typedef(t_typedef* ttypedef);
-  void generate_enum(t_enum* tenum);
-  void generate_struct(t_struct* tstruct);
+  void generate_typedef(t_typedef* ttypedef) override;
+  void generate_enum(t_enum* tenum) override;
+  void generate_struct(t_struct* tstruct) override;
   void generate_union(t_struct* tunion);
-  void generate_xception(t_struct* txception);
-  void generate_service(t_service* tservice);
+  void generate_xception(t_struct* txception) override;
+  void generate_service(t_service* tservice) override;
 
   void print_const_value(std::ostream& out,
                          std::string name,
@@ -185,13 +185,13 @@ public:
 
   void generate_serialize_list_element(std::ostream& out, t_list* tlist, std::string iter);
 
-  void generate_java_doc(std::ostream& out, t_field* field);
+  void generate_java_doc(std::ostream& out, t_field* field) override;
 
-  void generate_java_doc(std::ostream& out, t_doc* tdoc);
+  void generate_java_doc(std::ostream& out, t_doc* tdoc) override;
 
-  void generate_java_doc(std::ostream& out, t_function* tdoc);
+  void generate_java_doc(std::ostream& out, t_function* tdoc) override;
 
-  void generate_java_docstring_comment(std::ostream& out, string contents);
+  void generate_java_docstring_comment(std::ostream& out, string contents) override;
 
   void generate_deep_copy_container(std::ostream& out,
                                     std::string source_name_p1,
@@ -221,7 +221,7 @@ public:
   std::string function_signature(t_function* tfunction, std::string prefix = "");
   std::string argument_list(t_struct* tstruct, bool include_types = true);
   std::string type_to_enum(t_type* ttype);
-  std::string get_enum_class_name(t_type* type);
+  std::string get_enum_class_name(t_type* type) override;
   void generate_struct_desc(ostream& out, t_struct* tstruct);
   void generate_field_descs(ostream& out, t_struct* tstruct);
   std::string box_type(t_type* type, string value);
@@ -2980,9 +2980,7 @@ string t_javame_generator::constant_name(string name) {
 
   bool is_first = true;
   bool was_previous_char_upper = false;
-  for (string::iterator iter = name.begin(); iter != name.end(); ++iter) {
-    string::value_type character = (*iter);
-
+  for (char character : name) {
     bool is_upper = isupper(character);
 
     if (is_upper && !is_first && !was_previous_char_upper) {

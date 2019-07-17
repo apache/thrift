@@ -87,7 +87,7 @@ sudo ./b2 install
 
 # Java LIB Dependencies
 #####################################
-sudo yum install -y ant junit ant-nodeps ant-junit java-1.7.0-openjdk-devel
+sudo yum install -y ant junit ant-nodeps ant-junit java-1.8.0-openjdk-devel
 
 # Python LIB Dependencies
 #####################################

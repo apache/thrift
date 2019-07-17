@@ -14,9 +14,7 @@
 
 @ECHO OFF
 
-       IF "%PROFILE%" == "MSVC2010" (
-  CALL "C:\Program Files (x86)\Microsoft Visual Studio 10.0\VC\vcvarsall.bat" %PLATFORM%
-) ELSE IF "%PROFILE%" == "MSVC2012" (
+IF "%PROFILE%" == "MSVC2012" (
   CALL "C:\Program Files (x86)\Microsoft Visual Studio 11.0\VC\vcvarsall.bat" %PLATFORM%
 ) ELSE IF "%PROFILE%" == "MSVC2013" (
   CALL "C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\vcvarsall.bat" %PLATFORM%
@@ -37,7 +35,6 @@ CALL cl_setcompiler.bat   || EXIT /B
 CALL cl_setgenerator.bat  || EXIT /B
 
 SET APPVEYOR_SCRIPTS=%APPVEYOR_BUILD_FOLDER%\build\appveyor
-SET BUILDCACHE=%APPVEYOR_BUILD_FOLDER%\..\build\cache
 SET BUILDDIR=%APPVEYOR_BUILD_FOLDER%\..\build\%PROFILE%\%PLATFORM%
 SET INSTDIR=%APPVEYOR_BUILD_FOLDER%\..\build\%PROFILE%\%PLATFORM%
 SET SRCDIR=%APPVEYOR_BUILD_FOLDER%
@@ -54,13 +51,6 @@ IF "%PROFILE:~0,4%" == "MSVC" (
   SET BOOST_LIBRARYDIR=!BOOST_ROOT!/lib%NORM_PLATFORM%-msvc-%COMPILER:~-3,2%.%COMPILER:~-1,1%
   SET OPENSSL_ROOT=C:\OpenSSL-Win%NORM_PLATFORM%
   SET WIN3P=%APPVEYOR_BUILD_FOLDER%\thirdparty
-
-  :: MSVC2010 doesn't "do" std::thread
-  IF "%COMPILER%" == "vc100" (
-    SET THREADMODEL=BOOST
-  ) ELSE (
-    SET THREADMODEL=STD
-  )
 
   IF "%PYTHON_VERSION%" == "" (
     SET WITH_PYTHON=OFF
@@ -115,15 +105,18 @@ IF "%PROFILE:~0,4%" == "MSVC" (
 GOTO :EOF
 
 :SETUPNEWERMSVC
-  FOR /F "USEBACKQ TOKENS=*" %%i IN (`call "%ProgramFiles(x86)%\Microsoft Visual Studio\Installer\vswhere.exe" -version "[15.0,16.0)" -property installationPath`) DO (
-    IF "%MSVCROOT%" == "" (SET MSVCROOT=%%i)
+  :: If VsDevCmd.bat has already executed, as is the case in the
+  :: msvc2017 docker container, skip this...
+  IF NOT DEFINED VSCMD_VER (
+    FOR /F "USEBACKQ TOKENS=*" %%i IN (`call "%ProgramFiles(x86)%\Microsoft Visual Studio\Installer\vswhere.exe" -version "[15.0,16.0)" -property installationPath`) DO (
+      IF "%MSVCROOT%" == "" (SET MSVCROOT=%%i)
+    )
+    SET MSVCPLAT=x86
+    IF "%PLATFORM%" == "x64" (SET MSVCPLAT=amd64)
+
+    SET CURRENTDIR=%CD%
+    CALL "!MSVCROOT!\Common7\Tools\VsDevCmd.bat" -arch=!MSVCPLAT! || EXIT /B
+    CD %CURRENTDIR%
+    EXIT /B
   )
-  SET MSVCPLAT=x86
-  IF "%PLATFORM%" == "x64" (SET MSVCPLAT=amd64)
-
-  SET CURRENTDIR=%CD%
-  CALL "!MSVCROOT!\Common7\Tools\VsDevCmd.bat" -arch=!MSVCPLAT! || EXIT /B
-  CD %CURRENTDIR%
-  EXIT /B
-
 :EOF
