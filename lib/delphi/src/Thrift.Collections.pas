@@ -639,7 +639,7 @@ end;
 
 procedure TThriftListImpl<T>.Sort(const AComparer: IComparer<T>);
 begin
-  FList.Sort;
+  FList.Sort(AComparer);
 end;
 
 function TThriftListImpl<T>.ToArray: TArray<T>;
