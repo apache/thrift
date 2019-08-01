@@ -21,6 +21,7 @@ package thrift
 
 import (
 	"context"
+	"io"
 	"io/ioutil"
 	"testing"
 )
@@ -73,9 +74,20 @@ func TestTHeaderHeadersReadWrite(t *testing.T) {
 	}
 
 	// Read
+
+	// Make sure multiple calls to ReadFrame is fine.
+	if err := reader.ReadFrame(); err != nil {
+		t.Errorf("reader.ReadFrame returned error: %v", err)
+	}
+	if err := reader.ReadFrame(); err != nil {
+		t.Errorf("reader.ReadFrame returned error: %v", err)
+	}
 	read, err := ioutil.ReadAll(reader)
 	if err != nil {
 		t.Errorf("Read returned error: %v", err)
+	}
+	if err := reader.ReadFrame(); err != nil && err != io.EOF {
+		t.Errorf("reader.ReadFrame returned error: %v", err)
 	}
 	if string(read) != payload1+payload2 {
 		t.Errorf(

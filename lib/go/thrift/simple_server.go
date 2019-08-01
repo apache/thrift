@@ -194,7 +194,8 @@ func (p *TSimpleServer) processRequests(client TTransport) error {
 	// for THeaderProtocol, we must use the same protocol instance for
 	// input and output so that the response is in the same dialect that
 	// the server detected the request was in.
-	if _, ok := inputProtocol.(*THeaderProtocol); ok {
+	headerProtocol, ok := inputProtocol.(*THeaderProtocol)
+	if ok {
 		outputProtocol = inputProtocol
 	} else {
 		oTrans, err := p.outputTransportFactory.GetTransport(client)
@@ -222,7 +223,21 @@ func (p *TSimpleServer) processRequests(client TTransport) error {
 			return nil
 		}
 
-		ok, err := processor.Process(defaultCtx, inputProtocol, outputProtocol)
+		ctx := defaultCtx
+		if headerProtocol != nil {
+			// We need to call ReadFrame here, otherwise we won't
+			// get any headers on the AddReadTHeaderToContext call.
+			//
+			// ReadFrame is safe to be called multiple times so it
+			// won't break when it's called again later when we
+			// actually start to read the message.
+			if err := headerProtocol.ReadFrame(); err != nil {
+				return err
+			}
+			ctx = AddReadTHeaderToContext(defaultCtx, headerProtocol.GetReadHeaders())
+		}
+
+		ok, err := processor.Process(ctx, inputProtocol, outputProtocol)
 		if err, ok := err.(TTransportException); ok && err.TypeId() == END_OF_FILE {
 			return nil
 		} else if err != nil {
