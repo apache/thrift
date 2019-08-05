@@ -145,7 +145,7 @@ protected:
         indent(f_consts) << "immutable(" << render_type_name(type) << ") " << name << ";" << endl;
       }
 
-      f_consts << endl << "static this() {" << endl;
+      f_consts << endl << "shared static this() {" << endl;
       indent_up();
 
       bool first = true;
