@@ -188,6 +188,11 @@ func (p *THeaderProtocol) WriteBinary(value []byte) error {
 	return p.protocol.WriteBinary(value)
 }
 
+// ReadFrame calls underlying THeaderTransport's ReadFrame function.
+func (p *THeaderProtocol) ReadFrame() error {
+	return p.transport.ReadFrame()
+}
+
 func (p *THeaderProtocol) ReadMessageBegin() (name string, typeID TMessageType, seqID int32, err error) {
 	if err = p.transport.ReadFrame(); err != nil {
 		return
