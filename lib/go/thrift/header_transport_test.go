@@ -106,3 +106,13 @@ func TestTHeaderHeadersReadWrite(t *testing.T) {
 		)
 	}
 }
+
+func TestTHeaderTransportNoDoubleWrapping(t *testing.T) {
+	trans := NewTMemoryBuffer()
+	orig := NewTHeaderTransport(trans)
+	wrapped := NewTHeaderTransport(orig)
+
+	if wrapped != orig {
+		t.Errorf("NewTHeaderTransport double wrapped THeaderTransport")
+	}
+}

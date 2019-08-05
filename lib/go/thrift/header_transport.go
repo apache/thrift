@@ -271,7 +271,12 @@ var _ TTransport = (*THeaderTransport)(nil)
 // Please note that THeaderTransport handles framing and zlib by itself,
 // so the underlying transport should be the raw socket transports (TSocket or TSSLSocket),
 // instead of rich transports like TZlibTransport or TFramedTransport.
+//
+// If trans is already a *THeaderTransport, it will be returned as is.
 func NewTHeaderTransport(trans TTransport) *THeaderTransport {
+	if ht, ok := trans.(*THeaderTransport); ok {
+		return ht
+	}
 	return &THeaderTransport{
 		transport:    trans,
 		reader:       bufio.NewReader(trans),
