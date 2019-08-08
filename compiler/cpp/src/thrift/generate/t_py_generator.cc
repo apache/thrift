@@ -538,6 +538,9 @@ string t_py_generator::render_const_value(t_type* type, t_const_value* value) {
     t_base_type::t_base tbase = ((t_base_type*)type)->get_base();
     switch (tbase) {
     case t_base_type::TYPE_STRING:
+      if (((t_base_type*)type)->is_binary()) {
+        out << 'b';
+      }
       out << '"' << get_escaped_string(value) << '"';
       break;
     case t_base_type::TYPE_BOOL:
