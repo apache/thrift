@@ -70,7 +70,7 @@ func TestSetGetHeader(t *testing.T) {
 	)
 }
 
-func TestKeyList(t *testing.T) {
+func TestReadKeyList(t *testing.T) {
 	headers := THeaderMap{
 		"key1": "value1",
 		"key2": "value2",
@@ -93,5 +93,36 @@ func TestKeyList(t *testing.T) {
 
 	if !reflect.DeepEqual(headers, got) {
 		t.Errorf("Expected header map %+v, got %+v", headers, got)
+	}
+
+	writtenKeys := GetWriteHeaderList(ctx)
+	if len(writtenKeys) > 0 {
+		t.Errorf(
+			"Expected empty GetWriteHeaderList() result, got %+v",
+			writtenKeys,
+		)
+	}
+}
+
+func TestWriteKeyList(t *testing.T) {
+	keys := []string{
+		"key1",
+		"key2",
+	}
+	ctx := context.Background()
+
+	ctx = SetWriteHeaderList(ctx, keys)
+	got := GetWriteHeaderList(ctx)
+
+	if !reflect.DeepEqual(keys, got) {
+		t.Errorf("Expected header keys %+v, got %+v", keys, got)
+	}
+
+	readKeys := GetReadHeaderList(ctx)
+	if len(readKeys) > 0 {
+		t.Errorf(
+			"Expected empty GetReadHeaderList() result, got %+v",
+			readKeys,
+		)
 	}
 }

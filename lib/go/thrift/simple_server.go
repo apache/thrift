@@ -42,6 +42,9 @@ type TSimpleServer struct {
 	outputTransportFactory TTransportFactory
 	inputProtocolFactory   TProtocolFactory
 	outputProtocolFactory  TProtocolFactory
+
+	// Headers to auto forward in THeaderProtocol
+	forwardHeaders []string
 }
 
 func NewTSimpleServer2(processor TProcessor, serverTransport TServerTransport) *TSimpleServer {
@@ -123,6 +126,26 @@ func (p *TSimpleServer) OutputProtocolFactory() TProtocolFactory {
 
 func (p *TSimpleServer) Listen() error {
 	return p.serverTransport.Listen()
+}
+
+// SetForwardHeaders sets the list of header keys that will be auto forwarded
+// while using THeaderProtocol.
+//
+// "forward" means that when the server is also a client to other upstream
+// thrift servers, the context object user gets in the processor functions will
+// have both read and write headers set, with write headers being forwarded.
+// Users can always override the write headers by calling SetWriteHeaderList
+// before calling thrift client functions.
+func (p *TSimpleServer) SetForwardHeaders(headers []string) {
+	size := len(headers)
+	if size == 0 {
+		p.forwardHeaders = nil
+		return
+	}
+
+	keys := make([]string, size)
+	copy(keys, headers)
+	p.forwardHeaders = keys
 }
 
 func (p *TSimpleServer) innerAccept() (int32, error) {
@@ -235,6 +258,7 @@ func (p *TSimpleServer) processRequests(client TTransport) error {
 				return err
 			}
 			ctx = AddReadTHeaderToContext(defaultCtx, headerProtocol.GetReadHeaders())
+			ctx = SetWriteHeaderList(ctx, p.forwardHeaders)
 		}
 
 		ok, err := processor.Process(ctx, inputProtocol, outputProtocol)

@@ -24,6 +24,16 @@ func NewTStandardClient(inputProtocol, outputProtocol TProtocol) *TStandardClien
 }
 
 func (p *TStandardClient) Send(ctx context.Context, oprot TProtocol, seqId int32, method string, args TStruct) error {
+	// Set headers from context object on THeaderProtocol
+	if headerProt, ok := oprot.(*THeaderProtocol); ok {
+		headerProt.ClearWriteHeaders()
+		for _, key := range GetWriteHeaderList(ctx) {
+			if value, ok := GetHeader(ctx, key); ok {
+				headerProt.SetWriteHeader(key, value)
+			}
+		}
+	}
+
 	if err := oprot.WriteMessageBegin(method, CALL, seqId); err != nil {
 		return err
 	}

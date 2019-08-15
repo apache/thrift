@@ -32,6 +32,7 @@ type (
 // Values for headerKeyList.
 const (
 	headerKeyListRead headerKeyList = iota
+	headerKeyListWrite
 )
 
 // SetHeader sets a header in the context.
@@ -63,6 +64,25 @@ func SetReadHeaderList(ctx context.Context, keys []string) context.Context {
 // GetReadHeaderList returns the key list of read THeaders from the context.
 func GetReadHeaderList(ctx context.Context) []string {
 	if v := ctx.Value(headerKeyListRead); v != nil {
+		if value, ok := v.([]string); ok {
+			return value
+		}
+	}
+	return nil
+}
+
+// SetWriteHeaderList sets the key list of THeaders to write in the context.
+func SetWriteHeaderList(ctx context.Context, keys []string) context.Context {
+	return context.WithValue(
+		ctx,
+		headerKeyListWrite,
+		keys,
+	)
+}
+
+// GetWriteHeaderList returns the key list of THeaders to write from the context.
+func GetWriteHeaderList(ctx context.Context) []string {
+	if v := ctx.Value(headerKeyListWrite); v != nil {
 		if value, ok := v.([]string); ok {
 			return value
 		}
