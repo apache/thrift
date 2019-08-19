@@ -63,6 +63,7 @@ namespace Thrift.Transports.Client
         public int ConnectTimeout
         {
             set { _connectTimeout = value; }
+            get { return _connectTimeout; }
         }
 
         public override bool IsOpen => true;
@@ -145,7 +146,7 @@ namespace Thrift.Transports.Client
 
             if (_connectTimeout > 0)
             {
-                httpClient.Timeout = TimeSpan.FromSeconds(_connectTimeout);
+                httpClient.Timeout = TimeSpan.FromMilliseconds(_connectTimeout);
             }
 
             httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/x-thrift"));
