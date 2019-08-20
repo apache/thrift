@@ -1,3 +1,20 @@
+### This repo is versioned as of August 2019
+
+This repo is versioned with tagged [semver](http://semver.org/) style versioning, and requires tagging with a new
+version in order for code to be used in other Tinder repos.
+
+The steps are as follows:
+
+1. Make a new PR with your changes, including
+    1. update the `package.json` version field
+    2. adding a change log entry in [CHANGELOG](https://github.com/TinderBackend/thrift/blob/master/CHANGELOG.md).
+2. Merge your PR, and then create a new tag:
+
+        git tag 2.0.2
+        git push origin 2.0.2
+
+3. Update the relevant, consuming repo to use the new tagged version.
+
 Apache Thrift
 =============
 
