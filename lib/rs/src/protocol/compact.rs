@@ -322,7 +322,7 @@ impl TCompactInputProtocolFactory {
 }
 
 impl TInputProtocolFactory for TCompactInputProtocolFactory {
-    fn create(&self, transport: Box<TReadTransport + Send>) -> Box<TInputProtocol + Send> {
+    fn create(&self, transport: Box<dyn TReadTransport + Send>) -> Box<dyn TInputProtocol + Send> {
         Box::new(TCompactInputProtocol::new(transport))
     }
 }
@@ -593,7 +593,7 @@ impl TCompactOutputProtocolFactory {
 }
 
 impl TOutputProtocolFactory for TCompactOutputProtocolFactory {
-    fn create(&self, transport: Box<TWriteTransport + Send>) -> Box<TOutputProtocol + Send> {
+    fn create(&self, transport: Box<dyn TWriteTransport + Send>) -> Box<dyn TOutputProtocol + Send> {
         Box::new(TCompactOutputProtocol::new(transport))
     }
 }

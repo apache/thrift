@@ -194,7 +194,7 @@ where
     fn new_protocols_for_connection(
         &mut self,
         stream: TcpStream,
-    ) -> ::Result<(Box<TInputProtocol + Send>, Box<TOutputProtocol + Send>)> {
+    ) -> ::Result<(Box<dyn TInputProtocol + Send>, Box<dyn TOutputProtocol + Send>)> {
         // create the shared tcp stream
         let channel = TTcpChannel::with_stream(stream);
 
@@ -216,8 +216,8 @@ where
 
 fn handle_incoming_connection<PRC>(
     processor: Arc<PRC>,
-    i_prot: Box<TInputProtocol>,
-    o_prot: Box<TOutputProtocol>,
+    i_prot: Box<dyn TInputProtocol>,
+    o_prot: Box<dyn TOutputProtocol>,
 ) where
     PRC: TProcessor,
 {

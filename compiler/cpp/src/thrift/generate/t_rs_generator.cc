@@ -901,7 +901,7 @@ void t_rs_generator::render_enum_impl(const string& enum_name) {
 
   f_gen_
     << indent()
-    << "pub fn write_to_out_protocol(&self, o_prot: &mut TOutputProtocol) -> thrift::Result<()> {"
+    << "pub fn write_to_out_protocol(&self, o_prot: &mut dyn TOutputProtocol) -> thrift::Result<()> {"
     << endl;
   indent_up();
   f_gen_ << indent() << "o_prot.write_i32(*self as i32)" << endl;
@@ -910,7 +910,7 @@ void t_rs_generator::render_enum_impl(const string& enum_name) {
 
   f_gen_
     << indent()
-    << "pub fn read_from_in_protocol(i_prot: &mut TInputProtocol) -> thrift::Result<" << enum_name << "> {"
+    << "pub fn read_from_in_protocol(i_prot: &mut dyn TInputProtocol) -> thrift::Result<" << enum_name << "> {"
     << endl;
   indent_up();
 
@@ -1401,7 +1401,7 @@ void t_rs_generator::render_struct_sync_write(
   f_gen_
     << indent()
     << visibility_qualifier(struct_type)
-    << "fn write_to_out_protocol(&self, o_prot: &mut TOutputProtocol) -> thrift::Result<()> {"
+    << "fn write_to_out_protocol(&self, o_prot: &mut dyn TOutputProtocol) -> thrift::Result<()> {"
     << endl;
   indent_up();
 
@@ -1433,7 +1433,7 @@ void t_rs_generator::render_struct_sync_write(
 void t_rs_generator::render_union_sync_write(const string &union_name, t_struct *tstruct) {
   f_gen_
     << indent()
-    << "pub fn write_to_out_protocol(&self, o_prot: &mut TOutputProtocol) -> thrift::Result<()> {"
+    << "pub fn write_to_out_protocol(&self, o_prot: &mut dyn TOutputProtocol) -> thrift::Result<()> {"
     << endl;
   indent_up();
 
@@ -1675,7 +1675,7 @@ void t_rs_generator::render_struct_sync_read(
   f_gen_
     << indent()
     << visibility_qualifier(struct_type)
-    << "fn read_from_in_protocol(i_prot: &mut TInputProtocol) -> thrift::Result<" << struct_name << "> {"
+    << "fn read_from_in_protocol(i_prot: &mut dyn TInputProtocol) -> thrift::Result<" << struct_name << "> {"
     << endl;
 
   indent_up();
@@ -1797,7 +1797,7 @@ void t_rs_generator::render_struct_sync_read(
 void t_rs_generator::render_union_sync_read(const string &union_name, t_struct *tstruct) {
   f_gen_
     << indent()
-    << "pub fn read_from_in_protocol(i_prot: &mut TInputProtocol) -> thrift::Result<" << union_name << "> {"
+    << "pub fn read_from_in_protocol(i_prot: &mut dyn TInputProtocol) -> thrift::Result<" << union_name << "> {"
     << endl;
   indent_up();
 
@@ -2206,8 +2206,8 @@ void t_rs_generator::render_sync_client_tthriftclient_impl(const string &client_
     << " {" << endl;
   indent_up();
 
-  f_gen_ << indent() << "fn i_prot_mut(&mut self) -> &mut TInputProtocol { &mut self._i_prot }" << endl;
-  f_gen_ << indent() << "fn o_prot_mut(&mut self) -> &mut TOutputProtocol { &mut self._o_prot }" << endl;
+  f_gen_ << indent() << "fn i_prot_mut(&mut self) -> &mut dyn TInputProtocol { &mut self._i_prot }" << endl;
+  f_gen_ << indent() << "fn o_prot_mut(&mut self) -> &mut dyn TOutputProtocol { &mut self._o_prot }" << endl;
   f_gen_ << indent() << "fn sequence_number(&self) -> i32 { self._sequence_number }" << endl;
   f_gen_
     << indent()
@@ -2564,7 +2564,7 @@ void t_rs_generator::render_sync_processor_definition_and_impl(t_service *tservi
 
   f_gen_
     << indent()
-    << "fn process(&self, i_prot: &mut TInputProtocol, o_prot: &mut TOutputProtocol) -> thrift::Result<()> {"
+    << "fn process(&self, i_prot: &mut dyn TInputProtocol, o_prot: &mut dyn TOutputProtocol) -> thrift::Result<()> {"
     << endl;
   indent_up();
 
@@ -2609,8 +2609,8 @@ void t_rs_generator::render_sync_process_delegation_functions(t_service *tservic
       << "fn " << function_name
       << "(&self, "
       << "incoming_sequence_number: i32, "
-      << "i_prot: &mut TInputProtocol, "
-      << "o_prot: &mut TOutputProtocol) "
+      << "i_prot: &mut dyn TInputProtocol, "
+      << "o_prot: &mut dyn TOutputProtocol) "
       << "-> thrift::Result<()> {"
       << endl;
     indent_up();
@@ -2674,8 +2674,8 @@ void t_rs_generator::render_sync_process_function(t_function *tfunc, const strin
     << "<H: " << handler_type << ">"
     << "(handler: &H, "
     << sequence_number_param << ": i32, "
-    << "i_prot: &mut TInputProtocol, "
-    << output_protocol_param << ": &mut TOutputProtocol) "
+    << "i_prot: &mut dyn TInputProtocol, "
+    << output_protocol_param << ": &mut dyn TOutputProtocol) "
     << "-> thrift::Result<()> {"
     << endl;
 
