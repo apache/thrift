@@ -261,6 +261,7 @@ public:
    * @param format Certificate file format
    */
   virtual void loadCertificate(const char* path, const char* format = "PEM");
+  virtual void loadCertificateFromBuffer(const char* aCertificate, const char* format = "PEM");
   /**
    * Load private key.
    *
@@ -268,12 +269,14 @@ public:
    * @param format Private key file format
    */
   virtual void loadPrivateKey(const char* path, const char* format = "PEM");
+  virtual void loadPrivateKeyFromBuffer(const char* aPrivateKey, const char* format = "PEM");
   /**
    * Load trusted certificates from specified file.
    *
    * @param path Path to trusted certificate file
    */
   virtual void loadTrustedCertificates(const char* path, const char* capath = nullptr);
+  virtual void loadTrustedCertificatesFromBuffer(const char* aCertificate, const char* aChain = nullptr);
   /**
    * Default randomize method.
    */

@@ -99,6 +99,7 @@ check_PROGRAMS = \
 	TInterruptTest \
 	TServerIntegrationTest \
 	SecurityTest \
+	SecurityFromBufferTest \
 	ZlibTest \
 	TFileTransportTest \
 	link_test \
@@ -167,6 +168,17 @@ SecurityTest_SOURCES = \
 	SecurityTest.cpp
 
 SecurityTest_LDADD = \
+  libtestgencpp.la \
+  libprocessortest.la \
+  $(BOOST_TEST_LDADD) \
+  $(BOOST_FILESYSTEM_LDADD) \
+  $(BOOST_SYSTEM_LDADD) \
+  $(BOOST_THREAD_LDADD)
+
+SecurityFromBufferTest_SOURCES = \
+	SecurityFromBufferTest.cpp
+
+SecurityFromBufferTest_LDADD = \
   libtestgencpp.la \
   libprocessortest.la \
   $(BOOST_TEST_LDADD) \
