@@ -249,7 +249,7 @@ impl TBinaryInputProtocolFactory {
 }
 
 impl TInputProtocolFactory for TBinaryInputProtocolFactory {
-    fn create(&self, transport: Box<TReadTransport + Send>) -> Box<TInputProtocol + Send> {
+    fn create(&self, transport: Box<dyn TReadTransport + Send>) -> Box<dyn TInputProtocol + Send> {
         Box::new(TBinaryInputProtocol::new(transport, true))
     }
 }
@@ -453,7 +453,7 @@ impl TBinaryOutputProtocolFactory {
 }
 
 impl TOutputProtocolFactory for TBinaryOutputProtocolFactory {
-    fn create(&self, transport: Box<TWriteTransport + Send>) -> Box<TOutputProtocol + Send> {
+    fn create(&self, transport: Box<dyn TWriteTransport + Send>) -> Box<dyn TOutputProtocol + Send> {
         Box::new(TBinaryOutputProtocol::new(transport, true))
     }
 }

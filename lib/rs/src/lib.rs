@@ -47,6 +47,7 @@
 
 #![crate_type = "lib"]
 #![doc(test(attr(allow(unused_variables), deny(warnings))))]
+#![deny(bare_trait_objects)]
 
 extern crate byteorder;
 extern crate ordered_float;

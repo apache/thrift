@@ -79,7 +79,7 @@ use ProtocolErrorKind;
 /// ```
 // FIXME: implement Debug
 pub struct TStoredInputProtocol<'a> {
-    inner: &'a mut TInputProtocol,
+    inner: &'a mut dyn TInputProtocol,
     message_ident: Option<TMessageIdentifier>,
 }
 
@@ -90,7 +90,7 @@ impl<'a> TStoredInputProtocol<'a> {
     /// with service name stripped - that will be passed to
     /// `wrapped.read_message_begin(...)`.
     pub fn new(
-        wrapped: &mut TInputProtocol,
+        wrapped: &mut dyn TInputProtocol,
         message_ident: TMessageIdentifier,
     ) -> TStoredInputProtocol {
         TStoredInputProtocol {
