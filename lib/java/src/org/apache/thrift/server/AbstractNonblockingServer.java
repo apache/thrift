@@ -361,7 +361,7 @@ public abstract class AbstractNonblockingServer extends TServer {
           // if this frame will push us over the memory limit, then return.
           // with luck, more memory will free up the next time around.
           if (readBufferBytesAllocated.get() + frameSize > MAX_READ_BUFFER_BYTES) {
-            return true;
+            return false;
           }
 
           // increment the amount of memory allocated to read buffers
