@@ -188,7 +188,7 @@ pub enum Error {
     /// functions are automatically returned as an `ApplicationError`.
     Application(ApplicationError),
     /// IDL-defined exception structs.
-    User(Box<error::Error + Sync + Send>),
+    User(Box<dyn error::Error + Sync + Send>),
 }
 
 impl Error {
@@ -196,7 +196,7 @@ impl Error {
     ///
     /// Application code **should never** call this method directly.
     pub fn read_application_error_from_in_protocol(
-        i: &mut TInputProtocol,
+        i: &mut dyn TInputProtocol,
     ) -> ::Result<ApplicationError> {
         let mut message = "general remote error".to_owned();
         let mut kind = ApplicationErrorKind::Unknown;
@@ -247,7 +247,7 @@ impl Error {
     /// Application code **should never** call this method directly.
     pub fn write_application_error_to_out_protocol(
         e: &ApplicationError,
-        o: &mut TOutputProtocol,
+        o: &mut dyn TOutputProtocol,
     ) -> ::Result<()> {
         o.write_struct_begin(&TStructIdentifier {
             name: "TApplicationException".to_owned(),

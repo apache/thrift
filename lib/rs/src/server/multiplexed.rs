@@ -27,7 +27,7 @@ use super::{handle_process_result, TProcessor};
 
 const MISSING_SEPARATOR_AND_NO_DEFAULT: &'static str =
     "missing service separator and no default processor set";
-type ThreadSafeProcessor = Box<TProcessor + Send + Sync>;
+type ThreadSafeProcessor = Box<dyn TProcessor + Send + Sync>;
 
 /// A `TProcessor` that can demux service calls to multiple underlying
 /// Thrift services.
@@ -74,7 +74,7 @@ impl TMultiplexedProcessor {
     pub fn register<S: Into<String>>(
         &mut self,
         service_name: S,
-        processor: Box<TProcessor + Send + Sync>,
+        processor: Box<dyn TProcessor + Send + Sync>,
         as_default: bool,
     ) -> ::Result<()> {
         let mut stored = self.stored.lock().unwrap();
@@ -103,8 +103,8 @@ impl TMultiplexedProcessor {
     fn process_message(
         &self,
         msg_ident: &TMessageIdentifier,
-        i_prot: &mut TInputProtocol,
-        o_prot: &mut TOutputProtocol,
+        i_prot: &mut dyn TInputProtocol,
+        o_prot: &mut dyn TOutputProtocol,
     ) -> ::Result<()> {
         let (svc_name, svc_call) = split_ident_name(&msg_ident.name);
         debug!("routing svc_name {:?} svc_call {}", &svc_name, &svc_call);
@@ -134,7 +134,7 @@ impl TMultiplexedProcessor {
 }
 
 impl TProcessor for TMultiplexedProcessor {
-    fn process(&self, i_prot: &mut TInputProtocol, o_prot: &mut TOutputProtocol) -> ::Result<()> {
+    fn process(&self, i_prot: &mut dyn TInputProtocol, o_prot: &mut dyn TOutputProtocol) -> ::Result<()> {
         let msg_ident = i_prot.read_message_begin()?;
 
         debug!("process incoming msg id:{:?}", &msg_ident);
@@ -259,7 +259,7 @@ mod tests {
     }
 
     impl TProcessor for Service {
-        fn process(&self, _: &mut TInputProtocol, _: &mut TOutputProtocol) -> ::Result<()> {
+        fn process(&self, _: &mut dyn TInputProtocol, _: &mut dyn TOutputProtocol) -> ::Result<()> {
             let res = self
                 .invoked
                 .compare_and_swap(false, true, Ordering::Relaxed);
