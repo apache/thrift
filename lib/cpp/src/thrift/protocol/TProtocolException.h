@@ -84,6 +84,8 @@ public:
         return "TProtocolException: Invalid version";
       case NOT_IMPLEMENTED:
         return "TProtocolException: Not implemented";
+      case DEPTH_LIMIT:
+        return "TProtocolException: Exceeded depth limit";
       default:
         return "TProtocolException: (Invalid exception type)";
       }
