@@ -64,6 +64,9 @@
   #pragma comment(lib, "Ws2.lib")
   #else
   #pragma comment(lib, "Ws2_32.lib")
+  #pragma comment(lib, "gdi32.lib") // For static OpenSSL
+  #pragma comment(lib, "crypt32.lib") // For static OpenSSL
+  #pragma comment(lib, "user32.lib") // For static OpenSSL
   #pragma comment(lib, "advapi32.lib") // For security APIs in TPipeServer
   #pragma comment(lib, "Shlwapi.lib")  // For StrStrIA in TPipeServer
   #endif
