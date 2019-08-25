@@ -223,11 +223,12 @@ public:
   std::string argument_list(t_struct* tstruct, bool include_callback = false);
   std::string type_to_enum(t_type* ttype);
   std::string make_valid_nodeJs_identifier(std::string const& name);
+  std::string next_identifier_name(std::vector<t_field*> const& fields, std::string const& base_name);
+  bool find_field(std::vector<t_field*> const& fields, std::string const& name);
 
   /**
    * Helper parser functions
    */
-
   void parse_imports(t_program* program, const std::string& imports_string);
   void parse_thrift_package_output_directory(const std::string& thrift_package_output_directory);
 
@@ -1269,6 +1270,9 @@ void t_js_generator::generate_service(t_service* tservice) {
                  << "Client = " << tservice->get_extends()->get_name() << ".Client;" << endl
                  << js_const_type_ << tservice->get_extends()->get_name()
                  << "Processor = " << tservice->get_extends()->get_name() << ".Processor;" << endl;
+
+      f_service_ts_ << "import " << tservice->get_extends()->get_name() << " = require('./"
+                    << tservice->get_extends()->get_name() << "');" << endl;
     }
 
     f_service_ << js_const_type_ << "ttypes = require('./" + program_->get_name() + "_types');" << endl;
@@ -1312,11 +1316,14 @@ void t_js_generator::generate_service_processor(t_service* tservice) {
     if (gen_ts_) {
       f_service_ts_ << endl << "declare class Processor ";
       if (tservice->get_extends() != nullptr) {
-        f_service_ts_ << "extends " << tservice->get_extends()->get_name() << "Processor ";
+        f_service_ts_ << "extends " << tservice->get_extends()->get_name() << ".Processor ";
       }
       f_service_ts_ << "{" << endl;
       indent_up();
-      f_service_ts_ << ts_indent() << "private _handler: object;" << endl << endl;
+
+      if(tservice->get_extends() == nullptr) {
+        f_service_ts_ << ts_indent() << "private _handler: object;" << endl << endl;
+      }
       f_service_ts_ << ts_indent() << "constructor(handler: object);" << endl;
       f_service_ts_ << ts_indent() << "process(input: thrift.TProtocol, output: thrift.TProtocol): void;" << endl;
       indent_down();
@@ -1331,9 +1338,9 @@ void t_js_generator::generate_service_processor(t_service* tservice) {
   // ES6 Constructor
   if (gen_es6_) {
     if (is_subclass_service) {
-      f_service_ << " = class extends " << tservice->get_extends()->get_name() << "Processor {" << endl;
+      f_service_ << " = class " << service_name_ << "Processor extends " << tservice->get_extends()->get_name() << "Processor {" << endl;
     } else {
-      f_service_ << " = class {" << endl;
+      f_service_ << " = class " << service_name_ << "Processor {" << endl;
     }
     indent_up();
     indent(f_service_) << "constructor(handler) {" << endl;
@@ -1695,7 +1702,7 @@ void t_js_generator::generate_service_client(t_service* tservice) {
       f_service_ts_ << ts_print_doc(tservice) << ts_indent() << ts_declare() << "class "
                     << "Client ";
       if (tservice->get_extends() != nullptr) {
-        f_service_ts_ << "extends " << tservice->get_extends()->get_name() << "Client ";
+        f_service_ts_ << "extends " << tservice->get_extends()->get_name() << ".Client ";
       }
       f_service_ts_ << "{" << endl;
     }
@@ -1714,11 +1721,12 @@ void t_js_generator::generate_service_client(t_service* tservice) {
 
   // ES6 Constructor
   if (gen_es6_) {
+
     if (is_subclass_service) {
-      f_service_ << " = class extends " << js_namespace(tservice->get_extends()->get_program())
+      f_service_ << " = class " << service_name_ << "Client extends " << js_namespace(tservice->get_extends()->get_program())
                        << tservice->get_extends()->get_name() << "Client {" << endl;
     } else {
-      f_service_ << " = class {" << endl;
+      f_service_ << " = class " << service_name_ << "Client {" << endl;
     }
     indent_up();
     if (gen_node_) {
@@ -1745,11 +1753,14 @@ void t_js_generator::generate_service_client(t_service* tservice) {
     indent(f_service_) << "this._seqid = 0;" << endl;
     indent(f_service_) << "this._reqs = {};" << endl;
     if (gen_ts_) {
-      f_service_ts_ << ts_indent() << "private output: thrift.TTransport;" << endl
-                    << ts_indent() << "private pClass: thrift.TProtocol;" << endl
-                    << ts_indent() << "private _seqid: number;" << endl
-                    << endl
-                    << ts_indent() << "constructor(output: thrift.TTransport, pClass: { new(trans: thrift.TTransport): thrift.TProtocol });"
+      if(!is_subclass_service) {
+        f_service_ts_ << ts_indent() << "private output: thrift.TTransport;" << endl
+                      << ts_indent() << "private pClass: thrift.TProtocol;" << endl
+                      << ts_indent() << "private _seqid: number;" << endl
+                      << endl;
+      }
+
+      f_service_ts_ << ts_indent() << "constructor(output: thrift.TTransport, pClass: { new(trans: thrift.TTransport): thrift.TProtocol });"
                     << endl;
     }
   } else {
@@ -1958,7 +1969,10 @@ void t_js_generator::generate_service_client(t_service* tservice) {
                                                      : "Thrift.MessageType.CALL";
     // Build args
     if (fields.size() > 0){
-      f_service_ << indent() << js_const_type_ << "params = {" << endl;
+      // It is possible that a method argument is named "params", we need to ensure the locally
+      // generated identifier "params" is uniquely named
+      std::string params_identifier = this->next_identifier_name(fields, "params");
+      f_service_ << indent() << js_const_type_ << params_identifier << " = {" << endl;
       indent_up();
       for (fld_iter = fields.begin(); fld_iter != fields.end(); ++fld_iter) {
         indent(f_service_) << (*fld_iter)->get_name() << ": " << (*fld_iter)->get_name();
@@ -1970,7 +1984,9 @@ void t_js_generator::generate_service_client(t_service* tservice) {
       }
       indent_down();
       indent(f_service_) << "};" << endl;
-      indent(f_service_) << js_const_type_ << "args = new " << argsname << "(params);" << endl;
+
+      // NOTE: "args" is a reserved keyword, so no need to generate a unique identifier
+      indent(f_service_) << js_const_type_ << "args = new " << argsname << "(" << params_identifier << ");" << endl;
     } else {
       indent(f_service_) << js_const_type_ << "args = new " << argsname << "();" << endl;
     }
@@ -2729,7 +2745,7 @@ string t_js_generator::ts_get_type(t_type* type) {
     }
   } else if (type->is_enum() || type->is_struct() || type->is_xception()) {
     std::string type_name;
-    
+
     if (type->get_program()) {
       type_name = js_namespace(type->get_program());
 
@@ -2936,6 +2952,33 @@ void t_js_generator::parse_thrift_package_output_directory(const std::string& th
   } else {
     gen_episode_file_ = true;
   }
+}
+
+/**
+ * Checks is the specified field name is contained in the specified field vector
+ */
+bool t_js_generator::find_field(const std::vector<t_field*>& fields, const std::string& name) {
+    vector<t_field*>::const_iterator f_iter;
+    for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
+        if ((*f_iter)->get_name() == name) {
+          return true;
+        }
+    }
+
+    return false;
+}
+
+/**
+ * Given a vector of fields, generate a valid identifier name that does not conflict with avaliable field names
+ */
+std::string t_js_generator::next_identifier_name(const std::vector<t_field*>& fields, const std::string& base_name) {
+  // Search through fields until a match is not found, if a match is found prepend "_" to the identifier name
+  std::string current_name = this->make_valid_nodeJs_identifier(base_name);
+  while(this->find_field(fields, current_name)) {
+    current_name = this->make_valid_nodeJs_identifier("_" + current_name);
+  }
+
+  return current_name;
 }
 
 THRIFT_REGISTER_GENERATOR(js,
