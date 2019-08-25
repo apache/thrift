@@ -229,7 +229,6 @@ public:
   /**
    * Helper parser functions
    */
-
   void parse_imports(t_program* program, const std::string& imports_string);
   void parse_thrift_package_output_directory(const std::string& thrift_package_output_directory);
 
@@ -1325,7 +1324,6 @@ void t_js_generator::generate_service_processor(t_service* tservice) {
       if(tservice->get_extends() == NULL) {
         f_service_ts_ << ts_indent() << "private _handler: object;" << endl << endl;
       }
-
       f_service_ts_ << ts_indent() << "constructor(handler: object);" << endl;
       f_service_ts_ << ts_indent() << "process(input: thrift.TProtocol, output: thrift.TProtocol): void;" << endl;
       indent_down();
@@ -2961,7 +2959,6 @@ void t_js_generator::parse_thrift_package_output_directory(const std::string& th
  */
 bool t_js_generator::find_field(const std::vector<t_field*>& fields, const std::string& name) {
     vector<t_field*>::const_iterator f_iter;
-
     for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
         if ((*f_iter)->get_name() == name) {
           return true;
