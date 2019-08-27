@@ -38,7 +38,7 @@
 
 // ignore EEXIST, throw on any other error
 #ifdef _WIN32
-#define MKDIR(x) { int r = _mkdir(x); if (r == -1 && errno != EEXIST) { throw (std::string(x) + ": ") + strerror(errno); } }
+#define MKDIR(x) { int r = _mkdir(x); if (r == -1) { throw (std::string(x) + ": ") + strerror(errno); } }
 #else
 #define MKDIR(x) { int r = mkdir(x, S_IRWXU | S_IRWXG | S_IRWXO); if (r == -1 && errno != EEXIST) { throw (std::string(x) + ": ") + strerror(errno); } }
 #endif
