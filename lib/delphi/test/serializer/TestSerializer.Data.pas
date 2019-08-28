@@ -336,6 +336,10 @@ begin
   result.Byte_set_map := TDebugProtoTestConstants.COMPACT_TEST.Byte_set_map;
   result.Byte_list_map := TDebugProtoTestConstants.COMPACT_TEST.Byte_list_map;
 
+  result.Field500 := 500;
+  result.Field5000 := 5000;
+  result.Field20000 := 20000;
+
   {$IF cDebugProtoTest_Option_AnsiStr_Binary}
   result.A_binary := AnsiString( #0#1#2#3#4#5#6#7#8);
   {$ELSE}

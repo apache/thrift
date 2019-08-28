@@ -686,7 +686,8 @@ end;
 // Read a field header off the wire.
 function TCompactProtocolImpl.ReadFieldBegin: TThriftField;
 var type_ : Byte;
-    fieldId, modifier : ShortInt;
+    modifier : ShortInt;
+    fieldId : SmallInt;
 begin
   type_ := Byte( ReadByte);
 
@@ -700,7 +701,7 @@ begin
   modifier := ShortInt( (type_ and $F0) shr 4);
   if (modifier = 0)
   then fieldId := ReadI16    // not a delta. look ahead for the zigzag varint field id.
-  else fieldId := ShortInt( lastFieldId_ + modifier); // add the delta to the last Read field id.
+  else fieldId := SmallInt( lastFieldId_ + modifier); // add the delta to the last Read field id.
 
   Init( result, '', getTType(Byte(type_ and $0F)), fieldId);
 

@@ -164,6 +164,11 @@ struct CompactProtoTestStruct {
   47: map<i8, map<i8,i8>>     byte_map_map;
   48: map<i8, set<i8>>        byte_set_map;
   49: map<i8, list<i8>>       byte_list_map;
+  
+  // large field IDs
+  500 : i64  field500;
+  5000 : i64  field5000;
+  20000 : i64  field20000;
 }
 
 // To be used to test the serialization of an empty map

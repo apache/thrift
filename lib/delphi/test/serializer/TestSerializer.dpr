@@ -29,6 +29,7 @@ uses
   Thrift.Transport in '..\..\src\Thrift.Transport.pas',
   Thrift.Protocol in '..\..\src\Thrift.Protocol.pas',
   Thrift.Protocol.JSON in '..\..\src\Thrift.Protocol.JSON.pas',
+  Thrift.Protocol.Compact in '..\..\src\Thrift.Protocol.Compact.pas',
   Thrift.Collections in '..\..\src\Thrift.Collections.pas',
   Thrift.Server in '..\..\src\Thrift.Server.pas',
   Thrift.Utils in '..\..\src\Thrift.Utils.pas',
@@ -44,6 +45,12 @@ uses
 
 type
   TTestSerializer = class //extends TestCase {
+  private type
+    TMethod = (
+      mt_Bytes,
+      mt_Stream
+    );
+
   private
     FProtocols : TList< IProtocolFactory>;
 
@@ -53,6 +60,8 @@ type
     class procedure Deserialize( const input : TStream; const target : IBase; const factory : IProtocolFactory);  overload;
 
     procedure Test_Serializer_Deserializer;
+    procedure Test_OneOfEach(     const method : TMethod; const factory : IProtocolFactory; const stream : TFileStream);
+    procedure Test_CompactStruct( const method : TMethod; const factory : IProtocolFactory; const stream : TFileStream);
 
   public
     constructor Create;
@@ -70,7 +79,7 @@ begin
   inherited Create;
   FProtocols := TList< IProtocolFactory>.Create;
   FProtocols.Add( TBinaryProtocolImpl.TFactory.Create);
-  //FProtocols.Add( TCompactProtocolImpl.TFactory.Create);
+  FProtocols.Add( TCompactProtocolImpl.TFactory.Create);
   FProtocols.Add( TJSONProtocolImpl.TFactory.Create);
 end;
 
@@ -84,73 +93,115 @@ begin
   end;
 end;
 
-type TMethod = (mt_Bytes, mt_Stream);
+
+procedure TTestSerializer.Test_OneOfEach( const method : TMethod; const factory : IProtocolFactory; const stream : TFileStream);
+var tested, correct : IOneOfEach;
+    bytes   : TBytes;
+    i : Integer;
+begin
+  // write
+  tested := Fixtures.CreateOneOfEach;
+  case method of
+    mt_Bytes:  bytes := Serialize( tested, factory);
+    mt_Stream: begin
+      stream.Size := 0;
+      Serialize( tested, factory, stream);
+    end
+  else
+    ASSERT( FALSE);
+  end;
+
+  // init + read
+  tested := TOneOfEachImpl.Create;
+  case method of
+    mt_Bytes:  Deserialize( bytes, tested, factory);
+    mt_Stream: begin
+      stream.Position := 0;
+      Deserialize( stream, tested, factory);
+    end
+  else
+    ASSERT( FALSE);
+  end;
+
+  // check
+  correct := Fixtures.CreateOneOfEach;
+  ASSERT( tested.Im_true = correct.Im_true);
+  ASSERT( tested.Im_false = correct.Im_false);
+  ASSERT( tested.A_bite = correct.A_bite);
+  ASSERT( tested.Integer16 = correct.Integer16);
+  ASSERT( tested.Integer32 = correct.Integer32);
+  ASSERT( tested.Integer64 = correct.Integer64);
+  ASSERT( Abs( tested.Double_precision - correct.Double_precision) < 1E-12);
+  ASSERT( tested.Some_characters = correct.Some_characters);
+  ASSERT( tested.Zomg_unicode = correct.Zomg_unicode);
+  ASSERT( tested.What_who = correct.What_who);
+
+  ASSERT( Length(tested.Base64) = Length(correct.Base64));
+  ASSERT( CompareMem( @tested.Base64[0], @correct.Base64[0], Length(correct.Base64)));
+
+  ASSERT( tested.Byte_list.Count = correct.Byte_list.Count);
+  for i := 0 to tested.Byte_list.Count-1
+  do ASSERT( tested.Byte_list[i] = correct.Byte_list[i]);
+
+  ASSERT( tested.I16_list.Count = correct.I16_list.Count);
+  for i := 0 to tested.I16_list.Count-1
+  do ASSERT( tested.I16_list[i] = correct.I16_list[i]);
+
+  ASSERT( tested.I64_list.Count = correct.I64_list.Count);
+  for i := 0 to tested.I64_list.Count-1
+  do ASSERT( tested.I64_list[i] = correct.I64_list[i]);
+end;
+
+
+procedure TTestSerializer.Test_CompactStruct( const method : TMethod; const factory : IProtocolFactory; const stream : TFileStream);
+var tested, correct : ICompactProtoTestStruct;
+    bytes   : TBytes;
+begin
+  // write
+  tested := Fixtures.CreateCompactProtoTestStruct;
+  case method of
+    mt_Bytes:  bytes := Serialize( tested, factory);
+    mt_Stream: begin
+      stream.Size := 0;
+      Serialize( tested, factory, stream);
+    end
+  else
+    ASSERT( FALSE);
+  end;
+
+  // init + read
+  correct := TCompactProtoTestStructImpl.Create;
+  case method of
+    mt_Bytes:  Deserialize( bytes, tested, factory);
+    mt_Stream: begin
+      stream.Position := 0;
+      Deserialize( stream, tested, factory);
+    end
+  else
+    ASSERT( FALSE);
+  end;
+
+  // check
+  correct := Fixtures.CreateCompactProtoTestStruct;
+  ASSERT( correct.Field500  = tested.Field500);
+  ASSERT( correct.Field5000  = tested.Field5000);
+  ASSERT( correct.Field20000 = tested.Field20000);
+end;
 
 
 procedure TTestSerializer.Test_Serializer_Deserializer;
-var level3ooe, correct : IOneOfEach;
-    factory : IProtocolFactory;
-    bytes   : TBytes;
+var factory : IProtocolFactory;
     stream  : TFileStream;
-    i       : Integer;
     method  : TMethod;
 begin
-  correct := Fixtures.CreateOneOfEach;
   stream  := TFileStream.Create( 'TestSerializer.dat', fmCreate);
   try
 
     for method in [Low(TMethod)..High(TMethod)] do begin
       for factory in FProtocols do begin
 
-        // write
-        level3ooe := Fixtures.CreateOneOfEach;
-        case method of
-          mt_Bytes:  bytes := Serialize( level3ooe, factory);
-          mt_Stream: begin
-            stream.Size := 0;
-            Serialize( level3ooe, factory, stream);
-          end
-        else
-          ASSERT( FALSE);
-        end;
-
-        // init + read
-        level3ooe := TOneOfEachImpl.Create;
-        case method of
-          mt_Bytes:  Deserialize( bytes, level3ooe, factory);
-          mt_Stream: begin
-            stream.Position := 0;
-            Deserialize( stream, level3ooe, factory);
-          end
-        else
-          ASSERT( FALSE);
-        end;
-
-
-        // check
-        ASSERT( level3ooe.Im_true = correct.Im_true);
-        ASSERT( level3ooe.Im_false = correct.Im_false);
-        ASSERT( level3ooe.A_bite = correct.A_bite);
-        ASSERT( level3ooe.Integer16 = correct.Integer16);
-        ASSERT( level3ooe.Integer32 = correct.Integer32);
-        ASSERT( level3ooe.Integer64 = correct.Integer64);
-        ASSERT( Abs( level3ooe.Double_precision - correct.Double_precision) < 1E-12);
-        ASSERT( level3ooe.Some_characters = correct.Some_characters);
-        ASSERT( level3ooe.Zomg_unicode = correct.Zomg_unicode);
-        ASSERT( level3ooe.What_who = correct.What_who);
-        ASSERT( level3ooe.Base64 = correct.Base64);
-
-        ASSERT( level3ooe.Byte_list.Count = correct.Byte_list.Count);
-        for i := 0 to level3ooe.Byte_list.Count-1
-        do ASSERT( level3ooe.Byte_list[i] = correct.Byte_list[i]);
-
-        ASSERT( level3ooe.I16_list.Count = correct.I16_list.Count);
-        for i := 0 to level3ooe.I16_list.Count-1
-        do ASSERT( level3ooe.I16_list[i] = correct.I16_list[i]);
-
-        ASSERT( level3ooe.I64_list.Count = correct.I64_list.Count);
-        for i := 0 to level3ooe.I64_list.Count-1
-        do ASSERT( level3ooe.I64_list[i] = correct.I64_list[i]);
+        Test_OneOfEach(     method, factory, stream);
+        Test_CompactStruct( method, factory, stream);
       end;
     end;
 
