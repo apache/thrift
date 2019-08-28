@@ -29,6 +29,7 @@
 - [THRIFT-4675](https://issues.apache.org/jira/browse/THRIFT-4675) - js: now uses node-int64 for 64 bit integer constants
 - [THRIFT-4841](https://issues.apache.org/jira/browse/THRIFT-4841) - delphi: old THTTPTransport is now TMsxmlHTTPTransport
 - [THRIFT-4536](https://issues.apache.org/jira/browse/THRIFT-4536) - rust: convert from try-from crate to rust stable (1.34+), re-export ordered-float
+- [THRIFT-4942](https://issues.apache.org/jira/browse/THRIFT-4942) - php: class member variables generated from structs are now private, access and mutate them using getters and setters.
 
 ### Known Issues (Blocker or Critical)
 
