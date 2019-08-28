@@ -150,6 +150,13 @@ public:
 
   void generate_php_type_spec(std::ostream& out, t_type* t);
   void generate_php_struct_spec(std::ostream& out, t_struct* tstruct);
+  
+  void generate_generic_field_getters_setters(std::ostream& out, t_struct* tstruct);
+  
+  void generate_reflection_setters(ostringstream& out, string field_name, string cap_name);
+  void generate_reflection_getters(ostringstream& out, t_type* type, string field_name, string cap_name);
+  
+  std::string get_cap_name(std::string name);
 
   /**
    * Service-level generation functions
@@ -808,7 +815,81 @@ void t_php_generator::generate_php_struct_spec(ostream& out, t_struct* tstruct) 
   indent_down();
   indent(out) << ");" << endl << endl;
 }
+/**
+ * Generates necessary accessors and mutators for the private fields
+ */
+void t_php_generator::generate_generic_field_getters_setters(std::ostream& out,
+                                                              t_struct* tstruct) {
+  std::ostringstream getter_stream;
+  std::ostringstream setter_stream;
 
+  // build up the bodies of both the getter and setter at once
+  const vector<t_field*>& fields = tstruct->get_members();
+  vector<t_field*>::const_iterator f_iter;
+  for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
+    t_field* field = *f_iter;
+    t_type* type = get_true_type(field->get_type());
+    std::string field_name = field->get_name();
+    std::string cap_name = get_cap_name(field_name);
+
+    indent_up();
+    generate_reflection_setters(setter_stream, field_name, cap_name);
+    generate_reflection_getters(getter_stream, type, field_name, cap_name);
+    indent_down();
+  }
+
+  indent(out) << endl;
+  out << getter_stream.str();
+  out << setter_stream.str();
+  indent(out) << endl;
+}
+/**
+ * Generates a getter for the generated private fields
+ */
+void t_php_generator::generate_reflection_getters(ostringstream& out,
+                                                   t_type* type,
+                                                   string field_name,
+                                                   string cap_name) {
+
+  
+  out << indent() << "public function " << (type->is_bool() ? "is" : "get") << cap_name << "()" << endl
+      << indent() << "{" << endl;
+
+  indent_up();
+  
+  out << indent() << "return $this->" << field_name << ";" << endl;
+
+  indent_down();
+  out << indent() << "}" << endl;
+  out << endl;
+}
+/**
+ * Generates a setter for the generated private fields
+ */
+void t_php_generator::generate_reflection_setters(ostringstream& out,
+						  string field_name,
+						  string cap_name) {
+
+  out << indent() << "public function set" << cap_name << "(" << "$" << field_name << ")" << endl
+      << indent() << "{" << endl;
+
+  indent_up();
+  
+  out << indent() << "$this->" << field_name << " = $" << field_name << ";" << endl;
+
+  indent_down();
+  out << indent() << "}" << endl;
+  out << endl;
+}
+/**
+ * Gets the first-letter capitalized name for the field
+ *
+ * @param std::string name of the field
+ */
+std::string t_php_generator::get_cap_name(std::string name) {
+  name[0] = toupper(name[0]);
+  return name;
+}
 /**
  * Generates a struct definition for a thrift data type. This is nothing in PHP
  * where the objects are all just associative arrays (unless of course we
@@ -850,7 +931,7 @@ void t_php_generator::generate_php_struct_definition(ostream& out,
       dval = render_const_value((*m_iter)->get_type(), (*m_iter)->get_value());
     }
     generate_php_doc(out, *m_iter);
-    indent(out) << "public $" << (*m_iter)->get_name() << " = " << dval << ";" << endl;
+    indent(out) << "private $" << (*m_iter)->get_name() << " = " << dval << ";" << endl;
   }
 
   out << endl;
@@ -901,6 +982,9 @@ void t_php_generator::generate_php_struct_definition(ostream& out,
   out << indent() << "}" << endl << endl;
 
   out << endl;
+  
+  generate_generic_field_getters_setters(out, tstruct);
+
   generate_php_struct_reader(out, tstruct, is_result);
   out << endl;
   generate_php_struct_writer(out, tstruct, is_result);
@@ -1545,6 +1629,7 @@ void t_php_generator::generate_service_helpers(t_service* tservice) {
   vector<t_function*>::iterator f_iter;
 
   ofstream_with_content_based_conditional_update& f_struct_definition = f_service_;
+	
   if (classmap_) {
     f_struct_definition << "// HELPER FUNCTIONS AND STRUCTURES" << endl << endl;
   }
