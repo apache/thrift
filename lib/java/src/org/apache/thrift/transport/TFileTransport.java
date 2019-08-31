@@ -26,9 +26,6 @@ import java.io.OutputStream;
 import java.io.IOException;
 import java.util.Random;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 /**
  * FileTransport implementation of the TTransport interface.
  * Currently this is a straightforward port of the cpp implementation
@@ -38,8 +35,6 @@ import org.slf4j.LoggerFactory;
  * for chunking.
  */
 public class TFileTransport extends TTransport {
-
-  private static final Logger LOGGER = LoggerFactory.getLogger(TFileTransport.class);
 
   public static class TruncableBufferedInputStream extends BufferedInputStream {
     public void trunc() {
@@ -145,7 +140,7 @@ public class TFileTransport extends TTransport {
   /**
    * Current tailing policy
    */
-  protected TailPolicy currentPolicy_ = TailPolicy.NOWAIT;
+  TailPolicy currentPolicy_ = TailPolicy.NOWAIT;
 
 
   /** 
@@ -162,17 +157,17 @@ public class TFileTransport extends TTransport {
   /**
    * Event currently read in
    */
-  protected Event currentEvent_ = null;
+  Event currentEvent_ = null;
 
   /**
    * InputStream currently being used for reading
    */
-  protected InputStream inputStream_ = null;
+  InputStream inputStream_ = null;
 
   /**
    * current Chunk state
    */
-  protected ChunkState cs = null;
+  ChunkState cs = null;
 
   /**
    * is read only?
@@ -216,6 +211,7 @@ public class TFileTransport extends TTransport {
         is = new TruncableBufferedInputStream(inputFile_.getInputStream());
       }
     } catch (IOException iox) {
+      System.err.println("createInputStream: "+iox.getMessage());
       throw new TTransportException(iox.getMessage(), iox);
     }
     return(is);
@@ -384,7 +380,7 @@ public class TFileTransport extends TTransport {
       try {
         inputFile_.close();
       } catch (IOException iox) {
-        LOGGER.warn("WARNING: Error closing input file: " +
+        System.err.println("WARNING: Error closing input file: " +
                            iox.getMessage());
       }
       inputFile_ = null;
@@ -393,7 +389,7 @@ public class TFileTransport extends TTransport {
       try {
         outputStream_.close();
       } catch (IOException iox) {
-        LOGGER.warn("WARNING: Error closing output stream: " +
+        System.err.println("WARNING: Error closing output stream: " +
                            iox.getMessage());
       }
       outputStream_ = null;
@@ -529,6 +525,7 @@ public class TFileTransport extends TTransport {
     if(chunk*cs.getChunkSize() != cs.getOffset()) {
       try { inputFile_.seek((long)chunk*cs.getChunkSize()); } 
       catch (IOException iox) {
+        System.err.println("createInputStream: "+iox.getMessage());
         throw new TTransportException("Seek to chunk " +
                                       chunk + " " +iox.getMessage(), iox);
       }
@@ -594,20 +591,20 @@ public class TFileTransport extends TTransport {
       try {
         num_chunks = Integer.parseInt(args[1]);
       } catch (Exception e) {
-        LOGGER.error("Cannot parse " + args[1]); 
+        System.err.println("Cannot parse " + args[1]); 
         printUsage();
       }
     }
 
     TFileTransport t = new TFileTransport(args[0], true);
     t.open();
-    LOGGER.info("NumChunks="+t.getNumChunks());
+    System.out.println("NumChunks="+t.getNumChunks());
 
     Random r = new Random();
     for(int j=0; j<num_chunks; j++) {
       byte[] buf = new byte[4096];
       int cnum = r.nextInt(t.getNumChunks()-1);
-      LOGGER.info("Reading chunk "+cnum);
+      System.out.println("Reading chunk "+cnum);
       t.seekToChunk(cnum);
       for(int i=0; i<4096; i++) {
         t.read(buf, 0, 4096);
@@ -616,8 +613,8 @@ public class TFileTransport extends TTransport {
   }
 
   private static void printUsage() {
-    LOGGER.error("Usage: TFileTransport <filename> [num_chunks]");
-    LOGGER.error("       (Opens and reads num_chunks chunks from file randomly)");
+    System.err.println("Usage: TFileTransport <filename> [num_chunks]");
+    System.err.println("       (Opens and reads num_chunks chunks from file randomly)");
     System.exit(1);
   }
 
