@@ -44,7 +44,8 @@ ext.mavenRepositoryUrl = property('maven-repository-url')
 // Versions used in this project
 ext.httpclientVersion = property('httpclient.version')
 ext.httpcoreVersion = property('httpcore.version')
-ext.servletVersion = property('servlet.version')
+//ext.servletVersion = property('servlet.version')
+ext.tomcatEmbedVersion = property('tomcat.embed.version')
 ext.slf4jVersion = property('slf4j.version')
 ext.junitVersion = property('junit.version')
 ext.mockitoVersion = property('mockito.version')
@@ -66,7 +67,8 @@ dependencies {
     compile "org.slf4j:slf4j-api:${slf4jVersion}"
     compile "org.apache.httpcomponents:httpclient:${httpclientVersion}"
     compile "org.apache.httpcomponents:httpcore:${httpcoreVersion}"
-    compile "javax.servlet:servlet-api:${servletVersion}"
+    //compile "javax.servlet:servlet-api:${servletVersion}"
+    compile "org.apache.tomcat.embed:tomcat-embed-core:${tomcatEmbedVersion}"
     compile "javax.annotation:javax.annotation-api:${javaxAnnotationVersion}"
 
     testCompile "junit:junit:${junitVersion}"
