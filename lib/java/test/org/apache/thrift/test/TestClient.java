@@ -27,6 +27,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.apache.http.impl.HttpClients;
 import org.apache.thrift.TApplicationException;
 import org.apache.thrift.TException;
 import org.apache.thrift.TSerializer;
@@ -76,6 +77,7 @@ public class TestClient {
     String protocol_type = "binary";
     String transport_type = "buffered";
     boolean ssl = false;
+    boolean http_client = fasle;
 
     int socketTimeout = 1000;
 
@@ -99,6 +101,8 @@ public class TestClient {
           transport_type.trim();
         } else if (args[i].equals("--ssl")) {
           ssl = true;
+        } else if (args[i].equals("--client")) {
+          http_client = true;  
         } else if (args[i].equals("--help")) {
           System.out.println("Allowed options:");
           System.out.println("  --help\t\t\tProduce help message");
@@ -145,8 +149,15 @@ public class TestClient {
 
     try {
       if (transport_type.equals("http")) {
-        String url = "http://" + host + ":" + port + "/service";
-        transport = new THttpClient(url);
+        String url = "http://" + host + ":" + port + "/test/service";
+        if (http_client == true) {
+          
+          transport = new THttpClient(url, HttpClients.createDefault());
+        } else {
+          transport = new THttpClient(url);
+        }
+       
+
       } else {
         TSocket socket = null;
         if (ssl == true) {
