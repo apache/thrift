@@ -516,6 +516,10 @@ private:
 
   // Replace all instances of `search_string` with `replace_string` in `target`.
   void string_replace(string& target, const string& search_string, const string& replace_string);
+
+  // Adjust field identifier to correctly handle unspecified field identifiers
+  // THRIFT-4953
+  string rust_safe_field_id(int32_t id);
 };
 
 void t_rs_generator::init_generator() {
@@ -1172,8 +1176,8 @@ void t_rs_generator::render_struct_constructor(
         generic_type_parameters << ", ";
         generic_type_qualifiers << ", ";
       }
-      generic_type_parameters << "F" << member->get_key();
-      generic_type_qualifiers << "F" << member->get_key() << ": Into<Option<" << to_rust_type(member->get_type()) << ">>";
+      generic_type_parameters << "F" << rust_safe_field_id(member->get_key());
+      generic_type_qualifiers << "F" << rust_safe_field_id(member->get_key()) << ": Into<Option<" << to_rust_type(member->get_type()) << ">>";
     }
   }
 
@@ -1204,7 +1208,7 @@ void t_rs_generator::render_struct_constructor(
     }
 
     if (is_optional(member_req)) {
-      args << member_name << ": " << "F" << member->get_key();
+      args << member_name << ": " << "F" << rust_safe_field_id(member->get_key());
     } else {
       args << member_name << ": " << to_rust_type(member->get_type());
     }
@@ -1720,7 +1724,7 @@ void t_rs_generator::render_struct_sync_read(
 
   for (members_iter = members.begin(); members_iter != members.end(); ++members_iter) {
     t_field* tfield = (*members_iter);
-    f_gen_ << indent() << tfield->get_key() << " => {" << endl;
+    f_gen_ << indent() << rust_safe_field_id(tfield->get_key()) << " => {" << endl;
     indent_up();
     render_type_sync_read("val", tfield->get_type());
     f_gen_ << indent() << struct_field_read_temp_variable(tfield) << " = Some(val);" << endl;
@@ -1830,7 +1834,7 @@ void t_rs_generator::render_union_sync_read(const string &union_name, t_struct *
   vector<t_field*>::const_iterator members_iter;
   for (members_iter = members.begin(); members_iter != members.end(); ++members_iter) {
     t_field* member = (*members_iter);
-    f_gen_ << indent() << member->get_key() << " => {" << endl;
+    f_gen_ << indent() << rust_safe_field_id(member->get_key()) << " => {" << endl;
     indent_up();
     render_type_sync_read("val", member->get_type());
     f_gen_ << indent() << "if ret.is_none() {" << endl;
@@ -2034,7 +2038,7 @@ void t_rs_generator::render_map_sync_read(t_map *tmap, const string &map_var) {
 
 string t_rs_generator::struct_field_read_temp_variable(t_field* tfield) {
   std::ostringstream foss;
-  foss << "f_" << tfield->get_key();
+  foss << "f_" << rust_safe_field_id(tfield->get_key());
   return foss.str();
 }
 
@@ -3312,6 +3316,17 @@ string t_rs_generator::rust_camel_case(const string& name) {
   string str(capitalize(camelcase(name)));
   string_replace(str, "_", "");
   return str;
+}
+
+string t_rs_generator::rust_safe_field_id(int32_t id) {
+    string id_str = std::to_string(abs(id));
+    if (id >= 0) {
+        return id_str;
+    } else {
+        string str("neg");
+        str += id_str;
+        return str;
+    }
 }
 
 void t_rs_generator::string_replace(string& target, const string& search_string, const string& replace_string) {
