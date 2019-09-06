@@ -291,7 +291,7 @@ thrift_ssl_socket_read (ThriftTransport *transport, gpointer buf,
 {
   guint maxRecvRetries_ = 10;
   ThriftSSLSocket *ssl_socket = THRIFT_SSL_SOCKET (transport);
-  guint bytes = 0;
+  gint32 bytes = 0;
   guint retries = 0;
   ThriftSocket *socket = THRIFT_SOCKET (transport);
   g_return_val_if_fail (socket->sd != THRIFT_INVALID_SOCKET && ssl_socket->ssl!=NULL, FALSE);
