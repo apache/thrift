@@ -85,7 +85,7 @@ thrift_server_socket_listen (ThriftServerTransport *transport, GError **error)
     {
       g_set_error (error, THRIFT_SERVER_SOCKET_ERROR,
                    THRIFT_SERVER_SOCKET_ERROR_BIND,
-                   "failed to bind to path %s",
+                   "failed to bind to path %s: - %s",
                    tsocket->path, strerror(errno));
       return FALSE;
     }
@@ -115,7 +115,7 @@ thrift_server_socket_listen (ThriftServerTransport *transport, GError **error)
     {
       g_set_error (error, THRIFT_SERVER_SOCKET_ERROR,
                    THRIFT_SERVER_SOCKET_ERROR_BIND,
-                   "failed to bind to path %s",
+                   "failed to bind to path %s: - %s",
                    tsocket->path, strerror(errno));
       return FALSE;
     }
