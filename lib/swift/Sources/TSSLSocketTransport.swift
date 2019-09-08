@@ -20,6 +20,13 @@
 import Foundation
 import CoreFoundation
 
+#if !swift(>=4.2)
+// Swift 3/4 compatibility
+fileprivate extension RunLoopMode {
+  static let `default` = defaultRunLoopMode
+}
+#endif
+
 #if os(Linux)
 public class TSSLSocketTransport {
   init(hostname: String, port: UInt16) {
@@ -98,18 +105,18 @@ public class TSSLSocketTransport: TStreamTransport {
       
       CFReadStreamSetProperty(readStream?.takeRetainedValue(),
                               .SSLSettings,
-                              settings as CFTypeRef!)
+                              settings as CFTypeRef)
       
       CFWriteStreamSetProperty(writeStream?.takeRetainedValue(),
                               .SSLSettings,
-                              settings as CFTypeRef!)
+                              settings as CFTypeRef)
       
       inputStream = readStream!.takeRetainedValue()
-      inputStream?.schedule(in: .current, forMode: .defaultRunLoopMode)
+      inputStream?.schedule(in: .current, forMode: .default)
       inputStream?.open()
       
       outputStream = writeStream!.takeRetainedValue()
-      outputStream?.schedule(in: .current, forMode: .defaultRunLoopMode)
+      outputStream?.schedule(in: .current, forMode: .default)
       outputStream?.open()
       
       readStream?.release()

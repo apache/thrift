@@ -67,7 +67,7 @@ public class TCompactProtocol: TProtocol {
   /// Mark: - TCompactProtocol helpers
   
   func writebyteDirect(_ byte: UInt8) throws {
-    let byte = Data(bytes: [byte])
+    let byte = Data([byte])
     try ProtocolTransportTry(error: TProtocolError(message: "Transport Write Failed")) {
       try self.transport.write(data: byte)
     }
@@ -90,7 +90,7 @@ public class TCompactProtocol: TProtocol {
     }
     
     try ProtocolTransportTry(error: TProtocolError(message: "Transport Write Failed")) {
-      try self.transport.write(data: Data(bytes: i32buf[0..<idx]))
+      try self.transport.write(data: Data(i32buf[0..<idx]))
     }
   }
   
@@ -111,9 +111,8 @@ public class TCompactProtocol: TProtocol {
     }
     
     try ProtocolTransportTry(error: TProtocolError(message: "Transport Write Failed")) {
-      try self.transport.write(data: Data(bytes: varint64out[0..<idx]))
+      try self.transport.write(data: Data(varint64out[0..<idx]))
     }
-  
   }
   
   func writeCollectionBegin(_ elementType: TType, size: Int32) throws {
@@ -249,7 +248,6 @@ public class TCompactProtocol: TProtocol {
       let got      = String(format:"%2X", protocolId)
       throw TProtocolError(message: "Wrong Protocol ID \(got)",
                            extendedError: .mismatchedProtocol(expected: expected, got: got))
-
     }
 
     let versionAndType: UInt8 = try read()
@@ -257,7 +255,6 @@ public class TCompactProtocol: TProtocol {
     if version != TCompactProtocol.version {
       throw TProtocolError(error: .badVersion(expected: "\(TCompactProtocol.version)",
                                               got:"\(version)"))
-
     }
     
     let type = (versionAndType >> UInt8(TCType.typeShiftAmount)) & TCType.typeBits
@@ -485,7 +482,6 @@ public class TCompactProtocol: TProtocol {
     }
     
     lastFieldId = UInt8(fieldID)
-      
   }
   
   public func writeFieldStop() throws {

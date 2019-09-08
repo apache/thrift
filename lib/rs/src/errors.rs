@@ -58,7 +58,6 @@ use protocol::{TFieldIdentifier, TInputProtocol, TOutputProtocol, TStructIdentif
 /// Create a `TransportError`.
 ///
 /// ```
-/// use thrift;
 /// use thrift::{TransportError, TransportErrorKind};
 ///
 /// // explicit
@@ -104,7 +103,6 @@ use protocol::{TFieldIdentifier, TInputProtocol, TOutputProtocol, TStructIdentif
 /// Create an error from a string.
 ///
 /// ```
-/// use thrift;
 /// use thrift::{ApplicationError, ApplicationErrorKind};
 ///
 /// // we just use `From::from` to convert a `String` into a `thrift::Error`
@@ -134,7 +132,6 @@ use protocol::{TFieldIdentifier, TInputProtocol, TOutputProtocol, TStructIdentif
 /// ```
 ///
 /// ```
-/// use std::convert::From;
 /// use std::error::Error;
 /// use std::fmt;
 /// use std::fmt::{Display, Formatter};

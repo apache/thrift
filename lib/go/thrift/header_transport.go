@@ -271,7 +271,12 @@ var _ TTransport = (*THeaderTransport)(nil)
 // Please note that THeaderTransport handles framing and zlib by itself,
 // so the underlying transport should be the raw socket transports (TSocket or TSSLSocket),
 // instead of rich transports like TZlibTransport or TFramedTransport.
+//
+// If trans is already a *THeaderTransport, it will be returned as is.
 func NewTHeaderTransport(trans TTransport) *THeaderTransport {
+	if ht, ok := trans.(*THeaderTransport); ok {
+		return ht
+	}
 	return &THeaderTransport{
 		transport:    trans,
 		reader:       bufio.NewReader(trans),
@@ -689,4 +694,30 @@ func (t *THeaderTransport) isFramed() bool {
 	case clientHeaders, clientFramedBinary, clientFramedCompact:
 		return true
 	}
+}
+
+// THeaderTransportFactory is a TTransportFactory implementation to create
+// THeaderTransport.
+type THeaderTransportFactory struct {
+	// The underlying factory, could be nil.
+	Factory TTransportFactory
+}
+
+// NewTHeaderTransportFactory creates a new *THeaderTransportFactory.
+func NewTHeaderTransportFactory(factory TTransportFactory) TTransportFactory {
+	return &THeaderTransportFactory{
+		Factory: factory,
+	}
+}
+
+// GetTransport implements TTransportFactory.
+func (f *THeaderTransportFactory) GetTransport(trans TTransport) (TTransport, error) {
+	if f.Factory != nil {
+		t, err := f.Factory.GetTransport(trans)
+		if err != nil {
+			return nil, err
+		}
+		return NewTHeaderTransport(t), nil
+	}
+	return NewTHeaderTransport(trans), nil
 }

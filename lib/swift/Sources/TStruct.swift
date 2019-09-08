@@ -29,10 +29,10 @@ public protocol TStruct : TSerializable {
 }
 
 public extension TStruct {
-  public static var fieldIds: [String: (id: Int32, type: TType)] { return [:] }
-  public static var thriftType: TType { return .struct }
+  static var fieldIds: [String: (id: Int32, type: TType)] { return [:] }
+  static var thriftType: TType { return .struct }
   
-  public func write(to proto: TProtocol) throws {
+  func write(to proto: TProtocol) throws {
     // Write struct name first
     try proto.writeStructBegin(name: Self.structName)
     
@@ -45,7 +45,7 @@ public extension TStruct {
     try proto.writeStructEnd()
   }
   
-  public var hashValue: Int {
+  var hashValue: Int {
     let prime = 31
     var result = 1
     self.forEach { _, value, _ in

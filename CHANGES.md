@@ -25,6 +25,7 @@
 - [THRIFT-4709](https://issues.apache.org/jira/browse/THRIFT-4709) - java: changes to UTF-8 handling require JDK 1.7 at a minimum
 - [THRIFT-4712](https://issues.apache.org/jira/browse/THRIFT-4712) - java: class org.apache.thrift.ShortStack is no longer public
 - [THRIFT-4725](https://issues.apache.org/jira/browse/THRIFT-4725) - java: change return type signature of 'process' methods
+- [THRIFT-4805](https://issues.apache.org/jira/browse/THRIFT-4805) - java: replaced TSaslTransportException with TTransportException
 - [THRIFT-4675](https://issues.apache.org/jira/browse/THRIFT-4675) - js: now uses node-int64 for 64 bit integer constants
 - [THRIFT-4841](https://issues.apache.org/jira/browse/THRIFT-4841) - delphi: old THTTPTransport is now TMsxmlHTTPTransport
 - [THRIFT-4536](https://issues.apache.org/jira/browse/THRIFT-4536) - rust: convert from try-from crate to rust stable (1.34+), re-export ordered-float

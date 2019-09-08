@@ -20,7 +20,7 @@
 module thrift_test_server;
 
 import core.stdc.errno : errno;
-import core.stdc.signal : signal, sigfn_t, SIGINT, SIG_DFL, SIG_ERR;
+import core.stdc.signal : signal, SIGINT, SIG_DFL, SIG_ERR;
 import core.thread : dur, Thread;
 import std.algorithm;
 import std.exception : enforce;
@@ -314,8 +314,7 @@ void main(string[] args) {
     processor, serverSocket, transportFactory, protocolFactory);
 
   // Set up SIGINT signal handling
-  sigfn_t oldHandler = signal(SIGINT, &handleSignal);
-  enforce(oldHandler != SIG_ERR,
+  enforce(signal(SIGINT, &handleSignal) != SIG_ERR,
     "Could not replace the SIGINT signal handler: errno {0}".format(errno()));
   
   // Set up a server cancellation trigger

@@ -19,6 +19,8 @@
 
 package org.apache.thrift.server;
 
+import java.util.Arrays;
+import java.util.List;
 import java.util.Random;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.RejectedExecutionException;
@@ -29,13 +31,11 @@ import java.util.concurrent.TimeUnit;
 import org.apache.thrift.TException;
 import org.apache.thrift.TProcessor;
 import org.apache.thrift.protocol.TProtocol;
-import org.apache.thrift.transport.TSaslTransportException;
 import org.apache.thrift.transport.TServerTransport;
 import org.apache.thrift.transport.TTransport;
 import org.apache.thrift.transport.TTransportException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 
 /**
  * Server which uses Java's built in ThreadPool management to spawn off
@@ -312,21 +312,13 @@ public class TThreadPoolServer extends TServer {
             }
             processor.process(inputProtocol, outputProtocol);
         }
-      } catch (TException tx) {
-        LOGGER.error("Thrift error occurred during processing of message.", tx);
       } catch (Exception x) {
         // We'll usually receive RuntimeException types here
         // Need to unwrap to ascertain real causing exception before we choose to ignore
-        Throwable realCause = x.getCause();
         // Ignore err-logging all transport-level/type exceptions
-        if ((realCause != null && realCause instanceof TTransportException)
-            || (x instanceof TTransportException)) {
-          LOGGER.debug(
-              "Received TTransportException during processing of message. Ignoring.",
-              x);
-        } else {
+        if (!isIgnorableException(x)) {
           // Log the exception at error level and continue
-          LOGGER.error("Error occurred during processing of message.", x);
+          LOGGER.error((x instanceof TException? "Thrift " : "") + "Error occurred during processing of message.", x);
         }
       } finally {
         if (eventHandler != null) {
@@ -342,6 +334,26 @@ public class TThreadPoolServer extends TServer {
           client_.close();
         }
       }
+    }
+
+    private boolean isIgnorableException(Exception x) {
+      TTransportException tTransportException = null;
+
+      if (x instanceof TTransportException) {
+        tTransportException = (TTransportException)x;
+      }
+      else if (x.getCause() instanceof TTransportException) {
+        tTransportException = (TTransportException)x.getCause();
+      }
+
+      if (tTransportException != null) {
+        switch(tTransportException.getType()) {
+          case TTransportException.END_OF_FILE:
+          case TTransportException.TIMED_OUT:
+            return true;
+        }
+      }
+      return false;
     }
   }
 }

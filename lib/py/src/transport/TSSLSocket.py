@@ -291,11 +291,11 @@ class TSSLSocket(TSocket.TSocket, TSSLBase):
         plain_sock = socket.socket(family, socktype)
         try:
             return self._wrap_socket(plain_sock)
-        except Exception:
+        except Exception as ex:
             plain_sock.close()
             msg = 'failed to initialize SSL'
             logger.exception(msg)
-            raise TTransportException(TTransportException.NOT_OPEN, msg)
+            raise TTransportException(type=TTransportException.NOT_OPEN, message=msg, inner=ex)
 
     def open(self):
         super(TSSLSocket, self).open()
@@ -307,7 +307,7 @@ class TSSLSocket(TSocket.TSocket, TSSLBase):
             except TTransportException:
                 raise
             except Exception as ex:
-                raise TTransportException(TTransportException.UNKNOWN, str(ex))
+                raise TTransportException(message=str(ex), inner=ex)
 
 
 class TSSLServerSocket(TSocket.TServerSocket, TSSLBase):

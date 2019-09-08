@@ -71,6 +71,14 @@ public:
   }
 
 protected:
+
+  // D reserved words are suffixed with an underscore
+  static string suffix_if_reserved(const string& name) {
+	const bool isIn = std::binary_search(std::begin(d_reserved_words), std::end(d_reserved_words), name);
+	string ret = isIn ? name + "_" : name;
+	return ret;
+  }
+
   void init_generator() override {
     // Make output directory
     MKDIR(get_out_dir().c_str());
@@ -132,12 +140,12 @@ protected:
       vector<t_const*>::iterator c_iter;
       for (c_iter = consts.begin(); c_iter != consts.end(); ++c_iter) {
         this->emit_doc(*c_iter, f_consts);
-        string name = (*c_iter)->get_name();
+        string name = suffix_if_reserved((*c_iter)->get_name());
         t_type* type = (*c_iter)->get_type();
         indent(f_consts) << "immutable(" << render_type_name(type) << ") " << name << ";" << endl;
       }
 
-      f_consts << endl << "static this() {" << endl;
+      f_consts << endl << "shared static this() {" << endl;
       indent_up();
 
       bool first = true;
@@ -148,7 +156,7 @@ protected:
           f_consts << endl;
         }
         t_type* type = (*c_iter)->get_type();
-        indent(f_consts) << (*c_iter)->get_name() << " = ";
+        indent(f_consts) << suffix_if_reserved((*c_iter)->get_name()) << " = ";
         if (!is_immutable_type(type)) {
           f_consts << "cast(immutable(" << render_type_name(type) << ")) ";
         }
@@ -169,7 +177,7 @@ protected:
     vector<t_enum_value*> constants = tenum->get_constants();
 
     this->emit_doc(tenum, f_types_);
-    string enum_name = tenum->get_name();
+    string enum_name = suffix_if_reserved(tenum->get_name());
     f_types_ << indent() << "enum " << enum_name << " {" << endl;
 
     indent_up();
@@ -177,7 +185,7 @@ protected:
     vector<t_enum_value*>::const_iterator c_iter;
     for (c_iter = constants.begin(); c_iter != constants.end(); ++c_iter) {
       this->emit_doc(*c_iter, f_types_);
-      indent(f_types_) << (*c_iter)->get_name();
+      indent(f_types_) << suffix_if_reserved((*c_iter)->get_name());
       f_types_ << " = " << (*c_iter)->get_value() << ",";
     }
 
@@ -197,30 +205,30 @@ protected:
   }
 
   void generate_service(t_service* tservice) override {
-    string svc_name = tservice->get_name();
+    string svc_name = suffix_if_reserved(tservice->get_name());
 
     // Service implementation file includes
     string f_servicename = package_dir_ + svc_name + ".d";
     ofstream_with_content_based_conditional_update f_service;
     f_service.open(f_servicename.c_str());
-    f_service << autogen_comment() << "module " << render_package(*program_) << svc_name << ";"
+    f_service << autogen_comment() << "module " << suffix_if_reserved(render_package(*program_)) << svc_name << ";"
               << endl << endl;
 
     print_default_imports(f_service);
 
-    f_service << "import " << render_package(*get_program()) << program_name_ << "_types;" << endl;
+    f_service << "import " << suffix_if_reserved(render_package(*get_program())) << program_name_ << "_types;" << endl;
 
     t_service* extends_service = tservice->get_extends();
     if (extends_service != NULL) {
-      f_service << "import " << render_package(*(extends_service->get_program()))
-                << extends_service->get_name() << ";" << endl;
+      f_service << "import " << suffix_if_reserved(render_package(*(extends_service->get_program())))
+                << suffix_if_reserved(extends_service->get_name()) << ";" << endl;
     }
 
     f_service << endl;
 
     string extends = "";
     if (tservice->get_extends() != NULL) {
-      extends = " : " + render_type_name(tservice->get_extends());
+      extends = " : " + suffix_if_reserved(render_type_name(tservice->get_extends()));
     }
 
     this->emit_doc(tservice, f_service);
@@ -274,7 +282,7 @@ protected:
         meta << ",";
       }
 
-      meta << endl << indent() << "TMethodMeta(`" << (*fn_iter)->get_name() << "`, " << endl;
+      meta << endl << indent() << "TMethodMeta(`" << suffix_if_reserved((*fn_iter)->get_name()) << "`, " << endl;
       indent_up();
       indent(meta) << "[";
 
@@ -288,7 +296,7 @@ protected:
           meta << ", ";
         }
 
-        meta << "TParamMeta(`" << (*p_iter)->get_name() << "`, " << (*p_iter)->get_key();
+        meta << "TParamMeta(`" << suffix_if_reserved((*p_iter)->get_name()) << "`, " << (*p_iter)->get_key();
 
         t_const_value* cv = (*p_iter)->get_value();
         if (cv != NULL) {
@@ -312,8 +320,8 @@ protected:
             meta << ", ";
           }
 
-          meta << "TExceptionMeta(`" << (*ex_iter)->get_name() << "`, " << (*ex_iter)->get_key()
-               << ", `" << (*ex_iter)->get_type()->get_name() << "`)";
+          meta << "TExceptionMeta(`" << suffix_if_reserved((*ex_iter)->get_name()) << "`, "
+               << (*ex_iter)->get_key() << ", `" << (*ex_iter)->get_type()->get_name() << "`)";
         }
 
         meta << "]";
@@ -364,7 +372,7 @@ private:
    * Writes a server skeleton for the passed service to out.
    */
   void print_server_skeleton(ostream& out, t_service* tservice) {
-    string svc_name = tservice->get_name();
+    string svc_name = suffix_if_reserved(tservice->get_name());
 
     out << "/*" << endl
         << " * This auto-generated skeleton file illustrates how to build a server. If you" << endl
@@ -393,7 +401,7 @@ private:
       indent_up();
 
       out << indent() << "// Your implementation goes here." << endl << indent() << "writeln(\""
-          << (*f_iter)->get_name() << " called\");" << endl;
+          << suffix_if_reserved((*f_iter)->get_name()) << " called\");" << endl;
 
 	  t_type* rt = (*f_iter)->get_returntype();
 	  if (!rt->is_void()) {
@@ -428,16 +436,16 @@ private:
     const vector<t_field*>& members = tstruct->get_members();
 
     if (is_exception) {
-      indent(out) << "class " << tstruct->get_name() << " : TException {" << endl;
+      indent(out) << "class " << suffix_if_reserved(tstruct->get_name()) << " : TException {" << endl;
     } else {
-      indent(out) << "struct " << tstruct->get_name() << " {" << endl;
+      indent(out) << "struct " << suffix_if_reserved(tstruct->get_name()) << " {" << endl;
     }
     indent_up();
 
     // Declare all fields.
     vector<t_field*>::const_iterator m_iter;
     for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
-      indent(out) << render_type_name((*m_iter)->get_type()) << " " << (*m_iter)->get_name() << ";"
+      indent(out) << render_type_name((*m_iter)->get_type()) << " " << suffix_if_reserved((*m_iter)->get_name()) << ";"
                   << endl;
     }
 
@@ -462,7 +470,7 @@ private:
         }
         out << endl;
 
-        indent(out) << "TFieldMeta(`" << (*m_iter)->get_name() << "`, " << (*m_iter)->get_key();
+        indent(out) << "TFieldMeta(`" << suffix_if_reserved((*m_iter)->get_name()) << "`, " << (*m_iter)->get_key();
 
         t_const_value* cv = (*m_iter)->get_value();
         t_field::e_req req = (*m_iter)->get_req();
@@ -488,7 +496,7 @@ private:
    * method.
    */
   void print_function_signature(ostream& out, t_function* fn) {
-    out << render_type_name(fn->get_returntype()) << " " << fn->get_name() << "(";
+    out << render_type_name(fn->get_returntype()) << " " << suffix_if_reserved(fn->get_name()) << "(";
 
     const vector<t_field*>& fields = fn->get_arglist()->get_members();
     vector<t_field*>::const_iterator f_iter;
@@ -499,7 +507,7 @@ private:
       } else {
         out << ", ";
       }
-      out << render_type_name((*f_iter)->get_type(), true) << " " << (*f_iter)->get_name();
+      out << render_type_name((*f_iter)->get_type(), true) << " " << suffix_if_reserved((*f_iter)->get_name());
     }
 
     out << ")";
@@ -737,6 +745,30 @@ private:
   ofstream_with_content_based_conditional_update f_header_;
 
   string package_dir_;
+
+  protected:
+   static vector<string> d_reserved_words;
+
+};
+
+vector<string> t_d_generator::d_reserved_words = {
+    // The keywords are extracted from https://dlang.org/spec/lex.html
+    // and sorted for use with std::binary_search
+    "__FILE_FULL_PATH__", "__FILE__", "__FUNCTION__", "__LINE__", "__MODULE__",
+    "__PRETTY_FUNCTION__", "__gshared", "__parameters", "__traits", "__vector",
+    "abstract", "alias", "align", "asm", "assert", "auto", "body", "bool",
+    "break", "byte", "case", "cast", "catch", "cdouble", "cent", "cfloat",
+    "char", "class", "const", "continue", "creal", "dchar", "debug", "default",
+    "delegate", "delete", "deprecated", "do", "double", "else", "enum",
+    "export", "extern", "false", "final", "finally", "float", "for", "foreach",
+    "foreach_reverse", "function", "goto", "idouble", "if", "ifloat", "immutable",
+    "import", "in", "inout", "int", "interface", "invariant", "ireal", "is",
+    "lazy", "long", "macro ", "mixin", "module", "new", "nothrow", "null", "out",
+    "override", "package", "pragma", "private", "protected", "public", "pure",
+    "real", "ref", "return", "scope", "shared", "short", "static", "struct",
+    "super", "switch", "synchronized", "template", "this", "throw", "true", "try",
+    "typeid", "typeof", "ubyte", "ucent", "uint", "ulong", "union", "unittest",
+    "ushort", "version", "void", "wchar", "while", "with"
 };
 
 THRIFT_REGISTER_GENERATOR(d, "D", "")

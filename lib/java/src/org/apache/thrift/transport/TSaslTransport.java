@@ -310,14 +310,11 @@ abstract class TSaslTransport extends TTransport {
         underlyingTransport.close();
       }
     } catch (TTransportException e) {
-      /*
-       * If there is no-data or no-sasl header in the stream, throw a different
-       * type of exception so we can handle this scenario differently.
-       */
+      // If there is no-data or no-sasl header in the stream,
+      // log the failure, and clean up the underlying transport.
       if (!readSaslHeader && e.getType() == TTransportException.END_OF_FILE) {
         underlyingTransport.close();
-        LOGGER.debug("No data or no sasl data in the stream");
-        throw new TSaslTransportException("No data or no sasl data in the stream during negotiation", e);
+        LOGGER.debug("No data or no sasl data in the stream during negotiation");
       }
       throw e;
     }
@@ -427,6 +424,14 @@ abstract class TSaslTransport extends TTransport {
       readFrame();
     } catch (SaslException e) {
       throw new TTransportException(e);
+    } catch (TTransportException transportException) {
+      // If there is no-data or no-sasl header in the stream, log the failure, and rethrow.
+      if (transportException.getType() == TTransportException.END_OF_FILE) {
+        if (LOGGER.isDebugEnabled()) {
+          LOGGER.debug("No data or no sasl data in the stream during negotiation");
+        }
+      }
+      throw transportException;
     }
 
     return readBuffer.read(buf, off, len);
