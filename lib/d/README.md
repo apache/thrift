@@ -42,17 +42,8 @@ directory (PowerShell syntax):
 
 dmd -ofunittest -unittest -w $(dir -r -filter '*.d' -name)
 
-If you want to run the test clients/servers in OpenSSL
-mode, you have to provide »server-private-key.pem« and
-»server-certificate.pem« files in the directory the server
-executable resides in, and a »trusted-ca-certificate.pem«
-file for the client. The easiest way is to generate a new
-self signed certificate using the provided config file
-(openssl.test.cnf):
-
-openssl req -new -x509 -nodes -config openssl.test.cnf \
-  -out server-certificate.pem
-cat server-certificate.pem > trusted-ca-certificate.pem
-
-This steps are also performed automatically by the
-Autotools build system if the files are not present.
+Async and SSL
+-------------
+Using SSL with async is experimental (always has been) and
+the unit test "async_test --ssl" hangs.  Use at your own
+risk.

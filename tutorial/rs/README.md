@@ -8,7 +8,7 @@
 
 ```toml
 thrift = "x.y.z" # x.y.z is the version of the thrift compiler
-ordered_float = "0.3.0"
+ordered-float = "0.3.0"
 try_from = "0.2.0"
 ```
 

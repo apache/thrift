@@ -145,7 +145,7 @@ namespace Thrift.Transport.Client
 
             if (_connectTimeout > 0)
             {
-                httpClient.Timeout = TimeSpan.FromSeconds(_connectTimeout);
+                httpClient.Timeout = TimeSpan.FromMilliseconds(_connectTimeout);
             }
 
             httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/x-thrift"));

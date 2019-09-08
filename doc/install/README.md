@@ -28,7 +28,7 @@ These are only required if you choose to build the libraries for the given langu
     * zlib (optional)
 * Java
     * Java 1.8
-    * Apache Ant
+    * Gradle
 * C#: Mono 1.2.4 (and pkg-config to detect it) or Visual Studio 2005+
 * Python 2.6 (including header files for extension modules)
 * PHP 5.0 (optionally including header files for extension modules)

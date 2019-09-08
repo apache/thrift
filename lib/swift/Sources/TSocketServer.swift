@@ -105,7 +105,6 @@ class TSocketServer<InProtocol: TProtocol, OutProtocol: TProtocol, Processor: TP
                                                 [weak self] notification in
                                                 guard let strongSelf = self else { return }
                                                 strongSelf.connectionAccepted(strongSelf.socketFileHandle)
-
     }
 
     // tell socket to listen

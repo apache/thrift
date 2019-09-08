@@ -11,11 +11,11 @@
 # limitations under the License.
 
 #
-# Apache Thrift Docker build environment for Ubuntu Bionic
+# Apache Thrift Docker build environment for Ubuntu Disco
 # with some updated packages.
 #
 
-FROM buildpack-deps:bionic-scm
+FROM buildpack-deps:disco-scm
 MAINTAINER Apache Thrift <dev@thrift.apache.org>
 ENV DEBIAN_FRONTEND noninteractive
 
@@ -45,11 +45,11 @@ RUN curl https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor > /et
 
 # erlang
 RUN wget -O- https://packages.erlang-solutions.com/ubuntu/erlang_solutions.asc | apt-key add - && \
-    echo "deb https://packages.erlang-solutions.com/ubuntu bionic contrib" | tee /etc/apt/sources.list.d/erlang.list
+    echo "deb https://packages.erlang-solutions.com/ubuntu disco contrib" | tee /etc/apt/sources.list.d/erlang.list
 
 # node.js
 RUN curl -sL https://deb.nodesource.com/gpgkey/nodesource.gpg.key | apt-key add - && \
-    echo "deb https://deb.nodesource.com/node_10.x bionic main" | tee /etc/apt/sources.list.d/nodesource.list
+    echo "deb https://deb.nodesource.com/node_10.x disco main" | tee /etc/apt/sources.list.d/nodesource.list
 
 ### install general dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -190,12 +190,13 @@ RUN apt-get install -y --no-install-recommends \
 `# JS dependencies` \
       libxss1
 
-RUN apt-get install -y --no-install-recommends \
-`# OCaml dependencies` \
-      ocaml \
-      opam && \
-    opam init --yes && \
-    opam install --yes oasis
+# does not work on disco?
+# RUN apt-get install -y --no-install-recommends \
+# `# OCaml dependencies` \
+#       ocaml \
+#       opam && \
+#     opam init --yes && \
+#     opam install --yes oasis
 
 RUN apt-get install -y --no-install-recommends \
 `# Perl dependencies` \
@@ -254,21 +255,23 @@ RUN curl https://sh.rustup.rs -sSf | sh -s -- --default-toolchain 1.35.0 -y
 ENV PATH /root/.cargo/bin:$PATH
 
 # Swift on Linux for cross tests
-RUN cd / && \
-    wget --quiet https://swift.org/builds/swift-4.2.1-release/ubuntu1804/swift-4.2.1-RELEASE/swift-4.2.1-RELEASE-ubuntu18.04.tar.gz && \
-    tar xf swift-4.2.1-RELEASE-ubuntu18.04.tar.gz --strip-components=1 && \
-    rm swift-4.2.1-RELEASE-ubuntu18.04.tar.gz && \
-    swift --version
+# does not work on disco
+# RUN cd / && \
+#     wget --quiet https://swift.org/builds/swift-4.2.1-release/ubuntu1804/swift-4.2.1-RELEASE/swift-4.2.1-RELEASE-ubuntu18.04.tar.gz && \
+#     tar xf swift-4.2.1-RELEASE-ubuntu18.04.tar.gz --strip-components=1 && \
+#     rm swift-4.2.1-RELEASE-ubuntu18.04.tar.gz && \
+#     swift --version
 
 # cppcheck-1.82 has a nasty cpp parser bug, so we're using something newer
-RUN apt-get install -y --no-install-recommends \
-`# Static Code Analysis dependencies` \
-      cppcheck \
-      sloccount && \
-    pip install flake8 && \
-    wget -q "https://launchpad.net/ubuntu/+source/cppcheck/1.83-2/+build/14874703/+files/cppcheck_1.83-2_amd64.deb" && \
-    dpkg -i cppcheck_1.83-2_amd64.deb && \
-    rm cppcheck_1.83-2_amd64.deb
+# don't need this on disco, nobody uses it
+# RUN apt-get install -y --no-install-recommends \
+# `# Static Code Analysis dependencies` \
+#       cppcheck \
+#       sloccount && \
+#     pip install flake8 && \
+#     wget -q "https://launchpad.net/ubuntu/+source/cppcheck/1.83-2/+build/14874703/+files/cppcheck_1.83-2_amd64.deb" && \
+#     dpkg -i cppcheck_1.83-2_amd64.deb && \
+#     rm cppcheck_1.83-2_amd64.deb
 
 # Clean up
 RUN rm -rf /var/cache/apt/* && \

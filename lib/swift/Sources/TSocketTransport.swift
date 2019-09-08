@@ -29,6 +29,13 @@
 import Foundation
 import CoreFoundation
 
+#if !swift(>=4.2)
+// Swift 3/4 compatibility
+fileprivate extension RunLoopMode {
+  static let `default` = defaultRunLoopMode
+}
+#endif
+
 private struct Sys {
   #if os(Linux)
   static let read = Glibc.read
@@ -72,7 +79,7 @@ public class TCFSocketTransport: TStreamTransport {
     var readStream:  Unmanaged<CFReadStream>?
     var writeStream:  Unmanaged<CFWriteStream>?
     CFStreamCreatePairWithSocketToHost(kCFAllocatorDefault,
-                                       hostname as CFString!,
+                                       hostname as CFString,
                                        UInt32(port),
                                        &readStream,
                                        &writeStream)
@@ -88,11 +95,11 @@ public class TCFSocketTransport: TStreamTransport {
         }
 
       inputStream = readStream as InputStream
-      inputStream.schedule(in: .current, forMode: .defaultRunLoopMode)
+      inputStream.schedule(in: .current, forMode: .default)
       inputStream.open()
       
       outputStream = writeStream as OutputStream
-      outputStream.schedule(in: .current, forMode: .defaultRunLoopMode)
+      outputStream.schedule(in: .current, forMode: .default)
       outputStream.open()
       
     } else {
@@ -140,7 +147,6 @@ public class TSocketTransport : TTransport {
     }
     
     
-    
     #if os(Linux)
       let sock = socket(AF_INET, Int32(SOCK_STREAM.rawValue), 0)
       var addr = sockaddr_in(sin_family: sa_family_t(AF_INET),
@@ -184,7 +190,7 @@ public class TSocketTransport : TTransport {
     var buff = Array<UInt8>.init(repeating: 0, count: size)
     let readBytes = Sys.read(socketDescriptor, &buff, size)
     
-    return Data(bytes: buff[0..<readBytes])
+    return Data(buff[0..<readBytes])
   }
   
   public func write(data: Data) {

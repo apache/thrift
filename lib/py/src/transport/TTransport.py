@@ -34,9 +34,10 @@ class TTransportException(TException):
     SIZE_LIMIT = 6
     INVALID_CLIENT_TYPE = 7
 
-    def __init__(self, type=UNKNOWN, message=None):
+    def __init__(self, type=UNKNOWN, message=None, inner=None):
         TException.__init__(self, message)
         self.type = type
+        self.inner = inner
 
 
 class TTransportBase(object):

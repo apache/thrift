@@ -222,7 +222,6 @@ project.lock.json
 /lib/erl/test/*.beam
 /lib/erl/test/*.hrl
 /lib/erl/test/Thrift_omit_without.thrift
-/lib/erl/rebar.lock
 /lib/haxe/test/bin
 /lib/haxe/test/data.tmp
 /lib/hs/dist
@@ -323,6 +322,8 @@ project.lock.json
 /test/erl/.generated
 /test/erl/.rebar
 /test/erl/ebin
+/test/erl/_build/
+/test/erl/rebar.lock
 /test/go/bin/
 /test/go/ThriftTest.thrift
 /test/go/gopath

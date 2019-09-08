@@ -20,6 +20,13 @@
 import Foundation
 import CoreFoundation
 
+#if !swift(>=4.2)
+// Swift 3/4 compatibility
+fileprivate extension RunLoopMode {
+  static let `default` = defaultRunLoopMode
+}
+#endif
+
 #if os(Linux)
   /// Currently unavailable in Linux
   /// Remove comments and build to fix
@@ -64,7 +71,7 @@ import CoreFoundation
         if bytesRead <= 0 {
           throw TTransportError(error: .notOpen)
         }
-        read.append(Data(bytes: buffer))
+        read.append(Data(buffer))
       }
       return read
     }
@@ -85,7 +92,7 @@ import CoreFoundation
           break
         }
         
-        read.append(Data(bytes: buffer))
+        read.append(Data(buffer))
       }
       return read
     }
@@ -124,7 +131,7 @@ import CoreFoundation
         
         input?.delegate = nil
         input?.close()
-        input?.remove(from: .current, forMode: .defaultRunLoopMode)
+        input?.remove(from: .current, forMode: .default)
         input = nil
       }
       
@@ -135,7 +142,7 @@ import CoreFoundation
         }
         output?.delegate = nil
         output?.close()
-        output?.remove(from: .current, forMode: .defaultRunLoopMode)
+        output?.remove(from: .current, forMode: .default)
         output = nil
       }
     }

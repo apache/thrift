@@ -21,7 +21,7 @@ public struct TMap<Key : TSerializable & Hashable, Value : TSerializable>: Colle
   public typealias Storage = Dictionary<Key, Value>
   public typealias Element = Storage.Element
   public typealias Index = Storage.Index
-  public typealias IndexDistance = Storage.IndexDistance
+  public typealias IndexDistance = Int
   public typealias Indices = Storage.Indices
   public typealias SubSequence = Storage.SubSequence
   internal var storage = Storage()
@@ -33,11 +33,7 @@ public struct TMap<Key : TSerializable & Hashable, Value : TSerializable>: Colle
   }
   
   public mutating func updateValue(_ value: Value, forKey key: Key) -> Value? {
-    return updateValue(value, forKey: key)
-  }
-  
-  public mutating func removeAtIndex(_ index: DictionaryIndex<Key, Value>) -> (Key, Value) {
-    return removeAtIndex(index)
+    return storage.updateValue(value, forKey: key)
   }
   
   public mutating func removeValueForKey(_ key: Key) -> Value? {

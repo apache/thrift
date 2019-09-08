@@ -11,8 +11,8 @@ exclude = ["Makefile*", "test/**", "*.iml"]
 keywords = ["thrift"]
 
 [dependencies]
-ordered-float = "0.5"
-byteorder = "1"
-integer-encoding = "1"
+ordered-float = "1.0"
+byteorder = "1.3"
+integer-encoding = "1.0"
 log = "0.4"
 threadpool = "1.7"

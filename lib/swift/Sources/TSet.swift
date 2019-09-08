@@ -32,7 +32,7 @@ public struct TSet<Element : TSerializable & Hashable> : SetAlgebra, Hashable, C
   
   public typealias Indices = Storage.Indices
   public typealias Index = Storage.Index
-  public typealias IndexDistance = Storage.IndexDistance
+  public typealias IndexDistance = Int
   public typealias SubSequence = Storage.SubSequence
   
   

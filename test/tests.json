@@ -584,9 +584,9 @@
       ],
       "command": [
         "dart",
-	"--checked",
+	    "--enable-asserts",
         "test_client/bin/main.dart",
-	"--verbose"
+	    "--verbose"
       ]
     },
     "workdir": "dart"
@@ -612,9 +612,9 @@
         "true",
         "-noshell",
         "-pa",
-        "../../lib/erl/ebin/",
+        "../../lib/erl/_build/default/lib/thrift/ebin/",
         "-pa",
-        "./ebin",
+        "./_build/default/lib/thrift_test/ebin",
         "-s",
         "test_client",
         "-s",
@@ -630,9 +630,9 @@
         "true",
         "-noshell",
         "-pa",
-        "../../lib/erl/ebin/",
+        "../../lib/erl/_build/default/lib/thrift/ebin/",
         "-pa",
-        "./ebin",
+        "./_build/default/lib/thrift_test/ebin",
         "-s",
         "test_thrift_server",
         "-extra"
