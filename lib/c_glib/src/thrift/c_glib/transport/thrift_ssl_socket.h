@@ -178,7 +178,6 @@ thrift_ssl_load_cert_from_buffer(ThriftSSLSocket *ssl_socket, const char chain_c
 gboolean
 thrift_ssl_socket_is_open (ThriftTransport *transport);
 
-
 /**
  * Open connection if required and set the socket to be ready to send and receive
  * @param transport
@@ -188,6 +187,14 @@ thrift_ssl_socket_is_open (ThriftTransport *transport);
 gboolean
 thrift_ssl_socket_open (ThriftTransport *transport, GError **error);
 
+/**
+ * close connection exists and clears all resources socket initialized
+ * @param transport
+ * @param error
+ * @return true if transpot close success
+ */
+gboolean
+thrift_ssl_socket_close (ThriftTransport *transport, GError **error)
 
 /**
  * @brief Initialization function
@@ -202,6 +209,7 @@ thrift_ssl_socket_open (ThriftTransport *transport, GError **error);
  */
 void
 thrift_ssl_socket_initialize_openssl(void);
+
 /**
  * @brief Finalization function
  *
@@ -213,6 +221,18 @@ thrift_ssl_socket_initialize_openssl(void);
  */
 void
 thrift_ssl_socket_finalize_openssl(void);
+
+/**
+ * @brief authorize function
+ *
+ * It will do the authorization of ssl socket.
+ *
+ * It should be called in process of ssl socket handle handshake.
+ *
+ *
+ */
+void
+thrift_ssl_socket_authorize(void);
 
 G_END_DECLS
 #endif
