@@ -226,6 +226,10 @@ const CompactProtoTestStruct COMPACT_TEST = {
   'byte_map_map'       : {0 : {}, 1 : {1 : 1}, 2 : {1 : 1, 2 : 2}},
   'byte_set_map'       : {0 : [], 1 : [1], 2 : [1, 2]},
   'byte_list_map'      : {0 : [], 1 : [1], 2 : [1, 2]},
+  
+  'field500'           : 500,
+  'field5000'          : 5000,
+  'field20000'         : 20000,
 }
 
 
