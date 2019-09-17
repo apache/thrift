@@ -27,6 +27,10 @@ struct String {
   1: string val
 }
 
+struct Binary {
+  1: binary val
+}
+
 struct Boolean {
   1: bool val
 }

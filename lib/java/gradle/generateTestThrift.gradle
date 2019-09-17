@@ -80,6 +80,7 @@ task generateJava(group: 'Build') {
     thriftCompile(it, 'ManyOptionals.thrift')
     thriftCompile(it, 'JavaDeepCopyTest.thrift')
     thriftCompile(it, 'EnumContainersTest.thrift')
+    thriftCompile(it, 'JavaBinaryDefault.thrift')
 }
 
 task generateBeanJava(group: 'Build') {
