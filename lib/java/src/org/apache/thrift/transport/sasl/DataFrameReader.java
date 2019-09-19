@@ -17,23 +17,14 @@
  * under the License.
  */
 
-
-package org.apache.thrift.transport;
-
-import java.nio.channels.Selector;
+package org.apache.thrift.transport.sasl;
 
 /**
- * Server transport that can be operated in a nonblocking fashion.
+ * Frames for thrift (serialized) messages.
  */
-public abstract class TNonblockingServerTransport extends TServerTransport {
+public class DataFrameReader extends FrameReader<DataFrameHeaderReader> {
 
-  public abstract void registerSelector(Selector selector);
-
-  /**
-   *
-   * @return an incoming connection or null if there is none.
-   * @throws TTransportException
-   */
-  @Override
-  public abstract TNonblockingTransport accept() throws TTransportException;
+  public DataFrameReader() {
+    super(new DataFrameHeaderReader());
+  }
 }

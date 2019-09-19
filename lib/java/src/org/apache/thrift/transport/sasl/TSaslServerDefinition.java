@@ -17,23 +17,27 @@
  * under the License.
  */
 
+package org.apache.thrift.transport.sasl;
 
-package org.apache.thrift.transport;
-
-import java.nio.channels.Selector;
+import javax.security.auth.callback.CallbackHandler;
+import java.util.Map;
 
 /**
- * Server transport that can be operated in a nonblocking fashion.
+ * Contains all the parameters used to define a SASL server implementation.
  */
-public abstract class TNonblockingServerTransport extends TServerTransport {
+public class TSaslServerDefinition {
+  public final String mechanism;
+  public final String protocol;
+  public final String serverName;
+  public final Map<String, String> props;
+  public final CallbackHandler cbh;
 
-  public abstract void registerSelector(Selector selector);
-
-  /**
-   *
-   * @return an incoming connection or null if there is none.
-   * @throws TTransportException
-   */
-  @Override
-  public abstract TNonblockingTransport accept() throws TTransportException;
+  public TSaslServerDefinition(String mechanism, String protocol, String serverName,
+                               Map<String, String> props, CallbackHandler cbh) {
+    this.mechanism = mechanism;
+    this.protocol = protocol;
+    this.serverName = serverName;
+    this.props = props;
+    this.cbh = cbh;
+  }
 }

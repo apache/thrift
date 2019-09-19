@@ -17,23 +17,31 @@
  * under the License.
  */
 
-
-package org.apache.thrift.transport;
-
-import java.nio.channels.Selector;
+package org.apache.thrift.transport.sasl;
 
 /**
- * Server transport that can be operated in a nonblocking fashion.
+ * The header for data frame, it only contains a 4-byte payload size.
  */
-public abstract class TNonblockingServerTransport extends TServerTransport {
+public class DataFrameHeaderReader extends FixedSizeHeaderReader {
+  public static final int PAYLOAD_LENGTH_BYTES = 4;
 
-  public abstract void registerSelector(Selector selector);
+  private int payloadSize;
 
-  /**
-   *
-   * @return an incoming connection or null if there is none.
-   * @throws TTransportException
-   */
   @Override
-  public abstract TNonblockingTransport accept() throws TTransportException;
+  protected int headerSize() {
+    return PAYLOAD_LENGTH_BYTES;
+  }
+
+  @Override
+  protected void onComplete() throws TInvalidSaslFrameException {
+    payloadSize = byteBuffer.getInt(0);
+    if (payloadSize < 0) {
+      throw new TInvalidSaslFrameException("Payload size is negative: " + payloadSize);
+    }
+  }
+
+  @Override
+  public int payloadSize() {
+    return payloadSize;
+  }
 }

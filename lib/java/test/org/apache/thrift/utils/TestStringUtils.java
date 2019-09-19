@@ -17,23 +17,18 @@
  * under the License.
  */
 
+package org.apache.thrift.utils;
 
-package org.apache.thrift.transport;
+import org.junit.Assert;
+import org.junit.Test;
 
-import java.nio.channels.Selector;
+public class TestStringUtils {
 
-/**
- * Server transport that can be operated in a nonblocking fashion.
- */
-public abstract class TNonblockingServerTransport extends TServerTransport {
-
-  public abstract void registerSelector(Selector selector);
-
-  /**
-   *
-   * @return an incoming connection or null if there is none.
-   * @throws TTransportException
-   */
-  @Override
-  public abstract TNonblockingTransport accept() throws TTransportException;
+  @Test
+  public void testToHexString() {
+    byte[] bytes = {0x00, 0x1A, (byte) 0xEF, (byte) 0xAB, (byte) 0x92};
+    Assert.assertEquals("001AEFAB92", StringUtils.bytesToHexString(bytes));
+    Assert.assertEquals("EFAB92", StringUtils.bytesToHexString(bytes, 2, 3));
+    Assert.assertNull(StringUtils.bytesToHexString(null));
+  }
 }

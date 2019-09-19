@@ -17,23 +17,14 @@
  * under the License.
  */
 
-
 package org.apache.thrift.transport;
 
-import java.nio.channels.Selector;
-
 /**
- * Server transport that can be operated in a nonblocking fashion.
+ * End of file, especially, the underlying socket is closed.
  */
-public abstract class TNonblockingServerTransport extends TServerTransport {
+public class TEOFException extends TTransportException {
 
-  public abstract void registerSelector(Selector selector);
-
-  /**
-   *
-   * @return an incoming connection or null if there is none.
-   * @throws TTransportException
-   */
-  @Override
-  public abstract TNonblockingTransport accept() throws TTransportException;
+  public TEOFException(String message) {
+    super(TTransportException.END_OF_FILE, message);
+  }
 }

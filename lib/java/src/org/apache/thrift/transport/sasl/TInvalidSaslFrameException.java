@@ -17,23 +17,14 @@
  * under the License.
  */
 
-
-package org.apache.thrift.transport;
-
-import java.nio.channels.Selector;
+package org.apache.thrift.transport.sasl;
 
 /**
- * Server transport that can be operated in a nonblocking fashion.
+ * Got an invalid frame that does not respect the thrift sasl protocol.
  */
-public abstract class TNonblockingServerTransport extends TServerTransport {
+public class TInvalidSaslFrameException extends TSaslNegotiationException {
 
-  public abstract void registerSelector(Selector selector);
-
-  /**
-   *
-   * @return an incoming connection or null if there is none.
-   * @throws TTransportException
-   */
-  @Override
-  public abstract TNonblockingTransport accept() throws TTransportException;
+  public TInvalidSaslFrameException(String message) {
+    super(ErrorType.PROTOCOL_ERROR, message);
+  }
 }

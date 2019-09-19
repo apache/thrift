@@ -20,8 +20,6 @@
 package org.apache.thrift.transport;
 
 import java.nio.charset.StandardCharsets;
-import java.util.HashMap;
-import java.util.Map;
 
 import javax.security.sasl.Sasl;
 import javax.security.sasl.SaslClient;
@@ -30,6 +28,7 @@ import javax.security.sasl.SaslServer;
 
 import org.apache.thrift.EncodingUtils;
 import org.apache.thrift.TByteArrayOutputStream;
+import org.apache.thrift.transport.sasl.NegotiationStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -49,39 +48,6 @@ abstract class TSaslTransport extends TTransport {
 
   protected static enum SaslRole {
     SERVER, CLIENT;
-  }
-
-  /**
-   * Status bytes used during the initial Thrift SASL handshake.
-   */
-  protected static enum NegotiationStatus {
-    START((byte)0x01),
-    OK((byte)0x02),
-    BAD((byte)0x03),
-    ERROR((byte)0x04),
-    COMPLETE((byte)0x05);
-
-    private final byte value;
-
-    private static final Map<Byte, NegotiationStatus> reverseMap =
-      new HashMap<Byte, NegotiationStatus>();
-    static {
-      for (NegotiationStatus s : NegotiationStatus.class.getEnumConstants()) {
-        reverseMap.put(s.getValue(), s);
-      }
-    }
-
-    private NegotiationStatus(byte val) {
-      this.value = val;
-    }
-
-    public byte getValue() {
-      return value;
-    }
-
-    public static NegotiationStatus byValue(byte val) {
-      return reverseMap.get(val);
-    }
   }
 
   /**

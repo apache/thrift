@@ -31,6 +31,8 @@ import javax.security.sasl.Sasl;
 import javax.security.sasl.SaslException;
 import javax.security.sasl.SaslServer;
 
+import org.apache.thrift.transport.sasl.NegotiationStatus;
+import org.apache.thrift.transport.sasl.TSaslServerDefinition;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -50,29 +52,9 @@ public class TSaslServerTransport extends TSaslTransport {
   private Map<String, TSaslServerDefinition> serverDefinitionMap = new HashMap<String, TSaslServerDefinition>();
 
   /**
-   * Contains all the parameters used to define a SASL server implementation.
-   */
-  private static class TSaslServerDefinition {
-    public String mechanism;
-    public String protocol;
-    public String serverName;
-    public Map<String, String> props;
-    public CallbackHandler cbh;
-
-    public TSaslServerDefinition(String mechanism, String protocol, String serverName,
-        Map<String, String> props, CallbackHandler cbh) {
-      this.mechanism = mechanism;
-      this.protocol = protocol;
-      this.serverName = serverName;
-      this.props = props;
-      this.cbh = cbh;
-    }
-  }
-
-  /**
    * Uses the given underlying transport. Assumes that addServerDefinition is
    * called later.
-   * 
+   *
    * @param transport
    *          Transport underlying this one.
    */
@@ -84,7 +66,7 @@ public class TSaslServerTransport extends TSaslTransport {
    * Creates a <code>SaslServer</code> using the given SASL-specific parameters.
    * See the Java documentation for <code>Sasl.createSaslServer</code> for the
    * details of the parameters.
-   * 
+   *
    * @param transport
    *          The underlying Thrift transport.
    */

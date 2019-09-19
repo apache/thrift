@@ -17,23 +17,14 @@
  * under the License.
  */
 
-
-package org.apache.thrift.transport;
-
-import java.nio.channels.Selector;
+package org.apache.thrift.transport.sasl;
 
 /**
- * Server transport that can be operated in a nonblocking fashion.
+ * Read frames for sasl negotiatiions.
  */
-public abstract class TNonblockingServerTransport extends TServerTransport {
+public class SaslNegotiationFrameReader extends FrameReader<SaslNegotiationHeaderReader> {
 
-  public abstract void registerSelector(Selector selector);
-
-  /**
-   *
-   * @return an incoming connection or null if there is none.
-   * @throws TTransportException
-   */
-  @Override
-  public abstract TNonblockingTransport accept() throws TTransportException;
+  public SaslNegotiationFrameReader() {
+    super(new SaslNegotiationHeaderReader());
+  }
 }

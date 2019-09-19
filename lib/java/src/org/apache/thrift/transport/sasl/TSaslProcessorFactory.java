@@ -17,23 +17,16 @@
  * under the License.
  */
 
+package org.apache.thrift.transport.sasl;
 
-package org.apache.thrift.transport;
-
-import java.nio.channels.Selector;
+import org.apache.thrift.TException;
+import org.apache.thrift.TProcessor;
 
 /**
- * Server transport that can be operated in a nonblocking fashion.
+ * Get processor for a given state machine, so that users can customize the behavior of a TProcessor
+ * by interacting with the state machine.
  */
-public abstract class TNonblockingServerTransport extends TServerTransport {
+public interface TSaslProcessorFactory {
 
-  public abstract void registerSelector(Selector selector);
-
-  /**
-   *
-   * @return an incoming connection or null if there is none.
-   * @throws TTransportException
-   */
-  @Override
-  public abstract TNonblockingTransport accept() throws TTransportException;
+  TProcessor getProcessor(NonblockingSaslHandler saslHandler) throws TException;
 }
