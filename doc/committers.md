@@ -28,17 +28,16 @@
 
 1. The commit message should be in the format:
 
-       THRIFT-###:<Jira description>
+       THRIFT-####:<Jira description>
        Client: <component>
        Patch: <Name of person contributing the patch>
 
        Description of what was fixed or addressed.
 
-       <%
-           if this is a github pull request then add below comment
-            to automaticaly close GitHub request.
-       %>
-       This closes #XX
+       If this is a github pull request then add below comment to automaticaly close GitHub request, 
+	   where #NNNN is the PR number:
+       
+        This closes #NNNN
 
 
 1. Double check the patch committed and that nothing was missed then push the patch
