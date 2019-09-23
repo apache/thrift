@@ -25,6 +25,7 @@ stubs: thrifts/Base_One.thrift thrifts/Base_Two.thrift thrifts/Midlayer.thrift t
 	$(THRIFT) -I ./thrifts -out src --gen rs thrifts/Midlayer.thrift
 	$(THRIFT) -I ./thrifts -out src --gen rs thrifts/Ultimate.thrift
 	$(THRIFT) -out src --gen rs $(top_builddir)/test/Recursive.thrift
+	$(THRIFT) -out src --gen rs $(top_builddir)/test/Identifiers.thrift #THRIFT-4953
 
 check: stubs
 	$(CARGO) build
