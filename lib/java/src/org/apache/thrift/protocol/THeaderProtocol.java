@@ -45,8 +45,9 @@ public class THeaderProtocol extends TProtocol {
         protoId = ((THeaderTransport) trans_).getProtocolId();
         switch (protoId) {
             case THeaderTransport.T_BINARY_PROTOCOL:
-                // fbthrift use strictRead=true, can cause issues if source protocol is not using strictWrite=true
-                proto = new TBinaryProtocol(trans_, false, true);
+                // fbthrift use strictRead=true
+                // Circus is using strictWrite=false
+                proto = new TBinaryProtocol(trans_, false, false);
                 break;
             case THeaderTransport.T_COMPACT_PROTOCOL:
                 proto = new TCompactProtocol(trans_);

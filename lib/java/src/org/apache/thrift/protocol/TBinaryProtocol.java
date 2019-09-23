@@ -345,14 +345,7 @@ public class TBinaryProtocol extends TProtocol {
   public int readI32() throws TException {
     byte[] buf = inoutTemp;
     int off = 0;
-
-    if (trans_.getBytesRemainingInBuffer() >= 4) {
-      buf = trans_.getBuffer();
-      off = trans_.getBufferPosition();
-      trans_.consumeBuffer(4);
-    } else {
-      readAll(inoutTemp, 0, 4);
-    }
+    readAll(inoutTemp, 0, 4);
     return
       ((buf[off] & 0xff) << 24) |
       ((buf[off+1] & 0xff) << 16) |
