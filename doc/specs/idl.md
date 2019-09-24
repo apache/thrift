@@ -126,7 +126,7 @@ Because of this behaviour, required fields drastically limit the options with re
 - Read: Optional fields may, or may not be part of the input stream. 
 - Default values: are written when the isset flag is set
 
-Most language implementations use the recommended pratice of so-called "isset" flags to indicate whether a particular optional field is set or not. Only fields with this flag set are written, and conversely the flag is only set when a field value has been read from the input stream. 
+Most language implementations use the recommended practice of so-called "isset" flags to indicate whether a particular optional field is set or not. Only fields with this flag set are written, and conversely the flag is only set when a field value has been read from the input stream. 
 	
 #### default requiredness (implicit)
 
