@@ -410,8 +410,8 @@ public class THeaderTransport extends TFramedTransport {
             int transId = readVarint32Buf(frame);
             if (transId == Transforms.ZLIB_TRANSFORM.getValue()) {
                 readTransforms.add(transId);
-//            } else if (transId == Transforms.SNAPPY_TRANSFORM.getValue()) {
-//                readTransforms.add(transId);
+            } else if (transId == Transforms.SNAPPY_TRANSFORM.getValue()) {
+                readTransforms.add(transId);
             } else if (transId == Transforms.HMAC_TRANSFORM.getValue()) {
                 throw new THeaderException("Hmac transform no longer supported");
             } else {
@@ -450,8 +450,6 @@ public class THeaderTransport extends TFramedTransport {
 
         frame = untransform(frame);
         readBuffer_.reset(frame.array(), frame.position(), frame.remaining());
-        // adjust for 4 bytes sizeFiller_ in TFramedTransport
-        readBuffer_.consumeBuffer(4);
     }
 
     private ByteBuffer untransform(ByteBuffer data) throws TTransportException {
@@ -613,7 +611,6 @@ public class THeaderTransport extends TFramedTransport {
         } catch (TException e) {
             // Failed parsing a TApplicationException, so don't write headers
         }
-
         ByteBuffer frame = ByteBuffer.wrap(writeBuffer_.get());
         frame.limit(writeBuffer_.len());
         writeBuffer_.reset();
@@ -670,7 +667,8 @@ public class THeaderTransport extends TFramedTransport {
             // Allocate buffer for the headers.
             // 14 bytes for sz, magic , flags , seqId , headerSize
             ByteBuffer out = ByteBuffer.allocate(headerSize + 14);
-
+            // Account for additional padding of 4 bytes, compared to Circus
+            frame.position(4);
             // See thrift/doc/HeaderFormat.txt for more info on wire format
             encodeInt(out, 10 + headerSize + frame.remaining());
             encodeShort(out, HEADER_MAGIC >> 16);
@@ -689,7 +687,6 @@ public class THeaderTransport extends TFramedTransport {
                 out.put((byte) 0x00);
             }
             out.position(0);
-
             transport_.write(out.array(), out.position(), out.remaining());
             transport_.write(frame.array(), frame.position(), frame.remaining());
         } else if (clientType == ClientTypes.FRAMED_DEPRECATED) {
