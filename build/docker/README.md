@@ -109,12 +109,12 @@ new one for you:
 
 To run all unit tests (just like Travis CI does):
 
-    thrift$ dockerrun ubuntu-bionic
+    thrift$ dockerrun thrift/thrift-build:ubuntu-bionic
     root@8caf56b0ce7b:/thrift/src# build/docker/scripts/autotools.sh
 
 To run the cross tests (just like Travis CI does):
 
-    thrift$ dockerrun ubuntu-bionic
+    thrift$ dockerrun thrift/thrift-build:ubuntu-bionic
     root@8caf56b0ce7b:/thrift/src# build/docker/scripts/cross-test.sh
 
 When you are done, you want to clean up occasionally so that docker isn't using lots of extra disk space:
