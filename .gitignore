@@ -228,6 +228,7 @@ project.lock.json
 /lib/java/.gradle
 /lib/java/android/.gradle
 /lib/java/build
+/lib/java/out
 /lib/java/target
 /lib/js/dist
 /lib/js/doc
@@ -268,6 +269,7 @@ project.lock.json
 /lib/php/src/ext/thrift_protocol/mkinstalldirs
 /lib/php/src/ext/thrift_protocol/modules/
 /lib/php/src/ext/thrift_protocol/php_thrift_protocol.lo
+/lib/php/src/ext/thrift_protocol/php_thrift_protocol.loT
 /lib/php/src/ext/thrift_protocol/run-tests.php
 /lib/php/src/ext/thrift_protocol/thrift_protocol.la
 /lib/php/src/ext/thrift_protocol/tmp-php.ini
