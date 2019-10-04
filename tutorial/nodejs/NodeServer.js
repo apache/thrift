@@ -77,7 +77,6 @@ var server = thrift.createServer(Calculator, {
 
   zip: function() {
     console.log("zip()");
-    result(null);
   }
 
 });
