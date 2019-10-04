@@ -17,10 +17,10 @@
 # under the License.
 #
 
-gen-py/calculator.rb gen-py/shared_service.rb: $(top_srcdir)/tutorial/tutorial.thrift
+gen-rb/calculator.rb gen-rb/shared_service.rb: $(top_srcdir)/tutorial/tutorial.thrift
 	$(THRIFT) --gen rb -r $<
 
-all-local: gen-py/calculator.rb
+all-local: gen-rb/calculator.rb
 
 tutorialserver: all
 	${RUBY} RubyServer.rb
