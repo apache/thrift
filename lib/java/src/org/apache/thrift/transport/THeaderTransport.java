@@ -667,8 +667,7 @@ public class THeaderTransport extends TFramedTransport {
             // Allocate buffer for the headers.
             // 14 bytes for sz, magic , flags , seqId , headerSize
             ByteBuffer out = ByteBuffer.allocate(headerSize + 14);
-            // Account for additional padding of 4 bytes, compared to Circus
-            frame.position(4);
+
             // See thrift/doc/HeaderFormat.txt for more info on wire format
             encodeInt(out, 10 + headerSize + frame.remaining());
             encodeShort(out, HEADER_MAGIC >> 16);

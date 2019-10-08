@@ -78,13 +78,11 @@ public class TFramedTransport extends TTransport {
   public TFramedTransport(TTransport transport, int maxLength) {
     transport_ = transport;
     maxLength_ = maxLength;
-    writeBuffer_.write(sizeFiller_, 0, 4);
   }
 
   public TFramedTransport(TTransport transport) {
     transport_ = transport;
     maxLength_ = TFramedTransport.DEFAULT_MAX_LENGTH;
-    writeBuffer_.write(sizeFiller_, 0, 4);
   }
 
   @Override
