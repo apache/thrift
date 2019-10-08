@@ -26,6 +26,9 @@ import java.io.OutputStream;
 import java.io.IOException;
 import java.util.Random;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 /**
  * FileTransport implementation of the TTransport interface.
  * Currently this is a straightforward port of the cpp implementation
@@ -35,6 +38,8 @@ import java.util.Random;
  * for chunking.
  */
 public class TFileTransport extends TTransport {
+
+  private static final Logger LOGGER = LoggerFactory.getLogger(TFileTransport.class.getName());
 
   public static class TruncableBufferedInputStream extends BufferedInputStream {
     public void trunc() {
@@ -211,7 +216,6 @@ public class TFileTransport extends TTransport {
         is = new TruncableBufferedInputStream(inputFile_.getInputStream());
       }
     } catch (IOException iox) {
-      System.err.println("createInputStream: "+iox.getMessage());
       throw new TTransportException(iox.getMessage(), iox);
     }
     return(is);
@@ -380,7 +384,7 @@ public class TFileTransport extends TTransport {
       try {
         inputFile_.close();
       } catch (IOException iox) {
-        System.err.println("WARNING: Error closing input file: " +
+        LOGGER.warn("WARNING: Error closing input file: " +
                            iox.getMessage());
       }
       inputFile_ = null;
@@ -389,7 +393,7 @@ public class TFileTransport extends TTransport {
       try {
         outputStream_.close();
       } catch (IOException iox) {
-        System.err.println("WARNING: Error closing output stream: " +
+        LOGGER.warn("WARNING: Error closing output stream: " +
                            iox.getMessage());
       }
       outputStream_ = null;
@@ -525,7 +529,6 @@ public class TFileTransport extends TTransport {
     if(chunk*cs.getChunkSize() != cs.getOffset()) {
       try { inputFile_.seek((long)chunk*cs.getChunkSize()); } 
       catch (IOException iox) {
-        System.err.println("createInputStream: "+iox.getMessage());
         throw new TTransportException("Seek to chunk " +
                                       chunk + " " +iox.getMessage(), iox);
       }
@@ -591,20 +594,20 @@ public class TFileTransport extends TTransport {
       try {
         num_chunks = Integer.parseInt(args[1]);
       } catch (Exception e) {
-        System.err.println("Cannot parse " + args[1]); 
+        LOGGER.error("Cannot parse " + args[1]); 
         printUsage();
       }
     }
 
     TFileTransport t = new TFileTransport(args[0], true);
     t.open();
-    System.out.println("NumChunks="+t.getNumChunks());
+    LOGGER.info("NumChunks="+t.getNumChunks());
 
     Random r = new Random();
     for(int j=0; j<num_chunks; j++) {
       byte[] buf = new byte[4096];
       int cnum = r.nextInt(t.getNumChunks()-1);
-      System.out.println("Reading chunk "+cnum);
+      LOGGER.info("Reading chunk "+cnum);
       t.seekToChunk(cnum);
       for(int i=0; i<4096; i++) {
         t.read(buf, 0, 4096);
@@ -613,8 +616,8 @@ public class TFileTransport extends TTransport {
   }
 
   private static void printUsage() {
-    System.err.println("Usage: TFileTransport <filename> [num_chunks]");
-    System.err.println("       (Opens and reads num_chunks chunks from file randomly)");
+    LOGGER.error("Usage: TFileTransport <filename> [num_chunks]");
+    LOGGER.error("       (Opens and reads num_chunks chunks from file randomly)");
     System.exit(1);
   }
 
