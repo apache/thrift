@@ -52,5 +52,5 @@ cp -pr ../gen-perl .
 cp -pr ../gen-perl2 .
 perl ../tools/FixupDist.pl
 cd ..
-tar cvzf $DISTFILE $DISTDIR
+tar cvzf --hard-dereference $DISTFILE $DISTDIR
 rm -r $DISTDIR
