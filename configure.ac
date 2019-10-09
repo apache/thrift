@@ -871,6 +871,7 @@ AC_CONFIG_FILES([
   tutorial/netstd/Makefile
   tutorial/nodejs/Makefile
   tutorial/dart/Makefile
+  tutorial/perl/Makefile
   tutorial/py/Makefile
   tutorial/py.twisted/Makefile
   tutorial/py.tornado/Makefile

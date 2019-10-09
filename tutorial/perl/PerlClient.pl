@@ -23,7 +23,7 @@ use strict;
 use warnings;
 
 use lib '../../lib/perl/lib';
-use lib '../gen-perl';
+use lib 'gen-perl';
 
 use Thrift;
 use Thrift::BinaryProtocol;
