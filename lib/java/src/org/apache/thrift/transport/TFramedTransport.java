@@ -27,26 +27,26 @@ import org.apache.thrift.TByteArrayOutputStream;
  */
 public class TFramedTransport extends TTransport {
 
-  protected static final int DEFAULT_MAX_LENGTH = 0x3FFFFFFF;
+  protected static final int DEFAULT_MAX_LENGTH = 16384000;
 
   private int maxLength_;
 
   /**
    * Underlying transport
    */
-  protected TTransport transport_ = null;
+  private TTransport transport_ = null;
 
   /**
    * Buffer for output
    */
-  protected final TByteArrayOutputStream writeBuffer_ =
-          new TByteArrayOutputStream(1024);
+  private final TByteArrayOutputStream writeBuffer_ =
+    new TByteArrayOutputStream(1024);
 
   /**
    * Buffer for input
    */
-  protected final TMemoryInputTransport readBuffer_ =
-          new TMemoryInputTransport(new byte[0]);
+  private final TMemoryInputTransport readBuffer_ =
+    new TMemoryInputTransport(new byte[0]);
 
   public static class Factory extends TTransportFactory {
     private int maxLength_;
@@ -87,22 +87,18 @@ public class TFramedTransport extends TTransport {
     writeBuffer_.write(sizeFiller_, 0, 4);
   }
 
-  @Override
   public void open() throws TTransportException {
     transport_.open();
   }
 
-  @Override
   public boolean isOpen() {
     return transport_.isOpen();
   }
 
-  @Override
   public void close() {
     transport_.close();
   }
 
-  @Override
   public int read(byte[] buf, int off, int len) throws TTransportException {
     int got = readBuffer_.read(buf, off, len);
     if (got > 0) {
@@ -141,7 +137,6 @@ public class TFramedTransport extends TTransport {
 
   private final byte[] i32buf = new byte[4];
 
-
   private void readFrame() throws TTransportException {
     transport_.readAll(i32buf, 0, 4);
     int size = decodeFrameSize(i32buf);
@@ -154,7 +149,7 @@ public class TFramedTransport extends TTransport {
     if (size > maxLength_) {
       close();
       throw new TTransportException(TTransportException.CORRUPTED_DATA,
-              "Frame size (" + size + ") larger than max length (" + maxLength_ + ")!");
+          "Frame size (" + size + ") larger than max length (" + maxLength_ + ")!");
     }
 
     byte[] buff = new byte[size];
@@ -162,12 +157,9 @@ public class TFramedTransport extends TTransport {
     readBuffer_.reset(buff);
   }
 
-  @Override
   public void write(byte[] buf, int off, int len) throws TTransportException {
     writeBuffer_.write(buf, off, len);
   }
-
-
 
   @Override
   public void flush() throws TTransportException {
@@ -190,43 +182,9 @@ public class TFramedTransport extends TTransport {
 
   public static final int decodeFrameSize(final byte[] buf) {
     return
-            ((buf[0] & 0xff) << 24) |
-                    ((buf[1] & 0xff) << 16) |
-                    ((buf[2] & 0xff) <<  8) |
-                    ((buf[3] & 0xff));
-  }
-
-  /**
-   * Functions to encode/decode int32 and int16 to/from network byte order
-   */
-  public static final void encodeWord(final int frameSize, final byte[] buf) {
-    buf[0] = (byte) (0xff & (frameSize >> 24));
-    buf[1] = (byte) (0xff & (frameSize >> 16));
-    buf[2] = (byte) (0xff & (frameSize >> 8));
-    buf[3] = (byte) (0xff & (frameSize));
-  }
-
-  public static final int decodeWord(final byte[] buf) {
-    return decodeWord(buf, 0);
-  }
-
-  public static final int decodeWord(final byte[] buf, int off) {
-    return ((buf[0 + off] & 0xff) << 24)
-            | ((buf[1 + off] & 0xff) << 16)
-            | ((buf[2 + off] & 0xff) << 8)
-            | ((buf[3 + off] & 0xff));
-  }
-
-  public static final short decodeShort(final byte[] buf) {
-    return decodeShort(buf, 0);
-  }
-
-  public static final short decodeShort(final byte[] buf, int off) {
-    return (short) (((buf[0 + off] & 0xff) << 8) | ((buf[1 + off] & 0xff)));
-  }
-
-  public static final void encodeShort(final int value, final byte[] buf) {
-    buf[0] = (byte) (0xff & (value >> 8));
-    buf[1] = (byte) (0xff & (value));
+      ((buf[0] & 0xff) << 24) |
+      ((buf[1] & 0xff) << 16) |
+      ((buf[2] & 0xff) <<  8) |
+      ((buf[3] & 0xff));
   }
 }
