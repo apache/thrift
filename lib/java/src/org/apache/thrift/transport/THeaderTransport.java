@@ -19,6 +19,7 @@
 package org.apache.thrift.transport;
 
 import org.apache.thrift.TApplicationException;
+import org.apache.thrift.TByteArrayOutputStream;
 import org.apache.thrift.TException;
 import org.apache.thrift.protocol.TBinaryProtocol;
 import org.apache.thrift.protocol.TCompactProtocol;
@@ -37,7 +38,11 @@ import java.util.zip.Inflater;
 //import org.iq80.snappy.CorruptionException;
 //import org.iq80.snappy.Snappy;
 
-public class THeaderTransport extends TFramedTransport {
+public class THeaderTransport extends TTransport {
+    /**
+     * Underlying transport
+     */
+    protected TTransport transport_ = null;
     public static final int HEADER_MAGIC_MASK = 0xFFFF0000;
     public static final int HEADER_FLAGS_MASK = 0x0000FFFF;
 
@@ -51,6 +56,18 @@ public class THeaderTransport extends TFramedTransport {
     public static final int MAX_FRAME_SIZE = 0x3FFFFFFF;
 
     private int zlibBufferSize = 512;
+
+    /**
+     * Buffer for output
+     */
+    protected final TByteArrayOutputStream writeBuffer_ =
+            new TByteArrayOutputStream(1024);
+
+    /**
+     * Buffer for input
+     */
+    protected final TMemoryInputTransport readBuffer_ =
+            new TMemoryInputTransport(new byte[0]);
 
     // Transforms
     public enum Transforms {
@@ -132,7 +149,7 @@ public class THeaderTransport extends TFramedTransport {
     private String identity;
 
     public THeaderTransport(TTransport transport) {
-        super(transport);
+        transport_ = transport;
         writeTransforms = new ArrayList<Transforms>();
 
         // Always supported headers
@@ -146,6 +163,7 @@ public class THeaderTransport extends TFramedTransport {
 
     public THeaderTransport(TTransport transport, List<ClientTypes> clientTypes) {
         this(transport);
+        transport_ = transport;
 
         if (clientTypes != null) {
             for (ClientTypes t : clientTypes) {
@@ -241,6 +259,21 @@ public class THeaderTransport extends TFramedTransport {
     }
 
     @Override
+    public void open() throws TTransportException {
+        transport_.open();
+    }
+
+    @Override
+    public boolean isOpen() {
+        return transport_.isOpen();
+    }
+
+    @Override
+    public void close() {
+        transport_.close();
+    }
+
+    @Override
     public int read(byte[] buf, int off, int len) throws TTransportException {
         if (readBuffer_ != null) {
             int got = readBuffer_.read(buf, off, len);
@@ -259,6 +292,11 @@ public class THeaderTransport extends TFramedTransport {
         return readBuffer_.read(buf, off, len);
     }
 
+    @Override
+    public void write(byte[] buf, int off, int len) throws TTransportException {
+        writeBuffer_.write(buf, off, len);
+    }
+
     /**
      * Should be called from THeaderProtocol at the start of every message
      */
@@ -267,6 +305,14 @@ public class THeaderTransport extends TFramedTransport {
         clientType = ClientTypes.HEADERS;
         // Read the header bytes to check which protocol to use
         readFrame(0);
+    }
+
+    public static final short decodeShort(final byte[] buf) {
+        return decodeShort(buf, 0);
+    }
+
+    public static final short decodeShort(final byte[] buf, int off) {
+        return (short) (((buf[0 + off] & 0xff) << 8) | ((buf[1 + off] & 0xff)));
     }
 
     /**
@@ -359,6 +405,17 @@ public class THeaderTransport extends TFramedTransport {
         return result;
     }
 
+    public static final int decodeWord(final byte[] buf) {
+        return decodeWord(buf, 0);
+    }
+
+    public static final int decodeWord(final byte[] buf, int off) {
+        return ((buf[0 + off] & 0xff) << 24)
+                | ((buf[1 + off] & 0xff) << 16)
+                | ((buf[2 + off] & 0xff) << 8)
+                | ((buf[3 + off] & 0xff));
+    }
+
     private void writeVarint(ByteBuffer out, int n) {
         while (true) {
             if ((n & ~0x7F) == 0) {
@@ -410,8 +467,8 @@ public class THeaderTransport extends TFramedTransport {
             int transId = readVarint32Buf(frame);
             if (transId == Transforms.ZLIB_TRANSFORM.getValue()) {
                 readTransforms.add(transId);
-            } else if (transId == Transforms.SNAPPY_TRANSFORM.getValue()) {
-                readTransforms.add(transId);
+//            } else if (transId == Transforms.SNAPPY_TRANSFORM.getValue()) {
+//                readTransforms.add(transId);
             } else if (transId == Transforms.HMAC_TRANSFORM.getValue()) {
                 throw new THeaderException("Hmac transform no longer supported");
             } else {
@@ -713,6 +770,13 @@ public class THeaderTransport extends TFramedTransport {
 
     private final byte[] i32buf = new byte[4];
 
+    public static final void encodeWord(final int frameSize, final byte[] buf) {
+        buf[0] = (byte) (0xff & (frameSize >> 24));
+        buf[1] = (byte) (0xff & (frameSize >> 16));
+        buf[2] = (byte) (0xff & (frameSize >> 8));
+        buf[3] = (byte) (0xff & (frameSize));
+    }
+
     private void encodeInt(ByteBuffer out, final int val) {
         encodeWord(val, i32buf);
         out.put(i32buf, 0, 4);
@@ -720,12 +784,17 @@ public class THeaderTransport extends TFramedTransport {
 
     private final byte[] i16buf = new byte[2];
 
+    public static final void encodeShort(final int value, final byte[] buf) {
+        buf[0] = (byte) (0xff & (value >> 8));
+        buf[1] = (byte) (0xff & (value));
+    }
+
     private void encodeShort(ByteBuffer out, final int val) {
         encodeShort(val, i16buf);
         out.put(i16buf, 0, 2);
     }
 
-    public static class Factory extends TFramedTransport.Factory {
+    public static class Factory extends TTransportFactory {
         List<ClientTypes> clientTypes;
 
         public Factory(List<ClientTypes> clientTypes) {

@@ -40,13 +40,13 @@ public class TFramedTransport extends TTransport {
    * Buffer for output
    */
   protected final TByteArrayOutputStream writeBuffer_ =
-    new TByteArrayOutputStream(1024);
+          new TByteArrayOutputStream(1024);
 
   /**
    * Buffer for input
    */
   protected final TMemoryInputTransport readBuffer_ =
-    new TMemoryInputTransport(new byte[0]);
+          new TMemoryInputTransport(new byte[0]);
 
   public static class Factory extends TTransportFactory {
     private int maxLength_;
@@ -78,11 +78,13 @@ public class TFramedTransport extends TTransport {
   public TFramedTransport(TTransport transport, int maxLength) {
     transport_ = transport;
     maxLength_ = maxLength;
+    writeBuffer_.write(sizeFiller_, 0, 4);
   }
 
   public TFramedTransport(TTransport transport) {
     transport_ = transport;
     maxLength_ = TFramedTransport.DEFAULT_MAX_LENGTH;
+    writeBuffer_.write(sizeFiller_, 0, 4);
   }
 
   @Override
@@ -179,20 +181,20 @@ public class TFramedTransport extends TTransport {
     transport_.flush();
   }
 
-    public static final void encodeFrameSize(final int frameSize, final byte[] buf) {
-        buf[0] = (byte)(0xff & (frameSize >> 24));
-        buf[1] = (byte)(0xff & (frameSize >> 16));
-        buf[2] = (byte)(0xff & (frameSize >> 8));
-        buf[3] = (byte)(0xff & (frameSize));
-    }
+  public static final void encodeFrameSize(final int frameSize, final byte[] buf) {
+    buf[0] = (byte)(0xff & (frameSize >> 24));
+    buf[1] = (byte)(0xff & (frameSize >> 16));
+    buf[2] = (byte)(0xff & (frameSize >> 8));
+    buf[3] = (byte)(0xff & (frameSize));
+  }
 
-    public static final int decodeFrameSize(final byte[] buf) {
-        return
-                ((buf[0] & 0xff) << 24) |
-                        ((buf[1] & 0xff) << 16) |
-                        ((buf[2] & 0xff) <<  8) |
-                        ((buf[3] & 0xff));
-    }
+  public static final int decodeFrameSize(final byte[] buf) {
+    return
+            ((buf[0] & 0xff) << 24) |
+                    ((buf[1] & 0xff) << 16) |
+                    ((buf[2] & 0xff) <<  8) |
+                    ((buf[3] & 0xff));
+  }
 
   /**
    * Functions to encode/decode int32 and int16 to/from network byte order
