@@ -49,6 +49,14 @@ enum weekdays {
   SATURDAY ( weekend = "yes" )
 } (foo.bar="baz")
 
+/* Note that annotations on senum values are not supported. */
+senum seasons {
+  "Spring",
+  "Summer",
+  "Fall",
+  "Winter"
+} ( foo = "bar" )
+
 struct ostr_default {
   1: i32 bar;
 }

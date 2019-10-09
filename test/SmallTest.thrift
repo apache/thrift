@@ -24,6 +24,12 @@ struct Goodbyez {
   1: i32 val = 325;
 }
 
+senum Thinger {
+  "ASDFKJ",
+  "r32)*F#@",
+  "ASDFLJASDF"
+}
+
 struct BoolPasser {
   1: bool value = 1
 }
@@ -47,6 +53,7 @@ exception Goodbye {
 }
 
 service SmallService {
+  Thinger testThinger(1:Thinger bootz),
   Hello testMe(1:i32 hello=64, 2: Hello wonk) throws (1: Goodbye g),
   void testVoid() throws (1: Goodbye g),
   i32 testI32(1:i32 boo)
