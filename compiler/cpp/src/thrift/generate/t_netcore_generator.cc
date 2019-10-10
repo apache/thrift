@@ -91,6 +91,8 @@ t_netcore_generator::t_netcore_generator(t_program* program, const map<string, s
         }
     }
 
+    pwarning(1, "The 'netcore' target is deprecated. Consider using 'netstd' instead.\n");
+
     out_dir_base_ = "gen-netcore";
 }
 

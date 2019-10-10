@@ -291,6 +291,10 @@ public:
         pwarning(1, "Namespace 'smalltalk' is deprecated. Use 'st' instead");
         base_language = "st";
       }
+      else if ((base_language == "csharp") || (base_language == "netcore")) {
+        pwarning(1, "The '%s' target is deprecated. Consider moving to 'netstd' instead.", base_language.c_str());
+        // warn only, don't change base_language
+      }
 
       t_generator_registry::gen_map_t my_copy = t_generator_registry::get_generator_map();
 
