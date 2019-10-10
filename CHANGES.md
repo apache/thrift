@@ -26,6 +26,7 @@
 - [THRIFT-4712](https://issues.apache.org/jira/browse/THRIFT-4712) - java: class org.apache.thrift.ShortStack is no longer public
 - [THRIFT-4725](https://issues.apache.org/jira/browse/THRIFT-4725) - java: change return type signature of 'process' methods
 - [THRIFT-4805](https://issues.apache.org/jira/browse/THRIFT-4805) - java: replaced TSaslTransportException with TTransportException
+- [THRIFT-2530](https://issues.apache.org/jira/browse/THRIFT-2530) - java: TIOStreamTransport's "isOpen" now returns false after "close" is called
 - [THRIFT-4675](https://issues.apache.org/jira/browse/THRIFT-4675) - js: now uses node-int64 for 64 bit integer constants
 - [THRIFT-4841](https://issues.apache.org/jira/browse/THRIFT-4841) - delphi: old THTTPTransport is now TMsxmlHTTPTransport
 - [THRIFT-4536](https://issues.apache.org/jira/browse/THRIFT-4536) - rust: convert from try-from crate to rust stable (1.34+), re-export ordered-float
