@@ -156,8 +156,6 @@ public class TestClient {
         } else {
           transport = new THttpClient(url);
         }
-       
-
       } else {
         TSocket socket = null;
         if (ssl == true) {

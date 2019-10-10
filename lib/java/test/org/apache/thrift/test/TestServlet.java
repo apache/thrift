@@ -48,7 +48,5 @@ public class TestServlet extends TExtensibleServlet {
       TestHandler testHandler = new TestHandler();
       ThriftTest.Processor testProcessor = new ThriftTest.Processor(testHandler);
       return testProcessor;
-
   }
-  
 }
