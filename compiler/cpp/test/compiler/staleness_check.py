@@ -46,7 +46,7 @@ class TestStalenessCheck(unittest.TestCase):
 
         first_modification_time = os.path.getmtime(os.path.join(used_file_path))
 
-        time.sleep(0.1)
+        time.sleep(1.0)
 
         subprocess.call(command)
 
@@ -74,7 +74,7 @@ class TestStalenessCheck(unittest.TestCase):
         used_file.write("\n/* This is a comment */\n")
         used_file.close()
 
-        time.sleep(0.1)
+        time.sleep(1.0)
 
         subprocess.call(command)
 
@@ -112,7 +112,7 @@ class TestStalenessCheck(unittest.TestCase):
         temp_included_file.write("\nconst i32 an_integer = 42\n")
         temp_included_file.close()
 
-        time.sleep(0.1)
+        time.sleep(1.0)
 
         subprocess.call(command)
 
