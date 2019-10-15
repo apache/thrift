@@ -53,17 +53,17 @@ public class TestTSaslTransports extends TestCase {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(TestTSaslTransports.class);
 
-  private static final String HOST = "localhost";
-  private static final String SERVICE = "thrift-test";
-  private static final String PRINCIPAL = "thrift-test-principal";
-  private static final String PASSWORD = "super secret password";
-  private static final String REALM = "thrift-test-realm";
+  public static final String HOST = "localhost";
+  public static final String SERVICE = "thrift-test";
+  public static final String PRINCIPAL = "thrift-test-principal";
+  public static final String PASSWORD = "super secret password";
+  public static final String REALM = "thrift-test-realm";
 
-  private static final String UNWRAPPED_MECHANISM = "CRAM-MD5";
-  private static final Map<String, String> UNWRAPPED_PROPS = null;
+  public static final String UNWRAPPED_MECHANISM = "CRAM-MD5";
+  public static final Map<String, String> UNWRAPPED_PROPS = null;
 
-  private static final String WRAPPED_MECHANISM = "DIGEST-MD5";
-  private static final Map<String, String> WRAPPED_PROPS = new HashMap<String, String>();
+  public static final String WRAPPED_MECHANISM = "DIGEST-MD5";
+  public static final Map<String, String> WRAPPED_PROPS = new HashMap<String, String>();
 
   static {
     WRAPPED_PROPS.put(Sasl.QOP, "auth-int");
@@ -80,7 +80,7 @@ public class TestTSaslTransports extends TestCase {
       + "'We hold these truths to be self-evident, that all men are created equal.'";
 
 
-  private static class TestSaslCallbackHandler implements CallbackHandler {
+  public static class TestSaslCallbackHandler implements CallbackHandler {
     private final String password;
 
     public TestSaslCallbackHandler(String password) {
@@ -265,7 +265,7 @@ public class TestTSaslTransports extends TestCase {
     new TestTSaslTransportsWithServer().testIt();
   }
 
-  private static class TestTSaslTransportsWithServer extends ServerTestBase {
+  public static class TestTSaslTransportsWithServer extends ServerTestBase {
 
     private Thread serverThread;
     private TServer server;
