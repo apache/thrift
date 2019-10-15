@@ -17,23 +17,20 @@
  * under the License.
  */
 
-
 package org.apache.thrift.transport;
 
-import java.nio.channels.Selector;
+import org.junit.Assert;
+import org.junit.Test;
 
-/**
- * Server transport that can be operated in a nonblocking fashion.
- */
-public abstract class TNonblockingServerTransport extends TServerTransport {
+import java.nio.channels.ServerSocketChannel;
 
-  public abstract void registerSelector(Selector selector);
+public class TestNonblockingServerSocket {
 
-  /**
-   *
-   * @return an incoming connection or null if there is none.
-   * @throws TTransportException
-   */
-  @Override
-  public abstract TNonblockingTransport accept() throws TTransportException;
+  @Test
+  public void testSocketChannelBlockingMode() throws TTransportException {
+    try (TNonblockingServerSocket nonblockingServer = new TNonblockingServerSocket(0)){
+      ServerSocketChannel socketChannel = nonblockingServer.getServerSocketChannel();
+      Assert.assertFalse("Socket channel should be nonblocking", socketChannel.isBlocking());
+    }
+  }
 }
