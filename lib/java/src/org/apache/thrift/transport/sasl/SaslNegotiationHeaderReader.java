@@ -19,43 +19,39 @@
 
 package org.apache.thrift.transport.sasl;
 
-import java.util.HashMap;
-import java.util.Map;
-
 import static org.apache.thrift.transport.sasl.TSaslNegotiationException.ErrorType.PROTOCOL_ERROR;
 
 /**
- * Status bytes used during the initial Thrift SASL handshake.
+ * Header for sasl negotiation frames. It contains status byte of negotiation and a 4-byte integer
+ * (payload size).
  */
-public enum NegotiationStatus {
-  START((byte)0x01),
-  OK((byte)0x02),
-  BAD((byte)0x03),
-  ERROR((byte)0x04),
-  COMPLETE((byte)0x05);
+public class SaslNegotiationHeaderReader extends FixedSizeHeaderReader {
+  public static final int STATUS_BYTES = 1;
+  public static final int PAYLOAD_LENGTH_BYTES = 4;
 
-  private static final Map<Byte, NegotiationStatus> reverseMap = new HashMap<>();
+  private NegotiationStatus negotiationStatus;
+  private int payloadSize;
 
-  static {
-    for (NegotiationStatus s : NegotiationStatus.values()) {
-      reverseMap.put(s.getValue(), s);
+  @Override
+  protected int headerSize() {
+    return STATUS_BYTES + PAYLOAD_LENGTH_BYTES;
+  }
+
+  @Override
+  protected void onComplete() throws TSaslNegotiationException {
+    negotiationStatus = NegotiationStatus.byValue(byteBuffer.get(0));
+    payloadSize = byteBuffer.getInt(1);
+    if (payloadSize < 0) {
+      throw new TSaslNegotiationException(PROTOCOL_ERROR, "Payload size is negative: " + payloadSize);
     }
   }
 
-  private final byte value;
-
-  NegotiationStatus(byte val) {
-    this.value = val;
+  @Override
+  public int payloadSize() {
+    return payloadSize;
   }
 
-  public byte getValue() {
-    return value;
-  }
-
-  public static NegotiationStatus byValue(byte val) throws TSaslNegotiationException {
-    if (!reverseMap.containsKey(val)) {
-      throw new TSaslNegotiationException(PROTOCOL_ERROR, "Invalid status " + val);
-    }
-    return reverseMap.get(val);
+  public NegotiationStatus getStatus() {
+    return negotiationStatus;
   }
 }

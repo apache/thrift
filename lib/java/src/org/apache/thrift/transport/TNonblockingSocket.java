@@ -207,4 +207,9 @@ public class TNonblockingSocket extends TNonblockingTransport {
     return socketChannel_.finishConnect();
   }
 
+  @Override
+  public String toString() {
+    return "[remote: " + socketChannel_.socket().getRemoteSocketAddress() +
+        ", local: " + socketChannel_.socket().getLocalAddress() + "]" ;
+  }
 }
