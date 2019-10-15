@@ -29,6 +29,7 @@ import org.apache.thrift.TByteArrayOutputStream;
 import org.apache.thrift.TProcessor;
 import org.apache.thrift.protocol.TProtocol;
 import org.apache.thrift.protocol.TProtocolFactory;
+import org.apache.thrift.server.ServerContext;
 import org.apache.thrift.server.TServerEventHandler;
 import org.apache.thrift.transport.TMemoryTransport;
 import org.apache.thrift.transport.TNonblockingTransport;
@@ -69,7 +70,10 @@ public class NonblockingSaslHandler {
   private TProtocolFactory inputProtocolFactory;
   private TProtocolFactory outputProtocolFactory;
   private TServerEventHandler eventHandler;
-  // TODO: Use event handler
+  private ServerContext serverContext;
+  // It turns out the event handler implementation in hive sometimes creates a null ServerContext.
+  // In order to know whether TServerEventHandler#createContext is called we use such a flag.
+  private boolean serverContextCreated = false;
 
   // Wrapper around sasl server
   private ServerSaslPeer saslPeer;
@@ -320,6 +324,15 @@ public class NonblockingSaslHandler {
       TMemoryTransport memoryTransport = new TMemoryTransport(rawInput);
       TProtocol requestProtocol = inputProtocolFactory.getProtocol(memoryTransport);
       TProtocol responseProtocol = outputProtocolFactory.getProtocol(memoryTransport);
+
+      if (eventHandler != null) {
+        if (!serverContextCreated) {
+          serverContext = eventHandler.createContext(requestProtocol, responseProtocol);
+          serverContextCreated = true;
+        }
+        eventHandler.processContext(serverContext, memoryTransport, memoryTransport);
+      }
+
       TProcessor processor = processorFactory.getProcessor(this);
       processor.process(requestProtocol, responseProtocol);
       TByteArrayOutputStream rawOutput = memoryTransport.getOutput();
@@ -402,6 +415,11 @@ public class NonblockingSaslHandler {
     selectionKey.cancel();
     if (saslPeer != null) {
       saslPeer.dispose();
+    }
+    if (serverContextCreated) {
+      eventHandler.deleteContext(serverContext,
+          inputProtocolFactory.getProtocol(underlyingTransport),
+          outputProtocolFactory.getProtocol(underlyingTransport));
     }
     nextPhase = Phase.CLOSED;
     currentPhase = Phase.CLOSED;

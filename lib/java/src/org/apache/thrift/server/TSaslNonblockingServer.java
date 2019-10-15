@@ -64,7 +64,6 @@ public class TSaslNonblockingServer extends TServer {
   private final ExecutorService processingExecutor;
   private final TSaslServerFactory saslServerFactory;
   private final TSaslProcessorFactory saslProcessorFactory;
-  // TODO: handle event handler
 
   public TSaslNonblockingServer(Args args) throws IOException {
     super(args);
@@ -78,6 +77,9 @@ public class TSaslNonblockingServer extends TServer {
 
   @Override
   public void serve() {
+    if (eventHandler_ != null) {
+      eventHandler_.preServe();
+    }
     networkThreadPool.start();
     acceptor.start();
     setServing(true);
