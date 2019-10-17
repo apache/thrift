@@ -80,6 +80,7 @@ FILES[lib/netcore/Thrift/Properties/AssemblyInfo.cs]=simpleReplace
 FILES[lib/netcore/Thrift/Transports/Client/THttpClientTransport.cs]=simpleReplace
 FILES[lib/netstd/Thrift/Properties/AssemblyInfo.cs]=simpleReplace
 FILES[lib/netstd/Thrift/Transports/Client/THttpClientTransport.cs]=simpleReplace
+FILES[lib/netstd/Thrift/Thrift.csproj]=simpleReplace
 FILES[lib/ocaml/_oasis]=simpleReplace
 FILES[lib/perl/lib/Thrift.pm]=simpleReplace
 FILES[lib/py/setup.py]=simpleReplace
