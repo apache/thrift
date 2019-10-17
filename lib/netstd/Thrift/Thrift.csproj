@@ -39,6 +39,7 @@
     <SignAssembly>true</SignAssembly>
     <AssemblyOriginatorKeyFile>thrift.snk</AssemblyOriginatorKeyFile>
     <DelaySign>false</DelaySign>
+    <Version>0.13.0.0</Version>
   </PropertyGroup>
 
   <ItemGroup>
