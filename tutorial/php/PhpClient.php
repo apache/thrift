@@ -9,7 +9,7 @@ require_once __DIR__.'/../../vendor/autoload.php';
 
 use Thrift\ClassLoader\ThriftClassLoader;
 
-$GEN_DIR = realpath(dirname(__FILE__).'/..').'/gen-php';
+$GEN_DIR = realpath(dirname(__FILE__)).'/gen-php';
 
 $loader = new ThriftClassLoader();
 $loader->registerNamespace('Thrift', __DIR__ . '/../../lib/php/lib');

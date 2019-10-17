@@ -87,6 +87,10 @@ if WITH_PERL
 SUBDIRS += perl
 endif
 
+if WITH_PHP
+SUBDIRS += php
+endif
+
 #
 # generate html for ThriftTest.thrift
 #
@@ -108,7 +112,6 @@ EXTRA_DIST = \
 	erl \
 	hs \
 	ocaml \
-	php \
 	shared.thrift \
 	tutorial.thrift \
 	README.md
