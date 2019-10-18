@@ -3,18 +3,23 @@
 // Configure the Gradle code quality plugins here.
 //
 
-apply plugin: 'findbugs'
+dependencies {
+    spotbugs configurations.spotbugsPlugins.dependencies
+    spotbugsPlugins 'com.h3xstream.findsecbugs:findsecbugs-plugin:1.8.0'
+}
 
-findbugs {
+apply plugin: 'com.github.spotbugs'
+
+spotbugs{
     ignoreFailures = true
-    toolVersion = '3.0.1'
+    toolVersion = '3.1.12'
     sourceSets = [ sourceSets.main ]
     effort = 'max'
     reportLevel = 'low'
     excludeFilter = file('code_quality_tools/findbugs-filter.xml')
 }
 
-tasks.withType(FindBugs) {
+tasks.withType(SpotBugsTask) {
     reports {
         text.enabled = false
         html.enabled = true
