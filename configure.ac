@@ -872,6 +872,7 @@ AC_CONFIG_FILES([
   tutorial/nodejs/Makefile
   tutorial/dart/Makefile
   tutorial/perl/Makefile
+  tutorial/php/Makefile
   tutorial/py/Makefile
   tutorial/py.twisted/Makefile
   tutorial/py.tornado/Makefile
