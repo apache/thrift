@@ -24,6 +24,6 @@
 #pragma once
 #endif // _MSC_VER
 
-#define THRIFT_VERSION "@PACKAGE_VERSION@"
+#define THRIFT_VERSION "0.14.0"
 
 #endif // _THRIFT_VERSION_H_

@@ -54,6 +54,7 @@ FILES[Thrift.podspec]=simpleReplace
 FILES[appveyor.yml]=simpleReplace
 FILES[bower.json]=jsonReplace
 FILES[configure.ac]=configureReplace
+FILES[compiler/cpp/src/thrift/version.h]=simpleReplace
 FILES[contrib/thrift.spec]=simpleReplace
 FILES[doc/specs/idl.md]=simpleReplace
 FILES[lib/as3/gradle.properties]=simpleReplace

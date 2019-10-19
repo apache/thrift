@@ -20,7 +20,8 @@
 cmake_minimum_required(VERSION 3.3)
 project("thrift-compiler" VERSION ${PACKAGE_VERSION})
 
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/src/thrift/version.h.in ${CMAKE_CURRENT_BINARY_DIR}/thrift/version.h)
+# version.h now handled via veralign.sh
+#configure_file(${CMAKE_CURRENT_SOURCE_DIR}/src/thrift/version.h.in ${CMAKE_CURRENT_BINARY_DIR}/thrift/version.h)
 
 find_package(FLEX REQUIRED)
 find_package(BISON REQUIRED)
@@ -47,7 +48,7 @@ set(compiler_core
     src/thrift/generate/t_generator.cc
     src/thrift/parse/t_typedef.cc
     src/thrift/parse/parse.cc
-    ${CMAKE_CURRENT_BINARY_DIR}/thrift/version.h
+    src/thrift/version.h
 )
 
 set(thrift-compiler_SOURCES
