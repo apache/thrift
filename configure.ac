@@ -791,7 +791,6 @@ AC_CONFIG_FILES([
   compiler/cpp/Makefile
   compiler/cpp/src/Makefile
   compiler/cpp/test/Makefile
-  compiler/cpp/src/thrift/version.h
   lib/Makefile
   lib/as3/Makefile
   lib/cl/Makefile

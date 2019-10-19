@@ -45,6 +45,7 @@ thrift_SOURCES = src/thrift/audit/t_audit.cpp \
                  src/thrift/logging.h \
                  src/thrift/main.cc \
                  src/thrift/main.h \
+                 src/thrift/version.h \
                  src/thrift/parse/parse.cc \
                  src/thrift/parse/t_base_type.h \
                  src/thrift/parse/t_const.h \
@@ -118,8 +119,8 @@ EXTRA_DIST = \
              test \
              $(WINDOWS_DIST)
 
-clean-local:
-	$(RM) version.h
+#clean-local:
+#	$(RM) version.h   -- do not delete, we need it
 
 src/thrift/main.cc: src/thrift/version.h
 
