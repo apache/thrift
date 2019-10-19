@@ -16,7 +16,7 @@
 
 ## General information 
 
-Added generic way to cover code by tests for many languages (you just need to make a correct header file for generator for your language - example in **netcore** implementation)
+Added generic way to cover code by tests for many languages (you just need to make a correct header file for generator for your language - example in **netstd** implementation)
 
 At current moment these tests use free Catch library (https://github.com/catchorg/Catch2/tree/Catch1.x) for easy test creation and usage.
 Decision to use it was because of simplicity, easy usage, one header file to use, stable community and growing interest  (https://cpp.libhunt.com/project/googletest-google/vs/catch?rel=cmp-cmp)
@@ -29,7 +29,7 @@ Also, maybe, later it will be migrated to Catch2 (https://github.com/philsquared
 - Set **On** to call of **THRIFT_ADD_COMPILER** for your language
 
 ``` cmake 
-THRIFT_ADD_COMPILER(netcore "Enable compiler for .NET Core" ON)
+THRIFT_ADD_COMPILER(netstd "Enable compiler for .NET Standard" ON)
 ```
 
 - Create folder with name specified in list of languages in **CMakeLists.txt**

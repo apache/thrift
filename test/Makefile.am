@@ -78,7 +78,6 @@ SUBDIRS += haxe
 endif
 
 if WITH_DOTNET
-SUBDIRS += netcore
 SUBDIRS += netstd
 endif
 

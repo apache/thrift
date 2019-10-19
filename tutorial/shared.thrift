@@ -30,7 +30,6 @@ namespace java shared
 namespace perl shared
 namespace php shared
 namespace haxe shared
-namespace netcore shared
 namespace netstd shared
 
 
