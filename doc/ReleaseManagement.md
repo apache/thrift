@@ -331,7 +331,7 @@ Voting on the development mailing list provides additional benefits (wisdom from
     ~/thrift$ git push --tags
     ```
 
-    **NOTE:** If you get the error "gpg failed to sign the data" when tagging, try this fix: "export GPG_TTY=$(tty)"
+    **NOTE:** If you get the error "gpg failed to sign the data" when tagging, try this fix: ```export GPG_TTY=$(tty)```. Alternatively, it may be necessary to specify the ```-u <keyid>``` as an additional argument.
 
 1. Create a new release from the [GitHub Tags Page](https://github.com/apache/thrift/tags).  Attach the statically built Windows thrift compiler as a binary here.
 

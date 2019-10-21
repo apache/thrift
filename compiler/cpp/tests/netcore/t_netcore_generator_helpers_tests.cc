@@ -17,14 +17,14 @@
 
 #include "../catch/catch.hpp"
 #include <thrift/parse/t_program.h>
-#include <thrift/generate/t_netcore_generator.h>
+#include <thrift/generate/t_netstd_generator.h>
 
 using std::vector;
 
-TEST_CASE("t_netcore_generator::netcore_type_usings() without option wcf should return valid namespaces", "[helpers]")
+TEST_CASE("t_netstd_generator::netstd_type_usings() without option wcf should return valid namespaces", "[helpers]")
 {
     string path = "CassandraTest.thrift";
-    string name = "netcore";
+    string name = "netstd";
     map<string, string> parsed_options = { { "union", "union" } };
     string option_string = "";
 
@@ -39,19 +39,19 @@ TEST_CASE("t_netcore_generator::netcore_type_usings() without option wcf should 
                                 "using Thrift.Collections;\n" + endl;
 
     t_program* program = new t_program(path, name);
-    t_netcore_generator* gen = new t_netcore_generator(program, parsed_options, option_string);
+    t_netstd_generator* gen = new t_netstd_generator(program, parsed_options, option_string);
 
     REQUIRE_FALSE(gen->is_wcf_enabled());
-    REQUIRE(gen->netcore_type_usings() == expected_namespaces);
+    REQUIRE(gen->netstd_type_usings() == expected_namespaces);
 
     delete gen;
     delete program;
 }
 
-TEST_CASE("t_netcore_generator::netcore_type_usings() with option wcf should return valid namespaces", "[helpers]")
+TEST_CASE("t_netstd_generator::netstd_type_usings() with option wcf should return valid namespaces", "[helpers]")
 {
     string path = "CassandraTest.thrift";
-    string name = "netcore";
+    string name = "netstd";
     map<string, string> parsed_options = { { "wcf", "wcf" } };
     string option_string = "";
 
@@ -68,19 +68,19 @@ TEST_CASE("t_netcore_generator::netcore_type_usings() with option wcf should ret
                                     "using System.Runtime.Serialization;\n" + endl;
 
     t_program* program = new t_program(path, name);
-    t_netcore_generator* gen = new t_netcore_generator(program, parsed_options, option_string);
+    t_netstd_generator* gen = new t_netstd_generator(program, parsed_options, option_string);
 
     REQUIRE(gen->is_wcf_enabled());
-    REQUIRE(gen->netcore_type_usings() == expected_namespaces_wcf);
+    REQUIRE(gen->netstd_type_usings() == expected_namespaces_wcf);
 
     delete gen;
     delete program;
 }
 
-TEST_CASE("t_netcore_generator should contains latest C# keywords to normalize with @", "[helpers]")
+TEST_CASE("t_netstd_generator should contains latest C# keywords to normalize with @", "[helpers]")
 {
     string path = "CassandraTest.thrift";
-    string name = "netcore";
+    string name = "netstd";
     map<string, string> parsed_options = { { "wcf", "wcf" } };
     string option_string = "";
     vector<string> current_keywords = {
@@ -190,7 +190,7 @@ TEST_CASE("t_netcore_generator should contains latest C# keywords to normalize w
     string missed_keywords = "";
 
     t_program* program = new t_program(path, name);
-    t_netcore_generator* gen = new t_netcore_generator(program, parsed_options, option_string);
+    t_netstd_generator* gen = new t_netstd_generator(program, parsed_options, option_string);
     gen->init_generator();
     map<string, int> generators_keywords = gen->get_keywords_list();
 

@@ -17,18 +17,18 @@
 
 #include "../catch/catch.hpp"
 #include <thrift/parse/t_program.h>
-#include <thrift/generate/t_netcore_generator.h>
-#include "t_netcore_generator_functional_tests_helpers.h"
+#include <thrift/generate/t_netstd_generator.h>
+#include "t_netstd_generator_functional_tests_helpers.h"
 
-TEST_CASE( "t_netcore_generator should generate valid enum", "[functional]" )
+TEST_CASE( "t_netstd_generator should generate valid enum", "[functional]" )
 {
     string path = "CassandraTest.thrift";
-    string name = "netcore";
+    string name = "netstd";
     map<string, string> parsed_options = { { "wcf", "wcf" } };
     string option_string = "";
 
     t_program* program = new t_program(path, name);
-    t_netcore_generator* gen = new t_netcore_generator(program, parsed_options, option_string);
+    t_netstd_generator* gen = new t_netstd_generator(program, parsed_options, option_string);
 
     std::pair<string, t_enum*> pair = TestDataGenerator::get_test_enum_data(program);
     string expected_result = pair.first;
@@ -53,15 +53,15 @@ TEST_CASE( "t_netcore_generator should generate valid enum", "[functional]" )
     delete program;	
 }
 
-TEST_CASE("t_netcore_generator should generate valid void", "[functional]")
+TEST_CASE("t_netstd_generator should generate valid void", "[functional]")
 {
     string path = "CassandraTest.thrift";
-    string name = "netcore";
+    string name = "netstd";
     map<string, string> parsed_options = { { "wcf", "wcf" } };
     string option_string = "";
 
     t_program* program = new t_program(path, name);
-    t_netcore_generator* gen = new t_netcore_generator(program, parsed_options, option_string);
+    t_netstd_generator* gen = new t_netstd_generator(program, parsed_options, option_string);
 
     std::pair<string, t_const*> pair = TestDataGenerator::get_test_void_const_data(gen);
     string expected_result = pair.first;
@@ -86,15 +86,15 @@ TEST_CASE("t_netcore_generator should generate valid void", "[functional]")
     delete program;
 }
 
-TEST_CASE("t_netcore_generator should generate valid string with escaping keyword", "[functional]")
+TEST_CASE("t_netstd_generator should generate valid string with escaping keyword", "[functional]")
 {
     string path = "CassandraTest.thrift";
-    string name = "netcore";
+    string name = "netstd";
     map<string, string> parsed_options = { { "wcf", "wcf" } };
     string option_string = "";
 
     t_program* program = new t_program(path, name);
-    t_netcore_generator* gen = new t_netcore_generator(program, parsed_options, option_string);
+    t_netstd_generator* gen = new t_netstd_generator(program, parsed_options, option_string);
     gen->init_generator();
 
     std::pair<string, t_const*> pair = TestDataGenerator::get_test_string_const_data(gen);
@@ -122,15 +122,15 @@ TEST_CASE("t_netcore_generator should generate valid string with escaping keywor
     delete program;
 }
 
-TEST_CASE("t_netcore_generator should generate valid bool with escaping keyword", "[functional]")
+TEST_CASE("t_netstd_generator should generate valid bool with escaping keyword", "[functional]")
 {
     string path = "CassandraTest.thrift";
-    string name = "netcore";
+    string name = "netstd";
     map<string, string> parsed_options = { { "wcf", "wcf" } };
     string option_string = "";
 
     t_program* program = new t_program(path, name);
-    t_netcore_generator* gen = new t_netcore_generator(program, parsed_options, option_string);
+    t_netstd_generator* gen = new t_netstd_generator(program, parsed_options, option_string);
     gen->init_generator();
 
     std::pair<string, t_const*> pair = TestDataGenerator::get_test_bool_const_data(gen);
@@ -158,15 +158,15 @@ TEST_CASE("t_netcore_generator should generate valid bool with escaping keyword"
     delete program;
 }
 
-TEST_CASE("t_netcore_generator should generate valid sbyte (i8) with escaping keyword", "[functional]")
+TEST_CASE("t_netstd_generator should generate valid sbyte (i8) with escaping keyword", "[functional]")
 {
     string path = "CassandraTest.thrift";
-    string name = "netcore";
+    string name = "netstd";
     map<string, string> parsed_options = { { "wcf", "wcf" } };
     string option_string = "";
 
     t_program* program = new t_program(path, name);
-    t_netcore_generator* gen = new t_netcore_generator(program, parsed_options, option_string);
+    t_netstd_generator* gen = new t_netstd_generator(program, parsed_options, option_string);
     gen->init_generator();
 
     std::pair<string, t_const*> pair = TestDataGenerator::get_test_i8_const_data(gen);
@@ -194,15 +194,15 @@ TEST_CASE("t_netcore_generator should generate valid sbyte (i8) with escaping ke
     delete program;
 }
 
-TEST_CASE("t_netcore_generator should generate valid short (i16) with escaping keyword", "[functional]")
+TEST_CASE("t_netstd_generator should generate valid short (i16) with escaping keyword", "[functional]")
 {
     string path = "CassandraTest.thrift";
-    string name = "netcore";
+    string name = "netstd";
     map<string, string> parsed_options = { { "wcf", "wcf" } };
     string option_string = "";
 
     t_program* program = new t_program(path, name);
-    t_netcore_generator* gen = new t_netcore_generator(program, parsed_options, option_string);
+    t_netstd_generator* gen = new t_netstd_generator(program, parsed_options, option_string);
     gen->init_generator();
 
     std::pair<string, t_const*> pair = TestDataGenerator::get_test_i16_const_data(gen);
@@ -230,15 +230,15 @@ TEST_CASE("t_netcore_generator should generate valid short (i16) with escaping k
     delete program;
 }
 
-TEST_CASE("t_netcore_generator should generate valid integer (i32) with escaping keyword", "[functional]")
+TEST_CASE("t_netstd_generator should generate valid integer (i32) with escaping keyword", "[functional]")
 {
     string path = "CassandraTest.thrift";
-    string name = "netcore";
+    string name = "netstd";
     map<string, string> parsed_options = { { "wcf", "wcf" } };
     string option_string = "";
 
     t_program* program = new t_program(path, name);
-    t_netcore_generator* gen = new t_netcore_generator(program, parsed_options, option_string);
+    t_netstd_generator* gen = new t_netstd_generator(program, parsed_options, option_string);
     gen->init_generator();
 
     std::pair<string, t_const*> pair = TestDataGenerator::get_test_i32_const_data(gen);
@@ -266,15 +266,15 @@ TEST_CASE("t_netcore_generator should generate valid integer (i32) with escaping
     delete program;
 }
 
-TEST_CASE("t_netcore_generator should generate valid long (i64) with escaping keyword", "[functional]")
+TEST_CASE("t_netstd_generator should generate valid long (i64) with escaping keyword", "[functional]")
 {
     string path = "CassandraTest.thrift";
-    string name = "netcore";
+    string name = "netstd";
     map<string, string> parsed_options = { { "wcf", "wcf" } };
     string option_string = "";
 
     t_program* program = new t_program(path, name);
-    t_netcore_generator* gen = new t_netcore_generator(program, parsed_options, option_string);
+    t_netstd_generator* gen = new t_netstd_generator(program, parsed_options, option_string);
     gen->init_generator();
 
     std::pair<string, t_const*> pair = TestDataGenerator::get_test_i64_const_data(gen);
@@ -302,15 +302,15 @@ TEST_CASE("t_netcore_generator should generate valid long (i64) with escaping ke
     delete program;
 }
 
-TEST_CASE("t_netcore_generator should generate valid double with escaping keyword", "[functional]")
+TEST_CASE("t_netstd_generator should generate valid double with escaping keyword", "[functional]")
 {
     string path = "CassandraTest.thrift";
-    string name = "netcore";
+    string name = "netstd";
     map<string, string> parsed_options = { { "wcf", "wcf" } };
     string option_string = "";
 
     t_program* program = new t_program(path, name);
-    t_netcore_generator* gen = new t_netcore_generator(program, parsed_options, option_string);
+    t_netstd_generator* gen = new t_netstd_generator(program, parsed_options, option_string);
     gen->init_generator();
 
     std::pair<string, t_const*> pair = TestDataGenerator::get_test_double_const_data(gen);

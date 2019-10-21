@@ -94,8 +94,12 @@ public abstract class ServerTestBase extends TestCase {
     public ByteBuffer testBinary(ByteBuffer thing) {
       StringBuilder sb = new StringBuilder(thing.remaining() * 3);
       thing.mark();
-      while (thing.remaining() > 0) {
+      int limit = 0;  // limit output to keep the log size sane
+      while ((thing.remaining() > 0) && (++limit < 1024)) {
         sb.append(String.format("%02X ", thing.get()));
+      }
+      if(thing.remaining() > 0) {
+        sb.append("...");  // indicate we have more date
       }
       System.out.print("testBinary(" + sb.toString() + ")\n");
       thing.reset();

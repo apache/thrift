@@ -24,7 +24,7 @@ all-local:
 
 check-local:
 	$(DOTNETCORE) test Tests/Thrift.Tests/Thrift.Tests.csproj
-	${DOTNETCORE} test Tests/Thrift.IntegrationTests/Thrift.IntegrationTests.csproj
+	$(DOTNETCORE) test Tests/Thrift.IntegrationTests/Thrift.IntegrationTests.csproj
 
 clean-local:
 	$(RM) -r Thrift/bin

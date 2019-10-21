@@ -1,5 +1,3 @@
-#!/usr/bin/env bash
-
 #
 # Licensed to the Apache Software Foundation (ASF) under one
 # or more contributor license agreements. See the NOTICE file
@@ -19,8 +17,20 @@
 # under the License.
 #
 
-thrift -version
-dotnet --info
+gen-perl/tutorial/Calculator.pm gen-perl/shared/SharedService.pm: $(top_srcdir)/tutorial/tutorial.thrift
+	$(THRIFT) --gen perl -r $<
 
-dotnet test Tests\Thrift.IntegrationTests\Thrift.IntegrationTests.csproj
-dotnet test Tests\Thrift.Tests\Thrift.Tests.csproj
+all-local: gen-perl/tutorial/Calculator.pm
+
+tutorialserver: all
+	${PERL} PerlServer.pl
+
+tutorialclient: all
+	${PERL} PerlClient.pl
+
+clean-local:
+	$(RM) -r gen-*
+
+EXTRA_DIST = \
+	PerlServer.pl \
+	PerlClient.pl

@@ -17,34 +17,20 @@
 # under the License.
 #
 
-SUBDIRS = . 
+gen-php/tutorial/Calculator.php gen-php/shared/SharedService.php: $(top_srcdir)/tutorial/tutorial.thrift
+	$(THRIFT) --gen php:server -r $<
 
-all-local:
-	$(DOTNETCORE) build
+all-local: gen-php/tutorial/Calculator.php
 
-precross:
-	$(DOTNETCORE) build
+tutorialserver: all
+	${PYTHON} runserver.py
+
+tutorialclient: all
+	${PHP} PhpClient.php --http
 
 clean-local:
-	$(RM) -r Client/bin
-	$(RM) -r Client/obj
-	$(RM) -r Client/ThriftTest
-	$(RM) -r Server/bin
-	$(RM) -r Server/obj
-	$(RM) -r Server/ThriftTest
-
-dist-hook:
-	$(RM) -r $(distdir)/Client/bin
-	$(RM) -r $(distdir)/Client/obj
-	$(RM) -r $(distdir)/Client/ThriftTest
-	$(RM) -r $(distdir)/Server/bin
-	$(RM) -r $(distdir)/Server/obj
-	$(RM) -r $(distdir)/Server/ThriftTest
+	$(RM) -r gen-*
 
 EXTRA_DIST = \
-	Client \
-	README.md \
-	Server \
-	ThriftTest.sln \
-	build.cmd \
-	build.sh
+	PhpServer.php \
+	PhpClient.php

@@ -66,32 +66,32 @@ class Fixtures
 
         self::$testArgs['testStruct'] =
             new Xtruct(
-                array(
+            array(
                     'string_thing' => 'worked',
                     'byte_thing' => 0x01,
                     'i32_thing' => pow(2, 30),
                     'i64_thing' => self::$testArgs['testI64']
                 )
-            );
+        );
 
         self::$testArgs['testNestNested'] =
             new Xtruct(
-                array(
+            array(
                     'string_thing' => 'worked',
                     'byte_thing' => 0x01,
                     'i32_thing' => pow(2, 30),
                     'i64_thing' => self::$testArgs['testI64']
                 )
-            );
+        );
 
         self::$testArgs['testNest'] =
             new Xtruct2(
-                array(
+            array(
                     'byte_thing' => 0x01,
                     'struct_thing' => self::$testArgs['testNestNested'],
                     'i32_thing' => pow(2, 15)
                 )
-            );
+        );
 
         self::$testArgs['testMap'] =
             array(
@@ -138,23 +138,23 @@ class Fixtures
 
         $xtruct1 =
             new Xtruct(
-                array(
+            array(
                     'string_thing' => 'Goodbye4',
                     'byte_thing' => 4,
                     'i32_thing' => 4,
                     'i64_thing' => 4
                 )
-            );
+        );
 
         $xtruct2 =
             new Xtruct(
-                array(
+            array(
                     'string_thing' => 'Hello2',
                     'byte_thing' => 2,
                     'i32_thing' => 2,
                     'i64_thing' => 2
                 )
-            );
+        );
 
         $userMap =
             array(
@@ -164,21 +164,21 @@ class Fixtures
 
         $insanity2 =
             new Insanity(
-                array(
+            array(
                     'userMap' => $userMap,
                     'xtructs' => array($xtruct1, $xtruct2)
                 )
-            );
+        );
 
         $insanity3 = $insanity2;
 
         $insanity6 =
             new Insanity(
-                array(
+            array(
                     'userMap' => null,
                     'xtructs' => null
                 )
-            );
+        );
 
         self::$testArgs['testInsanityExpectedResult'] =
             array(

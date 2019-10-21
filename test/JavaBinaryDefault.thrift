@@ -15,30 +15,11 @@
  * KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations
  * under the License.
- *
- * Contains some contributions under the Thrift Software License.
- * Please see doc/old-thrift-license.txt in the Thrift distribution for
- * details.
  */
 
-namespace c_glib OneWayTest
-namespace java onewaytest
-namespace cpp onewaytest
-namespace rb Onewaytest
-namespace perl OneWayTest
-namespace csharp Onewaytest
-namespace js OneWayTest
-namespace st OneWayTest
-namespace py OneWayTest
-namespace py.twisted OneWayTest
-namespace go onewaytest
-namespace php OneWayTest
-namespace delphi Onewaytest
-namespace lua OneWayTest
-namespace xsd test (uri = 'http://thrift.apache.org/ns/OneWayTest')
+namespace java thrift.test
 
-// a minimal Thrift service, for use in OneWayHTTPTtest.cpp
-service OneWayService {
-  void roundTripRPC(),
-  oneway void oneWayRPC()
+struct StringAndBinary {
+  1: optional string strval = ""
+  2: optional binary binval = ""
 }

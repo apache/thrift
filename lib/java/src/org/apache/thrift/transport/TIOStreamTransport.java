@@ -79,13 +79,11 @@ public class TIOStreamTransport extends TTransport {
   }
 
   /**
-   * The streams must already be open at construction time, so this should
-   * always return true.
    *
-   * @return true
+   * @return false after close is called.
    */
   public boolean isOpen() {
-    return true;
+    return inputStream_ != null && outputStream_ != null;
   }
 
   /**
@@ -129,7 +127,7 @@ public class TIOStreamTransport extends TTransport {
       throw new TTransportException(TTransportException.UNKNOWN, iox);
     }
     if (bytesRead < 0) {
-      throw new TTransportException(TTransportException.END_OF_FILE);
+      throw new TTransportException(TTransportException.END_OF_FILE, "Socket is closed by peer.");
     }
     return bytesRead;
   }

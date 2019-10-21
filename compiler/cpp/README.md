@@ -168,7 +168,7 @@ Build the compiler in Visual Studio.
 
 ## Using Catch C++ test library
 
-Added generic way to cover code by tests for many languages (you just need to make a correct header file for generator for your language - example in **netcore** implementation)
+Added generic way to cover code by tests for many languages (you just need to make a correct header file for generator for your language - example in **netstd** implementation)
 
 - pls check **tests** folder
 

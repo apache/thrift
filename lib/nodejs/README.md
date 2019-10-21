@@ -68,3 +68,44 @@ Since JavaScript represents all numbers as doubles, int64 values cannot be accur
 ## Client and server examples
 
 Several example clients and servers are included in the thrift/lib/nodejs/examples folder and the cross language tutorial thrift/tutorial/nodejs folder.
+
+## Use on browsers
+
+You can use code generated with js:node on browsers with Webpack. Here is an example.
+
+thrift --gen js:node,ts,es6,with_ns
+
+```
+import * as thrift from 'thrift/browser';
+import { MyServiceClient } from '../gen-nodejs/MyService';
+
+let host = window.location.hostname;
+let port = 443;
+let opts = {
+  transport: thrift.TBufferedTransport,
+  protocol: thrift.TJSONProtocol, 
+    headers: {
+     'Content-Type': 'application/vnd.apache.thrift.json',
+    },
+    https: true,
+    path: '/url/path',
+    useCORS: true,
+};
+
+let connection = thrift.createXHRConnection(host, port, opts);
+let thriftClient = thrift.createXHRClient(MyServiceClient, connection);
+
+connection.on('error', (err) => {
+  console.error(err);
+});
+
+thriftClient.myService(param)
+  .then((result) => {
+    console.log(result);
+  })
+  .catch((err) => {
+    ....
+  });
+```
+
+Note that thrift/index.js must be renamed or skipped for browsers.

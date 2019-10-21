@@ -73,7 +73,6 @@
     <ClCompile Include="src\thrift\generate\t_js_generator.cc" />
     <ClCompile Include="src\thrift\generate\t_json_generator.cc" />
     <ClCompile Include="src\thrift\generate\t_lua_generator.cc" />
-    <ClCompile Include="src\thrift\generate\t_netcore_generator.cc" />
     <ClCompile Include="src\thrift\generate\t_netstd_generator.cc" />
     <ClCompile Include="src\thrift\generate\t_ocaml_generator.cc" />
     <ClCompile Include="src\thrift\generate\t_perl_generator.cc" />

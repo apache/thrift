@@ -64,7 +64,7 @@ pub trait TReadTransport: Read {}
 /// accepted client connections.
 pub trait TReadTransportFactory {
     /// Create a `TTransport` that wraps a channel over which bytes are to be read.
-    fn create(&self, channel: Box<Read + Send>) -> Box<TReadTransport + Send>;
+    fn create(&self, channel: Box<dyn Read + Send>) -> Box<dyn TReadTransport + Send>;
 }
 
 /// Identifies a transport used by `TOutputProtocol` to send bytes.
@@ -74,7 +74,7 @@ pub trait TWriteTransport: Write {}
 /// accepted client connections.
 pub trait TWriteTransportFactory {
     /// Create a `TTransport` that wraps a channel over which bytes are to be sent.
-    fn create(&self, channel: Box<Write + Send>) -> Box<TWriteTransport + Send>;
+    fn create(&self, channel: Box<dyn Write + Send>) -> Box<dyn TWriteTransport + Send>;
 }
 
 impl<T> TReadTransport for T where T: Read {}
@@ -87,7 +87,7 @@ impl<T> TReadTransportFactory for Box<T>
 where
     T: TReadTransportFactory + ?Sized,
 {
-    fn create(&self, channel: Box<Read + Send>) -> Box<TReadTransport + Send> {
+    fn create(&self, channel: Box<dyn Read + Send>) -> Box<dyn TReadTransport + Send> {
         (**self).create(channel)
     }
 }
@@ -96,7 +96,7 @@ impl<T> TWriteTransportFactory for Box<T>
 where
     T: TWriteTransportFactory + ?Sized,
 {
-    fn create(&self, channel: Box<Write + Send>) -> Box<TWriteTransport + Send> {
+    fn create(&self, channel: Box<dyn Write + Send>) -> Box<dyn TWriteTransport + Send> {
         (**self).create(channel)
     }
 }
@@ -231,7 +231,7 @@ mod tests {
 
     #[test]
     fn must_create_usable_read_channel_from_boxed_read() {
-        let r: Box<Read> = Box::new(Cursor::new([0, 1, 2]));
+        let r: Box<dyn Read> = Box::new(Cursor::new([0, 1, 2]));
         let _ = TBufferedReadTransport::new(r);
     }
 
@@ -243,7 +243,7 @@ mod tests {
 
     #[test]
     fn must_create_usable_write_channel_from_boxed_write() {
-        let w: Box<Write> = Box::new(vec![0u8; 10]);
+        let w: Box<dyn Write> = Box::new(vec![0u8; 10]);
         let _ = TBufferedWriteTransport::new(w);
     }
 
@@ -257,7 +257,7 @@ mod tests {
     #[test]
     fn must_create_usable_read_transport_from_boxed_read() {
         let r = Cursor::new([0, 1, 2]);
-        let mut t: Box<TReadTransport> = Box::new(TBufferedReadTransport::new(r));
+        let mut t: Box<dyn TReadTransport> = Box::new(TBufferedReadTransport::new(r));
         takes_read_transport(&mut t)
     }
 
@@ -271,7 +271,7 @@ mod tests {
     #[test]
     fn must_create_usable_write_transport_from_boxed_write() {
         let w = vec![0u8; 10];
-        let mut t: Box<TWriteTransport> = Box::new(TBufferedWriteTransport::new(w));
+        let mut t: Box<dyn TWriteTransport> = Box::new(TBufferedWriteTransport::new(w));
         takes_write_transport(&mut t)
     }
 

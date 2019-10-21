@@ -117,7 +117,11 @@ instance SIface.Srv_Iface InheritedHandler where
 
             Types.compactProtoTestStruct_byte_map_map = Map.empty,
             Types.compactProtoTestStruct_byte_set_map = Map.empty,
-            Types.compactProtoTestStruct_byte_list_map = Map.empty }
+            Types.compactProtoTestStruct_byte_list_map = Map.empty,
+
+            Types.compactProtoTestStruct_field500 = 500,
+            Types.compactProtoTestStruct_field5000 = 5000,
+            Types.compactProtoTestStruct_field20000 = 20000 }
 
     methodWithDefaultArgs _ arg = do
         ThriftTestUtils.serverLog $ "Got methodWithDefaultArgs: " ++ show arg

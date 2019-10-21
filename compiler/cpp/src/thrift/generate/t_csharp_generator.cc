@@ -87,6 +87,8 @@ public:
       }
     }
 
+    pwarning(1, "The 'csharp' target is deprecated. Consider using 'netstd' instead.\n");
+
     out_dir_base_ = "gen-csharp";
   }
   void init_generator() override;

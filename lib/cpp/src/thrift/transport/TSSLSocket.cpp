@@ -957,6 +957,28 @@ void TSSLSocketFactory::loadCertificate(const char* path, const char* format) {
   }
 }
 
+void TSSLSocketFactory::loadCertificateFromBuffer(const char* aCertificate, const char* format) {
+  if (aCertificate == nullptr || format == nullptr) {
+    throw TTransportException(TTransportException::BAD_ARGS,
+                              "loadCertificate: either <path> or <format> is NULL");
+  }
+  if (strcmp(format, "PEM") == 0) {
+    BIO* mem = BIO_new(BIO_s_mem());
+    BIO_puts(mem, aCertificate);
+    X509* cert = PEM_read_bio_X509(mem, NULL, 0, NULL);
+    BIO_free(mem);
+
+    if (SSL_CTX_use_certificate(ctx_->get(), cert) == 0) {
+      int errno_copy = THRIFT_GET_SOCKET_ERROR;
+      string errors;
+      buildErrors(errors, errno_copy);
+      throw TSSLException("SSL_CTX_use_certificate: " + errors);
+    }
+  } else {
+    throw TSSLException("Unsupported certificate format: " + string(format));
+  }
+}
+
 void TSSLSocketFactory::loadPrivateKey(const char* path, const char* format) {
   if (path == nullptr || format == nullptr) {
     throw TTransportException(TTransportException::BAD_ARGS,
@@ -972,6 +994,28 @@ void TSSLSocketFactory::loadPrivateKey(const char* path, const char* format) {
   }
 }
 
+void TSSLSocketFactory::loadPrivateKeyFromBuffer(const char* aPrivateKey, const char* format) {
+  if (aPrivateKey == nullptr || format == nullptr) {
+    throw TTransportException(TTransportException::BAD_ARGS,
+                              "loadPrivateKey: either <path> or <format> is NULL");
+  }
+  if (strcmp(format, "PEM") == 0) {
+    BIO* mem = BIO_new(BIO_s_mem());
+    BIO_puts(mem, aPrivateKey);
+    EVP_PKEY* cert = PEM_read_bio_PrivateKey(mem, nullptr, nullptr, nullptr);
+
+    BIO_free(mem);
+    if (SSL_CTX_use_PrivateKey(ctx_->get(), cert) == 0) {
+      int errno_copy = THRIFT_GET_SOCKET_ERROR;
+      string errors;
+      buildErrors(errors, errno_copy);
+      throw TSSLException("SSL_CTX_use_PrivateKey: " + errors);
+    }
+  } else {
+    throw TSSLException("Unsupported certificate format: " + string(format));
+  }
+}
+
 void TSSLSocketFactory::loadTrustedCertificates(const char* path, const char* capath) {
   if (path == nullptr) {
     throw TTransportException(TTransportException::BAD_ARGS,
@@ -982,6 +1026,39 @@ void TSSLSocketFactory::loadTrustedCertificates(const char* path, const char* ca
     string errors;
     buildErrors(errors, errno_copy);
     throw TSSLException("SSL_CTX_load_verify_locations: " + errors);
+  }
+}
+
+void TSSLSocketFactory::loadTrustedCertificatesFromBuffer(const char* aCertificate, const char* aChain) {
+  if (aCertificate == nullptr) {
+    throw TTransportException(TTransportException::BAD_ARGS,
+                              "loadTrustedCertificates: aCertificate is empty");
+  }
+  X509_STORE* vX509Store = SSL_CTX_get_cert_store(ctx_->get());
+  BIO* mem = BIO_new(BIO_s_mem());
+  BIO_puts(mem, aCertificate);
+  X509* cert = PEM_read_bio_X509(mem, NULL, 0, NULL);
+  BIO_free(mem);
+
+  if (X509_STORE_add_cert(vX509Store, cert) == 0) {
+    int errno_copy = THRIFT_GET_SOCKET_ERROR;
+    string errors;
+    buildErrors(errors, errno_copy);
+    throw TSSLException("X509_STORE_add_cert: " + errors);
+  }
+
+  if (aChain) {
+    mem = BIO_new(BIO_s_mem());
+    BIO_puts(mem, aChain);
+    cert = PEM_read_bio_X509(mem, NULL, 0, NULL);
+    BIO_free(mem);
+
+    if (SSL_CTX_add_extra_chain_cert(ctx_->get(), cert) == 0) {
+      int errno_copy = THRIFT_GET_SOCKET_ERROR;
+      string errors;
+      buildErrors(errors, errno_copy);
+      throw TSSLException("X509_STORE_add_cert: " + errors);
+    }
   }
 }
 

@@ -516,6 +516,10 @@ private:
 
   // Replace all instances of `search_string` with `replace_string` in `target`.
   void string_replace(string& target, const string& search_string, const string& replace_string);
+
+  // Adjust field identifier to correctly handle unspecified field identifiers
+  // THRIFT-4953
+  string rust_safe_field_id(int32_t id);
 };
 
 void t_rs_generator::init_generator() {
@@ -901,7 +905,7 @@ void t_rs_generator::render_enum_impl(const string& enum_name) {
 
   f_gen_
     << indent()
-    << "pub fn write_to_out_protocol(&self, o_prot: &mut TOutputProtocol) -> thrift::Result<()> {"
+    << "pub fn write_to_out_protocol(&self, o_prot: &mut dyn TOutputProtocol) -> thrift::Result<()> {"
     << endl;
   indent_up();
   f_gen_ << indent() << "o_prot.write_i32(*self as i32)" << endl;
@@ -910,7 +914,7 @@ void t_rs_generator::render_enum_impl(const string& enum_name) {
 
   f_gen_
     << indent()
-    << "pub fn read_from_in_protocol(i_prot: &mut TInputProtocol) -> thrift::Result<" << enum_name << "> {"
+    << "pub fn read_from_in_protocol(i_prot: &mut dyn TInputProtocol) -> thrift::Result<" << enum_name << "> {"
     << endl;
   indent_up();
 
@@ -1172,8 +1176,8 @@ void t_rs_generator::render_struct_constructor(
         generic_type_parameters << ", ";
         generic_type_qualifiers << ", ";
       }
-      generic_type_parameters << "F" << member->get_key();
-      generic_type_qualifiers << "F" << member->get_key() << ": Into<Option<" << to_rust_type(member->get_type()) << ">>";
+      generic_type_parameters << "F" << rust_safe_field_id(member->get_key());
+      generic_type_qualifiers << "F" << rust_safe_field_id(member->get_key()) << ": Into<Option<" << to_rust_type(member->get_type()) << ">>";
     }
   }
 
@@ -1204,7 +1208,7 @@ void t_rs_generator::render_struct_constructor(
     }
 
     if (is_optional(member_req)) {
-      args << member_name << ": " << "F" << member->get_key();
+      args << member_name << ": " << "F" << rust_safe_field_id(member->get_key());
     } else {
       args << member_name << ": " << to_rust_type(member->get_type());
     }
@@ -1401,7 +1405,7 @@ void t_rs_generator::render_struct_sync_write(
   f_gen_
     << indent()
     << visibility_qualifier(struct_type)
-    << "fn write_to_out_protocol(&self, o_prot: &mut TOutputProtocol) -> thrift::Result<()> {"
+    << "fn write_to_out_protocol(&self, o_prot: &mut dyn TOutputProtocol) -> thrift::Result<()> {"
     << endl;
   indent_up();
 
@@ -1433,7 +1437,7 @@ void t_rs_generator::render_struct_sync_write(
 void t_rs_generator::render_union_sync_write(const string &union_name, t_struct *tstruct) {
   f_gen_
     << indent()
-    << "pub fn write_to_out_protocol(&self, o_prot: &mut TOutputProtocol) -> thrift::Result<()> {"
+    << "pub fn write_to_out_protocol(&self, o_prot: &mut dyn TOutputProtocol) -> thrift::Result<()> {"
     << endl;
   indent_up();
 
@@ -1675,7 +1679,7 @@ void t_rs_generator::render_struct_sync_read(
   f_gen_
     << indent()
     << visibility_qualifier(struct_type)
-    << "fn read_from_in_protocol(i_prot: &mut TInputProtocol) -> thrift::Result<" << struct_name << "> {"
+    << "fn read_from_in_protocol(i_prot: &mut dyn TInputProtocol) -> thrift::Result<" << struct_name << "> {"
     << endl;
 
   indent_up();
@@ -1720,7 +1724,7 @@ void t_rs_generator::render_struct_sync_read(
 
   for (members_iter = members.begin(); members_iter != members.end(); ++members_iter) {
     t_field* tfield = (*members_iter);
-    f_gen_ << indent() << tfield->get_key() << " => {" << endl;
+    f_gen_ << indent() << rust_safe_field_id(tfield->get_key()) << " => {" << endl;
     indent_up();
     render_type_sync_read("val", tfield->get_type());
     f_gen_ << indent() << struct_field_read_temp_variable(tfield) << " = Some(val);" << endl;
@@ -1797,7 +1801,7 @@ void t_rs_generator::render_struct_sync_read(
 void t_rs_generator::render_union_sync_read(const string &union_name, t_struct *tstruct) {
   f_gen_
     << indent()
-    << "pub fn read_from_in_protocol(i_prot: &mut TInputProtocol) -> thrift::Result<" << union_name << "> {"
+    << "pub fn read_from_in_protocol(i_prot: &mut dyn TInputProtocol) -> thrift::Result<" << union_name << "> {"
     << endl;
   indent_up();
 
@@ -1830,7 +1834,7 @@ void t_rs_generator::render_union_sync_read(const string &union_name, t_struct *
   vector<t_field*>::const_iterator members_iter;
   for (members_iter = members.begin(); members_iter != members.end(); ++members_iter) {
     t_field* member = (*members_iter);
-    f_gen_ << indent() << member->get_key() << " => {" << endl;
+    f_gen_ << indent() << rust_safe_field_id(member->get_key()) << " => {" << endl;
     indent_up();
     render_type_sync_read("val", member->get_type());
     f_gen_ << indent() << "if ret.is_none() {" << endl;
@@ -2034,7 +2038,7 @@ void t_rs_generator::render_map_sync_read(t_map *tmap, const string &map_var) {
 
 string t_rs_generator::struct_field_read_temp_variable(t_field* tfield) {
   std::ostringstream foss;
-  foss << "f_" << tfield->get_key();
+  foss << "f_" << rust_safe_field_id(tfield->get_key());
   return foss.str();
 }
 
@@ -2206,8 +2210,8 @@ void t_rs_generator::render_sync_client_tthriftclient_impl(const string &client_
     << " {" << endl;
   indent_up();
 
-  f_gen_ << indent() << "fn i_prot_mut(&mut self) -> &mut TInputProtocol { &mut self._i_prot }" << endl;
-  f_gen_ << indent() << "fn o_prot_mut(&mut self) -> &mut TOutputProtocol { &mut self._o_prot }" << endl;
+  f_gen_ << indent() << "fn i_prot_mut(&mut self) -> &mut dyn TInputProtocol { &mut self._i_prot }" << endl;
+  f_gen_ << indent() << "fn o_prot_mut(&mut self) -> &mut dyn TOutputProtocol { &mut self._o_prot }" << endl;
   f_gen_ << indent() << "fn sequence_number(&self) -> i32 { self._sequence_number }" << endl;
   f_gen_
     << indent()
@@ -2564,7 +2568,7 @@ void t_rs_generator::render_sync_processor_definition_and_impl(t_service *tservi
 
   f_gen_
     << indent()
-    << "fn process(&self, i_prot: &mut TInputProtocol, o_prot: &mut TOutputProtocol) -> thrift::Result<()> {"
+    << "fn process(&self, i_prot: &mut dyn TInputProtocol, o_prot: &mut dyn TOutputProtocol) -> thrift::Result<()> {"
     << endl;
   indent_up();
 
@@ -2609,8 +2613,8 @@ void t_rs_generator::render_sync_process_delegation_functions(t_service *tservic
       << "fn " << function_name
       << "(&self, "
       << "incoming_sequence_number: i32, "
-      << "i_prot: &mut TInputProtocol, "
-      << "o_prot: &mut TOutputProtocol) "
+      << "i_prot: &mut dyn TInputProtocol, "
+      << "o_prot: &mut dyn TOutputProtocol) "
       << "-> thrift::Result<()> {"
       << endl;
     indent_up();
@@ -2674,8 +2678,8 @@ void t_rs_generator::render_sync_process_function(t_function *tfunc, const strin
     << "<H: " << handler_type << ">"
     << "(handler: &H, "
     << sequence_number_param << ": i32, "
-    << "i_prot: &mut TInputProtocol, "
-    << output_protocol_param << ": &mut TOutputProtocol) "
+    << "i_prot: &mut dyn TInputProtocol, "
+    << output_protocol_param << ": &mut dyn TOutputProtocol) "
     << "-> thrift::Result<()> {"
     << endl;
 
@@ -3312,6 +3316,17 @@ string t_rs_generator::rust_camel_case(const string& name) {
   string str(capitalize(camelcase(name)));
   string_replace(str, "_", "");
   return str;
+}
+
+string t_rs_generator::rust_safe_field_id(int32_t id) {
+    string id_str = std::to_string(abs(id));
+    if (id >= 0) {
+        return id_str;
+    } else {
+        string str("neg");
+        str += id_str;
+        return str;
+    }
 }
 
 void t_rs_generator::string_replace(string& target, const string& search_string, const string& replace_string) {

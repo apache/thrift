@@ -121,7 +121,7 @@ impl TFramedReadTransportFactory {
 
 impl TReadTransportFactory for TFramedReadTransportFactory {
     /// Create a `TFramedReadTransport`.
-    fn create(&self, channel: Box<Read + Send>) -> Box<TReadTransport + Send> {
+    fn create(&self, channel: Box<dyn Read + Send>) -> Box<dyn TReadTransport + Send> {
         Box::new(TFramedReadTransport::new(channel))
     }
 }
@@ -231,7 +231,7 @@ impl TFramedWriteTransportFactory {
 
 impl TWriteTransportFactory for TFramedWriteTransportFactory {
     /// Create a `TFramedWriteTransport`.
-    fn create(&self, channel: Box<Write + Send>) -> Box<TWriteTransport + Send> {
+    fn create(&self, channel: Box<dyn Write + Send>) -> Box<dyn TWriteTransport + Send> {
         Box::new(TFramedWriteTransport::new(channel))
     }
 }

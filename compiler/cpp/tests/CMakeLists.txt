@@ -27,7 +27,8 @@ set(THRIFT_COMPILER_SOURCE_DIR
 # don't generate ZERO_CHECK
 set(CMAKE_SUPPRESS_REGENERATION true)
 
-configure_file(${THRIFT_COMPILER_SOURCE_DIR}/src/thrift/version.h.in ${CMAKE_CURRENT_BINARY_DIR}/thrift/version.h)
+# version.h now handled via veralign.sh
+#configure_file(${THRIFT_COMPILER_SOURCE_DIR}/src/thrift/version.h.in ${CMAKE_CURRENT_BINARY_DIR}/thrift/version.h)
 if(MSVC)
     # The winflexbison generator outputs some macros that conflict with the Visual Studio 2010 copy of stdint.h
     # This might be fixed in later versions of Visual Studio, but an easy solution is to include stdint.h first
@@ -77,7 +78,7 @@ set(thrift_compiler_SOURCES
     ${THRIFT_COMPILER_SOURCE_DIR}/src/thrift/generate/t_generator.cc
     ${THRIFT_COMPILER_SOURCE_DIR}/src/thrift/parse/t_typedef.cc
     ${THRIFT_COMPILER_SOURCE_DIR}/src/thrift/parse/parse.cc
-    ${CMAKE_CURRENT_BINARY_DIR}/thrift/version.h
+    ${THRIFT_COMPILER_SOURCE_DIR}/thrift/version.h
 )
 
 # This macro adds an option THRIFT_COMPILER_${NAME}
@@ -115,7 +116,7 @@ THRIFT_ADD_COMPILER(javame  "Enable compiler for Java ME" OFF)
 THRIFT_ADD_COMPILER(js      "Enable compiler for JavaScript" OFF)
 THRIFT_ADD_COMPILER(json    "Enable compiler for JSON" OFF)
 THRIFT_ADD_COMPILER(lua     "Enable compiler for Lua" OFF)
-THRIFT_ADD_COMPILER(netcore "Enable compiler for .NET Core" ON)
+THRIFT_ADD_COMPILER(netstd  "Enable compiler for .NET Standard" ON)
 THRIFT_ADD_COMPILER(ocaml   "Enable compiler for OCaml" OFF)
 THRIFT_ADD_COMPILER(perl    "Enable compiler for Perl" OFF)
 THRIFT_ADD_COMPILER(php     "Enable compiler for PHP" OFF)

@@ -41,7 +41,7 @@ namespace Thrift.Transport
     internal static class TSocketVersionizer
     {
         /// <summary>
-        /// Creates a TcpClient according to the capabilitites of the used framework
+        /// Creates a TcpClient according to the capabilities of the used framework.
         /// </summary>
         internal static TcpClient CreateTcpClient()
         {
@@ -58,7 +58,7 @@ namespace Thrift.Transport
         }
 
         /// <summary>
-        /// Creates a TcpListener according to the capabilitites of the used framework.
+        /// Creates a TcpListener according to the capabilities of the used framework.
         /// </summary>
         internal static TcpListener CreateTcpListener(Int32 port)
         {
