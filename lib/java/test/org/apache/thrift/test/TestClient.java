@@ -77,7 +77,7 @@ public class TestClient {
     String protocol_type = "binary";
     String transport_type = "buffered";
     boolean ssl = false;
-    boolean http_client = fasle;
+    boolean http_client = false;
 
     int socketTimeout = 1000;
 
