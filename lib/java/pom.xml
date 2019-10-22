@@ -3,7 +3,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.carta</groupId>
     <artifactId>libthrift</artifactId>
-    <version>0.1.3-SNAPSHOT</version>
+    <version>0.1.3</version>
     <name>Apache Thrift</name>
     <description>Thrift is a software framework for scalable cross-language services development.</description>
     <url>http://thrift.apache.org</url>
