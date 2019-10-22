@@ -373,7 +373,12 @@ public class THeaderTransport extends TTransport {
                 flags = version & HEADER_FLAGS_MASK;
                 // read seqId
                 seqId = decodeWord(buff, 4);
-                int headerSize = decodeShort(buff, 8);
+                /* Read length of the header.
+                 * We are using 4 bytes to store the header length instead of 2, to deal with
+                 * headers larger than 65535 bytes
+                 * Related: https://github.com/carta/circus/pull/123
+                 */
+                int headerSize = decodeWord(buff, 8);
 
                 readHeaderFormat(headerSize, buff);
             } else {
@@ -443,7 +448,7 @@ public class THeaderTransport extends TTransport {
 
     private void readHeaderFormat(int headerSize, byte[] buff) throws TTransportException {
         ByteBuffer frame = ByteBuffer.wrap(buff);
-        frame.position(10); // Advance past version, flags, seqid
+        frame.position(12); // Advance past version, flags, seqid, length of headers
 
         headerSize = headerSize * 4;
         int endHeader = headerSize + frame.position();
@@ -722,15 +727,26 @@ public class THeaderTransport extends TTransport {
             headerSize += paddingSize;
 
             // Allocate buffer for the headers.
-            // 14 bytes for sz, magic , flags , seqId , headerSize
-            ByteBuffer out = ByteBuffer.allocate(headerSize + 14);
+            // 16 bytes for sz, magic , flags , seqId , length of header
+            ByteBuffer out = ByteBuffer.allocate(headerSize + 16);
 
             // See thrift/doc/HeaderFormat.txt for more info on wire format
-            encodeInt(out, 10 + headerSize + frame.remaining());
+            /*
+              2 bytes for header magic
+            + 2 bytes for flags
+            + 4 bytes for sequence id
+            + 4 bytes for header length (instead of 2 bytes. Related: https://github.com/carta/circus/pull/123)
+            = 12
+             */
+            encodeInt(out, 12 + headerSize + frame.remaining());
             encodeShort(out, HEADER_MAGIC >> 16);
             encodeShort(out, flags);
             encodeInt(out, seqId);
-            encodeShort(out, headerSize / 4);
+            /* We are using 4 bytes to store the header length instead of 2, to deal with
+             * headers larger than 65535 bytes
+             * Related: https://github.com/carta/circus/pull/123
+             */
+            encodeInt(out, headerSize / 4);
 
             out.put(headerData);
             out.put(transformData);
