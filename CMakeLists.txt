@@ -113,6 +113,10 @@ if(BUILD_JAVA)
     add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/lib/java)
 endif()
 
+if(BUILD_JAVASCRIPT)
+    add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/lib/js)
+endif()
+
 if(BUILD_PYTHON)
     add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/lib/py)
     if(BUILD_TESTING)
