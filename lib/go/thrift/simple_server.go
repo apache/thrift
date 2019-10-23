@@ -20,6 +20,7 @@
 package thrift
 
 import (
+	"io"
 	"log"
 	"runtime/debug"
 	"sync"
@@ -231,7 +232,7 @@ func (p *TSimpleServer) processRequests(client TTransport) error {
 
 	defer func() {
 		if e := recover(); e != nil {
-			log.Printf("panic in processor: %s: %s", e, debug.Stack())
+			log.Printf("panic in processor: %v: %s", e, debug.Stack())
 		}
 	}()
 
@@ -255,9 +256,12 @@ func (p *TSimpleServer) processRequests(client TTransport) error {
 			// won't break when it's called again later when we
 			// actually start to read the message.
 			if err := headerProtocol.ReadFrame(); err != nil {
+				if err == io.EOF {
+					return nil
+				}
 				return err
 			}
-			ctx = AddReadTHeaderToContext(defaultCtx, headerProtocol.GetReadHeaders())
+			ctx = AddReadTHeaderToContext(ctx, headerProtocol.GetReadHeaders())
 			ctx = SetWriteHeaderList(ctx, p.forwardHeaders)
 		}
 
