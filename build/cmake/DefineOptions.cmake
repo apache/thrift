@@ -108,7 +108,7 @@ endif()
 # Javascript
 option(WITH_JAVASCRIPT "Build Javascript Thrift library" ON)
 CMAKE_DEPENDENT_OPTION(BUILD_JAVASCRIPT "Build Javascript library" ON
-                       "BUILD_LIBRARIES;WITH_JAVASCRIPT" OFF)
+                       "BUILD_LIBRARIES;WITH_JAVASCRIPT;NOT WIN32; NOT CYGWIN" OFF)
 
 # NodeJS
 option(WITH_NODEJS "Build NodeJS Thrift library" ON)
