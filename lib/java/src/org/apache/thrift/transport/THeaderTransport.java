@@ -127,7 +127,7 @@ public class THeaderTransport extends TTransport {
 
     private static final int numClientTypes = 4;
 
-    private int protoId = T_COMPACT_PROTOCOL; // default
+    private int protoId = T_BINARY_PROTOCOL; // default
     private ClientTypes clientType = ClientTypes.HEADERS;
     private int seqId = 0;
     private int flags = 0;

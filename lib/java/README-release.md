@@ -8,5 +8,6 @@ Notes:
 1. assume your local env already has a valid settings.xml for cloudsmith.
 1. make any changes on feature branch then get it merged to master branch
 1. merge changes from master branch to release branch
+1. run `./gradlew test` and make sure all tests pass
 1. to deploy a snapshot version run `mvn clean deploy`, it should deploy it to cloudsmith
 1. to release and deploy run `mvn -B release:prepare release:perform`
