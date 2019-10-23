@@ -115,6 +115,13 @@ set_target_properties(thrift-compiler PROPERTIES OUTPUT_NAME thrift)
 
 target_link_libraries(thrift-compiler parse)
 
+add_custom_command(OUTPUT "${CMAKE_CURRENT_SOURCE_DIR}/thrift${CMAKE_EXECUTABLE_SUFFIX}"
+    DEPENDS thrift-compiler
+    COMMAND ${CMAKE_COMMAND} -E copy "$<TARGET_FILE:thrift-compiler>" "${CMAKE_CURRENT_SOURCE_DIR}/"
+    COMMENT "Copying the thrift compiler to the source tree for use by downstream targets")
+add_custom_target(copy-thrift-compiler
+    DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/thrift${CMAKE_EXECUTABLE_SUFFIX}")
+
 install(TARGETS thrift-compiler DESTINATION bin)
 
 if(BUILD_TESTING)
