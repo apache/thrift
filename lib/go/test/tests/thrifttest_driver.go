@@ -213,24 +213,25 @@ func (p *ThriftTestDriver) Start() {
 		2: {thrifttest.Numberz_SIX: crazyEmpty},
 	}
 	if r, err := client.TestInsanity(defaultCtx, crazy); !reflect.DeepEqual(r, insanity) || err != nil {
-		t.Fatal("TestInsanity failed")
+		t.Fatal("TestInsanity failed:", err)
 	}
 
 	if err := client.TestException(defaultCtx, "TException"); err == nil {
-		t.Fatal("TestException TException failed")
+		t.Fatal("TestException TException failed:", err)
 	}
 
-	if err, ok := client.TestException(defaultCtx, "Xception").(*thrifttest.Xception); ok == false || err == nil {
-		t.Fatal("TestException Xception failed")
-	} else if err.ErrorCode != 1001 || err.Message != "Xception" {
-		t.Fatal("TestException Xception failed")
+	err := client.TestException(defaultCtx, "Xception")
+	if e, ok := err.(*thrifttest.Xception); ok == false || e == nil {
+		t.Fatal("TestException Xception failed:", err)
+	} else if e.ErrorCode != 1001 || e.Message != "Xception" {
+		t.Fatal("TestException Xception failed:", e)
 	}
 
 	if err := client.TestException(defaultCtx, "no Exception"); err != nil {
-		t.Fatal("TestException no Exception failed")
+		t.Fatal("TestException no Exception failed:", err)
 	}
 
 	if err := client.TestOneway(defaultCtx, 0); err != nil {
-		t.Fatal("TestOneway failed")
+		t.Fatal("TestOneway failed:", err)
 	}
 }
