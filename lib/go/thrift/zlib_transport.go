@@ -23,7 +23,6 @@ import (
 	"compress/zlib"
 	"context"
 	"io"
-	"log"
 )
 
 // TZlibTransportFactory is a factory for TZlibTransport instances
@@ -67,7 +66,6 @@ func NewTZlibTransportFactoryWithFactory(level int, factory TTransportFactory) *
 func NewTZlibTransport(trans TTransport, level int) (*TZlibTransport, error) {
 	w, err := zlib.NewWriterLevel(trans, level)
 	if err != nil {
-		log.Println(err)
 		return nil, err
 	}
 
