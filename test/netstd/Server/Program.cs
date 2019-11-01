@@ -47,21 +47,21 @@ namespace Server
             switch(firstArg)
             {
                 case "server":
-                    return TestServer.Execute(subArgs);
+                    Console.WriteLine("The 'server' argument is no longer required.");
+                    PrintHelp();
+                    return -1;
                 case "--help":
                     PrintHelp();
                     return 0;
                 default:
-                    Console.WriteLine("Invalid argument: {0}", firstArg);
-                    PrintHelp();
-                    return -1;
+                    return TestServer.Execute(subArgs);
             }
         }
 
         private static void PrintHelp()
         {
             Console.WriteLine("Usage:");
-            Console.WriteLine("  Server  server  [options]'");
+            Console.WriteLine("  Server  [options]");
             Console.WriteLine("  Server  --help");
             Console.WriteLine("");
 

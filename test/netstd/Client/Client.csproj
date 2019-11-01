@@ -19,7 +19,7 @@
   -->
 
   <PropertyGroup>
-    <TargetFramework>netcoreapp2.0</TargetFramework>
+    <TargetFramework>netcoreapp3.0</TargetFramework>
     <AssemblyName>Client</AssemblyName>
     <PackageId>Client</PackageId>
     <OutputType>Exe</OutputType>

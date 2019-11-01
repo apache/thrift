@@ -1,5 +1,13 @@
 # Apache Thrift Changelog
 
+## 0.14.0
+
+### Breaking Changes
+
+- [THRIFT-4990](https://issues.apache.org/jira/browse/THRIFT-4990) - Upgrade to .NET Core 3.0
+- [THRIFT-4981](https://issues.apache.org/jira/browse/THRIFT-4981) - Remove deprecated netcore bindings from the code base
+
+
 ## 0.13.0
 
 ### New Languages
