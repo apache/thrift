@@ -47,24 +47,24 @@ namespace Client
             switch(firstArg)
             {
                 case "client":
-                    return TestClient.Execute(subArgs);
-                case "performance":
+                    Console.WriteLine("The 'client' argument is no longer required.");
+                    PrintHelp();
+                    return -1;
+                case "--performance-test":
                     return Tests.PerformanceTests.Execute();
                 case "--help":
                     PrintHelp();
                     return 0;
                 default:
-                    Console.WriteLine("Invalid argument: {0}", firstArg);
-                    PrintHelp();
-                    return -1;
+                    return TestClient.Execute(subArgs);
             }
         }
 
         private static void PrintHelp()
         {
             Console.WriteLine("Usage:");
-            Console.WriteLine("  Client  client  [options]");
-            Console.WriteLine("  Client  performance");
+            Console.WriteLine("  Client  [options]");
+            Console.WriteLine("  Client  --performance-test");
             Console.WriteLine("  Client  --help");
             Console.WriteLine("");
 

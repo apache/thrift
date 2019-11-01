@@ -177,7 +177,7 @@ Last updated: October 1, 2017
 | d         | 2.075.1       | 2.087.0       |       |
 | dart      | 2.0.0         | 2.4.0         |       |
 | delphi    |               |               | Not in CI |
-| dotnet    | 2.1.503       | 2.2.300       |       |
+| dotnet    | 3.0           | 3.0           |       |
 | erlang    | 18.3          | 22.0          |       |
 | go        | 1.10.8        | 1.12.6        |       |
 | haskell   | 7.10.3        | 8.0.2         |       |
