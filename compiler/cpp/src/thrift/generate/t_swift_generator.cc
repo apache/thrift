@@ -697,7 +697,9 @@ void t_swift_generator::generate_swift_struct(ostream& out,
     }
 
     block_open(out);
-    for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
+    vector<t_field*> sorted = members;
+    sort(sorted.begin(), sorted.end(), [](t_field *a, t_field *b) { return (a->get_key() < b->get_key()); } );
+    for (m_iter = sorted.begin(); m_iter != sorted.end(); ++m_iter) {
       out << endl;
       // TODO: Defaults
 
