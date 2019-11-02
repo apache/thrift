@@ -37,7 +37,7 @@ set(haskell_sources
 )
 
 if(BUILD_TESTING)
-    list(APPEND haskell_soruces
+    list(APPEND haskell_sources
         test/Spec.hs
         test/BinarySpec.hs
         test/CompactSpec.hs
