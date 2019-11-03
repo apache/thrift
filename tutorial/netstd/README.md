@@ -1,11 +1,11 @@
 # Building of samples for different platforms 
 
 # Reused components 
-- NET Core Standard 2.0
-- NET Core App 2.0
+- NET Core Standard 3.0
+- NET Core App 3.0
 
 # How to build
-- Download and install the latest .NET Core SDK for your platform https://www.microsoft.com/net/core#windowsvs2015 (archive for SDK 1.0.0-preview2-003121 located by: https://github.com/dotnet/core/blob/master/release-notes/download-archive.md)
+- Download and install the latest .NET Core SDK for your platform https://dotnet.microsoft.com/download/dotnet-core
 - Ensure that you have thrift.exe which supports netstd lib and it added to PATH 
 - Go to current folder 
 - Run **build.sh** or **build.cmd** from the root of cloned repository

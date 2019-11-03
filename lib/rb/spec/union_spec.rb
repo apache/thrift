@@ -51,8 +51,7 @@ describe 'Union' do
     it "should raise for wrong set field when hash initialized and type checking is off" do
       Thrift.type_checking = false
       union = SpecNamespace::My_union.new({incorrect_field: :incorrect})
-      example = lambda { Thrift::Serializer.new.serialize(union) }
-      expect(example).to raise_error(RuntimeError, "set_field is not valid for this union!")
+      expect { Thrift::Serializer.new.serialize(union) }.to raise_error(RuntimeError, "set_field is not valid for this union!")
     end
 
     it "should not be equal to nil" do

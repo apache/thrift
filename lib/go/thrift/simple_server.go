@@ -20,8 +20,8 @@
 package thrift
 
 import (
-	"log"
-	"runtime/debug"
+	"fmt"
+	"io"
 	"sync"
 	"sync/atomic"
 )
@@ -45,6 +45,8 @@ type TSimpleServer struct {
 
 	// Headers to auto forward in THeaderProtocol
 	forwardHeaders []string
+
+	logger Logger
 }
 
 func NewTSimpleServer2(processor TProcessor, serverTransport TServerTransport) *TSimpleServer {
@@ -148,6 +150,14 @@ func (p *TSimpleServer) SetForwardHeaders(headers []string) {
 	p.forwardHeaders = keys
 }
 
+// SetLogger sets the logger used by this TSimpleServer.
+//
+// If no logger was set before Serve is called, a default logger using standard
+// log library will be used.
+func (p *TSimpleServer) SetLogger(logger Logger) {
+	p.logger = logger
+}
+
 func (p *TSimpleServer) innerAccept() (int32, error) {
 	client, err := p.serverTransport.Accept()
 	p.mu.Lock()
@@ -164,7 +174,7 @@ func (p *TSimpleServer) innerAccept() (int32, error) {
 		go func() {
 			defer p.wg.Done()
 			if err := p.processRequests(client); err != nil {
-				log.Println("error processing request:", err)
+				p.logger(fmt.Sprintf("error processing request: %v", err))
 			}
 		}()
 	}
@@ -184,6 +194,8 @@ func (p *TSimpleServer) AcceptLoop() error {
 }
 
 func (p *TSimpleServer) Serve() error {
+	p.logger = fallbackLogger(p.logger)
+
 	err := p.Listen()
 	if err != nil {
 		return err
@@ -229,12 +241,6 @@ func (p *TSimpleServer) processRequests(client TTransport) error {
 		outputProtocol = p.outputProtocolFactory.GetProtocol(outputTransport)
 	}
 
-	defer func() {
-		if e := recover(); e != nil {
-			log.Printf("panic in processor: %s: %s", e, debug.Stack())
-		}
-	}()
-
 	if inputTransport != nil {
 		defer inputTransport.Close()
 	}
@@ -255,9 +261,12 @@ func (p *TSimpleServer) processRequests(client TTransport) error {
 			// won't break when it's called again later when we
 			// actually start to read the message.
 			if err := headerProtocol.ReadFrame(); err != nil {
+				if err == io.EOF {
+					return nil
+				}
 				return err
 			}
-			ctx = AddReadTHeaderToContext(defaultCtx, headerProtocol.GetReadHeaders())
+			ctx = AddReadTHeaderToContext(ctx, headerProtocol.GetReadHeaders())
 			ctx = SetWriteHeaderList(ctx, p.forwardHeaders)
 		}
 

@@ -20,9 +20,11 @@
 #
 
 use strict;
-use lib '../gen-perl';
+use lib '../../lib/perl/lib';
+use lib 'gen-perl';
 use Thrift::Socket;
 use Thrift::Server;
+use Thrift::ServerSocket;
 use tutorial::Calculator;
 
 package CalculatorHandler;

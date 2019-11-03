@@ -546,14 +546,14 @@ where
 /// ```
 pub trait TInputProtocolFactory {
     // Create a `TInputProtocol` that reads bytes from `transport`.
-    fn create(&self, transport: Box<TReadTransport + Send>) -> Box<TInputProtocol + Send>;
+    fn create(&self, transport: Box<dyn TReadTransport + Send>) -> Box<dyn TInputProtocol + Send>;
 }
 
 impl<T> TInputProtocolFactory for Box<T>
 where
     T: TInputProtocolFactory + ?Sized,
 {
-    fn create(&self, transport: Box<TReadTransport + Send>) -> Box<TInputProtocol + Send> {
+    fn create(&self, transport: Box<dyn TReadTransport + Send>) -> Box<dyn TInputProtocol + Send> {
         (**self).create(transport)
     }
 }
@@ -577,14 +577,14 @@ where
 /// ```
 pub trait TOutputProtocolFactory {
     /// Create a `TOutputProtocol` that writes bytes to `transport`.
-    fn create(&self, transport: Box<TWriteTransport + Send>) -> Box<TOutputProtocol + Send>;
+    fn create(&self, transport: Box<dyn TWriteTransport + Send>) -> Box<dyn TOutputProtocol + Send>;
 }
 
 impl<T> TOutputProtocolFactory for Box<T>
 where
     T: TOutputProtocolFactory + ?Sized,
 {
-    fn create(&self, transport: Box<TWriteTransport + Send>) -> Box<TOutputProtocol + Send> {
+    fn create(&self, transport: Box<dyn TWriteTransport + Send>) -> Box<dyn TOutputProtocol + Send> {
         (**self).create(transport)
     }
 }
@@ -926,29 +926,29 @@ mod tests {
 
     #[test]
     fn must_create_usable_input_protocol_from_concrete_input_protocol() {
-        let r: Box<TReadTransport> = Box::new(Cursor::new([0, 1, 2]));
+        let r: Box<dyn TReadTransport> = Box::new(Cursor::new([0, 1, 2]));
         let mut t = TCompactInputProtocol::new(r);
         takes_input_protocol(&mut t)
     }
 
     #[test]
     fn must_create_usable_input_protocol_from_boxed_input() {
-        let r: Box<TReadTransport> = Box::new(Cursor::new([0, 1, 2]));
-        let mut t: Box<TInputProtocol> = Box::new(TCompactInputProtocol::new(r));
+        let r: Box<dyn TReadTransport> = Box::new(Cursor::new([0, 1, 2]));
+        let mut t: Box<dyn TInputProtocol> = Box::new(TCompactInputProtocol::new(r));
         takes_input_protocol(&mut t)
     }
 
     #[test]
     fn must_create_usable_output_protocol_from_concrete_output_protocol() {
-        let w: Box<TWriteTransport> = Box::new(vec![0u8; 10]);
+        let w: Box<dyn TWriteTransport> = Box::new(vec![0u8; 10]);
         let mut t = TCompactOutputProtocol::new(w);
         takes_output_protocol(&mut t)
     }
 
     #[test]
     fn must_create_usable_output_protocol_from_boxed_output() {
-        let w: Box<TWriteTransport> = Box::new(vec![0u8; 10]);
-        let mut t: Box<TOutputProtocol> = Box::new(TCompactOutputProtocol::new(w));
+        let w: Box<dyn TWriteTransport> = Box::new(vec![0u8; 10]);
+        let mut t: Box<dyn TOutputProtocol> = Box::new(TCompactOutputProtocol::new(w));
         takes_output_protocol(&mut t)
     }
 

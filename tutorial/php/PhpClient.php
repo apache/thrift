@@ -5,16 +5,16 @@ namespace tutorial\php;
 
 error_reporting(E_ALL);
 
-require_once __DIR__.'/../../lib/php/lib/ClassLoader/ThriftClassLoader.php';
+require_once __DIR__.'/../../vendor/autoload.php';
 
 use Thrift\ClassLoader\ThriftClassLoader;
 
-$GEN_DIR = realpath(dirname(__FILE__).'/..').'/gen-php';
+$GEN_DIR = realpath(dirname(__FILE__)).'/gen-php';
 
 $loader = new ThriftClassLoader();
 $loader->registerNamespace('Thrift', __DIR__ . '/../../lib/php/lib');
-$loader->registerDefinition('shared', $GEN_DIR);
-$loader->registerDefinition('tutorial', $GEN_DIR);
+$loader->registerNamespace('shared', $GEN_DIR);
+$loader->registerNamespace('tutorial', $GEN_DIR);
 $loader->register();
 
 /*
