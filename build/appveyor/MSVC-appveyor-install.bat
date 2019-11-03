@@ -56,7 +56,7 @@ pip.exe ^
             tornado ^
             twisted                       || EXIT /B
 
-cinst -y ghc                              || EXIT /B
+cinst -y ghc --version 8.6.5              || EXIT /B
 
 :: Adobe Flex SDK 4.6 for ActionScript
 MKDIR "C:\Adobe\Flex\SDK\4.6"             || EXIT /B
