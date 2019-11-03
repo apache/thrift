@@ -174,7 +174,7 @@ inline bool ProtocolBase<Impl>::writeBuffer(char* data, size_t size) {
   if (output_->buf.capacity() < need) {
     try {
       output_->buf.reserve(need);
-    } catch (std::bad_alloc& ex) {
+    } catch (std::bad_alloc&) {
       PyErr_SetString(PyExc_MemoryError, "Failed to allocate write buffer");
       return false;
     }
