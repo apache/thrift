@@ -1,6 +1,6 @@
 ## Thrift interface description language
 
-For Thrift version 0.13.0.
+For Thrift version 0.14.0.
 
 The Thrift interface definition language (IDL) allows for the definition of [Thrift Types](/docs/types). A Thrift IDL file is processed by the Thrift code generator to produce code for the various target languages to support the defined structs and services in the IDL file.
 
@@ -126,7 +126,7 @@ Because of this behaviour, required fields drastically limit the options with re
 - Read: Optional fields may, or may not be part of the input stream. 
 - Default values: are written when the isset flag is set
 
-Most language implementations use the recommended pratice of so-called "isset" flags to indicate whether a particular optional field is set or not. Only fields with this flag set are written, and conversely the flag is only set when a field value has been read from the input stream. 
+Most language implementations use the recommended practice of so-called "isset" flags to indicate whether a particular optional field is set or not. Only fields with this flag set are written, and conversely the flag is only set when a field value has been read from the input stream. 
 	
 #### default requiredness (implicit)
 

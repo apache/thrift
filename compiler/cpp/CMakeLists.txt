@@ -20,7 +20,8 @@
 cmake_minimum_required(VERSION 3.3)
 project("thrift-compiler" VERSION ${PACKAGE_VERSION})
 
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/src/thrift/version.h.in ${CMAKE_CURRENT_BINARY_DIR}/thrift/version.h)
+# version.h now handled via veralign.sh
+#configure_file(${CMAKE_CURRENT_SOURCE_DIR}/src/thrift/version.h.in ${CMAKE_CURRENT_BINARY_DIR}/thrift/version.h)
 
 find_package(FLEX REQUIRED)
 find_package(BISON REQUIRED)
@@ -47,7 +48,7 @@ set(compiler_core
     src/thrift/generate/t_generator.cc
     src/thrift/parse/t_typedef.cc
     src/thrift/parse/parse.cc
-    ${CMAKE_CURRENT_BINARY_DIR}/thrift/version.h
+    src/thrift/version.h
 )
 
 set(thrift-compiler_SOURCES
@@ -90,7 +91,6 @@ THRIFT_ADD_COMPILER(javame  "Enable compiler for Java ME" ON)
 THRIFT_ADD_COMPILER(js      "Enable compiler for JavaScript" ON)
 THRIFT_ADD_COMPILER(json    "Enable compiler for JSON" ON)
 THRIFT_ADD_COMPILER(lua     "Enable compiler for Lua" ON)
-THRIFT_ADD_COMPILER(netcore "Enable compiler for .NET Core" ON)
 THRIFT_ADD_COMPILER(netstd  "Enable compiler for .NET Standard" ON)
 THRIFT_ADD_COMPILER(ocaml   "Enable compiler for OCaml" ON)
 THRIFT_ADD_COMPILER(perl    "Enable compiler for Perl" ON)

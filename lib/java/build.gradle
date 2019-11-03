@@ -36,6 +36,12 @@ plugins {
     id 'maven'
     id 'signing'
     id 'com.github.johnrengelman.shadow' version '4.0.4'
+    id "com.github.spotbugs" version "2.0.0"
+}
+
+ext {
+    // https://github.com/spotbugs/spotbugs-gradle-plugin/issues/32#issuecomment-409951172
+    SpotBugsTask = com.github.spotbugs.SpotBugsTask
 }
 
 description = 'Apache Thrift Java Library'

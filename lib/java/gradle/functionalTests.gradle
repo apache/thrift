@@ -34,6 +34,7 @@ sourceSets {
             include '**/test/TestClient.java'
             include '**/test/TestServer.java'
             include '**/test/TestNonblockingServer.java'
+            include '**/test/TestTServletServer.java'
         }
     }
 }
@@ -55,7 +56,7 @@ dependencies {
 shadowJar {
     description = 'Assemble a test JAR file for cross-check execution'
     // make sure the runners are created when this runs
-    dependsOn 'generateRunnerScriptForClient', 'generateRunnerScriptForServer', 'generateRunnerScriptForNonblockingServer'
+    dependsOn 'generateRunnerScriptForClient', 'generateRunnerScriptForServer', 'generateRunnerScriptForNonblockingServer', 'generateRunnerScriptForTServletServer'
 
     baseName = 'functionalTest'
     destinationDir = file("$buildDir/functionalTestJar")
@@ -142,6 +143,27 @@ task generateRunnerScriptForNonblockingServer(group: 'Build') {
 ${scriptHead}
 
 "${javaExe}" -cp "$jarPath" "-Djavax.net.ssl.keyStore=$keyStore" -Djavax.net.ssl.keyStorePassword=thrift org.apache.thrift.test.TestNonblockingServer $args
+"""
+
+    inputs.property 'runServerText', runServerText
+    outputs.file serverFile
+
+    doLast {
+        serverFile.parentFile.mkdirs()
+        serverFile.text = runServerText
+        serverFile.setExecutable(true, false)
+    }
+}
+
+task generateRunnerScriptForTServletServer(group: 'Build') {
+    description = 'Generate a runner script for cross-check tests with TestTServletServer'
+
+    def serverFile = file("$buildDir/runservletserver${scriptExt}")
+
+    def runServerText = """\
+${scriptHead}
+
+"${javaExe}" -cp "$jarPath" "-Djavax.net.ssl.keyStore=$keyStore" -Djavax.net.ssl.keyStorePassword=thrift org.apache.thrift.test.TestTServletServer $args
 """
 
     inputs.property 'runServerText', runServerText

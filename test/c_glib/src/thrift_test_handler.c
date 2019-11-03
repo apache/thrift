@@ -30,7 +30,7 @@
 
 G_DEFINE_TYPE (ThriftTestHandler,
                thrift_test_handler,
-               T_TEST_TYPE_THRIFT_TEST_HANDLER);
+               T_TEST_TYPE_THRIFT_TEST_HANDLER)
 
 gboolean
 thrift_test_handler_test_void (TTestThriftTestIf  *iface,

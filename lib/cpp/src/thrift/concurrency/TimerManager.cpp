@@ -132,7 +132,7 @@ public:
       Synchronized s(manager_->monitor_);
       if (manager_->state_ == TimerManager::STOPPING) {
         manager_->state_ = TimerManager::STOPPED;
-        manager_->monitor_.notify();
+        manager_->monitor_.notifyAll();
       }
     }
     return;

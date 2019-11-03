@@ -78,7 +78,6 @@ SUBDIRS += haxe
 endif
 
 if WITH_DOTNET
-SUBDIRS += netcore
 SUBDIRS += netstd
 endif
 
@@ -158,6 +157,7 @@ EXTRA_DIST = \
 	Include.thrift \
 	Int64Test.thrift \
 	JavaBeansTest.thrift \
+	JavaBinaryDefault.thrift \
 	JavaDeepCopyTest.thrift \
 	JavaTypes.thrift \
 	JsDeepConstructorTest.thrift \

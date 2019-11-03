@@ -731,7 +731,11 @@ string t_java_generator::render_const_value(ostream& out, t_type* type, t_const_
     t_base_type::t_base tbase = ((t_base_type*)type)->get_base();
     switch (tbase) {
     case t_base_type::TYPE_STRING:
-      render << '"' << get_escaped_string(value) << '"';
+      if (((t_base_type*)type)->is_binary()) {
+        render << "java.nio.ByteBuffer.wrap(\"" << get_escaped_string(value) << "\".getBytes())";
+      } else {
+        render << '"' << get_escaped_string(value) << '"';
+      }
       break;
     case t_base_type::TYPE_BOOL:
       render << ((value->get_integer() > 0) ? "true" : "false");

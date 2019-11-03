@@ -334,6 +334,17 @@ target_link_libraries(SecurityTest -lrt)
 endif ()
 add_test(NAME SecurityTest COMMAND SecurityTest -- "${CMAKE_CURRENT_SOURCE_DIR}/../../../test/keys")
 
+add_executable(SecurityFromBufferTest SecurityFromBufferTest.cpp)
+target_link_libraries(SecurityFromBufferTest
+    testgencpp
+    ${Boost_LIBRARIES}
+)
+LINK_AGAINST_THRIFT_LIBRARY(SecurityFromBufferTest thrift)
+if (NOT MSVC AND NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin" AND NOT MINGW)
+target_link_libraries(SecurityFromBufferTest -lrt)
+endif ()
+add_test(NAME SecurityFromBufferTest COMMAND SecurityFromBufferTest -- "${CMAKE_CURRENT_SOURCE_DIR}/../../../test/keys")
+
 endif()
 
 if(WITH_QT5)

@@ -29,10 +29,10 @@ use protocol::{TInputProtocol, TOutputProtocol};
 pub trait TThriftClient {
     /// Returns the input protocol used to read serialized Thrift messages
     /// from the Thrift server.
-    fn i_prot_mut(&mut self) -> &mut TInputProtocol;
+    fn i_prot_mut(&mut self) -> &mut dyn TInputProtocol;
     /// Returns the output protocol used to write serialized Thrift messages
     /// to the Thrift server.
-    fn o_prot_mut(&mut self) -> &mut TOutputProtocol;
+    fn o_prot_mut(&mut self) -> &mut dyn TOutputProtocol;
     /// Returns the sequence number of the last message written to the Thrift
     /// server. Returns `0` if no messages have been written. Sequence
     /// numbers should *never* be negative, and this method returns an `i32`
