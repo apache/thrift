@@ -68,10 +68,19 @@ else()
   set(hs_optimize -O1)
 endif()
 
+set(hs_crosstest_package_args
+    -package hashable
+    -package unordered-containers
+    -package vector
+    -package QuickCheck
+    -package split
+    -package network
+    -package network-uri
+)
 add_custom_command(
     OUTPUT ${hs_crosstest_apps}
-    COMMAND ${GHC} ${hs_optimize} ${hs_crosstest_args} ${CMAKE_CURRENT_SOURCE_DIR}/TestServer.hs -o TestServer
-    COMMAND ${GHC} ${hs_optimize} ${hs_crosstest_args} ${CMAKE_CURRENT_SOURCE_DIR}/TestClient.hs -o TestClient
+    COMMAND ${GHC} ${hs_crosstest_package_args} ${hs_optimize} ${hs_crosstest_args} ${CMAKE_CURRENT_SOURCE_DIR}/TestServer.hs -o TestServer
+    COMMAND ${GHC} ${hs_crosstest_package_args} ${hs_optimize} ${hs_crosstest_args} ${CMAKE_CURRENT_SOURCE_DIR}/TestClient.hs -o TestClient
     DEPENDS ${hs_test_gen} haskell_library TestServer.hs TestClient.hs
 )
 add_custom_target(haskell_crosstest ALL

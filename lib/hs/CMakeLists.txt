@@ -37,7 +37,7 @@ set(haskell_sources
 )
 
 if(BUILD_TESTING)
-    list(APPEND haskell_soruces
+    list(APPEND haskell_sources
         test/Spec.hs
         test/BinarySpec.hs
         test/CompactSpec.hs
@@ -47,7 +47,7 @@ if(BUILD_TESTING)
 endif()
 
 set(haskell_artifacts thrift_cabal.stamp)
-# Adding *.hi files so that any missing file triggers the build
+# Adding *.hs files so that any missing file triggers the build
 foreach(SRC ${haskell_sources})
     get_filename_component(EX ${SRC} EXT)
     if(${EX} STREQUAL ".hs")
@@ -68,10 +68,10 @@ add_custom_command(
     OUTPUT ${haskell_artifacts}
     COMMAND ${CABAL} update
     # Build dependencies first without --builddir, otherwise it fails.
-    COMMAND ${CABAL} install --only-dependencies ${hs_enable_test}
+    COMMAND ${CABAL} build --only-dependencies ${hs_enable_test}
     COMMAND ${CABAL} configure ${hs_optimize} ${hs_enable_test} --builddir=${CMAKE_CURRENT_BINARY_DIR}/dist
     COMMAND ${CABAL} build --builddir=${CMAKE_CURRENT_BINARY_DIR}/dist
-    COMMAND ${CABAL} install --builddir=${CMAKE_CURRENT_BINARY_DIR}/dist
+    COMMAND ${CABAL} install --lib --builddir=${CMAKE_CURRENT_BINARY_DIR}/dist
     COMMAND ${CMAKE_COMMAND} -E touch ${CMAKE_CURRENT_BINARY_DIR}/thrift_cabal.stamp
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
     DEPENDS ${haskell_sources}
@@ -85,9 +85,6 @@ if(BUILD_TESTING)
             COMMAND ${CABAL} check
             WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
     add_test(NAME HaskellCabalTest
-            # Cabal fails to find built executable when --builddir is specified.
-            # So we invoke the executable directly.
-            # COMMAND ${CABAL} test --builddir=${CMAKE_CURRENT_BINARY_DIR}/dist
-            # WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
-            COMMAND dist/build/spec/spec)
+            COMMAND ${CABAL} test --test-show-details=streaming --builddir=${CMAKE_CURRENT_BINARY_DIR}/dist
+            WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
 endif()
