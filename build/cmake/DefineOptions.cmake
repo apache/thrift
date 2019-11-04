@@ -53,11 +53,6 @@ endif ()
 CMAKE_DEPENDENT_OPTION(BUILD_AS3 "Build as3 library" ON
                        "BUILD_LIBRARIES;WITH_AS3;HAVE_COMPC" OFF)
 
-# OpenSSL (used by C++ and C GLib)
-find_package(OpenSSL QUIET)
-CMAKE_DEPENDENT_OPTION(WITH_OPENSSL "Build with OpenSSL support" ON
-                       "OPENSSL_FOUND" OFF)
-
 # C++
 option(WITH_CPP "Build C++ Thrift library" ON)
 if(WITH_CPP)
@@ -89,6 +84,13 @@ if(WITH_C_GLIB)
 endif()
 CMAKE_DEPENDENT_OPTION(BUILD_C_GLIB "Build C (GLib) library" ON
                        "BUILD_LIBRARIES;WITH_C_GLIB;GLIB_FOUND" OFF)
+
+# OpenSSL
+if(WITH_CPP OR WITH_C_GLIB)
+    find_package(OpenSSL QUIET)
+    CMAKE_DEPENDENT_OPTION(WITH_OPENSSL "Build with OpenSSL support" ON
+                        "OPENSSL_FOUND" OFF)
+endif()
 
 # Java
 option(WITH_JAVA "Build Java Thrift library" ON)
