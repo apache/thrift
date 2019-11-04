@@ -171,7 +171,7 @@ public class TThreadPoolServer extends TServer {
   	}
 
   	execute();
-  	if (!waitForShutdown()) {
+    if (!waitForShutdown()) {
   	  LOGGER.error("Shutdown is not done after " + stopTimeoutVal + stopTimeoutUnit);
     }
 
