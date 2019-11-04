@@ -18,7 +18,7 @@
 use std::convert::From;
 use std::io;
 use std::io::{ErrorKind, Read, Write};
-use std::net::{Shutdown, TcpStream};
+use std::net::{Shutdown, TcpStream, ToSocketAddrs};
 
 use super::{ReadHalf, TIoChannel, WriteHalf};
 use {new_transport_error, TransportErrorKind};
@@ -81,8 +81,8 @@ impl TTcpChannel {
         }
     }
 
-    /// Connect to `remote_address`, which should have the form `host:port`.
-    pub fn open(&mut self, remote_address: &str) -> ::Result<()> {
+    /// Connect to `remote_address`, which should implement `ToSocketAddrs` trait.
+    pub fn open<A: ToSocketAddrs>(&mut self, remote_address: A) -> ::Result<()> {
         if self.stream.is_some() {
             Err(new_transport_error(
                 TransportErrorKind::AlreadyOpen,
