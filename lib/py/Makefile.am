@@ -25,9 +25,12 @@ py3-build:
 py3-test: py3-build
 	$(PYTHON3) test/thrift_json.py
 	$(PYTHON3) test/test_sslsocket.py
+py3-install:
+	$(PYTHON3) setup.py install --root=$(DESTDIR) --prefix=$(prefix) $(PYTHON_SETUPUTIL_ARGS)
 else
 py3-build:
 py3-test:
+py3-install:
 endif
 
 all-local: py3-build
@@ -37,7 +40,7 @@ all-local: py3-build
 # the equivalent of /usr/local/lib in Python land.
 # Old version (can't put inline because it's not portable).
 #$(PYTHON) setup.py install --prefix=$(prefix) --root=$(DESTDIR) $(PYTHON_SETUPUTIL_ARGS)
-install-exec-hook:
+install-exec-hook: py3-install
 	$(PYTHON) setup.py install --root=$(DESTDIR) --prefix=$(PY_PREFIX) $(PYTHON_SETUPUTIL_ARGS)
 
 check-local: all py3-test
