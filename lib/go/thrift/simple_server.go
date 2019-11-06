@@ -272,7 +272,12 @@ func (p *TSimpleServer) processRequests(client TTransport) (err error) {
 			return nil
 		}
 
-		ctx := defaultCtx
+		ctx := SetResponseHelper(
+			defaultCtx,
+			TResponseHelper{
+				THeaderResponseHelper: NewTHeaderResponseHelper(outputProtocol),
+			},
+		)
 		if headerProtocol != nil {
 			// We need to call ReadFrame here, otherwise we won't
 			// get any headers on the AddReadTHeaderToContext call.
