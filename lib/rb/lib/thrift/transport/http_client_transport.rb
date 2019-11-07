@@ -47,6 +47,8 @@ module Thrift
       http.use_ssl = @url.scheme == 'https'
       http.verify_mode = @ssl_verify_mode if @url.scheme == 'https'
       resp = http.post(@url.request_uri, @outbuf, @headers)
+      raise TransportException.new(TransportException::UNKNOWN, "#{self.class.name} Could not connect to #{@url}, HTTP status code #{resp.code.to_i}") unless (200..299).include?(resp.code.to_i)
+
       data = resp.body
       data = Bytes.force_binary_encoding(data)
       @inbuf = StringIO.new data
