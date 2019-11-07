@@ -45,6 +45,7 @@ describe 'Thrift::HTTPClientTransport' do
           expect(http).to receive(:post).with("/path/to/service?param=value", "a test frame", {"Content-Type"=>"application/x-thrift"}) do
             double("Net::HTTPOK").tap do |response|
               expect(response).to receive(:body).and_return "data"
+              expect(response).to receive(:code).and_return "200"
             end
           end
         end
@@ -65,6 +66,7 @@ describe 'Thrift::HTTPClientTransport' do
           expect(http).to receive(:post).with("/path/to/service?param=value", "test", headers) do
             double("Net::HTTPOK").tap do |response|
               expect(response).to receive(:body).and_return "data"
+              expect(response).to receive(:code).and_return "200"
             end
           end
         end
@@ -84,6 +86,24 @@ describe 'Thrift::HTTPClientTransport' do
 
       @client.flush  rescue
       expect(@client.instance_variable_get(:@outbuf)).to eq(Thrift::Bytes.empty_byte_buffer)
+    end
+
+    it 'should raise TransportError on HTTP failures' do
+      @client.write "test"
+
+      expect(Net::HTTP).to receive(:new).with("my.domain.com", 80) do
+        double("Net::HTTP").tap do |http|
+          expect(http).to receive(:use_ssl=).with(false)
+          expect(http).to receive(:post).with("/path/to/service?param=value", "test", {"Content-Type"=>"application/x-thrift"}) do
+            double("Net::HTTPOK").tap do |response|
+              expect(response).not_to receive(:body)
+              expect(response).to receive(:code).at_least(:once).and_return "503"
+            end
+          end
+        end
+      end
+
+      expect { @client.flush }.to raise_error(Thrift::TransportException)
     end
 
   end
@@ -107,6 +127,7 @@ describe 'Thrift::HTTPClientTransport' do
               "Content-Type" => "application/x-thrift") do
             double("Net::HTTPOK").tap do |response|
               expect(response).to receive(:body).and_return "data"
+              expect(response).to receive(:code).and_return "200"
             end
           end
         end
@@ -128,6 +149,7 @@ describe 'Thrift::HTTPClientTransport' do
               "Content-Type" => "application/x-thrift") do
             double("Net::HTTPOK").tap do |response|
               expect(response).to receive(:body).and_return "data"
+              expect(response).to receive(:code).and_return "200"
             end
           end
         end
