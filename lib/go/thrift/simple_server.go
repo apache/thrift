@@ -221,7 +221,9 @@ func treatEOFErrorsAsNil(err error) error {
 	if err == nil {
 		return nil
 	}
-	if err == io.EOF {
+	// err could be io.EOF wrapped with TProtocolException,
+	// so that err == io.EOF doesn't necessarily work in some cases.
+	if err.Error() == io.EOF.Error() {
 		return nil
 	}
 	if err, ok := err.(TTransportException); ok && err.TypeId() == END_OF_FILE {
