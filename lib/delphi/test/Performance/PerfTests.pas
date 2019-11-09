@@ -21,6 +21,7 @@ interface
 uses
   Windows, Classes, SysUtils,
   Thrift.Collections,
+  Thrift.Configuration,
   Thrift.Test,
   Thrift.Protocol,
   Thrift.Protocol.JSON,
@@ -34,9 +35,10 @@ uses
 type
   TPerformanceTests = class
   strict private
-    Testdata  : ICrazyNesting;
-    MemBuffer : TMemoryStream;
-    Transport : ITransport;
+    FTestdata  : ICrazyNesting;
+    FMemBuffer : TMemoryStream;
+    FTransport : ITransport;
+    FConfig    : IThriftConfiguration;
 
     procedure ProtocolPeformanceTest;
     procedure RunTest( const ptyp : TKnownProtocol; const layered : TLayeredTransport);
@@ -74,7 +76,7 @@ procedure TPerformanceTests.ProtocolPeformanceTest;
 var layered : TLayeredTransport;
 begin
   Console.WriteLine('Setting up for ProtocolPeformanceTest ...');
-  Testdata := TestDataFactory.CreateCrazyNesting();
+  FTestdata := TestDataFactory.CreateCrazyNesting();
 
   for layered := Low(TLayeredTransport) to High(TLayeredTransport) do begin
     RunTest( TKnownProtocol.prot_Binary,  layered);
@@ -91,10 +93,12 @@ var freq, start, stop : Int64;
 begin
   QueryPerformanceFrequency( freq);
 
+  FConfig := TThriftConfigurationImpl.Create;
+
   proto := GenericProtocolFactory( ptyp, layered, TRUE);
   QueryPerformanceCounter( start);
-  Testdata.Write(proto);
-  Transport.Flush;
+  FTestdata.Write(proto);
+  FTransport.Flush;
   QueryPerformanceCounter( stop);
   Console.WriteLine( Format('RunTest(%s): write = %d msec', [
                      GetProtocolTransportName(ptyp,layered),
@@ -121,24 +125,24 @@ const COPY_ENTIRE_STREAM = 0;
 begin
   // read happens after write here, so let's take over the written bytes
   newBuf := TMemoryStream.Create;
-  if not forWrite then newBuf.CopyFrom( MemBuffer, COPY_ENTIRE_STREAM);
-  MemBuffer := newBuf;
-  MemBuffer.Position := 0;
+  if not forWrite then newBuf.CopyFrom( FMemBuffer, COPY_ENTIRE_STREAM);
+  FMemBuffer := newBuf;
+  FMemBuffer.Position := 0;
 
   //  layered transports anyone?
   stream := TThriftStreamAdapterDelphi.Create( newBuf, TRUE);
   if forWrite
-  then trans := TStreamTransportImpl.Create( nil, stream)
-  else trans := TStreamTransportImpl.Create( stream, nil);
+  then trans := TStreamTransportImpl.Create( nil, stream, FConfig)
+  else trans := TStreamTransportImpl.Create( stream, nil, FConfig);
   case layered of
-    trns_Framed   :  Transport := TFramedTransportImpl.Create( trans);
-    trns_Buffered :  Transport := TBufferedTransportImpl.Create( trans);
+    trns_Framed   :  FTransport := TFramedTransportImpl.Create( trans);
+    trns_Buffered :  FTransport := TBufferedTransportImpl.Create( trans);
   else
-    Transport := trans;
+    FTransport := trans;
   end;
 
-  if not Transport.IsOpen
-  then Transport.Open;
+  if not FTransport.IsOpen
+  then FTransport.Open;
 
   case ptyp of
     prot_Binary  :  result := TBinaryProtocolImpl.Create(trans);

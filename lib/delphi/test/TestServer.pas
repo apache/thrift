@@ -36,6 +36,7 @@ uses
   Thrift.Protocol.JSON,
   Thrift.Protocol.Compact,
   Thrift.Collections,
+  Thrift.Configuration,
   Thrift.Utils,
   Thrift.Test,
   Thrift,
@@ -593,7 +594,7 @@ begin
 
       trns_NamedPipes : begin
         Console.WriteLine('- named pipe ('+sPipeName+')');
-        namedpipe   := TNamedPipeServerTransportImpl.Create( sPipeName, 4096, PIPE_UNLIMITED_INSTANCES);
+        namedpipe   := TNamedPipeServerTransportImpl.Create( sPipeName, 4096, PIPE_UNLIMITED_INSTANCES, INFINITE);
         servertrans := namedpipe;
       end;
 
@@ -614,7 +615,7 @@ begin
 
     if (trns_Framed in layered) then begin
       Console.WriteLine('- framed transport');
-      TransportFactory := TFramedTransportImpl.TFactory.Create
+      TransportFactory := TFramedTransportImpl.TFactory.Create;
     end
     else begin
       TransportFactory := TTransportFactoryImpl.Create;

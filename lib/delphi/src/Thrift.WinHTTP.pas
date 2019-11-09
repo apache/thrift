@@ -1224,8 +1224,8 @@ begin
                               dwIndex)
   then begin
     dwError := GetLastError;
-    ASSERT( dwError = ERROR_WINHTTP_HEADER_NOT_FOUND);  // anything else would be an real error
-    result := MAXINT;  // we don't know
+    if dwError <> ERROR_WINHTTP_HEADER_NOT_FOUND then ASSERT(FALSE);  // anything else would be an real error
+    result  := MAXINT;  // we don't know
   end;
 end;
 
