@@ -81,7 +81,7 @@ type
     procedure Flush; virtual;
   end;
 
-  TTransportException = class( TException)
+  TTransportException = class abstract( TException)
   public
     type
       TExceptionType = (
@@ -93,10 +93,9 @@ type
         BadArgs,
         Interrupted
       );
-  private
-    function GetType: TExceptionType;
   protected
     constructor HiddenCreate(const Msg: string);
+    class function GetType: TExceptionType;  virtual; abstract;
   public
     class function Create( AType: TExceptionType): TTransportException; overload; deprecated 'Use specialized TTransportException types (or regenerate from IDL)';
     class function Create( const msg: string): TTransportException; reintroduce; overload; deprecated 'Use specialized TTransportException types (or regenerate from IDL)';
@@ -110,13 +109,40 @@ type
     constructor Create(const Msg: string);
   end;
 
-  TTransportExceptionUnknown = class (TTransportExceptionSpecialized);
-  TTransportExceptionNotOpen = class (TTransportExceptionSpecialized);
-  TTransportExceptionAlreadyOpen = class (TTransportExceptionSpecialized);
-  TTransportExceptionTimedOut = class (TTransportExceptionSpecialized);
-  TTransportExceptionEndOfFile = class (TTransportExceptionSpecialized);
-  TTransportExceptionBadArgs = class (TTransportExceptionSpecialized);
-  TTransportExceptionInterrupted = class (TTransportExceptionSpecialized);
+  TTransportExceptionUnknown = class (TTransportExceptionSpecialized)
+  protected
+    class function GetType: TTransportException.TExceptionType;  override;
+  end;
+
+  TTransportExceptionNotOpen = class (TTransportExceptionSpecialized)
+  protected
+    class function GetType: TTransportException.TExceptionType;  override;
+  end;
+
+  TTransportExceptionAlreadyOpen = class (TTransportExceptionSpecialized)
+  protected
+    class function GetType: TTransportException.TExceptionType;  override;
+  end;
+
+  TTransportExceptionTimedOut = class (TTransportExceptionSpecialized)
+  protected
+    class function GetType: TTransportException.TExceptionType;  override;
+  end;
+
+  TTransportExceptionEndOfFile = class (TTransportExceptionSpecialized)
+  protected
+    class function GetType: TTransportException.TExceptionType;  override;
+  end;
+
+  TTransportExceptionBadArgs = class (TTransportExceptionSpecialized)
+  protected
+    class function GetType: TTransportException.TExceptionType;  override;
+  end;
+
+  TTransportExceptionInterrupted = class (TTransportExceptionSpecialized)
+  protected
+    class function GetType: TTransportException.TExceptionType;  override;
+  end;
 
   TSecureProtocol = (
     SSL_2, SSL_3, TLS_1,   // outdated, for compatibilty only
@@ -446,17 +472,6 @@ end;
 
 { TTransportException }
 
-function TTransportException.GetType: TExceptionType;
-begin
-  if Self is TTransportExceptionNotOpen then Result := TExceptionType.NotOpen
-  else if Self is TTransportExceptionAlreadyOpen then Result := TExceptionType.AlreadyOpen
-  else if Self is TTransportExceptionTimedOut then Result := TExceptionType.TimedOut
-  else if Self is TTransportExceptionEndOfFile then Result := TExceptionType.EndOfFile
-  else if Self is TTransportExceptionBadArgs then Result := TExceptionType.BadArgs
-  else if Self is TTransportExceptionInterrupted then Result := TExceptionType.Interrupted
-  else Result := TExceptionType.Unknown;
-end;
-
 constructor TTransportException.HiddenCreate(const Msg: string);
 begin
   inherited Create(Msg);
@@ -470,8 +485,7 @@ begin
 {$WARN SYMBOL_DEPRECATED DEFAULT}
 end;
 
-class function TTransportException.Create(AType: TExceptionType;
-  const msg: string): TTransportException;
+class function TTransportException.Create(aType: TExceptionType; const msg: string): TTransportException;
 begin
   case AType of
     TExceptionType.NotOpen:     Result := TTransportExceptionNotOpen.Create(msg);
@@ -481,6 +495,7 @@ begin
     TExceptionType.BadArgs:     Result := TTransportExceptionBadArgs.Create(msg);
     TExceptionType.Interrupted: Result := TTransportExceptionInterrupted.Create(msg);
   else
+    ASSERT( TExceptionType.Unknown = aType);
     Result := TTransportExceptionUnknown.Create(msg);
   end;
 end;
@@ -495,6 +510,43 @@ end;
 constructor TTransportExceptionSpecialized.Create(const Msg: string);
 begin
   inherited HiddenCreate(Msg);
+end;
+
+{ specialized TTransportExceptions }
+
+class function TTransportExceptionUnknown.GetType: TTransportException.TExceptionType;
+begin
+  result := TExceptionType.Unknown;
+end;
+
+class function TTransportExceptionNotOpen.GetType: TTransportException.TExceptionType;
+begin
+  result := TExceptionType.NotOpen;
+end;
+
+class function TTransportExceptionAlreadyOpen.GetType: TTransportException.TExceptionType;
+begin
+  result := TExceptionType.AlreadyOpen;
+end;
+
+class function TTransportExceptionTimedOut.GetType: TTransportException.TExceptionType;
+begin
+  result := TExceptionType.TimedOut;
+end;
+
+class function TTransportExceptionEndOfFile.GetType: TTransportException.TExceptionType;
+begin
+  result := TExceptionType.EndOfFile;
+end;
+
+class function TTransportExceptionBadArgs.GetType: TTransportException.TExceptionType;
+begin
+  result := TExceptionType.BadArgs;
+end;
+
+class function TTransportExceptionInterrupted.GetType: TTransportException.TExceptionType;
+begin
+  result := TExceptionType.Interrupted;
 end;
 
 { TTransportFactoryImpl }

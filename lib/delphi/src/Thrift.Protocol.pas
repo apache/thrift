@@ -112,24 +112,27 @@ type
     function GetProtocol( const trans: ITransport): IProtocol;
   end;
 
-  TProtocolException = class( TException)
+  TProtocolException = class abstract( TException)
   public
-    const // TODO(jensg): change into enum
-      UNKNOWN = 0;
-      INVALID_DATA = 1;
-      NEGATIVE_SIZE = 2;
-      SIZE_LIMIT = 3;
-      BAD_VERSION = 4;
-      NOT_IMPLEMENTED = 5;
-      DEPTH_LIMIT = 6;
+    type TExceptionType = (
+      UNKNOWN = 0,
+      INVALID_DATA = 1,
+      NEGATIVE_SIZE = 2,
+      SIZE_LIMIT = 3,
+      BAD_VERSION = 4,
+      NOT_IMPLEMENTED = 5,
+      DEPTH_LIMIT = 6
+    );
   protected
     constructor HiddenCreate(const Msg: string);
+    class function GetType: TExceptionType;  virtual; abstract;
   public
     // purposefully hide inherited constructor
     class function Create(const Msg: string): TProtocolException; overload; deprecated 'Use specialized TProtocolException types (or regenerate from IDL)';
     class function Create: TProtocolException; overload; deprecated 'Use specialized TProtocolException types (or regenerate from IDL)';
-    class function Create( type_: Integer): TProtocolException; overload; deprecated 'Use specialized TProtocolException types (or regenerate from IDL)';
-    class function Create( type_: Integer; const msg: string): TProtocolException; overload; deprecated 'Use specialized TProtocolException types (or regenerate from IDL)';
+    class function Create( aType: TExceptionType): TProtocolException; overload; deprecated 'Use specialized TProtocolException types (or regenerate from IDL)';
+    class function Create( aType: TExceptionType; const msg: string): TProtocolException; overload; deprecated 'Use specialized TProtocolException types (or regenerate from IDL)';
+    property Type_: TExceptionType read GetType;
   end;
 
   // Needed to remove deprecation warning
@@ -138,13 +141,41 @@ type
     constructor Create(const Msg: string);
   end;
 
-  TProtocolExceptionUnknown = class (TProtocolExceptionSpecialized);
-  TProtocolExceptionInvalidData = class (TProtocolExceptionSpecialized);
-  TProtocolExceptionNegativeSize = class (TProtocolExceptionSpecialized);
-  TProtocolExceptionSizeLimit = class (TProtocolExceptionSpecialized);
-  TProtocolExceptionBadVersion = class (TProtocolExceptionSpecialized);
-  TProtocolExceptionNotImplemented = class (TProtocolExceptionSpecialized);
-  TProtocolExceptionDepthLimit = class (TProtocolExceptionSpecialized);
+  TProtocolExceptionUnknown = class (TProtocolExceptionSpecialized)
+  protected
+    class function GetType: TProtocolException.TExceptionType;  override;
+  end;
+
+  TProtocolExceptionInvalidData = class (TProtocolExceptionSpecialized)
+  protected
+    class function GetType: TProtocolException.TExceptionType;  override;
+  end;
+
+  TProtocolExceptionNegativeSize = class (TProtocolExceptionSpecialized)
+  protected
+    class function GetType: TProtocolException.TExceptionType;  override;
+  end;
+
+  TProtocolExceptionSizeLimit = class (TProtocolExceptionSpecialized)
+  protected
+    class function GetType: TProtocolException.TExceptionType;  override;
+  end;
+
+  TProtocolExceptionBadVersion = class (TProtocolExceptionSpecialized)
+  protected
+    class function GetType: TProtocolException.TExceptionType;  override;
+  end;
+
+  TProtocolExceptionNotImplemented = class (TProtocolExceptionSpecialized)
+  protected
+    class function GetType: TProtocolException.TExceptionType;  override;
+  end;
+
+  TProtocolExceptionDepthLimit = class (TProtocolExceptionSpecialized)
+  protected
+    class function GetType: TProtocolException.TExceptionType;  override;
+  end;
+
 
 
   TProtocolUtil = class
@@ -1000,23 +1031,24 @@ begin
   Result := TProtocolExceptionUnknown.Create('');
 end;
 
-class function TProtocolException.Create(type_: Integer): TProtocolException;
+class function TProtocolException.Create(aType: TExceptionType): TProtocolException;
 begin
 {$WARN SYMBOL_DEPRECATED OFF}
-  Result := Create(type_, '');
+  Result := Create(aType, '');
 {$WARN SYMBOL_DEPRECATED DEFAULT}
 end;
 
-class function TProtocolException.Create(type_: Integer; const msg: string): TProtocolException;
+class function TProtocolException.Create(aType: TExceptionType; const msg: string): TProtocolException;
 begin
-  case type_ of
-    INVALID_DATA:    Result := TProtocolExceptionInvalidData.Create(msg);
-    NEGATIVE_SIZE:   Result := TProtocolExceptionNegativeSize.Create(msg);
-    SIZE_LIMIT:      Result := TProtocolExceptionSizeLimit.Create(msg);
-    BAD_VERSION:     Result := TProtocolExceptionBadVersion.Create(msg);
-    NOT_IMPLEMENTED: Result := TProtocolExceptionNotImplemented.Create(msg);
-    DEPTH_LIMIT:     Result := TProtocolExceptionDepthLimit.Create(msg);
+  case aType of
+    TExceptionType.INVALID_DATA:    Result := TProtocolExceptionInvalidData.Create(msg);
+    TExceptionType.NEGATIVE_SIZE:   Result := TProtocolExceptionNegativeSize.Create(msg);
+    TExceptionType.SIZE_LIMIT:      Result := TProtocolExceptionSizeLimit.Create(msg);
+    TExceptionType.BAD_VERSION:     Result := TProtocolExceptionBadVersion.Create(msg);
+    TExceptionType.NOT_IMPLEMENTED: Result := TProtocolExceptionNotImplemented.Create(msg);
+    TExceptionType.DEPTH_LIMIT:     Result := TProtocolExceptionDepthLimit.Create(msg);
   else
+    ASSERT( TExceptionType.UNKNOWN = aType);
     Result := TProtocolExceptionUnknown.Create(msg);
   end;
 end;
@@ -1026,6 +1058,43 @@ end;
 constructor TProtocolExceptionSpecialized.Create(const Msg: string);
 begin
   inherited HiddenCreate(Msg);
+end;
+
+{ specialized TProtocolExceptions }
+
+class function TProtocolExceptionUnknown.GetType: TProtocolException.TExceptionType;
+begin
+  result := TExceptionType.UNKNOWN;
+end;
+
+class function TProtocolExceptionInvalidData.GetType: TProtocolException.TExceptionType;
+begin
+  result := TExceptionType.INVALID_DATA;
+end;
+
+class function TProtocolExceptionNegativeSize.GetType: TProtocolException.TExceptionType;
+begin
+  result := TExceptionType.NEGATIVE_SIZE;
+end;
+
+class function TProtocolExceptionSizeLimit.GetType: TProtocolException.TExceptionType;
+begin
+  result := TExceptionType.SIZE_LIMIT;
+end;
+
+class function TProtocolExceptionBadVersion.GetType: TProtocolException.TExceptionType;
+begin
+  result := TExceptionType.BAD_VERSION;
+end;
+
+class function TProtocolExceptionNotImplemented.GetType: TProtocolException.TExceptionType;
+begin
+  result := TExceptionType.NOT_IMPLEMENTED;
+end;
+
+class function TProtocolExceptionDepthLimit.GetType: TProtocolException.TExceptionType;
+begin
+  result := TExceptionType.DEPTH_LIMIT;
 end;
 
 { TBinaryProtocolImpl.TFactory }
