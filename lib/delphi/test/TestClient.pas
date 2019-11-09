@@ -1396,7 +1396,7 @@ begin
   case FSetup.endpoint of
     trns_Sockets: begin
       Console.WriteLine('Using sockets ('+FSetup.host+' port '+IntToStr(FSetup.port)+')');
-      streamtrans := TSocketImpl.Create( FSetup.host, FSetup.port );
+      streamtrans := TSocketImpl.Create( FSetup.host, FSetup.port, DEFAULT_THRIFT_TIMEOUT);
       FTransport := streamtrans;
     end;
 

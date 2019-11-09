@@ -132,6 +132,10 @@ type
     procedure PushContext( const aCtx : TJSONBaseContext);
     procedure PopContext;
 
+  strict protected
+    function  GetMinSerializedSize( const aType : TType) : Integer;  override;
+    procedure Reset;  override;
+
   public
     // TJSONProtocolImpl Constructor
     constructor Create( const aTrans : ITransport);
@@ -480,6 +484,13 @@ begin
 end;
 
 
+procedure TJSONProtocolImpl.Reset;
+begin
+  inherited Reset;
+  ResetContextStack;
+end;
+
+
 procedure TJSONProtocolImpl.ResetContextStack;
 begin
   while FContextStack.Count > 0
@@ -683,6 +694,7 @@ end;
 
 procedure TJSONProtocolImpl.WriteMessageBegin( const aMsg : TThriftMessage);
 begin
+  Reset;
   ResetContextStack;  // THRIFT-1473
 
   WriteJSONArrayStart;
@@ -1053,6 +1065,7 @@ end;
 
 function TJSONProtocolImpl.ReadMessageBegin: TThriftMessage;
 begin
+  Reset;
   ResetContextStack;  // THRIFT-1473
 
   Init( result);
@@ -1123,6 +1136,8 @@ begin
   result.ValueType := GetTypeIDForTypeName( str);
 
   result.Count := ReadJSONInteger;
+  CheckReadBytesAvailable(result);
+
   ReadJSONObjectStart;
 end;
 
@@ -1143,6 +1158,7 @@ begin
   str := SysUtils.TEncoding.UTF8.GetString( ReadJSONString(FALSE));
   result.ElementType := GetTypeIDForTypeName( str);
   result.Count := ReadJSONInteger;
+  CheckReadBytesAvailable(result);
 end;
 
 
@@ -1161,6 +1177,7 @@ begin
   str := SysUtils.TEncoding.UTF8.GetString( ReadJSONString(FALSE));
   result.ElementType := GetTypeIDForTypeName( str);
   result.Count := ReadJSONInteger;
+  CheckReadBytesAvailable(result);
 end;
 
 
@@ -1216,6 +1233,30 @@ function TJSONProtocolImpl.ReadBinary : TBytes;
 begin
   result := ReadJSONBase64;
 end;
+
+
+function TJSONProtocolImpl.GetMinSerializedSize( const aType : TType) : Integer;
+// Return the minimum number of bytes a type will consume on the wire
+begin
+  case aType of
+    TType.Stop:    result := 0;
+    TType.Void:    result := 0;
+    TType.Bool_:   result := 1;
+    TType.Byte_:   result := 1;
+    TType.Double_: result := 1;
+    TType.I16:     result := 1;
+    TType.I32:     result := 1;
+    TType.I64:     result := 1;
+    TType.String_: result := 2;  // empty string
+    TType.Struct:  result := 2;  // empty struct
+    TType.Map:     result := 2;  // empty map
+    TType.Set_:    result := 2;  // empty set
+    TType.List:    result := 2;  // empty list
+  else
+    raise TTransportExceptionBadArgs.Create('Unhandled type code');
+  end;
+end;
+
 
 
 //--- init code ---

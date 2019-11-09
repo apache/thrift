@@ -486,7 +486,7 @@ type
   IWinHTTPConnection = interface;
 
   IWinHTTPRequest = interface
-    ['{F65952F2-2F3B-47DC-B524-F1694E6D2AD7}']
+    ['{7862DC7C-3128-4AA1-B9B0-0EB0FE8B15B9}']
     function  Handle : HINTERNET;
     function  Connection : IWinHTTPConnection;
     function  AddRequestHeader( const aHeader : string; const addflag : DWORD = WINHTTP_ADDREQ_FLAG_ADD) : Boolean;
@@ -498,6 +498,7 @@ type
     function  FlushAndReceiveResponse : Boolean;
     function  ReadData( const dwRead : DWORD) : TBytes;  overload;
     function  ReadData( const pBuf : Pointer; const dwRead : DWORD) : DWORD;  overload;
+    function  QueryDataAvailable : DWORD;
   end;
 
   IWinHTTPConnection = interface
@@ -616,6 +617,7 @@ type
     function  FlushAndReceiveResponse : Boolean;
     function  ReadData( const dwRead : DWORD) : TBytes;  overload;
     function  ReadData( const pBuf : Pointer; const dwRead : DWORD) : DWORD;  overload;
+    function  QueryDataAvailable : DWORD;
 
   public
     constructor Create( const aConnection : IWinHTTPConnection;
@@ -1109,6 +1111,14 @@ begin
   or not WinHttpReadData( FHandle, pBuf, dwAvailable, result)
   then result := 0;
 end;
+
+
+function TWinHTTPRequestImpl.QueryDataAvailable : DWORD;
+begin
+  if not WinHttpQueryDataAvailable( FHandle, result)
+  then result := 0;
+end;
+
 
 
 { TWinHTTPUrlImpl }

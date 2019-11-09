@@ -71,15 +71,18 @@ type
 
   public
     // Create a new TDeserializer that uses the TBinaryProtocol by default.
-    constructor Create;  overload;
+    constructor Create( const aMaxMessageSize : Integer = DEFAULT_MAX_MESSAGE_SIZE);  overload;
 
     // Create a new TDeserializer.
     // It will use the TProtocol specified by the factory that is passed in.
-    constructor Create( const factory : IProtocolFactory);  overload;
+    constructor Create( const factory : IProtocolFactory;
+                        const aMaxMessageSize : Integer = DEFAULT_MAX_MESSAGE_SIZE);  overload;
 
     // Create a new TDeserializer.
     // It will use the TProtocol and layered transports specified by the factories that are passed in.
-    constructor Create( const protfact : IProtocolFactory; const transfact : ITransportFactory);  overload;
+    constructor Create( const protfact : IProtocolFactory;
+                        const transfact : ITransportFactory;
+                        const aMaxMessageSize : Integer = DEFAULT_MAX_MESSAGE_SIZE);  overload;
 
     // DTOR
     destructor Destroy;  override;
@@ -122,7 +125,7 @@ begin
   inherited Create;
   FStream    := TMemoryStream.Create;
   adapter    := TThriftStreamAdapterDelphi.Create( FStream, FALSE);
-  FTransport := TStreamTransportImpl.Create( nil, adapter);
+  FTransport := TStreamTransportImpl.Create( nil, adapter, TTransportControlImpl.Create(0));  // we don't read anything here
   if transfact <> nil then FTransport := transfact.GetTransport( FTransport);
   FProtocol  := protfact.GetProtocol( FTransport);
 
@@ -185,24 +188,26 @@ end;
 { TDeserializer }
 
 
-constructor TDeserializer.Create;
+constructor TDeserializer.Create( const aMaxMessageSize : Integer);
 // Create a new TDeserializer that uses the TBinaryProtocol by default.
 begin
   //no inherited;
-  Create( TBinaryProtocolImpl.TFactory.Create, nil);
+  Create( TBinaryProtocolImpl.TFactory.Create, nil, aMaxMessageSize);
 end;
 
 
-constructor TDeserializer.Create( const factory : IProtocolFactory);
+constructor TDeserializer.Create( const factory : IProtocolFactory; const aMaxMessageSize : Integer);
 // Create a new TDeserializer.
 // It will use the TProtocol specified by the factory that is passed in.
 begin
   //no inherited;
-  Create( factory, nil);
+  Create( factory, nil, aMaxMessageSize);
 end;
 
 
-constructor TDeserializer.Create( const protfact : IProtocolFactory; const transfact : ITransportFactory);
+constructor TDeserializer.Create( const protfact : IProtocolFactory;
+                                  const transfact : ITransportFactory;
+                                  const aMaxMessageSize : Integer = DEFAULT_MAX_MESSAGE_SIZE);
 // Create a new TDeserializer.
 // It will use the TProtocol specified by the factory that is passed in.
 var adapter : IThriftStream;
@@ -210,7 +215,7 @@ begin
   inherited Create;
   FStream    := TMemoryStream.Create;
   adapter    := TThriftStreamAdapterDelphi.Create( FStream, FALSE);
-  FTransport := TStreamTransportImpl.Create( adapter, nil);
+  FTransport := TStreamTransportImpl.Create( adapter, nil, TTransportControlImpl.Create(aMaxMessageSize));
   if transfact <> nil then FTransport := transfact.GetTransport( FTransport);
   FProtocol  := protfact.GetProtocol( FTransport);
 
