@@ -41,7 +41,7 @@ uses
 
 type
   TMsxmlHTTPClientImpl = class( TTransportImpl, IHTTPClient)
-  private
+  strict private
     FUri : string;
     FInputStream : IThriftStream;
     FOutputStream : IThriftStream;
@@ -52,7 +52,7 @@ type
     FCustomHeaders : IThriftDictionary<string,string>;
 
     function CreateRequest: IXMLHTTPRequest;
-  protected
+  strict protected
     function GetIsOpen: Boolean; override;
     procedure Open(); override;
     procedure Close(); override;

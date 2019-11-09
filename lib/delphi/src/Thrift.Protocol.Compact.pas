@@ -47,7 +47,7 @@ type
         function GetProtocol( const trans: ITransport): IProtocol;
       end;
 
-  private const
+  strict private const
 
     { TODO
     static TStruct ANONYMOUS_STRUCT = new TStruct("");
@@ -61,7 +61,7 @@ type
     TYPE_BITS         = Byte( $07); // 0000 0111
     TYPE_SHIFT_AMOUNT = Byte( 5);
 
-  private type
+  strict private type
     // All of the on-wire type codes.
     Types = (
       STOP          = $00,
@@ -79,7 +79,7 @@ type
       STRUCT        = $0C
     );
 
-  private const
+  strict private const
     ttypeToCompactType : array[TType] of Types = (
       Types.STOP,           // Stop    = 0,
       Types(-1),            // Void    = 1,
@@ -115,7 +115,7 @@ type
       TType.Struct      // STRUCT
     );
 
-  private
+  strict private
     // Used to keep track of the last field for the current and previous structs,
     // so we can do the delta stuff.
     lastField_ : TStack<Integer>;
@@ -123,11 +123,11 @@ type
 
     // If we encounter a boolean field begin, save the TField here so it can
     // have the value incorporated.
-    private booleanField_ : TThriftField;
+    strict private booleanField_ : TThriftField;
 
     // If we Read a field header, and it's a boolean field, save the boolean
     // value here so that ReadBool can use it.
-    private  boolValue_  : ( unused, bool_true, bool_false);
+    strict private  boolValue_  : ( unused, bool_true, bool_false);
 
   public
     constructor Create(const trans : ITransport);
@@ -135,7 +135,7 @@ type
 
     procedure Reset;
 
-  private
+  strict private
     procedure WriteByteDirect( const b : Byte);  overload;
 
     // Writes a byte without any possibility of all that field header nonsense.
@@ -145,7 +145,7 @@ type
     // TODO: make a permanent buffer like WriteVarint64?
     procedure WriteVarint32( n : Cardinal);
 
-  private
+  strict private
     // The workhorse of WriteFieldBegin. It has the option of doing a 'type override'
     // of the type header. This is used specifically in the boolean field case.
     procedure WriteFieldBeginInternal( const field : TThriftField; typeOverride : Byte);

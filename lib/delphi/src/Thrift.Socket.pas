@@ -81,7 +81,7 @@ type
   TScopeId = record
   public
     Value: ULONG;
-  private
+  strict private
     function GetBitField(Loc: Integer): Integer; inline;
     procedure SetBitField(Loc: Integer; const aValue: Integer); inline;
   public
@@ -125,7 +125,7 @@ type
   ISmartPointer<T> = reference to function: T;
 
   TSmartPointer<T> = class(TInterfacedObject, ISmartPointer<T>)
-  private
+  strict private
     FValue: T;
     FDestroyer: TSmartPointerDestroyer<T>;
   public
@@ -147,7 +147,7 @@ type
     class constructor Create;
     class destructor Destroy;
     class procedure DefaultLogDelegate(const Str: string);
-  protected type
+  strict protected type
     IGetAddrInfoWrapper = interface
       function Init: Integer;
       function GetRes: PAddrInfoW;

@@ -65,9 +65,9 @@ type
   end;
 
   TThriftDictionaryImpl<TKey,TValue> = class( TInterfacedObject, IThriftDictionary<TKey,TValue>, IThriftContainer, ISupportsToString)
-  private
+  strict private
     FDictionaly : TDictionary<TKey,TValue>;
-  protected
+  strict protected
     function GetEnumerator: TEnumerator<TPair<TKey,TValue>>;
 
     function GetKeys: TDictionary<TKey,TValue>.TKeyCollection;
@@ -142,9 +142,9 @@ type
   end;
 
   TThriftListImpl<T> = class( TInterfacedObject, IThriftList<T>, IThriftContainer, ISupportsToString)
-  private
+  strict private
     FList : TList<T>;
-  protected
+  strict protected
     function GetEnumerator: TEnumerator<T>;
     function GetCapacity: Integer;
     procedure SetCapacity(Value: Integer);
@@ -205,10 +205,10 @@ type
   end;
 
   THashSetImpl<TValue> = class( TInterfacedObject, IHashSet<TValue>, IThriftContainer, ISupportsToString)
-  private
+  strict private
     FDictionary : IThriftDictionary<TValue,Integer>;
     FIsReadOnly: Boolean;
-  protected
+  strict protected
     function GetEnumerator: TEnumerator<TValue>;
     function GetIsReadOnly: Boolean;
     function GetCount: Integer;

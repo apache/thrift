@@ -106,7 +106,6 @@ type
   end;
 
 
-
   IProtocolFactory = interface
     ['{7CD64A10-4E9F-4E99-93BF-708A31F4A67B}']
     function GetProtocol( const trans: ITransport): IProtocol;
@@ -123,7 +122,7 @@ type
       NOT_IMPLEMENTED = 5,
       DEPTH_LIMIT = 6
     );
-  protected
+  strict protected
     constructor HiddenCreate(const Msg: string);
     class function GetType: TExceptionType;  virtual; abstract;
   public
@@ -142,37 +141,37 @@ type
   end;
 
   TProtocolExceptionUnknown = class (TProtocolExceptionSpecialized)
-  protected
+  strict protected
     class function GetType: TProtocolException.TExceptionType;  override;
   end;
 
   TProtocolExceptionInvalidData = class (TProtocolExceptionSpecialized)
-  protected
+  strict protected
     class function GetType: TProtocolException.TExceptionType;  override;
   end;
 
   TProtocolExceptionNegativeSize = class (TProtocolExceptionSpecialized)
-  protected
+  strict protected
     class function GetType: TProtocolException.TExceptionType;  override;
   end;
 
   TProtocolExceptionSizeLimit = class (TProtocolExceptionSpecialized)
-  protected
+  strict protected
     class function GetType: TProtocolException.TExceptionType;  override;
   end;
 
   TProtocolExceptionBadVersion = class (TProtocolExceptionSpecialized)
-  protected
+  strict protected
     class function GetType: TProtocolException.TExceptionType;  override;
   end;
 
   TProtocolExceptionNotImplemented = class (TProtocolExceptionSpecialized)
-  protected
+  strict protected
     class function GetType: TProtocolException.TExceptionType;  override;
   end;
 
   TProtocolExceptionDepthLimit = class (TProtocolExceptionSpecialized)
-  protected
+  strict protected
     class function GetType: TProtocolException.TExceptionType;  override;
   end;
 
@@ -189,7 +188,7 @@ type
   end;
 
   TProtocolRecursionTrackerImpl = class abstract( TInterfacedObject, IProtocolRecursionTracker)
-  protected
+  strict protected
     FProtocol : IProtocol;
   public
     constructor Create( prot : IProtocol);
@@ -255,7 +254,7 @@ type
   end;
 
   TProtocolImpl = class abstract( TInterfacedObject, IProtocol)
-  protected
+  strict protected
     FTrans : ITransport;
     FRecursionLimit : Integer;
     FRecursionDepth : Integer;
@@ -326,33 +325,30 @@ type
 
 
   TBinaryProtocolImpl = class( TProtocolImpl )
-  protected
+  strict protected
     const
       VERSION_MASK : Cardinal = $ffff0000;
       VERSION_1 : Cardinal = $80010000;
-  protected
+  strict protected
     FStrictRead : Boolean;
     FStrictWrite : Boolean;
 
-  private
+  strict private
     function ReadAll( const pBuf : Pointer; const buflen : Integer; off: Integer; len: Integer ): Integer;  inline;
     function ReadStringBody( size: Integer): string;
 
   public
-
     type
       TFactory = class( TInterfacedObject, IProtocolFactory)
-      protected
+      strict protected
         FStrictRead : Boolean;
         FStrictWrite : Boolean;
-      public
         function GetProtocol( const trans: ITransport): IProtocol;
-        constructor Create( AStrictRead, AStrictWrite: Boolean ); overload;
-        constructor Create; overload;
+      public
+        constructor Create( const aStrictRead : Boolean = FALSE; const aStrictWrite: Boolean = TRUE); reintroduce;
       end;
 
-    constructor Create( const trans: ITransport); overload;
-    constructor Create( const trans: ITransport; strictRead: Boolean; strictWrite: Boolean); overload;
+    constructor Create( const trans: ITransport; strictRead: Boolean = FALSE; strictWrite: Boolean = TRUE); reintroduce;
 
     procedure WriteMessageBegin( const msg: TThriftMessage); override;
     procedure WriteMessageEnd; override;
@@ -405,7 +401,7 @@ type
     See p.175 of Design Patterns (by Gamma et al.)
   }
   TProtocolDecorator = class( TProtocolImpl)
-  private
+  strict private
     FWrappedProtocol : IProtocol;
 
   public
@@ -507,13 +503,13 @@ procedure Init( var rec : TThriftList;    const AElementType: TType = Low(TType)
 
 implementation
 
-function ConvertInt64ToDouble( const n: Int64): Double;
+function ConvertInt64ToDouble( const n: Int64): Double;  inline;
 begin
   ASSERT( SizeOf(n) = SizeOf(Result));
   System.Move( n, Result, SizeOf(Result));
 end;
 
-function ConvertDoubleToInt64( const d: Double): Int64;
+function ConvertDoubleToInt64( const d: Double): Int64;  inline;
 begin
   ASSERT( SizeOf(d) = SizeOf(Result));
   System.Move( d, Result, SizeOf(Result));
@@ -595,8 +591,7 @@ begin
   Result := '';
   b := ReadBinary;
   len := Length( b );
-  if len > 0 then
-  begin
+  if len > 0 then begin
     SetLength( Result, len);
     System.Move( b[0], Pointer(Result)^, len );
   end;
@@ -614,8 +609,7 @@ var
 begin
   len := Length(s);
   SetLength( b, len);
-  if len > 0 then
-  begin
+  if len > 0 then begin
     System.Move( Pointer(s)^, b[0], len );
   end;
   WriteBinary( b );
@@ -693,16 +687,9 @@ end;
 
 { TBinaryProtocolImpl }
 
-constructor TBinaryProtocolImpl.Create( const trans: ITransport);
+constructor TBinaryProtocolImpl.Create( const trans: ITransport; strictRead, strictWrite: Boolean);
 begin
-  //no inherited
-  Create( trans, False, True);
-end;
-
-constructor TBinaryProtocolImpl.Create( const trans: ITransport; strictRead,
-  strictWrite: Boolean);
-begin
-  inherited Create( trans );
+  inherited Create( trans);
   FStrictRead := strictRead;
   FStrictWrite := strictWrite;
 end;
@@ -718,7 +705,7 @@ var
   buf : TBytes;
 begin
   size := ReadI32;
-  SetLength( buf, size );
+  SetLength( buf, size);
   FTrans.ReadAll( buf, 0, size);
   Result := buf;
 end;
@@ -853,10 +840,9 @@ begin
 end;
 
 function TBinaryProtocolImpl.ReadStringBody( size: Integer): string;
-var
-  buf : TBytes;
+var buf : TBytes;
 begin
-  SetLength( buf, size );
+  SetLength( buf, size);
   FTrans.ReadAll( buf, 0, size );
   Result := TEncoding.UTF8.GetString( buf);
 end;
@@ -971,17 +957,14 @@ begin
 end;
 
 procedure TBinaryProtocolImpl.WriteMessageBegin( const msg: TThriftMessage);
-var
-  version : Cardinal;
+var version : Cardinal;
 begin
-  if FStrictWrite then
-  begin
+  if FStrictWrite then begin
     version := VERSION_1 or Cardinal( msg.Type_);
     WriteI32( Integer( version) );
     WriteString( msg.Name);
     WriteI32( msg.SeqID);
-  end else
-  begin
+  end else begin
     WriteString( msg.Name);
     WriteByte(ShortInt( msg.Type_));
     WriteI32( msg.SeqID);
@@ -1099,17 +1082,11 @@ end;
 
 { TBinaryProtocolImpl.TFactory }
 
-constructor TBinaryProtocolImpl.TFactory.Create(AStrictRead, AStrictWrite: Boolean);
+constructor TBinaryProtocolImpl.TFactory.Create( const aStrictRead, aStrictWrite: Boolean);
 begin
   inherited Create;
   FStrictRead := AStrictRead;
   FStrictWrite := AStrictWrite;
-end;
-
-constructor TBinaryProtocolImpl.TFactory.Create;
-begin
-  //no inherited;
-  Create( False, True )
 end;
 
 function TBinaryProtocolImpl.TFactory.GetProtocol( const trans: ITransport): IProtocol;

@@ -36,7 +36,6 @@ uses
   Thrift.Utils;
 
 type
-
   IThriftStream = interface
     ['{2A77D916-7446-46C1-8545-0AEC0008DBCA}']
     procedure Write( const buffer: TBytes; offset: Integer; count: Integer);  overload;
@@ -51,9 +50,9 @@ type
   end;
 
   TThriftStreamImpl = class( TInterfacedObject, IThriftStream)
-  private
+  strict private
     procedure CheckSizeAndOffset( const pBuf : Pointer; const buflen : Integer; offset: Integer; count: Integer);  overload;
-  protected
+  strict protected
     procedure Write( const buffer: TBytes; offset: Integer; count: Integer); overload; inline;
     procedure Write( const pBuf : Pointer; offset: Integer; count: Integer);  overload; virtual;
     function Read( var buffer: TBytes; offset: Integer; count: Integer): Integer; overload; inline;
@@ -66,10 +65,10 @@ type
   end;
 
   TThriftStreamAdapterDelphi = class( TThriftStreamImpl )
-  private
+  strict private
     FStream : TStream;
     FOwnsStream : Boolean;
-  protected
+  strict protected
     procedure Write( const pBuf : Pointer; offset: Integer; count: Integer); override;
     function Read( const pBuf : Pointer; const buflen : Integer; offset: Integer; count: Integer): Integer; override;
     procedure Open; override;
@@ -83,9 +82,9 @@ type
   end;
 
   TThriftStreamAdapterCOM = class( TThriftStreamImpl)
-  private
+  strict private
     FStream : IStream;
-  protected
+  strict protected
     procedure Write( const pBuf : Pointer; offset: Integer; count: Integer); override;
     function Read( const pBuf : Pointer; const buflen : Integer; offset: Integer; count: Integer): Integer; override;
     procedure Open; override;

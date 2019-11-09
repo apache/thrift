@@ -36,7 +36,7 @@ uses
 type
   // Generic utility for easily serializing objects into a byte array or Stream.
   TSerializer = class
-  private
+  strict private
     FStream    : TMemoryStream;
     FTransport : ITransport;
     FProtocol  : IProtocol;
@@ -60,7 +60,7 @@ type
 
   // Generic utility for easily deserializing objects from byte array or Stream.
   TDeserializer = class
-  private
+  strict private
     FStream    : TMemoryStream;
     FTransport : ITransport;
     FProtocol  : IProtocol;

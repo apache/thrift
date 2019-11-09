@@ -52,7 +52,7 @@ type
         UnsupportedClientType
       );
 {$SCOPEDENUMS OFF}
-  protected
+  strict protected
     constructor HiddenCreate(const Msg: string);
     class function GetType: TExceptionType;  virtual; abstract;
     class function GetSpecializedExceptionType(AType: TExceptionType): TApplicationExceptionSpecializedClass;
@@ -76,57 +76,57 @@ type
   end;
 
   TApplicationExceptionUnknown = class (TApplicationExceptionSpecialized)
-  protected
+  strict protected
     class function GetType: TApplicationException.TExceptionType;  override;
   end;
 
   TApplicationExceptionUnknownMethod = class (TApplicationExceptionSpecialized)
-  protected
+  strict protected
     class function GetType: TApplicationException.TExceptionType;  override;
   end;
 
   TApplicationExceptionInvalidMessageType = class (TApplicationExceptionSpecialized)
-  protected
+  strict protected
     class function GetType: TApplicationException.TExceptionType;  override;
   end;
 
   TApplicationExceptionWrongMethodName = class (TApplicationExceptionSpecialized)
-  protected
+  strict protected
     class function GetType: TApplicationException.TExceptionType;  override;
   end;
 
   TApplicationExceptionBadSequenceID = class (TApplicationExceptionSpecialized)
-  protected
+  strict protected
     class function GetType: TApplicationException.TExceptionType;  override;
   end;
 
   TApplicationExceptionMissingResult = class (TApplicationExceptionSpecialized)
-  protected
+  strict protected
     class function GetType: TApplicationException.TExceptionType;  override;
   end;
 
   TApplicationExceptionInternalError = class (TApplicationExceptionSpecialized)
-  protected
+  strict protected
     class function GetType: TApplicationException.TExceptionType;  override;
   end;
 
   TApplicationExceptionProtocolError = class (TApplicationExceptionSpecialized)
-  protected
+  strict protected
     class function GetType: TApplicationException.TExceptionType;  override;
   end;
 
   TApplicationExceptionInvalidTransform = class (TApplicationExceptionSpecialized)
-  protected
+  strict protected
     class function GetType: TApplicationException.TExceptionType;  override;
   end;
 
   TApplicationExceptionInvalidProtocol = class (TApplicationExceptionSpecialized)
-  protected
+  strict protected
     class function GetType: TApplicationException.TExceptionType;  override;
   end;
 
   TApplicationExceptionUnsupportedClientType = class (TApplicationExceptionSpecialized)
-  protected
+  strict protected
     class function GetType: TApplicationException.TExceptionType;  override;
   end;
 

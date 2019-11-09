@@ -37,7 +37,7 @@ uses
 
 type
   TWinHTTPClientImpl = class( TTransportImpl, IHTTPClient)
-  private
+  strict private
     FUri : string;
     FInputStream : IThriftStream;
     FOutputMemoryStream : TMemoryStream;
@@ -51,14 +51,14 @@ type
     function CreateRequest: IWinHTTPRequest;
     function SecureProtocolsAsWinHTTPFlags : Cardinal;
 
-  private
+  strict private
     type
       TErrorInfo = ( SplitUrl, WinHTTPSession, WinHTTPConnection, WinHTTPRequest, RequestSetup, AutoProxy );
 
       THTTPResponseStream = class( TThriftStreamImpl)
-      private
+      strict private
         FRequest : IWinHTTPRequest;
-      protected
+      strict protected
         procedure Write( const pBuf : Pointer; offset: Integer; count: Integer); override;
         function Read( const pBuf : Pointer; const buflen : Integer; offset: Integer; count: Integer): Integer; override;
         procedure Open; override;
@@ -71,7 +71,7 @@ type
         destructor Destroy; override;
       end;
 
-  protected
+  strict protected
     function GetIsOpen: Boolean; override;
     procedure Open(); override;
     procedure Close(); override;

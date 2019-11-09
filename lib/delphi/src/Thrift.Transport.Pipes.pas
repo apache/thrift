@@ -199,7 +199,7 @@ type
     FClientAnonWrite  : THandle;
 
     FTimeOut: DWORD;
-  protected
+  strict protected
     function Accept(const fnAccepting: TProc): ITransport; override;
 
     function CreateAnonPipe : Boolean;

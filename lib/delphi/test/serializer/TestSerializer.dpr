@@ -22,7 +22,10 @@ program TestSerializer;
 {$APPTYPE CONSOLE}
 
 uses
-  Classes, Windows, SysUtils, Generics.Collections,
+  Classes,
+  Windows,
+  SysUtils,
+  Generics.Collections,
   Thrift in '..\..\src\Thrift.pas',
   Thrift.Exception in '..\..\src\Thrift.Exception.pas',
   Thrift.Socket in '..\..\src\Thrift.Socket.pas',
@@ -40,8 +43,6 @@ uses
   System_,
   DebugProtoTest,
   TestSerializer.Data;
-
-
 
 type
   TTestSerializer = class //extends TestCase {

@@ -52,17 +52,17 @@ type
         function GetProtocol( const trans: ITransport): IProtocol;
       end;
 
-  private
+  strict private
     class function GetTypeNameForTypeID(typeID : TType) : string;
     class function GetTypeIDForTypeName( const name : string) : TType;
 
-  protected
+  strict protected
     type
       // Base class for tracking JSON contexts that may require
       // inserting/Reading additional JSON syntax characters.
       // This base context does nothing.
       TJSONBaseContext = class
-      protected
+      strict protected
         FProto : Pointer;  // weak IJSONProtocol;
       public
         constructor Create( const aProto : IJSONProtocol);
@@ -74,7 +74,7 @@ type
       // Context for JSON lists.
       // Will insert/Read commas before each item except for the first one.
       TJSONListContext = class( TJSONBaseContext)
-      private
+      strict private
         FFirst : Boolean;
       public
         constructor Create( const aProto : IJSONProtocol);
@@ -86,7 +86,7 @@ type
       // pair, and commas before each key except the first. In addition, will indicate that numbers
       // in the key position need to be escaped in quotes (since JSON keys must be strings).
       TJSONPairContext = class( TJSONBaseContext)
-      private
+      strict private
         FFirst, FColon : Boolean;
       public
         constructor Create( const aProto : IJSONProtocol);
@@ -97,11 +97,13 @@ type
 
       // Holds up to one byte from the transport
       TLookaheadReader = class
-      protected
+      strict protected
         FProto : Pointer;  // weak IJSONProtocol;
+
+      protected
         constructor Create( const aProto : IJSONProtocol);
 
-      private
+      strict private
         FHasData : Boolean;
         FData    : Byte;
 
@@ -115,7 +117,7 @@ type
         function Peek : Byte;
       end;
 
-  protected
+  strict protected
     // Stack of nested contexts that we may be in
     FContextStack : TStack<TJSONBaseContext>;
 
@@ -135,12 +137,12 @@ type
     constructor Create( const aTrans : ITransport);
     destructor Destroy;   override;
 
-  protected
+  strict protected
     // IJSONProtocol
     // Read a byte that must match b; otherwise an exception is thrown.
     procedure ReadJSONSyntaxChar( b : Byte);
 
-  private
+  strict private
     // Convert a byte containing a hex char ('0'-'9' or 'a'-'f') into its corresponding hex value
     class function HexVal( ch : Byte) : Byte;
 
@@ -213,7 +215,7 @@ type
     function ReadBinary: TBytes; override;
 
 
-  private
+  strict private
     // Reading methods.
 
     // Read in a JSON string, unescaping as appropriate.

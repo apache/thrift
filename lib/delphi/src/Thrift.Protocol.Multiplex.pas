@@ -54,7 +54,7 @@ type
     {  Used to delimit the service name from the function name }
     SEPARATOR = ':';
 
-  private
+  strict private
      FServiceName : String;
 
   public

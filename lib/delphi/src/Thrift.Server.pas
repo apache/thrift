@@ -61,7 +61,7 @@ type
   public
     type
       TLogDelegate = reference to procedure( const str: string);
-  protected
+  strict protected
     FProcessor : IProcessor;
     FServerTransport : IServerTransport;
     FInputTransportFactory : ITransportFactory;
@@ -80,51 +80,68 @@ type
     procedure Stop; virtual; abstract;
   public
     constructor Create(
-      const AProcessor :IProcessor;
-      const AServerTransport: IServerTransport;
-      const AInputTransportFactory : ITransportFactory;
-      const AOutputTransportFactory : ITransportFactory;
-      const AInputProtocolFactory : IProtocolFactory;
-      const AOutputProtocolFactory : IProtocolFactory;
-      const ALogDelegate : TLogDelegate
+      const aProcessor :IProcessor;
+      const aServerTransport: IServerTransport;
+      const aInputTransportFactory : ITransportFactory;
+      const aOutputTransportFactory : ITransportFactory;
+      const aInputProtocolFactory : IProtocolFactory;
+      const aOutputProtocolFactory : IProtocolFactory;
+      const aLogDelegate : TLogDelegate
       ); overload;
 
     constructor Create(
-      const AProcessor :IProcessor;
-      const AServerTransport: IServerTransport
+      const aProcessor :IProcessor;
+      const aServerTransport: IServerTransport
       ); overload;
 
     constructor Create(
-      const AProcessor :IProcessor;
-      const AServerTransport: IServerTransport;
-      const ALogDelegate: TLogDelegate
+      const aProcessor :IProcessor;
+      const aServerTransport: IServerTransport;
+      const aLogDelegate: TLogDelegate
       ); overload;
 
     constructor Create(
-      const AProcessor :IProcessor;
-      const AServerTransport: IServerTransport;
-      const ATransportFactory : ITransportFactory
+      const aProcessor :IProcessor;
+      const aServerTransport: IServerTransport;
+      const aTransportFactory : ITransportFactory
       ); overload;
 
     constructor Create(
-      const AProcessor :IProcessor;
-      const AServerTransport: IServerTransport;
-      const ATransportFactory : ITransportFactory;
-      const AProtocolFactory : IProtocolFactory
+      const aProcessor :IProcessor;
+      const aServerTransport: IServerTransport;
+      const aTransportFactory : ITransportFactory;
+      const aProtocolFactory : IProtocolFactory
       ); overload;
   end;
 
+
   TSimpleServer = class( TServerImpl)
-  private
+  strict private
     FStop : Boolean;
   public
-    constructor Create( const AProcessor: IProcessor; const AServerTransport: IServerTransport); overload;
-    constructor Create( const AProcessor: IProcessor; const AServerTransport: IServerTransport;
-      ALogDel: TServerImpl.TLogDelegate); overload;
-    constructor Create( const AProcessor: IProcessor; const AServerTransport: IServerTransport;
-      const ATransportFactory: ITransportFactory); overload;
-    constructor Create( const AProcessor: IProcessor; const AServerTransport: IServerTransport;
-      const ATransportFactory: ITransportFactory; const AProtocolFactory: IProtocolFactory); overload;
+    constructor Create(
+      const aProcessor: IProcessor;
+      const aServerTransport: IServerTransport
+      ); overload;
+
+    constructor Create(
+      const aProcessor: IProcessor;
+      const aServerTransport: IServerTransport;
+      const ALogDel: TServerImpl.TLogDelegate
+      ); overload;
+
+    constructor Create(
+      const aProcessor: IProcessor;
+      const aServerTransport: IServerTransport;
+      const aTransportFactory: ITransportFactory
+      ); overload;
+
+    constructor Create(
+      const aProcessor: IProcessor;
+      const aServerTransport: IServerTransport;
+      const aTransportFactory: ITransportFactory;
+      const aProtocolFactory: IProtocolFactory
+      ); overload;
 
     procedure Serve; override;
     procedure Stop; override;
@@ -135,8 +152,9 @@ implementation
 
 { TServerImpl }
 
-constructor TServerImpl.Create( const AProcessor: IProcessor;
-  const AServerTransport: IServerTransport; const ALogDelegate: TLogDelegate);
+constructor TServerImpl.Create( const aProcessor: IProcessor;
+                                const aServerTransport: IServerTransport;
+                                const aLogDelegate: TLogDelegate);
 var
   InputFactory, OutputFactory : IProtocolFactory;
   InputTransFactory, OutputTransFactory : ITransportFactory;
@@ -149,8 +167,8 @@ begin
 
   //no inherited;
   Create(
-    AProcessor,
-    AServerTransport,
+    aProcessor,
+    aServerTransport,
     InputTransFactory,
     OutputTransFactory,
     InputFactory,
@@ -159,8 +177,8 @@ begin
   );
 end;
 
-constructor TServerImpl.Create(const AProcessor: IProcessor;
-  const AServerTransport: IServerTransport);
+constructor TServerImpl.Create(const aProcessor: IProcessor;
+  const aServerTransport: IServerTransport);
 var
   InputFactory, OutputFactory : IProtocolFactory;
   InputTransFactory, OutputTransFactory : ITransportFactory;
@@ -173,8 +191,8 @@ begin
 
   //no inherited;
   Create(
-    AProcessor,
-    AServerTransport,
+    aProcessor,
+    aServerTransport,
     InputTransFactory,
     OutputTransFactory,
     InputFactory,
@@ -183,8 +201,8 @@ begin
   );
 end;
 
-constructor TServerImpl.Create(const AProcessor: IProcessor;
-  const AServerTransport: IServerTransport; const ATransportFactory: ITransportFactory);
+constructor TServerImpl.Create(const aProcessor: IProcessor;
+  const aServerTransport: IServerTransport; const aTransportFactory: ITransportFactory);
 var
   InputProtocolFactory : IProtocolFactory;
   OutputProtocolFactory : IProtocolFactory;
@@ -193,24 +211,24 @@ begin
   OutputProtocolFactory := TBinaryProtocolImpl.TFactory.Create;
 
   //no inherited;
-  Create( AProcessor, AServerTransport, ATransportFactory, ATransportFactory,
+  Create( aProcessor, aServerTransport, aTransportFactory, aTransportFactory,
     InputProtocolFactory, OutputProtocolFactory, DefaultLogDelegate);
 end;
 
-constructor TServerImpl.Create(const AProcessor: IProcessor;
-  const AServerTransport: IServerTransport;
-  const AInputTransportFactory, AOutputTransportFactory: ITransportFactory;
-  const AInputProtocolFactory, AOutputProtocolFactory: IProtocolFactory;
-  const ALogDelegate : TLogDelegate);
+constructor TServerImpl.Create(const aProcessor: IProcessor;
+  const aServerTransport: IServerTransport;
+  const aInputTransportFactory, aOutputTransportFactory: ITransportFactory;
+  const aInputProtocolFactory, aOutputProtocolFactory: IProtocolFactory;
+  const aLogDelegate : TLogDelegate);
 begin
   inherited Create;
-  FProcessor := AProcessor;
-  FServerTransport := AServerTransport;
-  FInputTransportFactory := AInputTransportFactory;
-  FOutputTransportFactory := AOutputTransportFactory;
-  FInputProtocolFactory := AInputProtocolFactory;
-  FOutputProtocolFactory := AOutputProtocolFactory;
-  FLogDelegate := ALogDelegate;
+  FProcessor := aProcessor;
+  FServerTransport := aServerTransport;
+  FInputTransportFactory := aInputTransportFactory;
+  FOutputTransportFactory := aOutputTransportFactory;
+  FInputProtocolFactory := aInputProtocolFactory;
+  FOutputProtocolFactory := aOutputProtocolFactory;
+  FLogDelegate := aLogDelegate;
 end;
 
 class procedure TServerImpl.DefaultLogDelegate( const str: string);
@@ -223,14 +241,14 @@ begin
   end;
 end;
 
-constructor TServerImpl.Create( const AProcessor: IProcessor;
-  const AServerTransport: IServerTransport; const ATransportFactory: ITransportFactory;
-  const AProtocolFactory: IProtocolFactory);
+constructor TServerImpl.Create( const aProcessor: IProcessor;
+  const aServerTransport: IServerTransport; const aTransportFactory: ITransportFactory;
+  const aProtocolFactory: IProtocolFactory);
 begin
   //no inherited;
-  Create( AProcessor, AServerTransport,
-          ATransportFactory, ATransportFactory,
-          AProtocolFactory, AProtocolFactory,
+  Create( aProcessor, aServerTransport,
+          aTransportFactory, aTransportFactory,
+          aProtocolFactory, aProtocolFactory,
           DefaultLogDelegate);
 end;
 
@@ -250,8 +268,8 @@ end;
 
 { TSimpleServer }
 
-constructor TSimpleServer.Create( const AProcessor: IProcessor;
-  const AServerTransport: IServerTransport);
+constructor TSimpleServer.Create( const aProcessor: IProcessor;
+  const aServerTransport: IServerTransport);
 var
   InputProtocolFactory : IProtocolFactory;
   OutputProtocolFactory : IProtocolFactory;
@@ -263,12 +281,12 @@ begin
   InputTransportFactory := TTransportFactoryImpl.Create;
   OutputTransportFactory := TTransportFactoryImpl.Create;
 
-  inherited Create( AProcessor, AServerTransport, InputTransportFactory,
+  inherited Create( aProcessor, aServerTransport, InputTransportFactory,
     OutputTransportFactory, InputProtocolFactory, OutputProtocolFactory, DefaultLogDelegate);
 end;
 
-constructor TSimpleServer.Create( const AProcessor: IProcessor;
-  const AServerTransport: IServerTransport; ALogDel: TServerImpl.TLogDelegate);
+constructor TSimpleServer.Create( const aProcessor: IProcessor;
+  const aServerTransport: IServerTransport; const ALogDel: TServerImpl.TLogDelegate);
 var
   InputProtocolFactory : IProtocolFactory;
   OutputProtocolFactory : IProtocolFactory;
@@ -280,23 +298,23 @@ begin
   InputTransportFactory := TTransportFactoryImpl.Create;
   OutputTransportFactory := TTransportFactoryImpl.Create;
 
-  inherited Create( AProcessor, AServerTransport, InputTransportFactory,
+  inherited Create( aProcessor, aServerTransport, InputTransportFactory,
     OutputTransportFactory, InputProtocolFactory, OutputProtocolFactory, ALogDel);
 end;
 
-constructor TSimpleServer.Create( const AProcessor: IProcessor;
-  const AServerTransport: IServerTransport; const ATransportFactory: ITransportFactory);
+constructor TSimpleServer.Create( const aProcessor: IProcessor;
+  const aServerTransport: IServerTransport; const aTransportFactory: ITransportFactory);
 begin
-  inherited Create( AProcessor, AServerTransport, ATransportFactory,
-    ATransportFactory, TBinaryProtocolImpl.TFactory.Create, TBinaryProtocolImpl.TFactory.Create, DefaultLogDelegate);
+  inherited Create( aProcessor, aServerTransport, aTransportFactory,
+    aTransportFactory, TBinaryProtocolImpl.TFactory.Create, TBinaryProtocolImpl.TFactory.Create, DefaultLogDelegate);
 end;
 
-constructor TSimpleServer.Create( const AProcessor: IProcessor;
-  const AServerTransport: IServerTransport; const ATransportFactory: ITransportFactory;
-  const AProtocolFactory: IProtocolFactory);
+constructor TSimpleServer.Create( const aProcessor: IProcessor;
+  const aServerTransport: IServerTransport; const aTransportFactory: ITransportFactory;
+  const aProtocolFactory: IProtocolFactory);
 begin
-  inherited Create( AProcessor, AServerTransport, ATransportFactory,
-    ATransportFactory, AProtocolFactory, AProtocolFactory, DefaultLogDelegate);
+  inherited Create( aProcessor, aServerTransport, aTransportFactory,
+    aTransportFactory, aProtocolFactory, aProtocolFactory, DefaultLogDelegate);
 end;
 
 procedure TSimpleServer.Serve;

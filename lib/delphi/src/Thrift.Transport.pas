@@ -64,7 +64,7 @@ type
   end;
 
   TTransportImpl = class( TInterfacedObject, ITransport)
-  protected
+  strict protected
     function GetIsOpen: Boolean; virtual; abstract;
     property IsOpen: Boolean read GetIsOpen;
     function Peek: Boolean; virtual;
@@ -93,7 +93,7 @@ type
         BadArgs,
         Interrupted
       );
-  protected
+  strict protected
     constructor HiddenCreate(const Msg: string);
     class function GetType: TExceptionType;  virtual; abstract;
   public
@@ -110,37 +110,37 @@ type
   end;
 
   TTransportExceptionUnknown = class (TTransportExceptionSpecialized)
-  protected
+  strict protected
     class function GetType: TTransportException.TExceptionType;  override;
   end;
 
   TTransportExceptionNotOpen = class (TTransportExceptionSpecialized)
-  protected
+  strict protected
     class function GetType: TTransportException.TExceptionType;  override;
   end;
 
   TTransportExceptionAlreadyOpen = class (TTransportExceptionSpecialized)
-  protected
+  strict protected
     class function GetType: TTransportException.TExceptionType;  override;
   end;
 
   TTransportExceptionTimedOut = class (TTransportExceptionSpecialized)
-  protected
+  strict protected
     class function GetType: TTransportException.TExceptionType;  override;
   end;
 
   TTransportExceptionEndOfFile = class (TTransportExceptionSpecialized)
-  protected
+  strict protected
     class function GetType: TTransportException.TExceptionType;  override;
   end;
 
   TTransportExceptionBadArgs = class (TTransportExceptionSpecialized)
-  protected
+  strict protected
     class function GetType: TTransportException.TExceptionType;  override;
   end;
 
   TTransportExceptionInterrupted = class (TTransportExceptionSpecialized)
-  protected
+  strict protected
     class function GetType: TTransportException.TExceptionType;  override;
   end;
 
@@ -182,7 +182,7 @@ type
   end;
 
   TServerTransportImpl = class( TInterfacedObject, IServerTransport)
-  protected
+  strict protected
     procedure Listen; virtual; abstract;
     procedure Close; virtual; abstract;
     function Accept( const fnAccepting: TProc): ITransport;  virtual; abstract;
@@ -199,9 +199,9 @@ type
 
   TTcpSocketStreamImpl = class( TThriftStreamImpl )
 {$IFDEF OLD_SOCKETS}
-  private type
+  strict private type
     TWaitForData = ( wfd_HaveData, wfd_Timeout, wfd_Error);
-  private
+  strict private
     FTcpClient : TCustomIpClient;
     FTimeout : Integer;
     function Select( ReadReady, WriteReady, ExceptFlag: PBoolean;
@@ -210,10 +210,10 @@ type
                           var wsaError, bytesReady : Integer): TWaitForData;
 {$ELSE}
     FTcpClient: TSocket;
-  protected const
+  strict protected const
     SLEEP_TIME = 200;
 {$ENDIF}
-  protected
+  strict protected
     procedure Write( const pBuf : Pointer; offset, count: Integer); override;
     function Read( const pBuf : Pointer; const buflen : Integer; offset: Integer; count: Integer): Integer; override;
     procedure Open; override;
@@ -239,10 +239,10 @@ type
   end;
 
   TStreamTransportImpl = class( TTransportImpl, IStreamTransport)
-  protected
+  strict protected
     FInputStream : IThriftStream;
     FOutputStream : IThriftStream;
-  protected
+  strict protected
     function GetIsOpen: Boolean; override;
 
     function GetInputStream: IThriftStream;
@@ -261,12 +261,12 @@ type
   end;
 
   TBufferedStreamImpl = class( TThriftStreamImpl)
-  private
+  strict private
     FStream : IThriftStream;
     FBufSize : Integer;
     FReadBuffer : TMemoryStream;
     FWriteBuffer : TMemoryStream;
-  protected
+  strict protected
     procedure Write( const pBuf : Pointer; offset: Integer; count: Integer); override;
     function Read( const pBuf : Pointer; const buflen : Integer; offset: Integer; count: Integer): Integer; override;
     procedure Open;  override;
@@ -280,7 +280,7 @@ type
   end;
 
   TServerSocketImpl = class( TServerTransportImpl)
-  private
+  strict private
 {$IFDEF OLD_SOCKETS}
     FServer : TTcpServer;
     FPort : Integer;
@@ -290,7 +290,7 @@ type
 {$ENDIF}
     FUseBufferedSocket : Boolean;
     FOwnsServer : Boolean;
-  protected
+  strict protected
     function Accept( const fnAccepting: TProc) : ITransport; override;
   public
 {$IFDEF OLD_SOCKETS}
@@ -306,7 +306,7 @@ type
   end;
 
   TBufferedTransportImpl = class( TTransportImpl )
-  private
+  strict private
     FInputBuffer : IThriftStream;
     FOutputBuffer : IThriftStream;
     FTransport : IStreamTransport;
@@ -314,7 +314,7 @@ type
 
     procedure InitBuffers;
     function GetUnderlyingTransport: ITransport;
-  protected
+  strict protected
     function GetIsOpen: Boolean; override;
     procedure Flush; override;
   public
@@ -329,7 +329,7 @@ type
   end;
 
   TSocketImpl = class(TStreamTransportImpl)
-  private
+  strict private
 {$IFDEF OLD_SOCKETS}
     FClient : TCustomIpClient;
 {$ELSE}
@@ -345,7 +345,7 @@ type
 {$ENDIF}
 
     procedure InitSocket;
-  protected
+  strict protected
     function GetIsOpen: Boolean; override;
   public
     procedure Open; override;
@@ -368,11 +368,11 @@ type
   end;
 
   TFramedTransportImpl = class( TTransportImpl)
-  private const
+  strict private const
     FHeaderSize : Integer = 4;
-  private class var
+  strict private class var
     FHeader_Dummy : array of Byte;
-  protected
+  strict protected
     FTransport : ITransport;
     FWriteBuffer : TMemoryStream;
     FReadBuffer : TMemoryStream;
