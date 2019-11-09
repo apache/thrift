@@ -53,6 +53,7 @@ type
     //procedure Open; override; - see derived classes
     procedure Close; override;
     procedure Flush; override;
+    procedure CheckReadBytesAvailable( const value : Integer);  override;
 
     function  ReadDirect(     const pBuf : Pointer; const buflen : Integer; offset: Integer; count: Integer): Integer;  overload;
     function  ReadOverlapped( const pBuf : Pointer; const buflen : Integer; offset: Integer; count: Integer): Integer;  overload;
@@ -123,13 +124,17 @@ type
   TNamedPipeTransportClientEndImpl = class( TPipeTransportBase)
   public
     // Named pipe constructors
-    constructor Create( aPipe : THandle; aOwnsHandle : Boolean;
-                        const aTimeOut : DWORD); overload;
+    constructor Create( const aPipe : THandle;
+                        const aOwnsHandle : Boolean;
+                        const aTimeOut : DWORD;
+                        const aTransportCtl : ITransportControl); overload;
+
     constructor Create( const aPipeName : string;
                         const aShareMode: DWORD = 0;
                         const aSecurityAttributes: PSecurityAttributes = nil;
                         const aTimeOut : DWORD = DEFAULT_THRIFT_TIMEOUT;
-                        const aOpenTimeOut : DWORD = DEFAULT_THRIFT_PIPE_OPEN_TIMEOUT);  overload;
+                        const aOpenTimeOut : DWORD = DEFAULT_THRIFT_PIPE_OPEN_TIMEOUT;
+                        const aTransportCtl : ITransportControl = nil);  overload;
   end;
 
 
@@ -139,17 +144,20 @@ type
   public
     // ITransport
     procedure Close; override;
-    constructor Create( aPipe : THandle; aOwnsHandle : Boolean;
-                        const aTimeOut : DWORD = DEFAULT_THRIFT_TIMEOUT); reintroduce;
+    constructor Create( const aPipe : THandle;
+                        const aOwnsHandle : Boolean;
+                        const aTimeOut : DWORD = DEFAULT_THRIFT_TIMEOUT;
+                        const aTransportCtl : ITransportControl = nil); reintroduce;
   end;
 
 
   TAnonymousPipeTransportImpl = class( TPipeTransportBase)
   public
     // Anonymous pipe constructor
-    constructor Create(const aPipeRead, aPipeWrite : THandle;
-                       aOwnsHandles : Boolean;
-                       const aTimeOut : DWORD = DEFAULT_THRIFT_TIMEOUT); overload;
+    constructor Create( const aPipeRead, aPipeWrite : THandle;
+                        const aOwnsHandles : Boolean;
+                        const aTimeOut : DWORD = DEFAULT_THRIFT_TIMEOUT;
+                        const aTransportCtl : ITransportControl = nil); overload;
   end;
 
 
@@ -307,6 +315,12 @@ end;
 function TPipeStreamBase.IsOpen: Boolean;
 begin
   result := (FPipe <> INVALID_HANDLE_VALUE);
+end;
+
+
+procedure TPipeStreamBase.CheckReadBytesAvailable( const value : Integer);
+begin
+  // can't tell how much we can suck out of the pipe
 end;
 
 
@@ -642,21 +656,24 @@ end;
 
 
 constructor TNamedPipeTransportClientEndImpl.Create( const aPipeName : string; const aShareMode: DWORD;
-                                   const aSecurityAttributes: PSecurityAttributes;
-                                   const aTimeOut, aOpenTimeOut : DWORD);
+                                                     const aSecurityAttributes: PSecurityAttributes;
+                                                     const aTimeOut, aOpenTimeOut : DWORD;
+                                                     const aTransportCtl : ITransportControl);
 // Named pipe constructor
 begin
-  inherited Create( nil, nil);
+  inherited Create( nil, nil, aTransportCtl);
   FInputStream  := TNamedPipeStreamImpl.Create( aPipeName, TRUE, aShareMode, aSecurityAttributes, aTimeOut, aOpenTimeOut);
   FOutputStream := FInputStream;  // true for named pipes
 end;
 
 
-constructor TNamedPipeTransportClientEndImpl.Create( aPipe : THandle; aOwnsHandle : Boolean;
-                                                     const aTimeOut : DWORD);
+constructor TNamedPipeTransportClientEndImpl.Create( const aPipe : THandle;
+                                                     const aOwnsHandle : Boolean;
+                                                     const aTimeOut : DWORD;
+                                                     const aTransportCtl : ITransportControl);
 // Named pipe constructor
 begin
-  inherited Create( nil, nil);
+  inherited Create( nil, nil, aTransportCtl);
   FInputStream  := THandlePipeStreamImpl.Create( aPipe, TRUE, aOwnsHandle, aTimeOut);
   FOutputStream := FInputStream;  // true for named pipes
 end;
@@ -665,12 +682,14 @@ end;
 { TNamedPipeTransportServerEndImpl }
 
 
-constructor TNamedPipeTransportServerEndImpl.Create( aPipe : THandle; aOwnsHandle : Boolean;
-                                                     const aTimeOut : DWORD);
+constructor TNamedPipeTransportServerEndImpl.Create( const aPipe : THandle;
+                                                     const aOwnsHandle : Boolean;
+                                                     const aTimeOut : DWORD;
+                                                     const aTransportCtl : ITransportControl);
 // Named pipe constructor
 begin
   FHandle := DuplicatePipeHandle( aPipe);
-  inherited Create( aPipe, aOwnsHandle, aTimeOut);
+  inherited Create( aPipe, aOwnsHandle, aTimeOut, aTransportCtl);
 end;
 
 
@@ -688,11 +707,12 @@ end;
 
 
 constructor TAnonymousPipeTransportImpl.Create( const aPipeRead, aPipeWrite : THandle;
-                                                aOwnsHandles : Boolean;
-                                                const aTimeOut : DWORD = DEFAULT_THRIFT_TIMEOUT);
+                                                const aOwnsHandles : Boolean;
+                                                const aTimeOut : DWORD;
+                                                const aTransportCtl : ITransportControl);
 // Anonymous pipe constructor
 begin
-  inherited Create( nil, nil);
+  inherited Create( nil, nil, aTransportCtl);
   // overlapped is not supported with AnonPipes, see MSDN
   FInputStream  := THandlePipeStreamImpl.Create( aPipeRead, aOwnsHandles, FALSE, aTimeOut);
   FOutputStream := THandlePipeStreamImpl.Create( aPipeWrite, aOwnsHandles, FALSE, aTimeOut);

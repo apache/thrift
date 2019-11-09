@@ -132,6 +132,7 @@ end;
 
 function TMultiplexedProcessorImpl.TStoredMessageProtocol.ReadMessageBegin: TThriftMessage;
 begin
+  Reset;
   result := FMessageBegin;
 end;
 

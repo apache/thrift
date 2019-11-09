@@ -69,6 +69,9 @@ type
     class procedure Deserialize( const input : TBytes; const target : IBase; const factory : TFactoryPair);  overload;
     class procedure Deserialize( const input : TStream; const target : IBase; const factory : TFactoryPair);  overload;
 
+    class procedure ValidateReadToEnd( const input : TBytes; const serial : TDeserializer);  overload;
+    class procedure ValidateReadToEnd( const input : TStream; const serial : TDeserializer);  overload;
+
     procedure Test_Serializer_Deserializer;
     procedure Test_OneOfEach(     const method : TMethod; const factory : TFactoryPair; const stream : TFileStream);
     procedure Test_CompactStruct( const method : TMethod; const factory : TFactoryPair; const stream : TFileStream);
@@ -305,9 +308,10 @@ end;
 class procedure TTestSerializer.Deserialize( const input : TBytes; const target : IBase; const factory : TFactoryPair);
 var serial : TDeserializer;
 begin
-  serial := TDeserializer.Create( factory.prot, factory.trans);
+  serial := TDeserializer.Create( factory.prot, factory.trans, Length(input));
   try
     serial.Deserialize( input, target);
+    ValidateReadToEnd( input, serial);
   finally
     serial.Free;
   end;
@@ -317,13 +321,44 @@ end;
 class procedure TTestSerializer.Deserialize( const input : TStream; const target : IBase; const factory : TFactoryPair);
 var serial : TDeserializer;
 begin
-  serial := TDeserializer.Create( factory.prot, factory.trans);
+  serial := TDeserializer.Create( factory.prot, factory.trans, input.Size);
   try
     serial.Deserialize( input, target);
+    ValidateReadToEnd( input, serial);
   finally
     serial.Free;
   end;
 end;
 
+
+class procedure TTestSerializer.ValidateReadToEnd( const input : TBytes; const serial : TDeserializer);
+// we should not have any more byte to read
+var dummy : IBase;
+begin
+  try
+    dummy := TOneOfEachImpl.Create;
+    serial.Deserialize( input, dummy);
+    raise EInOutError.Create('Expected exception not thrown?');
+  except
+    on e:TTransportExceptionEndOfFile do {expected};
+    on e:Exception do raise; // unexpected
+  end;
+end;
+
+
+class procedure TTestSerializer.ValidateReadToEnd( const input : TStream; const serial : TDeserializer);
+// we should not have any more byte to read
+var dummy : IBase;
+begin
+  try
+    input.Position := 0;
+    dummy := TOneOfEachImpl.Create;
+    serial.Deserialize( input, dummy);
+    raise EInOutError.Create('Expected exception not thrown?');
+  except
+    on e:TTransportExceptionEndOfFile do {expected};
+    on e:Exception do raise; // unexpected
+  end;
+end;
 
 end.

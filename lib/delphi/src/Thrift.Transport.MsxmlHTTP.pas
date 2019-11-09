@@ -59,6 +59,7 @@ type
     function  Read( const pBuf : Pointer; const buflen : Integer; off: Integer; len: Integer): Integer; override;
     procedure Write( const pBuf : Pointer; off, len : Integer); override;
     procedure Flush; override;
+    procedure CheckReadBytesAvailable( const value : Integer); override;
 
     procedure SetDnsResolveTimeout(const Value: Integer);
     function GetDnsResolveTimeout: Integer;
@@ -80,7 +81,7 @@ type
     property ReadTimeout: Integer read GetReadTimeout write SetReadTimeout;
     property CustomHeaders: IThriftDictionary<string,string> read GetCustomHeaders;
   public
-    constructor Create( const AUri: string);
+    constructor Create( const AUri: string; const aTransportCtl : ITransportControl = nil);
     destructor Destroy; override;
   end;
 
@@ -90,9 +91,9 @@ implementation
 
 { TMsxmlHTTPClientImpl }
 
-constructor TMsxmlHTTPClientImpl.Create(const AUri: string);
+constructor TMsxmlHTTPClientImpl.Create(const AUri: string; const aTransportCtl : ITransportControl);
 begin
-  inherited Create;
+  inherited Create( aTransportCtl);
   FUri := AUri;
 
   // defaults according to MSDN
@@ -218,6 +219,13 @@ begin
   end;
 end;
 
+procedure TMsxmlHTTPClientImpl.CheckReadBytesAvailable( const value : Integer);
+begin
+  if FInputStream <> nil
+  then FInputStream.CheckReadBytesAvailable( value)
+  else raise TTransportExceptionNotOpen.Create('No request has been sent');
+end;
+
 function TMsxmlHTTPClientImpl.Read( const pBuf : Pointer; const buflen : Integer; off: Integer; len: Integer): Integer;
 begin
   if FInputStream = nil then begin
@@ -225,7 +233,8 @@ begin
   end;
 
   try
-    Result := FInputStream.Read( pBuf, buflen, off, len)
+    Result := FInputStream.Read( pBuf, buflen, off, len);
+    ConsumeReadBytes( result);
   except
     on E: Exception
     do raise TTransportExceptionUnknown.Create(E.Message);

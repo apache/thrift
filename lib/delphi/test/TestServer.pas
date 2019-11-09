@@ -585,7 +585,7 @@ begin
       trns_Sockets : begin
         Console.WriteLine('- sockets (port '+IntToStr(port)+')');
         if (trns_Buffered in layered) then Console.WriteLine('- buffered');
-        servertrans := TServerSocketImpl.Create( Port, 0, (trns_Buffered in layered));
+        servertrans := TServerSocketImpl.Create( Port, DEFAULT_THRIFT_TIMEOUT, (trns_Buffered in layered));
       end;
 
       trns_MsxmlHttp,
