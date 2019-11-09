@@ -29,6 +29,7 @@ uses
   SysUtils,
   Math,
   Generics.Collections,
+  Thrift.Configuration,
   Thrift.Transport,
   Thrift.Protocol,
   Thrift.Utils;
@@ -298,7 +299,7 @@ const
 
 function TJSONProtocolImpl.TFactory.GetProtocol( const trans: ITransport): IProtocol;
 begin
-  result := TJSONProtocolImpl.Create(trans);
+  result := TJSONProtocolImpl.Create( trans);
 end;
 
 class function TJSONProtocolImpl.GetTypeNameForTypeID(typeID : TType) : string;

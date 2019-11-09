@@ -29,6 +29,7 @@ uses
   Math,
   Generics.Collections,
   Thrift.Collections,
+  Thrift.Configuration,
   Thrift.Transport,
   Thrift.Exception,
   Thrift.Utils,
@@ -36,7 +37,7 @@ uses
   Thrift.Stream;
 
 type
-  TWinHTTPClientImpl = class( TTransportImpl, IHTTPClient)
+  TWinHTTPClientImpl = class( TEndpointTransportBase, IHTTPClient)
   strict private
     FUri : string;
     FInputStream : IThriftStream;
@@ -58,19 +59,16 @@ type
       THTTPResponseStream = class( TThriftStreamImpl)
       strict private
         FRequest : IWinHTTPRequest;
-        FTransportControl : ITransportControl;
       strict protected
         procedure Write( const pBuf : Pointer; offset: Integer; count: Integer); override;
         function Read( const pBuf : Pointer; const buflen : Integer; offset: Integer; count: Integer): Integer; override;
-        procedure CheckReadBytesAvailable( const value : Integer);  override;
-        procedure ConsumeReadBytes( const count : Integer);
         procedure Open; override;
         procedure Close; override;
         procedure Flush; override;
         function IsOpen: Boolean; override;
         function ToArray: TBytes; override;
       public
-        constructor Create( const aRequest : IWinHTTPRequest; const aTransportCtl : ITransportControl);
+        constructor Create( const aRequest : IWinHTTPRequest);
         destructor Destroy; override;
       end;
 
@@ -81,7 +79,6 @@ type
     function  Read( const pBuf : Pointer; const buflen : Integer; off: Integer; len: Integer): Integer; override;
     procedure Write( const pBuf : Pointer; off, len : Integer); override;
     procedure Flush; override;
-    procedure CheckReadBytesAvailable( const value : Integer); override;
 
     procedure SetDnsResolveTimeout(const Value: Integer);
     function GetDnsResolveTimeout: Integer;
@@ -103,25 +100,29 @@ type
     property ReadTimeout: Integer read GetReadTimeout write SetReadTimeout;
     property CustomHeaders: IThriftDictionary<string,string> read GetCustomHeaders;
   public
-    constructor Create( const AUri: string; const aTransportCtl : ITransportControl = nil);
+    constructor Create( const aUri: string; const aConfig : IThriftConfiguration = nil);
     destructor Destroy; override;
   end;
 
 implementation
 
+const
+  WINHTTP_CONNECTION_TIMEOUT = 60 * 1000;
+  WINHTTP_SENDRECV_TIMEOUT   = 30 * 1000;
+
 
 { TWinHTTPClientImpl }
 
-constructor TWinHTTPClientImpl.Create(const AUri: string; const aTransportCtl : ITransportControl);
+constructor TWinHTTPClientImpl.Create( const aUri: string; const aConfig : IThriftConfiguration);
 begin
-  inherited Create( aTransportCtl);
+  inherited Create( aConfig);
   FUri := AUri;
 
   // defaults according to MSDN
   FDnsResolveTimeout := 0; // no timeout
-  FConnectionTimeout := 60 * 1000;
-  FSendTimeout       := 30 * 1000;
-  FReadTimeout       := 30 * 1000;
+  FConnectionTimeout := WINHTTP_CONNECTION_TIMEOUT;
+  FSendTimeout       := WINHTTP_SENDRECV_TIMEOUT;
+  FReadTimeout       := WINHTTP_SENDRECV_TIMEOUT;
 
   FSecureProtocols := DEFAULT_THRIFT_SECUREPROTOCOLS;
 
@@ -288,13 +289,6 @@ begin
   end;
 end;
 
-procedure TWinHTTPClientImpl.CheckReadBytesAvailable( const value : Integer);
-begin
-  if FInputStream <> nil
-  then FInputStream.CheckReadBytesAvailable( value)
-  else raise TTransportExceptionNotOpen.Create('No request has been sent');
-end;
-
 function TWinHTTPClientImpl.Read( const pBuf : Pointer; const buflen : Integer; off: Integer; len: Integer): Integer;
 begin
   if FInputStream = nil then begin
@@ -303,7 +297,7 @@ begin
 
   try
     Result := FInputStream.Read( pBuf, buflen, off, len);
-    ConsumeReadBytes( result);
+    CountConsumedMessageBytes( result);
   except
     on E: Exception
     do raise TTransportExceptionUnknown.Create(E.Message);
@@ -313,7 +307,6 @@ end;
 procedure TWinHTTPClientImpl.SendRequest;
 var
   http  : IWinHTTPRequest;
-  ctrl  : ITransportControl;
   pData : PByte;
   len   : Integer;
   error : Cardinal;
@@ -340,8 +333,8 @@ begin
     else raise TTransportExceptionInterrupted.Create( sMsg);
   end;
 
-  ctrl := TTransportControlImpl.Create( TransportControl.MaxAllowedMessageSize);
-  FInputStream := THTTPResponseStream.Create( http, ctrl);
+  FInputStream := THTTPResponseStream.Create( http);
+  UpdateKnownMessageSize( http.QueryTotalResponseSize);
 end;
 
 procedure TWinHTTPClientImpl.Write( const pBuf : Pointer; off, len : Integer);
@@ -355,12 +348,10 @@ end;
 
 { TWinHTTPClientImpl.THTTPResponseStream }
 
-constructor TWinHTTPClientImpl.THTTPResponseStream.Create( const aRequest : IWinHTTPRequest; const aTransportCtl : ITransportControl);
+constructor TWinHTTPClientImpl.THTTPResponseStream.Create( const aRequest : IWinHTTPRequest);
 begin
   inherited Create;
   FRequest := aRequest;
-  FTransportControl := aTransportCtl;
-  ASSERT( FTransportControl <> nil);
 end;
 
 destructor TWinHTTPClientImpl.THTTPResponseStream.Destroy;
@@ -406,8 +397,6 @@ begin
   if count >= buflen-offset
   then count := buflen-offset;
 
-  CheckReadBytesAvailable(count);
-
   if count > 0 then begin
     pTmp   := pBuf;
     Inc( pTmp, offset);
@@ -415,20 +404,6 @@ begin
     ASSERT( Result >= 0);
   end
   else Result := 0;
-
-  ConsumeReadBytes( result);
-end;
-
-procedure TWinHTTPClientImpl.THTTPResponseStream.ConsumeReadBytes( const count : Integer);
-begin
-  if FTransportControl <> nil
-  then FTransportControl.ConsumeReadBytes( count);
-end;
-
-procedure TWinHTTPClientImpl.THTTPResponseStream.CheckReadBytesAvailable( const value : Integer);
-begin
-  if Int64(value) > Int64(FRequest.QueryTotalResponseSize)
-  then raise TTransportExceptionEndOfFile.Create('Not enough input data');
 end;
 
 function TWinHTTPClientImpl.THTTPResponseStream.ToArray: TBytes;

@@ -33,6 +33,7 @@ uses
   Thrift.Protocol.JSON,
   Thrift.Protocol.Compact,
   Thrift.Collections,
+  Thrift.Configuration,
   Thrift.Server,
   Thrift.Utils,
   Thrift.Serializer,
@@ -283,8 +284,12 @@ end;
 
 class function TTestSerializer.Serialize(const input : IBase; const factory : TFactoryPair) : TBytes;
 var serial : TSerializer;
+    config : IThriftConfiguration;
 begin
-  serial := TSerializer.Create( factory.prot, factory.trans);
+  config := TThriftConfigurationImpl.Create;
+  config.MaxMessageSize := 0;   // we don't read anything here
+
+  serial := TSerializer.Create( factory.prot, factory.trans, config);
   try
     result := serial.Serialize( input);
   finally
@@ -295,8 +300,12 @@ end;
 
 class procedure TTestSerializer.Serialize(const input : IBase; const factory : TFactoryPair; const aStream : TStream);
 var serial : TSerializer;
+    config : IThriftConfiguration;
 begin
-  serial := TSerializer.Create( factory.prot, factory.trans);
+  config := TThriftConfigurationImpl.Create;
+  config.MaxMessageSize := 0;   // we don't read anything here
+
+  serial := TSerializer.Create( factory.prot, factory.trans, config);
   try
     serial.Serialize( input, aStream);
   finally
@@ -307,8 +316,12 @@ end;
 
 class procedure TTestSerializer.Deserialize( const input : TBytes; const target : IBase; const factory : TFactoryPair);
 var serial : TDeserializer;
+    config : IThriftConfiguration;
 begin
-  serial := TDeserializer.Create( factory.prot, factory.trans, Length(input));
+  config := TThriftConfigurationImpl.Create;
+  config.MaxMessageSize := Length(input);
+
+  serial := TDeserializer.Create( factory.prot, factory.trans, config);
   try
     serial.Deserialize( input, target);
     ValidateReadToEnd( input, serial);
@@ -320,8 +333,12 @@ end;
 
 class procedure TTestSerializer.Deserialize( const input : TStream; const target : IBase; const factory : TFactoryPair);
 var serial : TDeserializer;
+    config : IThriftConfiguration;
 begin
-  serial := TDeserializer.Create( factory.prot, factory.trans, input.Size);
+  config := TThriftConfigurationImpl.Create;
+  config.MaxMessageSize := input.Size;
+
+  serial := TDeserializer.Create( factory.prot, factory.trans, config);
   try
     serial.Deserialize( input, target);
     ValidateReadToEnd( input, serial);

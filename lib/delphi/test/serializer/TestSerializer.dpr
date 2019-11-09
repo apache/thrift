@@ -34,6 +34,7 @@ uses
   Thrift.Protocol.JSON in '..\..\src\Thrift.Protocol.JSON.pas',
   Thrift.Protocol.Compact in '..\..\src\Thrift.Protocol.Compact.pas',
   Thrift.Collections in '..\..\src\Thrift.Collections.pas',
+  Thrift.Configuration in '..\..\src\Thrift.Configuration.pas',
   Thrift.Server in '..\..\src\Thrift.Server.pas',
   Thrift.Utils in '..\..\src\Thrift.Utils.pas',
   Thrift.Serializer in '..\..\src\Thrift.Serializer.pas',
@@ -42,8 +43,8 @@ uses
   Thrift.TypeRegistry in '..\..\src\Thrift.TypeRegistry.pas',
   System_,
   DebugProtoTest,
-  TestSerializer.Tests,
-  TestSerializer.Data;
+  TestSerializer.Tests in 'TestSerializer.Tests.pas',
+  TestSerializer.Data in 'TestSerializer.Data.pas';
 
 
 var test : TTestSerializer;

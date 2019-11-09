@@ -37,22 +37,16 @@ uses
 
 type
   IThriftStream = interface
-    ['{DBE61E28-2A77-42DB-A5A3-3CCB8A2D09FA}']
+    ['{3A61A8A6-3639-4B91-A260-EFCA23944F3A}']
     procedure Write( const buffer: TBytes; offset: Integer; count: Integer);  overload;
     procedure Write( const pBuf : Pointer; offset: Integer; count: Integer);  overload;
     function Read( var buffer: TBytes; offset: Integer; count: Integer): Integer;  overload;
     function Read( const pBuf : Pointer; const buflen : Integer; offset: Integer; count: Integer): Integer;  overload;
-    procedure CheckReadBytesAvailable( const value : Integer);
     procedure Open;
     procedure Close;
     procedure Flush;
     function IsOpen: Boolean;
     function ToArray: TBytes;
-  end;
-
-
-  IThriftStream2 = interface( IThriftStream)
-    ['{1F55D9FE-F617-4B80-B8CA-4A300D8E33F6}']
     function Size : Int64;
     function Position : Int64;
   end;
@@ -67,15 +61,16 @@ type
     procedure Write( const pBuf : Pointer; offset: Integer; count: Integer);  overload; virtual;
     function Read( var buffer: TBytes; offset: Integer; count: Integer): Integer; overload; inline;
     function Read( const pBuf : Pointer; const buflen : Integer; offset: Integer; count: Integer): Integer; overload; virtual;
-    procedure CheckReadBytesAvailable( const value : Integer);  virtual; abstract;
     procedure Open; virtual; abstract;
     procedure Close; virtual; abstract;
     procedure Flush; virtual; abstract;
     function IsOpen: Boolean; virtual; abstract;
     function ToArray: TBytes; virtual; abstract;
+    function Size : Int64; virtual;
+    function Position : Int64;  virtual;
   end;
 
-  TThriftStreamAdapterDelphi = class( TThriftStreamImpl, IThriftStream2)
+  TThriftStreamAdapterDelphi = class( TThriftStreamImpl)
   strict private
     FStream : TStream;
     FOwnsStream : Boolean;
@@ -83,38 +78,32 @@ type
     // IThriftStream
     procedure Write( const pBuf : Pointer; offset: Integer; count: Integer); override;
     function Read( const pBuf : Pointer; const buflen : Integer; offset: Integer; count: Integer): Integer; override;
-    procedure CheckReadBytesAvailable( const value : Integer);  override;
     procedure Open; override;
     procedure Close; override;
     procedure Flush; override;
     function IsOpen: Boolean; override;
     function ToArray: TBytes; override;
-
-    // IThriftStream2
-    function Size : Int64;
-    function Position : Int64;
+    function Size : Int64; override;
+    function Position : Int64;  override;
   public
     constructor Create( const aStream: TStream; aOwnsStream : Boolean);
     destructor Destroy; override;
   end;
 
-  TThriftStreamAdapterCOM = class( TThriftStreamImpl, IThriftStream2)
+  TThriftStreamAdapterCOM = class( TThriftStreamImpl)
   strict private
     FStream : IStream;
   strict protected
     // IThriftStream
     procedure Write( const pBuf : Pointer; offset: Integer; count: Integer); override;
     function Read( const pBuf : Pointer; const buflen : Integer; offset: Integer; count: Integer): Integer; override;
-    procedure CheckReadBytesAvailable( const value : Integer);  override;
     procedure Open; override;
     procedure Close; override;
     procedure Flush; override;
     function IsOpen: Boolean; override;
     function ToArray: TBytes; override;
-
-    // IThriftStream2
-    function Size : Int64;
-    function Position : Int64;
+    function Size : Int64; override;
+    function Position : Int64;  override;
   public
     constructor Create( const aStream: IStream);
   end;
@@ -191,14 +180,6 @@ begin
   end;
 end;
 
-procedure TThriftStreamAdapterCOM.CheckReadBytesAvailable( const value : Integer);
-var nRemaining : Int64;
-begin
-  nRemaining := Self.Size - Self.Position;
-  if nRemaining < value
-  then raise TTransportExceptionEndOfFile.Create('Not enough input data');
-end;
-
 function TThriftStreamAdapterCOM.ToArray: TBytes;
 var
   len : Int64;
@@ -267,6 +248,19 @@ begin
   CheckSizeAndOffset( pBuf, offset+count, offset, count);
 end;
 
+function TThriftStreamImpl.Size : Int64;
+begin
+  ASSERT(FALSE);
+  raise ENotImplemented.Create(ClassName+'.Size');
+end;
+
+function TThriftStreamImpl.Position : Int64;
+begin
+  ASSERT(FALSE);
+  raise ENotImplemented.Create(ClassName+'.Position');
+end;
+
+
 { TThriftStreamAdapterDelphi }
 
 constructor TThriftStreamAdapterDelphi.Create( const aStream: TStream; aOwnsStream: Boolean);
@@ -330,13 +324,6 @@ begin
     Result := FStream.Read( pTmp^, count)
   end
   else Result := 0;
-end;
-
-procedure TThriftStreamAdapterDelphi.CheckReadBytesAvailable( const value : Integer);
-var nRemaining : Int64;
-begin
-  nRemaining := FStream.Size - FStream.Position;
-  if nRemaining < value then raise TTransportExceptionEndOfFile.Create('Not enough input data');
 end;
 
 function TThriftStreamAdapterDelphi.ToArray: TBytes;

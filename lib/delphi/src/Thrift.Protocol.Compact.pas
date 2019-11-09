@@ -28,6 +28,7 @@ uses
   SysUtils,
   Math,
   Generics.Collections,
+  Thrift.Configuration,
   Thrift.Transport,
   Thrift.Protocol,
   Thrift.Utils;
@@ -268,7 +269,7 @@ end;
 //--- TCompactProtocolImpl -------------------------------------------------
 
 
-constructor TCompactProtocolImpl.Create(const trans: ITransport);
+constructor TCompactProtocolImpl.Create( const trans : ITransport);
 begin
   inherited Create( trans);
 
