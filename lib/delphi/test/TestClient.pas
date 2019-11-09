@@ -93,7 +93,7 @@ type
       Normal,          // Fairly small array of usual size (256 bytes)
       ByteArrayTest,   // THRIFT-4454 Large writes/reads may cause range check errors in debug mode
       PipeWriteLimit,  // THRIFT-4372 Pipe write operations across a network are limited to 65,535 bytes per write.
-      TwentyMB         // that's quite a bit of data
+      FifteenMB        // quite a bit of data, but still below the default max frame size
     );
 
   private
@@ -1024,7 +1024,7 @@ begin
     Normal         : SetLength( result, $100);
     ByteArrayTest  : SetLength( result, SizeOf(TByteArray) + 128);
     PipeWriteLimit : SetLength( result, 65535 + 128);
-    TwentyMB       : SetLength( result, 20 * 1024 * 1024);
+    FifteenMB      : SetLength( result, 15 * 1024 * 1024);
   else
     raise EArgumentException.Create('aSize');
   end;

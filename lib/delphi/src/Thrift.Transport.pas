@@ -91,7 +91,8 @@ type
         TimedOut,
         EndOfFile,
         BadArgs,
-        Interrupted
+        Interrupted,
+        CorruptedData
       );
   strict protected
     constructor HiddenCreate(const Msg: string);
@@ -141,6 +142,11 @@ type
 
   TTransportExceptionInterrupted = class (TTransportExceptionSpecialized)
   strict protected
+    class function GetType: TTransportException.TExceptionType;  override;
+  end;
+
+  TTransportExceptionCorruptedData = class (TTransportExceptionSpecialized)
+  protected
     class function GetType: TTransportException.TExceptionType;  override;
   end;
 
@@ -368,15 +374,17 @@ type
   end;
 
   TFramedTransportImpl = class( TTransportImpl)
-  strict private const
-    FHeaderSize : Integer = 4;
-  strict private class var
-    FHeader_Dummy : array of Byte;
+  strict protected const
+    DEFAULT_MAX_LENGTH = 16384000;      // this value is used by all Thrift libraries
+  strict protected type
+    TFramedHeader = Int32;
   strict protected
     FTransport : ITransport;
     FWriteBuffer : TMemoryStream;
     FReadBuffer : TMemoryStream;
+    FMaxFrameSize : Integer;
 
+    procedure InitMaxFrameSize;
     procedure InitWriteBuffer;
     procedure ReadFrame;
   public
@@ -385,10 +393,6 @@ type
       public
         function GetTransport( const ATrans: ITransport): ITransport; override;
       end;
-
-    {$IFDEF HAVE_CLASS_CTOR}
-    class constructor Create;
-    {$ENDIF}
 
     constructor Create; overload;
     constructor Create( const ATrans: ITransport); overload;
@@ -403,9 +407,6 @@ type
     procedure Flush; override;
   end;
 
-{$IFNDEF HAVE_CLASS_CTOR}
-procedure TFramedTransportImpl_Initialize;
-{$ENDIF}
 
 const
   DEFAULT_THRIFT_TIMEOUT = 5 * 1000; // ms
@@ -547,6 +548,11 @@ end;
 class function TTransportExceptionInterrupted.GetType: TTransportException.TExceptionType;
 begin
   result := TExceptionType.Interrupted;
+end;
+
+class function TTransportExceptionCorruptedData.GetType: TTransportException.TExceptionType;
+begin
+  result := TExceptionType.CorruptedData;
 end;
 
 { TTransportFactoryImpl }
@@ -993,7 +999,7 @@ end;
 
 procedure TStreamTransportImpl.Open;
 begin
-
+  // nothing to do
 end;
 
 function TStreamTransportImpl.Read( const pBuf : Pointer; const buflen : Integer; off: Integer; len: Integer): Integer;
@@ -1087,35 +1093,19 @@ end;
 
 { TFramedTransportImpl }
 
-{$IFDEF HAVE_CLASS_CTOR}
-class constructor TFramedTransportImpl.Create;
-begin
-  SetLength( FHeader_Dummy, FHeaderSize);
-  FillChar( FHeader_Dummy[0], Length( FHeader_Dummy) * SizeOf( Byte ), 0);
-end;
-{$ELSE}
-procedure TFramedTransportImpl_Initialize;
-begin
-  SetLength( TFramedTransportImpl.FHeader_Dummy, TFramedTransportImpl.FHeaderSize);
-  FillChar( TFramedTransportImpl.FHeader_Dummy[0],
-    Length( TFramedTransportImpl.FHeader_Dummy) * SizeOf( Byte ), 0);
-end;
-{$ENDIF}
-
 constructor TFramedTransportImpl.Create;
 begin
   inherited Create;
-  InitWriteBuffer;
-end;
 
-procedure TFramedTransportImpl.Close;
-begin
-  FTransport.Close;
+  InitMaxFrameSize;
+  InitWriteBuffer;
 end;
 
 constructor TFramedTransportImpl.Create( const ATrans: ITransport);
 begin
   inherited Create;
+
+  InitMaxFrameSize;
   InitWriteBuffer;
   FTransport := ATrans;
 end;
@@ -1127,12 +1117,21 @@ begin
   inherited;
 end;
 
+procedure TFramedTransportImpl.InitMaxFrameSize;
+begin
+  FMaxFrameSize := DEFAULT_MAX_LENGTH;
+end;
+
+procedure TFramedTransportImpl.Close;
+begin
+  FTransport.Close;
+end;
+
 procedure TFramedTransportImpl.Flush;
 var
   buf : TBytes;
   len : Integer;
   data_len : Integer;
-
 begin
   len := FWriteBuffer.Size;
   SetLength( buf, len);
@@ -1140,7 +1139,7 @@ begin
     System.Move( FWriteBuffer.Memory^, buf[0], len );
   end;
 
-  data_len := len - FHeaderSize;
+  data_len := len - SizeOf(TFramedHeader);
   if (data_len < 0) then begin
     raise TTransportExceptionUnknown.Create('TFramedTransport.Flush: data_len < 0' );
   end;
@@ -1166,11 +1165,12 @@ type
   end;
 
 procedure TFramedTransportImpl.InitWriteBuffer;
+const DUMMY_HEADER : TFramedHeader = 0;
 begin
   FWriteBuffer.Free;
   FWriteBuffer := TMemoryStream.Create;
   TAccessMemoryStream(FWriteBuffer).Capacity := 1024;
-  FWriteBuffer.Write( Pointer(@FHeader_Dummy[0])^, FHeaderSize);
+  FWriteBuffer.Write( DUMMY_HEADER, SizeOf(DUMMY_HEADER));
 end;
 
 procedure TFramedTransportImpl.Open;
@@ -1202,17 +1202,27 @@ end;
 
 procedure TFramedTransportImpl.ReadFrame;
 var
-  i32rd : TBytes;
+  i32rd : packed array[0..SizeOf(TFramedHeader)-1] of Byte;
   size : Integer;
   buff : TBytes;
 begin
-  SetLength( i32rd, FHeaderSize );
-  FTransport.ReadAll( i32rd, 0, FHeaderSize);
+  FTransport.ReadAll( @i32rd[0], SizeOf(i32rd), 0, SizeOf(i32rd));
   size :=
     ((i32rd[0] and $FF) shl 24) or
     ((i32rd[1] and $FF) shl 16) or
     ((i32rd[2] and $FF) shl 8) or
      (i32rd[3] and $FF);
+
+  if size < 0 then begin
+    Close();
+    raise TTransportExceptionCorruptedData.Create('Read a negative frame size ('+IntToStr(size)+')');
+  end;
+
+  if size > FMaxFrameSize then begin
+    Close();
+    raise TTransportExceptionCorruptedData.Create('Frame size ('+IntToStr(size)+') larger than allowed maximum ('+IntToStr(FMaxFrameSize)+')');
+  end;
+
   SetLength( buff, size );
   FTransport.ReadAll( buff, 0, size );
   FReadBuffer.Free;

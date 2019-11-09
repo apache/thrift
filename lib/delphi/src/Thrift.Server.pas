@@ -61,7 +61,7 @@ type
   public
     type
       TLogDelegate = reference to procedure( const str: string);
-  strict protected
+  protected
     FProcessor : IProcessor;
     FServerTransport : IServerTransport;
     FInputTransportFactory : ITransportFactory;
@@ -116,7 +116,7 @@ type
 
 
   TSimpleServer = class( TServerImpl)
-  strict private
+  private
     FStop : Boolean;
   public
     constructor Create(
