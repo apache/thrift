@@ -31,6 +31,7 @@ uses
   Thrift in '..\src\Thrift.pas',
   Thrift.Transport in '..\src\Thrift.Transport.pas',
   Thrift.Socket in '..\src\Thrift.Socket.pas',
+  Thrift.Configuration in '..\src\Thrift.Configuration.pas',
   Thrift.Exception in '..\src\Thrift.Exception.pas',
   Thrift.Transport.Pipes in '..\src\Thrift.Transport.Pipes.pas',
   Thrift.Transport.WinHTTP in '..\src\Thrift.Transport.WinHTTP.pas',

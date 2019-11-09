@@ -29,6 +29,7 @@ uses
   Math,
   Generics.Collections,
   Thrift.Collections,
+  Thrift.Configuration,
   Thrift.Transport,
   Thrift.Exception,
   Thrift.Utils,
@@ -36,7 +37,7 @@ uses
   Thrift.Stream;
 
 type
-  TWinHTTPClientImpl = class( TTransportImpl, IHTTPClient)
+  TWinHTTPClientImpl = class( TEndpointTransportBase, IHTTPClient)
   strict private
     FUri : string;
     FInputStream : IThriftStream;
@@ -58,7 +59,7 @@ type
       THTTPResponseStream = class( TThriftStreamImpl)
       strict private
         FRequest : IWinHTTPRequest;
-        FTransportControl : ITransportControl;
+        FRemainingBytes : Integer;
       strict protected
         procedure Write( const pBuf : Pointer; offset: Integer; count: Integer); override;
         function Read( const pBuf : Pointer; const buflen : Integer; offset: Integer; count: Integer): Integer; override;
@@ -70,7 +71,7 @@ type
         function IsOpen: Boolean; override;
         function ToArray: TBytes; override;
       public
-        constructor Create( const aRequest : IWinHTTPRequest; const aTransportCtl : ITransportControl);
+        constructor Create( const aRequest : IWinHTTPRequest; const aConfig : IThriftConfiguration);
         destructor Destroy; override;
       end;
 
@@ -103,7 +104,7 @@ type
     property ReadTimeout: Integer read GetReadTimeout write SetReadTimeout;
     property CustomHeaders: IThriftDictionary<string,string> read GetCustomHeaders;
   public
-    constructor Create( const AUri: string; const aTransportCtl : ITransportControl = nil);
+    constructor Create( const aUri: string; const aConfig : IThriftConfiguration);
     destructor Destroy; override;
   end;
 
@@ -112,16 +113,16 @@ implementation
 
 { TWinHTTPClientImpl }
 
-constructor TWinHTTPClientImpl.Create(const AUri: string; const aTransportCtl : ITransportControl);
+constructor TWinHTTPClientImpl.Create( const aUri: string; const aConfig : IThriftConfiguration);
 begin
-  inherited Create( aTransportCtl);
+  inherited Create( aConfig);
   FUri := AUri;
 
   // defaults according to MSDN
   FDnsResolveTimeout := 0; // no timeout
-  FConnectionTimeout := 60 * 1000;
-  FSendTimeout       := 30 * 1000;
-  FReadTimeout       := 30 * 1000;
+  FConnectionTimeout := aConfig.ConnectionTimeout( 60 * 1000);
+  FSendTimeout       := aConfig.ReadWriteTimeout(  30 * 1000);
+  FReadTimeout       := aConfig.ReadWriteTimeout(  30 * 1000);
 
   FSecureProtocols := DEFAULT_THRIFT_SECUREPROTOCOLS;
 
@@ -313,7 +314,6 @@ end;
 procedure TWinHTTPClientImpl.SendRequest;
 var
   http  : IWinHTTPRequest;
-  ctrl  : ITransportControl;
   pData : PByte;
   len   : Integer;
   error : Cardinal;
@@ -340,8 +340,7 @@ begin
     else raise TTransportExceptionInterrupted.Create( sMsg);
   end;
 
-  ctrl := TTransportControlImpl.Create( TransportControl.MaxAllowedMessageSize);
-  FInputStream := THTTPResponseStream.Create( http, ctrl);
+  FInputStream := THTTPResponseStream.Create( http, Configuration);
 end;
 
 procedure TWinHTTPClientImpl.Write( const pBuf : Pointer; off, len : Integer);
@@ -355,12 +354,11 @@ end;
 
 { TWinHTTPClientImpl.THTTPResponseStream }
 
-constructor TWinHTTPClientImpl.THTTPResponseStream.Create( const aRequest : IWinHTTPRequest; const aTransportCtl : ITransportControl);
+constructor TWinHTTPClientImpl.THTTPResponseStream.Create( const aRequest : IWinHTTPRequest; const aConfig : IThriftConfiguration);
 begin
   inherited Create;
   FRequest := aRequest;
-  FTransportControl := aTransportCtl;
-  ASSERT( FTransportControl <> nil);
+  FRemainingBytes := aConfig.MaxMessageSize;
 end;
 
 destructor TWinHTTPClientImpl.THTTPResponseStream.Destroy;
@@ -421,8 +419,12 @@ end;
 
 procedure TWinHTTPClientImpl.THTTPResponseStream.ConsumeReadBytes( const count : Integer);
 begin
-  if FTransportControl <> nil
-  then FTransportControl.ConsumeReadBytes( count);
+  if FRemainingBytes >= count
+  then Dec( FRemainingBytes)
+  else begin
+    FRemainingBytes := 0;
+    raise TTransportExceptionEndOfFile.Create('Max messsage size exceeded');
+  end;
 end;
 
 procedure TWinHTTPClientImpl.THTTPResponseStream.CheckReadBytesAvailable( const value : Integer);

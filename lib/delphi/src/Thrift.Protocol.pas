@@ -31,6 +31,7 @@ uses
   Thrift.Stream,
   Thrift.Utils,
   Thrift.Collections,
+  Thrift.Configuration,
   Thrift.Transport;
 
 type
@@ -66,9 +67,6 @@ const
   ];
 
   VALID_MESSAGETYPES = [Low(TMessageType)..High(TMessageType)];
-
-const
-  DEFAULT_RECURSION_LIMIT = 64;
 
 type
   IProtocol = interface;
@@ -196,7 +194,7 @@ type
   end;
 
   IProtocol = interface
-    ['{7F3640D7-5082-49E7-B562-84202F323C3A}']
+    ['{F0040D99-937F-400D-9932-AF04F665899F}']
     function GetTransport: ITransport;
     procedure WriteMessageBegin( const msg: TThriftMessage);
     procedure WriteMessageEnd;
@@ -243,15 +241,13 @@ type
     function ReadString: string;
     function ReadAnsiString: AnsiString;
 
-    procedure SetRecursionLimit( value : Integer);
-    function  GetRecursionLimit : Integer;
     function  NextRecursionLevel : IProtocolRecursionTracker;
     procedure IncrementRecursionDepth;
     procedure DecrementRecursionDepth;
     function  GetMinSerializedSize( const aType : TType) : Integer;
 
     property Transport: ITransport read GetTransport;
-    property RecursionLimit : Integer read GetRecursionLimit write SetRecursionLimit;
+    function Configuration : IThriftConfiguration;
   end;
 
   TProtocolImpl = class abstract( TInterfacedObject, IProtocol)
@@ -260,8 +256,6 @@ type
     FRecursionLimit : Integer;
     FRecursionDepth : Integer;
 
-    procedure SetRecursionLimit( value : Integer);
-    function  GetRecursionLimit : Integer;
     function  NextRecursionLevel : IProtocolRecursionTracker;
     procedure IncrementRecursionDepth;
     procedure DecrementRecursionDepth;
@@ -272,8 +266,9 @@ type
     procedure CheckReadBytesAvailable( const value : TThriftMap);  overload; inline;
 
     procedure Reset;  virtual;
-    function GetTransport: ITransport;
-  public
+    function  GetTransport: ITransport;
+    function  Configuration : IThriftConfiguration;
+
     procedure WriteMessageBegin( const msg: TThriftMessage); virtual; abstract;
     procedure WriteMessageEnd; virtual; abstract;
     procedure WriteStructBegin( const struc: TThriftStruct); virtual; abstract;
@@ -319,9 +314,10 @@ type
     function ReadString: string; virtual;
     function ReadAnsiString: AnsiString; virtual;
 
-    property Transport: ITransport read GetTransport;
+    property  Transport: ITransport read GetTransport;
 
-    constructor Create( trans: ITransport );
+  public
+    constructor Create( const aTransport : ITransport);
   end;
 
   IBase = interface( ISupportsToString)
@@ -554,22 +550,12 @@ end;
 
 { TProtocolImpl }
 
-constructor TProtocolImpl.Create(trans: ITransport);
+constructor TProtocolImpl.Create( const aTransport : ITransport);
 begin
   inherited Create;
-  FTrans := trans;
-  FRecursionLimit := DEFAULT_RECURSION_LIMIT;
+  FTrans := aTransport;
+  FRecursionLimit := aTransport.Configuration.RecursionLimit;
   FRecursionDepth := 0;
-end;
-
-procedure TProtocolImpl.SetRecursionLimit( value : Integer);
-begin
-  FRecursionLimit := value;
-end;
-
-function TProtocolImpl.GetRecursionLimit : Integer;
-begin
-  result := FRecursionLimit;
 end;
 
 function TProtocolImpl.NextRecursionLevel : IProtocolRecursionTracker;
@@ -594,10 +580,14 @@ begin
   Result := FTrans;
 end;
 
+function TProtocolImpl.Configuration : IThriftConfiguration;
+begin
+  Result := FTrans.Configuration;
+end;
+
 procedure TProtocolImpl.Reset;
 begin
-  if FTrans.TransportControl <> nil
-  then FTrans.TransportControl.ResetConsumedMessageSize;
+  FTrans.ResetConsumedMessageSize;
 end;
 
 function TProtocolImpl.ReadAnsiString: AnsiString;
@@ -660,8 +650,6 @@ begin
   nPairSize := GetMinSerializedSize(value.KeyType) + GetMinSerializedSize(value.ValueType);
   FTrans.CheckReadBytesAvailable( value.Count * nPairSize);
 end;
-
-
 
 { TProtocolUtil }
 
@@ -1483,8 +1471,6 @@ begin
   rec.Count := ACount;
   rec.ElementType := AElementType;
 end;
-
-
 
 
 

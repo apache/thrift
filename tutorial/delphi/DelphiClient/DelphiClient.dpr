@@ -26,6 +26,7 @@ uses
   Generics.Collections,
   Thrift in '..\..\..\lib\delphi\src\Thrift.pas',
   Thrift.Collections in '..\..\..\lib\delphi\src\Thrift.Collections.pas',
+  Thrift.Configuration in '..\..\..\lib\delphi\src\Thrift.Configuration.pas',
   Thrift.Exception in '..\..\..\lib\delphi\src\Thrift.Exception.pas',
   Thrift.Utils in '..\..\..\lib\delphi\src\Thrift.Utils.pas',
   Thrift.Stream in '..\..\..\lib\delphi\src\Thrift.Stream.pas',
@@ -58,7 +59,7 @@ var transport : ITransport;
     log       : ISharedStruct;
 begin
   try
-    transport := TSocketImpl.Create( 'localhost', 9090);
+    transport := TSocketImpl.Create( 'localhost', 9090, TConfigurationImpl.DefaultConfiguration);
     protocol  := TBinaryProtocolImpl.Create( transport);
     client    := TCalculator.TClient.Create( protocol);
 

@@ -36,6 +36,7 @@ uses
   Thrift.Protocol.JSON,
   Thrift.Protocol.Compact,
   Thrift.Collections,
+  Thrift.Configuration,
   Thrift.Utils,
   Thrift.Test,
   Thrift,
@@ -471,6 +472,7 @@ var
   endpoint : TEndpointTransport;
   layered : TLayeredTransports;
   UseSSL : Boolean; // include where appropriate (TLayeredTransport?)
+  config : IConfigureThrift;
 begin
   try
     ServerEvents := FALSE;
@@ -482,6 +484,7 @@ begin
     Port := 9090;
     sPipeName := '';
     numWorker := 4;
+    config := TConfigurationImpl.Create;
 
     i := 0;
     while ( i < Length(args) ) do begin
@@ -585,7 +588,9 @@ begin
       trns_Sockets : begin
         Console.WriteLine('- sockets (port '+IntToStr(port)+')');
         if (trns_Buffered in layered) then Console.WriteLine('- buffered');
-        servertrans := TServerSocketImpl.Create( Port, DEFAULT_THRIFT_TIMEOUT, (trns_Buffered in layered));
+        config.ConnectionTimeout := TThriftNullable<Cardinal>.FromValue( DEFAULT_THRIFT_TIMEOUT);
+        config.ReadWriteTimeout  := TThriftNullable<Cardinal>.FromValue( DEFAULT_THRIFT_TIMEOUT);
+        servertrans := TServerSocketImpl.Create( Port, config.GetConfiguration, (trns_Buffered in layered));
       end;
 
       trns_MsxmlHttp,
@@ -595,13 +600,13 @@ begin
 
       trns_NamedPipes : begin
         Console.WriteLine('- named pipe ('+sPipeName+')');
-        namedpipe   := TNamedPipeServerTransportImpl.Create( sPipeName, 4096, PIPE_UNLIMITED_INSTANCES);
+        namedpipe   := TNamedPipeServerTransportImpl.Create( sPipeName, config.GetConfiguration, 4096, PIPE_UNLIMITED_INSTANCES);
         servertrans := namedpipe;
       end;
 
       trns_AnonPipes : begin
         Console.WriteLine('- anonymous pipes');
-        anonymouspipe := TAnonymousPipeServerTransportImpl.Create;
+        anonymouspipe := TAnonymousPipeServerTransportImpl.Create( config.GetConfiguration);
         servertrans   := anonymouspipe;
       end
 
@@ -616,7 +621,7 @@ begin
 
     if (trns_Framed in layered) then begin
       Console.WriteLine('- framed transport');
-      TransportFactory := TFramedTransportImpl.TFactory.Create
+      TransportFactory := TFramedTransportImpl.TFactory.Create;
     end
     else begin
       TransportFactory := TTransportFactoryImpl.Create;

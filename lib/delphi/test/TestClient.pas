@@ -53,6 +53,8 @@ uses
   Thrift.Test,
   Thrift.WinHTTP,
   Thrift.Utils,
+
+  Thrift.Configuration,
   Thrift.Collections;
 
 type
@@ -122,7 +124,7 @@ type
 
     procedure InitializeProtocolTransportStack;
     procedure ShutdownProtocolTransportStack;
-    function  InitializeHttpTransport( const aTimeoutSetting : Integer) : IHTTPClient;
+    function  InitializeHttpTransport( const aConfig : IThriftConfiguration) : IHTTPClient;
 
     procedure JSONProtocolReadWriteTest;
     function  PrepareBinaryData( aRandomDist : Boolean; aSize : TTestSize) : TBytes;
@@ -1068,6 +1070,7 @@ procedure TClientThread.JSONProtocolReadWriteTest;
 var prot   : IProtocol;
     stm    : TStringStream;
     list   : TThriftList;
+    config : IThriftConfiguration;
     binary, binRead, emptyBinary : TBytes;
     i,iErr : Integer;
 const
@@ -1089,6 +1092,8 @@ begin
   try
     StartTestGroup( 'JsonProtocolTest', test_Unknown);
 
+    config := TConfigurationImpl.DefaultConfiguration;
+
     // prepare binary data
     binary := PrepareBinaryData( FALSE, Normal);
     SetLength( emptyBinary, 0); // empty binary data block
@@ -1096,7 +1101,7 @@ begin
     // output setup
     prot := TJSONProtocolImpl.Create(
               TStreamTransportImpl.Create(
-                nil, TThriftStreamAdapterDelphi.Create( stm, FALSE)));
+                nil, TThriftStreamAdapterDelphi.Create( stm, FALSE), config));
 
     // write
     Init( list, TType.String_, 9);
@@ -1119,7 +1124,7 @@ begin
     stm.Position := 0;
     prot := TJSONProtocolImpl.Create(
               TStreamTransportImpl.Create(
-                TThriftStreamAdapterDelphi.Create( stm, FALSE), nil));
+                TThriftStreamAdapterDelphi.Create( stm, FALSE), nil, config));
 
     // read and compare
     list := prot.ReadListBegin;
@@ -1161,7 +1166,7 @@ begin
     stm.Position := 0;
     prot := TJSONProtocolImpl.Create(
               TStreamTransportImpl.Create(
-                TThriftStreamAdapterDelphi.Create( stm, FALSE), nil));
+                TThriftStreamAdapterDelphi.Create( stm, FALSE), nil, config));
     Expect( prot.ReadString = SOLIDUS_EXCPECTED, 'Solidus encoding');
 
 
@@ -1172,12 +1177,12 @@ begin
     stm.Size     := 0;
     prot := TJSONProtocolImpl.Create(
               TStreamTransportImpl.Create(
-                nil, TThriftStreamAdapterDelphi.Create( stm, FALSE)));
+                nil, TThriftStreamAdapterDelphi.Create( stm, FALSE), config));
     prot.WriteString( G_CLEF_AND_CYRILLIC_TEXT);
     stm.Position := 0;
     prot := TJSONProtocolImpl.Create(
               TStreamTransportImpl.Create(
-                TThriftStreamAdapterDelphi.Create( stm, FALSE), nil));
+                TThriftStreamAdapterDelphi.Create( stm, FALSE), nil, config));
     Expect( prot.ReadString = G_CLEF_AND_CYRILLIC_TEXT, 'Writing JSON with chars > 8 bit');
 
     // Widechars should work with hex-encoding too. Do they?
@@ -1187,7 +1192,7 @@ begin
     stm.Position := 0;
     prot := TJSONProtocolImpl.Create(
               TStreamTransportImpl.Create(
-                TThriftStreamAdapterDelphi.Create( stm, FALSE), nil));
+                TThriftStreamAdapterDelphi.Create( stm, FALSE), nil, config));
     Expect( prot.ReadString = G_CLEF_AND_CYRILLIC_TEXT, 'Reading JSON with chars > 8 bit');
 
 
@@ -1330,7 +1335,7 @@ begin
 end;
 
 
-function TClientThread.InitializeHttpTransport( const aTimeoutSetting : Integer) : IHTTPClient;
+function TClientThread.InitializeHttpTransport( const aConfig : IThriftConfiguration) : IHTTPClient;
 var sUrl    : string;
     comps   : URL_COMPONENTS;
     dwChars : DWORD;
@@ -1367,22 +1372,18 @@ begin
 
   Console.WriteLine('Target URL: '+sUrl);
   case FSetup.endpoint of
-    trns_MsxmlHttp :  result := TMsxmlHTTPClientImpl.Create( sUrl);
-    trns_WinHttp   :  result := TWinHTTPClientImpl.Create( sUrl);
+    trns_MsxmlHttp :  result := TMsxmlHTTPClientImpl.Create( sUrl, aConfig);
+    trns_WinHttp   :  result := TWinHTTPClientImpl.Create(   sUrl, aConfig);
   else
     raise Exception.Create(ENDPOINT_TRANSPORTS[FSetup.endpoint]+' unhandled case');
   end;
-
-  result.DnsResolveTimeout := aTimeoutSetting;
-  result.ConnectionTimeout := aTimeoutSetting;
-  result.SendTimeout       := aTimeoutSetting;
-  result.ReadTimeout       := aTimeoutSetting;
 end;
 
 
 procedure TClientThread.InitializeProtocolTransportStack;
 var streamtrans : IStreamTransport;
     canSSL : Boolean;
+    config : IConfigureThrift;
 const
   DEBUG_TIMEOUT   = 30 * 1000;
   RELEASE_TIMEOUT = DEFAULT_THRIFT_TIMEOUT;
@@ -1392,18 +1393,24 @@ begin
   // needed for HTTP clients as they utilize the MSXML COM components
   OleCheck( CoInitialize( nil));
 
+  config := TConfigurationImpl.Create;
+
   canSSL := FALSE;
   case FSetup.endpoint of
     trns_Sockets: begin
       Console.WriteLine('Using sockets ('+FSetup.host+' port '+IntToStr(FSetup.port)+')');
-      streamtrans := TSocketImpl.Create( FSetup.host, FSetup.port, DEFAULT_THRIFT_TIMEOUT);
+      config.ConnectionTimeout := TThriftNullable<Cardinal>.FromValue( DEFAULT_THRIFT_TIMEOUT);
+      config.ReadWriteTimeout  := TThriftNullable<Cardinal>.FromValue( DEFAULT_THRIFT_TIMEOUT);
+      streamtrans := TSocketImpl.Create( FSetup.host, FSetup.port, config.GetConfiguration);
       FTransport := streamtrans;
     end;
 
     trns_MsxmlHttp,
     trns_WinHttp: begin
       Console.WriteLine('Using HTTPClient');
-      FTransport := InitializeHttpTransport( HTTP_TIMEOUTS);
+      config.ConnectionTimeout := TThriftNullable<Cardinal>.FromValue( HTTP_TIMEOUTS);
+      config.ReadWriteTimeout  := TThriftNullable<Cardinal>.FromValue( HTTP_TIMEOUTS);
+      FTransport := InitializeHttpTransport( config.GetConfiguration);
       canSSL := TRUE;
     end;
 
@@ -1412,12 +1419,14 @@ begin
     end;
 
     trns_NamedPipes: begin
-      streamtrans := TNamedPipeTransportClientEndImpl.Create( FSetup.sPipeName, 0, nil, PIPE_TIMEOUT, PIPE_TIMEOUT);
+      config.ConnectionTimeout := TThriftNullable<Cardinal>.FromValue( PIPE_TIMEOUT);
+      config.ReadWriteTimeout  := TThriftNullable<Cardinal>.FromValue( PIPE_TIMEOUT);
+      streamtrans := TNamedPipeTransportClientEndImpl.Create( FSetup.sPipeName, config.GetConfiguration, 0);
       FTransport := streamtrans;
     end;
 
     trns_AnonPipes: begin
-      streamtrans := TAnonymousPipeTransportImpl.Create( FSetup.hAnonRead, FSetup.hAnonWrite, FALSE);
+      streamtrans := TAnonymousPipeTransportImpl.Create( FSetup.hAnonRead, FSetup.hAnonWrite, FALSE, config.GetConfiguration);
       FTransport := streamtrans;
     end;
 

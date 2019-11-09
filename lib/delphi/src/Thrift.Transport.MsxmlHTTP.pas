@@ -34,13 +34,14 @@ uses
     Winapi.ActiveX, Winapi.msxml,
   {$ENDIF}
   Thrift.Collections,
+  Thrift.Configuration,
   Thrift.Transport,
   Thrift.Exception,
   Thrift.Utils,
   Thrift.Stream;
 
 type
-  TMsxmlHTTPClientImpl = class( TTransportImpl, IHTTPClient)
+  TMsxmlHTTPClientImpl = class( TEndpointTransportBase, IHTTPClient)
   strict private
     FUri : string;
     FInputStream : IThriftStream;
@@ -81,7 +82,7 @@ type
     property ReadTimeout: Integer read GetReadTimeout write SetReadTimeout;
     property CustomHeaders: IThriftDictionary<string,string> read GetCustomHeaders;
   public
-    constructor Create( const AUri: string; const aTransportCtl : ITransportControl = nil);
+    constructor Create( const aUri: string; const aConfig : IThriftConfiguration);  reintroduce;
     destructor Destroy; override;
   end;
 
@@ -91,16 +92,16 @@ implementation
 
 { TMsxmlHTTPClientImpl }
 
-constructor TMsxmlHTTPClientImpl.Create(const AUri: string; const aTransportCtl : ITransportControl);
+constructor TMsxmlHTTPClientImpl.Create( const aUri: string; const aConfig : IThriftConfiguration);
 begin
-  inherited Create( aTransportCtl);
+  inherited Create( aConfig);
   FUri := AUri;
 
   // defaults according to MSDN
   FDnsResolveTimeout := 0; // no timeout
-  FConnectionTimeout := 60 * 1000;
-  FSendTimeout       := 30 * 1000;
-  FReadTimeout       := 30 * 1000;
+  FConnectionTimeout := aConfig.ConnectionTimeout( 60 * 1000);
+  FSendTimeout       := aConfig.ReadWriteTimeout(  30 * 1000);
+  FReadTimeout       := aConfig.ReadWriteTimeout(  30 * 1000);
 
   FCustomHeaders := TThriftDictionaryImpl<string,string>.Create;
   FOutputStream := TThriftStreamAdapterDelphi.Create( TMemoryStream.Create, True);

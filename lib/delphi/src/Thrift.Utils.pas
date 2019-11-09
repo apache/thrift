@@ -69,6 +69,24 @@ type
   end;
 
 
+  TThriftNullable<T> = record
+  strict private
+    FValue : T;
+    FHasValue : Boolean;
+
+    function  GetValueOrThrow : T;  overload;
+    procedure SetValue( const aValue : T);
+  public
+    class function FromValue( const aValue : T) : TThriftNullable<T>;  static;
+    class function Empty : TThriftNullable<T>;  static;
+
+    procedure SetEmpty;
+    property  HasValue : Boolean read FHasValue;
+    function  GetValue( out aValue : T): Boolean;  overload;
+    property  Value : T read GetValueOrThrow write SetValue;  // read may throw
+  end;
+
+
   Base64Utils = class sealed
   public
     class function Encode( const src : TBytes; srcOff, len : Integer; dst : TBytes; dstOff : Integer) : Integer; static;
@@ -330,6 +348,45 @@ end;
 function TThriftStringBuilder.Append( const Value: ISupportsToString): TStringBuilder;
 begin
   Result := Append( Value.ToString );
+end;
+
+
+{ TThriftNullable<T> }
+
+class function TThriftNullable<T>.Empty: TThriftNullable<T>;
+begin
+  result.SetEmpty;
+end;
+
+class function TThriftNullable<T>.FromValue(const aValue: T): TThriftNullable<T>;
+begin
+  result.Value := aValue;
+end;
+
+procedure TThriftNullable<T>.SetEmpty;
+begin
+  FHasValue := FALSE;
+  FValue    := default(T);
+end;
+
+procedure TThriftNullable<T>.SetValue( const aValue : T);
+begin
+  FValue    := aValue;
+  FHasValue := TRUE;
+end;
+
+function TThriftNullable<T>.GetValue( out aValue : T): Boolean;
+begin
+  result := FHasValue;
+  if result
+  then aValue := FValue
+  else aValue := default(T);
+end;
+
+function TThriftNullable<T>.GetValueOrThrow : T;
+begin
+  if not GetValue(result)
+  then raise EPropertyError.Create('Value not set');
 end;
 
 

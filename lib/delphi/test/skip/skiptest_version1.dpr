@@ -31,6 +31,7 @@ uses
   Thrift.Protocol in '..\..\src\Thrift.Protocol.pas',
   Thrift.Protocol.JSON in '..\..\src\Thrift.Protocol.JSON.pas',
   Thrift.Collections in '..\..\src\Thrift.Collections.pas',
+  Thrift.Configuration in '..\..\src\Thrift.Configuration.pas',
   Thrift.Server in '..\..\src\Thrift.Server.pas',
   Thrift.Utils in '..\..\src\Thrift.Utils.pas',
   Thrift.WinHTTP in '..\..\src\Thrift.WinHTTP.pas',
@@ -70,8 +71,8 @@ var adapt  : IThriftStream;
 begin
   adapt  := TThriftStreamAdapterDelphi.Create( stm, FALSE);
   if aForInput
-  then trans := TStreamTransportImpl.Create( adapt, nil)
-  else trans := TStreamTransportImpl.Create( nil, adapt);
+  then trans := TStreamTransportImpl.Create( adapt, nil, TConfigurationImpl.DefaultConfiguration)
+  else trans := TStreamTransportImpl.Create( nil, adapt, TConfigurationImpl.DefaultConfiguration);
   result := protfact.GetProtocol( trans);
 end;
 
