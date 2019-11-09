@@ -93,7 +93,8 @@ check: gopath
 				ignoreinitialismstest \
 				unionbinarytest \
 				conflictnamespacetestsuperthing \
-				conflict/context/conflict_service-remote
+				conflict/context/conflict_service-remote \
+				servicestest/container_test-remote
 	GOPATH=`pwd`/gopath $(GO) test thrift tests dontexportrwtest
 
 clean-local:
@@ -127,5 +128,5 @@ EXTRA_DIST = \
 	ConflictNamespaceTestB.thrift \
 	ConflictNamespaceTestC.thrift \
 	ConflictNamespaceTestD.thrift \
-	ConflictNamespaceTestSuperThing.thrift
+	ConflictNamespaceTestSuperThing.thrift \
 	ConflictNamespaceServiceTest.thrift
