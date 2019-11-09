@@ -49,6 +49,10 @@ type
     // It will use the TProtocol specified by the factory that is passed in.
     constructor Create( const factory : IProtocolFactory);  overload;
 
+    // Create a new TSerializer.
+    // It will use the TProtocol and layered transports specified by the factories that are passed in.
+    constructor Create( const protfact : IProtocolFactory; const transfact : ITransportFactory);  overload;
+
     // DTOR
     destructor Destroy;  override;
 
@@ -73,6 +77,10 @@ type
     // It will use the TProtocol specified by the factory that is passed in.
     constructor Create( const factory : IProtocolFactory);  overload;
 
+    // Create a new TDeserializer.
+    // It will use the TProtocol and layered transports specified by the factories that are passed in.
+    constructor Create( const protfact : IProtocolFactory; const transfact : ITransportFactory);  overload;
+
     // DTOR
     destructor Destroy;  override;
 
@@ -89,15 +97,24 @@ implementation
 { TSerializer }
 
 
-constructor TSerializer.Create();
+constructor TSerializer.Create;
 // Create a new TSerializer that uses the TBinaryProtocol by default.
 begin
   //no inherited;
-  Create( TBinaryProtocolImpl.TFactory.Create);
+  Create( TBinaryProtocolImpl.TFactory.Create, nil);
 end;
 
 
 constructor TSerializer.Create( const factory : IProtocolFactory);
+// Create a new TSerializer.
+// It will use the TProtocol specified by the factory that is passed in.
+begin
+  //no inherited;
+  Create( factory, nil);
+end;
+
+
+constructor TSerializer.Create( const protfact : IProtocolFactory; const transfact : ITransportFactory);
 // Create a new TSerializer.
 // It will use the TProtocol specified by the factory that is passed in.
 var adapter : IThriftStream;
@@ -106,7 +123,11 @@ begin
   FStream    := TMemoryStream.Create;
   adapter    := TThriftStreamAdapterDelphi.Create( FStream, FALSE);
   FTransport := TStreamTransportImpl.Create( nil, adapter);
-  FProtocol  := factory.GetProtocol( FTransport);
+  if transfact <> nil then FTransport := transfact.GetTransport( FTransport);
+  FProtocol  := protfact.GetProtocol( FTransport);
+
+  if not FTransport.IsOpen
+  then FTransport.Open;
 end;
 
 
@@ -131,6 +152,8 @@ begin
   try
     FStream.Size := 0;
     input.Write( FProtocol);
+    FTransport.Flush;
+
     SetLength( result, FStream.Size);
     iBytes := Length(result);
     if iBytes > 0
@@ -150,6 +173,8 @@ begin
   try
     FStream.Size := 0;
     input.Write( FProtocol);
+    FTransport.Flush;
+
     aStm.CopyFrom( FStream, COPY_ENTIRE_STREAM);
   finally
     FStream.Size := 0;  // free any allocated memory
@@ -160,15 +185,24 @@ end;
 { TDeserializer }
 
 
-constructor TDeserializer.Create();
+constructor TDeserializer.Create;
 // Create a new TDeserializer that uses the TBinaryProtocol by default.
 begin
   //no inherited;
-  Create( TBinaryProtocolImpl.TFactory.Create);
+  Create( TBinaryProtocolImpl.TFactory.Create, nil);
 end;
 
 
 constructor TDeserializer.Create( const factory : IProtocolFactory);
+// Create a new TDeserializer.
+// It will use the TProtocol specified by the factory that is passed in.
+begin
+  //no inherited;
+  Create( factory, nil);
+end;
+
+
+constructor TDeserializer.Create( const protfact : IProtocolFactory; const transfact : ITransportFactory);
 // Create a new TDeserializer.
 // It will use the TProtocol specified by the factory that is passed in.
 var adapter : IThriftStream;
@@ -177,7 +211,11 @@ begin
   FStream    := TMemoryStream.Create;
   adapter    := TThriftStreamAdapterDelphi.Create( FStream, FALSE);
   FTransport := TStreamTransportImpl.Create( adapter, nil);
-  FProtocol  := factory.GetProtocol( FTransport);
+  if transfact <> nil then FTransport := transfact.GetTransport( FTransport);
+  FProtocol  := protfact.GetProtocol( FTransport);
+
+  if not FTransport.IsOpen
+  then FTransport.Open;
 end;
 
 

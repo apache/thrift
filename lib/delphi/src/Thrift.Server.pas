@@ -61,7 +61,7 @@ type
   public
     type
       TLogDelegate = reference to procedure( const str: string);
-  protected
+  strict protected
     FProcessor : IProcessor;
     FServerTransport : IServerTransport;
     FInputTransportFactory : ITransportFactory;
