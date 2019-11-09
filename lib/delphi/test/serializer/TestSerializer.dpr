@@ -251,8 +251,9 @@ end;
 
 class procedure TTestSerializer.Deserialize( const input : TBytes; const target : IBase; const factory : IProtocolFactory);
 var serial : TDeserializer;
+const MAX_MESSAGE_SIZE_FOR_TESTS = 4096;
 begin
-  serial := TDeserializer.Create( factory);
+  serial := TDeserializer.Create( factory, MAX_MESSAGE_SIZE_FOR_TESTS);
   try
     serial.Deserialize( input, target);
   finally

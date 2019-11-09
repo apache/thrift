@@ -133,8 +133,6 @@ type
     constructor Create(const trans : ITransport);
     destructor Destroy;  override;
 
-    procedure Reset;
-
   strict private
     procedure WriteByteDirect( const b : Byte);  overload;
 
@@ -172,7 +170,7 @@ type
     procedure WriteDouble( const dub: Double); override;
     procedure WriteBinary( const b: TBytes); overload; override;
 
-  private
+  private  // unit visible stuff
     class function  DoubleToInt64Bits( const db : Double) : Int64;
     class function  Int64BitsToDouble( const i64 : Int64) : Double;
 
@@ -192,6 +190,10 @@ type
 
     //Convert a Int64 into little-endian bytes in buf starting at off and going until off+7.
     class procedure fixedLongToBytes( const n : Int64; var buf : TBytes);
+
+  strict protected
+    function GetMinSerializedSize( const aType : TType) : Integer;  override;
+    procedure Reset;  override;
 
   public
     function  ReadMessageBegin: TThriftMessage; override;
@@ -291,6 +293,7 @@ end;
 
 procedure TCompactProtocolImpl.Reset;
 begin
+  inherited Reset;
   lastField_.Clear();
   lastFieldId_ := 0;
   Init( booleanField_, '', TType.Stop, 0);
@@ -735,6 +738,7 @@ begin
   val := getTType( Byte( keyAndValueType and $F));
   Init( result, key, val, size);
   ASSERT( (result.KeyType = key) and (result.ValueType = val));
+  CheckReadBytesAvailable(result);
 end;
 
 
@@ -755,6 +759,7 @@ begin
 
   type_ := getTType( size_and_type);
   Init( result, type_, size);
+  CheckReadBytesAvailable(result);
 end;
 
 
@@ -775,6 +780,7 @@ begin
 
   type_ := getTType( size_and_type);
   Init( result, type_, size);
+  CheckReadBytesAvailable(result);
 end;
 
 
@@ -836,6 +842,7 @@ function TCompactProtocolImpl.ReadBinary: TBytes;
 var length : Integer;
 begin
   length := Integer( ReadVarint32);
+  FTrans.CheckReadBytesAvailable(length);
   SetLength( result, length);
   if (length > 0)
   then Transport.ReadAll( result, 0, length);
@@ -966,6 +973,32 @@ begin
   then result := Byte( ttypeToCompactType[ttype])
   else raise TProtocolExceptionInvalidData.Create('don''t know what type: '+IntToStr(Ord(ttype)));
 end;
+
+
+function TCompactProtocolImpl.GetMinSerializedSize( const aType : TType) : Integer;
+// Return the minimum number of bytes a type will consume on the wire
+begin
+  case aType of
+    TType.Stop:    result := 0;
+    TType.Void:    result := 0;
+    TType.Bool_:   result := SizeOf(Byte);
+    TType.Byte_:   result := SizeOf(Byte);
+    TType.Double_: result := 8;  // uses fixedLongToBytes() which always writes 8 bytes
+    TType.I16:     result := SizeOf(Byte);
+    TType.I32:     result := SizeOf(Byte);
+    TType.I64:     result := SizeOf(Byte);
+    TType.String_: result := SizeOf(Byte);  // string length
+    TType.Struct:  result := 0;             // empty struct
+    TType.Map:     result := SizeOf(Byte);  // element count
+    TType.Set_:    result := SizeOf(Byte);  // element count
+    TType.List:    result := SizeOf(Byte);  // element count
+  else
+    raise TTransportExceptionBadArgs.Create('Unhandled type code');
+  end;
+end;
+
+
+
 
 
 //--- unit tests -------------------------------------------

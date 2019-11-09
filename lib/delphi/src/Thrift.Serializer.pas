@@ -67,11 +67,11 @@ type
 
   public
     // Create a new TDeserializer that uses the TBinaryProtocol by default.
-    constructor Create;  overload;
+    constructor Create( const aMaxMessageSize : Integer = DEFAULT_MAX_MESSAGE_SIZE);  overload;
 
     // Create a new TDeserializer.
     // It will use the TProtocol specified by the factory that is passed in.
-    constructor Create( const factory : IProtocolFactory);  overload;
+    constructor Create( const factory : IProtocolFactory; const aMaxMessageSize : Integer = DEFAULT_MAX_MESSAGE_SIZE);  overload;
 
     // DTOR
     destructor Destroy;  override;
@@ -105,7 +105,7 @@ begin
   inherited Create;
   FStream    := TMemoryStream.Create;
   adapter    := TThriftStreamAdapterDelphi.Create( FStream, FALSE);
-  FTransport := TStreamTransportImpl.Create( nil, adapter);
+  FTransport := TStreamTransportImpl.Create( nil, adapter, TTransportControlImpl.Create(0));  // we don't read anything here
   FProtocol  := factory.GetProtocol( FTransport);
 end;
 
@@ -160,15 +160,15 @@ end;
 { TDeserializer }
 
 
-constructor TDeserializer.Create();
+constructor TDeserializer.Create( const aMaxMessageSize : Integer);
 // Create a new TDeserializer that uses the TBinaryProtocol by default.
 begin
   //no inherited;
-  Create( TBinaryProtocolImpl.TFactory.Create);
+  Create( TBinaryProtocolImpl.TFactory.Create, aMaxMessageSize);
 end;
 
 
-constructor TDeserializer.Create( const factory : IProtocolFactory);
+constructor TDeserializer.Create( const factory : IProtocolFactory; const aMaxMessageSize : Integer);
 // Create a new TDeserializer.
 // It will use the TProtocol specified by the factory that is passed in.
 var adapter : IThriftStream;
@@ -176,7 +176,7 @@ begin
   inherited Create;
   FStream    := TMemoryStream.Create;
   adapter    := TThriftStreamAdapterDelphi.Create( FStream, FALSE);
-  FTransport := TStreamTransportImpl.Create( adapter, nil);
+  FTransport := TStreamTransportImpl.Create( adapter, nil, TTransportControlImpl.Create(aMaxMessageSize));
   FProtocol  := factory.GetProtocol( FTransport);
 end;
 

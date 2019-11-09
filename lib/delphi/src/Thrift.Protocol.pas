@@ -196,7 +196,7 @@ type
   end;
 
   IProtocol = interface
-    ['{602A7FFB-0D9E-4CD8-8D7F-E5076660588A}']
+    ['{7F3640D7-5082-49E7-B562-84202F323C3A}']
     function GetTransport: ITransport;
     procedure WriteMessageBegin( const msg: TThriftMessage);
     procedure WriteMessageEnd;
@@ -248,6 +248,7 @@ type
     function  NextRecursionLevel : IProtocolRecursionTracker;
     procedure IncrementRecursionDepth;
     procedure DecrementRecursionDepth;
+    function  GetMinSerializedSize( const aType : TType) : Integer;
 
     property Transport: ITransport read GetTransport;
     property RecursionLimit : Integer read GetRecursionLimit write SetRecursionLimit;
@@ -265,6 +266,12 @@ type
     procedure IncrementRecursionDepth;
     procedure DecrementRecursionDepth;
 
+    function  GetMinSerializedSize( const aType : TType) : Integer;  virtual; abstract;
+    procedure CheckReadBytesAvailable( const value : TThriftList);  overload; inline;
+    procedure CheckReadBytesAvailable( const value : TThriftSet);  overload; inline;
+    procedure CheckReadBytesAvailable( const value : TThriftMap);  overload; inline;
+
+    procedure Reset;  virtual;
     function GetTransport: ITransport;
   public
     procedure WriteMessageBegin( const msg: TThriftMessage); virtual; abstract;
@@ -332,6 +339,7 @@ type
   strict protected
     FStrictRead : Boolean;
     FStrictWrite : Boolean;
+    function GetMinSerializedSize( const aType : TType) : Integer;  override;
 
   strict private
     function ReadAll( const pBuf : Pointer; const buflen : Integer; off: Integer; len: Integer ): Integer;  inline;
@@ -403,6 +411,9 @@ type
   TProtocolDecorator = class( TProtocolImpl)
   strict private
     FWrappedProtocol : IProtocol;
+
+  strict protected
+    function GetMinSerializedSize( const aType : TType) : Integer;  override;
 
   public
     // Encloses the specified protocol.
@@ -583,6 +594,12 @@ begin
   Result := FTrans;
 end;
 
+procedure TProtocolImpl.Reset;
+begin
+  if FTrans.TransportControl <> nil
+  then FTrans.TransportControl.ResetConsumedMessageSize;
+end;
+
 function TProtocolImpl.ReadAnsiString: AnsiString;
 var
   b : TBytes;
@@ -622,6 +639,29 @@ begin
   b := TEncoding.UTF8.GetBytes(s);
   WriteBinary( b );
 end;
+
+
+procedure TProtocolImpl.CheckReadBytesAvailable( const value : TThriftList);
+begin
+  FTrans.CheckReadBytesAvailable( value.Count * GetMinSerializedSize(value.ElementType));
+end;
+
+
+procedure TProtocolImpl.CheckReadBytesAvailable( const value : TThriftSet);
+begin
+  FTrans.CheckReadBytesAvailable( value.Count * GetMinSerializedSize(value.ElementType));
+end;
+
+
+procedure TProtocolImpl.CheckReadBytesAvailable( const value : TThriftMap);
+var nPairSize : Integer
+;
+begin
+  nPairSize := GetMinSerializedSize(value.KeyType) + GetMinSerializedSize(value.ValueType);
+  FTrans.CheckReadBytesAvailable( value.Count * nPairSize);
+end;
+
+
 
 { TProtocolUtil }
 
@@ -705,6 +745,7 @@ var
   buf : TBytes;
 begin
   size := ReadI32;
+  FTrans.CheckReadBytesAvailable( size);
   SetLength( buf, size);
   FTrans.ReadAll( buf, 0, size);
   Result := buf;
@@ -777,6 +818,7 @@ function TBinaryProtocolImpl.ReadListBegin: TThriftList;
 begin
   result.ElementType := TType(ReadByte);
   result.Count       := ReadI32;
+  CheckReadBytesAvailable(result);
 end;
 
 procedure TBinaryProtocolImpl.ReadListEnd;
@@ -789,6 +831,7 @@ begin
   result.KeyType   := TType(ReadByte);
   result.ValueType := TType(ReadByte);
   result.Count     := ReadI32;
+  CheckReadBytesAvailable(result);
 end;
 
 procedure TBinaryProtocolImpl.ReadMapEnd;
@@ -801,6 +844,7 @@ var
   size : Integer;
   version : Integer;
 begin
+  Reset;
   Init( result);
   size := ReadI32;
   if (size < 0) then begin
@@ -832,6 +876,7 @@ function TBinaryProtocolImpl.ReadSetBegin: TThriftSet;
 begin
   result.ElementType := TType(ReadByte);
   result.Count       := ReadI32;
+  CheckReadBytesAvailable(result);
 end;
 
 procedure TBinaryProtocolImpl.ReadSetEnd;
@@ -842,6 +887,7 @@ end;
 function TBinaryProtocolImpl.ReadStringBody( size: Integer): string;
 var buf : TBytes;
 begin
+  FTrans.CheckReadBytesAvailable( size);
   SetLength( buf, size);
   FTrans.ReadAll( buf, 0, size );
   Result := TEncoding.UTF8.GetString( buf);
@@ -959,6 +1005,7 @@ end;
 procedure TBinaryProtocolImpl.WriteMessageBegin( const msg: TThriftMessage);
 var version : Cardinal;
 begin
+  Reset;
   if FStrictWrite then begin
     version := VERSION_1 or Cardinal( msg.Type_);
     WriteI32( Integer( version) );
@@ -996,6 +1043,29 @@ procedure TBinaryProtocolImpl.WriteStructEnd;
 begin
 
 end;
+
+function TBinaryProtocolImpl.GetMinSerializedSize( const aType : TType) : Integer;
+// Return the minimum number of bytes a type will consume on the wire
+begin
+  case aType of
+    TType.Stop:    result := 0;
+    TType.Void:    result := 0;
+    TType.Bool_:   result := SizeOf(Byte);
+    TType.Byte_:   result := SizeOf(Byte);
+    TType.Double_: result := SizeOf(Double);
+    TType.I16:     result := SizeOf(Int16);
+    TType.I32:     result := SizeOf(Int32);
+    TType.I64:     result := SizeOf(Int64);
+    TType.String_: result := SizeOf(Int32);  // string length
+    TType.Struct:  result := 0;  // empty struct
+    TType.Map:     result := SizeOf(Int32);  // element count
+    TType.Set_:    result := SizeOf(Int32);  // element count
+    TType.List:    result := SizeOf(Int32);  // element count
+  else
+    raise TTransportExceptionBadArgs.Create('Unhandled type code');
+  end;
+end;
+
 
 { TProtocolException }
 
@@ -1360,6 +1430,12 @@ end;
 function TProtocolDecorator.ReadAnsiString: AnsiString;
 begin
   result := FWrappedProtocol.ReadAnsiString;
+end;
+
+
+function TProtocolDecorator.GetMinSerializedSize( const aType : TType) : Integer;
+begin
+  result := FWrappedProtocol.GetMinSerializedSize(aType);
 end;
 
 
