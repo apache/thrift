@@ -33,14 +33,19 @@
   "browser": "./lib/nodejs/lib/thrift/browser.js",
   "main": "./lib/nodejs/lib/thrift",
   "engines": {
-    "node": ">= 4.1.0"
+    "node": ">= 8.16.2"
   },
   "dependencies": {
+    "browser-or-node": "^1.2.1",
+    "isomorphic-ws": "^4.0.1",
     "node-int64": "^0.4.0",
     "q": "^1.5.0",
-    "ws": "^5.0.0"
+    "ws": "^5.2.2"
   },
   "devDependencies": {
+    "@types/node": "^10.12.6",
+    "@types/node-int64": "^0.4.29",
+    "@types/q": "^1.5.1",
     "buffer-equals": "^1.0.4",
     "commander": "^2.14.1",
     "connect": "^3.6.6",
@@ -49,15 +54,12 @@
     "eslint-plugin-prettier": "^3.0.0",
     "html-validator-cli": "^4.1.4",
     "istanbul": "^0.4.5",
-    "jsdoc": "^3.5.5",
+    "jsdoc": "^3.6.3",
     "json-int64": "^1.0.0",
     "prettier": "^1.14.3",
     "tape": "^4.9.0",
-    "utf-8-validate": "^4.0.0",
     "typescript": "^3.1.6",
-    "@types/node": "^10.12.6",
-    "@types/node-int64": "^0.4.29",
-    "@types/q": "^1.5.1"
+    "utf-8-validate": "^4.0.0"
   },
   "scripts": {
     "cover": "lib/nodejs/test/testAll.sh COVER",
