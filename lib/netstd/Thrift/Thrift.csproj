@@ -19,7 +19,7 @@
   -->
 
   <PropertyGroup>
-    <TargetFramework>netstandard2.1</TargetFramework>
+    <TargetFramework>netstandard2.0</TargetFramework>
     <AssemblyName>Thrift</AssemblyName>
     <PackageId>Thrift</PackageId>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>

@@ -311,6 +311,7 @@ private:
   std::string camelcase(const std::string& value) const;
   void fix_common_initialism(std::string& value, int i) const;
   std::string publicize(const std::string& value, bool is_args_or_result = false) const;
+  std::string publicize(const std::string& value, bool is_args_or_result, const std::string& service_name) const;
   std::string privatize(const std::string& value) const;
   std::string new_prefix(const std::string& value) const;
   static std::string variable_name_to_go_name(const std::string& value);
@@ -464,7 +465,7 @@ void t_go_generator::fix_common_initialism(std::string& value, int i) const {
   }
 }
 
-std::string t_go_generator::publicize(const std::string& value, bool is_args_or_result) const {
+std::string t_go_generator::publicize(const std::string& value, bool is_args_or_result, const std::string& service_name) const {
   if (value.size() <= 0) {
     return value;
   }
@@ -506,10 +507,14 @@ std::string t_go_generator::publicize(const std::string& value, bool is_args_or_
 
   // Avoid naming collisions with other services
   if (is_args_or_result) {
-    prefix += publicize(service_name_);
+    prefix += publicize(service_name);
   }
 
   return prefix + value2;
+}
+
+std::string t_go_generator::publicize(const std::string& value, bool is_args_or_result) const {
+  return publicize(value, is_args_or_result, service_name_);
 }
 
 std::string t_go_generator::new_prefix(const std::string& value) const {
@@ -2121,13 +2126,26 @@ void t_go_generator::generate_service_client(t_service* tservice) {
  * @param tservice The service to generate a remote for.
  */
 void t_go_generator::generate_service_remote(t_service* tservice) {
-  vector<t_function*> functions = tservice->get_functions();
-  t_service* parent = tservice->get_extends();
+  vector<t_function*> functions;
+  std::unordered_map<std::string, std::string> func_to_service;
 
-  // collect inherited functions
+  // collect all functions including inherited functions
+  t_service* parent = tservice;
   while (parent != NULL) {
     vector<t_function*> p_functions = parent->get_functions();
     functions.insert(functions.end(), p_functions.begin(), p_functions.end());
+
+    // We need to maintain a map of functions names to the name of their parent.
+    // This is because functions may come from a parent service, and if we need
+    // to create the arguments struct (e.g. `NewParentServiceNameFuncNameArgs()`)
+    // we need to make sure to specify the correct service name.
+    for (vector<t_function*>::iterator f_iter = p_functions.begin(); f_iter != p_functions.end(); ++f_iter) {
+      auto it = func_to_service.find((*f_iter)->get_name());
+      if (it == func_to_service.end()) {
+        func_to_service.emplace((*f_iter)->get_name(), parent->get_name());
+      }
+    }
+
     parent = parent->get_extends();
   }
 
@@ -2340,7 +2358,7 @@ void t_go_generator::generate_service_remote(t_service* tservice) {
     std::vector<t_field*>::size_type num_args = args.size();
     string funcName((*f_iter)->get_name());
     string pubName(publicize(funcName));
-    string argumentsName(publicize(funcName + "_args", true));
+    string argumentsName(publicize(funcName + "_args", true, func_to_service[funcName]));
     f_remote << indent() << "case \"" << escape_string(funcName) << "\":" << endl;
     indent_up();
     f_remote << indent() << "if flag.NArg() - 1 != " << num_args << " {" << endl;

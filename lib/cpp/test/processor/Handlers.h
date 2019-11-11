@@ -139,7 +139,7 @@ protected:
   std::shared_ptr<EventLog> log_;
 };
 
-#ifdef _WIN32
+#ifdef _MSC_VER
   #pragma warning( push )
   #pragma warning (disable : 4250 ) //inheriting methods via dominance
 #endif
@@ -168,7 +168,7 @@ protected:
   int32_t value_;
 };
 
-#ifdef _WIN32
+#ifdef _MSC_VER
   #pragma warning( pop )
 #endif
 
