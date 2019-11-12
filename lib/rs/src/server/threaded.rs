@@ -24,6 +24,7 @@ use transport::{TIoChannel, TReadTransportFactory, TTcpChannel, TWriteTransportF
 use {ApplicationError, ApplicationErrorKind};
 
 use super::TProcessor;
+use TransportErrorKind;
 
 /// Fixed-size thread-pool blocking Thrift server.
 ///
@@ -224,10 +225,15 @@ fn handle_incoming_connection<PRC>(
     let mut i_prot = i_prot;
     let mut o_prot = o_prot;
     loop {
-        let r = processor.process(&mut *i_prot, &mut *o_prot);
-        if let Err(e) = r {
-            warn!("processor completed with error: {:?}", e);
-            break;
+        match processor.process(&mut *i_prot, &mut *o_prot) {
+            Ok(()) => {},
+            Err(err) => {
+                match err {
+                    ::Error::Transport(ref transport_err) if transport_err.kind == TransportErrorKind::EndOfFile => {},
+                    other => warn!("processor completed with error: {:?}", other),
+                }
+                break;
+            }
         }
     }
 }
