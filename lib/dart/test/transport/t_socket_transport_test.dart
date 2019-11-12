@@ -18,9 +18,10 @@
 library thrift.test.transport.t_socket_transport_test;
 
 import 'dart:async';
-import 'dart:convert' show Utf8Codec, BASE64;
+import 'dart:convert' show Utf8Codec;
 import 'dart:typed_data' show Uint8List;
 
+import 'package:crypto/crypto.dart' show CryptoUtils;
 import 'package:mockito/mockito.dart';
 import 'package:test/test.dart';
 import 'package:thrift/thrift.dart';
@@ -30,14 +31,14 @@ void main() {
 
   final requestText = 'my test request';
   final requestBytes = new Uint8List.fromList(utf8Codec.encode(requestText));
-  final requestBase64 = BASE64.encode(requestBytes);
+  final requestBase64 = CryptoUtils.bytesToBase64(requestBytes);
 
   final responseText = 'response 1';
   final responseBytes = new Uint8List.fromList(utf8Codec.encode(responseText));
-  final responseBase64 = BASE64.encode(responseBytes);
+  final responseBase64 = CryptoUtils.bytesToBase64(responseBytes);
 
   final framedResponseBase64 =
-      BASE64.encode(_getFramedResponse(responseBytes));
+      CryptoUtils.bytesToBase64(_getFramedResponse(responseBytes));
 
   group('TClientSocketTransport', () {
     FakeSocket socket;
@@ -139,7 +140,7 @@ void main() {
       var response2Text = 'response 2';
       var response2Bytes =
           new Uint8List.fromList(utf8Codec.encode(response2Text));
-      var response2Base64 = BASE64.encode(response2Bytes);
+      var response2Base64 = CryptoUtils.bytesToBase64(response2Bytes);
       protocolFactory.message = new TMessage('foo2', TMessageType.REPLY, 124);
       socket.receiveFakeMessage(response2Base64);
 
@@ -279,7 +280,7 @@ class FakeSocket extends TSocket {
     if (!isOpen) throw new StateError('The socket is not open');
 
     var message =
-        new Uint8List.fromList(BASE64.decode(base64));
+        new Uint8List.fromList(CryptoUtils.base64StringToBytes(base64));
     _onMessageController.add(message);
   }
 }

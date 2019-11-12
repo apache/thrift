@@ -22,13 +22,11 @@ package thrift
 import (
 	"log"
 	"runtime/debug"
-	"sync/atomic"
 )
 
 // Simple, non-concurrent server for testing.
 type TSimpleServer struct {
 	quit chan struct{}
-	stopped int64
 
 	processorFactory       TProcessorFactory
 	serverTransport        TServerTransport
@@ -151,10 +149,8 @@ func (p *TSimpleServer) Serve() error {
 }
 
 func (p *TSimpleServer) Stop() error {
-	if atomic.CompareAndSwapInt64(&p.stopped, 0, 1) {
-		p.quit <- struct{}{}
-		p.serverTransport.Interrupt()
-	}
+	p.quit <- struct{}{}
+	p.serverTransport.Interrupt()
 	return nil
 }
 
@@ -182,9 +178,6 @@ func (p *TSimpleServer) processRequests(client TTransport) error {
 		} else if err != nil {
 			log.Printf("error processing request: %s", err)
 			return err
-		}
-		if err, ok := err.(TApplicationException); ok && err.TypeId() == UNKNOWN_METHOD {
-			continue
 		}
 		if !ok {
 			break

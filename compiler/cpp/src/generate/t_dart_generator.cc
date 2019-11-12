@@ -175,7 +175,6 @@ public:
   void generate_dart_bean_boilerplate(std::ofstream& out, t_struct* tstruct);
 
   void generate_function_helpers(t_function* tfunction);
-  std::string init_value(t_field* tfield);
   std::string get_cap_name(std::string name);
   std::string get_member_name(std::string name);
   std::string get_args_class_name(std::string name);
@@ -545,7 +544,6 @@ void t_dart_generator::generate_consts(std::vector<t_const*> consts) {
 
   // Print header
   f_consts << autogen_comment() << dart_library(file_name) << endl;
-  f_consts << dart_thrift_imports() << endl;
 
   export_class_to_library(file_name, class_name);
   indent(f_consts) << "class " << class_name;
@@ -596,8 +594,8 @@ void t_dart_generator::print_const_value(std::ofstream& out,
     vector<t_field*>::const_iterator f_iter;
     const map<t_const_value*, t_const_value*>& val = value->get_map();
     map<t_const_value*, t_const_value*>::const_iterator v_iter;
-    out << type_name(type) << " " << name << " = new " << type_name(type) << "()";
-    indent_up();
+    out << type_name(type) << " " << name << " = new " << type_name(type) << "();"
+        << endl;
     for (v_iter = val.begin(); v_iter != val.end(); ++v_iter) {
       t_type* field_type = NULL;
       for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
@@ -609,11 +607,10 @@ void t_dart_generator::print_const_value(std::ofstream& out,
         throw "type error: " + type->get_name() + " has no field " + v_iter->first->get_string();
       }
       string val = render_const_value(out, name, field_type, v_iter->second);
-      out << endl;
-      indent(out) << ".." << v_iter->first->get_string() << " = " << val;
+      indent(out) << name << ".";
+      out << v_iter->first->get_string() << " = " << val << ";" << endl;
     }
-    indent_down();
-    out << ";" << endl;
+    out << endl;
   } else if (type->is_map()) {
     if (!defval) {
       out << type_name(type) << " ";
@@ -802,7 +799,7 @@ void t_dart_generator::generate_dart_struct_definition(ofstream& out,
   for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
     generate_dart_doc(out, *m_iter);
     indent(out) << type_name((*m_iter)->get_type()) + " _"
-                << get_member_name((*m_iter)->get_name()) << init_value(*m_iter) << ";" << endl;
+                << get_member_name((*m_iter)->get_name()) << ";" << endl;
 
     indent(out) << "static const int " << upcase_string((*m_iter)->get_name())
                 << " = " << (*m_iter)->get_key() << ";" << endl;
@@ -2311,49 +2308,6 @@ string t_dart_generator::type_to_enum(t_type* type) {
   }
 
   throw "INVALID TYPE IN type_to_enum: " + type->get_name();
-}
-
-std::string t_dart_generator::init_value(t_field* field) {
-  // Do not initialize optional fields
-  if (field->get_req() == t_field::T_OPTIONAL) {
-    return "";
-  }
-
-  t_type* ttype = field->get_type();
-
-  // Get the actual type for a typedef
-  if (ttype->is_typedef()) {
-    ttype = ((t_typedef*)ttype)->get_type();
-  }
-
-  // Only consider base types for default initialization
-  if (!ttype->is_base_type()) {
-    return "";
-  }
-  t_base_type::t_base tbase = ((t_base_type*)ttype)->get_base();
-
-  // Initialize bools, ints, and doubles with sane defaults
-  string result;
-  switch (tbase) {
-  case t_base_type::TYPE_BOOL:
-    result = " = false";
-    break;
-  case t_base_type::TYPE_I8:
-  case t_base_type::TYPE_I16:
-  case t_base_type::TYPE_I32:
-  case t_base_type::TYPE_I64:
-    result = " = 0";
-    break;
-  case t_base_type::TYPE_DOUBLE:
-    result = " = 0.0";
-    break;
-  case t_base_type::TYPE_VOID:
-  case t_base_type::TYPE_STRING:
-    result = "";
-    break;
-  }
-
-  return result;
 }
 
 std::string t_dart_generator::get_cap_name(std::string name) {

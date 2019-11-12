@@ -121,7 +121,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 RUN apt-get update && apt-get install -y --no-install-recommends \
 `# CSharp dependencies` \
       libmono-system-web2.0-cil \
-      mono-devel
+      mono-complete \
+      mono-devel \
+      mono-gmcs \
+      mono-xbuild
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
 `# D dependencies` \
@@ -142,12 +145,11 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     rm -rf /tmp/* && \
     rm -rf /var/tmp/*
 
-# Ruby
-RUN gem install bundler --no-ri --no-rdoc
+# Java
+RUN update-java-alternatives -s java-1.7.0-openjdk-amd64
 
-# Python optional dependencies
-RUN pip2 install -U ipaddress backports.ssl_match_hostname tornado
-RUN pip3 install -U backports.ssl_match_hostname tornado
+# Ruby
+RUN gem install bundler rake
 
 # Go
 RUN curl -sSL https://storage.googleapis.com/golang/go1.4.3.linux-amd64.tar.gz | tar -C /usr/local/ -xz
@@ -186,5 +188,5 @@ ENV LC_ALL C.UTF-8
 
 ENV THRIFT_ROOT /thrift
 RUN mkdir -p $THRIFT_ROOT/src
-COPY Dockerfile $THRIFT_ROOT/
+COPY scripts $THRIFT_ROOT
 WORKDIR $THRIFT_ROOT/src

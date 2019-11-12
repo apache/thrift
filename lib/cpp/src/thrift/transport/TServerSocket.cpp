@@ -276,16 +276,15 @@ void TServerSocket::listen() {
     throw TTransportException(TTransportException::BAD_ARGS, "Specified port is invalid");
   }
 
+  struct addrinfo hints;
   const struct addrinfo *res;
   int error;
   char port[sizeof("65535")];
-  snprintf(port, sizeof(port), "%d", port_);
-
-  struct addrinfo hints;
   std::memset(&hints, 0, sizeof(hints));
   hints.ai_family = PF_UNSPEC;
   hints.ai_socktype = SOCK_STREAM;
   hints.ai_flags = AI_PASSIVE | AI_ADDRCONFIG;
+  sprintf(port, "%d", port_);
 
   // If address is not specified use wildcard address (NULL)
   TGetAddrInfoWrapper info(address_.empty() ? NULL : &address_[0], port, &hints);
@@ -446,7 +445,6 @@ void TServerSocket::listen() {
   // we may want to try to bind more than once, since THRIFT_NO_SOCKET_CACHING doesn't
   // always seem to work. The client can configure the retry variables.
   int retries = 0;
-  int errno_copy = 0;
 
   if (!path_.empty()) {
 
@@ -455,7 +453,7 @@ void TServerSocket::listen() {
     // Unix Domain Socket
     size_t len = path_.size() + 1;
     if (len > sizeof(((sockaddr_un*)NULL)->sun_path)) {
-      errno_copy = THRIFT_GET_SOCKET_ERROR;
+      int errno_copy = THRIFT_GET_SOCKET_ERROR;
       GlobalOutput.perror("TSocket::listen() Unix Domain socket path too long", errno_copy);
       throw TTransportException(TTransportException::NOT_OPEN,
                                 "Unix Domain socket path too long",
@@ -483,7 +481,6 @@ void TServerSocket::listen() {
       if (0 == ::bind(serverSocket_, (struct sockaddr*)&address, structlen)) {
         break;
       }
-      errno_copy = THRIFT_GET_SOCKET_ERROR;
       // use short circuit evaluation here to only sleep if we need to
     } while ((retries++ < retryLimit_) && (THRIFT_SLEEP_SEC(retryDelay_) == 0));
 #else
@@ -496,7 +493,6 @@ void TServerSocket::listen() {
       if (0 == ::bind(serverSocket_, res->ai_addr, static_cast<int>(res->ai_addrlen))) {
         break;
       }
-      errno_copy = THRIFT_GET_SOCKET_ERROR;
       // use short circuit evaluation here to only sleep if we need to
     } while ((retries++ < retryLimit_) && (THRIFT_SLEEP_SEC(retryDelay_) == 0));
 
@@ -506,7 +502,7 @@ void TServerSocket::listen() {
       socklen_t len = sizeof(sa);
       std::memset(&sa, 0, len);
       if (::getsockname(serverSocket_, reinterpret_cast<struct sockaddr*>(&sa), &len) < 0) {
-        errno_copy = THRIFT_GET_SOCKET_ERROR;
+        int errno_copy = errno;
         GlobalOutput.perror("TServerSocket::getPort() getsockname() ", errno_copy);
       } else {
         if (sa.ss_family == AF_INET6) {
@@ -524,15 +520,15 @@ void TServerSocket::listen() {
   if (retries > retryLimit_) {
     char errbuf[1024];
     if (!path_.empty()) {
-      snprintf(errbuf, sizeof(errbuf), "TServerSocket::listen() PATH %s", path_.c_str());
+      sprintf(errbuf, "TServerSocket::listen() PATH %s", path_.c_str());
     } else {
-      snprintf(errbuf, sizeof(errbuf), "TServerSocket::listen() BIND %d", port_);
+      sprintf(errbuf, "TServerSocket::listen() BIND %d", port_);
     }
     GlobalOutput(errbuf);
     close();
     throw TTransportException(TTransportException::NOT_OPEN,
                               "Could not bind",
-                              errno_copy);
+                              THRIFT_GET_SOCKET_ERROR);
   }
 
   if (listenCallback_)
@@ -540,7 +536,7 @@ void TServerSocket::listen() {
 
   // Call listen
   if (-1 == ::listen(serverSocket_, acceptBacklog_)) {
-    errno_copy = THRIFT_GET_SOCKET_ERROR;
+    int errno_copy = THRIFT_GET_SOCKET_ERROR;
     GlobalOutput.perror("TServerSocket::listen() listen() ", errno_copy);
     close();
     throw TTransportException(TTransportException::NOT_OPEN, "Could not listen", errno_copy);

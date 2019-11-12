@@ -115,9 +115,9 @@ handle_call( { call, Op, Args },
              _From,
              State=#state{ client = Client } ) ->
 
-  Timer = timer_fun(),
+  Start = now(),
   Result = ( catch thrift_client:call( Client, Op, Args) ),
-  Time = Timer(),
+  Time = timer:now_diff( now(), Start ),
 
   case Result of
     { C, { ok, Reply } } ->
@@ -217,21 +217,6 @@ reconn_time( #state{ reconn_max = ReconnMax, reconn_time = R } ) ->
     false -> Backoff
   end.
 
--ifdef(time_correction).
-timer_fun() ->
-  T1 = erlang:monotonic_time(),
-  fun() ->
-    T2 = erlang:monotonic_time(),
-    erlang:convert_time_unit(T2 - T1, native, micro_seconds)
-  end.
--else.
-timer_fun() ->
-  T1 = erlang:now(),
-  fun() ->
-    T2 = erlang:now(),
-    timer:now_diff(T2, T1)
-  end.
--endif.
 
 incr_stats( Op, Result, Time,
             State = #state{ op_cnt_dict  = OpCntDict,

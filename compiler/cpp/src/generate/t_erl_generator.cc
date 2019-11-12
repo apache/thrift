@@ -56,6 +56,8 @@ public:
     legacy_names_ = false;
     maps_ = false;
     otp16_ = false;
+    erl_namespace_ = program->get_namespace("erl");
+
     for( iter = parsed_options.begin(); iter != parsed_options.end(); ++iter) {
       if( iter->first.compare("legacynames") == 0) {
         legacy_names_ = true;
@@ -180,6 +182,8 @@ private:
   /* if true use non-namespaced dict and set instead of dict:dict and sets:set */
   bool otp16_;
 
+  /* A namespace that gets appended to our generated structs. */
+  std::string erl_namespace_;
   /**
    * add function to export list
    */
@@ -1013,10 +1017,8 @@ string t_erl_generator::argument_list(t_struct* tstruct) {
 
 string t_erl_generator::type_name(t_type* ttype) {
   string prefix = "";
-  string erl_namespace = ttype->get_program()->get_namespace("erl");
-
-  if (erl_namespace.length() > 0) {
-    prefix = erl_namespace + ".";
+  if (erl_namespace_.length() > 0) {
+    prefix = erl_namespace_ + ".";
   }
 
   string name = ttype->get_name();

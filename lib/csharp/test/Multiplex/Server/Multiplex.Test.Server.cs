@@ -30,14 +30,30 @@ namespace Test.Multiplex.Server
 {
     public class TestServer
     {
-        class BenchmarkServiceImpl : BenchmarkService.Iface
+        public interface ITestHandler
+        {
+            void SetServer( TServer aServer);
+        }
+
+        protected class TestHandlerImpl : ITestHandler
+        {
+            private TServer Server;
+
+            public void SetServer( TServer aServer)
+            {
+                Server = aServer;
+            }
+        }
+
+
+        protected class BenchmarkServiceImpl : TestHandlerImpl, BenchmarkService.Iface
         {
             public int fibonacci(sbyte n)
             {
                 int prev, next, result;
                 prev   = 0;
                 result = 1;
-                while (n > 0)
+                while( n > 0)
                 {
                     next   = result + prev;
                     prev   = result;
@@ -48,13 +64,14 @@ namespace Test.Multiplex.Server
             }
         }
 
-        class AggrServiceImpl : Aggr.Iface
+
+        protected class AggrServiceImpl : TestHandlerImpl,  Aggr.Iface
         {
             List<int> values = new List<int>();
 
             public void addValue(int value)
             {
-                values.Add(value);
+                values.Add( value);
             }
 
             public List<int> getValues()
@@ -63,45 +80,52 @@ namespace Test.Multiplex.Server
             }
         }
 
-        static void Execute(int port)
-        {
-            try
-            {
-                // create protocol factory, default to BinaryProtocol
-                TProtocolFactory ProtocolFactory = new TBinaryProtocol.Factory(true,true);
-                TServerTransport servertrans = new TServerSocket(port, 0, false);
-                TTransportFactory TransportFactory = new TFramedTransport.Factory();
+       static void Execute()
+       {
+           try
+           {
+               // create protocol factory, default to BinaryProtocol
+               TProtocolFactory ProtocolFactory = new TBinaryProtocol.Factory(true,true);
+               TServerTransport servertrans     = new TServerSocket( 9090, 0, false);
+               TTransportFactory TransportFactory = new TFramedTransport.Factory();
 
-                BenchmarkService.Iface benchHandler = new BenchmarkServiceImpl();
-                TProcessor benchProcessor = new BenchmarkService.Processor(benchHandler);
+               BenchmarkService.Iface benchHandler = new BenchmarkServiceImpl();
+               TProcessor benchProcessor = new BenchmarkService.Processor( benchHandler);
 
-                Aggr.Iface aggrHandler = new AggrServiceImpl();
-                TProcessor aggrProcessor = new Aggr.Processor(aggrHandler);
+               Aggr.Iface aggrHandler = new AggrServiceImpl();
+               TProcessor aggrProcessor = new Aggr.Processor( aggrHandler);
 
-                TMultiplexedProcessor multiplex = new TMultiplexedProcessor();
-                multiplex.RegisterProcessor(Constants.NAME_BENCHMARKSERVICE, benchProcessor);
-                multiplex.RegisterProcessor(Constants.NAME_AGGR, aggrProcessor);
+               TMultiplexedProcessor multiplex = new TMultiplexedProcessor();
+               multiplex.RegisterProcessor(Constants.NAME_BENCHMARKSERVICE, benchProcessor);
+               multiplex.RegisterProcessor(Constants.NAME_AGGR, aggrProcessor);
 
-                TServer ServerEngine = new TSimpleServer(multiplex, servertrans, TransportFactory, ProtocolFactory);
+               TServer ServerEngine = new TSimpleServer( multiplex, servertrans, TransportFactory, ProtocolFactory);
 
-                Console.WriteLine("Starting the server ...");
-                ServerEngine.Serve();
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine(e.Message);
-            }
-        }
+               (benchHandler as ITestHandler).SetServer( ServerEngine);
+               (aggrHandler as ITestHandler).SetServer( ServerEngine);
 
-        static void Main(string[] args)
-        {
-            int port = 9090;
-            if (args.Length > 0)
-            {
-                port = ushort.Parse(args[0]);
-            }
-            Execute(port);
-        }
+               Console.WriteLine("Starting the server ...");
+               ServerEngine.Serve();
+
+               (benchHandler as ITestHandler).SetServer(null);
+               (aggrHandler as ITestHandler).SetServer(null);
+
+           }
+           catch( Exception e)
+           {
+               Console.WriteLine( e.Message);
+           }
+           Console.WriteLine( "done.");
+       }
+
+
+       static void Main(string[] args)
+       {
+           Execute();
+       }
     }
+
+
+
 }
 

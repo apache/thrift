@@ -18,20 +18,17 @@
 #
 
 THRIFT = $(top_builddir)/compiler/cpp/thrift
-
-BIN_CPP = bin/Main-debug
 BIN_PHP = bin/php/Main-debug.php
-BIN_PHP_WEB = bin/php-web-server/Main-debug.php
 
 
 gen-haxe/tutorial/calculator.hx gen-haxe/shared/shared_service.hx: $(top_srcdir)/tutorial/tutorial.thrift
 	$(THRIFT) --gen haxe -r $<
 
-all-local: $(BIN_CPP) $(BIN_PHP) $(BIN_PHP_WEB)
+all-local: bin/Main-debug $(BIN_PHP)
 
 check: gen-haxe/tutorial/calculator.hx
 
-$(BIN_CPP): \
+bin/Main-debug: \
 		src/*.hx \
 		../../lib/haxe/src/org/apache/thrift/**/*.hx \
 		gen-haxe/tutorial/calculator.hx
@@ -43,41 +40,29 @@ $(BIN_PHP): \
 		gen-haxe/tutorial/calculator.hx
 	$(HAXE) --cwd .  php.hxml
 
-$(BIN_PHP_WEB): \
-		src/*.hx \
-		../../lib/haxe/src/org/apache/thrift/**/*.hx \
-		gen-haxe/tutorial/calculator.hx
-	$(HAXE) --cwd .  php-web-server.hxml
-
 tutorialserver: all
-	$(BIN_CPP) server
+	bin/Main-debug server
 
 tutorialserver_php: all
 	php -f $(BIN_PHP) server
 
 tutorialclient: all
-	$(BIN_CPP)
+	bin/Main-debug
 
 tutorialclient_php: all
 	php -f $(BIN_PHP) 
 
 tutorialsecureserver: all
-	$(BIN_CPP) server secure
+	bin/Main-debug server secure
 
 tutorialsecureserver_php: all
 	php -f $(BIN_PHP) server secure
 
 tutorialsecureclient: all
-	$(BIN_CPP) secure
+	bin/Main-debug secure
 
 tutorialsecureclient_php: all
 	php -f $(BIN_PHP) secure
-
-tutorialserver_php_http: all
-	php -S 127.0.0.1:9090 router.php
-
-tutorialclient_http: all
-	$(BIN_CPP) client http
 
 clean-local:
 	$(RM) -r gen-haxe bin

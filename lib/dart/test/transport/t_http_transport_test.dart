@@ -19,9 +19,10 @@ library thrift.test.transport.t_socket_transport_test;
 
 import 'dart:async';
 import 'dart:convert' show Encoding;
-import 'dart:convert' show Utf8Codec, BASE64;
+import 'dart:convert' show Utf8Codec;
 import 'dart:typed_data' show Uint8List;
 
+import 'package:crypto/crypto.dart' show CryptoUtils;
 import 'package:http/http.dart' show BaseRequest;
 import 'package:http/http.dart' show Client;
 import 'package:http/http.dart' show Response;
@@ -53,14 +54,14 @@ void main() {
       expect(client.postRequest, isNotEmpty);
 
       var requestText =
-          utf8Codec.decode(BASE64.decode(client.postRequest));
+          utf8Codec.decode(CryptoUtils.base64StringToBytes(client.postRequest));
       expect(requestText, expectedText);
     });
 
     test('Test transport receives response', () async {
       var expectedText = 'my response';
       var expectedBytes = utf8Codec.encode(expectedText);
-      client.postResponse = BASE64.encode(expectedBytes);
+      client.postResponse = CryptoUtils.bytesToBase64(expectedBytes);
 
       transport.writeAll(utf8Codec.encode('my request'));
       expect(transport.hasReadData, isFalse);
@@ -94,7 +95,7 @@ void main() {
 
       // prepare a response
       transport.writeAll(utf8Codec.encode('request 1'));
-      client.postResponse = BASE64.encode(expectedBytes);
+      client.postResponse = CryptoUtils.bytesToBase64(expectedBytes);
 
       Future responseReady = transport.flush().then((_) {
         var buffer = new Uint8List(expectedBytes.length);
@@ -105,7 +106,7 @@ void main() {
       // prepare a second response
       transport.writeAll(utf8Codec.encode('request 2'));
       var response2Bytes = utf8Codec.encode('response 2');
-      client.postResponse = BASE64.encode(response2Bytes);
+      client.postResponse = CryptoUtils.bytesToBase64(response2Bytes);
       await transport.flush();
 
       await responseReady;

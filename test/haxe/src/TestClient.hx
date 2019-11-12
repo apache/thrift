@@ -212,9 +212,7 @@ class TestClient {
             case socket:
                 transport = new TSocket(args.host, args.port);
             case http:
-                var uri = 'http://${args.host}:${args.port}';
-                trace('- http client : ${uri}');
-                transport = new THttpClient(uri);
+                transport = new THttpClient(args.host);
             default:
                 throw "Unhandled transport";
         }
@@ -260,7 +258,7 @@ class TestClient {
     {
         // We need to test a few basic things used in the ClientTest
         // Anything else beyond this scope should go into /lib/haxe/ instead
-        rslt.StartTestGroup( TestResults.EXITCODE_FAILBIT_BASETYPES);
+        rslt.StartTestGroup( 0);
 
         var map32 = new IntMap<Int32>();
         var map64 = new Int64Map<Int32>();

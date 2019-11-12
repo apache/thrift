@@ -17,9 +17,9 @@
 # under the License.
 #
 
-SUBDIRS = . test/Multiplex
+SUBDIRS = . test/ThriftTest
 
-THRIFTCODE = \
+THRIFTCODE= \
             src/Collections/THashSet.cs \
             src/Collections/TCollections.cs \
             src/Properties/AssemblyInfo.cs \
@@ -74,22 +74,30 @@ THRIFTCODE = \
             src/TApplicationException.cs
 
 if MONO_MCS
-export CSC = mcs
+CSC=mcs
 else
-export CSC = gmcs
+CSC=gmcs
 endif
 
 if NET_2_0
-export CSC_DEFINES = -d:NET_2_0
+MONO_DEFINES=/d:NET_2_0
 endif
 
 all-local: Thrift.dll
 
 Thrift.dll: $(THRIFTCODE)
-	$(CSC) $(CSC_DEFINES) -out:$@ -target:library -reference:System.Web $(THRIFTCODE)
+	$(CSC) $(THRIFTCODE) /out:Thrift.dll /target:library /reference:System.Web $(MONO_DEFINES)
 
 clean-local:
 	$(RM) Thrift.dll
+
+precross: all-local
+	$(MAKE) -C test/ThriftTest precross
+
+# run csharp tests?
+# check:
+# 	cd test/ThriftTest && ./maketest.sh
+# 	cd test/Multiplex && ./maketest.sh
 
 EXTRA_DIST = \
              $(THRIFTCODE) \

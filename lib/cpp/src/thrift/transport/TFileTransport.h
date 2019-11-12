@@ -27,7 +27,6 @@
 #include <string>
 #include <stdio.h>
 
-#include <boost/atomic.hpp>
 #include <boost/scoped_ptr.hpp>
 #include <boost/shared_ptr.hpp>
 
@@ -353,7 +352,7 @@ private:
 
   // To keep track of whether the buffer has been flushed
   Monitor flushed_;
-  boost::atomic<bool> forceFlush_;
+  volatile bool forceFlush_;
 
   // Mutex that is grabbed when enqueueing and swapping the read/write buffers
   Mutex mutex_;
@@ -439,4 +438,3 @@ private:
 } // apache::thrift::transport
 
 #endif // _THRIFT_TRANSPORT_TFILETRANSPORT_H_
-

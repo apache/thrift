@@ -20,7 +20,6 @@
 package thrift
 
 import (
-	"bytes"
 	"encoding/binary"
 	"errors"
 	"fmt"
@@ -474,8 +473,6 @@ func (p *TBinaryProtocol) readAll(buf []byte) error {
 	return NewTProtocolException(err)
 }
 
-const readLimit = 32768
-
 func (p *TBinaryProtocol) readStringBody(size int32) (value string, err error) {
 	if size < 0 {
 		return "", nil
@@ -483,32 +480,12 @@ func (p *TBinaryProtocol) readStringBody(size int32) (value string, err error) {
 	if uint64(size) > p.trans.RemainingBytes() {
 		return "", invalidDataLength
 	}
-
-	var (
-		buf bytes.Buffer
-		e   error
-		b   []byte
-	)
-
-	switch {
-	case int(size) <= len(p.buffer):
-		b = p.buffer[:size] // avoids allocation for small reads
-	case int(size) < readLimit:
-		b = make([]byte, size)
-	default:
-		b = make([]byte, readLimit)
+	var buf []byte
+	if int(size) <= len(p.buffer) {
+		buf = p.buffer[0:size]
+	} else {
+		buf = make([]byte, size)
 	}
-
-	for size > 0 {
-		_, e = io.ReadFull(p.trans, b)
-		buf.Write(b)
-		if e != nil {
-			break
-		}
-		size -= readLimit
-		if size < readLimit && size > 0 {
-			b = b[:size]
-		}
-	}
-	return buf.String(), NewTProtocolException(e)
+	_, e := io.ReadFull(p.trans, buf)
+	return string(buf), NewTProtocolException(e)
 }

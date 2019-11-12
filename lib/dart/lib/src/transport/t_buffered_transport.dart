@@ -22,7 +22,7 @@ class TBufferedTransport extends TTransport {
   final List<int> _writeBuffer = [];
   Iterator<int> _readIterator;
 
-  Uint8List consumeWriteBuffer() {
+  Uint8List _consumeWriteBuffer() {
     Uint8List buffer = new Uint8List.fromList(_writeBuffer);
     _writeBuffer.clear();
     return buffer;
@@ -91,7 +91,7 @@ class TBufferedTransport extends TTransport {
   }
 
   Future flush() {
-    _readIterator = consumeWriteBuffer().iterator;
+    _readIterator = _consumeWriteBuffer().iterator;
 
     return new Future.value();
   }

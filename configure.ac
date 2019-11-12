@@ -280,25 +280,20 @@ AM_CONDITIONAL(WITH_LUA, [test "$have_lua" = "yes"])
 AM_PATH_PYTHON(2.6,, :)
 AX_THRIFT_LIB(python, [Python], yes)
 if test "$with_python" = "yes";  then
-  if test -n "$PYTHON"; then
-    have_python="yes"
-  fi
+  AC_PATH_PROG([PIP], [pip])
   AC_PATH_PROG([TRIAL], [trial])
-  if test -n "$TRIAL"; then
-    have_trial="yes"
+  if test -n "$TRIAL" && test "x$PYTHON" != "x" && test "x$PYTHON" != "x:" ; then
+    have_python="yes"
   fi
 fi
 AM_CONDITIONAL(WITH_PYTHON, [test "$have_python" = "yes"])
-AM_CONDITIONAL(WITH_TWISTED_TEST, [test "$have_trial" = "yes"])
 
 # Find "python3" executable.
 # It's distro specific and far from ideal but needed to cross test py2-3 at once.
-# TODO: find "python2" if it's 3.x
-if python --version 2>&1 | grep -q "Python 2"; then
-  AC_PATH_PROGS([PYTHON3], [python3 python3.5 python35 python3.4 python34])
-  if test -n "$PYTHON3"; then
-    have_py3="yes"
-  fi
+AC_PATH_PROG([PYTHON3], [python3])
+AC_PATH_PROG([PIP3], [pip3])
+if test "x$PYTHON3" != "x" && test "x$PYTHON3" != "x:" && test "x$PIP3" != "x" ; then
+  have_py3="yes"
 fi
 AM_CONDITIONAL(WITH_PY3, [test "$have_py3" = "yes"])
 
@@ -726,7 +721,7 @@ AC_CONFIG_FILES([
   lib/c_glib/thrift_c_glib.pc
   lib/c_glib/test/Makefile
   lib/csharp/Makefile
-  lib/csharp/test/Multiplex/Makefile
+  lib/csharp/test/ThriftTest/Makefile
   lib/d/Makefile
   lib/d/test/Makefile
   lib/erl/Makefile
@@ -735,7 +730,6 @@ AC_CONFIG_FILES([
   lib/haxe/test/Makefile
   lib/hs/Makefile
   lib/java/Makefile
-  lib/js/Makefile
   lib/js/test/Makefile
   lib/json/Makefile
   lib/json/test/Makefile
@@ -754,7 +748,6 @@ AC_CONFIG_FILES([
   test/features/Makefile
   test/c_glib/Makefile
   test/cpp/Makefile
-  test/csharp/Makefile
   test/erl/Makefile
   test/go/Makefile
   test/haxe/Makefile
@@ -864,12 +857,7 @@ if test "$have_python" = "yes" ; then
   echo
   echo "Python Library:"
   echo "   Using Python .............. : $PYTHON"
-  if test "$have_py3" = "yes" ; then
-  echo "   Using Python3 ............. : $PYTHON3"
-  fi
-  if test "$have_trial" = "yes"; then
-  echo "   Using trial ............... : $TRIAL"
-  fi
+  echo "   Using Trial ............... : $TRIAL"
 fi
 if test "$have_php" = "yes" ; then
   echo

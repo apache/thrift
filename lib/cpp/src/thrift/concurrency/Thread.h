@@ -135,32 +135,18 @@ private:
  * object for execution
  */
 class ThreadFactory {
+
 public:
   virtual ~ThreadFactory() {}
-
-  /**
-   * Gets current detached mode
-   */
-  virtual bool isDetached() const = 0;
-
-  /**
-   * Create a new thread.
-   */
   virtual boost::shared_ptr<Thread> newThread(boost::shared_ptr<Runnable> runnable) const = 0;
 
-  /**
-   * Sets detached mode of threads
+  /** Gets the current thread id or unknown_thread_id if the current thread is not a thrift thread
    */
-  virtual void setDetached(bool detached) = 0;
 
   static const Thread::id_t unknown_thread_id;
 
-  /**
-   * Gets the current thread id or unknown_thread_id if the current thread is not a thrift thread
-   */
   virtual Thread::id_t getCurrentThreadId() const = 0;
 };
-
 }
 }
 } // apache::thrift::concurrency
