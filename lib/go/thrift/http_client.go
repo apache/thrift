@@ -103,7 +103,8 @@ func NewTHttpClientWithOptions(urlstr string, options THttpClientOptions) (TTran
 	if client == nil {
 		client = DefaultHttpClient
 	}
-	return &THttpClient{client: client, response: response, url: parsedURL}, nil
+	httpHeader := map[string][]string{"Content-Type": []string{"application/x-thrift"}}
+	return &THttpClient{client: client, response: response, url: parsedURL, header: httpHeader}, nil
 }
 
 func NewTHttpClient(urlstr string) (TTransport, error) {
@@ -120,7 +121,8 @@ func NewTHttpPostClientWithOptions(urlstr string, options THttpClientOptions) (T
 	if client == nil {
 		client = DefaultHttpClient
 	}
-	return &THttpClient{client: client, url: parsedURL, requestBuffer: bytes.NewBuffer(buf), header: http.Header{}}, nil
+	httpHeader := map[string][]string{"Content-Type": []string{"application/x-thrift"}}
+	return &THttpClient{client: client, url: parsedURL, requestBuffer: bytes.NewBuffer(buf), header: httpHeader}, nil
 }
 
 func NewTHttpPostClient(urlstr string) (TTransport, error) {
@@ -227,7 +229,6 @@ func (p *THttpClient) Flush() error {
 	if err != nil {
 		return NewTTransportExceptionFromError(err)
 	}
-	p.header.Add("Content-Type", "application/x-thrift")
 	req.Header = p.header
 	response, err := p.client.Do(req)
 	if err != nil {

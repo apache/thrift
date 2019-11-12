@@ -134,16 +134,12 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 `# Node.js dependencies` \
       nodejs \
       nodejs-dev \
-      nodejs-legacy \
-      npm
+      nodejs-legacy
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
 `# CSharp dependencies` \
       libmono-system-web2.0-cil \
-      mono-complete \
-      mono-devel \
-      mono-gmcs \
-      mono-xbuild
+      mono-devel
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
 `# D dependencies` \
@@ -164,11 +160,12 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     rm -rf /tmp/* && \
     rm -rf /var/tmp/*
 
-# Java
-RUN update-java-alternatives -s java-1.7.0-openjdk-amd64
-
 # Ruby
-RUN gem install bundler rake
+RUN gem install bundler --no-ri --no-rdoc
+
+# Python optional dependencies
+RUN pip2 install -U ipaddress backports.ssl_match_hostname tornado
+RUN pip3 install -U backports.ssl_match_hostname tornado
 
 # Go
 RUN curl -sSL https://storage.googleapis.com/golang/go1.4.3.linux-amd64.tar.gz | tar -C /usr/local/ -xz
@@ -184,6 +181,9 @@ RUN mkdir -p /usr/lib/haxe && \
     chmod -R 777 /usr/lib/haxe/lib && \
     haxelib setup /usr/lib/haxe/lib && \
     haxelib install hxcpp
+
+# Node.js
+RUN curl -sSL https://www.npmjs.com/install.sh | sh
 
 # D
 RUN curl -sSL http://downloads.dlang.org/releases/2.x/2.070.0/dmd_2.070.0-0_amd64.deb -o /tmp/dmd_2.070.0-0_amd64.deb && \
@@ -204,5 +204,5 @@ ENV PATH /usr/lib/dart/bin:$PATH
 
 ENV THRIFT_ROOT /thrift
 RUN mkdir -p $THRIFT_ROOT/src
-COPY scripts $THRIFT_ROOT
+COPY Dockerfile $THRIFT_ROOT/
 WORKDIR $THRIFT_ROOT/src

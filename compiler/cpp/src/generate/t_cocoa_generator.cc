@@ -795,12 +795,15 @@ void t_cocoa_generator::generate_cocoa_struct_copy_method(ofstream& out, t_struc
   
   for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
     t_type* t = get_true_type((*m_iter)->get_type());
+    out << indent() << "if (_" << (*m_iter)->get_name() << "IsSet)" << endl;
+    scope_up(out);
     if (type_can_be_null(t)) {
       out << indent() << "val." << (*m_iter)->get_name() << " = [self." << (*m_iter)->get_name() << " copy];";
     } else {
       out << indent() << "val." << (*m_iter)->get_name() << " = self." << (*m_iter)->get_name() << ";";
     }
     out << endl;
+    scope_down(out);
   }
   
   out << indent() << "return val;" << endl;

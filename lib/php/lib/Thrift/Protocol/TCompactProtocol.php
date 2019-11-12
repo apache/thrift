@@ -607,15 +607,14 @@ class TCompactProtocol extends TProtocol
       $arr = unpack('C', $x);
       $byte = $arr[1];
       $idx += 1;
-      if ($shift < 32) {
-        $lo |= (($byte & 0x7f) << $shift) &
-          0x00000000ffffffff;
-      }
       // Shift hi and lo together.
-      if ($shift >= 32) {
+      if ($shift < 28) {
+        $lo |= (($byte & 0x7f) << $shift);
+      } elseif ($shift == 28) {
+        $lo |= (($byte & 0x0f) << 28);
+        $hi |= (($byte & 0x70) >> 4);
+      } else {
         $hi |= (($byte & 0x7f) << ($shift - 32));
-      } elseif ($shift > 25) {
-        $hi |= (($byte & 0x7f) >> ($shift - 25));
       }
       if (($byte >> 7) === 0) {
         break;
@@ -634,56 +633,38 @@ class TCompactProtocol extends TProtocol
     $lo = $lo ^ $xorer;
 
     // Now put $hi and $lo back together
-    if (true) {
-      $isNeg = $hi  < 0;
+    $isNeg = $hi < 0 || $hi & 0x80000000;
 
-      // Check for a negative
-      if ($isNeg) {
-        $hi = ~$hi & (int) 0xffffffff;
-        $lo = ~$lo & (int) 0xffffffff;
+    // Check for a negative
+    if ($isNeg) {
+      $hi = ~$hi & (int) 0xffffffff;
+      $lo = ~$lo & (int) 0xffffffff;
 
-        if ($lo == (int) 0xffffffff) {
-          $hi++;
-          $lo = 0;
-        } else {
-          $lo++;
-        }
-      }
-
-      // Force 32bit words in excess of 2G to be positive - we deal with sign
-      // explicitly below
-
-      if ($hi & (int) 0x80000000) {
-        $hi &= (int) 0x7fffffff;
-        $hi += 0x80000000;
-      }
-
-      if ($lo & (int) 0x80000000) {
-        $lo &= (int) 0x7fffffff;
-        $lo += 0x80000000;
-      }
-
-      $value = $hi * 4294967296 + $lo;
-
-      if ($isNeg) {
-        $value = 0 - $value;
-      }
-    } else {
-
-      // Upcast negatives in LSB bit
-      if ($arr[2] & 0x80000000) {
-        $arr[2] = $arr[2] & 0xffffffff;
-      }
-
-      // Check for a negative
-      if ($arr[1] & 0x80000000) {
-        $arr[1] = $arr[1] & 0xffffffff;
-        $arr[1] = $arr[1] ^ 0xffffffff;
-        $arr[2] = $arr[2] ^ 0xffffffff;
-        $value = 0 - $arr[1] * 4294967296 - $arr[2] - 1;
+      if ($lo == (int) 0xffffffff) {
+        $hi++;
+        $lo = 0;
       } else {
-        $value = $arr[1] * 4294967296 + $arr[2];
+        $lo++;
       }
+    }
+
+    // Force 32bit words in excess of 2G to be positive - we deal with sign
+    // explicitly below
+
+    if ($hi & (int) 0x80000000) {
+      $hi &= (int) 0x7fffffff;
+      $hi += 0x80000000;
+    }
+
+    if ($lo & (int) 0x80000000) {
+      $lo &= (int) 0x7fffffff;
+      $lo += 0x80000000;
+    }
+
+    $value = $hi * 4294967296 + $lo;
+
+    if ($isNeg) {
+      $value = 0 - $value;
     }
 
     return $idx;

@@ -103,9 +103,8 @@ endif()
 option(WITH_PYTHON "Build Python Thrift library" ON)
 find_package(PythonInterp QUIET) # for Python executable
 find_package(PythonLibs QUIET) # for Python.h
-find_package(Pip QUIET)
 CMAKE_DEPENDENT_OPTION(BUILD_PYTHON "Build Python library" ON
-                       "BUILD_LIBRARIES;WITH_PYTHON;PYTHONLIBS_FOUND;PIP_FOUND" OFF)
+                       "BUILD_LIBRARIES;WITH_PYTHON;PYTHONLIBS_FOUND" OFF)
 
 # Haskell
 option(WITH_HASKELL "Build Haskell Thrift library" ON)

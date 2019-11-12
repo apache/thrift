@@ -71,7 +71,7 @@ class TFramedTransport extends TBufferedTransport {
   }
 
   Future flush() {
-    Uint8List buffer = _consumeWriteBuffer();
+    Uint8List buffer = consumeWriteBuffer();
     int length = buffer.length;
 
     headerBytes.buffer.asByteData().setUint32(0, length);

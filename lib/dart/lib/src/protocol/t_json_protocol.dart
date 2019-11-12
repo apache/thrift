@@ -155,7 +155,7 @@ class TJsonProtocol extends TProtocol {
     _context.write();
     transport.writeAll(_Constants.QUOTE_BYTES);
 
-    String base64 = CryptoUtils.bytesToBase64(bytes);
+    String base64 = BASE64.encode(bytes);
     transport.writeAll(utf8Codec.encode(base64));
 
     transport.writeAll(_Constants.QUOTE_BYTES);
@@ -423,7 +423,7 @@ class TJsonProtocol extends TProtocol {
     Uint8List base64Bytes = _readJsonString();
     String base64 = utf8Codec.decode(base64Bytes);
 
-    return new Uint8List.fromList(CryptoUtils.base64StringToBytes(base64));
+    return new Uint8List.fromList(BASE64.decode(base64));
   }
 
   void _readJsonObjectStart() {

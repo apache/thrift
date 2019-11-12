@@ -72,12 +72,18 @@ class Arguments
 
     public function new() {
         #if sys
-        try {
+          #if !phpwebserver
+          try {
               ParseArgs();
-        } catch (e : String) {
+          } catch (e : String) {
             trace(GetHelp());
             throw e;
-        }
+          }
+          #else
+            //forcing server
+            server = true;
+            transport = http;
+          #end
         #else
         trace("WN: Platform does not support program arguments, using defaults.");
         #end
