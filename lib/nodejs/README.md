@@ -75,8 +75,8 @@ You can use code generated with js:node on browsers with Webpack. Here is an exa
 
 thrift --gen js:node,ts,es6,with_ns
 
-```
-import * as thrift from 'thrift/browser';
+```javascript
+import * as thrift from 'thrift';
 import { MyServiceClient } from '../gen-nodejs/MyService';
 
 let host = window.location.hostname;
@@ -108,4 +108,35 @@ thriftClient.myService(param)
   });
 ```
 
-Note that thrift/index.js must be renamed or skipped for browsers.
+Bundlers, like webpack, will use thrift/browser.js by default because of the 
+`"browser": "./lib/nodejs/lib/thrift/browser.js"` field in package.json.
+
+### Browser example with WebSocket, BufferedTransport and BinaryProtocol
+```javascript
+import thrift from 'thrift';
+import { MyServiceClient } from '../gen-nodejs/MyService';
+
+const host = window.location.hostname;
+const port = 9090;
+const opts = {
+  transport: thrift.TBufferedTransport,
+  protocol: thrift.TBinaryProtocol
+}
+const connection = thrift.createWSConnection(host, port, opts);
+connection.open();
+const thriftClient = thrift.createWSClient(MyServiceClient, connection);
+
+connection.on('error', (err) => {
+  console.error(err);
+});
+
+thriftClient.myService(param)
+  .then((result) => {
+    console.log(result);
+  })
+  .catch((err) => {
+    ....
+  });
+```
+
+
