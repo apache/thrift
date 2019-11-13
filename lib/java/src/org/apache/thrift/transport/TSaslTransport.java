@@ -392,7 +392,7 @@ abstract class TSaslTransport extends TTransport {
     try {
       sasl.dispose();
     } catch (SaslException e) {
-      // Not much we can do here.
+      LOGGER.warn("Failed to dispose sasl participant.", e);
     }
   }
 
@@ -427,9 +427,7 @@ abstract class TSaslTransport extends TTransport {
     } catch (TTransportException transportException) {
       // If there is no-data or no-sasl header in the stream, log the failure, and rethrow.
       if (transportException.getType() == TTransportException.END_OF_FILE) {
-        if (LOGGER.isDebugEnabled()) {
-          LOGGER.debug("No data or no sasl data in the stream during negotiation");
-        }
+        LOGGER.debug("No data or no sasl data in the stream during negotiation");
       }
       throw transportException;
     }
