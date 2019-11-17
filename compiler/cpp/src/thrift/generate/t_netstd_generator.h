@@ -27,6 +27,7 @@
 #include <fstream>
 #include <iostream>
 #include <vector>
+#include <utility>
 #include <cctype>
 
 #include <stdlib.h>
@@ -129,7 +130,9 @@ public:
   string type_name(t_type* ttype);
   string base_type_name(t_base_type* tbase);
   string declare_field(t_field* tfield, bool init = false, string prefix = "");
-  string function_signature_async(t_function* tfunction, string prefix = "");
+  string function_signature_async(t_function* tfunction,
+                                  string prefix = "",
+                                  vector<std::pair<string, string>> optional_arguments = vector<std::pair<string, string>>());
   string function_signature(t_function* tfunction, string prefix = "");
   string argument_list(t_struct* tstruct, bool include_types = true);
   string type_to_enum(t_type* ttype);

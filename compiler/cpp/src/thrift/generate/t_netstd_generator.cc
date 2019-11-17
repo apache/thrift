@@ -1642,14 +1642,34 @@ void t_netstd_generator::generate_service_client(ostream& out, t_service* tservi
         string function_name = correct_function_name_for_async((*functions_iterator)->get_name());
 
         // async
+        std::pair<string, string> seqid_option = std::make_pair("bool validate_seqid", "false");
+        vector<std::pair<string, string>> optional_args = vector<std::pair<string, string>>{seqid_option};
         out << indent() << "public async " << function_signature_async(*functions_iterator, "") << endl
+            << indent() << "{" << endl;
+
+        indent_up();
+        string args = argument_list((*functions_iterator)->get_arglist(), false);
+        if (!args.empty()) {
+          args += ", ";
+        }
+        string await = (!(*functions_iterator)->get_returntype()->is_void()) ? "return await " : "";
+        out << indent() << await << (*functions_iterator)->get_name() << "Async("
+            << args << "cancellationToken, false);" << endl;
+
+        indent_down();
+        out << indent() << "}" << endl;
+
+
+        out << indent() << "public async " << function_signature_async(*functions_iterator, "", optional_args)
+            << endl
             << indent() << "{" << endl;
         indent_up();
 
         string argsname = (*functions_iterator)->get_name() + "Args";
 
-        out << indent() << "await OutputProtocol.WriteMessageBeginAsync(new TMessage(\"" << function_name
-            << "\", " << ((*functions_iterator)->is_oneway() ? "TMessageType.Oneway" : "TMessageType.Call") << ", SeqId), cancellationToken);" << endl
+        out << indent() << "var seqid = SeqId;" << endl
+            << indent() << "await OutputProtocol.WriteMessageBeginAsync(new TMessage(\"" << function_name
+            << "\", " << ((*functions_iterator)->is_oneway() ? "TMessageType.Oneway" : "TMessageType.Call") << ", seqid), cancellationToken);" << endl
             << indent() << endl
             << indent() << "var args = new " << argsname << "();" << endl;
 
@@ -1677,6 +1697,12 @@ void t_netstd_generator::generate_service_client(ostream& out, t_service* tservi
 
             out << indent() << endl
                 << indent() << "var msg = await InputProtocol.ReadMessageBeginAsync(cancellationToken);" << endl
+                << indent() << "if (validate_seqid && msg.SeqID != seqid)" << endl
+                << indent() << "{" << endl;
+            indent_up();
+            out << indent() << "throw new TApplicationException(TApplicationException.ExceptionType.MissingResult, \"Received SeqID and sent one do not match.\");" << endl;
+            indent_down();
+            out << indent() << "}" << endl
                 << indent() << "if (msg.Type == TMessageType.Exception)" << endl
                 << indent() << "{" << endl;
             indent_up();
@@ -2823,25 +2849,37 @@ string t_netstd_generator::function_signature(t_function* tfunction, string pref
     return type_name(ttype) + " " + normalize_name(prefix + tfunction->get_name()) + "(" + argument_list(tfunction->get_arglist()) + ")";
 }
 
-string t_netstd_generator::function_signature_async(t_function* tfunction, string prefix)
-{
-    t_type* ttype = tfunction->get_returntype();
-    string task = "Task";
-    if (!ttype->is_void())
-    {
-        task += "<" + type_name(ttype) + ">";
-    }
+string t_netstd_generator::function_signature_async(
+    t_function* tfunction,
+    string prefix,
+    vector<std::pair<string, string>> optional_arguments) {
 
-    string result = task + " " + normalize_name(prefix + tfunction->get_name()) + "Async(";
-    string args = argument_list(tfunction->get_arglist());
-    result += args;
-    if (!args.empty())
-    {
-        result += ", ";
-    }
-    result += "CancellationToken cancellationToken = default(CancellationToken))";
+  t_type* ttype = tfunction->get_returntype();
+  string task = "Task";
+  if (!ttype->is_void()) {
+    task += "<" + type_name(ttype) + ">";
+  }
 
-    return result;
+  string result = task + " " + normalize_name(prefix + tfunction->get_name()) + "Async(";
+  string args = argument_list(tfunction->get_arglist());
+  result += args;
+  if (!args.empty()) {
+    result += ", ";
+  }
+  std::pair<string, string> cancellation_token = std::make_pair("CancellationToken cancellationToken", "default(CancellationToken)");
+  optional_arguments.insert(optional_arguments.begin(), cancellation_token);
+  vector<std::pair<string, string>>::const_iterator o_iter;
+  bool first = true;
+  for (o_iter = optional_arguments.begin(); o_iter != optional_arguments.end(); ++o_iter) {
+    if (first) {
+      first = false;
+    } else {
+      result += ", ";
+    }
+    result += (*o_iter).first + " = " + (*o_iter).second;
+  }
+  result += ")";
+  return result;
 }
 
 string t_netstd_generator::argument_list(t_struct* tstruct, bool include_types)
