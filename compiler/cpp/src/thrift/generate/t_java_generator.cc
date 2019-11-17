@@ -1060,11 +1060,15 @@ void t_java_generator::generate_union_getters_and_setters(ostream& out, t_struct
     }
     indent(out) << "public void set" << get_cap_name(field->get_name()) << "("
                 << type_name(field->get_type()) << " value) {" << endl;
-    if (type_can_be_null(field->get_type())) {
-      indent(out) << "  if (value == null) throw new java.lang.NullPointerException();" << endl;
-    }
+
     indent(out) << "  setField_ = _Fields." << constant_name(field->get_name()) << ";" << endl;
-    indent(out) << "  value_ = value;" << endl;
+
+    if (type_can_be_null(field->get_type())) {
+      indent(out) << "  value_ = java.util.Objects.requireNonNull(value);" << endl;
+    } else {
+      indent(out) << "  value_ = value;" << endl;
+    }
+
     indent(out) << "}" << endl;
   }
 }
