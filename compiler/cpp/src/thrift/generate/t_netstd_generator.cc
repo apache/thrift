@@ -2844,7 +2844,7 @@ string t_netstd_generator::function_signature_async(t_function* tfunction, strin
     return result;
 }
 
-string t_netstd_generator::argument_list(t_struct* tstruct)
+string t_netstd_generator::argument_list(t_struct* tstruct, bool include_types)
 {
     string result = "";
     const vector<t_field*>& fields = tstruct->get_members();
@@ -2860,7 +2860,10 @@ string t_netstd_generator::argument_list(t_struct* tstruct)
         {
             result += ", ";
         }
-        result += type_name((*f_iter)->get_type()) + " " + normalize_name((*f_iter)->get_name());
+        if (include_types)
+          result += type_name((*f_iter)->get_type()) + " ";
+
+        result += normalize_name((*f_iter)->get_name());
     }
     return result;
 }
