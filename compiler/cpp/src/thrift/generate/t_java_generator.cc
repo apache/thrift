@@ -2052,8 +2052,8 @@ void t_java_generator::generate_java_struct_compare_to(ostream& out, t_struct* t
   vector<t_field*>::const_iterator m_iter;
   for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
     t_field* field = *m_iter;
-    indent(out) << "lastComparison = java.lang.Boolean.valueOf(" << generate_isset_check(field)
-                << ").compareTo(other." << generate_isset_check(field) << ");" << endl;
+    indent(out) << "lastComparison = java.lang.Boolean.compare(" << generate_isset_check(field)
+                << ", other." << generate_isset_check(field) << ");" << endl;
     indent(out) << "if (lastComparison != 0) {" << endl;
     indent(out) << "  return lastComparison;" << endl;
     indent(out) << "}" << endl;
