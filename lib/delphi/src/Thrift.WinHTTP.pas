@@ -205,6 +205,8 @@ const
   // flags for WinHttpOpen():
   WINHTTP_FLAG_ASYNC = $10000000;  // want async session, requires WinHttpSetStatusCallback() usage
 
+  WINHTTP_IGNORE_REQUEST_TOTAL_LENGTH = 0;
+
   // ports
   INTERNET_DEFAULT_PORT = 0;           // use the protocol-specific default (80 or 443)
 
@@ -218,8 +220,16 @@ const
   WINHTTP_FLAG_ESCAPE_DISABLE_QUERY  = $00000080;  // if escaping enabled escape path part, but do not escape query
 
   // flags for WinHttpSendRequest():
+  WINHTTP_NO_PROXY_NAME           = nil;
+  WINHTTP_NO_PROXY_BYPASS         = nil;
+  WINHTTP_NO_CLIENT_CERT_CONTEXT  = nil;
+  WINHTTP_NO_REFERER              = nil;
+  WINHTTP_DEFAULT_ACCEPT_TYPES    = nil;
   WINHTTP_NO_ADDITIONAL_HEADERS   = nil;
   WINHTTP_NO_REQUEST_DATA         = nil;
+  WINHTTP_HEADER_NAME_BY_INDEX    = nil;
+  WINHTTP_NO_OUTPUT_BUFFER        = nil;
+  WINHTTP_NO_HEADER_INDEX         = nil;
 
   // WinHttpAddRequestHeaders() dwModifiers
   WINHTTP_ADDREQ_INDEX_MASK = $0000FFFF;
@@ -246,8 +256,6 @@ const
 
   INTERNET_SCHEME_HTTP  = INTERNET_SCHEME(1);
   INTERNET_SCHEME_HTTPS = INTERNET_SCHEME(2);
-
-  WINHTTP_NO_CLIENT_CERT_CONTEXT = nil;
 
   // options manifests for WinHttp{Query|Set}Option
   WINHTTP_OPTION_CALLBACK = 1;
@@ -384,6 +392,88 @@ const
   SECURITY_FLAG_STRENGTH_MEDIUM  = $40000000;
   SECURITY_FLAG_STRENGTH_STRONG  = $20000000;
 
+  // query flags
+  WINHTTP_QUERY_MIME_VERSION                 = 0;
+  WINHTTP_QUERY_CONTENT_TYPE                 = 1;
+  WINHTTP_QUERY_CONTENT_TRANSFER_ENCODING    = 2;
+  WINHTTP_QUERY_CONTENT_ID                   = 3;
+  WINHTTP_QUERY_CONTENT_DESCRIPTION          = 4;
+  WINHTTP_QUERY_CONTENT_LENGTH               = 5;
+  WINHTTP_QUERY_CONTENT_LANGUAGE             = 6;
+  WINHTTP_QUERY_ALLOW                        = 7;
+  WINHTTP_QUERY_PUBLIC                       = 8;
+  WINHTTP_QUERY_DATE                         = 9;
+  WINHTTP_QUERY_EXPIRES                      = 10;
+  WINHTTP_QUERY_LAST_MODIFIED                = 11;
+  WINHTTP_QUERY_MESSAGE_ID                   = 12;
+  WINHTTP_QUERY_URI                          = 13;
+  WINHTTP_QUERY_DERIVED_FROM                 = 14;
+  WINHTTP_QUERY_COST                         = 15;
+  WINHTTP_QUERY_LINK                         = 16;
+  WINHTTP_QUERY_PRAGMA                       = 17;
+  WINHTTP_QUERY_VERSION                      = 18;
+  WINHTTP_QUERY_STATUS_CODE                  = 19;
+  WINHTTP_QUERY_STATUS_TEXT                  = 20;
+  WINHTTP_QUERY_RAW_HEADERS                  = 21;
+  WINHTTP_QUERY_RAW_HEADERS_CRLF             = 22;
+  WINHTTP_QUERY_CONNECTION                   = 23;
+  WINHTTP_QUERY_ACCEPT                       = 24;
+  WINHTTP_QUERY_ACCEPT_CHARSET               = 25;
+  WINHTTP_QUERY_ACCEPT_ENCODING              = 26;
+  WINHTTP_QUERY_ACCEPT_LANGUAGE              = 27;
+  WINHTTP_QUERY_AUTHORIZATION                = 28;
+  WINHTTP_QUERY_CONTENT_ENCODING             = 29;
+  WINHTTP_QUERY_FORWARDED                    = 30;
+  WINHTTP_QUERY_FROM                         = 31;
+  WINHTTP_QUERY_IF_MODIFIED_SINCE            = 32;
+  WINHTTP_QUERY_LOCATION                     = 33;
+  WINHTTP_QUERY_ORIG_URI                     = 34;
+  WINHTTP_QUERY_REFERER                      = 35;
+  WINHTTP_QUERY_RETRY_AFTER                  = 36;
+  WINHTTP_QUERY_SERVER                       = 37;
+  WINHTTP_QUERY_TITLE                        = 38;
+  WINHTTP_QUERY_USER_AGENT                   = 39;
+  WINHTTP_QUERY_WWW_AUTHENTICATE             = 40;
+  WINHTTP_QUERY_PROXY_AUTHENTICATE           = 41;
+  WINHTTP_QUERY_ACCEPT_RANGES                = 42;
+  WINHTTP_QUERY_SET_COOKIE                   = 43;
+  WINHTTP_QUERY_COOKIE                       = 44;
+  WINHTTP_QUERY_REQUEST_METHOD               = 45;
+  WINHTTP_QUERY_REFRESH                      = 46;
+  WINHTTP_QUERY_CONTENT_DISPOSITION          = 47;
+  WINHTTP_QUERY_AGE                          = 48;
+  WINHTTP_QUERY_CACHE_CONTROL                = 49;
+  WINHTTP_QUERY_CONTENT_BASE                 = 50;
+  WINHTTP_QUERY_CONTENT_LOCATION             = 51;
+  WINHTTP_QUERY_CONTENT_MD5                  = 52;
+  WINHTTP_QUERY_CONTENT_RANGE                = 53;
+  WINHTTP_QUERY_ETAG                         = 54;
+  WINHTTP_QUERY_HOST                         = 55;
+  WINHTTP_QUERY_IF_MATCH                     = 56;
+  WINHTTP_QUERY_IF_NONE_MATCH                = 57;
+  WINHTTP_QUERY_IF_RANGE                     = 58;
+  WINHTTP_QUERY_IF_UNMODIFIED_SINCE          = 59;
+  WINHTTP_QUERY_MAX_FORWARDS                 = 60;
+  WINHTTP_QUERY_PROXY_AUTHORIZATION          = 61;
+  WINHTTP_QUERY_RANGE                        = 62;
+  WINHTTP_QUERY_TRANSFER_ENCODING            = 63;
+  WINHTTP_QUERY_UPGRADE                      = 64;
+  WINHTTP_QUERY_VARY                         = 65;
+  WINHTTP_QUERY_VIA                          = 66;
+  WINHTTP_QUERY_WARNING                      = 67;
+  WINHTTP_QUERY_EXPECT                       = 68;
+  WINHTTP_QUERY_PROXY_CONNECTION             = 69;
+  WINHTTP_QUERY_UNLESS_MODIFIED_SINCE        = 70;
+  WINHTTP_QUERY_PROXY_SUPPORT                = 75;
+  WINHTTP_QUERY_AUTHENTICATION_INFO          = 76;
+  WINHTTP_QUERY_PASSPORT_URLS                = 77;
+  WINHTTP_QUERY_PASSPORT_CONFIG              = 78;
+  WINHTTP_QUERY_MAX                          = 78;
+  WINHTTP_QUERY_CUSTOM                       = 65535;
+  WINHTTP_QUERY_FLAG_REQUEST_HEADERS         = $80000000;
+  WINHTTP_QUERY_FLAG_SYSTEMTIME              = $40000000;
+  WINHTTP_QUERY_FLAG_NUMBER                  = $20000000;
+
   // Secure connection error status flags
   WINHTTP_CALLBACK_STATUS_FLAG_CERT_REV_FAILED         = $00000001;
   WINHTTP_CALLBACK_STATUS_FLAG_INVALID_CERT            = $00000002;
@@ -486,7 +576,7 @@ type
   IWinHTTPConnection = interface;
 
   IWinHTTPRequest = interface
-    ['{7862DC7C-3128-4AA1-B9B0-0EB0FE8B15B9}']
+    ['{7A8E7255-5440-4621-A8A8-1E9FFAA6D6FA}']
     function  Handle : HINTERNET;
     function  Connection : IWinHTTPConnection;
     function  AddRequestHeader( const aHeader : string; const addflag : DWORD = WINHTTP_ADDREQ_FLAG_ADD) : Boolean;
@@ -499,6 +589,7 @@ type
     function  ReadData( const dwRead : DWORD) : TBytes;  overload;
     function  ReadData( const pBuf : Pointer; const dwRead : DWORD) : DWORD;  overload;
     function  QueryDataAvailable : DWORD;
+    function  QueryTotalResponseSize : DWORD;
   end;
 
   IWinHTTPConnection = interface
@@ -618,6 +709,7 @@ type
     function  ReadData( const dwRead : DWORD) : TBytes;  overload;
     function  ReadData( const pBuf : Pointer; const dwRead : DWORD) : DWORD;  overload;
     function  QueryDataAvailable : DWORD;
+    function  QueryTotalResponseSize : DWORD;
 
   public
     constructor Create( const aConnection : IWinHTTPConnection;
@@ -1117,6 +1209,24 @@ function TWinHTTPRequestImpl.QueryDataAvailable : DWORD;
 begin
   if not WinHttpQueryDataAvailable( FHandle, result)
   then result := 0;
+end;
+
+
+function TWinHTTPRequestImpl.QueryTotalResponseSize : DWORD;
+var dwBytes, dwError, dwIndex : DWORD;
+begin
+  dwBytes := SizeOf( result);
+  dwIndex := DWORD( WINHTTP_NO_HEADER_INDEX);
+  if not WinHttpQueryHeaders( FHandle,
+                              WINHTTP_QUERY_CONTENT_LENGTH or WINHTTP_QUERY_FLAG_NUMBER,
+                              WINHTTP_HEADER_NAME_BY_INDEX,
+                              @result, dwBytes,
+                              dwIndex)
+  then begin
+    dwError := GetLastError;
+    ASSERT( dwError = ERROR_WINHTTP_HEADER_NOT_FOUND);  // anything else would be an real error
+    result := MAXINT;  // we don't know
+  end;
 end;
 
 

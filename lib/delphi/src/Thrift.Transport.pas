@@ -1308,6 +1308,9 @@ var
   len : Integer;
   data_len : Integer;
 begin
+  if not IsOpen
+  then raise TTransportExceptionNotOpen.Create('not open');
+
   len := FWriteBuffer.Size;
   SetLength( buf, len);
   if len > 0 then begin
@@ -1342,7 +1345,7 @@ type
 procedure TFramedTransportImpl.InitWriteBuffer;
 const DUMMY_HEADER : TFramedHeader = 0;
 begin
-  FWriteBuffer.Free;
+  FreeAndNil( FWriteBuffer);
   FWriteBuffer := TMemoryStream.Create;
   TAccessMemoryStream(FWriteBuffer).Capacity := 1024;
   FWriteBuffer.Write( DUMMY_HEADER, SizeOf(DUMMY_HEADER));

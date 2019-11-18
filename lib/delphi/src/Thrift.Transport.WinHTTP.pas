@@ -262,7 +262,7 @@ end;
 
 function TWinHTTPClientImpl.GetIsOpen: Boolean;
 begin
-  Result := True;
+  Result := Assigned( FOutputMemoryStream);
 end;
 
 procedure TWinHTTPClientImpl.Open;
@@ -427,7 +427,7 @@ end;
 
 procedure TWinHTTPClientImpl.THTTPResponseStream.CheckReadBytesAvailable( const value : Integer);
 begin
-  if Int64(value) > Int64(FRequest.QueryDataAvailable)
+  if Int64(value) > Int64(FRequest.QueryTotalResponseSize)
   then raise TTransportExceptionEndOfFile.Create('Not enough input data');
 end;
 
