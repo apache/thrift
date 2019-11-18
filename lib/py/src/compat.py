@@ -37,7 +37,7 @@ else:
     from io import BytesIO as BufferIO  # noqa
 
     def binary_to_str(bin_val):
-        return bin_val.decode('utf8')
+        return bin_val.decode('utf8','replace')
 
     def str_to_binary(str_val):
         return bytes(str_val, 'utf8')
