@@ -18,8 +18,9 @@
 # specific language governing permissions and limitations
 # under the License.
 #
-
+import os
 import sys
+
 try:
     from setuptools import setup, Extension
 except Exception:
@@ -29,7 +30,6 @@ from distutils.command.build_ext import build_ext
 from distutils.errors import CCompilerError, DistutilsExecError, DistutilsPlatformError
 
 # Fix to build sdist under vagrant
-import os
 if 'vagrant' in str(os.environ):
     try:
         del os.link
@@ -46,6 +46,20 @@ else:
 
 class BuildFailed(Exception):
     pass
+
+
+def read_file(path):
+    """
+    Return the contents of a file
+
+    Arguments:
+      - path: path to the file
+
+    Returns:
+      - contents of the file
+    """
+    with open(path, 'r') as desc_file:
+        return desc_file.read().rstrip()
 
 
 class ve_build_ext(build_ext):
@@ -92,11 +106,15 @@ def run_setup(with_binary):
     setup(name='thrift',
           version='0.13.0',
           description='Python bindings for the Apache Thrift RPC system',
+          # causes problems publishing
+          # license=read_file("LICENSE"),
+          long_description=read_file("README.md"),
+          long_description_content_type="text/markdown",
           author='Apache Thrift Developers',
           author_email='dev@thrift.apache.org',
-          url='http://thrift.apache.org',
-          license='Apache License 2.0',
+          url='https://thrift.apache.org',
           install_requires=['six>=1.7.2'],
+          license='Apache Software License, Version 2',
           extras_require={
               'ssl': ssl_deps,
               'tornado': tornado_deps,
@@ -114,9 +132,11 @@ def run_setup(with_binary):
               'Development Status :: 5 - Production/Stable',
               'Environment :: Console',
               'Intended Audience :: Developers',
+              'License :: OSI Approved :: Apache Software License',
               'Programming Language :: Python',
               'Programming Language :: Python :: 2',
               'Programming Language :: Python :: 3',
+              'Topic :: Software Development :: Code Generators',
               'Topic :: Software Development :: Libraries',
               'Topic :: System :: Networking'
           ],
