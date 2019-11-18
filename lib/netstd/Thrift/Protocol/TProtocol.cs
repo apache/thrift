@@ -234,6 +234,11 @@ namespace Thrift.Protocol
             return await ReadMessageBeginAsync(CancellationToken.None);
         }
 
+        public virtual async ValueTask<TMessage> ReadMessageBeginAsync(TMessage original_message, CancellationToken cancellationToken)
+        {
+            return await ReadMessageBeginAsync(cancellationToken);
+        }
+
         public abstract ValueTask<TMessage> ReadMessageBeginAsync(CancellationToken cancellationToken);
 
         public virtual async Task ReadMessageEndAsync()
