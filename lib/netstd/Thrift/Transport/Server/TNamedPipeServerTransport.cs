@@ -92,10 +92,16 @@ namespace Thrift.Transport.Server
                 try
                 {
                     var handle = CreatePipeNative(_pipeAddress, inbuf, outbuf);
-                    if( (handle != null) && (!handle.IsInvalid))
+                    if ((handle != null) && (!handle.IsInvalid))
+                    {
                         _stream = new NamedPipeServerStream(PipeDirection.InOut, _asyncMode, false, handle);
+                        handle = null; // we don't own it any longer
+                    }
                     else
+                    {
+                        handle?.Dispose();
                         _stream = new NamedPipeServerStream(_pipeAddress, direction, maxconn, mode, options, inbuf, outbuf/*, pipesec*/);
+                    }
                 }
                 catch (NotImplementedException) // Mono still does not support async, fallback to sync
                 {
@@ -301,7 +307,10 @@ namespace Thrift.Transport.Server
 
             protected override void Dispose(bool disposing)
             {
-                PipeStream?.Dispose();
+                if (disposing)
+                {
+                    PipeStream?.Dispose();
+                }
             }
         }
     }

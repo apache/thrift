@@ -63,7 +63,7 @@ namespace Thrift.Transport.Server
             RemoteCertificateValidationCallback clientCertValidator = null,
             LocalCertificateSelectionCallback localCertificateSelectionCallback = null,
             SslProtocols sslProtocols = SslProtocols.Tls12)
-            : this(null, certificate, clientCertValidator, localCertificateSelectionCallback)
+            : this(null, certificate, clientCertValidator, localCertificateSelectionCallback, sslProtocols)
         {
             try
             {
@@ -117,7 +117,9 @@ namespace Thrift.Transport.Server
                 client.SendTimeout = client.ReceiveTimeout = _clientTimeout;
 
                 //wrap the client in an SSL Socket passing in the SSL cert
-                var tTlsSocket = new TTlsSocketTransport(client, _serverCertificate, true, _clientCertValidator,
+                var tTlsSocket = new TTlsSocketTransport( 
+                    client, 
+                    _serverCertificate, true, _clientCertValidator,
                     _localCertificateSelectionCallback, _sslProtocols);
 
                 await tTlsSocket.SetupTlsAsync();

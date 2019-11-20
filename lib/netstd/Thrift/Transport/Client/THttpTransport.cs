@@ -99,19 +99,14 @@ namespace Thrift.Transport.Client
         public override async ValueTask<int> ReadAsync(byte[] buffer, int offset, int length, CancellationToken cancellationToken)
         {
             if (cancellationToken.IsCancellationRequested)
-            {
                 return await Task.FromCanceled<int>(cancellationToken);
-            }
 
             if (_inputStream == null)
-            {
                 throw new TTransportException(TTransportException.ExceptionType.NotOpen, "No request has been sent");
-            }
 
             try
             {
                 var ret = await _inputStream.ReadAsync(buffer, offset, length, cancellationToken);
-
                 if (ret == -1)
                 {
                     throw new TTransportException(TTransportException.ExceptionType.EndOfFile, "No more data available");

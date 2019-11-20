@@ -34,7 +34,7 @@ namespace Thrift.Transport
 
         protected abstract ValueTask<TTransport> AcceptImplementationAsync(CancellationToken cancellationToken);
 
-        public async ValueTask<TTransport> AcceptAsync()
+        public async ValueTask<TTransport> AcceptAsync() 
         {
             return await AcceptAsync(CancellationToken.None);
         }

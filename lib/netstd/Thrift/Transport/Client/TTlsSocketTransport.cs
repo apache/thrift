@@ -42,7 +42,8 @@ namespace Thrift.Transport.Client
         private SslStream _secureStream;
         private int _timeout;
 
-        public TTlsSocketTransport(TcpClient client, X509Certificate2 certificate, bool isServer = false,
+        public TTlsSocketTransport(TcpClient client,
+            X509Certificate2 certificate, bool isServer = false,
             RemoteCertificateValidationCallback certValidator = null,
             LocalCertificateSelectionCallback localCertificateSelectionCallback = null,
             SslProtocols sslProtocols = SslProtocols.Tls12)
@@ -67,7 +68,8 @@ namespace Thrift.Transport.Client
             }
         }
 
-        public TTlsSocketTransport(IPAddress host, int port, string certificatePath,
+        public TTlsSocketTransport(IPAddress host, int port, 
+            string certificatePath,
             RemoteCertificateValidationCallback certValidator = null,
             LocalCertificateSelectionCallback localCertificateSelectionCallback = null,
             SslProtocols sslProtocols = SslProtocols.Tls12)
@@ -79,7 +81,7 @@ namespace Thrift.Transport.Client
         {
         }
 
-        public TTlsSocketTransport(IPAddress host, int port,
+        public TTlsSocketTransport(IPAddress host, int port, 
             X509Certificate2 certificate = null,
             RemoteCertificateValidationCallback certValidator = null,
             LocalCertificateSelectionCallback localCertificateSelectionCallback = null,
@@ -92,7 +94,7 @@ namespace Thrift.Transport.Client
         {
         }
 
-        public TTlsSocketTransport(IPAddress host, int port, int timeout,
+        public TTlsSocketTransport(IPAddress host, int port,  int timeout,
             X509Certificate2 certificate,
             RemoteCertificateValidationCallback certValidator = null,
             LocalCertificateSelectionCallback localCertificateSelectionCallback = null,
@@ -109,7 +111,7 @@ namespace Thrift.Transport.Client
             InitSocket();
         }
 
-        public TTlsSocketTransport(string host, int port, int timeout,
+        public TTlsSocketTransport(string host, int port,  int timeout,
             X509Certificate2 certificate,
             RemoteCertificateValidationCallback certValidator = null,
             LocalCertificateSelectionCallback localCertificateSelectionCallback = null,
