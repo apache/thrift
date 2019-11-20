@@ -16,6 +16,7 @@
 // under the License.
 
 using System;
+using System.Diagnostics;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
@@ -23,29 +24,47 @@ using System.Threading.Tasks;
 namespace Thrift.Transport
 {
     // ReSharper disable once InconsistentNaming
-    public class TFramedTransport : TTransport
+    public class TBufferedTransport : TLayeredTransport
     {
-        private const int HeaderSize = 4;
-        private readonly byte[] HeaderBuf = new byte[HeaderSize];
-        private readonly Client.TMemoryBufferTransport ReadBuffer = new Client.TMemoryBufferTransport();
-        private readonly Client.TMemoryBufferTransport WriteBuffer = new Client.TMemoryBufferTransport();
-        private readonly TTransport InnerTransport;
-
+        private readonly int DesiredBufferSize;
+        private readonly Client.TMemoryBufferTransport ReadBuffer;
+        private readonly Client.TMemoryBufferTransport WriteBuffer;
         private bool IsDisposed;
 
         public class Factory : TTransportFactory
         {
             public override TTransport GetTransport(TTransport trans)
             {
-                return new TFramedTransport(trans);
+                return new TBufferedTransport(trans);
             }
         }
 
-        public TFramedTransport(TTransport transport)
+        //TODO: should support only specified input transport?
+        public TBufferedTransport(TTransport transport, int bufSize = 1024)
+            : base(transport)
         {
-            InnerTransport = transport ?? throw new ArgumentNullException(nameof(transport));
+            if (bufSize <= 0)
+            {
+                throw new ArgumentOutOfRangeException(nameof(bufSize), "Buffer size must be a positive number.");
+            }
 
-            InitWriteBuffer();
+            DesiredBufferSize = bufSize;
+
+            WriteBuffer = new Client.TMemoryBufferTransport(InnerTransport.Configuration, bufSize);
+            ReadBuffer = new Client.TMemoryBufferTransport(InnerTransport.Configuration, bufSize);
+
+            Debug.Assert(DesiredBufferSize == ReadBuffer.Capacity);
+            Debug.Assert(DesiredBufferSize == WriteBuffer.Capacity);
+        }
+
+        public TTransport UnderlyingTransport
+        {
+            get
+            {
+                CheckNotDisposed();
+
+                return InnerTransport;
+            }
         }
 
         public override bool IsOpen => !IsDisposed && InnerTransport.IsOpen;
@@ -74,27 +93,32 @@ namespace Thrift.Transport
                 throw new TTransportException(TTransportException.ExceptionType.NotOpen);
             }
 
-            // Read another frame of data if we run out of bytes
-            if (ReadBuffer.Position >= ReadBuffer.Length)
+
+            // do we have something buffered?
+            var count = ReadBuffer.Length - ReadBuffer.Position;
+            if (count > 0)
             {
-                await ReadFrameAsync(cancellationToken);
+                return await ReadBuffer.ReadAsync(buffer, offset, length, cancellationToken);
             }
 
+            // does the request even fit into the buffer?
+            // Note we test for >= instead of > to avoid nonsense buffering
+            if (length >= ReadBuffer.Capacity)
+            {
+                return await InnerTransport.ReadAsync(buffer, offset, length, cancellationToken);
+            }
+
+            // buffer a new chunk of bytes from the underlying transport
+            ReadBuffer.Length = ReadBuffer.Capacity;
+            ArraySegment<byte> bufSegment;
+            ReadBuffer.TryGetBuffer(out bufSegment);
+            ReadBuffer.Length = await InnerTransport.ReadAsync(bufSegment.Array, 0, bufSegment.Count, cancellationToken);
+            ReadBuffer.Position = 0;
+
+            // deliver the bytes
             return await ReadBuffer.ReadAsync(buffer, offset, length, cancellationToken);
         }
 
-        private async ValueTask ReadFrameAsync(CancellationToken cancellationToken)
-        {
-            await InnerTransport.ReadAllAsync(HeaderBuf, 0, HeaderSize, cancellationToken);
-            var size = DecodeFrameSize(HeaderBuf);
-
-            ReadBuffer.SetLength(size);
-            ReadBuffer.Seek(0, SeekOrigin.Begin);
-
-            ArraySegment<byte> bufSegment;
-            ReadBuffer.TryGetBuffer(out bufSegment);
-            await InnerTransport.ReadAllAsync(bufSegment.Array, 0, size, cancellationToken);
-        }
 
         public override async Task WriteAsync(byte[] buffer, int offset, int length, CancellationToken cancellationToken)
         {
@@ -106,12 +130,26 @@ namespace Thrift.Transport
                 throw new TTransportException(TTransportException.ExceptionType.NotOpen);
             }
 
-            if (WriteBuffer.Length > (int.MaxValue - length))
+            // enough space left in buffer?
+            var free = WriteBuffer.Capacity - WriteBuffer.Length;
+            if (length > free)
             {
-                await FlushAsync(cancellationToken);
+                ArraySegment<byte> bufSegment;
+                WriteBuffer.TryGetBuffer(out bufSegment);
+                await InnerTransport.WriteAsync(bufSegment.Array, 0, bufSegment.Count, cancellationToken);
+                WriteBuffer.SetLength(0);
             }
 
-            await WriteBuffer.WriteAsync(buffer, offset, length, cancellationToken);
+            // do the data even fit into the buffer?
+            // Note we test for < instead of <= to avoid nonsense buffering
+            if (length < WriteBuffer.Capacity)
+            {
+                await WriteBuffer.WriteAsync(buffer, offset, length, cancellationToken);
+                return;
+            }
+
+            // write thru
+            await InnerTransport.WriteAsync(buffer, offset, length, cancellationToken);
         }
 
         public override async Task FlushAsync(CancellationToken cancellationToken)
@@ -123,56 +161,22 @@ namespace Thrift.Transport
                 throw new TTransportException(TTransportException.ExceptionType.NotOpen);
             }
 
-            ArraySegment<byte> bufSegment;
-            WriteBuffer.TryGetBuffer(out bufSegment);
-
-            int dataLen = bufSegment.Count - HeaderSize;
-            if (dataLen < 0)
+            if (WriteBuffer.Length > 0)
             {
-                throw new InvalidOperationException(); // logic error actually
+                ArraySegment<byte> bufSegment;
+                WriteBuffer.TryGetBuffer(out bufSegment);
+                await InnerTransport.WriteAsync(bufSegment.Array, 0, bufSegment.Count, cancellationToken);
+                WriteBuffer.SetLength(0);
             }
-
-            // Inject message header into the reserved buffer space
-            EncodeFrameSize(dataLen, bufSegment.Array);
-
-            // Send the entire message at once
-            await InnerTransport.WriteAsync(bufSegment.Array, 0, bufSegment.Count, cancellationToken);
-
-            InitWriteBuffer();
 
             await InnerTransport.FlushAsync(cancellationToken);
         }
-
-        private void InitWriteBuffer()
-        {
-            // Reserve space for message header to be put right before sending it out
-            WriteBuffer.SetLength(HeaderSize);
-            WriteBuffer.Seek(0, SeekOrigin.End);
-        }
-
-        private static void EncodeFrameSize(int frameSize, byte[] buf)
-        {
-            buf[0] = (byte) (0xff & (frameSize >> 24));
-            buf[1] = (byte) (0xff & (frameSize >> 16));
-            buf[2] = (byte) (0xff & (frameSize >> 8));
-            buf[3] = (byte) (0xff & (frameSize));
-        }
-
-        private static int DecodeFrameSize(byte[] buf)
-        {
-            return
-                ((buf[0] & 0xff) << 24) |
-                ((buf[1] & 0xff) << 16) |
-                ((buf[2] & 0xff) << 8) |
-                (buf[3] & 0xff);
-        }
-
 
         private void CheckNotDisposed()
         {
             if (IsDisposed)
             {
-                throw new ObjectDisposedException(this.GetType().Name);
+                throw new ObjectDisposedException(nameof(InnerTransport));
             }
         }
 

@@ -39,10 +39,12 @@ namespace Thrift.Transport.Server
                
         public TTlsServerSocketTransport(
             TcpListener listener,
+            TConfiguration config,
             X509Certificate2 certificate,
             RemoteCertificateValidationCallback clientCertValidator = null,
             LocalCertificateSelectionCallback localCertificateSelectionCallback = null,
             SslProtocols sslProtocols = SslProtocols.Tls12)
+            : base(config)
         {
             if (!certificate.HasPrivateKey)
             {
@@ -59,11 +61,12 @@ namespace Thrift.Transport.Server
 
         public TTlsServerSocketTransport(
             int port,
+            TConfiguration config,
             X509Certificate2 certificate,
             RemoteCertificateValidationCallback clientCertValidator = null,
             LocalCertificateSelectionCallback localCertificateSelectionCallback = null,
             SslProtocols sslProtocols = SslProtocols.Tls12)
-            : this(null, certificate, clientCertValidator, localCertificateSelectionCallback, sslProtocols)
+            : this(null, config, certificate, clientCertValidator, localCertificateSelectionCallback, sslProtocols)
         {
             try
             {
@@ -117,8 +120,8 @@ namespace Thrift.Transport.Server
                 client.SendTimeout = client.ReceiveTimeout = _clientTimeout;
 
                 //wrap the client in an SSL Socket passing in the SSL cert
-                var tTlsSocket = new TTlsSocketTransport( 
-                    client, 
+                var tTlsSocket = new TTlsSocketTransport(
+                    client, Configuration,
                     _serverCertificate, true, _clientCertValidator,
                     _localCertificateSelectionCallback, _sslProtocols);
 

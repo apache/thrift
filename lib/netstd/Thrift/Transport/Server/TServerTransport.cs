@@ -23,6 +23,13 @@ namespace Thrift.Transport
     // ReSharper disable once InconsistentNaming
     public abstract class TServerTransport
     {
+        public readonly TConfiguration Configuration;
+
+        public TServerTransport(TConfiguration config)
+        {
+            Configuration = config ?? new TConfiguration();
+        }
+
         public abstract void Listen();
         public abstract void Close();
         public abstract bool IsClientPending();

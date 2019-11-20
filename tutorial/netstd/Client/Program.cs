@@ -40,6 +40,7 @@ namespace Client
     {
         private static ServiceCollection ServiceCollection = new ServiceCollection();
         private static ILogger Logger;
+        private static readonly TConfiguration Configuration = null;  // new TConfiguration() if  needed
 
         private static void DisplayHelp()
         {
@@ -143,7 +144,7 @@ Sample:
 
         private static TTransport GetTransport(string[] args)
         {
-            TTransport transport = new TSocketTransport(IPAddress.Loopback, 9090);
+            TTransport transport = new TSocketTransport(IPAddress.Loopback, 9090, Configuration);
 
             // construct endpoint transport
             var transportArg = args.FirstOrDefault(x => x.StartsWith("-tr"))?.Split(':')?[1];
@@ -152,19 +153,20 @@ Sample:
                 switch (selectedTransport)
                 {
                     case Transport.Tcp:
-                        transport = new TSocketTransport(IPAddress.Loopback, 9090);
+                        transport = new TSocketTransport(IPAddress.Loopback, 9090, Configuration);
                         break;
 
                     case Transport.NamedPipe:
-                        transport = new TNamedPipeTransport(".test");
+                        transport = new TNamedPipeTransport(".test", Configuration);
                         break;
 
                     case Transport.Http:
-                        transport = new THttpTransport(new Uri("http://localhost:9090"), null);
+                        transport = new THttpTransport(new Uri("http://localhost:9090"), Configuration);
                         break;
 
                     case Transport.TcpTls:
-                        transport = new TTlsSocketTransport(IPAddress.Loopback, 9090, GetCertificate(), CertValidator, LocalCertificateSelectionCallback);
+                        transport = new TTlsSocketTransport(IPAddress.Loopback, 9090, Configuration,
+                            GetCertificate(), CertValidator, LocalCertificateSelectionCallback);
                         break;
 
                     default:

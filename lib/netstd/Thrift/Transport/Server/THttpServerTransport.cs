@@ -42,27 +42,31 @@ namespace Thrift.Transport.Server
         protected TTransportFactory OutputTransportFactory;
 
         protected ITAsyncProcessor Processor;
+        protected TConfiguration Configuration;
 
         public THttpServerTransport(
             ITAsyncProcessor processor,
+            TConfiguration config,
             RequestDelegate next = null,
             ILoggerFactory loggerFactory = null)
-            : this(processor, new TBinaryProtocol.Factory(), null, next, loggerFactory)
+            : this(processor, config, new TBinaryProtocol.Factory(), null, next, loggerFactory)
         {
         }
 
         public THttpServerTransport(
             ITAsyncProcessor processor,
+            TConfiguration config,
             TProtocolFactory protocolFactory, 
             TTransportFactory transFactory = null, 
             RequestDelegate next = null,
             ILoggerFactory loggerFactory = null)
-            : this(processor, protocolFactory, protocolFactory, transFactory, transFactory, next, loggerFactory)
+            : this(processor, config, protocolFactory, protocolFactory, transFactory, transFactory, next, loggerFactory)
         {
         }
 
         public THttpServerTransport(
             ITAsyncProcessor processor,
+            TConfiguration config,
             TProtocolFactory inputProtocolFactory,
             TProtocolFactory outputProtocolFactory,
             TTransportFactory inputTransFactory = null,
@@ -73,6 +77,8 @@ namespace Thrift.Transport.Server
             // loggerFactory == null is not illegal anymore
 
             Processor = processor ?? throw new ArgumentNullException(nameof(processor));
+            Configuration = config;  // may be null
+
             InputProtocolFactory = inputProtocolFactory ?? throw new ArgumentNullException(nameof(inputProtocolFactory));
             OutputProtocolFactory = outputProtocolFactory ?? throw new ArgumentNullException(nameof(outputProtocolFactory));
 
@@ -91,7 +97,7 @@ namespace Thrift.Transport.Server
 
         public async Task ProcessRequestAsync(HttpContext context, CancellationToken cancellationToken)
         {
-            var transport = new TStreamTransport(context.Request.Body, context.Response.Body);
+            var transport = new TStreamTransport(context.Request.Body, context.Response.Body, Configuration);
 
             try
             {

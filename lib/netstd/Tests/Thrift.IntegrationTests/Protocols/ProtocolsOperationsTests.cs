@@ -31,6 +31,7 @@ namespace Thrift.IntegrationTests.Protocols
     public class ProtocolsOperationsTests
     {
         private readonly CompareLogic _compareLogic = new CompareLogic();
+        private static readonly TConfiguration Configuration = null;  // or new TConfiguration() if needed
 
         [DataTestMethod]
         [DataRow(typeof(TBinaryProtocol), TMessageType.Call)]
@@ -494,7 +495,7 @@ namespace Thrift.IntegrationTests.Protocols
         private static Tuple<Stream, TProtocol> GetProtocolInstance(Type protocolType)
         {
             var memoryStream = new MemoryStream();
-            var streamClientTransport = new TStreamTransport(memoryStream, memoryStream);
+            var streamClientTransport = new TStreamTransport(memoryStream, memoryStream,Configuration);
             var protocol = (TProtocol) Activator.CreateInstance(protocolType, streamClientTransport);
             return new Tuple<Stream, TProtocol>(memoryStream, protocol);
         }

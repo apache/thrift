@@ -28,6 +28,7 @@ using System.ServiceModel;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using Thrift;
 using Thrift.Collections;
 using Thrift.Protocol;
 using Thrift.Transport;
@@ -72,6 +73,7 @@ namespace ThriftTest
             public LayeredChoice layered = LayeredChoice.None;
             public ProtocolChoice protocol = ProtocolChoice.Binary;
             public TransportChoice transport = TransportChoice.Socket;
+            private readonly TConfiguration Configuration = null;  // or new TConfiguration() if needed
 
             internal void Parse(List<string> args)
             {
@@ -235,12 +237,12 @@ namespace ThriftTest
                 {
                     case TransportChoice.Http:
                         Debug.Assert(url != null);
-                        trans = new THttpTransport(new Uri(url), null);
+                        trans = new THttpTransport(new Uri(url), Configuration);
                         break;
 
                     case TransportChoice.NamedPipe:
                         Debug.Assert(pipe != null);
-                        trans = new TNamedPipeTransport(pipe);
+                        trans = new TNamedPipeTransport(pipe,Configuration);
                         break;
 
                     case TransportChoice.TlsSocket:
@@ -250,14 +252,15 @@ namespace ThriftTest
                             throw new InvalidOperationException("Certificate doesn't contain private key");
                         }
 
-                        trans = new TTlsSocketTransport(host, port, 0, cert,
+                        trans = new TTlsSocketTransport(host, port, Configuration, 0,
+                            cert,
                             (sender, certificate, chain, errors) => true,
                             null, SslProtocols.Tls | SslProtocols.Tls11 | SslProtocols.Tls12);
                         break;
 
                     case TransportChoice.Socket:
                     default:
-                        trans = new TSocketTransport(host, port);
+                        trans = new TSocketTransport(host, port, Configuration);
                         break;
                 }
 
