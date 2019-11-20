@@ -30,13 +30,15 @@ namespace Thrift.Transport.Client
         private bool _isDisposed;
 
 
-        public TSocketTransport(TcpClient client)
+        public TSocketTransport(TcpClient client, TConfiguration config)
+            : base(config)
         {
             TcpClient = client ?? throw new ArgumentNullException(nameof(client));
             SetInputOutputStream();
         }
 
-        public TSocketTransport(IPAddress host, int port, int timeout = 0)
+        public TSocketTransport(IPAddress host, int port, TConfiguration config, int timeout = 0)
+            : base(config)
         {
             Host = host;
             Port = port;
@@ -47,7 +49,8 @@ namespace Thrift.Transport.Client
             SetInputOutputStream();
         }
 
-        public TSocketTransport(string host, int port, int timeout = 0)
+        public TSocketTransport(string host, int port, TConfiguration config, int timeout = 0)
+            : base(config)
         {
             try
             {

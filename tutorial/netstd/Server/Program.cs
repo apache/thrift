@@ -44,6 +44,7 @@ namespace Server
     {
         private static ServiceCollection ServiceCollection = new ServiceCollection();
         private static ILogger Logger;
+        private static readonly TConfiguration Configuration = null;  // new TConfiguration() if  needed
 
         public static void Main(string[] args)
         {
@@ -163,13 +164,14 @@ Sample:
             switch (transport)
             {
                 case Transport.Tcp:
-                    serverTransport = new TServerSocketTransport(9090);
+                    serverTransport = new TServerSocketTransport(9090, Configuration);
                     break;
                 case Transport.NamedPipe:
-                    serverTransport = new TNamedPipeServerTransport(".test");
+                    serverTransport = new TNamedPipeServerTransport(".test", Configuration);
                     break;
                 case Transport.TcpTls:
-                    serverTransport = new TTlsServerSocketTransport(9090, GetCertificate(), ClientCertValidator, LocalCertificateSelectionCallback);
+                    serverTransport = new TTlsServerSocketTransport(9090, Configuration,
+                        GetCertificate(), ClientCertValidator, LocalCertificateSelectionCallback);
                     break;
             }
 

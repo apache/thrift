@@ -148,6 +148,8 @@ namespace ThriftTest
     public class TestServer
     {
         public static int _clientID = -1;
+        private static readonly TConfiguration Configuration = null;  // or new TConfiguration() if needed
+
         public delegate void TestLogDelegate(string msg, params object[] values);
 
         public class MyServerEventHandler : TServerEventHandler
@@ -552,7 +554,7 @@ namespace ThriftTest
                     {
                         case TransportChoice.NamedPipe:
                             Debug.Assert(param.pipe != null);
-                            trans = new TNamedPipeServerTransport(param.pipe);
+                            trans = new TNamedPipeServerTransport(param.pipe, Configuration);
                             break;
 
 
@@ -564,14 +566,15 @@ namespace ThriftTest
                                 throw new InvalidOperationException("Certificate doesn't contain private key");
                             }
 
-                        trans = new TTlsServerSocketTransport( param.port, cert,
+                            trans = new TTlsServerSocketTransport(param.port, Configuration,
+                                cert,
                                 (sender, certificate, chain, errors) => true,
                                 null, SslProtocols.Tls | SslProtocols.Tls11 | SslProtocols.Tls12);
                             break;
 
                         case TransportChoice.Socket:
                         default:
-                        trans = new TServerSocketTransport(param.port, 0);
+                            trans = new TServerSocketTransport(param.port, Configuration);
                             break;
                     }
 

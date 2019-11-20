@@ -27,7 +27,6 @@ namespace Thrift.Protocol
     // ReSharper disable once InconsistentNaming
     public abstract class TProtocol : IDisposable
     {
-        public const int DefaultRecursionDepth = 64;
         private bool _isDisposed;
         protected int RecursionDepth;
 
@@ -36,7 +35,7 @@ namespace Thrift.Protocol
         protected TProtocol(TTransport trans)
         {
             Trans = trans;
-            RecursionLimit = DefaultRecursionDepth;
+            RecursionLimit = trans.Configuration.RecursionLimit;
             RecursionDepth = 0;
         }
 
