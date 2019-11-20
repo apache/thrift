@@ -36,12 +36,7 @@ namespace Thrift.Transport.Client
             SetInputOutputStream();
         }
 
-        public TSocketTransport(IPAddress host, int port)
-            : this(host, port, 0)
-        {
-        }
-
-        public TSocketTransport(IPAddress host, int port, int timeout)
+        public TSocketTransport(IPAddress host, int port, int timeout = 0)
         {
             Host = host;
             Port = port;
@@ -84,7 +79,7 @@ namespace Thrift.Transport.Client
             }
         }
 
-    public TcpClient TcpClient { get; private set; }
+        public TcpClient TcpClient { get; private set; }
         public IPAddress Host { get; }
         public int Port { get; }
 

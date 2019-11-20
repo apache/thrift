@@ -30,14 +30,9 @@ namespace Thrift.Transport.Client
         private byte[] Bytes;
         private int _bytesUsed;
 
-        public TMemoryBufferTransport()
+        public TMemoryBufferTransport(int initialCapacity = 2048)
         {
-            Bytes = new byte[2048];  // default size
-        }
-
-        public TMemoryBufferTransport(int initialCapacity)
-        {
-            Bytes = new byte[initialCapacity];  // default size
+            Bytes = new byte[initialCapacity];  
         }
 
         public TMemoryBufferTransport(byte[] buf)

@@ -43,13 +43,16 @@ namespace Thrift.Transport.Server
 
         protected ITAsyncProcessor Processor;
 
-        public THttpServerTransport(ITAsyncProcessor processor, RequestDelegate next = null, ILoggerFactory loggerFactory = null)
+        public THttpServerTransport(
+            ITAsyncProcessor processor,
+            RequestDelegate next = null,
+            ILoggerFactory loggerFactory = null)
             : this(processor, new TBinaryProtocol.Factory(), null, next, loggerFactory)
         {
         }
 
         public THttpServerTransport(
-            ITAsyncProcessor processor, 
+            ITAsyncProcessor processor,
             TProtocolFactory protocolFactory, 
             TTransportFactory transFactory = null, 
             RequestDelegate next = null,
@@ -59,7 +62,7 @@ namespace Thrift.Transport.Server
         }
 
         public THttpServerTransport(
-            ITAsyncProcessor processor, 
+            ITAsyncProcessor processor,
             TProtocolFactory inputProtocolFactory,
             TProtocolFactory outputProtocolFactory,
             TTransportFactory inputTransFactory = null,

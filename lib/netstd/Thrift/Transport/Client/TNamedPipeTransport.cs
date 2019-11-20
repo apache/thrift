@@ -26,7 +26,7 @@ namespace Thrift.Transport.Client
     public class TNamedPipeTransport : TTransport
     {
         private NamedPipeClientStream PipeStream;
-        private int ConnectTimeout;
+        private readonly int ConnectTimeout;
 
         public TNamedPipeTransport(string pipe, int timeout = Timeout.Infinite) 
             : this(".", pipe, timeout)
@@ -102,7 +102,10 @@ namespace Thrift.Transport.Client
 
         protected override void Dispose(bool disposing)
         {
-            PipeStream.Dispose();
+            if(disposing) 
+            {
+              PipeStream?.Dispose();
+            }
         }
     }
 }
