@@ -777,9 +777,14 @@ string t_go_generator::render_included_programs(string& unused_prot) {
   const vector<t_program*>& includes = program_->get_includes();
   string result = "";
   string local_namespace = program_->get_namespace("go");
+  std::set<std::string> included;
   for (auto include : includes) {
     if (!local_namespace.empty() && local_namespace == include->get_namespace("go")) {
       continue;
+    }
+
+    if (!included.insert(include->get_namespace("go")).second) {
+        continue;
     }
 
     result += render_program_import(include, unused_prot);
