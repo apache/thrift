@@ -16,6 +16,7 @@
 // under the License.
 
 using System;
+using System.Buffers.Binary;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Text;
@@ -399,8 +400,7 @@ namespace Thrift.Protocol
             {
                 return;
             }
-
-            FixedLongToBytes(BitConverter.DoubleToInt64Bits(d), PreAllocatedBuffer, 0);
+            BinaryPrimitives.WriteInt64LittleEndian(PreAllocatedBuffer, BitConverter.DoubleToInt64Bits(d));
             await Trans.WriteAsync(PreAllocatedBuffer, 0, 8, cancellationToken);
         }
 
@@ -683,8 +683,8 @@ namespace Thrift.Protocol
             }
 
             await Trans.ReadAllAsync(PreAllocatedBuffer, 0, 8, cancellationToken);
-
-            return BitConverter.Int64BitsToDouble(BytesToLong(PreAllocatedBuffer));
+            
+            return BitConverter.Int64BitsToDouble(BinaryPrimitives.ReadInt64LittleEndian(PreAllocatedBuffer));
         }
 
         public override async ValueTask<string> ReadStringAsync(CancellationToken cancellationToken)
@@ -838,25 +838,6 @@ namespace Thrift.Protocol
             return (long) (n >> 1) ^ -(long) (n & 1);
         }
 
-        private static long BytesToLong(byte[] bytes)
-        {
-            /*
-            Note that it's important that the mask bytes are long literals,
-            otherwise they'll default to ints, and when you shift an int left 56 bits,
-            you just get a messed up int.
-            */
-
-            return
-                ((bytes[7] & 0xffL) << 56) |
-                ((bytes[6] & 0xffL) << 48) |
-                ((bytes[5] & 0xffL) << 40) |
-                ((bytes[4] & 0xffL) << 32) |
-                ((bytes[3] & 0xffL) << 24) |
-                ((bytes[2] & 0xffL) << 16) |
-                ((bytes[1] & 0xffL) << 8) |
-                (bytes[0] & 0xffL);
-        }
-
         private static TType GetTType(byte type)
         {
             // Given a TCompactProtocol.Types constant, convert it to its corresponding TType value.
@@ -873,19 +854,6 @@ namespace Thrift.Protocol
         {
             // Convert n into a zigzag int. This allows negative numbers to be represented compactly as a varint
             return (uint) (n << 1) ^ (uint) (n >> 31);
-        }
-
-        private static void FixedLongToBytes(long n, byte[] buf, int off)
-        {
-            // Convert a long into little-endian bytes in buf starting at off and going until off+7.
-            buf[off + 0] = (byte) (n & 0xff);
-            buf[off + 1] = (byte) ((n >> 8) & 0xff);
-            buf[off + 2] = (byte) ((n >> 16) & 0xff);
-            buf[off + 3] = (byte) ((n >> 24) & 0xff);
-            buf[off + 4] = (byte) ((n >> 32) & 0xff);
-            buf[off + 5] = (byte) ((n >> 40) & 0xff);
-            buf[off + 6] = (byte) ((n >> 48) & 0xff);
-            buf[off + 7] = (byte) ((n >> 56) & 0xff);
         }
 
         public class Factory : TProtocolFactory
