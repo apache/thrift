@@ -34,17 +34,9 @@ namespace Server
                 Console.WriteLine("Failed to grow scroll-back buffer");
             }
 
-            // split mode and options
-            var subArgs = new List<string>(args);
-            var firstArg = string.Empty;
-            if (subArgs.Count > 0)
-            { 
-                firstArg = subArgs[0];
-                subArgs.RemoveAt(0);
-            }
-
-            // run whatever mode is choosen
-            switch(firstArg)
+            // run whatever mode is choosen, default to test impl
+            var firstArg = args.Length > 0 ? args[0] : string.Empty;
+            switch (firstArg)
             {
                 case "server":
                     Console.WriteLine("The 'server' argument is no longer required.");
@@ -54,7 +46,7 @@ namespace Server
                     PrintHelp();
                     return 0;
                 default:
-                    return TestServer.Execute(subArgs);
+                    return TestServer.Execute(new List<string>( args));
             }
         }
 
