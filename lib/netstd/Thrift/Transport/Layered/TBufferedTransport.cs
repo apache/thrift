@@ -172,6 +172,17 @@ namespace Thrift.Transport
             await InnerTransport.FlushAsync(cancellationToken);
         }
 
+        public override void CheckReadBytesAvailable(long numBytes)
+        {
+            var buffered = ReadBuffer.Length - ReadBuffer.Position;
+            if (buffered < numBytes)
+            {
+                numBytes -= buffered;
+                InnerTransport.CheckReadBytesAvailable(numBytes);
+            }
+        }
+
+
         private void CheckNotDisposed()
         {
             if (IsDisposed)

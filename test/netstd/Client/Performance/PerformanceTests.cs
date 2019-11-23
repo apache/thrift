@@ -68,10 +68,9 @@ namespace Client.Tests
             foreach (var layered in Enum.GetValues(typeof(LayeredChoice)))
             {
                 Layered = (LayeredChoice)layered;
-
                 await RunTestAsync(async (bool b) => { return await GenericProtocolFactory<TBinaryProtocol>(b); });
                 await RunTestAsync(async (bool b) => { return await GenericProtocolFactory<TCompactProtocol>(b); });
-                //await RunTestAsync(async (bool b) => { return await GenericProtocolFactory<TJsonProtocol>(b); });
+                await RunTestAsync(async (bool b) => { return await GenericProtocolFactory<TJsonProtocol>(b); });
             }
         }
 

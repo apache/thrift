@@ -154,6 +154,18 @@ namespace Thrift.Transport
             WriteBuffer.Seek(0, SeekOrigin.End);
         }
 
+
+        public override void CheckReadBytesAvailable(long numBytes)
+        {
+            var buffered = ReadBuffer.Length - ReadBuffer.Position;
+            if (buffered < numBytes)
+            {
+                numBytes -= buffered;
+                InnerTransport.CheckReadBytesAvailable(numBytes);
+            }
+        }
+
+
         private static void EncodeFrameSize(int frameSize, byte[] buf)
         {
             buf[0] = (byte) (0xff & (frameSize >> 24));

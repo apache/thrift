@@ -19,5 +19,10 @@ namespace Thrift.Transport
         {
             InnerTransport.UpdateKnownMessageSize(size);
         }
+
+        public override void CheckReadBytesAvailable(long numBytes)
+        {
+            InnerTransport.CheckReadBytesAvailable(numBytes);
+        }
     }
 }

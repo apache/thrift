@@ -41,6 +41,7 @@ namespace Thrift.Transport.Client
         {
             Bytes = (byte[])buf.Clone();
             _bytesUsed = Bytes.Length;
+            UpdateKnownMessageSize(_bytesUsed);
         }
 
         public int Position { get; set; }
@@ -121,7 +122,6 @@ namespace Thrift.Transport.Client
 
         public override ValueTask<int> ReadAsync(byte[] buffer, int offset, int length, CancellationToken cancellationToken)
         {
-            CheckReadBytesAvailable(length);
             var count = Math.Min(Length - Position, length);
             Buffer.BlockCopy(Bytes, Position, buffer, offset, count);
             Position += count;

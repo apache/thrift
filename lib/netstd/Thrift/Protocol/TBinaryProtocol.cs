@@ -381,7 +381,7 @@ namespace Thrift.Protocol
                 ValueType = (TType) await ReadByteAsync(cancellationToken),
                 Count = await ReadI32Async(cancellationToken)
             };
-
+            CheckReadBytesAvailable(map);
             return map;
         }
 
@@ -405,7 +405,7 @@ namespace Thrift.Protocol
                 ElementType = (TType) await ReadByteAsync(cancellationToken),
                 Count = await ReadI32Async(cancellationToken)
             };
-
+            CheckReadBytesAvailable(list);
             return list;
         }
 
@@ -429,7 +429,7 @@ namespace Thrift.Protocol
                 ElementType = (TType) await ReadByteAsync(cancellationToken),
                 Count = await ReadI32Async(cancellationToken)
             };
-
+            CheckReadBytesAvailable(set);
             return set;
         }
 
@@ -541,6 +541,7 @@ namespace Thrift.Protocol
             }
 
             var size = await ReadI32Async(cancellationToken);
+            Transport.CheckReadBytesAvailable(size);
             var buf = new byte[size];
             await Trans.ReadAllAsync(buf, 0, size, cancellationToken);
             return buf;
@@ -570,9 +571,32 @@ namespace Thrift.Protocol
                 return Encoding.UTF8.GetString(PreAllocatedBuffer, 0, size);
             }
 
+            Transport.CheckReadBytesAvailable(size);
             var buf = new byte[size];
             await Trans.ReadAllAsync(buf, 0, size, cancellationToken);
             return Encoding.UTF8.GetString(buf, 0, buf.Length);
+        }
+
+        // Return the minimum number of bytes a type will consume on the wire
+        public override int GetMinSerializedSize(TType type)
+        {
+            switch (type)
+            {
+                case TType.Stop: return 0;
+                case TType.Void: return 0;
+                case TType.Bool: return sizeof(byte);
+                case TType.Byte: return sizeof(byte);
+                case TType.Double: return sizeof(double);
+                case TType.I16: return sizeof(short);
+                case TType.I32: return sizeof(int);
+                case TType.I64: return sizeof(long);
+                case TType.String: return sizeof(int);  // string length
+                case TType.Struct: return 0;  // empty struct
+                case TType.Map: return sizeof(int);  // element count
+                case TType.Set: return sizeof(int);  // element count
+                case TType.List: return sizeof(int);  // element count
+                default: throw new TTransportException(TTransportException.ExceptionType.Unknown, "unrecognized type code");
+            }
         }
 
         public class Factory : TProtocolFactory
