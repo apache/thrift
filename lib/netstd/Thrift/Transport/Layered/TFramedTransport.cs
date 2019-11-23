@@ -155,6 +155,16 @@ namespace Thrift.Transport
             WriteBuffer.Seek(0, SeekOrigin.End);
         }
 
+        public override void CheckReadBytesAvailable(long numBytes)
+        {
+            var buffered = ReadBuffer.Length - ReadBuffer.Position;
+            if (buffered < numBytes)
+            {
+                numBytes -= buffered;
+                InnerTransport.CheckReadBytesAvailable(numBytes);
+            }
+        }
+
         private void CheckNotDisposed()
         {
             if (IsDisposed)

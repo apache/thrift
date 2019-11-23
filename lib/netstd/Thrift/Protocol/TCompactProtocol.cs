@@ -590,7 +590,9 @@ namespace Thrift.Protocol
 
             var size = (int) await ReadVarInt32Async(cancellationToken);
             var keyAndValueType = size == 0 ? (byte) 0 : (byte) await ReadByteAsync(cancellationToken);
-            return new TMap(GetTType((byte) (keyAndValueType >> 4)), GetTType((byte) (keyAndValueType & 0xf)), size);
+            var map = new TMap(GetTType((byte) (keyAndValueType >> 4)), GetTType((byte) (keyAndValueType & 0xf)), size);
+            CheckReadBytesAvailable(map);
+            return map;
         }
 
         public override async Task ReadMapEndAsync(CancellationToken cancellationToken)
@@ -703,6 +705,7 @@ namespace Thrift.Protocol
                 return Encoding.UTF8.GetString(PreAllocatedBuffer, 0, length);
             }
 
+            Transport.CheckReadBytesAvailable(length);
             var buf = new byte[length];
             await Trans.ReadAllAsync(buf, 0, length, cancellationToken);
             return Encoding.UTF8.GetString(buf, 0, length);
@@ -718,6 +721,7 @@ namespace Thrift.Protocol
             }
 
             // read data
+            Transport.CheckReadBytesAvailable(length);
             var buf = new byte[length];
             await Trans.ReadAllAsync(buf, 0, length, cancellationToken);
             return buf;
@@ -745,7 +749,9 @@ namespace Thrift.Protocol
             }
 
             var type = GetTType(sizeAndType);
-            return new TList(type, size);
+            var list = new TList(type, size);
+            CheckReadBytesAvailable(list);
+            return list;
         }
 
         public override async Task ReadListEndAsync(CancellationToken cancellationToken)
@@ -854,6 +860,28 @@ namespace Thrift.Protocol
         {
             // Convert n into a zigzag int. This allows negative numbers to be represented compactly as a varint
             return (uint) (n << 1) ^ (uint) (n >> 31);
+        }
+
+        // Return the minimum number of bytes a type will consume on the wire
+        public override int GetMinSerializedSize(TType type)
+        {
+            switch (type)
+            {
+                case TType.Stop:    return 0;
+                case TType.Void:    return 0;
+                case TType.Bool:   return sizeof(byte);
+                case TType.Double: return 8;  // uses fixedLongToBytes() which always writes 8 bytes
+                case TType.Byte: return sizeof(byte);
+                case TType.I16:     return sizeof(byte);  // zigzag
+                case TType.I32:     return sizeof(byte);  // zigzag
+                case TType.I64:     return sizeof(byte);  // zigzag
+                case TType.String: return sizeof(byte);  // string length
+                case TType.Struct:  return 0;             // empty struct
+                case TType.Map:     return sizeof(byte);  // element count
+                case TType.Set:    return sizeof(byte);  // element count
+                case TType.List:    return sizeof(byte);  // element count
+                default: throw new TTransportException(TTransportException.ExceptionType.Unknown, "unrecognized type code");
+            }
         }
 
         public class Factory : TProtocolFactory

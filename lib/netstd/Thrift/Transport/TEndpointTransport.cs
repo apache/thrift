@@ -9,6 +9,7 @@ namespace Thrift.Transport
     abstract public class TEndpointTransport : TTransport
     {
         protected long MaxMessageSize { get => Configuration.MaxMessageSize; }
+        protected long KnownMessageSize { get; private set; }
         protected long RemainingMessageSize { get; private set; }
 
         private readonly TConfiguration _configuration;
@@ -25,22 +26,33 @@ namespace Thrift.Transport
         /// <summary>
         /// Resets RemainingMessageSize to the configured maximum 
         /// </summary>
-        protected void ResetConsumedMessageSize(long knownSize = -1)
+        protected void ResetConsumedMessageSize(long newSize = -1)
         {
-            if(knownSize >= 0)
-                RemainingMessageSize = Math.Min( MaxMessageSize, knownSize);
-            else
+            // full reset 
+            if (newSize < 0)
+            {
+                KnownMessageSize = MaxMessageSize;
                 RemainingMessageSize = MaxMessageSize;
+                return;
+            }
+
+            // update only: message size can shrink, but not grow
+            Debug.Assert(KnownMessageSize <= MaxMessageSize);
+            if (newSize > KnownMessageSize)
+                throw new TTransportException(TTransportException.ExceptionType.EndOfFile, "MaxMessageSize reached");
+
+            KnownMessageSize = newSize;
+            RemainingMessageSize = newSize;
         }
 
         /// <summary>
         /// Updates RemainingMessageSize to reflect then known real message size (e.g. framed transport).
-        /// Will throw if we already consumed too many bytes.
+        /// Will throw if we already consumed too many bytes or if the new size is larger than allowed.
         /// </summary>
         /// <param name="size"></param>
         public override void UpdateKnownMessageSize(long size)
         {
-            var consumed = MaxMessageSize - RemainingMessageSize;
+            var consumed = KnownMessageSize - RemainingMessageSize;
             ResetConsumedMessageSize(size);
             CountConsumedMessageBytes(consumed);
         }
@@ -49,7 +61,7 @@ namespace Thrift.Transport
         /// Throws if there are not enough bytes in the input stream to satisfy a read of numBytes bytes of data
         /// </summary>
         /// <param name="numBytes"></param>
-        protected void CheckReadBytesAvailable(long numBytes)
+        public override void CheckReadBytesAvailable(long numBytes)
         {
             if (RemainingMessageSize < numBytes)
                 throw new TTransportException(TTransportException.ExceptionType.EndOfFile, "MaxMessageSize reached");

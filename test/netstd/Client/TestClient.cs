@@ -446,7 +446,7 @@ namespace ThriftTest
             Normal,          // Fairly small array of usual size (256 bytes)
             Large,           // Large writes/reads may cause range check errors
             PipeWriteLimit,  // Windows Limit: Pipe write operations across a network are limited to 65,535 bytes per write.
-            TwentyMB         // that's quite a bit of data
+            FifteenMB        // that's quite a bit of data
         };
 
         public static byte[] PrepareTestData(bool randomDist, BinaryTestSize testcase)
@@ -466,8 +466,8 @@ namespace ThriftTest
                 case BinaryTestSize.PipeWriteLimit:
                     amount = 0xFFFF + 128;
                     break;
-                case BinaryTestSize.TwentyMB:
-                    amount = 20 * 1024 * 1024;
+                case BinaryTestSize.FifteenMB:
+                    amount = 15 * 1024 * 1024;
                     break;
                 default:
                     throw new ArgumentException(nameof(testcase));

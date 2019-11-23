@@ -243,5 +243,13 @@ namespace Thrift.Protocol
         {
             return await _wrappedProtocol.ReadBinaryAsync(cancellationToken);
         }
+
+        // Returns the minimum amount of bytes needed to store the smallest possible instance of TType.
+        public override int GetMinSerializedSize(TType type)
+        {
+            return _wrappedProtocol.GetMinSerializedSize(type);
+        }
+
+
     }
 }

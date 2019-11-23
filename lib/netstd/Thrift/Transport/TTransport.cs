@@ -34,7 +34,7 @@ namespace Thrift.Transport
         public abstract bool IsOpen { get; }
         public abstract TConfiguration Configuration { get; }
         public abstract void UpdateKnownMessageSize(long size);
-
+        public abstract void CheckReadBytesAvailable(long numBytes);
         public void Dispose()
         {
             Dispose(true);
