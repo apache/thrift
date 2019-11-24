@@ -2,6 +2,7 @@
   "name": "thrift",
   "version": "0.14.0",
   "description": "Thrift is a software framework for scalable cross-language services development.",
+  "main": "./src/thrift",
   "author": {
     "name": "Apache Thrift Developers",
     "email": "dev@thrift.apache.org"
