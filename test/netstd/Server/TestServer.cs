@@ -254,20 +254,20 @@ namespace ThriftTest
 
             public Task<Xtruct> testStructAsync(Xtruct thing, CancellationToken cancellationToken)
             {
-                logger.Invoke("testStruct({{\"{0}\", {1}, {2}, {3}}})", thing.String_thing, thing.Byte_thing, thing.I32_thing, thing.I64_thing);
+                logger.Invoke("testStruct({{\"{0}\", {1}, {2}, {3}}})", thing.StringThing, thing.ByteThing, thing.I32Thing, thing.I64Thing);
                 return Task.FromResult(thing);
             }
 
             public Task<Xtruct2> testNestAsync(Xtruct2 nest, CancellationToken cancellationToken)
             {
-                var thing = nest.Struct_thing;
+                var thing = nest.StructThing;
                 logger.Invoke("testNest({{{0}, {{\"{1}\", {2}, {3}, {4}, {5}}}}})",
-                    nest.Byte_thing,
-                    thing.String_thing,
-                    thing.Byte_thing,
-                    thing.I32_thing,
-                    thing.I64_thing,
-                    nest.I32_thing);
+                    nest.ByteThing,
+                    thing.StringThing,
+                    thing.ByteThing,
+                    thing.I32Thing,
+                    thing.I64Thing,
+                    nest.I32Thing);
                 return Task.FromResult(nest);
             }
 
@@ -429,10 +429,10 @@ namespace ThriftTest
                 logger.Invoke("testMulti()");
 
                 var hello = new Xtruct(); ;
-                hello.String_thing = "Hello2";
-                hello.Byte_thing = arg0;
-                hello.I32_thing = arg1;
-                hello.I64_thing = arg2;
+                hello.StringThing = "Hello2";
+                hello.ByteThing = arg0;
+                hello.I32Thing = arg1;
+                hello.I64Thing = arg2;
                 return Task.FromResult(hello);
             }
 
@@ -473,12 +473,12 @@ namespace ThriftTest
                     var x = new Xception2
                     {
                         ErrorCode = 2002,
-                        Struct_thing = new Xtruct { String_thing = "This is an Xception2" }
+                        StructThing = new Xtruct { StringThing = "This is an Xception2" }
                     };
                     throw x;
                 }
 
-                var result = new Xtruct { String_thing = arg1 };
+                var result = new Xtruct { StringThing = arg1 };
                 return Task.FromResult(result);
             }
 

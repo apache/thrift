@@ -47,6 +47,6 @@
     </Exec>
     <Exec Condition="Exists('$(PathToThrift)')" Command="&quot;$(PathToThrift)&quot; -out $(ProjectDir) -gen netstd:wcf,union,serial -r ./../../ThriftTest.thrift" />
     <Exec Condition="Exists('thrift')" Command="thrift -out $(ProjectDir) -gen netstd:wcf,union,serial -r ./../../ThriftTest.thrift" />
-    <Exec Condition="Exists('$(ProjectDir)/../../../compiler/cpp/thrift')" Command="$(ProjectDir)/../../../compiler/cpp/thrift -out $(ProjectDir) -gen netstd:wcf,union,serial -r ./../../ThriftTest.thrift" />
+    <Exec Condition="Exists('$(ProjectDir)/../../../compiler/cpp/thrift')" Command="$(ProjectDir)/../../../compiler/cpp/thrift -out $(ProjectDir) -gen netstd:wcf,union,serial,pascal -r ./../../ThriftTest.thrift" />
   </Target>
 </Project>
