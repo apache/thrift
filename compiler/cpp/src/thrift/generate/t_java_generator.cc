@@ -1064,7 +1064,7 @@ void t_java_generator::generate_union_getters_and_setters(ostream& out, t_struct
     indent(out) << "  setField_ = _Fields." << constant_name(field->get_name()) << ";" << endl;
 
     if (type_can_be_null(field->get_type())) {
-      indent(out) << "  value_ = java.util.Objects.requireNonNull(value);" << endl;
+      indent(out) << "  value_ = java.util.Objects.requireNonNull(value,\"" << "_Fields." << constant_name(field->get_name()) << "\");" << endl;
     } else {
       indent(out) << "  value_ = value;" << endl;
     }
