@@ -83,7 +83,7 @@ public class TIOStreamTransport extends TTransport {
    * @return false after close is called.
    */
   public boolean isOpen() {
-    return inputStream_ != null && outputStream_ != null;
+    return inputStream_ != null || outputStream_ != null;
   }
 
   /**
@@ -95,20 +95,23 @@ public class TIOStreamTransport extends TTransport {
    * Closes both the input and output streams.
    */
   public void close() {
-    if (inputStream_ != null) {
-      try {
-        inputStream_.close();
-      } catch (IOException iox) {
-        LOGGER.warn("Error closing input stream.", iox);
+    try {
+      if (inputStream_ != null) {
+        try {
+          inputStream_.close();
+        } catch (IOException iox) {
+          LOGGER.warn("Error closing input stream.", iox);
+        }
       }
+      if (outputStream_ != null) {
+        try {
+          outputStream_.close();
+        } catch (IOException iox) {
+          LOGGER.warn("Error closing output stream.", iox);
+        }
+      }
+    } finally {
       inputStream_ = null;
-    }
-    if (outputStream_ != null) {
-      try {
-        outputStream_.close();
-      } catch (IOException iox) {
-        LOGGER.warn("Error closing output stream.", iox);
-      }
       outputStream_ = null;
     }
   }
