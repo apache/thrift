@@ -27,8 +27,8 @@ import java.io.InputStream;
 import java.io.OutputStream;
 
 /**
- * This is the most commonly used base transport. It takes an InputStream
- * and an OutputStream and uses those to perform all transport operations.
+ * This is the most commonly used base transport. It takes an InputStream or
+ * an OutputStream or both and uses it/them to perform transport operations.
  * This allows for compatibility with all the nice constructs Java already
  * has to provide a variety of types of streams.
  *
@@ -50,7 +50,7 @@ public class TIOStreamTransport extends TTransport {
   protected TIOStreamTransport() {}
 
   /**
-   * Input stream constructor.
+   * Input stream constructor, constructs an input only transport.
    *
    * @param is Input stream to read from
    */
@@ -59,9 +59,9 @@ public class TIOStreamTransport extends TTransport {
   }
 
   /**
-   * Output stream constructor.
+   * Output stream constructor, constructs an output only transport.
    *
-   * @param os Output stream to read from
+   * @param os Output stream to write to
    */
   public TIOStreamTransport(OutputStream os) {
     outputStream_ = os;
