@@ -1,0 +1,14 @@
+version: 1.0.{build}
+branches:
+  only:
+    - /^(release/)?\d+\.\d+\.\d+$/
+image: Ubuntu
+clone_depth: 1
+environment:
+  matrix:
+    - login:
+        secure: echo docker-hub-api-key | docker login --username thrift --password-stdin
+build_script:
+  - sh: docker build compiler/cpp -f build/docker/publish/Dockerfile -t thrift:$APPVEYOR_REPO_BRANCH
+  - sh: eval $login
+  - sh: docker push thrift:$APPVEYOR_REPO_BRANCH
