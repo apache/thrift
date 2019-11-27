@@ -390,20 +390,17 @@ begin
       end;
 
     except
-      on E: TTransportException do
-      begin
+      on E: TTransportException do begin
         if FStop
         then FLogDelegate('TSimpleServer was shutting down, caught ' + E.ToString)
         else FLogDelegate( E.ToString);
       end;
-      on E: Exception do
-      begin
+      on E: Exception do begin
         FLogDelegate( E.ToString);
       end;
     end;
 
-    if context <> nil
-    then begin
+    if context <> nil then begin
       context.CleanupContext;
       context := nil;
     end;

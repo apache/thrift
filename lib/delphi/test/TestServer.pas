@@ -157,13 +157,11 @@ end;
 procedure TTestServer.TTestHandlerImpl.testException(const arg: string);
 begin
   Console.WriteLine('testException(' + arg + ')');
-  if ( arg = 'Xception') then
-  begin
+  if ( arg = 'Xception') then begin
     raise TXception.Create( 1001, arg);
   end;
 
-  if (arg = 'TException') then
-  begin
+  if (arg = 'TException') then begin
     raise TException.Create('TException');
   end;
 

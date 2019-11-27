@@ -1628,7 +1628,7 @@ begin
   result := 0;
   pTmp   := pBuf;
   Inc( pTmp, offset);
-  while count > 0 do begin
+  while (count > 0) and (result = 0) do begin
 
     while TRUE do begin
       wfd := WaitForData( msecs, pTmp, count, wsaError, nBytes);
