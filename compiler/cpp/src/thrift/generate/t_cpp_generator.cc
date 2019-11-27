@@ -504,6 +504,7 @@ void t_cpp_generator::close_generator() {
  * @param ttypedef The type definition
  */
 void t_cpp_generator::generate_typedef(t_typedef* ttypedef) {
+  generate_java_doc(f_types_, ttypedef);
   f_types_ << indent() << "typedef " << type_name(ttypedef->get_type(), true) << " "
            << ttypedef->get_symbolic() << ";" << endl << endl;
 }
@@ -524,6 +525,7 @@ void t_cpp_generator::generate_enum_constant_list(std::ostream& f,
     } else {
       f << "," << endl;
     }
+    generate_java_doc(f, *c_iter);
     indent(f) << prefix << (*c_iter)->get_name() << suffix;
     if (include_values) {
       f << " = " << (*c_iter)->get_value();
@@ -547,6 +549,7 @@ void t_cpp_generator::generate_enum(t_enum* tenum) {
   std::string enum_name = tenum->get_name();
   if (!gen_pure_enums_) {
     enum_name = "type";
+    generate_java_doc(f_types_, tenum);
     f_types_ << indent() << "struct " << tenum->get_name() << " {" << endl;
     indent_up();
   }
@@ -1075,6 +1078,8 @@ void t_cpp_generator::generate_struct_declaration(ostream& out,
 
   out << endl;
 
+  generate_java_doc(out, tstruct);
+
   // Open struct def
   out << indent() << "class " << tstruct->get_name() << extends << " {" << endl << indent()
       << " public:" << endl << endl;
@@ -1147,6 +1152,7 @@ void t_cpp_generator::generate_struct_declaration(ostream& out,
 
   // Declare all fields
   for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
+	generate_java_doc(out, *m_iter);
     indent(out) << declare_field(*m_iter,
                                  false,
                                  (pointers && !(*m_iter)->get_type()->is_xception()),
@@ -1933,6 +1939,9 @@ void t_cpp_generator::generate_service_interface(t_service* tservice, string sty
   if (style == "CobCl" && gen_templates_) {
     f_header_ << "template <class Protocol_>" << endl;
   }
+
+  generate_java_doc(f_header_, tservice);
+
   f_header_ << "class " << service_if_name << extends << " {" << endl << " public:" << endl;
   indent_up();
   f_header_ << indent() << "virtual ~" << service_if_name << "() {}" << endl;
@@ -2225,6 +2234,7 @@ void t_cpp_generator::generate_service_multiface(t_service* tservice) {
   indent_up();
 
   for (f_iter = functions.begin(); f_iter != functions.end(); ++f_iter) {
+    generate_java_doc(f_header_, *f_iter);
     t_struct* arglist = (*f_iter)->get_arglist();
     const vector<t_field*>& args = arglist->get_members();
     vector<t_field*>::const_iterator a_iter;
@@ -2438,6 +2448,8 @@ void t_cpp_generator::generate_service_client(t_service* tservice, string style)
   }
 
   if (style == "Cob") {
+    generate_java_doc(f_header_, tservice);
+
     f_header_ << indent()
               << "::std::shared_ptr< ::apache::thrift::async::TAsyncChannel> getChannel() {" << endl
               << indent() << "  return " << _this << "channel_;" << endl << indent() << "}" << endl;
@@ -2449,6 +2461,7 @@ void t_cpp_generator::generate_service_client(t_service* tservice, string style)
   vector<t_function*> functions = tservice->get_functions();
   vector<t_function*>::const_iterator f_iter;
   for (f_iter = functions.begin(); f_iter != functions.end(); ++f_iter) {
+    generate_java_doc(f_header_, *f_iter);
     indent(f_header_) << function_signature(*f_iter, ifstyle) << ";" << endl;
     // TODO(dreiss): Use private inheritance to avoid generating thise in cob-style.
     if (style == "Concurrent" && !(*f_iter)->is_oneway()) {
