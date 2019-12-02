@@ -31,7 +31,7 @@ use super::{ReadHalf, TIoChannel, WriteHalf};
 /// `set_readable_bytes(...)`. Callers can then read until the buffer is
 /// depleted. No further reads are accepted until the internal read buffer is
 /// replenished again.
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub struct TBufferChannel {
     read: Arc<Mutex<ReadData>>,
     write: Arc<Mutex<WriteData>>,
