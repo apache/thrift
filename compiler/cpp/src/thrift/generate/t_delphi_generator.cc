@@ -152,11 +152,13 @@ public:
   void generate_delphi_struct_writer_impl(ostream& out,
                                           std::string cls_prefix,
                                           t_struct* tstruct,
-                                          bool is_exception);
+                                          bool is_exception,
+                                          bool is_x_factory);
   void generate_delphi_struct_result_writer_impl(ostream& out,
                                                  std::string cls_prefix,
                                                  t_struct* tstruct,
-                                                 bool is_exception);
+                                                 bool is_exception,
+                                                 bool is_x_factory);
 
   void generate_delphi_struct_tostring_impl(ostream& out,
                                             std::string cls_prefix,
@@ -169,7 +171,8 @@ public:
   void generate_delphi_struct_reader_impl(ostream& out,
                                           std::string cls_prefix,
                                           t_struct* tstruct,
-                                          bool is_exception);
+                                          bool is_exception,
+                                          bool is_x_factory);
   void generate_delphi_create_exception_impl(ostream& out,
                                              string cls_prefix,
                                              t_struct* tstruct,
@@ -1532,9 +1535,28 @@ void t_delphi_generator::generate_delphi_struct_impl(ostream& out,
     indent_impl(out) << "begin" << endl;
     indent_up_impl();
     indent_impl(out) << "if F" << exception_factory_name << " = nil" << endl;
-    indent_impl(out) << "then F" << exception_factory_name << " := T" << exception_factory_name << "Impl.Create;" << endl;
-    indent_impl(out) << endl;
+    indent_impl(out) << "then F" << exception_factory_name << " := T" << exception_factory_name << "Impl.Create;" << endl << endl;
     indent_impl(out) << "result := F" << exception_factory_name << ";" << endl;
+    indent_down_impl();
+    indent_impl(out) << "end;" << endl << endl;
+    indent_impl(out) << "function " << cls_prefix << cls_nm << ".QueryInterface(const IID: TGUID; out Obj): HRESULT;" << endl;
+    indent_impl(out) << "begin" << endl;
+    indent_up_impl();
+    indent_impl(out) << "if GetInterface(IID, Obj)" << endl;
+    indent_impl(out) << "then result := S_OK" << endl;
+    indent_impl(out) << "else result := E_NOINTERFACE;" << endl;
+    indent_down_impl();
+    indent_impl(out) << "end;" << endl << endl;
+    indent_impl(out) << "function " << cls_prefix << cls_nm << "._AddRef: Integer;" << endl;
+    indent_impl(out) << "begin" << endl;
+    indent_up_impl();
+    indent_impl(out) << "result := -1;    // not refcounted" << endl;
+    indent_down_impl();
+    indent_impl(out) << "end;" << endl << endl;
+    indent_impl(out) << "function " << cls_prefix << cls_nm << "._Release: Integer;" << endl;
+    indent_impl(out) << "begin" << endl;
+    indent_up_impl();
+    indent_impl(out) << "result := -1;    // not refcounted" << endl;
     indent_down_impl();
     indent_impl(out) << "end;" << endl << endl;
   }
@@ -1586,13 +1608,11 @@ void t_delphi_generator::generate_delphi_struct_impl(ostream& out,
     }
   }
 
-  if ((!is_exception) || is_x_factory) {
-    generate_delphi_struct_reader_impl(out, cls_prefix, tstruct, is_exception);
-    if (is_result) {
-      generate_delphi_struct_result_writer_impl(out, cls_prefix, tstruct, is_exception);
-    } else {
-      generate_delphi_struct_writer_impl(out, cls_prefix, tstruct, is_exception);
-    }
+  generate_delphi_struct_reader_impl(out, cls_prefix, tstruct, is_exception, is_x_factory);
+  if (is_result) {
+    generate_delphi_struct_result_writer_impl(out, cls_prefix, tstruct, is_exception, is_x_factory);
+  } else {
+    generate_delphi_struct_writer_impl(out, cls_prefix, tstruct, is_exception, is_x_factory);
   }
   generate_delphi_struct_tostring_impl(out, cls_prefix, tstruct, is_exception, is_x_factory);
 
@@ -1741,7 +1761,7 @@ void t_delphi_generator::generate_delphi_struct_definition(ostream& out,
   }
   out << "class(";
   if (is_exception && (!is_x_factory)) {
-    out << "TException";
+    out << "TException, IInterface, IBase, ISupportsToString";
   } else {
     out << "TInterfacedObject, IBase, ISupportsToString, " << struct_intf_name;
   }
@@ -1801,8 +1821,18 @@ void t_delphi_generator::generate_delphi_struct_definition(ostream& out,
     }
   }
 
-  indent_down();
+  if (is_exception && (!is_x_factory)) {
+    out << endl;
+    indent_down();
+    indent(out) << "strict protected" << endl;
+    indent_up();  
+    indent(out) << "function QueryInterface(const IID: TGUID; out Obj): HRESULT; stdcall;" << endl;
+    indent(out) << "function _AddRef: Integer; stdcall;" << endl;
+    indent(out) << "function _Release: Integer; stdcall;" << endl;
+    out << endl;
+  }
 
+  indent_down();
   indent(out) << "public" << endl;
   indent_up();
 
@@ -1825,12 +1855,10 @@ void t_delphi_generator::generate_delphi_struct_definition(ostream& out,
     indent(out) << "function " << exception_factory_name << ": " << struct_intf_name << ";" << endl;
   }
 
-  if ((!is_exception) || is_x_factory) {
-    out << endl;
-    indent(out) << "// IBase" << endl;
-    indent(out) << "procedure Read( const iprot: IProtocol);" << endl;
-    indent(out) << "procedure Write( const oprot: IProtocol);" << endl;
-  }
+  out << endl;
+  indent(out) << "// IBase" << endl;
+  indent(out) << "procedure Read( const iprot: IProtocol);" << endl;
+  indent(out) << "procedure Write( const oprot: IProtocol);" << endl;
 
   if (is_exception && is_x_factory) {
     out << endl;
@@ -2163,9 +2191,7 @@ void t_delphi_generator::generate_service_client(t_service* tservice) {
       indent_impl(s_service_impl) << "begin" << endl;
       indent_up_impl();
       indent_impl(s_service_impl) << msgvar << " := iprot_.ReadMessageBegin();" << endl;
-      indent_impl(s_service_impl) << "if (" << msgvar << ".Type_ = TMessageType.Exception) then"
-                                  << endl;
-      indent_impl(s_service_impl) << "begin" << endl;
+      indent_impl(s_service_impl) << "if (" << msgvar << ".Type_ = TMessageType.Exception) then begin" << endl;
       indent_up_impl();
       indent_impl(s_service_impl) << appexvar << " := TApplicationException.Read(iprot_);" << endl;
       indent_impl(s_service_impl) << "iprot_.ReadMessageEnd();" << endl;
@@ -2178,8 +2204,7 @@ void t_delphi_generator::generate_service_client(t_service* tservice) {
       indent_impl(s_service_impl) << "iprot_.ReadMessageEnd();" << endl;
 
       if (!(*f_iter)->get_returntype()->is_void()) {
-        indent_impl(s_service_impl) << "if (" << retvar << ".__isset_success) then" << endl;
-        indent_impl(s_service_impl) << "begin" << endl;
+        indent_impl(s_service_impl) << "if (" << retvar << ".__isset_success) then begin" << endl;
         indent_up_impl();
         indent_impl(s_service_impl) << "Result := " << retvar << ".Success;" << endl;
         t_type* type = (*f_iter)->get_returntype();
@@ -2195,8 +2220,7 @@ void t_delphi_generator::generate_service_client(t_service* tservice) {
       vector<t_field*>::const_iterator x_iter;
       for (x_iter = xceptions.begin(); x_iter != xceptions.end(); ++x_iter) {
         indent_impl(s_service_impl) << "if (" << retvar << ".__isset_" << prop_name(*x_iter)
-                                    << ") then" << endl;
-        indent_impl(s_service_impl) << "begin" << endl;
+                                    << ") then begin" << endl;
         indent_up_impl();
         indent_impl(s_service_impl) << exceptvar << " := " << retvar << "." << prop_name(*x_iter)
                                     << ".CreateException;" << endl;
@@ -2324,8 +2348,7 @@ void t_delphi_generator::generate_service_server(t_service* tservice) {
   indent_impl(s_service_impl) << "msg := iprot.ReadMessageBegin();" << endl;
   indent_impl(s_service_impl) << "fn := nil;" << endl;
   indent_impl(s_service_impl) << "if not processMap_.TryGetValue(msg.Name, fn)" << endl;
-  indent_impl(s_service_impl) << "or not Assigned(fn) then" << endl;
-  indent_impl(s_service_impl) << "begin" << endl;
+  indent_impl(s_service_impl) << "or not Assigned(fn) then begin" << endl;
   indent_up_impl();
   indent_impl(s_service_impl) << "TProtocolUtil.Skip(iprot, TType.Struct);" << endl;
   indent_impl(s_service_impl) << "iprot.ReadMessageEnd();" << endl;
@@ -2716,8 +2739,7 @@ void t_delphi_generator::generate_deserialize_container(ostream& out,
     indent_impl(out) << obj << " := iprot.ReadListBegin();" << endl;
   }
 
-  indent_impl(out) << "for " << counter << " := 0 to " << obj << ".Count - 1 do" << endl;
-  indent_impl(out) << "begin" << endl;
+  indent_impl(out) << "for " << counter << " := 0 to " << obj << ".Count - 1 do begin" << endl;
   indent_up_impl();
   if (ttype->is_map()) {
     generate_deserialize_map_element(out, is_xception, (t_map*)ttype, name, local_vars);
@@ -2904,20 +2926,17 @@ void t_delphi_generator::generate_serialize_container(ostream& out,
   string iter = tmp("_iter");
   if (ttype->is_map()) {
     local_vars << "  " << iter << ": " << type_name(((t_map*)ttype)->get_key_type()) << ";" << endl;
-    indent_impl(out) << "for " << iter << " in " << prefix << ".Keys do" << endl;
-    indent_impl(out) << "begin" << endl;
+    indent_impl(out) << "for " << iter << " in " << prefix << ".Keys do begin" << endl;
     indent_up_impl();
   } else if (ttype->is_set()) {
     local_vars << "  " << iter << ": " << type_name(((t_set*)ttype)->get_elem_type()) << ";"
                << endl;
-    indent_impl(out) << "for " << iter << " in " << prefix << " do" << endl;
-    indent_impl(out) << "begin" << endl;
+    indent_impl(out) << "for " << iter << " in " << prefix << " do begin" << endl;
     indent_up_impl();
   } else if (ttype->is_list()) {
     local_vars << "  " << iter << ": " << type_name(((t_list*)ttype)->get_elem_type()) << ";"
                << endl;
-    indent_impl(out) << "for " << iter << " in " << prefix << " do" << endl;
-    indent_impl(out) << "begin" << endl;
+    indent_impl(out) << "for " << iter << " in " << prefix << " do begin" << endl;
     indent_up_impl();
   }
 
@@ -3575,7 +3594,8 @@ void t_delphi_generator::generate_delphi_create_exception_impl(ostream& out,
 void t_delphi_generator::generate_delphi_struct_reader_impl(ostream& out,
                                                             string cls_prefix,
                                                             t_struct* tstruct,
-                                                            bool is_exception) {
+                                                            bool is_exception,
+                                                            bool is_x_factory) {
 
   ostringstream local_vars;
   ostringstream code_block;
@@ -3604,32 +3624,28 @@ void t_delphi_generator::generate_delphi_struct_reader_impl(ostream& out,
   indent_impl(code_block) << "try" << endl;
   indent_up_impl();
 
-  indent_impl(code_block) << "while (true) do" << endl;
-  indent_impl(code_block) << "begin" << endl;
+  indent_impl(code_block) << "while (true) do begin" << endl;
   indent_up_impl();
 
   indent_impl(code_block) << "field_ := iprot.ReadFieldBegin();" << endl;
 
-  indent_impl(code_block) << "if (field_.Type_ = TType.Stop) then" << endl;
-  indent_impl(code_block) << "begin" << endl;
-  indent_up_impl();
-  indent_impl(code_block) << "Break;" << endl;
-  indent_down_impl();
-  indent_impl(code_block) << "end;" << endl;
+  indent_impl(code_block) << "if (field_.Type_ = TType.Stop) then Break;" << endl;
 
   bool first = true;
 
   for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
 
     if (first) {
+      code_block << endl;
       indent_impl(code_block) << "case field_.ID of" << endl;
       indent_up_impl();
     }
 
     first = false;
     if (f_iter != fields.begin()) {
-      code_block << ";" << endl;
+      code_block << endl;
     }
+
     indent_impl(code_block) << (*f_iter)->get_key() << ": begin" << endl;
     indent_up_impl();
     indent_impl(code_block) << "if (field_.Type_ = " << type_to_enum((*f_iter)->get_type())
@@ -3652,20 +3668,19 @@ void t_delphi_generator::generate_delphi_struct_reader_impl(ostream& out,
     indent_down_impl();
     indent_impl(code_block) << "end;" << endl;
     indent_down_impl();
-    indent_impl(code_block) << "end";
+    indent_impl(code_block) << "end;";
   }
 
   if (!first) {
     code_block << endl;
-    indent_impl(code_block) << "else begin" << endl;
+    indent_down_impl();
+    indent_impl(code_block) << "else" << endl;
     indent_up_impl();
   }
 
   indent_impl(code_block) << "TProtocolUtil.Skip(iprot, field_.Type_);" << endl;
 
   if (!first) {
-    indent_down_impl();
-    indent_impl(code_block) << "end;" << endl;
     indent_down_impl();
     indent_impl(code_block) << "end;" << endl;
   }
@@ -3684,8 +3699,13 @@ void t_delphi_generator::generate_delphi_struct_reader_impl(ostream& out,
   indent_impl(code_block) << "end;" << endl;
 
   // all required fields have been read?
+  first = true;
   for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
     if ((*f_iter)->get_req() == t_field::T_REQUIRED) {
+      if(first) {
+        code_block << endl;
+        first = false;
+      }
       indent_impl(code_block) << "if not _req_isset_" << prop_name(*f_iter, is_exception) << endl;
       indent_impl(code_block)
           << "then raise TProtocolExceptionInvalidData.Create("
@@ -3693,13 +3713,17 @@ void t_delphi_generator::generate_delphi_struct_reader_impl(ostream& out,
           << endl;
     }
   }
-
+  
+  if( is_exception && (!is_x_factory)) {
+    code_block << endl;
+    indent_impl(code_block) << "UpdateMessageProperty;" << endl;
+  }
   indent_down_impl();
   indent_impl(code_block) << "end;" << endl << endl;
 
   string cls_nm;
 
-  cls_nm = type_name(tstruct, true, false, is_exception, is_exception);
+  cls_nm = type_name(tstruct, true, is_exception && (!is_x_factory), is_x_factory, is_x_factory);
 
   indent_impl(out) << "procedure " << cls_prefix << cls_nm << ".Read( const iprot: IProtocol);"
                    << endl;
@@ -3715,7 +3739,8 @@ void t_delphi_generator::generate_delphi_struct_reader_impl(ostream& out,
 void t_delphi_generator::generate_delphi_struct_result_writer_impl(ostream& out,
                                                                    string cls_prefix,
                                                                    t_struct* tstruct,
-                                                                   bool is_exception) {
+                                                                   bool is_exception,
+                                                                   bool is_x_factory) {
 
   ostringstream local_vars;
   ostringstream code_block;
@@ -3759,7 +3784,7 @@ void t_delphi_generator::generate_delphi_struct_result_writer_impl(ostream& out,
 
   string cls_nm;
 
-  cls_nm = type_name(tstruct, true, false, is_exception, is_exception);
+  cls_nm = type_name(tstruct, true, is_exception && (!is_x_factory), is_x_factory, is_x_factory);
 
   indent_impl(out) << "procedure " << cls_prefix << cls_nm << ".Write( const oprot: IProtocol);"
                    << endl;
@@ -3779,7 +3804,8 @@ void t_delphi_generator::generate_delphi_struct_result_writer_impl(ostream& out,
 void t_delphi_generator::generate_delphi_struct_writer_impl(ostream& out,
                                                             string cls_prefix,
                                                             t_struct* tstruct,
-                                                            bool is_exception) {
+                                                            bool is_exception,
+                                                            bool is_x_factory) {
 
   ostringstream local_vars;
   ostringstream code_block;
@@ -3847,7 +3873,7 @@ void t_delphi_generator::generate_delphi_struct_writer_impl(ostream& out,
 
   string cls_nm;
 
-  cls_nm = type_name(tstruct, true, false, is_exception, is_exception);
+  cls_nm = type_name(tstruct, true, is_exception && (!is_x_factory), is_x_factory, is_x_factory);
 
   indent_impl(out) << "procedure " << cls_prefix << cls_nm << ".Write( const oprot: IProtocol);"
                    << endl;

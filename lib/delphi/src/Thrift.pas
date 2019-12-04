@@ -23,6 +23,7 @@ interface
 
 uses
   SysUtils,
+  Thrift.Utils,
   Thrift.Exception,
   Thrift.Protocol;
 
@@ -34,7 +35,7 @@ type
 
   TApplicationExceptionSpecializedClass = class of TApplicationExceptionSpecialized;
 
-  TApplicationException = class abstract( TException)
+  TApplicationException = class( TException, IBase, ISupportsToString)
   public
     type
 {$SCOPEDENUMS ON}
@@ -52,10 +53,18 @@ type
         UnsupportedClientType
       );
 {$SCOPEDENUMS OFF}
+  strict private
+    FExceptionType : TExceptionType;
+
+  strict protected
+    function QueryInterface(const IID: TGUID; out Obj): HResult; stdcall;
+    function _AddRef: Integer; stdcall;
+    function _Release: Integer; stdcall;
+
   strict protected
     constructor HiddenCreate(const Msg: string);
-    class function GetType: TExceptionType;  virtual; abstract;
     class function GetSpecializedExceptionType(AType: TExceptionType): TApplicationExceptionSpecializedClass;
+
   public
     // purposefully hide inherited constructor
     class function Create(const Msg: string): TApplicationException; overload; deprecated 'Use specialized TApplicationException types (or regenerate from IDL)';
@@ -63,7 +72,10 @@ type
     class function Create( AType: TExceptionType): TApplicationException; overload; deprecated 'Use specialized TApplicationException types (or regenerate from IDL)';
     class function Create( AType: TExceptionType; const msg: string): TApplicationException; overload; deprecated 'Use specialized TApplicationException types (or regenerate from IDL)';
 
-    property Type_: TExceptionType read GetType;
+    function Type_: TExceptionType; virtual;
+
+    procedure IBase_Read( const iprot: IProtocol);
+    procedure IBase.Read = IBase_Read;
 
     class function Read( const iprot: IProtocol): TApplicationException;
     procedure Write( const oprot: IProtocol );
@@ -71,8 +83,11 @@ type
 
   // Needed to remove deprecation warning
   TApplicationExceptionSpecialized = class abstract (TApplicationException)
+  strict protected
+    class function GetType: TApplicationException.TExceptionType;  virtual; abstract;
   public
     constructor Create(const Msg: string);
+    function Type_: TApplicationException.TExceptionType; override;
   end;
 
   TApplicationExceptionUnknown = class (TApplicationExceptionSpecialized)
@@ -163,6 +178,31 @@ begin
   Result := GetSpecializedExceptionType(AType).Create(msg);
 end;
 
+
+function TApplicationException.QueryInterface(const IID: TGUID; out Obj): HResult;
+begin
+  if GetInterface(IID, Obj)
+  then result := S_OK
+  else result := E_NOINTERFACE;
+end;
+
+function TApplicationException._AddRef: Integer;
+begin
+  result := -1;    // not refcounted
+end;
+
+function TApplicationException._Release: Integer;
+begin
+  result := -1;    // not refcounted
+end;
+
+
+function TApplicationException.Type_: TExceptionType;
+begin
+  result := FExceptionType;
+end;
+
+
 class function TApplicationException.GetSpecializedExceptionType(AType: TExceptionType): TApplicationExceptionSpecializedClass;
 begin
   case AType of
@@ -183,52 +223,60 @@ begin
 end;
 
 
-class function TApplicationException.Read( const iprot: IProtocol): TApplicationException;
+procedure TApplicationException.IBase_Read( const iprot: IProtocol);
 var
   field : TThriftField;
-  msg : string;
-  typ : TExceptionType;
   struc : TThriftStruct;
 begin
-  msg := '';
-  typ := TExceptionType.Unknown;
   struc := iprot.ReadStructBegin;
   while ( True ) do
   begin
     field := iprot.ReadFieldBegin;
-    if ( field.Type_ = TType.Stop) then
-    begin
+    if ( field.Type_ = TType.Stop) then begin
       Break;
     end;
 
     case field.Id of
       1 : begin
-        if ( field.Type_ = TType.String_) then
-        begin
-          msg := iprot.ReadString;
-        end else
-        begin
+        if ( field.Type_ = TType.String_) then begin
+          Exception(Self).Message := iprot.ReadString;
+        end else begin
           TProtocolUtil.Skip( iprot, field.Type_ );
         end;
       end;
 
       2 : begin
-        if ( field.Type_ = TType.I32) then
-        begin
-          typ := TExceptionType( iprot.ReadI32 );
-        end else
-        begin
+        if ( field.Type_ = TType.I32) then begin
+          FExceptionType := TExceptionType( iprot.ReadI32 );
+        end else begin
           TProtocolUtil.Skip( iprot, field.Type_ );
         end;
-      end else
-      begin
+      end else begin
         TProtocolUtil.Skip( iprot, field.Type_);
       end;
     end;
     iprot.ReadFieldEnd;
   end;
   iprot.ReadStructEnd;
-  Result := GetSpecializedExceptionType(typ).Create(msg);
+end;
+
+
+class function TApplicationException.Read( const iprot: IProtocol): TApplicationException;
+var instance : TApplicationException;
+    base : IBase;
+begin
+  instance := TApplicationException.CreateFmt('',[]);
+  try
+    if Supports( instance, IBase, base) then try
+      base.Read(iprot);
+    finally
+      base := nil;  // clear ref before free
+    end;
+
+    result := GetSpecializedExceptionType(instance.Type_).Create( Exception(instance).Message);
+  finally
+    instance.Free;
+  end;
 end;
 
 procedure TApplicationException.Write( const oprot: IProtocol);
@@ -240,8 +288,7 @@ begin
   Init(field);
 
   oprot.WriteStructBegin( struc );
-  if Message <> '' then
-  begin
+  if Message <> '' then begin
     field.Name := 'message';
     field.Type_ := TType.String_;
     field.Id := 1;
@@ -254,7 +301,7 @@ begin
   field.Type_ := TType.I32;
   field.Id := 2;
   oprot.WriteFieldBegin(field);
-  oprot.WriteI32(Integer(GetType));
+  oprot.WriteI32(Integer(Type_));
   oprot.WriteFieldEnd();
   oprot.WriteFieldStop();
   oprot.WriteStructEnd();
@@ -266,6 +313,12 @@ constructor TApplicationExceptionSpecialized.Create(const Msg: string);
 begin
   inherited HiddenCreate(Msg);
 end;
+
+function TApplicationExceptionSpecialized.Type_: TApplicationException.TExceptionType;
+begin
+  result := GetType;
+end;
+
 
 { specialized TApplicationExceptions }
 
