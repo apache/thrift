@@ -177,7 +177,6 @@ Last updated: October 1, 2017
 | d         | 2.075.1       | 2.087.0       |       |
 | dart      | 2.0.0         | 2.4.0         |       |
 | delphi    |               |               | Not in CI |
-| dotnet    | 3.0           | 3.0           |       |
 | erlang    | 18.3          | 22.0          |       |
 | go        | 1.10.8        | 1.12.6        |       |
 | haskell   | 7.10.3        | 8.0.2         |       |
@@ -185,6 +184,7 @@ Last updated: October 1, 2017
 | java      | 1.8.0_191     | 11.0.3        |       |
 | js        |               |               | Unsure how to look for version info? |
 | lua       |               | 5.2.4         | Lua 5.3: see THRIFT-4386 |
+| netstd    | 3.1           | 3.1           | LTS version |
 | nodejs    | 6.16.0        | 10.16.0       |       |
 | ocaml     |               | 4.05.0        | THRIFT-4517: ocaml 4.02.3 on xenial appears broken |
 | perl      | 5.22.1        | 5.26.1        |       |
