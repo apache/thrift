@@ -505,7 +505,7 @@ AX_THRIFT_LIB(netstd, [.NET Core], yes)
 if test "$with_netstd" = "yes";  then
   AC_PATH_PROG([DOTNETCORE], [dotnet])
   if [[ -x "$DOTNETCORE" ]] ; then
-    AX_PROG_DOTNETCORE_VERSION( [3.0.0], have_netstd="yes", have_netstd="no")
+    AX_PROG_DOTNETCORE_VERSION( [3.1.0], have_netstd="yes", have_netstd="no")
   fi
 fi
 AM_CONDITIONAL(WITH_DOTNET, [test "$have_netstd" = "yes"])

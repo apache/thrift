@@ -42,6 +42,7 @@ namespace Client
                     Console.WriteLine("The 'client' argument is no longer required.");
                     PrintHelp();
                     return -1;
+                case "--performance":
                 case "--performance-test":
                     return Tests.PerformanceTests.Execute();
                 case "--help":
