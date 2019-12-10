@@ -303,14 +303,8 @@ class TProtocolBase(object):
 
     def readContainerStruct(self, spec):
         (obj_class, obj_spec) = spec
-
-        # If obj_class.read is a classmethod (e.g. in frozen structs),
-        # call it as such.
-        if getattr(obj_class.read, '__self__', None) is obj_class:
-            obj = obj_class.read(self)
-        else:
-            obj = obj_class()
-            obj.read(self)
+        obj = obj_class()
+        obj.read(self)
         return obj
 
     def readContainerMap(self, spec):

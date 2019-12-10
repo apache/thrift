@@ -19,9 +19,7 @@
 # under the License.
 #
 
-from DebugProtoTest import Srv
 from DebugProtoTest.ttypes import CompactProtoTestStruct, Empty, Wrapper
-from DebugProtoTest.ttypes import ExceptionWithAMap, MutableException
 from thrift.Thrift import TFrozenDict
 from thrift.transport import TTransport
 from thrift.protocol import TBinaryProtocol, TCompactProtocol
@@ -95,21 +93,6 @@ class TestFrozenBase(unittest.TestCase):
         self.assertEqual(x.foo, Empty())
         x2 = self._roundtrip(x, Wrapper)
         self.assertEqual(x2.foo, Empty())
-
-    def test_frozen_exception(self):
-        exc = ExceptionWithAMap(blah='foo')
-        with self.assertRaises(TypeError):
-            exc.blah = 'bar'
-        mutexc = MutableException(msg='foo')
-        mutexc.msg = 'bar'
-        self.assertEqual(mutexc.msg, 'bar')
-
-    def test_frozen_exception_serialization(self):
-        result = Srv.declaredExceptionMethod_result(
-            xwamap=ExceptionWithAMap(blah="error"))
-        deserialized = self._roundtrip(
-            result, Srv.declaredExceptionMethod_result())
-        self.assertEqual(result, deserialized)
 
 
 class TestFrozen(TestFrozenBase):
