@@ -65,6 +65,7 @@ public:
     coding_ = "";
     gen_dynbaseclass_ = "";
     gen_dynbaseclass_exc_ = "";
+    gen_dynbaseclass_frozen_exc_ = "";
     gen_dynbaseclass_frozen_ = "";
     import_dynbase_ = "";
     package_prefix_ = "";
@@ -94,8 +95,11 @@ public:
         if( gen_dynbaseclass_exc_.empty()) {
           gen_dynbaseclass_exc_ = "TExceptionBase";
         }
+        if( gen_dynbaseclass_frozen_exc_.empty()) {
+          gen_dynbaseclass_frozen_exc_ = "TFrozenExceptionBase";
+        }
         if( import_dynbase_.empty()) {
-          import_dynbase_ = "from thrift.protocol.TBase import TBase, TFrozenBase, TExceptionBase, TTransport\n";
+          import_dynbase_ = "from thrift.protocol.TBase import TBase, TFrozenBase, TExceptionBase, TFrozenExceptionBase, TTransport\n";
         }
       } else if( iter->first.compare("dynbase") == 0) {
         gen_dynbase_ = true;
@@ -104,6 +108,8 @@ public:
         gen_dynbaseclass_frozen_ = (iter->second);
       } else if( iter->first.compare("dynexc") == 0) {
         gen_dynbaseclass_exc_ = (iter->second);
+      } else if( iter->first.compare("dynfrozenexc") == 0) {
+        gen_dynbaseclass_frozen_exc_ = (iter->second);
       } else if( iter->first.compare("dynimport") == 0) {
         gen_dynbase_ = true;
         import_dynbase_ = (iter->second);
@@ -269,7 +275,16 @@ public:
   }
 
   static bool is_immutable(t_type* ttype) {
-    return ttype->annotations_.find("python.immutable") != ttype->annotations_.end();
+    std::map<std::string, std::string>::iterator it = ttype->annotations_.find("python.immutable");
+
+    if (it == ttype->annotations_.end()) {
+      // Exceptions are immutable by default.
+      return ttype->is_xception();
+    } else if (it->second == "false") {
+      return false;
+    } else {
+      return true;
+    }
   }
 
 private:
@@ -288,6 +303,7 @@ private:
   std::string gen_dynbaseclass_;
   std::string gen_dynbaseclass_frozen_;
   std::string gen_dynbaseclass_exc_;
+  std::string gen_dynbaseclass_frozen_exc_;
 
   std::string import_dynbase_;
 
@@ -742,7 +758,11 @@ void t_py_generator::generate_py_struct_definition(ostream& out,
   out << endl << endl << "class " << tstruct->get_name();
   if (is_exception) {
     if (gen_dynamic_) {
-      out << "(" << gen_dynbaseclass_exc_ << ")";
+      if (is_immutable(tstruct)) {
+        out << "(" << gen_dynbaseclass_frozen_exc_ << ")";
+      } else {
+        out << "(" << gen_dynbaseclass_exc_ << ")";
+      }
     } else {
       out << "(TException)";
     }
@@ -2774,6 +2794,7 @@ THRIFT_REGISTER_GENERATOR(
     "    dynbase=CLS      Derive generated classes from class CLS instead of TBase.\n"
     "    dynfrozen=CLS    Derive generated immutable classes from class CLS instead of TFrozenBase.\n"
     "    dynexc=CLS       Derive generated exceptions from CLS instead of TExceptionBase.\n"
+    "    dynfrozenexc=CLS Derive generated immutable exceptions from CLS instead of TFrozenExceptionBase.\n"
     "    dynimport='from foo.bar import CLS'\n"
     "                     Add an import line to generated code to find the dynbase class.\n"
     "    package_prefix='top.package.'\n"

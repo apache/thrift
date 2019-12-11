@@ -80,3 +80,7 @@ class TFrozenBase(TBase):
                                       [self.__class__, self.thrift_spec])
         else:
             return iprot.readStruct(cls, cls.thrift_spec, True)
+
+
+class TFrozenExceptionBase(TFrozenBase, TExceptionBase):
+    pass

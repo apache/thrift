@@ -241,6 +241,10 @@ exception ExceptionWithAMap {
   2: map<string, string> map_field;
 }
 
+exception MutableException {
+  1: string msg;
+} (python.immutable = "false")
+
 service ServiceForExceptionWithAMap {
   void methodThatThrowsAnException() throws (1: ExceptionWithAMap xwamap);
 }
