@@ -82,10 +82,7 @@ class TestHandler(object):
 
     def testException(self, s):
         if s == 'Xception':
-            x = Xception()
-            x.errorCode = 1001
-            x.message = s
-            raise x
+            raise Xception(1001, s)
         elif s == 'throw_undeclared':
             raise ValueError('testing undeclared exception')
 
