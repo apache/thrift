@@ -307,7 +307,7 @@ def main(options):
         from thrift.transport import TSSLSocket
         transport = TSSLSocket.TSSLServerSocket(host, options.port, certfile=abs_key_path)
     else:
-        transport = TSocket.TServerSocket(host, options.port)
+        transport = TSocket.TServerSocket(host, options.port, options.domain_socket)
     tfactory = TTransport.TBufferedTransportFactory()
     if options.trans == 'buffered':
         tfactory = TTransport.TBufferedTransportFactory()
@@ -385,6 +385,8 @@ if __name__ == '__main__':
                       help="protocol to use, one of: accel, accelc, binary, compact, json, multi, multia, multiac, multic, multih, multij")
     parser.add_option('--transport', dest="trans", type="string",
                       help="transport to use, one of: buffered, framed, http")
+    parser.add_option('--domain-socket', dest="domain_socket", type="string",
+                      help="Unix domain socket path")
     parser.add_option('--container-limit', dest='container_limit', type='int', default=None)
     parser.add_option('--string-limit', dest='string_limit', type='int', default=None)
     parser.set_defaults(port=9090, verbose=1, proto='binary', transport='buffered')
