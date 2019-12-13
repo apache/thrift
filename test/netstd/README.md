@@ -6,7 +6,7 @@ Tests for Thrift client library ported to Microsoft .NET Core
 - ThriftTest - tests for Thrift library 
 
 # Reused components 
-- NET Core SDK 3.0
+- NET Core SDK 3.1 (LTS)
 
 # How to build on Windows
 - Get Thrift IDL compiler executable, add to some folder and add path to this folder into PATH variable

@@ -15,7 +15,7 @@
 // specific language governing permissions and limitations
 // under the License.
 
-use byteorder::{BigEndian, ReadBytesExt, WriteBytesExt};
+use byteorder::{LittleEndian, ReadBytesExt, WriteBytesExt};
 use integer_encoding::{VarIntReader, VarIntWriter};
 use std::convert::{From, TryFrom};
 use std::io;
@@ -247,7 +247,7 @@ where
     }
 
     fn read_double(&mut self) -> ::Result<f64> {
-        self.transport.read_f64::<BigEndian>().map_err(From::from)
+        self.transport.read_f64::<LittleEndian>().map_err(From::from)
     }
 
     fn read_string(&mut self) -> ::Result<String> {
@@ -521,7 +521,7 @@ where
     }
 
     fn write_double(&mut self, d: f64) -> ::Result<()> {
-        self.transport.write_f64::<BigEndian>(d).map_err(From::from)
+        self.transport.write_f64::<LittleEndian>(d).map_err(From::from)
     }
 
     fn write_string(&mut self, s: &str) -> ::Result<()> {
@@ -2372,6 +2372,29 @@ mod tests {
         let o_prot = TCompactOutputProtocol::new(w_mem);
 
         (i_prot, o_prot)
+    }
+
+    #[test]
+    fn must_read_write_double() {
+        let (mut i_prot, mut o_prot) = test_objects();
+
+        let double = 3.141592653589793238462643;
+        o_prot.write_double(double).unwrap();
+        copy_write_buffer_to_read_buffer!(o_prot);
+
+        assert_eq!(i_prot.read_double().unwrap(), double);
+    }
+
+    #[test]
+    fn must_encode_double_as_other_langs() {
+        let (_, mut o_prot) = test_objects();
+        let expected = [24, 45, 68, 84, 251, 33, 9, 64];
+
+        let double = 3.141592653589793238462643;
+        o_prot.write_double(double).unwrap();
+
+        assert_eq_written_bytes!(o_prot, expected);
+
     }
 
     fn assert_no_write<F>(mut write_fn: F)

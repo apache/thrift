@@ -27,6 +27,7 @@ import javax.security.sasl.Sasl;
 import javax.security.sasl.SaslClient;
 import javax.security.sasl.SaslException;
 
+import org.apache.thrift.transport.sasl.NegotiationStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

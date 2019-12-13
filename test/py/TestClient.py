@@ -51,7 +51,7 @@ class AbstractTest(unittest.TestCase):
                 from thrift.transport import TSSLSocket
                 socket = TSSLSocket.TSSLSocket(options.host, options.port, validate=False)
             else:
-                socket = TSocket.TSocket(options.host, options.port)
+                socket = TSocket.TSocket(options.host, options.port, options.domain_socket)
             # frame or buffer depending upon args
             self.transport = TTransport.TBufferedTransport(socket)
             if options.trans == 'framed':
@@ -474,6 +474,8 @@ if __name__ == "__main__":
                       help="protocol to use, one of: accel, accelc, binary, compact, header, json, multi, multia, multiac, multic, multih, multij")
     parser.add_option('--transport', dest="trans", type="string",
                       help="transport to use, one of: buffered, framed, http")
+    parser.add_option('--domain-socket', dest="domain_socket", type="string",
+                      help="Unix domain socket path")
     parser.set_defaults(framed=False, http_path=None, verbose=1, host='localhost', port=9090, proto='binary')
     options, args = parser.parse_args()
 
