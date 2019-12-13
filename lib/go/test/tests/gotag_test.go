@@ -38,8 +38,16 @@ func TestCustomTag(t *testing.T) {
 	s := gotagtest.Tagged{}
 	st := reflect.TypeOf(s)
 	field, ok := st.FieldByName("IntThing")
-	if !ok || field.Tag.Get("json") != "int_thing,string" {
-		t.Error("Unexpected custom tag value")
+	if !ok {
+		t.Error("Missing field IntThing")
+		return
+	}
+
+	if v := field.Tag.Get("json"); v != "custom_thing" {
+		t.Errorf("Expected custom_thing for tag json, got %s", v)
+	}
+	if v := field.Tag.Get("mykey"); v != "myvalue" {
+		t.Errorf("Expected myvalue for tag mykey, got %s", v)
 	}
 }
 

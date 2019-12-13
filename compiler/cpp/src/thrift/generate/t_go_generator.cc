@@ -240,6 +240,8 @@ public:
 
   void generate_go_docstring(std::ostream& out, t_doc* tdoc);
 
+  void parse_go_tags(map<string,string>* tags, const string in);
+
   /**
    * Helper rendering functions
    */
@@ -1377,7 +1379,9 @@ void t_go_generator::generate_go_struct_definition(ostream& out,
 
       t_type* fieldType = (*m_iter)->get_type();
       string goType = type_to_go_type_with_opt(fieldType, is_pointer_field(*m_iter));
-      string gotag = "db:\"" + escape_string((*m_iter)->get_name())  + "\" ";
+
+      map<string,string>tags;
+      tags["db"]=escape_string((*m_iter)->get_name());
 
       // Only add the `omitempty` tag if this field is optional and has no default value.
       // Otherwise a proper value like `false` for a bool field will be ommitted from
@@ -1385,16 +1389,25 @@ void t_go_generator::generate_go_struct_definition(ostream& out,
       bool has_default = (*m_iter)->get_value();
       bool is_optional = (*m_iter)->get_req() == t_field::T_OPTIONAL;
       if (is_optional && !has_default) {
-        gotag += "json:\"" + escape_string((*m_iter)->get_name()) + ",omitempty\"";
+        tags["json"]=escape_string((*m_iter)->get_name())+",omitempty";
       } else {
-        gotag += "json:\"" + escape_string((*m_iter)->get_name()) + "\"";
+        tags["json"]=escape_string((*m_iter)->get_name());
       }
 
-      // Check for user override of db and json tags using "go.tag"
+      // Check for user defined tags and them if there are any. User defined tags
+      // can override the above db and json tags.
       std::map<string, string>::iterator it = (*m_iter)->annotations_.find("go.tag");
       if (it != (*m_iter)->annotations_.end()) {
-        gotag = it->second;
+        parse_go_tags(&tags, it->second);
       }
+
+      string gotag;
+      for (auto it = tags.begin(); it != tags.end(); ++it) {
+        gotag += it->first + ":\"" + it->second + "\" ";
+      }
+      // Trailing whitespace
+      gotag.resize(gotag.size()-1);
+
       indent(out) << publicize((*m_iter)->get_name()) << " " << goType << " `thrift:\""
                   << escape_string((*m_iter)->get_name()) << "," << sorted_keys_pos;
       if ((*m_iter)->get_req() == t_field::T_REQUIRED) {
@@ -3733,6 +3746,48 @@ string t_go_generator::type_to_spec_args(t_type* ttype) {
   }
 
   throw "INVALID TYPE IN type_to_spec_args: " + ttype->get_name();
+}
+
+// parses a string of struct tags into key/value pairs and writes them to the given map
+void t_go_generator::parse_go_tags(map<string,string>* tags, const string in) {
+  string key;
+  string value;
+
+  size_t mode=0; // 0/1/2 for key/value/whitespace
+  size_t index=0;
+  for (auto it=in.begin(); it<in.end(); ++it, ++index) {
+      // Normally we start in key mode because the IDL is expected to be in
+      // (go.tag="key:\"value\"") format, but if there is leading whitespace
+      // we need to start in whitespace mode.
+      if (index==0 && mode==0 && in[index]==' ') {
+        mode=2;
+      }
+
+      if (mode==2) {
+          if (in[index]==' ') {
+              continue;
+          }
+          mode=0;
+      }
+
+      if (mode==0) {
+          if (in[index]==':') {
+              mode=1;
+              index++;
+              it++;
+              continue;
+          }
+          key+=in[index];
+      } else if (mode==1) {
+          if (in[index]=='"') {
+              (*tags)[key]=value;
+              key=value="";
+              mode=2;
+              continue;
+          }
+          value+=in[index];
+      }
+  }
 }
 
 bool format_go_output(const string& file_path) {
