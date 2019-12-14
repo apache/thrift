@@ -15,7 +15,7 @@
 // specific language governing permissions and limitations
 // under the License.
 
-use std::net::{TcpListener, TcpStream};
+use std::net::{TcpListener, TcpStream, ToSocketAddrs};
 use std::sync::Arc;
 use threadpool::ThreadPool;
 
@@ -162,14 +162,13 @@ where
 
     /// Listen for incoming connections on `listen_address`.
     ///
-    /// `listen_address` should be in the form `host:port`,
-    /// for example: `127.0.0.1:8080`.
+    /// `listen_address` should implement `ToSocketAddrs` trait.
     ///
     /// Return `()` if successful.
     ///
     /// Return `Err` when the server cannot bind to `listen_address` or there
     /// is an unrecoverable error.
-    pub fn listen(&mut self, listen_address: &str) -> ::Result<()> {
+    pub fn listen<A: ToSocketAddrs>(&mut self, listen_address: A) -> ::Result<()> {
         let listener = TcpListener::bind(listen_address)?;
         for stream in listener.incoming() {
             match stream {
