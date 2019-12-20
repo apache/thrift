@@ -21,6 +21,7 @@
 #define _THRIFT_TRANSPORT_THTTPCLIENT_H_ 1
 
 #include <thrift/transport/THttpTransport.h>
+#include <unordered_map>
 
 namespace apache {
 namespace thrift {
@@ -36,9 +37,11 @@ public:
 
   void flush() override;
 
+  void setCustomHeader(std::string key, std::string value);
 protected:
   std::string host_;
   std::string path_;
+  std::unordered_map<std::string, std::string> custom_headers_;
 
   void parseHeader(char* header) override;
   bool parseStatusLine(char* status) override;

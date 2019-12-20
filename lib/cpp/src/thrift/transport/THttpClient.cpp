@@ -92,6 +92,10 @@ bool THttpClient::parseStatusLine(char* status) {
   }
 }
 
+void THttpClient::setCustomHeader(string key, string value) {
+  custom_headers_[key] = value;
+}
+
 void THttpClient::flush() {
   // Fetch the contents of the write buffer
   uint8_t* buf;
@@ -103,7 +107,11 @@ void THttpClient::flush() {
   h << "POST " << path_ << " HTTP/1.1" << CRLF << "Host: " << host_ << CRLF
     << "Content-Type: application/x-thrift" << CRLF << "Content-Length: " << len << CRLF
     << "Accept: application/x-thrift" << CRLF << "User-Agent: Thrift/" << PACKAGE_VERSION
-    << " (C++/THttpClient)" << CRLF << CRLF;
+    << " (C++/THttpClient)" << CRLF;
+  for (auto iter = custom_headers_.begin(); iter != custom_headers_.end(); ++iter) {
+    h << iter->first << ":" << iter->second << CRLF;
+  }
+  h << CRLF;
   string header = h.str();
 
   if (header.size() > (std::numeric_limits<uint32_t>::max)())
