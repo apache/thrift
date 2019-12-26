@@ -117,7 +117,7 @@ sub readAll
 
     my $avail = ($self->{wPos} - $self->{rPos});
     if ($avail < $len) {
-        die TTransportException->new("Attempt to readAll($len) found only $avail available",
+        die Thrift::TTransportException->new("Attempt to readAll($len) found only $avail available",
                                     Thrift::TTransportException::END_OF_FILE);
     }
 

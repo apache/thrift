@@ -34,6 +34,9 @@ WriteMakefile( ABSTRACT => 'Apache Thrift is a software framework for scalable c
                    'Class::Accessor' => 0
                },
 #              SIGN => 1,
+               TEST_REQUIRES => {
+                   'Test::Exception' => 0,
+               },
                VERSION_FROM => 'lib/Thrift.pm' );
 
 # THRIFT-4691
