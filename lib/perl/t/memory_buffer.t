@@ -17,7 +17,8 @@
 # under the License.
 #
 
-use Test::More tests => 6;
+use Test::More tests => 7;
+use Test::Exception;
 
 use strict;
 use warnings;
@@ -32,6 +33,8 @@ use ThriftTest::Types;
 
 my $transport = Thrift::MemoryBuffer->new();
 my $protocol = Thrift::BinaryProtocol->new($transport);
+
+throws_ok { $protocol->readByte } 'Thrift::TTransportException';
 
 my $a = ThriftTest::Xtruct->new();
 $a->i32_thing(10);
