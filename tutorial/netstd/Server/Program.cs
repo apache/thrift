@@ -51,26 +51,28 @@ namespace Server
             args = args ?? new string[0];
 
             ServiceCollection.AddLogging(logging => ConfigureLogging(logging));
-            Logger = ServiceCollection.BuildServiceProvider().GetService<ILoggerFactory>().CreateLogger(nameof(Server));             
-
-
-            if (args.Any(x => x.StartsWith("-help", StringComparison.OrdinalIgnoreCase)))
+            using (var serviceProvider = ServiceCollection.BuildServiceProvider())
             {
-                DisplayHelp();
-                return;
+                Logger = serviceProvider.GetService<ILoggerFactory>().CreateLogger(nameof(Server));
+
+                if (args.Any(x => x.StartsWith("-help", StringComparison.OrdinalIgnoreCase)))
+                {
+                    DisplayHelp();
+                    return;
+                }
+
+                using (var source = new CancellationTokenSource())
+                {
+                    RunAsync(args, source.Token).GetAwaiter().GetResult();
+
+                    Logger.LogInformation("Press any key to stop...");
+
+                    Console.ReadLine();
+                    source.Cancel();
+                }
+
+                Logger.LogInformation("Server stopped");
             }
-
-            using (var source = new CancellationTokenSource())
-            {
-                RunAsync(args, source.Token).GetAwaiter().GetResult();
-
-                Logger.LogInformation("Press any key to stop...");
-
-                Console.ReadLine();
-                source.Cancel();
-            }
-
-            Logger.LogInformation("Server stopped");
         }
 
         private static void ConfigureLogging(ILoggingBuilder logging)
@@ -84,10 +86,10 @@ namespace Server
         {
             Logger.LogInformation(@"
 Usage: 
-    Server.exe -help
+    Server -help
         will diplay help information 
 
-    Server.exe -tr:<transport> -bf:<buffering> -pr:<protocol>
+    Server -tr:<transport> -bf:<buffering> -pr:<protocol>
         will run server with specified arguments (tcp transport, no buffering, and binary protocol by default)
 
 Options:
@@ -109,7 +111,7 @@ Options:
         multiplexed - multiplexed protocol will be used
 
 Sample:
-    Server.exe -tr:tcp 
+    Server -tr:tcp
 ");
         }
 
