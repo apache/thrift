@@ -49,7 +49,6 @@ func handleClient(client *tutorial.CalculatorClient) (err error) {
 		default:
 			fmt.Println("Error during operation:", err)
 		}
-		return err
 	} else {
 		fmt.Println("Whoa we can divide by 0 with new value:", quotient)
 	}
