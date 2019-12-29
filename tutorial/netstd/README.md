@@ -13,13 +13,13 @@
 
 # How to run 
 
-Depending on the platform, the name of the generated executables will vary. On Linux, it is just "client" or "server", on Windows it is "Client.exe" and "Server.exe". In the following, we use the abbreviated form "Client" and "Server".
+Depending on the platform, the name of the generated executables will vary. On Linux, it is just "Client" or "Server", on Windows it is "Client.exe" and "Server.exe". In the following, we use the abbreviated form "Client" and "Server".
 
 - build 
 - go to folder (Client/Server) 
 - run the generated executables: server first, then client from a second console
 
-#Known issues
+# Known issues
 - In trace logging mode you can see some not important internal exceptions
 
 # Running of samples 
@@ -29,10 +29,10 @@ On machines that do not have the SDK installed, you need to install the NET Core
 
 Usage: 
 
-    Server  -h
+    Server -help
         will diplay help information 
 
-    Server  -tr:<transport> -pr:<protocol> 
+    Server -tr:<transport> -pr:<protocol>
         will run server with specified arguments (tcp transport and binary protocol by default)
 
 Options:
@@ -52,7 +52,8 @@ Options:
         binary - (default) binary protocol will be used
         compact - compact protocol will be used
         json - json protocol will be used
-		
+        multiplexed - multiplexed protocol will be used
+
 Sample:
 
     Server -tr:tcp
@@ -68,7 +69,7 @@ Sample:
 
 Usage: 
 
-    Client -h
+    Client -help
         will diplay help information 
 
     Client -tr:<transport> -pr:<protocol> -mc:<numClients>
@@ -91,7 +92,8 @@ Options:
         binary - (default) binary protocol will be used
         compact - compact protocol will be used
         json - json protocol will be used
-        
+        multiplexed - multiplexed protocol will be used
+
     -mc (multiple clients):
         <numClients> - number of multiple clients to connect to server (max 100, default 1)
 
@@ -237,16 +239,10 @@ class CalculatorHandler:
             val = work.Num1 * work.Num2
         elif work.Op == Operation.Divide:
             if work.Num2 == 0:
-                x = InvalidOperation()
-                x.WhatOp = work.Op
-                x.Why = 'Cannot divide by 0'
-                raise x
+                raise InvalidOperation(work.Op, 'Cannot divide by 0')
             val = work.Num1 / work.Num2
         else:
-            x = InvalidOperation()
-            x.WhatOp = work.Op
-            x.Why = 'Invalid operation'
-            raise x
+            raise InvalidOperation(work.Op, 'Invalid operation')
 
         log = SharedStruct()
         log.Key = logid

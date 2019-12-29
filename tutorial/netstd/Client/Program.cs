@@ -46,10 +46,10 @@ namespace Client
         {
             Logger.LogInformation(@"
 Usage: 
-    Client.exe -help
+    Client -help
         will diplay help information 
 
-    Client.exe -tr:<transport> -bf:<buffering> -pr:<protocol> -mc:<numClients>
+    Client -tr:<transport> -bf:<buffering> -pr:<protocol> -mc:<numClients>
         will run client with specified arguments (tcp transport and binary protocol by default) and with 1 client
 
 Options:
@@ -74,7 +74,7 @@ Options:
         <numClients> - number of multiple clients to connect to server (max 100, default 1)
 
 Sample:
-    Client.exe -tr:tcp -p:binary
+    Client -tr:tcp -pr:binary
 ");
         }
 
@@ -83,19 +83,22 @@ Sample:
             args = args ?? new string[0];
 
             ServiceCollection.AddLogging(logging => ConfigureLogging(logging));
-            Logger = ServiceCollection.BuildServiceProvider().GetService<ILoggerFactory>().CreateLogger(nameof(Client));
-
-            if (args.Any(x => x.StartsWith("-help", StringComparison.OrdinalIgnoreCase)))
+            using (var serviceProvider = ServiceCollection.BuildServiceProvider())
             {
-                DisplayHelp();
-                return;
-            }
+                Logger = serviceProvider.GetService<ILoggerFactory>().CreateLogger(nameof(Client));
 
-            Logger.LogInformation("Starting client...");
+                if (args.Any(x => x.StartsWith("-help", StringComparison.OrdinalIgnoreCase)))
+                {
+                    DisplayHelp();
+                    return;
+                }
 
-            using (var source = new CancellationTokenSource())
-            {
-                RunAsync(args, source.Token).GetAwaiter().GetResult();
+                Logger.LogInformation("Starting client...");
+
+                using (var source = new CancellationTokenSource())
+                {
+                    RunAsync(args, source.Token).GetAwaiter().GetResult();
+                }
             }
         }
 
