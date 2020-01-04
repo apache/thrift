@@ -33,7 +33,7 @@
   "browser": "./lib/nodejs/lib/thrift/browser.js",
   "main": "./lib/nodejs/lib/thrift",
   "engines": {
-    "node": ">= 8.16.2"
+    "node": ">= 10.18.0"
   },
   "dependencies": {
     "browser-or-node": "^1.2.1",
