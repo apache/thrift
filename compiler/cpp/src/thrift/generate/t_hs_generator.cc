@@ -305,9 +305,9 @@ void t_hs_generator::generate_enum(t_enum* tenum) {
 
   bool first = true;
   for (c_iter = constants.begin(); c_iter != constants.end(); ++c_iter) {
-    string name = capitalize((*c_iter)->get_name());
+    string name = capitalize(tenum->get_name()) + "_" + capitalize((*c_iter)->get_name());
     f_types_ << (first ? "" : "|");
-    f_types_ << name;
+    f_types_ << << name;
     first = false;
   }
   indent(f_types_) << "deriving (P.Show, P.Eq, G.Generic, TY.Typeable, P.Ord, P.Bounded)" << endl;
@@ -321,7 +321,7 @@ void t_hs_generator::generate_enum(t_enum* tenum) {
   indent_up();
   for (c_iter = constants.begin(); c_iter != constants.end(); ++c_iter) {
     int value = (*c_iter)->get_value();
-    string name = capitalize((*c_iter)->get_name());
+    string name = capitalize(tenum->get_name()) + "_" + capitalize((*c_iter)->get_name());
     indent(f_types_) << name << " -> " << value << endl;
   }
   indent_down();
@@ -329,7 +329,7 @@ void t_hs_generator::generate_enum(t_enum* tenum) {
   indent_up();
   for (c_iter = constants.begin(); c_iter != constants.end(); ++c_iter) {
     int value = (*c_iter)->get_value();
-    string name = capitalize((*c_iter)->get_name());
+    string name = capitalize(tenum->get_name()) + "_" + capitalize((*c_iter)->get_name());
     indent(f_types_) << value << " -> " << name << endl;
   }
   indent(f_types_) << "_ -> X.throw T.ThriftException" << endl;
