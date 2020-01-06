@@ -307,7 +307,7 @@ void t_hs_generator::generate_enum(t_enum* tenum) {
   for (c_iter = constants.begin(); c_iter != constants.end(); ++c_iter) {
     string name = capitalize(tenum->get_name()) + "_" + capitalize((*c_iter)->get_name());
     f_types_ << (first ? "" : "|");
-    f_types_ << << name;
+    f_types_ << name;
     first = false;
   }
   indent(f_types_) << "deriving (P.Show, P.Eq, G.Generic, TY.Typeable, P.Ord, P.Bounded)" << endl;
