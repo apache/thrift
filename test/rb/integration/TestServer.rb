@@ -113,6 +113,7 @@ protocol = "binary"
 ssl = false
 transport = "buffered"
 @transportFactory = nil
+zlib = false
 
 ARGV.each do|a|
   if a == "--help"
@@ -122,7 +123,8 @@ ARGV.each do|a|
     puts "\t--port arg (=9090) \t Port number to listen \t not valid with domain-socket"
     puts "\t--protocol arg (=binary) \t protocol: accel, binary, compact, json"
     puts "\t--ssl \t use ssl \t not valid with domain-socket"
-    puts "\t--transport arg (=buffered) transport: buffered, framed, http"
+    puts "\t--transport arg (=buffered) transport: buffered, framed, zlib"
+    puts "\t--zlib \t use zlib"
     exit
   elsif a.start_with?("--domain-socket")
     domain_socket = a.split("=")[1]
@@ -134,6 +136,8 @@ ARGV.each do|a|
     transport = a.split("=")[1]
   elsif a.start_with?("--port")
     port = a.split("=")[1].to_i 
+  elsif a == "--zlib"
+    zlib = true
   end
 end
 
@@ -149,10 +153,13 @@ else
   raise 'Unknown protocol type'
 end
 
+@transportFactory = Thrift::BufferedTransportFactory.new
 if transport == "buffered" || transport.to_s.strip.empty?
-  @transportFactory = Thrift::BufferedTransportFactory.new
+  # noop
 elsif transport == "framed"
   @transportFactory = Thrift::FramedTransportFactory.new
+elsif transport == "zlib"
+  @transportFactory = Thrift::ZlibTransportFactory.new
 else
   raise 'Unknown transport type'
 end

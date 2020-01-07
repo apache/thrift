@@ -59,6 +59,7 @@ require 'thrift/transport/framed_transport'
 require 'thrift/transport/http_client_transport'
 require 'thrift/transport/io_stream_transport'
 require 'thrift/transport/memory_buffer_transport'
+require 'thrift/transport/zlib_transport'
 
 # server
 require 'thrift/server/base_server'

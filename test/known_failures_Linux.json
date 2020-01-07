@@ -721,5 +721,8 @@
   "rb-cpp_json_buffered-ip-ssl",
   "rb-cpp_json_framed-domain",
   "rb-cpp_json_framed-ip",
-  "rb-cpp_json_framed-ip-ssl"
+  "rb-cpp_json_framed-ip-ssl",
+  "rb-cpp_json_zlib-domain",
+  "rb-cpp_json_zlib-ip",
+  "rb-cpp_json_zlib-ip-ssl"
 ]

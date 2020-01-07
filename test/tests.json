@@ -401,7 +401,8 @@
     },
     "transports": [
       "buffered",
-      "framed"
+      "framed",
+      "zlib"
     ],
     "sockets": [
       "domain",
