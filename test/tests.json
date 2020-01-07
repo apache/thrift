@@ -497,7 +497,8 @@
     "name": "perl",
     "transports": [
       "buffered",
-      "framed"
+      "framed",
+      "zlib"
     ],
     "sockets": [
       "ip",

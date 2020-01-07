@@ -35,6 +35,7 @@ use Thrift;
 use Thrift::BinaryProtocol;
 use Thrift::BufferedTransport;
 use Thrift::FramedTransport;
+use Thrift::ZlibTransport;
 use Thrift::MultiplexedProcessor;
 use Thrift::SSLServerSocket;
 use Thrift::ServerSocket;
@@ -51,20 +52,21 @@ sub usage {
     print <<"EOF";
 Usage: $0 [OPTIONS]
 
-Options:                          (default)
-  --ca                                         Certificate authority file (optional).
-  --cert                                       Certificate file.
-                                               Required if using --ssl.
-  --ciphers                                    Acceptable cipher list.
-  --domain-socket <file>                       Use a unix domain socket.
-  --help                                       Show usage.
-  --key                                        Private key file for certificate.
-                                               Required if using --ssl and private key is
-                                               not in the certificate file.
-  --port <portnum>                9090         Port to use.
-  --protocol {binary}             binary       Protocol to use.
-  --ssl                                        If present, use SSL/TLS.
-  --transport {buffered|framed}   buffered     Transport to use.
+Options:                               (default)
+  --ca                                              Certificate authority file (optional).
+  --cert                                            Certificate file.
+                                                    Required if using --ssl.
+  --ciphers                                         Acceptable cipher list.
+  --domain-socket <file>                            Use a unix domain socket.
+  --help                                            Show usage.
+  --key                                             Private key file for certificate.
+                                                    Required if using --ssl and private key is
+                                                    not in the certificate file.
+  --port <portnum>                     9090         Port to use.
+  --protocol {binary}                  binary       Protocol to use.
+  --ssl                                             If present, use SSL/TLS.
+  --transport {buffered|framed|zlib}   buffered     Transport to use.
+  --zlib                                            If present, use ZlibTransport.
 
 EOF
 }
@@ -87,6 +89,7 @@ GetOptions(\%opts, qw (
     protocol=s
     ssl
     transport=s
+    zlib
 )) || exit 1;
 
 if ($opts{help}) {
@@ -115,12 +118,15 @@ elsif ($opts{ssl}) {
 else {
     $serversocket = Thrift::ServerSocket->new(\%opts);
 }
-my $transport;
+my $transport = Thrift::BufferedTransportFactory->new();
 if ($opts{transport} eq 'buffered') {
-    $transport = Thrift::BufferedTransportFactory->new();
+    # use the default transport as it is
 }
 elsif ($opts{transport} eq 'framed') {
     $transport = Thrift::FramedTransportFactory->new();
+}
+elsif ($opts{transport} eq 'zlib' or $opts{zlib}) {
+    $transport = Thrift::ZlibTransport->new($transport);
 }
 else {
     usage();

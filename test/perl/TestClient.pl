@@ -33,6 +33,7 @@ use Thrift;
 use Thrift::BinaryProtocol;
 use Thrift::BufferedTransport;
 use Thrift::FramedTransport;
+use Thrift::ZlibTransport;
 use Thrift::MultiplexedProtocol;
 use Thrift::SSLSocket;
 use Thrift::Socket;
@@ -48,19 +49,20 @@ sub usage {
     print <<"EOF";
 Usage: $0 [OPTIONS]
 
-Options:                          (default)
-  --ca                                         CA to validate server with.
-  --cert                                       Certificate to use.
-                                               Required if using --ssl.
-  --ciphers                                    Acceptable cipher list.
-  --domain-socket <file>                       Use a unix domain socket.
-  --help                                       Show usage.
-  --key                                        Certificate key.
-                                               Required if using --ssl.
-  --port <portnum>                9090         Port to use.
-  --protocol {binary}             binary       Protocol to use.
-  --ssl                                        If present, use SSL.
-  --transport {buffered|framed}   buffered     Transport to use.
+Options:                               (default)
+  --ca                                              CA to validate server with.
+  --cert                                            Certificate to use.
+                                                    Required if using --ssl.
+  --ciphers                                         Acceptable cipher list.
+  --domain-socket <file>                            Use a unix domain socket.
+  --help                                            Show usage.
+  --key                                             Certificate key.
+                                                    Required if using --ssl.
+  --port <portnum>                     9090         Port to use.
+  --protocol {binary}                  binary       Protocol to use.
+  --ssl                                             If present, use SSL.
+  --transport {buffered|framed|zlib}   buffered     Transport to use.
+  --zlib                                            If present, use ZlibTransport.
 
 EOF
 }
@@ -71,7 +73,7 @@ my %opts = (
     'transport' => 'buffered'
 );
 
-GetOptions(\%opts, qw (
+GetOptions(\%opts, qw(
     ca=s
     cert=s
     ciphers=s
@@ -83,6 +85,7 @@ GetOptions(\%opts, qw (
     protocol=s
     ssl
     transport=s
+    zlib
 )) || exit 1;
 
 if ($opts{help}) {
@@ -101,12 +104,15 @@ else {
   $socket = Thrift::Socket->new($opts{host}, $opts{port});
 }
 
-my $transport;
+my $transport = Thrift::BufferedTransport->new($socket, 1024, 1024);
 if ($opts{transport} eq 'buffered') {
-    $transport = Thrift::BufferedTransport->new($socket, 1024, 1024);
+    # use the default transport as it is
 }
 elsif ($opts{transport} eq 'framed') {
     $transport = Thrift::FramedTransport->new($socket);
+}
+elsif ($opts{transport} eq 'zlib' or $opts{zlib}) {
+    $transport = Thrift::ZlibTransport->new($transport);
 }
 else {
     usage();

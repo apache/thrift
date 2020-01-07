@@ -63,6 +63,7 @@ EXTRA_DIST = \
 	lib/Thrift/UnixSocket.pm \
 	lib/Thrift/Type.pm \
 	lib/Thrift/Transport.pm \
+	lib/Thrift/ZlibTransport.pm \
 	README.md
 
 THRIFT = @top_builddir@/compiler/cpp/thrift
