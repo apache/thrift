@@ -76,7 +76,8 @@
     "transports": [
       "http",
       "buffered",
-      "framed"
+      "framed",
+      "zlib"
     ],
     "sockets": [
       "ip",
