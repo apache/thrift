@@ -42,6 +42,7 @@ import thrift.transport.base;
 import thrift.transport.buffered;
 import thrift.transport.framed;
 import thrift.transport.http;
+import thrift.transport.zlib;
 import thrift.transport.ssl;
 import thrift.util.cancellation;
 import thrift.util.hashset;
@@ -246,11 +247,12 @@ void main(string[] args) {
   size_t numIOThreads = 1;
   TransportType transportType;
   bool ssl = false;
+  bool zlib = false;
   bool trace = true;
   size_t taskPoolSize = totalCPUs;
 
   getopt(args, "port", &port, "protocol", &protocolType, "server-type",
-    &serverType, "ssl", &ssl, "num-io-threads", &numIOThreads,
+    &serverType, "ssl", &ssl, "zlib", &zlib, "num-io-threads", &numIOThreads,
     "task-pool-size", &taskPoolSize, "trace", &trace,
     "transport", &transportType);
 

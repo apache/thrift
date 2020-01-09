@@ -35,6 +35,7 @@ import thrift.transport.base;
 import thrift.transport.buffered;
 import thrift.transport.framed;
 import thrift.transport.http;
+import thrift.transport.zlib;
 import thrift.transport.socket;
 import thrift.transport.ssl;
 import thrift.util.hashset;
@@ -47,6 +48,7 @@ enum TransportType {
   buffered,
   framed,
   http,
+  zlib,
   raw
 }
 
@@ -68,6 +70,7 @@ void main(string[] args) {
   bool ssl;
   ProtocolType protocolType;
   TransportType transportType;
+  bool zlib;
   bool trace;
 
   getopt(args,
@@ -75,6 +78,7 @@ void main(string[] args) {
     "protocol", &protocolType,
     "ssl", &ssl,
     "transport", &transportType,
+    "zlib", &zlib,
     "trace", &trace,
     "port", &port,
     "host", (string _, string value) {
@@ -102,22 +106,28 @@ void main(string[] args) {
     socket = new TSocket(host, port);
   }
 
-  TProtocol protocol;
+  TTransport transport;
   final switch (transportType) {
     case TransportType.buffered:
-      protocol = createProtocol(new TBufferedTransport(socket), protocolType);
+      transport = new TBufferedTransport(socket);
       break;
     case TransportType.framed:
-      protocol = createProtocol(new TFramedTransport(socket), protocolType);
+      transport = new TFramedTransport(socket);
       break;
     case TransportType.http:
-      protocol = createProtocol(
-        new TClientHttpTransport(socket, host, "/service"), protocolType);
+      transport = new TClientHttpTransport(socket, host, "/service");
+      break;
+    case TransportType.zlib:
+      transport = new TZlibTransport(socket);
       break;
     case TransportType.raw:
-      protocol = createProtocol(socket, protocolType);
+      transport = socket;
       break;
   }
+  if (zlib && transportType != TransportType.zlib) {
+    transport = new TZlibTransport(socket);
+  }
+  TProtocol protocol = createProtocol(transport, protocolType);
 
   auto client = tClient!ThriftTest(protocol);
 
