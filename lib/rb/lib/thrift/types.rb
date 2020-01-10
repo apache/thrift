@@ -40,7 +40,7 @@ module Thrift
     attr_accessor :type_checking
   end
 
-  class TypeError < Exception
+  class TypeError < Exception # rubocop:disable Lint/InheritException
   end
 
   def self.check_type(value, field, name, skip_nil=true)

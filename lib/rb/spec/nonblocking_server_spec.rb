@@ -127,7 +127,7 @@ describe 'NonblockingServer' do
     end
 
     after(:each) do
-      @clients.each { |client, trans| trans.close }
+      @clients.each { |_client, trans| trans.close }
       # @server.shutdown(1)
       @server_thread.kill
       @transport.close

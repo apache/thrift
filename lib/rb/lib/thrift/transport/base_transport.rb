@@ -19,7 +19,7 @@
 # 
 
 module Thrift
-  class TransportException < Exception
+  class TransportException < Exception # rubocop:disable Lint/InheritException
     UNKNOWN = 0
     NOT_OPEN = 1
     ALREADY_OPEN = 2
@@ -58,7 +58,7 @@ module Thrift
     # sz - The number of bytes to read from the transport.
     #
     # Returns a String acting as a byte buffer.
-    def read(sz)
+    def read(sz) # rubocop:disable Lint/UnusedMethodArgument
       raise NotImplementedError
     end
 

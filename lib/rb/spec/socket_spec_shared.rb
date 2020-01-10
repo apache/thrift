@@ -91,7 +91,7 @@ shared_examples_for "a socket" do
   it "should raise an error when read times out" do
     @socket.timeout = 0.5
     @socket.open
-    expect(IO).to receive(:select).once {sleep(0.5); nil}
+    expect(IO).to(receive(:select).once {sleep(0.5); nil})
     expect { @socket.read(17) }.to raise_error(Thrift::TransportException) { |e| expect(e.type).to eq(Thrift::TransportException::TIMED_OUT) }
   end
 

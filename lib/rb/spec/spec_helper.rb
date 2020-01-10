@@ -21,7 +21,7 @@
 require 'rubygems'
 require 'rspec'
 
-$:.unshift File.join(File.dirname(__FILE__), *%w[.. ext])
+$:.unshift File.join(File.dirname(__FILE__), '..', 'ext')
 
 # pretend we already loaded fastthread, otherwise the nonblocking_server_spec
 # will get screwed up
@@ -45,11 +45,11 @@ RSpec.configure do |configuration|
   end
 end
 
-$:.unshift File.join(File.dirname(__FILE__), *%w[.. test debug_proto gen-rb])
+$:.unshift File.join(File.dirname(__FILE__), '..', 'test', 'debug_proto', 'gen-rb')
 require 'srv'
 require 'debug_proto_test_constants'
 
-$:.unshift File.join(File.dirname(__FILE__), *%w[gen-rb])
+$:.unshift File.join(File.dirname(__FILE__), 'gen-rb')
 require 'thrift_spec_types'
 require 'nonblocking_service'
 
@@ -60,5 +60,5 @@ module Fixtures
   COMPACT_PROTOCOL_TEST_STRUCT.map_byte_map = nil
 end
 
-$:.unshift File.join(File.dirname(__FILE__), *%w[gen-rb/flat])
+$:.unshift File.join(File.dirname(__FILE__), 'gen-rb/flat')
 

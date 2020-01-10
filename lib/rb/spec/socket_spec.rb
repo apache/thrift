@@ -43,7 +43,7 @@ describe 'Socket' do
       expect(::Socket).to receive(:new).and_return(double("Handle", :connect_nonblock => true, :setsockopt => nil))
       expect(::Socket).to receive(:getaddrinfo).with("localhost", 9090, nil, ::Socket::SOCK_STREAM).and_return([[]])
       expect(::Socket).to receive(:sockaddr_in)
-      @socket.to_s == "socket(localhost:9090)"
+      expect(@socket.to_s).to eq("socket(localhost:9090)")
       @socket.open
     end
 

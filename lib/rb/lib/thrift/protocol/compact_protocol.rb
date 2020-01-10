@@ -112,7 +112,7 @@ module Thrift
       nil
     end
 
-    def write_struct_begin(name)
+    def write_struct_begin(name) # rubocop:disable Lint/UnusedMethodArgument
       @last_field.push(0)
       nil
     end
@@ -122,7 +122,7 @@ module Thrift
       nil
     end
 
-    def write_field_begin(name, type, id)
+    def write_field_begin(name, type, id) # rubocop:disable Lint/UnusedMethodArgument
       if type == Types::BOOL
         # we want to possibly include the value, so we'll wait.
         @boolean_field = [type, id]
@@ -347,7 +347,7 @@ module Thrift
     end
     
     def to_s
-      "compact(#{super.to_s})"
+      "compact(#{super})"
     end
 
     private
@@ -367,7 +367,7 @@ module Thrift
 
     def write_varint32(n)
       # int idx = 0;
-      while true
+      loop do
         if (n & ~0x7F) == 0
           # i32buf[idx++] = (byte)n;
           write_byte(n)
@@ -386,7 +386,7 @@ module Thrift
     EVERYTHING_ELSE_MASK = ~SEVEN_BIT_MASK
 
     def write_varint64(n)
-      while true
+      loop do
         if (n & EVERYTHING_ELSE_MASK) == 0 #TODO need to find a way to make this into a long...
           write_byte(n)
           break
@@ -404,7 +404,7 @@ module Thrift
     def read_varint64()
       shift = 0
       result = 0
-      while true
+      loop do
         b = read_byte()
         result |= (b & 0x7f) << shift
         break if (b & 0x80) != 0x80

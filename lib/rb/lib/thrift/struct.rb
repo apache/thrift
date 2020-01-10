@@ -21,7 +21,7 @@ require 'set'
 
 module Thrift
   module Struct
-    def initialize(d={}, &block)
+    def initialize(d={}, &block) # rubocop:disable Lint/UnusedMethodArgument
       # get a copy of the default values to work on, removing defaults in favor of arguments
       fields_with_defaults = fields_with_default_values.dup
       
@@ -58,7 +58,7 @@ module Thrift
       fields_with_default_values = self.class.instance_variable_get(:@fields_with_default_values)
       unless fields_with_default_values
         fields_with_default_values = {}
-        struct_fields.each do |fid, field_def|
+        struct_fields.each do |_fid, field_def|
           unless field_def[:default].nil?
             fields_with_default_values[field_def[:name]] = field_def[:default]
           end
@@ -70,7 +70,7 @@ module Thrift
     
     def inspect(skip_optional_nulls = true)
       fields = []
-      each_field do |fid, field_info|
+      each_field do |_fid, field_info|
         name = field_info[:name]
         value = instance_variable_get("@#{name}")
         unless skip_optional_nulls && field_info[:optional] && value.nil?
@@ -83,7 +83,7 @@ module Thrift
     def read(iprot)
       iprot.read_struct_begin
       loop do
-        fname, ftype, fid = iprot.read_field_begin
+        _fname, ftype, fid = iprot.read_field_begin
         break if (ftype == Types::STOP)
         handle_message(iprot, fid, ftype)
         iprot.read_field_end
@@ -115,7 +115,7 @@ module Thrift
 
     def ==(other)
       return false if other.nil?
-      each_field do |fid, field_info|
+      each_field do |_fid, field_info|
         name = field_info[:name]
         return false unless other.respond_to?(name) && self.send(name) == other.send(name)
       end
@@ -129,7 +129,7 @@ module Thrift
     # This implementation of hash() is inspired by Apache's Java HashCodeBuilder class.
     def hash
       total = 17
-      each_field do |fid, field_info|
+      each_field do |_fid, field_info|
         name = field_info[:name]
         value = self.send(name)
         total = (total * 37 + value.hash) & 0xffffffff
@@ -142,7 +142,7 @@ module Thrift
       unless other.is_a?(self.class)
         diffs << "Different class!"
       else
-        each_field do |fid, field_info|
+        each_field do |_fid, field_info|
           name = field_info[:name]
           diffs << "#{name} differs!" unless self.instance_variable_get("@#{name}") == other.instance_variable_get("@#{name}")
         end
@@ -174,7 +174,7 @@ module Thrift
 
     def <=>(other)
       if self.class == other.class
-        each_field do |fid, field_info|
+        each_field do |_fid, field_info|
           v1 = self.send(field_info[:name])
           v1_set = !v1.nil?
           v2 = other.send(field_info[:name])
@@ -195,8 +195,6 @@ module Thrift
         self.class <=> other.class
       end
     end
-
-    protected
 
     def self.append_features(mod)
       if mod.ancestors.include? ::Exception

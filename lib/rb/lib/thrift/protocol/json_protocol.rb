@@ -392,7 +392,7 @@ module Thrift
       write_json_array_end
     end
 
-    def write_struct_begin(name)
+    def write_struct_begin(name) # rubocop:disable Lint/UnusedMethodArgument
       write_json_object_start
     end
 
@@ -400,7 +400,7 @@ module Thrift
       write_json_object_end
     end
 
-    def write_field_begin(name, type, id)
+    def write_field_begin(name, type, id) # rubocop:disable Lint/UnusedMethodArgument
       write_json_integer(id)
       write_json_object_start
       write_json_string(get_type_name_for_type_id(type))
@@ -523,7 +523,7 @@ module Thrift
       read_json_syntax_char(@@kJSONStringDelimiter)
       ch = ""
       str = ""
-      while (true)
+      loop do
         ch = @reader.read
         if (ch == @@kJSONStringDelimiter)
           break
@@ -562,7 +562,7 @@ module Thrift
     # a valid JSON numeric character.
     def read_json_numeric_chars
       str = ""
-      while (true)
+      loop do
         ch = @reader.peek
         if (!is_json_numeric(ch))
           break;
@@ -770,7 +770,7 @@ module Thrift
     end
 
     def to_s
-      "json(#{super.to_s})"
+      "json(#{super})"
     end
   end
 

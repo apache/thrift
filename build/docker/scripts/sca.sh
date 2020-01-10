@@ -45,6 +45,9 @@ flake8
 composer install --quiet
 ./vendor/bin/phpcs
 
+# Ruby code style
+rubocop --fail-level W --format quiet lib/rb
+
 # TODO etc
 echo FIXMEs: `grep -r FIXME * | wc -l`
 echo  HACKs: `grep -r HACK * | wc -l`

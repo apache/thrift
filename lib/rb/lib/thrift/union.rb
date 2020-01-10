@@ -55,11 +55,11 @@ module Thrift
 
     def read(iprot)
       iprot.read_struct_begin
-      fname, ftype, fid = iprot.read_field_begin
+      _fname, ftype, fid = iprot.read_field_begin
       handle_message(iprot, fid, ftype)
       iprot.read_field_end
 
-      fname, ftype, fid = iprot.read_field_begin
+      _fname, ftype, _fid = iprot.read_field_begin
       raise "Too many fields for union" unless (ftype == Types::STOP) 
 
       iprot.read_struct_end

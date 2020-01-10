@@ -61,7 +61,7 @@ describe Thrift::CompactProtocol do
         proto.write_field_end
 
         proto = Thrift::CompactProtocol.new(trans)
-        name, type, id = proto.read_field_begin
+        _name, type, id = proto.read_field_begin
         expect(type).to eq(thrift_type)
         expect(id).to eq(15)
         read_back = proto.send(reader(primitive_type))
@@ -139,11 +139,11 @@ describe Thrift::CompactProtocol do
   end
   
   def writer(sym)
-    "write_#{sym.to_s}"
+    "write_#{sym}"
   end
   
   def reader(sym)
-    "read_#{sym.to_s}"
+    "read_#{sym}"
   end
 end
 

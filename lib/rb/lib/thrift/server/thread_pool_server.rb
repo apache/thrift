@@ -17,8 +17,6 @@
 # under the License.
 # 
 
-require 'thread'
-
 module Thrift
   class ThreadPoolServer < BaseServer
     def initialize(processor, server_transport, transport_factory=nil, protocol_factory=nil, num=20)
@@ -55,7 +53,8 @@ module Thrift
                   loop do
                     @processor.process(prot, prot)
                   end
-                rescue Thrift::TransportException, Thrift::ProtocolException => e
+                rescue Thrift::TransportException, Thrift::ProtocolException
+                  nil
                 ensure
                   trans.close
                 end
@@ -73,7 +72,7 @@ module Thrift
     end
     
     def to_s
-      "threadpool(#{super.to_s})"
+      "threadpool(#{super})"
     end
   end
 end

@@ -27,7 +27,7 @@ module Thrift
       @protocol.trans
     end
 
-    def write_message_begin(name, type, seqid)
+    def write_message_begin(name, type, seqid) # rubocop:disable Lint/UnusedMethodArgument
       @protocol.write_message_begin
     end
 

@@ -47,6 +47,7 @@ module Thrift
             begin
               socket.connect_nonblock(sockaddr)
             rescue Errno::EISCONN
+              nil
             end
           end
           return @handle = socket
@@ -71,7 +72,7 @@ module Thrift
           len = 0
           start = Time.now
           while Time.now - start < @timeout
-            rd, wr, = IO.select(nil, [@handle], nil, @timeout)
+            _rd, wr, = IO.select(nil, [@handle], nil, @timeout)
             if wr and not wr.empty?
               len += @handle.write_nonblock(str[len..-1])
               break if len >= str.length

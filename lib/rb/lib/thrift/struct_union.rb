@@ -80,7 +80,7 @@ module Thrift
           end
           value = nil
         else
-          value = Array.new(size) do |n|
+          value = Array.new(size) do
             read_field(iprot, field_info(field[:element]))
           end
         end
@@ -157,7 +157,8 @@ module Thrift
     end
 
     def inspect_field(value, field_info)
-      if enum_class = field_info[:enum_class]
+      enum_class = field_info[:enum_class]
+      if enum_class
         "#{enum_class.const_get(:VALUE_MAP)[value]} (#{value})"
       elsif value.is_a? Hash 
         if field_info[:type] == Types::MAP

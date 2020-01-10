@@ -17,8 +17,6 @@
 # under the License.
 #
 
-require 'thread'
-
 module Thrift
   class ThreadedServer < BaseServer
     def serve
@@ -34,6 +32,7 @@ module Thrift
                 @processor.process(p, p)
               end
             rescue Thrift::TransportException, Thrift::ProtocolException
+              nil
             ensure
               t.close
             end
@@ -45,7 +44,7 @@ module Thrift
     end
     
     def to_s
-      "threaded(#{super.to_s})"
+      "threaded(#{super})"
     end
   end
 end

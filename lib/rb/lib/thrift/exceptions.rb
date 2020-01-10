@@ -27,7 +27,7 @@ module Thrift
     attr_reader :message
   end
 
-  class ApplicationException < Exception
+  class ApplicationException < Exception # rubocop:disable Lint/InheritException
 
     UNKNOWN = 0
     UNKNOWN_METHOD = 1
@@ -50,8 +50,8 @@ module Thrift
 
     def read(iprot)
       iprot.read_struct_begin
-      while true
-        fname, ftype, fid = iprot.read_field_begin
+      loop do
+        _fname, ftype, fid = iprot.read_field_begin
         if ftype == Types::STOP
           break
         end

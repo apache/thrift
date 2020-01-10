@@ -45,7 +45,7 @@ module Thrift
     end
     
     def to_s
-      "ssl(#{super.to_s})"
+      "ssl(#{super})"
     end
   end
 end

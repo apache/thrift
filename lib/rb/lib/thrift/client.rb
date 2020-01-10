@@ -38,7 +38,7 @@ module Thrift
     def send_message_args(args_class, args)
       data = args_class.new
       args.each do |k, v|
-        data.send("#{k.to_s}=", v)
+        data.send("#{k}=", v)
       end
       begin
         data.write(@oprot)
@@ -51,7 +51,7 @@ module Thrift
     end
 
     def receive_message(result_klass)
-      fname, mtype, rseqid = @iprot.read_message_begin
+      _fname, mtype, _rseqid = @iprot.read_message_begin
       handle_exception(mtype)
       result = result_klass.new
       result.read(@iprot)

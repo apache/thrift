@@ -60,8 +60,8 @@ describe 'Processor' do
 
     it "should pass args off to the args class" do
       args_class = double("MockArgsClass")
-      args = double("#<MockArgsClass:mock>").tap do |args|
-        expect(args).to receive(:read).with(@prot).ordered
+      args = double("#<MockArgsClass:mock>").tap do |a|
+        expect(a).to receive(:read).with(@prot).ordered
       end
       expect(args_class).to receive(:new).and_return args
       expect(@prot).to receive(:read_message_end).ordered

@@ -50,9 +50,11 @@ module Thrift
       end
     end
 
-    def write_struct_begin(name); nil; end
+    def write_struct_begin(name) # rubocop:disable Lint/UnusedMethodArgument
+      nil
+    end
 
-    def write_field_begin(name, type, id)
+    def write_field_begin(name, type, id) # rubocop:disable Lint/UnusedMethodArgument
       write_byte(type)
       write_i16(id)
     end
@@ -228,7 +230,7 @@ module Thrift
     end
     
     def to_s
-      "binary(#{super.to_s})"
+      "binary(#{super})"
     end
   end
 

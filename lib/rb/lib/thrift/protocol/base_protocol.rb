@@ -21,7 +21,7 @@
 require 'set'
 
 module Thrift
-  class ProtocolException < Exception
+  class ProtocolException < Exception # rubocop:disable Lint/InheritException
 
     UNKNOWN = 0
     INVALID_DATA = 1
@@ -52,19 +52,19 @@ module Thrift
       false
     end
 
-    def write_message_begin(name, type, seqid)
+    def write_message_begin(name, type, seqid) # rubocop:disable Lint/UnusedMethodArgument
       raise NotImplementedError
     end
 
     def write_message_end; nil; end
 
-    def write_struct_begin(name)
+    def write_struct_begin(name) # rubocop:disable Lint/UnusedMethodArgument
       raise NotImplementedError
     end
 
     def write_struct_end; nil; end
 
-    def write_field_begin(name, type, id)
+    def write_field_begin(name, type, id) # rubocop:disable Lint/UnusedMethodArgument
       raise NotImplementedError
     end
 
@@ -74,45 +74,45 @@ module Thrift
       raise NotImplementedError
     end
 
-    def write_map_begin(ktype, vtype, size)
+    def write_map_begin(ktype, vtype, size) # rubocop:disable Lint/UnusedMethodArgument
       raise NotImplementedError
     end
 
     def write_map_end; nil; end
 
-    def write_list_begin(etype, size)
+    def write_list_begin(etype, size) # rubocop:disable Lint/UnusedMethodArgument
       raise NotImplementedError
     end
 
     def write_list_end; nil; end
 
-    def write_set_begin(etype, size)
+    def write_set_begin(etype, size) # rubocop:disable Lint/UnusedMethodArgument
       raise NotImplementedError
     end
 
     def write_set_end; nil; end
 
-    def write_bool(bool)
+    def write_bool(bool) # rubocop:disable Lint/UnusedMethodArgument
       raise NotImplementedError
     end
 
-    def write_byte(byte)
+    def write_byte(byte) # rubocop:disable Lint/UnusedMethodArgument
       raise NotImplementedError
     end
 
-    def write_i16(i16)
+    def write_i16(i16) # rubocop:disable Lint/UnusedMethodArgument
       raise NotImplementedError
     end
 
-    def write_i32(i32)
+    def write_i32(i32) # rubocop:disable Lint/UnusedMethodArgument
       raise NotImplementedError
     end
 
-    def write_i64(i64)
+    def write_i64(i64) # rubocop:disable Lint/UnusedMethodArgument
       raise NotImplementedError
     end
 
-    def write_double(dub)
+    def write_double(dub) # rubocop:disable Lint/UnusedMethodArgument
       raise NotImplementedError
     end
 
@@ -123,7 +123,7 @@ module Thrift
     # Raises EncodingError if the transcoding to UTF-8 fails.
     #
     # Returns nothing.
-    def write_string(str)
+    def write_string(str) # rubocop:disable Lint/UnusedMethodArgument
       raise NotImplementedError
     end
 
@@ -133,7 +133,7 @@ module Thrift
     # buf - The String to write.
     #
     # Returns nothing.
-    def write_binary(buf)
+    def write_binary(buf) # rubocop:disable Lint/UnusedMethodArgument
       raise NotImplementedError
     end
 
@@ -253,7 +253,7 @@ module Thrift
     def write_type(field_info, value)
       # if field_info is a Fixnum, assume it is a Thrift::Types constant
       # convert it into a field_info Hash for backwards compatibility
-      if field_info.is_a? Fixnum
+      if field_info.is_a? Fixnum # rubocop:disable Lint/UnifiedInteger
         field_info = {:type => field_info}
       end
 
@@ -293,7 +293,7 @@ module Thrift
     def read_type(field_info)
       # if field_info is a Fixnum, assume it is a Thrift::Types constant
       # convert it into a field_info Hash for backwards compatibility
-      if field_info.is_a? Fixnum
+      if field_info.is_a? Fixnum # rubocop:disable Lint/UnifiedInteger
         field_info = {:type => field_info}
       end
 
@@ -339,8 +339,8 @@ module Thrift
         read_string
       when Types::STRUCT
         read_struct_begin
-        while true
-          name, type, id = read_field_begin
+        loop do
+          _name, type, _id = read_field_begin
           break if type == Types::STOP
           skip(type)
           read_field_end
@@ -371,12 +371,12 @@ module Thrift
     end
     
     def to_s
-      "#{trans.to_s}"
+      "#{trans}"
     end
   end
 
   class BaseProtocolFactory
-    def get_protocol(trans)
+    def get_protocol(trans) # rubocop:disable Lint/UnusedMethodArgument
       raise NotImplementedError
     end
     

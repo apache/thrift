@@ -31,6 +31,7 @@ module Thrift
               @processor.process(prot, prot)
             end
           rescue Thrift::TransportException, Thrift::ProtocolException
+            nil
           ensure
             trans.close
           end
@@ -41,7 +42,7 @@ module Thrift
     end
     
     def to_s
-      "simple(#{super.to_s})"
+      "simple(#{super})"
     end
   end
 end

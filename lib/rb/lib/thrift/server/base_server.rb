@@ -31,7 +31,7 @@ module Thrift
     end
 
     def to_s
-      "server(#{@protocol_factory.to_s}(#{@transport_factory.to_s}(#{@server_transport.to_s})))"
+      "server(#{@protocol_factory}(#{@transport_factory}(#{@server_transport})))"
     end
   end
 end

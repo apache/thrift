@@ -21,7 +21,7 @@
 # class.
 #
 if RUBY_VERSION < "1.8.7"
-  class Fixnum
+  class Fixnum # rubocop:disable Lint/UnifiedInteger
     def ord
       self
     end

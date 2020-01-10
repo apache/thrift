@@ -35,7 +35,7 @@ describe 'Thrift::ServerSocket' do
     it "should accept an optional host argument" do
       @socket = Thrift::ServerSocket.new('localhost', 1234)
       expect(TCPServer).to receive(:new).with('localhost', 1234)
-      @socket.to_s == "server(localhost:1234)"
+      expect(@socket.to_s).to eq("socket(localhost:1234)")
       @socket.listen
     end
 

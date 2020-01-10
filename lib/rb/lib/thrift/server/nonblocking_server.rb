@@ -18,7 +18,6 @@
 # 
 
 require 'logger'
-require 'thread'
 
 module Thrift
   # this class expects to always use a FramedTransport for reading messages
@@ -46,7 +45,7 @@ module Thrift
           break if @server_transport.closed?
           begin
             rd, = select([@server_transport], nil, nil, 0.1)
-          rescue Errno::EBADF => e
+          rescue Errno::EBADF
             # In Ruby 1.9, calling @server_transport.close in shutdown paths causes the select() to raise an
             # Errno::EBADF. If this happens, ignore it and retry the loop.
             break
@@ -56,7 +55,8 @@ module Thrift
           @logger.debug "Accepted socket: #{socket.inspect}"
           @io_manager.add_connection socket
         end
-      rescue IOError => e
+      rescue IOError
+        nil
       end
       # we must be shutting down
       @logger.info "#{self} is shutting down, goodbye"
@@ -83,7 +83,7 @@ module Thrift
       if block
         shutdown_proc.call
       else
-        Thread.new &shutdown_proc
+        Thread.new(&shutdown_proc)
       end
     end
 
@@ -216,6 +216,7 @@ module Thrift
           # only reading the number of signals pushed on the pipe, but given the lack
           # of locks, in theory we could clear the pipe/queue while a new signal is being
           # placed on the pipe, at which point our next read_signals would hit this error
+          nil
         end
       end
 

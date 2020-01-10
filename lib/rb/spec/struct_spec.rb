@@ -92,7 +92,7 @@ describe 'Struct' do
 
       expect(s1 <=> s2).to eq(-1)
       expect(s2 <=> s1).to eq(1)
-      expect(s1 <=> s1).to eq(0)
+      expect(s1 <=> s1).to eq(0) # rubocop:disable Lint/UselessComparison
       expect(s1 <=> SpecNamespace::StructWithSomeEnum.new()).to eq(-1)
     end
 

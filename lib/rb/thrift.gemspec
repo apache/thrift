@@ -17,8 +17,6 @@ Gem::Specification.new do |s|
 
   s.rubyforge_project = 'thrift'
 
-  dir = File.expand_path(File.dirname(__FILE__))
-
   s.files = Dir.glob("{lib,spec}/**/*")
   s.test_files = Dir.glob("{test,spec,benchmark}/**/*")
   s.executables =  Dir.glob("{bin}/**/*")
