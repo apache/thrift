@@ -19,11 +19,11 @@
 # under the License.
 #
 
-from __future__ import division
-from __future__ import print_function
-import platform
+from __future__ import division, print_function
+
 import copy
 import os
+import platform
 import signal
 import socket
 import subprocess

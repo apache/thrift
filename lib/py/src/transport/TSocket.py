@@ -23,7 +23,8 @@ import os
 import socket
 import sys
 
-from .TTransport import TTransportBase, TTransportException, TServerTransportBase
+from .TTransport import (TServerTransportBase, TTransportBase,
+                         TTransportException)
 
 logger = logging.getLogger(__name__)
 

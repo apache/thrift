@@ -17,14 +17,13 @@
 # under the License.
 #
 
-from .TProtocol import (TType, TProtocolBase, TProtocolException,
-                        TProtocolFactory, checkIntegerLimits)
 import base64
 import math
 import sys
 
 from ..compat import str_to_binary
-
+from .TProtocol import (TProtocolBase, TProtocolException, TProtocolFactory,
+                        TType, checkIntegerLimits)
 
 __all__ = ['TJSONProtocol',
            'TJSONProtocolFactory',

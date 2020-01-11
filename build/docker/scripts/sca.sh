@@ -40,6 +40,10 @@ cppcheck --force --quiet --inline-suppr --error-exitcode=1 -j2 lib/c_glib/src li
 
 # Python code style
 flake8
+for i in $(find . -name '*.py' -type f | grep -v -E '(/gen-py|\./contrib/|\./lib/nodejs/examples/|\./lib/py/build/|\./test/py\.[^/]*/test_suite\.py|\./test/py/Test(Client|Server)\.py|\./tutorial/py)')
+do
+  isort -c $i
+done
 
 # PHP code style
 composer install --quiet

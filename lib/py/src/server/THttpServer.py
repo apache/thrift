@@ -21,8 +21,8 @@ import ssl
 
 from six.moves import BaseHTTPServer
 
-from thrift.Thrift import TMessageType
 from thrift.server import TServer
+from thrift.Thrift import TMessageType
 from thrift.transport import TTransport
 
 

@@ -17,10 +17,11 @@
 # under the License.
 #
 
-from .TProtocol import TType, TProtocolBase, TProtocolException, TProtocolFactory, checkIntegerLimits
 from struct import pack, unpack
 
 from ..compat import binary_to_str, str_to_binary
+from .TProtocol import (TProtocolBase, TProtocolException, TProtocolFactory,
+                        TType, checkIntegerLimits)
 
 __all__ = ['TCompactProtocol', 'TCompactProtocolFactory']
 

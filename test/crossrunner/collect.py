@@ -21,8 +21,8 @@ import platform
 import re
 from itertools import product
 
-from .util import merge_dict
 from .test import TestEntry
+from .util import merge_dict
 
 # Those keys are passed to execution as is.
 # Note that there are keys other than these, namely:

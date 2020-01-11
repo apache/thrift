@@ -265,7 +265,7 @@ RUN apt-get install -y --no-install-recommends \
 `# Static Code Analysis dependencies` \
       cppcheck \
       sloccount && \
-    pip install flake8 && \
+    pip install flake8 isort && \
     wget -q "https://launchpad.net/ubuntu/+source/cppcheck/1.83-2/+build/14874703/+files/cppcheck_1.83-2_amd64.deb" && \
     dpkg -i cppcheck_1.83-2_amd64.deb && \
     rm cppcheck_1.83-2_amd64.deb

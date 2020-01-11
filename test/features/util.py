@@ -2,12 +2,12 @@ import argparse
 import socket
 
 from local_thrift import thrift  # noqa
-from thrift.transport.TSocket import TSocket
-from thrift.transport.TTransport import TBufferedTransport, TFramedTransport
-from thrift.transport.THttpClient import THttpClient
 from thrift.protocol.TBinaryProtocol import TBinaryProtocol
 from thrift.protocol.TCompactProtocol import TCompactProtocol
 from thrift.protocol.TJSONProtocol import TJSONProtocol
+from thrift.transport.THttpClient import THttpClient
+from thrift.transport.TSocket import TSocket
+from thrift.transport.TTransport import TBufferedTransport, TFramedTransport
 
 
 def add_common_args(p):

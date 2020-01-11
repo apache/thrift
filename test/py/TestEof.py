@@ -19,11 +19,11 @@
 # under the License.
 #
 
-from ThriftTest.ttypes import Xtruct
-from thrift.transport import TTransport
-from thrift.protocol import TBinaryProtocol
-from thrift.protocol import TCompactProtocol
 import unittest
+
+from thrift.protocol import TBinaryProtocol, TCompactProtocol
+from thrift.transport import TTransport
+from ThriftTest.ttypes import Xtruct
 
 
 class TestEof(unittest.TestCase):

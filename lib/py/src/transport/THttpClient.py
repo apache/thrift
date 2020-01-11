@@ -17,18 +17,17 @@
 # under the License.
 #
 
-from io import BytesIO
+import base64
 import os
 import ssl
 import sys
 import warnings
-import base64
+from io import BytesIO
 
-from six.moves import urllib
-from six.moves import http_client
+import six
+from six.moves import http_client, urllib
 
 from .TTransport import TTransportBase
-import six
 
 
 class THttpClient(TTransportBase):

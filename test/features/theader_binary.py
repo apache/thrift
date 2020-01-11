@@ -4,13 +4,13 @@ import argparse
 import socket
 import sys
 
-from util import add_common_args
 from local_thrift import thrift  # noqa
+from thrift.protocol.TBinaryProtocol import TBinaryProtocol
+from thrift.protocol.TCompactProtocol import TCompactProtocol
 from thrift.Thrift import TMessageType, TType
 from thrift.transport.TSocket import TSocket
 from thrift.transport.TTransport import TBufferedTransport, TFramedTransport
-from thrift.protocol.TBinaryProtocol import TBinaryProtocol
-from thrift.protocol.TCompactProtocol import TCompactProtocol
+from util import add_common_args
 
 
 def test_void(proto):

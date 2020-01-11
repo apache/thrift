@@ -19,14 +19,16 @@
 # under the License.
 #
 
-from DebugProtoTest import Srv
-from DebugProtoTest.ttypes import CompactProtoTestStruct, Empty, Wrapper
-from DebugProtoTest.ttypes import ExceptionWithAMap, MutableException
-from thrift.Thrift import TFrozenDict
-from thrift.transport import TTransport
-from thrift.protocol import TBinaryProtocol, TCompactProtocol
 import collections
 import unittest
+
+from DebugProtoTest import Srv
+from DebugProtoTest.ttypes import (CompactProtoTestStruct, Empty,
+                                   ExceptionWithAMap, MutableException,
+                                   Wrapper)
+from thrift.protocol import TBinaryProtocol, TCompactProtocol
+from thrift.Thrift import TFrozenDict
+from thrift.transport import TTransport
 
 
 class TestFrozenBase(unittest.TestCase):

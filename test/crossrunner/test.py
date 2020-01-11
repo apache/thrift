@@ -21,8 +21,9 @@ import copy
 import multiprocessing
 import os
 import sys
+
 from .compat import path_join
-from .util import merge_dict, domain_socket_path
+from .util import domain_socket_path, merge_dict
 
 
 class TestProgram(object):

@@ -17,8 +17,10 @@
 # under the License.
 #
 
-from .TProtocol import TType, TProtocolBase, TProtocolException, TProtocolFactory
 from struct import pack, unpack
+
+from .TProtocol import (TProtocolBase, TProtocolException, TProtocolFactory,
+                        TType)
 
 
 class TBinaryProtocol(TProtocolBase):

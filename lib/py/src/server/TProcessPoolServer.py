@@ -19,11 +19,11 @@
 
 
 import logging
+from multiprocessing import Condition, Process, Value
 
-from multiprocessing import Process, Value, Condition
+from thrift.transport.TTransport import TTransportException
 
 from .TServer import TServer
-from thrift.transport.TTransport import TTransportException
 
 logger = logging.getLogger(__name__)
 

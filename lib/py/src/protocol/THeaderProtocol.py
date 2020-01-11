@@ -19,10 +19,12 @@
 
 from thrift.protocol.TBinaryProtocol import TBinaryProtocolAccelerated
 from thrift.protocol.TCompactProtocol import TCompactProtocolAccelerated
-from thrift.protocol.TProtocol import TProtocolBase, TProtocolException, TProtocolFactory
+from thrift.protocol.TProtocol import (TProtocolBase, TProtocolException,
+                                       TProtocolFactory)
 from thrift.Thrift import TApplicationException, TMessageType
-from thrift.transport.THeaderTransport import THeaderTransport, THeaderSubprotocolID, THeaderClientType
-
+from thrift.transport.THeaderTransport import (THeaderClientType,
+                                               THeaderSubprotocolID,
+                                               THeaderTransport)
 
 PROTOCOLS_BY_ID = {
     THeaderSubprotocolID.BINARY: TBinaryProtocolAccelerated,

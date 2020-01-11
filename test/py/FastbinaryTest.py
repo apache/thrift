@@ -31,16 +31,17 @@ import math
 import os
 import sys
 import timeit
-
 from copy import deepcopy
 from pprint import pprint
 
-from thrift.transport import TTransport
-from thrift.protocol.TBinaryProtocol import TBinaryProtocol, TBinaryProtocolAccelerated
-from thrift.protocol.TCompactProtocol import TCompactProtocol, TCompactProtocolAccelerated
-
 from DebugProtoTest import Srv
-from DebugProtoTest.ttypes import Backwards, Bonk, Empty, HolyMoley, OneOfEach, RandomStuff, Wrapper
+from DebugProtoTest.ttypes import (Backwards, Bonk, Empty, HolyMoley,
+                                   OneOfEach, RandomStuff, Wrapper)
+from thrift.protocol.TBinaryProtocol import (TBinaryProtocol,
+                                             TBinaryProtocolAccelerated)
+from thrift.protocol.TCompactProtocol import (TCompactProtocol,
+                                              TCompactProtocolAccelerated)
+from thrift.transport import TTransport
 
 
 class TDevNullTransport(TTransport.TTransportBase):

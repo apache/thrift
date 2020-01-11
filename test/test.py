@@ -28,13 +28,14 @@
 #
 
 from __future__ import print_function
-from itertools import chain
+
+import argparse
 import json
 import logging
 import multiprocessing
-import argparse
 import os
 import sys
+from itertools import chain
 
 import crossrunner
 from crossrunner.compat import path_join

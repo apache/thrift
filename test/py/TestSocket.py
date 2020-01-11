@@ -19,11 +19,12 @@
 # under the License.
 #
 
-from thrift.transport import TSocket
-import unittest
-import time
-import socket
 import random
+import socket
+import time
+import unittest
+
+from thrift.transport import TSocket
 
 
 class TimeoutTest(unittest.TestCase):

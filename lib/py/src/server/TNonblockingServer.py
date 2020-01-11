@@ -30,12 +30,12 @@ import select
 import socket
 import struct
 import threading
-
 from collections import deque
+
 from six.moves import queue
 
-from thrift.transport import TTransport
 from thrift.protocol.TBinaryProtocol import TBinaryProtocolFactory
+from thrift.transport import TTransport
 
 __all__ = ['TNonblockingServer']
 

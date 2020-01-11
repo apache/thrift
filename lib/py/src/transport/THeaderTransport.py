@@ -22,15 +22,11 @@ import zlib
 
 from thrift.compat import BufferIO, byte_index
 from thrift.protocol.TBinaryProtocol import TBinaryProtocol
-from thrift.protocol.TCompactProtocol import TCompactProtocol, readVarint, writeVarint
+from thrift.protocol.TCompactProtocol import (TCompactProtocol, readVarint,
+                                              writeVarint)
 from thrift.Thrift import TApplicationException
-from thrift.transport.TTransport import (
-    CReadableTransport,
-    TMemoryBuffer,
-    TTransportBase,
-    TTransportException,
-)
-
+from thrift.transport.TTransport import (CReadableTransport, TMemoryBuffer,
+                                         TTransportBase, TTransportException)
 
 U16 = struct.Struct("!H")
 I32 = struct.Struct("!i")

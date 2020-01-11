@@ -3,9 +3,9 @@
 import argparse
 import sys
 
-from util import add_common_args, init_protocol
 from local_thrift import thrift  # noqa
 from thrift.Thrift import TMessageType, TType
+from util import add_common_args, init_protocol
 
 
 # TODO: generate from ThriftTest.thrift

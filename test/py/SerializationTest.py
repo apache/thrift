@@ -19,33 +19,19 @@
 # under the License.
 #
 
-from ThriftTest.ttypes import (
-    Bonk,
-    Bools,
-    LargeDeltas,
-    ListBonks,
-    NestedListsBonk,
-    NestedListsI32x2,
-    NestedListsI32x3,
-    NestedMixedx2,
-    Numberz,
-    VersioningTestV1,
-    VersioningTestV2,
-    Xtruct,
-    Xtruct2,
-)
-
-from Recursive.ttypes import RecTree
-from Recursive.ttypes import RecList
-from Recursive.ttypes import CoRec
-from Recursive.ttypes import CoRec2
-from Recursive.ttypes import VectorTest
-from DebugProtoTest.ttypes import CompactProtoTestStruct, Empty
-from thrift.transport import TTransport
-from thrift.protocol import TBinaryProtocol, TCompactProtocol, TJSONProtocol
-from thrift.TSerialization import serialize, deserialize
 import sys
 import unittest
+
+from DebugProtoTest.ttypes import CompactProtoTestStruct, Empty
+from Recursive.ttypes import CoRec, CoRec2, RecList, RecTree, VectorTest
+from thrift.protocol import TBinaryProtocol, TCompactProtocol, TJSONProtocol
+from thrift.transport import TTransport
+from thrift.TSerialization import deserialize, serialize
+from ThriftTest.ttypes import (Bonk, Bools, LargeDeltas, ListBonks,
+                               NestedListsBonk, NestedListsI32x2,
+                               NestedListsI32x3, NestedMixedx2, Numberz,
+                               VersioningTestV1, VersioningTestV2, Xtruct,
+                               Xtruct2)
 
 
 class AbstractTest(unittest.TestCase):

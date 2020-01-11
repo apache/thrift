@@ -17,16 +17,16 @@
 # under the License.
 #
 
-from io import BytesIO
 import struct
+from io import BytesIO
 
-from zope.interface import implementer, Interface, Attribute
-from twisted.internet.protocol import ServerFactory, ClientFactory, \
-    connectionDone
 from twisted.internet import defer
+from twisted.internet.protocol import (ClientFactory, ServerFactory,
+                                       connectionDone)
 from twisted.internet.threads import deferToThread
 from twisted.protocols import basic
-from twisted.web import server, resource, http
+from twisted.web import http, resource, server
+from zope.interface import Attribute, Interface, implementer
 
 from thrift.transport import TTransport
 

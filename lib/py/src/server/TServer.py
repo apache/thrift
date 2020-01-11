@@ -17,10 +17,11 @@
 # under the License.
 #
 
-from six.moves import queue
 import logging
 import os
 import threading
+
+from six.moves import queue
 
 from thrift.protocol import TBinaryProtocol
 from thrift.protocol.THeaderProtocol import THeaderProtocolFactory

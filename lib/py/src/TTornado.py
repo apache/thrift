@@ -18,16 +18,18 @@
 #
 
 from __future__ import absolute_import
+
 import logging
 import socket
 import struct
-
-from .transport.TTransport import TTransportException, TTransportBase, TMemoryBuffer
-
-from io import BytesIO
 from collections import deque
 from contextlib import contextmanager
-from tornado import gen, iostream, ioloop, tcpserver, concurrent
+from io import BytesIO
+
+from tornado import concurrent, gen, ioloop, iostream, tcpserver
+
+from .transport.TTransport import (TMemoryBuffer, TTransportBase,
+                                   TTransportException)
 
 __all__ = ['TTornadoServer', 'TTornadoStreamTransport']
 

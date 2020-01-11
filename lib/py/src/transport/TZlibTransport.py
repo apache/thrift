@@ -23,9 +23,11 @@ data compression.
 """
 
 from __future__ import division
+
 import zlib
-from .TTransport import TTransportBase, CReadableTransport
+
 from ..compat import BufferIO
+from .TTransport import CReadableTransport, TTransportBase
 
 
 class TZlibTransportFactory(object):

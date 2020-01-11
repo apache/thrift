@@ -17,14 +17,16 @@
 # under the License.
 #
 
-from thrift.Thrift import TException, TType, TFrozenDict
-from thrift.transport.TTransport import TTransportException
-from ..compat import binary_to_str, str_to_binary
-
-import six
 import sys
 from itertools import islice
+
+import six
 from six.moves import zip
+
+from thrift.Thrift import TException, TFrozenDict, TType
+from thrift.transport.TTransport import TTransportException
+
+from ..compat import binary_to_str, str_to_binary
 
 
 class TProtocolException(TException):

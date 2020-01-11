@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-
 #
 # Licensed to the Apache Software Foundation (ASF) under one
 # or more contributor license agreements. See the NOTICE file
@@ -19,17 +18,18 @@
 # under the License.
 #
 
+import os
 import sys
+from distutils.command.build_ext import build_ext
+from distutils.errors import (CCompilerError, DistutilsExecError,
+                              DistutilsPlatformError)
+
 try:
     from setuptools import setup, Extension
 except Exception:
     from distutils.core import setup, Extension
 
-from distutils.command.build_ext import build_ext
-from distutils.errors import CCompilerError, DistutilsExecError, DistutilsPlatformError
-
 # Fix to build sdist under vagrant
-import os
 if 'vagrant' in str(os.environ):
     try:
         del os.link

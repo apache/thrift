@@ -19,9 +19,9 @@
 # under the License.
 #
 
-import os
 import BaseHTTPServer
 import CGIHTTPServer
+import os
 
 # chdir(2) into the tutorial directory.
 os.chdir(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))

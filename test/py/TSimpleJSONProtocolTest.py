@@ -19,12 +19,12 @@
 # under the License.
 #
 
-from ThriftTest.ttypes import Bonk, VersioningTestV1, VersioningTestV2
-from thrift.protocol import TJSONProtocol
-from thrift.transport import TTransport
-
 import json
 import unittest
+
+from thrift.protocol import TJSONProtocol
+from thrift.transport import TTransport
+from ThriftTest.ttypes import Bonk, VersioningTestV1, VersioningTestV2
 
 
 class SimpleJSONProtocolTest(unittest.TestCase):

@@ -18,8 +18,10 @@
 #
 
 from os import path
-from SCons.Builder import Builder
+
 from six.moves import map
+
+from SCons.Builder import Builder
 
 
 def scons_env(env, add=''):
