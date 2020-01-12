@@ -28,7 +28,7 @@ use Thrift::Type;
 #
 # Protocol exceptions
 #
-package Thrift::TProtocolException;
+package Thrift::TProtocolException;  ## no critic (RequireFilenameMatchesPackage)
 use base('Thrift::TException');
 use version 0.77; our $VERSION = version->declare("$Thrift::VERSION");
 

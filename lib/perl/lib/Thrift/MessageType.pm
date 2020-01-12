@@ -26,7 +26,7 @@ use Thrift;
 #
 # Message types for RPC
 #
-package Thrift::TMessageType;
+package Thrift::TMessageType;  ## no critic (RequireFilenameMatchesPackage)
 use version 0.77; our $VERSION = version->declare("$Thrift::VERSION");
 
 use constant CALL      => 1;

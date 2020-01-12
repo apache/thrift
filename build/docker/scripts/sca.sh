@@ -38,6 +38,12 @@ cppcheck --force --quiet --inline-suppr --suppress="*:thrift/thriftl.cc" --error
 cppcheck --force --quiet --inline-suppr --error-exitcode=1 -j2 lib/cpp/src lib/cpp/test test/cpp tutorial/cpp
 cppcheck --force --quiet --inline-suppr --error-exitcode=1 -j2 lib/c_glib/src lib/c_glib/test test/c_glib/src tutorial/c_glib
 
+# Perl code style
+for i in $(find . -iname '*.p[lm]' -type f | grep -v -E '(/gen-perl|\./lib/cl/externals/|\./lib/perl/blib/|\./lib/perl/t/)')
+do
+  perlcritic $i
+done
+
 # Python code style
 flake8
 

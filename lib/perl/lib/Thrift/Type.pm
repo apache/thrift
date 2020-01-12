@@ -26,7 +26,7 @@ use Thrift;
 #
 # Data types that can be sent via Thrift
 #
-package Thrift::TType;
+package Thrift::TType;  ## no critic (RequireFilenameMatchesPackage)
 use version 0.77; our $VERSION = version->declare("$Thrift::VERSION");
 
 use constant STOP   => 0;

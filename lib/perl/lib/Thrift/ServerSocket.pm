@@ -88,8 +88,6 @@ sub accept
         $result->{handle} = IO::Select->new($client);
         return $result;
     }
-
-    return undef;
 }
 
 sub close

@@ -24,7 +24,7 @@ use warnings;
 use Thrift;
 use Thrift::Type;
 
-package Thrift::TException;
+package Thrift::TException;  ## no critic (RequireFilenameMatchesPackage)
 use version 0.77; our $VERSION = version->declare("$Thrift::VERSION");
 
 use overload '""' => sub {
