@@ -175,6 +175,14 @@ to Java, Ruby, PHP).
 Look for the README.md file in the lib/<language>/ folder for more details on the
 installation of each language library package.
 
+Package Managers
+================
+
+Apache Thrift is available via a number of package managers, a list which is 
+is steadily growing. A more detailed overview can be found 
+[at the Apache Thrift web site under "Libraries"](http://thrift.apache.org/lib/) 
+and/or in the respecitive READMEs for each language under /lib
+
 Testing
 =======
 
