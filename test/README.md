@@ -126,15 +126,16 @@ line interface:
       -h [ --help ]               produce help message
       --port arg (=9090)          Port number to listen
       --domain-socket arg         Unix Domain Socket (e.g. /tmp/ThriftTest.thrift)
-      --named-pipe arg            Windows Named Pipe (e.g. MyThriftPipe)
-      --server-type arg (=simple) type of server, "simple", "thread-pool",
-                                  "threaded", or "nonblocking"
-      --transport arg (=buffered) transport: buffered, framed, http, anonpipe
-      --protocol arg (=binary)    protocol: binary, compact, json
+      --abstract-namespace        Create the domain socket in the Abstract
+                                  Namespace (no connection with filesystem
+                                  pathnames)
+      --transport arg (=buffered) transport: buffered, framed, http, zlib
+      --protocol arg (=binary)    protocol: binary, compact, header, json, multi,
+                                  multic, multih, multij
       --ssl                       Encrypted Transport using SSL
-      --processor-events          processor-events
+      --zlib                      Wrapped Transport using Zlib
       -n [ --workers ] arg (=4)   Number of thread pools workers. Only valid for
-                              thread-pool server type
+                                  thread-pool server type
 
 **Client command line interface:**
 
@@ -145,13 +146,15 @@ line interface:
       --port arg (=9090)          Port number to connect
       --domain-socket arg         Domain Socket (e.g. /tmp/ThriftTest.thrift),
                                   instead of host and port
-      --named-pipe arg            Windows Named Pipe (e.g. MyThriftPipe)
-      --anon-pipes hRead hWrite   Windows Anonymous Pipes pair (handles)
-      --transport arg (=buffered) Transport: buffered, framed, http, evhttp
-      --protocol arg (=binary)    Protocol: binary, compact, json
+      --abstract-namespace        Look for the domain socket in the Abstract
+                                  Namespace (no connection with filesystem
+                                  pathnames)
+      --transport arg (=buffered) Transport: buffered, framed, http, evhttp, zlib
+      --protocol arg (=binary)    Protocol: binary, compact, header, json, multi,
+                                  multic, multih, multij
       --ssl                       Encrypted Transport using SSL
+      --zlib                      Wrap Transport with Zlib
       -n [ --testloops ] arg (=1) Number of Tests
-      -t [ --threads ] arg (=1)   Number of Test threads
 
 If you have executed the **make check** or **make cross** then you will be able to browse
 [gen-html/ThriftTest.html](gen-html/ThriftTest.html) with the test documentation.
