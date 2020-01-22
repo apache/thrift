@@ -148,6 +148,8 @@ namespace ThriftTest
     public class TestServer
     {
         public static int _clientID = -1;
+        private static readonly TConfiguration Configuration = null;  // or new TConfiguration() if needed
+
         public delegate void TestLogDelegate(string msg, params object[] values);
 
         public class MyServerEventHandler : TServerEventHandler
@@ -181,19 +183,19 @@ namespace ThriftTest
 
         public class TestHandlerAsync : ThriftTest.IAsync
         {
-            public TServer server { get; set; }
-            private int handlerID;
-            private StringBuilder sb = new StringBuilder();
-            private TestLogDelegate logger;
+            public TServer Server { get; set; }
+            private readonly int handlerID;
+            private readonly StringBuilder sb = new StringBuilder();
+            private readonly TestLogDelegate logger;
 
             public TestHandlerAsync()
             {
                 handlerID = Interlocked.Increment(ref _clientID);
-                logger += testConsoleLogger;
+                logger += TestConsoleLogger;
                 logger.Invoke("New TestHandler instance created");
             }
 
-            public void testConsoleLogger(string msg, params object[] values)
+            public void TestConsoleLogger(string msg, params object[] values)
             {
                 sb.Clear();
                 sb.AppendFormat("handler{0:D3}:", handlerID);
@@ -525,117 +527,122 @@ namespace ThriftTest
 
         public static int Execute(List<string> args)
         {
-            var loggerFactory = new LoggerFactory();//.AddConsole().AddDebug();
-            var logger = new LoggerFactory().CreateLogger("Test");
-
-            try
+            using (var loggerFactory = new LoggerFactory()) //.AddConsole().AddDebug();
             {
-                var param = new ServerParam();
+                var logger = loggerFactory.CreateLogger("Test");
 
                 try
                 {
-                    param.Parse(args);
+                    var param = new ServerParam();
+
+                    try
+                    {
+                        param.Parse(args);
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine("*** FAILED ***");
+                        Console.WriteLine("Error while  parsing arguments");
+                        Console.WriteLine(ex.Message + " ST: " + ex.StackTrace);
+                        return 1;
+                    }
+
+
+                    // Endpoint transport (mandatory)
+                    TServerTransport trans;
+                    switch (param.transport)
+                    {
+                        case TransportChoice.NamedPipe:
+                            Debug.Assert(param.pipe != null);
+                            trans = new TNamedPipeServerTransport(param.pipe, Configuration);
+                            break;
+
+
+                        case TransportChoice.TlsSocket:
+                            var cert = GetServerCert();
+                            if (cert == null || !cert.HasPrivateKey)
+                            {
+                                cert?.Dispose();
+                                throw new InvalidOperationException("Certificate doesn't contain private key");
+                            }
+
+                            trans = new TTlsServerSocketTransport(param.port, Configuration,
+                                cert,
+                                (sender, certificate, chain, errors) => true,
+                                null, SslProtocols.Tls | SslProtocols.Tls11 | SslProtocols.Tls12);
+                            break;
+
+                        case TransportChoice.Socket:
+                        default:
+                            trans = new TServerSocketTransport(param.port, Configuration);
+                            break;
+                    }
+
+                    // Layered transport (mandatory)
+                    TTransportFactory transFactory = null;
+                    switch (param.buffering)
+                    {
+                        case BufferChoice.Framed:
+                            transFactory = new TFramedTransport.Factory();
+                            break;
+                        case BufferChoice.Buffered:
+                            transFactory = new TBufferedTransport.Factory();
+                            break;
+                        default:
+                            Debug.Assert(param.buffering == BufferChoice.None, "unhandled case");
+                            transFactory = null;  // no layered transprt
+                            break;
+                    }
+
+                    // Protocol (mandatory)
+                    TProtocolFactory proto;
+                    switch (param.protocol)
+                    {
+                        case ProtocolChoice.Compact:
+                            proto = new TCompactProtocol.Factory();
+                            break;
+                        case ProtocolChoice.Json:
+                            proto = new TJsonProtocol.Factory();
+                            break;
+                        case ProtocolChoice.Binary:
+                        default:
+                            proto = new TBinaryProtocol.Factory();
+                            break;
+                    }
+
+                    // Processor
+                    var testHandler = new TestHandlerAsync();
+                    var testProcessor = new ThriftTest.AsyncProcessor(testHandler);
+                    var processorFactory = new TSingletonProcessorFactory(testProcessor);
+
+                    TServer serverEngine = new TSimpleAsyncServer(processorFactory, trans, transFactory, transFactory, proto, proto, logger);
+
+                    //Server event handler
+                    var serverEvents = new MyServerEventHandler();
+                    serverEngine.SetEventHandler(serverEvents);
+
+                    // Run it
+                    var where = (!string.IsNullOrEmpty(param.pipe)) ? "on pipe " + param.pipe : "on port " + param.port;
+                    Console.WriteLine("Starting the AsyncBaseServer " + where +
+                                      " with processor TPrototypeProcessorFactory prototype factory " +
+                                      (param.buffering == BufferChoice.Buffered ? " with buffered transport" : "") +
+                                      (param.buffering == BufferChoice.Framed ? " with framed transport" : "") +
+                                      (param.transport == TransportChoice.TlsSocket ? " with encryption" : "") +
+                                      (param.protocol == ProtocolChoice.Compact ? " with compact protocol" : "") +
+                                      (param.protocol == ProtocolChoice.Json ? " with json protocol" : "") +
+                                      "...");
+                    serverEngine.ServeAsync(CancellationToken.None).GetAwaiter().GetResult();
+                    Console.ReadLine();
                 }
-                catch (Exception ex)
+                catch (Exception x)
                 {
-                    Console.WriteLine("*** FAILED ***");
-                    Console.WriteLine("Error while  parsing arguments");
-                    Console.WriteLine(ex.Message + " ST: " + ex.StackTrace);
+                    Console.Error.Write(x);
                     return 1;
                 }
 
-
-                // Endpoint transport (mandatory)
-                TServerTransport trans;
-                switch (param.transport)
-                {
-                    case TransportChoice.NamedPipe:
-                        Debug.Assert(param.pipe != null);
-                        trans = new TNamedPipeServerTransport(param.pipe);
-                        break;
-
-
-                    case TransportChoice.TlsSocket:
-                        var cert = GetServerCert();
-                        if (cert == null || !cert.HasPrivateKey)
-                        {
-                            throw new InvalidOperationException("Certificate doesn't contain private key");
-                        }
-
-                        trans = new TTlsServerSocketTransport( param.port, cert,
-                            (sender, certificate, chain, errors) => true, 
-                            null, SslProtocols.Tls | SslProtocols.Tls11 | SslProtocols.Tls12);
-                        break;
-
-                    case TransportChoice.Socket:
-                    default:  
-                        trans = new TServerSocketTransport(param.port, 0);
-                        break;
-                }
-
-                // Layered transport (mandatory)
-                TTransportFactory transFactory = null;
-                switch (param.buffering)
-                {
-                    case BufferChoice.Framed:
-                        transFactory = new TFramedTransport.Factory();
-                        break;
-                    case BufferChoice.Buffered:
-                        transFactory = new TBufferedTransport.Factory();
-                        break;
-                    default:
-                        Debug.Assert(param.buffering == BufferChoice.None, "unhandled case");
-                        transFactory = null;  // no layered transprt
-                        break;
-                }
-
-                // Protocol (mandatory)
-                TProtocolFactory proto;
-                switch (param.protocol)
-                {
-                    case ProtocolChoice.Compact:
-                        proto = new TCompactProtocol.Factory();
-                        break;
-                    case ProtocolChoice.Json:
-                        proto = new TJsonProtocol.Factory();
-                        break;
-                    case ProtocolChoice.Binary:
-                    default:
-                        proto = new TBinaryProtocol.Factory();
-                        break;
-                }
-
-                // Processor
-                var testHandler = new TestHandlerAsync();
-                var testProcessor = new ThriftTest.AsyncProcessor(testHandler);
-                var processorFactory = new TSingletonProcessorFactory(testProcessor);
-
-                TServer serverEngine = new TSimpleAsyncServer(processorFactory, trans, transFactory, transFactory, proto, proto, logger);
-
-                //Server event handler
-                var serverEvents = new MyServerEventHandler();
-                serverEngine.SetEventHandler(serverEvents);
-
-                // Run it
-                var where = (! string.IsNullOrEmpty(param.pipe)) ? "on pipe " + param.pipe : "on port " + param.port;
-                Console.WriteLine("Starting the AsyncBaseServer " + where +
-                                  " with processor TPrototypeProcessorFactory prototype factory " +
-                                  (param.buffering == BufferChoice.Buffered ? " with buffered transport" : "") +
-                                  (param.buffering == BufferChoice.Framed ? " with framed transport" : "") +
-                                  (param.transport == TransportChoice.TlsSocket ? " with encryption" : "") +
-                                  (param.protocol == ProtocolChoice.Compact ? " with compact protocol" : "") +
-                                  (param.protocol == ProtocolChoice.Json ? " with json protocol" : "") +
-                                  "...");
-                serverEngine.ServeAsync(CancellationToken.None).GetAwaiter().GetResult();
-                Console.ReadLine();
+                Console.WriteLine("done.");
+                return 0;
             }
-            catch (Exception x)
-            {
-                Console.Error.Write(x);
-                return 1;
-            }
-            Console.WriteLine("done.");
-            return 0;
         }
     }
 

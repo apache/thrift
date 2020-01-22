@@ -36,6 +36,7 @@ uses
   Thrift.Protocol.JSON,
   Thrift.Protocol.Compact,
   Thrift.Collections,
+  Thrift.Configuration,
   Thrift.Utils,
   Thrift.Test,
   Thrift,
@@ -157,13 +158,11 @@ end;
 procedure TTestServer.TTestHandlerImpl.testException(const arg: string);
 begin
   Console.WriteLine('testException(' + arg + ')');
-  if ( arg = 'Xception') then
-  begin
+  if ( arg = 'Xception') then begin
     raise TXception.Create( 1001, arg);
   end;
 
-  if (arg = 'TException') then
-  begin
+  if (arg = 'TException') then begin
     raise TException.Create('TException');
   end;
 
@@ -585,7 +584,7 @@ begin
       trns_Sockets : begin
         Console.WriteLine('- sockets (port '+IntToStr(port)+')');
         if (trns_Buffered in layered) then Console.WriteLine('- buffered');
-        servertrans := TServerSocketImpl.Create( Port, 0, (trns_Buffered in layered));
+        servertrans := TServerSocketImpl.Create( Port, DEFAULT_THRIFT_TIMEOUT, (trns_Buffered in layered));
       end;
 
       trns_MsxmlHttp,
@@ -595,7 +594,7 @@ begin
 
       trns_NamedPipes : begin
         Console.WriteLine('- named pipe ('+sPipeName+')');
-        namedpipe   := TNamedPipeServerTransportImpl.Create( sPipeName, 4096, PIPE_UNLIMITED_INSTANCES);
+        namedpipe   := TNamedPipeServerTransportImpl.Create( sPipeName, 4096, PIPE_UNLIMITED_INSTANCES, INFINITE);
         servertrans := namedpipe;
       end;
 
@@ -616,7 +615,7 @@ begin
 
     if (trns_Framed in layered) then begin
       Console.WriteLine('- framed transport');
-      TransportFactory := TFramedTransportImpl.TFactory.Create
+      TransportFactory := TFramedTransportImpl.TFactory.Create;
     end
     else begin
       TransportFactory := TTransportFactoryImpl.Create;

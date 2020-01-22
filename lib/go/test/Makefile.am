@@ -46,7 +46,8 @@ gopath: $(THRIFT) $(THRIFTTEST) \
 				ConflictNamespaceTestD.thrift \
 				ConflictNamespaceTestSuperThing.thrift \
 				ConflictNamespaceServiceTest.thrift \
-				ProcessorInterceptorTest.thrift
+				ProcessorInterceptorTest.thrift \
+				DuplicateImportsTest.thrif
 	mkdir -p gopath/src
 	grep -v list.*map.*list.*map $(THRIFTTEST) | grep -v 'set<Insanity>' > ThriftTest.thrift
 	$(THRIFT) $(THRIFTARGS) -r IncludesTest.thrift
@@ -73,6 +74,7 @@ gopath: $(THRIFT) $(THRIFTTEST) \
 	$(THRIFT) $(THRIFTARGS) ConflictNamespaceTestSuperThing.thrift
 	$(THRIFT) $(THRIFTARGS) ConflictNamespaceServiceTest.thrift
 	$(THRIFT) $(THRIFTARGS) ProcessorInterceptorTest.thrift
+	$(THRIFT) $(THRIFTARGS) -r DuplicateImportsTest.thrift
 	GOPATH=`pwd`/gopath $(GO) get github.com/golang/mock/gomock || true
 	sed -i 's/\"context\"/\"golang.org\/x\/net\/context\"/g' gopath/src/github.com/golang/mock/gomock/controller.go || true
 	GOPATH=`pwd`/gopath $(GO) get github.com/golang/mock/gomock
@@ -96,7 +98,9 @@ check: gopath
 				unionbinarytest \
 				conflictnamespacetestsuperthing \
 				processorinterceptortest \
-				conflict/context/conflict_service-remote
+				conflict/context/conflict_service-remote \
+				servicestest/container_test-remote \
+				duplicateimportstest
 	GOPATH=`pwd`/gopath $(GO) test thrift tests dontexportrwtest
 
 clean-local:

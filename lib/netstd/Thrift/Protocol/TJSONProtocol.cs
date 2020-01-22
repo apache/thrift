@@ -703,6 +703,7 @@ namespace Thrift.Protocol
             map.KeyType = TJSONProtocolHelper.GetTypeIdForTypeName(await ReadJsonStringAsync(false, cancellationToken));
             map.ValueType = TJSONProtocolHelper.GetTypeIdForTypeName(await ReadJsonStringAsync(false, cancellationToken));
             map.Count = (int) await ReadJsonIntegerAsync(cancellationToken);
+            CheckReadBytesAvailable(map);
             await ReadJsonObjectStartAsync(cancellationToken);
             return map;
         }
@@ -719,6 +720,7 @@ namespace Thrift.Protocol
             await ReadJsonArrayStartAsync(cancellationToken);
             list.ElementType = TJSONProtocolHelper.GetTypeIdForTypeName(await ReadJsonStringAsync(false, cancellationToken));
             list.Count = (int) await ReadJsonIntegerAsync(cancellationToken);
+            CheckReadBytesAvailable(list);
             return list;
         }
 
@@ -733,6 +735,7 @@ namespace Thrift.Protocol
             await ReadJsonArrayStartAsync(cancellationToken);
             set.ElementType = TJSONProtocolHelper.GetTypeIdForTypeName(await ReadJsonStringAsync(false, cancellationToken));
             set.Count = (int) await ReadJsonIntegerAsync(cancellationToken);
+            CheckReadBytesAvailable(set);
             return set;
         }
 
@@ -780,6 +783,28 @@ namespace Thrift.Protocol
         public override async ValueTask<byte[]> ReadBinaryAsync(CancellationToken cancellationToken)
         {
             return await ReadJsonBase64Async(cancellationToken);
+        }
+
+        // Return the minimum number of bytes a type will consume on the wire
+        public override int GetMinSerializedSize(TType type)
+        {
+            switch (type)
+            {
+                case TType.Stop: return 0;
+                case TType.Void: return 0;
+                case TType.Bool: return 1;  // written as int  
+                case TType.Byte: return 1;
+                case TType.Double: return 1;
+                case TType.I16: return 1;
+                case TType.I32: return 1;
+                case TType.I64: return 1;
+                case TType.String: return 2;  // empty string
+                case TType.Struct: return 2;  // empty struct
+                case TType.Map: return 2;  // empty map
+                case TType.Set: return 2;  // empty set
+                case TType.List: return 2;  // empty list
+                default: throw new TTransportException(TTransportException.ExceptionType.Unknown, "unrecognized type code");
+            }
         }
 
         /// <summary>

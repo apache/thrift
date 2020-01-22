@@ -24,12 +24,14 @@ namespace * Skiptest.One
 
 const i32 SKIPTESTSERVICE_VERSION = 1
 
-struct Pong {
-  1 : optional i32 version1
+enum PingPongEnum {
+	PingOne = 0,
+	PongOne = 1,
 }
 
 struct Ping {
   1 : optional i32 version1
+  100 : PingPongEnum EnumTest
 }
 
 exception PongFailed {
@@ -38,7 +40,7 @@ exception PongFailed {
 
 
 service SkipTestService {
-  void PingPong( 1: Ping pong) throws (444: PongFailed pof);
+  Ping PingPong( 1: Ping ping) throws (444: PongFailed pof);
 }
 
 

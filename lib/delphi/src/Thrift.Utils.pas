@@ -97,7 +97,7 @@ const
   THRIFT_MIMETYPE = 'application/x-thrift';
 
 {$IFDEF Win64}
-function InterlockedExchangeAdd64( var Addend : Int64; Value : Int64) : Int64;  
+function InterlockedExchangeAdd64( var Addend : Int64; Value : Int64) : Int64;
 {$ENDIF}
 
 
@@ -289,8 +289,15 @@ class function EnumUtils<T>.ToString(const value : Integer) : string;
 var pType : PTypeInfo;
 begin
   pType := PTypeInfo(TypeInfo(T));
-  if Assigned(pType) and (pType^.Kind = tkEnumeration)
-  then result := GetEnumName(pType,value)
+  if Assigned(pType)
+  and (pType^.Kind = tkEnumeration)
+  {$IF CompilerVersion >= 23.0}   // TODO: Range correct? What we know is that XE does not offer it, but Rio has it
+  and (pType^.TypeData^.MaxValue >= value)
+  and (pType^.TypeData^.MinValue <= value)
+  {$ELSE}
+  and FALSE  // THRIFT-5048: pType^.TypeData^ member not supported -> prevent GetEnumName() from reading outside the legal range
+  {$IFEND}
+  then result := GetEnumName( PTypeInfo(pType), value)
   else result := IntToStr(Ord(value));
 end;
 

@@ -44,32 +44,35 @@ namespace Server
     {
         private static ServiceCollection ServiceCollection = new ServiceCollection();
         private static ILogger Logger;
+        private static readonly TConfiguration Configuration = null;  // new TConfiguration() if  needed
 
         public static void Main(string[] args)
         {
             args = args ?? new string[0];
 
             ServiceCollection.AddLogging(logging => ConfigureLogging(logging));
-            Logger = ServiceCollection.BuildServiceProvider().GetService<ILoggerFactory>().CreateLogger(nameof(Server));             
-
-
-            if (args.Any(x => x.StartsWith("-help", StringComparison.OrdinalIgnoreCase)))
+            using (var serviceProvider = ServiceCollection.BuildServiceProvider())
             {
-                DisplayHelp();
-                return;
+                Logger = serviceProvider.GetService<ILoggerFactory>().CreateLogger(nameof(Server));
+
+                if (args.Any(x => x.StartsWith("-help", StringComparison.OrdinalIgnoreCase)))
+                {
+                    DisplayHelp();
+                    return;
+                }
+
+                using (var source = new CancellationTokenSource())
+                {
+                    RunAsync(args, source.Token).GetAwaiter().GetResult();
+
+                    Logger.LogInformation("Press any key to stop...");
+
+                    Console.ReadLine();
+                    source.Cancel();
+                }
+
+                Logger.LogInformation("Server stopped");
             }
-
-            using (var source = new CancellationTokenSource())
-            {
-                RunAsync(args, source.Token).GetAwaiter().GetResult();
-
-                Logger.LogInformation("Press any key to stop...");
-
-                Console.ReadLine();
-                source.Cancel();
-            }
-
-            Logger.LogInformation("Server stopped");
         }
 
         private static void ConfigureLogging(ILoggingBuilder logging)
@@ -83,10 +86,10 @@ namespace Server
         {
             Logger.LogInformation(@"
 Usage: 
-    Server.exe -help
+    Server -help
         will diplay help information 
 
-    Server.exe -tr:<transport> -bf:<buffering> -pr:<protocol>
+    Server -tr:<transport> -bf:<buffering> -pr:<protocol>
         will run server with specified arguments (tcp transport, no buffering, and binary protocol by default)
 
 Options:
@@ -108,7 +111,7 @@ Options:
         multiplexed - multiplexed protocol will be used
 
 Sample:
-    Server.exe -tr:tcp 
+    Server -tr:tcp
 ");
         }
 
@@ -163,13 +166,14 @@ Sample:
             switch (transport)
             {
                 case Transport.Tcp:
-                    serverTransport = new TServerSocketTransport(9090);
+                    serverTransport = new TServerSocketTransport(9090, Configuration);
                     break;
                 case Transport.NamedPipe:
-                    serverTransport = new TNamedPipeServerTransport(".test");
+                    serverTransport = new TNamedPipeServerTransport(".test", Configuration);
                     break;
                 case Transport.TcpTls:
-                    serverTransport = new TTlsServerSocketTransport(9090, GetCertificate(), ClientCertValidator, LocalCertificateSelectionCallback);
+                    serverTransport = new TTlsServerSocketTransport(9090, Configuration,
+                        GetCertificate(), ClientCertValidator, LocalCertificateSelectionCallback);
                     break;
             }
 
@@ -346,7 +350,7 @@ Sample:
 
             public class Startup
             {
-                public Startup(IHostingEnvironment env)
+                public Startup(IWebHostEnvironment env)
                 {
                     var builder = new ConfigurationBuilder()
                         .SetBasePath(env.ContentRootPath)
@@ -366,7 +370,7 @@ Sample:
                 }
 
                 // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-                public void Configure(IApplicationBuilder app, IHostingEnvironment env, ILoggerFactory loggerFactory)
+                public void Configure(IApplicationBuilder app, IWebHostEnvironment env, ILoggerFactory loggerFactory)
                 {
                     app.UseMiddleware<THttpServerTransport>();
                 }

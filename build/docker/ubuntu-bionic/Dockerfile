@@ -130,7 +130,7 @@ ENV PATH /usr/lib/dart/bin:$PATH
 
 RUN apt-get install -y --no-install-recommends \
 `# dotnet core dependencies` \
-      dotnet-sdk-2.2
+      dotnet-sdk-3.1
 
 RUN apt-get install -y --no-install-recommends \
 `# Erlang dependencies` \

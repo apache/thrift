@@ -36,7 +36,6 @@ namespace php OneWayTest
 namespace delphi Onewaytest
 namespace lua OneWayTest
 namespace xsd test (uri = 'http://thrift.apache.org/ns/OneWayTest')
-namespace netcore ThriftAsync.OneWayTest
 
 // a minimal Thrift service, for use in OneWayHTTPTtest.cpp
 service OneWayService {

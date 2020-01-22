@@ -4,9 +4,9 @@ VisualStudioVersion = 15.0.26730.12
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Thrift", "..\..\lib\netstd\Thrift\Thrift.csproj", "{C20EA2A9-7660-47DE-9A49-D1EF12FB2895}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Client", "Client\Client.csproj", "{21039F25-6ED7-4E80-A545-EBC93472EBD1}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Client", "Client\Client.csproj", "{21039F25-6ED7-4E80-A545-EBC93472EBD1}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Server", "Server\Server.csproj", "{0C6E8685-F191-4479-9842-882A38961127}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Server", "Server\Server.csproj", "{0C6E8685-F191-4479-9842-882A38961127}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

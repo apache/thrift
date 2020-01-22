@@ -59,7 +59,6 @@ SUBDIRS += haxe
 endif
 
 if WITH_DOTNET
-SUBDIRS += netcore
 SUBDIRS += netstd
 endif
 
@@ -83,6 +82,14 @@ if WITH_CL
 SUBDIRS += cl
 endif
 
+if WITH_PERL
+SUBDIRS += perl
+endif
+
+if WITH_PHP
+SUBDIRS += php
+endif
+
 #
 # generate html for ThriftTest.thrift
 #
@@ -104,8 +111,6 @@ EXTRA_DIST = \
 	erl \
 	hs \
 	ocaml \
-	perl \
-	php \
 	shared.thrift \
 	tutorial.thrift \
 	README.md

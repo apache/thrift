@@ -38,7 +38,8 @@ namespace Thrift.Transport.Server
         private volatile bool _isPending = true;
         private NamedPipeServerStream _stream = null;
 
-        public TNamedPipeServerTransport(string pipeAddress)
+        public TNamedPipeServerTransport(string pipeAddress, TConfiguration config)
+            : base(config)
         {
             _pipeAddress = pipeAddress;
         }
@@ -92,10 +93,16 @@ namespace Thrift.Transport.Server
                 try
                 {
                     var handle = CreatePipeNative(_pipeAddress, inbuf, outbuf);
-                    if( (handle != null) && (!handle.IsInvalid))
+                    if ((handle != null) && (!handle.IsInvalid))
+                    {
                         _stream = new NamedPipeServerStream(PipeDirection.InOut, _asyncMode, false, handle);
+                        handle = null; // we don't own it any longer
+                    }
                     else
+                    {
+                        handle?.Dispose();
                         _stream = new NamedPipeServerStream(_pipeAddress, direction, maxconn, mode, options, inbuf, outbuf/*, pipesec*/);
+                    }
                 }
                 catch (NotImplementedException) // Mono still does not support async, fallback to sync
                 {
@@ -218,7 +225,7 @@ namespace Thrift.Transport.Server
 
                 await _stream.WaitForConnectionAsync(cancellationToken);
 
-                var trans = new ServerTransport(_stream);
+                var trans = new ServerTransport(_stream, Configuration);
                 _stream = null; // pass ownership to ServerTransport
 
                 //_isPending = false;
@@ -237,11 +244,12 @@ namespace Thrift.Transport.Server
             }
         }
 
-        private class ServerTransport : TTransport
+        private class ServerTransport : TEndpointTransport
         {
             private readonly NamedPipeServerStream PipeStream;
 
-            public ServerTransport(NamedPipeServerStream stream)
+            public ServerTransport(NamedPipeServerStream stream, TConfiguration config)
+                : base(config)
             {
                 PipeStream = stream;
             }
@@ -268,7 +276,10 @@ namespace Thrift.Transport.Server
                     throw new TTransportException(TTransportException.ExceptionType.NotOpen);
                 }
 
-                return await PipeStream.ReadAsync(buffer, offset, length, cancellationToken);
+                CheckReadBytesAvailable(length);
+                var numBytes = await PipeStream.ReadAsync(buffer, offset, length, cancellationToken);
+                CountConsumedMessageBytes(numBytes);
+                return numBytes;
             }
 
             public override async Task WriteAsync(byte[] buffer, int offset, int length, CancellationToken cancellationToken)
@@ -297,11 +308,16 @@ namespace Thrift.Transport.Server
                 {
                     await Task.FromCanceled(cancellationToken);
                 }
+
+                ResetConsumedMessageSize();
             }
 
             protected override void Dispose(bool disposing)
             {
-                PipeStream?.Dispose();
+                if (disposing)
+                {
+                    PipeStream?.Dispose();
+                }
             }
         }
     }

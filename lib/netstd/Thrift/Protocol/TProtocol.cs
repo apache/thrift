@@ -27,7 +27,6 @@ namespace Thrift.Protocol
     // ReSharper disable once InconsistentNaming
     public abstract class TProtocol : IDisposable
     {
-        public const int DefaultRecursionDepth = 64;
         private bool _isDisposed;
         protected int RecursionDepth;
 
@@ -36,7 +35,7 @@ namespace Thrift.Protocol
         protected TProtocol(TTransport trans)
         {
             Trans = trans;
-            RecursionLimit = DefaultRecursionDepth;
+            RecursionLimit = trans.Configuration.RecursionLimit;
             RecursionDepth = 0;
         }
 
@@ -77,6 +76,27 @@ namespace Thrift.Protocol
             }
             _isDisposed = true;
         }
+
+
+        protected void CheckReadBytesAvailable(TSet set)
+        {
+            Transport.CheckReadBytesAvailable(set.Count * GetMinSerializedSize(set.ElementType));
+        }
+
+        protected void CheckReadBytesAvailable(TList list)
+        {
+            Transport.CheckReadBytesAvailable(list.Count * GetMinSerializedSize(list.ElementType));
+        }
+
+        protected void CheckReadBytesAvailable(TMap map)
+        {
+            var elmSize = GetMinSerializedSize(map.KeyType) + GetMinSerializedSize(map.ValueType);
+            Transport.CheckReadBytesAvailable(map.Count * elmSize);
+        }
+
+        // Returns the minimum amount of bytes needed to store the smallest possible instance of TType.
+        public abstract int GetMinSerializedSize(TType type);
+
 
         public virtual async Task WriteMessageBeginAsync(TMessage message)
         {

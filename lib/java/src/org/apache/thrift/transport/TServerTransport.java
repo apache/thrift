@@ -56,17 +56,17 @@ public abstract class TServerTransport implements Closeable {
 
   public abstract void listen() throws TTransportException;
 
-  public final TTransport accept() throws TTransportException {
-    TTransport transport = acceptImpl();
-    if (transport == null) {
-      throw new TTransportException("accept() may not return NULL");
-    }
-    return transport;
-  }
+  /**
+   * Accept incoming connection on the server socket. When there is no incoming connection available:
+   * either it should block infinitely in a blocking implementation, either it should return null in
+   * a nonblocking implementation.
+   *
+   * @return new connection
+   * @throws TTransportException if IO error.
+   */
+  public abstract TTransport accept() throws TTransportException;
 
   public abstract void close();
-
-  protected abstract TTransport acceptImpl() throws TTransportException;
 
   /**
    * Optional method implementation. This signals to the server transport

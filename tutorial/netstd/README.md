@@ -1,11 +1,10 @@
 # Building of samples for different platforms 
 
-# Reused components 
-- NET Core Standard 2.0
-- NET Core App 2.0
+# Requirements
+- NET Core Standard 3.1 (LTS) runtime or SDK (see below for further info)
 
 # How to build
-- Download and install the latest .NET Core SDK for your platform https://www.microsoft.com/net/core#windowsvs2015 (archive for SDK 1.0.0-preview2-003121 located by: https://github.com/dotnet/core/blob/master/release-notes/download-archive.md)
+- Download and install the latest .NET Core SDK for your platform https://dotnet.microsoft.com/download/dotnet-core
 - Ensure that you have thrift.exe which supports netstd lib and it added to PATH 
 - Go to current folder 
 - Run **build.sh** or **build.cmd** from the root of cloned repository
@@ -14,29 +13,26 @@
 
 # How to run 
 
-Notes: dotnet run supports passing arguments to app after -- symbols (https://docs.microsoft.com/en-us/dotnet/articles/core/tools/dotnet-run) - example: **dotnet run -- -h** will show help for app
+Depending on the platform, the name of the generated executables will vary. On Linux, it is just "Client" or "Server", on Windows it is "Client.exe" and "Server.exe". In the following, we use the abbreviated form "Client" and "Server".
 
 - build 
 - go to folder (Client/Server) 
-- run with specifying of correct parameters **dotnet run -tr:tcp -pr:multiplexed**, **dotnet run -help** (later, after migration to csproj and latest SDK will be possibility to use more usable form **dotnet run -- arguments**)
+- run the generated executables: server first, then client from a second console
 
-#Notes
-- Possible adding additional platforms after stabilization of .NET Core (runtimes, platforms (Red Hat Linux, OpenSuse, etc.) 
-
-#Known issues
+# Known issues
 - In trace logging mode you can see some not important internal exceptions
 
 # Running of samples 
-Please install Thrift C# .NET Core library or copy sources and build them to correcly build and run samples 
+On machines that do not have the SDK installed, you need to install the NET Core runtime first. The SDK is only needed to build programs, otherwise the runtime is sufficient.
 
 # NetCore Server
 
 Usage: 
 
-    Server.exe -h
+    Server -help
         will diplay help information 
 
-    Server.exe -tr:<transport> -pr:<protocol> 
+    Server -tr:<transport> -pr:<protocol>
         will run server with specified arguments (tcp transport and binary protocol by default)
 
 Options:
@@ -56,10 +52,11 @@ Options:
         binary - (default) binary protocol will be used
         compact - compact protocol will be used
         json - json protocol will be used
-		
+        multiplexed - multiplexed protocol will be used
+
 Sample:
 
-    Server.exe -tr:tcp
+    Server -tr:tcp
 
 **Remarks**:
 
@@ -72,10 +69,10 @@ Sample:
 
 Usage: 
 
-    Client.exe -h
+    Client -help
         will diplay help information 
 
-    Client.exe -tr:<transport> -pr:<protocol> -mc:<numClients>
+    Client -tr:<transport> -pr:<protocol> -mc:<numClients>
         will run client with specified arguments (tcp transport and binary protocol by default)
 
 Options:
@@ -95,13 +92,14 @@ Options:
         binary - (default) binary protocol will be used
         compact - compact protocol will be used
         json - json protocol will be used
-        
+        multiplexed - multiplexed protocol will be used
+
     -mc (multiple clients):
         <numClients> - number of multiple clients to connect to server (max 100, default 1)
 
 Sample:
 
-    Client.exe -tr:tcp -pr:binary -mc:10
+    Client -tr:tcp -pr:binary -mc:10
 
 Remarks:
 
@@ -111,8 +109,8 @@ Remarks:
 
 # How to test communication between NetCore and Python
 
-* Generate code with the latest **thrift.exe** util
-* Ensure that **thrift.exe** util generated folder **gen-py** with generated code for Python
+* Generate code with the latest **thrift** utility
+* Ensure that **thrift** generated folder **gen-py** with generated code for Python exists
 * Create **client.py** and **server.py** from the code examples below and save them to the folder with previosly generated folder **gen-py**
 * Run netstd samples (client and server) and python samples (client and server)
 
@@ -241,16 +239,10 @@ class CalculatorHandler:
             val = work.Num1 * work.Num2
         elif work.Op == Operation.Divide:
             if work.Num2 == 0:
-                x = InvalidOperation()
-                x.WhatOp = work.Op
-                x.Why = 'Cannot divide by 0'
-                raise x
+                raise InvalidOperation(work.Op, 'Cannot divide by 0')
             val = work.Num1 / work.Num2
         else:
-            x = InvalidOperation()
-            x.WhatOp = work.Op
-            x.Why = 'Invalid operation'
-            raise x
+            raise InvalidOperation(work.Op, 'Invalid operation')
 
         log = SharedStruct()
         log.Key = logid

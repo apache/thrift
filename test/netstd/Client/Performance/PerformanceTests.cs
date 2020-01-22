@@ -20,6 +20,7 @@ using System.Collections.Generic;
 using System.Text;
 using ThriftTest;
 using Thrift.Collections;
+using Thrift;
 using Thrift.Protocol;
 using System.Threading;
 using Thrift.Transport.Client;
@@ -36,6 +37,7 @@ namespace Client.Tests
         private TMemoryBufferTransport MemBuffer;
         private TTransport Transport;
         private LayeredChoice Layered;
+        private readonly TConfiguration Configuration = new TConfiguration();
 
         internal static int Execute()
         {
@@ -52,6 +54,11 @@ namespace Client.Tests
             return 0;
         }
 
+        public PerformanceTests()
+        {
+            Configuration.MaxFrameSize = Configuration.MaxMessageSize;  // default frame size is too small for this test
+        }
+
         private async Task ProtocolPeformanceTestAsync()
         {
             Console.WriteLine("Setting up for ProtocolPeformanceTestAsync ...");
@@ -61,10 +68,9 @@ namespace Client.Tests
             foreach (var layered in Enum.GetValues(typeof(LayeredChoice)))
             {
                 Layered = (LayeredChoice)layered;
-
                 await RunTestAsync(async (bool b) => { return await GenericProtocolFactory<TBinaryProtocol>(b); });
                 await RunTestAsync(async (bool b) => { return await GenericProtocolFactory<TCompactProtocol>(b); });
-                //await RunTestAsync(async (bool b) => { return await GenericProtocolFactory<TJsonProtocol>(b); });
+                await RunTestAsync(async (bool b) => { return await GenericProtocolFactory<TJsonProtocol>(b); });
             }
         }
 
@@ -76,9 +82,9 @@ namespace Client.Tests
             {
                 // read happens after write here, so let's take over the written bytes
                 if (forWrite)
-                    MemBuffer = new TMemoryBufferTransport();  
+                    MemBuffer = new TMemoryBufferTransport(Configuration);  
                 else
-                    MemBuffer = new TMemoryBufferTransport(MemBuffer.GetBuffer());
+                    MemBuffer = new TMemoryBufferTransport(MemBuffer.GetBuffer(), Configuration);
 
                 //  layered transports anyone?
                 switch (Layered)

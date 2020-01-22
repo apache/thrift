@@ -15,7 +15,7 @@
 // specific language governing permissions and limitations
 // under the License.
 
-use std::net::{TcpListener, TcpStream};
+use std::net::{TcpListener, TcpStream, ToSocketAddrs};
 use std::sync::Arc;
 use threadpool::ThreadPool;
 
@@ -64,7 +64,7 @@ use super::TProcessor;
 ///
 /// // `TProcessor` implementation for `SimpleService`
 /// impl TProcessor for SimpleServiceSyncProcessor {
-///     fn process(&self, i: &mut TInputProtocol, o: &mut TOutputProtocol) -> thrift::Result<()> {
+///     fn process(&self, i: &mut dyn TInputProtocol, o: &mut dyn TOutputProtocol) -> thrift::Result<()> {
 ///         unimplemented!();
 ///     }
 /// }
@@ -90,10 +90,10 @@ use super::TProcessor;
 /// let processor = SimpleServiceSyncProcessor::new(SimpleServiceHandlerImpl {});
 ///
 /// // instantiate the server
-/// let i_tr_fact: Box<TReadTransportFactory> = Box::new(TBufferedReadTransportFactory::new());
-/// let i_pr_fact: Box<TInputProtocolFactory> = Box::new(TBinaryInputProtocolFactory::new());
-/// let o_tr_fact: Box<TWriteTransportFactory> = Box::new(TBufferedWriteTransportFactory::new());
-/// let o_pr_fact: Box<TOutputProtocolFactory> = Box::new(TBinaryOutputProtocolFactory::new());
+/// let i_tr_fact: Box<dyn TReadTransportFactory> = Box::new(TBufferedReadTransportFactory::new());
+/// let i_pr_fact: Box<dyn TInputProtocolFactory> = Box::new(TBinaryInputProtocolFactory::new());
+/// let o_tr_fact: Box<dyn TWriteTransportFactory> = Box::new(TBufferedWriteTransportFactory::new());
+/// let o_pr_fact: Box<dyn TOutputProtocolFactory> = Box::new(TBinaryOutputProtocolFactory::new());
 ///
 /// let mut server = TServer::new(
 ///     i_tr_fact,
@@ -162,14 +162,13 @@ where
 
     /// Listen for incoming connections on `listen_address`.
     ///
-    /// `listen_address` should be in the form `host:port`,
-    /// for example: `127.0.0.1:8080`.
+    /// `listen_address` should implement `ToSocketAddrs` trait.
     ///
     /// Return `()` if successful.
     ///
     /// Return `Err` when the server cannot bind to `listen_address` or there
     /// is an unrecoverable error.
-    pub fn listen(&mut self, listen_address: &str) -> ::Result<()> {
+    pub fn listen<A: ToSocketAddrs>(&mut self, listen_address: A) -> ::Result<()> {
         let listener = TcpListener::bind(listen_address)?;
         for stream in listener.incoming() {
             match stream {

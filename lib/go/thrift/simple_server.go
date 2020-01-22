@@ -20,8 +20,8 @@
 package thrift
 
 import (
-	"log"
-	"runtime/debug"
+	"fmt"
+	"io"
 	"sync"
 	"sync/atomic"
 )
@@ -45,6 +45,8 @@ type TSimpleServer struct {
 
 	// Headers to auto forward in THeaderProtocol
 	forwardHeaders []string
+
+	logger Logger
 }
 
 func NewTSimpleServer2(processor TProcessor, serverTransport TServerTransport) *TSimpleServer {
@@ -148,6 +150,14 @@ func (p *TSimpleServer) SetForwardHeaders(headers []string) {
 	p.forwardHeaders = keys
 }
 
+// SetLogger sets the logger used by this TSimpleServer.
+//
+// If no logger was set before Serve is called, a default logger using standard
+// log library will be used.
+func (p *TSimpleServer) SetLogger(logger Logger) {
+	p.logger = logger
+}
+
 func (p *TSimpleServer) innerAccept() (int32, error) {
 	client, err := p.serverTransport.Accept()
 	p.mu.Lock()
@@ -164,7 +174,7 @@ func (p *TSimpleServer) innerAccept() (int32, error) {
 		go func() {
 			defer p.wg.Done()
 			if err := p.processRequests(client); err != nil {
-				log.Println("error processing request:", err)
+				p.logger(fmt.Sprintf("error processing request: %v", err))
 			}
 		}()
 	}
@@ -184,6 +194,8 @@ func (p *TSimpleServer) AcceptLoop() error {
 }
 
 func (p *TSimpleServer) Serve() error {
+	p.logger = fallbackLogger(p.logger)
+
 	err := p.Listen()
 	if err != nil {
 		return err
@@ -204,7 +216,27 @@ func (p *TSimpleServer) Stop() error {
 	return nil
 }
 
-func (p *TSimpleServer) processRequests(client TTransport) error {
+// If err is actually EOF, return nil, otherwise return err as-is.
+func treatEOFErrorsAsNil(err error) error {
+	if err == nil {
+		return nil
+	}
+	// err could be io.EOF wrapped with TProtocolException,
+	// so that err == io.EOF doesn't necessarily work in some cases.
+	if err.Error() == io.EOF.Error() {
+		return nil
+	}
+	if err, ok := err.(TTransportException); ok && err.TypeId() == END_OF_FILE {
+		return nil
+	}
+	return err
+}
+
+func (p *TSimpleServer) processRequests(client TTransport) (err error) {
+	defer func() {
+		err = treatEOFErrorsAsNil(err)
+	}()
+
 	processor := p.processorFactory.GetProcessor(client)
 	inputTransport, err := p.inputTransportFactory.GetTransport(client)
 	if err != nil {
@@ -229,12 +261,6 @@ func (p *TSimpleServer) processRequests(client TTransport) error {
 		outputProtocol = p.outputProtocolFactory.GetProtocol(outputTransport)
 	}
 
-	defer func() {
-		if e := recover(); e != nil {
-			log.Printf("panic in processor: %s: %s", e, debug.Stack())
-		}
-	}()
-
 	if inputTransport != nil {
 		defer inputTransport.Close()
 	}
@@ -246,7 +272,12 @@ func (p *TSimpleServer) processRequests(client TTransport) error {
 			return nil
 		}
 
-		ctx := defaultCtx
+		ctx := SetResponseHelper(
+			defaultCtx,
+			TResponseHelper{
+				THeaderResponseHelper: NewTHeaderResponseHelper(outputProtocol),
+			},
+		)
 		if headerProtocol != nil {
 			// We need to call ReadFrame here, otherwise we won't
 			// get any headers on the AddReadTHeaderToContext call.
@@ -257,14 +288,12 @@ func (p *TSimpleServer) processRequests(client TTransport) error {
 			if err := headerProtocol.ReadFrame(); err != nil {
 				return err
 			}
-			ctx = AddReadTHeaderToContext(defaultCtx, headerProtocol.GetReadHeaders())
+			ctx = AddReadTHeaderToContext(ctx, headerProtocol.GetReadHeaders())
 			ctx = SetWriteHeaderList(ctx, p.forwardHeaders)
 		}
 
 		ok, err := processor.Process(ctx, inputProtocol, outputProtocol)
-		if err, ok := err.(TTransportException); ok && err.TypeId() == END_OF_FILE {
-			return nil
-		} else if err != nil {
+		if _, ok := err.(TTransportException); ok && err != nil {
 			return err
 		}
 		if err, ok := err.(TApplicationException); ok && err.TypeId() == UNKNOWN_METHOD {

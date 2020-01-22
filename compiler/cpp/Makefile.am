@@ -45,6 +45,7 @@ thrift_SOURCES = src/thrift/audit/t_audit.cpp \
                  src/thrift/logging.h \
                  src/thrift/main.cc \
                  src/thrift/main.h \
+                 src/thrift/version.h \
                  src/thrift/parse/parse.cc \
                  src/thrift/parse/t_base_type.h \
                  src/thrift/parse/t_const.h \
@@ -87,8 +88,6 @@ thrift_SOURCES += src/thrift/generate/t_as3_generator.cc \
                   src/thrift/generate/t_js_generator.cc \
                   src/thrift/generate/t_json_generator.cc \
                   src/thrift/generate/t_lua_generator.cc \
-                  src/thrift/generate/t_netcore_generator.cc \
-                  src/thrift/generate/t_netcore_generator.h \
                   src/thrift/generate/t_netstd_generator.cc \
                   src/thrift/generate/t_netstd_generator.h \
                   src/thrift/generate/t_ocaml_generator.cc \
@@ -118,8 +117,8 @@ EXTRA_DIST = \
              test \
              $(WINDOWS_DIST)
 
-clean-local:
-	$(RM) version.h
+#clean-local:
+#	$(RM) version.h   -- do not delete, we need it
 
 src/thrift/main.cc: src/thrift/version.h
 

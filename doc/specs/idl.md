@@ -1,6 +1,6 @@
 ## Thrift interface description language
 
-For Thrift version 0.13.0.
+For Thrift version 0.14.0.
 
 The Thrift interface definition language (IDL) allows for the definition of [Thrift Types](/docs/types). A Thrift IDL file is processed by the Thrift code generator to produce code for the various target languages to support the defined structs and services in the IDL file.
 
@@ -224,8 +224,8 @@ Here are some examples of Thrift definitions, using the Thrift IDL:
  [tutorial]:           /tutorial/
  [fb303.thrift]:       https://raw.githubusercontent.com/apache/thrift/master/contrib/fb303/if/fb303.thrift
  [Apache Cassandra's]: http://cassandra.apache.org/
- [cassandra.thrift]:   http://svn.apache.org/viewvc/cassandra/trunk/interface/cassandra.thrift?view=co
- [Evernote API]:       http://www.evernote.com/about/developer/api/
+ [cassandra.thrift]:   https://gitbox.apache.org/repos/asf?p=cassandra.git;a=blob_plain;f=interface/cassandra.thrift;hb=refs/heads/cassandra-3.0
+ [Evernote API]:       https://github.com/evernote/evernote-thrift
 
 ## To Do/Questions
 

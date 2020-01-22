@@ -24,9 +24,17 @@ namespace * Skiptest.Two
 
 const i32 SKIPTESTSERVICE_VERSION = 2
 
+enum PingPongEnum {
+	PingOne = 0,
+	PongOne = 1,
+	PingTwo = 2,
+	PongTwo = 3,
+}
+
 struct Pong {
   1 : optional i32 version1
   2 : optional i16 version2
+  100 : PingPongEnum EnumTest
 }
 
 struct Ping {
@@ -40,6 +48,7 @@ struct Ping {
   16 : optional string strVal
   17 : optional Pong structVal
   18 : optional map< list< Pong>, set< string>> mapVal
+  100 : PingPongEnum EnumTest
 }
 
 exception PingFailed {

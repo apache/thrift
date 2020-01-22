@@ -24,26 +24,24 @@ using System.Threading.Tasks;
 namespace Thrift.Transport.Client
 {
     // ReSharper disable once InconsistentNaming
-    public class TMemoryBufferTransport : TTransport
+    public class TMemoryBufferTransport : TEndpointTransport
     {
         private bool IsDisposed;
         private byte[] Bytes;
         private int _bytesUsed;
 
-        public TMemoryBufferTransport()
+        public TMemoryBufferTransport(TConfiguration config, int initialCapacity = 2048)
+            : base(config)
         {
-            Bytes = new byte[2048];  // default size
+            Bytes = new byte[initialCapacity];  
         }
 
-        public TMemoryBufferTransport(int initialCapacity)
-        {
-            Bytes = new byte[initialCapacity];  // default size
-        }
-
-        public TMemoryBufferTransport(byte[] buf)
+        public TMemoryBufferTransport(byte[] buf, TConfiguration config)
+            :base(config)
         {
             Bytes = (byte[])buf.Clone();
             _bytesUsed = Bytes.Length;
+            UpdateKnownMessageSize(_bytesUsed);
         }
 
         public int Position { get; set; }
@@ -117,6 +115,9 @@ namespace Thrift.Transport.Client
             if ((0 > newPos) || (newPos > _bytesUsed))
                 throw new ArgumentException(nameof(origin));
             Position = newPos;
+
+            ResetConsumedMessageSize();
+            CountConsumedMessageBytes(Position);
         }
 
         public override ValueTask<int> ReadAsync(byte[] buffer, int offset, int length, CancellationToken cancellationToken)
@@ -124,6 +125,7 @@ namespace Thrift.Transport.Client
             var count = Math.Min(Length - Position, length);
             Buffer.BlockCopy(Bytes, Position, buffer, offset, count);
             Position += count;
+            CountConsumedMessageBytes(count);
             return new ValueTask<int>(count);
         }
 
@@ -147,6 +149,7 @@ namespace Thrift.Transport.Client
             {
                 await Task.FromCanceled(cancellationToken);
             }
+            ResetConsumedMessageSize();
         }
 
         public byte[] GetBuffer()
@@ -161,7 +164,6 @@ namespace Thrift.Transport.Client
             bufSegment = new ArraySegment<byte>(Bytes, 0, _bytesUsed);
             return true;
         }
-
 
         // IDisposable
         protected override void Dispose(bool disposing)

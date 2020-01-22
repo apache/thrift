@@ -22,15 +22,17 @@ using System.Threading.Tasks;
 namespace Thrift.Transport.Client
 {
     // ReSharper disable once InconsistentNaming
-    public class TStreamTransport : TTransport
+    public class TStreamTransport : TEndpointTransport
     {
         private bool _isDisposed;
 
-        protected TStreamTransport()
+        protected TStreamTransport(TConfiguration config)
+            :base(config)
         {
         }
 
-        public TStreamTransport(Stream inputStream, Stream outputStream)
+        public TStreamTransport(Stream inputStream, Stream outputStream, TConfiguration config)
+            : base(config)
         {
             InputStream = inputStream;
             OutputStream = outputStream;
@@ -38,7 +40,14 @@ namespace Thrift.Transport.Client
 
         protected Stream OutputStream { get; set; }
 
-        protected Stream InputStream { get; set; }
+        private Stream _InputStream = null;
+        protected Stream InputStream {
+            get => _InputStream;
+            set {
+                _InputStream = value;
+                ResetConsumedMessageSize();
+            }
+        }
 
         public override bool IsOpen => true;
 
@@ -90,7 +99,9 @@ namespace Thrift.Transport.Client
         public override async Task FlushAsync(CancellationToken cancellationToken)
         {
             await OutputStream.FlushAsync(cancellationToken);
+            ResetConsumedMessageSize();
         }
+
 
         // IDisposable
         protected override void Dispose(bool disposing)

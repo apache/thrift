@@ -34,6 +34,7 @@ sourceSets {
             exclude '**/test/TestClient.java'
             exclude '**/test/TestServer.java'
             exclude '**/test/TestNonblockingServer.java'
+            exclude '**/test/TestTServletServer.java'
         }
         resources {
             srcDir 'test'

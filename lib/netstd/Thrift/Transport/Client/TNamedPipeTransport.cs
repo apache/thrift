@@ -23,17 +23,18 @@ using System.Threading.Tasks;
 namespace Thrift.Transport.Client
 {
     // ReSharper disable once InconsistentNaming
-    public class TNamedPipeTransport : TTransport
+    public class TNamedPipeTransport : TEndpointTransport
     {
         private NamedPipeClientStream PipeStream;
-        private int ConnectTimeout;
+        private readonly int ConnectTimeout;
 
-        public TNamedPipeTransport(string pipe, int timeout = Timeout.Infinite) 
-            : this(".", pipe, timeout)
+        public TNamedPipeTransport(string pipe, TConfiguration config, int timeout = Timeout.Infinite) 
+            : this(".", pipe, config, timeout)
         {
         }
 
-        public TNamedPipeTransport(string server, string pipe, int timeout = Timeout.Infinite)
+        public TNamedPipeTransport(string server, string pipe, TConfiguration config, int timeout = Timeout.Infinite)
+            : base(config)
         {
             var serverName = string.IsNullOrWhiteSpace(server) ? server : ".";
             ConnectTimeout = (timeout > 0) ? timeout : Timeout.Infinite;
@@ -51,6 +52,7 @@ namespace Thrift.Transport.Client
             }
 
             await PipeStream.ConnectAsync( ConnectTimeout, cancellationToken);
+            ResetConsumedMessageSize();
         }
 
         public override void Close()
@@ -69,7 +71,10 @@ namespace Thrift.Transport.Client
                 throw new TTransportException(TTransportException.ExceptionType.NotOpen);
             }
 
-            return await PipeStream.ReadAsync(buffer, offset, length, cancellationToken);
+            CheckReadBytesAvailable(length);
+            var numRead = await PipeStream.ReadAsync(buffer, offset, length, cancellationToken);
+            CountConsumedMessageBytes(numRead);
+            return numRead;
         }
 
         public override async Task WriteAsync(byte[] buffer, int offset, int length, CancellationToken cancellationToken)
@@ -98,11 +103,16 @@ namespace Thrift.Transport.Client
             {
                 await Task.FromCanceled(cancellationToken);
             }
+            ResetConsumedMessageSize();
         }
 
+        
         protected override void Dispose(bool disposing)
         {
-            PipeStream.Dispose();
+            if(disposing) 
+            {
+              PipeStream?.Dispose();
+            }
         }
     }
 }

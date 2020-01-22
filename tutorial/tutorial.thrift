@@ -71,7 +71,6 @@ namespace java tutorial
 namespace php tutorial
 namespace perl tutorial
 namespace haxe tutorial
-namespace netcore tutorial
 namespace netstd tutorial
 
 /**

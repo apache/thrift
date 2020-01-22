@@ -62,19 +62,19 @@ type
 
 
   TMultiplexedProcessorImpl = class( TInterfacedObject, IMultiplexedProcessor, IProcessor)
-  private type
+  strict private type
     // Our goal was to work with any protocol.  In order to do that, we needed
     // to allow them to call readMessageBegin() and get a TMessage in exactly
     // the standard format, without the service name prepended to TMessage.name.
     TStoredMessageProtocol = class( TProtocolDecorator)
-    private
+    strict private
       FMessageBegin : TThriftMessage;
     public
       constructor Create( const protocol : IProtocol; const aMsgBegin : TThriftMessage);
       function ReadMessageBegin: TThriftMessage; override;
     end;
 
-  private
+  strict private
     FServiceProcessorMap : TDictionary<String, IProcessor>;
     FDefaultProcessor : IProcessor;
 
@@ -113,12 +113,6 @@ begin
 end;
 
 
-function TMultiplexedProcessorImpl.TStoredMessageProtocol.ReadMessageBegin: TThriftMessage;
-begin
-  result := FMessageBegin;
-end;
-
-
 constructor TMultiplexedProcessorImpl.Create;
 begin
   inherited Create;
@@ -133,6 +127,13 @@ begin
   finally
     inherited Destroy;
   end;
+end;
+
+
+function TMultiplexedProcessorImpl.TStoredMessageProtocol.ReadMessageBegin: TThriftMessage;
+begin
+  Reset;
+  result := FMessageBegin;
 end;
 
 

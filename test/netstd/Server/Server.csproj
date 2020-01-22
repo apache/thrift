@@ -19,7 +19,7 @@
   -->
 
   <PropertyGroup>
-    <TargetFramework>netcoreapp2.0</TargetFramework>
+    <TargetFramework>netcoreapp3.1</TargetFramework>
     <AssemblyName>Server</AssemblyName>
     <PackageId>Server</PackageId>
     <OutputType>Exe</OutputType>
@@ -33,9 +33,9 @@
   <ItemGroup>
     <PackageReference Include="System.IO.Pipes" Version="4.3.0" />
     <PackageReference Include="System.IO.Pipes.AccessControl" Version="4.5.1" />
-    <PackageReference Include="System.Net.Http.WinHttpHandler" Version="4.5.2" />
+    <PackageReference Include="System.Net.Http.WinHttpHandler" Version="4.7.0" />
     <PackageReference Include="System.Runtime.Serialization.Primitives" Version="[4.3,)" />
-    <PackageReference Include="System.ServiceModel.Primitives" Version="4.5.3" />
+    <PackageReference Include="System.ServiceModel.Primitives" Version="4.7.0" />
     <PackageReference Include="System.Threading" Version="[4.3,)" />
   </ItemGroup>
   <ItemGroup>

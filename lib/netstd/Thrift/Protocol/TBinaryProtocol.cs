@@ -16,6 +16,7 @@
 // under the License.
 
 using System;
+using System.Buffers.Binary;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -215,9 +216,7 @@ namespace Thrift.Protocol
             {
                 return;
             }
-
-            PreAllocatedBuffer[0] = (byte)(0xff & (i16 >> 8));
-            PreAllocatedBuffer[1] = (byte)(0xff & i16);
+            BinaryPrimitives.WriteInt16BigEndian(PreAllocatedBuffer, i16);
 
             await Trans.WriteAsync(PreAllocatedBuffer, 0, 2, cancellationToken);
         }
@@ -229,10 +228,7 @@ namespace Thrift.Protocol
                 return;
             }
 
-            PreAllocatedBuffer[0] = (byte)(0xff & (i32 >> 24));
-            PreAllocatedBuffer[1] = (byte)(0xff & (i32 >> 16));
-            PreAllocatedBuffer[2] = (byte)(0xff & (i32 >> 8));
-            PreAllocatedBuffer[3] = (byte)(0xff & i32);
+            BinaryPrimitives.WriteInt32BigEndian(PreAllocatedBuffer, i32);
 
             await Trans.WriteAsync(PreAllocatedBuffer, 0, 4, cancellationToken);
         }
@@ -245,14 +241,7 @@ namespace Thrift.Protocol
                 return;
             }
 
-            PreAllocatedBuffer[0] = (byte)(0xff & (i64 >> 56));
-            PreAllocatedBuffer[1] = (byte)(0xff & (i64 >> 48));
-            PreAllocatedBuffer[2] = (byte)(0xff & (i64 >> 40));
-            PreAllocatedBuffer[3] = (byte)(0xff & (i64 >> 32));
-            PreAllocatedBuffer[4] = (byte)(0xff & (i64 >> 24));
-            PreAllocatedBuffer[5] = (byte)(0xff & (i64 >> 16));
-            PreAllocatedBuffer[6] = (byte)(0xff & (i64 >> 8));
-            PreAllocatedBuffer[7] = (byte)(0xff & i64);
+            BinaryPrimitives.WriteInt64BigEndian(PreAllocatedBuffer, i64);
 
             await Trans.WriteAsync(PreAllocatedBuffer, 0, 8, cancellationToken);
         }
@@ -381,7 +370,7 @@ namespace Thrift.Protocol
                 ValueType = (TType) await ReadByteAsync(cancellationToken),
                 Count = await ReadI32Async(cancellationToken)
             };
-
+            CheckReadBytesAvailable(map);
             return map;
         }
 
@@ -405,7 +394,7 @@ namespace Thrift.Protocol
                 ElementType = (TType) await ReadByteAsync(cancellationToken),
                 Count = await ReadI32Async(cancellationToken)
             };
-
+            CheckReadBytesAvailable(list);
             return list;
         }
 
@@ -429,7 +418,7 @@ namespace Thrift.Protocol
                 ElementType = (TType) await ReadByteAsync(cancellationToken),
                 Count = await ReadI32Async(cancellationToken)
             };
-
+            CheckReadBytesAvailable(set);
             return set;
         }
 
@@ -470,7 +459,7 @@ namespace Thrift.Protocol
             }
 
             await Trans.ReadAllAsync(PreAllocatedBuffer, 0, 2, cancellationToken);
-            var result = (short) (((PreAllocatedBuffer[0] & 0xff) << 8) | PreAllocatedBuffer[1] & 0xff);
+            var result = BinaryPrimitives.ReadInt16BigEndian(PreAllocatedBuffer);
             return result;
         }
 
@@ -483,33 +472,10 @@ namespace Thrift.Protocol
 
             await Trans.ReadAllAsync(PreAllocatedBuffer, 0, 4, cancellationToken);
 
-            var result = 
-                ((PreAllocatedBuffer[0] & 0xff) << 24) | 
-                ((PreAllocatedBuffer[1] & 0xff) << 16) | 
-                ((PreAllocatedBuffer[2] & 0xff) << 8) |
-                PreAllocatedBuffer[3] & 0xff;
+            var result = BinaryPrimitives.ReadInt32BigEndian(PreAllocatedBuffer);
 
             return result;
         }
-
-#pragma warning disable 675
-
-        protected internal long ReadI64FromPreAllocatedBuffer()
-        {
-            var result =
-                ((long) (PreAllocatedBuffer[0] & 0xff) << 56) |
-                ((long) (PreAllocatedBuffer[1] & 0xff) << 48) |
-                ((long) (PreAllocatedBuffer[2] & 0xff) << 40) |
-                ((long) (PreAllocatedBuffer[3] & 0xff) << 32) |
-                ((long) (PreAllocatedBuffer[4] & 0xff) << 24) |
-                ((long) (PreAllocatedBuffer[5] & 0xff) << 16) |
-                ((long) (PreAllocatedBuffer[6] & 0xff) << 8) |
-                PreAllocatedBuffer[7] & 0xff;
-
-            return result;
-        }
-
-#pragma warning restore 675
 
         public override async ValueTask<long> ReadI64Async(CancellationToken cancellationToken)
         {
@@ -519,7 +485,7 @@ namespace Thrift.Protocol
             }
 
             await Trans.ReadAllAsync(PreAllocatedBuffer, 0, 8, cancellationToken);
-            return ReadI64FromPreAllocatedBuffer();
+            return BinaryPrimitives.ReadInt64BigEndian(PreAllocatedBuffer);
         }
 
         public override async ValueTask<double> ReadDoubleAsync(CancellationToken cancellationToken)
@@ -541,6 +507,7 @@ namespace Thrift.Protocol
             }
 
             var size = await ReadI32Async(cancellationToken);
+            Transport.CheckReadBytesAvailable(size);
             var buf = new byte[size];
             await Trans.ReadAllAsync(buf, 0, size, cancellationToken);
             return buf;
@@ -570,9 +537,32 @@ namespace Thrift.Protocol
                 return Encoding.UTF8.GetString(PreAllocatedBuffer, 0, size);
             }
 
+            Transport.CheckReadBytesAvailable(size);
             var buf = new byte[size];
             await Trans.ReadAllAsync(buf, 0, size, cancellationToken);
             return Encoding.UTF8.GetString(buf, 0, buf.Length);
+        }
+
+        // Return the minimum number of bytes a type will consume on the wire
+        public override int GetMinSerializedSize(TType type)
+        {
+            switch (type)
+            {
+                case TType.Stop: return 0;
+                case TType.Void: return 0;
+                case TType.Bool: return sizeof(byte);
+                case TType.Byte: return sizeof(byte);
+                case TType.Double: return sizeof(double);
+                case TType.I16: return sizeof(short);
+                case TType.I32: return sizeof(int);
+                case TType.I64: return sizeof(long);
+                case TType.String: return sizeof(int);  // string length
+                case TType.Struct: return 0;  // empty struct
+                case TType.Map: return sizeof(int);  // element count
+                case TType.Set: return sizeof(int);  // element count
+                case TType.List: return sizeof(int);  // element count
+                default: throw new TTransportException(TTransportException.ExceptionType.Unknown, "unrecognized type code");
+            }
         }
 
         public class Factory : TProtocolFactory

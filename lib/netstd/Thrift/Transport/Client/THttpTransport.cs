@@ -28,7 +28,7 @@ using System.Threading.Tasks;
 namespace Thrift.Transport.Client
 {
     // ReSharper disable once InconsistentNaming
-    public class THttpTransport : TTransport
+    public class THttpTransport : TEndpointTransport
     {
         private readonly X509Certificate[] _certificates;
         private readonly Uri _uri;
@@ -39,13 +39,14 @@ namespace Thrift.Transport.Client
         private MemoryStream _outputStream = new MemoryStream();
         private bool _isDisposed;
 
-        public THttpTransport(Uri uri, IDictionary<string, string> customRequestHeaders = null, string userAgent = null)
-            : this(uri, Enumerable.Empty<X509Certificate>(), customRequestHeaders, userAgent)
+        public THttpTransport(Uri uri, TConfiguration config, IDictionary<string, string> customRequestHeaders = null, string userAgent = null)
+            : this(uri, config, Enumerable.Empty<X509Certificate>(), customRequestHeaders, userAgent)
         {
         }
 
-        public THttpTransport(Uri uri, IEnumerable<X509Certificate> certificates,
+        public THttpTransport(Uri uri, TConfiguration config, IEnumerable<X509Certificate> certificates,
             IDictionary<string, string> customRequestHeaders, string userAgent = null)
+            : base(config)
         {
             _uri = uri;
             _certificates = (certificates ?? Enumerable.Empty<X509Certificate>()).ToArray();
@@ -99,24 +100,22 @@ namespace Thrift.Transport.Client
         public override async ValueTask<int> ReadAsync(byte[] buffer, int offset, int length, CancellationToken cancellationToken)
         {
             if (cancellationToken.IsCancellationRequested)
-            {
                 return await Task.FromCanceled<int>(cancellationToken);
-            }
 
             if (_inputStream == null)
-            {
                 throw new TTransportException(TTransportException.ExceptionType.NotOpen, "No request has been sent");
-            }
+
+            CheckReadBytesAvailable(length);
 
             try
             {
                 var ret = await _inputStream.ReadAsync(buffer, offset, length, cancellationToken);
-
                 if (ret == -1)
                 {
                     throw new TTransportException(TTransportException.ExceptionType.EndOfFile, "No more data available");
                 }
 
+                CountConsumedMessageBytes(ret);
                 return ret;
             }
             catch (IOException iox)
@@ -201,8 +200,10 @@ namespace Thrift.Transport.Client
             finally
             {
                 _outputStream = new MemoryStream();
+                ResetConsumedMessageSize();
             }
         }
+
 
         // IDisposable
         protected override void Dispose(bool disposing)

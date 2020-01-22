@@ -303,3 +303,17 @@ func (p *THeaderProtocol) ReadBinary() (value []byte, err error) {
 func (p *THeaderProtocol) Skip(fieldType TType) error {
 	return p.protocol.Skip(fieldType)
 }
+
+// GetResponseHeadersFromClient is a helper function to get the read THeaderMap
+// from the last response received from the given client.
+//
+// If the last response was not sent over THeader protocol,
+// a nil map will be returned.
+func GetResponseHeadersFromClient(c TClient) THeaderMap {
+	if sc, ok := c.(*TStandardClient); ok {
+		if hp, ok := sc.iprot.(*THeaderProtocol); ok {
+			return hp.transport.readHeaders
+		}
+	}
+	return nil
+}

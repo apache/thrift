@@ -33,6 +33,7 @@ uses
   Thrift.Protocol in '..\..\src\Thrift.Protocol.pas',
   Thrift.Protocol.Multiplex in '..\..\src\Thrift.Protocol.Multiplex.pas',
   Thrift.Processor.Multiplex in '..\..\src\Thrift.Processor.Multiplex.pas',
+  Thrift.Configuration in '..\..\src\Thrift.Configuration.pas',
   Thrift.Collections in '..\..\src\Thrift.Collections.pas',
   Thrift.Server in '..\..\src\Thrift.Server.pas',
   Thrift.Utils in '..\..\src\Thrift.Utils.pas',

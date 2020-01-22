@@ -51,6 +51,7 @@
 			</DelphiCompile>
 			<DCCReference Include="..\..\..\lib\delphi\src\Thrift.pas"/>
 			<DCCReference Include="..\..\..\lib\delphi\src\Thrift.Collections.pas"/>
+			<DCCReference Include="..\..\..\lib\delphi\src\Thrift.Configuration.pas"/>
 			<DCCReference Include="..\..\..\lib\delphi\src\Thrift.Exception.pas"/>
 			<DCCReference Include="..\..\..\lib\delphi\src\Thrift.Utils.pas"/>
 			<DCCReference Include="..\..\..\lib\delphi\src\Thrift.Stream.pas"/>
@@ -97,13 +98,13 @@
 					<VersionInfoKeys>
 						<VersionInfoKeys Name="CompanyName"/>
 						<VersionInfoKeys Name="FileDescription">Thrift Tutorial</VersionInfoKeys>
-						<VersionInfoKeys Name="FileVersion">0.13.0.0</VersionInfoKeys>
+						<VersionInfoKeys Name="FileVersion">0.14.0.0</VersionInfoKeys>
 						<VersionInfoKeys Name="InternalName">DelphiServer</VersionInfoKeys>
 						<VersionInfoKeys Name="LegalCopyright">Copyright © 2012 The Apache Software Foundation</VersionInfoKeys>
 						<VersionInfoKeys Name="LegalTrademarks"/>
 						<VersionInfoKeys Name="OriginalFilename">DelphiServer.exe</VersionInfoKeys>
 						<VersionInfoKeys Name="ProductName">Thrift</VersionInfoKeys>
-						<VersionInfoKeys Name="ProductVersion">0.13.0.0</VersionInfoKeys>
+						<VersionInfoKeys Name="ProductVersion">0.14.0.0</VersionInfoKeys>
 						<VersionInfoKeys Name="Comments"/>
 					</VersionInfoKeys>
 					<Source>

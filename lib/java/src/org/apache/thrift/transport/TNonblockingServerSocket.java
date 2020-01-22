@@ -108,7 +108,8 @@ public class TNonblockingServerSocket extends TNonblockingServerTransport {
     }
   }
 
-  protected TNonblockingSocket acceptImpl() throws TTransportException {
+  @Override
+  public TNonblockingSocket accept() throws TTransportException {
     if (serverSocket_ == null) {
       throw new TTransportException(TTransportException.NOT_OPEN, "No underlying server socket.");
     }
@@ -158,6 +159,11 @@ public class TNonblockingServerSocket extends TNonblockingServerTransport {
     if (serverSocket_ == null)
       return -1;
     return serverSocket_.getLocalPort();
+  }
+
+  // Expose it for test purpose.
+  ServerSocketChannel getServerSocketChannel() {
+    return serverSocketChannel;
   }
 
 }

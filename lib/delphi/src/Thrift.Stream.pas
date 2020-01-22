@@ -36,9 +36,8 @@ uses
   Thrift.Utils;
 
 type
-
   IThriftStream = interface
-    ['{2A77D916-7446-46C1-8545-0AEC0008DBCA}']
+    ['{3A61A8A6-3639-4B91-A260-EFCA23944F3A}']
     procedure Write( const buffer: TBytes; offset: Integer; count: Integer);  overload;
     procedure Write( const pBuf : Pointer; offset: Integer; count: Integer);  overload;
     function Read( var buffer: TBytes; offset: Integer; count: Integer): Integer;  overload;
@@ -48,12 +47,16 @@ type
     procedure Flush;
     function IsOpen: Boolean;
     function ToArray: TBytes;
+    function Size : Int64;
+    function Position : Int64;
   end;
 
-  TThriftStreamImpl = class( TInterfacedObject, IThriftStream)
-  private
+
+  TThriftStreamImpl = class abstract( TInterfacedObject, IThriftStream)
+  strict private
     procedure CheckSizeAndOffset( const pBuf : Pointer; const buflen : Integer; offset: Integer; count: Integer);  overload;
-  protected
+  strict protected
+    // IThriftStream
     procedure Write( const buffer: TBytes; offset: Integer; count: Integer); overload; inline;
     procedure Write( const pBuf : Pointer; offset: Integer; count: Integer);  overload; virtual;
     function Read( var buffer: TBytes; offset: Integer; count: Integer): Integer; overload; inline;
@@ -63,13 +66,16 @@ type
     procedure Flush; virtual; abstract;
     function IsOpen: Boolean; virtual; abstract;
     function ToArray: TBytes; virtual; abstract;
+    function Size : Int64; virtual;
+    function Position : Int64;  virtual;
   end;
 
-  TThriftStreamAdapterDelphi = class( TThriftStreamImpl )
-  private
+  TThriftStreamAdapterDelphi = class( TThriftStreamImpl)
+  strict private
     FStream : TStream;
     FOwnsStream : Boolean;
-  protected
+  strict protected
+    // IThriftStream
     procedure Write( const pBuf : Pointer; offset: Integer; count: Integer); override;
     function Read( const pBuf : Pointer; const buflen : Integer; offset: Integer; count: Integer): Integer; override;
     procedure Open; override;
@@ -77,15 +83,18 @@ type
     procedure Flush; override;
     function IsOpen: Boolean; override;
     function ToArray: TBytes; override;
+    function Size : Int64; override;
+    function Position : Int64;  override;
   public
-    constructor Create( const AStream: TStream; AOwnsStream : Boolean);
+    constructor Create( const aStream: TStream; aOwnsStream : Boolean);
     destructor Destroy; override;
   end;
 
   TThriftStreamAdapterCOM = class( TThriftStreamImpl)
-  private
+  strict private
     FStream : IStream;
-  protected
+  strict protected
+    // IThriftStream
     procedure Write( const pBuf : Pointer; offset: Integer; count: Integer); override;
     function Read( const pBuf : Pointer; const buflen : Integer; offset: Integer; count: Integer): Integer; override;
     procedure Open; override;
@@ -93,11 +102,15 @@ type
     procedure Flush; override;
     function IsOpen: Boolean; override;
     function ToArray: TBytes; override;
+    function Size : Int64; override;
+    function Position : Int64;  override;
   public
-    constructor Create( const AStream: IStream);
+    constructor Create( const aStream: IStream);
   end;
 
 implementation
+
+uses Thrift.Transport;
 
 { TThriftStreamAdapterCOM }
 
@@ -106,10 +119,10 @@ begin
   FStream := nil;
 end;
 
-constructor TThriftStreamAdapterCOM.Create( const AStream: IStream);
+constructor TThriftStreamAdapterCOM.Create( const aStream: IStream);
 begin
   inherited Create;
-  FStream := AStream;
+  FStream := aStream;
 end;
 
 procedure TThriftStreamAdapterCOM.Flush;
@@ -119,6 +132,24 @@ begin
       FStream.Commit( STGC_DEFAULT );
     end;
   end;
+end;
+
+function TThriftStreamAdapterCOM.Size : Int64;
+var statstg: TStatStg;
+begin
+  FillChar( statstg, SizeOf( statstg), 0);
+  if  IsOpen
+  and Succeeded( FStream.Stat( statstg, STATFLAG_NONAME ))
+  then result := statstg.cbSize
+  else result := 0;
+end;
+
+function TThriftStreamAdapterCOM.Position : Int64;
+var newpos : {$IF CompilerVersion >= 29.0} UInt64 {$ELSE} Int64  {$IFEND};
+begin
+  if SUCCEEDED( FStream.Seek( 0, STREAM_SEEK_CUR, newpos))
+  then result := Int64(newpos)  
+  else raise TTransportExceptionEndOfFile.Create('Seek() error');
 end;
 
 function TThriftStreamAdapterCOM.IsOpen: Boolean;
@@ -151,19 +182,11 @@ end;
 
 function TThriftStreamAdapterCOM.ToArray: TBytes;
 var
-  statstg: TStatStg;
-  len : Integer;
+  len : Int64;
   NewPos : {$IF CompilerVersion >= 29.0} UInt64 {$ELSE} Int64  {$IFEND};
   cbRead : Integer;
 begin
-  FillChar( statstg, SizeOf( statstg), 0);
-  len := 0;
-  if IsOpen then begin
-    if Succeeded( FStream.Stat( statstg, STATFLAG_NONAME )) then begin
-      len := statstg.cbSize;
-    end;
-  end;
-
+  len := Self.Size;
   SetLength( Result, len );
 
   if len > 0 then begin
@@ -225,7 +248,35 @@ begin
   CheckSizeAndOffset( pBuf, offset+count, offset, count);
 end;
 
+function TThriftStreamImpl.Size : Int64;
+begin
+  ASSERT(FALSE);
+  raise ENotImplemented.Create(ClassName+'.Size');
+end;
+
+function TThriftStreamImpl.Position : Int64;
+begin
+  ASSERT(FALSE);
+  raise ENotImplemented.Create(ClassName+'.Position');
+end;
+
+
 { TThriftStreamAdapterDelphi }
+
+constructor TThriftStreamAdapterDelphi.Create( const aStream: TStream; aOwnsStream: Boolean);
+begin
+  inherited Create;
+  FStream := aStream;
+  FOwnsStream := aOwnsStream;
+end;
+
+destructor TThriftStreamAdapterDelphi.Destroy;
+begin
+  if FOwnsStream
+  then Close;
+
+  inherited;
+end;
 
 procedure TThriftStreamAdapterDelphi.Close;
 begin
@@ -234,24 +285,19 @@ begin
   FOwnsStream := False;
 end;
 
-constructor TThriftStreamAdapterDelphi.Create( const AStream: TStream; AOwnsStream: Boolean);
-begin
-  inherited Create;
-  FStream := AStream;
-  FOwnsStream := AOwnsStream;
-end;
-
-destructor TThriftStreamAdapterDelphi.Destroy;
-begin
-  if FOwnsStream 
-  then Close;
-  
-  inherited;
-end;
-
 procedure TThriftStreamAdapterDelphi.Flush;
 begin
   // nothing to do
+end;
+
+function TThriftStreamAdapterDelphi.Size : Int64;
+begin
+  result := FStream.Size;
+end;
+
+function TThriftStreamAdapterDelphi.Position : Int64;
+begin
+  result := FStream.Position;
 end;
 
 function TThriftStreamAdapterDelphi.IsOpen: Boolean;
@@ -285,11 +331,9 @@ var
   OrgPos : Integer;
   len : Integer;
 begin
-  len := 0;
-  if FStream <> nil then
-  begin
-    len := FStream.Size;
-  end;
+  if FStream <> nil
+  then len := FStream.Size
+  else len := 0;
 
   SetLength( Result, len );
 

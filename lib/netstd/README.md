@@ -11,7 +11,7 @@ or
 - Build with scripts
 
 ## How to build on Unix/Linux
-- Ensure you have .NET SDK >= 2.0 installed, or use the [Ubuntu docker image](../../build/docker/README.md)
+- Ensure you have .NET Core SDK 3.1 (LTS) installed, or use the [Ubuntu docker image](../../build/docker/README.md)
 - Follow common automake build practice: `./ bootstrap && ./ configure && make`
 
 ## Known issues
