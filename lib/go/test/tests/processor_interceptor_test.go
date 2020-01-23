@@ -24,7 +24,7 @@ func NewResultInterceptor() thrift.HandlerInterceptor {
 type DummyHandler struct {
 }
 
-func (h *DummyHandler) DummyRequest(arg1 string) (string, error) {
+func (h *DummyHandler) DummyRequest(ctx context.Context, arg1 string) (string, error) {
 	return expectedHandlerResult, nil
 }
 
@@ -49,11 +49,11 @@ func TestProcessorInterceptor(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer transport.Close()
-	protocol := protocolFactory.GetProtocol(thrift.NewTBinaryProtocolTransport(transport))
+	protocol := protocolFactory.GetProtocol(transport)
 
 	client := processorinterceptortest.NewProcessorInterceptorClient(thrift.NewTStandardClient(protocol, protocol))
 
-	ret, err := client.DummyRequest(requestArgument)
+	ret, err := client.DummyRequest(context.Background(), requestArgument)
 
 	if err != nil {
 		t.Fatal("Unable to call server:", err)

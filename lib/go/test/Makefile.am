@@ -47,7 +47,7 @@ gopath: $(THRIFT) $(THRIFTTEST) \
 				ConflictNamespaceTestSuperThing.thrift \
 				ConflictNamespaceServiceTest.thrift \
 				ProcessorInterceptorTest.thrift \
-				DuplicateImportsTest.thrif
+				DuplicateImportsTest.thrift
 	mkdir -p gopath/src
 	grep -v list.*map.*list.*map $(THRIFTTEST) | grep -v 'set<Insanity>' > ThriftTest.thrift
 	$(THRIFT) $(THRIFTARGS) -r IncludesTest.thrift

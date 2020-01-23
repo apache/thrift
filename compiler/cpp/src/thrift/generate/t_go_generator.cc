@@ -2803,6 +2803,8 @@ void t_go_generator::generate_process_function(t_service* tservice, t_function* 
         } else {
             f_types_ << "_, ";
         }
+    } else {
+        f_types_ << "_, ";
     }
 
     // Generate the function call
