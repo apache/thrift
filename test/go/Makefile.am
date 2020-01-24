@@ -34,7 +34,9 @@ gopath: $(THRIFT) ThriftTest.thrift
 	$(THRIFTCMD) ThriftTest.thrift
 	$(THRIFTCMD) ../StressTest.thrift
 	ln -nfs ../../../lib/go/thrift src/thrift
-	GOPATH=`pwd` $(GO) get github.com/golang/mock/gomock
+	mkdir -p src/vendor/mock
+	curl -sSL https://github.com/golang/mock/tarball/06883d979f10cc178f2716846215c8cf90f9e363 | tar xz --strip-components=1 -C src/vendor/mock
+	GOPATH=`pwd` $(GO) install ./src/vendor/mock/gomock
 	touch gopath
 
 bin/testclient: gopath
@@ -60,4 +62,5 @@ genmock: gopath
 
 EXTRA_DIST = \
 	src/bin \
-	src/common
+	src/common \
+	src/vendor

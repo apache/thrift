@@ -41,7 +41,8 @@ RUN apt-get install -y python-all python-all-dev python-all-dbg python-setuptool
 
 # Ruby dependencies
 RUN apt-get install -y ruby ruby-dev && \
-    gem install bundler rake
+    gem install bundler --version '=1.17.3' && \
+    gem install rake --version '=11.3.0'
 
 # Perl dependencies
 RUN apt-get install -y libbit-vector-perl libclass-accessor-class-perl
@@ -74,20 +75,22 @@ RUN apt-get install -y ghc cabal-install libghc-binary-dev libghc-network-dev li
 # Haxe
 RUN apt-get install -y neko neko-dev libneko0 && \
     mkdir -p /tmp/haxe /usr/lib/haxe && \
-    curl http://haxe.org/website-content/downloads/3.2.0/downloads/haxe-3.2.0-linux64.tar.gz -o /tmp/haxe/haxe-3.2.0-linux64.tar.gz && \
+    curl -sSL http://haxe.org/website-content/downloads/3.2.0/downloads/haxe-3.2.0-linux64.tar.gz -o /tmp/haxe/haxe-3.2.0-linux64.tar.gz && \
     tar -xvzf /tmp/haxe/haxe-3.2.0-linux64.tar.gz -C /usr/lib/haxe --strip-components=1 && \
     ln -s /usr/lib/haxe/haxe /usr/bin/haxe && \
     ln -s /usr/lib/haxe/haxelib /usr/bin/haxelib && \
     mkdir -p /usr/lib/haxe/lib  && \
     chmod -R 777 /usr/lib/haxe/lib && \
     haxelib setup /usr/lib/haxe/lib && \
-    haxelib install hxcpp
+    haxelib install hxcpp 3.2.180
 
 # Lua dependencies
 RUN apt-get install -y lua5.2 lua5.2-dev
 
 # Node.js dependencies
 RUN apt-get install -y nodejs nodejs-dev nodejs-legacy npm
+# Overrides CA as npmjs registry uses newer/unrecognized ones
+COPY npm-config-defs.js /usr/share/npm/node_modules/npmconf/config-defs.js
 
 # CSharp
 RUN apt-get install -y mono-gmcs mono-devel mono-xbuild mono-complete libmono-system-web2.0-cil \

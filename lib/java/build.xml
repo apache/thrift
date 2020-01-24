@@ -360,7 +360,10 @@
     <artifact:writepom pomRefId="pom" file="${pom.xml}"/>
 
     <!-- Download the dependencies -->
-    <artifact:dependencies filesetId="build-dependency-jars" pomRefId="pom"/>
+    <artifact:dependencies filesetId="build-dependency-jars" pomRefId="pom">
+      <remoteRepository refid="central"/>
+      <remoteRepository refid="apache"/>
+    </artifact:dependencies>
 
     <!-- Copy the dependencies to the build/lib dir -->
     <copy todir="${build.dir}/lib">
@@ -370,6 +373,9 @@
 
     <!-- Dependencies needed for testing -->
     <artifact:dependencies filesetId="test-dependency-jars" useScope="runtime">
+      <remoteRepository refid="central"/>
+      <remoteRepository refid="apache"/>
+
       <dependency groupId="org.slf4j" artifactId="slf4j-log4j12" version="1.5.8"/>
       <dependency groupId="junit" artifactId="junit" version="4.4"/>
     </artifact:dependencies>

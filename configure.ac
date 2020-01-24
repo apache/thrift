@@ -553,6 +553,20 @@ AC_CHECK_LIB(rt, clock_gettime)
 AC_CHECK_LIB(socket, setsockopt)
 
 if test "$have_cpp" = "yes" ; then
+# mingw toolchain used to build "Thrift Compiler for Windows"
+# does not support libcrypto, so we just check if we building the cpp library
+AC_CHECK_LIB(crypto,
+ BN_init,
+ [AC_CHECK_LIB(ssl,
+ SSL_ctrl,
+ [LIBS="-lssl -lcrypto $LIBS"],
+ [AC_MSG_ERROR(["Error: libssl required"])],
+ -lcrypto
+ )],
+ [AC_MSG_ERROR(["Error: libcrypto required."])]
+)
+fi
+
 AC_TYPE_INT16_T
 AC_TYPE_INT32_T
 AC_TYPE_INT64_T
