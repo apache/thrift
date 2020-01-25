@@ -59,9 +59,8 @@ set(thrift_c_glib_SOURCES
 )
 
 # If OpenSSL is not found just ignore the OpenSSL stuff
-find_package(OpenSSL)
-if(OPENSSL_FOUND AND WITH_OPENSSL)
-    list( APPEND thrift_c_glib_SOURCES
+if(WITH_OPENSSL)
+    list(APPEND thrift_c_glib_SOURCES
 	    src/thrift/c_glib/transport/thrift_ssl_socket.c
     )
     include_directories(SYSTEM "${OPENSSL_INCLUDE_DIR}")
