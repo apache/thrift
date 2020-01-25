@@ -73,9 +73,6 @@ if(WITH_CPP)
     find_package(Qt5 QUIET COMPONENTS Core Network)
     CMAKE_DEPENDENT_OPTION(WITH_QT5 "Build with Qt5 support" ON
                            "Qt5_FOUND" OFF)
-    find_package(OpenSSL QUIET)
-    CMAKE_DEPENDENT_OPTION(WITH_OPENSSL "Build with OpenSSL support" ON
-                           "OPENSSL_FOUND" OFF)
 endif()
 CMAKE_DEPENDENT_OPTION(BUILD_CPP "Build C++ library" ON
                        "BUILD_LIBRARIES;WITH_CPP" OFF)
@@ -87,6 +84,13 @@ if(WITH_C_GLIB)
 endif()
 CMAKE_DEPENDENT_OPTION(BUILD_C_GLIB "Build C (GLib) library" ON
                        "BUILD_LIBRARIES;WITH_C_GLIB;GLIB_FOUND" OFF)
+
+# OpenSSL
+if(WITH_CPP OR WITH_C_GLIB)
+    find_package(OpenSSL QUIET)
+    CMAKE_DEPENDENT_OPTION(WITH_OPENSSL "Build with OpenSSL support" ON
+                        "OPENSSL_FOUND" OFF)
+endif()
 
 # Java
 option(WITH_JAVA "Build Java Thrift library" ON)
@@ -159,6 +163,11 @@ message(STATUS)
 message(STATUS "  Build as3 library:                          ${BUILD_AS3}")
 MESSAGE_DEP(WITH_AS3 "Disabled by WITH_AS3=OFF")
 MESSAGE_DEP(HAVE_COMPC "Adobe Flex compc was not found - did you set env var FLEX_HOME?")
+message(STATUS)
+message(STATUS "  Build with OpenSSL:                         ${WITH_OPENSSL}")
+if(WITH_OPENSSL)
+    message(STATUS "    Version:                                  ${OPENSSL_VERSION}")
+endif()
 message(STATUS)
 message(STATUS "  Build C++ library:                          ${BUILD_CPP}")
 MESSAGE_DEP(WITH_CPP "Disabled by WITH_CPP=OFF")
