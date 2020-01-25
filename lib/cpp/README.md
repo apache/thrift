@@ -98,6 +98,24 @@ http://monkey.org/~provos/libevent/
 
 The Thrift library targets Windows 7 or latter versions. The supports for windows XP and Vista are avaiable until 0.12.0.
 
+## Thrift and the VCPKG Package manager
+
+You can download and install thrift using the 
+[vcpkg](https://github.com/Microsoft/vcpkg) dependency manager:
+
+    git clone https://github.com/Microsoft/vcpkg.git
+    cd vcpkg
+    ./bootstrap-vcpkg.sh
+    ./vcpkg integrate install
+    ./vcpkg install thrift
+
+The thrift port in vcpkg is kept up to date by Microsoft team members 
+and community contributors. The Apache Thrift project is *not* responsible
+for the vcpkg port. Therefore, if the version is out of date, please 
+[create an issue or pull request](https://github.com/Microsoft/vcpkg) 
+on the vcpkg repository. 
+
+
 ## Named Pipes
 
 Named Pipe transport has been added in the TPipe and TPipeServer classes. This

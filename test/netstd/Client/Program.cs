@@ -34,29 +34,22 @@ namespace Client
                 Console.WriteLine("Failed to grow scroll-back buffer");
             }
 
-            // split mode and options
-            var subArgs = new List<string>(args);
-            var firstArg = string.Empty;
-            if (subArgs.Count > 0)
-            { 
-                firstArg = subArgs[0];
-                subArgs.RemoveAt(0);
-            }
-
-            // run whatever mode is choosen
-            switch(firstArg)
+            // run whatever mode is choosen, default to test impl
+            var firstArg = args.Length > 0 ? args[0] : string.Empty;
+            switch (firstArg)
             {
                 case "client":
                     Console.WriteLine("The 'client' argument is no longer required.");
                     PrintHelp();
                     return -1;
+                case "--performance":
                 case "--performance-test":
                     return Tests.PerformanceTests.Execute();
                 case "--help":
                     PrintHelp();
                     return 0;
                 default:
-                    return TestClient.Execute(subArgs);
+                    return TestClient.Execute(new List<string>(args));
             }
         }
 

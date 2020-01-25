@@ -23,6 +23,13 @@ namespace Thrift.Transport
     // ReSharper disable once InconsistentNaming
     public abstract class TServerTransport
     {
+        public readonly TConfiguration Configuration;
+
+        public TServerTransport(TConfiguration config)
+        {
+            Configuration = config ?? new TConfiguration();
+        }
+
         public abstract void Listen();
         public abstract void Close();
         public abstract bool IsClientPending();
@@ -34,7 +41,7 @@ namespace Thrift.Transport
 
         protected abstract ValueTask<TTransport> AcceptImplementationAsync(CancellationToken cancellationToken);
 
-        public async ValueTask<TTransport> AcceptAsync()
+        public async ValueTask<TTransport> AcceptAsync() 
         {
             return await AcceptAsync(CancellationToken.None);
         }

@@ -28,6 +28,7 @@ uses
   SysUtils,
   Math,
   Generics.Collections,
+  Thrift.Configuration,
   Thrift.Transport,
   Thrift.Protocol,
   Thrift.Utils;
@@ -47,7 +48,7 @@ type
         function GetProtocol( const trans: ITransport): IProtocol;
       end;
 
-  private const
+  strict private const
 
     { TODO
     static TStruct ANONYMOUS_STRUCT = new TStruct("");
@@ -61,7 +62,7 @@ type
     TYPE_BITS         = Byte( $07); // 0000 0111
     TYPE_SHIFT_AMOUNT = Byte( 5);
 
-  private type
+  strict private type
     // All of the on-wire type codes.
     Types = (
       STOP          = $00,
@@ -79,7 +80,7 @@ type
       STRUCT        = $0C
     );
 
-  private const
+  strict private const
     ttypeToCompactType : array[TType] of Types = (
       Types.STOP,           // Stop    = 0,
       Types(-1),            // Void    = 1,
@@ -115,7 +116,7 @@ type
       TType.Struct      // STRUCT
     );
 
-  private
+  strict private
     // Used to keep track of the last field for the current and previous structs,
     // so we can do the delta stuff.
     lastField_ : TStack<Integer>;
@@ -123,19 +124,17 @@ type
 
     // If we encounter a boolean field begin, save the TField here so it can
     // have the value incorporated.
-    private booleanField_ : TThriftField;
+    strict private booleanField_ : TThriftField;
 
     // If we Read a field header, and it's a boolean field, save the boolean
     // value here so that ReadBool can use it.
-    private  boolValue_  : ( unused, bool_true, bool_false);
+    strict private  boolValue_  : ( unused, bool_true, bool_false);
 
   public
     constructor Create(const trans : ITransport);
     destructor Destroy;  override;
 
-    procedure Reset;
-
-  private
+  strict private
     procedure WriteByteDirect( const b : Byte);  overload;
 
     // Writes a byte without any possibility of all that field header nonsense.
@@ -145,7 +144,7 @@ type
     // TODO: make a permanent buffer like WriteVarint64?
     procedure WriteVarint32( n : Cardinal);
 
-  private
+  strict private
     // The workhorse of WriteFieldBegin. It has the option of doing a 'type override'
     // of the type header. This is used specifically in the boolean field case.
     procedure WriteFieldBeginInternal( const field : TThriftField; typeOverride : Byte);
@@ -172,7 +171,7 @@ type
     procedure WriteDouble( const dub: Double); override;
     procedure WriteBinary( const b: TBytes); overload; override;
 
-  private
+  private  // unit visible stuff
     class function  DoubleToInt64Bits( const db : Double) : Int64;
     class function  Int64BitsToDouble( const i64 : Int64) : Double;
 
@@ -192,6 +191,10 @@ type
 
     //Convert a Int64 into little-endian bytes in buf starting at off and going until off+7.
     class procedure fixedLongToBytes( const n : Int64; var buf : TBytes);
+
+  strict protected
+    function GetMinSerializedSize( const aType : TType) : Integer;  override;
+    procedure Reset;  override;
 
   public
     function  ReadMessageBegin: TThriftMessage; override;
@@ -266,7 +269,7 @@ end;
 //--- TCompactProtocolImpl -------------------------------------------------
 
 
-constructor TCompactProtocolImpl.Create(const trans: ITransport);
+constructor TCompactProtocolImpl.Create( const trans : ITransport);
 begin
   inherited Create( trans);
 
@@ -291,6 +294,7 @@ end;
 
 procedure TCompactProtocolImpl.Reset;
 begin
+  inherited Reset;
   lastField_.Clear();
   lastFieldId_ := 0;
   Init( booleanField_, '', TType.Stop, 0);
@@ -735,6 +739,7 @@ begin
   val := getTType( Byte( keyAndValueType and $F));
   Init( result, key, val, size);
   ASSERT( (result.KeyType = key) and (result.ValueType = val));
+  CheckReadBytesAvailable(result);
 end;
 
 
@@ -755,6 +760,7 @@ begin
 
   type_ := getTType( size_and_type);
   Init( result, type_, size);
+  CheckReadBytesAvailable(result);
 end;
 
 
@@ -775,6 +781,7 @@ begin
 
   type_ := getTType( size_and_type);
   Init( result, type_, size);
+  CheckReadBytesAvailable(result);
 end;
 
 
@@ -836,6 +843,7 @@ function TCompactProtocolImpl.ReadBinary: TBytes;
 var length : Integer;
 begin
   length := Integer( ReadVarint32);
+  FTrans.CheckReadBytesAvailable(length);
   SetLength( result, length);
   if (length > 0)
   then Transport.ReadAll( result, 0, length);
@@ -966,6 +974,32 @@ begin
   then result := Byte( ttypeToCompactType[ttype])
   else raise TProtocolExceptionInvalidData.Create('don''t know what type: '+IntToStr(Ord(ttype)));
 end;
+
+
+function TCompactProtocolImpl.GetMinSerializedSize( const aType : TType) : Integer;
+// Return the minimum number of bytes a type will consume on the wire
+begin
+  case aType of
+    TType.Stop:    result := 0;
+    TType.Void:    result := 0;
+    TType.Bool_:   result := SizeOf(Byte);
+    TType.Byte_:   result := SizeOf(Byte);
+    TType.Double_: result := 8;  // uses fixedLongToBytes() which always writes 8 bytes
+    TType.I16:     result := SizeOf(Byte);
+    TType.I32:     result := SizeOf(Byte);
+    TType.I64:     result := SizeOf(Byte);
+    TType.String_: result := SizeOf(Byte);  // string length
+    TType.Struct:  result := 0;             // empty struct
+    TType.Map:     result := SizeOf(Byte);  // element count
+    TType.Set_:    result := SizeOf(Byte);  // element count
+    TType.List:    result := SizeOf(Byte);  // element count
+  else
+    raise TTransportExceptionBadArgs.Create('Unhandled type code');
+  end;
+end;
+
+
+
 
 
 //--- unit tests -------------------------------------------

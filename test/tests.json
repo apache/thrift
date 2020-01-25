@@ -152,7 +152,8 @@
     "transports": [
       "buffered",
       "framed",
-      "framed:fastframed"
+      "framed:fastframed",
+      "zlib"
     ],
     "sockets": [
       "ip",
@@ -264,7 +265,8 @@
     ],
     "sockets": [
       "ip",
-      "ip-ssl"
+      "ip-ssl",
+      "domain"
     ],
     "protocols": [
       "binary",
@@ -313,7 +315,8 @@
     ],
     "sockets": [
       "ip",
-      "ip-ssl"
+      "ip-ssl",
+      "domain"
     ],
     "protocols": [
       "binary",

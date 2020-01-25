@@ -121,7 +121,7 @@ line interface:
 
 **Server command line interface:**
 
-    $ ./cpp/TestServer -h
+    $ ./TestServer -h
     Allowed options:
       -h [ --help ]               produce help message
       --port arg (=9090)          Port number to listen
@@ -129,16 +129,20 @@ line interface:
       --named-pipe arg            Windows Named Pipe (e.g. MyThriftPipe)
       --server-type arg (=simple) type of server, "simple", "thread-pool",
                                   "threaded", or "nonblocking"
-      --transport arg (=buffered) transport: buffered, framed, http, anonpipe
-      --protocol arg (=binary)    protocol: binary, compact, json
+      --transport arg (=buffered) transport: buffered, framed, http, anonpipe, zlib
+      --protocol arg (=binary)    protocol: binary, compact, header, json
+      --multiplex                 Add TMultiplexedProtocol service name "ThriftTest"
+      --abstract-namespace        Create the domain socket in the Abstract Namespace 
+                                  (no connection with filesystem pathnames)
       --ssl                       Encrypted Transport using SSL
+      --zlib                      Wrapped Transport using Zlib
       --processor-events          processor-events
       -n [ --workers ] arg (=4)   Number of thread pools workers. Only valid for
-                              thread-pool server type
+                                  thread-pool server type
 
 **Client command line interface:**
 
-    $ ./cpp/TestClient -h
+    $ ./TestClient -h
     Allowed options:
       -h [ --help ]               produce help message
       --host arg (=localhost)     Host to connect
@@ -147,9 +151,13 @@ line interface:
                                   instead of host and port
       --named-pipe arg            Windows Named Pipe (e.g. MyThriftPipe)
       --anon-pipes hRead hWrite   Windows Anonymous Pipes pair (handles)
-      --transport arg (=buffered) Transport: buffered, framed, http, evhttp
-      --protocol arg (=binary)    Protocol: binary, compact, json
+      --abstract-namespace        Create the domain socket in the Abstract Namespace
+                                  (no connection with filesystem pathnames)
+      --transport arg (=buffered) Transport: buffered, framed, http, evhttp, zlib
+      --protocol arg (=binary)    Protocol: binary, compact, header, json
+      --multiplex                 Add TMultiplexedProtocol service name "ThriftTest"
       --ssl                       Encrypted Transport using SSL
+      --zlib                      Wrap Transport with Zlib
       -n [ --testloops ] arg (=1) Number of Tests
       -t [ --threads ] arg (=1)   Number of Test threads
 

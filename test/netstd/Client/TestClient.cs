@@ -28,6 +28,7 @@ using System.ServiceModel;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using Thrift;
 using Thrift.Collections;
 using Thrift.Protocol;
 using Thrift.Transport;
@@ -72,6 +73,7 @@ namespace ThriftTest
             public LayeredChoice layered = LayeredChoice.None;
             public ProtocolChoice protocol = ProtocolChoice.Binary;
             public TransportChoice transport = TransportChoice.Socket;
+            private readonly TConfiguration Configuration = null;  // or new TConfiguration() if needed
 
             internal void Parse(List<string> args)
             {
@@ -235,12 +237,12 @@ namespace ThriftTest
                 {
                     case TransportChoice.Http:
                         Debug.Assert(url != null);
-                        trans = new THttpTransport(new Uri(url), null);
+                        trans = new THttpTransport(new Uri(url), Configuration);
                         break;
 
                     case TransportChoice.NamedPipe:
                         Debug.Assert(pipe != null);
-                        trans = new TNamedPipeTransport(pipe);
+                        trans = new TNamedPipeTransport(pipe,Configuration);
                         break;
 
                     case TransportChoice.TlsSocket:
@@ -250,14 +252,15 @@ namespace ThriftTest
                             throw new InvalidOperationException("Certificate doesn't contain private key");
                         }
 
-                        trans = new TTlsSocketTransport(host, port, 0, cert,
+                        trans = new TTlsSocketTransport(host, port, Configuration, 0,
+                            cert,
                             (sender, certificate, chain, errors) => true,
                             null, SslProtocols.Tls | SslProtocols.Tls11 | SslProtocols.Tls12);
                         break;
 
                     case TransportChoice.Socket:
                     default:
-                        trans = new TSocketTransport(host, port);
+                        trans = new TSocketTransport(host, port, Configuration);
                         break;
                 }
 
@@ -443,12 +446,12 @@ namespace ThriftTest
             Normal,          // Fairly small array of usual size (256 bytes)
             Large,           // Large writes/reads may cause range check errors
             PipeWriteLimit,  // Windows Limit: Pipe write operations across a network are limited to 65,535 bytes per write.
-            TwentyMB         // that's quite a bit of data
+            FifteenMB        // that's quite a bit of data
         };
 
         public static byte[] PrepareTestData(bool randomDist, BinaryTestSize testcase)
         {
-            int amount = -1;
+            int amount;
             switch (testcase)
             {
                 case BinaryTestSize.Empty:
@@ -463,8 +466,8 @@ namespace ThriftTest
                 case BinaryTestSize.PipeWriteLimit:
                     amount = 0xFFFF + 128;
                     break;
-                case BinaryTestSize.TwentyMB:
-                    amount = 20 * 1024 * 1024;
+                case BinaryTestSize.FifteenMB:
+                    amount = 15 * 1024 * 1024;
                     break;
                 default:
                     throw new ArgumentException(nameof(testcase));
@@ -622,26 +625,29 @@ namespace ThriftTest
                 {
                     Console.WriteLine("*** FAILED ***");
                     returnCode |= ErrorContainers;
-                    throw new Exception("CrazyNesting.Equals failed");
                 }
             }
 
             // TODO: Validate received message
             Console.Write("testStruct({\"Zero\", 1, -3, -5})");
-            var o = new Xtruct();
-            o.String_thing = "Zero";
-            o.Byte_thing = (sbyte)1;
-            o.I32_thing = -3;
-            o.I64_thing = -5;
+            var o = new Xtruct
+            {
+                String_thing = "Zero",
+                Byte_thing = (sbyte)1,
+                I32_thing = -3,
+                I64_thing = -5
+            };
             var i = await client.testStructAsync(o, MakeTimeoutToken());
             Console.WriteLine(" = {\"" + i.String_thing + "\", " + i.Byte_thing + ", " + i.I32_thing + ", " + i.I64_thing + "}");
 
             // TODO: Validate received message
             Console.Write("testNest({1, {\"Zero\", 1, -3, -5}, 5})");
-            var o2 = new Xtruct2();
-            o2.Byte_thing = (sbyte)1;
-            o2.Struct_thing = o;
-            o2.I32_thing = 5;
+            var o2 = new Xtruct2
+            {
+                Byte_thing = (sbyte)1,
+                Struct_thing = o,
+                I32_thing = 5
+            };
             var i2 = await client.testNestAsync(o2, MakeTimeoutToken());
             i = i2.Struct_thing;
             Console.WriteLine(" = {" + i2.Byte_thing + ", {\"" + i.String_thing + "\", " + i.Byte_thing + ", " + i.I32_thing + ", " + i.I64_thing + "}, " + i2.I32_thing + "}");
@@ -838,16 +844,24 @@ namespace ThriftTest
             Console.WriteLine("}");
 
             // TODO: Validate received message
-            var insane = new Insanity();
-            insane.UserMap = new Dictionary<Numberz, long>();
-            insane.UserMap[Numberz.FIVE] = 5000L;
-            var truck = new Xtruct();
-            truck.String_thing = "Truck";
-            truck.Byte_thing = (sbyte)8;
-            truck.I32_thing = 8;
-            truck.I64_thing = 8;
-            insane.Xtructs = new List<Xtruct>();
-            insane.Xtructs.Add(truck);
+            var insane = new Insanity
+            {
+                UserMap = new Dictionary<Numberz, long>
+                {
+                    [Numberz.FIVE] = 5000L
+                }
+            };
+            var truck = new Xtruct
+            {
+                String_thing = "Truck",
+                Byte_thing = (sbyte)8,
+                I32_thing = 8,
+                I64_thing = 8
+            };
+            insane.Xtructs = new List<Xtruct>
+            {
+                truck
+            };
             Console.Write("testInsanity()");
             var whoa = await client.testInsanityAsync(insane, MakeTimeoutToken());
             Console.Write(" = {");
@@ -902,8 +916,10 @@ namespace ThriftTest
             sbyte arg0 = 1;
             var arg1 = 2;
             var arg2 = long.MaxValue;
-            var multiDict = new Dictionary<short, string>();
-            multiDict[1] = "one";
+            var multiDict = new Dictionary<short, string>
+            {
+                [1] = "one"
+            };
 
             var tmpMultiDict = new List<string>();
             foreach (var pair in multiDict)

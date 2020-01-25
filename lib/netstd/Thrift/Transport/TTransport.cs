@@ -30,8 +30,11 @@ namespace Thrift.Transport
         //TODO: think how to avoid peek byte
         private readonly byte[] _peekBuffer = new byte[1];
         private bool _hasPeekByte;
-        public abstract bool IsOpen { get; }
 
+        public abstract bool IsOpen { get; }
+        public abstract TConfiguration Configuration { get; }
+        public abstract void UpdateKnownMessageSize(long size);
+        public abstract void CheckReadBytesAvailable(long numBytes);
         public void Dispose()
         {
             Dispose(true);

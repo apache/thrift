@@ -31,6 +31,7 @@ uses
   Thrift.Stream,
   Thrift.Utils,
   Thrift.Collections,
+  Thrift.Configuration,
   Thrift.Transport;
 
 type
@@ -66,9 +67,6 @@ const
   ];
 
   VALID_MESSAGETYPES = [Low(TMessageType)..High(TMessageType)];
-
-const
-  DEFAULT_RECURSION_LIMIT = 64;
 
 type
   IProtocol = interface;
@@ -106,30 +104,32 @@ type
   end;
 
 
-
   IProtocolFactory = interface
     ['{7CD64A10-4E9F-4E99-93BF-708A31F4A67B}']
     function GetProtocol( const trans: ITransport): IProtocol;
   end;
 
-  TProtocolException = class( TException)
+  TProtocolException = class abstract( TException)
   public
-    const // TODO(jensg): change into enum
-      UNKNOWN = 0;
-      INVALID_DATA = 1;
-      NEGATIVE_SIZE = 2;
-      SIZE_LIMIT = 3;
-      BAD_VERSION = 4;
-      NOT_IMPLEMENTED = 5;
-      DEPTH_LIMIT = 6;
-  protected
+    type TExceptionType = (
+      UNKNOWN = 0,
+      INVALID_DATA = 1,
+      NEGATIVE_SIZE = 2,
+      SIZE_LIMIT = 3,
+      BAD_VERSION = 4,
+      NOT_IMPLEMENTED = 5,
+      DEPTH_LIMIT = 6
+    );
+  strict protected
     constructor HiddenCreate(const Msg: string);
+    class function GetType: TExceptionType;  virtual; abstract;
   public
     // purposefully hide inherited constructor
     class function Create(const Msg: string): TProtocolException; overload; deprecated 'Use specialized TProtocolException types (or regenerate from IDL)';
     class function Create: TProtocolException; overload; deprecated 'Use specialized TProtocolException types (or regenerate from IDL)';
-    class function Create( type_: Integer): TProtocolException; overload; deprecated 'Use specialized TProtocolException types (or regenerate from IDL)';
-    class function Create( type_: Integer; const msg: string): TProtocolException; overload; deprecated 'Use specialized TProtocolException types (or regenerate from IDL)';
+    class function Create( aType: TExceptionType): TProtocolException; overload; deprecated 'Use specialized TProtocolException types (or regenerate from IDL)';
+    class function Create( aType: TExceptionType; const msg: string): TProtocolException; overload; deprecated 'Use specialized TProtocolException types (or regenerate from IDL)';
+    property Type_: TExceptionType read GetType;
   end;
 
   // Needed to remove deprecation warning
@@ -138,13 +138,41 @@ type
     constructor Create(const Msg: string);
   end;
 
-  TProtocolExceptionUnknown = class (TProtocolExceptionSpecialized);
-  TProtocolExceptionInvalidData = class (TProtocolExceptionSpecialized);
-  TProtocolExceptionNegativeSize = class (TProtocolExceptionSpecialized);
-  TProtocolExceptionSizeLimit = class (TProtocolExceptionSpecialized);
-  TProtocolExceptionBadVersion = class (TProtocolExceptionSpecialized);
-  TProtocolExceptionNotImplemented = class (TProtocolExceptionSpecialized);
-  TProtocolExceptionDepthLimit = class (TProtocolExceptionSpecialized);
+  TProtocolExceptionUnknown = class (TProtocolExceptionSpecialized)
+  strict protected
+    class function GetType: TProtocolException.TExceptionType;  override;
+  end;
+
+  TProtocolExceptionInvalidData = class (TProtocolExceptionSpecialized)
+  strict protected
+    class function GetType: TProtocolException.TExceptionType;  override;
+  end;
+
+  TProtocolExceptionNegativeSize = class (TProtocolExceptionSpecialized)
+  strict protected
+    class function GetType: TProtocolException.TExceptionType;  override;
+  end;
+
+  TProtocolExceptionSizeLimit = class (TProtocolExceptionSpecialized)
+  strict protected
+    class function GetType: TProtocolException.TExceptionType;  override;
+  end;
+
+  TProtocolExceptionBadVersion = class (TProtocolExceptionSpecialized)
+  strict protected
+    class function GetType: TProtocolException.TExceptionType;  override;
+  end;
+
+  TProtocolExceptionNotImplemented = class (TProtocolExceptionSpecialized)
+  strict protected
+    class function GetType: TProtocolException.TExceptionType;  override;
+  end;
+
+  TProtocolExceptionDepthLimit = class (TProtocolExceptionSpecialized)
+  strict protected
+    class function GetType: TProtocolException.TExceptionType;  override;
+  end;
+
 
 
   TProtocolUtil = class
@@ -158,7 +186,7 @@ type
   end;
 
   TProtocolRecursionTrackerImpl = class abstract( TInterfacedObject, IProtocolRecursionTracker)
-  protected
+  strict protected
     FProtocol : IProtocol;
   public
     constructor Create( prot : IProtocol);
@@ -166,7 +194,7 @@ type
   end;
 
   IProtocol = interface
-    ['{602A7FFB-0D9E-4CD8-8D7F-E5076660588A}']
+    ['{F0040D99-937F-400D-9932-AF04F665899F}']
     function GetTransport: ITransport;
     procedure WriteMessageBegin( const msg: TThriftMessage);
     procedure WriteMessageEnd;
@@ -213,30 +241,34 @@ type
     function ReadString: string;
     function ReadAnsiString: AnsiString;
 
-    procedure SetRecursionLimit( value : Integer);
-    function  GetRecursionLimit : Integer;
     function  NextRecursionLevel : IProtocolRecursionTracker;
     procedure IncrementRecursionDepth;
     procedure DecrementRecursionDepth;
+    function  GetMinSerializedSize( const aType : TType) : Integer;
 
     property Transport: ITransport read GetTransport;
-    property RecursionLimit : Integer read GetRecursionLimit write SetRecursionLimit;
+    function Configuration : IThriftConfiguration;
   end;
 
   TProtocolImpl = class abstract( TInterfacedObject, IProtocol)
-  protected
+  strict protected
     FTrans : ITransport;
     FRecursionLimit : Integer;
     FRecursionDepth : Integer;
 
-    procedure SetRecursionLimit( value : Integer);
-    function  GetRecursionLimit : Integer;
     function  NextRecursionLevel : IProtocolRecursionTracker;
     procedure IncrementRecursionDepth;
     procedure DecrementRecursionDepth;
 
-    function GetTransport: ITransport;
-  public
+    function  GetMinSerializedSize( const aType : TType) : Integer;  virtual; abstract;
+    procedure CheckReadBytesAvailable( const value : TThriftList);  overload; inline;
+    procedure CheckReadBytesAvailable( const value : TThriftSet);  overload; inline;
+    procedure CheckReadBytesAvailable( const value : TThriftMap);  overload; inline;
+
+    procedure Reset;  virtual;
+    function  GetTransport: ITransport;
+    function  Configuration : IThriftConfiguration;
+
     procedure WriteMessageBegin( const msg: TThriftMessage); virtual; abstract;
     procedure WriteMessageEnd; virtual; abstract;
     procedure WriteStructBegin( const struc: TThriftStruct); virtual; abstract;
@@ -282,9 +314,10 @@ type
     function ReadString: string; virtual;
     function ReadAnsiString: AnsiString; virtual;
 
-    property Transport: ITransport read GetTransport;
+    property  Transport: ITransport read GetTransport;
 
-    constructor Create( trans: ITransport );
+  public
+    constructor Create( const aTransport : ITransport);
   end;
 
   IBase = interface( ISupportsToString)
@@ -295,33 +328,31 @@ type
 
 
   TBinaryProtocolImpl = class( TProtocolImpl )
-  protected
+  strict protected
     const
       VERSION_MASK : Cardinal = $ffff0000;
       VERSION_1 : Cardinal = $80010000;
-  protected
+  strict protected
     FStrictRead : Boolean;
     FStrictWrite : Boolean;
+    function GetMinSerializedSize( const aType : TType) : Integer;  override;
 
-  private
+  strict private
     function ReadAll( const pBuf : Pointer; const buflen : Integer; off: Integer; len: Integer ): Integer;  inline;
     function ReadStringBody( size: Integer): string;
 
   public
-
     type
       TFactory = class( TInterfacedObject, IProtocolFactory)
-      protected
+      strict protected
         FStrictRead : Boolean;
         FStrictWrite : Boolean;
-      public
         function GetProtocol( const trans: ITransport): IProtocol;
-        constructor Create( AStrictRead, AStrictWrite: Boolean ); overload;
-        constructor Create; overload;
+      public
+        constructor Create( const aStrictRead : Boolean = FALSE; const aStrictWrite: Boolean = TRUE); reintroduce;
       end;
 
-    constructor Create( const trans: ITransport); overload;
-    constructor Create( const trans: ITransport; strictRead: Boolean; strictWrite: Boolean); overload;
+    constructor Create( const trans: ITransport; strictRead: Boolean = FALSE; strictWrite: Boolean = TRUE); reintroduce;
 
     procedure WriteMessageBegin( const msg: TThriftMessage); override;
     procedure WriteMessageEnd; override;
@@ -374,8 +405,11 @@ type
     See p.175 of Design Patterns (by Gamma et al.)
   }
   TProtocolDecorator = class( TProtocolImpl)
-  private
+  strict private
     FWrappedProtocol : IProtocol;
+
+  strict protected
+    function GetMinSerializedSize( const aType : TType) : Integer;  override;
 
   public
     // Encloses the specified protocol.
@@ -476,13 +510,13 @@ procedure Init( var rec : TThriftList;    const AElementType: TType = Low(TType)
 
 implementation
 
-function ConvertInt64ToDouble( const n: Int64): Double;
+function ConvertInt64ToDouble( const n: Int64): Double;  inline;
 begin
   ASSERT( SizeOf(n) = SizeOf(Result));
   System.Move( n, Result, SizeOf(Result));
 end;
 
-function ConvertDoubleToInt64( const d: Double): Int64;
+function ConvertDoubleToInt64( const d: Double): Int64;  inline;
 begin
   ASSERT( SizeOf(d) = SizeOf(Result));
   System.Move( d, Result, SizeOf(Result));
@@ -516,22 +550,12 @@ end;
 
 { TProtocolImpl }
 
-constructor TProtocolImpl.Create(trans: ITransport);
+constructor TProtocolImpl.Create( const aTransport : ITransport);
 begin
   inherited Create;
-  FTrans := trans;
-  FRecursionLimit := DEFAULT_RECURSION_LIMIT;
+  FTrans := aTransport;
+  FRecursionLimit := aTransport.Configuration.RecursionLimit;
   FRecursionDepth := 0;
-end;
-
-procedure TProtocolImpl.SetRecursionLimit( value : Integer);
-begin
-  FRecursionLimit := value;
-end;
-
-function TProtocolImpl.GetRecursionLimit : Integer;
-begin
-  result := FRecursionLimit;
 end;
 
 function TProtocolImpl.NextRecursionLevel : IProtocolRecursionTracker;
@@ -556,6 +580,16 @@ begin
   Result := FTrans;
 end;
 
+function TProtocolImpl.Configuration : IThriftConfiguration;
+begin
+  Result := FTrans.Configuration;
+end;
+
+procedure TProtocolImpl.Reset;
+begin
+  FTrans.ResetConsumedMessageSize;
+end;
+
 function TProtocolImpl.ReadAnsiString: AnsiString;
 var
   b : TBytes;
@@ -564,8 +598,7 @@ begin
   Result := '';
   b := ReadBinary;
   len := Length( b );
-  if len > 0 then
-  begin
+  if len > 0 then begin
     SetLength( Result, len);
     System.Move( b[0], Pointer(Result)^, len );
   end;
@@ -583,8 +616,7 @@ var
 begin
   len := Length(s);
   SetLength( b, len);
-  if len > 0 then
-  begin
+  if len > 0 then begin
     System.Move( Pointer(s)^, b[0], len );
   end;
   WriteBinary( b );
@@ -596,6 +628,26 @@ var
 begin
   b := TEncoding.UTF8.GetBytes(s);
   WriteBinary( b );
+end;
+
+
+procedure TProtocolImpl.CheckReadBytesAvailable( const value : TThriftList);
+begin
+  FTrans.CheckReadBytesAvailable( value.Count * GetMinSerializedSize(value.ElementType));
+end;
+
+
+procedure TProtocolImpl.CheckReadBytesAvailable( const value : TThriftSet);
+begin
+  FTrans.CheckReadBytesAvailable( value.Count * GetMinSerializedSize(value.ElementType));
+end;
+
+
+procedure TProtocolImpl.CheckReadBytesAvailable( const value : TThriftMap);
+var nPairSize : Integer;
+begin
+  nPairSize := GetMinSerializedSize(value.KeyType) + GetMinSerializedSize(value.ValueType);
+  FTrans.CheckReadBytesAvailable( value.Count * nPairSize);
 end;
 
 { TProtocolUtil }
@@ -662,16 +714,9 @@ end;
 
 { TBinaryProtocolImpl }
 
-constructor TBinaryProtocolImpl.Create( const trans: ITransport);
+constructor TBinaryProtocolImpl.Create( const trans: ITransport; strictRead, strictWrite: Boolean);
 begin
-  //no inherited
-  Create( trans, False, True);
-end;
-
-constructor TBinaryProtocolImpl.Create( const trans: ITransport; strictRead,
-  strictWrite: Boolean);
-begin
-  inherited Create( trans );
+  inherited Create( trans);
   FStrictRead := strictRead;
   FStrictWrite := strictWrite;
 end;
@@ -687,7 +732,8 @@ var
   buf : TBytes;
 begin
   size := ReadI32;
-  SetLength( buf, size );
+  FTrans.CheckReadBytesAvailable( size);
+  SetLength( buf, size);
   FTrans.ReadAll( buf, 0, size);
   Result := buf;
 end;
@@ -759,6 +805,7 @@ function TBinaryProtocolImpl.ReadListBegin: TThriftList;
 begin
   result.ElementType := TType(ReadByte);
   result.Count       := ReadI32;
+  CheckReadBytesAvailable(result);
 end;
 
 procedure TBinaryProtocolImpl.ReadListEnd;
@@ -771,6 +818,7 @@ begin
   result.KeyType   := TType(ReadByte);
   result.ValueType := TType(ReadByte);
   result.Count     := ReadI32;
+  CheckReadBytesAvailable(result);
 end;
 
 procedure TBinaryProtocolImpl.ReadMapEnd;
@@ -783,6 +831,7 @@ var
   size : Integer;
   version : Integer;
 begin
+  Reset;
   Init( result);
   size := ReadI32;
   if (size < 0) then begin
@@ -814,6 +863,7 @@ function TBinaryProtocolImpl.ReadSetBegin: TThriftSet;
 begin
   result.ElementType := TType(ReadByte);
   result.Count       := ReadI32;
+  CheckReadBytesAvailable(result);
 end;
 
 procedure TBinaryProtocolImpl.ReadSetEnd;
@@ -822,10 +872,10 @@ begin
 end;
 
 function TBinaryProtocolImpl.ReadStringBody( size: Integer): string;
-var
-  buf : TBytes;
+var buf : TBytes;
 begin
-  SetLength( buf, size );
+  FTrans.CheckReadBytesAvailable( size);
+  SetLength( buf, size);
   FTrans.ReadAll( buf, 0, size );
   Result := TEncoding.UTF8.GetString( buf);
 end;
@@ -940,17 +990,15 @@ begin
 end;
 
 procedure TBinaryProtocolImpl.WriteMessageBegin( const msg: TThriftMessage);
-var
-  version : Cardinal;
+var version : Cardinal;
 begin
-  if FStrictWrite then
-  begin
+  Reset;
+  if FStrictWrite then begin
     version := VERSION_1 or Cardinal( msg.Type_);
     WriteI32( Integer( version) );
     WriteString( msg.Name);
     WriteI32( msg.SeqID);
-  end else
-  begin
+  end else begin
     WriteString( msg.Name);
     WriteByte(ShortInt( msg.Type_));
     WriteI32( msg.SeqID);
@@ -983,6 +1031,29 @@ begin
 
 end;
 
+function TBinaryProtocolImpl.GetMinSerializedSize( const aType : TType) : Integer;
+// Return the minimum number of bytes a type will consume on the wire
+begin
+  case aType of
+    TType.Stop:    result := 0;
+    TType.Void:    result := 0;
+    TType.Bool_:   result := SizeOf(Byte);
+    TType.Byte_:   result := SizeOf(Byte);
+    TType.Double_: result := SizeOf(Double);
+    TType.I16:     result := SizeOf(Int16);
+    TType.I32:     result := SizeOf(Int32);
+    TType.I64:     result := SizeOf(Int64);
+    TType.String_: result := SizeOf(Int32);  // string length
+    TType.Struct:  result := 0;  // empty struct
+    TType.Map:     result := SizeOf(Int32);  // element count
+    TType.Set_:    result := SizeOf(Int32);  // element count
+    TType.List:    result := SizeOf(Int32);  // element count
+  else
+    raise TTransportExceptionBadArgs.Create('Unhandled type code');
+  end;
+end;
+
+
 { TProtocolException }
 
 constructor TProtocolException.HiddenCreate(const Msg: string);
@@ -1000,23 +1071,24 @@ begin
   Result := TProtocolExceptionUnknown.Create('');
 end;
 
-class function TProtocolException.Create(type_: Integer): TProtocolException;
+class function TProtocolException.Create(aType: TExceptionType): TProtocolException;
 begin
 {$WARN SYMBOL_DEPRECATED OFF}
-  Result := Create(type_, '');
+  Result := Create(aType, '');
 {$WARN SYMBOL_DEPRECATED DEFAULT}
 end;
 
-class function TProtocolException.Create(type_: Integer; const msg: string): TProtocolException;
+class function TProtocolException.Create(aType: TExceptionType; const msg: string): TProtocolException;
 begin
-  case type_ of
-    INVALID_DATA:    Result := TProtocolExceptionInvalidData.Create(msg);
-    NEGATIVE_SIZE:   Result := TProtocolExceptionNegativeSize.Create(msg);
-    SIZE_LIMIT:      Result := TProtocolExceptionSizeLimit.Create(msg);
-    BAD_VERSION:     Result := TProtocolExceptionBadVersion.Create(msg);
-    NOT_IMPLEMENTED: Result := TProtocolExceptionNotImplemented.Create(msg);
-    DEPTH_LIMIT:     Result := TProtocolExceptionDepthLimit.Create(msg);
+  case aType of
+    TExceptionType.INVALID_DATA:    Result := TProtocolExceptionInvalidData.Create(msg);
+    TExceptionType.NEGATIVE_SIZE:   Result := TProtocolExceptionNegativeSize.Create(msg);
+    TExceptionType.SIZE_LIMIT:      Result := TProtocolExceptionSizeLimit.Create(msg);
+    TExceptionType.BAD_VERSION:     Result := TProtocolExceptionBadVersion.Create(msg);
+    TExceptionType.NOT_IMPLEMENTED: Result := TProtocolExceptionNotImplemented.Create(msg);
+    TExceptionType.DEPTH_LIMIT:     Result := TProtocolExceptionDepthLimit.Create(msg);
   else
+    ASSERT( TExceptionType.UNKNOWN = aType);
     Result := TProtocolExceptionUnknown.Create(msg);
   end;
 end;
@@ -1028,19 +1100,50 @@ begin
   inherited HiddenCreate(Msg);
 end;
 
+{ specialized TProtocolExceptions }
+
+class function TProtocolExceptionUnknown.GetType: TProtocolException.TExceptionType;
+begin
+  result := TExceptionType.UNKNOWN;
+end;
+
+class function TProtocolExceptionInvalidData.GetType: TProtocolException.TExceptionType;
+begin
+  result := TExceptionType.INVALID_DATA;
+end;
+
+class function TProtocolExceptionNegativeSize.GetType: TProtocolException.TExceptionType;
+begin
+  result := TExceptionType.NEGATIVE_SIZE;
+end;
+
+class function TProtocolExceptionSizeLimit.GetType: TProtocolException.TExceptionType;
+begin
+  result := TExceptionType.SIZE_LIMIT;
+end;
+
+class function TProtocolExceptionBadVersion.GetType: TProtocolException.TExceptionType;
+begin
+  result := TExceptionType.BAD_VERSION;
+end;
+
+class function TProtocolExceptionNotImplemented.GetType: TProtocolException.TExceptionType;
+begin
+  result := TExceptionType.NOT_IMPLEMENTED;
+end;
+
+class function TProtocolExceptionDepthLimit.GetType: TProtocolException.TExceptionType;
+begin
+  result := TExceptionType.DEPTH_LIMIT;
+end;
+
 { TBinaryProtocolImpl.TFactory }
 
-constructor TBinaryProtocolImpl.TFactory.Create(AStrictRead, AStrictWrite: Boolean);
+constructor TBinaryProtocolImpl.TFactory.Create( const aStrictRead, aStrictWrite: Boolean);
 begin
   inherited Create;
   FStrictRead := AStrictRead;
   FStrictWrite := AStrictWrite;
-end;
-
-constructor TBinaryProtocolImpl.TFactory.Create;
-begin
-  //no inherited;
-  Create( False, True )
 end;
 
 function TBinaryProtocolImpl.TFactory.GetProtocol( const trans: ITransport): IProtocol;
@@ -1317,6 +1420,12 @@ begin
 end;
 
 
+function TProtocolDecorator.GetMinSerializedSize( const aType : TType) : Integer;
+begin
+  result := FWrappedProtocol.GetMinSerializedSize(aType);
+end;
+
+
 { Init helper functions }
 
 procedure Init( var rec : TThriftMessage; const AName: string; const AMessageType: TMessageType; const ASeqID: Integer);
@@ -1361,8 +1470,6 @@ begin
   rec.Count := ACount;
   rec.ElementType := AElementType;
 end;
-
-
 
 
 

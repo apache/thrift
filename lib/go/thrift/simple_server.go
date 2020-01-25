@@ -216,7 +216,27 @@ func (p *TSimpleServer) Stop() error {
 	return nil
 }
 
-func (p *TSimpleServer) processRequests(client TTransport) error {
+// If err is actually EOF, return nil, otherwise return err as-is.
+func treatEOFErrorsAsNil(err error) error {
+	if err == nil {
+		return nil
+	}
+	// err could be io.EOF wrapped with TProtocolException,
+	// so that err == io.EOF doesn't necessarily work in some cases.
+	if err.Error() == io.EOF.Error() {
+		return nil
+	}
+	if err, ok := err.(TTransportException); ok && err.TypeId() == END_OF_FILE {
+		return nil
+	}
+	return err
+}
+
+func (p *TSimpleServer) processRequests(client TTransport) (err error) {
+	defer func() {
+		err = treatEOFErrorsAsNil(err)
+	}()
+
 	processor := p.processorFactory.GetProcessor(client)
 	inputTransport, err := p.inputTransportFactory.GetTransport(client)
 	if err != nil {
@@ -252,7 +272,12 @@ func (p *TSimpleServer) processRequests(client TTransport) error {
 			return nil
 		}
 
-		ctx := defaultCtx
+		ctx := SetResponseHelper(
+			defaultCtx,
+			TResponseHelper{
+				THeaderResponseHelper: NewTHeaderResponseHelper(outputProtocol),
+			},
+		)
 		if headerProtocol != nil {
 			// We need to call ReadFrame here, otherwise we won't
 			// get any headers on the AddReadTHeaderToContext call.
@@ -261,9 +286,6 @@ func (p *TSimpleServer) processRequests(client TTransport) error {
 			// won't break when it's called again later when we
 			// actually start to read the message.
 			if err := headerProtocol.ReadFrame(); err != nil {
-				if err == io.EOF {
-					return nil
-				}
 				return err
 			}
 			ctx = AddReadTHeaderToContext(ctx, headerProtocol.GetReadHeaders())
@@ -271,9 +293,7 @@ func (p *TSimpleServer) processRequests(client TTransport) error {
 		}
 
 		ok, err := processor.Process(ctx, inputProtocol, outputProtocol)
-		if err, ok := err.(TTransportException); ok && err.TypeId() == END_OF_FILE {
-			return nil
-		} else if err != nil {
+		if _, ok := err.(TTransportException); ok && err != nil {
 			return err
 		}
 		if err, ok := err.(TApplicationException); ok && err.TypeId() == UNKNOWN_METHOD {

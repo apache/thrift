@@ -52,8 +52,8 @@ use ProtocolErrorKind;
 /// impl TProcessor for ActualProcessor {
 ///     fn process(
 ///         &self,
-///         _: &mut TInputProtocol,
-///         _: &mut TOutputProtocol
+///         _: &mut dyn TInputProtocol,
+///         _: &mut dyn TOutputProtocol
 ///     ) -> thrift::Result<()> {
 ///         unimplemented!()
 ///     }

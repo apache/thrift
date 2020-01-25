@@ -35,6 +35,7 @@ uses
   Thrift.Protocol.Multiplex,
   Thrift.Processor.Multiplex,
   Thrift.Collections,
+  Thrift.Configuration,
   Thrift.Utils,
   Thrift,
   Benchmark,  // in gen-delphi folder
@@ -156,11 +157,14 @@ var
   aggrProcessor    : IProcessor;
   multiplex        : IMultiplexedProcessor;
   ServerEngine     : IServer;
+  config           : IThriftConfiguration;
 begin
   try
+    config := TThriftConfigurationImpl.Create;
+
     // create protocol factory, default to BinaryProtocol
     ProtocolFactory  := TBinaryProtocolImpl.TFactory.Create( TRUE, TRUE);
-    servertrans      := TServerSocketImpl.Create( 9090, 0, FALSE);
+    servertrans      := TServerSocketImpl.Create( 9090, DEFAULT_THRIFT_TIMEOUT, FALSE, config);
     TransportFactory := TFramedTransportImpl.TFactory.Create;
 
     benchHandler     := TBenchmarkServiceImpl.Create;

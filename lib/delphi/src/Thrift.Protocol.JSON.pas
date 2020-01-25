@@ -29,6 +29,7 @@ uses
   SysUtils,
   Math,
   Generics.Collections,
+  Thrift.Configuration,
   Thrift.Transport,
   Thrift.Protocol,
   Thrift.Utils;
@@ -52,17 +53,17 @@ type
         function GetProtocol( const trans: ITransport): IProtocol;
       end;
 
-  private
+  strict private
     class function GetTypeNameForTypeID(typeID : TType) : string;
     class function GetTypeIDForTypeName( const name : string) : TType;
 
-  protected
+  strict protected
     type
       // Base class for tracking JSON contexts that may require
       // inserting/Reading additional JSON syntax characters.
       // This base context does nothing.
       TJSONBaseContext = class
-      protected
+      strict protected
         FProto : Pointer;  // weak IJSONProtocol;
       public
         constructor Create( const aProto : IJSONProtocol);
@@ -74,7 +75,7 @@ type
       // Context for JSON lists.
       // Will insert/Read commas before each item except for the first one.
       TJSONListContext = class( TJSONBaseContext)
-      private
+      strict private
         FFirst : Boolean;
       public
         constructor Create( const aProto : IJSONProtocol);
@@ -86,7 +87,7 @@ type
       // pair, and commas before each key except the first. In addition, will indicate that numbers
       // in the key position need to be escaped in quotes (since JSON keys must be strings).
       TJSONPairContext = class( TJSONBaseContext)
-      private
+      strict private
         FFirst, FColon : Boolean;
       public
         constructor Create( const aProto : IJSONProtocol);
@@ -97,11 +98,13 @@ type
 
       // Holds up to one byte from the transport
       TLookaheadReader = class
-      protected
+      strict protected
         FProto : Pointer;  // weak IJSONProtocol;
+
+      protected
         constructor Create( const aProto : IJSONProtocol);
 
-      private
+      strict private
         FHasData : Boolean;
         FData    : Byte;
 
@@ -115,7 +118,7 @@ type
         function Peek : Byte;
       end;
 
-  protected
+  strict protected
     // Stack of nested contexts that we may be in
     FContextStack : TStack<TJSONBaseContext>;
 
@@ -130,17 +133,21 @@ type
     procedure PushContext( const aCtx : TJSONBaseContext);
     procedure PopContext;
 
+  strict protected
+    function  GetMinSerializedSize( const aType : TType) : Integer;  override;
+    procedure Reset;  override;
+
   public
     // TJSONProtocolImpl Constructor
     constructor Create( const aTrans : ITransport);
     destructor Destroy;   override;
 
-  protected
+  strict protected
     // IJSONProtocol
     // Read a byte that must match b; otherwise an exception is thrown.
     procedure ReadJSONSyntaxChar( b : Byte);
 
-  private
+  strict private
     // Convert a byte containing a hex char ('0'-'9' or 'a'-'f') into its corresponding hex value
     class function HexVal( ch : Byte) : Byte;
 
@@ -213,7 +220,7 @@ type
     function ReadBinary: TBytes; override;
 
 
-  private
+  strict private
     // Reading methods.
 
     // Read in a JSON string, unescaping as appropriate.
@@ -292,7 +299,7 @@ const
 
 function TJSONProtocolImpl.TFactory.GetProtocol( const trans: ITransport): IProtocol;
 begin
-  result := TJSONProtocolImpl.Create(trans);
+  result := TJSONProtocolImpl.Create( trans);
 end;
 
 class function TJSONProtocolImpl.GetTypeNameForTypeID(typeID : TType) : string;
@@ -475,6 +482,13 @@ begin
   finally
     inherited Destroy;
   end;
+end;
+
+
+procedure TJSONProtocolImpl.Reset;
+begin
+  inherited Reset;
+  ResetContextStack;
 end;
 
 
@@ -681,6 +695,7 @@ end;
 
 procedure TJSONProtocolImpl.WriteMessageBegin( const aMsg : TThriftMessage);
 begin
+  Reset;
   ResetContextStack;  // THRIFT-1473
 
   WriteJSONArrayStart;
@@ -1051,6 +1066,7 @@ end;
 
 function TJSONProtocolImpl.ReadMessageBegin: TThriftMessage;
 begin
+  Reset;
   ResetContextStack;  // THRIFT-1473
 
   Init( result);
@@ -1121,6 +1137,8 @@ begin
   result.ValueType := GetTypeIDForTypeName( str);
 
   result.Count := ReadJSONInteger;
+  CheckReadBytesAvailable(result);
+
   ReadJSONObjectStart;
 end;
 
@@ -1141,6 +1159,7 @@ begin
   str := SysUtils.TEncoding.UTF8.GetString( ReadJSONString(FALSE));
   result.ElementType := GetTypeIDForTypeName( str);
   result.Count := ReadJSONInteger;
+  CheckReadBytesAvailable(result);
 end;
 
 
@@ -1159,6 +1178,7 @@ begin
   str := SysUtils.TEncoding.UTF8.GetString( ReadJSONString(FALSE));
   result.ElementType := GetTypeIDForTypeName( str);
   result.Count := ReadJSONInteger;
+  CheckReadBytesAvailable(result);
 end;
 
 
@@ -1214,6 +1234,30 @@ function TJSONProtocolImpl.ReadBinary : TBytes;
 begin
   result := ReadJSONBase64;
 end;
+
+
+function TJSONProtocolImpl.GetMinSerializedSize( const aType : TType) : Integer;
+// Return the minimum number of bytes a type will consume on the wire
+begin
+  case aType of
+    TType.Stop:    result := 0;
+    TType.Void:    result := 0;
+    TType.Bool_:   result := 1;
+    TType.Byte_:   result := 1;
+    TType.Double_: result := 1;
+    TType.I16:     result := 1;
+    TType.I32:     result := 1;
+    TType.I64:     result := 1;
+    TType.String_: result := 2;  // empty string
+    TType.Struct:  result := 2;  // empty struct
+    TType.Map:     result := 2;  // empty map
+    TType.Set_:    result := 2;  // empty set
+    TType.List:    result := 2;  // empty list
+  else
+    raise TTransportExceptionBadArgs.Create('Unhandled type code');
+  end;
+end;
+
 
 
 //--- init code ---

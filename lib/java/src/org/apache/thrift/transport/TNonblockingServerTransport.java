@@ -28,4 +28,12 @@ import java.nio.channels.Selector;
 public abstract class TNonblockingServerTransport extends TServerTransport {
 
   public abstract void registerSelector(Selector selector);
+
+  /**
+   *
+   * @return an incoming connection or null if there is none.
+   * @throws TTransportException
+   */
+  @Override
+  public abstract TNonblockingTransport accept() throws TTransportException;
 }

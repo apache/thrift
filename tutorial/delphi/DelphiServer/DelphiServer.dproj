@@ -51,6 +51,7 @@
 			</DelphiCompile>
 			<DCCReference Include="..\..\..\lib\delphi\src\Thrift.pas"/>
 			<DCCReference Include="..\..\..\lib\delphi\src\Thrift.Collections.pas"/>
+			<DCCReference Include="..\..\..\lib\delphi\src\Thrift.Configuration.pas"/>
 			<DCCReference Include="..\..\..\lib\delphi\src\Thrift.Exception.pas"/>
 			<DCCReference Include="..\..\..\lib\delphi\src\Thrift.Utils.pas"/>
 			<DCCReference Include="..\..\..\lib\delphi\src\Thrift.Stream.pas"/>

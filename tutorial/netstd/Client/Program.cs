@@ -40,15 +40,16 @@ namespace Client
     {
         private static ServiceCollection ServiceCollection = new ServiceCollection();
         private static ILogger Logger;
+        private static readonly TConfiguration Configuration = null;  // new TConfiguration() if  needed
 
         private static void DisplayHelp()
         {
             Logger.LogInformation(@"
 Usage: 
-    Client.exe -help
+    Client -help
         will diplay help information 
 
-    Client.exe -tr:<transport> -bf:<buffering> -pr:<protocol> -mc:<numClients>
+    Client -tr:<transport> -bf:<buffering> -pr:<protocol> -mc:<numClients>
         will run client with specified arguments (tcp transport and binary protocol by default) and with 1 client
 
 Options:
@@ -73,7 +74,7 @@ Options:
         <numClients> - number of multiple clients to connect to server (max 100, default 1)
 
 Sample:
-    Client.exe -tr:tcp -p:binary
+    Client -tr:tcp -pr:binary
 ");
         }
 
@@ -82,19 +83,22 @@ Sample:
             args = args ?? new string[0];
 
             ServiceCollection.AddLogging(logging => ConfigureLogging(logging));
-            Logger = ServiceCollection.BuildServiceProvider().GetService<ILoggerFactory>().CreateLogger(nameof(Client));
-
-            if (args.Any(x => x.StartsWith("-help", StringComparison.OrdinalIgnoreCase)))
+            using (var serviceProvider = ServiceCollection.BuildServiceProvider())
             {
-                DisplayHelp();
-                return;
-            }
+                Logger = serviceProvider.GetService<ILoggerFactory>().CreateLogger(nameof(Client));
 
-            Logger.LogInformation("Starting client...");
+                if (args.Any(x => x.StartsWith("-help", StringComparison.OrdinalIgnoreCase)))
+                {
+                    DisplayHelp();
+                    return;
+                }
 
-            using (var source = new CancellationTokenSource())
-            {
-                RunAsync(args, source.Token).GetAwaiter().GetResult();
+                Logger.LogInformation("Starting client...");
+
+                using (var source = new CancellationTokenSource())
+                {
+                    RunAsync(args, source.Token).GetAwaiter().GetResult();
+                }
             }
         }
 
@@ -143,7 +147,7 @@ Sample:
 
         private static TTransport GetTransport(string[] args)
         {
-            TTransport transport = new TSocketTransport(IPAddress.Loopback, 9090);
+            TTransport transport = new TSocketTransport(IPAddress.Loopback, 9090, Configuration);
 
             // construct endpoint transport
             var transportArg = args.FirstOrDefault(x => x.StartsWith("-tr"))?.Split(':')?[1];
@@ -152,19 +156,20 @@ Sample:
                 switch (selectedTransport)
                 {
                     case Transport.Tcp:
-                        transport = new TSocketTransport(IPAddress.Loopback, 9090);
+                        transport = new TSocketTransport(IPAddress.Loopback, 9090, Configuration);
                         break;
 
                     case Transport.NamedPipe:
-                        transport = new TNamedPipeTransport(".test");
+                        transport = new TNamedPipeTransport(".test", Configuration);
                         break;
 
                     case Transport.Http:
-                        transport = new THttpTransport(new Uri("http://localhost:9090"), null);
+                        transport = new THttpTransport(new Uri("http://localhost:9090"), Configuration);
                         break;
 
                     case Transport.TcpTls:
-                        transport = new TTlsSocketTransport(IPAddress.Loopback, 9090, GetCertificate(), CertValidator, LocalCertificateSelectionCallback);
+                        transport = new TTlsSocketTransport(IPAddress.Loopback, 9090, Configuration,
+                            GetCertificate(), CertValidator, LocalCertificateSelectionCallback);
                         break;
 
                     default:

@@ -51,10 +51,11 @@ t_netstd_generator::t_netstd_generator(t_program* program, const map<string, str
     : t_oop_generator(program)
 {
     (void)option_string;
-
+    use_pascal_case_properties = false;
     union_ = false;
     serialize_ = false;
     wcf_ = false;
+
     wcf_namespace_.clear();
 
     map<string, string>::const_iterator iter;
@@ -75,9 +76,12 @@ t_netstd_generator::t_netstd_generator(t_program* program, const map<string, str
             wcf_ = true;
             wcf_namespace_ = iter->second;
         }
-        else
+        else if (iter->first.compare("pascal") == 0)
         {
-            throw "unknown option netstd:" + iter->first;
+          use_pascal_case_properties = true;
+        }
+        else {
+          throw "unknown option netstd:" + iter->first;
         }
     }
 
@@ -188,6 +192,7 @@ void t_netstd_generator::init_generator()
     pverbose("- union ...... %s\n", (is_union_enabled() ? "ON" : "off"));
     pverbose("- serialize .. %s\n", (is_serialize_enabled() ? "ON" : "off"));
     pverbose("- wcf ........ %s\n", (is_wcf_enabled() ? "ON" : "off"));
+    pverbose("- pascal ..... %s\n", (use_pascal_case_properties ? "ON" : "off"));
 }
 
 string t_netstd_generator::normalize_name(string name)
@@ -2674,18 +2679,41 @@ void t_netstd_generator::prepare_member_name_mapping(void* scope, const vector<t
     }
 }
 
-string t_netstd_generator::prop_name(t_field* tfield, bool suppress_mapping)
-{
-    string name(tfield->get_name());
-    if (suppress_mapping)
-    {
-        name[0] = toupper(name[0]);
+
+string t_netstd_generator::convert_to_pascal_case(const string& str) {
+  string out;
+  bool must_capitalize = true;
+  bool first_character = true;
+  for (auto it = str.begin(); it != str.end(); ++it) {
+    if (std::isalnum(*it)) {
+      if (must_capitalize) {
+        out.append(1, (char)::toupper(*it));
+        must_capitalize = false;
+      } else {
+        out.append(1, *it);
+      }
+    } else {
+      if (first_character) //this is a private variable and should not be PascalCased
+        return str;
+      must_capitalize = true;
     }
-    else
-    {
-        name = get_mapped_member_name(name);
-    }
-    return name;
+    first_character = false;
+  }
+  return out;
+}
+
+
+string t_netstd_generator::prop_name(t_field* tfield, bool suppress_mapping) {
+  string name(tfield->get_name());
+  if (suppress_mapping) {
+    name[0] = toupper(name[0]);
+    if (use_pascal_case_properties)
+      name = t_netstd_generator::convert_to_pascal_case(name);
+  } else {
+    name = get_mapped_member_name(name);
+  }
+
+  return name;
 }
 
 string t_netstd_generator::type_name(t_type* ttype)
@@ -3020,4 +3048,5 @@ THRIFT_REGISTER_GENERATOR(
     "    wcf:             Adds bindings for WCF to generated classes.\n"
     "    serial:          Add serialization support to generated classes.\n"
     "    union:           Use new union typing, which includes a static read function for union types.\n"
+    "    pascal:          Generate Pascal Case property names according to Microsoft naming convention.\n"
 )

@@ -240,6 +240,8 @@ public:
 
   void generate_go_docstring(std::ostream& out, t_doc* tdoc);
 
+  void parse_go_tags(map<string,string>* tags, const string in);
+
   /**
    * Helper rendering functions
    */
@@ -311,6 +313,7 @@ private:
   std::string camelcase(const std::string& value) const;
   void fix_common_initialism(std::string& value, int i) const;
   std::string publicize(const std::string& value, bool is_args_or_result = false) const;
+  std::string publicize(const std::string& value, bool is_args_or_result, const std::string& service_name) const;
   std::string privatize(const std::string& value) const;
   std::string new_prefix(const std::string& value) const;
   static std::string variable_name_to_go_name(const std::string& value);
@@ -464,7 +467,7 @@ void t_go_generator::fix_common_initialism(std::string& value, int i) const {
   }
 }
 
-std::string t_go_generator::publicize(const std::string& value, bool is_args_or_result) const {
+std::string t_go_generator::publicize(const std::string& value, bool is_args_or_result, const std::string& service_name) const {
   if (value.size() <= 0) {
     return value;
   }
@@ -506,10 +509,14 @@ std::string t_go_generator::publicize(const std::string& value, bool is_args_or_
 
   // Avoid naming collisions with other services
   if (is_args_or_result) {
-    prefix += publicize(service_name_);
+    prefix += publicize(service_name);
   }
 
   return prefix + value2;
+}
+
+std::string t_go_generator::publicize(const std::string& value, bool is_args_or_result) const {
+  return publicize(value, is_args_or_result, service_name_);
 }
 
 std::string t_go_generator::new_prefix(const std::string& value) const {
@@ -772,9 +779,14 @@ string t_go_generator::render_included_programs(string& unused_prot) {
   const vector<t_program*>& includes = program_->get_includes();
   string result = "";
   string local_namespace = program_->get_namespace("go");
+  std::set<std::string> included;
   for (auto include : includes) {
     if (!local_namespace.empty() && local_namespace == include->get_namespace("go")) {
       continue;
+    }
+
+    if (!included.insert(include->get_namespace("go")).second) {
+        continue;
     }
 
     result += render_program_import(include, unused_prot);
@@ -1367,7 +1379,9 @@ void t_go_generator::generate_go_struct_definition(ostream& out,
 
       t_type* fieldType = (*m_iter)->get_type();
       string goType = type_to_go_type_with_opt(fieldType, is_pointer_field(*m_iter));
-      string gotag = "db:\"" + escape_string((*m_iter)->get_name())  + "\" ";
+
+      map<string,string>tags;
+      tags["db"]=escape_string((*m_iter)->get_name());
 
       // Only add the `omitempty` tag if this field is optional and has no default value.
       // Otherwise a proper value like `false` for a bool field will be ommitted from
@@ -1375,16 +1389,25 @@ void t_go_generator::generate_go_struct_definition(ostream& out,
       bool has_default = (*m_iter)->get_value();
       bool is_optional = (*m_iter)->get_req() == t_field::T_OPTIONAL;
       if (is_optional && !has_default) {
-        gotag += "json:\"" + escape_string((*m_iter)->get_name()) + ",omitempty\"";
+        tags["json"]=escape_string((*m_iter)->get_name())+",omitempty";
       } else {
-        gotag += "json:\"" + escape_string((*m_iter)->get_name()) + "\"";
+        tags["json"]=escape_string((*m_iter)->get_name());
       }
 
-      // Check for user override of db and json tags using "go.tag"
+      // Check for user defined tags and them if there are any. User defined tags
+      // can override the above db and json tags.
       std::map<string, string>::iterator it = (*m_iter)->annotations_.find("go.tag");
       if (it != (*m_iter)->annotations_.end()) {
-        gotag = it->second;
+        parse_go_tags(&tags, it->second);
       }
+
+      string gotag;
+      for (auto it = tags.begin(); it != tags.end(); ++it) {
+        gotag += it->first + ":\"" + it->second + "\" ";
+      }
+      // Trailing whitespace
+      gotag.resize(gotag.size()-1);
+
       indent(out) << publicize((*m_iter)->get_name()) << " " << goType << " `thrift:\""
                   << escape_string((*m_iter)->get_name()) << "," << sorted_keys_pos;
       if ((*m_iter)->get_req() == t_field::T_REQUIRED) {
@@ -2121,13 +2144,26 @@ void t_go_generator::generate_service_client(t_service* tservice) {
  * @param tservice The service to generate a remote for.
  */
 void t_go_generator::generate_service_remote(t_service* tservice) {
-  vector<t_function*> functions = tservice->get_functions();
-  t_service* parent = tservice->get_extends();
+  vector<t_function*> functions;
+  std::unordered_map<std::string, std::string> func_to_service;
 
-  // collect inherited functions
+  // collect all functions including inherited functions
+  t_service* parent = tservice;
   while (parent != NULL) {
     vector<t_function*> p_functions = parent->get_functions();
     functions.insert(functions.end(), p_functions.begin(), p_functions.end());
+
+    // We need to maintain a map of functions names to the name of their parent.
+    // This is because functions may come from a parent service, and if we need
+    // to create the arguments struct (e.g. `NewParentServiceNameFuncNameArgs()`)
+    // we need to make sure to specify the correct service name.
+    for (vector<t_function*>::iterator f_iter = p_functions.begin(); f_iter != p_functions.end(); ++f_iter) {
+      auto it = func_to_service.find((*f_iter)->get_name());
+      if (it == func_to_service.end()) {
+        func_to_service.emplace((*f_iter)->get_name(), parent->get_name());
+      }
+    }
+
     parent = parent->get_extends();
   }
 
@@ -2340,7 +2376,7 @@ void t_go_generator::generate_service_remote(t_service* tservice) {
     std::vector<t_field*>::size_type num_args = args.size();
     string funcName((*f_iter)->get_name());
     string pubName(publicize(funcName));
-    string argumentsName(publicize(funcName + "_args", true));
+    string argumentsName(publicize(funcName + "_args", true, func_to_service[funcName]));
     f_remote << indent() << "case \"" << escape_string(funcName) << "\":" << endl;
     indent_up();
     f_remote << indent() << "if flag.NArg() - 1 != " << num_args << " {" << endl;
@@ -3710,6 +3746,48 @@ string t_go_generator::type_to_spec_args(t_type* ttype) {
   }
 
   throw "INVALID TYPE IN type_to_spec_args: " + ttype->get_name();
+}
+
+// parses a string of struct tags into key/value pairs and writes them to the given map
+void t_go_generator::parse_go_tags(map<string,string>* tags, const string in) {
+  string key;
+  string value;
+
+  size_t mode=0; // 0/1/2 for key/value/whitespace
+  size_t index=0;
+  for (auto it=in.begin(); it<in.end(); ++it, ++index) {
+      // Normally we start in key mode because the IDL is expected to be in
+      // (go.tag="key:\"value\"") format, but if there is leading whitespace
+      // we need to start in whitespace mode.
+      if (index==0 && mode==0 && in[index]==' ') {
+        mode=2;
+      }
+
+      if (mode==2) {
+          if (in[index]==' ') {
+              continue;
+          }
+          mode=0;
+      }
+
+      if (mode==0) {
+          if (in[index]==':') {
+              mode=1;
+              index++;
+              it++;
+              continue;
+          }
+          key+=in[index];
+      } else if (mode==1) {
+          if (in[index]=='"') {
+              (*tags)[key]=value;
+              key=value="";
+              mode=2;
+              continue;
+          }
+          value+=in[index];
+      }
+  }
 }
 
 bool format_go_output(const string& file_path) {

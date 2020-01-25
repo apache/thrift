@@ -16,6 +16,7 @@
 // under the License.
 
 using System;
+using System.Buffers.Binary;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
@@ -23,13 +24,12 @@ using System.Threading.Tasks;
 namespace Thrift.Transport
 {
     // ReSharper disable once InconsistentNaming
-    public class TFramedTransport : TTransport
+    public class TFramedTransport : TLayeredTransport
     {
         private const int HeaderSize = 4;
         private readonly byte[] HeaderBuf = new byte[HeaderSize];
-        private readonly Client.TMemoryBufferTransport ReadBuffer = new Client.TMemoryBufferTransport();
-        private readonly Client.TMemoryBufferTransport WriteBuffer = new Client.TMemoryBufferTransport();
-        private readonly TTransport InnerTransport;
+        private readonly Client.TMemoryBufferTransport ReadBuffer;
+        private readonly Client.TMemoryBufferTransport WriteBuffer;
 
         private bool IsDisposed;
 
@@ -42,9 +42,10 @@ namespace Thrift.Transport
         }
 
         public TFramedTransport(TTransport transport)
+            : base(transport)
         {
-            InnerTransport = transport ?? throw new ArgumentNullException(nameof(transport));
-
+            ReadBuffer = new Client.TMemoryBufferTransport(Configuration);
+            WriteBuffer = new Client.TMemoryBufferTransport(Configuration);
             InitWriteBuffer();
         }
 
@@ -86,7 +87,11 @@ namespace Thrift.Transport
         private async ValueTask ReadFrameAsync(CancellationToken cancellationToken)
         {
             await InnerTransport.ReadAllAsync(HeaderBuf, 0, HeaderSize, cancellationToken);
-            var size = DecodeFrameSize(HeaderBuf);
+            int size = BinaryPrimitives.ReadInt32BigEndian(HeaderBuf);
+
+            if ((0 > size) || (size > Configuration.MaxFrameSize))  // size must be in the range 0 to allowed max
+                throw new TTransportException(TTransportException.ExceptionType.Unknown, $"Maximum frame size exceeded ({size} bytes)");
+            UpdateKnownMessageSize(size + HeaderSize);
 
             ReadBuffer.SetLength(size);
             ReadBuffer.Seek(0, SeekOrigin.Begin);
@@ -133,7 +138,7 @@ namespace Thrift.Transport
             }
 
             // Inject message header into the reserved buffer space
-            EncodeFrameSize(dataLen, bufSegment.Array);
+            BinaryPrimitives.WriteInt32BigEndian(bufSegment.Array, dataLen);
 
             // Send the entire message at once
             await InnerTransport.WriteAsync(bufSegment.Array, 0, bufSegment.Count, cancellationToken);
@@ -150,23 +155,15 @@ namespace Thrift.Transport
             WriteBuffer.Seek(0, SeekOrigin.End);
         }
 
-        private static void EncodeFrameSize(int frameSize, byte[] buf)
+        public override void CheckReadBytesAvailable(long numBytes)
         {
-            buf[0] = (byte) (0xff & (frameSize >> 24));
-            buf[1] = (byte) (0xff & (frameSize >> 16));
-            buf[2] = (byte) (0xff & (frameSize >> 8));
-            buf[3] = (byte) (0xff & (frameSize));
+            var buffered = ReadBuffer.Length - ReadBuffer.Position;
+            if (buffered < numBytes)
+            {
+                numBytes -= buffered;
+                InnerTransport.CheckReadBytesAvailable(numBytes);
+            }
         }
-
-        private static int DecodeFrameSize(byte[] buf)
-        {
-            return
-                ((buf[0] & 0xff) << 24) |
-                ((buf[1] & 0xff) << 16) |
-                ((buf[2] & 0xff) << 8) |
-                (buf[3] & 0xff);
-        }
-
 
         private void CheckNotDisposed()
         {

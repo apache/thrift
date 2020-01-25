@@ -42,10 +42,12 @@ namespace Thrift.Transport.Client
         private SslStream _secureStream;
         private int _timeout;
 
-        public TTlsSocketTransport(TcpClient client, X509Certificate2 certificate, bool isServer = false,
+        public TTlsSocketTransport(TcpClient client, TConfiguration config,
+            X509Certificate2 certificate, bool isServer = false,
             RemoteCertificateValidationCallback certValidator = null,
             LocalCertificateSelectionCallback localCertificateSelectionCallback = null,
             SslProtocols sslProtocols = SslProtocols.Tls12)
+            : base(config)
         {
             _client = client;
             _certificate = certificate;
@@ -67,11 +69,12 @@ namespace Thrift.Transport.Client
             }
         }
 
-        public TTlsSocketTransport(IPAddress host, int port, string certificatePath,
+        public TTlsSocketTransport(IPAddress host, int port, TConfiguration config,
+            string certificatePath,
             RemoteCertificateValidationCallback certValidator = null,
             LocalCertificateSelectionCallback localCertificateSelectionCallback = null,
             SslProtocols sslProtocols = SslProtocols.Tls12)
-            : this(host, port, 0,
+            : this(host, port, config, 0,
                 new X509Certificate2(certificatePath),
                 certValidator,
                 localCertificateSelectionCallback,
@@ -79,12 +82,12 @@ namespace Thrift.Transport.Client
         {
         }
 
-        public TTlsSocketTransport(IPAddress host, int port,
+        public TTlsSocketTransport(IPAddress host, int port, TConfiguration config,
             X509Certificate2 certificate = null,
             RemoteCertificateValidationCallback certValidator = null,
             LocalCertificateSelectionCallback localCertificateSelectionCallback = null,
             SslProtocols sslProtocols = SslProtocols.Tls12)
-            : this(host, port, 0,
+            : this(host, port, config, 0,
                 certificate,
                 certValidator,
                 localCertificateSelectionCallback,
@@ -92,11 +95,12 @@ namespace Thrift.Transport.Client
         {
         }
 
-        public TTlsSocketTransport(IPAddress host, int port, int timeout,
+        public TTlsSocketTransport(IPAddress host, int port, TConfiguration config, int timeout,
             X509Certificate2 certificate,
             RemoteCertificateValidationCallback certValidator = null,
             LocalCertificateSelectionCallback localCertificateSelectionCallback = null,
             SslProtocols sslProtocols = SslProtocols.Tls12)
+            : base(config)
         {
             _host = host;
             _port = port;
@@ -109,11 +113,12 @@ namespace Thrift.Transport.Client
             InitSocket();
         }
 
-        public TTlsSocketTransport(string host, int port, int timeout,
+        public TTlsSocketTransport(string host, int port, TConfiguration config, int timeout,
             X509Certificate2 certificate,
             RemoteCertificateValidationCallback certValidator = null,
             LocalCertificateSelectionCallback localCertificateSelectionCallback = null,
             SslProtocols sslProtocols = SslProtocols.Tls12)
+            : base(config)
         {
             try
             {

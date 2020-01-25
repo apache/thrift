@@ -24,12 +24,11 @@ using System.Threading.Tasks;
 namespace Thrift.Transport
 {
     // ReSharper disable once InconsistentNaming
-    public class TBufferedTransport : TTransport
+    public class TBufferedTransport : TLayeredTransport
     {
         private readonly int DesiredBufferSize;
-        private readonly Client.TMemoryBufferTransport ReadBuffer = new Client.TMemoryBufferTransport(1024);
-        private readonly Client.TMemoryBufferTransport WriteBuffer = new Client.TMemoryBufferTransport(1024);
-        private readonly TTransport InnerTransport;
+        private readonly Client.TMemoryBufferTransport ReadBuffer;
+        private readonly Client.TMemoryBufferTransport WriteBuffer;
         private bool IsDisposed;
 
         public class Factory : TTransportFactory
@@ -42,19 +41,20 @@ namespace Thrift.Transport
 
         //TODO: should support only specified input transport?
         public TBufferedTransport(TTransport transport, int bufSize = 1024)
+            : base(transport)
         {
             if (bufSize <= 0)
             {
                 throw new ArgumentOutOfRangeException(nameof(bufSize), "Buffer size must be a positive number.");
             }
 
-            InnerTransport = transport ?? throw new ArgumentNullException(nameof(transport));
             DesiredBufferSize = bufSize;
 
-            if (DesiredBufferSize != ReadBuffer.Capacity)
-                ReadBuffer.Capacity = DesiredBufferSize;
-            if (DesiredBufferSize != WriteBuffer.Capacity)
-                WriteBuffer.Capacity = DesiredBufferSize;
+            WriteBuffer = new Client.TMemoryBufferTransport(InnerTransport.Configuration, bufSize);
+            ReadBuffer = new Client.TMemoryBufferTransport(InnerTransport.Configuration, bufSize);
+
+            Debug.Assert(DesiredBufferSize == ReadBuffer.Capacity);
+            Debug.Assert(DesiredBufferSize == WriteBuffer.Capacity);
         }
 
         public TTransport UnderlyingTransport
@@ -171,6 +171,17 @@ namespace Thrift.Transport
 
             await InnerTransport.FlushAsync(cancellationToken);
         }
+
+        public override void CheckReadBytesAvailable(long numBytes)
+        {
+            var buffered = ReadBuffer.Length - ReadBuffer.Position;
+            if (buffered < numBytes)
+            {
+                numBytes -= buffered;
+                InnerTransport.CheckReadBytesAvailable(numBytes);
+            }
+        }
+
 
         private void CheckNotDisposed()
         {

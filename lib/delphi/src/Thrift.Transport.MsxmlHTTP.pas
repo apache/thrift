@@ -34,14 +34,15 @@ uses
     Winapi.ActiveX, Winapi.msxml,
   {$ENDIF}
   Thrift.Collections,
+  Thrift.Configuration,
   Thrift.Transport,
   Thrift.Exception,
   Thrift.Utils,
   Thrift.Stream;
 
 type
-  TMsxmlHTTPClientImpl = class( TTransportImpl, IHTTPClient)
-  private
+  TMsxmlHTTPClientImpl = class( TEndpointTransportBase, IHTTPClient)
+  strict private
     FUri : string;
     FInputStream : IThriftStream;
     FOutputStream : IThriftStream;
@@ -52,7 +53,7 @@ type
     FCustomHeaders : IThriftDictionary<string,string>;
 
     function CreateRequest: IXMLHTTPRequest;
-  protected
+  strict protected
     function GetIsOpen: Boolean; override;
     procedure Open(); override;
     procedure Close(); override;
@@ -80,26 +81,29 @@ type
     property ReadTimeout: Integer read GetReadTimeout write SetReadTimeout;
     property CustomHeaders: IThriftDictionary<string,string> read GetCustomHeaders;
   public
-    constructor Create( const AUri: string);
+    constructor Create( const aUri: string; const aConfig : IThriftConfiguration);  reintroduce;
     destructor Destroy; override;
   end;
 
 
 implementation
 
+const
+  XMLHTTP_CONNECTION_TIMEOUT = 60 * 1000;
+  XMLHTTP_SENDRECV_TIMEOUT   = 30 * 1000;
 
 { TMsxmlHTTPClientImpl }
 
-constructor TMsxmlHTTPClientImpl.Create(const AUri: string);
+constructor TMsxmlHTTPClientImpl.Create( const aUri: string; const aConfig : IThriftConfiguration);
 begin
-  inherited Create;
-  FUri := AUri;
+  inherited Create( aConfig);
+  FUri := aUri;
 
   // defaults according to MSDN
   FDnsResolveTimeout := 0; // no timeout
-  FConnectionTimeout := 60 * 1000;
-  FSendTimeout       := 30 * 1000;
-  FReadTimeout       := 30 * 1000;
+  FConnectionTimeout := XMLHTTP_CONNECTION_TIMEOUT;
+  FSendTimeout       := XMLHTTP_SENDRECV_TIMEOUT;
+  FReadTimeout       := XMLHTTP_SENDRECV_TIMEOUT;
 
   FCustomHeaders := TThriftDictionaryImpl<string,string>.Create;
   FOutputStream := TThriftStreamAdapterDelphi.Create( TMemoryStream.Create, True);
@@ -225,7 +229,7 @@ begin
   end;
 
   try
-    Result := FInputStream.Read( pBuf, buflen, off, len)
+    Result := FInputStream.Read( pBuf, buflen, off, len);
   except
     on E: Exception
     do raise TTransportExceptionUnknown.Create(E.Message);
@@ -252,6 +256,7 @@ begin
     xmlhttp.send( IUnknown( TStreamAdapter.Create( ms, soReference )));
     FInputStream := nil;
     FInputStream := TThriftStreamAdapterCOM.Create( IUnknown( xmlhttp.responseStream) as IStream);
+    UpdateKnownMessageSize( FInputStream.Size);
   finally
     ms.Free;
   end;

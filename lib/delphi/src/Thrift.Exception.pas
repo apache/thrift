@@ -29,6 +29,8 @@ uses
 type
   // base class for all Thrift exceptions
   TException = class( SysUtils.Exception)
+  strict private
+    function GetMessageText : string;
   public
     function Message : string;        // hide inherited property: allow read, but prevent accidental writes
     procedure UpdateMessageProperty;  // update inherited message property with toString()
@@ -45,17 +47,25 @@ function TException.Message;
 // allow read (exception summary), but prevent accidental writes
 // read will return the exception summary
 begin
-  result := Self.ToString;
+  result := Self.GetMessageText;
 end;
+
 
 procedure TException.UpdateMessageProperty;
 // Update the inherited Message property to better conform to standard behaviour.
 // Nice benefit: The IDE is now able to show the exception message again.
 begin
-  inherited Message := Self.ToString;  // produces a summary text
+  inherited Message := Self.GetMessageText;
 end;
 
 
+function TException.GetMessageText : string;
+// produces a summary text
+begin
+  result := Self.ToString;
+  if (result <> '') and (result[1] = '(')
+  then result := Copy(result,2,Length(result)-2);
+end;
 
 
 end.

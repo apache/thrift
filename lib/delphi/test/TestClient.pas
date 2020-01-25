@@ -53,6 +53,8 @@ uses
   Thrift.Test,
   Thrift.WinHTTP,
   Thrift.Utils,
+
+  Thrift.Configuration,
   Thrift.Collections;
 
 type
@@ -93,7 +95,7 @@ type
       Normal,          // Fairly small array of usual size (256 bytes)
       ByteArrayTest,   // THRIFT-4454 Large writes/reads may cause range check errors in debug mode
       PipeWriteLimit,  // THRIFT-4372 Pipe write operations across a network are limited to 65,535 bytes per write.
-      TwentyMB         // that's quite a bit of data
+      FifteenMB        // quite a bit of data, but still below the default max frame size
     );
 
   private
@@ -122,7 +124,7 @@ type
 
     procedure InitializeProtocolTransportStack;
     procedure ShutdownProtocolTransportStack;
-    function  InitializeHttpTransport( const aTimeoutSetting : Integer) : IHTTPClient;
+    function  InitializeHttpTransport( const aTimeoutSetting : Integer; const aConfig : IThriftConfiguration = nil) : IHTTPClient;
 
     procedure JSONProtocolReadWriteTest;
     function  PrepareBinaryData( aRandomDist : Boolean; aSize : TTestSize) : TBytes;
@@ -1024,7 +1026,7 @@ begin
     Normal         : SetLength( result, $100);
     ByteArrayTest  : SetLength( result, SizeOf(TByteArray) + 128);
     PipeWriteLimit : SetLength( result, 65535 + 128);
-    TwentyMB       : SetLength( result, 20 * 1024 * 1024);
+    FifteenMB      : SetLength( result, 15 * 1024 * 1024);
   else
     raise EArgumentException.Create('aSize');
   end;
@@ -1068,6 +1070,7 @@ procedure TClientThread.JSONProtocolReadWriteTest;
 var prot   : IProtocol;
     stm    : TStringStream;
     list   : TThriftList;
+    config : IThriftConfiguration;
     binary, binRead, emptyBinary : TBytes;
     i,iErr : Integer;
 const
@@ -1089,6 +1092,8 @@ begin
   try
     StartTestGroup( 'JsonProtocolTest', test_Unknown);
 
+    config := TThriftConfigurationImpl.Create;
+
     // prepare binary data
     binary := PrepareBinaryData( FALSE, Normal);
     SetLength( emptyBinary, 0); // empty binary data block
@@ -1096,7 +1101,7 @@ begin
     // output setup
     prot := TJSONProtocolImpl.Create(
               TStreamTransportImpl.Create(
-                nil, TThriftStreamAdapterDelphi.Create( stm, FALSE)));
+                nil, TThriftStreamAdapterDelphi.Create( stm, FALSE), config));
 
     // write
     Init( list, TType.String_, 9);
@@ -1119,7 +1124,7 @@ begin
     stm.Position := 0;
     prot := TJSONProtocolImpl.Create(
               TStreamTransportImpl.Create(
-                TThriftStreamAdapterDelphi.Create( stm, FALSE), nil));
+                TThriftStreamAdapterDelphi.Create( stm, FALSE), nil, config));
 
     // read and compare
     list := prot.ReadListBegin;
@@ -1161,7 +1166,7 @@ begin
     stm.Position := 0;
     prot := TJSONProtocolImpl.Create(
               TStreamTransportImpl.Create(
-                TThriftStreamAdapterDelphi.Create( stm, FALSE), nil));
+                TThriftStreamAdapterDelphi.Create( stm, FALSE), nil, config));
     Expect( prot.ReadString = SOLIDUS_EXCPECTED, 'Solidus encoding');
 
 
@@ -1172,12 +1177,12 @@ begin
     stm.Size     := 0;
     prot := TJSONProtocolImpl.Create(
               TStreamTransportImpl.Create(
-                nil, TThriftStreamAdapterDelphi.Create( stm, FALSE)));
+                nil, TThriftStreamAdapterDelphi.Create( stm, FALSE), config));
     prot.WriteString( G_CLEF_AND_CYRILLIC_TEXT);
     stm.Position := 0;
     prot := TJSONProtocolImpl.Create(
               TStreamTransportImpl.Create(
-                TThriftStreamAdapterDelphi.Create( stm, FALSE), nil));
+                TThriftStreamAdapterDelphi.Create( stm, FALSE), nil, config));
     Expect( prot.ReadString = G_CLEF_AND_CYRILLIC_TEXT, 'Writing JSON with chars > 8 bit');
 
     // Widechars should work with hex-encoding too. Do they?
@@ -1187,7 +1192,7 @@ begin
     stm.Position := 0;
     prot := TJSONProtocolImpl.Create(
               TStreamTransportImpl.Create(
-                TThriftStreamAdapterDelphi.Create( stm, FALSE), nil));
+                TThriftStreamAdapterDelphi.Create( stm, FALSE), nil, config));
     Expect( prot.ReadString = G_CLEF_AND_CYRILLIC_TEXT, 'Reading JSON with chars > 8 bit');
 
 
@@ -1330,7 +1335,7 @@ begin
 end;
 
 
-function TClientThread.InitializeHttpTransport( const aTimeoutSetting : Integer) : IHTTPClient;
+function TClientThread.InitializeHttpTransport( const aTimeoutSetting : Integer; const aConfig : IThriftConfiguration) : IHTTPClient;
 var sUrl    : string;
     comps   : URL_COMPONENTS;
     dwChars : DWORD;
@@ -1367,8 +1372,8 @@ begin
 
   Console.WriteLine('Target URL: '+sUrl);
   case FSetup.endpoint of
-    trns_MsxmlHttp :  result := TMsxmlHTTPClientImpl.Create( sUrl);
-    trns_WinHttp   :  result := TWinHTTPClientImpl.Create( sUrl);
+    trns_MsxmlHttp :  result := TMsxmlHTTPClientImpl.Create( sUrl, aConfig);
+    trns_WinHttp   :  result := TWinHTTPClientImpl.Create(   sUrl, aConfig);
   else
     raise Exception.Create(ENDPOINT_TRANSPORTS[FSetup.endpoint]+' unhandled case');
   end;
@@ -1396,7 +1401,7 @@ begin
   case FSetup.endpoint of
     trns_Sockets: begin
       Console.WriteLine('Using sockets ('+FSetup.host+' port '+IntToStr(FSetup.port)+')');
-      streamtrans := TSocketImpl.Create( FSetup.host, FSetup.port );
+      streamtrans := TSocketImpl.Create( FSetup.host, FSetup.port);
       FTransport := streamtrans;
     end;
 
@@ -1417,7 +1422,7 @@ begin
     end;
 
     trns_AnonPipes: begin
-      streamtrans := TAnonymousPipeTransportImpl.Create( FSetup.hAnonRead, FSetup.hAnonWrite, FALSE);
+      streamtrans := TAnonymousPipeTransportImpl.Create( FSetup.hAnonRead, FSetup.hAnonWrite, FALSE, PIPE_TIMEOUT);
       FTransport := streamtrans;
     end;
 

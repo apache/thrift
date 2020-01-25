@@ -66,7 +66,8 @@ namespace Thrift.Server
                   outputTransportFactory,
                   inputProtocolFactory,
                   outputProtocolFactory,
-                  loggerFactory.CreateLogger<TSimpleAsyncServer>())
+                  loggerFactory.CreateLogger<TSimpleAsyncServer>(),
+                  clientWaitingDelay)
         {
         }
 

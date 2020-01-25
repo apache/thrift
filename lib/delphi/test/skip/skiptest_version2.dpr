@@ -30,7 +30,9 @@ uses
   Thrift.Transport in '..\..\src\Thrift.Transport.pas',
   Thrift.Protocol in '..\..\src\Thrift.Protocol.pas',
   Thrift.Protocol.JSON in '..\..\src\Thrift.Protocol.JSON.pas',
+  Thrift.Protocol.Compact in '..\..\src\Thrift.Protocol.Compact.pas',
   Thrift.Collections in '..\..\src\Thrift.Collections.pas',
+  Thrift.Configuration in '..\..\src\Thrift.Configuration.pas',
   Thrift.Server in '..\..\src\Thrift.Server.pas',
   Thrift.Utils in '..\..\src\Thrift.Utils.pas',
   Thrift.WinHTTP in '..\..\src\Thrift.WinHTTP.pas',
@@ -41,12 +43,15 @@ const
   REQUEST_EXT  = '.request';
   RESPONSE_EXT = '.response';
 
+
 function CreatePing : IPing;
 var list : IThriftList<IPong>;
     set_ : IHashSet<string>;
 begin
   result := TPingImpl.Create;
   result.Version1  := Tskiptest_version_2Constants.SKIPTESTSERVICE_VERSION;
+  result.EnumTest  := TPingPongEnum.PingTwo;
+
   result.BoolVal   := TRUE;
   result.ByteVal   := 2;
   result.DbVal     := 3;
@@ -58,6 +63,7 @@ begin
   result.StructVal := TPongImpl.Create;
   result.StructVal.Version1 := -1;
   result.StructVal.Version2 := -2;
+  result.StructVal.EnumTest := TPingPongEnum.PongTwo;
 
   list := TThriftListImpl<IPong>.Create;
   list.Add( result.StructVal);
@@ -86,6 +92,7 @@ function TDummyServer.PingPong(const ping: IPing; const pong: IPong): IPing;
 // TSkipTestService.Iface
 begin
   Writeln('- performing request from version '+IntToStr(ping.Version1)+' client');
+  Writeln( ping.ToString);
   result := CreatePing;
 end;
 
@@ -96,8 +103,8 @@ var adapt  : IThriftStream;
 begin
   adapt  := TThriftStreamAdapterDelphi.Create( stm, FALSE);
   if aForInput
-  then trans := TStreamTransportImpl.Create( adapt, nil)
-  else trans := TStreamTransportImpl.Create( nil, adapt);
+  then trans := TStreamTransportImpl.Create( adapt, nil, TThriftConfigurationImpl.Create)
+  else trans := TStreamTransportImpl.Create( nil, adapt, TThriftConfigurationImpl.Create);
   result := protfact.GetProtocol( trans);
 end;
 
@@ -142,7 +149,7 @@ begin
   Writeln('- reading response');
   stm := TFileStream.Create( fname+RESPONSE_EXT, fmOpenRead);
   try
-    // save request data
+    // load request data
     proto  := CreateProtocol( protfact, stm, TRUE);
     client := TSkipTestService.TClient.Create( proto, nil);
     cliRef := client as IUnknown;
@@ -190,12 +197,16 @@ end;
 procedure Test( protfact : IProtocolFactory; fname : string);
 begin
   // try to read an existing request
+  Writeln;
+  Writeln('Reading data file '+fname);
   if FileExists( fname + REQUEST_EXT) then begin
     ProcessFile( protfact, fname);
     ReadResponse( protfact, fname);
   end;
 
   // create a new request and try to process
+  Writeln;
+  Writeln('Writing data file '+fname);
   CreateRequest( protfact, fname);
   ProcessFile( protfact, fname);
   ReadResponse( protfact, fname);
@@ -203,8 +214,9 @@ end;
 
 
 const
-  FILE_BINARY = 'pingpong.bin';
-  FILE_JSON   = 'pingpong.json';
+  FILE_BINARY  = 'pingpong.bin';
+  FILE_JSON    = 'pingpong.json';
+  FILE_COMPACT = 'pingpong.compact';
 begin
   try
     Writeln( 'Delphi SkipTest '+IntToStr(Tskiptest_version_2Constants.SKIPTESTSERVICE_VERSION)+' using '+Thrift.Version);
@@ -216,6 +228,10 @@ begin
     Writeln;
     Writeln('JSON protocol');
     Test( TJSONProtocolImpl.TFactory.Create,   FILE_JSON);
+
+    Writeln;
+    Writeln('Compact protocol');
+    Test( TCompactProtocolImpl.TFactory.Create, FILE_COMPACT);
 
     Writeln;
     Writeln('Test completed without errors.');

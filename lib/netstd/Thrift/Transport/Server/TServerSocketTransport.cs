@@ -31,14 +31,15 @@ namespace Thrift.Transport.Server
         private readonly int _clientTimeout;
         private TcpListener _server;
 
-        public TServerSocketTransport(TcpListener listener, int clientTimeout = 0)
+        public TServerSocketTransport(TcpListener listener, TConfiguration config, int clientTimeout = 0)
+            : base(config)
         {
             _server = listener;
             _clientTimeout = clientTimeout;
         }
 
-        public TServerSocketTransport(int port, int clientTimeout = 0)
-            : this(null, clientTimeout)
+        public TServerSocketTransport(int port, TConfiguration config, int clientTimeout = 0)
+            : this(null, config, clientTimeout)
         {
             try
             {
@@ -93,7 +94,7 @@ namespace Thrift.Transport.Server
 
                 try
                 {
-                    tSocketTransport = new TSocketTransport(tcpClient)
+                    tSocketTransport = new TSocketTransport(tcpClient,Configuration)
                     {
                         Timeout = _clientTimeout
                     };
