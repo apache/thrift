@@ -55,6 +55,7 @@ public:
 
     log_unexpected_ = false;
     async_clients_ = false;
+    async_servers_ = false;
     debug_descriptions_ = false;
     no_strict_ = false;
     namespaced_ = false;
@@ -67,6 +68,11 @@ public:
         log_unexpected_ = true;
       } else if( iter->first.compare("async_clients") == 0) {
         async_clients_ = true;
+      } else if( iter->first.compare("async_servers") == 0) {
+        if (gen_cocoa_ == true) {
+          throw "Async servers is not compatible with compatible with the Thrift/Cocoa library";
+        }
+        async_servers_ = true;
       } else if( iter->first.compare("no_strict") == 0) {
         no_strict_ = true;
       } else if( iter->first.compare("debug_descriptions") == 0) {
@@ -173,6 +179,8 @@ public:
 
   void generate_swift_service_server(ostream& out, t_service* tservice);
   void generate_swift_service_server_implementation(ostream& out, t_service* tservice);
+  void generate_swift_service_server_async(ostream& out, t_service* tservice);
+  void generate_swift_service_server_async_implementation(ostream& out, t_service* tservice);
   void generate_swift_service_helpers(t_service* tservice);
 
   /**
@@ -277,6 +285,7 @@ private:
 
   bool log_unexpected_;
   bool async_clients_;
+  bool async_servers_;
 
   bool debug_descriptions_;
   bool no_strict_;
@@ -1503,6 +1512,9 @@ void t_swift_generator::generate_service(t_service* tservice) {
     generate_swift_service_client_async(f_decl_, tservice);
   }
   generate_swift_service_server(f_decl_, tservice);
+  if (async_servers_) {
+    generate_swift_service_server_async(f_decl_, tservice);
+  }
 
   generate_swift_service_helpers(tservice);
 
@@ -1511,6 +1523,9 @@ void t_swift_generator::generate_service(t_service* tservice) {
     generate_swift_service_client_async_implementation(f_impl_, tservice);
   }
   generate_swift_service_server_implementation(f_impl_, tservice);
+  if (async_servers_) {
+    generate_swift_service_server_async_implementation(f_impl_, tservice);
+  }
 }
 
 /**
@@ -1788,6 +1803,33 @@ void t_swift_generator::generate_swift_service_server(ostream& out, t_service* t
         << endl
         << indent() << "public init(service: " << tservice->get_name() << ")";
   }
+
+  block_open(out);
+  indent(out) << "self.service = service" << endl;
+  block_close(out);
+  out << endl;
+
+  block_close(out);
+  out << endl;
+}
+
+/**
+ * Generates an async service server interface definition. In other words,
+ * the TProcess implementation for the service definition.
+ *
+ * @param tservice The service to generate a client interface definition for
+ */
+void t_swift_generator::generate_swift_service_server_async(ostream& out, t_service* tservice) {
+  indent(out) << "open class " << tservice->get_name() << "ProcessorAsync /* " << tservice->get_name() << " */";
+
+  block_open(out);
+  out << endl;
+  out << indent() << "typealias ProcessorHandlerDictionary = "
+      << "[String: (Int32, TProtocol, TProtocol, " << tservice->get_name() << "Async) throws -> Void]" << endl
+      << endl
+      << indent() << "public var service: " << tservice->get_name() << "Async" << endl
+      << endl
+      << indent() << "public required init(service: " << tservice->get_name() << "Async)";
 
   block_open(out);
   indent(out) << "self.service = service" << endl;
@@ -2522,6 +2564,141 @@ void t_swift_generator::generate_swift_service_server_implementation(ostream& ou
   block_close(out);
   block_close(out);
   out << endl;
+ }
+
+/**
+ * Generates an async service server implementation.
+ *
+ * Implemented by generating a block for each service function that
+ * handles the processing of that function. The blocks are stored in
+ * a map and looked up via function/message name.
+ *
+ * @param tservice The service to generate an implementation for
+ */
+ // check one way behaviour
+void t_swift_generator::generate_swift_service_server_async_implementation(ostream& out,
+                                                                     t_service* tservice) {
+
+  string name = tservice->get_name() + "Processor";
+
+  indent(out) << "extension " << name << "Async : TProcessor";
+  block_open(out);
+  out << endl;
+  indent(out) << "static let processorHandlers: ProcessorHandlerDictionary =";
+  block_open(out);
+
+  out << endl;
+  out << indent() << "var processorHandlers = ProcessorHandlerDictionary()" << endl << endl;
+
+  // generate method map for routing incoming calls
+  vector<t_function*> functions = tservice->get_functions();
+  vector<t_function*>::const_iterator f_iter;
+  for (f_iter = functions.begin(); f_iter != functions.end(); ++f_iter) {
+    t_function* tfunction = *f_iter;
+
+    string args_type = function_args_helper_struct_type(tservice, *f_iter);
+
+    out << indent() << "processorHandlers[\"" << tfunction->get_name() << "\"] = { sequenceID, inProtocol, outProtocol, handler in" << endl
+        << endl;
+
+    indent_up();
+    out << indent() << "let args = try " << args_type << ".read(from: inProtocol)" << endl
+        << endl
+        << indent() << "try inProtocol.readMessageEnd()" << endl
+        << endl;
+
+    if (!tfunction->is_oneway() ) { // oneway does not work properly
+
+      indent(out) << "handler." << tfunction->get_name() << "(";
+
+      indent_up();
+      t_struct* arg_struct = tfunction->get_arglist();
+      const vector<t_field*>& fields = arg_struct->get_members();
+      vector<t_field*>::const_iterator f_iter;
+      for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
+        string fieldName = (*f_iter)->get_name();
+        out << fieldName << ": ";
+
+        out << "args." << fieldName;
+        out << ", ";
+      }
+
+      out << "completion: { asyncResult in" << endl;
+      string result_type = function_result_helper_struct_type(tservice, tfunction);
+      indent(out) << "var result = " << result_type << "()" << endl;
+
+      indent(out) << "do";
+      block_open(out);
+      indent(out) << "try ";
+      if (!tfunction->get_returntype()->is_void()) {
+        out << "result.success = ";
+      }
+      out << "asyncResult.value()" << endl;
+      indent_down();
+      out << indent() << "} catch let error as TApplicationError";
+      block_open(out);
+      out << indent() << "_ = try? outProtocol.writeException(messageName: \"" << tfunction->get_name() << "\", sequenceID: sequenceID, ex: error)" << endl
+          << indent() << "return" << endl;
+      indent_down();
+      out << indent() << "} catch let error";
+      block_open(out);
+      out << indent() << "_ = try? outProtocol.writeException(messageName: \"" << tfunction->get_name() << "\", sequenceID: sequenceID, ex: TApplicationError(error: .internalError))" << endl
+          << indent() << "return" << endl;
+      block_close(out);
+
+      if (!tfunction->is_oneway()) {
+        out << indent() << "do";
+        block_open(out);
+        out << indent() << "try outProtocol.writeMessageBegin(name: \"" << tfunction->get_name() << "\", type: .reply, sequenceID: sequenceID)" << endl
+            << indent() << "try result.write(to: outProtocol)" << endl
+            << indent() << "try outProtocol.writeMessageEnd()" << endl
+            << indent() << "try outProtocol.transport.flush()" << endl;
+        indent_down();
+        out << indent() << "} catch { }" << endl;
+        indent_down();
+        out << indent() << "})" << endl;
+      }
+      block_close(out);
+
+    }
+  } // end for
+
+  indent(out) << "return processorHandlers" << endl;
+
+  block_close(out,false);
+  out << "()" << endl;
+  out << endl;
+
+  indent(out) << "public func process(on inProtocol: TProtocol, outProtocol: TProtocol) throws";
+
+  block_open(out);
+
+  out << endl;
+  out << indent() << "let (messageName, _, sequenceID) = try inProtocol.readMessageBegin()" << endl
+      << endl
+      << indent() << "if let processorHandler = " << name << "Async.processorHandlers[messageName]";
+  block_open(out);
+  out << indent() << "do";
+  block_open(out);
+  out << indent() << "try processorHandler(sequenceID, inProtocol, outProtocol, service)" << endl;
+  block_close(out);
+  out << indent() << "catch let error as TApplicationError";
+  block_open(out);
+  out << indent() << "try outProtocol.writeException(messageName: messageName, sequenceID: sequenceID, ex: error)" << endl;
+  block_close(out);
+  block_close(out);
+  out << indent() << "else";
+  block_open(out);
+  out << indent() << "try inProtocol.skip(type: .struct)" << endl
+      << indent() << "try inProtocol.readMessageEnd()" << endl
+      << indent() << "let ex = TApplicationError(error: .unknownMethod(methodName: messageName))" << endl
+      << indent() << "try outProtocol.writeException(messageName: messageName, "
+      << "sequenceID: sequenceID, ex: ex)" << endl;
+
+  block_close(out);
+  block_close(out);
+  block_close(out);
+  out << endl;
 }
 
 /**
@@ -3195,6 +3372,7 @@ THRIFT_REGISTER_GENERATOR(
     "    debug_descriptions:\n"
     "                     Allow use of debugDescription so the app can add description via a cateogory/extension\n"
     "    async_clients:   Generate clients which invoke asynchronously via block syntax.\n"
+    "    async_servers:   Generate servers which invoke asynchronously via block syntax.\n"
     "    namespaced:      Generate source in Module scoped output directories for Swift Namespacing.\n"
     "    cocoa:           Generate Swift 2.x code compatible with the Thrift/Cocoa library\n"
     "    promise_kit:     Generate clients which invoke asynchronously via promises (only use with cocoa flag)\n"
