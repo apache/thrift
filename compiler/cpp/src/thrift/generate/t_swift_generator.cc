@@ -1507,8 +1507,10 @@ void t_swift_generator::generate_service(t_service* tservice) {
 
   generate_swift_service_protocol(f_decl_, tservice);
   generate_swift_service_client(f_decl_, tservice);
-  if (async_clients_) {
+  if (async_clients_ || async_servers_) {
     generate_swift_service_protocol_async(f_decl_, tservice);
+  }
+  if (async_clients_) { 
     generate_swift_service_client_async(f_decl_, tservice);
   }
   generate_swift_service_server(f_decl_, tservice);
