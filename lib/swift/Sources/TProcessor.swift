@@ -17,13 +17,6 @@
 * under the License.
 */
 
-
-public typealias TProcessorMessageHandler<T> = (Int, TProtocol, TProtocol, T) -> Void
-
 public protocol TProcessor {
-  associatedtype Service
-  var service: Service { get set }
   func process(on inProtocol: TProtocol, outProtocol: TProtocol) throws
-  init(service: Service)
 }
-

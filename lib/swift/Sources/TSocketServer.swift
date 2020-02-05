@@ -31,20 +31,22 @@ public let TSocketServerClientConnectionFinished = "TSocketServerClientConnectio
 public let TSocketServerProcessorKey = "TSocketServerProcessor"
 public let TSocketServerTransportKey = "TSocketServerTransport"
 
-class TSocketServer<InProtocol: TProtocol, OutProtocol: TProtocol, Processor: TProcessor, Service> where Processor.Service == Service {
+class TSocketServer<InProtocol: TProtocol, OutProtocol: TProtocol, Processor: TProcessor, Service> {
   var socketFileHandle: FileHandle
   var processingQueue =  DispatchQueue(label: "TSocketServer.processing",
                                        qos: .background,
                                        attributes: .concurrent)
   var serviceHandler: Service
+  let processor: Processor
 
   public init(port: Int,
               service: Service,
               inProtocol: InProtocol.Type,
               outProtocol: OutProtocol.Type,
-              processor: Processor.Type) throws {
+              processor: Processor) throws {
     // set service handler
     self.serviceHandler = service
+    self.processor = processor
 
     // create a socket
     var fd: Int32 = -1
@@ -127,7 +129,6 @@ class TSocketServer<InProtocol: TProtocol, OutProtocol: TProtocol, Processor: TP
   func handleClientConnection(_ clientSocket: FileHandle) {
 
     let transport = TFileHandleTransport(fileHandle: clientSocket)
-    let processor = Processor(service: serviceHandler)
 
     let inProtocol = InProtocol(on: transport)
     let outProtocol = OutProtocol(on: transport)
@@ -141,7 +142,7 @@ class TSocketServer<InProtocol: TProtocol, OutProtocol: TProtocol, Processor: TP
       NotificationCenter.default
         .post(name: Notification.Name(rawValue: TSocketServerClientConnectionFinished),
               object: self,
-              userInfo: [TSocketServerProcessorKey: processor,
+              userInfo: [TSocketServerProcessorKey: self.processor,
                          TSocketServerTransportKey: transport])
     }
   }
