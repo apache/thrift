@@ -17,8 +17,19 @@
 * under the License.
 */
 
+extension String {
+    static let multiplexSeparator = ":"
+}
+
+/**
+ `TMultiplexedProtocol` is a protocol-independent concrete decorator
+ that allows a Thrift client to communicate with a multiplexing Thrift server,
+ by prepending the service name to the function name during function calls.
+
+ - Note: THIS IS NOT USED BY SERVERS.  On the server, use `TMultiplexedProcessor` to handle request
+ from a multiplexing client.
+ */
 public class TMultiplexedProtocol<Protocol: TProtocol>: TWrappedProtocol<Protocol> {
-  public let separator = ":"
 
   public var serviceName = ""
   
@@ -33,7 +44,7 @@ public class TMultiplexedProtocol<Protocol: TProtocol>: TWrappedProtocol<Protoco
     switch messageType {
     case .call, .oneway:
       var serviceFunction = serviceName
-      serviceFunction += serviceName == "" ? "" : separator
+      serviceFunction += serviceName == "" ? "" : .multiplexSeparator
       serviceFunction += name
       return try super.writeMessageBegin(name: serviceFunction,
                                          type: messageType,

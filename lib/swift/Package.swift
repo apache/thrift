@@ -1,3 +1,4 @@
+// swift-tools-version:5.1
 /*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements. See the NOTICE file
@@ -20,5 +21,12 @@
 import PackageDescription
 
 let package = Package(
-	name: "Thrift"
+  name: "Thrift",
+  products: [
+    .library(name: "Thrift", targets: ["Thrift"])
+  ],
+  targets: [
+    .target(name: "Thrift", path: "Sources"),
+    .testTarget(name: "ThriftTests", dependencies: ["Thrift"])
+  ]
 )
