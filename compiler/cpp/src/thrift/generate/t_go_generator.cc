@@ -917,6 +917,7 @@ string t_go_generator::go_imports_begin(bool consts) {
   if (!consts && get_program()->get_enums().size() > 0) {
     system_packages.push_back("database/sql/driver");
     system_packages.push_back("errors");
+    system_packages.push_back("encoding/json");
     system_packages.push_back("strconv");
   }
   system_packages.push_back("fmt");
@@ -1058,6 +1059,11 @@ void t_go_generator::generate_enum(t_enum* tenum) {
   f_types_ << "if (err != nil) {" << endl << "return err" << endl << "}" << endl;
   f_types_ << "*p = q" << endl;
   f_types_ << "return nil" << endl;
+  f_types_ << "}" << endl << endl;
+
+  // Generate MarshalJSON
+  f_types_ << "func (p *" << tenum_name << ") MarshalJSON() ([]byte, error) {" << endl;
+  f_types_ << "return json.Marshal(p.String())" << endl;
   f_types_ << "}" << endl << endl;
 
   // Generate Scan for sql.Scanner interface
