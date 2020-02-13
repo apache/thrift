@@ -2746,17 +2746,19 @@ string t_netstd_generator::type_name(t_type* ttype)
         return "List<" + type_name(tlist->get_elem_type()) + ">";
     }
 
+    string the_name = check_and_correct_struct_name(normalize_name(ttype->get_name()));
+
     t_program* program = ttype->get_program();
     if (program != NULL && program != program_)
     {
         string ns = program->get_namespace("netstd");
         if (!ns.empty())
         {
-            return ns + "." + normalize_name(ttype->get_name());
+            return ns + "." + the_name;
         }
     }
 
-    return normalize_name(ttype->get_name());
+    return the_name;
 }
 
 string t_netstd_generator::base_type_name(t_base_type* tbase)
