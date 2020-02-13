@@ -52,7 +52,7 @@ func TestMarshaling(t *testing.T) {
 		t.Error(err)
 	}
 
-	expectedJson := `{"dummyEnum": "FIRST"}`
+	expectedJson := `{"dummyEnum":"FIRST"}`
 	actualJson := string(jsonBytes)
 
 	if actualJson != expectedJson {
