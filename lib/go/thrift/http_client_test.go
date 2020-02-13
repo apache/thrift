@@ -35,6 +35,13 @@ func TestHttpClient(t *testing.T) {
 		t.Fatalf("Unable to connect to %s: %s", addr.String(), err)
 	}
 	TransportTest(t, trans, trans)
+
+	t.Run("nilBuffer", func(t *testing.T) {
+		_ = trans.Close()
+		if _, err = trans.Write([]byte{1, 2, 3, 4}); err == nil {
+			t.Fatalf("writing to a closed transport did not result in an error")
+		}
+	})
 }
 
 func TestHttpClientHeaders(t *testing.T) {
