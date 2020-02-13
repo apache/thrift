@@ -6,8 +6,8 @@ import (
 	"structenummarshallingtest"
 )
 
-func TestUnmarshaling(t* testing.T) {
-	dummyStruct := &structenummarshallingtest.DummyEnum{}
+func TestUnmarshaling(t *testing.T) {
+	dummyStruct := &structenummarshallingtest.Dummy{}
 
 	err := json.Unmarshal([]byte(`{"dummyEnum": "FIRST"}`), dummyStruct)
 	if err != nil {
@@ -23,8 +23,8 @@ func TestUnmarshaling(t* testing.T) {
 	}
 }
 
-func TestMarshaling(t* testing.T) {
-	dummyStruct := &structenummarshallingtest.DummyEnum{
+func TestMarshaling(t *testing.T) {
+	dummyStruct := &structenummarshallingtest.Dummy{
 		DummyEnum: structenummarshallingtest.DummyEnum_FIRST,
 	}
 
