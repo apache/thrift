@@ -17,7 +17,7 @@
 # under the License.
 #
 
-set(THRIFT_VERSION ${thrift_VERSION})
+set(THRIFT_VERSION @thrift_VERSION@)
 
 @PACKAGE_INIT@
 
