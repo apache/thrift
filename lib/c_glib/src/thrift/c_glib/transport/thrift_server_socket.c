@@ -148,7 +148,7 @@ thrift_server_socket_accept (ThriftServerTransport *transport, GError **error)
                  THRIFT_SERVER_SOCKET_ERROR_ACCEPT,
                  "failed to accept connection - %s",
                  strerror(errno));
-    return FALSE;
+    return NULL;
   }
 
   socket = g_object_new (THRIFT_TYPE_SOCKET, NULL);
