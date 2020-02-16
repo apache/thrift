@@ -1251,15 +1251,7 @@ void t_netstd_generator::generate_netstd_struct_tostring(ostream& out, t_struct*
             out << indent() << "sb.Append(\", " << prop_name(*f_iter) << ": \");" << endl;
         }
 
-        t_type* ttype = (*f_iter)->get_type();
-        if (ttype->is_xception() || ttype->is_struct())
-        {
-            out << indent() << "sb.Append(" << prop_name(*f_iter) << "== null ? \"<null>\" : " << prop_name(*f_iter) << ".ToString());" << endl;
-        }
-        else
-        {
-            out << indent() << "sb.Append(" << prop_name(*f_iter) << ");" << endl;
-        }
+        out << indent() << prop_name(*f_iter) << ".ToString(sb);" << endl;
 
         if (!is_required)
         {
