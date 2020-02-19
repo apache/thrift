@@ -1462,7 +1462,7 @@ void t_go_generator::generate_go_struct_definition(ostream& out,
       out << indent() << "  if !p.IsSet" << publicized_name << "() {" << endl;
       out << indent() << "    return " << def_var_name << endl;
       out << indent() << "  }" << endl;
-      out << indent() << "return " << maybepointer << "p." << publicized_name << endl;
+      out << indent() << "  return " << maybepointer << "p." << publicized_name << endl;
       out << indent() << "}" << endl;
     } else {
       out << endl;
@@ -2679,21 +2679,26 @@ void t_go_generator::generate_service_server(t_service* tservice) {
     f_types_ << indent() << "  return p.processorMap" << endl;
     f_types_ << indent() << "}" << endl << endl;
     f_types_ << indent() << "func New" << serviceName << "Processor(handler " << serviceName
-               << ") *" << serviceName << "Processor {" << endl << endl;
+               << ", opts ...thrift.ProcessorOption) *" << serviceName << "Processor {" << endl << endl;
     f_types_
         << indent() << "  " << self << " := &" << serviceName
         << "Processor{handler:handler, processorMap:make(map[string]thrift.TProcessorFunction)}"
         << endl;
 
+    f_types_ << indent() << "  processorOptions := thrift.DefaultProcessorOptions" << endl;
+    f_types_ << indent() << "  for _, opt := range opts {" << endl;
+    f_types_ << indent() << "    opt.Apply(&processorOptions)" << endl;
+    f_types_ << indent() << "  }" << endl;
+
     for (f_iter = functions.begin(); f_iter != functions.end(); ++f_iter) {
       string escapedFuncName(escape_string((*f_iter)->get_name()));
       f_types_ << indent() << "  " << self << ".processorMap[\"" << escapedFuncName << "\"] = &"
                  << pServiceName << "Processor" << publicize((*f_iter)->get_name())
-                 << "{handler:handler}" << endl;
+                 << "{handler:handler, opts:processorOptions}" << endl;
     }
 
     string x(tmp("x"));
-    f_types_ << indent() << "return " << self << endl;
+    f_types_ << indent() << "  return " << self << endl;
     f_types_ << indent() << "}" << endl << endl;
     f_types_ << indent() << "func (p *" << serviceName
                << "Processor) Process(ctx context.Context, iprot, oprot thrift.TProtocol) (success bool, err "
@@ -2749,150 +2754,190 @@ void t_go_generator::generate_service_server(t_service* tservice) {
  * @param tfunction The function to write a dispatcher for
  */
 void t_go_generator::generate_process_function(t_service* tservice, t_function* tfunction) {
-  // Open function
-  string processorName = privatize(tservice->get_name()) + "Processor"
-                         + publicize(tfunction->get_name());
-  string argsname = publicize(tfunction->get_name() + "_args", true);
-  string resultname = publicize(tfunction->get_name() + "_result", true);
+    // Open function
+    string processorName = privatize(tservice->get_name()) + "Processor"
+                           + publicize(tfunction->get_name());
+    string argsname = publicize(tfunction->get_name() + "_args", true);
+    string resultname = publicize(tfunction->get_name() + "_result", true);
 
-  // t_struct* xs = tfunction->get_xceptions();
-  // const std::vector<t_field*>& xceptions = xs->get_members();
-  f_types_ << indent() << "type " << processorName << " struct {" << endl;
-  f_types_ << indent() << "  handler " << publicize(tservice->get_name()) << endl;
-  f_types_ << indent() << "}" << endl << endl;
-  f_types_ << indent() << "func (p *" << processorName
+    // t_struct* xs = tfunction->get_xceptions();
+    // const std::vector<t_field*>& xceptions = xs->get_members();
+    f_types_ << indent() << "type " << processorName << " struct {" << endl;
+    f_types_ << indent() << "  handler " << publicize(tservice->get_name()) << endl;
+    f_types_ << indent() << "  opts thrift.ProcessorOptions" << endl;
+    f_types_ << indent() << "}" << endl << endl;
+    f_types_ << indent() << "func (p *" << processorName
              << ") Process(ctx context.Context, seqId int32, iprot, oprot thrift.TProtocol) (success bool, err "
                 "thrift.TException) {" << endl;
-  indent_up();
-  f_types_ << indent() << "args := " << argsname << "{}" << endl;
-  f_types_ << indent() << "if err = args." << read_method_name_ <<  "(iprot); err != nil {" << endl;
-  f_types_ << indent() << "  iprot.ReadMessageEnd()" << endl;
-  if (!tfunction->is_oneway()) {
-    f_types_ << indent()
-               << "  x := thrift.NewTApplicationException(thrift.PROTOCOL_ERROR, err.Error())"
-               << endl;
-    f_types_ << indent() << "  oprot.WriteMessageBegin(\"" << escape_string(tfunction->get_name())
-               << "\", thrift.EXCEPTION, seqId)" << endl;
-    f_types_ << indent() << "  x.Write(oprot)" << endl;
-    f_types_ << indent() << "  oprot.WriteMessageEnd()" << endl;
-    f_types_ << indent() << "  oprot.Flush(ctx)" << endl;
-  }
-  f_types_ << indent() << "  return false, err" << endl;
-  f_types_ << indent() << "}" << endl << endl;
-  f_types_ << indent() << "iprot.ReadMessageEnd()" << endl;
-
-  if (!tfunction->is_oneway()) {
-    f_types_ << indent() << "result := " << resultname << "{}" << endl;
-  }
-  bool need_reference = type_need_reference(tfunction->get_returntype());
-  if (!tfunction->is_oneway() && !tfunction->get_returntype()->is_void()) {
-    f_types_ << "var retval " << type_to_go_type(tfunction->get_returntype()) << endl;
-  }
-
-  f_types_ << indent() << "var err2 error" << endl;
-  f_types_ << indent() << "if ";
-
-  if (!tfunction->is_oneway()) {
-    if (!tfunction->get_returntype()->is_void()) {
-      f_types_ << "retval, ";
-    }
-  }
-
-  // Generate the function call
-  t_struct* arg_struct = tfunction->get_arglist();
-  const std::vector<t_field*>& fields = arg_struct->get_members();
-  vector<t_field*>::const_iterator f_iter;
-  f_types_ << "err2 = p.handler." << publicize(tfunction->get_name()) << "(";
-  bool first = true;
-
-  f_types_ << "ctx";
-  for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
-    if (first) {
-      first = false;
-      f_types_ << ", ";
-    } else {
-      f_types_ << ", ";
-    }
-
-    f_types_ << "args." << publicize((*f_iter)->get_name());
-  }
-
-  f_types_ << "); err2 != nil {" << endl;
-
-  t_struct* exceptions = tfunction->get_xceptions();
-  const vector<t_field*>& x_fields = exceptions->get_members();
-  if (!x_fields.empty()) {
-    f_types_ << indent() << "switch v := err2.(type) {" << endl;
-
-    vector<t_field*>::const_iterator xf_iter;
-
-    for (xf_iter = x_fields.begin(); xf_iter != x_fields.end(); ++xf_iter) {
-      f_types_ << indent() << "  case " << type_to_go_type(((*xf_iter)->get_type())) << ":"
+    indent_up();
+    f_types_ << indent() << "args := " << argsname << "{}" << endl;
+    f_types_ << indent() << "if err = args." << read_method_name_ <<  "(iprot); err != nil {" << endl;
+    f_types_ << indent() << "  iprot.ReadMessageEnd()" << endl;
+    if (!tfunction->is_oneway()) {
+        f_types_ << indent()
+                 << "  x := thrift.NewTApplicationException(thrift.PROTOCOL_ERROR, err.Error())"
                  << endl;
-      f_types_ << indent() << "result." << publicize((*xf_iter)->get_name()) << " = v" << endl;
+        f_types_ << indent() << "  oprot.WriteMessageBegin(\"" << escape_string(tfunction->get_name())
+                 << "\", thrift.EXCEPTION, seqId)" << endl;
+        f_types_ << indent() << "  x.Write(oprot)" << endl;
+        f_types_ << indent() << "  oprot.WriteMessageEnd()" << endl;
+        f_types_ << indent() << "  oprot.Flush(ctx)" << endl;
+    }
+    f_types_ << indent() << "  return false, err" << endl;
+    f_types_ << indent() << "}" << endl << endl;
+    f_types_ << indent() << "iprot.ReadMessageEnd()" << endl;
+
+    if (!tfunction->is_oneway()) {
+        f_types_ << indent() << "result := " << resultname << "{}" << endl;
+    }
+    bool need_reference = type_need_reference(tfunction->get_returntype());
+    if (!tfunction->is_oneway() && !tfunction->get_returntype()->is_void()) {
+        f_types_ << indent() << "var retval " << type_to_go_type(tfunction->get_returntype()) << endl;
     }
 
-    f_types_ << indent() << "  default:" << endl;
-  }
+    f_types_ << indent() << "var err2 error" << endl;
 
-  if (!tfunction->is_oneway()) {
-    f_types_ << indent() << "  x := thrift.NewTApplicationException(thrift.INTERNAL_ERROR, "
-                              "\"Internal error processing " << escape_string(tfunction->get_name())
-               << ": \" + err2.Error())" << endl;
-    f_types_ << indent() << "  oprot.WriteMessageBegin(\"" << escape_string(tfunction->get_name())
-               << "\", thrift.EXCEPTION, seqId)" << endl;
-    f_types_ << indent() << "  x.Write(oprot)" << endl;
-    f_types_ << indent() << "  oprot.WriteMessageEnd()" << endl;
-    f_types_ << indent() << "  oprot.Flush(ctx)" << endl;
-  }
+    // Generate the function call
+    t_struct* arg_struct = tfunction->get_arglist();
+    const std::vector<t_field*>& fields = arg_struct->get_members();
+    vector<t_field*>::const_iterator f_iter;
 
-  f_types_ << indent() << "  return true, err2" << endl;
-
-  if (!x_fields.empty()) {
-    f_types_ << indent() << "}" << endl;
-  }
-
-  f_types_ << indent() << "}"; // closes err2 != nil
-
-  if (!tfunction->is_oneway()) {
-    if (!tfunction->get_returntype()->is_void()) {
-      f_types_ << " else {" << endl; // make sure we set Success retval only on success
-      indent_up();
-      f_types_ << indent() << "result.Success = ";
-      if (need_reference) {
-        f_types_ << "&";
-      }
-      f_types_ << "retval" << endl;
-      indent_down();
-      f_types_ << "}" << endl;
+    f_types_ << indent() << "if p.opts.Interceptor != nil {" << endl;
+    if (!tfunction->is_oneway()) {
+        if (!tfunction->get_returntype()->is_void()) {
+            f_types_ << indent() << indent() << " var res interface{}" << endl;
+            f_types_ << indent() << indent() << "  res, err2 = ";
+        } else {
+            f_types_ << indent() << indent() << "  _, err2 = ";
+        }
     } else {
-      f_types_ << endl;
+        f_types_ << indent() << indent() << "  _, err2 = ";
     }
-    f_types_ << indent() << "if err2 = oprot.WriteMessageBegin(\""
-               << escape_string(tfunction->get_name()) << "\", thrift.REPLY, seqId); err2 != nil {"
-               << endl;
-    f_types_ << indent() << "  err = err2" << endl;
+
+    f_types_ << "p.opts.Interceptor(ctx, \"" << escape_string(tfunction->get_name()) << "\", args, func(ctx context.Context, arg interface{}) (result interface{}, err error) {" << endl;
+    f_types_ << indent() << indent() << "return ";
+
+    if (tfunction->get_returntype()->is_void()) {
+        f_types_ << "nil, ";
+    }
+
+    f_types_ << "p.handler." << publicize(tfunction->get_name()) << "(";
+
+    f_types_ << "ctx";
+    for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
+        f_types_ << ", arg." << "(" << argsname << ")." << publicize((*f_iter)->get_name());
+    }
+
+    f_types_ << ")" << endl;
+
+    f_types_ << indent() << "})" << endl;
+
+    if (!tfunction->is_oneway()) {
+        if (!tfunction->get_returntype()->is_void()) {
+            f_types_ << indent() << "  if res != nil {" << endl;
+            f_types_ << indent() << indent() << "  retval = res.(" << type_to_go_type(tfunction->get_returntype()) << ")" << endl;
+            f_types_ << indent() << "  }" << endl;
+        }
+    }
+
+    f_types_ << indent() << "} else {" << endl;
+    f_types_ << indent() << indent();
+
+    if (!tfunction->is_oneway()) {
+        if (!tfunction->get_returntype()->is_void()) {
+            f_types_ << "retval, ";
+        }
+    }
+
+    f_types_ << "err2 = p.handler." << publicize(tfunction->get_name()) << "(";
+
+    f_types_ << "ctx";
+    for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
+        f_types_ << ", args." << publicize((*f_iter)->get_name());
+    }
+
+    f_types_ << ")" << endl;
+
     f_types_ << indent() << "}" << endl;
-    f_types_ << indent() << "if err2 = result." << write_method_name_ << "(oprot); err == nil && err2 != nil {" << endl;
-    f_types_ << indent() << "  err = err2" << endl;
-    f_types_ << indent() << "}" << endl;
-    f_types_ << indent() << "if err2 = oprot.WriteMessageEnd(); err == nil && err2 != nil {"
-               << endl;
-    f_types_ << indent() << "  err = err2" << endl;
-    f_types_ << indent() << "}" << endl;
-    f_types_ << indent() << "if err2 = oprot.Flush(ctx); err == nil && err2 != nil {" << endl;
-    f_types_ << indent() << "  err = err2" << endl;
-    f_types_ << indent() << "}" << endl;
-    f_types_ << indent() << "if err != nil {" << endl;
-    f_types_ << indent() << "  return" << endl;
-    f_types_ << indent() << "}" << endl;
-    f_types_ << indent() << "return true, err" << endl;
-  } else {
-    f_types_ << endl;
-    f_types_ << indent() << "return true, nil" << endl;
-  }
-  indent_down();
-  f_types_ << indent() << "}" << endl << endl;
+
+    f_types_ << indent() << "if err2 != nil {" << endl;
+    indent_up();
+    t_struct* exceptions = tfunction->get_xceptions();
+    const vector<t_field*>& x_fields = exceptions->get_members();
+    if (!x_fields.empty()) {
+        f_types_ << indent() << "switch v := err2.(type) {" << endl;
+
+        vector<t_field*>::const_iterator xf_iter;
+
+        for (xf_iter = x_fields.begin(); xf_iter != x_fields.end(); ++xf_iter) {
+            f_types_ << indent() << "case " << type_to_go_type(((*xf_iter)->get_type())) << ":" << endl;
+            f_types_ << indent() << "result." << publicize((*xf_iter)->get_name()) << " = v" << endl;
+        }
+
+        f_types_ << indent() << "default:" << endl;
+    }
+
+    if (!tfunction->is_oneway()) {
+        f_types_ << indent() << "  x := thrift.NewTApplicationException(thrift.INTERNAL_ERROR, "
+                    "\"Internal error processing " << escape_string(tfunction->get_name())
+                 << ": \" + err2.Error())" << endl;
+        f_types_ << indent() << "  oprot.WriteMessageBegin(\"" << escape_string(tfunction->get_name())
+                 << "\", thrift.EXCEPTION, seqId)" << endl;
+        f_types_ << indent() << "  x.Write(oprot)" << endl;
+        f_types_ << indent() << "  oprot.WriteMessageEnd()" << endl;
+        f_types_ << indent() << "  oprot.Flush(ctx)" << endl;
+    }
+
+    f_types_ << indent() << "  return true, err2" << endl;
+
+    if (!x_fields.empty()) {
+        f_types_ << indent() << "}" << endl;
+    }
+
+    indent_down();
+
+    f_types_ << indent() << "}"; // closes err2 != nil
+
+    if (!tfunction->is_oneway()) {
+        if (!tfunction->get_returntype()->is_void()) {
+            f_types_ << " else {" << endl; // make sure we set Success retval only on success
+            indent_up();
+            f_types_ << indent() << "result.Success = ";
+            if (need_reference) {
+                f_types_ << "&";
+            }
+            f_types_ << "retval" << endl;
+            f_types_ << "  }" << endl;
+            indent_down();
+        } else {
+            f_types_ << endl;
+        }
+        f_types_ << indent() << "if err2 = oprot.WriteMessageBegin(\""
+                 << escape_string(tfunction->get_name()) << "\", thrift.REPLY, seqId); err2 != nil {"
+                 << endl;
+        f_types_ << indent() << "  err = err2" << endl;
+        f_types_ << indent() << "}" << endl;
+        f_types_ << indent() << "if err2 = result." << write_method_name_ << "(oprot); err == nil && err2 != nil {" << endl;
+        f_types_ << indent() << "  err = err2" << endl;
+        f_types_ << indent() << "}" << endl;
+        f_types_ << indent() << "if err2 = oprot.WriteMessageEnd(); err == nil && err2 != nil {"
+                 << endl;
+        f_types_ << indent() << "  err = err2" << endl;
+        f_types_ << indent() << "}" << endl;
+        f_types_ << indent() << "if err2 = oprot.Flush(ctx); err == nil && err2 != nil {" << endl;
+        f_types_ << indent() << "  err = err2" << endl;
+        f_types_ << indent() << "}" << endl;
+        f_types_ << indent() << "if err != nil {" << endl;
+        f_types_ << indent() << "  return" << endl;
+        f_types_ << indent() << "}" << endl;
+        f_types_ << indent() << "return true, err" << endl;
+    } else {
+        f_types_ << endl;
+        f_types_ << indent() << "return true, nil" << endl;
+    }
+
+    indent_down();
+    f_types_ << "}" << endl << endl;
 }
 
 /**
