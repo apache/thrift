@@ -932,7 +932,7 @@ void parse(t_program* program, t_program* parent_program) {
     if (yyparse() != 0) {
       failure("Parser error during include pass.");
     }
-  } catch (string x) {
+  } catch (string &x) {
     failure(x.c_str());
   }
   fclose(yyin);
@@ -970,7 +970,7 @@ void parse(t_program* program, t_program* parent_program) {
     if (yyparse() != 0) {
       failure("Parser error during types pass.");
     }
-  } catch (string x) {
+  } catch (string &x) {
     failure(x.c_str());
   }
   fclose(yyin);
@@ -1014,7 +1014,7 @@ void generate(t_program* program, const vector<string>& generator_strings) {
         delete generator;
       }
     }
-  } catch (string s) {
+  } catch (string &s) {
     failure("Error: %s\n", s.c_str());
   } catch (const char* exc) {
     failure("Error: %s\n", exc);

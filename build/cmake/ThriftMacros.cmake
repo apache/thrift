@@ -25,6 +25,7 @@ endmacro(ADD_PKGCONFIG_THRIFT)
 
 macro(ADD_LIBRARY_THRIFT name)
     add_library(${name} ${ARGN})
+    target_include_directories(${name} INTERFACE $<INSTALL_INTERFACE:include>)
     set_target_properties(${name} PROPERTIES
         OUTPUT_NAME ${name}${THRIFT_RUNTIME_POSTFIX}   # windows link variants (/MT, /MD, /MTd, /MDd) get different names
         VERSION ${thrift_VERSION} )

@@ -166,19 +166,30 @@ func (p *THttpClient) Read(buf []byte) (int, error) {
 }
 
 func (p *THttpClient) ReadByte() (c byte, err error) {
+	if p.response == nil {
+		return 0, NewTTransportException(NOT_OPEN, "Response buffer is empty, no request.")
+	}
 	return readByte(p.response.Body)
 }
 
 func (p *THttpClient) Write(buf []byte) (int, error) {
-	n, err := p.requestBuffer.Write(buf)
-	return n, err
+	if p.requestBuffer == nil {
+		return 0, NewTTransportException(NOT_OPEN, "Request buffer is nil, connection may have been closed.")
+	}
+	return p.requestBuffer.Write(buf)
 }
 
 func (p *THttpClient) WriteByte(c byte) error {
+	if p.requestBuffer == nil {
+		return NewTTransportException(NOT_OPEN, "Request buffer is nil, connection may have been closed.")
+	}
 	return p.requestBuffer.WriteByte(c)
 }
 
 func (p *THttpClient) WriteString(s string) (n int, err error) {
+	if p.requestBuffer == nil {
+		return 0, NewTTransportException(NOT_OPEN, "Request buffer is nil, connection may have been closed.")
+	}
 	return p.requestBuffer.WriteString(s)
 }
 

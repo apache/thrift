@@ -19,14 +19,17 @@
 
 package thrift
 
+import (
+	"sync"
+)
+
 type TDeserializer struct {
-	Transport TTransport
+	Transport *TMemoryBuffer
 	Protocol  TProtocol
 }
 
 func NewTDeserializer() *TDeserializer {
-	var transport TTransport
-	transport = NewTMemoryBufferLen(1024)
+	transport := NewTMemoryBufferLen(1024)
 
 	protocol := NewTBinaryProtocolFactoryDefault().GetProtocol(transport)
 
@@ -36,6 +39,8 @@ func NewTDeserializer() *TDeserializer {
 }
 
 func (t *TDeserializer) ReadString(msg TStruct, s string) (err error) {
+	t.Transport.Reset()
+
 	err = nil
 	if _, err = t.Transport.Write([]byte(s)); err != nil {
 		return
@@ -47,6 +52,8 @@ func (t *TDeserializer) ReadString(msg TStruct, s string) (err error) {
 }
 
 func (t *TDeserializer) Read(msg TStruct, b []byte) (err error) {
+	t.Transport.Reset()
+
 	err = nil
 	if _, err = t.Transport.Write(b); err != nil {
 		return
@@ -55,4 +62,37 @@ func (t *TDeserializer) Read(msg TStruct, b []byte) (err error) {
 		return
 	}
 	return
+}
+
+// TDeserializerPool is the thread-safe version of TDeserializer,
+// it uses resource pool of TDeserializer under the hood.
+//
+// It must be initialized with NewTDeserializerPool.
+type TDeserializerPool struct {
+	pool sync.Pool
+}
+
+// NewTDeserializerPool creates a new TDeserializerPool.
+//
+// NewTDeserializer can be used as the arg here.
+func NewTDeserializerPool(f func() *TDeserializer) *TDeserializerPool {
+	return &TDeserializerPool{
+		pool: sync.Pool{
+			New: func() interface{} {
+				return f()
+			},
+		},
+	}
+}
+
+func (t *TDeserializerPool) ReadString(msg TStruct, s string) error {
+	d := t.pool.Get().(*TDeserializer)
+	defer t.pool.Put(d)
+	return d.ReadString(msg, s)
+}
+
+func (t *TDeserializerPool) Read(msg TStruct, b []byte) error {
+	d := t.pool.Get().(*TDeserializer)
+	defer t.pool.Put(d)
+	return d.Read(msg, b)
 }

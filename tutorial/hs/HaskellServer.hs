@@ -64,13 +64,13 @@ instance Calculator_Iface CalculatorHandler where
     printf "calculate(%d, %s)\n" logid (show work)
 
     let val = case op work of
-                ADD ->
+                Operation_ADD ->
                     num1 work + num2 work
-                SUBTRACT ->
+                Operation_SUBTRACT ->
                     num1 work - num2 work
-                MULTIPLY ->
+                Operation_MULTIPLY ->
                     num1 work * num2 work
-                DIVIDE ->
+                Operation_DIVIDE ->
                     if num2 work == 0 then
                         throw $
                               InvalidOperation {

@@ -212,10 +212,10 @@ instance ThriftTest_Iface TestHandler where
 
   testInsanity _ x = do
     System.IO.putStrLn "testInsanity()"
-    return $ Map.fromList [ (1, Map.fromList [ (TWO  , x)
-                                             , (THREE, x)
+    return $ Map.fromList [ (1, Map.fromList [ (Numberz_TWO  , x)
+                                             , (Numberz_THREE, x)
                                              ])
-                          , (2, Map.fromList [ (SIX, default_Insanity)
+                          , (2, Map.fromList [ (Numberz_SIX, default_Insanity)
                                              ])
                           ]
 

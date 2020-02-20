@@ -42,6 +42,7 @@ import org.apache.thrift.server.TThreadedSelectorServer;
 import org.apache.thrift.server.TNonblockingServer;
 import org.apache.thrift.transport.TFramedTransport;
 import org.apache.thrift.transport.TFastFramedTransport;
+import org.apache.thrift.transport.TZlibTransport;
 import org.apache.thrift.transport.TServerSocket;
 import org.apache.thrift.transport.TSSLTransportFactory;
 import org.apache.thrift.transport.TTransport;
@@ -127,6 +128,7 @@ public class TestServer {
     try {
       int port = 9090;
       boolean ssl = false;
+      boolean zlib = false;
       String transport_type = "buffered";
       String protocol_type = "binary";
       String server_type = "thread-pool";
@@ -150,6 +152,8 @@ public class TestServer {
             transport_type.trim();
           } else if (args[i].equals("--ssl")) {
             ssl = true;
+          } else if (args[i].equals("--zlib")) {
+            zlib = true;
           } else if (args[i].startsWith("--string-limit")) {
             string_limit = Integer.valueOf(args[i].split("=")[1]);
           } else if (args[i].startsWith("--container-limit")) {
@@ -158,9 +162,10 @@ public class TestServer {
             System.out.println("Allowed options:");
             System.out.println("  --help\t\t\tProduce help message");
             System.out.println("  --port=arg (=" + port + ")\tPort number to connect");
-            System.out.println("  --transport=arg (=" + transport_type + ")\n\t\t\t\tTransport: buffered, framed, fastframed");
+            System.out.println("  --transport=arg (=" + transport_type + ")\n\t\t\t\tTransport: buffered, framed, fastframed, zlib");
             System.out.println("  --protocol=arg (=" + protocol_type + ")\tProtocol: binary, compact, json, multi, multic, multij");
             System.out.println("  --ssl\t\t\tEncrypted Transport using SSL");
+            System.out.println("  --zlib\t\t\tCompressed Transport using Zlib");
             System.out.println("  --server-type=arg (=" + server_type +")\n\t\t\t\tType of server: simple, thread-pool, nonblocking, threaded-selector");
             System.out.println("  --string-limit=arg (=" + string_limit + ")\tString read length limit");
             System.out.println("  --container-limit=arg (=" + container_limit + ")\tContainer read length limit");
@@ -198,6 +203,7 @@ public class TestServer {
         if (transport_type.equals("buffered")) {
         } else if (transport_type.equals("framed")) {
         } else if (transport_type.equals("fastframed")) {
+        } else if (transport_type.equals("zlib")) {
         } else {
           throw new Exception("Unknown transport type! " + transport_type);
         }
@@ -229,6 +235,8 @@ public class TestServer {
         tTransportFactory = new TFramedTransport.Factory();
       } else if (transport_type.equals("fastframed")) {
         tTransportFactory = new TFastFramedTransport.Factory();
+      } else if (transport_type.equals("zlib")) {
+        tTransportFactory = new TZlibTransport.Factory();
       } else { // .equals("buffered") => default value
         tTransportFactory = new TTransportFactory();
       }

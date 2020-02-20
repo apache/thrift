@@ -21,6 +21,7 @@ package thrift
 
 import (
 	"context"
+	"sync"
 )
 
 type TSerializer struct {
@@ -76,4 +77,37 @@ func (t *TSerializer) Write(ctx context.Context, msg TStruct) (b []byte, err err
 
 	b = append(b, t.Transport.Bytes()...)
 	return
+}
+
+// TSerializerPool is the thread-safe version of TSerializer, it uses resource
+// pool of TSerializer under the hood.
+//
+// It must be initialized with NewTSerializerPool.
+type TSerializerPool struct {
+	pool sync.Pool
+}
+
+// NewTSerializerPool creates a new TSerializerPool.
+//
+// NewTSerializer can be used as the arg here.
+func NewTSerializerPool(f func() *TSerializer) *TSerializerPool {
+	return &TSerializerPool{
+		pool: sync.Pool{
+			New: func() interface{} {
+				return f()
+			},
+		},
+	}
+}
+
+func (t *TSerializerPool) WriteString(ctx context.Context, msg TStruct) (string, error) {
+	s := t.pool.Get().(*TSerializer)
+	defer t.pool.Put(s)
+	return s.WriteString(ctx, msg)
+}
+
+func (t *TSerializerPool) Write(ctx context.Context, msg TStruct) ([]byte, error) {
+	s := t.pool.Get().(*TSerializer)
+	defer t.pool.Put(s)
+	return s.Write(ctx, msg)
 }

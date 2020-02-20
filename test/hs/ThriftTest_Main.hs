@@ -107,7 +107,7 @@ instance Iface.ThriftTest_Iface TestHandler where
         return (Map.fromList [(1, Map.fromList [(2, 2)])])
 
     testInsanity _ x = do
-        return (Map.fromList [(1, Map.fromList [(Types.ONE, x)])])
+        return (Map.fromList [(1, Map.fromList [(Types.Numberz_ONE, x)])])
 
     testMulti _ _ _ _ _ _ _ = do
         return (Types.Xtruct "" 0 0 0)

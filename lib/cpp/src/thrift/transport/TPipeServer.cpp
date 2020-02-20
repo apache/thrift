@@ -286,8 +286,20 @@ shared_ptr<TTransport> TNamedPipeServer::acceptImpl() {
   // concurrently with interrupt, and that should be fine.
   if (GetOverlappedResult(Pipe_.h, &connectOverlap_.overlap, &dwDummy, TRUE)) {
     TAutoCrit lock(pipe_protect_);
+    shared_ptr<TPipe> client;
+    try {
+      client.reset(new TPipe(Pipe_));
+    } catch (TTransportException& ttx) {
+      if (ttx.getType() == TTransportException::INTERRUPTED) {
+        throw;
+      }
+
+      GlobalOutput.perror("Client connection failed. TTransportExceptionType=", ttx.getType());
+      // kick off the next connection before throwing
+      initiateNamedConnect(lock);
+      throw TTransportException(TTransportException::CLIENT_DISCONNECT, ttx.what());
+    }
     GlobalOutput.printf("Client connected.");
-    shared_ptr<TPipe> client(new TPipe(Pipe_));
     // kick off the next connection before returning
     initiateNamedConnect(lock);
     return client; // success!

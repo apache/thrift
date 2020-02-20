@@ -13,7 +13,6 @@
   "license": "Apache-2.0",
   "devDependencies": {
     "browserify": "~16.2",
-    "grunt": "~1.0",
     "grunt-cli": "~1.3",
     "grunt-contrib-concat": "~1.0",
     "grunt-contrib-jshint": "~2.1",
@@ -21,12 +20,11 @@
     "grunt-contrib-uglify": "~4.0",
     "grunt-jsdoc": "~2.3",
     "grunt-shell-spawn": "~0.4",
-    "jslint": "~0.12",
-    "node-int64": "~0.4.0"
-  },
-  "dependencies": {
+    "grunt": "~1.0",
     "jsdoc": "~3.5",
+    "jslint": "~0.12",
     "json-int64": "~1.0",
+    "node-int64": "~0.4.0",
     "nopt": "~4.0"
   }
 }
