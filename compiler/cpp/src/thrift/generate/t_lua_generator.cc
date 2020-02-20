@@ -197,6 +197,9 @@ void t_lua_generator::close_generator() {
  * Generate a typedef (essentially a constant)
  */
 void t_lua_generator::generate_typedef(t_typedef* ttypedef) {
+  if (ttypedef->get_type()->get_name().empty()) {
+    return;
+  }
   f_types_ << endl << endl << indent() << ttypedef->get_symbolic() << " = "
            << ttypedef->get_type()->get_name();
 }
