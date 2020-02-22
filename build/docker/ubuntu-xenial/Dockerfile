@@ -37,10 +37,6 @@ RUN apt-get update && \
       software-properties-common \
       wget && \
 
-# csharp (mono)
-# echo "deb http://download.mono-project.com/repo/debian xenial main" | tee /etc/apt/sources.list.d/mono.list && \
-#     apt-key adv --keyserver keyserver.ubuntu.com --recv-keys A6A19B38D3D831EF && \
-
 # D
     apt-key adv --keyserver keyserver.ubuntu.com --recv-keys EBCF975E5BA24D5E && \
     wget http://master.dl.sourceforge.net/project/d-apt/files/d-apt.list -O /etc/apt/sources.list.d/d-apt.list && \
@@ -93,10 +89,6 @@ RUN apt-get install -y --no-install-recommends \
       qt5-default \
       qtbase5-dev \
       qtbase5-dev-tools
-
-RUN apt-get install -y --no-install-recommends \
-`# csharp (mono) dependencies` \
-      mono-devel
 
 ENV D_VERSION 2.075.1-0
 RUN apt-get install -y --allow-unauthenticated --no-install-recommends \

@@ -125,11 +125,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
       npm
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
-`# CSharp dependencies` \
-      libmono-system-web2.0-cil \
-      mono-devel
-
-RUN apt-get update && apt-get install -y --no-install-recommends \
 `# D dependencies` \
       xdg-utils \
 `# Dart dependencies` \

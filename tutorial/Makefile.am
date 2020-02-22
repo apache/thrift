@@ -105,7 +105,6 @@ endif
 # EXTRA_DIST to be included in the release
 EXTRA_DIST = \
 	as3 \
-	csharp \
 	d \
 	delphi \
 	erl \
