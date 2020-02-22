@@ -28,3 +28,8 @@ that amount.
 This code is not quite what I would consider production-ready.  It doesn't
 support all of the normal hooks into Thrift, and its performance is
 sub-optimal because it does some unnecessary copying.
+
+Deprecation notice:
+Csharp is not a supported Apache Thrift target anymore. Instead netstd is the 
+recommended replacement. This code is left "as is" for educational purposes 
+unless someone converts it to netstd

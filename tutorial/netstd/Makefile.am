@@ -20,7 +20,7 @@
 SUBDIRS = . 
 
 all-local:
-	$(DOTNETCORE) build
+	$(DOTNETCORE) build -c Release
 
 clean-local:
 	$(RM) Interfaces.dll
