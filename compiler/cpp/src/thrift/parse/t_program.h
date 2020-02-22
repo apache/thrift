@@ -292,7 +292,7 @@ public:
         base_language = "st";
       }
       else if (base_language == "csharp") {
-        pwarning(1, "The '%s' target is deprecated. Consider moving to 'netstd' instead.", base_language.c_str());
+        pwarning(1, "The '%s' target is no longer available. Use 'netstd' instead.", base_language.c_str());
         // warn only, don't change base_language
       }
       else if (base_language == "netcore") {

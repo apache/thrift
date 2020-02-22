@@ -78,10 +78,6 @@ sudo apt-get install -qq lua5.2 lua5.2-dev
 # Node.js dependencies
 sudo apt-get install -qq nodejs nodejs-dev nodejs-legacy npm
 
-# CSharp
-sudo apt-get install -qq mono-gmcs mono-devel mono-xbuild mono-complete libmono-system-web2.0-cil
-sudo apt-get install -qq mingw32 mingw32-binutils mingw32-runtime nsis
-
 # D dependencies
 sudo wget http://master.dl.sourceforge.net/project/d-apt/files/d-apt.list -O /etc/apt/sources.list.d/d-apt.list
 sudo apt-get update && sudo apt-get -y --allow-unauthenticated install --reinstall d-apt-keyring && sudo apt-get update

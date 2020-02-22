@@ -32,8 +32,8 @@ If you would like to build Apache Thrift libraries for other programming languag
 	* libglib2.0-dev
  * Erlang
 	* erlang-base erlang-eunit erlang-dev rebar
- * Csharp
-	* mono-gmcs mono-devel libmono-system-web2.0-cil nunit nunit-console
+ * NetStd
+	* apt-transport-https dotnet-sdk-3.1 aspnetcore-runtime-3.1
  * Haskell
 	* ghc cabal-install libghc-binary-dev libghc-network-dev libghc-http-dev
  * Thrift Compiler for Windows

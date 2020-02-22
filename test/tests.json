@@ -419,48 +419,7 @@
     "workdir": "rb/gen-rb"
   },
   {
-    "name": "csharp",
-    "env": {
-      "MONO_PATH": "../../lib/csharp/"
-    },
-    "transports": [
-      "buffered",
-      "framed"
-    ],
-    "sockets": [
-      "ip",
-      "ip-ssl"
-    ],
-    "protocols": [
-      "binary",
-      "compact",
-      "json"
-    ],
-    "server": {
-      "command": [
-        "mono",
-        "TestClientServer.exe",
-        "server"
-      ]
-    },
-    "client": {
-      "timeout": 9,
-      "command": [
-        "mono",
-        "TestClientServer.exe",
-        "client"
-      ],
-      "protocols": [
-        "multi",
-        "multic",
-        "multi:binary",
-        "multic:compact"
-      ]
-    },
-    "workdir": "csharp"
-  },
-  {
-    "name": "netcore",
+    "name": "netstd",
     "transports": [
       "buffered",
       "framed"
@@ -493,7 +452,7 @@
         "client"
       ]
     },
-        "workdir": "netcore"
+        "workdir": "netstd"
   },
   {
     "name": "perl",

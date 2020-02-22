@@ -19,3 +19,8 @@ refer to the Rebus docs on how to do that (it's not that hard, really).
 
 Additional requirements:
 - RabbitMQ .NET client (see nuget)
+
+Deprecation notice:
+Csharp is not a supported Apache Thrift target anymore. Instead netstd is the 
+recommended replacement. This code is left "as is" for educational purposes 
+unless someone converts it to netstd

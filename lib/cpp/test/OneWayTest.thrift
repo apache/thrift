@@ -26,7 +26,6 @@ namespace java onewaytest
 namespace cpp onewaytest
 namespace rb Onewaytest
 namespace perl OneWayTest
-namespace csharp Onewaytest
 namespace js OneWayTest
 namespace st OneWayTest
 namespace py OneWayTest

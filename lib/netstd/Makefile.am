@@ -20,7 +20,7 @@
 SUBDIRS = . 
 
 all-local:
-	$(DOTNETCORE) build
+	$(DOTNETCORE) build -c Release
 
 check-local:
 	$(DOTNETCORE) test Tests/Thrift.Tests/Thrift.Tests.csproj

@@ -157,12 +157,7 @@ void t_netstd_generator::init_generator()
 {
     MKDIR(get_out_dir().c_str());
 
-    // for usage of csharp namespaces in thrift files (from files for csharp)
     namespace_name_ = program_->get_namespace("netstd");
-    if (namespace_name_.empty())
-    {
-        namespace_name_ = program_->get_namespace("netstd");
-    }
 
     string dir = namespace_name_;
     string subdir = get_out_dir().c_str();

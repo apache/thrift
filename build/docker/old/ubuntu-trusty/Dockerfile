@@ -75,10 +75,6 @@ RUN apt-get install -y --no-install-recommends \
       qtbase5-dev-tools
 
 RUN apt-get install -y --no-install-recommends \
-`# csharp (mono) dependencies` \
-      mono-devel
-
-RUN apt-get install -y --no-install-recommends \
 `# D dependencies` \
       dmd-bin=2.070.2-0 \
       libphobos2-dev=2.070.2-0 \
