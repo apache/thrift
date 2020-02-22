@@ -576,7 +576,7 @@ type
   IWinHTTPConnection = interface;
 
   IWinHTTPRequest = interface
-    ['{7A8E7255-5440-4621-A8A8-1E9FFAA6D6FA}']
+    ['{7AE6F63F-49B6-436B-8AAB-159E58EB900A}']
     function  Handle : HINTERNET;
     function  Connection : IWinHTTPConnection;
     function  AddRequestHeader( const aHeader : string; const addflag : DWORD = WINHTTP_ADDREQ_FLAG_ADD) : Boolean;
@@ -589,7 +589,7 @@ type
     function  ReadData( const dwRead : DWORD) : TBytes;  overload;
     function  ReadData( const pBuf : Pointer; const dwRead : DWORD) : DWORD;  overload;
     function  QueryDataAvailable : DWORD;
-    function  QueryTotalResponseSize : DWORD;
+    function  QueryTotalResponseSize( out dwSize : DWORD) : Boolean;
   end;
 
   IWinHTTPConnection = interface
@@ -709,7 +709,7 @@ type
     function  ReadData( const dwRead : DWORD) : TBytes;  overload;
     function  ReadData( const pBuf : Pointer; const dwRead : DWORD) : DWORD;  overload;
     function  QueryDataAvailable : DWORD;
-    function  QueryTotalResponseSize : DWORD;
+    function  QueryTotalResponseSize( out dwSize : DWORD) : Boolean;
 
   public
     constructor Create( const aConnection : IWinHTTPConnection;
@@ -1212,20 +1212,20 @@ begin
 end;
 
 
-function TWinHTTPRequestImpl.QueryTotalResponseSize : DWORD;
+function TWinHTTPRequestImpl.QueryTotalResponseSize( out dwSize : DWORD) : Boolean;
 var dwBytes, dwError, dwIndex : DWORD;
 begin
   dwBytes := SizeOf( result);
   dwIndex := DWORD( WINHTTP_NO_HEADER_INDEX);
-  if not WinHttpQueryHeaders( FHandle,
-                              WINHTTP_QUERY_CONTENT_LENGTH or WINHTTP_QUERY_FLAG_NUMBER,
-                              WINHTTP_HEADER_NAME_BY_INDEX,
-                              @result, dwBytes,
-                              dwIndex)
-  then begin
+  result := WinHttpQueryHeaders( FHandle,
+                                 WINHTTP_QUERY_CONTENT_LENGTH or WINHTTP_QUERY_FLAG_NUMBER,
+                                 WINHTTP_HEADER_NAME_BY_INDEX,
+                                 @dwSize, dwBytes,
+                                 dwIndex);
+  if not result then begin
+    dwSize  := MAXINT;  // we don't know, just return something useful
     dwError := GetLastError;
     if dwError <> ERROR_WINHTTP_HEADER_NOT_FOUND then ASSERT(FALSE);  // anything else would be an real error
-    result  := MAXINT;  // we don't know
   end;
 end;
 

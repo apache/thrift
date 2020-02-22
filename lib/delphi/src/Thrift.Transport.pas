@@ -579,7 +579,7 @@ begin
   // update only: message size can shrink, but not grow
   ASSERT( KnownMessageSize <= MaxMessageSize);
   if newSize > KnownMessageSize
-  then TTransportExceptionEndOfFile.Create('MaxMessageSize reached');
+  then raise TTransportExceptionEndOfFile.Create('MaxMessageSize reached');
 
   FKnownMessageSize := newSize;
   FRemainingMessageSize := newSize;

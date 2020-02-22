@@ -151,7 +151,7 @@ endif()
 ADD_PKGCONFIG_THRIFT(thrift)
 
 if(WITH_LIBEVENT)
-    find_package(Libevent REQUIRED)  # Libevent comes with CMake support form upstream
+    find_package(Libevent REQUIRED)  # Libevent comes with CMake support from upstream
     include_directories(SYSTEM ${LIBEVENT_INCLUDE_DIRS})
 
     ADD_LIBRARY_THRIFT(thriftnb ${thriftcppnb_SOURCES})
