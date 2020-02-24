@@ -34,7 +34,7 @@ class TProtocolDecorator: TProtocol {
   }
 
   func readMessageBegin() throws -> (String, TMessageType, Int32) {
-    try proto.readMessageBegin()
+    return try proto.readMessageBegin()
   }
 
   func readMessageEnd() throws {
@@ -42,7 +42,7 @@ class TProtocolDecorator: TProtocol {
   }
 
   func readStructBegin() throws -> String {
-    try proto.readStructBegin()
+    return try proto.readStructBegin()
   }
 
   func readStructEnd() throws {
@@ -50,7 +50,7 @@ class TProtocolDecorator: TProtocol {
   }
 
   func readFieldBegin() throws -> (String, TType, Int32) {
-    try proto.readFieldBegin()
+    return try proto.readFieldBegin()
   }
 
   func readFieldEnd() throws {
@@ -58,7 +58,7 @@ class TProtocolDecorator: TProtocol {
   }
 
   func readMapBegin() throws -> (TType, TType, Int32) {
-    try proto.readMapBegin()
+    return try proto.readMapBegin()
   }
 
   func readMapEnd() throws {
@@ -66,7 +66,7 @@ class TProtocolDecorator: TProtocol {
   }
 
   func readSetBegin() throws -> (TType, Int32) {
-    try proto.readSetBegin()
+    return try proto.readSetBegin()
   }
 
   func readSetEnd() throws {
@@ -74,7 +74,7 @@ class TProtocolDecorator: TProtocol {
   }
 
   func readListBegin() throws -> (TType, Int32) {
-    try proto.readListBegin()
+    return try proto.readListBegin()
   }
 
   func readListEnd() throws {
@@ -82,35 +82,35 @@ class TProtocolDecorator: TProtocol {
   }
 
   func read() throws -> String {
-    try proto.read()
+    return try proto.read()
   }
 
   func read() throws -> Bool {
-    try proto.read()
+    return try proto.read()
   }
 
   func read() throws -> UInt8 {
-    try proto.read()
+    return try proto.read()
   }
 
   func read() throws -> Int16 {
-    try proto.read()
+    return try proto.read()
   }
 
   func read() throws -> Int32 {
-    try proto.read()
+    return try proto.read()
   }
 
   func read() throws -> Int64 {
-    try proto.read()
+    return try proto.read()
   }
 
   func read() throws -> Double {
-    try proto.read()
+    return try proto.read()
   }
 
   func read() throws -> Data {
-    try proto.read()
+    return try proto.read()
   }
 
   func writeMessageBegin(name: String, type messageType: TMessageType, sequenceID: Int32) throws {
