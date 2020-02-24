@@ -86,6 +86,6 @@ private final class StoredMessage: TProtocolDecorator {
   }
 
   override func readMessageBegin() throws -> (String, TMessageType, Int32) {
-    message
+    return message
   }
 }
