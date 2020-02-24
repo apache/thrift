@@ -69,7 +69,7 @@ public:
       } else if( iter->first.compare("async_clients") == 0) {
         async_clients_ = true;
       } else if( iter->first.compare("async_servers") == 0) {
-        if (gen_cocoa_ == true) {
+        if (gen_cocoa_) {
           throw "Async servers is not compatible with compatible with the Thrift/Cocoa library";
         }
         async_servers_ = true;
