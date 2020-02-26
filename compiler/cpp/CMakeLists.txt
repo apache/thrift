@@ -115,10 +115,6 @@ set_target_properties(thrift-compiler PROPERTIES OUTPUT_NAME thrift)
 
 target_link_libraries(thrift-compiler parse)
 
-add_custom_command(TARGET thrift-compiler POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E make_directory "${CMAKE_SOURCE_DIR}/compiler/cpp"
-    COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_CURRENT_BINARY_DIR}/bin/thrift${CMAKE_EXECUTABLE_SUFFIX}" "${CMAKE_SOURCE_DIR}/compiler/cpp/")
-
 install(TARGETS thrift-compiler DESTINATION bin)
 
 if(BUILD_TESTING)

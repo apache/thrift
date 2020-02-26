@@ -58,6 +58,5 @@ EXTRA_DIST = \
 	package.json \
 	package-lock.json \
 	README.md \
-	CMakeLists.txt \
 	src \
 	test
