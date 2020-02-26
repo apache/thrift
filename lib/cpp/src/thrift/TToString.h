@@ -26,6 +26,8 @@
 #include <set>
 #include <sstream>
 #include <string>
+#include <unordered_map>
+#include <unordered_set>
 #include <vector>
 
 namespace apache {
@@ -102,8 +104,22 @@ std::string to_string(const std::map<K, V>& m) {
   return o.str();
 }
 
+template <typename K, typename V>
+std::string to_string(const std::unordered_map<K, V>& m) {
+  std::ostringstream o;
+  o << "{" << to_string(m.begin(), m.end()) << "}";
+  return o.str();
+}
+
 template <typename T>
 std::string to_string(const std::set<T>& s) {
+  std::ostringstream o;
+  o << "{" << to_string(s.begin(), s.end()) << "}";
+  return o.str();
+}
+
+template <typename T>
+std::string to_string(const std::unordered_set<T>& s) {
   std::ostringstream o;
   o << "{" << to_string(s.begin(), s.end()) << "}";
   return o.str();
