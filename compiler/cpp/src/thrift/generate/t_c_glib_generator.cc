@@ -2445,6 +2445,7 @@ void t_c_glib_generator::generate_service_processor(t_service* tservice) {
         f_service_ << args_indent << "\"" << (*xception_iter)->get_name() << "\", "
                    << (*xception_iter)->get_name() << "," << endl << args_indent << "NULL);" << endl
                    << endl;
+        f_service_ << indent() << "g_object_unref ("<< (*xception_iter)->get_name() <<");"<< endl;
         f_service_ << indent() << "result =" << endl;
         indent_up();
         f_service_ << indent() << "((thrift_protocol_write_message_begin (output_protocol," << endl;
