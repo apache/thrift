@@ -42,5 +42,4 @@ EXTRA_DIST = \
 	lib \
 	test \
 	coding_standards.md \
-	CMakeLists.txt \
 	README.md
