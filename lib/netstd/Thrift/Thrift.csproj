@@ -7,9 +7,9 @@
     to you under the Apache License, Version 2.0 (the
     "License"); you may not use this file except in compliance
     with the License. You may obtain a copy of the License at
-    
+
   	  http://www.apache.org/licenses/LICENSE-2.0
-    
+
     Unless required by applicable law or agreed to in writing,
     software distributed under the License is distributed on an
     "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
@@ -19,7 +19,12 @@
   -->
 
   <PropertyGroup>
-    <TargetFrameworks>netstandard2.1;netstandard2.0</TargetFrameworks>
+    <!--
+        The 'publish' target can only support a single target framework. Most
+        likely this should be either a recent lts for netstandard or netcore.
+        Currently this is netstandard2.1, but netcore3.1 may also be a good choice?
+    -->
+    <TargetFramework>netstandard2.1</TargetFramework>
     <AssemblyName>Thrift</AssemblyName>
     <PackageId>Thrift</PackageId>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>

@@ -17,7 +17,7 @@
 # under the License.
 #
 
-SUBDIRS = . 
+SUBDIRS = .
 
 all-local:
 	$(DOTNETCORE) build -c Release
@@ -38,5 +38,5 @@ EXTRA_DIST = \
 	Server \
 	Tutorial.sln \
 	build.cmd \
-	build.sh
-			 
+	build.sh \
+	CMakeLists.txt
