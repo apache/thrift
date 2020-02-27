@@ -58,7 +58,7 @@ public class MultiplexedProcessor: TProcessor {
 
   public func process(on inProtocol: TProtocol, outProtocol: TProtocol) throws {
     let message = try inProtocol.readMessageBegin()
-    guard message.1 != .call && message.1 != .oneway else { throw Error.incompatibleMessageType(message.1) }
+    guard message.1 == .call || message.1 == .oneway else { throw Error.incompatibleMessageType(message.1) }
     if let separatorIndex = message.0.firstIndex(of: Character(.multiplexSeparator)) {
       let serviceName = String(message.0.prefix(upTo: separatorIndex))
       let messageName = String(message.0.suffix(from: message.0.index(after: separatorIndex)))
