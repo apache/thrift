@@ -232,15 +232,9 @@ tutorial_calculator_handler_calculate (CalculatorIf      *iface,
          of its type and returning FALSE. */
       *ouch = g_object_new (TYPE_INVALID_OPERATION,
                             "whatOp", op,
-                            "why",  g_strdup ("Cannot divide by 0"),
+                            "why",   "Cannot divide by 0",
                             NULL);
       result = FALSE;
-
-      /* Note the call to g_strdup above: All the memory used by a
-         ThriftStruct's properties belongs to the object itself and
-         will be freed on destruction. Removing this call to g_strdup
-         will lead to a segmentation fault as the object tries to
-         release memory allocated statically to the program. */
     }
     else {
       *_return = num1 / num2;
@@ -250,7 +244,7 @@ tutorial_calculator_handler_calculate (CalculatorIf      *iface,
   default:
     *ouch = g_object_new (TYPE_INVALID_OPERATION,
                           "whatOp", op,
-                          "why",  g_strdup ("Invalid Operation"),
+                          "why",   "Invalid Operation",
                           NULL);
     result = FALSE;
   }
@@ -263,8 +257,8 @@ tutorial_calculator_handler_calculate (CalculatorIf      *iface,
     snprintf (log_value, sizeof log_value, "%d", *_return);
 
     log_struct = g_object_new (TYPE_SHARED_STRUCT,
-                               "key",   *log_key,
-                               "value",  g_strdup (log_value),
+                               "key",  *log_key,
+                               "value", log_value,
                                NULL);
     g_hash_table_replace (self->log, log_key, log_struct);
   }
@@ -336,8 +330,9 @@ tutorial_calculator_handler_get_struct (SharedServiceIf  *iface,
                   NULL);
     g_object_set (*_return,
                   "key",   log_key,
-                  "value", g_strdup (log_value),
+                  "value", log_value,
                   NULL);
+    g_free(log_value);
   }
 
   return TRUE;
@@ -510,11 +505,11 @@ int main (void)
   if (!sigint_received) {
     g_message ("thrift_server_serve: %s",
                error != NULL ? error->message : "(null)");
-    g_clear_error (&error);
   }
 
   puts ("done.");
 
+  g_clear_error (&error);
   g_object_unref (server);
   g_object_unref (transport_factory);
   g_object_unref (protocol_factory);
