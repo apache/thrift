@@ -78,7 +78,7 @@ class TSocketServer<InProtocol: TProtocol, OutProtocol: TProtocol, Processor: TP
       let address = Data(bytes: ptr, count: MemoryLayout<sockaddr_in>.size)
 
       let cfaddr = address.withUnsafeBytes {
-        CFDataCreateWithBytesNoCopy(kCFAllocatorDefault, $0.bindMemory(to: UInt8.self).baseAddress!, address.count, nil)
+        CFDataCreateWithBytesNoCopy(kCFAllocatorDefault, $0.bindMemory(to: UInt8.self).baseAddress!, address.count, kCFAllocatorNull)
       }
       if CFSocketSetAddress(sock, cfaddr) != CFSocketError.success { //kCFSocketSuccess {
         CFSocketInvalidate(sock)
