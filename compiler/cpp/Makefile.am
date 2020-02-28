@@ -72,6 +72,7 @@ thrift_SOURCES = src/thrift/audit/t_audit.cpp \
 thrift_SOURCES += src/thrift/generate/t_c_glib_generator.cc \
                   src/thrift/generate/t_cl_generator.cc \
                   src/thrift/generate/t_cpp_generator.cc \
+                  src/thrift/generate/t_csharp_generator.cc \
                   src/thrift/generate/t_d_generator.cc \
                   src/thrift/generate/t_dart_generator.cc \
                   src/thrift/generate/t_delphi_generator.cc \

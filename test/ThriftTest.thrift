@@ -23,6 +23,7 @@
 
 namespace c_glib TTest
 namespace cpp thrift.test
+namespace csharp Thrift.Test
 namespace delphi Thrift.Test
 namespace go thrifttest
 namespace java thrift.test
