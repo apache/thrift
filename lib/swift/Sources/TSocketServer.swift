@@ -129,7 +129,9 @@ class TSocketServer<InProtocol: TProtocol, OutProtocol: TProtocol, Processor: TP
     let outProtocol = OutProtocol(on: transport)
 
     do {
-      try processor.process(on: inProtocol, outProtocol: outProtocol)
+      while true {
+        try processor.process(on: inProtocol, outProtocol: outProtocol)
+      }
     } catch let error {
       print("Error processign request: \(error)")
     }
