@@ -102,7 +102,8 @@ class TSocketServer<InProtocol: TProtocol, OutProtocol: TProtocol, Processor: TP
                                                object: nil, queue: nil) {
                                                 [weak self] notification in
                                                 guard let strongSelf = self else { return }
-                                                strongSelf.connectionAccepted(strongSelf.socketFileHandle)
+                                                guard let clientSocket = notification.userInfo?[NSFileHandleNotificationFileHandleItem] as? FileHandle else { return }
+                                                strongSelf.connectionAccepted(clientSocket)
     }
 
     // tell socket to listen
@@ -115,17 +116,15 @@ class TSocketServer<InProtocol: TProtocol, OutProtocol: TProtocol, Processor: TP
     NotificationCenter.default.removeObserver(self)
   }
 
-  func connectionAccepted(_ socket: FileHandle) {
+  func connectionAccepted(_ clientSocket: FileHandle) {
     // Now that we have a client connected, handle the request on queue
     processingQueue.async {
-      self.handleClientConnection(socket)
+      self.handleClientConnection(clientSocket)
     }
   }
 
   func handleClientConnection(_ clientSocket: FileHandle) {
-
     let transport = TFileHandleTransport(fileHandle: clientSocket)
-
     let inProtocol = InProtocol(on: transport)
     let outProtocol = OutProtocol(on: transport)
 
