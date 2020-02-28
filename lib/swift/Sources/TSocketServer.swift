@@ -121,6 +121,9 @@ class TSocketServer<InProtocol: TProtocol, OutProtocol: TProtocol, Processor: TP
     processingQueue.async {
       self.handleClientConnection(clientSocket)
     }
+
+    // continue accepting connections
+    socketFileHandle.acceptConnectionInBackgroundAndNotify()
   }
 
   func handleClientConnection(_ clientSocket: FileHandle) {
