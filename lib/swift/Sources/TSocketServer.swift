@@ -31,7 +31,7 @@ public let TSocketServerClientConnectionFinished = "TSocketServerClientConnectio
 public let TSocketServerProcessorKey = "TSocketServerProcessor"
 public let TSocketServerTransportKey = "TSocketServerTransport"
 
-class TSocketServer<InProtocol: TProtocol, OutProtocol: TProtocol, Processor: TProcessor> {
+open class TSocketServer<InProtocol: TProtocol, OutProtocol: TProtocol, Processor: TProcessor> {
   var socketFileHandle: FileHandle
   var processingQueue =  DispatchQueue(label: "TSocketServer.processing",
                                        qos: .background,
@@ -126,8 +126,12 @@ class TSocketServer<InProtocol: TProtocol, OutProtocol: TProtocol, Processor: TP
     socketFileHandle.acceptConnectionInBackgroundAndNotify()
   }
 
+  open func createTransport(fileHandle: FileHandle) -> TTransport {
+    return TFileHandleTransport(fileHandle: fileHandle)
+  }
+
   func handleClientConnection(_ clientSocket: FileHandle) {
-    let transport = TFileHandleTransport(fileHandle: clientSocket)
+    let transport = createTransport(fileHandle: clientSocket)
     let inProtocol = InProtocol(on: transport)
     let outProtocol = OutProtocol(on: transport)
 
@@ -145,5 +149,11 @@ class TSocketServer<InProtocol: TProtocol, OutProtocol: TProtocol, Processor: TP
               userInfo: [TSocketServerProcessorKey: self.processor,
                          TSocketServerTransportKey: transport])
     }
+  }
+}
+
+public class TFramedSocketServer<InProtocol: TProtocol, OutProtocol: TProtocol, Processor: TProcessor>: TSocketServer<InProtocol, OutProtocol, Processor> {
+  open override func createTransport(fileHandle: FileHandle) -> TTransport {
+    return TFramedTransport(transport: super.createTransport(fileHandle: fileHandle))
   }
 }
