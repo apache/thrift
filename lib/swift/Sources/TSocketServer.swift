@@ -31,21 +31,17 @@ public let TSocketServerClientConnectionFinished = "TSocketServerClientConnectio
 public let TSocketServerProcessorKey = "TSocketServerProcessor"
 public let TSocketServerTransportKey = "TSocketServerTransport"
 
-class TSocketServer<InProtocol: TProtocol, OutProtocol: TProtocol, Processor: TProcessor, Service> {
+class TSocketServer<InProtocol: TProtocol, OutProtocol: TProtocol, Processor: TProcessor> {
   var socketFileHandle: FileHandle
   var processingQueue =  DispatchQueue(label: "TSocketServer.processing",
                                        qos: .background,
                                        attributes: .concurrent)
-  var serviceHandler: Service
   let processor: Processor
 
   public init(port: Int,
-              service: Service,
               inProtocol: InProtocol.Type,
               outProtocol: OutProtocol.Type,
               processor: Processor) throws {
-    // set service handler
-    self.serviceHandler = service
     self.processor = processor
 
     // create a socket
