@@ -57,16 +57,16 @@ class TSocketServer<InProtocol: TProtocol, OutProtocol: TProtocol, Processor: TP
       fd = CFSocketGetNative(sock)
       var yes = 1
       setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &yes, UInt32(MemoryLayout<Int>.size))
-
+      let inPort = in_port_t(UInt16(truncatingIfNeeded: port).bigEndian)
       #if os(Linux)
         var addr = sockaddr_in(sin_family: sa_family_t(AF_INET),
-                               sin_port: in_port_t(port.bigEndian),
+                               sin_port: inPort,
                                sin_addr: in_addr(s_addr: in_addr_t(0)),
                                sin_zero: (0, 0, 0, 0, 0, 0, 0, 0))
       #else
         var addr = sockaddr_in(sin_len: UInt8(MemoryLayout<sockaddr_in>.size),
                                sin_family: sa_family_t(AF_INET),
-                               sin_port: in_port_t(port.bigEndian),
+                               sin_port: inPort,
                                sin_addr: in_addr(s_addr: in_addr_t(0)),
                                sin_zero: (0, 0, 0, 0, 0, 0, 0, 0))
       #endif
