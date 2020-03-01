@@ -83,7 +83,10 @@ thrift_simple_server_serve (ThriftServer *server, GError **error)
         g_object_unref (input_protocol);
         g_object_unref (output_protocol);
       }
-
+      if ((*error) != NULL) {
+        g_message ("thrift_simple_server_serve : %s", (*error)->message);
+        g_clear_error (error);
+      }
       if (t != NULL)
       {
         g_object_unref (t);
