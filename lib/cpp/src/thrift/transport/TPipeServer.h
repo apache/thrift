@@ -31,6 +31,11 @@
 
 #define TPIPE_SERVER_MAX_CONNS_DEFAULT PIPE_UNLIMITED_INSTANCES
 
+// Windows - set security to allow non-elevated apps
+// to access pipes created by elevated apps.
+// Full access to everyone
+const std::string DEFAULT_PIPE_SECURITY{"D:(A;;FA;;;WD)"};
+
 namespace apache {
 namespace thrift {
 namespace transport {
@@ -51,6 +56,10 @@ public:
   // Named Pipe -
   TPipeServer(const std::string& pipename, uint32_t bufsize);
   TPipeServer(const std::string& pipename, uint32_t bufsize, uint32_t maxconnections);
+  TPipeServer(const std::string& pipename,
+              uint32_t bufsize,
+              uint32_t maxconnections,
+              std::string securityDescriptor);
   TPipeServer(const std::string& pipename);
   // Anonymous pipe -
   TPipeServer(int bufsize);
@@ -76,6 +85,7 @@ public:
   bool getAnonymous();
   void setAnonymous(bool anon);
   void setMaxConnections(uint32_t maxconnections);
+  void setSecurityDescriptor(std::string securityDescriptor);
 
   // this function is intended to be used in generic / template situations,
   // so its name needs to be the same as TPipe's
@@ -88,6 +98,7 @@ private:
   std::shared_ptr<TPipeServerImpl> impl_;
 
   std::string pipename_;
+  std::string securityDescriptor_;
   uint32_t bufsize_;
   uint32_t maxconns_;
   bool isAnonymous_;
@@ -96,8 +107,8 @@ private:
 //*NIX named pipe implementation uses domain socket
 typedef TServerSocket TPipeServer;
 #endif
-}
-}
-} // apache::thrift::transport
+} // namespace transport
+} // namespace thrift
+} // namespace apache
 
 #endif // #ifndef _THRIFT_TRANSPORT_TSERVERWINPIPES_H_
