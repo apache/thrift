@@ -3085,8 +3085,9 @@ void ProcessorGenerator::generate_class_definition() {
     }
   }
 
-  f_header_ << " public:" << endl << indent() << class_name_ << "(::std::shared_ptr<" << if_name_
-            << "> iface) :" << endl;
+  f_header_ << " public:" << endl
+            << indent() << "typedef " << if_name_ << " IfaceType;" << endl << endl
+            << indent() << class_name_ << "(::std::shared_ptr<" << if_name_ << "> iface) :" << endl;
   if (!extends_.empty()) {
     f_header_ << indent() << "  " << extends_ << "(iface)," << endl;
   }
