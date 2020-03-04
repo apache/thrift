@@ -178,7 +178,7 @@ void TSocketPool::setCurrentServer(const shared_ptr<TSocketPoolServer>& server) 
  * This function throws an exception if socket open fails. When socket
  * opens fails, the socket in the current server is reset.
  */
-/* TODO: without apc we ignore a lot of functionality from the php version */
+/* TODO: without apcu we ignore a lot of functionality from the php version */
 void TSocketPool::open() {
 
   size_t numServers = servers_.size();

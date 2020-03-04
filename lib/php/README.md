@@ -23,7 +23,7 @@ under the License.
 
 Thrift requires PHP 5. Thrift makes as few assumptions about your PHP
 environment as possible while trying to make some more advanced PHP
-features (i.e. APC cacheing using asbolute path URLs) as simple as possible.
+features (i.e. APCu cacheing using asbolute path URLs) as simple as possible.
 
 To use Thrift in your PHP codebase, take the following steps:
 
@@ -46,9 +46,9 @@ PHP_INT_SIZE
     used by the TBinaryProtocol to properly use pack() and unpack() to
     serialize data.
 
-apc_fetch(), apc_store()
+apcu_fetch(), apcu_store()
 
-    APC cache is used by the TSocketPool class. If you do not have APC installed,
+    APCu cache is used by the TSocketPool class. If you do not have APCu installed,
     Thrift will fill in null stub function definitions.
 
 # Breaking Changes
