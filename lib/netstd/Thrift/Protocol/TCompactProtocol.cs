@@ -16,6 +16,7 @@
 // under the License.
 
 using System;
+using System.Buffers;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Text;
@@ -65,7 +66,7 @@ namespace Thrift.Protocol
 
         // minimize memory allocations by means of an preallocated bytes buffer
         // The value of 128 is arbitrarily chosen, the required minimum size must be sizeof(long)
-        private byte[] PreAllocatedBuffer = new byte[128]; 
+        private readonly byte[] PreAllocatedBuffer = new byte[128]; 
 
         private struct VarInt
         {
@@ -411,11 +412,19 @@ namespace Thrift.Protocol
                 return;
             }
 
-            var bytes = Encoding.UTF8.GetBytes(str);
+            var buf = ArrayPool<byte>.Shared.Rent(Encoding.UTF8.GetByteCount(str));
+            try
+            {
+                var numberOfBytes = Encoding.UTF8.GetBytes(str, 0, str.Length, buf, 0);
 
-            Int32ToVarInt((uint) bytes.Length, ref PreAllocatedVarInt);
-            await Trans.WriteAsync(PreAllocatedVarInt.bytes, 0, PreAllocatedVarInt.count, cancellationToken);
-            await Trans.WriteAsync(bytes, 0, bytes.Length, cancellationToken);
+                Int32ToVarInt((uint)numberOfBytes, ref PreAllocatedVarInt);
+                await Trans.WriteAsync(PreAllocatedVarInt.bytes, 0, PreAllocatedVarInt.count, cancellationToken);
+                await Trans.WriteAsync(buf, 0, numberOfBytes, cancellationToken);
+            }
+            finally
+            {
+                ArrayPool<byte>.Shared.Return(buf);
+            }
         }
 
         public override async Task WriteBinaryAsync(byte[] bytes, CancellationToken cancellationToken)
@@ -703,9 +712,16 @@ namespace Thrift.Protocol
                 return Encoding.UTF8.GetString(PreAllocatedBuffer, 0, length);
             }
 
-            var buf = new byte[length];
-            await Trans.ReadAllAsync(buf, 0, length, cancellationToken);
-            return Encoding.UTF8.GetString(buf, 0, length);
+            var buf = ArrayPool<byte>.Shared.Rent(length);
+            try
+            {
+                await Trans.ReadAllAsync(buf, 0, length, cancellationToken);
+                return Encoding.UTF8.GetString(buf, 0, length);
+            }
+            finally
+            {
+                ArrayPool<byte>.Shared.Return(buf);
+            }
         }
 
         public override async ValueTask<byte[]> ReadBinaryAsync(CancellationToken cancellationToken)
@@ -714,7 +730,7 @@ namespace Thrift.Protocol
             var length = (int) await ReadVarInt32Async(cancellationToken);
             if (length == 0)
             {
-                return new byte[0];
+                return Array.Empty<byte>();
             }
 
             // read data
