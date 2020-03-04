@@ -72,7 +72,11 @@ namespace Thrift.Transport.Client
             }
 
             CheckReadBytesAvailable(length);
+#if NETSTANDARD2_1
+            var numRead = await PipeStream.ReadAsync(new Memory<byte>(buffer, offset, length), cancellationToken);
+#else
             var numRead = await PipeStream.ReadAsync(buffer, offset, length, cancellationToken);
+#endif
             CountConsumedMessageBytes(numRead);
             return numRead;
         }

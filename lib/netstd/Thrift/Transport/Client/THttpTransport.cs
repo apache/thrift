@@ -109,7 +109,11 @@ namespace Thrift.Transport.Client
 
             try
             {
+#if NETSTANDARD2_1
+                var ret = await _inputStream.ReadAsync(new Memory<byte>(buffer, offset, length), cancellationToken);
+#else
                 var ret = await _inputStream.ReadAsync(buffer, offset, length, cancellationToken);
+#endif
                 if (ret == -1)
                 {
                     throw new TTransportException(TTransportException.ExceptionType.EndOfFile, "No more data available");
