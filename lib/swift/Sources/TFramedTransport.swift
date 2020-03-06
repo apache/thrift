@@ -65,17 +65,15 @@ public class TFramedTransport: TTransport {
         throw TTransportError(error: .sizeLimit(limit: maxSize, got: toRead))
     }
 
-    return try transport.readAll(size: toRead)
+    let data = try transport.readAll(size: toRead)
+    remainingBytes -= data.count
+    return data
   }
 
   public func flush() throws {
     // copy buffer and reset
     let buff = writeBuffer
     writeBuffer = Data()
-
-    if buff.count - TFramedTransport.headerSize < 0 {
-      throw TTransportError(error: .unknown)
-    }
 
     let frameSize = encodeFrameSize(size: UInt32(buff.count))
 
