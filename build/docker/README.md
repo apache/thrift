@@ -194,4 +194,4 @@ Last updated: October 1, 2017
 | ruby      | 2.3.1p112     | 2.5.1p57      |       |
 | rust      | 1.34.0        | 1.35.0        |       |
 | smalltalk |               |               | Not in CI |
-| swift     |               | 4.2.1         |       |
+| swift     |               | 5.1.4         |       |
