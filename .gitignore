@@ -49,6 +49,7 @@ test-driver
 erl_crash.dump
 project.lock.json
 
+.Dockerfile.sha512
 .sonar
 .DS_Store
 .svn
@@ -350,6 +351,7 @@ project.lock.json
 /test/rs/target/
 /test/rs/*.iml
 /test/rs/**/*.iml
+/test/swift/CrossTests/.build
 /lib/cl/backport-update.zip
 /lib/cl/lib
 /tutorial/cl/quicklisp.lisp

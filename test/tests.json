@@ -717,5 +717,22 @@
       "buffered"
     ],
     "workdir": "../lib/nodets/test"
+  },
+  {
+    "name": "swift",
+    "server": {
+      "command": ["TestServer"],
+      "workdir": "swift/CrossTests/.build/x86_64-unknown-linux/debug",
+      "protocols": ["binary", "compact"],
+      "transports": ["buffered", "framed"],
+      "sockets": ["ip"]
+    },
+    "client": {
+      "command": ["TestClient"],
+      "workdir": "swift/CrossTests/.build/x86_64-unknown-linux/debug",
+      "protocols": ["binary", "compact"],
+      "transports": ["buffered", "framed"],
+      "sockets": ["ip"]
+    }
   }
 ]

@@ -17,30 +17,8 @@
 # under the License.
 #
 
-SUBDIRS = .
-
-all-local:
-	swift build --configuration release
-
-install-exec-hook:
-	swift install
-
-clean-local:
-	swift package clean
-	rm -rf .build
+SUBDIRS = CrossTests
 
 precross:
-	swift build
+	$(MAKE) -C CrossTests precross
 
-check-local:
-	swift test
-
-EXTRA_DIST = \
-	Package.swift \
-	Sources \
-	Tests \
-	README.md
-
-MAINTAINERCLEANFILES = \
-	Makefile \
-	Makefile.in

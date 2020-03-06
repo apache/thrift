@@ -17,30 +17,18 @@
 # under the License.
 #
 
-SUBDIRS = .
+TESTTHRIFT=../../ThriftTest.thrift
 
-all-local:
-	swift build --configuration release
+stubs: $(THRIFT) $(TESTTHRIFT)
+	$(THRIFT) -o Sources/Common --gen swift $(TESTTHRIFT)
 
-install-exec-hook:
-	swift install
-
-clean-local:
-	swift package clean
-	rm -rf .build
-
-precross:
+precross: stubs
 	swift build
 
-check-local:
-	swift test
+check: stubs
 
-EXTRA_DIST = \
-	Package.swift \
-	Sources \
-	Tests \
-	README.md
+clean-local:
+	$(RM) -r Sources/Common/gen-swift/
 
-MAINTAINERCLEANFILES = \
-	Makefile \
-	Makefile.in
+dist-hook:
+	$(RM) -r $(distdir)/gen-swift/

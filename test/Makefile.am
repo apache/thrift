@@ -96,6 +96,11 @@ SUBDIRS += rs
 PRECROSS_TARGET += precross-rs
 endif
 
+if WITH_SWIFT
+SUBDIRS += swift
+PRECROSS_TARGET += precross-swift
+endif
+
 #
 # generate html for ThriftTest.thrift AND validate it!
 #
@@ -138,6 +143,7 @@ EXTRA_DIST = \
 	py.twisted \
 	rb \
 	rs \
+	swift \
 	threads \
 	AnnotationTest.thrift \
 	BrokenConstants.thrift \
