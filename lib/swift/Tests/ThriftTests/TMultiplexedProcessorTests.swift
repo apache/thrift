@@ -138,4 +138,17 @@ class TMultiplexedProcessorTests: XCTestCase {
     try transport.flush()
     try sut.process(on: proto, outProtocol: proto)
   }
+
+  static var allTests : [(String, (TMultiplexedProcessorTests) -> () throws -> Void)] {
+    return [
+      ("testExceptionMessageThrowsError", testExceptionMessageThrowsError),
+      ("testReplyMessageThrowsError", testReplyMessageThrowsError),
+      ("testMissingDefaultProcessorThrowsError", testMissingDefaultProcessorThrowsError),
+      ("testUsesDefaultProcessorForNonMultiplexedMessage", testUsesDefaultProcessorForNonMultiplexedMessage),
+      ("testUsesProcessorForMultiplexedMessage", testUsesProcessorForMultiplexedMessage),
+      ("testMissingProcessorForMultiplexedMessageThrowsError", testMissingProcessorForMultiplexedMessageThrowsError),
+      ("testCallMessageDoesNotThrowError", testCallMessageDoesNotThrowError),
+      ("testOneWayMessageDoesNotThrowError", testOneWayMessageDoesNotThrowError)
+    ]
+  }
 }
