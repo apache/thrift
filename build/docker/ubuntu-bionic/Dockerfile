@@ -252,9 +252,9 @@ ENV PATH /root/.cargo/bin:$PATH
 
 # Swift on Linux for cross tests
 RUN cd / && \
-    wget --quiet https://swift.org/builds/swift-4.2.1-release/ubuntu1804/swift-4.2.1-RELEASE/swift-4.2.1-RELEASE-ubuntu18.04.tar.gz && \
-    tar xf swift-4.2.1-RELEASE-ubuntu18.04.tar.gz --strip-components=1 && \
-    rm swift-4.2.1-RELEASE-ubuntu18.04.tar.gz && \
+    wget --quiet https://swift.org/builds/swift-5.1.4-release/ubuntu1804/swift-5.1.4-RELEASE/swift-5.1.4-RELEASE-ubuntu18.04.tar.gz && \
+    tar xf swift-5.1.4-RELEASE-ubuntu18.04.tar.gz --strip-components=1 && \
+    rm swift-5.1.4-RELEASE-ubuntu18.04.tar.gz && \
     swift --version
 
 # cppcheck-1.82 has a nasty cpp parser bug, so we're using something newer
