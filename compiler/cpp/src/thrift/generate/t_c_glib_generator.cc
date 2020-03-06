@@ -2371,48 +2371,6 @@ void t_c_glib_generator::generate_service_processor(t_service* tservice) {
         }
         f_service_ << "return_value, "
                    << "NULL);" << endl;
-
-        // Deallocate (or unref) return_value
-        return_type = get_true_type(return_type);
-        if (return_type->is_base_type()) {
-          t_base_type* base_type = ((t_base_type*)return_type);
-
-          if (base_type->get_base() == t_base_type::TYPE_STRING) {
-            f_service_ << indent() << "if (return_value != NULL)" << endl;
-            indent_up();
-            if (base_type->is_binary()) {
-              f_service_ << indent() << "g_byte_array_unref (return_value);" << endl;
-            } else {
-              f_service_ << indent() << "g_free (return_value);" << endl;
-            }
-            indent_down();
-          }
-        } else if (return_type->is_container()) {
-          f_service_ << indent() << "if (return_value != NULL)" << endl;
-          indent_up();
-
-          if (return_type->is_list()) {
-            t_type* elem_type = ((t_list*)return_type)->get_elem_type();
-
-            f_service_ << indent();
-            if (is_numeric(elem_type)) {
-              f_service_ << "g_array_unref";
-            } else {
-              f_service_ << "g_ptr_array_unref";
-            }
-            f_service_ << " (return_value);" << endl;
-          } else if (return_type->is_map() || return_type->is_set()) {
-            f_service_ << indent() << "g_hash_table_unref (return_value);" << endl;
-          }
-
-          indent_down();
-        } else if (return_type->is_struct()) {
-          f_service_ << indent() << "if (return_value != NULL)" << endl;
-          indent_up();
-          f_service_ << indent() << "g_object_unref (return_value);" << endl;
-          indent_down();
-        }
-
         f_service_ << endl;
       }
       f_service_ << indent() << "result =" << endl;
@@ -2550,6 +2508,47 @@ void t_c_glib_generator::generate_service_processor(t_service* tservice) {
     }
 
     if (!(*function_iter)->is_oneway()) {
+      if (has_return_value) {
+        // Deallocate (or unref) return_value
+        return_type = get_true_type(return_type);
+        if (return_type->is_base_type()) {
+          t_base_type* base_type = ((t_base_type*)return_type);
+            if (base_type->get_base() == t_base_type::TYPE_STRING) {
+            f_service_ << indent() << "if (return_value != NULL)" << endl;
+            indent_up();
+            if (base_type->is_binary()) {
+              f_service_ << indent() << "g_byte_array_unref (return_value);" << endl;
+            } else {
+              f_service_ << indent() << "g_free (return_value);" << endl;
+            }
+            indent_down();
+          }
+        } else if (return_type->is_container()) {
+          f_service_ << indent() << "if (return_value != NULL)" << endl;
+          indent_up();
+
+          if (return_type->is_list()) {
+            t_type* elem_type = ((t_list*)return_type)->get_elem_type();
+
+            f_service_ << indent();
+            if (is_numeric(elem_type)) {
+              f_service_ << "g_array_unref";
+            } else {
+              f_service_ << "g_ptr_array_unref";
+            }
+            f_service_ << " (return_value);" << endl;
+          } else if (return_type->is_map() || return_type->is_set()) {
+            f_service_ << indent() << "g_hash_table_unref (return_value);" << endl;
+          }
+
+          indent_down();
+        } else if (return_type->is_struct()) {
+          f_service_ << indent() << "if (return_value != NULL)" << endl;
+          indent_up();
+          f_service_ << indent() << "g_object_unref (return_value);" << endl;
+          indent_down();
+        }
+      }
       f_service_ << indent() << "g_object_unref (result_struct);" << endl << endl << indent()
                  << "if (result == TRUE)" << endl;
       indent_up();
