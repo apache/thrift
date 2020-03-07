@@ -34,6 +34,14 @@ BISON_TARGET(thrifty ${CMAKE_CURRENT_SOURCE_DIR}/src/thrift/thrifty.yy ${CMAKE_C
 FLEX_TARGET(thriftl ${CMAKE_CURRENT_SOURCE_DIR}/src/thrift/thriftl.ll ${CMAKE_CURRENT_BINARY_DIR}/thrift/thriftl.cc)
 ADD_FLEX_BISON_DEPENDENCY(thriftl thrifty)
 
+if (CMAKE_HOST_APPLE AND APPLE)
+  # Fix behavior of CMAKE_CXX_STANDARD when targeting macOS.
+  if (POLICY CMP0025)
+    cmake_policy(SET CMP0025 NEW)
+  endif ()
+  set(CMAKE_CXX_STANDARD 11)
+endif()
+
 set(parse_SOURCES
     ${CMAKE_CURRENT_BINARY_DIR}/thrift/thrifty.cc
     ${CMAKE_CURRENT_BINARY_DIR}/thrift/thriftl.cc
