@@ -213,13 +213,9 @@ thrift_multiplexed_processor_process_impl (ThriftProcessor *processor, ThriftPro
 
   }
 
-  /*
-  FIXME This makes everything fail, I don't know why.
-  if(stored_message_protocol!=NULL){
-	  // After its use we must free it
-	  g_object_unref(stored_message_protocol);
+  if (stored_message_protocol != NULL) {
+      g_object_unref (stored_message_protocol);
   }
-  */
   return retval;
 }
 
