@@ -55,7 +55,7 @@ thrift_stored_message_protocol_read_message_begin (ThriftProtocol *protocol,
   ThriftStoredMessageProtocol *self = THRIFT_STORED_MESSAGE_PROTOCOL (protocol);
 
   /* We return the stored values on construction */
-  *name = self->name;
+  *name = g_strdup (self->name);
   *message_type = self->mtype;
   *seqid = self->seqid;
 
