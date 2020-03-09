@@ -54,7 +54,10 @@ RUN apt-get update && \
 
 # node.js
     curl -sL https://deb.nodesource.com/gpgkey/nodesource.gpg.key | apt-key add - && \
-    echo "deb https://deb.nodesource.com/node_8.x xenial main" | tee /etc/apt/sources.list.d/nodesource.list
+    echo "deb https://deb.nodesource.com/node_8.x xenial main" | tee /etc/apt/sources.list.d/nodesource.list &&\
+
+# ruby 2.4
+    apt-add-repository ppa:brightbox/ruby-ng
 
 ### install general dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -245,8 +248,8 @@ RUN apt-get install -y --no-install-recommends \
 
 RUN apt-get install -y --no-install-recommends \
 `# Ruby dependencies` \
-      ruby \
-      ruby-dev \
+      ruby2.4 \
+      ruby2.4-dev \
       ruby-bundler
 
 # Rust dependencies
