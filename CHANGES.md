@@ -858,8 +858,8 @@ Released 2017-DEC-27
 ### New Feature
 - [THRIFT-750](https://issues.apache.org/jira/browse/THRIFT-750) - C++ Compiler Virtual Function Option
 - [THRIFT-2945](https://issues.apache.org/jira/browse/THRIFT-2945) - Implement support for Rust language
-- [THRIFT-3857](https://issues.apache.org/jira/browse/THRIFT-3857) - thrift js:node complier support an object as parameter not an instance of struct
-- [THRIFT-3933](https://issues.apache.org/jira/browse/THRIFT-3933) - Port official C# .NET library for Thrift to C# .NET Core libary
+- [THRIFT-3857](https://issues.apache.org/jira/browse/THRIFT-3857) - thrift js:node compiler support an object as parameter not an instance of struct
+- [THRIFT-3933](https://issues.apache.org/jira/browse/THRIFT-3933) - Port official C# .NET library for Thrift to C# .NET Core library
 - [THRIFT-4039](https://issues.apache.org/jira/browse/THRIFT-4039) - Update of Apache Thrift .Net Core lib 
 - [THRIFT-4113](https://issues.apache.org/jira/browse/THRIFT-4113) - Provide a buffer transport for reading/writing in memory byte stream
 
@@ -1017,7 +1017,7 @@ Released 2017-DEC-27
 - [THRIFT-3689](https://issues.apache.org/jira/browse/THRIFT-3689) - thrift_reconnecting_client start failed when server is not available
 - [THRIFT-3695](https://issues.apache.org/jira/browse/THRIFT-3695) - Fix D test scripts
 - [THRIFT-3675](https://issues.apache.org/jira/browse/THRIFT-3675) - Union is not serialized correctly by Thrift C Glib
-- [THRIFT-3673](https://issues.apache.org/jira/browse/THRIFT-3673) - API fails with std::exception after a timeout occured in earlier any API call
+- [THRIFT-3673](https://issues.apache.org/jira/browse/THRIFT-3673) - API fails with std::exception after a timeout occurred in earlier any API call
 - [THRIFT-3709](https://issues.apache.org/jira/browse/THRIFT-3709) - Comment syntax can produce broken code
 - [THRIFT-3705](https://issues.apache.org/jira/browse/THRIFT-3705) - Go map has incorrect types when used with forward-defined types
 - [THRIFT-3702](https://issues.apache.org/jira/browse/THRIFT-3702) - Fix cross tests for Dart compact protocol (3 failing)
@@ -1627,7 +1627,7 @@ Released March 13, 2019 to backport a CVE fix to the popular 0.9.3 release.
 - [THRIFT-2881](https://issues.apache.org/jira/browse/THRIFT-2881) - Handle errors from Accept() correctly
 - [THRIFT-2849](https://issues.apache.org/jira/browse/THRIFT-2849) - Spell errors reported by codespell tool
 - [THRIFT-2870](https://issues.apache.org/jira/browse/THRIFT-2870) - C++ TJSONProtocol using locale dependent formatting
-- [THRIFT-2882](https://issues.apache.org/jira/browse/THRIFT-2882) - Lua Generator: using string.len funtion to get struct(map,list,set) size
+- [THRIFT-2882](https://issues.apache.org/jira/browse/THRIFT-2882) - Lua Generator: using string.len function to get struct(map,list,set) size
 - [THRIFT-2864](https://issues.apache.org/jira/browse/THRIFT-2864) - JSON generator missing from Visual Studio build project 
 - [THRIFT-2878](https://issues.apache.org/jira/browse/THRIFT-2878) - Go validation support of required fields
 - [THRIFT-2873](https://issues.apache.org/jira/browse/THRIFT-2873) - TPipe and TPipeServer don't compile on Windows with UNICODE enabled
@@ -1890,7 +1890,7 @@ Released March 13, 2019 to backport a CVE fix to the popular 0.9.3 release.
 - [THRIFT-2967](https://issues.apache.org/jira/browse/THRIFT-2967) - Add .editorconfig to root
 - [THRIFT-3033](https://issues.apache.org/jira/browse/THRIFT-3033) - Perl: Support for Multiplexing Services on any Transport, Protocol and Server
 - [THRIFT-3174](https://issues.apache.org/jira/browse/THRIFT-3174) - Initialism code in the Go compiler doesn't check first word
-- [THRIFT-3193](https://issues.apache.org/jira/browse/THRIFT-3193) - Option to supress date value in @Generated annotation
+- [THRIFT-3193](https://issues.apache.org/jira/browse/THRIFT-3193) - Option to suppress date value in @Generated annotation
 - [THRIFT-3305](https://issues.apache.org/jira/browse/THRIFT-3305) - Missing dist files for 0.9.3 release candidate
 - [THRIFT-3341](https://issues.apache.org/jira/browse/THRIFT-3341) - Add testBool methods
 - [THRIFT-3308](https://issues.apache.org/jira/browse/THRIFT-3308) - Fix broken test cases for 0.9.3 release candidate
@@ -1911,7 +1911,7 @@ Released March 13, 2019 to backport a CVE fix to the popular 0.9.3 release.
 - [THRIFT-2793](https://issues.apache.org/jira/browse/THRIFT-2793) - Go compiler produces uncompilable code
 - [THRIFT-1481](https://issues.apache.org/jira/browse/THRIFT-1481) - Unix domain sockets in C++ do not support the abstract namespace
 - [THRIFT-1455](https://issues.apache.org/jira/browse/THRIFT-1455) - TBinaryProtocolT<Transport_>::writeString casts from size_t to uint32_t, which is not safe on 64-bit platforms
-- [THRIFT-1579](https://issues.apache.org/jira/browse/THRIFT-1579) - PHP Extention - function thrift_protocol_read_binary not working from TBinarySerializer::deserialize
+- [THRIFT-1579](https://issues.apache.org/jira/browse/THRIFT-1579) - PHP Extension - function thrift_protocol_read_binary not working from TBinarySerializer::deserialize
 - [THRIFT-1584](https://issues.apache.org/jira/browse/THRIFT-1584) - Error: could not SetMinThreads in ThreadPool on single-core machines
 - [THRIFT-1614](https://issues.apache.org/jira/browse/THRIFT-1614) - Thrift build from svn repo sources fails with automake-1.12
 - [THRIFT-1047](https://issues.apache.org/jira/browse/THRIFT-1047) - rb_thrift_memory_buffer_write treats arg as string without check, segfaults if you pass non-string
@@ -2172,7 +2172,7 @@ Released March 13, 2019 to backport a CVE fix to the popular 0.9.3 release.
 - [THRIFT-2054](https://issues.apache.org/jira/browse/THRIFT-2054) - TSimpleFileTransport - Java Lib has no straight forward TTransport based file transport
 - [THRIFT-2040](https://issues.apache.org/jira/browse/THRIFT-2040) - "uninitialized variable" warnings on MSVC/windows
 - [THRIFT-2034](https://issues.apache.org/jira/browse/THRIFT-2034) - Give developers' C++ code direct access to socket FDs on server side
-- [THRIFT-2095](https://issues.apache.org/jira/browse/THRIFT-2095) - Use print function for Python 3 compatiblity
+- [THRIFT-2095](https://issues.apache.org/jira/browse/THRIFT-2095) - Use print function for Python 3 compatibility
 - [THRIFT-1868](https://issues.apache.org/jira/browse/THRIFT-1868) - Make the TPC backlog configurable in the Java servers
 - [THRIFT-1813](https://issues.apache.org/jira/browse/THRIFT-1813) - Add @Generated annotation to generated classes
 - [THRIFT-1815](https://issues.apache.org/jira/browse/THRIFT-1815) - Code generators line buffer output
@@ -2460,9 +2460,9 @@ Released March 13, 2019 to backport a CVE fix to the popular 0.9.3 release.
 - [THRIFT-1997](https://issues.apache.org/jira/browse/THRIFT-1997) - Add accept backlog configuration method to  TServerSocket
 - [THRIFT-2003](https://issues.apache.org/jira/browse/THRIFT-2003) - Deprecate senum
 - [THRIFT-2052](https://issues.apache.org/jira/browse/THRIFT-2052) - Vagrant machine image defaults to only 384MB of RAM
-- [THRIFT-1980](https://issues.apache.org/jira/browse/THRIFT-1980) - Modernize Go tooling, fix go client libary.
+- [THRIFT-1980](https://issues.apache.org/jira/browse/THRIFT-1980) - Modernize Go tooling, fix go client library.
 - [THRIFT-1977](https://issues.apache.org/jira/browse/THRIFT-1977) - C# compiler should generate constant files prefixed with thrift file name
-- [THRIFT-1985](https://issues.apache.org/jira/browse/THRIFT-1985) - add a Vagrantfile to build and test Apache Thrift fully reproducable
+- [THRIFT-1985](https://issues.apache.org/jira/browse/THRIFT-1985) - add a Vagrantfile to build and test Apache Thrift fully reproducible
 - [THRIFT-1994](https://issues.apache.org/jira/browse/THRIFT-1994) - Deprecate slist
 - [THRIFT-1993](https://issues.apache.org/jira/browse/THRIFT-1993) - Factory to create instances from known (generated) interface types with Delphi
 - [THRIFT-2081](https://issues.apache.org/jira/browse/THRIFT-2081) - Specified timeout should be used in TSocket.Open()
