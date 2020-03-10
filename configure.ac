@@ -306,11 +306,15 @@ AM_CONDITIONAL(WITH_TWISTED_TEST, [test "$have_trial" = "yes"])
 have_py3="no"
 AX_THRIFT_LIB(py3, [Py3], yes)
 if test "$with_py3" = "yes"; then
-  if $PYTHON --version 2>&1 | grep -q "Python 3"; then
-    AC_PATH_PROGS([PYTHON3], [python3 python3.7 python37 python3.6 python36 python3.5 python35 python3.4 python34])
+  # if $PYTHON is 2.x then search for python 3. otherwise, $PYTHON is already 3.x
+  if $PYTHON --version 2>&1 | grep -q "Python 2"; then
+    AC_PATH_PROGS([PYTHON3], [python3 python3.8 python38 python3.7 python37 python3.6 python36 python3.5 python35 python3.4 python34])
     if test -n "$PYTHON3"; then
       have_py3="yes"
     fi
+  elif $PYTHON --version 2>&1 | grep -q "Python 3"; then
+    have_py3="yes"
+    PYTHON3=$PYTHON
   fi
 fi
 AM_CONDITIONAL(WITH_PY3, [test "$have_py3" = "yes"])
