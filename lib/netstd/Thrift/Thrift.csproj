@@ -56,4 +56,9 @@
     <PackageReference Include="System.Threading.Tasks.Extensions" Version="4.5.3" />
   </ItemGroup>
 
+  <Target Name="SetTFMAssemblyAttributesPath" BeforeTargets="GenerateTargetFrameworkMonikerAttribute">
+    <PropertyGroup>
+      <TargetFrameworkMonikerAssemblyAttributesPath>$(IntermediateOutputPath)$(TargetFrameworkMoniker).AssemblyAttributes$(DefaultLanguageSourceExtension)</TargetFrameworkMonikerAssemblyAttributesPath>
+    </PropertyGroup>
+  </Target>
 </Project>
