@@ -11,6 +11,7 @@
     "netstd-limit_container_length_compact_buffered-ip",
     "netstd-limit_string_length_binary_buffered-ip",
     "netstd-limit_string_length_compact_buffered-ip",
+    "netstd-tls_binary_buffered-ip-ssl",
     "d-limit_container_length_binary_buffered-ip",
     "d-limit_container_length_compact_buffered-ip",
     "d-limit_string_length_binary_buffered-ip",
