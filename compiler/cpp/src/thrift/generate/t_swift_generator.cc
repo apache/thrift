@@ -1220,7 +1220,7 @@ void t_swift_generator::generate_swift_struct_reader(ostream& out,
         if (field_is_optional(*f_iter)) {
           continue;
         }
-        indent(out) << "try proto.validateValue(" << (*f_iter)->get_name() << ", "
+        indent(out) << "try proto.validateValue(" << maybe_escape_identifier((*f_iter)->get_name()) << ", "
                     << "named: \"" << (*f_iter)->get_name() << "\")" << endl;
       }
     }
