@@ -42,8 +42,9 @@
  */
 class t_generator {
 public:
-  t_generator(t_program* program)
-    : keywords_(lang_keywords()){
+  t_generator(t_program* program) {
+    update_keywords();
+
     tmp_ = 0;
     indent_ = 0;
     program_ = program;
@@ -99,6 +100,7 @@ public:
 
   /**
    * Check if all identifiers are valid for the target language
+   * See update_keywords()
    */
   virtual void validate_input() const;
 
@@ -106,9 +108,16 @@ protected:
   virtual std::set<std::string> lang_keywords() const;
 
   /**
+   * Call this from constructor if you implement lang_keywords()
+   */
+  void update_keywords() {
+    keywords_ = lang_keywords();
+  }
+
+  /**
    * A list of reserved words that cannot be used as identifiers.
    */
-  const std::set<std::string> keywords_;
+  std::set<std::string> keywords_;
 
   virtual void validate_id(const std::string& id) const;
 
