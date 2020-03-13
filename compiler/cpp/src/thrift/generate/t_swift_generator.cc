@@ -50,6 +50,8 @@ public:
                     const map<string, string>& parsed_options,
                     const string& option_string)
     : t_oop_generator(program) {
+    update_keywords();
+	
     (void)option_string;
     map<string, string>::const_iterator iter;
 

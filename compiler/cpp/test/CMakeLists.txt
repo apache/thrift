@@ -24,7 +24,9 @@ set(BOOST_COMPONENTS unit_test_framework)
 REQUIRE_BOOST_LIBRARIES(BOOST_COMPONENTS)
 
 file(GLOB KEYWORD_SAMPLES "${CMAKE_CURRENT_SOURCE_DIR}/keyword-samples/*.thrift")
-foreach(LANG ${thrift_compiler_LANGS})
+set(KEYWORD_LANGS ${thrift_compiler_LANGS})
+LIST(REMOVE_ITEM KEYWORD_LANGS swift) # in Swift you can escape reserved words
+foreach(LANG ${KEYWORD_LANGS})
     foreach(SAMPLE ${KEYWORD_SAMPLES})
         get_filename_component(FILENAME ${SAMPLE} NAME_WE)
         add_test(NAME "${LANG}_${FILENAME}"

@@ -52,6 +52,8 @@ public:
                  const std::map<std::string, std::string>& parsed_options,
                  const std::string& option_string)
     : t_generator (program) {
+    update_keywords();
+
     std::map<std::string, std::string>::const_iterator iter;
 
     gen_newstyle_ = true;
