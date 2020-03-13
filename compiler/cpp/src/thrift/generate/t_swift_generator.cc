@@ -50,6 +50,8 @@ public:
                     const map<string, string>& parsed_options,
                     const string& option_string)
     : t_oop_generator(program) {
+    update_keywords();
+	
     (void)option_string;
     map<string, string>::const_iterator iter;
 
@@ -288,6 +290,10 @@ private:
   bool gen_cocoa_;
   bool promise_kit_;
 
+protected:
+  std::set<std::string> lang_keywords() const override {
+	  return {};
+  }
 };
 
 /**
@@ -1210,7 +1216,7 @@ void t_swift_generator::generate_swift_struct_reader(ostream& out,
         if (field_is_optional(*f_iter)) {
           continue;
         }
-        indent(out) << "try proto.validateValue(" << (*f_iter)->get_name() << ", "
+        indent(out) << "try proto.validateValue(" << maybe_escape_identifier((*f_iter)->get_name()) << ", "
                     << "named: \"" << (*f_iter)->get_name() << "\")" << endl;
       }
     }
