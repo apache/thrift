@@ -288,6 +288,10 @@ private:
   bool gen_cocoa_;
   bool promise_kit_;
 
+protected:
+  std::set<std::string> lang_keywords() const override {
+	  return {};
+  }
 };
 
 /**
