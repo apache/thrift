@@ -274,14 +274,9 @@ thrift_ssl_socket_open (ThriftTransport *transport, GError **error)
 gboolean
 thrift_ssl_socket_close (ThriftTransport *transport, GError **error)
 {
-  /* gboolean retval = FALSE; */
   ThriftSSLSocket *ssl_socket = THRIFT_SSL_SOCKET(transport);
   if(ssl_socket!=NULL && ssl_socket->ssl) {
-      int rc = SSL_shutdown(ssl_socket->ssl);
-      (void)rc;
-/*      if (rc < 0) {
-	  int errno_copy = THRIFT_SSL_SOCKET_ERROR_SSL;
-      }*/
+      SSL_shutdown(ssl_socket->ssl);
       SSL_free(ssl_socket->ssl);
       ssl_socket->ssl = NULL;
       ERR_remove_state(0);

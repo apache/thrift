@@ -54,32 +54,32 @@ class TMultiplexedProcessorTests: XCTestCase {
     transport.reset()
   }
 
-  func testCallMessageThrowsError() throws {
-    try proto.writeMessageBegin(name: "message", type: .call, sequenceID: 1)
+  func testExceptionMessageThrowsError() throws {
+    try proto.writeMessageBegin(name: "message", type: .exception, sequenceID: 1)
     try transport.flush()
     XCTAssertThrowsError(try sut.process(on: proto, outProtocol: proto)) { error in
       guard case MultiplexedProcessor.Error.incompatibleMessageType(let type) = error else {
         XCTFail()
         return
       }
-      XCTAssertEqual(type, .call)
+      XCTAssertEqual(type, .exception)
     }
   }
 
-  func testOneWayMessageThrowsError() throws {
-    try proto.writeMessageBegin(name: "message", type: .oneway, sequenceID: 1)
+  func testReplyMessageThrowsError() throws {
+    try proto.writeMessageBegin(name: "message", type: .reply, sequenceID: 1)
     try transport.flush()
     XCTAssertThrowsError(try sut.process(on: proto, outProtocol: proto)) { error in
       guard case MultiplexedProcessor.Error.incompatibleMessageType(let type) = error else {
         XCTFail()
         return
       }
-      XCTAssertEqual(type, .oneway)
+      XCTAssertEqual(type, .reply)
     }
   }
 
   func testMissingDefaultProcessorThrowsError() throws {
-    try proto.writeMessageBegin(name: "message", type: .reply, sequenceID: 1)
+    try proto.writeMessageBegin(name: "message", type: .call, sequenceID: 1)
     try transport.flush()
     XCTAssertThrowsError(try sut.process(on: proto, outProtocol: proto)) { error in
       guard case MultiplexedProcessor.Error.missingDefaultProcessor = error else {
@@ -93,7 +93,7 @@ class TMultiplexedProcessorTests: XCTestCase {
     let calculator = Calculator()
     let calculatorProcessor = CalculatorProcessor(service: calculator)
     sut.register(defaultProcessor: calculatorProcessor)
-    try proto.writeMessageBegin(name: "message", type: .reply, sequenceID: 1)
+    try proto.writeMessageBegin(name: "message", type: .call, sequenceID: 1)
     try transport.flush()
     try sut.process(on: proto, outProtocol: proto)
     XCTAssertTrue(calculatorProcessor.processCalled)
@@ -103,14 +103,14 @@ class TMultiplexedProcessorTests: XCTestCase {
     let calculator = Calculator()
     let calculatorProcessor = CalculatorProcessor(service: calculator)
     sut.register(processor: calculatorProcessor, for: "Calculator")
-    try proto.writeMessageBegin(name: "Calculator:message", type: .reply, sequenceID: 1)
+    try proto.writeMessageBegin(name: "Calculator:message", type: .call, sequenceID: 1)
     try transport.flush()
     try sut.process(on: proto, outProtocol: proto)
     XCTAssertTrue(calculatorProcessor.processCalled)
   }
 
   func testMissingProcessorForMultiplexedMessageThrowsError() throws {
-    try proto.writeMessageBegin(name: "Calculator:message", type: .reply, sequenceID: 1)
+    try proto.writeMessageBegin(name: "Calculator:message", type: .call, sequenceID: 1)
     try transport.flush()
     XCTAssertThrowsError(try sut.process(on: proto, outProtocol: proto)) { error in
       guard case MultiplexedProcessor.Error.missingProcessor(let serviceName) = error else {
@@ -119,5 +119,23 @@ class TMultiplexedProcessorTests: XCTestCase {
       }
       XCTAssertEqual(serviceName, "Calculator")
     }
+  }
+
+  func testCallMessageDoesNotThrowError() throws {
+    let calculator = Calculator()
+    let calculatorProcessor = CalculatorProcessor(service: calculator)
+    sut.register(defaultProcessor: calculatorProcessor)
+    try proto.writeMessageBegin(name: "message", type: .call, sequenceID: 1)
+    try transport.flush()
+    try sut.process(on: proto, outProtocol: proto)
+  }
+
+  func testOneWayMessageDoesNotThrowError() throws {
+    let calculator = Calculator()
+    let calculatorProcessor = CalculatorProcessor(service: calculator)
+    sut.register(defaultProcessor: calculatorProcessor)
+    try proto.writeMessageBegin(name: "message", type: .oneway, sequenceID: 1)
+    try transport.flush()
+    try sut.process(on: proto, outProtocol: proto)
   }
 }
