@@ -82,8 +82,8 @@ static unsigned long thrift_ssl_socket_static_id_function(void)
 
 static void thrift_ssl_socket_static_locking_callback(int mode, int n, const char* unk, int id) 
 {
-  (void)unk;
-  (void)id;
+  THRIFT_UNUSED_VAR (unk);
+  THRIFT_UNUSED_VAR (id);
 
   if (mode & CRYPTO_LOCK)
     MUTEX_LOCK(thrift_ssl_socket_global_mutex_buf[n]);
