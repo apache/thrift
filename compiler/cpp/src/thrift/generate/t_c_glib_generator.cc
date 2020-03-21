@@ -4332,6 +4332,7 @@ void t_c_glib_generator::generate_deserialize_list_element(ostream& out,
     throw std::runtime_error("compiler error: list element type cannot be void");
   } else if (is_numeric(ttype)) {
     indent(out) << "g_array_append_vals (" << prefix << ", " << elem << ", 1);" << endl;
+    indent(out) << "g_free (" << elem << ");" << endl;
   } else {
     indent(out) << "g_ptr_array_add (" << prefix << ", " << elem << ");" << endl;
   }
