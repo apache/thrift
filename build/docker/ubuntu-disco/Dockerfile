@@ -89,10 +89,6 @@ RUN apt-get install -y --no-install-recommends \
       qtbase5-dev \
       qtbase5-dev-tools
 
-RUN apt-get install -y --no-install-recommends \
-`# csharp (mono) dependencies` \
-      mono-devel
-
 ENV SBCL_VERSION 1.5.3
 RUN \
 `# Common Lisp (sbcl) dependencies` \
@@ -204,7 +200,8 @@ RUN apt-get install -y --no-install-recommends \
       libclass-accessor-class-perl \
       libcrypt-ssleay-perl \
       libio-socket-ssl-perl \
-      libnet-ssleay-perl
+      libnet-ssleay-perl \
+      libtest-exception-perl
 
 RUN apt-get install -y --no-install-recommends \
 `# Php dependencies` \

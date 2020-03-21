@@ -17,13 +17,14 @@
 # under the License.
 #
 
-set(THRIFT_VERSION ${thrift_VERSION})
+set(THRIFT_VERSION @thrift_VERSION@)
 
 @PACKAGE_INIT@
 
 set_and_check(THRIFT_INCLUDE_DIR "@PACKAGE_INCLUDE_INSTALL_DIR@")
 set_and_check(THRIFT_CMAKE_DIR "@PACKAGE_CMAKE_INSTALL_DIR@")
 set_and_check(THRIFT_BIN_DIR "@PACKAGE_BIN_INSTALL_DIR@")
+set(THRIFT_COMPILER "${THRIFT_BIN_DIR}/thrift")
 
 if (NOT TARGET thrift::thrift)
   include("${THRIFT_CMAKE_DIR}/thriftTargets.cmake")

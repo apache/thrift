@@ -715,6 +715,31 @@ mod tests {
     }
 
     #[test]
+    fn must_round_trip_upto_i64_maxvalue() {
+        // See https://issues.apache.org/jira/browse/THRIFT-5131
+        for i in 0..64 {
+            let (mut i_prot, mut o_prot) = test_objects();
+            let val: i64 = ((1u64 << i) - 1) as i64;
+
+            o_prot
+                .write_field_begin(&TFieldIdentifier::new(
+                    "val",
+                    TType::I64,
+                    1
+                ))
+                .unwrap();
+            o_prot.write_i64(val).unwrap();
+            o_prot.write_field_end().unwrap();
+            o_prot.flush().unwrap();
+
+            copy_write_buffer_to_read_buffer!(o_prot);
+
+            i_prot.read_field_begin().unwrap();
+            assert_eq!(val, i_prot.read_i64().unwrap());
+        }
+    }
+
+    #[test]
     fn must_round_trip_message_begin() {
         let (mut i_prot, mut o_prot) = test_objects();
 

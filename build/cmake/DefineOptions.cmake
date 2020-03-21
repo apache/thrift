@@ -105,6 +105,16 @@ else()
                            "BUILD_LIBRARIES;WITH_JAVA;JAVA_FOUND;GRADLEW_FOUND" OFF)
 endif()
 
+# Javascript
+option(WITH_JAVASCRIPT "Build Javascript Thrift library" ON)
+CMAKE_DEPENDENT_OPTION(BUILD_JAVASCRIPT "Build Javascript library" ON
+                       "BUILD_LIBRARIES;WITH_JAVASCRIPT" OFF)
+
+# NodeJS
+option(WITH_NODEJS "Build NodeJS Thrift library" ON)
+CMAKE_DEPENDENT_OPTION(BUILD_NODEJS "Build NodeJS library" ON
+                       "BUILD_LIBRARIES;WITH_NODEJS" OFF)
+
 # Python
 option(WITH_PYTHON "Build Python Thrift library" ON)
 find_package(PythonInterp QUIET) # for Python executable
@@ -191,6 +201,10 @@ else()
     MESSAGE_DEP(JAVA_FOUND "Java Runtime missing")
     MESSAGE_DEP(GRADLEW_FOUND "Gradle Wrapper missing")
 endif()
+message(STATUS "  Build Javascript library:                   ${BUILD_JAVASCRIPT}")
+MESSAGE_DEP(WITH_JAVASCRIPT "Disabled by WITH_JAVASCRIPT=OFF")
+message(STATUS "  Build NodeJS library:                       ${BUILD_NODEJS}")
+MESSAGE_DEP(WITH_NODEJS "Disabled by WITH_NODEJS=OFF")
 message(STATUS)
 message(STATUS "  Build Python library:                       ${BUILD_PYTHON}")
 MESSAGE_DEP(WITH_PYTHON "Disabled by WITH_PYTHON=OFF")

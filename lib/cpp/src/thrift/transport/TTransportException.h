@@ -49,7 +49,8 @@ public:
     INTERRUPTED = 4,
     BAD_ARGS = 5,
     CORRUPTED_DATA = 6,
-    INTERNAL_ERROR = 7
+    INTERNAL_ERROR = 7,
+    CLIENT_DISCONNECT = 8
   };
 
   TTransportException() : apache::thrift::TException(), type_(UNKNOWN) {}

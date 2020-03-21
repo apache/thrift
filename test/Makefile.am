@@ -30,11 +30,6 @@ SUBDIRS += cl
 PRECROSS_TARGET += precross-cl
 endif
 
-if WITH_MONO
-SUBDIRS += csharp
-PRECROSS_TARGET += precross-csharp
-endif
-
 if WITH_CPP
 SUBDIRS += cpp
 PRECROSS_TARGET += precross-cpp

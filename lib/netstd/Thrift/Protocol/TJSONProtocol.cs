@@ -84,6 +84,16 @@ namespace Thrift.Protocol
         }
 
         /// <summary>
+        ///    Resets the context stack to pristine state. Allows for reusal of the protocol
+        ///    even in cases where the protocol instance was in an undefined state due to
+        ///    dangling/stale/obsolete contexts
+        /// </summary>
+        private void resetContext()
+        {
+            ContextStack.Clear();
+            Context = new JSONBaseContext(this);
+        }
+        /// <summary>
         ///     Read a byte that must match b[0]; otherwise an exception is thrown.
         ///     Marked protected to avoid synthetic accessor in JSONListContext.Read
         ///     and JSONPairContext.Read
@@ -267,6 +277,7 @@ namespace Thrift.Protocol
 
         public override async Task WriteMessageBeginAsync(TMessage message, CancellationToken cancellationToken)
         {
+            resetContext();
             await WriteJsonArrayStartAsync(cancellationToken);
             await WriteJsonIntegerAsync(Version, cancellationToken);
 
@@ -645,6 +656,8 @@ namespace Thrift.Protocol
         public override async ValueTask<TMessage> ReadMessageBeginAsync(CancellationToken cancellationToken)
         {
             var message = new TMessage();
+
+            resetContext();
             await ReadJsonArrayStartAsync(cancellationToken);
             if (await ReadJsonIntegerAsync(cancellationToken) != Version)
             {

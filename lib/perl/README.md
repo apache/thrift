@@ -61,6 +61,12 @@ to use Thrift.
   * Bit::Vector
   * Class::Accessor
 
+## Test
+
+This is only required when running tests:
+
+  * Test::Exception
+
 ### HttpClient Transport
 
 These are only required if using Thrift::HttpClient:

@@ -182,7 +182,7 @@ Last updated: October 1, 2017
 | haskell   | 7.10.3        | 8.0.2         |       |
 | haxe      | 3.2.1         | 3.4.4         | THRIFT-4352: avoid 3.4.2 |
 | java      | 1.8.0_191     | 11.0.3        |       |
-| js        |               |               | Unsure how to look for version info? |
+| js        | Node.js 6.17.1, V8 5.1.281.111, npm 3.10.10 | Node.js 10.18.0, V8 6.8.275.32, npm 6.13.4 |     |
 | lua       |               | 5.2.4         | Lua 5.3: see THRIFT-4386 |
 | netstd    | 3.1           | 3.1           | LTS version |
 | nodejs    | 6.16.0        | 10.16.0       |       |
@@ -194,4 +194,4 @@ Last updated: October 1, 2017
 | ruby      | 2.3.1p112     | 2.5.1p57      |       |
 | rust      | 1.34.0        | 1.35.0        |       |
 | smalltalk |               |               | Not in CI |
-| swift     |               | 4.2.1         |       |
+| swift     |               | 5.1.4         |       |

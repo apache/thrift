@@ -207,7 +207,6 @@ literal_begin (['\"])
 "cpp_include"        { return tok_cpp_include;          }
 "cpp_type"           { return tok_cpp_type;             }
 "java_package"       { error_unsupported_namespace_decl("java_package", "java"); /* do nothing */ }
-"csharp_namespace"   { error_unsupported_namespace_decl("csharp"); /* do nothing */ }
 "delphi_namespace"   { error_unsupported_namespace_decl("delphi"); /* do nothing */ }
 "php_namespace"      { error_unsupported_namespace_decl("php"); /* do nothing */ }
 "py_module"          { error_unsupported_namespace_decl("py_module", "py"); /* do nothing */ }

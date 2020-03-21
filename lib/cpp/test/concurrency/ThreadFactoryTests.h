@@ -83,7 +83,7 @@ public:
         } catch (SystemResourceException& e) {
           std::cout << "\t\t\tfailed to create " << lix* count + tix << " thread " << e.what()
                     << std::endl;
-          throw e;
+          throw;
         }
       }
 
@@ -97,7 +97,7 @@ public:
         } catch (SystemResourceException& e) {
           std::cout << "\t\t\tfailed to start  " << lix* count + tix << " thread " << e.what()
                     << std::endl;
-          throw e;
+          throw;
         }
       }
 

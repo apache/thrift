@@ -18,8 +18,15 @@
 */
 
 import Foundation
-import Dispatch
 
+// Conditional import for URLRequest
+// It was moved from Foundation to FoundationNetworking in 5.1, but
+// not on Darwin. See  https://stackoverflow.com/a/58606520
+#if canImport(FoundationNetworking)
+import FoundationNetworking
+#endif
+
+import Dispatch
 
 public class THTTPSessionTransport: TAsyncTransport {
   public class Factory : TAsyncTransportFactory {

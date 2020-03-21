@@ -35,6 +35,7 @@ import thrift.transport.base;
 import thrift.transport.buffered;
 import thrift.transport.framed;
 import thrift.transport.http;
+import thrift.transport.zlib;
 
 // This is a likely victim of @@BUG4744@@ when used with command argument
 // parsing.
@@ -79,6 +80,7 @@ enum TransportType {
   buffered,
   framed,
   http,
+  zlib,
   raw
 }
 
@@ -90,6 +92,8 @@ TTransportFactory createTransportFactory(TransportType type) {
       return new TFramedTransportFactory;
     case TransportType.http:
       return new TServerHttpTransportFactory;
+    case TransportType.zlib:
+      return new TZlibTransportFactory;
     case TransportType.raw:
       return new TTransportFactory;
   }

@@ -32,10 +32,6 @@ if WITH_C_GLIB
 SUBDIRS += c_glib
 endif
 
-if WITH_MONO
-SUBDIRS += csharp
-endif
-
 if WITH_JAVA
 SUBDIRS += java
 PRECROSS_TARGET += precross-java

@@ -26,7 +26,7 @@ For example, if you changed something in `nodejs` library and need to verify
 the patch, you can skip everything except `nodejs` itself and some reference
 implementation (currently `cpp` and `java` are recommended) like this:
 
-    ./configure --without-c_glib -without-csharp --without-erlang --without-lua ...
+    ./configure --without-c_glib --without-erlang --without-lua ...
     make precross -j8
     test/test.py --server cpp,java --client nodejs
     test/test.py --server nodejs --client cpp,java

@@ -17,7 +17,7 @@
 # - dart: does not come with Ubuntu so we're installing 2.0.0-1 for coverage
 # - dotnet: does not come with Ubuntu
 # - go: Xenial comes with 1.6, but we need 1.10 or later
-# - nodejs: Xenial comes with 4.2.6 which exits LTS April 2018, so we're installing 6.x
+# - nodejs: Xenial comes with 4.2.6 which exits LTS April 2018, so we're installing 8.x
 # - ocaml: causes stack overflow error, just started March 2018 not sure why
 #
 
@@ -37,10 +37,6 @@ RUN apt-get update && \
       software-properties-common \
       wget && \
 
-# csharp (mono)
-# echo "deb http://download.mono-project.com/repo/debian xenial main" | tee /etc/apt/sources.list.d/mono.list && \
-#     apt-key adv --keyserver keyserver.ubuntu.com --recv-keys A6A19B38D3D831EF && \
-
 # D
     apt-key adv --keyserver keyserver.ubuntu.com --recv-keys EBCF975E5BA24D5E && \
     wget http://master.dl.sourceforge.net/project/d-apt/files/d-apt.list -O /etc/apt/sources.list.d/d-apt.list && \
@@ -58,7 +54,10 @@ RUN apt-get update && \
 
 # node.js
     curl -sL https://deb.nodesource.com/gpgkey/nodesource.gpg.key | apt-key add - && \
-    echo "deb https://deb.nodesource.com/node_6.x xenial main" | tee /etc/apt/sources.list.d/nodesource.list
+    echo "deb https://deb.nodesource.com/node_8.x xenial main" | tee /etc/apt/sources.list.d/nodesource.list &&\
+
+# ruby 2.4
+    apt-add-repository ppa:brightbox/ruby-ng
 
 ### install general dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -93,10 +92,6 @@ RUN apt-get install -y --no-install-recommends \
       qt5-default \
       qtbase5-dev \
       qtbase5-dev-tools
-
-RUN apt-get install -y --no-install-recommends \
-`# csharp (mono) dependencies` \
-      mono-devel
 
 ENV D_VERSION 2.075.1-0
 RUN apt-get install -y --allow-unauthenticated --no-install-recommends \
@@ -213,7 +208,8 @@ RUN apt-get install -y --no-install-recommends \
       libclass-accessor-class-perl \
       libcrypt-ssleay-perl \
       libio-socket-ssl-perl \
-      libnet-ssleay-perl
+      libnet-ssleay-perl \
+      libtest-exception-perl
 
 RUN apt-get install -y --no-install-recommends \
 `# Php dependencies` \
@@ -252,8 +248,8 @@ RUN apt-get install -y --no-install-recommends \
 
 RUN apt-get install -y --no-install-recommends \
 `# Ruby dependencies` \
-      ruby \
-      ruby-dev \
+      ruby2.4 \
+      ruby2.4-dev \
       ruby-bundler
 
 # Rust dependencies

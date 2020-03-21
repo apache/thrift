@@ -76,21 +76,27 @@ thrift_server_set_property (GObject *object, guint property_id,
   switch (property_id)
   {
     case PROP_THRIFT_SERVER_PROCESSOR:
+      g_clear_object (&server->processor);
       server->processor = g_value_dup_object (value);
       break;
     case PROP_THRIFT_SERVER_SERVER_TRANSPORT:
+      g_clear_object (&server->server_transport);
       server->server_transport = g_value_dup_object (value);
       break;
     case PROP_THRIFT_SERVER_INPUT_TRANSPORT_FACTORY:
+      g_clear_object (&server->input_transport_factory);
       server->input_transport_factory = g_value_dup_object (value);
       break;
     case PROP_THRIFT_SERVER_OUTPUT_TRANSPORT_FACTORY:
+      g_clear_object (&server->output_transport_factory);
       server->output_transport_factory = g_value_dup_object (value);
       break;
     case PROP_THRIFT_SERVER_INPUT_PROTOCOL_FACTORY:
+      g_clear_object (&server->input_protocol_factory);
       server->input_protocol_factory = g_value_dup_object (value);
       break;
     case PROP_THRIFT_SERVER_OUTPUT_PROTOCOL_FACTORY:
+      g_clear_object (&server->output_protocol_factory);
       server->output_protocol_factory = g_value_dup_object (value);
       break;
   }

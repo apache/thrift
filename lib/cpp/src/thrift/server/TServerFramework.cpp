@@ -166,8 +166,9 @@ void TServerFramework::serve() {
       releaseOneDescriptor("inputTransport", inputTransport);
       releaseOneDescriptor("outputTransport", outputTransport);
       releaseOneDescriptor("client", client);
-      if (ttx.getType() == TTransportException::TIMED_OUT) {
-        // Accept timeout - continue processing.
+      if (ttx.getType() == TTransportException::TIMED_OUT
+          || ttx.getType() == TTransportException::CLIENT_DISCONNECT) {
+        // Accept timeout and client disconnect - continue processing.
         continue;
       } else if (ttx.getType() == TTransportException::END_OF_FILE
                  || ttx.getType() == TTransportException::INTERRUPTED) {

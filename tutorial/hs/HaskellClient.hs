@@ -48,7 +48,7 @@ main = do
   printf "1+1=%d\n" sum
 
 
-  let work = Work { work_op = DIVIDE,
+  let work = Work { work_op = Operation_DIVIDE,
                     work_num1 = 1,
                     work_num2 = 0,
                     work_comment = Nothing
@@ -58,7 +58,7 @@ main = do
         (\e -> printf "InvalidOperation %s\n" (show (e :: InvalidOperation)))
 
 
-  let work = Work { work_op = SUBTRACT,
+  let work = Work { work_op = Operation_SUBTRACT,
                     work_num1 = 15,
                     work_num2 = 10,
                     work_comment = Nothing

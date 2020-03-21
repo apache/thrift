@@ -314,10 +314,10 @@ end
 
 function TCompactProtocol:readMapBegin()
   local size = self:readVarint32()
-  if size < 0 then
-    return nil,nil,nil
+  local kvtype = 0
+  if size > 0 then
+    kvtype = self:readSignByte()
   end
-  local kvtype = self:readSignByte()
   local ktype = self:getTType(libluabitwise.shiftr(kvtype, 4))
   local vtype = self:getTType(kvtype)
   return ktype, vtype, size
@@ -426,7 +426,7 @@ function TCompactProtocol:readVarint64()
   local data = result(0)
   local shiftl = 0
   while true do
-    b = self:readByte()
+    b = self:readSignByte()
     endFlag, data = libluabpack.fromVarint64(b, shiftl, data)
     shiftl = shiftl + 7
     if endFlag == 0 then

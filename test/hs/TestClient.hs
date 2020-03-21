@@ -193,16 +193,16 @@ runClient p = do
 
   -- Enum Test
   putStrLn "testEnum"
-  numz1 <- Client.testEnum prot ONE
-  when (numz1 /= ONE) exitFailure
+  numz1 <- Client.testEnum prot Numberz_ONE
+  when (numz1 /= Numberz_ONE) exitFailure
 
   putStrLn "testEnum"
-  numz2 <- Client.testEnum prot TWO
-  when (numz2 /= TWO) exitFailure
+  numz2 <- Client.testEnum prot Numberz_TWO
+  when (numz2 /= Numberz_TWO) exitFailure
 
   putStrLn "testEnum"
-  numz5 <- Client.testEnum prot FIVE
-  when (numz5 /= FIVE) exitFailure
+  numz5 <- Client.testEnum prot Numberz_FIVE
+  when (numz5 /= Numberz_FIVE) exitFailure
 
   -- Typedef Test
   putStrLn "testTypedef"

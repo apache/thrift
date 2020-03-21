@@ -16,6 +16,7 @@
 // under the License.
 
 using System;
+using System.Linq;
 using System.Collections.Generic;
 using ThriftTest;
 
@@ -35,18 +36,18 @@ namespace Server
             }
 
             // run whatever mode is choosen, default to test impl
-            var firstArg = args.Length > 0 ? args[0] : string.Empty;
-            switch (firstArg)
+            var argslist = new List<string>(args);
+            switch (argslist.FirstOrDefault())
             {
-                case "server":
-                    Console.WriteLine("The 'server' argument is no longer required.");
-                    PrintHelp();
-                    return -1;
+                case "server":  // crosstest wants to pass this, so just emit a hint and ignore
+                    Console.WriteLine("Hint: The 'server' argument is no longer required.");
+                    argslist.RemoveAt(0);
+                    return TestServer.Execute(argslist);
                 case "--help":
                     PrintHelp();
                     return 0;
                 default:
-                    return TestServer.Execute(new List<string>( args));
+                    return TestServer.Execute(argslist);
             }
         }
 

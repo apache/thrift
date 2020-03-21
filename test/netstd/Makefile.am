@@ -20,10 +20,10 @@
 SUBDIRS = . 
 
 all-local:
-	$(DOTNETCORE) build
+	$(DOTNETCORE) build -c Release
 
 precross:
-	$(DOTNETCORE) build
+	$(DOTNETCORE) build -c Release
 
 clean-local:
 	$(RM) -r Client/bin

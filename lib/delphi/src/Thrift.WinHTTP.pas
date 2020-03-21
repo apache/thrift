@@ -576,7 +576,7 @@ type
   IWinHTTPConnection = interface;
 
   IWinHTTPRequest = interface
-    ['{7A8E7255-5440-4621-A8A8-1E9FFAA6D6FA}']
+    ['{FADA4B45-D447-4F07-8361-1AD6656E5E8C}']
     function  Handle : HINTERNET;
     function  Connection : IWinHTTPConnection;
     function  AddRequestHeader( const aHeader : string; const addflag : DWORD = WINHTTP_ADDREQ_FLAG_ADD) : Boolean;
@@ -589,7 +589,8 @@ type
     function  ReadData( const dwRead : DWORD) : TBytes;  overload;
     function  ReadData( const pBuf : Pointer; const dwRead : DWORD) : DWORD;  overload;
     function  QueryDataAvailable : DWORD;
-    function  QueryTotalResponseSize : DWORD;
+    function  QueryTotalResponseSize( out dwSize : DWORD) : Boolean;
+    function  QueryHttpStatus( out dwStatusCode : DWORD; out sStatusText : string) : Boolean;
   end;
 
   IWinHTTPConnection = interface
@@ -709,7 +710,8 @@ type
     function  ReadData( const dwRead : DWORD) : TBytes;  overload;
     function  ReadData( const pBuf : Pointer; const dwRead : DWORD) : DWORD;  overload;
     function  QueryDataAvailable : DWORD;
-    function  QueryTotalResponseSize : DWORD;
+    function  QueryTotalResponseSize( out dwSize : DWORD) : Boolean;
+    function  QueryHttpStatus( out dwStatusCode : DWORD; out sStatusText : string) : Boolean;
 
   public
     constructor Create( const aConnection : IWinHTTPConnection;
@@ -1212,23 +1214,70 @@ begin
 end;
 
 
-function TWinHTTPRequestImpl.QueryTotalResponseSize : DWORD;
+function TWinHTTPRequestImpl.QueryTotalResponseSize( out dwSize : DWORD) : Boolean;
 var dwBytes, dwError, dwIndex : DWORD;
 begin
   dwBytes := SizeOf( result);
   dwIndex := DWORD( WINHTTP_NO_HEADER_INDEX);
-  if not WinHttpQueryHeaders( FHandle,
-                              WINHTTP_QUERY_CONTENT_LENGTH or WINHTTP_QUERY_FLAG_NUMBER,
-                              WINHTTP_HEADER_NAME_BY_INDEX,
-                              @result, dwBytes,
-                              dwIndex)
-  then begin
+  result := WinHttpQueryHeaders( FHandle,
+                                 WINHTTP_QUERY_CONTENT_LENGTH or WINHTTP_QUERY_FLAG_NUMBER,
+                                 WINHTTP_HEADER_NAME_BY_INDEX,
+                                 @dwSize, dwBytes,
+                                 dwIndex);
+  if not result then begin
+    dwSize  := MAXINT;  // we don't know, just return something useful
     dwError := GetLastError;
     if dwError <> ERROR_WINHTTP_HEADER_NOT_FOUND then ASSERT(FALSE);  // anything else would be an real error
-    result  := MAXINT;  // we don't know
   end;
 end;
 
+
+function TWinHTTPRequestImpl.QueryHttpStatus( out dwStatusCode : DWORD; out sStatusText : string) : Boolean;
+var dwBytes, dwError, dwIndex : DWORD;
+begin
+  // HTTP status code
+  dwIndex := DWORD( WINHTTP_NO_HEADER_INDEX);
+  dwBytes := SizeOf(dwStatusCode);
+  result  := WinHttpQueryHeaders( FHandle,
+                                  WINHTTP_QUERY_STATUS_CODE or WINHTTP_QUERY_FLAG_NUMBER,
+                                  WINHTTP_HEADER_NAME_BY_INDEX,
+                                  @dwStatusCode, dwBytes,
+                                  dwIndex);
+  if not result then begin
+    dwStatusCode := 0;  // no data
+    dwError      := GetLastError;
+    if dwError <> ERROR_WINHTTP_HEADER_NOT_FOUND then ASSERT(FALSE);  // anything else would be an real error
+  end;
+
+  // HTTP status text
+  dwIndex := DWORD( WINHTTP_NO_HEADER_INDEX);
+  dwBytes := 0;
+  result  := WinHttpQueryHeaders( FHandle,
+                                  WINHTTP_QUERY_STATUS_TEXT,
+                                  WINHTTP_HEADER_NAME_BY_INDEX,
+                                  WINHTTP_NO_OUTPUT_BUFFER,  // we need to determine the size first
+                                  dwBytes,                   // will receive the required buffer size
+                                  dwIndex);
+  if dwBytes > 0 then begin  // allocate buffer and call again to get the value
+    SetLength( sStatusText, dwBytes div SizeOf(Char));
+    dwBytes := Length(sStatusText) * SizeOf(Char);
+    result  := WinHttpQueryHeaders( FHandle,
+                                    WINHTTP_QUERY_STATUS_TEXT,
+                                    WINHTTP_HEADER_NAME_BY_INDEX,
+                                    @sStatusText[1], dwBytes,
+                                    dwIndex);
+  end;
+  if result
+  then SetLength( sStatusText, StrLen(PChar(sStatusText)))  // get rid of any terminating #0 chars
+  else begin
+    sStatusText := '';  // no data
+    dwError     := GetLastError;
+    if dwError <> ERROR_WINHTTP_HEADER_NOT_FOUND then ASSERT(FALSE);  // anything else would be an real error
+  end;
+
+  // do we have at least something?
+  result := (dwStatusCode <> 0) or (sStatusText <> '');
+end;
 
 
 { TWinHTTPUrlImpl }
@@ -1384,9 +1433,6 @@ begin
   FUserName := value;
 end;
 
-
-initialization
-  OutputDebugString( PChar( SysErrorMessage( 12002)));
 
 end.
 

@@ -115,7 +115,7 @@ thrift_server_socket_listen (ThriftServerTransport *transport, GError **error)
     {
       g_set_error (error, THRIFT_SERVER_SOCKET_ERROR,
                    THRIFT_SERVER_SOCKET_ERROR_BIND,
-                   "failed to bind to path %s: - %s",
+                   "failed to listen to path %s: - %s",
                    tsocket->path, strerror(errno));
       return FALSE;
     }
@@ -148,7 +148,7 @@ thrift_server_socket_accept (ThriftServerTransport *transport, GError **error)
                  THRIFT_SERVER_SOCKET_ERROR_ACCEPT,
                  "failed to accept connection - %s",
                  strerror(errno));
-    return FALSE;
+    return NULL;
   }
 
   socket = g_object_new (THRIFT_TYPE_SOCKET, NULL);

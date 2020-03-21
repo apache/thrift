@@ -157,12 +157,7 @@ void t_netstd_generator::init_generator()
 {
     MKDIR(get_out_dir().c_str());
 
-    // for usage of csharp namespaces in thrift files (from files for csharp)
     namespace_name_ = program_->get_namespace("netstd");
-    if (namespace_name_.empty())
-    {
-        namespace_name_ = program_->get_namespace("netstd");
-    }
 
     string dir = namespace_name_;
     string subdir = get_out_dir().c_str();
@@ -1251,15 +1246,7 @@ void t_netstd_generator::generate_netstd_struct_tostring(ostream& out, t_struct*
             out << indent() << "sb.Append(\", " << prop_name(*f_iter) << ": \");" << endl;
         }
 
-        t_type* ttype = (*f_iter)->get_type();
-        if (ttype->is_xception() || ttype->is_struct())
-        {
-            out << indent() << "sb.Append(" << prop_name(*f_iter) << "== null ? \"<null>\" : " << prop_name(*f_iter) << ".ToString());" << endl;
-        }
-        else
-        {
-            out << indent() << "sb.Append(" << prop_name(*f_iter) << ");" << endl;
-        }
+        out << indent() << prop_name(*f_iter) << ".ToString(sb);" << endl;
 
         if (!is_required)
         {
@@ -2746,17 +2733,19 @@ string t_netstd_generator::type_name(t_type* ttype)
         return "List<" + type_name(tlist->get_elem_type()) + ">";
     }
 
+    string the_name = check_and_correct_struct_name(normalize_name(ttype->get_name()));
+
     t_program* program = ttype->get_program();
     if (program != NULL && program != program_)
     {
         string ns = program->get_namespace("netstd");
         if (!ns.empty())
         {
-            return ns + "." + normalize_name(ttype->get_name());
+            return ns + "." + the_name;
         }
     }
 
-    return normalize_name(ttype->get_name());
+    return the_name;
 }
 
 string t_netstd_generator::base_type_name(t_base_type* tbase)

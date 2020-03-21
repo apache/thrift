@@ -1912,8 +1912,7 @@ void t_java_generator::generate_java_struct_equality(ostream& out, t_struct* tst
   out << indent() << "@Override" << endl << indent() << "public boolean equals(java.lang.Object that) {"
       << endl;
   indent_up();
-  out << indent() << "if (that == null)" << endl << indent() << "  return false;" << endl
-      << indent() << "if (that instanceof " << tstruct->get_name() << ")" << endl << indent()
+  out << indent() << "if (that instanceof " << tstruct->get_name() << ")" << endl << indent()
       << "  return this.equals((" << tstruct->get_name() << ")that);" << endl << indent()
       << "return false;" << endl;
   scope_down(out);
