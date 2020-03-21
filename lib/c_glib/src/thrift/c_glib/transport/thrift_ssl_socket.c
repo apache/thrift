@@ -80,7 +80,11 @@ static unsigned long thrift_ssl_socket_static_id_function(void)
 #endif
 }
 
-static void thrift_ssl_socket_static_locking_callback(int mode, int n, const char* unk, int id) {
+static void thrift_ssl_socket_static_locking_callback(int mode, int n, const char* unk, int id) 
+{
+  THRIFT_UNUSED_VAR (unk);
+  THRIFT_UNUSED_VAR (id);
+
   if (mode & CRYPTO_LOCK)
     MUTEX_LOCK(thrift_ssl_socket_global_mutex_buf[n]);
   else
@@ -175,15 +179,15 @@ void thrift_ssl_socket_get_ssl_error(ThriftSSLSocket *socket, const guchar *erro
 	  break;
 	case SSL_ERROR_SYSCALL:
 	  buffer_size-=snprintf(buffer, buffer_size, "%s: ", error_msg);
-	  buffer_size-=snprintf(buffer+(1024-buffer_size), buffer_size, "%lX -> %s", errno, strerror(errno));
+	  buffer_size-=snprintf(buffer+(1024-buffer_size), buffer_size, "%X -> %s", errno, strerror(errno));
 	  break;
 	case SSL_ERROR_WANT_READ:
 	  buffer_size-=snprintf(buffer, buffer_size, "%s: ", error_msg);
-	  buffer_size-=snprintf(buffer+(1024-buffer_size), buffer_size, "%lX -> %s", ssl_error_type, "Error while reading from underlaying layer");
+	  buffer_size-=snprintf(buffer+(1024-buffer_size), buffer_size, "%X -> %s", ssl_error_type, "Error while reading from underlaying layer");
 	  break;
 	case SSL_ERROR_WANT_WRITE:
 	  buffer_size-=snprintf(buffer, buffer_size, "%s: ", error_msg);
-	  buffer_size-=snprintf(buffer+(1024-buffer_size), buffer_size, "%lX -> %s", ssl_error_type, "Error while writting to underlaying layer");
+	  buffer_size-=snprintf(buffer+(1024-buffer_size), buffer_size, "%X -> %s", ssl_error_type, "Error while writting to underlaying layer");
 	  break;
 
       }

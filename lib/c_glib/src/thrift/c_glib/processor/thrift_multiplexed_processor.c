@@ -41,6 +41,8 @@ static GParamSpec *thrift_multiplexed_processor_obj_properties[PROP_THRIFT_MULTI
 static gboolean
 thrift_multiplexed_processor_register_processor_impl(ThriftProcessor *processor, const gchar * multiplexed_processor_name, ThriftProcessor * multiplexed_processor , GError **error)
 {
+  THRIFT_UNUSED_VAR (error);
+
   ThriftMultiplexedProcessor *self = THRIFT_MULTIPLEXED_PROCESSOR(processor);
   g_hash_table_replace(self->multiplexed_services,
 		       g_strdup(multiplexed_processor_name),
@@ -336,11 +338,9 @@ thrift_multiplexed_processor_init (ThriftMultiplexedProcessor *self)
   self->default_processor_name = NULL;
 }
 
-
 gboolean
 thrift_multiplexed_processor_register_processor(ThriftProcessor *processor, const gchar * multiplexed_processor_name, ThriftProcessor * multiplexed_processor , GError **error)
 {
   return THRIFT_MULTIPLEXED_PROCESSOR_GET_CLASS(processor)->register_processor(processor, multiplexed_processor_name, multiplexed_processor, error);
 }
-
 
