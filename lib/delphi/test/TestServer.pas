@@ -56,9 +56,9 @@ type
       end;
 
       TTestHandlerImpl = class( TInterfacedObject, ITestHandler )
-      private
+      strict private
         FServer : IServer;
-      protected
+      strict protected
         procedure testVoid();
         function testBool(thing: Boolean): Boolean;
         function testString(const thing: string): string;
@@ -88,9 +88,10 @@ type
 
       class procedure PrintCmdLineHelp;
       class procedure InvalidArgs;
+      class function  IsSwitch( const aArgument, aSwitch : string; out sValue : string) : Boolean;
 
       class procedure LaunchAnonPipeChild( const app : string; const transport : IAnonymousPipeServerTransport);
-      class procedure Execute( const args: array of string);
+      class procedure Execute( const arguments : array of string);
   end;
 
 implementation
@@ -385,18 +386,16 @@ class procedure TTestServer.PrintCmdLineHelp;
 const HELPTEXT = ' [options]'#10
                + #10
                + 'Allowed options:'#10
-               + '  -h [ --help ]               produce help message'#10
-               + '  --port arg (=9090)          Port number to listen'#10
-               + '  --domain-socket arg         Unix Domain Socket (e.g. /tmp/ThriftTest.thrift)'#10
-               + '  --pipe arg                  Windows Named Pipe (e.g. MyThriftPipe)'#10
-               + '  --server-type arg (=simple) type of server, "simple", "thread-pool",'#10
-               + '                              "threaded", or "nonblocking"'#10
-               + '  --transport arg (=socket)   transport: buffered, framed, http, anonpipe'#10
-               + '  --protocol arg (=binary)    protocol: binary, compact, json'#10
-               + '  --ssl                       Encrypted Transport using SSL'#10
-               + '  --processor-events          processor-events'#10
-               + '  -n [ --workers ] arg (=4)   Number of thread pools workers. Only valid for'#10
-               + '                              thread-pool server type'#10
+               + '  -h | --help                   Produces this help message'#10
+               + '  --port=arg (9090)             Port number to connect'#10
+               + '  --pipe=arg                    Windows Named Pipe (e.g. MyThriftPipe)'#10
+               + '  --anon-pipes                  Windows Anonymous Pipes server, auto-starts client.exe'#10
+               + '  --server-type=arg (simple)    Type of server (simple, thread-pool, threaded, nonblocking)'#10
+               + '  --transport=arg (sockets)     Transport: buffered, framed, anonpipe'#10
+               + '  --protocol=arg (binary)       Protocol: binary, compact, json'#10
+               + '  --ssl                         Encrypted Transport using SSL'#10
+               + '  --processor-events            Enable processor-events'#10
+               + '  -n=num | --workers=num (4)    Number of thread-pool server workers'#10
                ;
 begin
   Console.WriteLine( ChangeFileExt(ExtractFileName(ParamStr(0)),'') + HELPTEXT);
@@ -407,6 +406,16 @@ begin
   Console.WriteLine( 'Invalid args.');
   Console.WriteLine( ChangeFileExt(ExtractFileName(ParamStr(0)),'') + ' -h for more information');
   Abort;
+end;
+
+class function TTestServer.IsSwitch( const aArgument, aSwitch : string; out sValue : string) : Boolean;
+begin
+  sValue := '';
+  result := (Copy( aArgument, 1, Length(aSwitch)) = aSwitch);
+  if result then begin
+    if (Copy( aArgument, 1, Length(aSwitch)+1) = (aSwitch+'='))
+    then sValue := Copy( aArgument, Length(aSwitch)+2, MAXINT);
+  end;
 end;
 
 class procedure TTestServer.LaunchAnonPipeChild( const app : string; const transport : IAnonymousPipeServerTransport);
@@ -431,7 +440,7 @@ begin
     sArg := ParamStr(i);
 
     // add anonymous handles and quote strings where appropriate
-    if sArg = '-anon'
+    if sArg = '--anon-pipes'
     then sArg := sArg +' '+ sHandles
     else begin
       if Pos(' ',sArg) > 0
@@ -446,11 +455,11 @@ begin
   Win32Check( CreateProcess( nil, PChar(sCmdLine), nil,nil,TRUE,0,nil,nil,si,pi));
 
   CloseHandle( pi.hThread);
-    CloseHandle( pi.hProcess);
+  CloseHandle( pi.hProcess);
 end;
 
 
-class procedure TTestServer.Execute( const args: array of string);
+class procedure TTestServer.Execute( const arguments : array of string);
 var
   Port : Integer;
   ServerEvents : Boolean;
@@ -463,8 +472,8 @@ var
   namedpipe : INamedPipeServerTransport;
   TransportFactory : ITransportFactory;
   ProtocolFactory : IProtocolFactory;
-  i, numWorker : Integer;
-  s : string;
+  iArg, numWorker : Integer;
+  sArg, sValue : string;
   protType : TKnownProtocol;
   servertype : TServerType;
   endpoint : TEndpointTransport;
@@ -482,83 +491,68 @@ begin
     sPipeName := '';
     numWorker := 4;
 
-    i := 0;
-    while ( i < Length(args) ) do begin
-      s := args[i];
-      Inc(i);
+    iArg := 0;
+    while iArg < Length(arguments) do begin
+      sArg := arguments[iArg];
+      Inc(iArg);
 
       // Allowed options:
-      if (s = '-h') or (s = '--help') then begin
-        // -h [ --help ]               produce help message
+      if IsSwitch( sArg, '-h', sValue)
+      or IsSwitch( sArg, '--help', sValue)
+      then begin
+        // -h | --help               produce help message
         PrintCmdLineHelp;
         Exit;
       end
-      else if (s = '--port') then begin
+      else if IsSwitch( sArg, '--port', sValue) then begin
         // --port arg (=9090)          Port number to listen
-        s := args[i];
-        Inc(i);
-        Port := StrToIntDef( s, Port);
+        Port := StrToIntDef( sValue, Port);
       end
-      else if (s = '--domain-socket') then begin
-        // --domain-socket arg         Unix Domain Socket (e.g. /tmp/ThriftTest.thrift)
-        raise Exception.Create('domain-socket not supported');
+      else if IsSwitch( sArg, '--anon-pipes', sValue) then begin
+        endpoint := trns_AnonPipes;
       end
-      else if (s = '--pipe') then begin
+      else if IsSwitch( sArg, '--pipe', sValue) then begin
         // --pipe arg                   Windows Named Pipe (e.g. MyThriftPipe)
         endpoint := trns_NamedPipes;
-        sPipeName := args[i];  // --pipe <name>
-        Inc( i );
+        sPipeName := sValue;  // --pipe <name>
       end
-      else if (s = '--server-type') then begin
+      else if IsSwitch( sArg, '--server-type', sValue) then begin
         // --server-type arg (=simple) type of server,
         // arg = "simple", "thread-pool", "threaded", or "nonblocking"
-        s := args[i];
-        Inc(i);
-
-        if      s = 'simple'      then servertype := srv_Simple
-        else if s = 'thread-pool' then servertype := srv_Threadpool
-        else if s = 'threaded'    then servertype := srv_Threaded
-        else if s = 'nonblocking' then servertype := srv_Nonblocking
+        if      sValue = 'simple'      then servertype := srv_Simple
+        else if sValue = 'thread-pool' then servertype := srv_Threadpool
+        else if sValue = 'threaded'    then servertype := srv_Threaded
+        else if sValue = 'nonblocking' then servertype := srv_Nonblocking
         else InvalidArgs;
       end
-      else if (s = '--transport') then begin
+      else if IsSwitch( sArg, '--transport', sValue) then begin
         // --transport arg (=buffered) transport: buffered, framed, http
-        s := args[i];
-        Inc(i);
-
-        if      s = 'buffered' then Include( layered, trns_Buffered)
-        else if s = 'framed'   then Include( layered, trns_Framed)
-        else if s = 'http'     then endpoint := trns_MsxmlHttp
-        else if s = 'winhttp'  then endpoint := trns_WinHttp
-        else if s = 'anonpipe' then endpoint := trns_AnonPipes
+        if      sValue = 'buffered' then Include( layered, trns_Buffered)
+        else if sValue = 'framed'   then Include( layered, trns_Framed)
+        else if sValue = 'http'     then endpoint := trns_MsxmlHttp
+        else if sValue = 'winhttp'  then endpoint := trns_WinHttp
+        else if sValue = 'anonpipe' then endpoint := trns_AnonPipes
         else InvalidArgs;
       end
-      else if (s = '--protocol') then begin
+      else if IsSwitch( sArg, '--protocol', sValue) then begin
         // --protocol arg (=binary)    protocol: binary, compact, json
-        s := args[i];
-        Inc(i);
-
-        if      s = 'binary'   then protType := prot_Binary
-        else if s = 'compact'  then protType := prot_Compact
-        else if s = 'json'     then protType := prot_JSON
+        if      sValue = 'binary'   then protType := prot_Binary
+        else if sValue = 'compact'  then protType := prot_Compact
+        else if sValue = 'json'     then protType := prot_JSON
         else InvalidArgs;
       end
-      else if (s = '--ssl') then begin
+      else if IsSwitch( sArg, '--ssl', sValue) then begin
         // --ssl     Encrypted Transport using SSL
         UseSSL := TRUE;
       end
-      else if (s = '--processor-events') then begin
+      else if IsSwitch( sArg, '--processor-events', sValue) then begin
          // --processor-events          processor-events
         ServerEvents := TRUE;
       end
-      else if (s = '-n') or (s = '--workers') then begin
+      else if IsSwitch( sArg, '-n', sValue) or IsSwitch( sArg, '--workers', sValue) then begin
         // -n [ --workers ] arg (=4)   Number of thread pools workers.
         // Only valid for thread-pool server type
-        s := args[i];
-        numWorker := StrToIntDef(s,0);
-        if numWorker > 0
-        then Inc(i)
-        else numWorker := 4;
+        numWorker := StrToIntDef(sValue,4);
       end
       else begin
         InvalidArgs;
