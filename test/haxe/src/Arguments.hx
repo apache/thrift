@@ -103,7 +103,7 @@ class Arguments
             +"  --port arg (=9090)          Port number to listen / connect to\n"
             /* not supported yet
             +"  --domain-socket arg         Unix Domain Socket (e.g. /tmp/ThriftTest.thrift)\n"
-            +"  --named-pipe arg            Windows Named Pipe (e.g. MyThriftPipe)\n"
+            +"  --pipe arg                  Windows Named Pipe (e.g. MyThriftPipe)\n"
             */
             +"  --protocol arg (=binary)    protocol: binary, compact, json\n"
             /* not supported yet
@@ -187,8 +187,8 @@ class Arguments
                 //   --domain-socket arg         Unix Domain Socket (e.g. /tmp/ThriftTest.thrift)
                 throw "domain sockets not supported yet";
             }
-            else if (arg == "--named-pipe") {
-                //   --named-pipe arg            Windows Named Pipe (e.g. MyThriftPipe)
+            else if (arg == "--pipe") {
+                //   --pipe arg                  Windows Named Pipe (e.g. MyThriftPipe)
                 throw "named pipes not supported yet";
             }
             else if (arg == "--protocol") {
