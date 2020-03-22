@@ -196,7 +196,7 @@ const HELPTEXT = ' [options]'#10
                + '  --port arg (=9090)          Port number to connect'#10
                + '  --domain-socket arg         Domain Socket (e.g. /tmp/ThriftTest.thrift),'#10
                + '                              instead of host and port'#10
-               + '  --named-pipe arg            Windows Named Pipe (e.g. MyThriftPipe)'#10
+               + '  --pipe arg                  Windows Named Pipe (e.g. MyThriftPipe)'#10
                + '  --anon-pipes hRead hWrite   Windows Anonymous Pipes pair (handles)'#10
                + '  --transport arg (=sockets)  Transport: buffered, framed, http, winhttp'#10
                + '  --protocol arg (=binary)    Protocol: binary, compact, json'#10
@@ -268,8 +268,8 @@ begin
         // --domain-socket arg         Domain Socket (e.g. /tmp/ThriftTest.thrift), instead of host and port
         raise Exception.Create('domain-socket not supported');
       end
-      else if s = '--named-pipe' then begin
-        // --named-pipe arg            Windows Named Pipe (e.g. MyThriftPipe)
+      else if s = '--pipe' then begin
+        // --pipe arg                 Windows Named Pipe (e.g. MyThriftPipe)
         setup.endpoint := trns_NamedPipes;
         setup.sPipeName := args[i];
         Inc( i);

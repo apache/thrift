@@ -126,7 +126,7 @@ line interface:
       -h | --help                  produce help message
       --port=arg (9090)            Port number to listen
       --domain-socket=arg          Unix Domain Socket (e.g. /tmp/ThriftTest.thrift)
-      --named-pipe=arg             Windows Named Pipe (e.g. MyThriftPipe)
+      --pipe=arg                   Windows Named Pipe (e.g. MyThriftPipe)
       --server-type=arg (simple)   type of server, "simple", "thread-pool",
                                    "threaded", or "nonblocking"
       --transport=arg (buffered)   transport: buffered, framed, http, anonpipe, zlib
@@ -149,7 +149,7 @@ line interface:
       --port=arg (9090)            Port number to connect
       --domain-socket=arg          Domain Socket (e.g. /tmp/ThriftTest.thrift),
                                    instead of host and port
-      --named-pipe=arg             Windows Named Pipe (e.g. MyThriftPipe)
+      --pipe=arg                   Windows Named Pipe (e.g. MyThriftPipe)
       --anon-pipes hRead hWrite    Windows Anonymous Pipes pair (handles)
       --abstract-namespace         Create the domain socket in the Abstract Namespace
                                    (no connection with filesystem pathnames)

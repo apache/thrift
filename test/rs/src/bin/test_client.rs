@@ -54,7 +54,7 @@ fn main() {
 fn run() -> thrift::Result<()> {
     // unsupported options:
     // --domain-socket
-    // --named-pipe
+    // --pipe
     // --anon-pipes
     // --ssl
     // --threads
