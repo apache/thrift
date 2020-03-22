@@ -57,7 +57,7 @@ fn run() -> thrift::Result<()> {
 
     // unsupported options:
     // --domain-socket
-    // --named-pipe
+    // --pipe
     // --ssl
     let matches = clap_app!(rust_test_client =>
         (version: "1.0")

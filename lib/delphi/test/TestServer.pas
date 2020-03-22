@@ -388,7 +388,7 @@ const HELPTEXT = ' [options]'#10
                + '  -h [ --help ]               produce help message'#10
                + '  --port arg (=9090)          Port number to listen'#10
                + '  --domain-socket arg         Unix Domain Socket (e.g. /tmp/ThriftTest.thrift)'#10
-               + '  --named-pipe arg            Windows Named Pipe (e.g. MyThriftPipe)'#10
+               + '  --pipe arg                  Windows Named Pipe (e.g. MyThriftPipe)'#10
                + '  --server-type arg (=simple) type of server, "simple", "thread-pool",'#10
                + '                              "threaded", or "nonblocking"'#10
                + '  --transport arg (=socket)   transport: buffered, framed, http, anonpipe'#10
@@ -503,10 +503,10 @@ begin
         // --domain-socket arg         Unix Domain Socket (e.g. /tmp/ThriftTest.thrift)
         raise Exception.Create('domain-socket not supported');
       end
-      else if (s = '--named-pipe') then begin
-        // --named-pipe arg            Windows Named Pipe (e.g. MyThriftPipe)
+      else if (s = '--pipe') then begin
+        // --pipe arg                   Windows Named Pipe (e.g. MyThriftPipe)
         endpoint := trns_NamedPipes;
-        sPipeName := args[i];  // -pipe <name>
+        sPipeName := args[i];  // --pipe <name>
         Inc( i );
       end
       else if (s = '--server-type') then begin
