@@ -76,7 +76,7 @@ build-indep-stamp: configure-stamp $(CURDIR)/compiler/cpp/thrift
 		./gradlew --no-daemon -Prelease=true jar
 
 	# C#
-	$(MAKE) -C $(CURDIR)/lib/csharp
+	$(MAKE) -C $(CURDIR)/lib/netstd
 
 	# Ruby
 	$(MAKE) -C $(CURDIR)/lib/rb
@@ -122,9 +122,9 @@ install-indep:
 		$(CURDIR)/debian/ruby-thrift/usr/lib/ruby/1.9.1
 
 	# C#
-	mkdir -p $(CURDIR)/debian/libthrift-cil/usr/lib/cli/thrift/ && \
-	cp $(CURDIR)/lib/csharp/Thrift.dll \
-		$(CURDIR)/debian/libthrift-cil/usr/lib/cli/thrift/Thrift.dll
+	mkdir -p $(CURDIR)/debian/libthrift-netstd/usr/lib/cli/thrift/ && \
+	cp $(CURDIR)/lib/netstd/Thrift/bin/Release/netstandard2.0/Thrift.dll \
+		$(CURDIR)/debian/libthrift-netstd/usr/lib/cli/thrift/Thrift.dll
 
 	# Perl
 	$(MAKE) -C $(CURDIR)/lib/perl install DESTDIR=$(CURDIR)/debian/libthrift-perl

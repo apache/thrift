@@ -77,10 +77,6 @@ RUN apt-get install -y --no-install-recommends \
       qtbase5-dev-tools
 
 RUN apt-get install -y --no-install-recommends \
-`# csharp (mono) dependencies` \
-      mono-devel
-
-RUN apt-get install -y --no-install-recommends \
 `# D dependencies` \
       dmd-bin \
       libevent-dev \

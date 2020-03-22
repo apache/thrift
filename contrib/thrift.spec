@@ -175,7 +175,6 @@ export RUBYLIB=${PWD}/lib/rb/lib
   %{?without_ruby:     --without-ruby     } \
   %{?without_php:      --without-php      } \
   %{!?without_php:     PHP_PREFIX=${RPM_BUILD_ROOT}/usr/lib/php } \
-  --without-csharp \
   --without-erlang \
 
 %if 0%{!?without_ruby:1}

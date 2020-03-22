@@ -38,7 +38,7 @@ A namespace declares which namespaces/package/module/etc. the type definitions i
 
     [5]  Namespace       ::=  ( 'namespace' ( NamespaceScope Identifier ) )
 
-    [6]  NamespaceScope  ::=  '*' | 'c_glib' | 'cpp' | 'csharp' | 'delphi' | 'go' | 'java' | 'js' | 'lua' | 'netcore' | 'perl' | 'php' | 'py' | 'py.twisted' | 'rb' | 'st' | 'xsd'
+    [6]  NamespaceScope  ::=  '*' | 'c_glib' | 'cpp' | 'delphi' | 'haxe' | 'go' | 'java' | 'js' | 'lua' | 'netstd' | 'perl' | 'php' | 'py' | 'py.twisted' | 'rb' | 'st' | 'xsd'
 
 ## Definition
 

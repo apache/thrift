@@ -29,11 +29,12 @@ if(ANDROID)
     add_custom_target(thrift_aar ALL DEPENDS ${THRIFT_AAR})
 
 else()
-
-    if(IS_ABSOLUTE "${LIB_INSTALL_DIR}")
-        set(JAVA_INSTALL_DIR "${LIB_INSTALL_DIR}/java")
-    else()
-        set(JAVA_INSTALL_DIR "${CMAKE_INSTALL_PREFIX}/${LIB_INSTALL_DIR}/java")
+    if(NOT JAVA_INSTALL_DIR)
+        if(IS_ABSOLUTE "${LIB_INSTALL_DIR}")
+            set(JAVA_INSTALL_DIR "${LIB_INSTALL_DIR}/java")
+        else()
+            set(JAVA_INSTALL_DIR "${CMAKE_INSTALL_PREFIX}/${LIB_INSTALL_DIR}/java")
+        endif()
     endif()
 
     if(IS_ABSOLUTE "${DOC_INSTALL_DIR}")

@@ -89,10 +89,6 @@ RUN apt-get install -y --no-install-recommends \
       qtbase5-dev \
       qtbase5-dev-tools
 
-RUN apt-get install -y --no-install-recommends \
-`# csharp (mono) dependencies` \
-      mono-devel
-
 ENV SBCL_VERSION 1.5.3
 RUN \
 `# Common Lisp (sbcl) dependencies` \

@@ -1,8 +1,8 @@
 Source: thrift
 Section: devel
 Priority: extra
-Build-Depends: debhelper (>= 9), build-essential, mono-mcs, python-dev, ant,
-    mono-devel,  libmono-system-web4.0-cil, erlang-base, ruby-dev | ruby1.9.1-dev, ruby-bundler ,autoconf, automake,
+Build-Depends: dotnet-runtime-3.1, dotnet-sdk-3.1, debhelper (>= 9), build-essential, python-dev, ant,
+    erlang-base, ruby-dev | ruby1.9.1-dev, ruby-bundler ,autoconf, automake,
     pkg-config, libtool, bison, flex, libboost-dev | libboost1.56-dev | libboost1.63-all-dev,
     python-all, python-setuptools, python-all-dev, python-all-dbg,
     python3-all, python3-setuptools, python3-all-dev, python3-all-dbg,
@@ -126,17 +126,16 @@ Description: Java bindings for Thrift
  classes, and then the modules in this package will allow you to use those
  classes in your programs.
 
-Package: libthrift-cil
+Package: libthrift-netstd
 Architecture: all
-Section: cli-mono
-Depends: cli-common, libmono-corlib4.0-cil (>= 2.10) | libmono-corlib4.5-cil (>=3.2), libmono-system4.0-cil (>= 2.10),
-    libmono-system-web4.0-cil (>= 2.10), ${misc:Depends}
-Description: CLI bindings for Thrift
+Section: netstd
+Depends: dotnet-runtime-3.1, ${misc:Depends}
+Description: NET Standard bindings for Thrift
  Thrift is a software framework for scalable cross-language services
  development. It combines a software stack with a code generation engine to
  build services that work efficiently and seamlessly.
  .
- This package contains the CLI bindings for Thrift. You will need the thrift
+ This package contains the NET Standard bindings for Thrift. You will need the thrift
  tool (in the thrift-compiler package) to compile your definition to C#
  classes, and then the modules in this package will allow you to use those
  classes in your programs.

@@ -218,9 +218,12 @@ print(" = $dub\n");
 exit(ERR_BASETYPES) if ($dub ne -852.234234234);
 
 #
-# BINARY TEST   ---  TODO
+# BINARY TEST
 #
-
+print("testBinary(pack('C*', 0..255))");
+my $bin = $testClient->testBinary(pack('C*', 0..255));
+printf(" = %s\n", join ' ', map { sprintf '%02x', $_ } unpack('C*', $bin));
+exit(ERR_BASETYPES) if ($bin ne pack('C*', 0..255));
 
 #
 # STRUCT TEST
