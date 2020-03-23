@@ -135,4 +135,7 @@ if(BUILD_HASKELL)
     endif()
 endif()
 
+# Create the uninstall target
+add_custom_target(uninstall "${CMAKE_COMMAND}" -P "${PROJECT_SOURCE_DIR}/build/cmake/uninstall.cmake")
+
 PRINT_CONFIG_SUMMARY()

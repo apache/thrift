@@ -163,11 +163,15 @@ where the Python modules are installed, set the PY_PREFIX variable.
 
 Make thrift:
 
-	make
+    make
 
 From the top directory, become superuser and do:
 
-	make install
+    make install
+
+Uninstall thrift:
+
+    make uninstall
 
 Note that some language packages must be installed manually using build tools
 better suited to those languages (at the time of this writing, this applies
@@ -190,7 +194,7 @@ Testing
 There are a large number of client library tests that can all be run
 from the top-level directory.
 
-          make -k check
+    make -k check
 
 This will make all of the libraries (as necessary), and run through
 the unit tests defined in each of the client libraries. If a single
@@ -199,7 +203,7 @@ at the end.
 
 To run the cross-language test suite, please run:
 
-          make cross
+    make cross
 
 This will run a set of tests that use different language clients and
 servers.
