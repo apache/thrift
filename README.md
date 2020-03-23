@@ -169,6 +169,10 @@ From the top directory, become superuser and do:
 
 	make install
 
+Uninstall thrift:
+
+        make uninstall
+
 Note that some language packages must be installed manually using build tools
 better suited to those languages (at the time of this writing, this applies
 to Java, Ruby, PHP).
