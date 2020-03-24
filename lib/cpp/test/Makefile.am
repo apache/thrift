@@ -106,6 +106,7 @@ check_PROGRAMS = \
 	OpenSSLManualInitTest \
 	EnumTest \
 	RenderedDoubleConstantsTest \
+	TSimpleFileTransportTest \
         AnnotationTest
 
 if AMX_HAVE_LIBEVENT
@@ -228,6 +229,14 @@ TFileTransportTest_SOURCES = \
 TFileTransportTest_LDADD = \
   libtestgencpp.la \
   $(BOOST_TEST_LDADD)
+
+
+TSimpleFileTransportTest_SOURCES = \
+	TSimpleFileTransportTest.cpp
+
+TSimpleFileTransportTest_LDADD = \
+  $(top_builddir)/lib/cpp/libthrift.la \
+	$(BOOST_TEST_LDADD)
 
 #
 # TFDTransportTest
