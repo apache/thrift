@@ -319,7 +319,9 @@ public:
 
         } else if (manager_->expireCallback_) {
           // The only other state the task could have been in is TIMEDOUT (see above)
+          manager_->mutex_.unlock();
           manager_->expireCallback_(task->getRunnable());
+          manager_->mutex_.lock();
           manager_->expiredCount_++;
         }
       }
