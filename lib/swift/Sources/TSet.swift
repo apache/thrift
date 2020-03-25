@@ -30,6 +30,7 @@ public struct TSet<Element : TSerializable & Hashable> : SetAlgebra, Hashable, C
   
   /// Mark: Collection
   
+  public typealias Element = Storage.Element
   public typealias Indices = Storage.Indices
   public typealias Index = Storage.Index
   public typealias IndexDistance = Int
