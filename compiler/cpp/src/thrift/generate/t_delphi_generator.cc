@@ -37,6 +37,13 @@
 #include "thrift/platform.h"
 #include "thrift/generate/t_oop_generator.h"
 
+#ifdef _WIN32
+#include <locale>
+#include <codecvt>
+#include <combaseapi.h>
+#include <guiddef.h>
+#endif
+
 using std::map;
 using std::ofstream;
 using std::ostream;
@@ -243,6 +250,7 @@ public:
   void generate_function_helpers(t_function* tfunction);
   void generate_service_interface(t_service* tservice);
   void generate_service_interface(t_service* tservice, bool for_async);
+  void generate_guid(std::ostream& out);
   void generate_service_helpers(t_service* tservice);
   void generate_service_client(t_service* tservice);
   void generate_service_server(t_service* tservice);
@@ -1712,6 +1720,8 @@ void t_delphi_generator::generate_delphi_struct_definition(ostream& out,
     indent(out) << struct_intf_name << " = interface(IBase)" << endl;
     indent_up();
 
+    generate_guid(out);
+
     for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
       generate_delphi_property_reader_definition(out, *m_iter, is_exception);
       generate_delphi_property_writer_definition(out, *m_iter, is_exception);
@@ -1934,6 +1944,7 @@ void t_delphi_generator::generate_service_interface(t_service* tservice, bool fo
   }
 
   indent_up();
+  generate_guid(s_service);
   vector<t_function*> functions = tservice->get_functions();
   vector<t_function*>::iterator f_iter;
   for (f_iter = functions.begin(); f_iter != functions.end(); ++f_iter) {
@@ -1944,6 +1955,23 @@ void t_delphi_generator::generate_service_interface(t_service* tservice, bool fo
   indent(s_service) << "end;" << endl << endl;
 
   indent_down();
+}
+
+void t_delphi_generator::generate_guid(std::ostream& out) {
+#ifdef _WIN32	// TODO: add support for non-windows platforms if needed
+  GUID guid;
+  if (SUCCEEDED(CoCreateGuid(&guid))) {
+	OLECHAR guid_chars[40];
+    if (StringFromGUID2(guid, &guid_chars[0], sizeof(guid_chars) / sizeof(guid_chars[0])) > 0) {
+      std::wstring guid_wstr(guid_chars);
+      std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> convert;
+      std::string guid_str = convert.to_bytes(guid_wstr);
+      indent(out) << "['" << guid_str << "']" << endl;
+    }
+  }
+#else
+  (void)out;  // prevent unused warning on other platforms
+#endif
 }
 
 void t_delphi_generator::generate_service_helpers(t_service* tservice) {
