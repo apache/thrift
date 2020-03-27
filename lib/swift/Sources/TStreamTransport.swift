@@ -104,10 +104,7 @@ fileprivate extension RunLoopMode {
       
       var bytesWritten = 0
       while bytesWritten < data.count {
-        bytesWritten = data.withUnsafeBytes {
-          return output.write($0, maxLength: data.count)
-        }
-        
+        bytesWritten = data.withUnsafeBytes { output.write($0.bindMemory(to: UInt8.self).baseAddress!, maxLength: data.count) }
         if bytesWritten == -1 {
           throw TTransportError(error: .notOpen)
         } else if bytesWritten == 0 {

@@ -45,15 +45,6 @@ public extension TStruct {
     try proto.writeStructEnd()
   }
   
-  var hashValue: Int {
-    let prime = 31
-    var result = 1
-    self.forEach { _, value, _ in
-      result = prime &* result &+ (value.hashValue)
-    }
-    return result
-  }
-  
   /// Provides a block for handling each (available) thrift property using reflection
   /// Caveat: Skips over optional values
   
