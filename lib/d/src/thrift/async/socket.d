@@ -18,7 +18,6 @@
  */
 module thrift.async.socket;
 
-import core.stdc.errno: ECONNRESET;
 import core.thread : Fiber;
 import core.time : dur, Duration;
 import std.array : empty;
@@ -33,10 +32,14 @@ import thrift.internal.endian;
 import thrift.internal.socket;
 
 version (Windows) {
-  import std.c.windows.winsock : connect;
+  import core.sys.windows.winsock2 : connect;
 } else version (Posix) {
   import core.sys.posix.sys.socket : connect;
 } else static assert(0, "Don't know connect on this platform.");
+
+version (Win32) {
+  import core.stdc.config : __c_long;
+}
 
 /**
  * Non-blocking socket implementation of the TTransport interface.
@@ -148,7 +151,11 @@ class TAsyncSocket : TSocketBase, TAsyncTransport {
           return;
         }
 
-        int errorCode = void;
+        version (Win32) {
+          __c_long errorCode = void;
+        } else {
+          int errorCode = void;
+        }
         socket_.getOption(SocketOptionLevel.SOCKET, cast(SocketOption)SO_ERROR,
           errorCode);
 
@@ -344,8 +351,8 @@ private {
     enum SO_ERROR = 0x1007;
   } else version (FreeBSD) {
     enum SO_ERROR = 0x1007;
-  } else version (Win32) {
-    import std.c.windows.winsock : SO_ERROR;
+  } else version (Windows) {
+    import core.sys.windows.winsock2 : SO_ERROR;
   } else static assert(false, "Don't know SO_ERROR on this platform.");
 
   // This hack forces a delegate literal to be scoped, even if it is passed to
