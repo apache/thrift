@@ -110,10 +110,10 @@ fn build_protocols(
     transport: &str,
     protocol: &str,
     service_name: &str,
-) -> thrift::Result<(Box<TInputProtocol>, Box<TOutputProtocol>)> {
+) -> thrift::Result<(Box<dyn TInputProtocol>, Box<dyn TOutputProtocol>)> {
     let (i_chan, o_chan) = tcp_channel(host, port)?;
 
-    let (i_tran, o_tran): (Box<TReadTransport>, Box<TWriteTransport>) = match transport {
+    let (i_tran, o_tran): (Box<dyn TReadTransport>, Box<dyn TWriteTransport>) = match transport {
         "buffered" => {
             (Box::new(TBufferedReadTransport::new(i_chan)),
              Box::new(TBufferedWriteTransport::new(o_chan)))
@@ -125,7 +125,7 @@ fn build_protocols(
         unmatched => return Err(format!("unsupported transport {}", unmatched).into()),
     };
 
-    let (i_prot, o_prot): (Box<TInputProtocol>, Box<TOutputProtocol>) = match protocol {
+    let (i_prot, o_prot): (Box<dyn TInputProtocol>, Box<dyn TOutputProtocol>) = match protocol {
         "binary" => {
             (Box::new(TBinaryInputProtocol::new(i_tran, true)),
              Box::new(TBinaryOutputProtocol::new(o_tran, true)))
@@ -164,8 +164,8 @@ fn tcp_channel(
     c.split()
 }
 
-type BuildThriftTestClient = ThriftTestSyncClient<Box<TInputProtocol>, Box<TOutputProtocol>>;
-type BuiltSecondServiceClient = SecondServiceSyncClient<Box<TInputProtocol>, Box<TOutputProtocol>>;
+type BuildThriftTestClient = ThriftTestSyncClient<Box<dyn TInputProtocol>, Box<dyn TOutputProtocol>>;
+type BuiltSecondServiceClient = SecondServiceSyncClient<Box<dyn TInputProtocol>, Box<dyn TOutputProtocol>>;
 
 #[cfg_attr(feature = "cargo-clippy", allow(cyclomatic_complexity))]
 fn make_thrift_calls(

@@ -21,7 +21,7 @@ use std::fmt;
 use std::fmt::{Debug, Formatter};
 use std::sync::{Arc, Mutex};
 
-use protocol::{TInputProtocol, TMessageIdentifier, TOutputProtocol, TStoredInputProtocol};
+use crate::protocol::{TInputProtocol, TMessageIdentifier, TOutputProtocol, TStoredInputProtocol};
 
 use super::{handle_process_result, TProcessor};
 
@@ -76,7 +76,7 @@ impl TMultiplexedProcessor {
         service_name: S,
         processor: Box<dyn TProcessor + Send + Sync>,
         as_default: bool,
-    ) -> ::Result<()> {
+    ) -> crate::Result<()> {
         let mut stored = self.stored.lock().unwrap();
 
         let name = service_name.into();
@@ -105,7 +105,7 @@ impl TMultiplexedProcessor {
         msg_ident: &TMessageIdentifier,
         i_prot: &mut dyn TInputProtocol,
         o_prot: &mut dyn TOutputProtocol,
-    ) -> ::Result<()> {
+    ) -> crate::Result<()> {
         let (svc_name, svc_call) = split_ident_name(&msg_ident.name);
         debug!("routing svc_name {:?} svc_call {}", &svc_name, &svc_call);
 
@@ -134,7 +134,7 @@ impl TMultiplexedProcessor {
 }
 
 impl TProcessor for TMultiplexedProcessor {
-    fn process(&self, i_prot: &mut dyn TInputProtocol, o_prot: &mut dyn TOutputProtocol) -> ::Result<()> {
+    fn process(&self, i_prot: &mut dyn TInputProtocol, o_prot: &mut dyn TOutputProtocol) -> crate::Result<()> {
         let msg_ident = i_prot.read_message_begin()?;
 
         debug!("process incoming msg id:{:?}", &msg_ident);
@@ -181,9 +181,9 @@ mod tests {
     use std::sync::atomic::{AtomicBool, Ordering};
     use std::sync::Arc;
 
-    use protocol::{TBinaryInputProtocol, TBinaryOutputProtocol, TMessageIdentifier, TMessageType};
-    use transport::{ReadHalf, TBufferChannel, TIoChannel, WriteHalf};
-    use {ApplicationError, ApplicationErrorKind};
+    use crate::protocol::{TBinaryInputProtocol, TBinaryOutputProtocol, TMessageIdentifier, TMessageType};
+    use crate::transport::{ReadHalf, TBufferChannel, TIoChannel, WriteHalf};
+    use crate::{ApplicationError, ApplicationErrorKind};
 
     use super::*;
 
@@ -220,7 +220,7 @@ mod tests {
         let rcvd_ident = i.read_message_begin().unwrap();
         let expected_ident = TMessageIdentifier::new("foo", TMessageType::Exception, 10);
         assert_eq!(rcvd_ident, expected_ident);
-        let rcvd_err = ::Error::read_application_error_from_in_protocol(&mut i).unwrap();
+        let rcvd_err = crate::Error::read_application_error_from_in_protocol(&mut i).unwrap();
         let expected_err = ApplicationError::new(
             ApplicationErrorKind::Unknown,
             MISSING_SEPARATOR_AND_NO_DEFAULT,
@@ -245,7 +245,7 @@ mod tests {
         let rcvd_ident = i.read_message_begin().unwrap();
         let expected_ident = TMessageIdentifier::new("missing:call", TMessageType::Exception, 10);
         assert_eq!(rcvd_ident, expected_ident);
-        let rcvd_err = ::Error::read_application_error_from_in_protocol(&mut i).unwrap();
+        let rcvd_err = crate::Error::read_application_error_from_in_protocol(&mut i).unwrap();
         let expected_err = ApplicationError::new(
             ApplicationErrorKind::Unknown,
             missing_processor_message(Some("missing")),
@@ -259,7 +259,7 @@ mod tests {
     }
 
     impl TProcessor for Service {
-        fn process(&self, _: &mut dyn TInputProtocol, _: &mut dyn TOutputProtocol) -> ::Result<()> {
+        fn process(&self, _: &mut dyn TInputProtocol, _: &mut dyn TOutputProtocol) -> crate::Result<()> {
             let res = self
                 .invoked
                 .compare_and_swap(false, true, Ordering::Relaxed);

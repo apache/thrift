@@ -18,9 +18,6 @@
 #[macro_use]
 extern crate clap;
 
-extern crate thrift;
-extern crate thrift_tutorial;
-
 use thrift::protocol::{TCompactInputProtocol, TCompactOutputProtocol};
 use thrift::transport::{
     ReadHalf, TFramedReadTransport, TFramedWriteTransport, TIoChannel, TTcpChannel, WriteHalf,

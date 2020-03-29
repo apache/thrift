@@ -139,7 +139,7 @@ impl TBufferChannel {
 }
 
 impl TIoChannel for TBufferChannel {
-    fn split(self) -> ::Result<(ReadHalf<Self>, WriteHalf<Self>)>
+    fn split(self) -> crate::Result<(ReadHalf<Self>, WriteHalf<Self>)>
     where
         Self: Sized,
     {

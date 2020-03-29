@@ -80,8 +80,8 @@ fn run() -> thrift::Result<()> {
 
     info!("binding to {}", listen_address);
 
-    let (i_transport_factory, o_transport_factory): (Box<TReadTransportFactory>,
-                                                     Box<TWriteTransportFactory>) =
+    let (i_transport_factory, o_transport_factory): (Box<dyn TReadTransportFactory>,
+                                                     Box<dyn TWriteTransportFactory>) =
         match &*transport {
             "buffered" => {
                 (Box::new(TBufferedReadTransportFactory::new()),
@@ -96,8 +96,8 @@ fn run() -> thrift::Result<()> {
             }
         };
 
-    let (i_protocol_factory, o_protocol_factory): (Box<TInputProtocolFactory>,
-                                                   Box<TOutputProtocolFactory>) =
+    let (i_protocol_factory, o_protocol_factory): (Box<dyn TInputProtocolFactory>,
+                                                   Box<dyn TOutputProtocolFactory>) =
         match &*protocol {
             "binary" | "multi" | "multi:binary" => {
                 (Box::new(TBinaryInputProtocolFactory::new()),

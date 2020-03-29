@@ -21,7 +21,7 @@ use super::{
     TFieldIdentifier, TInputProtocol, TListIdentifier, TMapIdentifier, TMessageIdentifier,
     TSetIdentifier, TStructIdentifier,
 };
-use ProtocolErrorKind;
+use crate::ProtocolErrorKind;
 
 /// `TInputProtocol` required to use a `TMultiplexedProcessor`.
 ///
@@ -101,95 +101,95 @@ impl<'a> TStoredInputProtocol<'a> {
 }
 
 impl<'a> TInputProtocol for TStoredInputProtocol<'a> {
-    fn read_message_begin(&mut self) -> ::Result<TMessageIdentifier> {
+    fn read_message_begin(&mut self) -> crate::Result<TMessageIdentifier> {
         self.message_ident.take().ok_or_else(|| {
-            ::errors::new_protocol_error(
+            crate::errors::new_protocol_error(
                 ProtocolErrorKind::Unknown,
                 "message identifier already read",
             )
         })
     }
 
-    fn read_message_end(&mut self) -> ::Result<()> {
+    fn read_message_end(&mut self) -> crate::Result<()> {
         self.inner.read_message_end()
     }
 
-    fn read_struct_begin(&mut self) -> ::Result<Option<TStructIdentifier>> {
+    fn read_struct_begin(&mut self) -> crate::Result<Option<TStructIdentifier>> {
         self.inner.read_struct_begin()
     }
 
-    fn read_struct_end(&mut self) -> ::Result<()> {
+    fn read_struct_end(&mut self) -> crate::Result<()> {
         self.inner.read_struct_end()
     }
 
-    fn read_field_begin(&mut self) -> ::Result<TFieldIdentifier> {
+    fn read_field_begin(&mut self) -> crate::Result<TFieldIdentifier> {
         self.inner.read_field_begin()
     }
 
-    fn read_field_end(&mut self) -> ::Result<()> {
+    fn read_field_end(&mut self) -> crate::Result<()> {
         self.inner.read_field_end()
     }
 
-    fn read_bytes(&mut self) -> ::Result<Vec<u8>> {
+    fn read_bytes(&mut self) -> crate::Result<Vec<u8>> {
         self.inner.read_bytes()
     }
 
-    fn read_bool(&mut self) -> ::Result<bool> {
+    fn read_bool(&mut self) -> crate::Result<bool> {
         self.inner.read_bool()
     }
 
-    fn read_i8(&mut self) -> ::Result<i8> {
+    fn read_i8(&mut self) -> crate::Result<i8> {
         self.inner.read_i8()
     }
 
-    fn read_i16(&mut self) -> ::Result<i16> {
+    fn read_i16(&mut self) -> crate::Result<i16> {
         self.inner.read_i16()
     }
 
-    fn read_i32(&mut self) -> ::Result<i32> {
+    fn read_i32(&mut self) -> crate::Result<i32> {
         self.inner.read_i32()
     }
 
-    fn read_i64(&mut self) -> ::Result<i64> {
+    fn read_i64(&mut self) -> crate::Result<i64> {
         self.inner.read_i64()
     }
 
-    fn read_double(&mut self) -> ::Result<f64> {
+    fn read_double(&mut self) -> crate::Result<f64> {
         self.inner.read_double()
     }
 
-    fn read_string(&mut self) -> ::Result<String> {
+    fn read_string(&mut self) -> crate::Result<String> {
         self.inner.read_string()
     }
 
-    fn read_list_begin(&mut self) -> ::Result<TListIdentifier> {
+    fn read_list_begin(&mut self) -> crate::Result<TListIdentifier> {
         self.inner.read_list_begin()
     }
 
-    fn read_list_end(&mut self) -> ::Result<()> {
+    fn read_list_end(&mut self) -> crate::Result<()> {
         self.inner.read_list_end()
     }
 
-    fn read_set_begin(&mut self) -> ::Result<TSetIdentifier> {
+    fn read_set_begin(&mut self) -> crate::Result<TSetIdentifier> {
         self.inner.read_set_begin()
     }
 
-    fn read_set_end(&mut self) -> ::Result<()> {
+    fn read_set_end(&mut self) -> crate::Result<()> {
         self.inner.read_set_end()
     }
 
-    fn read_map_begin(&mut self) -> ::Result<TMapIdentifier> {
+    fn read_map_begin(&mut self) -> crate::Result<TMapIdentifier> {
         self.inner.read_map_begin()
     }
 
-    fn read_map_end(&mut self) -> ::Result<()> {
+    fn read_map_end(&mut self) -> crate::Result<()> {
         self.inner.read_map_end()
     }
 
     // utility
     //
 
-    fn read_byte(&mut self) -> ::Result<u8> {
+    fn read_byte(&mut self) -> crate::Result<u8> {
         self.inner.read_byte()
     }
 }

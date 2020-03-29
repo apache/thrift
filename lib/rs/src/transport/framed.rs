@@ -239,7 +239,7 @@ impl TWriteTransportFactory for TFramedWriteTransportFactory {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use transport::mem::TBufferChannel;
+    use crate::transport::mem::TBufferChannel;
 
     // FIXME: test a forced reserve
 
