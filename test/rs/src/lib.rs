@@ -20,4 +20,4 @@ extern crate thrift;
 extern crate try_from;
 
 mod thrift_test;
-pub use thrift_test::*;
+pub use crate::thrift_test::*;

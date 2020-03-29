@@ -554,8 +554,6 @@ void t_rs_generator::render_attributes_and_includes() {
   f_gen_ << endl;
 
   // add standard includes
-  f_gen_ << "extern crate thrift;" << endl;
-  f_gen_ << endl;
   f_gen_ << "use thrift::OrderedFloat;" << endl;
   f_gen_ << "use std::cell::RefCell;" << endl;
   f_gen_ << "use std::collections::{BTreeMap, BTreeSet};" << endl;
@@ -600,7 +598,7 @@ void t_rs_generator::render_attributes_and_includes() {
   if (!referenced_modules.empty()) {
     set<string>::iterator module_iter;
     for (module_iter = referenced_modules.begin(); module_iter != referenced_modules.end(); ++module_iter) {
-      f_gen_ << "use " << rust_snake_case(*module_iter) << ";" << endl;
+      f_gen_ << "use crate::" << rust_snake_case(*module_iter) << ";" << endl;
     }
     f_gen_ << endl;
   }

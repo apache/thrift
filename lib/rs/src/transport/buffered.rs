@@ -264,7 +264,7 @@ mod tests {
     use std::io::{Read, Write};
 
     use super::*;
-    use transport::TBufferChannel;
+    use crate::transport::TBufferChannel;
 
     #[test]
     fn must_return_zero_if_read_buffer_is_empty() {

@@ -19,12 +19,12 @@ use std::net::{TcpListener, TcpStream, ToSocketAddrs};
 use std::sync::Arc;
 use threadpool::ThreadPool;
 
-use protocol::{TInputProtocol, TInputProtocolFactory, TOutputProtocol, TOutputProtocolFactory};
-use transport::{TIoChannel, TReadTransportFactory, TTcpChannel, TWriteTransportFactory};
-use {ApplicationError, ApplicationErrorKind};
+use crate::protocol::{TInputProtocol, TInputProtocolFactory, TOutputProtocol, TOutputProtocolFactory};
+use crate::transport::{TIoChannel, TReadTransportFactory, TTcpChannel, TWriteTransportFactory};
+use crate::{ApplicationError, ApplicationErrorKind};
 
 use super::TProcessor;
-use TransportErrorKind;
+use crate::TransportErrorKind;
 
 /// Fixed-size thread-pool blocking Thrift server.
 ///
@@ -169,7 +169,7 @@ where
     ///
     /// Return `Err` when the server cannot bind to `listen_address` or there
     /// is an unrecoverable error.
-    pub fn listen<A: ToSocketAddrs>(&mut self, listen_address: A) -> ::Result<()> {
+    pub fn listen<A: ToSocketAddrs>(&mut self, listen_address: A) -> crate::Result<()> {
         let listener = TcpListener::bind(listen_address)?;
         for stream in listener.incoming() {
             match stream {
@@ -185,7 +185,7 @@ where
             }
         }
 
-        Err(::Error::Application(ApplicationError {
+        Err(crate::Error::Application(ApplicationError {
             kind: ApplicationErrorKind::Unknown,
             message: "aborted listen loop".into(),
         }))
@@ -194,7 +194,7 @@ where
     fn new_protocols_for_connection(
         &mut self,
         stream: TcpStream,
-    ) -> ::Result<(Box<dyn TInputProtocol + Send>, Box<dyn TOutputProtocol + Send>)> {
+    ) -> crate::Result<(Box<dyn TInputProtocol + Send>, Box<dyn TOutputProtocol + Send>)> {
         // create the shared tcp stream
         let channel = TTcpChannel::with_stream(stream);
 
@@ -228,7 +228,7 @@ fn handle_incoming_connection<PRC>(
             Ok(()) => {},
             Err(err) => {
                 match err {
-                    ::Error::Transport(ref transport_err) if transport_err.kind == TransportErrorKind::EndOfFile => {},
+                    crate::Error::Transport(ref transport_err) if transport_err.kind == TransportErrorKind::EndOfFile => {},
                     other => warn!("processor completed with error: {:?}", other),
                 }
                 break;

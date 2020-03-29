@@ -76,8 +76,8 @@ fn run() -> thrift::Result<()> {
     let w_transport_factory = TFramedWriteTransportFactory::new();
 
     let (i_protocol_factory, o_protocol_factory): (
-        Box<TInputProtocolFactory>,
-        Box<TOutputProtocolFactory>,
+        Box<dyn TInputProtocolFactory>,
+        Box<dyn TOutputProtocolFactory>,
     ) = match &*protocol {
         "binary" => (
             Box::new(TBinaryInputProtocolFactory::new()),

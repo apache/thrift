@@ -21,7 +21,7 @@ use std::fmt::{Debug, Display, Formatter};
 use std::{error, fmt, io, string};
 use std::convert::TryFrom;
 
-use protocol::{TFieldIdentifier, TInputProtocol, TOutputProtocol, TStructIdentifier, TType};
+use crate::protocol::{TFieldIdentifier, TInputProtocol, TOutputProtocol, TStructIdentifier, TType};
 
 // FIXME: should all my error structs impl error::Error as well?
 // FIXME: should all fields in TransportError, ProtocolError and ApplicationError be optional?
@@ -197,7 +197,7 @@ impl Error {
     /// Application code **should never** call this method directly.
     pub fn read_application_error_from_in_protocol(
         i: &mut dyn TInputProtocol,
-    ) -> ::Result<ApplicationError> {
+    ) -> crate::Result<ApplicationError> {
         let mut message = "general remote error".to_owned();
         let mut kind = ApplicationErrorKind::Unknown;
 
@@ -248,7 +248,7 @@ impl Error {
     pub fn write_application_error_to_out_protocol(
         e: &ApplicationError,
         o: &mut dyn TOutputProtocol,
-    ) -> ::Result<()> {
+    ) -> crate::Result<()> {
         o.write_struct_begin(&TStructIdentifier {
             name: "TApplicationException".to_owned(),
         })?;

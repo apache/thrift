@@ -18,9 +18,6 @@
 #[macro_use]
 extern crate clap;
 
-extern crate thrift;
-extern crate thrift_tutorial;
-
 use std::collections::HashMap;
 use std::convert::{From, Into};
 use std::default::Default;
