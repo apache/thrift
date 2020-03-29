@@ -131,6 +131,8 @@ main (int argc, char **argv)
                               &argv,
                               &error) == FALSE) {
     fprintf (stderr, "%s\n", error->message);
+    g_clear_error (&error);
+    g_option_context_free (option_context);
     return 255;
   }
   g_option_context_free (option_context);
@@ -282,11 +284,11 @@ main (int argc, char **argv)
   if (!sigint_received) {
     g_message ("thrift_server_serve: %s",
                error != NULL ? error->message : "(null)");
-    g_clear_error (&error);
   }
 
   puts ("done.");
 
+  g_clear_error (&error);
   g_object_unref (server);
   g_object_unref (protocol_factory);
   g_object_unref (transport_factory);
