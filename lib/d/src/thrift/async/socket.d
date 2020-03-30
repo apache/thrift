@@ -37,12 +37,9 @@ version (Windows) {
   import core.sys.posix.sys.socket : connect;
 } else static assert(0, "Don't know connect on this platform.");
 
-version (Windows) {
-  import core.sys.windows.winsock2 : WSAECONNRESET;
-  enum ECONNRESET = WSAECONNRESET;
-} else version (Posix) {
-  import core.stdc.errno : ECONNRESET;
-} else static assert(0, "Don't know ECONNRESET on this platform.");
+version (Win32) {
+  import core.stdc.config : __c_long;
+}
 
 /**
  * Non-blocking socket implementation of the TTransport interface.
@@ -154,7 +151,11 @@ class TAsyncSocket : TSocketBase, TAsyncTransport {
           return;
         }
 
-        int errorCode = void;
+        version (Win32) {
+          __c_long errorCode = void;
+        } else {
+          int errorCode = void;
+        }
         socket_.getOption(SocketOptionLevel.SOCKET, cast(SocketOption)SO_ERROR,
           errorCode);
 
