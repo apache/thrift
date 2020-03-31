@@ -64,7 +64,7 @@ include(CheckCXXSourceCompiles)
 check_cxx_source_compiles(
   "
   #include <string.h>
-  int main(){char b;char *a = strerror_r(0, &b, 0); return(0);}
+  int main(){char b;char *a = strerror_r(0, &b, 0); static_cast<void>(a); return(0);}
   "
   STRERROR_R_CHAR_P)
 
