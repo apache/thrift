@@ -229,10 +229,19 @@ BOOST_AUTO_TEST_CASE(test_json_proto_6) {
   "304},\"6\":{\"dbl\":1e-305},\"7\":{\"dbl\":0},\"8\":{\"dbl\":-0}}"
   );
 
-  const std::string result(apache::thrift::ThriftJSONString(dub));
+  std::shared_ptr<TMemoryBuffer> buffer(new TMemoryBuffer());
+  std::shared_ptr<TJSONProtocol> proto(new TJSONProtocol(buffer)); 
+  dub.write(proto.get());
+  Doubles dub_1;
+  dub_1.read(proto.get());
 
+  const std::string result(apache::thrift::ThriftJSONString(dub));
+  const std::string result_1(apache::thrift::ThriftJSONString(dub_1));
+  
   BOOST_CHECK_MESSAGE(!expected_result.compare(result),
     "Expected:\n" << expected_result << "\nGotten:\n" << result);
+  BOOST_CHECK_MESSAGE(!expected_result.compare(result_1),
+    "Expected:\n" << expected_result << "\nGotten:\n" << result_1);
 }
 
 BOOST_AUTO_TEST_CASE(test_json_proto_7) {
