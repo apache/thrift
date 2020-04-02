@@ -85,10 +85,10 @@ public:
     assert(mutexImpl);
 
     std::unique_lock<std::timed_mutex> lock(*mutexImpl, std::adopt_lock);
-    bool timedout = (conditionVariable_.wait_for(lock, timeout)
-                     == std::cv_status::timeout);
+    notified_ = false;
+    bool finished = conditionVariable_.wait_for(lock, timeout, [this]{ return notified_; });
     lock.release();
-    return (timedout ? THRIFT_ETIMEDOUT : 0);
+    return (finished ? 0: THRIFT_ETIMEDOUT);
   }
 
   /**
@@ -101,10 +101,10 @@ public:
     assert(mutexImpl);
 
     std::unique_lock<std::timed_mutex> lock(*mutexImpl, std::adopt_lock);
-    bool timedout = (conditionVariable_.wait_until(lock, abstime)
-                     == std::cv_status::timeout);
+    notified_ = false;
+    bool finished = conditionVariable_.wait_until(lock, abstime, [this]{ return notified_; });
     lock.release();
-    return (timedout ? THRIFT_ETIMEDOUT : 0);
+    return (finished ? 0 : THRIFT_ETIMEDOUT);
   }
 
   /**
@@ -117,14 +117,35 @@ public:
     assert(mutexImpl);
 
     std::unique_lock<std::timed_mutex> lock(*mutexImpl, std::adopt_lock);
-    conditionVariable_.wait(lock);
+    notified_ = false;
+    conditionVariable_.wait(lock, [this]{ return notified_; });
     lock.release();
     return 0;
   }
 
-  void notify() { conditionVariable_.notify_one(); }
+  void notify() {
+    { // scope to release the lock before notify_one()
+      assert(mutex_);
+      auto* mutexImpl = static_cast<std::timed_mutex*>(mutex_->getUnderlyingImpl());
+      assert(mutexImpl);
 
-  void notifyAll() { conditionVariable_.notify_all(); }
+      std::unique_lock<std::timed_mutex> lock(*mutexImpl, std::adopt_lock);
+      notified_ = true;
+    }
+    conditionVariable_.notify_one();
+  }
+
+  void notifyAll() {
+    { // scope to release the lock before notify_all()
+      assert(mutex_);
+      auto* mutexImpl = static_cast<std::timed_mutex*>(mutex_->getUnderlyingImpl());
+      assert(mutexImpl);
+
+      std::unique_lock<std::timed_mutex> lock(*mutexImpl, std::adopt_lock);
+      notified_ = true;
+    }
+    conditionVariable_.notify_all();
+  }
 
 private:
   void init(Mutex* mutex) { mutex_ = mutex; }
@@ -132,6 +153,7 @@ private:
   const std::unique_ptr<Mutex> ownedMutex_;
   std::condition_variable_any conditionVariable_;
   Mutex* mutex_;
+  bool notified_ = false;
 };
 
 Monitor::Monitor() : impl_(new Monitor::Impl()) {
