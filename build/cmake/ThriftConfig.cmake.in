@@ -29,13 +29,18 @@ set(THRIFT_COMPILER "${THRIFT_BIN_DIR}/thrift@CMAKE_EXECUTABLE_SUFFIX@")
 if (NOT TARGET thrift::thrift)
     include("${THRIFT_CMAKE_DIR}/thriftTargets.cmake")
 endif()
-
 set(THRIFT_LIBRARIES thrift::thrift)
+
+if(@ZLIB_FOUND@ AND @WITH_ZLIB@)
+    if (NOT TARGET thriftz::thriftz)
+        include("${THRIFT_CMAKE_DIR}/thriftzTargets.cmake")
+    endif()
+    set(THRIFT_LIBRARIES thriftz::thriftz)
+endif()
 
 if ("${THRIFT_LIBRARIES}" STREQUAL "")
     message(FATAL_ERROR "thrift libraries were not found")
 endif()
-
 if (NOT Thrift_FIND_QUIETLY)
     message(STATUS "Found thrift: ${PACKAGE_PREFIX_DIR}")
 endif()
