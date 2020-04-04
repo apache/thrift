@@ -185,3 +185,7 @@ class THttpClient(TTransportBase):
         self.code = self.__http_response.status
         self.message = self.__http_response.reason
         self.headers = self.__http_response.msg
+
+        # Saves the cookie sent by the server response
+        if 'Set-Cookie' in self.headers:
+            self.__http.putheader('Cookie', self.headers['Set-Cookie'])
