@@ -95,6 +95,10 @@ else
 crossfeature:
 endif
 
+if WITH_C_GLIB
+DISTCHECK_CONFIGURE_FLAGS = --enable-introspection
+endif
+
 cross-%: precross crossfeature
 	$(CROSS_PY) test/test.py --retry-count 5 --skip-known-failures --server $(CROSS_LANGS_COMMA_SEPARATED) --client $(CROSS_LANGS_COMMA_SEPARATED) --regex "$*"
 

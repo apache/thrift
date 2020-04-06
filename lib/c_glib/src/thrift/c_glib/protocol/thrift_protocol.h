@@ -30,7 +30,7 @@ G_BEGIN_DECLS
  *  \brief Abstract class for Thrift protocol implementations.
  */
 
-/**
+/*
  * Enumerated definition of the types that the Thrift protocol supports.
  * Take special note of the T_END type which is used specifically to mark
  * the end of a sequence of fields.
@@ -56,7 +56,7 @@ typedef enum {
   T_UTF16  = 17
 } ThriftType;
 
-/**
+/*
  * Enumerated definition of the message types that the Thrift protocol
  * supports.
  */

@@ -105,14 +105,56 @@ include_processor_HEADERS = src/thrift/c_glib/processor/thrift_processor.h \
                             src/thrift/c_glib/processor/thrift_dispatch_processor.h \
                             src/thrift/c_glib/processor/thrift_multiplexed_processor.h
 
+if HAVE_INTROSPECTION
+-include $(INTROSPECTION_MAKEFILE)
+INTROSPECTION_GIRS = Thrift-$(PACKAGE_VERSION).gir
+INTROSPECTION_SCANNER_ARGS = --add-include-path=$(srcdir) --warn-all
+INTROSPECTION_COMPILER_ARGS = --includedir=$(srcdir)
+
+Thrift-$(PACKAGE_VERSION).gir: libthrift_c_glib.la
+Thrift_0_14_0_gir_INCLUDES = GObject-2.0
+Thrift_0_14_0_gir_CFLAGS = $(libthrift_c_glib_la_CFLAGS) $(AM_CPPFLAGS)
+Thrift_0_14_0_gir_LIBS = libthrift_c_glib.la
+Thrift_0_14_0_gir_FILES = $(libthrift_c_glib_la_SOURCES) \
+                      $(include_thrift_HEADERS) \
+                      $(include_protocol_HEADERS) \
+                      $(include_transport_HEADERS) \
+                      $(include_server_HEADERS) \
+                      $(include_processor_HEADERS)
+
+girdir = $(datadir)/gir-1.0
+gir_DATA = $(INTROSPECTION_GIRS)
+
+typelibdir = $(libdir)/girepository-1.0
+typelib_DATA = $(INTROSPECTION_GIRS:.gir=.typelib)
+
+if ENABLE_VAPIGEN
+-include $(VAPIGEN_MAKEFILE)
+
+thrift-$(PACKAGE_VERSION).deps:
+thrift-$(PACKAGE_VERSION).vapi: Thrift-$(PACKAGE_VERSION).gir thrift-$(PACKAGE_VERSION).deps
+
+VAPIGEN_VAPIS = thrift-$(PACKAGE_VERSION).vapi
+
+thrift_0_14_0_vapi_FILES = Thrift-$(PACKAGE_VERSION).gir
+thrift_0_14_0_vapi_METADATADIRS = $(srcdir)/metadata
+vapidir = $(datadir)/vala/vapi
+vapi_DATA = $(VAPIGEN_VAPIS) $(VAPIGEN_VAPIS:.vapi=.deps)
+endif
+endif
 
 EXTRA_DIST = \
              CMakeLists.txt \
              coding_standards.md \
              README.md \
              test/glib.suppress \
-             thrift_c_glib.pc.in
+             thrift_c_glib.pc.in \
+             Thrift-$(PACKAGE_VERSION).metadata \
+             thrift-$(PACKAGE_VERSION).deps
 
 CLEANFILES = \
              *.gcno \
-             *.gcda
+             *.gcda \
+             $(gir_DATA) \
+             $(typelib_DATA) \
+             $(vapi_DATA)

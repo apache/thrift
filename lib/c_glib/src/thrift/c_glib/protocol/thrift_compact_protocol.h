@@ -65,7 +65,7 @@ struct _ThriftCompactProtocol
 
   /* private */
 
-  /**
+  /*
    * (Writing) If we encounter a boolean field begin, save the TField here
    * so it can have the value incorporated.
    */
@@ -73,14 +73,14 @@ struct _ThriftCompactProtocol
   ThriftType _bool_field_type;
   gint16 _bool_field_id;
 
-  /**
+  /*
    * (Reading) If we read a field header, and it's a boolean field, save
    * the boolean value here so that read_bool can use it.
    */
   gboolean _has_bool_value;
   gboolean _bool_value;
 
-  /**
+  /*
    * Used to keep track of the last field for the current and previous structs,
    * so we can do the delta stuff.
    */

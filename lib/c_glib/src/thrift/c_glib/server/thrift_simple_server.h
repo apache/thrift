@@ -40,7 +40,7 @@ G_BEGIN_DECLS
 
 typedef struct _ThriftSimpleServer ThriftSimpleServer;
 
-/**
+/*
  * Thrift Simple Server instance.
  */
 struct _ThriftSimpleServer
@@ -53,7 +53,7 @@ struct _ThriftSimpleServer
 
 typedef struct _ThriftSimpleServerClass ThriftSimpleServerClass;
 
-/**
+/*
  * Thrift Simple Server class.
  */
 struct _ThriftSimpleServerClass

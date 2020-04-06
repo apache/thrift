@@ -19,7 +19,7 @@
 
 #include <thrift/c_glib/thrift.h>
 
-/**
+/*
  * GHashTable callback to add keys to a GList.
  */
 void

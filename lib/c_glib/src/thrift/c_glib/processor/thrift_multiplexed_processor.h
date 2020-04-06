@@ -71,7 +71,7 @@ gboolean thrift_multiplexed_processor_process (ThriftMultiplexedProcessor *proce
 
 /* Public API */
 
-/**
+/*
  * @brief Registers a processor in the multiplexed processor under its name. It
  * will take a reference to the processor so refcount will be incremented.
  * It will also be decremented on object destruction.

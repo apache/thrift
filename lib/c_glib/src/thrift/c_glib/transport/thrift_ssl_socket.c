@@ -66,7 +66,7 @@ static gboolean thrift_ssl_socket_openssl_initialized=FALSE;
 static MUTEX_TYPE *thrift_ssl_socket_global_mutex_buf=NULL;
 
 
-/**
+/*
  * OpenSSL uniq id function.
  *
  * @return    thread id
@@ -84,7 +84,6 @@ static void thrift_ssl_socket_static_locking_callback(int mode, int n, const cha
 {
   THRIFT_UNUSED_VAR (unk);
   THRIFT_UNUSED_VAR (id);
-
   if (mode & CRYPTO_LOCK)
     MUTEX_LOCK(thrift_ssl_socket_global_mutex_buf[n]);
   else
@@ -145,7 +144,7 @@ G_DEFINE_TYPE(ThriftSSLSocket, thrift_ssl_socket, THRIFT_TYPE_SOCKET)
 
 
 
-/**
+/*
  * When there's a thread context attached, we pass the SSL socket context so it
  * can check if the error is outside SSL, on I/O for example
  * @param socket
@@ -196,7 +195,7 @@ void thrift_ssl_socket_get_ssl_error(ThriftSSLSocket *socket, const guchar *erro
   }
 }
 
-/**
+/*
  * For global SSL errors
  * @param error_msg
  * @param thrift_error_no

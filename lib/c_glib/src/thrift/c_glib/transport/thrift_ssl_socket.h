@@ -95,7 +95,7 @@ struct _ThriftSSLSocketClass
   gpointer padding[12];
 };
 
-enum _ThriftSSLSocketProtocol {
+typedef enum {
   SSLTLS  = 0,  /* Supports SSLv2 and SSLv3 handshake but only negotiates at TLSv1_0 or later. */
 /*SSLv2   = 1,   HORRIBLY INSECURE! */
   SSLv3   = 2,  /* Supports SSLv3 only - also horribly insecure! */
@@ -103,8 +103,7 @@ enum _ThriftSSLSocketProtocol {
   TLSv1_1 = 4,  /* Supports TLSv1_1 or later. */
   TLSv1_2 = 5,  /* Supports TLSv1_2 or later. */
   LATEST  = TLSv1_2
-};
-typedef enum _ThriftSSLSocketProtocol ThriftSSLSocketProtocol;
+} ThriftSSLSocketProtocol;
 
 
 /* Internal functions */
@@ -117,7 +116,7 @@ GType thrift_ssl_socket_get_type (void);
 
 /* Public API */
 
-/**
+/*
  * @brief Set a pinning manager instead of the default one.
  *
  * The pinning manager will be used during the SSL handshake to check certificate
@@ -130,7 +129,7 @@ GType thrift_ssl_socket_get_type (void);
 void thrift_ssl_socket_set_manager(ThriftSSLSocket *ssl_socket, AUTHORIZATION_MANAGER_CALLBACK callback);
 
 /* This is the SSL API */
-/**
+/*
  * Convenience function to create a new SSL context with the protocol specified
  * and assign this new context to the created ThriftSSLSocket with specified host:port.
  * @param ssl_protocol
@@ -142,7 +141,7 @@ void thrift_ssl_socket_set_manager(ThriftSSLSocket *ssl_socket, AUTHORIZATION_MA
 ThriftSSLSocket*
 thrift_ssl_socket_new_with_host(ThriftSSLSocketProtocol ssl_protocol, gchar *hostname, guint port, GError **error);
 
-/**
+/*
  * Convenience function to create a new SSL context with the protocol specified
  * and assign this new context to the created ThriftSSLSocket.
  * @param ssl_protocol
@@ -152,7 +151,7 @@ thrift_ssl_socket_new_with_host(ThriftSSLSocketProtocol ssl_protocol, gchar *hos
 ThriftSSLSocket*
 thrift_ssl_socket_new(ThriftSSLSocketProtocol ssl_protocol, GError **error);
 
-/**
+/*
  * Load a certificate chain from a PEM file.
  * @param ssl_socket The ssl socket
  * @param file_name The file name of the PEM certificate chain
@@ -161,7 +160,7 @@ thrift_ssl_socket_new(ThriftSSLSocketProtocol ssl_protocol, GError **error);
 gboolean
 thrift_ssl_load_cert_from_file(ThriftSSLSocket *ssl_socket, const char *file_name);
 
-/**
+/*
  * Load a certificate chain from memory
  * @param ssl_socket the ssl socket
  * @param chain_certs the buffer to load PEM from
@@ -170,7 +169,7 @@ thrift_ssl_load_cert_from_file(ThriftSSLSocket *ssl_socket, const char *file_nam
 gboolean
 thrift_ssl_load_cert_from_buffer(ThriftSSLSocket *ssl_socket, const char chain_certs[]);
 
-/**
+/*
  * Check if the ssl socket is open and ready to send and receive
  * @param transport
  * @return true if open
@@ -179,7 +178,7 @@ gboolean
 thrift_ssl_socket_is_open (ThriftTransport *transport);
 
 
-/**
+/*
  * Open connection if required and set the socket to be ready to send and receive
  * @param transport
  * @param error
@@ -189,7 +188,7 @@ gboolean
 thrift_ssl_socket_open (ThriftTransport *transport, GError **error);
 
 
-/**
+/*
  * @brief Initialization function
  *
  * It will initialize OpenSSL function. This initialization will be done app
@@ -202,7 +201,7 @@ thrift_ssl_socket_open (ThriftTransport *transport, GError **error);
  */
 void
 thrift_ssl_socket_initialize_openssl(void);
-/**
+/*
  * @brief Finalization function
  *
  * It clears all resources initialized in initialize function.

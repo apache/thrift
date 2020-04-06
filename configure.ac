@@ -202,6 +202,8 @@ if test "$with_c_glib" = "yes"; then
     AC_PATH_PROG([GSETTINGS], [gsettings])
     have_c_glib="yes"
   fi
+  GOBJECT_INTROSPECTION_CHECK([1.40.0])
+  VAPIGEN_CHECK()
 fi
 AM_CONDITIONAL(WITH_C_GLIB, [test "$have_glib2" = "yes" -a "$have_gobject2" = "yes"])
 

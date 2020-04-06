@@ -113,7 +113,7 @@ thrift_bitwise_cast_gdouble (const guint64 v)
   return u.to;
 }
 
-/**
+/*
  * Convert l into a zigzag long. This allows negative numbers to be
  * represented compactly as a varint.
  */
@@ -123,7 +123,7 @@ i64_to_zigzag (const gint64 l)
   return (((guint64)l) << 1) ^ (l >> 63);
 }
 
-/**
+/*
  * Convert n into a zigzag int. This allows negative numbers to be
  * represented compactly as a varint.
  */
@@ -133,7 +133,7 @@ i32_to_zigzag (const gint32 n)
   return (((guint32)n) << 1) ^ (n >> 31);
 }
 
-/**
+/*
  * Convert from zigzag int to int.
  */
 static gint32
@@ -142,7 +142,7 @@ zigzag_to_i32 (guint32 n)
   return (n >> 1) ^ (guint32) (-(gint32) (n & 1));
 }
 
-/**
+/*
  * Convert from zigzag long to long.
  */
 static gint64
@@ -190,7 +190,7 @@ ThriftType thrift_compact_protocol_get_ttype (ThriftCompactProtocol *protocol,
   }
 }
 
-/**
+/*
  * Write an i32 as a varint. Results in 1-5 bytes on the wire.
  */
 gint32
@@ -225,7 +225,7 @@ thrift_compact_protocol_write_varint32 (ThriftCompactProtocol *protocol,
   }
 }
 
-/**
+/*
  * Write an i64 as a varint. Results in 1-10 bytes on the wire.
  */
 gint32
@@ -260,7 +260,7 @@ thrift_compact_protocol_write_varint64 (ThriftCompactProtocol *protocol,
   }
 }
 
-/**
+/*
  * Read an i64 from the wire as a proper varint. The MSB of each byte is set
  * if there is another byte to follow. This can read up to 10 bytes.
  */
@@ -303,7 +303,7 @@ thrift_compact_protocol_read_varint64 (ThriftCompactProtocol *protocol,
   }
 }
 
-/**
+/*
  * Read an i32 from the wire as a varint. The MSB of each byte is set
  * if there is another byte to follow. This can read up to 5 bytes.
  */
@@ -381,7 +381,7 @@ thrift_compact_protocol_write_field_begin_internal (ThriftCompactProtocol
   return xfer;
 }
 
-/**
+/*
  * Method for writing the start of lists and sets. List and sets on
  * the wire differ only by the type indicator.
  */
