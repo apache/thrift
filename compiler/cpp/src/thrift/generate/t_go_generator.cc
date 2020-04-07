@@ -1441,7 +1441,7 @@ void t_go_generator::generate_go_struct_definition(ostream& out,
     string def_var_name = tstruct_name + "_" + publicized_name + "_DEFAULT";
     if ((*m_iter)->get_req() == t_field::T_OPTIONAL || is_pointer_field(*m_iter)) {
       if (is_pointer_field(*m_iter)){
-        out << indent() << "var " << def_var_name << " = new(" << goType << ")";
+        out << indent() << "var " << def_var_name << " = new(" << m_iter << ")";
       } else {
         out << indent() << "var " << def_var_name << " " << goType;
       }
