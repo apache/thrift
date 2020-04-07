@@ -58,8 +58,7 @@ namespace Thrift.Transport.Client
                 if (entry.AddressList.Length == 0)
                     throw new TTransportException(TTransportException.ExceptionType.Unknown, "unable to resolve host name");
 
-                var addr = entry.AddressList[0];
-                Host = new IPAddress(addr.GetAddressBytes(), addr.ScopeId);
+                Host = entry.AddressList[0];
                 Port = port;
 
                 TcpClient = new TcpClient(host, port);
