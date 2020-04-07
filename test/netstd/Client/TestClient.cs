@@ -51,7 +51,6 @@ namespace ThriftTest
         Framed
     }
 
-
     internal enum TransportChoice
     {
         Socket,
@@ -340,7 +339,7 @@ namespace ThriftTest
                         Console.WriteLine("*** FAILED ***");
                         Console.WriteLine("Connect failed: " + ex.Message);
                         ReturnCode |= ErrorUnknown;
-                        Console.WriteLine(ex.Message + " ST: " + ex.StackTrace);
+                        Console.WriteLine(ex.Message + "\n" + ex.StackTrace);
                         continue;
                     }
                     catch (Exception ex)
@@ -348,7 +347,7 @@ namespace ThriftTest
                         Console.WriteLine("*** FAILED ***");
                         Console.WriteLine("Connect failed: " + ex.Message);
                         ReturnCode |= ErrorUnknown;
-                        Console.WriteLine(ex.Message + " ST: " + ex.StackTrace);
+                        Console.WriteLine(ex.Message + "\n" + ex.StackTrace);
                         continue;
                     }
 
@@ -359,7 +358,7 @@ namespace ThriftTest
                     catch (Exception ex)
                     {
                         Console.WriteLine("*** FAILED ***");
-                        Console.WriteLine(ex.Message + " ST: " + ex.StackTrace);
+                        Console.WriteLine(ex.Message + "\n" + ex.StackTrace);
                         ReturnCode |= ErrorUnknown;
                     }
                 }
@@ -370,7 +369,7 @@ namespace ThriftTest
                 catch (Exception ex)
                 {
                     Console.WriteLine("Error while closing transport");
-                    Console.WriteLine(ex.Message + " ST: " + ex.StackTrace);
+                    Console.WriteLine(ex.Message + "\n" + ex.StackTrace);
                 }
                 done = true;
             }
@@ -404,8 +403,8 @@ namespace ThriftTest
                 catch (Exception ex)
                 {
                     Console.WriteLine("*** FAILED ***");
-                    Console.WriteLine("Error while  parsing arguments");
-                    Console.WriteLine(ex.Message + " ST: " + ex.StackTrace);
+                    Console.WriteLine("Error while parsing arguments");
+                    Console.WriteLine(ex.Message + "\n" + ex.StackTrace);
                     return ErrorUnknown;
                 }
 
@@ -429,7 +428,7 @@ namespace ThriftTest
             {
                 Console.WriteLine("*** FAILED ***");
                 Console.WriteLine("Unexpected error");
-                Console.WriteLine(outerEx.Message + " ST: " + outerEx.StackTrace);
+                Console.WriteLine(outerEx.Message + "\n" + outerEx.StackTrace);
                 return ErrorUnknown;
             }
         }
@@ -607,11 +606,11 @@ namespace ThriftTest
                 {
                     Console.WriteLine("*** FAILED ***");
                     returnCode |= ErrorBaseTypes;
-                    Console.WriteLine(ex.Message + " ST: " + ex.StackTrace);
+                    Console.WriteLine(ex.Message + "\n" + ex.StackTrace);
                 }
             }
 
-            // CrazyNesting 
+            // CrazyNesting
             Console.WriteLine("Test CrazyNesting");
             var one = new CrazyNesting();
             var two = new CrazyNesting();
@@ -951,7 +950,7 @@ namespace ThriftTest
             {
                 Console.WriteLine("*** FAILED ***");
                 returnCode |= ErrorExceptions;
-                Console.WriteLine(ex.Message + " ST: " + ex.StackTrace);
+                Console.WriteLine(ex.Message + "\n" + ex.StackTrace);
             }
             try
             {
@@ -968,7 +967,7 @@ namespace ThriftTest
             {
                 Console.WriteLine("*** FAILED ***");
                 returnCode |= ErrorExceptions;
-                Console.WriteLine(ex.Message + " ST: " + ex.StackTrace);
+                Console.WriteLine(ex.Message + "\n" + ex.StackTrace);
             }
             try
             {
@@ -980,7 +979,7 @@ namespace ThriftTest
             {
                 Console.WriteLine("*** FAILED ***");
                 returnCode |= ErrorExceptions;
-                Console.WriteLine(ex.Message + " ST: " + ex.StackTrace);
+                Console.WriteLine(ex.Message + "\n" + ex.StackTrace);
             }
 
             try
@@ -1002,7 +1001,7 @@ namespace ThriftTest
             {
                 Console.WriteLine("*** FAILED ***");
                 returnCode |= ErrorExceptions;
-                Console.WriteLine(ex.Message + " ST: " + ex.StackTrace);
+                Console.WriteLine(ex.Message + "\n" + ex.StackTrace);
             }
             try
             {
@@ -1023,7 +1022,7 @@ namespace ThriftTest
             {
                 Console.WriteLine("*** FAILED ***");
                 returnCode |= ErrorExceptions;
-                Console.WriteLine(ex.Message + " ST: " + ex.StackTrace);
+                Console.WriteLine(ex.Message + "\n" + ex.StackTrace);
             }
             try
             {
@@ -1038,7 +1037,7 @@ namespace ThriftTest
             {
                 Console.WriteLine("*** FAILED ***");
                 returnCode |= ErrorExceptions;
-                Console.WriteLine(ex.Message + " ST: " + ex.StackTrace);
+                Console.WriteLine(ex.Message + "\n" + ex.StackTrace);
             }
 
             Console.WriteLine("Test Oneway(1)");
