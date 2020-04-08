@@ -79,7 +79,7 @@ public:
 
   TException(const std::string& message) : message_(message) {}
 
-  ~TException() noexcept override = default;
+  virtual ~TException() noexcept override = default;
 
   const char* what() const noexcept override {
     if (message_.empty()) {
