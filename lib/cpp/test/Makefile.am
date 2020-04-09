@@ -30,7 +30,6 @@ BUILT_SOURCES = gen-cpp/AnnotationTest_types.h \
                 gen-cpp/ParentService.h \
 		gen-cpp/OneWayTest_types.h \
 		gen-cpp/OneWayService.h \
-		gen-cpp/OneWayTest_constants.h \
                 gen-cpp/proc_types.h
 
 noinst_LTLIBRARIES = libtestgencpp.la libprocessortest.la
@@ -54,11 +53,8 @@ nodist_libtestgencpp_la_SOURCES = \
 	gen-cpp/TypedefTest_types.cpp \
 	gen-cpp/TypedefTest_types.h \
 	gen-cpp/OneWayService.cpp \
-	gen-cpp/OneWayTest_constants.cpp \
 	gen-cpp/OneWayTest_types.h \
 	gen-cpp/OneWayService.h \
-	gen-cpp/OneWayTest_constants.h \
-	gen-cpp/OneWayTest_types.cpp \
 	ThriftTest_extras.cpp \
 	DebugProtoTest_extras.cpp
 
@@ -414,7 +410,7 @@ gen-cpp/Service.cpp gen-cpp/StressTest_types.cpp: $(top_srcdir)/test/StressTest.
 gen-cpp/SecondService.cpp gen-cpp/ThriftTest_constants.cpp gen-cpp/ThriftTest.cpp gen-cpp/ThriftTest_types.cpp gen-cpp/ThriftTest_types.h: $(top_srcdir)/test/ThriftTest.thrift
 	$(THRIFT) --gen cpp $<
 
-gen-cpp/OneWayService.cpp gen-cpp/OneWayTest_constants.cpp gen-cpp/OneWayTest_types.h gen-cpp/OneWayService.h gen-cpp/OneWayTest_constants.h gen-cpp/OneWayTest_types.cpp: OneWayTest.thrift
+gen-cpp/OneWayService.cpp gen-cpp/OneWayTest_types.h gen-cpp/OneWayService.h: OneWayTest.thrift
 	$(THRIFT) --gen cpp $<
 
 gen-cpp/ChildService.cpp gen-cpp/ChildService.h gen-cpp/ParentService.cpp gen-cpp/ParentService.h gen-cpp/proc_types.cpp gen-cpp/proc_types.h: processor/proc.thrift

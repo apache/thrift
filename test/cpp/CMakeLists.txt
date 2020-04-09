@@ -52,8 +52,6 @@ LINK_AGAINST_THRIFT_LIBRARY(crosstestgencpp thrift)
 
 set(crossstressgencpp_SOURCES
     gen-cpp/Service.cpp
-    gen-cpp/StressTest_types.cpp
-    gen-cpp/StressTest_constants.cpp
 )
 add_library(crossstressgencpp STATIC ${crossstressgencpp_SOURCES})
 LINK_AGAINST_THRIFT_LIBRARY(crossstressgencpp thrift)
@@ -92,6 +90,6 @@ add_custom_command(OUTPUT gen-cpp/SecondService.cpp gen-cpp/SecondService.h gen-
     COMMAND ${THRIFT_COMPILER} --gen cpp:templates,cob_style -r ${PROJECT_SOURCE_DIR}/test/ThriftTest.thrift
 )
 
-add_custom_command(OUTPUT gen-cpp/StressTest_types.cpp gen-cpp/StressTest_constants.cpp gen-cpp/Service.cpp
+add_custom_command(OUTPUT gen-cpp/Service.cpp
     COMMAND ${THRIFT_COMPILER} --gen cpp ${PROJECT_SOURCE_DIR}/test/StressTest.thrift
 )
