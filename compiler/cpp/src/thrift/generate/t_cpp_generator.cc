@@ -89,6 +89,8 @@ public:
         gen_no_ostream_operators_ = true;
       } else if ( iter->first.compare("no_skeleton") == 0) {
         gen_no_skeleton_ = true;
+      } else if ( iter->first.compare("include_guard_prefix") == 0 ) {
+        include_guard_prefix_ = iter->second;
       } else {
         throw "unknown option cpp:" + iter->first;
       }
@@ -365,6 +367,11 @@ private:
   std::string ns_close_;
 
   /**
+   * Will be used to #ifndef and #define include guards.
+   */
+  std::string include_guard_prefix_;
+
+  /**
    * File streams, stored here to avoid passing them as parameters to every
    * function.
    */
@@ -415,10 +422,10 @@ void t_cpp_generator::init_generator() {
   f_types_tcc_ << autogen_comment();
 
   // Start ifndef
-  f_types_ << "#ifndef " << program_name_ << "_TYPES_H" << endl << "#define " << program_name_
-           << "_TYPES_H" << endl << endl;
-  f_types_tcc_ << "#ifndef " << program_name_ << "_TYPES_TCC" << endl << "#define " << program_name_
-               << "_TYPES_TCC" << endl << endl;
+  f_types_ << "#ifndef " << include_guard_prefix_ << program_name_ << "_TYPES_H" << endl
+           << "#define " << include_guard_prefix_ << program_name_ << "_TYPES_H" << endl << endl;
+  f_types_tcc_ << "#ifndef " << include_guard_prefix_ << program_name_ << "_TYPES_TCC" << endl 
+               << "#define " << include_guard_prefix_ << program_name_ << "_TYPES_TCC" << endl << endl;
 
   // Include base types
   f_types_ << "#include <iosfwd>" << endl
@@ -704,8 +711,9 @@ void t_cpp_generator::generate_consts(std::vector<t_const*> consts) {
   f_consts_impl << autogen_comment();
 
   // Start ifndef
-  f_consts << "#ifndef " << program_name_ << "_CONSTANTS_H" << endl << "#define " << program_name_
-           << "_CONSTANTS_H" << endl << endl << "#include \"" << get_include_prefix(*get_program())
+  f_consts << "#ifndef " << include_guard_prefix_ << program_name_ << "_CONSTANTS_H" << endl 
+           << "#define " << include_guard_prefix_ << program_name_ << "_CONSTANTS_H" << endl << endl 
+           << "#include \"" << get_include_prefix(*get_program())
            << program_name_ << "_types.h\"" << endl << endl << ns_open_ << endl << endl;
 
   f_consts_impl << "#include \"" << get_include_prefix(*get_program()) << program_name_
@@ -1771,7 +1779,8 @@ void t_cpp_generator::generate_service(t_service* tservice) {
 
   // Print header file includes
   f_header_ << autogen_comment();
-  f_header_ << "#ifndef " << svcname << "_H" << endl << "#define " << svcname << "_H" << endl
+  f_header_ << "#ifndef " << include_guard_prefix_ << svcname << "_H" << endl 
+            << "#define " << include_guard_prefix_ << svcname << "_H" << endl
             << endl;
   if (gen_cob_style_) {
     f_header_ << "#include <thrift/transport/TBufferTransports.h>" << endl // TMemoryBuffer
@@ -1819,8 +1828,9 @@ void t_cpp_generator::generate_service(t_service* tservice) {
     f_service_tcc_ << "#include \"" << get_include_prefix(*get_program()) << svcname << ".h\""
                    << endl;
 
-    f_service_tcc_ << "#ifndef " << svcname << "_TCC" << endl << "#define " << svcname << "_TCC"
-                   << endl << endl;
+    f_service_tcc_ << "#ifndef " << include_guard_prefix_ << svcname << "_TCC" << endl
+                   << "#define " << include_guard_prefix_ << svcname << "_TCC" << endl
+                   << endl;
 
     if (gen_cob_style_) {
       f_service_tcc_ << "#include \"thrift/async/TAsyncChannel.h\"" << endl;
@@ -4587,6 +4597,8 @@ THRIFT_REGISTER_GENERATOR(
     "    templates:       Generate templatized reader/writer methods.\n"
     "    pure_enums:      Generate pure enums instead of wrapper classes.\n"
     "    include_prefix:  Use full include paths in generated files.\n"
+    "    include_guard_prefix:\n"
+    "                     Prefix include guards #ifdef with given string.\n"
     "    moveable_types:  Generate move constructors and assignment operators.\n"
     "    no_ostream_operators:\n"
     "                     Omit generation of ostream definitions.\n"
