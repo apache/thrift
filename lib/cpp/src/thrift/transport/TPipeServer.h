@@ -59,7 +59,7 @@ public:
   TPipeServer(const std::string& pipename,
               uint32_t bufsize,
               uint32_t maxconnections,
-              std::string securityDescriptor);
+              const std::string& securityDescriptor);
   TPipeServer(const std::string& pipename);
   // Anonymous pipe -
   TPipeServer(int bufsize);
@@ -85,7 +85,7 @@ public:
   bool getAnonymous();
   void setAnonymous(bool anon);
   void setMaxConnections(uint32_t maxconnections);
-  void setSecurityDescriptor(std::string securityDescriptor);
+  void setSecurityDescriptor(const std::string& securityDescriptor);
 
   // this function is intended to be used in generic / template situations,
   // so its name needs to be the same as TPipe's
@@ -107,8 +107,8 @@ private:
 //*NIX named pipe implementation uses domain socket
 typedef TServerSocket TPipeServer;
 #endif
-} // namespace transport
-} // namespace thrift
-} // namespace apache
+}
+}
+} // apache::thrift::transport
 
 #endif // #ifndef _THRIFT_TRANSPORT_TSERVERWINPIPES_H_

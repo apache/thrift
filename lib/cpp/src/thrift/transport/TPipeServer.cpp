@@ -17,18 +17,18 @@
  * under the License.
  */
 
-#include <cstring>
 #include <thrift/thrift-config.h>
+#include <cstring>
 
-#include <boost/noncopyable.hpp>
 #include <thrift/transport/TPipe.h>
 #include <thrift/transport/TPipeServer.h>
+#include <boost/noncopyable.hpp>
 
 #ifdef _WIN32
+#include <thrift/windows/OverlappedSubmissionThread.h>
 #include <AccCtrl.h>
 #include <Aclapi.h>
 #include <sddl.h>
-#include <thrift/windows/OverlappedSubmissionThread.h>
 #endif //_WIN32
 
 namespace apache {
@@ -99,7 +99,7 @@ public:
   TNamedPipeServer(const std::string& pipename,
                    uint32_t bufsize,
                    uint32_t maxconnections,
-                   std::string securityDescriptor)
+                   const std::string& securityDescriptor)
     : stopping_(false),
       pipename_(pipename),
       bufsize_(bufsize),
@@ -132,8 +132,8 @@ public:
   virtual HANDLE getNativeWaitHandle() { return listen_event_.h; }
 
 private:
-  bool createNamedPipe(const TAutoCrit& lockProof);
-  void initiateNamedConnect(const TAutoCrit& lockProof);
+  bool createNamedPipe(const TAutoCrit &lockProof);
+  void initiateNamedConnect(const TAutoCrit &lockProof);
 
   TAutoOverlapThread thread_;
   TOverlappedWorkItem connectOverlap_;
@@ -176,7 +176,7 @@ TPipeServer::TPipeServer(const std::string& pipename, uint32_t bufsize, uint32_t
 TPipeServer::TPipeServer(const std::string& pipename,
                          uint32_t bufsize,
                          uint32_t maxconnections,
-                         std::string securityDescriptor)
+                         const std::string& securityDescriptor)
   : bufsize_(bufsize), isAnonymous_(false) {
   setMaxConnections(maxconnections);
   setPipename(pipename);
@@ -234,7 +234,7 @@ shared_ptr<TTransport> TAnonPipeServer::acceptImpl() {
   return client;
 }
 
-void TNamedPipeServer::initiateNamedConnect(const TAutoCrit& lockProof) {
+void TNamedPipeServer::initiateNamedConnect(const TAutoCrit &lockProof) {
   if (stopping_)
     return;
   if (!createNamedPipe(lockProof)) {
@@ -328,8 +328,8 @@ shared_ptr<TTransport> TNamedPipeServer::acceptImpl() {
   // if we got here, then we are in an error / shutdown case
   DWORD gle = GetLastError(); // save error before doing cleanup
   GlobalOutput.perror("TPipeServer ConnectNamedPipe GLE=", gle);
-  if (gle == ERROR_OPERATION_ABORTED) {
-    TAutoCrit lock(pipe_protect_); // Needed to insure concurrent thread to be out of interrupt.
+  if(gle == ERROR_OPERATION_ABORTED) {
+    TAutoCrit lock(pipe_protect_);    	// Needed to insure concurrent thread to be out of interrupt.
     throw TTransportException(TTransportException::INTERRUPTED, "TPipeServer: server interupted");
   }
   throw TTransportException(TTransportException::NOT_OPEN, "TPipeServer: client connection failed");
@@ -472,7 +472,7 @@ void TPipeServer::setAnonymous(bool anon) {
   isAnonymous_ = anon;
 }
 
-void TPipeServer::setSecurityDescriptor(std::string securityDescriptor) {
+void TPipeServer::setSecurityDescriptor(const std::string& securityDescriptor) {
   securityDescriptor_ = securityDescriptor;
 }
 
@@ -486,6 +486,6 @@ void TPipeServer::setMaxConnections(uint32_t maxconnections) {
 }
 
 #endif //_WIN32
-} // namespace transport
-} // namespace thrift
-} // namespace apache
+}
+}
+} // apache::thrift::transport
