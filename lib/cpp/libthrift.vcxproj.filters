@@ -96,12 +96,6 @@
     <ClCompile Include="src\thrift\concurrency\BoostMutex.cpp">
       <Filter>concurrency</Filter>
     </ClCompile>
-    <ClCompile Include="src\thrift\concurrency\BoostThreadFactory.cpp">
-      <Filter>concurrency</Filter>
-    </ClCompile>
-    <ClCompile Include="src\thrift\concurrency\StdThreadFactory.cpp">
-      <Filter>concurrency</Filter>
-    </ClCompile>
     <ClCompile Include="src\thrift\windows\WinFcntl.cpp">
       <Filter>windows</Filter>
     </ClCompile>
@@ -226,15 +220,6 @@
     </ClInclude>
     <ClInclude Include="src\thrift\windows\force_inc.h">
       <Filter>windows</Filter>
-    </ClInclude>
-    <ClInclude Include="src\thrift\concurrency\BoostThreadFactory.h">
-      <Filter>concurrency</Filter>
-    </ClInclude>
-    <ClInclude Include="src\thrift\concurrency\StdThreadFactory.h">
-      <Filter>concurrency</Filter>
-    </ClInclude>
-    <ClInclude Include="src\thrift\concurrency\PlatformThreadFactory.h">
-      <Filter>concurrency</Filter>
     </ClInclude>
     <ClInclude Include="src\thrift\windows\WinFcntl.h">
       <Filter>windows</Filter>
