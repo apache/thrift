@@ -63,7 +63,7 @@ private:
  * and ready to start execution.  More or less analogous to java.lang.Thread
  * (minus all the thread group, priority, mode and other baggage, since that
  * is difficult to abstract across platforms and is left for platform-specific
- * ThreadFactory implemtations to deal with
+ * ThreadFactory implementations to deal with
  *
  * @see apache::thrift::concurrency::ThreadFactory)
  */
