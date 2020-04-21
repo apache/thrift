@@ -185,6 +185,10 @@ TServerSocket::~TServerSocket() {
   close();
 }
 
+bool TServerSocket::isOpen() const {
+  return (serverSocket_ != THRIFT_INVALID_SOCKET);
+}
+
 void TServerSocket::setSendTimeout(int sendTimeout) {
   sendTimeout_ = sendTimeout;
 }

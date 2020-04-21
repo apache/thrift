@@ -181,6 +181,10 @@ TPipeServer::TPipeServer() : bufsize_(1024), isAnonymous_(true) {
 //---- Destructor ----
 TPipeServer::~TPipeServer() {}
 
+bool TPipeServer::isOpen() const {
+  return (impl_->getPipeHandle() != INVALID_HANDLE_VALUE);
+}
+
 //---------------------------------------------------------
 // Transport callbacks
 //---------------------------------------------------------
