@@ -28,6 +28,7 @@ module Thrift.Transport.Handle
     ) where
 
 import Control.Exception ( catch, throw )
+import Control.Monad ( when )
 import Data.ByteString.Internal (c2w)
 import Data.Functor
 
@@ -50,7 +51,13 @@ instance Transport Handle where
           hLookAhead h
           LBS.hGetNonBlocking h n
     tReadAll _ 0 = return mempty
-    tReadAll h n = LBS.hGet h n `Control.Exception.catch` throwTransportExn
+    tReadAll h n = do
+      result <- LBS.hGet h n `Control.Exception.catch` throwTransportExn
+      let rlen = fromIntegral $ LBS.length result
+      when (rlen == 0) (throw $ TransportExn "Cannot read. Remote side has closed." TE_UNKNOWN)
+      if n <= rlen
+        then return result
+        else (result `mappend`) <$> tReadAll h (n - rlen)
     tPeek h = (Just . c2w <$> hLookAhead h) `Control.Exception.catch` handleEOF Nothing
     tWrite = LBS.hPut
     tFlush = hFlush
