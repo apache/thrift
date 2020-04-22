@@ -87,11 +87,11 @@ instance Transport t => Transport (FramedTransport t) where
 readFrame :: Transport t => FramedTransport t -> IO Int
 readFrame trans = do
   -- Read and decode the frame size.
-  szBs <- tRead (wrappedTrans trans) 4
+  szBs <- tReadAll (wrappedTrans trans) 4
   let sz = fromIntegral (B.decode szBs :: Int32)
 
   -- Read the frame and stuff it into the read buffer.
-  bs <- tRead (wrappedTrans trans) sz
+  bs <- tReadAll (wrappedTrans trans) sz
   fillBuf (readBuffer trans) bs
 
   -- Return the frame size so that the caller knows whether to expect
