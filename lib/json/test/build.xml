@@ -115,6 +115,7 @@
 
     <artifact:dependencies filesetId="test.dependency.jars">
       <dependency groupId="com.github.fge" artifactId="json-schema-validator" version="${json-schema-validator.version}"/>
+      <remoteRepository url="${mvn.repo}"/>
     </artifact:dependencies>
 
     <!-- Copy the dependencies to the build/lib dir -->

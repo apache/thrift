@@ -235,6 +235,7 @@
       <dependency groupId="org.apache.httpcomponents" artifactId="httpclient" version="4.0.1"/>
       <dependency groupId="com.googlecode.jslint4java" artifactId="jslint4java-ant" version="1.4.6"/>
       <dependency groupId="eu.medsea.mimeutil" artifactId="mime-util" version="2.1.3"/>
+      <remoteRepository url="${mvn.repo}"/>
     </artifact:dependencies>
 
     <!-- Copy the dependencies to the build/lib dir -->
