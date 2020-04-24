@@ -499,10 +499,17 @@ func (t *THeaderTransport) Read(p []byte) (read int, err error) {
 			if err != nil {
 				return
 			}
-			if read < len(p) {
-				var nextRead int
-				nextRead, err = t.Read(p[read:])
-				read += nextRead
+			if read == 0 {
+				// Try to read the next frame when we hit EOF
+				// (end of frame) immediately.
+				// When we got here, it means the last read
+				// finished the previous frame, but didn't
+				// do endOfFrame handling yet.
+				// We have to read the next frame here,
+				// as otherwise we would return 0 and nil,
+				// which is a case not handled well by most
+				// protocol implementations.
+				return t.Read(p)
 			}
 		}
 		return

@@ -23,7 +23,9 @@ import (
 	"context"
 	"io"
 	"io/ioutil"
+	"strings"
 	"testing"
+	"testing/quick"
 )
 
 func TestTHeaderHeadersReadWrite(t *testing.T) {
@@ -126,5 +128,54 @@ func TestTHeaderTransportNoDoubleWrapping(t *testing.T) {
 
 	if wrapped != orig {
 		t.Errorf("NewTHeaderTransport double wrapped THeaderTransport")
+	}
+}
+
+func TestTHeaderTransportNoReadBeyondFrame(t *testing.T) {
+	trans := NewTMemoryBuffer()
+	writeContent := func(writer TTransport, content string) error {
+		if _, err := io.Copy(writer, strings.NewReader(content)); err != nil {
+			return err
+		}
+		if err := writer.Flush(context.Background()); err != nil {
+			return err
+		}
+		return nil
+	}
+	f := func(content string) bool {
+		defer trans.Reset()
+		if len(content) == 0 {
+			return true
+		}
+
+		reader := NewTHeaderTransport(trans)
+		writer := NewTHeaderTransport(trans)
+		// Write content twice
+		if err := writeContent(writer, content); err != nil {
+			t.Error(err)
+		}
+		if err := writeContent(writer, content); err != nil {
+			t.Error(err)
+		}
+		// buf is big enough to read both content out,
+		// but it shouldn't read beyond the first one in a single Read call.
+		buf := make([]byte, len(content)*3)
+		read, err := reader.Read(buf)
+		if err != nil {
+			t.Error(err)
+		}
+		if read == 0 || read > len(content) {
+			t.Errorf(
+				"Expected read in no more than %d:%q, got %d:%q",
+				len(content),
+				content,
+				read,
+				buf[:read],
+			)
+		}
+		return !t.Failed()
+	}
+	if err := quick.Check(f, nil); err != nil {
+		t.Error(err)
 	}
 }
