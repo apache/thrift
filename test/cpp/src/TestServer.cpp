@@ -735,8 +735,8 @@ int main(int argc, char** argv) {
   }
 
   if (zlib) {
-    // hmm.. doesn't seem to be a way to make it wrap the others...
-    transportFactory = std::make_shared<TZlibTransportFactory>();
+    // currently TZlibTransportFactory is the only factory than can wrap another:
+    transportFactory = std::make_shared<TZlibTransportFactory>(transportFactory);
   }
 
   // Server Info
@@ -816,7 +816,7 @@ int main(int argc, char** argv) {
       // if using header
       server->setOutputProtocolFactory(std::shared_ptr<TProtocolFactory>());
     }
-    
+
     apache::thrift::concurrency::ThreadFactory factory;
     factory.setDetached(false);
     std::shared_ptr<apache::thrift::concurrency::Runnable> serverThreadRunner(server);
@@ -829,7 +829,7 @@ int main(int argc, char** argv) {
 
     thread->start();
     gMonitor.waitForever();         // wait for a shutdown signal
-    
+
 #ifdef HAVE_SIGNAL_H
     signal(SIGINT, SIG_DFL);
 #endif
@@ -842,4 +842,3 @@ int main(int argc, char** argv) {
   cout << "done." << endl;
   return 0;
 }
-

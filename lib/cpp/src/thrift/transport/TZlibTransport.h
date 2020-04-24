@@ -229,12 +229,19 @@ class TZlibTransportFactory : public TTransportFactory {
 public:
   TZlibTransportFactory() = default;
 
+  /**
+   * Wraps a transport factory into a zlibbed one.
+   */
+  TZlibTransportFactory(std::shared_ptr<TTransportFactory> transportFactory);
+
   ~TZlibTransportFactory() override = default;
 
-  std::shared_ptr<TTransport> getTransport(std::shared_ptr<TTransport> trans) override {
-    return std::shared_ptr<TTransport>(new TZlibTransport(trans));
-  }
+  std::shared_ptr<TTransport> getTransport(std::shared_ptr<TTransport> trans) override;
+
+protected:
+  std::shared_ptr<TTransportFactory> transportFactory_;
 };
+
 }
 }
 } // apache::thrift::transport
