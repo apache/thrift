@@ -59,6 +59,8 @@ public:
   // Destructor
   virtual ~TPipeServer();
 
+  bool isOpen() const override;
+
   // Standard transport callbacks
   void interrupt() override;
   void close() override;
