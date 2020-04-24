@@ -44,6 +44,15 @@ func SetHeader(ctx context.Context, key, value string) context.Context {
 	)
 }
 
+// UnsetHeader unsets a previously set header in the context.
+func UnsetHeader(ctx context.Context, key string) context.Context {
+	return context.WithValue(
+		ctx,
+		headerKey(key),
+		nil,
+	)
+}
+
 // GetHeader returns a value of the given header from the context.
 func GetHeader(ctx context.Context, key string) (value string, ok bool) {
 	if v := ctx.Value(headerKey(key)); v != nil {

@@ -74,7 +74,7 @@ This allows us to distingush between different (older) transports.
                           data.
 
 
-###Info IDs:
+### Info IDs:
 
     INFO_KEYVALUE 0x01 - varint32 number of headers.
                        - key/value pairs of varstrings (varint16 length plus
