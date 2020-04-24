@@ -23,11 +23,19 @@
 #include <memory>
 #include <stdexcept>
 #include <sys/types.h>
+#include <fcntl.h>
+
+#ifdef HAVE_AF_UNIX_H
+#include <afunix.h>
+#endif
 #ifdef HAVE_SYS_SOCKET_H
 #include <sys/socket.h>
 #endif
 #ifdef HAVE_SYS_UN_H
 #include <sys/un.h>
+#endif
+#ifdef HAVE_SYS_STAT_H
+#include <sys/stat.h>
 #endif
 #ifdef HAVE_SYS_POLL_H
 #include <sys/poll.h>
@@ -39,7 +47,6 @@
 #ifdef HAVE_NETDB_H
 #include <netdb.h>
 #endif
-#include <fcntl.h>
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
@@ -186,7 +193,21 @@ TServerSocket::~TServerSocket() {
 }
 
 bool TServerSocket::isOpen() const {
-  return (serverSocket_ != THRIFT_INVALID_SOCKET);
+  if (serverSocket_ == THRIFT_INVALID_SOCKET)
+    return false;
+
+  if (!listening_)
+    return false;
+
+  if (!path_.empty() && (path_[0] != '\0')) {
+    // On some platforms the domain socket file may not be instantly
+    // available yet, i.e. the Windows file system can be slow:
+    struct THRIFT_STAT path_info;
+    if (::THRIFT_STAT(path_.c_str(), &path_info) < 0)
+      return false;
+  }
+
+  return true;
 }
 
 void TServerSocket::setSendTimeout(int sendTimeout) {
@@ -229,7 +250,6 @@ void TServerSocket::setInterruptableChildren(bool enable) {
 }
 
 void TServerSocket::listen() {
-  listening_ = true;
 #ifdef _WIN32
   TWinsockSingleton::create();
 #endif // _WIN32
@@ -307,25 +327,28 @@ void TServerSocket::listen() {
                               errno_copy);
   }
 
-  // Set THRIFT_NO_SOCKET_CACHING to prevent 2MSL delay on accept
   int one = 1;
-  if (-1 == setsockopt(serverSocket_,
-                       SOL_SOCKET,
-                       THRIFT_NO_SOCKET_CACHING,
-                       cast_sockopt(&one),
-                       sizeof(one))) {
-// ignore errors coming out of this setsockopt on Windows.  This is because
-// SO_EXCLUSIVEADDRUSE requires admin privileges on WinXP, but we don't
-// want to force servers to be an admin.
-#ifndef _WIN32
-    int errno_copy = THRIFT_GET_SOCKET_ERROR;
-    GlobalOutput.perror("TServerSocket::listen() setsockopt() THRIFT_NO_SOCKET_CACHING ",
-                        errno_copy);
-    close();
-    throw TTransportException(TTransportException::NOT_OPEN,
-                              "Could not set THRIFT_NO_SOCKET_CACHING",
-                              errno_copy);
-#endif
+  if (path_.empty()) {
+    // Set THRIFT_NO_SOCKET_CACHING to prevent 2MSL delay on accept.
+    // This does not work with Domain sockets on most platforms. And
+    // on Windows it completely breaks the socket. Therefore do not
+    // use this on Domain sockets.
+    if (-1 == setsockopt(serverSocket_,
+                         SOL_SOCKET,
+                         THRIFT_NO_SOCKET_CACHING,
+                         cast_sockopt(&one),
+                         sizeof(one))) {
+      // NOTE: SO_EXCLUSIVEADDRUSE socket option can only be used by members
+      // of the Administrators security group on Windows XP and earlier. But
+      // wince we do not target WinX anymore, no special checks required.
+      int errno_copy = THRIFT_GET_SOCKET_ERROR;
+      GlobalOutput.perror("TServerSocket::listen() setsockopt() THRIFT_NO_SOCKET_CACHING ",
+                          errno_copy);
+      close();
+      throw TTransportException(TTransportException::NOT_OPEN,
+                                "Could not set THRIFT_NO_SOCKET_CACHING",
+                                errno_copy);
+    }
   }
 
   // Set TCP buffer sizes
@@ -395,7 +418,7 @@ void TServerSocket::listen() {
     throw TTransportException(TTransportException::NOT_OPEN, "Could not set SO_LINGER", errno_copy);
   }
 
-  // Unix Sockets do not need that
+  // Unix Domain Sockets do not need that
   if (path_.empty()) {
     // TCP Nodelay, speed over bandwidth
     if (-1
@@ -436,48 +459,30 @@ void TServerSocket::listen() {
   int errno_copy = 0;
 
   if (!path_.empty()) {
-
-#ifndef _WIN32
-
     // Unix Domain Socket
-    size_t len = path_.size() + 1;
-    if (len > sizeof(((sockaddr_un*)nullptr)->sun_path)) {
+    struct sockaddr_un address;
+
+    // Store the zero-terminated path in address.sun_path
+    if ((path_.size() + 1) > sizeof(address.sun_path)) {
       errno_copy = THRIFT_GET_SOCKET_ERROR;
-      GlobalOutput.perror("TSocket::listen() Unix Domain socket path too long", errno_copy);
+      GlobalOutput.perror("TServerSocket::listen() Unix Domain socket path too long", errno_copy);
       throw TTransportException(TTransportException::NOT_OPEN,
                                 "Unix Domain socket path too long",
                                 errno_copy);
     }
 
-    struct sockaddr_un address;
+    memset(&address, '\0', sizeof(address));
     address.sun_family = AF_UNIX;
-    memcpy(address.sun_path, path_.c_str(), len);
+    memcpy(address.sun_path, path_.c_str(), path_.size());
 
-    auto structlen = static_cast<socklen_t>(sizeof(address));
-
-    if (!address.sun_path[0]) { // abstract namespace socket
-#ifdef __linux__
-      // sun_path is not null-terminated in this case and structlen determines its length
-      structlen -= sizeof(address.sun_path) - len;
-#else
-      GlobalOutput.perror("TSocket::open() Abstract Namespace Domain sockets only supported on linux: ", -99);
-      throw TTransportException(TTransportException::NOT_OPEN,
-                                " Abstract Namespace Domain socket path not supported");
-#endif
-    }
 
     do {
-      if (0 == ::bind(serverSocket_, (struct sockaddr*)&address, structlen)) {
+      if (0 == ::bind(serverSocket_, (struct sockaddr*)&address, static_cast<socklen_t>(sizeof(address)))) {
         break;
       }
       errno_copy = THRIFT_GET_SOCKET_ERROR;
       // use short circuit evaluation here to only sleep if we need to
     } while ((retries++ < retryLimit_) && (THRIFT_SLEEP_SEC(retryDelay_) == 0));
-#else
-    GlobalOutput.perror("TSocket::open() Unix Domain socket path not supported on windows", -99);
-    throw TTransportException(TTransportException::NOT_OPEN,
-                              " Unix Domain socket path not supported");
-#endif
   } else {
     do {
       if (0 == ::bind(serverSocket_, res->ai_addr, static_cast<int>(res->ai_addrlen))) {
@@ -511,9 +516,13 @@ void TServerSocket::listen() {
   if (retries > retryLimit_) {
     char errbuf[1024];
     if (!path_.empty()) {
-      THRIFT_SNPRINTF(errbuf, sizeof(errbuf), "TServerSocket::listen() PATH %s", path_.c_str());
+#ifdef _WIN32
+      THRIFT_SNPRINTF(errbuf, sizeof(errbuf), "TServerSocket::listen() Could not bind to path %s, error %d", path_.c_str(), WSAGetLastError());
+#else
+      THRIFT_SNPRINTF(errbuf, sizeof(errbuf), "TServerSocket::listen() Could not bind to path %s", path_.c_str());
+#endif
     } else {
-      THRIFT_SNPRINTF(errbuf, sizeof(errbuf), "TServerSocket::listen() BIND %d", port_);
+      THRIFT_SNPRINTF(errbuf, sizeof(errbuf), "TServerSocket::listen() Could not bind to %d", port_);
     }
     GlobalOutput(errbuf);
     close();
@@ -534,6 +543,7 @@ void TServerSocket::listen() {
   }
 
   // The socket is now listening!
+  listening_ = true;
 }
 
 int TServerSocket::getPort() {
@@ -629,15 +639,10 @@ shared_ptr<TTransport> TServerSocket::acceptImpl() {
   }
 
   shared_ptr<TSocket> client = createSocket(clientSocket);
-  if (sendTimeout_ > 0) {
-    client->setSendTimeout(sendTimeout_);
-  }
-  if (recvTimeout_ > 0) {
-    client->setRecvTimeout(recvTimeout_);
-  }
-  if (keepAlive_) {
-    client->setKeepAlive(keepAlive_);
-  }
+  client->setPath(path_);
+  client->setSendTimeout(sendTimeout_);
+  client->setRecvTimeout(recvTimeout_);
+  client->setKeepAlive(keepAlive_);
   client->setCachedAddress((sockaddr*)&clientAddress, size);
 
   if (acceptCallback_)

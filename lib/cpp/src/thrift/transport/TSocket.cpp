@@ -20,9 +20,16 @@
 #include <thrift/thrift-config.h>
 
 #include <cstring>
+#include <memory>
 #include <sstream>
+#include <sys/types.h>
+#include <fcntl.h>
+
 #ifdef HAVE_SYS_IOCTL_H
 #include <sys/ioctl.h>
+#endif
+#ifdef HAVE_AF_UNIX_H
+#include <afunix.h>
 #endif
 #ifdef HAVE_SYS_SOCKET_H
 #include <sys/socket.h>
@@ -33,7 +40,6 @@
 #ifdef HAVE_SYS_POLL_H
 #include <sys/poll.h>
 #endif
-#include <sys/types.h>
 #ifdef HAVE_NETINET_IN_H
 #include <netinet/in.h>
 #include <netinet/tcp.h>
@@ -41,7 +47,6 @@
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
-#include <fcntl.h>
 
 #include <thrift/concurrency/Monitor.h>
 #include <thrift/transport/TSocket.h>
@@ -321,39 +326,23 @@ void TSocket::openConnection(struct addrinfo* res) {
   // Connect the socket
   int ret;
   if (!path_.empty()) {
+    // Unix Domain Socket
+    struct sockaddr_un address;
 
-#ifndef _WIN32
-    size_t len = path_.size() + 1;
-    if (len > sizeof(((sockaddr_un*)nullptr)->sun_path)) {
+    // Store the zero-terminated path in address.sun_path
+    if ((path_.size() + 1) > sizeof(address.sun_path)) {
       int errno_copy = THRIFT_GET_SOCKET_ERROR;
       GlobalOutput.perror("TSocket::open() Unix Domain socket path too long", errno_copy);
-      throw TTransportException(TTransportException::NOT_OPEN, " Unix Domain socket path too long");
-    }
-
-    struct sockaddr_un address;
-    address.sun_family = AF_UNIX;
-    memcpy(address.sun_path, path_.c_str(), len);
-
-    auto structlen = static_cast<socklen_t>(sizeof(address));
-
-    if (!address.sun_path[0]) { // abstract namespace socket
-#ifdef __linux__
-      // sun_path is not null-terminated in this case and structlen determines its length
-      structlen -= sizeof(address.sun_path) - len;
-#else
-      GlobalOutput.perror("TSocket::open() Abstract Namespace Domain sockets only supported on linux: ", -99);
       throw TTransportException(TTransportException::NOT_OPEN,
-                                " Abstract Namespace Domain socket path not supported");
-#endif
+                                "Unix Domain socket path too long",
+                                errno_copy);
     }
 
-    ret = connect(socket_, (struct sockaddr*)&address, structlen);
-#else
-    GlobalOutput.perror("TSocket::open() Unix Domain socket path not supported on windows", -99);
-    throw TTransportException(TTransportException::NOT_OPEN,
-                              " Unix Domain socket path not supported");
-#endif
+    memset(&address, '\0', sizeof(address));
+    address.sun_family = AF_UNIX;
+    memcpy(address.sun_path, path_.c_str(), path_.size());
 
+    ret = connect(socket_, (struct sockaddr*)&address, sizeof(address));
   } else {
     ret = connect(socket_, res->ai_addr, static_cast<int>(res->ai_addrlen));
   }
@@ -432,7 +421,7 @@ void TSocket::open() {
 
 void TSocket::unix_open() {
   if (!path_.empty()) {
-    // Unix Domain SOcket does not need addrinfo struct, so we pass NULL
+    // Unix Domain Socket does not need addrinfo struct, so we pass NULL
     openConnection(nullptr);
   }
 }
@@ -700,12 +689,20 @@ int TSocket::getPort() {
   return port_;
 }
 
+std::string TSocket::getPath() {
+    return path_;
+}
+
 void TSocket::setHost(string host) {
   host_ = host;
 }
 
 void TSocket::setPort(int port) {
   port_ = port;
+}
+
+void TSocket::setPath(std::string path) {
+    path_ = path;
 }
 
 void TSocket::setLinger(bool on, int linger) {
@@ -792,6 +789,13 @@ void TSocket::setKeepAlive(bool keepAlive) {
     return;
   }
 
+#ifdef _WIN32
+  if (!path_.empty()) {
+      // Windows Domain sockets do not support SO_KEEPALIVE.
+      return;
+  }
+#endif
+
   int value = keepAlive_;
   int ret
       = setsockopt(socket_, SOL_SOCKET, SO_KEEPALIVE, const_cast_sockopt(&value), sizeof(value));
@@ -817,7 +821,10 @@ string TSocket::getSocketInfo() const {
       oss << "<Host: " << host_ << " Port: " << port_ << ">";
     }
   } else {
-    oss << "<Path: " << path_ << ">";
+    std::string fmt_path_ = path_;
+    if (!fmt_path_.empty() && fmt_path_[0] == '\0')
+      fmt_path_[0] = '@';
+    oss << "<Path: " << fmt_path_ << ">";
   }
   return oss.str();
 }
