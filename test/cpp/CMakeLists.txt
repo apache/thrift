@@ -75,12 +75,16 @@ LINK_AGAINST_THRIFT_LIBRARY(StressTest thriftnb)
 add_test(NAME StressTest COMMAND StressTest)
 add_test(NAME StressTestConcurrent COMMAND StressTest --client-type=concurrent)
 
-add_executable(StressTestNonBlocking src/StressTestNonBlocking.cpp)
-target_link_libraries(StressTestNonBlocking crossstressgencpp ${Boost_LIBRARIES} ${LIBEVENT_LIB})
-LINK_AGAINST_THRIFT_LIBRARY(StressTestNonBlocking thrift)
-LINK_AGAINST_THRIFT_LIBRARY(StressTestNonBlocking thriftnb)
-LINK_AGAINST_THRIFT_LIBRARY(StressTestNonBlocking thriftz)
-add_test(NAME StressTestNonBlocking COMMAND StressTestNonBlocking)
+# As of https://jira.apache.org/jira/browse/THRIFT-4282, StressTestNonBlocking
+# is broken on Windows. Contributions welcome.
+if (NOT WIN32 AND NOT CYGWIN)
+    add_executable(StressTestNonBlocking src/StressTestNonBlocking.cpp)
+    target_link_libraries(StressTestNonBlocking crossstressgencpp ${Boost_LIBRARIES} ${LIBEVENT_LIB})
+    LINK_AGAINST_THRIFT_LIBRARY(StressTestNonBlocking thrift)
+    LINK_AGAINST_THRIFT_LIBRARY(StressTestNonBlocking thriftnb)
+    LINK_AGAINST_THRIFT_LIBRARY(StressTestNonBlocking thriftz)
+    add_test(NAME StressTestNonBlocking COMMAND StressTestNonBlocking)
+endif()
 
 #
 # Common thrift code generation rules
