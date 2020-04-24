@@ -146,9 +146,12 @@ extension TApplicationError : TSerializable {
     try proto.writeFieldStop()
     try proto.writeStructEnd()
   }
-  
-  public var hashValue: Int {
-    return error.thriftErrorCode &+ (message?.hashValue ?? 0)
+}
+
+extension TApplicationError: Hashable {
+  public func hash(into hasher: inout Hasher) {
+    hasher.combine(error.thriftErrorCode)
+    hasher.combine(message)
   }
 }
 

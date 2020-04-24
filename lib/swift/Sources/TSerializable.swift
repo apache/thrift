@@ -21,7 +21,6 @@ import Foundation
 
 
 public protocol TSerializable {
-  var hashValue: Int { get }
 
   /// TType for instance
   static var thriftType: TType { get }
@@ -41,10 +40,6 @@ extension TSerializable {
 
   /// convenience for member access
   public var thriftType: TType { return Self.thriftType }
-}
-
-public func ==<T>(lhs: T, rhs: T) -> Bool where T : TSerializable {
-  return lhs.hashValue == rhs.hashValue
 }
 
 /// Default read/write for primitave Thrift types:
