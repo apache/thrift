@@ -152,22 +152,11 @@ jobs:
     # ------------------------- phase: swift ------------------------
     # We lint the podspec
     - os: osx
-      osx_image: xcode10.1
+      osx_image: xcode11.3
       language: swift
       script:
         - gem update cocoapods
-        - pod lib lint --allow-warnings --swift-version=3
-      env:
-        - JOB="pod lib lint"
-
-    - os: osx
-      osx_image: xcode10.2
-      language: swift
-      script:
-        - gem update cocoapods
-        - pod lib lint --allow-warnings --swift-version=4.0
-        - pod lib lint --allow-warnings --swift-version=4.2
-        - pod lib lint --allow-warnings --swift-version=5.0
+        - pod lib lint --allow-warnings --swift-version=5.1
       env:
         - JOB="pod lib lint"
 

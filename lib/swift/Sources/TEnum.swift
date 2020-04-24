@@ -24,7 +24,10 @@ public protocol TEnum : TSerializable, Hashable {
 
 extension TEnum {
   public static var thriftType: TType { return .i32 }
-  public var hashValue: Int { return rawValue.hashValue }
+
+  public func hash(into hasher: inout Hasher) {
+    hasher.combine(rawValue)
+  }
 
   public func write(to proto: TProtocol) throws {
     try proto.write(rawValue)
