@@ -17,12 +17,6 @@
 # under the License.
 #
 
-# Unit tests for the compiler still require boost
-include(BoostMacros)
-REQUIRE_BOOST_HEADERS()
-set(BOOST_COMPONENTS unit_test_framework)
-REQUIRE_BOOST_LIBRARIES(BOOST_COMPONENTS)
-
 file(GLOB KEYWORD_SAMPLES "${CMAKE_CURRENT_SOURCE_DIR}/keyword-samples/*.thrift")
 foreach(LANG ${thrift_compiler_LANGS})
     foreach(SAMPLE ${KEYWORD_SAMPLES})
@@ -33,7 +27,6 @@ foreach(LANG ${thrift_compiler_LANGS})
             PASS_REGULAR_EXPRESSION "Cannot use reserved language keyword")
     endforeach()
 endforeach()
-
 
 find_package(PythonInterp QUIET)
 if(PYTHONINTERP_FOUND)
