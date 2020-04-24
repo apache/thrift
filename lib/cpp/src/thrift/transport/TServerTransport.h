@@ -38,6 +38,11 @@ public:
   virtual ~TServerTransport() = default;
 
   /**
+   * Whether this transport is open.
+   */
+  virtual bool isOpen() const { return false; }
+
+  /**
    * Starts the server transport listening for new connections. Prior to this
    * call most transports will not return anything when accept is called.
    *
