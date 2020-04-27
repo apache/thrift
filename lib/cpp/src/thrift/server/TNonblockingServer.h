@@ -54,7 +54,6 @@ using apache::thrift::protocol::TProtocol;
 using apache::thrift::concurrency::Runnable;
 using apache::thrift::concurrency::ThreadManager;
 using apache::thrift::concurrency::ThreadFactory;
-using apache::thrift::concurrency::ThreadFactory;
 using apache::thrift::concurrency::Thread;
 using apache::thrift::concurrency::Mutex;
 using apache::thrift::concurrency::Guard;

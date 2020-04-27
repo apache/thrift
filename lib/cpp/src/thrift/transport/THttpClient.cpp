@@ -117,6 +117,10 @@ void THttpClient::flush() {
   writeBuffer_.resetBuffer();
   readHeaders_ = true;
 }
+
+void THttpClient::setPath(std::string path) {
+  path_ = path;
+}
 }
 }
 } // apache::thrift::transport

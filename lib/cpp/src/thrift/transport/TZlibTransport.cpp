@@ -397,6 +397,18 @@ void TZlibTransport::verifyChecksum() {
                             "verifyChecksum() called before end of "
                             "zlib stream");
 }
+
+TZlibTransportFactory::TZlibTransportFactory(std::shared_ptr<TTransportFactory> transportFactory)
+  :transportFactory_(transportFactory) {
+}
+
+std::shared_ptr<TTransport> TZlibTransportFactory::getTransport(std::shared_ptr<TTransport> trans) {
+  if (transportFactory_) {
+    return std::shared_ptr<TTransport>(new TZlibTransport(transportFactory_->getTransport(trans)));
+  } else {
+    return std::shared_ptr<TTransport>(new TZlibTransport(trans));
+  }
+}
 }
 }
 } // apache::thrift::transport

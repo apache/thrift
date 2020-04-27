@@ -57,6 +57,7 @@ EXTRA_DIST = \
 	Gruntfile.js \
 	package.json \
 	package-lock.json \
+	CMakeLists.txt \
 	README.md \
 	src \
 	test

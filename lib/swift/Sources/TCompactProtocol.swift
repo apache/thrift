@@ -371,10 +371,7 @@ public class TCompactProtocol: TProtocol {
     try ProtocolTransportTry(error: TProtocolError(message: "Transport Read Failed")) {
       buff = try self.transport.readAll(size: 8)
     }
-    
-    let i64: UInt64 = buff.withUnsafeBytes { (ptr: UnsafePointer<UInt8>) -> UInt64 in
-      return UnsafePointer<UInt64>(OpaquePointer(ptr)).pointee
-    }
+    let i64: UInt64 = buff.withUnsafeBytes { $0.load(as: UInt64.self) }
     let bits = CFSwapInt64LittleToHost(i64)
     return Double(bitPattern: bits)
   }

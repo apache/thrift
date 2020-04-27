@@ -22,8 +22,6 @@ BUILT_SOURCES = gen-cpp/ThriftTest.cpp \
                 gen-cpp/ThriftTest_types.cpp \
                 gen-cpp/ThriftTest_constants.cpp \
                 gen-cpp/SecondService.cpp \
-                gen-cpp/StressTest_types.cpp \
-                gen-cpp/StressTest_constants.cpp \
                 gen-cpp/Service.cpp
 
 noinst_LTLIBRARIES = libtestgencpp.la libstresstestgencpp.la
@@ -44,9 +42,6 @@ nodist_libtestgencpp_la_SOURCES = \
 libtestgencpp_la_LIBADD = $(top_builddir)/lib/cpp/libthrift.la
 
 nodist_libstresstestgencpp_la_SOURCES = \
-	gen-cpp/StressTest_constants.cpp \
-	gen-cpp/StressTest_types.cpp \
-	gen-cpp/StressTest_constants.h \
 	gen-cpp/StressTest_types.h \
 	gen-cpp/Service.cpp \
 	gen-cpp/Service.h
@@ -105,7 +100,7 @@ StressTestNonBlocking_LDADD = \
 gen-cpp/ThriftTest.cpp gen-cpp/ThriftTest_types.cpp gen-cpp/ThriftTest_constants.cpp gen-cpp/SecondService.cpp gen-cpp/SecondService.h gen-cpp/SecondService.tcc: $(top_srcdir)/test/ThriftTest.thrift $(THRIFT)
 	$(THRIFT) --gen cpp:templates,cob_style -r $<
 
-gen-cpp/StressTest_types.cpp gen-cpp/StressTest_constants.cpp gen-cpp/Service.cpp: $(top_srcdir)/test/StressTest.thrift $(THRIFT)
+gen-cpp/Service.cpp: $(top_srcdir)/test/StressTest.thrift $(THRIFT)
 	$(THRIFT) --gen cpp $<
 
 AM_CPPFLAGS = $(BOOST_CPPFLAGS) $(LIBEVENT_CPPFLAGS) -I$(top_srcdir)/lib/cpp/src -Igen-cpp -I.

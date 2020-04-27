@@ -30,6 +30,7 @@ public struct TSet<Element : TSerializable & Hashable> : SetAlgebra, Hashable, C
   
   /// Mark: Collection
   
+  public typealias Element = Storage.Element
   public typealias Indices = Storage.Indices
   public typealias Index = Storage.Index
   public typealias IndexDistance = Int
@@ -126,13 +127,8 @@ public struct TSet<Element : TSerializable & Hashable> : SetAlgebra, Hashable, C
 
   
   /// Mark: Hashable
-  public var hashValue : Int {
-    let prime = 31
-    var result = 1
-    for element in storage {
-      result = prime &* result &+ element.hashValue
-    }
-    return result
+  public func hash(into hasher: inout Hasher) {
+    hasher.combine(storage)
   }
   
   /// Mark: TSerializable
