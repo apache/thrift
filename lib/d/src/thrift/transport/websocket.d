@@ -121,7 +121,7 @@ protected:
       upgrade_ = sicmp(upgrade, "websocket") == 0;
     } else if (startsWith!compToLower(split[0], cast(ubyte[])"connection")) {
       auto connection = stripLeft(cast(const(char)[])split[2]);
-      connection_ = sicmp(connection, "upgrade") == 0;
+      connection_ = canFind(connection.toLower, "upgrade");
     } else if (startsWith!compToLower(split[0], cast(ubyte[])"sec-websocket-key")) {
       auto secWebSocketKey = stripLeft(cast(const(char)[])split[2]);
       auto hash = sha1Of(secWebSocketKey ~ WEBSOCKET_GUID);
