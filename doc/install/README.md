@@ -26,6 +26,7 @@ These are only required if you choose to build the libraries for the given langu
     * Boost 1.56.0
     * libevent (optional, to build the nonblocking server)
     * zlib (optional)
+    * Qt (optional)
 * Java
     * Java 1.8
     * Gradle
