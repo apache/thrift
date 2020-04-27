@@ -465,12 +465,16 @@ void TSocket::local_open() {
 
   error = getaddrinfo(host_.c_str(), port, &hints, &res0);
 
+  if (
 #ifdef _WIN32
-  if (error == WSANO_DATA) {
+      error == WSANO_DATA
+#else
+      error == EAI_NODATA
+#endif
+    ) {
     hints.ai_flags &= ~AI_ADDRCONFIG;
     error = getaddrinfo(host_.c_str(), port, &hints, &res0);
   }
-#endif
 
   if (error) {
     string errStr = "TSocket::open() getaddrinfo() " + getSocketInfo()
