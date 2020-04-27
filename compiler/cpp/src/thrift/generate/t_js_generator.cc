@@ -1737,6 +1737,9 @@ void t_js_generator::generate_service_client(t_service* tservice) {
   indent_up();
 
   if (gen_node_) {
+    if (gen_es6_ && is_subclass_service) {
+      indent(f_service_) << "super(output, pClass);" << endl;
+    }
     indent(f_service_) << "this.output = output;" << endl;
     indent(f_service_) << "this.pClass = pClass;" << endl;
     indent(f_service_) << "this._seqid = 0;" << endl;
