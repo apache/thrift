@@ -185,6 +185,10 @@ TServerSocket::~TServerSocket() {
   close();
 }
 
+bool TServerSocket::isOpen() const {
+  return (serverSocket_ != THRIFT_INVALID_SOCKET);
+}
+
 void TServerSocket::setSendTimeout(int sendTimeout) {
   sendTimeout_ = sendTimeout;
 }
@@ -257,7 +261,7 @@ void TServerSocket::listen() {
     throw TTransportException(TTransportException::BAD_ARGS, "Specified port is invalid");
   }
 
-  const struct addrinfo *res;
+  const struct addrinfo *res = nullptr;
   int error;
   char port[sizeof("65535")];
   THRIFT_SNPRINTF(port, sizeof(port), "%d", port_);
@@ -271,19 +275,21 @@ void TServerSocket::listen() {
   // If address is not specified use wildcard address (NULL)
   TGetAddrInfoWrapper info(address_.empty() ? nullptr : &address_[0], port, &hints);
 
-  error = info.init();
-  if (error) {
-    GlobalOutput.printf("getaddrinfo %d: %s", error, THRIFT_GAI_STRERROR(error));
-    close();
-    throw TTransportException(TTransportException::NOT_OPEN,
-                              "Could not resolve host for server socket.");
-  }
+  if (path_.empty()) {
+    error = info.init();
+    if (error) {
+      GlobalOutput.printf("getaddrinfo %d: %s", error, THRIFT_GAI_STRERROR(error));
+      close();
+      throw TTransportException(TTransportException::NOT_OPEN,
+                                "Could not resolve host for server socket.");
+    }
 
-  // Pick the ipv6 address first since ipv4 addresses can be mapped
-  // into ipv6 space.
-  for (res = info.res(); res; res = res->ai_next) {
-    if (res->ai_family == AF_INET6 || res->ai_next == nullptr)
-      break;
+    // Pick the ipv6 address first since ipv4 addresses can be mapped
+    // into ipv6 space.
+    for (res = info.res(); res; res = res->ai_next) {
+      if (res->ai_family == AF_INET6 || res->ai_next == nullptr)
+        break;
+    }
   }
 
   if (!path_.empty()) {
@@ -368,7 +374,7 @@ void TServerSocket::listen() {
 #endif // #ifdef TCP_DEFER_ACCEPT
 
 #ifdef IPV6_V6ONLY
-  if (res->ai_family == AF_INET6 && path_.empty()) {
+  if (path_.empty() && res->ai_family == AF_INET6) {
     int zero = 0;
     if (-1 == setsockopt(serverSocket_,
                          IPPROTO_IPV6,

@@ -98,6 +98,9 @@ public:
 
   ~TServerSocket() override;
 
+
+  bool isOpen() const override;
+
   void setSendTimeout(int sendTimeout);
   void setRecvTimeout(int recvTimeout);
 

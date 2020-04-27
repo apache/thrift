@@ -24,6 +24,10 @@
 #include <stdarg.h>
 #include <stdio.h>
 
+#ifdef _WIN32
+#include <windows.h>
+#endif
+
 namespace apache {
 namespace thrift {
 
@@ -101,14 +105,12 @@ void TOutput::perror(const char* message, int errno_copy) {
 }
 
 std::string TOutput::strerror_s(int errno_copy) {
-#ifndef HAVE_STRERROR_R
-  return "errno = " + to_string(errno_copy);
-#else // HAVE_STRERROR_R
-
   char b_errbuf[1024] = {'\0'};
+
+#ifdef HAVE_STRERROR_R
 #ifdef STRERROR_R_CHAR_P
-  char* b_error = strerror_r(errno_copy, b_errbuf, sizeof(b_errbuf));
-#else
+  char* b_error = ::strerror_r(errno_copy, b_errbuf, sizeof(b_errbuf));
+#else // STRERROR_R_CHAR_P
   char* b_error = b_errbuf;
   int rv = strerror_r(errno_copy, b_errbuf, sizeof(b_errbuf));
   if (rv == -1) {
@@ -116,13 +118,27 @@ std::string TOutput::strerror_s(int errno_copy) {
     return "XSI-compliant strerror_r() failed with errno = "
            + to_string(errno_copy);
   }
-#endif
+#endif // STRERROR_R_CHAR_P
+#else // HAVE_STRERROR_R
+#ifdef _WIN32
+  const size_t size = FormatMessageA(FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
+                                     NULL, errno_copy, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
+                                     b_errbuf, sizeof(b_errbuf), NULL);
+
+  if (size > 2 && b_errbuf[size-2] == '\r' && b_errbuf[size-1] == '\n') {
+    b_errbuf[size-2] = '\0';
+    b_errbuf[size-1] = '\0';
+  }
+#else // _WIN32
+  ::strerror_s(b_errbuf, sizeof(b_errbuf), errno_copy);
+#endif // _WIN32
+  char* b_error = b_errbuf;
+#endif // HAVE_STRERROR_R
+
   // Can anyone prove that explicit cast is probably not necessary
   // to ensure that the string object is constructed before
   // b_error becomes invalid?
   return std::string(b_error);
-
-#endif // HAVE_STRERROR_R
 }
 }
 } // apache::thrift

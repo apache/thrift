@@ -23,6 +23,5 @@
 
 AUTOMAKE_OPTIONS = subdir-objects serial-tests nostdinc
 
-AM_CPPFLAGS = $(BOOST_CPPFLAGS) -I$(top_srcdir)/compiler/cpp/src
-AM_LDFLAGS = $(BOOST_LDFLAGS)
+AM_CPPFLAGS = -I$(top_srcdir)/compiler/cpp/src
 AM_CXXFLAGS = -Wall -Wextra -pedantic

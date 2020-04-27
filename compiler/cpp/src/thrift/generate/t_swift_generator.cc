@@ -855,37 +855,27 @@ void t_swift_generator::generate_swift_struct_hashable_extension(ostream& out,
   indent(out) << "extension " << tstruct->get_name() << " : Hashable";
   block_open(out);
   out << endl;
-  indent(out) << visibility << " var hashValue : Int";
+  indent(out) << visibility << " func hash(into hasher: inout Hasher)";
   block_open(out);
 
   const vector<t_field*>& members = tstruct->get_members();
   vector<t_field*>::const_iterator m_iter;
 
   if (!members.empty()) {
-    indent(out) << "let prime = 31" << endl;
-    indent(out) << "var result = 1" << endl;
     if (!tstruct->is_union()) {
       for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
         t_field* tfield = *m_iter;
-        string accessor = field_is_optional(tfield) ? "?." : ".";
-        string defaultor = field_is_optional(tfield) ? " ?? 0" : "";
-        indent(out) << "result = prime &* result &+ (" << maybe_escape_identifier(tfield->get_name()) << accessor
-                    <<  "hashValue" << defaultor << ")" << endl;
+        indent(out) << "hasher.combine(" << maybe_escape_identifier(tfield->get_name()) << ")" << endl;
       }
     } else {
       indent(out) << "switch self {" << endl;
       for (m_iter = members.begin(); m_iter != members.end(); m_iter++) {
         t_field *tfield = *m_iter;
-        indent(out) << "case ." << tfield->get_name() << "(let val): result = prime &* val.hashValue" << endl;
+        indent(out) << "case ." << tfield->get_name() << "(let val): hasher.combine(val)" << endl;
       }
       indent(out) << "}" << endl << endl;
     }
-    indent(out) << "return result" << endl;
   }
-  else {
-    indent(out) << "return 31" << endl;
-  }
-
   block_close(out);
   out << endl;
   block_close(out);
@@ -2877,8 +2867,8 @@ void t_swift_generator::async_function_docstring(ostream& out, t_function* tfunc
     }
 
     // completion
-    indent(out) << "///   - completion: TAsyncResult<" << type_name(tfunction->get_returntype())
-                << "> wrapping return and following Exceptions: ";
+    indent(out) << "///   - completion: Result<" << type_name(tfunction->get_returntype())
+                << ", Error> wrapping return and following Exceptions: ";
     t_struct* xs = tfunction->get_xceptions();
     const vector<t_field*>& xceptions = xs->get_members();
     vector<t_field*>::const_iterator x_iter;
@@ -2903,9 +2893,9 @@ string t_swift_generator::async_function_signature(t_function* tfunction) {
   string result = "func " + (gen_cocoa_ ? function_name(tfunction) : tfunction->get_name());
 
   if (!gen_cocoa_) {
-    string response_string = "(TAsyncResult<";
+    string response_string = "(Result<";
     response_string += (ttype->is_void()) ? "Void" : type_name(ttype);
-    response_string += ">) -> Void";
+    response_string += ", Error>) -> Void";
     result += "(" + argument_list(tfunction->get_arglist(), "", false)
             + (targlist->get_members().size() ? ", " : "")
             + "completion: @escaping " + response_string + ")";

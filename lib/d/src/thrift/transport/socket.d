@@ -18,7 +18,6 @@
  */
 module thrift.transport.socket;
 
-import core.stdc.errno: ECONNRESET;
 import core.thread : Thread;
 import core.time : dur, Duration;
 import std.array : empty;
@@ -28,6 +27,13 @@ import std.socket;
 import thrift.base;
 import thrift.transport.base;
 import thrift.internal.socket;
+
+version (Windows) {
+  import core.sys.windows.winsock2 : WSAECONNRESET;
+  enum ECONNRESET = WSAECONNRESET;
+} else version (Posix) {
+  import core.stdc.errno : ECONNRESET;
+} else static assert(0, "Don't know ECONNRESET on this platform.");
 
 /**
  * Common parts of a socket TTransport implementation, regardless of how the

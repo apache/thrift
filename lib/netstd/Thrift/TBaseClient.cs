@@ -63,7 +63,7 @@ namespace Thrift
                 await _inputProtocol.Transport.OpenAsync(cancellationToken);
             }
 
-            if (!_inputProtocol.Transport.IsOpen)
+            if (!_outputProtocol.Transport.IsOpen)
             {
                 await _outputProtocol.Transport.OpenAsync(cancellationToken);
             }

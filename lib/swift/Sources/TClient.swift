@@ -40,16 +40,3 @@ open class TAsyncClient<Protocol: TProtocol, Factory: TAsyncTransportFactory> {
     self.factory = factory
   }
 }
-
-
-public enum TAsyncResult<T> {
-  case success(T)
-  case error(Swift.Error)
-  
-  public func value() throws -> T {
-    switch self {
-    case .success(let t): return t
-    case .error(let e): throw e
-    }
-  }
-}

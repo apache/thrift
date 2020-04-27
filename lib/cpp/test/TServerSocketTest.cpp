@@ -35,6 +35,7 @@ BOOST_AUTO_TEST_SUITE(TServerSocketTest)
 BOOST_AUTO_TEST_CASE(test_bind_to_address) {
   TServerSocket sock1("localhost", 0);
   sock1.listen();
+  BOOST_CHECK(sock1.isOpen());
   int port = sock1.getPort();
   TSocket clientSock("localhost", port);
   clientSock.open();
@@ -48,17 +49,20 @@ BOOST_AUTO_TEST_CASE(test_bind_to_address) {
   sock2.close();
 }
 
-BOOST_AUTO_TEST_CASE(test_listen_valid_port) {
+BOOST_AUTO_TEST_CASE(test_listen_invalid_port) {
   TServerSocket sock1(-1);
   TTRANSPORT_CHECK_THROW(sock1.listen(), TTransportException::BAD_ARGS);
+  BOOST_CHECK(!sock1.isOpen());
 
   TServerSocket sock2(65536);
   TTRANSPORT_CHECK_THROW(sock2.listen(), TTransportException::BAD_ARGS);
+  BOOST_CHECK(!sock1.isOpen());
 }
 
 BOOST_AUTO_TEST_CASE(test_close_before_listen) {
   TServerSocket sock1("localhost", 0);
   sock1.close();
+  BOOST_CHECK(!sock1.isOpen());
 }
 
 BOOST_AUTO_TEST_CASE(test_get_port) {

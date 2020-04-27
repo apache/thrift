@@ -198,7 +198,7 @@ public class TSocketTransport : TTransport {
     var writeBuffer = data
     while bytesToWrite > 0 {
       let written = writeBuffer.withUnsafeBytes {
-        Sys.write(socketDescriptor, $0, writeBuffer.count)
+        Sys.write(socketDescriptor, $0.baseAddress!, writeBuffer.count)
       }
       writeBuffer = writeBuffer.subdata(in: written ..< writeBuffer.count)
       bytesToWrite -= written
