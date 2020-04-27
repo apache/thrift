@@ -39,7 +39,7 @@ class TSocketBase(TTransportBase):
                                       self._socket_family,
                                       socket.SOCK_STREAM,
                                       0,
-                                      socket.AI_PASSIVE | socket.AI_ADDRCONFIG)
+                                      socket.AI_PASSIVE)
 
     def close(self):
         if self.handle:
