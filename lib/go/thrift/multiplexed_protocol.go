@@ -117,6 +117,67 @@ func NewTMultiplexedProcessor() *TMultiplexedProcessor {
 	}
 }
 
+// ProcessorMap returns a mapping of "{ProcessorName}{MULTIPLEXED_SEPARATOR}{FunctionName}"
+// to TProcessorFunction for any registered processors.  If there is also a
+// DefaultProcessor, the keys for the methods on that processor will simply be
+// "{FunctionName}".  If the TMultiplexedProcessor has both a DefaultProcessor and
+// other registered processors, then the keys will be a mix of both formats.
+//
+// The implementation differs with other TProcessors in that the map returned is
+// a new map, while most TProcessors just return their internal mapping directly.
+// This means that edits to the map returned by this implementation of ProcessorMap
+// will not affect the underlying mapping within the TMultiplexedProcessor.
+func (t *TMultiplexedProcessor) ProcessorMap() map[string]TProcessorFunction {
+	processorFuncMap := make(map[string]TProcessorFunction)
+	for name, processor := range t.serviceProcessorMap {
+		for method, processorFunc := range processor.ProcessorMap() {
+			processorFuncName := name + MULTIPLEXED_SEPARATOR + method
+			processorFuncMap[processorFuncName] = processorFunc
+		}
+	}
+	if t.DefaultProcessor != nil {
+		for method, processorFunc := range t.DefaultProcessor.ProcessorMap() {
+			processorFuncMap[method] = processorFunc
+		}
+	}
+	return processorFuncMap
+}
+
+// AddToProcessorMap updates the underlying TProcessor ProccessorMaps depending on
+// the format of "name".
+//
+// If "name" is in the format "{ProcessorName}{MULTIPLEXED_SEPARATOR}{FunctionName}",
+// then it sets the given TProcessorFunction on the inner TProcessor with the
+// ProcessorName component using the FunctionName component.
+//
+// If "name" is just in the format "{FunctionName}", that is to say there is no
+// MULTIPLEXED_SEPARATOR, and the TMultiplexedProcessor has a DefaultProcessor
+// configured, then it will set the given TProcessorFunction on the DefaultProcessor
+// using the given name.
+//
+// If there is not a TProcessor available for the given name, then this function
+// does nothing.  This can happen when there is no TProcessor registered for
+// the given ProcessorName or if all that is given is the FunctionName and there
+// is no DefaultProcessor set.
+func (t *TMultiplexedProcessor) AddToProcessorMap(name string, processorFunc TProcessorFunction) {
+	components := strings.SplitN(name, MULTIPLEXED_SEPARATOR, 2)
+	if len(components) != 2 {
+		if t.DefaultProcessor != nil && len(components) == 1 {
+			t.DefaultProcessor.AddToProcessorMap(components[0], processorFunc)
+		}
+		return
+	}
+	processorName := components[0]
+	funcName := components[1]
+	if processor, ok := t.serviceProcessorMap[processorName]; ok {
+		processor.AddToProcessorMap(funcName, processorFunc)
+	}
+
+}
+
+// verify that TMultiplexedProcessor implements TProcessor
+var _ TProcessor = (*TMultiplexedProcessor)(nil)
+
 func (t *TMultiplexedProcessor) RegisterDefault(processor TProcessor) {
 	t.DefaultProcessor = processor
 }
