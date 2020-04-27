@@ -25,6 +25,7 @@ py3-build:
 py3-test: py3-build
 	$(PYTHON3) test/thrift_json.py
 	$(PYTHON3) test/test_sslsocket.py
+	$(PYTHON3) test/thrift_TBinaryProtocol.py
 else
 py3-build:
 py3-test:
@@ -43,6 +44,7 @@ install-exec-hook:
 check-local: all py3-test
 	$(PYTHON) test/thrift_json.py
 	$(PYTHON) test/test_sslsocket.py
+	$(PYTHON) test/thrift_TBinaryProtocol.py
 
 clean-local:
 	$(RM) -r build
