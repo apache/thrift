@@ -575,7 +575,7 @@ begin
   FillChar(Hints, SizeOf(Hints), 0);
   Hints.ai_family := PF_UNSPEC;
   Hints.ai_socktype := SOCK_STREAM;
-  Hints.ai_flags := AI_PASSIVE or AI_ADDRCONFIG;
+  Hints.ai_flags := AI_PASSIVE;
   StrFmt(ThePort, '%d', [FPort]);
 
   Result := TGetAddrInfoWrapper.Create(AAddress, ThePort, @Hints);
