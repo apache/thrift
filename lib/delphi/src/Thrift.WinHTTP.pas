@@ -1216,6 +1216,7 @@ end;
 
 function TWinHTTPRequestImpl.QueryTotalResponseSize( out dwSize : DWORD) : Boolean;
 var dwBytes, dwError, dwIndex : DWORD;
+    bytes : array[0..32-1] of Byte;
 begin
   dwBytes := SizeOf( result);
   dwIndex := DWORD( WINHTTP_NO_HEADER_INDEX);
@@ -1224,11 +1225,30 @@ begin
                                  WINHTTP_HEADER_NAME_BY_INDEX,
                                  @dwSize, dwBytes,
                                  dwIndex);
-  if not result then begin
-    dwSize  := MAXINT;  // we don't know, just return something useful
-    dwError := GetLastError;
-    if dwError <> ERROR_WINHTTP_HEADER_NOT_FOUND then ASSERT(FALSE);  // anything else would be an real error
+  if result then Exit;
+  dwError := GetLastError;
+
+  // Hack: WinHttpQueryHeaders() sometimes returns error 122 even if the buffer is large enough
+  // According to the docs, WINHTTP_QUERY_FLAG_NUMBER always returns a 32 bit number (which it does!)
+  // but for some strange reason since win 10 build 18636.815 passing a 4 bytes buffer is not enough anymore
+  if dwError = ERROR_INSUFFICIENT_BUFFER then begin
+    dwBytes := sizeof(bytes);
+    FillChar( bytes[0], dwBytes, 0);
+    result := WinHttpQueryHeaders( FHandle,
+                                   WINHTTP_QUERY_CONTENT_LENGTH or WINHTTP_QUERY_FLAG_NUMBER,
+                                   WINHTTP_HEADER_NAME_BY_INDEX,
+                                   @bytes[0], dwBytes,
+                                   dwIndex);
+    if result then begin
+      ASSERT( dwBytes = SizeOf(dwSize));        // result is still a DWORD
+      Move( bytes[0], dwSize, SizeOf(dwSize));  // copy over result data
+      Exit;
+    end;
   end;
+
+  // header may just not be there
+  dwSize  := MAXINT;  // we don't know, just return something useful
+  ASSERT( dwError = ERROR_WINHTTP_HEADER_NOT_FOUND);  // anything else would be an real error
 end;
 
 
