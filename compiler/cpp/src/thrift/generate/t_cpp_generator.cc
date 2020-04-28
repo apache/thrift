@@ -1281,8 +1281,13 @@ void t_cpp_generator::generate_struct_declaration(ostream& out,
 
   if (swap) {
     // Generate a namespace-scope swap() function
-    out << indent() << "void swap(" << tstruct->get_name() << " &a, " << tstruct->get_name()
-        << " &b);" << endl << endl;
+    if (tstruct->get_name() == "a" || tstruct->get_name() == "b") {
+      out << indent() << "void swap(" << tstruct->get_name() << " &a1, " << tstruct->get_name()
+          << " &a2);" << endl << endl;
+    } else {
+       out << indent() << "void swap(" << tstruct->get_name() << " &a, " << tstruct->get_name()
+           << " &b);" << endl << endl;
+    }
   }
 
   if (is_user_struct) {
@@ -1601,8 +1606,14 @@ void t_cpp_generator::generate_struct_result_writer(ostream& out,
  * @param tstruct The struct
  */
 void t_cpp_generator::generate_struct_swap(ostream& out, t_struct* tstruct) {
-  out << indent() << "void swap(" << tstruct->get_name() << " &a, " << tstruct->get_name()
-      << " &b) {" << endl;
+  if (tstruct->get_name() == "a" || tstruct->get_name() == "b") {
+    out << indent() << "void swap(" << tstruct->get_name() << " &a1, " << tstruct->get_name()
+        << " &a2) {" << endl; 
+  } else {
+    out << indent() << "void swap(" << tstruct->get_name() << " &a, " << tstruct->get_name()
+        << " &b) {" << endl;
+  }
+
   indent_up();
 
   // Let argument-dependent name lookup find the correct swap() function to
@@ -1617,18 +1628,32 @@ void t_cpp_generator::generate_struct_swap(ostream& out, t_struct* tstruct) {
       has_nonrequired_fields = true;
     }
 
-    out << indent() << "swap(a." << tfield->get_name() << ", b." << tfield->get_name() << ");"
-        << endl;
+    if (tstruct->get_name() == "a" || tstruct->get_name() == "b") {
+      out << indent() << "swap(a1." << tfield->get_name() << ", a2." << tfield->get_name() << ");"
+          << endl;
+    } else {
+      out << indent() << "swap(a." << tfield->get_name() << ", b." << tfield->get_name() << ");"
+          << endl;
+    }
   }
 
   if (has_nonrequired_fields) {
-    out << indent() << "swap(a.__isset, b.__isset);" << endl;
+    if (tstruct->get_name() == "a" || tstruct->get_name() == "b") {
+      out << indent() << "swap(a1.__isset, a2.__isset);" << endl; 
+    } else {
+      out << indent() << "swap(a.__isset, b.__isset);" << endl;
+    }
   }
 
   // handle empty structs
   if (fields.size() == 0) {
-    out << indent() << "(void) a;" << endl;
-    out << indent() << "(void) b;" << endl;
+    if (tstruct->get_name() == "a" || tstruct->get_name() == "b") {
+      out << indent() << "(void) a1;" << endl;
+      out << indent() << "(void) a2;" << endl;
+    } else {
+      out << indent() << "(void) a;" << endl;
+      out << indent() << "(void) b;" << endl;
+    }
   }
 
   scope_down(out);
