@@ -20,6 +20,7 @@
 package org.apache.thrift.utils;
 
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
 
 public class TestStringUtils {
@@ -31,4 +32,28 @@ public class TestStringUtils {
     Assert.assertEquals("EFAB92", StringUtils.bytesToHexString(bytes, 2, 3));
     Assert.assertNull(StringUtils.bytesToHexString(null));
   }
+
+
+  private byte[] bytes;
+
+  @Before
+  public void setUp() throws Exception {
+    bytes = new byte[]{1, 2, 3, 4, 5};
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void testNegativeLength() {
+    StringUtils.bytesToHexString(bytes, 0, -1);
+  }
+
+  @Test(expected = IndexOutOfBoundsException.class)
+  public void testNegativeStartOffset() {
+    StringUtils.bytesToHexString(bytes, -1, 1);
+  }
+
+  @Test(expected = IndexOutOfBoundsException.class)
+  public void testInvalidRange() {
+    StringUtils.bytesToHexString(bytes, 5, 1);
+  }
+
 }
