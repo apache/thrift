@@ -56,6 +56,13 @@ set(crossstressgencpp_SOURCES
 add_library(crossstressgencpp STATIC ${crossstressgencpp_SOURCES})
 LINK_AGAINST_THRIFT_LIBRARY(crossstressgencpp thrift)
 
+set(crossspecificnamegencpp_SOURCES
+    gen-cpp/EchoService.cpp 
+    gen-cpp/SpecificNameTest_types.cpp
+)
+add_library(crossspecificnamegencpp STATIC ${crossspecificnamegencpp_SOURCES})
+LINK_AGAINST_THRIFT_LIBRARY(crossspecificnamegencpp thrift)
+
 add_executable(TestServer src/TestServer.cpp)
 target_link_libraries(TestServer crosstestgencpp ${Boost_LIBRARIES} ${LIBEVENT_LIB})
 LINK_AGAINST_THRIFT_LIBRARY(TestServer thrift)
@@ -86,6 +93,12 @@ if (NOT WIN32 AND NOT CYGWIN)
     add_test(NAME StressTestNonBlocking COMMAND StressTestNonBlocking)
 endif()
 
+add_executable(SpecificNameTest src/SpecificNameTest.cpp)
+target_link_libraries(SpecificNameTest crossspecificnamegencpp ${Boost_LIBRARIES} ${LIBEVENT_LIB})
+LINK_AGAINST_THRIFT_LIBRARY(SpecificNameTest thrift)
+LINK_AGAINST_THRIFT_LIBRARY(SpecificNameTest thriftnb)
+add_test(NAME SpecificNameTest COMMAND SpecificNameTest)
+
 #
 # Common thrift code generation rules
 #
@@ -96,4 +109,8 @@ add_custom_command(OUTPUT gen-cpp/SecondService.cpp gen-cpp/SecondService.h gen-
 
 add_custom_command(OUTPUT gen-cpp/Service.cpp
     COMMAND ${THRIFT_COMPILER} --gen cpp ${PROJECT_SOURCE_DIR}/test/StressTest.thrift
+)
+
+add_custom_command(OUTPUT gen-cpp/EchoService.cpp gen-cpp/SpecificNameTest_types.cpp
+    COMMAND ${THRIFT_COMPILER} --gen cpp ${PROJECT_SOURCE_DIR}/test/SpecificNameTest.thrift
 )

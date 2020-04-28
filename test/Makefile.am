@@ -167,6 +167,7 @@ EXTRA_DIST = \
 	ThriftTest.thrift \
 	TypedefTest.thrift \
 	UnsafeTypes.thrift \
+	SpecificNameTest.thrift \
 	known_failures_Linux.json \
 	test.py \
 	tests.json \
