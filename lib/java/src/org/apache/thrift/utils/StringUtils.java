@@ -55,6 +55,9 @@ public final class StringUtils {
     if (offset < 0) {
       throw new IndexOutOfBoundsException("Negative start offset " + offset);
     }
+    if (length > bytes.length - offset) {
+      throw new IndexOutOfBoundsException("Invalid range, bytes.length: " + bytes.length + " offset: " + offset + " length: " + length);
+    }
     char[] chars = new char[length * 2];
     for (int i = 0; i < length; i++) {
       int unsignedInt = bytes[i + offset] & 0xFF;
