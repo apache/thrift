@@ -7,7 +7,7 @@
 - [ ] If a ticket exists: Does your pull request title follow the pattern "THRIFT-NNNN: describe my issue"?
 - [ ] Did you squash your changes to a single commit?  (not required, but preferred)
 - [ ] Did you do your best to avoid breaking changes?  If one was needed, did you label the Jira ticket with "Breaking-Change"?
-- [ ] If your change does not involve any code, add ` [skip ci]` at the end of your pull request to free up build resources.
+- [ ] If your change does not involve any code, include `[skip ci]` anywhere in the commit message to free up build resources.
 
 <!--
   The Contributing Guide at:
