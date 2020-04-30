@@ -68,3 +68,42 @@ var (
 	_ TProcessorFunction = WrappedTProcessorFunction{}
 	_ TProcessorFunction = (*WrappedTProcessorFunction)(nil)
 )
+
+// ClientMiddleware can be passed to WrapClient in order to wrap TClient calls
+// with custom middleware.
+type ClientMiddleware func(TClient) TClient
+
+// WrappedTClient is a convenience struct that implements the TClient interface
+// using inner Wrapped function.
+//
+// This is provided to aid in developing ClientMiddleware.
+type WrappedTClient struct {
+	Wrapped func(ctx context.Context, method string, args, result TStruct) error
+}
+
+// Call implements the TClient interface by calling and returning c.Wrapped.
+func (c WrappedTClient) Call(ctx context.Context, method string, args, result TStruct) error {
+	return c.Wrapped(ctx, method, args, result)
+}
+
+// verify that WrappedTClient implements TClient
+var (
+	_ TClient = WrappedTClient{}
+	_ TClient = (*WrappedTClient)(nil)
+)
+
+// WrapClient wraps the given TClient in the given middlewares.
+//
+// Middlewares will be called in the order that they are defined:
+//
+//		1. Middlewares[0]
+//		2. Middlewares[1]
+//		...
+//		N. Middlewares[n]
+func WrapClient(client TClient, middlewares ...ClientMiddleware) TClient {
+	// Add middlewares in reverse so the first in the list is the outermost.
+	for i := len(middlewares) - 1; i >= 0; i-- {
+		client = middlewares[i](client)
+	}
+	return client
+}
