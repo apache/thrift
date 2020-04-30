@@ -59,6 +59,8 @@ func simpleClientLoggingMiddleware(next TClient) TClient {
 	}
 }
 
+// This example demonstrates how to define and use a simple logging middleware
+// to your thrift client.
 func ExampleClientMiddleware() {
 	var (
 		trans        TTransport

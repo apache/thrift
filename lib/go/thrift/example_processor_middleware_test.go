@@ -24,7 +24,7 @@ import (
 	"log"
 )
 
-func simpleProcessorLoggingMiddleware(name string, next TProcessorFunction) TProcessorFunction {
+func SimpleProcessorLoggingMiddleware(name string, next TProcessorFunction) TProcessorFunction {
 	return WrappedTProcessorFunction{
 		Wrapped: func(ctx context.Context, seqId int32, in, out TProtocol) (bool, TException) {
 			log.Printf("Before: %q", name)
@@ -39,6 +39,8 @@ func simpleProcessorLoggingMiddleware(name string, next TProcessorFunction) TPro
 	}
 }
 
+// This example demonstrates how to define and use a simple logging middleware
+// to your thrift server/processor.
 func ExampleProcessorMiddleware() {
 	var (
 		processor    TProcessor
@@ -46,7 +48,7 @@ func ExampleProcessorMiddleware() {
 		transFactory TTransportFactory
 		protoFactory TProtocolFactory
 	)
-	processor = WrapProcessor(processor, simpleProcessorLoggingMiddleware)
+	processor = WrapProcessor(processor, SimpleProcessorLoggingMiddleware)
 	server := NewTSimpleServer4(processor, trans, transFactory, protoFactory)
 	log.Fatal(server.Serve())
 }
