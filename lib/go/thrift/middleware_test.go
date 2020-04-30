@@ -32,7 +32,15 @@ func (c *counter) incr() {
 	c.count++
 }
 
-func testMiddleware(c *counter) ProcessorMiddleware {
+func newCounter(t *testing.T) *counter {
+	c := counter{}
+	if c.count != 0 {
+		t.Fatal("Unexpected initial count.")
+	}
+	return &c
+}
+
+func testProcessorMiddleware(c *counter) ProcessorMiddleware {
 	return func(name string, next TProcessorFunction) TProcessorFunction {
 		return WrappedTProcessorFunction{
 			Wrapped: func(ctx context.Context, seqId int32, in, out TProtocol) (bool, TException) {
@@ -43,12 +51,15 @@ func testMiddleware(c *counter) ProcessorMiddleware {
 	}
 }
 
-func newCounter(t *testing.T) *counter {
-	c := counter{}
-	if c.count != 0 {
-		t.Fatal("Unexpected initial count.")
+func testClientMiddleware(c *counter) ClientMiddleware {
+	return func(next TClient) TClient {
+		return WrappedTClient{
+			Wrapped: func(ctx context.Context, method string, args, result TStruct) error {
+				c.incr()
+				return next.Call(ctx, method, args, result)
+			},
+		}
 	}
-	return &c
 }
 
 func TestWrapProcessor(t *testing.T) {
@@ -64,7 +75,7 @@ func TestWrapProcessor(t *testing.T) {
 	}
 	c := newCounter(t)
 	ctx := setMockWrappableProcessorName(context.Background(), name)
-	wrapped := WrapProcessor(processor, testMiddleware(c))
+	wrapped := WrapProcessor(processor, testProcessorMiddleware(c))
 	wrapped.Process(ctx, nil, nil)
 	if c.count != 1 {
 		t.Fatalf("Unexpected count value %v", c.count)
@@ -94,7 +105,7 @@ func TestWrapTMultiplexedProcessor(t *testing.T) {
 			},
 		},
 	})
-	wrapped := WrapProcessor(processor, testMiddleware(c))
+	wrapped := WrapProcessor(processor, testProcessorMiddleware(c))
 	ctx := setMockWrappableProcessorName(context.Background(), name)
 	in := NewStoredMessageProtocol(nil, name, 1, 1)
 	wrapped.Process(ctx, in, nil)
@@ -105,6 +116,20 @@ func TestWrapTMultiplexedProcessor(t *testing.T) {
 	in = NewStoredMessageProtocol(nil, processorName+MULTIPLEXED_SEPARATOR+name, 1, 1)
 	wrapped.Process(ctx, in, nil)
 	if c.count != 2 {
+		t.Fatalf("Unexpected count value %v", c.count)
+	}
+}
+
+func TestWrapClient(t *testing.T) {
+	client := WrappedTClient{
+		Wrapped: func(ctx context.Context, method string, args, result TStruct) error {
+			return nil
+		},
+	}
+	c := newCounter(t)
+	wrapped := WrapClient(client, testClientMiddleware(c))
+	wrapped.Call(context.Background(), "test", nil, nil)
+	if c.count != 1 {
 		t.Fatalf("Unexpected count value %v", c.count)
 	}
 }

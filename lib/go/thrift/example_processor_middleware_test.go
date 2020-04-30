@@ -24,7 +24,7 @@ import (
 	"log"
 )
 
-func simpleLoggingMiddleware(name string, next TProcessorFunction) TProcessorFunction {
+func simpleProcessorLoggingMiddleware(name string, next TProcessorFunction) TProcessorFunction {
 	return WrappedTProcessorFunction{
 		Wrapped: func(ctx context.Context, seqId int32, in, out TProtocol) (bool, TException) {
 			log.Printf("Before: %q", name)
@@ -46,7 +46,7 @@ func ExampleProcessorMiddleware() {
 		transFactory TTransportFactory
 		protoFactory TProtocolFactory
 	)
-	processor = WrapProcessor(processor, simpleLoggingMiddleware)
+	processor = WrapProcessor(processor, simpleProcessorLoggingMiddleware)
 	server := NewTSimpleServer4(processor, trans, transFactory, protoFactory)
 	log.Fatal(server.Serve())
 }
