@@ -90,6 +90,8 @@ public:
         gen_no_ostream_operators_ = true;
       } else if ( iter->first.compare("no_skeleton") == 0) {
         gen_no_skeleton_ = true;
+      } else if ( iter->first.compare("multiline_namespace") == 0) {
+        multiline_namespace_ = true;
       } else {
         throw "unknown option cpp:" + iter->first;
       }
@@ -362,6 +364,11 @@ private:
    * True if thrift has member(s)
    */
   bool has_members_;
+
+  /**
+   * True if thrift want to generate multi-line namespace style code
+   */
+  bool multiline_namespace_;
 
   /**
    * Strings for namespace, computed once up front then used directly
@@ -1816,9 +1823,13 @@ void t_cpp_generator::generate_service(t_service* tservice) {
             << endl;
   if (gen_cob_style_) {
     f_header_ << "#include <thrift/transport/TBufferTransports.h>" << endl // TMemoryBuffer
-              << "#include <functional>" << endl 
-              << "namespace apache { namespace thrift { namespace async {" << endl
-              << "class TAsyncChannel;" << endl << "}}}" << endl;
+              << "#include <functional>" << endl;
+    if(multiline_namespace_) {
+      f_header_ << "namespace apache { " << endl << "namespace thrift { " << endl << "namespace async {" << endl; 
+    } else {
+      f_header_ << "namespace apache { namespace thrift { namespace async {" << endl; 
+    }
+    f_header_ << "class TAsyncChannel;" << endl << "}}}" << endl;
   }
   f_header_ << "#include <thrift/TDispatchProcessor.h>" << endl;
   if (gen_cob_style_) {
@@ -4265,8 +4276,12 @@ string t_cpp_generator::namespace_open(string ns) {
     result += separator;
     result += "namespace ";
     result += ns.substr(0, loc);
-    result += " {";
-    separator = " ";
+    if (multiline_namespace_) {
+      result += " {\n";
+    } else {
+      result += " {";
+      separator = " "; 
+    } 
     ns = ns.substr(loc + 1);
   }
   if (ns.size() > 0) {
@@ -4631,4 +4646,6 @@ THRIFT_REGISTER_GENERATOR(
     "    moveable_types:  Generate move constructors and assignment operators.\n"
     "    no_ostream_operators:\n"
     "                     Omit generation of ostream definitions.\n"
-    "    no_skeleton:     Omits generation of skeleton.\n")
+    "    no_skeleton:     Omits generation of skeleton.\n"
+    "    multiline_namespace:\n"
+    "                     Generate multi-line namespace style.\n")
