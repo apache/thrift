@@ -53,6 +53,7 @@ class TWebSocketServer : public THttpServer {
 public:
   TWebSocketServer(std::shared_ptr<TTransport> transport)
     : THttpServer(transport) {
+      resetHandshake();
   }
 
   ~TWebSocketServer() override = default;
