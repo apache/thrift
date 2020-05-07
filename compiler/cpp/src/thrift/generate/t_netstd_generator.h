@@ -159,4 +159,5 @@ private:
   void prepare_member_name_mapping(void* scope, const vector<t_field*>& members, const string& structname);
   void cleanup_member_name_mapping(void* scope);
   string get_mapped_member_name(string oldname);
+  void reset_indent();
 };
