@@ -316,8 +316,16 @@ void t_netstd_generator::init_keywords()
     netstd_keywords["when"] = 1;
 }
 
+void t_netstd_generator::reset_indent() {
+  while( indent_count() > 0) { 
+    indent_down(); 
+  }
+}
+
+
 void t_netstd_generator::start_netstd_namespace(ostream& out)
 {
+    out << "#pragma warning disable IDE1006  // parts of the code use IDL spelling" << endl;
     if (!namespace_name_.empty())
     {
         out << "namespace " << namespace_name_ << endl;
@@ -331,6 +339,7 @@ void t_netstd_generator::end_netstd_namespace(ostream& out)
     {
         scope_down(out);
     }
+    out << "#pragma warning restore IDE1006" << endl;
 }
 
 string t_netstd_generator::netstd_type_usings() const
@@ -394,6 +403,7 @@ void t_netstd_generator::generate_enum(t_enum* tenum)
 
 void t_netstd_generator::generate_enum(ostream& out, t_enum* tenum)
 {
+    reset_indent();
     out << autogen_comment() << endl;
 
     start_netstd_namespace(out);
@@ -439,6 +449,7 @@ void t_netstd_generator::generate_consts(ostream& out, vector<t_const*> consts)
         return;
     }
 
+    reset_indent();
     out << autogen_comment() << netstd_type_usings() << endl;
 
     start_netstd_namespace(out);
@@ -676,6 +687,7 @@ void t_netstd_generator::generate_netstd_struct(t_struct* tstruct, bool is_excep
 
     f_struct.open(f_struct_name.c_str());
 
+  reset_indent();
     f_struct << autogen_comment() << netstd_type_usings() << netstd_thrift_usings() << endl;
 
     generate_netstd_struct_definition(f_struct, tstruct, is_exception);
@@ -1200,11 +1212,12 @@ void t_netstd_generator::generate_netstd_struct_tostring(ostream& out, t_struct*
     vector<t_field*>::const_iterator f_iter;
 
     bool useFirstFlag = false;
+    string tmp_count = tmp("tmp");
     for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter)
     {
         if (!field_is_required((*f_iter)))
         {
-            out << indent() << "bool __first = true;" << endl;
+            out << indent() << "int " << tmp_count.c_str() << " = 0;" << endl;
             useFirstFlag = true;
         }
         break;
@@ -1234,11 +1247,7 @@ void t_netstd_generator::generate_netstd_struct_tostring(ostream& out, t_struct*
 
         if (useFirstFlag && (!had_required))
         {
-            out << indent() << "if(!__first) { sb.Append(\", \"); }" << endl;
-            if (!is_required)
-            {
-                out << indent() << "__first = false;" << endl;
-            }
+            out << indent() << "if(0 < " << tmp_count.c_str() << (is_required ? "" : "++") << ") { sb.Append(\", \"); }" << endl;
             out << indent() << "sb.Append(\"" << prop_name(*f_iter) << ": \");" << endl;
         }
         else
@@ -1255,7 +1264,7 @@ void t_netstd_generator::generate_netstd_struct_tostring(ostream& out, t_struct*
         }
         else
         {
-            had_required = true; // now __first must be false, so we don't need to check it anymore
+            had_required = true; // now __count must be > 0, so we don't need to check it anymore
         }
     }
 
@@ -1274,6 +1283,7 @@ void t_netstd_generator::generate_netstd_union(t_struct* tunion)
 
     f_union.open(f_union_name.c_str());
 
+    reset_indent();
     f_union << autogen_comment() << netstd_type_usings() << netstd_thrift_usings() << endl;
 
     generate_netstd_union_definition(f_union, tunion);
@@ -1403,9 +1413,9 @@ void t_netstd_generator::generate_netstd_struct_equals(ostream& out, t_struct* t
     out << indent() << "public override bool Equals(object that)" << endl
         << indent() << "{" << endl;
     indent_up();
-    out << indent() << "var other = that as " << check_and_correct_struct_name(normalize_name(tstruct->get_name())) << ";" << endl
-        << indent() << "if (other == null) return false;" << endl
+    out << indent() << "if (!(that is " << check_and_correct_struct_name(normalize_name(tstruct->get_name())) << " other)) return false;" << endl
         << indent() << "if (ReferenceEquals(this, other)) return true;" << endl;
+
 
     const vector<t_field*>& fields = tstruct->get_members();
     vector<t_field*>::const_iterator f_iter;
@@ -1488,7 +1498,7 @@ void t_netstd_generator::generate_netstd_struct_hashcode(ostream& out, t_struct*
         else
         {
             out << prop_name((*f_iter)) << ".GetHashCode()";
-        }	
+        }
         out << ";" << endl;
 
         if (!field_is_required((*f_iter)))
@@ -1513,6 +1523,7 @@ void t_netstd_generator::generate_service(t_service* tservice)
     ofstream_with_content_based_conditional_update f_service;
     f_service.open(f_service_name.c_str());
 
+    reset_indent();
     f_service << autogen_comment() << netstd_type_usings() << netstd_thrift_usings() << endl;
 
     start_netstd_namespace(f_service);
@@ -1641,9 +1652,11 @@ void t_netstd_generator::generate_service_client(ostream& out, t_service* tservi
         string argsname = (*functions_iterator)->get_name() + "Args";
 
         out << indent() << "await OutputProtocol.WriteMessageBeginAsync(new TMessage(\"" << function_name
-            << "\", " << ((*functions_iterator)->is_oneway() ? "TMessageType.Oneway" : "TMessageType.Call") << ", SeqId), cancellationToken);" << endl
+            << "\", TMessageType." << ((*functions_iterator)->is_oneway() ? "Oneway" : "Call") 
+            << ", SeqId), cancellationToken);" << endl
             << indent() << endl
-            << indent() << "var args = new " << argsname << "();" << endl;
+            << indent() << "var args = new " << argsname << "() {" << endl;
+        indent_up();
 
         t_struct* arg_struct = (*functions_iterator)->get_arglist();
         prepare_member_name_mapping(arg_struct);
@@ -1652,8 +1665,12 @@ void t_netstd_generator::generate_service_client(ostream& out, t_service* tservi
 
         for (fld_iter = fields.begin(); fld_iter != fields.end(); ++fld_iter)
         {
-            out << indent() << "args." << prop_name(*fld_iter) << " = " << normalize_name((*fld_iter)->get_name()) << ";" << endl;
+            out << indent() << prop_name(*fld_iter) << " = " << normalize_name((*fld_iter)->get_name()) << "," << endl;
         }
+
+        indent_down();
+        out << indent() << "};" << endl;
+
 
         out << indent() << endl
             << indent() << "await args.WriteAsync(OutputProtocol, cancellationToken);" << endl
@@ -1749,7 +1766,7 @@ void t_netstd_generator::generate_service_server(ostream& out, t_service* tservi
 
     indent_up();
 
-    out << indent() << "private IAsync _iAsync;" << endl
+    out << indent() << "private readonly IAsync _iAsync;" << endl
         << endl
         << indent() << "public AsyncProcessor(IAsync iAsync)";
 
@@ -1762,10 +1779,7 @@ void t_netstd_generator::generate_service_server(ostream& out, t_service* tservi
         << indent() << "{" << endl;
     indent_up();
 
-    out << indent() << "if (iAsync == null) throw new ArgumentNullException(nameof(iAsync));" << endl
-        << endl
-        << indent() << "_iAsync = iAsync;" << endl;
-
+    out << indent() << "_iAsync = iAsync ?? throw new ArgumentNullException(nameof(iAsync));" << endl;
     for (f_iter = functions.begin(); f_iter != functions.end(); ++f_iter)
     {
         string function_name = (*f_iter)->get_name();
@@ -1818,8 +1832,7 @@ void t_netstd_generator::generate_service_server(ostream& out, t_service* tservi
     indent_up();
     out << indent() << "var msg = await iprot.ReadMessageBeginAsync(cancellationToken);" << endl
         << endl
-        << indent() << "ProcessFunction fn;" << endl
-        << indent() << "processMap_.TryGetValue(msg.Name, out fn);" << endl
+        << indent() << "processMap_.TryGetValue(msg.Name, out ProcessFunction fn);" << endl
         << endl
         << indent() << "if (fn == null)" << endl
         << indent() << "{" << endl;
@@ -2856,7 +2869,7 @@ string t_netstd_generator::function_signature_async(t_function* tfunction, strin
     {
         result += ", ";
     }
-    result += "CancellationToken cancellationToken = default(CancellationToken))";
+    result += "CancellationToken cancellationToken = default)";
 
     return result;
 }
