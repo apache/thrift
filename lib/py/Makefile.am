@@ -27,6 +27,7 @@ py3-test: py3-build
 	$(PYTHON3) test/thrift_transport.py
 	$(PYTHON3) test/test_sslsocket.py
 	$(PYTHON3) test/thrift_TBinaryProtocol.py
+	$(PYTHON3) test/thrift_TZlibTransport.py
 else
 py3-build:
 py3-test:
@@ -47,6 +48,7 @@ check-local: all py3-test
 	$(PYTHON) test/thrift_transport.py
 	$(PYTHON) test/test_sslsocket.py
 	$(PYTHON) test/thrift_TBinaryProtocol.py
+	$(PYTHON) test/thrift_TZlibTransport.py
 
 clean-local:
 	$(RM) -r build
