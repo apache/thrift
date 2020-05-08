@@ -328,7 +328,8 @@ class TSocket extends TTransport
             if ($writable > 0) {
                 // write buffer to stream
                 $written = fwrite($this->handle_, $buf);
-                if ($written === -1 || $written === false) {
+                $closed_socket = $written === 0 && feof($this->handle_);
+                if ($written === -1 || $written === false || $closed_socket) {
                     throw new TTransportException(
                         'TSocket: Could not write ' . TStringFuncFactory::create()->strlen($buf) . ' bytes ' .
                         $this->host_ . ':' . $this->port_
