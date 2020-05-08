@@ -2199,7 +2199,7 @@ void t_cpp_generator::generate_service_async_skeleton(t_service* tservice) {
              << "public " << svcname << "CobSvIf {" << endl << " public:" << endl;
   indent_up();
   f_skeleton << indent() << svcname << "AsyncHandler() {" << endl << indent()
-             << "  syncHandler_ = std::auto_ptr<" << svcname << "Handler>(new " << svcname
+             << "  syncHandler_ = std::unique_ptr<" << svcname << "Handler>(new " << svcname
              << "Handler);" << endl << indent() << "  // Your initialization goes here" << endl
              << indent() << "}" << endl;
   f_skeleton << indent() << "virtual ~" << service_name_ << "AsyncHandler();" << endl;
@@ -2223,7 +2223,7 @@ void t_cpp_generator::generate_service_async_skeleton(t_service* tservice) {
 
     scope_down(f_skeleton);
   }
-  f_skeleton << endl << " protected:" << endl << indent() << "std::auto_ptr<" << svcname
+  f_skeleton << endl << " protected:" << endl << indent() << "std::unique_ptr<" << svcname
              << "Handler> syncHandler_;" << endl;
   indent_down();
   f_skeleton << "};" << endl << endl;
