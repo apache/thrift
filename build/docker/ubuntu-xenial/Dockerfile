@@ -17,7 +17,7 @@
 # - dart: does not come with Ubuntu so we're installing 2.0.0-1 for coverage
 # - dotnet: does not come with Ubuntu
 # - go: Xenial comes with 1.6, but we need 1.10 or later
-# - nodejs: Xenial comes with 4.2.6 which exits LTS April 2018, so we're installing 8.x
+# - nodejs: Xenial comes with 4.2.6 which exits LTS April 2018, so we're installing 10.x
 # - ocaml: causes stack overflow error, just started March 2018 not sure why
 #
 
@@ -54,7 +54,7 @@ RUN apt-get update && \
 
 # node.js
     curl -sL https://deb.nodesource.com/gpgkey/nodesource.gpg.key | apt-key add - && \
-    echo "deb https://deb.nodesource.com/node_8.x xenial main" | tee /etc/apt/sources.list.d/nodesource.list &&\
+    echo "deb https://deb.nodesource.com/node_10.x xenial main" | tee /etc/apt/sources.list.d/nodesource.list && \
 
 # ruby 2.4
     apt-add-repository ppa:brightbox/ruby-ng
