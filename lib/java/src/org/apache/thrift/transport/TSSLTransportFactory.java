@@ -172,7 +172,7 @@ public class TSSLTransportFactory {
    */
   public static TSocket getClientSocket(String host, int port, int timeout, TSSLTransportParameters params) throws TTransportException {
     if (params == null || !(params.isKeyStoreSet || params.isTrustStoreSet)) {
-      throw new TTransportException("Either one of the KeyStore or TrustStore must be set for SSLTransportParameters");
+      throw new TTransportException(TTransportException.NOT_OPEN, "Either one of the KeyStore or TrustStore must be set for SSLTransportParameters");
     }
 
     SSLContext ctx = createSSLContext(params);
@@ -225,7 +225,7 @@ public class TSSLTransportFactory {
       }
 
     } catch (Exception e) {
-      throw new TTransportException("Error creating the transport", e);
+      throw new TTransportException(TTransportException.NOT_OPEN, "Error creating the transport", e);
     } finally {
       if (in != null) {
         try {
@@ -275,8 +275,10 @@ public class TSSLTransportFactory {
       SSLSocket socket = (SSLSocket) factory.createSocket(host, port);
       socket.setSoTimeout(timeout);
       return new TSocket(socket);
+    } catch (TTransportException tte) {
+      throw tte;
     } catch (Exception e) {
-      throw new TTransportException("Could not connect to " + host + " on port " + port, e);
+      throw new TTransportException(TTransportException.NOT_OPEN, "Could not connect to " + host + " on port " + port, e);
     }
   }
 
