@@ -20,7 +20,6 @@
 package org.apache.thrift;
 
 import java.io.ByteArrayOutputStream;
-import java.io.UnsupportedEncodingException;
 
 import org.apache.thrift.protocol.TBinaryProtocol;
 import org.apache.thrift.protocol.TProtocol;
@@ -80,22 +79,6 @@ public class TSerializer {
     baos_.reset();
     base.write(protocol_);
     return baos_.toByteArray();
-  }
-
-  /**
-   * Serialize the Thrift object into a Java string, using a specified
-   * character set for encoding.
-   *
-   * @param base The object to serialize
-   * @param charset Valid JVM charset
-   * @return Serialized object as a String
-   */
-  public String toString(TBase base, String charset) throws TException {
-    try {
-      return new String(serialize(base), charset);
-    } catch (UnsupportedEncodingException uex) {
-      throw new TException("JVM DOES NOT SUPPORT ENCODING: " + charset);
-    }
   }
 
   /**
