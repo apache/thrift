@@ -87,7 +87,7 @@ libthrift_la_SOURCES = src/thrift/TApplicationException.cpp \
                        src/thrift/transport/TNonblockingSSLServerSocket.cpp \
                        src/thrift/transport/TTransportUtils.cpp \
                        src/thrift/transport/TBufferTransports.cpp \
-		               src/thrift/transport/TWebSocketServer.cpp \
+                       src/thrift/transport/TWebSocketServer.cpp \
                        src/thrift/server/TConnectedClient.cpp \
                        src/thrift/server/TServer.cpp \
                        src/thrift/server/TServerFramework.cpp \
@@ -201,7 +201,7 @@ include_transport_HEADERS = \
                          src/thrift/transport/TBufferTransports.h \
                          src/thrift/transport/TShortReadTransport.h \
                          src/thrift/transport/TZlibTransport.h \
-			             src/thrift/transport/TWebSocketServer.h
+                         src/thrift/transport/TWebSocketServer.h
 
 include_serverdir = $(include_thriftdir)/server
 include_server_HEADERS = \
