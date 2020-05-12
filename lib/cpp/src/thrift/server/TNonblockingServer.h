@@ -173,6 +173,9 @@ private:
   // Index of next IO Thread to be used (for round-robin)
   uint32_t nextIOThread_;
 
+  // Synchronizes access to ioThreads_ vector
+  Mutex ioThreadsMutex_;
+
   // Synchronizes access to connection stack and similar data
   Mutex connMutex_;
 

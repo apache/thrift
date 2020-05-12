@@ -1077,6 +1077,8 @@ void TNonblockingServer::expireClose(std::shared_ptr<Runnable> task) {
 }
 
 void TNonblockingServer::stop() {
+  Guard g(ioThreadsMutex_);
+
   // Breaks the event loop in all threads so that they end ASAP.
   for (auto & ioThread : ioThreads_) {
     ioThread->stop();
@@ -1104,6 +1106,8 @@ void TNonblockingServer::registerEvents(event_base* user_event_base) {
 
     shared_ptr<TNonblockingIOThread> thread(
         new TNonblockingIOThread(this, id, listenFd, useHighPriorityIOThreads_));
+
+    Guard g(ioThreadsMutex_);
     ioThreads_.push_back(thread);
   }
 
@@ -1175,6 +1179,8 @@ TNonblockingIOThread::TNonblockingIOThread(TNonblockingServer* server,
     notificationEvent_{} {
   notificationPipeFDs_[0] = -1;
   notificationPipeFDs_[1] = -1;
+
+  createNotificationPipe();
 }
 
 TNonblockingIOThread::~TNonblockingIOThread() {
@@ -1269,8 +1275,6 @@ void TNonblockingIOThread::registerEvents() {
     }
     GlobalOutput.printf("TNonblocking: IO thread #%d registered for listen.", number_);
   }
-
-  createNotificationPipe();
 
   // Create an event to be notified when a task finishes
   event_set(&notificationEvent_,
