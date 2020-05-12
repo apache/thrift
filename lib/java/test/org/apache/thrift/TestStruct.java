@@ -18,6 +18,14 @@
  */
 package org.apache.thrift;
 
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.ObjectInputStream;
@@ -26,8 +34,6 @@ import java.nio.ByteBuffer;
 import java.util.HashMap;
 import java.util.Map;
 
-import junit.framework.TestCase;
-
 import org.apache.thrift.meta_data.FieldMetaData;
 import org.apache.thrift.meta_data.ListMetaData;
 import org.apache.thrift.meta_data.MapMetaData;
@@ -35,6 +41,7 @@ import org.apache.thrift.meta_data.SetMetaData;
 import org.apache.thrift.meta_data.StructMetaData;
 import org.apache.thrift.protocol.TBinaryProtocol;
 import org.apache.thrift.protocol.TType;
+import org.junit.Test;
 
 import thrift.test.Bonk;
 import thrift.test.CrazyNesting;
@@ -48,7 +55,9 @@ import thrift.test.StructA;
 import thrift.test.StructB;
 import thrift.test.Xtruct;
 
-public class TestStruct extends TestCase {
+public class TestStruct {
+
+  @Test
   public void testIdentity() throws Exception {
     TSerializer   binarySerializer   = new   TSerializer(new TBinaryProtocol.Factory());
     TDeserializer binaryDeserializer = new TDeserializer(new TBinaryProtocol.Factory());
@@ -96,6 +105,7 @@ public class TestStruct extends TestCase {
     assertEquals(hm.hashCode(), hm2.hashCode());
   }
 
+  @Test
   public void testDeepCopy() throws Exception {
     TSerializer   binarySerializer   = new   TSerializer(new TBinaryProtocol.Factory());
     TDeserializer binaryDeserializer = new TDeserializer(new TBinaryProtocol.Factory());
@@ -121,6 +131,7 @@ public class TestStruct extends TestCase {
     assertFalse(hm.equals(hmCopy2));
   }
 
+  @Test
   public void testCompareTo() throws Exception {
     Bonk bonk1 = new Bonk();
     Bonk bonk2 = new Bonk();
@@ -150,6 +161,7 @@ public class TestStruct extends TestCase {
     assertEquals(0, bonk1.compareTo(bonk2));
   }
 
+  @Test
   public void testCompareToWithDataStructures() {
     Insanity insanity1 = new Insanity();
     Insanity insanity2 = new Insanity();
@@ -198,6 +210,7 @@ public class TestStruct extends TestCase {
     assertEquals(insanity1 + " should be equal to " + insanity2 + ", but is: " + compareTo, 0, compareTo);
   }
 
+  @Test
   public void testMetaData() throws Exception {
     Map<CrazyNesting._Fields, FieldMetaData> mdMap = CrazyNesting.metaDataMap;
 
@@ -251,6 +264,7 @@ public class TestStruct extends TestCase {
     assertFalse(vmd.keyMetaData.isTypedef());
   }
 
+  @Test
   public void testToString() throws Exception {
     JavaTestHelper object = new JavaTestHelper();
     object.req_int = 0;
@@ -308,12 +322,7 @@ public class TestStruct extends TestCase {
         object.toString());
   }
 
-  private static void assertArrayEquals(byte[] expected, byte[] actual) {
-    if (!java.util.Arrays.equals(expected, actual)) {
-      fail("Expected byte array did not match actual.");
-    }
-  }
-
+  @Test
   public void testBytesBufferFeatures() throws Exception {
     
     final String testString = "testBytesBufferFeatures";
@@ -344,10 +353,11 @@ public class TestStruct extends TestCase {
     assertArrayEquals(testString.getBytes(), o.getReq_bin());
   }
 
+  @Test
   public void testJavaSerializable() throws Exception {
     ByteArrayOutputStream baos = new ByteArrayOutputStream();
     ObjectOutputStream oos = new ObjectOutputStream(baos);
-    
+
     OneOfEach ooe = Fixtures.oneOfEach;
 
     // Serialize ooe the Java way...
@@ -362,6 +372,7 @@ public class TestStruct extends TestCase {
     assertEquals(ooe, ooe2);
   }
 
+  @Test
   public void testSubStructValidation() throws Exception {
     StructA valid = new StructA("valid");
     StructA invalid = new StructA();

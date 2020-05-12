@@ -19,11 +19,16 @@
 
 package org.apache.thrift;
 
-import junit.framework.TestCase;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
 import org.apache.thrift.Option;
+import org.junit.Test;
 
 // Tests and documents behavior for the "Option<T>" type
-public class TestOptionType extends TestCase {
+public class TestOptionType {
     public void testSome() throws Exception {
         String name = "Chuck Norris";
         Option<String> option = Option.fromNullable(name);
@@ -35,6 +40,7 @@ public class TestOptionType extends TestCase {
         assertEquals(option.get(),"Chuck Norris");
     }
 
+    @Test
     public void testNone() throws Exception {
         String name = null;
         Option<String> option = Option.fromNullable(name);
@@ -54,11 +60,13 @@ public class TestOptionType extends TestCase {
         }
     }
 
+    @Test
     public void testMakeSome() throws Exception {
         Option<String> some = Option.some("wee");
         assertTrue(some instanceof Option.Some);
     }
 
+    @Test
     public void testMakeNone() throws Exception {
         Option<Integer> none = Option.none();
         assertTrue(none instanceof Option.None);

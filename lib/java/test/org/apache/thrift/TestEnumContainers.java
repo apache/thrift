@@ -19,7 +19,10 @@
 
 package org.apache.thrift;
 
-import junit.framework.TestCase;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+
 import thrift.test.enumcontainers.EnumContainersTestConstants;
 import thrift.test.enumcontainers.GodBean;
 import thrift.test.enumcontainers.GreekGodGoddess;
@@ -29,8 +32,11 @@ import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
 
-public class TestEnumContainers extends TestCase {
+import org.junit.Test;
 
+public class TestEnumContainers {
+
+    @Test
     public void testEnumContainers() throws Exception {
         final GodBean b1 = new GodBean();
         b1.addToGoddess(GreekGodGoddess.HERA);
@@ -71,6 +77,7 @@ public class TestEnumContainers extends TestCase {
         }
     }
 
+    @Test
     public void testEnumConstants() {
         assertEquals("lightning bolt", EnumContainersTestConstants.ATTRIBUTES.get(GreekGodGoddess.ZEUS));
         assertTrue(EnumContainersTestConstants.ATTRIBUTES instanceof EnumMap);

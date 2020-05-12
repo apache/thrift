@@ -18,21 +18,30 @@
  */
 package org.apache.thrift;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotSame;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+
 import java.nio.ByteBuffer;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import junit.framework.TestCase;
+import org.junit.Test;
 
-public class TestTBaseHelper extends TestCase {
+public class TestTBaseHelper {
+
+  @Test
   public void testByteArrayComparison() {
     assertTrue(TBaseHelper.compareTo(new byte[]{'a','b'}, new byte[]{'a','c'}) < 0);
   }
 
+  @Test
   public void testSets() {
     Set<String> a = new HashSet<String>();
     Set<String> b = new HashSet<String>();
@@ -56,26 +65,28 @@ public class TestTBaseHelper extends TestCase {
     assertTrue(TBaseHelper.compareTo(a, b) > 0);
   }
 
+  @Test
   public void testNestedStructures() {
     Set<List<String>> a = new HashSet<List<String>>();
     Set<List<String>> b = new HashSet<List<String>>();
 
-    a.add(Arrays.asList(new String[] {"a","b"}));
-    b.add(Arrays.asList(new String[] {"a","b", "c"}));
-    a.add(Arrays.asList(new String[] {"a","b"}));
-    b.add(Arrays.asList(new String[] {"a","b", "c"}));
+    a.add(Arrays.asList("a","b"));
+    b.add(Arrays.asList("a","b", "c"));
+    a.add(Arrays.asList("a","b"));
+    b.add(Arrays.asList("a","b", "c"));
 
     assertTrue(TBaseHelper.compareTo(a, b) < 0);
   }
 
+  @Test
   public void testMapsInSets() {
-    Set<Map<String, Long>> a = new HashSet<Map<String, Long>>();
-    Set<Map<String, Long>> b = new HashSet<Map<String, Long>>();
+    Set<Map<String, Long>> a = new HashSet<>();
+    Set<Map<String, Long>> b = new HashSet<>();
 
     assertTrue(TBaseHelper.compareTo(a, b) == 0);
 
-    Map<String, Long> innerA = new HashMap<String, Long>();
-    Map<String, Long> innerB = new HashMap<String, Long>();
+    Map<String, Long> innerA = new HashMap<>();
+    Map<String, Long> innerB = new HashMap<>();
     a.add(innerA);
     b.add(innerB);
 
@@ -85,9 +96,10 @@ public class TestTBaseHelper extends TestCase {
     assertTrue(TBaseHelper.compareTo(a, b) < 0);
   }
 
+  @Test
   public void testByteArraysInMaps() {
-    Map<byte[], Long> a = new HashMap<byte[], Long>();
-    Map<byte[], Long> b = new HashMap<byte[], Long>();
+    Map<byte[], Long> a = new HashMap<>();
+    Map<byte[], Long> b = new HashMap<>();
 
     assertTrue(TBaseHelper.compareTo(a, b) == 0);
 
@@ -98,9 +110,10 @@ public class TestTBaseHelper extends TestCase {
     assertTrue(TBaseHelper.compareTo(a, b) > 0);
   }
 
+  @Test
   public void testMapsWithNulls() {
-    Map<String, String> a = new HashMap<String, String>();
-    Map<String, String> b = new HashMap<String, String>();
+    Map<String, String> a = new HashMap<>();
+    Map<String, String> b = new HashMap<>();
     a.put("a", null);
     a.put("b", null);
     b.put("a", null);
@@ -109,6 +122,7 @@ public class TestTBaseHelper extends TestCase {
     assertTrue(TBaseHelper.compareTo(a, b) == 0);
   }
 
+  @Test
   public void testMapKeyComparison() {
     Map<String, String> a = new HashMap<String, String>();
     Map<String, String> b = new HashMap<String, String>();
@@ -118,21 +132,20 @@ public class TestTBaseHelper extends TestCase {
     assertTrue(TBaseHelper.compareTo(a, b) < 0);
   }
 
+  @Test
   public void testMapValueComparison() {
-    Map<String, String> a = new HashMap<String, String>();
-    Map<String, String> b = new HashMap<String, String>();
-    a.put("a", "b");
-    b.put("a", "a");
+    Map<String, String> a = Collections.singletonMap("a", "b");
+    Map<String, String> b = Collections.singletonMap("a", "a");
 
     assertTrue(TBaseHelper.compareTo(a, b) > 0);
   }
 
+  @Test
   public void testByteArraysInSets() {
-    Set<byte[]> a = new HashSet<byte[]>();
-    Set<byte[]> b = new HashSet<byte[]>();
+    Set<byte[]> a = new HashSet<>();
+    Set<byte[]> b = new HashSet<>();
 
-    if (TBaseHelper.compareTo(a, b) != 0)
-      throw new RuntimeException("Set compare failed:" + a + " vs. " + b);
+    assertEquals(0, TBaseHelper.compareTo(a, b));
 
     a.add(new byte[]{'a','b'});
     b.add(new byte[]{'a','b'});
@@ -141,6 +154,7 @@ public class TestTBaseHelper extends TestCase {
     assertTrue(TBaseHelper.compareTo(a, b) > 0);
   }
 
+  @Test
   public void testByteBufferToByteArray() throws Exception {
     byte[] b1 = {10,9,8,7,6,5,4,3,2,1,0};
     byte[] b2 = TBaseHelper.byteBufferToByteArray(ByteBuffer.wrap(b1));
@@ -151,10 +165,12 @@ public class TestTBaseHelper extends TestCase {
     assertEquals(ByteBuffer.wrap(b1, 1, 3), ByteBuffer.wrap(b3));
   }
 
+  @Test
   public void testRightSize() throws Exception {
     assertNull(TBaseHelper.rightSize(null));
   }
 
+  @Test
   public void testByteBufferToString() {
     byte[] array = new byte[]{1, 2, 3};
     ByteBuffer bb = ByteBuffer.wrap(array, 1, 2);
@@ -172,6 +188,7 @@ public class TestTBaseHelper extends TestCase {
     assertEquals("02 03", sb.toString());
   }
 
+  @Test
   public void testCopyBinaryWithByteBuffer() throws Exception {
     byte[] bytes = new byte[]{0, 1, 2, 3, 4, 5};
     ByteBuffer b = ByteBuffer.wrap(bytes);
@@ -198,6 +215,7 @@ public class TestTBaseHelper extends TestCase {
     assertNull(TBaseHelper.copyBinary((ByteBuffer)null));
   }
 
+  @Test
   public void testCopyBinaryWithByteArray() throws Exception {
     byte[] bytes = new byte[]{0, 1, 2, 3, 4, 5};
     byte[] copy = TBaseHelper.copyBinary(bytes);

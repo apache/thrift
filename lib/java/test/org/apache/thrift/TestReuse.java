@@ -22,36 +22,40 @@ package org.apache.thrift;
 import java.util.HashSet;
 
 import org.apache.thrift.protocol.TBinaryProtocol;
+import org.junit.Test;
 
+import org.junit.Assert;
 import thrift.test.Reuse;
 
-// Tests reusing objects for deserialization.
-//
-public class TestReuse extends TestStruct {
+/**
+ * Tests reusing objects for deserialization.
+ */
+public class TestReuse {
 
+  @Test
   public void testReuseObject() throws Exception {
     TSerializer   binarySerializer   = new   TSerializer(new TBinaryProtocol.Factory());
     TDeserializer binaryDeserializer = new TDeserializer(new TBinaryProtocol.Factory());
 
     Reuse ru1 = new Reuse();
     HashSet<String> hs1 = new HashSet<String>();
-    byte[] serBytes;    
+    byte[] serBytes;
     String st1 = new String("string1");
     String st2 = new String("string2");
 
     ru1.setVal1(11);
     ru1.setVal2(hs1);
     ru1.addToVal2(st1);
-    
+
     serBytes = binarySerializer.serialize(ru1);
 
     // update hash set after serialization
     hs1.add(st2);
 
     binaryDeserializer.deserialize(ru1, serBytes);
-   
-    assertTrue( ru1.getVal2() == hs1 );
-    assertTrue( hs1.size() == 2 );
+
+    Assert.assertEquals(hs1, ru1.getVal2());
+    Assert.assertEquals(2, hs1.size());
   }
 
 }

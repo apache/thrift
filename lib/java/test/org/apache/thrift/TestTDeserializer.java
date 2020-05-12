@@ -18,14 +18,15 @@
  */
 package org.apache.thrift;
 
-import java.nio.ByteBuffer;
+import static org.junit.Assert.assertEquals;
 
-import junit.framework.TestCase;
+import java.nio.ByteBuffer;
 
 import org.apache.thrift.protocol.TBinaryProtocol;
 import org.apache.thrift.protocol.TCompactProtocol;
 import org.apache.thrift.protocol.TJSONProtocol;
 import org.apache.thrift.protocol.TProtocolFactory;
+import org.junit.Test;
 
 import thrift.test.Backwards;
 import thrift.test.OneOfEach;
@@ -33,7 +34,7 @@ import thrift.test.PrimitiveThenStruct;
 import thrift.test.StructWithAUnion;
 import thrift.test.TestUnion;
 
-public class TestTDeserializer extends TestCase {
+public class TestTDeserializer {
 
   private static final TProtocolFactory[] PROTOCOLS = new TProtocolFactory[] {
     new TBinaryProtocol.Factory(), 
@@ -41,6 +42,7 @@ public class TestTDeserializer extends TestCase {
     new TJSONProtocol.Factory()
   };
 
+  @Test
   public void testPartialDeserialize() throws Exception {
     //Root:StructWithAUnion
     //  1:Union

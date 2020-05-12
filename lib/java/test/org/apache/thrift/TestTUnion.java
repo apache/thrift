@@ -18,6 +18,13 @@
  */
 package org.apache.thrift;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotSame;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.ObjectInputStream;
@@ -30,12 +37,11 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import junit.framework.TestCase;
-
 import org.apache.thrift.protocol.TBinaryProtocol;
 import org.apache.thrift.protocol.TProtocol;
 import org.apache.thrift.protocol.TTupleProtocol;
 import org.apache.thrift.transport.TMemoryBuffer;
+import org.junit.Test;
 
 import thrift.test.ComparableUnion;
 import thrift.test.Empty;
@@ -45,8 +51,9 @@ import thrift.test.StructWithAUnion;
 import thrift.test.TestUnion;
 import thrift.test.TestUnionMinusStringField;
 
-public class TestTUnion extends TestCase {
+public class TestTUnion {
 
+  @Test
   public void testBasic() throws Exception {
     TestUnion union = new TestUnion();
 
@@ -57,9 +64,9 @@ public class TestTUnion extends TestCase {
     union = new TestUnion(TestUnion._Fields.I32_FIELD, 25);
 
     assertEquals(Integer.valueOf(25), union.getFieldValue());
-  
+
     assertEquals(Integer.valueOf(25), union.getFieldValue(TestUnion._Fields.I32_FIELD));
-    
+
     assertTrue(union.isSetI32_field());
   
     try {
@@ -99,6 +106,7 @@ public class TestTUnion extends TestCase {
     union.toString();
   }
 
+  @Test
   public void testCompareTo() throws Exception {
     ComparableUnion cu = ComparableUnion.string_field("a");
     ComparableUnion cu2 = ComparableUnion.string_field("b");
@@ -118,7 +126,7 @@ public class TestTUnion extends TestCase {
 
     assertTrue(cu.compareTo(cu2) < 0);
     assertTrue(cu2.compareTo(cu) > 0);
-    
+
     TestUnion union1 = new TestUnion(TestUnion._Fields.STRUCT_LIST, new ArrayList<RandomStuff>());
     TestUnion union2 = new TestUnion(TestUnion._Fields.STRUCT_LIST, new ArrayList<RandomStuff>());
     assertTrue(union1.compareTo(union2) == 0);
@@ -136,6 +144,7 @@ public class TestTUnion extends TestCase {
     assertTrue(union5.compareTo(union6) > 0);
   }
 
+  @Test
   public void testEquality() throws Exception {
     TestUnion union = new TestUnion(TestUnion._Fields.I32_FIELD, 25);
 
@@ -152,6 +161,7 @@ public class TestTUnion extends TestCase {
     assertFalse(union.equals(otherUnion));
   }
 
+  @Test
   public void testSerialization() throws Exception {
     TestUnion union = new TestUnion(TestUnion._Fields.I32_FIELD, 25);
     union.setI32_set(Collections.singleton(42));
@@ -186,7 +196,8 @@ public class TestTUnion extends TestCase {
     swau.write(proto);
     new Empty().read(proto);
   }
-  
+
+  @Test
   public void testTupleProtocolSerialization () throws Exception {
     TestUnion union = new TestUnion(TestUnion._Fields.I32_FIELD, 25);
     union.setI32_set(Collections.singleton(42));
@@ -222,6 +233,7 @@ public class TestTUnion extends TestCase {
     new Empty().read(proto);
   }
 
+  @Test
   public void testSkip() throws Exception {
     TestUnion tu = TestUnion.string_field("string");
     byte[] tuSerialized = new TSerializer().serialize(tu);
@@ -231,6 +243,7 @@ public class TestTUnion extends TestCase {
     assertNull(tums.getFieldValue());
   }
 
+  @Test
   public void testDeepCopy() throws Exception {
     byte[] bytes = {1, 2, 3};
     ByteBuffer value = ByteBuffer.wrap(bytes);
@@ -239,7 +252,8 @@ public class TestTUnion extends TestCase {
     assertEquals(cu, copy);
     assertNotSame(cu.bufferForBinary_field().array(), copy.bufferForBinary_field().array());
   }
-  
+
+  @Test
   public void testToString() throws Exception {
     byte[] bytes = {1, 2, 3};
     ByteBuffer value = ByteBuffer.wrap(bytes);
@@ -248,10 +262,11 @@ public class TestTUnion extends TestCase {
     assertEquals(expectedString, cu.toString());
   }
 
+  @Test
   public void testJavaSerializable() throws Exception {
     ByteArrayOutputStream baos = new ByteArrayOutputStream();
     ObjectOutputStream oos = new ObjectOutputStream(baos);
-    
+
     TestUnion tu = TestUnion.string_field("string");
 
     // Serialize tu the Java way...

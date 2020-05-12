@@ -19,70 +19,81 @@
 
 package org.apache.thrift;
 
-import junit.framework.TestCase;
-
 import thrift.test.Opt4;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+
+import org.junit.Test;
+
 import thrift.test.Opt30;
 import thrift.test.Opt64;
 import thrift.test.Opt80;
 
 // Exercises the isSet methods using structs from from ManyOptionals.thrift
-public class TestOptionals extends TestCase {
+public class TestOptionals {
+
+  @Test
   public void testEncodingUtils() throws Exception {
     assertEquals((short)0x8, EncodingUtils.setBit((short)0, 3, true));
     assertEquals((short)0, EncodingUtils.setBit((short)0x8, 3, false));
-    assertEquals(true, EncodingUtils.testBit((short)0x8, 3));
-    assertEquals(false, EncodingUtils.testBit((short)0x8, 4));
+    assertTrue(EncodingUtils.testBit((short)0x8, 3));
+    assertFalse(EncodingUtils.testBit((short)0x8, 4));
 
     assertEquals((short)Short.MIN_VALUE, EncodingUtils.setBit((short)0, 15, true));
     assertEquals((short)0, EncodingUtils.setBit((short)Short.MIN_VALUE, 15, false));
-    assertEquals(true, EncodingUtils.testBit(Short.MIN_VALUE, 15));
-    assertEquals(false, EncodingUtils.testBit(Short.MIN_VALUE, 14));
+    assertTrue(EncodingUtils.testBit(Short.MIN_VALUE, 15));
+    assertFalse(EncodingUtils.testBit(Short.MIN_VALUE, 14));
   }
 
+  @Test
   public void testOpt4() throws Exception {
     Opt4 x = new Opt4();
-    assertEquals(false, x.isSetDef1());
+    assertFalse(x.isSetDef1());
     x.setDef1(3);
-    assertEquals(true, x.isSetDef1());
-    assertEquals(false, x.isSetDef2());
+    assertTrue(x.isSetDef1());
+    assertFalse(x.isSetDef2());
 
     Opt4 copy = new Opt4(x);
-    assertEquals(true, copy.isSetDef1());
+    assertTrue(copy.isSetDef1());
     copy.unsetDef1();
-    assertEquals(false, copy.isSetDef1());
-    assertEquals(true, x.isSetDef1());
+    assertFalse(copy.isSetDef1());
+    assertTrue(x.isSetDef1());
   }
 
+  @Test
   public void testOpt30() throws Exception {
     Opt30 x = new Opt30();
-    assertEquals(false, x.isSetDef1());
+    assertFalse(x.isSetDef1());
     x.setDef1(3);
-    assertEquals(true, x.isSetDef1());
-    assertEquals(false, x.isSetDef2());
+    assertTrue(x.isSetDef1());
+    assertFalse(x.isSetDef2());
   }
 
+  @Test
   public void testOpt64() throws Exception {
     Opt64 x = new Opt64();
-    assertEquals(false, x.isSetDef1());
+    assertFalse(x.isSetDef1());
     x.setDef1(3);
-    assertEquals(true, x.isSetDef1());
-    assertEquals(false, x.isSetDef2());
+    assertTrue(x.isSetDef1());
+    assertFalse(x.isSetDef2());
     x.setDef64(22);
-    assertEquals(true, x.isSetDef64());
-    assertEquals(false, x.isSetDef63());
+    assertTrue(x.isSetDef64());
+    assertFalse(x.isSetDef63());
   }
 
+  @Test
   public void testOpt80() throws Exception {
     Opt80 x = new Opt80();
-    assertEquals(false, x.isSetDef1());
+    assertFalse(x.isSetDef1());
     x.setDef1(3);
-    assertEquals(true, x.isSetDef1());
-    assertEquals(false, x.isSetDef2());
+    assertTrue(x.isSetDef1());
+    assertFalse(x.isSetDef2());
 
     Opt80 copy = new Opt80(x);
     copy.unsetDef1();
-    assertEquals(false, copy.isSetDef1());
-    assertEquals(true, x.isSetDef1());
+    assertFalse(copy.isSetDef1());
+    assertTrue(x.isSetDef1());
   }
 }
