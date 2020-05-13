@@ -2182,7 +2182,11 @@ void t_cpp_generator::generate_service_async_skeleton(t_service* tservice) {
              << "// filename to avoid overwriting it and rewrite as asynchronous any functions"
              << endl << "// that would otherwise introduce unwanted latency." << endl << endl
              << "#include \"" << get_include_prefix(*get_program()) << svcname << ".h\"" << endl
-             << "#include <thrift/protocol/TBinaryProtocol.h>" << endl << endl
+             << "#include <thrift/protocol/TBinaryProtocol.h>" << endl
+             << "#include <thrift/async/TAsyncProtocolProcessor.h>" << endl
+             << "#include <thrift/async/TEvhttpServer.h>" << endl
+             << "#include <event.h>" << endl
+             << "#include <evhttp.h>" << endl << endl
              << "using namespace ::apache::thrift;" << endl
              << "using namespace ::apache::thrift::protocol;" << endl
              << "using namespace ::apache::thrift::transport;" << endl
@@ -2195,6 +2199,24 @@ void t_cpp_generator::generate_service_async_skeleton(t_service* tservice) {
     f_skeleton << "using namespace " << string(ns, 0, ns.size() - 2) << ";" << endl << endl;
   }
 
+  f_skeleton << "class " << svcname << "Handler : virtual public " << svcname << "If {" << endl
+             << " public:" << endl;
+  indent_up();
+  f_skeleton << indent() << svcname << "Handler() {" << endl << indent()
+             << "  // Your initialization goes here" << endl << indent() << "}" << endl << endl;
+
+  vector<t_function*> functions = tservice->get_functions();
+  vector<t_function*>::iterator f_iter;
+  for (f_iter = functions.begin(); f_iter != functions.end(); ++f_iter) {
+    generate_java_doc(f_skeleton, *f_iter);
+    f_skeleton << indent() << function_signature(*f_iter, "") << " {" << endl << indent()
+               << "  // Your implementation goes here" << endl << indent() << "  printf(\""
+               << (*f_iter)->get_name() << "\\n\");" << endl << indent() << "}" << endl << endl;
+  }
+
+  indent_down();
+  f_skeleton << "};" << endl << endl;
+
   f_skeleton << "class " << svcname << "AsyncHandler : "
              << "public " << svcname << "CobSvIf {" << endl << " public:" << endl;
   indent_up();
@@ -2204,8 +2226,6 @@ void t_cpp_generator::generate_service_async_skeleton(t_service* tservice) {
              << indent() << "}" << endl;
   f_skeleton << indent() << "virtual ~" << service_name_ << "AsyncHandler();" << endl;
 
-  vector<t_function*> functions = tservice->get_functions();
-  vector<t_function*>::iterator f_iter;
   for (f_iter = functions.begin(); f_iter != functions.end(); ++f_iter) {
     f_skeleton << endl << indent() << function_signature(*f_iter, "CobSv", "", true) << " {"
                << endl;
@@ -2227,6 +2247,21 @@ void t_cpp_generator::generate_service_async_skeleton(t_service* tservice) {
              << "Handler> syncHandler_;" << endl;
   indent_down();
   f_skeleton << "};" << endl << endl;
+
+  f_skeleton << indent() << "int main(int argc, char **argv) {" << endl;
+  indent_up();
+  f_skeleton
+      << indent() << "int port = 9090;" << endl << indent() << "::std::shared_ptr<" << svcname
+      << "AsyncHandler> handler(new " << svcname << "AsyncHandler());" << endl << indent()
+      << "::std::shared_ptr<" << svcname << "AsyncProcessor> processor(new " << svcname << "AsyncProcessor(handler));" << endl
+      << indent() << "::std::shared_ptr<TProtocolFactory> protocolFactory(new TBinaryProtocolFactory());"
+      << endl
+      << indent() << "::std::shared_ptr<TAsyncProtocolProcessor> protocolProcessor(new TAsyncProtocolProcessor(processor, protocolFactory));"
+      << endl << endl << indent()
+      << "TEvhttpServer server(protocolProcessor, port);"
+      << endl << indent() << "server.serve();" << endl << indent() << "return 0;" << endl;
+  indent_down();
+  f_skeleton << "}" << endl << endl;
 }
 
 /**
