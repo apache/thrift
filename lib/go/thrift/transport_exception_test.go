@@ -36,25 +36,45 @@ func (t *timeout) Error() string {
 	return fmt.Sprintf("Timeout: %v", t.timedout)
 }
 
+type unwrapper interface {
+	Unwrap() error
+}
+
 func TestTExceptionTimeout(t *testing.T) {
 	timeout := &timeout{true}
 	exception := NewTTransportExceptionFromError(timeout)
 	if timeout.Error() != exception.Error() {
-		t.Fatalf("Error did not match: expected %q, got %q", timeout.Error(), exception.Error())
+		t.Errorf("Error did not match: expected %q, got %q", timeout.Error(), exception.Error())
 	}
 
 	if exception.TypeId() != TIMED_OUT {
-		t.Fatalf("TypeId was not TIMED_OUT: expected %v, got %v", TIMED_OUT, exception.TypeId())
+		t.Errorf("TypeId was not TIMED_OUT: expected %v, got %v", TIMED_OUT, exception.TypeId())
+	}
+
+	// NOTE: this can also be replaced by errors.Unwrap, but that requires
+	// go 1.13+.
+	if e, ok := exception.(unwrapper); !ok {
+		t.Error("Expected exception to be unwrappable, it is not.")
+	} else if e.Unwrap() != timeout {
+		t.Errorf("Unwrapped exception did not match: expected %v, got %v", timeout, e.Unwrap())
 	}
 }
 
 func TestTExceptionEOF(t *testing.T) {
 	exception := NewTTransportExceptionFromError(io.EOF)
 	if io.EOF.Error() != exception.Error() {
-		t.Fatalf("Error did not match: expected %q, got %q", io.EOF.Error(), exception.Error())
+		t.Errorf("Error did not match: expected %q, got %q", io.EOF.Error(), exception.Error())
 	}
 
 	if exception.TypeId() != END_OF_FILE {
-		t.Fatalf("TypeId was not END_OF_FILE: expected %v, got %v", END_OF_FILE, exception.TypeId())
+		t.Errorf("TypeId was not END_OF_FILE: expected %v, got %v", END_OF_FILE, exception.TypeId())
+	}
+
+	// NOTE: this can also be replaced by errors.Unwrap, but that requires
+	// go 1.13+.
+	if e, ok := exception.(unwrapper); !ok {
+		t.Error("Expected exception to be unwrappable, it is not.")
+	} else if e.Unwrap() != io.EOF {
+		t.Errorf("Unwrapped exception did not match: expected %v, got %v", io.EOF, e.Unwrap())
 	}
 }
