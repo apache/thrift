@@ -51,12 +51,10 @@ namespace Thrift.Transport.Client
 
         public override bool IsOpen => true;
 
-        public override async Task OpenAsync(CancellationToken cancellationToken)
+        public override Task OpenAsync(CancellationToken cancellationToken)
         {
-            if (cancellationToken.IsCancellationRequested)
-            {
-                await Task.FromCanceled(cancellationToken);
-            }
+            cancellationToken.ThrowIfCancellationRequested();
+            return Task.CompletedTask;
         }
 
         public override void Close()

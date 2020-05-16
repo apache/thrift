@@ -76,12 +76,10 @@ namespace Thrift.Server
             // do nothing
         }
 
-        public virtual async Task ServeAsync(CancellationToken cancellationToken)
+        public virtual Task ServeAsync(CancellationToken cancellationToken)
         {
-            if (cancellationToken.IsCancellationRequested)
-            {
-                await Task.FromCanceled(cancellationToken);
-            }
+            cancellationToken.ThrowIfCancellationRequested();
+            return Task.CompletedTask;
         }
     }
 }

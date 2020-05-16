@@ -26,10 +26,7 @@ namespace Thrift.Protocol.Utilities
     {
         public static async Task SkipAsync(TProtocol protocol, TType type, CancellationToken cancellationToken)
         {
-            if (cancellationToken.IsCancellationRequested)
-            {
-                await Task.FromCanceled(cancellationToken);
-            }
+            cancellationToken.ThrowIfCancellationRequested();
 
             protocol.IncrementRecursionDepth();
             try
