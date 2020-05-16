@@ -68,12 +68,10 @@ namespace Thrift.Transport.Client
 
         public MediaTypeHeaderValue ContentType { get; set; }
 
-        public override async Task OpenAsync(CancellationToken cancellationToken)
+        public override Task OpenAsync(CancellationToken cancellationToken)
         {
-            if (cancellationToken.IsCancellationRequested)
-            {
-                await Task.FromCanceled(cancellationToken);
-            }
+            cancellationToken.ThrowIfCancellationRequested();
+            return Task.CompletedTask;
         }
 
         public override void Close()
@@ -99,8 +97,7 @@ namespace Thrift.Transport.Client
 
         public override async ValueTask<int> ReadAsync(byte[] buffer, int offset, int length, CancellationToken cancellationToken)
         {
-            if (cancellationToken.IsCancellationRequested)
-                return await Task.FromCanceled<int>(cancellationToken);
+            cancellationToken.ThrowIfCancellationRequested();
 
             if (_inputStream == null)
                 throw new TTransportException(TTransportException.ExceptionType.NotOpen, "No request has been sent");
@@ -130,10 +127,7 @@ namespace Thrift.Transport.Client
 
         public override async Task WriteAsync(byte[] buffer, int offset, int length, CancellationToken cancellationToken)
         {
-            if (cancellationToken.IsCancellationRequested)
-            {
-                await Task.FromCanceled(cancellationToken);
-            }
+            cancellationToken.ThrowIfCancellationRequested();
 
             await _outputStream.WriteAsync(buffer, offset, length, cancellationToken);
         }

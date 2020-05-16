@@ -29,7 +29,7 @@ namespace Thrift.Benchmarks
     public class CompactProtocolBenchmarks
     {
         private MemoryStream _Stream;
-        private TCompactProtocol _Protocol;
+        private TProtocol _Protocol;
 
         [Params(10000)]
         public int NumberOfOperationsPerIteration { get; set; }
