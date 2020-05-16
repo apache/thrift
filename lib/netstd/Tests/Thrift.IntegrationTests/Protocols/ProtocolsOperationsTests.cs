@@ -57,13 +57,13 @@ namespace Thrift.IntegrationTests.Protocols
                 {
                     var protocol = tuple.Item2;
 
-                    await protocol.WriteMessageBeginAsync(expected);
-                    await protocol.WriteMessageEndAsync();
+                    await protocol.WriteMessageBeginAsync(expected, default);
+                    await protocol.WriteMessageEndAsync(default);
 
                     stream.Seek(0, SeekOrigin.Begin);
 
-                    var actualMessage = await protocol.ReadMessageBeginAsync();
-                    await protocol.ReadMessageEndAsync();
+                    var actualMessage = await protocol.ReadMessageBeginAsync(default);
+                    await protocol.ReadMessageEndAsync(default);
 
                     var result = _compareLogic.Compare(expected, actualMessage);
                     Assert.IsTrue(result.AreEqual, result.DifferencesString);
@@ -91,13 +91,13 @@ namespace Thrift.IntegrationTests.Protocols
                 {
                     var protocol = tuple.Item2;
 
-                    await protocol.WriteStructBeginAsync(expected);
-                    await protocol.WriteStructEndAsync();
+                    await protocol.WriteStructBeginAsync(expected, default);
+                    await protocol.WriteStructEndAsync(default);
 
                     stream?.Seek(0, SeekOrigin.Begin);
 
-                    var actual = await protocol.ReadStructBeginAsync();
-                    await protocol.ReadStructEndAsync();
+                    var actual = await protocol.ReadStructBeginAsync(default);
+                    await protocol.ReadStructEndAsync(default);
 
                     var result = _compareLogic.Compare(expected, actual);
                     Assert.IsTrue(result.AreEqual, result.DifferencesString);
@@ -126,13 +126,13 @@ namespace Thrift.IntegrationTests.Protocols
                 {
                     var protocol = tuple.Item2;
 
-                    await protocol.WriteFieldBeginAsync(expected);
-                    await protocol.WriteFieldEndAsync();
+                    await protocol.WriteFieldBeginAsync(expected, default);
+                    await protocol.WriteFieldEndAsync(default);
 
                     stream?.Seek(0, SeekOrigin.Begin);
 
-                    var actual = await protocol.ReadFieldBeginAsync();
-                    await protocol.ReadFieldEndAsync();
+                    var actual = await protocol.ReadFieldBeginAsync(default);
+                    await protocol.ReadFieldEndAsync(default);
 
                     var result = _compareLogic.Compare(expected, actual);
                     Assert.IsTrue(result.AreEqual, result.DifferencesString);
@@ -159,13 +159,13 @@ namespace Thrift.IntegrationTests.Protocols
                 {
                     var protocol = tuple.Item2;
 
-                    await protocol.WriteMapBeginAsync(expected);
-                    await protocol.WriteMapEndAsync();
+                    await protocol.WriteMapBeginAsync(expected, default);
+                    await protocol.WriteMapEndAsync(default);
 
                     stream?.Seek(0, SeekOrigin.Begin);
 
-                    var actual = await protocol.ReadMapBeginAsync();
-                    await protocol.ReadMapEndAsync();
+                    var actual = await protocol.ReadMapBeginAsync(default);
+                    await protocol.ReadMapEndAsync(default);
 
                     var result = _compareLogic.Compare(expected, actual);
                     Assert.IsTrue(result.AreEqual, result.DifferencesString);
@@ -193,13 +193,13 @@ namespace Thrift.IntegrationTests.Protocols
                 {
                     var protocol = tuple.Item2;
 
-                    await protocol.WriteListBeginAsync(expected);
-                    await protocol.WriteListEndAsync();
+                    await protocol.WriteListBeginAsync(expected, default);
+                    await protocol.WriteListEndAsync(default);
 
                     stream?.Seek(0, SeekOrigin.Begin);
 
-                    var actual = await protocol.ReadListBeginAsync();
-                    await protocol.ReadListEndAsync();
+                    var actual = await protocol.ReadListBeginAsync(default);
+                    await protocol.ReadListEndAsync(default);
 
                     var result = _compareLogic.Compare(expected, actual);
                     Assert.IsTrue(result.AreEqual, result.DifferencesString);
@@ -226,13 +226,13 @@ namespace Thrift.IntegrationTests.Protocols
                 {
                     var protocol = tuple.Item2;
 
-                    await protocol.WriteSetBeginAsync(expected);
-                    await protocol.WriteSetEndAsync();
+                    await protocol.WriteSetBeginAsync(expected, default);
+                    await protocol.WriteSetEndAsync(default);
 
                     stream?.Seek(0, SeekOrigin.Begin);
 
-                    var actual = await protocol.ReadSetBeginAsync();
-                    await protocol.ReadSetEndAsync();
+                    var actual = await protocol.ReadSetBeginAsync(default);
+                    await protocol.ReadSetEndAsync(default);
 
                     var result = _compareLogic.Compare(expected, actual);
                     Assert.IsTrue(result.AreEqual, result.DifferencesString);
@@ -259,11 +259,11 @@ namespace Thrift.IntegrationTests.Protocols
                 {
                     var protocol = tuple.Item2;
 
-                    await protocol.WriteBoolAsync(expected);
+                    await protocol.WriteBoolAsync(expected, default);
 
                     stream?.Seek(0, SeekOrigin.Begin);
 
-                    var actual = await protocol.ReadBoolAsync();
+                    var actual = await protocol.ReadBoolAsync(default);
 
                     var result = _compareLogic.Compare(expected, actual);
                     Assert.IsTrue(result.AreEqual, result.DifferencesString);
@@ -290,11 +290,11 @@ namespace Thrift.IntegrationTests.Protocols
                 {
                     var protocol = tuple.Item2;
 
-                    await protocol.WriteByteAsync(expected);
+                    await protocol.WriteByteAsync(expected, default);
 
                     stream?.Seek(0, SeekOrigin.Begin);
 
-                    var actual = await protocol.ReadByteAsync();
+                    var actual = await protocol.ReadByteAsync(default);
 
                     var result = _compareLogic.Compare(expected, actual);
                     Assert.IsTrue(result.AreEqual, result.DifferencesString);
@@ -321,11 +321,11 @@ namespace Thrift.IntegrationTests.Protocols
                 {
                     var protocol = tuple.Item2;
 
-                    await protocol.WriteI16Async(expected);
+                    await protocol.WriteI16Async(expected, default);
 
                     stream?.Seek(0, SeekOrigin.Begin);
 
-                    var actual = await protocol.ReadI16Async();
+                    var actual = await protocol.ReadI16Async(default);
 
                     var result = _compareLogic.Compare(expected, actual);
                     Assert.IsTrue(result.AreEqual, result.DifferencesString);
@@ -352,11 +352,11 @@ namespace Thrift.IntegrationTests.Protocols
                 {
                     var protocol = tuple.Item2;
 
-                    await protocol.WriteI32Async(expected);
+                    await protocol.WriteI32Async(expected, default);
 
                     stream?.Seek(0, SeekOrigin.Begin);
 
-                    var actual = await protocol.ReadI32Async();
+                    var actual = await protocol.ReadI32Async(default);
 
                     var result = _compareLogic.Compare(expected, actual);
                     Assert.IsTrue(result.AreEqual, result.DifferencesString);
@@ -383,11 +383,11 @@ namespace Thrift.IntegrationTests.Protocols
                 {
                     var protocol = tuple.Item2;
 
-                    await protocol.WriteI64Async(expected);
+                    await protocol.WriteI64Async(expected, default);
 
                     stream?.Seek(0, SeekOrigin.Begin);
 
-                    var actual = await protocol.ReadI64Async();
+                    var actual = await protocol.ReadI64Async(default);
 
                     var result = _compareLogic.Compare(expected, actual);
                     Assert.IsTrue(result.AreEqual, result.DifferencesString);
@@ -414,11 +414,11 @@ namespace Thrift.IntegrationTests.Protocols
                 {
                     var protocol = tuple.Item2;
 
-                    await protocol.WriteDoubleAsync(expected);
+                    await protocol.WriteDoubleAsync(expected, default);
 
                     stream?.Seek(0, SeekOrigin.Begin);
 
-                    var actual = await protocol.ReadDoubleAsync();
+                    var actual = await protocol.ReadDoubleAsync(default);
 
                     var result = _compareLogic.Compare(expected, actual);
                     Assert.IsTrue(result.AreEqual, result.DifferencesString);
@@ -445,11 +445,11 @@ namespace Thrift.IntegrationTests.Protocols
                 {
                     var protocol = tuple.Item2;
 
-                    await protocol.WriteStringAsync(expected);
+                    await protocol.WriteStringAsync(expected, default);
 
                     stream?.Seek(0, SeekOrigin.Begin);
 
-                    var actual = await protocol.ReadStringAsync();
+                    var actual = await protocol.ReadStringAsync(default);
 
                     var result = _compareLogic.Compare(expected, actual);
                     Assert.IsTrue(result.AreEqual, result.DifferencesString);
@@ -476,11 +476,11 @@ namespace Thrift.IntegrationTests.Protocols
                 {
                     var protocol = tuple.Item2;
 
-                    await protocol.WriteBinaryAsync(expected);
+                    await protocol.WriteBinaryAsync(expected, default);
 
                     stream?.Seek(0, SeekOrigin.Begin);
 
-                    var actual = await protocol.ReadBinaryAsync();
+                    var actual = await protocol.ReadBinaryAsync(default);
 
                     var result = _compareLogic.Compare(expected, actual);
                     Assert.IsTrue(result.AreEqual, result.DifferencesString);

@@ -40,10 +40,7 @@ namespace Thrift.Processor
 
         public async Task<bool> ProcessAsync(TProtocol iprot, TProtocol oprot, CancellationToken cancellationToken)
         {
-            if (cancellationToken.IsCancellationRequested)
-            {
-                return await Task.FromCanceled<bool>(cancellationToken);
-            }
+            cancellationToken.ThrowIfCancellationRequested();
 
             try
             {
@@ -129,14 +126,10 @@ namespace Thrift.Processor
                 _msgBegin = messageBegin;
             }
 
-            public override async ValueTask<TMessage> ReadMessageBeginAsync(CancellationToken cancellationToken)
+            public override ValueTask<TMessage> ReadMessageBeginAsync(CancellationToken cancellationToken)
             {
-                if (cancellationToken.IsCancellationRequested)
-                {
-                    return await Task.FromCanceled<TMessage>(cancellationToken);
-                }
-
-                return _msgBegin;
+                cancellationToken.ThrowIfCancellationRequested();
+                return new ValueTask<TMessage>(_msgBegin);
             }
         }
     }

@@ -101,13 +101,12 @@ namespace Thrift.Transport.Client
             }
         }
 
-        public override async Task FlushAsync(CancellationToken cancellationToken)
+        public override Task FlushAsync(CancellationToken cancellationToken)
         {
-            if (cancellationToken.IsCancellationRequested)
-            {
-                await Task.FromCanceled(cancellationToken);
-            }
+            cancellationToken.ThrowIfCancellationRequested();
+
             ResetConsumedMessageSize();
+            return Task.CompletedTask;
         }
 
         

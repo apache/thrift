@@ -18,13 +18,13 @@
 namespace Thrift.Protocol.Entities
 {
     // ReSharper disable once InconsistentNaming
-    public struct TStruct
+    public readonly struct TStruct
     {
         public TStruct(string name)
         {
             Name = name;
         }
 
-        public string Name { get; set; }
+        public string Name { get;  }
     }
 }

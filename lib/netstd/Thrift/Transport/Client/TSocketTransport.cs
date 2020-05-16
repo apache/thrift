@@ -106,10 +106,7 @@ namespace Thrift.Transport.Client
 
         public override async Task OpenAsync(CancellationToken cancellationToken)
         {
-            if (cancellationToken.IsCancellationRequested)
-            {
-                await Task.FromCanceled(cancellationToken);
-            }
+            cancellationToken.ThrowIfCancellationRequested();
 
             if (IsOpen)
             {

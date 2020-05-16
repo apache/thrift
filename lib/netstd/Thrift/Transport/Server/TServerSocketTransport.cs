@@ -77,10 +77,7 @@ namespace Thrift.Transport.Server
 
         protected override async ValueTask<TTransport> AcceptImplementationAsync(CancellationToken cancellationToken)
         {
-            if (cancellationToken.IsCancellationRequested)
-            {
-                return await Task.FromCanceled<TTransport>(cancellationToken);
-            }
+            cancellationToken.ThrowIfCancellationRequested();
 
             if (_server == null)
             {
