@@ -175,7 +175,7 @@ class TestHandler(object):
 
     def testMulti(self, arg0, arg1, arg2, arg3, arg4, arg5):
         if options.verbose > 1:
-            logging.info('testMulti(%s)' % [arg0, arg1, arg2, arg3, arg4, arg5])
+            logging.info('testMulti(%s, %s, %s, %s, %s, %s)' % (arg0, arg1, arg2, arg3, arg4, arg5))
         return Xtruct(string_thing='Hello2',
                       byte_thing=arg0, i32_thing=arg1, i64_thing=arg2)
 
