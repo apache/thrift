@@ -24,7 +24,7 @@
 #include <openssl/bio.h>
 #include <openssl/evp.h>
 
-#include <thrift/config.h>
+#include <thrift/Thrift.h>
 
 using std::string;
 
@@ -40,7 +40,8 @@ std::string base64Encode(unsigned char* data, int length) {
   BIO* dest = BIO_new(BIO_s_mem());
   BIO_push(base64.get(), dest);
   BIO_write(base64.get(), data, length);
-  BIO_flush(base64.get());
+  int ret = BIO_flush(base64.get());
+  THRIFT_UNUSED_VARIABLE(ret);
 
   char* encoded;
   length = BIO_get_mem_data(dest, &encoded);

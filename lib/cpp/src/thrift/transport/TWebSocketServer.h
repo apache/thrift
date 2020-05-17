@@ -20,7 +20,7 @@
 #ifndef _THRIFT_TRANSPORT_TWEBSOCKETSERVER_H_
 #define _THRIFT_TRANSPORT_TWEBSOCKETSERVER_H_ 1
 
-#include <thrift/endian.h>
+#include <thrift/portable_endian.h>
 
 #include <cstdlib>
 #include <iostream>
@@ -107,6 +107,7 @@ public:
 
 protected:
   std::string getHeader(uint32_t len) override {
+    THRIFT_UNUSED_VARIABLE(len);
     std::ostringstream h;
     h << "HTTP/1.1 101 Switching Protocols" << CRLF << "Server: Thrift/" << PACKAGE_VERSION << CRLF
       << "Upgrade: websocket" << CRLF << "Connection: Upgrade" << CRLF
@@ -226,6 +227,7 @@ private:
     // it doesn't really matter if the frame is marked as FIN.
     // Capture it only for debugging only.
     auto fin = (headerBuffer[0] & 0x80) != 0;
+    THRIFT_UNUSED_VARIABLE(fin);
 
     // RSV1, RSV2, RSV3
     if ((headerBuffer[0] & 0x70) != 0) {
@@ -259,7 +261,7 @@ private:
       payloadLength = be64toh(*reinterpret_cast<uint64_t*>(headerBuffer));
       if ((payloadLength & 0x8000000000000000) != 0) {
         failConnection(CloseCode::ProtocolError);
-        throw new TTransportException(
+        throw TTransportException(
             TTransportException::CORRUPTED_DATA,
             "The most significant bit of the payload length must be zero");
       }
@@ -303,6 +305,7 @@ private:
         uint8_t buffer[2];
         readBuffer_.read(buffer, 2);
         CloseCode closeCode = static_cast<CloseCode>(be16toh(*reinterpret_cast<uint16_t*>(buffer)));
+        THRIFT_UNUSED_VARIABLE(closeCode);
         string closeReason = readBuffer_.readAsString(length - 2);
         T_DEBUG("Connection closed: %d %s", closeCode, closeReason);
       }
