@@ -365,6 +365,8 @@ private:
     transport_->write(header, headerSize);
   }
 
+  // Add constant here to avoid a linker error on Windows
+  constexpr static const char* CRLF = "\r\n";
   std::string acceptKey_;
   bool connection_;
   bool secWebSocketKey_;
