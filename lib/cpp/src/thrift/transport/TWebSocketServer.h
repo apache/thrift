@@ -39,6 +39,9 @@
 #define THRIFT_strncasecmp(str1, str2, len) strncasecmp(str1, str2, len)
 #define THRIFT_strcasestr(haystack, needle) strcasestr(haystack, needle)
 #endif
+#if defined(__CYGWIN__)
+#include <alloca.h>
+#endif
 
 using std::string;
 
