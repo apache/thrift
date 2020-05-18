@@ -35,6 +35,7 @@ public:
   void flush() override;
 
 protected:
+  virtual std::string getHeader(uint32_t len);
   void readHeaders();
   void parseHeader(char* header) override;
   bool parseStatusLine(char* status) override;
