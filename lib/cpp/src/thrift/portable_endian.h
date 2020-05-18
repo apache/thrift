@@ -81,10 +81,17 @@
 #		define be32toh(x) ntohl(x)
 #		define le32toh(x) (x)
 
+#	if defined(__MINGW32__)
+#		define htobe64(x) __builtin_bswap64(x)
+#		define htole64(x) (x)
+#		define be64toh(x) __builtin_bswap64(x)
+#		define le64toh(x) (x)
+#	else
 #		define htobe64(x) htonll(x)
 #		define htole64(x) (x)
 #		define be64toh(x) ntohll(x)
 #		define le64toh(x) (x)
+#	endif
 
 #	elif BYTE_ORDER == BIG_ENDIAN
 
