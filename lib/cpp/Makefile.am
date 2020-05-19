@@ -189,6 +189,7 @@ include_transport_HEADERS = \
                          src/thrift/transport/THttpClient.h \
                          src/thrift/transport/THttpServer.h \
                          src/thrift/transport/TSocket.h \
+                         src/thrift/transport/TSocketUtils.h \
                          src/thrift/transport/TPipe.h \
                          src/thrift/transport/TPipeServer.h \
                          src/thrift/transport/TSSLSocket.h \
