@@ -35,41 +35,50 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="src\thrift\async\TAsyncChannel.cpp"/>
-    <ClCompile Include="src\thrift\async\TConcurrentClientSyncInfo.cpp"/>
-    <ClCompile Include="src\thrift\concurrency\BoostMonitor.cpp" />
-    <ClCompile Include="src\thrift\concurrency\BoostMutex.cpp" />
-    <ClCompile Include="src\thrift\concurrency\ThreadManager.cpp"/>
-    <ClCompile Include="src\thrift\concurrency\TimerManager.cpp"/>
-    <ClCompile Include="src\thrift\concurrency\Util.cpp"/>
-    <ClCompile Include="src\thrift\processor\PeekProcessor.cpp"/>
+    <ClCompile Include="src\thrift\async\TAsyncChannel.cpp" />
+    <ClCompile Include="src\thrift\async\TAsyncProtocolProcessor.cpp" />
+    <ClCompile Include="src\thrift\async\TConcurrentClientSyncInfo.cpp" />
+    <ClCompile Include="src\thrift\concurrency\Monitor.cpp" />
+    <ClCompile Include="src\thrift\concurrency\Mutex.cpp" />
+    <ClCompile Include="src\thrift\concurrency\Thread.cpp" />
+    <ClCompile Include="src\thrift\concurrency\ThreadFactory.cpp" />
+    <ClCompile Include="src\thrift\concurrency\ThreadManager.cpp" />
+    <ClCompile Include="src\thrift\concurrency\TimerManager.cpp" />
+    <ClCompile Include="src\thrift\processor\PeekProcessor.cpp" />
     <ClCompile Include="src\thrift\protocol\TBase64Utils.cpp" />
-    <ClCompile Include="src\thrift\protocol\TDebugProtocol.cpp"/>
-    <ClCompile Include="src\thrift\protocol\TJSONProtocol.cpp"/>
-    <ClCompile Include="src\thrift\protocol\TProtocol.cpp"/>
-    <ClCompile Include="src\thrift\protocol\TMultiplexedProtocol.cpp"/>
-    <ClCompile Include="src\thrift\server\TSimpleServer.cpp"/>
-    <ClCompile Include="src\thrift\server\TThreadPoolServer.cpp"/>
-    <ClCompile Include="src\thrift\server\TThreadedServer.cpp"/>
-    <ClCompile Include="src\thrift\server\TConnectedClient.cpp"/>
-    <ClCompile Include="src\thrift\server\TNonblockingServer.cpp"/>
-    <ClCompile Include="src\thrift\server\TServerFramework.cpp"/>
-    <ClCompile Include="src\thrift\TApplicationException.cpp"/>
-    <ClCompile Include="src\thrift\TOutput.cpp"/>
-    <ClCompile Include="src\thrift\transport\TBufferTransports.cpp"/>
+    <ClCompile Include="src\thrift\protocol\TDebugProtocol.cpp" />
+    <ClCompile Include="src\thrift\protocol\THeaderProtocol.cpp" />
+    <ClCompile Include="src\thrift\protocol\TJSONProtocol.cpp" />
+    <ClCompile Include="src\thrift\protocol\TProtocol.cpp" />
+    <ClCompile Include="src\thrift\protocol\TMultiplexedProtocol.cpp" />
+    <ClCompile Include="src\thrift\server\TServer.cpp" />
+    <ClCompile Include="src\thrift\server\TSimpleServer.cpp" />
+    <ClCompile Include="src\thrift\server\TThreadPoolServer.cpp" />
+    <ClCompile Include="src\thrift\server\TThreadedServer.cpp" />
+    <ClCompile Include="src\thrift\server\TConnectedClient.cpp" />
+    <ClCompile Include="src\thrift\server\TServerFramework.cpp" />
+    <ClCompile Include="src\thrift\TApplicationException.cpp" />
+    <ClCompile Include="src\thrift\TOutput.cpp" />
+    <ClCompile Include="src\thrift\transport\TBufferTransports.cpp" />
     <ClCompile Include="src\thrift\transport\TFDTransport.cpp" />
     <ClCompile Include="src\thrift\transport\THttpClient.cpp" />
     <ClCompile Include="src\thrift\transport\THttpServer.cpp" />
-    <ClCompile Include="src\thrift\transport\THttpTransport.cpp"/>
+    <ClCompile Include="src\thrift\transport\THttpTransport.cpp" />
+    <ClCompile Include="src\thrift\transport\TNonblockingServerSocket.cpp" />
+    <ClCompile Include="src\thrift\transport\TNonblockingSSLServerSocket.cpp" />
     <ClCompile Include="src\thrift\transport\TPipe.cpp" />
     <ClCompile Include="src\thrift\transport\TPipeServer.cpp" />
-    <ClCompile Include="src\thrift\transport\TServerSocket.cpp"/>
+    <ClCompile Include="src\thrift\transport\TServerSocket.cpp" />
     <ClCompile Include="src\thrift\transport\TSimpleFileTransport.cpp" />
     <ClCompile Include="src\thrift\transport\TFileTransport.cpp" />
-    <ClCompile Include="src\thrift\transport\TSocket.cpp"/>
-    <ClCompile Include="src\thrift\transport\TSSLSocket.cpp"/>
-    <ClCompile Include="src\thrift\transport\TTransportException.cpp"/>
-    <ClCompile Include="src\thrift\transport\TTransportUtils.cpp"/>
+    <ClCompile Include="src\thrift\transport\TSocket.cpp" />
+    <ClCompile Include="src\thrift\transport\TSocketPool.cpp" />
+    <ClCompile Include="src\thrift\transport\TSSLServerSocket.cpp" />
+    <ClCompile Include="src\thrift\transport\TSSLSocket.cpp" />
+    <ClCompile Include="src\thrift\transport\TTransportException.cpp" />
+    <ClCompile Include="src\thrift\transport\TTransportUtils.cpp" />
+    <ClCompile Include="src\thrift\transport\TWebSocketServer.cpp" />
+    <ClCompile Include="src\thrift\VirtualProfiling.cpp" />
     <ClCompile Include="src\thrift\windows\GetTimeOfDay.cpp" />
     <ClCompile Include="src\thrift\windows\OverlappedSubmissionThread.cpp" />
     <ClCompile Include="src\thrift\windows\SocketPair.cpp" />
@@ -77,51 +86,90 @@
     <ClCompile Include="src\thrift\windows\WinFcntl.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="src\thrift\async\TAsyncBufferProcessor.h" />
     <ClInclude Include="src\thrift\async\TAsyncChannel.h" />
+    <ClInclude Include="src\thrift\async\TAsyncDispatchProcessor.h" />
+    <ClInclude Include="src\thrift\async\TAsyncProcessor.h" />
+    <ClInclude Include="src\thrift\async\TAsyncProtocolProcessor.h" />
     <ClInclude Include="src\thrift\async\TConcurrentClientSyncInfo.h" />
     <ClInclude Include="src\thrift\concurrency\Exception.h" />
+    <ClInclude Include="src\thrift\concurrency\FunctionRunner.h" />
+    <ClInclude Include="src\thrift\concurrency\Monitor.h" />
+    <ClInclude Include="src\thrift\concurrency\Mutex.h" />
+    <ClInclude Include="src\thrift\concurrency\Thread.h" />
+    <ClInclude Include="src\thrift\concurrency\ThreadFactory.h" />
+    <ClInclude Include="src\thrift\concurrency\ThreadManager.h" />
+    <ClInclude Include="src\thrift\concurrency\TimerManager.h" />
+    <ClInclude Include="src\thrift\portable_endian.h" />
     <ClInclude Include="src\thrift\processor\PeekProcessor.h" />
+    <ClInclude Include="src\thrift\processor\StatsProcessor.h" />
     <ClInclude Include="src\thrift\processor\TMultiplexedProcessor.h" />
+    <ClInclude Include="src\thrift\protocol\TBase64Utils.h" />
     <ClInclude Include="src\thrift\protocol\TBinaryProtocol.h" />
+    <ClInclude Include="src\thrift\protocol\TCompactProtocol.h" />
     <ClInclude Include="src\thrift\protocol\TDebugProtocol.h" />
+    <ClInclude Include="src\thrift\protocol\THeaderProtocol.h" />
     <ClInclude Include="src\thrift\protocol\TJSONProtocol.h" />
     <ClInclude Include="src\thrift\protocol\TMultiplexedProtocol.h" />
     <ClInclude Include="src\thrift\protocol\TProtocol.h" />
+    <ClInclude Include="src\thrift\protocol\TProtocolDecorator.h" />
+    <ClInclude Include="src\thrift\protocol\TProtocolException.h" />
+    <ClInclude Include="src\thrift\protocol\TProtocolTap.h" />
+    <ClInclude Include="src\thrift\protocol\TProtocolTypes.h" />
     <ClInclude Include="src\thrift\protocol\TVirtualProtocol.h" />
+    <ClInclude Include="src\thrift\server\TConnectedClient.h" />
     <ClInclude Include="src\thrift\server\TServer.h" />
+    <ClInclude Include="src\thrift\server\TServerFramework.h" />
     <ClInclude Include="src\thrift\server\TSimpleServer.h" />
     <ClInclude Include="src\thrift\server\TThreadPoolServer.h" />
     <ClInclude Include="src\thrift\server\TThreadedServer.h" />
     <ClInclude Include="src\thrift\TApplicationException.h" />
+    <ClInclude Include="src\thrift\TBase.h" />
+    <ClInclude Include="src\thrift\TDispatchProcessor.h" />
+    <ClInclude Include="src\thrift\thrift-config.h" />
     <ClInclude Include="src\thrift\Thrift.h" />
+    <ClInclude Include="src\thrift\thrift_export.h" />
+    <ClInclude Include="src\thrift\TLogging.h" />
     <ClInclude Include="src\thrift\TOutput.h" />
     <ClInclude Include="src\thrift\TProcessor.h" />
+    <ClInclude Include="src\thrift\transport\PlatformSocket.h" />
     <ClInclude Include="src\thrift\transport\TBufferTransports.h" />
     <ClInclude Include="src\thrift\transport\TFDTransport.h" />
     <ClInclude Include="src\thrift\transport\TFileTransport.h" />
     <ClInclude Include="src\thrift\transport\THttpClient.h" />
     <ClInclude Include="src\thrift\transport\THttpServer.h" />
+    <ClInclude Include="src\thrift\transport\THttpTransport.h" />
+    <ClInclude Include="src\thrift\transport\TNonblockingServerSocket.h" />
+    <ClInclude Include="src\thrift\transport\TNonblockingServerTransport.h" />
+    <ClInclude Include="src\thrift\transport\TNonblockingSSLServerSocket.h" />
     <ClInclude Include="src\thrift\transport\TPipe.h" />
     <ClInclude Include="src\thrift\transport\TPipeServer.h" />
     <ClInclude Include="src\thrift\transport\TServerSocket.h" />
     <ClInclude Include="src\thrift\transport\TServerTransport.h" />
+    <ClInclude Include="src\thrift\transport\TShortReadTransport.h" />
     <ClInclude Include="src\thrift\transport\TSimpleFileTransport.h" />
     <ClInclude Include="src\thrift\transport\TSocket.h" />
+    <ClInclude Include="src\thrift\transport\TSocketPool.h" />
+    <ClInclude Include="src\thrift\transport\TSSLServerSocket.h" />
     <ClInclude Include="src\thrift\transport\TSSLSocket.h" />
     <ClInclude Include="src\thrift\transport\TTransport.h" />
     <ClInclude Include="src\thrift\transport\TTransportException.h" />
     <ClInclude Include="src\thrift\transport\TTransportUtils.h" />
     <ClInclude Include="src\thrift\transport\TVirtualTransport.h" />
+    <ClInclude Include="src\thrift\transport\TWebSocketServer.h" />
+    <ClInclude Include="src\thrift\TToString.h" />
     <ClInclude Include="src\thrift\windows\config.h" />
     <ClInclude Include="src\thrift\windows\GetTimeOfDay.h" />
     <ClInclude Include="src\thrift\windows\Operators.h" />
     <ClInclude Include="src\thrift\windows\OverlappedSubmissionThread.h" />
     <ClInclude Include="src\thrift\windows\SocketPair.h" />
+    <ClInclude Include="src\thrift\windows\Sync.h" />
     <ClInclude Include="src\thrift\windows\TWinsockSingleton.h" />
     <ClInclude Include="src\thrift\windows\WinFcntl.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="src\thrift\protocol\TBinaryProtocol.tcc" />
+    <None Include="src\thrift\protocol\TCompactProtocol.tcc" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{DD26F57E-60F2-4F37-A616-D219A9BF338F}</ProjectGuid>
@@ -212,6 +260,7 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <IncludePath>$(ProjectDir)\src\;$(ProjectDir)\src\thrift\windows\;$(BOOST_ROOT)\include;$(BOOST_ROOT)\;$(OPENSSL_ROOT_DIR)\include\;$(IncludePath)</IncludePath>
+    <LibraryPath>$(BOOST_ROOT)\stage\lib;$(OPENSSL_ROOT_DIR)\lib;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug-mt|Win32'">
     <IncludePath>$(ProjectDir)\src\;$(ProjectDir)\src\thrift\windows\;$(BOOST_ROOT)\include;$(BOOST_ROOT)\;$(OPENSSL_ROOT_DIR)\include\;$(IncludePath)</IncludePath>
@@ -239,7 +288,7 @@
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>HAVE_CONFIG_H=1;WIN32;_DEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>HAVE_CONFIG_H=1;WIN32;_DEBUG;_LIB;thrift_EXPORTS;PACKAGE_VERSION="0.14.0";%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ProgramDataBaseFileName>$(IntDir)libthrift.pdb</ProgramDataBaseFileName>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
     </ClCompile>
@@ -359,3 +408,4 @@
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
 </Project>
+

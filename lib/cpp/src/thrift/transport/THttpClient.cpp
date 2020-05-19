@@ -22,7 +22,7 @@
 #include <sstream>
 #include <boost/algorithm/string.hpp>
 
-#include <thrift/config.h>
+#include <thrift/thrift-config.h>
 #include <thrift/transport/THttpClient.h>
 #include <thrift/transport/TSocket.h>
 

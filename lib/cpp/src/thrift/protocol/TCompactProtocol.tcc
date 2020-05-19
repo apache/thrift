@@ -21,7 +21,7 @@
 
 #include <limits>
 
-#include "thrift/config.h"
+#include "thrift/thrift-config.h"
 
 /*
  * TCompactProtocol::i*ToZigzag depend on the fact that the right shift

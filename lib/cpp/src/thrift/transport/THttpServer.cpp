@@ -21,7 +21,7 @@
 #include <sstream>
 #include <iostream>
 
-#include <thrift/config.h>
+#include <thrift/thrift-config.h>
 #include <thrift/transport/THttpServer.h>
 #include <thrift/transport/TSocket.h>
 #if defined(_MSC_VER) || defined(__MINGW32__)

@@ -6,9 +6,6 @@
     </ClCompile>
     <ClCompile Include="src\thrift\TOutput.cpp" />
     <ClCompile Include="src\thrift\TApplicationException.cpp" />
-    <ClCompile Include="src\thrift\windows\StdAfx.cpp">
-      <Filter>windows</Filter>
-    </ClCompile>
     <ClCompile Include="src\thrift\transport\TTransportException.cpp">
       <Filter>transport</Filter>
     </ClCompile>
@@ -19,9 +16,6 @@
       <Filter>concurrency</Filter>
     </ClCompile>
     <ClCompile Include="src\thrift\concurrency\TimerManager.cpp">
-      <Filter>concurrency</Filter>
-    </ClCompile>
-    <ClCompile Include="src\thrift\concurrency\Util.cpp">
       <Filter>concurrency</Filter>
     </ClCompile>
     <ClCompile Include="src\thrift\protocol\TDebugProtocol.cpp">
@@ -90,12 +84,6 @@
     <ClCompile Include="src\thrift\windows\SocketPair.cpp">
       <Filter>windows</Filter>
     </ClCompile>
-    <ClCompile Include="src\thrift\concurrency\BoostMonitor.cpp">
-      <Filter>concurrency</Filter>
-    </ClCompile>
-    <ClCompile Include="src\thrift\concurrency\BoostMutex.cpp">
-      <Filter>concurrency</Filter>
-    </ClCompile>
     <ClCompile Include="src\thrift\windows\WinFcntl.cpp">
       <Filter>windows</Filter>
     </ClCompile>
@@ -104,6 +92,49 @@
     </ClCompile>
     <ClCompile Include="src\thrift\transport\TPipeServer.cpp">
       <Filter>transport</Filter>
+    </ClCompile>
+    <ClCompile Include="src\thrift\protocol\TProtocol.cpp" />
+    <ClCompile Include="src\thrift\server\TConnectedClient.cpp" />
+    <ClCompile Include="src\thrift\server\TServerFramework.cpp" />
+    <ClCompile Include="src\thrift\windows\OverlappedSubmissionThread.cpp" />
+    <ClCompile Include="src\thrift\async\TAsyncProtocolProcessor.cpp">
+      <Filter>async</Filter>
+    </ClCompile>
+    <ClCompile Include="src\thrift\concurrency\Monitor.cpp">
+      <Filter>concurrency</Filter>
+    </ClCompile>
+    <ClCompile Include="src\thrift\concurrency\Mutex.cpp">
+      <Filter>concurrency</Filter>
+    </ClCompile>
+    <ClCompile Include="src\thrift\concurrency\Thread.cpp">
+      <Filter>concurrency</Filter>
+    </ClCompile>
+    <ClCompile Include="src\thrift\concurrency\ThreadFactory.cpp">
+      <Filter>concurrency</Filter>
+    </ClCompile>
+    <ClCompile Include="src\thrift\protocol\THeaderProtocol.cpp">
+      <Filter>protocol</Filter>
+    </ClCompile>
+    <ClCompile Include="src\thrift\server\TServer.cpp">
+      <Filter>server</Filter>
+    </ClCompile>
+    <ClCompile Include="src\thrift\transport\TNonblockingServerSocket.cpp">
+      <Filter>transport</Filter>
+    </ClCompile>
+    <ClCompile Include="src\thrift\transport\TNonblockingSSLServerSocket.cpp">
+      <Filter>transport</Filter>
+    </ClCompile>
+    <ClCompile Include="src\thrift\transport\TSocketPool.cpp">
+      <Filter>transport</Filter>
+    </ClCompile>
+    <ClCompile Include="src\thrift\transport\TSSLServerSocket.cpp">
+      <Filter>transport</Filter>
+    </ClCompile>
+    <ClCompile Include="src\thrift\transport\TWebSocketServer.cpp">
+      <Filter>transport</Filter>
+    </ClCompile>
+    <ClCompile Include="src\thrift\VirtualProfiling.cpp">
+      <Filter>windows</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -119,12 +150,6 @@
     <ClInclude Include="src\thrift\Thrift.h" />
     <ClInclude Include="src\thrift\TProcessor.h" />
     <ClInclude Include="src\thrift\TApplicationException.h" />
-    <ClInclude Include="src\thrift\windows\StdAfx.h">
-      <Filter>windows</Filter>
-    </ClInclude>
-    <ClInclude Include="src\thrift\windows\TargetVersion.h">
-      <Filter>windows</Filter>
-    </ClInclude>
     <ClInclude Include="src\thrift\concurrency\Exception.h">
       <Filter>concurrency</Filter>
     </ClInclude>
@@ -218,9 +243,6 @@
     <ClInclude Include="src\thrift\windows\SocketPair.h">
       <Filter>windows</Filter>
     </ClInclude>
-    <ClInclude Include="src\thrift\windows\force_inc.h">
-      <Filter>windows</Filter>
-    </ClInclude>
     <ClInclude Include="src\thrift\windows\WinFcntl.h">
       <Filter>windows</Filter>
     </ClInclude>
@@ -229,6 +251,122 @@
     </ClInclude>
     <ClInclude Include="src\thrift\transport\TPipeServer.h">
       <Filter>transport</Filter>
+    </ClInclude>
+    <ClInclude Include="src\thrift\TOutput.h" />
+    <ClInclude Include="src\thrift\windows\OverlappedSubmissionThread.h" />
+    <ClInclude Include="src\thrift\async\TAsyncBufferProcessor.h">
+      <Filter>async</Filter>
+    </ClInclude>
+    <ClInclude Include="src\thrift\async\TAsyncDispatchProcessor.h">
+      <Filter>async</Filter>
+    </ClInclude>
+    <ClInclude Include="src\thrift\async\TAsyncProcessor.h">
+      <Filter>async</Filter>
+    </ClInclude>
+    <ClInclude Include="src\thrift\async\TAsyncProtocolProcessor.h">
+      <Filter>async</Filter>
+    </ClInclude>
+    <ClInclude Include="src\thrift\concurrency\FunctionRunner.h">
+      <Filter>concurrency</Filter>
+    </ClInclude>
+    <ClInclude Include="src\thrift\concurrency\Monitor.h">
+      <Filter>concurrency</Filter>
+    </ClInclude>
+    <ClInclude Include="src\thrift\concurrency\Mutex.h">
+      <Filter>concurrency</Filter>
+    </ClInclude>
+    <ClInclude Include="src\thrift\concurrency\Thread.h">
+      <Filter>concurrency</Filter>
+    </ClInclude>
+    <ClInclude Include="src\thrift\concurrency\ThreadFactory.h">
+      <Filter>concurrency</Filter>
+    </ClInclude>
+    <ClInclude Include="src\thrift\concurrency\ThreadManager.h">
+      <Filter>concurrency</Filter>
+    </ClInclude>
+    <ClInclude Include="src\thrift\concurrency\TimerManager.h">
+      <Filter>concurrency</Filter>
+    </ClInclude>
+    <ClInclude Include="src\thrift\processor\StatsProcessor.h">
+      <Filter>processor</Filter>
+    </ClInclude>
+    <ClInclude Include="src\thrift\protocol\TBase64Utils.h">
+      <Filter>protocol</Filter>
+    </ClInclude>
+    <ClInclude Include="src\thrift\protocol\TCompactProtocol.h">
+      <Filter>protocol</Filter>
+    </ClInclude>
+    <ClInclude Include="src\thrift\protocol\THeaderProtocol.h">
+      <Filter>protocol</Filter>
+    </ClInclude>
+    <ClInclude Include="src\thrift\protocol\TProtocolDecorator.h">
+      <Filter>protocol</Filter>
+    </ClInclude>
+    <ClInclude Include="src\thrift\protocol\TProtocolException.h">
+      <Filter>protocol</Filter>
+    </ClInclude>
+    <ClInclude Include="src\thrift\protocol\TProtocolTap.h">
+      <Filter>protocol</Filter>
+    </ClInclude>
+    <ClInclude Include="src\thrift\protocol\TProtocolTypes.h">
+      <Filter>protocol</Filter>
+    </ClInclude>
+    <ClInclude Include="src\thrift\server\TConnectedClient.h">
+      <Filter>server</Filter>
+    </ClInclude>
+    <ClInclude Include="src\thrift\server\TServerFramework.h">
+      <Filter>server</Filter>
+    </ClInclude>
+    <ClInclude Include="src\thrift\transport\PlatformSocket.h">
+      <Filter>transport</Filter>
+    </ClInclude>
+    <ClInclude Include="src\thrift\transport\THttpTransport.h">
+      <Filter>transport</Filter>
+    </ClInclude>
+    <ClInclude Include="src\thrift\transport\TNonblockingServerSocket.h">
+      <Filter>transport</Filter>
+    </ClInclude>
+    <ClInclude Include="src\thrift\transport\TNonblockingServerTransport.h">
+      <Filter>transport</Filter>
+    </ClInclude>
+    <ClInclude Include="src\thrift\transport\TNonblockingSSLServerSocket.h">
+      <Filter>transport</Filter>
+    </ClInclude>
+    <ClInclude Include="src\thrift\transport\TShortReadTransport.h">
+      <Filter>transport</Filter>
+    </ClInclude>
+    <ClInclude Include="src\thrift\transport\TSocketPool.h">
+      <Filter>transport</Filter>
+    </ClInclude>
+    <ClInclude Include="src\thrift\transport\TSSLServerSocket.h">
+      <Filter>transport</Filter>
+    </ClInclude>
+    <ClInclude Include="src\thrift\transport\TWebSocketServer.h">
+      <Filter>transport</Filter>
+    </ClInclude>
+    <ClInclude Include="src\thrift\windows\Sync.h">
+      <Filter>windows</Filter>
+    </ClInclude>
+    <ClInclude Include="src\thrift\portable_endian.h">
+      <Filter>windows</Filter>
+    </ClInclude>
+    <ClInclude Include="src\thrift\TBase.h">
+      <Filter>windows</Filter>
+    </ClInclude>
+    <ClInclude Include="src\thrift\TDispatchProcessor.h">
+      <Filter>windows</Filter>
+    </ClInclude>
+    <ClInclude Include="src\thrift\thrift_export.h">
+      <Filter>windows</Filter>
+    </ClInclude>
+    <ClInclude Include="src\thrift\thrift-config.h">
+      <Filter>windows</Filter>
+    </ClInclude>
+    <ClInclude Include="src\thrift\TLogging.h">
+      <Filter>windows</Filter>
+    </ClInclude>
+    <ClInclude Include="src\thrift\TToString.h">
+      <Filter>windows</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -261,8 +399,9 @@
     <None Include="src\thrift\protocol\TBinaryProtocol.tcc">
       <Filter>protocol</Filter>
     </None>
-    <None Include="src\thrift\windows\tr1\functional">
-      <Filter>windows\tr1</Filter>
+    <None Include="src\thrift\protocol\TCompactProtocol.tcc">
+      <Filter>protocol</Filter>
     </None>
   </ItemGroup>
 </Project>
+
