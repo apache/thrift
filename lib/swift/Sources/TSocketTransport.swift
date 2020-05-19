@@ -159,7 +159,7 @@ public class TSocketTransport : TTransport {
       var addr = sockaddr_in(sin_len: UInt8(MemoryLayout<sockaddr_in>.size),
                              sin_family: sa_family_t(AF_INET),
                              sin_port: in_port_t(htons(UInt16(port))),
-                             sin_addr: in_addr(s_addr: in_addr_t(0)),
+                             sin_addr: hostAddr,
                              sin_zero: (0, 0, 0, 0, 0, 0, 0, 0))
       
     #endif
