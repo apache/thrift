@@ -100,7 +100,7 @@ public:
   THRIFT_SOCKET getSocketFD() override { return serverSocket_; }
 
   int getPort() override;
-  
+
   int getListenPort() override;
 
   void listen() override;
@@ -128,6 +128,9 @@ private:
 
   socket_func_t listenCallback_;
   socket_func_t acceptCallback_;
+
+  void _setup_sockopts();
+  void _setup_tcp_sockopts();
 };
 }
 }
