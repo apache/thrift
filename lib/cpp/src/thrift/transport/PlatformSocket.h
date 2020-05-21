@@ -70,16 +70,10 @@
 #  define THRIFT_SLEEP_USEC thrift_usleep
 #  define THRIFT_TIMESPEC thrift_timespec
 #  define THRIFT_CTIME_R thrift_ctime_r
-#  define THRIFT_POLL thrift_poll
-#  if WINVER <= 0x0502 //XP, Server2003
-#    define THRIFT_POLLFD  thrift_pollfd
-#    define THRIFT_POLLIN  0x0300
-#    define THRIFT_POLLOUT 0x0010
-#  else //Vista, Win7...
-#    define THRIFT_POLLFD  pollfd
-#    define THRIFT_POLLIN  POLLIN
-#    define THRIFT_POLLOUT POLLOUT
-#  endif //WINVER
+#  define THRIFT_POLL WSAPoll
+#  define THRIFT_POLLFD  pollfd
+#  define THRIFT_POLLIN  POLLIN
+#  define THRIFT_POLLOUT POLLOUT
 #  define THRIFT_SHUT_RDWR SD_BOTH
 #  if !defined(AI_ADDRCONFIG)
 #    define AI_ADDRCONFIG 0x00000400
