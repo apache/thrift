@@ -26,7 +26,7 @@ import (
 )
 
 type TSocket struct {
-	conn           net.Conn
+	conn           *socketConn
 	addr           net.Addr
 	connectTimeout time.Duration
 	socketTimeout  time.Duration
@@ -58,7 +58,7 @@ func NewTSocketFromAddrTimeout(addr net.Addr, connTimeout time.Duration, soTimeo
 
 // Creates a TSocket from an existing net.Conn
 func NewTSocketFromConnTimeout(conn net.Conn, connTimeout time.Duration) *TSocket {
-	return &TSocket{conn: conn, addr: conn.RemoteAddr(), connectTimeout: connTimeout, socketTimeout: connTimeout}
+	return &TSocket{conn: wrapSocketConn(conn), addr: conn.RemoteAddr(), connectTimeout: connTimeout, socketTimeout: connTimeout}
 }
 
 // Sets the connect timeout
@@ -89,7 +89,7 @@ func (p *TSocket) pushDeadline(read, write bool) {
 
 // Connects the socket, creating a new socket object if necessary.
 func (p *TSocket) Open() error {
-	if p.IsOpen() {
+	if p.conn.isValid() {
 		return NewTTransportException(ALREADY_OPEN, "Socket already connected.")
 	}
 	if p.addr == nil {
@@ -102,7 +102,11 @@ func (p *TSocket) Open() error {
 		return NewTTransportException(NOT_OPEN, "Cannot open bad address.")
 	}
 	var err error
-	if p.conn, err = net.DialTimeout(p.addr.Network(), p.addr.String(), p.connectTimeout); err != nil {
+	if p.conn, err = createSocketConnFromReturn(net.DialTimeout(
+		p.addr.Network(),
+		p.addr.String(),
+		p.connectTimeout,
+	)); err != nil {
 		return NewTTransportException(NOT_OPEN, err.Error())
 	}
 	return nil
@@ -115,10 +119,7 @@ func (p *TSocket) Conn() net.Conn {
 
 // Returns true if the connection is open
 func (p *TSocket) IsOpen() bool {
-	if p.conn == nil {
-		return false
-	}
-	return true
+	return p.conn.IsOpen()
 }
 
 // Closes the socket.
@@ -140,7 +141,7 @@ func (p *TSocket) Addr() net.Addr {
 }
 
 func (p *TSocket) Read(buf []byte) (int, error) {
-	if !p.IsOpen() {
+	if !p.conn.isValid() {
 		return 0, NewTTransportException(NOT_OPEN, "Connection not open")
 	}
 	p.pushDeadline(true, false)
@@ -149,7 +150,7 @@ func (p *TSocket) Read(buf []byte) (int, error) {
 }
 
 func (p *TSocket) Write(buf []byte) (int, error) {
-	if !p.IsOpen() {
+	if !p.conn.isValid() {
 		return 0, NewTTransportException(NOT_OPEN, "Connection not open")
 	}
 	p.pushDeadline(false, true)
@@ -161,7 +162,7 @@ func (p *TSocket) Flush(ctx context.Context) error {
 }
 
 func (p *TSocket) Interrupt() error {
-	if !p.IsOpen() {
+	if !p.conn.isValid() {
 		return nil
 	}
 	return p.conn.Close()
