@@ -23,12 +23,21 @@ all-local:
 	$(DOTNETCORE) build -c Release
 
 check-local:
+	$(DOTNETCORE) test Tests/Thrift.PublicInterfaces.Compile.Tests/Thrift.PublicInterfaces.Compile.Tests.csproj
 	$(DOTNETCORE) test Tests/Thrift.Tests/Thrift.Tests.csproj
 	$(DOTNETCORE) test Tests/Thrift.IntegrationTests/Thrift.IntegrationTests.csproj
 
 clean-local:
 	$(RM) -r Thrift/bin
 	$(RM) -r Thrift/obj
+	$(RM) -r Benchmarks/Thrift.Benchmarks/bin
+	$(RM) -r Benchmarks/Thrift.Benchmarks/obj
+	$(RM) -r Tests/Thrift.Tests/bin
+	$(RM) -r Tests/Thrift.Tests/obj
+	$(RM) -r Tests/Thrift.IntegrationTests/bin
+	$(RM) -r Tests/Thrift.IntegrationTests/obj
+	$(RM) -r Tests/Thrift.PublicInterfaces.Compile.Tests/bin
+	$(RM) -r Tests/Thrift.PublicInterfaces.Compile.Tests/obj
 
 EXTRA_DIST = \
 	README.md \
@@ -36,6 +45,7 @@ EXTRA_DIST = \
 	Tests/Thrift.IntegrationTests/Thrift.IntegrationTests.csproj \
 	Tests/Thrift.PublicInterfaces.Compile.Tests/Thrift.PublicInterfaces.Compile.Tests.csproj \
 	Tests/Thrift.PublicInterfaces.Compile.Tests/Properties/AssemblyInfo.cs \
+	Tests/Thrift.PublicInterfaces.Compile.Tests/optional_required_default.thrift \
 	Tests/Thrift.PublicInterfaces.Compile.Tests/CassandraTest.thrift \
 	Tests/Thrift.Tests/Thrift.Tests.csproj \
 	Tests/Thrift.Tests/Protocols \

@@ -22,12 +22,13 @@ namespace Thrift.Protocol
 {
     public interface TUnionBase
     {
-        Task WriteAsync(TProtocol tProtocol, CancellationToken cancellationToken = default(CancellationToken));
+        Task WriteAsync(TProtocol tProtocol, CancellationToken cancellationToken = default);
     }
 
     // ReSharper disable once InconsistentNaming
     public interface TBase : TUnionBase
     {
-        Task ReadAsync(TProtocol tProtocol, CancellationToken cancellationToken = default(CancellationToken));
+        Task ReadAsync(TProtocol tProtocol, CancellationToken cancellationToken = default);
     }
+
 }

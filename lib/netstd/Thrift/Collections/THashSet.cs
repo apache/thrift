@@ -60,12 +60,12 @@ namespace Thrift.Collections
             Items.CopyTo(array, arrayIndex);
         }
 
-        public IEnumerator GetEnumerator()
+        IEnumerator IEnumerable.GetEnumerator()
         {
             return Items.GetEnumerator();
         }
 
-        IEnumerator<T> IEnumerable<T>.GetEnumerator()
+        public IEnumerator<T> GetEnumerator()
         {
             return ((IEnumerable<T>) Items).GetEnumerator();
         }

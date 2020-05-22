@@ -16,11 +16,12 @@
 // under the License.
 
 using System.Collections;
+using System.Collections.Generic;
 
 namespace Thrift.Collections
 {
     // ReSharper disable once InconsistentNaming
-    public class TCollections
+    public static class TCollections
     {
         /// <summary>
         ///     This will return true if the two collections are value-wise the same.
@@ -36,6 +37,18 @@ namespace Thrift.Collections
             if (first == null || second == null)
             {
                 return false;
+            }
+
+            // for dictionaries, we need to compare keys and values separately
+            // because KeyValuePair<K,V>.Equals() will not do what we want
+            var fdict = first as IDictionary;
+            var sdict = second as IDictionary;
+            if ((fdict != null) || (sdict != null))
+            {
+                if ((fdict == null) || (sdict == null))
+                    return false;
+                return TCollections.Equals(fdict.Keys, sdict.Keys)
+                    && TCollections.Equals(fdict.Values, sdict.Values);
             }
 
             var fiter = first.GetEnumerator();
@@ -91,11 +104,13 @@ namespace Thrift.Collections
 
                 unchecked
                 {
-                    hashcode = (hashcode*397) ^ (objHash);
+                    hashcode = (hashcode * 397) ^ (objHash);
                 }
             }
 
             return hashcode;
         }
+
+
     }
 }

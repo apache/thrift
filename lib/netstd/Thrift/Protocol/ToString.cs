@@ -21,7 +21,7 @@ using System.Collections.Generic;
 using System.Text;
 using Thrift.Protocol;
 
-namespace Thrift.Collections
+namespace Thrift.Protocol
 {
 
 
@@ -73,7 +73,7 @@ namespace Thrift.Collections
             }
             else
             {
-                sb.Append(self.ToString());
+                sb.Append(self != null?  self.ToString() : "<null>");
             }
         }
     }
