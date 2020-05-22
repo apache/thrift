@@ -238,18 +238,3 @@ For the lib/nodejs/lib/thrift/json_parse.js:
 (By Douglas Crockford <douglas@crockford.com>)
 
 --------------------------------------------------
-For lib/cpp/src/thrift/portable_endian.h
-
-// endian.h
-//
-// https://gist.github.com/panzi/6856583
-//
-// I, Mathias Panzenböck, place this file hereby into the public domain. Use
-// it at your own risk for whatever you like. In case there are
-// jurisdictions that don't support putting things in the public domain you
-// can also consider it to be "dual licensed" under the BSD, MIT and Apache
-// licenses, if you want to. This code is trivial anyway. Consider it an
-// example on how to get the endian conversion functions on different
-// platforms.
-
---------------------------------------------------
