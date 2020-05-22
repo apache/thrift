@@ -1,4 +1,4 @@
-﻿// Licensed to the Apache Software Foundation(ASF) under one
+// Licensed to the Apache Software Foundation(ASF) under one
 // or more contributor license agreements.See the NOTICE file
 // distributed with this work for additional information
 // regarding copyright ownership.The ASF licenses this file
@@ -17,6 +17,8 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Security.Cryptography.Xml;
 using System.Text;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Thrift.Collections;
@@ -30,54 +32,209 @@ namespace Thrift.Tests.Collections
         //TODO: Add tests for IEnumerable with objects and primitive values inside
 
         [TestMethod]
-        public void TCollection_Equals_Primitive_Test()
+        public void TCollection_List_Equals_Primitive_Test()
         {
             var collection1 = new List<int> {1,2,3};
             var collection2 = new List<int> {1,2,3};
-
-            var result = TCollections.Equals(collection1, collection2);
-
-            Assert.IsTrue(result);
+            Assert.IsTrue(TCollections.Equals(collection1, collection2));
+            Assert.IsTrue(collection1.SequenceEqual(collection2));
         }
 
         [TestMethod]
-        public void TCollection_Equals_Primitive_Different_Test()
+        public void TCollection_List_Equals_Primitive_Different_Test()
         {
             var collection1 = new List<int> { 1, 2, 3 };
             var collection2 = new List<int> { 1, 2 };
+            Assert.IsFalse(TCollections.Equals(collection1, collection2));
+            Assert.IsFalse(collection1.SequenceEqual(collection2));
 
-            var result = TCollections.Equals(collection1, collection2);
-
-            Assert.IsFalse(result);
+            collection2.Add(4);
+            Assert.IsFalse(TCollections.Equals(collection1, collection2));
+            Assert.IsFalse(collection1.SequenceEqual(collection2));
         }
 
         [TestMethod]
-        public void TCollection_Equals_Objects_Test()
+        public void TCollection_List_Equals_Objects_Test()
         {
             var collection1 = new List<ExampleClass> { new ExampleClass { X = 1 }, new ExampleClass { X = 2 } };
             var collection2 = new List<ExampleClass> { new ExampleClass { X = 1 }, new ExampleClass { X = 2 } };
-
-            var result = TCollections.Equals(collection1, collection2);
-
-            // references to different collections
-            Assert.IsFalse(result);
+            Assert.IsTrue(TCollections.Equals(collection1, collection2));
+            Assert.IsTrue(collection1.SequenceEqual(collection2));
         }
 
         [TestMethod]
-        public void TCollection_Equals_OneAndTheSameObject_Test()
+        public void TCollection_List_List_Equals_Objects_Test()
+        {
+            var collection1 = new List<List<ExampleClass>> { new List<ExampleClass> { new ExampleClass { X = 1 }, new ExampleClass { X = 2 } } };
+            var collection2 = new List<List<ExampleClass>> { new List<ExampleClass> { new ExampleClass { X = 1 }, new ExampleClass { X = 2 } } };
+            Assert.IsTrue(TCollections.Equals(collection1, collection2));
+            Assert.IsFalse(collection1.SequenceEqual(collection2));  // SequenceEqual() calls Equals() of the inner list instead of SequenceEqual()
+        }
+
+        [TestMethod]
+        public void TCollection_List_Equals_OneAndTheSameObject_Test()
         {
             var collection1 = new List<ExampleClass> { new ExampleClass { X = 1 }, new ExampleClass { X = 2 } };
             var collection2 = collection1;
-
-            var result = TCollections.Equals(collection1, collection2);
-
-            // references to one and the same collection
-            Assert.IsTrue(result);
+            Assert.IsTrue(TCollections.Equals(collection1, collection2));
+            Assert.IsTrue(collection1.SequenceEqual(collection2));
         }
+
+        [TestMethod]
+        public void TCollection_Set_Equals_Primitive_Test()
+        {
+            var collection1 = new THashSet<int> {1,2,3};
+            var collection2 = new THashSet<int> {1,2,3};
+            Assert.IsTrue(TCollections.Equals(collection1, collection2));
+            Assert.IsTrue(collection1.SequenceEqual(collection2));
+        }
+
+        [TestMethod]
+        public void TCollection_Set_Equals_Primitive_Different_Test()
+        {
+            var collection1 = new THashSet<int> { 1, 2, 3 };
+            var collection2 = new THashSet<int> { 1, 2 };
+            Assert.IsFalse(TCollections.Equals(collection1, collection2));
+            Assert.IsFalse(collection1.SequenceEqual(collection2));
+
+            collection2.Add(4);
+            Assert.IsFalse(TCollections.Equals(collection1, collection2));
+            Assert.IsFalse(collection1.SequenceEqual(collection2));
+        }
+
+        [TestMethod]
+        public void TCollection_Set_Equals_Objects_Test()
+        {
+            var collection1 = new THashSet<ExampleClass> { new ExampleClass { X = 1 }, new ExampleClass { X = 2 } };
+            var collection2 = new THashSet<ExampleClass> { new ExampleClass { X = 1 }, new ExampleClass { X = 2 } };
+            Assert.IsTrue(TCollections.Equals(collection1, collection2));
+            Assert.IsTrue(collection1.SequenceEqual(collection2));
+        }
+
+        [TestMethod]
+        public void TCollection_Set_Set_Equals_Objects_Test()
+        {
+            var collection1 = new THashSet<THashSet<ExampleClass>> { new THashSet<ExampleClass> { new ExampleClass { X = 1 }, new ExampleClass { X = 2 } } };
+            var collection2 = new THashSet<THashSet<ExampleClass>> { new THashSet<ExampleClass> { new ExampleClass { X = 1 }, new ExampleClass { X = 2 } } };
+            Assert.IsTrue(TCollections.Equals(collection1, collection2));
+            Assert.IsFalse(collection1.SequenceEqual(collection2));  // SequenceEqual() calls Equals() of the inner list instead of SequenceEqual()
+        }
+
+        [TestMethod]
+        public void TCollection_Set_Equals_OneAndTheSameObject_Test()
+        {
+            var collection1 = new THashSet<ExampleClass> { new ExampleClass { X = 1 }, new ExampleClass { X = 2 } };
+            var collection2 = collection1;      // references to one and the same collection
+            Assert.IsTrue(TCollections.Equals(collection1, collection2));
+            Assert.IsTrue(collection1.SequenceEqual(collection2));
+        }
+
+
+        [TestMethod]
+        public void TCollection_Map_Equals_Primitive_Test()
+        {
+            var collection1 = new Dictionary<int, int> { [1] = 1, [2] = 2, [3] = 3 };
+            var collection2 = new Dictionary<int, int> { [1] = 1, [2] = 2, [3] = 3 };
+            Assert.IsTrue(TCollections.Equals(collection1, collection2));
+            Assert.IsTrue(collection1.SequenceEqual(collection2));
+        }
+
+        [TestMethod]
+        public void TCollection_Map_Equals_Primitive_Different_Test()
+        {
+            var collection1 = new Dictionary<int, int> { [1] = 1, [2] = 2, [3] = 3 };
+            var collection2 = new Dictionary<int, int> { [1] = 1, [2] = 2 };
+            Assert.IsFalse(TCollections.Equals(collection1, collection2));
+            Assert.IsFalse(collection1.SequenceEqual(collection2));
+
+            collection2[3] = 3;
+            Assert.IsTrue(TCollections.Equals(collection1, collection2));
+            Assert.IsTrue(collection1.SequenceEqual(collection2));
+
+            collection2[3] = 4;
+            Assert.IsFalse(TCollections.Equals(collection1, collection2));
+        }
+
+        [TestMethod]
+        public void TCollection_Map_Equals_Objects_Test()
+        {
+            var collection1 = new Dictionary<int, ExampleClass>
+            {
+                [1] = new ExampleClass { X = 1 },
+                [-1] = new ExampleClass { X = 2 }
+            };
+            var collection2 = new Dictionary<int, ExampleClass>
+            {
+                [1] = new ExampleClass { X = 1 },
+                [-1] = new ExampleClass { X = 2 }
+            };
+
+            Assert.IsTrue(TCollections.Equals(collection1, collection2));
+            Assert.IsTrue(collection1.SequenceEqual(collection2));
+        }
+
+        [TestMethod]
+        public void TCollection_Map_Map_Equals_Objects_Test()
+        {
+            var collection1 = new Dictionary<int, Dictionary<int, ExampleClass>>
+            {
+                [0] = new Dictionary<int, ExampleClass>
+                {
+                    [1] = new ExampleClass { X = 1 },
+                    [-1] = new ExampleClass { X = 2 }
+                }
+            };
+            var collection2 = new Dictionary<int, Dictionary<int, ExampleClass>>
+            {
+                [0] = new Dictionary<int, ExampleClass>
+                {
+                    [1] = new ExampleClass { X = 1 },
+                    [-1] = new ExampleClass { X = 2 }
+                }
+            };
+
+            Assert.IsTrue(TCollections.Equals(collection1, collection2));
+            Assert.IsFalse(collection1.SequenceEqual(collection2));  // SequenceEqual() calls Equals() of the inner list instead of SequenceEqual()
+        }
+
+        [TestMethod]
+        public void TCollection_Map_Equals_OneAndTheSameObject_Test()
+        {
+            var collection1 = new Dictionary<int, ExampleClass>
+            {
+                [1] = new ExampleClass { X = 1 },
+                [-1] = new ExampleClass { X = 2 }
+            };
+            var collection2 = collection1;
+            Assert.IsTrue(TCollections.Equals(collection1, collection2));
+            Assert.IsTrue(collection1.SequenceEqual(collection2));
+        }
+
 
         private class ExampleClass
         {
             public int X { get; set; }
+
+            // all Thrift-generated classes override Equals(), we do just the same
+            public override bool Equals(object that)
+            {
+                if (!(that is ExampleClass other)) return false;
+                if (ReferenceEquals(this, other)) return true;
+
+                return this.X == other.X;
+            }
+
+            //  overriding Equals() requires GetHashCode() as well
+            public override int GetHashCode()
+            {
+                int hashcode = 157;
+                unchecked
+                {
+                    hashcode = (hashcode * 397) + X.GetHashCode();
+                }
+                return hashcode;
+            }
         }
     }
 }
+

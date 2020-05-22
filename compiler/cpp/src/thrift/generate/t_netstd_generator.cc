@@ -51,6 +51,7 @@ t_netstd_generator::t_netstd_generator(t_program* program, const map<string, str
     : t_oop_generator(program)
 {
     (void)option_string;
+    suppress_deepcopy = false;
     use_pascal_case_properties = false;
     union_ = false;
     serialize_ = false;
@@ -62,23 +63,22 @@ t_netstd_generator::t_netstd_generator(t_program* program, const map<string, str
 
     for (iter = parsed_options.begin(); iter != parsed_options.end(); ++iter)
     {
-        if (iter->first.compare("union") == 0)
-        {
+        if (iter->first.compare("union") == 0) {
             union_ = true;
         }
-        else if (iter->first.compare("serial") == 0)
-        {
+        else if (iter->first.compare("serial") == 0) {
             serialize_ = true;
             wcf_namespace_ = iter->second; // since there can be only one namespace
         }
-        else if (iter->first.compare("wcf") == 0)
-        {
+        else if (iter->first.compare("wcf") == 0) {
             wcf_ = true;
             wcf_namespace_ = iter->second;
         }
-        else if (iter->first.compare("pascal") == 0)
-        {
+        else if (iter->first.compare("pascal") == 0) {
           use_pascal_case_properties = true;
+        }
+        else if (iter->first.compare("no_deepcopy") == 0) {
+          suppress_deepcopy = true;
         }
         else {
           throw "unknown option netstd:" + iter->first;
@@ -132,12 +132,19 @@ static bool field_has_default(t_field* tfield) { return tfield->get_value() != N
 
 static bool field_is_required(t_field* tfield) { return tfield->get_req() == t_field::T_REQUIRED; }
 
-static bool type_can_be_null(t_type* ttype)
+static t_type* resolve_typedef(t_type* ttype)
 {
     while (ttype->is_typedef())
     {
         ttype = static_cast<t_typedef*>(ttype)->get_type();
     }
+    return ttype;
+}
+
+
+static bool type_can_be_null(t_type* ttype)
+{
+    ttype = resolve_typedef(ttype);
 
     return ttype->is_container() || ttype->is_struct() || ttype->is_xception() || ttype->is_string();
 }
@@ -184,10 +191,11 @@ void t_netstd_generator::init_generator()
     }
 
     pverbose(".NET Standard options:\n");
-    pverbose("- union ...... %s\n", (is_union_enabled() ? "ON" : "off"));
-    pverbose("- serialize .. %s\n", (is_serialize_enabled() ? "ON" : "off"));
-    pverbose("- wcf ........ %s\n", (is_wcf_enabled() ? "ON" : "off"));
-    pverbose("- pascal ..... %s\n", (use_pascal_case_properties ? "ON" : "off"));
+    pverbose("- union ......... %s\n", (is_union_enabled() ? "ON" : "off"));
+    pverbose("- serialize ..... %s\n", (is_serialize_enabled() ? "ON" : "off"));
+    pverbose("- wcf ........... %s\n", (is_wcf_enabled() ? "ON" : "off"));
+    pverbose("- pascal ........ %s\n", (use_pascal_case_properties ? "ON" : "off"));
+    pverbose("- no_deepcopy ... %s\n", (suppress_deepcopy ? "ON" : "off"));
 }
 
 string t_netstd_generator::normalize_name(string name)
@@ -350,6 +358,7 @@ string t_netstd_generator::netstd_type_usings() const
         "using System.Collections.Generic;\n"
         "using System.Text;\n"
         "using System.IO;\n"
+        "using System.Linq;\n"
         "using System.Threading;\n"
         "using System.Threading.Tasks;\n"
         "using Thrift;\n"
@@ -486,6 +495,7 @@ void t_netstd_generator::print_const_def_value(ostream& out, string name, t_type
         const map<t_const_value*, t_const_value*, t_const_value::value_compare>& val = value->get_map();
         vector<t_field*>::const_iterator f_iter;
         map<t_const_value*, t_const_value*, t_const_value::value_compare>::const_iterator v_iter;
+        collect_extensions_types(static_cast<t_struct*>(type));
         prepare_member_name_mapping(static_cast<t_struct*>(type));
 
         for (v_iter = val.begin(); v_iter != val.end(); ++v_iter)
@@ -569,10 +579,8 @@ bool t_netstd_generator::print_const_value(ostream& out, string name, t_type* ty
 {
     out << indent();
     bool need_static_construction = !in_static;
-    while (type->is_typedef())
-    {
-        type = static_cast<t_typedef*>(type)->get_type();
-    }
+    
+    type = resolve_typedef( type);
 
     if (!defval || needtype)
     {
@@ -622,7 +630,11 @@ string t_netstd_generator::render_const_value(ostream& out, string name, t_type*
         switch (tbase)
         {
         case t_base_type::TYPE_STRING:
-            render << '"' << get_escaped_string(value) << '"';
+            if (type->is_binary()) {
+                render << "System.Text.Encoding.UTF8.GetBytes(\"" << get_escaped_string(value) << "\")";
+            } else {
+                render << '"' << get_escaped_string(value) << '"';
+            } 
             break;
         case t_base_type::TYPE_BOOL:
             render << ((value->get_integer() > 0) ? "true" : "false");
@@ -661,8 +673,194 @@ string t_netstd_generator::render_const_value(ostream& out, string name, t_type*
     return render.str();
 }
 
+void t_netstd_generator::collect_extensions_types(t_struct* tstruct)
+{
+    const vector<t_field*>& members = tstruct->get_members();
+    vector<t_field*>::const_iterator m_iter;
+
+    // make private members with public Properties
+    for (m_iter = members.begin(); m_iter != members.end(); ++m_iter)
+    {
+        collect_extensions_types((*m_iter)->get_type());
+    }    
+}
+
+void t_netstd_generator::collect_extensions_types(t_type* ttype)
+{
+    ttype = resolve_typedef( ttype);
+    string key = type_name(ttype);
+    
+    if (ttype->is_struct() || ttype->is_xception())
+    {
+        if( checked_extension_types.find(key) == checked_extension_types.end())
+        {
+            checked_extension_types[key] = ttype;    // prevent recursion
+            
+            t_struct* tstruct = static_cast<t_struct*>(ttype);
+            collect_extensions_types(tstruct);
+        }
+        return;
+    }
+    
+    if (ttype->is_map() || ttype->is_set() || ttype->is_list())
+    {
+        if( collected_extension_types.find(key) == collected_extension_types.end())
+        {
+            collected_extension_types[key] = ttype;   // prevent recursion
+            
+            if( ttype->is_map())
+            {
+                t_map* tmap = static_cast<t_map*>(ttype);
+                collect_extensions_types(tmap->get_key_type());
+                collect_extensions_types(tmap->get_val_type());
+            } 
+            else if (ttype->is_set())
+            {
+                t_set* tset = static_cast<t_set*>(ttype);
+                collect_extensions_types(tset->get_elem_type());
+            } 
+            else if (ttype->is_list())
+            {
+                t_list* tlist = static_cast<t_list*>(ttype);
+                collect_extensions_types(tlist->get_elem_type());
+            }
+        }
+
+        return;
+    }
+}
+
+void t_netstd_generator::generate_extensions_file()
+{
+    if (collected_extension_types.empty())
+    {
+        return;
+    }
+
+    string f_exts_name = namespace_dir_ + '/' + program_name_ + ".Extensions.cs";
+    ofstream_with_content_based_conditional_update f_exts;
+    f_exts.open(f_exts_name.c_str());
+
+    generate_extensions(f_exts, collected_extension_types);
+
+    f_exts.close();
+}
+
+void t_netstd_generator::generate_extensions(ostream& out, map<string, t_type*> types)
+{
+    if (types.empty())
+    {
+        return;
+    }
+
+    reset_indent();
+    out << autogen_comment() << netstd_type_usings() << endl;
+
+    start_netstd_namespace(out);
+
+    out << indent() << "public static class " << make_valid_csharp_identifier(program_name_) << "Extensions" << endl;
+    scope_up(out);
+
+    bool needs_typecast = false;
+    std::map<string,t_type*>::const_iterator iter;
+    for( iter = types.begin(); iter != types.end(); ++iter)
+    {
+        out << indent() << "public static bool Equals(this " << iter->first << " instance, object that)" << endl;
+        scope_up(out);
+        out << indent() << "if (!(that is " << iter->first << " other)) return false;" << endl;
+        out << indent() << "if (ReferenceEquals(instance, other)) return true;" << endl;
+        out << endl;
+        out << indent() << "return TCollections.Equals(instance, other);" << endl;
+        scope_down(out);
+        out << endl << endl;
+        
+        out << indent() << "public static int GetHashCode(this " << iter->first << " instance)" << endl;
+        scope_up(out);
+        out << indent() << "return TCollections.GetHashCode(instance);" << endl;
+        scope_down(out);
+        out << endl << endl;
+
+        if(! suppress_deepcopy) {
+            out << indent() << "public static " << iter->first << " " << DEEP_COPY_METHOD_NAME << "(this " << iter->first << " source)" << endl;
+            scope_up(out);
+            out << indent() << "if (source == null)" << endl;
+            indent_up();
+            out << indent() << "return null;" << endl << endl;
+            indent_down();
+
+            string tmp_instance = tmp("tmp");
+            out << indent() << "var " << tmp_instance << " = new " << iter->first << "(source.Count);" << endl;
+            if( iter->second->is_map())
+            {
+                t_map* tmap = static_cast<t_map*>(iter->second);
+                string copy_key = get_deep_copy_method_call(tmap->get_key_type(), needs_typecast);
+                string copy_val = get_deep_copy_method_call(tmap->get_val_type(), needs_typecast);
+                bool null_key = type_can_be_null(tmap->get_key_type());
+                bool null_val = type_can_be_null(tmap->get_val_type());
+                
+                out << indent() << "foreach (var pair in source)" << endl;
+                indent_up();
+                out << indent() << tmp_instance << ".Add(";
+                if( null_key)
+                {
+                    out << "(pair.Key != null) ? pair.Key" << copy_key << " : null";
+                } else {
+                    out << "pair.Key" << copy_key;
+                }
+                out << ", ";
+                if( null_val)
+                {
+                    out << "(pair.Value != null) ? pair.Value" << copy_val << " : null";
+                } else {
+                    out << "pair.Value" << copy_val;
+                }
+                out << ");" << endl;
+                indent_down();
+                
+            } else if( iter->second->is_set() || iter->second->is_list()) {
+                string copy_elm;
+                bool null_elm = false;
+                if (iter->second->is_set())
+                {
+                    t_set* tset = static_cast<t_set*>(iter->second);
+                    copy_elm = get_deep_copy_method_call(tset->get_elem_type(), needs_typecast);
+                    null_elm = type_can_be_null(tset->get_elem_type());
+                }
+                else // list
+                {
+                    t_list* tlist = static_cast<t_list*>(iter->second);
+                    copy_elm = get_deep_copy_method_call(tlist->get_elem_type(), needs_typecast);
+                    null_elm = type_can_be_null(tlist->get_elem_type());
+                }
+
+                out << indent() << "foreach (var elem in source)" << endl;
+                indent_up();
+                out << indent() << tmp_instance << ".Add(";
+                if( null_elm)
+                {
+                    out << "(elem != null) ? elem" << copy_elm << " : null";
+                } else {
+                    out << "elem" << copy_elm;
+                }
+                out << ");" << endl;
+                indent_down();
+            }
+
+            out << indent() << "return " << tmp_instance << ";" << endl;
+            scope_down(out);
+            out << endl << endl;
+        }
+    }
+
+
+    scope_down(out);
+    end_netstd_namespace(out);
+}
+
 void t_netstd_generator::generate_struct(t_struct* tstruct)
 {
+    collect_extensions_types(tstruct);
+    
     if (is_union_enabled() && tstruct->is_union())
     {
         generate_netstd_union(tstruct);
@@ -707,6 +905,7 @@ void t_netstd_generator::generate_netstd_struct_definition(ostream& out, t_struc
     out << endl;
 
     generate_netstd_doc(out, tstruct);
+    collect_extensions_types(tstruct);    
     prepare_member_name_mapping(tstruct);
 
     if ((is_serialize_enabled() || is_wcf_enabled()) && !is_exception)
@@ -753,7 +952,7 @@ void t_netstd_generator::generate_netstd_struct_definition(ostream& out, t_struc
         if (is_required)
         {
             has_required_fields = true;
-        }
+    }
         else
         {
             has_non_required_fields = true;
@@ -828,10 +1027,8 @@ void t_netstd_generator::generate_netstd_struct_definition(ostream& out, t_struc
     for (m_iter = members.begin(); m_iter != members.end(); ++m_iter)
     {
         t_type* t = (*m_iter)->get_type();
-        while (t->is_typedef())
-        {
-            t = static_cast<t_typedef*>(t)->get_type();
-        }
+        t = resolve_typedef(t);
+
         if ((*m_iter)->get_value() != NULL)
         {
             if (field_is_required((*m_iter)))
@@ -849,6 +1046,7 @@ void t_netstd_generator::generate_netstd_struct_definition(ostream& out, t_struc
     indent_down();
     out << indent() << "}" << endl << endl;
 
+    // if we have required fields, we add that CTOR too
     if (has_required_fields)
     {
         out << indent() << "public " << sharp_struct_name << "(";
@@ -884,6 +1082,9 @@ void t_netstd_generator::generate_netstd_struct_definition(ostream& out, t_struc
         out << indent() << "}" << endl << endl;
     }
 
+    // DeepCopy()
+    generate_netstd_deepcopy_method(out, tstruct, sharp_struct_name);
+
     generate_netstd_struct_reader(out, tstruct);
     if (is_result)
     {
@@ -912,6 +1113,7 @@ void t_netstd_generator::generate_netstd_struct_definition(ostream& out, t_struc
         end_netstd_namespace(out);
     }
 }
+
 
 void t_netstd_generator::generate_netstd_wcffault(ostream& out, t_struct* tstruct)
 {
@@ -943,6 +1145,57 @@ void t_netstd_generator::generate_netstd_wcffault(ostream& out, t_struct* tstruc
         generate_property(out, *m_iter, true, false);
     }
 
+    indent_down();
+    out << indent() << "}" << endl << endl;
+}
+
+void t_netstd_generator::generate_netstd_deepcopy_method(ostream& out, t_struct* tstruct, std::string sharp_struct_name)
+{
+    if( suppress_deepcopy) {
+        return;  // feature disabled
+    }
+        
+    const vector<t_field*>& members = tstruct->get_members();
+    vector<t_field*>::const_iterator m_iter;
+
+    out << indent() << "public " << sharp_struct_name << " " << DEEP_COPY_METHOD_NAME << "()" << endl;
+    out << indent() << "{" << endl;
+    indent_up();
+
+    // return directly if there are only required fields
+    string tmp_instance = tmp("tmp");
+    out << indent() << "var " << tmp_instance << " = new " << sharp_struct_name << "();" << endl;
+
+    for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
+        bool needs_typecast = false;
+        t_type* ttype = (*m_iter)->get_type();
+        string copy_op = get_deep_copy_method_call(ttype, needs_typecast);
+        
+        bool have_indent = false;
+        if (!field_is_required(*m_iter)) {
+            out << indent() << "if( this.__isset." << normalize_name((*m_iter)->get_name()) << ")" << endl;
+            indent_up();
+            have_indent = true;
+        } 
+        else if( type_can_be_null(ttype)) {
+            out << indent() << "if( this." << prop_name(*m_iter) << " != null)" << endl;
+            indent_up();
+            have_indent = true;
+        } 
+
+        out << indent() << tmp_instance << "." << prop_name(*m_iter) << " = ";
+        if( needs_typecast) {
+            out << "(" << type_name(ttype) << ")";
+        }
+        out << "this." << prop_name(*m_iter) << copy_op << ";" << endl;
+
+        if (have_indent) {
+            indent_down();
+        }
+    }
+
+    out << indent() << "return " << tmp_instance << ";" << endl;
+    
     indent_down();
     out << indent() << "}" << endl << endl;
 }
@@ -1298,8 +1551,8 @@ void t_netstd_generator::generate_netstd_union_definition(ostream& out, t_struct
     // Let's define the class first
     start_netstd_namespace(out);
 
-    out << indent() << "public abstract partial class " << tunion->get_name() << " : TUnionBase" << endl
-        << indent() << "{" << endl;
+    out << indent() << "public abstract partial class " << tunion->get_name() << " : TUnionBase" << endl;
+    out << indent() << "{" << endl;
     indent_up();
 
     out << indent() << "public abstract Task WriteAsync(TProtocol tProtocol, CancellationToken cancellationToken);" << endl
@@ -1312,13 +1565,106 @@ void t_netstd_generator::generate_netstd_union_definition(ostream& out, t_struct
     indent_down();
     out << indent() << "}" << endl << endl;
 
-    out << indent() << "public class ___undefined : " << tunion->get_name() << endl
-        << indent() << "{" << endl;
+    const vector<t_field*>& fields = tunion->get_members();
+    vector<t_field*>::const_iterator f_iter;
+
+    out << indent() << "public override bool Equals(object that)" << endl;
+    scope_up(out);
+    out << indent() << "if (!(that is " << tunion->get_name() << " other)) return false;" << endl;
+    out << indent() << "if (ReferenceEquals(this, other)) return true;" << endl;
+    out << endl;
+    out << indent() << "if(this.Isset != other.Isset) return false;" << endl;
+    out << endl;
+    out << indent() << "switch (Isset)" << endl;
+    scope_up(out);
+    for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter)
+    {
+        bool needs_typecast = false;
+        string copy_op = get_deep_copy_method_call((*f_iter)->get_type(), needs_typecast);
+        out << indent() << "case " << (*f_iter)->get_key() << ":" << endl;
+        indent_up();
+        out << indent() << "return Equals(As_" << (*f_iter)->get_name() << ", other.As_" << (*f_iter)->get_name() << ");" << endl;
+        indent_down();
+    }                
+    out << indent() << "default:" << endl;
+    indent_up();
+    out << indent() << "return true;" << endl;
+    indent_down();
+    indent_down();
+    scope_down(out);
+    scope_down(out);
+    out << endl;
+
+    out << indent() << "public override int GetHashCode()" << endl;
+    out << indent() << "{" << endl;
+    indent_up();
+    out << indent() << "switch (Isset)" << endl;
+    out << indent() << "{" << endl;
+    indent_up();    
+    for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter)
+    {
+        bool needs_typecast = false;
+        string copy_op = get_deep_copy_method_call((*f_iter)->get_type(), needs_typecast);
+        out << indent() << "case " << (*f_iter)->get_key() << ":" << endl;
+        indent_up();
+        out << indent() << "return As_" << (*f_iter)->get_name() << ".GetHashCode();" << endl;
+        indent_down();
+    }                
+    out << indent() << "default:" << endl;
+    indent_up();
+    out << indent() << "return (new ___undefined()).GetHashCode();" << endl;
+    indent_down();
+    indent_down();
+    out << indent() << "}" << endl;
+    indent_down();
+    out << indent() << "}" << endl << endl;
+
+    if( ! suppress_deepcopy) {
+        out << indent() << "public " << tunion->get_name() << " DeepCopy()" << endl;
+        out << indent() << "{" << endl;
+        indent_up();
+        out << indent() << "switch (Isset)" << endl;
+        out << indent() << "{" << endl;
+        indent_up();    
+        for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter)
+        {
+            bool needs_typecast = false;
+            string copy_op = get_deep_copy_method_call((*f_iter)->get_type(), needs_typecast);
+            out << indent() << "case " << (*f_iter)->get_key() << ":" << endl;
+            indent_up();
+            out << indent() << "return new " << (*f_iter)->get_name() << "(As_" << (*f_iter)->get_name() << copy_op << ");" << endl;
+            indent_down();
+        }                
+        out << indent() << "default:" << endl;
+        indent_up();
+        out << indent() << "return new ___undefined();" << endl;
+        indent_down();
+        indent_down();
+        out << indent() << "}" << endl;
+        indent_down();
+        out << indent() << "}" << endl << endl;
+    }
+
+    out << indent() << "public class ___undefined : " << tunion->get_name() << endl;
+    out << indent() << "{" << endl;
     indent_up();
 
     out << indent() << "public override object Data { get { return null; } }" << endl
         << indent() << "public ___undefined() : base(0) {}" << endl << endl;
+        
+    if( ! suppress_deepcopy) {
+        out << indent() << "public new ___undefined DeepCopy()" << endl;
+        out << indent() << "{" << endl;
+        indent_up();
+        out << indent() << "return new ___undefined();" << endl;
+        indent_down();
+        out << indent() << "}" << endl << endl;
+    }
 
+    t_struct undefined_struct(program_,"___undefined");
+    generate_netstd_struct_equals(out, &undefined_struct);
+    generate_netstd_struct_hashcode(out, &undefined_struct);
+    
     out << indent() << "public override Task WriteAsync(TProtocol oprot, CancellationToken cancellationToken)" << endl
         << indent() << "{" << endl;
     indent_up();
@@ -1327,9 +1673,6 @@ void t_netstd_generator::generate_netstd_union_definition(ostream& out, t_struct
     out << indent() << "}" << endl << endl;
     indent_down();
     out << indent() << "}" << endl << endl;
-
-    const vector<t_field*>& fields = tunion->get_members();
-    vector<t_field*>::const_iterator f_iter;
 
     for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter)
     {
@@ -1360,8 +1703,8 @@ void t_netstd_generator::generate_netstd_union_class(ostream& out, t_struct* tun
         << endl;
     
     
-    out << indent() << "public class " << tfield->get_name() << " : " << tunion->get_name() << endl
-        << indent() << "{" << endl;
+    out << indent() << "public class " << tfield->get_name() << " : " << tunion->get_name() << endl;
+    out << indent() << "{" << endl;
     indent_up();
 
     out << indent() << "private " << type_name(tfield->get_type()) << " _data;" << endl
@@ -1372,6 +1715,34 @@ void t_netstd_generator::generate_netstd_union_class(ostream& out, t_struct* tun
     out << indent() << "this._data = data;" << endl;
     indent_down();
     out << indent() << "}" << endl;
+
+    if( ! suppress_deepcopy) {
+        out << indent() << "public new " << tfield->get_name() << " DeepCopy()" << endl;
+        out << indent() << "{" << endl;
+        indent_up();
+        bool needs_typecast = false;
+        string copy_op = get_deep_copy_method_call(tfield->get_type(), needs_typecast);
+        out << indent() << "return new " << tfield->get_name() << "(_data" << copy_op << ");" << endl;
+        indent_down();
+        out << indent() << "}" << endl << endl;
+    }
+
+    out << indent() << "public override bool Equals(object that)" << endl;
+    out << indent() << "{" << endl;
+    indent_up();
+    out << indent() << "if (!(that is " << tunion->get_name() << " other)) return false;" << endl;
+    out << indent() << "if (ReferenceEquals(this, other)) return true;" << endl;
+    out << endl;
+    out << indent() << "return Equals( _data, other.As_" << tfield->get_name() << ");" << endl;
+    indent_down();
+    out << indent() << "}" << endl << endl;
+
+    out << indent() << "public override int GetHashCode()" << endl;
+    out << indent() << "{" << endl;
+    indent_up();
+    out << indent() << "return _data.GetHashCode();" << endl;
+    indent_down();
+    out << indent() << "}" << endl << endl;
 
     out << indent() << "public override async Task WriteAsync(TProtocol oprot, CancellationToken cancellationToken) {" << endl;
     indent_up();
@@ -1403,6 +1774,7 @@ void t_netstd_generator::generate_netstd_union_class(ostream& out, t_struct* tun
     out << indent() << "oprot.DecrementRecursionDepth();" << endl;
     indent_down();
     out << indent() << "}" << endl;
+    indent_down();
     out << indent() << "}" << endl;
     indent_down();
     out << indent() << "}" << endl << endl;
@@ -1544,6 +1916,9 @@ void t_netstd_generator::generate_service(t_service* tservice)
     f_service.close();
 
     indent_validate(ic, "generate_service.");
+
+    // right at the end, after everything else
+    generate_extensions_file();
 }
 
 void t_netstd_generator::generate_service_interface(ostream& out, t_service* tservice)
@@ -1602,6 +1977,7 @@ void t_netstd_generator::generate_service_helpers(ostream& out, t_service* tserv
     for (f_iter = functions.begin(); f_iter != functions.end(); ++f_iter)
     {
         t_struct* ts = (*f_iter)->get_arglist();
+        collect_extensions_types(ts);
         generate_netstd_struct_definition(out, ts, false, true);
         generate_function_helpers(out, *f_iter);
     }
@@ -1659,6 +2035,7 @@ void t_netstd_generator::generate_service_client(ostream& out, t_service* tservi
         indent_up();
 
         t_struct* arg_struct = (*functions_iterator)->get_arglist();
+        collect_extensions_types(arg_struct);
         prepare_member_name_mapping(arg_struct);
         const vector<t_field*>& fields = arg_struct->get_members();
         vector<t_field*>::const_iterator fld_iter;
@@ -1682,6 +2059,7 @@ void t_netstd_generator::generate_service_client(ostream& out, t_service* tservi
             string resultname = (*functions_iterator)->get_name() + "Result";
             t_struct noargs(program_);
             t_struct* xs = (*functions_iterator)->get_xceptions();
+            collect_extensions_types(xs);
             prepare_member_name_mapping(xs, xs->get_members(), resultname);
 
             out << indent() << endl
@@ -1894,6 +2272,7 @@ void t_netstd_generator::generate_function_helpers(ostream& out, t_function* tfu
         result.append(*f_iter);
     }
 
+    collect_extensions_types(&result);
     generate_netstd_struct_definition(out, &result, false, true, true);
 }
 
@@ -1944,6 +2323,7 @@ void t_netstd_generator::generate_process_function_async(ostream& out, t_service
     out << "await _iAsync." << normalize_name(tfunction->get_name()) << "Async(";
 
     bool first = true;
+    collect_extensions_types(arg_struct);
     prepare_member_name_mapping(arg_struct);
     for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter)
     {
@@ -1970,6 +2350,7 @@ void t_netstd_generator::generate_process_function_async(ostream& out, t_service
 
     vector<t_field*>::const_iterator x_iter;
 
+    collect_extensions_types(xs);
     prepare_member_name_mapping(xs, xs->get_members(), resultname);
     if (xceptions.size() > 0)
     {
@@ -2114,10 +2495,7 @@ void t_netstd_generator::generate_netstd_union_reader(ostream& out, t_struct* tu
 void t_netstd_generator::generate_deserialize_field(ostream& out, t_field* tfield, string prefix, bool is_propertyless)
 {
     t_type* type = tfield->get_type();
-    while (type->is_typedef())
-    {
-        type = static_cast<t_typedef*>(type)->get_type();
-    }
+    type = resolve_typedef( type);
 
     if (type->is_void())
     {
@@ -2326,10 +2704,7 @@ void t_netstd_generator::generate_deserialize_list_element(ostream& out, t_list*
 void t_netstd_generator::generate_serialize_field(ostream& out, t_field* tfield, string prefix, bool is_propertyless)
 {
     t_type* type = tfield->get_type();
-    while (type->is_typedef())
-    {
-        type = static_cast<t_typedef*>(type)->get_type();
-    }
+    type = resolve_typedef( type);
 
     string name = prefix + (is_propertyless ? "" : prop_name(tfield));
 
@@ -2718,10 +3093,7 @@ string t_netstd_generator::prop_name(t_field* tfield, bool suppress_mapping) {
 
 string t_netstd_generator::type_name(t_type* ttype)
 {
-    while (ttype->is_typedef())
-    {
-        ttype = static_cast<t_typedef*>(ttype)->get_type();
-    }
+    ttype = resolve_typedef(ttype);
 
     if (ttype->is_base_type())
     {
@@ -2768,11 +3140,10 @@ string t_netstd_generator::base_type_name(t_base_type* tbase)
     case t_base_type::TYPE_VOID:
         return "void";
     case t_base_type::TYPE_STRING:
+        if (tbase->is_binary())
         {
-            if (tbase->is_binary())
-            {
-                return "byte[]";
-            }
+            return "byte[]";
+        } else {
             return "string";
         }
     case t_base_type::TYPE_BOOL:
@@ -2792,16 +3163,46 @@ string t_netstd_generator::base_type_name(t_base_type* tbase)
     }
 }
 
+string t_netstd_generator::get_deep_copy_method_call(t_type* ttype, bool& needs_typecast)
+{
+    ttype = resolve_typedef(ttype);
+
+    needs_typecast = false;
+    if (ttype->is_base_type())
+    {
+        t_base_type::t_base tbase = static_cast<t_base_type*>(ttype)->get_base();
+        switch (tbase)
+        {
+        case t_base_type::TYPE_STRING:
+            if (ttype->is_binary())
+            {
+                return ".ToArray()";
+            } else {
+                return "";  // simple assignment will do, strings are immutable in C#
+            }
+            break;
+        default:
+            return "";  // simple assignment will do
+        }
+    }
+    else if (ttype->is_enum())
+    {
+        return "";  // simple assignment will do
+    }
+    else 
+    {
+        needs_typecast = (! ttype->is_container());
+        return "." + DEEP_COPY_METHOD_NAME + "()";
+    }
+}
+
 string t_netstd_generator::declare_field(t_field* tfield, bool init, string prefix)
 {
     string result = type_name(tfield->get_type()) + " " + prefix + tfield->get_name();
     if (init)
     {
         t_type* ttype = tfield->get_type();
-        while (ttype->is_typedef())
-        {
-            ttype = static_cast<t_typedef*>(ttype)->get_type();
-        }
+        ttype = resolve_typedef(ttype);
         if (ttype->is_base_type() && field_has_default(tfield))
         {
             std::ofstream dummy;
@@ -2897,10 +3298,7 @@ string t_netstd_generator::argument_list(t_struct* tstruct)
 
 string t_netstd_generator::type_to_enum(t_type* type)
 {
-    while (type->is_typedef())
-    {
-        type = static_cast<t_typedef*>(type)->get_type();
-    }
+    type = resolve_typedef( type);
 
     if (type->is_base_type())
     {
@@ -3051,4 +3449,5 @@ THRIFT_REGISTER_GENERATOR(
     "    serial:          Add serialization support to generated classes.\n"
     "    union:           Use new union typing, which includes a static read function for union types.\n"
     "    pascal:          Generate Pascal Case property names according to Microsoft naming convention.\n"
+    "    no_deepcopy:     Suppress generation of DeepCopy() method.\n"
 )
