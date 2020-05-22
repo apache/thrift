@@ -42,13 +42,16 @@
     </Exec>
     <Exec Condition="Exists('$(PathToThrift)')" Command="$(PathToThrift) -gen netstd:wcf,union,serial -r ./CassandraTest.thrift" />
     <Exec Condition="Exists('thrift')" Command="thrift -gen netstd:wcf,union,serial -r ./CassandraTest.thrift" />
-    <Exec Condition="Exists('$(ProjectDir)/../../../compiler/cpp/thrift')" Command="$(ProjectDir)/../../../compiler/cpp/thrift -gen netstd:wcf,union,serial -r ./CassandraTest.thrift" />
+    <Exec Condition="Exists('$(ProjectDir)/../../../../compiler/cpp/thrift')" Command="$(ProjectDir)/../../../../compiler/cpp/thrift -gen netstd:wcf,union,serial -r ./CassandraTest.thrift" />
+    <Exec Condition="Exists('$(PathToThrift)')" Command="$(PathToThrift) -gen netstd:wcf,union,serial -r ./optional_required_default.thrift" />
+    <Exec Condition="Exists('thrift')" Command="thrift -gen netstd:wcf,union,serial -r ./optional_required_default.thrift" />
+    <Exec Condition="Exists('$(ProjectDir)/../../../../compiler/cpp/thrift')" Command="$(ProjectDir)/../../../../compiler/cpp/thrift -gen netstd:wcf,union,serial -r ./optional_required_default.thrift" />
     <Exec Condition="Exists('$(PathToThrift)')" Command="$(PathToThrift) -gen netstd:wcf,union,serial -r ./../../../../test/ThriftTest.thrift" />
     <Exec Condition="Exists('thrift')" Command="thrift -gen netstd:wcf,union,serial -r ./../../../../test/ThriftTest.thrift" />
-    <Exec Condition="Exists('$(ProjectDir)/../../../compiler/cpp/thrift')" Command="$(ProjectDir)/../../../compiler/cpp/thrift -gen netstd:wcf,union,serial -r ./../../../../test/ThriftTest.thrift" />
+    <Exec Condition="Exists('$(ProjectDir)/../../../../compiler/cpp/thrift')" Command="$(ProjectDir)/../../../../compiler/cpp/thrift -gen netstd:wcf,union,serial -r ./../../../../test/ThriftTest.thrift" />
     <Exec Condition="Exists('$(PathToThrift)')" Command="$(PathToThrift) -gen netstd:wcf,union,serial -r ./../../../../contrib/fb303/if/fb303.thrift" />
     <Exec Condition="Exists('thrift')" Command="thrift -gen netstd:wcf,union,serial -r ./../../../../contrib/fb303/if/fb303.thrift" />
-    <Exec Condition="Exists('$(ProjectDir)/../../../compiler/cpp/thrift')" Command="$(ProjectDir)/../../../compiler/cpp/thrift -gen netstd:wcf,union,serial -r ./../../../../contrib/fb303/if/fb303.thrift" />
+    <Exec Condition="Exists('$(ProjectDir)/../../../../compiler/cpp/thrift')" Command="$(ProjectDir)/../../../../compiler/cpp/thrift -gen netstd:wcf,union,serial -r ./../../../../contrib/fb303/if/fb303.thrift" />
   </Target>
 
 </Project>
