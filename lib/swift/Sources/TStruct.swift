@@ -62,7 +62,7 @@ public extension TStruct {
     for (propName, propValue) in mirror.children {
       guard let propName = propName else { continue }
 
-      if let tval = unwrap(any: propValue) as? TSerializable, let id = Self.fieldIds[propName] {
+      if let tval = unwrap(any: propValue, parent: mirror) as? TSerializable, let id = Self.fieldIds[propName] {
         try block(propName, tval, id)
       }
     }
@@ -78,10 +78,10 @@ public extension TStruct {
   /// - parameter any: Any instance to attempt to unwrap
   ///
   /// - returns: Unwrapped Any as Optional<Any>
-  private func unwrap(any: Any) -> Any? {
+  private func unwrap(any: Any, parent: Mirror) -> Any? {
     let mi = Mirror(reflecting: any)
     
-    if mi.displayStyle != .optional { return any }
+    if parent.displayStyle != .enum && mi.displayStyle != .optional { return any }
     if mi.children.count == 0 { return nil }
     
     let (_, some) = mi.children.first!
