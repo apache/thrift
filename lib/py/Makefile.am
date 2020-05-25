@@ -30,6 +30,7 @@ py3-test: py3-build
 	$(PYTHON3) test/thrift_TZlibTransport.py
 	$(PYTHON3) test/thrift_TCompactProtocol.py
 	$(PYTHON3) test/thrift_TNonblockingServer.py
+	$(PYTHON3) test/thrift_TSocket.py
 else
 py3-build:
 py3-test:
@@ -54,7 +55,7 @@ check-local: all py3-test
 	$(PYTHON) test/thrift_TZlibTransport.py
 	$(PYTHON) test/thrift_TCompactProtocol.py
 	$(PYTHON) test/thrift_TNonblockingServer.py
-
+	$(PYTHON) test/thrift_TSocket.py
 
 clean-local:
 	$(RM) -r build
