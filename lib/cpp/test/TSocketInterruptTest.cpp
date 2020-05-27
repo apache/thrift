@@ -18,7 +18,7 @@
  */
 
 #define BOOST_TEST_MODULE TSocketInterruptTest
-#include <boost/test/auto_unit_test.hpp>
+#include <boost/test/unit_test.hpp>
 
 #include <boost/chrono/duration.hpp>
 #include <boost/date_time/posix_time/posix_time_duration.hpp>

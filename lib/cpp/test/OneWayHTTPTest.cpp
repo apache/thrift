@@ -17,7 +17,7 @@
  * under the License.
  */
 
-#include <boost/test/auto_unit_test.hpp>
+#include <boost/test/unit_test.hpp>
 #include <boost/thread.hpp>
 #include <iostream>
 #include <climits>
