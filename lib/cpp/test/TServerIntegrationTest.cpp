@@ -19,7 +19,7 @@
 
 #define BOOST_TEST_MODULE TServerIntegrationTest
 #include <atomic>
-#include <boost/test/auto_unit_test.hpp>
+#include <boost/test/unit_test.hpp>
 #include <boost/date_time/posix_time/ptime.hpp>
 #include <boost/foreach.hpp>
 #include <boost/format.hpp>

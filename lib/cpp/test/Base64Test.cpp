@@ -17,7 +17,7 @@
  * under the License.
  */
 
-#include <boost/test/auto_unit_test.hpp>
+#include <boost/test/unit_test.hpp>
 #include <thrift/protocol/TBase64Utils.h>
 
 using apache::thrift::protocol::base64_encode;

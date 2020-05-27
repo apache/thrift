@@ -17,7 +17,7 @@
  * under the License.
  */
 
-#include <boost/test/auto_unit_test.hpp>
+#include <boost/test/unit_test.hpp>
 #include <boost/test/unit_test_suite.hpp>
 #include <boost/chrono/duration.hpp>
 #include <boost/date_time/posix_time/posix_time_duration.hpp>
