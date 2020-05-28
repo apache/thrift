@@ -30,6 +30,7 @@ py3-test: py3-build
 	$(PYTHON3) test/thrift_TZlibTransport.py
 	$(PYTHON3) test/thrift_TCompactProtocol.py
 	$(PYTHON3) test/thrift_TNonblockingServer.py
+	$(PYTHON3) test/thrift_TProcesspoolServer.py
 else
 py3-build:
 py3-test:
@@ -38,6 +39,7 @@ endif
 all-local: py3-build
 	$(PYTHON) setup.py build
 	${THRIFT} --gen py test/test_thrift_file/TestServer.thrift
+	${THRIFT} --gen py test/test_thrift_file/TProcesspoolServer.thrift
 
 # We're ignoring prefix here because site-packages seems to be
 # the equivalent of /usr/local/lib in Python land.
@@ -55,6 +57,7 @@ check-local: all py3-test
 	$(PYTHON) test/thrift_TZlibTransport.py
 	$(PYTHON) test/thrift_TCompactProtocol.py
 	$(PYTHON) test/thrift_TNonblockingServer.py
+	$(PYTHON) test/thrift_TProcesspoolServer.py
 
 
 clean-local:
