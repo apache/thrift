@@ -389,6 +389,8 @@ string t_netstd_generator::netstd_thrift_usings() const
 
 void t_netstd_generator::close_generator()
 {
+    // right at the end, after everything else
+    generate_extensions_file();
 }
 
 void t_netstd_generator::generate_typedef(t_typedef* ttypedef)
@@ -1916,9 +1918,6 @@ void t_netstd_generator::generate_service(t_service* tservice)
     f_service.close();
 
     indent_validate(ic, "generate_service.");
-
-    // right at the end, after everything else
-    generate_extensions_file();
 }
 
 void t_netstd_generator::generate_service_interface(ostream& out, t_service* tservice)
