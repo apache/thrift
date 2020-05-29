@@ -79,7 +79,7 @@ thrift_buffered_transport_read_slow (ThriftTransport *transport, gpointer buf,
   gint ret = 0;
   guint32 want = len;
   guint32 got = 0;
-  guchar *tmpdata = g_alloca (len);
+  guchar *tmpdata = g_new0 (guchar, len);
   guint32 have = t->r_buf->len;
 
   /* we shouldn't hit this unless the buffer doesn't have enough to read */
@@ -102,12 +102,14 @@ thrift_buffered_transport_read_slow (ThriftTransport *transport, gpointer buf,
                                                                 tmpdata,
                                                                 want,
                                                                 error)) < 0) {
+      g_free (tmpdata);
       return ret;
     }
     got += ret;
 
     /* copy the data starting from where we left off */
     memcpy ((guint8 *)buf + have, tmpdata, got);
+    g_free (tmpdata);
     return got + have; 
   } else {
     guint32 give;
@@ -116,11 +118,12 @@ thrift_buffered_transport_read_slow (ThriftTransport *transport, gpointer buf,
                                                                 tmpdata,
                                                                 want,
                                                                 error)) < 0) {
+      g_free (tmpdata);
       return ret;
     }
     got += ret;
     t->r_buf = g_byte_array_append (t->r_buf, tmpdata, got);
-    
+    g_free (tmpdata);
     /* hand over what we have up to what the caller wants */
     give = want < t->r_buf->len ? want : t->r_buf->len;
 
