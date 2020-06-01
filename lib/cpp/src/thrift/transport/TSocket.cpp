@@ -80,6 +80,27 @@ namespace transport {
 TSocket::TSocket(const string& host, int port)
   : host_(host),
     port_(port),
+    local_(""),
+    localAddressFamily_(AF_UNSPEC),
+    path_(""),
+    socket_(THRIFT_INVALID_SOCKET),
+    peerPort_(0),
+    connTimeout_(0),
+    sendTimeout_(0),
+    recvTimeout_(0),
+    keepAlive_(false),
+    lingerOn_(1),
+    lingerVal_(0),
+    noDelay_(1),
+    maxRecvRetries_(5) {
+}
+
+TSocket::TSocket(const string& host, int port, const string& peer)
+  : host_(host),
+    port_(port),
+    local_(peer),
+    localAddressFamily_(AF_UNSPEC),
+    path_(""),
     socket_(THRIFT_INVALID_SOCKET),
     peerPort_(0),
     connTimeout_(0),
@@ -93,7 +114,10 @@ TSocket::TSocket(const string& host, int port)
 }
 
 TSocket::TSocket(const string& path)
-  : port_(0),
+  : host_(""),
+    port_(0),
+    local_(""),
+    localAddressFamily_(AF_UNSPEC),
     path_(path),
     socket_(THRIFT_INVALID_SOCKET),
     peerPort_(0),
@@ -109,7 +133,10 @@ TSocket::TSocket(const string& path)
 }
 
 TSocket::TSocket()
-  : port_(0),
+  : host_(""),
+    port_(0),
+    local_(""),
+    localAddressFamily_(AF_UNSPEC),
     socket_(THRIFT_INVALID_SOCKET),
     peerPort_(0),
     connTimeout_(0),
@@ -124,7 +151,10 @@ TSocket::TSocket()
 }
 
 TSocket::TSocket(THRIFT_SOCKET socket)
-  : port_(0),
+  : host_(""),
+    port_(0),
+    local_(""),
+    localAddressFamily_(AF_UNSPEC),
     socket_(socket),
     peerPort_(0),
     connTimeout_(0),
@@ -316,6 +346,31 @@ void TSocket::openConnection(struct addrinfo* res) {
       GlobalOutput.perror("TSocket::open() THRIFT_FCNTL " + getSocketInfo(), errno_copy);
       throw TTransportException(TTransportException::NOT_OPEN, "THRIFT_FCNTL() failed", errno_copy);
     }
+  }
+
+  // Bind the socket
+  if (!local_.empty() && path_.empty()) {
+     int ret;
+     if (AF_INET6 == localAddressFamily_) {
+        struct sockaddr_in6 address;
+        bzero((char *) &address, sizeof(address));
+        address.sin6_family = AF_INET6;
+        inet_pton(AF_INET6, local_.c_str(), address.sin6_addr.s6_addr);
+        address.sin6_addr = in6addr_any;
+        socklen_t structlen = static_cast<socklen_t>(sizeof(address));
+        ret = bind(socket_, (struct sockaddr *) &address, structlen);
+     } else {// Use IPv4 as default
+        struct sockaddr_in address;
+        bzero((char *) &address, sizeof(address));
+        address.sin_family = AF_INET;
+        address.sin_addr.s_addr = inet_addr(local_.c_str());
+        socklen_t structlen = static_cast<socklen_t>(sizeof(address));
+        ret = bind(socket_, (struct sockaddr*)&address, structlen);
+     }
+     if (ret == -1) {
+        int errno_copy = THRIFT_GET_SOCKET_ERROR;
+        throw TTransportException(TTransportException::NOT_OPEN, "bind() failed", errno_copy);
+     }
   }
 
   // Connect the socket
@@ -704,12 +759,24 @@ int TSocket::getPort() {
   return port_;
 }
 
+std::string TSocket::getLocal() {
+  return local_;
+}
+
 void TSocket::setHost(string host) {
   host_ = host;
 }
 
 void TSocket::setPort(int port) {
   port_ = port;
+}
+
+void TSocket::setLocal(string local) {
+  local_ = local;
+}
+
+void TSocket::setLocalAddressFamily(int addressFamily) {
+   localAddressFamily_ = addressFamily;
 }
 
 void TSocket::setLinger(bool on, int linger) {

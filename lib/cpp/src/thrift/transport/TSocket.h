@@ -64,6 +64,17 @@ public:
   TSocket(const std::string& host, int port);
 
   /**
+   * Constructs a new socket. Note that this does NOT actually connect the
+   * socket.
+   *
+   * @param host An IP address or hostname to connect to
+   * @param port The port to connect on
+   * @param local The local IP address to bind on
+   */
+  TSocket(const std::string& host, int port, const std::string& local);
+
+
+  /**
    * Constructs a new Unix domain socket.
    * Note that this does NOT actually connect the socket.
    *
@@ -150,6 +161,14 @@ public:
   int getPort();
 
   /**
+   * Get the local address that the socket is binded to
+   *
+   * @return string local address identifier
+   */
+  std::string getLocal();
+
+
+  /**
    * Set the host that socket will connect to
    *
    * @param host host identifier
@@ -162,6 +181,20 @@ public:
    * @param port port number
    */
   void setPort(int port);
+
+  /**
+   * Set the local address that socket will bind to
+   *
+   * @param local local address identifier
+   */
+  void setLocal(std::string local);
+
+  /**
+   * Set the local address address family
+   *
+   * @param addressFamily address family
+   */
+  void setLocalAddressFamily(int addressFamily);
 
   /**
    * Controls whether the linger option is set on the socket.
@@ -287,6 +320,12 @@ protected:
 
   /** Port number to connect on */
   int port_;
+
+  /** Local address to bind to */
+  std::string local_;
+
+  /** Local address IP family */
+  int localAddressFamily_;
 
   /** UNIX domain socket path */
   std::string path_;
