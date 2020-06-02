@@ -5,9 +5,9 @@
 // to you under the Apache License, Version 2.0 (the
 // "License"); you may not use this file except in compliance
 // with the License. You may obtain a copy of the License at
-// 
+//
 //     http://www.apache.org/licenses/LICENSE-2.0
-// 
+//
 // Unless required by applicable law or agreed to in writing,
 // software distributed under the License is distributed on an
 // "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
@@ -54,6 +54,34 @@ namespace Thrift.Transport.Server
             }
         }
 
+        public override bool IsOpen()
+        {
+            if ((_server != null) && (_server.Server != null))
+            {
+                return _server.Server.IsBound;
+            }
+            return false;
+        }
+
+        public int GetPort()
+        {
+            if ((_server != null) && (_server.Server != null) && (_server.Server.LocalEndPoint != null))
+            {
+                if (_server.Server.LocalEndPoint is IPEndPoint server)
+                {
+                    return server.Port;
+                }
+                else
+                {
+                    throw new TTransportException("ServerSocket is not a network socket");
+                }
+            }
+            else
+            {
+                throw new TTransportException("ServerSocket is not open");
+            }
+        }
+
         public override void Listen()
         {
             // Make sure not to block on accept
@@ -91,7 +119,7 @@ namespace Thrift.Transport.Server
 
                 try
                 {
-                    tSocketTransport = new TSocketTransport(tcpClient,Configuration)
+                    tSocketTransport = new TSocketTransport(tcpClient, Configuration)
                     {
                         Timeout = _clientTimeout
                     };
@@ -106,7 +134,7 @@ namespace Thrift.Transport.Server
                     }
                     else //  Otherwise, clean it up ourselves.
                     {
-                        ((IDisposable) tcpClient).Dispose();
+                        ((IDisposable)tcpClient).Dispose();
                     }
 
                     throw;
