@@ -5,9 +5,9 @@
 // to you under the Apache License, Version 2.0 (the
 // "License"); you may not use this file except in compliance
 // with the License. You may obtain a copy of the License at
-// 
+//
 //     http://www.apache.org/licenses/LICENSE-2.0
-// 
+//
 // Unless required by applicable law or agreed to in writing,
 // software distributed under the License is distributed on an
 // "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
@@ -36,7 +36,7 @@ namespace Thrift.Transport.Server
         private readonly X509Certificate2 _serverCertificate;
         private readonly SslProtocols _sslProtocols;
         private TcpListener _server;
-               
+
         public TTlsServerSocketTransport(
             TcpListener listener,
             TConfiguration config,
@@ -78,6 +78,32 @@ namespace Thrift.Transport.Server
             {
                 _server = null;
                 throw new TTransportException($"Could not create ServerSocket on port {port}.");
+            }
+        }
+
+        public override bool IsOpen()
+        {
+            return (_server != null) 
+				&& (_server.Server != null) 
+				&& _server.Server.IsBound;
+        }
+
+        public int GetPort()
+        {
+            if ((_server != null) && (_server.Server != null) && (_server.Server.LocalEndPoint != null))
+            {
+                if (_server.Server.LocalEndPoint is IPEndPoint server)
+                {
+                    return server.Port;
+                }
+                else
+                {
+                    throw new TTransportException("ServerSocket is not a network socket");
+                }
+            }
+            else
+            {
+                throw new TTransportException("ServerSocket is not open");
             }
         }
 
@@ -123,7 +149,7 @@ namespace Thrift.Transport.Server
                     _localCertificateSelectionCallback, _sslProtocols);
 
                 await tTlsSocket.SetupTlsAsync();
-                
+
                 return tTlsSocket;
             }
             catch (Exception ex)

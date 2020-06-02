@@ -44,6 +44,10 @@ namespace Thrift.Transport.Server
             _pipeAddress = pipeAddress;
         }
 
+        public override bool IsOpen() {
+            return true;
+        }
+
         public override void Listen()
         {
             // nothing to do here
