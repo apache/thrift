@@ -252,8 +252,8 @@ public:
   std::string type_name(t_type* ttype);
   std::string function_signature(t_function* tfunction, bool interface = false);
   std::string argument_list(t_struct* tstruct,
-                            std::vector<std::string>* pre = NULL,
-                            std::vector<std::string>* post = NULL);
+                            std::vector<std::string>* pre = nullptr,
+                            std::vector<std::string>* post = nullptr);
   std::string type_to_enum(t_type* ttype);
   std::string type_to_spec_args(t_type* ttype);
 
@@ -590,13 +590,13 @@ string t_py_generator::render_const_value(t_type* type, t_const_value* value) {
     const map<t_const_value*, t_const_value*, t_const_value::value_compare>& val = value->get_map();
     map<t_const_value*, t_const_value*, t_const_value::value_compare>::const_iterator v_iter;
     for (v_iter = val.begin(); v_iter != val.end(); ++v_iter) {
-      t_type* field_type = NULL;
+      t_type* field_type = nullptr;
       for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
         if ((*f_iter)->get_name() == v_iter->first->get_string()) {
           field_type = (*f_iter)->get_type();
         }
       }
-      if (field_type == NULL) {
+      if (field_type == nullptr) {
         throw "type error: " + type->get_name() + " has no field " + v_iter->first->get_string();
       }
       indent(out) << render_const_value(g_type_string, v_iter->first) << ": "
@@ -832,7 +832,7 @@ void t_py_generator::generate_py_struct_definition(ostream& out,
     for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
       // Initialize fields
       t_type* type = (*m_iter)->get_type();
-      if (!type->is_base_type() && !type->is_enum() && (*m_iter)->get_value() != NULL) {
+      if (!type->is_base_type() && !type->is_enum() && (*m_iter)->get_value() != nullptr) {
         indent(out) << "if " << (*m_iter)->get_name() << " is "
                     << "self.thrift_spec[" << (*m_iter)->get_key() << "][4]:" << endl;
         indent_up();
@@ -987,7 +987,7 @@ void t_py_generator::generate_py_struct_reader(ostream& out, t_struct* tstruct) 
       t_field* tfield = *f_iter;
       std::ostringstream result;
       result << tfield->get_name() << " = ";
-      if (tfield->get_value() != NULL) {
+      if (tfield->get_value() != nullptr) {
         result << render_field_default_value(tfield);
       } else {
         result << "None";
@@ -1138,7 +1138,7 @@ void t_py_generator::generate_service(t_service* tservice) {
 
   f_service_ << py_autogen_comment() << endl << py_imports() << endl;
 
-  if (tservice->get_extends() != NULL) {
+  if (tservice->get_extends() != nullptr) {
     f_service_ << "import "
                << get_real_py_module(tservice->get_extends()->get_program(), gen_twisted_, package_prefix_) << "."
                << tservice->get_extends()->get_name() << endl;
@@ -1227,7 +1227,7 @@ void t_py_generator::generate_py_function_helpers(t_function* tfunction) {
 void t_py_generator::generate_service_interface(t_service* tservice) {
   string extends = "";
   string extends_if = "";
-  if (tservice->get_extends() != NULL) {
+  if (tservice->get_extends() != nullptr) {
     extends = type_name(tservice->get_extends());
     extends_if = "(" + extends + ".Iface)";
   } else {
@@ -1272,7 +1272,7 @@ void t_py_generator::generate_service_interface(t_service* tservice) {
 void t_py_generator::generate_service_client(t_service* tservice) {
   string extends = "";
   string extends_client = "";
-  if (tservice->get_extends() != NULL) {
+  if (tservice->get_extends() != nullptr) {
     extends = type_name(tservice->get_extends());
     if (gen_zope_interface_) {
       extends_client = "(" + extends + ".Client)";
@@ -1609,7 +1609,7 @@ void t_py_generator::generate_service_remote(t_service* tservice) {
   vector<t_function*> functions = tservice->get_functions();
   // Get all function from parents
   t_service* parent = tservice->get_extends();
-  while (parent != NULL) {
+  while (parent != nullptr) {
     vector<t_function*> p_functions = parent->get_functions();
     functions.insert(functions.end(), p_functions.begin(), p_functions.end());
     parent = parent->get_extends();
@@ -1818,7 +1818,7 @@ void t_py_generator::generate_service_server(t_service* tservice) {
 
   string extends = "";
   string extends_processor = "";
-  if (tservice->get_extends() != NULL) {
+  if (tservice->get_extends() != nullptr) {
     extends = type_name(tservice->get_extends());
     extends_processor = extends + ".Processor, ";
   }
@@ -2609,7 +2609,7 @@ void t_py_generator::generate_python_docstring(ostream& out, t_doc* tdoc) {
 string t_py_generator::declare_argument(t_field* tfield) {
   std::ostringstream result;
   result << tfield->get_name() << "=";
-  if (tfield->get_value() != NULL) {
+  if (tfield->get_value() != nullptr) {
     result << render_field_default_value(tfield);
   } else {
     result << "None";
@@ -2624,7 +2624,7 @@ string t_py_generator::declare_argument(t_field* tfield) {
  */
 string t_py_generator::render_field_default_value(t_field* tfield) {
   t_type* type = get_true_type(tfield->get_type());
-  if (tfield->get_value() != NULL) {
+  if (tfield->get_value() != nullptr) {
     return render_const_value(type, tfield->get_value());
   } else {
     return "None";
@@ -2700,7 +2700,7 @@ string t_py_generator::type_name(t_type* ttype) {
   if (ttype->is_service()) {
     return get_real_py_module(program, gen_twisted_, package_prefix_) + "." + ttype->get_name();
   }
-  if (program != NULL && program != program_) {
+  if (program != nullptr && program != program_) {
     return get_real_py_module(program, gen_twisted_, package_prefix_) + ".ttypes." + ttype->get_name();
   }
   return ttype->get_name();

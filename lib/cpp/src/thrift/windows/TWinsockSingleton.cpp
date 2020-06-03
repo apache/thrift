@@ -26,7 +26,7 @@ namespace apache {
 namespace thrift {
 namespace transport {
 
-TWinsockSingleton::instance_ptr TWinsockSingleton::instance_ptr_(NULL);
+TWinsockSingleton::instance_ptr TWinsockSingleton::instance_ptr_(nullptr);
 std::once_flag TWinsockSingleton::flags_;
 
 //------------------------------------------------------------------------------

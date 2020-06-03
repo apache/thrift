@@ -265,7 +265,7 @@ public:
 
   std::string js_type_namespace(t_program* p) {
     if (gen_node_) {
-      if (p != NULL && p != program_) {
+      if (p != nullptr && p != program_) {
         return make_valid_nodeJs_identifier(p->get_name()) + "_ttypes.";
       }
       return "ttypes.";
@@ -325,7 +325,7 @@ public:
    * @param t_field The field to check
    * @return string
    */
-  string ts_get_req(t_field* field) {return (field->get_req() == t_field::T_OPTIONAL || field->get_value() != NULL ? "?" : ""); }
+  string ts_get_req(t_field* field) {return (field->get_req() == t_field::T_OPTIONAL || field->get_value() != nullptr ? "?" : ""); }
 
   /**
    * Returns the documentation, if the provided documentable object has one.
@@ -738,13 +738,13 @@ string t_js_generator::render_const_value(t_type* type, t_const_value* value) {
     const map<t_const_value*, t_const_value*, t_const_value::value_compare>& val = value->get_map();
     map<t_const_value*, t_const_value*, t_const_value::value_compare>::const_iterator v_iter;
     for (v_iter = val.begin(); v_iter != val.end(); ++v_iter) {
-      t_type* field_type = NULL;
+      t_type* field_type = nullptr;
       for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
         if ((*f_iter)->get_name() == v_iter->first->get_string()) {
           field_type = (*f_iter)->get_type();
         }
       }
-      if (field_type == NULL) {
+      if (field_type == nullptr) {
         throw std::runtime_error("type error: " + type->get_name() + " has no field " + v_iter->first->get_string());
       }
       if (v_iter != val.begin())
@@ -901,7 +901,7 @@ void t_js_generator::generate_js_struct_definition(ostream& out,
   for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
     string dval = declare_field(*m_iter, false, true);
     t_type* t = get_true_type((*m_iter)->get_type());
-    if ((*m_iter)->get_value() != NULL && !(t->is_struct() || t->is_xception())) {
+    if ((*m_iter)->get_value() != nullptr && !(t->is_struct() || t->is_xception())) {
       dval = render_const_value((*m_iter)->get_type(), (*m_iter)->get_value());
       out << indent() << "this." << (*m_iter)->get_name() << " = " << dval << ";" << endl;
     } else {
@@ -923,7 +923,7 @@ void t_js_generator::generate_js_struct_definition(ostream& out,
 
     for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
       t_type* t = get_true_type((*m_iter)->get_type());
-      if ((*m_iter)->get_value() != NULL && (t->is_struct() || t->is_xception())) {
+      if ((*m_iter)->get_value() != nullptr && (t->is_struct() || t->is_xception())) {
         indent(out) << "this." << (*m_iter)->get_name() << " = "
                     << render_const_value(t, (*m_iter)->get_value()) << ";" << endl;
       }
@@ -1210,7 +1210,7 @@ void t_js_generator::generate_service(t_service* tservice) {
   f_service_ << js_includes() << endl << render_includes() << endl;
 
   if (gen_ts_) {
-    if (tservice->get_extends() != NULL) {
+    if (tservice->get_extends() != nullptr) {
       f_service_ts_ << "/// <reference path=\"" << tservice->get_extends()->get_name()
                     << ".d.ts\" />" << endl;
     }
@@ -1262,7 +1262,7 @@ void t_js_generator::generate_service(t_service* tservice) {
   }
 
   if (gen_node_) {
-    if (tservice->get_extends() != NULL) {
+    if (tservice->get_extends() != nullptr) {
       f_service_ << js_const_type_ <<  tservice->get_extends()->get_name() << " = require('./"
                  << tservice->get_extends()->get_name() << "');" << endl << js_const_type_
                  << tservice->get_extends()->get_name()
@@ -1311,7 +1311,7 @@ void t_js_generator::generate_service_processor(t_service* tservice) {
     f_service_ << prefix << service_name_ << "Processor = " << "exports.Processor";
     if (gen_ts_) {
       f_service_ts_ << endl << "declare class Processor ";
-      if (tservice->get_extends() != NULL) {
+      if (tservice->get_extends() != nullptr) {
         f_service_ts_ << "extends " << tservice->get_extends()->get_name() << "Processor ";
       }
       f_service_ts_ << "{" << endl;
@@ -1326,7 +1326,7 @@ void t_js_generator::generate_service_processor(t_service* tservice) {
              << "exports.Processor";
   }
 
-  bool is_subclass_service = tservice->get_extends() != NULL;
+  bool is_subclass_service = tservice->get_extends() != nullptr;
 
   // ES6 Constructor
   if (gen_es6_) {
@@ -1686,7 +1686,7 @@ void t_js_generator::generate_service_rest(t_service* tservice) {
  */
 void t_js_generator::generate_service_client(t_service* tservice) {
 
-  bool is_subclass_service = tservice->get_extends() != NULL;
+  bool is_subclass_service = tservice->get_extends() != nullptr;
 
   if (gen_node_) {
     string prefix = has_js_namespace(tservice->get_program()) ? js_namespace(tservice->get_program()) : js_const_type_;
@@ -1694,7 +1694,7 @@ void t_js_generator::generate_service_client(t_service* tservice) {
     if (gen_ts_) {
       f_service_ts_ << ts_print_doc(tservice) << ts_indent() << ts_declare() << "class "
                     << "Client ";
-      if (tservice->get_extends() != NULL) {
+      if (tservice->get_extends() != nullptr) {
         f_service_ts_ << "extends " << tservice->get_extends()->get_name() << "Client ";
       }
       f_service_ts_ << "{" << endl;

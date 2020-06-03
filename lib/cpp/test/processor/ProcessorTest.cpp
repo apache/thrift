@@ -924,6 +924,6 @@ int main( int argc, char* argv[] ) {
   THRIFT_UNUSED_VARIABLE(argc);
   THRIFT_UNUSED_VARIABLE(argv);
   ::boost::unit_test::framework::master_test_suite().p_name.value = "ProcessorTest";
-  return NULL;
+  return nullptr;
 }
 #endif

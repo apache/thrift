@@ -128,7 +128,7 @@ static string check_and_correct_struct_name(const string& struct_name)
     return struct_name;
 }
 
-static bool field_has_default(t_field* tfield) { return tfield->get_value() != NULL; }
+static bool field_has_default(t_field* tfield) { return tfield->get_value() != nullptr; }
 
 static bool field_is_required(t_field* tfield) { return tfield->get_req() == t_field::T_REQUIRED; }
 
@@ -502,7 +502,7 @@ void t_netstd_generator::print_const_def_value(ostream& out, string name, t_type
 
         for (v_iter = val.begin(); v_iter != val.end(); ++v_iter)
         {
-            t_field* field = NULL;
+            t_field* field = nullptr;
 
             for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter)
             {
@@ -512,7 +512,7 @@ void t_netstd_generator::print_const_def_value(ostream& out, string name, t_type
                 }
             }
 
-            if (field == NULL)
+            if (field == nullptr)
             {
                 throw "type error: " + type->get_name() + " has no field " + v_iter->first->get_string();
             }
@@ -1031,7 +1031,7 @@ void t_netstd_generator::generate_netstd_struct_definition(ostream& out, t_struc
         t_type* t = (*m_iter)->get_type();
         t = resolve_typedef(t);
 
-        if ((*m_iter)->get_value() != NULL)
+        if ((*m_iter)->get_value() != nullptr)
         {
             if (field_is_required((*m_iter)))
             {
@@ -1924,7 +1924,7 @@ void t_netstd_generator::generate_service_interface(ostream& out, t_service* tse
 {
     string extends = "";
     string extends_iface = "";
-    if (tservice->get_extends() != NULL)
+    if (tservice->get_extends() != nullptr)
     {
         extends = type_name(tservice->get_extends());
         extends_iface = " : " + extends + ".IAsync";
@@ -1986,7 +1986,7 @@ void t_netstd_generator::generate_service_client(ostream& out, t_service* tservi
 {
     string extends = "";
     string extends_client = "";
-    if (tservice->get_extends() != NULL)
+    if (tservice->get_extends() != nullptr)
     {
         extends = type_name(tservice->get_extends());
         extends_client = extends + ".Client, ";
@@ -2132,7 +2132,7 @@ void t_netstd_generator::generate_service_server(ostream& out, t_service* tservi
 
     string extends = "";
     string extends_processor = "";
-    if (tservice->get_extends() != NULL)
+    if (tservice->get_extends() != nullptr)
     {
         extends = type_name(tservice->get_extends());
         extends_processor = extends + ".AsyncProcessor, ";
@@ -3120,7 +3120,7 @@ string t_netstd_generator::type_name(t_type* ttype)
     string the_name = check_and_correct_struct_name(normalize_name(ttype->get_name()));
 
     t_program* program = ttype->get_program();
-    if (program != NULL && program != program_)
+    if (program != nullptr && program != program_)
     {
         string ns = program->get_namespace("netstd");
         if (!ns.empty())
@@ -3434,7 +3434,7 @@ string t_netstd_generator::get_enum_class_name(t_type* type)
 {
     string package = "";
     t_program* program = type->get_program();
-    if (program != NULL && program != program_)
+    if (program != nullptr && program != program_)
     {
         package = program->get_namespace("netstd") + ".";
     }

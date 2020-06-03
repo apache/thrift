@@ -50,7 +50,7 @@ public:
   virtual HANDLE getWrtPipeHandle() = 0;
   virtual HANDLE getClientRdPipeHandle() = 0;
   virtual HANDLE getClientWrtPipeHandle() = 0;
-  virtual HANDLE getNativeWaitHandle() { return NULL; }
+  virtual HANDLE getNativeWaitHandle() { return nullptr; }
 };
 
 class TAnonPipeServer : public TPipeServerImpl {
@@ -155,7 +155,7 @@ private:
 HANDLE TPipeServer::getNativeWaitHandle() {
   if (impl_)
     return impl_->getNativeWaitHandle();
-  return NULL;
+  return nullptr;
 }
 
 //---- Constructors ----
@@ -227,7 +227,7 @@ shared_ptr<TTransport> TAnonPipeServer::acceptImpl() {
                           &buf,     // buffer to receive reply
                           0,        // size of buffer
                           &br,      // number of bytes read
-                          NULL);    // not overlapped
+                          nullptr);    // not overlapped
 
   if (!fSuccess && GetLastError() != ERROR_MORE_DATA) {
     GlobalOutput.perror("TPipeServer unable to initiate pipe comms, GLE=", GetLastError());
@@ -248,7 +248,7 @@ void TNamedPipeServer::initiateNamedConnect(const TAutoCrit &lockProof) {
 
   // The prior connection has been handled, so close the gate
   ResetEvent(listen_event_.h);
-  connectOverlap_.reset(NULL, 0, listen_event_.h);
+  connectOverlap_.reset(nullptr, 0, listen_event_.h);
   connectOverlap_.h = Pipe_.h;
   thread_->addWorkItem(&connectOverlap_);
 
@@ -283,7 +283,7 @@ void TNamedPipeServer::initiateNamedConnect(const TAutoCrit &lockProof) {
 shared_ptr<TTransport> TNamedPipeServer::acceptImpl() {
   {
     TAutoCrit lock(pipe_protect_);
-    if (cached_client_.get() != NULL) {
+    if (cached_client_.get() != nullptr) {
       shared_ptr<TPipe> client;
       // zero out cached_client, since we are about to return it.
       client.swap(cached_client_);
@@ -350,7 +350,7 @@ void TPipeServer::close() {
 
 bool TNamedPipeServer::createNamedPipe(const TAutoCrit& /*lockProof*/) {
 
-  PSECURITY_DESCRIPTOR psd = NULL;
+  PSECURITY_DESCRIPTOR psd = nullptr;
   ULONG size = 0;
 
   if (!ConvertStringSecurityDescriptorToSecurityDescriptorA(securityDescriptor_.c_str(),
@@ -404,7 +404,7 @@ bool TAnonPipeServer::createAnonPipe() {
                         GetLastError());
     return false;
   }
-  if (!SetSecurityDescriptorDacl(&sd, true, NULL, false)) {
+  if (!SetSecurityDescriptorDacl(&sd, true, nullptr, false)) {
     GlobalOutput.perror("TPipeServer SetSecurityDescriptorDacl (anon) failed, GLE=",
                         GetLastError());
     return false;

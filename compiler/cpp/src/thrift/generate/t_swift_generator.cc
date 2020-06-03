@@ -1599,7 +1599,7 @@ void t_swift_generator::generate_swift_service_protocol(ostream& out, t_service*
 
     indent(out) << "public protocol " << tservice->get_name();
     t_service* parent = tservice->get_extends();
-    if (parent != NULL) {
+    if (parent != nullptr) {
       out << " : " << parent->get_name();
     }
     block_open(out);
@@ -1684,7 +1684,7 @@ void t_swift_generator::generate_swift_service_client(ostream& out, t_service* t
 
     // Inherit from ParentClient
     t_service* parent = tservice->get_extends();
-    out << " : " << ((parent == NULL) ? "TClient" : parent->get_name() + "Client");
+    out << " : " << ((parent == nullptr) ? "TClient" : parent->get_name() + "Client");
     out <<  " /* , " << tservice->get_name() << " */";
     block_open(out);
     out << endl;
@@ -1729,7 +1729,7 @@ void t_swift_generator::generate_swift_service_client_async(ostream& out, t_serv
     // Inherit from ParentClient
     t_service* parent = tservice->get_extends();
 
-    out << " : " << ((parent == NULL) ? "T" :  parent->get_name()) + "AsyncClient<Protocol, Factory>";
+    out << " : " << ((parent == nullptr) ? "T" :  parent->get_name()) + "AsyncClient<Protocol, Factory>";
     out <<  " /* , " << tservice->get_name() << " */";
 
     block_open(out);
@@ -2646,7 +2646,7 @@ void t_swift_generator::render_const_value(ostream& out,
 
     for (f_iter = fields.begin(); f_iter != fields.end();) {
       t_field* tfield = *f_iter;
-      t_const_value* value = NULL;
+      t_const_value* value = nullptr;
       for (v_iter = val.begin(); v_iter != val.end(); ++v_iter) {
         if (tfield->get_name() == v_iter->first->get_string()) {
           value = v_iter->second;

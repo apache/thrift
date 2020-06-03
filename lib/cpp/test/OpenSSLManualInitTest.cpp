@@ -88,6 +88,6 @@ boost::unit_test::test_suite* init_unit_test_suite(int argc, char* argv[]) {
 
   suite->add(BOOST_TEST_CASE(test_openssl_availability));
 
-  return NULL;
+  return nullptr;
 }
 #endif

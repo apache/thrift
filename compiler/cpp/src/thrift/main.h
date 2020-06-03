@@ -103,8 +103,8 @@ void emit_byte_type_warning();
 
 /**
  * Prints deprecation notice for old NS declarations that are no longer supported
- * If new_form is NULL, old_form is assumed to be a language identifier, such as "cpp"
- * If new_form is not NULL, both arguments are used exactly as given
+ * If new_form is nullptr, old_form is assumed to be a language identifier, such as "cpp"
+ * If new_form is not nullptr, both arguments are used exactly as given
  */
 void error_unsupported_namespace_decl(const char* old_form, const char* new_form = nullptr);
 

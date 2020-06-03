@@ -230,7 +230,7 @@ public:
   HANDLE hWrite;
 
   CoupledPipeTransports() {
-    BOOST_REQUIRE(CreatePipe(&hRead, &hWrite, NULL, 1048576 * 2));
+    BOOST_REQUIRE(CreatePipe(&hRead, &hWrite, nullptr, 1048576 * 2));
     in.reset(new TPipe(hRead, hWrite));
     in->open();
     out = in;
@@ -707,7 +707,7 @@ void test_borrow_part_available() {
   uint8_t read_buf[16];
   memset(write_buf, 'a', sizeof(write_buf));
 
-  // Attemping to borrow 10 bytes when only 9 are available should return NULL
+  // Attemping to borrow 10 bytes when only 9 are available should return nullptr
   // immediately.
   transports.out->write(write_buf, 9);
   transports.out->flush();
@@ -1075,7 +1075,7 @@ boost::unit_test::test_suite* init_unit_test_suite(int argc, char* argv[]) {
   THRIFT_UNUSED_VARIABLE(argc);
   THRIFT_UNUSED_VARIABLE(argv);
   struct timeval tv;
-  THRIFT_GETTIMEOFDAY(&tv, NULL);
+  THRIFT_GETTIMEOFDAY(&tv, nullptr);
   int seed = tv.tv_sec ^ tv.tv_usec;
 
   initrand(seed);
@@ -1084,6 +1084,6 @@ boost::unit_test::test_suite* init_unit_test_suite(int argc, char* argv[]) {
   suite->p_name.value = "TransportTest";
   TransportTestGen transport_test_generator(suite, 1);
   transport_test_generator.generate();
-  return NULL;
+  return nullptr;
 }
 #endif

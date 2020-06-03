@@ -384,11 +384,11 @@ test_thrift_client (void)
   // create a C client
   tsocket = (ThriftSocket *) g_object_new (THRIFT_TYPE_SOCKET,
                           "hostname", "localhost",
-                          "port", TEST_PORT, NULL);
+                          "port", TEST_PORT, nullptr);
   protocol = (ThriftBinaryProtocol *) g_object_new (THRIFT_TYPE_BINARY_PROTOCOL,
                            "transport",
-                           tsocket, NULL);
-  client = (TTestThriftTestClient *) g_object_new (T_TEST_TYPE_THRIFT_TEST_CLIENT, "input_protocol", protocol, "output_protocol", protocol, NULL);
+                           tsocket, nullptr);
+  client = (TTestThriftTestClient *) g_object_new (T_TEST_TYPE_THRIFT_TEST_CLIENT, "input_protocol", protocol, "output_protocol", protocol, nullptr);
   iface = T_TEST_THRIFT_TEST_IF (client);
 
   // open and send

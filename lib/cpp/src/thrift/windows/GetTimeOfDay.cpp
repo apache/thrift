@@ -51,7 +51,7 @@ int thrift_gettimeofday(struct timeval* tv, struct timezone* tz) {
 int thrift_gettimeofday(struct timeval * tp, struct timezone * tzp)
 {
     // We don't fill it in so prove nobody is looking for the data
-    assert(tzp == NULL);
+    assert(tzp == nullptr);
 
     // Note: some broken versions only have 8 trailing zero's, the correct epoch has 9 trailing zero's
     // This magic number is the number of 100 nanosecond intervals since January 1, 1601 (UTC)

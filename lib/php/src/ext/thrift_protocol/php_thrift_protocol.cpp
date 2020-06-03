@@ -414,7 +414,7 @@ void createObject(const char* obj_typename, zval* return_value, int nargs = 0, z
   object_and_properties_init(return_value, ce, nullptr);
   zend_function* constructor = zend_std_get_constructor(Z_OBJ_P(return_value));
   zval ctor_rv;
-  zend_call_method(return_value, ce, &constructor, NULL, 0, &ctor_rv, nargs, arg1, arg2);
+  zend_call_method(return_value, ce, &constructor, nullptr, 0, &ctor_rv, nargs, arg1, arg2);
   zval_dtor(&ctor_rv);
   if (EG(exception)) {
     zend_object *ex = EG(exception);

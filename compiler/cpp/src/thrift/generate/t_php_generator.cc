@@ -651,13 +651,13 @@ string t_php_generator::render_const_value(t_type* type, t_const_value* value) {
     const map<t_const_value*, t_const_value*, t_const_value::value_compare>& val = value->get_map();
     map<t_const_value*, t_const_value*, t_const_value::value_compare>::const_iterator v_iter;
     for (v_iter = val.begin(); v_iter != val.end(); ++v_iter) {
-      t_type* field_type = NULL;
+      t_type* field_type = nullptr;
       for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
         if ((*f_iter)->get_name() == v_iter->first->get_string()) {
           field_type = (*f_iter)->get_type();
         }
       }
-      if (field_type == NULL) {
+      if (field_type == nullptr) {
         throw "type error: " + type->get_name() + " has no field " + v_iter->first->get_string();
       }
       out << indent();
@@ -846,7 +846,7 @@ void t_php_generator::generate_php_struct_definition(ostream& out,
   for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
     string dval = "null";
     t_type* t = get_true_type((*m_iter)->get_type());
-    if ((*m_iter)->get_value() != NULL && !(t->is_struct() || t->is_xception())) {
+    if ((*m_iter)->get_value() != nullptr && !(t->is_struct() || t->is_xception())) {
       dval = render_const_value((*m_iter)->get_type(), (*m_iter)->get_value());
     }
     generate_php_doc(out, *m_iter);
@@ -864,7 +864,7 @@ void t_php_generator::generate_php_struct_definition(ostream& out,
   if (members.size() > 0) {
     for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
       t_type* t = get_true_type((*m_iter)->get_type());
-      if ((*m_iter)->get_value() != NULL && (t->is_struct() || t->is_xception())) {
+      if ((*m_iter)->get_value() != nullptr && (t->is_struct() || t->is_xception())) {
         indent(out) << "$this->" << (*m_iter)->get_name() << " = "
                     << render_const_value(t, (*m_iter)->get_value()) << ";" << endl;
       }
@@ -1293,7 +1293,7 @@ void t_php_generator::generate_service_processor(t_service* tservice) {
 
   string extends = "";
   string extends_processor = "";
-  if (tservice->get_extends() != NULL) {
+  if (tservice->get_extends() != nullptr) {
     extends = tservice->get_extends()->get_name();
     extends_processor = " extends " + php_namespace(tservice->get_extends()->get_program())
                         + extends + "Processor";
@@ -1618,7 +1618,7 @@ void t_php_generator::generate_service_interface(t_service* tservice) {
 
   string extends = "";
   string extends_if = "";
-  if (tservice->get_extends() != NULL) {
+  if (tservice->get_extends() != nullptr) {
     extends = " extends " + php_namespace(tservice->get_extends()->get_program())
               + tservice->get_extends()->get_name();
     extends_if = " extends " + php_namespace(tservice->get_extends()->get_program())
@@ -1657,7 +1657,7 @@ void t_php_generator::generate_service_rest(t_service* tservice) {
 
   string extends = "";
   string extends_if = "";
-  if (tservice->get_extends() != NULL) {
+  if (tservice->get_extends() != nullptr) {
     extends = " extends " + php_namespace(tservice->get_extends()->get_program())
               + tservice->get_extends()->get_name();
     extends_if = " extends " + php_namespace(tservice->get_extends()->get_program())
@@ -1738,7 +1738,7 @@ void t_php_generator::generate_service_client(t_service* tservice) {
 
   string extends = "";
   string extends_client = "";
-  if (tservice->get_extends() != NULL) {
+  if (tservice->get_extends() != nullptr) {
     extends = tservice->get_extends()->get_name();
     extends_client = " extends " + php_namespace(tservice->get_extends()->get_program()) + extends
                      + "Client";

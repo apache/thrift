@@ -235,7 +235,7 @@ t_generator* t_generator_registry::get_generator(t_program* program,
   gen_map_t::iterator iter = the_map.find(language);
 
   if (iter == the_map.end()) {
-    return NULL;
+    return nullptr;
   }
 
   return iter->second->get_generator(program, parsed_options, options);

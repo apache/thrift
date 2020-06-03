@@ -34,7 +34,7 @@ void TClientInfoConnection::recordAddr(const sockaddr* addr) {
   eraseAddr();
   initTime();
   ncalls_ = 0;
-  if (addr != NULL) {
+  if (addr != nullptr) {
     if (addr->sa_family == AF_INET) {
       memcpy((void*)&addr_.ipv4, (const void *)addr, sizeof(sockaddr_in));
     }
@@ -55,7 +55,7 @@ const char* TClientInfoConnection::getAddr(char* buf, int len) const {
   case AF_INET6:
     return inet_ntop(AF_INET6, &addr_.ipv6.sin6_addr, buf, len);
   default:
-    return NULL;
+    return nullptr;
   }
 }
 
@@ -70,7 +70,7 @@ void TClientInfoConnection::eraseCall() {
 
 const char* TClientInfoConnection::getCall() const {
   if (call_[0] == '\0') {
-      return NULL;
+      return nullptr;
   }
   return call_;
 }
@@ -90,7 +90,7 @@ void TClientInfoConnection::initTime() {
 
 TClientInfoConnection* TClientInfo::getConnection(int fd, bool grow) {
   if (fd < 0 || (!grow && fd >= info_.size())) {
-    return NULL;
+    return nullptr;
   }
   return &info_[fd];
 }
@@ -119,7 +119,7 @@ void TClientInfoServerHandler::deleteContext(void* connectionContext,
 void TClientInfoServerHandler::processContext(void* connectionContext,
                                               shared_ptr<TTransport> transport) {
   Connect* call = static_cast<Connect*>(connectionContext);
-  if (call->callInfo_ == NULL) {
+  if (call->callInfo_ == nullptr) {
     if (typeid(*(transport.get())) == typeid(TSocket)) {
       TSocket* tsocket = static_cast<TSocket*>(transport.get());
       int fd = tsocket->getSocketFD();
@@ -127,7 +127,7 @@ void TClientInfoServerHandler::processContext(void* connectionContext,
         return;
       }
       call->callInfo_ = call->clientInfo_->getConnection(fd, true);
-      assert(call->callInfo_ != NULL);
+      assert(call->callInfo_ != nullptr);
       socklen_t len;
         call->callInfo_->recordAddr(tsocket->getCachedAddress(&len));
     }
@@ -142,13 +142,13 @@ void TClientInfoServerHandler::getStatsStrings(vector<string>& result) {
   for (int i = 0; i < clientInfo_.size(); ++i) {
     TClientInfoConnection* info = clientInfo_.getConnection(i, false);
     const char* callStr = info->getCall();
-    if (callStr == NULL) {
+    if (callStr == nullptr) {
       continue;
     }
 
     char addrBuf[INET6_ADDRSTRLEN];
     const char* addrStr = info->getAddr(addrBuf, sizeof addrBuf);
-    if (addrStr == NULL) {
+    if (addrStr == nullptr) {
       // cerr << "no addr!" << endl;
       continue;
     }
@@ -168,11 +168,11 @@ void TClientInfoServerHandler::getStatsStrings(vector<string>& result) {
 void* TClientInfoCallHandler::getContext(const char* fn_name, void* serverContext) {
   if (serverContext) {
     TClientInfoConnection* callInfo =  static_cast<TClientInfoServerHandler::Connect*>(serverContext)->callInfo_;
-    if (callInfo != NULL) {
+    if (callInfo != nullptr) {
       callInfo->recordCall(fn_name);
     }
   }
-  return NULL;
+  return nullptr;
 }
 
 } } } // namespace apache::thrift::server

@@ -399,6 +399,6 @@ boost::unit_test::test_suite* init_unit_test_suite(int argc, char* argv[]) {
 
   // Parse arguments
   parse_args(argc, argv);
-  return NULL;
+  return nullptr;
 }
 #endif

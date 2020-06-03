@@ -462,13 +462,13 @@ void t_javame_generator::print_const_value(std::ostream& out,
       indent_up();
     }
     for (v_iter = val.begin(); v_iter != val.end(); ++v_iter) {
-      t_type* field_type = NULL;
+      t_type* field_type = nullptr;
       for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
         if ((*f_iter)->get_name() == v_iter->first->get_string()) {
           field_type = (*f_iter)->get_type();
         }
       }
-      if (field_type == NULL) {
+      if (field_type == nullptr) {
         throw "type error: " + type->get_name() + " has no field " + v_iter->first->get_string();
       }
       string val = render_const_value(out, name, field_type, v_iter->second);
@@ -1060,7 +1060,7 @@ void t_javame_generator::generate_java_struct_definition(ostream& out,
   indent_up();
   for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
     t_type* t = get_true_type((*m_iter)->get_type());
-    if ((*m_iter)->get_value() != NULL) {
+    if ((*m_iter)->get_value() != nullptr) {
       print_const_value(out,
                         "this." + (*m_iter)->get_name(),
                         t,
@@ -1898,7 +1898,7 @@ void t_javame_generator::generate_primitive_service_interface(t_service* tservic
   f_iface.open(f_interface_name.c_str());
 
   string extends_iface = "";
-  if (tservice->get_extends() != NULL) {
+  if (tservice->get_extends() != nullptr) {
     extends_iface = " extends " + type_name(tservice->get_extends()) + "Iface";
   }
 
@@ -1923,7 +1923,7 @@ void t_javame_generator::generate_primitive_service_interface(t_service* tservic
 void t_javame_generator::generate_service_interface(t_service* tservice) {
   string extends = "";
   string extends_iface = "";
-  if (tservice->get_extends() != NULL) {
+  if (tservice->get_extends() != nullptr) {
     extends = type_name(tservice->get_extends());
     extends_iface = " extends " + extends + ".Iface";
   }
@@ -1964,7 +1964,7 @@ void t_javame_generator::generate_service_helpers(t_service* tservice) {
 void t_javame_generator::generate_service_client(t_service* tservice) {
   string extends = "";
   string extends_client = "";
-  if (tservice->get_extends() != NULL) {
+  if (tservice->get_extends() != nullptr) {
     extends = type_name(tservice->get_extends());
     extends_client = " extends " + extends + ".Client";
   }
@@ -2144,7 +2144,7 @@ void t_javame_generator::generate_service_server(t_service* tservice) {
   // Extends stuff
   string extends = "";
   string extends_processor = "";
-  if (tservice->get_extends() != NULL) {
+  if (tservice->get_extends() != nullptr) {
     extends = type_name(tservice->get_extends());
     extends_processor = " extends " + extends + ".Processor";
   }
@@ -2791,7 +2791,7 @@ string t_javame_generator::type_name(t_type* ttype,
 
   // Check for namespacing
   t_program* program = ttype->get_program();
-  if (program != NULL && program != program_) {
+  if (program != nullptr && program != program_) {
     string package = program->get_namespace("java");
     if (!package.empty()) {
       return package + "." + ttype->get_name();
@@ -2846,7 +2846,7 @@ string t_javame_generator::declare_field(t_field* tfield, bool init) {
   string result = type_name(tfield->get_type()) + " " + tfield->get_name();
   if (init) {
     t_type* ttype = get_true_type(tfield->get_type());
-    if (ttype->is_base_type() && tfield->get_value() != NULL) {
+    if (ttype->is_base_type() && tfield->get_value() != nullptr) {
       std::ofstream dummy;
       result += " = " + render_const_value(dummy, tfield->get_name(), ttype, tfield->get_value());
     } else if (ttype->is_base_type()) {
@@ -3208,7 +3208,7 @@ void t_javame_generator::generate_isset_set(ostream& out, t_field* field) {
 std::string t_javame_generator::get_enum_class_name(t_type* type) {
   string package = "";
   t_program* program = type->get_program();
-  if (program != NULL && program != program_) {
+  if (program != nullptr && program != program_) {
     package = program->get_namespace("java") + ".";
   }
   return package + type->get_name();
@@ -3252,7 +3252,7 @@ void t_javame_generator::generate_java_struct_clear(std::ostream& out, t_struct*
   indent_up();
   for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
     t_type* t = get_true_type((*m_iter)->get_type());
-    if ((*m_iter)->get_value() != NULL) {
+    if ((*m_iter)->get_value() != nullptr) {
       print_const_value(out,
                         "this." + (*m_iter)->get_name(),
                         t,

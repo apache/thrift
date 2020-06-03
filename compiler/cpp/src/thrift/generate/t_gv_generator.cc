@@ -314,7 +314,7 @@ void t_gv_generator::generate_service(t_service* tservice) {
     for (; arg_iter != args.end(); arg_iter++) {
       f_out_ << "|<param_" << (*arg_iter)->get_name() << ">";
       f_out_ << (*arg_iter)->get_name();
-      if ((*arg_iter)->get_value() != NULL) {
+      if ((*arg_iter)->get_value() != nullptr) {
         f_out_ << " = ";
         print_const_value((*arg_iter)->get_type(), (*arg_iter)->get_value());
       }

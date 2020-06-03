@@ -956,9 +956,9 @@ void t_delphi_generator::generate_typedef(t_typedef* ttypedef) {
 }
 
 bool t_delphi_generator::is_fully_defined_type(t_type* ttype) {
-  if ((NULL != ttype->get_program()) && (ttype->get_program() != program_)) {
+  if ((nullptr != ttype->get_program()) && (ttype->get_program() != program_)) {
     t_scope* scope = ttype->get_program()->scope();
-    if (NULL != scope->get_type(ttype->get_name())) {
+    if (nullptr != scope->get_type(ttype->get_name())) {
       // printf("type %s found in included scope %s\n", ttype->get_name().c_str(),
       // ttype->get_program()->get_name().c_str());
       return true;
@@ -1230,13 +1230,13 @@ void t_delphi_generator::print_const_def_value(std::ostream& vars,
     const map<t_const_value*, t_const_value*, t_const_value::value_compare>& val = value->get_map();
     map<t_const_value*, t_const_value*, t_const_value::value_compare>::const_iterator v_iter;
     for (v_iter = val.begin(); v_iter != val.end(); ++v_iter) {
-      t_type* field_type = NULL;
+      t_type* field_type = nullptr;
       for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
         if ((*f_iter)->get_name() == v_iter->first->get_string()) {
           field_type = (*f_iter)->get_type();
         }
       }
-      if (field_type == NULL) {
+      if (field_type == nullptr) {
         throw "type error: " + type->get_name() + " has no field " + v_iter->first->get_string();
       }
       string val = render_const_value(vars, out, name, field_type, v_iter->second);
@@ -1466,7 +1466,7 @@ void t_delphi_generator::generate_delphi_struct_impl(ostream& out,
     while (t->is_typedef()) {
       t = ((t_typedef*)t)->get_type();
     }
-    if ((*m_iter)->get_value() != NULL) {
+    if ((*m_iter)->get_value() != nullptr) {
       initialize_field(vars,
                        code,
                        "F" + prop_name((*m_iter)->get_name(), is_exception),
@@ -1934,7 +1934,7 @@ void t_delphi_generator::generate_service_interface(t_service* tservice, bool fo
   indent_up();
 
   generate_delphi_doc(s_service, tservice);
-  if (tservice->get_extends() != NULL) {
+  if (tservice->get_extends() != nullptr) {
     extends = type_name(tservice->get_extends(), true, true);
     extends_iface = extends + "." + iface_name;
     generate_delphi_doc(s_service, tservice);
@@ -1996,7 +1996,7 @@ void t_delphi_generator::generate_service_client(t_service* tservice) {
   string implements = async_ ? "Iface, IAsync" : "Iface";
 
   generate_delphi_doc(s_service, tservice);
-  if (tservice->get_extends() != NULL) {
+  if (tservice->get_extends() != nullptr) {
     extends = type_name(tservice->get_extends(), true, true);
     extends_client = extends + ".TClient";
   }
@@ -2281,7 +2281,7 @@ void t_delphi_generator::generate_service_server(t_service* tservice) {
 
   string full_cls = normalize_clsnm(service_name_, "T") + ".TProcessorImpl";
 
-  if (tservice->get_extends() != NULL) {
+  if (tservice->get_extends() != nullptr) {
     extends = type_name(tservice->get_extends(), true, true);
     extends_processor = extends + ".TProcessorImpl";
     indent(s_service) << "TProcessorImpl = class(" << extends_processor << ", IProcessor)" << endl;
@@ -2298,13 +2298,13 @@ void t_delphi_generator::generate_service_server(t_service* tservice) {
   indent_impl(s_service_impl) << "constructor " << full_cls << ".Create( iface_: Iface );" << endl;
   indent_impl(s_service_impl) << "begin" << endl;
   indent_up_impl();
-  if (tservice->get_extends() != NULL) {
+  if (tservice->get_extends() != nullptr) {
     indent_impl(s_service_impl) << "inherited Create( iface_);" << endl;
   } else {
     indent_impl(s_service_impl) << "inherited Create;" << endl;
   }
   indent_impl(s_service_impl) << "Self.iface_ := iface_;" << endl;
-  if (tservice->get_extends() != NULL) {
+  if (tservice->get_extends() != nullptr) {
     indent_impl(s_service_impl) << "ASSERT( processMap_ <> nil);  // inherited" << endl;
   } else {
     indent_impl(s_service_impl)
@@ -2330,7 +2330,7 @@ void t_delphi_generator::generate_service_server(t_service* tservice) {
   indent(s_service) << "iface_: Iface;" << endl;
   indent_down();
 
-  if (tservice->get_extends() == NULL) {
+  if (tservice->get_extends() == nullptr) {
     indent(s_service) << "protected" << endl;
     indent_up();
     indent(s_service) << "type" << endl;
@@ -3078,7 +3078,7 @@ string t_delphi_generator::type_name(t_type* ttype,
   if (ttype->is_typedef()) {
     t_typedef* tdef = (t_typedef*)ttype;
     if (tdef->is_forward_typedef()) { // forward types according to THRIFT-2421
-      if (tdef->get_type() != NULL) {
+      if (tdef->get_type() != nullptr) {
         return type_name(tdef->get_type(),
                          b_cls,
                          b_no_postfix,
