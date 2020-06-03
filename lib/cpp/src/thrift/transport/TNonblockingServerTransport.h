@@ -49,7 +49,7 @@ public:
    * Gets a new dynamically allocated transport object and passes it to the
    * caller. Note that it is the explicit duty of the caller to free the
    * allocated object. The returned TTransport object must always be in the
-   * opened state. NULL should never be returned, instead an Exception should
+   * opened state. nullptr should never be returned, instead an Exception should
    * always be thrown.
    *
    * @return A new TTransport object
@@ -58,7 +58,7 @@ public:
   std::shared_ptr<TSocket> accept() {
     std::shared_ptr<TSocket> result = acceptImpl();
     if (!result) {
-      throw TTransportException("accept() may not return NULL");
+      throw TTransportException("accept() may not return nullptr");
     }
     return result;
   }

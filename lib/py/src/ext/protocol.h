@@ -35,7 +35,7 @@ public:
   ProtocolBase()
     : stringLimit_((std::numeric_limits<int32_t>::max)()),
       containerLimit_((std::numeric_limits<int32_t>::max)()),
-      output_(NULL) {}
+      output_(nullptr) {}
   inline virtual ~ProtocolBase();
 
   bool prepareDecodeBufferFromTransport(PyObject* trans);

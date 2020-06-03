@@ -23,7 +23,7 @@ namespace thriftcommon
 			(int)boost::shared_dynamic_cast<TPipeServer>(transport)->getClientWrtPipeHandle());
 
 		//spawn the child process
-		if (!CreateProcessA(NULL, handles, NULL,NULL,TRUE,0,NULL,NULL,&si,&pi))
+		if (!CreateProcessA(nullptr, handles, nullptr,nullptr,TRUE,0,nullptr,nullptr,&si,&pi))
 		{
 			GlobalOutput.perror("TPipeServer CreateProcess failed, GLE=", GetLastError());
 			return false;

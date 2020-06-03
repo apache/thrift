@@ -120,7 +120,7 @@ class Stopwatch
 public:
   enum Unit { UNIT_SECONDS, UNIT_MILLISECONDS, UNIT_MICROSECONDS };
   Stopwatch();
-  uint64_t elapsedUnits(Unit unit, std::string *label = NULL) const;
+  uint64_t elapsedUnits(Unit unit, std::string *label = nullptr) const;
   void reset();
 private:
   timeval startTime_;

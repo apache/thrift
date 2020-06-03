@@ -454,7 +454,7 @@ int main( int argc, char* argv[] ) {
 boost::unit_test::test_suite* init_unit_test_suite(int argc, char* argv[]) {
   THRIFT_UNUSED_VARIABLE(argc);
   THRIFT_UNUSED_VARIABLE(argv);
-  uint32_t seed = static_cast<uint32_t>(time(NULL));
+  uint32_t seed = static_cast<uint32_t>(time(nullptr));
 #ifdef HAVE_INTTYPES_H
   printf("seed: %" PRIu32 "\n", seed);
 #endif
@@ -470,6 +470,6 @@ boost::unit_test::test_suite* init_unit_test_suite(int argc, char* argv[]) {
 
   suite->add(BOOST_TEST_CASE(test_no_write));
 
-  return NULL;
+  return nullptr;
 }
 #endif

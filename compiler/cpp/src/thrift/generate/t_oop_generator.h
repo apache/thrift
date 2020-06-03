@@ -59,7 +59,7 @@ public:
   virtual std::string get_enum_class_name(t_type* type) {
     std::string package = "";
     t_program* program = type->get_program();
-    if (program != NULL && program != program_) {
+    if (program != nullptr && program != program_) {
       package = program->get_namespace("java") + ".";
     }
     return package + type->get_name();

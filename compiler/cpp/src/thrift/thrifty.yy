@@ -250,7 +250,7 @@ Program:
   HeaderList DefinitionList
     {
       pdebug("Program -> Headers DefinitionList");
-      if((g_program_doctext_candidate != NULL) && (g_program_doctext_status != ALREADY_PROCESSED))
+      if((g_program_doctext_candidate != nullptr) && (g_program_doctext_status != ALREADY_PROCESSED))
       {
         g_program->set_doc(g_program_doctext_candidate);
         g_program_doctext_status = ALREADY_PROCESSED;
@@ -262,9 +262,9 @@ CaptureDocText:
     {
       if (g_parse_mode == PROGRAM) {
         $$ = g_doctext;
-        g_doctext = NULL;
+        g_doctext = nullptr;
       } else {
-        $$ = NULL;
+        $$ = nullptr;
       }
     }
 
@@ -300,7 +300,7 @@ Header:
       if (g_parse_mode == PROGRAM) {
         g_program->set_namespace($2, $3);
       }
-      if ($4 != NULL) {
+      if ($4 != nullptr) {
         g_program->set_namespace_annotations($2, $4->annotations_);
         delete $4;
       }
@@ -339,7 +339,7 @@ DefinitionList:
   DefinitionList CaptureDocText Definition
     {
       pdebug("DefinitionList -> DefinitionList Definition");
-      if ($2 != NULL && $3 != NULL) {
+      if ($2 != nullptr && $3 != nullptr) {
         $3->set_doc($2);
       }
     }
@@ -362,7 +362,7 @@ Definition:
       pdebug("Definition -> TypeDefinition");
       if (g_parse_mode == PROGRAM) {
         g_scope->add_type($1->get_name(), $1);
-        if (g_parent_scope != NULL) {
+        if (g_parent_scope != nullptr) {
           g_parent_scope->add_type(g_parent_prefix + $1->get_name(), $1);
         }
         if (! g_program->is_unique_typename($1)) {
@@ -377,7 +377,7 @@ Definition:
       pdebug("Definition -> Service");
       if (g_parse_mode == PROGRAM) {
         g_scope->add_service($1->get_name(), $1);
-        if (g_parent_scope != NULL) {
+        if (g_parent_scope != nullptr) {
           g_parent_scope->add_service(g_parent_prefix + $1->get_name(), $1);
         }
         g_program->add_service($1);
@@ -441,7 +441,7 @@ Typedef:
       validate_simple_identifier( $3);
       t_typedef *td = new t_typedef(g_program, $2, $3);
       $$ = td;
-      if ($4 != NULL) {
+      if ($4 != nullptr) {
         $$->annotations_ = $4->annotations_;
         delete $4;
       }
@@ -454,7 +454,7 @@ Enum:
       $$ = $4;
       validate_simple_identifier( $2);
       $$->set_name($2);
-      if ($6 != NULL) {
+      if ($6 != nullptr) {
         $$->annotations_ = $6->annotations_;
         delete $6;
       }
@@ -468,7 +468,7 @@ Enum:
           t_const_value* const_val = new t_const_value((*c_iter)->get_value());
           const_val->set_enum($$);
           g_scope->add_constant(const_name, new t_const(g_type_i32, (*c_iter)->get_name(), const_val));
-          if (g_parent_scope != NULL) {
+          if (g_parent_scope != nullptr) {
             g_parent_scope->add_constant(g_parent_prefix + const_name, new t_const(g_type_i32, (*c_iter)->get_name(), const_val));
           }
         }
@@ -494,10 +494,10 @@ EnumDef:
     {
       pdebug("EnumDef -> EnumValue");
       $$ = $2;
-      if ($1 != NULL) {
+      if ($1 != nullptr) {
         $$->set_doc($1);
       }
-	  if ($3 != NULL) {
+	  if ($3 != nullptr) {
         $$->annotations_ = $3->annotations_;
         delete $3;
       }
@@ -536,7 +536,7 @@ Senum:
       pdebug("Senum -> tok_senum tok_identifier { SenumDefList }");
       validate_simple_identifier( $2);
       $$ = new t_typedef(g_program, $4, $2);
-      if ($6 != NULL) {
+      if ($6 != nullptr) {
         $$->annotations_ = $6->annotations_;
         delete $6;
       }
@@ -574,11 +574,11 @@ Const:
         validate_const_type($$);
 
         g_scope->add_constant($3, $$);
-        if (g_parent_scope != NULL) {
+        if (g_parent_scope != nullptr) {
           g_parent_scope->add_constant(g_parent_prefix + $3, $$);
         }
       } else {
-        $$ = NULL;
+        $$ = nullptr;
       }
     }
 
@@ -681,7 +681,7 @@ Struct:
       $5->set_union($1 == struct_is_union);
       $$ = $5;
       $$->set_name($2);
-      if ($7 != NULL) {
+      if ($7 != nullptr) {
         $$->annotations_ = $7->annotations_;
         delete $7;
       }
@@ -724,7 +724,7 @@ XsdAttributes:
     }
 |
     {
-      $$ = NULL;
+      $$ = nullptr;
     }
 
 Xception:
@@ -735,7 +735,7 @@ Xception:
       $4->set_name($2);
       $4->set_xception(true);
       $$ = $4;
-      if ($6 != NULL) {
+      if ($6 != nullptr) {
         $$->annotations_ = $6->annotations_;
         delete $6;
       }
@@ -749,7 +749,7 @@ Service:
       $$ = $6;
       $$->set_name($2);
       $$->set_extends($3);
-      if ($9 != NULL) {
+      if ($9 != nullptr) {
         $$->annotations_ = $9->annotations_;
         delete $9;
       }
@@ -769,10 +769,10 @@ Extends:
   tok_extends tok_identifier
     {
       pdebug("Extends -> tok_extends tok_identifier");
-      $$ = NULL;
+      $$ = nullptr;
       if (g_parse_mode == PROGRAM) {
         $$ = g_scope->get_service($2);
-        if ($$ == NULL) {
+        if ($$ == nullptr) {
           yyerror("Service \"%s\" has not been defined.", $2);
           exit(1);
         }
@@ -780,7 +780,7 @@ Extends:
     }
 |
     {
-      $$ = NULL;
+      $$ = nullptr;
     }
 
 FunctionList:
@@ -802,10 +802,10 @@ Function:
       validate_simple_identifier( $4);
       $6->set_name(std::string($4) + "_args");
       $$ = new t_function($3, $4, $6, $8, $2);
-      if ($1 != NULL) {
+      if ($1 != nullptr) {
         $$->set_doc($1);
       }
-      if ($9 != NULL) {
+      if ($9 != nullptr) {
         $$->annotations_ = $9->annotations_;
         delete $9;
       }
@@ -868,20 +868,20 @@ Field:
       $$ = new t_field($4, $6, $2.value);
       $$->set_reference($5);
       $$->set_req($3);
-      if ($7 != NULL) {
+      if ($7 != nullptr) {
         g_scope->resolve_const_value($7, $4);
         validate_field_value($$, $7);
         $$->set_value($7);
       }
       $$->set_xsd_optional($8);
       $$->set_xsd_nillable($9);
-      if ($1 != NULL) {
+      if ($1 != nullptr) {
         $$->set_doc($1);
       }
-      if ($10 != NULL) {
+      if ($10 != nullptr) {
         $$->set_xsd_attrs($10);
       }
-      if ($11 != NULL) {
+      if ($11 != nullptr) {
         $$->annotations_ = $11->annotations_;
         delete $11;
       }
@@ -974,12 +974,12 @@ FieldValue:
       if (g_parse_mode == PROGRAM) {
         $$ = $2;
       } else {
-        $$ = NULL;
+        $$ = nullptr;
       }
     }
 |
     {
-      $$ = NULL;
+      $$ = nullptr;
     }
 
 FunctionType:
@@ -1000,11 +1000,11 @@ FieldType:
       pdebug("FieldType -> tok_identifier");
       if (g_parse_mode == INCLUDES) {
         // Ignore identifiers in include mode
-        $$ = NULL;
+        $$ = nullptr;
       } else {
         // Lookup the identifier in the current scope
         $$ = g_scope->get_type($1);
-        if ($$ == NULL) {
+        if ($$ == nullptr) {
           /*
            * Either this type isn't yet declared, or it's never
              declared.  Either way allow it and we'll figure it out
@@ -1028,7 +1028,7 @@ FieldType:
 BaseType: SimpleBaseType TypeAnnotations
     {
       pdebug("BaseType -> SimpleBaseType TypeAnnotations");
-      if ($2 != NULL) {
+      if ($2 != nullptr) {
         $$ = new t_base_type(*static_cast<t_base_type*>($1));
         $$->annotations_ = $2->annotations_;
         delete $2;
@@ -1088,7 +1088,7 @@ ContainerType: SimpleContainerType TypeAnnotations
     {
       pdebug("ContainerType -> SimpleContainerType TypeAnnotations");
       $$ = $1;
-      if ($2 != NULL) {
+      if ($2 != nullptr) {
         $$->annotations_ = $2->annotations_;
         delete $2;
       }
@@ -1116,7 +1116,7 @@ MapType:
     {
       pdebug("MapType -> tok_map <FieldType, FieldType>");
       $$ = new t_map($4, $6);
-      if ($2 != NULL) {
+      if ($2 != nullptr) {
         ((t_container*)$$)->set_cpp_name(std::string($2));
       }
     }
@@ -1126,7 +1126,7 @@ SetType:
     {
       pdebug("SetType -> tok_set<FieldType>");
       $$ = new t_set($4);
-      if ($2 != NULL) {
+      if ($2 != nullptr) {
         ((t_container*)$$)->set_cpp_name(std::string($2));
       }
     }
@@ -1137,7 +1137,7 @@ ListType:
       pdebug("ListType -> tok_list<FieldType>");
       check_for_list_of_bytes($3);
       $$ = new t_list($3);
-      if ($5 != NULL) {
+      if ($5 != nullptr) {
         ((t_container*)$$)->set_cpp_name(std::string($5));
       }
     }
@@ -1149,7 +1149,7 @@ CppType:
     }
 |
     {
-      $$ = NULL;
+      $$ = nullptr;
     }
 
 TypeAnnotations:
@@ -1160,7 +1160,7 @@ TypeAnnotations:
     }
 |
     {
-      $$ = NULL;
+      $$ = nullptr;
     }
 
 TypeAnnotationList:

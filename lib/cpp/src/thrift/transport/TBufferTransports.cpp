@@ -112,7 +112,7 @@ void TBufferedTransport::writeSlow(const uint8_t* buf, uint32_t len) {
 const uint8_t* TBufferedTransport::borrowSlow(uint8_t* buf, uint32_t* len) {
   (void)buf;
   (void)len;
-  // Simply return NULL.  We don't know if there is actually data available on
+  // Simply return nullptr.  We don't know if there is actually data available on
   // the underlying transport, so calling read() might block.
   return nullptr;
 }

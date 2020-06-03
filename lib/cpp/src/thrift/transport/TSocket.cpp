@@ -432,7 +432,7 @@ void TSocket::open() {
 
 void TSocket::unix_open() {
   if (!path_.empty()) {
-    // Unix Domain SOcket does not need addrinfo struct, so we pass NULL
+    // Unix Domain SOcket does not need addrinfo struct, so we pass nullptr
     openConnection(nullptr);
   }
 }

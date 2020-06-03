@@ -28,7 +28,7 @@ class AggrAsyncHandler : public AggrCobSvIf {
 
  public:
   AggrAsyncHandler()
-    : eb_(NULL)
+    : eb_(nullptr)
     , pfact_(new TBinaryProtocolFactory())
   {
     leaf_ports_.push_back(8081);

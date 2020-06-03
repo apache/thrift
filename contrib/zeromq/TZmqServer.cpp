@@ -41,7 +41,7 @@ bool TZmqServer::serveOne(int recv_flags) {
       outputProtocolFactory_->getProtocol(outputTransport));
   shared_ptr<TMemoryBuffer> transport(new TMemoryBuffer);
 
-  processor_->process(inputProtocol, outputProtocol, NULL);
+  processor_->process(inputProtocol, outputProtocol, nullptr);
 
   if (zmq_type_ == ZMQ_REP) {
     uint8_t* buf;

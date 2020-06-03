@@ -112,7 +112,7 @@ public:
   void* getFrame(int index) const {
     int adjusted_index = index + skip_;
     if (adjusted_index < 0 || adjusted_index >= numCallers_) {
-      return NULL;
+      return nullptr;
     }
     return callers_[adjusted_index];
   }
@@ -151,7 +151,7 @@ public:
   };
 
   Key(const Backtrace* bt, const std::type_info& type_info)
-    : backtrace_(bt), typeName1_(type_info.name()), typeName2_(NULL) {}
+    : backtrace_(bt), typeName1_(type_info.name()), typeName2_(nullptr) {}
 
   Key(const Backtrace* bt, const std::type_info& type_info1, const std::type_info& type_info2)
     : backtrace_(bt), typeName1_(type_info1.name()), typeName2_(type_info2.name()) {}
@@ -189,7 +189,7 @@ public:
    */
   void cleanup() {
     delete backtrace_;
-    backtrace_ = NULL;
+    backtrace_ = nullptr;
   }
 
   int cmp(const Key& k) const {

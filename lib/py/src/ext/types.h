@@ -83,7 +83,7 @@ enum TType {
 // replace with unique_ptr when we're OK with C++11
 class ScopedPyObject {
 public:
-  ScopedPyObject() : obj_(NULL) {}
+  ScopedPyObject() : obj_(nullptr) {}
   explicit ScopedPyObject(PyObject* py_object) : obj_(py_object) {}
   ~ScopedPyObject() {
     if (obj_)
@@ -98,7 +98,7 @@ public:
   }
   PyObject* release() throw() {
     PyObject* tmp = obj_;
-    obj_ = NULL;
+    obj_ = nullptr;
     return tmp;
   }
   void swap(ScopedPyObject& other) throw() {

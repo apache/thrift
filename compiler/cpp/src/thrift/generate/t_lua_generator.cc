@@ -282,13 +282,13 @@ string t_lua_generator::render_const_value(t_type* type, t_const_value* value) {
     const map<t_const_value*, t_const_value*, t_const_value::value_compare>& val = value->get_map();
     map<t_const_value*, t_const_value*, t_const_value::value_compare>::const_iterator v_iter;
     for (v_iter = val.begin(); v_iter != val.end();) {
-      t_type* field_type = NULL;
+      t_type* field_type = nullptr;
       for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
         if ((*f_iter)->get_name() == v_iter->first->get_string()) {
           field_type = (*f_iter)->get_type();
         }
       }
-      if (field_type == NULL) {
+      if (field_type == nullptr) {
         throw "type error: " + type->get_name() + " has no field " + v_iter->first->get_string();
       }
 
@@ -513,7 +513,7 @@ void t_lua_generator::generate_service(t_service* tservice) {
   if (gen_requires_) {
     f_service_ << endl << "require '" << cur_ns << "ttypes'" << endl;
 
-    if (tservice->get_extends() != NULL) {
+    if (tservice->get_extends() != nullptr) {
       f_service_ << "require '" << get_namespace(tservice->get_extends()->get_program())
                  << tservice->get_extends()->get_name() << "'" << endl;
     }
@@ -550,7 +550,7 @@ void t_lua_generator::generate_service_client(ostream& out, t_service* tservice)
 
   // Client object definition
   out << classname << " = __TObject.new(";
-  if (extends_s != NULL) {
+  if (extends_s != nullptr) {
     out << extends_s->get_name() << "Client";
   } else {
     out << "__TClient";
@@ -646,7 +646,7 @@ void t_lua_generator::generate_service_processor(ostream& out, t_service* tservi
 
   // Define processor table
   out << endl << classname << " = __TObject.new(";
-  if (extends_s != NULL) {
+  if (extends_s != nullptr) {
     out << extends_s->get_name() << "Processor" << endl;
   } else {
     out << "__TProcessor" << endl;

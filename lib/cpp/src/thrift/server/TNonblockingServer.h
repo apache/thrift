@@ -158,7 +158,7 @@ private:
   /// The optional user-provided event-base (for single-thread servers)
   event_base* userEventBase_;
 
-  /// For processing via thread pool, may be NULL
+  /// For processing via thread pool, may be nullptr
   std::shared_ptr<ThreadManager> threadManager_;
 
   /// Is thread pool processing?

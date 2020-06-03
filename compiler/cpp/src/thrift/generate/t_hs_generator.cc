@@ -367,7 +367,7 @@ void t_hs_generator::generate_const(t_const* tconst) {
  * validate_types method in main.cc
  */
 string t_hs_generator::render_const_value(t_type* type, t_const_value* value) {
-  if (value == NULL)
+  if (value == nullptr)
     return type_to_default(type);
 
   type = get_true_type(type);
@@ -411,7 +411,7 @@ string t_hs_generator::render_const_value(t_type* type, t_const_value* value) {
       int val = constant->get_value();
       if (val == value->get_integer()) {
         t_program* prog = type->get_program();
-        if (prog != NULL && prog != program_)
+        if (prog != nullptr && prog != program_)
           out << capitalize(prog->get_name()) << "_Types.";
         out << capitalize(constant->get_name());
         break;
@@ -427,13 +427,13 @@ string t_hs_generator::render_const_value(t_type* type, t_const_value* value) {
 
     bool first = true;
     for (auto v_iter : val) {
-      t_field* field = NULL;
+      t_field* field = nullptr;
 
       for (auto f_iter : fields)
         if (f_iter->get_name() == v_iter.first->get_string())
           field = f_iter;
 
-      if (field == NULL)
+      if (field == nullptr)
         throw "type error: " + cname + " has no field " + v_iter.first->get_string();
 
       string fname = v_iter.first->get_string();
@@ -676,7 +676,7 @@ void t_hs_generator::generate_hs_struct_reader(ostream& out, t_struct* tstruct) 
       out << "P.error \"Missing required field: " << fname << "\"";
     } else {
       if ((field->get_req() == t_field::T_OPTIONAL
-           || ((t_type*)field->get_type())->is_xception()) && field->get_value() == NULL) {
+           || ((t_type*)field->get_type())->is_xception()) && field->get_value() == nullptr) {
         out << "P.Nothing";
       } else {
         out << field_name(sname, fname) << " default_" << sname;
@@ -941,7 +941,7 @@ void t_hs_generator::generate_hs_default(ostream& out, t_struct* tstruct) {
     indent(out) << field_name(name, mname) << " = ";
     if (field->get_req() == t_field::T_OPTIONAL
         || ((t_type*)field->get_type())->is_xception()) {
-      if (value == NULL) {
+      if (value == nullptr) {
         out << "P.Nothing";
       } else {
         out << "P.Just " << render_const_value(type, value);
@@ -973,7 +973,7 @@ void t_hs_generator::generate_service_interface(t_service* tservice) {
   f_iface_ << endl;
 
   string sname = capitalize(service_name_);
-  if (tservice->get_extends() != NULL) {
+  if (tservice->get_extends() != nullptr) {
     string extends = type_name(tservice->get_extends());
 
     indent(f_iface_) << "import " << extends << "_Iface" << endl;
@@ -1026,7 +1026,7 @@ void t_hs_generator::generate_service_client(t_service* tservice) {
   string sname = capitalize(service_name_);
   indent(f_client_) << "module " << sname << "_Client(" << exports << ") where" << endl;
 
-  if (tservice->get_extends() != NULL) {
+  if (tservice->get_extends() != nullptr) {
     extends = type_name(tservice->get_extends());
     indent(f_client_) << "import " << extends << "_Client" << endl;
   }
@@ -1156,7 +1156,7 @@ void t_hs_generator::generate_service_server(t_service* tservice) {
   }
 
   indent(f_service_) << "_ -> ";
-  if (tservice->get_extends() != NULL) {
+  if (tservice->get_extends() != nullptr) {
     f_service_ << type_name(tservice->get_extends())
                << ".proc_ handler (iprot,oprot) (name,typ,seqid)" << endl;
 
@@ -1510,7 +1510,7 @@ string t_hs_generator::type_name(t_type* ttype, string function_prefix) {
   string prefix = "";
   t_program* program = ttype->get_program();
 
-  if (program != NULL && program != program_)
+  if (program != nullptr && program != program_)
     if (!ttype->is_service())
       prefix = capitalize(program->get_name()) + "_Types.";
 

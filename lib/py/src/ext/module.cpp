@@ -48,20 +48,20 @@ namespace py {
 template <typename T>
 static PyObject* encode_impl(PyObject* args) {
   if (!args)
-    return NULL;
+    return nullptr;
 
-  PyObject* enc_obj = NULL;
-  PyObject* type_args = NULL;
+  PyObject* enc_obj = nullptr;
+  PyObject* type_args = nullptr;
   if (!PyArg_ParseTuple(args, "OO", &enc_obj, &type_args)) {
-    return NULL;
+    return nullptr;
   }
   if (!enc_obj || !type_args) {
-    return NULL;
+    return nullptr;
   }
 
   T protocol;
   if (!protocol.prepareEncodeBuffer() || !protocol.encodeValue(enc_obj, T_STRUCT, type_args)) {
-    return NULL;
+    return nullptr;
   }
 
   return protocol.getEncodedValue();
@@ -79,11 +79,11 @@ static inline long as_long_then_delete(PyObject* value, long default_value) {
 
 template <typename T>
 static PyObject* decode_impl(PyObject* args) {
-  PyObject* output_obj = NULL;
-  PyObject* oprot = NULL;
-  PyObject* typeargs = NULL;
+  PyObject* output_obj = nullptr;
+  PyObject* oprot = nullptr;
+  PyObject* typeargs = nullptr;
   if (!PyArg_ParseTuple(args, "OOO", &output_obj, &oprot, &typeargs)) {
-    return NULL;
+    return nullptr;
   }
 
   T protocol;
@@ -96,16 +96,16 @@ static PyObject* decode_impl(PyObject* args) {
                           default_limit));
   ScopedPyObject transport(PyObject_GetAttr(oprot, INTERN_STRING(trans)));
   if (!transport) {
-    return NULL;
+    return nullptr;
   }
 
   StructTypeArgs parsedargs;
   if (!parse_struct_args(&parsedargs, typeargs)) {
-    return NULL;
+    return nullptr;
   }
 
   if (!protocol.prepareDecodeBufferFromTransport(transport.get())) {
-    return NULL;
+    return nullptr;
   }
 
   return protocol.readStruct(output_obj, parsedargs.klass, parsedargs.spec);
@@ -141,22 +141,22 @@ static PyMethodDef ThriftFastBinaryMethods[] = {
     {"decode_binary", decode_binary, METH_VARARGS, ""},
     {"encode_compact", encode_compact, METH_VARARGS, ""},
     {"decode_compact", decode_compact, METH_VARARGS, ""},
-    {NULL, NULL, 0, NULL} /* Sentinel */
+    {nullptr, nullptr, 0, nullptr} /* Sentinel */
 };
 
 #if PY_MAJOR_VERSION >= 3
 
 static struct PyModuleDef ThriftFastBinaryDef = {PyModuleDef_HEAD_INIT,
                                                  "thrift.protocol.fastbinary",
-                                                 NULL,
+                                                 nullptr,
                                                  0,
                                                  ThriftFastBinaryMethods,
-                                                 NULL,
-                                                 NULL,
-                                                 NULL,
-                                                 NULL};
+                                                 nullptr,
+                                                 nullptr,
+                                                 nullptr,
+                                                 nullptr};
 
-#define INITERROR return NULL;
+#define INITERROR return nullptr;
 
 PyObject* PyInit_fastbinary() {
 
@@ -167,7 +167,7 @@ PyObject* PyInit_fastbinary() {
 void initfastbinary() {
 
   PycString_IMPORT;
-  if (PycStringIO == NULL)
+  if (PycStringIO == nullptr)
     INITERROR
 
 #endif
@@ -193,7 +193,7 @@ void initfastbinary() {
 #else
       Py_InitModule("thrift.protocol.fastbinary", ThriftFastBinaryMethods);
 #endif
-  if (module == NULL)
+  if (module == nullptr)
     INITERROR;
 
 #if PY_MAJOR_VERSION >= 3

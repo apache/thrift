@@ -122,8 +122,8 @@ std::string TOutput::strerror_s(int errno_copy) {
 #else // HAVE_STRERROR_R
 #ifdef _WIN32
   const size_t size = FormatMessageA(FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
-                                     NULL, errno_copy, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
-                                     b_errbuf, sizeof(b_errbuf), NULL);
+                                     nullptr, errno_copy, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
+                                     b_errbuf, sizeof(b_errbuf), nullptr);
 
   if (size > 2 && b_errbuf[size-2] == '\r' && b_errbuf[size-1] == '\n') {
     b_errbuf[size-2] = '\0';

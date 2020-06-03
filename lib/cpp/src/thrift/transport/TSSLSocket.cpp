@@ -562,7 +562,7 @@ void TSSLSocket::flush() {
     throw TSSLException("BIO_flush: Handshake is not completed");
   BIO* bio = SSL_get_wbio(ssl_);
   if (bio == nullptr) {
-    throw TSSLException("SSL_get_wbio returns NULL");
+    throw TSSLException("SSL_get_wbio returns nullptr");
   }
   if (BIO_flush(bio) != 1) {
     int errno_copy = THRIFT_GET_SOCKET_ERROR;
@@ -798,7 +798,7 @@ unsigned int TSSLSocket::waitForEvent(bool wantRead) {
   }
 
   if (bio == nullptr) {
-    throw TSSLException("SSL_get_?bio returned NULL");
+    throw TSSLException("SSL_get_?bio returned nullptr");
   }
 
   if (BIO_get_fd(bio, &fdSocket) <= 0) {
@@ -943,7 +943,7 @@ void TSSLSocketFactory::authenticate(bool required) {
 void TSSLSocketFactory::loadCertificate(const char* path, const char* format) {
   if (path == nullptr || format == nullptr) {
     throw TTransportException(TTransportException::BAD_ARGS,
-                              "loadCertificateChain: either <path> or <format> is NULL");
+                              "loadCertificateChain: either <path> or <format> is nullptr");
   }
   if (strcmp(format, "PEM") == 0) {
     if (SSL_CTX_use_certificate_chain_file(ctx_->get(), path) == 0) {
@@ -960,12 +960,12 @@ void TSSLSocketFactory::loadCertificate(const char* path, const char* format) {
 void TSSLSocketFactory::loadCertificateFromBuffer(const char* aCertificate, const char* format) {
   if (aCertificate == nullptr || format == nullptr) {
     throw TTransportException(TTransportException::BAD_ARGS,
-                              "loadCertificate: either <path> or <format> is NULL");
+                              "loadCertificate: either <path> or <format> is nullptr");
   }
   if (strcmp(format, "PEM") == 0) {
     BIO* mem = BIO_new(BIO_s_mem());
     BIO_puts(mem, aCertificate);
-    X509* cert = PEM_read_bio_X509(mem, NULL, 0, NULL);
+    X509* cert = PEM_read_bio_X509(mem, nullptr, 0, nullptr);
     BIO_free(mem);
 
     if (SSL_CTX_use_certificate(ctx_->get(), cert) == 0) {
@@ -982,7 +982,7 @@ void TSSLSocketFactory::loadCertificateFromBuffer(const char* aCertificate, cons
 void TSSLSocketFactory::loadPrivateKey(const char* path, const char* format) {
   if (path == nullptr || format == nullptr) {
     throw TTransportException(TTransportException::BAD_ARGS,
-                              "loadPrivateKey: either <path> or <format> is NULL");
+                              "loadPrivateKey: either <path> or <format> is nullptr");
   }
   if (strcmp(format, "PEM") == 0) {
     if (SSL_CTX_use_PrivateKey_file(ctx_->get(), path, SSL_FILETYPE_PEM) == 0) {
@@ -997,7 +997,7 @@ void TSSLSocketFactory::loadPrivateKey(const char* path, const char* format) {
 void TSSLSocketFactory::loadPrivateKeyFromBuffer(const char* aPrivateKey, const char* format) {
   if (aPrivateKey == nullptr || format == nullptr) {
     throw TTransportException(TTransportException::BAD_ARGS,
-                              "loadPrivateKey: either <path> or <format> is NULL");
+                              "loadPrivateKey: either <path> or <format> is nullptr");
   }
   if (strcmp(format, "PEM") == 0) {
     BIO* mem = BIO_new(BIO_s_mem());
@@ -1019,7 +1019,7 @@ void TSSLSocketFactory::loadPrivateKeyFromBuffer(const char* aPrivateKey, const 
 void TSSLSocketFactory::loadTrustedCertificates(const char* path, const char* capath) {
   if (path == nullptr) {
     throw TTransportException(TTransportException::BAD_ARGS,
-                              "loadTrustedCertificates: <path> is NULL");
+                              "loadTrustedCertificates: <path> is nullptr");
   }
   if (SSL_CTX_load_verify_locations(ctx_->get(), path, capath) == 0) {
     int errno_copy = THRIFT_GET_SOCKET_ERROR;
@@ -1037,7 +1037,7 @@ void TSSLSocketFactory::loadTrustedCertificatesFromBuffer(const char* aCertifica
   X509_STORE* vX509Store = SSL_CTX_get_cert_store(ctx_->get());
   BIO* mem = BIO_new(BIO_s_mem());
   BIO_puts(mem, aCertificate);
-  X509* cert = PEM_read_bio_X509(mem, NULL, 0, NULL);
+  X509* cert = PEM_read_bio_X509(mem, nullptr, 0, nullptr);
   BIO_free(mem);
 
   if (X509_STORE_add_cert(vX509Store, cert) == 0) {
@@ -1050,7 +1050,7 @@ void TSSLSocketFactory::loadTrustedCertificatesFromBuffer(const char* aCertifica
   if (aChain) {
     mem = BIO_new(BIO_s_mem());
     BIO_puts(mem, aChain);
-    cert = PEM_read_bio_X509(mem, NULL, 0, NULL);
+    cert = PEM_read_bio_X509(mem, nullptr, 0, nullptr);
     BIO_free(mem);
 
     if (SSL_CTX_add_extra_chain_cert(ctx_->get(), cert) == 0) {

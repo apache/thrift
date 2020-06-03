@@ -159,7 +159,7 @@ literal_begin (['\"])
     g_doctext[strlen(g_doctext) - 1] = '\0';
     g_doctext = clean_up_doctext(g_doctext);
     g_doctext_lineno = yylineno;
-    if( (g_program_doctext_candidate == NULL) && (g_program_doctext_status == INVALID)){
+    if( (g_program_doctext_candidate == nullptr) && (g_program_doctext_status == INVALID)){
       g_program_doctext_candidate = strdup(g_doctext);
       g_program_doctext_lineno = g_doctext_lineno;
       g_program_doctext_status = STILL_CANDIDATE;
@@ -264,7 +264,7 @@ literal_begin (['\"])
 
 {intconstant} {
   errno = 0;
-  yylval.iconst = strtoll(yytext, NULL, 10);
+  yylval.iconst = strtoll(yytext, nullptr, 10);
   if (errno == ERANGE) {
     integer_overflow(yytext);
   }
@@ -275,7 +275,7 @@ literal_begin (['\"])
   errno = 0;
   char sign = yytext[0];
   int shift = sign == '0' ? 2 : 3;
-  yylval.iconst = strtoll(yytext+shift, NULL, 16);
+  yylval.iconst = strtoll(yytext+shift, nullptr, 16);
   if (sign == '-') {
     yylval.iconst = -yylval.iconst;
   }

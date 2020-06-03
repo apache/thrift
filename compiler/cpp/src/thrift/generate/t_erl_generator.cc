@@ -625,13 +625,13 @@ string t_erl_generator::render_const_value(t_type* type, t_const_value* value) {
 
     bool first = true;
     for (v_iter = val.begin(); v_iter != val.end(); ++v_iter) {
-      t_type* field_type = NULL;
+      t_type* field_type = nullptr;
       for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
         if ((*f_iter)->get_name() == v_iter->first->get_string()) {
           field_type = (*f_iter)->get_type();
         }
       }
-      if (field_type == NULL) {
+      if (field_type == nullptr) {
         throw "type error: " + type->get_name() + " has no field " + v_iter->first->get_string();
       }
 
@@ -909,7 +909,7 @@ void t_erl_generator::generate_service(t_service* tservice) {
 
   hrl_header(f_service_hrl_, service_name_);
 
-  if (tservice->get_extends() != NULL) {
+  if (tservice->get_extends() != nullptr) {
     f_service_hrl_ << "-include(\""
                    << make_safe_for_module_name(tservice->get_extends()->get_name())
                    << "_thrift.hrl\"). % inherit " << endl;
@@ -1013,7 +1013,7 @@ void t_erl_generator::generate_service_interface(t_service* tservice) {
   }
 
   // Inheritance - pass unknown functions to base class
-  if (tservice->get_extends() != NULL) {
+  if (tservice->get_extends() != nullptr) {
     indent(f_service_) << "function_info(Function, InfoType) ->" << endl;
     indent_up();
     indent(f_service_) << make_safe_for_module_name(tservice->get_extends()->get_name())

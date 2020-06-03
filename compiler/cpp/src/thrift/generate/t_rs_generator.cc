@@ -2470,7 +2470,7 @@ void t_rs_generator::render_sync_processor(t_service *tservice) {
 
 void t_rs_generator::render_sync_handler_trait(t_service *tservice) {
   string extension = "";
-  if (tservice->get_extends() != NULL) {
+  if (tservice->get_extends() != nullptr) {
     t_service* extends = tservice->get_extends();
     extension = " : " + rust_namespace(extends) + rust_sync_handler_trait_name(extends);
   }
@@ -2751,7 +2751,7 @@ void t_rs_generator::render_sync_handler_failed(t_function *tfunc) {
   indent_up();
 
   // if there are any user-defined exceptions for this service call handle them first
-  if (tfunc->get_xceptions() != NULL && tfunc->get_xceptions()->get_sorted_members().size() > 0) {
+  if (tfunc->get_xceptions() != nullptr && tfunc->get_xceptions()->get_sorted_members().size() > 0) {
     string user_err_var("usr_err");
     f_gen_ << indent() << "thrift::Error::User(" << user_err_var << ") => {" << endl;
     indent_up();
@@ -2780,7 +2780,7 @@ void t_rs_generator::render_sync_handler_failed(t_function *tfunc) {
 }
 
 void t_rs_generator::render_sync_handler_failed_user_exception_branch(t_function *tfunc) {
-  if (tfunc->get_xceptions() == NULL || tfunc->get_xceptions()->get_sorted_members().empty()) {
+  if (tfunc->get_xceptions() == nullptr || tfunc->get_xceptions()->get_sorted_members().empty()) {
     throw "cannot render user exception branches if no user exceptions defined";
   }
 
@@ -2918,7 +2918,7 @@ string t_rs_generator::handler_successful_return_struct(t_function* tfunc) {
   }
 
   // any user-defined exceptions
-  if (tfunc->get_xceptions() != NULL) {
+  if (tfunc->get_xceptions() != nullptr) {
     t_struct* txceptions = tfunc->get_xceptions();
     const vector<t_field*> members = txceptions->get_sorted_members();
     vector<t_field*>::const_iterator members_iter;
@@ -3170,7 +3170,7 @@ t_field::e_req t_rs_generator::actual_field_req(t_field* tfield, t_rs_generator:
 }
 
 bool t_rs_generator::has_args(t_function* tfunc) {
-  return tfunc->get_arglist() != NULL && !tfunc->get_arglist()->get_sorted_members().empty();
+  return tfunc->get_arglist() != nullptr && !tfunc->get_arglist()->get_sorted_members().empty();
 }
 
 bool t_rs_generator::has_non_void_args(t_function* tfunc) {

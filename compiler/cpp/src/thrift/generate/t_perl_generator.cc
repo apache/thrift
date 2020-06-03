@@ -362,13 +362,13 @@ string t_perl_generator::render_const_value(t_type* type, t_const_value* value) 
     const map<t_const_value*, t_const_value*, t_const_value::value_compare>& val = value->get_map();
     map<t_const_value*, t_const_value*, t_const_value::value_compare>::const_iterator v_iter;
     for (v_iter = val.begin(); v_iter != val.end(); ++v_iter) {
-      t_type* field_type = NULL;
+      t_type* field_type = nullptr;
       for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
         if ((*f_iter)->get_name() == v_iter->first->get_string()) {
           field_type = (*f_iter)->get_type();
         }
       }
-      if (field_type == NULL) {
+      if (field_type == nullptr) {
         throw "type error: " + type->get_name() + " has no field " + v_iter->first->get_string();
       }
       indent(out) << render_const_value(g_type_string, v_iter->first);
@@ -489,7 +489,7 @@ void t_perl_generator::generate_perl_struct_definition(ostream& out,
   for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
     string dval = "undef";
     t_type* t = get_true_type((*m_iter)->get_type());
-    if ((*m_iter)->get_value() != NULL && !(t->is_struct() || t->is_xception())) {
+    if ((*m_iter)->get_value() != nullptr && !(t->is_struct() || t->is_xception())) {
       dval = render_const_value((*m_iter)->get_type(), (*m_iter)->get_value());
     }
     out << indent() << "$self->{" << (*m_iter)->get_name() << "} = " << dval << ";" << endl;
@@ -500,7 +500,7 @@ void t_perl_generator::generate_perl_struct_definition(ostream& out,
 
     for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
       t_type* t = get_true_type((*m_iter)->get_type());
-      if ((*m_iter)->get_value() != NULL && (t->is_struct() || t->is_xception())) {
+      if ((*m_iter)->get_value() != nullptr && (t->is_struct() || t->is_xception())) {
         indent(out) << "$self->{" << (*m_iter)->get_name()
                     << "} = " << render_const_value(t, (*m_iter)->get_value()) << ";" << endl;
       }
@@ -680,7 +680,7 @@ void t_perl_generator::generate_service(t_service* tservice) {
   generate_use_includes(f_service_, done, tservice, true);
 
   t_service* extends_s = tservice->get_extends();
-  if (extends_s != NULL) {
+  if (extends_s != nullptr) {
     f_service_ << "use " << perl_namespace(extends_s->get_program()) << extends_s->get_name() << ";"
                << endl;
   }
@@ -712,7 +712,7 @@ void t_perl_generator::generate_service_processor(t_service* tservice) {
   string extends = "";
   string extends_processor = "";
   t_service* extends_s = tservice->get_extends();
-  if (extends_s != NULL) {
+  if (extends_s != nullptr) {
     extends = perl_namespace(extends_s->get_program()) + extends_s->get_name();
     extends_processor = "use base qw(" + extends + "Processor);";
   }
@@ -939,7 +939,7 @@ void t_perl_generator::generate_perl_function_helpers(t_function* tfunction) {
 void t_perl_generator::generate_service_interface(t_service* tservice) {
   string extends_if = "";
   t_service* extends_s = tservice->get_extends();
-  if (extends_s != NULL) {
+  if (extends_s != nullptr) {
     extends_if = "use base qw(" + perl_namespace(extends_s->get_program()) + extends_s->get_name()
                  + "If);";
   }
@@ -964,7 +964,7 @@ void t_perl_generator::generate_service_rest(t_service* tservice) {
   string extends = "";
   string extends_if = "";
   t_service* extends_s = tservice->get_extends();
-  if (extends_s != NULL) {
+  if (extends_s != nullptr) {
     extends = extends_s->get_name();
     extends_if = "use base qw(" + perl_namespace(extends_s->get_program()) + extends_s->get_name()
                  + "Rest);";
@@ -1024,7 +1024,7 @@ void t_perl_generator::generate_service_client(t_service* tservice) {
   string extends = "";
   string extends_client = "";
   t_service* extends_s = tservice->get_extends();
-  if (extends_s != NULL) {
+  if (extends_s != nullptr) {
     extends = perl_namespace(extends_s->get_program()) + extends_s->get_name();
     extends_client = "use base qw(" + extends + "Client);";
   }

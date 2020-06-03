@@ -183,7 +183,7 @@ void pseudo_sync_write(HANDLE pipe, HANDLE event, const uint8_t* buf, uint32_t l
 
   uint32_t written = 0;
   while (written < len) {
-    BOOL result = ::WriteFile(pipe, buf + written, len - written, NULL, &tempOverlap);
+    BOOL result = ::WriteFile(pipe, buf + written, len - written, nullptr, &tempOverlap);
 
     if (result == FALSE && ::GetLastError() != ERROR_IO_PENDING) {
       GlobalOutput.perror("TPipe ::WriteFile errored GLE=", ::GetLastError());
@@ -205,7 +205,7 @@ uint32_t pseudo_sync_read(HANDLE pipe, HANDLE event, uint8_t* buf, uint32_t len)
   memset(&tempOverlap, 0, sizeof(tempOverlap));
   tempOverlap.hEvent = event;
 
-  BOOL result = ::ReadFile(pipe, buf, len, NULL, &tempOverlap);
+  BOOL result = ::ReadFile(pipe, buf, len, nullptr, &tempOverlap);
 
   if (result == FALSE && ::GetLastError() != ERROR_IO_PENDING) {
     GlobalOutput.perror("TPipe ::ReadFile errored GLE=", ::GetLastError());
@@ -255,7 +255,7 @@ TPipe::~TPipe() {
 // Transport callbacks
 //---------------------------------------------------------
 bool TPipe::isOpen() const {
-  return impl_.get() != NULL;
+  return impl_.get() != nullptr;
 }
 
 bool TPipe::peek() {
@@ -272,10 +272,10 @@ void TPipe::open() {
     hPipe.reset(CreateFileA(pipename_.c_str(),
                             GENERIC_READ | GENERIC_WRITE,
                             0,             // no sharing
-                            NULL,          // default security attributes
+                            nullptr,          // default security attributes
                             OPEN_EXISTING, // opens existing pipe
                             flags,
-                            NULL)); // no template file
+                            nullptr)); // no template file
 
     if (hPipe.h != INVALID_HANDLE_VALUE)
       break; // success!
@@ -310,7 +310,7 @@ uint32_t pipe_read(HANDLE pipe, uint8_t* buf, uint32_t len) {
                           buf,     // buffer to receive reply
                           len,     // size of buffer
                           &cbRead, // number of bytes read
-                          NULL);   // not overlapped
+                          nullptr);   // not overlapped
 
   if (!fSuccess && GetLastError() != ERROR_MORE_DATA)
     return 0; // No more data, possibly because client disconnected.
@@ -330,7 +330,7 @@ void pipe_write(HANDLE pipe, const uint8_t* buf, uint32_t len) {
                            buf,        // message
                            len,        // message length
                            &cbWritten, // bytes written
-                           NULL);      // not overlapped
+                           nullptr);      // not overlapped
 
   if (!fSuccess)
     throw TTransportException(TTransportException::NOT_OPEN, "Write to pipe failed");

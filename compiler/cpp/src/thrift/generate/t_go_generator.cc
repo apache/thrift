@@ -1193,7 +1193,7 @@ string t_go_generator::render_const_value(t_type* type, t_const_value* value, co
     map<t_const_value*, t_const_value*, t_const_value::value_compare>::const_iterator v_iter;
 
     for (v_iter = val.begin(); v_iter != val.end(); ++v_iter) {
-      t_type* field_type = NULL;
+      t_type* field_type = nullptr;
       bool is_optional = false;
       for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
         if ((*f_iter)->get_name() == v_iter->first->get_string()) {
@@ -1202,7 +1202,7 @@ string t_go_generator::render_const_value(t_type* type, t_const_value* value, co
         }
       }
 
-      if (field_type == NULL) {
+      if (field_type == nullptr) {
         throw "type error: " + type->get_name() + " has no field " + v_iter->first->get_string();
       }
       out << endl << indent() << publicize(v_iter->first->get_string()) << ": "
@@ -1303,7 +1303,7 @@ void t_go_generator::generate_go_struct_initializer(ostream& out,
     string publicized_name;
     t_const_value* def_value;
     get_publicized_name_and_def_value(member, &publicized_name, &def_value);
-    if (!pointer_field && def_value != NULL && !omit_initialization(member)) {
+    if (!pointer_field && def_value != nullptr && !omit_initialization(member)) {
       out << endl << indent() << publicized_name << ": "
           << render_field_initial_value(member, member->get_name(), pointer_field) << ","
           << endl;
@@ -1441,7 +1441,7 @@ void t_go_generator::generate_go_struct_definition(ostream& out,
     string def_var_name = tstruct_name + "_" + publicized_name + "_DEFAULT";
     if ((*m_iter)->get_req() == t_field::T_OPTIONAL || is_pointer_field(*m_iter)) {
       out << indent() << "var " << def_var_name << " " << goType;
-      if (def_value != NULL) {
+      if (def_value != nullptr) {
         out << " = " << render_const_value(fieldType, def_value, (*m_iter)->get_name());
       }
       out << endl;
@@ -1913,7 +1913,7 @@ void t_go_generator::generate_service_interface(t_service* tservice) {
   string serviceName(publicize(tservice->get_name()));
   string interfaceName = serviceName;
 
-  if (tservice->get_extends() != NULL) {
+  if (tservice->get_extends() != nullptr) {
     extends = type_name(tservice->get_extends());
     size_t index = extends.rfind(".");
 
@@ -1956,7 +1956,7 @@ void t_go_generator::generate_service_client(t_service* tservice) {
   string extends_client_new = "";
   string serviceName(publicize(tservice->get_name()));
 
-  if (tservice->get_extends() != NULL) {
+  if (tservice->get_extends() != nullptr) {
     extends = type_name(tservice->get_extends());
     size_t index = extends.rfind(".");
 
@@ -2149,7 +2149,7 @@ void t_go_generator::generate_service_remote(t_service* tservice) {
 
   // collect all functions including inherited functions
   t_service* parent = tservice;
-  while (parent != NULL) {
+  while (parent != nullptr) {
     vector<t_function*> p_functions = parent->get_functions();
     functions.insert(functions.end(), p_functions.begin(), p_functions.end());
 
@@ -2639,7 +2639,7 @@ void t_go_generator::generate_service_server(t_service* tservice) {
   string extends_processor_new = "";
   string serviceName(publicize(tservice->get_name()));
 
-  if (tservice->get_extends() != NULL) {
+  if (tservice->get_extends() != nullptr) {
     extends = type_name(tservice->get_extends());
     size_t index = extends.rfind(".");
 
@@ -3446,7 +3446,7 @@ string t_go_generator::declare_argument(t_field* tfield) {
   std::ostringstream result;
   result << publicize(tfield->get_name()) << "=";
 
-  if (tfield->get_value() != NULL) {
+  if (tfield->get_value() != nullptr) {
     result << "thrift_spec[" << tfield->get_key() << "][4]";
   } else {
     result << "nil";
@@ -3458,7 +3458,7 @@ string t_go_generator::declare_argument(t_field* tfield) {
 /**
  * Renders a struct field initial value.
  *
- * @param tfield The field, which must have `tfield->get_value() != NULL`
+ * @param tfield The field, which must have `tfield->get_value() != nullptr`
  */
 string t_go_generator::render_field_initial_value(t_field* tfield,
                                                   const string& name,
@@ -3560,7 +3560,7 @@ string t_go_generator::type_name(t_type* ttype) {
 string t_go_generator::module_name(t_type* ttype) {
   t_program* program = ttype->get_program();
 
-  if (program != NULL && program != program_) {
+  if (program != nullptr && program != program_) {
     if (program->get_namespace("go").empty() ||
         program_->get_namespace("go").empty() ||
         program->get_namespace("go") != program_->get_namespace("go")) {

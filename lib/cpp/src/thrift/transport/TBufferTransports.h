@@ -137,7 +137,7 @@ protected:
   /**
    * Slow path borrow.
    *
-   * POSTCONDITION: return == NULL || rBound_ - rBase_ >= *len
+   * POSTCONDITION: return == nullptr || rBound_ - rBase_ >= *len
    */
   virtual const uint8_t* borrowSlow(uint8_t* buf, uint32_t* len) = 0;
 
@@ -245,7 +245,7 @@ public:
   /**
    * The following behavior is currently implemented by TBufferedTransport,
    * but that may change in a future version:
-   * 1/ If len is at most rBufSize_, borrow will never return NULL.
+   * 1/ If len is at most rBufSize_, borrow will never return nullptr.
    *    Depending on the underlying transport, it could throw an exception
    *    or hang forever.
    * 2/ Some borrow requests may copy bytes internally.  However,
