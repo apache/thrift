@@ -24,15 +24,16 @@
 
 module Thrift.Transport.Handle
     ( module Thrift.Transport
-    , HandleSource(..)
+    , hOpenSocket
     ) where
 
 import Control.Exception ( catch, throw )
 import Control.Monad ( when )
 import Data.ByteString.Internal (c2w)
 import Data.Functor
+import Data.Maybe (listToMaybe, maybe)
 
-import Network
+import Network.Socket
 
 import System.IO
 import System.IO.Error ( isEOFError )
@@ -62,17 +63,12 @@ instance Transport Handle where
     tWrite = LBS.hPut
     tFlush = hFlush
 
-
--- | Type class for all types that can open a Handle. This class is used to
--- replace tOpen in the Transport type class.
-class HandleSource s where
-    hOpen :: s -> IO Handle
-
-instance HandleSource FilePath where
-    hOpen s = openFile s ReadWriteMode
-
-instance HandleSource (HostName, PortID) where
-    hOpen = uncurry connectTo
+hOpenSocket :: HostName -> ServiceName -> IO Handle
+hOpenSocket host port = do
+  addr <- head <$> getAddrInfo (Just $ defaultHints { addrSocketType = Stream }) (Just host) (Just port)
+  sock <- socket (addrFamily addr) (addrSocketType addr) (addrProtocol addr)
+  connect sock $ addrAddress addr
+  socketToHandle sock ReadWriteMode
 
 throwTransportExn :: IOError -> IO a
 throwTransportExn e = if isEOFError e

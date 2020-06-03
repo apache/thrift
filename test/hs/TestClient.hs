@@ -25,7 +25,6 @@ import Control.Monad
 import Data.Functor
 import Data.List.Split
 import Data.String
-import Network
 import Network.URI
 import System.Environment
 import System.Exit
@@ -68,11 +67,11 @@ data TransportType = Buffered IO.Handle
 
 getTransport :: String -> String -> Int -> (IO TransportType)
 getTransport "buffered" host port = do
-  h <- hOpen (host, PortNumber $ fromIntegral port)
+  h <- hOpenSocket host (show port)
   IO.hSetBuffering h $ IO.BlockBuffering Nothing
   return $ Buffered h
 getTransport "framed" host port = do
-  h <- hOpen (host, PortNumber $ fromIntegral port)
+  h <- hOpenSocket host (show port)
   t <- openFramedTransport h
   return $ Framed t
 getTransport "http" host port = let uriStr = "http://" ++ host ++ ":" ++ show port in

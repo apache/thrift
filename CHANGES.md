@@ -13,6 +13,7 @@
 - [THRIFT-5116](https://issues.apache.org/jira/browse/THRIFT-5116) - Upgrade NodeJS to 10.x
 - [THRIFT-5138](https://issues.apache.org/jira/browse/THRIFT-5138) - Swift generator does not escape keywords properly
 - [THRIFT-5164](https://issues.apache.org/jira/browse/THRIFT-5164) - In Go library TProcessor interface now includes ProcessorMap and AddToProcessorMap functions.
+- [THRIFT-4731](https://issues.apache.org/jira/browse/THRIFT-4731) - The Haskell library has been ported to the new network modules.
 
 ### Java
 

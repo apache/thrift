@@ -27,7 +27,7 @@ import Data.HashMap.Strict (HashMap)
 import Data.List
 import Data.List.Split
 import Data.String
-import Network
+import Network.Socket
 import System.Environment
 import System.Exit
 import System.IO
@@ -80,11 +80,13 @@ data TransportType = Buffered (Socket -> (IO IO.Handle))
 
 getTransport :: String -> TransportType
 getTransport "buffered" = Buffered $ \s -> do
-  (h, _, _) <- (accept s)
+  (sock, _) <- accept s
+  h <- socketToHandle sock ReadWriteMode
   IO.hSetBuffering h $ IO.BlockBuffering Nothing
   return h
 getTransport "framed" = Framed $ \s -> do
-  (h, _, _) <- (accept s)
+  (sock, _) <- accept s
+  h <- socketToHandle sock ReadWriteMode
   openFramedTransport h
 getTransport t = NoTransport $ "Unsupported transport: " ++ t
 
@@ -270,13 +272,13 @@ main = do
           return (p, p)
 
         doRunServer p f = do
-          runThreadedServer (acceptor p f) TestHandler ThriftTest.process . PortNumber . fromIntegral
+          runThreadedServer (acceptor p f) TestHandler ThriftTest.process
 
         runServer p f port = case p of
           Binary  -> doRunServer BinaryProtocol f port
           Compact -> doRunServer CompactProtocol f port
           JSON    -> doRunServer JSONProtocol f port
-          Header  -> runThreadedServer (headerAcceptor f) TestHandler ThriftTest.process (PortNumber $ fromIntegral port)
+          Header  -> runThreadedServer (headerAcceptor f) TestHandler ThriftTest.process port
 
 parseFlags :: [String] -> Options -> Maybe Options
 parseFlags (flag : flags) opts = do

@@ -27,7 +27,7 @@ import Control.Concurrent ( forkIO )
 import Control.Exception
 import Control.Monad ( forever, when )
 
-import Network
+import Network.Socket
 
 import System.IO
 
@@ -42,20 +42,36 @@ runThreadedServer :: (Protocol i, Protocol o)
                   => (Socket -> IO (i, o))
                   -> h
                   -> (h -> (i, o) -> IO Bool)
-                  -> PortID
+                  -> Int
                   -> IO a
 runThreadedServer accepter hand proc_ port = do
-    socket <- listenOn port
-    acceptLoop (accepter socket) (proc_ hand)
+    let hints = defaultHints {
+            addrFlags = [AI_PASSIVE]
+          , addrSocketType = Stream
+          }
+    addr <- head <$> getAddrInfo (Just hints) Nothing (Just $ show port)
+
+    bracket (open addr) close $ \sock -> do
+      acceptLoop (accepter sock) (proc_ hand)
+  where
+    open addr = do
+      sock <- socket (addrFamily addr) (addrSocketType addr) (addrProtocol addr)
+      setSocketOption sock ReuseAddr 1
+      fd <- fdSocket sock
+      setCloseOnExecIfNeeded fd
+      bind sock $ addrAddress addr
+      listen sock 1024
+      return sock
 
 -- | A basic threaded binary protocol socket server.
 runBasicServer :: h
                -> (h -> (BinaryProtocol Handle, BinaryProtocol Handle) -> IO Bool)
-               -> PortNumber
+               -> Int
                -> IO a
-runBasicServer hand proc_ port = runThreadedServer binaryAccept hand proc_ (PortNumber port)
+runBasicServer hand proc_ port = runThreadedServer binaryAccept hand proc_ port
   where binaryAccept s = do
-            (h, _, _) <- accept s
+            (aSock, _) <- accept s
+            h <- socketToHandle aSock ReadWriteMode
             return (BinaryProtocol h, BinaryProtocol h)
 
 acceptLoop :: IO t -> (t -> IO Bool) -> IO a

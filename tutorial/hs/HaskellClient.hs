@@ -34,10 +34,9 @@ import Control.Exception
 import Data.Maybe
 import Data.Text.Lazy
 import Text.Printf
-import Network
 
 main = do
-  transport  <- hOpen ("localhost", PortNumber 9090)
+  transport  <- hOpenSocket "127.0.0.1" "9090"
   let binProto = BinaryProtocol transport
   let client = (binProto, binProto)
 
