@@ -56,11 +56,6 @@ set(hs_crosstest_apps
     ${CMAKE_CURRENT_BINARY_DIR}/TestServer
     ${CMAKE_CURRENT_BINARY_DIR}/TestClient
 )
-set(hs_crosstest_args
-    -igen-hs
-    -odir=${CMAKE_CURRENT_BINARY_DIR}
-    -hidir=${CMAKE_CURRENT_BINARY_DIR}
-)
 
 if (CMAKE_BUILD_TYPE STREQUAL "Debug")
   set(hs_optimize -O0)
@@ -70,9 +65,9 @@ endif()
 
 add_custom_command(
     OUTPUT ${hs_crosstest_apps}
-    COMMAND ${GHC} ${hs_optimize} ${hs_crosstest_args} ${CMAKE_CURRENT_SOURCE_DIR}/TestServer.hs -o TestServer
-    COMMAND ${GHC} ${hs_optimize} ${hs_crosstest_args} ${CMAKE_CURRENT_SOURCE_DIR}/TestClient.hs -o TestClient
-    DEPENDS ${hs_test_gen} haskell_library TestServer.hs TestClient.hs
+    COMMAND ${CABAL} v2-install --builddir=${CMAKE_CURRENT_BINARY_DIR}/test-dist ${hs_optimize} --installdir=${CMAKE_CURRENT_BINARY_DIR}
+    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+    DEPENDS ${hs_test_gen} haskell_library copy-hs-test-files ${CMAKE_CURRENT_BINARY_DIR}/cabal.project ${CMAKE_CURRENT_BINARY_DIR}/thrift-test.cabal
 )
 add_custom_target(haskell_crosstest ALL
     COMMENT "Building Haskell cross test executables"
@@ -112,3 +107,10 @@ add_custom_command(OUTPUT ${hs_test_gen}
     COMMAND ${THRIFT_COMPILER} --gen hs ${PROJECT_SOURCE_DIR}/test/Include.thrift
     DEPENDS ${hs_test_gen_sources}
 )
+
+add_custom_target(copy-hs-test-files ALL
+    COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_BINARY_DIR}/test-hs/
+)
+
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cabal.project ${CMAKE_CURRENT_BINARY_DIR}/cabal.project)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/thrift-test.cabal ${CMAKE_CURRENT_BINARY_DIR}/thrift-test.cabal)

@@ -1,0 +1,2 @@
+packages:  .
+           @PROJECT_SOURCE_DIR@/lib/hs

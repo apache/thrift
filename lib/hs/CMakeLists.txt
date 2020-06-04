@@ -66,12 +66,9 @@ endif()
 
 add_custom_command(
     OUTPUT ${haskell_artifacts}
-    COMMAND ${CABAL} update
-    # Build dependencies first without --builddir, otherwise it fails.
-    COMMAND ${CABAL} install --only-dependencies ${hs_enable_test}
-    COMMAND ${CABAL} configure ${hs_optimize} ${hs_enable_test} --builddir=${CMAKE_CURRENT_BINARY_DIR}/dist
-    COMMAND ${CABAL} build --builddir=${CMAKE_CURRENT_BINARY_DIR}/dist
-    COMMAND ${CABAL} install --builddir=${CMAKE_CURRENT_BINARY_DIR}/dist
+    COMMAND ${CABAL} v2-update
+    COMMAND ${CABAL} v2-configure ${hs_optimize} ${hs_enable_test} --builddir=${CMAKE_CURRENT_BINARY_DIR}/dist
+    COMMAND ${CABAL} v2-build --builddir=${CMAKE_CURRENT_BINARY_DIR}/dist
     COMMAND ${CMAKE_COMMAND} -E touch ${CMAKE_CURRENT_BINARY_DIR}/thrift_cabal.stamp
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
     DEPENDS ${haskell_sources}
@@ -85,9 +82,6 @@ if(BUILD_TESTING)
             COMMAND ${CABAL} check
             WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
     add_test(NAME HaskellCabalTest
-            # Cabal fails to find built executable when --builddir is specified.
-            # So we invoke the executable directly.
-            # COMMAND ${CABAL} test --builddir=${CMAKE_CURRENT_BINARY_DIR}/dist
-            # WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
-            COMMAND dist/build/spec/spec)
+            COMMAND ${CABAL} v2-test --builddir=${CMAKE_CURRENT_BINARY_DIR}/dist
+            WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
 endif()
