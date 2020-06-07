@@ -62,12 +62,17 @@ func NewTSSLSocketFromAddrTimeout(addr net.Addr, cfg *tls.Config, timeout time.D
 
 // Creates a TSSLSocket from an existing net.Conn
 func NewTSSLSocketFromConnTimeout(conn net.Conn, cfg *tls.Config, timeout time.Duration) *TSSLSocket {
-	return &TSSLSocket{conn: wrapSocketConn(conn), addr: conn.RemoteAddr(), timeout: timeout, cfg: cfg}
+	sock := &TSSLSocket{conn: wrapSocketConn(conn), addr: conn.RemoteAddr(), timeout: timeout, cfg: cfg}
+	sock.conn.socketTimeout = timeout
+	return sock
 }
 
 // Sets the socket timeout
 func (p *TSSLSocket) SetTimeout(timeout time.Duration) error {
 	p.timeout = timeout
+	if p.conn != nil {
+		p.conn.socketTimeout = timeout
+	}
 	return nil
 }
 
@@ -101,6 +106,7 @@ func (p *TSSLSocket) Open() error {
 		)); err != nil {
 			return NewTTransportException(NOT_OPEN, err.Error())
 		}
+		p.conn.socketTimeout = p.timeout
 	} else {
 		if p.conn.isValid() {
 			return NewTTransportException(ALREADY_OPEN, "Socket already connected.")
@@ -124,6 +130,7 @@ func (p *TSSLSocket) Open() error {
 		)); err != nil {
 			return NewTTransportException(NOT_OPEN, err.Error())
 		}
+		p.conn.socketTimeout = p.timeout
 	}
 	return nil
 }

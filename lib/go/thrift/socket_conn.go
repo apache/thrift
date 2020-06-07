@@ -23,13 +23,16 @@ import (
 	"bytes"
 	"io"
 	"net"
+	"time"
 )
 
 // socketConn is a wrapped net.Conn that tries to do connectivity check.
 type socketConn struct {
 	net.Conn
 
-	buf bytes.Buffer
+	socketTimeout time.Duration
+	buf           bytes.Buffer
+	buffer        [1]byte
 }
 
 var _ net.Conn = (*socketConn)(nil)
