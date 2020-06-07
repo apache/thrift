@@ -273,7 +273,7 @@ public abstract class AbstractNonblockingServer extends TServer {
     protected final TNonblockingTransport trans_;
 
     // the SelectionKey that corresponds to our transport
-    protected final SelectionKey selectionKey_;
+    protected SelectionKey selectionKey_;
 
     // the SelectThread that owns the registration of our transport
     protected final AbstractSelectThread selectThread_;
