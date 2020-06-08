@@ -30,6 +30,10 @@
 
 #include <event.h>
 
+#ifdef __linux__
+#include <signal.h>
+#endif
+
 using namespace apache::thrift;
 using apache::thrift::concurrency::Guard;
 using apache::thrift::concurrency::Monitor;
