@@ -24,6 +24,7 @@ package thrift
 import (
 	"io"
 	"syscall"
+	"time"
 )
 
 func (sc *socketConn) read0() error {
@@ -36,16 +37,23 @@ func (sc *socketConn) checkConn() error {
 		// No way to check, return nil
 		return nil
 	}
+
+	// Push read deadline
+	var t time.Time
+	if sc.socketTimeout > 0 {
+		t = time.Now().Add(sc.socketTimeout)
+	}
+	sc.Conn.SetReadDeadline(t)
+
 	rc, err := syscallConn.SyscallConn()
 	if err != nil {
 		return err
 	}
 
 	var n int
-	var buf [1]byte
 
 	if readErr := rc.Read(func(fd uintptr) bool {
-		n, err = syscall.Read(int(fd), buf[:])
+		n, err = syscall.Read(int(fd), sc.buffer[:])
 		return true
 	}); readErr != nil {
 		return readErr
@@ -58,9 +66,9 @@ func (sc *socketConn) checkConn() error {
 	}
 
 	if n > 0 {
-		// We got 1 byte,
+		// We got something,
 		// put it to sc's buf for the next real read to use.
-		sc.buf.Write(buf[:])
+		sc.buf.Write(sc.buffer[:n])
 		return nil
 	}
 

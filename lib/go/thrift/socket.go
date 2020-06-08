@@ -58,7 +58,9 @@ func NewTSocketFromAddrTimeout(addr net.Addr, connTimeout time.Duration, soTimeo
 
 // Creates a TSocket from an existing net.Conn
 func NewTSocketFromConnTimeout(conn net.Conn, connTimeout time.Duration) *TSocket {
-	return &TSocket{conn: wrapSocketConn(conn), addr: conn.RemoteAddr(), connectTimeout: connTimeout, socketTimeout: connTimeout}
+	sock := &TSocket{conn: wrapSocketConn(conn), addr: conn.RemoteAddr(), connectTimeout: connTimeout, socketTimeout: connTimeout}
+	sock.conn.socketTimeout = connTimeout
+	return sock
 }
 
 // Sets the connect timeout
@@ -70,6 +72,9 @@ func (p *TSocket) SetConnTimeout(timeout time.Duration) error {
 // Sets the socket timeout
 func (p *TSocket) SetSocketTimeout(timeout time.Duration) error {
 	p.socketTimeout = timeout
+	if p.conn != nil {
+		p.conn.socketTimeout = timeout
+	}
 	return nil
 }
 
@@ -109,6 +114,7 @@ func (p *TSocket) Open() error {
 	)); err != nil {
 		return NewTTransportException(NOT_OPEN, err.Error())
 	}
+	p.conn.socketTimeout = p.socketTimeout
 	return nil
 }
 
