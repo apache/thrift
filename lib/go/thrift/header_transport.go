@@ -330,10 +330,7 @@ func (t *THeaderTransport) ReadFrame() error {
 	t.reader.Discard(size32)
 
 	// Read the frame fully into frameBuffer.
-	_, err = io.Copy(
-		&t.frameBuffer,
-		io.LimitReader(t.reader, int64(frameSize)),
-	)
+	_, err = io.CopyN(&t.frameBuffer, t.reader, int64(frameSize))
 	if err != nil {
 		return err
 	}
@@ -395,7 +392,7 @@ func (t *THeaderTransport) parseHeaders(frameSize uint32) error {
 		)
 	}
 	headerBuf := NewTMemoryBuffer()
-	_, err = io.Copy(headerBuf, io.LimitReader(&t.frameBuffer, headerLength))
+	_, err = io.CopyN(headerBuf, &t.frameBuffer, headerLength)
 	if err != nil {
 		return err
 	}
