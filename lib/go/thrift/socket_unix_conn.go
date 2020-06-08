@@ -27,6 +27,11 @@ import (
 	"time"
 )
 
+// We rely on this variable to be the zero time,
+// but define it as global variable to avoid repetitive allocations.
+// Please DO NOT mutate this variable in any way.
+var zeroTime time.Time
+
 func (sc *socketConn) read0() error {
 	return sc.checkConn()
 }
@@ -38,12 +43,10 @@ func (sc *socketConn) checkConn() error {
 		return nil
 	}
 
-	// Push read deadline
-	var t time.Time
-	if sc.socketTimeout > 0 {
-		t = time.Now().Add(sc.socketTimeout)
-	}
-	sc.Conn.SetReadDeadline(t)
+	// The reading about to be done here is non-blocking so we don't really
+	// need a read deadline. We just need to clear the previously set read
+	// deadline, if any.
+	sc.Conn.SetReadDeadline(zeroTime)
 
 	rc, err := syscallConn.SyscallConn()
 	if err != nil {

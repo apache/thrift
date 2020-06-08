@@ -23,16 +23,14 @@ import (
 	"bytes"
 	"io"
 	"net"
-	"time"
 )
 
 // socketConn is a wrapped net.Conn that tries to do connectivity check.
 type socketConn struct {
 	net.Conn
 
-	socketTimeout time.Duration
-	buf           bytes.Buffer
-	buffer        [1]byte
+	buf    bytes.Buffer
+	buffer [1]byte
 }
 
 var _ net.Conn = (*socketConn)(nil)
@@ -78,6 +76,10 @@ func (sc *socketConn) isValid() bool {
 // connection is nil.
 //
 // Otherwise, it tries to do a connectivity check and returns the result.
+//
+// It also has the side effect of resetting the previously set read deadline on
+// the socket. As a result, it shouldn't be called between setting read deadline
+// and doing actual read.
 func (sc *socketConn) IsOpen() bool {
 	if !sc.isValid() {
 		return false

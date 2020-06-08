@@ -58,9 +58,7 @@ func NewTSocketFromAddrTimeout(addr net.Addr, connTimeout time.Duration, soTimeo
 
 // Creates a TSocket from an existing net.Conn
 func NewTSocketFromConnTimeout(conn net.Conn, connTimeout time.Duration) *TSocket {
-	sock := &TSocket{conn: wrapSocketConn(conn), addr: conn.RemoteAddr(), connectTimeout: connTimeout, socketTimeout: connTimeout}
-	sock.conn.socketTimeout = connTimeout
-	return sock
+	return &TSocket{conn: wrapSocketConn(conn), addr: conn.RemoteAddr(), connectTimeout: connTimeout, socketTimeout: connTimeout}
 }
 
 // Sets the connect timeout
@@ -72,9 +70,6 @@ func (p *TSocket) SetConnTimeout(timeout time.Duration) error {
 // Sets the socket timeout
 func (p *TSocket) SetSocketTimeout(timeout time.Duration) error {
 	p.socketTimeout = timeout
-	if p.conn != nil {
-		p.conn.socketTimeout = timeout
-	}
 	return nil
 }
 
@@ -114,7 +109,6 @@ func (p *TSocket) Open() error {
 	)); err != nil {
 		return NewTTransportException(NOT_OPEN, err.Error())
 	}
-	p.conn.socketTimeout = p.socketTimeout
 	return nil
 }
 
@@ -151,6 +145,9 @@ func (p *TSocket) Read(buf []byte) (int, error) {
 		return 0, NewTTransportException(NOT_OPEN, "Connection not open")
 	}
 	p.pushDeadline(true, false)
+	// NOTE: Calling any of p.IsOpen, p.conn.read0, or p.conn.IsOpen between
+	// p.pushDeadline and p.conn.Read could cause the deadline set inside
+	// p.pushDeadline being reset, thus need to be avoided.
 	n, err := p.conn.Read(buf)
 	return n, NewTTransportExceptionFromError(err)
 }
