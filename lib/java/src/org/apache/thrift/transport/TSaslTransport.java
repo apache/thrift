@@ -217,8 +217,8 @@ abstract class TSaslTransport extends TTransport {
      * data in the stream, possibly a TCP health check from load balancer.
      */
     boolean readSaslHeader = false;
-
-    LOGGER.debug("opening transport {}", this);
+		if (LOGGER.isDebugEnabled())
+			LOGGER.debug("opening transport {}", this);
     if (sasl != null && sasl.isComplete())
       throw new TTransportException("SASL transport already open");
 
@@ -230,7 +230,8 @@ abstract class TSaslTransport extends TTransport {
       // initial response, or an empty one.
       handleSaslStartMessage();
       readSaslHeader = true;
-      LOGGER.debug("{}: Start message handled", getRole());
+			if (LOGGER.isDebugEnabled())
+				LOGGER.debug("{}: Start message handled", getRole());
 
       SaslResponse message = null;
       while (!sasl.isComplete()) {
@@ -245,15 +246,17 @@ abstract class TSaslTransport extends TTransport {
         // If we are the client, and the server indicates COMPLETE, we don't need to
         // send back any further response.
         if (message.status == NegotiationStatus.COMPLETE &&
-            getRole() == SaslRole.CLIENT) {
-          LOGGER.debug("{}: All done!", getRole());
+            getRole() == SaslRole.CLIENT) {					
+					if (LOGGER.isDebugEnabled())		
+						LOGGER.debug("{}: All done!", getRole());
           continue;
         }
 
         sendSaslMessage(sasl.isComplete() ? NegotiationStatus.COMPLETE : NegotiationStatus.OK,
                         challenge);
-      }
-      LOGGER.debug("{}: Main negotiation loop complete", getRole());
+      }			
+			if (LOGGER.isDebugEnabled())
+				LOGGER.debug("{}: Main negotiation loop complete", getRole());
 
       // If we're the client, and we're complete, but the server isn't
       // complete yet, we need to wait for its response. This will occur
@@ -261,7 +264,8 @@ abstract class TSaslTransport extends TTransport {
       // and are immediately complete.
       if (getRole() == SaslRole.CLIENT &&
           (message == null || message.status == NegotiationStatus.OK)) {
-        LOGGER.debug("{}: SASL Client receiving last message", getRole());
+				if (LOGGER.isDebugEnabled())
+					LOGGER.debug("{}: SASL Client receiving last message", getRole());
         message = receiveSaslMessage();
         if (message.status != NegotiationStatus.COMPLETE) {
           throw new TTransportException(
