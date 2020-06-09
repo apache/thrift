@@ -19,6 +19,8 @@
 
 package org.apache.thrift.transport;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 /**
  * Generic class that encapsulates the I/O layer. This is basically a thin
  * wrapper around the combined functionality of Java input/output streams.
@@ -26,6 +28,8 @@ package org.apache.thrift.transport;
  */
 public abstract class TTransport {
 
+
+	private static final Logger LOGGER = LoggerFactory.getLogger(TTransport.class);
   /**
    * Queries whether the transport is open.
    *
@@ -83,8 +87,12 @@ public abstract class TTransport {
     while (got < len) {
       ret = read(buf, off+got, len-got);
       if (ret <= 0) {
-        throw new TTransportException("Cannot read. Remote side has closed. Tried to read " + len + " bytes, but only got " + got + " bytes.");
-      }
+				if (LOGGER.isInfoEnabled())  {
+				throw new TTransportException("Cannot read. Remote side has closed. Tried to read " + len + " bytes, but only got " + got + " bytes.");
+			}
+			else 
+				throw new TTransportException("Cannot read. Remote side has closed. ");
+			}
       got += ret;
     }
     return got;
