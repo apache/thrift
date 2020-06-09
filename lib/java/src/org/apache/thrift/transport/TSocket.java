@@ -238,9 +238,8 @@ public class TSocket extends TIOStreamTransport {
     if (socket_ != null) {
       try {
         socket_.close();
-      } catch (IOException iox) {
-				if (LOGGER.isWarnEnabled()) 
-        LOGGER.warn("Could not close socket.", iox);
+      } catch (IOException iox) {				
+        //LOGGER.warn("Could not close socket.", iox);
       }
       socket_ = null;
     }
