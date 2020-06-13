@@ -60,52 +60,52 @@ func (_mr *_MockTProtocolRecorder) Flush(ctx context.Context) *gomock.Call {
 	return _mr.mock.ctrl.RecordCall(_mr.mock, "Flush")
 }
 
-func (_m *MockTProtocol) ReadBinary() ([]byte, error) {
-	ret := _m.ctrl.Call(_m, "ReadBinary")
+func (_m *MockTProtocol) ReadBinary(ctx context.Context) ([]byte, error) {
+	ret := _m.ctrl.Call(_m, "ReadBinary", ctx)
 	ret0, _ := ret[0].([]byte)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-func (_mr *_MockTProtocolRecorder) ReadBinary() *gomock.Call {
-	return _mr.mock.ctrl.RecordCall(_mr.mock, "ReadBinary")
+func (_mr *_MockTProtocolRecorder) ReadBinary(ctx context.Context) *gomock.Call {
+	return _mr.mock.ctrl.RecordCall(_mr.mock, "ReadBinary", ctx)
 }
 
-func (_m *MockTProtocol) ReadBool() (bool, error) {
-	ret := _m.ctrl.Call(_m, "ReadBool")
+func (_m *MockTProtocol) ReadBool(ctx context.Context) (bool, error) {
+	ret := _m.ctrl.Call(_m, "ReadBool", ctx)
 	ret0, _ := ret[0].(bool)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-func (_mr *_MockTProtocolRecorder) ReadBool() *gomock.Call {
-	return _mr.mock.ctrl.RecordCall(_mr.mock, "ReadBool")
+func (_mr *_MockTProtocolRecorder) ReadBool(ctx context.Context) *gomock.Call {
+	return _mr.mock.ctrl.RecordCall(_mr.mock, "ReadBool", ctx)
 }
 
-func (_m *MockTProtocol) ReadByte() (int8, error) {
-	ret := _m.ctrl.Call(_m, "ReadByte")
+func (_m *MockTProtocol) ReadByte(ctx context.Context) (int8, error) {
+	ret := _m.ctrl.Call(_m, "ReadByte", ctx)
 	ret0, _ := ret[0].(int8)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-func (_mr *_MockTProtocolRecorder) ReadByte() *gomock.Call {
-	return _mr.mock.ctrl.RecordCall(_mr.mock, "ReadByte")
+func (_mr *_MockTProtocolRecorder) ReadByte(ctx context.Context) *gomock.Call {
+	return _mr.mock.ctrl.RecordCall(_mr.mock, "ReadByte", ctx)
 }
 
-func (_m *MockTProtocol) ReadDouble() (float64, error) {
-	ret := _m.ctrl.Call(_m, "ReadDouble")
+func (_m *MockTProtocol) ReadDouble(ctx context.Context) (float64, error) {
+	ret := _m.ctrl.Call(_m, "ReadDouble", ctx)
 	ret0, _ := ret[0].(float64)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-func (_mr *_MockTProtocolRecorder) ReadDouble() *gomock.Call {
-	return _mr.mock.ctrl.RecordCall(_mr.mock, "ReadDouble")
+func (_mr *_MockTProtocolRecorder) ReadDouble(ctx context.Context) *gomock.Call {
+	return _mr.mock.ctrl.RecordCall(_mr.mock, "ReadDouble", ctx)
 }
 
-func (_m *MockTProtocol) ReadFieldBegin() (string, thrift.TType, int16, error) {
-	ret := _m.ctrl.Call(_m, "ReadFieldBegin")
+func (_m *MockTProtocol) ReadFieldBegin(ctx context.Context) (string, thrift.TType, int16, error) {
+	ret := _m.ctrl.Call(_m, "ReadFieldBegin", ctx)
 	ret0, _ := ret[0].(string)
 	ret1, _ := ret[1].(thrift.TType)
 	ret2, _ := ret[2].(int16)
@@ -113,77 +113,77 @@ func (_m *MockTProtocol) ReadFieldBegin() (string, thrift.TType, int16, error) {
 	return ret0, ret1, ret2, ret3
 }
 
-func (_mr *_MockTProtocolRecorder) ReadFieldBegin() *gomock.Call {
-	return _mr.mock.ctrl.RecordCall(_mr.mock, "ReadFieldBegin")
+func (_mr *_MockTProtocolRecorder) ReadFieldBegin(ctx context.Context) *gomock.Call {
+	return _mr.mock.ctrl.RecordCall(_mr.mock, "ReadFieldBegin", ctx)
 }
 
-func (_m *MockTProtocol) ReadFieldEnd() error {
-	ret := _m.ctrl.Call(_m, "ReadFieldEnd")
+func (_m *MockTProtocol) ReadFieldEnd(ctx context.Context) error {
+	ret := _m.ctrl.Call(_m, "ReadFieldEnd", ctx)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
-func (_mr *_MockTProtocolRecorder) ReadFieldEnd() *gomock.Call {
-	return _mr.mock.ctrl.RecordCall(_mr.mock, "ReadFieldEnd")
+func (_mr *_MockTProtocolRecorder) ReadFieldEnd(ctx context.Context) *gomock.Call {
+	return _mr.mock.ctrl.RecordCall(_mr.mock, "ReadFieldEnd", ctx)
 }
 
-func (_m *MockTProtocol) ReadI16() (int16, error) {
-	ret := _m.ctrl.Call(_m, "ReadI16")
+func (_m *MockTProtocol) ReadI16(ctx context.Context) (int16, error) {
+	ret := _m.ctrl.Call(_m, "ReadI16", ctx)
 	ret0, _ := ret[0].(int16)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-func (_mr *_MockTProtocolRecorder) ReadI16() *gomock.Call {
-	return _mr.mock.ctrl.RecordCall(_mr.mock, "ReadI16")
+func (_mr *_MockTProtocolRecorder) ReadI16(ctx context.Context) *gomock.Call {
+	return _mr.mock.ctrl.RecordCall(_mr.mock, "ReadI16", ctx)
 }
 
-func (_m *MockTProtocol) ReadI32() (int32, error) {
-	ret := _m.ctrl.Call(_m, "ReadI32")
+func (_m *MockTProtocol) ReadI32(ctx context.Context) (int32, error) {
+	ret := _m.ctrl.Call(_m, "ReadI32", ctx)
 	ret0, _ := ret[0].(int32)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-func (_mr *_MockTProtocolRecorder) ReadI32() *gomock.Call {
-	return _mr.mock.ctrl.RecordCall(_mr.mock, "ReadI32")
+func (_mr *_MockTProtocolRecorder) ReadI32(ctx context.Context) *gomock.Call {
+	return _mr.mock.ctrl.RecordCall(_mr.mock, "ReadI32", ctx)
 }
 
-func (_m *MockTProtocol) ReadI64() (int64, error) {
-	ret := _m.ctrl.Call(_m, "ReadI64")
+func (_m *MockTProtocol) ReadI64(ctx context.Context) (int64, error) {
+	ret := _m.ctrl.Call(_m, "ReadI64", ctx)
 	ret0, _ := ret[0].(int64)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-func (_mr *_MockTProtocolRecorder) ReadI64() *gomock.Call {
-	return _mr.mock.ctrl.RecordCall(_mr.mock, "ReadI64")
+func (_mr *_MockTProtocolRecorder) ReadI64(ctx context.Context) *gomock.Call {
+	return _mr.mock.ctrl.RecordCall(_mr.mock, "ReadI64", ctx)
 }
 
-func (_m *MockTProtocol) ReadListBegin() (thrift.TType, int, error) {
-	ret := _m.ctrl.Call(_m, "ReadListBegin")
+func (_m *MockTProtocol) ReadListBegin(ctx context.Context) (thrift.TType, int, error) {
+	ret := _m.ctrl.Call(_m, "ReadListBegin", ctx)
 	ret0, _ := ret[0].(thrift.TType)
 	ret1, _ := ret[1].(int)
 	ret2, _ := ret[2].(error)
 	return ret0, ret1, ret2
 }
 
-func (_mr *_MockTProtocolRecorder) ReadListBegin() *gomock.Call {
-	return _mr.mock.ctrl.RecordCall(_mr.mock, "ReadListBegin")
+func (_mr *_MockTProtocolRecorder) ReadListBegin(ctx context.Context) *gomock.Call {
+	return _mr.mock.ctrl.RecordCall(_mr.mock, "ReadListBegin", ctx)
 }
 
-func (_m *MockTProtocol) ReadListEnd() error {
-	ret := _m.ctrl.Call(_m, "ReadListEnd")
+func (_m *MockTProtocol) ReadListEnd(ctx context.Context) error {
+	ret := _m.ctrl.Call(_m, "ReadListEnd", ctx)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
-func (_mr *_MockTProtocolRecorder) ReadListEnd() *gomock.Call {
-	return _mr.mock.ctrl.RecordCall(_mr.mock, "ReadListEnd")
+func (_mr *_MockTProtocolRecorder) ReadListEnd(ctx context.Context) *gomock.Call {
+	return _mr.mock.ctrl.RecordCall(_mr.mock, "ReadListEnd", ctx)
 }
 
-func (_m *MockTProtocol) ReadMapBegin() (thrift.TType, thrift.TType, int, error) {
-	ret := _m.ctrl.Call(_m, "ReadMapBegin")
+func (_m *MockTProtocol) ReadMapBegin(ctx context.Context) (thrift.TType, thrift.TType, int, error) {
+	ret := _m.ctrl.Call(_m, "ReadMapBegin", ctx)
 	ret0, _ := ret[0].(thrift.TType)
 	ret1, _ := ret[1].(thrift.TType)
 	ret2, _ := ret[2].(int)
@@ -191,22 +191,22 @@ func (_m *MockTProtocol) ReadMapBegin() (thrift.TType, thrift.TType, int, error)
 	return ret0, ret1, ret2, ret3
 }
 
-func (_mr *_MockTProtocolRecorder) ReadMapBegin() *gomock.Call {
-	return _mr.mock.ctrl.RecordCall(_mr.mock, "ReadMapBegin")
+func (_mr *_MockTProtocolRecorder) ReadMapBegin(ctx context.Context) *gomock.Call {
+	return _mr.mock.ctrl.RecordCall(_mr.mock, "ReadMapBegin", ctx)
 }
 
-func (_m *MockTProtocol) ReadMapEnd() error {
-	ret := _m.ctrl.Call(_m, "ReadMapEnd")
+func (_m *MockTProtocol) ReadMapEnd(ctx context.Context) error {
+	ret := _m.ctrl.Call(_m, "ReadMapEnd", ctx)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
-func (_mr *_MockTProtocolRecorder) ReadMapEnd() *gomock.Call {
-	return _mr.mock.ctrl.RecordCall(_mr.mock, "ReadMapEnd")
+func (_mr *_MockTProtocolRecorder) ReadMapEnd(ctx context.Context) *gomock.Call {
+	return _mr.mock.ctrl.RecordCall(_mr.mock, "ReadMapEnd", ctx)
 }
 
-func (_m *MockTProtocol) ReadMessageBegin() (string, thrift.TMessageType, int32, error) {
-	ret := _m.ctrl.Call(_m, "ReadMessageBegin")
+func (_m *MockTProtocol) ReadMessageBegin(ctx context.Context) (string, thrift.TMessageType, int32, error) {
+	ret := _m.ctrl.Call(_m, "ReadMessageBegin", ctx)
 	ret0, _ := ret[0].(string)
 	ret1, _ := ret[1].(thrift.TMessageType)
 	ret2, _ := ret[2].(int32)
@@ -214,82 +214,82 @@ func (_m *MockTProtocol) ReadMessageBegin() (string, thrift.TMessageType, int32,
 	return ret0, ret1, ret2, ret3
 }
 
-func (_mr *_MockTProtocolRecorder) ReadMessageBegin() *gomock.Call {
-	return _mr.mock.ctrl.RecordCall(_mr.mock, "ReadMessageBegin")
+func (_mr *_MockTProtocolRecorder) ReadMessageBegin(ctx context.Context) *gomock.Call {
+	return _mr.mock.ctrl.RecordCall(_mr.mock, "ReadMessageBegin", ctx)
 }
 
-func (_m *MockTProtocol) ReadMessageEnd() error {
-	ret := _m.ctrl.Call(_m, "ReadMessageEnd")
+func (_m *MockTProtocol) ReadMessageEnd(ctx context.Context) error {
+	ret := _m.ctrl.Call(_m, "ReadMessageEnd", ctx)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
-func (_mr *_MockTProtocolRecorder) ReadMessageEnd() *gomock.Call {
-	return _mr.mock.ctrl.RecordCall(_mr.mock, "ReadMessageEnd")
+func (_mr *_MockTProtocolRecorder) ReadMessageEnd(ctx context.Context) *gomock.Call {
+	return _mr.mock.ctrl.RecordCall(_mr.mock, "ReadMessageEnd", ctx)
 }
 
-func (_m *MockTProtocol) ReadSetBegin() (thrift.TType, int, error) {
-	ret := _m.ctrl.Call(_m, "ReadSetBegin")
+func (_m *MockTProtocol) ReadSetBegin(ctx context.Context) (thrift.TType, int, error) {
+	ret := _m.ctrl.Call(_m, "ReadSetBegin", ctx)
 	ret0, _ := ret[0].(thrift.TType)
 	ret1, _ := ret[1].(int)
 	ret2, _ := ret[2].(error)
 	return ret0, ret1, ret2
 }
 
-func (_mr *_MockTProtocolRecorder) ReadSetBegin() *gomock.Call {
-	return _mr.mock.ctrl.RecordCall(_mr.mock, "ReadSetBegin")
+func (_mr *_MockTProtocolRecorder) ReadSetBegin(ctx context.Context) *gomock.Call {
+	return _mr.mock.ctrl.RecordCall(_mr.mock, "ReadSetBegin", ctx)
 }
 
-func (_m *MockTProtocol) ReadSetEnd() error {
-	ret := _m.ctrl.Call(_m, "ReadSetEnd")
+func (_m *MockTProtocol) ReadSetEnd(ctx context.Context) error {
+	ret := _m.ctrl.Call(_m, "ReadSetEnd", ctx)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
-func (_mr *_MockTProtocolRecorder) ReadSetEnd() *gomock.Call {
-	return _mr.mock.ctrl.RecordCall(_mr.mock, "ReadSetEnd")
+func (_mr *_MockTProtocolRecorder) ReadSetEnd(ctx context.Context) *gomock.Call {
+	return _mr.mock.ctrl.RecordCall(_mr.mock, "ReadSetEnd", ctx)
 }
 
-func (_m *MockTProtocol) ReadString() (string, error) {
-	ret := _m.ctrl.Call(_m, "ReadString")
+func (_m *MockTProtocol) ReadString(ctx context.Context) (string, error) {
+	ret := _m.ctrl.Call(_m, "ReadString", ctx)
 	ret0, _ := ret[0].(string)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-func (_mr *_MockTProtocolRecorder) ReadString() *gomock.Call {
-	return _mr.mock.ctrl.RecordCall(_mr.mock, "ReadString")
+func (_mr *_MockTProtocolRecorder) ReadString(ctx context.Context) *gomock.Call {
+	return _mr.mock.ctrl.RecordCall(_mr.mock, "ReadString", ctx)
 }
 
-func (_m *MockTProtocol) ReadStructBegin() (string, error) {
-	ret := _m.ctrl.Call(_m, "ReadStructBegin")
+func (_m *MockTProtocol) ReadStructBegin(ctx context.Context) (string, error) {
+	ret := _m.ctrl.Call(_m, "ReadStructBegin", ctx)
 	ret0, _ := ret[0].(string)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-func (_mr *_MockTProtocolRecorder) ReadStructBegin() *gomock.Call {
-	return _mr.mock.ctrl.RecordCall(_mr.mock, "ReadStructBegin")
+func (_mr *_MockTProtocolRecorder) ReadStructBegin(ctx context.Context) *gomock.Call {
+	return _mr.mock.ctrl.RecordCall(_mr.mock, "ReadStructBegin", ctx)
 }
 
-func (_m *MockTProtocol) ReadStructEnd() error {
-	ret := _m.ctrl.Call(_m, "ReadStructEnd")
+func (_m *MockTProtocol) ReadStructEnd(ctx context.Context) error {
+	ret := _m.ctrl.Call(_m, "ReadStructEnd", ctx)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
-func (_mr *_MockTProtocolRecorder) ReadStructEnd() *gomock.Call {
-	return _mr.mock.ctrl.RecordCall(_mr.mock, "ReadStructEnd")
+func (_mr *_MockTProtocolRecorder) ReadStructEnd(ctx context.Context) *gomock.Call {
+	return _mr.mock.ctrl.RecordCall(_mr.mock, "ReadStructEnd", ctx)
 }
 
-func (_m *MockTProtocol) Skip(_param0 thrift.TType) error {
-	ret := _m.ctrl.Call(_m, "Skip", _param0)
+func (_m *MockTProtocol) Skip(ctx context.Context, _param0 thrift.TType) error {
+	ret := _m.ctrl.Call(_m, "Skip", ctx, _param0)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
-func (_mr *_MockTProtocolRecorder) Skip(arg0 interface{}) *gomock.Call {
-	return _mr.mock.ctrl.RecordCall(_mr.mock, "Skip", arg0)
+func (_mr *_MockTProtocolRecorder) Skip(ctx context.Context, arg0 interface{}) *gomock.Call {
+	return _mr.mock.ctrl.RecordCall(_mr.mock, "Skip", ctx, arg0)
 }
 
 func (_m *MockTProtocol) Transport() thrift.TTransport {
@@ -302,212 +302,212 @@ func (_mr *_MockTProtocolRecorder) Transport() *gomock.Call {
 	return _mr.mock.ctrl.RecordCall(_mr.mock, "Transport")
 }
 
-func (_m *MockTProtocol) WriteBinary(_param0 []byte) error {
-	ret := _m.ctrl.Call(_m, "WriteBinary", _param0)
+func (_m *MockTProtocol) WriteBinary(ctx context.Context, _param0 []byte) error {
+	ret := _m.ctrl.Call(_m, "WriteBinary", ctx, _param0)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
-func (_mr *_MockTProtocolRecorder) WriteBinary(arg0 interface{}) *gomock.Call {
-	return _mr.mock.ctrl.RecordCall(_mr.mock, "WriteBinary", arg0)
+func (_mr *_MockTProtocolRecorder) WriteBinary(ctx context.Context, arg0 interface{}) *gomock.Call {
+	return _mr.mock.ctrl.RecordCall(_mr.mock, "WriteBinary", ctx, arg0)
 }
 
-func (_m *MockTProtocol) WriteBool(_param0 bool) error {
-	ret := _m.ctrl.Call(_m, "WriteBool", _param0)
+func (_m *MockTProtocol) WriteBool(ctx context.Context, _param0 bool) error {
+	ret := _m.ctrl.Call(_m, "WriteBool", ctx, _param0)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
-func (_mr *_MockTProtocolRecorder) WriteBool(arg0 interface{}) *gomock.Call {
-	return _mr.mock.ctrl.RecordCall(_mr.mock, "WriteBool", arg0)
+func (_mr *_MockTProtocolRecorder) WriteBool(ctx context.Context, arg0 interface{}) *gomock.Call {
+	return _mr.mock.ctrl.RecordCall(_mr.mock, "WriteBool", ctx, arg0)
 }
 
-func (_m *MockTProtocol) WriteByte(_param0 int8) error {
-	ret := _m.ctrl.Call(_m, "WriteByte", _param0)
+func (_m *MockTProtocol) WriteByte(ctx context.Context, _param0 int8) error {
+	ret := _m.ctrl.Call(_m, "WriteByte", ctx, _param0)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
-func (_mr *_MockTProtocolRecorder) WriteByte(arg0 interface{}) *gomock.Call {
-	return _mr.mock.ctrl.RecordCall(_mr.mock, "WriteByte", arg0)
+func (_mr *_MockTProtocolRecorder) WriteByte(ctx context.Context, arg0 interface{}) *gomock.Call {
+	return _mr.mock.ctrl.RecordCall(_mr.mock, "WriteByte", ctx, arg0)
 }
 
-func (_m *MockTProtocol) WriteDouble(_param0 float64) error {
-	ret := _m.ctrl.Call(_m, "WriteDouble", _param0)
+func (_m *MockTProtocol) WriteDouble(ctx context.Context, _param0 float64) error {
+	ret := _m.ctrl.Call(_m, "WriteDouble", ctx, _param0)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
-func (_mr *_MockTProtocolRecorder) WriteDouble(arg0 interface{}) *gomock.Call {
-	return _mr.mock.ctrl.RecordCall(_mr.mock, "WriteDouble", arg0)
+func (_mr *_MockTProtocolRecorder) WriteDouble(ctx context.Context, arg0 interface{}) *gomock.Call {
+	return _mr.mock.ctrl.RecordCall(_mr.mock, "WriteDouble", ctx, arg0)
 }
 
-func (_m *MockTProtocol) WriteFieldBegin(_param0 string, _param1 thrift.TType, _param2 int16) error {
-	ret := _m.ctrl.Call(_m, "WriteFieldBegin", _param0, _param1, _param2)
+func (_m *MockTProtocol) WriteFieldBegin(ctx context.Context, _param0 string, _param1 thrift.TType, _param2 int16) error {
+	ret := _m.ctrl.Call(_m, "WriteFieldBegin", ctx, _param0, _param1, _param2)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
-func (_mr *_MockTProtocolRecorder) WriteFieldBegin(arg0, arg1, arg2 interface{}) *gomock.Call {
-	return _mr.mock.ctrl.RecordCall(_mr.mock, "WriteFieldBegin", arg0, arg1, arg2)
+func (_mr *_MockTProtocolRecorder) WriteFieldBegin(ctx context.Context, arg0, arg1, arg2 interface{}) *gomock.Call {
+	return _mr.mock.ctrl.RecordCall(_mr.mock, "WriteFieldBegin", ctx, arg0, arg1, arg2)
 }
 
-func (_m *MockTProtocol) WriteFieldEnd() error {
-	ret := _m.ctrl.Call(_m, "WriteFieldEnd")
+func (_m *MockTProtocol) WriteFieldEnd(ctx context.Context) error {
+	ret := _m.ctrl.Call(_m, "WriteFieldEnd", ctx)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
-func (_mr *_MockTProtocolRecorder) WriteFieldEnd() *gomock.Call {
-	return _mr.mock.ctrl.RecordCall(_mr.mock, "WriteFieldEnd")
+func (_mr *_MockTProtocolRecorder) WriteFieldEnd(ctx context.Context) *gomock.Call {
+	return _mr.mock.ctrl.RecordCall(_mr.mock, "WriteFieldEnd", ctx)
 }
 
-func (_m *MockTProtocol) WriteFieldStop() error {
-	ret := _m.ctrl.Call(_m, "WriteFieldStop")
+func (_m *MockTProtocol) WriteFieldStop(ctx context.Context) error {
+	ret := _m.ctrl.Call(_m, "WriteFieldStop", ctx)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
-func (_mr *_MockTProtocolRecorder) WriteFieldStop() *gomock.Call {
-	return _mr.mock.ctrl.RecordCall(_mr.mock, "WriteFieldStop")
+func (_mr *_MockTProtocolRecorder) WriteFieldStop(ctx context.Context) *gomock.Call {
+	return _mr.mock.ctrl.RecordCall(_mr.mock, "WriteFieldStop", ctx)
 }
 
-func (_m *MockTProtocol) WriteI16(_param0 int16) error {
-	ret := _m.ctrl.Call(_m, "WriteI16", _param0)
+func (_m *MockTProtocol) WriteI16(ctx context.Context, _param0 int16) error {
+	ret := _m.ctrl.Call(_m, "WriteI16", ctx, _param0)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
-func (_mr *_MockTProtocolRecorder) WriteI16(arg0 interface{}) *gomock.Call {
-	return _mr.mock.ctrl.RecordCall(_mr.mock, "WriteI16", arg0)
+func (_mr *_MockTProtocolRecorder) WriteI16(ctx context.Context, arg0 interface{}) *gomock.Call {
+	return _mr.mock.ctrl.RecordCall(_mr.mock, "WriteI16", ctx, arg0)
 }
 
-func (_m *MockTProtocol) WriteI32(_param0 int32) error {
-	ret := _m.ctrl.Call(_m, "WriteI32", _param0)
+func (_m *MockTProtocol) WriteI32(ctx context.Context, _param0 int32) error {
+	ret := _m.ctrl.Call(_m, "WriteI32", ctx, _param0)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
-func (_mr *_MockTProtocolRecorder) WriteI32(arg0 interface{}) *gomock.Call {
-	return _mr.mock.ctrl.RecordCall(_mr.mock, "WriteI32", arg0)
+func (_mr *_MockTProtocolRecorder) WriteI32(ctx context.Context, arg0 interface{}) *gomock.Call {
+	return _mr.mock.ctrl.RecordCall(_mr.mock, "WriteI32", ctx, arg0)
 }
 
-func (_m *MockTProtocol) WriteI64(_param0 int64) error {
-	ret := _m.ctrl.Call(_m, "WriteI64", _param0)
+func (_m *MockTProtocol) WriteI64(ctx context.Context, _param0 int64) error {
+	ret := _m.ctrl.Call(_m, "WriteI64", ctx, _param0)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
-func (_mr *_MockTProtocolRecorder) WriteI64(arg0 interface{}) *gomock.Call {
-	return _mr.mock.ctrl.RecordCall(_mr.mock, "WriteI64", arg0)
+func (_mr *_MockTProtocolRecorder) WriteI64(ctx context.Context, arg0 interface{}) *gomock.Call {
+	return _mr.mock.ctrl.RecordCall(_mr.mock, "WriteI64", ctx, arg0)
 }
 
-func (_m *MockTProtocol) WriteListBegin(_param0 thrift.TType, _param1 int) error {
-	ret := _m.ctrl.Call(_m, "WriteListBegin", _param0, _param1)
+func (_m *MockTProtocol) WriteListBegin(ctx context.Context, _param0 thrift.TType, _param1 int) error {
+	ret := _m.ctrl.Call(_m, "WriteListBegin", ctx, _param0, _param1)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
-func (_mr *_MockTProtocolRecorder) WriteListBegin(arg0, arg1 interface{}) *gomock.Call {
-	return _mr.mock.ctrl.RecordCall(_mr.mock, "WriteListBegin", arg0, arg1)
+func (_mr *_MockTProtocolRecorder) WriteListBegin(ctx context.Context, arg0, arg1 interface{}) *gomock.Call {
+	return _mr.mock.ctrl.RecordCall(_mr.mock, "WriteListBegin", ctx, arg0, arg1)
 }
 
-func (_m *MockTProtocol) WriteListEnd() error {
-	ret := _m.ctrl.Call(_m, "WriteListEnd")
+func (_m *MockTProtocol) WriteListEnd(ctx context.Context) error {
+	ret := _m.ctrl.Call(_m, "WriteListEnd", ctx)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
-func (_mr *_MockTProtocolRecorder) WriteListEnd() *gomock.Call {
-	return _mr.mock.ctrl.RecordCall(_mr.mock, "WriteListEnd")
+func (_mr *_MockTProtocolRecorder) WriteListEnd(ctx context.Context) *gomock.Call {
+	return _mr.mock.ctrl.RecordCall(_mr.mock, "WriteListEnd", ctx)
 }
 
-func (_m *MockTProtocol) WriteMapBegin(_param0 thrift.TType, _param1 thrift.TType, _param2 int) error {
-	ret := _m.ctrl.Call(_m, "WriteMapBegin", _param0, _param1, _param2)
+func (_m *MockTProtocol) WriteMapBegin(ctx context.Context, _param0 thrift.TType, _param1 thrift.TType, _param2 int) error {
+	ret := _m.ctrl.Call(_m, "WriteMapBegin", ctx, _param0, _param1, _param2)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
-func (_mr *_MockTProtocolRecorder) WriteMapBegin(arg0, arg1, arg2 interface{}) *gomock.Call {
-	return _mr.mock.ctrl.RecordCall(_mr.mock, "WriteMapBegin", arg0, arg1, arg2)
+func (_mr *_MockTProtocolRecorder) WriteMapBegin(ctx context.Context, arg0, arg1, arg2 interface{}) *gomock.Call {
+	return _mr.mock.ctrl.RecordCall(_mr.mock, "WriteMapBegin", ctx, arg0, arg1, arg2)
 }
 
-func (_m *MockTProtocol) WriteMapEnd() error {
-	ret := _m.ctrl.Call(_m, "WriteMapEnd")
+func (_m *MockTProtocol) WriteMapEnd(ctx context.Context) error {
+	ret := _m.ctrl.Call(_m, "WriteMapEnd", ctx)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
-func (_mr *_MockTProtocolRecorder) WriteMapEnd() *gomock.Call {
-	return _mr.mock.ctrl.RecordCall(_mr.mock, "WriteMapEnd")
+func (_mr *_MockTProtocolRecorder) WriteMapEnd(ctx context.Context) *gomock.Call {
+	return _mr.mock.ctrl.RecordCall(_mr.mock, "WriteMapEnd", ctx)
 }
 
-func (_m *MockTProtocol) WriteMessageBegin(_param0 string, _param1 thrift.TMessageType, _param2 int32) error {
-	ret := _m.ctrl.Call(_m, "WriteMessageBegin", _param0, _param1, _param2)
+func (_m *MockTProtocol) WriteMessageBegin(ctx context.Context, _param0 string, _param1 thrift.TMessageType, _param2 int32) error {
+	ret := _m.ctrl.Call(_m, "WriteMessageBegin", ctx, _param0, _param1, _param2)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
-func (_mr *_MockTProtocolRecorder) WriteMessageBegin(arg0, arg1, arg2 interface{}) *gomock.Call {
-	return _mr.mock.ctrl.RecordCall(_mr.mock, "WriteMessageBegin", arg0, arg1, arg2)
+func (_mr *_MockTProtocolRecorder) WriteMessageBegin(ctx context.Context, arg0, arg1, arg2 interface{}) *gomock.Call {
+	return _mr.mock.ctrl.RecordCall(_mr.mock, "WriteMessageBegin", ctx, arg0, arg1, arg2)
 }
 
-func (_m *MockTProtocol) WriteMessageEnd() error {
-	ret := _m.ctrl.Call(_m, "WriteMessageEnd")
+func (_m *MockTProtocol) WriteMessageEnd(ctx context.Context) error {
+	ret := _m.ctrl.Call(_m, "WriteMessageEnd", ctx)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
-func (_mr *_MockTProtocolRecorder) WriteMessageEnd() *gomock.Call {
-	return _mr.mock.ctrl.RecordCall(_mr.mock, "WriteMessageEnd")
+func (_mr *_MockTProtocolRecorder) WriteMessageEnd(ctx context.Context) *gomock.Call {
+	return _mr.mock.ctrl.RecordCall(_mr.mock, "WriteMessageEnd", ctx)
 }
 
-func (_m *MockTProtocol) WriteSetBegin(_param0 thrift.TType, _param1 int) error {
-	ret := _m.ctrl.Call(_m, "WriteSetBegin", _param0, _param1)
+func (_m *MockTProtocol) WriteSetBegin(ctx context.Context, _param0 thrift.TType, _param1 int) error {
+	ret := _m.ctrl.Call(_m, "WriteSetBegin", ctx, _param0, _param1)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
-func (_mr *_MockTProtocolRecorder) WriteSetBegin(arg0, arg1 interface{}) *gomock.Call {
-	return _mr.mock.ctrl.RecordCall(_mr.mock, "WriteSetBegin", arg0, arg1)
+func (_mr *_MockTProtocolRecorder) WriteSetBegin(ctx context.Context, arg0, arg1 interface{}) *gomock.Call {
+	return _mr.mock.ctrl.RecordCall(_mr.mock, "WriteSetBegin", ctx, arg0, arg1)
 }
 
-func (_m *MockTProtocol) WriteSetEnd() error {
-	ret := _m.ctrl.Call(_m, "WriteSetEnd")
+func (_m *MockTProtocol) WriteSetEnd(ctx context.Context) error {
+	ret := _m.ctrl.Call(_m, "WriteSetEnd", ctx)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
-func (_mr *_MockTProtocolRecorder) WriteSetEnd() *gomock.Call {
-	return _mr.mock.ctrl.RecordCall(_mr.mock, "WriteSetEnd")
+func (_mr *_MockTProtocolRecorder) WriteSetEnd(ctx context.Context) *gomock.Call {
+	return _mr.mock.ctrl.RecordCall(_mr.mock, "WriteSetEnd", ctx)
 }
 
-func (_m *MockTProtocol) WriteString(_param0 string) error {
-	ret := _m.ctrl.Call(_m, "WriteString", _param0)
+func (_m *MockTProtocol) WriteString(ctx context.Context, _param0 string) error {
+	ret := _m.ctrl.Call(_m, "WriteString", ctx, _param0)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
-func (_mr *_MockTProtocolRecorder) WriteString(arg0 interface{}) *gomock.Call {
-	return _mr.mock.ctrl.RecordCall(_mr.mock, "WriteString", arg0)
+func (_mr *_MockTProtocolRecorder) WriteString(ctx context.Context, arg0 interface{}) *gomock.Call {
+	return _mr.mock.ctrl.RecordCall(_mr.mock, "WriteString", ctx, arg0)
 }
 
-func (_m *MockTProtocol) WriteStructBegin(_param0 string) error {
-	ret := _m.ctrl.Call(_m, "WriteStructBegin", _param0)
+func (_m *MockTProtocol) WriteStructBegin(ctx context.Context, _param0 string) error {
+	ret := _m.ctrl.Call(_m, "WriteStructBegin", ctx, _param0)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
-func (_mr *_MockTProtocolRecorder) WriteStructBegin(arg0 interface{}) *gomock.Call {
-	return _mr.mock.ctrl.RecordCall(_mr.mock, "WriteStructBegin", arg0)
+func (_mr *_MockTProtocolRecorder) WriteStructBegin(ctx context.Context, arg0 interface{}) *gomock.Call {
+	return _mr.mock.ctrl.RecordCall(_mr.mock, "WriteStructBegin", ctx, arg0)
 }
 
-func (_m *MockTProtocol) WriteStructEnd() error {
-	ret := _m.ctrl.Call(_m, "WriteStructEnd")
+func (_m *MockTProtocol) WriteStructEnd(ctx context.Context) error {
+	ret := _m.ctrl.Call(_m, "WriteStructEnd", ctx)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
-func (_mr *_MockTProtocolRecorder) WriteStructEnd() *gomock.Call {
-	return _mr.mock.ctrl.RecordCall(_mr.mock, "WriteStructEnd")
+func (_mr *_MockTProtocolRecorder) WriteStructEnd(ctx context.Context) *gomock.Call {
+	return _mr.mock.ctrl.RecordCall(_mr.mock, "WriteStructEnd", ctx)
 }

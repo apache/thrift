@@ -64,6 +64,10 @@ func (p *tTransportException) Unwrap() error {
 	return p.err
 }
 
+func (p *tTransportException) Timeout() bool {
+	return p.typeId == TIMED_OUT
+}
+
 func NewTTransportException(t int, e string) TTransportException {
 	return &tTransportException{typeId: t, err: errors.New(e)}
 }
@@ -91,4 +95,14 @@ func NewTTransportExceptionFromError(e error) TTransportException {
 	}
 
 	return &tTransportException{typeId: UNKNOWN_TRANSPORT_EXCEPTION, err: e}
+}
+
+// isTimeoutError returns true when err is a timeout error.
+//
+// Note that this also includes TTransportException wrapped timeout errors.
+func isTimeoutError(err error) bool {
+	if t, ok := err.(timeoutable); ok {
+		return t.Timeout()
+	}
+	return false
 }

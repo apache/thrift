@@ -20,9 +20,9 @@
 package thrift
 
 import (
+	"errors"
 	"fmt"
 	"io"
-
 	"testing"
 )
 
@@ -76,5 +76,34 @@ func TestTExceptionEOF(t *testing.T) {
 		t.Error("Expected exception to be unwrappable, it is not.")
 	} else if e.Unwrap() != io.EOF {
 		t.Errorf("Unwrapped exception did not match: expected %v, got %v", io.EOF, e.Unwrap())
+	}
+}
+
+func TestIsTimeoutError(t *testing.T) {
+	te := &timeout{true}
+	if !isTimeoutError(te) {
+		t.Error("isTimeoutError expected true, got false")
+	}
+	e := NewTTransportExceptionFromError(te)
+	if !isTimeoutError(e) {
+		t.Error("isTimeoutError on wrapped TTransportException expected true, got false")
+	}
+
+	te = &timeout{false}
+	if isTimeoutError(te) {
+		t.Error("isTimeoutError expected false, got true")
+	}
+	e = NewTTransportExceptionFromError(te)
+	if isTimeoutError(e) {
+		t.Error("isTimeoutError on wrapped TTransportException expected false, got true")
+	}
+
+	err := errors.New("foo")
+	if isTimeoutError(err) {
+		t.Error("isTimeoutError expected false, got true")
+	}
+	e = NewTTransportExceptionFromError(err)
+	if isTimeoutError(e) {
+		t.Error("isTimeoutError on wrapped TTransportException expected false, got true")
 	}
 }

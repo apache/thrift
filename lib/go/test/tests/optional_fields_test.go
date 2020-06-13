@@ -21,6 +21,7 @@ package tests
 
 import (
 	"bytes"
+	"context"
 	gomock "github.com/golang/mock/gomock"
 	"optionalfieldstest"
 	"testing"
@@ -185,12 +186,12 @@ func TestNoOptionalUnsetFieldsOnWire(t *testing.T) {
 	defer mockCtrl.Finish()
 	proto := NewMockTProtocol(mockCtrl)
 	gomock.InOrder(
-		proto.EXPECT().WriteStructBegin("all_optional").Return(nil),
-		proto.EXPECT().WriteFieldStop().Return(nil),
-		proto.EXPECT().WriteStructEnd().Return(nil),
+		proto.EXPECT().WriteStructBegin(context.Background(), "all_optional").Return(nil),
+		proto.EXPECT().WriteFieldStop(context.Background()).Return(nil),
+		proto.EXPECT().WriteStructEnd(context.Background()).Return(nil),
 	)
 	ao := optionalfieldstest.NewAllOptional()
-	ao.Write(proto)
+	ao.Write(context.Background(), proto)
 }
 
 func TestNoSetToDefaultFieldsOnWire(t *testing.T) {
@@ -198,13 +199,13 @@ func TestNoSetToDefaultFieldsOnWire(t *testing.T) {
 	defer mockCtrl.Finish()
 	proto := NewMockTProtocol(mockCtrl)
 	gomock.InOrder(
-		proto.EXPECT().WriteStructBegin("all_optional").Return(nil),
-		proto.EXPECT().WriteFieldStop().Return(nil),
-		proto.EXPECT().WriteStructEnd().Return(nil),
+		proto.EXPECT().WriteStructBegin(context.Background(), "all_optional").Return(nil),
+		proto.EXPECT().WriteFieldStop(context.Background()).Return(nil),
+		proto.EXPECT().WriteStructEnd(context.Background()).Return(nil),
 	)
 	ao := optionalfieldstest.NewAllOptional()
 	ao.I = 42
-	ao.Write(proto)
+	ao.Write(context.Background(), proto)
 }
 
 //Make sure that only one field is being serialized when set to non-default
@@ -213,16 +214,16 @@ func TestOneISetFieldOnWire(t *testing.T) {
 	defer mockCtrl.Finish()
 	proto := NewMockTProtocol(mockCtrl)
 	gomock.InOrder(
-		proto.EXPECT().WriteStructBegin("all_optional").Return(nil),
-		proto.EXPECT().WriteFieldBegin("i", thrift.TType(thrift.I64), int16(2)).Return(nil),
-		proto.EXPECT().WriteI64(int64(123)).Return(nil),
-		proto.EXPECT().WriteFieldEnd().Return(nil),
-		proto.EXPECT().WriteFieldStop().Return(nil),
-		proto.EXPECT().WriteStructEnd().Return(nil),
+		proto.EXPECT().WriteStructBegin(context.Background(), "all_optional").Return(nil),
+		proto.EXPECT().WriteFieldBegin(context.Background(), "i", thrift.TType(thrift.I64), int16(2)).Return(nil),
+		proto.EXPECT().WriteI64(context.Background(), int64(123)).Return(nil),
+		proto.EXPECT().WriteFieldEnd(context.Background()).Return(nil),
+		proto.EXPECT().WriteFieldStop(context.Background()).Return(nil),
+		proto.EXPECT().WriteStructEnd(context.Background()).Return(nil),
 	)
 	ao := optionalfieldstest.NewAllOptional()
 	ao.I = 123
-	ao.Write(proto)
+	ao.Write(context.Background(), proto)
 }
 
 func TestOneLSetFieldOnWire(t *testing.T) {
@@ -230,19 +231,19 @@ func TestOneLSetFieldOnWire(t *testing.T) {
 	defer mockCtrl.Finish()
 	proto := NewMockTProtocol(mockCtrl)
 	gomock.InOrder(
-		proto.EXPECT().WriteStructBegin("all_optional").Return(nil),
-		proto.EXPECT().WriteFieldBegin("l", thrift.TType(thrift.LIST), int16(9)).Return(nil),
-		proto.EXPECT().WriteListBegin(thrift.TType(thrift.I64), 2).Return(nil),
-		proto.EXPECT().WriteI64(int64(1)).Return(nil),
-		proto.EXPECT().WriteI64(int64(2)).Return(nil),
-		proto.EXPECT().WriteListEnd().Return(nil),
-		proto.EXPECT().WriteFieldEnd().Return(nil),
-		proto.EXPECT().WriteFieldStop().Return(nil),
-		proto.EXPECT().WriteStructEnd().Return(nil),
+		proto.EXPECT().WriteStructBegin(context.Background(), "all_optional").Return(nil),
+		proto.EXPECT().WriteFieldBegin(context.Background(), "l", thrift.TType(thrift.LIST), int16(9)).Return(nil),
+		proto.EXPECT().WriteListBegin(context.Background(), thrift.TType(thrift.I64), 2).Return(nil),
+		proto.EXPECT().WriteI64(context.Background(), int64(1)).Return(nil),
+		proto.EXPECT().WriteI64(context.Background(), int64(2)).Return(nil),
+		proto.EXPECT().WriteListEnd(context.Background()).Return(nil),
+		proto.EXPECT().WriteFieldEnd(context.Background()).Return(nil),
+		proto.EXPECT().WriteFieldStop(context.Background()).Return(nil),
+		proto.EXPECT().WriteStructEnd(context.Background()).Return(nil),
 	)
 	ao := optionalfieldstest.NewAllOptional()
 	ao.L = []int64{1, 2}
-	ao.Write(proto)
+	ao.Write(context.Background(), proto)
 }
 
 func TestOneBinSetFieldOnWire(t *testing.T) {
@@ -250,16 +251,16 @@ func TestOneBinSetFieldOnWire(t *testing.T) {
 	defer mockCtrl.Finish()
 	proto := NewMockTProtocol(mockCtrl)
 	gomock.InOrder(
-		proto.EXPECT().WriteStructBegin("all_optional").Return(nil),
-		proto.EXPECT().WriteFieldBegin("bin", thrift.TType(thrift.STRING), int16(13)).Return(nil),
-		proto.EXPECT().WriteBinary([]byte("somebytestring")).Return(nil),
-		proto.EXPECT().WriteFieldEnd().Return(nil),
-		proto.EXPECT().WriteFieldStop().Return(nil),
-		proto.EXPECT().WriteStructEnd().Return(nil),
+		proto.EXPECT().WriteStructBegin(context.Background(), "all_optional").Return(nil),
+		proto.EXPECT().WriteFieldBegin(context.Background(), "bin", thrift.TType(thrift.STRING), int16(13)).Return(nil),
+		proto.EXPECT().WriteBinary(context.Background(), []byte("somebytestring")).Return(nil),
+		proto.EXPECT().WriteFieldEnd(context.Background()).Return(nil),
+		proto.EXPECT().WriteFieldStop(context.Background()).Return(nil),
+		proto.EXPECT().WriteStructEnd(context.Background()).Return(nil),
 	)
 	ao := optionalfieldstest.NewAllOptional()
 	ao.Bin = []byte("somebytestring")
-	ao.Write(proto)
+	ao.Write(context.Background(), proto)
 }
 
 func TestOneEmptyBinSetFieldOnWire(t *testing.T) {
@@ -267,14 +268,14 @@ func TestOneEmptyBinSetFieldOnWire(t *testing.T) {
 	defer mockCtrl.Finish()
 	proto := NewMockTProtocol(mockCtrl)
 	gomock.InOrder(
-		proto.EXPECT().WriteStructBegin("all_optional").Return(nil),
-		proto.EXPECT().WriteFieldBegin("bin", thrift.TType(thrift.STRING), int16(13)).Return(nil),
-		proto.EXPECT().WriteBinary([]byte{}).Return(nil),
-		proto.EXPECT().WriteFieldEnd().Return(nil),
-		proto.EXPECT().WriteFieldStop().Return(nil),
-		proto.EXPECT().WriteStructEnd().Return(nil),
+		proto.EXPECT().WriteStructBegin(context.Background(), "all_optional").Return(nil),
+		proto.EXPECT().WriteFieldBegin(context.Background(), "bin", thrift.TType(thrift.STRING), int16(13)).Return(nil),
+		proto.EXPECT().WriteBinary(context.Background(), []byte{}).Return(nil),
+		proto.EXPECT().WriteFieldEnd(context.Background()).Return(nil),
+		proto.EXPECT().WriteFieldStop(context.Background()).Return(nil),
+		proto.EXPECT().WriteStructEnd(context.Background()).Return(nil),
 	)
 	ao := optionalfieldstest.NewAllOptional()
 	ao.Bin = []byte{}
-	ao.Write(proto)
+	ao.Write(context.Background(), proto)
 }

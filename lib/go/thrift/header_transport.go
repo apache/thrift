@@ -297,18 +297,34 @@ func (t *THeaderTransport) IsOpen() bool {
 
 // ReadFrame tries to read the frame header, guess the client type, and handle
 // unframed clients.
-func (t *THeaderTransport) ReadFrame() error {
+func (t *THeaderTransport) ReadFrame(ctx context.Context) error {
 	if !t.needReadFrame() {
 		// No need to read frame, skipping.
 		return nil
 	}
+
 	// Peek and handle the first 32 bits.
 	// They could either be the length field of a framed message,
 	// or the first bytes of an unframed message.
-	buf, err := t.reader.Peek(size32)
+	var buf []byte
+	var err error
+	// This is also usually the first read from a connection,
+	// so handle retries around socket timeouts.
+	_, deadlineSet := ctx.Deadline()
+	for {
+		buf, err = t.reader.Peek(size32)
+		if deadlineSet && isTimeoutError(err) && ctx.Err() == nil {
+			// This is I/O timeout and we still have time,
+			// continue trying
+			continue
+		}
+		// For anything else, do not retry
+		break
+	}
 	if err != nil {
 		return err
 	}
+
 	frameSize := binary.BigEndian.Uint32(buf)
 	if frameSize&VERSION_MASK == VERSION_1 {
 		t.clientType = clientUnframedBinary
@@ -341,7 +357,7 @@ func (t *THeaderTransport) ReadFrame() error {
 	version := binary.BigEndian.Uint32(buf)
 	if version&THeaderHeaderMask == THeaderHeaderMagic {
 		t.clientType = clientHeaders
-		return t.parseHeaders(frameSize)
+		return t.parseHeaders(ctx, frameSize)
 	}
 	if version&VERSION_MASK == VERSION_1 {
 		t.clientType = clientFramedBinary
@@ -371,7 +387,7 @@ func (t *THeaderTransport) endOfFrame() error {
 	return t.frameReader.Close()
 }
 
-func (t *THeaderTransport) parseHeaders(frameSize uint32) error {
+func (t *THeaderTransport) parseHeaders(ctx context.Context, frameSize uint32) error {
 	if t.clientType != clientHeaders {
 		return nil
 	}
@@ -451,11 +467,11 @@ func (t *THeaderTransport) parseHeaders(frameSize uint32) error {
 				return err
 			}
 			for i := 0; i < int(count); i++ {
-				key, err := hp.ReadString()
+				key, err := hp.ReadString(ctx)
 				if err != nil {
 					return err
 				}
-				value, err := hp.ReadString()
+				value, err := hp.ReadString(ctx)
 				if err != nil {
 					return err
 				}
@@ -485,7 +501,12 @@ func (t *THeaderTransport) needReadFrame() bool {
 }
 
 func (t *THeaderTransport) Read(p []byte) (read int, err error) {
-	err = t.ReadFrame()
+	// Here using context.Background instead of a context passed in is safe.
+	// First is that there's no way to pass context into this function.
+	// Then, 99% of the case when calling this Read frame is already read
+	// into frameReader. ReadFrame here is more of preventing bugs that
+	// didn't call ReadFrame before calling Read.
+	err = t.ReadFrame(context.Background())
 	if err != nil {
 		return
 	}
@@ -557,10 +578,10 @@ func (t *THeaderTransport) Flush(ctx context.Context) error {
 				return NewTTransportExceptionFromError(err)
 			}
 			for key, value := range t.writeHeaders {
-				if err := hp.WriteString(key); err != nil {
+				if err := hp.WriteString(ctx, key); err != nil {
 					return NewTTransportExceptionFromError(err)
 				}
-				if err := hp.WriteString(value); err != nil {
+				if err := hp.WriteString(ctx, value); err != nil {
 					return NewTTransportExceptionFromError(err)
 				}
 			}

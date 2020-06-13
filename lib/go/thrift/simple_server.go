@@ -285,7 +285,7 @@ func (p *TSimpleServer) processRequests(client TTransport) (err error) {
 			// ReadFrame is safe to be called multiple times so it
 			// won't break when it's called again later when we
 			// actually start to read the message.
-			if err := headerProtocol.ReadFrame(); err != nil {
+			if err := headerProtocol.ReadFrame(ctx); err != nil {
 				return err
 			}
 			ctx = AddReadTHeaderToContext(ctx, headerProtocol.GetReadHeaders())

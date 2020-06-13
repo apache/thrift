@@ -30,8 +30,8 @@ type TSerializer struct {
 }
 
 type TStruct interface {
-	Write(p TProtocol) error
-	Read(p TProtocol) error
+	Write(ctx context.Context, p TProtocol) error
+	Read(ctx context.Context, p TProtocol) error
 }
 
 func NewTSerializer() *TSerializer {
@@ -46,7 +46,7 @@ func NewTSerializer() *TSerializer {
 func (t *TSerializer) WriteString(ctx context.Context, msg TStruct) (s string, err error) {
 	t.Transport.Reset()
 
-	if err = msg.Write(t.Protocol); err != nil {
+	if err = msg.Write(ctx, t.Protocol); err != nil {
 		return
 	}
 
@@ -63,7 +63,7 @@ func (t *TSerializer) WriteString(ctx context.Context, msg TStruct) (s string, e
 func (t *TSerializer) Write(ctx context.Context, msg TStruct) (b []byte, err error) {
 	t.Transport.Reset()
 
-	if err = msg.Write(t.Protocol); err != nil {
+	if err = msg.Write(ctx, t.Protocol); err != nil {
 		return
 	}
 
