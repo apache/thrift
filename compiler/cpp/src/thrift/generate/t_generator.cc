@@ -234,6 +234,13 @@ t_generator* t_generator_registry::get_generator(t_program* program,
   gen_map_t& the_map = get_generator_map();
   gen_map_t::iterator iter = the_map.find(language);
 
+  if ((language == "csharp") || (language == "netcore")) {
+    failure("The '%s' target is no longer available. Use 'netstd' instead.", language.c_str());
+  }
+  else if (language == "as3") {
+    pwarning(1, "The '%s' target is deprecated and will be removed in future Thrift versions.", language.c_str());
+  }
+
   if (iter == the_map.end()) {
     return nullptr;
   }
