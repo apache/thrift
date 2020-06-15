@@ -34,7 +34,9 @@ namespace apache {
 namespace thrift {
 namespace transport {
 
-THttpServer::THttpServer(std::shared_ptr<TTransport> transport) : THttpTransport(transport) {
+THttpServer::THttpServer(std::shared_ptr<TTransport> transport, std::shared_ptr<TConfiguration> config) 
+  : THttpTransport(transport, config) {
+
 }
 
 THttpServer::~THttpServer() = default;
@@ -118,6 +120,7 @@ bool THttpServer::parseStatusLine(char* status) {
 }
 
 void THttpServer::flush() {
+  resetConsumedMessageSize();
   // Fetch the contents of the write buffer
   uint8_t* buf;
   uint32_t len;

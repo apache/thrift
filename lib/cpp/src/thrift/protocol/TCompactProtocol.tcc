@@ -538,6 +538,9 @@ uint32_t TCompactProtocolT<Transport_>::readMapBegin(TType& keyType,
   valType = getTType((int8_t)((uint8_t)kvType & 0xf));
   size = (uint32_t)msize;
 
+  TMap map(keyType, valType, size);
+  checkReadBytesAvailable(map);
+
   return rsize;
 }
 
@@ -569,6 +572,9 @@ uint32_t TCompactProtocolT<Transport_>::readListBegin(TType& elemType,
 
   elemType = getTType((int8_t)(size_and_type & 0x0f));
   size = (uint32_t)lsize;
+
+  TList list(elemType, size);
+  checkReadBytesAvailable(list);
 
   return rsize;
 }
@@ -706,6 +712,8 @@ uint32_t TCompactProtocolT<Transport_>::readBinary(std::string& str) {
   trans_->readAll(string_buf_, size);
   str.assign((char*)string_buf_, size);
 
+  trans_->checkReadBytesAvailable(rsize + (uint32_t)size);
+
   return rsize + (uint32_t)size;
 }
 
@@ -820,6 +828,30 @@ TType TCompactProtocolT<Transport_>::getTType(int8_t type) {
       throw TException(std::string("don't know what type: ") + (char)type);
   }
 }
+
+// Return the minimum number of bytes a type will consume on the wire
+template <class Transport_>
+int TCompactProtocolT<Transport_>::getMinSerializedSize(TType type)
+{
+  switch (type)
+  {
+    case T_STOP:    return 0;
+    case T_VOID:    return 0;
+    case T_BOOL:   return sizeof(int8_t);
+    case T_DOUBLE: return 8;  // uses fixedLongToBytes() which always writes 8 bytes
+    case T_BYTE: return sizeof(int8_t);
+    case T_I16:     return sizeof(int8_t);  // zigzag
+    case T_I32:     return sizeof(int8_t);  // zigzag
+    case T_I64:     return sizeof(int8_t);  // zigzag
+    case T_STRING: return sizeof(int8_t);  // string length
+    case T_STRUCT:  return 0;             // empty struct
+    case T_MAP:     return sizeof(int8_t);  // element count
+    case T_SET:    return sizeof(int8_t);  // element count
+    case T_LIST:    return sizeof(int8_t);  // element count
+    default: throw TProtocolException(TProtocolException::UNKNOWN, "unrecognized type code");
+  }
+}
+
 
 }}} // apache::thrift::protocol
 

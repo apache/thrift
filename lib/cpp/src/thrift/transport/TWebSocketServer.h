@@ -53,8 +53,8 @@ std::string base64Encode(unsigned char* data, int length);
 template <bool binary>
 class TWebSocketServer : public THttpServer {
 public:
-  TWebSocketServer(std::shared_ptr<TTransport> transport)
-    : THttpServer(transport) {
+  TWebSocketServer(std::shared_ptr<TTransport> transport, std::shared_ptr<TConfiguration> config = nullptr)
+    : THttpServer(transport, config) {
       resetHandshake();
   }
 
@@ -98,6 +98,7 @@ public:
   }
 
   void flush() override {
+    resetConsumedMessageSize();
     writeFrameHeader();
     uint8_t* buffer;
     uint32_t length;

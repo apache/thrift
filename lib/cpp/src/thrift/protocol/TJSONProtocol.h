@@ -245,6 +245,24 @@ public:
 
   uint32_t readBinary(std::string& str);
 
+  int getMinSerializedSize(TType type);
+
+  void checkReadBytesAvailable(TSet& set)
+  {
+      trans_->checkReadBytesAvailable(set.size_ * getMinSerializedSize(set.elemType_));
+  }
+
+  void checkReadBytesAvailable(TList& list)
+  {
+      trans_->checkReadBytesAvailable(list.size_ * getMinSerializedSize(list.elemType_));
+  }
+
+  void checkReadBytesAvailable(TMap& map)
+  {
+      int elmSize = getMinSerializedSize(map.keyType_) + getMinSerializedSize(map.valueType_);
+      trans_->checkReadBytesAvailable(map.size_ * elmSize);
+  }
+
   class LookaheadReader {
 
   public:

@@ -1013,6 +1013,10 @@ uint32_t TJSONProtocol::readMapBegin(TType& keyType, TType& valType, uint32_t& s
     throw TProtocolException(TProtocolException::SIZE_LIMIT);
   size = static_cast<uint32_t>(tmpVal);
   result += readJSONObjectStart();
+
+  TMap map(keyType, valType, size);
+  checkReadBytesAvailable(map);
+
   return result;
 }
 
@@ -1032,6 +1036,10 @@ uint32_t TJSONProtocol::readListBegin(TType& elemType, uint32_t& size) {
   if (tmpVal > (std::numeric_limits<uint32_t>::max)())
     throw TProtocolException(TProtocolException::SIZE_LIMIT);
   size = static_cast<uint32_t>(tmpVal);
+
+  TList list(elemType, size);
+  checkReadBytesAvailable(list);
+
   return result;
 }
 
@@ -1049,6 +1057,10 @@ uint32_t TJSONProtocol::readSetBegin(TType& elemType, uint32_t& size) {
   if (tmpVal > (std::numeric_limits<uint32_t>::max)())
     throw TProtocolException(TProtocolException::SIZE_LIMIT);
   size = static_cast<uint32_t>(tmpVal);
+
+  TSet set(elemType, size);
+  checkReadBytesAvailable(set);
+
   return result;
 }
 
@@ -1093,6 +1105,29 @@ uint32_t TJSONProtocol::readString(std::string& str) {
 uint32_t TJSONProtocol::readBinary(std::string& str) {
   return readJSONBase64(str);
 }
+
+// Return the minimum number of bytes a type will consume on the wire
+int TJSONProtocol::getMinSerializedSize(TType type)
+{
+  switch (type)
+  {
+    case T_STOP: return 0;
+    case T_VOID: return 0;
+    case T_BOOL: return 1;  // written as int  
+    case T_BYTE: return 1;
+    case T_DOUBLE: return 1;
+    case T_I16: return 1;
+    case T_I32: return 1;
+    case T_I64: return 1;
+    case T_STRING: return 2;  // empty string
+    case T_STRUCT: return 2;  // empty struct
+    case T_MAP: return 2;  // empty map
+    case T_SET: return 2;  // empty set
+    case T_LIST: return 2;  // empty list
+    default: throw TProtocolException(TProtocolException::UNKNOWN, "unrecognized type code");
+  }
+}
+
 }
 }
 } // apache::thrift::protocol

@@ -17,27 +17,43 @@
  * under the License.
  */
 
-#ifndef _THRIFT_TRANSPORT_TSIMPLEFILETRANSPORT_H_
-#define _THRIFT_TRANSPORT_TSIMPLEFILETRANSPORT_H_ 1
+#ifndef _THRIFT_TMAP_H_
+#define _THRIFT_TMAP_H_
 
-#include <thrift/transport/TFDTransport.h>
+#include <thrift/protocol/TEnum.h>
 
 namespace apache {
 namespace thrift {
-namespace transport {
+namespace protocol {
+
+using namespace apache::thrift::protocol;
 
 /**
- * Dead-simple wrapper around a file.
+ * Helper class that encapsulates map metadata.
  *
- * Writeable files are opened with O_CREAT and O_APPEND
  */
-class TSimpleFileTransport : public TFDTransport {
-public:
-  TSimpleFileTransport(const std::string& path, bool read = true, bool write = false, 
-                                    std::shared_ptr<TConfiguration> config = nullptr);
+class TMap {
+public: 
+  TMap()
+    : keyType_(T_STOP),
+      valueType_(T_STOP),
+      size_(0) {
+
+  }
+
+  TMap(TType k, TType v, int s)
+    : keyType_(k),
+      valueType_(v),
+      size_(s) {
+
+  }
+
+  TType  keyType_;
+  TType  valueType_;
+  int   size_;
 };
 }
 }
-} // apache::thrift::transport
+} // apache::thrift::protocol
 
-#endif //  _THRIFT_TRANSPORT_TSIMPLEFILETRANSPORT_H_
+#endif // #ifndef _THRIFT_TMAP_H_

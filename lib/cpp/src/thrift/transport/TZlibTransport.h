@@ -83,8 +83,10 @@ public:
                  int crbuf_size = DEFAULT_CRBUF_SIZE,
                  int uwbuf_size = DEFAULT_UWBUF_SIZE,
                  int cwbuf_size = DEFAULT_CWBUF_SIZE,
-                 int16_t comp_level = Z_DEFAULT_COMPRESSION)
-    : transport_(transport),
+                 int16_t comp_level = Z_DEFAULT_COMPRESSION,
+                 std::shared_ptr<TConfiguration> config = nullptr)
+    : TVirtualTransport(config),
+      transport_(transport),
       urpos_(0),
       uwpos_(0),
       input_ended_(false),

@@ -27,6 +27,10 @@
 
 #include <thrift/transport/TTransport.h>
 #include <thrift/protocol/TProtocolException.h>
+#include <thrift/protocol/TEnum.h>
+#include <thrift/protocol/TList.h>
+#include <thrift/protocol/TSet.h>
+#include <thrift/protocol/TMap.h>
 
 #include <memory>
 
@@ -169,45 +173,6 @@ namespace thrift {
 namespace protocol {
 
 using apache::thrift::transport::TTransport;
-
-/**
- * Enumerated definition of the types that the Thrift protocol supports.
- * Take special note of the T_END type which is used specifically to mark
- * the end of a sequence of fields.
- */
-enum TType {
-  T_STOP       = 0,
-  T_VOID       = 1,
-  T_BOOL       = 2,
-  T_BYTE       = 3,
-  T_I08        = 3,
-  T_I16        = 6,
-  T_I32        = 8,
-  T_U64        = 9,
-  T_I64        = 10,
-  T_DOUBLE     = 4,
-  T_STRING     = 11,
-  T_UTF7       = 11,
-  T_STRUCT     = 12,
-  T_MAP        = 13,
-  T_SET        = 14,
-  T_LIST       = 15,
-  T_UTF8       = 16,
-  T_UTF16      = 17
-};
-
-/**
- * Enumerated definition of the message types that the Thrift protocol
- * supports.
- */
-enum TMessageType {
-  T_CALL       = 1,
-  T_REPLY      = 2,
-  T_EXCEPTION  = 3,
-  T_ONEWAY     = 4
-};
-
-static const uint32_t DEFAULT_RECURSION_LIMIT = 64;
 
 /**
  * Abstract class for a thrift protocol driver. These are all the methods that
@@ -578,10 +543,33 @@ public:
   uint32_t getRecursionLimit() const {return recursion_limit_;}
   void setRecurisionLimit(uint32_t depth) {recursion_limit_ = depth;}
 
+  // Returns the minimum amount of bytes needed to store the smallest possible instance of TType.
+  virtual int getMinSerializedSize(TType type) { 
+    THRIFT_UNUSED_VARIABLE(type);
+    return 0;
+  }
+
 protected:
   TProtocol(std::shared_ptr<TTransport> ptrans)
-    : ptrans_(ptrans), input_recursion_depth_(0), output_recursion_depth_(0), recursion_limit_(DEFAULT_RECURSION_LIMIT)
+    : ptrans_(ptrans), input_recursion_depth_(0), output_recursion_depth_(0), 
+      recursion_limit_(ptrans->getConfiguration()->getRecursionLimit())
   {}
+
+  virtual void checkReadBytesAvailable(TSet& set)
+  {
+      ptrans_->checkReadBytesAvailable(set.size_ * getMinSerializedSize(set.elemType_));
+  }
+
+  virtual void checkReadBytesAvailable(TList& list)
+  {
+      ptrans_->checkReadBytesAvailable(list.size_ * getMinSerializedSize(list.elemType_));
+  }
+
+  virtual void checkReadBytesAvailable(TMap& map)
+  {
+      int elmSize = getMinSerializedSize(map.keyType_) + getMinSerializedSize(map.valueType_);
+      ptrans_->checkReadBytesAvailable(map.size_ * elmSize);
+  }
 
   std::shared_ptr<TTransport> ptrans_;
 

@@ -38,8 +38,10 @@ namespace test {
  */
 class TShortReadTransport : public TVirtualTransport<TShortReadTransport> {
 public:
-  TShortReadTransport(std::shared_ptr<TTransport> transport, double full_prob)
-    : transport_(transport), fullProb_(full_prob) {}
+  TShortReadTransport(std::shared_ptr<TTransport> transport, double full_prob,
+                     std::shared_ptr<TConfiguration> config = nullptr)
+    : TVirtualTransport(config), transport_(transport), fullProb_(full_prob) {
+    }
 
   bool isOpen() const override { return transport_->isOpen(); }
 
@@ -50,6 +52,7 @@ public:
   void close() override { transport_->close(); }
 
   uint32_t read(uint8_t* buf, uint32_t len) {
+    checkReadBytesAvailable(len);
     if (len == 0) {
       return 0;
     }
@@ -62,11 +65,17 @@ public:
 
   void write(const uint8_t* buf, uint32_t len) { transport_->write(buf, len); }
 
-  void flush() override { transport_->flush(); }
+  void flush() override { 
+    resetConsumedMessageSize();
+    transport_->flush(); 
+  }
 
   const uint8_t* borrow(uint8_t* buf, uint32_t* len) { return transport_->borrow(buf, len); }
 
-  void consume(uint32_t len) { return transport_->consume(len); }
+  void consume(uint32_t len) { 
+    countConsumedMessageBytes(len);
+    return transport_->consume(len); 
+  }
 
   std::shared_ptr<TTransport> getUnderlyingTransport() { return transport_; }
 

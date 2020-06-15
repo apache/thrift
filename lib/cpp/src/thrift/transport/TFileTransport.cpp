@@ -63,8 +63,9 @@ using std::string;
 using namespace apache::thrift::protocol;
 using namespace apache::thrift::concurrency;
 
-TFileTransport::TFileTransport(string path, bool readOnly)
-  : readState_(),
+TFileTransport::TFileTransport(string path, bool readOnly, std::shared_ptr<TConfiguration> config)
+  : TTransport(config),
+    readState_(),
     readBuff_(nullptr),
     currentEvent_(nullptr),
     readBuffSize_(DEFAULT_READ_BUFF_SIZE),
@@ -519,6 +520,7 @@ void TFileTransport::writerThread() {
 }
 
 void TFileTransport::flush() {
+  resetConsumedMessageSize();
   // file must be open for writing for any flushing to take place
   if (!writerThread_.get()) {
     return;
@@ -537,6 +539,7 @@ void TFileTransport::flush() {
 }
 
 uint32_t TFileTransport::readAll(uint8_t* buf, uint32_t len) {
+  checkReadBytesAvailable(len);
   uint32_t have = 0;
   uint32_t get = 0;
 
@@ -568,6 +571,7 @@ bool TFileTransport::peek() {
 }
 
 uint32_t TFileTransport::read(uint8_t* buf, uint32_t len) {
+  checkReadBytesAvailable(len);
   // check if there an event is ready to be read
   if (!currentEvent_) {
     currentEvent_ = readEvent();

@@ -140,6 +140,24 @@ public:
 
   uint32_t writeBinary(const std::string& str);
 
+  int getMinSerializedSize(TType type);
+
+  void checkReadBytesAvailable(TSet& set)
+  {
+      trans_->checkReadBytesAvailable(set.size_ * getMinSerializedSize(set.elemType_));
+  }
+
+  void checkReadBytesAvailable(TList& list)
+  {
+      trans_->checkReadBytesAvailable(list.size_ * getMinSerializedSize(list.elemType_));
+  }
+
+  void checkReadBytesAvailable(TMap& map)
+  {
+      int elmSize = getMinSerializedSize(map.keyType_) + getMinSerializedSize(map.valueType_);
+      trans_->checkReadBytesAvailable(map.size_ * elmSize);
+  }
+
   /**
   * These methods are called by structs, but don't actually have any wired
   * output or purpose

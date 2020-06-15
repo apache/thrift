@@ -28,7 +28,7 @@ namespace transport {
 
 class THttpServer : public THttpTransport {
 public:
-  THttpServer(std::shared_ptr<TTransport> transport);
+  THttpServer(std::shared_ptr<TTransport> transport, std::shared_ptr<TConfiguration> config = nullptr);
 
   ~THttpServer() override;
 

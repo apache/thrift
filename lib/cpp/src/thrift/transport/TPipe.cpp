@@ -222,30 +222,35 @@ uint32_t pseudo_sync_read(HANDLE pipe, HANDLE event, uint8_t* buf, uint32_t len)
 }
 
 //---- Constructors ----
-TPipe::TPipe(TAutoHandle &Pipe)
-  : impl_(new TWaitableNamedPipeImpl(Pipe)), TimeoutSeconds_(3), isAnonymous_(false) {
+TPipe::TPipe(TAutoHandle &Pipe, std::shared_ptr<TConfiguration> config)
+  : impl_(new TWaitableNamedPipeImpl(Pipe)), TimeoutSeconds_(3), 
+  isAnonymous_(false), TVirtualTransport(config) {
 }
 
-TPipe::TPipe(HANDLE Pipe)
-  : TimeoutSeconds_(3), isAnonymous_(false)
+TPipe::TPipe(HANDLE Pipe, std::shared_ptr<TConfiguration> config)
+  : TimeoutSeconds_(3), isAnonymous_(false), TVirtualTransport(config)
 {
   TAutoHandle pipeHandle(Pipe);
   impl_.reset(new TWaitableNamedPipeImpl(pipeHandle));
 }
 
-TPipe::TPipe(const char* pipename) : TimeoutSeconds_(3), isAnonymous_(false) {
+TPipe::TPipe(const char* pipename, std::shared_ptr<TConfiguration> config) : TimeoutSeconds_(3), 
+  isAnonymous_(false), TVirtualTransport(config) {
   setPipename(pipename);
 }
 
-TPipe::TPipe(const std::string& pipename) : TimeoutSeconds_(3), isAnonymous_(false) {
+TPipe::TPipe(const std::string& pipename, std::shared_ptr<TConfiguration> config) : TimeoutSeconds_(3), 
+  isAnonymous_(false), TVirtualTransport(config) {
   setPipename(pipename);
 }
 
-TPipe::TPipe(HANDLE PipeRd, HANDLE PipeWrt)
-  : impl_(new TAnonPipeImpl(PipeRd, PipeWrt)), TimeoutSeconds_(3), isAnonymous_(true) {
+TPipe::TPipe(HANDLE PipeRd, HANDLE PipeWrt, std::shared_ptr<TConfiguration> config)
+  : impl_(new TAnonPipeImpl(PipeRd, PipeWrt)), TimeoutSeconds_(3), isAnonymous_(true),
+    TVirtualTransport(config) {
 }
 
-TPipe::TPipe() : TimeoutSeconds_(3), isAnonymous_(false) {
+TPipe::TPipe(std::shared_ptr<TConfiguration> config) : TimeoutSeconds_(3), isAnonymous_(false), 
+                                                       TVirtualTransport(config) {
 }
 
 TPipe::~TPipe() {
@@ -299,6 +304,7 @@ void TPipe::close() {
 }
 
 uint32_t TPipe::read(uint8_t* buf, uint32_t len) {
+  checkReadBytesAvailable(len);
   if (!isOpen())
     throw TTransportException(TTransportException::NOT_OPEN, "Called read on non-open pipe");
   return impl_->read(buf, len);
