@@ -77,8 +77,9 @@ namespace transport {
  *
  */
 
-TSocket::TSocket(const string& host, int port)
-  : host_(host),
+TSocket::TSocket(const string& host, int port, std::shared_ptr<TConfiguration> config)
+  : TVirtualTransport(config),
+    host_(host),
     port_(port),
     socket_(THRIFT_INVALID_SOCKET),
     peerPort_(0),
@@ -92,8 +93,9 @@ TSocket::TSocket(const string& host, int port)
     maxRecvRetries_(5) {
 }
 
-TSocket::TSocket(const string& path)
-  : port_(0),
+TSocket::TSocket(const string& path, std::shared_ptr<TConfiguration> config)
+  : TVirtualTransport(config),
+    port_(0),
     path_(path),
     socket_(THRIFT_INVALID_SOCKET),
     peerPort_(0),
@@ -108,8 +110,9 @@ TSocket::TSocket(const string& path)
   cachedPeerAddr_.ipv4.sin_family = AF_UNSPEC;
 }
 
-TSocket::TSocket()
-  : port_(0),
+TSocket::TSocket(std::shared_ptr<TConfiguration> config)
+  : TVirtualTransport(config),
+    port_(0),
     socket_(THRIFT_INVALID_SOCKET),
     peerPort_(0),
     connTimeout_(0),
@@ -123,8 +126,9 @@ TSocket::TSocket()
   cachedPeerAddr_.ipv4.sin_family = AF_UNSPEC;
 }
 
-TSocket::TSocket(THRIFT_SOCKET socket)
-  : port_(0),
+TSocket::TSocket(THRIFT_SOCKET socket, std::shared_ptr<TConfiguration> config)
+  : TVirtualTransport(config),
+    port_(0),
     socket_(socket),
     peerPort_(0),
     connTimeout_(0),
@@ -144,8 +148,10 @@ TSocket::TSocket(THRIFT_SOCKET socket)
 #endif
 }
 
-TSocket::TSocket(THRIFT_SOCKET socket, std::shared_ptr<THRIFT_SOCKET> interruptListener)
-  : port_(0),
+TSocket::TSocket(THRIFT_SOCKET socket, std::shared_ptr<THRIFT_SOCKET> interruptListener,
+                std::shared_ptr<TConfiguration> config)
+  : TVirtualTransport(config),
+    port_(0),
     socket_(socket),
     peerPort_(0),
     interruptListener_(interruptListener),
@@ -522,6 +528,7 @@ void TSocket::setSocketFD(THRIFT_SOCKET socket) {
 }
 
 uint32_t TSocket::read(uint8_t* buf, uint32_t len) {
+  checkReadBytesAvailable(len);
   if (socket_ == THRIFT_INVALID_SOCKET) {
     throw TTransportException(TTransportException::NOT_OPEN, "Called read on non-open socket");
   }

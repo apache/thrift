@@ -63,8 +63,10 @@ public:
  */
 class TPipedTransport : virtual public TTransport {
 public:
-  TPipedTransport(std::shared_ptr<TTransport> srcTrans, std::shared_ptr<TTransport> dstTrans)
-    : srcTrans_(srcTrans),
+  TPipedTransport(std::shared_ptr<TTransport> srcTrans, std::shared_ptr<TTransport> dstTrans,
+                 std::shared_ptr<TConfiguration> config = nullptr)
+    : TTransport(config),
+      srcTrans_(srcTrans),
       dstTrans_(dstTrans),
       rBufSize_(512),
       rPos_(0),
@@ -88,8 +90,10 @@ public:
 
   TPipedTransport(std::shared_ptr<TTransport> srcTrans,
                   std::shared_ptr<TTransport> dstTrans,
-                  uint32_t sz)
-    : srcTrans_(srcTrans),
+                  uint32_t sz,
+                  std::shared_ptr<TConfiguration> config = nullptr)
+    : TTransport(config),
+      srcTrans_(srcTrans),
       dstTrans_(dstTrans),
       rBufSize_(512),
       rPos_(0),
@@ -241,7 +245,8 @@ protected:
 class TPipedFileReaderTransport : public TPipedTransport, public TFileReaderTransport {
 public:
   TPipedFileReaderTransport(std::shared_ptr<TFileReaderTransport> srcTrans,
-                            std::shared_ptr<TTransport> dstTrans);
+                            std::shared_ptr<TTransport> dstTrans,
+                            std::shared_ptr<TConfiguration> config = nullptr);
 
   ~TPipedFileReaderTransport() override;
 

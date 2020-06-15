@@ -111,37 +111,40 @@ protected:
   /**
    * Constructor.
    */
-  TSSLSocket(std::shared_ptr<SSLContext> ctx);
+  TSSLSocket(std::shared_ptr<SSLContext> ctx, std::shared_ptr<TConfiguration> config = nullptr);
   /**
    * Constructor with an interrupt signal.
    */
-  TSSLSocket(std::shared_ptr<SSLContext> ctx, std::shared_ptr<THRIFT_SOCKET> interruptListener);
+  TSSLSocket(std::shared_ptr<SSLContext> ctx, std::shared_ptr<THRIFT_SOCKET> interruptListener,
+            std::shared_ptr<TConfiguration> config = nullptr);
   /**
    * Constructor, create an instance of TSSLSocket given an existing socket.
    *
    * @param socket An existing socket
    */
-  TSSLSocket(std::shared_ptr<SSLContext> ctx, THRIFT_SOCKET socket);
+  TSSLSocket(std::shared_ptr<SSLContext> ctx, THRIFT_SOCKET socket, std::shared_ptr<TConfiguration> config = nullptr);
   /**
    * Constructor, create an instance of TSSLSocket given an existing socket that can be interrupted.
    *
    * @param socket An existing socket
    */
-  TSSLSocket(std::shared_ptr<SSLContext> ctx, THRIFT_SOCKET socket, std::shared_ptr<THRIFT_SOCKET> interruptListener);
+  TSSLSocket(std::shared_ptr<SSLContext> ctx, THRIFT_SOCKET socket, std::shared_ptr<THRIFT_SOCKET> interruptListener,
+            std::shared_ptr<TConfiguration> config = nullptr);
    /**
    * Constructor.
    *
    * @param host  Remote host name
    * @param port  Remote port number
    */
-  TSSLSocket(std::shared_ptr<SSLContext> ctx, std::string host, int port);
+  TSSLSocket(std::shared_ptr<SSLContext> ctx, std::string host, int port, std::shared_ptr<TConfiguration> config = nullptr);
     /**
   * Constructor with an interrupt signal.
   *
   * @param host  Remote host name
   * @param port  Remote port number
   */
-    TSSLSocket(std::shared_ptr<SSLContext> ctx, std::string host, int port, std::shared_ptr<THRIFT_SOCKET> interruptListener);
+    TSSLSocket(std::shared_ptr<SSLContext> ctx, std::string host, int port, std::shared_ptr<THRIFT_SOCKET> interruptListener,
+              std::shared_ptr<TConfiguration> config = nullptr);
   /**
    * Authorize peer access after SSL handshake completes.
    */

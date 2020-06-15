@@ -31,8 +31,9 @@ namespace transport {
 const char* THttpTransport::CRLF = "\r\n";
 const int THttpTransport::CRLF_LEN = 2;
 
-THttpTransport::THttpTransport(std::shared_ptr<TTransport> transport)
-  : transport_(transport),
+THttpTransport::THttpTransport(std::shared_ptr<TTransport> transport, std::shared_ptr<TConfiguration> config)
+  : TVirtualTransport(config),
+    transport_(transport),
     origin_(""),
     readHeaders_(true),
     chunked_(false),
@@ -61,6 +62,7 @@ THttpTransport::~THttpTransport() {
 }
 
 uint32_t THttpTransport::read(uint8_t* buf, uint32_t len) {
+  checkReadBytesAvailable(len);
   if (readBuffer_.available_read() == 0) {
     readBuffer_.resetBuffer();
     uint32_t got = readMoreData();

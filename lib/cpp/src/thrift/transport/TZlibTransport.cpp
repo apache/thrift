@@ -136,6 +136,7 @@ inline int TZlibTransport::readAvail() const {
 }
 
 uint32_t TZlibTransport::read(uint8_t* buf, uint32_t len) {
+  checkReadBytesAvailable(len);
   uint32_t need = len;
 
   // TODO(dreiss): Skip urbuf on big reads.
@@ -265,6 +266,7 @@ void TZlibTransport::flush() {
   }
 
   flushToTransport(Z_FULL_FLUSH);
+  resetConsumedMessageSize();
 }
 
 void TZlibTransport::finish() {
@@ -335,6 +337,7 @@ const uint8_t* TZlibTransport::borrow(uint8_t* buf, uint32_t* len) {
 }
 
 void TZlibTransport::consume(uint32_t len) {
+  countConsumedMessageBytes(len);
   if (readAvail() >= (int)len) {
     urpos_ += len;
   } else {

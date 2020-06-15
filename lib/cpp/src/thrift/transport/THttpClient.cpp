@@ -34,12 +34,16 @@ namespace transport {
 
 THttpClient::THttpClient(std::shared_ptr<TTransport> transport,
                          std::string host,
-                         std::string path)
-  : THttpTransport(transport), host_(host), path_(path) {
+                         std::string path,
+                         std::shared_ptr<TConfiguration> config)
+  : THttpTransport(transport, config),
+    host_(host), 
+    path_(path) {
 }
 
-THttpClient::THttpClient(string host, int port, string path)
-  : THttpTransport(std::shared_ptr<TTransport>(new TSocket(host, port))),
+THttpClient::THttpClient(string host, int port, string path, 
+                         std::shared_ptr<TConfiguration> config)
+  : THttpTransport(std::shared_ptr<TTransport>(new TSocket(host, port)), config),
     host_(host),
     path_(path) {
 }
@@ -93,6 +97,7 @@ bool THttpClient::parseStatusLine(char* status) {
 }
 
 void THttpClient::flush() {
+  resetConsumedMessageSize();
   // Fetch the contents of the write buffer
   uint8_t* buf;
   uint32_t len;

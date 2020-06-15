@@ -141,7 +141,8 @@ include_thrift_HEADERS = \
                          src/thrift/TApplicationException.h \
                          src/thrift/TLogging.h \
                          src/thrift/TToString.h \
-                         src/thrift/TBase.h
+                         src/thrift/TBase.h \
+                         src/thrift/TConfiguration.h
 
 include_concurrencydir = $(include_thriftdir)/concurrency
 include_concurrency_HEADERS = \
@@ -156,6 +157,10 @@ include_concurrency_HEADERS = \
 
 include_protocoldir = $(include_thriftdir)/protocol
 include_protocol_HEADERS = \
+                         src/thrift/protocol/TEnum.h \
+                         src/thrift/protocol/TList.h \
+                         src/thrift/protocol/TSet.h \
+                         src/thrift/protocol/TMap.h \
                          src/thrift/protocol/TBinaryProtocol.h \
                          src/thrift/protocol/TBinaryProtocol.tcc \
                          src/thrift/protocol/TCompactProtocol.h \

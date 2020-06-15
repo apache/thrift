@@ -40,8 +40,10 @@ class TFDTransport : public TVirtualTransport<TFDTransport> {
 public:
   enum ClosePolicy { NO_CLOSE_ON_DESTROY = 0, CLOSE_ON_DESTROY = 1 };
 
-  TFDTransport(int fd, ClosePolicy close_policy = NO_CLOSE_ON_DESTROY)
-    : fd_(fd), close_policy_(close_policy) {}
+  TFDTransport(int fd, ClosePolicy close_policy = NO_CLOSE_ON_DESTROY,
+              std::shared_ptr<TConfiguration> config = nullptr)
+    : TVirtualTransport(config), fd_(fd), close_policy_(close_policy) {
+    }
 
   ~TFDTransport() override {
     if (close_policy_ == CLOSE_ON_DESTROY) {

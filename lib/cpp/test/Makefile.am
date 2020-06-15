@@ -130,7 +130,8 @@ UnitTests_SOURCES = \
 	TypedefTest.cpp \
 	TServerSocketTest.cpp \
 	TServerTransportTest.cpp \
-	TTransportCheckThrow.h
+	TTransportCheckThrow.h \
+	ThrifttReadCheckTests.cpp
 
 UnitTests_LDADD = \
   libtestgencpp.la \

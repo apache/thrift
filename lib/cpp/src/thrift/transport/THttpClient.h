@@ -40,13 +40,16 @@ public:
    */
   THttpClient(std::shared_ptr<TTransport> transport,
               std::string host = "localhost",
-              std::string path = "/service");
+              std::string path = "/service",
+              std::shared_ptr<TConfiguration> config = nullptr);
 
   /**
    * @brief Constructor that will create a new socket transport using the host
    * and port.
    */
-  THttpClient(std::string host, int port, std::string path = "");
+  THttpClient(std::string host, int port, 
+              std::string path = "",
+              std::shared_ptr<TConfiguration> config = nullptr);
 
   ~THttpClient() override;
 

@@ -21,6 +21,7 @@
 #define _THRIFT_TRANSPORT_TTRANSPORT_H_ 1
 
 #include <thrift/Thrift.h>
+#include <thrift/TConfiguration.h>
 #include <thrift/transport/TTransportException.h>
 #include <memory>
 #include <string>
@@ -55,6 +56,15 @@ uint32_t readAll(Transport_& trans, uint8_t* buf, uint32_t len) {
  */
 class TTransport {
 public:
+  TTransport(std::shared_ptr<TConfiguration> config = nullptr) { 
+    if(config == nullptr) {
+      configuration_ = std::shared_ptr<TConfiguration> (new TConfiguration());
+    } else {
+      configuration_ = config;
+    }
+    resetConsumedMessageSize(); 
+  }
+
   /**
    * Virtual deconstructor.
    */
@@ -238,11 +248,87 @@ public:
    */
   virtual const std::string getOrigin() const { return "Unknown"; }
 
-protected:
+  std::shared_ptr<TConfiguration> getConfiguration() { return configuration_; }
+
+  void setConfiguration(std::shared_ptr<TConfiguration> config) { 
+    if (config != nullptr) configuration_ = config; 
+  }
+
   /**
-   * Simple constructor.
+   * Updates RemainingMessageSize to reflect then known real message size (e.g. framed transport).
+   * Will throw if we already consumed too many bytes or if the new size is larger than allowed.
+   *
+   * @param size  real message size
    */
-  TTransport() = default;
+  void updateKnownMessageSize(long int size)
+  {
+    long int consumed = knownMessageSize_ - remainingMessageSize_;
+    resetConsumedMessageSize(size);
+    countConsumedMessageBytes(consumed);
+  }
+
+  /**
+   * Throws if there are not enough bytes in the input stream to satisfy a read of numBytes bytes of data
+   *
+   * @param numBytes  numBytes bytes of data
+   */
+  void checkReadBytesAvailable(long int numBytes)
+  {
+    if (remainingMessageSize_ < numBytes)
+      throw new TTransportException(TTransportException::END_OF_FILE, "MaxMessageSize reached");
+  }
+
+protected:
+  std::shared_ptr<TConfiguration> configuration_;
+  long int remainingMessageSize_;
+  long int knownMessageSize_;
+
+  inline long int getRemainingMessageSize() { return remainingMessageSize_; }
+  inline void setRemainingMessageSize(long int remainingMessageSize) { remainingMessageSize_ = remainingMessageSize; }
+  inline int getMaxMessageSize() { return configuration_->getMaxMessageSize(); }
+  inline long int getKnownMessageSize() { return knownMessageSize_; }
+  void setKnownMessageSize(long int knownMessageSize) { knownMessageSize_ = knownMessageSize; }
+
+  /**  
+   * Resets RemainingMessageSize to the configured maximum
+   * 
+   *  @param newSize  configured size
+   */
+  void resetConsumedMessageSize(long newSize = -1)
+  {
+    // full reset 
+    if (newSize < 0)
+    {
+        knownMessageSize_ = getMaxMessageSize();
+        remainingMessageSize_ = getMaxMessageSize();
+        return;
+    }
+
+    // update only: message size can shrink, but not grow
+    if (newSize > knownMessageSize_)
+        throw new TTransportException(TTransportException::END_OF_FILE, "MaxMessageSize reached");
+
+    knownMessageSize_ = newSize;
+    remainingMessageSize_ = newSize;
+  }
+
+  /**
+   * Consumes numBytes from the RemainingMessageSize.
+   * 
+   *  @param numBytes  Consumes numBytes
+   */
+  void countConsumedMessageBytes(long int numBytes)
+  {
+    if (remainingMessageSize_ >= numBytes)
+    {
+      remainingMessageSize_ -= numBytes;
+    }
+    else
+    {
+      remainingMessageSize_ = 0;
+      throw new TTransportException(TTransportException::END_OF_FILE, "MaxMessageSize reached");
+    }
+  }
 };
 
 /**

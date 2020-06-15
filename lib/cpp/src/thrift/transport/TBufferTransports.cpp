@@ -118,6 +118,7 @@ const uint8_t* TBufferedTransport::borrowSlow(uint8_t* buf, uint32_t* len) {
 }
 
 void TBufferedTransport::flush() {
+  resetConsumedMessageSize();
   // Write out any data waiting in the write buffer.
   auto have_bytes = static_cast<uint32_t>(wBase_ - wBuf_.get());
   if (have_bytes > 0) {
@@ -248,6 +249,7 @@ void TFramedTransport::writeSlow(const uint8_t* buf, uint32_t len) {
 }
 
 void TFramedTransport::flush() {
+  resetConsumedMessageSize();
   int32_t sz_hbo, sz_nbo;
   assert(wBufSize_ > sizeof(sz_nbo));
 

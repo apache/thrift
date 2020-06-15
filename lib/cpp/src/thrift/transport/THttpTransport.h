@@ -36,7 +36,7 @@ namespace transport {
  */
 class THttpTransport : public TVirtualTransport<THttpTransport> {
 public:
-  THttpTransport(std::shared_ptr<TTransport> transport);
+  THttpTransport(std::shared_ptr<TTransport> transport, std::shared_ptr<TConfiguration> config = nullptr);
 
   ~THttpTransport() override;
 
@@ -54,7 +54,9 @@ public:
 
   void write(const uint8_t* buf, uint32_t len);
 
-  void flush() override = 0;
+  void flush() override {
+    resetConsumedMessageSize();
+  };
 
   const std::string getOrigin() const override;
 

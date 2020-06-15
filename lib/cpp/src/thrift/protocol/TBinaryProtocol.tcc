@@ -21,6 +21,7 @@
 #define _THRIFT_PROTOCOL_TBINARYPROTOCOL_TCC_ 1
 
 #include <thrift/protocol/TBinaryProtocol.h>
+#include <thrift/transport/TTransportException.h>
 
 #include <limits>
 
@@ -285,6 +286,10 @@ uint32_t TBinaryProtocolT<Transport_, ByteOrder_>::readMapBegin(TType& keyType,
     throw TProtocolException(TProtocolException::SIZE_LIMIT);
   }
   size = (uint32_t)sizei;
+  
+  TMap map(keyType, valType, size);
+  checkReadBytesAvailable(map);
+
   return result;
 }
 
@@ -307,6 +312,10 @@ uint32_t TBinaryProtocolT<Transport_, ByteOrder_>::readListBegin(TType& elemType
     throw TProtocolException(TProtocolException::SIZE_LIMIT);
   }
   size = (uint32_t)sizei;
+
+  TList list(elemType, size);
+  checkReadBytesAvailable(list);
+
   return result;
 }
 
@@ -329,6 +338,10 @@ uint32_t TBinaryProtocolT<Transport_, ByteOrder_>::readSetBegin(TType& elemType,
     throw TProtocolException(TProtocolException::SIZE_LIMIT);
   }
   size = (uint32_t)sizei;
+
+  TSet set(elemType, size);
+  checkReadBytesAvailable(set);
+
   return result;
 }
 
@@ -447,6 +460,30 @@ uint32_t TBinaryProtocolT<Transport_, ByteOrder_>::readStringBody(StrType& str, 
   this->trans_->readAll(reinterpret_cast<uint8_t*>(&str[0]), size);
   return (uint32_t)size;
 }
+
+// Return the minimum number of bytes a type will consume on the wire
+template <class Transport_, class ByteOrder_>
+int TBinaryProtocolT<Transport_, ByteOrder_>::getMinSerializedSize(TType type)
+{
+  switch (type)
+  {
+      case T_STOP: return 0;
+      case T_VOID: return 0;
+      case T_BOOL: return sizeof(int8_t);
+      case T_BYTE: return sizeof(int8_t);
+      case T_DOUBLE: return sizeof(double);
+      case T_I16: return sizeof(short);
+      case T_I32: return sizeof(int);
+      case T_I64: return sizeof(long);
+      case T_STRING: return sizeof(int);  // string length
+      case T_STRUCT: return 0;  // empty struct
+      case T_MAP: return sizeof(int);  // element count
+      case T_SET: return sizeof(int);  // element count
+      case T_LIST: return sizeof(int);  // element count
+      default: throw TProtocolException(TProtocolException::UNKNOWN, "unrecognized type code");
+  }
+}
+
 }
 }
 } // apache::thrift::protocol

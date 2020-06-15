@@ -62,6 +62,7 @@ public:
    * This method is meant to eventually be nonvirtual and inlinable.
    */
   uint32_t read(uint8_t* buf, uint32_t len) {
+    checkReadBytesAvailable(len);
     uint8_t* new_rBase = rBase_ + len;
     if (TDB_LIKELY(new_rBase <= rBound_)) {
       std::memcpy(buf, rBase_, len);
@@ -120,6 +121,7 @@ public:
    * Consume doesn't require a slow path.
    */
   void consume(uint32_t len) {
+    countConsumedMessageBytes(len);
     if (TDB_LIKELY(static_cast<ptrdiff_t>(len) <= rBound_ - rBase_)) {
       rBase_ += len;
     } else {
@@ -148,7 +150,8 @@ protected:
    * performance-sensitive operation, so it is okay to just leave it to
    * the concrete class to set up pointers correctly.
    */
-  TBufferBase() : rBase_(nullptr), rBound_(nullptr), wBase_(nullptr), wBound_(nullptr) {}
+  TBufferBase(std::shared_ptr<TConfiguration> config = nullptr) 
+    : TVirtualTransport(config), rBase_(nullptr), rBound_(nullptr), wBase_(nullptr), wBound_(nullptr) {}
 
   /// Convenience mutator for setting the read buffer.
   void setReadBuffer(uint8_t* buf, uint32_t len) {
@@ -186,8 +189,9 @@ public:
   static const int DEFAULT_BUFFER_SIZE = 512;
 
   /// Use default buffer sizes.
-  TBufferedTransport(std::shared_ptr<TTransport> transport)
-    : transport_(transport),
+  TBufferedTransport(std::shared_ptr<TTransport> transport, std::shared_ptr<TConfiguration> config = nullptr)
+    : TVirtualTransport(config),
+      transport_(transport),
       rBufSize_(DEFAULT_BUFFER_SIZE),
       wBufSize_(DEFAULT_BUFFER_SIZE),
       rBuf_(new uint8_t[rBufSize_]),
@@ -196,8 +200,9 @@ public:
   }
 
   /// Use specified buffer sizes.
-  TBufferedTransport(std::shared_ptr<TTransport> transport, uint32_t sz)
-    : transport_(transport),
+  TBufferedTransport(std::shared_ptr<TTransport> transport, uint32_t sz, std::shared_ptr<TConfiguration> config = nullptr)
+    : TVirtualTransport(config),
+      transport_(transport),
       rBufSize_(sz),
       wBufSize_(sz),
       rBuf_(new uint8_t[rBufSize_]),
@@ -206,8 +211,10 @@ public:
   }
 
   /// Use specified read and write buffer sizes.
-  TBufferedTransport(std::shared_ptr<TTransport> transport, uint32_t rsz, uint32_t wsz)
-    : transport_(transport),
+  TBufferedTransport(std::shared_ptr<TTransport> transport, uint32_t rsz, uint32_t wsz, 
+                     std::shared_ptr<TConfiguration> config = nullptr)
+    : TVirtualTransport(config),
+      transport_(transport),
       rBufSize_(rsz),
       wBufSize_(wsz),
       rBuf_(new uint8_t[rBufSize_]),
@@ -309,8 +316,9 @@ public:
   static const int DEFAULT_MAX_FRAME_SIZE = 256 * 1024 * 1024;
 
   /// Use default buffer sizes.
-  TFramedTransport()
-    : transport_(),
+  TFramedTransport(std::shared_ptr<TConfiguration> config = nullptr)
+    : TVirtualTransport(config),
+      transport_(),
       rBufSize_(0),
       wBufSize_(DEFAULT_BUFFER_SIZE),
       rBuf_(),
@@ -319,27 +327,30 @@ public:
     initPointers();
   }
 
-  TFramedTransport(std::shared_ptr<TTransport> transport)
-    : transport_(transport),
+  TFramedTransport(std::shared_ptr<TTransport> transport, std::shared_ptr<TConfiguration> config = nullptr)
+    : TVirtualTransport(config),
+      transport_(transport),
       rBufSize_(0),
       wBufSize_(DEFAULT_BUFFER_SIZE),
       rBuf_(),
       wBuf_(new uint8_t[wBufSize_]),
       bufReclaimThresh_((std::numeric_limits<uint32_t>::max)()),
-      maxFrameSize_(DEFAULT_MAX_FRAME_SIZE) {
+      maxFrameSize_(configuration_->getMaxFrameSize()) {
     initPointers();
   }
 
   TFramedTransport(std::shared_ptr<TTransport> transport,
                    uint32_t sz,
-                   uint32_t bufReclaimThresh = (std::numeric_limits<uint32_t>::max)())
-    : transport_(transport),
+                   uint32_t bufReclaimThresh = (std::numeric_limits<uint32_t>::max)(),
+                   std::shared_ptr<TConfiguration> config = nullptr)
+    : TVirtualTransport(config),
+      transport_(transport),
       rBufSize_(0),
       wBufSize_(sz),
       rBuf_(),
       wBuf_(new uint8_t[wBufSize_]),
       bufReclaimThresh_(bufReclaimThresh),
-      maxFrameSize_(DEFAULT_MAX_FRAME_SIZE) {
+      maxFrameSize_(configuration_->getMaxFrameSize()) {
     initPointers();
   }
 
@@ -503,7 +514,10 @@ public:
    * Construct a TMemoryBuffer with a default-sized buffer,
    * owned by the TMemoryBuffer object.
    */
-  TMemoryBuffer() { initCommon(nullptr, defaultSize, true, 0); }
+  TMemoryBuffer(std::shared_ptr<TConfiguration> config = nullptr)
+    : TVirtualTransport(config) { 
+    initCommon(nullptr, defaultSize, true, 0); 
+  }
 
   /**
    * Construct a TMemoryBuffer with a buffer of a specified size,
@@ -511,7 +525,10 @@ public:
    *
    * @param sz  The initial size of the buffer.
    */
-  TMemoryBuffer(uint32_t sz) { initCommon(nullptr, sz, true, 0); }
+  TMemoryBuffer(uint32_t sz, std::shared_ptr<TConfiguration> config = nullptr) 
+    : TVirtualTransport(config) { 
+    initCommon(nullptr, sz, true, 0); 
+  }
 
   /**
    * Construct a TMemoryBuffer with buf as its initial contents.
@@ -523,7 +540,8 @@ public:
    * @param sz     The size of @c buf.
    * @param policy See @link MemoryPolicy @endlink .
    */
-  TMemoryBuffer(uint8_t* buf, uint32_t sz, MemoryPolicy policy = OBSERVE) {
+  TMemoryBuffer(uint8_t* buf, uint32_t sz, MemoryPolicy policy = OBSERVE, std::shared_ptr<TConfiguration> config = nullptr) 
+    : TVirtualTransport(config) {
     if (buf == nullptr && sz != 0) {
       throw TTransportException(TTransportException::BAD_ARGS,
                                 "TMemoryBuffer given null buffer with non-zero size.");

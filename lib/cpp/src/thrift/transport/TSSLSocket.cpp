@@ -214,34 +214,37 @@ SSL* SSLContext::createSSL() {
 }
 
 // TSSLSocket implementation
-TSSLSocket::TSSLSocket(std::shared_ptr<SSLContext> ctx)
-  : TSocket(), server_(false), ssl_(nullptr), ctx_(ctx) {
+TSSLSocket::TSSLSocket(std::shared_ptr<SSLContext> ctx, std::shared_ptr<TConfiguration> config)
+  : TSocket(config), server_(false), ssl_(nullptr), ctx_(ctx) {
   init();
 }
 
-TSSLSocket::TSSLSocket(std::shared_ptr<SSLContext> ctx, std::shared_ptr<THRIFT_SOCKET> interruptListener)
-        : TSocket(), server_(false), ssl_(nullptr), ctx_(ctx) {
+TSSLSocket::TSSLSocket(std::shared_ptr<SSLContext> ctx, std::shared_ptr<THRIFT_SOCKET> interruptListener,
+                      std::shared_ptr<TConfiguration> config)
+        : TSocket(config), server_(false), ssl_(nullptr), ctx_(ctx) {
   init();
   interruptListener_ = interruptListener;
 }
 
-TSSLSocket::TSSLSocket(std::shared_ptr<SSLContext> ctx, THRIFT_SOCKET socket)
-  : TSocket(socket), server_(false), ssl_(nullptr), ctx_(ctx) {
+TSSLSocket::TSSLSocket(std::shared_ptr<SSLContext> ctx, THRIFT_SOCKET socket, std::shared_ptr<TConfiguration> config)
+  : TSocket(socket, config), server_(false), ssl_(nullptr), ctx_(ctx) {
   init();
 }
 
-TSSLSocket::TSSLSocket(std::shared_ptr<SSLContext> ctx, THRIFT_SOCKET socket, std::shared_ptr<THRIFT_SOCKET> interruptListener)
-        : TSocket(socket, interruptListener), server_(false), ssl_(nullptr), ctx_(ctx) {
+TSSLSocket::TSSLSocket(std::shared_ptr<SSLContext> ctx, THRIFT_SOCKET socket, std::shared_ptr<THRIFT_SOCKET> interruptListener,
+                      std::shared_ptr<TConfiguration> config)
+        : TSocket(socket, interruptListener, config), server_(false), ssl_(nullptr), ctx_(ctx) {
   init();
 }
 
-TSSLSocket::TSSLSocket(std::shared_ptr<SSLContext> ctx, string host, int port)
-  : TSocket(host, port), server_(false), ssl_(nullptr), ctx_(ctx) {
+TSSLSocket::TSSLSocket(std::shared_ptr<SSLContext> ctx, string host, int port, std::shared_ptr<TConfiguration> config)
+  : TSocket(host, port, config), server_(false), ssl_(nullptr), ctx_(ctx) {
   init();
 }
 
-TSSLSocket::TSSLSocket(std::shared_ptr<SSLContext> ctx, string host, int port, std::shared_ptr<THRIFT_SOCKET> interruptListener)
-        : TSocket(host, port), server_(false), ssl_(nullptr), ctx_(ctx) {
+TSSLSocket::TSSLSocket(std::shared_ptr<SSLContext> ctx, string host, int port, std::shared_ptr<THRIFT_SOCKET> interruptListener,
+                      std::shared_ptr<TConfiguration> config)
+        : TSocket(host, port, config), server_(false), ssl_(nullptr), ctx_(ctx) {
   init();
   interruptListener_ = interruptListener;
 }
@@ -391,6 +394,7 @@ void TSSLSocket::close() {
  * exception incase of failure.
 */
 uint32_t TSSLSocket::read(uint8_t* buf, uint32_t len) {
+  checkReadBytesAvailable(len);
   initializeHandshake();
   if (!checkHandshake())
     throw TTransportException(TTransportException::UNKNOWN, "retry again");
@@ -553,6 +557,7 @@ uint32_t TSSLSocket::write_partial(const uint8_t* buf, uint32_t len) {
 }
 
 void TSSLSocket::flush() {
+  resetConsumedMessageSize();
   // Don't throw exception if not open. Thrift servers close socket twice.
   if (ssl_ == nullptr) {
     return;

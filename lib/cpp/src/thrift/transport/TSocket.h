@@ -52,7 +52,7 @@ public:
    * socket.
    *
    */
-  TSocket();
+  TSocket(std::shared_ptr<TConfiguration> config = nullptr);
 
   /**
    * Constructs a new socket. Note that this does NOT actually connect the
@@ -61,7 +61,7 @@ public:
    * @param host An IP address or hostname to connect to
    * @param port The port to connect on
    */
-  TSocket(const std::string& host, int port);
+  TSocket(const std::string& host, int port, std::shared_ptr<TConfiguration> config = nullptr);
 
   /**
    * Constructs a new Unix domain socket.
@@ -69,7 +69,7 @@ public:
    *
    * @param path The Unix domain socket e.g. "/tmp/ThriftTest.binary.thrift"
    */
-  TSocket(const std::string& path);
+  TSocket(const std::string& path, std::shared_ptr<TConfiguration> config = nullptr);
 
   /**
    * Destroyes the socket object, closing it if necessary.
@@ -264,13 +264,14 @@ public:
   /**
    * Constructor to create socket from file descriptor.
    */
-  TSocket(THRIFT_SOCKET socket);
+  TSocket(THRIFT_SOCKET socket, std::shared_ptr<TConfiguration> config = nullptr);
 
   /**
    * Constructor to create socket from file descriptor that
    * can be interrupted safely.
    */
-  TSocket(THRIFT_SOCKET socket, std::shared_ptr<THRIFT_SOCKET> interruptListener);
+  TSocket(THRIFT_SOCKET socket, std::shared_ptr<THRIFT_SOCKET> interruptListener, 
+         std::shared_ptr<TConfiguration> config = nullptr);
 
   /**
    * Set a cache of the peer address (used when trivially available: e.g.

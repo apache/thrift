@@ -35,8 +35,8 @@ namespace apache {
 namespace thrift {
 namespace transport {
 
-TSimpleFileTransport::TSimpleFileTransport(const std::string& path, bool read, bool write)
-  : TFDTransport(-1, TFDTransport::CLOSE_ON_DESTROY) {
+TSimpleFileTransport::TSimpleFileTransport(const std::string& path, bool read, bool write, std::shared_ptr<TConfiguration> config)
+  : TFDTransport(-1, TFDTransport::CLOSE_ON_DESTROY, config) {
   int flags = 0;
   if (read && write) {
     flags = O_RDWR;

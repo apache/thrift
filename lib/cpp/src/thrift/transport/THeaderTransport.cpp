@@ -415,6 +415,7 @@ void THeaderTransport::clearHeaders() {
 }
 
 void THeaderTransport::flush() {
+  resetConsumedMessageSize();
   // Write out any data waiting in the write buffer.
   uint32_t haveBytes = getWriteBytes();
 

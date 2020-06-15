@@ -26,6 +26,7 @@ namespace thrift {
 namespace transport {
 
 uint32_t TPipedTransport::read(uint8_t* buf, uint32_t len) {
+  checkReadBytesAvailable(len);
   uint32_t need = len;
 
   // We don't have enough data yet
@@ -104,8 +105,9 @@ void TPipedTransport::flush() {
 
 TPipedFileReaderTransport::TPipedFileReaderTransport(
     std::shared_ptr<TFileReaderTransport> srcTrans,
-    std::shared_ptr<TTransport> dstTrans)
-  : TPipedTransport(srcTrans, dstTrans), srcTrans_(srcTrans) {
+    std::shared_ptr<TTransport> dstTrans,
+    std::shared_ptr<TConfiguration> config)
+  : TPipedTransport(srcTrans, dstTrans, config), srcTrans_(srcTrans) {
 }
 
 TPipedFileReaderTransport::~TPipedFileReaderTransport() = default;
@@ -131,6 +133,7 @@ uint32_t TPipedFileReaderTransport::read(uint8_t* buf, uint32_t len) {
 }
 
 uint32_t TPipedFileReaderTransport::readAll(uint8_t* buf, uint32_t len) {
+  checkReadBytesAvailable(len);
   uint32_t have = 0;
   uint32_t get = 0;
 
