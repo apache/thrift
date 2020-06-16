@@ -25,9 +25,8 @@ import time
 
 gen_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "gen-py")
 sys.path.append(gen_path)
+import _import_local_thrift  # noqa
 from TProcesspoolServer import HelloService
-
-
 from thrift.transport import TSocket, TTransport
 from thrift.protocol import TBinaryProtocol
 from thrift.server import TProcessPoolServer
@@ -41,11 +40,13 @@ class HelloServiceHandler:
 
 
 class Server:
+
     def __init__(self):
         handler = HelloServiceHandler()
         processor = HelloService.Processor(handler)
         transport = TSocket.TServerSocket("localhost", 5050)
         self.server = TProcessPoolServer.TProcessPoolServer(processor, transport)
+
     def open_server(self):
         print("Starting thrift server in python")
         self.server.serve()
@@ -91,6 +92,6 @@ class Test_TProcessPoolServer(unittest.TestCase):
         finally:
             s.stop_server()
 
+
 if __name__ == '__main__':
     unittest.main()
-
