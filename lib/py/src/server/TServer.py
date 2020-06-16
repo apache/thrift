@@ -18,6 +18,7 @@
 #
 
 from six.moves import queue
+from collections import deque
 import logging
 import os
 import threading
@@ -26,8 +27,52 @@ from thrift.protocol import TBinaryProtocol
 from thrift.protocol.THeaderProtocol import THeaderProtocolFactory
 from thrift.transport import TTransport
 
+__all__ = ['TSimpleServer','TThreadedServer','TThreadPoolServer','TForkingServer']
 logger = logging.getLogger(__name__)
 
+class Worker(threading.Thread):
+   
+    def __init__(self, queue):
+        threading.Thread.__init__(self)
+        self.queue = queue
+
+    def run(self):
+        while True:
+            try:
+                processor,iprot,oprot,otrans,callback=self.queue.get()
+                if processor is None:
+                    break
+                processor.process(iprot,oprot)
+                callback(True,otrans.getvalue())
+            except Exception:
+                logger.exception("Exception while processing request",exc_info=True)
+                callback(False, b'')
+
+WAIT_LEN = 0
+WAIT_MESSAGE = 1
+WAIT_PROCESS = 2
+SEND_ANSWER = 3
+CLOSED = 4
+
+class Message(object):
+    def __init__(self, offset, len_, header):
+        self.offset = offset
+        self.len_ = len_
+        self.buffer = None
+        self.is_header = header
+
+class Connection(object):
+    def __init__(self, new_socket, wake_up):
+        self.socket = new_socket
+        self.socket.setblocking(False)
+        self.status = WAIT_LEN
+        self.len = 0
+        self.received = deque()
+        self._reading = Message(0, 4, True)
+        self.lock = threading.Lock()
+        self.wake_up = wake_up
+        self.remaining = False
+        
 
 class TServer(object):
     """Base interface for a server, which must have a serve() method.
@@ -69,6 +114,9 @@ class TServer(object):
 
     def serve(self):
         pass
+    def close(self):
+        self.status = CLOSED
+        self.socket.close()
 
 
 class TSimpleServer(TServer):
