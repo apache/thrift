@@ -11,4 +11,4 @@ environment:
 build_script:
   - sh: docker build compiler/cpp -f build/docker/publish/Dockerfile -t thrift:$APPVEYOR_REPO_BRANCH
   - sh: eval $login
-  - sh: docker push thrift:$APPVEYOR_REPO_BRANCH
+  - sh: docker push apache/thrift:$APPVEYOR_REPO_BRANCH
