@@ -115,7 +115,7 @@ public:
                                 t_field* tfield,
                                 bool isPublic,
                                 std::string fieldPrefix = "");
-  void generate_delphi_isset_reader_definition(ostream& out, t_field* tfield, bool is_xception);
+  void generate_delphi_isset_reader_writer_definition(ostream& out, t_field* tfield, bool is_xception);
   void generate_delphi_property_reader_definition(ostream& out,
                                                   t_field* tfield,
                                                   bool is_xception_class);
@@ -149,7 +149,7 @@ public:
                                          bool is_union,
                                          bool is_xception_factory,
                                          std::string xception_factory_name);
-  void generate_delphi_isset_reader_impl(ostream& out,
+  void generate_delphi_isset_reader_writer_impl(ostream& out,
                                          std::string cls_prefix,
                                          std::string name,
                                          t_type* type,
@@ -1612,7 +1612,7 @@ void t_delphi_generator::generate_delphi_struct_impl(ostream& out,
                                          is_x_factory,
                                          exception_factory_name);
     if ((*m_iter)->get_req() != t_field::T_REQUIRED) {
-      generate_delphi_isset_reader_impl(out, cls_prefix, cls_nm, t, *m_iter, "F", is_exception);
+      generate_delphi_isset_reader_writer_impl(out, cls_prefix, cls_nm, t, *m_iter, "F", is_exception);
     }
   }
 
@@ -1744,7 +1744,7 @@ void t_delphi_generator::generate_delphi_struct_definition(ostream& out,
       out << endl;
       for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
         if ((*m_iter)->get_req() != t_field::T_REQUIRED) {
-          generate_delphi_isset_reader_definition(out, *m_iter, is_exception);
+          generate_delphi_isset_reader_writer_definition(out, *m_iter, is_exception);
         }
       }
     }
@@ -1754,7 +1754,7 @@ void t_delphi_generator::generate_delphi_struct_definition(ostream& out,
       for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
         if ((*m_iter)->get_req() != t_field::T_REQUIRED) {
           isset_name = "__isset_" + prop_name(*m_iter, is_exception);
-          indent(out) << "property " << isset_name << ": System.Boolean read Get" << isset_name << ";"
+          indent(out) << "property " << isset_name << ": System.Boolean read Get" << isset_name << " write Set" << isset_name << ";"
                       << endl;
         }
       }
@@ -1827,6 +1827,7 @@ void t_delphi_generator::generate_delphi_struct_definition(ostream& out,
       if ((*m_iter)->get_req() != t_field::T_REQUIRED) {
         isset_name = "__isset_" + prop_name(*m_iter, is_exception);
         indent(out) << "function Get" << isset_name << ": System.Boolean;" << endl;
+        indent(out) << "procedure Set" << isset_name << "( const value : System.Boolean);" << endl;
       }
     }
   }
@@ -1890,7 +1891,7 @@ void t_delphi_generator::generate_delphi_struct_definition(ostream& out,
     for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
       if ((*m_iter)->get_req() != t_field::T_REQUIRED) {
         isset_name = "__isset_" + prop_name(*m_iter, is_exception);
-        indent(out) << "property " << isset_name << ": System.Boolean read Get" << isset_name << ";"
+        indent(out) << "property " << isset_name << ": System.Boolean read Get" << isset_name << " write Set" << isset_name << ";"
                     << endl;
       }
     }
@@ -3459,10 +3460,11 @@ void t_delphi_generator::generate_delphi_property_reader_definition(ostream& out
               << type_name(ftype, false, true, is_xception, true) << ";" << endl;
 }
 
-void t_delphi_generator::generate_delphi_isset_reader_definition(ostream& out,
+void t_delphi_generator::generate_delphi_isset_reader_writer_definition(ostream& out,
                                                                  t_field* tfield,
                                                                  bool is_xception) {
   indent(out) << "function Get__isset_" << prop_name(tfield, is_xception) << ": System.Boolean;" << endl;
+  indent(out) << "procedure Set__isset_" << prop_name(tfield, is_xception) << "( const value : System.Boolean);" << endl;
 }
 
 void t_delphi_generator::generate_delphi_clear_union_value(ostream& out,
@@ -3557,7 +3559,7 @@ void t_delphi_generator::generate_delphi_property_reader_impl(ostream& out,
   indent_impl(out) << "end;" << endl << endl;
 }
 
-void t_delphi_generator::generate_delphi_isset_reader_impl(ostream& out,
+void t_delphi_generator::generate_delphi_isset_reader_writer_impl(ostream& out,
                                                            std::string cls_prefix,
                                                            std::string name,
                                                            t_type* type,
@@ -3567,11 +3569,20 @@ void t_delphi_generator::generate_delphi_isset_reader_impl(ostream& out,
   (void)type;
 
   string isset_name = "__isset_" + prop_name(tfield, is_xception);
+  
   indent_impl(out) << "function " << cls_prefix << name << "."
                    << "Get" << isset_name << ": System.Boolean;" << endl;
   indent_impl(out) << "begin" << endl;
   indent_up_impl();
   indent_impl(out) << "Result := " << fieldPrefix << isset_name << ";" << endl;
+  indent_down_impl();
+  indent_impl(out) << "end;" << endl << endl;
+  
+  indent_impl(out) << "procedure " << cls_prefix << name << "."
+                   << "Set" << isset_name << "( const value: System.Boolean);" << endl;
+  indent_impl(out) << "begin" << endl;
+  indent_up_impl();
+  indent_impl(out) << fieldPrefix << isset_name << " := value;" << endl;
   indent_down_impl();
   indent_impl(out) << "end;" << endl << endl;
 }
