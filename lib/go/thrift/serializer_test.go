@@ -80,7 +80,7 @@ type serializer interface {
 }
 
 type deserializer interface {
-	ReadString(TStruct, string) error
+	ReadString(context.Context, TStruct, string) error
 }
 
 func plainSerializer(pf ProtocolFactory) serializer {
@@ -158,7 +158,7 @@ func ProtocolTest1(t *testing.T, pf ProtocolFactory) {
 
 				t1 := impl.Deserializer(pf)
 				var m1 MyTestStruct
-				if err = t1.ReadString(&m1, s); err != nil {
+				if err = t1.ReadString(context.Background(), &m1, s); err != nil {
 					test.Fatalf("Unable to Deserialize struct: %v", err)
 
 				}
@@ -199,7 +199,7 @@ func ProtocolTest2(t *testing.T, pf ProtocolFactory) {
 
 				t1 := impl.Deserializer(pf)
 				var m1 MyTestStruct
-				if err = t1.ReadString(&m1, s); err != nil {
+				if err = t1.ReadString(context.Background(), &m1, s); err != nil {
 					test.Fatalf("Unable to Deserialize struct: %v", err)
 
 				}
@@ -264,7 +264,7 @@ func TestSerializerPoolAsync(t *testing.T) {
 						t.Fatal("serialize:", err)
 					}
 					var m1 MyTestStruct
-					if err = d.ReadString(&m1, str); err != nil {
+					if err = d.ReadString(context.Background(), &m1, str); err != nil {
 						t.Fatal("deserialize:", err)
 
 					}
@@ -335,7 +335,7 @@ func BenchmarkSerializer(b *testing.B) {
 					str, _ := s.WriteString(context.Background(), &m)
 					var m1 MyTestStruct
 					d := c.Deserializer()
-					d.ReadString(&m1, str)
+					d.ReadString(context.Background(), &m1, str)
 				}
 			},
 		)

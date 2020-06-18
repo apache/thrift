@@ -37,7 +37,7 @@ func TestRequiredField_SucecssWhenSet(t *testing.T) {
 	}
 
 	d := thrift.NewTDeserializer()
-	err = d.Read(&requiredfieldtest.RequiredField{}, sourceData)
+	err = d.Read(context.Background(), &requiredfieldtest.RequiredField{}, sourceData)
 	if err != nil {
 		t.Fatalf("Did not expect an error when trying to deserialize the requiredfieldtest.RequiredField: %v", err)
 	}
@@ -53,7 +53,7 @@ func TestRequiredField_ErrorWhenMissing(t *testing.T) {
 
 	// attempt to deserialize into a different type (which should fail)
 	d := thrift.NewTDeserializer()
-	err = d.Read(&requiredfieldtest.RequiredField{}, sourceData)
+	err = d.Read(context.Background(), &requiredfieldtest.RequiredField{}, sourceData)
 	if err == nil {
 		t.Fatal("Expected an error when trying to deserialize an object which is missing a required field")
 	}
@@ -66,12 +66,12 @@ func TestStructReadRequiredFields(t *testing.T) {
 
 	// None of required fields are set
 	gomock.InOrder(
-		protocol.EXPECT().ReadStructBegin().Return("StructC", nil),
-		protocol.EXPECT().ReadFieldBegin().Return("_", thrift.TType(thrift.STOP), int16(1), nil),
-		protocol.EXPECT().ReadStructEnd().Return(nil),
+		protocol.EXPECT().ReadStructBegin(context.Background()).Return("StructC", nil),
+		protocol.EXPECT().ReadFieldBegin(context.Background()).Return("_", thrift.TType(thrift.STOP), int16(1), nil),
+		protocol.EXPECT().ReadStructEnd(context.Background()).Return(nil),
 	)
 
-	err := testStruct.Read(protocol)
+	err := testStruct.Read(context.Background(), protocol)
 	mockCtrl.Finish()
 	mockCtrl = gomock.NewController(t)
 	if err == nil {
@@ -87,15 +87,15 @@ func TestStructReadRequiredFields(t *testing.T) {
 
 	// One of the required fields is set
 	gomock.InOrder(
-		protocol.EXPECT().ReadStructBegin().Return("StructC", nil),
-		protocol.EXPECT().ReadFieldBegin().Return("I", thrift.TType(thrift.I32), int16(2), nil),
-		protocol.EXPECT().ReadI32().Return(int32(1), nil),
-		protocol.EXPECT().ReadFieldEnd().Return(nil),
-		protocol.EXPECT().ReadFieldBegin().Return("_", thrift.TType(thrift.STOP), int16(1), nil),
-		protocol.EXPECT().ReadStructEnd().Return(nil),
+		protocol.EXPECT().ReadStructBegin(context.Background()).Return("StructC", nil),
+		protocol.EXPECT().ReadFieldBegin(context.Background()).Return("I", thrift.TType(thrift.I32), int16(2), nil),
+		protocol.EXPECT().ReadI32(context.Background()).Return(int32(1), nil),
+		protocol.EXPECT().ReadFieldEnd(context.Background()).Return(nil),
+		protocol.EXPECT().ReadFieldBegin(context.Background()).Return("_", thrift.TType(thrift.STOP), int16(1), nil),
+		protocol.EXPECT().ReadStructEnd(context.Background()).Return(nil),
 	)
 
-	err = testStruct.Read(protocol)
+	err = testStruct.Read(context.Background(), protocol)
 	mockCtrl.Finish()
 	mockCtrl = gomock.NewController(t)
 	if err == nil {
@@ -111,18 +111,18 @@ func TestStructReadRequiredFields(t *testing.T) {
 
 	// Both of the required fields are set
 	gomock.InOrder(
-		protocol.EXPECT().ReadStructBegin().Return("StructC", nil),
-		protocol.EXPECT().ReadFieldBegin().Return("i", thrift.TType(thrift.I32), int16(2), nil),
-		protocol.EXPECT().ReadI32().Return(int32(1), nil),
-		protocol.EXPECT().ReadFieldEnd().Return(nil),
-		protocol.EXPECT().ReadFieldBegin().Return("s2", thrift.TType(thrift.STRING), int16(4), nil),
-		protocol.EXPECT().ReadString().Return("test", nil),
-		protocol.EXPECT().ReadFieldEnd().Return(nil),
-		protocol.EXPECT().ReadFieldBegin().Return("_", thrift.TType(thrift.STOP), int16(1), nil),
-		protocol.EXPECT().ReadStructEnd().Return(nil),
+		protocol.EXPECT().ReadStructBegin(context.Background()).Return("StructC", nil),
+		protocol.EXPECT().ReadFieldBegin(context.Background()).Return("i", thrift.TType(thrift.I32), int16(2), nil),
+		protocol.EXPECT().ReadI32(context.Background()).Return(int32(1), nil),
+		protocol.EXPECT().ReadFieldEnd(context.Background()).Return(nil),
+		protocol.EXPECT().ReadFieldBegin(context.Background()).Return("s2", thrift.TType(thrift.STRING), int16(4), nil),
+		protocol.EXPECT().ReadString(context.Background()).Return("test", nil),
+		protocol.EXPECT().ReadFieldEnd(context.Background()).Return(nil),
+		protocol.EXPECT().ReadFieldBegin(context.Background()).Return("_", thrift.TType(thrift.STOP), int16(1), nil),
+		protocol.EXPECT().ReadStructEnd(context.Background()).Return(nil),
 	)
 
-	err = testStruct.Read(protocol)
+	err = testStruct.Read(context.Background(), protocol)
 	mockCtrl.Finish()
 	if err != nil {
 		t.Fatal("Expected read to succeed")

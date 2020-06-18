@@ -20,6 +20,7 @@
 package thrift
 
 import (
+	"context"
 	"sync"
 )
 
@@ -38,27 +39,27 @@ func NewTDeserializer() *TDeserializer {
 		protocol}
 }
 
-func (t *TDeserializer) ReadString(msg TStruct, s string) (err error) {
+func (t *TDeserializer) ReadString(ctx context.Context, msg TStruct, s string) (err error) {
 	t.Transport.Reset()
 
 	err = nil
 	if _, err = t.Transport.Write([]byte(s)); err != nil {
 		return
 	}
-	if err = msg.Read(t.Protocol); err != nil {
+	if err = msg.Read(ctx, t.Protocol); err != nil {
 		return
 	}
 	return
 }
 
-func (t *TDeserializer) Read(msg TStruct, b []byte) (err error) {
+func (t *TDeserializer) Read(ctx context.Context, msg TStruct, b []byte) (err error) {
 	t.Transport.Reset()
 
 	err = nil
 	if _, err = t.Transport.Write(b); err != nil {
 		return
 	}
-	if err = msg.Read(t.Protocol); err != nil {
+	if err = msg.Read(ctx, t.Protocol); err != nil {
 		return
 	}
 	return
@@ -85,14 +86,14 @@ func NewTDeserializerPool(f func() *TDeserializer) *TDeserializerPool {
 	}
 }
 
-func (t *TDeserializerPool) ReadString(msg TStruct, s string) error {
+func (t *TDeserializerPool) ReadString(ctx context.Context, msg TStruct, s string) error {
 	d := t.pool.Get().(*TDeserializer)
 	defer t.pool.Put(d)
-	return d.ReadString(msg, s)
+	return d.ReadString(ctx, msg, s)
 }
 
-func (t *TDeserializerPool) Read(msg TStruct, b []byte) error {
+func (t *TDeserializerPool) Read(ctx context.Context, msg TStruct, b []byte) error {
 	d := t.pool.Get().(*TDeserializer)
 	defer t.pool.Put(d)
-	return d.Read(msg, b)
+	return d.Read(ctx, msg, b)
 }
