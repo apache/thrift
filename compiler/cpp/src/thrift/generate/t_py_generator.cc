@@ -2230,7 +2230,7 @@ void t_py_generator::generate_deserialize_field(ostream& out,
         } else if(!gen_utf8strings_) {
           out << "readString()";
         } else {
-          out << "readString().decode('utf-8') if sys.version_info[0] == 2 else iprot.readString()";
+          out << "readString().decode('utf-8', errors='replace') if sys.version_info[0] == 2 else iprot.readString()";
         }
         break;
       case t_base_type::TYPE_BOOL:
