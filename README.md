@@ -21,7 +21,7 @@ supports the languages that you currently use.
 
 Thrift is specifically designed to support non-atomic version changes
 across client and server code.  This allows you to upgrade your
-server while still being able service older clients; or have newer
+server while still being able to service older clients; or have newer
 clients issue requests to older servers.  An excellent community-provided
 write-up about thrift and compatibility when versioning an API can be
 found in the [Thrift Missing Guide](https://diwakergupta.github.io/thrift-missing-guide/#_versioning_compatibility).
