@@ -171,4 +171,6 @@ private:
   void collect_extensions_types(t_type* ttype);
   void generate_extensions(ostream& out, map<string, t_type*> types);
   void reset_indent();
+  void generate_null_check_begin(ostream& out, t_field* tfield);
+  void generate_null_check_end(ostream& out, t_field* tfield);
 };
