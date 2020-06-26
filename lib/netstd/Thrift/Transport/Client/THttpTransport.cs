@@ -57,6 +57,33 @@ namespace Thrift.Transport.Client
             // due to current bug with performance of Dispose in netcore https://github.com/dotnet/corefx/issues/8809
             // this can be switched to default way (create client->use->dispose per flush) later
             _httpClient = CreateClient(customRequestHeaders);
+            ConfigureClient(_httpClient);
+        }
+
+        /// <summary>
+        /// Constructor that takes a <c>HttpClient</c> instance to support using <c>IHttpClientFactory</c>.
+        /// </summary>
+        /// <remarks>As the <c>HttpMessageHandler</c> of the client must be configured at the time of creation, it
+        /// is assumed that the consumer has already added any certificates and configured decompression methods. The
+        /// consumer can use the <c>CreateHttpClientHandler</c> method to get a handler with these set.</remarks>
+        /// <param name="httpClient">Client configured with the desired message handler, user agent, and URI if not
+        /// specified in the <c>uri</c> parameter. A default user agent will be used if not set.</param>
+        /// <param name="config">Thrift configuration object</param>
+        /// <param name="uri">Optional URI to use for requests, if not specified the base address of <c>httpClient</c>
+        /// is used.</param>
+        public THttpTransport(HttpClient httpClient, TConfiguration config, Uri uri = null)
+            : base(config)
+        {
+            _httpClient = httpClient;
+
+            _uri = uri ?? httpClient.BaseAddress;
+            httpClient.BaseAddress = _uri;
+
+            var userAgent = _httpClient.DefaultRequestHeaders.UserAgent.ToString();
+            if (!string.IsNullOrEmpty(userAgent))
+                UserAgent = userAgent;
+
+            ConfigureClient(_httpClient);
         }
 
         // According to RFC 2616 section 3.8, the "User-Agent" header may not carry a version number
@@ -132,24 +159,29 @@ namespace Thrift.Transport.Client
             await _outputStream.WriteAsync(buffer, offset, length, cancellationToken);
         }
 
-        private HttpClient CreateClient(IDictionary<string, string> customRequestHeaders)
+        /// <summary>
+        /// Get a client handler configured with recommended properties to use with the <c>HttpClient</c> constructor
+        /// and an <c>IHttpClientFactory</c>.
+        /// </summary>
+        /// <param name="certificates">An optional array of client certificates to associate with the handler.</param>
+        /// <returns>
+        /// A client handler with deflate and gZip compression-decompression algorithms and any client
+        /// certificates passed in via <c>certificates</c>.
+        /// </returns>
+        public static HttpClientHandler CreateHttpClientHandler(X509Certificate[] certificates = null)
         {
             var handler = new HttpClientHandler();
-            handler.ClientCertificates.AddRange(_certificates);
+            if (certificates != null)
+                handler.ClientCertificates.AddRange(certificates);
             handler.AutomaticDecompression = System.Net.DecompressionMethods.Deflate | System.Net.DecompressionMethods.GZip;
+            return handler;
+        }
 
+        private HttpClient CreateClient(IDictionary<string, string> customRequestHeaders)
+        {
+            var handler = CreateHttpClientHandler(_certificates);
             var httpClient = new HttpClient(handler);
 
-            if (_connectTimeout > 0)
-            {
-                httpClient.Timeout = TimeSpan.FromMilliseconds(_connectTimeout);
-            }
-
-            httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/x-thrift"));
-            httpClient.DefaultRequestHeaders.UserAgent.TryParseAdd(UserAgent);
-
-            httpClient.DefaultRequestHeaders.AcceptEncoding.Add(new StringWithQualityHeaderValue("deflate"));
-            httpClient.DefaultRequestHeaders.AcceptEncoding.Add(new StringWithQualityHeaderValue("gzip"));
 
             if (customRequestHeaders != null)
             {
@@ -160,6 +192,23 @@ namespace Thrift.Transport.Client
             }
 
             return httpClient;
+        }
+
+        private void ConfigureClient(HttpClient httpClient)
+        {
+            if (_connectTimeout > 0)
+            {
+                httpClient.Timeout = TimeSpan.FromMilliseconds(_connectTimeout);
+            }
+
+            httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/x-thrift"));
+
+            // Clear any user agent values to avoid drift with the field value
+            httpClient.DefaultRequestHeaders.UserAgent.Clear();
+            httpClient.DefaultRequestHeaders.UserAgent.TryParseAdd(UserAgent);
+
+            httpClient.DefaultRequestHeaders.AcceptEncoding.Add(new StringWithQualityHeaderValue("deflate"));
+            httpClient.DefaultRequestHeaders.AcceptEncoding.Add(new StringWithQualityHeaderValue("gzip"));
         }
 
         public override async Task FlushAsync(CancellationToken cancellationToken)
