@@ -57,8 +57,8 @@ func NewTSocketFromAddrTimeout(addr net.Addr, connTimeout time.Duration, soTimeo
 }
 
 // Creates a TSocket from an existing net.Conn
-func NewTSocketFromConnTimeout(conn net.Conn, connTimeout time.Duration) *TSocket {
-	return &TSocket{conn: wrapSocketConn(conn), addr: conn.RemoteAddr(), connectTimeout: connTimeout, socketTimeout: connTimeout}
+func NewTSocketFromConnTimeout(conn net.Conn, socketTimeout time.Duration) *TSocket {
+	return &TSocket{conn: wrapSocketConn(conn), addr: conn.RemoteAddr(), socketTimeout: socketTimeout}
 }
 
 // Sets the connect timeout
