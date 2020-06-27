@@ -20,11 +20,33 @@
 package thrift
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"sync"
 	"sync/atomic"
+	"time"
 )
+
+// ErrAbandonRequest is a special error server handler implementations can
+// return to indicate that the request has been abandoned.
+//
+// TSimpleServer will check for this error, and close the client connection
+// instead of writing the response/error back to the client.
+//
+// It shall only be used when the server handler implementation know that the
+// client already abandoned the request (by checking that the passed in context
+// is already canceled, for example).
+var ErrAbandonRequest = errors.New("request abandoned")
+
+// ServerConnectivityCheckInterval defines the ticker interval used by
+// connectivity check in thrift compiled TProcessorFunc implementations.
+//
+// It's defined as a variable instead of constant, so that thrift server
+// implementations can change its value to control the behavior.
+//
+// If it's changed to <=0, the feature will be disabled.
+var ServerConnectivityCheckInterval = time.Millisecond
 
 /*
  * This is not a typical TSimpleServer as it is not blocked after accept a socket.
@@ -293,6 +315,9 @@ func (p *TSimpleServer) processRequests(client TTransport) (err error) {
 		}
 
 		ok, err := processor.Process(ctx, inputProtocol, outputProtocol)
+		if err == ErrAbandonRequest {
+			return client.Close()
+		}
 		if _, ok := err.(TTransportException); ok && err != nil {
 			return err
 		}

@@ -919,6 +919,7 @@ string t_go_generator::go_imports_begin(bool consts) {
     system_packages.push_back("errors");
   }
   system_packages.push_back("fmt");
+  system_packages.push_back("time");
   system_packages.push_back(gen_thrift_import_);
   return "import(\n" + render_system_packages(system_packages);
 }
@@ -937,6 +938,7 @@ string t_go_generator::go_imports_end() {
       "var _ = fmt.Printf\n"
       "var _ = context.Background\n"
       "var _ = reflect.DeepEqual\n"
+      "var _ = time.Now\n"
       "var _ = bytes.Equal\n\n");
 }
 
@@ -2778,15 +2780,66 @@ void t_go_generator::generate_process_function(t_service* tservice, t_function* 
     f_types_ << indent() << "  oprot.Flush(ctx)" << endl;
   }
   f_types_ << indent() << "  return false, err" << endl;
-  f_types_ << indent() << "}" << endl << endl;
-  f_types_ << indent() << "iprot.ReadMessageEnd(ctx)" << endl;
+  f_types_ << indent() << "}" << endl;
+  f_types_ << indent() << "iprot.ReadMessageEnd(ctx)" << endl << endl;
+
+  // Even though we never create the goroutine in oneway handlers,
+  // always have (nop) tickerCancel defined makes the writing part of code
+  // generating easier and less error-prone.
+  f_types_ << indent() << "tickerCancel := func() {}" << endl;
+  // Only create the goroutine for non-oneways.
+  if (!tfunction->is_oneway()) {
+    f_types_ << indent() << "// Start a goroutine to do server side connectivity check." << endl;
+    f_types_ << indent() << "if thrift.ServerConnectivityCheckInterval > 0 {" << endl;
+
+    indent_up();
+    f_types_ << indent() << "var cancel context.CancelFunc" << endl;
+    f_types_ << indent() << "ctx, cancel = context.WithCancel(ctx)" << endl;
+    f_types_ << indent() << "defer cancel()" << endl;
+    f_types_ << indent() << "var tickerCtx context.Context" << endl;
+    f_types_ << indent() << "tickerCtx, tickerCancel = context.WithCancel(context.Background())" << endl;
+    f_types_ << indent() << "defer tickerCancel()" << endl;
+    f_types_ << indent() << "go func(ctx context.Context, cancel context.CancelFunc) {" << endl;
+
+    indent_up();
+    f_types_ << indent() << "ticker := time.NewTicker(thrift.ServerConnectivityCheckInterval)" << endl;
+    f_types_ << indent() << "defer ticker.Stop()" << endl;
+    f_types_ << indent() << "for {" << endl;
+
+    indent_up();
+    f_types_ << indent() << "select {" << endl;
+    f_types_ << indent() << "case <-ctx.Done():" << endl;
+    indent_up();
+    f_types_ << indent() << "return" << endl;
+    indent_down();
+    f_types_ << indent() << "case <-ticker.C:" << endl;
+
+    indent_up();
+    f_types_ << indent() << "if !iprot.Transport().IsOpen() {" << endl;
+    indent_up();
+    f_types_ << indent() << "cancel()" << endl;
+    f_types_ << indent() << "return" << endl;
+    indent_down();
+    f_types_ << indent() << "}" << endl;
+    indent_down();
+    f_types_ << indent() << "}" << endl;
+    indent_down();
+    f_types_ << indent() << "}" << endl;
+    indent_down();
+    f_types_ << indent() << "}(tickerCtx, cancel)" << endl;
+    indent_down();
+    f_types_ << indent() << "}" << endl << endl;
+  } else {
+    // Make sure we don't get the defined but unused compiling error.
+    f_types_ << indent() << "_ = tickerCancel" << endl << endl;
+  }
 
   if (!tfunction->is_oneway()) {
     f_types_ << indent() << "result := " << resultname << "{}" << endl;
   }
   bool need_reference = type_need_reference(tfunction->get_returntype());
   if (!tfunction->is_oneway() && !tfunction->get_returntype()->is_void()) {
-    f_types_ << "var retval " << type_to_go_type(tfunction->get_returntype()) << endl;
+    f_types_ << indent() << "var retval " << type_to_go_type(tfunction->get_returntype()) << endl;
   }
 
   f_types_ << indent() << "var err2 error" << endl;
@@ -2818,6 +2871,7 @@ void t_go_generator::generate_process_function(t_service* tservice, t_function* 
   }
 
   f_types_ << "); err2 != nil {" << endl;
+  f_types_ << indent() << "  tickerCancel()" << endl;
 
   t_struct* exceptions = tfunction->get_xceptions();
   const vector<t_field*>& x_fields = exceptions->get_members();
@@ -2836,6 +2890,11 @@ void t_go_generator::generate_process_function(t_service* tservice, t_function* 
   }
 
   if (!tfunction->is_oneway()) {
+    // Avoid writing the error to the wire if it's ErrAbandonRequest
+    f_types_ << indent() << "  if err2 == thrift.ErrAbandonRequest {" << endl;
+    f_types_ << indent() << "    return false, err2" << endl;
+    f_types_ << indent() << "  }" << endl;
+
     f_types_ << indent() << "  x := thrift.NewTApplicationException(thrift.INTERNAL_ERROR, "
                               "\"Internal error processing " << escape_string(tfunction->get_name())
                << ": \" + err2.Error())" << endl;
@@ -2864,10 +2923,11 @@ void t_go_generator::generate_process_function(t_service* tservice, t_function* 
       }
       f_types_ << "retval" << endl;
       indent_down();
-      f_types_ << "}" << endl;
+      f_types_ << indent() << "}" << endl;
     } else {
       f_types_ << endl;
     }
+    f_types_ << indent() << "tickerCancel()" << endl;
     f_types_ << indent() << "if err2 = oprot.WriteMessageBegin(ctx, \""
                << escape_string(tfunction->get_name()) << "\", thrift.REPLY, seqId); err2 != nil {"
                << endl;
@@ -2889,6 +2949,7 @@ void t_go_generator::generate_process_function(t_service* tservice, t_function* 
     f_types_ << indent() << "return true, err" << endl;
   } else {
     f_types_ << endl;
+    f_types_ << indent() << "tickerCancel()" << endl;
     f_types_ << indent() << "return true, nil" << endl;
   }
   indent_down();
