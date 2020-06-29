@@ -543,10 +543,12 @@ validate(_Req, {{struct, union, StructDef} = Type, Data = {Name, Value}}, Path)
     end;
 validate(Req, {{struct, _Flavour, {Mod, Name} = Type}, Data}, Path)
   when is_tuple(Data) ->
-    case Mod:record_name(Name) of
+    try Mod:record_name(Name) of
       RName when RName =:= element(1, Data) ->
         validate(Req, {Mod:struct_info(Name), Data}, Path);
       _ ->
+        throw({invalid, Path, Type, Data})
+    catch error:badarg ->
         throw({invalid, Path, Type, Data})
     end;
 validate(_Req, {{struct, _Flavour, StructDef}, Data}, Path)
