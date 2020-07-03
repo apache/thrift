@@ -94,7 +94,7 @@ public abstract class FrameWriter {
   public abstract void withOnlyPayload(byte[] payload, int offset, int length);
 
   protected abstract ByteBuffer buildFrame(byte[] header, int headerOffset, int headerLength,
-                                           byte[] payload, int payloadOffset, int payloadeLength);
+                                           byte[] payload, int payloadOffset, int payloadLength);
 
   /**
    * Nonblocking write to the underlying transport.
