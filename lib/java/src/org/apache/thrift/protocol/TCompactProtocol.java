@@ -361,7 +361,7 @@ public class TCompactProtocol extends TProtocol {
    * Write a string to the wire with a varint size preceding.
    */
   public void writeString(String str) throws TException {
-    byte[] bytes = str.getBytes(StandardCharsets.UTF_8);
+    byte[] bytes = str == null ? new byte[0] : str.getBytes(StandardCharsets.UTF_8);
     writeBinary(bytes, 0, bytes.length);
   }
 
@@ -369,6 +369,10 @@ public class TCompactProtocol extends TProtocol {
    * Write a byte array, using a varint for the size.
    */
   public void writeBinary(ByteBuffer bin) throws TException {
+    if (bin == null) {
+      bin = ByteBuffer.wrap(new byte[0]);
+    }
+
     int length = bin.limit() - bin.position();
     writeBinary(bin.array(), bin.position() + bin.arrayOffset(), length);
   }

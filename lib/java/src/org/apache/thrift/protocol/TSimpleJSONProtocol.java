@@ -305,6 +305,10 @@ public class TSimpleJSONProtocol extends TProtocol {
 
   @Override
   public void writeString(String str) throws TException {
+    if (str == null) {
+      str = "";
+    }
+
     writeContext_.write();
     int length = str.length();
     StringBuffer escape = new StringBuffer(length + 16);
@@ -359,6 +363,10 @@ public class TSimpleJSONProtocol extends TProtocol {
 
   @Override
   public void writeBinary(ByteBuffer bin) throws TException {
+    if (bin == null) {
+      bin = ByteBuffer.wrap(new byte[0]);
+    }
+
     // TODO(mcslee): Fix this
     writeString(new String(bin.array(), bin.position() + bin.arrayOffset(),
         bin.limit() - bin.position() - bin.arrayOffset(),

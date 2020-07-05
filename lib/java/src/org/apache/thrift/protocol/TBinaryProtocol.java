@@ -222,13 +222,17 @@ public class TBinaryProtocol extends TProtocol {
 
   @Override
   public void writeString(String str) throws TException {
-    byte[] dat = str.getBytes(StandardCharsets.UTF_8);
+    byte[] dat = str == null ? new byte[0] : str.getBytes(StandardCharsets.UTF_8);
     writeI32(dat.length);
     trans_.write(dat, 0, dat.length);
   }
 
   @Override
   public void writeBinary(ByteBuffer bin) throws TException {
+    if (bin == null) {
+      bin = ByteBuffer.wrap(new byte[0]);
+    }
+
     int length = bin.limit() - bin.position();
     writeI32(length);
     trans_.write(bin.array(), bin.position() + bin.arrayOffset(), length);

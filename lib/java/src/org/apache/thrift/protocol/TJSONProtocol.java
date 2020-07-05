@@ -616,12 +616,16 @@ public class TJSONProtocol extends TProtocol {
 
   @Override
   public void writeString(String str) throws TException {
-    byte[] b = str.getBytes(StandardCharsets.UTF_8);
+    byte[] b = str == null ? new byte[0] : str.getBytes(StandardCharsets.UTF_8);
     writeJSONString(b);
   }
 
   @Override
   public void writeBinary(ByteBuffer bin) throws TException {
+    if (bin == null) {
+      bin = ByteBuffer.wrap(new byte[0]);
+    }
+
     writeJSONBase64(bin.array(), bin.position() + bin.arrayOffset(), bin.limit() - bin.position() - bin.arrayOffset());
   }
 
