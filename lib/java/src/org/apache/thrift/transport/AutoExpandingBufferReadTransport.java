@@ -51,8 +51,10 @@ public class AutoExpandingBufferReadTransport extends TTransport {
   @Override
   public final int read(byte[] target, int off, int len) throws TTransportException {
     int amtToRead = Math.min(len, getBytesRemainingInBuffer());
-    System.arraycopy(buf.array(), pos, target, off, amtToRead);
-    consumeBuffer(amtToRead);
+    if(amtToRead > 0){
+      System.arraycopy(buf.array(), pos, target, off, amtToRead);
+      consumeBuffer(amtToRead);
+    }
     return amtToRead;
   }
 
@@ -81,4 +83,3 @@ public class AutoExpandingBufferReadTransport extends TTransport {
     return limit - pos;
   }
 }
-  
