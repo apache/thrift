@@ -50,6 +50,7 @@ check-local: all py3-test
 	$(PYTHON) test/thrift_json.py
 	$(PYTHON) test/thrift_transport.py
 	$(PYTHON) test/test_sslsocket.py
+	$(PYTHON) test/test_socket.py
 	$(PYTHON) test/thrift_TBinaryProtocol.py
 	$(PYTHON) test/thrift_TZlibTransport.py
 	$(PYTHON) test/thrift_TCompactProtocol.py
