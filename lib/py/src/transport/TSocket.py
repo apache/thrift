@@ -74,7 +74,31 @@ class TSocket(TSocketBase):
         self.handle = h
 
     def isOpen(self):
-        return self.handle is not None
+        if self.handle is None:
+            return False
+
+        # this lets us cheaply see if the other end of the socket is still
+        # connected. if disconnected, we'll get EOF back (expressed as zero
+        # bytes of data) otherwise we'll get one byte or an error indicating
+        # we'd have to block for data.
+        #
+        # note that we're not doing this with socket.MSG_DONTWAIT because 1)
+        # it's linux-specific and 2) gevent-patched sockets hide EAGAIN from us
+        # when timeout is non-zero.
+        original_timeout = self.handle.gettimeout()
+        try:
+            self.handle.settimeout(0)
+            try:
+                peeked_bytes = self.handle.recv(1, socket.MSG_PEEK)
+            except (socket.error, OSError) as exc:  # on modern python this is just BlockingIOError
+                if exc.errno in (errno.EWOULDBLOCK, errno.EAGAIN):
+                    return True
+                return False
+        finally:
+            self.handle.settimeout(original_timeout)
+
+        # the length will be zero if we got EOF (indicating connection closed)
+        return len(peeked_bytes) == 1
 
     def setTimeout(self, ms):
         if ms is None:
