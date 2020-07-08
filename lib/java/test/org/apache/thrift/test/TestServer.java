@@ -19,6 +19,9 @@
 
 package org.apache.thrift.test;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.net.InetAddress;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -278,7 +281,14 @@ public class TestServer {
         // SSL socket
         TServerSocket tServerSocket = null;
         if (ssl) {
-          tServerSocket = TSSLTransportFactory.getServerSocket(port, 0);
+          TSSLTransportFactory.TSSLTransportParameters params = new TSSLTransportFactory.TSSLTransportParameters();
+          String path = new File("").getCanonicalPath();
+          System.out.println(path);
+          path = path.endsWith("java"+ File.separator + "build") ? path.substring(0, path.length() - 6) : path;
+          path = path + File.separator + "test" + File.separator + ".keystore";
+          System.out.println("Keystore-path: " + path);
+          params.setKeyStore(new FileInputStream(path), "thrift");
+          tServerSocket = TSSLTransportFactory.getServerSocket(port, 0, InetAddress.getByName("localhost"), params);
         } else {
           tServerSocket = new TServerSocket(new TServerSocket.ServerSocketTransportArgs().port(port));
         }

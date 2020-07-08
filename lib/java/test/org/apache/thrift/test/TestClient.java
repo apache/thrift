@@ -19,6 +19,8 @@
 
 package org.apache.thrift.test;
 
+import java.io.File;
+import java.io.FileInputStream;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -106,7 +108,7 @@ public class TestClient {
         } else if (args[i].equals("--zlib")) {
           zlib = true;
         } else if (args[i].equals("--client")) {
-          http_client = true;  
+          http_client = true;
         } else if (args[i].equals("--help")) {
           System.out.println("Allowed options:");
           System.out.println("  --help\t\t\tProduce help message");
@@ -157,7 +159,7 @@ public class TestClient {
       if (transport_type.equals("http")) {
         String url = "http://" + host + ":" + port + "/test/service";
         if (http_client == true) {
-          
+
           transport = new THttpClient(url, HttpClients.createDefault());
         } else {
           transport = new THttpClient(url);
@@ -165,7 +167,11 @@ public class TestClient {
       } else {
         TSocket socket = null;
         if (ssl == true) {
-          socket = TSSLTransportFactory.getClientSocket(host, port, 0);
+          TSSLTransportFactory.TSSLTransportParameters params = new TSSLTransportFactory.TSSLTransportParameters();
+          String path = new File("").getCanonicalPath() + File.separator + "test" + File.separator + ".truststore";
+          System.out.println("Truststore-path: " + path);
+          params.setKeyStore(new FileInputStream(path), "thrift");
+          socket = TSSLTransportFactory.getClientSocket(host, port, 0, params);
         } else {
           socket = new TSocket(host, port);
         }
