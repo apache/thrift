@@ -93,7 +93,12 @@ BOOST_AUTO_TEST_CASE(multi_item_unordered_map_to_string) {
   std::unordered_map<int, std::string> m;
   m[12] = "abc";
   m[31] = "xyz";
-  BOOST_CHECK_EQUAL(to_string(m), "{12: abc, 31: xyz}");
+  // Because it is an ordered_map, the resulting to_string
+  // could be one of the following
+  auto p1 = "{12: abc, 31: xyz}";
+  auto p2 = "{31: xyz, 12: abc}";
+  bool result = (to_string(m) == p1 || to_string(m) == p2);
+  BOOST_CHECK_EQUAL(result, true);
 }
 
 BOOST_AUTO_TEST_CASE(empty_set_to_string) {
@@ -129,7 +134,12 @@ BOOST_AUTO_TEST_CASE(multi_item_unordered_set_to_string) {
   std::unordered_set<char> s;
   s.insert('a');
   s.insert('z');
-  BOOST_CHECK_EQUAL(to_string(s), "{a, z}");
+  // Because it is an ordered_map, the resulting to_string
+  // could be one of the following
+  auto p1 = "{a, z}";
+  auto p2 = "{z, a}";
+  bool result = (to_string(s) == p1 || to_string(s) == p2);
+  BOOST_CHECK_EQUAL(result, true);
 }
 
 BOOST_AUTO_TEST_CASE(generated_empty_object_to_string) {
