@@ -278,8 +278,10 @@ public class TBinaryProtocol extends TProtocol {
 
   @Override
   public TMap readMapBegin() throws TException {
-    TMap map = new TMap(readByte(), readByte(), readI32());
-    checkContainerReadLength(map.size);
+    int size = readI32();
+    checkContainerReadLength(size);
+
+    TMap map = new TMap(readByte(), readByte(), size);
     return map;
   }
 
@@ -288,8 +290,10 @@ public class TBinaryProtocol extends TProtocol {
 
   @Override
   public TList readListBegin() throws TException {
-    TList list = new TList(readByte(), readI32());
-    checkContainerReadLength(list.size);
+    int size = readI32();
+    checkContainerReadLength(size);
+
+    TList list = new TList(readByte(), size);
     return list;
   }
 
@@ -298,8 +302,10 @@ public class TBinaryProtocol extends TProtocol {
 
   @Override
   public TSet readSetBegin() throws TException {
-    TSet set = new TSet(readByte(), readI32());
-    checkContainerReadLength(set.size);
+    int size = readI32();
+    checkContainerReadLength(size);
+
+    TSet set = new TSet(readByte(), size);
     return set;
   }
 
