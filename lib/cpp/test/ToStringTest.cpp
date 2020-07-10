@@ -134,7 +134,7 @@ BOOST_AUTO_TEST_CASE(multi_item_unordered_set_to_string) {
   std::unordered_set<char> s;
   s.insert('a');
   s.insert('z');
-  // Because it is an ordered_map, the resulting to_string
+  // Because it is an ordered_set, the resulting to_string
   // could be one of the following
   auto p1 = "{a, z}";
   auto p2 = "{z, a}";
