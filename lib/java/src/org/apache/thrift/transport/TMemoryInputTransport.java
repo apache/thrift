@@ -47,6 +47,8 @@ public final class TMemoryInputTransport extends TTransport {
 
   public void clear() {
     buf_ = null;
+    pos_ = 0;
+    endPos_ = 0;
   }
 
   @Override
