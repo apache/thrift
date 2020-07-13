@@ -313,6 +313,7 @@ begin
   pType := PTypeInfo(TypeInfo(T));
   if Assigned(pType) then begin
     case pType^.Kind of
+
       tkInterface : begin
         pIntf := PInterface(@value);
         if Supports( pIntf^, ISupportsToString, stos) then begin
@@ -320,6 +321,17 @@ begin
           Exit;
         end;
       end;
+
+      tkEnumeration : begin
+        case SizeOf(value) of
+          1 : begin result := EnumUtils<T>.ToString( PShortInt(@value)^);  Exit; end;
+          2 : begin result := EnumUtils<T>.ToString( PSmallInt(@value)^);  Exit; end;
+          4 : begin result := EnumUtils<T>.ToString( PLongInt(@value)^);  Exit; end;
+        else
+          ASSERT(FALSE); // in theory, this should not happen
+        end;
+      end;
+
     end;
   end;
 

@@ -37,56 +37,19 @@ uses
   Thrift.Stream in '..\..\src\Thrift.Stream.pas',
   Thrift.WinHTTP in '..\..\src\Thrift.WinHTTP.pas',
   Thrift.TypeRegistry in '..\..\src\Thrift.TypeRegistry.pas',
-  DebugProtoTest;
+  Thrift.Test, // in 'gen-delphi\Thrift.Test.pas',
+  Test.TypeRegistry,
+  Test.EnumToString;
 
-type
-  Tester<T : IInterface> = class
-  public
-    class procedure Test;
-  end;
-
-class procedure Tester<T>.Test;
-var instance : T;
-    name : string;
-begin
-  instance := TypeRegistry.Construct<T>;
-  name := GetTypeName(TypeInfo(T));
-  if instance <> nil
-  then Writeln( name, ' = ok')
-  else begin
-    Writeln( name, ' = failed');
-    raise Exception.Create( 'Test with '+name+' failed!');
-  end;
-end;
 
 begin
-  Writeln('Testing ...');
-  Tester<IDoubles>.Test;
-  Tester<IOneOfEach>.Test;
-  Tester<IBonk>.Test;
-  Tester<INesting>.Test;
-  Tester<IHolyMoley>.Test;
-  Tester<IBackwards>.Test;
-  Tester<IEmpty>.Test;
-  Tester<IWrapper>.Test;
-  Tester<IRandomStuff>.Test;
-  Tester<IBase64>.Test;
-  Tester<ICompactProtoTestStruct>.Test;
-  Tester<ISingleMapTestStruct>.Test;
-  Tester<IBlowUp>.Test;
-  Tester<IReverseOrderStruct>.Test;
-  Tester<IStructWithSomeEnum>.Test;
-  Tester<ITestUnion>.Test;
-  Tester<ITestUnionMinusStringField>.Test;
-  Tester<IComparableUnion>.Test;
-  Tester<IStructWithAUnion>.Test;
-  Tester<IPrimitiveThenStruct>.Test;
-  Tester<IStructWithASomemap>.Test;
-  Tester<IBigFieldIdStruct>.Test;
-  Tester<IBreaksRubyCompactProtocol>.Test;
-  Tester<ITupleProtocolTestStruct>.Test;
-  Writeln('Completed.');
+  try
+    Test.TypeRegistry.RunTest;
+    Test.EnumToString.RunTest;
 
-
+    Writeln('Completed.');
+  except
+    on e:Exception do Writeln(e.ClassName,': ',e.Message);
+  end;
 end.
 
