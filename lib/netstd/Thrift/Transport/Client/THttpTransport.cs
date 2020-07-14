@@ -168,7 +168,7 @@ namespace Thrift.Transport.Client
         /// A client handler with deflate and gZip compression-decompression algorithms and any client
         /// certificates passed in via <c>certificates</c>.
         /// </returns>
-        public static HttpClientHandler CreateHttpClientHandler(X509Certificate[] certificates = null)
+        public virtual HttpClientHandler CreateHttpClientHandler(X509Certificate[] certificates = null)
         {
             var handler = new HttpClientHandler();
             if (certificates != null)
