@@ -1956,6 +1956,10 @@ void t_netstd_generator::generate_service_helpers(ostream& out, t_service* tserv
     vector<t_function*> functions = tservice->get_functions();
     vector<t_function*>::iterator f_iter;
 
+    out << indent() << "public class InternalStructs" << endl;
+    out << indent() << "{" << endl;
+    indent_up();
+
     for (f_iter = functions.begin(); f_iter != functions.end(); ++f_iter)
     {
         t_struct* ts = (*f_iter)->get_arglist();
@@ -1963,6 +1967,9 @@ void t_netstd_generator::generate_service_helpers(ostream& out, t_service* tserv
         generate_netstd_struct_definition(out, ts, false, true);
         generate_function_helpers(out, *f_iter);
     }
+
+    indent_down();
+    out << indent() << "}" << endl << endl;
 }
 
 void t_netstd_generator::generate_service_client(ostream& out, t_service* tservice)
@@ -2013,7 +2020,7 @@ void t_netstd_generator::generate_service_client(ostream& out, t_service* tservi
             << "\", TMessageType." << ((*functions_iterator)->is_oneway() ? "Oneway" : "Call") 
             << ", SeqId), cancellationToken);" << endl
             << indent() << endl
-            << indent() << "var args = new " << argsname << "() {" << endl;
+            << indent() << "var args = new InternalStructs." << argsname << "() {" << endl;
         indent_up();
 
         t_struct* arg_struct = (*functions_iterator)->get_arglist();
@@ -2057,7 +2064,7 @@ void t_netstd_generator::generate_service_client(ostream& out, t_service* tservi
 
             out << indent() << "}" << endl
                 << endl
-                << indent() << "var result = new " << resultname << "();" << endl
+                << indent() << "var result = new InternalStructs." << resultname << "();" << endl
                 << indent() << "await result.ReadAsync(InputProtocol, cancellationToken);" << endl
                 << indent() << "await InputProtocol.ReadMessageEndAsync(cancellationToken);" << endl;
 
@@ -2269,13 +2276,13 @@ void t_netstd_generator::generate_process_function_async(ostream& out, t_service
     string argsname = tfunction->get_name() + "Args";
     string resultname = tfunction->get_name() + "Result";
 
-    out << indent() << "var args = new " << argsname << "();" << endl
+    out << indent() << "var args = new InternalStructs." << argsname << "();" << endl
         << indent() << "await args.ReadAsync(iprot, cancellationToken);" << endl
         << indent() << "await iprot.ReadMessageEndAsync(cancellationToken);" << endl;
 
     if (!tfunction->is_oneway())
     {
-        out << indent() << "var result = new " << resultname << "();" << endl;
+        out << indent() << "var result = new InternalStructs." << resultname << "();" << endl;
     }
 
     out << indent() << "try" << endl
@@ -3007,6 +3014,7 @@ void t_netstd_generator::prepare_member_name_mapping(void* scope, const vector<t
 
     // prevent name conflicts with struct (CS0542 error)
     used_member_names.insert(structname);
+    used_member_names.insert("Isset");
 
     // prevent name conflicts with known methods (THRIFT-2942)
     used_member_names.insert("Read");
@@ -3103,12 +3111,12 @@ string t_netstd_generator::type_name(t_type* ttype)
     string the_name = check_and_correct_struct_name(normalize_name(ttype->get_name()));
 
     t_program* program = ttype->get_program();
-    if (program != nullptr && program != program_)
+    if (program != nullptr)// && program != program_)
     {
-        string ns = program->get_namespace("netstd");
+        string ns =  program->get_namespace("netstd");
         if (!ns.empty())
         {
-            return ns + "." + the_name;
+            return "global::" + ns + "." + the_name;
         }
     }
 
@@ -3417,11 +3425,11 @@ string t_netstd_generator::get_enum_class_name(t_type* type)
 {
     string package = "";
     t_program* program = type->get_program();
-    if (program != nullptr && program != program_)
+    if (program != nullptr) // && program != program_)
     {
         package = program->get_namespace("netstd") + ".";
     }
-    return package + type->get_name();
+    return "global::" + package + type->get_name();
 }
 
 THRIFT_REGISTER_GENERATOR(
