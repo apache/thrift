@@ -990,7 +990,7 @@ void t_netstd_generator::generate_netstd_struct_definition(ostream& out, t_struc
                 {
                     out << indent() << "[DataMember]" << endl;
                 }
-                out << indent() << "public bool " << normalize_name((*m_iter)->get_name()) << ";" << endl;
+                out << indent() << "public bool " << get_isset_name(normalize_name((*m_iter)->get_name())) << ";" << endl;
             }
         }
 
@@ -1011,7 +1011,7 @@ void t_netstd_generator::generate_netstd_struct_definition(ostream& out, t_struc
                     out << indent() << "public bool ShouldSerialize" << prop_name(*m_iter) << "()" << endl
                         << indent() << "{" << endl;
                     indent_up();
-                    out << indent() << "return __isset." << normalize_name((*m_iter)->get_name()) << ";" << endl;
+                    out << indent() << "return __isset." << get_isset_name(normalize_name((*m_iter)->get_name())) << ";" << endl;
                     indent_down();
                     out << indent() << "}" << endl << endl;
                 }
@@ -1041,7 +1041,7 @@ void t_netstd_generator::generate_netstd_struct_definition(ostream& out, t_struc
             {
                 print_const_value(out, "this._" + (*m_iter)->get_name(), t, (*m_iter)->get_value(), true, true);
                 // Optionals with defaults are marked set
-                out << indent() << "this.__isset." << normalize_name((*m_iter)->get_name()) << " = true;" << endl;
+                out << indent() << "this.__isset." << get_isset_name(normalize_name((*m_iter)->get_name())) << " = true;" << endl;
             }
         }
     }
@@ -1184,8 +1184,8 @@ void t_netstd_generator::generate_netstd_deepcopy_method(ostream& out, t_struct*
 
         generate_null_check_end( out, *m_iter);
         if( !is_required) {
-            out << indent() << tmp_instance << ".__isset." << normalize_name((*m_iter)->get_name())
-                 << " = this.__isset." << normalize_name((*m_iter)->get_name()) << ";" << endl;
+            out << indent() << tmp_instance << ".__isset." << get_isset_name(normalize_name((*m_iter)->get_name()))
+                 << " = this.__isset." << get_isset_name(normalize_name((*m_iter)->get_name())) << ";" << endl;
         }
     }
 
@@ -1317,7 +1317,7 @@ void t_netstd_generator::generate_null_check_begin(ostream& out, t_field* tfield
             if( !first) {
                 out << " && ";
             }
-            out << "__isset." << normalize_name(tfield->get_name());
+            out << "__isset." << get_isset_name(normalize_name(tfield->get_name()));
         }
         
         out << ")" << endl
@@ -1421,7 +1421,7 @@ void t_netstd_generator::generate_netstd_struct_result_writer(ostream& out, t_st
                 out << indent() << "else if";
             }
 
-            out << "(this.__isset." << normalize_name((*f_iter)->get_name()) << ")" << endl
+            out << "(this.__isset." << get_isset_name(normalize_name((*f_iter)->get_name())) << ")" << endl
                 << indent() << "{" << endl;
             indent_up();
 
@@ -1802,9 +1802,9 @@ void t_netstd_generator::generate_netstd_struct_equals(ostream& out, t_struct* t
         }
         if (!field_is_required((*f_iter)))
         {
-            out << "((__isset." << normalize_name((*f_iter)->get_name()) << " == other.__isset."
-                << normalize_name((*f_iter)->get_name()) << ") && ((!__isset."
-                << normalize_name((*f_iter)->get_name()) << ") || (";
+            out << "((__isset." << get_isset_name(normalize_name((*f_iter)->get_name())) << " == other.__isset."
+                << get_isset_name(normalize_name((*f_iter)->get_name())) << ") && ((!__isset."
+                << get_isset_name(normalize_name((*f_iter)->get_name())) << ") || (";
         }
         t_type* ttype = (*f_iter)->get_type();
         if (ttype->is_container() || ttype->is_binary())
@@ -2082,7 +2082,7 @@ void t_netstd_generator::generate_service_client(ostream& out, t_service* tservi
             vector<t_field*>::const_iterator x_iter;
             for (x_iter = xceptions.begin(); x_iter != xceptions.end(); ++x_iter)
             {
-                out << indent() << "if (result.__isset." << normalize_name((*x_iter)->get_name()) << ")" << endl
+                out << indent() << "if (result.__isset." << get_isset_name(normalize_name((*x_iter)->get_name())) << ")" << endl
                     << indent() << "{" << endl;
                 indent_up();
                 out << indent() << "throw result." << prop_name(*x_iter) << ";" << endl;
@@ -2910,7 +2910,7 @@ void t_netstd_generator::generate_netstd_property(ostream& out, t_field* tfield,
         {
             if (generateIsset)
             {
-                out << indent() << "__isset." << normalize_name(tfield->get_name()) << " = value.HasValue;" << endl;
+                out << indent() << "__isset." << get_isset_name(normalize_name(tfield->get_name())) << " = value.HasValue;" << endl;
             }
             out << indent() << "if (value.HasValue) this." << fieldPrefix + tfield->get_name() << " = value.Value;" << endl;
         }
@@ -2918,7 +2918,7 @@ void t_netstd_generator::generate_netstd_property(ostream& out, t_field* tfield,
         {
             if (generateIsset)
             {
-                out << indent() << "__isset." << normalize_name(tfield->get_name()) << " = true;" << endl;
+                out << indent() << "__isset." << get_isset_name(normalize_name(tfield->get_name())) << " = true;" << endl;
             }
             out << indent() << "this." << fieldPrefix + tfield->get_name() << " = value;" << endl;
         }
@@ -3065,6 +3065,11 @@ string t_netstd_generator::convert_to_pascal_case(const string& str) {
     first_character = false;
   }
   return out;
+}
+
+
+string t_netstd_generator::get_isset_name(const string& str) {
+  return ("Isset" != str) ? str : str + "_";
 }
 
 
