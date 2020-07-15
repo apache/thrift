@@ -166,6 +166,7 @@ private:
   void prepare_member_name_mapping(void* scope, const vector<t_field*>& members, const string& structname);
   void cleanup_member_name_mapping(void* scope);
   string get_mapped_member_name(string oldname);
+  string get_isset_name(const string& str);
   string get_deep_copy_method_call(t_type* ttype, bool& needs_typecast);
   void collect_extensions_types(t_struct* tstruct);
   void collect_extensions_types(t_type* ttype);

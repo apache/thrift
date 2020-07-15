@@ -32,14 +32,15 @@ struct AsyncProcessor  { 1: optional i32 foo }
 struct Client          { 1: optional i32 foo }
 struct IAsync          { 1: optional i32 foo }
 
+struct ReservedMemberName { 1: optional i32 Isset }
 
 service MyService{
     BrokenResult Broken( 1 : BrokenArgs  foo)
     WorksRslt     Works( 1 : WorksArrrgs foo)
 
-	InternalStructs InternalStructs( 1: InternalStructs foo)
-	AsyncProcessor  AsyncProcessor ( 1: AsyncProcessor  foo)
-	Client          Client         ( 1: Client  foo)
-	IAsync          IAsync         ( 1: IAsync  foo)
+    InternalStructs InternalStructs( 1: InternalStructs foo)
+    AsyncProcessor  AsyncProcessor ( 1: AsyncProcessor  foo)
+    Client          Client         ( 1: Client  foo)
+    IAsync          IAsync         ( 1: IAsync  foo)
 }
 
