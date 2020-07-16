@@ -141,10 +141,12 @@ class THttpClient(TTransportBase):
     def write(self, buf):
         self.__wbuf.write(buf)
 
+    def clearResponse(self):
+        if self.__http_response:
+            self.__http_response.read()
+
     def flush(self):
-        if self.isOpen():
-            self.close()
-        self.open()
+        self.clearResponse()
 
         # Pull data out of buffer
         data = self.__wbuf.getvalue()
