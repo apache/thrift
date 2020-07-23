@@ -86,6 +86,7 @@ struct _ThriftProtocol
 
   /* protected */
   ThriftTransport *transport;
+
 };
 
 typedef struct _ThriftProtocolClass ThriftProtocolClass;
@@ -171,6 +172,7 @@ struct _ThriftProtocolClass
   gint32 (*read_string) (ThriftProtocol *protocol, gchar **str, GError **error);
   gint32 (*read_binary) (ThriftProtocol *protocol, gpointer *buf,
                          guint32 *len, GError **error);
+  gint (*get_min_serialized_size) (ThriftProtocol *protocol, ThriftType type, GError **error);
 };
 
 /* used by THRIFT_TYPE_PROTOCOL */
@@ -316,6 +318,9 @@ gint32 thrift_protocol_read_string (ThriftProtocol *protocol,
 gint32 thrift_protocol_read_binary (ThriftProtocol *protocol,
                                     gpointer *buf, guint32 *len,
                                     GError **error);
+
+gint thrift_protocol_get_min_serialized_size (ThriftProtocol *protocol,
+		                              ThriftType type, GError **error);
 
 gint32 thrift_protocol_skip (ThriftProtocol *protocol, ThriftType type,
                              GError **error);

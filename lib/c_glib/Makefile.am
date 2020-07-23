@@ -32,6 +32,7 @@ AM_CFLAGS = -Wall -Wextra -pedantic
 libthrift_c_glib_la_SOURCES = src/thrift/c_glib/thrift.c \
                               src/thrift/c_glib/thrift_struct.c \
                               src/thrift/c_glib/thrift_application_exception.c \
+                              src/thrift/c_glib/thrift_configuration.c \
                               src/thrift/c_glib/processor/thrift_processor.c \
                               src/thrift/c_glib/processor/thrift_dispatch_processor.c \
                               src/thrift/c_glib/processor/thrift_multiplexed_processor.c \
@@ -67,7 +68,8 @@ include_thrift_HEADERS = \
                          $(top_builddir)/config.h \
                          src/thrift/c_glib/thrift.h \
                          src/thrift/c_glib/thrift_application_exception.h \
-                         src/thrift/c_glib/thrift_struct.h
+                         src/thrift/c_glib/thrift_struct.h \
+                         src/thrift/c_glib/thrift_configuration.h
 
 include_protocoldir = $(include_thriftdir)/protocol
 include_protocol_HEADERS = src/thrift/c_glib/protocol/thrift_protocol.h \

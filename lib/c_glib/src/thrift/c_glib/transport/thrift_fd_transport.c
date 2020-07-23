@@ -26,6 +26,7 @@
 #include <glib/gstdio.h>
 
 #include <thrift/c_glib/thrift.h>
+#include <thrift/c_glib/thrift_configuration.h>
 #include <thrift/c_glib/transport/thrift_transport.h>
 #include <thrift/c_glib/transport/thrift_fd_transport.h>
 
@@ -33,7 +34,10 @@
 enum _ThriftFDTransportProperties
 {
   PROP_0,
-  PROP_THRIFT_FD_TRANSPORT_FD
+  PROP_THRIFT_FD_TRANSPORT_FD,
+  PROP_THRIFT_FD_TRANSPORT_CONFIGURATION,
+  PROP_THRIFT_FD_TRANSPORT_REMAINING_MESSAGE_SIZE,
+  PROP_THRIFT_FD_TRANSPORT_KNOW_MESSAGE_SIZE,
 };
 
 G_DEFINE_TYPE (ThriftFDTransport, thrift_fd_transport, THRIFT_TYPE_TRANSPORT)
@@ -87,6 +91,12 @@ thrift_fd_transport_read (ThriftTransport *transport, gpointer buf,
   ssize_t n;
 
   t = THRIFT_FD_TRANSPORT (transport);
+  ThriftTransportClass *ttc = THRIFT_TRANSPORT_GET_CLASS (transport);
+  if(!ttc->checkReadBytesAvailable(transport, len, error))
+  {
+    return -1;
+  }
+
   n = read (t->fd, (guint8 *) buf, len);
   if (n == -1) {
     g_set_error (error,
@@ -157,6 +167,12 @@ thrift_fd_transport_flush (ThriftTransport *transport, GError **error)
 {
   ThriftFDTransport *t;
   t = THRIFT_FD_TRANSPORT (transport);
+  ThriftTransportClass *ttc = THRIFT_TRANSPORT_GET_CLASS (transport);
+  if(!ttc->resetConsumedMessageSize (transport, -1, error))
+  {
+    return FALSE;
+  }
+
   if (fsync (t->fd) == -1) {
     g_set_error (error,
                  THRIFT_TRANSPORT_ERROR,
@@ -194,9 +210,20 @@ thrift_fd_transport_get_property (GObject *object, guint property_id,
 
   t = THRIFT_FD_TRANSPORT (object);
 
+  ThriftTransport *tt = THRIFT_TRANSPORT (object);
+
   switch (property_id) {
     case PROP_THRIFT_FD_TRANSPORT_FD:
       g_value_set_int (value, t->fd);
+      break;
+    case PROP_THRIFT_FD_TRANSPORT_CONFIGURATION:
+      g_value_set_object (value, tt->configuration);
+      break;
+    case PROP_THRIFT_FD_TRANSPORT_REMAINING_MESSAGE_SIZE:
+      g_value_set_long (value, tt->remainingMessageSize_);
+      break;
+    case PROP_THRIFT_FD_TRANSPORT_KNOW_MESSAGE_SIZE:
+      g_value_set_long (value, tt->knowMessageSize_);
       break;
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, property_id, pspec);
@@ -215,9 +242,20 @@ thrift_fd_transport_set_property (GObject *object, guint property_id,
 
   t = THRIFT_FD_TRANSPORT (object);
 
+  ThriftTransport *tt = THRIFT_TRANSPORT (object);
+
   switch (property_id) {
     case PROP_THRIFT_FD_TRANSPORT_FD:
       t->fd = g_value_get_int (value);
+      break;
+    case PROP_THRIFT_FD_TRANSPORT_CONFIGURATION:
+      tt->configuration = g_value_dup_object (value);
+      break;
+    case PROP_THRIFT_FD_TRANSPORT_REMAINING_MESSAGE_SIZE:
+      tt->remainingMessageSize_ = g_value_get_long (value);
+      break;
+    case PROP_THRIFT_FD_TRANSPORT_KNOW_MESSAGE_SIZE:
+      tt->knowMessageSize_ = g_value_get_long (value);
       break;
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, property_id, pspec);
@@ -251,6 +289,38 @@ thrift_fd_transport_class_init (ThriftFDTransportClass *cls)
                                  G_PARAM_READWRITE);
   g_object_class_install_property (gobject_class,
                                    PROP_THRIFT_FD_TRANSPORT_FD,
+                                   param_spec);
+
+  param_spec = g_param_spec_object ("configuration",
+                                    "configuration (construct)",
+                                    "Thrift Configuration",
+                                    THRIFT_TYPE_CONFIGURATION,
+                                    G_PARAM_CONSTRUCT_ONLY |
+                                    G_PARAM_READWRITE);
+  g_object_class_install_property (gobject_class,
+                                   PROP_THRIFT_FD_TRANSPORT_CONFIGURATION,
+                                   param_spec);
+
+  param_spec = g_param_spec_long ("remainingmessagesize",
+                                  "remainingmessagesize (construct)",
+                                  "Set the remaining message size",
+                                  0, /* min */
+                                  G_MAXINT32, /* max */
+                                  DEFAULT_MAX_MESSAGE_SIZE, /* default by construct */
+                                  G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY);
+  g_object_class_install_property (gobject_class,
+                                   PROP_THRIFT_FD_TRANSPORT_REMAINING_MESSAGE_SIZE,
+                                   param_spec);
+
+  param_spec = g_param_spec_long ("knowmessagesize",
+                                  "knowmessagesize (construct)",
+                                  "Set the known size of the message",
+                                  0, /* min */
+                                  G_MAXINT32, /* max */
+                                  DEFAULT_MAX_MESSAGE_SIZE, /* default by construct */
+                                  G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY);
+  g_object_class_install_property (gobject_class,
+                                   PROP_THRIFT_FD_TRANSPORT_KNOW_MESSAGE_SIZE,
                                    param_spec);
 
   gobject_class->finalize = thrift_fd_transport_finalize;

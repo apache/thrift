@@ -1051,6 +1051,8 @@ thrift_compact_protocol_read_map_begin (ThriftProtocol *protocol,
   gint32 msize;
 
   ThriftCompactProtocol *cp;
+  ThriftProtocol *tp = THRIFT_PROTOCOL (protocol);
+  ThriftTransportClass *ttc = THRIFT_TRANSPORT_GET_CLASS (tp->transport);
 
   g_return_val_if_fail (THRIFT_IS_COMPACT_PROTOCOL (protocol), -1);
 
@@ -1106,6 +1108,14 @@ thrift_compact_protocol_read_map_begin (ThriftProtocol *protocol,
     return -1;
   }
 
+  if(!ttc->checkReadBytesAvailable (THRIFT_TRANSPORT (tp->transport), 
+                                    msize * thrift_protocol_get_min_serialized_size (protocol, *key_type, error) + 
+                                    msize * thrift_protocol_get_min_serialized_size (protocol, *value_type, error),
+                                    error))
+  {
+    return -1;
+  }
+
   return xfer;
 }
 
@@ -1124,7 +1134,8 @@ thrift_compact_protocol_read_list_begin (ThriftProtocol *protocol,
                                          guint32 *size, GError **error)
 {
   ThriftCompactProtocol *cp;
-
+  ThriftProtocol *tp = THRIFT_PROTOCOL (protocol);
+  ThriftTransportClass *ttc = THRIFT_TRANSPORT_GET_CLASS (tp->transport);
   gint32 ret;
   gint32 xfer;
 
@@ -1171,6 +1182,13 @@ thrift_compact_protocol_read_list_begin (ThriftProtocol *protocol,
   }
   *element_type = ret;
   *size = (guint32) lsize;
+
+  if(!ttc->checkReadBytesAvailable (THRIFT_TRANSPORT (tp->transport), 
+                                    (lsize * thrift_protocol_get_min_serialized_size (protocol, *element_type, error)),
+                                    error))
+  {
+    return -1;
+  }
 
   return xfer;
 }
@@ -1479,6 +1497,48 @@ thrift_compact_protocol_read_binary (ThriftProtocol *protocol,
   return xfer;
 }
 
+gint
+thrift_compact_protocol_get_min_serialized_size (ThriftProtocol *protocol, ThriftType type, GError **error)
+{
+  THRIFT_UNUSED_VAR (protocol);
+
+  switch (type)
+  {
+    case T_STOP:
+         return 0;
+    case T_VOID:
+         return 0;
+    case T_BOOL:
+         return sizeof(gint8);
+    case T_DOUBLE:
+         return 8;
+    case T_BYTE:
+         return sizeof(gint8);
+    case T_I16:
+         return sizeof(gint8);
+    case T_I32:
+         return sizeof(gint8);
+    case T_I64:
+	 return sizeof(gint8);
+    case T_STRING:
+         return sizeof(gint8);
+    case T_STRUCT:
+         return 0;
+    case T_MAP:
+         return sizeof(gint8);
+    case T_SET:
+         return sizeof(gint8);
+    case T_LIST:
+         return sizeof(gint8);
+    default:
+         g_set_error(error,
+                     THRIFT_PROTOCOL_ERROR,
+                     THRIFT_PROTOCOL_ERROR_INVALID_DATA,
+                     "unrecognized type");
+         return -1;
+  }
+}
+
 /* property accessor */
 void
 thrift_compact_protocol_get_property (GObject *object, guint property_id,
@@ -1600,6 +1660,7 @@ thrift_compact_protocol_class_init (ThriftCompactProtocolClass *klass)
   cls->read_double = thrift_compact_protocol_read_double;
   cls->read_string = thrift_compact_protocol_read_string;
   cls->read_binary = thrift_compact_protocol_read_binary;
+  cls->get_min_serialized_size = thrift_compact_protocol_get_min_serialized_size;
 }
 
 static void

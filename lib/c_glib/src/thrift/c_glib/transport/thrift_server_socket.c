@@ -38,7 +38,10 @@ enum _ThriftServerSocketProperties
   PROP_0,
   PROP_THRIFT_SERVER_SOCKET_PORT,
   PROP_THRIFT_SERVER_SOCKET_PATH,
-  PROP_THRIFT_SERVER_SOCKET_BACKLOG
+  PROP_THRIFT_SERVER_SOCKET_BACKLOG,
+  PROP_THRIFT_SERVER_SOCKET_CONFIGURATION,
+  PROP_THRIFT_SERVER_SOCKET_REMAINING_MESSAGE_SIZE,
+  PROP_THRIFT_SERVER_SOCKET_KNOW_MESSAGE_SIZE
 };
 
 /* define the GError domain string */
@@ -141,6 +144,7 @@ thrift_server_socket_accept (ThriftServerTransport *transport, GError **error)
   ThriftSocket *socket = NULL;
 
   ThriftServerSocket *tsocket = THRIFT_SERVER_SOCKET (transport);
+  ThriftServerTransport *tst = THRIFT_SERVER_TRANSPORT (transport);
 
   if ((sd = accept(tsocket->sd, (struct sockaddr *) &address, &addrlen)) == -1)
   {
@@ -151,7 +155,16 @@ thrift_server_socket_accept (ThriftServerTransport *transport, GError **error)
     return NULL;
   }
 
-  socket = g_object_new (THRIFT_TYPE_SOCKET, NULL);
+  if(tst->configuration != NULL)
+  {
+    socket = g_object_new (THRIFT_TYPE_SOCKET, "configuration", tst->configuration, 
+		           "remainingmessagesize", tst->configuration->maxMessageSize_, 
+		           "knowmessagesize", tst->configuration->maxMessageSize_, NULL);
+  }
+  else
+  {
+    socket = g_object_new (THRIFT_TYPE_SOCKET, NULL);
+  }
   socket->sd = sd;
 
   return THRIFT_TRANSPORT(socket);
@@ -207,6 +220,7 @@ thrift_server_socket_get_property (GObject *object, guint property_id,
                                    GValue *value, GParamSpec *pspec)
 {
   ThriftServerSocket *socket = THRIFT_SERVER_SOCKET (object);
+  ThriftServerTransport *transport = THRIFT_SERVER_TRANSPORT (object);
 
   switch (property_id)
   {
@@ -219,6 +233,15 @@ thrift_server_socket_get_property (GObject *object, guint property_id,
     case PROP_THRIFT_SERVER_SOCKET_BACKLOG:
       g_value_set_uint (value, socket->backlog);
       break;
+    case PROP_THRIFT_SERVER_SOCKET_CONFIGURATION:
+      g_value_set_object (value, transport->configuration);
+      break;
+    case PROP_THRIFT_SERVER_SOCKET_REMAINING_MESSAGE_SIZE:
+      g_value_set_long (value, transport->remainingMessageSize_);
+      break;
+    case PROP_THRIFT_SERVER_SOCKET_KNOW_MESSAGE_SIZE:
+      g_value_set_long (value, transport->knowMessageSize_);
+      break; 
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, property_id, pspec);
       break;
@@ -231,6 +254,7 @@ thrift_server_socket_set_property (GObject *object, guint property_id,
                                    const GValue *value, GParamSpec *pspec)
 {
   ThriftServerSocket *socket = THRIFT_SERVER_SOCKET (object);
+  ThriftServerTransport *transport = THRIFT_SERVER_TRANSPORT (object);
 
   switch (property_id)
   {
@@ -245,6 +269,15 @@ thrift_server_socket_set_property (GObject *object, guint property_id,
       break;
     case PROP_THRIFT_SERVER_SOCKET_BACKLOG:
       socket->backlog = g_value_get_uint (value);
+      break;
+    case PROP_THRIFT_SERVER_SOCKET_CONFIGURATION:
+      transport->configuration = g_value_dup_object (value);
+      break;
+    case PROP_THRIFT_SERVER_SOCKET_REMAINING_MESSAGE_SIZE:
+      transport->remainingMessageSize_ = g_value_get_long (value);
+      break;
+    case PROP_THRIFT_SERVER_SOCKET_KNOW_MESSAGE_SIZE:
+      transport->knowMessageSize_ = g_value_get_long (value);
       break;
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, property_id, pspec);
@@ -298,6 +331,36 @@ thrift_server_socket_class_init (ThriftServerSocketClass *cls)
                                    PROP_THRIFT_SERVER_SOCKET_BACKLOG,
                                    param_spec);
 
+  param_spec = g_param_spec_object ("configuration",
+                                    "configuration (construct)",
+                                    "Thtift Configuration",
+                                    THRIFT_TYPE_CONFIGURATION,
+                                    G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY);
+  g_object_class_install_property (gobject_class,
+                                   PROP_THRIFT_SERVER_SOCKET_CONFIGURATION,
+                                   param_spec);
+
+  param_spec = g_param_spec_long ("remainingmessagesize",
+                                  "remainingmessagesize (construct)",
+                                  "Set the remaining message size",
+                                  0, /* min */
+                                  G_MAXINT32, /* max */
+                                  DEFAULT_MAX_MESSAGE_SIZE, /* default by construct */
+                                  G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY);
+  g_object_class_install_property (gobject_class,
+                                   PROP_THRIFT_SERVER_SOCKET_REMAINING_MESSAGE_SIZE,
+                                   param_spec);
+
+  param_spec = g_param_spec_long ("knowmessagesize",
+                                  "knowmessagesize (construct)",
+                                  "Set the known size of the message",
+                                  0, /* min */
+                                  G_MAXINT32, /* max */
+                                  DEFAULT_MAX_MESSAGE_SIZE, /* default by construct */
+                                  G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY);
+  g_object_class_install_property (gobject_class,
+                                   PROP_THRIFT_SERVER_SOCKET_KNOW_MESSAGE_SIZE,
+                                   param_spec);
   gobject_class->finalize = thrift_server_socket_finalize;
 
   tstc->listen = thrift_server_socket_listen;

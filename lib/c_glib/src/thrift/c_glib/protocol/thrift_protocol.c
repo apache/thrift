@@ -419,6 +419,13 @@ thrift_protocol_read_binary (ThriftProtocol *protocol, gpointer *buf,
                                                             len, error);
 }
 
+gint
+thrift_protocol_get_min_serialized_size (ThriftProtocol *protocol, ThriftType type, GError ** error)
+{
+   return THRIFT_PROTOCOL_GET_CLASS (protocol)->get_min_serialized_size (protocol,
+                                                                         type, error);
+}
+
 #define THRIFT_SKIP_RESULT_OR_RETURN(_RES, _CALL) \
   { \
     gint32 _x = (_CALL); \
@@ -598,10 +605,10 @@ thrift_protocol_class_init (ThriftProtocolClass *cls)
   gobject_class->dispose = thrift_protocol_dispose;
 
   g_object_class_install_property (gobject_class,
-      PROP_THRIFT_PROTOCOL_TRANSPORT,
-      g_param_spec_object ("transport", "Transport", "Thrift Transport",
-                           THRIFT_TYPE_TRANSPORT,
-                           G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY));
+                                   PROP_THRIFT_PROTOCOL_TRANSPORT,
+                                   g_param_spec_object ("transport", "Transport", "Thrift Transport",
+                                                        THRIFT_TYPE_TRANSPORT,
+                                                        G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY));
 
   cls->write_message_begin = thrift_protocol_write_message_begin;
   cls->write_message_end = thrift_protocol_write_message_end;
@@ -643,4 +650,5 @@ thrift_protocol_class_init (ThriftProtocolClass *cls)
   cls->read_double = thrift_protocol_read_double;
   cls->read_string = thrift_protocol_read_string;
   cls->read_binary = thrift_protocol_read_binary;
+  cls->get_min_serialized_size = thrift_protocol_get_min_serialized_size;
 }

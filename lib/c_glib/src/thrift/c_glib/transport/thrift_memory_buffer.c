@@ -17,6 +17,7 @@
  * under the License.
  */
 
+#include <errno.h>
 #include <netdb.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -24,6 +25,7 @@
 #include <unistd.h>
 
 #include <thrift/c_glib/thrift.h>
+#include <thrift/c_glib/thrift_configuration.h>
 #include <thrift/c_glib/transport/thrift_transport.h>
 #include <thrift/c_glib/transport/thrift_memory_buffer.h>
 
@@ -33,7 +35,10 @@ enum _ThriftMemoryBufferProperties
   PROP_0,
   PROP_THRIFT_MEMORY_BUFFER_BUFFER_SIZE,
   PROP_THRIFT_MEMORY_BUFFER_BUFFER,
-  PROP_THRIFT_MEMORY_BUFFER_OWNER
+  PROP_THRIFT_MEMORY_BUFFER_OWNER,
+  PROP_THRIFT_MEMORY_BUFFER_CONFIGURATION,
+  PROP_THRIFT_MEMORY_BUFFER_REMAINING_MESSAGE_SIZE,
+  PROP_THRIFT_MEMORY_BUFFER_KNOW_MESSAGE_SIZE
 };
 
 G_DEFINE_TYPE(ThriftMemoryBuffer, thrift_memory_buffer, THRIFT_TYPE_TRANSPORT)
@@ -70,9 +75,14 @@ thrift_memory_buffer_read (ThriftTransport *transport, gpointer buf,
                            guint32 len, GError **error)
 {
   ThriftMemoryBuffer *t = THRIFT_MEMORY_BUFFER (transport);
+  ThriftTransportClass *ttc = THRIFT_TRANSPORT_GET_CLASS (transport);
+
   guint32 give = len; 
 
-  THRIFT_UNUSED_VAR (error);
+  if(!ttc->checkReadBytesAvailable (transport, len, error))
+  {
+    return -1;
+  }
 
   /* if the requested bytes are more than what we have available,
    * just give all that we have the buffer */
@@ -168,6 +178,8 @@ thrift_memory_buffer_get_property (GObject *object, guint property_id,
                                    GValue *value, GParamSpec *pspec)
 {
   ThriftMemoryBuffer *t = THRIFT_MEMORY_BUFFER (object);
+  
+  ThriftTransport *tt = THRIFT_TRANSPORT (object);
 
   THRIFT_UNUSED_VAR (pspec);
 
@@ -182,6 +194,15 @@ thrift_memory_buffer_get_property (GObject *object, guint property_id,
     case PROP_THRIFT_MEMORY_BUFFER_OWNER:
       g_value_set_boolean (value, t->owner);
       break;
+    case PROP_THRIFT_MEMORY_BUFFER_CONFIGURATION:
+      g_value_set_object (value, tt->configuration);
+      break;
+    case PROP_THRIFT_MEMORY_BUFFER_REMAINING_MESSAGE_SIZE:
+      g_value_set_long (value, tt->remainingMessageSize_);
+      break;
+    case PROP_THRIFT_MEMORY_BUFFER_KNOW_MESSAGE_SIZE:
+      g_value_set_long (value, tt->knowMessageSize_);
+      break;
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, property_id, pspec);
       break;
@@ -195,6 +216,8 @@ thrift_memory_buffer_set_property (GObject *object, guint property_id,
 {
   ThriftMemoryBuffer *t = THRIFT_MEMORY_BUFFER (object);
 
+  ThriftTransport *tt = THRIFT_TRANSPORT (object);
+
   THRIFT_UNUSED_VAR (pspec);
 
   switch (property_id)
@@ -207,6 +230,15 @@ thrift_memory_buffer_set_property (GObject *object, guint property_id,
       break;
     case PROP_THRIFT_MEMORY_BUFFER_OWNER:
       t->owner = g_value_get_boolean (value);
+      break;
+    case PROP_THRIFT_MEMORY_BUFFER_CONFIGURATION:
+      tt->configuration = g_value_dup_object (value);
+      break;
+    case PROP_THRIFT_MEMORY_BUFFER_REMAINING_MESSAGE_SIZE:
+      tt->remainingMessageSize_ = g_value_get_long (value);
+      break;
+    case PROP_THRIFT_MEMORY_BUFFER_KNOW_MESSAGE_SIZE:
+      tt->knowMessageSize_ = g_value_get_long (value);
       break;
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, property_id, pspec);
@@ -270,6 +302,38 @@ thrift_memory_buffer_class_init (ThriftMemoryBufferClass *cls)
                                      G_PARAM_READWRITE);
   g_object_class_install_property (gobject_class,
                                    PROP_THRIFT_MEMORY_BUFFER_OWNER,
+                                   param_spec);
+
+  param_spec = g_param_spec_object ("configuration",
+                                    "configuration (construct)",
+                                    "Thrift Configuration",
+                                    THRIFT_TYPE_CONFIGURATION,
+                                    G_PARAM_CONSTRUCT_ONLY | 
+                                    G_PARAM_READWRITE);
+  g_object_class_install_property (gobject_class,
+                                   PROP_THRIFT_MEMORY_BUFFER_CONFIGURATION,
+                                   param_spec);
+
+  param_spec = g_param_spec_long ("remainingmessagesize",
+                                  "remainingmessagesize (construct)",
+                                  "Set the remaining message size",
+                                  0, /* min */
+                                  G_MAXINT32, /* max */
+                                  DEFAULT_MAX_MESSAGE_SIZE, /* default by construct */
+                                  G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY);
+  g_object_class_install_property (gobject_class,
+                                   PROP_THRIFT_MEMORY_BUFFER_REMAINING_MESSAGE_SIZE,
+                                   param_spec);
+
+  param_spec = g_param_spec_long ("knowmessagesize",
+                                  "knowmessagesize (construct)",
+                                  "Set the known size of the message",
+                                  0, /* min */
+                                  G_MAXINT32, /* max */
+                                  DEFAULT_MAX_MESSAGE_SIZE, /* default by construct */
+                                  G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY);
+  g_object_class_install_property (gobject_class,
+                                   PROP_THRIFT_MEMORY_BUFFER_KNOW_MESSAGE_SIZE,
                                    param_spec);
 
   gobject_class->constructed = thrift_memory_buffer_constructed;
