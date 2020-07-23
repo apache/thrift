@@ -22,6 +22,8 @@
 
 #include <glib-object.h>
 
+#include <thrift/c_glib/thrift_configuration.h>
+
 G_BEGIN_DECLS
 
 /*! \file thrift_transport.h
@@ -50,6 +52,11 @@ typedef struct _ThriftTransport ThriftTransport;
 struct _ThriftTransport
 {
   GObject parent;
+
+  /* protected */
+  ThriftConfiguration *configuration;
+  glong remainingMessageSize_;
+  glong knowMessageSize_;
 };
 
 typedef struct _ThriftTransportClass ThriftTransportClass;
@@ -75,6 +82,10 @@ struct _ThriftTransportClass
   gboolean (*flush) (ThriftTransport *transport, GError **error);
   gint32 (*read_all) (ThriftTransport *transport, gpointer buf,
                       guint32 len, GError **error);
+  gboolean (*updateKnownMessageSize) (ThriftTransport *transport, glong size, GError **error);
+  gboolean (*checkReadBytesAvailable) (ThriftTransport *transport, glong numBytes, GError **error);
+  gboolean (*resetConsumedMessageSize) (ThriftTransport *transport, glong newSize, GError **error);
+  gboolean (*countConsumedMessageBytes) (ThriftTransport *transport, glong numBytes, GError **error);
 };
 
 /* used by THRIFT_TYPE_TRANSPORT */
@@ -161,7 +172,8 @@ typedef enum
   THRIFT_TRANSPORT_ERROR_CONNECT,
   THRIFT_TRANSPORT_ERROR_SEND,
   THRIFT_TRANSPORT_ERROR_RECEIVE,
-  THRIFT_TRANSPORT_ERROR_CLOSE
+  THRIFT_TRANSPORT_ERROR_CLOSE,
+  THRIFT_TRANSPORT_ERROR_MAX_MESSAGE_SIZE_REACHED
 } ThriftTransportError;
 
 /* define an error domain for GError to use */

@@ -31,6 +31,7 @@ set(thrift_c_glib_SOURCES
     src/thrift/c_glib/thrift.c
     src/thrift/c_glib/thrift_struct.c
     src/thrift/c_glib/thrift_application_exception.c
+    src/thrift/c_glib/thrift_configuration.c
     src/thrift/c_glib/processor/thrift_processor.c
     src/thrift/c_glib/processor/thrift_dispatch_processor.c
     src/thrift/c_glib/processor/thrift_multiplexed_processor.c

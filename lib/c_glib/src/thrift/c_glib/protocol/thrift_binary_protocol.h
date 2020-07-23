@@ -67,6 +67,9 @@ struct _ThriftBinaryProtocolClass
 /* used by THRIFT_TYPE_BINARY_PROTOCOL */
 GType thrift_binary_protocol_get_type (void);
 
+gint
+thrift_binary_protocol_get_min_serialized_size(ThriftProtocol *protocol, ThriftType type, GError **error);
+
 G_END_DECLS
 
 #endif /* _THRIFT_BINARY_PROTOCOL_H */
