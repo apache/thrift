@@ -159,7 +159,7 @@ G_DEFINE_TYPE(ThriftSSLSocket, thrift_ssl_socket, THRIFT_TYPE_SOCKET)
  * @param error
  */
 static
-void thrift_ssl_socket_get_ssl_error(ThriftSSLSocket *socket, const guchar *error_msg, guint thrift_error_no, int ssl_error, GError **error)
+void thrift_ssl_socket_get_ssl_error(ThriftSSLSocket *socket, const gchar *error_msg, guint thrift_error_no, int ssl_error, GError **error)
 {
   unsigned long error_code;
   char buffer[1024];
@@ -207,7 +207,7 @@ void thrift_ssl_socket_get_ssl_error(ThriftSSLSocket *socket, const guchar *erro
  * @param error
  */
 static
-void thrift_ssl_socket_get_error(const guchar *error_msg, guint thrift_error_no, GError **error)
+void thrift_ssl_socket_get_error(const gchar *error_msg, guint thrift_error_no, GError **error)
 {
   unsigned long error_code;
   while ((error_code = ERR_get_error()) != 0) {
