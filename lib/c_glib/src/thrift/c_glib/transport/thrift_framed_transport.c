@@ -93,7 +93,7 @@ thrift_framed_transport_read_frame (ThriftTransport *transport,
     sz = ntohl (sz);
 
     /* create a buffer to hold the data and read that much data */
-    tmpdata = g_alloca (sz);
+    tmpdata = g_new0 (guchar, sz);
     bytes = thrift_transport_read (t->transport, tmpdata, sz, error);
 
     if (bytes > 0 && (error == NULL || *error == NULL))
@@ -103,6 +103,7 @@ thrift_framed_transport_read_frame (ThriftTransport *transport,
 
       result = TRUE;
     }
+    g_free (tmpdata);
   }
 
   return result;
@@ -232,7 +233,7 @@ thrift_framed_transport_flush (ThriftTransport *transport, GError **error)
   sz_nbo = (gint32) htonl ((guint32) t->w_buf->len);
 
   /* copy the size of the frame and then the frame itself */
-  tmpdata = g_alloca (sz_hbo);
+  tmpdata = g_new0 (guchar, sz_hbo);
   memcpy (tmpdata, (guint8 *) &sz_nbo, sizeof (sz_nbo));
 
   if (t->w_buf->len > 0)
@@ -248,7 +249,7 @@ thrift_framed_transport_flush (ThriftTransport *transport, GError **error)
 
   THRIFT_TRANSPORT_GET_CLASS (t->transport)->flush (t->transport,
                                                     error);
-
+  g_free (tmpdata);
   return TRUE;
 }
 
