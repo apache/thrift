@@ -143,7 +143,7 @@ func TestTHeaderTransportNoReadBeyondFrame(t *testing.T) {
 		return nil
 	}
 	f := func(content string) bool {
-		defer trans.Reset()
+		trans.Reset()
 		if len(content) == 0 {
 			return true
 		}
@@ -173,9 +173,80 @@ func TestTHeaderTransportNoReadBeyondFrame(t *testing.T) {
 				buf[:read],
 			)
 		}
+
+		// Check for endOfFrame handling
+		if !reader.needReadFrame() {
+			t.Error("Expected needReadFrame to be true after read the frame fully, got false")
+		}
 		return !t.Failed()
 	}
 	if err := quick.Check(f, nil); err != nil {
+		t.Error(err)
+	}
+}
+
+func TestTHeaderTransportEndOfFrameHandling(t *testing.T) {
+	trans := NewTMemoryBuffer()
+	writeContent := func(writer TTransport, content string) error {
+		if _, err := io.Copy(writer, strings.NewReader(content)); err != nil {
+			return err
+		}
+		if err := writer.Flush(context.Background()); err != nil {
+			return err
+		}
+		return nil
+	}
+
+	readFully := func(content string) bool {
+		trans.Reset()
+		if len(content) == 0 {
+			return true
+		}
+
+		reader := NewTHeaderTransport(trans)
+		writer := NewTHeaderTransport(trans)
+		// Write content
+		if err := writeContent(writer, content); err != nil {
+			t.Error(err)
+		}
+		buf := make([]byte, len(content))
+		_, err := reader.Read(buf)
+		if err != nil {
+			t.Error(err)
+		}
+		if !reader.needReadFrame() {
+			t.Error("Expected needReadFrame to be true after read the frame fully, got false")
+		}
+		return !t.Failed()
+	}
+	if err := quick.Check(readFully, nil); err != nil {
+		t.Error(err)
+	}
+
+	readPartially := func(content string) bool {
+		trans.Reset()
+		if len(content) < 1 {
+			return true
+		}
+
+		reader := NewTHeaderTransport(trans)
+		writer := NewTHeaderTransport(trans)
+		// Write content
+		if err := writeContent(writer, content); err != nil {
+			t.Error(err)
+		}
+		// Make the buf smaller so it can't read fully
+		buf := make([]byte, len(content)-1)
+		_, err := reader.Read(buf)
+		if err != nil {
+			t.Error(err)
+		}
+		if reader.needReadFrame() {
+			t.Error("Expected needReadFrame to be false before read the frame fully, got true")
+		}
+		return !t.Failed()
+	}
+	if err := quick.Check(readPartially, nil); err != nil {
 		t.Error(err)
 	}
 }
