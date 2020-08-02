@@ -20,8 +20,6 @@
 package thrift
 
 import (
-	"bytes"
-	"io"
 	"net"
 )
 
@@ -29,7 +27,6 @@ import (
 type socketConn struct {
 	net.Conn
 
-	buf    bytes.Buffer
 	buffer [1]byte
 }
 
@@ -101,16 +98,5 @@ func (sc *socketConn) Read(p []byte) (n int, err error) {
 		return 0, sc.read0()
 	}
 
-	n, err = sc.buf.Read(p)
-	if err != nil && err != io.EOF {
-		return
-	}
-	if n == len(p) {
-		return n, nil
-	}
-	// Continue reading from the wire.
-	var newRead int
-	newRead, err = sc.Conn.Read(p[n:])
-	n += newRead
-	return
+	return sc.Conn.Read(p)
 }

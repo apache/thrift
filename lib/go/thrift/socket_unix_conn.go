@@ -56,22 +56,20 @@ func (sc *socketConn) checkConn() error {
 	var n int
 
 	if readErr := rc.Read(func(fd uintptr) bool {
-		n, err = syscall.Read(int(fd), sc.buffer[:])
+		n, _, err = syscall.Recvfrom(int(fd), sc.buffer[:], syscall.MSG_PEEK|syscall.MSG_DONTWAIT)
 		return true
 	}); readErr != nil {
 		return readErr
 	}
 
-	if err == syscall.EAGAIN || err == syscall.EWOULDBLOCK {
-		// This means the connection is still open but we don't have
-		// anything to read right now.
+	if n > 0 {
+		// We got something, which means we are good
 		return nil
 	}
 
-	if n > 0 {
-		// We got something,
-		// put it to sc's buf for the next real read to use.
-		sc.buf.Write(sc.buffer[:n])
+	if err == syscall.EAGAIN || err == syscall.EWOULDBLOCK {
+		// This means the connection is still open but we don't have
+		// anything to read right now.
 		return nil
 	}
 
