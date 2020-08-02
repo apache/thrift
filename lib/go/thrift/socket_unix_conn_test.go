@@ -75,16 +75,13 @@ func TestSocketConnUnix(t *testing.T) {
 		t.Error("Expected sc to report open, got false")
 	}
 	// Do connection check again twice after server already wrote new data,
-	// make sure we correctly buffered the read bytes
+	// make sure we don't cause any data loss with the check.
 	time.Sleep(interval * 10)
 	if !sc.IsOpen() {
 		t.Error("Expected sc to report open, got false")
 	}
 	if !sc.IsOpen() {
 		t.Error("Expected sc to report open, got false")
-	}
-	if sc.buf.Len() == 0 {
-		t.Error("Expected sc to buffer read bytes, got empty buffer")
 	}
 	n, err = sc.Read(buf)
 	if err != nil {
