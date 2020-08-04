@@ -70,3 +70,11 @@ service foo_service {
   void foo() ( foo = "bar" )
 } (a.b="c")
 
+service deprecate_everything {
+  void Foo( ) ( deprecated = "This method has neither 'x' nor \"y\"" )
+  void Bar( ) ( deprecated = "Fails to deliver 中文 колбаса" )
+  void Baz( ) ( deprecated = "Need this to work with tabs (\t) or Umlauts (äöüÄÖÜß) too" )
+  void Deprecated() ( deprecated ) // no comment
+}
+
+

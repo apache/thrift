@@ -3,7 +3,7 @@ program ReservedKeywords;
 {$APPTYPE CONSOLE}
 
 uses
-  SysUtils, System_;
+  SysUtils, System_, AnnotationTest;
 
 begin
   try
