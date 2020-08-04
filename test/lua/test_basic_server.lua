@@ -66,6 +66,10 @@ function TestHandler:testStruct(thing)
   return thing
 end
 
+function TestHandler:testOneway(secondsToSleep)
+  print("testOneway secondsToSleep:", secondsToSleep)
+end
+
 --------------------------------------------------------------------------------
 -- Test
 local server
@@ -132,6 +136,7 @@ function testBasicServer(rawArgs)
     protocolFactory = prot_factory
   }
   assert(server, 'Failed to create server')
+  server:setExceptionHandler(function (err) error(err) end)
 
   -- Serve
   server:serve()

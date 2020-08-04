@@ -85,9 +85,17 @@ function TServer:_preServe()
   end
 end
 
+function TServer:setExceptionHandler(exceptionHandler)
+  self.exceptionHandler = exceptionHandler
+end
+
 function TServer:_handleException(err)
   if string.find(err, 'TTransportException') == nil then
-    print(err)
+    if self.exceptionHandler then
+      self.exceptionHandler(err)
+    else
+      print(err)
+    end
   end
 end
 
