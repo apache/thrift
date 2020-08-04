@@ -134,5 +134,9 @@ struct Thrift4554_Struct {
   4 : optional Thrift4554_Enum Foo
 }
 
+service deprecate_included_outer extends ReservedIncluded.deprecate_included_inner {
+  void FooBarBaz()
+}
+
 
 // EOF

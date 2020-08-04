@@ -65,7 +65,9 @@
 		<Import Condition="Exists('$(BDS)\Bin\CodeGear.Delphi.Targets')" Project="$(BDS)\Bin\CodeGear.Delphi.Targets"/>
 		<Import Condition="Exists('$(APPDATA)\Embarcadero\$(BDSAPPDATABASEDIR)\$(PRODUCTVERSION)\UserTools.proj')" Project="$(APPDATA)\Embarcadero\$(BDSAPPDATABASEDIR)\$(PRODUCTVERSION)\UserTools.proj"/>
 		<PropertyGroup>
-			<PreBuildEvent><![CDATA[thrift -r  -gen delphi ReservedKeywords.thrift]]></PreBuildEvent>
+			<PreBuildEvent><![CDATA[if exist gen-delphi del gen-delphi\* /s /q
+thrift -r  -gen delphi ReservedKeywords.thrift
+thrift -r  -gen delphi ..\..\..\..\test\AnnotationTest.thrift]]></PreBuildEvent>
 		</PropertyGroup>
 		<ProjectExtensions>
 			<Borland.Personality>Delphi.Personality.12</Borland.Personality>

@@ -22,4 +22,11 @@ namespace delphi SysUtils
 
 const i32 integer = 42
 
+service deprecate_included_inner {
+  void Foo( ) ( deprecated = "This method has neither 'x' nor \"y\"" )
+  void Bar( ) ( deprecated = "Fails to deliver 中文 колбаса" )
+  void Baz( ) ( deprecated = "Need this to work with tabs (\t) or Umlauts (äöüÄÖÜß) too" )
+  void Deprecated() ( deprecated ) // no comment
+}
+
 // EOF

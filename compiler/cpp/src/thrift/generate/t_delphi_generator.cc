@@ -330,6 +330,7 @@ public:
                               std::string prefix,
                               bool b_no_check_keyword = false);
   std::string make_valid_delphi_identifier(std::string const& fromName);
+  std::string make_pascal_string_literal( std::string value);
   std::string input_arg_prefix(t_type* ttype);
 
   std::string base_type_name(t_base_type* tbase);
@@ -802,6 +803,7 @@ void t_delphi_generator::close_generator() {
   f_all << autogen_comment() << endl;
   generate_delphi_doc(f_all, program_);
   f_all << "unit " << unitname << ";" << endl << endl;
+  f_all << "{$WARN SYMBOL_DEPRECATED OFF}" << endl << endl;
   f_all << "interface" << endl << endl;
   f_all << "uses" << endl;
 
@@ -1050,6 +1052,28 @@ void t_delphi_generator::generate_enum(t_enum* tenum) {
   indent_down();
   indent(s_enum) << ");" << endl << endl;
   indent_down();
+}
+
+std::string t_delphi_generator::make_pascal_string_literal(std::string value) {
+  std::stringstream result;
+
+  if (value.length() == 0) {
+    return "";
+  }
+
+  result << "'";
+  for (char const &c: value) {
+    if( (c >= 0) && (c < 32)) {  // convert ctrl chars, but leave UTF-8 alone
+      result << "#" << (int)c;  
+    } else if (c == '\'') {
+      result << "''";   // duplicate any single quotes we find
+    } else {
+      result << c;   // anything else "as is"
+    }
+  }
+  result << "'";
+  
+  return result.str();
 }
 
 std::string t_delphi_generator::make_valid_delphi_identifier(std::string const& fromName) {
@@ -1959,10 +1983,10 @@ void t_delphi_generator::generate_service_interface(t_service* tservice, bool fo
 }
 
 void t_delphi_generator::generate_guid(std::ostream& out) {
-#ifdef _WIN32	// TODO: add support for non-windows platforms if needed
+#ifdef _WIN32   // TODO: add support for non-windows platforms if needed
   GUID guid;
   if (SUCCEEDED(CoCreateGuid(&guid))) {
-	OLECHAR guid_chars[40];
+    OLECHAR guid_chars[40];
     if (StringFromGUID2(guid, &guid_chars[0], sizeof(guid_chars) / sizeof(guid_chars[0])) > 0) {
       std::wstring guid_wstr(guid_chars);
       std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> convert;
@@ -3261,25 +3285,42 @@ string t_delphi_generator::function_signature(t_function* tfunction,
     prefix = full_cls + ".";
   }
 
+  string signature = "";
+  
   if( for_async) {
     if (is_void(ttype)) {
-      return "function " + prefix + normalize_name(tfunction->get_name(), true, is_xception) + "Async("
-             + argument_list(tfunction->get_arglist()) + "): IFuture<Integer>;";  // no IFuture<void> in Delphi
+      signature = "function " + prefix + normalize_name(tfunction->get_name(), true, is_xception) + "Async("
+                + argument_list(tfunction->get_arglist()) + "): IFuture<Integer>;";  // no IFuture<void> in Delphi
     } else {
-      return "function " + prefix + normalize_name(tfunction->get_name(), true, is_xception) + "Async("
-             + argument_list(tfunction->get_arglist()) + "): IFuture<"
-             + type_name(ttype, false, true, is_xception, true) + ">;";
+      signature = "function " + prefix + normalize_name(tfunction->get_name(), true, is_xception) + "Async("
+                + argument_list(tfunction->get_arglist()) + "): IFuture<"
+                + type_name(ttype, false, true, is_xception, true) + ">;";
     }
   } else {
     if (is_void(ttype)) {
-      return "procedure " + prefix + normalize_name(tfunction->get_name(), true, is_xception) + "("
-             + argument_list(tfunction->get_arglist()) + ");";
+      signature = "procedure " + prefix + normalize_name(tfunction->get_name(), true, is_xception) + "("
+                + argument_list(tfunction->get_arglist()) + ");";
     } else {
-      return "function " + prefix + normalize_name(tfunction->get_name(), true, is_xception) + "("
-             + argument_list(tfunction->get_arglist()) + "): "
-             + type_name(ttype, false, true, is_xception, true) + ";";
+      signature = "function " + prefix + normalize_name(tfunction->get_name(), true, is_xception) + "("
+                + argument_list(tfunction->get_arglist()) + "): "
+                + type_name(ttype, false, true, is_xception, true) + ";";
     }
   }
+
+  // deprecated method? only at intf decl!
+  if( full_cls == "") {
+    auto iter = tfunction->annotations_.find("deprecated");
+    if( tfunction->annotations_.end() != iter) {
+      signature += " deprecated";
+      // empty annotation values end up with "1" somewhere, ignore these as well
+      if ((iter->second.length() > 0) && (iter->second != "1")) {
+        signature += " " + make_pascal_string_literal(iter->second);
+      }
+      signature += ";";
+    }
+  }
+
+  return signature;
 }
 
 string t_delphi_generator::argument_list(t_struct* tstruct) {
