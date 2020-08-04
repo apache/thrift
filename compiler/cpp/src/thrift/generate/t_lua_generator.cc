@@ -659,7 +659,9 @@ void t_lua_generator::generate_service_processor(ostream& out, t_service* tservi
 
   indent(out) << "local name, mtype, seqid = iprot:readMessageBegin()" << endl;
   indent(out) << "local func_name = 'process_' .. name" << endl;
-  indent(out) << "if not self[func_name] or ttype(self[func_name]) ~= 'function' then";
+  indent(out) << "if not self[func_name] or ttype(self[func_name]) ~= 'function' then" << endl;
+  indent_up();
+  indent(out) << "if oprot ~= nil then";
   indent_up();
   out << endl << indent() << "iprot:skip(TType.STRUCT)" << endl << indent()
       << "iprot:readMessageEnd()" << endl << indent() << "x = TApplicationException:new{" << endl
@@ -668,8 +670,11 @@ void t_lua_generator::generate_service_processor(ostream& out, t_service* tservi
       << "seqid)" << endl << indent() << "x:write(oprot)" << endl << indent()
       << "oprot:writeMessageEnd()" << endl << indent() << "oprot.trans:flush()" << endl;
   indent_down();
+  out << indent() << "end" << endl << indent()
+      << "return false, 'Unknown function '..name" << endl;
+  indent_down();
   indent(out) << "else" << endl << indent()
-              << "  self[func_name](self, seqid, iprot, oprot, server_ctx)" << endl << indent()
+              << "  return self[func_name](self, seqid, iprot, oprot, server_ctx)" << endl << indent()
               << "end" << endl;
 
   indent_down();
@@ -698,37 +703,45 @@ void t_lua_generator::generate_process_function(ostream& out,
   // Read the request
   out << indent() << "local args = " << argsname << ":new{}" << endl << indent()
       << "local reply_type = TMessageType.REPLY" << endl << indent() << "args:read(iprot)" << endl
-      << indent() << "iprot:readMessageEnd()" << endl << indent() << "local result = " << resultname
-      << ":new{}" << endl << indent() << "local status, res = pcall(self.handler." << fn_name
-      << ", self.handler";
+      << indent() << "iprot:readMessageEnd()" << endl;
 
+  if (!tfunction->is_oneway()) {
+      out << indent() << "local result = " << resultname
+          << ":new{}" << endl;
+  }
+
+  out <<  indent() << "local status, res = pcall(self.handler." << fn_name
+      << ", self.handler";
   // Print arguments
   t_struct* args = tfunction->get_arglist();
   if (args->get_members().size() > 0) {
     out << ", " << argument_list(args, "args.");
   }
+  out << ")" << endl;
 
-  // Check for errors
-  out << ")" << endl << indent() << "if not status then" << endl << indent()
-      << "  reply_type = TMessageType.EXCEPTION" << endl << indent()
-      << "  result = TApplicationException:new{message = res}" << endl;
+  if (!tfunction->is_oneway()) {
+      // Check for errors
+      out << indent() << "if not status then" << endl << indent()
+          << "  reply_type = TMessageType.EXCEPTION" << endl << indent()
+          << "  result = TApplicationException:new{message = res}" << endl;
 
-  // Handle custom exceptions
-  const std::vector<t_field*>& xf = tfunction->get_xceptions()->get_members();
-  if (xf.size() > 0) {
-    vector<t_field*>::const_iterator x_iter;
-    for (x_iter = xf.begin(); x_iter != xf.end(); ++x_iter) {
-      out << indent() << "elseif ttype(res) == '" << (*x_iter)->get_type()->get_name() << "' then"
-          << endl << indent() << "  result." << (*x_iter)->get_name() << " = res" << endl;
-    }
+      // Handle custom exceptions
+      const std::vector<t_field*>& xf = tfunction->get_xceptions()->get_members();
+      if (xf.size() > 0) {
+          vector<t_field*>::const_iterator x_iter;
+          for (x_iter = xf.begin(); x_iter != xf.end(); ++x_iter) {
+              out << indent() << "elseif ttype(res) == '" << (*x_iter)->get_type()->get_name() << "' then"
+                  << endl << indent() << "  result." << (*x_iter)->get_name() << " = res" << endl;
+          }
+      }
+
+      // Set the result and write the reply
+      out << indent() << "else" << endl << indent() << "  result.success = res" << endl << indent()
+          << "end" << endl << indent() << "oprot:writeMessageBegin('" << fn_name << "', reply_type, "
+          << "seqid)" << endl << indent() << "result:write(oprot)" << endl << indent()
+          << "oprot:writeMessageEnd()" << endl << indent() << "oprot.trans:flush()" << endl;
   }
-
-  // Set the result and write the reply
-  out << indent() << "else" << endl << indent() << "  result.success = res" << endl << indent()
-      << "end" << endl << indent() << "oprot:writeMessageBegin('" << fn_name << "', reply_type, "
-      << "seqid)" << endl << indent() << "result:write(oprot)" << endl << indent()
-      << "oprot:writeMessageEnd()" << endl << indent() << "oprot.trans:flush()" << endl;
-
+  out << indent() << "return status, res" << endl;
   indent_down();
   indent(out) << "end" << endl;
 }
