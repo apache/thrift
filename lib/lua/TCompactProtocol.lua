@@ -118,8 +118,8 @@ function TCompactProtocol:writeMessageEnd()
 end
 
 function TCompactProtocol:writeStructBegin(name)
-  self.lastFieldIndex = self.lastFieldIndex + 1
   self.lastField[self.lastFieldIndex] = self.lastFieldId
+  self.lastFieldIndex = self.lastFieldIndex + 1
   self.lastFieldId = 0
 end
 
