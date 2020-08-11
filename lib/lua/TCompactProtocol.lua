@@ -317,7 +317,10 @@ function TCompactProtocol:readMapBegin()
   if size < 0 then
     return nil,nil,nil
   end
-  local kvtype = self:readSignByte()
+  local kvtype = 0
+  if size ~= 0 then
+    kvtype = self:readSignByte()
+  end
   local ktype = self:getTType(libluabitwise.shiftr(kvtype, 4))
   local vtype = self:getTType(kvtype)
   return ktype, vtype, size
