@@ -291,7 +291,7 @@ class TestHandler : public ThriftTestIf {
   }
 
   void testException(const std::string &arg)
-    throw(Xception, apache::thrift::TException) override
+    noexcept(false)  override
   {
     cout << "[C -> C++] testException(" << arg << ")" << endl;
     if (arg.compare("Xception") == 0) {
@@ -309,7 +309,7 @@ class TestHandler : public ThriftTestIf {
     }
   }
 
-  void testMultiException(Xtruct &result, const std::string &arg0, const std::string &arg1) throw(Xception, Xception2) override {
+  void testMultiException(Xtruct &result, const std::string &arg0, const std::string &arg1) noexcept(false) override {
 
     cout << "[C -> C++] testMultiException(" << arg0 << ", " << arg1 << ")" << endl;
 
