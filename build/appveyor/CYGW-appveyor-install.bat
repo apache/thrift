@@ -47,4 +47,4 @@ CALL cl_showenv.bat                        || EXIT /B
 ::
 
 %BASH% -lc "apt-cyg remove cmake"
-%BASH% -lc "cd / && wget http://mirror.clarkson.edu/cygwin/x86_64/release/cmake/cmake-3.13.1-1.tar.xz && tar xJf cmake-3.13.1-1.tar.xz && hash -r && cmake --version"
+%BASH% -lc "cd / && wget http://mirror.clarkson.edu/cygwin/x86_64/release/cmake/cmake-3.14.5-1.tar.xz && tar xJf cmake-3.14.5-1.tar.xz && hash -r && cmake --version"
