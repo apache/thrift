@@ -250,7 +250,7 @@ project.lock.json
 /lib/rb/ext/mkmf.log
 /lib/rb/ext/thrift_native.bundle
 /lib/rb/ext/thrift_native.so
-/lib/rb/test/
+#/lib/rb/test/
 /lib/rb/thrift-*.gem
 /lib/php/src/ext/thrift_protocol/Makefile.*
 /lib/php/src/ext/thrift_protocol/build/
