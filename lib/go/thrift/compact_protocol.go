@@ -209,7 +209,6 @@ func (p *TCompactProtocol) writeFieldBeginInternal(ctx context.Context, name str
 	}
 
 	p.lastFieldId = fieldId
-	// p.lastField.Push(field.id);
 	return written, nil
 }
 
