@@ -31,7 +31,7 @@ RUN C:\TEMP\vs_buildtools.exe --quiet --wait --norestart --nocache `
 RUN DEL C:\TEMP\vs_buildtools.exe
 
 # Install CMake
-ADD https://github.com/Kitware/CMake/releases/download/v3.13.4/cmake-3.13.4-win64-x64.msi C:\TEMP\cmake.msi
+ADD https://github.com/Kitware/CMake/releases/download/v3.16.3/cmake-3.16.3-win64-x64.msi C:\TEMP\cmake.msi
 RUN msiexec.exe /i C:\TEMP\cmake.msi /qn && `
     SETX PATH "%PATH%;C:\Program Files\CMake\bin" && `
     DEL C:\TEMP\cmake.msi
