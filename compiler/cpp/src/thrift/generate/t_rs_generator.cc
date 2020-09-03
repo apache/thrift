@@ -1456,6 +1456,10 @@ void t_rs_generator::render_union_sync_write(const string &union_name, t_struct 
       t_field* member = (*members_iter);
       t_field::e_req member_req = t_field::T_REQUIRED;
       t_type* ttype = member->get_type();
+      if (ttype->is_typedef()) {
+        // get the actual type of typedef
+        ttype = ((t_typedef*)ttype)->get_type();
+      }
       string match_var((ttype->is_base_type() && !ttype->is_string()) ? "f" : "ref f");
       f_gen_
         << indent()
