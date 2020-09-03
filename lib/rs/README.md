@@ -46,6 +46,14 @@ It does not currently use any Rust 2018 features.
 
 Breaking changes are minimized. When they are made they will be outlined below with transition guidelines.
 
+##### Thrift 0.14.0
+
+* **[THRIFT-5158]** - Rust library and generator now support Rust 2018 only
+
+    The Rust `thrift` library was updated to Rust 2018 via `cargo fix --edition`.
+    All test code in the repo was updated as well. The code generator was also updated
+    to support Rust 2018 only.
+
 ##### Thrift 0.13.0
 
 * **[THRIFT-4536]** - Use TryFrom from std, required rust 1.34.0 or higher

@@ -253,7 +253,7 @@ RUN apt-get install -y --no-install-recommends \
       ruby-bundler
 
 # Rust dependencies
-RUN curl https://sh.rustup.rs -sSf | sh -s -- --default-toolchain 1.34.0 -y
+RUN curl https://sh.rustup.rs -sSf | sh -s -- --default-toolchain 1.40.0 -y
 
 # Clean up
 RUN rm -rf /var/cache/apt/* && \

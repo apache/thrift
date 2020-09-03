@@ -76,10 +76,10 @@ pub mod server;
 pub mod transport;
 
 mod errors;
-pub use errors::*;
+pub use crate::errors::*;
 
 mod autogen;
-pub use autogen::*;
+pub use crate::autogen::*;
 
 /// Result type returned by all runtime library functions.
 ///

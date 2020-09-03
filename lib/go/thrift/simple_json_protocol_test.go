@@ -682,7 +682,7 @@ func TestWriteSimpleJSONProtocolMap(t *testing.T) {
 		strv := l[k*2+4]
 		ik, err := strconv.Atoi(strk)
 		if err != nil {
-			t.Fatalf("Bad value for %s index %v, wrote: %v, expected: %v, error: %s", thetype, k, strk, string(k), err.Error())
+			t.Fatalf("Bad value for %s index %v, wrote: %v, expected: %v, error: %s", thetype, k, strk, k, err.Error())
 		}
 		if ik != k {
 			t.Fatalf("Bad value for %s index %v, wrote: %v, expected: %v", thetype, k, strk, k)

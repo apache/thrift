@@ -89,12 +89,6 @@ T_ERRCODE socket_wait(p_socket sock, int mode, int timeout) {
     return TIMEOUT;
   }
 
-  // Verify that we can actually read from the remote host
-  if (mode & WAIT_MODE_C && FD_ISSET(*sock, &rfds) &&
-      recv(*sock, (char*) &rfds, 0, 0) != 0) {
-    return errno;
-  }
-
   return SUCCESS;
 }
 

@@ -82,7 +82,7 @@ impl<P> TOutputProtocol for TMultiplexedOutputProtocol<P>
 where
     P: TOutputProtocol,
 {
-    fn write_message_begin(&mut self, identifier: &TMessageIdentifier) -> ::Result<()> {
+    fn write_message_begin(&mut self, identifier: &TMessageIdentifier) -> crate::Result<()> {
         match identifier.message_type {
             // FIXME: is there a better way to override identifier here?
             TMessageType::Call | TMessageType::OneWay => {
@@ -96,94 +96,94 @@ where
         }
     }
 
-    fn write_message_end(&mut self) -> ::Result<()> {
+    fn write_message_end(&mut self) -> crate::Result<()> {
         self.inner.write_message_end()
     }
 
-    fn write_struct_begin(&mut self, identifier: &TStructIdentifier) -> ::Result<()> {
+    fn write_struct_begin(&mut self, identifier: &TStructIdentifier) -> crate::Result<()> {
         self.inner.write_struct_begin(identifier)
     }
 
-    fn write_struct_end(&mut self) -> ::Result<()> {
+    fn write_struct_end(&mut self) -> crate::Result<()> {
         self.inner.write_struct_end()
     }
 
-    fn write_field_begin(&mut self, identifier: &TFieldIdentifier) -> ::Result<()> {
+    fn write_field_begin(&mut self, identifier: &TFieldIdentifier) -> crate::Result<()> {
         self.inner.write_field_begin(identifier)
     }
 
-    fn write_field_end(&mut self) -> ::Result<()> {
+    fn write_field_end(&mut self) -> crate::Result<()> {
         self.inner.write_field_end()
     }
 
-    fn write_field_stop(&mut self) -> ::Result<()> {
+    fn write_field_stop(&mut self) -> crate::Result<()> {
         self.inner.write_field_stop()
     }
 
-    fn write_bytes(&mut self, b: &[u8]) -> ::Result<()> {
+    fn write_bytes(&mut self, b: &[u8]) -> crate::Result<()> {
         self.inner.write_bytes(b)
     }
 
-    fn write_bool(&mut self, b: bool) -> ::Result<()> {
+    fn write_bool(&mut self, b: bool) -> crate::Result<()> {
         self.inner.write_bool(b)
     }
 
-    fn write_i8(&mut self, i: i8) -> ::Result<()> {
+    fn write_i8(&mut self, i: i8) -> crate::Result<()> {
         self.inner.write_i8(i)
     }
 
-    fn write_i16(&mut self, i: i16) -> ::Result<()> {
+    fn write_i16(&mut self, i: i16) -> crate::Result<()> {
         self.inner.write_i16(i)
     }
 
-    fn write_i32(&mut self, i: i32) -> ::Result<()> {
+    fn write_i32(&mut self, i: i32) -> crate::Result<()> {
         self.inner.write_i32(i)
     }
 
-    fn write_i64(&mut self, i: i64) -> ::Result<()> {
+    fn write_i64(&mut self, i: i64) -> crate::Result<()> {
         self.inner.write_i64(i)
     }
 
-    fn write_double(&mut self, d: f64) -> ::Result<()> {
+    fn write_double(&mut self, d: f64) -> crate::Result<()> {
         self.inner.write_double(d)
     }
 
-    fn write_string(&mut self, s: &str) -> ::Result<()> {
+    fn write_string(&mut self, s: &str) -> crate::Result<()> {
         self.inner.write_string(s)
     }
 
-    fn write_list_begin(&mut self, identifier: &TListIdentifier) -> ::Result<()> {
+    fn write_list_begin(&mut self, identifier: &TListIdentifier) -> crate::Result<()> {
         self.inner.write_list_begin(identifier)
     }
 
-    fn write_list_end(&mut self) -> ::Result<()> {
+    fn write_list_end(&mut self) -> crate::Result<()> {
         self.inner.write_list_end()
     }
 
-    fn write_set_begin(&mut self, identifier: &TSetIdentifier) -> ::Result<()> {
+    fn write_set_begin(&mut self, identifier: &TSetIdentifier) -> crate::Result<()> {
         self.inner.write_set_begin(identifier)
     }
 
-    fn write_set_end(&mut self) -> ::Result<()> {
+    fn write_set_end(&mut self) -> crate::Result<()> {
         self.inner.write_set_end()
     }
 
-    fn write_map_begin(&mut self, identifier: &TMapIdentifier) -> ::Result<()> {
+    fn write_map_begin(&mut self, identifier: &TMapIdentifier) -> crate::Result<()> {
         self.inner.write_map_begin(identifier)
     }
 
-    fn write_map_end(&mut self) -> ::Result<()> {
+    fn write_map_end(&mut self) -> crate::Result<()> {
         self.inner.write_map_end()
     }
 
-    fn flush(&mut self) -> ::Result<()> {
+    fn flush(&mut self) -> crate::Result<()> {
         self.inner.flush()
     }
 
     // utility
     //
 
-    fn write_byte(&mut self, b: u8) -> ::Result<()> {
+    fn write_byte(&mut self, b: u8) -> crate::Result<()> {
         self.inner.write_byte(b)
     }
 }
@@ -191,8 +191,8 @@ where
 #[cfg(test)]
 mod tests {
 
-    use protocol::{TBinaryOutputProtocol, TMessageIdentifier, TMessageType, TOutputProtocol};
-    use transport::{TBufferChannel, TIoChannel, WriteHalf};
+    use crate::protocol::{TBinaryOutputProtocol, TMessageIdentifier, TMessageType, TOutputProtocol};
+    use crate::transport::{TBufferChannel, TIoChannel, WriteHalf};
 
     use super::*;
 

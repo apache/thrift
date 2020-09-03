@@ -22,7 +22,7 @@
 //! to implement required functionality. Users should never have to use code
 //! in this module directly.
 
-use protocol::{TInputProtocol, TOutputProtocol};
+use crate::protocol::{TInputProtocol, TOutputProtocol};
 
 /// Specifies the minimum functionality an auto-generated client should provide
 /// to communicate with a Thrift server.

@@ -15,9 +15,5 @@
 // specific language governing permissions and limitations
 // under the License.
 
-extern crate ordered_float;
-extern crate thrift;
-extern crate try_from;
-
 pub mod shared;
 pub mod tutorial;

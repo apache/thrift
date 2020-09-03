@@ -41,6 +41,8 @@ clean-local:
 	-$(RM) src/base_two.rs
 	-$(RM) src/midlayer.rs
 	-$(RM) src/ultimate.rs
+	-$(RM) src/recursive.rs
+	-$(RM) src/identifiers.rs
 	-$(RM) -r bin
 
 EXTRA_DIST = \
