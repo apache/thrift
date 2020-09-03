@@ -38,7 +38,7 @@ IF "%APPVEYOR_BUILD_ID%" == "" (
 )
 
 cinst -y jdk8                             || EXIT /B
-cinst -y winflexbison3                    || EXIT /B
+cinst -y winflexbison3 --version 2.5.18.20190508                   || EXIT /B
 
 :: zlib - not available through chocolatey
 CD "%APPVEYOR_SCRIPTS%"                   || EXIT /B
