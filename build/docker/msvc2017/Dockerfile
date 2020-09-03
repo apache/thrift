@@ -47,8 +47,20 @@ RUN @"%SystemRoot%\System32\WindowsPowerShell\v1.0\powershell.exe" `
     "iex ((New-Object System.Net.WebClient).DownloadString('https://chocolatey.org/install.ps1'))" `
     && SETX PATH "%PATH%;%ALLUSERSPROFILE%\chocolatey\bin"
 
+# Install scoop
+RUN @"%SystemRoot%\System32\WindowsPowerShell\v1.0\powershell.exe" `
+    -NoProfile -InputFormat None -ExecutionPolicy Bypass -Command `
+    "Set-ExecutionPolicy RemoteSigned -scope CurrentUser"'
+
+RUN @"%SystemRoot%\System32\WindowsPowerShell\v1.0\powershell.exe" `
+    -NoProfile -InputFormat None -ExecutionPolicy Bypass -Command `
+    "iex ((New-Object System.Net.WebClient).DownloadString('https://get.scoop.sh'))" `
+
 # Install winflexbison (for the thrift compiler build)
 RUN choco install winflexbison3 -y
+
+# Install winflexbison by scoop
+RUN scoop install winflexbison
 
 # Install 7zip and curl (used by the libevent and zlib build scripts)
 RUN choco install 7zip curl -y
