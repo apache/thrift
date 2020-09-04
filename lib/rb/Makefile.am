@@ -36,7 +36,9 @@ clean-local:
 check-local: all
 	$(BUNDLER) install
 	$(BUNDLER) exec rake
-
+	$(RUBY) test/TestBufferedTransport.rb
+	$(RUBY) test/TestFramedTransport.rb
+	$(RUBY) test/TestUnixServerSocket.rb
 endif
 
 dist-hook:
@@ -52,4 +54,5 @@ EXTRA_DIST = \
 	benchmark \
 	script \
 	spec \
+	test \
 	README.md
