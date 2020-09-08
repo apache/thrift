@@ -1,5 +1,6 @@
 package org.apache.thrift.transport;
 
+import java.nio.Buffer;
 import java.nio.BufferOverflowException;
 import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
@@ -63,7 +64,7 @@ public final class TByteBuffer extends TTransport {
    * Convenience method to call clear() on the underlying NIO ByteBuffer.
    */
   public TByteBuffer clear() {
-    byteBuffer.clear();
+    ((Buffer)byteBuffer).clear();
     return this;
   }
 
@@ -71,7 +72,7 @@ public final class TByteBuffer extends TTransport {
    * Convenience method to call flip() on the underlying NIO ByteBuffer.
      */
   public TByteBuffer flip() {
-    byteBuffer.flip();
+    ((Buffer)byteBuffer).flip();
     return this;
   }
 

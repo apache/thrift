@@ -19,6 +19,7 @@
 package org.apache.thrift.async;
 
 import java.io.IOException;
+import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
@@ -260,7 +261,7 @@ public abstract class TAsyncMethodCall<T> {
         cleanUpAndFireCallback(key);
       } else {
         state = State.READING_RESPONSE_SIZE;
-        sizeBuffer.rewind();  // Prepare to read incoming frame size
+        ((Buffer)sizeBuffer).rewind();  // Prepare to read incoming frame size
         key.interestOps(SelectionKey.OP_READ);
       }
     }

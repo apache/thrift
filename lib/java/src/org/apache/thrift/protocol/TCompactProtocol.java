@@ -21,6 +21,7 @@
 package org.apache.thrift.protocol;
 
 import java.io.UnsupportedEncodingException;
+import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 
@@ -369,8 +370,8 @@ public class TCompactProtocol extends TProtocol {
    * Write a byte array, using a varint for the size.
    */
   public void writeBinary(ByteBuffer bin) throws TException {
-    int length = bin.limit() - bin.position();
-    writeBinary(bin.array(), bin.position() + bin.arrayOffset(), length);
+    int length = ((Buffer)bin).limit() - ((Buffer)bin).position();
+    writeBinary(bin.array(), ((Buffer)bin).position() + bin.arrayOffset(), length);
   }
 
   private void writeBinary(byte[] buf, int offset, int length) throws TException {

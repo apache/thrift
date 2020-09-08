@@ -18,6 +18,7 @@
 package org.apache.thrift;
 
 import java.io.Serializable;
+import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.util.Comparator;
 import java.util.Iterator;
@@ -213,8 +214,8 @@ public final class TBaseHelper {
     byte[] buf = bb.array();
 
     int arrayOffset = bb.arrayOffset();
-    int offset = arrayOffset + bb.position();
-    int origLimit = arrayOffset + bb.limit();
+    int offset = arrayOffset + ((Buffer)bb).position();
+    int origLimit = arrayOffset + ((Buffer)bb).limit();
     int limit = (origLimit - offset > 128) ? offset + 128 : origLimit;
 
     for (int i = offset; i < limit; i++) {
@@ -244,7 +245,7 @@ public final class TBaseHelper {
 
   public static boolean wrapsFullArray(ByteBuffer byteBuffer) {
     return byteBuffer.hasArray()
-      && byteBuffer.position() == 0
+      && ((Buffer)byteBuffer).position() == 0
       && byteBuffer.arrayOffset() == 0
       && byteBuffer.remaining() == byteBuffer.capacity();
   }
@@ -252,7 +253,7 @@ public final class TBaseHelper {
   public static int byteBufferToByteArray(ByteBuffer byteBuffer, byte[] target, int offset) {
     int remaining = byteBuffer.remaining();
     System.arraycopy(byteBuffer.array(),
-        byteBuffer.arrayOffset() + byteBuffer.position(),
+        byteBuffer.arrayOffset() + ((Buffer)byteBuffer).position(),
         target,
         offset,
         remaining);
@@ -275,7 +276,7 @@ public final class TBaseHelper {
     }
     ByteBuffer copy = ByteBuffer.wrap(new byte[orig.remaining()]);
     if (orig.hasArray()) {
-      System.arraycopy(orig.array(), orig.arrayOffset() + orig.position(), copy.array(), 0, orig.remaining());
+      System.arraycopy(orig.array(), orig.arrayOffset() + ((Buffer)orig).position(), copy.array(), 0, orig.remaining());
     } else {
       orig.slice().get(copy.array());
     }

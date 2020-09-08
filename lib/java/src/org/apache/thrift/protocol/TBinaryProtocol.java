@@ -19,6 +19,7 @@
 
 package org.apache.thrift.protocol;
 
+import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 
@@ -229,9 +230,9 @@ public class TBinaryProtocol extends TProtocol {
 
   @Override
   public void writeBinary(ByteBuffer bin) throws TException {
-    int length = bin.limit() - bin.position();
+    int length = ((Buffer)bin).limit() - ((Buffer)bin).position();
     writeI32(length);
-    trans_.write(bin.array(), bin.position() + bin.arrayOffset(), length);
+    trans_.write(bin.array(), ((Buffer)bin).position() + bin.arrayOffset(), length);
   }
 
   /**

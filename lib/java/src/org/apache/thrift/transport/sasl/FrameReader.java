@@ -23,6 +23,7 @@ import org.apache.thrift.transport.TEOFException;
 import org.apache.thrift.transport.TTransport;
 import org.apache.thrift.transport.TTransportException;
 
+import java.nio.Buffer;
 import java.nio.ByteBuffer;
 
 /**
@@ -144,10 +145,10 @@ public abstract class FrameReader<T extends FrameHeaderReader> {
    */
   static int readAvailable(TTransport transport, ByteBuffer recipient) throws TTransportException {
     if (!recipient.hasRemaining()) {
-      throw new IllegalStateException("Trying to fill a full recipient with " + recipient.limit()
+      throw new IllegalStateException("Trying to fill a full recipient with " + ((Buffer)recipient).limit()
           + " bytes");
     }
-    int currentPosition = recipient.position();
+    int currentPosition = ((Buffer)recipient).position();
     byte[] bytes = recipient.array();
     int offset = recipient.arrayOffset() + currentPosition;
     int expectedLength = recipient.remaining();
@@ -156,7 +157,7 @@ public abstract class FrameReader<T extends FrameHeaderReader> {
       throw new TEOFException("Transport is closed, while trying to read " + expectedLength +
           " bytes");
     }
-    recipient.position(currentPosition + got);
+    ((Buffer)recipient).position(currentPosition + got);
     return got;
   }
 }

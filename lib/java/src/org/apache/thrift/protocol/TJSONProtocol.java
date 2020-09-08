@@ -20,6 +20,7 @@
 package org.apache.thrift.protocol;
 
 import java.io.IOException;
+import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -622,7 +623,7 @@ public class TJSONProtocol extends TProtocol {
 
   @Override
   public void writeBinary(ByteBuffer bin) throws TException {
-    writeJSONBase64(bin.array(), bin.position() + bin.arrayOffset(), bin.limit() - bin.position() - bin.arrayOffset());
+    writeJSONBase64(bin.array(), ((Buffer)bin).position() + bin.arrayOffset(), ((Buffer)bin).limit() - ((Buffer)bin).position() - bin.arrayOffset());
   }
 
   /**

@@ -23,6 +23,7 @@ import org.apache.thrift.transport.TTransport;
 import org.apache.thrift.transport.TTransportException;
 import org.apache.thrift.utils.StringUtils;
 
+import java.nio.Buffer;
 import java.nio.ByteBuffer;
 
 /**
@@ -39,13 +40,13 @@ public abstract class FixedSizeHeaderReader implements FrameHeaderReader {
 
   @Override
   public void clear() {
-    byteBuffer.clear();
+    ((Buffer)byteBuffer).clear();
   }
 
   @Override
   public byte[] toBytes() {
     if (!isComplete()) {
-      throw new IllegalStateException("Header is not yet complete " + StringUtils.bytesToHexString(byteBuffer.array(), 0, byteBuffer.position()));
+      throw new IllegalStateException("Header is not yet complete " + StringUtils.bytesToHexString(byteBuffer.array(), 0, ((Buffer)byteBuffer).position()));
     }
     return byteBuffer.array();
   }

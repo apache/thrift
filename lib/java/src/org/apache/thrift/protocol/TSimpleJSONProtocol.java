@@ -19,6 +19,7 @@
 
 package org.apache.thrift.protocol;
 
+import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.Stack;
@@ -360,8 +361,8 @@ public class TSimpleJSONProtocol extends TProtocol {
   @Override
   public void writeBinary(ByteBuffer bin) throws TException {
     // TODO(mcslee): Fix this
-    writeString(new String(bin.array(), bin.position() + bin.arrayOffset(),
-        bin.limit() - bin.position() - bin.arrayOffset(),
+    writeString(new String(bin.array(), ((Buffer)bin).position() + bin.arrayOffset(),
+        ((Buffer)bin).limit() - ((Buffer)bin).position() - bin.arrayOffset(),
         StandardCharsets.UTF_8));
   }
 
