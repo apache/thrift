@@ -398,8 +398,7 @@ void TServerSocket::listen() {
     _setup_unixdomain_sockopts();
 
 #ifndef _WIN32
-    size_t len = path_.size() + 1;
-    if (len > sizeof(((sockaddr_un*)nullptr)->sun_path)) {
+    if ((path_.size() + 1) > sizeof(((sockaddr_un*)nullptr)->sun_path)) {
       errno_copy = THRIFT_GET_SOCKET_ERROR;
       GlobalOutput.perror("TSocket::listen() Unix Domain socket path too long", errno_copy);
       throw TTransportException(TTransportException::NOT_OPEN,
@@ -408,16 +407,13 @@ void TServerSocket::listen() {
     }
 
     struct sockaddr_un address;
+    // Store the zero-terminated path in address.sun_path
+    memset(&address, '\0', sizeof(address));
     address.sun_family = AF_UNIX;
-    memcpy(address.sun_path, path_.c_str(), len);
-
-    auto structlen = static_cast<socklen_t>(sizeof(address));
+    memcpy(address.sun_path, path_.c_str(), path_.size());
 
     if (!address.sun_path[0]) { // abstract namespace socket
-#ifdef __linux__
-      // sun_path is not null-terminated in this case and structlen determines its length
-      structlen -= sizeof(address.sun_path) - len;
-#else
+#ifndef __linux__
       GlobalOutput.perror("TSocket::open() Abstract Namespace Domain sockets only supported on linux: ", -99);
       throw TTransportException(TTransportException::NOT_OPEN,
                                 " Abstract Namespace Domain socket path not supported");
@@ -425,7 +421,7 @@ void TServerSocket::listen() {
     }
 
     do {
-      if (0 == ::bind(serverSocket_, (struct sockaddr*)&address, structlen)) {
+      if (0 == ::bind(serverSocket_, (struct sockaddr*)&address, static_cast<socklen_t>(sizeof(struct sockaddr_un)))) {
         break;
       }
       errno_copy = THRIFT_GET_SOCKET_ERROR;
