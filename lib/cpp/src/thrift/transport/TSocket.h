@@ -68,6 +68,7 @@ public:
    * Note that this does NOT actually connect the socket.
    *
    * @param path The Unix domain socket e.g. "/tmp/ThriftTest.binary.thrift"
+   * or a zero-prefixed string to create an abstract domain socket on Linux.
    */
   TSocket(const std::string& path, std::shared_ptr<TConfiguration> config = nullptr);
 
@@ -150,6 +151,13 @@ public:
   int getPort();
 
   /**
+   * Get the Unix domain socket path that the socket is connected to
+   *
+   * @return std::string path
+   */
+  std::string getPath();
+
+  /**
    * Set the host that socket will connect to
    *
    * @param host host identifier
@@ -162,6 +170,13 @@ public:
    * @param port port number
    */
   void setPort(int port);
+
+  /**
+   * Set the Unix domain socket path for the socket
+   *
+   * @param path std::string path
+   */
+  void setPath(std::string path);
 
   /**
    * Controls whether the linger option is set on the socket.
