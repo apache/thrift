@@ -167,7 +167,13 @@ TServerSocket::~TServerSocket() {
 }
 
 bool TServerSocket::isOpen() const {
-  return (serverSocket_ != THRIFT_INVALID_SOCKET);
+  if (serverSocket_ == THRIFT_INVALID_SOCKET)
+    return false;
+
+  if (!listening_)
+    return false;
+
+  return true;
 }
 
 void TServerSocket::setSendTimeout(int sendTimeout) {
@@ -324,7 +330,6 @@ void TServerSocket::_setup_tcp_sockopts() {
 }
 
 void TServerSocket::listen() {
-  listening_ = true;
 #ifdef _WIN32
   TWinsockSingleton::create();
 #endif // _WIN32
@@ -538,6 +543,7 @@ void TServerSocket::listen() {
   }
 
   // The socket is now listening!
+  listening_ = true;
 }
 
 int TServerSocket::getPort() {
