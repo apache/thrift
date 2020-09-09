@@ -47,6 +47,7 @@
 #include <thrift/transport/TSocket.h>
 #include <thrift/transport/TTransportException.h>
 #include <thrift/transport/PlatformSocket.h>
+#include <thrift/transport/SocketCommon.h>
 
 #ifndef SOCKOPT_CAST_T
 #ifndef _WIN32
@@ -328,30 +329,14 @@ void TSocket::openConnection(struct addrinfo* res) {
   int ret;
   if (!path_.empty()) {
 
+/*
+ * TODO: seems that windows now support unix sockets,
+ *       see: https://devblogs.microsoft.com/commandline/af_unix-comes-to-windows/
+ */
 #ifndef _WIN32
-    size_t len = path_.size() + 1;
-    if (len > sizeof(((sockaddr_un*)nullptr)->sun_path)) {
-      int errno_copy = THRIFT_GET_SOCKET_ERROR;
-      GlobalOutput.perror("TSocket::open() Unix Domain socket path too long", errno_copy);
-      throw TTransportException(TTransportException::NOT_OPEN, " Unix Domain socket path too long");
-    }
 
     struct sockaddr_un address;
-    address.sun_family = AF_UNIX;
-    memcpy(address.sun_path, path_.c_str(), len);
-
-    auto structlen = static_cast<socklen_t>(sizeof(address));
-
-    if (!address.sun_path[0]) { // abstract namespace socket
-#ifdef __linux__
-      // sun_path is not null-terminated in this case and structlen determines its length
-      structlen -= sizeof(address.sun_path) - len;
-#else
-      GlobalOutput.perror("TSocket::open() Abstract Namespace Domain sockets only supported on linux: ", -99);
-      throw TTransportException(TTransportException::NOT_OPEN,
-                                " Abstract Namespace Domain socket path not supported");
-#endif
-    }
+    socklen_t structlen = fillUnixSocketAddr(address, path_);
 
     ret = connect(socket_, (struct sockaddr*)&address, structlen);
 #else
