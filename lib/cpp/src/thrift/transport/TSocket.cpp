@@ -438,7 +438,7 @@ void TSocket::open() {
 
 void TSocket::unix_open() {
   if (!path_.empty()) {
-    // Unix Domain SOcket does not need addrinfo struct, so we pass nullptr
+    // Unix Domain Socket does not need addrinfo struct, so we pass NULL
     openConnection(nullptr);
   }
 }
@@ -711,12 +711,20 @@ int TSocket::getPort() {
   return port_;
 }
 
+std::string TSocket::getPath() {
+    return path_;
+}
+
 void TSocket::setHost(string host) {
   host_ = host;
 }
 
 void TSocket::setPort(int port) {
   port_ = port;
+}
+
+void TSocket::setPath(std::string path) {
+    path_ = path;
 }
 
 void TSocket::setLinger(bool on, int linger) {
@@ -828,7 +836,11 @@ string TSocket::getSocketInfo() const {
       oss << "<Host: " << host_ << " Port: " << port_ << ">";
     }
   } else {
-    oss << "<Path: " << path_ << ">";
+    std::string fmt_path_ = path_;
+    // Handle printing abstract sockets (first character is a '\0' char):
+    if (!fmt_path_.empty() && fmt_path_[0] == '\0')
+      fmt_path_[0] = '@';
+    oss << "<Path: " << fmt_path_ << ">";
   }
   return oss.str();
 }
