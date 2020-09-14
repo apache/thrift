@@ -78,6 +78,10 @@ add_executable(testcompactprotocol testcompactprotocol.c)
 LINK_AGAINST_THRIFT_LIBRARY(testcompactprotocol thrift_c_glib)
 add_test(NAME testcompactprotocol COMMAND testcompactprotocol)
 
+add_executable(testjsonprotocol testjsonprotocol.c)
+LINK_AGAINST_THRIFT_LIBRARY(testjsonprotocol thrift_c_glib)
+add_test(NAME testjsonprotocol COMMAND testjsonprotocol)
+
 add_executable(testbufferedtransport testbufferedtransport.c)
 LINK_AGAINST_THRIFT_LIBRARY(testbufferedtransport thrift_c_glib)
 add_test(NAME testbufferedtransport COMMAND testbufferedtransport)

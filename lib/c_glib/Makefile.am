@@ -30,6 +30,7 @@ AM_CFLAGS = -Wall -Wextra -pedantic
 # Define the source files for the module
 
 libthrift_c_glib_la_SOURCES = src/thrift/c_glib/thrift.c \
+                              src/thrift/c_glib/thrift_base64_utils.c \
                               src/thrift/c_glib/thrift_struct.c \
                               src/thrift/c_glib/thrift_application_exception.c \
                               src/thrift/c_glib/thrift_configuration.c \
@@ -45,6 +46,12 @@ libthrift_c_glib_la_SOURCES = src/thrift/c_glib/thrift.c \
                               src/thrift/c_glib/protocol/thrift_binary_protocol_factory.c \
                               src/thrift/c_glib/protocol/thrift_compact_protocol.c \
                               src/thrift/c_glib/protocol/thrift_compact_protocol_factory.c \
+                              src/thrift/c_glib/protocol/thrift_look_ahead_reader.c \
+                              src/thrift/c_glib/protocol/thrift_json_context.c \
+                              src/thrift/c_glib/protocol/thrift_json_pair_context.c \
+                              src/thrift/c_glib/protocol/thrift_json_list_context.c \
+                              src/thrift/c_glib/protocol/thrift_json_protocol.c \
+                              src/thrift/c_glib/protocol/thrift_json_protocol_factory.c \
                               src/thrift/c_glib/transport/thrift_transport.c \
                               src/thrift/c_glib/transport/thrift_transport_factory.c \
                               src/thrift/c_glib/transport/thrift_buffered_transport_factory.c \
@@ -67,6 +74,7 @@ include_thriftdir = $(includedir)/thrift/c_glib
 include_thrift_HEADERS = \
                          $(top_builddir)/config.h \
                          src/thrift/c_glib/thrift.h \
+                         src/thrift/c_glib/thrift_base64_utils.h \
                          src/thrift/c_glib/thrift_application_exception.h \
                          src/thrift/c_glib/thrift_struct.h \
                          src/thrift/c_glib/thrift_configuration.h
@@ -79,6 +87,12 @@ include_protocol_HEADERS = src/thrift/c_glib/protocol/thrift_protocol.h \
                            src/thrift/c_glib/protocol/thrift_binary_protocol_factory.h \
                            src/thrift/c_glib/protocol/thrift_compact_protocol.h \
                            src/thrift/c_glib/protocol/thrift_compact_protocol_factory.h \
+                           src/thrift/c_glib/protocol/thrift_look_ahead_reader.h \
+                           src/thrift/c_glib/protocol/thrift_json_context.h \
+                           src/thrift/c_glib/protocol/thrift_json_pair_context.h \
+                           src/thrift/c_glib/protocol/thrift_json_list_context.h \
+                           src/thrift/c_glib/protocol/thrift_json_protocol.h \
+                           src/thrift/c_glib/protocol/thrift_json_protocol_factory.h \
                            src/thrift/c_glib/protocol/thrift_multiplexed_protocol.h \
                            src/thrift/c_glib/protocol/thrift_stored_message_protocol.h
                            
