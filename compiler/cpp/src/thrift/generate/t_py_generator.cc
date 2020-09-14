@@ -1172,7 +1172,7 @@ void t_py_generator::generate_service(t_service* tservice) {
 
   // Close service file
   f_service_ << "fix_spec(all_structs)" << endl
-             << "del all_structs" << endl << endl;
+             << "del all_structs" << endl;
   f_service_.close();
 }
 
