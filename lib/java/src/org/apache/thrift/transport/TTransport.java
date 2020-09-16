@@ -19,6 +19,8 @@
 
 package org.apache.thrift.transport;
 
+import org.apache.thrift.TConfiguration;
+
 import java.io.Closeable;
 
 /**
@@ -160,4 +162,10 @@ public abstract class TTransport implements Closeable {
    * @param len
    */
   public void consumeBuffer(int len) {}
+
+  public abstract TConfiguration getConfiguration();
+
+  public abstract void updateKnownMessageSize(long size) throws TTransportException;
+
+  public abstract void checkReadBytesAvailable(long numBytes) throws TTransportException;
 }

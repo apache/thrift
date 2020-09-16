@@ -37,11 +37,12 @@ import org.apache.thrift.protocol.TBinaryProtocol;
 import org.apache.thrift.protocol.TCompactProtocol;
 import org.apache.thrift.protocol.TProtocol;
 import org.apache.thrift.protocol.TProtocolFactory;
-import org.apache.thrift.transport.TFramedTransport;
+import org.apache.thrift.transport.TTransportException;
+import org.apache.thrift.transport.layered.TFramedTransport;
 import org.apache.thrift.transport.TSocket;
 import org.apache.thrift.transport.TTransport;
 import org.apache.thrift.transport.TTransportFactory;
-import org.apache.thrift.transport.TFramedTransport.Factory;
+import org.apache.thrift.transport.layered.TFramedTransport.Factory;
 
 import thrift.test.Insanity;
 import thrift.test.Numberz;
@@ -203,7 +204,7 @@ public abstract class ServerTestBase extends TestCase {
       System.out.print("testInsanity()\n");
 
       HashMap<Numberz,Insanity> first_map = new HashMap<Numberz, Insanity>();
-      HashMap<Numberz,Insanity> second_map = new HashMap<Numberz, Insanity>();;
+      HashMap<Numberz,Insanity> second_map = new HashMap<Numberz, Insanity>();
 
       first_map.put(Numberz.TWO, argument);
       first_map.put(Numberz.THREE, argument);
@@ -222,7 +223,7 @@ public abstract class ServerTestBase extends TestCase {
     public Xtruct testMulti(byte arg0, int arg1, long arg2, Map<Short,String> arg3, Numberz arg4, long arg5) {
       System.out.print("testMulti()\n");
 
-      Xtruct hello = new Xtruct();;
+      Xtruct hello = new Xtruct();
       hello.string_thing = "Hello2";
       hello.byte_thing = arg0;
       hello.i32_thing = arg1;
@@ -268,7 +269,7 @@ public abstract class ServerTestBase extends TestCase {
     }
 
     public void testOneway(int sleepFor) {
-      System.out.println("testOneway(" + Integer.toString(sleepFor) +
+      System.out.println("testOneway(" + sleepFor +
                          ") => sleeping...");
       try {
         Thread.sleep(sleepFor * SLEEP_DELAY);
@@ -533,7 +534,7 @@ public abstract class ServerTestBase extends TestCase {
     }
 
     @Override
-    public TTransport getTransport(TTransport trans) {
+    public TTransport getTransport(TTransport trans) throws TTransportException {
       count++;
       return factory.getTransport(trans);
     }

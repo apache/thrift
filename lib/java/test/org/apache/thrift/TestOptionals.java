@@ -34,8 +34,8 @@ public class TestOptionals extends TestCase {
     assertEquals(true, EncodingUtils.testBit((short)0x8, 3));
     assertEquals(false, EncodingUtils.testBit((short)0x8, 4));
 
-    assertEquals((short)Short.MIN_VALUE, EncodingUtils.setBit((short)0, 15, true));
-    assertEquals((short)0, EncodingUtils.setBit((short)Short.MIN_VALUE, 15, false));
+    assertEquals(Short.MIN_VALUE, EncodingUtils.setBit((short)0, 15, true));
+    assertEquals((short)0, EncodingUtils.setBit(Short.MIN_VALUE, 15, false));
     assertEquals(true, EncodingUtils.testBit(Short.MIN_VALUE, 15));
     assertEquals(false, EncodingUtils.testBit(Short.MIN_VALUE, 14));
   }

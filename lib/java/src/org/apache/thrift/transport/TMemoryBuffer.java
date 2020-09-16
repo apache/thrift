@@ -20,12 +20,14 @@
 package org.apache.thrift.transport;
 
 import org.apache.thrift.TByteArrayOutputStream;
+import org.apache.thrift.TConfiguration;
+
 import java.nio.charset.Charset;
 
 /**
  * Memory buffer-based implementation of the TTransport interface.
  */
-public class TMemoryBuffer extends TTransport {
+public class TMemoryBuffer extends TEndpointTransport {
   /**
    * Create a TMemoryBuffer with an initial buffer size of <i>size</i>. The
    * internal buffer will grow as necessary to accommodate the size of the data
@@ -33,8 +35,24 @@ public class TMemoryBuffer extends TTransport {
    *
    * @param size the initial size of the buffer
    */
-  public TMemoryBuffer(int size) {
+  public TMemoryBuffer(int size) throws TTransportException {
+    super(new TConfiguration());
     arr_ = new TByteArrayOutputStream(size);
+    updateKnownMessageSize(size);
+  }
+
+  /**
+   * Create a TMemoryBuffer with an initial buffer size of <i>size</i>. The
+   * internal buffer will grow as necessary to accommodate the size of the data
+   * being written to it.
+   *
+   * @param config
+   * @param size the initial size of the buffer
+   */
+  public TMemoryBuffer(TConfiguration config, int size) throws TTransportException {
+    super(config);
+    arr_ = new TByteArrayOutputStream(size);
+    updateKnownMessageSize(size);
   }
 
   @Override
@@ -53,9 +71,11 @@ public class TMemoryBuffer extends TTransport {
   }
 
   @Override
-  public int read(byte[] buf, int off, int len) {
+  public int read(byte[] buf, int off, int len) throws TTransportException {
+    checkReadBytesAvailable(len);
     byte[] src = arr_.get();
     int amtToRead = (len > arr_.len() - pos_ ? arr_.len() - pos_ : len);
+
     if (amtToRead > 0) {
       System.arraycopy(src, pos_, buf, off, amtToRead);
       pos_ += amtToRead;

@@ -19,13 +19,19 @@
 
 package org.apache.thrift.transport;
 
+import org.apache.thrift.TConfiguration;
+
 import java.io.IOException;
 import java.net.SocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 
-public abstract class TNonblockingTransport extends TTransport {
+public abstract class TNonblockingTransport extends TEndpointTransport {
+
+  public TNonblockingTransport(TConfiguration config) throws TTransportException {
+    super(config);
+  }
 
   /**
    * Non-blocking connection initialization.

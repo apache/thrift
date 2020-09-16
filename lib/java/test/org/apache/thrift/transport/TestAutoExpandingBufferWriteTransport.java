@@ -19,14 +19,18 @@
 package org.apache.thrift.transport;
 
 import java.nio.ByteBuffer;
+
+import org.apache.thrift.TConfiguration;
 import org.junit.Test;
 import static org.junit.Assert.*;
 
 public class TestAutoExpandingBufferWriteTransport {
 
+  private TConfiguration config = new TConfiguration();
+
   @Test
   public void testIt() throws Exception {
-    AutoExpandingBufferWriteTransport t = new AutoExpandingBufferWriteTransport(1, 0);
+    AutoExpandingBufferWriteTransport t = new AutoExpandingBufferWriteTransport(config, 1, 0);
     assertEquals(0, t.getLength());
     assertEquals(1, t.getBuf().array().length);
     byte[] b1 = new byte[]{1,2,3};
@@ -43,7 +47,7 @@ public class TestAutoExpandingBufferWriteTransport {
     assertEquals(2, t.getLength());
     assertEquals(ByteBuffer.wrap(b2), ByteBuffer.wrap(t.getBuf().array(), 0, 2));
 
-    AutoExpandingBufferWriteTransport uut = new AutoExpandingBufferWriteTransport(8, 4);
+    AutoExpandingBufferWriteTransport uut = new AutoExpandingBufferWriteTransport(config, 8, 4);
     assertEquals(4, uut.getLength());
     assertEquals(8, uut.getBuf().array().length);
     uut.write(b1);
@@ -53,17 +57,17 @@ public class TestAutoExpandingBufferWriteTransport {
   }
 
   @Test(expected = IllegalArgumentException.class)
-  public void testBadInitialSize() throws IllegalArgumentException {
-    new AutoExpandingBufferWriteTransport(0, 0);
+  public void testBadInitialSize() throws IllegalArgumentException, TTransportException {
+    new AutoExpandingBufferWriteTransport(config, 0, 0);
   }
 
   @Test(expected = IllegalArgumentException.class)
-  public void testBadFrontReserveSize() throws IllegalArgumentException {
-    new AutoExpandingBufferWriteTransport(4, -1);
+  public void testBadFrontReserveSize() throws IllegalArgumentException, TTransportException {
+    new AutoExpandingBufferWriteTransport(config, 4, -1);
   }
 
   @Test(expected = IllegalArgumentException.class)
-  public void testTooSmallFrontReserveSize() throws IllegalArgumentException {
-    new AutoExpandingBufferWriteTransport(4, 5);
+  public void testTooSmallFrontReserveSize() throws IllegalArgumentException, TTransportException {
+    new AutoExpandingBufferWriteTransport(config, 4, 5);
   }
 }

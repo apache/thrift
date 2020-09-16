@@ -31,7 +31,7 @@ import java.nio.ByteBuffer;
  * the behaviour of the enclosed <code>TProtocol</code>.
  *
  * <p>See p.175 of Design Patterns (by Gamma et al.)</p>
- * 
+ *
  * @see org.apache.thrift.protocol.TMultiplexedProtocol
  */
 public abstract class TProtocolDecorator extends TProtocol {
@@ -209,5 +209,15 @@ public abstract class TProtocolDecorator extends TProtocol {
 
     public ByteBuffer readBinary() throws TException {
         return concreteProtocol.readBinary();
+    }
+
+    /**
+     *
+     * @param type  Returns the minimum amount of bytes needed to store the smallest possible instance of TType.
+     * @return
+     * @throws TException
+     */
+    public int getMinSerializedSize(byte type) throws TException {
+        return concreteProtocol.getMinSerializedSize(type);
     }
 }

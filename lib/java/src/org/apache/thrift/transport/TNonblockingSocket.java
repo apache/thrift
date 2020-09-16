@@ -30,6 +30,7 @@ import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.SocketChannel;
 
+import org.apache.thrift.TConfiguration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -47,7 +48,7 @@ public class TNonblockingSocket extends TNonblockingTransport {
 
   private final SocketChannel socketChannel_;
 
-  public TNonblockingSocket(String host, int port) throws IOException {
+  public TNonblockingSocket(String host, int port) throws IOException, TTransportException {
     this(host, port, 0);
   }
 
@@ -57,7 +58,7 @@ public class TNonblockingSocket extends TNonblockingTransport {
    * @param port
    * @throws IOException
    */
-  public TNonblockingSocket(String host, int port, int timeout) throws IOException {
+  public TNonblockingSocket(String host, int port, int timeout) throws IOException, TTransportException {
     this(SocketChannel.open(), timeout, new InetSocketAddress(host, port));
   }
 
@@ -67,13 +68,19 @@ public class TNonblockingSocket extends TNonblockingTransport {
    * @param socketChannel Already created SocketChannel object
    * @throws IOException if there is an error setting up the streams
    */
-  public TNonblockingSocket(SocketChannel socketChannel) throws IOException {
+  public TNonblockingSocket(SocketChannel socketChannel) throws IOException, TTransportException {
     this(socketChannel, 0, null);
     if (!socketChannel.isConnected()) throw new IOException("Socket must already be connected");
   }
 
   private TNonblockingSocket(SocketChannel socketChannel, int timeout, SocketAddress socketAddress)
-      throws IOException {
+          throws IOException, TTransportException {
+    this(new TConfiguration(), socketChannel, timeout, socketAddress);
+  }
+
+  private TNonblockingSocket(TConfiguration config, SocketChannel socketChannel, int timeout, SocketAddress socketAddress)
+          throws IOException, TTransportException {
+    super(config);
     socketChannel_ = socketChannel;
     socketAddress_ = socketAddress;
 

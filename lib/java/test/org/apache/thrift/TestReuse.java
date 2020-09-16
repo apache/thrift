@@ -35,21 +35,21 @@ public class TestReuse extends TestStruct {
 
     Reuse ru1 = new Reuse();
     HashSet<String> hs1 = new HashSet<String>();
-    byte[] serBytes;    
+    byte[] serBytes;
     String st1 = new String("string1");
     String st2 = new String("string2");
 
     ru1.setVal1(11);
     ru1.setVal2(hs1);
     ru1.addToVal2(st1);
-    
+
     serBytes = binarySerializer.serialize(ru1);
 
     // update hash set after serialization
     hs1.add(st2);
 
     binaryDeserializer.deserialize(ru1, serBytes);
-   
+
     assertTrue( ru1.getVal2() == hs1 );
     assertTrue( hs1.size() == 2 );
   }

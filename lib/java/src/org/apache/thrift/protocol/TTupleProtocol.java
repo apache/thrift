@@ -80,9 +80,9 @@ public final class TTupleProtocol extends TCompactProtocol {
    * extension). The byte-ordering of the result is big-endian which means the
    * most significant bit is in element 0. The bit at index 0 of the bit set is
    * assumed to be the least significant bit.
-   * 
+   *
    * @param bits
-   * @param vectorWidth 
+   * @param vectorWidth
    * @return a byte array of at least length 1
    */
   public static byte[] toByteArray(BitSet bits, int vectorWidth) {
@@ -95,4 +95,27 @@ public final class TTupleProtocol extends TCompactProtocol {
     return bytes;
   }
 
+  public TMap readMapBegin(byte keyType, byte valTyep) throws TException {
+    int size = super.readI32();
+    TMap map = new TMap(keyType, valTyep, size);
+
+    checkReadBytesAvailable(map);
+    return map;
+  }
+
+  public TList readListBegin(byte type) throws TException {
+    int size = super.readI32();
+    TList list = new TList(type, size);
+
+    checkReadBytesAvailable(list);
+    return list;
+  }
+
+  public TSet readSetBegin(byte type) throws TException {
+    return new TSet(readListBegin(type));
+  }
+
+  public void readMapEnd() throws TException {}
+  public void readListEnd() throws TException {}
+  public void readSetEnd() throws TException {}
 }

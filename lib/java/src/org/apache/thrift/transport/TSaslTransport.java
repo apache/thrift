@@ -20,6 +20,7 @@
 package org.apache.thrift.transport;
 
 import java.nio.charset.StandardCharsets;
+import java.util.Objects;
 
 import javax.security.sasl.Sasl;
 import javax.security.sasl.SaslClient;
@@ -28,6 +29,8 @@ import javax.security.sasl.SaslServer;
 
 import org.apache.thrift.EncodingUtils;
 import org.apache.thrift.TByteArrayOutputStream;
+import org.apache.thrift.TConfiguration;
+import org.apache.thrift.transport.layered.TFramedTransport;
 import org.apache.thrift.transport.sasl.NegotiationStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -36,7 +39,7 @@ import org.slf4j.LoggerFactory;
  * A superclass for SASL client/server thrift transports. A subclass need only
  * implement the <code>open</code> method.
  */
-abstract class TSaslTransport extends TTransport {
+abstract class TSaslTransport extends TEndpointTransport {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(TSaslTransport.class);
 
@@ -83,7 +86,8 @@ abstract class TSaslTransport extends TTransport {
    * @param underlyingTransport
    *          The thrift transport which this transport is wrapping.
    */
-  protected TSaslTransport(TTransport underlyingTransport) {
+  protected TSaslTransport(TTransport underlyingTransport) throws TTransportException {
+    super(Objects.isNull(underlyingTransport.getConfiguration()) ? new TConfiguration() : underlyingTransport.getConfiguration());
     this.underlyingTransport = underlyingTransport;
   }
 
@@ -96,7 +100,8 @@ abstract class TSaslTransport extends TTransport {
    * @param underlyingTransport
    *          The thrift transport which this transport is wrapping.
    */
-  protected TSaslTransport(SaslClient saslClient, TTransport underlyingTransport) {
+  protected TSaslTransport(SaslClient saslClient, TTransport underlyingTransport) throws TTransportException {
+    super(Objects.isNull(underlyingTransport.getConfiguration()) ? new TConfiguration() : underlyingTransport.getConfiguration());
     sasl = new SaslParticipant(saslClient);
     this.underlyingTransport = underlyingTransport;
   }
@@ -151,7 +156,7 @@ abstract class TSaslTransport extends TTransport {
     }
 
     int payloadBytes = EncodingUtils.decodeBigEndian(messageHeader, STATUS_BYTES);
-    if (payloadBytes < 0 || payloadBytes > 104857600 /* 100 MB */) {
+    if (payloadBytes < 0 || payloadBytes > getConfiguration().getMaxMessageSize() /* 100 MB */) {
       throw sendAndThrowMessage(
         NegotiationStatus.ERROR, "Invalid payload header length: " + payloadBytes);
     }

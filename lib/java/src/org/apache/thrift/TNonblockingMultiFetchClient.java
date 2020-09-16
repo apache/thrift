@@ -75,7 +75,7 @@ import java.util.concurrent.TimeoutException;
  *
  */
 public class TNonblockingMultiFetchClient {
-  
+
   private static final Logger LOGGER = LoggerFactory.getLogger(
     TNonblockingMultiFetchClient.class);
 
@@ -86,7 +86,7 @@ public class TNonblockingMultiFetchClient {
   // time limit for fetching data from all servers (in second)
   private int fetchTimeoutSeconds;
 
-  // store request that will be sent to servers  
+  // store request that will be sent to servers
   private ByteBuffer requestBuf;
   private ByteBuffer requestBufDuplication;
 
@@ -104,7 +104,7 @@ public class TNonblockingMultiFetchClient {
     this.fetchTimeoutSeconds = fetchTimeoutSeconds;
     this.requestBuf = requestBuf;
     this.servers = servers;
-      
+
     stats = new TNonblockingMultiFetchStats();
     recvBuf = null;
   }
@@ -128,7 +128,7 @@ public class TNonblockingMultiFetchClient {
       if (requestBufDuplication == null) {
         requestBufDuplication = requestBuf.duplicate();
       }
-      return requestBufDuplication;  
+      return requestBufDuplication;
     }
   }
 
@@ -171,7 +171,7 @@ public class TNonblockingMultiFetchClient {
       task.cancel(true);
       LOGGER.error("Exception during fetch", ee);
     } catch (TimeoutException te) {
-      // attempt to cancel execution of the task.  
+      // attempt to cancel execution of the task.
       task.cancel(true);
       LOGGER.error("Timeout for fetch", te);
     }
@@ -207,10 +207,10 @@ public class TNonblockingMultiFetchClient {
       // buffer for receiving response from servers
       recvBuf                     = new ByteBuffer[numTotalServers];
       // buffer for sending request
-      ByteBuffer sendBuf[]        = new ByteBuffer[numTotalServers];
-      long numBytesRead[]         = new long[numTotalServers];
-      int frameSize[]             = new int[numTotalServers];
-      boolean hasReadFrameSize[]  = new boolean[numTotalServers];
+      ByteBuffer[] sendBuf = new ByteBuffer[numTotalServers];
+      long[] numBytesRead = new long[numTotalServers];
+      int[] frameSize = new int[numTotalServers];
+      boolean[] hasReadFrameSize = new boolean[numTotalServers];
 
       try {
         selector = Selector.open();
@@ -240,10 +240,11 @@ public class TNonblockingMultiFetchClient {
         } catch (Exception e) {
           stats.incNumConnectErrorServers();
           LOGGER.error("Set up socket to server {} error", server, e);
+
           // free resource
           if (s != null) {
             try {s.close();} catch (Exception ex) {}
-          }            
+          }
           if (key != null) {
              key.cancel();
           }
@@ -253,7 +254,7 @@ public class TNonblockingMultiFetchClient {
       // wait for events
       while (stats.getNumReadCompletedServers() +
         stats.getNumConnectErrorServers() < stats.getNumTotalServers()) {
-        // if the thread is interrupted (e.g., task is cancelled)  
+        // if the thread is interrupted (e.g., task is cancelled)
         if (Thread.currentThread().isInterrupted()) {
           return;
         }

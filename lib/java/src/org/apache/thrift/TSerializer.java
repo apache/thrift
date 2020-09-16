@@ -26,6 +26,7 @@ import org.apache.thrift.protocol.TBinaryProtocol;
 import org.apache.thrift.protocol.TProtocol;
 import org.apache.thrift.protocol.TProtocolFactory;
 import org.apache.thrift.transport.TIOStreamTransport;
+import org.apache.thrift.transport.TTransportException;
 
 /**
  * Generic utility for easily serializing objects into a byte array or Java
@@ -42,7 +43,7 @@ public class TSerializer {
   /**
    * This transport wraps that byte array
    */
-  private final TIOStreamTransport transport_ = new TIOStreamTransport(baos_);
+  private final TIOStreamTransport transport_;
 
   /**
    * Internal protocol used for serializing objects.
@@ -52,7 +53,7 @@ public class TSerializer {
   /**
    * Create a new TSerializer that uses the TBinaryProtocol by default.
    */
-  public TSerializer() {
+  public TSerializer() throws TTransportException {
     this(new TBinaryProtocol.Factory());
   }
 
@@ -62,7 +63,8 @@ public class TSerializer {
    *
    * @param protocolFactory Factory to create a protocol
    */
-  public TSerializer(TProtocolFactory protocolFactory) {
+  public TSerializer(TProtocolFactory protocolFactory) throws TTransportException {
+    transport_ = new TIOStreamTransport(new TConfiguration(), baos_);
     protocol_ = protocolFactory.getProtocol(transport_);
   }
 

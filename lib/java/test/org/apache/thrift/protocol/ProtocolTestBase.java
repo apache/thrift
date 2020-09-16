@@ -18,24 +18,26 @@
  */
 package org.apache.thrift.protocol;
 
+import java.lang.Exception;
+import java.lang.Integer;
+import java.lang.String;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import junit.framework.TestCase;
 
-import org.apache.thrift.Fixtures;
-import org.apache.thrift.TBase;
-import org.apache.thrift.TDeserializer;
-import org.apache.thrift.TException;
-import org.apache.thrift.TSerializer;
+import org.apache.thrift.*;
+import org.apache.thrift.server.ServerTestBase;
 import org.apache.thrift.transport.TMemoryBuffer;
 
-import thrift.test.CompactProtoTestStruct;
-import thrift.test.HolyMoley;
-import thrift.test.Nesting;
-import thrift.test.OneOfEach;
-import thrift.test.Srv;
+import org.apache.thrift.transport.TTransportException;
+import thrift.test.*;
 
 public abstract class ProtocolTestBase extends TestCase {
 
@@ -409,7 +411,7 @@ public abstract class ProtocolTestBase extends TestCase {
       }
       long serEnd = System.currentTimeMillis();
       long serElapsed = serEnd - serStart;
-      System.out.println("Ser:\t" + serElapsed + "ms\t" 
+      System.out.println("Ser:\t" + serElapsed + "ms\t"
           + ((double)serElapsed / NUM_REPS) + "ms per serialization");
 
       HolyMoley cpts = new HolyMoley();
@@ -420,8 +422,109 @@ public abstract class ProtocolTestBase extends TestCase {
       }
       long deserEnd = System.currentTimeMillis();
       long deserElapsed = deserEnd - deserStart;
-      System.out.println("Des:\t" + deserElapsed + "ms\t" 
+      System.out.println("Des:\t" + deserElapsed + "ms\t"
           + ((double)deserElapsed / NUM_REPS) + "ms per deserialization");
+    }
+  }
+
+  private ServerTestBase.TestHandler testHandler = new ServerTestBase.TestHandler() {
+    @Override
+    public String testString(String thing) {
+      thing = thing + " Apache Thrift Java " + thing;
+      return thing;
+    }
+
+    @Override
+    public List<Integer> testList(List<Integer> thing) {
+      thing.addAll(thing);
+      thing.addAll(thing);
+      return thing;
+    }
+
+    @Override
+    public Set<Integer> testSet(Set<Integer> thing) {
+      thing.addAll(thing.stream().map( x -> x + 100).collect(Collectors.toSet()));
+      return thing;
+    }
+
+    @Override
+    public Map<String, String> testStringMap(Map<String, String> thing) {
+      thing.put("a", "123");
+      thing.put(" x y ", " with spaces ");
+      thing.put("same", "same");
+      thing.put("0", "numeric key");
+      thing.put("1", "");
+      thing.put("ok", "2355555");
+      thing.put("end", "0");
+      return thing;
+    }
+  };
+
+  private TProtocol initConfig(int maxSize) throws TException{
+    TConfiguration config = TConfiguration.custom().setMaxMessageSize(maxSize).build();
+    TMemoryBuffer bufferTrans = new TMemoryBuffer(config, 0);
+    return getFactory().getProtocol(bufferTrans);
+  }
+
+  public void testReadCheckMaxMessageRequestForString() throws TException{
+    TProtocol clientOutProto = initConfig(15);
+    TProtocol clientInProto = initConfig(15);
+    ThriftTest.Client testClient = new ThriftTest.Client(clientInProto, clientOutProto);
+    ThriftTest.Processor testProcessor = new ThriftTest.Processor(testHandler);
+    try {
+      testClient.send_testString("test");
+      testProcessor.process(clientOutProto, clientInProto);
+      String result = testClient.recv_testString();
+      System.out.println("----result: "+result);
+    } catch (TException e) {
+      assertEquals("MaxMessageSize reached", e.getMessage());
+    }
+  }
+
+  public void testReadCheckMaxMessageRequestForList() throws TException{
+    TProtocol clientOutProto = initConfig(15);
+    TProtocol clientInProto = initConfig(15);
+    ThriftTest.Client testClient = new ThriftTest.Client(clientInProto, clientOutProto);
+    ThriftTest.Processor testProcessor = new ThriftTest.Processor(testHandler);
+    try {
+      testClient.send_testList(Arrays.asList(1, 23242346, 888888, 90));
+      testProcessor.process(clientOutProto, clientInProto);
+      testClient.recv_testList();
+      fail("Limitations not achieved as expected");
+    } catch (TTransportException e) {
+      assertEquals("MaxMessageSize reached", e.getMessage());
+    }
+  }
+
+  public void testReadCheckMaxMessageRequestForMap() throws TException{
+    TProtocol clientOutProto = initConfig(13);
+    TProtocol clientInProto = initConfig(13);
+    ThriftTest.Client testClient = new ThriftTest.Client(clientInProto, clientOutProto);
+    ThriftTest.Processor testProcessor = new ThriftTest.Processor(testHandler);
+    Map<String, String> thing = new HashMap<>();
+    thing.put("key", "Thrift");
+    try {
+      testClient.send_testStringMap(thing);
+      testProcessor.process(clientOutProto, clientInProto);
+      testClient.recv_testStringMap();
+      fail("Limitations not achieved as expected");
+    } catch (TTransportException e) {
+      assertEquals("MaxMessageSize reached", e.getMessage());
+    }
+  }
+
+  public void testReadCheckMaxMessageRequestForSet() throws TException{
+    TProtocol clientOutProto = initConfig(10);
+    TProtocol clientInProto = initConfig(10);
+    ThriftTest.Client testClient = new ThriftTest.Client(clientInProto, clientOutProto);
+    ThriftTest.Processor testProcessor = new ThriftTest.Processor(testHandler);
+    try {
+      testClient.send_testSet(Stream.of(234, 0, 987087, 45, 88888888, 9).collect(Collectors.toSet()));
+      testProcessor.process(clientOutProto, clientInProto);
+      testClient.recv_testSet();
+      fail("Limitations not achieved as expected");
+    } catch (TTransportException e) {
+      assertEquals("MaxMessageSize reached", e.getMessage());
     }
   }
 }

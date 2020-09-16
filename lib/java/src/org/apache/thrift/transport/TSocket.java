@@ -19,6 +19,7 @@
 
 package org.apache.thrift.transport;
 
+import org.apache.thrift.TConfiguration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -69,6 +70,7 @@ public class TSocket extends TIOStreamTransport {
    * @throws TTransportException if there is an error setting up the streams
    */
   public TSocket(Socket socket) throws TTransportException {
+    super(new TConfiguration());
     socket_ = socket;
     try {
       socket_.setSoLinger(false, 0);
@@ -93,23 +95,36 @@ public class TSocket extends TIOStreamTransport {
    * Creates a new unconnected socket that will connect to the given host
    * on the given port.
    *
+   * @param config  check config
    * @param host Remote host
    * @param port Remote port
    */
-  public TSocket(String host, int port) {
-    this(host, port, 0);
+  public TSocket(TConfiguration config, String host, int port) throws TTransportException {
+    this(config, host, port, 0);
   }
 
   /**
    * Creates a new unconnected socket that will connect to the given host
    * on the given port.
    *
+   * @param host Remote host
+   * @param port Remote port
+   */
+  public TSocket(String host, int port) throws TTransportException {
+    this(new TConfiguration(), host, port, 0);
+  }
+
+  /**
+   * Creates a new unconnected socket that will connect to the given host
+   * on the given port.
+   *
+   * @param config  check config
    * @param host    Remote host
    * @param port    Remote port
    * @param timeout Socket timeout and connection timeout
    */
-  public TSocket(String host, int port, int timeout) {
-    this(host, port, timeout, timeout);
+  public TSocket(TConfiguration config, String host, int port, int timeout) throws TTransportException {
+    this(config, host, port, timeout, timeout);
   }
 
   /**
@@ -117,12 +132,14 @@ public class TSocket extends TIOStreamTransport {
    * on the given port, with a specific connection timeout and a
    * specific socket timeout.
    *
+   * @param config          check config
    * @param host            Remote host
    * @param port            Remote port
    * @param socketTimeout   Socket timeout
    * @param connectTimeout  Connection timeout
    */
-  public TSocket(String host, int port, int socketTimeout, int connectTimeout) {
+  public TSocket(TConfiguration config, String host, int port, int socketTimeout, int connectTimeout) throws TTransportException {
+    super(config);
     host_ = host;
     port_ = port;
     socketTimeout_ = socketTimeout;

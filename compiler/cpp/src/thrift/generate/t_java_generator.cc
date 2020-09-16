@@ -2526,7 +2526,7 @@ void t_java_generator::generate_java_bean_boilerplate(ostream& out, t_struct* ts
       }else{
         indent(out) << " : java.nio.ByteBuffer.wrap(" << field_name << ".clone());" << endl;
       }
-                 
+
       if (!bean_style_) {
         indent(out) << "  return this;" << endl;
       }
@@ -3861,19 +3861,18 @@ void t_java_generator::generate_deserialize_container(ostream& out,
     // Declare variables, read header
     if (ttype->is_map()) {
       indent(out) << "org.apache.thrift.protocol.TMap " << obj
-                  << " = new org.apache.thrift.protocol.TMap("
+                  << " = iprot.readMapBegin("
                   << type_to_enum(((t_map*)ttype)->get_key_type()) << ", "
-                  << type_to_enum(((t_map*)ttype)->get_val_type()) << ", "
-                  << "iprot.readI32());" << endl;
+                  << type_to_enum(((t_map*)ttype)->get_val_type()) << "); "<< endl;
     } else if (ttype->is_set()) {
       indent(out) << "org.apache.thrift.protocol.TSet " << obj
-                  << " = new org.apache.thrift.protocol.TSet("
-                  << type_to_enum(((t_set*)ttype)->get_elem_type()) << ", iprot.readI32());"
+                  << " = iprot.readSetBegin("
+                  << type_to_enum(((t_set*)ttype)->get_elem_type()) << ");"
                   << endl;
     } else if (ttype->is_list()) {
       indent(out) << "org.apache.thrift.protocol.TList " << obj
-                  << " = new org.apache.thrift.protocol.TList("
-                  << type_to_enum(((t_list*)ttype)->get_elem_type()) << ", iprot.readI32());"
+                  << " = iprot.readListBegin("
+                  << type_to_enum(((t_list*)ttype)->get_elem_type()) << ");"
                   << endl;
     }
   }
