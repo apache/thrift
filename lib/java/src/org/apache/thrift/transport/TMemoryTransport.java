@@ -22,18 +22,28 @@ package org.apache.thrift.transport;
 import java.nio.ByteBuffer;
 
 import org.apache.thrift.TByteArrayOutputStream;
+import org.apache.thrift.TConfiguration;
 
 /**
  * In memory transport with separate buffers for input and output.
  */
-public class TMemoryTransport extends TTransport {
+public class TMemoryTransport extends TEndpointTransport {
 
   private final ByteBuffer inputBuffer;
   private final TByteArrayOutputStream outputBuffer;
 
-  public TMemoryTransport(byte[] input) {
+  public TMemoryTransport(byte[] input) throws TTransportException {
+    super(new TConfiguration());
     inputBuffer = ByteBuffer.wrap(input);
     outputBuffer = new TByteArrayOutputStream(1024);
+    updateKnownMessageSize(input.length);
+  }
+
+  public TMemoryTransport(TConfiguration config, byte[] input) throws TTransportException {
+    super(config);
+    inputBuffer = ByteBuffer.wrap(input);
+    outputBuffer = new TByteArrayOutputStream(1024);
+    updateKnownMessageSize(input.length);
   }
 
   @Override
@@ -56,6 +66,7 @@ public class TMemoryTransport extends TTransport {
 
   @Override
   public int read(byte[] buf, int off, int len) throws TTransportException {
+    checkReadBytesAvailable(len);
     int remaining = inputBuffer.remaining();
     if (remaining < len) {
       throw new TTransportException(TTransportException.END_OF_FILE,

@@ -47,14 +47,14 @@ public class TSaslClientTransport extends TSaslTransport {
 
   /**
    * Uses the given <code>SaslClient</code>.
-   * 
+   *
    * @param saslClient
    *          The <code>SaslClient</code> to use for the subsequent SASL
    *          negotiation.
    * @param transport
    *          Transport underlying this one.
    */
-  public TSaslClientTransport(SaslClient saslClient, TTransport transport) {
+  public TSaslClientTransport(SaslClient saslClient, TTransport transport) throws TTransportException {
     super(saslClient, transport);
     mechanism = saslClient.getMechanismName();
   }
@@ -63,14 +63,14 @@ public class TSaslClientTransport extends TSaslTransport {
    * Creates a <code>SaslClient</code> using the given SASL-specific parameters.
    * See the Java documentation for <code>Sasl.createSaslClient</code> for the
    * details of the parameters.
-   * 
+   *
    * @param transport
    *          The underlying Thrift transport.
    * @throws SaslException
    */
   public TSaslClientTransport(String mechanism, String authorizationId, String protocol,
       String serverName, Map<String, String> props, CallbackHandler cbh, TTransport transport)
-      throws SaslException {
+          throws SaslException, TTransportException {
     super(Sasl.createSaslClient(new String[] { mechanism }, authorizationId, protocol, serverName,
         props, cbh), transport);
     this.mechanism = mechanism;

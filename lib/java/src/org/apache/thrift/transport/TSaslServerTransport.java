@@ -58,7 +58,7 @@ public class TSaslServerTransport extends TSaslTransport {
    * @param transport
    *          Transport underlying this one.
    */
-  public TSaslServerTransport(TTransport transport) {
+  public TSaslServerTransport(TTransport transport) throws TTransportException {
     super(transport);
   }
 
@@ -71,12 +71,12 @@ public class TSaslServerTransport extends TSaslTransport {
    *          The underlying Thrift transport.
    */
   public TSaslServerTransport(String mechanism, String protocol, String serverName,
-      Map<String, String> props, CallbackHandler cbh, TTransport transport) {
+      Map<String, String> props, CallbackHandler cbh, TTransport transport) throws TTransportException {
     super(transport);
     addServerDefinition(mechanism, protocol, serverName, props, cbh);
   }
 
-  private TSaslServerTransport(Map<String, TSaslServerDefinition> serverDefinitionMap, TTransport transport) {
+  private TSaslServerTransport(Map<String, TSaslServerDefinition> serverDefinitionMap, TTransport transport) throws TTransportException {
     super(transport);
     this.serverDefinitionMap.putAll(serverDefinitionMap);
   }
@@ -190,7 +190,7 @@ public class TSaslServerTransport extends TSaslTransport {
      * receives the same <code>TSaslServerTransport</code>.
      */
     @Override
-    public TTransport getTransport(TTransport base) {
+    public TTransport getTransport(TTransport base) throws TTransportException {
       WeakReference<TSaslServerTransport> ret = transportMap.get(base);
       if (ret == null || ret.get() == null) {
         LOGGER.debug("transport map does not contain key", base);

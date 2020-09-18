@@ -40,6 +40,7 @@ import javax.security.sasl.SaslServerFactory;
 
 import junit.framework.TestCase;
 
+import org.apache.thrift.TConfiguration;
 import org.apache.thrift.TProcessor;
 import org.apache.thrift.protocol.TProtocolFactory;
 import org.apache.thrift.server.ServerTestBase;
@@ -409,9 +410,10 @@ public class TestTSaslTransports extends TestCase {
   private static class MockTTransport extends TTransport {
 
     byte[] badHeader = null;
-    private TMemoryInputTransport readBuffer = new TMemoryInputTransport();
+    private TMemoryInputTransport readBuffer;
 
-    public MockTTransport(int mode) {
+    public MockTTransport(int mode) throws TTransportException {
+      readBuffer = new TMemoryInputTransport();
       if (mode==1) {
         // Invalid status byte
         badHeader = new byte[] { (byte)0xFF, (byte)0x00, (byte)0x00, (byte)0x00, (byte)0x05 };
@@ -443,25 +445,41 @@ public class TestTSaslTransports extends TestCase {
 
     @Override
     public void write(byte[] buf, int off, int len) throws TTransportException {}
+
+    @Override
+    public TConfiguration getConfiguration() {
+      return readBuffer.getConfiguration();
+    }
+
+    @Override
+    public void updateKnownMessageSize(long size) throws TTransportException {
+      readBuffer.updateKnownMessageSize(size);
+    }
+
+    @Override
+    public void checkReadBytesAvailable(long numBytes) throws TTransportException {
+      readBuffer.checkReadBytesAvailable(numBytes);
+    }
   }
 
   public void testBadHeader() {
-    TSaslTransport saslTransport = new TSaslServerTransport(new MockTTransport(1));
+    TSaslTransport saslTransport;
     try {
+      saslTransport = new TSaslServerTransport(new MockTTransport(1));
       saslTransport.receiveSaslMessage();
       fail("Should have gotten an error due to incorrect status byte value.");
     } catch (TTransportException e) {
       assertEquals(e.getMessage(), "Invalid status -1");
     }
-    saslTransport = new TSaslServerTransport(new MockTTransport(2));
     try {
+      saslTransport = new TSaslServerTransport(new MockTTransport(2));
       saslTransport.receiveSaslMessage();
       fail("Should have gotten an error due to negative payload length.");
     } catch (TTransportException e) {
       assertEquals(e.getMessage(), "Invalid payload header length: -1");
     }
-    saslTransport = new TSaslServerTransport(new MockTTransport(3));
     try {
+      saslTransport = new TSaslServerTransport(new MockTTransport(3));
       saslTransport.receiveSaslMessage();
       fail("Should have gotten an error due to bogus (large) payload length.");
     } catch (TTransportException e) {

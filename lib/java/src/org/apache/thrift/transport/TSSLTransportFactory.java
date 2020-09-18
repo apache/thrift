@@ -45,7 +45,7 @@ import org.slf4j.LoggerFactory;
  *  TSocket and TServerSocket
  */
 public class TSSLTransportFactory {
-  
+
   private static final Logger LOGGER =
       LoggerFactory.getLogger(TSSLTransportFactory.class);
 
@@ -350,7 +350,7 @@ public class TSSLTransportFactory {
       }
       isKeyStoreSet = true;
     }
-    
+
     /**
      * Set the keystore, password, certificate type and the store type
      *
@@ -363,7 +363,7 @@ public class TSSLTransportFactory {
     	this.keyStoreStream = keyStoreStream;
     	setKeyStore("", keyPass, keyManagerType, keyStoreType);
     }
-    
+
     /**
      * Set the keystore and password
      *
@@ -373,7 +373,7 @@ public class TSSLTransportFactory {
     public void setKeyStore(String keyStore, String keyPass) {
       setKeyStore(keyStore, keyPass, null, null);
     }
-    
+
     /**
      * Set the keystore and password
      *
@@ -383,7 +383,7 @@ public class TSSLTransportFactory {
     public void setKeyStore(InputStream keyStoreStream, String keyPass) {
       setKeyStore(keyStoreStream, keyPass, null, null);
     }
-    
+
     /**
      * Set the truststore, password, certificate type and the store type
      *
@@ -403,7 +403,7 @@ public class TSSLTransportFactory {
       }
       isTrustStoreSet = true;
     }
-    
+
     /**
      * Set the truststore, password, certificate type and the store type
      *
@@ -426,7 +426,7 @@ public class TSSLTransportFactory {
     public void setTrustStore(String trustStore, String trustPass) {
       setTrustStore(trustStore, trustPass, null, null);
     }
-    
+
     /**
      * Set the truststore and password
      *

@@ -27,14 +27,16 @@ import java.io.IOException;
 import java.util.Arrays;
 
 import junit.framework.TestCase;
+import org.apache.thrift.transport.layered.TFastFramedTransport;
+import org.apache.thrift.transport.layered.TFramedTransport;
 
 public class TestTFramedTransport extends TestCase {
 
-  protected TTransport getTransport(TTransport underlying) {
+  protected TTransport getTransport(TTransport underlying) throws TTransportException {
     return new TFramedTransport(underlying);
   }
 
-  protected TTransport getTransport(TTransport underlying, int maxLength) {
+  protected TTransport getTransport(TTransport underlying, int maxLength) throws TTransportException {
     return new TFramedTransport(underlying, maxLength);
   }
 
@@ -73,6 +75,7 @@ public class TestTFramedTransport extends TestCase {
     assertEquals(30, trans.read(new byte[30], 0, 30));
     assertEquals(2, countTrans.readCount);
 
+    // Known message size exceeded
     readBuf = new byte[220];
     assertEquals(220, trans.read(readBuf, 0, 220));
     assertTrue(Arrays.equals(readBuf, byteSequence(0, 219)));
@@ -149,8 +152,8 @@ public class TestTFramedTransport extends TestCase {
     DataOutputStream dos = new DataOutputStream(baos);
     dos.writeInt(50);
     dos.write(byteSequence(0, 49));
-    dos.writeInt(75);
-    dos.write(byteSequence(125, 200));
+    dos.writeInt(50);
+    dos.write(byteSequence(125, 175));
 
     TMemoryBuffer membuf = new TMemoryBuffer(0);
     membuf.write(baos.toByteArray());
@@ -177,10 +180,11 @@ public class TestTFramedTransport extends TestCase {
     assertEquals(0, trans.getBytesRemainingInBuffer());
     assertEquals(50, trans.getBufferPosition());
 
+    // Known message size exceeded
     trans.read(readBuf, 0, 10);
     assertEquals(4, countTrans.readCount);
     assertTrue(Arrays.equals(readBuf, byteSequence(125,134)));
-    assertEquals(65, trans.getBytesRemainingInBuffer());
+    assertEquals(40, trans.getBytesRemainingInBuffer());
     assertEquals(10, trans.getBufferPosition());
   }
 

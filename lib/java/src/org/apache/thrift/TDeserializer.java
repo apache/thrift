@@ -29,6 +29,7 @@ import org.apache.thrift.protocol.TProtocolFactory;
 import org.apache.thrift.protocol.TProtocolUtil;
 import org.apache.thrift.protocol.TType;
 import org.apache.thrift.transport.TMemoryInputTransport;
+import org.apache.thrift.transport.TTransportException;
 
 /**
  * Generic utility for easily deserializing objects from a byte array or Java
@@ -42,7 +43,7 @@ public class TDeserializer {
   /**
    * Create a new TDeserializer that uses the TBinaryProtocol by default.
    */
-  public TDeserializer() {
+  public TDeserializer() throws TTransportException {
     this(new TBinaryProtocol.Factory());
   }
 
@@ -52,8 +53,8 @@ public class TDeserializer {
    *
    * @param protocolFactory Factory to create a protocol
    */
-  public TDeserializer(TProtocolFactory protocolFactory) {
-    trans_ = new TMemoryInputTransport();
+  public TDeserializer(TProtocolFactory protocolFactory) throws TTransportException {
+    trans_ = new TMemoryInputTransport(new TConfiguration());
     protocol_ = protocolFactory.getProtocol(trans_);
   }
 
@@ -105,19 +106,19 @@ public class TDeserializer {
 
   /**
    * Deserialize only a single Thrift object (addressed by recursively using field id)
-   * from a byte record.   
+   * from a byte record.
    * @param tb The object to read into
    * @param bytes The serialized object to read from
    * @param fieldIdPathFirst First of the FieldId's that define a path tb
    * @param fieldIdPathRest The rest FieldId's that define a path tb
-   * @throws TException 
+   * @throws TException
    */
   public void partialDeserialize(TBase tb, byte[] bytes, TFieldIdEnum fieldIdPathFirst, TFieldIdEnum ... fieldIdPathRest) throws TException {
     try {
       if (locateField(bytes, fieldIdPathFirst, fieldIdPathRest) != null) {
         // if this line is reached, iprot will be positioned at the start of tb.
         tb.read(protocol_);
-      }      
+      }
     } catch (Exception e) {
       throw new TException(e);
     } finally {

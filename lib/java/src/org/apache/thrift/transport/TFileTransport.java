@@ -26,13 +26,14 @@ import java.io.OutputStream;
 import java.io.IOException;
 import java.util.Random;
 
+import org.apache.thrift.TConfiguration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
  * FileTransport implementation of the TTransport interface.
  * Currently this is a straightforward port of the cpp implementation
- * 
+ *
  * It may make better sense to provide a basic stream access on top of the framed file format
  * The FileTransport can then be a user of this framed file format with some additional logic
  * for chunking.
@@ -44,7 +45,7 @@ public class TFileTransport extends TTransport {
   public static class TruncableBufferedInputStream extends BufferedInputStream {
     public void trunc() {
       pos = count = 0;
-    }        
+    }
     public TruncableBufferedInputStream(InputStream in) {
       super(in);
     }
@@ -62,7 +63,7 @@ public class TFileTransport extends TTransport {
     /**
      * Initialize an event. Initially, it has no valid contents
      *
-     * @param buf byte array buffer to store event 
+     * @param buf byte array buffer to store event
      */
     public Event(byte[] buf) {
       buf_ = buf;
@@ -88,9 +89,9 @@ public class TFileTransport extends TTransport {
 
       return(ndesired);
     }
-  };
+  }
 
-  public static class ChunkState {
+    public static class ChunkState {
     /**
      * Chunk Size. Must be same across all implementations
      */
@@ -111,7 +112,7 @@ public class TFileTransport extends TTransport {
     public long getOffset() { return (offset_);}
   }
 
-  public static enum TailPolicy {
+  public enum TailPolicy {
 
     NOWAIT(0, 0),
       WAIT_FOREVER(500, -1);
@@ -148,13 +149,13 @@ public class TFileTransport extends TTransport {
   TailPolicy currentPolicy_ = TailPolicy.NOWAIT;
 
 
-  /** 
+  /**
    * Underlying file being read
    */
   protected TSeekableFile inputFile_ = null;
 
-  /** 
-   * Underlying outputStream 
+  /**
+   * Underlying outputStream
    */
   protected OutputStream outputStream_ = null;
 
@@ -181,7 +182,7 @@ public class TFileTransport extends TTransport {
 
   /**
    * Get File Tailing Policy
-   * 
+   *
    * @return current read policy
    */
   public TailPolicy getTailPolicy() {
@@ -190,7 +191,7 @@ public class TFileTransport extends TTransport {
 
   /**
    * Set file Tailing Policy
-   * 
+   *
    * @param policy New policy to set
    * @return Old policy
    */
@@ -203,7 +204,7 @@ public class TFileTransport extends TTransport {
 
   /**
    * Initialize read input stream
-   * 
+   *
    * @return input stream to read from file
    */
   private InputStream createInputStream() throws TTransportException {
@@ -223,7 +224,7 @@ public class TFileTransport extends TTransport {
 
   /**
    * Read (potentially tailing) an input stream
-   * 
+   *
    * @param is InputStream to read from
    * @param buf Buffer to read into
    * @param off Offset in buffer to read into
@@ -232,7 +233,7 @@ public class TFileTransport extends TTransport {
    *
    * @return number of bytes read
    */
-  private int tailRead(InputStream is, byte[] buf, 
+  private int tailRead(InputStream is, byte[] buf,
                        int off, int len, TailPolicy tp) throws TTransportException {
     int orig_len = len;
     try {
@@ -322,7 +323,7 @@ public class TFileTransport extends TTransport {
       // check if event is corrupted and do recovery as required
       if(esize > cs.getRemaining()) {
         throw new TTransportException("FileTransport error: bad event size");
-        /*        
+        /*
                   if(performRecovery()) {
                   esize=0;
                   } else {
@@ -361,7 +362,7 @@ public class TFileTransport extends TTransport {
    * Files are not opened in ctor - but in explicit open call
    */
   public void open() throws TTransportException {
-    if (isOpen()) 
+    if (isOpen())
       throw new TTransportException(TTransportException.ALREADY_OPEN);
 
     try {
@@ -406,7 +407,7 @@ public class TFileTransport extends TTransport {
    *
    * @param path File path to read and write from
    * @param readOnly Whether this is a read-only transport
-   */ 
+   */
   public TFileTransport(final String path, boolean readOnly) throws IOException {
     inputFile_ = new TStandardFile(path);
     readOnly_ = readOnly;
@@ -457,8 +458,8 @@ public class TFileTransport extends TTransport {
    * @throws TTransportException if there was an error reading data
    */
   public int read(byte[] buf, int off, int len) throws TTransportException {
-    if(!isOpen()) 
-      throw new TTransportException(TTransportException.NOT_OPEN, 
+    if(!isOpen())
+      throw new TTransportException(TTransportException.NOT_OPEN,
                                     "Must open before reading");
 
     if(currentEvent_.getRemaining() == 0) {
@@ -471,14 +472,14 @@ public class TFileTransport extends TTransport {
   }
 
   public int getNumChunks() throws TTransportException {
-    if(!isOpen()) 
-      throw new TTransportException(TTransportException.NOT_OPEN, 
+    if(!isOpen())
+      throw new TTransportException(TTransportException.NOT_OPEN,
                                     "Must open before getNumChunks");
     try {
       long len = inputFile_.length();
       if(len == 0)
         return 0;
-      else 
+      else
         return (((int)(len/cs.getChunkSize())) + 1);
 
     } catch (IOException iox) {
@@ -487,8 +488,8 @@ public class TFileTransport extends TTransport {
   }
 
   public int getCurChunk() throws TTransportException {
-    if(!isOpen()) 
-      throw new TTransportException(TTransportException.NOT_OPEN, 
+    if(!isOpen())
+      throw new TTransportException(TTransportException.NOT_OPEN,
                                     "Must open before getCurChunk");
     return (cs.getChunkNum());
 
@@ -496,8 +497,8 @@ public class TFileTransport extends TTransport {
 
 
   public void seekToChunk(int chunk) throws TTransportException {
-    if(!isOpen()) 
-      throw new TTransportException(TTransportException.NOT_OPEN, 
+    if(!isOpen())
+      throw new TTransportException(TTransportException.NOT_OPEN,
                                     "Must open before seeking");
 
     int numChunks = getNumChunks();
@@ -527,7 +528,7 @@ public class TFileTransport extends TTransport {
     }
 
     if(chunk*cs.getChunkSize() != cs.getOffset()) {
-      try { inputFile_.seek((long)chunk*cs.getChunkSize()); } 
+      try { inputFile_.seek((long)chunk*cs.getChunkSize()); }
       catch (IOException iox) {
         throw new TTransportException("Seek to chunk " +
                                       chunk + " " +iox.getMessage(), iox);
@@ -549,8 +550,8 @@ public class TFileTransport extends TTransport {
   }
 
   public void seekToEnd() throws TTransportException {
-    if(!isOpen()) 
-      throw new TTransportException(TTransportException.NOT_OPEN, 
+    if(!isOpen())
+      throw new TTransportException(TTransportException.NOT_OPEN,
                                     "Must open before seeking");
     seekToChunk(getNumChunks());
   }
@@ -577,9 +578,25 @@ public class TFileTransport extends TTransport {
     throw new TTransportException("Not Supported");
   }
 
+
+  @Override
+  public TConfiguration getConfiguration() {
+    return null;
+  }
+
+  @Override
+  public void updateKnownMessageSize(long size) throws TTransportException {
+
+  }
+
+  @Override
+  public void checkReadBytesAvailable(long numBytes) throws TTransportException {
+
+  }
+
   /**
    * test program
-   * 
+   *
    */
   public static void main(String[] args) throws Exception {
 
@@ -594,7 +611,7 @@ public class TFileTransport extends TTransport {
       try {
         num_chunks = Integer.parseInt(args[1]);
       } catch (Exception e) {
-        LOGGER.error("Cannot parse " + args[1]); 
+        LOGGER.error("Cannot parse " + args[1]);
         printUsage();
       }
     }

@@ -19,29 +19,21 @@
 
 package org.apache.thrift.test;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
 import org.apache.thrift.protocol.TBinaryProtocol;
 import org.apache.thrift.protocol.TCompactProtocol;
 import org.apache.thrift.protocol.TJSONProtocol;
 import org.apache.thrift.protocol.TProtocol;
 import org.apache.thrift.protocol.TProtocolFactory;
-import org.apache.thrift.protocol.TMultiplexedProtocol;
 import org.apache.thrift.server.ServerContext;
 import org.apache.thrift.server.TServer;
-import org.apache.thrift.server.TServer.Args;
 import org.apache.thrift.server.TSimpleServer;
 import org.apache.thrift.server.TThreadPoolServer;
 import org.apache.thrift.server.ServerTestBase.TestHandler;
 import org.apache.thrift.server.TServerEventHandler;
 import org.apache.thrift.server.TThreadedSelectorServer;
 import org.apache.thrift.server.TNonblockingServer;
-import org.apache.thrift.transport.TFramedTransport;
-import org.apache.thrift.transport.TFastFramedTransport;
+import org.apache.thrift.transport.layered.TFramedTransport;
+import org.apache.thrift.transport.layered.TFastFramedTransport;
 import org.apache.thrift.transport.TZlibTransport;
 import org.apache.thrift.transport.TServerSocket;
 import org.apache.thrift.transport.TSSLTransportFactory;
@@ -50,14 +42,8 @@ import org.apache.thrift.transport.TTransportFactory;
 import org.apache.thrift.transport.TNonblockingServerSocket;
 import org.apache.thrift.TMultiplexedProcessor;
 
-import thrift.test.Insanity;
-import thrift.test.Numberz;
 import thrift.test.SecondService;
 import thrift.test.ThriftTest;
-import thrift.test.Xception;
-import thrift.test.Xception2;
-import thrift.test.Xtruct;
-import thrift.test.Xtruct2;
 
 public class TestServer {
 

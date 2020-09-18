@@ -215,7 +215,7 @@ public class TNonblockingServer extends AbstractNonblockingServer {
 
     protected FrameBuffer createFrameBuffer(final TNonblockingTransport trans,
         final SelectionKey selectionKey,
-        final AbstractSelectThread selectThread) {
+        final AbstractSelectThread selectThread) throws TTransportException {
         return processorFactory_.isAsyncProcessor() ?
                   new AsyncFrameBuffer(trans, selectionKey, selectThread) :
                   new FrameBuffer(trans, selectionKey, selectThread);
@@ -229,7 +229,7 @@ public class TNonblockingServer extends AbstractNonblockingServer {
       TNonblockingTransport client = null;
       try {
         // accept the connection
-        client = (TNonblockingTransport)serverTransport.accept();
+        client = serverTransport.accept();
         clientKey = client.registerSelector(selector, SelectionKey.OP_READ);
 
         // add this key to the map

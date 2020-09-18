@@ -24,6 +24,7 @@ import java.nio.charset.StandardCharsets;
 
 import org.apache.thrift.TException;
 import org.apache.thrift.transport.TTransport;
+import org.apache.thrift.transport.TTransportException;
 
 /**
  * Binary protocol implementation for thrift.
@@ -279,6 +280,8 @@ public class TBinaryProtocol extends TProtocol {
   @Override
   public TMap readMapBegin() throws TException {
     TMap map = new TMap(readByte(), readByte(), readI32());
+
+    checkReadBytesAvailable(map);
     checkContainerReadLength(map.size);
     return map;
   }
@@ -289,6 +292,8 @@ public class TBinaryProtocol extends TProtocol {
   @Override
   public TList readListBegin() throws TException {
     TList list = new TList(readByte(), readI32());
+
+    checkReadBytesAvailable(list);
     checkContainerReadLength(list.size);
     return list;
   }
@@ -299,6 +304,8 @@ public class TBinaryProtocol extends TProtocol {
   @Override
   public TSet readSetBegin() throws TException {
     TSet set = new TSet(readByte(), readI32());
+
+    checkReadBytesAvailable(set);
     checkContainerReadLength(set.size);
     return set;
   }
@@ -393,8 +400,6 @@ public class TBinaryProtocol extends TProtocol {
   public String readString() throws TException {
     int size = readI32();
 
-    checkStringReadLength(size);
-
     if (trans_.getBytesRemainingInBuffer() >= size) {
       String s = new String(trans_.getBuffer(), trans_.getBufferPosition(),
           size, StandardCharsets.UTF_8);
@@ -429,11 +434,14 @@ public class TBinaryProtocol extends TProtocol {
     return ByteBuffer.wrap(buf);
   }
 
-  private void checkStringReadLength(int length) throws TProtocolException {
+  private void checkStringReadLength(int length) throws TException {
     if (length < 0) {
       throw new TProtocolException(TProtocolException.NEGATIVE_SIZE,
                                    "Negative length: " + length);
     }
+
+    getTransport().checkReadBytesAvailable(length);
+
     if (stringLengthLimit_ != NO_LENGTH_LIMIT && length > stringLengthLimit_) {
       throw new TProtocolException(TProtocolException.SIZE_LIMIT,
                                    "Length exceeded max allowed: " + length);
@@ -453,5 +461,29 @@ public class TBinaryProtocol extends TProtocol {
 
   private int readAll(byte[] buf, int off, int len) throws TException {
     return trans_.readAll(buf, off, len);
+  }
+
+  /**
+   *
+   * Return the minimum number of bytes a type will consume on the wire
+   */
+  public int getMinSerializedSize(byte type) throws TTransportException {
+    switch (type)
+    {
+      case 0: return 0; // Stop
+      case 1: return 0; // Void
+      case 2: return 1; // Bool sizeof(byte)
+      case 3: return 1; // Byte sizeof(byte)
+      case 4: return 8; // Double sizeof(double)
+      case 6: return 2; // I16 sizeof(short)
+      case 8: return 4; // I32 sizeof(int)
+      case 10: return 8;// I64 sizeof(long)
+      case 11: return 4;  // string length sizeof(int)
+      case 12: return 0;  // empty struct
+      case 13: return 4;  // element count Map sizeof(int)
+      case 14: return 4;  // element count Set sizeof(int)
+      case 15: return 4;  // element count List sizeof(int)
+      default: throw new TTransportException(TTransportException.UNKNOWN, "unrecognized type code");
+    }
   }
 }

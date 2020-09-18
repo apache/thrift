@@ -26,6 +26,7 @@ import java.nio.charset.StandardCharsets;
 
 import org.apache.thrift.TException;
 import org.apache.thrift.transport.TTransport;
+import org.apache.thrift.transport.TTransportException;
 
 /**
  * TCompactProtocol2 is the Java implementation of the compact protocol specified
@@ -579,7 +580,9 @@ public class TCompactProtocol extends TProtocol {
     int size = readVarint32();
     checkContainerReadLength(size);
     byte keyAndValueType = size == 0 ? 0 : readByte();
-    return new TMap(getTType((byte)(keyAndValueType >> 4)), getTType((byte)(keyAndValueType & 0xf)), size);
+    TMap map = new TMap(getTType((byte)(keyAndValueType >> 4)), getTType((byte)(keyAndValueType & 0xf)), size);
+    checkReadBytesAvailable(map);
+    return map;
   }
 
   /**
@@ -595,8 +598,9 @@ public class TCompactProtocol extends TProtocol {
       size = readVarint32();
     }
     checkContainerReadLength(size);
-    byte type = getTType(size_and_type);
-    return new TList(type, size);
+    TList list = new TList(getTType(size_and_type), size);
+    checkReadBytesAvailable(list);
+    return list;
   }
 
   /**
@@ -694,9 +698,9 @@ public class TCompactProtocol extends TProtocol {
    */
   public ByteBuffer readBinary() throws TException {
     int length = readVarint32();
-    checkStringReadLength(length);
+    
     if (length == 0) return EMPTY_BUFFER;
-
+    getTransport().checkReadBytesAvailable(length);
     if (trans_.getBytesRemainingInBuffer() >= length) {
       ByteBuffer bb = ByteBuffer.wrap(trans_.getBuffer(), trans_.getBufferPosition(), length);
       trans_.consumeBuffer(length);
@@ -719,11 +723,14 @@ public class TCompactProtocol extends TProtocol {
     return buf;
   }
 
-  private void checkStringReadLength(int length) throws TProtocolException {
+  private void checkStringReadLength(int length) throws TException {
     if (length < 0) {
       throw new TProtocolException(TProtocolException.NEGATIVE_SIZE,
                                    "Negative length: " + length);
     }
+
+    getTransport().checkReadBytesAvailable(length);
+    
     if (stringLengthLimit_ != NO_LENGTH_LIMIT && length > stringLengthLimit_) {
       throw new TProtocolException(TProtocolException.SIZE_LIMIT,
                                    "Length exceeded max allowed: " + length);
@@ -900,5 +907,41 @@ public class TCompactProtocol extends TProtocol {
    */
   private byte getCompactType(byte ttype) {
     return ttypeToCompactType[ttype];
+  }
+
+  /**
+   * Return the minimum number of bytes a type will consume on the wire
+   */
+  public int getMinSerializedSize(byte type) throws TTransportException {
+      switch (type) {
+          case 0:
+              return 0; // Stop
+          case 1:
+              return 0; // Void
+          case 2:
+              return 1; // Bool sizeof(byte)
+          case 3:
+              return 1; // Byte sizeof(byte)
+          case 4:
+              return 8; // Double sizeof(double)
+          case 6:
+              return 1; // I16 sizeof(byte)
+          case 8:
+              return 1; // I32 sizeof(byte)
+          case 10:
+              return 1;// I64 sizeof(byte)
+          case 11:
+              return 1;  // string length sizeof(byte)
+          case 12:
+              return 0;  // empty struct
+          case 13:
+              return 1;  // element count Map sizeof(byte)
+          case 14:
+              return 1;  // element count Set sizeof(byte)
+          case 15:
+              return 1;  // element count List sizeof(byte)
+          default:
+              throw new TTransportException(TTransportException.UNKNOWN, "unrecognized type code");
+      }
   }
 }

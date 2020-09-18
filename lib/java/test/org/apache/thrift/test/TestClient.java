@@ -37,8 +37,8 @@ import org.apache.thrift.protocol.TJSONProtocol;
 import org.apache.thrift.protocol.TMultiplexedProtocol;
 import org.apache.thrift.protocol.TProtocol;
 import org.apache.thrift.protocol.TSimpleJSONProtocol;
-import org.apache.thrift.transport.TFastFramedTransport;
-import org.apache.thrift.transport.TFramedTransport;
+import org.apache.thrift.transport.layered.TFastFramedTransport;
+import org.apache.thrift.transport.layered.TFramedTransport;
 import org.apache.thrift.transport.THttpClient;
 import org.apache.thrift.transport.TSSLTransportFactory;
 import org.apache.thrift.transport.TSocket;
@@ -106,7 +106,7 @@ public class TestClient {
         } else if (args[i].equals("--zlib")) {
           zlib = true;
         } else if (args[i].equals("--client")) {
-          http_client = true;  
+          http_client = true;
         } else if (args[i].equals("--help")) {
           System.out.println("Allowed options:");
           System.out.println("  --help\t\t\tProduce help message");
@@ -157,7 +157,7 @@ public class TestClient {
       if (transport_type.equals("http")) {
         String url = "http://" + host + ":" + port + "/test/service";
         if (http_client == true) {
-          
+
           transport = new THttpClient(url, HttpClients.createDefault());
         } else {
           transport = new THttpClient(url);
@@ -775,7 +775,7 @@ public class TestClient {
         long onewayElapsedMillis = (System.nanoTime() - startOneway) / 1000000;
         if (onewayElapsedMillis > 200) {
           System.out.println("Oneway test took too long to execute failed: took " +
-                             Long.toString(onewayElapsedMillis) +
+                  onewayElapsedMillis +
                              "ms");
           System.out.println("oneway calls are 'fire and forget' and therefore should not cause blocking.");
           System.out.println("Some transports (HTTP) have a required response, and typically this failure");
@@ -786,7 +786,7 @@ public class TestClient {
           returnCode |= ERR_BASETYPES;
         } else {
           System.out.println("Success - fire and forget only took " +
-                             Long.toString(onewayElapsedMillis) +
+                  onewayElapsedMillis +
                              "ms");
         }
 

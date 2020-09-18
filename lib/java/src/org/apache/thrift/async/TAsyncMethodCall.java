@@ -27,7 +27,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import org.apache.thrift.TException;
 import org.apache.thrift.protocol.TProtocol;
 import org.apache.thrift.protocol.TProtocolFactory;
-import org.apache.thrift.transport.TFramedTransport;
+import org.apache.thrift.transport.layered.TFramedTransport;
 import org.apache.thrift.transport.TMemoryBuffer;
 import org.apache.thrift.transport.TNonblockingTransport;
 import org.apache.thrift.transport.TTransportException;
@@ -98,7 +98,7 @@ public abstract class TAsyncMethodCall<T> {
   protected long getStartTime() {
     return startTime;
   }
-  
+
   protected long getSequenceId() {
     return sequenceId;
   }
@@ -106,11 +106,11 @@ public abstract class TAsyncMethodCall<T> {
   public TAsyncClient getClient() {
     return client;
   }
-  
+
   public boolean hasTimeout() {
     return timeout > 0;
   }
-  
+
   public long getTimeoutTimestamp() {
     return timeout + startTime;
   }

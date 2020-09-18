@@ -21,6 +21,7 @@ package org.apache.thrift.transport;
 import java.nio.ByteBuffer;
 
 import junit.framework.TestCase;
+import org.apache.thrift.TConfiguration;
 
 public class TestAutoExpandingBufferReadTransport extends TestCase {
   private static final byte[] HUNDRED_BYTES = new byte[100];
@@ -32,9 +33,9 @@ public class TestAutoExpandingBufferReadTransport extends TestCase {
   }
 
   public void testIt() throws Exception {
-    AutoExpandingBufferReadTransport t = new AutoExpandingBufferReadTransport(150);
+    AutoExpandingBufferReadTransport t = new AutoExpandingBufferReadTransport(new TConfiguration(), 150);
 
-    TMemoryInputTransport membuf = new TMemoryInputTransport(HUNDRED_BYTES);
+    TMemoryInputTransport membuf = new TMemoryInputTransport(new TConfiguration(), HUNDRED_BYTES);
 
     t.fill(membuf, 100);
     assertEquals(100, t.getBytesRemainingInBuffer());

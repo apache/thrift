@@ -16,7 +16,13 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.apache.thrift.transport;
+package org.apache.thrift.transport.layered;
+
+
+import org.apache.thrift.TConfiguration;
+import org.apache.thrift.transport.*;
+
+import java.util.Objects;
 
 /**
  * This transport is wire compatible with {@link TFramedTransport}, but makes
@@ -27,18 +33,18 @@ package org.apache.thrift.transport;
  *
  * This implementation is NOT threadsafe.
  */
-public class TFastFramedTransport extends TTransport {
+public class TFastFramedTransport extends TLayeredTransport {
 
   public static class Factory extends TTransportFactory {
     private final int initialCapacity;
     private final int maxLength;
 
     public Factory() {
-      this(DEFAULT_BUF_CAPACITY, DEFAULT_MAX_LENGTH);
+      this(DEFAULT_BUF_CAPACITY, TConfiguration.DEFAULT_MAX_FRAME_SIZE);
     }
 
     public Factory(int initialCapacity) {
-      this(initialCapacity, DEFAULT_MAX_LENGTH);
+      this(initialCapacity, TConfiguration.DEFAULT_MAX_FRAME_SIZE);
     }
 
     public Factory(int initialCapacity, int maxLength) {
@@ -47,7 +53,7 @@ public class TFastFramedTransport extends TTransport {
     }
 
     @Override
-    public TTransport getTransport(TTransport trans) {
+    public TTransport getTransport(TTransport trans) throws TTransportException {
       return new TFastFramedTransport(trans,
           initialCapacity,
           maxLength);
@@ -58,12 +64,7 @@ public class TFastFramedTransport extends TTransport {
    * How big should the default read and write buffers be?
    */
   public static final int DEFAULT_BUF_CAPACITY = 1024;
-  /**
-   * How big is the largest allowable frame? Defaults to 16MB.
-   */
-  public static final int DEFAULT_MAX_LENGTH = 16384000;
 
-  private final TTransport underlying;
   private final AutoExpandingBufferWriteTransport writeBuffer;
   private AutoExpandingBufferReadTransport readBuffer;
   private final int initialBufferCapacity;
@@ -75,8 +76,8 @@ public class TFastFramedTransport extends TTransport {
    * for initial buffer size and max frame length.
    * @param underlying Transport that real reads and writes will go through to.
    */
-  public TFastFramedTransport(TTransport underlying) {
-    this(underlying, DEFAULT_BUF_CAPACITY, DEFAULT_MAX_LENGTH);
+  public TFastFramedTransport(TTransport underlying) throws TTransportException {
+    this(underlying, DEFAULT_BUF_CAPACITY, TConfiguration.DEFAULT_MAX_FRAME_SIZE);
   }
 
   /**
@@ -87,8 +88,8 @@ public class TFastFramedTransport extends TTransport {
    * In practice, it's not critical to set this unless you know in advance that
    * your messages are going to be very large.
    */
-  public TFastFramedTransport(TTransport underlying, int initialBufferCapacity) {
-    this(underlying, initialBufferCapacity, DEFAULT_MAX_LENGTH);
+  public TFastFramedTransport(TTransport underlying, int initialBufferCapacity) throws TTransportException {
+    this(underlying, initialBufferCapacity, TConfiguration.DEFAULT_MAX_FRAME_SIZE);
   }
 
   /**
@@ -102,27 +103,29 @@ public class TFastFramedTransport extends TTransport {
    * @param maxLength The max frame size you are willing to read. You can use
    * this parameter to limit how much memory can be allocated.
    */
-  public TFastFramedTransport(TTransport underlying, int initialBufferCapacity, int maxLength) {
-    this.underlying = underlying;
+  public TFastFramedTransport(TTransport underlying, int initialBufferCapacity, int maxLength) throws TTransportException {
+    super(underlying);
+    TConfiguration config = Objects.isNull(underlying.getConfiguration()) ? new TConfiguration() : underlying.getConfiguration();
     this.maxLength = maxLength;
+    config.setMaxFrameSize(maxLength);
     this.initialBufferCapacity = initialBufferCapacity;
-    readBuffer = new AutoExpandingBufferReadTransport(initialBufferCapacity);
-    writeBuffer = new AutoExpandingBufferWriteTransport(initialBufferCapacity, 4);
+    readBuffer = new AutoExpandingBufferReadTransport(config, initialBufferCapacity);
+    writeBuffer = new AutoExpandingBufferWriteTransport(config, initialBufferCapacity, 4);
   }
 
   @Override
   public void close() {
-    underlying.close();
+    getInnerTransport().close();
   }
 
   @Override
   public boolean isOpen() {
-    return underlying.isOpen();
+    return getInnerTransport().isOpen();
   }
 
   @Override
   public void open() throws TTransportException {
-    underlying.open();
+    getInnerTransport().open();
   }
 
   @Override
@@ -139,7 +142,7 @@ public class TFastFramedTransport extends TTransport {
   }
 
   private void readFrame() throws TTransportException {
-    underlying.readAll(i32buf , 0, 4);
+    getInnerTransport().readAll(i32buf , 0, 4);
     int size = TFramedTransport.decodeFrameSize(i32buf);
 
     if (size < 0) {
@@ -147,13 +150,13 @@ public class TFastFramedTransport extends TTransport {
       throw new TTransportException(TTransportException.CORRUPTED_DATA, "Read a negative frame size (" + size + ")!");
     }
 
-    if (size > maxLength) {
+    if (size > getInnerTransport().getConfiguration().getMaxFrameSize()) {
       close();
       throw new TTransportException(TTransportException.CORRUPTED_DATA,
           "Frame size (" + size + ") larger than max length (" + maxLength + ")!");
     }
 
-    readBuffer.fill(underlying, size);
+    readBuffer.fill(getInnerTransport(), size);
   }
 
   @Override
@@ -169,18 +172,18 @@ public class TFastFramedTransport extends TTransport {
   /**
    * Only clears the read buffer!
    */
-  public void clear() {
-    readBuffer = new AutoExpandingBufferReadTransport(initialBufferCapacity);
+  public void clear() throws TTransportException {
+    readBuffer = new AutoExpandingBufferReadTransport(getConfiguration(), initialBufferCapacity);
   }
 
   @Override
   public void flush() throws TTransportException {
-    int payloadLength = writeBuffer.getLength() - 4;        
+    int payloadLength = writeBuffer.getLength() - 4;
     byte[] data = writeBuffer.getBuf().array();
     TFramedTransport.encodeFrameSize(payloadLength, data);
-    underlying.write(data, 0, payloadLength + 4);
+    getInnerTransport().write(data, 0, payloadLength + 4);
     writeBuffer.reset();
-    underlying.flush();
+    getInnerTransport().flush();
   }
 
   @Override

@@ -16,18 +16,23 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.apache.thrift;
 
-import org.apache.thrift.server.AbstractNonblockingServer.AsyncFrameBuffer;
 
-public interface TAsyncProcessor {
-  /**
-   * Process a single frame.
+package org.apache.thrift.protocol;
 
-   * <b>Note:</b> Implementations must call fb.responseReady() once processing
-   * is complete
-   *
-   * @throws TException if the frame cannot be processed
-   */
-  public void process(final AsyncFrameBuffer fb) throws TException;
+import org.apache.thrift.TDeserializer;
+import org.apache.thrift.TException;
+import thrift.test.Bonk;
+
+public class TestTBinaryProtocol extends ProtocolTestBase {
+  @Override
+  protected TProtocolFactory getFactory() {
+    return new TBinaryProtocol.Factory();
+  }
+
+  @Override
+  protected boolean canBeUsedNaked() {
+    return true;
+  }
+
 }

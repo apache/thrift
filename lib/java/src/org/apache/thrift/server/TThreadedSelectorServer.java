@@ -457,7 +457,7 @@ public class TThreadedSelectorServer extends AbstractNonblockingServer {
 
     private TNonblockingTransport doAccept() {
       try {
-        return (TNonblockingTransport) serverTransport.accept();
+        return serverTransport.accept();
       } catch (TTransportException tte) {
         // something went wrong accepting.
         LOGGER.warn("Exception trying to accept!", tte);
@@ -685,7 +685,7 @@ public class TThreadedSelectorServer extends AbstractNonblockingServer {
 
     protected FrameBuffer createFrameBuffer(final TNonblockingTransport trans,
         final SelectionKey selectionKey,
-        final AbstractSelectThread selectThread) {
+        final AbstractSelectThread selectThread) throws TTransportException {
         return processorFactory_.isAsyncProcessor() ?
                   new AsyncFrameBuffer(trans, selectionKey, selectThread) :
                   new FrameBuffer(trans, selectionKey, selectThread);
@@ -699,7 +699,7 @@ public class TThreadedSelectorServer extends AbstractNonblockingServer {
         FrameBuffer frameBuffer = createFrameBuffer(accepted, clientKey, SelectorThread.this);
 
         clientKey.attach(frameBuffer);
-      } catch (IOException e) {
+      } catch (IOException | TTransportException e) {
         LOGGER.warn("Failed to register accepted connection to selector!", e);
         if (clientKey != null) {
           cleanupSelectionKey(clientKey);

@@ -34,7 +34,7 @@ public class TTransportFactory {
    * @param trans The base transport
    * @return Wrapped Transport
    */
-  public TTransport getTransport(TTransport trans) {
+  public TTransport getTransport(TTransport trans) throws TTransportException {
     return trans;
   }
 

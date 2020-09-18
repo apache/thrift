@@ -25,6 +25,7 @@ import java.util.Stack;
 
 import org.apache.thrift.TException;
 import org.apache.thrift.transport.TTransport;
+import org.apache.thrift.transport.TTransportException;
 
 /**
  * JSON protocol implementation for thrift.
@@ -478,6 +479,30 @@ public class TSimpleJSONProtocol extends TProtocol {
   public static class CollectionMapKeyException extends TException {
     public CollectionMapKeyException(String message) {
       super(message);
+    }
+  }
+
+  /**
+   *
+   * Return the minimum number of bytes a type will consume on the wire
+   */
+  public int getMinSerializedSize(byte type) throws TException {
+    switch (type)
+    {
+      case 0: return 0; // Stop
+      case 1: return 0; // Void
+      case 2: return 1; // Bool
+      case 3: return 1; // Byte
+      case 4: return 1; // Double
+      case 6: return 1; // I16
+      case 8: return 1; // I32
+      case 10: return 1;// I64
+      case 11: return 2;  // string length
+      case 12: return 2;  // empty struct
+      case 13: return 2;  // element count Map
+      case 14: return 2;  // element count Set
+      case 15: return 2;  // element count List
+      default: throw new TTransportException(TTransportException.UNKNOWN, "unrecognized type code");
     }
   }
 }

@@ -18,10 +18,12 @@
  */
 package org.apache.thrift.transport;
 
+import org.apache.thrift.TConfiguration;
+
 /**
  * TTransport for writing to an AutoExpandingBuffer.
  */
-public final class AutoExpandingBufferWriteTransport extends TTransport {
+public final class AutoExpandingBufferWriteTransport extends TEndpointTransport {
 
   private final AutoExpandingBuffer buf;
   private int pos;
@@ -38,7 +40,8 @@ public final class AutoExpandingBufferWriteTransport extends TTransport {
    * @throws IllegalArgumentException if frontReserve is less than zero
    * @throws IllegalArgumentException if frontReserve is greater than initialCapacity
    */
-  public AutoExpandingBufferWriteTransport(int initialCapacity, int frontReserve) {
+  public AutoExpandingBufferWriteTransport(TConfiguration config, int initialCapacity, int frontReserve) throws TTransportException {
+    super(config);
     if (initialCapacity < 1) {
       throw new IllegalArgumentException("initialCapacity");
     }

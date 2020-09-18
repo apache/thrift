@@ -61,7 +61,7 @@ public class TestTMemoryInputTransport extends TestCase {
     assertEquals(3, trans.getBytesRemainingInBuffer());
   }
 
-  public void testWithOffsetAndLength() throws Exception {
+  public void testWithOffsetAndLength() throws TTransportException {
     byte[] input_buf = new byte[]{1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
     TMemoryInputTransport trans = new TMemoryInputTransport(input_buf, 1, 3);
     assertEquals(1, trans.getBufferPosition());

@@ -23,7 +23,7 @@ import org.apache.thrift.TAsyncProcessor;
 import org.apache.thrift.TByteArrayOutputStream;
 import org.apache.thrift.TException;
 import org.apache.thrift.protocol.TProtocol;
-import org.apache.thrift.transport.TFramedTransport;
+import org.apache.thrift.transport.layered.TFramedTransport;
 import org.apache.thrift.transport.TIOStreamTransport;
 import org.apache.thrift.transport.TMemoryInputTransport;
 import org.apache.thrift.transport.TNonblockingServerTransport;
@@ -305,7 +305,7 @@ public abstract class AbstractNonblockingServer extends TServer {
 
     public FrameBuffer(final TNonblockingTransport trans,
         final SelectionKey selectionKey,
-        final AbstractSelectThread selectThread) {
+        final AbstractSelectThread selectThread) throws TTransportException {
       trans_ = trans;
       selectionKey_ = selectionKey;
       selectThread_ = selectThread;
@@ -542,10 +542,7 @@ public abstract class AbstractNonblockingServer extends TServer {
      */
     private boolean internalRead() {
       try {
-        if (trans_.read(buffer_) < 0) {
-          return false;
-        }
-        return true;
+          return trans_.read(buffer_) >= 0;
       } catch (IOException e) {
         LOGGER.warn("Got an IOException in internalRead!", e);
         return false;
@@ -582,7 +579,7 @@ public abstract class AbstractNonblockingServer extends TServer {
   } // FrameBuffer
 
   public class AsyncFrameBuffer extends FrameBuffer {
-    public AsyncFrameBuffer(TNonblockingTransport trans, SelectionKey selectionKey, AbstractSelectThread selectThread) {
+    public AsyncFrameBuffer(TNonblockingTransport trans, SelectionKey selectionKey, AbstractSelectThread selectThread) throws TTransportException {
       super(trans, selectionKey, selectThread);
     }
 

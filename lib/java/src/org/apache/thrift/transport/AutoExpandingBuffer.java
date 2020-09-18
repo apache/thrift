@@ -27,7 +27,7 @@ import java.util.Arrays;
  * rate slightly faster than the requested capacity with the (untested)
  * objective of avoiding expensive buffer allocations and copies.
  */
-class AutoExpandingBuffer {
+public class AutoExpandingBuffer {
   private byte[] array;
 
   public AutoExpandingBuffer(int initialCapacity) {
