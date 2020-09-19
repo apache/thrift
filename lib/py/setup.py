@@ -67,6 +67,7 @@ def run_setup(with_binary):
         extensions = dict(
             ext_modules=[
                 Extension('thrift.protocol.fastbinary',
+                          extra_compile_args=['-std=c++11'],
                           sources=[
                               'src/ext/module.cpp',
                               'src/ext/types.cpp',
