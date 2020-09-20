@@ -779,14 +779,11 @@ void t_cpp_generator::print_const_value(ostream& out,
     vector<t_field*>::const_iterator f_iter;
     const map<t_const_value*, t_const_value*, t_const_value::value_compare>& val = value->get_map();
     map<t_const_value*, t_const_value*, t_const_value::value_compare>::const_iterator v_iter;
-    bool is_nonrequired_field = false;
     for (v_iter = val.begin(); v_iter != val.end(); ++v_iter) {
-      t_type* field_type = nullptr;
-      is_nonrequired_field = false;
+      t_type* field_type = NULL;
       for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
         if ((*f_iter)->get_name() == v_iter->first->get_string()) {
           field_type = (*f_iter)->get_type();
-          is_nonrequired_field = (*f_iter)->get_req() != t_field::T_REQUIRED;
         }
       }
       if (field_type == nullptr) {
@@ -794,9 +791,7 @@ void t_cpp_generator::print_const_value(ostream& out,
       }
       string val = render_const_value(out, name, field_type, v_iter->second);
       indent(out) << name << "." << v_iter->first->get_string() << " = " << val << ";" << endl;
-      if (is_nonrequired_field) {
-        indent(out) << name << ".__isset." << v_iter->first->get_string() << " = true;" << endl;
-      }
+      indent(out) << name << ".__isset." << v_iter->first->get_string() << " = true;" << endl;
     }
     out << endl;
   } else if (type->is_map()) {
@@ -971,17 +966,12 @@ void t_cpp_generator::generate_constructor_helper(ostream& out,
     indent(out) << "(void) " << tmp_name << ";" << endl;
 
   vector<t_field*>::const_iterator f_iter;
-  bool has_nonrequired_fields = false;
   for (f_iter = members.begin(); f_iter != members.end(); ++f_iter) {
-    if ((*f_iter)->get_req() != t_field::T_REQUIRED)
-      has_nonrequired_fields = true;
     indent(out) << (*f_iter)->get_name() << " = "
                 << maybeMove(tmp_name + "." + (*f_iter)->get_name(), is_move) << ";" << endl;
   }
 
-  if (has_nonrequired_fields) {
-    indent(out) << "__isset = " << maybeMove(tmp_name + ".__isset", is_move) << ";" << endl;
-  }
+  indent(out) << "__isset = " << maybeMove(tmp_name + ".__isset", is_move) << ";" << endl;
 
   indent_down();
   indent(out) << "}" << endl;
@@ -1016,16 +1006,11 @@ void t_cpp_generator::generate_assignment_helper(ostream& out, t_struct* tstruct
     indent(out) << "(void) " << tmp_name << ";" << endl;
 
   vector<t_field*>::const_iterator f_iter;
-  bool has_nonrequired_fields = false;
   for (f_iter = members.begin(); f_iter != members.end(); ++f_iter) {
-    if ((*f_iter)->get_req() != t_field::T_REQUIRED)
-      has_nonrequired_fields = true;
     indent(out) << (*f_iter)->get_name() << " = "
                 << maybeMove(tmp_name + "." + (*f_iter)->get_name(), is_move) << ";" << endl;
   }
-  if (has_nonrequired_fields) {
-    indent(out) << "__isset = " << maybeMove(tmp_name + ".__isset", is_move) << ";" << endl;
-  }
+  indent(out) << "__isset = " << maybeMove(tmp_name + ".__isset", is_move) << ";" << endl;
 
   indent(out) << "return *this;" << endl;
   indent_down();
@@ -1063,14 +1048,7 @@ void t_cpp_generator::generate_struct_declaration(ostream& out,
   // the generated code amenable to processing by SWIG.
   // We only declare the struct if it gets used in the class.
 
-  // Isset struct has boolean fields, but only for non-required fields.
-  bool has_nonrequired_fields = false;
-  for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
-    if ((*m_iter)->get_req() != t_field::T_REQUIRED)
-      has_nonrequired_fields = true;
-  }
-
-  if (has_nonrequired_fields && (!pointers || read)) {
+  if (!pointers || read) {
 
     out << indent() << "typedef struct _" << tstruct->get_name() << "__isset {" << endl;
     indent_up();
@@ -1078,10 +1056,7 @@ void t_cpp_generator::generate_struct_declaration(ostream& out,
     indent(out) << "_" << tstruct->get_name() << "__isset() ";
     bool first = true;
     for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
-      if ((*m_iter)->get_req() == t_field::T_REQUIRED) {
-        continue;
-      }
-      string isSet = ((*m_iter)->get_value() != nullptr) ? "true" : "false";
+      string isSet = ((*m_iter)->get_value() != NULL) ? "true" : "false";
       if (first) {
         first = false;
         out << ": " << (*m_iter)->get_name() << "(" << isSet << ")";
@@ -1092,9 +1067,7 @@ void t_cpp_generator::generate_struct_declaration(ostream& out,
     out << " {}" << endl;
 
     for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
-      if ((*m_iter)->get_req() != t_field::T_REQUIRED) {
-        indent(out) << "bool " << (*m_iter)->get_name() << " :1;" << endl;
-      }
+      indent(out) << "bool " << (*m_iter)->get_name() << " :1;" << endl;
     }
 
     indent_down();
@@ -1185,7 +1158,7 @@ void t_cpp_generator::generate_struct_declaration(ostream& out,
   }
 
   // Add the __isset data member if we need it, using the definition from above
-  if (has_nonrequired_fields && (!pointers || read)) {
+  if (!pointers || read) {
     out << endl << indent() << "_" << tstruct->get_name() << "__isset __isset;" << endl;
   }
 
@@ -1329,14 +1302,9 @@ void t_cpp_generator::generate_struct_definition(ostream& out,
       }
       indent_up();
       out << indent() << "this->" << (*m_iter)->get_name() << " = val;" << endl;
+      out << indent() << "__isset." << (*m_iter)->get_name() << " = true;" << endl;
       indent_down();
 
-      // assume all fields are required except optional fields.
-      // for optional fields change __isset.name to true
-      bool is_optional = (*m_iter)->get_req() == t_field::T_OPTIONAL;
-      if (is_optional) {
-        out << indent() << indent() << "__isset." << (*m_iter)->get_name() << " = true;" << endl;
-      }
       out << indent() << "}" << endl;
     }
   }
@@ -1378,13 +1346,6 @@ void t_cpp_generator::generate_struct_reader(ostream& out, t_struct* tstruct, bo
       << indent() << "using ::apache::thrift::protocol::TProtocolException;" << endl
       << endl;
 
-  // Required variables aren't in __isset, so we need tmp vars to check them.
-  for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
-    if ((*f_iter)->get_req() == t_field::T_REQUIRED)
-      indent(out) << "bool isset_" << (*f_iter)->get_name() << " = false;" << endl;
-  }
-  out << endl;
-
   // Loop over reading in fields
   indent(out) << "while (true)" << endl;
   scope_up(out);
@@ -1411,16 +1372,13 @@ void t_cpp_generator::generate_struct_reader(ostream& out, t_struct* tstruct, bo
       indent(out) << "if (ftype == " << type_to_enum((*f_iter)->get_type()) << ") {" << endl;
       indent_up();
 
-      const char* isset_prefix = ((*f_iter)->get_req() != t_field::T_REQUIRED) ? "this->__isset."
-                                                                               : "isset_";
-
 #if 0
           // This code throws an exception if the same field is encountered twice.
           // We've decided to leave it out for performance reasons.
           // TODO(dreiss): Generate this code and "if" it out to make it easier
           // for people recompiling thrift to include it.
           out <<
-            indent() << "if (" << isset_prefix << (*f_iter)->get_name() << ")" << endl <<
+            indent() << "if (" << "this->__isset." << (*f_iter)->get_name() << ")" << endl <<
             indent() << "  throw TProtocolException(TProtocolException::INVALID_DATA);" << endl;
 #endif
 
@@ -1429,7 +1387,7 @@ void t_cpp_generator::generate_struct_reader(ostream& out, t_struct* tstruct, bo
       } else {
         generate_deserialize_field(out, *f_iter, "this->");
       }
-      out << indent() << isset_prefix << (*f_iter)->get_name() << " = true;" << endl;
+      out << indent() << "this->__isset." << (*f_iter)->get_name() << " = true;" << endl;
       indent_down();
       out << indent() << "} else {" << endl << indent() << "  xfer += iprot->skip(ftype);" << endl
           <<
@@ -1459,7 +1417,7 @@ void t_cpp_generator::generate_struct_reader(ostream& out, t_struct* tstruct, bo
   out << endl;
   for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
     if ((*f_iter)->get_req() == t_field::T_REQUIRED)
-      out << indent() << "if (!isset_" << (*f_iter)->get_name() << ')' << endl << indent()
+      out << indent() << "if (!this->__isset." << (*f_iter)->get_name() << ')' << endl << indent()
           << "  throw TProtocolException(TProtocolException::INVALID_DATA);" << endl;
   }
 
@@ -1491,7 +1449,21 @@ void t_cpp_generator::generate_struct_writer(ostream& out, t_struct* tstruct, bo
 
   out << indent() << "uint32_t xfer = 0;" << endl;
 
+  indent(out) << "using ::apache::thrift::protocol::TProtocolException;" << endl;
+
   indent(out) << "::apache::thrift::protocol::TOutputRecursionTracker tracker(*oprot);" << endl;
+
+  // check the that required fields were explicitly set before writing anything
+  for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
+    if ((*f_iter)->get_req() == t_field::T_REQUIRED) {
+        out << indent() << "if (!this->__isset." << (*f_iter)->get_name() << ") {" << endl;
+        indent_up();
+        out << indent() << "throw TProtocolException(TProtocolException::INVALID_DATA);" << endl;
+        indent_down();
+        out << indent() << "}" << endl;
+    }
+  }
+
   indent(out) << "xfer += oprot->writeStructBegin(\"" << name << "\");" << endl;
 
   for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
@@ -1621,29 +1593,13 @@ void t_cpp_generator::generate_struct_swap(ostream& out, t_struct* tstruct) {
   // namespaces, fall back to ::std::swap().
   out << indent() << "using ::std::swap;" << endl;
 
-  bool has_nonrequired_fields = false;
   const vector<t_field*>& fields = tstruct->get_members();
   for (auto tfield : fields) {
-    if (tfield->get_req() != t_field::T_REQUIRED) {
-      has_nonrequired_fields = true;
-    }
-
-    if (tstruct->get_name() == "a" || tstruct->get_name() == "b") {
-      out << indent() << "swap(a1." << tfield->get_name() << ", a2." << tfield->get_name() << ");"
-          << endl;
-    } else {
-      out << indent() << "swap(a." << tfield->get_name() << ", b." << tfield->get_name() << ");"
-          << endl;
-    }
+    out << indent() << "swap(a." << tfield->get_name() << ", b." << tfield->get_name() << ");"
+        << endl;
   }
 
-  if (has_nonrequired_fields) {
-    if (tstruct->get_name() == "a" || tstruct->get_name() == "b") {
-      out << indent() << "swap(a1.__isset, a2.__isset);" << endl; 
-    } else {
-      out << indent() << "swap(a.__isset, b.__isset);" << endl;
-    }
-  }
+  out << indent() << "swap(a.__isset, b.__isset);" << endl;
 
   // handle empty structs
   if (fields.size() == 0) {
