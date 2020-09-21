@@ -28,10 +28,13 @@ import (
 	"testing/quick"
 )
 
-func TestTHeaderHeadersReadWrite(t *testing.T) {
+func testTHeaderHeadersReadWriteProtocolID(t *testing.T, protoID THeaderProtocolID) {
 	trans := NewTMemoryBuffer()
 	reader := NewTHeaderTransport(trans)
-	writer := NewTHeaderTransport(trans)
+	writer, err := NewTHeaderTransportWithProtocolID(trans, protoID)
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	const key1 = "key1"
 	const value1 = "value1"
@@ -98,10 +101,10 @@ func TestTHeaderHeadersReadWrite(t *testing.T) {
 			read,
 		)
 	}
-	if prot := reader.Protocol(); prot != THeaderProtocolBinary {
+	if prot := reader.Protocol(); prot != protoID {
 		t.Errorf(
 			"reader.Protocol() expected %d, got %d",
-			THeaderProtocolBinary,
+			protoID,
 			prot,
 		)
 	}
@@ -118,6 +121,18 @@ func TestTHeaderHeadersReadWrite(t *testing.T) {
 			"reader.GetReadHeaders() expected size 2, actual content: %+v",
 			headers,
 		)
+	}
+}
+
+func TestTHeaderHeadersReadWrite(t *testing.T) {
+	for label, id := range map[string]THeaderProtocolID{
+		"default": THeaderProtocolDefault,
+		"binary":  THeaderProtocolBinary,
+		"compact": THeaderProtocolCompact,
+	} {
+		t.Run(label, func(t *testing.T) {
+			testTHeaderHeadersReadWriteProtocolID(t, id)
+		})
 	}
 }
 

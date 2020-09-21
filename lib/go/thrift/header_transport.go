@@ -75,6 +75,15 @@ const (
 	THeaderProtocolDefault                   = THeaderProtocolBinary
 )
 
+// Declared globally to avoid repetitive allocations, not really used.
+var globalMemoryBuffer = NewTMemoryBuffer()
+
+// Validate checks whether the THeaderProtocolID is a valid/supported one.
+func (id THeaderProtocolID) Validate() error {
+	_, err := id.GetProtocol(globalMemoryBuffer)
+	return err
+}
+
 // GetProtocol gets the corresponding TProtocol from the wrapped protocol id.
 func (id THeaderProtocolID) GetProtocol(trans TTransport) (TProtocol, error) {
 	switch id {
@@ -84,7 +93,7 @@ func (id THeaderProtocolID) GetProtocol(trans TTransport) (TProtocol, error) {
 			fmt.Sprintf("THeader protocol id %d not supported", id),
 		)
 	case THeaderProtocolBinary:
-		return NewTBinaryProtocolFactoryDefault().GetProtocol(trans), nil
+		return NewTBinaryProtocolTransport(trans), nil
 	case THeaderProtocolCompact:
 		return NewTCompactProtocol(trans), nil
 	}
@@ -93,11 +102,12 @@ func (id THeaderProtocolID) GetProtocol(trans TTransport) (TProtocol, error) {
 // THeaderTransformID defines the numeric id of the transform used.
 type THeaderTransformID int32
 
-// THeaderTransformID values
+// THeaderTransformID values.
+//
+// Values not defined here are not currently supported, namely HMAC and Snappy.
 const (
 	TransformNone THeaderTransformID = iota // 0, no special handling
 	TransformZlib                           // 1, zlib
-	// Rest of the values are not currently supported, namely HMAC and Snappy.
 )
 
 var supportedTransformIDs = map[THeaderTransformID]bool{
@@ -283,6 +293,34 @@ func NewTHeaderTransport(trans TTransport) *THeaderTransport {
 		writeHeaders: make(THeaderMap),
 		protocolID:   THeaderProtocolDefault,
 	}
+}
+
+// NewTHeaderTransportWithProtocolID creates THeaderTransport from the
+// underlying transport, with given protocol ID set.
+//
+// If trans is already a *THeaderTransport, it will be returned as is,
+// but with protocol ID overridden by the value passed in.
+//
+// If the passed in protocol ID is an invalid/unsupported one,
+// this function returns error.
+//
+// The protocol ID overridden is only useful for client transports.
+// For servers,
+// the protocol ID will be overridden again to the one set by the client,
+// to ensure that servers always speak the same dialect as the client.
+func NewTHeaderTransportWithProtocolID(trans TTransport, protoID THeaderProtocolID) (*THeaderTransport, error) {
+	if err := protoID.Validate(); err != nil {
+		return nil, err
+	}
+	if ht, ok := trans.(*THeaderTransport); ok {
+		return ht, nil
+	}
+	return &THeaderTransport{
+		transport:    trans,
+		reader:       bufio.NewReader(trans),
+		writeHeaders: make(THeaderMap),
+		protocolID:   protoID,
+	}, nil
 }
 
 // Open calls the underlying transport's Open function.

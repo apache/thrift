@@ -37,31 +37,73 @@ type THeaderProtocol struct {
 }
 
 // NewTHeaderProtocol creates a new THeaderProtocol from the underlying
-// transport. The passed in transport will be wrapped with THeaderTransport.
+// transport with default protocol ID.
+//
+// The passed in transport will be wrapped with THeaderTransport.
 //
 // Note that THeaderTransport handles frame and zlib by itself,
 // so the underlying transport should be a raw socket transports (TSocket or TSSLSocket),
 // instead of rich transports like TZlibTransport or TFramedTransport.
 func NewTHeaderProtocol(trans TTransport) *THeaderProtocol {
-	t := NewTHeaderTransport(trans)
-	p, _ := THeaderProtocolDefault.GetProtocol(t)
+	p, err := newTHeaderProtocolWithProtocolID(trans, THeaderProtocolDefault)
+	if err != nil {
+		// Since we used THeaderProtocolDefault this should never happen,
+		// but put a sanity check here just in case.
+		panic(err)
+	}
+	return p
+}
+
+func newTHeaderProtocolWithProtocolID(trans TTransport, protoID THeaderProtocolID) (*THeaderProtocol, error) {
+	t, err := NewTHeaderTransportWithProtocolID(trans, protoID)
+	if err != nil {
+		return nil, err
+	}
+	p, err := t.protocolID.GetProtocol(t)
+	if err != nil {
+		return nil, err
+	}
 	return &THeaderProtocol{
 		transport: t,
 		protocol:  p,
+	}, nil
+}
+
+type tHeaderProtocolFactory struct {
+	protoID THeaderProtocolID
+}
+
+func (f tHeaderProtocolFactory) GetProtocol(trans TTransport) TProtocol {
+	p, err := newTHeaderProtocolWithProtocolID(trans, f.protoID)
+	if err != nil {
+		// Currently there's no way for external users to construct a
+		// valid factory with invalid protoID, so this should never
+		// happen. But put a sanity check here just in case in the
+		// future a bug made that possible.
+		panic(err)
 	}
+	return p
 }
 
-type tHeaderProtocolFactory struct{}
-
-func (tHeaderProtocolFactory) GetProtocol(trans TTransport) TProtocol {
-	return NewTHeaderProtocol(trans)
-}
-
-// NewTHeaderProtocolFactory creates a factory for THeader.
+// NewTHeaderProtocolFactory creates a factory for THeader with default protocol
+// ID.
 //
 // It's a wrapper for NewTHeaderProtocol
 func NewTHeaderProtocolFactory() TProtocolFactory {
-	return tHeaderProtocolFactory{}
+	return tHeaderProtocolFactory{
+		protoID: THeaderProtocolDefault,
+	}
+}
+
+// NewTHeaderProtocolFactoryWithProtocolID creates a factory for THeader with
+// given protocol ID.
+func NewTHeaderProtocolFactoryWithProtocolID(protoID THeaderProtocolID) (TProtocolFactory, error) {
+	if err := protoID.Validate(); err != nil {
+		return nil, err
+	}
+	return tHeaderProtocolFactory{
+		protoID: protoID,
+	}, nil
 }
 
 // Transport returns the underlying transport.
