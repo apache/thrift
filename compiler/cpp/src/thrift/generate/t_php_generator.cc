@@ -89,8 +89,8 @@ public:
           pwarning(0, "psr4 is default option! needn't add psr4 option!\n");
         }
       } else if (iter->first.compare("getters_setters") == 0) {
-	getters_setters_ = true;
-      }else {
+        getters_setters_ = true;
+      } else {
         throw "unknown option php:" + iter->first;
       }
     }
