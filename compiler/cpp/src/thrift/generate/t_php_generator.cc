@@ -61,6 +61,8 @@ public:
     oop_ = false;
     validate_ = false;
     json_serializable_ = false;
+    getters_setters_ = false;
+	    
     nsglobal_ = ""; // by default global namespace is empty
     classmap_ = false;
     for (iter = parsed_options.begin(); iter != parsed_options.end(); ++iter) {
@@ -86,7 +88,9 @@ public:
         } else {
           pwarning(0, "psr4 is default option! needn't add psr4 option!\n");
         }
-      } else {
+      } else if (iter->first.compare("getters_setters") == 0) {
+	getters_setters_ = true;
+      }else {
         throw "unknown option php:" + iter->first;
       }
     }
@@ -983,8 +987,9 @@ void t_php_generator::generate_php_struct_definition(ostream& out,
   out << indent() << "}" << endl << endl;
 
   out << endl;
-  generate_generic_field_getters_setters(out, tstruct);
-
+  if (getters_setters_) {
+    generate_generic_field_getters_setters(out, tstruct);
+  }
   generate_php_struct_reader(out, tstruct, is_result);
   out << endl;
   generate_php_struct_writer(out, tstruct, is_result);
@@ -2866,4 +2871,5 @@ THRIFT_REGISTER_GENERATOR(
     "    rest:            Generate PHP REST processors\n"
     "    nsglobal=NAME:   Set global namespace\n"
     "    validate:        Generate PHP validator methods\n"
-    "    json:            Generate JsonSerializable classes (requires PHP >= 5.4)\n")
+    "    json:            Generate JsonSerializable classes (requires PHP >= 5.4)\n"
+    "    getters_setters: Generate Getters and Setters for struct variables\n")
