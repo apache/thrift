@@ -411,6 +411,11 @@ private:
    * Global namespace for PHP 5.3
    */
   std::string nsglobal_;
+
+  /**
+   * Whether to generate getters and setters
+   */
+  bool getters_setters_;
 };
 
 bool t_php_generator::is_valid_namespace(const std::string& sub_namespace) {
