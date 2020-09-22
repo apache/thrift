@@ -106,6 +106,30 @@ add_executable(testoptionalrequired testoptionalrequired.c)
 target_link_libraries(testoptionalrequired testgenc)
 add_test(NAME testoptionalrequired COMMAND testoptionalrequired)
 
+add_executable(testthriftbinaryreadcheck testthriftbinaryreadcheck.c)
+target_link_libraries(testthriftbinaryreadcheck testgenc)
+add_test(NAME testthriftbinaryreadcheck COMMAND testthriftbinaryreadcheck)
+
+add_executable(testthriftbufferedreadcheck testthriftbufferedreadcheck.c)
+target_link_libraries(testthriftbufferedreadcheck testgenc)
+add_test(NAME testthriftbufferedreadcheck COMMAND testthriftbufferedreadcheck)
+
+add_executable(testthriftcompactreadcheck testthriftcompactreadcheck.c)
+target_link_libraries(testthriftcompactreadcheck testgenc)
+add_test(NAME testthriftcompactreadcheck COMMAND testthriftcompactreadcheck)
+
+add_executable(testthriftframedreadcheck testthriftframedreadcheck.c)
+target_link_libraries(testthriftframedreadcheck testgenc)
+add_test(NAME testthriftframedreadcheck COMMAND testthriftframedreadcheck)
+
+add_executable(testthriftfdreadcheck testthriftfdreadcheck.c)
+target_link_libraries(testthriftfdreadcheck testgenc)
+add_test(NAME testthriftfdreadcheck COMMAND testthriftfdreadcheck)
+
+add_executable(testthriftmemorybufferreadcheck testthriftmemorybufferreadcheck.c)
+target_link_libraries(testthriftmemorybufferreadcheck testgenc)
+add_test(NAME testthriftmemorybufferreadcheck COMMAND testthriftmemorybufferreadcheck)
+
 include_directories("${PROJECT_SOURCE_DIR}/test/c_glib/src" "${CMAKE_CURRENT_BINARY_DIR}/gen-c_glib")
 
 add_executable(testthrifttest testthrifttest.c
