@@ -31,12 +31,12 @@ type TDeserializer struct {
 
 func NewTDeserializer() *TDeserializer {
 	transport := NewTMemoryBufferLen(1024)
-
-	protocol := NewTBinaryProtocolFactoryDefault().GetProtocol(transport)
+	protocol := NewTBinaryProtocolTransport(transport)
 
 	return &TDeserializer{
-		transport,
-		protocol}
+		Transport: transport,
+		Protocol:  protocol,
+	}
 }
 
 func (t *TDeserializer) ReadString(ctx context.Context, msg TStruct, s string) (err error) {
@@ -68,7 +68,8 @@ func (t *TDeserializer) Read(ctx context.Context, msg TStruct, b []byte) (err er
 // TDeserializerPool is the thread-safe version of TDeserializer,
 // it uses resource pool of TDeserializer under the hood.
 //
-// It must be initialized with NewTDeserializerPool.
+// It must be initialized with either NewTDeserializerPool or
+// NewTDeserializerPoolSizeFactory.
 type TDeserializerPool struct {
 	pool sync.Pool
 }
@@ -81,6 +82,27 @@ func NewTDeserializerPool(f func() *TDeserializer) *TDeserializerPool {
 		pool: sync.Pool{
 			New: func() interface{} {
 				return f()
+			},
+		},
+	}
+}
+
+// NewTDeserializerPoolSizeFactory creates a new TDeserializerPool with
+// the given size and protocol factory.
+//
+// Note that the size is not the limit. The TMemoryBuffer underneath can grow
+// larger than that. It just dictates the initial size.
+func NewTDeserializerPoolSizeFactory(size int, factory TProtocolFactory) *TDeserializerPool {
+	return &TDeserializerPool{
+		pool: sync.Pool{
+			New: func() interface{} {
+				transport := NewTMemoryBufferLen(size)
+				protocol := factory.GetProtocol(transport)
+
+				return &TDeserializer{
+					Transport: transport,
+					Protocol:  protocol,
+				}
 			},
 		},
 	}
