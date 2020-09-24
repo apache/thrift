@@ -283,6 +283,7 @@ T_ERRCODE socket_setblocking(p_socket sock) {
   return strerror(err)
 
 const char * tcp_create(p_socket sock) {
+  // TODO support IPv6
   int err = socket_create(sock, AF_INET, SOCK_STREAM, 0);
   ERRORSTR_RETURN(err);
 }
@@ -293,6 +294,7 @@ const char * tcp_destroy(p_socket sock) {
 }
 
 const char * tcp_bind(p_socket sock, const char *host, unsigned short port) {
+  // TODO support IPv6
   int err;
   struct hostent *h;
   struct sockaddr_in local;
@@ -327,6 +329,7 @@ const char * tcp_connect(p_socket sock,
                          const char *host,
                          unsigned short port,
                          int timeout) {
+  // TODO support IPv6
   int err;
   struct hostent *h;
   struct sockaddr_in remote;
@@ -344,6 +347,66 @@ const char * tcp_connect(p_socket sock,
   }
   err = socket_connect(sock, (p_sa) &remote, sizeof(remote), timeout);
   ERRORSTR_RETURN(err);
+}
+
+const char * tcp_create_and_connect(p_socket sock,
+                                    const char *host,
+                                    unsigned short port,
+                                    int timeout) {
+  int err;
+  struct sockaddr_in sa4;
+  struct sockaddr_in6 sa6;
+
+  memset(&sa4, 0, sizeof(sa4));
+  sa4.sin_family = AF_INET;
+  sa4.sin_port = htons(port);
+  memset(&sa6, 0, sizeof(sa6));
+  sa6.sin6_family = AF_INET6;
+  sa6.sin6_port = htons(port);
+
+  if (inet_pton(AF_INET, host, &sa4.sin_addr)) {
+    socket_create(sock, AF_INET, SOCK_STREAM, 0);
+    err = socket_connect(sock, (p_sa) &sa4, sizeof(sa4), timeout);
+    ERRORSTR_RETURN(err);
+  } else if (inet_pton(AF_INET6, host, &sa6.sin6_addr)) {
+    socket_create(sock, AF_INET6, SOCK_STREAM, 0);
+    err = socket_connect(sock, (p_sa) &sa6, sizeof(sa6), timeout);
+    ERRORSTR_RETURN(err);
+  } else {
+    struct addrinfo hints, *servinfo, *rp;
+    char portStr[6];
+    int rv;
+
+    memset(&hints, 0, sizeof(hints));
+    hints.ai_family = AF_UNSPEC;
+    hints.ai_socktype = SOCK_STREAM;
+
+    sprintf(portStr, "%u", port);
+
+    if ((rv = getaddrinfo(host, portStr, &hints, &servinfo)) != 0) {
+      return gai_strerror(rv);
+    }
+
+    err = TIMEOUT;
+    for (rp = servinfo; rp != NULL; rp = rp->ai_next) {
+      err = socket_create(sock, rp->ai_family, rp->ai_socktype, rp->ai_protocol);
+      if (err != SUCCESS) {
+        continue;
+      }
+      err = socket_connect(sock, (p_sa) rp->ai_addr, rp->ai_addrlen, timeout);
+      if (err == SUCCESS) {
+        break;
+      }
+      close(*sock);
+    }
+    freeaddrinfo(servinfo);
+    if (rp == NULL) {
+      *sock = -1;
+      return "Failed to connect";
+    } else {
+      ERRORSTR_RETURN(err);
+    }
+  }
 }
 
 #define WRITE_STEP 8192
