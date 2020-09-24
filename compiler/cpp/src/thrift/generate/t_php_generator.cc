@@ -157,7 +157,7 @@ public:
   void generate_generic_field_getters_setters(std::ostream& out, t_struct* tstruct);
 
   void generate_reflection_setters(ostringstream& out, string field_name, string cap_name);
-  void generate_reflection_getters(ostringstream& out, t_type* type, string field_name, string cap_name);
+  void generate_reflection_getters(ostringstream& out, string field_name, string cap_name);
 
   std::string get_cap_name(std::string name);
 
@@ -837,13 +837,12 @@ void t_php_generator::generate_generic_field_getters_setters(std::ostream& out,
   vector<t_field*>::const_iterator f_iter;
   for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
     t_field* field = *f_iter;
-    t_type* type = get_true_type(field->get_type());
     std::string field_name = field->get_name();
     std::string cap_name = get_cap_name(field_name);
 
     indent_up();
     generate_reflection_setters(setter_stream, field_name, cap_name);
-    generate_reflection_getters(getter_stream, type, field_name, cap_name);
+    generate_reflection_getters(getter_stream, field_name, cap_name);
     indent_down();
   }
 
@@ -856,7 +855,6 @@ void t_php_generator::generate_generic_field_getters_setters(std::ostream& out,
  * Generates a getter for the generated private fields
  */
 void t_php_generator::generate_reflection_getters(ostringstream& out,
-                                                   t_type* type,
                                                    string field_name,
                                                    string cap_name) {
 
