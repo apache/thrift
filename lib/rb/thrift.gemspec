@@ -12,10 +12,10 @@ Gem::Specification.new do |s|
   s.license     = 'Apache-2.0'
   s.extensions  = ['ext/extconf.rb']
 
-  s.has_rdoc      = true
+  
   s.rdoc_options  = %w[--line-numbers --inline-source --title Thrift --main README]
 
-  s.rubyforge_project = 'thrift'
+  
 
   dir = File.expand_path(File.dirname(__FILE__))
 
