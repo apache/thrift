@@ -46,7 +46,7 @@ std::string str_to_id(const std::string& s) {
   for(auto chr=s.begin();chr<=s.end(); ++chr) {
     if(*chr == '.' || *chr == 0)
       continue;
-    id += std::tolower(*chr); 
+    id += tolower(*chr); 
   }
   return id;
 }
@@ -183,7 +183,7 @@ void t_markdown_generator::generate_program_toc_row(t_program* tprog) {
         fill = &filling.back();
       }
       string name = get_service_name(*sv_iter);
-      (*fill)[1] = "[" + name + "](" + make_file_link(fname) + "#service" + str_to_id(name) + ")";
+      (*fill)[1] = "[" + name + "](" + make_file_link(fname) + "#service-" + str_to_id(name) + ")";
   
       vector<t_function*> functions = (*sv_iter)->get_functions();
       vector<t_function*>::iterator fn_iter;
