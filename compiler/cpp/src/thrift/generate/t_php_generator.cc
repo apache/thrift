@@ -939,7 +939,8 @@ void t_php_generator::generate_php_struct_definition(ostream& out,
       dval = render_const_value((*m_iter)->get_type(), (*m_iter)->get_value());
     }
     generate_php_doc(out, *m_iter);
-    indent(out) << "public $" << (*m_iter)->get_name() << " = " << dval << ";" << endl;
+    string access = (getters_setters_) ? "private" : "public";
+    indent(out) << access << " $" << (*m_iter)->get_name() << " = " << dval << ";" << endl;
   }
 
   out << endl;
