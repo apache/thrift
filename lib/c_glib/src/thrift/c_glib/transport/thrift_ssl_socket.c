@@ -69,6 +69,8 @@ static gboolean thrift_ssl_socket_openssl_initialized=FALSE;
 /* This array will store all of the mutexes available to OpenSSL. */
 static MUTEX_TYPE *thrift_ssl_socket_global_mutex_buf=NULL;
 
+gboolean
+thrift_ssl_socket_authorize(ThriftTransport * transport, GError **error);
 
 /**
  * OpenSSL uniq id function.
@@ -245,7 +247,7 @@ thrift_ssl_socket_peek (ThriftTransport *transport, GError **error)
       gchar byte;
       rc = SSL_peek(ssl_socket->ssl, &byte, 1);
       if (rc < 0) {
-	  thrift_ssl_socket_get_ssl_error(ssl_socket, "Check socket data",
+	  thrift_ssl_socket_get_ssl_error(ssl_socket, (const guchar*)"Check socket data",
 					  THRIFT_SSL_SOCKET_ERROR_SSL, rc, error);
       }
       if (rc == 0) {
@@ -315,7 +317,7 @@ thrift_ssl_socket_read (ThriftTransport *transport, gpointer buf,
 	      continue;
 	  }
       }else{
-	  thrift_ssl_socket_get_ssl_error(ssl_socket, "Receive error",
+	  thrift_ssl_socket_get_ssl_error(ssl_socket, (const guchar*)"Receive error",
 					  THRIFT_SSL_SOCKET_ERROR_SSL, bytes, error);
 
       }
@@ -351,7 +353,7 @@ thrift_ssl_socket_write (ThriftTransport *transport, const gpointer buf,
       ret = SSL_write (ssl_socket->ssl, (guint8 *)buf + sent, len - sent);
       if (ret < 0)
 	{
-	  thrift_ssl_socket_get_ssl_error(ssl_socket, "Send error",
+	  thrift_ssl_socket_get_ssl_error(ssl_socket, (const guchar*)"Send error",
 					  THRIFT_SSL_SOCKET_ERROR_SSL, ret, error);
 	  return FALSE;
 	}
@@ -423,7 +425,7 @@ thrift_ssl_socket_handle_handshake(ThriftTransport * transport, GError **error)
 	  rc = SSL_connect(ssl_socket->ssl);
       }
       if (rc <= 0) {
-	  thrift_ssl_socket_get_ssl_error(ssl_socket, "Error while connect/bind", THRIFT_SSL_SOCKET_ERROR_CONNECT_BIND, rc, error);
+	  thrift_ssl_socket_get_ssl_error(ssl_socket, (const guchar*)"Error while connect/bind", THRIFT_SSL_SOCKET_ERROR_CONNECT_BIND, rc, error);
 	  return FALSE;
       }
   }else
@@ -851,7 +853,7 @@ thrift_ssl_socket_context_initialize(ThriftSSLSocketProtocol ssl_protocol, GErro
   }
 
   if (context == NULL) {
-      thrift_ssl_socket_get_error("No cipher overlay", THRIFT_SSL_SOCKET_ERROR_CIPHER_NOT_AVAILABLE, error);
+      thrift_ssl_socket_get_error((const guchar*)"No cipher overlay", THRIFT_SSL_SOCKET_ERROR_CIPHER_NOT_AVAILABLE, error);
       return NULL;
   }
   SSL_CTX_set_mode(context, SSL_MODE_AUTO_RETRY);

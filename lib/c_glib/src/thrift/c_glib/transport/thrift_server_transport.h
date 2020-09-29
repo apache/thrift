@@ -63,10 +63,10 @@ struct _ThriftServerTransportClass
   gboolean (*listen) (ThriftServerTransport *transport, GError **error);
   ThriftTransport *(*accept) (ThriftServerTransport *transport, GError **error);
   gboolean (*close) (ThriftServerTransport *transport, GError **error);
-  gboolean (*updateKnownMessageSize) (ThriftTransport *transport, glong size, GError **error);
-  gboolean (*checkReadBytesAvailable) (ThriftTransport *transport, glong numBytes, GError **error);
-  gboolean (*resetConsumedMessageSize) (ThriftTransport *transport, glong newSize, GError **error);
-  gboolean (*countConsumedMessageBytes) (ThriftTransport *transport, glong numBytes, GError **error);
+  gboolean (*updateKnownMessageSize) (ThriftServerTransport *transport, glong size, GError **error);
+  gboolean (*checkReadBytesAvailable) (ThriftServerTransport *transport, glong numBytes, GError **error);
+  gboolean (*resetConsumedMessageSize) (ThriftServerTransport *transport, glong newSize, GError **error);
+  gboolean (*countConsumedMessageBytes) (ThriftServerTransport *transport, glong numBytes, GError **error);
 };
 
 /* used by THRIFT_TYPE_SERVER_TRANSPORT */

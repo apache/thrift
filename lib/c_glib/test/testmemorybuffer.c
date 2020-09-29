@@ -186,7 +186,6 @@ static void
 test_read_and_write_external (void)
 {
   ThriftMemoryBuffer *tbuffer = NULL;
-  gchar *b;
   GError *error = NULL;
   GByteArray *buf = g_byte_array_new ();
   g_assert (buf != NULL);

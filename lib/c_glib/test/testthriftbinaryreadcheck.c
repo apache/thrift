@@ -173,7 +173,7 @@ test_read_and_wirte_complex_types (void)
                             "port", port, "path", NULL, 
                             "configuration", tconfiguration, NULL);
     transport = THRIFT_TRANSPORT (tsocket);
-    THRIFT_TRANSPORT_GET_CLASS (tsocket)->resetConsumedMessageSize(tsocket, -1, NULL);
+    THRIFT_TRANSPORT_GET_CLASS (tsocket)->resetConsumedMessageSize(THRIFT_TRANSPORT (tsocket), -1, NULL);
     thrift_transport_open (transport, NULL);
     g_assert (thrift_transport_is_open (transport));
 
@@ -221,9 +221,7 @@ thrift_server_complex_types (const int port)
     ThriftType element_type = T_VOID, 
                key_type = T_VOID, 
                value_type = T_VOID; 
-    gint32 ret = 0;
     guint32 size = 0;
-    glong tempsize = 0;
 
     ThriftConfiguration *tconfiguration = g_object_new (THRIFT_TYPE_CONFIGURATION,
                                                         "max_message_size", MAX_MESSAGE_SIZE,
