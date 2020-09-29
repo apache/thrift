@@ -44,7 +44,8 @@ func gz(handler http.HandlerFunc) http.HandlerFunc {
 	sp := &sync.Pool{
 		New: func() interface{} {
 			return gzip.NewWriter(nil)
-		}}
+		},
+	}
 
 	return func(w http.ResponseWriter, r *http.Request) {
 		if !strings.Contains(r.Header.Get("Accept-Encoding"), "gzip") {
