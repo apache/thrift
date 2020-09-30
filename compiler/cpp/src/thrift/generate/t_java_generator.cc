@@ -5444,7 +5444,7 @@ THRIFT_REGISTER_GENERATOR(
     "above).\n"
     "    option_type:     Wrap optional fields in an Option type.\n"
     "    rethrow_unhandled_exceptions:\n"
-    "                     Enable rethrow of unhandled exceptions and let them propagate futher."
+    "                     Enable rethrow of unhandled exceptions and let them propagate further."
     " (Default behavior is to catch and log it.)\n"
     "    java5:           Generate Java 1.5 compliant code (includes android_legacy flag).\n"
     "    reuse-objects:   Data objects will not be allocated, but existing instances will be used "
