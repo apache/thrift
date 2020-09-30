@@ -24,6 +24,7 @@ import (
 	"io"
 	"net/http"
 	"strings"
+	"sync"
 )
 
 // NewThriftHandlerFunc is a function that create a ready to use Apache Thrift Handler function
@@ -40,14 +41,24 @@ func NewThriftHandlerFunc(processor TProcessor,
 
 // gz transparently compresses the HTTP response if the client supports it.
 func gz(handler http.HandlerFunc) http.HandlerFunc {
+	sp := &sync.Pool{
+		New: func() interface{} {
+			return gzip.NewWriter(nil)
+		},
+	}
+
 	return func(w http.ResponseWriter, r *http.Request) {
 		if !strings.Contains(r.Header.Get("Accept-Encoding"), "gzip") {
 			handler(w, r)
 			return
 		}
 		w.Header().Set("Content-Encoding", "gzip")
-		gz := gzip.NewWriter(w)
-		defer gz.Close()
+		gz := sp.Get().(*gzip.Writer)
+		gz.Reset(w)
+		defer func() {
+			_ = gz.Close()
+			sp.Put(gz)
+		}()
 		gzw := gzipResponseWriter{Writer: gz, ResponseWriter: w}
 		handler(gzw, r)
 	}
