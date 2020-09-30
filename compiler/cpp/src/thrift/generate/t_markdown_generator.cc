@@ -303,6 +303,7 @@ void t_markdown_generator::generate_program() {
   f_out_ << "# Thrift module: " << pname << endl << endl;
 
   print_doc(program_);
+  f_out_ << endl << endl;
 
   generate_program_toc();
 
@@ -863,42 +864,43 @@ void t_markdown_generator::print_fn_args_doc(t_function* tfunction) {
   vector<t_field*>::iterator arg_iter = args.begin();
   if (arg_iter != args.end()) {
     for (; arg_iter != args.end(); arg_iter++) {
-      if ((*arg_iter)->has_doc() && !(*arg_iter)->get_doc().empty())
+      if ((*arg_iter)->has_doc() && !(*arg_iter)->get_doc().empty()) {
         has_docs = true;
+        break;
+      }
     }
     if (has_docs) {
       arg_iter = args.begin();
-      f_out_ << endl << "#### Parameters" << endl;
-      f_out_ << endl << "|Name|Description|" << endl
-             << "|---|---|" << endl;
-      for (; arg_iter != args.end(); arg_iter++) {
-        f_out_ << "|" << (*arg_iter)->get_name();
-        f_out_ << "|";
-        f_out_ << escape_html((*arg_iter)->get_doc());
-        f_out_ << "|" << endl;
+      f_out_ << endl << "* parameters:" << endl;
+      for (int n = 1; arg_iter != args.end(); ++arg_iter, ++n ) {
+        f_out_ << n << ". " << (*arg_iter)->get_name();
+        f_out_ << " - " << escape_html((*arg_iter)->get_doc());
+        f_out_ << endl;
       }
       f_out_ << endl;
     }
   }
+  if(!has_docs) 
+    f_out_ << endl;
 
   has_docs = false;
   vector<t_field*> excepts = tfunction->get_xceptions()->get_members();
   vector<t_field*>::iterator ex_iter = excepts.begin();
   if (ex_iter != excepts.end()) {
-    for (; ex_iter != excepts.end(); ex_iter++) {
-      if ((*ex_iter)->has_doc() && !(*ex_iter)->get_doc().empty())
+    for (; ex_iter != excepts.end(); ++ex_iter) {
+      if ((*ex_iter)->has_doc() && !(*ex_iter)->get_doc().empty()) {
         has_docs = true;
+        break;
+      }
     }
     if (has_docs) {
       ex_iter = excepts.begin();
-      f_out_ << endl << "### Exceptions" << endl;
-      f_out_ << endl << "|Type|Description|" << endl
-             << "|---|---|" << endl;
+      f_out_ << "* exceptions:" << endl;
       for (; ex_iter != excepts.end(); ex_iter++) {
-        f_out_ << "|" << (*ex_iter)->get_type()->get_name();
-        f_out_ << "|";
+        f_out_ << "  * " << (*ex_iter)->get_type()->get_name();
+        f_out_ << " - ";
         f_out_ << escape_html((*ex_iter)->get_doc());
-        f_out_ << "|" << endl;
+        f_out_ << endl;
       }
       f_out_ << endl;
     }
@@ -1033,7 +1035,10 @@ void t_markdown_generator::generate_service(t_service* tservice) {
     print_type(tservice->get_extends());
     f_out_ << "_" << endl;
   }
+
   print_doc(tservice);
+  f_out_ << endl;
+
   vector<t_function*> functions = tservice->get_functions();
   vector<t_function*>::iterator fn_iter = functions.begin();
   for (; fn_iter != functions.end(); fn_iter++) {
