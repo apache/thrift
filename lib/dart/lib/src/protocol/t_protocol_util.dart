@@ -29,7 +29,7 @@ class TProtocolUtil {
 
   static _skip(TProtocol prot, int type, int recursionLimit) {
     if (recursionLimit <= 0) {
-      throw new TProtocolError(
+      throw TProtocolError(
           TProtocolErrorType.DEPTH_LIMIT, "Depth limit exceeded");
     }
 
@@ -101,7 +101,7 @@ class TProtocolUtil {
         break;
 
       default:
-        throw new TProtocolError(TProtocolErrorType.INVALID_DATA, "Invalid data");
+        throw TProtocolError(TProtocolErrorType.INVALID_DATA, "Invalid data");
     }
   }
 }

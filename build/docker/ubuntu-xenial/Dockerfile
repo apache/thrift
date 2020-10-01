@@ -114,7 +114,7 @@ RUN curl -sSL https://github.com/D-Programming-Deimos/openssl/archive/v1.1.6+1.0
     mv openssl-1.1.6-1.0.1g/C/* /usr/include/dmd/druntime/import/C/ && \
     rm -rf openssl-1.1.6-1.0.1g
 
-ENV DART_VERSION 2.0.0-1
+ENV DART_VERSION 2.7.2-1
 RUN apt-get install -y --no-install-recommends \
 `# Dart dependencies` \
       dart=$DART_VERSION

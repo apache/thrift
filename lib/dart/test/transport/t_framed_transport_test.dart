@@ -18,15 +18,15 @@
 library thrift.test.transport.t_framed_transport_test;
 
 import 'dart:async';
+import 'dart:convert' show utf8;
 import 'dart:typed_data' show Uint8List;
 
-import 'package:dart2_constant/convert.dart' show utf8;
 import 'package:test/test.dart';
 import 'package:thrift/thrift.dart';
 
 void main() {
   group('TFramedTransport partial reads', () {
-    final flushAwaitDuration = new Duration(seconds: 10);
+    final flushAwaitDuration = Duration(seconds: 10);
 
     FakeReadOnlySocket socket;
     TSocketTransport socketTransport;
@@ -34,22 +34,24 @@ void main() {
     var messageAvailable;
 
     setUp(() {
-      socket = new FakeReadOnlySocket();
-      socketTransport = new TClientSocketTransport(socket);
-      transport = new TFramedTransport(socketTransport);
+      socket = FakeReadOnlySocket();
+      socketTransport = TClientSocketTransport(socket);
+      transport = TFramedTransport(socketTransport);
       messageAvailable = false;
     });
 
     expectNoReadableBytes() {
-      var readBuffer = new Uint8List(128);
+      var readBuffer = Uint8List(128);
       var readBytes = transport.read(readBuffer, 0, readBuffer.lengthInBytes);
       expect(readBytes, 0);
       expect(messageAvailable, false);
     }
 
-    test('Test transport reads messages where header and body are sent separately', () async {
+    test(
+        'Test transport reads messages where header and body are sent separately',
+        () async {
       // buffer into which we'll read
-      var readBuffer = new Uint8List(10);
+      var readBuffer = Uint8List(10);
       var readBytes;
 
       // registers for readable bytes
@@ -59,21 +61,22 @@ void main() {
       });
 
       // write header bytes
-      socket.messageController.add(new Uint8List.fromList([0x00, 0x00, 0x00, 0x06]));
+      socket.messageController
+          .add(Uint8List.fromList([0x00, 0x00, 0x00, 0x06]));
 
       // you shouldn't be able to get any bytes from the read,
       // because the header has been consumed internally
       expectNoReadableBytes();
 
       // write first batch of body
-      socket.messageController.add(new Uint8List.fromList(utf8.encode("He")));
+      socket.messageController.add(Uint8List.fromList(utf8.encode("He")));
 
       // you shouldn't be able to get any bytes from the read,
       // because the frame has been consumed internally
       expectNoReadableBytes();
 
       // write second batch of body
-      socket.messageController.add(new Uint8List.fromList(utf8.encode("llo!")));
+      socket.messageController.add(Uint8List.fromList(utf8.encode("llo!")));
 
       // have to wait for the flush to complete,
       // because it's only then that the frame is available for reading
@@ -86,10 +89,11 @@ void main() {
       expect(readBuffer.sublist(0, 6), utf8.encode("Hello!"));
     });
 
-    test('Test transport reads messages where header is sent in pieces '
-         'and body is also sent in pieces', () async {
+    test(
+        'Test transport reads messages where header is sent in pieces '
+        'and body is also sent in pieces', () async {
       // buffer into which we'll read
-      var readBuffer = new Uint8List(10);
+      var readBuffer = Uint8List(10);
       var readBytes;
 
       // registers for readable bytes
@@ -99,27 +103,27 @@ void main() {
       });
 
       // write first part of header bytes
-      socket.messageController.add(new Uint8List.fromList([0x00, 0x00]));
+      socket.messageController.add(Uint8List.fromList([0x00, 0x00]));
 
       // you shouldn't be able to get any bytes from the read
       expectNoReadableBytes();
 
       // write second part of header bytes
-      socket.messageController.add(new Uint8List.fromList([0x00, 0x03]));
+      socket.messageController.add(Uint8List.fromList([0x00, 0x03]));
 
       // you shouldn't be able to get any bytes from the read again
       // because only the header was read, and there's no frame body
       readBytes = expectNoReadableBytes();
 
       // write first batch of body
-      socket.messageController.add(new Uint8List.fromList(utf8.encode("H")));
+      socket.messageController.add(Uint8List.fromList(utf8.encode("H")));
 
       // you shouldn't be able to get any bytes from the read,
       // because the frame has been consumed internally
       expectNoReadableBytes();
 
       // write second batch of body
-      socket.messageController.add(new Uint8List.fromList(utf8.encode("i!")));
+      socket.messageController.add(Uint8List.fromList(utf8.encode("i!")));
 
       // have to wait for the flush to complete,
       // because it's only then that the frame is available for reading
@@ -134,17 +138,18 @@ void main() {
   });
 }
 
-
-
 class FakeReadOnlySocket extends TSocket {
-
-  StreamController<Uint8List> messageController = new StreamController<Uint8List>(sync: true);
-  StreamController<Object> errorController = new StreamController<Object>();
-  StreamController<TSocketState> stateController = new StreamController<TSocketState>();
+  StreamController<Uint8List> messageController =
+      StreamController<Uint8List>(sync: true);
+  StreamController<Object> errorController = StreamController<Object>();
+  StreamController<TSocketState> stateController =
+      StreamController<TSocketState>();
 
   @override
-  Future close() {
-    // noop
+  Future close() async {
+    messageController.close();
+    errorController.close();
+    stateController.close();
   }
 
   @override
@@ -163,7 +168,7 @@ class FakeReadOnlySocket extends TSocket {
   Stream<TSocketState> get onState => stateController.stream;
 
   @override
-  Future open() {
+  Future open() async {
     // noop
   }
 
@@ -172,4 +177,3 @@ class FakeReadOnlySocket extends TSocket {
     // noop
   }
 }
-

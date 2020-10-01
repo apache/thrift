@@ -23,5 +23,5 @@ part of thrift;
 /// Adapted from the Java version.
 class TTransportFactory {
   Future<TTransport> getTransport(TTransport transport) =>
-      new Future.value(transport);
+      Future.value(transport);
 }
