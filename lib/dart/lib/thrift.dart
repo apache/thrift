@@ -19,12 +19,9 @@ library thrift;
 
 import 'dart:async';
 import 'dart:collection';
-import 'dart:convert' show Utf8Codec;
-import 'dart:typed_data' show ByteData;
-import 'dart:typed_data' show Uint8List;
+import 'dart:convert' show Utf8Codec, base64;
+import 'dart:typed_data' show ByteData, Uint8List, Endian;
 
-import 'package:dart2_constant/convert.dart' show base64;
-import 'package:dart2_constant/typed_data.dart' show Endianness;
 import 'package:fixnum/fixnum.dart';
 import 'package:http/http.dart' show Client;
 import 'package:logging/logging.dart';

@@ -23,12 +23,12 @@ import 'package:thrift/thrift.dart';
 
 /// TestTObject is a simple test struct
 class TestTObject implements TBase {
-  static final TStruct _STRUCT_DESC = new TStruct("TestTObject");
-  static final TField _I_FIELD_DESC = new TField("i", TType.I32, 1);
-  static final TField _D_FIELD_DESC = new TField("d", TType.DOUBLE, 2);
-  static final TField _S_FIELD_DESC = new TField("s", TType.STRING, 3);
-  static final TField _L_FIELD_DESC = new TField("l", TType.LIST, 4);
-  static final TField _B_FIELD_DESC = new TField("b", TType.BOOL, 5);
+  static final TStruct _STRUCT_DESC = TStruct("TestTObject");
+  static final TField _I_FIELD_DESC = TField("i", TType.I32, 1);
+  static final TField _D_FIELD_DESC = TField("d", TType.DOUBLE, 2);
+  static final TField _S_FIELD_DESC = TField("s", TType.STRING, 3);
+  static final TField _L_FIELD_DESC = TField("l", TType.LIST, 4);
+  static final TField _B_FIELD_DESC = TField("b", TType.BOOL, 5);
 
   int _i;
   static const int I = 1;
@@ -45,8 +45,7 @@ class TestTObject implements TBase {
   bool __isset_d = false;
   bool __isset_b = false;
 
-  TestTObject() {
-  }
+  TestTObject();
 
   // i
   int get i => this._i;
@@ -116,6 +115,7 @@ class TestTObject implements TBase {
     this.__isset_b = false;
   }
 
+  @override
   getFieldValue(int fieldID) {
     switch (fieldID) {
       case I:
@@ -129,10 +129,11 @@ class TestTObject implements TBase {
       case B:
         return this.b;
       default:
-        throw new ArgumentError("Field $fieldID doesn't exist!");
+        throw ArgumentError("Field $fieldID doesn't exist!");
     }
   }
 
+  @override
   setFieldValue(int fieldID, Object value) {
     switch (fieldID) {
       case I:
@@ -176,11 +177,12 @@ class TestTObject implements TBase {
         break;
 
       default:
-        throw new ArgumentError("Field $fieldID doesn't exist!");
+        throw ArgumentError("Field $fieldID doesn't exist!");
     }
   }
 
   // Returns true if field corresponding to fieldID is set (has been assigned a value) and false otherwise
+  @override
   bool isSet(int fieldID) {
     switch (fieldID) {
       case I:
@@ -194,10 +196,11 @@ class TestTObject implements TBase {
       case B:
         return isSetB();
       default:
-        throw new ArgumentError("Field $fieldID doesn't exist!");
+        throw ArgumentError("Field $fieldID doesn't exist!");
     }
   }
 
+  @override
   read(TProtocol iprot) {
     TField field;
     iprot.readStructBegin();
@@ -234,7 +237,7 @@ class TestTObject implements TBase {
           if (field.type == TType.LIST) {
             {
               TList _list74 = iprot.readListBegin();
-              this.l = new List<String>();
+              this.l = List<String>();
               for (int _i75 = 0; _i75 < _list74.length; ++_i75) {
                 String _elem76;
                 _elem76 = iprot.readString();
@@ -266,6 +269,7 @@ class TestTObject implements TBase {
     validate();
   }
 
+  @override
   write(TProtocol oprot) {
     validate();
 
@@ -284,7 +288,7 @@ class TestTObject implements TBase {
     if (this.l != null) {
       oprot.writeFieldBegin(_L_FIELD_DESC);
       {
-        oprot.writeListBegin(new TList(TType.STRING, this.l.length));
+        oprot.writeListBegin(TList(TType.STRING, this.l.length));
         for (var elem77 in this.l) {
           oprot.writeString(elem77);
         }
@@ -299,8 +303,9 @@ class TestTObject implements TBase {
     oprot.writeStructEnd();
   }
 
+  @override
   String toString() {
-    StringBuffer ret = new StringBuffer("TestTObject(");
+    StringBuffer ret = StringBuffer("TestTObject(");
 
     ret.write("i:");
     ret.write(this.i);
@@ -338,5 +343,4 @@ class TestTObject implements TBase {
     // check for required fields
     // check that fields of type enum have valid values
   }
-
 }

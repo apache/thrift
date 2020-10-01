@@ -18,15 +18,15 @@
 part of thrift;
 
 class TSerializer {
-  final message = new TMessage('Serializer', TMessageType.ONEWAY, 1);
+  final message = TMessage('Serializer', TMessageType.ONEWAY, 1);
   TBufferedTransport transport;
   TProtocol protocol;
 
   TSerializer({TProtocolFactory protocolFactory}) {
-    this.transport = new TBufferedTransport();
-    
+    this.transport = TBufferedTransport();
+
     if (protocolFactory == null) {
-      protocolFactory = new TBinaryProtocolFactory();
+      protocolFactory = TBinaryProtocolFactory();
     }
 
     this.protocol = protocolFactory.getProtocol(this.transport);
@@ -34,15 +34,15 @@ class TSerializer {
 
   Uint8List write(TBase base) {
     base.write(protocol);
-    
+
     return transport.consumeWriteBuffer();
   }
 
   String writeString(TBase base) {
     base.write(protocol);
-    
+
     Uint8List bytes = transport.consumeWriteBuffer();
-    
+
     return base64.encode(bytes);
   }
 }

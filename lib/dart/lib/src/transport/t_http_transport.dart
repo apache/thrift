@@ -34,31 +34,33 @@ class THttpClientTransport extends TBufferedTransport {
 
   THttpClientTransport(this.httpClient, this.config) {
     if (httpClient == null) {
-      throw new ArgumentError.notNull("httpClient");
+      throw ArgumentError.notNull("httpClient");
     }
   }
 
+  @override
   Future close() async {
     _reset(isOpen: false);
     httpClient.close();
   }
 
+  @override
   Future flush() {
     var requestBody = base64.encode(consumeWriteBuffer());
 
     // Use a sync completer to ensure that the buffer can be read immediately
     // after the read buffer is set, and avoid a race condition where another
     // response could overwrite the read buffer.
-    var completer = new Completer.sync();
+    var completer = Completer.sync();
 
     httpClient
         .post(config.url, headers: config.headers, body: requestBody)
         .then((response) {
       Uint8List data;
       try {
-        data = new Uint8List.fromList(base64.decode(response.body));
+        data = Uint8List.fromList(base64.decode(response.body));
       } on FormatException catch (_) {
-        throw new TProtocolError(TProtocolErrorType.INVALID_DATA,
+        throw TProtocolError(TProtocolErrorType.INVALID_DATA,
             "Expected a Base 64 encoded string.");
       }
 
@@ -78,7 +80,7 @@ class THttpConfig {
 
   THttpConfig(this.url, Map<String, String> headers) {
     if (url == null || !url.hasAuthority) {
-      throw new ArgumentError("Invalid url");
+      throw ArgumentError("Invalid url");
     }
 
     _initHeaders(headers);
@@ -94,6 +96,6 @@ class THttpConfig {
     h['Content-Type'] = 'application/x-thrift';
     h['Accept'] = 'application/x-thrift';
 
-    _headers = new Map.unmodifiable(h);
+    _headers = Map.unmodifiable(h);
   }
 }

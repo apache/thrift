@@ -32,12 +32,11 @@ class TApplicationErrorType {
 }
 
 class TApplicationError extends TError {
-  static final TStruct _struct = new TStruct("TApplicationError");
+  static final TStruct _struct = TStruct("TApplicationError");
   static const int MESSAGE = 1;
-  static final TField _messageField =
-      new TField("message", TType.STRING, MESSAGE);
+  static final TField _messageField = TField("message", TType.STRING, MESSAGE);
   static const int TYPE = 2;
-  static final TField _typeField = new TField("type", TType.I32, TYPE);
+  static final TField _typeField = TField("type", TType.I32, TYPE);
 
   TApplicationError(
       [int type = TApplicationErrorType.UNKNOWN, String message = ""])
@@ -46,7 +45,7 @@ class TApplicationError extends TError {
   static TApplicationError read(TProtocol iprot) {
     TField field;
 
-    String message = null;
+    String message;
     int type = TApplicationErrorType.UNKNOWN;
 
     iprot.readStructBegin();
@@ -82,13 +81,13 @@ class TApplicationError extends TError {
     }
     iprot.readStructEnd();
 
-    return new TApplicationError(type, message);
+    return TApplicationError(type, message);
   }
 
   write(TProtocol oprot) {
     oprot.writeStructBegin(_struct);
 
-    if (message != null && !message.isEmpty) {
+    if (message != null && message.isNotEmpty) {
       oprot.writeFieldBegin(_messageField);
       oprot.writeString(message);
       oprot.writeFieldEnd();

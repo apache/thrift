@@ -25,14 +25,14 @@ void main() {
   group('TTransportFactory', () {
     test('transport is returned from base factory', () async {
       TTransport result;
-      TTransport transport = null;
+      TTransport transport;
 
-      var factory = new TTransportFactory();
+      var factory = TTransportFactory();
 
       result = await factory.getTransport(transport);
       expect(result, isNull);
 
-      transport = new TBufferedTransport();
+      transport = TBufferedTransport();
       result = await factory.getTransport(transport);
 
       expect(result, transport);
