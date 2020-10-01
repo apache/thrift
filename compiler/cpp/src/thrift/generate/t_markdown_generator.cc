@@ -38,21 +38,6 @@ using std::string;
 using std::stringstream;
 using std::vector;
 
-//using std::endl;
-static const string endl = "\n"; // avoid ostream << std::endl flushes
-
-std::string str_to_id(const std::string& s) {
-  std::string id;
-  for(auto chr=s.begin();chr<=s.end(); ++chr) {
-    if(*chr == '.' || *chr == 0)
-      continue;
-    id += tolower(*chr); 
-  }
-  return id;
-}
-
-
-enum input_type { INPUT_UNKNOWN, INPUT_UTF8, INPUT_PLAIN };
 
 /**
  * MARKDOWN code generator
@@ -60,6 +45,11 @@ enum input_type { INPUT_UNKNOWN, INPUT_UTF8, INPUT_PLAIN };
  * mostly copy/pasting/tweaking from t_html_generator's work.
  */
 class t_markdown_generator : public t_generator {
+
+static const char endl = '\n'; // avoid ostream << std::endl flushes
+
+enum input_type { INPUT_UNKNOWN, INPUT_UTF8, INPUT_PLAIN };
+
 public:
   t_markdown_generator(t_program* program,
                        const std::map<std::string, std::string>& parsed_options,
@@ -123,6 +113,8 @@ public:
   void print_const_value(t_type* type, t_const_value* tvalue);
   void print_fn_args_doc(t_function* tfunction);
 
+  std::string str_to_id(const std::string& s);
+
 private:
   ofstream_with_content_based_conditional_update f_out_;
   std::string current_file_;
@@ -131,6 +123,20 @@ private:
   bool unsafe_;
   std::string extension_;
 };
+
+
+/**
+ * string to markdown-id link reference 
+ */
+std::string t_markdown_generator::str_to_id(const std::string& s) {
+  std::string id;
+  for(auto chr=s.begin();chr<=s.end(); ++chr) {
+    if(*chr == '.' || *chr == 0)
+      continue;
+    id += tolower(*chr); 
+  }
+  return id;
+}
 
 /**
  * Emits the Table of Contents links at the top of the module's page
@@ -183,7 +189,9 @@ void t_markdown_generator::generate_program_toc_row(t_program* tprog) {
         fill = &filling.back();
       }
       string name = get_service_name(*sv_iter);
-      (*fill)[1] = "[" + name + "](" + make_file_link(fname) + "#service-" + str_to_id(name) + ")";
+      (*fill)[1] = "[" + name + "](" 
+        + make_file_link(fname) 
+        + "#service-" + str_to_id(name) + ")";
   
       vector<t_function*> functions = (*sv_iter)->get_functions();
       vector<t_function*>::iterator fn_iter;
@@ -191,7 +199,9 @@ void t_markdown_generator::generate_program_toc_row(t_program* tprog) {
         string fn_name = (*fn_iter)->get_name(); 
         filling.emplace_back();
         fill = &filling.back();
-        (*fill)[1] = "	[ &bull; " + fn_name + "](" + make_file_link(fname) + "#function-" + str_to_id(name + fn_name) + ")";
+        (*fill)[1] = "	[ &bull; " + fn_name + "](" 
+          + make_file_link(fname) 
+          + "#function-" + str_to_id(name + fn_name) + ")";
       }
     }
   }
@@ -212,7 +222,9 @@ void t_markdown_generator::generate_program_toc_row(t_program* tprog) {
         ++it_fill;
       }
       string name = (*en_iter)->get_name();
-      (*fill)[2] = "[" + name + "](" + make_file_link(fname) + "#enumeration-" + str_to_id(name) + ")";
+      (*fill)[2] = "[" + name + "](" 
+        + make_file_link(fname) 
+        + "#enumeration-" + str_to_id(name) + ")";
     }
   }
   if (!tprog->get_typedefs().empty()) {
@@ -228,7 +240,9 @@ void t_markdown_generator::generate_program_toc_row(t_program* tprog) {
         ++it_fill;
       }
       string name = (*td_iter)->get_symbolic();
-      (*fill)[2] = "[" + name + "](" + make_file_link(fname) + "#typedef-" + str_to_id(name) + ")";
+      (*fill)[2] = "[" + name + "](" 
+        + make_file_link(fname) 
+        + "#typedef-" + str_to_id(name) + ")";
     }
   }
   if (!tprog->get_objects().empty()) {
@@ -275,7 +289,9 @@ void t_markdown_generator::generate_program_toc_row(t_program* tprog) {
         ++it_fill;
       }
       string name = (*con_iter)->get_name();
-      (*fill)[3] = "[" + name + "](" + make_file_link(fname) + "#constant-" + str_to_id(name) + ")";
+      (*fill)[3] = "[" + name + "](" 
+        + make_file_link(fname) 
+        + "#constant-" + str_to_id(name) + ")";
     }
     
   }
@@ -376,8 +392,10 @@ void t_markdown_generator::generate_index() {
   f_out_.open(index_fname.c_str());
   
   f_out_ << "# Thrift declarations" << endl;
-  f_out_ << "| Module | Services & Functions | Data types | Constants |" << endl 
-         << "| --- | --- | --- | --- |" << endl;
+  f_out_ << "| Module | Services & Functions | Data types | Constants |" 
+         << endl 
+         << "| --- | --- | --- | --- |" 
+         << endl;
   vector<t_program*> programs;
   generate_program_toc_rows(program_, programs);
   f_out_ << endl;
@@ -737,7 +755,9 @@ void t_markdown_generator::print_const_value(t_type* type, t_const_value* tvalue
   if (tvalue->get_type() == t_const_value::CV_IDENTIFIER) {
     string fname = make_file_name(program_->get_name());
     string name = escape_html(tvalue->get_identifier());
-    f_out_ << "[```" << name << "```](" + make_file_link(fname) + "#constant-" + str_to_id(name) + ")";
+    f_out_ << "[```" << name << "```](" 
+      + make_file_link(fname) 
+      + "#constant-" + str_to_id(name) + ")";
     return;
   }
 
