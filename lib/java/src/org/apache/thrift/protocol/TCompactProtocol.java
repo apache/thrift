@@ -363,20 +363,17 @@ public class TCompactProtocol extends TProtocol {
    */
   public void writeString(String str) throws TException {
     byte[] bytes = str.getBytes(StandardCharsets.UTF_8);
-    writeBinary(bytes, 0, bytes.length);
+    writeVarint32(bytes.length);
+    trans_.write(bytes, 0, bytes.length);
   }
 
   /**
    * Write a byte array, using a varint for the size.
    */
   public void writeBinary(ByteBuffer bin) throws TException {
-    int length = bin.limit() - bin.position();
-    writeBinary(bin.array(), bin.position() + bin.arrayOffset(), length);
-  }
-
-  private void writeBinary(byte[] buf, int offset, int length) throws TException {
-    writeVarint32(length);
-    trans_.write(buf, offset, length);
+    ByteBuffer bb = bin.asReadOnlyBuffer();
+    writeVarint32(bb.remaining());
+    trans_.write(bb);
   }
 
   //
@@ -694,12 +691,13 @@ public class TCompactProtocol extends TProtocol {
   }
 
   /**
-   * Read a byte[] from the wire.
+   * Read a ByteBuffer from the wire.
    */
   public ByteBuffer readBinary() throws TException {
     int length = readVarint32();
-    
-    if (length == 0) return EMPTY_BUFFER;
+    if (length == 0) {
+      return EMPTY_BUFFER;
+    }
     getTransport().checkReadBytesAvailable(length);
     if (trans_.getBytesRemainingInBuffer() >= length) {
       ByteBuffer bb = ByteBuffer.wrap(trans_.getBuffer(), trans_.getBufferPosition(), length);
