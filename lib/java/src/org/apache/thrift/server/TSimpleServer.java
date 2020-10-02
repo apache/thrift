@@ -82,6 +82,7 @@ public class TSimpleServer extends TServer {
         }
       } catch (TTransportException ttx) {
         // Client died, just move on
+        LOGGER.debug("Client Transportation Exception", ttx);
       } catch (TException tx) {
         if (!stopped_) {
           LOGGER.error("Thrift error occurred during processing of message.", tx);
