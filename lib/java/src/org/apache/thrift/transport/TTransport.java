@@ -22,6 +22,7 @@ package org.apache.thrift.transport;
 import org.apache.thrift.TConfiguration;
 
 import java.io.Closeable;
+import java.nio.ByteBuffer;
 
 /**
  * Generic class that encapsulates the I/O layer. This is basically a thin
@@ -119,6 +120,22 @@ public abstract class TTransport implements Closeable {
    */
   public abstract void write(byte[] buf, int off, int len)
     throws TTransportException;
+
+  /**
+   * Writes a sequence of bytes to the buffer. An attempt is made to write all
+   * remaining bytes in the buffer, that is, src.remaining(), at the moment this
+   * method is invoked. Upon return the buffer's position will updated; its limit
+   * will not have changed. Subclasses are encouraged to provide a more efficient
+   * implementation of this method.
+   *
+   * @param src The buffer from which bytes are to be retrieved
+   * @throws TTransportException if there was an error writing data
+   */
+  public void write(ByteBuffer src) throws TTransportException {
+    byte[] arr = new byte[src.remaining()];
+    src.get(arr);
+    write(arr);
+  }
 
   /**
    * Flush any pending data out of a transport buffer.

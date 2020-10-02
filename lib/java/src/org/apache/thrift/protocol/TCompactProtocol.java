@@ -370,8 +370,8 @@ public class TCompactProtocol extends TProtocol {
    * Write a byte array, using a varint for the size.
    */
   public void writeBinary(ByteBuffer bin) throws TException {
-    int length = bin.limit() - bin.position();
-    writeBinary(bin.array(), bin.position() + bin.arrayOffset(), length);
+    writeVarint32(bin.remaining());
+    writeBinary(bin);
   }
 
   private void writeBinary(byte[] buf, int offset, int length) throws TException {
