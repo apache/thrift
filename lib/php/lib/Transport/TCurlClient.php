@@ -159,14 +159,24 @@ class TCurlClient extends TTransport
      */
     public function read($len)
     {
+        $len_avail = strlen($this->response_);
+        if ($len_avail === 0) {
+            throw new TTransportException(
+                'TCurlClient: Could not read ' . $len . ' bytes from ' .
+                $this->host_ . ':' . $this->port_ . $this->uri_, TTransportException::UNKNOWN);
+        }
+        $ret = null;
         if ($len >= strlen($this->response_)) {
-            return $this->response_;
+            //although we know there is not going to be enough data, we return what we have
+            //to meet the TTransport definition
+            $ret = $this->response_;
+            //this is needed make the next read call fail with TTransportException
+            $this->response_ = "";
         } else {
             $ret = substr($this->response_, 0, $len);
             $this->response_ = substr($this->response_, $len);
-
-            return $ret;
         }
+        return $ret;
     }
 
     /**
