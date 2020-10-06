@@ -217,9 +217,9 @@ public abstract class TAsyncMethodCall<T> {
     state = State.ERROR;
   }
 
-  private void doReadingResponseBody(SelectionKey key) throws IOException {
+  private void doReadingResponseBody(SelectionKey key) throws TTransportException {
     if (transport.read(frameBuffer) < 0) {
-      throw new IOException("Read call frame failed");
+      throw new TTransportException(TTransportException.END_OF_FILE, "Read call frame failed");
     }
     if (frameBuffer.remaining() == 0) {
       cleanUpAndFireCallback(key);
@@ -241,9 +241,9 @@ public abstract class TAsyncMethodCall<T> {
     }
   }
 
-  private void doReadingResponseSize() throws IOException {
+  private void doReadingResponseSize() throws TTransportException {
     if (transport.read(sizeBuffer) < 0) {
-      throw new IOException("Read call frame size failed");
+      throw new TTransportException(TTransportException.END_OF_FILE, "Read call frame failed");
     }
     if (sizeBuffer.remaining() == 0) {
       state = State.READING_RESPONSE_BODY;
@@ -251,9 +251,9 @@ public abstract class TAsyncMethodCall<T> {
     }
   }
 
-  private void doWritingRequestBody(SelectionKey key) throws IOException {
+  private void doWritingRequestBody(SelectionKey key) throws TTransportException {
     if (transport.write(frameBuffer) < 0) {
-      throw new IOException("Write call frame failed");
+      throw new TTransportException(TTransportException.END_OF_FILE, "Write call frame failed");
     }
     if (frameBuffer.remaining() == 0) {
       if (isOneway) {
@@ -266,9 +266,9 @@ public abstract class TAsyncMethodCall<T> {
     }
   }
 
-  private void doWritingRequestSize() throws IOException {
+  private void doWritingRequestSize() throws TTransportException {
     if (transport.write(sizeBuffer) < 0) {
-      throw new IOException("Write call frame size failed");
+      throw new TTransportException(TTransportException.END_OF_FILE, "Write call frame failed");
     }
     if (sizeBuffer.remaining() == 0) {
       state = State.WRITING_REQUEST_BODY;

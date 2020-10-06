@@ -61,6 +61,26 @@ public abstract class TTransport implements Closeable {
   public abstract void close();
 
   /**
+   * Reads a sequence of bytes from this channel into the given buffer. An
+   * attempt is made to read up to the number of bytes remaining in the buffer,
+   * that is, dst.remaining(), at the moment this method is invoked. Upon return
+   * the buffer's position will move forward the number of bytes read; its limit
+   * will not have changed. Subclasses are encouraged to provide a more
+   * efficient implementation of this method.
+   *
+   * @param dst The buffer into which bytes are to be transferred
+   * @return The number of bytes read, possibly zero, or -1 if the channel has
+   *         reached end-of-stream
+   * @throws TTransportException if there was an error reading data
+   */
+  public int read(ByteBuffer dst) throws TTransportException {
+    byte[] arr = new byte[dst.remaining()];
+    this.readAll(arr, 0, arr.length);
+    dst.put(arr);
+    return arr.length;
+  }
+
+  /**
    * Reads up to len bytes into buffer buf, starting at offset off.
    *
    * @param buf Array to read into
@@ -129,12 +149,14 @@ public abstract class TTransport implements Closeable {
    * implementation of this method.
    *
    * @param src The buffer from which bytes are to be retrieved
+   * @return The number of bytes written, possibly zero
    * @throws TTransportException if there was an error writing data
    */
-  public void write(ByteBuffer src) throws TTransportException {
+  public int write(ByteBuffer src) throws TTransportException {
     byte[] arr = new byte[src.remaining()];
     src.get(arr);
     write(arr);
+    return arr.length;
   }
 
   /**

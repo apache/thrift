@@ -144,10 +144,13 @@ public class TNonblockingSocket extends TNonblockingTransport {
   /**
    * Perform a nonblocking read into buffer.
    */
-  public int read(ByteBuffer buffer) throws IOException {
-    return socketChannel_.read(buffer);
+  public int read(ByteBuffer buffer) throws TTransportException {
+    try {
+      return socketChannel_.read(buffer);
+    } catch (IOException iox) {
+      throw new TTransportException(TTransportException.UNKNOWN, iox);
+    }
   }
-
 
   /**
    * Reads from the underlying input stream if not null.
@@ -167,8 +170,12 @@ public class TNonblockingSocket extends TNonblockingTransport {
   /**
    * Perform a nonblocking write of the data in buffer;
    */
-  public int write(ByteBuffer buffer) throws IOException {
-    return socketChannel_.write(buffer);
+  public int write(ByteBuffer buffer) throws TTransportException {
+    try {
+      return socketChannel_.write(buffer);
+    } catch (IOException iox) {
+      throw new TTransportException(TTransportException.UNKNOWN, iox);
+    }
   }
 
   /**
@@ -179,11 +186,7 @@ public class TNonblockingSocket extends TNonblockingTransport {
       throw new TTransportException(TTransportException.NOT_OPEN,
         "Cannot write to write-only socket channel");
     }
-    try {
-      socketChannel_.write(ByteBuffer.wrap(buf, off, len));
-    } catch (IOException iox) {
-      throw new TTransportException(TTransportException.UNKNOWN, iox);
-    }
+    write(ByteBuffer.wrap(buf, off, len));
   }
 
   /**
