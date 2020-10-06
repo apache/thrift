@@ -100,7 +100,7 @@ public abstract class FrameWriter {
   /**
    * Nonblocking write to the underlying transport.
    *
-   * @throws IOException
+   * @throws TTransportException
    */
   public void write(TNonblockingTransport transport) throws TTransportException {
     transport.write(frameBytes);
