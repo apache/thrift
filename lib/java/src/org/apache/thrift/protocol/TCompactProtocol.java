@@ -371,7 +371,7 @@ public class TCompactProtocol extends TProtocol {
    */
   public void writeBinary(ByteBuffer bin) throws TException {
     writeVarint32(bin.remaining());
-    writeBinary(bin);
+    trans_.write(bin);
   }
 
   private void writeBinary(byte[] buf, int offset, int length) throws TException {
