@@ -75,9 +75,9 @@ public abstract class TTransport implements Closeable {
    */
   public int read(ByteBuffer dst) throws TTransportException {
     byte[] arr = new byte[dst.remaining()];
-    this.readAll(arr, 0, arr.length);
-    dst.put(arr);
-    return arr.length;
+    int n = read(arr, 0, arr.length);
+    dst.put(arr, 0, n);
+    return n;
   }
 
   /**
@@ -155,7 +155,7 @@ public abstract class TTransport implements Closeable {
   public int write(ByteBuffer src) throws TTransportException {
     byte[] arr = new byte[src.remaining()];
     src.get(arr);
-    write(arr);
+    write(arr, 0, arr.length);
     return arr.length;
   }
 

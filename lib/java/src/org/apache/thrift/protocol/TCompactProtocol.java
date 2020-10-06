@@ -363,7 +363,8 @@ public class TCompactProtocol extends TProtocol {
    */
   public void writeString(String str) throws TException {
     byte[] bytes = str.getBytes(StandardCharsets.UTF_8);
-    writeBinary(bytes, 0, bytes.length);
+    writeVarint32(bytes.length);
+    trans_.write(bytes, 0, bytes.length);
   }
 
   /**
@@ -372,11 +373,6 @@ public class TCompactProtocol extends TProtocol {
   public void writeBinary(ByteBuffer bin) throws TException {
     writeVarint32(bin.remaining());
     trans_.write(bin);
-  }
-
-  private void writeBinary(byte[] buf, int offset, int length) throws TException {
-    writeVarint32(length);
-    trans_.write(buf, offset, length);
   }
 
   //
