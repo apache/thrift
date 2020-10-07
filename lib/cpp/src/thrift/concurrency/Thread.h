@@ -67,10 +67,11 @@ private:
  *
  * @see apache::thrift::concurrency::ThreadFactory)
  */
-class Thread final : public std::enable_shared_from_this<Thread> {
+class Thread : public std::enable_shared_from_this<Thread> {
 
 public:
   typedef std::thread::id id_t;
+  typedef void (*thread_funct_t)(std::shared_ptr<Thread> );
 
   enum STATE { uninitialized, starting, started, stopping, stopped };
 
@@ -84,7 +85,7 @@ public:
     this->_runnable = runnable;
   }
 
-  ~Thread() {
+  virtual ~Thread() {
     if (!detached_ && thread_->joinable()) {
       try {
         join();
@@ -117,7 +118,7 @@ public:
    * configuration then invokes the run method of the Runnable object bound
    * to this thread.
    */
-  void start() {
+  virtual void start() {
     if (getState() != uninitialized) {
       return;
     }
@@ -126,7 +127,7 @@ public:
     setState(starting);
 
     Synchronized sync(monitor_);
-    thread_ = std::unique_ptr<std::thread>(new std::thread(threadMain, selfRef));
+    thread_ = std::make_unique<std::thread>(getThreadFunc(), selfRef);
 
     if (detached_)
       thread_->detach();
@@ -142,7 +143,7 @@ public:
    * until this thread completes.  If the target thread is not joinable, then
    * nothing happens.
    */
-  void join() {
+  virtual void join() {
     if (!detached_ && state_ != uninitialized) {
       thread_->join();
     }
@@ -157,6 +158,11 @@ public:
    * Gets the runnable object this thread is hosting
    */
   std::shared_ptr<Runnable> runnable() const { return _runnable; }
+
+protected:
+  virtual thread_funct_t getThreadFunc() const {
+      return threadMain;
+  } 
 
 private:
   std::shared_ptr<Runnable> _runnable;
