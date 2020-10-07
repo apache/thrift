@@ -31,7 +31,7 @@ namespace concurrency {
  * Factory to create thread object and bind them to Runnable
  * object for execution
  */
-class ThreadFactory final {
+class ThreadFactory {
 public:
   /**
    * All threads created by a factory are reference-counted
@@ -43,7 +43,7 @@ public:
    */
   ThreadFactory(bool detached = true) : detached_(detached) { }
 
-  ~ThreadFactory() = default;
+  virtual ~ThreadFactory() = default;
 
   /**
    * Gets current detached mode
@@ -58,7 +58,7 @@ public:
   /**
    * Create a new thread.
    */
-  std::shared_ptr<Thread> newThread(std::shared_ptr<Runnable> runnable) const;
+  virtual std::shared_ptr<Thread> newThread(std::shared_ptr<Runnable> runnable) const;
 
   /**
    * Gets the current thread id or unknown_thread_id if the current thread is not a thrift thread
