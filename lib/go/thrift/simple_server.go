@@ -46,7 +46,7 @@ var ErrAbandonRequest = errors.New("request abandoned")
 // implementations can change its value to control the behavior.
 //
 // If it's changed to <=0, the feature will be disabled.
-var ServerConnectivityCheckInterval = time.Millisecond
+var ServerConnectivityCheckInterval = time.Millisecond * 5
 
 /*
  * This is not a typical TSimpleServer as it is not blocked after accept a socket.

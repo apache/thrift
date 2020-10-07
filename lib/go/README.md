@@ -107,4 +107,9 @@ main function:
 
     thrift.ServerConnectivityCheckInterval = 0
 
+Please be advised that due to a
+[Go runtime bug](https://github.com/golang/go/issues/27707), currently
+if this interval is set to a value too low (for example, 1ms), it might cause
+excessive cpu overhead.
+
 This feature is also only enabled on non-oneway endpoints.
