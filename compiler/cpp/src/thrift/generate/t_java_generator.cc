@@ -2645,13 +2645,6 @@ void t_java_generator::generate_java_struct_tostring(ostream& out, t_struct* tst
       indent(out) << "if (!first) sb.append(\", \");" << endl;
     }
     indent(out) << "sb.append(\"" << (*f_iter)->get_name() << ":\");" << endl;
-    bool can_be_null = type_can_be_null(field->get_type());
-    if (can_be_null) {
-      indent(out) << "if (this." << (*f_iter)->get_name() << " == null) {" << endl;
-      indent(out) << "  sb.append(\"null\");" << endl;
-      indent(out) << "} else {" << endl;
-      indent_up();
-    }
 
     if (get_true_type(field->get_type())->is_binary()) {
       indent(out) << "org.apache.thrift.TBaseHelper.toString(this." << field->get_name() << ", sb);"
@@ -2668,10 +2661,6 @@ void t_java_generator::generate_java_struct_tostring(ostream& out, t_struct* tst
       indent(out) << "sb.append(this." << (*f_iter)->get_name() << ");" << endl;
     }
 
-    if (can_be_null) {
-      indent_down();
-      indent(out) << "}" << endl;
-    }
     indent(out) << "first = false;" << endl;
 
     if (could_be_unset) {

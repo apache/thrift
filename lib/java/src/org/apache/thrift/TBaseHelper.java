@@ -191,6 +191,11 @@ public final class TBaseHelper {
   }
 
   public static void toString(Collection<ByteBuffer> bbs, StringBuilder sb) {
+    if (bbs == null) {
+      sb.append(bbs);
+      return;
+    }
+
     Iterator<ByteBuffer> it = bbs.iterator();
     if (!it.hasNext()) {
       sb.append("[]");
@@ -210,6 +215,11 @@ public final class TBaseHelper {
   }
 
   public static void toString(ByteBuffer bb, StringBuilder sb) {
+    if (bb == null) {
+      sb.append(bb);
+      return;
+    }
+
     byte[] buf = bb.array();
 
     int arrayOffset = bb.arrayOffset();
