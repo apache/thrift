@@ -196,6 +196,7 @@ erl_crash.dump
 /lib/erl/.eunit
 /lib/erl/ebin
 /lib/erl/deps/
+/lib/erl/_build
 /lib/erl/src/thrift.app.src
 /lib/erl/test/*.hrl
 /lib/erl/test/*.beam
