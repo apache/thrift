@@ -233,7 +233,7 @@ AX_THRIFT_LIB(erlang, [Erlang], yes)
 if test "$with_erlang" = "yes";  then
   AC_ERLANG_PATH_ERL
   AC_ERLANG_PATH_ERLC
-  AC_PATH_PROG([REBAR], [rebar])
+  AC_PATH_PROG([REBAR], [rebar3])
   if test -n "$ERLC" ; then
     AC_ERLANG_SUBST_LIB_DIR
     # Install into the detected Erlang directory instead of $libdir/erlang/lib
