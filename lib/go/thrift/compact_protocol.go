@@ -22,6 +22,7 @@ package thrift
 import (
 	"context"
 	"encoding/binary"
+	"errors"
 	"fmt"
 	"io"
 	"math"
@@ -158,6 +159,9 @@ func (p *TCompactProtocol) WriteStructBegin(ctx context.Context, name string) er
 // this as an opportunity to pop the last field from the current struct off
 // of the field stack.
 func (p *TCompactProtocol) WriteStructEnd(ctx context.Context) error {
+	if len(p.lastField) <= 0 {
+		return NewTProtocolExceptionWithType(INVALID_DATA, errors.New("WriteStructEnd called without matching WriteStructBegin call before"))
+	}
 	p.lastFieldId = p.lastField[len(p.lastField)-1]
 	p.lastField = p.lastField[:len(p.lastField)-1]
 	return nil
@@ -386,6 +390,9 @@ func (p *TCompactProtocol) ReadStructBegin(ctx context.Context) (name string, er
 // this struct from the field stack.
 func (p *TCompactProtocol) ReadStructEnd(ctx context.Context) error {
 	// consume the last field we read off the wire.
+	if len(p.lastField) <= 0 {
+		return NewTProtocolExceptionWithType(INVALID_DATA, errors.New("ReadStructEnd called without matching ReadStructBegin call before"))
+	}
 	p.lastFieldId = p.lastField[len(p.lastField)-1]
 	p.lastField = p.lastField[:len(p.lastField)-1]
 	return nil

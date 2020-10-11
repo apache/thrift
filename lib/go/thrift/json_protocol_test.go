@@ -648,3 +648,7 @@ func TestWriteJSONProtocolMap(t *testing.T) {
 	}
 	trans.Close()
 }
+
+func TestTJSONProtocolUnmatchedBeginEnd(t *testing.T) {
+	UnmatchedBeginEndProtocolTest(t, NewTJSONProtocolFactory())
+}
