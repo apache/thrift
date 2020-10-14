@@ -127,7 +127,7 @@ public:
     setState(starting);
 
     Synchronized sync(monitor_);
-    thread_ = std::make_unique<std::thread>(getThreadFunc(), selfRef);
+    thread_ = std::unique_ptr<std::thread>(new std::thread(getThreadFunc(), selfRef));
 
     if (detached_)
       thread_->detach();
