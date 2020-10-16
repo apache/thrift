@@ -433,7 +433,7 @@ protected:
     std::ofstream out_file;
     out_file.exceptions(out_file.exceptions() | std::ofstream::badbit | std::ofstream::failbit);
     try {
-      out_file.open(output_file_path.c_str(), std::ios::out);
+      out_file.open(output_file_path.c_str(), std::ios::out | std::ios::app);
     }
     catch (const std::ios_base::failure& e) {
       ::failure("failed to write the output to the file '%s', details: '%s'", output_file_path.c_str(), e.what());
