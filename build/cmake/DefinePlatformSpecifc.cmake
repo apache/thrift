@@ -25,13 +25,7 @@ set(CMAKE_DEBUG_POSTFIX "d" CACHE STRING "Set debug library postfix")
 
 # basic options
 foreach(lang IN ITEMS C CXX)
-  if(CMAKE_${lang}_COMPILER_ID STREQUAL "Clang")
-    set(CMAKE_${lang}_FLAGS "${CMAKE_${lang}_FLAGS} -Wall")
-    set(CMAKE_${lang}_FLAGS "${CMAKE_${lang}_FLAGS} -ferror-limit=1")
-  elseif(CMAKE_${lang}_COMPILER_ID STREQUAL "GNU")
-    set(CMAKE_${lang}_FLAGS "${CMAKE_${lang}_FLAGS} -Wall -Wextra")
-    set(CMAKE_${lang}_FLAGS "${CMAKE_${lang}_FLAGS} -fmax-errors=1")
-  elseif(CMAKE_${lang}_COMPILER_ID STREQUAL "MSVC")
+  if("CMAKE_${lang}_COMPILER_ID" STREQUAL "MSVC" OR "${CMAKE_${lang}_SIMULATE_ID}" STREQUAL "MSVC")
     set(CMAKE_${lang}_FLAGS "${CMAKE_${lang}_FLAGS} /MP") # parallel build
     set(CMAKE_${lang}_FLAGS "${CMAKE_${lang}_FLAGS} /W3") # warning level 3
     include(CheckCXXCompilerFlag)
@@ -45,6 +39,12 @@ foreach(lang IN ITEMS C CXX)
       set(CMAKE_${lang}_FLAGS "${CMAKE_${lang}_FLAGS} /execution-charset:utf-8")
     endif()
     add_definitions("-DUNICODE -D_UNICODE")
+  elseif("CMAKE_${lang}_COMPILER_ID" STREQUAL "Clang")
+    set(CMAKE_${lang}_FLAGS "${CMAKE_${lang}_FLAGS} -Wall")
+    set(CMAKE_${lang}_FLAGS "${CMAKE_${lang}_FLAGS} -ferror-limit=1")
+  elseif("CMAKE_${lang}_COMPILER_ID" STREQUAL "GNU")
+    set(CMAKE_${lang}_FLAGS "${CMAKE_${lang}_FLAGS} -Wall -Wextra")
+    set(CMAKE_${lang}_FLAGS "${CMAKE_${lang}_FLAGS} -fmax-errors=1")
   endif()
 endforeach()
 
