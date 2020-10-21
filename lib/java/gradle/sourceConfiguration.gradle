@@ -71,6 +71,7 @@ jar {
     manifest {
         attributes([
             "Implementation-Version": "${project.version}",
+            "Automatic-Module-Name": "${project.group}",
             "Bundle-ManifestVersion": "2",
             "Bundle-SymbolicName": "${project.group}",
             "Bundle-Name": "Apache Thrift",
