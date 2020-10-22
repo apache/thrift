@@ -27,14 +27,15 @@ import base64
 from six.moves import urllib
 from six.moves import http_client
 
-from .TTransport import TTransportBase
+from thrift.TConfiguration import TConfiguration
+from thrift.transport.TTransport import TTransportBase
 import six
 
 
 class THttpClient(TTransportBase):
     """Http implementation of TTransport base."""
 
-    def __init__(self, uri_or_host, port=None, path=None, cafile=None, cert_file=None, key_file=None, ssl_context=None):
+    def __init__(self, uri_or_host, config, port=None, path=None, cafile=None, cert_file=None, key_file=None, ssl_context=None):
         """THttpClient supports two different types of construction:
 
         THttpClient(host, port, path) - deprecated
@@ -52,6 +53,7 @@ class THttpClient(TTransportBase):
                 stacklevel=2)
             self.host = uri_or_host
             self.port = port
+            self.config = config
             assert path
             self.path = path
             self.scheme = 'http'
@@ -68,6 +70,7 @@ class THttpClient(TTransportBase):
                 self.context = ssl.create_default_context(cafile=cafile) if (cafile and not ssl_context) else ssl_context
             self.host = parsed.hostname
             self.path = parsed.path
+            self.config = config
             if parsed.query:
                 self.path += '?%s' % parsed.query
         try:
@@ -106,10 +109,10 @@ class THttpClient(TTransportBase):
 
     def open(self):
         if self.scheme == 'http':
-            self.__http = http_client.HTTPConnection(self.host, self.port,
+            self.__http = http_client.HTTPConnection(self.host, self.port,self.config,
                                                      timeout=self.__timeout)
         elif self.scheme == 'https':
-            self.__http = http_client.HTTPSConnection(self.host, self.port,
+            self.__http = http_client.HTTPSConnection(self.host, self.port,self.config,
                                                       key_file=self.keyfile,
                                                       cert_file=self.certfile,
                                                       timeout=self.__timeout,
@@ -142,6 +145,7 @@ class THttpClient(TTransportBase):
         self.__wbuf.write(buf)
 
     def flush(self):
+        self.resetCosumedMessageSize(-1)     
         if self.isOpen():
             self.close()
         self.open()

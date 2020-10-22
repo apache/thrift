@@ -23,8 +23,8 @@ import os
 import socket
 import sys
 
-from .TTransport import TTransportBase, TTransportException, TServerTransportBase
-
+from thrift.transport.TTransport import TTransportBase, TTransportException, TServerTransportBase
+from thrift.TConfiguration import TConfiguration
 logger = logging.getLogger(__name__)
 
 

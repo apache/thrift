@@ -19,7 +19,9 @@
 
 from .TProtocol import TType, TProtocolBase, TProtocolException, TProtocolFactory
 from struct import pack, unpack
-
+from thrift.protocol.TMap import TMap
+from thrift.protocol.TList import TList
+from thrift.protocol.TSet import TSet
 
 class TBinaryProtocol(TProtocolBase):
     """Binary implementation of the Thrift protocol driver."""
@@ -44,9 +46,11 @@ class TBinaryProtocol(TProtocolBase):
         self.container_length_limit = kwargs.get('container_length_limit', None)
 
     def _check_string_length(self, length):
+        self.trans.checkReadBytesAvailable(length) 
         self._check_length(self.string_length_limit, length)
 
-    def _check_container_length(self, length):
+    def _check_container_length(self, length):        
+        self.trans.checkReadBytesAvailable(length) 
         self._check_length(self.container_length_limit, length)
 
     def writeMessageBegin(self, name, type, seqid):
@@ -148,6 +152,8 @@ class TBinaryProtocol(TProtocolBase):
             name = self.trans.readAll(sz)
             type = self.readByte()
             seqid = self.readI32()
+    
+        self.trans.checkReadBytesAvailable(sz)
         return (name, type, seqid)
 
     def readMessageEnd(self):
@@ -173,6 +179,9 @@ class TBinaryProtocol(TProtocolBase):
         ktype = self.readByte()
         vtype = self.readByte()
         size = self.readI32()
+        map =TMap(ktype, vtype, size)
+        self.checkReadBytesAvailable(map)
+
         self._check_container_length(size)
         return (ktype, vtype, size)
 
@@ -182,6 +191,8 @@ class TBinaryProtocol(TProtocolBase):
     def readListBegin(self):
         etype = self.readByte()
         size = self.readI32()
+        list = TList(etype,size)
+        self.checkReadBytesAvailable(list)
         self._check_container_length(size)
         return (etype, size)
 
@@ -191,6 +202,8 @@ class TBinaryProtocol(TProtocolBase):
     def readSetBegin(self):
         etype = self.readByte()
         size = self.readI32()
+        set = TSet(etype,size)
+        self.checkReadBytesAvailable(set)
         self._check_container_length(size)
         return (etype, size)
 
@@ -229,10 +242,38 @@ class TBinaryProtocol(TProtocolBase):
         return val
 
     def readBinary(self):
-        size = self.readI32()
+        size = self.readI32() 
         self._check_string_length(size)
         s = self.trans.readAll(size)
         return s
+
+    def getMinSerializedSize(self, ttype):
+        if ttype == TType.STOP:
+            return 0
+        elif ttype == TType.VOID:
+            return 0
+        elif ttype == TType.BOOL:
+            return 1
+        elif ttype == TType.BYTE:
+            return 1
+        elif ttype == TType.DOUBLE:
+            return 8
+        elif ttype == TType.I16:
+            return 2
+        elif ttype == TType.I32:
+            return 4
+        elif ttype == TType.I64:
+            return 8
+        elif ttype == TType.STRING:
+            return 4
+        elif ttype == TType.STRUCT:
+            return 0
+        elif ttype == TType.MAP:
+            return 4
+        elif ttype == TType.SET:
+            return 4
+        elif ttype == TType.LIST:
+            return 4
 
 
 class TBinaryProtocolFactory(TProtocolFactory):

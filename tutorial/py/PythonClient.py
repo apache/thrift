@@ -29,16 +29,16 @@ from tutorial.ttypes import InvalidOperation, Operation, Work
 
 from thrift import Thrift
 from thrift.transport import TSocket
-from thrift.transport import TTransport
+from thrift.transport import TTransport, TBufferedTransport
 from thrift.protocol import TBinaryProtocol
-
+from thrift.TConfiguration import TConfiguration
 
 def main():
     # Make socket
     transport = TSocket.TSocket('localhost', 9090)
-
+    config = TConfiguration()
     # Buffering is critical. Raw sockets are very slow
-    transport = TTransport.TBufferedTransport(transport)
+    transport = TBufferedTransport.TBufferedTransport(transport, config)
 
     # Wrap in a protocol
     protocol = TBinaryProtocol.TBinaryProtocol(transport)

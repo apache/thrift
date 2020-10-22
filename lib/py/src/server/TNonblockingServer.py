@@ -36,6 +36,7 @@ from six.moves import queue
 
 from thrift.transport import TTransport
 from thrift.protocol.TBinaryProtocol import TBinaryProtocolFactory
+from thrift.TConfiguration import TConfiguration
 
 __all__ = ['TNonblockingServer']
 

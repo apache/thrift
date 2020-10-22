@@ -22,8 +22,8 @@ import unittest
 
 import _import_local_thrift  # noqa
 from thrift.protocol.TJSONProtocol import TJSONProtocol
-from thrift.transport import TTransport
-
+from thrift.transport import TTransport, TBufferedTransport
+from thrift.TConfiguration import TConfiguration
 #
 # In order to run the test under Windows. We need to create symbolic link
 # name 'thrift' to '../src' folder by using:
@@ -33,13 +33,14 @@ from thrift.transport import TTransport
 
 
 class TestJSONString(unittest.TestCase):
-
+    config =TConfiguration()
+    config.setMaxMessageSize(200)
     def test_escaped_unicode_string(self):
         unicode_json = b'"hello \\u0e01\\u0e02\\u0e03\\ud835\\udcab\\udb40\\udc70 unicode"'
         unicode_text = u'hello \u0e01\u0e02\u0e03\U0001D4AB\U000E0070 unicode'
 
         buf = TTransport.TMemoryBuffer(unicode_json)
-        transport = TTransport.TBufferedTransportFactory().getTransport(buf)
+        transport = TBufferedTransport.TBufferedTransportFactory().getTransport(buf, self.config)
         protocol = TJSONProtocol(transport)
 
         if sys.version_info[0] == 2:
@@ -50,7 +51,7 @@ class TestJSONString(unittest.TestCase):
         write_data = '{"software":"thrift","1":[23,1.2010000000000001,32767,2147483647,9223372036854775807],"base64":"aGVsbG8gdGhyaWZ0","bool":0}'
 
         buff = TTransport.TMemoryBuffer()
-        transport = TTransport.TBufferedTransportFactory().getTransport(buff)
+        transport = TBufferedTransport.TBufferedTransportFactory().getTransport(buff, self.config)
         protocol = TJSONProtocol(transport)
         protocol.writeJSONObjectStart()
         protocol.writeJSONString("software")
@@ -79,7 +80,7 @@ class TestJSONString(unittest.TestCase):
         read_data = '{"software":"thrift","1":[23,1.2010000000000001,32767,2147483647,9223372036854775807],"base64":"aGVsbG8gdGhyaWZ0","bool":0}'
 
         buff = TTransport.TMemoryBuffer(read_data.encode('utf-8'))
-        transport = TTransport.TBufferedTransportFactory().getTransport(buff)
+        transport = TBufferedTransport.TBufferedTransportFactory().getTransport(buff, self.config)
         protocol = TJSONProtocol(transport)
         protocol.readJSONObjectStart()
         u_1 = protocol.readString()

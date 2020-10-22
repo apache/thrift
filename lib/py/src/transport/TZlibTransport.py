@@ -24,9 +24,9 @@ data compression.
 
 from __future__ import division
 import zlib
-from .TTransport import TTransportBase, CReadableTransport
-from ..compat import BufferIO
-
+from thrift.transport.TTransport import TTransportBase, CReadableTransport, TTransportException
+from thrift.compat import BufferIO
+from thrift.TConfiguration import TConfiguration
 
 class TZlibTransportFactory(object):
     """Factory transport that builds zlib compressed transports.
@@ -47,7 +47,7 @@ class TZlibTransportFactory(object):
     _last_trans = None
     _last_z = None
 
-    def getTransport(self, trans, compresslevel=9):
+    def getTransport(self, trans, config, compresslevel=9):
         """Wrap a transport, trans, with the TZlibTransport
         compressed transport class, returning a new
         transport to the caller.
@@ -61,7 +61,7 @@ class TZlibTransportFactory(object):
         """
         if trans == self._last_trans:
             return self._last_z
-        ztrans = TZlibTransport(trans, compresslevel)
+        ztrans = TZlibTransport(trans, config, compresslevel)
         self._last_trans = trans
         self._last_z = ztrans
         return ztrans
@@ -74,9 +74,12 @@ class TZlibTransport(TTransportBase, CReadableTransport):
     """
     # Read buffer size for the python fastbinary C extension,
     # the TBinaryProtocolAccelerated class.
+
+    remainingMessageSize = 0
+    knownMessageSize = 0
     DEFAULT_BUFFSIZE = 4096
 
-    def __init__(self, trans, compresslevel=9):
+    def __init__(self, trans, config, compresslevel=9):
         """Create a new TZlibTransport, wrapping C{trans}, another
         TTransport derived object.
 
@@ -87,12 +90,54 @@ class TZlibTransport(TTransportBase, CReadableTransport):
         @type compresslevel: int
         """
         self.__trans = trans
+        self.config = config
         self.compresslevel = compresslevel
         self.__rbuf = BufferIO()
         self.__wbuf = BufferIO()
         self._init_zlib()
         self._init_stats()
+        self.resetConsumedMessageSize(-1)
 
+
+    def getMessageSize(self):
+        getMessageSize = self.getConfiguration().getMaxMessageSize()
+        return getMessageSize
+
+    def getConfiguration(self):
+        if self.config == None:
+            cfg = TConfiguration()
+        else:
+            cfg = self.config 
+        return cfg
+
+    def resetConsumedMessageSize(self, newSize):
+        if newSize < 0:
+            self.knownMessageSize = self.getMessageSize()
+            self.remainingMessageSize = self.getMessageSize()
+            return
+        if newSize > self.knownMessageSize:
+            raise Exception(TTransportException.END_OF_FILE, "MaxMessageSize reached")
+            self.knownMessageSize = newSize
+            self.remainingMessageSize = newSize
+
+    def updateKnownMessageSize(self, size):
+        consumed = self.knownMessageSize - self.remainingMessageSize 
+        if size == 0:
+            self.resetConSumedMessageSize(-1)
+        else:
+            self.resetConSumedMessageSize(size)
+        self.countConsumedMessageBytes(consumed)
+
+    def checkReadBytesAvailable(self, numBytes):
+        if self.remainingMessageSize < numBytes:
+            raise Exception(TTransportException.END_OF_FILE, "MaxMessageSize reached")
+
+    def countConsumedMessageBytes(self, numBytes):
+        if self.remainingMessageSize >= numBytes:
+            self.remainingMessageSize -= numBytes
+        else:
+            self.remainingMessageSize = 0
+            raise Exception(TTransportException.END_OF_FILE, "MaxMessageSize reached")
     def _reinit_buffers(self):
         """Internal method to initialize/reset the internal StringIO objects
         for read and write buffers.
@@ -179,6 +224,7 @@ class TZlibTransport(TTransportBase, CReadableTransport):
         return self.__trans.close()
 
     def read(self, sz):
+        self.checkReadBytesAvailable(sz)
         """Read up to sz bytes from the decompressed bytes buffer, and
         read from the underlying transport if the decompression
         buffer is empty.
@@ -194,6 +240,7 @@ class TZlibTransport(TTransportBase, CReadableTransport):
         return ret
 
     def readComp(self, sz):
+        self.checkReadBytesAvailable(sz)
         """Read compressed data from the underlying transport, then
         decompress it and append it to the internal StringIO read buffer
         """
@@ -215,6 +262,7 @@ class TZlibTransport(TTransportBase, CReadableTransport):
         self.__wbuf.write(buf)
 
     def flush(self):
+        self.resetConsumedMessageSize(-1)
         """Flush any queued up data in the write buffer and ensure the
         compression buffer is flushed out to the underlying transport
         """

@@ -21,6 +21,7 @@ include_directories(${PYTHON_INCLUDE_DIRS})
 
 add_custom_target(python_build ALL
     COMMAND ${THRIFT_COMPILER} --gen py test/test_thrift_file/TestServer.thrift
+    COMMAND ${THRIFT_COMPILER} --gen py test/test_thrift_file/TProcesspoolServer.thrift
     COMMAND ${PYTHON_EXECUTABLE} setup.py build
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
     COMMENT "Building Python library"
@@ -34,4 +35,14 @@ if(BUILD_TESTING)
     add_test(PythonThriftTZlibTransport ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/test/thrift_TZlibTransport.py)
     add_test(PythonThriftProtocol ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/test/thrift_TCompactProtocol.py)
     add_test(PythonThriftTNonblockingServer ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/test/thrift_TNonblockingServer.py)
+    add_test(PythonThriftTProcesspoolServer ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/test/thrift_TProcesspoolServer.py)
+    add_test(PythonThriftReadBinaryProtocolCheck ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/test/thrift_ReadCheckTests/thrift_ReadBinaryProtocolCheckTest.py)
+
+    add_test(PythonThriftReadCompactProtocolCheck ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/test/thrift_ReadCheckTests/thrift_ReadCompactProtocolCheckTest.py)
+    add_test(PythonThriftReadJSONProtocolCheck ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/test/thrift_ReadCheckTests/thrift_ReadJSONProtocolCheckTest.py)
+    add_test(PythonThriftReadBufferedTransportCheck ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/test/thrift_ReadCheckTests/thrift_ReadBufferedTransportCheckTest.py)
+    add_test(PythonThriftReadFramedTransportCheck ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/test/thrift_ReadCheckTests/thrift_ReadFramedTransportCheckTest.py)
+    add_test(PythonThriftReadZlibTransportCheck ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/test/thrift_ReadCheckTests/thrift_ReadZlibTransportCheckTest.py)
+
+
 endif()

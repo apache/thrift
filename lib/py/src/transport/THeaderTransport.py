@@ -24,6 +24,7 @@ from thrift.compat import BufferIO, byte_index
 from thrift.protocol.TBinaryProtocol import TBinaryProtocol
 from thrift.protocol.TCompactProtocol import TCompactProtocol, readVarint, writeVarint
 from thrift.Thrift import TApplicationException
+from thrift.TConfiguration import TConfiguration
 from thrift.transport.TTransport import (
     CReadableTransport,
     TMemoryBuffer,
@@ -31,11 +32,10 @@ from thrift.transport.TTransport import (
     TTransportException,
 )
 
-
 U16 = struct.Struct("!H")
 I32 = struct.Struct("!i")
 HEADER_MAGIC = 0x0FFF
-HARD_MAX_FRAME_SIZE = 0x3FFFFFFF
+HARD_MAX_FRAME_SIZE = hex(TConfiguration().getMaxFrameSize())
 
 
 class THeaderClientType(object):
@@ -87,11 +87,11 @@ def _writeString(trans, value):
 
 
 class THeaderTransport(TTransportBase, CReadableTransport):
-    def __init__(self, transport, allowed_client_types):
+    def __init__(self, transport, allowed_client_types, config):
         self._transport = transport
         self._client_type = THeaderClientType.HEADERS
         self._allowed_client_types = allowed_client_types
-
+        self.config = config
         self._read_buffer = BufferIO(b"")
         self._read_headers = {}
 
@@ -285,6 +285,7 @@ class THeaderTransport(TTransportBase, CReadableTransport):
         self._write_buffer.write(buf)
 
     def flush(self):
+        self.resetConsumedMessageSize(-1)
         payload = self._write_buffer.getvalue()
         self._write_buffer = BufferIO()
 

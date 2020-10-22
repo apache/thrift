@@ -18,4 +18,4 @@
 #
 
 __all__ = ['fastbinary', 'TBase', 'TBinaryProtocol', 'TCompactProtocol',
-           'TJSONProtocol', 'TProtocol', 'TProtocolDecorator']
+           'TJSONProtocol', 'TProtocol', 'TProtocolDecorator','TMap', 'TList', 'TSet']

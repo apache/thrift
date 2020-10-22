@@ -24,7 +24,7 @@ import math
 import sys
 
 from ..compat import str_to_binary
-
+from thrift.protocol import TMap, TList, TSet
 
 __all__ = ['TJSONProtocol',
            'TJSONProtocolFactory',
@@ -452,6 +452,8 @@ class TJSONProtocol(TJSONProtocolBase):
         keyType = JTYPES[self.readJSONString(False)]
         valueType = JTYPES[self.readJSONString(False)]
         size = self.readJSONInteger()
+        map = TMap.TMap(keyType, valueType, size)
+        self.checkReadBytesAvailable(map)
         self.readJSONObjectStart()
         return (keyType, valueType, size)
 
@@ -464,8 +466,22 @@ class TJSONProtocol(TJSONProtocolBase):
         elemType = JTYPES[self.readJSONString(False)]
         size = self.readJSONInteger()
         return (elemType, size)
-    readListBegin = readCollectionBegin
-    readSetBegin = readCollectionBegin
+
+    def readListBegin(self): 
+        self.readJSONArrayStart()
+        elemType = JTYPES[self.readJSONString(False)]
+        size = self.readJSONInteger()
+        list = TList.TList(elemType, size)
+        self.checkReadBytesAvailable(list)
+        return (elemType, size)
+
+    def readSetBegin(self):    
+        self.readJSONArrayStart()
+        elemType = JTYPES[self.readJSONString(False)]
+        size = self.readJSONInteger()
+        set = TSet.TSet(elemType, size)
+        self.checkReadBytesAvailable(set)
+        return (elemType, size)
 
     def readCollectionEnd(self):
         self.readJSONArrayEnd()
@@ -575,6 +591,35 @@ class TJSONProtocol(TJSONProtocolBase):
 
     def writeBinary(self, binary):
         self.writeJSONBase64(binary)
+
+    def getMinSerializedSize(self, ttype):
+         
+        if ttype == TType().STOP:
+            return 0
+        elif ttype == TType().VOID:
+            return 0
+        elif ttype == TType().BOOL:
+            return 1
+        elif ttype == TType().BYTE: 
+            return 1
+        elif ttype == TType().DOUBLE:
+            return 1
+        elif ttype == TType().I16:
+            return 1
+        elif ttype == TType().I32:
+            return 1
+        elif ttype == TType().I64:
+            return 1
+        elif ttype == TType().STRING:
+            return 2
+        elif ttype == TType().STRUCT:
+            return 2
+        elif ttype == TType().MAP:
+            return 2
+        elif ttype == TType().SET:
+            return 2
+        elif ttype == TType().LIST:
+            return 2
 
 
 class TJSONProtocolFactory(TProtocolFactory):

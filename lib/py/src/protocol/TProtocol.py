@@ -18,14 +18,15 @@
 #
 
 from thrift.Thrift import TException, TType, TFrozenDict
-from thrift.transport.TTransport import TTransportException
+from thrift.transport.TTransport import TTransportException, TTransportBase, TTransportFactoryBase
 from ..compat import binary_to_str, str_to_binary
-
 import six
 import sys
 from itertools import islice
 from six.moves import zip
-
+from thrift.protocol.TMap import TMap
+from thrift.protocol.TList import TList
+from thrift.protocol.TSet import TSet
 
 class TProtocolException(TException):
     """Custom Protocol Exception class"""
@@ -44,7 +45,7 @@ class TProtocolException(TException):
         self.type = type
 
 
-class TProtocolBase(object):
+class TProtocolBase(TTransportBase, TTransportFactoryBase):
     """Base class for Thrift protocol driver."""
 
     def __init__(self, trans):
@@ -406,7 +407,24 @@ class TProtocolBase(object):
 
     def writeFieldByTType(self, ttype, val, spec):
         next(self._write_by_ttype(ttype, [val], spec, spec))
+     
+    def getMinSerializedSize(ttype):
+        pass
 
+
+    def checkReadBytesAvailable(self, n):
+        if int(isinstance(n, TMap)) == 1:
+            elemSize = (self.getMinSerializedSize(n.keyType)) + (self.getMinSerializedSize(n.valueType))
+            self.trans.checkReadBytesAvailable((n.size)*(elemSize))
+#            print((n.size)*(elemSize))
+ 
+        if int(isinstance(n, TSet)) == 1:
+            self.trans.checkReadBytesAvailable((n.size) * (self.getMinSerializedSize(n.elemType)))
+#            print((n.size) * (self.getMinSerializedSize(n.elemType)))
+
+        if int(isinstance(n, TList)) == 1:
+            self.trans.checkReadBytesAvailable((n.size) * (self.getMinSerializedSize(n.elemType)))
+#            print((n.size) * (self.getMinSerializedSize(n.elemType))) 
 
 def checkIntegerLimits(i, bits):
     if bits == 8 and (i < -128 or i > 127):

@@ -17,10 +17,14 @@
 # under the License.
 #
 
-from .TProtocol import TType, TProtocolBase, TProtocolException, TProtocolFactory, checkIntegerLimits
+from thrift.protocol.TProtocol import TType, TProtocolBase, TProtocolException, TProtocolFactory, checkIntegerLimits
 from struct import pack, unpack
 
 from ..compat import binary_to_str, str_to_binary
+from thrift.protocol.TMap import TMap
+from thrift.protocol.TSet import TSet
+from thrift.protocol.TList import TList
+
 
 __all__ = ['TCompactProtocol', 'TCompactProtocolFactory']
 
@@ -145,9 +149,11 @@ class TCompactProtocol(TProtocolBase):
         self.container_length_limit = container_length_limit
 
     def _check_string_length(self, length):
+        self.trans.checkReadBytesAvailable(length)
         self._check_length(self.string_length_limit, length)
 
     def _check_container_length(self, length):
+        self.trans.checkReadBytesAvailable(length)
         self._check_length(self.container_length_limit, length)
 
     def __writeVarint(self, n):
@@ -228,6 +234,7 @@ class TCompactProtocol(TProtocolBase):
             self.__writeSize(size)
         self.__containers.append(self.state)
         self.state = CONTAINER_WRITE
+        
     writeSetBegin = writeCollectionBegin
     writeListBegin = writeCollectionBegin
 
@@ -374,8 +381,34 @@ class TCompactProtocol(TProtocolBase):
         self.__containers.append(self.state)
         self.state = CONTAINER_READ
         return type, size
-    readSetBegin = readCollectionBegin
-    readListBegin = readCollectionBegin
+
+    def readSetBegin(self):
+        assert self.state in (VALUE_READ, CONTAINER_READ), self.state
+        size_type = self.__readUByte()
+        size = size_type >> 4
+        type = self.__getTType(size_type)
+        if size == 15:
+            size = self.__readSize()
+        self._check_container_length(size)
+        self.__containers.append(self.state)
+        self.state = CONTAINER_READ
+        set = TSet(type, size)
+        self.checkReadBytesAvailable(set)
+        return type, size
+
+    def readListBegin(self):
+        assert self.state in (VALUE_READ, CONTAINER_READ), self.state
+        size_type = self.__readUByte()
+        size = size_type >> 4
+        type = self.__getTType(size_type)
+        if size == 15:
+            size = self.__readSize()
+        self._check_container_length(size)
+        self.__containers.append(self.state)
+        self.state = CONTAINER_READ
+        list = TList(type,size)
+        self.checkReadBytesAvailable(list)
+        return type, size
 
     def readMapBegin(self):
         assert self.state in (VALUE_READ, CONTAINER_READ), self.state
@@ -388,6 +421,9 @@ class TCompactProtocol(TProtocolBase):
         ktype = self.__getTType(types >> 4)
         self.__containers.append(self.state)
         self.state = CONTAINER_READ
+
+        map = TMap(ktype, vtype, size)
+        self.checkReadBytesAvailable(map)
         return (ktype, vtype, size)
 
     def readCollectionEnd(self):
@@ -421,12 +457,41 @@ class TCompactProtocol(TProtocolBase):
     def __readBinary(self):
         size = self.__readSize()
         self._check_string_length(size)
+        self.trans.checkReadBytesAvailable(size)
         return self.trans.readAll(size)
     readBinary = reader(__readBinary)
 
     def __getTType(self, byte):
         return TTYPES[byte & 0x0f]
 
+    def getMinSerializedSize(self, ttype):
+         
+        if ttype == TType().STOP:
+            return 0
+        elif ttype == TType().VOID:
+            return 0
+        elif ttype == TType().BOOL:
+            return 1
+        elif ttype == TType().BYTE: 
+            return 1
+        elif ttype == TType().DOUBLE:
+            return 8
+        elif ttype == TType().I16:
+            return 1
+        elif ttype == TType().I32:
+            return 1
+        elif ttype == TType().I64:
+            return 1
+        elif ttype == TType().STRING:
+            return 1
+        elif ttype == TType().STRUCT:
+            return 0
+        elif ttype == TType().MAP:
+            return 1
+        elif ttype == TType().SET:
+            return 1
+        elif ttype == TType().LIST:
+            return 1
 
 class TCompactProtocolFactory(TProtocolFactory):
     def __init__(self,

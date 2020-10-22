@@ -27,10 +27,10 @@ gen_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__
 sys.path.append(gen_path)
 import _import_local_thrift  # noqa
 from TestServer import TestServer
-from thrift.transport import TSocket, TTransport
+from thrift.transport import TSocket, TTransport, TFramedTransport
 from thrift.protocol import TBinaryProtocol
 from thrift.server import TNonblockingServer
-
+from thrift.TConfiguration import TConfiguration
 
 class Handler:
 
@@ -43,7 +43,7 @@ class Server:
     def __init__(self):
         handler = Handler()
         processor = TestServer.Processor(handler)
-        transport = TSocket.TServerSocket("127.0.0.1", 30030)
+        transport = TSocket.TServerSocket("127.0.0.1", 7070)
         self.server = TNonblockingServer.TNonblockingServer(processor, transport)
 
     def start_server(self):
@@ -57,10 +57,11 @@ class Server:
 
 
 class Client:
-
+    config = TConfiguration()
+    config.setMaxMessageSize(200)
     def start_client(self):
-        transport = TSocket.TSocket("127.0.0.1", 30030)
-        trans = TTransport.TFramedTransport(transport)
+        transport = TSocket.TSocket("127.0.0.1", 7070)
+        trans = TFramedTransport.TFramedTransport(transport, self.config)
         protocol = TBinaryProtocol.TBinaryProtocol(trans)
         client = TestServer.Client(protocol)
         trans.open()
@@ -84,7 +85,7 @@ class TestNonblockingServer(unittest.TestCase):
         serve_thread = threading.Thread(target=serve.start_server)
         client_thread = threading.Thread(target=client.start_client)
         serve_thread.start()
-        time.sleep(10)
+        time.sleep(3)
         client_thread.start()
         client_thread.join(0.5)
         try:

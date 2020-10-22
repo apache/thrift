@@ -308,15 +308,15 @@ def main(options):
         transport = TSSLSocket.TSSLServerSocket(host, options.port, certfile=abs_key_path)
     else:
         transport = TSocket.TServerSocket(host, options.port, options.domain_socket)
-    tfactory = TTransport.TBufferedTransportFactory()
+    tfactory = TBufferedTransport.TBufferedTransportFactory()
     if options.trans == 'buffered':
-        tfactory = TTransport.TBufferedTransportFactory()
+        tfactory = TBufferedTransport.TBufferedTransportFactory()
     elif options.trans == 'framed':
-        tfactory = TTransport.TFramedTransportFactory()
+        tfactory = TFramedTransport.TFramedTransportFactory()
     elif options.trans == '':
         raise AssertionError('Unknown --transport option: %s' % options.trans)
     else:
-        tfactory = TTransport.TBufferedTransportFactory()
+        tfactory = TBufferedTransport.TBufferedTransportFactory()
     # if --zlib, then wrap server transport, and use a different transport factory
     if options.zlib:
         transport = TZlibTransport.TZlibTransport(transport)  # wrap  with zlib
@@ -402,7 +402,7 @@ if __name__ == '__main__':
     from thrift.Thrift import TException
     from thrift.TMultiplexedProcessor import TMultiplexedProcessor
     from thrift.transport import THeaderTransport
-    from thrift.transport import TTransport
+    from thrift.transport import TTransport, TBufferedTransport, TFramedTransport
     from thrift.transport import TSocket
     from thrift.transport import TZlibTransport
     from thrift.protocol import TBinaryProtocol

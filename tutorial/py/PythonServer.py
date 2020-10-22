@@ -30,9 +30,10 @@ from tutorial.ttypes import InvalidOperation, Operation
 from shared.ttypes import SharedStruct
 
 from thrift.transport import TSocket
-from thrift.transport import TTransport
+from thrift.transport import TTransport, TBufferedTransport, TFramedTransport
 from thrift.protocol import TBinaryProtocol
 from thrift.server import TServer
+from thrift.TConfiguration import TConfiguration
 
 
 class CalculatorHandler:
@@ -78,10 +79,11 @@ class CalculatorHandler:
 
 
 if __name__ == '__main__':
+    config = TConfiguration()
     handler = CalculatorHandler()
     processor = Calculator.Processor(handler)
     transport = TSocket.TServerSocket(host='127.0.0.1', port=9090)
-    tfactory = TTransport.TBufferedTransportFactory()
+    tfactory = TBufferedTransport.TBufferedTransportFactory()
     pfactory = TBinaryProtocol.TBinaryProtocolFactory()
 
     server = TServer.TSimpleServer(processor, transport, tfactory, pfactory)

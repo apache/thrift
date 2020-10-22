@@ -22,9 +22,9 @@ import random
 import string
 
 import _import_local_thrift  # noqa
-from thrift.transport import TTransport
+from thrift.transport import TTransport, TBufferedTransport
 from thrift.transport import TZlibTransport
-
+from thrift.TConfiguration import TConfiguration
 
 def generate_random_buff():
     data = []
@@ -45,10 +45,12 @@ def generate_random_buff():
 
 class TestTZlibTransport(unittest.TestCase):
 
+    config = TConfiguration()
+    config.setMaxMessageSize(2000000)
     def test_write_then_read(self):
         buff = TTransport.TMemoryBuffer()
-        trans = TTransport.TBufferedTransportFactory().getTransport(buff)
-        zlib_trans = TZlibTransport.TZlibTransport(trans)
+        trans = TBufferedTransport.TBufferedTransportFactory().getTransport(buff, self.config)
+        zlib_trans = TZlibTransport.TZlibTransport(trans, self.config)
         data_w = generate_random_buff()
         zlib_trans.write(data_w.encode('utf-8'))
         zlib_trans.flush()
@@ -57,8 +59,8 @@ class TestTZlibTransport(unittest.TestCase):
         zlib_trans.close()
 
         buff = TTransport.TMemoryBuffer(value)
-        trans = TTransport.TBufferedTransportFactory().getTransport(buff)
-        zlib_trans = TZlibTransport.TZlibTransport(trans)
+        trans = TBufferedTransport.TBufferedTransportFactory().getTransport(buff, self.config)
+        zlib_trans = TZlibTransport.TZlibTransport(trans, self.config)
         data_r = zlib_trans.read(len(data_w))
         zlib_trans.close()
 
@@ -70,8 +72,8 @@ class TestTZlibTransport(unittest.TestCase):
 
     def test_after_flushd_write_then_read(self):
         buff = TTransport.TMemoryBuffer()
-        trans = TTransport.TBufferedTransportFactory().getTransport(buff)
-        zlib_trans = TZlibTransport.TZlibTransport(trans)
+        trans = TBufferedTransport.TBufferedTransportFactory().getTransport(buff, self.config)
+        zlib_trans = TZlibTransport.TZlibTransport(trans, self.config)
         data_w_1 = "hello thrift !@#" * 50
         zlib_trans.write(data_w_1.encode('utf-8'))
         zlib_trans.flush()
@@ -83,8 +85,8 @@ class TestTZlibTransport(unittest.TestCase):
         zlib_trans.close()
 
         buff = TTransport.TMemoryBuffer(value)
-        trans = TTransport.TBufferedTransportFactory().getTransport(buff)
-        zlib_trans = TZlibTransport.TZlibTransport(trans)
+        trans = TBufferedTransport.TBufferedTransportFactory().getTransport(buff, self.config)
+        zlib_trans = TZlibTransport.TZlibTransport(trans, self.config)
         data_r = zlib_trans.read(len(data_w_1) + len(data_w_2))
         zlib_trans.close()
 

@@ -41,7 +41,7 @@ from Recursive.ttypes import CoRec
 from Recursive.ttypes import CoRec2
 from Recursive.ttypes import VectorTest
 from DebugProtoTest.ttypes import CompactProtoTestStruct, Empty
-from thrift.transport import TTransport
+from thrift.transport import TTransport, TBufferedTransport, TFramedTransport
 from thrift.protocol import TBinaryProtocol, TCompactProtocol, TJSONProtocol
 from thrift.TSerialization import serialize, deserialize
 import sys
@@ -392,7 +392,7 @@ class AcceleratedFramedTest(unittest.TestCase):
         parts = [data[:cutpoint], data[cutpoint:]]
 
         framed_buffer = TTransport.TMemoryBuffer()
-        framed_writer = TTransport.TFramedTransport(framed_buffer)
+        framed_writer = TFramedTransport.TFramedTransport(framed_buffer)
         for part in parts:
             framed_writer.write(part)
             framed_writer.flush()
@@ -400,7 +400,7 @@ class AcceleratedFramedTest(unittest.TestCase):
 
         # Recreate framed_buffer so we can read from it.
         framed_buffer = TTransport.TMemoryBuffer(framed_buffer.getvalue())
-        framed_reader = TTransport.TFramedTransport(framed_buffer)
+        framed_reader = TFramedTransport.TFramedTransport(framed_buffer)
         prot = protocol_factory.getProtocol(framed_reader)
         self.assertEqual(prot.readI32(), 42)
         self.assertEqual(prot.readString(), bigstring)

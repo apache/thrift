@@ -17,4 +17,4 @@
 # under the License.
 #
 
-__all__ = ['TServer', 'TNonblockingServer']
+__all__ = ['TServer', 'TNonblockingServer', 'TProcessPoolServer', 'THttpServer']

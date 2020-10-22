@@ -19,7 +19,8 @@
 
 import _import_local_thrift  # noqa
 from thrift.protocol import TCompactProtocol
-from thrift.transport import TTransport
+from thrift.transport import TTransport, TBufferedTransport
+from thrift.TConfiguration import TConfiguration
 import unittest
 
 CLEAR = 0
@@ -34,8 +35,10 @@ BOOL_READ = 8
 
 
 def testNaked(type, data):
+    config = TConfiguration()
+    config.setMaxMessageSize(20)
     buf = TTransport.TMemoryBuffer()
-    transport = TTransport.TBufferedTransportFactory().getTransport(buf)
+    transport = TBufferedTransport.TBufferedTransportFactory().getTransport(buf, config)
     protocol = TCompactProtocol.TCompactProtocol(transport)
 
     if type.capitalize() == 'Byte':
@@ -73,7 +76,7 @@ def testNaked(type, data):
     transport.flush()
     data_r = buf.getvalue()
     buf = TTransport.TMemoryBuffer(data_r)
-    transport = TTransport.TBufferedTransportFactory().getTransport(buf)
+    transport = TBufferedTransport.TBufferedTransportFactory().getTransport(buf, config)
     protocol = TCompactProtocol.TCompactProtocol(transport)
     if type.capitalize() == 'Byte':
         protocol.state = VALUE_READ
@@ -111,7 +114,9 @@ def testNaked(type, data):
 def testField(type, data):
     TType = {"Bool": 2, "Byte": 3, "Binary": 5, "I16": 6, "I32": 8, "I64": 10, "Double": 11, "String": 12}
     buf = TTransport.TMemoryBuffer()
-    transport = TTransport.TBufferedTransportFactory().getTransport(buf)
+    config = TConfiguration()
+    config.setMaxMessageSize(200)
+    transport = TBufferedTransport.TBufferedTransportFactory().getTransport(buf, config)
     protocol = TCompactProtocol.TCompactProtocol(transport)
     protocol.writeStructBegin('struct')
     protocol.writeFieldBegin("field", TType[type.capitalize()], 10)
@@ -146,7 +151,7 @@ def testField(type, data):
     data_r = buf.getvalue()
 
     buf = TTransport.TMemoryBuffer(data_r)
-    transport = TTransport.TBufferedTransportFactory().getTransport(buf)
+    transport = TBufferedTransport.TBufferedTransportFactory().getTransport(buf, config)
     protocol = TCompactProtocol.TCompactProtocol(transport)
     protocol.readStructBegin()
     protocol.readFieldBegin()
@@ -185,7 +190,9 @@ def testMessage(data):
     message['seqid'] = data[2]
 
     buf = TTransport.TMemoryBuffer()
-    transport = TTransport.TBufferedTransportFactory().getTransport(buf)
+    config = TConfiguration()
+    config.setMaxMessageSize(200)
+    transport = TBufferedTransport.TBufferedTransportFactory().getTransport(buf, config)
     protocol = TCompactProtocol.TCompactProtocol(transport)
     protocol.writeMessageBegin(message['name'], message['type'], message['seqid'])
     protocol.writeMessageEnd()
@@ -194,7 +201,7 @@ def testMessage(data):
     data_r = buf.getvalue()
 
     buf = TTransport.TMemoryBuffer(data_r)
-    transport = TTransport.TBufferedTransportFactory().getTransport(buf)
+    transport = TBufferedTransport.TBufferedTransportFactory().getTransport(buf, config)
     protocol = TCompactProtocol.TCompactProtocol(transport)
     result = protocol.readMessageBegin()
     protocol.readMessageEnd()

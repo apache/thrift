@@ -25,7 +25,7 @@ import threading
 from thrift.protocol import TBinaryProtocol
 from thrift.protocol.THeaderProtocol import THeaderProtocolFactory
 from thrift.transport import TTransport
-
+from thrift.TConfiguration import TConfiguration
 logger = logging.getLogger(__name__)
 
 
@@ -60,6 +60,7 @@ class TServer(object):
         self.outputTransportFactory = outputTransportFactory
         self.inputProtocolFactory = inputProtocolFactory
         self.outputProtocolFactory = outputProtocolFactory
+        
 
         input_is_header = isinstance(self.inputProtocolFactory, THeaderProtocolFactory)
         output_is_header = isinstance(self.outputProtocolFactory, THeaderProtocolFactory)
@@ -74,6 +75,7 @@ class TServer(object):
 class TSimpleServer(TServer):
     """Simple single-threaded server that just pumps around one transport."""
 
+
     def __init__(self, *args):
         TServer.__init__(self, *args)
 
@@ -83,8 +85,8 @@ class TSimpleServer(TServer):
             client = self.serverTransport.accept()
             if not client:
                 continue
-
-            itrans = self.inputTransportFactory.getTransport(client)
+            
+            itrans = self.inputTransportFactory.getTransport(client, config)
             iprot = self.inputProtocolFactory.getProtocol(itrans)
 
             # for THeaderProtocol, we must use the same protocol instance for
@@ -94,7 +96,7 @@ class TSimpleServer(TServer):
                 otrans = None
                 oprot = iprot
             else:
-                otrans = self.outputTransportFactory.getTransport(client)
+                otrans = self.outputTransportFactory.getTransport(client, config)
                 oprot = self.outputProtocolFactory.getProtocol(otrans)
 
             try:
@@ -112,6 +114,7 @@ class TSimpleServer(TServer):
 
 class TThreadedServer(TServer):
     """Threaded server that spawns a new thread per each connection."""
+#    config = TConfiguration()
 
     def __init__(self, *args, **kwargs):
         TServer.__init__(self, *args)
@@ -133,7 +136,7 @@ class TThreadedServer(TServer):
                 logger.exception(x)
 
     def handle(self, client):
-        itrans = self.inputTransportFactory.getTransport(client)
+        itrans = self.inputTransportFactory.getTransport(client, config)
         iprot = self.inputProtocolFactory.getProtocol(itrans)
 
         # for THeaderProtocol, we must use the same protocol instance for input
@@ -143,7 +146,7 @@ class TThreadedServer(TServer):
             otrans = None
             oprot = iprot
         else:
-            otrans = self.outputTransportFactory.getTransport(client)
+            otrans = self.outputTransportFactory.getTransport(client, config)
             oprot = self.outputProtocolFactory.getProtocol(otrans)
 
         try:
@@ -161,7 +164,7 @@ class TThreadedServer(TServer):
 
 class TThreadPoolServer(TServer):
     """Server with a fixed size pool of threads which service requests."""
-
+#    config = TConfiguration(20000)
     def __init__(self, *args, **kwargs):
         TServer.__init__(self, *args)
         self.clients = queue.Queue()
@@ -183,7 +186,7 @@ class TThreadPoolServer(TServer):
 
     def serveClient(self, client):
         """Process input/output from a client for as long as possible"""
-        itrans = self.inputTransportFactory.getTransport(client)
+        itrans = self.inputTransportFactory.getTransport(client, config)
         iprot = self.inputProtocolFactory.getProtocol(itrans)
 
         # for THeaderProtocol, we must use the same protocol instance for input
@@ -193,7 +196,7 @@ class TThreadPoolServer(TServer):
             otrans = None
             oprot = iprot
         else:
-            otrans = self.outputTransportFactory.getTransport(client)
+            otrans = self.outputTransportFactory.getTransport(client, config)
             oprot = self.outputProtocolFactory.getProtocol(otrans)
 
         try:
@@ -243,6 +246,7 @@ class TForkingServer(TServer):
     This code is heavily inspired by SocketServer.ForkingMixIn in the
     Python stdlib.
     """
+#    config = TConfiguration()
     def __init__(self, *args):
         TServer.__init__(self, *args)
         self.children = []
@@ -269,12 +273,12 @@ class TForkingServer(TServer):
 
                     # Parent must close socket or the connection may not get
                     # closed promptly
-                    itrans = self.inputTransportFactory.getTransport(client)
-                    otrans = self.outputTransportFactory.getTransport(client)
+                    itrans = self.inputTransportFactory.getTransport(client, config)
+                    otrans = self.outputTransportFactory.getTransport(client, config)
                     try_close(itrans)
                     try_close(otrans)
                 else:
-                    itrans = self.inputTransportFactory.getTransport(client)
+                    itrans = self.inputTransportFactory.getTransport(client, config)
                     iprot = self.inputProtocolFactory.getProtocol(itrans)
 
                     # for THeaderProtocol, we must use the same protocol
@@ -285,7 +289,7 @@ class TForkingServer(TServer):
                         otrans = None
                         oprot = iprot
                     else:
-                        otrans = self.outputTransportFactory.getTransport(client)
+                        otrans = self.outputTransportFactory.getTransport(client, config)
                         oprot = self.outputProtocolFactory.getProtocol(otrans)
 
                     ecode = 0

@@ -35,7 +35,7 @@ import timeit
 from copy import deepcopy
 from pprint import pprint
 
-from thrift.transport import TTransport
+from thrift.transport import TTransport, TBufferedTransport, TFramedTransport
 from thrift.protocol.TBinaryProtocol import TBinaryProtocol, TBinaryProtocolAccelerated
 from thrift.protocol.TCompactProtocol import TCompactProtocol, TCompactProtocolAccelerated
 
@@ -156,7 +156,7 @@ class Test(object):
             raise Exception('read value mismatch')
 
         prot = self._fast(
-            TTransport.TBufferedTransport(
+            TBufferedTransport.TBufferedTransport(
                 TTransport.TMemoryBuffer(slow_version_binary)), fallback=False)
         c = o.__class__()
         c.read(prot)

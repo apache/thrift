@@ -22,22 +22,23 @@ import os
 
 import _import_local_thrift  # noqa
 from thrift.transport import TTransport
-
+from thrift.TConfiguration import TConfiguration
 
 class TestTFileObjectTransport(unittest.TestCase):
-
+    config = TConfiguration()
+    config.setMaxMessageSize(200000)
     def test_TFileObjectTransport(self):
         test_dir = os.path.dirname(os.path.abspath(__file__))
         datatxt_path = os.path.join(test_dir, 'data.txt')
         buffer = '{"soft":"thrift","version":0.13,"1":true}'
         with open(datatxt_path, "w+") as f:
-            buf = TTransport.TFileObjectTransport(f)
+            buf = TTransport.TFileObjectTransport(f, self.config )
             buf.write(buffer)
             buf.flush()
             buf.close()
 
         with open(datatxt_path, "rb") as f:
-            buf = TTransport.TFileObjectTransport(f)
+            buf = TTransport.TFileObjectTransport(f, self.config)
             value = buf.read(len(buffer)).decode('utf-8')
             self.assertEqual(buffer, value)
             buf.close()

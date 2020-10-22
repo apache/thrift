@@ -53,11 +53,11 @@ class AbstractTest(unittest.TestCase):
             else:
                 socket = TSocket.TSocket(options.host, options.port, options.domain_socket)
             # frame or buffer depending upon args
-            self.transport = TTransport.TBufferedTransport(socket)
+            self.transport = TBufferedTransport.TBufferedTransport(socket)
             if options.trans == 'framed':
-                self.transport = TTransport.TFramedTransport(socket)
+                self.transport = TFramedTransport.TFramedTransport(socket)
             elif options.trans == 'buffered':
-                self.transport = TTransport.TBufferedTransport(socket)
+                self.transport = TBufferedTransport.TBufferedTransport(socket)
             elif options.trans == '':
                 raise AssertionError('Unknown --transport option: %s' % options.trans)
             if options.zlib:
@@ -489,7 +489,7 @@ if __name__ == "__main__":
     from ThriftTest import ThriftTest
     from ThriftTest.ttypes import Xtruct, Xtruct2, Numberz, Xception, Xception2
     from thrift.Thrift import TException
-    from thrift.transport import TTransport
+    from thrift.transport import TTransport, TBufferedTransport, TFramedTransport
     from thrift.transport import TSocket
     from thrift.transport import THttpClient
     from thrift.transport import TZlibTransport

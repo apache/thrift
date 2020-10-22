@@ -24,7 +24,7 @@ from multiprocessing import Process, Value, Condition
 
 from .TServer import TServer
 from thrift.transport.TTransport import TTransportException
-
+from thrift.TConfiguration import TConfiguration
 logger = logging.getLogger(__name__)
 
 
@@ -38,6 +38,7 @@ class TProcessPoolServer(TServer):
         TServer.__init__(self, *args)
         self.numWorkers = 10
         self.workers = []
+        self.config = TConfiguration()
         self.isRunning = Value('b', False)
         self.stopCondition = Condition()
         self.postForkCallback = None
