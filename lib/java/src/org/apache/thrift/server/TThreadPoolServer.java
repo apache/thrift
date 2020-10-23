@@ -19,7 +19,6 @@
 
 package org.apache.thrift.server;
 
-import java.util.Random;
 import java.util.WeakHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.RejectedExecutionException;
@@ -49,10 +48,6 @@ public class TThreadPoolServer extends TServer {
     public ExecutorService executorService;
     public int stopTimeoutVal = 60;
     public TimeUnit stopTimeoutUnit = TimeUnit.SECONDS;
-    public int requestTimeout = 20;
-    public TimeUnit requestTimeoutUnit = TimeUnit.SECONDS;
-    public int beBackoffSlotLength = 100;
-    public TimeUnit beBackoffSlotLengthUnit = TimeUnit.MILLISECONDS;
 
     public Args(TServerTransport transport) {
       super(transport);
@@ -78,27 +73,6 @@ public class TThreadPoolServer extends TServer {
       return this;
     }
 
-    public Args requestTimeout(int n) {
-      requestTimeout = n;
-      return this;
-    }
-
-    public Args requestTimeoutUnit(TimeUnit tu) {
-      requestTimeoutUnit = tu;
-      return this;
-    }
-    //Binary exponential backoff slot length
-    public Args beBackoffSlotLength(int n) {
-      beBackoffSlotLength = n;
-      return this;
-    }
-
-    //Binary exponential backoff slot time unit
-    public Args beBackoffSlotLengthUnit(TimeUnit tu) {
-      beBackoffSlotLengthUnit = tu;
-      return this;
-    }
-
     public Args executorService(ExecutorService executorService) {
       this.executorService = executorService;
       return this;
@@ -113,35 +87,19 @@ public class TThreadPoolServer extends TServer {
 
   private final long stopTimeoutVal;
 
-  private final TimeUnit requestTimeoutUnit;
-
-  private final long requestTimeout;
-
-  private final long beBackoffSlotInMillis;
-
-  private Random random = new Random(System.currentTimeMillis());
-
   public TThreadPoolServer(Args args) {
     super(args);
 
     stopTimeoutUnit = args.stopTimeoutUnit;
     stopTimeoutVal = args.stopTimeoutVal;
-    requestTimeoutUnit = args.requestTimeoutUnit;
-    requestTimeout = args.requestTimeout;
-    beBackoffSlotInMillis = args.beBackoffSlotLengthUnit.toMillis(args.beBackoffSlotLength);
 
     executorService_ = args.executorService != null ?
         args.executorService : createDefaultExecutorService(args);
   }
 
   private static ExecutorService createDefaultExecutorService(Args args) {
-    SynchronousQueue<Runnable> executorQueue =
-      new SynchronousQueue<Runnable>();
-    return new ThreadPoolExecutor(args.minWorkerThreads,
-                                  args.maxWorkerThreads,
-                                  args.stopTimeoutVal,
-                                  args.stopTimeoutUnit,
-                                  executorQueue);
+    return new ThreadPoolExecutor(args.minWorkerThreads, args.maxWorkerThreads, 60L,
+        TimeUnit.SECONDS,  new SynchronousQueue<>());
   }
 
   protected ExecutorService getExecutorService() {
@@ -182,51 +140,19 @@ public class TThreadPoolServer extends TServer {
     while (!stopped_) {
       try {
         TTransport client = serverTransport_.accept();
-        WorkerProcess wp = new WorkerProcess(client);
-
-        int retryCount = 0;
-        long remainTimeInMillis = requestTimeoutUnit.toMillis(requestTimeout);
-        while(true) {
-          try {
-            executorService_.execute(wp);
-            activeWorkers.put(wp, Boolean.TRUE);
-            break;
-          } catch(Throwable t) {
-            if (t instanceof RejectedExecutionException) {
-              retryCount++;
-              try {
-                if (remainTimeInMillis > 0) {
-                  //do a truncated 20 binary exponential backoff sleep
-                  long sleepTimeInMillis = ((long) (random.nextDouble() *
-                      (1L << Math.min(retryCount, 20)))) * beBackoffSlotInMillis;
-                  sleepTimeInMillis = Math.min(sleepTimeInMillis, remainTimeInMillis);
-                  TimeUnit.MILLISECONDS.sleep(sleepTimeInMillis);
-                  remainTimeInMillis = remainTimeInMillis - sleepTimeInMillis;
-                } else {
-                  client.close();
-                  wp = null;
-                  LOGGER.warn("Task has been rejected by ExecutorService " + retryCount
-                      + " times till timedout, reason: " + t);
-                  break;
-                }
-              } catch (InterruptedException e) {
-                LOGGER.warn("Interrupted while waiting to place client on executor queue.");
-                Thread.currentThread().interrupt();
-                break;
-              }
-            } else if (t instanceof Error) {
-              LOGGER.error("ExecutorService threw error: " + t, t);
-              throw (Error)t;
-            } else {
-              //for other possible runtime errors from ExecutorService, should also not kill serve
-              LOGGER.warn("ExecutorService threw error: " + t, t);
-              break;
-            }
+        try {
+          WorkerProcess wp = new WorkerProcess(client);
+          executorService_.execute(wp);
+          activeWorkers.put(wp, Boolean.TRUE);
+        } catch (RejectedExecutionException ree) {
+          if (!stopped_) {
+            LOGGER.warn("ThreadPool is saturated with incoming requests. Closing latest connection.");
           }
+          client.close();
         }
       } catch (TTransportException ttx) {
         if (!stopped_) {
-          LOGGER.warn("Transport error occurred during acceptance of message.", ttx);
+          LOGGER.warn("Transport error occurred during acceptance of message", ttx);
         }
       }
     }
