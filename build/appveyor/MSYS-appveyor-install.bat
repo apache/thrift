@@ -26,7 +26,7 @@ CALL cl_setenv.bat                         || EXIT /B
 CALL cl_showenv.bat                        || EXIT /B
 
 :: We're going to keep boost at a version cmake understands
-SET BOOSTPKG=mingw-w64-x86_64-boost-1.64.0-3-any.pkg.tar.xz
+SET BOOSTPKG=mingw-w64-x86_64-boost-1.71.0-1-any.pkg.tar.xz
 SET IGNORE=--ignore mingw-w64-x86_64-boost
 
 SET PACKAGES=^

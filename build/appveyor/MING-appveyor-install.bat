@@ -25,6 +25,9 @@ CALL cl_banner_install.bat                 || EXIT /B
 CALL cl_setenv.bat                         || EXIT /B
 CALL cl_showenv.bat                        || EXIT /B
 
+SET BOOSTPKG=mingw-w64-x86_64-boost-1.71.0-1-any.pkg.tar.xz
+SET IGNORE=--ignore mingw-w64-x86_64-boost
+
 SET PACKAGES=^
   --needed -S bison flex make ^
   mingw-w64-%MINGWPLAT%-boost ^
@@ -49,3 +52,4 @@ SET PACKAGES=^
 :: %BASH% -lc "pacman --noconfirm -Su %IGNORE%"                        || EXIT /B
 ::
 %BASH% -lc "pacman --noconfirm %PACKAGES%"                          || EXIT /B
+%BASH% -lc "wget http://repo.msys2.org/mingw/x86_64/%BOOSTPKG% && pacman -- noconfirm --needed -U %BOOSTPKG% && rm %BOOKSTPKG%" || EXIT /B
