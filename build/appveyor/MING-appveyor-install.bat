@@ -25,9 +25,6 @@ CALL cl_banner_install.bat                 || EXIT /B
 CALL cl_setenv.bat                         || EXIT /B
 CALL cl_showenv.bat                        || EXIT /B
 
-SET BOOSTPKG=mingw-w64-x86_64-boost-1.71.0-1-any.pkg.tar.xz
-SET IGNORE=--ignore mingw-w64-x86_64-boost
-
 SET PACKAGES=^
   --needed -S bison flex make ^
   mingw-w64-%MINGWPLAT%-boost ^
@@ -50,7 +47,13 @@ SET PACKAGES=^
 :: Upgrade things
 :: %BASH% -lc "pacman --noconfirm -Syu %IGNORE%"                       || EXIT /B
 :: %BASH% -lc "pacman --noconfirm -Su %IGNORE%"                        || EXIT /B
-::
-%BASH% -lc "pacman -Scc"                                            || EXIT /B
-%BASH% -lc "pacman -Syyu"                                           || EXIT /B
-%BASH% -lc "pacman --noconfirm %PACKAGES%"                          || EXIT /B
+
+:: Updata the new key
+%BASH% -lc "curl -O http://repo.msys2.org/msys/x86_64/msys2-keyring-r21.b39fb11-1-any.pkg.tar.xz"         || EXIT /B
+%BASH% -lc "curl -O http://repo.msys2.org/msys/x86_64/msys2-keyring-r21.b39fb11-1-any.pkg.tar.xz.sig"     || EXIT /B
+%BASH% -lc "pacman-key --verify msys2-keyring-r21.b39fb11-1-any.pkg.tar.xz.sig"                           || EXIT /B
+%BASH% -lc "pacman --noconfirm -U --config <(echo) msys2-keyring-r21.b39fb11-1-any.pkg.tar.xz"            || EXIT /B
+:: Upgrade things
+%BASH% -lc "pacman --noconfirm -Sy"                                                                       || EXIT /B
+%BASH% -lc "pacman --noconfirm -Sydd pacman"                                                              || EXIT /B
+%BASH% -lc "pacman --noconfirm %PACKAGES%"                                                                || EXIT /B
