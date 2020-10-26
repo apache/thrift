@@ -51,5 +51,6 @@ SET PACKAGES=^
 :: %BASH% -lc "pacman --noconfirm -Syu %IGNORE%"                       || EXIT /B
 :: %BASH% -lc "pacman --noconfirm -Su %IGNORE%"                        || EXIT /B
 ::
+%BASH% -lc "pacman -Scc"                                            || EXIT /B
+%BASH% -lc "pacman -Syyu"                                           || EXIT /B
 %BASH% -lc "pacman --noconfirm %PACKAGES%"                          || EXIT /B
-%BASH% -lc "wget http://repo.msys2.org/mingw/x86_64/%BOOSTPKG% && pacman -- noconfirm --needed -U %BOOSTPKG% && rm %BOOKSTPKG%" || EXIT /B
