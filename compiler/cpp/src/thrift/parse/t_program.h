@@ -112,7 +112,10 @@ public:
     objects_.push_back(tx);
     xceptions_.push_back(tx);
   }
-  void add_service(t_service* ts) { services_.push_back(ts); }
+  void add_service(t_service* ts) {
+    ts->validate_unique_members();
+    services_.push_back(ts);
+  }
 
   // Programs to include
   std::vector<t_program*>& get_includes() { return includes_; }
