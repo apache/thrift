@@ -110,7 +110,7 @@ type
     function  MaxMessageSize : Integer;
     property  RemainingMessageSize : Int64 read FRemainingMessageSize;
     property  KnownMessageSize : Int64 read FKnownMessageSize;
-    procedure ResetConsumedMessageSize( const newSize : Int64 = -1); inline;
+    procedure ResetConsumedMessageSize( const newSize : Int64 = -1);
     procedure UpdateKnownMessageSize(const size : Int64); override;
     procedure CheckReadBytesAvailable(const numBytes : Int64); inline;
     procedure CountConsumedMessageBytes(const numBytes : Int64); inline;
