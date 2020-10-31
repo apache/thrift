@@ -96,6 +96,14 @@ thrift_framed_transport_read_frame (ThriftTransport *transport,
     guchar *tmpdata;
 
     sz = ntohl (sz);
+    if (sz > t->max_frame_size)
+    {
+      g_set_error (error,
+                   THRIFT_TRANSPORT_ERROR,
+                   THRIFT_TRANSPORT_ERROR_MAX_MESSAGE_SIZE_REACHED,
+                   "Recived an oversized frame,");
+      return result;
+    }
 
     /* create a buffer to hold the data and read that much data */
     tmpdata = g_new0 (guchar, sz);
@@ -277,6 +285,7 @@ thrift_framed_transport_init (ThriftFramedTransport *transport)
   transport->transport = NULL;
   transport->r_buf = g_byte_array_new ();
   transport->w_buf = g_byte_array_new ();
+  transport->max_frame_size = DEFAULT_MAX_FRAME_SIZE;
 }
 
 /* destructor */
@@ -354,6 +363,10 @@ thrift_framed_transport_set_property (GObject *object, guint property_id,
       break;
     case PROP_THRIFT_FRAMED_TRANSPORT_CONFIGURATION:
       tt->configuration = g_value_dup_object (value);
+      if (tt->configuration != NULL)
+      {
+        transport->max_frame_size = tt->configuration->maxFrameSize_;
+      }
       break;
     case  PROP_THRIFT_FRAMED_TRANSPORT_REMAINING_MESSAGE_SIZE:
       tt->remainingMessageSize_ = g_value_get_long (value);
