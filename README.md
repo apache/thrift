@@ -107,7 +107,7 @@ We have [comprehensive building instructions for docker](build/docker/README.md)
 Requirements
 ============
 
-See http://thrift.apache.org/docs/install for a list of build requirements (may be stale).  Alternatively see the docker build environments for a list of prerequisites.
+See http://thrift.apache.org/docs/install for a list of build requirements (may be stale).  Alternatively, see the docker build environments for a list of prerequisites.
 
 Resources
 =========
@@ -186,7 +186,7 @@ Package Managers
 Apache Thrift is available via a number of package managers, a list which is 
 is steadily growing. A more detailed overview can be found 
 [at the Apache Thrift web site under "Libraries"](http://thrift.apache.org/lib/) 
-and/or in the respecitive READMEs for each language under /lib
+and/or in the respective READMEs for each language under /lib
 
 Testing
 =======

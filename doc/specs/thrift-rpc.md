@@ -24,15 +24,15 @@ under the License.
 --------------------------------------------------------------------
 -->
 
-This document describes the high level message exchange between the Thrift RPC client and server.
+This document describes the high-level message exchange between the Thrift RPC client and server.
 See [thrift-binary-protocol.md] and [thrift-compact-protocol.md] for a description of how the exchanges are encoded on
 the wire.
 
-In addition, this document compares the binary protocol with the compact protocol. Finally it describes the framed vs.
+In addition, this document compares the binary protocol with the compact protocol. Finally, it describes the framed vs.
 unframed transport.
 
 The information here is _mostly_ based on the Java implementation in the Apache thrift library (version 0.9.1 and
-0.9.3). Other implementation however, should behave the same.
+0.9.3). Other implementation, however, should behave the same.
 
 For background on Thrift see the [Thrift whitepaper (pdf)](https://thrift.apache.org/static/files/thrift-20070401.pdf).
 
@@ -93,14 +93,14 @@ in the Thrift IDL file, or some other part of the Thrift stack throws an excepti
 not encode or decode a message or struct.
 
 In the Java implementation (0.9.3) there is different behavior for the synchronous and asynchronous server. In the async
-server all exceptions are send as a `TApplicationException` (see 'Response struct' below). In the synchronous Java
+server all exceptions are sent as a `TApplicationException` (see 'Response struct' below). In the synchronous Java
 implementation only (undeclared) exceptions that extend `TException` are send as a `TApplicationException`. Unchecked
 exceptions lead to an immediate close of the connection.
 
 Type `Oneway` is only used starting from Apache Thrift 0.9.3. Earlier versions do _not_ send TMessages of type `Oneway`,
 even for service methods defined with the `oneway` modifier.
 
-When client sends a request with type `Oneway`, the server must _not_ send a response (steps 3 and 4 are skipped). Note
+When the client sends a request with type `Oneway`, the server must _not_ send a response (steps 3 and 4 are skipped). Note
 that the Thrift IDL enforces a return type of `void` and does not allow exceptions for oneway services.
 
 ## Request struct
@@ -151,7 +151,7 @@ always slightly faster.
 ## Compatibility
 
 A server could automatically determine whether a client talks the binary protocol or the compact protocol by
-investigating the first byte. If the value is `1000 0001` or `0000 0000` (assuming a name shorter then ±16 MB) it is the
+investigating the first byte. If the value is `1000 0001` or `0000 0000` (assuming a name shorter than ±16 MB) it is the
 binary protocol. When the value is `1000 0010` it is talking the compact protocol.
 
 ## Framed vs. unframed transport
