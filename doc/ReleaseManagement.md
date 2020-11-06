@@ -14,13 +14,13 @@ Apache Thrift and the vast majority of package management systems out there conf
 - *minor* is increased for each release cycle;
 - *patch* is increased for patch builds between release cycles to address critical defect, security, or packaging issues
 
-Further, if there are only packaging changes for a single third-party distribution point to correct an issue, the major.minor.patch may remain the same while adding a suffix compatible with that distribution point, for example "0.12.0.1" for nuget, or "0.12.0-1" for maven.
+Further, if there are only packaging changes for a single third-party distribution point to correct an issue, the major.minor.patch may remain the same while adding a suffix compatible with that distribution point, for example, "0.12.0.1" for nuget, or "0.12.0-1" for maven.
 
 #### External Package Patches
 
 It is common to have language-specific critical defects or packaging errors that need to be resolved between releases of Apache Thrift.  The project handles these on a case-by-case basis for languages that have their own [package management systems](http://apache.thrift.org/libraries).  When a language-specific patch is made, the patch level of the distribution pushed to the external package manager is bumped.
 
- As such, there may be cases between Apache Thrift releases where there are (for example) a `0.12.1` and `0.12.2` version of a Haskell Hackage package, and perhaps also a `0.12.3` version of a dlang dub package.  You will not find a tag or an official project release in these cases, however the code changes will be reflected in the release branch and in master.  In these cases we would not release a version of Apache Thrift nor would we refresh all the external language packages.
+ As such, there may be cases between Apache Thrift releases where there are (for example) a `0.12.1` and `0.12.2` version of a Haskell Hackage package, and perhaps also a `0.12.3` version of a dlang dub package.  You will not find a tag or an official project release in these cases, however, the code changes will be reflected in the release branch and in master.  In these cases we would not release a version of Apache Thrift nor would we refresh all the external language packages.
 
 #### Version in the master branch
 
@@ -54,7 +54,7 @@ Before a release cycle begins, someone must nominate themselves on the developme
 1. Your profile at https://id.apache.org/ is valid and contains a PGP key.  If it does not, see the [Apache OpenPGP Instructions](https://www.apache.org/dev/openpgp.html).  If your PGP private key creation seems to hang indefinitely while creating entropy, try these fixes:
     - Generate disk I/O with: `dd if=/dev/sda of=/dev/zero`
     - Install the `rng-tools` package.
-1. Your PGP key is visible in the [Apache Committer Keys](http://people.apache.org/keys/committer/) for code signing.  This list is updated periodically from your Apache ID (see previous step).
+1. Your PGP key is visible in the [Apache Committer Keys](http://people.apache.org/keys/committer/) for code signing.  This list is updated periodically from your Apache ID (see the previous step).
 1. You have read and agree with the contents of the [ASF Release Distribution Policy](https://www.apache.org/dev/release-distribution.html).
 1. You have access and the ability to use subversion.  All distribution artifacts are released through a subversion commit.
 1. You can build in the Linux Docker Container, and you have Visual Studio 2017.
@@ -76,7 +76,7 @@ All Apache Thrift releases go through a 72-hour final release candidate voting p
 
     It is healthy to scrub these periodically, whether or not you are making a new release.
 
-1. Check that the version number in the `master` branch matches the version number of the upcomning release.  To check the `master` branch version, run:
+1. Check that the version number in the `master` branch matches the version number of the upcoming release.  To check the `master` branch version, run:
 
     ```bash
     thrift$ grep AC_INIT configure.ac | cut -d'[' -f3 | cut -d']' -f1
@@ -315,11 +315,11 @@ Voting on the development mailing list provides additional benefits (wisdom from
         --username <apache-username> --password <apache-password>
     ```
 
-    **NOTE** One you check in, you need to wait about a day for all the mirrors to update.  You cannot send the announcement email or update the web site until the mirrors are updated.
+    **NOTE** Once you check-in, you need to wait about a day for all the mirrors to update.  You cannot send the announcement email or update the web site until the mirrors are updated.
 
 1. Create and push a tag for the release, for example "v1.0.0".
 
-    **NOTE:** All new releases must have the "v" prefix to satisfy third  party package managers (dlang dub, golang, etc..)
+    **NOTE:** All new releases must have the "v" prefix to satisfy third-party package managers (dlang dub, golang, etc..)
 
     **NOTE:** You **should** [sign the release tag](https://git-scm.com/book/en/v2/Git-Tools-Signing-Your-Work).  Since you already have a GPG signing key for publishing the Apache Release, you want to [upload that key to your GitHub account](https://help.github.com/en/articles/adding-a-new-gpg-key-to-your-github-account).  Once the key is known by GitHub you can sign the tag.
 
@@ -389,7 +389,7 @@ Voting on the development mailing list provides additional benefits (wisdom from
 
 #### Third Party Package Managers
 
-See https://thrift.apache.org/lib/ for the current status of each external package manager's distribution.  Information below is from the 0.12.0 release:
+See https://thrift.apache.org/lib/ for the current status of each external package manager's distribution.  The information below is from the 0.12.0 release:
 
   > This section needs to be updated with detailed instructions for each language, or pointers to the README.md files in each language directory with detailed release instructions for the given package management system.
 
@@ -398,7 +398,7 @@ See https://thrift.apache.org/lib/ for the current status of each external packa
   * Go into lib/dart and run "pub publish --dry-run" and resolve any warnings.
   * Run "pub publish" and go through the google account authorization to allow it.
 * [dlang] Within a day, the dlang dub site https://code.dlang.org/packages/apache-thrift?tab=info
-  should pick up the release based on the tag.  No action needed.
+  should pick up the release based on the tag.  No action is needed.
 * [haskell] https://hackage.haskell.org/package/thrift
     https://jira.apache.org/jira/browse/THRIFT-4698
 * [npmjs] @jfarrell is the only one who can do this right now.
