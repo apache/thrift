@@ -17,7 +17,7 @@
 
 1. Inspect the applied patch to ensure that all [Legal aspects on Submission of Contributions (Patches)](http://www.apache.org/licenses/LICENSE-2.0.html#contributions) are met
 
-1. Run the necessary unit tests and cross language test cases to verify the patch
+1. Run the necessary unit tests and cross-language test cases to verify the patch
 
 1. Commit the patch
 
@@ -34,7 +34,7 @@
 
        Description of what was fixed or addressed.
 
-       If this is a github pull request then add below comment to automaticaly close GitHub request, 
+       If this is a github pull request then add the below comment to automatically close GitHub request, 
 	   where #NNNN is the PR number:
        
         This closes #NNNN
@@ -47,7 +47,7 @@
        git push origin master
 
 
-1. Resolve the jira issue and set the following for the changelog
+1. Resolve the Jira issue and set the following for the changelog
 
   * Component the patch is for
   * fixVersion to the current version on master
