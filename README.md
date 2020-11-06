@@ -7,8 +7,8 @@ Introduction
 Thrift is a lightweight, language-independent software stack for
 point-to-point RPC implementation.
 Thrift provides clean abstractions and implementations for data transport,
-data serialization, and application level processing. The code generation
-system takes a simple definition language as input and generates code
+data serialization, and application-level processing. The code generation
+system takes a simple definition of language as input and generates code
 across programming languages that uses the abstracted stack to build
 interoperable RPC clients and servers.
 
@@ -107,7 +107,7 @@ We have [comprehensive building instructions for docker](build/docker/README.md)
 Requirements
 ============
 
-See http://thrift.apache.org/docs/install for a list of build requirements (may be stale).  Alternatively see the docker build environments for a list of prerequisites.
+See http://thrift.apache.org/docs/install for a list of build requirements (may be stale).  Alternatively, see the docker build environments for a list of prerequisites.
 
 Resources
 =========
@@ -119,7 +119,7 @@ More information about Thrift can be obtained on the Thrift webpage at:
 Acknowledgments
 ===============
 
-Thrift was inspired by pillar, a lightweight RPC tool written by Adam D'Angelo,
+Thrift was inspired by the pillar, a lightweight RPC tool written by Adam D'Angelo,
 and also by Google's protocol buffers.
 
 Installation
@@ -183,10 +183,9 @@ installation of each language library package.
 Package Managers
 ================
 
-Apache Thrift is available via a number of package managers, a list which is 
-is steadily growing. A more detailed overview can be found 
+Apache Thrift is available via a number of package managers, a list which is is steadily growing. A more detailed overview can be found 
 [at the Apache Thrift web site under "Libraries"](http://thrift.apache.org/lib/) 
-and/or in the respecitive READMEs for each language under /lib
+and/or in the respective READMEs for each language under /lib
 
 Testing
 =======
