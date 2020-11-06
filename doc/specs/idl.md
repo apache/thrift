@@ -104,7 +104,7 @@ A service provides the interface for a set of functionality provided by a Thrift
 
 ### Field Requiredness
 
-There are two explicit requiredness values, and a third one that is applied implicity if neither  *required* nor *optional* are given: *default* requiredness.
+There are two explicit requiredness values, and a third one that is applied implicitly if neither  *required* nor *optional* are given: *default* requiredness.
 
     [18] FieldReq        ::=  'required' | 'optional' 
 
@@ -144,7 +144,7 @@ The major point to keep in mind here is the fact, that any unwritten default val
 
 ### XSD Options
 
-N.B.: These have  some internal purpose at Facebook but serve no current purpose in Thrift. Use of these options is strongly discouraged.
+N.B.: These have some internal purpose at Facebook but serve no current purpose in Thrift. The use of these options is strongly discouraged.
 
     [19] XsdFieldOptions ::=  'xsd_optional'? 'xsd_nillable'? XsdAttrs?
 
@@ -236,7 +236,7 @@ Initialization of Base Types for all Languages?
 Why does position of `CppType` vary between `SetType` and `ListType`?
 
  * std::set does sort the elements automatically, that's the design. see [Thrift Types](/docs/types) or the [C++ std:set reference][] for further details
- * The question is, how other languages are doing that? What about custom objects, do they have a Compare function the set the order correctly?
+ * The question is, how other languages are doing that? What about custom objects, do they have a Compare function to set the order correctly?
 
  [C++ std:set reference]: http://www.cplusplus.com/reference/stl/set/
 
