@@ -1,10 +1,10 @@
 ## Windows Setup
 
-The Thrift environment consists of two main parts: The Thrift compiler EXE and the language-dependent libraries. Most of these libraries will require some kind of build and/or installation. But regarding the Thrift compiler utility there are a number of different alternatives. 
+The Thrift environment consists of two main parts: The Thrift compiler EXE and the language-dependent libraries. Most of these libraries will require some kind of build and/or installation. But regarding the Thrift compiler utility, there are a number of different alternatives. 
 
 The first one of these alternatives is to download the **pre-built Thrift Compiler EXE** and only build the libraries needed from source, following one of the "Setup from source" methods outlined below.
 
-The other two options are to build the Thrift compiler from source. The most recommended way to achieve this is by means of the **Visual Studio C++ build project**. Alternatively, the Thrift compiler can also be built via **Cygwin** or **MinGW** build environments, however this method is not only less comfortable, but more time-consuming and requires much more manual effort. 
+The other two options are to build the Thrift compiler from the source. The most recommended way to achieve this is by means of the **Visual Studio C++ build project**. Alternatively, the Thrift compiler can also be built via **Cygwin** or **MinGW** build environments, however, this method is not only less comfortable, but more time-consuming and requires much more manual effort. 
 
 
 ## Prebuilt Thrift compiler
@@ -26,7 +26,7 @@ Thrift's compiler is written in C++ and designed to be portable, but there are s
 
 ### Build and install the compiler
  
-After all requirements are in place, use the `compiler/cpp/compiler.vcxproj` build project to build the Thrift compiler. Copy the resulting EXE file to a location of your choice. 
+After all, requirements are in place, use the `compiler/cpp/compiler.vcxproj` build project to build the Thrift compiler. Copy the resulting EXE file to a location of your choice. 
 
 ### Build and install target libraries
 
@@ -112,7 +112,7 @@ This can be implemented in a Makefile using the following lines:
 
 Then linking using $(LTHRIFT) instead of -lthrift.
 
-	TODO - diagnose issue further
+	TODO - diagnose the issue further
 
 #### C++ runtime segfault with cygwin 1.7.5-1, g++-4.3.4, fork() and throw
 
@@ -131,7 +131,7 @@ To compile the Thrift generator & runtime libraries (untested) without the cygwi
  * MinGW 
  * [Apache Thrift Requirements](/docs/install)
 
-In addition you need to add the following entry to your windows PATH variable.
+In addition, you need to add the following entry to your windows PATH variable.
 
 	C:\MINGW\BIN
 	
