@@ -69,6 +69,7 @@ describe 'Client' do
       expect(@prot).to receive(:read_message_end)
       mock_klass = double("#<MockClass:mock>")
       expect(mock_klass).to receive(:read).with(@prot)
+      @client.receive_message_begin()
       @client.receive_message(double("MockClass", :new => mock_klass))
     end
 
@@ -80,7 +81,8 @@ describe 'Client' do
           expect(mock_exc).to receive(:read).with(@prot)
         end
       end
-      expect { @client.receive_message(nil) }.to raise_error(StandardError)
+      fname, mtype, sqeid = @client.receive_message_begin()
+      expect { @client.handle_exception(mtype) }.to raise_error(StandardError)
     end
 
     it "should close the transport if an error occurs while sending a message" do

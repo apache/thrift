@@ -943,7 +943,12 @@ void t_rb_generator::generate_service_client(t_service* tservice) {
       f_service_.indent() << "def " << function_signature(&recv_function) << endl;
       f_service_.indent_up();
 
-      // TODO(mcslee): Validate message reply here, seq ids etc.
+      f_service_.indent() << "fname, mtype, rseqid = receive_message_begin()" << endl;
+      f_service_.indent() << "handle_exception(mtype)" << endl;
+
+      f_service_.indent() << "if reply_seqid(rseqid)==false" << endl;
+      f_service_.indent() << "  raise \"seqid reply faild\"" << endl;
+      f_service_.indent() << "end" << endl;
 
       f_service_.indent() << "result = receive_message(" << resultname << ")" << endl;
 
