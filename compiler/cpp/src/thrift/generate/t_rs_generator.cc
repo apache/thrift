@@ -554,7 +554,6 @@ void t_rs_generator::render_attributes_and_includes() {
   f_gen_ << endl;
 
   // add standard includes
-  f_gen_ << "use thrift::OrderedFloat;" << endl;
   f_gen_ << "use std::cell::RefCell;" << endl;
   f_gen_ << "use std::collections::{BTreeMap, BTreeSet};" << endl;
   f_gen_ << "use std::convert::{From, TryFrom};" << endl;
@@ -564,6 +563,7 @@ void t_rs_generator::render_attributes_and_includes() {
   f_gen_ << "use std::fmt::{Display, Formatter};" << endl;
   f_gen_ << "use std::rc::Rc;" << endl;
   f_gen_ << endl;
+  f_gen_ << "use thrift::OrderedFloat;" << endl;
   f_gen_ << "use thrift::{ApplicationError, ApplicationErrorKind, ProtocolError, ProtocolErrorKind, TThriftClient};" << endl;
   f_gen_ << "use thrift::protocol::{TFieldIdentifier, TListIdentifier, TMapIdentifier, TMessageIdentifier, TMessageType, TInputProtocol, TOutputProtocol, TSetIdentifier, TStructIdentifier, TType};" << endl;
   f_gen_ << "use thrift::protocol::field_id;" << endl;
@@ -706,7 +706,7 @@ void t_rs_generator::render_const_value(t_type* ttype, t_const_value* tvalue, bo
       f_gen_ << tvalue->get_integer();
       break;
     case t_base_type::TYPE_DOUBLE:
-      f_gen_ << "OrderedFloat::from(" << tvalue->get_double() << " as f64)";
+      f_gen_ << "OrderedFloat::from(" << tvalue->get_double() << "_f64)";
       break;
     default:
       throw "cannot generate const value for " + t_base_type::t_base_name(tbase_type->get_base());
@@ -901,12 +901,16 @@ void t_rs_generator::render_enum_impl(const string& enum_name) {
   f_gen_ << "impl " << enum_name << " {" << endl;
   indent_up();
 
+  // taking enum as 'self' here because Thrift enums
+  // are represented as Rust enums with integer values
+  // it's cheaper to copy the integer as opposed to
+  // taking a reference to the enum
   f_gen_
     << indent()
-    << "pub fn write_to_out_protocol(&self, o_prot: &mut dyn TOutputProtocol) -> thrift::Result<()> {"
+    << "pub fn write_to_out_protocol(self, o_prot: &mut dyn TOutputProtocol) -> thrift::Result<()> {"
     << endl;
   indent_up();
-  f_gen_ << indent() << "o_prot.write_i32(*self as i32)" << endl;
+  f_gen_ << indent() << "o_prot.write_i32(self as i32)" << endl;
   indent_down();
   f_gen_ << indent() << "}" << endl;
 
@@ -1230,7 +1234,7 @@ void t_rs_generator::render_struct_constructor(
     << endl;
   indent_up();
 
-  if (members.size() == 0) {
+  if (members.empty()) {
     f_gen_ << indent() << struct_name << " {}" << endl;
   } else {
     f_gen_ << indent() << struct_name << " {" << endl;
@@ -1244,7 +1248,7 @@ void t_rs_generator::render_struct_constructor(
       if (is_optional(member_req)) {
         f_gen_ << indent() << member_name << ": " << member_name << ".into()," << endl;
       } else {
-        f_gen_ << indent() << member_name << ": " << member_name << "," << endl;
+        f_gen_ << indent() << member_name << "," << endl;
       }
     }
 
@@ -1504,19 +1508,14 @@ void t_rs_generator::render_struct_field_sync_write(
     indent_up();
     f_gen_ << indent() << "o_prot.write_field_begin(&" << field_ident_string << ")?;" << endl;
     render_type_sync_write("fld_var", true, field_type);
-    f_gen_ << indent() << "o_prot.write_field_end()?;" << endl;
-    f_gen_ << indent() << "()" << endl; // FIXME: remove this extraneous '()'
+    f_gen_ << indent() << "o_prot.write_field_end()?" << endl;
     indent_down();
-    f_gen_ << indent() << "} else {" << endl; // FIXME: remove else branch
-    indent_up();
     /* FIXME: rethink how I deal with OPT_IN_REQ_OUT
     if (req == t_field::T_OPT_IN_REQ_OUT) {
       f_gen_ << indent() << "let field_ident = " << field_ident_string << ";" << endl;
       f_gen_ << indent() << "o_prot.write_field_begin(&field_ident)?;" << endl;
       f_gen_ << indent() << "o_prot.write_field_end()?;" << endl;
     }*/
-    f_gen_ << indent() << "()" << endl;
-    indent_down();
     f_gen_ << indent() << "}" << endl;
   } else {
     f_gen_ << indent() << "o_prot.write_field_begin(&" << field_ident_string << ")?;" << endl;
@@ -2308,7 +2307,7 @@ void t_rs_generator::render_sync_send(t_function* tfunc) {
   for (members_iter = members.begin(); members_iter != members.end(); ++members_iter) {
     t_field* member = (*members_iter);
     string member_name(rust_field_name(member));
-    struct_definition << member_name << ": " << member_name << ", ";
+    struct_definition << member_name << ", ";
   }
   string struct_fields = struct_definition.str();
   if (struct_fields.size() > 0) {

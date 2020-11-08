@@ -4,37 +4,22 @@
 
 1. Get the [Thrift compiler](https://thrift.apache.org).
 
-2. Add the following crates to your `Cargo.toml`.
+2. Add the thrift crate to your `Cargo.toml`.
 
 ```toml
 thrift = "x.y.z" # x.y.z is the version of the thrift compiler
-ordered-float = "0.3.0"
-try_from = "0.2.0"
 ```
 
-3. Add the same crates to your `lib.rs` or `main.rs`.
-
-```rust
-extern crate ordered_float;
-extern crate thrift;
-extern crate try_from;
-```
-
-4. Generate Rust sources for your IDL (for example, `Tutorial.thrift`).
+3. Generate Rust sources for your IDL (for example, `Tutorial.thrift`).
 
 ```shell
 thrift -out my_rust_program/src --gen rs -r Tutorial.thrift
 ```
 
-5. Use the generated source in your code.
+4. Use the generated source in your code.
 
 ```rust
-// add extern crates here, or in your lib.rs
-extern crate ordered_float;
-extern crate thrift;
-extern crate try_from;
-
-// generated Rust module
+// generated Rust module from Thrift IDL
 mod tutorial;
 
 use thrift::protocol::{TCompactInputProtocol, TCompactOutputProtocol};
@@ -120,7 +105,7 @@ each generated file.
 ### Results and Errors
 
 The Thrift runtime library defines a `thrift::Result` and a `thrift::Error` type,
-both of which are used throught the runtime library and in all generated code.
+both of which are used throughout the runtime library and in all generated code.
 Conversions are defined from `std::io::Error`, `str` and `String` into
 `thrift::Error`.
 

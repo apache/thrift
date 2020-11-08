@@ -288,6 +288,7 @@ project.lock.json
 /lib/rs/test/src/midlayer.rs
 /lib/rs/test/src/recursive.rs
 /lib/rs/test/src/ultimate.rs
+/lib/rs/test/src/identifiers.rs
 /lib/rs/*.iml
 /lib/rs/**/*.iml
 /lib/swift/.build

@@ -15,11 +15,7 @@
 // specific language governing permissions and limitations
 // under the License.
 
-#[macro_use]
-extern crate clap;
-
-extern crate kitchen_sink;
-extern crate thrift;
+use clap::{clap_app, value_t};
 
 use std::convert::Into;
 
@@ -28,6 +24,8 @@ use kitchen_sink::midlayer::{MealServiceSyncClient, TMealServiceSyncClient};
 use kitchen_sink::recursive;
 use kitchen_sink::recursive::{CoRec, CoRec2, RecList, RecTree, TTestServiceSyncClient};
 use kitchen_sink::ultimate::{FullMealServiceSyncClient, TFullMealServiceSyncClient};
+
+use thrift;
 use thrift::protocol::{
     TBinaryInputProtocol, TBinaryOutputProtocol, TCompactInputProtocol, TCompactOutputProtocol,
     TInputProtocol, TOutputProtocol,

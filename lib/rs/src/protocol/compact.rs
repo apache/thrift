@@ -76,7 +76,7 @@ where
             last_read_field_id: 0,
             read_field_id_stack: Vec::new(),
             pending_read_bool_value: None,
-            transport: transport,
+            transport,
         }
     }
 
@@ -193,7 +193,7 @@ where
 
                 Ok(TFieldIdentifier {
                     name: None,
-                    field_type: field_type,
+                    field_type,
                     id: Some(self.last_read_field_id),
                 })
             }
@@ -371,7 +371,7 @@ where
             last_write_field_id: 0,
             write_field_id_stack: Vec::new(),
             pending_write_bool_field_identifier: None,
-            transport: transport,
+            transport,
         }
     }
 
@@ -673,7 +673,7 @@ mod tests {
             431
         )));
 
-        #[cfg_attr(rustfmt, rustfmt::skip)]
+        #[rustfmt::skip]
         let expected: [u8; 8] = [
             0x82, /* protocol ID */
             0x21, /* message type | protocol version */
@@ -695,10 +695,10 @@ mod tests {
         assert_success!(o_prot.write_message_begin(&TMessageIdentifier::new(
             "bar",
             TMessageType::Reply,
-            991828
+            991_828
         )));
 
-        #[cfg_attr(rustfmt, rustfmt::skip)]
+        #[rustfmt::skip]
         let expected: [u8; 9] = [
             0x82, /* protocol ID */
             0x41, /* message type | protocol version */
@@ -743,7 +743,7 @@ mod tests {
     fn must_round_trip_message_begin() {
         let (mut i_prot, mut o_prot) = test_objects();
 
-        let ident = TMessageIdentifier::new("service_call", TMessageType::Call, 1283948);
+        let ident = TMessageIdentifier::new("service_call", TMessageType::Call, 1_283_948);
 
         assert_success!(o_prot.write_message_begin(&ident));
 
@@ -787,7 +787,7 @@ mod tests {
         assert_success!(o_prot.write_field_stop());
         assert_success!(o_prot.write_struct_end());
 
-        #[cfg_attr(rustfmt, rustfmt::skip)]
+        #[rustfmt::skip]
         let expected: [u8; 5] = [
             0x03, /* field type */
             0x00, /* first field id */
@@ -902,7 +902,7 @@ mod tests {
         assert_success!(o_prot.write_field_stop());
         assert_success!(o_prot.write_struct_end());
 
-        #[cfg_attr(rustfmt, rustfmt::skip)]
+        #[rustfmt::skip]
         let expected: [u8; 4] = [
             0x15, /* field delta (1) | field type */
             0x1A, /* field delta (1) | field type */
@@ -1015,7 +1015,7 @@ mod tests {
         assert_success!(o_prot.write_field_stop());
         assert_success!(o_prot.write_struct_end());
 
-        #[cfg_attr(rustfmt, rustfmt::skip)]
+        #[rustfmt::skip]
         let expected: [u8; 8] = [
             0x05, /* field type */
             0x00, /* first field id */
@@ -1139,7 +1139,7 @@ mod tests {
         assert_success!(o_prot.write_field_stop());
         assert_success!(o_prot.write_struct_end());
 
-        #[cfg_attr(rustfmt, rustfmt::skip)]
+        #[rustfmt::skip]
         let expected: [u8; 10] = [
             0x16, /* field delta (1) | field type */
             0x85, /* field delta (8) | field type */
@@ -1156,6 +1156,7 @@ mod tests {
         assert_eq_written_bytes!(o_prot, expected);
     }
 
+    #[allow(clippy::cognitive_complexity)]
     #[test]
     fn must_round_trip_struct_with_mix_of_long_and_delta_fields() {
         let (mut i_prot, mut o_prot) = test_objects();
@@ -1304,7 +1305,7 @@ mod tests {
         assert_success!(o_prot.write_field_stop());
         assert_success!(o_prot.write_struct_end());
 
-        #[cfg_attr(rustfmt, rustfmt::skip)]
+        #[rustfmt::skip]
         let expected: [u8; 7] = [
             0x16, /* field delta (1) | field type */
             0x85, /* field delta (8) | field type */
@@ -1318,6 +1319,7 @@ mod tests {
         assert_eq_written_bytes!(o_prot, expected);
     }
 
+    #[allow(clippy::cognitive_complexity)]
     #[test]
     fn must_round_trip_nested_structs_0() {
         // last field of the containing struct is a delta
@@ -1477,7 +1479,7 @@ mod tests {
         assert_success!(o_prot.write_field_stop());
         assert_success!(o_prot.write_struct_end());
 
-        #[cfg_attr(rustfmt, rustfmt::skip)]
+        #[rustfmt::skip]
         let expected: [u8; 7] = [
             0x16, /* field delta (1) | field type */
             0x85, /* field delta (8) | field type */
@@ -1491,6 +1493,7 @@ mod tests {
         assert_eq_written_bytes!(o_prot, expected);
     }
 
+    #[allow(clippy::cognitive_complexity)]
     #[test]
     fn must_round_trip_nested_structs_1() {
         // last field of the containing struct is a delta
@@ -1650,7 +1653,7 @@ mod tests {
         assert_success!(o_prot.write_field_stop());
         assert_success!(o_prot.write_struct_end());
 
-        #[cfg_attr(rustfmt, rustfmt::skip)]
+        #[rustfmt::skip]
         let expected: [u8; 7] = [
             0x16, /* field delta (1) | field type */
             0x08, /* field type */
@@ -1664,6 +1667,7 @@ mod tests {
         assert_eq_written_bytes!(o_prot, expected);
     }
 
+    #[allow(clippy::cognitive_complexity)]
     #[test]
     fn must_round_trip_nested_structs_2() {
         let (mut i_prot, mut o_prot) = test_objects();
@@ -1820,7 +1824,7 @@ mod tests {
         assert_success!(o_prot.write_field_stop());
         assert_success!(o_prot.write_struct_end());
 
-        #[cfg_attr(rustfmt, rustfmt::skip)]
+        #[rustfmt::skip]
         let expected: [u8; 8] = [
             0x16, /* field delta (1) | field type */
             0x08, /* field type */
@@ -1835,6 +1839,7 @@ mod tests {
         assert_eq_written_bytes!(o_prot, expected);
     }
 
+    #[allow(clippy::cognitive_complexity)]
     #[test]
     fn must_round_trip_nested_structs_3() {
         // last field of the containing struct is a full write
@@ -1986,7 +1991,7 @@ mod tests {
         assert_success!(o_prot.write_field_stop());
         assert_success!(o_prot.write_struct_end());
 
-        #[cfg_attr(rustfmt, rustfmt::skip)]
+        #[rustfmt::skip]
         let expected: [u8; 7] = [
             0x11, /* field delta (1) | true */
             0x82, /* field delta (8) | false */
@@ -2000,6 +2005,7 @@ mod tests {
         assert_eq_written_bytes!(o_prot, expected);
     }
 
+    #[allow(clippy::cognitive_complexity)]
     #[test]
     fn must_round_trip_bool_field() {
         let (mut i_prot, mut o_prot) = test_objects();
@@ -2245,7 +2251,7 @@ mod tests {
     fn must_round_trip_large_sized_set_begin() {
         let (mut i_prot, mut o_prot) = test_objects();
 
-        let ident = TSetIdentifier::new(TType::Map, 3928429);
+        let ident = TSetIdentifier::new(TType::Map, 3_928_429);
 
         assert_success!(o_prot.write_set_begin(&ident));
 
@@ -2312,7 +2318,7 @@ mod tests {
     fn must_round_trip_map_begin() {
         let (mut i_prot, mut o_prot) = test_objects();
 
-        let ident = TMapIdentifier::new(TType::Map, TType::List, 1928349);
+        let ident = TMapIdentifier::new(TType::Map, TType::List, 1_928_349);
 
         assert_success!(o_prot.write_map_begin(&ident));
 
@@ -2403,11 +2409,13 @@ mod tests {
     fn must_read_write_double() {
         let (mut i_prot, mut o_prot) = test_objects();
 
-        let double = 3.141592653589793238462643;
+        #[allow(clippy::approx_constant)]
+        let double = 3.141_592_653_589_793;
         o_prot.write_double(double).unwrap();
         copy_write_buffer_to_read_buffer!(o_prot);
 
-        assert_eq!(i_prot.read_double().unwrap(), double);
+        let read_double = i_prot.read_double().unwrap();
+        assert!(read_double - double < std::f64::EPSILON);
     }
 
     #[test]
@@ -2415,11 +2423,11 @@ mod tests {
         let (_, mut o_prot) = test_objects();
         let expected = [24, 45, 68, 84, 251, 33, 9, 64];
 
-        let double = 3.141592653589793238462643;
+        #[allow(clippy::approx_constant)]
+        let double = 3.141_592_653_589_793;
         o_prot.write_double(double).unwrap();
 
         assert_eq_written_bytes!(o_prot, expected);
-
     }
 
     fn assert_no_write<F>(mut write_fn: F)

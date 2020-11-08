@@ -26,7 +26,7 @@ use super::{TOutputProtocol, TOutputProtocolFactory, TSetIdentifier, TStructIden
 use crate::transport::{TReadTransport, TWriteTransport};
 use crate::{ProtocolError, ProtocolErrorKind};
 
-const BINARY_PROTOCOL_VERSION_1: u32 = 0x80010000;
+const BINARY_PROTOCOL_VERSION_1: u32 = 0x8001_0000;
 
 /// Read messages encoded in the Thrift simple binary encoding.
 ///
@@ -69,8 +69,8 @@ where
     /// version number in the protocol header.
     pub fn new(transport: T, strict: bool) -> TBinaryInputProtocol<T> {
         TBinaryInputProtocol {
-            strict: strict,
-            transport: transport,
+            strict,
+            transport,
         }
     }
 }
@@ -79,7 +79,7 @@ impl<T> TInputProtocol for TBinaryInputProtocol<T>
 where
     T: TReadTransport,
 {
-    #[cfg_attr(feature = "cargo-clippy", allow(collapsible_if))]
+    #[allow(clippy::collapsible_if)]
     fn read_message_begin(&mut self) -> crate::Result<TMessageIdentifier> {
         let mut first_bytes = vec![0; 4];
         self.transport.read_exact(&mut first_bytes[..])?;
@@ -295,8 +295,8 @@ where
     /// protocol version number in the protocol header.
     pub fn new(transport: T, strict: bool) -> TBinaryOutputProtocol<T> {
         TBinaryOutputProtocol {
-            strict: strict,
-            transport: transport,
+            strict,
+            transport,
         }
     }
 }
@@ -520,7 +520,7 @@ mod tests {
         let ident = TMessageIdentifier::new("test", TMessageType::Call, 1);
         assert!(o_prot.write_message_begin(&ident).is_ok());
 
-        #[cfg_attr(rustfmt, rustfmt::skip)]
+        #[rustfmt::skip]
         let expected: [u8; 16] = [
             0x80,
             0x01,
@@ -550,7 +550,7 @@ mod tests {
         let ident = TMessageIdentifier::new("test", TMessageType::Call, 1);
         assert!(o_prot.write_message_begin(&ident).is_ok());
 
-        #[cfg_attr(rustfmt, rustfmt::skip)]
+        #[rustfmt::skip]
         let expected: [u8; 13] = [
             0x00,
             0x00,
@@ -577,7 +577,7 @@ mod tests {
         let ident = TMessageIdentifier::new("test", TMessageType::Reply, 10);
         assert!(o_prot.write_message_begin(&ident).is_ok());
 
-        #[cfg_attr(rustfmt, rustfmt::skip)]
+        #[rustfmt::skip]
         let expected: [u8; 16] = [
             0x80,
             0x01,
@@ -607,7 +607,7 @@ mod tests {
         let ident = TMessageIdentifier::new("test", TMessageType::Reply, 10);
         assert!(o_prot.write_message_begin(&ident).is_ok());
 
-        #[cfg_attr(rustfmt, rustfmt::skip)]
+        #[rustfmt::skip]
         let expected: [u8; 13] = [
             0x00,
             0x00,
@@ -892,7 +892,7 @@ mod tests {
     fn must_round_trip_bytes() {
         let (mut i_prot, mut o_prot) = test_objects(true);
 
-        #[cfg_attr(rustfmt, rustfmt::skip)]
+        #[rustfmt::skip]
         let bytes: [u8; 25] = [
             0x20,
             0xFD,

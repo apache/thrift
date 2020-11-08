@@ -15,8 +15,6 @@
 // specific language governing permissions and limitations
 // under the License.
 
-extern crate thrift;
-
 pub mod base_one;
 pub mod base_two;
 pub mod midlayer;

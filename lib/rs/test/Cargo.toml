@@ -7,9 +7,7 @@ authors = ["Apache Thrift Developers <dev@thrift.apache.org>"]
 publish = false
 
 [dependencies]
-clap = "<2.28.0"
-ordered-float = "1.0"
-try_from = "0.3"
+clap = "2.33"
 
 [dependencies.thrift]
 path = "../"

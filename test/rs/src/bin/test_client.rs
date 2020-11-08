@@ -15,20 +15,15 @@
 // specific language governing permissions and limitations
 // under the License.
 
-#[macro_use]
-extern crate log;
-extern crate env_logger;
+use env_logger;
+use log::*;
+use clap::{clap_app, value_t};
 
-#[macro_use]
-extern crate clap;
-extern crate ordered_float;
-extern crate thrift;
-extern crate thrift_test; // huh. I have to do this to use my lib
-
-use ordered_float::OrderedFloat;
 use std::collections::{BTreeMap, BTreeSet};
 use std::fmt::Debug;
 
+use thrift;
+use thrift::OrderedFloat;
 use thrift::protocol::{TBinaryInputProtocol, TBinaryOutputProtocol, TCompactInputProtocol,
                        TCompactOutputProtocol, TInputProtocol, TMultiplexedOutputProtocol,
                        TOutputProtocol};
@@ -38,7 +33,7 @@ use thrift::transport::{ReadHalf, TBufferedReadTransport, TBufferedWriteTranspor
 use thrift_test::*;
 
 fn main() {
-    env_logger::init().expect("logger setup failed");
+    env_logger::init();
 
     debug!("initialized logger - running cross-test client");
 
@@ -167,7 +162,7 @@ fn tcp_channel(
 type BuildThriftTestClient = ThriftTestSyncClient<Box<dyn TInputProtocol>, Box<dyn TOutputProtocol>>;
 type BuiltSecondServiceClient = SecondServiceSyncClient<Box<dyn TInputProtocol>, Box<dyn TOutputProtocol>>;
 
-#[cfg_attr(feature = "cargo-clippy", allow(cyclomatic_complexity))]
+#[allow(clippy::cognitive_complexity)]
 fn make_thrift_calls(
     thrift_test_client: &mut BuildThriftTestClient,
     second_service_client: &mut Option<BuiltSecondServiceClient>,
@@ -191,7 +186,7 @@ fn make_thrift_calls(
     verify_expected_result(thrift_test_client.test_byte(42), 42)?;
 
     info!("testi32");
-    verify_expected_result(thrift_test_client.test_i32(1159348374), 1159348374)?;
+    verify_expected_result(thrift_test_client.test_i32(1_159_348_374), 1_159_348_374)?;
 
     info!("testi64");
     // try!(verify_expected_result(thrift_test_client.test_i64(-8651829879438294565),
@@ -231,14 +226,14 @@ fn make_thrift_calls(
         let x_snd = Xtruct {
             string_thing: Some("foo".to_owned()),
             byte_thing: Some(12),
-            i32_thing: Some(219129),
-            i64_thing: Some(12938492818),
+            i32_thing: Some(219_129),
+            i64_thing: Some(12_938_492_818),
         };
         let x_cmp = Xtruct {
             string_thing: Some("foo".to_owned()),
             byte_thing: Some(12),
-            i32_thing: Some(219129),
-            i64_thing: Some(12938492818),
+            i32_thing: Some(219_129),
+            i64_thing: Some(12_938_492_818),
         };
         verify_expected_result(thrift_test_client.test_struct(x_snd), x_cmp)?;
     }
@@ -264,11 +259,11 @@ fn make_thrift_calls(
                 Xtruct {
                     string_thing: Some("foo".to_owned()),
                     byte_thing: Some(1),
-                    i32_thing: Some(324382098),
-                    i64_thing: Some(12938492818),
+                    i32_thing: Some(324_382_098),
+                    i64_thing: Some(12_938_492_818),
                 },
             ),
-            i32_thing: Some(293481098),
+            i32_thing: Some(293_481_098),
         };
         let x_cmp = Xtruct2 {
             byte_thing: Some(32),
@@ -276,11 +271,11 @@ fn make_thrift_calls(
                 Xtruct {
                     string_thing: Some("foo".to_owned()),
                     byte_thing: Some(1),
-                    i32_thing: Some(324382098),
-                    i64_thing: Some(12938492818),
+                    i32_thing: Some(324_382_098),
+                    i64_thing: Some(12_938_492_818),
                 },
             ),
-            i32_thing: Some(293481098),
+            i32_thing: Some(293_481_098),
         };
         verify_expected_result(thrift_test_client.test_nest(x_snd), x_cmp)?;
     }
@@ -314,12 +309,12 @@ fn make_thrift_calls(
     info!("testSet");
     {
         let mut s_snd: BTreeSet<i32> = BTreeSet::new();
-        s_snd.insert(293481);
+        s_snd.insert(293_481);
         s_snd.insert(23);
         s_snd.insert(3234);
 
         let mut s_cmp: BTreeSet<i32> = BTreeSet::new();
-        s_cmp.insert(293481);
+        s_cmp.insert(293_481);
         s_cmp.insert(23);
         s_cmp.insert(3234);
 
@@ -386,12 +381,12 @@ fn make_thrift_calls(
         let s_cmp = Xtruct {
             string_thing: Some("Hello2".to_owned()),
             byte_thing: Some(1),
-            i32_thing: Some(-123948),
-            i64_thing: Some(-19234123981),
+            i32_thing: Some(-123_948),
+            i64_thing: Some(-19_234_123_981),
         };
 
         verify_expected_result(
-            thrift_test_client.test_multi(1, -123948, -19234123981, m_snd, Numberz::Eight, 81),
+            thrift_test_client.test_multi(1, -123_948, -19_234_123_981, m_snd, Numberz::Eight, 81),
             s_cmp,
         )?;
     }
@@ -429,8 +424,8 @@ fn make_thrift_calls(
             Xtruct {
                 string_thing: Some("baz".to_owned()),
                 byte_thing: Some(0),
-                i32_thing: Some(3948539),
-                i64_thing: Some(-12938492),
+                i32_thing: Some(3_948_539),
+                i64_thing: Some(-12_938_492),
             },
         );
 
@@ -453,7 +448,7 @@ fn make_thrift_calls(
         s_cmp.insert(1 as UserId, s_cmp_nested_1);
         s_cmp.insert(2 as UserId, s_cmp_nested_2);
 
-        verify_expected_result(thrift_test_client.test_insanity(insanity.clone()), s_cmp)?;
+        verify_expected_result(thrift_test_client.test_insanity(insanity), s_cmp)?;
     }
 
     info!("testException - remote throws Xception");
@@ -583,7 +578,6 @@ fn make_thrift_calls(
     thrift_test_client.test_void()
 }
 
-#[cfg_attr(feature = "cargo-clippy", allow(needless_pass_by_value))]
 fn verify_expected_result<T: Debug + PartialEq + Sized>(
     actual: Result<T, thrift::Error>,
     expected: T,
