@@ -151,6 +151,10 @@ class Connection(object):
             while len(self._rbuf) >= self._reading.end:
                 if self._reading.is_header:
                     mlen, = struct.unpack('!i', self._rbuf[:4])
+                    if mlen < 0:
+                        logger.error('could not read the head from frame')
+                        self.close()
+                        break
                     self._reading = Message(self._reading.end, mlen, False)
                     self.status = WAIT_MESSAGE
                 else:
