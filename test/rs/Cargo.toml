@@ -8,10 +8,8 @@ publish = false
 
 [dependencies]
 clap = "2.33"
-env_logger = "0.4.0"
+env_logger = "0.8"
 log = "0.4"
-ordered-float = "1.0"
-try_from = "0.3"
 
 [dependencies.thrift]
 path = "../../lib/rs"

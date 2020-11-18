@@ -236,8 +236,8 @@ impl Error {
         i.read_struct_end()?;
 
         Ok(ApplicationError {
-            kind: kind,
-            message: message,
+            kind,
+            message,
         })
     }
 
@@ -283,7 +283,7 @@ impl error::Error for Error {
 }
 
 impl Debug for Error {
-    fn fmt(&self, f: &mut Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         match *self {
             Error::Transport(ref e) => Debug::fmt(e, f),
             Error::Protocol(ref e) => Debug::fmt(e, f),
@@ -294,7 +294,7 @@ impl Debug for Error {
 }
 
 impl Display for Error {
-    fn fmt(&self, f: &mut Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         match *self {
             Error::Transport(ref e) => Display::fmt(e, f),
             Error::Protocol(ref e) => Display::fmt(e, f),
@@ -362,7 +362,7 @@ impl TransportError {
     /// Create a new `TransportError`.
     pub fn new<S: Into<String>>(kind: TransportErrorKind, message: S) -> TransportError {
         TransportError {
-            kind: kind,
+            kind,
             message: message.into(),
         }
     }
@@ -404,7 +404,7 @@ impl TransportError {
 }
 
 impl Display for TransportError {
-    fn fmt(&self, f: &mut Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         write!(f, "{}", self.description())
     }
 }
@@ -490,7 +490,7 @@ impl ProtocolError {
     /// Create a new `ProtocolError`.
     pub fn new<S: Into<String>>(kind: ProtocolErrorKind, message: S) -> ProtocolError {
         ProtocolError {
-            kind: kind,
+            kind,
             message: message.into(),
         }
     }
@@ -534,7 +534,7 @@ impl ProtocolError {
 }
 
 impl Display for ProtocolError {
-    fn fmt(&self, f: &mut Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         write!(f, "{}", self.description())
     }
 }
@@ -581,7 +581,7 @@ impl ApplicationError {
     /// Create a new `ApplicationError`.
     pub fn new<S: Into<String>>(kind: ApplicationErrorKind, message: S) -> ApplicationError {
         ApplicationError {
-            kind: kind,
+            kind,
             message: message.into(),
         }
     }
@@ -638,7 +638,7 @@ impl ApplicationError {
 }
 
 impl Display for ApplicationError {
-    fn fmt(&self, f: &mut Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         write!(f, "{}", self.description())
     }
 }

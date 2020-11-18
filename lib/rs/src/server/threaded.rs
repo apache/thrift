@@ -15,6 +15,8 @@
 // specific language governing permissions and limitations
 // under the License.
 
+use log::warn;
+
 use std::net::{TcpListener, TcpStream, ToSocketAddrs};
 use std::sync::Arc;
 use threadpool::ThreadPool;

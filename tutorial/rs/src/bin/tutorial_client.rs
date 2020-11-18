@@ -15,8 +15,7 @@
 // specific language governing permissions and limitations
 // under the License.
 
-#[macro_use]
-extern crate clap;
+use clap::{clap_app, value_t};
 
 use thrift::protocol::{TCompactInputProtocol, TCompactOutputProtocol};
 use thrift::transport::{

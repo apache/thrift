@@ -15,18 +15,17 @@
 // specific language governing permissions and limitations
 // under the License.
 
-#[macro_use]
-extern crate clap;
-
 use std::collections::HashMap;
 use std::convert::{From, Into};
 use std::default::Default;
 use std::sync::Mutex;
 
+use clap::{clap_app, value_t};
+
 use thrift::protocol::{TCompactInputProtocolFactory, TCompactOutputProtocolFactory};
 use thrift::server::TServer;
-
 use thrift::transport::{TFramedReadTransportFactory, TFramedWriteTransportFactory};
+
 use thrift_tutorial::shared::{SharedServiceSyncHandler, SharedStruct};
 use thrift_tutorial::tutorial::{CalculatorSyncHandler, CalculatorSyncProcessor};
 use thrift_tutorial::tutorial::{InvalidOperation, Operation, Work};

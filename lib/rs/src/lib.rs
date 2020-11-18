@@ -49,14 +49,6 @@
 #![doc(test(attr(allow(unused_variables), deny(warnings))))]
 #![deny(bare_trait_objects)]
 
-extern crate byteorder;
-extern crate ordered_float;
-extern crate integer_encoding;
-extern crate threadpool;
-
-#[macro_use]
-extern crate log;
-
 // NOTE: this macro has to be defined before any modules. See:
 // https://danielkeep.github.io/quick-intro-to-macros.html#some-more-gotchas
 

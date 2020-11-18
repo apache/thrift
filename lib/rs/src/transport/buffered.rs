@@ -200,7 +200,7 @@ where
         TBufferedWriteTransport {
             buf: Vec::with_capacity(write_capacity),
             cap: write_capacity,
-            channel: channel,
+            channel,
         }
     }
 }
@@ -347,8 +347,8 @@ mod tests {
 
         // fill the underlying transport's byte buffer
         let mut readable_bytes = [0u8; 10];
-        for i in 0..10 {
-            readable_bytes[i] = i as u8;
+        for (i, b) in readable_bytes.iter_mut().enumerate() {
+            *b = i as u8;
         }
 
         t.chan.set_readable_bytes(&readable_bytes);
@@ -365,8 +365,8 @@ mod tests {
         assert_eq!(&buf, &[0, 1, 2, 3, 4, 5, 6, 7]);
 
         // let's clear out the buffer and try read again
-        for i in 0..8 {
-            buf[i] = 0;
+        for b in &mut buf{
+            *b = 0;
         }
         let read_result = t.read(&mut buf);
 

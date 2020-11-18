@@ -15,6 +15,8 @@
 // specific language governing permissions and limitations
 // under the License.
 
+use log::debug;
+
 use std::collections::HashMap;
 use std::convert::Into;
 use std::fmt;
@@ -25,7 +27,7 @@ use crate::protocol::{TInputProtocol, TMessageIdentifier, TOutputProtocol, TStor
 
 use super::{handle_process_result, TProcessor};
 
-const MISSING_SEPARATOR_AND_NO_DEFAULT: &'static str =
+const MISSING_SEPARATOR_AND_NO_DEFAULT: &str =
     "missing service separator and no default processor set";
 type ThreadSafeProcessor = Box<dyn TProcessor + Send + Sync>;
 
@@ -70,7 +72,7 @@ impl TMultiplexedProcessor {
     /// Returns success if a new entry was inserted. Returns an error if:
     /// * A processor exists for `service_name`
     /// * You attempt to register a processor as default, and an existing default exists
-    #[cfg_attr(feature = "cargo-clippy", allow(map_entry))]
+    #[allow(clippy::map_entry)]
     pub fn register<S: Into<String>>(
         &mut self,
         service_name: S,
@@ -145,7 +147,7 @@ impl TProcessor for TMultiplexedProcessor {
 }
 
 impl Debug for TMultiplexedProcessor {
-    fn fmt(&self, f: &mut Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         let stored = self.stored.lock().unwrap();
         write!(
             f,
