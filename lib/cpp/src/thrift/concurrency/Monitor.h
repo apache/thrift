@@ -23,6 +23,7 @@
 #include <chrono>
 #include <thrift/concurrency/Exception.h>
 #include <thrift/concurrency/Mutex.h>
+#include <thrift/TNonCopyable.h>
 
 namespace apache {
 namespace thrift {
@@ -46,7 +47,7 @@ namespace concurrency {
  *
  * @version $Id:$
  */
-class Monitor : boost::noncopyable {
+class Monitor : apache::thrift::TNonCopyable {
 public:
   /** Creates a new mutex, and takes ownership of it. */
   Monitor();
