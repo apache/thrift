@@ -73,7 +73,7 @@ endif()
 include(ThriftMacros)
 
 ADD_LIBRARY_THRIFT(thrift_c_glib ${thrift_c_glib_SOURCES})
-TARGET_LINK_LIBRARIES_THRIFT(thrift_c_glib ${SYSLIBS})
+TARGET_LINK_LIBRARIES_THRIFT(thrift_c_glib PUBLIC ${SYSLIBS})
 
 # Install the headers
 install(DIRECTORY "src/thrift" DESTINATION "${INCLUDE_INSTALL_DIR}"
