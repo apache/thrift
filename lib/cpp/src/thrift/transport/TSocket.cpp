@@ -331,23 +331,18 @@ void TSocket::openConnection(struct addrinfo* res) {
   // Connect the socket
   int ret;
   if (isUnixDomainSocket()) {
-
-/*
- * TODO: seems that windows now support unix sockets,
- *       see: https://devblogs.microsoft.com/commandline/af_unix-comes-to-windows/
- */
-#ifndef _WIN32
-
+    // Windows supports Unix domain sockets since it ships the header
+    // HAVE_AF_UNIX_H (see https://devblogs.microsoft.com/commandline/af_unix-comes-to-windows/)
+#if (!defined(_WIN32) || defined(HAVE_AF_UNIX_H))
     struct sockaddr_un address;
     socklen_t structlen = fillUnixSocketAddr(address, path_);
 
     ret = connect(socket_, (struct sockaddr*)&address, structlen);
 #else
-    GlobalOutput.perror("TSocket::open() Unix Domain socket path not supported on windows", -99);
+    GlobalOutput.perror("TSocket::open() Unix Domain socket path not supported on this version of Windows", -99);
     throw TTransportException(TTransportException::NOT_OPEN,
                               " Unix Domain socket path not supported");
 #endif
-
   } else {
     ret = connect(socket_, res->ai_addr, static_cast<int>(res->ai_addrlen));
   }
@@ -803,6 +798,13 @@ void TSocket::setKeepAlive(bool keepAlive) {
   if (socket_ == THRIFT_INVALID_SOCKET) {
     return;
   }
+
+#ifdef _WIN32
+  if (isUnixDomainSocket()) {
+      // Windows Domain sockets do not support SO_KEEPALIVE.
+      return;
+  }
+#endif
 
   int value = keepAlive_;
   int ret
