@@ -43,6 +43,9 @@
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
+#ifdef HAVE_SYS_STAT_H
+#include <sys/stat.h>
+#endif
 
 #include <thrift/transport/PlatformSocket.h>
 #include <thrift/transport/TServerSocket.h>
@@ -60,6 +63,16 @@
 #else
 #define SOCKOPT_CAST_T char
 #endif // _WIN32
+#endif
+
+#ifdef _WIN32
+// Including Windows.h can conflict with Winsock2 usage, and also
+// adds problematic macros like min() and max(). Try to work around:
+#define NOMINMAX
+#define WIN32_LEAN_AND_MEAN
+#include <Windows.h>
+#undef NOMINMAX
+#undef WIN32_LEAN_AND_MEAN
 #endif
 
 template <class T>
@@ -173,6 +186,25 @@ bool TServerSocket::isOpen() const {
 
   if (!listening_)
     return false;
+
+  if (!path_.empty() && (path_[0] != '\0')) {
+    // On some platforms the domain socket file may not be instantly
+    // available yet, i.e. the Windows file system can be slow. Therefore
+    // we should check that the domain socket file actually exists.
+#ifdef _MSC_VER
+    // Currently there is a bug in ClangCl on Windows so the stat() call
+    // does not work. Workaround is a Windows-specific call if file exists:
+    DWORD const f_attrib = GetFileAttributesA(path_.c_str());
+    if (f_attrib == INVALID_FILE_ATTRIBUTES) {
+#else
+    struct THRIFT_STAT path_info;
+    if (::THRIFT_STAT(path_.c_str(), &path_info) < 0) {
+#endif
+      const std::string vError = "TServerSocket::isOpen(): The domain socket path '" + path_ + "' does not exist (yet).";
+      GlobalOutput.perror(vError.c_str(), THRIFT_GET_SOCKET_ERROR);
+      return false;
+    }
+  }
 
   return true;
 }
