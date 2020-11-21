@@ -2390,7 +2390,7 @@ void t_netstd_generator::generate_process_function_async(ostream& out, t_service
     indent_down();
     out << indent() << "else" << endl;
     indent_up();
-    out << indent() << "Console.WriteLine(sErr);" << endl;
+    out << indent() << "Console.Error.WriteLine(sErr);" << endl;
     indent_down();
 
     if (tfunction->is_oneway())
