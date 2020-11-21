@@ -34,6 +34,8 @@ using Thrift.Server;
 using Thrift.Transport;
 using Thrift.Transport.Server;
 
+#pragma warning disable IDE0063  // using can be simplified, we don't
+
 namespace ThriftTest
 {
     internal enum ProtocolChoice
@@ -594,21 +596,13 @@ namespace ThriftTest
                             break;
                     }
 
-                    // Protocol (mandatory)
-                    TProtocolFactory proto;
-                    switch (param.protocol)
+                    TProtocolFactory proto = param.protocol switch
                     {
-                        case ProtocolChoice.Compact:
-                            proto = new TCompactProtocol.Factory();
-                            break;
-                        case ProtocolChoice.Json:
-                            proto = new TJsonProtocol.Factory();
-                            break;
-                        case ProtocolChoice.Binary:
-                        default:
-                            proto = new TBinaryProtocol.Factory();
-                            break;
-                    }
+                        ProtocolChoice.Compact => new TCompactProtocol.Factory(),
+                        ProtocolChoice.Json => new TJsonProtocol.Factory(),
+                        ProtocolChoice.Binary => new TBinaryProtocol.Factory(),
+                        _ => new TBinaryProtocol.Factory(),
+                    };
 
                     // Processor
                     var testHandler = new TestHandlerAsync();
