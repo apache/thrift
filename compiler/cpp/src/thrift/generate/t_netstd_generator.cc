@@ -361,6 +361,7 @@ string t_netstd_generator::netstd_type_usings() const
         "using System.Linq;\n"
         "using System.Threading;\n"
         "using System.Threading.Tasks;\n"
+        "using Microsoft.Extensions.Logging;\n"
         "using Thrift;\n"
         "using Thrift.Collections;\n";
 
@@ -2134,8 +2135,9 @@ void t_netstd_generator::generate_service_server(ostream& out, t_service* tservi
     indent_up();
 
     out << indent() << "private readonly IAsync _iAsync;" << endl
+        << indent() << "private readonly ILogger<AsyncProcessor> _logger;" << endl
         << endl
-        << indent() << "public AsyncProcessor(IAsync iAsync)";
+        << indent() << "public AsyncProcessor(IAsync iAsync, ILogger<AsyncProcessor> logger = default)";
 
     if (!extends.empty())
     {
@@ -2147,6 +2149,7 @@ void t_netstd_generator::generate_service_server(ostream& out, t_service* tservi
     indent_up();
 
     out << indent() << "_iAsync = iAsync ?? throw new ArgumentNullException(nameof(iAsync));" << endl;
+    out << indent() << "_logger = logger;" << endl;
     for (f_iter = functions.begin(); f_iter != functions.end(); ++f_iter)
     {
         string function_name = (*f_iter)->get_name();
@@ -2380,8 +2383,15 @@ void t_netstd_generator::generate_process_function_async(ostream& out, t_service
         << indent() << "{" << endl;
     indent_up();
 
-    out << indent() << "Console.Error.WriteLine(\"Error occurred in processor:\");" << endl
-        << indent() << "Console.Error.WriteLine(ex.ToString());" << endl;
+    out << indent() << "var sErr = $\"Error occurred in {GetType().FullName}: {ex.Message}\";" << endl;
+    out << indent() << "if(_logger != null)" << endl;
+    indent_up();
+    out << indent() << "_logger.LogError(ex, sErr);" << endl;
+    indent_down();
+    out << indent() << "else" << endl;
+    indent_up();
+    out << indent() << "Console.WriteLine(sErr);" << endl;
+    indent_down();
 
     if (tfunction->is_oneway())
     {
