@@ -1507,7 +1507,7 @@ void t_netstd_generator::generate_netstd_struct_tostring(ostream& out, t_struct*
             out << indent() << "sb.Append(\", " << prop_name(*f_iter) << ": \");" << endl;
         }
 
-        out << indent() << prop_name(*f_iter) << ".ToString(sb);" << endl;
+        out << indent() << "sb.Append(" << prop_name(*f_iter) << ".ToString());" << endl;
 
         generate_null_check_end(out, *f_iter);
         if (is_required) {
