@@ -40,7 +40,7 @@ AM_CPPFLAGS = -I../src -I./gen-c_glib -I$(top_builddir)/lib/c_glib/src/thrift
 AM_CFLAGS = -g -Wall -Wextra -pedantic $(GLIB_CFLAGS) $(GOBJECT_CFLAGS) $(OPENSSL_INCLUDES) \
 	@GCOV_CFLAGS@
 AM_CXXFLAGS = $(AM_CFLAGS)
-AM_LDFLAGS = $(GLIB_LIBS) $(GOBJECT_LIBS) $(OPENSSL_LIBS) @GCOV_LDFLAGS@
+AM_LDFLAGS = $(GLIB_LIBS) $(GOBJECT_LIBS) $(OPENSSL_LIBS) $(ZLIB_LIBS) @GCOV_LDFLAGS@
 
 check_PROGRAMS = \
   testserialization \
@@ -52,6 +52,7 @@ check_PROGRAMS = \
   testcompactprotocol \
   testbufferedtransport \
   testframedtransport \
+  testzlibtransport \
   testfdtransport \
   testmemorybuffer \
   teststruct \
@@ -68,7 +69,8 @@ check_PROGRAMS = \
 
 if WITH_CPP
   BUILT_SOURCES += gen-cpp/ThriftTest_types.cpp
-  check_PROGRAMS += testthrifttestclient
+  check_PROGRAMS += testthrifttestclient \
+                    testthrifttestzlibclient
 endif
 
 testserialization_SOURCES = testserialization.c
@@ -152,6 +154,14 @@ testbufferedtransport_LDADD = \
 
 testframedtransport_SOURCES = testframedtransport.c
 testframedtransport_LDADD = \
+    $(top_builddir)/lib/c_glib/src/thrift/c_glib/transport/libthrift_c_glib_la-thrift_transport.o \
+    $(top_builddir)/lib/c_glib/src/thrift/c_glib/transport/libthrift_c_glib_la-thrift_socket.o \
+    $(top_builddir)/lib/c_glib/src/thrift/c_glib/transport/libthrift_c_glib_la-thrift_server_transport.o \
+    $(top_builddir)/lib/c_glib/src/thrift/c_glib/transport/libthrift_c_glib_la-thrift_server_socket.o \
+    $(top_builddir)/lib/c_glib/src/thrift/c_glib/libthrift_c_glib_la-thrift_configuration.o 
+
+testzlibtransport_SOURCES = testzlibtransport.c
+testzlibtransport_LDADD = \
     $(top_builddir)/lib/c_glib/src/thrift/c_glib/transport/libthrift_c_glib_la-thrift_transport.o \
     $(top_builddir)/lib/c_glib/src/thrift/c_glib/transport/libthrift_c_glib_la-thrift_socket.o \
     $(top_builddir)/lib/c_glib/src/thrift/c_glib/transport/libthrift_c_glib_la-thrift_server_transport.o \
@@ -257,6 +267,11 @@ testthrifttestclient_SOURCES = testthrifttestclient.cpp
 testthrifttestclient_CPPFLAGS = -I../../cpp/src $(BOOST_CPPFLAGS) -I./gen-cpp -I../src -I./gen-c_glib $(GLIB_CFLAGS)
 testthrifttestclient_LDADD = ../../cpp/.libs/libthrift.la ../libthrift_c_glib.la libtestgenc.la libtestgencpp.la
 testthrifttestclient_LDFLAGS = -L../.libs -L../../cpp/.libs $(GLIB_LIBS) $(GOBJECT_LIBS)
+
+testthrifttestzlibclient_SOURCES = testthrifttestzlibclient.cpp
+testthrifttestzlibclient_CPPFLAGS = -I../../cpp/src $(BOOST_CPPFLAGS) -I./gen-cpp -I../src -I./gen-c_glib $(GLIB_CFLAGS)
+testthrifttestzlibclient_LDADD = ../../cpp/.libs/libthrift.la ../../cpp/.libs/libthriftz.la ../libthrift_c_glib.la libtestgenc.la libtestgencpp.la
+testthrifttestzlibclient_LDFLAGS = -L../.libs -L../../cpp/.libs $(GLIB_LIBS) $(GOBJECT_LIBS)
 
 check_LTLIBRARIES = libtestgenc.la
 

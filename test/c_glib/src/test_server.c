@@ -32,6 +32,8 @@
 #include <thrift/c_glib/transport/thrift_buffered_transport_factory.h>
 #include <thrift/c_glib/transport/thrift_framed_transport.h>
 #include <thrift/c_glib/transport/thrift_framed_transport_factory.h>
+#include <thrift/c_glib/transport/thrift_zlib_transport.h>
+#include <thrift/c_glib/transport/thrift_zlib_transport_factory.h>
 #include <thrift/c_glib/transport/thrift_server_socket.h>
 #include <thrift/c_glib/transport/thrift_server_transport.h>
 #include <thrift/c_glib/transport/thrift_transport.h>
@@ -85,7 +87,7 @@ main (int argc, char **argv)
     { "server-type",     0, 0, G_OPTION_ARG_STRING,   &server_type_option,
       "Type of server: simple (=simple)", NULL },
     { "transport",       0, 0, G_OPTION_ARG_STRING,   &transport_option,
-      "Transport: buffered, framed (=buffered)", NULL },
+      "Transport: buffered, framed, zlib (=buffered)", NULL },
     { "protocol",        0, 0, G_OPTION_ARG_STRING,   &protocol_option,
       "Protocol: binary, compact (=binary)", NULL },
     { "string-limit",    0, 0, G_OPTION_ARG_INT,      &string_limit,
@@ -166,6 +168,10 @@ main (int argc, char **argv)
     if (strncmp (transport_option, "framed", 7) == 0) {
       transport_factory_type = THRIFT_TYPE_FRAMED_TRANSPORT_FACTORY;
       transport_name = "framed";
+    }
+    else if (strncmp (transport_option, "zlib", 5) == 0) {
+      transport_factory_type = THRIFT_TYPE_ZLIB_TRANSPORT_FACTORY;
+      transport_name = "zlib";
     }
     else if (strncmp (transport_option, "buffered", 9) != 0) {
       fprintf (stderr, "Unknown transport type %s\n", transport_option);
