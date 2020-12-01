@@ -34,6 +34,3 @@ dist-hook:
 	find $(distdir) -type f -name ".packages" | xargs $(RM)
 	find $(distdir) -type d -name "packages" | xargs $(RM) -r
 
-EXTRA_DIST = \
-	.analysis_options
-
