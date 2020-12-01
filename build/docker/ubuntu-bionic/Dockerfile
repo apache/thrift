@@ -118,7 +118,7 @@ RUN \
     mv deimos-openssl-1.1.0h/C/* /usr/include/dmd/druntime/import/C/ && \
     rm -rf deimos-openssl-1.1.0h
 
-ENV DART_VERSION 2.4.0-1
+ENV DART_VERSION 2.7.2
 RUN apt-get install -y --no-install-recommends \
       `# Dart dependencies` \
       dart=$DART_VERSION
