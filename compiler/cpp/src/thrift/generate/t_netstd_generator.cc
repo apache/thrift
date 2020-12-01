@@ -1066,7 +1066,7 @@ void t_netstd_generator::generate_netstd_struct_definition(ostream& out, t_struc
                 {
                     out << ", ";
                 }
-                out << type_name((*m_iter)->get_type()) << " " << (*m_iter)->get_name();
+                out << type_name((*m_iter)->get_type()) << " " << normalize_name((*m_iter)->get_name());
             }
         }
         out << ") : this()" << endl
@@ -1077,7 +1077,7 @@ void t_netstd_generator::generate_netstd_struct_definition(ostream& out, t_struc
         {
             if (field_is_required(*m_iter))
             {
-                out << indent() << "this." << prop_name(*m_iter) << " = " << (*m_iter)->get_name() << ";" << endl;
+                out << indent() << "this." << prop_name(*m_iter) << " = " << normalize_name((*m_iter)->get_name()) << ";" << endl;
             }
         }
 
