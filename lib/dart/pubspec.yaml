@@ -24,7 +24,7 @@ homepage: http://thrift.apache.org
 documentation: http://thrift.apache.org
 
 environment:
-  sdk: ">=2.4.0 <3.0.0"
+  sdk: ">=2.0.0 <3.0.0"
 
 dependencies:
   fixnum: ^0.10.2
