@@ -85,17 +85,10 @@ const int8_t T_EXCEPTION = 3;
 const int INVALID_DATA = 1;
 const int BAD_VERSION = 4;
 
-static zend_function_entry thrift_protocol_functions[] = {
-  PHP_FE(thrift_protocol_write_binary, nullptr)
-  PHP_FE(thrift_protocol_read_binary, nullptr)
-  PHP_FE(thrift_protocol_read_binary_after_message_begin, nullptr)
-  {nullptr, nullptr, nullptr}
-};
-
 zend_module_entry thrift_protocol_module_entry = {
   STANDARD_MODULE_HEADER,
   "thrift_protocol",
-  thrift_protocol_functions,
+  ext_functions,
   nullptr,
   nullptr,
   nullptr,
@@ -414,7 +407,7 @@ void createObject(const char* obj_typename, zval* return_value, int nargs = 0, z
   object_and_properties_init(return_value, ce, nullptr);
   zend_function* constructor = zend_std_get_constructor(Z_OBJ_P(return_value));
   zval ctor_rv;
-  zend_call_method(return_value, ce, &constructor, nullptr, 0, &ctor_rv, nargs, arg1, arg2);
+  zend_call_method(Z4_OBJ_P(return_value), ce, &constructor, nullptr, 0, &ctor_rv, nargs, arg1, arg2);
   zval_dtor(&ctor_rv);
   if (EG(exception)) {
     zend_object *ex = EG(exception);
@@ -928,7 +921,7 @@ void validate_thrift_object(zval* object) {
 
             zval* is_required = zend_hash_str_find(fieldspec, "isRequired", sizeof("isRequired")-1);
             zval rv;
-            zval* prop = zend_read_property(object_class_entry, object, varname, strlen(varname), false, &rv);
+            zval* prop = zend_read_property(object_class_entry, Z4_OBJ_P(object), varname, strlen(varname), false, &rv);
 
             if (Z_TYPE_INFO_P(is_required) == IS_TRUE && Z_TYPE_P(prop) == IS_NULL) {
                 char errbuf[128];
@@ -969,7 +962,7 @@ void binary_deserialize_spec(zval* zthis, PHPInputTransport& transport, HashTabl
         ZVAL_UNDEF(&rv);
 
         binary_deserialize(ttype, transport, &rv, fieldspec);
-        zend_update_property(ce, zthis, varname, strlen(varname), &rv);
+        zend_update_property(ce, Z4_OBJ_P(zthis), varname, strlen(varname), &rv);
 
         zval_ptr_dtor(&rv);
       } else {
@@ -1010,7 +1003,7 @@ void binary_serialize_spec(zval* zthis, PHPOutputTransport& transport, HashTable
     int8_t ttype = Z_LVAL_P(val_ptr);
 
     zval rv;
-    zval* prop = zend_read_property(Z_OBJCE_P(zthis), zthis, varname, strlen(varname), false, &rv);
+    zval* prop = zend_read_property(Z_OBJCE_P(zthis), Z4_OBJ_P(zthis), varname, strlen(varname), false, &rv);
 
     if (Z_TYPE_P(prop) == IS_REFERENCE){
       ZVAL_DEREF(prop);
