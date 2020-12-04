@@ -55,6 +55,9 @@
     <Exec Condition="Exists('$(PathToThrift)')" Command="$(PathToThrift) -gen netstd:wcf,union,serial -r ./Thrift5253.thrift" />
     <Exec Condition="Exists('thrift')" Command="thrift -gen netstd:wcf,union,serial -r ./Thrift5253.thrift" />
     <Exec Condition="Exists('$(ProjectDir)/../../../../compiler/cpp/thrift')" Command="$(ProjectDir)/../../../../compiler/cpp/thrift -gen netstd:wcf,union,serial -r ./Thrift5253.thrift" />
+    <Exec Condition="Exists('$(PathToThrift)')" Command="$(PathToThrift) -gen netstd:wcf,union,serial -r ./Thrift5320.thrift" />
+    <Exec Condition="Exists('thrift')" Command="thrift -gen netstd:wcf,union,serial -r ./Thrift5320.thrift" />
+    <Exec Condition="Exists('$(ProjectDir)/../../../../compiler/cpp/thrift')" Command="$(ProjectDir)/../../../../compiler/cpp/thrift -gen netstd:wcf,union,serial -r ./Thrift5320.thrift" />
   </Target>
 
 </Project>
