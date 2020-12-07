@@ -160,6 +160,7 @@ public:
   std::shared_ptr<Runnable> runnable() const { return _runnable; }
 
 protected:
+
   virtual thread_funct_t getThreadFunc() const {
       return threadMain;
   } 
