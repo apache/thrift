@@ -333,7 +333,10 @@ void t_netstd_generator::reset_indent() {
 
 void t_netstd_generator::start_netstd_namespace(ostream& out)
 {
-    out << "#pragma warning disable IDE1006  // parts of the code use IDL spelling" << endl;
+    out << "#pragma warning disable IDE0079  // remove unnecessary pragmas" << endl
+        << "#pragma warning disable IDE1006  // parts of the code use IDL spelling" << endl
+        << endl;
+
     if (!namespace_name_.empty())
     {
         out << "namespace " << namespace_name_ << endl;
@@ -347,7 +350,6 @@ void t_netstd_generator::end_netstd_namespace(ostream& out)
     {
         scope_down(out);
     }
-    out << "#pragma warning restore IDE1006" << endl;
 }
 
 string t_netstd_generator::netstd_type_usings() const
