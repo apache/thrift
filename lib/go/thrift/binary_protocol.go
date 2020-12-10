@@ -432,6 +432,15 @@ func (p *TBinaryProtocol) ReadString(ctx context.Context) (value string, err err
 		err = invalidDataLength
 		return
 	}
+	if size == 0 {
+		return "", nil
+	}
+	if size < int32(len(p.buffer)) {
+		// Avoid allocation on small reads
+		buf := p.buffer[:size]
+		read, e := io.ReadFull(p.trans, buf)
+		return string(buf[:read]), NewTProtocolException(e)
+	}
 
 	return p.readStringBody(size)
 }
@@ -445,9 +454,7 @@ func (p *TBinaryProtocol) ReadBinary(ctx context.Context) ([]byte, error) {
 		return nil, invalidDataLength
 	}
 
-	isize := int(size)
-	buf := make([]byte, isize)
-	_, err := io.ReadFull(p.trans, buf)
+	buf, err := safeReadBytes(size, p.trans)
 	return buf, NewTProtocolException(err)
 }
 
@@ -479,38 +486,21 @@ func (p *TBinaryProtocol) readAll(ctx context.Context, buf []byte) (err error) {
 	return NewTProtocolException(err)
 }
 
-const readLimit = 32768
-
 func (p *TBinaryProtocol) readStringBody(size int32) (value string, err error) {
+	buf, err := safeReadBytes(size, p.trans)
+	return string(buf), NewTProtocolException(err)
+}
+
+// This function is shared between TBinaryProtocol and TCompactProtocol.
+//
+// It tries to read size bytes from trans, in a way that prevents large
+// allocations when size is insanely large (mostly caused by malformed message).
+func safeReadBytes(size int32, trans io.Reader) ([]byte, error) {
 	if size < 0 {
-		return "", nil
+		return nil, nil
 	}
 
-	var (
-		buf bytes.Buffer
-		e   error
-		b   []byte
-	)
-
-	switch {
-	case int(size) <= len(p.buffer):
-		b = p.buffer[:size] // avoids allocation for small reads
-	case int(size) < readLimit:
-		b = make([]byte, size)
-	default:
-		b = make([]byte, readLimit)
-	}
-
-	for size > 0 {
-		_, e = io.ReadFull(p.trans, b)
-		buf.Write(b)
-		if e != nil {
-			break
-		}
-		size -= readLimit
-		if size < readLimit && size > 0 {
-			b = b[:size]
-		}
-	}
-	return buf.String(), NewTProtocolException(e)
+	buf := new(bytes.Buffer)
+	_, err := io.CopyN(buf, trans, int64(size))
+	return buf.Bytes(), err
 }
