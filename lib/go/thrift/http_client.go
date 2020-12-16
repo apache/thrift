@@ -197,15 +197,11 @@ func (p *THttpClient) Flush(ctx context.Context) error {
 	// Close any previous response body to avoid leaking connections.
 	p.closeResponse()
 
-	// Request might not have been fully read by http client.
-	// Reset so we don't send the remains on next call.
-	defer func() {
-		if p.requestBuffer != nil {
-			p.requestBuffer.Reset()
-		}
-	}()
-
-	req, err := http.NewRequest("POST", p.url.String(), p.requestBuffer)
+	// Give up the ownership of the current request buffer to http request,
+	// and create a new buffer for the next request.
+	buf := p.requestBuffer
+	p.requestBuffer = new(bytes.Buffer)
+	req, err := http.NewRequest("POST", p.url.String(), buf)
 	if err != nil {
 		return NewTTransportExceptionFromError(err)
 	}
