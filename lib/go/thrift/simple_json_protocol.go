@@ -1364,3 +1364,10 @@ func (p *TSimpleJSONProtocol) write(b []byte) (int, error) {
 	}
 	return n, err
 }
+
+// SetTConfiguration implements TConfigurationSetter for propagation.
+func (p *TSimpleJSONProtocol) SetTConfiguration(conf *TConfiguration) {
+	PropagateTConfiguration(p.trans, conf)
+}
+
+var _ TConfigurationSetter = (*TSimpleJSONProtocol)(nil)
