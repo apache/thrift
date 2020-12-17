@@ -587,3 +587,5 @@ func (p *TJSONProtocol) StringToTypeId(fieldType string) (TType, error) {
 	e := fmt.Errorf("Unknown type identifier: %s", fieldType)
 	return TType(STOP), NewTProtocolExceptionWithType(INVALID_DATA, e)
 }
+
+var _ TConfigurationSetter = (*TJSONProtocol)(nil)

@@ -90,3 +90,10 @@ func (p *TBufferedTransport) Flush(ctx context.Context) error {
 func (p *TBufferedTransport) RemainingBytes() (num_bytes uint64) {
 	return p.tp.RemainingBytes()
 }
+
+// SetTConfiguration implements TConfigurationSetter for propagation.
+func (p *TBufferedTransport) SetTConfiguration(conf *TConfiguration) {
+	PropagateTConfiguration(p.tp, conf)
+}
+
+var _ TConfigurationSetter = (*TBufferedTransport)(nil)
