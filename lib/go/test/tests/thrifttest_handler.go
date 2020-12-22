@@ -179,7 +179,7 @@ func (p *ThriftTestHandler) TestException(ctx context.Context, arg string) (err 
 		x.Message = arg
 		return x
 	} else if arg == "TException" {
-		return thrift.TException(errors.New(arg))
+		return thrift.WrapTException(errors.New(arg))
 	} else {
 		return nil
 	}

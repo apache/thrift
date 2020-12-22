@@ -36,10 +36,6 @@ func (t *timeout) Error() string {
 	return fmt.Sprintf("Timeout: %v", t.timedout)
 }
 
-type unwrapper interface {
-	Unwrap() error
-}
-
 func TestTExceptionTimeout(t *testing.T) {
 	timeout := &timeout{true}
 	exception := NewTTransportExceptionFromError(timeout)
