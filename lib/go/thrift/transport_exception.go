@@ -48,6 +48,12 @@ type tTransportException struct {
 	err    error
 }
 
+var _ TTransportException = (*tTransportException)(nil)
+
+func (tTransportException) TExceptionType() TExceptionType {
+	return TExceptionTypeTransport
+}
+
 func (p *tTransportException) TypeId() int {
 	return p.typeId
 }

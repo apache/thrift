@@ -315,7 +315,9 @@ func (p *TSimpleServer) processRequests(client TTransport) (err error) {
 		}
 
 		ok, err := processor.Process(ctx, inputProtocol, outputProtocol)
-		if err == ErrAbandonRequest {
+		// Once we dropped support for pre-go1.13 this can be replaced by:
+		// errors.Is(err, ErrAbandonRequest)
+		if unwrapError(err) == ErrAbandonRequest {
 			return client.Close()
 		}
 		if _, ok := err.(TTransportException); ok && err != nil {
@@ -329,4 +331,18 @@ func (p *TSimpleServer) processRequests(client TTransport) (err error) {
 		}
 	}
 	return nil
+}
+
+type unwrapper interface {
+	Unwrap() error
+}
+
+func unwrapError(err error) error {
+	for {
+		if u, ok := err.(unwrapper); ok {
+			err = u.Unwrap()
+		} else {
+			return err
+		}
+	}
 }

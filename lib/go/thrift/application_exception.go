@@ -64,6 +64,12 @@ type tApplicationException struct {
 	type_   int32
 }
 
+var _ TApplicationException = (*tApplicationException)(nil)
+
+func (tApplicationException) TExceptionType() TExceptionType {
+	return TExceptionTypeApplication
+}
+
 func (e tApplicationException) Error() string {
 	if e.message != "" {
 		return e.message

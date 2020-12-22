@@ -1493,8 +1493,15 @@ void t_go_generator::generate_go_struct_definition(ostream& out,
 
   if (is_exception) {
     out << indent() << "func (p *" << tstruct_name << ") Error() string {" << endl;
-    out << indent() << "  return p.String()" << endl;
+    out << indent() << indent() << "return p.String()" << endl;
     out << indent() << "}" << endl << endl;
+
+    out << indent() << "func (" << tstruct_name << ") TExceptionType() thrift.TExceptionType {" << endl;
+    out << indent() << indent() << "return thrift.TExceptionTypeCompiled" << endl;
+    out << indent() << "}" << endl << endl;
+
+    out << indent() << "var _ thrift.TException = (*" << tstruct_name << ")(nil)"
+        << endl << endl;
   }
 }
 
@@ -2700,8 +2707,8 @@ void t_go_generator::generate_service_server(t_service* tservice) {
     f_types_ << indent() << "func (p *" << serviceName
                << "Processor) Process(ctx context.Context, iprot, oprot thrift.TProtocol) (success bool, err "
                   "thrift.TException) {" << endl;
-    f_types_ << indent() << "  name, _, seqId, err := iprot.ReadMessageBegin(ctx)" << endl;
-    f_types_ << indent() << "  if err != nil { return false, err }" << endl;
+    f_types_ << indent() << "  name, _, seqId, err2 := iprot.ReadMessageBegin(ctx)" << endl;
+    f_types_ << indent() << "  if err2 != nil { return false, thrift.WrapTException(err2) }" << endl;
     f_types_ << indent() << "  if processor, ok := p.GetProcessorFunction(name); ok {" << endl;
     f_types_ << indent() << "    return processor.Process(ctx, seqId, iprot, oprot)" << endl;
     f_types_ << indent() << "  }" << endl;
@@ -2767,11 +2774,12 @@ void t_go_generator::generate_process_function(t_service* tservice, t_function* 
                 "thrift.TException) {" << endl;
   indent_up();
   f_types_ << indent() << "args := " << argsname << "{}" << endl;
-  f_types_ << indent() << "if err = args." << read_method_name_ <<  "(ctx, iprot); err != nil {" << endl;
+  f_types_ << indent() << "var err2 error" << endl;
+  f_types_ << indent() << "if err2 = args." << read_method_name_ <<  "(ctx, iprot); err2 != nil {" << endl;
   f_types_ << indent() << "  iprot.ReadMessageEnd(ctx)" << endl;
   if (!tfunction->is_oneway()) {
     f_types_ << indent()
-               << "  x := thrift.NewTApplicationException(thrift.PROTOCOL_ERROR, err.Error())"
+               << "  x := thrift.NewTApplicationException(thrift.PROTOCOL_ERROR, err2.Error())"
                << endl;
     f_types_ << indent() << "  oprot.WriteMessageBegin(ctx, \"" << escape_string(tfunction->get_name())
                << "\", thrift.EXCEPTION, seqId)" << endl;
@@ -2779,7 +2787,7 @@ void t_go_generator::generate_process_function(t_service* tservice, t_function* 
     f_types_ << indent() << "  oprot.WriteMessageEnd(ctx)" << endl;
     f_types_ << indent() << "  oprot.Flush(ctx)" << endl;
   }
-  f_types_ << indent() << "  return false, err" << endl;
+  f_types_ << indent() << "  return false, thrift.WrapTException(err2)" << endl;
   f_types_ << indent() << "}" << endl;
   f_types_ << indent() << "iprot.ReadMessageEnd(ctx)" << endl << endl;
 
@@ -2842,7 +2850,6 @@ void t_go_generator::generate_process_function(t_service* tservice, t_function* 
     f_types_ << indent() << "var retval " << type_to_go_type(tfunction->get_returntype()) << endl;
   }
 
-  f_types_ << indent() << "var err2 error" << endl;
   f_types_ << indent() << "if ";
 
   if (!tfunction->is_oneway()) {
@@ -2892,7 +2899,7 @@ void t_go_generator::generate_process_function(t_service* tservice, t_function* 
   if (!tfunction->is_oneway()) {
     // Avoid writing the error to the wire if it's ErrAbandonRequest
     f_types_ << indent() << "  if err2 == thrift.ErrAbandonRequest {" << endl;
-    f_types_ << indent() << "    return false, err2" << endl;
+    f_types_ << indent() << "    return false, thrift.WrapTException(err2)" << endl;
     f_types_ << indent() << "  }" << endl;
 
     f_types_ << indent() << "  x := thrift.NewTApplicationException(thrift.INTERNAL_ERROR, "
@@ -2905,7 +2912,7 @@ void t_go_generator::generate_process_function(t_service* tservice, t_function* 
     f_types_ << indent() << "  oprot.Flush(ctx)" << endl;
   }
 
-  f_types_ << indent() << "  return true, err2" << endl;
+  f_types_ << indent() << "  return true, thrift.WrapTException(err2)" << endl;
 
   if (!x_fields.empty()) {
     f_types_ << indent() << "}" << endl;
@@ -2931,17 +2938,17 @@ void t_go_generator::generate_process_function(t_service* tservice, t_function* 
     f_types_ << indent() << "if err2 = oprot.WriteMessageBegin(ctx, \""
                << escape_string(tfunction->get_name()) << "\", thrift.REPLY, seqId); err2 != nil {"
                << endl;
-    f_types_ << indent() << "  err = err2" << endl;
+    f_types_ << indent() << "  err = thrift.WrapTException(err2)" << endl;
     f_types_ << indent() << "}" << endl;
     f_types_ << indent() << "if err2 = result." << write_method_name_ << "(ctx, oprot); err == nil && err2 != nil {" << endl;
-    f_types_ << indent() << "  err = err2" << endl;
+    f_types_ << indent() << "  err = thrift.WrapTException(err2)" << endl;
     f_types_ << indent() << "}" << endl;
     f_types_ << indent() << "if err2 = oprot.WriteMessageEnd(ctx); err == nil && err2 != nil {"
                << endl;
-    f_types_ << indent() << "  err = err2" << endl;
+    f_types_ << indent() << "  err = thrift.WrapTException(err2)" << endl;
     f_types_ << indent() << "}" << endl;
     f_types_ << indent() << "if err2 = oprot.Flush(ctx); err == nil && err2 != nil {" << endl;
-    f_types_ << indent() << "  err = err2" << endl;
+    f_types_ << indent() << "  err = thrift.WrapTException(err2)" << endl;
     f_types_ << indent() << "}" << endl;
     f_types_ << indent() << "if err != nil {" << endl;
     f_types_ << indent() << "  return" << endl;
