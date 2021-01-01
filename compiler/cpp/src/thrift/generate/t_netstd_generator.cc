@@ -1517,7 +1517,7 @@ void t_netstd_generator::generate_netstd_struct_tostring(ostream& out, t_struct*
         }
     }
 
-    out << indent() << "sb.Append(\")\");" << endl
+    out << indent() << "sb.Append(')');" << endl
         << indent() << "return sb.ToString();" << endl;
     indent_down();
     out << indent() << "}" << endl;
