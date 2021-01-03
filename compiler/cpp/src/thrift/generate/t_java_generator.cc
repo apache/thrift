@@ -4878,11 +4878,11 @@ void t_java_generator::generate_field_descs(ostream& out, t_struct* tstruct) {
   }
 }
 
-void t_java_generator::generate_scheme_map(ostream& out, t_struct* tstruct) {
+void t_java_generator::generate_scheme_map(ostream& out, t_struct*) {
   indent(out) << "private static final org.apache.thrift.scheme.SchemeFactory STANDARD_SCHEME_FACTORY = new "
-      << tstruct->get_name() << "StandardSchemeFactory();" << endl;
+      << "StandardSchemeFactory();" << endl;
   indent(out) << "private static final org.apache.thrift.scheme.SchemeFactory TUPLE_SCHEME_FACTORY = new "
-      << tstruct->get_name() << "TupleSchemeFactory();" << endl;
+      << "TupleSchemeFactory();" << endl;
 }
 
 void t_java_generator::generate_field_name_constants(ostream& out, t_struct* tstruct) {
@@ -5268,18 +5268,18 @@ void t_java_generator::generate_standard_writer(ostream& out, t_struct* tstruct,
 void t_java_generator::generate_java_struct_standard_scheme(ostream& out,
                                                             t_struct* tstruct,
                                                             bool is_result) {
-  indent(out) << "private static class " << tstruct->get_name()
+  indent(out) << "private static class "
               << "StandardSchemeFactory implements org.apache.thrift.scheme.SchemeFactory {" << endl;
   indent_up();
-  indent(out) << "public " << tstruct->get_name() << "StandardScheme getScheme() {" << endl;
+  indent(out) << "public StandardScheme getScheme() {" << endl;
   indent_up();
-  indent(out) << "return new " << tstruct->get_name() << "StandardScheme();" << endl;
+  indent(out) << "return new StandardScheme();" << endl;
   indent_down();
   indent(out) << "}" << endl;
   indent_down();
   indent(out) << "}" << endl << endl;
 
-  out << indent() << "private static class " << tstruct->get_name()
+  out << indent() << "private static class "
       << "StandardScheme extends org.apache.thrift.scheme.StandardScheme<" << tstruct->get_name() << "> {" << endl << endl;
   indent_up();
   generate_standard_reader(out, tstruct);
@@ -5386,17 +5386,17 @@ void t_java_generator::generate_java_struct_tuple_writer(ostream& out, t_struct*
 }
 
 void t_java_generator::generate_java_struct_tuple_scheme(ostream& out, t_struct* tstruct) {
-  indent(out) << "private static class " << tstruct->get_name()
+  indent(out) << "private static class "
               << "TupleSchemeFactory implements org.apache.thrift.scheme.SchemeFactory {" << endl;
   indent_up();
-  indent(out) << "public " << tstruct->get_name() << "TupleScheme getScheme() {" << endl;
+  indent(out) << "public TupleScheme getScheme() {" << endl;
   indent_up();
-  indent(out) << "return new " << tstruct->get_name() << "TupleScheme();" << endl;
+  indent(out) << "return new TupleScheme();" << endl;
   indent_down();
   indent(out) << "}" << endl;
   indent_down();
   indent(out) << "}" << endl << endl;
-  out << indent() << "private static class " << tstruct->get_name()
+  out << indent() << "private static class "
       << "TupleScheme extends org.apache.thrift.scheme.TupleScheme<" << tstruct->get_name() << "> {" << endl << endl;
   indent_up();
   generate_java_struct_tuple_writer(out, tstruct);
