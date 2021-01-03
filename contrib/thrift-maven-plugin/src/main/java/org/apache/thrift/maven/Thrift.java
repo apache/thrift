@@ -51,6 +51,7 @@ final class Thrift {
     private final File javaOutputDirectory;
     private final CommandLineUtils.StringStreamConsumer output;
     private final CommandLineUtils.StringStreamConsumer error;
+    private final boolean strict;
 
     /**
      * Constructs a new instance. This should only be used by the {@link Builder}.
@@ -61,9 +62,12 @@ final class Thrift {
      * @param thriftFiles         The thrift source files to compile.
      * @param javaOutputDirectory The directory into which the java source files
      *                            will be generated.
+     * @param strict              Tells if the compilation is to be done in strict
+     *                            mode.
      */
     private Thrift(String executable, String generator, ImmutableSet<File> thriftPath,
-                   ImmutableSet<File> thriftFiles, File javaOutputDirectory) {
+                   ImmutableSet<File> thriftFiles, File javaOutputDirectory,
+                   boolean strict) {
         this.executable = checkNotNull(executable, "executable");
         this.generator = checkNotNull(generator, "generator");
         this.thriftPathElements = checkNotNull(thriftPath, "thriftPath");
@@ -71,6 +75,7 @@ final class Thrift {
         this.javaOutputDirectory = checkNotNull(javaOutputDirectory, "javaOutputDirectory");
         this.error = new CommandLineUtils.StringStreamConsumer();
         this.output = new CommandLineUtils.StringStreamConsumer();
+        this.strict = strict;
     }
 
     /**
@@ -112,6 +117,9 @@ final class Thrift {
             command.add("-I");
             command.add(thriftPathElement.toString());
         }
+        if (strict) {
+            command.add("-strict");
+        }
         command.add("-out");
         command.add(javaOutputDirectory.toString());
         command.add("--gen");
@@ -143,6 +151,7 @@ final class Thrift {
         private Set<File> thriftPathElements;
         private Set<File> thriftFiles;
         private String generator;
+        private boolean strict;
 
         /**
          * Constructs a new builder. The two parameters are present as they are
@@ -193,6 +202,11 @@ final class Thrift {
         public Builder setGenerator(String generator) {
             checkNotNull(generator);
             this.generator = generator;
+            return this;
+        }
+
+        public Builder setStrict(boolean strict) {
+            this.strict = strict;
             return this;
         }
 
@@ -256,7 +270,7 @@ final class Thrift {
         public Thrift build() {
             checkState(!thriftFiles.isEmpty());
             return new Thrift(executable, generator, ImmutableSet.copyOf(thriftPathElements),
-                    ImmutableSet.copyOf(thriftFiles), javaOutputDirectory);
+                    ImmutableSet.copyOf(thriftFiles), javaOutputDirectory, strict);
         }
     }
 }

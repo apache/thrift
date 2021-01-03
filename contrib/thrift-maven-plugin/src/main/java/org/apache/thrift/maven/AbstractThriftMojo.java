@@ -98,6 +98,14 @@ abstract class AbstractThriftMojo extends AbstractMojo {
     private String generator;
 
     /**
+     * Tells the plugin whether to enable strict mode in Thrift compiler.
+     * By default, compilation is not strict.
+     *
+     * @parameter default-value="false"
+     */
+    private boolean strict;
+
+    /**
      * @parameter
      */
     private File[] additionalThriftPathElements = new File[]{};
@@ -178,6 +186,7 @@ abstract class AbstractThriftMojo extends AbstractMojo {
 
                     Thrift thrift = new Thrift.Builder(thriftExecutable, outputDirectory)
                             .setGenerator(generator)
+                            .setStrict(strict)
                             .addThriftPathElement(thriftSourceRoot)
                             .addThriftPathElements(derivedThriftPathElements)
                             .addThriftPathElements(asList(additionalThriftPathElements))
@@ -325,7 +334,7 @@ abstract class AbstractThriftMojo extends AbstractMojo {
     ImmutableSet<File> findThriftFilesInDirectory(File directory) throws IOException {
         checkNotNull(directory);
         checkArgument(directory.isDirectory(), "%s is not a directory", directory);
-        List<File> thriftFilesInDirectory = getFiles(directory, 
+        List<File> thriftFilesInDirectory = getFiles(directory,
         		Joiner.on(",").join(includes),
         		Joiner.on(",").join(excludes));
         return ImmutableSet.copyOf(thriftFilesInDirectory);

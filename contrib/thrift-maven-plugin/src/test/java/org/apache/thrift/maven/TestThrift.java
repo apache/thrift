@@ -26,10 +26,7 @@ import org.junit.Test;
 
 import java.io.File;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.Assert.*;
 
 public class TestThrift {
 
@@ -118,6 +115,48 @@ public class TestThrift {
             new File(testRootDir, "shared/SharedService.java").exists());
         assertTrue("generated java code doesn't exist",
             new File(testRootDir, "tutorial/InvalidOperation.java").exists());
+    }
+
+    @Test
+    public void testImperfectNonStrict() throws Exception {
+        final File imperfectThrift = new File(idlDir, "imperfect.thrift");
+
+        builder.addThriftFile(imperfectThrift);
+
+        final Thrift thrift = builder.build();
+        // compilation is not strict by default
+
+        assertTrue("File not found: imperfect.thrift", imperfectThrift.exists());
+        assertFalse("gen-java directory should not exist", genJavaDir.exists());
+
+        // execute the compile
+        final int result = thrift.compile();
+        assertEquals(0, result);
+
+        assertFalse("gen-java directory was not removed", genJavaDir.exists());
+        assertTrue("generated java code doesn't exist",
+                   new File(testRootDir, "strictness/ImperfectService.java").exists());
+    }
+
+    @Test
+    public void testImperfectStrict() throws Exception {
+        final File imperfectThrift = new File(idlDir, "imperfect.thrift");
+
+        builder.addThriftFile(imperfectThrift);
+        builder.setStrict(true);
+
+        final Thrift thrift = builder.build();
+
+        assertTrue("File not found: imperfect.thrift", imperfectThrift.exists());
+        assertFalse("gen-java directory should not exist", genJavaDir.exists());
+
+        // execute the compile
+        final int result = thrift.compile();
+        assertNotEquals(0, result);
+
+        assertFalse("gen-java directory was not removed", genJavaDir.exists());
+        assertFalse("java code has been generated exist despire errors",
+                   new File(testRootDir, "strictness/ImperfectService.java").exists());
     }
 
     @Test
