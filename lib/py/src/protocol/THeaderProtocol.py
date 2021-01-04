@@ -35,7 +35,9 @@ class THeaderProtocol(TProtocolBase):
 
     THeaderProtocol frames other Thrift protocols and adds support for optional
     out-of-band headers. The currently supported subprotocols are
-    TBinaryProtocol and TCompactProtocol.
+    TBinaryProtocol and TCompactProtocol. When used as a client, the
+    subprotocol to frame can be chosen with the `default_protocol` parameter to
+    the constructor.
 
     It's also possible to apply transforms to the encoded message payload. The
     only transform currently supported is to gzip.
@@ -53,14 +55,14 @@ class THeaderProtocol(TProtocolBase):
 
     """
 
-    def __init__(self, transport, allowed_client_types):
+    def __init__(self, transport, allowed_client_types, default_protocol=THeaderSubprotocolID.BINARY):
         # much of the actual work for THeaderProtocol happens down in
         # THeaderTransport since we need to do low-level shenanigans to detect
         # if the client is sending us headers or one of the headerless formats
         # we support. this wraps the real transport with the one that does all
         # the magic.
         if not isinstance(transport, THeaderTransport):
-            transport = THeaderTransport(transport, allowed_client_types)
+            transport = THeaderTransport(transport, allowed_client_types, default_protocol)
         super(THeaderProtocol, self).__init__(transport)
         self._set_protocol()
 
@@ -218,8 +220,13 @@ class THeaderProtocol(TProtocolBase):
 
 
 class THeaderProtocolFactory(TProtocolFactory):
-    def __init__(self, allowed_client_types=(THeaderClientType.HEADERS,)):
+    def __init__(
+        self,
+        allowed_client_types=(THeaderClientType.HEADERS,),
+        default_protocol=THeaderSubprotocolID.BINARY,
+    ):
         self.allowed_client_types = allowed_client_types
+        self.default_protocol = default_protocol
 
     def getProtocol(self, trans):
-        return THeaderProtocol(trans, self.allowed_client_types)
+        return THeaderProtocol(trans, self.allowed_client_types, self.default_protocol)
