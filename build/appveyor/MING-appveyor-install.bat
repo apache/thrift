@@ -25,14 +25,16 @@ CALL cl_banner_install.bat                 || EXIT /B
 CALL cl_setenv.bat                         || EXIT /B
 CALL cl_showenv.bat                        || EXIT /B
 
-SET PACKAGES=^
-  --needed -S bison flex make ^
-  mingw-w64-%MINGWPLAT%-boost ^
-  mingw-w64-%MINGWPLAT%-cmake ^
-  mingw-w64-%MINGWPLAT%-libevent ^
-  mingw-w64-%MINGWPLAT%-openssl ^
-  mingw-w64-%MINGWPLAT%-toolchain ^
-  mingw-w64-%MINGWPLAT%-zlib
+choco install mingw
+
+::SET PACKAGES=^
+::  --needed -S bison flex make ^
+::  mingw-w64-%MINGWPLAT%-boost ^
+::  mingw-w64-%MINGWPLAT%-cmake ^
+::  mingw-w64-%MINGWPLAT%-libevent ^
+::  mingw-w64-%MINGWPLAT%-openssl ^
+::  mingw-w64-%MINGWPLAT%-toolchain ^
+::  mingw-w64-%MINGWPLAT%-zlib
 
 ::mingw-w64-%MINGWPLAT%-qt5 : WAY too large (1GB download!) - tested in cygwin builds anyway
 
@@ -49,11 +51,11 @@ SET PACKAGES=^
 :: %BASH% -lc "pacman --noconfirm -Su %IGNORE%"                        || EXIT /B
 
 :: Updata the new key
-%BASH% -lc "curl -O http://repo.msys2.org/msys/x86_64/msys2-keyring-r21.b39fb11-1-any.pkg.tar.xz"         || EXIT /B
-%BASH% -lc "curl -O http://repo.msys2.org/msys/x86_64/msys2-keyring-r21.b39fb11-1-any.pkg.tar.xz.sig"     || EXIT /B
-%BASH% -lc "pacman-key --verify msys2-keyring-r21.b39fb11-1-any.pkg.tar.xz.sig"                           || EXIT /B
-%BASH% -lc "pacman --noconfirm -U --config <(echo) msys2-keyring-r21.b39fb11-1-any.pkg.tar.xz"            || EXIT /B
+::%BASH% -lc "curl -O http://repo.msys2.org/msys/x86_64/msys2-keyring-r21.b39fb11-1-any.pkg.tar.xz"         || EXIT /B
+::%BASH% -lc "curl -O http://repo.msys2.org/msys/x86_64/msys2-keyring-r21.b39fb11-1-any.pkg.tar.xz.sig"     || EXIT /B
+::%BASH% -lc "pacman-key --verify msys2-keyring-r21.b39fb11-1-any.pkg.tar.xz.sig"                           || EXIT /B
+::%BASH% -lc "pacman --noconfirm -U --config <(echo) msys2-keyring-r21.b39fb11-1-any.pkg.tar.xz"            || EXIT /B
 :: Upgrade things
-%BASH% -lc "pacman --noconfirm -Sy"                                                                       || EXIT /B
-%BASH% -lc "pacman --noconfirm -Sydd pacman"                                                              || EXIT /B
-%BASH% -lc "pacman --noconfirm %PACKAGES%"                                                                || EXIT /B
+::%BASH% -lc "pacman --noconfirm -Sy"                                                                       || EXIT /B
+::%BASH% -lc "pacman --noconfirm -Sydd pacman"                                                              || EXIT /B
+::%BASH% -lc "pacman --noconfirm %PACKAGES%"                                                                || EXIT /B
