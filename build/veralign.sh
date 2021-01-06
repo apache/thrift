@@ -57,6 +57,7 @@ FILES[configure.ac]=configureReplace
 FILES[contrib/Rebus/Properties/AssemblyInfo.cs]=simpleReplace
 FILES[contrib/thrift.spec]=simpleReplace
 FILES[contrib/zeromq/csharp/AssemblyInfo.cs]=simpleReplace
+FILES[contrib/thrift-maven-plugin/pom.xml]=pomReplace
 FILES[doc/specs/idl.md]=simpleReplace
 FILES[lib/as3/gradle.properties]=simpleReplace
 FILES[lib/d/src/thrift/base.d]=simpleReplace
@@ -155,7 +156,7 @@ validateVersion "${NEWVERSION}" || exit $?
 #
 function escapeVersion
 {
-    echo "$(echo $1 | sed 's/\./\\./g' | sed 's/\[/\\\[/g' | sed 's/\]/\\\]/g')"
+    echo "$(echo "$1" | sed 's/\./\\./g' | sed 's/\[/\\\[/g' | sed 's/\]/\\\]/g')"
 }
 
 # Set up verbose hilighting if running interactive
@@ -236,6 +237,18 @@ function jsonReplace
 function pubspecReplace
 {
     replace "$1" "version: ${OLDVERSION}" "version: ${NEWVERSION}"
+}
+
+#
+# pomReplace: replace a specific version field in a maven pom file
+#   must be a top level "version" field in the xml structure
+# \param $1 filename to do replacements on
+# \returns 0 on success
+#
+
+function pomReplace
+{
+    replace "$1" "^  <version>${OLDVERSION}<\/version>" "  <version>${NEWVERSION}<\/version>"
 }
 
 #
