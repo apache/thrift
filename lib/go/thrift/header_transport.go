@@ -488,7 +488,7 @@ func (t *THeaderTransport) parseHeaders(ctx context.Context, frameSize uint32) e
 	headers := make(THeaderMap)
 	for {
 		infoType, err := hp.readVarint32()
-		if err == io.EOF {
+		if errors.Is(err, io.EOF) {
 			break
 		}
 		if err != nil {

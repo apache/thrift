@@ -21,6 +21,7 @@ package thrift
 
 import (
 	"context"
+	"errors"
 )
 
 // THeaderProtocol is a thrift protocol that implements THeader:
@@ -233,8 +234,8 @@ func (p *THeaderProtocol) ReadMessageBegin(ctx context.Context) (name string, ty
 	var newProto TProtocol
 	newProto, err = p.transport.Protocol().GetProtocol(p.transport)
 	if err != nil {
-		tAppExc, ok := err.(TApplicationException)
-		if !ok {
+		var tAppExc TApplicationException
+		if !errors.As(err, &tAppExc) {
 			return
 		}
 		if e := p.protocol.WriteMessageBegin(ctx, "", EXCEPTION, seqID); e != nil {

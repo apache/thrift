@@ -178,7 +178,7 @@ Last updated: October 1, 2017
 | dart      | 2.0.0         | 2.4.0         |       |
 | delphi    |               |               | Not in CI |
 | erlang    | 18.3          | 22.0          |       |
-| go        | 1.10.8        | 1.12.6        |       |
+| go        | 1.14.14       | 1.15.7        |       |
 | haskell   | 7.10.3        | 8.0.2         |       |
 | haxe      | 3.2.1         | 3.4.4         | THRIFT-4352: avoid 3.4.2 |
 | java      | 1.8.0_191     | 11.0.3        |       |

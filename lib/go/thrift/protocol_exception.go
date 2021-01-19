@@ -21,6 +21,7 @@ package thrift
 
 import (
 	"encoding/base64"
+	"errors"
 )
 
 // Thrift Protocol exception
@@ -76,7 +77,7 @@ func NewTProtocolException(err error) TProtocolException {
 		return e
 	}
 
-	if _, ok := err.(base64.CorruptInputError); ok {
+	if errors.As(err, new(base64.CorruptInputError)) {
 		return NewTProtocolExceptionWithType(INVALID_DATA, err)
 	}
 
