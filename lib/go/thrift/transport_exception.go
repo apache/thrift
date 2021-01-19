@@ -92,23 +92,23 @@ func NewTTransportExceptionFromError(e error) TTransportException {
 		return t
 	}
 
-	newTTransportException := func(typeID int, err error, prefix string) TTransportException {
-		return &tTransportException{
-			typeId: typeID,
-			err:    err,
-			msg:    prefix + err.Error(),
-		}
+	te := &tTransportException{
+		typeId: UNKNOWN_TRANSPORT_EXCEPTION,
+		err:    e,
+		msg:    e.Error(),
 	}
 
 	if isTimeoutError(e) {
-		return newTTransportException(TIMED_OUT, e, "")
+		te.typeId = TIMED_OUT
+		return te
 	}
 
-	if e == io.EOF {
-		return newTTransportException(END_OF_FILE, e, "")
+	if errors.Is(e, io.EOF) {
+		te.typeId = END_OF_FILE
+		return te
 	}
 
-	return newTTransportException(UNKNOWN_TRANSPORT_EXCEPTION, e, "")
+	return te
 }
 
 func prependTTransportException(prepend string, e TTransportException) TTransportException {
@@ -119,11 +119,12 @@ func prependTTransportException(prepend string, e TTransportException) TTranspor
 	}
 }
 
-// isTimeoutError returns true when err is a timeout error.
+// isTimeoutError returns true when err is an error caused by timeout.
 //
 // Note that this also includes TTransportException wrapped timeout errors.
 func isTimeoutError(err error) bool {
-	if t, ok := err.(timeoutable); ok {
+	var t timeoutable
+	if errors.As(err, &t) {
 		return t.Timeout()
 	}
 	return false

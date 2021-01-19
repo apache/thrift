@@ -243,12 +243,11 @@ func treatEOFErrorsAsNil(err error) error {
 	if err == nil {
 		return nil
 	}
-	// err could be io.EOF wrapped with TProtocolException,
-	// so that err == io.EOF doesn't necessarily work in some cases.
-	if err.Error() == io.EOF.Error() {
+	if errors.Is(err, io.EOF) {
 		return nil
 	}
-	if err, ok := err.(TTransportException); ok && err.TypeId() == END_OF_FILE {
+	var te TTransportException
+	if errors.As(err, &te) && te.TypeId() == END_OF_FILE {
 		return nil
 	}
 	return err
@@ -315,15 +314,14 @@ func (p *TSimpleServer) processRequests(client TTransport) (err error) {
 		}
 
 		ok, err := processor.Process(ctx, inputProtocol, outputProtocol)
-		// Once we dropped support for pre-go1.13 this can be replaced by:
-		// errors.Is(err, ErrAbandonRequest)
-		if unwrapError(err) == ErrAbandonRequest {
+		if errors.Is(err, ErrAbandonRequest) {
 			return client.Close()
 		}
-		if _, ok := err.(TTransportException); ok && err != nil {
+		if errors.As(err, new(TTransportException)) && err != nil {
 			return err
 		}
-		if err, ok := err.(TApplicationException); ok && err.TypeId() == UNKNOWN_METHOD {
+		var tae TApplicationException
+		if errors.As(err, &tae) && tae.TypeId() == UNKNOWN_METHOD {
 			continue
 		}
 		if !ok {
@@ -331,18 +329,4 @@ func (p *TSimpleServer) processRequests(client TTransport) (err error) {
 		}
 	}
 	return nil
-}
-
-type unwrapper interface {
-	Unwrap() error
-}
-
-func unwrapError(err error) error {
-	for {
-		if u, ok := err.(unwrapper); ok {
-			err = u.Unwrap()
-		} else {
-			return err
-		}
-	}
 }
