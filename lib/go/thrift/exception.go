@@ -38,11 +38,11 @@ func PrependError(prepend string, err error) error {
 		switch te.TExceptionType() {
 		case TExceptionTypeTransport:
 			if t, ok := err.(TTransportException); ok {
-				return NewTTransportException(t.TypeId(), msg)
+				return prependTTransportException(prepend, t)
 			}
 		case TExceptionTypeProtocol:
 			if t, ok := err.(TProtocolException); ok {
-				return NewTProtocolExceptionWithType(t.TypeId(), errors.New(msg))
+				return prependTProtocolException(prepend, t)
 			}
 		case TExceptionTypeApplication:
 			if t, ok := err.(TApplicationException); ok {
@@ -51,7 +51,8 @@ func PrependError(prepend string, err error) error {
 		}
 
 		return wrappedTException{
-			err:            errors.New(msg),
+			err:            err,
+			msg:            msg,
 			tExceptionType: te.TExceptionType(),
 		}
 	}
@@ -87,17 +88,19 @@ func WrapTException(err error) TException {
 
 	return wrappedTException{
 		err:            err,
+		msg:            err.Error(),
 		tExceptionType: TExceptionTypeUnknown,
 	}
 }
 
 type wrappedTException struct {
 	err            error
+	msg            string
 	tExceptionType TExceptionType
 }
 
 func (w wrappedTException) Error() string {
-	return w.err.Error()
+	return w.msg
 }
 
 func (w wrappedTException) TExceptionType() TExceptionType {
