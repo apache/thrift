@@ -46,6 +46,7 @@ const (
 type tTransportException struct {
 	typeId int
 	err    error
+	msg    string
 }
 
 var _ TTransportException = (*tTransportException)(nil)
@@ -59,7 +60,7 @@ func (p *tTransportException) TypeId() int {
 }
 
 func (p *tTransportException) Error() string {
-	return p.err.Error()
+	return p.msg
 }
 
 func (p *tTransportException) Err() error {
@@ -75,7 +76,11 @@ func (p *tTransportException) Timeout() bool {
 }
 
 func NewTTransportException(t int, e string) TTransportException {
-	return &tTransportException{typeId: t, err: errors.New(e)}
+	return &tTransportException{
+		typeId: t,
+		err:    errors.New(e),
+		msg:    e,
+	}
 }
 
 func NewTTransportExceptionFromError(e error) TTransportException {
@@ -87,20 +92,31 @@ func NewTTransportExceptionFromError(e error) TTransportException {
 		return t
 	}
 
-	switch v := e.(type) {
-	case TTransportException:
-		return v
-	case timeoutable:
-		if v.Timeout() {
-			return &tTransportException{typeId: TIMED_OUT, err: e}
+	newTTransportException := func(typeID int, err error, prefix string) TTransportException {
+		return &tTransportException{
+			typeId: typeID,
+			err:    err,
+			msg:    prefix + err.Error(),
 		}
 	}
 
-	if e == io.EOF {
-		return &tTransportException{typeId: END_OF_FILE, err: e}
+	if isTimeoutError(e) {
+		return newTTransportException(TIMED_OUT, e, "")
 	}
 
-	return &tTransportException{typeId: UNKNOWN_TRANSPORT_EXCEPTION, err: e}
+	if e == io.EOF {
+		return newTTransportException(END_OF_FILE, e, "")
+	}
+
+	return newTTransportException(UNKNOWN_TRANSPORT_EXCEPTION, e, "")
+}
+
+func prependTTransportException(prepend string, e TTransportException) TTransportException {
+	return &tTransportException{
+		typeId: e.TypeId(),
+		err:    e,
+		msg:    prepend + e.Error(),
+	}
 }
 
 // isTimeoutError returns true when err is a timeout error.

@@ -42,6 +42,7 @@ const (
 type tProtocolException struct {
 	typeId int
 	err    error
+	msg    string
 }
 
 var _ TProtocolException = (*tProtocolException)(nil)
@@ -55,11 +56,11 @@ func (p *tProtocolException) TypeId() int {
 }
 
 func (p *tProtocolException) String() string {
-	return p.err.Error()
+	return p.msg
 }
 
 func (p *tProtocolException) Error() string {
-	return p.err.Error()
+	return p.msg
 }
 
 func (p *tProtocolException) Unwrap() error {
@@ -70,19 +71,16 @@ func NewTProtocolException(err error) TProtocolException {
 	if err == nil {
 		return nil
 	}
+
 	if e, ok := err.(TProtocolException); ok {
 		return e
 	}
+
 	if _, ok := err.(base64.CorruptInputError); ok {
-		return &tProtocolException{
-			typeId: INVALID_DATA,
-			err:    err,
-		}
+		return NewTProtocolExceptionWithType(INVALID_DATA, err)
 	}
-	return &tProtocolException{
-		typeId: UNKNOWN_PROTOCOL_EXCEPTION,
-		err:    err,
-	}
+
+	return NewTProtocolExceptionWithType(UNKNOWN_PROTOCOL_EXCEPTION, err)
 }
 
 func NewTProtocolExceptionWithType(errType int, err error) TProtocolException {
@@ -92,5 +90,14 @@ func NewTProtocolExceptionWithType(errType int, err error) TProtocolException {
 	return &tProtocolException{
 		typeId: errType,
 		err:    err,
+		msg:    err.Error(),
+	}
+}
+
+func prependTProtocolException(prepend string, err TProtocolException) TProtocolException {
+	return &tProtocolException{
+		typeId: err.TypeId(),
+		err:    err,
+		msg:    prepend + err.Error(),
 	}
 }
