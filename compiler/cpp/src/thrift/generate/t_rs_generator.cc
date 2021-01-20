@@ -565,7 +565,7 @@ void t_rs_generator::render_attributes_and_includes() {
   f_gen_ << endl;
   f_gen_ << "use thrift::OrderedFloat;" << endl;
   f_gen_ << "use thrift::{ApplicationError, ApplicationErrorKind, ProtocolError, ProtocolErrorKind, TThriftClient};" << endl;
-  f_gen_ << "use thrift::protocol::{TFieldIdentifier, TListIdentifier, TMapIdentifier, TMessageIdentifier, TMessageType, TInputProtocol, TOutputProtocol, TSetIdentifier, TStructIdentifier, TType};" << endl;
+  f_gen_ << "use thrift::protocol::{TFieldIdentifier, TListIdentifier, TMapIdentifier, TMessageIdentifier, TMessageType, TInputProtocol, TOutputProtocol, TSetIdentifier, TStructIdentifier, TType, TObject};" << endl;
   f_gen_ << "use thrift::protocol::field_id;" << endl;
   f_gen_ << "use thrift::protocol::verify_expected_message_type;" << endl;
   f_gen_ << "use thrift::protocol::verify_expected_sequence_number;" << endl;
@@ -898,7 +898,7 @@ void t_rs_generator::render_enum_definition(t_enum* tenum, const string& enum_na
 }
 
 void t_rs_generator::render_enum_impl(const string& enum_name) {
-  f_gen_ << "impl " << enum_name << " {" << endl;
+  f_gen_ << "impl TObject for " << enum_name << " {" << endl;
   indent_up();
 
   // taking enum as 'self' here because Thrift enums
@@ -907,16 +907,16 @@ void t_rs_generator::render_enum_impl(const string& enum_name) {
   // taking a reference to the enum
   f_gen_
     << indent()
-    << "pub fn write_to_out_protocol(self, o_prot: &mut dyn TOutputProtocol) -> thrift::Result<()> {"
+    << "fn write_to_out_protocol(&self, o_prot: &mut dyn TOutputProtocol) -> thrift::Result<()> {"
     << endl;
   indent_up();
-  f_gen_ << indent() << "o_prot.write_i32(self as i32)" << endl;
+  f_gen_ << indent() << "o_prot.write_i32(*self as i32)" << endl;
   indent_down();
   f_gen_ << indent() << "}" << endl;
 
   f_gen_
     << indent()
-    << "pub fn read_from_in_protocol(i_prot: &mut dyn TInputProtocol) -> thrift::Result<" << enum_name << "> {"
+    << "fn read_from_in_protocol(i_prot: &mut dyn TInputProtocol) -> thrift::Result<" << enum_name << "> {"
     << endl;
   indent_up();
 
@@ -1141,12 +1141,17 @@ void t_rs_generator::render_struct_impl(
     render_struct_constructor(struct_name, tstruct, struct_type);
   }
 
-  render_struct_sync_read(struct_name, tstruct, struct_type);
-  render_struct_sync_write(tstruct, struct_type);
-
   if (struct_type == t_rs_generator::T_RESULT) {
     render_result_struct_to_result_method(tstruct);
   }
+
+  f_gen_ << "}" << endl;
+  f_gen_ << endl;
+
+  f_gen_ << "impl TObject for " << struct_name << " {" << endl;
+
+  render_struct_sync_read(struct_name, tstruct, struct_type);
+  render_struct_sync_write(tstruct, struct_type);
 
   indent_down();
   f_gen_ << "}" << endl;
@@ -1383,7 +1388,7 @@ void t_rs_generator::render_union_definition(const string& union_name, t_struct*
 }
 
 void t_rs_generator::render_union_impl(const string& union_name, t_struct* tstruct) {
-  f_gen_ << "impl " << union_name << " {" << endl;
+  f_gen_ << "impl TObject for " << union_name << " {" << endl;
   indent_up();
 
   render_union_sync_read(union_name, tstruct);
@@ -1406,7 +1411,6 @@ void t_rs_generator::render_struct_sync_write(
 ) {
   f_gen_
     << indent()
-    << visibility_qualifier(struct_type)
     << "fn write_to_out_protocol(&self, o_prot: &mut dyn TOutputProtocol) -> thrift::Result<()> {"
     << endl;
   indent_up();
@@ -1439,7 +1443,7 @@ void t_rs_generator::render_struct_sync_write(
 void t_rs_generator::render_union_sync_write(const string &union_name, t_struct *tstruct) {
   f_gen_
     << indent()
-    << "pub fn write_to_out_protocol(&self, o_prot: &mut dyn TOutputProtocol) -> thrift::Result<()> {"
+    << "fn write_to_out_protocol(&self, o_prot: &mut dyn TOutputProtocol) -> thrift::Result<()> {"
     << endl;
   indent_up();
 
@@ -1679,7 +1683,6 @@ void t_rs_generator::render_struct_sync_read(
 ) {
   f_gen_
     << indent()
-    << visibility_qualifier(struct_type)
     << "fn read_from_in_protocol(i_prot: &mut dyn TInputProtocol) -> thrift::Result<" << struct_name << "> {"
     << endl;
 
@@ -1802,7 +1805,7 @@ void t_rs_generator::render_struct_sync_read(
 void t_rs_generator::render_union_sync_read(const string &union_name, t_struct *tstruct) {
   f_gen_
     << indent()
-    << "pub fn read_from_in_protocol(i_prot: &mut dyn TInputProtocol) -> thrift::Result<" << union_name << "> {"
+    << "fn read_from_in_protocol(i_prot: &mut dyn TInputProtocol) -> thrift::Result<" << union_name << "> {"
     << endl;
   indent_up();
 
