@@ -92,7 +92,8 @@ Where:
 
 ### String encoding
 
-*String*s are first encoded to UTF-8, and then send as binary.
+*String*s are first encoded to UTF-8, and then send as binary. They do not
+include a NUL delimiter.
 
 ### Double encoding
 
