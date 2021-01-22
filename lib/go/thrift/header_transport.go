@@ -264,6 +264,7 @@ type THeaderTransport struct {
 	writeTransforms []THeaderTransformID
 
 	clientType clientType
+	protocolID THeaderProtocolID
 	cfg        *TConfiguration
 
 	// buffer is used in the following scenarios to avoid repetitive
@@ -303,6 +304,7 @@ func NewTHeaderTransportConf(trans TTransport, conf *TConfiguration) *THeaderTra
 		transport:    trans,
 		reader:       bufio.NewReader(trans),
 		writeHeaders: make(THeaderMap),
+		protocolID:   conf.GetTHeaderProtocolID(),
 		cfg:          conf,
 	}
 }
@@ -443,16 +445,7 @@ func (t *THeaderTransport) parseHeaders(ctx context.Context, frameSize uint32) e
 	if err != nil {
 		return err
 	}
-	idPtr, err := THeaderProtocolIDPtr(THeaderProtocolID(protoID))
-	if err != nil {
-		return err
-	}
-	if t.cfg == nil {
-		t.cfg = &TConfiguration{
-			noPropagation: true,
-		}
-	}
-	t.cfg.THeaderProtocolID = idPtr
+	t.protocolID = THeaderProtocolID(protoID)
 
 	var transformCount int32
 	transformCount, err = hp.readVarint32()
@@ -597,7 +590,7 @@ func (t *THeaderTransport) Flush(ctx context.Context) error {
 		headers := NewTMemoryBuffer()
 		hp := NewTCompactProtocol(headers)
 		hp.SetTConfiguration(t.cfg)
-		if _, err := hp.writeVarint32(int32(t.cfg.GetTHeaderProtocolID())); err != nil {
+		if _, err := hp.writeVarint32(int32(t.protocolID)); err != nil {
 			return NewTTransportExceptionFromError(err)
 		}
 		if _, err := hp.writeVarint32(int32(len(t.writeTransforms))); err != nil {
@@ -742,7 +735,7 @@ func (t *THeaderTransport) AddTransform(transform THeaderTransformID) error {
 func (t *THeaderTransport) Protocol() THeaderProtocolID {
 	switch t.clientType {
 	default:
-		return t.cfg.GetTHeaderProtocolID()
+		return t.protocolID
 	case clientFramedBinary, clientUnframedBinary:
 		return THeaderProtocolBinary
 	case clientFramedCompact, clientUnframedCompact:
