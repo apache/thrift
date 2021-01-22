@@ -1493,11 +1493,15 @@ void t_go_generator::generate_go_struct_definition(ostream& out,
 
   if (is_exception) {
     out << indent() << "func (p *" << tstruct_name << ") Error() string {" << endl;
-    out << indent() << indent() << "return p.String()" << endl;
+    indent_up();
+    out << indent() << "return p.String()" << endl;
+    indent_down();
     out << indent() << "}" << endl << endl;
 
     out << indent() << "func (" << tstruct_name << ") TExceptionType() thrift.TExceptionType {" << endl;
-    out << indent() << indent() << "return thrift.TExceptionTypeCompiled" << endl;
+    indent_up();
+    out << indent() << "return thrift.TExceptionTypeCompiled" << endl;
+    indent_down();
     out << indent() << "}" << endl << endl;
 
     out << indent() << "var _ thrift.TException = (*" << tstruct_name << ")(nil)"
@@ -1990,6 +1994,7 @@ void t_go_generator::generate_service_client(t_service* tservice) {
     f_types_ << indent() << "*" << extends_client << endl;
   } else {
     f_types_ << indent() << "c thrift.TClient" << endl;
+    f_types_ << indent() << "meta thrift.ResponseMeta" << endl;
   }
 
   indent_down();
@@ -2059,7 +2064,19 @@ void t_go_generator::generate_service_client(t_service* tservice) {
     indent_up();
     f_types_ << indent() << "return p.c" << endl;
     indent_down();
-    f_types_ << indent() << "}" << endl;
+    f_types_ << indent() << "}" << endl << endl;
+
+    f_types_ << indent() << "func (p *" << serviceName << "Client) LastResponseMeta_() thrift.ResponseMeta {" << endl;
+    indent_up();
+    f_types_ << indent() << "return p.meta" << endl;
+    indent_down();
+    f_types_ << indent() << "}" << endl << endl;
+
+    f_types_ << indent() << "func (p *" << serviceName << "Client) SetLastResponseMeta_(meta thrift.ResponseMeta) {" << endl;
+    indent_up();
+    f_types_ << indent() << "p.meta = meta" << endl;
+    indent_down();
+    f_types_ << indent() << "}" << endl << endl;
   }
 
   // Generate client method implementations
@@ -2091,8 +2108,11 @@ void t_go_generator::generate_service_client(t_service* tservice) {
       std::string resultName = tmp("_result");
       std::string resultType = publicize(method + "_result", true);
       f_types_ << indent() << "var " << resultName << " " << resultType << endl;
-      f_types_ << indent() << "if err = p.Client_().Call(ctx, \""
-        << method << "\", &" << argsName << ", &" << resultName << "); err != nil {" << endl;
+      f_types_ << indent() << "var meta thrift.ResponseMeta" << endl;
+      f_types_ << indent() << "meta, err = p.Client_().Call(ctx, \""
+        << method << "\", &" << argsName << ", &" << resultName << ")" << endl;
+      f_types_ << indent() << "p.SetLastResponseMeta_(meta)" << endl;
+      f_types_ << indent() << "if err != nil {" << endl;
 
       indent_up();
       f_types_ << indent() << "return" << endl;
@@ -2131,9 +2151,13 @@ void t_go_generator::generate_service_client(t_service* tservice) {
         f_types_ << indent() << "return nil" << endl;
       }
     } else {
+      // Since we don't have response meta for oneway calls, overwrite it with
+      // an empty one to avoid users getting the meta from last call and
+      // mistaken it as from the oneway call.
+      f_types_ << indent() << "p.SetLastResponseMeta_(thrift.ResponseMeta{})" << endl;
       // TODO: would be nice to not to duplicate the call generation
-      f_types_ << indent() << "if err := p.Client_().Call(ctx, \""
-      << method << "\", &"<< argsName << ", nil); err != nil {" << endl;
+      f_types_ << indent() << "if _, err := p.Client_().Call(ctx, \""
+        << method << "\", &"<< argsName << ", nil); err != nil {" << endl;
 
       indent_up();
       f_types_ << indent() << "return err" << endl;

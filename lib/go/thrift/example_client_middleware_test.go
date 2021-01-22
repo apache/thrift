@@ -45,16 +45,16 @@ func NewMyServiceClient(_ TClient) MyService {
 
 func simpleClientLoggingMiddleware(next TClient) TClient {
 	return WrappedTClient{
-		Wrapped: func(ctx context.Context, method string, args, result TStruct) error {
+		Wrapped: func(ctx context.Context, method string, args, result TStruct) (ResponseMeta, error) {
 			log.Printf("Before: %q", method)
 			log.Printf("Args: %#v", args)
-			err := next.Call(ctx, method, args, result)
+			headers, err := next.Call(ctx, method, args, result)
 			log.Printf("After: %q", method)
 			log.Printf("Result: %#v", result)
 			if err != nil {
 				log.Printf("Error: %v", err)
 			}
-			return err
+			return headers, err
 		},
 	}
 }

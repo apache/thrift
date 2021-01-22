@@ -78,11 +78,11 @@ type ClientMiddleware func(TClient) TClient
 //
 // This is provided to aid in developing ClientMiddleware.
 type WrappedTClient struct {
-	Wrapped func(ctx context.Context, method string, args, result TStruct) error
+	Wrapped func(ctx context.Context, method string, args, result TStruct) (ResponseMeta, error)
 }
 
 // Call implements the TClient interface by calling and returning c.Wrapped.
-func (c WrappedTClient) Call(ctx context.Context, method string, args, result TStruct) error {
+func (c WrappedTClient) Call(ctx context.Context, method string, args, result TStruct) (ResponseMeta, error) {
 	return c.Wrapped(ctx, method, args, result)
 }
 
