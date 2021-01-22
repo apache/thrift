@@ -9,6 +9,17 @@ type TClient interface {
 	Call(ctx context.Context, method string, args, result TStruct) error
 }
 
+// TStandardClientUnwrapper is an optional interface TClient implementations can
+// choose to implement, to unwrap the underlying *TStandardClient.
+//
+// Both TStandardClient and WrappedTClient implement it.
+type TStandardClientUnwrapper interface {
+	TClient
+
+	// Returns the underlying *TStandardClient, if any.
+	UnwrapTStandardClient() *TStandardClient
+}
+
 type TStandardClient struct {
 	seqId        int32
 	iprot, oprot TProtocol
@@ -93,3 +104,10 @@ func (p *TStandardClient) Call(ctx context.Context, method string, args, result 
 
 	return p.Recv(ctx, p.iprot, seqId, method, result)
 }
+
+// UnwrapTStandardClient implements TStandardClientUnwrapper by returning self.
+func (p *TStandardClient) UnwrapTStandardClient() *TStandardClient {
+	return p
+}
+
+var _ TStandardClientUnwrapper = (*TStandardClient)(nil)

@@ -54,6 +54,7 @@ func testProcessorMiddleware(c *counter) ProcessorMiddleware {
 func testClientMiddleware(c *counter) ClientMiddleware {
 	return func(next TClient) TClient {
 		return WrappedTClient{
+			Next: next,
 			Wrapped: func(ctx context.Context, method string, args, result TStruct) error {
 				c.incr()
 				return next.Call(ctx, method, args, result)
@@ -131,5 +132,33 @@ func TestWrapClient(t *testing.T) {
 	wrapped.Call(context.Background(), "test", nil, nil)
 	if c.count != 1 {
 		t.Fatalf("Unexpected count value %v", c.count)
+	}
+}
+
+func TestUnwrapTStandardClient(t *testing.T) {
+	origin := &TStandardClient{}
+
+	unwrapped := origin.UnwrapTStandardClient()
+	if unwrapped != origin {
+		t.Errorf("Expected unwrapped *TStandardClient %p, got %p", origin, unwrapped)
+	}
+
+	// wrap multiple layers of middlewares
+	wrapped := WrapClient(
+		origin,
+		testClientMiddleware(newCounter(t)),
+		testClientMiddleware(newCounter(t)),
+		testClientMiddleware(newCounter(t)),
+	)
+	if u, ok := wrapped.(TStandardClientUnwrapper); !ok {
+		t.Errorf(
+			"Expected TStandardClientUnwrapper implementation, got %#v",
+			wrapped,
+		)
+	} else {
+		unwrapped = u.UnwrapTStandardClient()
+		if unwrapped != origin {
+			t.Errorf("Expected unwrapped *TStandardClient %p, got %p", origin, unwrapped)
+		}
 	}
 }

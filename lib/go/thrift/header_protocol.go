@@ -351,7 +351,11 @@ func (p *THeaderProtocol) SetTConfiguration(cfg *TConfiguration) {
 // If the last response was not sent over THeader protocol,
 // a nil map will be returned.
 func GetResponseHeadersFromClient(c TClient) THeaderMap {
-	if sc, ok := c.(*TStandardClient); ok {
+	if u, ok := c.(TStandardClientUnwrapper); ok {
+		sc := u.UnwrapTStandardClient()
+		if sc == nil {
+			return nil
+		}
 		if hp, ok := sc.iprot.(*THeaderProtocol); ok {
 			return hp.transport.readHeaders
 		}

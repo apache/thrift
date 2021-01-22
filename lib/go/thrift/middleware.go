@@ -79,6 +79,7 @@ type ClientMiddleware func(TClient) TClient
 // This is provided to aid in developing ClientMiddleware.
 type WrappedTClient struct {
 	Wrapped func(ctx context.Context, method string, args, result TStruct) error
+	Next    TClient
 }
 
 // Call implements the TClient interface by calling and returning c.Wrapped.
@@ -86,10 +87,25 @@ func (c WrappedTClient) Call(ctx context.Context, method string, args, result TS
 	return c.Wrapped(ctx, method, args, result)
 }
 
-// verify that WrappedTClient implements TClient
+// UnwrapTStandardClient implements TStandardClientUnwrapper by trying to call
+// UnwrapTStandardClient of the wrapped client.
+func (c WrappedTClient) UnwrapTStandardClient() *TStandardClient {
+	if c.Next == nil {
+		return nil
+	}
+	if u, ok := c.Next.(TStandardClientUnwrapper); ok {
+		return u.UnwrapTStandardClient()
+	}
+	return nil
+}
+
+// verify that WrappedTClient implements TClient and TStandardClientUnwrapper.
 var (
 	_ TClient = WrappedTClient{}
 	_ TClient = (*WrappedTClient)(nil)
+
+	_ TStandardClientUnwrapper = WrappedTClient{}
+	_ TStandardClientUnwrapper = (*WrappedTClient)(nil)
 )
 
 // WrapClient wraps the given TClient in the given middlewares.
