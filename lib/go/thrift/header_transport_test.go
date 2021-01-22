@@ -281,3 +281,27 @@ func BenchmarkTHeaderProtocolIDValidate(b *testing.B) {
 		})
 	}
 }
+
+func TestSetTHeaderTransportProtocolID(t *testing.T) {
+	const expected = THeaderProtocolCompact
+	factory := NewTHeaderTransportFactoryConf(nil, &TConfiguration{
+		THeaderProtocolID: THeaderProtocolIDPtrMust(expected),
+	})
+	buf := NewTMemoryBuffer()
+	trans, err := factory.GetTransport(buf)
+	if err != nil {
+		t.Fatalf("Failed to get transport from factory: %v", err)
+	}
+	ht, ok := trans.(*THeaderTransport)
+	if !ok {
+		t.Fatalf("Transport is not *THeaderTransport: %#v", trans)
+	}
+	if actual := ht.Protocol(); actual != expected {
+		t.Errorf("Expected protocol id %v, got %v", expected, actual)
+	}
+
+	ht.SetTConfiguration(&TConfiguration{})
+	if actual := ht.Protocol(); actual != expected {
+		t.Errorf("Expected protocol id %v, got %v", expected, actual)
+	}
+}
