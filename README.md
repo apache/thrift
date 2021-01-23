@@ -137,7 +137,7 @@ From the top directory, do:
     ./configure
 
 You may need to specify the location of the boost files explicitly.
-If you installed boost in /usr/local, you would run configure as follows:
+If you installed boost in `/usr/local`, you would run configure as follows:
 
     ./configure --with-boost=/usr/local
 
@@ -157,7 +157,7 @@ Run ./configure --help to see other configuration options
 
 Please be aware that the Python library will ignore the --prefix option
 and just install wherever Python's distutils puts it (usually along
-the lines of /usr/lib/pythonX.Y/site-packages/).  If you need to control
+the lines of `/usr/lib/pythonX.Y/site-packages/`).  If you need to control
 where the Python modules are installed, set the PY_PREFIX variable.
 (DESTDIR is respected for Python and C++.)
 
