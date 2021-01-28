@@ -1129,29 +1129,31 @@ void t_cpp_generator::generate_struct_declaration(ostream& out,
     }
 
     // Default constructor
-    indent(out) << tstruct->get_name() << "()";
+    std::string clsname_ctor = tstruct->get_name() + "()";
+    indent(out) << clsname_ctor;
 
     bool init_ctor = false;
+    std::string args_indent(indent().size() + clsname_ctor.size() + 3, ' ');
 
     for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
       t_type* t = get_true_type((*m_iter)->get_type());
       if (t->is_base_type() || t->is_enum() || is_reference(*m_iter)) {
         string dval;
-        if (t->is_enum()) {
-          dval += "(" + type_name(t) + ")";
-        }
-        dval += (t->is_string() || is_reference(*m_iter)) ? "" : "0";
         t_const_value* cv = (*m_iter)->get_value();
         if (cv != nullptr) {
-          dval = render_const_value(out, (*m_iter)->get_name(), t, cv);
+          dval += render_const_value(out, (*m_iter)->get_name(), t, cv);
+        } else if (t->is_enum()) {
+          dval += "static_cast<" + type_name(t) + ">(0)";
+        } else {
+          dval += (t->is_string() || is_reference(*m_iter)) ? "" : "0";
         }
         if (!init_ctor) {
           init_ctor = true;
           out << " : ";
-          out << (*m_iter)->get_name() << "(" << dval << ")";
         } else {
-          out << ", " << (*m_iter)->get_name() << "(" << dval << ")";
+          out << ",\n" << args_indent;
         }
+        out << (*m_iter)->get_name() << "(" << dval << ")";
       }
     }
     out << " {" << endl;
@@ -1248,7 +1250,10 @@ void t_cpp_generator::generate_struct_declaration(ostream& out,
           << "uint32_t read(Protocol_* iprot);" << endl;
     } else {
       out << indent() << "uint32_t read("
-          << "::apache::thrift::protocol::TProtocol* iprot);" << endl;
+          << "::apache::thrift::protocol::TProtocol* iprot)";
+      if(!is_exception && !extends.empty())
+        out << " override";
+      out << ';' << endl;
     }
   }
   if (write) {
@@ -1257,7 +1262,10 @@ void t_cpp_generator::generate_struct_declaration(ostream& out,
           << "uint32_t write(Protocol_* oprot) const;" << endl;
     } else {
       out << indent() << "uint32_t write("
-          << "::apache::thrift::protocol::TProtocol* oprot) const;" << endl;
+          << "::apache::thrift::protocol::TProtocol* oprot) const";
+      if(!is_exception && !extends.empty())
+        out << " override";
+      out << ';' << endl;
     }
   }
   out << endl;
@@ -1697,6 +1705,8 @@ void t_cpp_generator::generate_exception_what_method_decl(std::ostream& out,
     out << tstruct->get_name() << "::";
   }
   out << "what() const noexcept";
+  if(!external)
+    out << " override";
 }
 
 namespace struct_ostream_operator_generator {
@@ -2059,8 +2069,10 @@ void t_cpp_generator::generate_service_interface_factory(t_service* tservice, st
   f_header_ << indent() << "typedef " << service_if_name << " Handler;" << endl << endl << indent()
             << "virtual ~" << factory_name << "() {}" << endl << endl << indent() << "virtual "
             << service_if_name << "* getHandler("
-            << "const ::apache::thrift::TConnectionInfo& connInfo) = 0;" << endl << indent()
-            << "virtual void releaseHandler(" << base_if_name << "* /* handler */) = 0;" << endl;
+            << "const ::apache::thrift::TConnectionInfo& connInfo)"
+            << (extends.empty() ? "" : " override") << " = 0;" << endl << indent()
+            << "virtual void releaseHandler(" << base_if_name << "* /* handler */)"
+            << (extends.empty() ? "" : " override") << " = 0;" << endl << indent();
 
   indent_down();
   f_header_ << "};" << endl << endl;
@@ -2074,9 +2086,9 @@ void t_cpp_generator::generate_service_interface_factory(t_service* tservice, st
             << ">& iface) : iface_(iface) {}" << endl << indent() << "virtual ~"
             << singleton_factory_name << "() {}" << endl << endl << indent() << "virtual "
             << service_if_name << "* getHandler("
-            << "const ::apache::thrift::TConnectionInfo&) {" << endl << indent()
+            << "const ::apache::thrift::TConnectionInfo&) override {" << endl << indent()
             << "  return iface_.get();" << endl << indent() << "}" << endl << indent()
-            << "virtual void releaseHandler(" << base_if_name << "* /* handler */) {}" << endl;
+            << "virtual void releaseHandler(" << base_if_name << "* /* handler */) override {}" << endl;
 
   f_header_ << endl << " protected:" << endl << indent() << "::std::shared_ptr<" << service_if_name
             << "> iface_;" << endl;
@@ -2102,7 +2114,8 @@ void t_cpp_generator::generate_service_null(t_service* tservice, string style) {
   vector<t_function*> functions = tservice->get_functions();
   vector<t_function*>::iterator f_iter;
   for (f_iter = functions.begin(); f_iter != functions.end(); ++f_iter) {
-    f_header_ << indent() << function_signature(*f_iter, style, "", false) << " {" << endl;
+    f_header_ << indent() << function_signature(*f_iter, style, "", false)
+              << "override {" << endl;
     indent_up();
 
     t_type* returntype = (*f_iter)->get_returntype();
@@ -2340,7 +2353,7 @@ void t_cpp_generator::generate_service_multiface(t_service* tservice) {
     }
     call += ")";
 
-    f_header_ << indent() << function_signature(*f_iter, "") << " {" << endl;
+    f_header_ << indent() << function_signature(*f_iter, "") << " override {" << endl;
     indent_up();
     f_header_ << indent() << "size_t sz = ifaces_.size();" << endl << indent() << "size_t i = 0;"
               << endl << indent() << "for (; i < (sz - 1); ++i) {" << endl;
@@ -2547,7 +2560,8 @@ void t_cpp_generator::generate_service_client(t_service* tservice, string style)
   vector<t_function*>::const_iterator f_iter;
   for (f_iter = functions.begin(); f_iter != functions.end(); ++f_iter) {
     generate_java_doc(f_header_, *f_iter);
-    indent(f_header_) << function_signature(*f_iter, ifstyle) << ";" << endl;
+    indent(f_header_) << function_signature(*f_iter, ifstyle) 
+                      << " override;" << endl;
     // TODO(dreiss): Use private inheritance to avoid generating thise in cob-style.
     if (style == "Concurrent" && !(*f_iter)->is_oneway()) {
       // concurrent clients need to move the seqid from the send function to the
@@ -3096,7 +3110,8 @@ void ProcessorGenerator::generate_class_definition() {
   f_header_ << indent() << "virtual " << ret_type_ << "dispatchCall(" << finish_cob_
             << "::apache::thrift::protocol::TProtocol* iprot, "
             << "::apache::thrift::protocol::TProtocol* oprot, "
-            << "const std::string& fname, int32_t seqid" << call_context_ << ");" << endl;
+            << "const std::string& fname, int32_t seqid" << call_context_ 
+            << ") override;" << endl;
   if (generator_->gen_templates_) {
     f_header_ << indent() << "virtual " << ret_type_ << "dispatchCallTemplated(" << finish_cob_
               << "Protocol_* iprot, Protocol_* oprot, "
@@ -3309,11 +3324,12 @@ void ProcessorGenerator::generate_factory() {
   indent_up();
 
   f_header_ << indent() << factory_class_name_ << "(const ::std::shared_ptr< " << if_factory_name
-            << " >& handlerFactory) :" << endl << indent()
+            << " >& handlerFactory) noexcept :" << endl << indent()
             << "    handlerFactory_(handlerFactory) {}" << endl << endl << indent()
             << "::std::shared_ptr< ::apache::thrift::"
             << (style_ == "Cob" ? "async::TAsyncProcessor" : "TProcessor") << " > "
-            << "getProcessor(const ::apache::thrift::TConnectionInfo& connInfo);" << endl;
+            << "getProcessor(const ::apache::thrift::TConnectionInfo& connInfo) override;"
+            << endl;
 
   f_header_ << endl << " protected:" << endl << indent() << "::std::shared_ptr< "
             << if_factory_name << " > handlerFactory_;" << endl;
@@ -3945,7 +3961,8 @@ void t_cpp_generator::generate_deserialize_field(ostream& out,
   } else if (type->is_enum()) {
     string t = tmp("ecast");
     out << indent() << "int32_t " << t << ";" << endl << indent() << "xfer += iprot->readI32(" << t
-        << ");" << endl << indent() << name << " = (" << type_name(type) << ")" << t << ";" << endl;
+        << ");" << endl << indent() << name << " = static_cast<" 
+        << type_name(type) << ">(" << t << ");" << endl;
   } else {
     printf("DO NOT KNOW HOW TO DESERIALIZE FIELD '%s' TYPE '%s'\n",
            tfield->get_name().c_str(),
@@ -4150,7 +4167,7 @@ void t_cpp_generator::generate_serialize_field(ostream& out,
             + name;
       }
     } else if (type->is_enum()) {
-      out << "writeI32((int32_t)" << name << ");";
+      out << "writeI32(static_cast<int32_t>(" << name << "));";
     }
     out << endl;
   } else {
@@ -4485,13 +4502,13 @@ string t_cpp_generator::declare_field(t_field* tfield,
         result += " = 0";
         break;
       case t_base_type::TYPE_DOUBLE:
-        result += " = (double)0";
+        result += " = 0.0";
         break;
       default:
         throw "compiler error: no C++ initializer for base type " + t_base_type::t_base_name(tbase);
       }
     } else if (type->is_enum()) {
-      result += " = (" + type_name(type) + ")0";
+      result += " = static_cast<" + type_name(type) + ">(0)";
     }
   }
   if (!reference) {
