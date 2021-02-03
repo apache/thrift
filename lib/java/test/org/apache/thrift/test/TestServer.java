@@ -81,6 +81,24 @@ public class TestServer {
             this.connectionId = connectionId;
         }
 
+    @Override
+    public <T> T unwrap(Class<T> iface) {
+      try {
+        if (isWrapperFor(iface)) {
+          return iface.cast(this);
+        } else {
+          throw new RuntimeException("The context is not a wrapper for " + iface.getName());
+        }
+      } catch (Exception e) {
+        throw new RuntimeException("The context is not a wrapper and does not implement the interface");
+      }
+    }
+
+    @Override
+    public boolean isWrapperFor(Class<?> iface) {
+      return iface.isInstance(this);
+    }
+
   }
 
   static class TestServerEventHandler implements TServerEventHandler {
@@ -99,12 +117,12 @@ public class TestServer {
         }
 
         public void deleteContext(ServerContext serverContext, TProtocol input, TProtocol output) {
-            TestServerContext ctx = (TestServerContext)serverContext;
+            TestServerContext ctx = serverContext.unwrap(TestServerContext.class);
             System.out.println("TServerEventHandler.deleteContext - connection #"+ctx.getConnectionId()+" terminated");
         }
 
         public void processContext(ServerContext serverContext, TTransport inputTransport, TTransport outputTransport) {
-            TestServerContext ctx = (TestServerContext)serverContext;
+            TestServerContext ctx = serverContext.unwrap(TestServerContext.class);
             System.out.println("TServerEventHandler.processContext - connection #"+ctx.getConnectionId()+" is ready to process next request");
         }
 
