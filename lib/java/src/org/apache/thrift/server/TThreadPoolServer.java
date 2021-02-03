@@ -23,6 +23,7 @@ import java.util.Optional;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.SynchronousQueue;
+import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
@@ -97,8 +98,16 @@ public class TThreadPoolServer extends TServer {
   }
 
   private static ExecutorService createDefaultExecutorService(Args args) {
-    return new ThreadPoolExecutor(args.minWorkerThreads, args.maxWorkerThreads, 60L,
-        TimeUnit.SECONDS,  new SynchronousQueue<>());
+    return new ThreadPoolExecutor(args.minWorkerThreads, args.maxWorkerThreads, 60L, TimeUnit.SECONDS,
+        new SynchronousQueue<>(), new ThreadFactory() {
+          @Override
+          public Thread newThread(Runnable r) {
+            Thread thread = new Thread(r);
+            thread.setDaemon(true);
+            thread.setName("TThreadPoolServer WorkerProcess-%d");
+            return thread;
+          }
+        });
   }
 
   protected ExecutorService getExecutorService() {
@@ -128,7 +137,9 @@ public class TThreadPoolServer extends TServer {
     }
 
     execute();
+
     executorService_.shutdownNow();
+
     if (!waitForShutdown()) {
       LOGGER.error("Shutdown is not done after " + stopTimeoutVal + stopTimeoutUnit);
     }
@@ -165,8 +176,7 @@ public class TThreadPoolServer extends TServer {
     long now = System.currentTimeMillis();
     while (timeoutMS >= 0) {
       try {
-        executorService_.awaitTermination(timeoutMS, TimeUnit.MILLISECONDS);
-        return true;
+        return executorService_.awaitTermination(timeoutMS, TimeUnit.MILLISECONDS);
       } catch (InterruptedException ix) {
         long newnow = System.currentTimeMillis();
         timeoutMS -= (newnow - now);
@@ -223,10 +233,18 @@ public class TThreadPoolServer extends TServer {
           connectionContext = eventHandler.get().createContext(inputProtocol, outputProtocol);
         }
 
-        while (!Thread.currentThread().isInterrupted()) {
+        while (true) {
+          if (Thread.currentThread().isInterrupted()) {
+            LOGGER.debug("WorkerProcess requested to shutdown");
+            break;
+          }
           if (eventHandler.isPresent()) {
             eventHandler.get().processContext(connectionContext, inputTransport, outputTransport);
           }
+          // This process cannot be interrupted by Interrupting the Thread. This
+          // will return once a message has been processed or the socket timeout
+          // has elapsed, at which point it will return and check the interrupt
+          // state of the thread.
           processor.process(inputProtocol, outputProtocol);
         }
       } catch (Exception x) {
@@ -237,7 +255,7 @@ public class TThreadPoolServer extends TServer {
         // Ignore err-logging all transport-level/type exceptions
         if (!isIgnorableException(x)) {
           // Log the exception at error level and continue
-          LOGGER.error((x instanceof TException? "Thrift " : "") + "Error occurred during processing of message.", x);
+          LOGGER.error((x instanceof TException ? "Thrift " : "") + "Error occurred during processing of message.", x);
         }
       } finally {
         if (eventHandler.isPresent()) {
