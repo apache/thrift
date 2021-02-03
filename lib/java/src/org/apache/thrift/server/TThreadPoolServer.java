@@ -19,7 +19,7 @@
 
 package org.apache.thrift.server;
 
-import java.util.WeakHashMap;
+import java.util.Optional;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.SynchronousQueue;
@@ -40,7 +40,7 @@ import org.slf4j.LoggerFactory;
  * a worker pool that deals with client connections in blocking way.
  */
 public class TThreadPoolServer extends TServer {
-  private static final Logger LOGGER = LoggerFactory.getLogger(TThreadPoolServer.class.getName());
+  private static final Logger LOGGER = LoggerFactory.getLogger(TThreadPoolServer.class);
 
   public static class Args extends AbstractServerArgs<Args> {
     public int minWorkerThreads = 5;
@@ -81,7 +81,6 @@ public class TThreadPoolServer extends TServer {
 
   // Executor service for handling client connections
   private ExecutorService executorService_;
-  private WeakHashMap<WorkerProcess, Boolean> activeWorkers = new WeakHashMap<>();
 
   private final TimeUnit stopTimeoutUnit;
 
@@ -107,7 +106,7 @@ public class TThreadPoolServer extends TServer {
   }
 
   protected boolean preServe() {
-  	try {
+    try {
       serverTransport_.listen();
     } catch (TTransportException ttx) {
       LOGGER.error("Error occurred during listening.", ttx);
@@ -124,13 +123,14 @@ public class TThreadPoolServer extends TServer {
   }
 
   public void serve() {
-  	if (!preServe()) {
-  		return;
-  	}
+    if (!preServe()) {
+      return;
+    }
 
-  	execute();
+    execute();
+    executorService_.shutdownNow();
     if (!waitForShutdown()) {
-  	  LOGGER.error("Shutdown is not done after " + stopTimeoutVal + stopTimeoutUnit);
+      LOGGER.error("Shutdown is not done after " + stopTimeoutVal + stopTimeoutUnit);
     }
 
     setServing(false);
@@ -141,9 +141,7 @@ public class TThreadPoolServer extends TServer {
       try {
         TTransport client = serverTransport_.accept();
         try {
-          WorkerProcess wp = new WorkerProcess(client);
-          executorService_.execute(wp);
-          activeWorkers.put(wp, Boolean.TRUE);
+          executorService_.execute(new WorkerProcess(client));
         } catch (RejectedExecutionException ree) {
           if (!stopped_) {
             LOGGER.warn("ThreadPool is saturated with incoming requests. Closing latest connection.");
@@ -181,10 +179,6 @@ public class TThreadPoolServer extends TServer {
   public void stop() {
     stopped_ = true;
     serverTransport_.interrupt();
-    executorService_.shutdown();
-    for (WorkerProcess wp : activeWorkers.keySet()) {
-      wp.stop();
-    }
   }
 
   private class WorkerProcess implements Runnable {
@@ -213,7 +207,7 @@ public class TThreadPoolServer extends TServer {
       TProtocol inputProtocol = null;
       TProtocol outputProtocol = null;
 
-      TServerEventHandler eventHandler = null;
+      Optional<TServerEventHandler> eventHandler = Optional.empty();
       ServerContext connectionContext = null;
 
       try {
@@ -223,22 +217,17 @@ public class TThreadPoolServer extends TServer {
         inputProtocol = inputProtocolFactory_.getProtocol(inputTransport);
         outputProtocol = outputProtocolFactory_.getProtocol(outputTransport);
 
-        eventHandler = getEventHandler();
-        if (eventHandler != null) {
-          connectionContext = eventHandler.createContext(inputProtocol, outputProtocol);
+        eventHandler = Optional.ofNullable(getEventHandler());
+
+        if (eventHandler.isPresent()) {
+          connectionContext = eventHandler.get().createContext(inputProtocol, outputProtocol);
         }
-        // we check stopped_ first to make sure we're not supposed to be shutting
-        // down. this is necessary for graceful shutdown.
-        while (true) {
 
-            if (eventHandler != null) {
-              eventHandler.processContext(connectionContext, inputTransport, outputTransport);
-            }
-
-            if (stopped_) {
-              break;
-            }
-            processor.process(inputProtocol, outputProtocol);
+        while (!Thread.currentThread().isInterrupted()) {
+          if (eventHandler.isPresent()) {
+            eventHandler.get().processContext(connectionContext, inputTransport, outputTransport);
+          }
+          processor.process(inputProtocol, outputProtocol);
         }
       } catch (Exception x) {
         LOGGER.debug("Error processing request", x);
@@ -251,8 +240,8 @@ public class TThreadPoolServer extends TServer {
           LOGGER.error((x instanceof TException? "Thrift " : "") + "Error occurred during processing of message.", x);
         }
       } finally {
-        if (eventHandler != null) {
-          eventHandler.deleteContext(connectionContext, inputProtocol, outputProtocol);
+        if (eventHandler.isPresent()) {
+          eventHandler.get().deleteContext(connectionContext, inputProtocol, outputProtocol);
         }
         if (inputTransport != null) {
           inputTransport.close();
@@ -270,10 +259,9 @@ public class TThreadPoolServer extends TServer {
       TTransportException tTransportException = null;
 
       if (x instanceof TTransportException) {
-        tTransportException = (TTransportException)x;
-      }
-      else if (x.getCause() instanceof TTransportException) {
-        tTransportException = (TTransportException)x.getCause();
+        tTransportException = (TTransportException) x;
+      } else if (x.getCause() instanceof TTransportException) {
+        tTransportException = (TTransportException) x.getCause();
       }
 
       if (tTransportException != null) {
@@ -284,10 +272,6 @@ public class TThreadPoolServer extends TServer {
         }
       }
       return false;
-    }
-
-    private void stop() {
-      client_.close();
     }
   }
 }
