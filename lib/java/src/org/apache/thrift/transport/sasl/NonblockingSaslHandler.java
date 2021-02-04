@@ -329,11 +329,16 @@ public class NonblockingSaslHandler {
           serverContext = eventHandler.createContext(requestProtocol, responseProtocol);
           serverContextCreated = true;
         }
-        eventHandler.processContext(serverContext, memoryTransport, memoryTransport);
+        eventHandler.preProcessContext(serverContext, memoryTransport, memoryTransport);
       }
 
       TProcessor processor = processorFactory.getProcessor(this);
       processor.process(requestProtocol, responseProtocol);
+
+      if (eventHandler != null) {
+        eventHandler.postProcessContext(serverContext, memoryTransport, memoryTransport);
+      }
+
       TByteArrayOutputStream rawOutput = memoryTransport.getOutput();
       if (rawOutput.len() == 0) {
         // This is a oneway request, no response to send back. Waiting for next incoming request.

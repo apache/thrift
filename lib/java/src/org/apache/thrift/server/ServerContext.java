@@ -17,11 +17,11 @@
  * under the License.
  */
 
+package org.apache.thrift.server;
+
 /**
  * Interface for storing server's connection context.
  */
-package org.apache.thrift.server;
-
 public interface ServerContext {
 
   /**

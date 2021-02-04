@@ -519,9 +519,12 @@ public abstract class AbstractNonblockingServer extends TServer {
 
       try {
         if (eventHandler_ != null) {
-          eventHandler_.processContext(context_, inTrans_, outTrans_);
+          eventHandler_.preProcessContext(context_, inTrans_, outTrans_);
+          processorFactory_.getProcessor(inTrans_).process(inProt_, outProt_);
+          eventHandler_.postProcessContext(context_, inTrans_, outTrans_);
+        } else {
+          processorFactory_.getProcessor(inTrans_).process(inProt_, outProt_);
         }
-        processorFactory_.getProcessor(inTrans_).process(inProt_, outProt_);
         responseReady();
         return;
       } catch (TException te) {
@@ -598,9 +601,12 @@ public abstract class AbstractNonblockingServer extends TServer {
 
       try {
         if (eventHandler_ != null) {
-          eventHandler_.processContext(context_, inTrans_, outTrans_);
+          eventHandler_.preProcessContext(context_, inTrans_, outTrans_);
+          ((TAsyncProcessor)processorFactory_.getProcessor(inTrans_)).process(this);
+          eventHandler_.postProcessContext(context_, inTrans_, outTrans_);
+        } else {
+          ((TAsyncProcessor)processorFactory_.getProcessor(inTrans_)).process(this);
         }
-        ((TAsyncProcessor)processorFactory_.getProcessor(inTrans_)).process(this);
         return;
       } catch (TException te) {
         LOGGER.warn("Exception while invoking!", te);

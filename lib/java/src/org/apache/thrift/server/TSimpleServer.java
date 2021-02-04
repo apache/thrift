@@ -19,7 +19,6 @@
 
 package org.apache.thrift.server;
 
-import org.apache.thrift.TException;
 import org.apache.thrift.TProcessor;
 import org.apache.thrift.protocol.TProtocol;
 import org.apache.thrift.transport.TTransport;
@@ -75,21 +74,20 @@ public class TSimpleServer extends TServer {
           }
           while (true) {
             if (eventHandler_ != null) {
-              eventHandler_.processContext(connectionContext, inputTransport, outputTransport);
+              eventHandler_.preProcessContext(connectionContext, inputTransport, outputTransport);
+              processor.process(inputProtocol, outputProtocol);
+              eventHandler_.postProcessContext(connectionContext, inputTransport, outputTransport);
+            } else {
+              processor.process(inputProtocol, outputProtocol);
             }
-            processor.process(inputProtocol, outputProtocol);
           }
-        }
-      } catch (TTransportException ttx) {
-        // Client died, just move on
-        LOGGER.debug("Client Transportation Exception", ttx);
-      } catch (TException tx) {
-        if (!stopped_) {
-          LOGGER.error("Thrift error occurred during processing of message.", tx);
         }
       } catch (Exception x) {
         if (!stopped_) {
-          LOGGER.error("Error occurred during processing of message.", x);
+          LOGGER.error("Error processing request", x);
+        }
+        if (eventHandler_ != null) {
+          eventHandler_.errorProcessContext(connectionContext, inputTransport, outputTransport, x);
         }
       }
 

@@ -27,7 +27,6 @@ import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
-import org.apache.thrift.TException;
 import org.apache.thrift.TProcessor;
 import org.apache.thrift.protocol.TProtocol;
 import org.apache.thrift.transport.TServerTransport;
@@ -238,24 +237,23 @@ public class TThreadPoolServer extends TServer {
             LOGGER.debug("WorkerProcess requested to shutdown");
             break;
           }
-          if (eventHandler.isPresent()) {
-            eventHandler.get().processContext(connectionContext, inputTransport, outputTransport);
-          }
+
           // This process cannot be interrupted by Interrupting the Thread. This
           // will return once a message has been processed or the socket timeout
           // has elapsed, at which point it will return and check the interrupt
           // state of the thread.
-          processor.process(inputProtocol, outputProtocol);
+          if (eventHandler.isPresent()) {
+            eventHandler.get().preProcessContext(connectionContext, inputTransport, outputTransport);
+            processor.process(inputProtocol, outputProtocol);
+            eventHandler.get().postProcessContext(connectionContext, inputTransport, outputTransport);
+          } else {
+            processor.process(inputProtocol, outputProtocol);
+          }
         }
       } catch (Exception x) {
         LOGGER.debug("Error processing request", x);
-
-        // We'll usually receive RuntimeException types here
-        // Need to unwrap to ascertain real causing exception before we choose to ignore
-        // Ignore err-logging all transport-level/type exceptions
-        if (!isIgnorableException(x)) {
-          // Log the exception at error level and continue
-          LOGGER.error((x instanceof TException ? "Thrift " : "") + "Error occurred during processing of message.", x);
+        if (eventHandler.isPresent()) {
+          eventHandler.get().errorProcessContext(connectionContext, inputTransport, outputTransport, x);
         }
       } finally {
         if (eventHandler.isPresent()) {
@@ -271,25 +269,6 @@ public class TThreadPoolServer extends TServer {
           client_.close();
         }
       }
-    }
-
-    private boolean isIgnorableException(Exception x) {
-      TTransportException tTransportException = null;
-
-      if (x instanceof TTransportException) {
-        tTransportException = (TTransportException) x;
-      } else if (x.getCause() instanceof TTransportException) {
-        tTransportException = (TTransportException) x.getCause();
-      }
-
-      if (tTransportException != null) {
-        switch(tTransportException.getType()) {
-          case TTransportException.END_OF_FILE:
-          case TTransportException.TIMED_OUT:
-            return true;
-        }
-      }
-      return false;
     }
   }
 }

@@ -23,15 +23,12 @@ import org.apache.thrift.protocol.TProtocol;
 import org.apache.thrift.transport.TTransport;
 
 /**
- * Interface that can handle events from the server core. To
- * use this you should subclass it and implement the methods that you care
- * about. Your subclass can also store local data that you may care about,
- * such as additional "arguments" to these methods (stored in the object
- * instance's state).
+ * Interface that can handle events from the server core. To use this you should
+ * subclass it and implement the methods that you care about. Your subclass can
+ * also store local data that you may care about, such as additional "arguments"
+ * to these methods (stored in the object instance's state).
  *
- * TODO: It seems this is a custom code entry point created for some resource management purpose in hive.
- * But when looking into hive code, we see that the argments of TProtocol and TTransport are never used.
- * We probably should remove these arguments from all the methods.
+ * @see ServerContext
  */
 public interface TServerEventHandler {
 
@@ -43,21 +40,28 @@ public interface TServerEventHandler {
   /**
    * Called when a new client has connected and is about to being processing.
    */
-  ServerContext createContext(TProtocol input,
-                              TProtocol output);
+  ServerContext createContext(TProtocol input, TProtocol output);
 
   /**
    * Called when a client has finished request-handling to delete server
    * context.
    */
-  void deleteContext(ServerContext serverContext,
-                             TProtocol input,
-                             TProtocol output);
+  void deleteContext(ServerContext serverContext, TProtocol input, TProtocol output);
 
   /**
    * Called when a client is about to call the processor.
    */
-  void processContext(ServerContext serverContext,
-                              TTransport inputTransport, TTransport outputTransport);
+  void preProcessContext(ServerContext serverContext, TTransport inputTransport, TTransport outputTransport);
+
+  /**
+   * Called when a client has finished calling the processor.
+   */
+  void postProcessContext(ServerContext serverContext, TTransport inputTransport, TTransport outputTransport);
+
+  /**
+   * Called when an exception occurs during processing.
+   */
+  void errorProcessContext(ServerContext serverContext, TTransport inputTransport, TTransport outputTransport,
+      Throwable cause);
 
 }
