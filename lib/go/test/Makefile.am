@@ -111,28 +111,30 @@ client: stubs
 EXTRA_DIST = \
 	dontexportrwtest \
 	tests \
+	common \
 	BinaryKeyTest.thrift \
-	GoTagTest.thrift \
-	IncludesTest.thrift \
-	MultiplexedProtocolTest.thrift \
-	NamespacedTest.thrift \
-	OnewayTest.thrift \
-	OptionalFieldsTest.thrift \
-	RequiredFieldTest.thrift \
-	RefAnnotationFieldsTest.thrift \
-	UnionDefaultValueTest.thrift \
-	UnionBinaryTest.thrift \
-	ServicesTest.thrift \
-	TypedefFieldTest.thrift \
-	ErrorTest.thrift \
-	NamesTest.thrift \
-	InitialismsTest.thrift \
-	DontExportRWTest.thrift \
-	IgnoreInitialismsTest.thrift \
+	ConflictNamespaceServiceTest.thrift \
 	ConflictNamespaceTestA.thrift \
 	ConflictNamespaceTestB.thrift \
 	ConflictNamespaceTestC.thrift \
 	ConflictNamespaceTestD.thrift \
 	ConflictNamespaceTestSuperThing.thrift \
-	ConflictNamespaceServiceTest.thrift \
-	EqualsTest.thrift
+	DontExportRWTest.thrift \
+	DuplicateImportsTest.thrift \
+	ErrorTest.thrift \
+	EqualsTest.thrift \
+	GoTagTest.thrift \
+	IgnoreInitialismsTest.thrift \
+	IncludesTest.thrift \
+	InitialismsTest.thrift \
+	MultiplexedProtocolTest.thrift \
+	NamespacedTest.thrift \
+	NamesTest.thrift \
+	OnewayTest.thrift \
+	OptionalFieldsTest.thrift \
+	RefAnnotationFieldsTest.thrift \
+	RequiredFieldTest.thrift \
+	ServicesTest.thrift \
+	TypedefFieldTest.thrift \
+	UnionBinaryTest.thrift \
+	UnionDefaultValueTest.thrift

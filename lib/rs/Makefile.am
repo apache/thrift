@@ -43,4 +43,7 @@ clean-local:
 EXTRA_DIST = \
 	src \
 	Cargo.toml \
-	README.md
+	README.md \
+	release.sh \
+	RELEASING.md
+
