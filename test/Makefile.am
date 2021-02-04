@@ -150,6 +150,7 @@ EXTRA_DIST = \
 	EnumTest.thrift \
 	FullCamelTest.thrift \
 	Include.thrift \
+	Identifiers.thrift \
 	Int64Test.thrift \
 	JavaBeansTest.thrift \
 	JavaBinaryDefault.thrift \
@@ -166,7 +167,9 @@ EXTRA_DIST = \
 	StressTest.thrift \
 	ThriftTest.thrift \
 	TypedefTest.thrift \
+	Types.thrift \
 	UnsafeTypes.thrift \
+	Service.thrift \
 	SpecificNameTest.thrift \
 	known_failures_Linux.json \
 	test.py \

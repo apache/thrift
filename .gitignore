@@ -278,6 +278,18 @@ project.lock.json
 /lib/go/src
 /lib/go/test/gopath/
 /lib/go/test/ThriftTest.thrift
+/lib/nodets/test-compiled/
+/lib/ocaml/_build/
+/lib/ocaml/_tags
+/lib/ocaml/configure
+/lib/ocaml/setup.data
+/lib/ocaml/setup.ml
+/lib/ocaml/myocamlbuild.ml
+/lib/ocaml/*/META
+/lib/ocaml/*/*.mllib
+/lib/ocaml/*/*.mldylib
+/lib/ocaml/Makefile
+/lib/ocaml/OCamlMakefile
 /lib/rs/target/
 /lib/rs/Cargo.lock
 /lib/rs/test/Cargo.lock
@@ -292,6 +304,8 @@ project.lock.json
 /lib/rs/*.iml
 /lib/rs/**/*.iml
 /lib/swift/.build
+/lib/ts/test/build/
+/lib/ts/test/gen-*
 /libtool
 /ltmain.sh
 /missing
@@ -343,6 +357,8 @@ project.lock.json
 /test/netstd/*.vspx
 /test/netstd/*.vsp
 /test/netstd/*.diagsession
+/test/netstd/Client/ThriftTest
+/test/netstd/Server/ThriftTest
 /test/netstd/Thrift
 /test/php/php_ext_dir/
 /test/rs/Cargo.lock
@@ -399,5 +415,7 @@ project.lock.json
 /tutorial/rs/bin
 /tutorial/rs/target
 /tutorial/rs/Cargo.lock
+/tutorial/netstd/Interfaces/shared
+/tutorial/netstd/Interfaces/tutorial
 /ylwrap
 

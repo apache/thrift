@@ -132,9 +132,15 @@ style-local:
 	codespell --write-changes --skip=$(skipped_files) --disable-colors
 
 EXTRA_DIST = \
+	.asf.yaml \
 	.clang-format \
 	.dockerignore \
 	.editorconfig \
+	.eslintignore \
+	.eslintrc.json \
+	.flake8 \
+	.gitattributes \
+	.gitignore \
 	.travis.yml \
 	.rustfmt.toml \
 	ApacheThrift.nuspec \
@@ -156,6 +162,7 @@ EXTRA_DIST = \
 	LICENSE \
 	NOTICE \
 	package.json \
+	package-lock.json \
 	phpcs.xml.dist \
 	README.md \
 	sonar-project.properties \

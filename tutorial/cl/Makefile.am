@@ -62,4 +62,5 @@ EXTRA_DIST = \
 	shared-implementation.lisp \
 	thrift-tutorial.asd \
 	make-tutorial-server.lisp \
-	make-tutorial-client.lisp
+	make-tutorial-client.lisp \
+	load-locally.lisp

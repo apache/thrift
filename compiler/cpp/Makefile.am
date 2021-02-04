@@ -115,6 +115,7 @@ EXTRA_DIST = \
              README.md \
              CMakeLists.txt \
              test \
+             tests \
              $(WINDOWS_DIST)
 
 #clean-local:
