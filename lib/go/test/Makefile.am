@@ -73,6 +73,7 @@ gopath: $(THRIFT) $(THRIFTTEST) \
 	$(THRIFT) $(THRIFTARGS) ConflictNamespaceTestSuperThing.thrift
 	$(THRIFT) $(THRIFTARGS) ConflictNamespaceServiceTest.thrift
 	$(THRIFT) $(THRIFTARGS) -r DuplicateImportsTest.thrift
+	$(THRIFT) $(THRIFTARGS) EqualsTest.thrift
 	GOPATH=`pwd`/gopath $(GO) get github.com/golang/mock/gomock || true
 	sed -i 's/\"context\"/\"golang.org\/x\/net\/context\"/g' gopath/src/github.com/golang/mock/gomock/controller.go || true
 	GOPATH=`pwd`/gopath $(GO) get github.com/golang/mock/gomock
@@ -97,7 +98,8 @@ check: gopath
 				conflictnamespacetestsuperthing \
 				conflict/context/conflict_service-remote \
 				servicestest/container_test-remote \
-				duplicateimportstest
+				duplicateimportstest \
+				equalstest
 	GOPATH=`pwd`/gopath $(GO) test thrift tests dontexportrwtest
 
 clean-local:
@@ -132,4 +134,5 @@ EXTRA_DIST = \
 	ConflictNamespaceTestC.thrift \
 	ConflictNamespaceTestD.thrift \
 	ConflictNamespaceTestSuperThing.thrift \
-	ConflictNamespaceServiceTest.thrift
+	ConflictNamespaceServiceTest.thrift \
+	EqualsTest.thrift
