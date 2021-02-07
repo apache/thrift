@@ -2155,7 +2155,7 @@ void t_cpp_generator::generate_service_null(t_service* tservice, string style) {
   vector<t_function*>::iterator f_iter;
   for (f_iter = functions.begin(); f_iter != functions.end(); ++f_iter) {
     f_header_ << indent() << function_signature(*f_iter, style, "", false)
-              << "override {" << endl;
+              << " override {" << endl;
     indent_up();
 
     t_type* returntype = (*f_iter)->get_returntype();
@@ -3562,9 +3562,9 @@ void t_cpp_generator::generate_process_function(t_service* tservice,
             << ") {" << endl;
         if (!tfunction->is_oneway()) {
           indent_up();
-          out << indent() << "result." << (*x_iter)->get_name() << " = " << (*x_iter)->get_name()
-              << ";" << endl << indent() << "result.__isset." << (*x_iter)->get_name() << " = true;"
-              << endl;
+          out << indent() << "result." << (*x_iter)->get_name()
+                          << " = std::move(" << (*x_iter)->get_name() << ");" << endl
+              << indent() << "result.__isset." << (*x_iter)->get_name() << " = true;" << endl;
           indent_down();
           out << indent() << "}";
         } else {
