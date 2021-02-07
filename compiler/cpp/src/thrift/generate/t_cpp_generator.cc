@@ -298,7 +298,6 @@ public:
    * Move defaults to 'noexcept'
    */
   bool is_struct_storage_not_throwing(t_struct* tstruct) const;
-  bool is_field_storage_not_throwing(t_field* field) const;
 
 private:
   /**
@@ -4678,38 +4677,39 @@ string t_cpp_generator::type_to_enum(t_type* type) {
 
 
 bool t_cpp_generator::is_struct_storage_not_throwing(t_struct* tstruct) const {
-  const vector<t_field*>& members = tstruct->get_members();
-  for (auto m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
-    if(!is_field_storage_not_throwing(*m_iter))
+  vector<t_field*> members = tstruct->get_members();
+
+  for(size_t i=0; i < members.size(); ++i)  {
+    t_type* type = get_true_type(members[i]->get_type());
+
+    if(type->is_enum())
+      continue;
+    if(type->is_xception())
       return false;
-  }
-  return true;
-}
-
-bool t_cpp_generator::is_field_storage_not_throwing(t_field* field) const {
-  t_type* type = get_true_type(field->get_type());
-
-  if (type->is_enum()) {
-    return true;
-  }
-  if (type->is_base_type()) {
-    switch (((t_base_type*)type)->get_base()) {
+    if(type->is_base_type()) switch(((t_base_type*)type)->get_base()) {
       case t_base_type::TYPE_BOOL:
       case t_base_type::TYPE_I8:
       case t_base_type::TYPE_I16:
       case t_base_type::TYPE_I32:
       case t_base_type::TYPE_I64:
       case t_base_type::TYPE_DOUBLE:
-        return true;
+        continue;
       case t_base_type::TYPE_VOID:
       case t_base_type::TYPE_STRING:
       default:
         return false;
     }
+    if(type->is_struct()) {
+      const vector<t_field*>& more = ((t_struct*)type)->get_members();
+      for(auto it = more.begin(); it < more.end(); ++it) {
+        if(std::find(members.begin(), members.end(), *it) == members.end())
+          members.push_back(*it);
+      }
+      continue;
+    }
+    return false; // rest-as-throwing(require-alloc)
   }
-  if (type->is_struct())
-    return is_struct_storage_not_throwing((t_struct*)type);
-  return false;
+  return true;
 }
 
 
