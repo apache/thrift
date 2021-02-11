@@ -20,6 +20,7 @@
 
   <PropertyGroup>
     <TargetFramework>netcoreapp3.1</TargetFramework>
+    <Version>0.15.0.0</Version>
     <AssemblyName>Thrift.PublicInterfaces.Compile.Tests</AssemblyName>
     <PackageId>Thrift.PublicInterfaces.Compile.Tests</PackageId>
     <GenerateAssemblyConfigurationAttribute>false</GenerateAssemblyConfigurationAttribute>

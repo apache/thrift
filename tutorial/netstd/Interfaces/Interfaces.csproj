@@ -22,6 +22,7 @@
     <TargetFramework>netstandard2.0</TargetFramework>
     <AssemblyName>Interfaces</AssemblyName>
     <PackageId>Interfaces</PackageId>
+    <Version>0.15.0.0</Version>
     <GenerateAssemblyConfigurationAttribute>false</GenerateAssemblyConfigurationAttribute>
     <GenerateAssemblyCompanyAttribute>false</GenerateAssemblyCompanyAttribute>
     <GenerateAssemblyProductAttribute>false</GenerateAssemblyProductAttribute>
