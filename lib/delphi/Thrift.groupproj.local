@@ -1,9 +1,0 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
-<BorlandProject>
-	<Transactions>
-    <Transaction>1899.12.30 00:00:00.000.873,E:\D\TPCPP\Thrift\wc-XE-all\wc-JensG-haxe\lib\delphi\Thrift.groupproj=C:\Users\Jens\Documents\RAD Studio\Projekte\ProjectGroup1.groupproj</Transaction>
-  </Transactions>
-	<Default.Personality>
-		<Projects ActiveProject="E:\D\TPCPP\Thrift\wc-XE-all\wc-JensG-haxe\lib\delphi\test\client.dproj"/>
-	</Default.Personality>
-</BorlandProject>
