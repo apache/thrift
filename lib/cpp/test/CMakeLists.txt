@@ -283,7 +283,6 @@ target_link_libraries(processor_test
     testgencpp_cob
     ${Boost_LIBRARIES}
 )
-LINK_AGAINST_THRIFT_LIBRARY(processor_test thrift)
 LINK_AGAINST_THRIFT_LIBRARY(processor_test thriftnb)
 add_test(NAME processor_test COMMAND processor_test)
 
@@ -292,10 +291,8 @@ add_executable(TNonblockingServerTest ${TNonblockingServerTest_SOURCES})
 include_directories(${LIBEVENT_INCLUDE_DIRS})
 target_link_libraries(TNonblockingServerTest
     testgencpp_cob
-    ${LIBEVENT_LIBRARIES}
     ${Boost_LIBRARIES}
 )
-LINK_AGAINST_THRIFT_LIBRARY(TNonblockingServerTest thrift)
 LINK_AGAINST_THRIFT_LIBRARY(TNonblockingServerTest thriftnb)
 add_test(NAME TNonblockingServerTest COMMAND TNonblockingServerTest)
 
@@ -305,10 +302,8 @@ if(OPENSSL_FOUND AND WITH_OPENSSL)
   include_directories(${LIBEVENT_INCLUDE_DIRS})
   target_link_libraries(TNonblockingSSLServerTest
     testgencpp_cob
-    ${LIBEVENT_LIBRARIES}
     ${Boost_LIBRARIES}
   )
-  LINK_AGAINST_THRIFT_LIBRARY(TNonblockingSSLServerTest thrift)
   LINK_AGAINST_THRIFT_LIBRARY(TNonblockingSSLServerTest thriftnb)
   add_test(NAME TNonblockingSSLServerTest COMMAND TNonblockingSSLServerTest -- "${CMAKE_CURRENT_SOURCE_DIR}/../../../test/keys")
 endif(OPENSSL_FOUND AND WITH_OPENSSL)

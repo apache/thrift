@@ -153,9 +153,9 @@ include(ThriftMacros)
 
 ADD_LIBRARY_THRIFT(thrift ${thriftcpp_SOURCES} ${thriftcpp_threads_SOURCES})
 if(WIN32)
-    TARGET_LINK_LIBRARIES_THRIFT(thrift ${SYSLIBS} ws2_32)
+    TARGET_LINK_LIBRARIES_THRIFT(thrift PUBLIC ${SYSLIBS} ws2_32)
 else()
-    TARGET_LINK_LIBRARIES_THRIFT(thrift ${SYSLIBS})
+    TARGET_LINK_LIBRARIES_THRIFT(thrift PUBLIC ${SYSLIBS})
 endif()
 ADD_PKGCONFIG_THRIFT(thrift)
 
@@ -164,8 +164,13 @@ if(WITH_LIBEVENT)
     include_directories(SYSTEM ${LIBEVENT_INCLUDE_DIRS})
 
     ADD_LIBRARY_THRIFT(thriftnb ${thriftcppnb_SOURCES})
-    LINK_AGAINST_THRIFT_LIBRARY(thriftnb thrift)
-    TARGET_LINK_LIBRARIES_THRIFT(thriftnb ${SYSLIBS} ${LIBEVENT_LIBRARIES})
+    LINK_AGAINST_THRIFT_LIBRARY(thriftnb PUBLIC thrift)
+    if(TARGET libevent::core AND TARGET libevent::extra)
+        # libevent was found via its cmake config, use modern style targets
+        TARGET_LINK_LIBRARIES_THRIFT(thriftnb PUBLIC libevent::core libevent::extra)
+    else()
+        TARGET_LINK_LIBRARIES_THRIFT(thriftnb PUBLIC ${LIBEVENT_LIBRARIES})
+    endif()
     ADD_PKGCONFIG_THRIFT(thrift-nb)
 endif()
 
@@ -174,8 +179,8 @@ if(WITH_ZLIB)
     include_directories(SYSTEM ${ZLIB_INCLUDE_DIRS})
 
     ADD_LIBRARY_THRIFT(thriftz ${thriftcppz_SOURCES})
-    TARGET_LINK_LIBRARIES_THRIFT(thriftz ${SYSLIBS} ${ZLIB_LIBRARIES})
-    TARGET_LINK_LIBRARIES_THRIFT_AGAINST_THRIFT_LIBRARY(thriftz thrift)
+    LINK_AGAINST_THRIFT_LIBRARY(thriftz PUBLIC thrift)
+    TARGET_LINK_LIBRARIES_THRIFT(thriftz PUBLIC ${ZLIB_LIBRARIES})
     ADD_PKGCONFIG_THRIFT(thrift-z)
 endif()
 
