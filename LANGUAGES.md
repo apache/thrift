@@ -1,6 +1,8 @@
 # Apache Thrift Language Support #
 
-Guidance For: 0.13.0 | 
+Guidance For: 0.15.0 | 
+[0.14.0](https://github.com/apache/thrift/blob/v0.14.0/LANGUAGES.md) | 
+[0.13.0](https://github.com/apache/thrift/blob/v0.13.0/LANGUAGES.md) | 
 [0.12.0](https://github.com/apache/thrift/blob/v0.12.0/LANGUAGES.md) | 
 [0.11.0](https://github.com/apache/thrift/blob/0.11.0/LANGUAGES.md)
 
@@ -57,17 +59,6 @@ Thrift's core protocol is TBinary, supported by all languages except for JavaScr
 </tr>
 </thead>
 <tbody>
-<tr align=center>
-<td align=left><a href="https://github.com/apache/thrift/blob/master/lib/as3/README.md">ActionScript</a></td>
-<!-- Since -----------------><td>0.3.0</td>
-<!-- Build Systems ---------><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td>
-<!-- Language Levels -------><td colspan=2>FLEX SDK 4.6</td>
-<!-- Low-Level Transports --><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cred.png" alt=""/></td>
-<!-- Transport Wrappers ----><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cred.png" alt=""/></td>
-<!-- Protocols -------------><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cred.png" alt=""/></td>
-<!-- Servers ---------------><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cred.png" alt=""/></td>
-<td align=left><a href="https://issues.apache.org/jira/issues/?jql=project%20%3D%20THRIFT%20AND%20component%20in%20(%22AS3%20-%20Compiler%22%2C%20%22AS3%20-%20Library%22)%20and%20status%20not%20in%20(fixed%2C%20resolved%2C%20closed)">ActionScript</a></td>
-</tr>
 <tr align=center>
 <td align=left><a href="https://github.com/apache/thrift/blob/master/lib/c_glib/README.md">C (glib)</a></td>
 <!-- Since -----------------><td>0.6.0</td>

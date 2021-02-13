@@ -98,10 +98,6 @@ if(BUILD_CPP)
     endif()
 endif()
 
-if(BUILD_AS3)
-    add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/lib/as3)
-endif()
-
 if(BUILD_C_GLIB)
     add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/lib/c_glib)
     if(BUILD_TESTING)

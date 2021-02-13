@@ -237,9 +237,6 @@ t_generator* t_generator_registry::get_generator(t_program* program,
   if ((language == "csharp") || (language == "netcore")) {
     failure("The '%s' target is no longer available. Use 'netstd' instead.", language.c_str());
   }
-  else if (language == "as3") {
-    pwarning(1, "The '%s' target is deprecated and will be removed in future Thrift versions.", language.c_str());
-  }
   else if (language == "hs") {
     pwarning(1, "The '%s' target is deprecated and will be removed in future Thrift versions.", language.c_str());
   }
