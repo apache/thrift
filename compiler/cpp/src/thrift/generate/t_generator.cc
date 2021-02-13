@@ -240,6 +240,9 @@ t_generator* t_generator_registry::get_generator(t_program* program,
   else if (language == "as3") {
     pwarning(1, "The '%s' target is deprecated and will be removed in future Thrift versions.", language.c_str());
   }
+  else if (language == "hs") {
+    pwarning(1, "The '%s' target is deprecated and will be removed in future Thrift versions.", language.c_str());
+  }
 
   if (iter == the_map.end()) {
     return nullptr;
