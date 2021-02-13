@@ -105,8 +105,6 @@ project.lock.json
 /contrib/fb303/py/fb303/ttypes.py
 /depcomp
 /install-sh
-/lib/as3/.gradle/
-/lib/as3/build/
 /lib/cl/backport-update.zip
 /lib/cl/lib
 /lib/cl/run-tests

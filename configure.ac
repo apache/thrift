@@ -116,7 +116,6 @@ AC_ARG_ENABLE([libs],
 have_libs=yes
 if test "$enable_libs" = "no"; then
   have_libs="no"
-  with_as3="no"
   with_cpp="no"
   with_c_glib="no"
   with_cl="no"
@@ -140,18 +139,6 @@ if test "$enable_libs" = "no"; then
   with_rs="no"
   with_swift="no"
 fi
-
-AX_THRIFT_LIB(as3, [as3], yes)
-have_as3=no
-if test "$with_as3" = "yes"; then
-  if test "${FLEX_HOME+set}" = set; then 
-    AC_PATH_PROGS([FLEX_COMPC], [compc], "fail", [$PATH$PATH_SEPARATOR$FLEX_HOME/bin])
-    if test "$FLEX_COMPC" != "fail"; then
-      have_as3="yes"
-    fi
-  fi
-fi
-AM_CONDITIONAL(WITH_AS3, [test "$have_as3" = "yes"])
 
 AX_THRIFT_LIB(cpp, [C++], yes)
 have_cpp=no
@@ -776,7 +763,6 @@ AC_CONFIG_FILES([
   compiler/cpp/src/Makefile
   compiler/cpp/test/Makefile
   lib/Makefile
-  lib/as3/Makefile
   lib/cl/Makefile
   lib/cpp/Makefile
   lib/cpp/test/Makefile
@@ -857,8 +843,6 @@ AC_CONFIG_FILES([
   tutorial/rs/Makefile
 ])
 
-if test "$have_as3" = "yes" ; then MAYBE_AS3="as3" ; else MAYBE_AS3="" ; fi
-AC_SUBST([MAYBE_AS3])
 if test "$have_cpp" = "yes" ; then MAYBE_CPP="cpp" ; else MAYBE_CPP="" ; fi
 AC_SUBST([MAYBE_CPP])
 if test "$have_c_glib" = "yes" ; then MAYBE_C_GLIB="c_glib" ; else MAYBE_C_GLIB="" ; fi
@@ -906,7 +890,6 @@ AC_OUTPUT
 echo
 echo "$PACKAGE $VERSION"
 echo
-echo "Building ActionScript3 Library : $have_as3"
 echo "Building C (GLib) Library .... : $have_c_glib"
 echo "Building C++ Library ......... : $have_cpp"
 echo "Building Common Lisp Library.. : $have_cl"
@@ -928,12 +911,6 @@ echo "Building Ruby Library ........ : $have_ruby"
 echo "Building Rust Library ........ : $have_rs"
 echo "Building Swift Library ....... : $have_swift"
 
-if test "$have_as3" = "yes" ; then
-  echo
-  echo "ActionScript Library:"
-  echo "   FLEX_HOME ................. : $FLEX_HOME"
-  echo "   Using compc version ....... : $($FLEX_COMPC --version)"
-fi
 if test "$have_c_glib" = "yes" ; then
   echo
   echo "C (glib):"
