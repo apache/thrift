@@ -19,7 +19,7 @@
   -->
 
 <PropertyGroup>
-  <TargetFrameworks>netstandard2.1;netstandard2.0</TargetFrameworks>
+  <TargetFrameworks>netstandard2.1;netstandard2.0;net5.0</TargetFrameworks>
   <AssemblyName>Thrift</AssemblyName>
   <PackageId>ApacheThrift</PackageId>
   <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
@@ -55,16 +55,16 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.Http.Abstractions" Version="2.2.0" />
-    <PackageReference Include="Microsoft.Extensions.Logging" Version="3.1.0" />
-    <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="3.1.0" />
-    <PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="3.1.0" />
+    <PackageReference Include="Microsoft.Extensions.Logging" Version="5.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="5.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="5.0.0" />
     <PackageReference Include="System.IO.Pipes" Version="[4.3,)" />
-    <PackageReference Include="System.IO.Pipes.AccessControl" Version="4.5.1" />
-    <PackageReference Include="System.Net.Http.WinHttpHandler" Version="4.7.0" />
+    <PackageReference Include="System.IO.Pipes.AccessControl" Version="5.0.0" />
+    <PackageReference Include="System.Net.Http.WinHttpHandler" Version="5.0.0" />
     <PackageReference Include="System.Net.NameResolution" Version="[4.3,)" />
     <PackageReference Include="System.Net.Requests" Version="[4.3,)" />
     <PackageReference Include="System.Net.Security" Version="4.3.2" />
-    <PackageReference Include="System.Threading.Tasks.Extensions" Version="4.5.3" />
+    <PackageReference Include="System.Threading.Tasks.Extensions" Version="4.5.4" />
   </ItemGroup>
 
   <Target Name="SetTFMAssemblyAttributesPath" BeforeTargets="GenerateTargetFrameworkMonikerAttribute">
