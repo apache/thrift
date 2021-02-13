@@ -26,13 +26,16 @@ namespace Server
     {
         public static int Main(string[] args)
         {
-            try
+            if (OperatingSystem.IsWindows())
             {
-                Console.SetBufferSize(Console.BufferWidth, 4096);
-            }
-            catch (Exception)
-            {
-                Console.WriteLine("Failed to grow scroll-back buffer");
+                try
+                {
+                    Console.SetBufferSize(Console.BufferWidth, 4096);
+                }
+                catch (Exception)
+                {
+                    Console.WriteLine("Failed to grow scroll-back buffer");
+                }
             }
 
             // run whatever mode is choosen, default to test impl
