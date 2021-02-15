@@ -187,6 +187,7 @@
 - [THRIFT-5203](https://issues.apache.org/jira/browse/THRIFT-5203) - Remove Unused toString Method in TSerializer
 - [THRIFT-5237](https://issues.apache.org/jira/browse/THRIFT-5237) - Implement MAX_MESSAGE_SIZE and consolidate limits into a TConfiguration class
 - [THRIFT-5247](https://issues.apache.org/jira/browse/THRIFT-5247) - Avoiding meaningless System.copy
+- [THRIFT-5274](https://issues.apache.org/jira/browse/THRIFT-5274) - Thrift 0.13.0 does not work with JDK8
 - [THRIFT-5287](https://issues.apache.org/jira/browse/THRIFT-5287) - Log When Client Connections are Dropped
 - [THRIFT-5288](https://issues.apache.org/jira/browse/THRIFT-5288) - Move Support for ByteBuffer into TTransport
 
