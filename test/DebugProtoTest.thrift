@@ -245,6 +245,8 @@ exception MutableException {
   1: string msg;
 } (python.immutable = "false")
 
+exception ExceptionWithoutFields {}
+
 service ServiceForExceptionWithAMap {
   void methodThatThrowsAnException() throws (1: ExceptionWithAMap xwamap);
 }
