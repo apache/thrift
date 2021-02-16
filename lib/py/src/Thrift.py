@@ -90,7 +90,7 @@ class TException(Exception):
 
     def __init__(self, message=None):
         Exception.__init__(self, message)
-        self.message = message
+        super(TException, self).__setattr__("message", message)
 
 
 class TApplicationException(TException):
