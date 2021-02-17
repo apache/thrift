@@ -1062,7 +1062,7 @@ std::string t_delphi_generator::make_pascal_string_literal(std::string value) {
   }
 
   result << "'";
-  for (char const &c: value) {
+  for (signed char const c: value) {
     if( (c >= 0) && (c < 32)) {  // convert ctrl chars, but leave UTF-8 alone
       result << "#" << (int)c;  
     } else if (c == '\'') {
