@@ -2170,14 +2170,15 @@ void t_go_generator::generate_service_client(t_service* tservice) {
     }
 
     if (!(*f_iter)->is_oneway()) {
+      std::string metaName = tmp("_meta");
       std::string resultName = tmp("_result");
       std::string resultType = publicize(method + "_result", true);
       f_types_ << indent() << "var " << resultName << " " << resultType << endl;
-      f_types_ << indent() << "var meta thrift.ResponseMeta" << endl;
-      f_types_ << indent() << "meta, err = p.Client_().Call(ctx, \""
+      f_types_ << indent() << "var " << metaName << " thrift.ResponseMeta" << endl;
+      f_types_ << indent() << metaName << ", _err = p.Client_().Call(ctx, \""
         << method << "\", &" << argsName << ", &" << resultName << ")" << endl;
-      f_types_ << indent() << "p.SetLastResponseMeta_(meta)" << endl;
-      f_types_ << indent() << "if err != nil {" << endl;
+      f_types_ << indent() << "p.SetLastResponseMeta_(" << metaName << ")" << endl;
+      f_types_ << indent() << "if _err != nil {" << endl;
 
       indent_up();
       f_types_ << indent() << "return" << endl;
@@ -2199,7 +2200,7 @@ void t_go_generator::generate_service_client(t_service* tservice) {
           indent_up();
 
           if (!(*f_iter)->get_returntype()->is_void()) {
-            f_types_ << indent() << "return r, " << field << endl;
+            f_types_ << indent() << "return _r, " << field << endl;
           } else {
             f_types_ << indent() << "return "<< field << endl;
           }
@@ -2222,7 +2223,7 @@ void t_go_generator::generate_service_client(t_service* tservice) {
       f_types_ << indent() << "p.SetLastResponseMeta_(thrift.ResponseMeta{})" << endl;
       // TODO: would be nice to not to duplicate the call generation
       f_types_ << indent() << "if _, err := p.Client_().Call(ctx, \""
-        << method << "\", &"<< argsName << ", nil); err != nil {" << endl;
+        << method << "\", &" << argsName << ", nil); err != nil {" << endl;
 
       indent_up();
       f_types_ << indent() << "return err" << endl;
@@ -3787,7 +3788,7 @@ string t_go_generator::function_signature_if(t_function* tfunction, string prefi
   string errs = argument_list(exceptions);
 
   if (!ret->is_void()) {
-    signature += "r " + type_to_go_type(ret);
+    signature += "_r " + type_to_go_type(ret);
 
     if (addError || errs.size() == 0) {
       signature += ", ";
@@ -3795,7 +3796,7 @@ string t_go_generator::function_signature_if(t_function* tfunction, string prefi
   }
 
   if (addError) {
-    signature += "err error";
+    signature += "_err error";
   }
 
   signature += ")";
