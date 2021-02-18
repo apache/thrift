@@ -335,6 +335,7 @@ void t_netstd_generator::start_netstd_namespace(ostream& out)
 {
     out << "#pragma warning disable IDE0079  // remove unnecessary pragmas" << endl
         << "#pragma warning disable IDE1006  // parts of the code use IDL spelling" << endl
+        << "#pragma warning disable IDE0083  // pattern matching \"that is not SomeType\" requires net5.0 but we still support earlier versions" << endl
         << endl;
 
     if (!namespace_name_.empty())
