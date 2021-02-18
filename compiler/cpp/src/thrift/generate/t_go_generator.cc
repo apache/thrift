@@ -787,14 +787,15 @@ void t_go_generator::init_generator() {
 string t_go_generator::render_included_programs(string& unused_prot) {
   const vector<t_program*>& includes = program_->get_includes();
   string result = "";
-  string local_namespace = program_->get_namespace("go");
+  string local_namespace = get_real_go_module(program_);
   std::set<std::string> included;
   for (auto include : includes) {
-    if (!local_namespace.empty() && local_namespace == include->get_namespace("go")) {
+    std::string includeModule = get_real_go_module(include);
+    if (!local_namespace.empty() && local_namespace == includeModule) {
       continue;
     }
 
-    if (!included.insert(include->get_namespace("go")).second) {
+    if (!included.insert(includeModule).second) {
         continue;
     }
 
