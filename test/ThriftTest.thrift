@@ -411,17 +411,3 @@ struct StructB {
 struct OptionalSetDefaultTest {
   1: optional set<string> with_default = [ "test" ]
 }
-
-service ConflictingNamesTest {
-  /**
-   * Use some names that could conflict with the compiler code as args
-   * to make sure that the compiler handled them correctly.
-   */
-  void testNameConflicts(
-    // 1: string args,   // args is already a reserved keyword in thrift compiler
-    // 2: string result, // result will cause problems in compiled netstd code
-    3: string meta,
-    4: string r,
-    5: string err,
-  )
-}
