@@ -80,24 +80,6 @@ where
         }
     }
 
-    /// Reads a varint for an `i32` without attempting to zigzag-decode it.
-    fn read_non_zigzag_varint(&mut self) -> crate::Result<i32> {
-        let mut num = 0i32;
-
-        let mut buf = [0u8; 1];
-        let mut shift_bits = 0u32;
-        let mut should_continue = true;
-
-        while should_continue {
-            self.transport.read_exact(&mut buf)?;
-            num |= ((buf[0] & 0x7F) as i32) << shift_bits;
-            shift_bits += 7;
-            should_continue = (buf[0] & 0x80) > 0;
-        }
-
-        Ok(num)
-    }
-
     fn read_list_set_begin(&mut self) -> crate::Result<(TType, i32)> {
         let header = self.read_byte()?;
         let element_type = collection_u8_to_type(header & 0x0F)?;
@@ -146,7 +128,8 @@ where
 
         // NOTE: unsigned right shift will pad with 0s
         let message_type: TMessageType = TMessageType::try_from(type_and_byte >> 5)?;
-        let sequence_number = self.read_non_zigzag_varint()?;
+        // writing side wrote signed sequence number as u32 to avoid zigzag encoding
+        let sequence_number = self.transport.read_varint::<u32>()? as i32;
         let service_call_name = self.read_string()?;
 
         self.last_read_field_id = 0;
@@ -395,27 +378,6 @@ where
         }
     }
 
-    /// Writes a varint for an `i32` without attempting to zigzag-encode it first.
-    fn write_non_zigzag_varint(&mut self, i: i32) -> crate::Result<()> {
-        let mut output = Vec::with_capacity(5);
-        let mut i = i as u32; // avoids sign extension on bitshift
-
-        loop {
-            if (i & !0x7F) == 0 {
-                output.push(i as u8);
-                break;
-            } else {
-                let varint_byte = ((i as u8) & 0x7F) | 0x80;
-                output.push(varint_byte);
-                i >>= 7;
-            }
-        }
-
-        self.transport
-            .write_all(output.as_slice())
-            .map_err(From::from)
-    }
-
     // FIXME: field_type as unconstrained u8 is bad
     fn write_field_header(&mut self, field_type: u8, field_id: i16) -> crate::Result<()> {
         let field_delta = field_id - self.last_write_field_id;
@@ -441,10 +403,8 @@ where
         } else {
             let header = 0xF0 | elem_identifier;
             self.write_byte(header)?;
-            // size is strictly positive as per the spec, so:
-            // 1. we first cast to u32
-            // 2. write as varint
-            // which means that integer_encoding will **not** zigzag it first
+            // element count is strictly positive as per the spec, so
+            // cast i32 as u32 so that varint writing won't use zigzag encoding
             self.transport
                 .write_varint(element_count as u32)
                 .map_err(From::from)
@@ -466,7 +426,8 @@ where
     fn write_message_begin(&mut self, identifier: &TMessageIdentifier) -> crate::Result<()> {
         self.write_byte(COMPACT_PROTOCOL_ID)?;
         self.write_byte((u8::from(identifier.message_type) << 5) | COMPACT_VERSION)?;
-        self.write_non_zigzag_varint(identifier.sequence_number)?;
+        // cast i32 as u32 so that varint writing won't use zigzag encoding
+        self.transport.write_varint(identifier.sequence_number as u32)?;
         self.write_string(&identifier.name)?;
         Ok(())
     }
@@ -540,10 +501,8 @@ where
     }
 
     fn write_bytes(&mut self, b: &[u8]) -> crate::Result<()> {
-        // size is strictly positive as per the spec, so:
-        // 1. we first cast to u32
-        // 2. write as varint
-        // which means that integer_encoding will **not** zigzag it first
+        // length is strictly positive as per the spec, so
+        // cast i32 as u32 so that varint writing won't use zigzag encoding
         self.transport.write_varint(b.len() as u32)?;
         self.transport.write_all(b).map_err(From::from)
     }
@@ -554,7 +513,7 @@ where
 
     fn write_i16(&mut self, i: i16) -> crate::Result<()> {
         self.transport
-            .write_varint(i as i32)
+            .write_varint(i)
             .map_err(From::from)
             .map(|_| ())
     }
@@ -603,10 +562,8 @@ where
         if identifier.size == 0 {
             self.write_byte(0)
         } else {
-            // size is strictly positive as per the spec, so:
-            // 1. we first cast to u32
-            // 2. write as varint
-            // which means that integer_encoding will **not** zigzag it first
+            // element count is strictly positive as per the spec, so
+            // cast i32 as u32 so that varint writing won't use zigzag encoding
             self.transport.write_varint(identifier.size as u32)?;
 
             let key_type = identifier
