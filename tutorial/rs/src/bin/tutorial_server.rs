@@ -123,7 +123,7 @@ impl CalculatorSyncHandler for CalculatorServer {
         let res = if let Some(ref op) = w.op {
             if w.num1.is_none() || w.num2.is_none() {
                 Err(InvalidOperation {
-                    what_op: Some(*op as i32),
+                    what_op: Some(op.into()),
                     why: Some("no operands specified".to_owned()),
                 })
             } else {
@@ -131,19 +131,26 @@ impl CalculatorSyncHandler for CalculatorServer {
                 let num1 = w.num1.as_ref().expect("operands checked");
                 let num2 = w.num2.as_ref().expect("operands checked");
 
-                match *op {
-                    Operation::Add => Ok(num1 + num2),
-                    Operation::Subtract => Ok(num1 - num2),
-                    Operation::Multiply => Ok(num1 * num2),
-                    Operation::Divide => {
+                match op {
+                    &Operation::ADD => Ok(num1 + num2),
+                    &Operation::SUBTRACT => Ok(num1 - num2),
+                    &Operation::MULTIPLY => Ok(num1 * num2),
+                    &Operation::DIVIDE => {
                         if *num2 == 0 {
                             Err(InvalidOperation {
-                                what_op: Some(*op as i32),
+                                what_op: Some(op.into()),
                                 why: Some("divide by 0".to_owned()),
                             })
                         } else {
                             Ok(num1 / num2)
                         }
+                    },
+                    _ => {
+                        let op_val: i32 = op.into();
+                        Err(InvalidOperation {
+                            what_op: Some(op_val),
+                            why: Some(format!("unsupported operation type '{}'", op_val)),
+                        })
                     }
                 }
             }

@@ -46,6 +46,51 @@ It does not currently use any Rust 2018 features.
 
 Breaking changes are minimized. When they are made they will be outlined below with transition guidelines.
 
+##### Thrift 0.15.0
+
+* **[THRIFT-5314]** - Generate enums implementations that are forward compatible (i.e. don't error on unknown values)
+
+  As a result of this change the Rust representation of an enum changes from a standard
+  Rust enum into a newtype struct with associated constants.
+  
+  For example:
+
+  ```thrift
+    // THRIFT
+    enum Operation {
+      ADD,
+      SUBTRACT,
+      MULTIPLY,
+      DIVIDE,
+    }
+  ```
+
+  used to generate:
+  
+  ```rust
+    // OLD AUTO-GENERATED RUST
+    pub enum Operation {
+       Add,
+       Subtract,
+       Multiply,
+       Divide,
+     }
+  ```
+
+  It *now* generates:
+  
+  ```rust
+    // NEW AUTO-GENERATED RUST
+    pub struct Operation(pub i32);
+  
+    impl Operation {
+      pub const ADD: Operation = Operation(0);
+      pub const SUBTRACT: Operation = Operation(1);
+      pub const MULTIPLY: Operation = Operation(2);
+      pub const DIVIDE: Operation = Operation(3);
+    }
+  ```
+
 ##### Thrift 0.14.0
 
 * **[THRIFT-5158]** - Rust library and generator now support Rust 2018 only. Required rust 1.40.0 or higher
@@ -91,7 +136,9 @@ Breaking changes are minimized. When they are made they will be outlined below w
        DIVIDE,
      }
     ```
+  
     It *now* generates:
+  
     ```rust
     // NEW AUTO-GENERATED RUST
     pub enum Operation {
