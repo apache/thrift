@@ -6,7 +6,7 @@
 	"description": "Haxe bindings for the Apache Thrift RPC and serialization framework",
 	"version": "0.15.0",
 	"releasenote": "Licensed under Apache License, Version 2.0. The Apache Thrift compiler needs to be installed separately.",
-	"contributors": ["Apache Software Foundation (ASF)"],
+	"contributors": ["ApacheThrift"],
 	"dependencies": { },
 	"classPath": "src"
 }
