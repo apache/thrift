@@ -32,6 +32,7 @@ import shared.*;
 enum Prot {
     binary;
     json;
+	compact;
 }
 
 enum Trns {
@@ -112,12 +113,12 @@ class Main {
     #if ! (flash || js)
 
     private static function GetHelp() : String {
-        return Sys.executablePath()+"  modus  trnsOption  transport  protocol\n"
+        return Sys.programPath+"  modus  layered  transport  protocol\n"
         +"Options:\n"
-        +"  modus:       client, server   (default: client)\n"
-        +"  trnsOption:  framed, buffered (default: none)\n"
-        +"  transport:   socket, http     (default: socket)\n"
-        +"  protocol:    binary, json     (default: binary)\n"
+        +"  modus:       client, server          (default: client)\n"
+        +"  layered:     framed, buffered        (default: none)\n"
+        +"  transport:   socket, http            (default: socket)\n"
+        +"  protocol:    binary, json, compact   (default: binary)\n"
         +"\n"
         +"All arguments are optional.\n";
     }
@@ -159,6 +160,9 @@ class Main {
                     ++step;
                 } else if ( arg == "json") {
                     prot = json;
+                    ++step;
+                } else if ( arg == "compact") {
+                    prot = compact;
                     ++step;
                 } else {
                     throw "Unknown protocol "+arg;
@@ -217,6 +221,9 @@ class Main {
         case json:
              trace("- JSON protocol");
              protocol = new TJSONProtocol( transport);
+        case compact:
+             trace("- compact protocol");
+             protocol = new TCompactProtocol( transport);
         default:
             throw "Unhandled protocol";
         }
@@ -232,7 +239,7 @@ class Main {
         var client = ClientSetup();
 
         try {
-              client.ping();
+            client.ping();
             trace("ping() successful");
         } catch(error : TException) {
             trace('ping() failed: $error');
@@ -310,11 +317,12 @@ class Main {
             #else
               trace("- http transport");
               transport = new TWrappingServerTransport(
-                      new TStreamTransport(
-                        new TFileStream("php://input", Read),
-                        new TFileStream("php://output", Append)
-                        )
-                      );
+                new TStreamTransport(
+                  new TFileStream("php://input", Read),
+                  new TFileStream("php://output", Append),
+                  null
+                )
+              );
 
             #end
         default:
@@ -341,11 +349,14 @@ class Main {
         case json:
             trace("- JSON protocol");
              protfactory = new TJSONProtocolFactory();
+        case compact:
+            trace("- compact protocol");
+             protfactory = new TCompactProtocolFactory();
         default:
             throw "Unhandled protocol";
         }
 
-        var handler = new CalculatorHandler();
+        var handler : Calculator_service = new CalculatorHandler();
         var processor = new CalculatorProcessor(handler);
         var server = new TSimpleServer( processor, transport, transfactory, protfactory);
         #if phpwebserver

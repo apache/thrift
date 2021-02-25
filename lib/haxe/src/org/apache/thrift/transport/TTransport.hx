@@ -19,12 +19,18 @@
 
 package org.apache.thrift.transport;
 
+import haxe.Int64;
 import haxe.io.Eof;
 import haxe.io.Bytes;
 import haxe.io.BytesBuffer;
 import org.apache.thrift.AbstractMethodError;
 
 class TTransport {
+	
+	public var Configuration(get, never) : TConfiguration;
+	public function get_Configuration() : TConfiguration throw "abstract method called";
+	public function UpdateKnownMessageSize(size : Int64) : Void throw "abstract method called";
+	public function CheckReadBytesAvailable(numBytes : Int64) : Void  throw "abstract method called";
 
     /**
      * Queries whether the transport is open.

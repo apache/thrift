@@ -27,7 +27,7 @@
 
 #PHP target
 -php bin/php-web-server/
---php-front Main-debug.php
+-D php-front=Main-debug.php
 
 #defines
 -D phpwebserver

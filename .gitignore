@@ -355,6 +355,7 @@ project.lock.json
 /test/go/src/gen/
 /test/go/src/thrift
 /test/haxe/bin
+/test/haxe/.buildtemp
 /test/hs/TestClient
 /test/hs/TestServer
 /test/php/php_ext_dir/

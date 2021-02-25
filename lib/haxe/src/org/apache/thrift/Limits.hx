@@ -23,9 +23,9 @@ class Limits {
 
     // Haxe limits are not fixed values, they depend on the target platform
     // For example, neko limits an int to 31 bits instead of 32. So we detect
-    // the values once during intialisation in order to
+    // the values once during initialization in order to
     // (a) get the right values for the current  platform, and
-    // (b) prevent us from dependecies to a bunch of defines
+    // (b) prevent us from dependencies to a bunch of defines
 
     public static var I32_MAX = {
         var last : Int = 0;

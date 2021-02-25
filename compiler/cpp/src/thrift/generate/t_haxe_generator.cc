@@ -52,12 +52,11 @@ public:
     (void)option_string;
     std::map<std::string, std::string>::const_iterator iter;
 
-    callbacks_ = false;
     rtti_ = false;
     buildmacro_ = "";
     for( iter = parsed_options.begin(); iter != parsed_options.end(); ++iter) {
       if( iter->first.compare("callbacks") == 0) {
-        callbacks_ = true;
+        printf("Hint: The 'callbacks' option is no longer necessary.\n");
       } else if( iter->first.compare("rtti") == 0) {
         rtti_ = true;
       } else if( iter->first.compare("buildmacro") == 0) {
@@ -115,7 +114,7 @@ public:
   void generate_haxe_validator(std::ostream& out, t_struct* tstruct);
   void generate_haxe_struct_result_writer(std::ostream& out, t_struct* tstruct);
   void generate_haxe_struct_writer(std::ostream& out, t_struct* tstruct);
-  void generate_haxe_struct_tostring(std::ostream& out, t_struct* tstruct);
+  void generate_haxe_struct_tostring(std::ostream& out, t_struct* tstruct, bool is_override);
   void generate_haxe_meta_data_map(std::ostream& out, t_struct* tstruct);
   void generate_field_value_meta_data(std::ostream& out, t_type* type);
   std::string get_haxe_type_string(t_type* type);
@@ -138,12 +137,12 @@ public:
   void generate_isset_set(ostream& out, t_field* field);
   // removed std::string isset_field_id(t_field* field);
 
-  void generate_service_interface(t_service* tservice);
+  void generate_service_interface(t_service* tservice, bool combined);
   void generate_service_helpers(t_service* tservice);
   void generate_service_client(t_service* tservice);
   void generate_service_server(t_service* tservice);
   void generate_process_function(t_service* tservice, t_function* tfunction);
-  void generate_service_method_signature(t_function* tfunction, bool is_interface);
+  void generate_service_method_signature(t_function* tfunction, bool is_interface, bool combined);
 
   /**
    * Serialization constructs
@@ -186,13 +185,13 @@ public:
   std::string type_name(t_type* ttype, bool in_container = false, bool in_init = false);
   std::string base_type_name(t_base_type* tbase, bool in_container = false);
   std::string declare_field(t_field* tfield, bool init = false);
-  std::string function_signature_callback(t_function* tfunction);
+  std::string function_signature_combined(t_function* tfunction);
   std::string function_signature_normal(t_function* tfunction);
   std::string argument_list(t_struct* tstruct);
   std::string type_to_enum(t_type* ttype);
   std::string get_enum_class_name(t_type* type) override;
   string generate_service_method_onsuccess(t_function* tfunction, bool as_type, bool omit_name);
-  void generate_service_method_signature_callback(t_function* tfunction, bool is_interface);
+  void generate_service_method_signature_combined(t_function* tfunction, bool is_interface);
   void generate_service_method_signature_normal(t_function* tfunction, bool is_interface);
 
   bool type_can_be_null(t_type* ttype) {
@@ -220,7 +219,6 @@ public:
   std::string constant_name(std::string name);
 
 private:
-  bool callbacks_;
   bool rtti_;
   string buildmacro_;
 
@@ -290,10 +288,17 @@ string t_haxe_generator::haxe_package() {
  * @return List of imports for haxe types that are used in here
  */
 string t_haxe_generator::haxe_type_imports() {
-  return string() + "import org.apache.thrift.helper.*;\n" + "import haxe.io.Bytes;\n"
-         + "import haxe.ds.IntMap;\n" + "import haxe.ds.StringMap;\n"
-         + "import haxe.ds.ObjectMap;\n" + "\n" + "#if flash\n"
-         + "import flash.errors.ArgumentError;\n" + "#end\n" + "\n";
+  return string()
+       + "import org.apache.thrift.helper.*;\n"
+       + "import haxe.io.Bytes;\n"
+       + "import haxe.ds.IntMap;\n"
+       + "import haxe.ds.StringMap;\n"
+       + "import haxe.ds.ObjectMap;\n"
+       + "\n"
+       + "#if flash\n"
+       + "import flash.errors.ArgumentError;\n"
+       + "#end\n"
+       + "\n";
 }
 
 /**
@@ -302,8 +307,11 @@ string t_haxe_generator::haxe_type_imports() {
  * @return List of imports necessary for thrift
  */
 string t_haxe_generator::haxe_thrift_imports() {
-  return string() + "import org.apache.thrift.*;\n" + "import org.apache.thrift.meta_data.*;\n"
-         + "import org.apache.thrift.protocol.*;\n" + "\n";
+  return string()
+       + "import org.apache.thrift.*;\n"
+       + "import org.apache.thrift.meta_data.*;\n"
+       + "import org.apache.thrift.protocol.*;\n"
+       + "\n";
 }
 
 /**
@@ -348,8 +356,7 @@ string t_haxe_generator::haxe_thrift_gen_imports(t_service* tservice) {
       string package = program->get_namespace("haxe");
       if (!package.empty()) {
         if (imports.find(package + "." + (*f_iter)->get_returntype()->get_name()) == string::npos) {
-          imports.append("import " + package + "." + (*f_iter)->get_returntype()->get_name()
-                         + ";\n");
+          imports.append("import " + package + "." + (*f_iter)->get_returntype()->get_name()+ ";\n");
         }
       }
     }
@@ -718,10 +725,8 @@ void t_haxe_generator::generate_haxe_struct_definition(ostream& out,
   if (is_exception) {
     out << "extends TException ";
   }
-  out << "implements TBase ";
-
-  scope_up(out);
-  indent(out) << endl;
+  out << "implements TBase {" << endl << endl;
+  indent_up();
 
   indent(out) << "static var STRUCT_DESC = { new TStruct(\"" << tstruct->get_name() << "\"); };"
               << endl;
@@ -806,7 +811,7 @@ void t_haxe_generator::generate_haxe_struct_definition(ostream& out,
   } else {
     generate_haxe_struct_writer(out, tstruct);
   }
-  generate_haxe_struct_tostring(out, tstruct);
+  generate_haxe_struct_tostring(out, tstruct, is_exception);
   generate_haxe_validator(out, tstruct);
   scope_down(out);
   out << endl;
@@ -1272,9 +1277,12 @@ void t_haxe_generator::generate_property_getters_setters(ostream& out, t_struct*
  *
  * @param tstruct The struct definition
  */
-void t_haxe_generator::generate_haxe_struct_tostring(ostream& out, t_struct* tstruct) {
-  out << indent() << "public "
-      << "function toString() : String {" << endl;
+void t_haxe_generator::generate_haxe_struct_tostring(ostream& out, t_struct* tstruct, bool is_override) {
+  out << indent() << "public ";
+  if( is_override) {
+    out << "override ";
+  }
+  out << "function toString() : String {" << endl;
   indent_up();
 
   out << indent() << "var ret : String = \"" << tstruct->get_name() << "(\";" << endl;
@@ -1474,8 +1482,30 @@ void t_haxe_generator::generate_field_value_meta_data(std::ostream& out, t_type*
  * @param tservice The service definition
  */
 void t_haxe_generator::generate_service(t_service* tservice) {
-  // Make interface file
-  string f_service_name = package_dir_ + "/" + get_cap_name(service_name_) + ".hx";
+  // Make service interface file with only "normal" calls
+  string f_service_name = package_dir_ + "/" + get_cap_name(service_name_) + "_service.hx";
+  f_service_.open(f_service_name.c_str());
+
+  f_service_ << autogen_comment() << haxe_package() << ";" << endl;
+
+  f_service_ << endl << haxe_type_imports() << haxe_thrift_imports()
+             << haxe_thrift_gen_imports(tservice);
+
+  if (tservice->get_extends() != nullptr) {
+    t_type* parent = tservice->get_extends();
+    string parent_namespace = parent->get_program()->get_namespace("haxe");
+    if (!parent_namespace.empty() && parent_namespace != package_name_) {
+      f_service_ << "import " << type_name(parent) << "_service;" << endl;
+    }
+  }
+
+  f_service_ << endl;
+
+  generate_service_interface(tservice,false);
+  f_service_.close();
+
+  // Client interface file with dual suppport ("normal" and "callback" style)
+  f_service_name = package_dir_ + "/" + get_cap_name(service_name_) + ".hx";
   f_service_.open(f_service_name.c_str());
 
   f_service_ << autogen_comment() << haxe_package() << ";" << endl;
@@ -1493,8 +1523,7 @@ void t_haxe_generator::generate_service(t_service* tservice) {
 
   f_service_ << endl;
 
-  generate_service_interface(tservice);
-
+  generate_service_interface(tservice,true);
   f_service_.close();
 
   // Now make the implementation/client file
@@ -1515,7 +1544,6 @@ void t_haxe_generator::generate_service(t_service* tservice) {
   f_service_ << endl;
 
   generate_service_client(tservice);
-
   f_service_.close();
 
   // Now make the helper class files
@@ -1525,18 +1553,20 @@ void t_haxe_generator::generate_service(t_service* tservice) {
   f_service_name = package_dir_ + "/" + get_cap_name(service_name_) + "Processor.hx";
   f_service_.open(f_service_name.c_str());
 
-  f_service_ << autogen_comment() << haxe_package() << ";" << endl << endl << haxe_type_imports()
-             << haxe_thrift_imports() << haxe_thrift_gen_imports(tservice) << endl;
+  f_service_ << autogen_comment() << haxe_package() << ";" << endl 
+             << endl 
+             << haxe_type_imports()
+             << haxe_thrift_imports() 
+             << haxe_thrift_gen_imports(tservice) 
+             << endl;
 
   if (!package_name_.empty()) {
     f_service_ << "import " << package_name_ << ".*;" << endl;
-    f_service_ << "import " << package_name_ << "." << get_cap_name(service_name_).c_str()
-               << "Impl;" << endl;
+    f_service_ << "import " << package_name_ << "." << get_cap_name(service_name_).c_str() << "Impl;" << endl;
     f_service_ << endl;
   }
 
   generate_service_server(tservice);
-
   f_service_.close();
 }
 
@@ -1580,9 +1610,9 @@ string t_haxe_generator::generate_service_method_onsuccess(t_function* tfunction
  *
  * @param tfunction The service function to generate code for.
  */
-void t_haxe_generator::generate_service_method_signature(t_function* tfunction, bool is_interface) {
-  if (callbacks_) {
-    generate_service_method_signature_callback(tfunction, is_interface);
+void t_haxe_generator::generate_service_method_signature(t_function* tfunction, bool is_interface, bool combined) {
+  if( combined) {
+    generate_service_method_signature_combined(tfunction, is_interface);
   } else {
     generate_service_method_signature_normal(tfunction, is_interface);
   }
@@ -1607,7 +1637,7 @@ void t_haxe_generator::generate_service_method_signature_normal(t_function* tfun
  *
  * @param tfunction The service function to generate code for.
  */
-void t_haxe_generator::generate_service_method_signature_callback(t_function* tfunction,
+void t_haxe_generator::generate_service_method_signature_combined(t_function* tfunction,
                                                                   bool is_interface) {
   if (!tfunction->is_oneway()) {
     std::string on_success_impl = generate_service_method_onsuccess(tfunction, false, false);
@@ -1616,9 +1646,9 @@ void t_haxe_generator::generate_service_method_signature_callback(t_function* tf
   }
 
   if (is_interface) {
-    indent(f_service_) << function_signature_callback(tfunction) << ";" << endl << endl;
+    indent(f_service_) << function_signature_combined(tfunction) << ";" << endl << endl;
   } else {
-    indent(f_service_) << "public " << function_signature_callback(tfunction) << " {" << endl;
+    indent(f_service_) << "public " << function_signature_combined(tfunction) << " {" << endl;
   }
 }
 
@@ -1627,24 +1657,26 @@ void t_haxe_generator::generate_service_method_signature_callback(t_function* tf
  *
  * @param tservice The service to generate a header definition for
  */
-void t_haxe_generator::generate_service_interface(t_service* tservice) {
+void t_haxe_generator::generate_service_interface(t_service* tservice, bool combined) {
+  string cbk_postfix = combined ? "" : "_service";
+
   string extends_iface = "";
   if (tservice->get_extends() != nullptr) {
-    extends_iface = " extends " + tservice->get_extends()->get_name();
+    extends_iface = " extends " + tservice->get_extends()->get_name() + cbk_postfix;
   }
 
-  generate_haxe_doc(f_service_, tservice);
-  // generate_rtti_decoration(f_service_); - not yet, because of
-  // https://github.com/HaxeFoundation/haxe/issues/3626
-  generate_macro_decoration(f_service_);
-  f_service_ << indent() << "interface " << get_cap_name(service_name_) << extends_iface << " {"
-             << endl << endl;
-  indent_up();
   vector<t_function*> functions = tservice->get_functions();
   vector<t_function*>::iterator f_iter;
+
+  generate_haxe_doc(f_service_, tservice);
+  generate_rtti_decoration(f_service_);
+  generate_macro_decoration(f_service_);
+  f_service_ << indent() << "interface " << get_cap_name(service_name_) << cbk_postfix << extends_iface << " {"
+             << endl << endl;
+  indent_up();
   for (f_iter = functions.begin(); f_iter != functions.end(); ++f_iter) {
     generate_haxe_doc(f_service_, *f_iter);
-    generate_service_method_signature(*f_iter, true);
+    generate_service_method_signature(*f_iter, true, combined);
   }
   indent_down();
   f_service_ << indent() << "}" << endl << endl;
@@ -1729,7 +1761,7 @@ void t_haxe_generator::generate_service_client(t_service* tservice) {
     string funname = (*f_iter)->get_name();
 
     // Open function
-    generate_service_method_signature(*f_iter, false);
+    generate_service_method_signature(*f_iter, false, true);
 
     indent_up();
 
@@ -1741,21 +1773,23 @@ void t_haxe_generator::generate_service_client(t_service* tservice) {
     const vector<t_field*>& fields = arg_struct->get_members();
 
     // Serialize the request
+    string args = tmp("args");
     string calltype = (*f_iter)->is_oneway() ? "ONEWAY" : "CALL";
     f_service_ << indent() << "oprot_.writeMessageBegin(new TMessage(\"" << funname
                << "\", TMessageType." << calltype << ", seqid_));" << endl << indent()
-               << "var args : " << argsname << " = new " << argsname << "();" << endl;
+               << "var " << args << " : " << argsname << " = new " << argsname << "();" << endl;
 
     for (fld_iter = fields.begin(); fld_iter != fields.end(); ++fld_iter) {
-      f_service_ << indent() << "args." << (*fld_iter)->get_name() << " = "
+      f_service_ << indent() << args << "." << (*fld_iter)->get_name() << " = "
                  << (*fld_iter)->get_name() << ";" << endl;
     }
 
-    f_service_ << indent() << "args.write(oprot_);" << endl << indent()
+    f_service_ << indent() << args << ".write(oprot_);" << endl << indent()
                << "oprot_.writeMessageEnd();" << endl;
 
+    string retval = tmp("retval");
     if (!((*f_iter)->is_oneway() || (*f_iter)->get_returntype()->is_void())) {
-      f_service_ << indent() << "var retval : " << type_name((*f_iter)->get_returntype()) << ";"
+      f_service_ << indent() << "var " << retval << " : " << type_name((*f_iter)->get_returntype()) << ";"
                  << endl;
     }
 
@@ -1764,109 +1798,108 @@ void t_haxe_generator::generate_service_client(t_service* tservice) {
     } else {
       indent(f_service_) << "oprot_.getTransport().flush(function(error:Dynamic) : Void {" << endl;
       indent_up();
-      if (callbacks_) {
-        indent(f_service_) << "try {" << endl;
-        indent_up();
-      }
+      indent(f_service_) << "try {" << endl;
+      indent_up();
+      string appex = tmp("appex");
+      indent(f_service_) << "var " << appex << " : TApplicationException;" << endl;
       string resultname = get_cap_name((*f_iter)->get_name() + "_result");
       indent(f_service_) << "if (error != null) {" << endl;
       indent_up();
-      if (callbacks_) {
-        indent(f_service_) << "if (onError != null) onError(error);" << endl;
-        indent(f_service_) << "return;" << endl;
-      } else {
-        indent(f_service_) << "throw error;" << endl;
-      }
-      indent_down();
-      indent(f_service_) << "}" << endl;
-      indent(f_service_) << "var msg : TMessage = iprot_.readMessageBegin();" << endl;
-      indent(f_service_) << "if (msg.type == TMessageType.EXCEPTION) {" << endl;
+      indent(f_service_) << "if (onError == null)" << endl;
       indent_up();
-      indent(f_service_) << "var x = TApplicationException.read(iprot_);" << endl;
-      indent(f_service_) << "iprot_.readMessageEnd();" << endl;
-      if (callbacks_) {
-        indent(f_service_) << "if (onError != null) onError(x);" << endl;
-        indent(f_service_) << "return;" << endl;
-      } else {
-        indent(f_service_) << "throw x;" << endl;
-      }
+      indent(f_service_) << "throw error;" << endl;
       indent_down();
-      indent(f_service_) << "}" << endl;
-      indent(f_service_) << "var result : " << resultname << " = new " << resultname << "();"
-                         << endl;
-      indent(f_service_) << "result.read(iprot_);" << endl;
+      indent(f_service_) << "onError(error);" << endl;
+      indent(f_service_) << "return;" << endl;
+      indent_down();
+      indent(f_service_) << "}" << endl << endl;
+      string msg = tmp("msg");
+      indent(f_service_) << "var " << msg << " : TMessage = iprot_.readMessageBegin();" << endl;
+      indent(f_service_) << "if (" << msg << ".type == TMessageType.EXCEPTION) {" << endl;
+      indent_up();
+      indent(f_service_) << appex << " = TApplicationException.read(iprot_);" << endl;
+      indent(f_service_) << "iprot_.readMessageEnd();" << endl;
+      indent(f_service_) << "if (onError == null)" << endl;
+      indent_up();
+      indent(f_service_) << "throw " << appex << ";" << endl;
+      indent_down();
+      indent(f_service_) << "onError(" << appex << ");" << endl;
+      indent(f_service_) << "return;" << endl;
+      indent_down();
+      indent(f_service_) << "}" << endl << endl;
+      string result = tmp("result");
+      indent(f_service_) << "var " << result << " : " << resultname << " = new " << resultname << "();" << endl;
+      indent(f_service_) << "" << result << ".read(iprot_);" << endl;
       indent(f_service_) << "iprot_.readMessageEnd();" << endl;
 
       // Careful, only return _result if not a void function
       if (!(*f_iter)->get_returntype()->is_void()) {
-        indent(f_service_) << "if (result." << generate_isset_check("success") << ") {" << endl;
+        indent(f_service_) << "if (" << result << "." << generate_isset_check("success") << ") {" << endl;
         indent_up();
-        if (callbacks_) {
-          indent(f_service_) << "if (onSuccess != null) onSuccess(result.success);" << endl;
-          indent(f_service_) << "return;" << endl;
-        } else {
-          indent(f_service_) << "retval = result.success;" << endl;
-          indent(f_service_) << "return;" << endl;
-        }
+        indent(f_service_) << "if (onSuccess != null)" << endl;
+        indent_up();
+        indent(f_service_) << "onSuccess(" << result << ".success);" << endl;
         indent_down();
-        indent(f_service_) << "}" << endl;
+        indent(f_service_) << retval << " = " << result << ".success;" << endl;
+        indent(f_service_) << "return;" << endl;
+        indent_down();
+        indent(f_service_) << "}" << endl << endl;
       }
 
       t_struct* xs = (*f_iter)->get_xceptions();
       const std::vector<t_field*>& xceptions = xs->get_members();
       vector<t_field*>::const_iterator x_iter;
       for (x_iter = xceptions.begin(); x_iter != xceptions.end(); ++x_iter) {
-        indent(f_service_) << "if (result." << (*x_iter)->get_name() << " != null) {" << endl;
+        indent(f_service_) << "if (" << result << "." << (*x_iter)->get_name() << " != null) {" << endl;
         indent_up();
-        if (callbacks_) {
-          indent(f_service_) << "if (onError != null) onError(result." << (*x_iter)->get_name()
-                             << ");" << endl;
-          indent(f_service_) << "return;" << endl;
-        } else {
-          indent(f_service_) << "throw result." << (*x_iter)->get_name() << ";" << endl;
-        }
+        indent(f_service_) << "if (onError == null)" << endl;
+        indent_up();
+        indent(f_service_) << "throw " << result << "." << (*x_iter)->get_name() << ";" << endl;
         indent_down();
-        indent(f_service_) << "}" << endl;
+        indent(f_service_) << "onError(" << result << "." << (*x_iter)->get_name() << ");" << endl;
+        indent(f_service_) << "return;" << endl;
+        indent_down();
+        indent(f_service_) << "}" << endl << endl;
       }
 
       // If you get here it's an exception, unless a void function
       if ((*f_iter)->get_returntype()->is_void()) {
-        if (callbacks_) {
-          indent(f_service_) << "if (onSuccess != null) onSuccess();" << endl;
-        }
+        indent(f_service_) << "if (onSuccess != null)" << endl;
+        indent_up();
+        indent(f_service_) << "onSuccess();" << endl;
+        indent_down();
         indent(f_service_) << "return;" << endl;
       } else {
-        if (callbacks_) {
-          indent(f_service_) << "if (onError != null)" << endl;
-          indent_up();
-          indent(f_service_)
-              << "onError( new TApplicationException(TApplicationException.MISSING_RESULT," << endl;
-          indent(f_service_) << "                               \"" << (*f_iter)->get_name()
-                             << " failed: unknown result\"));" << endl;
-          indent_down();
-        } else {
-          indent(f_service_)
-              << "throw new TApplicationException(TApplicationException.MISSING_RESULT," << endl;
-          indent(f_service_) << "                            \"" << (*f_iter)->get_name()
-                             << " failed: unknown result\");" << endl;
-        }
-      }
-
-      if (callbacks_) {
-        indent_down();
-        indent(f_service_) << "} catch( e : TException) {" << endl;
+        indent(f_service_) << appex << " = new TApplicationException("
+                           << "TApplicationException.MISSING_RESULT,"
+                           << "\"" << (*f_iter)->get_name() << " failed: unknown result\");" << endl;
+        indent(f_service_) << "if (onError == null)" << endl;
         indent_up();
-        indent(f_service_) << "if (onError != null) onError(e);" << endl;
+        indent(f_service_) << "throw " << appex << ";" << endl;
         indent_down();
-        indent(f_service_) << "}" << endl;
+        indent(f_service_) << "onError(" << appex << ");" << endl;
+        indent(f_service_) << "return;" << endl;
       }
 
       indent_down();
-      indent(f_service_) << "});" << endl;
+      indent(f_service_) << endl;
+      indent(f_service_) << "} catch( e : TException) {" << endl;
+      indent_up();
+      indent(f_service_) << "if (onError == null)" << endl;
+      indent_up();
+      indent(f_service_) << "throw e;" << endl;
+      indent_down();
+      indent(f_service_) << "onError(e);" << endl;
+      indent(f_service_) << "return;" << endl;
+      indent_down();
+      indent(f_service_) << "}" << endl;
+
+      indent_down();
+      indent(f_service_) << "});" << endl << endl;
     }
 
     if (!((*f_iter)->is_oneway() || (*f_iter)->get_returntype()->is_void())) {
-      f_service_ << indent() << "return retval;" << endl;
+      f_service_ << indent() << "return " << retval << ";" << endl;
     }
 
     // Close function
@@ -1904,7 +1937,7 @@ void t_haxe_generator::generate_service_server(t_service* tservice) {
   indent_up();
 
   f_service_ << indent() << "private var " << get_cap_name(service_name_)
-             << "_iface_ : " << get_cap_name(service_name_) << ";" << endl;
+             << "_iface_ : " << get_cap_name(service_name_) << "_service;" << endl;
 
   if (extends.empty()) {
     f_service_ << indent()
@@ -1914,7 +1947,7 @@ void t_haxe_generator::generate_service_server(t_service* tservice) {
 
   f_service_ << endl;
 
-  indent(f_service_) << "public function new( iface : " << get_cap_name(service_name_) << ")"
+  indent(f_service_) << "public function new( iface : " << get_cap_name(service_name_) << "_service)"
                      << endl;
   scope_up(f_service_);
   if (!extends.empty()) {
@@ -1943,20 +1976,20 @@ void t_haxe_generator::generate_service_server(t_service* tservice) {
   f_service_ << indent() << "var msg : TMessage = iprot.readMessageBegin();" << endl;
 
   // TODO(mcslee): validate message, was the seqid etc. legit?
-  // AS- If all method is oneway:
-  // do you have an oprot?
-  // do you you need nullcheck?
+
   f_service_
-      << indent() << "var fn  = PROCESS_MAP.get(msg.name);" << endl << indent()
-      << "if (fn == null) {" << endl << indent() << "  TProtocolUtil.skip(iprot, TType.STRUCT);"
-      << endl << indent() << "  iprot.readMessageEnd();" << endl << indent()
-      << "  var x = new TApplicationException(TApplicationException.UNKNOWN_METHOD, \"Invalid "
-         "method name: '\"+msg.name+\"'\");" << endl << indent()
-      << "  oprot.writeMessageBegin(new TMessage(msg.name, TMessageType.EXCEPTION, msg.seqid));"
-      << endl << indent() << "  x.write(oprot);" << endl << indent() << "  oprot.writeMessageEnd();"
-      << endl << indent() << "  oprot.getTransport().flush();" << endl << indent()
-      << "  return true;" << endl << indent() << "}" << endl << indent()
-      << "fn( msg.seqid, iprot, oprot);" << endl;
+      << indent() << "var fn  = PROCESS_MAP.get(msg.name);" << endl
+      << indent() << "if (fn == null) {" << endl
+      << indent() << "  TProtocolUtil.skip(iprot, TType.STRUCT);" << endl
+      << indent() << "  iprot.readMessageEnd();" << endl
+      << indent() << "  var appex = new TApplicationException(TApplicationException.UNKNOWN_METHOD, "
+                  << "\"Invalid method name: '\"+msg.name+\"'\");" << endl
+      << indent() << "  oprot.writeMessageBegin(new TMessage(msg.name, TMessageType.EXCEPTION, msg.seqid));" << endl
+      << indent() << "  appex.write(oprot);" << endl << indent() << "  oprot.writeMessageEnd();" << endl
+      << indent() << "  oprot.getTransport().flush();" << endl
+      << indent() << "  return true;" << endl << indent() << "}" << endl
+      << indent() << "fn( msg.seqid, iprot, oprot);" << endl
+      ;
 
   f_service_ << indent() << "return true;" << endl;
 
@@ -2029,84 +2062,36 @@ void t_haxe_generator::generate_process_function(t_service* tservice, t_function
 
   // Declare result for non oneway function
   if (!tfunction->is_oneway()) {
-    f_service_ << indent() << "var result : " << resultname << " = new " << resultname << "();"
-               << endl;
+    f_service_ << indent() << "var result : " << resultname << " = new " << resultname << "();" << endl;
   }
 
   // Try block for any  function to catch (defined or undefined) exceptions
   f_service_ << indent() << "try {" << endl;
   indent_up();
 
-  if (callbacks_) {
-    // callback function style onError/onSuccess
 
-    // Generate the function call
-    t_struct* arg_struct = tfunction->get_arglist();
-    const std::vector<t_field*>& fields = arg_struct->get_members();
-    vector<t_field*>::const_iterator f_iter;
+  // normal function():result style
 
-    f_service_ << indent();
-    f_service_ << get_cap_name(service_name_) << "_iface_." << tfunction->get_name() << "(";
-    bool first = true;
-    for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
-      if (first) {
-        first = false;
-      } else {
-        f_service_ << ", ";
-      }
-      f_service_ << "args." << (*f_iter)->get_name();
-    }
+  // Generate the function call
+  t_struct* arg_struct = tfunction->get_arglist();
+  const std::vector<t_field*>& fields = arg_struct->get_members();
+  vector<t_field*>::const_iterator f_iter;
 
-    if (tfunction->is_oneway()) {
-      f_service_ << ");" << endl;
-    } else {
-      if (first) {
-        first = false;
-      } else {
-        f_service_ << ", ";
-      }
-      string on_success = generate_service_method_onsuccess(tfunction, false, true);
-      indent_up();
-      f_service_ << endl;
-      indent(f_service_) << "null,  // errors are thrown by the handler" << endl;
-      if (tfunction->get_returntype()->is_void()) {
-        indent(f_service_) << "null); // no retval" << endl;
-      } else {
-        indent(f_service_) << "function" << on_success.c_str() << " {" << endl;
-        if (!tfunction->get_returntype()->is_void()) {
-          indent_up();
-          indent(f_service_) << "result.success = retval;" << endl;
-          indent_down();
-        }
-        indent(f_service_) << "});" << endl;
-      }
-      indent_down();
-    }
-
-  } else {
-    // normal function():result style
-
-    // Generate the function call
-    t_struct* arg_struct = tfunction->get_arglist();
-    const std::vector<t_field*>& fields = arg_struct->get_members();
-    vector<t_field*>::const_iterator f_iter;
-
-    f_service_ << indent();
-    if (!(tfunction->is_oneway() || tfunction->get_returntype()->is_void())) {
-      f_service_ << "result.success = ";
-    }
-    f_service_ << get_cap_name(service_name_) << "_iface_." << tfunction->get_name() << "(";
-    bool first = true;
-    for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
-      if (first) {
-        first = false;
-      } else {
-        f_service_ << ", ";
-      }
-      f_service_ << "args." << (*f_iter)->get_name();
-    }
-    f_service_ << ");" << endl;
+  f_service_ << indent();
+  if (!(tfunction->is_oneway() || tfunction->get_returntype()->is_void())) {
+    f_service_ << "result.success = ";
   }
+  f_service_ << get_cap_name(service_name_) << "_iface_." << tfunction->get_name() << "(";
+  bool first = true;
+  for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
+    if (first) {
+      first = false;
+    } else {
+      f_service_ << ", ";
+    }
+    f_service_ << "args." << (*f_iter)->get_name();
+  }
+  f_service_ << ");" << endl;
 
   indent_down();
   f_service_ << indent() << "}";
@@ -2128,16 +2113,16 @@ void t_haxe_generator::generate_process_function(t_service* tservice, t_function
   }
 
   // always catch all exceptions to prevent from service denial
+  string appex = tmp("appex");
   f_service_ << " catch (th : Dynamic) {" << endl;
   indent_up();
-  indent(f_service_) << "trace(\"Internal error processing " << tfunction->get_name() << "\", th);"
-                     << endl;
+  indent(f_service_) << "trace(\"Internal error processing " << tfunction->get_name() << "\", th);" << endl;
   if (!tfunction->is_oneway()) {
-    indent(f_service_) << "var x = new TApplicationException(TApplicationException.INTERNAL_ERROR, "
+    indent(f_service_) << "var appex = new TApplicationException(TApplicationException.INTERNAL_ERROR, "
                           "\"Internal error processing " << tfunction->get_name() << "\");" << endl;
     indent(f_service_) << "oprot.writeMessageBegin(new TMessage(\"" << tfunction->get_name()
                        << "\", TMessageType.EXCEPTION, seqid));" << endl;
-    indent(f_service_) << "x.write(oprot);" << endl;
+    indent(f_service_) << "appex.write(oprot);" << endl;
     indent(f_service_) << "oprot.writeMessageEnd();" << endl;
     indent(f_service_) << "oprot.getTransport().flush();" << endl;
   }
@@ -2702,7 +2687,7 @@ string t_haxe_generator::declare_field(t_field* tfield, bool init) {
  * @param tfunction Function definition
  * @return String of rendered function definition
  */
-string t_haxe_generator::function_signature_callback(t_function* tfunction) {
+string t_haxe_generator::function_signature_combined(t_function* tfunction) {
   std::string on_error_success = "onError : Dynamic->Void = null, "
                                  + generate_service_method_onsuccess(tfunction, true, false);
 
@@ -2714,7 +2699,14 @@ string t_haxe_generator::function_signature_callback(t_function* tfunction) {
     arguments += on_error_success; //"onError : Function, onSuccess : Function";
   }
 
-  std::string result = "function " + tfunction->get_name() + "(" + arguments + ") : Void";
+  std::string resulttype;
+  if (tfunction->is_oneway() || tfunction->get_returntype()->is_void()) {
+    resulttype = "Void";
+  } else {
+    resulttype = type_name(tfunction->get_returntype());
+  }
+
+  std::string result = "function " + tfunction->get_name() + "(" + arguments + ") : "+resulttype;
   return result;
 }
 
@@ -2975,7 +2967,6 @@ std::string t_haxe_generator::get_enum_class_name(t_type* type) {
 THRIFT_REGISTER_GENERATOR(
     haxe,
     "Haxe",
-    "    callbacks        Use onError()/onSuccess() callbacks for service methods\n"
     "    rtti             Enable @:rtti for generated classes and interfaces\n"
     "    buildmacro=my.macros.Class.method(args)\n"
     "                     Add @:build macro calls to generated classes and interfaces\n")

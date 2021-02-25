@@ -21,6 +21,7 @@ package org.apache.thrift.transport;
 
 import org.apache.thrift.transport.*;
 
+import haxe.Int64;
 import haxe.io.Eof;
 import haxe.io.Bytes;
 import haxe.io.BytesBuffer;
@@ -28,15 +29,12 @@ import haxe.io.BytesOutput;
 import haxe.io.BytesInput;
 
 
-class TBufferedTransport extends TTransport
+class TBufferedTransport extends TLayeredTransport
 {
     // constants
     public static inline var DEFAULT_BUFSIZE : Int = 0x1000;    // 4096 Bytes
     public static inline var MIN_BUFSIZE : Int = 0x100;         // 256 Bytes
     public static inline var MAX_BUFSIZE : Int = 0x100000;      // 1 MB
-
-    // Underlying transport
-    public var transport(default,null) :  TTransport = null;
 
     // Buffer for input/output
     private var readBuffer_ : BytesInput = null;
@@ -45,6 +43,7 @@ class TBufferedTransport extends TTransport
 
     // Constructor wraps around another transport
     public function new( transport : TTransport, bufSize : Int = DEFAULT_BUFSIZE) {
+		super(transport);
 
         // ensure buffer size is in the range
         if ( bufSize < MIN_BUFSIZE)
@@ -52,22 +51,21 @@ class TBufferedTransport extends TTransport
         else if( bufSize > MAX_BUFSIZE)
             bufSize = MAX_BUFSIZE;
 
-        this.transport = transport;
         this.bufSize = bufSize;
         this.writeBuffer_ = new BytesOutput();
         this.writeBuffer_.bigEndian = true;
     }
 
     public override function open() : Void {
-        transport.open();
+        InnerTransport.open();
     }
 
     public override function isOpen() : Bool {
-        return transport.isOpen();
+        return InnerTransport.isOpen();
     }
 
     public override function close() : Void {
-        transport.close();
+        InnerTransport.close();
     }
 
     public override function read(buf : BytesBuffer, off : Int, len : Int) : Int {
@@ -86,7 +84,7 @@ class TBufferedTransport extends TTransport
                 // there is no point in buffering whenever the
                 // remaining length exceeds the buffer size
                 if ( len >= bufSize) {
-                    var got = transport.read( buf, off, len);
+                    var got = InnerTransport.read( buf, off, len);
                     if (got > 0) {
                         buf.addBytes(data, 0, got);
                         return got;
@@ -109,7 +107,7 @@ class TBufferedTransport extends TTransport
         var size = bufSize;
         try {
             var buffer = new BytesBuffer();
-            size = transport.read( buffer, 0, size);
+            size = InnerTransport.read( buffer, 0, size);
             readBuffer_ = new BytesInput( buffer.getBytes(), 0, size);
             readBuffer_.bigEndian = true;
             return size;
@@ -125,7 +123,7 @@ class TBufferedTransport extends TTransport
                 var buf = writeBuffer_.getBytes();
                 writeBuffer_ = new BytesOutput();
                 writeBuffer_.bigEndian = true;
-                transport.write(buf, 0, buf.length);
+                InnerTransport.write(buf, 0, buf.length);
             }
         }
     }
@@ -141,7 +139,7 @@ class TBufferedTransport extends TTransport
         var write_thru : Bool = exceeds_buf && (writeBuffer_.length >= halfSize);
         if ( write_thru) {
             writeChunk(true); // force send whatever we have in there
-            transport.write(buf, off, len);  // write thru
+            InnerTransport.write(buf, off, len);  // write thru
         } else {
             writeBuffer_.writeBytes(buf, off, len);
             writeChunk(false);
@@ -150,6 +148,18 @@ class TBufferedTransport extends TTransport
 
     public override function flush( callback : Dynamic->Void =null) : Void {
         writeChunk(true);
-        transport.flush(callback);
+        InnerTransport.flush(callback);
     }
+	
+	public override function CheckReadBytesAvailable(numBytes : Int64) : Void
+	{
+		var buffered = readBuffer_.length - readBuffer_.position;
+		if (buffered < numBytes)
+		{
+			numBytes -= buffered;
+			InnerTransport.CheckReadBytesAvailable(numBytes);
+		}
+	}
+	
+	
 }

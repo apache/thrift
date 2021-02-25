@@ -21,6 +21,15 @@ package org.apache.thrift.transport;
 
 class TServerTransport {
 
+	private var Configuration(default,null) : TConfiguration;
+
+	// private CTOR to prevent direct instantiation
+	// in other words, this class MUST be extended
+	private function new( config : TConfiguration)
+	{
+		Configuration = (config != null) ? config : new TConfiguration();
+	}
+
     public function Accept() : TTransport {
         var transport = AcceptImpl();
         if (transport == null) {

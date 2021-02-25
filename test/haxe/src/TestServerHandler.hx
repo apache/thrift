@@ -36,7 +36,7 @@ import haxe.ds.ObjectMap;
 import thrift.test.*;  // generated code
 
 
-class TestServerHandler implements ThriftTest {
+class TestServerHandler implements ThriftTest_service {
 
     public var server:TServer;
 
@@ -465,8 +465,10 @@ class TestServerHandler implements ThriftTest {
     */
     public function testOneway(secondsToSleep:haxe.Int32):Void
     {
+		#if sys
         trace("testOneway(" + secondsToSleep + "), sleeping...");
         Sys.sleep(secondsToSleep);
+		#end
         trace("testOneway finished");
     }
 

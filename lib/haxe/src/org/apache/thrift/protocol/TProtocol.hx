@@ -82,4 +82,7 @@ interface TProtocol {
     // recursion tracking
     function IncrementRecursionDepth() : Void;
     function DecrementRecursionDepth() : Void;
+	
+	// message size
+	function GetMinSerializedSize(type : TType) : Int;
 }
