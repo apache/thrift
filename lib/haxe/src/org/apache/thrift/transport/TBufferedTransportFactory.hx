@@ -27,7 +27,7 @@ class TBufferedTransportFactory extends TTransportFactory {
     private var bufSize : Int;
 
     public function new(bufSize : Int = TBufferedTransport.DEFAULT_BUFSIZE) {
-        super();
+		super();
         this.bufSize = bufSize;
     }
 

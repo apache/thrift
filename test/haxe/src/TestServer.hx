@@ -39,20 +39,24 @@ class TestServer
             switch( args.transport) {
             case socket:
                 trace("- socket port "+args.port);
+				#if (flash || html5 || js)
+				throw "Transport not supported on this platform";
+                #else
                 transport = new TServerSocket( args.port);
+				#end
             case http:
                 trace("- http");
-                #if !phpwebserver
-                  throw "HTTP server not implemented yet";
-                 //transport = new THttpServer( targetHost);
+                #if phpwebserver
+                transport = new TWrappingServerTransport( 
+					new TStreamTransport(
+						new TFileStream("php://input", Read),
+						new TFileStream("php://output", Append),
+						null
+					)
+				);
                 #else
-                transport =    new TWrappingServerTransport(
-                        new TStreamTransport(
-                          new TFileStream("php://input", Read),
-                          new TFileStream("php://output", Append)
-                          )
-                        );
-
+				throw "Transport not supported on this platform";
+                //transport = new THttpServer( targetHost);
                 #end
             default:
                 throw "Unhandled transport";
@@ -86,7 +90,7 @@ class TestServer
 
 
             // Processor
-            var handler = new TestServerHandler();
+            var handler : ThriftTest_service = new TestServerHandler();
             var processor = new ThriftTestProcessor(handler);
 
             // Simple Server

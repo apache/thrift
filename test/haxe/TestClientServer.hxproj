@@ -4,7 +4,7 @@
   <output>
     <movie outputType="Application" />
     <movie input="" />
-    <movie path="bin/TestClientServer" />
+    <movie path="bin\TestClientServer" />
     <movie fps="30" />
     <movie width="800" />
     <movie height="600" />
@@ -17,7 +17,7 @@
   <classpaths>
     <class path="src" />
     <class path="gen-haxe" />
-    <class path="../../lib/haxe/src" />
+    <class path="..\..\lib\haxe\src" />
   </classpaths>
   <!-- Build options -->
   <build>

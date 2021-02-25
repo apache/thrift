@@ -26,8 +26,8 @@
 -main Main
 
 #PHP target
--php bin/php/
---php-front Main-debug.php
+-php bin/php
+-D php-front=Main-debug.php
 
 
 #Add debug information

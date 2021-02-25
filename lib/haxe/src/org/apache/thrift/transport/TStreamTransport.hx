@@ -19,6 +19,7 @@
 
 package org.apache.thrift.transport;
 
+import org.apache.thrift.TConfiguration;
 import org.apache.thrift.transport.*;
 import org.apache.thrift.helper.*;
 
@@ -28,13 +29,15 @@ import haxe.io.BytesOutput;
 import haxe.io.BytesInput;
 
 
-class TStreamTransport extends TTransport {
+class TStreamTransport extends TEndpointTransport {
 
     public var InputStream(default,null) : TStream;
     public var OutputStream(default,null) : TStream;
 
 
-    public function new( input : TStream, output : TStream) {
+    public function new( input : TStream, output : TStream, config : TConfiguration) {
+		super(config);
+
         this.InputStream = input;
         this.OutputStream = output;
     }
@@ -48,7 +51,7 @@ class TStreamTransport extends TTransport {
     }
 
     public override function open() : Void {
-    }
+	}
 
     public override function close() : Void {
         if (InputStream != null)

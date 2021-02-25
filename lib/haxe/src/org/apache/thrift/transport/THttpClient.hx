@@ -20,6 +20,7 @@
 package org.apache.thrift.transport;
 
 
+import haxe.Timer;
 import haxe.io.Bytes;
 import haxe.io.BytesBuffer;
 import haxe.io.BytesOutput;
@@ -27,6 +28,9 @@ import haxe.io.BytesInput;
 
 import haxe.Http;
 
+#if js
+import js.lib.Promise;
+#end
 
 
 /**
@@ -34,7 +38,7 @@ import haxe.Http;
 * Thrift web services implementation.
 */
 
-class THttpClient extends TTransport {
+class THttpClient extends TEndpointTransport {
 
     private var requestBuffer_  : BytesOutput = new BytesOutput();
     private var responseBuffer_ : BytesInput = null;
@@ -42,20 +46,23 @@ class THttpClient extends TTransport {
     private var request_        : Http = null;
 
 
-    public function new( requestUrl : String) : Void {
-          request_ = new Http(requestUrl);
-        request_.addHeader( "contentType", "application/x-thrift");
+    public function new( requestUrl : String, config : TConfiguration = null) : Void {
+		super(config);
+		
+		request_ = new Http(requestUrl);
+        request_.addHeader( "Content-Type", "application/x-thrift");
     }
 
 
     public override function open() : Void {
+		ResetConsumedMessageSize();
     }
 
     public override function close() : Void {
     }
 
     public override function isOpen() : Bool {
-      return true;
+		return true;
     }
 
     public override function read(buf:BytesBuffer, off : Int, len : Int) : Int {
@@ -66,6 +73,7 @@ class THttpClient extends TTransport {
         var data =Bytes.alloc(len);
         len = responseBuffer_.readBytes(data, off, len);
         buf.addBytes(data,0,len);
+        CountConsumedMessageBytes(len);
         return len;
     }
 
@@ -78,24 +86,36 @@ class THttpClient extends TTransport {
         var buffer = requestBuffer_;
         requestBuffer_ = new BytesOutput();
         responseBuffer_ = null;
+		ResetConsumedMessageSize();
 
+		/*
         request_.onData = function(data : String) {
-            var tmp = new BytesBuffer();
-            tmp.addString(data);
-            responseBuffer_ = new BytesInput(tmp.getBytes());
-            if( callback != null) {
-                callback(null);
-            }
+			var tmp = new BytesBuffer();
+			tmp.addString(data);
+			responseBuffer_ = new BytesInput(tmp.getBytes());
+			if( callback != null) {
+				callback(null);
         };
+		*/
 
-        request_.onError = function(msg : String) {
-            if( callback != null) {
-                callback(new TTransportException(TTransportException.UNKNOWN, "IOError: " + msg));
-            }
-        };
+		request_.onBytes = function(data : Bytes) {
+			responseBuffer_ = new BytesInput(data);
+			if( callback != null) {
+				callback(null);
+			}
+		};
 
-        request_.setPostData(buffer.getBytes().toString());
-        request_.request(true/*POST*/);
+		request_.onError = function(msg : String) {
+			if( callback != null) {
+				callback(new TTransportException(TTransportException.UNKNOWN, "IOError: " + msg));
+			}
+		};
+		
+		
+		// the request
+		request_.setPostBytes(buffer.getBytes());
+		request_.request(true/*POST*/);
+		
     }
 
 }

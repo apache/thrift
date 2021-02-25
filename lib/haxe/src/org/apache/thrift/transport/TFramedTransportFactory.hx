@@ -19,19 +19,17 @@
 
 package org.apache.thrift.transport;
 
+import org.apache.thrift.TConfiguration;
 import org.apache.thrift.transport.*;
 
 
 class TFramedTransportFactory extends TTransportFactory {
 
-    var maxLength_ : Int;
-
-    public function new(maxLength : Int = TFramedTransport.DEFAULT_MAX_LENGTH) {
-        super();
-        maxLength_ = maxLength;
+    public function new() {
+		super();
     }
 
     public override function getTransport(base : TTransport) : TTransport {
-        return new TFramedTransport(base, maxLength_);
+        return new TFramedTransport(base);
     }
 }

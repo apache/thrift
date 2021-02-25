@@ -41,213 +41,217 @@ import flash.events.EventDispatcher;
      * Unlike Http Client, it uses a single POST, and chunk-encoding to transfer all messages.
      */
 
-    public class TFullDuplexHttpClient extends TTransport
-    {
-        private var socket : Socket = null;
-        private var host  :  String;
-        private var port  :  Int;
-        private var resource  :  String;
-        private var stripped  :  Bool = false;
-        private var obuffer : Bytes = new Bytes();
-        private var input : IDataInput;
-        private var output : IDataOutput;
-        private var bytesInChunk  :  Int = 0;
-        private var CRLF : Bytes = new Bytes();
-        private var ioCallback : TException->Void = null;
-        private var eventDispatcher : EventDispatcher = new EventDispatcher();
+public class TFullDuplexHttpClient extends TEndpointTransport
+{
+	private var socket : Socket = null;
+	private var host  :  String;
+	private var port  :  Int;
+	private var resource  :  String;
+	private var stripped  :  Bool = false;
+	private var obuffer : Bytes = new Bytes();
+	private var input : IDataInput;
+	private var output : IDataOutput;
+	private var bytesInChunk  :  Int = 0;
+	private var CRLF : Bytes = new Bytes();
+	private var ioCallback : TException->Void = null;
+	private var eventDispatcher : EventDispatcher = new EventDispatcher();
 
-        public function new(host  :  String, port  :  Int, resource  :  String)  :  Void
-        {
-            CRLF.writeByte(13);
-            CRLF.writeByte(10);
-            this.host = host;
-            this.port = port;
-            this.resource = resource;
-        }
+	public function new(host  :  String, port  :  Int, resource  :  String, config : TConfiguration = null)  :  Void
+	{
+		super(config);		
+		CRLF.writeByte(13);
+		CRLF.writeByte(10);
+		this.host = host;
+		this.port = port;
+		this.resource = resource;
+	}
 
-        public override function close()  :  Void
-        {
-            this.input = null;
-            this.output = null;
-            this.stripped = false;
-            socket.close()
-        }
+	public override function close()  :  Void
+	{
+		this.input = null;
+		this.output = null;
+		this.stripped = false;
+		socket.close();
+		ResetConsumedMessageSize();
+	}
 
-        public override function peek()  :  Bool
-        {
-            if(socket.connected)
-            {
-                trace("Bytes remained:" + socket.bytesAvailable);
-                return socket.bytesAvailable>0;
-            }
-            return false;
-        }
+	public override function peek()  :  Bool
+	{
+		if(socket.connected)
+		{
+			trace("Bytes remaining:" + socket.bytesAvailable);
+			return socket.bytesAvailable>0;
+		}
+		return false;
+	}
 
-        public override function read(buf : Bytes, off  :  Int, len  :  Int)  :  Int
-        {
-            var n1  :  Int = 0, n2  :  Int = 0, n3  :  Int = 0, n4  :  Int = 0, cidx  :  Int = 2;
-            var chunkSize : Bytes = new Bytes();
+	public override function read(buf : Bytes, off  :  Int, len  :  Int)  :  Int
+	{
+		var n1  :  Int = 0, n2  :  Int = 0, n3  :  Int = 0, n4  :  Int = 0, cidx  :  Int = 2;
+		var chunkSize : Bytes = new Bytes();
 
-            try
-            {
-                while (!stripped)
-                {
-                    n1 = n2;
-                    n2 = n3;
-                    n3 = n4;
-                    n4 = input.readByte();
-                    if ((n1 == 13) && (n2 == 10) && (n3 == 13) && (n4 == 10))
-                    {
-                        stripped = true;
-                    }
-                }
+		try
+		{
+			while (!stripped)
+			{
+				n1 = n2;
+				n2 = n3;
+				n3 = n4;
+				n4 = input.readByte();
+				if ((n1 == 13) && (n2 == 10) && (n3 == 13) && (n4 == 10))
+				{
+					stripped = true;
+				}
+			}
 
-                // read chunk size
-                if (bytesInChunk == 0)
-                {
-                    n1 = input.readByte();
-                    n2 = input.readByte();
+			// read chunk size
+			if (bytesInChunk == 0)
+			{
+				n1 = input.readByte();
+				n2 = input.readByte();
 
-                    chunkSize.writeByte(n1);
-                    chunkSize.writeByte(n2);
+				chunkSize.writeByte(n1);
+				chunkSize.writeByte(n2);
 
-                    while (!((n1 == 13) && (n2 == 10)))
-                    {
-                        n1 = n2;
-                        n2 = input.readByte();
-                        chunkSize.writeByte(n2);
-                    }
+				while (!((n1 == 13) && (n2 == 10)))
+				{
+					n1 = n2;
+					n2 = input.readByte();
+					chunkSize.writeByte(n2);
+				}
 
-                    bytesInChunk = parseInt(chunkSize.toString(), 16);
-                }
+				bytesInChunk = parseInt(chunkSize.toString(), 16);
+			}
 
-                input.readBytes(buf, off, len);
-                debugBuffer(buf);
-                bytesInChunk -= len;
+			input.readBytes(buf, off, len);
+			debugBuffer(buf);
+			bytesInChunk -= len;
 
-                if (bytesInChunk == 0)
-                {
-                    // advance the  :  "\r\n"
-                    input.readUTFBytes(2);
-                }
-                return len;
-            }
-            catch (e : EOFError)
-            {
-                trace(e);
-                throw new TTransportException(TTransportException.UNKNOWN, "No more data available.");
-            }
-            catch (e : TException)
-            {
-                trace('TException $e');
-                throw e;
-            }
-            catch (e : Error)
-            {
-                trace(e);
-                throw new TTransportException(TTransportException.UNKNOWN, 'Bad IO error: $e');
-            }
-            catch (e : Dynamic)
-            {
-                trace(e);
-                throw new TTransportException(TTransportException.UNKNOWN, 'Bad IO error: $e');
-            }
-            return 0;
-        }
+			if (bytesInChunk == 0)
+			{
+				// advance the  :  "\r\n"
+				input.readUTFBytes(2);
+			}
+			
+			CountConsumedMessageBytes(len);
+			return len;
+		}
+		catch (e : EOFError)
+		{
+			trace(e);
+			throw new TTransportException(TTransportException.UNKNOWN, "No more data available.");
+		}
+		catch (e : TException)
+		{
+			trace('TException $e');
+			throw e;
+		}
+		catch (e : Error)
+		{
+			trace(e);
+			throw new TTransportException(TTransportException.UNKNOWN, 'Bad IO error: $e');
+		}
+		catch (e : Dynamic)
+		{
+			trace(e);
+			throw new TTransportException(TTransportException.UNKNOWN, 'Bad IO error: $e');
+		}
+		return 0;
+	}
 
-        public function debugBuffer(buf : Bytes)  :  Void
-        {
-            var debug  :  String = "BUFFER >>";
-            var i  :  Int;
-            for (i = 0; i < buf.length; i++)
-            {
-                debug += buf[i] as int;
-                debug += " ";
-            }
+	public function debugBuffer(buf : Bytes)  :  Void
+	{
+		var debug  :  String = "BUFFER >>";
+		var i  :  Int;
+		for (i = 0; i < buf.length; i++)
+		{
+			debug += buf[i] as int;
+			debug += " ";
+		}
 
-            trace(debug + "<<");
-        }
+		trace(debug + "<<");
+	}
 
-        public override function write(buf : Bytes, off  :  Int, len  :  Int)  :  Void
-        {
-            obuffer.writeBytes(buf, off, len);
-        }
+	public override function write(buf : Bytes, off  :  Int, len  :  Int)  :  Void
+	{
+		obuffer.writeBytes(buf, off, len);
+	}
 
-        public function addEventListener(type  :  String, listener : Function, useCapture  :  Bool = false, priority  :  Int = 0, useWeakReference  :  Bool = false)  :  Void
-        {
-            this.eventDispatcher.addEventListener(type, listener, useCapture, priority, useWeakReference);
-        }
+	public function addEventListener(type  :  String, listener : Function, useCapture  :  Bool = false, priority  :  Int = 0, useWeakReference  :  Bool = false)  :  Void
+	{
+		this.eventDispatcher.addEventListener(type, listener, useCapture, priority, useWeakReference);
+	}
 
-        public override function open()  :  Void
-        {
-            this.socket = new Socket();
-            this.socket.addEventListener(Event.CONNECT, socketConnected);
-            this.socket.addEventListener(IOErrorEvent.IO_ERROR, socketError);
-            this.socket.addEventListener(SecurityErrorEvent.SECURITY_ERROR, socketSecurityError);
-            this.socket.addEventListener(ProgressEvent.SOCKET_DATA, socketDataHandler);
-            this.socket.connect(host, port);
-        }
+	public override function open()  :  Void
+	{
+		this.socket = new Socket();
+		this.socket.addEventListener(Event.CONNECT, socketConnected);
+		this.socket.addEventListener(IOErrorEvent.IO_ERROR, socketError);
+		this.socket.addEventListener(SecurityErrorEvent.SECURITY_ERROR, socketSecurityError);
+		this.socket.addEventListener(ProgressEvent.SOCKET_DATA, socketDataHandler);
+		this.socket.connect(host, port);
+		ResetConsumedMessageSize();
+	}
 
-        public function socketConnected(event : Event)  :  Void
-        {
-            this.output = this.socket;
-            this.input = this.socket;
-            this.output.writeUTF( "CONNECT " + resource + " HTTP/1.1\n"
-                                + "Host :  " + host + ":" + port + "\r\n"
-                                + "User-Agent :  Thrift/Haxe\r\n"
-                                + "Transfer-Encoding :  chunked\r\n"
-                                + "content-type :  application/x-thrift\r\n"
-                                + "Accept :  */*\r\n"
-                                + "\r\n");
-            this.eventDispatcher.dispatchEvent(event);
-        }
+	public function socketConnected(event : Event)  :  Void
+	{
+		this.output = this.socket;
+		this.input = this.socket;
+		this.output.writeUTF( "CONNECT " + resource + " HTTP/1.1\n"
+							+ "Host :  " + host + ":" + port + "\r\n"
+							+ "User-Agent :  Thrift/Haxe\r\n"
+							+ "Transfer-Encoding :  chunked\r\n"
+							+ "Content-Type :  application/x-thrift\r\n"
+							+ "Accept :  */*\r\n"
+							+ "\r\n");
+		this.eventDispatcher.dispatchEvent(event);
+	}
 
-        public function socketError(event : IOErrorEvent)  :  Void
-        {
-            trace("Error Connecting:" + event);
-            this.close();
-            if (ioCallback == null)
-            {
-                return;
-            }
-            ioCallback(new TTransportException(TTransportException.UNKNOWN, "IOError :  " + event.text));
-            this.eventDispatcher.dispatchEvent(event);
-        }
+	public function socketError(event : IOErrorEvent)  :  Void
+	{
+		trace("Error Connecting:" + event);
+		this.close();
+		if (ioCallback == null)
+		{
+			return;
+		}
+		ioCallback(new TTransportException(TTransportException.UNKNOWN, "IOError :  " + event.text));
+		this.eventDispatcher.dispatchEvent(event);
+	}
 
-        public function socketSecurityError(event : SecurityErrorEvent)  :  Void
-        {
-            trace("Security Error Connecting:" + event);
-            this.close();
-            this.eventDispatcher.dispatchEvent(event);
-        }
+	public function socketSecurityError(event : SecurityErrorEvent)  :  Void
+	{
+		trace("Security Error Connecting:" + event);
+		this.close();
+		this.eventDispatcher.dispatchEvent(event);
+	}
 
-        public function socketDataHandler(event : ProgressEvent)  :  Void
-        {
-            trace("Got Data call:" +ioCallback);
-            if (ioCallback != null)
-            {
-                ioCallback(null);
-            };
-            this.eventDispatcher.dispatchEvent(event);
-        }
+	public function socketDataHandler(event : ProgressEvent)  :  Void
+	{
+		trace("Got Data call:" +ioCallback);
+		if (ioCallback != null)
+		{
+			ioCallback(null);
+		};
+		this.eventDispatcher.dispatchEvent(event);
+	}
 
-        public override function flush(callback : Error->Void = null)  :  Void
-        {
-            trace("set callback:" + callback);
-            this.ioCallback = callback;
-            this.output.writeUTF(this.obuffer.length.toString(16));
-            this.output.writeBytes(CRLF);
-            this.output.writeBytes(this.obuffer);
-            this.output.writeBytes(CRLF);
-            this.socket.flush();
-            // waiting for  new Flex sdk 3.5
-            //this.obuffer.clear();
-            this.obuffer = new Bytes();
-        }
+	public override function flush(callback : Error->Void = null)  :  Void
+	{
+		trace("set callback:" + callback);
+		this.ioCallback = callback;
+		this.output.writeUTF(this.obuffer.length.toString(16));
+		this.output.writeBytes(CRLF);
+		this.output.writeBytes(this.obuffer);
+		this.output.writeBytes(CRLF);
+		this.socket.flush();
+		this.obuffer = new Bytes();
+		ResetConsumedMessageSize();
+	}
 
-        public override function isOpen()  :  Bool
-        {
-            return (this.socket == null ? false  :  this.socket.connected);
-        }
+	public override function isOpen()  :  Bool
+	{
+		return (this.socket != null) && this.socket.connected;
+	}
 
 }

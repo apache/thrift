@@ -26,16 +26,14 @@ Using Thrift with Haxe
 Haxe setup
 ---------------
 
-Thrift requires Haxe 3.1.3. Installers for Windows and OSX
+Thrift requires Haxe 4.2.1. Installers for Windows and OSX
 platforms are available at `http://haxe.org/download`. 
 
 Depending on the desired targets, you may have to install the appropriate HaxeLibs 
-after installing Haxe itself. For example, if you plan to target C#, Java and C++,
-enter the following commands after installing Haxe:
+after installing Haxe itself. For example, if you plan to target C++, enter the 
+following command after installing Haxe:
 
     haxelib install hxcpp
-    haxelib install hxjava
-    haxelib install hxcs
 
 For other targets, please consult the Haxe documentation whether or not any additional
 target libraries need to be installed and how to achieve this.
@@ -66,12 +64,12 @@ or
 Thrift Haxe bindings
 -------------------
 	
-Thrift Haxe bindings can be set up via the `haxelib` tool  
-either from the official ASF repo, or via the github mirror.
+Thrift Haxe bindings can be set up via the `haxelib` tool  as usual.
+Alternatively, the "github" method can be used.
 
-- To set up any **stable version**, choose the appropriate branch (e.g. `0.12.0`):
+- To set up any **stable version**, choose the appropriate branch (e.g. `0.14.1`):
 
-    - `haxelib git thrift https://github.com/apache/thrift.git 0.12.0 lib/haxe`
+    - `haxelib git thrift https://github.com/apache/thrift.git 0.14.1 lib/haxe`
 
 - To set up the current **development version**, use the `master` branch:
   
@@ -85,35 +83,24 @@ or build from source, depending on your operating system. Appropriate
 downloads and more information can be found at http://thrift.apache.org
 	
 To get started, visit the /tutorial/haxe and /test/haxe dirs for examples. 
-If you are using HIDE or the FlashDevelop IDE, you'll find appropriate 
-project files in these folders.
+If you are using the HaxeDevelop IDE, you'll find appropriate project files 
+in these folders.
 
 
-Current status
+Breaking changes
 ========================
-- tested with Haxe C++ target
-- tested with Haxe PHP target (console/web server, binary protocols)
-- transports: Socket, HTTP (servers run inside PHP server/PHP target only), Stream
-- protocols: Binary, JSON, Multiplex, Compact
-- tutorial client and server available
-- cross-test client and server available 
+This version requires Haxe 4 and cannot be used with earlier versions.
 
+It is recommended to clear out all gen-haxe contents once before switching 
+to the new version. Otherwise you may run into troubles with leftovers from 
+previous versions.
 
-Further developments
-========================
-- improve to work with C#, Java and JavaScript Haxe/OpenFL targets
-- improve to work with more (ideally all) Haxe/OpenFL targets
-- add HTTP server, update tutorial and tests accordingly
+The compiler option ```callbacks``` is now obsolete. The compiler will always 
+generate a dual interface (i.e. with optional callback style) for use on the 
+client side, plus a new ```_service``` interface to be used for server 
+implementations. Consequentially, your client and server implementations will
+need some manual intervention.
 
-
-Known restrictions
-========================
-
-Although designed with maximum portability in mind, for technical reasons some platforms
-may only support parts of the library, or not be compatible at all.
-
-Javascript:
-- tutorial fails to build because of unsupported Sys.args
 
 PHP HTTP Server notes
 ========================

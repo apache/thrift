@@ -32,5 +32,10 @@ class TException {
         errorMsg = msg;
     }
 
+	public function toString() : String {
+		var clsname = Type.getClassName( Type.getClass(this));
+		return '${clsname}: ${errorMsg} (code ${errorID})';
+	}
+	
 }
  

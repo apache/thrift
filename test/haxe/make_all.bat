@@ -30,16 +30,19 @@ thrift -r -gen haxe   ..\ThriftTest.thrift
 if errorlevel 1 goto STOP
 
 rem # invoke Haxe compiler for all targets
+rd .buildtemp /S /Q
 for %%a in (*.hxml) do (
-	rem * filter Python, as it is not supported by Haxe 3.1.3 (but will be in 3.1.4)
-	if not "%%a"=="python.hxml" (
-		echo --------------------------
-		echo Building %%a ...
-		echo --------------------------
-		haxe  --cwd .  %%a
-	)
+	echo --------------------------
+	echo Building %%a ...
+	echo --------------------------
+	haxe  --cwd .  %%a
+	if not exist ".buildtemp" mkdir ".buildtemp"
+	move bin ".buildtemp\%%a"
+	if errorlevel 1 pause
 )
 
+rd bin /S /Q
+rename .buildtemp bin
 
 echo.
 echo done.
