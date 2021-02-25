@@ -25,6 +25,9 @@ using System.Security.Cryptography.X509Certificates;
 using System.Threading;
 using System.Threading.Tasks;
 
+#pragma warning disable IDE0079 // unnecessary suppression
+#pragma warning disable IDE0063 // simplify using
+
 namespace Thrift.Transport.Client
 {
     // ReSharper disable once InconsistentNaming
@@ -33,7 +36,7 @@ namespace Thrift.Transport.Client
         private readonly X509Certificate[] _certificates;
         private readonly Uri _uri;
 
-        private int _connectTimeout = 30000; // Timeouts in milliseconds
+        private readonly int _connectTimeout = 30000; // Timeouts in milliseconds
         private HttpClient _httpClient;
         private Stream _inputStream;
         private MemoryStream _outputStream = new MemoryStream();
@@ -133,10 +136,10 @@ namespace Thrift.Transport.Client
 
             try
             {
-#if NETSTANDARD2_1
-                var ret = await _inputStream.ReadAsync(new Memory<byte>(buffer, offset, length), cancellationToken);
-#else
+#if NETSTANDARD2_0
                 var ret = await _inputStream.ReadAsync(buffer, offset, length, cancellationToken);
+#else
+                var ret = await _inputStream.ReadAsync(new Memory<byte>(buffer, offset, length), cancellationToken);
 #endif
                 if (ret == -1)
                 {
@@ -156,7 +159,11 @@ namespace Thrift.Transport.Client
         {
             cancellationToken.ThrowIfCancellationRequested();
 
+#if NETSTANDARD2_0
             await _outputStream.WriteAsync(buffer, offset, length, cancellationToken);
+#else
+            await _outputStream.WriteAsync(buffer.AsMemory(offset, length), cancellationToken);
+#endif
         }
 
         /// <summary>
@@ -224,7 +231,11 @@ namespace Thrift.Transport.Client
                     var response = (await _httpClient.PostAsync(_uri, contentStream, cancellationToken)).EnsureSuccessStatusCode();
 
                     _inputStream?.Dispose();
+#if NETSTANDARD2_0 || NETSTANDARD2_1
                     _inputStream = await response.Content.ReadAsStreamAsync();
+#else
+                    _inputStream = await response.Content.ReadAsStreamAsync(cancellationToken);
+#endif
                     if (_inputStream.CanSeek)
                     {
                         _inputStream.Seek(0, SeekOrigin.Begin);

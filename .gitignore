@@ -416,5 +416,7 @@ project.lock.json
 /tutorial/rs/Cargo.lock
 /tutorial/netstd/Interfaces/shared
 /tutorial/netstd/Interfaces/tutorial
+/tutorial/netstd/Server/Properties/launchSettings.json
+/tutorial/netstd/Client/Properties/launchSettings.json
 /ylwrap
 
