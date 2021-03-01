@@ -21,15 +21,16 @@ use clap::{clap_app, value_t};
 
 use std::collections::{BTreeMap, BTreeSet};
 use std::fmt::Debug;
+use std::net::TcpStream;
 
 use thrift;
 use thrift::OrderedFloat;
 use thrift::protocol::{TBinaryInputProtocol, TBinaryOutputProtocol, TCompactInputProtocol,
                        TCompactOutputProtocol, TInputProtocol, TMultiplexedOutputProtocol,
                        TOutputProtocol};
-use thrift::transport::{ReadHalf, TBufferedReadTransport, TBufferedWriteTransport,
+use thrift::transport::{TBufferedReadTransport, TBufferedWriteTransport,
                         TFramedReadTransport, TFramedWriteTransport, TIoChannel, TReadTransport,
-                        TTcpChannel, TWriteTransport, WriteHalf};
+                        TTcpChannel, TWriteTransport};
 use thrift_test::*;
 
 fn main() {
@@ -71,17 +72,22 @@ fn run() -> thrift::Result<()> {
     let transport = matches.value_of("transport").unwrap_or("buffered");
     let protocol = matches.value_of("protocol").unwrap_or("binary");
 
-
-    let mut thrift_test_client = {
-        let (i_prot, o_prot) = build_protocols(host, port, transport, protocol, "ThriftTest")?;
-        ThriftTestSyncClient::new(i_prot, o_prot)
-    };
+    // create a TCPStream that will be shared by all Thrift clients
+    // service calls from multiple Thrift clients will be interleaved over the same connection
+    // this isn't a problem for us because we're single-threaded and all calls block to completion
+    let shared_stream = TcpStream::connect(format!("{}:{}", host, port))?;
 
     let mut second_service_client = if protocol.starts_with("multi") {
-        let (i_prot, o_prot) = build_protocols(host, port, transport, protocol, "SecondService")?;
+        let shared_stream_clone = shared_stream.try_clone()?;
+        let (i_prot, o_prot) = build(shared_stream_clone, transport, protocol, "SecondService")?;
         Some(SecondServiceSyncClient::new(i_prot, o_prot))
     } else {
         None
+    };
+
+    let mut thrift_test_client = {
+        let (i_prot, o_prot) = build(shared_stream, transport, protocol, "ThriftTest")?;
+        ThriftTestSyncClient::new(i_prot, o_prot)
     };
 
     info!(
@@ -99,14 +105,14 @@ fn run() -> thrift::Result<()> {
     Ok(())
 }
 
-fn build_protocols(
-    host: &str,
-    port: u16,
+fn build(
+    stream: TcpStream,
     transport: &str,
     protocol: &str,
     service_name: &str,
 ) -> thrift::Result<(Box<dyn TInputProtocol>, Box<dyn TOutputProtocol>)> {
-    let (i_chan, o_chan) = tcp_channel(host, port)?;
+    let c = TTcpChannel::with_stream(stream);
+    let (i_chan, o_chan) = c.split()?;
 
     let (i_tran, o_tran): (Box<dyn TReadTransport>, Box<dyn TWriteTransport>) = match transport {
         "buffered" => {
@@ -146,17 +152,6 @@ fn build_protocols(
     };
 
     Ok((i_prot, o_prot))
-}
-
-// FIXME: expose "open" through the client interface so I don't have to early
-// open
-fn tcp_channel(
-    host: &str,
-    port: u16,
-) -> thrift::Result<(ReadHalf<TTcpChannel>, WriteHalf<TTcpChannel>)> {
-    let mut c = TTcpChannel::new();
-    c.open(&format!("{}:{}", host, port))?;
-    c.split()
 }
 
 type BuildThriftTestClient = ThriftTestSyncClient<Box<dyn TInputProtocol>, Box<dyn TOutputProtocol>>;
