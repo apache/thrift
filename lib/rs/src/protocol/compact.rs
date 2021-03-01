@@ -427,7 +427,8 @@ where
         self.write_byte(COMPACT_PROTOCOL_ID)?;
         self.write_byte((u8::from(identifier.message_type) << 5) | COMPACT_VERSION)?;
         // cast i32 as u32 so that varint writing won't use zigzag encoding
-        self.transport.write_varint(identifier.sequence_number as u32)?;
+        self.transport
+            .write_varint(identifier.sequence_number as u32)?;
         self.write_string(&identifier.name)?;
         Ok(())
     }
@@ -1091,6 +1092,7 @@ mod tests {
         let (mut i_prot, _) = test_objects();
 
         // signed two's complement of -1073741823 = 1100_0000_0000_0000_0000_0000_0000_0001
+        #[rustfmt::skip]
         let source_bytes: [u8; 11] = [
             0x82, /* protocol ID */
             0x21, /* message type | protocol version */
@@ -1102,7 +1104,7 @@ mod tests {
             0x03, /* message-name length */
             0x66,
             0x6F,
-            0x6F /* "foo" */,
+            0x6F, /* "foo" */
         ];
 
         i_prot.transport.set_readable_bytes(&source_bytes);

@@ -21,7 +21,9 @@ use std::net::{TcpListener, TcpStream, ToSocketAddrs};
 use std::sync::Arc;
 use threadpool::ThreadPool;
 
-use crate::protocol::{TInputProtocol, TInputProtocolFactory, TOutputProtocol, TOutputProtocolFactory};
+use crate::protocol::{
+    TInputProtocol, TInputProtocolFactory, TOutputProtocol, TOutputProtocolFactory,
+};
 use crate::transport::{TIoChannel, TReadTransportFactory, TTcpChannel, TWriteTransportFactory};
 use crate::{ApplicationError, ApplicationErrorKind};
 
@@ -196,7 +198,10 @@ where
     fn new_protocols_for_connection(
         &mut self,
         stream: TcpStream,
-    ) -> crate::Result<(Box<dyn TInputProtocol + Send>, Box<dyn TOutputProtocol + Send>)> {
+    ) -> crate::Result<(
+        Box<dyn TInputProtocol + Send>,
+        Box<dyn TOutputProtocol + Send>,
+    )> {
         // create the shared tcp stream
         let channel = TTcpChannel::with_stream(stream);
 
@@ -227,10 +232,11 @@ fn handle_incoming_connection<PRC>(
     let mut o_prot = o_prot;
     loop {
         match processor.process(&mut *i_prot, &mut *o_prot) {
-            Ok(()) => {},
+            Ok(()) => {}
             Err(err) => {
                 match err {
-                    crate::Error::Transport(ref transport_err) if transport_err.kind == TransportErrorKind::EndOfFile => {},
+                    crate::Error::Transport(ref transport_err)
+                        if transport_err.kind == TransportErrorKind::EndOfFile => {}
                     other => warn!("processor completed with error: {:?}", other),
                 }
                 break;

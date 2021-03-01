@@ -191,7 +191,9 @@ where
 #[cfg(test)]
 mod tests {
 
-    use crate::protocol::{TBinaryOutputProtocol, TMessageIdentifier, TMessageType, TOutputProtocol};
+    use crate::protocol::{
+        TBinaryOutputProtocol, TMessageIdentifier, TMessageType, TOutputProtocol,
+    };
     use crate::transport::{TBufferChannel, TIoChannel, WriteHalf};
 
     use super::*;

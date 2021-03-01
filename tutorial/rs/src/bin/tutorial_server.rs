@@ -144,7 +144,7 @@ impl CalculatorSyncHandler for CalculatorServer {
                         } else {
                             Ok(num1 / num2)
                         }
-                    },
+                    }
                     _ => {
                         let op_val: i32 = op.into();
                         Err(InvalidOperation {

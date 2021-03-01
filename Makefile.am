@@ -142,7 +142,6 @@ EXTRA_DIST = \
 	.gitattributes \
 	.gitignore \
 	.travis.yml \
-	.rustfmt.toml \
 	ApacheThrift.nuspec \
 	appveyor.yml \
 	bootstrap.sh \
@@ -165,5 +164,6 @@ EXTRA_DIST = \
 	package-lock.json \
 	phpcs.xml.dist \
 	README.md \
+	rust-toolchain \
 	sonar-project.properties \
 	Thrift.podspec

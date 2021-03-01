@@ -15,22 +15,24 @@
 // specific language governing permissions and limitations
 // under the License.
 
+use clap::{clap_app, value_t};
 use env_logger;
 use log::*;
-use clap::{clap_app, value_t};
 
 use std::collections::{BTreeMap, BTreeSet};
 use std::fmt::Debug;
 use std::net::TcpStream;
 
 use thrift;
+use thrift::protocol::{
+    TBinaryInputProtocol, TBinaryOutputProtocol, TCompactInputProtocol, TCompactOutputProtocol,
+    TInputProtocol, TMultiplexedOutputProtocol, TOutputProtocol,
+};
+use thrift::transport::{
+    TBufferedReadTransport, TBufferedWriteTransport, TFramedReadTransport, TFramedWriteTransport,
+    TIoChannel, TReadTransport, TTcpChannel, TWriteTransport,
+};
 use thrift::OrderedFloat;
-use thrift::protocol::{TBinaryInputProtocol, TBinaryOutputProtocol, TCompactInputProtocol,
-                       TCompactOutputProtocol, TInputProtocol, TMultiplexedOutputProtocol,
-                       TOutputProtocol};
-use thrift::transport::{TBufferedReadTransport, TBufferedWriteTransport,
-                        TFramedReadTransport, TFramedWriteTransport, TIoChannel, TReadTransport,
-                        TTcpChannel, TWriteTransport};
 use thrift_test::*;
 
 fn main() {
@@ -92,10 +94,7 @@ fn run() -> thrift::Result<()> {
 
     info!(
         "connecting to {}:{} with {}+{} stack",
-        host,
-        port,
-        protocol,
-        transport
+        host, port, protocol, transport
     );
 
     for _ in 0..testloops {
@@ -115,47 +114,50 @@ fn build(
     let (i_chan, o_chan) = c.split()?;
 
     let (i_tran, o_tran): (Box<dyn TReadTransport>, Box<dyn TWriteTransport>) = match transport {
-        "buffered" => {
-            (Box::new(TBufferedReadTransport::new(i_chan)),
-             Box::new(TBufferedWriteTransport::new(o_chan)))
-        }
-        "framed" => {
-            (Box::new(TFramedReadTransport::new(i_chan)),
-             Box::new(TFramedWriteTransport::new(o_chan)))
-        }
+        "buffered" => (
+            Box::new(TBufferedReadTransport::new(i_chan)),
+            Box::new(TBufferedWriteTransport::new(o_chan)),
+        ),
+        "framed" => (
+            Box::new(TFramedReadTransport::new(i_chan)),
+            Box::new(TFramedWriteTransport::new(o_chan)),
+        ),
         unmatched => return Err(format!("unsupported transport {}", unmatched).into()),
     };
 
     let (i_prot, o_prot): (Box<dyn TInputProtocol>, Box<dyn TOutputProtocol>) = match protocol {
-        "binary" => {
-            (Box::new(TBinaryInputProtocol::new(i_tran, true)),
-             Box::new(TBinaryOutputProtocol::new(o_tran, true)))
-        }
-        "multi" => {
-            (Box::new(TBinaryInputProtocol::new(i_tran, true)),
-             Box::new(
-                TMultiplexedOutputProtocol::new(
-                    service_name,
-                    TBinaryOutputProtocol::new(o_tran, true),
-                ),
-            ))
-        }
-        "compact" => {
-            (Box::new(TCompactInputProtocol::new(i_tran)),
-             Box::new(TCompactOutputProtocol::new(o_tran)))
-        }
-        "multic" => {
-            (Box::new(TCompactInputProtocol::new(i_tran)),
-             Box::new(TMultiplexedOutputProtocol::new(service_name, TCompactOutputProtocol::new(o_tran)),))
-        }
+        "binary" => (
+            Box::new(TBinaryInputProtocol::new(i_tran, true)),
+            Box::new(TBinaryOutputProtocol::new(o_tran, true)),
+        ),
+        "multi" => (
+            Box::new(TBinaryInputProtocol::new(i_tran, true)),
+            Box::new(TMultiplexedOutputProtocol::new(
+                service_name,
+                TBinaryOutputProtocol::new(o_tran, true),
+            )),
+        ),
+        "compact" => (
+            Box::new(TCompactInputProtocol::new(i_tran)),
+            Box::new(TCompactOutputProtocol::new(o_tran)),
+        ),
+        "multic" => (
+            Box::new(TCompactInputProtocol::new(i_tran)),
+            Box::new(TMultiplexedOutputProtocol::new(
+                service_name,
+                TCompactOutputProtocol::new(o_tran),
+            )),
+        ),
         unmatched => return Err(format!("unsupported protocol {}", unmatched).into()),
     };
 
     Ok((i_prot, o_prot))
 }
 
-type BuildThriftTestClient = ThriftTestSyncClient<Box<dyn TInputProtocol>, Box<dyn TOutputProtocol>>;
-type BuiltSecondServiceClient = SecondServiceSyncClient<Box<dyn TInputProtocol>, Box<dyn TOutputProtocol>>;
+type BuildThriftTestClient =
+    ThriftTestSyncClient<Box<dyn TInputProtocol>, Box<dyn TOutputProtocol>>;
+type BuiltSecondServiceClient =
+    SecondServiceSyncClient<Box<dyn TInputProtocol>, Box<dyn TOutputProtocol>>;
 
 #[allow(clippy::cognitive_complexity)]
 fn make_thrift_calls(
@@ -250,26 +252,22 @@ fn make_thrift_calls(
     {
         let x_snd = Xtruct2 {
             byte_thing: Some(32),
-            struct_thing: Some(
-                Xtruct {
-                    string_thing: Some("foo".to_owned()),
-                    byte_thing: Some(1),
-                    i32_thing: Some(324_382_098),
-                    i64_thing: Some(12_938_492_818),
-                },
-            ),
+            struct_thing: Some(Xtruct {
+                string_thing: Some("foo".to_owned()),
+                byte_thing: Some(1),
+                i32_thing: Some(324_382_098),
+                i64_thing: Some(12_938_492_818),
+            }),
             i32_thing: Some(293_481_098),
         };
         let x_cmp = Xtruct2 {
             byte_thing: Some(32),
-            struct_thing: Some(
-                Xtruct {
-                    string_thing: Some("foo".to_owned()),
-                    byte_thing: Some(1),
-                    i32_thing: Some(324_382_098),
-                    i64_thing: Some(12_938_492_818),
-                },
-            ),
+            struct_thing: Some(Xtruct {
+                string_thing: Some("foo".to_owned()),
+                byte_thing: Some(1),
+                i32_thing: Some(324_382_098),
+                i64_thing: Some(12_938_492_818),
+            }),
             i32_thing: Some(293_481_098),
         };
         verify_expected_result(thrift_test_client.test_nest(x_snd), x_cmp)?;
@@ -399,30 +397,24 @@ fn make_thrift_calls(
         arg_map_usermap.insert(Numberz::EIGHT, 19);
 
         let mut arg_vec_xtructs: Vec<Xtruct> = Vec::new();
-        arg_vec_xtructs.push(
-            Xtruct {
-                string_thing: Some("foo".to_owned()),
-                byte_thing: Some(8),
-                i32_thing: Some(29),
-                i64_thing: Some(92384),
-            },
-        );
-        arg_vec_xtructs.push(
-            Xtruct {
-                string_thing: Some("bar".to_owned()),
-                byte_thing: Some(28),
-                i32_thing: Some(2),
-                i64_thing: Some(-1281),
-            },
-        );
-        arg_vec_xtructs.push(
-            Xtruct {
-                string_thing: Some("baz".to_owned()),
-                byte_thing: Some(0),
-                i32_thing: Some(3_948_539),
-                i64_thing: Some(-12_938_492),
-            },
-        );
+        arg_vec_xtructs.push(Xtruct {
+            string_thing: Some("foo".to_owned()),
+            byte_thing: Some(8),
+            i32_thing: Some(29),
+            i64_thing: Some(92384),
+        });
+        arg_vec_xtructs.push(Xtruct {
+            string_thing: Some("bar".to_owned()),
+            byte_thing: Some(28),
+            i32_thing: Some(2),
+            i64_thing: Some(-1281),
+        });
+        arg_vec_xtructs.push(Xtruct {
+            string_thing: Some("baz".to_owned()),
+            byte_thing: Some(0),
+            i32_thing: Some(3_948_539),
+            i64_thing: Some(-12_938_492),
+        });
 
         let mut s_cmp_nested_1: BTreeMap<Numberz, Insanity> = BTreeMap::new();
         let insanity = Insanity {
@@ -450,12 +442,12 @@ fn make_thrift_calls(
     {
         let r = thrift_test_client.test_exception("Xception".to_owned());
         let x = match r {
-            Err(thrift::Error::User(ref e)) => {
-                match e.downcast_ref::<Xception>() {
-                    Some(x) => Ok(x),
-                    None => Err(thrift::Error::User("did not get expected Xception struct".into()),),
-                }
-            }
+            Err(thrift::Error::User(ref e)) => match e.downcast_ref::<Xception>() {
+                Some(x) => Ok(x),
+                None => Err(thrift::Error::User(
+                    "did not get expected Xception struct".into(),
+                )),
+            },
             _ => Err(thrift::Error::User("did not get exception".into())),
         }?;
 
@@ -493,12 +485,12 @@ fn make_thrift_calls(
         let r =
             thrift_test_client.test_multi_exception("Xception".to_owned(), "ignored".to_owned());
         let x = match r {
-            Err(thrift::Error::User(ref e)) => {
-                match e.downcast_ref::<Xception>() {
-                    Some(x) => Ok(x),
-                    None => Err(thrift::Error::User("did not get expected Xception struct".into()),),
-                }
-            }
+            Err(thrift::Error::User(ref e)) => match e.downcast_ref::<Xception>() {
+                Some(x) => Ok(x),
+                None => Err(thrift::Error::User(
+                    "did not get expected Xception struct".into(),
+                )),
+            },
             _ => Err(thrift::Error::User("did not get exception".into())),
         }?;
 
@@ -515,28 +507,26 @@ fn make_thrift_calls(
         let r =
             thrift_test_client.test_multi_exception("Xception2".to_owned(), "ignored".to_owned());
         let x = match r {
-            Err(thrift::Error::User(ref e)) => {
-                match e.downcast_ref::<Xception2>() {
-                    Some(x) => Ok(x),
-                    None => Err(thrift::Error::User("did not get expected Xception struct".into()),),
-                }
-            }
+            Err(thrift::Error::User(ref e)) => match e.downcast_ref::<Xception2>() {
+                Some(x) => Ok(x),
+                None => Err(thrift::Error::User(
+                    "did not get expected Xception struct".into(),
+                )),
+            },
             _ => Err(thrift::Error::User("did not get exception".into())),
         }?;
 
         let x_cmp = Xception2 {
             error_code: Some(2002),
-            struct_thing: Some(
-                Xtruct {
-                    string_thing: Some("This is an Xception2".to_owned()),
-                    // since this is an OPT_IN_REQ_OUT field the sender sets a default
-                    byte_thing: Some(0),
-                    // since this is an OPT_IN_REQ_OUT field the sender sets a default
-                    i32_thing: Some(0),
-                    // since this is an OPT_IN_REQ_OUT field the sender sets a default
-                    i64_thing: Some(0),
-                },
-            ),
+            struct_thing: Some(Xtruct {
+                string_thing: Some("This is an Xception2".to_owned()),
+                // since this is an OPT_IN_REQ_OUT field the sender sets a default
+                byte_thing: Some(0),
+                // since this is an OPT_IN_REQ_OUT field the sender sets a default
+                i32_thing: Some(0),
+                // since this is an OPT_IN_REQ_OUT field the sender sets a default
+                i64_thing: Some(0),
+            }),
         };
 
         verify_expected_result(Ok(x), &x_cmp)?;
@@ -546,7 +536,9 @@ fn make_thrift_calls(
     {
         let r = thrift_test_client.test_multi_exception("haha".to_owned(), "RETURNED".to_owned());
         let x = match r {
-            Err(e) => Err(thrift::Error::User(format!("received an unexpected exception {:?}", e).into(),),),
+            Err(e) => Err(thrift::Error::User(
+                format!("received an unexpected exception {:?}", e).into(),
+            )),
             _ => r,
         }?;
 
@@ -586,7 +578,9 @@ fn verify_expected_result<T: Debug + PartialEq + Sized>(
                 Ok(())
             } else {
                 info!("*** FAILED ***");
-                Err(thrift::Error::User(format!("expected {:?} but got {:?}", &expected, &v).into()),)
+                Err(thrift::Error::User(
+                    format!("expected {:?} but got {:?}", &expected, &v).into(),
+                ))
             }
         }
         Err(e) => Err(e),
