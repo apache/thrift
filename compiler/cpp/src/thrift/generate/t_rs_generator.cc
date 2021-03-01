@@ -116,7 +116,7 @@ private:
 
   // Write the impl block associated with the rust representation of an enum. This includes methods
   // to write the enum to a protocol, read it from a protocol, etc.
-  void render_enum_impl(const string& enum_name);
+  void render_enum_impl(t_enum* tenum, const string& enum_name);
 
   // Write a simple rust const value (ie. `pub const FOO: foo...`).
   void render_const_value(const string& name, t_type* ttype, t_const_value* tvalue);
@@ -868,49 +868,62 @@ void t_rs_generator::generate_typedef(t_typedef* ttypedef) {
 void t_rs_generator::generate_enum(t_enum* tenum) {
   string enum_name(rust_camel_case(tenum->get_name()));
   render_enum_definition(tenum, enum_name);
-  render_enum_impl(enum_name);
+  render_enum_impl(tenum, enum_name);
   render_enum_conversion(tenum, enum_name);
 }
 
 void t_rs_generator::render_enum_definition(t_enum* tenum, const string& enum_name) {
   render_rustdoc((t_doc*) tenum);
   f_gen_ << "#[derive(Copy, Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]" << endl;
-  f_gen_ << "pub enum " << enum_name << " {" << endl;
-  indent_up();
-
-  vector<t_enum_value*> constants = tenum->get_constants();
-  vector<t_enum_value*>::iterator constants_iter;
-  for (constants_iter = constants.begin(); constants_iter != constants.end(); ++constants_iter) {
-    t_enum_value* val = (*constants_iter);
-    render_rustdoc((t_doc*) val);
-    f_gen_
-      << indent()
-      << rust_enum_variant_name(val->get_name())
-      << " = "
-      << val->get_value()
-      << ","
-      << endl;
-  }
-
-  indent_down();
-  f_gen_ << "}" << endl;
+  f_gen_ << "pub struct " << enum_name << "(pub i32);" << endl;
   f_gen_ << endl;
 }
 
-void t_rs_generator::render_enum_impl(const string& enum_name) {
+void t_rs_generator::render_enum_impl(t_enum* tenum, const string& enum_name) {
   f_gen_ << "impl " << enum_name << " {" << endl;
   indent_up();
 
-  // taking enum as 'self' here because Thrift enums
-  // are represented as Rust enums with integer values
-  // it's cheaper to copy the integer as opposed to
-  // taking a reference to the enum
+  vector<t_enum_value*> constants = tenum->get_constants();
+
+  // associated constants for each IDL-defined enum variant
+  {
+      vector<t_enum_value*>::iterator constants_iter;
+      for (constants_iter = constants.begin(); constants_iter != constants.end(); ++constants_iter) {
+        t_enum_value* val = (*constants_iter);
+        render_rustdoc((t_doc*) val);
+        f_gen_
+            << indent()
+            << "pub const " << rust_enum_variant_name(val->get_name()) << ": " << enum_name
+            << " = "
+            << enum_name << "(" << val->get_value() << ")"
+            << ";"
+            << endl;
+      }
+  }
+
+  // array containing all IDL-defined enum variants
+  {
+    f_gen_ << indent() << "pub const ENUM_VALUES: &'static [Self] = &[" << endl;
+    indent_up();
+    vector<t_enum_value*>::iterator constants_iter;
+    for (constants_iter = constants.begin(); constants_iter != constants.end(); ++constants_iter) {
+      t_enum_value* val = (*constants_iter);
+      f_gen_
+          << indent()
+          << "Self::" << rust_enum_variant_name(val->get_name())
+          << ","
+          << endl;
+    }
+    indent_down();
+    f_gen_ << indent() << "];" << endl;
+  }
+
   f_gen_
     << indent()
-    << "pub fn write_to_out_protocol(self, o_prot: &mut dyn TOutputProtocol) -> thrift::Result<()> {"
+    << "pub fn write_to_out_protocol(&self, o_prot: &mut dyn TOutputProtocol) -> thrift::Result<()> {"
     << endl;
   indent_up();
-  f_gen_ << indent() << "o_prot.write_i32(self as i32)" << endl;
+  f_gen_ << indent() << "o_prot.write_i32(self.0)" << endl;
   indent_down();
   f_gen_ << indent() << "}" << endl;
 
@@ -919,10 +932,8 @@ void t_rs_generator::render_enum_impl(const string& enum_name) {
     << "pub fn read_from_in_protocol(i_prot: &mut dyn TInputProtocol) -> thrift::Result<" << enum_name << "> {"
     << endl;
   indent_up();
-
   f_gen_ << indent() << "let enum_value = i_prot.read_i32()?;" << endl;
-  f_gen_ << indent() << enum_name << "::try_from(enum_value)";
-
+  f_gen_ << indent() << "Ok(" << enum_name << "::from(enum_value)" << ")" << endl;
   indent_down();
   f_gen_ << indent() << "}" << endl;
 
@@ -932,17 +943,13 @@ void t_rs_generator::render_enum_impl(const string& enum_name) {
 }
 
 void t_rs_generator::render_enum_conversion(t_enum* tenum, const string& enum_name) {
-  f_gen_ << "impl TryFrom<i32> for " << enum_name << " {" << endl;
+  // From trait: i32 -> ENUM_TYPE
+  f_gen_ << "impl From<i32> for " << enum_name << " {" << endl;
   indent_up();
-
-  f_gen_ << indent() << "type Error = thrift::Error;";
-
-  f_gen_ << indent() << "fn try_from(i: i32) -> Result<Self, Self::Error> {" << endl;
+  f_gen_ << indent() << "fn from(i: i32) -> Self {" << endl;
   indent_up();
-
   f_gen_ << indent() << "match i {" << endl;
   indent_up();
-
   vector<t_enum_value*> constants = tenum->get_constants();
   vector<t_enum_value*>::iterator constants_iter;
   for (constants_iter = constants.begin(); constants_iter != constants.end(); ++constants_iter) {
@@ -950,26 +957,50 @@ void t_rs_generator::render_enum_conversion(t_enum* tenum, const string& enum_na
     f_gen_
       << indent()
       << val->get_value()
-      << " => Ok(" << enum_name << "::" << rust_enum_variant_name(val->get_name()) << "),"
+      << " => " << enum_name << "::" << rust_enum_variant_name(val->get_name()) << ","
       << endl;
   }
-  f_gen_ << indent() << "_ => {" << endl;
+  f_gen_ << indent() << "_ => " << enum_name << "(i)" << endl;
+  indent_down();
+  f_gen_ << indent() << "}" << endl;
+  indent_down();
+  f_gen_ << indent() << "}" << endl;
+  indent_down();
+  f_gen_ << "}" << endl;
+  f_gen_ << endl;
+
+  // From trait: &i32 -> ENUM_TYPE
+  f_gen_ << "impl From<&i32> for " << enum_name << " {" << endl;
   indent_up();
-  render_thrift_error(
-    "Protocol",
-    "ProtocolError",
-    "ProtocolErrorKind::InvalidData",
-    "format!(\"cannot convert enum constant {} to " + enum_name + "\", i)"
-  );
-  indent_down();
-  f_gen_ << indent() << "}," << endl;
-
+  f_gen_ << indent() << "fn from(i: &i32) -> Self {" << endl;
+  indent_up();
+  f_gen_ << indent() << enum_name << "::from(*i)" << endl;
   indent_down();
   f_gen_ << indent() << "}" << endl;
+  indent_down();
+  f_gen_ << "}" << endl;
+  f_gen_ << endl;
 
+  // From trait: ENUM_TYPE -> int
+  f_gen_ << "impl From<" << enum_name << "> for i32 {" << endl;
+  indent_up();
+  f_gen_ << indent() << "fn from(e: " << enum_name << ") -> i32 {" << endl;
+  indent_up();
+  f_gen_ << indent() << "e.0" << endl;
   indent_down();
   f_gen_ << indent() << "}" << endl;
+  indent_down();
+  f_gen_ << "}" << endl;
+  f_gen_ << endl;
 
+  // From trait: &ENUM_TYPE -> int
+  f_gen_ << "impl From<&" << enum_name << "> for i32 {" << endl;
+  indent_up();
+  f_gen_ << indent() << "fn from(e: &" << enum_name << ") -> i32 {" << endl;
+  indent_up();
+  f_gen_ << indent() << "e.0" << endl;
+  indent_down();
+  f_gen_ << indent() << "}" << endl;
   indent_down();
   f_gen_ << "}" << endl;
   f_gen_ << endl;
@@ -3295,9 +3326,11 @@ string t_rs_generator::rust_enum_variant_name(const string &name) {
   }
 
   if (all_uppercase) {
-    return capitalize(camelcase(lowercase(name)));
+    return name;
   } else {
-    return capitalize(camelcase(name));
+    string modified_name(uppercase(underscore(name)));
+    string_replace(modified_name, "__", "_");
+    return modified_name;
   }
 }
 
