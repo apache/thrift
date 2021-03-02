@@ -550,6 +550,7 @@ void t_rs_generator::render_attributes_and_includes() {
   f_gen_ << "#![allow(clippy::too_many_arguments, clippy::type_complexity)]" << endl;
   // prevent rustfmt from running against this file
   // lines are too long, code is (thankfully!) not visual-indented, etc.
+  // can't use #[rustfmt::skip] see: https://github.com/rust-lang/rust/issues/54726
   f_gen_ << "#![cfg_attr(rustfmt, rustfmt_skip)]" << endl;
   f_gen_ << endl;
 
@@ -918,6 +919,7 @@ void t_rs_generator::render_enum_impl(t_enum* tenum, const string& enum_name) {
     f_gen_ << indent() << "];" << endl;
   }
 
+  f_gen_ << indent() << "#[allow(clippy::trivially_copy_pass_by_ref)]" << endl;
   f_gen_
     << indent()
     << "pub fn write_to_out_protocol(&self, o_prot: &mut dyn TOutputProtocol) -> thrift::Result<()> {"

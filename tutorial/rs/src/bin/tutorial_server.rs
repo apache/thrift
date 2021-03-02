@@ -131,11 +131,11 @@ impl CalculatorSyncHandler for CalculatorServer {
                 let num1 = w.num1.as_ref().expect("operands checked");
                 let num2 = w.num2.as_ref().expect("operands checked");
 
-                match op {
-                    &Operation::ADD => Ok(num1 + num2),
-                    &Operation::SUBTRACT => Ok(num1 - num2),
-                    &Operation::MULTIPLY => Ok(num1 * num2),
-                    &Operation::DIVIDE => {
+                match *op {
+                    Operation::ADD => Ok(num1 + num2),
+                    Operation::SUBTRACT => Ok(num1 - num2),
+                    Operation::MULTIPLY => Ok(num1 * num2),
+                    Operation::DIVIDE => {
                         if *num2 == 0 {
                             Err(InvalidOperation {
                                 what_op: Some(op.into()),
