@@ -136,7 +136,11 @@ impl TMultiplexedProcessor {
 }
 
 impl TProcessor for TMultiplexedProcessor {
-    fn process(&self, i_prot: &mut dyn TInputProtocol, o_prot: &mut dyn TOutputProtocol) -> crate::Result<()> {
+    fn process(
+        &self,
+        i_prot: &mut dyn TInputProtocol,
+        o_prot: &mut dyn TOutputProtocol,
+    ) -> crate::Result<()> {
         let msg_ident = i_prot.read_message_begin()?;
 
         debug!("process incoming msg id:{:?}", &msg_ident);
@@ -183,7 +187,9 @@ mod tests {
     use std::sync::atomic::{AtomicBool, Ordering};
     use std::sync::Arc;
 
-    use crate::protocol::{TBinaryInputProtocol, TBinaryOutputProtocol, TMessageIdentifier, TMessageType};
+    use crate::protocol::{
+        TBinaryInputProtocol, TBinaryOutputProtocol, TMessageIdentifier, TMessageType,
+    };
     use crate::transport::{ReadHalf, TBufferChannel, TIoChannel, WriteHalf};
     use crate::{ApplicationError, ApplicationErrorKind};
 
@@ -261,7 +267,11 @@ mod tests {
     }
 
     impl TProcessor for Service {
-        fn process(&self, _: &mut dyn TInputProtocol, _: &mut dyn TOutputProtocol) -> crate::Result<()> {
+        fn process(
+            &self,
+            _: &mut dyn TInputProtocol,
+            _: &mut dyn TOutputProtocol,
+        ) -> crate::Result<()> {
             let res = self
                 .invoked
                 .compare_and_swap(false, true, Ordering::Relaxed);

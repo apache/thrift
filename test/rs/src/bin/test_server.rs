@@ -15,23 +15,25 @@
 // specific language governing permissions and limitations
 // under the License.
 
+use clap::{clap_app, value_t};
 use env_logger;
 use log::*;
-use clap::{clap_app, value_t};
 
 use std::collections::{BTreeMap, BTreeSet};
 use std::thread;
 use std::time::Duration;
 
 use thrift;
-use thrift::OrderedFloat;
-use thrift::protocol::{TBinaryInputProtocolFactory, TBinaryOutputProtocolFactory,
-                       TCompactInputProtocolFactory, TCompactOutputProtocolFactory,
-                       TInputProtocolFactory, TOutputProtocolFactory};
+use thrift::protocol::{
+    TBinaryInputProtocolFactory, TBinaryOutputProtocolFactory, TCompactInputProtocolFactory,
+    TCompactOutputProtocolFactory, TInputProtocolFactory, TOutputProtocolFactory,
+};
 use thrift::server::{TMultiplexedProcessor, TServer};
-use thrift::transport::{TBufferedReadTransportFactory, TBufferedWriteTransportFactory,
-                        TFramedReadTransportFactory, TFramedWriteTransportFactory,
-                        TReadTransportFactory, TWriteTransportFactory};
+use thrift::transport::{
+    TBufferedReadTransportFactory, TBufferedWriteTransportFactory, TFramedReadTransportFactory,
+    TFramedWriteTransportFactory, TReadTransportFactory, TWriteTransportFactory,
+};
+use thrift::OrderedFloat;
 use thrift_test::*;
 
 fn main() {
@@ -49,7 +51,6 @@ fn main() {
 }
 
 fn run() -> thrift::Result<()> {
-
     // unsupported options:
     // --domain-socket
     // --pipe
@@ -75,50 +76,55 @@ fn run() -> thrift::Result<()> {
 
     info!("binding to {}", listen_address);
 
-    let (i_transport_factory, o_transport_factory): (Box<dyn TReadTransportFactory>,
-                                                     Box<dyn TWriteTransportFactory>) =
-        match &*transport {
-            "buffered" => {
-                (Box::new(TBufferedReadTransportFactory::new()),
-                 Box::new(TBufferedWriteTransportFactory::new()))
-            }
-            "framed" => {
-                (Box::new(TFramedReadTransportFactory::new()),
-                 Box::new(TFramedWriteTransportFactory::new()))
-            }
-            unknown => {
-                return Err(format!("unsupported transport type {}", unknown).into());
-            }
-        };
+    let (i_transport_factory, o_transport_factory): (
+        Box<dyn TReadTransportFactory>,
+        Box<dyn TWriteTransportFactory>,
+    ) = match &*transport {
+        "buffered" => (
+            Box::new(TBufferedReadTransportFactory::new()),
+            Box::new(TBufferedWriteTransportFactory::new()),
+        ),
+        "framed" => (
+            Box::new(TFramedReadTransportFactory::new()),
+            Box::new(TFramedWriteTransportFactory::new()),
+        ),
+        unknown => {
+            return Err(format!("unsupported transport type {}", unknown).into());
+        }
+    };
 
-    let (i_protocol_factory, o_protocol_factory): (Box<dyn TInputProtocolFactory>,
-                                                   Box<dyn TOutputProtocolFactory>) =
-        match &*protocol {
-            "binary" | "multi" | "multi:binary" => {
-                (Box::new(TBinaryInputProtocolFactory::new()),
-                 Box::new(TBinaryOutputProtocolFactory::new()))
-            }
-            "compact" | "multic" | "multi:compact" => {
-                (Box::new(TCompactInputProtocolFactory::new()),
-                 Box::new(TCompactOutputProtocolFactory::new()))
-            }
-            unknown => {
-                return Err(format!("unsupported transport type {}", unknown).into());
-            }
-        };
+    let (i_protocol_factory, o_protocol_factory): (
+        Box<dyn TInputProtocolFactory>,
+        Box<dyn TOutputProtocolFactory>,
+    ) = match &*protocol {
+        "binary" | "multi" | "multi:binary" => (
+            Box::new(TBinaryInputProtocolFactory::new()),
+            Box::new(TBinaryOutputProtocolFactory::new()),
+        ),
+        "compact" | "multic" | "multi:compact" => (
+            Box::new(TCompactInputProtocolFactory::new()),
+            Box::new(TCompactOutputProtocolFactory::new()),
+        ),
+        unknown => {
+            return Err(format!("unsupported transport type {}", unknown).into());
+        }
+    };
 
     let test_processor = ThriftTestSyncProcessor::new(ThriftTestSyncHandlerImpl {});
 
     match &*server_type {
         "simple" | "thread-pool" => {
             if protocol == "multi" || protocol == "multic" {
-                let second_service_processor = SecondServiceSyncProcessor::new(SecondServiceSyncHandlerImpl {},);
+                let second_service_processor =
+                    SecondServiceSyncProcessor::new(SecondServiceSyncHandlerImpl {});
 
                 let mut multiplexed_processor = TMultiplexedProcessor::new();
-                multiplexed_processor
-                    .register("ThriftTest", Box::new(test_processor), true)?;
-                multiplexed_processor
-                    .register("SecondService", Box::new(second_service_processor), false)?;
+                multiplexed_processor.register("ThriftTest", Box::new(test_processor), true)?;
+                multiplexed_processor.register(
+                    "SecondService",
+                    Box::new(second_service_processor),
+                    false,
+                )?;
 
                 let mut server = TServer::new(
                     i_transport_factory,
@@ -315,15 +321,11 @@ impl ThriftTestSyncHandler for ThriftTestSyncHandlerImpl {
         info!("testException({})", arg);
 
         match &*arg {
-            "Xception" => {
-                Err(
-                    (Xception {
-                             error_code: Some(1001),
-                             message: Some(arg),
-                         })
-                        .into(),
-                )
-            }
+            "Xception" => Err((Xception {
+                error_code: Some(1001),
+                message: Some(arg),
+            })
+            .into()),
             "TException" => Err("this is a random error".into()),
             _ => Ok(()),
         }
@@ -339,41 +341,27 @@ impl ThriftTestSyncHandler for ThriftTestSyncHandlerImpl {
     //   do not throw anything and return Xtruct with string_thing = arg1
     fn handle_test_multi_exception(&self, arg0: String, arg1: String) -> thrift::Result<Xtruct> {
         match &*arg0 {
-            "Xception" => {
-                Err(
-                    (Xception {
-                             error_code: Some(1001),
-                             message: Some("This is an Xception".to_owned()),
-                         })
-                        .into(),
-                )
-            }
-            "Xception2" => {
-                Err(
-                    (Xception2 {
-                             error_code: Some(2002),
-                             struct_thing: Some(
-                            Xtruct {
-                                string_thing: Some("This is an Xception2".to_owned()),
-                                byte_thing: None,
-                                i32_thing: None,
-                                i64_thing: None,
-                            },
-                        ),
-                         })
-                        .into(),
-                )
-            }
-            _ => {
-                Ok(
-                    Xtruct {
-                        string_thing: Some(arg1),
-                        byte_thing: None,
-                        i32_thing: None,
-                        i64_thing: None,
-                    },
-                )
-            }
+            "Xception" => Err((Xception {
+                error_code: Some(1001),
+                message: Some("This is an Xception".to_owned()),
+            })
+            .into()),
+            "Xception2" => Err((Xception2 {
+                error_code: Some(2002),
+                struct_thing: Some(Xtruct {
+                    string_thing: Some("This is an Xception2".to_owned()),
+                    byte_thing: None,
+                    i32_thing: None,
+                    i64_thing: None,
+                }),
+            })
+            .into()),
+            _ => Ok(Xtruct {
+                string_thing: Some(arg1),
+                byte_thing: None,
+                i32_thing: None,
+                i64_thing: None,
+            }),
         }
     }
 

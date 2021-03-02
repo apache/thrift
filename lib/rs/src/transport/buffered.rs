@@ -365,7 +365,7 @@ mod tests {
         assert_eq!(&buf, &[0, 1, 2, 3, 4, 5, 6, 7]);
 
         // let's clear out the buffer and try read again
-        for b in &mut buf{
+        for b in &mut buf {
             *b = 0;
         }
         let read_result = t.read(&mut buf);

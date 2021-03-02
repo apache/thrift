@@ -31,9 +31,11 @@ install:
 	@echo '##############################################################'
 
 check-local:
+	$(CARGO) fmt --all -- --check
 	$(CARGO) test
 
 all-local:
+	$(CARGO) fmt --all -- --check
 	$(CARGO) build
 
 clean-local:

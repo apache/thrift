@@ -15,13 +15,15 @@
 // specific language governing permissions and limitations
 // under the License.
 
+use std::convert::TryFrom;
 use std::convert::{From, Into};
 use std::error::Error as StdError;
 use std::fmt::{Debug, Display, Formatter};
 use std::{error, fmt, io, string};
-use std::convert::TryFrom;
 
-use crate::protocol::{TFieldIdentifier, TInputProtocol, TOutputProtocol, TStructIdentifier, TType};
+use crate::protocol::{
+    TFieldIdentifier, TInputProtocol, TOutputProtocol, TStructIdentifier, TType,
+};
 
 // FIXME: should all my error structs impl error::Error as well?
 // FIXME: should all fields in TransportError, ProtocolError and ApplicationError be optional?
@@ -235,10 +237,7 @@ impl Error {
 
         i.read_struct_end()?;
 
-        Ok(ApplicationError {
-            kind,
-            message,
-        })
+        Ok(ApplicationError { kind, message })
     }
 
     /// Convert an `ApplicationError` into its wire representation and write

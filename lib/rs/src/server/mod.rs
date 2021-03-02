@@ -91,7 +91,8 @@ pub trait TProcessor {
     /// the response to `o`.
     ///
     /// Returns `()` if the handler was executed; `Err` otherwise.
-    fn process(&self, i: &mut dyn TInputProtocol, o: &mut dyn TOutputProtocol) -> crate::Result<()>;
+    fn process(&self, i: &mut dyn TInputProtocol, o: &mut dyn TOutputProtocol)
+        -> crate::Result<()>;
 }
 
 /// Convenience function used in generated `TProcessor` implementations to
