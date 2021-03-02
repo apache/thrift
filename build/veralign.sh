@@ -71,7 +71,6 @@ FILES[lib/js/package-lock.json]=jsonReplace
 FILES[lib/js/package.json]=jsonReplace
 FILES[lib/js/src/thrift.js]=simpleReplace
 FILES[lib/lua/Thrift.lua]=simpleReplace
-FILES[lib/netstd/Tests/Thrift.PublicInterfaces.Compile.Tests/Properties/AssemblyInfo.cs]=simpleReplace
 FILES[lib/netstd/Thrift/Properties/AssemblyInfo.cs]=simpleReplace
 FILES[lib/netstd/Thrift/Properties/AssemblyInfo.cs]=simpleReplace
 FILES[lib/netstd/Thrift/Thrift.csproj]=simpleReplace
@@ -90,8 +89,6 @@ FILES[package.json]=jsonReplace
 FILES[sonar-project.properties]=simpleReplace
 FILES[test/dart/test_client/pubspec.yaml]=pubspecReplace
 FILES[test/erl/src/thrift_test.app.src]=simpleReplace
-FILES[test/netstd/Client/Properties/AssemblyInfo.cs]=simpleReplace
-FILES[test/netstd/Server/Properties/AssemblyInfo.cs]=simpleReplace
 FILES[Thrift.podspec]=simpleReplace
 FILES[tutorial/dart/client/pubspec.yaml]=pubspecReplace
 FILES[tutorial/dart/console_client/pubspec.yaml]=pubspecReplace
@@ -99,9 +96,6 @@ FILES[tutorial/dart/server/pubspec.yaml]=pubspecReplace
 FILES[tutorial/delphi/DelphiClient/DelphiClient.dproj]=simpleReplace
 FILES[tutorial/delphi/DelphiServer/DelphiServer.dproj]=simpleReplace
 FILES[tutorial/hs/ThriftTutorial.cabal]=simpleReplace
-FILES[tutorial/netstd/Client/Properties/AssemblyInfo.cs]=simpleReplace
-FILES[tutorial/netstd/Interfaces/Properties/AssemblyInfo.cs]=simpleReplace
-FILES[tutorial/netstd/Server/Properties/AssemblyInfo.cs]=simpleReplace
 FILES[tutorial/ocaml/_oasis]=simpleReplace
 
 
