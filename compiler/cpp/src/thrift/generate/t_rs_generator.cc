@@ -409,10 +409,10 @@ private:
   bool is_double(t_type* ttype);
 
   // Return a string representing the rust type given a `t_type`.
-  string to_rust_type(t_type* ttype, bool ordered_float = true);
+  string to_rust_type(t_type* ttype);
 
   // Return a string representing the `const` rust type given a `t_type`
-  string to_rust_const_type(t_type* ttype, bool ordered_float = true);
+  string to_rust_const_type(t_type* ttype);
 
   // Return a string representing the rift `protocol::TType` given a `t_type`.
   string to_rust_field_type_enum(t_type* ttype);
@@ -3034,7 +3034,7 @@ bool t_rs_generator::is_double(t_type* ttype) {
   return false;
 }
 
-string t_rs_generator::to_rust_type(t_type* ttype, bool ordered_float) {
+string t_rs_generator::to_rust_type(t_type* ttype) {
   // ttype = get_true_type(ttype); <-- recurses through as many typedef layers as necessary
   if (ttype->is_base_type()) {
     t_base_type* tbase_type = ((t_base_type*)ttype);
@@ -3058,11 +3058,7 @@ string t_rs_generator::to_rust_type(t_type* ttype, bool ordered_float) {
     case t_base_type::TYPE_I64:
       return "i64";
     case t_base_type::TYPE_DOUBLE:
-      if (ordered_float) {
-        return "OrderedFloat<f64>";
-      } else {
-        return "f64";
-      }
+      return "OrderedFloat<f64>";
     }
   } else if (ttype->is_typedef()) {
     t_typedef* ttypedef = (t_typedef*)ttype;
@@ -3087,7 +3083,7 @@ string t_rs_generator::to_rust_type(t_type* ttype, bool ordered_float) {
   throw "cannot find rust type for " + ttype->get_name();
 }
 
-string t_rs_generator::to_rust_const_type(t_type* ttype, bool ordered_float) {
+string t_rs_generator::to_rust_const_type(t_type* ttype) {
   if (ttype->is_base_type()) {
     t_base_type* tbase_type = ((t_base_type*)ttype);
     if (tbase_type->get_base() == t_base_type::TYPE_STRING) {
@@ -3099,7 +3095,7 @@ string t_rs_generator::to_rust_const_type(t_type* ttype, bool ordered_float) {
     }
   }
 
-  return to_rust_type(ttype, ordered_float);
+  return to_rust_type(ttype);
 }
 
 string t_rs_generator::to_rust_field_type_enum(t_type* ttype) {
