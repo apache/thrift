@@ -1087,15 +1087,7 @@ void t_rs_generator::render_struct_definition(
 
 void t_rs_generator::render_exception_struct_error_trait_impls(const string& struct_name, t_struct* tstruct) {
   // error::Error trait
-  f_gen_ << "impl Error for " << struct_name << " {" << endl;
-  indent_up();
-  f_gen_ << indent() << "fn description(&self) -> &str {" << endl;
-  indent_up();
-  f_gen_ << indent() << "\"" << "remote service threw " << tstruct->get_name() << "\"" << endl; // use *original* name
-  indent_down();
-  f_gen_ << indent() << "}" << endl;
-  indent_down();
-  f_gen_ << "}" << endl;
+  f_gen_ << "impl Error for " << struct_name << " {}" << endl;
   f_gen_ << endl;
 
   // convert::From trait
@@ -1115,7 +1107,12 @@ void t_rs_generator::render_exception_struct_error_trait_impls(const string& str
   indent_up();
   f_gen_ << indent() << "fn fmt(&self, f: &mut Formatter) -> fmt::Result {" << endl;
   indent_up();
-  f_gen_ << indent() << "self.description().fmt(f)" << endl;
+  f_gen_
+      << indent()
+      << "write!(f, "
+      << "\"remote service threw " << tstruct->get_name() << "\"" // use *original* name
+      << ")"
+      << endl;
   indent_down();
   f_gen_ << indent() << "}" << endl;
   indent_down();
@@ -2896,7 +2893,7 @@ void t_rs_generator::render_sync_handler_failed_user_exception_branch(t_function
 
   f_gen_ << indent() << "let ret_err = {" << endl;
   indent_up();
-  render_thrift_error_struct("ApplicationError", "ApplicationErrorKind::Unknown", "usr_err.description()");
+  render_thrift_error_struct("ApplicationError", "ApplicationErrorKind::Unknown", "usr_err.to_string()");
   indent_down();
   f_gen_ << indent() << "};" << endl;
   render_sync_handler_send_exception_response(tfunc, "ret_err");
@@ -2919,7 +2916,7 @@ void t_rs_generator::render_sync_handler_failed_application_exception_branch(
 void t_rs_generator::render_sync_handler_failed_default_exception_branch(t_function *tfunc) {
   f_gen_ << indent() << "let ret_err = {" << endl;
   indent_up();
-  render_thrift_error_struct("ApplicationError", "ApplicationErrorKind::Unknown", "e.description()");
+  render_thrift_error_struct("ApplicationError", "ApplicationErrorKind::Unknown", "e.to_string()");
   indent_down();
   f_gen_ << indent() << "};" << endl;
   if (tfunc->is_oneway()) {
