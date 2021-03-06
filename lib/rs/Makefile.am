@@ -32,10 +32,12 @@ install:
 
 check-local:
 	$(CARGO) fmt --all -- --check
+	$(CARGO) clippy --all -- -D warnings
 	$(CARGO) test
 
 all-local:
 	$(CARGO) fmt --all -- --check
+	$(CARGO) clippy --all -- -D warnings
 	$(CARGO) build
 
 clean-local:

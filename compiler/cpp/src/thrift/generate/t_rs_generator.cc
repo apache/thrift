@@ -18,7 +18,6 @@
  */
 
 #include <string>
-#include <fstream>
 #include <iostream>
 
 #include "thrift/platform.h"
@@ -409,10 +408,10 @@ private:
   bool is_double(t_type* ttype);
 
   // Return a string representing the rust type given a `t_type`.
-  string to_rust_type(t_type* ttype, bool ordered_float = true);
+  string to_rust_type(t_type* ttype);
 
   // Return a string representing the `const` rust type given a `t_type`
-  string to_rust_const_type(t_type* ttype, bool ordered_float = true);
+  string to_rust_const_type(t_type* ttype);
 
   // Return a string representing the rift `protocol::TType` given a `t_type`.
   string to_rust_field_type_enum(t_type* ttype);
@@ -547,9 +546,15 @@ void t_rs_generator::render_attributes_and_includes() {
   f_gen_ << "#![allow(unused_extern_crates)]" << endl;
   // constructors take *all* struct parameters, which can trigger the "too many arguments" warning
   // some auto-gen'd types can be deeply nested. clippy recommends factoring them out which is hard to autogen
-  f_gen_ << "#![allow(clippy::too_many_arguments, clippy::type_complexity)]" << endl;
+  // FIXME: re-enable the 'vec_box' lint see: [THRIFT-5364](https://issues.apache.org/jira/browse/THRIFT-5364)
+  // This can happen because we automatically generate a Vec<Box<Type>> when the type is a typedef
+  // and it's a forward typedef. This (typedef + forward typedef) can happen in two situations:
+  // 1. When the type is recursive
+  // 2. When you define types out of order
+  f_gen_ << "#![allow(clippy::too_many_arguments, clippy::type_complexity, clippy::vec_box)]" << endl;
   // prevent rustfmt from running against this file
   // lines are too long, code is (thankfully!) not visual-indented, etc.
+  // can't use #[rustfmt::skip] see: https://github.com/rust-lang/rust/issues/54726
   f_gen_ << "#![cfg_attr(rustfmt, rustfmt_skip)]" << endl;
   f_gen_ << endl;
 
@@ -918,6 +923,7 @@ void t_rs_generator::render_enum_impl(t_enum* tenum, const string& enum_name) {
     f_gen_ << indent() << "];" << endl;
   }
 
+  f_gen_ << indent() << "#[allow(clippy::trivially_copy_pass_by_ref)]" << endl;
   f_gen_
     << indent()
     << "pub fn write_to_out_protocol(&self, o_prot: &mut dyn TOutputProtocol) -> thrift::Result<()> {"
@@ -3032,7 +3038,7 @@ bool t_rs_generator::is_double(t_type* ttype) {
   return false;
 }
 
-string t_rs_generator::to_rust_type(t_type* ttype, bool ordered_float) {
+string t_rs_generator::to_rust_type(t_type* ttype) {
   // ttype = get_true_type(ttype); <-- recurses through as many typedef layers as necessary
   if (ttype->is_base_type()) {
     t_base_type* tbase_type = ((t_base_type*)ttype);
@@ -3056,11 +3062,7 @@ string t_rs_generator::to_rust_type(t_type* ttype, bool ordered_float) {
     case t_base_type::TYPE_I64:
       return "i64";
     case t_base_type::TYPE_DOUBLE:
-      if (ordered_float) {
-        return "OrderedFloat<f64>";
-      } else {
-        return "f64";
-      }
+      return "OrderedFloat<f64>";
     }
   } else if (ttype->is_typedef()) {
     t_typedef* ttypedef = (t_typedef*)ttype;
@@ -3085,7 +3087,7 @@ string t_rs_generator::to_rust_type(t_type* ttype, bool ordered_float) {
   throw "cannot find rust type for " + ttype->get_name();
 }
 
-string t_rs_generator::to_rust_const_type(t_type* ttype, bool ordered_float) {
+string t_rs_generator::to_rust_const_type(t_type* ttype) {
   if (ttype->is_base_type()) {
     t_base_type* tbase_type = ((t_base_type*)ttype);
     if (tbase_type->get_base() == t_base_type::TYPE_STRING) {
@@ -3097,7 +3099,7 @@ string t_rs_generator::to_rust_const_type(t_type* ttype, bool ordered_float) {
     }
   }
 
-  return to_rust_type(ttype, ordered_float);
+  return to_rust_type(ttype);
 }
 
 string t_rs_generator::to_rust_field_type_enum(t_type* ttype) {
