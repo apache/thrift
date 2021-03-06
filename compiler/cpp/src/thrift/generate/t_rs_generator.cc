@@ -18,7 +18,6 @@
  */
 
 #include <string>
-#include <fstream>
 #include <iostream>
 
 #include "thrift/platform.h"
@@ -547,7 +546,12 @@ void t_rs_generator::render_attributes_and_includes() {
   f_gen_ << "#![allow(unused_extern_crates)]" << endl;
   // constructors take *all* struct parameters, which can trigger the "too many arguments" warning
   // some auto-gen'd types can be deeply nested. clippy recommends factoring them out which is hard to autogen
-  f_gen_ << "#![allow(clippy::too_many_arguments, clippy::type_complexity)]" << endl;
+  // FIXME: re-enable the 'vec_box' lint see: [THRIFT-5364](https://issues.apache.org/jira/browse/THRIFT-5364)
+  // This can happen because we automatically generate a Vec<Box<Type>> when the type is a typedef
+  // and it's a forward typedef. This (typedef + forward typedef) can happen in two situations:
+  // 1. When the type is recursive
+  // 2. When you define types out of order
+  f_gen_ << "#![allow(clippy::too_many_arguments, clippy::type_complexity, clippy::vec_box)]" << endl;
   // prevent rustfmt from running against this file
   // lines are too long, code is (thankfully!) not visual-indented, etc.
   // can't use #[rustfmt::skip] see: https://github.com/rust-lang/rust/issues/54726
