@@ -17,38 +17,17 @@
 # under the License.
 #
 
-SUBDIRS = .
+SUBDIRS = src
 
-if WITH_TESTS
-SUBDIRS += test
-SUBDIRS += test_recursive
-endif
-
-install:
-	@echo '##############################################################'
-	@echo '##############################################################'
-	@echo 'The Rust client library should be installed via a Cargo.toml dependency - please see /lib/rs/README.md'
-	@echo '##############################################################'
-	@echo '##############################################################'
-
-check-local:
-	$(CARGO) fmt --all -- --check
-	$(CARGO) clippy --all -- -D warnings
-	$(CARGO) test
-
-all-local:
+check:
 	$(CARGO) fmt --all -- --check
 	$(CARGO) clippy --all -- -D warnings
 	$(CARGO) build
+	$(CARGO) test
 
 clean-local:
 	$(CARGO) clean
 	-$(RM) Cargo.lock
 
 EXTRA_DIST = \
-	src \
-	Cargo.toml \
-	README.md \
-	release.sh \
-	RELEASING.md
-
+	Cargo.toml

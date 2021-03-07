@@ -299,6 +299,17 @@ project.lock.json
 /lib/rs/test/src/recursive.rs
 /lib/rs/test/src/ultimate.rs
 /lib/rs/test/src/identifiers.rs
+/lib/rs/test_recursive/Cargo.lock
+/lib/rs/test_recursive/src/vehicles.rs
+/lib/rs/test_recursive/src/maintenance/maintenance_facility.rs
+/lib/rs/test_recursive/src/transit/buses.rs
+/lib/rs/test_recursive/src/transit/trains.rs
+/lib/rs/test_recursive/src/transit/transporters.rs
+/lib/rs/test_recursive/src/transit/light/light_rail.rs
+/lib/rs/test_recursive/src/transit/light/streetcars.rs
+/lib/rs/test_recursive/src/transit/services/city_services.rs
+/lib/rs/test_recursive/target/
+/lib/rs/test_recursive/bin/
 /lib/rs/*.iml
 /lib/rs/**/*.iml
 /lib/swift/.build

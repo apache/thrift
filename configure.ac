@@ -797,6 +797,12 @@ AC_CONFIG_FILES([
   lib/rb/Makefile
   lib/rs/Makefile
   lib/rs/test/Makefile
+  lib/rs/test_recursive/Makefile
+  lib/rs/test_recursive/src/Makefile
+  lib/rs/test_recursive/src/maintenance/Makefile
+  lib/rs/test_recursive/src/transit/Makefile
+  lib/rs/test_recursive/src/transit/light/Makefile
+  lib/rs/test_recursive/src/transit/services/Makefile
   lib/lua/Makefile
   lib/swift/Makefile
   lib/ts/Makefile
