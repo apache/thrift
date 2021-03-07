@@ -3318,7 +3318,7 @@ string t_rs_generator::rust_enum_variant_name(const string &name) {
   bool all_uppercase = true;
 
   for (char i : name) {
-    if (isalnum(i) && islower(i)) {
+    if (isalpha(i) && islower(i)) {
       all_uppercase = false;
       break;
     }
@@ -3334,9 +3334,22 @@ string t_rs_generator::rust_enum_variant_name(const string &name) {
 }
 
 string t_rs_generator::rust_upper_case(const string& name) {
-  string str(uppercase(underscore(name)));
-  string_replace(str, "__", "_");
-  return str;
+  bool all_uppercase = true;
+
+  for (char i : name) {
+    if (isalpha(i) && islower(i)) {
+      all_uppercase = false;
+      break;
+    }
+  }
+
+  if (all_uppercase) {
+    return name;
+  } else {
+    string str(uppercase(underscore(name)));
+    string_replace(str, "__", "_");
+    return str;
+  }
 }
 
 string t_rs_generator::rust_snake_case(const string& name) {
