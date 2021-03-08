@@ -34,6 +34,7 @@
 #include "thrift/generate/t_generator.h"
 
 using std::map;
+using std::cout;
 using std::ostream;
 using std::ostringstream;
 using std::string;
@@ -250,12 +251,14 @@ public:
   std::string declare_argument(t_field* tfield);
   std::string render_field_default_value(t_field* tfield);
   std::string type_name(t_type* ttype);
+  std::string type_name(t_type* ttype, std::string prefix);
   std::string function_signature(t_function* tfunction, bool interface = false);
   std::string argument_list(t_struct* tstruct,
                             std::vector<std::string>* pre = nullptr,
                             std::vector<std::string>* post = nullptr);
   std::string type_to_enum(t_type* ttype);
   std::string type_to_spec_args(t_type* ttype);
+  std::string type_to_spec_args(t_type* ttype, std::string prefix);
 
   static bool is_valid_namespace(const std::string& sub_namespace) {
     return sub_namespace == "twisted";
@@ -2692,18 +2695,27 @@ string t_py_generator::argument_list(t_struct* tstruct, vector<string>* pre, vec
 }
 
 string t_py_generator::type_name(t_type* ttype) {
+  string prefix = "";
+  return type_name(ttype, prefix);
+}
+
+string t_py_generator::type_name(t_type* ttype, string prefix) {
   while (ttype->is_typedef()) {
+    if(prefix.size() != 0) {
+      prefix += ".";
+    }
+    prefix = prefix + get_real_py_module(ttype->get_program(), gen_twisted_, package_prefix_) + ".ttypes";
     ttype = ((t_typedef*)ttype)->get_type();
   }
 
   t_program* program = ttype->get_program();
   if (ttype->is_service()) {
-    return get_real_py_module(program, gen_twisted_, package_prefix_) + "." + ttype->get_name();
+    return prefix + "." + get_real_py_module(program, gen_twisted_, package_prefix_) + "." + ttype->get_name();
   }
   if (program != nullptr && program != program_) {
-    return get_real_py_module(program, gen_twisted_, package_prefix_) + ".ttypes." + ttype->get_name();
+    return prefix + "." + get_real_py_module(program, gen_twisted_, package_prefix_) + ".ttypes." + ttype->get_name();
   }
-  return ttype->get_name();
+  return prefix + "." + ttype->get_name();
 }
 
 /**
@@ -2748,8 +2760,12 @@ string t_py_generator::type_to_enum(t_type* type) {
 }
 
 /** See the comment inside generate_py_struct_definition for what this is. */
-string t_py_generator::type_to_spec_args(t_type* ttype) {
+string t_py_generator::type_to_spec_args(t_type* ttype, string prefix) {
   while (ttype->is_typedef()) {
+    if(prefix.size() != 0) {
+      prefix += ".";
+    }
+    prefix = prefix + get_real_py_module(ttype->get_program(), gen_twisted_, package_prefix_) + ".ttypes";
     ttype = ((t_typedef*)ttype)->get_type();
   }
 
@@ -2761,26 +2777,31 @@ string t_py_generator::type_to_spec_args(t_type* ttype) {
   } else if (ttype->is_base_type() || ttype->is_enum()) {
     return  "None";
   } else if (ttype->is_struct() || ttype->is_xception()) {
-    return "[" + type_name(ttype) + ", None]";
+    return "[" + type_name(ttype, prefix) + ", None]";
   } else if (ttype->is_map()) {
     return "(" + type_to_enum(((t_map*)ttype)->get_key_type()) + ", "
-           + type_to_spec_args(((t_map*)ttype)->get_key_type()) + ", "
+           + type_to_spec_args(((t_map*)ttype)->get_key_type(), prefix) + ", "
            + type_to_enum(((t_map*)ttype)->get_val_type()) + ", "
-           + type_to_spec_args(((t_map*)ttype)->get_val_type()) + ", "
+           + type_to_spec_args(((t_map*)ttype)->get_val_type(), prefix) + ", "
            + (is_immutable(ttype) ? "True" : "False") + ")";
 
   } else if (ttype->is_set()) {
     return "(" + type_to_enum(((t_set*)ttype)->get_elem_type()) + ", "
-           + type_to_spec_args(((t_set*)ttype)->get_elem_type()) + ", "
+           + type_to_spec_args(((t_set*)ttype)->get_elem_type(), prefix) + ", "
            + (is_immutable(ttype) ? "True" : "False") + ")";
 
   } else if (ttype->is_list()) {
     return "(" + type_to_enum(((t_list*)ttype)->get_elem_type()) + ", "
-           + type_to_spec_args(((t_list*)ttype)->get_elem_type()) + ", "
+           + type_to_spec_args(((t_list*)ttype)->get_elem_type(), prefix) + ", "
            + (is_immutable(ttype) ? "True" : "False") + ")";
   }
 
   throw "INVALID TYPE IN type_to_spec_args: " + ttype->get_name();
+}
+
+string t_py_generator::type_to_spec_args(t_type* ttype) {
+	string prefix = "";
+	return type_to_spec_args(ttype, prefix);
 }
 
 THRIFT_REGISTER_GENERATOR(
