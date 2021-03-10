@@ -22,6 +22,8 @@ stubs: ../ThriftTest.thrift
 
 precross: stubs
 	$(CARGO) build
+	$(CARGO) fmt --all -- --check
+	$(CARGO) clippy --all -- -D warnings
 	[ -d bin ] || mkdir bin
 	cp target/debug/test_server bin/test_server
 	cp target/debug/test_client bin/test_client

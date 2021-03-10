@@ -54,8 +54,8 @@ macro(TARGET_LINK_LIBRARIES_THRIFT name)
     target_link_libraries(${name} ${ARGN})
 endmacro()
 
-macro(LINK_AGAINST_THRIFT_LIBRARY target libname)
-    target_link_libraries(${target} ${libname})
+macro(LINK_AGAINST_THRIFT_LIBRARY target)
+    target_link_libraries(${target} ${ARGN})
 endmacro()
 
 macro(TARGET_LINK_LIBRARIES_THRIFT_AGAINST_THRIFT_LIBRARY target libname)

@@ -46,6 +46,9 @@ sourceSets {
 // ----------------------------------------------------------------------------
 // Compiler configuration details
 
+// These two properties are still needed on JDK8, and possibly used directly by
+// plugins. However, the '--release' option added below makes these two
+// properties redundant when building with JDK9 or later.
 sourceCompatibility = '1.8'
 targetCompatibility = '1.8'
 
@@ -53,6 +56,10 @@ tasks.withType(JavaCompile) {
     options.encoding = 'UTF-8'
     options.debug = true
     options.deprecation = true
+    // the following is to build with Java 8 specifications, even when building with JDK9 or later
+    if (JavaVersion.current() > JavaVersion.VERSION_1_8) {
+        options.compilerArgs.addAll(['--release', '8'])
+    }
     // options.compilerArgs.addAll('-Xlint:unchecked')
 }
 

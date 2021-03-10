@@ -20,10 +20,6 @@
 SUBDIRS = json xml
 PRECROSS_TARGET =
 
-if WITH_AS3
-SUBDIRS += as3
-endif
-
 if WITH_CPP
 SUBDIRS += cpp
 endif
@@ -106,7 +102,6 @@ endif
 # All of the libs that don't use Automake need to go in here
 # so they will end up in our release tarballs.
 EXTRA_DIST = \
-	as3 \
 	d \
 	dart \
 	delphi \

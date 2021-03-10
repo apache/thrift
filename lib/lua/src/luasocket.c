@@ -344,22 +344,18 @@ static int l_socket_create_and_connect(lua_State *L) {
   // Create and connect loop for timeout milliseconds
   end = __gettime() + timeout/1000;
   do {
-    // Create the socket
-    err = tcp_create(&sock);
-    if (!err) {
-        // Connect
-        err = tcp_connect(&sock, host, port, timeout);
-        if (err) {
-          tcp_destroy(&sock);
-          usleep(100000); // sleep for 100ms
-        } else {
-          p_tcp tcp = (p_tcp) lua_newuserdata(L, sizeof(t_tcp));
-          settype(L, -2, SOCKET_CLIENT);
-          socket_setnonblocking(&sock);
-          tcp->sock = sock;
-          tcp->timeout = timeout;
-          return 1; // Return userdata
-        }
+    // Create and connect the socket
+    err = tcp_create_and_connect(&sock, host, port, timeout);
+    if (err) {
+      tcp_destroy(&sock);
+      usleep(100000); // sleep for 100ms
+    } else {
+      p_tcp tcp = (p_tcp) lua_newuserdata(L, sizeof(t_tcp));
+      settype(L, -2, SOCKET_CLIENT);
+      socket_setnonblocking(&sock);
+      tcp->sock = sock;
+      tcp->timeout = timeout;
+      return 1; // Return userdata
     }
   } while (err && __gettime() < end);
 

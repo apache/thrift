@@ -111,7 +111,12 @@ pub trait TIoChannel: Read + Write {
     /// Returned halves may share the underlying OS channel or buffer resources.
     /// Implementations **should ensure** that these two halves can be safely
     /// used independently by concurrent threads.
-    fn split(self) -> crate::Result<(crate::transport::ReadHalf<Self>, crate::transport::WriteHalf<Self>)>
+    fn split(
+        self,
+    ) -> crate::Result<(
+        crate::transport::ReadHalf<Self>,
+        crate::transport::WriteHalf<Self>,
+    )>
     where
         Self: Sized;
 }

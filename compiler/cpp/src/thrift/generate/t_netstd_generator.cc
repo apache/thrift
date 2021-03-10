@@ -333,7 +333,11 @@ void t_netstd_generator::reset_indent() {
 
 void t_netstd_generator::start_netstd_namespace(ostream& out)
 {
-    out << "#pragma warning disable IDE1006  // parts of the code use IDL spelling" << endl;
+    out << "#pragma warning disable IDE0079  // remove unnecessary pragmas" << endl
+        << "#pragma warning disable IDE1006  // parts of the code use IDL spelling" << endl
+        << "#pragma warning disable IDE0083  // pattern matching \"that is not SomeType\" requires net5.0 but we still support earlier versions" << endl
+        << endl;
+
     if (!namespace_name_.empty())
     {
         out << "namespace " << namespace_name_ << endl;
@@ -347,7 +351,6 @@ void t_netstd_generator::end_netstd_namespace(ostream& out)
     {
         scope_down(out);
     }
-    out << "#pragma warning restore IDE1006" << endl;
 }
 
 string t_netstd_generator::netstd_type_usings() const
@@ -1066,7 +1069,7 @@ void t_netstd_generator::generate_netstd_struct_definition(ostream& out, t_struc
                 {
                     out << ", ";
                 }
-                out << type_name((*m_iter)->get_type()) << " " << (*m_iter)->get_name();
+                out << type_name((*m_iter)->get_type()) << " " << normalize_name((*m_iter)->get_name());
             }
         }
         out << ") : this()" << endl
@@ -1077,7 +1080,7 @@ void t_netstd_generator::generate_netstd_struct_definition(ostream& out, t_struc
         {
             if (field_is_required(*m_iter))
             {
-                out << indent() << "this." << prop_name(*m_iter) << " = " << (*m_iter)->get_name() << ";" << endl;
+                out << indent() << "this." << prop_name(*m_iter) << " = " << normalize_name((*m_iter)->get_name()) << ";" << endl;
             }
         }
 
@@ -1198,7 +1201,7 @@ void t_netstd_generator::generate_netstd_deepcopy_method(ostream& out, t_struct*
 
 void t_netstd_generator::generate_netstd_struct_reader(ostream& out, t_struct* tstruct)
 {
-    out << indent() << "public async Task ReadAsync(TProtocol iprot, CancellationToken cancellationToken)" << endl
+    out << indent() << "public async global::System.Threading.Tasks.Task ReadAsync(TProtocol iprot, CancellationToken cancellationToken)" << endl
         << indent() << "{" << endl;
     indent_up();
     out << indent() << "iprot.IncrementRecursionDepth();" << endl
@@ -1340,7 +1343,7 @@ void t_netstd_generator::generate_null_check_end(ostream& out, t_field* tfield) 
 
 void t_netstd_generator::generate_netstd_struct_writer(ostream& out, t_struct* tstruct)
 {
-    out << indent() << "public async Task WriteAsync(TProtocol oprot, CancellationToken cancellationToken)" << endl
+    out << indent() << "public async global::System.Threading.Tasks.Task WriteAsync(TProtocol oprot, CancellationToken cancellationToken)" << endl
         << indent() << "{" << endl;
     indent_up();
 
@@ -1390,7 +1393,7 @@ void t_netstd_generator::generate_netstd_struct_writer(ostream& out, t_struct* t
 
 void t_netstd_generator::generate_netstd_struct_result_writer(ostream& out, t_struct* tstruct)
 {
-    out << indent() << "public async Task WriteAsync(TProtocol oprot, CancellationToken cancellationToken)" << endl
+    out << indent() << "public async global::System.Threading.Tasks.Task WriteAsync(TProtocol oprot, CancellationToken cancellationToken)" << endl
         << indent() << "{" << endl;
     indent_up();
 
@@ -1515,7 +1518,7 @@ void t_netstd_generator::generate_netstd_struct_tostring(ostream& out, t_struct*
         }
     }
 
-    out << indent() << "sb.Append(\")\");" << endl
+    out << indent() << "sb.Append(')');" << endl
         << indent() << "return sb.ToString();" << endl;
     indent_down();
     out << indent() << "}" << endl;
@@ -1549,7 +1552,7 @@ void t_netstd_generator::generate_netstd_union_definition(ostream& out, t_struct
     out << indent() << "{" << endl;
     indent_up();
 
-    out << indent() << "public abstract Task WriteAsync(TProtocol tProtocol, CancellationToken cancellationToken);" << endl
+    out << indent() << "public abstract global::System.Threading.Tasks.Task WriteAsync(TProtocol tProtocol, CancellationToken cancellationToken);" << endl
         << indent() << "public readonly int Isset;" << endl
         << indent() << "public abstract object Data { get; }" << endl
         << indent() << "protected " << tunion->get_name() << "(int isset)" << endl
@@ -1659,7 +1662,7 @@ void t_netstd_generator::generate_netstd_union_definition(ostream& out, t_struct
     generate_netstd_struct_equals(out, &undefined_struct);
     generate_netstd_struct_hashcode(out, &undefined_struct);
     
-    out << indent() << "public override Task WriteAsync(TProtocol oprot, CancellationToken cancellationToken)" << endl
+    out << indent() << "public override global::System.Threading.Tasks.Task WriteAsync(TProtocol oprot, CancellationToken cancellationToken)" << endl
         << indent() << "{" << endl;
     indent_up();
     out << indent() << "throw new TProtocolException( TProtocolException.INVALID_DATA, \"Cannot persist an union type which is not set.\");" << endl;
@@ -1738,7 +1741,7 @@ void t_netstd_generator::generate_netstd_union_class(ostream& out, t_struct* tun
     indent_down();
     out << indent() << "}" << endl << endl;
 
-    out << indent() << "public override async Task WriteAsync(TProtocol oprot, CancellationToken cancellationToken) {" << endl;
+    out << indent() << "public override async global::System.Threading.Tasks.Task WriteAsync(TProtocol oprot, CancellationToken cancellationToken) {" << endl;
     indent_up();
 
     out << indent() << "oprot.IncrementRecursionDepth();" << endl
@@ -2162,7 +2165,7 @@ void t_netstd_generator::generate_service_server(ostream& out, t_service* tservi
 
     if (extends.empty())
     {
-        out << indent() << "protected delegate Task ProcessFunction(int seqid, TProtocol iprot, TProtocol oprot, CancellationToken cancellationToken);" << endl;
+        out << indent() << "protected delegate global::System.Threading.Tasks.Task ProcessFunction(int seqid, TProtocol iprot, TProtocol oprot, CancellationToken cancellationToken);" << endl;
     }
 
     if (extends.empty())
@@ -2271,7 +2274,7 @@ void t_netstd_generator::generate_function_helpers(ostream& out, t_function* tfu
 void t_netstd_generator::generate_process_function_async(ostream& out, t_service* tservice, t_function* tfunction)
 {
     (void)tservice;
-    out << indent() << "public async Task " << tfunction->get_name()
+    out << indent() << "public async global::System.Threading.Tasks.Task " << tfunction->get_name()
         << "_ProcessAsync(int seqid, TProtocol iprot, TProtocol oprot, CancellationToken cancellationToken)" << endl
         << indent() << "{" << endl;
     indent_up();
@@ -3262,7 +3265,7 @@ string t_netstd_generator::function_signature(t_function* tfunction, string pref
 string t_netstd_generator::function_signature_async(t_function* tfunction, string prefix)
 {
     t_type* ttype = tfunction->get_returntype();
-    string task = "Task";
+    string task = "global::System.Threading.Tasks.Task";
     if (!ttype->is_void())
     {
         task += "<" + type_name(ttype) + ">";

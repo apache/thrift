@@ -75,4 +75,7 @@ const char * tcp_accept(p_socket sock, p_socket client, int timeout);
 const char * tcp_connect(p_socket sock, const char *host, unsigned short port,
                          int timeout);
 
+const char * tcp_create_and_connect(p_socket sock, const char *host,
+                                    unsigned short port, int timeout);
+
 #endif

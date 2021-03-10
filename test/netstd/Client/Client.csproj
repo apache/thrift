@@ -19,10 +19,11 @@
   -->
 
   <PropertyGroup>
-    <TargetFramework>netcoreapp3.1</TargetFramework>
+    <TargetFramework>net5.0</TargetFramework>
     <AssemblyName>Client</AssemblyName>
     <PackageId>Client</PackageId>
     <OutputType>Exe</OutputType>
+    <Version>0.15.0.0</Version>
     <GenerateAssemblyTitleAttribute>false</GenerateAssemblyTitleAttribute>
     <GenerateAssemblyDescriptionAttribute>false</GenerateAssemblyDescriptionAttribute>
     <GenerateAssemblyConfigurationAttribute>false</GenerateAssemblyConfigurationAttribute>
@@ -31,9 +32,9 @@
     <GenerateAssemblyCopyrightAttribute>false</GenerateAssemblyCopyrightAttribute>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="System.Net.Http.WinHttpHandler" Version="4.7.0" />
+    <PackageReference Include="System.Net.Http.WinHttpHandler" Version="5.0.0" />
     <PackageReference Include="System.Runtime.Serialization.Primitives" Version="[4.3,)" />
-    <PackageReference Include="System.ServiceModel.Primitives" Version="4.7.0" />
+    <PackageReference Include="System.ServiceModel.Primitives" Version="4.8.1" />
     <PackageReference Include="System.Threading" Version="[4.3,)" />
   </ItemGroup>
   <ItemGroup>

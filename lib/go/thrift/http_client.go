@@ -22,6 +22,7 @@ package thrift
 import (
 	"bytes"
 	"context"
+	"errors"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -159,7 +160,7 @@ func (p *THttpClient) Read(buf []byte) (int, error) {
 		return 0, NewTTransportException(NOT_OPEN, "Response buffer is empty, no request.")
 	}
 	n, err := p.response.Body.Read(buf)
-	if n > 0 && (err == nil || err == io.EOF) {
+	if n > 0 && (err == nil || errors.Is(err, io.EOF)) {
 		return n, nil
 	}
 	return n, NewTTransportExceptionFromError(err)
@@ -197,7 +198,11 @@ func (p *THttpClient) Flush(ctx context.Context) error {
 	// Close any previous response body to avoid leaking connections.
 	p.closeResponse()
 
-	req, err := http.NewRequest("POST", p.url.String(), p.requestBuffer)
+	// Give up the ownership of the current request buffer to http request,
+	// and create a new buffer for the next request.
+	buf := p.requestBuffer
+	p.requestBuffer = new(bytes.Buffer)
+	req, err := http.NewRequest("POST", p.url.String(), buf)
 	if err != nil {
 		return NewTTransportExceptionFromError(err)
 	}

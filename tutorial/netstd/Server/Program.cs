@@ -38,17 +38,20 @@ using shared;
 using Thrift.Processor;
 using System.Diagnostics;
 
+#pragma warning disable IDE0063  // using
+#pragma warning disable IDE0057  // substr
+
 namespace Server
 {
     public class Program
     {
-        private static ServiceCollection ServiceCollection = new ServiceCollection();
+        private static readonly ServiceCollection ServiceCollection = new ServiceCollection();
         private static ILogger Logger;
         private static readonly TConfiguration Configuration = null;  // new TConfiguration() if  needed
 
         public static void Main(string[] args)
         {
-            args = args ?? new string[0];
+            args ??= Array.Empty<string>();
 
             ServiceCollection.AddLogging(logging => ConfigureLogging(logging));
             using (var serviceProvider = ServiceCollection.BuildServiceProvider())
@@ -89,26 +92,27 @@ Usage:
     Server -help
         will diplay help information 
 
-    Server -tr:<transport> -bf:<buffering> -pr:<protocol>
+    Server -tr:<transport> -bf:<buffering> -pr:<protocol>  [-multiplex]
         will run server with specified arguments (tcp transport, no buffering, and binary protocol by default)
 
 Options:
     -tr (transport): 
-        tcp - (default) tcp transport will be used (host - ""localhost"", port - 9090)
-        namedpipe - namedpipe transport will be used (pipe address - "".test"")
-        http - http transport will be used (http address - ""localhost:9090"")
-        tcptls - tcp transport with tls will be used (host - ""localhost"", port - 9090)
+        tcp - (default) tcp transport (localhost:9090)
+        tcptls - tcp transport with tls (localhost:9090)
+        namedpipe - namedpipe transport (pipe "".test"")
+        http - http transport (localhost:9090)
 
     -bf (buffering): 
-        none - (default) no buffering will be used
-        buffered - buffered transport will be used
-        framed - framed transport will be used
+        none - (default) no buffering
+        buffered - buffered transport
+        framed - framed transport
 
     -pr (protocol): 
-        binary - (default) binary protocol will be used
-        compact - compact protocol will be used
-        json - json protocol will be used
-        multiplexed - multiplexed protocol will be used
+        binary - (default) binary protocol
+        compact - compact protocol
+        json - json protocol
+
+    -multiplex - adds multiplexed protocol
 
 Sample:
     Server -tr:tcp
@@ -120,48 +124,68 @@ Sample:
             var selectedTransport = GetTransport(args);
             var selectedBuffering = GetBuffering(args);
             var selectedProtocol = GetProtocol(args);
+            var multiplex = GetMultiplex(args);
 
             if (selectedTransport == Transport.Http)
             {
+                if (multiplex)
+                    throw new Exception("This tutorial semple code does not yet allow multiplex over http (although Thrift itself of course does)");
                 new HttpServerSample().Run(cancellationToken);
             }
             else
             {
-                await RunSelectedConfigurationAsync(selectedTransport, selectedBuffering, selectedProtocol, cancellationToken);
+                await RunSelectedConfigurationAsync(selectedTransport, selectedBuffering, selectedProtocol, multiplex, cancellationToken);
             }
+        }
+
+
+        private static bool GetMultiplex(string[] args)
+        {
+            var mplex = args.FirstOrDefault(x => x.StartsWith("-multiplex"));
+            return !string.IsNullOrEmpty(mplex);
         }
 
         private static Protocol GetProtocol(string[] args)
         {
-            var transport = args.FirstOrDefault(x => x.StartsWith("-pr"))?.Split(':')?[1];
+            var protocol = args.FirstOrDefault(x => x.StartsWith("-pr"))?.Split(':')?[1];
+            if (string.IsNullOrEmpty(protocol))
+                return Protocol.Binary;
 
-            Enum.TryParse(transport, true, out Protocol selectedProtocol);
-
-            return selectedProtocol;
+            protocol = protocol.Substring(0, 1).ToUpperInvariant() + protocol.Substring(1).ToLowerInvariant();
+            if (Enum.TryParse(protocol, true, out Protocol selectedProtocol))
+                return selectedProtocol;
+            else
+                return Protocol.Binary;
         }
 
         private static Buffering GetBuffering(string[] args)
         {
             var buffering = args.FirstOrDefault(x => x.StartsWith("-bf"))?.Split(":")?[1];
+            if (string.IsNullOrEmpty(buffering))
+                return Buffering.None;
 
-            Enum.TryParse<Buffering>(buffering, out var selectedBuffering);
-
-            return selectedBuffering;
+            buffering = buffering.Substring(0, 1).ToUpperInvariant() + buffering.Substring(1).ToLowerInvariant();
+            if( Enum.TryParse<Buffering>(buffering, out var selectedBuffering))
+                return selectedBuffering;
+            else
+                return Buffering.None;
         }
 
         private static Transport GetTransport(string[] args)
         {
             var transport = args.FirstOrDefault(x => x.StartsWith("-tr"))?.Split(':')?[1];
+            if (string.IsNullOrEmpty(transport))
+                return Transport.Tcp;
 
-            Enum.TryParse(transport, true, out Transport selectedTransport);
-
-            return selectedTransport;
+            transport = transport.Substring(0, 1).ToUpperInvariant() + transport.Substring(1).ToLowerInvariant();
+            if( Enum.TryParse(transport, true, out Transport selectedTransport))
+                return selectedTransport;
+            else
+                return Transport.Tcp;
         }
 
-        private static async Task RunSelectedConfigurationAsync(Transport transport, Buffering buffering, Protocol protocol, CancellationToken cancellationToken)
+        private static async Task RunSelectedConfigurationAsync(Transport transport, Buffering buffering, Protocol protocol, bool multiplex, CancellationToken cancellationToken)
         {
-            var handler = new CalculatorAsyncHandler();
-
             TServerTransport serverTransport = null;
             switch (transport)
             {
@@ -177,18 +201,15 @@ Sample:
                     break;
             }
 
-            TTransportFactory inputTransportFactory = null;
-            TTransportFactory outputTransportFactory = null;
+            TTransportFactory transportFactory = null;
             switch (buffering)
             {
                 case Buffering.Buffered:
-                    inputTransportFactory = new TBufferedTransport.Factory();
-                    outputTransportFactory = new TBufferedTransport.Factory();
+                    transportFactory = new TBufferedTransport.Factory();
                     break;
 
                 case Buffering.Framed:
-                    inputTransportFactory = new TFramedTransport.Factory();
-                    outputTransportFactory = new TFramedTransport.Factory();
+                    transportFactory = new TFramedTransport.Factory();
                     break;
 
                 default: // layered transport(s) are optional
@@ -196,65 +217,57 @@ Sample:
                     break;
             }
 
-            TProtocolFactory inputProtocolFactory = null;
-            TProtocolFactory outputProtocolFactory = null;
-            ITAsyncProcessor processor = null;
+            TProtocolFactory protocolFactory = null;
             switch (protocol)
             {
                 case Protocol.Binary:
-                    inputProtocolFactory = new TBinaryProtocol.Factory();
-                    outputProtocolFactory = new TBinaryProtocol.Factory();
-                    processor = new Calculator.AsyncProcessor(handler);
+                    protocolFactory = new TBinaryProtocol.Factory();
                     break;
 
                 case Protocol.Compact:
-                    inputProtocolFactory = new TCompactProtocol.Factory();
-                    outputProtocolFactory = new TCompactProtocol.Factory();
-                    processor = new Calculator.AsyncProcessor(handler);
+                    protocolFactory = new TCompactProtocol.Factory();
                     break;
 
                 case Protocol.Json:
-                    inputProtocolFactory = new TJsonProtocol.Factory();
-                    outputProtocolFactory = new TJsonProtocol.Factory();
-                    processor = new Calculator.AsyncProcessor(handler);
-                    break;
-
-                case Protocol.Multiplexed:
-                    inputProtocolFactory = new TBinaryProtocol.Factory();
-                    outputProtocolFactory = new TBinaryProtocol.Factory();
-
-                    var calcHandler = new CalculatorAsyncHandler();
-                    var calcProcessor = new Calculator.AsyncProcessor(calcHandler);
-
-                    var sharedServiceHandler = new SharedServiceAsyncHandler();
-                    var sharedServiceProcessor = new SharedService.AsyncProcessor(sharedServiceHandler);
-
-                    var multiplexedProcessor = new TMultiplexedProcessor();
-                    multiplexedProcessor.RegisterProcessor(nameof(Calculator), calcProcessor);
-                    multiplexedProcessor.RegisterProcessor(nameof(SharedService), sharedServiceProcessor);
-
-                    processor = multiplexedProcessor;
+                    protocolFactory = new TJsonProtocol.Factory();
                     break;
 
                 default:
                     throw new ArgumentOutOfRangeException(nameof(protocol), protocol, null);
             }
 
+            var handler = new CalculatorAsyncHandler();
+            ITAsyncProcessor processor = new Calculator.AsyncProcessor(handler);
+
+            if (multiplex)
+            {
+                var multiplexedProcessor = new TMultiplexedProcessor();
+                multiplexedProcessor.RegisterProcessor(nameof(Calculator), processor);
+
+                processor = multiplexedProcessor;
+            }
+
 
             try
             {
                 Logger.LogInformation(
-                    $"Selected TAsyncServer with {serverTransport} transport, {processor} processor and {inputProtocolFactory} protocol factories");
+                    string.Format(
+                        "TSimpleAsyncServer with \n{0} transport\n{1} buffering\nmultiplex = {2}\n{3} protocol",
+                        transport,
+                        buffering,
+                        multiplex ? "yes" : "no",
+                        protocol
+                        ));
 
                 var loggerFactory = ServiceCollection.BuildServiceProvider().GetService<ILoggerFactory>();
 
                 var server = new TSimpleAsyncServer(
                     itProcessorFactory: new TSingletonProcessorFactory(processor),
                     serverTransport: serverTransport,
-                    inputTransportFactory: inputTransportFactory,
-                    outputTransportFactory: outputTransportFactory,
-                    inputProtocolFactory: inputProtocolFactory,
-                    outputProtocolFactory: outputProtocolFactory,
+                    inputTransportFactory: transportFactory,
+                    outputTransportFactory: transportFactory,
+                    inputProtocolFactory: protocolFactory,
+                    outputProtocolFactory: protocolFactory,
                     logger: loggerFactory.CreateLogger<TSimpleAsyncServer>());
 
                 Logger.LogInformation("Starting the server...");
@@ -323,7 +336,6 @@ Sample:
             Binary,
             Compact,
             Json,
-            Multiplexed
         }
 
         public class HttpServerSample
@@ -364,6 +376,8 @@ Sample:
                 // This method gets called by the runtime. Use this method to add services to the container.
                 public void ConfigureServices(IServiceCollection services)
                 {
+                    // NOTE: this is not really the recommended way to do it
+                    // because the HTTP server cannot be configured properly to e.g. accept framed or multiplex
                     services.AddTransient<Calculator.IAsync, CalculatorAsyncHandler>();
                     services.AddTransient<ITAsyncProcessor, Calculator.AsyncProcessor>();
                     services.AddTransient<THttpServerTransport, THttpServerTransport>();
@@ -372,6 +386,8 @@ Sample:
                 // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
                 public void Configure(IApplicationBuilder app, IWebHostEnvironment env, ILoggerFactory loggerFactory)
                 {
+                    _ = env;
+                    _ = loggerFactory;
                     app.UseMiddleware<THttpServerTransport>();
                 }
             }
@@ -408,7 +424,7 @@ Sample:
             {
                 Logger.LogInformation($"CalculateAsync({logid}, [{w.Op},{w.Num1},{w.Num2}])");
 
-                var val = 0;
+                int val;
                 switch (w.Op)
                 {
                     case Operation.ADD:

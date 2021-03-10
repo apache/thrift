@@ -21,7 +21,7 @@
 
 from DebugProtoTest import Srv
 from DebugProtoTest.ttypes import CompactProtoTestStruct, Empty, Wrapper
-from DebugProtoTest.ttypes import ExceptionWithAMap, MutableException
+from DebugProtoTest.ttypes import ExceptionWithAMap, MutableException, ExceptionWithoutFields
 from thrift.Thrift import TFrozenDict
 from thrift.transport import TTransport
 from thrift.protocol import TBinaryProtocol, TCompactProtocol
@@ -103,6 +103,9 @@ class TestFrozenBase(unittest.TestCase):
         mutexc = MutableException(msg='foo')
         mutexc.msg = 'bar'
         self.assertEqual(mutexc.msg, 'bar')
+
+    def test_frozen_exception_with_no_fields(self):
+        ExceptionWithoutFields()
 
     def test_frozen_exception_serialization(self):
         result = Srv.declaredExceptionMethod_result(

@@ -55,5 +55,5 @@ SET PACKAGES=^
 %BASH% -lc "pacman --noconfirm -U --config <(echo) msys2-keyring-r21.b39fb11-1-any.pkg.tar.xz"            || EXIT /B
 :: Upgrade things
 %BASH% -lc "pacman --noconfirm -Sy"                                                                       || EXIT /B
-%BASH% -lc "pacman --noconfirm -Sydd pacman"                                                              || EXIT /B
+%BASH% -lc "pacman --noconfirm -Udd https://repo.msys2.org/msys/x86_64/pacman-5.2.2-5-x86_64.pkg.tar.xz"    || EXIT /B
 %BASH% -lc "pacman --noconfirm %PACKAGES%"                                                                || EXIT /B

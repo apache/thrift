@@ -2,11 +2,12 @@
 name = "thrift"
 description = "Rust bindings for the Apache Thrift RPC system"
 edition = "2018"
-version = "0.14.0"
+version = "0.15.0"
 license = "Apache-2.0"
 authors = ["Apache Thrift Developers <dev@thrift.apache.org>"]
 homepage = "http://thrift.apache.org"
-documentation = "https://thrift.apache.org"
+documentation = "https://docs.rs/thrift"
+repository = "https://github.com/apache/thrift/tree/master/lib/rs"
 readme = "README.md"
 exclude = ["Makefile*", "test/**", "*.iml"]
 keywords = ["thrift"]

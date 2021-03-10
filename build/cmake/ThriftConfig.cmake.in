@@ -27,17 +27,37 @@ set_and_check(THRIFT_BIN_DIR "@PACKAGE_BIN_INSTALL_DIR@")
 set(THRIFT_COMPILER "${THRIFT_BIN_DIR}/thrift@CMAKE_EXECUTABLE_SUFFIX@")
 
 if (NOT TARGET thrift::thrift)
-  include("${THRIFT_CMAKE_DIR}/thriftTargets.cmake")
+    include("${THRIFT_CMAKE_DIR}/thriftTargets.cmake")
 endif()
-
 set(THRIFT_LIBRARIES thrift::thrift)
 
-if ("${THRIFT_LIBRARIES}" STREQUAL "")
-	message(FATAL_ERROR "thrift libraries were not found")
+if(@ZLIB_FOUND@ AND @WITH_ZLIB@)
+    if (NOT TARGET thriftz::thriftz)
+        include("${THRIFT_CMAKE_DIR}/thriftzTargets.cmake")
+    endif()
+    set(THRIFT_LIBRARIES thriftz::thriftz)
 endif()
 
+if ("${THRIFT_LIBRARIES}" STREQUAL "")
+    message(FATAL_ERROR "thrift libraries were not found")
+endif()
 if (NOT Thrift_FIND_QUIETLY)
-  message(STATUS "Found thrift: ${PACKAGE_PREFIX_DIR}")
+    message(STATUS "Found thrift: ${PACKAGE_PREFIX_DIR}")
+endif()
+
+
+include(CMakeFindDependencyMacro)
+
+if(@ZLIB_FOUND@ AND @WITH_ZLIB@)
+    find_dependency(ZLIB)
+endif()
+
+if(@OPENSSL_FOUND@ AND @WITH_OPENSSL@)
+    find_dependency(OpenSSL)
+endif()
+
+if(@Libevent_FOUND@ AND @WITH_LIBEVENT@)
+    find_dependency(Libevent)
 endif()
 
 check_required_components(Thrift)

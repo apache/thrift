@@ -209,12 +209,12 @@ struct FullHandler;
 impl FullMealAndDrinksServiceSyncHandler for FullHandler {
     fn handle_full_meal_and_drinks(&self) -> thrift::Result<FullMealAndDrinks> {
         println!("full_meal_and_drinks: handling full meal and drinks call");
-        Ok(FullMealAndDrinks::new(full_meal(), Drink::CanadianWhisky))
+        Ok(FullMealAndDrinks::new(full_meal(), Drink::CANADIAN_WHISKY))
     }
 
     fn handle_best_pie(&self) -> thrift::Result<Pie> {
         println!("full_meal_and_drinks: handling pie call");
-        Ok(Pie::MississippiMud) // I prefer Pie::Pumpkin, but I have to check that casing works
+        Ok(Pie::MISSISSIPPI_MUD) // I prefer Pie::Pumpkin, but I have to check that casing works
     }
 }
 
@@ -259,7 +259,7 @@ fn noodle() -> Noodle {
 }
 
 fn ramen() -> Ramen {
-    Ramen::new("Mr Ramen".to_owned(), 72, BrothType::Miso)
+    Ramen::new("Mr Ramen".to_owned(), 72, BrothType::MISO)
 }
 
 fn napkin() -> Napkin {

@@ -15,21 +15,24 @@
 // specific language governing permissions and limitations
 // under the License.
 
+use clap::{clap_app, value_t};
 use env_logger;
 use log::*;
-use clap::{clap_app, value_t};
 
 use std::collections::{BTreeMap, BTreeSet};
 use std::fmt::Debug;
+use std::net::TcpStream;
 
 use thrift;
+use thrift::protocol::{
+    TBinaryInputProtocol, TBinaryOutputProtocol, TCompactInputProtocol, TCompactOutputProtocol,
+    TInputProtocol, TMultiplexedOutputProtocol, TOutputProtocol,
+};
+use thrift::transport::{
+    TBufferedReadTransport, TBufferedWriteTransport, TFramedReadTransport, TFramedWriteTransport,
+    TIoChannel, TReadTransport, TTcpChannel, TWriteTransport,
+};
 use thrift::OrderedFloat;
-use thrift::protocol::{TBinaryInputProtocol, TBinaryOutputProtocol, TCompactInputProtocol,
-                       TCompactOutputProtocol, TInputProtocol, TMultiplexedOutputProtocol,
-                       TOutputProtocol};
-use thrift::transport::{ReadHalf, TBufferedReadTransport, TBufferedWriteTransport,
-                        TFramedReadTransport, TFramedWriteTransport, TIoChannel, TReadTransport,
-                        TTcpChannel, TWriteTransport, WriteHalf};
 use thrift_test::*;
 
 fn main() {
@@ -71,25 +74,27 @@ fn run() -> thrift::Result<()> {
     let transport = matches.value_of("transport").unwrap_or("buffered");
     let protocol = matches.value_of("protocol").unwrap_or("binary");
 
-
-    let mut thrift_test_client = {
-        let (i_prot, o_prot) = build_protocols(host, port, transport, protocol, "ThriftTest")?;
-        ThriftTestSyncClient::new(i_prot, o_prot)
-    };
+    // create a TCPStream that will be shared by all Thrift clients
+    // service calls from multiple Thrift clients will be interleaved over the same connection
+    // this isn't a problem for us because we're single-threaded and all calls block to completion
+    let shared_stream = TcpStream::connect(format!("{}:{}", host, port))?;
 
     let mut second_service_client = if protocol.starts_with("multi") {
-        let (i_prot, o_prot) = build_protocols(host, port, transport, protocol, "SecondService")?;
+        let shared_stream_clone = shared_stream.try_clone()?;
+        let (i_prot, o_prot) = build(shared_stream_clone, transport, protocol, "SecondService")?;
         Some(SecondServiceSyncClient::new(i_prot, o_prot))
     } else {
         None
     };
 
+    let mut thrift_test_client = {
+        let (i_prot, o_prot) = build(shared_stream, transport, protocol, "ThriftTest")?;
+        ThriftTestSyncClient::new(i_prot, o_prot)
+    };
+
     info!(
         "connecting to {}:{} with {}+{} stack",
-        host,
-        port,
-        protocol,
-        transport
+        host, port, protocol, transport
     );
 
     for _ in 0..testloops {
@@ -99,68 +104,60 @@ fn run() -> thrift::Result<()> {
     Ok(())
 }
 
-fn build_protocols(
-    host: &str,
-    port: u16,
+fn build(
+    stream: TcpStream,
     transport: &str,
     protocol: &str,
     service_name: &str,
 ) -> thrift::Result<(Box<dyn TInputProtocol>, Box<dyn TOutputProtocol>)> {
-    let (i_chan, o_chan) = tcp_channel(host, port)?;
+    let c = TTcpChannel::with_stream(stream);
+    let (i_chan, o_chan) = c.split()?;
 
     let (i_tran, o_tran): (Box<dyn TReadTransport>, Box<dyn TWriteTransport>) = match transport {
-        "buffered" => {
-            (Box::new(TBufferedReadTransport::new(i_chan)),
-             Box::new(TBufferedWriteTransport::new(o_chan)))
-        }
-        "framed" => {
-            (Box::new(TFramedReadTransport::new(i_chan)),
-             Box::new(TFramedWriteTransport::new(o_chan)))
-        }
+        "buffered" => (
+            Box::new(TBufferedReadTransport::new(i_chan)),
+            Box::new(TBufferedWriteTransport::new(o_chan)),
+        ),
+        "framed" => (
+            Box::new(TFramedReadTransport::new(i_chan)),
+            Box::new(TFramedWriteTransport::new(o_chan)),
+        ),
         unmatched => return Err(format!("unsupported transport {}", unmatched).into()),
     };
 
     let (i_prot, o_prot): (Box<dyn TInputProtocol>, Box<dyn TOutputProtocol>) = match protocol {
-        "binary" => {
-            (Box::new(TBinaryInputProtocol::new(i_tran, true)),
-             Box::new(TBinaryOutputProtocol::new(o_tran, true)))
-        }
-        "multi" => {
-            (Box::new(TBinaryInputProtocol::new(i_tran, true)),
-             Box::new(
-                TMultiplexedOutputProtocol::new(
-                    service_name,
-                    TBinaryOutputProtocol::new(o_tran, true),
-                ),
-            ))
-        }
-        "compact" => {
-            (Box::new(TCompactInputProtocol::new(i_tran)),
-             Box::new(TCompactOutputProtocol::new(o_tran)))
-        }
-        "multic" => {
-            (Box::new(TCompactInputProtocol::new(i_tran)),
-             Box::new(TMultiplexedOutputProtocol::new(service_name, TCompactOutputProtocol::new(o_tran)),))
-        }
+        "binary" => (
+            Box::new(TBinaryInputProtocol::new(i_tran, true)),
+            Box::new(TBinaryOutputProtocol::new(o_tran, true)),
+        ),
+        "multi" => (
+            Box::new(TBinaryInputProtocol::new(i_tran, true)),
+            Box::new(TMultiplexedOutputProtocol::new(
+                service_name,
+                TBinaryOutputProtocol::new(o_tran, true),
+            )),
+        ),
+        "compact" => (
+            Box::new(TCompactInputProtocol::new(i_tran)),
+            Box::new(TCompactOutputProtocol::new(o_tran)),
+        ),
+        "multic" => (
+            Box::new(TCompactInputProtocol::new(i_tran)),
+            Box::new(TMultiplexedOutputProtocol::new(
+                service_name,
+                TCompactOutputProtocol::new(o_tran),
+            )),
+        ),
         unmatched => return Err(format!("unsupported protocol {}", unmatched).into()),
     };
 
     Ok((i_prot, o_prot))
 }
 
-// FIXME: expose "open" through the client interface so I don't have to early
-// open
-fn tcp_channel(
-    host: &str,
-    port: u16,
-) -> thrift::Result<(ReadHalf<TTcpChannel>, WriteHalf<TTcpChannel>)> {
-    let mut c = TTcpChannel::new();
-    c.open(&format!("{}:{}", host, port))?;
-    c.split()
-}
-
-type BuildThriftTestClient = ThriftTestSyncClient<Box<dyn TInputProtocol>, Box<dyn TOutputProtocol>>;
-type BuiltSecondServiceClient = SecondServiceSyncClient<Box<dyn TInputProtocol>, Box<dyn TOutputProtocol>>;
+type BuildThriftTestClient =
+    ThriftTestSyncClient<Box<dyn TInputProtocol>, Box<dyn TOutputProtocol>>;
+type BuiltSecondServiceClient =
+    SecondServiceSyncClient<Box<dyn TInputProtocol>, Box<dyn TOutputProtocol>>;
 
 #[allow(clippy::cognitive_complexity)]
 fn make_thrift_calls(
@@ -211,7 +208,7 @@ fn make_thrift_calls(
 
     info!("testEnum");
     {
-        verify_expected_result(thrift_test_client.test_enum(Numberz::Two), Numberz::Two)?;
+        verify_expected_result(thrift_test_client.test_enum(Numberz::TWO), Numberz::TWO)?;
     }
 
     info!("testBinary");
@@ -255,26 +252,22 @@ fn make_thrift_calls(
     {
         let x_snd = Xtruct2 {
             byte_thing: Some(32),
-            struct_thing: Some(
-                Xtruct {
-                    string_thing: Some("foo".to_owned()),
-                    byte_thing: Some(1),
-                    i32_thing: Some(324_382_098),
-                    i64_thing: Some(12_938_492_818),
-                },
-            ),
+            struct_thing: Some(Xtruct {
+                string_thing: Some("foo".to_owned()),
+                byte_thing: Some(1),
+                i32_thing: Some(324_382_098),
+                i64_thing: Some(12_938_492_818),
+            }),
             i32_thing: Some(293_481_098),
         };
         let x_cmp = Xtruct2 {
             byte_thing: Some(32),
-            struct_thing: Some(
-                Xtruct {
-                    string_thing: Some("foo".to_owned()),
-                    byte_thing: Some(1),
-                    i32_thing: Some(324_382_098),
-                    i64_thing: Some(12_938_492_818),
-                },
-            ),
+            struct_thing: Some(Xtruct {
+                string_thing: Some("foo".to_owned()),
+                byte_thing: Some(1),
+                i32_thing: Some(324_382_098),
+                i64_thing: Some(12_938_492_818),
+            }),
             i32_thing: Some(293_481_098),
         };
         verify_expected_result(thrift_test_client.test_nest(x_snd), x_cmp)?;
@@ -386,7 +379,7 @@ fn make_thrift_calls(
         };
 
         verify_expected_result(
-            thrift_test_client.test_multi(1, -123_948, -19_234_123_981, m_snd, Numberz::Eight, 81),
+            thrift_test_client.test_multi(1, -123_948, -19_234_123_981, m_snd, Numberz::EIGHT, 81),
             s_cmp,
         )?;
     }
@@ -400,49 +393,43 @@ fn make_thrift_calls(
     // }
     {
         let mut arg_map_usermap: BTreeMap<Numberz, i64> = BTreeMap::new();
-        arg_map_usermap.insert(Numberz::One, 4289);
-        arg_map_usermap.insert(Numberz::Eight, 19);
+        arg_map_usermap.insert(Numberz::ONE, 4289);
+        arg_map_usermap.insert(Numberz::EIGHT, 19);
 
         let mut arg_vec_xtructs: Vec<Xtruct> = Vec::new();
-        arg_vec_xtructs.push(
-            Xtruct {
-                string_thing: Some("foo".to_owned()),
-                byte_thing: Some(8),
-                i32_thing: Some(29),
-                i64_thing: Some(92384),
-            },
-        );
-        arg_vec_xtructs.push(
-            Xtruct {
-                string_thing: Some("bar".to_owned()),
-                byte_thing: Some(28),
-                i32_thing: Some(2),
-                i64_thing: Some(-1281),
-            },
-        );
-        arg_vec_xtructs.push(
-            Xtruct {
-                string_thing: Some("baz".to_owned()),
-                byte_thing: Some(0),
-                i32_thing: Some(3_948_539),
-                i64_thing: Some(-12_938_492),
-            },
-        );
+        arg_vec_xtructs.push(Xtruct {
+            string_thing: Some("foo".to_owned()),
+            byte_thing: Some(8),
+            i32_thing: Some(29),
+            i64_thing: Some(92384),
+        });
+        arg_vec_xtructs.push(Xtruct {
+            string_thing: Some("bar".to_owned()),
+            byte_thing: Some(28),
+            i32_thing: Some(2),
+            i64_thing: Some(-1281),
+        });
+        arg_vec_xtructs.push(Xtruct {
+            string_thing: Some("baz".to_owned()),
+            byte_thing: Some(0),
+            i32_thing: Some(3_948_539),
+            i64_thing: Some(-12_938_492),
+        });
 
         let mut s_cmp_nested_1: BTreeMap<Numberz, Insanity> = BTreeMap::new();
         let insanity = Insanity {
             user_map: Some(arg_map_usermap),
             xtructs: Some(arg_vec_xtructs),
         };
-        s_cmp_nested_1.insert(Numberz::Two, insanity.clone());
-        s_cmp_nested_1.insert(Numberz::Three, insanity.clone());
+        s_cmp_nested_1.insert(Numberz::TWO, insanity.clone());
+        s_cmp_nested_1.insert(Numberz::THREE, insanity.clone());
 
         let mut s_cmp_nested_2: BTreeMap<Numberz, Insanity> = BTreeMap::new();
         let empty_insanity = Insanity {
             user_map: Some(BTreeMap::new()),
             xtructs: Some(Vec::new()),
         };
-        s_cmp_nested_2.insert(Numberz::Six, empty_insanity);
+        s_cmp_nested_2.insert(Numberz::SIX, empty_insanity);
 
         let mut s_cmp: BTreeMap<UserId, BTreeMap<Numberz, Insanity>> = BTreeMap::new();
         s_cmp.insert(1 as UserId, s_cmp_nested_1);
@@ -455,12 +442,12 @@ fn make_thrift_calls(
     {
         let r = thrift_test_client.test_exception("Xception".to_owned());
         let x = match r {
-            Err(thrift::Error::User(ref e)) => {
-                match e.downcast_ref::<Xception>() {
-                    Some(x) => Ok(x),
-                    None => Err(thrift::Error::User("did not get expected Xception struct".into()),),
-                }
-            }
+            Err(thrift::Error::User(ref e)) => match e.downcast_ref::<Xception>() {
+                Some(x) => Ok(x),
+                None => Err(thrift::Error::User(
+                    "did not get expected Xception struct".into(),
+                )),
+            },
             _ => Err(thrift::Error::User("did not get exception".into())),
         }?;
 
@@ -498,12 +485,12 @@ fn make_thrift_calls(
         let r =
             thrift_test_client.test_multi_exception("Xception".to_owned(), "ignored".to_owned());
         let x = match r {
-            Err(thrift::Error::User(ref e)) => {
-                match e.downcast_ref::<Xception>() {
-                    Some(x) => Ok(x),
-                    None => Err(thrift::Error::User("did not get expected Xception struct".into()),),
-                }
-            }
+            Err(thrift::Error::User(ref e)) => match e.downcast_ref::<Xception>() {
+                Some(x) => Ok(x),
+                None => Err(thrift::Error::User(
+                    "did not get expected Xception struct".into(),
+                )),
+            },
             _ => Err(thrift::Error::User("did not get exception".into())),
         }?;
 
@@ -520,28 +507,26 @@ fn make_thrift_calls(
         let r =
             thrift_test_client.test_multi_exception("Xception2".to_owned(), "ignored".to_owned());
         let x = match r {
-            Err(thrift::Error::User(ref e)) => {
-                match e.downcast_ref::<Xception2>() {
-                    Some(x) => Ok(x),
-                    None => Err(thrift::Error::User("did not get expected Xception struct".into()),),
-                }
-            }
+            Err(thrift::Error::User(ref e)) => match e.downcast_ref::<Xception2>() {
+                Some(x) => Ok(x),
+                None => Err(thrift::Error::User(
+                    "did not get expected Xception struct".into(),
+                )),
+            },
             _ => Err(thrift::Error::User("did not get exception".into())),
         }?;
 
         let x_cmp = Xception2 {
             error_code: Some(2002),
-            struct_thing: Some(
-                Xtruct {
-                    string_thing: Some("This is an Xception2".to_owned()),
-                    // since this is an OPT_IN_REQ_OUT field the sender sets a default
-                    byte_thing: Some(0),
-                    // since this is an OPT_IN_REQ_OUT field the sender sets a default
-                    i32_thing: Some(0),
-                    // since this is an OPT_IN_REQ_OUT field the sender sets a default
-                    i64_thing: Some(0),
-                },
-            ),
+            struct_thing: Some(Xtruct {
+                string_thing: Some("This is an Xception2".to_owned()),
+                // since this is an OPT_IN_REQ_OUT field the sender sets a default
+                byte_thing: Some(0),
+                // since this is an OPT_IN_REQ_OUT field the sender sets a default
+                i32_thing: Some(0),
+                // since this is an OPT_IN_REQ_OUT field the sender sets a default
+                i64_thing: Some(0),
+            }),
         };
 
         verify_expected_result(Ok(x), &x_cmp)?;
@@ -551,7 +536,9 @@ fn make_thrift_calls(
     {
         let r = thrift_test_client.test_multi_exception("haha".to_owned(), "RETURNED".to_owned());
         let x = match r {
-            Err(e) => Err(thrift::Error::User(format!("received an unexpected exception {:?}", e).into(),),),
+            Err(e) => Err(thrift::Error::User(
+                format!("received an unexpected exception {:?}", e).into(),
+            )),
             _ => r,
         }?;
 
@@ -591,7 +578,9 @@ fn verify_expected_result<T: Debug + PartialEq + Sized>(
                 Ok(())
             } else {
                 info!("*** FAILED ***");
-                Err(thrift::Error::User(format!("expected {:?} but got {:?}", &expected, &v).into()),)
+                Err(thrift::Error::User(
+                    format!("expected {:?} but got {:?}", &expected, &v).into(),
+                ))
             }
         }
         Err(e) => Err(e),

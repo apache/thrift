@@ -265,6 +265,7 @@ type THeaderTransport struct {
 
 	clientType clientType
 	protocolID THeaderProtocolID
+	cfg        *TConfiguration
 
 	// buffer is used in the following scenarios to avoid repetitive
 	// allocations, while 4 is big enough for all those scenarios:
@@ -276,51 +277,36 @@ type THeaderTransport struct {
 
 var _ TTransport = (*THeaderTransport)(nil)
 
-// NewTHeaderTransport creates THeaderTransport from the underlying transport.
-//
-// Please note that THeaderTransport handles framing and zlib by itself,
-// so the underlying transport should be the raw socket transports (TSocket or TSSLSocket),
-// instead of rich transports like TZlibTransport or TFramedTransport.
-//
-// If trans is already a *THeaderTransport, it will be returned as is.
+// Deprecated: Use NewTHeaderTransportConf instead.
 func NewTHeaderTransport(trans TTransport) *THeaderTransport {
-	if ht, ok := trans.(*THeaderTransport); ok {
-		return ht
-	}
-	return &THeaderTransport{
-		transport:    trans,
-		reader:       bufio.NewReader(trans),
-		writeHeaders: make(THeaderMap),
-		protocolID:   THeaderProtocolDefault,
-	}
+	return NewTHeaderTransportConf(trans, &TConfiguration{
+		noPropagation: true,
+	})
 }
 
-// NewTHeaderTransportWithProtocolID creates THeaderTransport from the
-// underlying transport, with given protocol ID set.
+// NewTHeaderTransportConf creates THeaderTransport from the
+// underlying transport, with given TConfiguration attached.
 //
 // If trans is already a *THeaderTransport, it will be returned as is,
-// but with protocol ID overridden by the value passed in.
+// but with TConfiguration overridden by the value passed in.
 //
-// If the passed in protocol ID is an invalid/unsupported one,
-// this function returns error.
-//
-// The protocol ID overridden is only useful for client transports.
+// The protocol ID in TConfiguration is only useful for client transports.
 // For servers,
 // the protocol ID will be overridden again to the one set by the client,
 // to ensure that servers always speak the same dialect as the client.
-func NewTHeaderTransportWithProtocolID(trans TTransport, protoID THeaderProtocolID) (*THeaderTransport, error) {
-	if err := protoID.Validate(); err != nil {
-		return nil, err
-	}
+func NewTHeaderTransportConf(trans TTransport, conf *TConfiguration) *THeaderTransport {
 	if ht, ok := trans.(*THeaderTransport); ok {
-		return ht, nil
+		ht.SetTConfiguration(conf)
+		return ht
 	}
+	PropagateTConfiguration(trans, conf)
 	return &THeaderTransport{
 		transport:    trans,
 		reader:       bufio.NewReader(trans),
 		writeHeaders: make(THeaderMap),
-		protocolID:   protoID,
-	}, nil
+		protocolID:   conf.GetTHeaderProtocolID(),
+		cfg:          conf,
+	}
 }
 
 // Open calls the underlying transport's Open function.
@@ -375,7 +361,7 @@ func (t *THeaderTransport) ReadFrame(ctx context.Context) error {
 
 	// At this point it should be a framed message,
 	// sanity check on frameSize then discard the peeked part.
-	if frameSize > THeaderMaxFrameSize {
+	if frameSize > THeaderMaxFrameSize || frameSize > uint32(t.cfg.GetMaxFrameSize()) {
 		return NewTProtocolExceptionWithType(
 			SIZE_LIMIT,
 			errors.New("frame too large"),
@@ -451,6 +437,7 @@ func (t *THeaderTransport) parseHeaders(ctx context.Context, frameSize uint32) e
 		return err
 	}
 	hp := NewTCompactProtocol(headerBuf)
+	hp.SetTConfiguration(t.cfg)
 
 	// At this point the header is already read into headerBuf,
 	// and t.frameBuffer starts from the actual payload.
@@ -459,6 +446,7 @@ func (t *THeaderTransport) parseHeaders(ctx context.Context, frameSize uint32) e
 		return err
 	}
 	t.protocolID = THeaderProtocolID(protoID)
+
 	var transformCount int32
 	transformCount, err = hp.readVarint32()
 	if err != nil {
@@ -493,7 +481,7 @@ func (t *THeaderTransport) parseHeaders(ctx context.Context, frameSize uint32) e
 	headers := make(THeaderMap)
 	for {
 		infoType, err := hp.readVarint32()
-		if err == io.EOF {
+		if errors.Is(err, io.EOF) {
 			break
 		}
 		if err != nil {
@@ -601,6 +589,7 @@ func (t *THeaderTransport) Flush(ctx context.Context) error {
 	case clientHeaders:
 		headers := NewTMemoryBuffer()
 		hp := NewTCompactProtocol(headers)
+		hp.SetTConfiguration(t.cfg)
 		if _, err := hp.writeVarint32(int32(t.protocolID)); err != nil {
 			return NewTTransportExceptionFromError(err)
 		}
@@ -763,17 +752,37 @@ func (t *THeaderTransport) isFramed() bool {
 	}
 }
 
+// SetTConfiguration implements TConfigurationSetter.
+func (t *THeaderTransport) SetTConfiguration(cfg *TConfiguration) {
+	PropagateTConfiguration(t.transport, cfg)
+	t.cfg = cfg
+}
+
 // THeaderTransportFactory is a TTransportFactory implementation to create
 // THeaderTransport.
+//
+// It also implements TConfigurationSetter.
 type THeaderTransportFactory struct {
 	// The underlying factory, could be nil.
 	Factory TTransportFactory
+
+	cfg *TConfiguration
 }
 
-// NewTHeaderTransportFactory creates a new *THeaderTransportFactory.
+// Deprecated: Use NewTHeaderTransportFactoryConf instead.
 func NewTHeaderTransportFactory(factory TTransportFactory) TTransportFactory {
+	return NewTHeaderTransportFactoryConf(factory, &TConfiguration{
+		noPropagation: true,
+	})
+}
+
+// NewTHeaderTransportFactoryConf creates a new *THeaderTransportFactory with
+// the given *TConfiguration.
+func NewTHeaderTransportFactoryConf(factory TTransportFactory, conf *TConfiguration) TTransportFactory {
 	return &THeaderTransportFactory{
 		Factory: factory,
+
+		cfg: conf,
 	}
 }
 
@@ -784,7 +793,18 @@ func (f *THeaderTransportFactory) GetTransport(trans TTransport) (TTransport, er
 		if err != nil {
 			return nil, err
 		}
-		return NewTHeaderTransport(t), nil
+		return NewTHeaderTransportConf(t, f.cfg), nil
 	}
-	return NewTHeaderTransport(trans), nil
+	return NewTHeaderTransportConf(trans, f.cfg), nil
 }
+
+// SetTConfiguration implements TConfigurationSetter.
+func (f *THeaderTransportFactory) SetTConfiguration(cfg *TConfiguration) {
+	PropagateTConfiguration(f.Factory, f.cfg)
+	f.cfg = cfg
+}
+
+var (
+	_ TConfigurationSetter = (*THeaderTransportFactory)(nil)
+	_ TConfigurationSetter = (*THeaderTransport)(nil)
+)

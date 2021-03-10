@@ -68,10 +68,7 @@ where
     /// Set `strict` to `true` if all incoming messages contain the protocol
     /// version number in the protocol header.
     pub fn new(transport: T, strict: bool) -> TBinaryInputProtocol<T> {
-        TBinaryInputProtocol {
-            strict,
-            transport,
-        }
+        TBinaryInputProtocol { strict, transport }
     }
 }
 
@@ -294,10 +291,7 @@ where
     /// Set `strict` to `true` if all outgoing messages should contain the
     /// protocol version number in the protocol header.
     pub fn new(transport: T, strict: bool) -> TBinaryOutputProtocol<T> {
-        TBinaryOutputProtocol {
-            strict,
-            transport,
-        }
+        TBinaryOutputProtocol { strict, transport }
     }
 }
 
@@ -453,7 +447,10 @@ impl TBinaryOutputProtocolFactory {
 }
 
 impl TOutputProtocolFactory for TBinaryOutputProtocolFactory {
-    fn create(&self, transport: Box<dyn TWriteTransport + Send>) -> Box<dyn TOutputProtocol + Send> {
+    fn create(
+        &self,
+        transport: Box<dyn TWriteTransport + Send>,
+    ) -> Box<dyn TOutputProtocol + Send> {
         Box::new(TBinaryOutputProtocol::new(transport, true))
     }
 }

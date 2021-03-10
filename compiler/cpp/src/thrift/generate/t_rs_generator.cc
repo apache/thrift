@@ -18,7 +18,6 @@
  */
 
 #include <string>
-#include <fstream>
 #include <iostream>
 
 #include "thrift/platform.h"
@@ -116,7 +115,7 @@ private:
 
   // Write the impl block associated with the rust representation of an enum. This includes methods
   // to write the enum to a protocol, read it from a protocol, etc.
-  void render_enum_impl(const string& enum_name);
+  void render_enum_impl(t_enum* tenum, const string& enum_name);
 
   // Write a simple rust const value (ie. `pub const FOO: foo...`).
   void render_const_value(const string& name, t_type* ttype, t_const_value* tvalue);
@@ -409,10 +408,10 @@ private:
   bool is_double(t_type* ttype);
 
   // Return a string representing the rust type given a `t_type`.
-  string to_rust_type(t_type* ttype, bool ordered_float = true);
+  string to_rust_type(t_type* ttype);
 
   // Return a string representing the `const` rust type given a `t_type`
-  string to_rust_const_type(t_type* ttype, bool ordered_float = true);
+  string to_rust_const_type(t_type* ttype);
 
   // Return a string representing the rift `protocol::TType` given a `t_type`.
   string to_rust_field_type_enum(t_type* ttype);
@@ -547,9 +546,15 @@ void t_rs_generator::render_attributes_and_includes() {
   f_gen_ << "#![allow(unused_extern_crates)]" << endl;
   // constructors take *all* struct parameters, which can trigger the "too many arguments" warning
   // some auto-gen'd types can be deeply nested. clippy recommends factoring them out which is hard to autogen
-  f_gen_ << "#![allow(clippy::too_many_arguments, clippy::type_complexity)]" << endl;
+  // FIXME: re-enable the 'vec_box' lint see: [THRIFT-5364](https://issues.apache.org/jira/browse/THRIFT-5364)
+  // This can happen because we automatically generate a Vec<Box<Type>> when the type is a typedef
+  // and it's a forward typedef. This (typedef + forward typedef) can happen in two situations:
+  // 1. When the type is recursive
+  // 2. When you define types out of order
+  f_gen_ << "#![allow(clippy::too_many_arguments, clippy::type_complexity, clippy::vec_box)]" << endl;
   // prevent rustfmt from running against this file
   // lines are too long, code is (thankfully!) not visual-indented, etc.
+  // can't use #[rustfmt::skip] see: https://github.com/rust-lang/rust/issues/54726
   f_gen_ << "#![cfg_attr(rustfmt, rustfmt_skip)]" << endl;
   f_gen_ << endl;
 
@@ -868,49 +873,63 @@ void t_rs_generator::generate_typedef(t_typedef* ttypedef) {
 void t_rs_generator::generate_enum(t_enum* tenum) {
   string enum_name(rust_camel_case(tenum->get_name()));
   render_enum_definition(tenum, enum_name);
-  render_enum_impl(enum_name);
+  render_enum_impl(tenum, enum_name);
   render_enum_conversion(tenum, enum_name);
 }
 
 void t_rs_generator::render_enum_definition(t_enum* tenum, const string& enum_name) {
   render_rustdoc((t_doc*) tenum);
   f_gen_ << "#[derive(Copy, Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]" << endl;
-  f_gen_ << "pub enum " << enum_name << " {" << endl;
-  indent_up();
-
-  vector<t_enum_value*> constants = tenum->get_constants();
-  vector<t_enum_value*>::iterator constants_iter;
-  for (constants_iter = constants.begin(); constants_iter != constants.end(); ++constants_iter) {
-    t_enum_value* val = (*constants_iter);
-    render_rustdoc((t_doc*) val);
-    f_gen_
-      << indent()
-      << rust_enum_variant_name(val->get_name())
-      << " = "
-      << val->get_value()
-      << ","
-      << endl;
-  }
-
-  indent_down();
-  f_gen_ << "}" << endl;
+  f_gen_ << "pub struct " << enum_name << "(pub i32);" << endl;
   f_gen_ << endl;
 }
 
-void t_rs_generator::render_enum_impl(const string& enum_name) {
+void t_rs_generator::render_enum_impl(t_enum* tenum, const string& enum_name) {
   f_gen_ << "impl " << enum_name << " {" << endl;
   indent_up();
 
-  // taking enum as 'self' here because Thrift enums
-  // are represented as Rust enums with integer values
-  // it's cheaper to copy the integer as opposed to
-  // taking a reference to the enum
+  vector<t_enum_value*> constants = tenum->get_constants();
+
+  // associated constants for each IDL-defined enum variant
+  {
+      vector<t_enum_value*>::iterator constants_iter;
+      for (constants_iter = constants.begin(); constants_iter != constants.end(); ++constants_iter) {
+        t_enum_value* val = (*constants_iter);
+        render_rustdoc((t_doc*) val);
+        f_gen_
+            << indent()
+            << "pub const " << rust_enum_variant_name(val->get_name()) << ": " << enum_name
+            << " = "
+            << enum_name << "(" << val->get_value() << ")"
+            << ";"
+            << endl;
+      }
+  }
+
+  // array containing all IDL-defined enum variants
+  {
+    f_gen_ << indent() << "pub const ENUM_VALUES: &'static [Self] = &[" << endl;
+    indent_up();
+    vector<t_enum_value*>::iterator constants_iter;
+    for (constants_iter = constants.begin(); constants_iter != constants.end(); ++constants_iter) {
+      t_enum_value* val = (*constants_iter);
+      f_gen_
+          << indent()
+          << "Self::" << rust_enum_variant_name(val->get_name())
+          << ","
+          << endl;
+    }
+    indent_down();
+    f_gen_ << indent() << "];" << endl;
+  }
+
+  f_gen_ << indent() << "#[allow(clippy::trivially_copy_pass_by_ref)]" << endl;
   f_gen_
     << indent()
-    << "pub fn write_to_out_protocol(self, o_prot: &mut dyn TOutputProtocol) -> thrift::Result<()> {"
+    << "pub fn write_to_out_protocol(&self, o_prot: &mut dyn TOutputProtocol) -> thrift::Result<()> {"
     << endl;
   indent_up();
-  f_gen_ << indent() << "o_prot.write_i32(self as i32)" << endl;
+  f_gen_ << indent() << "o_prot.write_i32(self.0)" << endl;
   indent_down();
   f_gen_ << indent() << "}" << endl;
 
@@ -919,10 +938,8 @@ void t_rs_generator::render_enum_impl(const string& enum_name) {
     << "pub fn read_from_in_protocol(i_prot: &mut dyn TInputProtocol) -> thrift::Result<" << enum_name << "> {"
     << endl;
   indent_up();
-
   f_gen_ << indent() << "let enum_value = i_prot.read_i32()?;" << endl;
-  f_gen_ << indent() << enum_name << "::try_from(enum_value)";
-
+  f_gen_ << indent() << "Ok(" << enum_name << "::from(enum_value)" << ")" << endl;
   indent_down();
   f_gen_ << indent() << "}" << endl;
 
@@ -932,17 +949,13 @@ void t_rs_generator::render_enum_impl(const string& enum_name) {
 }
 
 void t_rs_generator::render_enum_conversion(t_enum* tenum, const string& enum_name) {
-  f_gen_ << "impl TryFrom<i32> for " << enum_name << " {" << endl;
+  // From trait: i32 -> ENUM_TYPE
+  f_gen_ << "impl From<i32> for " << enum_name << " {" << endl;
   indent_up();
-
-  f_gen_ << indent() << "type Error = thrift::Error;";
-
-  f_gen_ << indent() << "fn try_from(i: i32) -> Result<Self, Self::Error> {" << endl;
+  f_gen_ << indent() << "fn from(i: i32) -> Self {" << endl;
   indent_up();
-
   f_gen_ << indent() << "match i {" << endl;
   indent_up();
-
   vector<t_enum_value*> constants = tenum->get_constants();
   vector<t_enum_value*>::iterator constants_iter;
   for (constants_iter = constants.begin(); constants_iter != constants.end(); ++constants_iter) {
@@ -950,26 +963,50 @@ void t_rs_generator::render_enum_conversion(t_enum* tenum, const string& enum_na
     f_gen_
       << indent()
       << val->get_value()
-      << " => Ok(" << enum_name << "::" << rust_enum_variant_name(val->get_name()) << "),"
+      << " => " << enum_name << "::" << rust_enum_variant_name(val->get_name()) << ","
       << endl;
   }
-  f_gen_ << indent() << "_ => {" << endl;
+  f_gen_ << indent() << "_ => " << enum_name << "(i)" << endl;
+  indent_down();
+  f_gen_ << indent() << "}" << endl;
+  indent_down();
+  f_gen_ << indent() << "}" << endl;
+  indent_down();
+  f_gen_ << "}" << endl;
+  f_gen_ << endl;
+
+  // From trait: &i32 -> ENUM_TYPE
+  f_gen_ << "impl From<&i32> for " << enum_name << " {" << endl;
   indent_up();
-  render_thrift_error(
-    "Protocol",
-    "ProtocolError",
-    "ProtocolErrorKind::InvalidData",
-    "format!(\"cannot convert enum constant {} to " + enum_name + "\", i)"
-  );
-  indent_down();
-  f_gen_ << indent() << "}," << endl;
-
+  f_gen_ << indent() << "fn from(i: &i32) -> Self {" << endl;
+  indent_up();
+  f_gen_ << indent() << enum_name << "::from(*i)" << endl;
   indent_down();
   f_gen_ << indent() << "}" << endl;
+  indent_down();
+  f_gen_ << "}" << endl;
+  f_gen_ << endl;
 
+  // From trait: ENUM_TYPE -> int
+  f_gen_ << "impl From<" << enum_name << "> for i32 {" << endl;
+  indent_up();
+  f_gen_ << indent() << "fn from(e: " << enum_name << ") -> i32 {" << endl;
+  indent_up();
+  f_gen_ << indent() << "e.0" << endl;
   indent_down();
   f_gen_ << indent() << "}" << endl;
+  indent_down();
+  f_gen_ << "}" << endl;
+  f_gen_ << endl;
 
+  // From trait: &ENUM_TYPE -> int
+  f_gen_ << "impl From<&" << enum_name << "> for i32 {" << endl;
+  indent_up();
+  f_gen_ << indent() << "fn from(e: &" << enum_name << ") -> i32 {" << endl;
+  indent_up();
+  f_gen_ << indent() << "e.0" << endl;
+  indent_down();
+  f_gen_ << indent() << "}" << endl;
   indent_down();
   f_gen_ << "}" << endl;
   f_gen_ << endl;
@@ -1050,15 +1087,7 @@ void t_rs_generator::render_struct_definition(
 
 void t_rs_generator::render_exception_struct_error_trait_impls(const string& struct_name, t_struct* tstruct) {
   // error::Error trait
-  f_gen_ << "impl Error for " << struct_name << " {" << endl;
-  indent_up();
-  f_gen_ << indent() << "fn description(&self) -> &str {" << endl;
-  indent_up();
-  f_gen_ << indent() << "\"" << "remote service threw " << tstruct->get_name() << "\"" << endl; // use *original* name
-  indent_down();
-  f_gen_ << indent() << "}" << endl;
-  indent_down();
-  f_gen_ << "}" << endl;
+  f_gen_ << "impl Error for " << struct_name << " {}" << endl;
   f_gen_ << endl;
 
   // convert::From trait
@@ -1078,7 +1107,12 @@ void t_rs_generator::render_exception_struct_error_trait_impls(const string& str
   indent_up();
   f_gen_ << indent() << "fn fmt(&self, f: &mut Formatter) -> fmt::Result {" << endl;
   indent_up();
-  f_gen_ << indent() << "self.description().fmt(f)" << endl;
+  f_gen_
+      << indent()
+      << "write!(f, "
+      << "\"remote service threw " << tstruct->get_name() << "\"" // use *original* name
+      << ")"
+      << endl;
   indent_down();
   f_gen_ << indent() << "}" << endl;
   indent_down();
@@ -2859,7 +2893,7 @@ void t_rs_generator::render_sync_handler_failed_user_exception_branch(t_function
 
   f_gen_ << indent() << "let ret_err = {" << endl;
   indent_up();
-  render_thrift_error_struct("ApplicationError", "ApplicationErrorKind::Unknown", "usr_err.description()");
+  render_thrift_error_struct("ApplicationError", "ApplicationErrorKind::Unknown", "usr_err.to_string()");
   indent_down();
   f_gen_ << indent() << "};" << endl;
   render_sync_handler_send_exception_response(tfunc, "ret_err");
@@ -2882,7 +2916,7 @@ void t_rs_generator::render_sync_handler_failed_application_exception_branch(
 void t_rs_generator::render_sync_handler_failed_default_exception_branch(t_function *tfunc) {
   f_gen_ << indent() << "let ret_err = {" << endl;
   indent_up();
-  render_thrift_error_struct("ApplicationError", "ApplicationErrorKind::Unknown", "e.description()");
+  render_thrift_error_struct("ApplicationError", "ApplicationErrorKind::Unknown", "e.to_string()");
   indent_down();
   f_gen_ << indent() << "};" << endl;
   if (tfunc->is_oneway()) {
@@ -3001,7 +3035,7 @@ bool t_rs_generator::is_double(t_type* ttype) {
   return false;
 }
 
-string t_rs_generator::to_rust_type(t_type* ttype, bool ordered_float) {
+string t_rs_generator::to_rust_type(t_type* ttype) {
   // ttype = get_true_type(ttype); <-- recurses through as many typedef layers as necessary
   if (ttype->is_base_type()) {
     t_base_type* tbase_type = ((t_base_type*)ttype);
@@ -3025,11 +3059,7 @@ string t_rs_generator::to_rust_type(t_type* ttype, bool ordered_float) {
     case t_base_type::TYPE_I64:
       return "i64";
     case t_base_type::TYPE_DOUBLE:
-      if (ordered_float) {
-        return "OrderedFloat<f64>";
-      } else {
-        return "f64";
-      }
+      return "OrderedFloat<f64>";
     }
   } else if (ttype->is_typedef()) {
     t_typedef* ttypedef = (t_typedef*)ttype;
@@ -3054,7 +3084,7 @@ string t_rs_generator::to_rust_type(t_type* ttype, bool ordered_float) {
   throw "cannot find rust type for " + ttype->get_name();
 }
 
-string t_rs_generator::to_rust_const_type(t_type* ttype, bool ordered_float) {
+string t_rs_generator::to_rust_const_type(t_type* ttype) {
   if (ttype->is_base_type()) {
     t_base_type* tbase_type = ((t_base_type*)ttype);
     if (tbase_type->get_base() == t_base_type::TYPE_STRING) {
@@ -3066,7 +3096,7 @@ string t_rs_generator::to_rust_const_type(t_type* ttype, bool ordered_float) {
     }
   }
 
-  return to_rust_type(ttype, ordered_float);
+  return to_rust_type(ttype);
 }
 
 string t_rs_generator::to_rust_field_type_enum(t_type* ttype) {
@@ -3288,23 +3318,38 @@ string t_rs_generator::rust_enum_variant_name(const string &name) {
   bool all_uppercase = true;
 
   for (char i : name) {
-    if (isalnum(i) && islower(i)) {
+    if (isalpha(i) && islower(i)) {
       all_uppercase = false;
       break;
     }
   }
 
   if (all_uppercase) {
-    return capitalize(camelcase(lowercase(name)));
+    return name;
   } else {
-    return capitalize(camelcase(name));
+    string modified_name(uppercase(underscore(name)));
+    string_replace(modified_name, "__", "_");
+    return modified_name;
   }
 }
 
 string t_rs_generator::rust_upper_case(const string& name) {
-  string str(uppercase(underscore(name)));
-  string_replace(str, "__", "_");
-  return str;
+  bool all_uppercase = true;
+
+  for (char i : name) {
+    if (isalpha(i) && islower(i)) {
+      all_uppercase = false;
+      break;
+    }
+  }
+
+  if (all_uppercase) {
+    return name;
+  } else {
+    string str(uppercase(underscore(name)));
+    string_replace(str, "__", "_");
+    return str;
+  }
 }
 
 string t_rs_generator::rust_snake_case(const string& name) {

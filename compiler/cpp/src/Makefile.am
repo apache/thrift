@@ -37,3 +37,8 @@ thrift_libparse_a_SOURCES = thrift/thrifty.yy \
 
 clean-local:
 	$(RM) thrift/thriftl.cc thrift/thrifty.cc thrift/thrifty.h thrift/thrifty.hh
+
+
+EXTRA_DIST = \
+	thrift/logging.cc \
+	thrift/windows/config.h

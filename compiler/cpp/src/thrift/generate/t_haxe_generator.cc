@@ -2975,7 +2975,7 @@ std::string t_haxe_generator::get_enum_class_name(t_type* type) {
 THRIFT_REGISTER_GENERATOR(
     haxe,
     "Haxe",
-    "    callbacks        Use onError()/onSuccess() callbacks for service methods (like AS3)\n"
+    "    callbacks        Use onError()/onSuccess() callbacks for service methods\n"
     "    rtti             Enable @:rtti for generated classes and interfaces\n"
     "    buildmacro=my.macros.Class.method(args)\n"
     "                     Add @:build macro calls to generated classes and interfaces\n")

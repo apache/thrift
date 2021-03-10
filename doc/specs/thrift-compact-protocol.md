@@ -61,9 +61,21 @@ def longToZigZag(n: Long): Long = (n << 1) ^ (n >> 63)
 def zigzagToLong(n: Long): Long = (n >>> 1) ^ - (n & 1)
 ```
 
-The zigzag int is then encoded as a *var int*. Var ints take 1 to 5 bytes (int32) or 1 to 10 bytes (int64). The most
-significant bit of each byte indicates if more bytes follow. The concatenation of the least significant 7 bits from each
-byte form the number, where the first byte has the most significant bits (so they are in big endian or network order).
+The zigzag int is then encoded as a *var int*, also known as *Unsigned LEB128*.  Var ints take 1 to 5 bytes (int32) or 
+1 to 10 bytes (int64). The process consists in taking a Big Endian unsigned integer, left-padding the bit-string to 
+make it a multiple of 7 bits, splitting it into 7-bit groups, prefixing the most-significant 7-bit group with the 0 
+bit, prefixing the remaining 7-bit groups with the 1 bit and encoding the resulting bit-string in Little Endian.
+
+For example, the integer 50399 is encoded as follows:
+
+```
+50399 = 1100 0100 1101 1111         (Big Endian representation)
+      = 00000 1100 0100 1101 1111   (Left-padding)
+      = 0000011 0001001 1011111     (7-bit groups)
+      = 00000011 10001001 11011111  (Most-significant bit prefixes)
+      = 11011111 10001001 00000011  (Little Endian representation)
+      = 0xDF 0x89 0x03
+```
 
 Var ints are sometimes used directly inside the compact protocol to represent positive numbers.
 
@@ -92,7 +104,8 @@ Where:
 
 ### String encoding
 
-*String*s are first encoded to UTF-8, and then send as binary.
+*String*s are first encoded to UTF-8, and then send as binary. They do not
+include a NUL delimiter.
 
 ### Double encoding
 

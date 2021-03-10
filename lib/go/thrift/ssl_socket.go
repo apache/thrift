@@ -34,70 +34,115 @@ type TSSLSocket struct {
 	// addr is nil when hostPort is not "", and is only used when the
 	// TSSLSocket is constructed from a net.Addr.
 	addr net.Addr
-	cfg  *tls.Config
 
-	connectTimeout time.Duration
-	socketTimeout  time.Duration
+	cfg *TConfiguration
 }
 
-// NewTSSLSocket creates a net.Conn-backed TTransport, given a host and port and tls Configuration
+// NewTSSLSocketConf creates a net.Conn-backed TTransport, given a host and port.
 //
 // Example:
-// 	trans, err := thrift.NewTSSLSocket("localhost:9090", nil)
-func NewTSSLSocket(hostPort string, cfg *tls.Config) (*TSSLSocket, error) {
-	return NewTSSLSocketTimeout(hostPort, cfg, 0, 0)
-}
-
-// NewTSSLSocketTimeout creates a net.Conn-backed TTransport, given a host and port
-// it also accepts a tls Configuration and connect/socket timeouts as time.Duration
-func NewTSSLSocketTimeout(hostPort string, cfg *tls.Config, connectTimeout, socketTimeout time.Duration) (*TSSLSocket, error) {
-	if cfg.MinVersion == 0 {
+//
+//     trans, err := thrift.NewTSSLSocketConf("localhost:9090", nil, &TConfiguration{
+//         ConnectTimeout: time.Second, // Use 0 for no timeout
+//         SocketTimeout:  time.Second, // Use 0 for no timeout
+//     })
+func NewTSSLSocketConf(hostPort string, conf *TConfiguration) (*TSSLSocket, error) {
+	if cfg := conf.GetTLSConfig(); cfg != nil && cfg.MinVersion == 0 {
 		cfg.MinVersion = tls.VersionTLS10
 	}
 	return &TSSLSocket{
-		hostPort:       hostPort,
-		cfg:            cfg,
-		connectTimeout: connectTimeout,
-		socketTimeout:  socketTimeout,
+		hostPort: hostPort,
+		cfg:      conf,
 	}, nil
 }
 
-// Creates a TSSLSocket from a net.Addr
-func NewTSSLSocketFromAddrTimeout(addr net.Addr, cfg *tls.Config, connectTimeout, socketTimeout time.Duration) *TSSLSocket {
+// Deprecated: Use NewTSSLSocketConf instead.
+func NewTSSLSocket(hostPort string, cfg *tls.Config) (*TSSLSocket, error) {
+	return NewTSSLSocketConf(hostPort, &TConfiguration{
+		TLSConfig: cfg,
+
+		noPropagation: true,
+	})
+}
+
+// Deprecated: Use NewTSSLSocketConf instead.
+func NewTSSLSocketTimeout(hostPort string, cfg *tls.Config, connectTimeout, socketTimeout time.Duration) (*TSSLSocket, error) {
+	return NewTSSLSocketConf(hostPort, &TConfiguration{
+		ConnectTimeout: connectTimeout,
+		SocketTimeout:  socketTimeout,
+		TLSConfig:      cfg,
+
+		noPropagation: true,
+	})
+}
+
+// NewTSSLSocketFromAddrConf creates a TSSLSocket from a net.Addr.
+func NewTSSLSocketFromAddrConf(addr net.Addr, conf *TConfiguration) *TSSLSocket {
 	return &TSSLSocket{
-		addr:           addr,
-		cfg:            cfg,
-		connectTimeout: connectTimeout,
-		socketTimeout:  socketTimeout,
+		addr: addr,
+		cfg:  conf,
 	}
 }
 
-// Creates a TSSLSocket from an existing net.Conn
-func NewTSSLSocketFromConnTimeout(conn net.Conn, cfg *tls.Config, socketTimeout time.Duration) *TSSLSocket {
+// Deprecated: Use NewTSSLSocketFromAddrConf instead.
+func NewTSSLSocketFromAddrTimeout(addr net.Addr, cfg *tls.Config, connectTimeout, socketTimeout time.Duration) *TSSLSocket {
+	return NewTSSLSocketFromAddrConf(addr, &TConfiguration{
+		ConnectTimeout: connectTimeout,
+		SocketTimeout:  socketTimeout,
+		TLSConfig:      cfg,
+
+		noPropagation: true,
+	})
+}
+
+// NewTSSLSocketFromConnConf creates a TSSLSocket from an existing net.Conn.
+func NewTSSLSocketFromConnConf(conn net.Conn, conf *TConfiguration) *TSSLSocket {
 	return &TSSLSocket{
-		conn:          wrapSocketConn(conn),
-		addr:          conn.RemoteAddr(),
-		cfg:           cfg,
-		socketTimeout: socketTimeout,
+		conn: wrapSocketConn(conn),
+		addr: conn.RemoteAddr(),
+		cfg:  conf,
 	}
+}
+
+// Deprecated: Use NewTSSLSocketFromConnConf instead.
+func NewTSSLSocketFromConnTimeout(conn net.Conn, cfg *tls.Config, socketTimeout time.Duration) *TSSLSocket {
+	return NewTSSLSocketFromConnConf(conn, &TConfiguration{
+		SocketTimeout: socketTimeout,
+		TLSConfig:     cfg,
+
+		noPropagation: true,
+	})
+}
+
+// SetTConfiguration implements TConfigurationSetter.
+//
+// It can be used to change connect and socket timeouts.
+func (p *TSSLSocket) SetTConfiguration(conf *TConfiguration) {
+	p.cfg = conf
 }
 
 // Sets the connect timeout
 func (p *TSSLSocket) SetConnTimeout(timeout time.Duration) error {
-	p.connectTimeout = timeout
+	if p.cfg == nil {
+		p.cfg = &TConfiguration{}
+	}
+	p.cfg.ConnectTimeout = timeout
 	return nil
 }
 
 // Sets the socket timeout
 func (p *TSSLSocket) SetSocketTimeout(timeout time.Duration) error {
-	p.socketTimeout = timeout
+	if p.cfg == nil {
+		p.cfg = &TConfiguration{}
+	}
+	p.cfg.SocketTimeout = timeout
 	return nil
 }
 
 func (p *TSSLSocket) pushDeadline(read, write bool) {
 	var t time.Time
-	if p.socketTimeout > 0 {
-		t = time.Now().Add(time.Duration(p.socketTimeout))
+	if timeout := p.cfg.GetSocketTimeout(); timeout > 0 {
+		t = time.Now().Add(time.Duration(timeout))
 	}
 	if read && write {
 		p.conn.SetDeadline(t)
@@ -116,11 +161,11 @@ func (p *TSSLSocket) Open() error {
 	if p.hostPort != "" {
 		if p.conn, err = createSocketConnFromReturn(tls.DialWithDialer(
 			&net.Dialer{
-				Timeout: p.connectTimeout,
+				Timeout: p.cfg.GetConnectTimeout(),
 			},
 			"tcp",
 			p.hostPort,
-			p.cfg,
+			p.cfg.GetTLSConfig(),
 		)); err != nil {
 			return NewTTransportException(NOT_OPEN, err.Error())
 		}
@@ -139,11 +184,11 @@ func (p *TSSLSocket) Open() error {
 		}
 		if p.conn, err = createSocketConnFromReturn(tls.DialWithDialer(
 			&net.Dialer{
-				Timeout: p.connectTimeout,
+				Timeout: p.cfg.GetConnectTimeout(),
 			},
 			p.addr.Network(),
 			p.addr.String(),
-			p.cfg,
+			p.cfg.GetTLSConfig(),
 		)); err != nil {
 			return NewTTransportException(NOT_OPEN, err.Error())
 		}
@@ -209,3 +254,5 @@ func (p *TSSLSocket) RemainingBytes() (num_bytes uint64) {
 	const maxSize = ^uint64(0)
 	return maxSize // the truth is, we just don't know unless framed is used
 }
+
+var _ TConfigurationSetter = (*TSSLSocket)(nil)

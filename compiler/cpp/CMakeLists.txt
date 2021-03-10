@@ -72,7 +72,6 @@ macro(THRIFT_ADD_COMPILER name description initial)
 endmacro()
 
 # The following compiler can be enabled or disabled
-THRIFT_ADD_COMPILER(as3     "Enable compiler for ActionScript 3" ON)
 THRIFT_ADD_COMPILER(c_glib  "Enable compiler for C with Glib" ON)
 THRIFT_ADD_COMPILER(cl      "Enable compiler for Common LISP" ON)
 THRIFT_ADD_COMPILER(cpp     "Enable compiler for C++" ON)

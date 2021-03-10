@@ -5,8 +5,15 @@ import (
 	"fmt"
 )
 
+// ResponseMeta represents the metadata attached to the response.
+type ResponseMeta struct {
+	// The headers in the response, if any.
+	// If the underlying transport/protocol is not THeader, this will always be nil.
+	Headers THeaderMap
+}
+
 type TClient interface {
-	Call(ctx context.Context, method string, args, result TStruct) error
+	Call(ctx context.Context, method string, args, result TStruct) (ResponseMeta, error)
 }
 
 type TStandardClient struct {
@@ -78,18 +85,25 @@ func (p *TStandardClient) Recv(ctx context.Context, iprot TProtocol, seqId int32
 	return iprot.ReadMessageEnd(ctx)
 }
 
-func (p *TStandardClient) Call(ctx context.Context, method string, args, result TStruct) error {
+func (p *TStandardClient) Call(ctx context.Context, method string, args, result TStruct) (ResponseMeta, error) {
 	p.seqId++
 	seqId := p.seqId
 
 	if err := p.Send(ctx, p.oprot, seqId, method, args); err != nil {
-		return err
+		return ResponseMeta{}, err
 	}
 
 	// method is oneway
 	if result == nil {
-		return nil
+		return ResponseMeta{}, nil
 	}
 
-	return p.Recv(ctx, p.iprot, seqId, method, result)
+	err := p.Recv(ctx, p.iprot, seqId, method, result)
+	var headers THeaderMap
+	if hp, ok := p.iprot.(*THeaderProtocol); ok {
+		headers = hp.transport.readHeaders
+	}
+	return ResponseMeta{
+		Headers: headers,
+	}, err
 }

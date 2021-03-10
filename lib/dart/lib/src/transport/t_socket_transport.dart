@@ -28,27 +28,30 @@ part of thrift;
 ///
 /// Adapted from the JS WebSocket transport.
 abstract class TSocketTransport extends TBufferedTransport {
-  final Logger logger = new Logger('thrift.TSocketTransport');
+  final Logger logger = Logger('thrift.TSocketTransport');
 
   final TSocket socket;
 
   /// A transport using the provided [socket].
   TSocketTransport(this.socket) {
     if (socket == null) {
-      throw new ArgumentError.notNull('socket');
+      throw ArgumentError.notNull('socket');
     }
 
     socket.onError.listen((e) => logger.warning(e));
     socket.onMessage.listen(handleIncomingMessage);
   }
 
+  @override
   bool get isOpen => socket.isOpen;
 
+  @override
   Future open() {
     _reset(isOpen: true);
     return socket.open();
   }
 
+  @override
   Future close() {
     _reset(isOpen: false);
     return socket.close();
@@ -70,13 +73,14 @@ class TClientSocketTransport extends TSocketTransport {
 
   TClientSocketTransport(TSocket socket) : super(socket);
 
+  @override
   Future flush() {
     Uint8List bytes = consumeWriteBuffer();
 
     // Use a sync completer to ensure that the buffer can be read immediately
     // after the read buffer is set, and avoid a race condition where another
     // response could overwrite the read buffer.
-    var completer = new Completer<Uint8List>.sync();
+    var completer = Completer<Uint8List>.sync();
     _completers.add(completer);
 
     if (bytes.lengthInBytes > 0) {
@@ -86,6 +90,7 @@ class TClientSocketTransport extends TSocketTransport {
     return completer.future;
   }
 
+  @override
   void handleIncomingMessage(Uint8List messageBytes) {
     super.handleIncomingMessage(messageBytes);
 
@@ -103,7 +108,7 @@ class TClientSocketTransport extends TSocketTransport {
 /// incoming message arrives to correlate a response to a request, using the
 /// seqid.
 class TAsyncClientSocketTransport extends TSocketTransport {
-  static const defaultTimeout = const Duration(seconds: 30);
+  static const defaultTimeout = Duration(seconds: 30);
 
   final Map<int, Completer<Uint8List>> _completers = {};
 
@@ -112,11 +117,12 @@ class TAsyncClientSocketTransport extends TSocketTransport {
   final Duration responseTimeout;
 
   TAsyncClientSocketTransport(TSocket socket, TMessageReader messageReader,
-      {Duration responseTimeout: defaultTimeout})
+      {Duration responseTimeout = defaultTimeout})
       : this.messageReader = messageReader,
         this.responseTimeout = responseTimeout,
         super(socket);
 
+  @override
   Future flush() {
     Uint8List bytes = consumeWriteBuffer();
     TMessage message = messageReader.readMessage(bytes);
@@ -125,15 +131,15 @@ class TAsyncClientSocketTransport extends TSocketTransport {
     // Use a sync completer to ensure that the buffer can be read immediately
     // after the read buffer is set, and avoid a race condition where another
     // response could overwrite the read buffer.
-    var completer = new Completer<Uint8List>.sync();
+    var completer = Completer<Uint8List>.sync();
     _completers[seqid] = completer;
 
     if (responseTimeout != null) {
-      new Future.delayed(responseTimeout, () {
+      Future.delayed(responseTimeout, () {
         var completer = _completers.remove(seqid);
         if (completer != null) {
           completer.completeError(
-              new TimeoutException("Response timed out.", responseTimeout));
+              TimeoutException("Response timed out.", responseTimeout));
         }
       });
     }
@@ -143,6 +149,7 @@ class TAsyncClientSocketTransport extends TSocketTransport {
     return completer.future;
   }
 
+  @override
   void handleIncomingMessage(Uint8List messageBytes) {
     super.handleIncomingMessage(messageBytes);
 
@@ -161,14 +168,16 @@ class TServerSocketTransport extends TSocketTransport {
   Stream get onIncomingMessage => _onIncomingMessageController.stream;
 
   TServerSocketTransport(TSocket socket)
-      : _onIncomingMessageController = new StreamController.broadcast(),
+      : _onIncomingMessageController = StreamController.broadcast(),
         super(socket);
 
+  @override
   Future flush() async {
     Uint8List message = consumeWriteBuffer();
     socket.send(message);
   }
 
+  @override
   void handleIncomingMessage(Uint8List messageBytes) {
     super.handleIncomingMessage(messageBytes);
 

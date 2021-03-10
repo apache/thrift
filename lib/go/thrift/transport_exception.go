@@ -46,6 +46,13 @@ const (
 type tTransportException struct {
 	typeId int
 	err    error
+	msg    string
+}
+
+var _ TTransportException = (*tTransportException)(nil)
+
+func (tTransportException) TExceptionType() TExceptionType {
+	return TExceptionTypeTransport
 }
 
 func (p *tTransportException) TypeId() int {
@@ -53,7 +60,7 @@ func (p *tTransportException) TypeId() int {
 }
 
 func (p *tTransportException) Error() string {
-	return p.err.Error()
+	return p.msg
 }
 
 func (p *tTransportException) Err() error {
@@ -69,7 +76,11 @@ func (p *tTransportException) Timeout() bool {
 }
 
 func NewTTransportException(t int, e string) TTransportException {
-	return &tTransportException{typeId: t, err: errors.New(e)}
+	return &tTransportException{
+		typeId: t,
+		err:    errors.New(e),
+		msg:    e,
+	}
 }
 
 func NewTTransportExceptionFromError(e error) TTransportException {
@@ -81,27 +92,39 @@ func NewTTransportExceptionFromError(e error) TTransportException {
 		return t
 	}
 
-	switch v := e.(type) {
-	case TTransportException:
-		return v
-	case timeoutable:
-		if v.Timeout() {
-			return &tTransportException{typeId: TIMED_OUT, err: e}
-		}
+	te := &tTransportException{
+		typeId: UNKNOWN_TRANSPORT_EXCEPTION,
+		err:    e,
+		msg:    e.Error(),
 	}
 
-	if e == io.EOF {
-		return &tTransportException{typeId: END_OF_FILE, err: e}
+	if isTimeoutError(e) {
+		te.typeId = TIMED_OUT
+		return te
 	}
 
-	return &tTransportException{typeId: UNKNOWN_TRANSPORT_EXCEPTION, err: e}
+	if errors.Is(e, io.EOF) {
+		te.typeId = END_OF_FILE
+		return te
+	}
+
+	return te
 }
 
-// isTimeoutError returns true when err is a timeout error.
+func prependTTransportException(prepend string, e TTransportException) TTransportException {
+	return &tTransportException{
+		typeId: e.TypeId(),
+		err:    e,
+		msg:    prepend + e.Error(),
+	}
+}
+
+// isTimeoutError returns true when err is an error caused by timeout.
 //
 // Note that this also includes TTransportException wrapped timeout errors.
 func isTimeoutError(err error) bool {
-	if t, ok := err.(timeoutable); ok {
+	var t timeoutable
+	if errors.As(err, &t) {
 		return t.Timeout()
 	}
 	return false

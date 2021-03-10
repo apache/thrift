@@ -28,11 +28,13 @@ import (
 	"io"
 )
 
+// Deprecated: Use DEFAULT_MAX_FRAME_SIZE instead.
 const DEFAULT_MAX_LENGTH = 16384000
 
 type TFramedTransport struct {
 	transport TTransport
-	maxLength uint32
+
+	cfg *TConfiguration
 
 	writeBuf bytes.Buffer
 
@@ -43,32 +45,75 @@ type TFramedTransport struct {
 }
 
 type tFramedTransportFactory struct {
-	factory   TTransportFactory
-	maxLength uint32
+	factory TTransportFactory
+	cfg     *TConfiguration
 }
 
+// Deprecated: Use NewTFramedTransportFactoryConf instead.
 func NewTFramedTransportFactory(factory TTransportFactory) TTransportFactory {
-	return &tFramedTransportFactory{factory: factory, maxLength: DEFAULT_MAX_LENGTH}
+	return NewTFramedTransportFactoryConf(factory, &TConfiguration{
+		MaxFrameSize: DEFAULT_MAX_LENGTH,
+
+		noPropagation: true,
+	})
 }
 
+// Deprecated: Use NewTFramedTransportFactoryConf instead.
 func NewTFramedTransportFactoryMaxLength(factory TTransportFactory, maxLength uint32) TTransportFactory {
-	return &tFramedTransportFactory{factory: factory, maxLength: maxLength}
+	return NewTFramedTransportFactoryConf(factory, &TConfiguration{
+		MaxFrameSize: int32(maxLength),
+
+		noPropagation: true,
+	})
+}
+
+func NewTFramedTransportFactoryConf(factory TTransportFactory, conf *TConfiguration) TTransportFactory {
+	PropagateTConfiguration(factory, conf)
+	return &tFramedTransportFactory{
+		factory: factory,
+		cfg:     conf,
+	}
 }
 
 func (p *tFramedTransportFactory) GetTransport(base TTransport) (TTransport, error) {
+	PropagateTConfiguration(base, p.cfg)
 	tt, err := p.factory.GetTransport(base)
 	if err != nil {
 		return nil, err
 	}
-	return NewTFramedTransportMaxLength(tt, p.maxLength), nil
+	return NewTFramedTransportConf(tt, p.cfg), nil
 }
 
+func (p *tFramedTransportFactory) SetTConfiguration(cfg *TConfiguration) {
+	PropagateTConfiguration(p.factory, cfg)
+	p.cfg = cfg
+}
+
+// Deprecated: Use NewTFramedTransportConf instead.
 func NewTFramedTransport(transport TTransport) *TFramedTransport {
-	return &TFramedTransport{transport: transport, reader: bufio.NewReader(transport), maxLength: DEFAULT_MAX_LENGTH}
+	return NewTFramedTransportConf(transport, &TConfiguration{
+		MaxFrameSize: DEFAULT_MAX_LENGTH,
+
+		noPropagation: true,
+	})
 }
 
+// Deprecated: Use NewTFramedTransportConf instead.
 func NewTFramedTransportMaxLength(transport TTransport, maxLength uint32) *TFramedTransport {
-	return &TFramedTransport{transport: transport, reader: bufio.NewReader(transport), maxLength: maxLength}
+	return NewTFramedTransportConf(transport, &TConfiguration{
+		MaxFrameSize: int32(maxLength),
+
+		noPropagation: true,
+	})
+}
+
+func NewTFramedTransportConf(transport TTransport, conf *TConfiguration) *TFramedTransport {
+	PropagateTConfiguration(transport, conf)
+	return &TFramedTransport{
+		transport: transport,
+		reader:    bufio.NewReader(transport),
+		cfg:       conf,
+	}
 }
 
 func (p *TFramedTransport) Open() error {
@@ -155,7 +200,7 @@ func (p *TFramedTransport) readFrame() error {
 		return err
 	}
 	size := binary.BigEndian.Uint32(buf)
-	if size < 0 || size > p.maxLength {
+	if size < 0 || size > uint32(p.cfg.GetMaxFrameSize()) {
 		return NewTTransportException(UNKNOWN_TRANSPORT_EXCEPTION, fmt.Sprintf("Incorrect frame size (%d)", size))
 	}
 	_, err := io.CopyN(&p.readBuf, p.reader, int64(size))
@@ -165,3 +210,14 @@ func (p *TFramedTransport) readFrame() error {
 func (p *TFramedTransport) RemainingBytes() (num_bytes uint64) {
 	return uint64(p.readBuf.Len())
 }
+
+// SetTConfiguration implements TConfigurationSetter.
+func (p *TFramedTransport) SetTConfiguration(cfg *TConfiguration) {
+	PropagateTConfiguration(p.transport, cfg)
+	p.cfg = cfg
+}
+
+var (
+	_ TConfigurationSetter = (*tFramedTransportFactory)(nil)
+	_ TConfigurationSetter = (*TFramedTransport)(nil)
+)

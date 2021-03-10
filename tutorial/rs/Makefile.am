@@ -24,6 +24,8 @@ gen-rs/tutorial.rs gen-rs/shared.rs: $(top_srcdir)/tutorial/tutorial.thrift
 
 all-local: gen-rs/tutorial.rs
 	$(CARGO) build
+	$(CARGO) fmt --all -- --check
+	$(CARGO) clippy --all -- -D warnings
 	[ -d bin ] || mkdir bin
 	cp target/debug/tutorial_server bin/tutorial_server
 	cp target/debug/tutorial_client bin/tutorial_client

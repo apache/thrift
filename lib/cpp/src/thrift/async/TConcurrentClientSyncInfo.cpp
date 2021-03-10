@@ -184,7 +184,11 @@ int32_t TConcurrentClientSyncInfo::generateSeqId()
       throw apache::thrift::TApplicationException(
         TApplicationException::BAD_SEQUENCE_ID,
         "about to repeat a seqid");
-  int32_t newSeqId = nextseqid_++;
+  int32_t newSeqId = nextseqid_;
+  if (nextseqid_ == (std::numeric_limits<int32_t>::max)())
+    nextseqid_ = (std::numeric_limits<int32_t>::min)();
+  else
+    ++nextseqid_;
   seqidToMonitorMap_[newSeqId] = newMonitor_(seqidGuard);
   return newSeqId;
 }

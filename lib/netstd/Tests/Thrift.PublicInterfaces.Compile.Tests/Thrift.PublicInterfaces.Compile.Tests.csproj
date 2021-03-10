@@ -19,7 +19,8 @@
   -->
 
   <PropertyGroup>
-    <TargetFramework>netcoreapp3.1</TargetFramework>
+    <TargetFramework>net5.0</TargetFramework>
+    <Version>0.15.0.0</Version>
     <AssemblyName>Thrift.PublicInterfaces.Compile.Tests</AssemblyName>
     <PackageId>Thrift.PublicInterfaces.Compile.Tests</PackageId>
     <GenerateAssemblyConfigurationAttribute>false</GenerateAssemblyConfigurationAttribute>
@@ -33,7 +34,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="System.ServiceModel.Primitives" Version="4.7.0" />
+    <PackageReference Include="System.ServiceModel.Primitives" Version="4.8.1" />
   </ItemGroup>
 
   <Target Name="PreBuild" BeforeTargets="_GenerateRestoreProjectSpec;Restore;Compile">
@@ -55,6 +56,9 @@
     <Exec Condition="Exists('$(PathToThrift)')" Command="$(PathToThrift) -gen netstd:wcf,union,serial -r ./Thrift5253.thrift" />
     <Exec Condition="Exists('thrift')" Command="thrift -gen netstd:wcf,union,serial -r ./Thrift5253.thrift" />
     <Exec Condition="Exists('$(ProjectDir)/../../../../compiler/cpp/thrift')" Command="$(ProjectDir)/../../../../compiler/cpp/thrift -gen netstd:wcf,union,serial -r ./Thrift5253.thrift" />
+    <Exec Condition="Exists('$(PathToThrift)')" Command="$(PathToThrift) -gen netstd:wcf,union,serial -r ./Thrift5320.thrift" />
+    <Exec Condition="Exists('thrift')" Command="thrift -gen netstd:wcf,union,serial -r ./Thrift5320.thrift" />
+    <Exec Condition="Exists('$(ProjectDir)/../../../../compiler/cpp/thrift')" Command="$(ProjectDir)/../../../../compiler/cpp/thrift -gen netstd:wcf,union,serial -r ./Thrift5320.thrift" />
   </Target>
 
 </Project>

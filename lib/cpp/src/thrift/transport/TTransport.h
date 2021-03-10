@@ -275,7 +275,7 @@ public:
   void checkReadBytesAvailable(long int numBytes)
   {
     if (remainingMessageSize_ < numBytes)
-      throw new TTransportException(TTransportException::END_OF_FILE, "MaxMessageSize reached");
+      throw TTransportException(TTransportException::END_OF_FILE, "MaxMessageSize reached");
   }
 
 protected:
@@ -306,7 +306,7 @@ protected:
 
     // update only: message size can shrink, but not grow
     if (newSize > knownMessageSize_)
-        throw new TTransportException(TTransportException::END_OF_FILE, "MaxMessageSize reached");
+        throw TTransportException(TTransportException::END_OF_FILE, "MaxMessageSize reached");
 
     knownMessageSize_ = newSize;
     remainingMessageSize_ = newSize;
@@ -326,7 +326,7 @@ protected:
     else
     {
       remainingMessageSize_ = 0;
-      throw new TTransportException(TTransportException::END_OF_FILE, "MaxMessageSize reached");
+      throw TTransportException(TTransportException::END_OF_FILE, "MaxMessageSize reached");
     }
   }
 };
