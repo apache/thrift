@@ -457,4 +457,5 @@ void Init_binary_protocol_accelerated() {
   rb_define_method(bpa_class, "read_set_end", rb_thrift_binary_proto_read_set_end, 0);
 
   rbuf_ivar_id = rb_intern("@rbuf");
+  rb_global_variable(&rbuf_ivar_id);
 }
