@@ -112,10 +112,19 @@ VALUE protocol_exception_class;
 void Init_thrift_native() {
   // cached classes
   thrift_module = rb_const_get(rb_cObject, rb_intern("Thrift"));
+  rb_global_variable(&thrift_module);
+
   thrift_bytes_module = rb_const_get(thrift_module, rb_intern("Bytes"));
+  rb_global_variable(&thrift_bytes_module);
+
   thrift_types_module = rb_const_get(thrift_module, rb_intern("Types"));
+  rb_global_variable(&thrift_types_module);
+
   rb_cSet = rb_const_get(rb_cObject, rb_intern("Set"));
+  rb_global_variable(&rb_cSet);
+
   protocol_exception_class = rb_const_get(thrift_module, rb_intern("ProtocolException"));
+  rb_global_variable(&protocol_exception_class);
 
   // Init ttype constants
   TTYPE_BOOL = FIX2INT(rb_const_get(thrift_types_module, rb_intern("BOOL")));
@@ -193,6 +202,14 @@ void Init_thrift_native() {
   element_sym = ID2SYM(rb_intern("element"));
   class_sym = ID2SYM(rb_intern("class"));
   binary_sym = ID2SYM(rb_intern("binary"));
+
+  rb_global_variable(&type_sym);
+  rb_global_variable(&name_sym);
+  rb_global_variable(&key_sym);
+  rb_global_variable(&value_sym);
+  rb_global_variable(&element_sym);
+  rb_global_variable(&class_sym);
+  rb_global_variable(&binary_sym);
 
   Init_struct();
   Init_binary_protocol_accelerated();
