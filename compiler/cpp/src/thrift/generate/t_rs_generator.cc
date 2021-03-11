@@ -26,9 +26,10 @@
 using std::map;
 using std::ofstream;
 using std::ostringstream;
+using std::pair;
+using std::set;
 using std::string;
 using std::vector;
-using std::set;
 
 static const string endl("\n"); // avoid ostream << std::endl flushes
 static const string SERVICE_RESULT_VARIABLE("result_value");
@@ -105,7 +106,7 @@ private:
   void render_attributes_and_includes();
 
   // Create the closure of Rust modules referenced by this service.
-  void compute_service_referenced_modules(t_service *tservice, set<string> &referenced_modules);
+  void compute_service_referenced_modules(t_service *tservice, set<pair<string, string>> &referenced_modules);
 
   // Write the rust representation of an enum.
   void render_enum_definition(t_enum* tenum, const string& enum_name);
@@ -583,13 +584,13 @@ void t_rs_generator::render_attributes_and_includes() {
   // NOTE: this is more involved than you would expect because of service extension
   // Basically, I have to find the closure of all the services and include their modules at the top-level
 
-  set<string> referenced_modules;
+  set<pair<string, string>> referenced_modules; // set<module, namespace>
 
   // first, start by adding explicit thrift includes
   const vector<t_program*> includes = get_program()->get_includes();
   vector<t_program*>::const_iterator includes_iter;
   for(includes_iter = includes.begin(); includes_iter != includes.end(); ++includes_iter) {
-    referenced_modules.insert((*includes_iter)->get_name());
+    referenced_modules.insert(std::make_pair((*includes_iter)->get_name(), (*includes_iter)->get_namespace("rs")));
   }
 
   // next, recursively iterate through all the services and add the names of any programs they reference
@@ -601,9 +602,18 @@ void t_rs_generator::render_attributes_and_includes() {
 
   // finally, write all the "pub use..." declarations
   if (!referenced_modules.empty()) {
-    set<string>::iterator module_iter;
+    set<pair<string, string>>::iterator module_iter;
     for (module_iter = referenced_modules.begin(); module_iter != referenced_modules.end(); ++module_iter) {
-      f_gen_ << "use crate::" << rust_snake_case(*module_iter) << ";" << endl;
+      string module_name((*module_iter).first);
+
+      string module_namespace((*module_iter).second);
+      string_replace(module_namespace, ".", "::");
+
+      if (module_namespace.empty()) {
+        f_gen_ << "use crate::" << rust_snake_case(module_name) << ";" << endl;
+      } else {
+        f_gen_ << "use crate::" << module_namespace << "::" << rust_snake_case(module_name) << ";" << endl;
+      }
     }
     f_gen_ << endl;
   }
@@ -611,12 +621,12 @@ void t_rs_generator::render_attributes_and_includes() {
 
 void t_rs_generator::compute_service_referenced_modules(
   t_service *tservice,
-  set<string> &referenced_modules
+  set<pair<string, string>> &referenced_modules
 ) {
   t_service* extends = tservice->get_extends();
   if (extends) {
     if (extends->get_program() != get_program()) {
-      referenced_modules.insert(extends->get_program()->get_name());
+      referenced_modules.insert(std::make_pair(extends->get_program()->get_name(), extends->get_program()->get_namespace("rs")));
     }
     compute_service_referenced_modules(extends, referenced_modules);
   }

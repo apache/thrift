@@ -19,36 +19,18 @@
 
 SUBDIRS = .
 
-if WITH_TESTS
-SUBDIRS += test
-SUBDIRS += test_recursive
-endif
+THRIFT = $(top_builddir)/compiler/cpp/thrift
 
-install:
-	@echo '##############################################################'
-	@echo '##############################################################'
-	@echo 'The Rust client library should be installed via a Cargo.toml dependency - please see /lib/rs/README.md'
-	@echo '##############################################################'
-	@echo '##############################################################'
+stubs: ../../Vehicles.thrift ../Trains.thrift ../services/CityServices.thrift LightRail.thrift Streetcars.thrift $(THRIFT)
+	$(THRIFT) -I . -I ../../ -I ../ -I ../services -out . --gen rs LightRail.thrift
+	$(THRIFT) -I . -I ../../ -I ../ -I ../services -out . --gen rs Streetcars.thrift
 
-check-local:
-	$(CARGO) fmt --all -- --check
-	$(CARGO) clippy --all -- -D warnings
-	$(CARGO) test
-
-all-local:
-	$(CARGO) fmt --all -- --check
-	$(CARGO) clippy --all -- -D warnings
-	$(CARGO) build
+check: stubs
 
 clean-local:
-	$(CARGO) clean
-	-$(RM) Cargo.lock
+	-$(RM) light_rail.rs
+	-$(RM) streetcars.rs
 
 EXTRA_DIST = \
-	src \
-	Cargo.toml \
-	README.md \
-	release.sh \
-	RELEASING.md
-
+	LightRail.thrift \
+	Streetcars.thrift
