@@ -17,29 +17,21 @@
 # under the License.
 #
 
-SUBDIRS = .
+gopathfuzz: $(THRIFT) fuzz.go
+	$(THRIFT) -r --gen go ../../../../tutorial/tutorial.thrift
+	GO111MODULE=on go mod init fuzz
+	GO111MODULE=on cd gen-go/shared && go mod init shared
+	GO111MODULE=on cd gen-go/tutorial && go mod init tutorial
+	GO111MODULE=on go mod edit -replace shared=./gen-go/shared
+	GO111MODULE=on go mod edit -replace tutorial=./gen-go/tutorial
+	GO111MODULE=on cd ../../../../lib/go/thrift && go mod init github.com/apache/thrift/lib/go/thrift
+	GO111MODULE=on go mod edit -replace github.com/apache/thrift/lib/go/thrift=../../../../lib/go/thrift
+	GO111MODULE=on go mod tidy
+	touch gopathfuzz
 
-if WITH_TESTS
-SUBDIRS += test test/fuzz
-endif
-
-install:
-	@echo '##############################################################'
-	@echo '##############################################################'
-	@echo 'The Go client library should be installed via "go get", please see /lib/go/README.md'
-	@echo '##############################################################'
-	@echo '##############################################################'
-
-check-local:
-	GOPATH=`pwd` $(GO) test -race ./thrift
+check: gopathfuzz
+	go test -tags gofuzz
 
 clean-local:
-	$(RM) -rf pkg
+	$(RM) -r gopathfuzz gen-go
 
-all-local:
-	GOPATH=`pwd` $(GO) build ./thrift
-
-EXTRA_DIST = \
-	thrift \
-	coding_standards.md \
-	README.md
