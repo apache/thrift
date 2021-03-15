@@ -122,11 +122,14 @@ func Skip(ctx context.Context, self TProtocol, fieldType TType, maxDepth int) (e
 			return err
 		}
 		for {
-			_, typeId, _, _ := self.ReadFieldBegin(ctx)
+			_, typeId, _, err := self.ReadFieldBegin(ctx)
+			if err != nil {
+				return err
+			}
 			if typeId == STOP {
 				break
 			}
-			err := Skip(ctx, self, typeId, maxDepth-1)
+			err = Skip(ctx, self, typeId, maxDepth-1)
 			if err != nil {
 				return err
 			}
