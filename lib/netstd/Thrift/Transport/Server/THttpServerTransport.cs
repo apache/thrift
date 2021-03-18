@@ -116,7 +116,12 @@ namespace Thrift.Transport.Server
             catch (TTransportException)
             {
                 if (!context.Response.HasStarted)  // if something goes bust, let the client know
-                    context.Response.StatusCode = 500;
+                    context.Response.StatusCode = 500;   // internal server error
+            }
+            catch (TProtocolException)
+            {
+                if (!context.Response.HasStarted)  // if something goes bust, let the client know
+                    context.Response.StatusCode = 400;   // bad request, e.g. required field missing
             }
             finally
             {
