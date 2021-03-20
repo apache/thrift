@@ -83,9 +83,6 @@ RUN C:\TEMP\openssl.exe /silent && `
 # Install java
 RUN choco install jdk8 -y
 
-# Install haskell
-RUN choco install ghc -y
-
 # Install python3
 RUN choco install python3 -y
 

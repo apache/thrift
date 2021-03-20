@@ -121,11 +121,6 @@ RUN apt-get install -y --no-install-recommends \
       golang-go
 
 RUN apt-get install -y --no-install-recommends \
-`# Haskell dependencies` \
-      ghc \
-      cabal-install
-
-RUN apt-get install -y --no-install-recommends \
 `# Haxe dependencies` \
       haxe \
       neko \

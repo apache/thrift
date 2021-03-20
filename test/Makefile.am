@@ -64,10 +64,6 @@ SUBDIRS += rb
 PRECROSS_TARGET += precross-rb
 endif
 
-if WITH_HASKELL
-SUBDIRS += hs
-endif
-
 if WITH_HAXE
 SUBDIRS += haxe
 endif
@@ -127,7 +123,6 @@ EXTRA_DIST = \
 	crossrunner \
 	dart \
 	erl \
-	hs \
 	keys \
 	lua \
 	ocaml \

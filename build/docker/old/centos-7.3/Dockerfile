@@ -95,9 +95,6 @@ RUN yum install -y glib2-devel
 RUN curl -sSL https://storage.googleapis.com/golang/go1.9.linux-amd64.tar.gz | tar -C /usr/local/ -xz
 ENV PATH /usr/local/go/bin:$PATH
 
-# Haskell Dependencies
-RUN yum -y install haskell-platform
-
 # Haxe Dependencies
 # Not in debian/stretch
 

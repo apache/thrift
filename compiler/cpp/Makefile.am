@@ -79,7 +79,6 @@ thrift_SOURCES += src/thrift/generate/t_c_glib_generator.cc \
                   src/thrift/generate/t_go_generator.cc \
                   src/thrift/generate/t_gv_generator.cc \
                   src/thrift/generate/t_haxe_generator.cc \
-                  src/thrift/generate/t_hs_generator.cc \
                   src/thrift/generate/t_html_generator.cc \
                   src/thrift/generate/t_markdown_generator.cc \
                   src/thrift/generate/t_java_generator.cc \

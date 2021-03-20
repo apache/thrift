@@ -50,10 +50,6 @@ if WITH_RUBY
 SUBDIRS += rb
 endif
 
-if WITH_HASKELL
-SUBDIRS += hs
-endif
-
 if WITH_HAXE
 SUBDIRS += haxe
 endif
@@ -107,7 +103,6 @@ EXTRA_DIST = \
 	d \
 	delphi \
 	erl \
-	hs \
 	ocaml \
 	shared.thrift \
 	tutorial.thrift \
