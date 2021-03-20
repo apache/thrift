@@ -124,13 +124,6 @@ if(BUILD_PYTHON)
     endif()
 endif()
 
-if(BUILD_HASKELL)
-    add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/lib/hs)
-    if(BUILD_TESTING)
-        add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/test/hs)
-    endif()
-endif()
-
 # Create the uninstall target
 add_custom_target(uninstall "${CMAKE_COMMAND}" -P "${PROJECT_SOURCE_DIR}/build/cmake/uninstall.cmake")
 

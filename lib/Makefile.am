@@ -48,10 +48,6 @@ if WITH_RUBY
 SUBDIRS += rb
 endif
 
-if WITH_HASKELL
-SUBDIRS += hs
-endif
-
 if WITH_PERL
 SUBDIRS += perl
 endif

@@ -122,13 +122,6 @@ find_package(PythonLibs QUIET) # for Python.h
 CMAKE_DEPENDENT_OPTION(BUILD_PYTHON "Build Python library" ON
                        "BUILD_LIBRARIES;WITH_PYTHON;PYTHONINTERP_FOUND;PYTHONLIBS_FOUND" OFF)
 
-# Haskell
-option(WITH_HASKELL "Build Haskell Thrift library" ON)
-find_package(GHC QUIET)
-find_package(Cabal QUIET)
-CMAKE_DEPENDENT_OPTION(BUILD_HASKELL "Build GHC library" ON
-                       "BUILD_LIBRARIES;WITH_HASKELL;GHC_FOUND;CABAL_FOUND" OFF)
-
 # Common library options
 # https://cmake.org/cmake/help/latest/variable/BUILD_SHARED_LIBS.html
 # Default on Windows is static, shared mode library support needs work...
@@ -215,10 +208,6 @@ message(STATUS "  Build Python library:                       ${BUILD_PYTHON}")
 MESSAGE_DEP(WITH_PYTHON "Disabled by WITH_PYTHON=OFF")
 MESSAGE_DEP(PYTHONLIBS_FOUND "Python libraries missing")
 message(STATUS)
-message(STATUS "  Build Haskell library:                      ${BUILD_HASKELL}")
-MESSAGE_DEP(WITH_HASKELL "Disabled by WITH_HASKELL=OFF")
-MESSAGE_DEP(GHC_FOUND "GHC missing")
-MESSAGE_DEP(CABAL_FOUND "Cabal missing")
 message(STATUS)
 message(STATUS "----------------------------------------------------------")
 endmacro(PRINT_CONFIG_SUMMARY)

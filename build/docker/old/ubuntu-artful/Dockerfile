@@ -145,11 +145,6 @@ RUN curl -fsSL "$GOLANG_DOWNLOAD_URL" -o golang.tar.gz && \
                         rm golang.tar.gz
 
 RUN apt-get install -y --no-install-recommends \
-`# Haskell dependencies` \
-      ghc \
-      cabal-install
-
-RUN apt-get install -y --no-install-recommends \
 `# Haxe dependencies` \
       haxe \
       neko \

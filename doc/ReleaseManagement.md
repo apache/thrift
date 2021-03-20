@@ -399,8 +399,6 @@ See https://thrift.apache.org/lib/ for the current status of each external packa
   * Run "pub publish" and go through the google account authorization to allow it.
 * [dlang] Within a day, the dlang dub site https://code.dlang.org/packages/apache-thrift?tab=info
   should pick up the release based on the tag.  No action is needed.
-* [haskell] https://hackage.haskell.org/package/thrift
-    https://jira.apache.org/jira/browse/THRIFT-4698
 * [npmjs] @jfarrell is the only one who can do this right now.
     https://issues.apache.org/jira/browse/THRIFT-4688
 * [perl] A submission to CPAN is necessary (normally jeking3 does this):
