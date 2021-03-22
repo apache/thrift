@@ -24,9 +24,10 @@ import (
 	"crypto/tls"
 	"flag"
 	"fmt"
-	"gen/thrifttest"
 	"net/http"
-	"thrift"
+
+	"github.com/apache/thrift/lib/go/thrift"
+	"github.com/apache/thrift/test/go/src/gen/thrifttest"
 )
 
 var debugClientProtocol bool

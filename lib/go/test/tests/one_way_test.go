@@ -23,10 +23,11 @@ import (
 	"context"
 	"fmt"
 	"net"
-	"onewaytest"
 	"testing"
-	"thrift"
 	"time"
+
+	"github.com/apache/thrift/lib/go/test/gopath/src/onewaytest"
+	"github.com/apache/thrift/lib/go/thrift"
 )
 
 func findPort() net.Addr {

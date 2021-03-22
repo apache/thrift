@@ -20,9 +20,10 @@
 package tests
 
 import (
-	"namestest"
 	"reflect"
 	"testing"
+
+	"github.com/apache/thrift/lib/go/test/gopath/src/namestest"
 )
 
 func TestThatAttributeNameSubstituionDoesNotOccur(t *testing.T) {

@@ -22,8 +22,9 @@ package main
 import (
 	"flag"
 	"fmt"
-	"github.com/apache/thrift/lib/go/thrift"
 	"os"
+
+	"github.com/apache/thrift/lib/go/thrift"
 )
 
 func Usage() {

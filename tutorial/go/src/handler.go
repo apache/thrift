@@ -22,9 +22,10 @@ package main
 import (
 	"context"
 	"fmt"
-	"shared"
 	"strconv"
-	"tutorial"
+
+	"github.com/apache/thrift/tutorial/go/gen-go/shared"
+	"github.com/apache/thrift/tutorial/go/gen-go/tutorial"
 )
 
 type CalculatorHandler struct {

@@ -22,13 +22,14 @@ package common
 import (
 	"context"
 	"errors"
-	"gen/thrifttest"
 	"reflect"
 	"sync"
 	"testing"
-	"thrift"
 
 	"github.com/golang/mock/gomock"
+
+	"github.com/apache/thrift/lib/go/thrift"
+	"github.com/apache/thrift/test/go/src/gen/thrifttest"
 )
 
 type test_unit struct {
@@ -84,8 +85,8 @@ func doUnit(t *testing.T, unit *test_unit) {
 }
 
 var rmapmap = map[int32]map[int32]int32{
-	-4: map[int32]int32{-4: -4, -3: -3, -2: -2, -1: -1},
-	4:  map[int32]int32{4: 4, 3: 3, 2: 2, 1: 1},
+	-4: {-4: -4, -3: -3, -2: -2, -1: -1},
+	4:  {4: 4, 3: 3, 2: 2, 1: 1},
 }
 
 var xxs = &thrifttest.Xtruct{

@@ -23,9 +23,9 @@ import (
 	"context"
 	"crypto/tls"
 	"fmt"
-	"tutorial"
 
 	"github.com/apache/thrift/lib/go/thrift"
+	"github.com/apache/thrift/tutorial/go/gen-go/tutorial"
 )
 
 var defaultCtx = context.Background()

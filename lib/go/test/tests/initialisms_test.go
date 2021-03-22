@@ -20,9 +20,10 @@
 package tests
 
 import (
-	"initialismstest"
 	"reflect"
 	"testing"
+
+	"github.com/apache/thrift/lib/go/test/gopath/src/initialismstest"
 )
 
 func TestThatCommonInitialismsAreFixed(t *testing.T) {

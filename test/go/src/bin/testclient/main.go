@@ -20,13 +20,14 @@
 package main
 
 import (
-	"common"
 	"context"
 	"flag"
-	"gen/thrifttest"
 	t "log"
 	"reflect"
-	"thrift"
+
+	"github.com/apache/thrift/lib/go/thrift"
+	"github.com/apache/thrift/test/go/src/common"
+	"github.com/apache/thrift/test/go/src/gen/thrifttest"
 )
 
 var host = flag.String("host", "localhost", "Host to connect")
@@ -50,8 +51,8 @@ func main() {
 }
 
 var rmapmap = map[int32]map[int32]int32{
-	-4: map[int32]int32{-4: -4, -3: -3, -2: -2, -1: -1},
-	4:  map[int32]int32{4: 4, 3: 3, 2: 2, 1: 1},
+	-4: {-4: -4, -3: -3, -2: -2, -1: -1},
+	4:  {4: 4, 3: 3, 2: 2, 1: 1},
 }
 
 var xxs = &thrifttest.Xtruct{

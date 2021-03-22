@@ -1,15 +1,12 @@
 #!/bin/sh
+
 set -e
 
-export GOPATH=`pwd`
-export GOBIN=`pwd`/bin
-export GO111MODULE=off
+export GOPATH=$(mktemp -d -t gopath-XXXXXXXXXX)
 
-mkdir -p src/github.com/golang/mock
-cd src/github.com/golang
-curl -fsSL https://github.com/golang/mock/archive/v1.2.0.tar.gz -o mock.tar.gz
-tar -xzvf mock.tar.gz -C mock --strip-components=1
-cd mock/mockgen
-go install .
-cd ../../../../../
-bin/mockgen -destination=src/common/mock_handler.go -package=common gen/thrifttest ThriftTest
+# TODO: Once we dropped support to go 1.15, add "@v1.5.0" suffix to go install
+GO111MODULE=on go install -mod=mod github.com/golang/mock/mockgen
+
+`go env GOPATH`/bin/mockgen -build_flags "-mod=mod" -destination=src/common/mock_handler.go -package=common github.com/apache/thrift/test/go/src/gen/thrifttest ThriftTest
+
+rm -Rf $GOPATH

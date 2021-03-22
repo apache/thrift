@@ -20,9 +20,10 @@
 package tests
 
 import (
-	"gotagtest"
 	"reflect"
 	"testing"
+
+	"github.com/apache/thrift/lib/go/test/gopath/src/gotagtest"
 )
 
 func TestDefaultTag(t *testing.T) {

@@ -31,13 +31,13 @@ install:
 	@echo '##############################################################'
 
 check-local:
-	GOPATH=`pwd` $(GO) test -race ./thrift
+	$(GO) test -mod=mod -race ./thrift
 
 clean-local:
 	$(RM) -rf pkg
 
 all-local:
-	GOPATH=`pwd` $(GO) build ./thrift
+	$(GO) build -mod=mod ./thrift
 
 EXTRA_DIST = \
 	thrift \

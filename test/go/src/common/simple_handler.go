@@ -21,8 +21,9 @@ package common
 
 import (
 	"errors"
-	. "gen/thrifttest"
 	"time"
+
+	. "github.com/apache/thrift/test/go/src/gen/thrifttest"
 )
 
 var SimpleHandler = &simpleHandler{}
@@ -96,8 +97,8 @@ func (p *simpleHandler) TestTypedef(thing UserId) (r UserId, err error) {
 func (p *simpleHandler) TestMapMap(hello int32) (r map[int32]map[int32]int32, err error) {
 
 	r = map[int32]map[int32]int32{
-		-4: map[int32]int32{-4: -4, -3: -3, -2: -2, -1: -1},
-		4:  map[int32]int32{4: 4, 3: 3, 2: 2, 1: 1},
+		-4: {-4: -4, -3: -3, -2: -2, -1: -1},
+		4:  {4: 4, 3: 3, 2: 2, 1: 1},
 	}
 	return
 }

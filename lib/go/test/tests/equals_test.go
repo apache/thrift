@@ -20,9 +20,10 @@
 package tests
 
 import (
-	"equalstest"
 	"strconv"
 	"testing"
+
+	"github.com/apache/thrift/lib/go/test/gopath/src/equalstest"
 )
 
 func TestEquals(t *testing.T) {

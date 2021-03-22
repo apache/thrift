@@ -22,11 +22,12 @@ package tests
 import (
 	"context"
 	"errors"
-	"errortest"
 	"testing"
-	"thrift"
 
 	"github.com/golang/mock/gomock"
+
+	"github.com/apache/thrift/lib/go/test/gopath/src/errortest"
+	"github.com/apache/thrift/lib/go/thrift"
 )
 
 // TestCase: Comprehensive call and reply workflow in the client.

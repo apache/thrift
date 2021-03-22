@@ -22,9 +22,10 @@ package tests
 import (
 	"context"
 	"errors"
-	"thrift"
-	"thrifttest"
 	"time"
+
+	"github.com/apache/thrift/lib/go/test/gopath/src/thrifttest"
+	"github.com/apache/thrift/lib/go/thrift"
 )
 
 type SecondServiceHandler struct {

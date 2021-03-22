@@ -20,12 +20,13 @@
 package main
 
 import (
-	"common"
 	"flag"
 	"fmt"
 	"log"
 	"net/http"
-	"thrift"
+
+	"github.com/apache/thrift/lib/go/thrift"
+	"github.com/apache/thrift/test/go/src/common"
 )
 
 var host = flag.String("host", "localhost", "Host to connect")

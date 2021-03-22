@@ -24,10 +24,10 @@ package fuzz
 import (
 	"context"
 	"fmt"
-	"shared"
 	"strconv"
-	"tutorial"
 
+	"github.com/apache/thrift/lib/go/test/fuzz/gen-go/shared"
+	"github.com/apache/thrift/lib/go/test/fuzz/gen-go/tutorial"
 	"github.com/apache/thrift/lib/go/thrift"
 )
 
