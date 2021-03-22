@@ -22,8 +22,9 @@ package main
 import (
 	"crypto/tls"
 	"fmt"
+
 	"github.com/apache/thrift/lib/go/thrift"
-	"tutorial"
+	"github.com/apache/thrift/tutorial/go/gen-go/tutorial"
 )
 
 func runServer(transportFactory thrift.TTransportFactory, protocolFactory thrift.TProtocolFactory, addr string, secure bool) error {
@@ -40,7 +41,7 @@ func runServer(transportFactory thrift.TTransportFactory, protocolFactory thrift
 	} else {
 		transport, err = thrift.NewTServerSocket(addr)
 	}
-	
+
 	if err != nil {
 		return err
 	}

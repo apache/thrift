@@ -18,19 +18,11 @@
 #
 
 gopathfuzz: $(THRIFT) fuzz.go
-	$(THRIFT) -r --gen go ../../../../tutorial/tutorial.thrift
-	GO111MODULE=on go mod init fuzz
-	GO111MODULE=on cd gen-go/shared && go mod init shared
-	GO111MODULE=on cd gen-go/tutorial && go mod init tutorial
-	GO111MODULE=on go mod edit -replace shared=./gen-go/shared
-	GO111MODULE=on go mod edit -replace tutorial=./gen-go/tutorial
-	GO111MODULE=on cd ../../../../lib/go/thrift && go mod init github.com/apache/thrift/lib/go/thrift
-	GO111MODULE=on go mod edit -replace github.com/apache/thrift/lib/go/thrift=../../../../lib/go/thrift
-	GO111MODULE=on go mod tidy
+	$(THRIFT) -r --gen go:thrift_import=github.com/apache/thrift/lib/go/thrift,package_prefix=github.com/apache/thrift/lib/go/test/fuzz/gen-go/$(COMPILER_EXTRAFLAG) ../../../../tutorial/tutorial.thrift
 	touch gopathfuzz
 
 check: gopathfuzz
-	go test -tags gofuzz
+	go test -mod=mod -tags gofuzz
 
 clean-local:
 	$(RM) -r gopathfuzz gen-go

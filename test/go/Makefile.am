@@ -19,7 +19,7 @@
 
 BUILT_SOURCES = gopath
 
-THRIFTCMD = $(THRIFT) -out src/gen --gen go:thrift_import=thrift$(COMPILER_EXTRAFLAG)
+THRIFTCMD = $(THRIFT) -out src/gen --gen go:thrift_import=github.com/apache/thrift/lib/go/thrift,package_prefix=github.com/apache/thrift/test/go/src/gen/$(COMPILER_EXTRAFLAG)
 THRIFTTEST = $(top_srcdir)/test/ThriftTest.thrift
 
 precross: bin/testclient bin/testserver
@@ -34,20 +34,16 @@ gopath: $(THRIFT) ThriftTest.thrift
 	mkdir -p src/gen
 	$(THRIFTCMD) ThriftTest.thrift
 	$(THRIFTCMD) ../StressTest.thrift
-	GOPATH=`pwd` $(GO) get github.com/golang/mock/gomock || true
-	sed -i 's/\"context\"/\"golang.org\/x\/net\/context\"/g' src/github.com/golang/mock/gomock/controller.go || true
-	GOPATH=`pwd` $(GO) get github.com/golang/mock/gomock
-	ln -nfs ../../../lib/go/thrift src/thrift
 	touch gopath
 
 bin/testclient: gopath
-	GOPATH=`pwd` $(GO) install bin/testclient
+	GOPATH=`pwd` $(GO) install -mod=mod ./src/bin/testclient
 
 bin/testserver: gopath
-	GOPATH=`pwd` $(GO) install bin/testserver
+	GOPATH=`pwd` $(GO) install -mod=mod ./src/bin/testserver
 
 bin/stress: gopath
-	GOPATH=`pwd` $(GO) install bin/stress
+	GOPATH=`pwd` $(GO) install -mod=mod ./src/bin/stress
 
 clean-local:
 	$(RM) -r src/gen src/github.com/golang src/thrift bin pkg gopath ThriftTest.thrift
@@ -55,7 +51,7 @@ clean-local:
 check_PROGRAMS: bin/testclient bin/testserver bin/stress
 
 check: gopath genmock
-	GOPATH=`pwd` $(GO) test -v common/...
+	$(GO) test -mod=mod -v ./src/common/...
 
 genmock: gopath
 	sh genmock.sh

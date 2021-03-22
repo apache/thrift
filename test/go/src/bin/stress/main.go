@@ -23,7 +23,6 @@ import (
 	"context"
 	"flag"
 	"fmt"
-	"gen/stress"
 	"log"
 	_ "net/http/pprof"
 	"os"
@@ -31,8 +30,10 @@ import (
 	"runtime/pprof"
 	"sync"
 	"sync/atomic"
-	"thrift"
 	"time"
+
+	"github.com/apache/thrift/lib/go/thrift"
+	"github.com/apache/thrift/test/go/src/gen/stress"
 )
 
 var cpuprofile = flag.String("cpuprofile", "", "write cpu profile to this file")

@@ -22,7 +22,8 @@ package tests
 import (
 	"reflect"
 	"testing"
-	"thrifttest"
+
+	"github.com/apache/thrift/lib/go/test/gopath/src/thrifttest"
 )
 
 type ThriftTestDriver struct {

@@ -21,11 +21,12 @@ package tests
 
 import (
 	"context"
-	"multiplexedprotocoltest"
 	"net"
 	"testing"
-	"thrift"
 	"time"
+
+	"github.com/apache/thrift/lib/go/test/gopath/src/multiplexedprotocoltest"
+	"github.com/apache/thrift/lib/go/thrift"
 )
 
 func FindAvailableTCPServerPort() net.Addr {

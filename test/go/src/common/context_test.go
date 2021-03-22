@@ -28,8 +28,9 @@ import (
 	"os"
 	"syscall"
 	"testing"
-	"thrift"
 	"time"
+
+	"github.com/apache/thrift/lib/go/thrift"
 )
 
 type slowHttpHandler struct{}

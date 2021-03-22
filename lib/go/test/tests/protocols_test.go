@@ -21,8 +21,9 @@ package tests
 
 import (
 	"testing"
-	"thrift"
-	"thrifttest"
+
+	"github.com/apache/thrift/lib/go/test/gopath/src/thrifttest"
+	"github.com/apache/thrift/lib/go/thrift"
 )
 
 func RunSocketTestSuite(t *testing.T, protocolFactory thrift.TProtocolFactory,

@@ -20,8 +20,9 @@
 package tests
 
 import (
-	"binarykeytest"
 	"testing"
+
+	"github.com/apache/thrift/lib/go/test/gopath/src/binarykeytest"
 )
 
 func TestBinaryMapKeyGeneratesString(t *testing.T) {

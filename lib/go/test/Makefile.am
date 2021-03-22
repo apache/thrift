@@ -17,7 +17,7 @@
 # under the License.
 #
 
-THRIFTARGS = -out gopath/src/ --gen go:thrift_import=thrift$(COMPILER_EXTRAFLAG)
+THRIFTARGS = -out gopath/src/ --gen go:thrift_import=github.com/apache/thrift/lib/go/thrift,package_prefix=github.com/apache/thrift/lib/go/test/gopath/src/$(COMPILER_EXTRAFLAG)
 THRIFTTEST = $(top_srcdir)/test/ThriftTest.thrift
 
 # Thrift for GO has problems with complex map keys: THRIFT-2063
@@ -77,40 +77,37 @@ gopath: $(THRIFT) $(THRIFTTEST) \
 	$(THRIFT) $(THRIFTARGS) -r DuplicateImportsTest.thrift
 	$(THRIFT) $(THRIFTARGS) EqualsTest.thrift
 	$(THRIFT) $(THRIFTARGS) ConflictArgNamesTest.thrift
-	GOPATH=`pwd`/gopath $(GO) get github.com/golang/mock/gomock || true
-	sed -i 's/\"context\"/\"golang.org\/x\/net\/context\"/g' gopath/src/github.com/golang/mock/gomock/controller.go || true
-	GOPATH=`pwd`/gopath $(GO) get github.com/golang/mock/gomock
-	ln -nfs ../../../thrift gopath/src/thrift
 	ln -nfs ../../tests gopath/src/tests
 	cp -r ./dontexportrwtest gopath/src
 	touch gopath
 
 check: gopath
-	GOPATH=`pwd`/gopath $(GO) build \
-				includestest \
-				binarykeytest \
-				servicestest \
-				typedeffieldtest \
-				refannotationfieldstest \
-				errortest	\
-				namestest \
-				initialismstest \
-				dontexportrwtest \
-				ignoreinitialismstest \
-				unionbinarytest \
-				conflictnamespacetestsuperthing \
-				conflict/context/conflict_service-remote \
-				servicestest/container_test-remote \
-				duplicateimportstest \
-				equalstest \
-				conflictargnamestest
-	GOPATH=`pwd`/gopath $(GO) test thrift tests dontexportrwtest
+	$(GO) build -mod=mod \
+				./gopath/src/includestest \
+				./gopath/src/binarykeytest \
+				./gopath/src/servicestest \
+				./gopath/src/typedeffieldtest \
+				./gopath/src/refannotationfieldstest \
+				./gopath/src/errortest	\
+				./gopath/src/namestest \
+				./gopath/src/initialismstest \
+				./gopath/src/dontexportrwtest \
+				./gopath/src/ignoreinitialismstest \
+				./gopath/src/unionbinarytest \
+				./gopath/src/conflictnamespacetestsuperthing \
+				./gopath/src/conflict/context/conflict_service-remote \
+				./gopath/src/servicestest/container_test-remote \
+				./gopath/src/duplicateimportstest \
+				./gopath/src/equalstest \
+				./gopath/src/conflictargnamestest
+	$(GO) test -mod=mod github.com/apache/thrift/lib/go/thrift
+	$(GO) test -mod=mod ./gopath/src/tests ./gopath/src/dontexportrwtest
 
 clean-local:
 	$(RM) -r gopath ThriftTest.thrift gen-go
 
 client: stubs
-	$(GO) run TestClient.go
+	$(GO) run -mod=mod TestClient.go
 
 EXTRA_DIST = \
 	dontexportrwtest \
