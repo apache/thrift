@@ -56,7 +56,6 @@ public:
 
     legacy_names_ = false;
     maps_ = false;
-    otp16_ = false;
     export_lines_first_ = true;
     export_types_lines_first_ = true;
 
@@ -65,15 +64,9 @@ public:
         legacy_names_ = true;
       } else if( iter->first.compare("maps") == 0) {
         maps_ = true;
-      } else if( iter->first.compare("otp16") == 0) {
-        otp16_ = true;
       } else {
         throw "unknown option erl:" + iter->first;
       }
-    }
-
-    if (maps_ && otp16_) {
-      throw "argument error: Cannot specify both maps and otp16; maps are not available for Erlang/OTP R16 or older";
     }
 
     out_dir_base_ = "gen-erl";
@@ -183,9 +176,6 @@ private:
 
   /* if true use maps instead of dicts in generated code */
   bool maps_;
-
-  /* if true use non-namespaced dict and set instead of dict:dict and sets:set */
-  bool otp16_;
 
   /**
    * add function to export list
@@ -748,17 +738,11 @@ string t_erl_generator::render_member_type(t_field* field) {
   } else if (type->is_map()) {
     if (maps_) {
       return "map()";
-    } else if (otp16_) {
-      return "dict()";
     } else {
       return "dict:dict()";
     }
   } else if (type->is_set()) {
-    if (otp16_) {
-      return "set()";
-    } else {
       return "sets:set()";
-    }
   } else if (type->is_list()) {
     return "list()";
   } else {
@@ -1278,5 +1262,4 @@ THRIFT_REGISTER_GENERATOR(
     erl,
     "Erlang",
     "    legacynames:     Output files retain naming conventions of Thrift 0.9.1 and earlier.\n"
-    "    maps:            Generate maps instead of dicts.\n"
-    "    otp16:           Generate non-namespaced dict and set instead of dict:dict and sets:set.\n")
+    "    maps:            Generate maps instead of dicts.\n")

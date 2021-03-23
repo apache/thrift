@@ -220,11 +220,6 @@ if test "$with_erlang" = "yes";  then
   if test -n "$ERL" -a -n "$ERLC" && test "x$REBAR" != "x" ; then
     have_erlang="yes"
 
-    # otp_release is simply a number (like "17") for OTP17+ while "R16..." for OTP16 or less.
-    # OTP version is currently only used for running tests.
-    if $ERL -eval 'erlang:display(erlang:system_info(otp_release)),halt().' -noshell | grep "^\"R" >/dev/null; then
-      erlang_otp16_or_less="yes"
-    fi
   fi
 fi
 AM_CONDITIONAL(WITH_ERLANG, [test "$have_erlang" = "yes"])
