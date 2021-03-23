@@ -1262,5 +1262,4 @@ THRIFT_REGISTER_GENERATOR(
     erl,
     "Erlang",
     "    legacynames:     Output files retain naming conventions of Thrift 0.9.1 and earlier.\n"
-    "    maps:            Generate maps instead of dicts.\n"
-    "    otp16:           Generate non-namespaced dict and set instead of dict:dict and sets:set.\n")
+    "    maps:            Generate maps instead of dicts.\n")
