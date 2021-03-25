@@ -77,8 +77,9 @@ func (p MyTestEnum) String() string {
 		return "THIRD"
 	case MyTestEnum_FOURTH:
 		return "FOURTH"
+	default:
+		return "<UNSET>"
 	}
-	return "<UNSET>"
 }
 
 func MyTestEnumFromString(s string) (MyTestEnum, error) {

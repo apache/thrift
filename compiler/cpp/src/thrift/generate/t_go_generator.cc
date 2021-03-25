@@ -1029,8 +1029,9 @@ void t_go_generator::generate_enum(t_enum* tenum) {
     }
   }
 
+  to_string_mapping << indent() << "  default:" << endl;
+  to_string_mapping << indent() << "    return \"<UNSET>\"" << endl;
   to_string_mapping << indent() << "  }" << endl;
-  to_string_mapping << indent() << "  return \"<UNSET>\"" << endl;
   to_string_mapping << indent() << "}" << endl;
   from_string_mapping << indent() << "  }" << endl;
   from_string_mapping << indent() << "  return " << tenum_name << "(0),"
