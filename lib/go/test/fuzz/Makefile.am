@@ -18,7 +18,9 @@
 #
 
 gopathfuzz: $(THRIFT) fuzz.go
-	$(THRIFT) -r --gen go:thrift_import=github.com/apache/thrift/lib/go/thrift,package_prefix=github.com/apache/thrift/lib/go/test/fuzz/gen-go/$(COMPILER_EXTRAFLAG) ../../../../tutorial/tutorial.thrift
+	$(THRIFT) -r --gen go:thrift_import=github.com/apache/thrift/lib/go/thrift$(COMPILER_EXTRAFLAG) ../../../../tutorial/tutorial.thrift
+	cd gen-go/shared && go mod init shared
+	cd gen-go/tutorial && go mod init tutorial
 	touch gopathfuzz
 
 check: gopathfuzz

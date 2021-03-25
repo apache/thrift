@@ -26,8 +26,9 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/apache/thrift/lib/go/test/fuzz/gen-go/shared"
-	"github.com/apache/thrift/lib/go/test/fuzz/gen-go/tutorial"
+	"shared"
+	"tutorial"
+
 	"github.com/apache/thrift/lib/go/thrift"
 )
 
