@@ -6,6 +6,10 @@
 
 - [THRIFT-5383](https://issues.apache.org/jira/browse/THRIFT-5383) - THRIFT-5383 TJSONProtocol Java readString throws on bounds check
 
+### Go
+
+- [THRIFT-5369](https://issues.apache.org/jira/browse/THRIFT-5369) - No longer pre-allocating the whole container (map/set/list) in compiled go code to avoid huge allocations on malformed messages
+
 
 ## 0.14.1
 
