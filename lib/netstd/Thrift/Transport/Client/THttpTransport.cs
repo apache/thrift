@@ -36,7 +36,7 @@ namespace Thrift.Transport.Client
         private readonly X509Certificate[] _certificates;
         private readonly Uri _uri;
 
-        private readonly int _connectTimeout = 30000; // Timeouts in milliseconds
+        private int _connectTimeout = 30000; // Timeouts in milliseconds
         private HttpClient _httpClient;
         private Stream _inputStream;
         private MemoryStream _outputStream = new MemoryStream();
@@ -91,6 +91,22 @@ namespace Thrift.Transport.Client
 
         // According to RFC 2616 section 3.8, the "User-Agent" header may not carry a version number
         public readonly string UserAgent = "Thrift netstd THttpClient";
+
+        public int ConnectTimeout
+        {
+            set
+            {
+                _connectTimeout = value;
+                if(_httpClient != null)
+                    _httpClient.Timeout = TimeSpan.FromMilliseconds(_connectTimeout);
+            }
+            get
+            {
+                if (_httpClient == null)
+                    return _connectTimeout;
+                return (int)_httpClient.Timeout.TotalMilliseconds;
+            }
+        }
 
         public override bool IsOpen => true;
 
