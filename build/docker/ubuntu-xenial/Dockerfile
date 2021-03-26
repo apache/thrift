@@ -13,7 +13,7 @@
 #
 # Apache Thrift Docker build environment for Ubuntu Xenial
 # Using all stock Ubuntu Xenial packaging except for:
-# - d: does not come with Ubuntu so we're installing 2.075.1 for coverage
+# - d: does not come with Ubuntu so we're installing 2.087.0 for coverage
 # - dart: does not come with Ubuntu so we're installing 2.0.0-1 for coverage
 # - dotnet: does not come with Ubuntu
 # - go: Xenial comes with 1.6, but we need 1.10 or later
@@ -36,11 +36,6 @@ RUN apt-get update && \
       curl \
       software-properties-common \
       wget && \
-
-# D
-    apt-key adv --keyserver keyserver.ubuntu.com --recv-keys EBCF975E5BA24D5E && \
-    wget http://master.dl.sourceforge.net/project/d-apt/files/d-apt.list -O /etc/apt/sources.list.d/d-apt.list && \
-    wget -qO - https://dlang.org/d-keyring.gpg | apt-key add - && \
 
 # Dart
     curl https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - && \
@@ -93,26 +88,22 @@ RUN apt-get install -y --no-install-recommends \
       qtbase5-dev \
       qtbase5-dev-tools
 
-ENV D_VERSION 2.075.1-0
-RUN apt-get install -y --allow-unauthenticated --no-install-recommends \
+ENV D_VERSION     2.087.0
+ENV DMD_DEB       dmd_2.087.0-0_amd64.deb
+RUN \
 `# D dependencies` \
-      dmd-bin=$D_VERSION \
-      libphobos2-dev=$D_VERSION \
-      dub=1.6.0-0 \
-      dfmt \
-      dscanner \
-      libevent-dev \
-      libssl-dev \
-      xdg-utils
-RUN mkdir -p /usr/include/dmd/druntime/import/deimos /usr/include/dmd/druntime/import/C && \
-    curl -sSL https://github.com/D-Programming-Deimos/libevent/archive/master.tar.gz| tar xz && \
-    mv libevent-master/deimos/* /usr/include/dmd/druntime/import/deimos/ && \
-    mv libevent-master/C/* /usr/include/dmd/druntime/import/C/ && \
-    rm -rf libevent-master
-RUN curl -sSL https://github.com/D-Programming-Deimos/openssl/archive/v1.1.6+1.0.1g.tar.gz | tar xz && \
-    mv openssl-1.1.6-1.0.1g/deimos/* /usr/include/dmd/druntime/import/deimos/ && \
-    mv openssl-1.1.6-1.0.1g/C/* /usr/include/dmd/druntime/import/C/ && \
-    rm -rf openssl-1.1.6-1.0.1g
+    wget -q http://downloads.dlang.org/releases/2.x/${D_VERSION}/${DMD_DEB} && \
+    dpkg --install ${DMD_DEB} && \
+    rm -f ${DMD_DEB} && \
+    mkdir -p /usr/include/dmd/druntime/import/deimos /usr/include/dmd/druntime/import/C && \
+    git clone -b 'v2.0.2+2.0.16' https://github.com/D-Programming-Deimos/libevent.git deimos-libevent-2.0 && \
+    mv deimos-libevent-2.0/deimos/* /usr/include/dmd/druntime/import/deimos/ && \
+    mv deimos-libevent-2.0/C/* /usr/include/dmd/druntime/import/C/ && \
+    rm -rf deimos-libevent-2.0 && \
+    git clone -b 'v1.1.6+1.0.1g' https://github.com/D-Programming-Deimos/openssl.git deimos-openssl-1.0.1g && \
+    mv deimos-openssl-1.0.1g/deimos/* /usr/include/dmd/druntime/import/deimos/ && \
+    mv deimos-openssl-1.0.1g/C/* /usr/include/dmd/druntime/import/C/ && \
+    rm -rf deimos-openssl-1.0.1g
 
 ENV DART_VERSION 2.7.2-1
 RUN apt-get install -y --no-install-recommends \
