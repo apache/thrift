@@ -19,8 +19,10 @@
   -->
 
   <PropertyGroup>
+    <ThriftVersion>0.15.0</ThriftVersion>
+    <ThriftVersionOutput>Thrift version $(ThriftVersion)</ThriftVersionOutput>
     <TargetFramework>net5.0</TargetFramework>
-    <Version>0.15.0.0</Version>
+    <Version>$(ThriftVersion).0</Version>
     <AssemblyName>Thrift.PublicInterfaces.Compile.Tests</AssemblyName>
     <PackageId>Thrift.PublicInterfaces.Compile.Tests</PackageId>
     <GenerateAssemblyConfigurationAttribute>false</GenerateAssemblyConfigurationAttribute>
@@ -38,27 +40,44 @@
   </ItemGroup>
 
   <Target Name="PreBuild" BeforeTargets="_GenerateRestoreProjectSpec;Restore;Compile">
+    <!-- Check on the path -->
     <Exec Condition="'$(OS)' == 'Windows_NT'" Command="where thrift" ConsoleToMSBuild="true">
       <Output TaskParameter="ConsoleOutput" PropertyName="PathToThrift" />
     </Exec>
-    <Exec Condition="Exists('$(PathToThrift)')" Command="$(PathToThrift) -gen netstd:wcf,union,serial -r ./CassandraTest.thrift" />
-    <Exec Condition="Exists('thrift')" Command="thrift -gen netstd:wcf,union,serial -r ./CassandraTest.thrift" />
-    <Exec Condition="Exists('$(ProjectDir)/../../../../compiler/cpp/thrift')" Command="$(ProjectDir)/../../../../compiler/cpp/thrift -gen netstd:wcf,union,serial -r ./CassandraTest.thrift" />
-    <Exec Condition="Exists('$(PathToThrift)')" Command="$(PathToThrift) -gen netstd:wcf,union,serial -r ./optional_required_default.thrift" />
-    <Exec Condition="Exists('thrift')" Command="thrift -gen netstd:wcf,union,serial -r ./optional_required_default.thrift" />
-    <Exec Condition="Exists('$(ProjectDir)/../../../../compiler/cpp/thrift')" Command="$(ProjectDir)/../../../../compiler/cpp/thrift -gen netstd:wcf,union,serial -r ./optional_required_default.thrift" />
-    <Exec Condition="Exists('$(PathToThrift)')" Command="$(PathToThrift) -gen netstd:wcf,union,serial -r ./../../../../test/ThriftTest.thrift" />
-    <Exec Condition="Exists('thrift')" Command="thrift -gen netstd:wcf,union,serial -r ./../../../../test/ThriftTest.thrift" />
-    <Exec Condition="Exists('$(ProjectDir)/../../../../compiler/cpp/thrift')" Command="$(ProjectDir)/../../../../compiler/cpp/thrift -gen netstd:wcf,union,serial -r ./../../../../test/ThriftTest.thrift" />
-    <Exec Condition="Exists('$(PathToThrift)')" Command="$(PathToThrift) -gen netstd:wcf,union,serial -r ./../../../../contrib/fb303/if/fb303.thrift" />
-    <Exec Condition="Exists('thrift')" Command="thrift -gen netstd:wcf,union,serial -r ./../../../../contrib/fb303/if/fb303.thrift" />
-    <Exec Condition="Exists('$(ProjectDir)/../../../../compiler/cpp/thrift')" Command="$(ProjectDir)/../../../../compiler/cpp/thrift -gen netstd:wcf,union,serial -r ./../../../../contrib/fb303/if/fb303.thrift" />
-    <Exec Condition="Exists('$(PathToThrift)')" Command="$(PathToThrift) -gen netstd:wcf,union,serial -r ./Thrift5253.thrift" />
-    <Exec Condition="Exists('thrift')" Command="thrift -gen netstd:wcf,union,serial -r ./Thrift5253.thrift" />
-    <Exec Condition="Exists('$(ProjectDir)/../../../../compiler/cpp/thrift')" Command="$(ProjectDir)/../../../../compiler/cpp/thrift -gen netstd:wcf,union,serial -r ./Thrift5253.thrift" />
-    <Exec Condition="Exists('$(PathToThrift)')" Command="$(PathToThrift) -gen netstd:wcf,union,serial -r ./Thrift5320.thrift" />
-    <Exec Condition="Exists('thrift')" Command="thrift -gen netstd:wcf,union,serial -r ./Thrift5320.thrift" />
-    <Exec Condition="Exists('$(ProjectDir)/../../../../compiler/cpp/thrift')" Command="$(ProjectDir)/../../../../compiler/cpp/thrift -gen netstd:wcf,union,serial -r ./Thrift5320.thrift" />
+    <Exec Condition="'$(OS)' != 'Windows_NT'" Command="which thrift || true" ConsoleToMSBuild="true">
+      <Output TaskParameter="ConsoleOutput" PropertyName="PathToThrift" />
+    </Exec>
+    <!-- Check in the current directory -->
+    <CreateProperty Condition="Exists('thrift')" Value="thrift">
+      <Output TaskParameter="Value" PropertyName="PathToThrift" />
+    </CreateProperty>
+    <!-- Check for the root projects output -->
+    <CreateProperty Condition="Exists('$(ProjectDir)/../../../../compiler/cpp/thrift')" Value="$(ProjectDir)/../../../../compiler/cpp/thrift">
+      <Output TaskParameter="Value" PropertyName="PathToThrift" />
+    </CreateProperty>
+    <Error 
+      Condition="!Exists('$(PathToThrift)')"
+      Text="Thrift executable could not be found."
+    />
+    <!-- Make sure the thrift version found is the same as the projects version -->
+    <Exec Command="$(PathToThrift) -version" ConsoleToMSBuild="true">
+      <Output TaskParameter="ConsoleOutput" PropertyName="ThriftBinaryVersion" />
+    </Exec>
+    <Error 
+      Condition="$(ThriftBinaryVersion) != '$(ThriftVersionOutput)'"
+      Text="Thrift version returned: '$(ThriftBinaryVersion)' is not equal to the projects version '$(ThriftVersionOutput)'."
+    />
+    <Message
+      Importance="high"
+      Text="Generating tests with thrift binary: '$(PathToThrift)'"
+    />
+    <!-- Generate the thrift test files -->
+    <Exec Command="$(PathToThrift) -gen netstd:wcf,union,serial -r ./CassandraTest.thrift" />
+    <Exec Command="$(PathToThrift) -gen netstd:wcf,union,serial -r ./optional_required_default.thrift" />
+    <Exec Command="$(PathToThrift) -gen netstd:wcf,union,serial -r ./../../../../test/ThriftTest.thrift" />
+    <Exec Command="$(PathToThrift) -gen netstd:wcf,union,serial -r ./../../../../contrib/fb303/if/fb303.thrift" />
+    <Exec Command="$(PathToThrift) -gen netstd:wcf,union,serial -r ./Thrift5253.thrift" />
+    <Exec Command="$(PathToThrift) -gen netstd:wcf,union,serial -r ./Thrift5320.thrift" />
   </Target>
 
 </Project>
