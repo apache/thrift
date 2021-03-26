@@ -97,6 +97,8 @@ var errEmptyJSONContextStack = NewTProtocolExceptionWithType(INVALID_DATA, error
 type TSimpleJSONProtocol struct {
 	trans TTransport
 
+	cfg *TConfiguration
+
 	parseContextStack jsonContextStack
 	dumpContext       jsonContextStack
 
@@ -104,9 +106,18 @@ type TSimpleJSONProtocol struct {
 	reader *bufio.Reader
 }
 
-// Constructor
+// Deprecated: Use NewTSimpleJSONProtocolConf instead.:
 func NewTSimpleJSONProtocol(t TTransport) *TSimpleJSONProtocol {
-	v := &TSimpleJSONProtocol{trans: t,
+	return NewTSimpleJSONProtocolConf(t, &TConfiguration{
+		noPropagation: true,
+	})
+}
+
+func NewTSimpleJSONProtocolConf(t TTransport, conf *TConfiguration) *TSimpleJSONProtocol {
+	PropagateTConfiguration(t, conf)
+	v := &TSimpleJSONProtocol{
+		trans:  t,
+		cfg:    conf,
 		writer: bufio.NewWriter(t),
 		reader: bufio.NewReader(t),
 	}
@@ -116,14 +127,32 @@ func NewTSimpleJSONProtocol(t TTransport) *TSimpleJSONProtocol {
 }
 
 // Factory
-type TSimpleJSONProtocolFactory struct{}
-
-func (p *TSimpleJSONProtocolFactory) GetProtocol(trans TTransport) TProtocol {
-	return NewTSimpleJSONProtocol(trans)
+type TSimpleJSONProtocolFactory struct {
+	cfg *TConfiguration
 }
 
+func (p *TSimpleJSONProtocolFactory) GetProtocol(trans TTransport) TProtocol {
+	return NewTSimpleJSONProtocolConf(trans, p.cfg)
+}
+
+// SetTConfiguration implements TConfigurationSetter for propagation.
+func (p *TSimpleJSONProtocolFactory) SetTConfiguration(conf *TConfiguration) {
+	p.cfg = conf
+}
+
+// Deprecated: Use NewTSimpleJSONProtocolFactoryConf instead.
 func NewTSimpleJSONProtocolFactory() *TSimpleJSONProtocolFactory {
-	return &TSimpleJSONProtocolFactory{}
+	return &TSimpleJSONProtocolFactory{
+		cfg: &TConfiguration{
+			noPropagation: true,
+		},
+	}
+}
+
+func NewTSimpleJSONProtocolFactoryConf(conf *TConfiguration) *TSimpleJSONProtocolFactory {
+	return &TSimpleJSONProtocolFactory{
+		cfg: conf,
+	}
 }
 
 var (
@@ -399,6 +428,13 @@ func (p *TSimpleJSONProtocol) ReadMapBegin(ctx context.Context) (keyType TType, 
 
 	// read size
 	iSize, err := p.ReadI64(ctx)
+	if err != nil {
+		return keyType, valueType, 0, err
+	}
+	err = checkSizeForProtocol(int32(size), p.cfg)
+	if err != nil {
+		return keyType, valueType, 0, err
+	}
 	size = int(iSize)
 	return keyType, valueType, size, err
 }
@@ -1070,9 +1106,16 @@ func (p *TSimpleJSONProtocol) ParseElemListBegin() (elemType TType, size int, e 
 	if err != nil {
 		return elemType, size, err
 	}
-	nSize, _, err2 := p.ParseI64()
+	nSize, _, err := p.ParseI64()
+	if err != nil {
+		return elemType, 0, err
+	}
+	err = checkSizeForProtocol(int32(nSize), p.cfg)
+	if err != nil {
+		return elemType, 0, err
+	}
 	size = int(nSize)
-	return elemType, size, err2
+	return elemType, size, nil
 }
 
 func (p *TSimpleJSONProtocol) ParseListEnd() error {
@@ -1368,6 +1411,10 @@ func (p *TSimpleJSONProtocol) write(b []byte) (int, error) {
 // SetTConfiguration implements TConfigurationSetter for propagation.
 func (p *TSimpleJSONProtocol) SetTConfiguration(conf *TConfiguration) {
 	PropagateTConfiguration(p.trans, conf)
+	p.cfg = conf
 }
 
-var _ TConfigurationSetter = (*TSimpleJSONProtocol)(nil)
+var (
+	_ TConfigurationSetter = (*TSimpleJSONProtocol)(nil)
+	_ TConfigurationSetter = (*TSimpleJSONProtocolFactory)(nil)
+)

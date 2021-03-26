@@ -23,7 +23,6 @@ import (
 	"bytes"
 	"context"
 	"encoding/binary"
-	"errors"
 	"fmt"
 	"io"
 	"math"
@@ -334,8 +333,6 @@ func (p *TBinaryProtocol) ReadFieldEnd(ctx context.Context) error {
 	return nil
 }
 
-var invalidDataLength = NewTProtocolExceptionWithType(INVALID_DATA, errors.New("Invalid data length"))
-
 func (p *TBinaryProtocol) ReadMapBegin(ctx context.Context) (kType, vType TType, size int, err error) {
 	k, e := p.ReadByte(ctx)
 	if e != nil {
@@ -354,8 +351,8 @@ func (p *TBinaryProtocol) ReadMapBegin(ctx context.Context) (kType, vType TType,
 		err = NewTProtocolException(e)
 		return
 	}
-	if size32 < 0 {
-		err = invalidDataLength
+	err = checkSizeForProtocol(size32, p.cfg)
+	if err != nil {
 		return
 	}
 	size = int(size32)
@@ -378,8 +375,8 @@ func (p *TBinaryProtocol) ReadListBegin(ctx context.Context) (elemType TType, si
 		err = NewTProtocolException(e)
 		return
 	}
-	if size32 < 0 {
-		err = invalidDataLength
+	err = checkSizeForProtocol(size32, p.cfg)
+	if err != nil {
 		return
 	}
 	size = int(size32)
@@ -403,8 +400,8 @@ func (p *TBinaryProtocol) ReadSetBegin(ctx context.Context) (elemType TType, siz
 		err = NewTProtocolException(e)
 		return
 	}
-	if size32 < 0 {
-		err = invalidDataLength
+	err = checkSizeForProtocol(size32, p.cfg)
+	if err != nil {
 		return
 	}
 	size = int(size32)
@@ -464,10 +461,6 @@ func (p *TBinaryProtocol) ReadString(ctx context.Context) (value string, err err
 	}
 	err = checkSizeForProtocol(size, p.cfg)
 	if err != nil {
-		return
-	}
-	if size < 0 {
-		err = invalidDataLength
 		return
 	}
 	if size == 0 {
