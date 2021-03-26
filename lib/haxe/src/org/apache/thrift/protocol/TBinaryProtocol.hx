@@ -306,7 +306,7 @@ class TBinaryProtocol extends TProtocolImplBase implements TProtocol {
 		switch (type)
 		{
 			case TType.STOP: return 0;
-			case TType.VOID: return 0;
+			case TType.VOID_: return 0;
 			case TType.BOOL: return 1;
 			case TType.BYTE: return 1;
 			case TType.DOUBLE: return 8;

@@ -1407,7 +1407,7 @@ std::string t_haxe_generator::get_haxe_type_string(t_type* type) {
   } else if (type->is_base_type()) {
     switch (((t_base_type*)type)->get_base()) {
     case t_base_type::TYPE_VOID:
-      return "TType.VOID";
+      return "TType.VOID_";
       break;
     case t_base_type::TYPE_STRING:
       return "TType.STRING";
