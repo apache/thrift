@@ -30,5 +30,5 @@ SET CMAKEARGS=^
   -DWITH_PYTHON=OFF
 
 @ECHO ON
-%BASH% -lc "mkdir -p %BUILDDIR% && cd %BUILDDIR% && cmake.exe %SRCDIR% %CMAKEARGS% && cmake --build . --config %CONFIGURATION% --target install" || EXIT /B
+%BASH% -lc "mkdir -p %BUILDDIR% && cd %BUILDDIR% && cmake.exe %SRCDIR% %CMAKEARGS% && cmake --build . --config %CONFIGURATION% --target install -j `nproc`" || EXIT /B
 @ECHO OFF

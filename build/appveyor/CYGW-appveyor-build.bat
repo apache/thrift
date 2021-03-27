@@ -31,5 +31,5 @@ SET CMAKEARGS=^
 :: -DCMAKE_CXX_STANDARD=11 ^
 
 @ECHO ON
-%BASH% -lc "mkdir -p %BUILDDIR% && cd %BUILDDIR% && cmake.exe %SRCDIR% %CMAKEARGS% && cmake --build . --config %CONFIGURATION% --target install" || EXIT /B
+%BASH% -lc "export PATH=/cygdrive/c/Windows/system32:/cygdrive/c/Windows:/cygdrive/c/Windows/System32/Wbem:/cygdrive/c/Windows/System32/WindowsPowerShell/v1.0:/usr/bin && mkdir -p %BUILDDIR% && cd %BUILDDIR% && cmake %SRCDIR% %CMAKEARGS% && cmake --build . --config %CONFIGURATION% --target install -j `nproc`" || EXIT /B
 @ECHO OFF
