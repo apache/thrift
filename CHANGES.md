@@ -1,5 +1,47 @@
 # Apache Thrift Changelog
 
+## 0.15.0
+
+### Breaking Changes
+
+- [THRIFT-5229](https://issues.apache.org/jira/browse/THRIFT-5229) - ActionScript 3 support dropped
+- [THRIFT-5347](https://issues.apache.org/jira/browse/THRIFT-5347) - Haskell support dropped
+- [THRIFT-5381](https://issues.apache.org/jira/browse/THRIFT-5381) - possible collisions at VOID type with some 3rd-party libraries on Haxe cpp targets
+
+
+## 0.14.1
+
+### Known Open Issues (Blocker or Critical)
+
+- [THRIFT-3877](https://issues.apache.org/jira/browse/THRIFT-3877) - C++: library don't work with HTTP (csharp server, cpp client; need cross test enhancement)
+- [THRIFT-5098](https://issues.apache.org/jira/browse/THRIFT-5098) - Deprecated: "The high level Network interface is no longer supported. Please use Network.Socket." and other Haskell issues
+- [THRIFT-5245](https://issues.apache.org/jira/browse/THRIFT-5245) - NPE when the value of map's key is null
+
+### Deprecated Languages
+
+- [THRIFT-5347](https://issues.apache.org/jira/browse/THRIFT-5347) - Deprecate Haskell bindings
+
+### Build Process
+
+- [THRIFT-5334](https://issues.apache.org/jira/browse/THRIFT-5334) - version of thrift-maven-plugin is not sync with the main project
+
+### Delphi
+
+- [THRIFT-5350](https://issues.apache.org/jira/browse/THRIFT-5350) - 0.14.0 fails to build on non-x86
+
+### Go
+
+- [THRIFT-5353](https://issues.apache.org/jira/browse/THRIFT-5353) - Namespace from type is ignored in generated code
+
+### Python
+
+- [THRIFT-5352](https://issues.apache.org/jira/browse/THRIFT-5352) - Python: IDL exceptions with no fields can't be instantiated
+
+### Rust
+
+- [THRIFT-5299](https://issues.apache.org/jira/browse/THRIFT-5299) - rs implementation compact protocol seq_id should not use zigzag encoding.
+
+
 ## 0.14.0
 
 ### Deprecated Languages
