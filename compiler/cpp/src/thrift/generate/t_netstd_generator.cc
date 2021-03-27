@@ -667,7 +667,7 @@ string t_netstd_generator::render_const_value(ostream& out, string name, t_type*
     }
     else if (type->is_enum())
     {
-        render << type->get_name() << "." << value->get_identifier_name();
+        render << type_name(type) << "." << value->get_identifier_name();
     }
     else
     {
