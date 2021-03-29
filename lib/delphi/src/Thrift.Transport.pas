@@ -1437,7 +1437,9 @@ begin
 
   if Int64(size) > Int64(Configuration.MaxFrameSize) then begin
     Close();
-    raise TTransportExceptionCorruptedData.Create('Frame size ('+IntToStr(size)+') larger than allowed maximum ('+IntToStr(Configuration.MaxFrameSize)+')');
+    if CharUtils.IsHtmlDoctype(size)
+    then raise TTransportExceptionCorruptedData.Create('Remote end sends HTML instead of data')
+    else raise TTransportExceptionCorruptedData.Create('Frame size ('+IntToStr(size)+') larger than allowed maximum ('+IntToStr(Configuration.MaxFrameSize)+')');
   end;
 
   UpdateKnownMessageSize(size + SizeOf(size));

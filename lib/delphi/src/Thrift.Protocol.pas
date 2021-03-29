@@ -833,6 +833,7 @@ var
 begin
   Reset;
   Init( result);
+
   size := ReadI32;
   if (size < 0) then begin
     version := size and Integer( VERSION_MASK);
@@ -842,14 +843,20 @@ begin
     result.Type_ := TMessageType( size and $000000ff);
     result.Name := ReadString;
     result.SeqID := ReadI32;
-  end
-  else begin
-    if FStrictRead then begin
-      raise TProtocolExceptionBadVersion.Create('Missing version in readMessageBegin, old client?' );
-    end;
+    Exit;
+  end;
+
+  try
+    if FStrictRead
+    then raise TProtocolExceptionBadVersion.Create('Missing version in readMessageBegin, old client?' );
+
     result.Name := ReadStringBody( size );
     result.Type_ := TMessageType( ReadByte );
     result.SeqID := ReadI32;
+  except
+    if CharUtils.IsHtmlDoctype(size)
+    then raise TProtocolExceptionInvalidData.Create('Remote end sends HTML instead of data')
+    else raise; // something else
   end;
 end;
 
