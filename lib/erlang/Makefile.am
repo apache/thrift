@@ -47,15 +47,24 @@ install: all
 	done
 
 uninstall:
-	rm -rf $(DESTDIR)$(ERLANG_INSTALL_LIB_DIR_thrift)
+	$(RM) -rf $(DESTDIR)$(ERLANG_INSTALL_LIB_DIR_thrift)
 
-clean:
-	rm -f .generated
-	rm -rf test/gen-erlang/
+clean-local:
 	$(REBAR) clean
+	$(RM) -r _build/
+	$(RM)    .generated
+	$(RM) -r test/gen-erlang/
 
 maintainer-clean-local:
-	rm -rf ebin
+	$(RM) -r ebin/
+
+dist-hook:
+	$(RM)    $(distdir)/.generated
+	$(RM) -r $(distdir)/.rebar/
+	$(RM) -r $(distdir)/_build/
+	$(RM) -r $(distdir)/test/gen-erl/
+	$(RM)    $(distdir)/$(THRIFT_OMIT_FILE)
+
 
 EXTRA_DIST = \
 	include \
