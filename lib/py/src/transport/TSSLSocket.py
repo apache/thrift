@@ -40,10 +40,10 @@ class TSSLBase(object):
     # ciphers argument is not available for Python < 2.7.0
     _has_ciphers = sys.hexversion >= 0x020700F0
 
-    # For pythoon >= 2.7.9, use latest TLS that both client and server
+    # For python >= 2.7.9, use latest TLS that both client and server
     # supports.
     # SSL 2.0 and 3.0 are disabled via ssl.OP_NO_SSLv2 and ssl.OP_NO_SSLv3.
-    # For pythoon < 2.7.9, use TLS 1.0 since TLSv1_X nor OP_NO_SSLvX is
+    # For python < 2.7.9, use TLS 1.0 since TLSv1_X nor OP_NO_SSLvX is
     # unavailable.
     _default_protocol = ssl.PROTOCOL_SSLv23 if _has_ssl_context else \
         ssl.PROTOCOL_TLSv1
@@ -79,8 +79,8 @@ class TSSLBase(object):
     SSL_VERSION = _default_protocol
     """
   Default SSL version.
-  For backword compatibility, it can be modified.
-  Use __init__ keywoard argument "ssl_version" instead.
+  For backwards compatibility, it can be modified.
+  Use __init__ keyword argument "ssl_version" instead.
   """
 
     def _deprecated_arg(self, args, kwargs, pos, key):
@@ -89,12 +89,12 @@ class TSSLBase(object):
         real_pos = pos + 3
         warnings.warn(
             '%dth positional argument is deprecated.'
-            'please use keyward argument insteand.'
+            'please use keyword argument instead.'
             % real_pos, DeprecationWarning, stacklevel=3)
 
         if key in kwargs:
             raise TypeError(
-                'Duplicate argument: %dth argument and %s keyward argument.'
+                'Duplicate argument: %dth argument and %s keyword argument.'
                 % (real_pos, key))
         kwargs[key] = args[pos]
 
@@ -118,7 +118,7 @@ class TSSLBase(object):
         if TSSLBase.SSL_VERSION != self._default_protocol:
             warnings.warn(
                 'SSL_VERSION is deprecated.'
-                'please use ssl_version keyward argument instead.',
+                'please use ssl_version keyword argument instead.',
                 DeprecationWarning, stacklevel=2)
         self._context = ssl_opts.pop('ssl_context', None)
         self._server_hostname = None
@@ -232,6 +232,7 @@ class TSSLSocket(TSocket.TSocket, TSSLBase):
           ``validate_callback`` (cert, hostname) -> None:
               Called after SSL handshake. Can raise when hostname does not
               match the cert.
+          ``socket_keepalive`` enable TCP keepalive, default off.
         """
         self.is_valid = False
         self.peercert = None
@@ -259,9 +260,20 @@ class TSSLSocket(TSocket.TSocket, TSSLBase):
             kwargs['cert_reqs'] = ssl.CERT_REQUIRED if validate else ssl.CERT_NONE
 
         unix_socket = kwargs.pop('unix_socket', None)
+        socket_keepalive = kwargs.pop('socket_keepalive', False)
         self._validate_callback = kwargs.pop('validate_callback', _match_hostname)
         TSSLBase.__init__(self, False, host, kwargs)
-        TSocket.TSocket.__init__(self, host, port, unix_socket)
+        TSocket.TSocket.__init__(self, host, port, unix_socket,
+                                 socket_keepalive=socket_keepalive)
+
+    def close(self):
+        try:
+            self.handle.settimeout(0.001)
+            self.handle = self.handle.unwrap()
+        except (ssl.SSLError, socket.error, OSError):
+            # could not complete shutdown in a reasonable amount of time.  bail.
+            pass
+        TSocket.TSocket.close(self)
 
     @property
     def validate(self):
@@ -279,11 +291,11 @@ class TSSLSocket(TSocket.TSocket, TSSLBase):
         plain_sock = socket.socket(family, socktype)
         try:
             return self._wrap_socket(plain_sock)
-        except Exception:
+        except Exception as ex:
             plain_sock.close()
             msg = 'failed to initialize SSL'
             logger.exception(msg)
-            raise TTransportException(TTransportException.NOT_OPEN, msg)
+            raise TTransportException(type=TTransportException.NOT_OPEN, message=msg, inner=ex)
 
     def open(self):
         super(TSSLSocket, self).open()
@@ -295,7 +307,7 @@ class TSSLSocket(TSocket.TSocket, TSSLBase):
             except TTransportException:
                 raise
             except Exception as ex:
-                raise TTransportException(TTransportException.UNKNOWN, str(ex))
+                raise TTransportException(message=str(ex), inner=ex)
 
 
 class TSSLServerSocket(TSocket.TServerSocket, TSSLBase):
@@ -346,7 +358,7 @@ class TSSLServerSocket(TSocket.TServerSocket, TSSLBase):
         TSSLBase.__init__(self, True, None, kwargs)
         TSocket.TServerSocket.__init__(self, host, port, unix_socket)
         if self._should_verify and not _match_has_ipaddress:
-            raise ValueError('Need ipaddress and backports.ssl_match_hostname'
+            raise ValueError('Need ipaddress and backports.ssl_match_hostname '
                              'module to verify client certificate')
 
     def setCertfile(self, certfile):
@@ -368,7 +380,7 @@ class TSSLServerSocket(TSocket.TServerSocket, TSSLBase):
         plain_client, addr = self.handle.accept()
         try:
             client = self._wrap_socket(plain_client)
-        except ssl.SSLError:
+        except (ssl.SSLError, socket.error, OSError):
             logger.exception('Error while accepting from %s', addr)
             # failed handshake/ssl wrap, close socket to client
             plain_client.close()

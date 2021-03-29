@@ -111,7 +111,7 @@ public class TServerSocket extends TServerTransport {
   }
 
   public void listen() throws TTransportException {
-    // Make sure not to block on accept
+    // Make sure to block on accept
     if (serverSocket_ != null) {
       try {
         serverSocket_.setSoTimeout(0);
@@ -121,18 +121,23 @@ public class TServerSocket extends TServerTransport {
     }
   }
 
-  protected TSocket acceptImpl() throws TTransportException {
+  @Override
+  public TSocket accept() throws TTransportException {
     if (serverSocket_ == null) {
       throw new TTransportException(TTransportException.NOT_OPEN, "No underlying server socket.");
     }
+    Socket result;
     try {
-      Socket result = serverSocket_.accept();
-      TSocket result2 = new TSocket(result);
-      result2.setTimeout(clientTimeout_);
-      return result2;
-    } catch (IOException iox) {
-      throw new TTransportException(iox);
+      result = serverSocket_.accept();
+    } catch (Exception e) {
+      throw new TTransportException(e);
     }
+    if (result == null) {
+      throw new TTransportException("Blocking server's accept() may not return NULL");
+    }
+    TSocket socket = new TSocket(result);
+    socket.setTimeout(clientTimeout_);
+    return socket;
   }
 
   public void close() {

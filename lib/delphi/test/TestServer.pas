@@ -29,7 +29,6 @@ interface
 uses
   Windows, SysUtils,
   Generics.Collections,
-  Thrift.Console,
   Thrift.Server,
   Thrift.Transport,
   Thrift.Transport.Pipes,
@@ -37,11 +36,13 @@ uses
   Thrift.Protocol.JSON,
   Thrift.Protocol.Compact,
   Thrift.Collections,
+  Thrift.Configuration,
   Thrift.Utils,
   Thrift.Test,
   Thrift,
   TestConstants,
   TestServerEvents,
+  ConsoleHelper,
   Contnrs;
 
 type
@@ -55,9 +56,9 @@ type
       end;
 
       TTestHandlerImpl = class( TInterfacedObject, ITestHandler )
-      private
+      strict private
         FServer : IServer;
-      protected
+      strict protected
         procedure testVoid();
         function testBool(thing: Boolean): Boolean;
         function testString(const thing: string): string;
@@ -87,9 +88,10 @@ type
 
       class procedure PrintCmdLineHelp;
       class procedure InvalidArgs;
+      class function  IsSwitch( const aArgument, aSwitch : string; out sValue : string) : Boolean;
 
       class procedure LaunchAnonPipeChild( const app : string; const transport : IAnonymousPipeServerTransport);
-      class procedure Execute( const args: array of string);
+      class procedure Execute( const arguments : array of string);
   end;
 
 implementation
@@ -144,27 +146,25 @@ end;
 
 function TTestServer.TTestHandlerImpl.testBinary(const thing: TBytes): TBytes;
 begin
-  Console.WriteLine('testBinary("' + BytesToHex( thing ) + '")');
+  Console.WriteLine('testBinary('+IntToStr(Length(thing)) + ' bytes)');
   Result := thing;
 end;
 
 function TTestServer.TTestHandlerImpl.testEnum(thing: TNumberz): TNumberz;
 begin
-  Console.WriteLine('testEnum(' + IntToStr( Integer( thing)) + ')');
+  Console.WriteLine('testEnum(' + EnumUtils<TNumberz>.ToString(Ord(thing)) + ')');
   Result := thing;
 end;
 
 procedure TTestServer.TTestHandlerImpl.testException(const arg: string);
 begin
   Console.WriteLine('testException(' + arg + ')');
-  if ( arg = 'Xception') then
-  begin
+  if ( arg = 'Xception') then begin
     raise TXception.Create( 1001, arg);
   end;
 
-  if (arg = 'TException') then
-  begin
-    raise TException.Create('');
+  if (arg = 'TException') then begin
+    raise TException.Create('TException');
   end;
 
   // else do not throw anything
@@ -185,44 +185,36 @@ end;
 function TTestServer.TTestHandlerImpl.testInsanity(
   const argument: IInsanity): IThriftDictionary<Int64, IThriftDictionary<TNumberz, IInsanity>>;
 var
-  hello, goodbye : IXtruct;
-  crazy : IInsanity;
   looney : IInsanity;
   first_map : IThriftDictionary<TNumberz, IInsanity>;
   second_map : IThriftDictionary<TNumberz, IInsanity>;
   insane : IThriftDictionary<Int64, IThriftDictionary<TNumberz, IInsanity>>;
 
 begin
+  Console.Write('testInsanity(');
+  if argument <> nil then Console.Write(argument.ToString);
+  Console.WriteLine(')');
 
-  Console.WriteLine('testInsanity()');
-  hello := TXtructImpl.Create;
-  hello.String_thing := 'Hello2';
-  hello.Byte_thing := 2;
-  hello.I32_thing := 2;
-  hello.I64_thing := 2;
 
-  goodbye := TXtructImpl.Create;
-  goodbye.String_thing := 'Goodbye4';
-  goodbye.Byte_thing := 4;
-  goodbye.I32_thing := 4;
-  goodbye.I64_thing := 4;
-
-  crazy := TInsanityImpl.Create;
-  crazy.UserMap := TThriftDictionaryImpl<TNumberz, Int64>.Create;
-  crazy.UserMap.AddOrSetValue( TNumberz.EIGHT, 8);
-  crazy.Xtructs := TThriftListImpl<IXtruct>.Create;
-  crazy.Xtructs.Add(goodbye);
-
-  looney := TInsanityImpl.Create;
-  crazy.UserMap.AddOrSetValue( TNumberz.FIVE, 5);
-  crazy.Xtructs.Add(hello);
+  (**
+   * So you think you've got this all worked, out eh?
+   *
+   * Creates a the returned map with these values and prints it out:
+   *   { 1 => { 2 => argument,
+   *            3 => argument,
+   *          },
+   *     2 => { 6 => <empty Insanity struct>, },
+   *   }
+   * @return map<UserId, map<Numberz,Insanity>> - a map with the above values
+   *)
 
   first_map := TThriftDictionaryImpl<TNumberz, IInsanity>.Create;
   second_map := TThriftDictionaryImpl<TNumberz, IInsanity>.Create;
 
-  first_map.AddOrSetValue( TNumberz.TWO, crazy);
-  first_map.AddOrSetValue( TNumberz.THREE, crazy);
+  first_map.AddOrSetValue( TNumberz.TWO, argument);
+  first_map.AddOrSetValue( TNumberz.THREE, argument);
 
+  looney := TInsanityImpl.Create;
   second_map.AddOrSetValue( TNumberz.SIX, looney);
 
   insane := TThriftDictionaryImpl<Int64, IThriftDictionary<TNumberz, IInsanity>>.Create;
@@ -233,49 +225,20 @@ begin
   Result := insane;
 end;
 
-function TTestServer.TTestHandlerImpl.testList(
-  const thing: IThriftList<Integer>): IThriftList<Integer>;
-var
-  first : Boolean;
-  elem : Integer;
+function TTestServer.TTestHandlerImpl.testList( const thing: IThriftList<Integer>): IThriftList<Integer>;
 begin
-  Console.Write('testList({');
-  first := True;
-  for elem in thing do
-  begin
-    if first then
-    begin
-      first := False;
-    end else
-    begin
-      Console.Write(', ');
-    end;
-    Console.Write( IntToStr( elem));
-  end;
-  Console.WriteLine('})');
+  Console.Write('testList(');
+  if thing <> nil then Console.Write(thing.ToString);
+  Console.WriteLine(')');
   Result := thing;
 end;
 
 function TTestServer.TTestHandlerImpl.testMap(
   const thing: IThriftDictionary<Integer, Integer>): IThriftDictionary<Integer, Integer>;
-var
-  first : Boolean;
-  key : Integer;
 begin
-  Console.Write('testMap({');
-  first := True;
-  for key in thing.Keys do
-  begin
-    if (first) then
-    begin
-      first := false;
-    end else
-    begin
-      Console.Write(', ');
-    end;
-    Console.Write(IntToStr(key) + ' => ' + IntToStr( thing[key]));
-  end;
-  Console.WriteLine('})');
+  Console.Write('testMap(');
+  if thing <> nil then Console.Write(thing.ToString);
+  Console.WriteLine(')');
   Result := thing;
 end;
 
@@ -324,12 +287,11 @@ var
   x2 : TXception2;
 begin
   Console.WriteLine('testMultiException(' + arg0 + ', ' + arg1 + ')');
-  if ( arg0 = 'Xception') then
-  begin
+  if ( arg0 = 'Xception') then begin
     raise TXception.Create( 1001, 'This is an Xception');  // test the new rich CTOR
-  end else
-  if ( arg0 = 'Xception2') then
-  begin
+  end;
+
+  if ( arg0 = 'Xception2') then begin
     x2 := TXception2.Create;  // the old way still works too?
     x2.ErrorCode := 2002;
     x2.Struct_thing := TXtructImpl.Create;
@@ -343,17 +305,11 @@ begin
 end;
 
 function TTestServer.TTestHandlerImpl.testNest( const thing: IXtruct2): IXtruct2;
-var
-  temp : IXtruct;
 begin
-  temp := thing.Struct_thing;
-  Console.WriteLine('testNest({' +
-         IntToStr( thing.Byte_thing) + ', {' +
-         '"' + temp.String_thing + '", ' +
-         IntToStr( temp.Byte_thing) + ', ' +
-         IntToStr( temp.I32_thing) + ', ' +
-         IntToStr( temp.I64_thing) + '}, ' +
-         IntToStr( temp.I32_thing) + '})');
+  Console.Write('testNest(');
+  if thing <> nil then Console.Write(thing.ToString);
+  Console.WriteLine(')');
+
   Result := thing;
 end;
 
@@ -364,34 +320,18 @@ begin
   Console.WriteLine('testOneway finished');
 end;
 
-function TTestServer.TTestHandlerImpl.testSet(
-  const thing: IHashSet<Integer>):IHashSet<Integer>;
-var
-  first : Boolean;
-  elem : Integer;
+function TTestServer.TTestHandlerImpl.testSet( const thing: IHashSet<Integer>):IHashSet<Integer>;
 begin
-  Console.Write('testSet({');
-  first := True;
+  Console.Write('testSet(');
+  if thing <> nil then Console.Write(thing.ToString);
+  Console.WriteLine(')');;
 
-  for elem in thing do
-  begin
-    if first then
-    begin
-      first := False;
-    end else
-    begin
-      Console.Write( ', ');
-    end;
-    Console.Write( IntToStr( elem));
-  end;
-  Console.WriteLine('})');
   Result := thing;
 end;
 
 procedure TTestServer.TTestHandlerImpl.testStop;
 begin
-  if FServer <> nil then
-  begin
+  if FServer <> nil then begin
     FServer.Stop;
   end;
 end;
@@ -410,24 +350,11 @@ end;
 
 function TTestServer.TTestHandlerImpl.testStringMap(
   const thing: IThriftDictionary<string, string>): IThriftDictionary<string, string>;
-var
-  first : Boolean;
-  key : string;
 begin
-  Console.Write('testStringMap({');
-  first := True;
-  for key in thing.Keys do
-  begin
-    if (first) then
-    begin
-      first := false;
-    end else
-    begin
-      Console.Write(', ');
-    end;
-    Console.Write(key + ' => ' + thing[key]);
-  end;
-  Console.WriteLine('})');
+  Console.Write('testStringMap(');
+  if thing <> nil then Console.Write(thing.ToString);
+  Console.WriteLine(')');
+
   Result := thing;
 end;
 
@@ -444,11 +371,10 @@ end;
 
 function TTestServer.TTestHandlerImpl.testStruct( const thing: IXtruct): IXtruct;
 begin
-  Console.WriteLine('testStruct({' +
-    '"' + thing.String_thing + '", ' +
-      IntToStr( thing.Byte_thing) + ', ' +
-      IntToStr( thing.I32_thing) + ', ' +
-      IntToStr( thing.I64_thing));
+  Console.Write('testStruct(');
+  if thing <> nil then Console.Write(thing.ToString);
+  Console.WriteLine(')');
+
   Result := thing;
 end;
 
@@ -460,18 +386,16 @@ class procedure TTestServer.PrintCmdLineHelp;
 const HELPTEXT = ' [options]'#10
                + #10
                + 'Allowed options:'#10
-               + '  -h [ --help ]               produce help message'#10
-               + '  --port arg (=9090)          Port number to listen'#10
-               + '  --domain-socket arg         Unix Domain Socket (e.g. /tmp/ThriftTest.thrift)'#10
-               + '  --named-pipe arg            Windows Named Pipe (e.g. MyThriftPipe)'#10
-               + '  --server-type arg (=simple) type of server, "simple", "thread-pool",'#10
-               + '                              "threaded", or "nonblocking"'#10
-               + '  --transport arg (=socket)   transport: buffered, framed, http, anonpipe'#10
-               + '  --protocol arg (=binary)    protocol: binary, compact, json'#10
-               + '  --ssl                       Encrypted Transport using SSL'#10
-               + '  --processor-events          processor-events'#10
-               + '  -n [ --workers ] arg (=4)   Number of thread pools workers. Only valid for'#10
-               + '                              thread-pool server type'#10
+               + '  -h | --help                   Produces this help message'#10
+               + '  --port=arg (9090)             Port number to connect'#10
+               + '  --pipe=arg                    Windows Named Pipe (e.g. MyThriftPipe)'#10
+               + '  --anon-pipes                  Windows Anonymous Pipes server, auto-starts client.exe'#10
+               + '  --server-type=arg (simple)    Type of server (simple, thread-pool, threaded, nonblocking)'#10
+               + '  --transport=arg (sockets)     Transport: buffered, framed, anonpipe'#10
+               + '  --protocol=arg (binary)       Protocol: binary, compact, json'#10
+               + '  --ssl                         Encrypted Transport using SSL'#10
+               + '  --processor-events            Enable processor-events'#10
+               + '  -n=num | --workers=num (4)    Number of thread-pool server workers'#10
                ;
 begin
   Console.WriteLine( ChangeFileExt(ExtractFileName(ParamStr(0)),'') + HELPTEXT);
@@ -482,6 +406,16 @@ begin
   Console.WriteLine( 'Invalid args.');
   Console.WriteLine( ChangeFileExt(ExtractFileName(ParamStr(0)),'') + ' -h for more information');
   Abort;
+end;
+
+class function TTestServer.IsSwitch( const aArgument, aSwitch : string; out sValue : string) : Boolean;
+begin
+  sValue := '';
+  result := (Copy( aArgument, 1, Length(aSwitch)) = aSwitch);
+  if result then begin
+    if (Copy( aArgument, 1, Length(aSwitch)+1) = (aSwitch+'='))
+    then sValue := Copy( aArgument, Length(aSwitch)+2, MAXINT);
+  end;
 end;
 
 class procedure TTestServer.LaunchAnonPipeChild( const app : string; const transport : IAnonymousPipeServerTransport);
@@ -506,7 +440,7 @@ begin
     sArg := ParamStr(i);
 
     // add anonymous handles and quote strings where appropriate
-    if sArg = '-anon'
+    if sArg = '--anon-pipes'
     then sArg := sArg +' '+ sHandles
     else begin
       if Pos(' ',sArg) > 0
@@ -521,11 +455,11 @@ begin
   Win32Check( CreateProcess( nil, PChar(sCmdLine), nil,nil,TRUE,0,nil,nil,si,pi));
 
   CloseHandle( pi.hThread);
-    CloseHandle( pi.hProcess);
+  CloseHandle( pi.hProcess);
 end;
 
 
-class procedure TTestServer.Execute( const args: array of string);
+class procedure TTestServer.Execute( const arguments : array of string);
 var
   Port : Integer;
   ServerEvents : Boolean;
@@ -538,8 +472,8 @@ var
   namedpipe : INamedPipeServerTransport;
   TransportFactory : ITransportFactory;
   ProtocolFactory : IProtocolFactory;
-  i, numWorker : Integer;
-  s : string;
+  iArg, numWorker : Integer;
+  sArg, sValue : string;
   protType : TKnownProtocol;
   servertype : TServerType;
   endpoint : TEndpointTransport;
@@ -557,82 +491,68 @@ begin
     sPipeName := '';
     numWorker := 4;
 
-    i := 0;
-    while ( i < Length(args) ) do begin
-      s := args[i];
-      Inc(i);
+    iArg := 0;
+    while iArg < Length(arguments) do begin
+      sArg := arguments[iArg];
+      Inc(iArg);
 
       // Allowed options:
-      if (s = '-h') or (s = '--help') then begin
-        // -h [ --help ]               produce help message
+      if IsSwitch( sArg, '-h', sValue)
+      or IsSwitch( sArg, '--help', sValue)
+      then begin
+        // -h | --help               produce help message
         PrintCmdLineHelp;
         Exit;
       end
-      else if (s = '--port') then begin
+      else if IsSwitch( sArg, '--port', sValue) then begin
         // --port arg (=9090)          Port number to listen
-        s := args[i];
-        Inc(i);
-        Port := StrToIntDef( s, Port);
+        Port := StrToIntDef( sValue, Port);
       end
-      else if (s = '--domain-socket') then begin
-        // --domain-socket arg         Unix Domain Socket (e.g. /tmp/ThriftTest.thrift)
-        raise Exception.Create('domain-socket not supported');
+      else if IsSwitch( sArg, '--anon-pipes', sValue) then begin
+        endpoint := trns_AnonPipes;
       end
-      else if (s = '--named-pipe') then begin
-        // --named-pipe arg            Windows Named Pipe (e.g. MyThriftPipe)
+      else if IsSwitch( sArg, '--pipe', sValue) then begin
+        // --pipe arg                   Windows Named Pipe (e.g. MyThriftPipe)
         endpoint := trns_NamedPipes;
-        sPipeName := args[i];  // -pipe <name>
-        Inc( i );
+        sPipeName := sValue;  // --pipe <name>
       end
-      else if (s = '--server-type') then begin
+      else if IsSwitch( sArg, '--server-type', sValue) then begin
         // --server-type arg (=simple) type of server,
         // arg = "simple", "thread-pool", "threaded", or "nonblocking"
-        s := args[i];
-        Inc(i);
-
-        if      s = 'simple'      then servertype := srv_Simple
-        else if s = 'thread-pool' then servertype := srv_Threadpool
-        else if s = 'threaded'    then servertype := srv_Threaded
-        else if s = 'nonblocking' then servertype := srv_Nonblocking
+        if      sValue = 'simple'      then servertype := srv_Simple
+        else if sValue = 'thread-pool' then servertype := srv_Threadpool
+        else if sValue = 'threaded'    then servertype := srv_Threaded
+        else if sValue = 'nonblocking' then servertype := srv_Nonblocking
         else InvalidArgs;
       end
-      else if (s = '--transport') then begin
+      else if IsSwitch( sArg, '--transport', sValue) then begin
         // --transport arg (=buffered) transport: buffered, framed, http
-        s := args[i];
-        Inc(i);
-
-        if      s = 'buffered' then Include( layered, trns_Buffered)
-        else if s = 'framed'   then Include( layered, trns_Framed)
-        else if s = 'http'     then endpoint := trns_Http
-        else if s = 'anonpipe' then endpoint := trns_AnonPipes
+        if      sValue = 'buffered' then Include( layered, trns_Buffered)
+        else if sValue = 'framed'   then Include( layered, trns_Framed)
+        else if sValue = 'http'     then endpoint := trns_MsxmlHttp
+        else if sValue = 'winhttp'  then endpoint := trns_WinHttp
+        else if sValue = 'anonpipe' then endpoint := trns_AnonPipes
         else InvalidArgs;
       end
-      else if (s = '--protocol') then begin
+      else if IsSwitch( sArg, '--protocol', sValue) then begin
         // --protocol arg (=binary)    protocol: binary, compact, json
-        s := args[i];
-        Inc(i);
-
-        if      s = 'binary'   then protType := prot_Binary
-        else if s = 'compact'  then protType := prot_Compact
-        else if s = 'json'     then protType := prot_JSON
+        if      sValue = 'binary'   then protType := prot_Binary
+        else if sValue = 'compact'  then protType := prot_Compact
+        else if sValue = 'json'     then protType := prot_JSON
         else InvalidArgs;
       end
-      else if (s = '--ssl') then begin
+      else if IsSwitch( sArg, '--ssl', sValue) then begin
         // --ssl     Encrypted Transport using SSL
         UseSSL := TRUE;
       end
-      else if (s = '--processor-events') then begin
+      else if IsSwitch( sArg, '--processor-events', sValue) then begin
          // --processor-events          processor-events
         ServerEvents := TRUE;
       end
-      else if (s = '-n') or (s = '--workers') then begin
+      else if IsSwitch( sArg, '-n', sValue) or IsSwitch( sArg, '--workers', sValue) then begin
         // -n [ --workers ] arg (=4)   Number of thread pools workers.
         // Only valid for thread-pool server type
-        s := args[i];
-        numWorker := StrToIntDef(s,0);
-        if numWorker > 0
-        then Inc(i)
-        else numWorker := 4;
+        numWorker := StrToIntDef(sValue,4);
       end
       else begin
         InvalidArgs;
@@ -658,16 +578,17 @@ begin
       trns_Sockets : begin
         Console.WriteLine('- sockets (port '+IntToStr(port)+')');
         if (trns_Buffered in layered) then Console.WriteLine('- buffered');
-        servertrans := TServerSocketImpl.Create( Port, 0, (trns_Buffered in layered));
+        servertrans := TServerSocketImpl.Create( Port, DEFAULT_THRIFT_TIMEOUT, (trns_Buffered in layered));
       end;
 
-      trns_Http : begin
-        raise Exception.Create(ENDPOINT_TRANSPORTS[endpoint]+' server transport not implemented');
+      trns_MsxmlHttp,
+      trns_WinHttp : begin
+        raise Exception.Create('HTTP server transport not implemented');
       end;
 
       trns_NamedPipes : begin
         Console.WriteLine('- named pipe ('+sPipeName+')');
-        namedpipe   := TNamedPipeServerTransportImpl.Create( sPipeName, 4096, PIPE_UNLIMITED_INSTANCES);
+        namedpipe   := TNamedPipeServerTransportImpl.Create( sPipeName, 4096, PIPE_UNLIMITED_INSTANCES, INFINITE);
         servertrans := namedpipe;
       end;
 
@@ -688,7 +609,7 @@ begin
 
     if (trns_Framed in layered) then begin
       Console.WriteLine('- framed transport');
-      TransportFactory := TFramedTransportImpl.TFactory.Create
+      TransportFactory := TFramedTransportImpl.TFactory.Create;
     end
     else begin
       TransportFactory := TTransportFactoryImpl.Create;

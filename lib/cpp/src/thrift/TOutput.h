@@ -20,12 +20,14 @@
 #ifndef _THRIFT_OUTPUT_H_
 #define _THRIFT_OUTPUT_H_ 1
 
+#include <thrift/thrift_export.h>
+
 namespace apache {
 namespace thrift {
 
 class TOutput {
 public:
-  TOutput() : f_(&errorTimeWrapper) {}
+  TOutput();
 
   inline void setOutputFunction(void (*function)(const char*)) { f_ = function; }
 
@@ -51,7 +53,7 @@ private:
   void (*f_)(const char*);
 };
 
-extern TOutput GlobalOutput;
+THRIFT_EXPORT extern TOutput GlobalOutput;
 }
 } // namespace apache::thrift
 

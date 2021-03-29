@@ -10,6 +10,9 @@
     <Filter Include="windows">
       <UniqueIdentifier>{60fc9e5e-0866-4aba-8662-439bb4a461d3}</UniqueIdentifier>
     </Filter>
+    <Filter Include="transport">
+      <UniqueIdentifier>{23fe2fde-a7c9-43ec-a409-7f53df5eee64}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\thrift\server\TNonblockingServer.cpp">
@@ -26,6 +29,12 @@
     </ClCompile>
     <ClCompile Include="src\thrift\windows\StdAfx.cpp">
       <Filter>windows</Filter>
+    </ClCompile>
+    <ClCompile Include="src\thrift\transport\TNonblockingServerSocket.cpp">
+      <Filter>transport</Filter>
+    </ClCompile>
+    <ClCompile Include="src\thrift\transport\TNonblockingSSLServerSocket.cpp">
+      <Filter>transport</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -52,6 +61,15 @@
     </ClInclude>
     <ClInclude Include="src\thrift\windows\force_inc.h">
       <Filter>windows</Filter>
+    </ClInclude>
+    <ClInclude Include="src\thrift\transport\TNonblockingServerSocket.h">
+      <Filter>transport</Filter>
+    </ClInclude>
+    <ClInclude Include="src\thrift\transport\TNonblockingServerTransport.h">
+      <Filter>transport</Filter>
+    </ClInclude>
+    <ClInclude Include="src\thrift\transport\TNonblockingSSLServerSocket.h">
+      <Filter>transport</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

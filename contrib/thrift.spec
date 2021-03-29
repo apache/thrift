@@ -28,7 +28,7 @@ Name:           thrift
 License:        Apache License v2.0
 Group:          Development
 Summary:        RPC and serialization framework
-Version:        0.9.1
+Version:        0.14.1
 Release:        0
 URL:            http://thrift.apache.org
 Packager:       Thrift Developers <dev@thrift.apache.org>
@@ -58,8 +58,8 @@ BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 Thrift is a software framework for scalable cross-language services
 development. It combines a powerful software stack with a code generation
 engine to build services that work efficiently and seamlessly between C++,
-Java, C#, Python, Ruby, Perl, PHP, Objective C/Cocoa, Smalltalk, Erlang,
-Objective Caml, and Haskell.
+Java, C#, Python, Ruby, Perl, PHP, Smalltalk, Erlang, OCaml, Haskell, and
+other languages.
 
 %files
 %defattr(-,root,root)
@@ -175,8 +175,20 @@ export RUBYLIB=${PWD}/lib/rb/lib
   %{?without_ruby:     --without-ruby     } \
   %{?without_php:      --without-php      } \
   %{!?without_php:     PHP_PREFIX=${RPM_BUILD_ROOT}/usr/lib/php } \
-  --without-csharp \
   --without-erlang \
+
+%if 0%{!?without_ruby:1}
+eval $(grep "^WITH_RUBY_TRUE" config.log)
+if [[ "${WITH_RUBY_TRUE}" != "" ]]; then
+  set +x
+  echo ""
+  echo "configure determined that ruby requirements are missing (bundler gem?), either install missing components" >&2
+  echo "or disable the ruby sub-packages as follows:"                                                              >&2
+  echo "     rpmbuild -D'%without_ruby 1' ..."                                                                     >&2
+  echo ""
+  exit 1
+fi
+%endif
 
 make %{?_smp_mflags}
 
@@ -234,5 +246,7 @@ umask 007
 /sbin/ldconfig > /dev/null 2>&1
 
 %changelog
+* Wed Aug 21 2013 Thrift Dev <dev@thrift.apache.org>
+- Thrift 0.9.1 release.
 * Wed Oct 10 2012 Thrift Dev <dev@thrift.apache.org> 
 - Thrift 0.9.0 release.

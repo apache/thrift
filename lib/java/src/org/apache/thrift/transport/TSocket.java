@@ -19,6 +19,7 @@
 
 package org.apache.thrift.transport;
 
+import org.apache.thrift.TConfiguration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -40,27 +41,27 @@ public class TSocket extends TIOStreamTransport {
   /**
    * Wrapped Socket object
    */
-  private Socket socket_ = null;
+  private Socket socket_;
 
   /**
    * Remote host
    */
-  private String host_  = null;
+  private String host_;
 
   /**
    * Remote port
    */
-  private int port_ = 0;
+  private int port_;
 
   /**
    * Socket timeout - read timeout on the socket
    */
-  private int socketTimeout_ = 0;
+  private int socketTimeout_;
 
   /**
    * Connection timeout
    */
-  private int connectTimeout_ = 0;
+  private int connectTimeout_;
 
   /**
    * Constructor that takes an already created socket.
@@ -69,6 +70,7 @@ public class TSocket extends TIOStreamTransport {
    * @throws TTransportException if there is an error setting up the streams
    */
   public TSocket(Socket socket) throws TTransportException {
+    super(new TConfiguration());
     socket_ = socket;
     try {
       socket_.setSoLinger(false, 0);
@@ -80,8 +82,8 @@ public class TSocket extends TIOStreamTransport {
 
     if (isOpen()) {
       try {
-        inputStream_ = new BufferedInputStream(socket_.getInputStream(), 1024);
-        outputStream_ = new BufferedOutputStream(socket_.getOutputStream(), 1024);
+        inputStream_ = new BufferedInputStream(socket_.getInputStream());
+        outputStream_ = new BufferedOutputStream(socket_.getOutputStream());
       } catch (IOException iox) {
         close();
         throw new TTransportException(TTransportException.NOT_OPEN, iox);
@@ -93,23 +95,36 @@ public class TSocket extends TIOStreamTransport {
    * Creates a new unconnected socket that will connect to the given host
    * on the given port.
    *
+   * @param config  check config
    * @param host Remote host
    * @param port Remote port
    */
-  public TSocket(String host, int port) {
-    this(host, port, 0);
+  public TSocket(TConfiguration config, String host, int port) throws TTransportException {
+    this(config, host, port, 0);
   }
 
   /**
    * Creates a new unconnected socket that will connect to the given host
    * on the given port.
    *
+   * @param host Remote host
+   * @param port Remote port
+   */
+  public TSocket(String host, int port) throws TTransportException {
+    this(new TConfiguration(), host, port, 0);
+  }
+
+  /**
+   * Creates a new unconnected socket that will connect to the given host
+   * on the given port.
+   *
+   * @param config  check config
    * @param host    Remote host
    * @param port    Remote port
    * @param timeout Socket timeout and connection timeout
    */
-  public TSocket(String host, int port, int timeout) {
-    this(host, port, timeout, timeout);
+  public TSocket(TConfiguration config, String host, int port, int timeout) throws TTransportException {
+    this(config, host, port, timeout, timeout);
   }
 
   /**
@@ -117,12 +132,14 @@ public class TSocket extends TIOStreamTransport {
    * on the given port, with a specific connection timeout and a
    * specific socket timeout.
    *
+   * @param config          check config
    * @param host            Remote host
    * @param port            Remote port
    * @param socketTimeout   Socket timeout
    * @param connectTimeout  Connection timeout
    */
-  public TSocket(String host, int port, int socketTimeout, int connectTimeout) {
+  public TSocket(TConfiguration config, String host, int port, int socketTimeout, int connectTimeout) throws TTransportException {
+    super(config);
     host_ = host;
     port_ = port;
     socketTimeout_ = socketTimeout;
@@ -206,11 +223,11 @@ public class TSocket extends TIOStreamTransport {
       throw new TTransportException(TTransportException.ALREADY_OPEN, "Socket already connected.");
     }
 
-    if (host_.length() == 0) {
+    if (host_ == null || host_.length() == 0) {
       throw new TTransportException(TTransportException.NOT_OPEN, "Cannot open null host.");
     }
-    if (port_ <= 0) {
-      throw new TTransportException(TTransportException.NOT_OPEN, "Cannot open without port.");
+    if (port_ <= 0 || port_ > 65535) {
+      throw new TTransportException(TTransportException.NOT_OPEN, "Invalid port " + port_);
     }
 
     if (socket_ == null) {
@@ -219,8 +236,8 @@ public class TSocket extends TIOStreamTransport {
 
     try {
       socket_.connect(new InetSocketAddress(host_, port_), connectTimeout_);
-      inputStream_ = new BufferedInputStream(socket_.getInputStream(), 1024);
-      outputStream_ = new BufferedOutputStream(socket_.getOutputStream(), 1024);
+      inputStream_ = new BufferedInputStream(socket_.getInputStream());
+      outputStream_ = new BufferedOutputStream(socket_.getOutputStream());
     } catch (IOException iox) {
       close();
       throw new TTransportException(TTransportException.NOT_OPEN, iox);

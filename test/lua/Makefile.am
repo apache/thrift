@@ -28,4 +28,7 @@ stubs: ../ThriftTest.thrift $(THRIFT)
 precross: stubs
 
 clean-local:
-	$(RM) -r gen-lua
+	$(RM) -r gen-lua/
+
+dist-hook:
+	$(RM) -r $(distdir)/gen-lua/

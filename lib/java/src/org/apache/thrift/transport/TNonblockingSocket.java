@@ -30,6 +30,7 @@ import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.SocketChannel;
 
+import org.apache.thrift.TConfiguration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -47,7 +48,7 @@ public class TNonblockingSocket extends TNonblockingTransport {
 
   private final SocketChannel socketChannel_;
 
-  public TNonblockingSocket(String host, int port) throws IOException {
+  public TNonblockingSocket(String host, int port) throws IOException, TTransportException {
     this(host, port, 0);
   }
 
@@ -57,7 +58,7 @@ public class TNonblockingSocket extends TNonblockingTransport {
    * @param port
    * @throws IOException
    */
-  public TNonblockingSocket(String host, int port, int timeout) throws IOException {
+  public TNonblockingSocket(String host, int port, int timeout) throws IOException, TTransportException {
     this(SocketChannel.open(), timeout, new InetSocketAddress(host, port));
   }
 
@@ -67,13 +68,19 @@ public class TNonblockingSocket extends TNonblockingTransport {
    * @param socketChannel Already created SocketChannel object
    * @throws IOException if there is an error setting up the streams
    */
-  public TNonblockingSocket(SocketChannel socketChannel) throws IOException {
+  public TNonblockingSocket(SocketChannel socketChannel) throws IOException, TTransportException {
     this(socketChannel, 0, null);
     if (!socketChannel.isConnected()) throw new IOException("Socket must already be connected");
   }
 
   private TNonblockingSocket(SocketChannel socketChannel, int timeout, SocketAddress socketAddress)
-      throws IOException {
+          throws IOException, TTransportException {
+    this(new TConfiguration(), socketChannel, timeout, socketAddress);
+  }
+
+  private TNonblockingSocket(TConfiguration config, SocketChannel socketChannel, int timeout, SocketAddress socketAddress)
+          throws IOException, TTransportException {
+    super(config);
     socketChannel_ = socketChannel;
     socketAddress_ = socketAddress;
 
@@ -137,10 +144,13 @@ public class TNonblockingSocket extends TNonblockingTransport {
   /**
    * Perform a nonblocking read into buffer.
    */
-  public int read(ByteBuffer buffer) throws IOException {
-    return socketChannel_.read(buffer);
+  public int read(ByteBuffer buffer) throws TTransportException {
+    try {
+      return socketChannel_.read(buffer);
+    } catch (IOException iox) {
+      throw new TTransportException(TTransportException.UNKNOWN, iox);
+    }
   }
-
 
   /**
    * Reads from the underlying input stream if not null.
@@ -160,8 +170,12 @@ public class TNonblockingSocket extends TNonblockingTransport {
   /**
    * Perform a nonblocking write of the data in buffer;
    */
-  public int write(ByteBuffer buffer) throws IOException {
-    return socketChannel_.write(buffer);
+  public int write(ByteBuffer buffer) throws TTransportException {
+    try {
+      return socketChannel_.write(buffer);
+    } catch (IOException iox) {
+      throw new TTransportException(TTransportException.UNKNOWN, iox);
+    }
   }
 
   /**
@@ -172,11 +186,7 @@ public class TNonblockingSocket extends TNonblockingTransport {
       throw new TTransportException(TTransportException.NOT_OPEN,
         "Cannot write to write-only socket channel");
     }
-    try {
-      socketChannel_.write(ByteBuffer.wrap(buf, off, len));
-    } catch (IOException iox) {
-      throw new TTransportException(TTransportException.UNKNOWN, iox);
-    }
+    write(ByteBuffer.wrap(buf, off, len));
   }
 
   /**
@@ -207,4 +217,9 @@ public class TNonblockingSocket extends TNonblockingTransport {
     return socketChannel_.finishConnect();
   }
 
+  @Override
+  public String toString() {
+    return "[remote: " + socketChannel_.socket().getRemoteSocketAddress() +
+        ", local: " + socketChannel_.socket().getLocalAddress() + "]" ;
+  }
 }

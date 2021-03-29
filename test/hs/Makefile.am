@@ -17,8 +17,6 @@
 # under the License.
 #
 
-THRIFT = $(top_builddir)/compiler/cpp/thrift
-
 stubs: $(THRIFT) ../ConstantsDemo.thrift ../DebugProtoTest.thrift ../ThriftTest.thrift ../Include.thrift
 	$(THRIFT) --gen hs ../ConstantsDemo.thrift
 	$(THRIFT) --gen hs ../DebugProtoTest.thrift
@@ -32,9 +30,18 @@ check: stubs
 	sh run-test.sh Include
 
 clean-local:
-	$(RM) -r gen-hs
+	$(RM) -r gen-hs/
 	$(RM) *.hi
 	$(RM) *.o
+	$(RM) TestClient
+	$(RM) TestServer
+
+dist-hook:
+	$(RM) -r $(distdir)/gen-hs/
+	$(RM) $(distdir)/*.hi
+	$(RM) $(distdir)/*.o
+	$(RM) $(destdir)/TestClient
+	$(RM) $(destdir)/TestServer
 
 all-local: stubs
 	ghc -igen-hs TestServer.hs

@@ -17,7 +17,7 @@
  * under the License.
  */
 
-#include <assert.h>
+#include <errno.h>
 #include <netdb.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -34,7 +34,10 @@ enum _ThriftBufferedTransportProperties
   PROP_0,
   PROP_THRIFT_BUFFERED_TRANSPORT_TRANSPORT,
   PROP_THRIFT_BUFFERED_TRANSPORT_READ_BUFFER_SIZE,
-  PROP_THRIFT_BUFFERED_TRANSPORT_WRITE_BUFFER_SIZE
+  PROP_THRIFT_BUFFERED_TRANSPORT_WRITE_BUFFER_SIZE,
+  PROP_THRIFT_BUFFERED_TRANSPORT_CONFIGURATION,
+  PROP_THRIFT_BUFFERED_TRANSPORT_REMAINING_MESSAGE_SIZE,
+  PROP_THRIFT_BUFFERED_TRANSPORT_KNOW_MESSAGE_SIZE
 };
 
 G_DEFINE_TYPE(ThriftBufferedTransport, thrift_buffered_transport, THRIFT_TYPE_TRANSPORT)
@@ -80,11 +83,12 @@ thrift_buffered_transport_read_slow (ThriftTransport *transport, gpointer buf,
   gint ret = 0;
   guint32 want = len;
   guint32 got = 0;
-  guchar *tmpdata = g_alloca (len);
+  guchar *tmpdata = g_new0 (guchar, len);
   guint32 have = t->r_buf->len;
 
+
   /* we shouldn't hit this unless the buffer doesn't have enough to read */
-  assert (t->r_buf->len < want);
+  g_assert (t->r_buf->len < want);
 
   /* first copy what we have in our buffer. */
   if (have > 0)
@@ -103,12 +107,14 @@ thrift_buffered_transport_read_slow (ThriftTransport *transport, gpointer buf,
                                                                 tmpdata,
                                                                 want,
                                                                 error)) < 0) {
+      g_free (tmpdata);
       return ret;
     }
     got += ret;
 
     /* copy the data starting from where we left off */
     memcpy ((guint8 *)buf + have, tmpdata, got);
+    g_free (tmpdata);
     return got + have; 
   } else {
     guint32 give;
@@ -117,11 +123,12 @@ thrift_buffered_transport_read_slow (ThriftTransport *transport, gpointer buf,
                                                                 tmpdata,
                                                                 want,
                                                                 error)) < 0) {
+      g_free (tmpdata);
       return ret;
     }
     got += ret;
     t->r_buf = g_byte_array_append (t->r_buf, tmpdata, got);
-    
+    g_free (tmpdata);
     /* hand over what we have up to what the caller wants */
     give = want < t->r_buf->len ? want : t->r_buf->len;
 
@@ -140,6 +147,11 @@ thrift_buffered_transport_read (ThriftTransport *transport, gpointer buf,
                                 guint32 len, GError **error)
 {
   ThriftBufferedTransport *t = THRIFT_BUFFERED_TRANSPORT (transport);
+  ThriftTransportClass *ttc = THRIFT_TRANSPORT_GET_CLASS (transport);
+  if(!ttc->checkReadBytesAvailable (transport, len, error))
+  {
+    return -1;
+  }
 
   /* if we have enough buffer data to fulfill the read, just use
    * a memcpy */
@@ -241,6 +253,12 @@ gboolean
 thrift_buffered_transport_flush (ThriftTransport *transport, GError **error)
 {
   ThriftBufferedTransport *t = THRIFT_BUFFERED_TRANSPORT (transport);
+  ThriftTransportClass *ttc = THRIFT_TRANSPORT_GET_CLASS (transport);
+
+  if(!ttc->resetConsumedMessageSize (transport, -1, error))
+  {
+    return FALSE;
+  }
 
   if (t->w_buf != NULL && t->w_buf->len > 0)
   {
@@ -294,6 +312,8 @@ thrift_buffered_transport_get_property (GObject *object, guint property_id,
 {
   ThriftBufferedTransport *transport = THRIFT_BUFFERED_TRANSPORT (object);
 
+  ThriftTransport *tt = THRIFT_TRANSPORT (object);
+
   THRIFT_UNUSED_VAR (pspec);
 
   switch (property_id)
@@ -307,6 +327,15 @@ thrift_buffered_transport_get_property (GObject *object, guint property_id,
     case PROP_THRIFT_BUFFERED_TRANSPORT_WRITE_BUFFER_SIZE:
       g_value_set_uint (value, transport->w_buf_size);
       break;
+    case PROP_THRIFT_BUFFERED_TRANSPORT_CONFIGURATION:
+      g_value_set_object (value, tt->configuration);
+      break;
+    case PROP_THRIFT_BUFFERED_TRANSPORT_REMAINING_MESSAGE_SIZE:
+      g_value_set_long (value, tt->remainingMessageSize_);
+      break;
+    case PROP_THRIFT_BUFFERED_TRANSPORT_KNOW_MESSAGE_SIZE:
+      g_value_set_long (value, tt->knowMessageSize_);
+      break;
   }
 }
 
@@ -316,6 +345,8 @@ thrift_buffered_transport_set_property (GObject *object, guint property_id,
                                         const GValue *value, GParamSpec *pspec)
 {
   ThriftBufferedTransport *transport = THRIFT_BUFFERED_TRANSPORT (object);
+
+  ThriftTransport *tt = THRIFT_TRANSPORT (object);
 
   THRIFT_UNUSED_VAR (pspec);
 
@@ -329,6 +360,15 @@ thrift_buffered_transport_set_property (GObject *object, guint property_id,
       break;
     case PROP_THRIFT_BUFFERED_TRANSPORT_WRITE_BUFFER_SIZE:
       transport->w_buf_size = g_value_get_uint (value);
+      break;
+    case PROP_THRIFT_BUFFERED_TRANSPORT_CONFIGURATION:
+      tt->configuration = g_value_dup_object (value);
+      break;
+    case PROP_THRIFT_BUFFERED_TRANSPORT_REMAINING_MESSAGE_SIZE:
+      tt->remainingMessageSize_ = g_value_get_long (value);
+      break;
+    case PROP_THRIFT_BUFFERED_TRANSPORT_KNOW_MESSAGE_SIZE:
+      tt->knowMessageSize_ = g_value_get_long (value);
       break;
   }
 }
@@ -377,6 +417,36 @@ thrift_buffered_transport_class_init (ThriftBufferedTransportClass *cls)
                                    PROP_THRIFT_BUFFERED_TRANSPORT_WRITE_BUFFER_SIZE,
                                    param_spec);
 
+  param_spec = g_param_spec_object ("configuration",
+                                    "configuration (construct)",
+                                    "Thrift Configuration",
+                                    THRIFT_TYPE_CONFIGURATION,
+                                    G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY);
+  g_object_class_install_property (gobject_class,
+                                   PROP_THRIFT_BUFFERED_TRANSPORT_CONFIGURATION,
+                                   param_spec);
+
+  param_spec = g_param_spec_long ("remainingmessagesize",
+                                  "remainingmessagesize (construct)",
+                                  "Set the remaining message size",
+                                  0, /* min */
+                                  G_MAXINT32, /* max */
+                                  DEFAULT_MAX_MESSAGE_SIZE, /* default by construct */
+                                  G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY);
+  g_object_class_install_property (gobject_class,
+                                   PROP_THRIFT_BUFFERED_TRANSPORT_REMAINING_MESSAGE_SIZE,
+                                   param_spec);
+
+  param_spec = g_param_spec_long ("knowmessagesize",
+                                  "knowmessagesize (construct)",
+                                  "Set the known size of the message",
+                                  0, /* min */
+                                  G_MAXINT32, /* max */
+                                  DEFAULT_MAX_MESSAGE_SIZE, /* default by construct */
+                                  G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY);
+  g_object_class_install_property (gobject_class,
+                                   PROP_THRIFT_BUFFERED_TRANSPORT_KNOW_MESSAGE_SIZE,
+                                   param_spec);
 
   gobject_class->finalize = thrift_buffered_transport_finalize;
   ttc->is_open = thrift_buffered_transport_is_open;

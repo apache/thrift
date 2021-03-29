@@ -26,8 +26,7 @@
 
 #include <limits>
 
-#include <boost/static_assert.hpp>
-#include <boost/make_shared.hpp>
+#include <memory>
 
 namespace apache {
 namespace thrift {
@@ -42,11 +41,11 @@ void THeaderProtocol::resetProtocol() {
 
   switch (protoId_) {
   case T_BINARY_PROTOCOL:
-    proto_ = boost::make_shared<TBinaryProtocolT<THeaderTransport> >(trans_);
+    proto_ = std::make_shared<TBinaryProtocolT<THeaderTransport> >(trans_);
     break;
 
   case T_COMPACT_PROTOCOL:
-    proto_ = boost::make_shared<TCompactProtocolT<THeaderTransport> >(trans_);
+    proto_ = std::make_shared<TCompactProtocolT<THeaderTransport> >(trans_);
     break;
 
   default:

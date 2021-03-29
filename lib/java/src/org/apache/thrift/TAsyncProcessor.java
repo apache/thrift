@@ -18,18 +18,16 @@
  */
 package org.apache.thrift;
 
-import org.apache.thrift.protocol.*;
-
-import org.apache.thrift.server.AbstractNonblockingServer.*;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import java.util.Collections;
-import java.util.Map;
+import org.apache.thrift.server.AbstractNonblockingServer.AsyncFrameBuffer;
 
 public interface TAsyncProcessor {
-    /**
-     * Implementations must call fb.responseReady() once processing is complete
-     */
-    public boolean process(final AsyncFrameBuffer fb) throws TException;
+  /**
+   * Process a single frame.
+
+   * <b>Note:</b> Implementations must call fb.responseReady() once processing
+   * is complete
+   *
+   * @throws TException if the frame cannot be processed
+   */
+  public void process(final AsyncFrameBuffer fb) throws TException;
 }

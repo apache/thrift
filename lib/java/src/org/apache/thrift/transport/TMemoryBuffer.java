@@ -20,19 +20,39 @@
 package org.apache.thrift.transport;
 
 import org.apache.thrift.TByteArrayOutputStream;
-import java.io.UnsupportedEncodingException;
+import org.apache.thrift.TConfiguration;
+
+import java.nio.charset.Charset;
 
 /**
  * Memory buffer-based implementation of the TTransport interface.
  */
-public class TMemoryBuffer extends TTransport {
+public class TMemoryBuffer extends TEndpointTransport {
   /**
    * Create a TMemoryBuffer with an initial buffer size of <i>size</i>. The
    * internal buffer will grow as necessary to accommodate the size of the data
    * being written to it.
+   *
+   * @param size the initial size of the buffer
    */
-  public TMemoryBuffer(int size) {
+  public TMemoryBuffer(int size) throws TTransportException {
+    super(new TConfiguration());
     arr_ = new TByteArrayOutputStream(size);
+    updateKnownMessageSize(size);
+  }
+
+  /**
+   * Create a TMemoryBuffer with an initial buffer size of <i>size</i>. The
+   * internal buffer will grow as necessary to accommodate the size of the data
+   * being written to it.
+   *
+   * @param config
+   * @param size the initial size of the buffer
+   */
+  public TMemoryBuffer(TConfiguration config, int size) throws TTransportException {
+    super(config);
+    arr_ = new TByteArrayOutputStream(size);
+    updateKnownMessageSize(size);
   }
 
   @Override
@@ -51,9 +71,11 @@ public class TMemoryBuffer extends TTransport {
   }
 
   @Override
-  public int read(byte[] buf, int off, int len) {
+  public int read(byte[] buf, int off, int len) throws TTransportException {
+    checkReadBytesAvailable(len);
     byte[] src = arr_.get();
     int amtToRead = (len > arr_.len() - pos_ ? arr_.len() - pos_ : len);
+
     if (amtToRead > 0) {
       System.arraycopy(src, pos_, buf, off, amtToRead);
       pos_ += amtToRead;
@@ -69,11 +91,11 @@ public class TMemoryBuffer extends TTransport {
   /**
    * Output the contents of the memory buffer as a String, using the supplied
    * encoding
-   * @param enc  the encoding to use
+   * @param charset the encoding to use
    * @return the contents of the memory buffer as a String
    */
-  public String toString(String enc) throws UnsupportedEncodingException {
-    return arr_.toString(enc);
+  public String toString(Charset charset) {
+    return arr_.toString(charset);
   }
 
   public String inspect() {

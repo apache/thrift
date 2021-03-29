@@ -1,6 +1,7 @@
-# Apache Thrift - CMake build
+# Apache Thrift - CMake Build
 
 ## Goal
+
 Extend Apache Thrift's *make cross* approach to the build system.
 
 Due to growing the field of operating system support, a proper executable
@@ -11,12 +12,26 @@ package generation process.
 As nice side benefit of CMake is the generation of development environment
 specific soultion files. => No solution files within source tree.
 
+## Prerequisites
+
+These are language-specific, however for C++ you must provide:
+
+- Boost
+- OpenSSL
+
+You may optionally provide:
+
+- libevent
+- zlib
 
 ## Usage
-just do this:
 
-    mkdir cmake-build && cd cmake-build
-    cmake ..
+To use CMake you first create an out-of-tree build directory, then use
+CMake to generate a build framework, then build:
+
+    mkdir /tmp/build
+    cd /tmp/build
+    cmake /location/to/thrift
 
 if you use a specific toolchain pass it to cmake, the same for options:
 
@@ -25,13 +40,6 @@ if you use a specific toolchain pass it to cmake, the same for options:
     cmake -DTHRIFT_COMPILER_HS=OFF ..
     cmake -DWITH_ZLIB=ON ..
 
-or on Windows
-
-    cmake -G "Visual Studio 12 2013 Win64" \
-    -DBOOST_ROOT=C:/3rdparty/boost_1_58_0 \
-    -DZLIB_ROOT=C:/3rdparty/zlib128-dll \
-    -DWITH_SHARED_LIB=off -DWITH_BOOSTTHREADS=ON ..
-
 and open the development environment you like with the solution or do this:
 
     make
@@ -39,15 +47,25 @@ and open the development environment you like with the solution or do this:
     make cross
     make dist
 
-to generate an installer and distribution package do this:
+or on Windows, the following will produce a solution file you can use
+inside Visual Studio:
+
+    cmake -G "Visual Studio 15 2017 Win64" \
+      -DBOOST_ROOT=C:/3rdparty/boost_1_69_0 \
+      -DBOOST_LIBRARYDIR=C:/3rdparty/boost_1_69_0/lib64-msvc-14.1^
+      -DZLIB_ROOT=C:/3rdparty/zlib-1.2.11
+
+<!--
+To generate an installer and distribution package do this:
 
     cpack
+-->
 
 ## TODO
+
 * git hash or tag based versioning depending on source state
 * build tutorial
 * build test
-* with/without language lib/<lang>/
 * enable/disable
 * make cross
 * make dist (create an alias to make package_source)

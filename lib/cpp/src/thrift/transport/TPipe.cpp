@@ -28,8 +28,6 @@ namespace apache {
 namespace thrift {
 namespace transport {
 
-using namespace std;
-
 /**
 * TPipe implementation.
 */
@@ -160,7 +158,8 @@ uint32_t TWaitableNamedPipeImpl::read(uint8_t* buf, uint32_t len) {
     end_unread_idx_ = endAsyncRead();
   }
 
-  uint32_t bytes_to_copy = (std::min)(len, end_unread_idx_ - begin_unread_idx_);
+  uint32_t __idxsize = end_unread_idx_ - begin_unread_idx_;
+  uint32_t bytes_to_copy = (len < __idxsize) ? len : __idxsize;
   memcpy(buf, &buffer_[begin_unread_idx_], bytes_to_copy);
   begin_unread_idx_ += bytes_to_copy;
   if (begin_unread_idx_ != end_unread_idx_) {
@@ -184,7 +183,7 @@ void pseudo_sync_write(HANDLE pipe, HANDLE event, const uint8_t* buf, uint32_t l
 
   uint32_t written = 0;
   while (written < len) {
-    BOOL result = ::WriteFile(pipe, buf + written, len - written, NULL, &tempOverlap);
+    BOOL result = ::WriteFile(pipe, buf + written, len - written, nullptr, &tempOverlap);
 
     if (result == FALSE && ::GetLastError() != ERROR_IO_PENDING) {
       GlobalOutput.perror("TPipe ::WriteFile errored GLE=", ::GetLastError());
@@ -206,7 +205,7 @@ uint32_t pseudo_sync_read(HANDLE pipe, HANDLE event, uint8_t* buf, uint32_t len)
   memset(&tempOverlap, 0, sizeof(tempOverlap));
   tempOverlap.hEvent = event;
 
-  BOOL result = ::ReadFile(pipe, buf, len, NULL, &tempOverlap);
+  BOOL result = ::ReadFile(pipe, buf, len, nullptr, &tempOverlap);
 
   if (result == FALSE && ::GetLastError() != ERROR_IO_PENDING) {
     GlobalOutput.perror("TPipe ::ReadFile errored GLE=", ::GetLastError());
@@ -223,30 +222,35 @@ uint32_t pseudo_sync_read(HANDLE pipe, HANDLE event, uint8_t* buf, uint32_t len)
 }
 
 //---- Constructors ----
-TPipe::TPipe(TAutoHandle &Pipe)
-  : impl_(new TWaitableNamedPipeImpl(Pipe)), TimeoutSeconds_(3), isAnonymous_(false) {
+TPipe::TPipe(TAutoHandle &Pipe, std::shared_ptr<TConfiguration> config)
+  : impl_(new TWaitableNamedPipeImpl(Pipe)), TimeoutSeconds_(3), 
+  isAnonymous_(false), TVirtualTransport(config) {
 }
 
-TPipe::TPipe(HANDLE Pipe)
-  : TimeoutSeconds_(3), isAnonymous_(false)
+TPipe::TPipe(HANDLE Pipe, std::shared_ptr<TConfiguration> config)
+  : TimeoutSeconds_(3), isAnonymous_(false), TVirtualTransport(config)
 {
   TAutoHandle pipeHandle(Pipe);
   impl_.reset(new TWaitableNamedPipeImpl(pipeHandle));
 }
 
-TPipe::TPipe(const char* pipename) : TimeoutSeconds_(3), isAnonymous_(false) {
+TPipe::TPipe(const char* pipename, std::shared_ptr<TConfiguration> config) : TimeoutSeconds_(3), 
+  isAnonymous_(false), TVirtualTransport(config) {
   setPipename(pipename);
 }
 
-TPipe::TPipe(const std::string& pipename) : TimeoutSeconds_(3), isAnonymous_(false) {
+TPipe::TPipe(const std::string& pipename, std::shared_ptr<TConfiguration> config) : TimeoutSeconds_(3), 
+  isAnonymous_(false), TVirtualTransport(config) {
   setPipename(pipename);
 }
 
-TPipe::TPipe(HANDLE PipeRd, HANDLE PipeWrt)
-  : impl_(new TAnonPipeImpl(PipeRd, PipeWrt)), TimeoutSeconds_(3), isAnonymous_(true) {
+TPipe::TPipe(HANDLE PipeRd, HANDLE PipeWrt, std::shared_ptr<TConfiguration> config)
+  : impl_(new TAnonPipeImpl(PipeRd, PipeWrt)), TimeoutSeconds_(3), isAnonymous_(true),
+    TVirtualTransport(config) {
 }
 
-TPipe::TPipe() : TimeoutSeconds_(3), isAnonymous_(false) {
+TPipe::TPipe(std::shared_ptr<TConfiguration> config) : TimeoutSeconds_(3), isAnonymous_(false), 
+                                                       TVirtualTransport(config) {
 }
 
 TPipe::~TPipe() {
@@ -255,8 +259,8 @@ TPipe::~TPipe() {
 //---------------------------------------------------------
 // Transport callbacks
 //---------------------------------------------------------
-bool TPipe::isOpen() {
-  return impl_.get() != NULL;
+bool TPipe::isOpen() const {
+  return impl_.get() != nullptr;
 }
 
 bool TPipe::peek() {
@@ -273,10 +277,10 @@ void TPipe::open() {
     hPipe.reset(CreateFileA(pipename_.c_str(),
                             GENERIC_READ | GENERIC_WRITE,
                             0,             // no sharing
-                            NULL,          // default security attributes
+                            nullptr,          // default security attributes
                             OPEN_EXISTING, // opens existing pipe
                             flags,
-                            NULL)); // no template file
+                            nullptr)); // no template file
 
     if (hPipe.h != INVALID_HANDLE_VALUE)
       break; // success!
@@ -300,6 +304,7 @@ void TPipe::close() {
 }
 
 uint32_t TPipe::read(uint8_t* buf, uint32_t len) {
+  checkReadBytesAvailable(len);
   if (!isOpen())
     throw TTransportException(TTransportException::NOT_OPEN, "Called read on non-open pipe");
   return impl_->read(buf, len);
@@ -311,7 +316,7 @@ uint32_t pipe_read(HANDLE pipe, uint8_t* buf, uint32_t len) {
                           buf,     // buffer to receive reply
                           len,     // size of buffer
                           &cbRead, // number of bytes read
-                          NULL);   // not overlapped
+                          nullptr);   // not overlapped
 
   if (!fSuccess && GetLastError() != ERROR_MORE_DATA)
     return 0; // No more data, possibly because client disconnected.
@@ -331,7 +336,7 @@ void pipe_write(HANDLE pipe, const uint8_t* buf, uint32_t len) {
                            buf,        // message
                            len,        // message length
                            &cbWritten, // bytes written
-                           NULL);      // not overlapped
+                           nullptr);      // not overlapped
 
   if (!fSuccess)
     throw TTransportException(TTransportException::NOT_OPEN, "Write to pipe failed");
@@ -341,12 +346,12 @@ void pipe_write(HANDLE pipe, const uint8_t* buf, uint32_t len) {
 // Accessors
 //---------------------------------------------------------
 
-string TPipe::getPipename() {
+std::string TPipe::getPipename() {
   return pipename_;
 }
 
 void TPipe::setPipename(const std::string& pipename) {
-  if (pipename.find("\\\\") == -1)
+  if (pipename.find("\\\\") == std::string::npos)
     pipename_ = "\\\\.\\pipe\\" + pipename;
   else
     pipename_ = pipename;

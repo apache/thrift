@@ -19,15 +19,24 @@
 
 BUILT_SOURCES = gen-dart/tutorial/lib/tutorial.dart gen-dart/shared/lib/shared.dart
 
-THRIFT = $(top_builddir)/compiler/cpp/thrift
-
 gen-dart/tutorial/lib/tutorial.dart gen-dart/shared/lib/shared.dart: $(top_srcdir)/tutorial/tutorial.thrift
 	$(THRIFT) --gen dart -r $<
 
 all-local: gen-dart/tutorial/lib/tutorial.dart pub-get
 
 clean-local:
-	$(RM) -r gen-*
+	$(RM) -r gen-*/
+	find . -type d -name ".dart_tool" | xargs $(RM) -r
+	find . -type d -name "packages" | xargs $(RM) -r
+	find . -type f -name ".packages" | xargs $(RM)
+	find . -type f -name "pubspec.lock" | xargs $(RM)
+
+dist-hook:
+	$(RM) -r $(distdir)/gen-*/
+	find $(distdir) -type d -name ".dart_tool" | xargs $(RM) -r
+	find $(distdir) -type d -name "packages" | xargs $(RM) -r
+	find $(distdir) -type f -name ".packages" | xargs $(RM)
+	find $(distdir) -type f -name "pubspec.lock" | xargs $(RM)
 
 pub-get: pub-get-gen pub-get-client pub-get-console-client pub-get-server
 
@@ -66,4 +75,7 @@ EXTRA_DIST = \
 	console_client/pubspec.yaml \
 	server/bin/main.dart \
 	server/pubspec.yaml \
+	console_client/.analysis_options \
+	client/.analysis_options \
+	server/.analysis_options \
 	build.sh

@@ -49,30 +49,30 @@ class TPipeImpl;
 class TPipe : public TVirtualTransport<TPipe> {
 public:
   // Constructs a new pipe object.
-  TPipe();
+  TPipe(std::shared_ptr<TConfiguration> config = nullptr);
   // Named pipe constructors -
-  explicit TPipe(HANDLE Pipe);       // HANDLE is a void*
-  explicit TPipe(TAutoHandle& Pipe); // this ctor will clear out / move from Pipe
+  explicit TPipe(HANDLE Pipe, std::shared_ptr<TConfiguration> config = nullptr);       // HANDLE is a void*
+  explicit TPipe(TAutoHandle& Pipe, std::shared_ptr<TConfiguration> config = nullptr); // this ctor will clear out / move from Pipe
   // need a const char * overload so string literals don't go to the HANDLE overload
-  explicit TPipe(const char* pipename);
-  explicit TPipe(const std::string& pipename);
+  explicit TPipe(const char* pipename, std::shared_ptr<TConfiguration> config = nullptr);
+  explicit TPipe(const std::string& pipename, std::shared_ptr<TConfiguration> config = nullptr);
   // Anonymous pipe -
-  TPipe(HANDLE PipeRd, HANDLE PipeWrt);
+  TPipe(HANDLE PipeRd, HANDLE PipeWrt, std::shared_ptr<TConfiguration> config = nullptr);
 
   // Destroys the pipe object, closing it if necessary.
   virtual ~TPipe();
 
   // Returns whether the pipe is open & valid.
-  virtual bool isOpen();
+  bool isOpen() const override;
 
   // Checks whether more data is available in the pipe.
-  virtual bool peek();
+  bool peek() override;
 
   // Creates and opens the named/anonymous pipe.
-  virtual void open();
+  void open() override;
 
   // Shuts down communications on the pipe.
-  virtual void close();
+  void close() override;
 
   // Reads from the pipe.
   virtual uint32_t read(uint8_t* buf, uint32_t len);
@@ -95,7 +95,7 @@ public:
   HANDLE getNativeWaitHandle();
 
 private:
-  boost::shared_ptr<TPipeImpl> impl_;
+  std::shared_ptr<TPipeImpl> impl_;
 
   std::string pipename_;
 

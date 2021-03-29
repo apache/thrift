@@ -278,9 +278,13 @@ handle_cast(stop, State) ->
 
 terminate(Reason, #thrift_socket_server{listen=Listen, port=Port}) ->
     gen_tcp:close(Listen),
-    {backtrace, Bt} = erlang:process_info(self(), backtrace),
-    error_logger:error_report({?MODULE, ?LINE,
-                               {child_error, Reason, Bt}}),
+    case Reason of
+        normal -> ok;
+        shutdown -> ok;
+        _ -> {backtrace, Bt} = erlang:process_info(self(), backtrace),
+             error_logger:error_report({?MODULE, ?LINE,
+                                       {child_error, Reason, Bt}})
+    end,
     case Port < 1024 of
         true ->
             catch fdsrv:stop(),

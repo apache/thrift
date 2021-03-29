@@ -28,6 +28,7 @@ module Thrift.Transport.Handle
     ) where
 
 import Control.Exception ( catch, throw )
+import Control.Monad ( when )
 import Data.ByteString.Internal (c2w)
 import Data.Functor
 
@@ -44,7 +45,19 @@ import Data.Monoid
 instance Transport Handle where
     tIsOpen = hIsOpen
     tClose = hClose
-    tRead h n = LBS.hGet h n `Control.Exception.catch` handleEOF mempty
+    tRead h n = read `Control.Exception.catch` handleEOF mempty
+      where
+        read = do
+          hLookAhead h
+          LBS.hGetNonBlocking h n
+    tReadAll _ 0 = return mempty
+    tReadAll h n = do
+      result <- LBS.hGet h n `Control.Exception.catch` throwTransportExn
+      let rlen = fromIntegral $ LBS.length result
+      when (rlen == 0) (throw $ TransportExn "Cannot read. Remote side has closed." TE_UNKNOWN)
+      if n <= rlen
+        then return result
+        else (result `mappend`) <$> tReadAll h (n - rlen)
     tPeek h = (Just . c2w <$> hLookAhead h) `Control.Exception.catch` handleEOF Nothing
     tWrite = LBS.hPut
     tFlush = hFlush
@@ -61,8 +74,12 @@ instance HandleSource FilePath where
 instance HandleSource (HostName, PortID) where
     hOpen = uncurry connectTo
 
+throwTransportExn :: IOError -> IO a
+throwTransportExn e = if isEOFError e
+    then throw $ TransportExn "Cannot read. Remote side has closed." TE_UNKNOWN
+    else throw $ TransportExn "Handle tReadAll: Could not read" TE_UNKNOWN
 
 handleEOF :: a -> IOError -> IO a
 handleEOF a e = if isEOFError e
     then return a
-    else throw $ TransportExn "TChannelTransport: Could not read" TE_UNKNOWN
+    else throw $ TransportExn "Handle: Could not read" TE_UNKNOWN

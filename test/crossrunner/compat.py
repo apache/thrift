@@ -8,9 +8,9 @@ if sys.version_info[0] == 2:
         bin_args = map(lambda a: a.decode(_ENCODE), args)
         return os.path.join(*bin_args).encode(_ENCODE)
 
-    def str_join(s, l):
-        bin_args = map(lambda a: a.decode(_ENCODE), l)
-        b = s.decode(_ENCODE)
+    def str_join(left, right):
+        bin_args = map(lambda a: a.decode(_ENCODE), right)
+        b = left.decode(_ENCODE)
         return b.join(bin_args).encode(_ENCODE)
 
     logfile_open = open

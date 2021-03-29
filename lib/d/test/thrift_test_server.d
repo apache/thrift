@@ -16,8 +16,11 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+
 module thrift_test_server;
 
+import core.stdc.errno : errno;
+import core.stdc.signal : signal, SIGINT, SIG_DFL, SIG_ERR;
 import core.thread : dur, Thread;
 import std.algorithm;
 import std.exception : enforce;
@@ -39,7 +42,9 @@ import thrift.transport.base;
 import thrift.transport.buffered;
 import thrift.transport.framed;
 import thrift.transport.http;
+import thrift.transport.zlib;
 import thrift.transport.ssl;
+import thrift.util.cancellation;
 import thrift.util.hashset;
 import test_utils;
 
@@ -205,18 +210,49 @@ private:
   bool trace_;
 }
 
+shared(bool) gShutdown = false;
+
+nothrow @nogc extern(C) void handleSignal(int sig) {
+  gShutdown = true;
+}
+
+// Runs a thread that waits for shutdown to be
+// signaled and then triggers cancellation,
+// causing the server to stop.  While we could
+// use a signalfd for this purpose, we are instead
+// opting for a busy waiting scheme for maximum
+// portability since signalfd is a linux thing.
+
+class ShutdownThread : Thread {
+  this(TCancellationOrigin cancellation) {
+    cancellation_ = cancellation;
+    super(&run);
+  }
+  
+private:
+  void run() {
+    while (!gShutdown) {
+      Thread.sleep(dur!("msecs")(25));
+    }
+    cancellation_.trigger();
+  }
+  
+  TCancellationOrigin cancellation_;
+}
+
 void main(string[] args) {
   ushort port = 9090;
   ServerType serverType;
   ProtocolType protocolType;
   size_t numIOThreads = 1;
   TransportType transportType;
-  bool ssl;
-  bool trace;
+  bool ssl = false;
+  bool zlib = false;
+  bool trace = true;
   size_t taskPoolSize = totalCPUs;
 
   getopt(args, "port", &port, "protocol", &protocolType, "server-type",
-    &serverType, "ssl", &ssl, "num-io-threads", &numIOThreads,
+    &serverType, "ssl", &ssl, "zlib", &zlib, "num-io-threads", &numIOThreads,
     "task-pool-size", &taskPoolSize, "trace", &trace,
     "transport", &transportType);
 
@@ -279,8 +315,25 @@ void main(string[] args) {
   auto server = createServer(serverType, numIOThreads, taskPoolSize,
     processor, serverSocket, transportFactory, protocolFactory);
 
+  // Set up SIGINT signal handling
+  enforce(signal(SIGINT, &handleSignal) != SIG_ERR,
+    "Could not replace the SIGINT signal handler: errno {0}".format(errno()));
+  
+  // Set up a server cancellation trigger
+  auto cancel = new TCancellationOrigin();
+
+  // Set up a listener for the shutdown condition - this will
+  // wake up when the signal occurs and trigger cancellation.
+  auto shutdown = new ShutdownThread(cancel);
+  shutdown.start();
+  
+  // Serve from this thread; the signal will stop the server
+  // and control will return here
   writefln("Starting %s/%s %s ThriftTest server %son port %s...", protocolType,
     transportType, serverType, ssl ? "(using SSL) ": "", port);
-  server.serve();
+  server.serve(cancel);
+  shutdown.join();
+  signal(SIGINT, SIG_DFL);
+    
   writeln("done.");
 }

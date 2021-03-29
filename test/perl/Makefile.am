@@ -17,8 +17,6 @@
 # under the License.
 #
 
-THRIFT = $(top_builddir)/compiler/cpp/thrift
-
 stubs: ../ThriftTest.thrift
 	$(THRIFT) --gen perl ../ThriftTest.thrift
 
@@ -27,5 +25,7 @@ precross: stubs
 check: stubs
 
 clean-local:
-	$(RM) -r gen-perl
+	$(RM) -r gen-perl/
 
+dist-hook:
+	$(RM) -r $(distdir)/gen-perl/

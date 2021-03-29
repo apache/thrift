@@ -22,7 +22,7 @@ unit Thrift.Collections;
 interface
 
 uses
-  Generics.Collections, Generics.Defaults, Thrift.Utils;
+  SysUtils, Generics.Collections, Generics.Defaults, Thrift.Utils;
 
 type
 
@@ -30,10 +30,10 @@ type
   TArray<T> = array of T;
 {$IFEND}
 
-  IThriftContainer = interface
-    ['{93DEF5A0-D162-461A-AB22-5B4EE0734050}']
-    function ToString: string;
+  IThriftContainer = interface( ISupportsToString)
+    ['{E05C0F9D-A4F5-491D-AADA-C926B4BDB6E4}']
   end;
+
 
   IThriftDictionary<TKey,TValue> = interface(IThriftContainer)
     ['{25EDD506-F9D1-4008-A40F-5940364B7E46}']
@@ -64,10 +64,10 @@ type
     property Values: TDictionary<TKey,TValue>.TValueCollection read GetValues;
   end;
 
-  TThriftDictionaryImpl<TKey,TValue> = class( TInterfacedObject, IThriftDictionary<TKey,TValue>)
-  private
+  TThriftDictionaryImpl<TKey,TValue> = class( TInterfacedObject, IThriftDictionary<TKey,TValue>, IThriftContainer, ISupportsToString)
+  strict private
     FDictionaly : TDictionary<TKey,TValue>;
-  protected
+  strict protected
     function GetEnumerator: TEnumerator<TPair<TKey,TValue>>;
 
     function GetKeys: TDictionary<TKey,TValue>.TKeyCollection;
@@ -95,6 +95,7 @@ type
   public
     constructor Create(ACapacity: Integer = 0);
     destructor Destroy; override;
+    function ToString : string;  override;
   end;
 
   IThriftList<T> = interface(IThriftContainer)
@@ -140,10 +141,10 @@ type
     property Items[Index: Integer]: T read GetItem write SetItem; default;
   end;
 
-  TThriftListImpl<T> = class( TInterfacedObject, IThriftList<T>)
-  private
+  TThriftListImpl<T> = class( TInterfacedObject, IThriftList<T>, IThriftContainer, ISupportsToString)
+  strict private
     FList : TList<T>;
-  protected
+  strict protected
     function GetEnumerator: TEnumerator<T>;
     function GetCapacity: Integer;
     procedure SetCapacity(Value: Integer);
@@ -186,6 +187,7 @@ type
   public
     constructor Create;
     destructor Destroy; override;
+    function ToString : string;  override;
   end;
 
   IHashSet<TValue> = interface(IThriftContainer)
@@ -202,11 +204,11 @@ type
     function Remove( const item: TValue ): Boolean;
   end;
 
-  THashSetImpl<TValue> = class( TInterfacedObject, IHashSet<TValue>)
-  private
+  THashSetImpl<TValue> = class( TInterfacedObject, IHashSet<TValue>, IThriftContainer, ISupportsToString)
+  strict private
     FDictionary : IThriftDictionary<TValue,Integer>;
     FIsReadOnly: Boolean;
-  protected
+  strict protected
     function GetEnumerator: TEnumerator<TValue>;
     function GetIsReadOnly: Boolean;
     function GetCount: Integer;
@@ -219,6 +221,7 @@ type
     function Remove( const item: TValue ): Boolean;
   public
     constructor Create;
+    function ToString : string;  override;
   end;
 
 implementation
@@ -284,6 +287,28 @@ begin
   begin
     FDictionary.Remove( item );
     Result := not FDictionary.ContainsKey( item );
+  end;
+end;
+
+function THashSetImpl<TValue>.ToString : string;
+var elm : TValue;
+    sb : TThriftStringBuilder;
+    first : Boolean;
+begin
+  sb := TThriftStringBuilder.Create('{');
+  try
+    first := TRUE;
+    for elm in FDictionary.Keys do begin
+      if first
+      then first := FALSE
+      else sb.Append(', ');
+
+      sb.Append( StringUtils<TValue>.ToString(elm));
+    end;
+    sb.Append('}');
+    Result := sb.ToString;
+  finally
+    sb.Free;
   end;
 end;
 
@@ -391,6 +416,32 @@ begin
 {$ELSE}
   Result := FDictionaly.ToArray;
 {$IFEND}
+end;
+
+function TThriftDictionaryImpl<TKey, TValue>.ToString : string;
+var pair : TPair<TKey, TValue>;
+    sb : TThriftStringBuilder;
+    first : Boolean;
+begin
+  sb := TThriftStringBuilder.Create('{');
+  try
+    first := TRUE;
+    for pair in FDictionaly do begin
+      if first
+      then first := FALSE
+      else sb.Append(', ');
+
+      sb.Append( '(');
+      sb.Append( StringUtils<TKey>.ToString(pair.Key));
+      sb.Append(' => ');
+      sb.Append( StringUtils<TValue>.ToString(pair.Value));
+      sb.Append(')');
+    end;
+    sb.Append('}');
+    Result := sb.ToString;
+  finally
+    sb.Free;
+  end;
 end;
 
 procedure TThriftDictionaryImpl<TKey, TValue>.TrimExcess;
@@ -588,7 +639,7 @@ end;
 
 procedure TThriftListImpl<T>.Sort(const AComparer: IComparer<T>);
 begin
-  FList.Sort;
+  FList.Sort(AComparer);
 end;
 
 function TThriftListImpl<T>.ToArray: TArray<T>;
@@ -609,6 +660,28 @@ begin
 {$ELSE}
   Result := FList.ToArray;
 {$IFEND}
+end;
+
+function TThriftListImpl<T>.ToString : string;
+var elm : T;
+    sb : TThriftStringBuilder;
+    first : Boolean;
+begin
+  sb := TThriftStringBuilder.Create('{');
+  try
+    first := TRUE;
+    for elm in FList do begin
+      if first
+      then first := FALSE
+      else sb.Append(', ');
+
+      sb.Append( StringUtils<T>.ToString(elm));
+    end;
+    sb.Append('}');
+    Result := sb.ToString;
+  finally
+    sb.Free;
+  end;
 end;
 
 procedure TThriftListImpl<T>.TrimExcess;

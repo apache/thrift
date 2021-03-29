@@ -25,7 +25,7 @@
 #include <thrift/transport/TTransport.h>
 #include <thrift/transport/TTransportUtils.h>
 #include <thrift/transport/TBufferTransports.h>
-#include <boost/shared_ptr.hpp>
+#include <memory>
 
 namespace apache {
 namespace thrift {
@@ -40,41 +40,41 @@ class PeekProcessor : public apache::thrift::TProcessor {
 
 public:
   PeekProcessor();
-  virtual ~PeekProcessor();
+  ~PeekProcessor() override;
 
   // Input here: actualProcessor  - the underlying processor
   //             protocolFactory  - the protocol factory used to wrap the memory buffer
   //             transportFactory - this TPipedTransportFactory is used to wrap the source transport
   //                                via a call to getPipedTransport
   void initialize(
-      boost::shared_ptr<apache::thrift::TProcessor> actualProcessor,
-      boost::shared_ptr<apache::thrift::protocol::TProtocolFactory> protocolFactory,
-      boost::shared_ptr<apache::thrift::transport::TPipedTransportFactory> transportFactory);
+      std::shared_ptr<apache::thrift::TProcessor> actualProcessor,
+      std::shared_ptr<apache::thrift::protocol::TProtocolFactory> protocolFactory,
+      std::shared_ptr<apache::thrift::transport::TPipedTransportFactory> transportFactory);
 
-  boost::shared_ptr<apache::thrift::transport::TTransport> getPipedTransport(
-      boost::shared_ptr<apache::thrift::transport::TTransport> in);
+  std::shared_ptr<apache::thrift::transport::TTransport> getPipedTransport(
+      std::shared_ptr<apache::thrift::transport::TTransport> in);
 
-  void setTargetTransport(boost::shared_ptr<apache::thrift::transport::TTransport> targetTransport);
+  void setTargetTransport(std::shared_ptr<apache::thrift::transport::TTransport> targetTransport);
 
-  virtual bool process(boost::shared_ptr<apache::thrift::protocol::TProtocol> in,
-                       boost::shared_ptr<apache::thrift::protocol::TProtocol> out,
-                       void* connectionContext);
+  bool process(std::shared_ptr<apache::thrift::protocol::TProtocol> in,
+                       std::shared_ptr<apache::thrift::protocol::TProtocol> out,
+                       void* connectionContext) override;
 
   // The following three functions can be overloaded by child classes to
   // achieve desired peeking behavior
   virtual void peekName(const std::string& fname);
   virtual void peekBuffer(uint8_t* buffer, uint32_t size);
-  virtual void peek(boost::shared_ptr<apache::thrift::protocol::TProtocol> in,
+  virtual void peek(std::shared_ptr<apache::thrift::protocol::TProtocol> in,
                     apache::thrift::protocol::TType ftype,
                     int16_t fid);
   virtual void peekEnd();
 
 private:
-  boost::shared_ptr<apache::thrift::TProcessor> actualProcessor_;
-  boost::shared_ptr<apache::thrift::protocol::TProtocol> pipedProtocol_;
-  boost::shared_ptr<apache::thrift::transport::TPipedTransportFactory> transportFactory_;
-  boost::shared_ptr<apache::thrift::transport::TMemoryBuffer> memoryBuffer_;
-  boost::shared_ptr<apache::thrift::transport::TTransport> targetTransport_;
+  std::shared_ptr<apache::thrift::TProcessor> actualProcessor_;
+  std::shared_ptr<apache::thrift::protocol::TProtocol> pipedProtocol_;
+  std::shared_ptr<apache::thrift::transport::TPipedTransportFactory> transportFactory_;
+  std::shared_ptr<apache::thrift::transport::TMemoryBuffer> memoryBuffer_;
+  std::shared_ptr<apache::thrift::transport::TTransport> targetTransport_;
 };
 }
 }

@@ -1,0 +1,8 @@
+notifications:
+    commits:      commits@thrift.apache.org
+    issues:       dev@thrift.apache.org
+    pullrequests_status: dev@thrift.apache.org
+    pullrequests_comment: notifications@thrift.apache.org
+    jira_options: link label worklog
+    
+    

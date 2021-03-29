@@ -55,8 +55,8 @@ struct TAutoResetEvent : boost::noncopyable {
   HANDLE h;
 
   TAutoResetEvent() {
-    h = CreateEvent(NULL, FALSE, FALSE, NULL);
-    if (h == NULL) {
+    h = CreateEvent(nullptr, FALSE, FALSE, nullptr);
+    if (h == nullptr) {
       GlobalOutput.perror("TAutoResetEvent unable to create event, GLE=", GetLastError());
       throw apache::thrift::concurrency::SystemResourceException("CreateEvent failed");
     }
@@ -68,8 +68,8 @@ struct TManualResetEvent : boost::noncopyable {
   HANDLE h;
 
   TManualResetEvent() {
-    h = CreateEvent(NULL, TRUE, FALSE, NULL);
-    if (h == NULL) {
+    h = CreateEvent(nullptr, TRUE, FALSE, nullptr);
+    if (h == nullptr) {
       GlobalOutput.perror("TManualResetEvent unable to create event, GLE=", GetLastError());
       throw apache::thrift::concurrency::SystemResourceException("CreateEvent failed");
     }

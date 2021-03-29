@@ -23,4 +23,4 @@ under the License.
 Using Thrift with Dart
 ====================
 
-Dart 1.12.0 or newer is required
+Dart 1.24.3 or newer is required

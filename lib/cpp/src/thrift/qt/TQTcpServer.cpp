@@ -17,25 +17,27 @@
  * under the License.
  */
 
+#include <functional>
+#include <memory>
+
 #include <thrift/qt/TQTcpServer.h>
 #include <thrift/qt/TQIODeviceTransport.h>
 
 #include <QMetaType>
 #include <QTcpSocket>
 
-#include <thrift/cxxfunctional.h>
-
 #include <thrift/protocol/TProtocol.h>
 #include <thrift/async/TAsyncProcessor.h>
 
-using boost::shared_ptr;
 using apache::thrift::protocol::TProtocol;
 using apache::thrift::protocol::TProtocolFactory;
 using apache::thrift::transport::TTransport;
 using apache::thrift::transport::TTransportException;
 using apache::thrift::transport::TQIODeviceTransport;
-using apache::thrift::stdcxx::function;
-using apache::thrift::stdcxx::bind;
+using std::bind;
+using std::function;
+using std::placeholders::_1;
+using std::shared_ptr;
 
 QT_USE_NAMESPACE
 
@@ -65,8 +67,7 @@ TQTcpServer::TQTcpServer(shared_ptr<QTcpServer> server,
   connect(server.get(), SIGNAL(newConnection()), SLOT(processIncoming()));
 }
 
-TQTcpServer::~TQTcpServer() {
-}
+TQTcpServer::~TQTcpServer() = default;
 
 void TQTcpServer::processIncoming() {
   while (server_->hasPendingConnections()) {
@@ -89,7 +90,7 @@ void TQTcpServer::processIncoming() {
     }
 
     ctxMap_[connection.get()]
-        = shared_ptr<ConnectionContext>(new ConnectionContext(connection, transport, iprot, oprot));
+        = std::make_shared<ConnectionContext>(connection, transport, iprot, oprot);
 
     connect(connection.get(), SIGNAL(readyRead()), SLOT(beginDecode()));
 
@@ -98,7 +99,7 @@ void TQTcpServer::processIncoming() {
 }
 
 void TQTcpServer::beginDecode() {
-  QTcpSocket* connection(qobject_cast<QTcpSocket*>(sender()));
+  auto* connection(qobject_cast<QTcpSocket*>(sender()));
   Q_ASSERT(connection);
 
   if (ctxMap_.find(connection) == ctxMap_.end()) {
@@ -110,7 +111,7 @@ void TQTcpServer::beginDecode() {
 
   try {
     processor_
-        ->process(bind(&TQTcpServer::finish, this, ctx, apache::thrift::stdcxx::placeholders::_1),
+        ->process(bind(&TQTcpServer::finish, this, ctx, _1),
                   ctx->iprot_,
                   ctx->oprot_);
   } catch (const TTransportException& ex) {
@@ -123,7 +124,7 @@ void TQTcpServer::beginDecode() {
 }
 
 void TQTcpServer::socketClosed() {
-  QTcpSocket* connection(qobject_cast<QTcpSocket*>(sender()));
+  auto* connection(qobject_cast<QTcpSocket*>(sender()));
   Q_ASSERT(connection);
   scheduleDeleteConnectionContext(connection);
 }

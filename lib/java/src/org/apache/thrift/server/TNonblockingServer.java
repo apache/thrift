@@ -86,8 +86,8 @@ public class TNonblockingServer extends AbstractNonblockingServer {
     try {
       selectAcceptThread_.join();
     } catch (InterruptedException e) {
-      // for now, just silently ignore. technically this means we'll have less of
-      // a graceful shutdown as a result.
+      LOGGER.debug("Interrupted while waiting for accept thread", e);
+      Thread.currentThread().interrupt();
     }
   }
 
@@ -215,7 +215,7 @@ public class TNonblockingServer extends AbstractNonblockingServer {
 
     protected FrameBuffer createFrameBuffer(final TNonblockingTransport trans,
         final SelectionKey selectionKey,
-        final AbstractSelectThread selectThread) {
+        final AbstractSelectThread selectThread) throws TTransportException {
         return processorFactory_.isAsyncProcessor() ?
                   new AsyncFrameBuffer(trans, selectionKey, selectThread) :
                   new FrameBuffer(trans, selectionKey, selectThread);
@@ -229,7 +229,7 @@ public class TNonblockingServer extends AbstractNonblockingServer {
       TNonblockingTransport client = null;
       try {
         // accept the connection
-        client = (TNonblockingTransport)serverTransport.accept();
+        client = serverTransport.accept();
         clientKey = client.registerSelector(selector, SelectionKey.OP_READ);
 
         // add this key to the map
@@ -239,7 +239,6 @@ public class TNonblockingServer extends AbstractNonblockingServer {
       } catch (TTransportException tte) {
         // something went wrong accepting.
         LOGGER.warn("Exception trying to accept!", tte);
-        tte.printStackTrace();
         if (clientKey != null) cleanupSelectionKey(clientKey);
         if (client != null) client.close();
       }

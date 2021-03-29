@@ -44,7 +44,7 @@ class THttpClientTransport extends TBufferedTransport {
   }
 
   Future flush() {
-    var requestBody = CryptoUtils.bytesToBase64(_consumeWriteBuffer());
+    var requestBody = base64.encode(consumeWriteBuffer());
 
     // Use a sync completer to ensure that the buffer can be read immediately
     // after the read buffer is set, and avoid a race condition where another
@@ -56,8 +56,7 @@ class THttpClientTransport extends TBufferedTransport {
         .then((response) {
       Uint8List data;
       try {
-        data = new Uint8List.fromList(
-            CryptoUtils.base64StringToBytes(response.body));
+        data = new Uint8List.fromList(base64.decode(response.body));
       } on FormatException catch (_) {
         throw new TProtocolError(TProtocolErrorType.INVALID_DATA,
             "Expected a Base 64 encoded string.");
@@ -75,7 +74,7 @@ class THttpConfig {
   final Uri url;
 
   Map<String, String> _headers;
-  get headers => _headers;
+  Map<String, String> get headers => _headers;
 
   THttpConfig(this.url, Map<String, String> headers) {
     if (url == null || !url.hasAuthority) {

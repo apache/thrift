@@ -24,10 +24,12 @@ under the License.
 Using Thrift with Go
 ====================
 
+Thrift supports Go 1.7+
+
 In following Go conventions, we recommend you use the 'go' tool to install
 Thrift for go.
 
-    $ go get git.apache.org/thrift.git/lib/go/thrift/...
+    $ go get github.com/apache/thrift/lib/go/thrift/...
 
 Will retrieve and install the most recent version of the package.
 
@@ -64,3 +66,50 @@ As such, we provide some helpers that do just this under lib/go/thrift/. E.g.,
 
 And so on. The code generator also creates analogous helpers for user-defined
 typedefs and enums.
+
+Adding custom tags to generated Thrift structs
+==============================================
+
+You can add tags to the auto-generated thrift structs using the following format:
+
+    struct foo {
+      1: required string Bar (go.tag = "some_tag:\"some_tag_value\"")
+    }
+    
+which will generate:
+
+    type Foo struct {
+      Bar string `thrift:"bar,1,required" some_tag:"some_tag_value"`
+    }
+
+A note about server handler implementations
+===========================================
+
+The context object passed into the server handler function will be canceled when
+the client closes the connection (this is a best effort check, not a guarantee
+-- there's no guarantee that the context object is always canceled when client
+closes the connection, but when it's canceled you can always assume the client
+closed the connection). When implementing Go Thrift server, you can take
+advantage of that to abandon requests that's no longer needed:
+
+    func MyEndpoint(ctx context.Context, req *thriftRequestType) (*thriftResponseType, error) {
+        ...
+        if ctx.Err() == context.Canceled {
+            return nil, thrift.ErrAbandonRequest
+        }
+        ...
+    }
+
+This feature would add roughly 1 millisecond of latency overhead to the server
+handlers (along with roughly 2 goroutines per request).
+If that is unacceptable, it can be disabled by having this line early in your
+main function:
+
+    thrift.ServerConnectivityCheckInterval = 0
+
+Please be advised that due to a
+[Go runtime bug](https://github.com/golang/go/issues/27707), currently
+if this interval is set to a value too low (for example, 1ms), it might cause
+excessive cpu overhead.
+
+This feature is also only enabled on non-oneway endpoints.

@@ -29,7 +29,7 @@ public abstract class TBaseProcessor<I> implements TProcessor {
   }
 
   @Override
-  public boolean process(TProtocol in, TProtocol out) throws TException {
+  public void process(TProtocol in, TProtocol out) throws TException {
     TMessage msg = in.readMessageBegin();
     getCurrentTraceData().getServiceSpan().getMetadata().putValue(MetadataProperties.CALL_NAME, msg.name);
     ProcessFunction fn = processMap.get(msg.name);
@@ -38,7 +38,5 @@ public abstract class TBaseProcessor<I> implements TProcessor {
       in.readMessageEnd();
       throw new TApplicationException(TApplicationException.UNKNOWN_METHOD, "Invalid method name: '"+msg.name+"'");
     }
-    fn.process(msg.seqid, in, out, iface);
-    return true;
   }
 }

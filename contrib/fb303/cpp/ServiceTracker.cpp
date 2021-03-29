@@ -46,7 +46,7 @@ ServiceTracker::ServiceTracker(facebook::fb303::FacebookBase *handler,
     checkpointServices_(0)
 {
   if (featureCheckpoint_) {
-    time_t now = time(NULL);
+    time_t now = time(nullptr);
     checkpointTime_ = now;
   } else {
     checkpointTime_ = 0;
@@ -105,7 +105,7 @@ ServiceTracker::startService(const ServiceMethod &serviceMethod)
   if (featureThreadCheck_ && !serviceMethod.featureLogOnly_) {
     // note: Might want to put these messages in reportCheckpoint() if
     // log is getting spammed.
-    if (threadManager_ != NULL) {
+    if (threadManager_ != nullptr) {
       size_t idle_count = threadManager_->idleWorkerCount();
       if (idle_count == 0) {
         stringstream message;
@@ -211,7 +211,7 @@ ServiceTracker::finishService(const ServiceMethod &serviceMethod)
 
         // maybe report checkpoint
         // note: ...if it's been long enough since the last report.
-        time_t now = time(NULL);
+        time_t now = time(nullptr);
         uint64_t check_interval = now - checkpointTime_;
         if (check_interval >= CHECKPOINT_MINIMUM_INTERVAL_SECONDS) {
           reportCheckpoint();
@@ -239,7 +239,7 @@ ServiceTracker::finishService(const ServiceMethod &serviceMethod)
 void
 ServiceTracker::reportCheckpoint()
 {
-  time_t now = time(NULL);
+  time_t now = time(nullptr);
 
   uint64_t check_count = checkpointServices_;
   uint64_t check_interval = now - checkpointTime_;
@@ -282,7 +282,7 @@ ServiceTracker::reportCheckpoint()
           << " checkpoint_speed_sum:" << check_duration
           << " lifetime_time:" << life_interval
           << " lifetime_services:" << life_count;
-  if (featureThreadCheck_ && threadManager_ != NULL) {
+  if (featureThreadCheck_ && threadManager_ != nullptr) {
     size_t worker_count = threadManager_->workerCount();
     size_t idle_count = threadManager_->idleWorkerCount();
     message << " total_workers:" << worker_count
@@ -321,7 +321,7 @@ ServiceTracker::defaultLogMethod(int level, const string &message)
 {
   if (level <= LOG_LEVEL) {
     string level_string;
-    time_t now = time(NULL);
+    time_t now = time(nullptr);
     char now_pretty[26];
     ctime_r(&now, now_pretty);
     now_pretty[24] = '\0';
@@ -356,20 +356,20 @@ ServiceTracker::defaultLogMethod(int level, const string &message)
  */
 Stopwatch::Stopwatch()
 {
-  gettimeofday(&startTime_, NULL);
+  gettimeofday(&startTime_, nullptr);
 }
 
 void
 Stopwatch::reset()
 {
-  gettimeofday(&startTime_, NULL);
+  gettimeofday(&startTime_, nullptr);
 }
 
 uint64_t
 Stopwatch::elapsedUnits(Stopwatch::Unit unit, string *label) const
 {
   timeval now_time;
-  gettimeofday(&now_time, NULL);
+  gettimeofday(&now_time, nullptr);
   time_t duration_secs = now_time.tv_sec - startTime_.tv_sec;
 
   uint64_t duration_units;
@@ -377,7 +377,7 @@ Stopwatch::elapsedUnits(Stopwatch::Unit unit, string *label) const
   case UNIT_SECONDS:
     duration_units = duration_secs
       + (now_time.tv_usec - startTime_.tv_usec + 500000) / 1000000;
-    if (NULL != label) {
+    if (nullptr != label) {
       stringstream ss_label;
       ss_label << duration_units << " secs";
       label->assign(ss_label.str());
@@ -386,7 +386,7 @@ Stopwatch::elapsedUnits(Stopwatch::Unit unit, string *label) const
   case UNIT_MICROSECONDS:
     duration_units = duration_secs * 1000000
       + now_time.tv_usec - startTime_.tv_usec;
-    if (NULL != label) {
+    if (nullptr != label) {
       stringstream ss_label;
       ss_label << duration_units << " us";
       label->assign(ss_label.str());
@@ -396,7 +396,7 @@ Stopwatch::elapsedUnits(Stopwatch::Unit unit, string *label) const
   default:
     duration_units = duration_secs * 1000
       + (now_time.tv_usec - startTime_.tv_usec + 500) / 1000;
-    if (NULL != label) {
+    if (nullptr != label) {
       stringstream ss_label;
       ss_label << duration_units << " ms";
       label->assign(ss_label.str());

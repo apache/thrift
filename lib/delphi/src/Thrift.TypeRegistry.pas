@@ -29,7 +29,7 @@ type
   TFactoryMethod<T> = function:T;
 
   TypeRegistry = class
-  private
+  strict private
     class var FTypeInfoToFactoryLookup : TDictionary<Pointer, Pointer>;
   public
     class constructor Create;

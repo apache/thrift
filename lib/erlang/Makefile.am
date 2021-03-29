@@ -32,13 +32,10 @@ ERL_FLAG = erlang
 	touch .generated
 
 all: .generated
-	$(REBAR) get-deps
 	$(REBAR) compile
 
 check: .generated
-	$(REBAR) -C rebar.test.config get-deps
-	$(REBAR) -C rebar.test.config compile
-	$(REBAR) -C rebar.test.config skip_deps=true eunit
+	$(REBAR) eunit
 
 install: all
 	mkdir -p $(DESTDIR)$(ERLANG_INSTALL_LIB_DIR_thrift) ; \

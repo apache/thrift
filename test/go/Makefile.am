@@ -19,8 +19,7 @@
 
 BUILT_SOURCES = gopath
 
-THRIFT = $(top_builddir)/compiler/cpp/thrift
-THRIFTCMD = $(THRIFT) -out src/gen --gen go:thrift_import=thrift
+THRIFTCMD = $(THRIFT) -out src/gen --gen go:thrift_import=thrift$(COMPILER_EXTRAFLAG)
 THRIFTTEST = $(top_srcdir)/test/ThriftTest.thrift
 
 precross: bin/testclient bin/testserver
@@ -28,13 +27,17 @@ precross: bin/testclient bin/testserver
 ThriftTest.thrift: $(THRIFTTEST)
 	grep -v list.*map.*list.*map $(THRIFTTEST) > ThriftTest.thrift
 
+.PHONY: gopath
+
 # Thrift for GO has problems with complex map keys: THRIFT-2063
 gopath: $(THRIFT) ThriftTest.thrift
 	mkdir -p src/gen
 	$(THRIFTCMD) ThriftTest.thrift
 	$(THRIFTCMD) ../StressTest.thrift
-	ln -nfs ../../../lib/go/thrift src/thrift
+	GOPATH=`pwd` $(GO) get github.com/golang/mock/gomock || true
+	sed -i 's/\"context\"/\"golang.org\/x\/net\/context\"/g' src/github.com/golang/mock/gomock/controller.go || true
 	GOPATH=`pwd` $(GO) get github.com/golang/mock/gomock
+	ln -nfs ../../../lib/go/thrift src/thrift
 	touch gopath
 
 bin/testclient: gopath
@@ -51,13 +54,13 @@ clean-local:
 
 check_PROGRAMS: bin/testclient bin/testserver bin/stress
 
-check: gopath
+check: gopath genmock
 	GOPATH=`pwd` $(GO) test -v common/...
 
 genmock: gopath
-	GOPATH=`pwd` $(GO) install github.com/golang/mock/mockgen
-	GOPATH=`pwd` bin/mockgen -destination=src/common/mock_handler.go -package=common gen/thrifttest ThriftTest
+	sh genmock.sh
 
 EXTRA_DIST = \
 	src/bin \
-	src/common
+	src/common \
+	genmock.sh

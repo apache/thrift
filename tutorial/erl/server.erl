@@ -36,25 +36,25 @@ add(N1, N2) ->
     N1+N2.
 
 calculate(Logid, Work) ->
-    { Op, Num1, Num2 } = { Work#work.op, Work#work.num1, Work#work.num2 },
+    { Op, Num1, Num2 } = { Work#'Work'.op, Work#'Work'.num1, Work#'Work'.num2 },
     debug("calculate(~p, {~p,~p,~p})", [Logid, Op, Num1, Num2]),
     case Op of
-        ?tutorial_Operation_ADD      -> Num1 + Num2;
-        ?tutorial_Operation_SUBTRACT -> Num1 - Num2;
-        ?tutorial_Operation_MULTIPLY -> Num1 * Num2;
+        ?TUTORIAL_OPERATION_ADD      -> Num1 + Num2;
+        ?TUTORIAL_OPERATION_SUBTRACT -> Num1 - Num2;
+        ?TUTORIAL_OPERATION_MULTIPLY -> Num1 * Num2;
 
-        ?tutorial_Operation_DIVIDE when Num2 == 0 ->
-          throw(#invalidOperation{whatOp=Op, why="Cannot divide by 0"});
-        ?tutorial_Operation_DIVIDE ->
+        ?TUTORIAL_OPERATION_DIVIDE when Num2 == 0 ->
+          throw(#'InvalidOperation'{whatOp=Op, why="Cannot divide by 0"});
+        ?TUTORIAL_OPERATION_DIVIDE ->
           Num1 div Num2;
 
         _Else ->
-          throw(#invalidOperation{whatOp=Op, why="Invalid operation"})
+          throw(#'InvalidOperation'{whatOp=Op, why="Invalid operation"})
     end.
 
 getStruct(Key) ->
     debug("getStruct(~p)", [Key]),
-    #sharedStruct{key=Key, value="RARG"}.
+    #'SharedStruct'{key=Key, value="RARG"}.
 
 zip() ->
     debug("zip", []),
@@ -63,7 +63,7 @@ zip() ->
 %%
 
 start() ->
-    start(9999).
+    start(9090).
 
 start(Port) ->
     Handler   = ?MODULE,

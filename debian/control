@@ -1,19 +1,19 @@
 Source: thrift
 Section: devel
 Priority: extra
-Build-Depends: debhelper (>= 9), build-essential, mono-gmcs, python-dev, ant,
-    mono-devel,  libmono-system-web2.0-cil, erlang-base, ruby-dev | ruby1.9.1-dev, autoconf, automake,
-    pkg-config, libtool, bison, flex, libboost-dev | libboost1.53-dev,
+Build-Depends: dotnet-runtime-3.1, dotnet-sdk-3.1, debhelper (>= 9), build-essential, python-dev, ant,
+    erlang-base, ruby-dev | ruby1.9.1-dev, ruby-bundler ,autoconf, automake,
+    pkg-config, libtool, bison, flex, libboost-dev | libboost1.56-dev | libboost1.63-all-dev,
     python-all, python-setuptools, python-all-dev, python-all-dbg,
     python3-all, python3-setuptools, python3-all-dev, python3-all-dbg,
-    openjdk-6-jdk | java-sdk,
-    libboost-test-dev | libboost-test1.53-dev, libevent-dev, libssl-dev, perl (>= 5.8.0-7),
-    php5, php5-dev, libglib2.0-dev, qtbase5-dev, qtbase5-dev-tools
+    openjdk-8-jdk | openjdk-8-jdk-headless | openjdk-11-jdk | openjdk-11-jdk-headless | default-jdk,
+    libboost-test-dev | libboost-test1.56-dev | libboost-test1.63-dev, libevent-dev, libssl-dev, perl (>= 5.8.0-7),
+    php (>= 5), php-dev (>= 5), libglib2.0-dev, qtchooser, qtbase5-dev-tools
 Maintainer: Thrift Developer's <dev@thrift.apache.org>
 Homepage: http://thrift.apache.org/
-Vcs-Git: https://git-wip-us.apache.org/repos/asf/thrift.git
-Vcs-Browser: https://git-wip-us.apache.org/repos/asf?p=thrift.git
-Standards-Version: 3.9.5
+Vcs-Git: https://github.com/apache/thrift.git
+Vcs-Browser: https://github.com/apache/thrift
+Standards-Version: 3.9.7
 X-Python-Version: >= 2.6
 X-Python3-Version: >= 3.3
 
@@ -115,7 +115,7 @@ Description: Ruby bindings for Thrift
 Package: libthrift-java
 Architecture: all
 Section: java
-Depends: java-gcj-compat | java1-runtime | java2-runtime, ${misc:Depends}
+Depends: ${misc:Depends}
 Description: Java bindings for Thrift
  Thrift is a software framework for scalable cross-language services
  development. It combines a software stack with a code generation engine to
@@ -126,17 +126,16 @@ Description: Java bindings for Thrift
  classes, and then the modules in this package will allow you to use those
  classes in your programs.
 
-Package: libthrift-cil
+Package: libthrift-netstd
 Architecture: all
-Section: cli-mono
-Depends: cli-common, libmono-corlib1.0-cil (>= 1.0), libmono-system1.0-cil (>= 1.0), 
-    libmono-system-web2.0-cil, ${misc:Depends}
-Description: CLI bindings for Thrift
+Section: netstd
+Depends: dotnet-runtime-3.1, ${misc:Depends}
+Description: NET Standard bindings for Thrift
  Thrift is a software framework for scalable cross-language services
  development. It combines a software stack with a code generation engine to
  build services that work efficiently and seamlessly.
  .
- This package contains the CLI bindings for Thrift. You will need the thrift
+ This package contains the NET Standard bindings for Thrift. You will need the thrift
  tool (in the thrift-compiler package) to compile your definition to C#
  classes, and then the modules in this package will allow you to use those
  classes in your programs.
@@ -165,6 +164,17 @@ Description: Thrift C++ library
  .
  This package contains the runtime libraries needed for C++ applications
  using Thrift.
+
+Package: libthrift0-dbg
+Architecture: any
+Section: debug
+Depends: ${shlibs:Depends}, ${misc:Depends}, libthrift0 (= ${binary:Version})
+Description: Thrift C++ library debug symbols
+ Thrift is a software framework for scalable cross-language services
+ development. It combines a software stack with a code generation engine to
+ build services that work efficiently and seamlessly.
+ .
+ This package contains the debug symbols for the Thrift C++ runtime libraries.
 
 Package: libthrift-dev
 Architecture: any

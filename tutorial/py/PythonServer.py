@@ -57,16 +57,10 @@ class CalculatorHandler:
             val = work.num1 * work.num2
         elif work.op == Operation.DIVIDE:
             if work.num2 == 0:
-                x = InvalidOperation()
-                x.whatOp = work.op
-                x.why = 'Cannot divide by 0'
-                raise x
+                raise InvalidOperation(work.op, 'Cannot divide by 0')
             val = work.num1 / work.num2
         else:
-            x = InvalidOperation()
-            x.whatOp = work.op
-            x.why = 'Invalid operation'
-            raise x
+            raise InvalidOperation(work.op, 'Invalid operation')
 
         log = SharedStruct()
         log.key = logid
@@ -82,10 +76,11 @@ class CalculatorHandler:
     def zip(self):
         print('zip()')
 
+
 if __name__ == '__main__':
     handler = CalculatorHandler()
     processor = Calculator.Processor(handler)
-    transport = TSocket.TServerSocket(port=9090)
+    transport = TSocket.TServerSocket(host='127.0.0.1', port=9090)
     tfactory = TTransport.TBufferedTransportFactory()
     pfactory = TBinaryProtocol.TBinaryProtocolFactory()
 

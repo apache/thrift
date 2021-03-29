@@ -25,12 +25,19 @@ interface
 
 uses
   {$IFDEF OLD_UNIT_NAMES}
-  Classes, Windows, SysUtils, Character, SyncObjs;
+  Classes, Windows, SysUtils, Character, SyncObjs, TypInfo, Rtti;
   {$ELSE}
-  System.Classes, Winapi.Windows, System.SysUtils, System.Character, System.SyncObjs;
+  System.Classes, Winapi.Windows, System.SysUtils, System.Character,
+  System.SyncObjs, System.TypInfo, System.Rtti;
   {$ENDIF}
 
 type
+  ISupportsToString = interface
+    ['{AF71C350-E0CD-4E94-B77C-0310DC8227FF}']
+    function ToString : string;
+  end;
+
+
   IOverlappedHelper = interface
     ['{A1832EFA-2E02-4884-8F09-F0A0277157FA}']
     function Overlapped : TOverlapped;
@@ -55,6 +62,13 @@ type
   end;
 
 
+  TThriftStringBuilder = class( TStringBuilder)
+  public
+    function Append(const Value: TBytes): TStringBuilder; overload;
+    function Append(const Value: ISupportsToString): TStringBuilder; overload;
+  end;
+
+
   Base64Utils = class sealed
   public
     class function Encode( const src : TBytes; srcOff, len : Integer; dst : TBytes; dstOff : Integer) : Integer; static;
@@ -68,9 +82,23 @@ type
     class function IsLowSurrogate( const c : Char) : Boolean; static; inline;
   end;
 
+  EnumUtils<T> = class sealed
+  public
+    class function ToString(const value : Integer) : string;  reintroduce; static; inline;
+  end;
 
-function InterlockedCompareExchange64( var Target : Int64; Exchange, Comparand : Int64) : Int64; stdcall;
-function InterlockedExchangeAdd64( var Addend : Int64; Value : Int64) : Int64; stdcall;
+  StringUtils<T> = class sealed
+  public
+    class function ToString(const value : T) : string;  reintroduce; static; inline;
+  end;
+
+
+const
+  THRIFT_MIMETYPE = 'application/x-thrift';
+
+{$IFDEF Win64}
+function InterlockedExchangeAdd64( var Addend : Int64; Value : Int64) : Int64;
+{$ENDIF}
 
 
 implementation
@@ -205,8 +233,12 @@ end;
 
 class function CharUtils.IsHighSurrogate( const c : Char) : Boolean;
 begin
-  {$IF CompilerVersion < 23.0}
-  result := Character.IsHighSurrogate( c);
+  {$IF CompilerVersion < 25.0}
+    {$IFDEF OLD_UNIT_NAMES}
+    result := Character.IsHighSurrogate(c);
+    {$ELSE}
+    result := System.Character.IsHighSurrogate(c);
+    {$ENDIF}
   {$ELSE}
   result := c.IsHighSurrogate();
   {$IFEND}
@@ -215,22 +247,31 @@ end;
 
 class function CharUtils.IsLowSurrogate( const c : Char) : Boolean;
 begin
-  {$IF CompilerVersion < 23.0}
-  result := Character.IsLowSurrogate( c);
+  {$IF CompilerVersion < 25.0}
+    {$IFDEF OLD_UNIT_NAMES}
+    result := Character.IsLowSurrogate(c);
+    {$ELSE}
+    result := System.Character.IsLowSurrogate(c);
+    {$ENDIF}
   {$ELSE}
-  result := c.IsLowSurrogate;
+  result := c.IsLowSurrogate();
   {$IFEND}
 end;
 
 
-// natively available since stone age
-function InterlockedCompareExchange64;
-external KERNEL32 name 'InterlockedCompareExchange64';
+{$IFDEF Win64}
+
+function InterlockedCompareExchange64( var Target : Int64; Exchange, Comparand : Int64) : Int64;  inline;
+begin
+  {$IFDEF OLD_UNIT_NAMES}
+  result := Windows.InterlockedCompareExchange64( Target, Exchange, Comparand);
+  {$ELSE}
+  result := WinApi.Windows.InterlockedCompareExchange64( Target, Exchange, Comparand);
+  {$ENDIF}
+end;
 
 
-// natively available >= Vista
-// implemented this way since there are still some people running Windows XP :-(
-function InterlockedExchangeAdd64( var Addend : Int64; Value : Int64) : Int64; stdcall;
+function InterlockedExchangeAdd64( var Addend : Int64; Value : Int64) : Int64;
 var old : Int64;
 begin
   repeat
@@ -239,6 +280,76 @@ begin
   result := Old;
 end;
 
+{$ENDIF}
+
+
+{ EnumUtils<T> }
+
+class function EnumUtils<T>.ToString(const value : Integer) : string;
+var pType : PTypeInfo;
+begin
+  pType := PTypeInfo(TypeInfo(T));
+  if Assigned(pType)
+  and (pType^.Kind = tkEnumeration)
+  {$IF CompilerVersion >= 23.0}   // TODO: Range correct? What we know is that XE does not offer it, but Rio has it
+  and (pType^.TypeData^.MaxValue >= value)
+  and (pType^.TypeData^.MinValue <= value)
+  {$ELSE}
+  and FALSE  // THRIFT-5048: pType^.TypeData^ member not supported -> prevent GetEnumName() from reading outside the legal range
+  {$IFEND}
+  then result := GetEnumName( PTypeInfo(pType), value)
+  else result := IntToStr(Ord(value));
+end;
+
+
+{ StringUtils<T> }
+
+class function StringUtils<T>.ToString(const value : T) : string;
+type PInterface = ^IInterface;
+var pType : PTypeInfo;
+    stos  : ISupportsToString;
+    pIntf : PInterface;  // Workaround: Rio does not allow the direct typecast
+begin
+  pType := PTypeInfo(TypeInfo(T));
+  if Assigned(pType) then begin
+    case pType^.Kind of
+
+      tkInterface : begin
+        pIntf := PInterface(@value);
+        if Supports( pIntf^, ISupportsToString, stos) then begin
+          result := stos.toString;
+          Exit;
+        end;
+      end;
+
+      tkEnumeration : begin
+        case SizeOf(value) of
+          1 : begin result := EnumUtils<T>.ToString( PShortInt(@value)^);  Exit; end;
+          2 : begin result := EnumUtils<T>.ToString( PSmallInt(@value)^);  Exit; end;
+          4 : begin result := EnumUtils<T>.ToString( PLongInt(@value)^);  Exit; end;
+        else
+          ASSERT(FALSE); // in theory, this should not happen
+        end;
+      end;
+
+    end;
+  end;
+
+  result := TValue.From<T>(value).ToString;
+end;
+
+
+{ TThriftStringBuilder }
+
+function TThriftStringBuilder.Append(const Value: TBytes): TStringBuilder;
+begin
+  Result := Append( string( RawByteString(Value)) );
+end;
+
+function TThriftStringBuilder.Append( const Value: ISupportsToString): TStringBuilder;
+begin
+  Result := Append( Value.ToString );
+end;
 
 
 end.

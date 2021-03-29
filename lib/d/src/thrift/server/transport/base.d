@@ -95,16 +95,7 @@ class TServerTransportException : TException {
 
   ///
   this(Type type, string file = __FILE__, size_t line = __LINE__, Throwable next = null) {
-    string msg = "TTransportException: ";
-    switch (type) {
-      case Type.UNKNOWN: msg ~= "Unknown server transport exception"; break;
-      case Type.NOT_LISTENING: msg ~= "Server transport not listening"; break;
-      case Type.ALREADY_LISTENING: msg ~= "Server transport already listening"; break;
-      case Type.RESOURCE_FAILED: msg ~= "An underlying resource failed"; break;
-      default: msg ~= "(Invalid exception type)"; break;
-    }
-
-    this(msg, type, file, line, next);
+    this(errorMsg(type), type, file, line, next);
   }
 
   ///
@@ -129,5 +120,18 @@ class TServerTransportException : TException {
 
 protected:
   Type type_;
+
+private:
+  string errorMsg(Type type) {
+    string msg = "TTransportException: ";
+    switch (type) {
+      case Type.UNKNOWN: msg ~= "Unknown server transport exception"; break;
+      case Type.NOT_LISTENING: msg ~= "Server transport not listening"; break;
+      case Type.ALREADY_LISTENING: msg ~= "Server transport already listening"; break;
+      case Type.RESOURCE_FAILED: msg ~= "An underlying resource failed"; break;
+      default: msg ~= "(Invalid exception type)"; break;
+    }
+    return msg;
+  }
 }
 

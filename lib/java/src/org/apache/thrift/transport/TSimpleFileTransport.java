@@ -18,6 +18,8 @@
  */
 package org.apache.thrift.transport;
 
+import org.apache.thrift.TConfiguration;
+
 import java.io.IOException;
 import java.io.RandomAccessFile;
 
@@ -25,26 +27,43 @@ import java.io.RandomAccessFile;
 /**
  * Basic file support for the TTransport interface
  */
-public final class TSimpleFileTransport extends TTransport {
+public final class TSimpleFileTransport extends TEndpointTransport {
 
-  private RandomAccessFile file = null;   
-  private boolean readable;               
-  private boolean writable;               
-  private String path_;               
+  private RandomAccessFile file = null;
+  private boolean readable;
+  private boolean writable;
+  private String path_;
 
 
   /**
-   * Create a transport backed by a simple file 
-   * 
+   * Create a transport backed by a simple file
+   *
    * @param path the path to the file to open/create
    * @param read true to support read operations
    * @param write true to support write operations
    * @param openFile true to open the file on construction
    * @throws TTransportException if file open fails
    */
-  public TSimpleFileTransport(String path, boolean read, 
+  public TSimpleFileTransport(String path, boolean read,
                               boolean write, boolean openFile)
           throws TTransportException {
+    this(new TConfiguration(), path, read, write, openFile);
+  }
+
+  /**
+   * Create a transport backed by a simple file
+   *
+   * @param config
+   * @param path the path to the file to open/create
+   * @param read true to support read operations
+   * @param write true to support write operations
+   * @param openFile true to open the file on construction
+   * @throws TTransportException if file open fails
+   */
+  public TSimpleFileTransport(TConfiguration config, String path, boolean read,
+                              boolean write, boolean openFile)
+          throws TTransportException {
+    super(config);
     if (path.length() <= 0) {
       throw new TTransportException("No path specified");
     }
@@ -58,11 +77,11 @@ public final class TSimpleFileTransport extends TTransport {
       open();
     }
   }
-  
+
   /**
-   * Create a transport backed by a simple file 
+   * Create a transport backed by a simple file
    * Implicitly opens file to conform to C++ behavior.
-   * 
+   *
    * @param path the path to the file to open/create
    * @param read true to support read operations
    * @param write true to support write operations
@@ -72,7 +91,7 @@ public final class TSimpleFileTransport extends TTransport {
           throws TTransportException {
     this(path, read, write, true);
   }
-  
+
   /**
    * Create a transport backed by a simple read only disk file (implicitly opens
    * file)
@@ -95,7 +114,7 @@ public final class TSimpleFileTransport extends TTransport {
   }
 
   /**
-   * Open file if not previously opened. 
+   * Open file if not previously opened.
    *
    * @throws TTransportException if open fails
    */
@@ -111,7 +130,7 @@ public final class TSimpleFileTransport extends TTransport {
       } catch (IOException ioe) {
         file = null;
         throw new TTransportException(ioe.getMessage());
-      }      
+      }
     }
   }
 
@@ -131,7 +150,7 @@ public final class TSimpleFileTransport extends TTransport {
   }
 
   /**
-   * Read up to len many bytes into buf at offset 
+   * Read up to len many bytes into buf at offset
    *
    * @param buf houses bytes read
    * @param off offset into buff to begin writing to
@@ -144,6 +163,7 @@ public final class TSimpleFileTransport extends TTransport {
     if (!readable) {
       throw new TTransportException("Read operation on write only file");
     }
+    checkReadBytesAvailable(len);
     int iBytesRead = 0;
     try {
       iBytesRead = file.read(buf, off, len);
@@ -155,7 +175,7 @@ public final class TSimpleFileTransport extends TTransport {
   }
 
   /**
-   * Write len many bytes from buff starting at offset 
+   * Write len many bytes from buff starting at offset
    *
    * @param buf buffer containing bytes to write
    * @param off offset into buffer to begin writing from

@@ -56,5 +56,9 @@ module Thrift
     end
 
     alias to_io handle
+
+    def to_s
+      "domain(#{@path})"
+    end
   end
 end

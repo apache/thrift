@@ -17,13 +17,15 @@
  * under the License.
  */
 
-#include <boost/test/auto_unit_test.hpp>
+#include <boost/test/unit_test.hpp>
 #include <thrift/transport/TSocket.h>
 #include <thrift/transport/TServerTransport.h>
+#include <memory>
 
 using apache::thrift::transport::TServerTransport;
 using apache::thrift::transport::TTransport;
 using apache::thrift::transport::TTransportException;
+using std::shared_ptr;
 
 BOOST_AUTO_TEST_SUITE(TServerTransportTest)
 
@@ -32,13 +34,13 @@ class TestTTransport : public TTransport {};
 class TestTServerTransport : public TServerTransport {
 public:
   TestTServerTransport() : valid_(true) {}
-  void close() {}
+  void close() override {}
   bool valid_;
 
 protected:
-  boost::shared_ptr<TTransport> acceptImpl() {
-    return valid_ ? boost::shared_ptr<TestTTransport>(new TestTTransport)
-                  : boost::shared_ptr<TestTTransport>();
+  shared_ptr<TTransport> acceptImpl() override {
+    return valid_ ? std::make_shared<TestTTransport>()
+                  : shared_ptr<TestTTransport>();
   }
 };
 

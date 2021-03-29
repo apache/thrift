@@ -30,7 +30,7 @@
 
 G_DEFINE_TYPE (ThriftTestHandler,
                thrift_test_handler,
-               T_TEST_TYPE_THRIFT_TEST_HANDLER);
+               T_TEST_TYPE_THRIFT_TEST_HANDLER)
 
 gboolean
 thrift_test_handler_test_void (TTestThriftTestIf  *iface,
@@ -367,7 +367,7 @@ thrift_test_handler_test_list (TTestThriftTestIf  *iface,
   printf ("testList({");
   for (i = 0; i < thing->len; i += 1) {
     gint32 value;
-    gint32 *new_value;
+    gint32 new_value;
 
     if (first)
       first = FALSE;
@@ -377,9 +377,8 @@ thrift_test_handler_test_list (TTestThriftTestIf  *iface,
     value = g_array_index (thing, gint32, i);
     printf ("%d", value);
 
-    new_value = g_malloc (sizeof *new_value);
-    *new_value = value;
-    g_array_append_val (*_return, *new_value);
+    new_value = value;
+    g_array_append_val (*_return, new_value);
   }
   printf ("})\n");
 
@@ -591,6 +590,9 @@ thrift_test_handler_test_insanity (TTestThriftTestIf    *iface,
                 byte_thing,
                 i32_thing,
                 i64_thing);
+        if (string_thing != NULL) {
+          g_free (string_thing);
+        }
       }
       printf ("}");
       g_ptr_array_unref (xtructs);
@@ -624,10 +626,10 @@ thrift_test_handler_test_multi (TTestThriftTestIf   *iface,
   printf ("testMulti()\n");
 
   g_object_set (*_return,
-                "string_thing", g_strdup ("Hello2"),
-                "byte_thing",   arg0,
-                "i32_thing",    arg1,
-                "i64_thing",    arg2,
+                "string_thing", "Hello2",
+                "byte_thing",    arg0,
+                "i32_thing",     arg1,
+                "i64_thing",     arg2,
                 NULL);
 
   return TRUE;
@@ -654,7 +656,7 @@ thrift_test_handler_test_exception (TTestThriftTestIf  *iface,
        argument, set *error to NULL and return FALSE */
     *err1 = g_object_new (T_TEST_TYPE_XCEPTION,
                           "errorCode", 1001,
-                          "message",   g_strdup (arg),
+                          "message",   arg,
                           NULL);
     *error = NULL;
     result = FALSE;
@@ -676,7 +678,7 @@ thrift_test_handler_test_exception (TTestThriftTestIf  *iface,
     /* This code is duplicated from the C++ test suite, though it
        appears to serve no purpose */
     xtruct = g_object_new (T_TEST_TYPE_XTRUCT,
-                           "string_thing", g_strdup (arg),
+                           "string_thing", arg,
                            NULL);
     g_object_unref (xtruct);
 
@@ -709,7 +711,7 @@ thrift_test_handler_test_multi_exception (TTestThriftTestIf  *iface,
   if (strncmp (arg0, "Xception", 8) == 0 && strlen(arg0) == 8) {
     *err1 = g_object_new (T_TEST_TYPE_XCEPTION,
                           "errorCode", 1001,
-                          "message",   g_strdup ("This is an Xception"),
+                          "message",  "This is an Xception",
                           NULL);
     result = FALSE;
   }
@@ -722,7 +724,7 @@ thrift_test_handler_test_multi_exception (TTestThriftTestIf  *iface,
                   "struct_thing", &struct_thing,
                   NULL);
     g_object_set (struct_thing,
-                  "string_thing", g_strdup ("This is an Xception2"),
+                  "string_thing", "This is an Xception2",
                   NULL);
     g_object_set (*err2,
                   "struct_thing", struct_thing,
@@ -733,7 +735,7 @@ thrift_test_handler_test_multi_exception (TTestThriftTestIf  *iface,
   }
   else {
     g_object_set (*_return,
-                  "string_thing", g_strdup (arg1),
+                  "string_thing", arg1,
                   NULL);
     result = TRUE;
   }

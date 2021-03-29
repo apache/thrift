@@ -26,7 +26,7 @@ For example, if you changed something in `nodejs` library and need to verify
 the patch, you can skip everything except `nodejs` itself and some reference
 implementation (currently `cpp` and `java` are recommended) like this:
 
-    ./configure --without-c_glib -without-csharp --without-erlang --without-lua ...
+    ./configure --without-c_glib --without-erlang --without-lua ...
     make precross -j8
     test/test.py --server cpp,java --client nodejs
     test/test.py --server nodejs --client cpp,java
@@ -121,37 +121,45 @@ line interface:
 
 **Server command line interface:**
 
-    $ ./cpp/TestServer -h
+    $ ./TestServer -h
     Allowed options:
-      -h [ --help ]               produce help message
-      --port arg (=9090)          Port number to listen
-      --domain-socket arg         Unix Domain Socket (e.g. /tmp/ThriftTest.thrift)
-      --named-pipe arg            Windows Named Pipe (e.g. MyThriftPipe)
-      --server-type arg (=simple) type of server, "simple", "thread-pool",
-                                  "threaded", or "nonblocking"
-      --transport arg (=buffered) transport: buffered, framed, http, anonpipe
-      --protocol arg (=binary)    protocol: binary, compact, json
-      --ssl                       Encrypted Transport using SSL
-      --processor-events          processor-events
-      -n [ --workers ] arg (=4)   Number of thread pools workers. Only valid for
-                              thread-pool server type
+      -h | --help                  produce help message
+      --port=arg (9090)            Port number to listen
+      --domain-socket=arg          Unix Domain Socket (e.g. /tmp/ThriftTest.thrift)
+      --pipe=arg                   Windows Named Pipe (e.g. MyThriftPipe)
+      --server-type=arg (simple)   type of server, "simple", "thread-pool",
+                                   "threaded", or "nonblocking"
+      --transport=arg (buffered)   transport: buffered, framed, http, anonpipe, zlib
+      --protocol=arg (binary)      protocol: binary, compact, header, json
+      --multiplex                  Add TMultiplexedProtocol service name "ThriftTest"
+      --abstract-namespace         Create the domain socket in the Abstract Namespace 
+                                   (no connection with filesystem pathnames)
+      --ssl                        Encrypted Transport using SSL
+      --zlib                       Wrapped Transport using Zlib
+      --processor-events           processor-events
+      -n=arg | --workers=arg (=4)  Number of thread pools workers. Only valid for
+                                   thread-pool server type
 
 **Client command line interface:**
 
-    $ ./cpp/TestClient -h
+    $ ./TestClient -h
     Allowed options:
-      -h [ --help ]               produce help message
-      --host arg (=localhost)     Host to connect
-      --port arg (=9090)          Port number to connect
-      --domain-socket arg         Domain Socket (e.g. /tmp/ThriftTest.thrift),
-                                  instead of host and port
-      --named-pipe arg            Windows Named Pipe (e.g. MyThriftPipe)
-      --anon-pipes hRead hWrite   Windows Anonymous Pipes pair (handles)
-      --transport arg (=buffered) Transport: buffered, framed, http, evhttp
-      --protocol arg (=binary)    Protocol: binary, compact, json
-      --ssl                       Encrypted Transport using SSL
-      -n [ --testloops ] arg (=1) Number of Tests
-      -t [ --threads ] arg (=1)   Number of Test threads
+      -h | --help                  produce help message
+      --host=arg (localhost)       Host to connect
+      --port=arg (9090)            Port number to connect
+      --domain-socket=arg          Domain Socket (e.g. /tmp/ThriftTest.thrift),
+                                   instead of host and port
+      --pipe=arg                   Windows Named Pipe (e.g. MyThriftPipe)
+      --anon-pipes hRead hWrite    Windows Anonymous Pipes pair (handles)
+      --abstract-namespace         Create the domain socket in the Abstract Namespace
+                                   (no connection with filesystem pathnames)
+      --transport=arg (buffered)   Transport: buffered, framed, http, evhttp, zlib
+      --protocol=arg (binary)      Protocol: binary, compact, header, json
+      --multiplex                  Add TMultiplexedProtocol service name "ThriftTest"
+      --ssl                        Encrypted Transport using SSL
+      --zlib                       Wrap Transport with Zlib
+      -n=arg | --testloops=arg (1) Number of Tests
+      -t=arg | --threads=arg (1)   Number of Test threads
 
 If you have executed the **make check** or **make cross** then you will be able to browse
 [gen-html/ThriftTest.html](gen-html/ThriftTest.html) with the test documentation.
@@ -166,7 +174,7 @@ failing tests:
       #define TEST_STRUCTS       2  // 0000 0010
       #define TEST_CONTAINERS    4  // 0000 0100
       #define TEST_EXCEPTIONS    8  // 0000 1000
-      #define TEST_UNKNOWN      64  // 0100 0000 (Failed to prepare environemt etc.)
+      #define TEST_UNKNOWN      64  // 0100 0000 (Failed to prepare environment etc.)
       #define TEST_TIMEOUT     128  // 1000 0000
       #define TEST_NOTUSED      48  // 0011 0000 (reserved bits)
 

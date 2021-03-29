@@ -25,66 +25,31 @@ uses
   Classes, Windows, SysUtils, Generics.Collections, TypInfo,
   Thrift in '..\..\src\Thrift.pas',
   Thrift.Transport in '..\..\src\Thrift.Transport.pas',
+  Thrift.Exception in '..\..\src\Thrift.Exception.pas',
   Thrift.Socket in '..\..\src\Thrift.Socket.pas',
   Thrift.Protocol in '..\..\src\Thrift.Protocol.pas',
   Thrift.Protocol.JSON in '..\..\src\Thrift.Protocol.JSON.pas',
   Thrift.Collections in '..\..\src\Thrift.Collections.pas',
+  Thrift.Configuration in '..\..\src\Thrift.Configuration.pas',
   Thrift.Server in '..\..\src\Thrift.Server.pas',
-  Thrift.Console in '..\..\src\Thrift.Console.pas',
   Thrift.Utils in '..\..\src\Thrift.Utils.pas',
   Thrift.Serializer in '..\..\src\Thrift.Serializer.pas',
   Thrift.Stream in '..\..\src\Thrift.Stream.pas',
+  Thrift.WinHTTP in '..\..\src\Thrift.WinHTTP.pas',
   Thrift.TypeRegistry in '..\..\src\Thrift.TypeRegistry.pas',
-  DebugProtoTest;
+  Thrift.Test, // in 'gen-delphi\Thrift.Test.pas',
+  Test.TypeRegistry,
+  Test.EnumToString;
 
-type
-  Tester<T : IInterface> = class
-  public
-    class procedure Test;
-  end;
-
-class procedure Tester<T>.Test;
-var instance : T;
-    name : string;
-begin
-  instance := TypeRegistry.Construct<T>;
-  name := GetTypeName(TypeInfo(T));
-  if instance <> nil
-  then Writeln( name, ' = ok')
-  else begin
-    Writeln( name, ' = failed');
-    raise Exception.Create( 'Test with '+name+' failed!');
-  end;
-end;
 
 begin
-  Writeln('Testing ...');
-  Tester<IDoubles>.Test;
-  Tester<IOneOfEach>.Test;
-  Tester<IBonk>.Test;
-  Tester<INesting>.Test;
-  Tester<IHolyMoley>.Test;
-  Tester<IBackwards>.Test;
-  Tester<IEmpty>.Test;
-  Tester<IWrapper>.Test;
-  Tester<IRandomStuff>.Test;
-  Tester<IBase64>.Test;
-  Tester<ICompactProtoTestStruct>.Test;
-  Tester<ISingleMapTestStruct>.Test;
-  Tester<IBlowUp>.Test;
-  Tester<IReverseOrderStruct>.Test;
-  Tester<IStructWithSomeEnum>.Test;
-  Tester<ITestUnion>.Test;
-  Tester<ITestUnionMinusStringField>.Test;
-  Tester<IComparableUnion>.Test;
-  Tester<IStructWithAUnion>.Test;
-  Tester<IPrimitiveThenStruct>.Test;
-  Tester<IStructWithASomemap>.Test;
-  Tester<IBigFieldIdStruct>.Test;
-  Tester<IBreaksRubyCompactProtocol>.Test;
-  Tester<ITupleProtocolTestStruct>.Test;
-  Writeln('Completed.');
+  try
+    Test.TypeRegistry.RunTest;
+    Test.EnumToString.RunTest;
 
-
+    Writeln('Completed.');
+  except
+    on e:Exception do Writeln(e.ClassName,': ',e.Message);
+  end;
 end.
 

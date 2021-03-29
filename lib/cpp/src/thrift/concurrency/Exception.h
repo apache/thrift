@@ -35,7 +35,7 @@ class InvalidArgumentException : public apache::thrift::TException {};
 
 class IllegalStateException : public apache::thrift::TException {
 public:
-  IllegalStateException() {}
+  IllegalStateException() = default;
   IllegalStateException(const std::string& message) : TException(message) {}
 };
 
@@ -53,7 +53,7 @@ public:
 
 class SystemResourceException : public apache::thrift::TException {
 public:
-  SystemResourceException() {}
+  SystemResourceException() = default;
 
   SystemResourceException(const std::string& message) : TException(message) {}
 };

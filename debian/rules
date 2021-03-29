@@ -29,7 +29,7 @@ configure-stamp:
 
 	# Add here commands to configure the package.
 	if [ -f bootstrap.sh ]; then $(CURDIR)/bootstrap.sh; fi
-	$(CURDIR)/configure --prefix=/usr
+	$(CURDIR)/configure --prefix=/usr --enable-plugin=no
 
 	touch configure-stamp
 
@@ -73,10 +73,10 @@ build-indep-stamp: configure-stamp $(CURDIR)/compiler/cpp/thrift
 
 	# Java
 	cd $(CURDIR)/lib/java && \
-		ant
+		./gradlew --no-daemon -Prelease=true jar
 
 	# C#
-	$(MAKE) -C $(CURDIR)/lib/csharp
+	$(MAKE) -C $(CURDIR)/lib/netstd
 
 	# Ruby
 	$(MAKE) -C $(CURDIR)/lib/rb
@@ -102,7 +102,7 @@ install: install-indep install-arch
 install-indep:
 	dh_testdir
 	dh_testroot
-	dh_clean -k -i
+	dh_prep -i
 	dh_installdirs -i
 
 	# Add here commands to install the indep part of the package into
@@ -111,7 +111,7 @@ install-indep:
 
 	# Java
 	mkdir -p $(CURDIR)/debian/libthrift-java/usr/share/java/ && \
-	cp $(CURDIR)/lib/java/build/libthrift*.jar \
+	cp $(CURDIR)/lib/java/build/libs/libthrift*.jar \
 		$(CURDIR)/debian/libthrift-java/usr/share/java/
 
 	# Ruby
@@ -122,13 +122,14 @@ install-indep:
 		$(CURDIR)/debian/ruby-thrift/usr/lib/ruby/1.9.1
 
 	# C#
-	mkdir -p $(CURDIR)/debian/libthrift-cil/usr/lib/cli/thrift/ && \
-	cp $(CURDIR)/lib/csharp/Thrift.dll \
-		$(CURDIR)/debian/libthrift-cil/usr/lib/cli/thrift/Thrift.dll
+	mkdir -p $(CURDIR)/debian/libthrift-netstd/usr/lib/cli/thrift/ && \
+	cp $(CURDIR)/lib/netstd/Thrift/bin/Release/netstandard2.0/Thrift.dll \
+		$(CURDIR)/debian/libthrift-netstd/usr/lib/cli/thrift/Thrift.dll
 
 	# Perl
 	$(MAKE) -C $(CURDIR)/lib/perl install DESTDIR=$(CURDIR)/debian/libthrift-perl
-	mv $(CURDIR)/debian/libthrift-perl/usr/local/lib/perl5 $(CURDIR)/debian/libthrift-perl/usr/lib
+	mkdir -p $(CURDIR)/debian/libthrift-perl/usr/share
+	mv $(CURDIR)/debian/libthrift-perl/usr/local/lib/perl5 $(CURDIR)/debian/libthrift-perl/usr/share
 	rmdir $(CURDIR)/debian/libthrift-perl/usr/local/lib
 	rmdir $(CURDIR)/debian/libthrift-perl/usr/local
 
@@ -199,9 +200,10 @@ binary-common:
 	dh_installexamples
 	dh_installman
 	dh_link
+	dh_strip -plibthrift0 --dbg-package=libthrift0-dbg
 	dh_strip -ppython-thrift --dbg-package=python-thrift-dbg
 	dh_strip -ppython3-thrift --dbg-package=python3-thrift-dbg
-	dh_strip -pthrift-compiler -plibthrift0
+	dh_strip -pthrift-compiler
 	dh_compress
 	dh_fixperms
 	dh_makeshlibs

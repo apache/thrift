@@ -118,8 +118,8 @@ function TCompactProtocol:writeMessageEnd()
 end
 
 function TCompactProtocol:writeStructBegin(name)
-  self.lastFieldIndex = self.lastFieldIndex + 1
   self.lastField[self.lastFieldIndex] = self.lastFieldId
+  self.lastFieldIndex = self.lastFieldIndex + 1
   self.lastFieldId = 0
 end
 
@@ -176,7 +176,6 @@ function TCompactProtocol:writeBool(bool)
   if bool then
     value = TCompactType.COMPACT_BOOLEAN_TRUE
   end
-  print(value,self.booleanFieldPending,self.booleanFieldId)
   if self.booleanFieldPending then
     self:writeFieldBeginInternal(self.booleanFieldName, TType.BOOL, self.booleanFieldId, value)
     self.booleanFieldPending = false
@@ -293,17 +292,20 @@ function TCompactProtocol:readFieldBegin()
   if ttype == TType.STOP then
     return nil, ttype, 0
   end
-  -- mask off the 4 MSB of the type header. it could contain a field id delta.
-  local modifier = libluabitwise.shiftr(libluabitwise.band(field_and_ttype, 0xf0), 4)
+  local modifier = libluabitwise.shiftr(field_and_ttype, 4)
   local id = 0
   if modifier == 0 then
     id = self:readI16()
   else
     id = self.lastFieldId + modifier
   end
-  if ttype == TType.BOOL then
-    boolValue = libluabitwise.band(field_and_ttype, 0x0f) == TCompactType.COMPACT_BOOLEAN_TRUE
-    boolValueIsNotNull = true
+  local type = libluabitwise.band(field_and_ttype, 0x0f)
+  if type == TCompactType.COMPACT_BOOLEAN_TRUE then
+    self.boolValue = true
+    self.boolValueIsNotNull = true
+  elseif type == TCompactType.COMPACT_BOOLEAN_FALSE then
+    self.boolValue = false
+    self.boolValueIsNotNull = true
   end
   self.lastFieldId = id
   return nil, ttype, id
@@ -314,10 +316,10 @@ end
 
 function TCompactProtocol:readMapBegin()
   local size = self:readVarint32()
-  if size < 0 then
-    return nil,nil,nil
+  local kvtype = 0
+  if size > 0 then
+    kvtype = self:readSignByte()
   end
-  local kvtype = self:readSignByte()
   local ktype = self:getTType(libluabitwise.shiftr(kvtype, 4))
   local vtype = self:getTType(kvtype)
   return ktype, vtype, size
@@ -350,9 +352,9 @@ function TCompactProtocol:readSetEnd()
 end
 
 function TCompactProtocol:readBool()
-  if boolValueIsNotNull then
-    boolValueIsNotNull = true
-    return boolValue
+  if self.boolValueIsNotNull then
+    self.boolValueIsNotNull = false
+    return self.boolValue
   end
   local val = self:readSignByte()
   if val == TCompactType.COMPACT_BOOLEAN_TRUE then
@@ -426,7 +428,7 @@ function TCompactProtocol:readVarint64()
   local data = result(0)
   local shiftl = 0
   while true do
-    b = self:readByte()
+    b = self:readSignByte()
     endFlag, data = libluabpack.fromVarint64(b, shiftl, data)
     shiftl = shiftl + 7
     if endFlag == 0 then

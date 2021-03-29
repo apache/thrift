@@ -21,91 +21,90 @@
 # Please see doc/old-thrift-license.txt in the Thrift distribution for
 # details.
 
-AM_YFLAGS = -d
-LIBS =
-BUILT_SOURCES = src/thrifty.cc
+AUTOMAKE_OPTIONS = subdir-objects nostdinc
+
+SUBDIRS = src .
+if WITH_TESTS
+SUBDIRS += test
+endif
 
 bin_PROGRAMS = thrift
 
-noinst_LIBRARIES = libparse.a
-
 thrift_OBJDIR = obj
 
-thrift_SOURCES = src/main.cc \
-                 src/generate/t_generator.cc \
-                 src/generate/t_generator_registry.h \
-                 src/globals.h \
-                 src/main.h \
-                 src/platform.h \
-                 src/logging.h \
-                 src/audit/t_audit.cpp \
-                 src/audit/t_audit.h \
-                 src/parse/t_doc.h \
-                 src/parse/t_type.h \
-                 src/parse/t_base_type.h \
-                 src/parse/t_enum.h \
-                 src/parse/t_enum_value.h \
-                 src/parse/t_typedef.h \
-                 src/parse/t_typedef.cc \
-                 src/parse/t_container.h \
-                 src/parse/t_list.h \
-                 src/parse/t_set.h \
-                 src/parse/t_map.h \
-                 src/parse/t_struct.h \
-                 src/parse/t_field.h \
-                 src/parse/t_service.h \
-                 src/parse/t_function.h \
-                 src/parse/t_program.h \
-                 src/parse/t_scope.h \
-                 src/parse/t_const.h \
-                 src/parse/t_const_value.h \
-                 src/parse/parse.cc \
-                 src/generate/t_generator.h \
-                 src/generate/t_oop_generator.h \
-                 src/generate/t_html_generator.h \
-                 src/windows/config.h \
-                 src/windows/version.h
+thrift_SOURCES = src/thrift/audit/t_audit.cpp \
+                 src/thrift/audit/t_audit.h \
+                 src/thrift/common.cc \
+                 src/thrift/common.h \
+                 src/thrift/generate/t_generator.cc \
+                 src/thrift/generate/t_generator.h \
+                 src/thrift/generate/t_generator_registry.h \
+                 src/thrift/generate/t_html_generator.h \
+                 src/thrift/generate/t_oop_generator.h \
+                 src/thrift/globals.h \
+                 src/thrift/logging.h \
+                 src/thrift/main.cc \
+                 src/thrift/main.h \
+                 src/thrift/version.h \
+                 src/thrift/parse/parse.cc \
+                 src/thrift/parse/t_base_type.h \
+                 src/thrift/parse/t_const.h \
+                 src/thrift/parse/t_const_value.h \
+                 src/thrift/parse/t_container.h \
+                 src/thrift/parse/t_doc.h \
+                 src/thrift/parse/t_enum.h \
+                 src/thrift/parse/t_enum_value.h \
+                 src/thrift/parse/t_field.h \
+                 src/thrift/parse/t_function.h \
+                 src/thrift/parse/t_list.h \
+                 src/thrift/parse/t_map.h \
+                 src/thrift/parse/t_program.h \
+                 src/thrift/parse/t_scope.h \
+                 src/thrift/parse/t_service.h \
+                 src/thrift/parse/t_set.h \
+                 src/thrift/parse/t_struct.h \
+                 src/thrift/parse/t_type.h \
+                 src/thrift/parse/t_typedef.cc \
+                 src/thrift/parse/t_typedef.h \
+                 src/thrift/platform.h
 
 # Specific client generator source
-thrift_SOURCES += src/generate/t_c_glib_generator.cc \
-                  src/generate/t_cpp_generator.cc \
-                  src/generate/t_java_generator.cc \
-                  src/generate/t_json_generator.cc \
-                  src/generate/t_as3_generator.cc \
-                  src/generate/t_dart_generator.cc \
-                  src/generate/t_haxe_generator.cc \
-                  src/generate/t_csharp_generator.cc \
-                  src/generate/t_py_generator.cc \
-                  src/generate/t_rb_generator.cc \
-                  src/generate/t_perl_generator.cc \
-                  src/generate/t_php_generator.cc \
-                  src/generate/t_erl_generator.cc \
-                  src/generate/t_erlang_generator.cc \
-                  src/generate/t_cocoa_generator.cc \
-                  src/generate/t_swift_generator.cc \
-                  src/generate/t_st_generator.cc \
-                  src/generate/t_ocaml_generator.cc \
-                  src/generate/t_hs_generator.cc \
-                  src/generate/t_xsd_generator.cc \
-                  src/generate/t_xml_generator.cc \
-                  src/generate/t_html_generator.cc \
-                  src/generate/t_js_generator.cc \
-                  src/generate/t_javame_generator.cc \
-                  src/generate/t_delphi_generator.cc \
-                  src/generate/t_go_generator.cc \
-                  src/generate/t_gv_generator.cc \
-                  src/generate/t_d_generator.cc \
-                  src/generate/t_lua_generator.cc
+thrift_SOURCES += src/thrift/generate/t_as3_generator.cc \
+                  src/thrift/generate/t_c_glib_generator.cc \
+                  src/thrift/generate/t_cl_generator.cc \
+                  src/thrift/generate/t_cpp_generator.cc \
+                  src/thrift/generate/t_d_generator.cc \
+                  src/thrift/generate/t_dart_generator.cc \
+                  src/thrift/generate/t_delphi_generator.cc \
+                  src/thrift/generate/t_erl_generator.cc \
+                  src/thrift/generate/t_erlang_generator.cc \
+                  src/thrift/generate/t_go_generator.cc \
+                  src/thrift/generate/t_gv_generator.cc \
+                  src/thrift/generate/t_haxe_generator.cc \
+                  src/thrift/generate/t_hs_generator.cc \
+                  src/thrift/generate/t_html_generator.cc \
+                  src/thrift/generate/t_markdown_generator.cc \
+                  src/thrift/generate/t_java_generator.cc \
+                  src/thrift/generate/t_javame_generator.cc \
+                  src/thrift/generate/t_js_generator.cc \
+                  src/thrift/generate/t_json_generator.cc \
+                  src/thrift/generate/t_lua_generator.cc \
+                  src/thrift/generate/t_netstd_generator.cc \
+                  src/thrift/generate/t_netstd_generator.h \
+                  src/thrift/generate/t_ocaml_generator.cc \
+                  src/thrift/generate/t_perl_generator.cc \
+                  src/thrift/generate/t_php_generator.cc \
+                  src/thrift/generate/t_py_generator.cc \
+                  src/thrift/generate/t_rb_generator.cc \
+                  src/thrift/generate/t_rs_generator.cc \
+                  src/thrift/generate/t_st_generator.cc \
+                  src/thrift/generate/t_swift_generator.cc \
+                  src/thrift/generate/t_xml_generator.cc \
+                  src/thrift/generate/t_xsd_generator.cc
 
 thrift_CPPFLAGS = -I$(srcdir)/src
-thrift_CXXFLAGS = -Wall -Wextra -pedantic
-thrift_LDADD = @LEXLIB@ libparse.a
-
-libparse_a_CPPFLAGS = -I$(srcdir)/src
-libparse_a_CXXFLAGS = -Wall -Wno-sign-compare -Wno-unused
-
-libparse_a_SOURCES = src/thrifty.yy \
-                     src/thriftl.ll
+thrift_CXXFLAGS = -Wall -Wextra -pedantic -Werror
+thrift_LDADD = @LEXLIB@ src/thrift/libparse.a
 
 WINDOWS_DIST = \
              compiler.sln \
@@ -116,12 +115,14 @@ EXTRA_DIST = \
              coding_standards.md \
              README.md \
              CMakeLists.txt \
+             test \
+             tests \
              $(WINDOWS_DIST)
 
-clean-local:
-	$(RM) thriftl.cc thrifty.cc thrifty.h thrifty.hh version.h windows/version.h
+#clean-local:
+#	$(RM) version.h   -- do not delete, we need it
 
-src/main.cc: version.h
+src/thrift/main.cc: src/thrift/version.h
 
 style-local:
 	$(CPPSTYLE_CMD)

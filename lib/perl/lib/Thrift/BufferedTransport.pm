@@ -17,15 +17,17 @@
 # under the License.
 #
 
-require 5.6.0;
+use 5.10.0;
 use strict;
 use warnings;
 
 use Thrift;
+use Thrift::Exception;
 use Thrift::Transport;
 
 package Thrift::BufferedTransport;
 use base('Thrift::Transport');
+use version 0.77; our $VERSION = version->declare("$Thrift::VERSION");
 
 sub new
 {
@@ -110,6 +112,7 @@ sub flush
 # BufferedTransport factory creates buffered transport objects from transports
 #
 package Thrift::BufferedTransportFactory;
+use version 0.77; our $VERSION = version->declare("$Thrift::VERSION");
 
 sub new {
     my $classname = shift;

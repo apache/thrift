@@ -62,6 +62,7 @@ public:
    * This method is meant to eventually be nonvirtual and inlinable.
    */
   uint32_t read(uint8_t* buf, uint32_t len) {
+    checkReadBytesAvailable(len);
     uint8_t* new_rBase = rBase_ + len;
     if (TDB_LIKELY(new_rBase <= rBound_)) {
       std::memcpy(buf, rBase_, len);
@@ -120,6 +121,7 @@ public:
    * Consume doesn't require a slow path.
    */
   void consume(uint32_t len) {
+    countConsumedMessageBytes(len);
     if (TDB_LIKELY(static_cast<ptrdiff_t>(len) <= rBound_ - rBase_)) {
       rBase_ += len;
     } else {
@@ -137,7 +139,7 @@ protected:
   /**
    * Slow path borrow.
    *
-   * POSTCONDITION: return == NULL || rBound_ - rBase_ >= *len
+   * POSTCONDITION: return == nullptr || rBound_ - rBase_ >= *len
    */
   virtual const uint8_t* borrowSlow(uint8_t* buf, uint32_t* len) = 0;
 
@@ -148,7 +150,8 @@ protected:
    * performance-sensitive operation, so it is okay to just leave it to
    * the concrete class to set up pointers correctly.
    */
-  TBufferBase() : rBase_(NULL), rBound_(NULL), wBase_(NULL), wBound_(NULL) {}
+  TBufferBase(std::shared_ptr<TConfiguration> config = nullptr) 
+    : TVirtualTransport(config), rBase_(nullptr), rBound_(nullptr), wBase_(nullptr), wBound_(nullptr) {}
 
   /// Convenience mutator for setting the read buffer.
   void setReadBuffer(uint8_t* buf, uint32_t len) {
@@ -162,7 +165,7 @@ protected:
     wBound_ = buf + len;
   }
 
-  virtual ~TBufferBase() {}
+  ~TBufferBase() override = default;
 
   /// Reads begin here.
   uint8_t* rBase_;
@@ -186,8 +189,9 @@ public:
   static const int DEFAULT_BUFFER_SIZE = 512;
 
   /// Use default buffer sizes.
-  TBufferedTransport(boost::shared_ptr<TTransport> transport)
-    : transport_(transport),
+  TBufferedTransport(std::shared_ptr<TTransport> transport, std::shared_ptr<TConfiguration> config = nullptr)
+    : TVirtualTransport(config),
+      transport_(transport),
       rBufSize_(DEFAULT_BUFFER_SIZE),
       wBufSize_(DEFAULT_BUFFER_SIZE),
       rBuf_(new uint8_t[rBufSize_]),
@@ -196,8 +200,9 @@ public:
   }
 
   /// Use specified buffer sizes.
-  TBufferedTransport(boost::shared_ptr<TTransport> transport, uint32_t sz)
-    : transport_(transport),
+  TBufferedTransport(std::shared_ptr<TTransport> transport, uint32_t sz, std::shared_ptr<TConfiguration> config = nullptr)
+    : TVirtualTransport(config),
+      transport_(transport),
       rBufSize_(sz),
       wBufSize_(sz),
       rBuf_(new uint8_t[rBufSize_]),
@@ -206,8 +211,10 @@ public:
   }
 
   /// Use specified read and write buffer sizes.
-  TBufferedTransport(boost::shared_ptr<TTransport> transport, uint32_t rsz, uint32_t wsz)
-    : transport_(transport),
+  TBufferedTransport(std::shared_ptr<TTransport> transport, uint32_t rsz, uint32_t wsz, 
+                     std::shared_ptr<TConfiguration> config = nullptr)
+    : TVirtualTransport(config),
+      transport_(transport),
       rBufSize_(rsz),
       wBufSize_(wsz),
       rBuf_(new uint8_t[rBufSize_]),
@@ -215,37 +222,37 @@ public:
     initPointers();
   }
 
-  void open() { transport_->open(); }
+  void open() override { transport_->open(); }
 
-  bool isOpen() { return transport_->isOpen(); }
+  bool isOpen() const override { return transport_->isOpen(); }
 
-  bool peek() {
+  bool peek() override {
     if (rBase_ == rBound_) {
       setReadBuffer(rBuf_.get(), transport_->read(rBuf_.get(), rBufSize_));
     }
     return (rBound_ > rBase_);
   }
 
-  void close() {
+  void close() override {
     flush();
     transport_->close();
   }
 
-  virtual uint32_t readSlow(uint8_t* buf, uint32_t len);
+  uint32_t readSlow(uint8_t* buf, uint32_t len) override;
 
-  virtual void writeSlow(const uint8_t* buf, uint32_t len);
+  void writeSlow(const uint8_t* buf, uint32_t len) override;
 
-  void flush();
+  void flush() override;
 
   /**
    * Returns the origin of the underlying transport
    */
-  virtual const std::string getOrigin() { return transport_->getOrigin(); }
+  const std::string getOrigin() const override { return transport_->getOrigin(); }
 
   /**
    * The following behavior is currently implemented by TBufferedTransport,
    * but that may change in a future version:
-   * 1/ If len is at most rBufSize_, borrow will never return NULL.
+   * 1/ If len is at most rBufSize_, borrow will never return nullptr.
    *    Depending on the underlying transport, it could throw an exception
    *    or hang forever.
    * 2/ Some borrow requests may copy bytes internally.  However,
@@ -253,9 +260,9 @@ public:
    *    will ever have to be copied again.  For optimial performance,
    *    stay under this limit.
    */
-  virtual const uint8_t* borrowSlow(uint8_t* buf, uint32_t* len);
+  const uint8_t* borrowSlow(uint8_t* buf, uint32_t* len) override;
 
-  boost::shared_ptr<TTransport> getUnderlyingTransport() { return transport_; }
+  std::shared_ptr<TTransport> getUnderlyingTransport() { return transport_; }
 
   /*
    * TVirtualTransport provides a default implementation of readAll().
@@ -270,7 +277,7 @@ protected:
     // Write size never changes.
   }
 
-  boost::shared_ptr<TTransport> transport_;
+  std::shared_ptr<TTransport> transport_;
 
   uint32_t rBufSize_;
   uint32_t wBufSize_;
@@ -284,15 +291,15 @@ protected:
  */
 class TBufferedTransportFactory : public TTransportFactory {
 public:
-  TBufferedTransportFactory() {}
+  TBufferedTransportFactory() = default;
 
-  virtual ~TBufferedTransportFactory() {}
+  ~TBufferedTransportFactory() override = default;
 
   /**
    * Wraps the transport into a buffered one.
    */
-  virtual boost::shared_ptr<TTransport> getTransport(boost::shared_ptr<TTransport> trans) {
-    return boost::shared_ptr<TTransport>(new TBufferedTransport(trans));
+  std::shared_ptr<TTransport> getTransport(std::shared_ptr<TTransport> trans) override {
+    return std::shared_ptr<TTransport>(new TBufferedTransport(trans));
   }
 };
 
@@ -309,8 +316,9 @@ public:
   static const int DEFAULT_MAX_FRAME_SIZE = 256 * 1024 * 1024;
 
   /// Use default buffer sizes.
-  TFramedTransport()
-    : transport_(),
+  TFramedTransport(std::shared_ptr<TConfiguration> config = nullptr)
+    : TVirtualTransport(config),
+      transport_(),
       rBufSize_(0),
       wBufSize_(DEFAULT_BUFFER_SIZE),
       rBuf_(),
@@ -319,54 +327,57 @@ public:
     initPointers();
   }
 
-  TFramedTransport(boost::shared_ptr<TTransport> transport)
-    : transport_(transport),
+  TFramedTransport(std::shared_ptr<TTransport> transport, std::shared_ptr<TConfiguration> config = nullptr)
+    : TVirtualTransport(config),
+      transport_(transport),
       rBufSize_(0),
       wBufSize_(DEFAULT_BUFFER_SIZE),
       rBuf_(),
       wBuf_(new uint8_t[wBufSize_]),
       bufReclaimThresh_((std::numeric_limits<uint32_t>::max)()),
-      maxFrameSize_(DEFAULT_MAX_FRAME_SIZE) {
+      maxFrameSize_(configuration_->getMaxFrameSize()) {
     initPointers();
   }
 
-  TFramedTransport(boost::shared_ptr<TTransport> transport,
+  TFramedTransport(std::shared_ptr<TTransport> transport,
                    uint32_t sz,
-                   uint32_t bufReclaimThresh = (std::numeric_limits<uint32_t>::max)())
-    : transport_(transport),
+                   uint32_t bufReclaimThresh = (std::numeric_limits<uint32_t>::max)(),
+                   std::shared_ptr<TConfiguration> config = nullptr)
+    : TVirtualTransport(config),
+      transport_(transport),
       rBufSize_(0),
       wBufSize_(sz),
       rBuf_(),
       wBuf_(new uint8_t[wBufSize_]),
       bufReclaimThresh_(bufReclaimThresh),
-      maxFrameSize_(DEFAULT_MAX_FRAME_SIZE) {
+      maxFrameSize_(configuration_->getMaxFrameSize()) {
     initPointers();
   }
 
-  void open() { transport_->open(); }
+  void open() override { transport_->open(); }
 
-  bool isOpen() { return transport_->isOpen(); }
+  bool isOpen() const override { return transport_->isOpen(); }
 
-  bool peek() { return (rBase_ < rBound_) || transport_->peek(); }
+  bool peek() override { return (rBase_ < rBound_) || transport_->peek(); }
 
-  void close() {
+  void close() override {
     flush();
     transport_->close();
   }
 
-  virtual uint32_t readSlow(uint8_t* buf, uint32_t len);
+  uint32_t readSlow(uint8_t* buf, uint32_t len) override;
 
-  virtual void writeSlow(const uint8_t* buf, uint32_t len);
+  void writeSlow(const uint8_t* buf, uint32_t len) override;
 
-  virtual void flush();
+  void flush() override;
 
-  uint32_t readEnd();
+  uint32_t readEnd() override;
 
-  uint32_t writeEnd();
+  uint32_t writeEnd() override;
 
-  const uint8_t* borrowSlow(uint8_t* buf, uint32_t* len);
+  const uint8_t* borrowSlow(uint8_t* buf, uint32_t* len) override;
 
-  boost::shared_ptr<TTransport> getUnderlyingTransport() { return transport_; }
+  std::shared_ptr<TTransport> getUnderlyingTransport() { return transport_; }
 
   /*
    * TVirtualTransport provides a default implementation of readAll().
@@ -377,7 +388,7 @@ public:
   /**
    * Returns the origin of the underlying transport
    */
-  virtual const std::string getOrigin() { return transport_->getOrigin(); }
+  const std::string getOrigin() const override { return transport_->getOrigin(); }
 
   /**
    * Set the maximum size of the frame at read
@@ -399,7 +410,7 @@ protected:
   virtual bool readFrame();
 
   void initPointers() {
-    setReadBuffer(NULL, 0);
+    setReadBuffer(nullptr, 0);
     setWriteBuffer(wBuf_.get(), wBufSize_);
 
     // Pad the buffer so we can insert the size later.
@@ -407,7 +418,7 @@ protected:
     this->write((uint8_t*)&pad, sizeof(pad));
   }
 
-  boost::shared_ptr<TTransport> transport_;
+  std::shared_ptr<TTransport> transport_;
 
   uint32_t rBufSize_;
   uint32_t wBufSize_;
@@ -423,15 +434,15 @@ protected:
  */
 class TFramedTransportFactory : public TTransportFactory {
 public:
-  TFramedTransportFactory() {}
+  TFramedTransportFactory() = default;
 
-  virtual ~TFramedTransportFactory() {}
+  ~TFramedTransportFactory() override = default;
 
   /**
    * Wraps the transport into a framed one.
    */
-  virtual boost::shared_ptr<TTransport> getTransport(boost::shared_ptr<TTransport> trans) {
-    return boost::shared_ptr<TTransport>(new TFramedTransport(trans));
+  std::shared_ptr<TTransport> getTransport(std::shared_ptr<TTransport> trans) override {
+    return std::shared_ptr<TTransport>(new TFramedTransport(trans));
   }
 };
 
@@ -448,11 +459,14 @@ class TMemoryBuffer : public TVirtualTransport<TMemoryBuffer, TBufferBase> {
 private:
   // Common initialization done by all constructors.
   void initCommon(uint8_t* buf, uint32_t size, bool owner, uint32_t wPos) {
-    if (buf == NULL && size != 0) {
+
+    maxBufferSize_ = (std::numeric_limits<uint32_t>::max)();
+
+    if (buf == nullptr && size != 0) {
       assert(owner);
       buf = (uint8_t*)std::malloc(size);
-      if (buf == NULL) {
-        throw std::bad_alloc();
+      if (buf == nullptr) {
+	throw std::bad_alloc();
       }
     }
 
@@ -500,7 +514,10 @@ public:
    * Construct a TMemoryBuffer with a default-sized buffer,
    * owned by the TMemoryBuffer object.
    */
-  TMemoryBuffer() { initCommon(NULL, defaultSize, true, 0); }
+  TMemoryBuffer(std::shared_ptr<TConfiguration> config = nullptr)
+    : TVirtualTransport(config) { 
+    initCommon(nullptr, defaultSize, true, 0); 
+  }
 
   /**
    * Construct a TMemoryBuffer with a buffer of a specified size,
@@ -508,7 +525,10 @@ public:
    *
    * @param sz  The initial size of the buffer.
    */
-  TMemoryBuffer(uint32_t sz) { initCommon(NULL, sz, true, 0); }
+  TMemoryBuffer(uint32_t sz, std::shared_ptr<TConfiguration> config = nullptr) 
+    : TVirtualTransport(config) { 
+    initCommon(nullptr, sz, true, 0); 
+  }
 
   /**
    * Construct a TMemoryBuffer with buf as its initial contents.
@@ -520,8 +540,9 @@ public:
    * @param sz     The size of @c buf.
    * @param policy See @link MemoryPolicy @endlink .
    */
-  TMemoryBuffer(uint8_t* buf, uint32_t sz, MemoryPolicy policy = OBSERVE) {
-    if (buf == NULL && sz != 0) {
+  TMemoryBuffer(uint8_t* buf, uint32_t sz, MemoryPolicy policy = OBSERVE, std::shared_ptr<TConfiguration> config = nullptr) 
+    : TVirtualTransport(config) {
+    if (buf == nullptr && sz != 0) {
       throw TTransportException(TTransportException::BAD_ARGS,
                                 "TMemoryBuffer given null buffer with non-zero size.");
     }
@@ -532,7 +553,7 @@ public:
       initCommon(buf, sz, policy == TAKE_OWNERSHIP, sz);
       break;
     case COPY:
-      initCommon(NULL, sz, true, 0);
+      initCommon(nullptr, sz, true, 0);
       this->write(buf, sz);
       break;
     default:
@@ -541,19 +562,19 @@ public:
     }
   }
 
-  ~TMemoryBuffer() {
+  ~TMemoryBuffer() override {
     if (owner_) {
       std::free(buffer_);
     }
   }
 
-  bool isOpen() { return true; }
+  bool isOpen() const override { return true; }
 
-  bool peek() { return (rBase_ < wBase_); }
+  bool peek() override { return (rBase_ < wBase_); }
 
-  void open() {}
+  void open() override {}
 
-  void close() {}
+  void close() override {}
 
   // TODO(dreiss): Make bufPtr const.
   void getBuffer(uint8_t** bufPtr, uint32_t* sz) {
@@ -562,7 +583,7 @@ public:
   }
 
   std::string getBufferAsString() {
-    if (buffer_ == NULL) {
+    if (buffer_ == nullptr) {
       return "";
     }
     uint8_t* buf;
@@ -572,7 +593,7 @@ public:
   }
 
   void appendBufferToString(std::string& str) {
-    if (buffer_ == NULL) {
+    if (buffer_ == nullptr) {
       return;
     }
     uint8_t* buf;
@@ -631,9 +652,9 @@ public:
   uint32_t readAppendToString(std::string& str, uint32_t len);
 
   // return number of bytes read
-  uint32_t readEnd() {
+  uint32_t readEnd() override {
     // This cast should be safe, because buffer_'s size is a uint32_t
-    uint32_t bytes = static_cast<uint32_t>(rBase_ - buffer_);
+    auto bytes = static_cast<uint32_t>(rBase_ - buffer_);
     if (rBase_ == wBase_) {
       resetBuffer();
     }
@@ -641,7 +662,7 @@ public:
   }
 
   // Return number of bytes written
-  uint32_t writeEnd() {
+  uint32_t writeEnd() override {
     // This cast should be safe, because buffer_'s size is a uint32_t
     return static_cast<uint32_t>(wBase_ - buffer_);
   }
@@ -673,6 +694,29 @@ public:
    */
   uint32_t readAll(uint8_t* buf, uint32_t len) { return TBufferBase::readAll(buf, len); }
 
+  //! \brief Get the current buffer size
+  //! \returns the current buffer size
+  uint32_t getBufferSize() const {
+    return bufferSize_;
+  }
+
+  //! \brief Get the current maximum buffer size
+  //! \returns the current maximum buffer size
+  uint32_t getMaxBufferSize() const {
+    return maxBufferSize_;
+  }
+
+  //! \brief Change the maximum buffer size
+  //! \param[in]  maxSize  the new maximum buffer size allowed to grow to
+  //! \throws  TTransportException(BAD_ARGS) if maxSize is less than the current buffer size
+  void setMaxBufferSize(uint32_t maxSize) {
+    if (maxSize < bufferSize_) {
+      throw TTransportException(TTransportException::BAD_ARGS,
+                                "Maximum buffer size would be less than current buffer size");
+    }
+    maxBufferSize_ = maxSize;
+  }
+
 protected:
   void swap(TMemoryBuffer& that) {
     using std::swap;
@@ -693,17 +737,20 @@ protected:
   // Compute the position and available data for reading.
   void computeRead(uint32_t len, uint8_t** out_start, uint32_t* out_give);
 
-  uint32_t readSlow(uint8_t* buf, uint32_t len);
+  uint32_t readSlow(uint8_t* buf, uint32_t len) override;
 
-  void writeSlow(const uint8_t* buf, uint32_t len);
+  void writeSlow(const uint8_t* buf, uint32_t len) override;
 
-  const uint8_t* borrowSlow(uint8_t* buf, uint32_t* len);
+  const uint8_t* borrowSlow(uint8_t* buf, uint32_t* len) override;
 
   // Data buffer
   uint8_t* buffer_;
 
   // Allocated buffer size
   uint32_t bufferSize_;
+
+  // Maximum allowed size
+  uint32_t maxBufferSize_;
 
   // Is this object the owner of the buffer?
   bool owner_;

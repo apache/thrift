@@ -17,26 +17,25 @@
 # under the License.
 #
 
-cmake_minimum_required(VERSION 2.8.12)
+cmake_minimum_required(VERSION 3.4)
 
-project("Apache Thrift")
+if(POLICY CMP0048)
+  cmake_policy(SET CMP0048 NEW)  # package version behavior added in cmake 3.0
+endif()
+if(POLICY CMP0074)
+  cmake_policy(SET CMP0074 NEW)  # find_package behavior added in cmake 3.12
+endif()
+
+# PACKAGE_VERSION is used by cpack scripts currently
+# Both thrift_VERSION and PACKAGE_VERSION should be the same for now
+set(thrift_VERSION "0.14.1")
+set(PACKAGE_VERSION ${thrift_VERSION})
+
+project("thrift" VERSION ${PACKAGE_VERSION})
+message(STATUS "Configuring ${CMAKE_PROJECT_NAME} ${thrift_VERSION}")
+
 
 set(CMAKE_MODULE_PATH "${CMAKE_MODULE_PATH}" "${CMAKE_CURRENT_SOURCE_DIR}/build/cmake")
-
-# TODO: add `git rev-parse --short HEAD`
-# Read the version information from the Autoconf file
-file (STRINGS "${CMAKE_CURRENT_SOURCE_DIR}/configure.ac" CONFIGURE_AC REGEX "AC_INIT\\(.*\\)" )
-
-# The following variable is used in the version.h.in file
-string(REGEX REPLACE "AC_INIT\\(\\[.*\\], \\[([0-9]+\\.[0-9]+\\.[0-9]+(-dev)?)\\]\\)" "\\1" PACKAGE_VERSION ${CONFIGURE_AC})
-message(STATUS "Parsed Thrift package version: ${PACKAGE_VERSION}")
-
-# These are internal to CMake
-string(REGEX REPLACE "([0-9]+\\.[0-9]+\\.[0-9]+)(-dev)?" "\\1" thrift_VERSION ${PACKAGE_VERSION})
-string(REGEX REPLACE "([0-9]+)\\.[0-9]+\\.[0-9]+" "\\1" thrift_VERSION_MAJOR ${thrift_VERSION})
-string(REGEX REPLACE "[0-9]+\\.([0-9])+\\.[0-9]+" "\\1" thrift_VERSION_MINOR ${thrift_VERSION})
-string(REGEX REPLACE "[0-9]+\\.[0-9]+\\.([0-9]+)" "\\1" thrift_VERSION_PATCH ${thrift_VERSION})
-message(STATUS "Parsed Thrift version: ${thrift_VERSION} (${thrift_VERSION_MAJOR}.${thrift_VERSION_MINOR}.${thrift_VERSION_PATCH})")
 
 # Some default settings
 include(DefineCMakeDefaults)
@@ -48,16 +47,23 @@ include(DefineInstallationPaths)
 # Based on the options set some platform specifics
 include(DefinePlatformSpecifc)
 
+# Add CMake targets for static code analysis
+include(StaticCodeAnalysis)
+
 # Generate the config.h file
 include(ConfigureChecks)
 
-# Package it
+# Generate the ThriftConfig.cmake module
+include(GenerateConfigModule)
+
+# Packaging
 include(CPackConfig)
 
-
+# Dependencies
+include(BoostMacros)
 find_package(Threads)
-
 include(CTest)
+
 if(BUILD_TESTING)
   message(STATUS "Building with unittests")
 
@@ -73,6 +79,9 @@ if(BUILD_COMPILER)
         set(THRIFT_COMPILER $<TARGET_FILE:thrift-compiler>)
     endif()
     add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/compiler/cpp)
+elseif(EXISTS ${THRIFT_COMPILER})
+    add_executable(thrift-compiler IMPORTED)
+    set_property(TARGET thrift-compiler PROPERTY IMPORTED_LOCATION ${THRIFT_COMPILER})
 endif()
 
 if(BUILD_CPP)
@@ -89,12 +98,27 @@ if(BUILD_CPP)
     endif()
 endif()
 
+if(BUILD_AS3)
+    add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/lib/as3)
+endif()
+
 if(BUILD_C_GLIB)
     add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/lib/c_glib)
+    if(BUILD_TESTING)
+        add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/test/c_glib)
+    endif()
 endif()
 
 if(BUILD_JAVA)
     add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/lib/java)
+endif()
+
+if(BUILD_JAVASCRIPT)
+    add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/lib/js)
+endif()
+
+if(BUILD_NODEJS)
+    add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/lib/nodejs)
 endif()
 
 if(BUILD_PYTHON)
@@ -110,5 +134,8 @@ if(BUILD_HASKELL)
         add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/test/hs)
     endif()
 endif()
+
+# Create the uninstall target
+add_custom_target(uninstall "${CMAKE_COMMAND}" -P "${PROJECT_SOURCE_DIR}/build/cmake/uninstall.cmake")
 
 PRINT_CONFIG_SUMMARY()

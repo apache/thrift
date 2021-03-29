@@ -38,10 +38,10 @@ import Thrift.Protocol.Binary
 
 -- | A threaded sever that is capable of using any Transport or Protocol
 -- instances.
-runThreadedServer :: (Transport t, Protocol i, Protocol o)
-                  => (Socket -> IO (i t, o t))
+runThreadedServer :: (Protocol i, Protocol o)
+                  => (Socket -> IO (i, o))
                   -> h
-                  -> (h -> (i t, o t) -> IO Bool)
+                  -> (h -> (i, o) -> IO Bool)
                   -> PortID
                   -> IO a
 runThreadedServer accepter hand proc_ port = do

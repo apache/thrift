@@ -623,7 +623,7 @@ private {
             to!string(event_get_version()), to!string(event_base_get_method(eventBase_)));
 
           // Register the event for the listening socket.
-          listenEvent_ = event_new(eventBase_, listenSocket_.handle,
+          listenEvent_ = event_new(eventBase_, cast(evutil_socket_t)listenSocket_.handle,
             EV_READ | EV_PERSIST | EV_ET,
             assumeNothrow(&TNonblockingServer.acceptConnectionsCallback),
             cast(void*)server_);
@@ -638,7 +638,7 @@ private {
         completionReceiveSocket_ = pair[1];
 
         // Register an event for the task completion notification socket.
-        completionEvent_ = event_new(eventBase_, completionReceiveSocket_.handle,
+        completionEvent_ = event_new(eventBase_, cast(evutil_socket_t)completionReceiveSocket_.handle,
           EV_READ | EV_PERSIST | EV_ET, assumeNothrow(&completedCallback),
           cast(void*)this);
 
@@ -893,14 +893,14 @@ private {
       callsSinceResize_ = 0;
 
       factoryInputTransport_ =
-        server_.inputTransportFactory_.getTransport(inputTransport_);
+        server_.inputTransportFactory.getTransport(inputTransport_);
       factoryOutputTransport_ =
-        server_.outputTransportFactory_.getTransport(outputTransport_);
+        server_.outputTransportFactory.getTransport(outputTransport_);
 
       inputProtocol_ =
-        server_.inputProtocolFactory_.getProtocol(factoryInputTransport_);
+        server_.inputProtocolFactory.getProtocol(factoryInputTransport_);
       outputProtocol_ =
-        server_.outputProtocolFactory_.getProtocol(factoryOutputTransport_);
+        server_.outputProtocolFactory.getProtocol(factoryOutputTransport_);
 
       if (server_.eventHandler) {
         connectionContext_ =
@@ -908,7 +908,7 @@ private {
       }
 
       auto info = TConnectionInfo(inputProtocol_, outputProtocol_, socket_);
-      processor_ = server_.processorFactory_.getProcessor(info);
+      processor_ = server_.processorFactory.getProcessor(info);
     }
 
     ~this() {
@@ -1212,10 +1212,10 @@ private {
 
       if (!event_) {
         // If the event was not already allocated, do it now.
-        event_ = event_new(loop_.eventBase_, socket_.socketHandle,
+        event_ = event_new(loop_.eventBase_, cast(evutil_socket_t)socket_.socketHandle,
           eventFlags_, assumeNothrow(&workSocketCallback), cast(void*)this);
       } else {
-        event_assign(event_, loop_.eventBase_, socket_.socketHandle,
+        event_assign(event_, loop_.eventBase_, cast(evutil_socket_t)socket_.socketHandle,
           eventFlags_, assumeNothrow(&workSocketCallback), cast(void*)this);
       }
 

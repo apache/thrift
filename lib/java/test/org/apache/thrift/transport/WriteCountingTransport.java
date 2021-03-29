@@ -19,6 +19,8 @@
 package org.apache.thrift.transport;
 
 
+import org.apache.thrift.TConfiguration;
+
 public class WriteCountingTransport extends TTransport {
   public int writeCount = 0;
   private final TTransport trans;
@@ -50,5 +52,20 @@ public class WriteCountingTransport extends TTransport {
   @Override
   public void flush() throws TTransportException {
     trans.flush();
+  }
+
+  @Override
+  public TConfiguration getConfiguration() {
+    return trans.getConfiguration();
+  }
+
+  @Override
+  public void updateKnownMessageSize(long size) throws TTransportException {
+    trans.updateKnownMessageSize(size);
+  }
+
+  @Override
+  public void checkReadBytesAvailable(long numBytes) throws TTransportException {
+    trans.checkReadBytesAvailable(numBytes);
   }
 }

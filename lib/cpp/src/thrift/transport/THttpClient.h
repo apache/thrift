@@ -26,22 +26,43 @@ namespace apache {
 namespace thrift {
 namespace transport {
 
+/**
+ * @brief Client transport using HTTP. The path is an optional field that is
+ * not required by Thrift HTTP server or client. It can be used i.e. with HTTP
+ * redirection, load balancing or forwarding on the server.
+ */
 class THttpClient : public THttpTransport {
 public:
-  THttpClient(boost::shared_ptr<TTransport> transport, std::string host, std::string path = "");
+  /**
+   * @brief Constructor that wraps an existing transport, but also sets the
+   * host and path. The host and path are not used for the connection but are
+   * set in the HTTP header of the transport.
+   */
+  THttpClient(std::shared_ptr<TTransport> transport,
+              std::string host = "localhost",
+              std::string path = "/service",
+              std::shared_ptr<TConfiguration> config = nullptr);
 
-  THttpClient(std::string host, int port, std::string path = "");
+  /**
+   * @brief Constructor that will create a new socket transport using the host
+   * and port.
+   */
+  THttpClient(std::string host, int port, 
+              std::string path = "",
+              std::shared_ptr<TConfiguration> config = nullptr);
 
-  virtual ~THttpClient();
+  ~THttpClient() override;
 
-  virtual void flush();
+  void flush() override;
+
+  void setPath(std::string path);
 
 protected:
   std::string host_;
   std::string path_;
 
-  virtual void parseHeader(char* header);
-  virtual bool parseStatusLine(char* status);
+  void parseHeader(char* header) override;
+  bool parseStatusLine(char* status) override;
 };
 }
 }

@@ -219,12 +219,11 @@ read_struct_loop(IProto0, SDict, RTuple) ->
     end.
 
 skip_field(FType, IProto0, SDict, RTuple) ->
-    FTypeAtom = thrift_protocol:typeid_to_atom(FType),
-    {IProto1, ok} = thrift_protocol:skip(IProto0, FTypeAtom),
+    {IProto1, ok} = skip(IProto0, typeid_to_atom(FType)),
     {IProto2, ok} = read(IProto1, field_end),
     read_struct_loop(IProto2, SDict, RTuple).
 
--spec skip(#protocol{}, any()) -> {#protocol{}, ok}.
+-spec skip(#protocol{}, atom()) -> {#protocol{}, ok}.
 
 skip(Proto0, struct) ->
     {Proto1, ok} = read(Proto0, struct_begin),
@@ -261,7 +260,7 @@ skip_struct_loop(Proto0) ->
         ?tType_STOP ->
             {Proto1, ok};
         _Else ->
-            {Proto2, ok} = skip(Proto1, Type),
+            {Proto2, ok} = skip(Proto1, typeid_to_atom(Type)),
             {Proto3, ok} = read(Proto2, field_end),
             skip_struct_loop(Proto3)
     end.
@@ -271,8 +270,8 @@ skip_map_loop(Proto0, Map = #protocol_map_begin{ktype = Ktype,
                                                 size = Size}) ->
     case Size of
         N when N > 0 ->
-            {Proto1, ok} = skip(Proto0, Ktype),
-            {Proto2, ok} = skip(Proto1, Vtype),
+            {Proto1, ok} = skip(Proto0, typeid_to_atom(Ktype)),
+            {Proto2, ok} = skip(Proto1, typeid_to_atom(Vtype)),
             skip_map_loop(Proto2,
                           Map#protocol_map_begin{size = Size - 1});
         0 -> {Proto0, ok}
@@ -282,7 +281,7 @@ skip_set_loop(Proto0, Map = #protocol_set_begin{etype = Etype,
                                                 size = Size}) ->
     case Size of
         N when N > 0 ->
-            {Proto1, ok} = skip(Proto0, Etype),
+            {Proto1, ok} = skip(Proto0, typeid_to_atom(Etype)),
             skip_set_loop(Proto1,
                           Map#protocol_set_begin{size = Size - 1});
         0 -> {Proto0, ok}
@@ -292,7 +291,7 @@ skip_list_loop(Proto0, Map = #protocol_list_begin{etype = Etype,
                                                   size = Size}) ->
     case Size of
         N when N > 0 ->
-            {Proto1, ok} = skip(Proto0, Etype),
+            {Proto1, ok} = skip(Proto0, typeid_to_atom(Etype)),
             skip_list_loop(Proto1,
                            Map#protocol_list_begin{size = Size - 1});
         0 -> {Proto0, ok}

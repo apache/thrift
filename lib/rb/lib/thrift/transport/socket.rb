@@ -134,8 +134,10 @@ module Thrift
       @handle = nil
     end
 
-    def to_io
-      @handle
+    alias to_io handle
+
+    def to_s
+      "socket(#{@host}:#{@port})"
     end
   end
 end

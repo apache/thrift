@@ -12,6 +12,7 @@ import org.apache.thrift.protocol.TProtocol;
 import org.apache.thrift.transport.TMemoryBuffer;
 import org.apache.thrift.transport.TTransport;
 
+import org.apache.thrift.transport.TTransportException;
 import thrift.test.HolyMoley;
 import thrift.test.Nesting;
 import thrift.test.OneOfEach;
@@ -19,6 +20,9 @@ import thrift.test.OneOfEach;
 public class TestStandardScheme extends TestCase {
   TSerializer serializer = new TSerializer();
   TDeserializer deserializer = new TDeserializer();
+
+  public TestStandardScheme() throws TTransportException {
+  }
 
   /**
    * This tests whether the Standard Scheme properly reads structs serialized

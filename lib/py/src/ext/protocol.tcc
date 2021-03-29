@@ -48,7 +48,7 @@ inline EncodeBuffer* new_encode_buffer(size_t size) {
     PycString_IMPORT;
   }
   if (!PycStringIO) {
-    return NULL;
+    return nullptr;
   }
   return PycStringIO->NewOutput(size);
 }
@@ -83,7 +83,7 @@ PyObject* ProtocolBase<Impl>::getEncodedValue() {
     PycString_IMPORT;
   }
   if (!PycStringIO) {
-    return NULL;
+    return nullptr;
   }
   return PycStringIO->cgetvalue(output_);
 }
@@ -102,7 +102,7 @@ inline bool ProtocolBase<Impl>::writeBuffer(char* data, size_t size) {
     PyErr_SetString(PyExc_IOError, "failed to write to cStringIO object");
     return false;
   }
-  if (len != size) {
+  if (static_cast<size_t>(len) != size) {
     PyErr_Format(PyExc_EOFError, "write length mismatch: expected %lu got %d", size, len);
     return false;
   }
@@ -144,7 +144,7 @@ inline int read_buffer(PyObject* buf, char** output, int len) {
   *output = PyBytes_AS_STRING(buf2->buf) + buf2->pos;
 #endif
   Py_ssize_t pos0 = buf2->pos;
-  buf2->pos = std::min(buf2->pos + static_cast<Py_ssize_t>(len), buf2->string_size);
+  buf2->pos = (std::min)(buf2->pos + static_cast<Py_ssize_t>(len), buf2->string_size);
   return static_cast<int>(buf2->pos - pos0);
 }
 }
@@ -174,7 +174,7 @@ inline bool ProtocolBase<Impl>::writeBuffer(char* data, size_t size) {
   if (output_->buf.capacity() < need) {
     try {
       output_->buf.reserve(need);
-    } catch (std::bad_alloc& ex) {
+    } catch (std::bad_alloc&) {
       PyErr_SetString(PyExc_MemoryError, "Failed to allocate write buffer");
       return false;
     }
@@ -212,7 +212,7 @@ inline bool check_ssize_t_32(Py_ssize_t len) {
   if (INT_CONV_ERROR_OCCURRED(len)) {
     return false;
   }
-  if (!CHECK_RANGE(len, 0, std::numeric_limits<int32_t>::max())) {
+  if (!CHECK_RANGE(len, 0, (std::numeric_limits<int32_t>::max)())) {
     PyErr_SetString(PyExc_OverflowError, "size out of range: exceeded INT32_MAX");
     return false;
   }
@@ -277,7 +277,7 @@ bool ProtocolBase<Impl>::readBytes(char** output, int len) {
   } else {
     // using building functions as this is a rare codepath
     ScopedPyObject newiobuf(PyObject_CallFunction(input_.refill_callable.get(), refill_signature,
-                                                  *output, rlen, len, NULL));
+                                                  *output, rlen, len, nullptr));
     if (!newiobuf) {
       return false;
     }
@@ -332,7 +332,7 @@ bool ProtocolBase<Impl>::prepareDecodeBufferFromTransport(PyObject* trans) {
 template <typename Impl>
 bool ProtocolBase<Impl>::prepareEncodeBuffer() {
   output_ = detail::new_encode_buffer(INIT_OUTBUF_SIZE);
-  return output_ != NULL;
+  return output_ != nullptr;
 }
 
 template <typename Impl>
@@ -360,8 +360,8 @@ bool ProtocolBase<Impl>::encodeValue(PyObject* value, TType type, PyObject* type
   case T_I08: {
     int8_t val;
 
-    if (!parse_pyint(value, &val, std::numeric_limits<int8_t>::min(),
-                     std::numeric_limits<int8_t>::max())) {
+    if (!parse_pyint(value, &val, (std::numeric_limits<int8_t>::min)(),
+                     (std::numeric_limits<int8_t>::max)())) {
       return false;
     }
 
@@ -371,8 +371,8 @@ bool ProtocolBase<Impl>::encodeValue(PyObject* value, TType type, PyObject* type
   case T_I16: {
     int16_t val;
 
-    if (!parse_pyint(value, &val, std::numeric_limits<int16_t>::min(),
-                     std::numeric_limits<int16_t>::max())) {
+    if (!parse_pyint(value, &val, (std::numeric_limits<int16_t>::min)(),
+                     (std::numeric_limits<int16_t>::max)())) {
       return false;
     }
 
@@ -382,8 +382,8 @@ bool ProtocolBase<Impl>::encodeValue(PyObject* value, TType type, PyObject* type
   case T_I32: {
     int32_t val;
 
-    if (!parse_pyint(value, &val, std::numeric_limits<int32_t>::min(),
-                     std::numeric_limits<int32_t>::max())) {
+    if (!parse_pyint(value, &val, (std::numeric_limits<int32_t>::min)(),
+                     (std::numeric_limits<int32_t>::max)())) {
       return false;
     }
 
@@ -397,8 +397,8 @@ bool ProtocolBase<Impl>::encodeValue(PyObject* value, TType type, PyObject* type
       return false;
     }
 
-    if (!CHECK_RANGE(nval, std::numeric_limits<int64_t>::min(),
-                     std::numeric_limits<int64_t>::max())) {
+    if (!CHECK_RANGE(nval, (std::numeric_limits<int64_t>::min)(),
+                     (std::numeric_limits<int64_t>::max)())) {
       PyErr_SetString(PyExc_OverflowError, "int out of range");
       return false;
     }
@@ -484,8 +484,8 @@ bool ProtocolBase<Impl>::encodeValue(PyObject* value, TType type, PyObject* type
       return false;
     }
     Py_ssize_t pos = 0;
-    PyObject* k = NULL;
-    PyObject* v = NULL;
+    PyObject* k = nullptr;
+    PyObject* v = nullptr;
     // TODO(bmaurer): should support any mapping, not just dicts
     while (PyDict_Next(value, &pos, &k, &v)) {
       if (!encodeValue(k, parsedargs.ktag, parsedargs.ktypeargs)
@@ -647,7 +647,7 @@ PyObject* ProtocolBase<Impl>::decodeValue(TType type, PyObject* typeargs) {
   case T_BOOL: {
     bool v = 0;
     if (!impl()->readBool(v)) {
-      return NULL;
+      return nullptr;
     }
     if (v) {
       Py_RETURN_TRUE;
@@ -658,21 +658,21 @@ PyObject* ProtocolBase<Impl>::decodeValue(TType type, PyObject* typeargs) {
   case T_I08: {
     int8_t v = 0;
     if (!impl()->readI8(v)) {
-      return NULL;
+      return nullptr;
     }
     return PyInt_FromLong(v);
   }
   case T_I16: {
     int16_t v = 0;
     if (!impl()->readI16(v)) {
-      return NULL;
+      return nullptr;
     }
     return PyInt_FromLong(v);
   }
   case T_I32: {
     int32_t v = 0;
     if (!impl()->readI32(v)) {
-      return NULL;
+      return nullptr;
     }
     return PyInt_FromLong(v);
   }
@@ -680,7 +680,7 @@ PyObject* ProtocolBase<Impl>::decodeValue(TType type, PyObject* typeargs) {
   case T_I64: {
     int64_t v = 0;
     if (!impl()->readI64(v)) {
-      return NULL;
+      return nullptr;
     }
     // TODO(dreiss): Find out if we can take this fastpath always when
     //               sizeof(long) == sizeof(long long).
@@ -693,19 +693,19 @@ PyObject* ProtocolBase<Impl>::decodeValue(TType type, PyObject* typeargs) {
   case T_DOUBLE: {
     double v = 0.0;
     if (!impl()->readDouble(v)) {
-      return NULL;
+      return nullptr;
     }
     return PyFloat_FromDouble(v);
   }
 
   case T_STRING: {
-    char* buf = NULL;
+    char* buf = nullptr;
     int len = impl()->readString(&buf);
     if (len < 0) {
-      return NULL;
+      return nullptr;
     }
     if (isUtf8(typeargs)) {
-      return PyUnicode_DecodeUTF8(buf, len, 0);
+      return PyUnicode_DecodeUTF8(buf, len, "replace");
     } else {
       return PyBytes_FromStringAndSize(buf, len);
     }
@@ -715,28 +715,28 @@ PyObject* ProtocolBase<Impl>::decodeValue(TType type, PyObject* typeargs) {
   case T_SET: {
     SetListTypeArgs parsedargs;
     if (!parse_set_list_args(&parsedargs, typeargs)) {
-      return NULL;
+      return nullptr;
     }
 
     TType etype = T_STOP;
     int32_t len = impl()->readListBegin(etype);
     if (len < 0) {
-      return NULL;
+      return nullptr;
     }
     if (len > 0 && !checkType(etype, parsedargs.element_type)) {
-      return NULL;
+      return nullptr;
     }
 
     bool use_tuple = type == T_LIST && parsedargs.immutable;
     ScopedPyObject ret(use_tuple ? PyTuple_New(len) : PyList_New(len));
     if (!ret) {
-      return NULL;
+      return nullptr;
     }
 
     for (int i = 0; i < len; i++) {
       PyObject* item = decodeValue(etype, parsedargs.typeargs);
       if (!item) {
-        return NULL;
+        return nullptr;
       }
       if (use_tuple) {
         PyTuple_SET_ITEM(ret.get(), i, item);
@@ -758,32 +758,32 @@ PyObject* ProtocolBase<Impl>::decodeValue(TType type, PyObject* typeargs) {
   case T_MAP: {
     MapTypeArgs parsedargs;
     if (!parse_map_args(&parsedargs, typeargs)) {
-      return NULL;
+      return nullptr;
     }
 
     TType ktype = T_STOP;
     TType vtype = T_STOP;
     uint32_t len = impl()->readMapBegin(ktype, vtype);
     if (len > 0 && (!checkType(ktype, parsedargs.ktag) || !checkType(vtype, parsedargs.vtag))) {
-      return NULL;
+      return nullptr;
     }
 
     ScopedPyObject ret(PyDict_New());
     if (!ret) {
-      return NULL;
+      return nullptr;
     }
 
     for (uint32_t i = 0; i < len; i++) {
       ScopedPyObject k(decodeValue(ktype, parsedargs.ktypeargs));
       if (!k) {
-        return NULL;
+        return nullptr;
       }
       ScopedPyObject v(decodeValue(vtype, parsedargs.vtypeargs));
       if (!v) {
-        return NULL;
+        return nullptr;
       }
       if (PyDict_SetItem(ret.get(), k.get(), v.get()) == -1) {
-        return NULL;
+        return nullptr;
       }
     }
 
@@ -792,12 +792,12 @@ PyObject* ProtocolBase<Impl>::decodeValue(TType type, PyObject* typeargs) {
         ThriftModule = PyImport_ImportModule("thrift.Thrift");
       }
       if (!ThriftModule) {
-        return NULL;
+        return nullptr;
       }
 
       ScopedPyObject cls(PyObject_GetAttr(ThriftModule, INTERN_STRING(TFrozenDict)));
       if (!cls) {
-        return NULL;
+        return nullptr;
       }
 
       ScopedPyObject arg(PyTuple_New(1));
@@ -811,7 +811,7 @@ PyObject* ProtocolBase<Impl>::decodeValue(TType type, PyObject* typeargs) {
   case T_STRUCT: {
     StructTypeArgs parsedargs;
     if (!parse_struct_args(&parsedargs, typeargs)) {
-      return NULL;
+      return nullptr;
     }
     return readStruct(Py_None, parsedargs.klass, parsedargs.spec);
   }
@@ -823,7 +823,7 @@ PyObject* ProtocolBase<Impl>::decodeValue(TType type, PyObject* typeargs) {
   case T_U64:
   default:
     PyErr_Format(PyExc_TypeError, "Unexpected TType for decodeValue: %d", type);
-    return NULL;
+    return nullptr;
   }
 }
 
@@ -833,26 +833,26 @@ PyObject* ProtocolBase<Impl>::readStruct(PyObject* output, PyObject* klass, PyOb
   bool immutable = output == Py_None;
   ScopedPyObject kwargs;
   if (spec_seq_len == -1) {
-    return NULL;
+    return nullptr;
   }
 
   if (immutable) {
     kwargs.reset(PyDict_New());
     if (!kwargs) {
       PyErr_SetString(PyExc_TypeError, "failed to prepare kwargument storage");
-      return NULL;
+      return nullptr;
     }
   }
 
   detail::ReadStructScope<Impl> scope = detail::readStructScope(this);
   if (!scope) {
-    return NULL;
+    return nullptr;
   }
   while (true) {
     TType type = T_STOP;
     int16_t tag;
     if (!impl()->readFieldBegin(type, tag)) {
-      return NULL;
+      return nullptr;
     }
     if (type == T_STOP) {
       break;
@@ -860,7 +860,7 @@ PyObject* ProtocolBase<Impl>::readStruct(PyObject* output, PyObject* klass, PyOb
     if (tag < 0 || tag >= spec_seq_len) {
       if (!skip(type)) {
         PyErr_SetString(PyExc_TypeError, "Error while skipping unknown field");
-        return NULL;
+        return nullptr;
       }
       continue;
     }
@@ -869,38 +869,38 @@ PyObject* ProtocolBase<Impl>::readStruct(PyObject* output, PyObject* klass, PyOb
     if (item_spec == Py_None) {
       if (!skip(type)) {
         PyErr_SetString(PyExc_TypeError, "Error while skipping unknown field");
-        return NULL;
+        return nullptr;
       }
       continue;
     }
     StructItemSpec parsedspec;
     if (!parse_struct_item_spec(&parsedspec, item_spec)) {
-      return NULL;
+      return nullptr;
     }
     if (parsedspec.type != type) {
       if (!skip(type)) {
         PyErr_Format(PyExc_TypeError, "struct field had wrong type: expected %d but got %d",
                      parsedspec.type, type);
-        return NULL;
+        return nullptr;
       }
       continue;
     }
 
     ScopedPyObject fieldval(decodeValue(parsedspec.type, parsedspec.typeargs));
     if (!fieldval) {
-      return NULL;
+      return nullptr;
     }
 
     if ((immutable && PyDict_SetItem(kwargs.get(), parsedspec.attrname, fieldval.get()) == -1)
         || (!immutable && PyObject_SetAttr(output, parsedspec.attrname, fieldval.get()) == -1)) {
-      return NULL;
+      return nullptr;
     }
   }
   if (immutable) {
     ScopedPyObject args(PyTuple_New(0));
     if (!args) {
       PyErr_SetString(PyExc_TypeError, "failed to prepare argument storage");
-      return NULL;
+      return nullptr;
     }
     return PyObject_Call(klass, args.get(), kwargs.get());
   }

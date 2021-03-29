@@ -17,17 +17,17 @@
 # under the License.
 #
 
-THRIFT = $(top_builddir)/compiler/cpp/thrift
 THRIFTCMD = $(THRIFT) --gen haxe -r
 THRIFTTEST = $(top_srcdir)/test/ThriftTest.thrift
 
 BIN_CPP = bin/Main-debug
 BIN_PHP = bin/php/Main-debug.php
+BIN_PHP_WEB = bin/php-web-server/Main-debug.php
 
 gen-haxe/thrift/test/ThriftTest.hx: $(THRIFTTEST)
 	$(THRIFTCMD) $(THRIFTTEST)
 
-all-local: $(BIN_CPP) $(BIN_PHP)
+all-local: $(BIN_CPP) $(BIN_PHP) $(BIN_PHP_WEB)
 
 $(BIN_CPP): \
 		src/*.hx \
@@ -41,6 +41,11 @@ $(BIN_PHP): \
 		gen-haxe/thrift/test/ThriftTest.hx
 	$(HAXE) --cwd .  php.hxml
 
+$(BIN_PHP_WEB): \
+		src/*.hx \
+		../../lib/haxe/src/org/apache/thrift/**/*.hx \
+		gen-haxe/thrift/test/ThriftTest.hx
+	$(HAXE) --cwd .  php-web-server.hxml
 
 
 
@@ -56,32 +61,44 @@ $(BIN_PHP): \
 clean-local:
 	$(RM) -r gen-haxe bin
 
-check: check_cpp check_php
+.NOTPARALLEL:
+
+check: check_cpp \
+	check_php \
+	check_php_web 
 
 check_cpp: $(BIN_CPP) 
-	timeout 10 $(BIN_CPP) server &
+	timeout 20 $(BIN_CPP) server &
 	sleep 1
 	$(BIN_CPP) client
 	sleep 10
 
 check_php: $(BIN_PHP) 
-	timeout 10 php -f $(BIN_PHP) server &
+	timeout 20 php -f $(BIN_PHP) server &
 	sleep 1
 	php -f $(BIN_PHP) client
 	sleep 10
 
+check_php_web: $(BIN_PHP_WEB) $(BIN_CPP)
+	timeout 20 php -S 127.0.0.1:9090 router.php &
+	sleep 1
+	$(BIN_CPP) client --transport http
+	sleep 10
+
 
 EXTRA_DIST = \
-             src \
-             cpp.hxml \
-             csharp.hxml \
-             flash.hxml \
-             java.hxml \
-             javascript.hxml \
-             neko.hxml \
-             php.hxml \
-             python.hxml \
-             project.hide \
-             TestClientServer.hxproj \
-             make_all.bat \
-             make_all.sh
+	src \
+	cpp.hxml \
+	csharp.hxml \
+	flash.hxml \
+	java.hxml \
+	javascript.hxml \
+	neko.hxml \
+	php.hxml \
+	python.hxml \
+	router.php \
+	project.hide \
+	php-web-server.hxml \
+	TestClientServer.hxproj \
+	make_all.bat \
+	make_all.sh

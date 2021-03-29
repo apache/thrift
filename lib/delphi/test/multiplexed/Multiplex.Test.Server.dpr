@@ -24,17 +24,20 @@ program Multiplex.Test.Server;
 uses
   SysUtils,
   Multiplex.Server.Main in 'Multiplex.Server.Main.pas',
+  ConsoleHelper in '..\ConsoleHelper.pas',
   Thrift in '..\..\src\Thrift.pas',
+  Thrift.Exception in '..\..\src\Thrift.Exception.pas',
   Thrift.Socket in '..\..\src\Thrift.Socket.pas',
   Thrift.Transport in '..\..\src\Thrift.Transport.pas',
   Thrift.Transport.Pipes in '..\..\src\Thrift.Transport.Pipes.pas',
   Thrift.Protocol in '..\..\src\Thrift.Protocol.pas',
   Thrift.Protocol.Multiplex in '..\..\src\Thrift.Protocol.Multiplex.pas',
   Thrift.Processor.Multiplex in '..\..\src\Thrift.Processor.Multiplex.pas',
+  Thrift.Configuration in '..\..\src\Thrift.Configuration.pas',
   Thrift.Collections in '..\..\src\Thrift.Collections.pas',
   Thrift.Server in '..\..\src\Thrift.Server.pas',
-  Thrift.Console in '..\..\src\Thrift.Console.pas',
   Thrift.Utils in '..\..\src\Thrift.Utils.pas',
+  Thrift.WinHTTP in '..\..\src\Thrift.WinHTTP.pas',
   Thrift.TypeRegistry in '..\..\src\Thrift.TypeRegistry.pas',
   Thrift.Stream in '..\..\src\Thrift.Stream.pas';
 

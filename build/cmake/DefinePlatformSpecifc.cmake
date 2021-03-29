@@ -17,9 +17,44 @@
 # under the License.
 #
 
+# Uncomment this to show some basic cmake variables about platforms
+# include (NewPlatformDebug)
+
+# For Debug build types, default to "d"-suffix in library names.
+set(CMAKE_DEBUG_POSTFIX "d" CACHE STRING "Set debug library postfix")
+
+# basic options
+foreach(lang IN ITEMS C CXX)
+  if("CMAKE_${lang}_COMPILER_ID" STREQUAL "MSVC" OR "${CMAKE_${lang}_SIMULATE_ID}" STREQUAL "MSVC")
+    set(CMAKE_${lang}_FLAGS "${CMAKE_${lang}_FLAGS} /MP") # parallel build
+    set(CMAKE_${lang}_FLAGS "${CMAKE_${lang}_FLAGS} /W3") # warning level 3
+    include(CheckCXXCompilerFlag)
+    set(CMAKE_REQUIRED_QUIET ON)
+    check_cxx_compiler_flag("/source-charset:utf-8" res_var)
+    if (res_var)
+      set(CMAKE_${lang}_FLAGS "${CMAKE_${lang}_FLAGS} /source-charset:utf-8")
+    endif()
+    check_cxx_compiler_flag("/execution-charset:utf-8" res_var)
+    if (res_var)
+      set(CMAKE_${lang}_FLAGS "${CMAKE_${lang}_FLAGS} /execution-charset:utf-8")
+    endif()
+    add_definitions("-DUNICODE -D_UNICODE")
+  elseif("CMAKE_${lang}_COMPILER_ID" STREQUAL "Clang")
+    set(CMAKE_${lang}_FLAGS "${CMAKE_${lang}_FLAGS} -Wall")
+    set(CMAKE_${lang}_FLAGS "${CMAKE_${lang}_FLAGS} -ferror-limit=1")
+  elseif("CMAKE_${lang}_COMPILER_ID" STREQUAL "GNU")
+    set(CMAKE_${lang}_FLAGS "${CMAKE_${lang}_FLAGS} -Wall -Wextra")
+    set(CMAKE_${lang}_FLAGS "${CMAKE_${lang}_FLAGS} -fmax-errors=1")
+  endif()
+endforeach()
 
 # Visual Studio specific options
 if(MSVC)
+    # Allow for shared library builds
+    if(BUILD_SHARED_LIBS)
+        set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON CACHE TYPE BOOL FORCE)
+    endif()
+
     #For visual studio the library naming is as following:
     # Dynamic libraries:
     #  - thrift.dll  for release library
@@ -34,61 +69,48 @@ if(MSVC)
     #
     # the same holds for other libraries like libthriftz etc.
 
-    # For Debug build types, append a "d" to the library names.
-    set(CMAKE_DEBUG_POSTFIX "d" CACHE STRING "Set debug library postfix" FORCE)
-    set(CMAKE_RELEASE_POSTFIX "" CACHE STRING "Set release library postfix" FORCE)
-
     # Build using /MT option instead of /MD if the WITH_MT options is set
     if(WITH_MT)
         set(CompilerFlags
                 CMAKE_CXX_FLAGS
                 CMAKE_CXX_FLAGS_DEBUG
                 CMAKE_CXX_FLAGS_RELEASE
+                CMAKE_CXX_FLAGS_RELWITHDEBINFO
                 CMAKE_C_FLAGS
                 CMAKE_C_FLAGS_DEBUG
                 CMAKE_C_FLAGS_RELEASE
+                CMAKE_C_FLAGS_RELWITHDEBINFO
                 )
         foreach(CompilerFlag ${CompilerFlags})
           string(REPLACE "/MD" "/MT" ${CompilerFlag} "${${CompilerFlag}}")
         endforeach()
-        set(STATIC_POSTFIX "mt" CACHE STRING "Set static library postfix" FORCE)
+        set(THRIFT_RUNTIME_POSTFIX "mt" CACHE STRING "Set runtime library postfix" FORCE)
     else(WITH_MT)
-        set(STATIC_POSTFIX "md" CACHE STRING "Set static library postfix" FORCE)
+        set(THRIFT_RUNTIME_POSTFIX "md" CACHE STRING "Set runtime library postfix" FORCE)
     endif(WITH_MT)
-
-    # Disable Windows.h definition of macros for min and max
-    add_definitions("-DNOMINMAX")
 
     # Disable boost auto linking pragmas - cmake includes the right files
     add_definitions("-DBOOST_ALL_NO_LIB")
-
-    # Windows build does not know how to make a shared library yet
-    # as there are no __declspec(dllexport) or exports files in the project.
-    if (WITH_SHARED_LIB)
-      message (FATAL_ERROR "Windows build does not support shared library output yet, please set -DWITH_SHARED_LIB=off")
-    endif()
-
 elseif(UNIX)
   find_program( MEMORYCHECK_COMMAND valgrind )
   set( MEMORYCHECK_COMMAND_OPTIONS "--gen-suppressions=all --leak-check=full" )
   set( MEMORYCHECK_SUPPRESSIONS_FILE "${PROJECT_SOURCE_DIR}/test/valgrind.suppress" )
 endif()
 
-# WITH_*THREADS selects which threading library to use
-if(WITH_BOOSTTHREADS)
-  add_definitions("-DUSE_BOOST_THREAD=1")
-elseif(WITH_STDTHREADS)
-  add_definitions("-DUSE_STD_THREAD=1")
+add_definitions("-D__STDC_FORMAT_MACROS")
+add_definitions("-D__STDC_LIMIT_MACROS")
+
+# C++ Language Level
+set(CXX_LANGUAGE_LEVEL "C++${CMAKE_CXX_STANDARD}")
+if (CMAKE_CXX_STANDARD_REQUIRED)
+  string(CONCAT CXX_LANGUAGE_LEVEL "${CXX_LANGUAGE_LEVEL} [compiler must support it]")
+else()
+  string(CONCAT CXX_LANGUAGE_LEVEL "${CXX_LANGUAGE_LEVEL} [fallback to earlier if compiler does not support it]")
+endif()
+if (CMAKE_CXX_EXTENSIONS)
+  string(CONCAT CXX_LANGUAGE_LEVEL "${CXX_LANGUAGE_LEVEL} [with compiler-specific extensions]")
 endif()
 
-# GCC and Clang.
-if(CMAKE_COMPILER_IS_GNUCC OR CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-  # FIXME -pedantic can not be used at the moment because of: https://issues.apache.org/jira/browse/THRIFT-2784
-  #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -O2 -Wall -Wextra -pedantic")
-  # FIXME enabling c++11 breaks some Linux builds on Travis by triggering a g++ bug, see
-  # https://travis-ci.org/apache/thrift/jobs/58017022
-  # on the other hand, both MacOSX and FreeBSD need c++11
-  if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin" OR ${CMAKE_SYSTEM_NAME} MATCHES "FreeBSD")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -O2 -Wall -Wextra")
-  endif()
+if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-deprecated-register")
 endif()

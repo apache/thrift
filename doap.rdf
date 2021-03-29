@@ -27,7 +27,7 @@
     <name>Apache Thrift</name>
     <homepage rdf:resource="http://thrift.apache.org" />
     <asfext:pmc rdf:resource="http://thrift.apache.org" />
-    <shortdesc>Apache Thrift software provides a framework for scalable cross-language services development, combines a software stack with a code generation engine to build services that work efficiently and seamlessly between C++, Java, Python, PHP, Ruby, Erlang, Perl, Haskell, C#, Cocoa, JavaScript, Node.js, Smalltalk, OCaml and Delphi and other languages. </shortdesc>
+    <shortdesc>Apache Thrift software provides a framework for scalable cross-language services development, combines a software stack with a code generation engine to build services that work efficiently and seamlessly between C++, Java, Python, PHP, Ruby, Erlang, Perl, Haskell, C#, JavaScript, Node.js, Smalltalk, OCaml and Delphi and other languages. </shortdesc>
     <description>Apache Thrift allows you to define data types and service interfaces in a simple definition file. Taking that file as input, the compiler generates code to be used to easily build RPC clients and servers that communicate seamlessly across programming languages. Instead of writing a load of boilerplate code to serialize and transport your objects and invoke remote methods, you can get right down to business. </description>
     <bug-database rdf:resource="https://issues.apache.org/jira/browse/THRIFT" />
     <mailing-list rdf:resource="http://thrift.apache.org/mailing/" />
@@ -36,12 +36,13 @@
     <programming-language>C</programming-language>
     <programming-language>C#</programming-language>
     <programming-language>C++</programming-language>
-    <programming-language>Cocoa</programming-language>
     <programming-language>D</programming-language>
+    <programming-language>Dart</programming-language>
     <programming-language>Delphi</programming-language>
     <programming-language>Erlang</programming-language>
     <programming-language>Go</programming-language>
     <programming-language>Haskell</programming-language>
+    <programming-language>Haxe</programming-language>
     <programming-language>Java</programming-language>
     <programming-language>JavaScript</programming-language>
     <programming-language>node.js</programming-language>
@@ -49,12 +50,43 @@
     <programming-language>Perl</programming-language>
     <programming-language>PHP</programming-language>
     <programming-language>Python</programming-language>
+    <programming-language>Rust</programming-language>
     <programming-language>SmallTalk</programming-language>
     <category rdf:resource="http://projects.apache.org/category/http" />
     <category rdf:resource="http://projects.apache.org/category/library" />
     <category rdf:resource="http://projects.apache.org/category/network-client" />
     <category rdf:resource="http://projects.apache.org/category/network-server" />
     <release rdf:parseType="Collection">
+      <Version>
+        <name>Apache Thrift</name>
+        <created>2021-03-02</created>
+        <revision>0.14.1</revision>
+      </Version>
+      <Version>
+        <name>Apache Thrift</name>
+        <created>2021-02-04</created>
+        <revision>0.14.0</revision>
+      </Version>
+      <Version>
+        <name>Apache Thrift</name>
+        <created>2019-10-11</created>
+        <revision>0.13.0</revision>
+      </Version>
+      <Version>
+        <name>Apache Thrift</name>
+        <created>2018-12-28</created>
+        <revision>0.12.0</revision>
+      </Version>
+      <Version>
+        <name>Apache Thrift</name>
+        <created>2017-11-30</created>
+        <revision>0.11.0</revision>
+      </Version>
+      <Version>
+        <name>Apache Thrift</name>
+        <created>2017-03-01</created>
+        <revision>0.10.0</revision>
+      </Version>
       <Version>
         <name>Apache Thrift</name>
         <created>2015-09-25</created>
@@ -118,8 +150,8 @@
     </release>
     <repository>
       <GitRepository>
-        <location rdf:resource="https://git-wip-us.apache.org/repos/asf/thrift.git"/>
-        <browse rdf:resource="https://git-wip-us.apache.org/repos/asf?p=thrift.git"/>
+        <location rdf:resource="https://github.com/apache/thrift.git"/>
+        <browse rdf:resource="https://github.com/apache/thrift"/>
       </GitRepository>
     </repository>
     <maintainer>

@@ -31,6 +31,7 @@ import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.ByteArrayEntity;
 import org.apache.http.params.CoreConnectionPNames;
+import org.apache.thrift.TConfiguration;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -55,7 +56,7 @@ import java.util.function.BooleanSupplier;
  * Using the THttpClient(String url) constructor or passing null as the
  * HttpClient to THttpClient(String url, HttpClient client) will create an
  * instance which will use HttpURLConnection.
- * <p>
+ *
  * When using HttpClient, the following configuration leads to 5-15%
  * better performance than the HttpURLConnection implementation:
  * <p>
@@ -70,7 +71,7 @@ import java.util.function.BooleanSupplier;
  * @see <a href="https://issues.apache.org/jira/browse/THRIFT-970">THRIFT-970</a>
  */
 
-public class THttpClient extends TTransport {
+public class THttpClient extends TEndpointTransport {
 
   private URL url_ = null;
 
@@ -118,13 +119,37 @@ public class THttpClient extends TTransport {
     public TTransport getTransport(TTransport trans) {
       try {
         if (null != client) {
-          return new THttpClient(url, client, interceptor);
+          return new THttpClient(trans.getConfiguration(), url, client, interceptor);
         } else {
-          return new THttpClient(url, interceptor);
+          return new THttpClient(trans.getConfiguration(), url, interceptor);
         }
       } catch (TTransportException tte) {
         return null;
       }
+    }
+  }
+
+  public THttpClient(TConfiguration config, String url) throws TTransportException {
+    super(config);
+    try {
+      url_ = new URL(url);
+      this.client = null;
+      this.host = null;
+      this.interceptor = new EmptyCommonInterceptor();
+    } catch (IOException iox) {
+      throw new TTransportException(iox);
+    }
+  }
+
+  public THttpClient(TConfiguration config, String url, CommonInterceptor interceptor) throws TTransportException {
+    super(config);
+    try {
+      url_ = new URL(url);
+      this.client = null;
+      this.host = null;
+      this.interceptor = interceptor == null ? new EmptyCommonInterceptor() : interceptor;
+    } catch (IOException iox) {
+      throw new TTransportException(iox);
     }
   }
 
@@ -133,10 +158,35 @@ public class THttpClient extends TTransport {
   }
 
   public THttpClient(String url, CommonInterceptor interceptor) throws TTransportException {
+    super(new TConfiguration());
     try {
       url_ = new URL(url);
       this.client = null;
       this.host = null;
+      this.interceptor = interceptor == null ? new EmptyCommonInterceptor() : interceptor;
+    } catch (IOException iox) {
+      throw new TTransportException(iox);
+    }
+  }
+
+  public THttpClient(TConfiguration config, String url, HttpClient client) throws TTransportException {
+    super(config);
+    try {
+      url_ = new URL(url);
+      this.client = client;
+      this.host = new HttpHost(url_.getHost(), -1 == url_.getPort() ? url_.getDefaultPort() : url_.getPort(), url_.getProtocol());
+      this.interceptor = new EmptyCommonInterceptor();
+    } catch (IOException iox) {
+      throw new TTransportException(iox);
+    }
+  }
+
+  public THttpClient(TConfiguration config, String url, HttpClient client, CommonInterceptor interceptor) throws TTransportException {
+    super(config);
+    try {
+      url_ = new URL(url);
+      this.client = client;
+      this.host = new HttpHost(url_.getHost(), -1 == url_.getPort() ? url_.getDefaultPort() : url_.getPort(), url_.getProtocol());
       this.interceptor = interceptor == null ? new EmptyCommonInterceptor() : interceptor;
     } catch (IOException iox) {
       throw new TTransportException(iox);
@@ -148,6 +198,7 @@ public class THttpClient extends TTransport {
   }
 
   public THttpClient(String url, HttpClient client, CommonInterceptor interceptor) throws TTransportException {
+    super(new TConfiguration());
     try {
       url_ = new URL(url);
       this.client = client;
@@ -199,7 +250,6 @@ public class THttpClient extends TTransport {
       try {
         inputStream_.close();
       } catch (IOException ioe) {
-        ;
       }
       inputStream_ = null;
     }
@@ -213,11 +263,16 @@ public class THttpClient extends TTransport {
     if (inputStream_ == null) {
       throw new TTransportException("Response buffer is empty, no request.");
     }
+
+    checkReadBytesAvailable(len);
+
     try {
       int ret = inputStream_.read(buf, off, len);
       if (ret == -1) {
         throw new TTransportException("No more data available.");
       }
+      countConsumedMessageBytes(ret);
+
       return ret;
     } catch (IOException iox) {
       throw new TTransportException(iox);
@@ -291,6 +346,7 @@ public class THttpClient extends TTransport {
       // to HttpClient.
       //
       HttpPost newPost = post;
+
       setMainHeaders((key, val) -> newPost.setHeader(key, val));
 
       setCustomHeaders((key, val) -> newPost.setHeader(key, val));
@@ -391,6 +447,8 @@ public class THttpClient extends TTransport {
 
     } catch (IOException iox) {
       throw new TTransportException(iox);
+    } finally {
+      resetConsumedMessageSize(-1);
     }
   }
 }

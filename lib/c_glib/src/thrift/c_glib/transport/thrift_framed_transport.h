@@ -37,7 +37,7 @@ G_BEGIN_DECLS
 #define THRIFT_FRAMED_TRANSPORT(obj) (G_TYPE_CHECK_INSTANCE_CAST ((obj), THRIFT_TYPE_FRAMED_TRANSPORT, ThriftFramedTransport))
 #define THRIFT_IS_FRAMED_TRANSPORT(obj) (G_TYPE_CHECK_INSTANCE_TYPE ((obj), THRIFT_TYPE_FRAMED_TRANSPORT))
 #define THRIFT_FRAMED_TRANSPORT_CLASS(c) (G_TYPE_CHECK_CLASS_CAST ((c), THRIFT_TYPE_FRAMED_TRANSPORT, ThriftFramedTransportClass))
-#define THRIFT_IS_FRAMED_TRANSPORT_CLASS(c) (G_TYPE_CHECK_CLASS_TYPE ((c), THRIFT_TYPE_FRAMED_TRANSPORT)
+#define THRIFT_IS_FRAMED_TRANSPORT_CLASS(c) (G_TYPE_CHECK_CLASS_TYPE ((c), THRIFT_TYPE_FRAMED_TRANSPORT))
 #define THRIFT_FRAMED_TRANSPORT_GET_CLASS(obj) (G_TYPE_INSTANCE_GET_CLASS ((obj), THRIFT_TYPE_FRAMED_TRANSPORT, ThriftFramedTransportClass))
 
 typedef struct _ThriftFramedTransport ThriftFramedTransport;
@@ -53,6 +53,7 @@ struct _ThriftFramedTransport
   ThriftTransport *transport;
 
   /* private */
+  guint32 max_frame_size;
   GByteArray *r_buf;
   GByteArray *w_buf;
   guint32 r_buf_size;

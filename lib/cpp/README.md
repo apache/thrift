@@ -19,7 +19,6 @@ KIND, either express or implied. See the License for the
 specific language governing permissions and limitations
 under the License.
 
-
 # Using Thrift with C++
 
 The Thrift C++ libraries are built using the GNU tools. Follow the instructions
@@ -34,8 +33,8 @@ In case you do not want to open another README.md file, do this thrift src:
 
 Thrift is divided into two libraries.
 
-* libthrift - The core Thrift library contains all the core Thrift code. It requires
-  boost shared pointers, pthreads, and librt.
+* libthrift - The core Thrift library contains all the core Thrift code.  This requires
+  openssl, pthreads, and librt.
 
 * libthriftnb - This library contains the Thrift nonblocking server, which uses libevent.
   To link this library you will also need to link libevent.
@@ -55,15 +54,20 @@ you are using libthriftnb you will also need libevent.
 
 ## Dependencies
 
-boost shared pointers
-http://www.boost.org/libs/smart_ptr/smart_ptr.htm
+C++11 is required at a minimum.  C++03/C++98 are not supported after version 0.12.0.
 
-libevent (for libthriftnb only)
+Boost is required to run the C++ unit tests.  It is not necessary to link against
+the runtime library.
+
+libevent (for libthriftnb only) - most linux distributions have dev packages for this:
 http://monkey.org/~provos/libevent/
 
 # Using Thrift with C++ on Windows
 
-You need to define an environment variables for 3rd party components separately:
+Both the autoconf and cmake build systems are able to automatically detect many
+system configurations without the need to specify library locations, however if
+you run into problems or want to redirect thrift to build and link against your
+own provided third party libraries:
 
 BOOST_ROOT : For boost, e.g. D:\boost_1_55_0
 OPENSSL_ROOT_DIR : For OpenSSL, e.g. D:\OpenSSL-Win32
@@ -74,54 +78,43 @@ LIBEVENT_ROOT_DIR : For Libevent e.g. D:\libevent-2.0.21-stable
 
 See /3rdparty.user for more details.
 
-Thrift is divided into two libraries.
-
-* libthrift - The core Thrift library contains all the core Thrift code. It requires
-  boost shared pointers, pthreads, and librt.
-
-* libthriftnb - This library contains the Thrift nonblocking server, which uses libevent.
-  To link this library you will also need to link libevent.
+The same linking guidelines described above for libthriftnb apply to windows as well.
 
 ## Linking Against Thrift
 
 You need to link your project that uses thrift against all the thrift
-dependencies; in the case of libthrift, boost and for
+dependencies; in the case of libthrift, openssl, pthreads, and librt and for
 libthriftnb, libevent.
 
 In the project properties you must also set HAVE_CONFIG_H as force include
-the config header: "windows/confg.h"
+the config header: "windows/config.h"
 
 ## Dependencies
-
-boost shared pointers
-http://www.boost.org/libs/smart_ptr/smart_ptr.htm
-
-boost thread
-http://www.boost.org/doc/libs/release/doc/html/thread.html
 
 libevent (for libthriftnb only)
 http://monkey.org/~provos/libevent/
 
-## Notes on boost thread (static vs shared):
-
-By default lib/cpp/windows/force_inc.h defines:
-
-    #define BOOST_ALL_NO_LIB 1
-    #define BOOST_THREAD_NO_LIB 1
-
-This has for effect to have the host application linking against Thrift
-to have to link with boost thread as a static library.
-
-If you wanted instead to link with boost thread as a shared library,
-you'll need to uncomment those two lines, and recompile.
-
 ## Windows version compatibility
 
-The Thrift library targets Windows XP for broadest compatbility. A notable
-difference is in the Windows-specific implementation of the socket poll
-function. To target Vista, Win7 or other versions, comment out the line
+The Thrift library targets Windows 7 or latter versions. The supports for windows XP and Vista are avaiable until 0.12.0.
 
-    #define TARGET_WIN_XP.
+## Thrift and the VCPKG Package manager
+
+You can download and install thrift using the 
+[vcpkg](https://github.com/Microsoft/vcpkg) dependency manager:
+
+    git clone https://github.com/Microsoft/vcpkg.git
+    cd vcpkg
+    ./bootstrap-vcpkg.sh
+    ./vcpkg integrate install
+    ./vcpkg install thrift
+
+The thrift port in vcpkg is kept up to date by Microsoft team members 
+and community contributors. The Apache Thrift project is *not* responsible
+for the vcpkg port. Therefore, if the version is out of date, please 
+[create an issue or pull request](https://github.com/Microsoft/vcpkg) 
+on the vcpkg repository. 
+
 
 ## Named Pipes
 
@@ -139,50 +132,16 @@ TSimpleServer, TThreadedServer, and TThreadPoolServer.
 
 ## Implementation
 
-There're two main classes TSSLSocketFactory and TSSLSocket. Instances of
+There are two main classes TSSLSocketFactory and TSSLSocket. Instances of
 TSSLSocket are always created from TSSLSocketFactory.
-
-PosixSSLThreadFactory creates PosixSSLThread. The only difference from the
-PthreadThread type is that it cleanups OpenSSL error queue upon exiting
-the thread. Ideally, OpenSSL APIs should only be called from PosixSSLThread.
 
 ## How to use SSL APIs
 
-This is for demo. In real code, typically only one TSSLSocketFactory
-instance is needed.
+See the TestClient.cpp and TestServer.cpp files for examples.
 
-    shared_ptr<TSSLSocketFactory> getSSLSocketFactory() {
-      shared_ptr<TSSLSocketFactory> factory(new TSSLSocketFactory());
-      // client: load trusted certificates
-      factory->loadTrustedCertificates("my-trusted-ca-certificates.pem");
-      // client: optionally set your own access manager, otherwise,
-      //         the default client access manager will be loaded.
+### AccessManager (certificate validation)
 
-      factory->loadCertificate("my-certificate-signed-by-ca.pem");
-      factory->loadPrivateKey("my-private-key.pem");
-      // server: optionally setup access manager
-      // shared_ptr<AccessManager> accessManager(new MyAccessManager);
-      // factory->access(accessManager);
-      ...
-    }
-
-
-client code sample
-
-    shared_ptr<TSSLSocketFactory> factory = getSSLSocketFactory();
-    shared_ptr<TSocket> socket = factory.createSocket(host, port);
-    shared_ptr<TBufferedTransport> transport(new TBufferedTransport(socket));
-    ...
-
-
-server code sample
-
-    shared_ptr<TSSLSocketFactory> factory = getSSLSocketFactory();
-    shared_ptr<TSSLServerSocket> socket(new TSSLServerSocket(port, factory));
-    shared_ptr<TTransportFactory> transportFactory(new TBufferedTransportFactory));
-    ...
-
-## AccessManager
+An example of certificate validation can be found in TestServer.cpp.
 
 AccessManager defines a callback interface. It has three callback methods:
 
@@ -272,3 +231,66 @@ OpenSSL's RAND_poll() when OpenSSL library is first initialized.
 
 The PRNG seed is key to the application security. This method should be
 overridden if it's not strong enough for you.
+
+# Deprecations
+
+## 0.12.0
+
+Support for C++03/C++98 was deprecated.
+Support for Boost at runtime was deprecated.
+
+# Breaking Changes
+
+## 1.0.0
+
+THRIFT-4720:
+The classes Monitor and TimerManager now use std::chrono::milliseconds for timeout, the methods and functions involving THRIFT_TIMESPEC and timeval have been removed, the related tests have been modified.
+
+Support for Windows XP/Vista has been dropped.
+
+Support for C++03/C++98 has been dropped.  Use version 0.12.0 to support that
+language level.  As a consequence, boost is no longer required as a runtime
+library depenedency, but is is still required to build the runtime library
+and to run the unit tests.  We will work towards removing boost as a
+build dependency for folks who just want to build the runtime and not
+run the tests.  This means the header thrift/stdcxx.h has been removed and
+anything that relied on it has been changed to directly use C++11 concepts.
+
+THRIFT-4730:
+The classes BoostThreadFactory, PosixThreadFactory, StdThreadFactory, and
+PlatformThreadFactory have been removed, and we will use a ThreadFactory
+based on C++11 (essentially StdThreadFactory was renamed ThreadFactory).
+
+THRIFT-4732:
+The CMake build options WITH_SHARED_LIBS and WITH_STATIC_LIBS are deprecated.
+The project no longer performs a side-by-side static and shared build; you
+tell CMake through BUILD_SHARED_LIBS whether to make shared or static
+libraries now.  This is CMake standard behavior.
+
+THRIFT-4735:
+Qt4 support was removed.
+
+THRIFT-4762:
+Added `const` specifier to `TTransport::getOrigin()`. This changes its function signature.
+It's recommended to add the `override` specifier in implementations derived from `TTransport`.
+
+## 0.11.0
+
+Older versions of thrift depended on the <boost/smart_ptr.hpp> classes which
+were used in thrift headers to define interfaces.  Thrift now detects C++11
+at build time and will prefer to use <memory> classes from C++11 instead.
+You can force the library to build with boost memory classes by defining the
+preprocessor macro `FORCE_BOOST_SMART_PTR`.  (THRIFT-2221)
+
+In the pthread mutex implementation, the contention profiling code was enabled
+by default in all builds.  This changed to be disabled by default.  (THRIFT-4151)
+
+In older releases, if a TSSLSocketFactory's lifetime was not at least as long
+as the TSSLSockets it created, we silently reverted openssl to unsafe multithread behavior
+and so the results were undefined.  Changes were made in 0.11.0 that cause either an
+assertion or a core instead of undefined behavior.  The lifetime of a TSSLSocketFactory
+*must* be longer than any TSSLSocket that it creates, otherwise openssl will be cleaned
+up too early.  If the static boolean is set to disable openssl initialization and
+cleanup and leave it up to the consuming application, this requirement is not needed.
+(THRIFT-4164)
+

@@ -27,15 +27,17 @@ uses
   Multiplex.Client.Main in 'Multiplex.Client.Main.pas',
   Thrift in '..\..\src\Thrift.pas',
   Thrift.Socket in '..\..\src\Thrift.Socket.pas',
+  Thrift.Exception in '..\..\src\Thrift.Exception.pas',
   Thrift.Transport in '..\..\src\Thrift.Transport.pas',
   Thrift.Transport.Pipes in '..\..\src\Thrift.Transport.Pipes.pas',
   Thrift.Protocol in '..\..\src\Thrift.Protocol.pas',
   Thrift.Protocol.Multiplex in '..\..\src\Thrift.Protocol.Multiplex.pas',
   Thrift.Collections in '..\..\src\Thrift.Collections.pas',
+  Thrift.Configuration in '..\..\src\Thrift.Configuration.pas',
   Thrift.Server in '..\..\src\Thrift.Server.pas',
   Thrift.Stream in '..\..\src\Thrift.Stream.pas',
-  Thrift.Console in '..\..\src\Thrift.Console.pas',
   Thrift.TypeRegistry in '..\..\src\Thrift.TypeRegistry.pas',
+  Thrift.WinHTTP in '..\..\src\Thrift.WinHTTP.pas',
   Thrift.Utils in '..\..\src\Thrift.Utils.pas';
 
 var

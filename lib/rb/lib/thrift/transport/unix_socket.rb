@@ -36,5 +36,9 @@ module Thrift
         raise TransportException.new(TransportException::NOT_OPEN, "Could not open UNIX socket at #{@path}")
       end
     end
+    
+    def to_s
+      "domain(#{@path})"
+    end
   end
 end

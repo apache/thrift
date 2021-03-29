@@ -172,6 +172,9 @@ function testBasicClient(rawArgs)
   assertEqual(o.i32_thing, r.i32_thing, 'Failed testStruct 3')
   assertEqual(o.i64_thing, r.i64_thing, 'Failed testStruct 4')
 
+  -- oneway
+  client:testOneway(3)
+
   -- TODO add list map set exception etc etc
 end
 

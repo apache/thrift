@@ -95,7 +95,7 @@ interface TAsyncClientPoolBase(Interface) if (isService!Interface) :
 }
 
 immutable bool delegate(Exception) defaultRpcFaultFilter;
-static this() {
+shared static this() {
   defaultRpcFaultFilter = (Exception e) {
     import thrift.protocol.base;
     import thrift.transport.base;

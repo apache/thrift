@@ -41,10 +41,13 @@ func RunSocketTestSuite(t *testing.T, protocolFactory thrift.TProtocolFactory,
 	go server.Serve()
 
 	// client
-	var transport thrift.TTransport = thrift.NewTSocketFromAddrTimeout(addr, TIMEOUT)
-	transport = transportFactory.GetTransport(transport)
+	var transport thrift.TTransport = thrift.NewTSocketFromAddrTimeout(addr, TIMEOUT, TIMEOUT)
+	transport, err = transportFactory.GetTransport(transport)
+	if err != nil {
+		t.Fatal(err)
+	}
 	var protocol thrift.TProtocol = protocolFactory.GetProtocol(transport)
-	thriftTestClient := thrifttest.NewThriftTestClientProtocol(transport, protocol, protocol)
+	thriftTestClient := thrifttest.NewThriftTestClient(thrift.NewTStandardClient(protocol, protocol))
 	err = transport.Open()
 	if err != nil {
 		t.Fatal("Unable to open client socket", err)

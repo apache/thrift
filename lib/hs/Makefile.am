@@ -24,7 +24,7 @@ EXTRA_DIST = \
 	README.md \
 	Setup.lhs \
 	TODO \
-	Thrift.cabal \
+	thrift.cabal \
 	src \
 	test
 
@@ -38,6 +38,9 @@ install-exec-hook:
 # Make sure this doesn't fail if Haskell is not configured.
 clean-local:
 	$(CABAL) clean
+
+dist-local:
+	$(CABAL) sdist
 
 maintainer-clean-local:
 	$(CABAL) clean

@@ -26,21 +26,26 @@ describe 'UNIXSocket' do
     before(:each) do
       @path = '/tmp/thrift_spec_socket'
       @socket = Thrift::UNIXSocket.new(@path)
-      @handle = mock("Handle", :closed? => false)
-      @handle.stub!(:close)
-      ::UNIXSocket.stub!(:new).and_return(@handle)
+      @handle = double("Handle", :closed? => false)
+      allow(@handle).to receive(:close)
+      allow(::UNIXSocket).to receive(:new).and_return(@handle)
     end
 
     it_should_behave_like "a socket"
 
     it "should raise a TransportException when it cannot open a socket" do
-      ::UNIXSocket.should_receive(:new).and_raise(StandardError)
-      lambda { @socket.open }.should raise_error(Thrift::TransportException) { |e| e.type.should == Thrift::TransportException::NOT_OPEN }
+      expect(::UNIXSocket).to receive(:new).and_raise(StandardError)
+      expect { @socket.open }.to raise_error(Thrift::TransportException) { |e| expect(e.type).to eq(Thrift::TransportException::NOT_OPEN) }
     end
 
     it "should accept an optional timeout" do
-      ::UNIXSocket.stub!(:new)
-      Thrift::UNIXSocket.new(@path, 5).timeout.should == 5
+      allow(::UNIXSocket).to receive(:new)
+      expect(Thrift::UNIXSocket.new(@path, 5).timeout).to eq(5)
+    end
+    
+    it "should provide a reasonable to_s" do
+      allow(::UNIXSocket).to receive(:new)
+      expect(Thrift::UNIXSocket.new(@path).to_s).to eq("domain(#{@path})")
     end
   end
 
@@ -51,57 +56,61 @@ describe 'UNIXSocket' do
     end
 
     it "should create a handle when calling listen" do
-      UNIXServer.should_receive(:new).with(@path)
+      expect(UNIXServer).to receive(:new).with(@path)
       @socket.listen
     end
 
     it "should create a Thrift::UNIXSocket to wrap accepted sockets" do
-      handle = mock("UNIXServer")
-      UNIXServer.should_receive(:new).with(@path).and_return(handle)
+      handle = double("UNIXServer")
+      expect(UNIXServer).to receive(:new).with(@path).and_return(handle)
       @socket.listen
-      sock = mock("sock")
-      handle.should_receive(:accept).and_return(sock)
-      trans = mock("UNIXSocket")
-      Thrift::UNIXSocket.should_receive(:new).and_return(trans)
-      trans.should_receive(:handle=).with(sock)
-      @socket.accept.should == trans
+      sock = double("sock")
+      expect(handle).to receive(:accept).and_return(sock)
+      trans = double("UNIXSocket")
+      expect(Thrift::UNIXSocket).to receive(:new).and_return(trans)
+      expect(trans).to receive(:handle=).with(sock)
+      expect(@socket.accept).to eq(trans)
     end
 
     it "should close the handle when closed" do
-      handle = mock("UNIXServer", :closed? => false)
-      UNIXServer.should_receive(:new).with(@path).and_return(handle)
+      handle = double("UNIXServer", :closed? => false)
+      expect(UNIXServer).to receive(:new).with(@path).and_return(handle)
       @socket.listen
-      handle.should_receive(:close)
-      File.stub!(:delete)
+      expect(handle).to receive(:close)
+      allow(File).to receive(:delete)
       @socket.close
     end
 
     it "should delete the socket when closed" do
-      handle = mock("UNIXServer", :closed? => false)
-      UNIXServer.should_receive(:new).with(@path).and_return(handle)
+      handle = double("UNIXServer", :closed? => false)
+      expect(UNIXServer).to receive(:new).with(@path).and_return(handle)
       @socket.listen
-      handle.stub!(:close)
-      File.should_receive(:delete).with(@path)
+      allow(handle).to receive(:close)
+      expect(File).to receive(:delete).with(@path)
       @socket.close
     end
 
     it "should return nil when accepting if there is no handle" do
-      @socket.accept.should be_nil
+      expect(@socket.accept).to be_nil
     end
 
     it "should return true for closed? when appropriate" do
-      handle = mock("UNIXServer", :closed? => false)
-      UNIXServer.stub!(:new).and_return(handle)
-      File.stub!(:delete)
+      handle = double("UNIXServer", :closed? => false)
+      allow(UNIXServer).to receive(:new).and_return(handle)
+      allow(File).to receive(:delete)
       @socket.listen
-      @socket.should_not be_closed
-      handle.stub!(:close)
+      expect(@socket).not_to be_closed
+      allow(handle).to receive(:close)
       @socket.close
-      @socket.should be_closed
+      expect(@socket).to be_closed
       @socket.listen
-      @socket.should_not be_closed
-      handle.stub!(:closed?).and_return(true)
-      @socket.should be_closed
+      expect(@socket).not_to be_closed
+      allow(handle).to receive(:closed?).and_return(true)
+      expect(@socket).to be_closed
+    end
+
+    it "should provide a reasonable to_s" do
+      expect(@socket.to_s).to eq("domain(#{@path})")
     end
   end
 end

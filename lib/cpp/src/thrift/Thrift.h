@@ -42,9 +42,6 @@
 #include <exception>
 #include <typeinfo>
 
-#include <boost/utility/enable_if.hpp>
-#include <boost/type_traits/is_convertible.hpp>
-
 #include <thrift/TLogging.h>
 #include <thrift/TOutput.h>
 
@@ -82,9 +79,9 @@ public:
 
   TException(const std::string& message) : message_(message) {}
 
-  virtual ~TException() throw() {}
+  virtual ~TException() noexcept override = default;
 
-  virtual const char* what() const throw() {
+  const char* what() const noexcept override {
     if (message_.empty()) {
       return "Default TException.";
     } else {
@@ -101,14 +98,14 @@ public:
   template <class E>
   static TDelayedException* delayException(const E& e);
   virtual void throw_it() = 0;
-  virtual ~TDelayedException(){};
+  virtual ~TDelayedException() = default;
 };
 
 template <class E>
 class TExceptionWrapper : public TDelayedException {
 public:
   TExceptionWrapper(const E& e) : e_(e) {}
-  virtual void throw_it() {
+  void throw_it() override {
     E temp(e_);
     delete this;
     throw temp;

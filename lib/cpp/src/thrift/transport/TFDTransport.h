@@ -40,10 +40,12 @@ class TFDTransport : public TVirtualTransport<TFDTransport> {
 public:
   enum ClosePolicy { NO_CLOSE_ON_DESTROY = 0, CLOSE_ON_DESTROY = 1 };
 
-  TFDTransport(int fd, ClosePolicy close_policy = NO_CLOSE_ON_DESTROY)
-    : fd_(fd), close_policy_(close_policy) {}
+  TFDTransport(int fd, ClosePolicy close_policy = NO_CLOSE_ON_DESTROY,
+              std::shared_ptr<TConfiguration> config = nullptr)
+    : TVirtualTransport(config), fd_(fd), close_policy_(close_policy) {
+    }
 
-  ~TFDTransport() {
+  ~TFDTransport() override {
     if (close_policy_ == CLOSE_ON_DESTROY) {
       try {
         close();
@@ -53,11 +55,11 @@ public:
     }
   }
 
-  bool isOpen() { return fd_ >= 0; }
+  bool isOpen() const override { return fd_ >= 0; }
 
-  void open() {}
+  void open() override {}
 
-  void close();
+  void close() override;
 
   uint32_t read(uint8_t* buf, uint32_t len);
 

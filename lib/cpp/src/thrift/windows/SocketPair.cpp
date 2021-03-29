@@ -77,12 +77,12 @@ int thrift_socketpair(int d, int type, int protocol, THRIFT_SOCKET sv[2]) {
       break;
     if (listen(listener, 1) == SOCKET_ERROR)
       break;
-    sv[0] = WSASocket(AF_INET, SOCK_STREAM, 0, NULL, 0, flags);
+    sv[0] = WSASocket(AF_INET, SOCK_STREAM, 0, nullptr, 0, flags);
     if (sv[0] == INVALID_SOCKET)
       break;
     if (connect(sv[0], &a.addr, sizeof(a.inaddr)) == SOCKET_ERROR)
       break;
-    sv[1] = accept(listener, NULL, NULL);
+    sv[1] = accept(listener, nullptr, nullptr);
     if (sv[1] == INVALID_SOCKET)
       break;
 

@@ -57,6 +57,27 @@ public abstract class TProtocol {
     return trans_;
   }
 
+  protected void checkReadBytesAvailable(TMap map) throws TException {
+    long elemSize = getMinSerializedSize(map.keyType) + getMinSerializedSize(map.valueType);
+    trans_.checkReadBytesAvailable(map.size * elemSize);
+  }
+
+  protected void checkReadBytesAvailable(TList list) throws TException {
+    trans_.checkReadBytesAvailable(list.size * getMinSerializedSize(list.elemType));
+  }
+
+  protected void checkReadBytesAvailable(TSet set) throws TException {
+    trans_.checkReadBytesAvailable(set.size * getMinSerializedSize(set.elemType));
+  }
+
+  /**
+   * Return
+   * @param type  Returns the minimum amount of bytes needed to store the smallest possible instance of TType.
+   * @return
+   * @throws TException
+   */
+  public abstract int getMinSerializedSize(byte type) throws TException;
+
   /**
    * Writing methods.
    */
@@ -152,7 +173,7 @@ public abstract class TProtocol {
    * be implemented for stateful protocols.
    */
   public void reset() {}
-  
+
   /**
    * Scheme accessor
    */

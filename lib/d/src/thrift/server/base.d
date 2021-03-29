@@ -118,6 +118,38 @@ protected:
   TTransportFactory outputTransportFactory_;
   TProtocolFactory inputProtocolFactory_;
   TProtocolFactory outputProtocolFactory_;
+
+public:
+
+  @property TProcessorFactory processorFactory()
+  {
+    return processorFactory_;
+  }
+
+  @property TServerTransport serverTransport()
+  {
+    return serverTransport_;
+  }
+
+  @property TTransportFactory inputTransportFactory()
+  {
+    return inputTransportFactory_;
+  }
+
+  @property TTransportFactory outputTransportFactory()
+  {
+    return outputTransportFactory_;
+  }
+
+  @property TProtocolFactory inputProtocolFactory()
+  {
+    return inputProtocolFactory_;
+  }
+
+  @property TProtocolFactory outputProtocolFactory()
+  {
+    return outputProtocolFactory_;
+  }
 }
 
 /**

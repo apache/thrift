@@ -31,7 +31,7 @@
 #include <io.h>
 #endif
 
-using namespace std;
+using std::string;
 
 namespace apache {
 namespace thrift {
@@ -52,6 +52,7 @@ void TFDTransport::close() {
 }
 
 uint32_t TFDTransport::read(uint8_t* buf, uint32_t len) {
+  checkReadBytesAvailable(len);
   unsigned int maxRetries = 5; // same as the TSocket default
   unsigned int retries = 0;
   while (true) {

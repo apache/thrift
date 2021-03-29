@@ -33,7 +33,7 @@ import junit.framework.TestCase;
 
 public class TestTZlibTransport extends TestCase {
 
-  protected TTransport getTransport(TTransport underlying) {
+  protected TTransport getTransport(TTransport underlying) throws TTransportException {
     return new TZlibTransport(underlying);
   }
 

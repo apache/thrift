@@ -37,13 +37,13 @@ sudo DEBIAN_FRONTEND=noninteractive apt-get upgrade -qq -y
 # Install Dependencies
 # ---
 # General dependencies
-sudo apt-get install -qq automake libtool flex bison pkg-config g++ libssl-dev make libqt4-dev git debhelper
+sudo apt-get install -qq automake libtool flex bison pkg-config g++ libssl-dev make git debhelper
 
 # C++ dependencies
 sudo apt-get install -qq libboost-dev libboost-test-dev libboost-program-options-dev libboost-filesystem-dev libboost-system-dev libevent-dev 
 
 # Java dependencies
-sudo apt-get install -qq ant openjdk-7-jdk maven
+sudo apt-get install -qq ant openjdk-8-jdk maven
 
 # Python dependencies
 sudo apt-get install -qq python-all python-all-dev python-all-dbg python-setuptools python-support python-six python3-six
@@ -78,10 +78,6 @@ sudo apt-get install -qq lua5.2 lua5.2-dev
 # Node.js dependencies
 sudo apt-get install -qq nodejs nodejs-dev nodejs-legacy npm
 
-# CSharp
-sudo apt-get install -qq mono-gmcs mono-devel mono-xbuild mono-complete libmono-system-web2.0-cil
-sudo apt-get install -qq mingw32 mingw32-binutils mingw32-runtime nsis
-
 # D dependencies
 sudo wget http://master.dl.sourceforge.net/project/d-apt/files/d-apt.list -O /etc/apt/sources.list.d/d-apt.list
 sudo apt-get update && sudo apt-get -y --allow-unauthenticated install --reinstall d-apt-keyring && sudo apt-get update
@@ -89,8 +85,8 @@ sudo apt-get install -qq xdg-utils dmd-bin
 
 # Customize the system
 # ---
-# Default java to latest 1.7 version
-update-java-alternatives -s java-1.7.0-openjdk-amd64 
+# Default java to latest 1.8 version
+update-java-alternatives -s java-1.8.0-openjdk-amd64 
 
 # PHPUnit package broken in ubuntu. see https://bugs.launchpad.net/ubuntu/+source/phpunit/+bug/701544
 sudo apt-get upgrade pear

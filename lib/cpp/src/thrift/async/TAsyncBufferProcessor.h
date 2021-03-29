@@ -20,9 +20,7 @@
 #ifndef _THRIFT_TASYNC_BUFFER_PROCESSOR_H_
 #define _THRIFT_TASYNC_BUFFER_PROCESSOR_H_ 1
 
-#include <thrift/cxxfunctional.h>
-#include <boost/shared_ptr.hpp>
-
+#include <memory>
 #include <thrift/transport/TBufferTransports.h>
 
 namespace apache {
@@ -36,10 +34,10 @@ public:
   // forcefully close the connection (if applicable).
   // "in" and "out" should be TMemoryBuffer or similar,
   // not a wrapper around a socket.
-  virtual void process(apache::thrift::stdcxx::function<void(bool healthy)> _return,
-                       boost::shared_ptr<apache::thrift::transport::TBufferBase> ibuf,
-                       boost::shared_ptr<apache::thrift::transport::TBufferBase> obuf) = 0;
-  virtual ~TAsyncBufferProcessor() {}
+  virtual void process(std::function<void(bool healthy)> _return,
+                       std::shared_ptr<transport::TBufferBase> ibuf,
+                       std::shared_ptr<transport::TBufferBase> obuf) = 0;
+  virtual ~TAsyncBufferProcessor() = default;
 };
 }
 }
