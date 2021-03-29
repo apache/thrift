@@ -160,6 +160,8 @@ private:
   template <class Type>
   static std::string render_string(Type const& v);
 
+  static const std::string render_double(const double);
+
   /**
    * Struct generation code
    */
@@ -345,6 +347,36 @@ void t_erlang_generator::close_generator() {
 
   f_erl_file_.close();
   f_hrl_file_.close();
+}
+
+const std::string t_erlang_generator::render_double(const double value) {
+  std::stringstream double_output_stream;
+  // sets the maximum precision: http://en.cppreference.com/w/cpp/io/manip/setprecision
+  // sets the output format to fixed: http://en.cppreference.com/w/cpp/io/manip/fixed (not in scientific notation)
+  double_output_stream << std::setprecision(std::numeric_limits<double>::digits10 + 1);
+
+  #ifdef _MSC_VER
+      // strtod is broken in MSVC compilers older than 2015, so std::fixed fails to format a double literal.
+      // more details: https://blogs.msdn.microsoft.com/vcblog/2014/06/18/
+      //               c-runtime-crt-features-fixes-and-breaking-changes-in-visual-studio-14-ctp1/
+      //               and
+      //               http://www.exploringbinary.com/visual-c-plus-plus-strtod-still-broken/
+      #if _MSC_VER >= MSC_2015_VER
+          double_output_stream << std::fixed;
+      #else
+          // note that if this function is called from the erlangang generator and the MSVC compiler is older than 2015,
+          // the double literal must be output in the scientific format. There can be some cases where the
+          // mantissa of the output does not have fractionals, which is illegal in Erlang.
+          // example => 10000000000000000.0 being output as 1e+16
+          double_output_stream << std::scientific;
+      #endif
+  #else
+      double_output_stream << std::fixed;
+  #endif
+
+  double_output_stream << value;
+
+  return double_output_stream.str();
 }
 
 void t_erlang_generator::generate_typespecs(std::ostream& os) {
@@ -714,9 +746,9 @@ string t_erlang_generator::render_const_value(t_type* type, std::string name, t_
       break;
     case t_base_type::TYPE_DOUBLE:
       if (value->get_type() == t_const_value::CV_INTEGER) {
-        out << value->get_integer();
+        out << "float(" << value->get_integer() << ")";
       } else {
-        out << value->get_double();
+        out << render_double(value->get_double());
       }
       break;
     default:
