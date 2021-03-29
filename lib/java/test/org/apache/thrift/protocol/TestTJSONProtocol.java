@@ -45,4 +45,15 @@ public class TestTJSONProtocol extends ProtocolTestBase {
 
     assertEquals(expectedString, protocol.readString());
   }
+
+  public void testExactlySizedBuffer() throws TException {
+    String inputString = "yeehaw";
+    TMemoryBuffer buffer = new TMemoryBuffer(inputString.length() + 2);
+
+    TJSONProtocol protocol = new TJSONProtocol(buffer);
+    protocol.writeString(inputString);
+    String outputString = protocol.readString();
+
+    assertEquals(inputString, outputString);
+  }
 }
