@@ -37,7 +37,8 @@ uses
   Thrift.Stream in '..\..\src\Thrift.Stream.pas',
   Thrift.WinHTTP in '..\..\src\Thrift.WinHTTP.pas',
   Thrift.TypeRegistry in '..\..\src\Thrift.TypeRegistry.pas',
-  Thrift.Test, // in 'gen-delphi\Thrift.Test.pas',
+  Thrift.Test in 'gen-delphi\Thrift.Test.pas',
+  DebugProtoTest in 'gen-delphi\DebugProtoTest.pas',
   Test.TypeRegistry,
   Test.EnumToString;
 

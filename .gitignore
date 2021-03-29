@@ -198,14 +198,12 @@ project.lock.json
 /lib/dart/**/packages
 /lib/dart/**/.pub/
 /lib/dart/**/pubspec.lock
-/lib/delphi/test/skip/*.request
-/lib/delphi/test/skip/*.response
+/lib/delphi/test/skip/bin
 /lib/delphi/test/serializer/*.dat
 /lib/delphi/**/*.identcache
 /lib/delphi/**/*.local
 /lib/delphi/**/*.dcu
 /lib/delphi/**/*.2007
-/lib/delphi/**/*.dproj
 /lib/delphi/**/codegen/*.bat
 /lib/erl/_build/
 /lib/erl/.eunit

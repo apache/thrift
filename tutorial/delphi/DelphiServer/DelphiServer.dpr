@@ -36,8 +36,8 @@ uses
   Thrift.Server in '..\..\..\lib\delphi\src\Thrift.Server.pas',
   Thrift.Transport in '..\..\..\lib\delphi\src\Thrift.Transport.pas',
   Thrift.WinHTTP in '..\..\..\lib\delphi\src\Thrift.WinHTTP.pas',
-  Shared in '..\..\gen-delphi\Shared.pas',
-  Tutorial in '..\..\gen-delphi\Tutorial.pas';
+  Shared in '..\gen-delphi\Shared.pas',
+  Tutorial in '..\gen-delphi\Tutorial.pas';
 
 
 type

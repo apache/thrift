@@ -25,6 +25,8 @@ program Multiplex.Test.Client;
 uses
   SysUtils,
   Multiplex.Client.Main in 'Multiplex.Client.Main.pas',
+  Benchmark in 'gen-delphi\Benchmark.pas',
+  Aggr in 'gen-delphi\Aggr.pas',
   Thrift in '..\..\src\Thrift.pas',
   Thrift.Socket in '..\..\src\Thrift.Socket.pas',
   Thrift.Exception in '..\..\src\Thrift.Exception.pas',
