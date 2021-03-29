@@ -45,4 +45,18 @@ public class TestTJSONProtocol extends ProtocolTestBase {
 
     assertEquals(expectedString, protocol.readString());
   }
+
+  public void testExactlySizedBuffer() throws TException {
+    // Regression test for https://issues.apache.org/jira/browse/THRIFT-5383.
+    // Ensures that a JSON string can be read after writing to a buffer just
+    // large enough to contain it.
+    String inputString = "abcdefg";
+    TMemoryBuffer buffer = new TMemoryBuffer(inputString.length() + 2);
+
+    TJSONProtocol protocol = new TJSONProtocol(buffer);
+    protocol.writeString(inputString);
+    String outputString = protocol.readString();
+
+    assertEquals(inputString, outputString);
+  }
 }
