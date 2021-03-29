@@ -197,7 +197,7 @@ end;
 
 function TMsxmlHTTPClientImpl.GetIsOpen: Boolean;
 begin
-  Result := True;
+  Result := Assigned(FOutputStream);
 end;
 
 procedure TMsxmlHTTPClientImpl.Open;
@@ -264,7 +264,9 @@ end;
 
 procedure TMsxmlHTTPClientImpl.Write( const pBuf : Pointer; off, len : Integer);
 begin
-  FOutputStream.Write( pBuf, off, len);
+  if FOutputStream <> nil
+  then FOutputStream.Write( pBuf, off, len)
+  else raise TTransportExceptionNotOpen.Create('Transport closed');
 end;
 
 

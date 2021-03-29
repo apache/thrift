@@ -474,6 +474,10 @@ begin
     on e:Exception do Expect( FALSE, 'Unexpected exception "'+e.ClassName+'": '+e.Message);
   end;
 
+  // re-open connection if needed
+  if not FTransport.IsOpen
+  then FTransport.Open;
+
   // case 2: exception type NOT declared in IDL at the function call
   // this will close the connection
   try
@@ -505,6 +509,9 @@ begin
   end;
   {$ENDIF Exceptions}
 
+  // re-open connection if needed
+  if not FTransport.IsOpen
+  then FTransport.Open;
 
   // simple things
   StartTestGroup( 'simple Thrift calls', test_BaseTypes);
