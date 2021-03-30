@@ -57,8 +57,6 @@ set( thriftcpp_SOURCES
    src/thrift/transport/TServerSocket.cpp
    src/thrift/transport/TTransportUtils.cpp
    src/thrift/transport/TBufferTransports.cpp
-   src/thrift/transport/TWebSocketServer.h
-   src/thrift/transport/TWebSocketServer.cpp
    src/thrift/transport/SocketCommon.cpp
    src/thrift/server/TConnectedClient.cpp
    src/thrift/server/TServerFramework.cpp
@@ -105,6 +103,7 @@ if(OPENSSL_FOUND AND WITH_OPENSSL)
     list( APPEND thriftcpp_SOURCES
        src/thrift/transport/TSSLSocket.cpp
        src/thrift/transport/TSSLServerSocket.cpp
+       src/thrift/transport/TWebSocketServer.cpp
     )
     include_directories(SYSTEM "${OPENSSL_INCLUDE_DIR}")
     list(APPEND SYSLIBS "${OPENSSL_LIBRARIES}")
