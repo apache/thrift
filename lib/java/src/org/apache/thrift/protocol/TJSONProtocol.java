@@ -972,8 +972,7 @@ public class TJSONProtocol extends TProtocol {
 
   @Override
   public String readString() throws TException {
-    String str = readJSONString(false).toString(StandardCharsets.UTF_8);
-    return str;
+    return readJSONString(false).toString(StandardCharsets.UTF_8);
   }
 
   @Override
