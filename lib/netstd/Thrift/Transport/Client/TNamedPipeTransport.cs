@@ -17,6 +17,7 @@
 
 using System;
 using System.IO.Pipes;
+using System.Security.Principal;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -39,7 +40,7 @@ namespace Thrift.Transport.Client
             var serverName = string.IsNullOrWhiteSpace(server) ? server : ".";
             ConnectTimeout = (timeout > 0) ? timeout : Timeout.Infinite;
 
-            PipeStream = new NamedPipeClientStream(serverName, pipe, PipeDirection.InOut, PipeOptions.None);
+            PipeStream = new NamedPipeClientStream(serverName, pipe, PipeDirection.InOut, PipeOptions.None, TokenImpersonationLevel.Anonymous);
         }
 
         public override bool IsOpen => PipeStream != null && PipeStream.IsConnected;

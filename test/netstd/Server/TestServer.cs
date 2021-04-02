@@ -149,7 +149,10 @@ namespace ThriftTest
 
     public class TestServer
     {
-        public static int _clientID = -1;
+        #pragma warning disable CA2211
+        public static int _clientID = -1;  // use with Interlocked only!
+        #pragma warning restore CA2211
+
         private static readonly TConfiguration Configuration = null;  // or new TConfiguration() if needed
 
         public delegate void TestLogDelegate(string msg, params object[] values);
@@ -556,7 +559,7 @@ namespace ThriftTest
                     {
                         case TransportChoice.NamedPipe:
                             Debug.Assert(param.pipe != null);
-                            trans = new TNamedPipeServerTransport(param.pipe, Configuration);
+                            trans = new TNamedPipeServerTransport(param.pipe, Configuration, NamedPipeClientFlags.OnlyLocalClients);
                             break;
 
 
