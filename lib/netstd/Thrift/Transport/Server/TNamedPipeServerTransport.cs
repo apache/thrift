@@ -27,6 +27,12 @@ using System.Security.Principal;
 
 namespace Thrift.Transport.Server
 {
+    [Flags]
+    public enum NamedPipeClientFlags {
+        None = 0x00,
+        OnlyLocalClients = 0x01
+    };
+
     // ReSharper disable once InconsistentNaming
     public class TNamedPipeServerTransport : TServerTransport
     {
@@ -37,11 +43,21 @@ namespace Thrift.Transport.Server
         private bool _asyncMode = true;
         private volatile bool _isPending = true;
         private NamedPipeServerStream _stream = null;
+        private readonly bool _onlyLocalClients = false;  // compatibility default
 
+        public TNamedPipeServerTransport(string pipeAddress, TConfiguration config, NamedPipeClientFlags flags)
+            : base(config)
+        {
+            _pipeAddress = pipeAddress;
+            _onlyLocalClients = flags.HasFlag(NamedPipeClientFlags.OnlyLocalClients);
+        }
+
+        [Obsolete("This CTOR is deprecated, please use the other one instead.")]
         public TNamedPipeServerTransport(string pipeAddress, TConfiguration config)
             : base(config)
         {
             _pipeAddress = pipeAddress;
+            _onlyLocalClients = false;
         }
 
         public override bool IsOpen() {
@@ -96,7 +112,7 @@ namespace Thrift.Transport.Server
 
                 try
                 {
-                    var handle = CreatePipeNative(_pipeAddress, inbuf, outbuf);
+                    var handle = CreatePipeNative(_pipeAddress, inbuf, outbuf, _onlyLocalClients);
                     if ((handle != null) && (!handle.IsInvalid))
                     {
                         _stream = new NamedPipeServerStream(PipeDirection.InOut, _asyncMode, false, handle);
@@ -149,14 +165,14 @@ namespace Thrift.Transport.Server
 
 
         // Workaround: create the pipe via API call
-        // we have to do it this way, since NamedPipeServerStream() for netstd still lacks a few CTORs
+        // we have to do it this way, since NamedPipeServerStream() for netstd still lacks a few CTORs and/or arguments
         // and _stream.SetAccessControl(pipesec); only keeps throwing ACCESS_DENIED errors at us
         // References:
         // - https://github.com/dotnet/corefx/issues/30170 (closed, continued in 31190)
         // - https://github.com/dotnet/corefx/issues/31190 System.IO.Pipes.AccessControl package does not work
         // - https://github.com/dotnet/corefx/issues/24040 NamedPipeServerStream: Provide support for WRITE_DAC
         // - https://github.com/dotnet/corefx/issues/34400 Have a mechanism for lower privileged user to connect to a privileged user's pipe
-        private static SafePipeHandle CreatePipeNative(string name, int inbuf, int outbuf)
+        private static SafePipeHandle CreatePipeNative(string name, int inbuf, int outbuf, bool OnlyLocalClients)
         {
             if (! RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
                 return null; // Windows only
@@ -187,18 +203,25 @@ namespace Thrift.Transport.Server
                 }
 
                 // a bunch of constants we will need shortly
-                const int PIPE_ACCESS_DUPLEX = 0x00000003;
-                const int FILE_FLAG_OVERLAPPED = 0x40000000;
-                const int WRITE_DAC = 0x00040000;
-                const int PIPE_TYPE_BYTE = 0x00000000;
-                const int PIPE_READMODE_BYTE = 0x00000000;
-                const int PIPE_UNLIMITED_INSTANCES = 255;
+                const uint PIPE_ACCESS_DUPLEX = 0x00000003;
+                const uint FILE_FLAG_OVERLAPPED = 0x40000000;
+                const uint WRITE_DAC = 0x00040000;
+                const uint PIPE_TYPE_BYTE = 0x00000000;
+                const uint PIPE_READMODE_BYTE = 0x00000000;
+                const uint PIPE_UNLIMITED_INSTANCES = 255;
+                const uint PIPE_ACCEPT_REMOTE_CLIENTS = 0x00000000;  // Connections from remote clients can be accepted and checked against the security descriptor for the pipe.
+                const uint PIPE_REJECT_REMOTE_CLIENTS = 0x00000008;  // Connections from remote clients are automatically rejected. 
+
+                // any extra flags we want to add
+                uint dwPipeModeXtra
+                    = (OnlyLocalClients ? PIPE_REJECT_REMOTE_CLIENTS : PIPE_ACCEPT_REMOTE_CLIENTS)
+                    ;
 
                 // create the pipe via API call
                 var rawHandle = CreateNamedPipe(
                     @"\\.\pipe\" + name,
                     PIPE_ACCESS_DUPLEX | FILE_FLAG_OVERLAPPED | WRITE_DAC,
-                    PIPE_TYPE_BYTE | PIPE_READMODE_BYTE,
+                    PIPE_TYPE_BYTE | PIPE_READMODE_BYTE | dwPipeModeXtra,
                     PIPE_UNLIMITED_INSTANCES, (uint)inbuf, (uint)outbuf,
                     5 * 1000,
                     secAttrs
