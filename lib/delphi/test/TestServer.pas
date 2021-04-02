@@ -479,6 +479,9 @@ var
   endpoint : TEndpointTransport;
   layered : TLayeredTransports;
   UseSSL : Boolean; // include where appropriate (TLayeredTransport?)
+  config : IThriftConfiguration;
+const
+  PIPEFLAGS = [ TNamedPipeFlag.OnlyLocalClients];
 begin
   try
     ServerEvents := FALSE;
@@ -573,6 +576,7 @@ begin
     ASSERT( ProtocolFactory <> nil);
     Console.WriteLine('- '+THRIFT_PROTOCOLS[protType]+' protocol');
 
+    config := nil; // TODO
     case endpoint of
 
       trns_Sockets : begin
@@ -588,7 +592,7 @@ begin
 
       trns_NamedPipes : begin
         Console.WriteLine('- named pipe ('+sPipeName+')');
-        namedpipe   := TNamedPipeServerTransportImpl.Create( sPipeName, 4096, PIPE_UNLIMITED_INSTANCES, INFINITE);
+        namedpipe   := TNamedPipeServerTransportImpl.Create( sPipeName, PIPEFLAGS, config);
         servertrans := namedpipe;
       end;
 

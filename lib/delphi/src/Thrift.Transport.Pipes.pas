@@ -239,6 +239,12 @@ type
   end;
 
 
+  TNamedPipeFlag = (
+    OnlyLocalClients   // sets PIPE_REJECT_REMOTE_CLIENTS
+  );
+  TNamedPipeFlags = set of TNamedPipeFlag;
+
+
   TNamedPipeServerTransportImpl = class( TPipeServerTransportBase, INamedPipeServerTransport)
   strict private
     FPipeName     : string;
@@ -247,7 +253,7 @@ type
     FTimeout      : DWORD;
     FHandle       : THandle;
     FConnected    : Boolean;
-
+    FOnlyLocalClients : Boolean;
 
   strict protected
     function Accept(const fnAccepting: TProc): ITransport; override;
@@ -264,11 +270,37 @@ type
                         const aMaxConns : Cardinal = PIPE_UNLIMITED_INSTANCES;
                         const aTimeOut : Cardinal = INFINITE;
                         const aConfig : IThriftConfiguration = nil
+                        );  reintroduce; overload; deprecated 'use the other CTOR instead';
+
+    constructor Create( const aPipename : string;
+                        const aFlags : TNamedPipeFlags;
+                        const aConfig : IThriftConfiguration = nil;
+                        const aBufsize : Cardinal = 4096;
+                        const aMaxConns : Cardinal = PIPE_UNLIMITED_INSTANCES;
+                        const aTimeOut : Cardinal = INFINITE
                         );  reintroduce; overload;
   end;
 
 
 implementation
+
+const
+  // flags used but not declared in all Delphi versions, see MSDN
+  PIPE_ACCEPT_REMOTE_CLIENTS = 0;           // CreateNamedPipe() -> dwPipeMode = default
+  PIPE_REJECT_REMOTE_CLIENTS = $00000008;   // CreateNamedPipe() -> dwPipeMode
+
+  // Windows platfoms only
+  // https://github.com/dotnet/coreclr/pull/379/files
+  // https://referencesource.microsoft.com/#System.Runtime.Remoting/channels/ipc/win32namedpipes.cs,46b96e3f3828f497,references
+  // Citation from the first source:
+  // > For mitigating local elevation of privilege attack through named pipes
+  // > make sure we always call CreateFile with SECURITY_ANONYMOUS so that the
+  // > named pipe server can't impersonate a high privileged client security context
+  {$IFDEF MSWINDOWS}
+  PREVENT_PIPE_IMPERSONATION = SECURITY_SQOS_PRESENT or SECURITY_ANONYMOUS;
+  {$ELSE}
+  PREVENT_PIPE_IMPERSONATION = 0; // not available on Linux etc
+  {$ENDIF}
 
 
 procedure ClosePipeHandle( var hPipe : THandle);
@@ -561,7 +593,7 @@ end;
 
 procedure TNamedPipeStreamImpl.Open;
 var hPipe    : THandle;
-    retries, timeout, dwErr : DWORD;
+    retries, timeout, dwErr, dwFlagsAndAttributes : DWORD;
 const INTERVAL = 10; // ms
 begin
   if IsOpen then Exit;
@@ -587,14 +619,18 @@ begin
     Sleep(INTERVAL)
   end;
 
+  dwFlagsAndAttributes := FILE_FLAG_OVERLAPPED
+                       or FILE_FLAG_WRITE_THROUGH // async+fast, please
+                       or PREVENT_PIPE_IMPERSONATION;
+
   // open that thingy
   hPipe := CreateFile( PChar( FPipeName),
                        GENERIC_READ or GENERIC_WRITE,
-                       FShareMode,        // sharing
-                       FSecurityAttribs,  // security attributes
-                       OPEN_EXISTING,     // opens existing pipe
-                       FILE_FLAG_OVERLAPPED or FILE_FLAG_WRITE_THROUGH, // async+fast, please
-                       0);                // no template file
+                       FShareMode,            // sharing
+                       FSecurityAttribs,      // security attributes
+                       OPEN_EXISTING,         // opens existing pipe
+                       dwFlagsAndAttributes,  // flags + attribs
+                       0);                    // no template file
 
   if hPipe = INVALID_HANDLE_VALUE
   then raise TTransportExceptionNotOpen.Create('Unable to open pipe, '+SysErrorMessage(GetLastError));
@@ -885,8 +921,9 @@ end;
 
 
 constructor TNamedPipeServerTransportImpl.Create( const aPipename : string;
-                                                  const aBufsize, aMaxConns, aTimeOut : Cardinal;
-                                                  const aConfig : IThriftConfiguration);
+                                                  const aFlags : TNamedPipeFlags;
+                                                  const aConfig : IThriftConfiguration;
+                                                  const aBufsize, aMaxConns, aTimeOut : Cardinal);
 // Named Pipe CTOR
 begin
   inherited Create( aConfig);
@@ -898,8 +935,21 @@ begin
   FConnected := FALSE;
   ASSERT( FTimeout > 0);
 
+  FOnlyLocalClients := (TNamedPipeFlag.OnlyLocalClients in aFlags);
+
   if Copy(FPipeName,1,2) <> '\\'
   then FPipeName := '\\.\pipe\' + FPipeName;  // assume localhost
+end;
+
+
+constructor TNamedPipeServerTransportImpl.Create( const aPipename : string;
+                                                  const aBufsize, aMaxConns, aTimeOut : Cardinal;
+                                                  const aConfig : IThriftConfiguration);
+// Named Pipe CTOR (deprecated)
+begin
+  {$WARN SYMBOL_DEPRECATED OFF}  // Delphi XE emits a false warning here
+  Create( aPipeName, [], aConfig, aBufsize, aMaxConns, aTimeOut);
+  {$WARN SYMBOL_DEPRECATED ON}
 end;
 
 
@@ -1008,6 +1058,7 @@ var SIDAuthWorld : SID_IDENTIFIER_AUTHORITY ;
     acl          : PACL;
     sd           : PSECURITY_DESCRIPTOR;
     sa           : SECURITY_ATTRIBUTES;
+    dwPipeModeXtra : DWORD;
 const
   SECURITY_WORLD_SID_AUTHORITY  : TSIDIdentifierAuthority = (Value : (0,0,0,0,0,1));
   SECURITY_WORLD_RID = $00000000;
@@ -1041,22 +1092,24 @@ begin
     sa.lpSecurityDescriptor := sd;
     sa.bInheritHandle       := FALSE;
 
+    // any extra flags we want to add to dwPipeMode
+    dwPipeModeXtra := 0;
+    if FOnlyLocalClients then dwPipeModeXtra := dwPipeModeXtra or PIPE_REJECT_REMOTE_CLIENTS;
+
     // Create an instance of the named pipe
     {$IFDEF OLD_UNIT_NAMES}
     result := Windows.CreateNamedPipe(
     {$ELSE}
     result := Winapi.Windows.CreateNamedPipe(
     {$ENDIF}
-        PChar( FPipeName),        // pipe name
-        PIPE_ACCESS_DUPLEX or     // read/write access
-        FILE_FLAG_OVERLAPPED,     // async mode
-        PIPE_TYPE_BYTE or         // byte type pipe
-        PIPE_READMODE_BYTE,       // byte read mode
-        FMaxConns,                // max. instances
-        FBufSize,                 // output buffer size
-        FBufSize,                 // input buffer size
-        FTimeout,                 // time-out, see MSDN
-        @sa                       // default security attribute
+        PChar( FPipeName),             // pipe name
+        PIPE_ACCESS_DUPLEX or FILE_FLAG_OVERLAPPED,              // read/write access + async mode
+        PIPE_TYPE_BYTE or PIPE_READMODE_BYTE or dwPipeModeXtra,  // byte type pipe + byte read mode + extras
+        FMaxConns,                     // max. instances
+        FBufSize,                      // output buffer size
+        FBufSize,                      // input buffer size
+        FTimeout,                      // time-out, see MSDN
+        @sa                            // default security attribute
     );
 
     if( result <> INVALID_HANDLE_VALUE)
