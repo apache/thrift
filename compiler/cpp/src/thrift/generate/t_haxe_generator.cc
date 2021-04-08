@@ -217,6 +217,7 @@ public:
   }
 
   std::string constant_name(std::string name);
+  std::string make_package_name(std::string value);
 
 private:
   bool rtti_;
@@ -240,19 +241,7 @@ private:
 void t_haxe_generator::init_generator() {
   // Make output directory
   MKDIR(get_out_dir().c_str());
-  package_name_ = program_->get_namespace("haxe");
-
-  // Haxe package names are lowercase
-  if (package_name_.length() > 0) {
-    package_name_[0] = tolower(package_name_[0]);
-    size_t index = package_name_.find('.');
-    while (index != std::string::npos) {
-      if (++index < package_name_.length()) {
-        package_name_[index] = tolower(package_name_[index]);
-      }
-      index = package_name_.find('.', index);
-    }
-  }
+  package_name_ = make_package_name( program_->get_namespace("haxe"));
 
   string dir = package_name_;
   string subdir = get_out_dir();
@@ -268,6 +257,24 @@ void t_haxe_generator::init_generator() {
   }
 
   package_dir_ = subdir;
+}
+
+// Haxe package names start with lowercase letters
+std::string t_haxe_generator::make_package_name(std::string value) {
+  std::string retval(value);
+
+  if (retval.length() > 0) {
+    retval[0] = tolower(retval[0]);
+    size_t index = retval.find('.');
+    while (index != std::string::npos) {
+      if (++index < retval.length()) {
+        retval[index] = tolower(retval[index]);
+      }
+      index = retval.find('.', index);
+    }
+  }
+
+  return retval;
 }
 
 /**
@@ -328,7 +335,7 @@ string t_haxe_generator::haxe_thrift_gen_imports(t_struct* tstruct, string& impo
   for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
     t_program* program = (*m_iter)->get_type()->get_program();
     if (program != nullptr && program != program_) {
-      string package = program->get_namespace("haxe");
+      string package = make_package_name( program->get_namespace("haxe"));
       if (!package.empty()) {
         if (imports.find(package + "." + (*m_iter)->get_type()->get_name()) == string::npos) {
           imports.append("import " + package + "." + (*m_iter)->get_type()->get_name() + ";\n");
@@ -353,7 +360,7 @@ string t_haxe_generator::haxe_thrift_gen_imports(t_service* tservice) {
   for (f_iter = functions.begin(); f_iter != functions.end(); ++f_iter) {
     t_program* program = (*f_iter)->get_returntype()->get_program();
     if (program != nullptr && program != program_) {
-      string package = program->get_namespace("haxe");
+      string package = make_package_name( program->get_namespace("haxe"));
       if (!package.empty()) {
         if (imports.find(package + "." + (*f_iter)->get_returntype()->get_name()) == string::npos) {
           imports.append("import " + package + "." + (*f_iter)->get_returntype()->get_name()+ ";\n");
@@ -1493,7 +1500,7 @@ void t_haxe_generator::generate_service(t_service* tservice) {
 
   if (tservice->get_extends() != nullptr) {
     t_type* parent = tservice->get_extends();
-    string parent_namespace = parent->get_program()->get_namespace("haxe");
+    string parent_namespace = make_package_name( parent->get_program()->get_namespace("haxe"));
     if (!parent_namespace.empty() && parent_namespace != package_name_) {
       f_service_ << "import " << type_name(parent) << "_service;" << endl;
     }
@@ -1515,7 +1522,7 @@ void t_haxe_generator::generate_service(t_service* tservice) {
 
   if (tservice->get_extends() != nullptr) {
     t_type* parent = tservice->get_extends();
-    string parent_namespace = parent->get_program()->get_namespace("haxe");
+    string parent_namespace = make_package_name( parent->get_program()->get_namespace("haxe"));
     if (!parent_namespace.empty() && parent_namespace != package_name_) {
       f_service_ << "import " << type_name(parent) << ";" << endl;
     }
@@ -1535,7 +1542,7 @@ void t_haxe_generator::generate_service(t_service* tservice) {
 
   if (tservice->get_extends() != nullptr) {
     t_type* parent = tservice->get_extends();
-    string parent_namespace = parent->get_program()->get_namespace("haxe");
+    string parent_namespace = make_package_name( parent->get_program()->get_namespace("haxe"));
     if (!parent_namespace.empty() && parent_namespace != package_name_) {
       f_service_ << "import " << type_name(parent) << "Impl;" << endl;
     }
@@ -2592,7 +2599,7 @@ string t_haxe_generator::type_name(t_type* ttype, bool in_container, bool in_ini
   // Check for namespacing
   t_program* program = ttype->get_program();
   if (program != nullptr && program != program_) {
-    string package = program->get_namespace("haxe");
+    string package = make_package_name( program->get_namespace("haxe"));
     if (!package.empty()) {
       return package + "." + ttype->get_name();
     }
@@ -2959,7 +2966,7 @@ std::string t_haxe_generator::get_enum_class_name(t_type* type) {
   string package = "";
   t_program* program = type->get_program();
   if (program != nullptr /*&& program != program_*/) {
-    package = program->get_namespace("haxe") + ".";
+    package = make_package_name( program->get_namespace("haxe")) + ".";
   }
   return package + type->get_name();
 }
