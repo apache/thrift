@@ -4061,8 +4061,17 @@ void t_c_glib_generator::generate_deserialize_field(ostream& out,
       throw "compiler error: no C reader for base type " + t_base_type::t_base_name(tbase) + name;
     }
     out << ", error)) < 0)" << endl;
-    out << indent() << "  return " << error_ret << ";" << endl << indent() << "xfer += ret;"
-        << endl;
+    if ((tbase != t_base_type::TYPE_STRING) && allocate) {
+      scope_up(out);
+      out << indent() << "g_free (&" << name << ");" << endl;
+      out << indent() << "return " << error_ret << ";" << endl;
+      scope_down(out);
+      out << indent() << "xfer += ret;" << endl;
+    }
+    else{
+      out << indent() << "  return " << error_ret << ";" << endl << indent() << "xfer += ret;"
+         << endl;
+    }
 
     // load the byte array with the data
     if (tbase == t_base_type::TYPE_STRING && type->is_binary()) {
