@@ -42,5 +42,9 @@ service MyService{
     AsyncProcessor  AsyncProcessor ( 1: AsyncProcessor  foo)
     Client          Client         ( 1: Client  foo)
     IAsync          IAsync         ( 1: IAsync  foo)
+
+    // inconsistent treatment of methods ending in "Async"
+    void TestXsync()
+    void TestAsync()
 }
 
