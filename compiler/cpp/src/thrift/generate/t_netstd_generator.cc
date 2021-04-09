@@ -88,18 +88,6 @@ t_netstd_generator::t_netstd_generator(t_program* program, const map<string, str
     out_dir_base_ = "gen-netstd";
 }
 
-static string correct_function_name_for_async(string const& function_name)
-{
-    string const async_end = "Async";
-    size_t i = function_name.find(async_end);
-    if (i != string::npos)
-    {
-        return function_name + async_end;
-    }
-
-    return function_name;
-}
-
 /**
 * \brief Search and replace "_args" substring in struct name if exist (for C# class naming)
 * \param struct_name
@@ -2011,7 +1999,8 @@ void t_netstd_generator::generate_service_client(ostream& out, t_service* tservi
 
     for (functions_iterator = functions.begin(); functions_iterator != functions.end(); ++functions_iterator)
     {
-        string function_name = correct_function_name_for_async((*functions_iterator)->get_name());
+        string raw_func_name = (*functions_iterator)->get_name();
+        string function_name = raw_func_name + "Async";
 
         // async
         out << indent() << "public async " << function_signature_async(*functions_iterator, "") << endl
@@ -2020,7 +2009,7 @@ void t_netstd_generator::generate_service_client(ostream& out, t_service* tservi
 
         string argsname = (*functions_iterator)->get_name() + "Args";
 
-        out << indent() << "await OutputProtocol.WriteMessageBeginAsync(new TMessage(\"" << function_name
+        out << indent() << "await OutputProtocol.WriteMessageBeginAsync(new TMessage(\"" << raw_func_name
             << "\", TMessageType." << ((*functions_iterator)->is_oneway() ? "Oneway" : "Call") 
             << ", SeqId), cancellationToken);" << endl
             << indent() << endl
@@ -2155,8 +2144,8 @@ void t_netstd_generator::generate_service_server(ostream& out, t_service* tservi
     out << indent() << "_logger = logger;" << endl;
     for (f_iter = functions.begin(); f_iter != functions.end(); ++f_iter)
     {
-        string function_name = (*f_iter)->get_name();
-        out << indent() << "processMap_[\"" << correct_function_name_for_async(function_name) << "\"] = " << function_name << "_ProcessAsync;" << endl;
+        string raw_func_name = (*f_iter)->get_name();
+        out << indent() << "processMap_[\"" << raw_func_name << "\"] = " << raw_func_name << "_ProcessAsync;" << endl;
     }
 
     indent_down();
@@ -2370,7 +2359,7 @@ void t_netstd_generator::generate_process_function_async(ostream& out, t_service
     if (!tfunction->is_oneway())
     {
         out << indent() << "await oprot.WriteMessageBeginAsync(new TMessage(\""
-                << correct_function_name_for_async(tfunction->get_name()) << "\", TMessageType.Reply, seqid), cancellationToken); " << endl
+                << tfunction->get_name() << "\", TMessageType.Reply, seqid), cancellationToken); " << endl
             << indent() << "await result.WriteAsync(oprot, cancellationToken);" << endl;
     }
     indent_down();
@@ -2404,7 +2393,7 @@ void t_netstd_generator::generate_process_function_async(ostream& out, t_service
     else
     {
         out << indent() << "var x = new TApplicationException(TApplicationException.ExceptionType.InternalError,\" Internal error.\");" << endl
-            << indent() << "await oprot.WriteMessageBeginAsync(new TMessage(\"" << correct_function_name_for_async(tfunction->get_name())
+            << indent() << "await oprot.WriteMessageBeginAsync(new TMessage(\"" << tfunction->get_name()
             << "\", TMessageType.Exception, seqid), cancellationToken);" << endl
             << indent() << "await x.WriteAsync(oprot, cancellationToken);" << endl;
         indent_down();

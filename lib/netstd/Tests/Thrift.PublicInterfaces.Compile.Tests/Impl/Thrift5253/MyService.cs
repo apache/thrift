@@ -51,6 +51,16 @@ namespace Thrift.PublicInterfaces.Compile.Tests.Impl.Thrift5253
             return Task.FromResult(new InternalStructs() { Foo = input.Foo });
         }
 
+        public Task TestAsyncAsync(CancellationToken cancellationToken = default)
+        {
+            return Task.CompletedTask;
+        }
+
+        public Task TestXsyncAsync(CancellationToken cancellationToken = default)
+        {
+            return Task.CompletedTask;
+        }
+
         public Task<WorksRslt> WorksAsync(WorksArrrgs input, CancellationToken cancellationToken = default)
         {
             return Task.FromResult(new WorksRslt() { Foo = input.Foo });
