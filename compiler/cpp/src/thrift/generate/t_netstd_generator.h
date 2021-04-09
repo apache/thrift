@@ -139,6 +139,8 @@ public:
   string argument_list(t_struct* tstruct);
   string type_to_enum(t_type* ttype);
   string prop_name(t_field* tfield, bool suppress_mapping = false);
+  string func_name(t_function* tfunc, bool suppress_mapping = false);
+  string func_name(std::string fname, bool suppress_mapping = false);
   string convert_to_pascal_case(const string& str);
   string get_enum_class_name(t_type* type);
 
@@ -152,6 +154,7 @@ private:
   bool wcf_;
   bool use_pascal_case_properties;
   bool suppress_deepcopy;
+  bool add_async_postfix;
 
   string wcf_namespace_;
   map<string, int> netstd_keywords;
@@ -162,8 +165,10 @@ private:
   void init_keywords();
   string normalize_name(string name);
   string make_valid_csharp_identifier(string const& fromName);
+  void prepare_member_name_mapping(t_service* tservice);
   void prepare_member_name_mapping(t_struct* tstruct);
-  void prepare_member_name_mapping(void* scope, const vector<t_field*>& members, const string& structname);
+  void prepare_member_name_mapping(t_struct* scope, const vector<t_field*>& members, const string& structname);
+  void prepare_member_name_mapping(t_service* scope, const vector<t_function*>& members, const string& structname);
   void cleanup_member_name_mapping(void* scope);
   string get_mapped_member_name(string oldname);
   string get_isset_name(const string& str);

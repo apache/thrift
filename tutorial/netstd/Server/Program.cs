@@ -45,7 +45,7 @@ namespace Server
 {
     public class Program
     {
-        private static readonly ServiceCollection ServiceCollection = new ServiceCollection();
+        private static readonly ServiceCollection ServiceCollection = new();
         private static ILogger Logger;
         private static readonly TConfiguration Configuration = null;  // new TConfiguration() if  needed
 
@@ -186,55 +186,30 @@ Sample:
 
         private static async Task RunSelectedConfigurationAsync(Transport transport, Buffering buffering, Protocol protocol, bool multiplex, CancellationToken cancellationToken)
         {
-            TServerTransport serverTransport = null;
-            switch (transport)
+            TServerTransport serverTransport = transport switch
             {
-                case Transport.Tcp:
-                    serverTransport = new TServerSocketTransport(9090, Configuration);
-                    break;
-                case Transport.NamedPipe:
-                    serverTransport = new TNamedPipeServerTransport(".test", Configuration);
-                    break;
-                case Transport.TcpTls:
-                    serverTransport = new TTlsServerSocketTransport(9090, Configuration,
-                        GetCertificate(), ClientCertValidator, LocalCertificateSelectionCallback);
-                    break;
-            }
+                Transport.Tcp => new TServerSocketTransport(9090, Configuration),
+                Transport.NamedPipe => new TNamedPipeServerTransport(".test", Configuration, NamedPipeClientFlags.None),
+                Transport.TcpTls => new TTlsServerSocketTransport(9090, Configuration, GetCertificate(), ClientCertValidator, LocalCertificateSelectionCallback),
+                _ => throw new ArgumentException("unsupported value $transport", nameof(transport)),
+            };
 
-            TTransportFactory transportFactory = null;
-            switch (buffering)
+            TTransportFactory transportFactory = buffering switch
             {
-                case Buffering.Buffered:
-                    transportFactory = new TBufferedTransport.Factory();
-                    break;
+                Buffering.Buffered => new TBufferedTransport.Factory(),
+                Buffering.Framed => new TFramedTransport.Factory(),
+                // layered transport(s) are optional
+                Buffering.None => null,
+                _ => throw new ArgumentException("unsupported value $buffering", nameof(buffering)),
+            };
 
-                case Buffering.Framed:
-                    transportFactory = new TFramedTransport.Factory();
-                    break;
-
-                default: // layered transport(s) are optional
-                    Debug.Assert(buffering == Buffering.None, "unhandled case");
-                    break;
-            }
-
-            TProtocolFactory protocolFactory = null;
-            switch (protocol)
+            TProtocolFactory protocolFactory = protocol switch
             {
-                case Protocol.Binary:
-                    protocolFactory = new TBinaryProtocol.Factory();
-                    break;
-
-                case Protocol.Compact:
-                    protocolFactory = new TCompactProtocol.Factory();
-                    break;
-
-                case Protocol.Json:
-                    protocolFactory = new TJsonProtocol.Factory();
-                    break;
-
-                default:
-                    throw new ArgumentOutOfRangeException(nameof(protocol), protocol, null);
-            }
+                Protocol.Binary => new TBinaryProtocol.Factory(),
+                Protocol.Compact => new TCompactProtocol.Factory(),
+                Protocol.Json => new TJsonProtocol.Factory(),
+                _ => throw new ArgumentException("unsupported value $protocol", nameof(protocol)),
+            };
 
             var handler = new CalculatorAsyncHandler();
             ITAsyncProcessor processor = new Calculator.AsyncProcessor(handler);
@@ -395,34 +370,34 @@ Sample:
 
         public class CalculatorAsyncHandler : Calculator.IAsync
         {
-            private readonly Dictionary<int, SharedStruct> _log = new Dictionary<int, SharedStruct>();
+            private readonly Dictionary<int, SharedStruct> _log = new();
 
             public CalculatorAsyncHandler()
             {
             }
 
-            public async Task<SharedStruct> getStructAsync(int key,
+            public async Task<SharedStruct> getStruct(int key,
                 CancellationToken cancellationToken)
             {
-                Logger.LogInformation("GetStructAsync({0})", key);
+                Logger.LogInformation("GetStruct({0})", key);
                 return await Task.FromResult(_log[key]);
             }
 
-            public async Task pingAsync(CancellationToken cancellationToken)
+            public async Task ping(CancellationToken cancellationToken)
             {
-                Logger.LogInformation("PingAsync()");
+                Logger.LogInformation("Ping()");
                 await Task.CompletedTask;
             }
 
-            public async Task<int> addAsync(int num1, int num2, CancellationToken cancellationToken)
+            public async Task<int> add(int num1, int num2, CancellationToken cancellationToken)
             {
-                Logger.LogInformation($"AddAsync({num1},{num2})");
+                Logger.LogInformation($"Add({num1},{num2})");
                 return await Task.FromResult(num1 + num2);
             }
 
-            public async Task<int> calculateAsync(int logid, Work w, CancellationToken cancellationToken)
+            public async Task<int> calculate(int logid, Work w, CancellationToken cancellationToken)
             {
-                Logger.LogInformation($"CalculateAsync({logid}, [{w.Op},{w.Num1},{w.Num2}])");
+                Logger.LogInformation($"Calculate({logid}, [{w.Op},{w.Num1},{w.Num2}])");
 
                 int val;
                 switch (w.Op)
@@ -476,22 +451,22 @@ Sample:
                 return await Task.FromResult(val);
             }
 
-            public async Task zipAsync(CancellationToken cancellationToken)
+            public async Task zip(CancellationToken cancellationToken)
             {
-                Logger.LogInformation("ZipAsync() with delay 100mc");
+                Logger.LogInformation("Zip() with delay 100mc");
                 await Task.Delay(100, CancellationToken.None);
             }
         }
 
         public class SharedServiceAsyncHandler : SharedService.IAsync
         {
-            public async Task<SharedStruct> getStructAsync(int key, CancellationToken cancellationToken)
+            public async Task<SharedStruct> getStruct(int key, CancellationToken cancellationToken)
             {
-                Logger.LogInformation("GetStructAsync({0})", key);
+                Logger.LogInformation("GetStruct({0})", key);
                 return await Task.FromResult(new SharedStruct()
                 {
                     Key = key,
-                    Value = "GetStructAsync"
+                    Value = "GetStruct"
                 });
             }
         }
