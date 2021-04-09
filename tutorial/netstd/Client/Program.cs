@@ -41,7 +41,7 @@ namespace Client
 {
     public class Program
     {
-        private static readonly ServiceCollection ServiceCollection = new ServiceCollection();
+        private static readonly ServiceCollection ServiceCollection = new();
         private static ILogger Logger;
         private static readonly TConfiguration Configuration = null;  // new TConfiguration() if  needed
 
@@ -287,17 +287,13 @@ Sample:
         private static TProtocol MakeProtocol(string[] args, TTransport transport)
         {
             Protocol selectedProtocol = GetProtocol(args);
-            switch (selectedProtocol)
+            return selectedProtocol switch
             {
-                case Protocol.Binary:
-                    return new TBinaryProtocol(transport);
-                case Protocol.Compact:
-                    return new TCompactProtocol(transport);
-                case Protocol.Json:
-                    return new TJsonProtocol(transport);
-                default:
-                    throw new Exception("unhandled protocol");
-            }
+                Protocol.Binary => new TBinaryProtocol(transport),
+                Protocol.Compact => new TCompactProtocol(transport),
+                Protocol.Json => new TJsonProtocol(transport),
+                _ => throw new Exception("unhandled protocol"),
+            };
         }
 
         private static async Task RunClientAsync(TProtocol protocol, bool multiplex, CancellationToken cancellationToken)
@@ -333,12 +329,12 @@ Sample:
 
             // Async version
 
-            Logger.LogInformation($"{client.ClientId} PingAsync()");
-            await client.pingAsync(cancellationToken);
+            Logger.LogInformation($"{client.ClientId} Ping()");
+            await client.ping(cancellationToken);
 
-            Logger.LogInformation($"{client.ClientId} AddAsync(1,1)");
-            var sum = await client.addAsync(1, 1, cancellationToken);
-            Logger.LogInformation($"{client.ClientId} AddAsync(1,1)={sum}");
+            Logger.LogInformation($"{client.ClientId} Add(1,1)");
+            var sum = await client.add(1, 1, cancellationToken);
+            Logger.LogInformation($"{client.ClientId} Add(1,1)={sum}");
 
             var work = new Work
             {
@@ -349,8 +345,8 @@ Sample:
 
             try
             {
-                Logger.LogInformation($"{client.ClientId} CalculateAsync(1)");
-                await client.calculateAsync(1, work, cancellationToken);
+                Logger.LogInformation($"{client.ClientId} Calculate(1)");
+                await client.calculate(1, work, cancellationToken);
                 Logger.LogInformation($"{client.ClientId} Whoa we can divide by 0");
             }
             catch (InvalidOperation io)
@@ -364,8 +360,8 @@ Sample:
 
             try
             {
-                Logger.LogInformation($"{client.ClientId} CalculateAsync(1)");
-                var diff = await client.calculateAsync(1, work, cancellationToken);
+                Logger.LogInformation($"{client.ClientId} Calculate(1)");
+                var diff = await client.calculate(1, work, cancellationToken);
                 Logger.LogInformation($"{client.ClientId} 15-10={diff}");
             }
             catch (InvalidOperation io)
@@ -373,12 +369,12 @@ Sample:
                 Logger.LogInformation($"{client.ClientId} Invalid operation: " + io);
             }
 
-            Logger.LogInformation($"{client.ClientId} GetStructAsync(1)");
-            var log = await client.getStructAsync(1, cancellationToken);
+            Logger.LogInformation($"{client.ClientId} GetStruct(1)");
+            var log = await client.getStruct(1, cancellationToken);
             Logger.LogInformation($"{client.ClientId} Check log: {log.Value}");
 
-            Logger.LogInformation($"{client.ClientId} ZipAsync() with delay 100mc on server side");
-            await client.zipAsync(cancellationToken);
+            Logger.LogInformation($"{client.ClientId} Zip() with delay 100mc on server side");
+            await client.zip(cancellationToken);
         }
 
 

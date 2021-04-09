@@ -35,6 +35,7 @@ using Thrift.Transport;
 using Thrift.Transport.Server;
 
 #pragma warning disable IDE0063  // using can be simplified, we don't
+#pragma warning disable IDE0057  // substr can be simplified, we don't
 
 namespace ThriftTest
 {
@@ -190,7 +191,7 @@ namespace ThriftTest
         {
             public TServer Server { get; set; }
             private readonly int handlerID;
-            private readonly StringBuilder sb = new StringBuilder();
+            private readonly StringBuilder sb = new();
             private readonly TestLogDelegate logger;
 
             public TestHandlerAsync()
@@ -209,61 +210,61 @@ namespace ThriftTest
                 Console.Write(sb.ToString());
             }
 
-            public Task testVoidAsync(CancellationToken cancellationToken)
+            public Task testVoid(CancellationToken cancellationToken)
             {
                 logger.Invoke("testVoid()");
                 return Task.CompletedTask;
             }
 
-            public Task<string> testStringAsync(string thing, CancellationToken cancellationToken)
+            public Task<string> testString(string thing, CancellationToken cancellationToken)
             {
                 logger.Invoke("testString({0})", thing);
                 return Task.FromResult(thing);
             }
 
-            public Task<bool> testBoolAsync(bool thing, CancellationToken cancellationToken)
+            public Task<bool> testBool(bool thing, CancellationToken cancellationToken)
             {
                 logger.Invoke("testBool({0})", thing);
                 return Task.FromResult(thing);
             }
 
-            public Task<sbyte> testByteAsync(sbyte thing, CancellationToken cancellationToken)
+            public Task<sbyte> testByte(sbyte thing, CancellationToken cancellationToken)
             {
                 logger.Invoke("testByte({0})", thing);
                 return Task.FromResult(thing);
             }
 
-            public Task<int> testI32Async(int thing, CancellationToken cancellationToken)
+            public Task<int> testI32(int thing, CancellationToken cancellationToken)
             {
                 logger.Invoke("testI32({0})", thing);
                 return Task.FromResult(thing);
             }
 
-            public Task<long> testI64Async(long thing, CancellationToken cancellationToken)
+            public Task<long> testI64(long thing, CancellationToken cancellationToken)
             {
                 logger.Invoke("testI64({0})", thing);
                 return Task.FromResult(thing);
             }
 
-            public Task<double> testDoubleAsync(double thing, CancellationToken cancellationToken)
+            public Task<double> testDouble(double thing, CancellationToken cancellationToken)
             {
                 logger.Invoke("testDouble({0})", thing);
                 return Task.FromResult(thing);
             }
 
-            public Task<byte[]> testBinaryAsync(byte[] thing, CancellationToken cancellationToken)
+            public Task<byte[]> testBinary(byte[] thing, CancellationToken cancellationToken)
             {
                 logger.Invoke("testBinary({0} bytes)", thing.Length);
                 return Task.FromResult(thing);
             }
 
-            public Task<Xtruct> testStructAsync(Xtruct thing, CancellationToken cancellationToken)
+            public Task<Xtruct> testStruct(Xtruct thing, CancellationToken cancellationToken)
             {
                 logger.Invoke("testStruct({{\"{0}\", {1}, {2}, {3}}})", thing.String_thing, thing.Byte_thing, thing.I32_thing, thing.I64_thing);
                 return Task.FromResult(thing);
             }
 
-            public Task<Xtruct2> testNestAsync(Xtruct2 nest, CancellationToken cancellationToken)
+            public Task<Xtruct2> testNest(Xtruct2 nest, CancellationToken cancellationToken)
             {
                 var thing = nest.Struct_thing;
                 logger.Invoke("testNest({{{0}, {{\"{1}\", {2}, {3}, {4}, {5}}}}})",
@@ -276,7 +277,7 @@ namespace ThriftTest
                 return Task.FromResult(nest);
             }
 
-            public Task<Dictionary<int, int>> testMapAsync(Dictionary<int, int> thing, CancellationToken cancellationToken)
+            public Task<Dictionary<int, int>> testMap(Dictionary<int, int> thing, CancellationToken cancellationToken)
             {
                 sb.Clear();
                 sb.Append("testMap({{");
@@ -298,7 +299,7 @@ namespace ThriftTest
                 return Task.FromResult(thing);
             }
 
-            public Task<Dictionary<string, string>> testStringMapAsync(Dictionary<string, string> thing, CancellationToken cancellationToken)
+            public Task<Dictionary<string, string>> testStringMap(Dictionary<string, string> thing, CancellationToken cancellationToken)
             {
                 sb.Clear();
                 sb.Append("testStringMap({{");
@@ -320,7 +321,7 @@ namespace ThriftTest
                 return Task.FromResult(thing);
             }
 
-            public Task<THashSet<int>> testSetAsync(THashSet<int> thing, CancellationToken cancellationToken)
+            public Task<THashSet<int>> testSet(THashSet<int> thing, CancellationToken cancellationToken)
             {
                 sb.Clear();
                 sb.Append("testSet({{");
@@ -342,7 +343,7 @@ namespace ThriftTest
                 return Task.FromResult(thing);
             }
 
-            public Task<List<int>> testListAsync(List<int> thing, CancellationToken cancellationToken)
+            public Task<List<int>> testList(List<int> thing, CancellationToken cancellationToken)
             {
                 sb.Clear();
                 sb.Append("testList({{");
@@ -364,19 +365,19 @@ namespace ThriftTest
                 return Task.FromResult(thing);
             }
 
-            public Task<Numberz> testEnumAsync(Numberz thing, CancellationToken cancellationToken)
+            public Task<Numberz> testEnum(Numberz thing, CancellationToken cancellationToken)
             {
                 logger.Invoke("testEnum({0})", thing);
                 return Task.FromResult(thing);
             }
 
-            public Task<long> testTypedefAsync(long thing, CancellationToken cancellationToken)
+            public Task<long> testTypedef(long thing, CancellationToken cancellationToken)
             {
                 logger.Invoke("testTypedef({0})", thing);
                 return Task.FromResult(thing);
             }
 
-            public Task<Dictionary<int, Dictionary<int, int>>> testMapMapAsync(int hello, CancellationToken cancellationToken)
+            public Task<Dictionary<int, Dictionary<int, int>>> testMapMap(int hello, CancellationToken cancellationToken)
             {
                 logger.Invoke("testMapMap({0})", hello);
                 var mapmap = new Dictionary<int, Dictionary<int, int>>();
@@ -395,7 +396,7 @@ namespace ThriftTest
                 return Task.FromResult(mapmap);
             }
 
-            public Task<Dictionary<long, Dictionary<Numberz, Insanity>>> testInsanityAsync(Insanity argument, CancellationToken cancellationToken)
+            public Task<Dictionary<long, Dictionary<Numberz, Insanity>>> testInsanity(Insanity argument, CancellationToken cancellationToken)
             {
                 logger.Invoke("testInsanity()");
 
@@ -428,7 +429,7 @@ namespace ThriftTest
                 return Task.FromResult(insane);
             }
 
-            public Task<Xtruct> testMultiAsync(sbyte arg0, int arg1, long arg2, Dictionary<short, string> arg3, Numberz arg4, long arg5,
+            public Task<Xtruct> testMulti(sbyte arg0, int arg1, long arg2, Dictionary<short, string> arg3, Numberz arg4, long arg5,
                 CancellationToken cancellationToken)
             {
                 logger.Invoke("testMulti()");
@@ -441,7 +442,7 @@ namespace ThriftTest
                 return Task.FromResult(hello);
             }
 
-            public Task testExceptionAsync(string arg, CancellationToken cancellationToken)
+            public Task testException(string arg, CancellationToken cancellationToken)
             {
                 logger.Invoke("testException({0})", arg);
                 if (arg == "Xception")
@@ -460,7 +461,7 @@ namespace ThriftTest
                 return Task.CompletedTask;
             }
 
-            public Task<Xtruct> testMultiExceptionAsync(string arg0, string arg1, CancellationToken cancellationToken)
+            public Task<Xtruct> testMultiException(string arg0, string arg1, CancellationToken cancellationToken)
             {
                 logger.Invoke("testMultiException({0}, {1})", arg0, arg1);
                 if (arg0 == "Xception")
@@ -487,7 +488,7 @@ namespace ThriftTest
                 return Task.FromResult(result);
             }
 
-            public Task testOnewayAsync(int secondsToSleep, CancellationToken cancellationToken)
+            public Task testOneway(int secondsToSleep, CancellationToken cancellationToken)
             {
                 logger.Invoke("testOneway({0}), sleeping...", secondsToSleep);
                 Task.Delay(secondsToSleep * 1000, cancellationToken).GetAwaiter().GetResult();
