@@ -7,6 +7,7 @@
 - [THRIFT-5229](https://issues.apache.org/jira/browse/THRIFT-5229) - ActionScript 3 support dropped
 - [THRIFT-5347](https://issues.apache.org/jira/browse/THRIFT-5347) - Haskell support dropped
 - [THRIFT-5381](https://issues.apache.org/jira/browse/THRIFT-5381) - possible collisions at VOID type with some 3rd-party libraries on Haxe cpp targets
+- [THRIFT-5396](https://issues.apache.org/jira/browse/THRIFT-5396) - deprecate netstd "Async" method postfix
 
 ### Go
 
