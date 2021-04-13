@@ -31,8 +31,10 @@ namespace Thrift.Transport.Server
     public class THttpServerTransport
     {
         protected const string ContentType = "application/x-thrift";
+        /* never used
         private readonly ILogger _logger;
         private readonly RequestDelegate _next;
+        */
         protected Encoding Encoding = Encoding.UTF8;
 
         protected TProtocolFactory InputProtocolFactory;
@@ -85,11 +87,13 @@ namespace Thrift.Transport.Server
             InputTransportFactory = inputTransFactory;
             OutputTransportFactory = outputTransFactory;
 
+            /* never used
             _next = next;
             _logger = (loggerFactory != null) ? loggerFactory.CreateLogger<THttpServerTransport>() : new NullLogger<THttpServerTransport>();
-        }
+            */
+    }
 
-        public async Task Invoke(HttpContext context)
+    public async Task Invoke(HttpContext context)
         {
             context.Response.ContentType = ContentType;
             await ProcessRequestAsync(context, context.RequestAborted); //TODO: check for correct logic
