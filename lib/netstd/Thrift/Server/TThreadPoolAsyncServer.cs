@@ -172,19 +172,21 @@ namespace Thrift.Server
                 if (ServerEventHandler != null)
                     await ServerEventHandler.PreServeAsync(cancellationToken);
 
-                while (!stop)
+                while (!(stop || ServerCancellationToken.IsCancellationRequested))
                 {
-                    int failureCount = 0;
                     try
                     {
                         TTransport client = await ServerTransport.AcceptAsync(cancellationToken);
                         ThreadPool.QueueUserWorkItem(this.Execute, client);
                     }
+                    catch (TaskCanceledException)
+                    {
+                        stop = true;
+                    }
                     catch (TTransportException ttx)
                     {
                         if (!stop || ttx.Type != TTransportException.ExceptionType.Interrupted)
                         {
-                            ++failureCount;
                             LogError(ttx.ToString());
                         }
 
