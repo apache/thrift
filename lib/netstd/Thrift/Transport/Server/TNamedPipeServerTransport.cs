@@ -264,6 +264,11 @@ namespace Thrift.Transport.Server
                 Close();
                 throw;
             }
+            catch (TaskCanceledException)
+            {
+                Close();
+                throw;  // let it bubble up
+            }
             catch (Exception e)
             {
                 Close();
