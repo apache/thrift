@@ -166,7 +166,11 @@ func (p *TSocket) Open() error {
 		p.addr.String(),
 		p.cfg.GetConnectTimeout(),
 	)); err != nil {
-		return NewTTransportException(NOT_OPEN, err.Error())
+		return &tTransportException{
+			typeId: NOT_OPEN,
+			err:    err,
+			msg:    err.Error(),
+		}
 	}
 	return nil
 }

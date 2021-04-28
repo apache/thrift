@@ -72,7 +72,7 @@ func (p *tTransportException) Unwrap() error {
 }
 
 func (p *tTransportException) Timeout() bool {
-	return p.typeId == TIMED_OUT
+	return p.typeId == TIMED_OUT || isTimeoutError(p.err)
 }
 
 func NewTTransportException(t int, e string) TTransportException {

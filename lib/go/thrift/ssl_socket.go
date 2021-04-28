@@ -167,7 +167,11 @@ func (p *TSSLSocket) Open() error {
 			p.hostPort,
 			p.cfg.GetTLSConfig(),
 		)); err != nil {
-			return NewTTransportException(NOT_OPEN, err.Error())
+			return &tTransportException{
+				typeId: NOT_OPEN,
+				err:    err,
+				msg:    err.Error(),
+			}
 		}
 	} else {
 		if p.conn.isValid() {
@@ -190,7 +194,11 @@ func (p *TSSLSocket) Open() error {
 			p.addr.String(),
 			p.cfg.GetTLSConfig(),
 		)); err != nil {
-			return NewTTransportException(NOT_OPEN, err.Error())
+			return &tTransportException{
+				typeId: NOT_OPEN,
+				err:    err,
+				msg:    err.Error(),
+			}
 		}
 	}
 	return nil
