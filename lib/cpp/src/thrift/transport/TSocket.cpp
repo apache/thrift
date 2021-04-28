@@ -23,6 +23,9 @@
 #include <sstream>
 #ifdef HAVE_SYS_IOCTL_H
 #include <sys/ioctl.h>
+#ifdef __sun
+#include <sys/filio.h>
+#endif // __sun
 #endif
 #ifdef HAVE_SYS_SOCKET_H
 #include <sys/socket.h>
