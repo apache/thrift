@@ -11,7 +11,8 @@
 
 ### Go
 
-- [THRIFT-5369](https://issues.apache.org/jira/browse/THRIFT-5369) - No longer pre-allocating the whole container (map/set/list) in compiled go code to avoid huge allocations on malformed messages
+- [THRIFT-5369](https://issues.apache.org/jira/browse/THRIFT-5369) - TConfiguration.GetMaxMessageSize() now also applies to container sizes in TProtocol implementations provided
+- [THRIFT-5404](https://issues.apache.org/jira/browse/THRIFT-5404) - TTransportException.Timeout would correctly return true when it's connect timeout during TSocket.Open call
 
 
 ## 0.14.1
