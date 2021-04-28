@@ -170,6 +170,7 @@ RUN apt-get install -y --no-install-recommends \
 RUN apt-get install -y --no-install-recommends \
 `# JS dependencies` \
       libxss1 \
+      libxtst6 \
       libatk-bridge2.0-0 \
       libgtk-3-0
 
