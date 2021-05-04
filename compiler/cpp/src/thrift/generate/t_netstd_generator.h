@@ -165,6 +165,7 @@ private:
   void init_keywords();
   string normalize_name(string name);
   string make_valid_csharp_identifier(string const& fromName);
+  string make_csharp_string_literal( string const& value);
   void prepare_member_name_mapping(t_service* tservice);
   void prepare_member_name_mapping(t_struct* tstruct);
   void prepare_member_name_mapping(t_struct* scope, const vector<t_field*>& members, const string& structname);
