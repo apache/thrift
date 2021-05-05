@@ -18,6 +18,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.InteropServices;
 using ThriftTest;
 
 namespace Client
@@ -26,8 +27,8 @@ namespace Client
     {
         public static int Main(string[] args)
         {
-            if (OperatingSystem.IsWindows())
-            { 
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            {
                 try
                 {
                     Console.SetBufferSize(Console.BufferWidth, 4096);
@@ -69,5 +70,3 @@ namespace Client
         }
     }
 }
-
-

@@ -18,6 +18,7 @@
 using System;
 using System.Linq;
 using System.Collections.Generic;
+using System.Runtime.InteropServices;
 using ThriftTest;
 
 namespace Server
@@ -26,7 +27,7 @@ namespace Server
     {
         public static int Main(string[] args)
         {
-            if (OperatingSystem.IsWindows())
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
                 try
                 {
@@ -65,5 +66,3 @@ namespace Server
         }
     }
 }
-
-
