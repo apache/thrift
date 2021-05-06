@@ -909,13 +909,9 @@ void t_js_generator::generate_js_struct_definition(ostream& out,
       out << indent() << dval << ";" << endl;
     }
     if (gen_ts_) {
-      if (gen_node_) {
-        f_types_ts_ << ts_indent() << "public " << (*m_iter)->get_name() << ": "
-                    << ts_get_type((*m_iter)->get_type()) << ";" << endl;
-      } else {
-        f_types_ts_ << ts_indent() << (*m_iter)->get_name() << ": "
-                    << ts_get_type((*m_iter)->get_type()) << ";" << endl;
-      }
+      string ts_access = gen_node_ ? "public " : "";
+      f_types_ts_ << ts_indent() << ts_access << (*m_iter)->get_name() << ts_get_req(*m_iter) << ": "
+                  << ts_get_type((*m_iter)->get_type()) << ";" << endl;
     }
   }
 
