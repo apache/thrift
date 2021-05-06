@@ -25,10 +25,11 @@ SUBDIRS += c_glib
 PRECROSS_TARGET += precross-c_glib
 endif
 
-if WITH_CL
-SUBDIRS += cl
-PRECROSS_TARGET += precross-cl
-endif
+# temporarily commented due to THRIFT-5410
+#if WITH_CL
+#SUBDIRS += cl
+#PRECROSS_TARGET += precross-cl
+#endif
 
 if WITH_CPP
 SUBDIRS += cpp
