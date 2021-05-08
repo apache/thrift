@@ -44,6 +44,13 @@
 //! | transport |
 //! +-----------+
 //! ```
+//!
+//! # Tutorial
+//!
+//! For an example of how to setup a simple client and server using this crate
+//! see the [tutorial].
+//!
+//! [tutorial]: https://github.com/apache/thrift/tree/master/tutorial/rs
 
 #![crate_type = "lib"]
 #![doc(test(attr(allow(unused_variables), deny(warnings))))]
