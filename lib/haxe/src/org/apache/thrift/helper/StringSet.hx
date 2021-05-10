@@ -89,7 +89,7 @@ class StringSet {
         return ret;
     }
 
-    public function get_size() : String {
+    public function get_size() : Int {
         return _size;
     }
 }
