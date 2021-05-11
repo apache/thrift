@@ -658,6 +658,7 @@ public:
     if (rBase_ == wBase_) {
       resetBuffer();
     }
+    resetConsumedMessageSize();
     return bytes;
   }
 
