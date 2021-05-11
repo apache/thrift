@@ -643,20 +643,24 @@ public class TThreadedSelectorServer extends AbstractNonblockingServer {
         LOGGER.warn("Created new Selector.");
       } catch (IOException e) {
         LOGGER.error("Create new Selector error.", e);
+        return;
       }
 
-      for (SelectionKey key : oldSelector.selectedKeys()) {
-        if (!key.isValid() && key.readyOps() == 0)
-          continue;
-        SelectableChannel channel = key.channel();
+      for (SelectionKey key : oldSelector.keys()) {
         Object attachment = key.attachment();
-
+        int interestOps = key.interestOps();
         try {
+          if (!key.isValid() && interestOps == 0)
+            continue;
+
+          SelectableChannel channel = key.channel();
+          key.cancel();
           if (attachment == null) {
-            channel.register(newSelector, key.readyOps());
+            channel.register(newSelector, interestOps);
           } else {
-            channel.register(newSelector, key.readyOps(), attachment);
+            channel.register(newSelector, interestOps, attachment);
           }
+
         } catch (ClosedChannelException e) {
           LOGGER.error("Register new selector key error.", e);
         }
