@@ -1349,19 +1349,21 @@ void t_netstd_generator::generate_netstd_struct_writer(ostream& out, t_struct* t
     const vector<t_field*>& fields = tstruct->get_sorted_members();
     vector<t_field*>::const_iterator f_iter;
 
-    out << indent() << "var struc = new TStruct(\"" << name << "\");" << endl
-        << indent() << "await oprot.WriteStructBeginAsync(struc, cancellationToken);" << endl;
+    string tmpvar = tmp("tmp");
+    out << indent() << "var " << tmpvar << " = new TStruct(\"" << name << "\");" << endl
+        << indent() << "await oprot.WriteStructBeginAsync(" << tmpvar << ", cancellationToken);" << endl;
 
     if (fields.size() > 0)
     {
-        out << indent() << "var field = new TField();" << endl;
+        tmpvar = tmp("tmp");
+        out << indent() << "var " << tmpvar << " = new TField();" << endl;
         for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter)
         {
             generate_null_check_begin( out, *f_iter);
-            out << indent() << "field.Name = \"" << (*f_iter)->get_name() << "\";" << endl
-                << indent() << "field.Type = " << type_to_enum((*f_iter)->get_type()) << ";" << endl
-                << indent() << "field.ID = " << (*f_iter)->get_key() << ";" << endl
-                << indent() << "await oprot.WriteFieldBeginAsync(field, cancellationToken);" << endl;
+            out << indent() << tmpvar << ".Name = \"" << (*f_iter)->get_name() << "\";" << endl
+                << indent() << tmpvar << ".Type = " << type_to_enum((*f_iter)->get_type()) << ";" << endl
+                << indent() << tmpvar << ".ID = " << (*f_iter)->get_key() << ";" << endl
+                << indent() << "await oprot.WriteFieldBeginAsync(" << tmpvar << ", cancellationToken);" << endl;
 
             generate_serialize_field(out, *f_iter);
 
@@ -1399,12 +1401,14 @@ void t_netstd_generator::generate_netstd_struct_result_writer(ostream& out, t_st
     const vector<t_field*>& fields = tstruct->get_sorted_members();
     vector<t_field*>::const_iterator f_iter;
 
-    out << indent() << "var struc = new TStruct(\"" << name << "\");" << endl
-        << indent() << "await oprot.WriteStructBeginAsync(struc, cancellationToken);" << endl;
+    string tmpvar = tmp("tmp");
+    out << indent() << "var " << tmpvar << " = new TStruct(\"" << name << "\");" << endl
+        << indent() << "await oprot.WriteStructBeginAsync(" << tmpvar << ", cancellationToken);" << endl;
 
     if (fields.size() > 0)
     {
-        out << indent() << "var field = new TField();" << endl;
+        tmpvar = tmp("tmp");
+        out << indent() << "var " << tmpvar << " = new TField();" << endl;
         bool first = true;
         for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter)
         {
@@ -1430,10 +1434,10 @@ void t_netstd_generator::generate_netstd_struct_result_writer(ostream& out, t_st
                 indent_up();
             }
 
-            out << indent() << "field.Name = \"" << prop_name(*f_iter) << "\";" << endl
-                << indent() << "field.Type = " << type_to_enum((*f_iter)->get_type()) << ";" << endl
-                << indent() << "field.ID = " << (*f_iter)->get_key() << ";" << endl
-                << indent() << "await oprot.WriteFieldBeginAsync(field, cancellationToken);" << endl;
+            out << indent() << tmpvar << ".Name = \"" << prop_name(*f_iter) << "\";" << endl
+                << indent() << tmpvar << ".Type = " << type_to_enum((*f_iter)->get_type()) << ";" << endl
+                << indent() << tmpvar << ".ID = " << (*f_iter)->get_key() << ";" << endl
+                << indent() << "await oprot.WriteFieldBeginAsync(" << tmpvar << ", cancellationToken);" << endl;
 
             generate_serialize_field(out, *f_iter);
 
@@ -1466,10 +1470,11 @@ void t_netstd_generator::generate_netstd_struct_result_writer(ostream& out, t_st
 
 void t_netstd_generator::generate_netstd_struct_tostring(ostream& out, t_struct* tstruct)
 {
+    string tmpvar = tmp("tmp");
     out << indent() << "public override string ToString()" << endl
         << indent() << "{" << endl;
-    indent_up();
-    out << indent() << "var sb = new StringBuilder(\"" << tstruct->get_name() << "(\");" << endl;
+    indent_up();	
+    out << indent() << "var " << tmpvar << " = new StringBuilder(\"" << tstruct->get_name() << "(\");" << endl;
 
     const vector<t_field*>& fields = tstruct->get_members();
     vector<t_field*>::const_iterator f_iter;
@@ -1495,15 +1500,15 @@ void t_netstd_generator::generate_netstd_struct_tostring(ostream& out, t_struct*
 
         if (useFirstFlag && (!had_required))
         {
-            out << indent() << "if(0 < " << tmp_count.c_str() << (is_required ? "" : "++") << ") { sb.Append(\", \"); }" << endl;
-            out << indent() << "sb.Append(\"" << prop_name(*f_iter) << ": \");" << endl;
+            out << indent() << "if(0 < " << tmp_count.c_str() << (is_required ? "" : "++") << ") { " << tmpvar << ".Append(\", \"); }" << endl;
+            out << indent() << tmpvar << ".Append(\"" << prop_name(*f_iter) << ": \");" << endl;
         }
         else
         {
-            out << indent() << "sb.Append(\", " << prop_name(*f_iter) << ": \");" << endl;
+            out << indent() << tmpvar << ".Append(\", " << prop_name(*f_iter) << ": \");" << endl;
         }
 
-        out << indent() << prop_name(*f_iter) << ".ToString(sb);" << endl;
+        out << indent() << prop_name(*f_iter) << ".ToString(" << tmpvar << ");" << endl;
 
         generate_null_check_end(out, *f_iter);
         if (is_required) {
@@ -1511,8 +1516,8 @@ void t_netstd_generator::generate_netstd_struct_tostring(ostream& out, t_struct*
         }
     }
 
-    out << indent() << "sb.Append(')');" << endl
-        << indent() << "return sb.ToString();" << endl;
+    out << indent() << tmpvar << ".Append(')');" << endl
+        << indent() << "return " << tmpvar << ".ToString();" << endl;
     indent_down();
     out << indent() << "}" << endl;
 }
@@ -2026,13 +2031,14 @@ void t_netstd_generator::generate_service_client(ostream& out, t_service* tservi
             << indent() << "{" << endl;
         indent_up();
 
+        string tmpvar = tmp("tmp");
         string argsname = (*functions_iterator)->get_name() + "Args";
 
         out << indent() << "await OutputProtocol.WriteMessageBeginAsync(new TMessage(\"" << raw_func_name
             << "\", TMessageType." << ((*functions_iterator)->is_oneway() ? "Oneway" : "Call") 
             << ", SeqId), cancellationToken);" << endl
             << indent() << endl
-            << indent() << "var args = new InternalStructs." << argsname << "() {" << endl;
+            << indent() << "var " << tmpvar << " = new InternalStructs." << argsname << "() {" << endl;
         indent_up();
 
         t_struct* arg_struct = (*functions_iterator)->get_arglist();
@@ -2051,7 +2057,7 @@ void t_netstd_generator::generate_service_client(ostream& out, t_service* tservi
 
 
         out << indent() << endl
-            << indent() << "await args.WriteAsync(OutputProtocol, cancellationToken);" << endl
+            << indent() << "await " << tmpvar << ".WriteAsync(OutputProtocol, cancellationToken);" << endl
             << indent() << "await OutputProtocol.WriteMessageEndAsync(cancellationToken);" << endl
             << indent() << "await OutputProtocol.Transport.FlushAsync(cancellationToken);" << endl;
 
@@ -2063,29 +2069,32 @@ void t_netstd_generator::generate_service_client(ostream& out, t_service* tservi
             collect_extensions_types(xs);
             prepare_member_name_mapping(xs, xs->get_members(), resultname);
 
+            tmpvar = tmp("tmp");
             out << indent() << endl
-                << indent() << "var msg = await InputProtocol.ReadMessageBeginAsync(cancellationToken);" << endl
-                << indent() << "if (msg.Type == TMessageType.Exception)" << endl
+                << indent() << "var " << tmpvar << " = await InputProtocol.ReadMessageBeginAsync(cancellationToken);" << endl
+                << indent() << "if (" << tmpvar << ".Type == TMessageType.Exception)" << endl
                 << indent() << "{" << endl;
             indent_up();
 
-            out << indent() << "var x = await TApplicationException.ReadAsync(InputProtocol, cancellationToken);" << endl
+            tmpvar = tmp("tmp");
+            out << indent() << "var " << tmpvar << " = await TApplicationException.ReadAsync(InputProtocol, cancellationToken);" << endl
                 << indent() << "await InputProtocol.ReadMessageEndAsync(cancellationToken);" << endl
-                << indent() << "throw x;" << endl;
+                << indent() << "throw " << tmpvar << ";" << endl;
             indent_down();
 
+            tmpvar = tmp("tmp");
             out << indent() << "}" << endl
                 << endl
-                << indent() << "var result = new InternalStructs." << resultname << "();" << endl
-                << indent() << "await result.ReadAsync(InputProtocol, cancellationToken);" << endl
+                << indent() << "var " << tmpvar << " = new InternalStructs." << resultname << "();" << endl
+                << indent() << "await " << tmpvar << ".ReadAsync(InputProtocol, cancellationToken);" << endl
                 << indent() << "await InputProtocol.ReadMessageEndAsync(cancellationToken);" << endl;
 
             if (!(*functions_iterator)->get_returntype()->is_void())
             {
-                out << indent() << "if (result.__isset.success)" << endl
+                out << indent() << "if (" << tmpvar << ".__isset.success)" << endl
                     << indent() << "{" << endl;
                 indent_up();
-                out << indent() << "return result.Success;" << endl;
+                out << indent() << "return " << tmpvar << ".Success;" << endl;
                 indent_down();
                 out << indent() << "}" << endl;
             }
@@ -2094,10 +2103,10 @@ void t_netstd_generator::generate_service_client(ostream& out, t_service* tservi
             vector<t_field*>::const_iterator x_iter;
             for (x_iter = xceptions.begin(); x_iter != xceptions.end(); ++x_iter)
             {
-                out << indent() << "if (result.__isset." << get_isset_name(normalize_name((*x_iter)->get_name())) << ")" << endl
+                out << indent() << "if (" << tmpvar << ".__isset." << get_isset_name(normalize_name((*x_iter)->get_name())) << ")" << endl
                     << indent() << "{" << endl;
                 indent_up();
-                out << indent() << "throw result." << prop_name(*x_iter) << ";" << endl;
+                out << indent() << "throw " << tmpvar << "." << prop_name(*x_iter) << ";" << endl;
                 indent_down();
                 out << indent() << "}" << endl;
             }
@@ -2295,13 +2304,15 @@ void t_netstd_generator::generate_process_function_async(ostream& out, t_service
     string argsname = tfunction->get_name() + "Args";
     string resultname = tfunction->get_name() + "Result";
 
-    out << indent() << "var args = new InternalStructs." << argsname << "();" << endl
-        << indent() << "await args.ReadAsync(iprot, cancellationToken);" << endl
+    string args = tmp("tmp");
+    out << indent() << "var " << args << " = new InternalStructs." << argsname << "();" << endl
+        << indent() << "await " << args << ".ReadAsync(iprot, cancellationToken);" << endl
         << indent() << "await iprot.ReadMessageEndAsync(cancellationToken);" << endl;
 
+    string tmpResult = tmp("tmp");
     if (!tfunction->is_oneway())
     {
-        out << indent() << "var result = new InternalStructs." << resultname << "();" << endl;
+        out << indent() << "var " << tmpResult << " = new InternalStructs." << resultname << "();" << endl;
     }
 
     out << indent() << "try" << endl
@@ -2330,7 +2341,7 @@ void t_netstd_generator::generate_process_function_async(ostream& out, t_service
     out << indent();
     if (!tfunction->is_oneway() && !tfunction->get_returntype()->is_void())
     {
-        out << "result.Success = ";
+        out << tmpResult << ".Success = ";
     }
 
     out << "await _iAsync." << func_name(normalize_name(tfunction->get_name()) + (add_async_postfix ? "Async" : "")) << "(";
@@ -2349,7 +2360,7 @@ void t_netstd_generator::generate_process_function_async(ostream& out, t_service
             out << ", ";
         }
 
-        out << "args." << prop_name(*f_iter);
+        out << args << "." << prop_name(*f_iter);
     }
 
     cleanup_member_name_mapping(arg_struct);
@@ -2382,7 +2393,7 @@ void t_netstd_generator::generate_process_function_async(ostream& out, t_service
             if (!tfunction->is_oneway())
             {
                 indent_up();
-                out << indent() << "result." << prop_name(*x_iter) << " = " << (*x_iter)->get_name() << ";" << endl;
+                out << indent() << tmpResult << "." << prop_name(*x_iter) << " = " << (*x_iter)->get_name() << ";" << endl;
                 indent_down();
             }
             out << indent() << "}" << endl;
@@ -2393,29 +2404,31 @@ void t_netstd_generator::generate_process_function_async(ostream& out, t_service
     {
         out << indent() << "await oprot.WriteMessageBeginAsync(new TMessage(\""
                 << tfunction->get_name() << "\", TMessageType.Reply, seqid), cancellationToken); " << endl
-            << indent() << "await result.WriteAsync(oprot, cancellationToken);" << endl;
+            << indent() << "await " << tmpResult << ".WriteAsync(oprot, cancellationToken);" << endl;
     }
     indent_down();
 
     cleanup_member_name_mapping(xs);
 
+    string tmpex = tmp("tmp");
     out << indent() << "}" << endl
         << indent() << "catch (TTransportException)" << endl
         << indent() << "{" << endl
         << indent() << "  throw;" << endl
-        << indent() << "}" << endl
-        << indent() << "catch (Exception ex)" << endl
+        << indent() << "}" << endl 
+        << indent() << "catch (Exception " << tmpex << ")" << endl
         << indent() << "{" << endl;
     indent_up();
 
-    out << indent() << "var sErr = $\"Error occurred in {GetType().FullName}: {ex.Message}\";" << endl;
+    string tmpvar = tmp("tmp");
+    out << indent() << "var " << tmpvar << " = $\"Error occurred in {GetType().FullName}: {" << tmpex << ".Message}\";" << endl;
     out << indent() << "if(_logger != null)" << endl;
     indent_up();
-    out << indent() << "_logger.LogError(ex, sErr);" << endl;
+    out << indent() << "_logger.LogError(" << tmpex << ", " << tmpvar << ");" << endl;
     indent_down();
     out << indent() << "else" << endl;
     indent_up();
-    out << indent() << "Console.Error.WriteLine(sErr);" << endl;
+    out << indent() << "Console.Error.WriteLine(" << tmpvar << ");" << endl;
     indent_down();
 
     if (tfunction->is_oneway())
@@ -2425,10 +2438,11 @@ void t_netstd_generator::generate_process_function_async(ostream& out, t_service
     }
     else
     {
-        out << indent() << "var x = new TApplicationException(TApplicationException.ExceptionType.InternalError,\" Internal error.\");" << endl
+        tmpvar = tmp("tmp");
+        out << indent() << "var " << tmpvar << " = new TApplicationException(TApplicationException.ExceptionType.InternalError,\" Internal error.\");" << endl
             << indent() << "await oprot.WriteMessageBeginAsync(new TMessage(\"" << tfunction->get_name()
             << "\", TMessageType.Exception, seqid), cancellationToken);" << endl
-            << indent() << "await x.WriteAsync(oprot, cancellationToken);" << endl;
+            << indent() << "await " << tmpvar << ".WriteAsync(oprot, cancellationToken);" << endl;
         indent_down();
 
         out << indent() << "}" << endl
@@ -2453,14 +2467,15 @@ void t_netstd_generator::generate_netstd_union_reader(ostream& out, t_struct* tu
     out << indent() << "try" << endl;
     scope_up(out);
 
-    out << indent() << tunion->get_name() << " retval;" << endl;
+    string tmpRetval = tmp("tmp");
+    out << indent() << tunion->get_name() << " " << tmpRetval << ";" << endl;
     out << indent() << "await iprot.ReadStructBeginAsync(cancellationToken);" << endl;
     out << indent() << "TField field = await iprot.ReadFieldBeginAsync(cancellationToken);" << endl;
     // we cannot have the first field be a stop -- we must have a single field defined
     out << indent() << "if (field.Type == TType.Stop)" << endl;
     scope_up(out);
     out << indent() << "await iprot.ReadFieldEndAsync(cancellationToken);" << endl;
-    out << indent() << "retval = new ___undefined();" << endl;
+    out << indent() << "" << tmpRetval << " = new ___undefined();" << endl;
     scope_down(out);
     out << indent() << "else" << endl;
     scope_up(out);
@@ -2474,13 +2489,14 @@ void t_netstd_generator::generate_netstd_union_reader(ostream& out, t_struct* tu
         out << indent() << "if (field.Type == " << type_to_enum((*f_iter)->get_type()) << ") {" << endl;
         indent_up();
 
-        out << indent() << type_name((*f_iter)->get_type()) << " temp;" << endl;
-        generate_deserialize_field(out, (*f_iter), "temp", true);
-        out << indent() << "retval = new " << (*f_iter)->get_name() << "(temp);" << endl;
+        string tmpvar = tmp("tmp");
+        out << indent() << type_name((*f_iter)->get_type()) << " " << tmpvar << ";" << endl;
+        generate_deserialize_field(out, (*f_iter), tmpvar, true);
+        out << indent() << tmpRetval << " = new " << (*f_iter)->get_name() << "(" << tmpvar << ");" << endl;
 
         indent_down();
         out << indent() << "} else { " << endl << indent() << " await TProtocolUtil.SkipAsync(iprot, field.Type, cancellationToken);"
-            << endl << indent() << "  retval = new ___undefined();" << endl << indent() << "}" << endl
+            << endl << indent() << "  " << tmpRetval << " = new ___undefined();" << endl << indent() << "}" << endl
             << indent() << "break;" << endl;
         indent_down();
     }
@@ -2488,7 +2504,7 @@ void t_netstd_generator::generate_netstd_union_reader(ostream& out, t_struct* tu
     out << indent() << "default: " << endl;
     indent_up();
     out << indent() << "await TProtocolUtil.SkipAsync(iprot, field.Type, cancellationToken);" << endl << indent()
-        << "retval = new ___undefined();" << endl;
+        << tmpRetval << " = new ___undefined();" << endl;
     out << indent() << "break;" << endl;
     indent_down();
 
@@ -2504,7 +2520,7 @@ void t_netstd_generator::generate_netstd_union_reader(ostream& out, t_struct* tu
     // end of else for TStop
     scope_down(out);
     out << indent() << "await iprot.ReadStructEndAsync(cancellationToken);" << endl;
-    out << indent() << "return retval;" << endl;
+    out << indent() << "return " << tmpRetval << ";" << endl;
     indent_down();
 
     scope_down(out);
