@@ -580,6 +580,7 @@ void t_cpp_generator::generate_enum(t_enum* tenum) {
     generate_java_doc(f_types_, tenum);
     f_types_ << indent() << "struct " << tenum->get_name() << " {" << endl;
     indent_up();
+    f_types_ << indent() << "static const std::map<int, const char*>& _VALUES_TO_NAMES;" << endl;
   }
   f_types_ << indent() << "enum " << enum_name;
 
@@ -614,6 +615,12 @@ void t_cpp_generator::generate_enum(t_enum* tenum) {
                 << tenum->get_name() << "Values"
                 << ", _k" << tenum->get_name() << "Names), "
                 << "::apache::thrift::TEnumIterator(-1, nullptr, nullptr));" << endl << endl;
+
+  if (!gen_pure_enums_) {
+      f_types_impl_ << indent() << "const std::map<int, const char*>& "
+                    << tenum->get_name() << "::_VALUES_TO_NAMES = _"
+                    << tenum->get_name() << "_VALUES_TO_NAMES;" << endl << endl;
+  }
 
   generate_enum_ostream_operator_decl(f_types_, tenum);
   generate_enum_ostream_operator(f_types_impl_, tenum);
