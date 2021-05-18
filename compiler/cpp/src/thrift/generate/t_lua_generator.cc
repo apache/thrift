@@ -593,7 +593,21 @@ void t_lua_generator::generate_service_client(ostream& out, t_service* tservice)
     vector<t_field*>::const_iterator fld_iter;
     for (fld_iter = args.begin(); fld_iter != args.end(); ++fld_iter) {
       std::string argname = (*fld_iter)->get_name();
-      indent(out) << "args." << argname << " = " << argname << endl;
+      if ((*fld_iter)->get_value() != nullptr) {
+        // Insert default value for nil arguments
+        t_type* type = get_true_type((*fld_iter)->get_type());
+        indent(out) << "if " << argname << " ~= nil then" << endl;
+        indent_up();
+        indent(out) << "args." << argname << " = " << argname << endl;
+        indent_down();
+        indent(out) << "else" << endl;
+        indent_up();
+        indent(out) << "args." << argname << " = " << render_const_value(type, (*fld_iter)->get_value()) << endl;
+        indent_down();
+        indent(out) << "end" << endl;
+      } else {
+        indent(out) << "args." << argname << " = " << argname << endl;
+      }
     }
 
     indent(out) << "args:write(self.oprot)" << endl;
