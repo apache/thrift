@@ -29,6 +29,9 @@ using Thrift.Processor;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 
+#pragma warning disable IDE0079  // remove unnecessary pragmas
+#pragma warning disable IDE0063  // using can be simplified, we don't
+
 namespace Thrift.Server
 {
     /// <summary>
@@ -125,8 +128,7 @@ namespace Thrift.Server
             {
                 if ((threadConfig.MaxWorkerThreads > 0) || (threadConfig.MaxIOThreads > 0))
                 {
-                    int work, comm;
-                    ThreadPool.GetMaxThreads(out work, out comm);
+                    ThreadPool.GetMaxThreads(out int work, out int comm);
                     if (threadConfig.MaxWorkerThreads > 0)
                         work = threadConfig.MaxWorkerThreads;
                     if (threadConfig.MaxIOThreads > 0)
@@ -137,8 +139,7 @@ namespace Thrift.Server
 
                 if ((threadConfig.MinWorkerThreads > 0) || (threadConfig.MinIOThreads > 0))
                 {
-                    int work, comm;
-                    ThreadPool.GetMinThreads(out work, out comm);
+                    ThreadPool.GetMinThreads(out int work, out int comm);
                     if (threadConfig.MinWorkerThreads > 0)
                         work = threadConfig.MinWorkerThreads;
                     if (threadConfig.MinIOThreads > 0)
@@ -209,7 +210,7 @@ namespace Thrift.Server
             }
             finally
             {
-                ServerCancellationToken = default(CancellationToken);
+                ServerCancellationToken = default;
             }
         }
 
@@ -255,6 +256,7 @@ namespace Thrift.Server
                             //actually arriving or the client may hang up without ever makeing a request.
                             if (ServerEventHandler != null)
                                 ServerEventHandler.ProcessContextAsync(connectionContext, inputTransport, cancellationToken).Wait();
+
                             //Process client request (blocks until transport is readable)
                             if (!processor.ProcessAsync(inputProtocol, outputProtocol, cancellationToken).Result)
                                 break;
