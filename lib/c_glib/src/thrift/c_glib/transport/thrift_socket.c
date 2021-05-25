@@ -127,6 +127,7 @@ thrift_socket_open (ThriftTransport *transport, GError **error)
   struct hostent *hp = NULL;
   struct sockaddr_in pin;
   int err;
+  int errno_copy;
 #if defined(HAVE_GETHOSTBYNAME_R)
   struct hostent he;
   char buf[1024];
@@ -155,10 +156,11 @@ thrift_socket_open (ThriftTransport *transport, GError **error)
     /* open a connection */
     if (connect (tsocket->sd, (struct sockaddr *) &pin, sizeof(pin)) == -1)
     {
+        errno_copy = errno;
         thrift_socket_close(transport, NULL);
         g_set_error (error, THRIFT_TRANSPORT_ERROR, THRIFT_TRANSPORT_ERROR_CONNECT,
                    "failed to connect to path %s: - %s",
-                   tsocket->path, strerror(errno));
+                   tsocket->path, strerror(errno_copy));
       return FALSE;
     }
     return TRUE;
@@ -198,10 +200,11 @@ thrift_socket_open (ThriftTransport *transport, GError **error)
   /* open a connection */
   if (connect (tsocket->sd, (struct sockaddr *) &pin, sizeof(pin)) == -1)
   {
+      errno_copy = errno;
       thrift_socket_close(transport, NULL);
       g_set_error (error, THRIFT_TRANSPORT_ERROR, THRIFT_TRANSPORT_ERROR_CONNECT,
                  "failed to connect to host %s:%d - %s",
-                 tsocket->hostname, tsocket->port, strerror(errno));
+                 tsocket->hostname, tsocket->port, strerror(errno_copy));
     return FALSE;
   }
 
