@@ -60,11 +60,19 @@ namespace ThriftTest
         Framed
     }
 
+    internal enum ServerChoice
+    {
+        Simple,
+        ThreadPool
+    }
+
+
     internal class ServerParam
     {
         internal BufferChoice buffering = BufferChoice.None;
         internal ProtocolChoice protocol = ProtocolChoice.Binary;
         internal TransportChoice transport = TransportChoice.Socket;
+        internal ServerChoice server = ServerChoice.Simple;
         internal int port = 9090;
         internal string pipe = null;
 
@@ -103,13 +111,17 @@ namespace ThriftTest
                 {
                     protocol = ProtocolChoice.Json;
                 }
+                else if (args[i] == "--server-type=simple")
+                {
+                    server = ServerChoice.Simple;
+                }
                 else if (args[i] == "--threaded" || args[i] == "--server-type=threaded")
                 {
                     throw new NotImplementedException(args[i]);
                 }
                 else if (args[i] == "--threadpool" || args[i] == "--server-type=threadpool")
                 {
-                    throw new NotImplementedException(args[i]);
+                    server = ServerChoice.ThreadPool;
                 }
                 else if (args[i] == "--prototype" || args[i] == "--processor=prototype")
                 {
@@ -613,16 +625,23 @@ namespace ThriftTest
                     var testProcessor = new ThriftTest.AsyncProcessor(testHandler);
                     var processorFactory = new TSingletonProcessorFactory(testProcessor);
 
-                    TServer serverEngine = new TSimpleAsyncServer(processorFactory, trans, transFactory, transFactory, proto, proto, logger);
+                    var poolconfig = new TThreadPoolAsyncServer.Configuration();  // use platform defaults
+                    TServer serverEngine = param.server switch
+                    {
+                        ServerChoice.Simple => new TSimpleAsyncServer(processorFactory, trans, transFactory, transFactory, proto, proto, logger),
+                        ServerChoice.ThreadPool => new TThreadPoolAsyncServer(processorFactory, trans, transFactory, transFactory, proto, proto, poolconfig, logger),
+                        _ => new TSimpleAsyncServer(processorFactory, trans, transFactory, transFactory, proto, proto, logger)
+                    };
 
                     //Server event handler
                     var serverEvents = new MyServerEventHandler();
                     serverEngine.SetEventHandler(serverEvents);
 
                     // Run it
-                    var where = (!string.IsNullOrEmpty(param.pipe)) ? "on pipe " + param.pipe : "on port " + param.port;
-                    Console.WriteLine("Starting the AsyncBaseServer " + where +
-                                      " with processor TPrototypeProcessorFactory prototype factory " +
+                    var where = (!string.IsNullOrEmpty(param.pipe)) ? "pipe " + param.pipe : "port " + param.port;
+                    Console.WriteLine("Running "+ serverEngine.GetType().Name +
+                                      " at "+ where +
+                                      " using "+ processorFactory.GetType().Name + " processor prototype factory " +
                                       (param.buffering == BufferChoice.Buffered ? " with buffered transport" : "") +
                                       (param.buffering == BufferChoice.Framed ? " with framed transport" : "") +
                                       (param.transport == TransportChoice.TlsSocket ? " with encryption" : "") +
