@@ -89,6 +89,20 @@ void authorize(SSL* ssl, TAccessManager accessManager,
   // Check subjectAltName(s), if present.
   auto alternatives = cast(STACK_OF!(GENERAL_NAME)*)
     X509_get_ext_d2i(cert, NID_subject_alt_name, null, null);
+
+  version(use_openssl_1_0_x) {
+    enum _GEN_DNS = GENERAL_NAME.GEN_DNS;
+    enum _GEN_IPADD = GENERAL_NAME.GEN_IPADD;
+  } else version(use_openssl_1_1_x) {
+    enum _GEN_DNS = GEN_DNS;
+    enum _GEN_IPADD = GEN_IPADD;
+  } else {
+    static assert(false, `Must have version either use_openssl_1_0_x or use_openssl_1_1_x defined, e.g.
+	"subConfigurations": {
+		"apache-thrift": "use_openssl_1_0"
+	}`);
+  }
+
   if (alternatives != null) {
     auto count = sk_GENERAL_NAME_num(alternatives);
     for (int i = 0; decision == Decision.SKIP && i < count; i++) {
@@ -98,11 +112,12 @@ void authorize(SSL* ssl, TAccessManager accessManager,
       }
       auto data = ASN1_STRING_data(name.d.ia5);
       auto length = ASN1_STRING_length(name.d.ia5);
+
       switch (name.type) {
-        case GENERAL_NAME.GEN_DNS:
+        case _GEN_DNS:
           decision = accessManager.verify(hostName, cast(char[])data[0 .. length]);
           break;
-        case GENERAL_NAME.GEN_IPADD:
+        case _GEN_IPADD:
           decision = accessManager.verify(peerAddress, data[0 .. length]);
           break;
         default:
