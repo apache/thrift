@@ -26,6 +26,7 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.net.SocketTimeoutException;
 
 /**
  * This is the most commonly used base transport. It takes an InputStream or
@@ -174,6 +175,8 @@ public class TIOStreamTransport extends TEndpointTransport {
     int bytesRead;
     try {
       bytesRead = inputStream_.read(buf, off, len);
+    } catch (SocketTimeoutException ste) {
+      throw new TTransportException(TTransportException.TIMED_OUT, ste);
     } catch (IOException iox) {
       throw new TTransportException(TTransportException.UNKNOWN, iox);
     }
