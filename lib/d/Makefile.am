@@ -153,7 +153,7 @@ clean-local:
 #
 # Unit tests (built both in debug and release mode).
 #
-d_test_flags = -unittest -w -wi -I$(top_srcdir)/lib/d/src
+d_test_flags = -unittest -w -wi -I$(top_srcdir)/lib/d/src -version=use_openssl_1_0_x
 
 # There just must be some way to reassign a variable without warnings in
 # Automake...
