@@ -97,7 +97,7 @@ d_main_modules = $(filter-out $(d_libevent_dependent_modules) \
 	$(d_openssl_dependent_modules),$(d_modules))
 
 
-d_lib_flags = -w -wi -Isrc -lib
+d_lib_flags = -w -wi -Isrc -lib -version=use_openssl_1_0_x
 all_targets =
 
 #
