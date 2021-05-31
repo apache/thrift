@@ -253,6 +253,13 @@ RUN cd / && \
     rm swift-5.1.4-RELEASE-ubuntu18.04.tar.gz && \
     swift --version
 
+# Locale(s) for cpp unit tests
+RUN apt-get install -y --no-install-recommends \
+`# Locale dependencies` \
+      locales && \
+    locale-gen en_US.UTF-8 && \
+    update-locale
+
 # cppcheck-1.82 has a nasty cpp parser bug, so we're using something newer
 RUN apt-get install -y --no-install-recommends \
 `# Static Code Analysis dependencies` \

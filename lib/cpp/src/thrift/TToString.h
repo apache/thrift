@@ -22,6 +22,7 @@
 
 #include <cmath>
 #include <limits>
+#include <locale>
 #include <map>
 #include <set>
 #include <sstream>
@@ -34,6 +35,7 @@ namespace thrift {
 template <typename T>
 std::string to_string(const T& t) {
   std::ostringstream o;
+  o.imbue(std::locale("C"));
   o << t;
   return o.str();
 }
