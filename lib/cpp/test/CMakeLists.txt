@@ -20,7 +20,7 @@
 # Unit tests still require boost
 include(BoostMacros)
 REQUIRE_BOOST_HEADERS()
-set(BOOST_COMPONENTS chrono date_time filesystem random thread unit_test_framework)
+set(BOOST_COMPONENTS filesystem thread unit_test_framework)
 REQUIRE_BOOST_LIBRARIES(BOOST_COMPONENTS)
 
 include(ThriftMacros)
@@ -88,11 +88,11 @@ add_executable(UnitTests ${UnitTest_SOURCES})
 target_link_libraries(UnitTests testgencpp ${Boost_LIBRARIES})
 LINK_AGAINST_THRIFT_LIBRARY(UnitTests thrift)
 add_test(NAME UnitTests COMMAND UnitTests)
-if ( MSVC )
+if(MSVC)
     # Disable C4503: decorated name length exceeded, name was truncated
     # 'insanity' results in very long decorated names
     set_property( TARGET UnitTests APPEND_STRING PROPERTY COMPILE_FLAGS /wd4503 )
-endif ( MSVC )
+endif()
 
 
 set( TInterruptTest_SOURCES
@@ -111,7 +111,7 @@ target_link_libraries(TInterruptTest
 )
 LINK_AGAINST_THRIFT_LIBRARY(TInterruptTest thrift)
 if (NOT MSVC AND NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin" AND NOT MINGW)
-target_link_libraries(TInterruptTest -lrt)
+    target_link_libraries(TInterruptTest -lrt)
 endif ()
 add_test(NAME TInterruptTest COMMAND TInterruptTest -- "${CMAKE_CURRENT_SOURCE_DIR}/../../../test/keys")
 
@@ -122,7 +122,7 @@ target_link_libraries(TServerIntegrationTest
 )
 LINK_AGAINST_THRIFT_LIBRARY(TServerIntegrationTest thrift)
 if (NOT MSVC AND NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin" AND NOT MINGW)
-target_link_libraries(TServerIntegrationTest -lrt)
+    target_link_libraries(TServerIntegrationTest -lrt)
 endif ()
 add_test(NAME TServerIntegrationTest COMMAND TServerIntegrationTest)
 
@@ -205,13 +205,13 @@ add_test(NAME AllProtocolsTest COMMAND AllProtocolsTest)
 
 # The debug run-time in Windows asserts on isprint() with negative inputs
 if (NOT MSVC OR (MSVC AND CMAKE_BUILD_TYPE EQUAL "DEBUG"))
-add_executable(DebugProtoTest DebugProtoTest.cpp)
-target_link_libraries(DebugProtoTest
-    testgencpp
-    ${Boost_LIBRARIES}
-)
-LINK_AGAINST_THRIFT_LIBRARY(DebugProtoTest thrift)
-add_test(NAME DebugProtoTest COMMAND DebugProtoTest)
+    add_executable(DebugProtoTest DebugProtoTest.cpp)
+    target_link_libraries(DebugProtoTest
+        testgencpp
+        ${Boost_LIBRARIES}
+    )
+    LINK_AGAINST_THRIFT_LIBRARY(DebugProtoTest thrift)
+    add_test(NAME DebugProtoTest COMMAND DebugProtoTest)
 endif()
 
 add_executable(JSONProtoTest JSONProtoTest.cpp)
@@ -270,44 +270,44 @@ target_link_libraries(link_test testgencpp)
 add_test(NAME link_test COMMAND link_test)
 
 if(WITH_LIBEVENT)
-set(processor_test_SOURCES
-    processor/ProcessorTest.cpp
-    processor/EventLog.cpp
-    processor/ServerThread.cpp
-    processor/EventLog.h
-    processor/Handlers.h
-    processor/ServerThread.h
-)
-add_executable(processor_test ${processor_test_SOURCES})
-target_link_libraries(processor_test
-    testgencpp_cob
-    ${Boost_LIBRARIES}
-)
-LINK_AGAINST_THRIFT_LIBRARY(processor_test thriftnb)
-add_test(NAME processor_test COMMAND processor_test)
+    set(processor_test_SOURCES
+        processor/ProcessorTest.cpp
+        processor/EventLog.cpp
+        processor/ServerThread.cpp
+        processor/EventLog.h
+        processor/Handlers.h
+        processor/ServerThread.h
+    )
+    add_executable(processor_test ${processor_test_SOURCES})
+    target_link_libraries(processor_test
+        testgencpp_cob
+        ${Boost_LIBRARIES}
+    )
+    LINK_AGAINST_THRIFT_LIBRARY(processor_test thriftnb)
+    add_test(NAME processor_test COMMAND processor_test)
 
-set(TNonblockingServerTest_SOURCES TNonblockingServerTest.cpp)
-add_executable(TNonblockingServerTest ${TNonblockingServerTest_SOURCES})
-include_directories(${LIBEVENT_INCLUDE_DIRS})
-target_link_libraries(TNonblockingServerTest
-    testgencpp_cob
-    ${Boost_LIBRARIES}
-)
-LINK_AGAINST_THRIFT_LIBRARY(TNonblockingServerTest thriftnb)
-add_test(NAME TNonblockingServerTest COMMAND TNonblockingServerTest)
+    set(TNonblockingServerTest_SOURCES TNonblockingServerTest.cpp)
+    add_executable(TNonblockingServerTest ${TNonblockingServerTest_SOURCES})
+    include_directories(${LIBEVENT_INCLUDE_DIRS})
+    target_link_libraries(TNonblockingServerTest
+        testgencpp_cob
+        ${Boost_LIBRARIES}
+    )
+    LINK_AGAINST_THRIFT_LIBRARY(TNonblockingServerTest thriftnb)
+    add_test(NAME TNonblockingServerTest COMMAND TNonblockingServerTest)
 
-if(OPENSSL_FOUND AND WITH_OPENSSL)
-  set(TNonblockingSSLServerTest_SOURCES TNonblockingSSLServerTest.cpp)
-  add_executable(TNonblockingSSLServerTest ${TNonblockingSSLServerTest_SOURCES})
-  include_directories(${LIBEVENT_INCLUDE_DIRS})
-  target_link_libraries(TNonblockingSSLServerTest
-    testgencpp_cob
-    ${Boost_LIBRARIES}
-  )
-  LINK_AGAINST_THRIFT_LIBRARY(TNonblockingSSLServerTest thriftnb)
-  add_test(NAME TNonblockingSSLServerTest COMMAND TNonblockingSSLServerTest -- "${CMAKE_CURRENT_SOURCE_DIR}/../../../test/keys")
-endif(OPENSSL_FOUND AND WITH_OPENSSL)
-endif(WITH_LIBEVENT)
+    if(OPENSSL_FOUND AND WITH_OPENSSL)
+      set(TNonblockingSSLServerTest_SOURCES TNonblockingSSLServerTest.cpp)
+      add_executable(TNonblockingSSLServerTest ${TNonblockingSSLServerTest_SOURCES})
+      include_directories(${LIBEVENT_INCLUDE_DIRS})
+      target_link_libraries(TNonblockingSSLServerTest
+        testgencpp_cob
+        ${Boost_LIBRARIES}
+      )
+      LINK_AGAINST_THRIFT_LIBRARY(TNonblockingSSLServerTest thriftnb)
+      add_test(NAME TNonblockingSSLServerTest COMMAND TNonblockingSSLServerTest -- "${CMAKE_CURRENT_SOURCE_DIR}/../../../test/keys")
+    endif(OPENSSL_FOUND AND WITH_OPENSSL)
+endif()
 
 if(OPENSSL_FOUND AND WITH_OPENSSL)
 add_executable(OpenSSLManualInitTest OpenSSLManualInitTest.cpp)
@@ -325,7 +325,7 @@ target_link_libraries(SecurityTest
 )
 LINK_AGAINST_THRIFT_LIBRARY(SecurityTest thrift)
 if (NOT MSVC AND NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin" AND NOT MINGW)
-target_link_libraries(SecurityTest -lrt)
+    target_link_libraries(SecurityTest -lrt)
 endif ()
 add_test(NAME SecurityTest COMMAND SecurityTest -- "${CMAKE_CURRENT_SOURCE_DIR}/../../../test/keys")
 
@@ -336,14 +336,14 @@ target_link_libraries(SecurityFromBufferTest
 )
 LINK_AGAINST_THRIFT_LIBRARY(SecurityFromBufferTest thrift)
 if (NOT MSVC AND NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin" AND NOT MINGW)
-target_link_libraries(SecurityFromBufferTest -lrt)
+    target_link_libraries(SecurityFromBufferTest -lrt)
 endif ()
 add_test(NAME SecurityFromBufferTest COMMAND SecurityFromBufferTest -- "${CMAKE_CURRENT_SOURCE_DIR}/../../../test/keys")
 
 endif()
 
 if(WITH_QT5)
-add_subdirectory(qt)
+    add_subdirectory(qt)
 endif()
 
 #

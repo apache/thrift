@@ -20,9 +20,7 @@
 
 set(TEST_PREFIX "c_glib")
 
-# include_directories(SYSTEM ${Boost_INCLUDE_DIRS})
-
-#Make sure gen-cpp and gen-c_glib files can be included
+# Make sure gen-cpp and gen-c_glib files can be included
 include_directories("${CMAKE_CURRENT_BINARY_DIR}")
 
 # Create the thrift C test library
@@ -151,7 +149,6 @@ add_test(NAME testthrifttest COMMAND testthrifttest)
 
 
 if(BUILD_CPP)
-
     include_directories("${PROJECT_SOURCE_DIR}/lib/cpp/src")
 
     # Create the thrift C++ test library
