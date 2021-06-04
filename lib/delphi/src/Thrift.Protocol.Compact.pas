@@ -80,6 +80,9 @@ type
       STRUCT        = $0C
     );
 
+  private type
+    TEightBytesArray = packed array[0..7] of Byte;
+
   strict private const
     ttypeToCompactType : array[TType] of Types = (
       Types.STOP,           // Stop    = 0,
@@ -190,7 +193,7 @@ type
     class function intToZigZag( const n : Integer) : Cardinal;
 
     //Convert a Int64 into little-endian bytes in buf starting at off and going until off+7.
-    class procedure fixedLongToBytes( const n : Int64; var buf : TBytes);
+    class procedure fixedLongToBytes( const n : Int64; var buf : TEightBytesArray); inline;
 
   strict protected
     function GetMinSerializedSize( const aType : TType) : Integer;  override;
@@ -240,7 +243,7 @@ type
     // Note that it's important that the mask bytes are Int64 literals,
     // otherwise they'll default to ints, and when you shift an Integer left 56 bits,
     // you just get a messed up Integer.
-    class function bytesToLong( const bytes : TBytes) : Int64;
+    class function bytesToLong( const bytes : TEightBytesArray) : Int64; inline;
 
     // type testing and converting
     class function isBoolType( const b : byte) : Boolean;
@@ -319,10 +322,9 @@ end;
 
 // Write an i32 as a varint. Results in 1-5 bytes on the wire.
 procedure TCompactProtocolImpl.WriteVarint32( n : Cardinal);
-var i32buf : TBytes;
-    idx : Integer;
+var idx : Integer;
+    i32buf : packed array[0..4] of Byte;
 begin
-  SetLength( i32buf, 5);
   idx := 0;
   while TRUE do begin
     ASSERT( idx < Length(i32buf));
@@ -339,7 +341,7 @@ begin
     n := n shr 7;
   end;
 
-  Transport.Write( i32buf, 0, idx);
+  Transport.Write( @i32buf[0], 0, idx);
 end;
 
 
@@ -521,10 +523,10 @@ end;
 
 // Write a double to the wire as 8 bytes.
 procedure TCompactProtocolImpl.WriteDouble( const dub: Double);
-var data : TBytes;
+var data : TEightBytesArray;
 begin
   fixedLongToBytes( DoubleToInt64Bits(dub), data);
-  Transport.Write( data);
+  Transport.Write( @data[0], 0, SizeOf(data));
 end;
 
 
@@ -580,10 +582,9 @@ end;
 
 // Write an i64 as a varint. Results in 1-10 bytes on the wire.
 procedure TCompactProtocolImpl.WriteVarint64( n : UInt64);
-var varint64out : TBytes;
-    idx : Integer;
+var idx : Integer;
+    varint64out : packed array[0..9] of Byte;
 begin
-  SetLength( varint64out, 10);
   idx := 0;
   while TRUE do begin
     ASSERT( idx < Length(varint64out));
@@ -600,7 +601,7 @@ begin
     n := n shr 7;
   end;
 
-  Transport.Write( varint64out, 0, idx);
+  Transport.Write( @varint64out[0], 0, idx);
 end;
 
 
@@ -627,9 +628,9 @@ end;
 
 
 // Convert a Int64 into 8 little-endian bytes in buf
-class procedure TCompactProtocolImpl.fixedLongToBytes( const n : Int64; var buf : TBytes);
+class procedure TCompactProtocolImpl.fixedLongToBytes( const n : Int64; var buf : TEightBytesArray);
 begin
-  SetLength( buf, 8);
+  ASSERT( Length(buf) >= 8);
   buf[0] := Byte( n         and $FF);
   buf[1] := Byte((n shr 8)  and $FF);
   buf[2] := Byte((n shr 16) and $FF);
@@ -829,11 +830,11 @@ end;
 
 
 // No magic here - just Read a double off the wire.
-function TCompactProtocolImpl.ReadDouble:Double;
-var longBits : TBytes;
+function TCompactProtocolImpl.ReadDouble : Double;
+var longBits : TEightBytesArray;
 begin
-  SetLength( longBits, 8);
-  Transport.ReadAll( longBits, 0, 8);
+  ASSERT( SizeOf(longBits) = SizeOf(result));
+  Transport.ReadAll( @longBits[0], SizeOf(longBits), 0, SizeOf(longBits));
   result := Int64BitsToDouble( bytesToLong( longBits));
 end;
 
@@ -934,7 +935,7 @@ end;
 // Note that it's important that the mask bytes are Int64 literals,
 // otherwise they'll default to ints, and when you shift an Integer left 56 bits,
 // you just get a messed up Integer.
-class function TCompactProtocolImpl.bytesToLong( const bytes : TBytes) : Int64;
+class function TCompactProtocolImpl.bytesToLong( const bytes : TEightBytesArray) : Int64;
 begin
   ASSERT( Length(bytes) >= 8);
   result := (Int64(bytes[7] and $FF) shl 56) or
@@ -1104,7 +1105,7 @@ end;
 procedure TestLongBytes;
 
   procedure Test( const test : Int64);
-  var buf : TBytes;
+  var buf : TCompactProtocolImpl.TEightBytesArray;
   begin
     TCompactProtocolImpl.fixedLongToBytes( test, buf);
     ASSERT( TCompactProtocolImpl.bytesToLong( buf) = test, IntToStr(test));

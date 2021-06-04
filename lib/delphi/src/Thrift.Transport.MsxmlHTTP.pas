@@ -106,7 +106,7 @@ begin
   FReadTimeout       := XMLHTTP_SENDRECV_TIMEOUT;
 
   FCustomHeaders := TThriftDictionaryImpl<string,string>.Create;
-  FOutputStream := TThriftStreamAdapterDelphi.Create( TMemoryStream.Create, True);
+  FOutputStream := TThriftStreamAdapterDelphi.Create( TThriftMemoryStream.Create, True);
 end;
 
 function TMsxmlHTTPClientImpl.CreateRequest: IXMLHTTPRequest;
@@ -202,7 +202,7 @@ end;
 
 procedure TMsxmlHTTPClientImpl.Open;
 begin
-  FOutputStream := TThriftStreamAdapterDelphi.Create( TMemoryStream.Create, True);
+  FOutputStream := TThriftStreamAdapterDelphi.Create( TThriftMemoryStream.Create, True);
 end;
 
 procedure TMsxmlHTTPClientImpl.Close;
@@ -217,7 +217,7 @@ begin
     SendRequest;
   finally
     FOutputStream := nil;
-    FOutputStream := TThriftStreamAdapterDelphi.Create( TMemoryStream.Create, True);
+    FOutputStream := TThriftStreamAdapterDelphi.Create( TThriftMemoryStream.Create, True);
     ASSERT( FOutputStream <> nil);
   end;
 end;
@@ -239,13 +239,13 @@ end;
 procedure TMsxmlHTTPClientImpl.SendRequest;
 var
   xmlhttp : IXMLHTTPRequest;
-  ms : TMemoryStream;
+  ms : TThriftMemoryStream;
   a : TBytes;
   len : Integer;
 begin
   xmlhttp := CreateRequest;
 
-  ms := TMemoryStream.Create;
+  ms := TThriftMemoryStream.Create;
   try
     a := FOutputStream.ToArray;
     len := Length(a);

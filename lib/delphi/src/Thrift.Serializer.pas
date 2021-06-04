@@ -38,7 +38,7 @@ type
   // Generic utility for easily serializing objects into a byte array or Stream.
   TSerializer = class
   strict private
-    FStream    : TMemoryStream;
+    FStream    : TThriftMemoryStream;
     FTransport : ITransport;
     FProtocol  : IProtocol;
 
@@ -59,7 +59,7 @@ type
   // Generic utility for easily deserializing objects from byte array or Stream.
   TDeserializer = class
   strict private
-    FStream    : TMemoryStream;
+    FStream    : TThriftMemoryStream;
     FTransport : ITransport;
     FProtocol  : IProtocol;
 
@@ -92,7 +92,7 @@ var adapter : IThriftStream;
 begin
   inherited Create;
 
-  FStream    := TMemoryStream.Create;
+  FStream    := TThriftMemoryStream.Create;
   adapter    := TThriftStreamAdapterDelphi.Create( FStream, FALSE);
 
   FTransport := TStreamTransportImpl.Create( nil, adapter, aConfig);
@@ -170,7 +170,7 @@ var adapter : IThriftStream;
 begin
   inherited Create;
 
-  FStream    := TMemoryStream.Create;
+  FStream    := TThriftMemoryStream.Create;
   adapter    := TThriftStreamAdapterDelphi.Create( FStream, FALSE);
 
   FTransport := TStreamTransportImpl.Create( adapter, nil, aConfig);

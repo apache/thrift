@@ -32,6 +32,7 @@ uses
   Thrift.Configuration,
   Thrift.Transport,
   Thrift.Protocol,
+  Thrift.Stream,
   Thrift.Utils;
 
 type
@@ -832,7 +833,7 @@ end;
 
 
 function TJSONProtocolImpl.ReadJSONString( skipContext : Boolean) : TBytes;
-var buffer : TMemoryStream;
+var buffer : TThriftMemoryStream;
     ch  : Byte;
     wch : Word;
     highSurogate: Char;
@@ -841,7 +842,7 @@ var buffer : TMemoryStream;
     tmp : TBytes;
 begin
   highSurogate := #0;
-  buffer := TMemoryStream.Create;
+  buffer := TThriftMemoryStream.Create;
   try
     if not skipContext
     then FContext.Read;
