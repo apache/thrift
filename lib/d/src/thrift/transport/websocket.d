@@ -163,7 +163,7 @@ private:
 
   void failConnection(CloseCode reason) {
     writeFrameHeader(Opcode.Close);
-    transport_.write(nativeToBigEndian!ushort(reason));
+    transport_.write(std.bitmanip.nativeToBigEndian!ushort(reason));
     transport_.flush();
     transport_.close();
   }
@@ -332,10 +332,10 @@ private:
       header[1] = cast(ubyte)writeBuffer_.length;
     } else if (writeBuffer_.length < 65536) {
       header[1] = 126;
-      header[2..4] = nativeToBigEndian(cast(ushort)writeBuffer_.length);
+      header[2..4] = std.bitmanip.nativeToBigEndian(cast(ushort)writeBuffer_.length);
     } else {
       header[1] = 127;
-      header[2..10] = nativeToBigEndian(cast(ulong)writeBuffer_.length);
+      header[2..10] = std.bitmanip.nativeToBigEndian(cast(ulong)writeBuffer_.length);
     }
 
     transport_.write(header);
