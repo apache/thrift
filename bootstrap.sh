@@ -61,4 +61,4 @@ autoheader
 sed '/undef VERSION/d' config.hin > config.hin2
 mv config.hin2 config.hin
 autoconf
-automake --copy --add-missing --foreign
+automake --copy --add-missing
