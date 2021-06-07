@@ -260,6 +260,7 @@ RUN apt-get install -y --no-install-recommends \
 `# Locale dependencies` \
       locales && \
     locale-gen en_US.UTF-8 && \
+    locale-gen de_DE.UTF-8 && \
     update-locale
 
 # cppcheck-1.82 has a nasty cpp parser bug, so we're using something newer

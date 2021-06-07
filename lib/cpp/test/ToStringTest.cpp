@@ -19,6 +19,7 @@
 
 #include <vector>
 #include <map>
+#include <locale>
 
 #include <boost/test/unit_test.hpp>
 
@@ -38,6 +39,26 @@ BOOST_AUTO_TEST_CASE(base_types_to_string) {
   BOOST_CHECK_EQUAL(to_string('a'), "a");
   BOOST_CHECK_EQUAL(to_string(1.2), "1.2");
   BOOST_CHECK_EQUAL(to_string("abc"), "abc");
+}
+
+BOOST_AUTO_TEST_CASE(locale_en_US_int_to_string) {
+#if _WIN32
+  std::locale::global(std::locale("en-US.UTF-8"));
+#else
+  std::locale::global(std::locale("en_US.UTF-8"));
+#endif
+  BOOST_CHECK_EQUAL(to_string(1000000), "1000000");
+}
+
+BOOST_AUTO_TEST_CASE(locale_de_DE_floating_point_to_string) {
+#if _WIN32
+  std::locale::global(std::locale("de-DE.UTF-8"));
+#else
+  std::locale::global(std::locale("de_DE.UTF-8"));
+#endif
+  BOOST_CHECK_EQUAL(to_string(1.5), "1.5");
+  BOOST_CHECK_EQUAL(to_string(1.5f), "1.5");
+  BOOST_CHECK_EQUAL(to_string(1.5L), "1.5");
 }
 
 BOOST_AUTO_TEST_CASE(empty_vector_to_string) {

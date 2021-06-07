@@ -22,7 +22,6 @@
 #include <iomanip>
 #include <sstream>
 #include <thrift/protocol/TJSONProtocol.h>
-#include <locale>
 #include <memory>
 #include <thrift/transport/TBufferTransports.h>
 #include "gen-cpp/DebugProtoTest_types.h"
@@ -350,27 +349,4 @@ BOOST_AUTO_TEST_CASE(test_json_unicode_escaped_missing_hi_surrogate) {
   OneOfEach ooe2;
   BOOST_CHECK_THROW(ooe2.read(proto.get()),
     apache::thrift::protocol::TProtocolException);
-}
-
-BOOST_AUTO_TEST_CASE(test_json_locale_with_thousands_separator_comma) {
-  testCaseSetup_1();
-
-  const std::string expected_result(
-  "{\"1\":{\"tf\":1},\"2\":{\"tf\":0},\"3\":{\"i8\":127},\"4\":{\"i16\":27000},"
-  "\"5\":{\"i32\":16777216},\"6\":{\"i64\":6000000000},\"7\":{\"dbl\":3.1415926"
-  "535897931},\"8\":{\"str\":\"JSON THIS! \\\"\\u0001\"},\"9\":{\"str\":\"\xd7\\"
-  "n\\u0007\\t\"},\"10\":{\"tf\":0},\"11\":{\"str\":\"AQIDrQ\"},\"12\":{\"lst\""
-  ":[\"i8\",3,1,2,3]},\"13\":{\"lst\":[\"i16\",3,1,2,3]},\"14\":{\"lst\":[\"i64"
-  "\",3,1,2,3]}}");
-
-#if _WIN32
-  std::locale::global(std::locale("en-US.UTF-8"));
-#else
-  std::locale::global(std::locale("en_US.UTF-8"));
-#endif
-
-  const std::string result(apache::thrift::ThriftJSONString(*ooe));
-
-  BOOST_CHECK_MESSAGE(!expected_result.compare(result),
-    "Expected:\n" << expected_result << "\nGotten:\n" << result);
 }
