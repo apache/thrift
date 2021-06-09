@@ -255,6 +255,14 @@ ENV PATH /root/.cargo/bin:$PATH
 #     rm swift-4.2.1-RELEASE-ubuntu18.04.tar.gz && \
 #     swift --version
 
+# Locale(s) for cpp unit tests
+RUN apt-get install -y --no-install-recommends \
+`# Locale dependencies` \
+      locales && \
+    locale-gen en_US.UTF-8 && \
+    locale-gen de_DE.UTF-8 && \
+    update-locale
+
 # cppcheck-1.82 has a nasty cpp parser bug, so we're using something newer
 # don't need this on disco, nobody uses it
 # RUN apt-get install -y --no-install-recommends \

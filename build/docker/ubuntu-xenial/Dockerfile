@@ -235,6 +235,14 @@ RUN apt-get install -y --no-install-recommends \
 # Rust dependencies
 RUN curl https://sh.rustup.rs -sSf | sh -s -- --default-toolchain 1.40.0 -y
 
+# Locale(s) for cpp unit tests
+RUN apt-get install -y --no-install-recommends \
+`# Locale dependencies` \
+      locales && \
+    locale-gen en_US.UTF-8 && \
+    locale-gen de_DE.UTF-8 && \
+    update-locale
+
 # Clean up
 RUN rm -rf /var/cache/apt/* && \
     rm -rf /var/lib/apt/lists/* && \
