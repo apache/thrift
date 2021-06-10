@@ -404,7 +404,11 @@ void TServerSocket::listen() {
   if (tcp) {
     try {
       resolved_addresses.resolve(address_, std::to_string(port_), SOCK_STREAM,
+#ifdef ANDROID
+                                 AI_PASSIVE | AI_ADDRCONFIG);
+#else
                                  AI_PASSIVE | AI_V4MAPPED);
+#endif
     } catch (const std::system_error& e) {
       GlobalOutput.printf("getaddrinfo() -> %d; %s", e.code().value(), e.what());
       close();
