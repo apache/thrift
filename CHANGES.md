@@ -1,5 +1,12 @@
 # Apache Thrift Changelog
 
+## 0.14.2
+
+### Java
+
+- [THRIFT-5383](https://issues.apache.org/jira/browse/THRIFT-5383) - THRIFT-5383 TJSONProtocol Java readString throws on bounds check
+
+
 ## 0.14.1
 
 ### Known Open Issues (Blocker or Critical)

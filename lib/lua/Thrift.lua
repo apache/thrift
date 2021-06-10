@@ -48,7 +48,7 @@ function ttable_size(t)
   return count
 end
 
-version = '0.14.1'
+version = '0.14.2'
 
 TType = {
   STOP   = 0,

@@ -39,8 +39,8 @@
   <SignAssembly>true</SignAssembly>
   <AssemblyOriginatorKeyFile>thrift.snk</AssemblyOriginatorKeyFile>
   <DelaySign>false</DelaySign>
-  <Title>Apache Thrift 0.14.1</Title>
-  <Version>0.14.1.0</Version>
+  <Title>Apache Thrift 0.14.2</Title>
+  <Version>0.14.2.0</Version>
   <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
   <PackageProjectUrl>http://thrift.apache.org/</PackageProjectUrl>
   <Authors>Apache Thrift Developers</Authors>
@@ -49,7 +49,7 @@
   <PackageDescription>C# .NET Core bindings for the Apache Thrift RPC system</PackageDescription>
   <PackageReleaseNotes></PackageReleaseNotes>
   <PackageTags>Apache Thrift RPC</PackageTags>
-  <PackageReleaseNotes>https://github.com/apache/thrift/blob/0.14.1/CHANGES.md</PackageReleaseNotes>
+  <PackageReleaseNotes>https://github.com/apache/thrift/blob/0.14.2/CHANGES.md</PackageReleaseNotes>
   <Copyright>Copyright 2021 The Apache Software Foundation</Copyright>
 </PropertyGroup>
 

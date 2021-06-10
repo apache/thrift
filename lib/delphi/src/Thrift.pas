@@ -28,7 +28,7 @@ uses
   Thrift.Protocol;
 
 const
-  Version = '0.14.1';
+  Version = '0.14.2';
 
 type
   TException = Thrift.Exception.TException; // compatibility alias

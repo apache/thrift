@@ -17,7 +17,7 @@
  specific language governing permissions and limitations
  under the License.
  -->
-<!-- Apache Thrift Smalltalk library version 0.14.1 -->
+<!-- Apache Thrift Smalltalk library version 0.14.2 -->
 <package>
   <name>libthrift-st</name>
   <file>thrift.st</file>
