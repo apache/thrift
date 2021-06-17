@@ -58,6 +58,16 @@
     <release rdf:parseType="Collection">
       <Version>
         <name>Apache Thrift</name>
+        <created>2021-06-11</created>
+        <revision>0.14.2</revision>
+      </Version>
+      <Version>
+        <name>Apache Thrift</name>
+        <created>2021-03-02</created>
+        <revision>0.14.1</revision>
+      </Version>
+      <Version>
+        <name>Apache Thrift</name>
         <created>2021-02-04</created>
         <revision>0.14.0</revision>
       </Version>
