@@ -28,17 +28,18 @@ namespace Thrift.Transport.Client
     {
         private NamedPipeClientStream PipeStream;
         private readonly int ConnectTimeout;
+		private const int DEFAULT_CONNECT_TIMEOUT = 60 * 1000;   // Timeout.Infinite is not a good default
 
-        public TNamedPipeTransport(string pipe, TConfiguration config, int timeout = Timeout.Infinite) 
+        public TNamedPipeTransport(string pipe, TConfiguration config, int timeout = DEFAULT_CONNECT_TIMEOUT) 
             : this(".", pipe, config, timeout)
         {
         }
 
-        public TNamedPipeTransport(string server, string pipe, TConfiguration config, int timeout = Timeout.Infinite)
+        public TNamedPipeTransport(string server, string pipe, TConfiguration config, int timeout = DEFAULT_CONNECT_TIMEOUT) 
             : base(config)
         {
             var serverName = string.IsNullOrWhiteSpace(server) ? server : ".";
-            ConnectTimeout = (timeout > 0) ? timeout : Timeout.Infinite;
+            ConnectTimeout = (timeout > 0) ? timeout : DEFAULT_CONNECT_TIMEOUT;
 
             PipeStream = new NamedPipeClientStream(serverName, pipe, PipeDirection.InOut, PipeOptions.None, TokenImpersonationLevel.Anonymous);
         }
