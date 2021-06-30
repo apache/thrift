@@ -26,6 +26,7 @@ import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.thrift.TException;
 import org.apache.thrift.TProcessor;
@@ -100,11 +101,12 @@ public class TThreadPoolServer extends TServer {
   private static ExecutorService createDefaultExecutorService(Args args) {
     return new ThreadPoolExecutor(args.minWorkerThreads, args.maxWorkerThreads, 60L, TimeUnit.SECONDS,
         new SynchronousQueue<>(), new ThreadFactory() {
+          final AtomicLong count = new AtomicLong();
           @Override
           public Thread newThread(Runnable r) {
             Thread thread = new Thread(r);
             thread.setDaemon(true);
-            thread.setName("TThreadPoolServer WorkerProcess-%d");
+            thread.setName(String.format("TThreadPoolServer WorkerProcess-%d", count.getAndIncrement()));
             return thread;
           }
         });
