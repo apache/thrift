@@ -134,7 +134,7 @@ type
     strict private  boolValue_  : ( unused, bool_true, bool_false);
 
   public
-    constructor Create(const trans : ITransport);
+    constructor Create(const trans : ITransport);  override;
     destructor Destroy;  override;
 
   strict private

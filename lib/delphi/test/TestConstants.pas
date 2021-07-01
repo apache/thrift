@@ -21,7 +21,8 @@ unit TestConstants;
 
 interface
 
-uses SysUtils;
+uses SysUtils,
+     Thrift.Protocol, Thrift.Protocol.Compact, Thrift.Protocol.JSON;
 
 type
   TKnownProtocol = (
@@ -55,6 +56,13 @@ type
   TLayeredTransports = set of TLayeredTransport;
 
 const
+  PROTOCOL_CLASSES : array[TKnownProtocol] of TProtocolImplClass = (
+    TBinaryProtocolImpl,
+    TJSONProtocolImpl,
+    TCompactProtocolImpl
+  );
+
+const
   SERVER_TYPES : array[TServerType] of string
                   = ('Simple', 'Nonblocking', 'Threadpool', 'Threaded');
 
@@ -66,10 +74,6 @@ const
 
   ENDPOINT_TRANSPORTS : array[TEndpointTransport] of string
                   = ('Sockets', 'Http', 'WinHttp', 'Named Pipes','Anon Pipes', 'EvHttp');
-
-  // defaults are: read=false, write=true
-  BINARY_STRICT_READ  = FALSE;
-  BINARY_STRICT_WRITE = FALSE;
 
   HUGE_TEST_STRING = 'Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy '
                    + 'eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam '
