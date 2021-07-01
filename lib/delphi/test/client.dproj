@@ -142,9 +142,7 @@
 						<VersionInfoKeys Name="ProductVersion">1.0.0.0</VersionInfoKeys>
 						<VersionInfoKeys Name="Comments"/>
 					</VersionInfoKeys>
-					<Parameters>
-						<Parameters Name="RunParams"> --transport=framed --transport=winhttp --host=example.org --port=80</Parameters>
-					</Parameters>
+					<Parameters/>
 				</Delphi.Personality>
 				<Platforms>
 					<Platform value="Win32">True</Platform>

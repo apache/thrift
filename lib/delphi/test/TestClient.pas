@@ -53,7 +53,6 @@ uses
   Thrift.Test,
   Thrift.WinHTTP,
   Thrift.Utils,
-
   Thrift.Configuration,
   Thrift.Collections;
 
