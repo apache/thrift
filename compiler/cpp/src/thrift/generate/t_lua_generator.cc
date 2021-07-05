@@ -259,7 +259,7 @@ string t_lua_generator::render_const_value(t_type* type, t_const_value* value) {
       out << value->get_integer();
       break;
     case t_base_type::TYPE_I64:
-      out << "lualongnumber.new('" << value->get_string() << "')";
+      out << "lualongnumber.new('" << value->get_integer() << "')";
       break;
     case t_base_type::TYPE_DOUBLE:
       if (value->get_type() == t_const_value::CV_INTEGER) {
