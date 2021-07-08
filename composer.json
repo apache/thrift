@@ -18,7 +18,7 @@
         "issues": "https://issues.apache.org/jira/browse/THRIFT"
     },
     "require": {
-        "php": "^5.5 || ^7.0"
+        "php": "^5.5 || ^7.0 || ^8.0"
     },
     "require-dev": {
         "phpunit/phpunit": "~4.8.36",
