@@ -1639,9 +1639,9 @@ void t_rs_generator::render_list_sync_write(const string &list_var, bool list_va
   f_gen_ << indent() << "for e in " << ref << list_var << " {" << endl;
   indent_up();
   render_type_sync_write(string_container_write_variable(elem_type, "e"), true, elem_type);
-  f_gen_ << indent() << "o_prot.write_list_end()?;" << endl;
   indent_down();
   f_gen_ << indent() << "}" << endl;
+  f_gen_ << indent() << "o_prot.write_list_end()?;" << endl;
 }
 
 void t_rs_generator::render_set_sync_write(const string &set_var, bool set_var_is_ref, t_set *tset) {
@@ -1660,9 +1660,9 @@ void t_rs_generator::render_set_sync_write(const string &set_var, bool set_var_i
   f_gen_ << indent() << "for e in " << ref << set_var << " {" << endl;
   indent_up();
   render_type_sync_write(string_container_write_variable(elem_type, "e"), true, elem_type);
-  f_gen_ << indent() << "o_prot.write_set_end()?;" << endl;
   indent_down();
   f_gen_ << indent() << "}" << endl;
+  f_gen_ << indent() << "o_prot.write_set_end()?;" << endl;
 }
 
 void t_rs_generator::render_map_sync_write(const string &map_var, bool map_var_is_ref, t_map *tmap) {
@@ -1684,9 +1684,9 @@ void t_rs_generator::render_map_sync_write(const string &map_var, bool map_var_i
   indent_up();
   render_type_sync_write(string_container_write_variable(key_type, "k"), true, key_type);
   render_type_sync_write(string_container_write_variable(val_type, "v"), true, val_type);
-  f_gen_ << indent() << "o_prot.write_map_end()?;" << endl;
   indent_down();
   f_gen_ << indent() << "}" << endl;
+  f_gen_ << indent() << "o_prot.write_map_end()?;" << endl;
 }
 
 string t_rs_generator::string_container_write_variable(t_type* ttype, const string& base_var) {
