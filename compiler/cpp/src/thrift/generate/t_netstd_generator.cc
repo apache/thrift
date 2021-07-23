@@ -318,8 +318,8 @@ void t_netstd_generator::init_keywords()
 }
 
 void t_netstd_generator::reset_indent() {
-  while( indent_count() > 0) { 
-    indent_down(); 
+  while( indent_count() > 0) {
+    indent_down();
   }
 }
 
@@ -578,7 +578,7 @@ bool t_netstd_generator::print_const_value(ostream& out, string name, t_type* ty
 {
     out << indent();
     bool need_static_construction = !in_static;
-    
+
     type = resolve_typedef( type);
 
     if (!defval || needtype)
@@ -633,7 +633,7 @@ string t_netstd_generator::render_const_value(ostream& out, string name, t_type*
                 render << "System.Text.Encoding.UTF8.GetBytes(\"" << get_escaped_string(value) << "\")";
             } else {
                 render << '"' << get_escaped_string(value) << '"';
-            } 
+            }
             break;
         case t_base_type::TYPE_BOOL:
             render << ((value->get_integer() > 0) ? "true" : "false");
@@ -681,43 +681,43 @@ void t_netstd_generator::collect_extensions_types(t_struct* tstruct)
     for (m_iter = members.begin(); m_iter != members.end(); ++m_iter)
     {
         collect_extensions_types((*m_iter)->get_type());
-    }    
+    }
 }
 
 void t_netstd_generator::collect_extensions_types(t_type* ttype)
 {
     ttype = resolve_typedef( ttype);
     string key = type_name(ttype);
-    
+
     if (ttype->is_struct() || ttype->is_xception())
     {
         if( checked_extension_types.find(key) == checked_extension_types.end())
         {
             checked_extension_types[key] = ttype;    // prevent recursion
-            
+
             t_struct* tstruct = static_cast<t_struct*>(ttype);
             collect_extensions_types(tstruct);
         }
         return;
     }
-    
+
     if (ttype->is_map() || ttype->is_set() || ttype->is_list())
     {
         if( collected_extension_types.find(key) == collected_extension_types.end())
         {
             collected_extension_types[key] = ttype;   // prevent recursion
-            
+
             if( ttype->is_map())
             {
                 t_map* tmap = static_cast<t_map*>(ttype);
                 collect_extensions_types(tmap->get_key_type());
                 collect_extensions_types(tmap->get_val_type());
-            } 
+            }
             else if (ttype->is_set())
             {
                 t_set* tset = static_cast<t_set*>(ttype);
                 collect_extensions_types(tset->get_elem_type());
-            } 
+            }
             else if (ttype->is_list())
             {
                 t_list* tlist = static_cast<t_list*>(ttype);
@@ -772,7 +772,7 @@ void t_netstd_generator::generate_extensions(ostream& out, map<string, t_type*> 
         out << indent() << "return TCollections.Equals(instance, other);" << endl;
         scope_down(out);
         out << endl << endl;
-        
+
         out << indent() << "public static int GetHashCode(this " << iter->first << " instance)" << endl;
         scope_up(out);
         out << indent() << "return TCollections.GetHashCode(instance);" << endl;
@@ -796,7 +796,7 @@ void t_netstd_generator::generate_extensions(ostream& out, map<string, t_type*> 
                 string copy_val = get_deep_copy_method_call(tmap->get_val_type(), needs_typecast);
                 bool null_key = type_can_be_null(tmap->get_key_type());
                 bool null_val = type_can_be_null(tmap->get_val_type());
-                
+
                 out << indent() << "foreach (var pair in source)" << endl;
                 indent_up();
                 out << indent() << tmp_instance << ".Add(";
@@ -815,7 +815,7 @@ void t_netstd_generator::generate_extensions(ostream& out, map<string, t_type*> 
                 }
                 out << ");" << endl;
                 indent_down();
-                
+
             } else if( iter->second->is_set() || iter->second->is_list()) {
                 string copy_elm;
                 bool null_elm = false;
@@ -859,7 +859,7 @@ void t_netstd_generator::generate_extensions(ostream& out, map<string, t_type*> 
 void t_netstd_generator::generate_struct(t_struct* tstruct)
 {
     collect_extensions_types(tstruct);
-    
+
     if (is_union_enabled() && tstruct->is_union())
     {
         generate_netstd_union(tstruct);
@@ -904,7 +904,7 @@ void t_netstd_generator::generate_netstd_struct_definition(ostream& out, t_struc
     out << endl;
 
     generate_netstd_doc(out, tstruct);
-    collect_extensions_types(tstruct);    
+    collect_extensions_types(tstruct);
     prepare_member_name_mapping(tstruct);
 
     if ((is_serialize_enabled() || is_wcf_enabled()) && !is_exception)
@@ -1153,7 +1153,7 @@ void t_netstd_generator::generate_netstd_deepcopy_method(ostream& out, t_struct*
     if( suppress_deepcopy) {
         return;  // feature disabled
     }
-        
+
     const vector<t_field*>& members = tstruct->get_members();
     vector<t_field*>::const_iterator m_iter;
 
@@ -1169,7 +1169,7 @@ void t_netstd_generator::generate_netstd_deepcopy_method(ostream& out, t_struct*
         bool needs_typecast = false;
         t_type* ttype = (*m_iter)->get_type();
         string copy_op = get_deep_copy_method_call(ttype, needs_typecast);
-        
+
         bool is_required = field_is_required(*m_iter);
         generate_null_check_begin( out, *m_iter);
 
@@ -1187,7 +1187,7 @@ void t_netstd_generator::generate_netstd_deepcopy_method(ostream& out, t_struct*
     }
 
     out << indent() << "return " << tmp_instance << ";" << endl;
-    
+
     indent_down();
     out << indent() << "}" << endl << endl;
 }
@@ -1300,34 +1300,34 @@ void t_netstd_generator::generate_netstd_struct_reader(ostream& out, t_struct* t
 void t_netstd_generator::generate_null_check_begin(ostream& out, t_field* tfield) {
     bool is_required = field_is_required(tfield);
     bool null_allowed = type_can_be_null(tfield->get_type());
-    
+
     if( null_allowed || (!is_required)) {
         bool first = true;
         out << indent() << "if(";
-        
+
         if( null_allowed) {
             out << "(" << prop_name(tfield) << " != null)";
             first = false;
         }
-    
+
         if( !is_required) {
             if( !first) {
                 out << " && ";
             }
             out << "__isset." << get_isset_name(normalize_name(tfield->get_name()));
         }
-        
+
         out << ")" << endl
             << indent() << "{" << endl;
         indent_up();
-    }        
+    }
 }
 
 
 void t_netstd_generator::generate_null_check_end(ostream& out, t_field* tfield) {
     bool is_required = field_is_required(tfield);
     bool null_allowed = type_can_be_null(tfield->get_type());
-    
+
     if( null_allowed || (!is_required)) {
         indent_down();
         out << indent() << "}" << endl;
@@ -1473,7 +1473,7 @@ void t_netstd_generator::generate_netstd_struct_tostring(ostream& out, t_struct*
     string tmpvar = tmp("tmp");
     out << indent() << "public override string ToString()" << endl
         << indent() << "{" << endl;
-    indent_up();	
+    indent_up();
     out << indent() << "var " << tmpvar << " = new StringBuilder(\"" << tstruct->get_name() << "(\");" << endl;
 
     const vector<t_field*>& fields = tstruct->get_members();
@@ -1580,7 +1580,7 @@ void t_netstd_generator::generate_netstd_union_definition(ostream& out, t_struct
         indent_up();
         out << indent() << "return Equals(As_" << (*f_iter)->get_name() << ", other.As_" << (*f_iter)->get_name() << ");" << endl;
         indent_down();
-    }                
+    }
     out << indent() << "default:" << endl;
     indent_up();
     out << indent() << "return true;" << endl;
@@ -1595,7 +1595,7 @@ void t_netstd_generator::generate_netstd_union_definition(ostream& out, t_struct
     indent_up();
     out << indent() << "switch (Isset)" << endl;
     out << indent() << "{" << endl;
-    indent_up();    
+    indent_up();
     for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter)
     {
         bool needs_typecast = false;
@@ -1604,7 +1604,7 @@ void t_netstd_generator::generate_netstd_union_definition(ostream& out, t_struct
         indent_up();
         out << indent() << "return As_" << (*f_iter)->get_name() << ".GetHashCode();" << endl;
         indent_down();
-    }                
+    }
     out << indent() << "default:" << endl;
     indent_up();
     out << indent() << "return (new ___undefined()).GetHashCode();" << endl;
@@ -1620,7 +1620,7 @@ void t_netstd_generator::generate_netstd_union_definition(ostream& out, t_struct
         indent_up();
         out << indent() << "switch (Isset)" << endl;
         out << indent() << "{" << endl;
-        indent_up();    
+        indent_up();
         for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter)
         {
             bool needs_typecast = false;
@@ -1629,7 +1629,7 @@ void t_netstd_generator::generate_netstd_union_definition(ostream& out, t_struct
             indent_up();
             out << indent() << "return new " << (*f_iter)->get_name() << "(As_" << (*f_iter)->get_name() << copy_op << ");" << endl;
             indent_down();
-        }                
+        }
         out << indent() << "default:" << endl;
         indent_up();
         out << indent() << "return new ___undefined();" << endl;
@@ -1646,7 +1646,7 @@ void t_netstd_generator::generate_netstd_union_definition(ostream& out, t_struct
 
     out << indent() << "public override object Data { get { return null; } }" << endl
         << indent() << "public ___undefined() : base(0) {}" << endl << endl;
-        
+
     if( ! suppress_deepcopy) {
         out << indent() << "public new ___undefined DeepCopy()" << endl;
         out << indent() << "{" << endl;
@@ -1659,7 +1659,7 @@ void t_netstd_generator::generate_netstd_union_definition(ostream& out, t_struct
     t_struct undefined_struct(program_,"___undefined");
     generate_netstd_struct_equals(out, &undefined_struct);
     generate_netstd_struct_hashcode(out, &undefined_struct);
-    
+
     out << indent() << "public override global::System.Threading.Tasks.Task WriteAsync(TProtocol oprot, CancellationToken cancellationToken)" << endl
         << indent() << "{" << endl;
     indent_up();
@@ -1696,8 +1696,8 @@ void t_netstd_generator::generate_netstd_union_class(ostream& out, t_struct* tun
     indent_down();
     out << indent() << "}" << endl
         << endl;
-    
-    
+
+
     out << indent() << "public class " << tfield->get_name() << " : " << tunion->get_name() << endl;
     out << indent() << "{" << endl;
     indent_up();
@@ -2014,9 +2014,10 @@ void t_netstd_generator::generate_service_client(ostream& out, t_service* tservi
         << indent() << "{" << endl
         << indent() << "}" << endl
         << endl
-        << indent() << "public Client(TProtocol inputProtocol, TProtocol outputProtocol) : base(inputProtocol, outputProtocol)"
+        << indent() << "public Client(TProtocol inputProtocol, TProtocol outputProtocol) : base(inputProtocol, outputProtocol)" << endl
         << indent() << "{" << endl
-        << indent() << "}" << endl;
+        << indent() << "}" << endl
+        << endl;
 
     vector<t_function*> functions = tservice->get_functions();
     vector<t_function*>::const_iterator functions_iterator;
@@ -2030,12 +2031,29 @@ void t_netstd_generator::generate_service_client(ostream& out, t_service* tservi
         out << indent() << "public async " << function_signature_async(*functions_iterator, "") << endl
             << indent() << "{" << endl;
         indent_up();
+        out << indent() << "await send_" << function_name << "(";
+        string call_args = argument_list((*functions_iterator)->get_arglist(),false);
+        if(! call_args.empty()) {
+            out << call_args << ", ";
+        }
+        out << "cancellationToken);" << endl;
+        if(! (*functions_iterator)->is_oneway()) {
+            out << indent() << ((*functions_iterator)->get_returntype()->is_void() ? "" : "return ")
+                            << "await recv_" << function_name << "(cancellationToken);" << endl;
+        }
+        indent_down();
+        out << indent() << "}" << endl << endl;
+
+        // async send
+        out << indent() << "public async " << function_signature_async(*functions_iterator, "send_", MODE_NO_RETURN) << endl
+            << indent() << "{" << endl;
+        indent_up();
 
         string tmpvar = tmp("tmp");
         string argsname = (*functions_iterator)->get_name() + "Args";
 
         out << indent() << "await OutputProtocol.WriteMessageBeginAsync(new TMessage(\"" << raw_func_name
-            << "\", TMessageType." << ((*functions_iterator)->is_oneway() ? "Oneway" : "Call") 
+            << "\", TMessageType." << ((*functions_iterator)->is_oneway() ? "Oneway" : "Call")
             << ", SeqId), cancellationToken);" << endl
             << indent() << endl
             << indent() << "var " << tmpvar << " = new InternalStructs." << argsname << "() {" << endl;
@@ -2061,8 +2079,16 @@ void t_netstd_generator::generate_service_client(ostream& out, t_service* tservi
             << indent() << "await OutputProtocol.WriteMessageEndAsync(cancellationToken);" << endl
             << indent() << "await OutputProtocol.Transport.FlushAsync(cancellationToken);" << endl;
 
+        indent_down();
+        out << indent() << "}" << endl << endl;
+
         if (!(*functions_iterator)->is_oneway())
         {
+            // async recv
+            out << indent() << "public async " << function_signature_async(*functions_iterator, "recv_", MODE_NO_ARGS) << endl
+                << indent() << "{" << endl;
+            indent_up();
+
             string resultname = (*functions_iterator)->get_name() + "Result";
             t_struct noargs(program_);
             t_struct* xs = (*functions_iterator)->get_xceptions();
@@ -2111,11 +2137,7 @@ void t_netstd_generator::generate_service_client(ostream& out, t_service* tservi
                 out << indent() << "}" << endl;
             }
 
-            if ((*functions_iterator)->get_returntype()->is_void())
-            {
-                out << indent() << "return;" << endl;
-            }
-            else
+            if (!(*functions_iterator)->get_returntype()->is_void())
             {
                 out << indent() << "throw new TApplicationException(TApplicationException.ExceptionType.MissingResult, \""
                     << function_name << " failed: unknown result\");" << endl;
@@ -2124,11 +2146,6 @@ void t_netstd_generator::generate_service_client(ostream& out, t_service* tservi
             cleanup_member_name_mapping(xs);
             indent_down();
             out << indent() << "}" << endl << endl;
-        }
-        else
-        {
-            indent_down();
-            out << indent() << "}" << endl;
         }
 
         cleanup_member_name_mapping(arg_struct);
@@ -2335,7 +2352,7 @@ void t_netstd_generator::generate_process_function_async(ostream& out, t_service
 
     bool is_deprecated = (tfunction->annotations_.end() != tfunction->annotations_.find("deprecated"));
     if( is_deprecated) {
-      out << indent() << "#pragma warning disable CS0618,CS0612" << endl; 
+      out << indent() << "#pragma warning disable CS0618,CS0612" << endl;
     }
 
     out << indent();
@@ -2373,7 +2390,7 @@ void t_netstd_generator::generate_process_function_async(ostream& out, t_service
     out << "cancellationToken);" << endl;
 
     if( is_deprecated) {
-      out << indent() << "#pragma warning restore CS0618,CS0612" << endl; 
+      out << indent() << "#pragma warning restore CS0618,CS0612" << endl;
     }
 
     vector<t_field*>::const_iterator x_iter;
@@ -2415,7 +2432,7 @@ void t_netstd_generator::generate_process_function_async(ostream& out, t_service
         << indent() << "catch (TTransportException)" << endl
         << indent() << "{" << endl
         << indent() << "  throw;" << endl
-        << indent() << "}" << endl 
+        << indent() << "}" << endl
         << indent() << "catch (Exception " << tmpex << ")" << endl
         << indent() << "{" << endl;
     indent_up();
@@ -3001,7 +3018,7 @@ string t_netstd_generator::make_csharp_string_literal( string const& value)
     }
   }
   result << "\"";
-  
+
   return result.str();
 }
 
@@ -3319,7 +3336,7 @@ string t_netstd_generator::get_deep_copy_method_call(t_type* ttype, bool& needs_
     {
         return "";  // simple assignment will do
     }
-    else 
+    else
     {
         needs_typecast = (! ttype->is_container());
         return "." + DEEP_COPY_METHOD_NAME + "()";
@@ -3384,28 +3401,30 @@ string t_netstd_generator::function_signature(t_function* tfunction, string pref
     return type_name(ttype) + " " + func_name(normalize_name(prefix + tfunction->get_name())) + "(" + argument_list(tfunction->get_arglist()) + ")";
 }
 
-string t_netstd_generator::function_signature_async(t_function* tfunction, string prefix)
+string t_netstd_generator::function_signature_async(t_function* tfunction, string prefix, int mode)
 {
     t_type* ttype = tfunction->get_returntype();
     string task = "global::System.Threading.Tasks.Task";
-    if (!ttype->is_void())
+    if ((!ttype->is_void()) && ((mode & MODE_NO_RETURN) == 0))
     {
         task += "<" + type_name(ttype) + ">";
     }
 
     string result = task + " " + func_name(normalize_name(prefix + tfunction->get_name()) + (add_async_postfix ? "Async" : "")) + "(";
     string args = argument_list(tfunction->get_arglist());
-    result += args;
-    if (!args.empty())
-    {
-        result += ", ";
+    if((mode & MODE_NO_ARGS) == 0) {
+        result += args;
+        if (!args.empty())
+        {
+            result += ", ";
+        }
     }
     result += "CancellationToken cancellationToken = default)";
 
     return result;
 }
 
-string t_netstd_generator::argument_list(t_struct* tstruct)
+string t_netstd_generator::argument_list(t_struct* tstruct, bool with_types)
 {
     string result = "";
     const vector<t_field*>& fields = tstruct->get_members();
@@ -3421,7 +3440,12 @@ string t_netstd_generator::argument_list(t_struct* tstruct)
         {
             result += ", ";
         }
-        result += type_name((*f_iter)->get_type()) + " " + normalize_name((*f_iter)->get_name());
+
+        if( with_types) {
+            result += type_name((*f_iter)->get_type()) + " ";
+        }
+
+        result += normalize_name((*f_iter)->get_name());
     }
     return result;
 }
