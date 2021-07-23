@@ -131,12 +131,16 @@ public:
   string netstd_type_usings() const;
   string netstd_thrift_usings() const;
 
+  static const int MODE_FULL_DECL = 0x00;
+  static const int MODE_NO_RETURN = 0x01;
+  static const int MODE_NO_ARGS   = 0x02;
+
   string type_name(t_type* ttype);
   string base_type_name(t_base_type* tbase);
   string declare_field(t_field* tfield, bool init = false, string prefix = "");
-  string function_signature_async(t_function* tfunction, string prefix = "");
+  string function_signature_async(t_function* tfunction, string prefix = "", int mode = MODE_FULL_DECL);
   string function_signature(t_function* tfunction, string prefix = "");
-  string argument_list(t_struct* tstruct);
+  string argument_list(t_struct* tstruct, bool with_types = true);
   string type_to_enum(t_type* ttype);
   string prop_name(t_field* tfield, bool suppress_mapping = false);
   string func_name(t_function* tfunc, bool suppress_mapping = false);
