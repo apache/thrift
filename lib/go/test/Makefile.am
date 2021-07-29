@@ -48,7 +48,9 @@ gopath: $(THRIFT) $(THRIFTTEST) \
 				ConflictNamespaceServiceTest.thrift \
 				DuplicateImportsTest.thrift \
 				EqualsTest.thrift \
-				ConflictArgNamesTest.thrift
+				ConflictArgNamesTest.thrift \
+				ConstOptionalFieldImport.thrift \
+				ConstOptionalField.thrift
 	mkdir -p gopath/src
 	grep -v list.*map.*list.*map $(THRIFTTEST) | grep -v 'set<Insanity>' > ThriftTest.thrift
 	$(THRIFT) $(THRIFTARGS) -r IncludesTest.thrift
@@ -77,6 +79,7 @@ gopath: $(THRIFT) $(THRIFTTEST) \
 	$(THRIFT) $(THRIFTARGS) -r DuplicateImportsTest.thrift
 	$(THRIFT) $(THRIFTARGS) EqualsTest.thrift
 	$(THRIFT) $(THRIFTARGS) ConflictArgNamesTest.thrift
+	$(THRIFT) $(THRIFTARGS) -r ConstOptionalField.thrift
 	ln -nfs ../../tests gopath/src/tests
 	cp -r ./dontexportrwtest gopath/src
 	touch gopath
@@ -121,6 +124,8 @@ EXTRA_DIST = \
 	ConflictNamespaceTestC.thrift \
 	ConflictNamespaceTestD.thrift \
 	ConflictNamespaceTestSuperThing.thrift \
+	ConstOptionalField.thrift \
+	ConstOptionalFieldImport.thrift \
 	DontExportRWTest.thrift \
 	DuplicateImportsTest.thrift \
 	ErrorTest.thrift \

@@ -1102,6 +1102,10 @@ void t_go_generator::generate_const(t_const* tconst) {
  * validate_types method in main.cc
  */
 string t_go_generator::render_const_value(t_type* type, t_const_value* value, const string& name, bool opt) {
+  string typedef_opt_ptr;
+  if (type->is_typedef()) {
+    typedef_opt_ptr = type_name(type) + "Ptr";
+  }
   type = get_true_type(type);
   std::ostringstream out;
 
@@ -1109,32 +1113,61 @@ string t_go_generator::render_const_value(t_type* type, t_const_value* value, co
     t_base_type::t_base tbase = ((t_base_type*)type)->get_base();
 
     if (opt) {
-      out << "&(&struct{x ";
       switch (tbase) {
         case t_base_type::TYPE_BOOL:
-          out << "bool}{";
+          if (typedef_opt_ptr != "") {
+            out << typedef_opt_ptr;
+          } else {
+            out << "thrift.BoolPtr";
+          }
+          out << "(";
           out << (value->get_integer() > 0 ? "true" : "false");
           break;
 
         case t_base_type::TYPE_I8:
-          out << "int8}{";
+          if (typedef_opt_ptr != "") {
+            out << typedef_opt_ptr;
+          } else {
+            out << "thrift.Int8Ptr";
+          }
+          out << "(";
           out << value->get_integer();
           break;
         case t_base_type::TYPE_I16:
-          out << "int16}{";
+          if (typedef_opt_ptr != "") {
+            out << typedef_opt_ptr;
+          } else {
+            out << "thrift.Int16Ptr";
+          }
+          out << "(";
           out << value->get_integer();
           break;
         case t_base_type::TYPE_I32:
-          out << "int32}{";
+          if (typedef_opt_ptr != "") {
+            out << typedef_opt_ptr;
+          } else {
+            out << "thrift.Int32Ptr";
+          }
+          out << "(";
           out << value->get_integer();
           break;
         case t_base_type::TYPE_I64:
-          out << "int64}{";
+          if (typedef_opt_ptr != "") {
+            out << typedef_opt_ptr;
+          } else {
+            out << "thrift.Int64Ptr";
+          }
+          out << "(";
           out << value->get_integer();
           break;
 
         case t_base_type::TYPE_DOUBLE:
-          out << "float64}{";
+          if (typedef_opt_ptr != "") {
+            out << typedef_opt_ptr;
+          } else {
+            out << "thrift.Float64Ptr";
+          }
+          out << "(";
           if (value->get_type() == t_const_value::CV_INTEGER) {
             out << value->get_integer();
           } else {
@@ -1143,14 +1176,19 @@ string t_go_generator::render_const_value(t_type* type, t_const_value* value, co
           break;
 
         case t_base_type::TYPE_STRING:
-          out << "string}{";
+          if (typedef_opt_ptr != "") {
+            out << typedef_opt_ptr;
+          } else {
+            out << "thrift.StringPtr";
+          }
+          out << "(";
           out << '"' + get_escaped_string(value) + '"';
           break;
 
         default:
           throw "compiler error: no const of base type " + t_base_type::t_base_name(tbase);
       }
-      out << "}).x";
+      out << ")";
     } else {
       switch (tbase) {
         case t_base_type::TYPE_STRING:
@@ -1193,7 +1231,17 @@ string t_go_generator::render_const_value(t_type* type, t_const_value* value, co
       }
     }
   } else if (type->is_enum()) {
-    indent(out) << value->get_integer();
+    if (opt) {
+      if (typedef_opt_ptr != "") {
+        out << typedef_opt_ptr << "(";
+      } else {
+        out << type_name(type) << "Ptr(";
+      }
+    }
+    out << value->get_integer();
+    if (opt) {
+      out << ")";
+    }
   } else if (type->is_struct() || type->is_xception()) {
     out << "&" << publicize(type_name(type)) << "{";
     indent_up();
