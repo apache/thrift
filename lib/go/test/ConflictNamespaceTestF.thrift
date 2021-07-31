@@ -16,26 +16,8 @@
 # specific language governing permissions and limitations
 # under the License.
 #
-namespace go conflict.super
+namespace go conflictf.thrift
 
-include "ConflictNamespaceTestA.thrift"
-include "ConflictNamespaceTestB.thrift"
-include "ConflictNamespaceTestC.thrift"
-include "ConflictNamespaceTestD.thrift"
-include "ConflictNamespaceTestE.thrift"
-include "ConflictNamespaceTestF.thrift"
-
-struct SuperThing {
-  1: ConflictNamespaceTestA.ThingA thing_a
-  2: ConflictNamespaceTestB.ThingB thing_b
-  3: ConflictNamespaceTestC.ThingC thing_c
-  4: ConflictNamespaceTestD.ThingD thing_d
-  5: ConflictNamespaceTestE.ThingE thing_e
-  6: ConflictNamespaceTestF.ThingF thing_f
-}
-
-// Define an enum to force the import of database/sql/driver
-enum Enum {
-  One = 1
-  Two = 2
+struct ThingF {
+  1: bool value
 }

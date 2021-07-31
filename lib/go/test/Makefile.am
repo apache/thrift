@@ -44,6 +44,8 @@ gopath: $(THRIFT) $(THRIFTTEST) \
 				ConflictNamespaceTestB.thrift \
 				ConflictNamespaceTestC.thrift \
 				ConflictNamespaceTestD.thrift \
+				ConflictNamespaceTestE.thrift \
+				ConflictNamespaceTestF.thrift \
 				ConflictNamespaceTestSuperThing.thrift \
 				ConflictNamespaceServiceTest.thrift \
 				DuplicateImportsTest.thrift \
@@ -74,6 +76,8 @@ gopath: $(THRIFT) $(THRIFTTEST) \
 	$(THRIFT) $(THRIFTARGS) ConflictNamespaceTestB.thrift
 	$(THRIFT) $(THRIFTARGS) ConflictNamespaceTestC.thrift
 	$(THRIFT) $(THRIFTARGS) ConflictNamespaceTestD.thrift
+	$(THRIFT) $(THRIFTARGS) ConflictNamespaceTestE.thrift
+	$(THRIFT) $(THRIFTARGS) ConflictNamespaceTestF.thrift
 	$(THRIFT) $(THRIFTARGS) ConflictNamespaceTestSuperThing.thrift
 	$(THRIFT) $(THRIFTARGS) ConflictNamespaceServiceTest.thrift
 	$(THRIFT) $(THRIFTARGS) -r DuplicateImportsTest.thrift
@@ -97,7 +101,7 @@ check: gopath
 				./gopath/src/dontexportrwtest \
 				./gopath/src/ignoreinitialismstest \
 				./gopath/src/unionbinarytest \
-				./gopath/src/conflictnamespacetestsuperthing \
+				./gopath/src/conflict/super \
 				./gopath/src/conflict/context/conflict_service-remote \
 				./gopath/src/servicestest/container_test-remote \
 				./gopath/src/duplicateimportstest \
