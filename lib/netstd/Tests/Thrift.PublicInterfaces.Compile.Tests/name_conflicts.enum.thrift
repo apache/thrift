@@ -15,34 +15,22 @@
 # limitations under the License.
 
 // Testcases for 
-// - THRIFT-5445 "cancellationToken" cannot be used as argument name
 // - THRIFT-5091 Netstd generator produces uncompileable code for struct names ending with "_result" or "_args"
 // - THRIFT-5444 netstd generator produces uncompileable code for enums ending with "_result" or "_args"
 
-namespace * name_conflicts
+namespace * name_conflicts_enum
 
-include "name_conflicts.enum.thrift"
-
-struct some_struct_args {
-	1: name_conflicts.enum.some_args    some_args
-	2: name_conflicts.enum.some_result  some_result
+enum some_result {
+	foo,
+	bar,
+	baz
 }
 
-exception some_error_result {
-	1: name_conflicts.enum.some_args    some_args
-	2: name_conflicts.enum.some_result  some_result
+enum some_args {
+	foo,
+	bar,
+	baz
 }
 
-service some_service {	
-
-	name_conflicts.enum.some_result some_method( 
-		1: i32 cancellationToken
-		2: name_conflicts.enum.some_args some_args
-		3: some_struct_args more_args
-	) throws (
-		1: some_error_result some_error_result
-	)
-	
-}
 
 // EOF
