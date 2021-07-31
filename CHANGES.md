@@ -11,8 +11,9 @@
 
 ### Go
 
-- [THRIFT-5369](https://issues.apache.org/jira/browse/THRIFT-5369) - TConfiguration.GetMaxMessageSize() now also applies to container sizes in TProtocol implementations provided
 - [THRIFT-5404](https://issues.apache.org/jira/browse/THRIFT-5404) - TTransportException.Timeout would correctly return true when it's connect timeout during TSocket.Open call
+- [THRIFT-5389](https://issues.apache.org/jira/browse/THRIFT-5389) - The compiler now generates correct go code with thrift constant defined on optional enum/typedef fields
+- [THRIFT-4797](https://issues.apache.org/jira/browse/THRIFT-4797) - The compiler now correctly auto renames import thrift namespaces when they collide with system imports
 
 
 ## 0.14.2
@@ -23,7 +24,7 @@
 
 ### Go
 
-- [THRIFT-5369](https://issues.apache.org/jira/browse/THRIFT-5369) - No longer pre-allocating the whole container (map/set/list) in compiled go code to avoid huge allocations on malformed messages
+- [THRIFT-5369](https://issues.apache.org/jira/browse/THRIFT-5369) - TConfiguration.GetMaxMessageSize() now also applies to container sizes in TProtocol implementations provided
 
 
 ## 0.14.1

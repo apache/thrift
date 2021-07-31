@@ -854,16 +854,50 @@ string t_go_generator::render_program_import(const t_program* program, string& u
   return result;
 }
 
+/**
+ * Render import lines for the system packages.
+ *
+ * The arg system_packages supports the following two options for import auto
+ * rename in case duplications happens:
+ *
+ * 1. The full import path without double quotation marks, with part after the
+ *    last "/" as the import identifier. e.g.:
+ *    - "context" (context)
+ *    - "database/sql/driver" (driver)
+ * 2. A rename import with double quotation marks around the full import path,
+ *    with the part before the first space as the import identifier. e.g.:
+ *    - "thrift \"github.com/apache/thrift/lib/go/thrift\"" (thrift)
+ *
+ * If a system package's package name is different from the last part of its
+ * full import path, please always rename import it for dedup to work correctly,
+ * e.g. "package \"github.com/org/go-package\"".
+ *
+ * @param system_packages
+ */
 string t_go_generator::render_system_packages(std::vector<string>& system_packages) {
   string result = "";
 
   for (vector<string>::iterator iter = system_packages.begin(); iter != system_packages.end(); ++iter) {
     string package = *iter;
-    result += "\t\""+ package +"\"\n";
+    string identifier = package;
+    auto space_pos = package.find(" ");
+    if (space_pos != string::npos) {
+      // This is a rename import line, no need to wrap double quotation marks.
+      result += "\t"+ package +"\n";
+      // The part before the first space is the import identifier.
+      identifier = package.substr(0, space_pos);
+    } else {
+      result += "\t\""+ package +"\"\n";
+      // The part after the last / is the import identifier.
+      auto slash_pos = package.rfind("/");
+      if (slash_pos != string::npos) {
+        identifier = package.substr(slash_pos+1);
+      }
+    }
 
     // Reserve these package names in case the collide with imported Thrift packages
-    package_identifiers_set_.insert(package);
-    package_identifiers_.emplace(package, package);
+    package_identifiers_set_.insert(identifier);
+    package_identifiers_.emplace(package, identifier);
   }
   return result;
 }
@@ -929,8 +963,9 @@ string t_go_generator::go_imports_begin(bool consts) {
   }
   system_packages.push_back("fmt");
   system_packages.push_back("time");
-  system_packages.push_back(gen_thrift_import_);
-  return "import(\n" + render_system_packages(system_packages);
+  // For the thrift import, always do rename import to make sure it's called thrift.
+  system_packages.push_back("thrift \"" + gen_thrift_import_ + "\"");
+  return "import (\n" + render_system_packages(system_packages);
 }
 
 /**
@@ -2341,12 +2376,13 @@ void t_go_generator::generate_service_remote(t_service* tservice) {
   system_packages.push_back("os");
   system_packages.push_back("strconv");
   system_packages.push_back("strings");
+  // For the thrift import, always do rename import to make sure it's called thrift.
+  system_packages.push_back("thrift \"" + gen_thrift_import_ + "\"");
 
   f_remote << go_autogen_comment();
   f_remote << indent() << "package main" << endl << endl;
   f_remote << indent() << "import (" << endl;
   f_remote << render_system_packages(system_packages);
-  f_remote << indent() << "\t\"" + gen_thrift_import_ + "\"" << endl;
   f_remote << indent() << render_included_programs(unused_protection);
   f_remote << render_program_import(program_, unused_protection);
   f_remote << indent() << ")" << endl;
