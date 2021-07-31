@@ -92,34 +92,6 @@ t_netstd_generator::t_netstd_generator(t_program* program, const map<string, str
     out_dir_base_ = "gen-netstd";
 }
 
-/**
-* \brief Search and replace "_args" substring in struct name if exist (for C# class naming)
-* \param struct_name
-* \return Modified struct name ("Struct_args" -> "StructArgs") or original name
-*/
-static string check_and_correct_struct_name(const string& struct_name)
-{
-    string args_end = "_args";
-    size_t i = struct_name.find(args_end);
-    if (i != string::npos)
-    {
-        string new_struct_name = struct_name;
-        new_struct_name.replace(i, args_end.length(), "Args");
-        return new_struct_name;
-    }
-
-    string result_end = "_result";
-    size_t j = struct_name.find(result_end);
-    if (j != string::npos)
-    {
-        string new_struct_name = struct_name;
-        new_struct_name.replace(j, result_end.length(), "Result");
-        return new_struct_name;
-    }
-
-    return struct_name;
-}
-
 static bool field_has_default(t_field* tfield) { return tfield->get_value() != nullptr; }
 
 static bool field_is_required(t_field* tfield) { return tfield->get_req() == t_field::T_REQUIRED; }
@@ -417,7 +389,7 @@ void t_netstd_generator::generate_enum(ostream& out, t_enum* tenum)
     start_netstd_namespace(out);
     generate_netstd_doc(out, tenum);
 
-    out << indent() << "public enum " << tenum->get_name() << endl;
+    out << indent() << "public enum " << type_name(tenum,false) << endl;
     scope_up(out);
 
     vector<t_enum_value*> constants = tenum->get_constants();
@@ -914,7 +886,7 @@ void t_netstd_generator::generate_netstd_struct_definition(ostream& out, t_struc
 
     bool is_final = tstruct->annotations_.find("final") != tstruct->annotations_.end();
 
-    string sharp_struct_name = check_and_correct_struct_name(normalize_name(tstruct->get_name()));
+    string sharp_struct_name = type_name(tstruct, false);
 
     out << indent() << "public " << (is_final ? "sealed " : "") << "partial class " << sharp_struct_name << " : ";
 
@@ -1121,7 +1093,7 @@ void t_netstd_generator::generate_netstd_wcffault(ostream& out, t_struct* tstruc
 
     bool is_final = tstruct->annotations_.find("final") != tstruct->annotations_.end();
 
-    out << indent() << "public " << (is_final ? "sealed " : "") << "partial class " << tstruct->get_name() << "Fault" << endl
+    out << indent() << "public " << (is_final ? "sealed " : "") << "partial class " << type_name(tstruct,false) << "Fault" << endl
         << indent() << "{" << endl;
     indent_up();
 
@@ -1780,7 +1752,7 @@ void t_netstd_generator::generate_netstd_struct_equals(ostream& out, t_struct* t
     out << indent() << "public override bool Equals(object that)" << endl
         << indent() << "{" << endl;
     indent_up();
-    out << indent() << "if (!(that is " << check_and_correct_struct_name(normalize_name(tstruct->get_name())) << " other)) return false;" << endl
+    out << indent() << "if (!(that is " << type_name(tstruct,false) << " other)) return false;" << endl
         << indent() << "if (ReferenceEquals(this, other)) return true;" << endl;
 
 
@@ -2050,7 +2022,7 @@ void t_netstd_generator::generate_service_client(ostream& out, t_service* tservi
         indent_up();
 
         string tmpvar = tmp("tmp");
-        string argsname = (*functions_iterator)->get_name() + "Args";
+        string argsname = (*functions_iterator)->get_name() + "_args";
 
         out << indent() << "await OutputProtocol.WriteMessageBeginAsync(new TMessage(\"" << raw_func_name
             << "\", TMessageType." << ((*functions_iterator)->is_oneway() ? "Oneway" : "Call")
@@ -2089,7 +2061,7 @@ void t_netstd_generator::generate_service_client(ostream& out, t_service* tservi
                 << indent() << "{" << endl;
             indent_up();
 
-            string resultname = (*functions_iterator)->get_name() + "Result";
+            string resultname = (*functions_iterator)->get_name() + "_result";
             t_struct noargs(program_);
             t_struct* xs = (*functions_iterator)->get_xceptions();
             collect_extensions_types(xs);
@@ -2318,8 +2290,8 @@ void t_netstd_generator::generate_process_function_async(ostream& out, t_service
         << indent() << "{" << endl;
     indent_up();
 
-    string argsname = tfunction->get_name() + "Args";
-    string resultname = tfunction->get_name() + "Result";
+    string argsname = tfunction->get_name() + "_args";
+    string resultname = tfunction->get_name() + "_result";
 
     string args = tmp("tmp");
     out << indent() << "var " << args << " = new InternalStructs." << argsname << "();" << endl
@@ -2950,22 +2922,22 @@ void t_netstd_generator::generate_netstd_property(ostream& out, t_field* tfield,
     {
         out << indent() << "[DataMember(Order = 0)]" << endl;
     }
+    out << indent() << (isPublic ? "public " : "private ") << type_name(tfield->get_type()) << " " << prop_name(tfield);
+
     bool is_required = field_is_required(tfield);
     if (is_required)
     {
-        out << indent() << (isPublic ? "public " : "private ") << type_name(tfield->get_type()) << " " << prop_name(tfield) << " { get; set; }" << endl;
+        out << " { get; set; }" << endl;
     }
     else
     {
-        out << indent() << (isPublic ? "public " : "private ")  << type_name(tfield->get_type()) << " " << prop_name(tfield) << endl
+        out << endl
             << indent() << "{" << endl;
         indent_up();
 
         out << indent() << "get" << endl
             << indent() << "{" << endl;
         indent_up();
-
-        bool use_nullable = false;
 
         out << indent() << "return " << fieldPrefix + tfield->get_name() << ";" << endl;
         indent_down();
@@ -2974,22 +2946,11 @@ void t_netstd_generator::generate_netstd_property(ostream& out, t_field* tfield,
             << indent() << "{" << endl;
         indent_up();
 
-        if (use_nullable)
+        if (generateIsset)
         {
-            if (generateIsset)
-            {
-                out << indent() << "__isset." << get_isset_name(normalize_name(tfield->get_name())) << " = value.HasValue;" << endl;
-            }
-            out << indent() << "if (value.HasValue) this." << fieldPrefix + tfield->get_name() << " = value.Value;" << endl;
+            out << indent() << "__isset." << get_isset_name(normalize_name(tfield->get_name())) << " = true;" << endl;
         }
-        else
-        {
-            if (generateIsset)
-            {
-                out << indent() << "__isset." << get_isset_name(normalize_name(tfield->get_name())) << " = true;" << endl;
-            }
-            out << indent() << "this." << fieldPrefix + tfield->get_name() << " = value;" << endl;
-        }
+        out << indent() << "this." << fieldPrefix + tfield->get_name() << " = value;" << endl;
 
         indent_down();
         out << indent() << "}" << endl;
@@ -3238,7 +3199,7 @@ string t_netstd_generator::func_name(std::string fname, bool suppress_mapping) {
   return get_mapped_member_name(fname);
 }
 
-string t_netstd_generator::type_name(t_type* ttype)
+string t_netstd_generator::type_name(t_type* ttype, bool with_namespace)
 {
     ttype = resolve_typedef(ttype);
 
@@ -3265,15 +3226,18 @@ string t_netstd_generator::type_name(t_type* ttype)
         return "List<" + type_name(tlist->get_elem_type()) + ">";
     }
 
-    string the_name = check_and_correct_struct_name(normalize_name(ttype->get_name()));
+    string the_name = normalize_name(ttype->get_name());
 
-    t_program* program = ttype->get_program();
-    if (program != nullptr)// && program != program_)
+    if(with_namespace)
     {
-        string ns =  program->get_namespace("netstd");
-        if (!ns.empty())
+        t_program* program = ttype->get_program();
+        if (program != nullptr)// && program != program_)
         {
-            return "global::" + ns + "." + the_name;
+            string ns =  program->get_namespace("netstd");
+            if (!ns.empty())
+            {
+                return "global::" + ns + "." + the_name;
+            }
         }
     }
 

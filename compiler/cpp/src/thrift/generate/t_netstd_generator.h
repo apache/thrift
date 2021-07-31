@@ -135,7 +135,7 @@ public:
   static const int MODE_NO_RETURN = 0x01;
   static const int MODE_NO_ARGS   = 0x02;
 
-  string type_name(t_type* ttype);
+  string type_name(t_type* ttype, bool with_namespace = true);
   string base_type_name(t_base_type* tbase);
   string declare_field(t_field* tfield, bool init = false, string prefix = "");
   string function_signature_async(t_function* tfunction, string prefix = "", int mode = MODE_FULL_DECL);

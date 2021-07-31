@@ -74,6 +74,7 @@
     <!-- Generate the thrift test files -->
     <Exec Command="$(PathToThrift) -gen netstd:wcf,union,serial -r ./CassandraTest.thrift" />
     <Exec Command="$(PathToThrift) -gen netstd:wcf,union,serial -r ./optional_required_default.thrift" />
+    <Exec Command="$(PathToThrift) -gen netstd:wcf,union,serial -r ./name_conflicts.thrift" />
     <Exec Command="$(PathToThrift) -gen netstd:wcf,union,serial -r ./../../../../test/ThriftTest.thrift" />
     <Exec Command="$(PathToThrift) -gen netstd:wcf,union,serial -r ./../../../../contrib/fb303/if/fb303.thrift" />
     <Exec Command="$(PathToThrift) -gen netstd:wcf,union,serial -r ./Thrift5253.thrift" />
