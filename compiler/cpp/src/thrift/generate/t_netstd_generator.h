@@ -46,6 +46,7 @@ using std::vector;
 static const string endl = "\n"; // avoid ostream << std::endl flushes
 
 static const string DEEP_COPY_METHOD_NAME = "DeepCopy";
+static const string CANCELLATION_TOKEN_NAME = "cancellationToken";
 
 class t_netstd_generator : public t_oop_generator
 {
@@ -167,7 +168,7 @@ private:
   map<string, t_type*> checked_extension_types;
   
   void init_keywords();
-  string normalize_name(string name);
+  string normalize_name(string name, bool is_arg_name = false);
   string make_valid_csharp_identifier(string const& fromName);
   string make_csharp_string_literal( string const& value);
   void prepare_member_name_mapping(t_service* tservice);
