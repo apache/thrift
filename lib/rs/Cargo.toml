@@ -14,13 +14,14 @@ keywords = ["thrift"]
 
 [dependencies]
 byteorder = "1.3"
-integer-encoding = "3.0"
+integer-encoding = { version = "3.0", features = ["futures_async"] }
 log = "0.4"
 ordered-float = "1.0"
 threadpool = "1.7"
 
-async-trait = {version = "^0.1", optional = true}
+async-trait = {version = "0.1", optional = true}
+futures = {version = "0.3", optional = true}
 
 [features]
 default = ["async"]
-async = ["async-trait"]
+async = ["async-trait", "futures"]

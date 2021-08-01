@@ -88,6 +88,8 @@ macro_rules! set_readable_bytes {
 
 mod binary;
 mod compact;
+mod compact_stream;
+pub use compact_stream::TCompactInputStreamProtocol;
 mod multiplexed;
 mod stored;
 mod stream;
