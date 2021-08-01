@@ -90,6 +90,8 @@ mod binary;
 mod compact;
 mod multiplexed;
 mod stored;
+mod stream;
+pub use stream::TInputStreamProtocol;
 
 pub use self::binary::{
     TBinaryInputProtocol, TBinaryInputProtocolFactory, TBinaryOutputProtocol,

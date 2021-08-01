@@ -257,23 +257,25 @@ private:
   // Write the code to read bytes from the wire into the given `t_struct`. `struct_name` is the
   // actual Rust name of the `t_struct`. If `struct_type` is `T_ARGS` then all struct fields are
   // necessary. Otherwise, the field's default optionality is used.
-  void render_struct_sync_read(const string &struct_name, t_struct *tstruct, t_rs_generator::e_struct_type struct_type);
+  // Set `is_sync` to `false` to generate the async version.
+  void render_struct_read(const string &struct_name, t_struct *tstruct, t_rs_generator::e_struct_type struct_type, bool is_sync = true);
 
   // Write the rust function that deserializes a single type (i.e. i32 etc.) from its wire representation.
   // Set `is_boxed` to `true` if the resulting value should be wrapped in a `Box::new(...)`.
-  void render_type_sync_read(const string &type_var, t_type *ttype, bool is_boxed = false);
+  // Set `is_sync` to `false` to generate the async version.
+  void render_type_read(const string &type_var, t_type *ttype, bool is_boxed = false, bool is_sync = true);
 
   // Read the wire representation of a list and convert it to its corresponding rust implementation.
   // The deserialized list is stored in `list_variable`.
-  void render_list_sync_read(t_list *tlist, const string &list_variable);
+  void render_list_read(t_list *tlist, const string &list_variable, bool is_sync = true);
 
   // Read the wire representation of a set and convert it to its corresponding rust implementation.
   // The deserialized set is stored in `set_variable`.
-  void render_set_sync_read(t_set *tset, const string &set_variable);
+  void render_set_read(t_set *tset, const string &set_variable, bool is_sync = true);
 
   // Read the wire representation of a map and convert it to its corresponding rust implementation.
   // The deserialized map is stored in `map_variable`.
-  void render_map_sync_read(t_map *tmap, const string &map_variable);
+  void render_map_read(t_map *tmap, const string &map_variable, bool is_sync = true);
 
   // Return a temporary variable used to store values when deserializing nested containers.
   string struct_field_read_temp_variable(t_field* tfield);
@@ -292,7 +294,7 @@ private:
   void render_union_sync_write(const string &union_name, t_struct *tstruct);
 
   // Write the `ENUM::read_from_in_protocol` function.
-  void render_union_sync_read(const string &union_name, t_struct *tstruct);
+  void render_union_read(const string &union_name, t_struct *tstruct, bool is_sync = true);
 
   // Top-level function that calls the various render functions necessary to write the rust representation
   // of a Thrift client.
@@ -571,7 +573,7 @@ void t_rs_generator::render_attributes_and_includes() {
   f_gen_ << endl;
   f_gen_ << "use thrift::OrderedFloat;" << endl;
   f_gen_ << "use thrift::{ApplicationError, ApplicationErrorKind, ProtocolError, ProtocolErrorKind, TThriftClient};" << endl;
-  f_gen_ << "use thrift::protocol::{TFieldIdentifier, TListIdentifier, TMapIdentifier, TMessageIdentifier, TMessageType, TInputProtocol, TOutputProtocol, TSetIdentifier, TStructIdentifier, TType};" << endl;
+  f_gen_ << "use thrift::protocol::{TFieldIdentifier, TListIdentifier, TMapIdentifier, TMessageIdentifier, TMessageType, TInputProtocol, TInputStreamProtocol, TOutputProtocol, TSetIdentifier, TStructIdentifier, TType};" << endl;
   f_gen_ << "use thrift::protocol::field_id;" << endl;
   f_gen_ << "use thrift::protocol::verify_expected_message_type;" << endl;
   f_gen_ << "use thrift::protocol::verify_expected_sequence_number;" << endl;
@@ -953,6 +955,16 @@ void t_rs_generator::render_enum_impl(t_enum* tenum, const string& enum_name) {
   indent_down();
   f_gen_ << indent() << "}" << endl;
 
+  f_gen_
+    << indent()
+    << "pub async fn stream_from_in_protocol(i_prot: &mut dyn TInputStreamProtocol) -> thrift::Result<" << enum_name << "> {"
+    << endl;
+  indent_up();
+  f_gen_ << indent() << "let enum_value = i_prot.read_i32().await?;" << endl;
+  f_gen_ << indent() << "Ok(" << enum_name << "::from(enum_value)" << ")" << endl;
+  indent_down();
+  f_gen_ << indent() << "}" << endl;
+
   indent_down();
   f_gen_ << "}" << endl;
   f_gen_ << endl;
@@ -1185,7 +1197,8 @@ void t_rs_generator::render_struct_impl(
     render_struct_constructor(struct_name, tstruct, struct_type);
   }
 
-  render_struct_sync_read(struct_name, tstruct, struct_type);
+  render_struct_read(struct_name, tstruct, struct_type, true);
+  render_struct_read(struct_name, tstruct, struct_type, false);
   render_struct_sync_write(tstruct, struct_type);
 
   if (struct_type == t_rs_generator::T_RESULT) {
@@ -1430,7 +1443,8 @@ void t_rs_generator::render_union_impl(const string& union_name, t_struct* tstru
   f_gen_ << "impl " << union_name << " {" << endl;
   indent_up();
 
-  render_union_sync_read(union_name, tstruct);
+  render_union_read(union_name, tstruct, true);
+  render_union_read(union_name, tstruct, false);
   render_union_sync_write(union_name, tstruct);
 
   indent_down();
@@ -1717,19 +1731,34 @@ bool t_rs_generator::needs_deref_on_container_write(t_type* ttype) {
 //
 //-----------------------------------------------------------------------------
 
-void t_rs_generator::render_struct_sync_read(
+void t_rs_generator::render_struct_read(
     const string &struct_name,
-    t_struct *tstruct, t_rs_generator::e_struct_type struct_type
+    t_struct *tstruct, t_rs_generator::e_struct_type struct_type,
+    bool is_sync
 ) {
+  string ending;
+  if (is_sync) {
+    ending = "?;";
+  } else {
+    ending = ".await?;";
+  };
+
   f_gen_
     << indent()
-    << visibility_qualifier(struct_type)
-    << "fn read_from_in_protocol(i_prot: &mut dyn TInputProtocol) -> thrift::Result<" << struct_name << "> {"
-    << endl;
+    << visibility_qualifier(struct_type);
+  if (is_sync) {
+    f_gen_
+      << "fn read_from_in_protocol(i_prot: &mut dyn TInputProtocol) -> thrift::Result<" << struct_name << "> {"
+      << endl;
+  } else {
+    f_gen_
+      << "async fn stream_from_in_protocol(i_prot: &mut dyn TInputStreamProtocol) -> thrift::Result<" << struct_name << "> {"
+      << endl;
+  };
 
   indent_up();
 
-  f_gen_ << indent() << "i_prot.read_struct_begin()?;" << endl;
+  f_gen_ << indent() << "i_prot.read_struct_begin()" << ending << endl;
 
   // create temporary variables: one for each field in the struct
   const vector<t_field*> members = tstruct->get_sorted_members();
@@ -1755,7 +1784,7 @@ void t_rs_generator::render_struct_sync_read(
   indent_up();
 
   // break out if you've found the Stop field
-  f_gen_ << indent() << "let field_ident = i_prot.read_field_begin()?;" << endl;
+  f_gen_ << indent() << "let field_ident = i_prot.read_field_begin()" << ending << endl;
   f_gen_ << indent() << "if field_ident.field_type == TType::Stop {" << endl;
   indent_up();
   f_gen_ << indent() << "break;" << endl;
@@ -1771,7 +1800,7 @@ void t_rs_generator::render_struct_sync_read(
     t_field* tfield = (*members_iter);
     f_gen_ << indent() << rust_safe_field_id(tfield->get_key()) << " => {" << endl;
     indent_up();
-    render_type_sync_read("val", tfield->get_type());
+    render_type_read("val", tfield->get_type(), false, is_sync);
     f_gen_ << indent() << struct_field_read_temp_variable(tfield) << " = Some(val);" << endl;
     indent_down();
     f_gen_ << indent() << "}," << endl;
@@ -1780,16 +1809,16 @@ void t_rs_generator::render_struct_sync_read(
   // default case (skip fields)
   f_gen_ << indent() << "_ => {" << endl;
   indent_up();
-  f_gen_ << indent() << "i_prot.skip(field_ident.field_type)?;" << endl;
+  f_gen_ << indent() << "i_prot.skip(field_ident.field_type)" << ending << endl;
   indent_down();
   f_gen_ << indent() << "}," << endl;
 
   indent_down();
   f_gen_ << indent() << "};" << endl; // finish match
-  f_gen_ << indent() << "i_prot.read_field_end()?;" << endl;
+  f_gen_ << indent() << "i_prot.read_field_end()" << ending << endl;
   indent_down();
   f_gen_ << indent() << "}" << endl; // finish loop
-  f_gen_ << indent() << "i_prot.read_struct_end()?;" << endl; // read message footer from the wire
+  f_gen_ << indent() << "i_prot.read_struct_end()" << ending << endl; // read message footer from the wire
 
   // verify that all required fields exist
   for (members_iter = members.begin(); members_iter != members.end(); ++members_iter) {
@@ -1843,11 +1872,26 @@ void t_rs_generator::render_struct_sync_read(
   f_gen_ << indent() << "}" << endl;
 }
 
-void t_rs_generator::render_union_sync_read(const string &union_name, t_struct *tstruct) {
-  f_gen_
-    << indent()
-    << "pub fn read_from_in_protocol(i_prot: &mut dyn TInputProtocol) -> thrift::Result<" << union_name << "> {"
-    << endl;
+void t_rs_generator::render_union_read(const string &union_name, t_struct *tstruct, bool is_sync) {
+  string ending;
+  if (is_sync) {
+    ending = "?;";
+  } else {
+    ending = ".await?;";
+  };
+
+  if (is_sync) {
+    f_gen_
+      << indent()
+      << "pub fn read_from_in_protocol(i_prot: &mut dyn TInputProtocol) -> thrift::Result<" << union_name << "> {"
+      << endl;
+  } else {
+    f_gen_
+      << indent()
+      << "pub async fn stream_from_in_protocol(i_prot: &mut dyn TInputStreamProtocol) -> thrift::Result<" << union_name << "> {"
+      << endl;
+  };
+
   indent_up();
 
   // create temporary variables to hold the
@@ -1856,14 +1900,14 @@ void t_rs_generator::render_union_sync_read(const string &union_name, t_struct *
   f_gen_ << indent() << "let mut received_field_count = 0;" << endl;
 
   // read the struct preamble
-  f_gen_ << indent() << "i_prot.read_struct_begin()?;" << endl;
+  f_gen_ << indent() << "i_prot.read_struct_begin()" << ending << endl;
 
   // now loop through the fields we've received
   f_gen_ << indent() << "loop {" << endl; // start loop
   indent_up();
 
   // break out if you've found the Stop field
-  f_gen_ << indent() << "let field_ident = i_prot.read_field_begin()?;" << endl;
+  f_gen_ << indent() << "let field_ident = i_prot.read_field_begin()" << ending << endl;
   f_gen_ << indent() << "if field_ident.field_type == TType::Stop {" << endl;
   indent_up();
   f_gen_ << indent() << "break;" << endl;
@@ -1881,7 +1925,7 @@ void t_rs_generator::render_union_sync_read(const string &union_name, t_struct *
     t_field* member = (*members_iter);
     f_gen_ << indent() << rust_safe_field_id(member->get_key()) << " => {" << endl;
     indent_up();
-    render_type_sync_read("val", member->get_type());
+    render_type_read("val", member->get_type(), false, is_sync);
     f_gen_ << indent() << "if ret.is_none() {" << endl;
     indent_up();
     f_gen_
@@ -1898,17 +1942,17 @@ void t_rs_generator::render_union_sync_read(const string &union_name, t_struct *
   // default case (skip fields)
   f_gen_ << indent() << "_ => {" << endl;
   indent_up();
-  f_gen_ << indent() << "i_prot.skip(field_ident.field_type)?;" << endl;
+  f_gen_ << indent() << "i_prot.skip(field_ident.field_type)" << ending << endl;
   f_gen_ << indent() << "received_field_count += 1;" << endl;
   indent_down();
   f_gen_ << indent() << "}," << endl;
 
   indent_down();
   f_gen_ << indent() << "};" << endl; // finish match
-  f_gen_ << indent() << "i_prot.read_field_end()?;" << endl;
+  f_gen_ << indent() << "i_prot.read_field_end()" << ending << endl;
   indent_down();
   f_gen_ << indent() << "}" << endl; // finish loop
-  f_gen_ << indent() << "i_prot.read_struct_end()?;" << endl; // finish reading message from wire
+  f_gen_ << indent() << "i_prot.read_struct_end()" << ending << endl; // finish reading message from wire
 
   // return the value or an error
   f_gen_ << indent() << "if received_field_count == 0 {" << endl;
@@ -1940,36 +1984,49 @@ void t_rs_generator::render_union_sync_read(const string &union_name, t_struct *
 }
 
 // Construct the rust representation of all supported types from the wire.
-void t_rs_generator::render_type_sync_read(const string &type_var, t_type *ttype, bool is_boxed) {
+void t_rs_generator::render_type_read(const string &type_var, t_type *ttype, bool is_boxed, bool is_sync) {
   if (ttype->is_base_type()) {
     t_base_type* tbase_type = (t_base_type*)ttype;
+
+    string ending;
+    if (is_sync) {
+      ending = "?;";
+    } else {
+      ending = ".await?;";
+    };
+
     switch (tbase_type->get_base()) {
     case t_base_type::TYPE_VOID:
       throw "cannot read field of type TYPE_VOID from input protocol";
     case t_base_type::TYPE_STRING:
       if (tbase_type->is_binary()) {
-        f_gen_ << indent() << "let " << type_var << " = i_prot.read_bytes()?;" << endl;
+        f_gen_ << indent() << "let " << type_var << " = i_prot.read_bytes()" << ending << endl;
       } else {
-        f_gen_ << indent() << "let " << type_var << " = i_prot.read_string()?;" << endl;
+        f_gen_ << indent() << "let " << type_var << " = i_prot.read_string()" << ending << endl;
       }
       return;
     case t_base_type::TYPE_BOOL:
-      f_gen_ << indent() << "let " << type_var << " = i_prot.read_bool()?;" << endl;
+      f_gen_ << indent() << "let " << type_var << " = i_prot.read_bool()" << ending << endl;
       return;
     case t_base_type::TYPE_I8:
-      f_gen_ << indent() << "let " << type_var << " = i_prot.read_i8()?;" << endl;
+      f_gen_ << indent() << "let " << type_var << " = i_prot.read_i8()" << ending << endl;
       return;
     case t_base_type::TYPE_I16:
-      f_gen_ << indent() << "let " << type_var << " = i_prot.read_i16()?;" << endl;
+      f_gen_ << indent() << "let " << type_var << " = i_prot.read_i16()" << ending << endl;
       return;
     case t_base_type::TYPE_I32:
-      f_gen_ << indent() << "let " << type_var << " = i_prot.read_i32()?;" << endl;
+      f_gen_ << indent() << "let " << type_var << " = i_prot.read_i32()" << ending << endl;
       return;
     case t_base_type::TYPE_I64:
-      f_gen_ << indent() << "let " << type_var << " = i_prot.read_i64()?;" << endl;
+      f_gen_ << indent() << "let " << type_var << " = i_prot.read_i64()" << ending << endl;
       return;
     case t_base_type::TYPE_DOUBLE:
-      f_gen_ << indent() << "let " << type_var << " = OrderedFloat::from(i_prot.read_double()?);" << endl;
+      if (is_sync) {
+        ending = "?);";
+      } else {
+        ending = ".await?);";
+      }
+      f_gen_ << indent() << "let " << type_var << " = OrderedFloat::from(i_prot.read_double()?);" << ending << endl;
       return;
     }
   } else if (ttype->is_typedef()) {
@@ -1982,10 +2039,15 @@ void t_rs_generator::render_type_sync_read(const string &type_var, t_type *ttype
     // so I have to pass this parameter along. Going with this approach because it
     // seems like the lowest-cost option to easily support recursive types.
     t_typedef* ttypedef = (t_typedef*)ttype;
-    render_type_sync_read(type_var, ttypedef->get_type(), ttypedef->is_forward_typedef());
+    render_type_read(type_var, ttypedef->get_type(), ttypedef->is_forward_typedef(), is_sync);
     return;
   } else if (ttype->is_enum() || ttype->is_struct() || ttype->is_xception()) {
-    string read_call(to_rust_type(ttype) + "::read_from_in_protocol(i_prot)?");
+    string read_call;
+    if (is_sync) {
+      read_call = (to_rust_type(ttype) + "::read_from_in_protocol(i_prot)?");
+    } else {
+      read_call = (to_rust_type(ttype) + "::stream_from_in_protocol(i_prot).await?");
+    };
     read_call = is_boxed ? "Box::new(" + read_call + ")" : read_call;
     f_gen_
       << indent()
@@ -1993,13 +2055,13 @@ void t_rs_generator::render_type_sync_read(const string &type_var, t_type *ttype
       << endl;
     return;
   } else if (ttype->is_map()) {
-    render_map_sync_read((t_map *) ttype, type_var);
+    render_map_read((t_map *) ttype, type_var, is_sync);
     return;
   } else if (ttype->is_set()) {
-    render_set_sync_read((t_set *) ttype, type_var);
+    render_set_read((t_set *) ttype, type_var, is_sync);
     return;
   } else if (ttype->is_list()) {
-    render_list_sync_read((t_list *) ttype, type_var);
+    render_list_read((t_list *) ttype, type_var, is_sync);
     return;
   }
 
@@ -2007,10 +2069,17 @@ void t_rs_generator::render_type_sync_read(const string &type_var, t_type *ttype
 }
 
 // Construct the rust representation of a list from the wire.
-void t_rs_generator::render_list_sync_read(t_list *tlist, const string &list_var) {
+void t_rs_generator::render_list_read(t_list *tlist, const string &list_var, bool is_sync) {
   t_type* elem_type = tlist->get_elem_type();
 
-  f_gen_ << indent() << "let list_ident = i_prot.read_list_begin()?;" << endl;
+  string ending;
+  if (is_sync) {
+    ending = "?;";
+  } else {
+    ending = ".await?;";
+  };
+
+  f_gen_ << indent() << "let list_ident = i_prot.read_list_begin()" << ending << endl;
   f_gen_
     << indent()
     << "let mut " << list_var << ": " << to_rust_type((t_type*) tlist)
@@ -2021,20 +2090,27 @@ void t_rs_generator::render_list_sync_read(t_list *tlist, const string &list_var
   indent_up();
 
   string list_elem_var = tmp("list_elem_");
-  render_type_sync_read(list_elem_var, elem_type);
+  render_type_read(list_elem_var, elem_type, false, is_sync);
   f_gen_ << indent() << list_var << ".push(" << list_elem_var << ");" << endl;
 
   indent_down();
 
   f_gen_ << indent() << "}" << endl;
-  f_gen_ << indent() << "i_prot.read_list_end()?;" << endl;
+  f_gen_ << indent() << "i_prot.read_list_end()" << ending << endl;
 }
 
 // Construct the rust representation of a set from the wire.
-void t_rs_generator::render_set_sync_read(t_set *tset, const string &set_var) {
+void t_rs_generator::render_set_read(t_set *tset, const string &set_var, bool is_sync) {
   t_type* elem_type = tset->get_elem_type();
 
-  f_gen_ << indent() << "let set_ident = i_prot.read_set_begin()?;" << endl;
+  string ending;
+  if (is_sync) {
+    ending = "?;";
+  } else {
+    ending = ".await?;";
+  };
+
+  f_gen_ << indent() << "let set_ident = i_prot.read_set_begin()" << ending << endl;
   f_gen_
     << indent()
     << "let mut " << set_var << ": " << to_rust_type((t_type*) tset)
@@ -2045,21 +2121,27 @@ void t_rs_generator::render_set_sync_read(t_set *tset, const string &set_var) {
   indent_up();
 
   string set_elem_var = tmp("set_elem_");
-  render_type_sync_read(set_elem_var, elem_type);
+  render_type_read(set_elem_var, elem_type, false, is_sync);
   f_gen_ << indent() << set_var << ".insert(" << set_elem_var << ");" << endl;
 
   indent_down();
 
   f_gen_ << indent() << "}" << endl;
-  f_gen_ << indent() << "i_prot.read_set_end()?;" << endl;
+  f_gen_ << indent() << "i_prot.read_set_end()" << ending << endl;
 }
 
-// Construct the rust representation of a map from the wire.
-void t_rs_generator::render_map_sync_read(t_map *tmap, const string &map_var) {
+void t_rs_generator::render_map_read(t_map *tmap, const string &map_var, bool is_sync) {
+  string ending;
+  if (is_sync) {
+    ending = "?;";
+  } else {
+    ending = ".await?;";
+  };
+
   t_type* key_type = tmap->get_key_type();
   t_type* val_type = tmap->get_val_type();
 
-  f_gen_ << indent() << "let map_ident = i_prot.read_map_begin()?;" << endl;
+  f_gen_ << indent() << "let map_ident = i_prot.read_map_begin()" << ending << endl;
   f_gen_
     << indent()
     << "let mut " << map_var << ": " << to_rust_type((t_type*) tmap)
@@ -2070,15 +2152,15 @@ void t_rs_generator::render_map_sync_read(t_map *tmap, const string &map_var) {
   indent_up();
 
   string key_elem_var = tmp("map_key_");
-  render_type_sync_read(key_elem_var, key_type);
+  render_type_read(key_elem_var, key_type, false, is_sync);
   string val_elem_var = tmp("map_val_");
-  render_type_sync_read(val_elem_var, val_type);
+  render_type_read(val_elem_var, val_type, false, is_sync);
   f_gen_ << indent() << map_var << ".insert(" << key_elem_var << ", " << val_elem_var << ");" << endl;
 
   indent_down();
 
   f_gen_ << indent() << "}" << endl;
-  f_gen_ << indent() << "i_prot.read_map_end()?;" << endl;
+  f_gen_ << indent() << "i_prot.read_map_end()" << ending << endl;
 }
 
 string t_rs_generator::struct_field_read_temp_variable(t_field* tfield) {

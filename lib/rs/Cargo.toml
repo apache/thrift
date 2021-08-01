@@ -18,3 +18,9 @@ integer-encoding = "3.0"
 log = "0.4"
 ordered-float = "1.0"
 threadpool = "1.7"
+
+async-trait = {version = "^0.1", optional = true}
+
+[features]
+default = ["async"]
+async = ["async-trait"]
