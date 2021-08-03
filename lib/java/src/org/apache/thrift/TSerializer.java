@@ -74,6 +74,7 @@ public class TSerializer {
    *
    * @param base The object to serialize
    * @return Serialized object in byte[] format
+   * @throws TException if an error is encountered during serialization.
    */
   public byte[] serialize(TBase base) throws TException {
     baos_.reset();
@@ -87,9 +88,9 @@ public class TSerializer {
    *
    * @param base The object to serialize
    * @return Serialized object as a String
+   * @throws TException if an error is encountered during serialization.
    */
   public String toString(TBase base) throws TException {
     return new String(serialize(base));
   }
 }
-
