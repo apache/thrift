@@ -2,18 +2,156 @@
 
 ## 0.15.0
 
-### Breaking Changes
+### Known Open Issues (Blocker or Critical)
+
+- [THRIFT-3877](https://issues.apache.org/jira/browse/THRIFT-3877) - C++: library don't work with HTTP (csharp server, cpp client; need cross test enhancement)
+
+### Removed Languages
 
 - [THRIFT-5229](https://issues.apache.org/jira/browse/THRIFT-5229) - ActionScript 3 support dropped
 - [THRIFT-5347](https://issues.apache.org/jira/browse/THRIFT-5347) - Haskell support dropped
+
+### Breaking Changes
+
 - [THRIFT-5381](https://issues.apache.org/jira/browse/THRIFT-5381) - possible collisions at VOID type with some 3rd-party libraries on Haxe cpp targets
 - [THRIFT-5396](https://issues.apache.org/jira/browse/THRIFT-5396) - deprecate netstd "Async" method postfix
 
-### Go
+### AS3
 
-- [THRIFT-5404](https://issues.apache.org/jira/browse/THRIFT-5404) - TTransportException.Timeout would correctly return true when it's connect timeout during TSocket.Open call
+- [THRIFT-5229](https://issues.apache.org/jira/browse/THRIFT-5229) - Deprecate/remove ActionScript 3 support
+
+### Build Process
+
+- [THRIFT-5429](https://issues.apache.org/jira/browse/THRIFT-5429) - build: autotools: add foreign to AM_INIT_AUTOMAKE
+- [THRIFT-5394](https://issues.apache.org/jira/browse/THRIFT-5394) - AppVeyor CI tries to download outdated cmake
+- [THRIFT-5334](https://issues.apache.org/jira/browse/THRIFT-5334) - version of thrift-maven-plugin is not sync with the main project
+
+### C glib
+
+- [THRIFT-5421](https://issues.apache.org/jira/browse/THRIFT-5421) - Fix the problem of incorrect setting of errno in some files
+- [THRIFT-5399](https://issues.apache.org/jira/browse/THRIFT-5399) - Fix socket leak in abnormal situation
+- [THRIFT-5265](https://issues.apache.org/jira/browse/THRIFT-5265) - Add the zlib transport to c_glib
+- [THRIFT-5244](https://issues.apache.org/jira/browse/THRIFT-5244) - Dynamic exception specifications are deprecated in C++11[-Wdeprecated]
+
+### C++
+
+- [THRIFT-5342](https://issues.apache.org/jira/browse/THRIFT-5342) - Apply 'noexcept' attribute to Init/Copy/Move Constructors and Assignments
+- [THRIFT-5341](https://issues.apache.org/jira/browse/THRIFT-5341) - Fix Old-Style-Cast, Missing override and Possible noexcept
+- [THRIFT-5355](https://issues.apache.org/jira/browse/THRIFT-5355) - Do not rely on compiler and check boundaries
+
+### D language
+
+- [THRIFT-5376](https://issues.apache.org/jira/browse/THRIFT-5376) - Fix deprecation warnings in D library
+- [THRIFT-4979](https://issues.apache.org/jira/browse/THRIFT-4979) - Still D deprecation warnings about std.datetime.* in current master
+- [THRIFT-4303](https://issues.apache.org/jira/browse/THRIFT-4303) - D deprecation warnings
+
+### Dart
+
+- [THRIFT-5285](https://issues.apache.org/jira/browse/THRIFT-5285) - Update to dart 2, widen range on http package
+
+### Delphi
+
+- [THRIFT-5438](https://issues.apache.org/jira/browse/THRIFT-5438) - Inconsistent handling of exceptions during message read vs. message write phase
+- [THRIFT-5350](https://issues.apache.org/jira/browse/THRIFT-5350) - 0.14.0 fails to build on non-x86
+- [THRIFT-5437](https://issues.apache.org/jira/browse/THRIFT-5437) - Make TProtocolImpl CTOR virtual
+- [THRIFT-5428](https://issues.apache.org/jira/browse/THRIFT-5428) - Prevent costly reallocations to improve performance
+- [THRIFT-5390](https://issues.apache.org/jira/browse/THRIFT-5390) - Named Pipes transport hardening
+- [THRIFT-5387](https://issues.apache.org/jira/browse/THRIFT-5387) - Improved and simplified Delphi test setup 
+- [THRIFT-5386](https://issues.apache.org/jira/browse/THRIFT-5386) - XML-HTTP client may throw "max message size reached" incorrectly
+- [THRIFT-5385](https://issues.apache.org/jira/browse/THRIFT-5385) - XML-HTTP client reports IsOpen=TRUE even if it is not
+- [THRIFT-5384](https://issues.apache.org/jira/browse/THRIFT-5384) - Improved error message for HTTP transports
+
+### Documentation
+
+- [THRIFT-5348](https://issues.apache.org/jira/browse/THRIFT-5348) - Update debian/copyright
+- [THRIFT-5332](https://issues.apache.org/jira/browse/THRIFT-5332) - Question: list all the reserved words in thrift doc
+
+### Erlang
+
+- [THRIFT-5377](https://issues.apache.org/jira/browse/THRIFT-5377) - Remove Erlang R16 support
+
+### Go language
+
+- [THRIFT-5337](https://issues.apache.org/jira/browse/THRIFT-5337) - Go set fields write improvement
+- [THRIFT-5353](https://issues.apache.org/jira/browse/THRIFT-5353) - Namespace from type is ignored in generated code
+- [THRIFT-5358](https://issues.apache.org/jira/browse/THRIFT-5358) - Add go.mod file(s)
+- [THRIFT-5369](https://issues.apache.org/jira/browse/THRIFT-5369) - Malformed payload can still cause huge allocations
 - [THRIFT-5389](https://issues.apache.org/jira/browse/THRIFT-5389) - The compiler now generates correct go code with thrift constant defined on optional enum/typedef fields
-- [THRIFT-4797](https://issues.apache.org/jira/browse/THRIFT-4797) - The compiler now correctly auto renames import thrift namespaces when they collide with system imports
+- [THRIFT-5404](https://issues.apache.org/jira/browse/THRIFT-5404) - TTransportException.Timeout would correctly return true when it's connect timeout during TSocket.Open call
+
+### Haskell
+
+- [THRIFT-5347](https://issues.apache.org/jira/browse/THRIFT-5347) - Deprecate Haskell bindings
+
+### Haxe
+
+- [THRIFT-5393](https://issues.apache.org/jira/browse/THRIFT-5393) - Incorrect namespaces for included types
+- [THRIFT-5381](https://issues.apache.org/jira/browse/THRIFT-5381) - possible collisions at VOID type with some 3rd-party libraries on Haxe cpp targets
+- [THRIFT-5370](https://issues.apache.org/jira/browse/THRIFT-5370) - Haxe 4 compatibility
+- [THRIFT-5413](https://issues.apache.org/jira/browse/THRIFT-5413) - Int vs String in method get_size required by property size
+- [THRIFT-3036](https://issues.apache.org/jira/browse/THRIFT-3036) - create official haxelib Thrift package
+
+### Java
+
+- [THRIFT-5433](https://issues.apache.org/jira/browse/THRIFT-5433) - Add Counter To Thread Name of TThreadPoolServer
+- [THRIFT-5432](https://issues.apache.org/jira/browse/THRIFT-5432) - TSaslTransport throw TTransportException of MaxMessageSize reached 
+- [THRIFT-5430](https://issues.apache.org/jira/browse/THRIFT-5430) - FieldMetaData synchronized method can trigger deadlock during static class initialization in JVM native code
+- [THRIFT-5425](https://issues.apache.org/jira/browse/THRIFT-5425) - Throw an exception when reading TSimpleJson in Java
+- [THRIFT-5400](https://issues.apache.org/jira/browse/THRIFT-5400) - Java library does not export the .annotation package
+- [THRIFT-5383](https://issues.apache.org/jira/browse/THRIFT-5383) - TJSONProtocol Java readString throws on bounds check 
+- [THRIFT-5375](https://issues.apache.org/jira/browse/THRIFT-5375) - Put org.apache.tomcat.embed:tomcat-embed-core into scope test
+
+### JavaScript
+
+- [THRIFT-3508](https://issues.apache.org/jira/browse/THRIFT-3508) - JS:TS Generator set all fields of the struct as required
+
+### Lua
+
+- [THRIFT-5439](https://issues.apache.org/jira/browse/THRIFT-5439) - Lua Generator does not support const i64
+- [THRIFT-5417](https://issues.apache.org/jira/browse/THRIFT-5417) - Fix Lua compiler omitting default values in Lua service functions
+
+### netstd
+
+- [THRIFT-5445](https://issues.apache.org/jira/browse/THRIFT-5445) - "cancellationToken" cannot be used as argument name
+- [THRIFT-5444](https://issues.apache.org/jira/browse/THRIFT-5444) - Netstd generator produces uncompileable code for enums ending with "_result" or "_args"
+- [THRIFT-5442](https://issues.apache.org/jira/browse/THRIFT-5442) - Separate client service calls into send/recv methods and make them public
+- [THRIFT-5414](https://issues.apache.org/jira/browse/THRIFT-5414) - Use of specific parameter names generates uncompileable code
+- [THRIFT-5408](https://issues.apache.org/jira/browse/THRIFT-5408) - Support for deprecated methods (via annotation)
+- [THRIFT-5396](https://issues.apache.org/jira/browse/THRIFT-5396) - deprecate "Async" method postfix
+- [THRIFT-5395](https://issues.apache.org/jira/browse/THRIFT-5395) - inconsistent treatment of methods ending in "Async"
+- [THRIFT-5382](https://issues.apache.org/jira/browse/THRIFT-5382) - Netstd default list/set enums values are generated incorrectly in some cases
+- [THRIFT-5354](https://issues.apache.org/jira/browse/THRIFT-5354) - disable IDE0083 warning
+- [THRIFT-5436](https://issues.apache.org/jira/browse/THRIFT-5436) - Timeout.Infinite is not a good default
+- [THRIFT-5431](https://issues.apache.org/jira/browse/THRIFT-5431) - Response should include 'content-type' header
+- [THRIFT-5422](https://issues.apache.org/jira/browse/THRIFT-5422) - add threadpool server to netstd test suite impl
+- [THRIFT-5419](https://issues.apache.org/jira/browse/THRIFT-5419) - Incorrect usage of thread pool in TThreadPoolAsyncServer may lead to poor performance
+- [THRIFT-5407](https://issues.apache.org/jira/browse/THRIFT-5407) - Keep support for .NET Core 3.1
+- [THRIFT-5398](https://issues.apache.org/jira/browse/THRIFT-5398) - ThreadPoolServer not stoppable via CancellationToken 
+- [THRIFT-5391](https://issues.apache.org/jira/browse/THRIFT-5391) - Named pipes transport hardening
+- [THRIFT-5373](https://issues.apache.org/jira/browse/THRIFT-5373) - HTTP status in case of Protocol/Transport exceptions
+- [THRIFT-5349](https://issues.apache.org/jira/browse/THRIFT-5349) - Add net5.0 as supported platform
+- [THRIFT-5236](https://issues.apache.org/jira/browse/THRIFT-5236) - THttpTransport.cs still has bad timeout code
+
+### PHP
+
+- [THRIFT-5440](https://issues.apache.org/jira/browse/THRIFT-5440) - Add php8 to composer.json
+- [THRIFT-5318](https://issues.apache.org/jira/browse/THRIFT-5318) - PHP 8 compatible version of binary protocol
+
+### Python
+
+- [THRIFT-5352](https://issues.apache.org/jira/browse/THRIFT-5352) - Python: IDL exceptions with no fields can't be instantiated
+
+### Ruby
+
+- [THRIFT-5367](https://issues.apache.org/jira/browse/THRIFT-5367) - Ruby library crashes when using GC.compact
+- [THRIFT-5312](https://issues.apache.org/jira/browse/THRIFT-5312) - The Ruby compilation configuration in the .gemspec file is modified to be compatible with later bundler versions.
+
+### Rust
+
+- [THRIFT-5363](https://issues.apache.org/jira/browse/THRIFT-5363) - All-caps constant rendered incorrectly
+- [THRIFT-5314](https://issues.apache.org/jira/browse/THRIFT-5314) - Enum forward compatibility
+- [THRIFT-4101](https://issues.apache.org/jira/browse/THRIFT-4101) - Make auto-generated Rust enums and unions more user-extensible
+- [THRIFT-4098](https://issues.apache.org/jira/browse/THRIFT-4098) - Support user-defined output namespaces in generated Rust modules
 
 
 ## 0.14.2
