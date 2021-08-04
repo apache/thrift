@@ -1,4 +1,4 @@
-﻿/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements. See the NOTICE file
  * distributed with this work for additional information
@@ -17,22 +17,11 @@
  * under the License.
  */
 
-using System.Reflection;
-using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
+package tests
 
-[assembly: AssemblyTitle("RebusSample")]
-[assembly: AssemblyDescription("")]
-[assembly: AssemblyConfiguration("")]
-[assembly: AssemblyCompany("")]
-[assembly: AssemblyProduct("RebusSample")]
-[assembly: AssemblyCopyright("Copyright ©  2014")]
-[assembly: AssemblyTrademark("")]
-[assembly: AssemblyCulture("")]
+import (
+	"github.com/apache/thrift/lib/go/test/gopath/src/conflict/super"
+)
 
-[assembly: ComVisible(false)]
-
-[assembly: Guid("0af10984-40d3-453d-b1e5-421529e8c7e2")]
-
-[assembly: AssemblyVersion("0.16.0.0")]
-[assembly: AssemblyFileVersion("0.16.0.0")]
+// We just want to make sure that the compiler generated package compiles.
+var _ = super.GoUnusedProtection__

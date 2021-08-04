@@ -19,7 +19,7 @@
   -->
 
   <PropertyGroup>
-    <ThriftVersion>0.15.0</ThriftVersion>
+    <ThriftVersion>0.16.0</ThriftVersion>
     <ThriftVersionOutput>Thrift version $(ThriftVersion)</ThriftVersionOutput>
     <TargetFramework>net5.0</TargetFramework>
     <Version>$(ThriftVersion).0</Version>
@@ -74,6 +74,7 @@
     <!-- Generate the thrift test files -->
     <Exec Command="$(PathToThrift) -gen netstd:wcf,union,serial -r ./CassandraTest.thrift" />
     <Exec Command="$(PathToThrift) -gen netstd:wcf,union,serial -r ./optional_required_default.thrift" />
+    <Exec Command="$(PathToThrift) -gen netstd:wcf,union,serial -r ./name_conflicts.thrift" />
     <Exec Command="$(PathToThrift) -gen netstd:wcf,union,serial -r ./../../../../test/ThriftTest.thrift" />
     <Exec Command="$(PathToThrift) -gen netstd:wcf,union,serial -r ./../../../../contrib/fb303/if/fb303.thrift" />
     <Exec Command="$(PathToThrift) -gen netstd:wcf,union,serial -r ./Thrift5253.thrift" />

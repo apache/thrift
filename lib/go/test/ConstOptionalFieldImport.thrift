@@ -1,4 +1,4 @@
-﻿/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements. See the NOTICE file
  * distributed with this work for additional information
@@ -17,22 +17,20 @@
  * under the License.
  */
 
-using System.Reflection;
-using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
+namespace go constoptionalfielda
 
-[assembly: AssemblyTitle("RebusSample")]
-[assembly: AssemblyDescription("")]
-[assembly: AssemblyConfiguration("")]
-[assembly: AssemblyCompany("")]
-[assembly: AssemblyProduct("RebusSample")]
-[assembly: AssemblyCopyright("Copyright ©  2014")]
-[assembly: AssemblyTrademark("")]
-[assembly: AssemblyCulture("")]
+enum Foo {
+  One = 1,
+  Two = 2,
+}
 
-[assembly: ComVisible(false)]
+typedef Foo TypedefAFoo
 
-[assembly: Guid("0af10984-40d3-453d-b1e5-421529e8c7e2")]
-
-[assembly: AssemblyVersion("0.16.0.0")]
-[assembly: AssemblyFileVersion("0.16.0.0")]
+typedef bool TypedefABool
+typedef i8 TypedefAI8
+typedef i16 TypedefAI16
+typedef i32 TypedefAI32
+typedef i64 TypedefAI64
+typedef double TypedefADouble
+typedef string TypedefAString
+typedef binary TypedefABinary
