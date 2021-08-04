@@ -58,6 +58,8 @@ environment:
      APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015
 
    - PROFILE: MINGW
+     # Currently the the latest MSYS2 is in the following image:
+     APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019
      PLATFORM: x64
      CONFIGURATION: RelWithDebInfo
      DISABLED_TESTS: (StalenessCheckTest)

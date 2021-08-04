@@ -20,13 +20,17 @@
 @ECHO OFF
 SETLOCAL EnableDelayedExpansion
 
-CD build\appveyor                          || EXIT /B
-CALL win_banner_install.bat                 || EXIT /B
-CALL win_setenv.bat                         || EXIT /B
-CALL win_showenv.bat                        || EXIT /B
+CD build\appveyor || EXIT /B
+CALL win_banner_install.bat || EXIT /B
+CALL win_setenv.bat || EXIT /B
+CALL win_showenv.bat || EXIT /B
 
 SET PACKAGES=^
-  --needed -S bison flex make ^
+  base-devel ^
+  mingw-w64-x86_64-toolchain ^
+  bison ^
+  flex ^
+  make ^
   mingw-w64-%MINGWPLAT%-boost ^
   mingw-w64-%MINGWPLAT%-cmake ^
   mingw-w64-%MINGWPLAT%-libevent ^
@@ -36,24 +40,20 @@ SET PACKAGES=^
 
 ::mingw-w64-%MINGWPLAT%-qt5 : WAY too large (1GB download!) - tested in cygwin builds anyway
 
-:: the following uninstall and system upgrade was causing issues; appveyor's is relatively new
-:: Remove old packages that no longer exist to avoid an error
-:: %BASH% -lc "pacman --noconfirm --remove libcatgets catgets || true" || EXIT /B
-
-:: Remove incompatible packages 8.2.0-3 and 7.3.0-2 (mingw packaging bugs if you ask me!)
-:: %BASH% -lc "pacman --noconfirm --remove mingw-w64-x86_64-gcc-ada mingw-w64-x86_64-gcc-objc || true" || EXIT /B
-:: %BASH% -lc "pacman --noconfirm --remove mingw-w64-x86_64-gcc-ada mingw-w64-x86_64-gcc-objc || true" || EXIT /B
-
 :: Upgrade things
-:: %BASH% -lc "pacman --noconfirm -Syu %IGNORE%"                       || EXIT /B
-:: %BASH% -lc "pacman --noconfirm -Su %IGNORE%"                        || EXIT /B
+%BASH% -lc "pacman --noconfirm -Syu %IGNORE%" || EXIT /B
+%BASH% -lc "pacman --noconfirm -Su %IGNORE%" || EXIT /B
+%BASH% -lc "pacman --noconfirm --needed -S %PACKAGES%" || EXIT /B
 
-:: Updata the new key
-%BASH% -lc "curl -O http://repo.msys2.org/msys/x86_64/msys2-keyring-r21.b39fb11-1-any.pkg.tar.xz"         || EXIT /B
-%BASH% -lc "curl -O http://repo.msys2.org/msys/x86_64/msys2-keyring-r21.b39fb11-1-any.pkg.tar.xz.sig"     || EXIT /B
-%BASH% -lc "pacman-key --verify msys2-keyring-r21.b39fb11-1-any.pkg.tar.xz.sig"                           || EXIT /B
-%BASH% -lc "pacman --noconfirm -U --config <(echo) msys2-keyring-r21.b39fb11-1-any.pkg.tar.xz"            || EXIT /B
-:: Upgrade things
-%BASH% -lc "pacman --noconfirm -Sy"                                                                       || EXIT /B
-%BASH% -lc "pacman --noconfirm -Udd https://repo.msys2.org/msys/x86_64/pacman-5.2.2-5-x86_64.pkg.tar.xz"    || EXIT /B
-%BASH% -lc "pacman --noconfirm %PACKAGES%"                                                                || EXIT /B
+
+:: These instructions are for a manual update of specific package versions.
+:: Fall back to this in case the above does not work anymore (broken upstream).
+:::: Updata the new key
+::%BASH% -lc "curl -O http://repo.msys2.org/msys/x86_64/msys2-keyring-1~20210213-2-any.pkg.tar.xz" || EXIT /B
+::%BASH% -lc "curl -O http://repo.msys2.org/msys/x86_64/msys2-keyring-1~20210213-2-any.pkg.tar.xz.sig" || EXIT /B
+::%BASH% -lc "pacman-key --verify msys2-keyring-1~20210213-2-any.pkg.tar.xz.sig" || EXIT /B
+::%BASH% -lc "pacman --noconfirm -U --config <(echo) msys2-keyring-1~20210213-2-any.pkg.tar.xz" || EXIT /B
+:::: Upgrade things
+::%BASH% -lc "pacman --noconfirm -Sy" || EXIT /B
+::%BASH% -lc "pacman --noconfirm -Udd https://repo.msys2.org/msys/x86_64/pacman-5.2.2-5-x86_64.pkg.tar.xz" || EXIT /B
+::%BASH% -lc "pacman --noconfirm --needed -S %PACKAGES%" || EXIT /B
