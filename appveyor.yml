@@ -65,24 +65,16 @@ environment:
      CONFIGURATION: RelWithDebInfo
      DISABLED_TESTS: (StalenessCheckTest)
 
-   #- PROFILE: CYGWIN
-   #  PROFILE_CLASS: CYGWIN
-   #  PLATFORM: x64
-   #  CONFIGURATION: RelWithDebInfo
-   #  DISABLED_TESTS: (ZlibTest|OpenSSLManualInitTest|TNonblockingServerTest)
+   - PROFILE: CYGWIN
+     PROFILE_CLASS: CYGWIN
+     PLATFORM: x64
+     CONFIGURATION: RelWithDebInfo
+     DISABLED_TESTS: (ZlibTest|OpenSSLManualInitTest|TNonblockingServerTest)
 
-install:
-  - cd %APPVEYOR_BUILD_FOLDER%
-  - call build\appveyor\%PROFILE_CLASS%-appveyor-install.bat
-  - refreshenv
 
 build_script:
   - cd %APPVEYOR_BUILD_FOLDER%
-  - call build\appveyor\%PROFILE_CLASS%-appveyor-build.bat
-
-test_script:
-  - cd %APPVEYOR_BUILD_FOLDER%
-  - call build\appveyor\%PROFILE_CLASS%-appveyor-test.bat
+  - call build\appveyor\%PROFILE_CLASS%-appveyor-full.bat
 
 
 # artifact capture disabled as it might increase service cost for little gain:
