@@ -15,9 +15,9 @@
 @ECHO OFF
 SETLOCAL EnableDelayedExpansion
 
-CD build\appveyor                           || EXIT /B
-CALL cl_banner_build.bat                    || EXIT /B
-CALL cl_setenv.bat                          || EXIT /B
+CD build\appveyor || EXIT /B
+CALL cl_banner_build.bat || EXIT /B
+CALL cl_setenv.bat || EXIT /B
 
 SET CMAKEARGS=^
   -G'%GENERATOR%' ^

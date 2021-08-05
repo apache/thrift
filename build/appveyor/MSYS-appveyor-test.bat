@@ -15,10 +15,10 @@
 @ECHO OFF
 SETLOCAL EnableDelayedExpansion
 
-CD build\appveyor              || EXIT /B
-CALL cl_banner_test.bat        || EXIT /B
-CALL cl_setenv.bat             || EXIT /B
-CD "%BUILDDIR%"                || EXIT /B
+CD build\appveyor || EXIT /B
+CALL cl_banner_test.bat || EXIT /B
+CALL cl_setenv.bat || EXIT /B
+CD "%BUILDDIR%" || EXIT /B
 
 :: randomly fails on mingw; see Jira THRIFT-4106
 SET DISABLED_TESTS=concurrency_test

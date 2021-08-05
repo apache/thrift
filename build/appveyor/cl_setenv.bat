@@ -21,7 +21,7 @@ IF "%PROFILE%" == "MSVC2012" (
 ) ELSE IF "%PROFILE%" == "MSVC2015" (
   CALL "C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\vcvarsall.bat" %PLATFORM%
 ) ELSE IF "%PROFILE%" == "MSVC2017" (
-  CALL :SETUPNEWERMSVC    || EXIT /B
+  CALL :SETUPNEWERMSVC || EXIT /B
 ) ELSE IF "%PROFILE%" == "MINGW" (
   REM Supported, nothing special to do here.
 ) ELSE IF "%PROFILE%" == "CYGWIN" (
@@ -31,8 +31,8 @@ IF "%PROFILE%" == "MSVC2012" (
   EXIT /B 1
 )
 
-CALL cl_setcompiler.bat   || EXIT /B
-CALL cl_setgenerator.bat  || EXIT /B
+CALL cl_setcompiler.bat || EXIT /B
+CALL cl_setgenerator.bat || EXIT /B
 
 SET APPVEYOR_SCRIPTS=%APPVEYOR_BUILD_FOLDER%\build\appveyor
 SET BUILDDIR=%APPVEYOR_BUILD_FOLDER%\..\build\%PROFILE%\%PLATFORM%

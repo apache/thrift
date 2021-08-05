@@ -15,8 +15,8 @@
 @ECHO OFF
 SETLOCAL EnableDelayedExpansion
 
-CD build\appveyor              || EXIT /B
-CALL cl_banner_test.bat        || EXIT /B
-CALL cl_setenv.bat             || EXIT /B
+CD build\appveyor || EXIT /B
+CALL cl_banner_test.bat || EXIT /B
+CALL cl_setenv.bat || EXIT /B
 
 %BASH% -lc "cd %BUILDDIR% && ctest.exe -C %CONFIGURATION% --timeout 300 -VV -E '%DISABLED_TESTS%'" || EXIT /B

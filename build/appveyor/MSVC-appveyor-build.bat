@@ -15,11 +15,11 @@
 @ECHO OFF
 SETLOCAL EnableDelayedExpansion
 
-CD build\appveyor                           || EXIT /B
-CALL cl_banner_build.bat                    || EXIT /B
-CALL cl_setenv.bat                          || EXIT /B
-MKDIR "%BUILDDIR%"                          || EXIT /B
-CD "%BUILDDIR%"                             || EXIT /B
+CD build\appveyor || EXIT /B
+CALL cl_banner_build.bat || EXIT /B
+CALL cl_setenv.bat || EXIT /B
+MKDIR "%BUILDDIR%" || EXIT /B
+CD "%BUILDDIR%" || EXIT /B
 
 :: When libraries cannot be found, things might have been updated
 :: so uncomment this and submit a pull request to see what's there
@@ -51,9 +51,9 @@ CD "%BUILDDIR%"                             || EXIT /B
     -DOPENSSL_USE_STATIC_LIBS=OFF ^
     -DZLIB_LIBRARY="%WIN3P%\zlib-inst\lib\zlib%ZLIB_LIB_SUFFIX%.lib" ^
     -DZLIB_ROOT="%WIN3P%\zlib-inst" ^
-    -DWITH_PYTHON=%WITH_PYTHON%             || EXIT /B
+    -DWITH_PYTHON=%WITH_PYTHON% || EXIT /B
 @ECHO OFF
 
 cmake --build . ^
   --config "%CONFIGURATION%" ^
-  --target INSTALL                          || EXIT /B
+  --target INSTALL || EXIT /B

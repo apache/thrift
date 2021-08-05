@@ -14,10 +14,10 @@
 
 @ECHO ON
 SETLOCAL EnableDelayedExpansion
-CD build\appveyor              || EXIT /B
-CALL cl_banner_test.bat        || EXIT /B
-CALL cl_setenv.bat             || EXIT /B
-CD "%BUILDDIR%"                || EXIT /B
+CD build\appveyor || EXIT /B
+CALL cl_banner_test.bat || EXIT /B
+CALL cl_setenv.bat || EXIT /B
+CD "%BUILDDIR%" || EXIT /B
 
 DIR C:\libraries
 DIR C:\libraries\boost_1_59_0
