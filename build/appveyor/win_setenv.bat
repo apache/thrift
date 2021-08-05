@@ -14,14 +14,39 @@
 
 @ECHO OFF
 
-IF "%PROFILE%" == "MSVC2012" (
-  CALL "C:\Program Files (x86)\Microsoft Visual Studio 11.0\VC\vcvarsall.bat" %PLATFORM%
-) ELSE IF "%PROFILE%" == "MSVC2013" (
-  CALL "C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\vcvarsall.bat" %PLATFORM%
-) ELSE IF "%PROFILE%" == "MSVC2015" (
-  CALL "C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\vcvarsall.bat" %PLATFORM%
+:: PLATFORM is x86 or x64
+:: NORM_PLATFORM is 32 or 64
+:: MSVCPLAT is x86 or amd64
+IF "%PLATFORM%" == "x86" (
+    SET NORM_PLATFORM=32
+) ELSE (
+    SET NORM_PLATFORM=64
+)
+IF "%PLATFORM%" == "x86" (
+    SET MSVCPLAT=x86
+) ELSE (
+    SET MSVCPLAT=amd64
+)
+
+IF "%PROFILE%" == "MSVC2015" (
+  IF "%PLATFORM%" == "x86" (
+    CALL "C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\vcvarsall.bat" x86 || EXIT /B
+  ) ELSE (
+    CALL "C:\Program Files\Microsoft SDKs\Windows\v7.1\Bin\SetEnv.cmd" /x64 || EXIT /B
+    CALL "C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\vcvarsall.bat" x86_amd64 || EXIT /B
+  )
 ) ELSE IF "%PROFILE%" == "MSVC2017" (
-  CALL :SETUPNEWERMSVC || EXIT /B
+  IF "%PLATFORM%" == "x86" (
+    CALL "C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\VC\Auxiliary\Build\vcvars32.bat" || EXIT /B
+  ) ELSE (
+    CALL "C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\VC\Auxiliary\Build\vcvars64.bat" || EXIT /B
+  )
+) ELSE IF "%PROFILE%" == "MSVC2019" (
+  IF "%PLATFORM%" == "x86" (
+    CALL "C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Auxiliary\Build\vcvars32.bat" || EXIT /B
+  ) ELSE (
+    CALL "C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Auxiliary\Build\vcvars64.bat" || EXIT /B
+  )
 ) ELSE IF "%PROFILE%" == "MINGW" (
   REM Supported, nothing special to do here.
 ) ELSE IF "%PROFILE%" == "CYGWIN" (
@@ -36,13 +61,9 @@ CALL win_setgenerator.bat || EXIT /B
 
 SET APPVEYOR_SCRIPTS=%APPVEYOR_BUILD_FOLDER%\build\appveyor
 SET BUILDDIR=%APPVEYOR_BUILD_FOLDER%\..\build\%PROFILE%\%PLATFORM%
-SET INSTDIR=%APPVEYOR_BUILD_FOLDER%\..\build\%PROFILE%\%PLATFORM%
+SET INSTDIR=%APPVEYOR_BUILD_FOLDER%\..\install\%PROFILE%\%PLATFORM%
 SET SRCDIR=%APPVEYOR_BUILD_FOLDER%
 
-:: PLATFORM is x64 or x86
-:: NORM_PLATFORM is 64 or 32
-SET NORM_PLATFORM=%PLATFORM:~-2,2%
-IF "%NORM_PLATFORM%" == "86" (SET NORM_PLATFORM=32)
 
 IF "%PROFILE:~0,4%" == "MSVC" (
 
@@ -56,13 +77,13 @@ IF "%PROFILE:~0,4%" == "MSVC" (
     SET WITH_PYTHON=OFF
   ) ELSE (
     SET WITH_PYTHON=ON
-    IF /i "%PLATFORM%" == "x64" SET PTEXT=-x64
+    IF /i "%PLATFORM%" == "x64" (SET PTEXT=-x64)
     SET PATH=C:\Python%PYTHON_VERSION:.=%!PTEXT!\scripts;C:\Python%PYTHON_VERSION:.=%!PTEXT!;!PATH!
   )
   IF "%CONFIGURATION%" == "Debug" (SET ZLIB_LIB_SUFFIX=d)
 
   IF NOT "%QT_VERSION%" == "" (
-    IF /i "%PLATFORM%" == "x64" SET QTEXT=_64
+    IF /i "%PLATFORM%" == "x64" (SET QTEXT=_64)
     SET PATH=C:\Qt\%QT_VERSION%\%PROFILE%!QTEXT!\bin;!PATH!
   )
 
@@ -70,8 +91,11 @@ IF "%PROFILE:~0,4%" == "MSVC" (
 
   :: PLATFORM = x86 means MINGWPLAT i686
   :: PLATFORM = x64 means MINGWPLAT x86_64
-  SET MINGWPLAT=x86_64
-  IF "%PLATFORM%" == "x86" (SET MINGWPLAT=i686)
+  IF "%PLATFORM%" == "x86" (
+    SET MINGWPLAT=i686
+  ) ELSE (
+    SET MINGWPLAT=x86_64
+  )
 
   SET BASH=C:\msys64\usr\bin\bash.exe
   !BASH! -lc "sed -i '/export PATH=\/mingw32\/bin/d' ~/.bash_profile && sed -i '/export PATH=\/mingw64\/bin/d' ~/.bash_profile && echo 'export PATH=/mingw%NORM_PLATFORM%/bin:$PATH' >> ~/.bash_profile" || EXIT /B
@@ -85,38 +109,24 @@ IF "%PROFILE:~0,4%" == "MSVC" (
 
 ) ELSE IF "%PROFILE:~0,4%" == "CYGW" (
 
-  SET CYGWINROOT=C:\cygwin
-  IF "%PLATFORM%" == "x64" (SET CYGWINROOT=!CYGWINROOT!64)
+  IF "%PLATFORM%" == "x64" (
+    SET CYGWINROOT=C:\cygwin64
+  ) ELSE (
+    SET CYGWINROOT=C:\cygwin
+  )
+
+  IF "%PLATFORM%" == "x64" (
+    SET SETUP=!CYGWINROOT!\setup-x86_64.exe
+  ) ELSE (
+    SET SETUP=!CYGWINROOT!\setup-x86.exe
+  )
 
   SET BASH=!CYGWINROOT!\bin\bash.exe
-  SET SETUP=!CYGWINROOT!\setup-x86
-  IF "%PLATFORM%" == "x64" (SET SETUP=!SETUP!_64)
-  SET SETUP=!SETUP!.exe
-
   SET BUILDDIR=%BUILDDIR:\=/%
   SET BUILDDIR=/cygdrive/c!BUILDDIR:~2!
   SET INSTDIR=%INSTDIR:\=/%
-  SET INSTDIR_CYG=/cygdrive/c!INSTDIR:~2!
+  SET INSTDIR=/cygdrive/c!INSTDIR:~2!
   SET SRCDIR=%SRCDIR:\=/%
   SET SRCDIR=/cygdrive/c!SRCDIR:~2!
 
 )
-
-GOTO :EOF
-
-:SETUPNEWERMSVC
-  :: If VsDevCmd.bat has already executed, as is the case in the
-  :: msvc2017 docker container, skip this...
-  IF NOT DEFINED VSCMD_VER (
-    FOR /F "USEBACKQ TOKENS=*" %%i IN (`call "%ProgramFiles(x86)%\Microsoft Visual Studio\Installer\vswhere.exe" -version "[15.0,16.0)" -property installationPath`) DO (
-      IF "%MSVCROOT%" == "" (SET MSVCROOT=%%i)
-    )
-    SET MSVCPLAT=x86
-    IF "%PLATFORM%" == "x64" (SET MSVCPLAT=amd64)
-
-    SET CURRENTDIR=%CD%
-    CALL "!MSVCROOT!\Common7\Tools\VsDevCmd.bat" -arch=!MSVCPLAT! || EXIT /B
-    CD %CURRENTDIR%
-    EXIT /B
-  )
-:EOF

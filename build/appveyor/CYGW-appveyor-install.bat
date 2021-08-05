@@ -26,15 +26,10 @@ CALL win_setenv.bat || EXIT /B
 CALL win_showenv.bat || EXIT /B
 
 ::
-:: Upgrades cygwin to the latest, if you want...
-::
-:: appveyor DownloadFile "https://cygwin.com/setup-x86_64.exe"
-:: setup-x86_64.exe --quiet-mode --wait --upgrade-also --packages="gcc-g++"
-
-::
-:: Install apt-cyg for package management
+:: Install apt-cyg for package management because its easier to use
+:: than Cygwins setup.exe. But both are possible to use.
 ::
 
-%BASH% -lc "wget rawgit.com/transcode-open/apt-cyg/master/apt-cyg && install apt-cyg /bin && rm -f apt-cyg" || EXIT /B
+%BASH% -lc "wget https://rawgit.com/transcode-open/apt-cyg/master/apt-cyg && install apt-cyg /bin && rm -f apt-cyg" || EXIT /B
 %BASH% -lc "apt-cyg update" || EXIT /B
-%BASH% -lc "apt-cyg install bison cmake flex gcc-g++ libboost-devel libevent-devel make openssl-devel xz zlib-devel" || EXIT /B
+%BASH% -lc "apt-cyg install unzip xz cmake make bison flex gcc-g++ libboost-devel libevent-devel openssl-devel zlib-devel" || EXIT /B

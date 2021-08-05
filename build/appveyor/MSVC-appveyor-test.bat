@@ -14,19 +14,13 @@
 
 @ECHO ON
 SETLOCAL EnableDelayedExpansion
+
 CD build\appveyor || EXIT /B
 CALL win_banner_test.bat || EXIT /B
 CALL win_setenv.bat || EXIT /B
-CD "%BUILDDIR%" || EXIT /B
-
-DIR C:\libraries
-DIR C:\libraries\boost_1_59_0
-DIR C:\libraries\boost_1_60_0
-DIR C:\libraries\boost_1_62_0
-DIR C:\libraries\boost_1_63_0
-DIR C:\libraries\boost_1_64_0
 
 :: Add directories to the path to find DLLs of third party libraries so tests run properly!
 SET PATH=%BOOST_LIBRARYDIR:/=\%;%OPENSSL_ROOT%\bin;%WIN3P%\zlib-inst\bin;%PATH%
 
+CD "%BUILDDIR%" || EXIT /B
 ctest -C %CONFIGURATION% --timeout 300 -VV -E "(%DISABLED_TESTS%)" || EXIT /B

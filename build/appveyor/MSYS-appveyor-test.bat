@@ -18,9 +18,9 @@ SETLOCAL EnableDelayedExpansion
 CD build\appveyor || EXIT /B
 CALL win_banner_test.bat || EXIT /B
 CALL win_setenv.bat || EXIT /B
-CD "%BUILDDIR%" || EXIT /B
 
 :: randomly fails on mingw; see Jira THRIFT-4106
 SET DISABLED_TESTS=concurrency_test
 
+CD "%BUILDDIR%" || EXIT /B
 %BASH% -lc "cd %BUILDDIR_MSYS% && ctest.exe -C %CONFIGURATION% --timeout 300 -VV -E '(%DISABLED_TESTS%)'" || EXIT /B

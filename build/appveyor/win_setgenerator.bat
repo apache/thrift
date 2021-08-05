@@ -40,40 +40,27 @@
 
 IF DEFINED GENERATOR (
   ECHO [warn ] using existing environment variable GENERATOR
-  EXIT /B 0
-)
-
-
-IF "%PROFILE:~0,4%" == "MING" (
+) ELSE IF "%PROFILE:~0,4%" == "MING" (
   SET GENERATOR=MinGW Makefiles
-
 ) ELSE IF "%PROFILE:~0,4%" == "CYGW" (
   SET GENERATOR=Unix Makefiles
-
 ) ELSE IF "%PROFILE:~0,4%" == "MSYS" (
   SET GENERATOR=MSYS Makefiles
-) ELSE (
+) ELSE IF "%PROFILE:~0,4%" == "MSVC" (
   IF /i "%PLATFORM%" == "x64" SET GENARCH= Win64
-  CALL :CHECK 16
-  IF !ERRORLEVEL! == 0 SET GENERATOR=Visual Studio 10 2010!GENARCH!
-  CALL :CHECK 17
-  IF !ERRORLEVEL! == 0 SET GENERATOR=Visual Studio 11 2012!GENARCH!
-  CALL :CHECK 18
-  IF !ERRORLEVEL! == 0 SET GENERATOR=Visual Studio 12 2013!GENARCH!
-  CALL :CHECK 19.0
-  IF !ERRORLEVEL! == 0 SET GENERATOR=Visual Studio 14 2015!GENARCH!
-  CALL :CHECK 19.1
-  IF !ERRORLEVEL! == 0 SET GENERATOR=Visual Studio 15 2017!GENARCH!
-)
-
-IF NOT DEFINED GENERATOR (
-  ECHO [error] unable to determine the CMake generator to use
+  IF "%PROFILE%" == "MSVC2015" (
+    SET GENERATOR=Visual Studio 14 2015!GENARCH!
+  ) ELSE IF "%PROFILE%" == "MSVC2017" (
+    SET GENERATOR=Visual Studio 15 2017!GENARCH!
+  ) ELSE IF "%PROFILE%" == "MSVC2019" (
+    SET GENERATOR=Visual Studio 16 2019!GENARCH!
+  ) ELSE (
+    ECHO [error] unable to determine the CMake generator to use from MSVC profile %PROFILE%
+    EXIT /B 1
+  )
+) ELSE (
+  ECHO [error] unable to determine the CMake generator to use from profile %PROFILE%
   EXIT /B 1
 )
 
 ECHO [info ] using CMake generator        %GENERATOR%
-EXIT /B 0
-
-:CHECK
-cl /? 2>&1 | findstr /C:"Version %1%" > nul
-EXIT /B
