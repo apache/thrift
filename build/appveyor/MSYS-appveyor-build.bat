@@ -44,5 +44,5 @@ SET CMAKEARGS=-G\"%GENERATOR%\" ^
   -DWITH_SHARED_LIB=OFF ^
   -DWITH_STATIC_LIB=ON
 
-%BASH% -lc "mkdir %BUILDDIR_MSYS% && cd %BUILDDIR_MSYS% && %CMAKE% %SRCDIR_MSYS% %CMAKEARGS% && %CMAKE% --build . --config %CONFIGURATION% --target install" || EXIT /B
+%BASH% -lc "mkdir %BUILDDIR_MSYS% && cd %BUILDDIR_MSYS% && %CMAKE% %SRCDIR_MSYS% %CMAKEARGS% && %CMAKE% --build . --config %CONFIGURATION% && %CMAKE% --install . --config %CONFIGURATION%" || EXIT /B
 @ECHO OFF

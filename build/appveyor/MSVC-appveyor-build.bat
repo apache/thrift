@@ -54,6 +54,6 @@ cmake "%SRCDIR%" ^
   -DWITH_PYTHON=%WITH_PYTHON% || EXIT /B
 @ECHO OFF
 
-cmake --build . ^
-  --config "%CONFIGURATION%" ^
-  --target install || EXIT /B
+cmake --build . --config "%CONFIGURATION%" || EXIT /B
+
+cmake --install . --config "%CONFIGURATION%" || EXIT /B
