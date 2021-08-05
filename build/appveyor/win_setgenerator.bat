@@ -40,13 +40,13 @@
 
 IF DEFINED GENERATOR (
   ECHO [warn ] using existing environment variable GENERATOR
-) ELSE IF "%PROFILE:~0,4%" == "MING" (
+) ELSE IF "%PROFILE_CLASS%" == "MINGW" (
   SET GENERATOR=MinGW Makefiles
-) ELSE IF "%PROFILE:~0,4%" == "CYGW" (
+) ELSE IF "%PROFILE_CLASS%" == "CYGWIN" (
   SET GENERATOR=Unix Makefiles
-) ELSE IF "%PROFILE:~0,4%" == "MSYS" (
+) ELSE IF "%PROFILE_CLASS%" == "MSYS" (
   SET GENERATOR=MSYS Makefiles
-) ELSE IF "%PROFILE:~0,4%" == "MSVC" (
+) ELSE IF "%PROFILE_CLASS%" == "MSVC" (
   IF /i "%PLATFORM%" == "x64" SET GENARCH= Win64
   IF "%PROFILE%" == "MSVC2015" (
     SET GENERATOR=Visual Studio 14 2015!GENARCH!

@@ -14,7 +14,7 @@
 
 ECHO/
 ECHO ===============================================================================
-IF "%PROFILE:~0,4%" == "MSVC" (
+IF "%PROFILE_CLASS%" == "MSVC" (
 ECHO Versions
 ECHO -------------------------------------------------------------------------------
 ECHO boost                 = %BOOST_VERSION%
@@ -49,7 +49,7 @@ ECHO SRCDIR                = %SRCDIR%
 ECHO WIN3P                 = %WIN3P%
 ECHO WITH_PYTHON           = %WITH_PYTHON%
 ECHO ZLIB_STATIC_SUFFIX    = %ZLIB_STATIC_SUFFIX%
-IF NOT "%PROFILE:~0,4%" == "MSVC" (
+IF NOT "%PROFILE_CLASS%" == "MSVC" (
   ECHO/
   ECHO UNIXy PATH
   ECHO -------------------------------------------------------------------------------

@@ -28,8 +28,8 @@ SET PLATFORM=%2
 SET PROFILE=%3
 
 CD %APPVEYOR_BUILD_FOLDER%
-CALL build\appveyor\%PROFILE:~0,4%-appveyor-install.bat || EXIT /B
+CALL build\appveyor\%PROFILE_CLASS%-appveyor-install.bat || EXIT /B
 CD %APPVEYOR_BUILD_FOLDER%
-CALL build\appveyor\%PROFILE:~0,4%-appveyor-build.bat || EXIT /B
+CALL build\appveyor\%PROFILE_CLASS%-appveyor-build.bat || EXIT /B
 CD %APPVEYOR_BUILD_FOLDER%
-CALL build\appveyor\%PROFILE:~0,4%-appveyor-test.bat
+CALL build\appveyor\%PROFILE_CLASS%-appveyor-test.bat

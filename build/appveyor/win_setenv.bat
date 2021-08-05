@@ -65,7 +65,7 @@ SET INSTDIR=%APPVEYOR_BUILD_FOLDER%\..\install\%PROFILE%\%PLATFORM%
 SET SRCDIR=%APPVEYOR_BUILD_FOLDER%
 
 
-IF "%PROFILE:~0,4%" == "MSVC" (
+IF "%PROFILE_CLASS%" == "MSVC" (
 
   :: FindBoost needs forward slashes so cmake doesn't see something as an escaped character
   SET BOOST_ROOT=C:/Libraries/boost_%BOOST_VERSION:.=_%
@@ -87,7 +87,7 @@ IF "%PROFILE:~0,4%" == "MSVC" (
     SET PATH=C:\Qt\%QT_VERSION%\%PROFILE%!QTEXT!\bin;!PATH!
   )
 
-) ELSE IF "%PROFILE:~0,4%" == "MING" (
+) ELSE IF "%PROFILE_CLASS%" == "MINGW" (
 
   :: PLATFORM = x86 means MINGWPLAT i686
   :: PLATFORM = x64 means MINGWPLAT x86_64
@@ -107,7 +107,7 @@ IF "%PROFILE:~0,4%" == "MSVC" (
   SET SRCDIR=%SRCDIR:\=/%
   SET SRCDIR=/c!SRCDIR:~2!
 
-) ELSE IF "%PROFILE:~0,4%" == "CYGW" (
+) ELSE IF "%PROFILE_CLASS%" == "CYGWIN" (
 
   IF "%PLATFORM%" == "x64" (
     SET CYGWINROOT=C:\cygwin64

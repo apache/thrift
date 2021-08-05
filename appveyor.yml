@@ -34,6 +34,7 @@ matrix:
 environment:
   matrix:
    - PROFILE: MSVC2017
+     PROFILE_CLASS: MSVC
      APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
      PLATFORM: x64
      CONFIGURATION: Release
@@ -45,6 +46,7 @@ environment:
      ZLIB_VERSION: 1.2.11
 
    - PROFILE: MSVC2015
+     PROFILE_CLASS: MSVC
      APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015
      PLATFORM: x86
      CONFIGURATION: Debug
@@ -56,6 +58,7 @@ environment:
      ZLIB_VERSION: 1.2.8
 
    - PROFILE: MINGW
+     PROFILE_CLASS: MINGW
      # Currently the the latest MSYS2 is in the following image:
      APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019
      PLATFORM: x64
@@ -63,22 +66,23 @@ environment:
      DISABLED_TESTS: (StalenessCheckTest)
 
    #- PROFILE: CYGWIN
+   #  PROFILE_CLASS: CYGWIN
    #  PLATFORM: x64
    #  CONFIGURATION: RelWithDebInfo
    #  DISABLED_TESTS: (ZlibTest|OpenSSLManualInitTest|TNonblockingServerTest)
 
 install:
   - cd %APPVEYOR_BUILD_FOLDER%
-  - call build\appveyor\%PROFILE:~0,4%-appveyor-install.bat
+  - call build\appveyor\%PROFILE_CLASS%-appveyor-install.bat
   - refreshenv
 
 build_script:
   - cd %APPVEYOR_BUILD_FOLDER%
-  - call build\appveyor\%PROFILE:~0,4%-appveyor-build.bat
+  - call build\appveyor\%PROFILE_CLASS%-appveyor-build.bat
 
 test_script:
   - cd %APPVEYOR_BUILD_FOLDER%
-  - call build\appveyor\%PROFILE:~0,4%-appveyor-test.bat
+  - call build\appveyor\%PROFILE_CLASS%-appveyor-test.bat
 
 
 # artifact capture disabled as it might increase service cost for little gain:
