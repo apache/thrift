@@ -21,9 +21,9 @@
 SETLOCAL EnableDelayedExpansion
 
 CD build\appveyor || EXIT /B
-CALL cl_banner_install.bat || EXIT /B
-CALL cl_setenv.bat || EXIT /B
-CALL cl_showenv.bat || EXIT /B
+CALL win_banner_install.bat || EXIT /B
+CALL win_setenv.bat || EXIT /B
+CALL win_showenv.bat || EXIT /B
 
 ::
 :: Upgrades cygwin to the latest, if you want...

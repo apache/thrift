@@ -21,9 +21,9 @@
 SETLOCAL EnableDelayedExpansion
 
 CD build\appveyor || EXIT /B
-CALL cl_banner_install.bat || EXIT /B
-CALL cl_setenv.bat || EXIT /B
-CALL cl_showenv.bat || EXIT /B
+CALL win_banner_install.bat || EXIT /B
+CALL win_setenv.bat || EXIT /B
+CALL win_showenv.bat || EXIT /B
 MKDIR "%WIN3P%" || EXIT /B
 
 choco feature enable -n allowGlobalConfirmation || EXIT /B
@@ -48,7 +48,7 @@ call build-zlib.bat || EXIT /B
 CD "%APPVEYOR_SCRIPTS%" || EXIT /B
 call build-libevent.bat || EXIT /B
 
-:: python packages (correct path to pip set in cl_setenv.bat)
+:: python packages (correct path to pip set in win_setenv.bat)
 pip.exe ^
     install backports.ssl_match_hostname ^
             ipaddress ^

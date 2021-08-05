@@ -21,9 +21,9 @@
 SETLOCAL EnableDelayedExpansion
 
 CD build\appveyor                          || EXIT /B
-CALL cl_banner_install.bat                 || EXIT /B
-CALL cl_setenv.bat                         || EXIT /B
-CALL cl_showenv.bat                        || EXIT /B
+CALL win_banner_install.bat                 || EXIT /B
+CALL win_setenv.bat                         || EXIT /B
+CALL win_showenv.bat                        || EXIT /B
 
 :: We're going to keep boost at a version cmake understands
 SET BOOSTPKG=mingw-w64-x86_64-boost-1.64.0-3-any.pkg.tar.xz
@@ -45,4 +45,3 @@ SET PACKAGES=^
 :: does not have built-in dependencies for boost 1.66.0 yet
 :: -- this cuts down on build warning output --
 %BASH% -lc "wget http://repo.msys2.org/mingw/x86_64/%BOOSTPKG% && pacman --noconfirm --needed -U %BOOSTPKG% && rm %BOOSTPKG%" || EXIT /B
-

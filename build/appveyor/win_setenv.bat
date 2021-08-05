@@ -31,8 +31,8 @@ IF "%PROFILE%" == "MSVC2012" (
   EXIT /B 1
 )
 
-CALL cl_setcompiler.bat || EXIT /B
-CALL cl_setgenerator.bat || EXIT /B
+CALL win_setcompiler.bat || EXIT /B
+CALL win_setgenerator.bat || EXIT /B
 
 SET APPVEYOR_SCRIPTS=%APPVEYOR_BUILD_FOLDER%\build\appveyor
 SET BUILDDIR=%APPVEYOR_BUILD_FOLDER%\..\build\%PROFILE%\%PLATFORM%
