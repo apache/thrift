@@ -201,45 +201,48 @@ private:
 
   // Write the function that serializes a struct to its wire representation. If `struct_type` is `T_ARGS`
   // then all fields are considered "required", if not, the default optionality is used.
-  void render_struct_sync_write(t_struct *tstruct, t_rs_generator::e_struct_type struct_type);
+  // `is_sync` denotes whether to write the sync or async version of the code.
+  void render_struct_write(t_struct *tstruct, t_rs_generator::e_struct_type struct_type, bool is_sync = true);
 
   // Helper function that serializes a single struct field to its wire representation. Unpacks the
   // variable (since it may be optional) and serializes according to the optionality rules required by `req`.
   // Variables in auto-generated code are passed by reference. Since this function may be called in
   // contexts where the variable is *already* a reference you can set `field_var_is_ref` to `true` to avoid
   // generating an extra, unnecessary `&` that the compiler will have to automatically dereference.
-  void render_struct_field_sync_write(
+  void render_struct_field_write(
     const string &field_var,
     bool field_var_is_ref,
     t_field *tfield,
-    t_field::e_req req);
+    t_field::e_req req,
+    bool is_sync = true
+    );
 
   // Write the rust function that serializes a single type (i.e. a i32 etc.) to its wire representation.
   // Variables in auto-generated code are passed by reference. Since this function may be called in
   // contexts where the variable is *already* a reference you can set `type_var_is_ref` to `true` to avoid
   // generating an extra, unnecessary `&` that the compiler will have to automatically dereference.
-  void render_type_sync_write(const string &type_var, bool type_var_is_ref, t_type *ttype);
+  void render_type_write(const string &type_var, bool type_var_is_ref, t_type *ttype, bool is_sync = true);
 
   // Write a list to the output protocol. `list_variable` is the variable containing the list
   // that will be written to the output protocol.
   // Variables in auto-generated code are passed by reference. Since this function may be called in
   // contexts where the variable is *already* a reference you can set `list_var_is_ref` to `true` to avoid
   // generating an extra, unnecessary `&` that the compiler will have to automatically dereference.
-  void render_list_sync_write(const string &list_var, bool list_var_is_ref, t_list *tlist);
+  void render_list_write(const string &list_var, bool list_var_is_ref, t_list *tlist, bool is_sync = true);
 
   // Write a set to the output protocol. `set_variable` is the variable containing the set that will
   // be written to the output protocol.
   // Variables in auto-generated code are passed by reference. Since this function may be called in
   // contexts where the variable is *already* a reference you can set `set_var_is_ref` to `true` to avoid
   // generating an extra, unnecessary `&` that the compiler will have to automatically dereference.
-  void render_set_sync_write(const string &set_var, bool set_var_is_ref, t_set *tset);
+  void render_set_write(const string &set_var, bool set_var_is_ref, t_set *tset, bool is_sync = true);
 
   // Write a map to the output protocol. `map_variable` is the variable containing the map that will
   // be written to the output protocol.
   // Variables in auto-generated code are passed by reference. Since this function may be called in
   // contexts where the variable is *already* a reference you can set `map_var_is_ref` to `true` to avoid
   // generating an extra, unnecessary `&` that the compiler will have to automatically dereference.
-  void render_map_sync_write(const string &map_var, bool map_var_is_ref, t_map *tset);
+  void render_map_write(const string &map_var, bool map_var_is_ref, t_map *tset, bool is_sync = true);
 
   // Return `true` if we need to dereference ths type when writing an element from a container.
   // Iterations on rust containers are performed as follows: `for v in &values { ... }`
@@ -291,7 +294,7 @@ private:
   void render_union_impl(const string& union_name, t_struct* tstruct);
 
   // Write the `ENUM::write_to_out_protocol` function.
-  void render_union_sync_write(const string &union_name, t_struct *tstruct);
+  void render_union_write(const string &union_name, t_struct *tstruct, bool is_sync = true);
 
   // Write the `ENUM::read_from_in_protocol` function.
   void render_union_read(const string &union_name, t_struct *tstruct, bool is_sync = true);
@@ -573,7 +576,7 @@ void t_rs_generator::render_attributes_and_includes() {
   f_gen_ << endl;
   f_gen_ << "use thrift::OrderedFloat;" << endl;
   f_gen_ << "use thrift::{ApplicationError, ApplicationErrorKind, ProtocolError, ProtocolErrorKind, TThriftClient};" << endl;
-  f_gen_ << "use thrift::protocol::{TFieldIdentifier, TListIdentifier, TMapIdentifier, TMessageIdentifier, TMessageType, TInputProtocol, TInputStreamProtocol, TOutputProtocol, TSetIdentifier, TStructIdentifier, TType};" << endl;
+  f_gen_ << "use thrift::protocol::{TFieldIdentifier, TListIdentifier, TMapIdentifier, TMessageIdentifier, TMessageType, TInputProtocol, TInputStreamProtocol, TOutputProtocol, TOutputStreamProtocol, TSetIdentifier, TStructIdentifier, TType};" << endl;
   f_gen_ << "use thrift::protocol::field_id;" << endl;
   f_gen_ << "use thrift::protocol::verify_expected_message_type;" << endl;
   f_gen_ << "use thrift::protocol::verify_expected_sequence_number;" << endl;
@@ -945,6 +948,16 @@ void t_rs_generator::render_enum_impl(t_enum* tenum, const string& enum_name) {
   indent_down();
   f_gen_ << indent() << "}" << endl;
 
+  f_gen_ << indent() << "#[allow(clippy::trivially_copy_pass_by_ref)]" << endl;
+  f_gen_
+    << indent()
+    << "pub async fn write_to_out_stream_protocol(&self, o_prot: &mut dyn TOutputStreamProtocol) -> thrift::Result<()> {"
+    << endl;
+  indent_up();
+  f_gen_ << indent() << "o_prot.write_i32(self.0).await" << endl;
+  indent_down();
+  f_gen_ << indent() << "}" << endl;
+
   f_gen_
     << indent()
     << "pub fn read_from_in_protocol(i_prot: &mut dyn TInputProtocol) -> thrift::Result<" << enum_name << "> {"
@@ -1199,7 +1212,8 @@ void t_rs_generator::render_struct_impl(
 
   render_struct_read(struct_name, tstruct, struct_type, true);
   render_struct_read(struct_name, tstruct, struct_type, false);
-  render_struct_sync_write(tstruct, struct_type);
+  render_struct_write(tstruct, struct_type, true);
+  render_struct_write(tstruct, struct_type, false);
 
   if (struct_type == t_rs_generator::T_RESULT) {
     render_result_struct_to_result_method(tstruct);
@@ -1445,7 +1459,8 @@ void t_rs_generator::render_union_impl(const string& union_name, t_struct* tstru
 
   render_union_read(union_name, tstruct, true);
   render_union_read(union_name, tstruct, false);
-  render_union_sync_write(union_name, tstruct);
+  render_union_write(union_name, tstruct, true);
+  render_union_write(union_name, tstruct, false);
 
   indent_down();
   f_gen_ << "}" << endl;
@@ -1458,21 +1473,38 @@ void t_rs_generator::render_union_impl(const string& union_name, t_struct* tstru
 //
 //-----------------------------------------------------------------------------
 
-void t_rs_generator::render_struct_sync_write(
+void t_rs_generator::render_struct_write(
     t_struct *tstruct,
-    t_rs_generator::e_struct_type struct_type
+    t_rs_generator::e_struct_type struct_type,
+    bool is_sync
 ) {
-  f_gen_
+
+  string ending;
+  if (is_sync) {
+    ending = "?;";
+  } else {
+    ending = ".await?;";
+  };
+
+  if (is_sync) {
+    f_gen_
     << indent()
     << visibility_qualifier(struct_type)
     << "fn write_to_out_protocol(&self, o_prot: &mut dyn TOutputProtocol) -> thrift::Result<()> {"
     << endl;
+  } else {
+    f_gen_
+      << indent()
+      << visibility_qualifier(struct_type)
+      << "async fn write_to_out_stream_protocol(&self, o_prot: &mut dyn TOutputStreamProtocol) -> thrift::Result<()> {"
+      << endl;
+  };
   indent_up();
 
   // write struct header to output protocol
   // note: use the *original* struct name here
   f_gen_ << indent() << "let struct_ident = TStructIdentifier::new(\"" + tstruct->get_name() + "\");" << endl;
-  f_gen_ << indent() << "o_prot.write_struct_begin(&struct_ident)?;" << endl;
+  f_gen_ << indent() << "o_prot.write_struct_begin(&struct_ident)" << ending << endl;
 
   // write struct members to output protocol
   vector<t_field*> members = tstruct->get_sorted_members();
@@ -1482,29 +1514,43 @@ void t_rs_generator::render_struct_sync_write(
       t_field* member = (*members_iter);
       t_field::e_req member_req = actual_field_req(member, struct_type);
       string member_var("self." + rust_field_name(member));
-      render_struct_field_sync_write(member_var, false, member, member_req);
+      render_struct_field_write(member_var, false, member, member_req, is_sync);
     }
   }
 
   // write struct footer to output protocol
-  f_gen_ << indent() << "o_prot.write_field_stop()?;" << endl;
+  f_gen_ << indent() << "o_prot.write_field_stop()" << ending << endl;
   f_gen_ << indent() << "o_prot.write_struct_end()" << endl;
 
   indent_down();
   f_gen_ << indent() << "}" << endl;
 }
 
-void t_rs_generator::render_union_sync_write(const string &union_name, t_struct *tstruct) {
-  f_gen_
+void t_rs_generator::render_union_write(const string &union_name, t_struct *tstruct, bool is_sync) {
+  string ending;
+  if (is_sync) {
+    ending = "?;";
+  } else {
+    ending = ".await?;";
+  };
+
+  if (is_sync) {
+    f_gen_
     << indent()
     << "pub fn write_to_out_protocol(&self, o_prot: &mut dyn TOutputProtocol) -> thrift::Result<()> {"
     << endl;
+  } else {
+    f_gen_
+      << indent()
+      << "pub async fn write_to_out_stream_protocol(&self, o_prot: &mut dyn TOutputStreamProtocol) -> thrift::Result<()> {"
+      << endl;
+  };
   indent_up();
 
   // write struct header to output protocol
   // note: use the *original* struct name here
   f_gen_ << indent() << "let struct_ident = TStructIdentifier::new(\"" + tstruct->get_name() + "\");" << endl;
-  f_gen_ << indent() << "o_prot.write_struct_begin(&struct_ident)?;" << endl;
+  f_gen_ << indent() << "o_prot.write_struct_begin(&struct_ident)" << ending << endl;
 
   // write the enum field to the output protocol
   vector<t_field*> members = tstruct->get_sorted_members();
@@ -1527,7 +1573,7 @@ void t_rs_generator::render_union_sync_write(const string &union_name, t_struct 
         << "(" << match_var << ") => {"
         << endl;
       indent_up();
-      render_struct_field_sync_write("f", true, member, member_req);
+      render_struct_field_write("f", true, member, member_req, is_sync);
       indent_down();
       f_gen_ << indent() << "}," << endl;
     }
@@ -1536,19 +1582,27 @@ void t_rs_generator::render_union_sync_write(const string &union_name, t_struct 
   }
 
   // write struct footer to output protocol
-  f_gen_ << indent() << "o_prot.write_field_stop()?;" << endl;
+  f_gen_ << indent() << "o_prot.write_field_stop()" << ending << endl;
   f_gen_ << indent() << "o_prot.write_struct_end()" << endl;
 
   indent_down();
   f_gen_ << indent() << "}" << endl;
 }
 
-void t_rs_generator::render_struct_field_sync_write(
+void t_rs_generator::render_struct_field_write(
   const string &field_var,
   bool field_var_is_ref,
   t_field *tfield,
-  t_field::e_req req
+  t_field::e_req req,
+  bool is_sync
 ) {
+  string ending;
+  if (is_sync) {
+    ending = "?;";
+  } else {
+    ending = ".await?;";
+  };
+
   t_type* field_type = tfield->get_type();
   t_type* actual_type = get_true_type(field_type);
 
@@ -1564,9 +1618,9 @@ void t_rs_generator::render_struct_field_sync_write(
     string let_var((actual_type->is_base_type() && !actual_type->is_string()) ? "fld_var" : "ref fld_var");
     f_gen_ << indent() << "if let Some(" << let_var << ") = " << field_var << " {" << endl;
     indent_up();
-    f_gen_ << indent() << "o_prot.write_field_begin(&" << field_ident_string << ")?;" << endl;
-    render_type_sync_write("fld_var", true, field_type);
-    f_gen_ << indent() << "o_prot.write_field_end()?" << endl;
+    f_gen_ << indent() << "o_prot.write_field_begin(&" << field_ident_string << ")" << ending << endl;
+    render_type_write("fld_var", true, field_type, is_sync);
+    f_gen_ << indent() << "o_prot.write_field_end()?;" << endl;
     indent_down();
     /* FIXME: rethink how I deal with OPT_IN_REQ_OUT
     if (req == t_field::T_OPT_IN_REQ_OUT) {
@@ -1576,13 +1630,20 @@ void t_rs_generator::render_struct_field_sync_write(
     }*/
     f_gen_ << indent() << "}" << endl;
   } else {
-    f_gen_ << indent() << "o_prot.write_field_begin(&" << field_ident_string << ")?;" << endl;
-    render_type_sync_write(field_var, field_var_is_ref, tfield->get_type());
+    f_gen_ << indent() << "o_prot.write_field_begin(&" << field_ident_string << ")" << ending << endl;
+    render_type_write(field_var, field_var_is_ref, tfield->get_type(), is_sync);
     f_gen_ << indent() << "o_prot.write_field_end()?;" << endl;
   }
 }
 
-void t_rs_generator::render_type_sync_write(const string &type_var, bool type_var_is_ref, t_type *ttype) {
+void t_rs_generator::render_type_write(const string &type_var, bool type_var_is_ref, t_type *ttype, bool is_sync) {
+  string ending;
+  if (is_sync) {
+    ending = "?;";
+  } else {
+    ending = ".await?;";
+  };
+
   if (ttype->is_base_type()) {
     t_base_type* tbase_type = (t_base_type*)ttype;
     switch (tbase_type->get_base()) {
@@ -1591,53 +1652,64 @@ void t_rs_generator::render_type_sync_write(const string &type_var, bool type_va
     case t_base_type::TYPE_STRING: {
       string ref(type_var_is_ref ? "" : "&");
       if (tbase_type->is_binary()) {
-        f_gen_ << indent() << "o_prot.write_bytes(" + ref + type_var + ")?;" << endl;
+        f_gen_ << indent() << "o_prot.write_bytes(" + ref + type_var + ")" << ending << endl;
       } else {
-        f_gen_ << indent() << "o_prot.write_string(" + ref + type_var + ")?;" << endl;
+        f_gen_ << indent() << "o_prot.write_string(" + ref + type_var + ")" << ending << endl;
       }
       return;
     }
     case t_base_type::TYPE_BOOL:
-      f_gen_ << indent() << "o_prot.write_bool(" + type_var + ")?;" << endl;
+      f_gen_ << indent() << "o_prot.write_bool(" + type_var + ")" << ending << endl;
       return;
     case t_base_type::TYPE_I8:
-      f_gen_ << indent() << "o_prot.write_i8(" + type_var + ")?;" << endl;
+      f_gen_ << indent() << "o_prot.write_i8(" + type_var + ")" << ending << endl;
       return;
     case t_base_type::TYPE_I16:
-      f_gen_ << indent() << "o_prot.write_i16(" + type_var + ")?;" << endl;
+      f_gen_ << indent() << "o_prot.write_i16(" + type_var + ")" << ending << endl;
       return;
     case t_base_type::TYPE_I32:
-      f_gen_ << indent() << "o_prot.write_i32(" + type_var + ")?;" << endl;
+      f_gen_ << indent() << "o_prot.write_i32(" + type_var + ")" << ending << endl;
       return;
     case t_base_type::TYPE_I64:
-      f_gen_ << indent() << "o_prot.write_i64(" + type_var + ")?;" << endl;
+      f_gen_ << indent() << "o_prot.write_i64(" + type_var + ")" << ending << endl;
       return;
     case t_base_type::TYPE_DOUBLE:
-      f_gen_ << indent() << "o_prot.write_double(" + type_var + ".into())?;" << endl;
+      f_gen_ << indent() << "o_prot.write_double(" + type_var + ".into())" << ending << endl;
       return;
     }
   } else if (ttype->is_typedef()) {
     t_typedef* ttypedef = (t_typedef*) ttype;
-    render_type_sync_write(type_var, type_var_is_ref, ttypedef->get_type());
+    render_type_write(type_var, type_var_is_ref, ttypedef->get_type(), is_sync);
     return;
   } else if (ttype->is_enum() || ttype->is_struct() || ttype->is_xception()) {
-    f_gen_ << indent() << type_var + ".write_to_out_protocol(o_prot)?;" << endl;
+    if (is_sync) {
+      f_gen_ << indent() << type_var + ".write_to_out_protocol(o_prot)" << ending << endl;
+    } else {
+      f_gen_ << indent() << type_var + ".write_to_out_stream_protocol(o_prot)" << ending << endl;
+    }
     return;
   } else if (ttype->is_map()) {
-    render_map_sync_write(type_var, type_var_is_ref, (t_map *) ttype);
+    render_map_write(type_var, type_var_is_ref, (t_map *) ttype, is_sync);
     return;
   } else if (ttype->is_set()) {
-    render_set_sync_write(type_var, type_var_is_ref, (t_set *) ttype);
+    render_set_write(type_var, type_var_is_ref, (t_set *) ttype, is_sync);
     return;
   } else if (ttype->is_list()) {
-    render_list_sync_write(type_var, type_var_is_ref, (t_list *) ttype);
+    render_list_write(type_var, type_var_is_ref, (t_list *) ttype, is_sync);
     return;
   }
 
   throw "cannot write unsupported type " + ttype->get_name();
 }
 
-void t_rs_generator::render_list_sync_write(const string &list_var, bool list_var_is_ref, t_list *tlist) {
+void t_rs_generator::render_list_write(const string &list_var, bool list_var_is_ref, t_list *tlist, bool is_sync) {
+  string ending;
+  if (is_sync) {
+    ending = "?;";
+  } else {
+    ending = ".await?;";
+  };
+
   t_type* elem_type = tlist->get_elem_type();
 
   f_gen_
@@ -1646,19 +1718,27 @@ void t_rs_generator::render_list_sync_write(const string &list_var, bool list_va
     << "&TListIdentifier::new("
     << to_rust_field_type_enum(elem_type) << ", "
     << list_var << ".len() as i32" << ")"
-    << ")?;"
+    << ")"
+    << ending
     << endl;
 
   string ref(list_var_is_ref ? "" : "&");
   f_gen_ << indent() << "for e in " << ref << list_var << " {" << endl;
   indent_up();
-  render_type_sync_write(string_container_write_variable(elem_type, "e"), true, elem_type);
+  render_type_write(string_container_write_variable(elem_type, "e"), true, elem_type, is_sync);
   indent_down();
   f_gen_ << indent() << "}" << endl;
-  f_gen_ << indent() << "o_prot.write_list_end()?;" << endl;
+  f_gen_ << indent() << "o_prot.write_list_end()" << ending << endl;
 }
 
-void t_rs_generator::render_set_sync_write(const string &set_var, bool set_var_is_ref, t_set *tset) {
+void t_rs_generator::render_set_write(const string &set_var, bool set_var_is_ref, t_set *tset, bool is_sync) {
+  string ending;
+  if (is_sync) {
+    ending = "?;";
+  } else {
+    ending = ".await?;";
+  };
+
   t_type* elem_type = tset->get_elem_type();
 
   f_gen_
@@ -1667,19 +1747,27 @@ void t_rs_generator::render_set_sync_write(const string &set_var, bool set_var_i
     << "&TSetIdentifier::new("
     << to_rust_field_type_enum(elem_type) << ", "
     << set_var << ".len() as i32" << ")"
-    << ")?;"
+    << ")"
+    << ending
     << endl;
 
   string ref(set_var_is_ref ? "" : "&");
   f_gen_ << indent() << "for e in " << ref << set_var << " {" << endl;
   indent_up();
-  render_type_sync_write(string_container_write_variable(elem_type, "e"), true, elem_type);
+  render_type_write(string_container_write_variable(elem_type, "e"), true, elem_type, is_sync);
   indent_down();
   f_gen_ << indent() << "}" << endl;
-  f_gen_ << indent() << "o_prot.write_set_end()?;" << endl;
+  f_gen_ << indent() << "o_prot.write_set_end()" << ending << endl;
 }
 
-void t_rs_generator::render_map_sync_write(const string &map_var, bool map_var_is_ref, t_map *tmap) {
+void t_rs_generator::render_map_write(const string &map_var, bool map_var_is_ref, t_map *tmap, bool is_sync) {
+  string ending;
+  if (is_sync) {
+    ending = "?;";
+  } else {
+    ending = ".await?;";
+  };
+
   t_type* key_type = tmap->get_key_type();
   t_type* val_type = tmap->get_val_type();
 
@@ -1690,17 +1778,18 @@ void t_rs_generator::render_map_sync_write(const string &map_var, bool map_var_i
     << to_rust_field_type_enum(key_type) << ", "
     << to_rust_field_type_enum(val_type) << ", "
     << map_var << ".len() as i32)"
-    << ")?;"
+    << ")"
+    << ending
     << endl;
 
   string ref(map_var_is_ref ? "" : "&");
   f_gen_ << indent() << "for (k, v) in " << ref << map_var << " {" << endl;
   indent_up();
-  render_type_sync_write(string_container_write_variable(key_type, "k"), true, key_type);
-  render_type_sync_write(string_container_write_variable(val_type, "v"), true, val_type);
+  render_type_write(string_container_write_variable(key_type, "k"), true, key_type, is_sync);
+  render_type_write(string_container_write_variable(val_type, "v"), true, val_type, is_sync);
   indent_down();
   f_gen_ << indent() << "}" << endl;
-  f_gen_ << indent() << "o_prot.write_map_end()?;" << endl;
+  f_gen_ << indent() << "o_prot.write_map_end()"<< ending << endl;
 }
 
 string t_rs_generator::string_container_write_variable(t_type* ttype, const string& base_var) {

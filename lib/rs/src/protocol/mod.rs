@@ -90,10 +90,12 @@ mod binary;
 mod compact;
 mod compact_stream;
 pub use compact_stream::TCompactInputStreamProtocol;
+mod compact_stream_write;
+pub use compact_stream_write::TCompactOutputStreamProtocol;
 mod multiplexed;
 mod stored;
 mod stream;
-pub use stream::TInputStreamProtocol;
+pub use stream::{TInputStreamProtocol, TOutputStreamProtocol};
 
 pub use self::binary::{
     TBinaryInputProtocol, TBinaryInputProtocolFactory, TBinaryOutputProtocol,

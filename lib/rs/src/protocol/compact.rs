@@ -27,9 +27,9 @@ use super::{
 use super::{TOutputProtocol, TOutputProtocolFactory, TSetIdentifier, TStructIdentifier, TType};
 use crate::transport::{TReadTransport, TWriteTransport};
 
-pub(self) const COMPACT_PROTOCOL_ID: u8 = 0x82;
-pub(self) const COMPACT_VERSION: u8 = 0x01;
-pub(self) const COMPACT_VERSION_MASK: u8 = 0x1F;
+pub(super) const COMPACT_PROTOCOL_ID: u8 = 0x82;
+pub(super) const COMPACT_VERSION: u8 = 0x01;
+pub(super) const COMPACT_VERSION_MASK: u8 = 0x1F;
 
 /// Read messages encoded in the Thrift compact protocol.
 ///
@@ -618,14 +618,14 @@ impl TOutputProtocolFactory for TCompactOutputProtocolFactory {
     }
 }
 
-fn collection_type_to_u8(field_type: TType) -> u8 {
+pub(super) fn collection_type_to_u8(field_type: TType) -> u8 {
     match field_type {
         TType::Bool => 0x01,
         f => type_to_u8(f),
     }
 }
 
-fn type_to_u8(field_type: TType) -> u8 {
+pub(super) fn type_to_u8(field_type: TType) -> u8 {
     match field_type {
         TType::Stop => 0x00,
         TType::I08 => 0x03, // equivalent to TType::Byte

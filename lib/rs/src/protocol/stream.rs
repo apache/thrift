@@ -144,3 +144,60 @@ pub trait TInputStreamProtocol: Send {
     /// This method should **never** be used in generated code.
     async fn read_byte(&mut self) -> crate::Result<u8>;
 }
+
+#[async_trait]
+pub trait TOutputStreamProtocol: Send {
+    /// Write the beginning of a Thrift message.
+    async fn write_message_begin(&mut self, identifier: &TMessageIdentifier) -> crate::Result<()>;
+    /// Write the end of a Thrift message.
+    async fn write_message_end(&mut self) -> crate::Result<()>;
+    /// Write the beginning of a Thrift struct.
+    async fn write_struct_begin(&mut self, identifier: &TStructIdentifier) -> crate::Result<()>;
+    /// Write the end of a Thrift struct.
+    fn write_struct_end(&mut self) -> crate::Result<()>;
+    /// Write the beginning of a Thrift field.
+    async fn write_field_begin(&mut self, identifier: &TFieldIdentifier) -> crate::Result<()>;
+    /// Write the end of a Thrift field.
+    fn write_field_end(&mut self) -> crate::Result<()>;
+    /// Write a STOP field indicating that all the fields in a struct have been
+    /// written.
+    async fn write_field_stop(&mut self) -> crate::Result<()>;
+    /// Write a bool.
+    async fn write_bool(&mut self, b: bool) -> crate::Result<()>;
+    /// Write a fixed-length byte array.
+    async fn write_bytes(&mut self, b: &[u8]) -> crate::Result<()>;
+    /// Write an 8-bit signed integer.
+    async fn write_i8(&mut self, i: i8) -> crate::Result<()>;
+    /// Write a 16-bit signed integer.
+    async fn write_i16(&mut self, i: i16) -> crate::Result<()>;
+    /// Write a 32-bit signed integer.
+    async fn write_i32(&mut self, i: i32) -> crate::Result<()>;
+    /// Write a 64-bit signed integer.
+    async fn write_i64(&mut self, i: i64) -> crate::Result<()>;
+    /// Write a 64-bit float.
+    async fn write_double(&mut self, d: f64) -> crate::Result<()>;
+    /// Write a fixed-length string.
+    async fn write_string(&mut self, s: &str) -> crate::Result<()>;
+    /// Write the beginning of a list.
+    async fn write_list_begin(&mut self, identifier: &TListIdentifier) -> crate::Result<()>;
+    /// Write the end of a list.
+    async fn write_list_end(&mut self) -> crate::Result<()>;
+    /// Write the beginning of a set.
+    async fn write_set_begin(&mut self, identifier: &TSetIdentifier) -> crate::Result<()>;
+    /// Write the end of a set.
+    async fn write_set_end(&mut self) -> crate::Result<()>;
+    /// Write the beginning of a map.
+    async fn write_map_begin(&mut self, identifier: &TMapIdentifier) -> crate::Result<()>;
+    /// Write the end of a map.
+    async fn write_map_end(&mut self) -> crate::Result<()>;
+    /// Flush buffered bytes to the underlying transport.
+    async fn flush(&mut self) -> crate::Result<()>;
+
+    // utility (DO NOT USE IN GENERATED CODE!!!!)
+    //
+
+    /// Write an unsigned byte.
+    ///
+    /// This method should **never** be used in generated code.
+    async fn write_byte(&mut self, b: u8) -> crate::Result<()>; // FIXME: REMOVE
+}
