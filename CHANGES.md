@@ -15,6 +15,7 @@
 
 - [THRIFT-5381](https://issues.apache.org/jira/browse/THRIFT-5381) - possible collisions at VOID type with some 3rd-party libraries on Haxe cpp targets
 - [THRIFT-5396](https://issues.apache.org/jira/browse/THRIFT-5396) - deprecate netstd "Async" method postfix
+- [THRIFT-5453](https://issues.apache.org/jira/browse/THRIFT-5453) - go: NewTSocketConf no longer returns an error
 
 ### AS3
 
@@ -78,6 +79,8 @@
 - [THRIFT-5369](https://issues.apache.org/jira/browse/THRIFT-5369) - Malformed payload can still cause huge allocations
 - [THRIFT-5389](https://issues.apache.org/jira/browse/THRIFT-5389) - The compiler now generates correct go code with thrift constant defined on optional enum/typedef fields
 - [THRIFT-5404](https://issues.apache.org/jira/browse/THRIFT-5404) - TTransportException.Timeout would correctly return true when it's connect timeout during TSocket.Open call
+- [THRIFT-4797](https://issues.apache.org/jira/browse/THRIFT-4797) - The compiler now correctly auto renames import thrift namespaces when they collide with system imports
+- [THRIFT-5453](https://issues.apache.org/jira/browse/THRIFT-5453) - Defer DNS lookups from NewTSocketConf (without any timeout check) to TSocket.Open (subject to ConnectTimeout set in TConfiguration)
 
 ### Haskell
 
