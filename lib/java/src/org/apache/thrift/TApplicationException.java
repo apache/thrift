@@ -125,6 +125,10 @@ public class TApplicationException extends TException implements TSerializable {
 
   /**
    * Convenience factory method for constructing a TApplicationException given a TProtocol input
+   *
+   * @param iprot protocol from which an instance of TApplicationException is read.
+   * @return an instance of TApplicationException read from iprot.
+   * @throws TException if there is an error reading from iprot.
    */
   public static TApplicationException readFrom(TProtocol iprot) throws TException
   {

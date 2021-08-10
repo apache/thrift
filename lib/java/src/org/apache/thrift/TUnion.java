@@ -43,7 +43,7 @@ public abstract class TUnion<T extends TUnion<T,F>, F extends TFieldIdEnum> impl
     setField_ = null;
     value_ = null;
   }
-  
+
   private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
   static {
     schemes.put(StandardScheme.class, new TUnionStandardSchemeFactory());
@@ -153,22 +153,25 @@ public abstract class TUnion<T extends TUnion<T,F>, F extends TFieldIdEnum> impl
   }
 
   /**
-   * Implementation should be generated so that we can efficiently type check 
+   * Implementation should be generated so that we can efficiently type check
    * various values.
-   * @param setField
-   * @param value
+   * @param setField the field to assign value to.
+   * @param value the value to be assigned to setField.
+   * @throws ClassCastException if the type of value is incompatible with the type of setField.
    */
   protected abstract void checkType(F setField, Object value) throws ClassCastException;
 
   /**
-   * Implementation should be generated to read the right stuff from the wire 
-   * based on the field header. 
-   * @param field
+   * Implementation should be generated to read the right stuff from the wire
+   * based on the field header.
+   *
+   * @param iprot input protocol from which to read a value.
+   * @param field the field whose value is to be read from iprot.
    * @return read Object based on the field header, as specified by the argument.
    */
   protected abstract Object standardSchemeReadValue(TProtocol iprot, TField field) throws TException;
   protected abstract void standardSchemeWriteValue(TProtocol oprot) throws TException;
-  
+
   protected abstract Object tupleSchemeReadValue(TProtocol iprot, short fieldID) throws TException;
   protected abstract void tupleSchemeWriteValue(TProtocol oprot) throws TException;
 
@@ -203,13 +206,13 @@ public abstract class TUnion<T extends TUnion<T,F>, F extends TFieldIdEnum> impl
     this.setField_ = null;
     this.value_ = null;
   }
-  
+
   private static class TUnionStandardSchemeFactory implements SchemeFactory {
     public TUnionStandardScheme getScheme() {
       return new TUnionStandardScheme();
     }
   }
-  
+
   private static class TUnionStandardScheme extends StandardScheme<TUnion> {
 
     @Override
@@ -247,13 +250,13 @@ public abstract class TUnion<T extends TUnion<T,F>, F extends TFieldIdEnum> impl
       oprot.writeStructEnd();
     }
   }
-  
+
   private static class TUnionTupleSchemeFactory implements SchemeFactory {
     public TUnionTupleScheme getScheme() {
       return new TUnionTupleScheme();
     }
   }
-  
+
   private static class TUnionTupleScheme extends TupleScheme<TUnion> {
 
     @Override
