@@ -65,11 +65,13 @@ environment:
      CONFIGURATION: RelWithDebInfo
      DISABLED_TESTS: (StalenessCheckTest)
 
-   - PROFILE: CYGWIN
-     PROFILE_CLASS: CYGWIN
-     PLATFORM: x64
-     CONFIGURATION: RelWithDebInfo
-     DISABLED_TESTS: (ZlibTest|OpenSSLManualInitTest|TNonblockingServerTest)
+  # As of 2021.08.06, the Cygwin build is broken with a missing dll exception.
+  # See for an example https://ci.appveyor.com/project/ApacheSoftwareFoundation/thrift/builds/40263513/job/a69xt6m4o0y9x1bw?fullLog=true
+  # - PROFILE: CYGWIN
+  #   PROFILE_CLASS: CYGWIN
+  #   PLATFORM: x64
+  #   CONFIGURATION: RelWithDebInfo
+  #   DISABLED_TESTS: (ZlibTest|OpenSSLManualInitTest|TNonblockingServerTest)
 
 
 build_script:
