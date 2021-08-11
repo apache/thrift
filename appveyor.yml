@@ -28,8 +28,10 @@ branches:
     - master
     - /^(release/)?\d+\.\d+\.\d+$/
 
-matrix:
-  fast_finish: true
+# Note: We could abort all jobs on the first error, but then it
+# becomes hard to learn from the other jobs results. Therefore disabled:
+#matrix:
+#  fast_finish: true
 
 environment:
   matrix:
