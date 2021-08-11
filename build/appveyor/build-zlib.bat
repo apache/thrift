@@ -25,7 +25,7 @@ SET URL=http://zlib.net/%URLFILE%
 SET FURL=http://zlib.net/fossils/%URLFILE%
 
 :: Download - support running a local build or a build in appveyor
-CD "%WIN3P%"                                                     || EXIT /B
+CD "%WIN3P%" || EXIT /B
 IF "%APPVEYOR_BUILD_ID%" == "" (
     curl -L -f -o "%URLFILE%" "%URL%"
     IF ERRORLEVEL 1 (
@@ -34,23 +34,23 @@ IF "%APPVEYOR_BUILD_ID%" == "" (
 ) ELSE (
     appveyor DownloadFile "%URL%"
     IF ERRORLEVEL 1 (
-        appveyor DownloadFile "%FURL%"                           || EXIT /B
+        appveyor DownloadFile "%FURL%" || EXIT /B
     )
 )
-7z x "%URLFILE%" -so | 7z x -si -ttar > nul                      || EXIT /B
+7z x "%URLFILE%" -so | 7z x -si -ttar > nul || EXIT /B
 
 :: Generate
-MKDIR "%BUILDDIR%"                                               || EXIT /B
-CD "%BUILDDIR%"                                                  || EXIT /B
+MKDIR "%BUILDDIR%" || EXIT /B
+CD "%BUILDDIR%" || EXIT /B
 cmake "%SRCDIR%" ^
       -G"NMake Makefiles" ^
       -DCMAKE_INSTALL_PREFIX="%INSTDIR%" ^
-      -DCMAKE_BUILD_TYPE="%CONFIGURATION%"                       || EXIT /B
+      -DCMAKE_BUILD_TYPE="%CONFIGURATION%" || EXIT /B
 
 :: Build
-nmake /fMakefile install                                         || EXIT /B
+nmake /fMakefile install || EXIT /B
 IF "%CONFIGURATION%" == "Debug" (
-    COPY "%BUILDDIR%\zlibd.pdb" "%INSTDIR%\bin\"                 || EXIT /B
+    COPY "%BUILDDIR%\zlibd.pdb" "%INSTDIR%\bin\" || EXIT /B
 )
 
 ENDLOCAL

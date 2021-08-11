@@ -28,15 +28,16 @@ branches:
     - master
     - /^(release/)?\d+\.\d+\.\d+$/
 
-os:
-  - Visual Studio 2017
-
-matrix:
-  fast_finish: true
+# Note: We could abort all jobs on the first error, but then it
+# becomes hard to learn from the other jobs results. Therefore disabled:
+#matrix:
+#  fast_finish: true
 
 environment:
   matrix:
    - PROFILE: MSVC2017
+     PROFILE_CLASS: MSVC
+     APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
      PLATFORM: x64
      CONFIGURATION: Release
      BUILD_SHARED_LIBS: ON
@@ -47,6 +48,8 @@ environment:
      ZLIB_VERSION: 1.2.11
 
    - PROFILE: MSVC2015
+     PROFILE_CLASS: MSVC
+     APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015
      PLATFORM: x86
      CONFIGURATION: Debug
      BUILD_SHARED_LIBS: OFF
@@ -55,30 +58,27 @@ environment:
      PYTHON_VERSION: 3.5
      QT_VERSION: 5.8
      ZLIB_VERSION: 1.2.8
-     APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015
 
    - PROFILE: MINGW
+     PROFILE_CLASS: MINGW
+     # Currently the the latest MSYS2 is in the following image:
+     APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019
      PLATFORM: x64
      CONFIGURATION: RelWithDebInfo
      DISABLED_TESTS: (StalenessCheckTest)
 
-   - PROFILE: CYGWIN
-     PLATFORM: x64
-     CONFIGURATION: RelWithDebInfo
-     DISABLED_TESTS: (ZlibTest|OpenSSLManualInitTest|TNonblockingServerTest)
+  # As of 2021.08.06, the Cygwin build is broken with a missing dll exception.
+  # See for an example https://ci.appveyor.com/project/ApacheSoftwareFoundation/thrift/builds/40263513/job/a69xt6m4o0y9x1bw?fullLog=true
+  # - PROFILE: CYGWIN
+  #   PROFILE_CLASS: CYGWIN
+  #   PLATFORM: x64
+  #   CONFIGURATION: RelWithDebInfo
+  #   DISABLED_TESTS: (ZlibTest|OpenSSLManualInitTest|TNonblockingServerTest)
 
-install:
-  - cd %APPVEYOR_BUILD_FOLDER%
-  - call build\appveyor\%PROFILE:~0,4%-appveyor-install.bat
-  - refreshenv
 
 build_script:
   - cd %APPVEYOR_BUILD_FOLDER%
-  - call build\appveyor\%PROFILE:~0,4%-appveyor-build.bat
-
-test_script:
-  - cd %APPVEYOR_BUILD_FOLDER%
-  - call build\appveyor\%PROFILE:~0,4%-appveyor-test.bat
+  - call build\appveyor\%PROFILE_CLASS%-appveyor-full.bat
 
 
 # artifact capture disabled as it might increase service cost for little gain:
