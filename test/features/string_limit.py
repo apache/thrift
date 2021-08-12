@@ -51,11 +51,12 @@ def main(argv):
     print('[OK]: just limit')
     try:
         test_string(proto, 'a' * (args.limit + 1))
-    except:
+    except Exception:
         print('[OK]: limit + 1')
     else:
         print('[ERROR]: limit + 1')
         assert False
+
 
 if __name__ == '__main__':
     main(sys.argv[1:])

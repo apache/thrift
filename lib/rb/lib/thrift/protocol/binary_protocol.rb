@@ -226,12 +226,19 @@ module Thrift
       size = read_i32
       trans.read_all(size)
     end
-
+    
+    def to_s
+      "binary(#{super.to_s})"
+    end
   end
 
   class BinaryProtocolFactory < BaseProtocolFactory
     def get_protocol(trans)
       return Thrift::BinaryProtocol.new(trans)
+    end
+    
+    def to_s
+      "binary"
     end
   end
 end

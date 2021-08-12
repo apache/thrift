@@ -17,16 +17,21 @@
 # under the License.
 #
 
+use 5.10.0;
 use strict;
 use warnings;
 
-package Thrift::MessageType;
+use Thrift;
 
-use strict;
+#
+# Message types for RPC
+#
+package Thrift::TMessageType;
+use version 0.77; our $VERSION = version->declare("$Thrift::VERSION");
 
-use constant CALL 	=> 1;
-use constant REPLY	=> 2;
-use constant EXCEPTION	=> 3;
-use constant ONEWAY 	=> 4;
+use constant CALL      => 1;
+use constant REPLY     => 2;
+use constant EXCEPTION => 3;
+use constant ONEWAY    => 4;
 
 1;

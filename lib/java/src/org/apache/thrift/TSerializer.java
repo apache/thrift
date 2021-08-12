@@ -20,12 +20,12 @@
 package org.apache.thrift;
 
 import java.io.ByteArrayOutputStream;
-import java.io.UnsupportedEncodingException;
 
 import org.apache.thrift.protocol.TBinaryProtocol;
 import org.apache.thrift.protocol.TProtocol;
 import org.apache.thrift.protocol.TProtocolFactory;
 import org.apache.thrift.transport.TIOStreamTransport;
+import org.apache.thrift.transport.TTransportException;
 
 /**
  * Generic utility for easily serializing objects into a byte array or Java
@@ -42,7 +42,7 @@ public class TSerializer {
   /**
    * This transport wraps that byte array
    */
-  private final TIOStreamTransport transport_ = new TIOStreamTransport(baos_);
+  private final TIOStreamTransport transport_;
 
   /**
    * Internal protocol used for serializing objects.
@@ -52,7 +52,7 @@ public class TSerializer {
   /**
    * Create a new TSerializer that uses the TBinaryProtocol by default.
    */
-  public TSerializer() {
+  public TSerializer() throws TTransportException {
     this(new TBinaryProtocol.Factory());
   }
 
@@ -62,7 +62,8 @@ public class TSerializer {
    *
    * @param protocolFactory Factory to create a protocol
    */
-  public TSerializer(TProtocolFactory protocolFactory) {
+  public TSerializer(TProtocolFactory protocolFactory) throws TTransportException {
+    transport_ = new TIOStreamTransport(new TConfiguration(), baos_);
     protocol_ = protocolFactory.getProtocol(transport_);
   }
 
@@ -78,22 +79,6 @@ public class TSerializer {
     baos_.reset();
     base.write(protocol_);
     return baos_.toByteArray();
-  }
-
-  /**
-   * Serialize the Thrift object into a Java string, using a specified
-   * character set for encoding.
-   *
-   * @param base The object to serialize
-   * @param charset Valid JVM charset
-   * @return Serialized object as a String
-   */
-  public String toString(TBase base, String charset) throws TException {
-    try {
-      return new String(serialize(base), charset);
-    } catch (UnsupportedEncodingException uex) {
-      throw new TException("JVM DOES NOT SUPPORT ENCODING: " + charset);
-    }
   }
 
   /**

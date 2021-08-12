@@ -18,17 +18,39 @@
  */
 package org.apache.thrift.transport;
 
+import org.apache.thrift.TConfiguration;
+
 /**
  * TTransport for writing to an AutoExpandingBuffer.
  */
-public final class AutoExpandingBufferWriteTransport extends TTransport {
+public final class AutoExpandingBufferWriteTransport extends TEndpointTransport {
 
   private final AutoExpandingBuffer buf;
   private int pos;
+  private int res;
 
-  public AutoExpandingBufferWriteTransport(int initialCapacity, double growthCoefficient) {
-    this.buf = new AutoExpandingBuffer(initialCapacity, growthCoefficient);
-    this.pos = 0;
+  /**
+   * Constructor.
+   * @param initialCapacity the initial capacity of the buffer
+   * @param frontReserve space, if any, to reserve at the beginning such
+   *                     that the first write is after this reserve.
+   *                     This allows framed transport to reserve space
+   *                     for the frame buffer length.
+   * @throws IllegalArgumentException if initialCapacity is less than one
+   * @throws IllegalArgumentException if frontReserve is less than zero
+   * @throws IllegalArgumentException if frontReserve is greater than initialCapacity
+   */
+  public AutoExpandingBufferWriteTransport(TConfiguration config, int initialCapacity, int frontReserve) throws TTransportException {
+    super(config);
+    if (initialCapacity < 1) {
+      throw new IllegalArgumentException("initialCapacity");
+    }
+    if (frontReserve < 0 || initialCapacity < frontReserve) {
+      throw new IllegalArgumentException("frontReserve");
+    }
+    this.buf = new AutoExpandingBuffer(initialCapacity);
+    this.pos = frontReserve;
+    this.res = frontReserve;
   }
 
   @Override
@@ -56,11 +78,14 @@ public final class AutoExpandingBufferWriteTransport extends TTransport {
     return buf;
   }
 
-  public int getPos() {
+  /**
+   * @return length of the buffer, including any front reserve
+   */
+  public int getLength() {
     return pos;
   }
 
   public void reset() {
-    pos = 0;
+    pos = res;
   }
 }

@@ -26,28 +26,35 @@ import (
 
 func TestReadWriteCompactProtocol(t *testing.T) {
 	ReadWriteProtocolTest(t, NewTCompactProtocolFactory())
-	   transports := []TTransport{
-	     NewTMemoryBuffer(),
-	     NewStreamTransportRW(bytes.NewBuffer(make([]byte, 0, 16384))),
-	     NewTFramedTransport(NewTMemoryBuffer()),
-	   }
-	   for _, trans := range transports {
-	     p := NewTCompactProtocol(trans);
-	     ReadWriteBool(t, p, trans);
-	     p = NewTCompactProtocol(trans);
-	     ReadWriteByte(t, p, trans);
-	     p = NewTCompactProtocol(trans);
-	     ReadWriteI16(t, p, trans);
-	     p = NewTCompactProtocol(trans);
-	     ReadWriteI32(t, p, trans);
-	     p = NewTCompactProtocol(trans);
-	     ReadWriteI64(t, p, trans);
-	     p = NewTCompactProtocol(trans);
-	     ReadWriteDouble(t, p, trans);
-	     p = NewTCompactProtocol(trans);
-	     ReadWriteString(t, p, trans);
-	     p = NewTCompactProtocol(trans);
-	     ReadWriteBinary(t, p, trans);
-	     trans.Close();
-	   }
+
+	transports := []TTransport{
+		NewTMemoryBuffer(),
+		NewStreamTransportRW(bytes.NewBuffer(make([]byte, 0, 16384))),
+		NewTFramedTransport(NewTMemoryBuffer()),
+	}
+
+	zlib0, _ := NewTZlibTransport(NewTMemoryBuffer(), 0)
+	zlib6, _ := NewTZlibTransport(NewTMemoryBuffer(), 6)
+	zlib9, _ := NewTZlibTransport(NewTFramedTransport(NewTMemoryBuffer()), 9)
+	transports = append(transports, zlib0, zlib6, zlib9)
+
+	for _, trans := range transports {
+		p := NewTCompactProtocol(trans)
+		ReadWriteBool(t, p, trans)
+		p = NewTCompactProtocol(trans)
+		ReadWriteByte(t, p, trans)
+		p = NewTCompactProtocol(trans)
+		ReadWriteI16(t, p, trans)
+		p = NewTCompactProtocol(trans)
+		ReadWriteI32(t, p, trans)
+		p = NewTCompactProtocol(trans)
+		ReadWriteI64(t, p, trans)
+		p = NewTCompactProtocol(trans)
+		ReadWriteDouble(t, p, trans)
+		p = NewTCompactProtocol(trans)
+		ReadWriteString(t, p, trans)
+		p = NewTCompactProtocol(trans)
+		ReadWriteBinary(t, p, trans)
+		trans.Close()
+	}
 }

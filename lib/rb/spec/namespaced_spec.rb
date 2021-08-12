@@ -32,7 +32,7 @@ describe 'namespaced generation' do
      "other_namespace/referenced_constants.rb",
      "other_namespace/referenced_types.rb"
     ].each do |name|
-      File.exist?(File.join(prefix, name)).should be_true
+      expect(File.exist?(File.join(prefix, name))).to be_truthy
     end
   end
 
@@ -44,20 +44,20 @@ describe 'namespaced generation' do
      "referenced_constants.rb",
      "referenced_types.rb"
     ].each do |name|
-      File.exist?(File.join(prefix, name)).should_not be_true
+      expect(File.exist?(File.join(prefix, name))).not_to be_truthy
     end
   end
 
   it "has a service class in the right place" do
-    defined?(NamespacedSpecNamespace::NamespacedNonblockingService).should be_true
+    expect(defined?(NamespacedSpecNamespace::NamespacedNonblockingService)).to be_truthy
   end
 
   it "has a struct in the right place" do
-    defined?(NamespacedSpecNamespace::Hello).should be_true
+    expect(defined?(NamespacedSpecNamespace::Hello)).to be_truthy
   end
 
   it "required an included file" do
-    defined?(OtherNamespace::SomeEnum).should be_true
+    expect(defined?(OtherNamespace::SomeEnum)).to be_truthy
   end
 
   it "extended a service" do

@@ -28,52 +28,57 @@ describe 'Thrift::ServerSocket' do
     end
 
     it "should create a handle when calling listen" do
-      TCPServer.should_receive(:new).with(nil, 1234)
+      expect(TCPServer).to receive(:new).with(nil, 1234)
       @socket.listen
     end
 
     it "should accept an optional host argument" do
       @socket = Thrift::ServerSocket.new('localhost', 1234)
-      TCPServer.should_receive(:new).with('localhost', 1234)
+      expect(TCPServer).to receive(:new).with('localhost', 1234)
+      @socket.to_s == "server(localhost:1234)"
       @socket.listen
     end
 
     it "should create a Thrift::Socket to wrap accepted sockets" do
-      handle = mock("TCPServer")
-      TCPServer.should_receive(:new).with(nil, 1234).and_return(handle)
+      handle = double("TCPServer")
+      expect(TCPServer).to receive(:new).with(nil, 1234).and_return(handle)
       @socket.listen
-      sock = mock("sock")
-      handle.should_receive(:accept).and_return(sock)
-      trans = mock("Socket")
-      Thrift::Socket.should_receive(:new).and_return(trans)
-      trans.should_receive(:handle=).with(sock)
-      @socket.accept.should == trans
+      sock = double("sock")
+      expect(handle).to receive(:accept).and_return(sock)
+      trans = double("Socket")
+      expect(Thrift::Socket).to receive(:new).and_return(trans)
+      expect(trans).to receive(:handle=).with(sock)
+      expect(@socket.accept).to eq(trans)
     end
 
     it "should close the handle when closed" do
-      handle = mock("TCPServer", :closed? => false)
-      TCPServer.should_receive(:new).with(nil, 1234).and_return(handle)
+      handle = double("TCPServer", :closed? => false)
+      expect(TCPServer).to receive(:new).with(nil, 1234).and_return(handle)
       @socket.listen
-      handle.should_receive(:close)
+      expect(handle).to receive(:close)
       @socket.close
     end
 
     it "should return nil when accepting if there is no handle" do
-      @socket.accept.should be_nil
+      expect(@socket.accept).to be_nil
     end
 
     it "should return true for closed? when appropriate" do
-      handle = mock("TCPServer", :closed? => false)
-      TCPServer.stub!(:new).and_return(handle)
+      handle = double("TCPServer", :closed? => false)
+      allow(TCPServer).to receive(:new).and_return(handle)
       @socket.listen
-      @socket.should_not be_closed
-      handle.stub!(:close)
+      expect(@socket).not_to be_closed
+      allow(handle).to receive(:close)
       @socket.close
-      @socket.should be_closed
+      expect(@socket).to be_closed
       @socket.listen
-      @socket.should_not be_closed
-      handle.stub!(:closed?).and_return(true)
-      @socket.should be_closed
+      expect(@socket).not_to be_closed
+      allow(handle).to receive(:closed?).and_return(true)
+      expect(@socket).to be_closed
+    end
+
+    it "should provide a reasonable to_s" do
+      expect(@socket.to_s).to eq("socket(:1234)")
     end
   end
 end

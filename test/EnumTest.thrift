@@ -71,6 +71,11 @@ enum MyEnum5 {
   e2 = 42   // fails with 0.9.3 and earlier
 }
 
+enum MyEnumWithCustomOstream {
+  custom1 = 1,
+  CustoM2
+} (cpp.customostream)
+
 struct MyStruct {
   1: MyEnum2 me2_2 = MyEnum1.ME2_2
   2: MyEnum3 me3_n2 = MyEnum3.ME3_N2

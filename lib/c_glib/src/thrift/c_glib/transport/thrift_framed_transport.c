@@ -17,7 +17,7 @@
  * under the License.
  */
 
-#include <assert.h>
+#include <errno.h>
 #include <netdb.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -27,6 +27,7 @@
 #include <netinet/in.h>
 
 #include <thrift/c_glib/thrift.h>
+#include <thrift/c_glib/thrift_configuration.h>
 #include <thrift/c_glib/transport/thrift_transport.h>
 #include <thrift/c_glib/transport/thrift_framed_transport.h>
 
@@ -36,7 +37,10 @@ enum _ThriftFramedTransportProperties
   PROP_0,
   PROP_THRIFT_FRAMED_TRANSPORT_TRANSPORT,
   PROP_THRIFT_FRAMED_TRANSPORT_READ_BUFFER_SIZE,
-  PROP_THRIFT_FRAMED_TRANSPORT_WRITE_BUFFER_SIZE
+  PROP_THRIFT_FRAMED_TRANSPORT_WRITE_BUFFER_SIZE,
+  PROP_THRIFT_FRAMED_TRANSPORT_REMAINING_MESSAGE_SIZE,
+  PROP_THRIFT_FRAMED_TRANSPORT_KNOW_MESSAGE_SIZE,
+  PROP_THRIFT_FRAMED_TRANSPORT_CONFIGURATION
 };
 
 G_DEFINE_TYPE(ThriftFramedTransport, thrift_framed_transport, THRIFT_TYPE_TRANSPORT)
@@ -92,9 +96,17 @@ thrift_framed_transport_read_frame (ThriftTransport *transport,
     guchar *tmpdata;
 
     sz = ntohl (sz);
+    if (sz > t->max_frame_size)
+    {
+      g_set_error (error,
+                   THRIFT_TRANSPORT_ERROR,
+                   THRIFT_TRANSPORT_ERROR_MAX_MESSAGE_SIZE_REACHED,
+                   "Recived an oversized frame,");
+      return result;
+    }
 
     /* create a buffer to hold the data and read that much data */
-    tmpdata = g_alloca (sz);
+    tmpdata = g_new0 (guchar, sz);
     bytes = thrift_transport_read (t->transport, tmpdata, sz, error);
 
     if (bytes > 0 && (error == NULL || *error == NULL))
@@ -104,6 +116,7 @@ thrift_framed_transport_read_frame (ThriftTransport *transport,
 
       result = TRUE;
     }
+    g_free (tmpdata);
   }
 
   return result;
@@ -120,7 +133,7 @@ thrift_framed_transport_read_slow (ThriftTransport *transport, gpointer buf,
   gint32 result = -1;
 
   /* we shouldn't hit this unless the buffer doesn't have enough to read */
-  assert (t->r_buf->len < want);
+  g_assert (t->r_buf->len < want);
 
   /* first copy what we have in our buffer, if there is anything left */
   if (have > 0)
@@ -153,6 +166,12 @@ thrift_framed_transport_read (ThriftTransport *transport, gpointer buf,
                               guint32 len, GError **error)
 {
   ThriftFramedTransport *t = THRIFT_FRAMED_TRANSPORT (transport);
+  ThriftTransportClass *ttc = THRIFT_TRANSPORT_GET_CLASS (transport);
+
+  if(!ttc->checkReadBytesAvailable (transport, len, error))
+  { 
+    return -1;
+  }
 
   /* if we have enough buffer data to fulfill the read, just use
    * a memcpy from the buffer */
@@ -225,15 +244,21 @@ gboolean
 thrift_framed_transport_flush (ThriftTransport *transport, GError **error)
 {
   ThriftFramedTransport *t = THRIFT_FRAMED_TRANSPORT (transport);
+  ThriftTransportClass *ttc = THRIFT_TRANSPORT_GET_CLASS (transport);
   gint32 sz_hbo, sz_nbo;
   guchar *tmpdata;
+
+  if(!ttc->resetConsumedMessageSize (transport, -1, error))
+  {
+    return FALSE;
+  }
 
   /* get the size of the frame in host and network byte order */
   sz_hbo = t->w_buf->len + sizeof(sz_nbo);
   sz_nbo = (gint32) htonl ((guint32) t->w_buf->len);
 
   /* copy the size of the frame and then the frame itself */
-  tmpdata = g_alloca (sz_hbo);
+  tmpdata = g_new0 (guchar, sz_hbo);
   memcpy (tmpdata, (guint8 *) &sz_nbo, sizeof (sz_nbo));
 
   if (t->w_buf->len > 0)
@@ -249,7 +274,7 @@ thrift_framed_transport_flush (ThriftTransport *transport, GError **error)
 
   THRIFT_TRANSPORT_GET_CLASS (t->transport)->flush (t->transport,
                                                     error);
-
+  g_free (tmpdata);
   return TRUE;
 }
 
@@ -260,6 +285,7 @@ thrift_framed_transport_init (ThriftFramedTransport *transport)
   transport->transport = NULL;
   transport->r_buf = g_byte_array_new ();
   transport->w_buf = g_byte_array_new ();
+  transport->max_frame_size = DEFAULT_MAX_FRAME_SIZE;
 }
 
 /* destructor */
@@ -287,6 +313,7 @@ thrift_framed_transport_get_property (GObject *object, guint property_id,
                                       GValue *value, GParamSpec *pspec)
 {
   ThriftFramedTransport *transport = THRIFT_FRAMED_TRANSPORT (object);
+  ThriftTransport *tt = THRIFT_TRANSPORT (object);
 
   THRIFT_UNUSED_VAR (pspec);
 
@@ -301,6 +328,15 @@ thrift_framed_transport_get_property (GObject *object, guint property_id,
     case PROP_THRIFT_FRAMED_TRANSPORT_WRITE_BUFFER_SIZE:
       g_value_set_uint (value, transport->w_buf_size);
       break;
+    case PROP_THRIFT_FRAMED_TRANSPORT_CONFIGURATION:
+      g_value_set_object (value, tt->configuration);
+      break;
+    case PROP_THRIFT_FRAMED_TRANSPORT_REMAINING_MESSAGE_SIZE:
+      g_value_set_long (value, tt->remainingMessageSize_);
+      break;
+    case PROP_THRIFT_FRAMED_TRANSPORT_KNOW_MESSAGE_SIZE:
+      g_value_set_long (value, tt->knowMessageSize_);
+      break;
   }
 }
 
@@ -310,6 +346,7 @@ thrift_framed_transport_set_property (GObject *object, guint property_id,
                                       const GValue *value, GParamSpec *pspec)
 {
   ThriftFramedTransport *transport = THRIFT_FRAMED_TRANSPORT (object);
+  ThriftTransport *tt = THRIFT_TRANSPORT (object);
 
   THRIFT_UNUSED_VAR (pspec);
 
@@ -323,6 +360,19 @@ thrift_framed_transport_set_property (GObject *object, guint property_id,
       break;
     case PROP_THRIFT_FRAMED_TRANSPORT_WRITE_BUFFER_SIZE:
       transport->w_buf_size = g_value_get_uint (value);
+      break;
+    case PROP_THRIFT_FRAMED_TRANSPORT_CONFIGURATION:
+      tt->configuration = g_value_dup_object (value);
+      if (tt->configuration != NULL)
+      {
+        transport->max_frame_size = tt->configuration->maxFrameSize_;
+      }
+      break;
+    case  PROP_THRIFT_FRAMED_TRANSPORT_REMAINING_MESSAGE_SIZE:
+      tt->remainingMessageSize_ = g_value_get_long (value);
+      break;
+    case PROP_THRIFT_FRAMED_TRANSPORT_KNOW_MESSAGE_SIZE:
+      tt->knowMessageSize_ = g_value_get_long (value);
       break;
   }
 }
@@ -369,6 +419,36 @@ thrift_framed_transport_class_init (ThriftFramedTransportClass *cls)
                                   G_PARAM_READWRITE);
   g_object_class_install_property (gobject_class,
                                    PROP_THRIFT_FRAMED_TRANSPORT_WRITE_BUFFER_SIZE,
+                                   param_spec);
+
+  param_spec = g_param_spec_object ("configuration", "configuration (construct)",
+                                    "Thrift Configuration",
+                                    THRIFT_TYPE_CONFIGURATION,
+                                    G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY);
+  g_object_class_install_property (gobject_class,
+                                   PROP_THRIFT_FRAMED_TRANSPORT_CONFIGURATION,
+                                   param_spec);
+
+  param_spec = g_param_spec_long ("remainingmessagesize",
+                                  "remainingmessagesize (construct)",
+                                  "Set the remaining message size",
+                                  0, /* min */
+                                  G_MAXINT32, /* max */
+                                  DEFAULT_MAX_MESSAGE_SIZE, /* default by construct */
+                                  G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY);
+  g_object_class_install_property (gobject_class,
+                                   PROP_THRIFT_FRAMED_TRANSPORT_REMAINING_MESSAGE_SIZE,
+                                   param_spec);
+  
+  param_spec = g_param_spec_long ("knowmessagesize",
+                                  "knowmessagesize (construct)",
+                                  "Set the known size of the message",
+                                  0, /* min */
+                                  G_MAXINT32, /* max */
+                                  DEFAULT_MAX_MESSAGE_SIZE, /* default by construct */
+                                  G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY);
+  g_object_class_install_property (gobject_class,
+                                   PROP_THRIFT_FRAMED_TRANSPORT_KNOW_MESSAGE_SIZE,
                                    param_spec);
 
   gobject_class->finalize = thrift_framed_transport_finalize;

@@ -28,7 +28,7 @@
 #include <thrift/transport/TTransportUtils.h>
 #include <thrift/concurrency/Monitor.h>
 #include <thrift/concurrency/ThreadManager.h>
-#include <thrift/concurrency/PlatformThreadFactory.h>
+#include <thrift/concurrency/ThreadFactory.h>
 #if _WIN32
    #include <thrift/windows/TWinsockSingleton.h>
 #endif
@@ -118,8 +118,8 @@ int main(int argc, char **argv) {
   /*
   shared_ptr<ThreadManager> threadManager =
     ThreadManager::newSimpleThreadManager(10);
-  shared_ptr<PlatformThreadFactory> threadFactory =
-    shared_ptr<PlatformThreadFactory>(new PlatformThreadFactory());
+  shared_ptr<ThreadFactory> threadFactory =
+    shared_ptr<ThreadFactory>(new ThreadFactory());
   threadManager->threadFactory(threadFactory);
   threadManager->start();
 

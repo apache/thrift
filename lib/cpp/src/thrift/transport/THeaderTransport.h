@@ -21,13 +21,19 @@
 #define THRIFT_TRANSPORT_THEADERTRANSPORT_H_ 1
 
 #include <bitset>
+#include <limits>
 #include <vector>
 #include <stdexcept>
 #include <string>
 #include <map>
 
+#ifdef HAVE_STDINT_H
+#include <stdint.h>
+#elif HAVE_INTTYPES_H
+#include <inttypes.h>
+#endif
+
 #include <boost/scoped_array.hpp>
-#include <boost/shared_ptr.hpp>
 
 #include <thrift/protocol/TProtocolTypes.h>
 #include <thrift/transport/TBufferTransports.h>
@@ -68,36 +74,38 @@ public:
   static const int THRIFT_MAX_VARINT32_BYTES = 5;
 
   /// Use default buffer sizes.
-  explicit THeaderTransport(const boost::shared_ptr<TTransport>& transport)
-    : TVirtualTransport(transport),
+  explicit THeaderTransport(const std::shared_ptr<TTransport>& transport, 
+                            std::shared_ptr<TConfiguration> config = nullptr)
+    : TVirtualTransport(transport, config),
       outTransport_(transport),
       protoId(T_COMPACT_PROTOCOL),
       clientType(THRIFT_HEADER_CLIENT_TYPE),
       seqId(0),
       flags(0),
       tBufSize_(0),
-      tBuf_(NULL) {
+      tBuf_(nullptr) {
     if (!transport_) throw std::invalid_argument("transport is empty");
     initBuffers();
   }
 
-  THeaderTransport(const boost::shared_ptr<TTransport> inTransport,
-                   const boost::shared_ptr<TTransport> outTransport)
-    : TVirtualTransport(inTransport),
+  THeaderTransport(const std::shared_ptr<TTransport> inTransport,
+                   const std::shared_ptr<TTransport> outTransport,
+                   std::shared_ptr<TConfiguration> config = nullptr)
+    : TVirtualTransport(inTransport, config),
       outTransport_(outTransport),
       protoId(T_COMPACT_PROTOCOL),
       clientType(THRIFT_HEADER_CLIENT_TYPE),
       seqId(0),
       flags(0),
       tBufSize_(0),
-      tBuf_(NULL) {
+      tBuf_(nullptr) {
     if (!transport_) throw std::invalid_argument("inTransport is empty");
     if (!outTransport_) throw std::invalid_argument("outTransport is empty");
     initBuffers();
   }
 
-  virtual uint32_t readSlow(uint8_t* buf, uint32_t len);
-  virtual void flush();
+  uint32_t readSlow(uint8_t* buf, uint32_t len) override;
+  void flush() override;
 
   void resizeTransformBuffer(uint32_t additionalSize = 0);
 
@@ -135,8 +143,7 @@ public:
   void transform(uint8_t* ptr, uint32_t sz);
 
   uint16_t getNumTransforms() const {
-    int trans = writeTrans_.size();
-    return trans;
+    return safe_numeric_cast<uint16_t>(writeTrans_.size());
   }
 
   void setTransform(uint16_t transId) { writeTrans_.push_back(transId); }
@@ -170,17 +177,17 @@ protected:
    * Returns true if a frame was read successfully, or false on EOF.
    * (Raises a TTransportException if EOF occurs after a partial frame.)
    */
-  virtual bool readFrame();
+  bool readFrame() override;
 
   void ensureReadBuffer(uint32_t sz);
   uint32_t getWriteBytes();
 
   void initBuffers() {
-    setReadBuffer(NULL, 0);
+    setReadBuffer(nullptr, 0);
     setWriteBuffer(wBuf_.get(), wBufSize_);
   }
 
-  boost::shared_ptr<TTransport> outTransport_;
+  std::shared_ptr<TTransport> outTransport_;
 
   // 0 and 16th bits must be 0 to differentiate from framed & unframed
   static const uint32_t HEADER_MAGIC = 0x0FFF0000;
@@ -204,7 +211,7 @@ protected:
   /**
    * Returns the maximum number of bytes that write k/v headers can take
    */
-  size_t getMaxWriteHeadersSize() const;
+  uint32_t getMaxWriteHeadersSize() const;
 
   struct infoIdType {
     enum idType {
@@ -252,15 +259,15 @@ protected:
  */
 class THeaderTransportFactory : public TTransportFactory {
 public:
-  THeaderTransportFactory() {}
+  THeaderTransportFactory() = default;
 
-  virtual ~THeaderTransportFactory() {}
+  ~THeaderTransportFactory() override = default;
 
   /**
    * Wraps the transport into a header one.
    */
-  virtual boost::shared_ptr<TTransport> getTransport(boost::shared_ptr<TTransport> trans) {
-    return boost::shared_ptr<TTransport>(new THeaderTransport(trans));
+  std::shared_ptr<TTransport> getTransport(std::shared_ptr<TTransport> trans) override {
+    return std::shared_ptr<TTransport>(new THeaderTransport(trans));
   }
 };
 }

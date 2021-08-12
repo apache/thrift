@@ -21,7 +21,8 @@ import 'dart:async';
 import 'dart:convert' show Utf8Codec;
 import 'dart:typed_data' show Uint8List;
 
-import 'package:crypto/crypto.dart' show CryptoUtils;
+import 'package:dart2_constant/convert.dart' show base64;
+import 'package:dart2_constant/core.dart' as core;
 import 'package:mockito/mockito.dart';
 import 'package:test/test.dart';
 import 'package:thrift/thrift.dart';
@@ -31,14 +32,13 @@ void main() {
 
   final requestText = 'my test request';
   final requestBytes = new Uint8List.fromList(utf8Codec.encode(requestText));
-  final requestBase64 = CryptoUtils.bytesToBase64(requestBytes);
+  final requestBase64 = base64.encode(requestBytes);
 
   final responseText = 'response 1';
   final responseBytes = new Uint8List.fromList(utf8Codec.encode(responseText));
-  final responseBase64 = CryptoUtils.bytesToBase64(responseBytes);
+  final responseBase64 = base64.encode(responseBytes);
 
-  final framedResponseBase64 =
-      CryptoUtils.bytesToBase64(_getFramedResponse(responseBytes));
+  final framedResponseBase64 = base64.encode(_getFramedResponse(responseBytes));
 
   group('TClientSocketTransport', () {
     FakeSocket socket;
@@ -118,7 +118,7 @@ void main() {
       protocolFactory.message = new TMessage('foo', TMessageType.CALL, 123);
       transport = new TAsyncClientSocketTransport(
           socket, new TMessageReader(protocolFactory),
-          responseTimeout: Duration.ZERO);
+          responseTimeout: core.Duration.zero);
       await transport.open();
       transport.writeAll(requestBytes);
     });
@@ -140,7 +140,7 @@ void main() {
       var response2Text = 'response 2';
       var response2Bytes =
           new Uint8List.fromList(utf8Codec.encode(response2Text));
-      var response2Base64 = CryptoUtils.bytesToBase64(response2Bytes);
+      var response2Base64 = base64.encode(response2Bytes);
       protocolFactory.message = new TMessage('foo2', TMessageType.REPLY, 124);
       socket.receiveFakeMessage(response2Base64);
 
@@ -170,7 +170,7 @@ void main() {
 
       transport = new TFramedTransport(new TAsyncClientSocketTransport(
           socket, messageReader,
-          responseTimeout: Duration.ZERO));
+          responseTimeout: core.Duration.zero));
       await transport.open();
       transport.writeAll(requestBytes);
     });
@@ -276,11 +276,10 @@ class FakeSocket extends TSocket {
     _sendPayload = data;
   }
 
-  void receiveFakeMessage(String base64) {
+  void receiveFakeMessage(String base64text) {
     if (!isOpen) throw new StateError('The socket is not open');
 
-    var message =
-        new Uint8List.fromList(CryptoUtils.base64StringToBytes(base64));
+    var message = new Uint8List.fromList(base64.decode(base64text));
     _onMessageController.add(message);
   }
 }

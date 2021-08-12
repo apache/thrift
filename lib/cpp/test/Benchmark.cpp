@@ -23,8 +23,9 @@
 #include <iostream>
 #define _USE_MATH_DEFINES
 #include <math.h>
-#include "thrift/transport/TBufferTransports.h"
+#include <memory>
 #include "thrift/protocol/TBinaryProtocol.h"
+#include "thrift/transport/TBufferTransports.h"
 #include "gen-cpp/DebugProtoTest_types.h"
 
 #ifdef HAVE_SYS_TIME_H
@@ -35,12 +36,12 @@ class Timer {
 public:
   timeval vStart;
 
-  Timer() { THRIFT_GETTIMEOFDAY(&vStart, 0); }
-  void start() { THRIFT_GETTIMEOFDAY(&vStart, 0); }
+  Timer() { THRIFT_GETTIMEOFDAY(&vStart, nullptr); }
+  void start() { THRIFT_GETTIMEOFDAY(&vStart, nullptr); }
 
   double frame() {
     timeval vEnd;
-    THRIFT_GETTIMEOFDAY(&vEnd, 0);
+    THRIFT_GETTIMEOFDAY(&vEnd, nullptr);
     double dstart = vStart.tv_sec + ((double)vStart.tv_usec / 1000000.0);
     double dend = vEnd.tv_sec + ((double)vEnd.tv_usec / 1000000.0);
     return dend - dstart;
@@ -48,11 +49,11 @@ public:
 };
 
 int main() {
-  using namespace std;
   using namespace thrift::test::debug;
   using namespace apache::thrift::transport;
   using namespace apache::thrift::protocol;
-  using namespace boost;
+  using std::cout;
+  using std::endl;
 
   OneOfEach ooe;
   ooe.im_true = true;
@@ -67,9 +68,9 @@ int main() {
   ooe.base64 = "\1\2\3\255";
 
   int num = 100000;
-  boost::shared_ptr<TMemoryBuffer> buf(new TMemoryBuffer(num*1000));
+  std::shared_ptr<TMemoryBuffer> buf(new TMemoryBuffer(num*1000));
 
-  uint8_t* data = NULL;
+  uint8_t* data = nullptr;
   uint32_t datasize = 0;
 
   {
@@ -88,7 +89,7 @@ int main() {
   buf->getBuffer(&data, &datasize);
 
   {
-    boost::shared_ptr<TMemoryBuffer> buf2(new TMemoryBuffer(data, datasize));
+    std::shared_ptr<TMemoryBuffer> buf2(new TMemoryBuffer(data, datasize));
     TBinaryProtocolT<TMemoryBuffer> prot(buf2);
     OneOfEach ooe2;
     double elapsed = 0.0;
@@ -116,7 +117,7 @@ int main() {
 
   {
     OneOfEach ooe2;
-    boost::shared_ptr<TMemoryBuffer> buf2(new TMemoryBuffer(data, datasize));
+    std::shared_ptr<TMemoryBuffer> buf2(new TMemoryBuffer(data, datasize));
     TBinaryProtocolT<TMemoryBuffer, TNetworkLittleEndian> prot(buf2);
     double elapsed = 0.0;
     Timer timer;
@@ -142,7 +143,7 @@ int main() {
   }
 
   {
-    boost::shared_ptr<TMemoryBuffer> buf2(new TMemoryBuffer(data, datasize));
+    std::shared_ptr<TMemoryBuffer> buf2(new TMemoryBuffer(data, datasize));
     TBinaryProtocolT<TMemoryBuffer> prot(buf2);
     OneOfEach ooe2;
     double elapsed = 0.0;
@@ -156,7 +157,7 @@ int main() {
   }
 
 
-  data = NULL;
+  data = nullptr;
   datasize = 0;
   num = 10000000;
 
@@ -181,7 +182,7 @@ int main() {
   buf->getBuffer(&data, &datasize);
 
   {
-    boost::shared_ptr<TMemoryBuffer> buf2(new TMemoryBuffer(data, datasize));
+    std::shared_ptr<TMemoryBuffer> buf2(new TMemoryBuffer(data, datasize));
     TBinaryProtocolT<TMemoryBuffer> prot(buf2);
     ListDoublePerf listDoublePerf2;
     double elapsed = 0.0;
@@ -205,7 +206,7 @@ int main() {
 
   {
     ListDoublePerf listDoublePerf2;
-    boost::shared_ptr<TMemoryBuffer> buf2(new TMemoryBuffer(data, datasize));
+    std::shared_ptr<TMemoryBuffer> buf2(new TMemoryBuffer(data, datasize));
     TBinaryProtocolT<TMemoryBuffer, TNetworkLittleEndian> prot(buf2);
     double elapsed = 0.0;
     Timer timer;
@@ -227,7 +228,7 @@ int main() {
   }
 
   {
-    boost::shared_ptr<TMemoryBuffer> buf2(new TMemoryBuffer(data, datasize));
+    std::shared_ptr<TMemoryBuffer> buf2(new TMemoryBuffer(data, datasize));
     TBinaryProtocolT<TMemoryBuffer> prot(buf2);
     ListDoublePerf listDoublePerf2;
     double elapsed = 0.0;

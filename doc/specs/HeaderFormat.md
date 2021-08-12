@@ -46,7 +46,7 @@ doesn't know about the transform ID, an error MUST be returned as we
 don't know how to transform the data.
 
 Conversely, data in the info headers is ignorable.  This should only
-be things like timestamps, debuging tracing, etc.  Using the header
+be things like timestamps, debugging tracing, etc.  Using the header
 size you should be able to skip this data and read the payload safely
 if you don't know the info ID.
 
@@ -61,7 +61,7 @@ Info ID's and transform ID's should share the same ID space.
 Header will be padded out to next 4-byte boundary with `0x00`.
 
 Max frame size is `0x3FFFFFFF`, which is slightly less than `HTTP_MAGIC`.
-This allows us to distingush between different (older) transports.
+This allows us to distinguish between different (older) transports.
 
 ### Transform IDs:
 
@@ -74,7 +74,7 @@ This allows us to distingush between different (older) transports.
                           data.
 
 
-###Info IDs:
+### Info IDs:
 
     INFO_KEYVALUE 0x01 - varint32 number of headers.
                        - key/value pairs of varstrings (varint16 length plus

@@ -1,4 +1,4 @@
-/*
+﻿/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements. See the NOTICE file
  * distributed with this work for additional information
@@ -17,8 +17,6 @@
  * under the License.
  */
 
-#define __STDC_FORMAT_MACROS
-#include <inttypes.h>
 #include <limits>
 #include <locale>
 #include <ios>
@@ -28,36 +26,93 @@
 #include <thrift/protocol/TCompactProtocol.h>
 #include <thrift/protocol/THeaderProtocol.h>
 #include <thrift/protocol/TJSONProtocol.h>
+#include <thrift/protocol/TMultiplexedProtocol.h>
 #include <thrift/transport/THttpClient.h>
 #include <thrift/transport/TTransportUtils.h>
 #include <thrift/transport/TSocket.h>
 #include <thrift/transport/TSSLSocket.h>
+#include <thrift/transport/TZlibTransport.h>
 #include <thrift/async/TEvhttpClientChannel.h>
 #include <thrift/server/TNonblockingServer.h> // <event.h>
 
-#include <boost/shared_ptr.hpp>
-#include <boost/program_options.hpp>
+#ifdef HAVE_STDINT_H
+#include <stdint.h>
+#endif
+#ifdef HAVE_INTTYPES_H
+#include <inttypes.h>
+#endif
+
+#include <boost/algorithm/string.hpp>
 #include <boost/filesystem.hpp>
-#include <thrift/cxxfunctional.h>
+#include <boost/program_options.hpp>
+#include <boost/random/random_device.hpp>
 #if _WIN32
 #include <thrift/windows/TWinsockSingleton.h>
 #endif
 
+#include "SecondService.h"
 #include "ThriftTest.h"
 
 using namespace std;
 using namespace apache::thrift;
+using namespace apache::thrift::async;
 using namespace apache::thrift::protocol;
 using namespace apache::thrift::transport;
 using namespace thrift::test;
-using namespace apache::thrift::async;
+
+//
+// A pedantic protocol that checks to make sure the response sequence ID
+// is the same as the sent sequence ID.  lib/cpp always sends zero for
+// synchronous clients, so this bumps the number to make sure it gets
+// returned properly from the remote server.  Any server that does not
+// respond with the same sequence number is violating the sequence ID
+// agreement between client and server.
+//
+
+template<typename Proto>
+class TPedanticProtocol : public Proto 
+{
+    public:
+        TPedanticProtocol(std::shared_ptr<TTransport>& transport)
+          : Proto(transport), m_last_seqid((std::numeric_limits<int32_t>::max)() - 10) { }
+
+        virtual uint32_t writeMessageBegin_virt(const std::string& name,
+                                           const TMessageType messageType,
+                                           const int32_t in_seqid) override
+        {
+            int32_t seqid = in_seqid;
+            if (!seqid) { // this is typical for normal cpp generated code
+                seqid = ++m_last_seqid;
+            }
+
+            return Proto::writeMessageBegin_virt(name, messageType, seqid);
+        }
+
+        virtual uint32_t readMessageBegin_virt(std::string& name,
+                                          TMessageType& messageType,
+                                          int32_t& seqid) override
+        {
+            uint32_t result = Proto::readMessageBegin_virt(name, messageType, seqid);
+            if (seqid != m_last_seqid) {
+                std::stringstream ss;
+                ss << "ERROR: send request with seqid " << m_last_seqid << " and got reply with seqid " << seqid;
+                throw std::logic_error(ss.str());
+            } /* else {
+                std::cout << "verified seqid " << m_last_seqid << " round trip OK" << std::endl;
+            } */
+            return result;
+        }
+
+    private:
+        int32_t m_last_seqid;
+};
 
 // Current time, microseconds since the epoch
 uint64_t now() {
   int64_t ret;
   struct timeval tv;
 
-  THRIFT_GETTIMEOFDAY(&tv, NULL);
+  THRIFT_GETTIMEOFDAY(&tv, nullptr);
   ret = tv.tv_sec;
   ret = ret * 1000 * 1000 + tv.tv_usec;
   return ret;
@@ -89,10 +144,10 @@ static void testVoid_clientReturn(event_base* base, ThriftTestCobClient* client)
     for (int testNr = 0; testNr < 10; ++testNr) {
       std::ostringstream os;
       os << "test" << testNr;
-      client->testString(tcxx::bind(testString_clientReturn,
+      client->testString(std::bind(testString_clientReturn,
                                     base,
                                     testNr,
-                                    tcxx::placeholders::_1),
+                                    std::placeholders::_1),
                        os.str());
     }
   } catch (TException& exn) {
@@ -123,16 +178,22 @@ bool print_eq(T expected, T actual) {
     return_code |= ERR_BASETYPES;                                                                  \
   }
 
+int binary_test(ThriftTestClient& testClient, string::size_type siz);
+
+BOOST_CONSTEXPR_OR_CONST int ERR_BASETYPES = 1;
+BOOST_CONSTEXPR_OR_CONST int ERR_STRUCTS = 2;
+BOOST_CONSTEXPR_OR_CONST int ERR_CONTAINERS = 4;
+BOOST_CONSTEXPR_OR_CONST int ERR_EXCEPTIONS = 8;
+BOOST_CONSTEXPR_OR_CONST int ERR_UNKNOWN = 64;
+
 int main(int argc, char** argv) {
   cout.precision(19);
-  int ERR_BASETYPES = 1;
-  int ERR_STRUCTS = 2;
-  int ERR_CONTAINERS = 4;
-  int ERR_EXCEPTIONS = 8;
-  int ERR_UNKNOWN = 64;
 
-  string testDir = boost::filesystem::system_complete(argv[0]).parent_path().parent_path().parent_path().string();
-  string pemPath = testDir + "/keys/CA.pem";
+  string testDir  = boost::filesystem::system_complete(argv[0]).parent_path().parent_path().parent_path().string();
+  string caPath   = testDir + "/keys/CA.pem";
+  string certPath = testDir + "/keys/client.crt";
+  string keyPath  = testDir + "/keys/client.key";
+
 #if _WIN32
   transport::TWinsockSingleton::create();
 #endif
@@ -140,6 +201,7 @@ int main(int argc, char** argv) {
   int port = 9090;
   int numTests = 1;
   bool ssl = false;
+  bool zlib = false;
   string transport_type = "buffered";
   string protocol_type = "binary";
   string domain_socket = "";
@@ -149,28 +211,35 @@ int main(int argc, char** argv) {
   int return_code = 0;
 
   boost::program_options::options_description desc("Allowed options");
-  desc.add_options()("help,h",
-                     "produce help message")("host",
-                                             boost::program_options::value<string>(&host)
-                                                 ->default_value(host),
-                                             "Host to connect")("port",
-                                                                boost::program_options::value<int>(
-                                                                    &port)->default_value(port),
-                                                                "Port number to connect")(
-      "domain-socket",
-      boost::program_options::value<string>(&domain_socket)->default_value(domain_socket),
-      "Domain Socket (e.g. /tmp/ThriftTest.thrift), instead of host and port")(
-      "abstract-namespace",
-      "Look for the domain socket in the Abstract Namespace (no connection with filesystem pathnames)")(
-      "transport",
-      boost::program_options::value<string>(&transport_type)->default_value(transport_type),
-      "Transport: buffered, framed, http, evhttp")(
-      "protocol",
-      boost::program_options::value<string>(&protocol_type)->default_value(protocol_type),
-      "Protocol: binary, header, compact, json")("ssl", "Encrypted Transport using SSL")(
-      "testloops,n",
-      boost::program_options::value<int>(&numTests)->default_value(numTests),
-      "Number of Tests")("noinsane", "Do not run insanity test");
+  desc.add_options()
+      ("help,h", "produce help message")
+      ("host",
+          boost::program_options::value<string>(&host)->default_value(host),
+          "Host to connect")
+      ("port",
+          boost::program_options::value<int>(&port)->default_value(port),
+          "Port number to connect")
+      ("domain-socket",
+          boost::program_options::value<string>(&domain_socket)->default_value(domain_socket),
+          "Domain Socket (e.g. /tmp/ThriftTest.thrift), instead of host and port")
+      ("abstract-namespace",
+          "Look for the domain socket in the Abstract Namespace"
+          " (no connection with filesystem pathnames)")
+      ("transport",
+          boost::program_options::value<string>(&transport_type)->default_value(transport_type),
+          "Transport: buffered, framed, http, evhttp, zlib")
+      ("protocol",
+          boost::program_options::value<string>(&protocol_type)->default_value(protocol_type),
+          "Protocol: binary, compact, header, json, multi, multic, multih, multij")
+      ("ssl",
+          "Encrypted Transport using SSL")
+      ("zlib",
+          "Wrap Transport with Zlib")
+      ("testloops,n",
+          boost::program_options::value<int>(&numTests)->default_value(numTests),
+          "Number of Tests")
+      ("noinsane",
+          "Do not run insanity test");
 
   boost::program_options::variables_map vm;
   boost::program_options::store(boost::program_options::parse_command_line(argc, argv, desc), vm);
@@ -187,6 +256,10 @@ int main(int argc, char** argv) {
       } else if (protocol_type == "compact") {
       } else if (protocol_type == "header") {
       } else if (protocol_type == "json") {
+      } else if (protocol_type == "multi") {
+      } else if (protocol_type == "multic") {
+      } else if (protocol_type == "multih") {
+      } else if (protocol_type == "multij") {
       } else {
         throw invalid_argument("Unknown protocol type " + protocol_type);
       }
@@ -197,6 +270,8 @@ int main(int argc, char** argv) {
       } else if (transport_type == "framed") {
       } else if (transport_type == "http") {
       } else if (transport_type == "evhttp") {
+      } else if (transport_type == "zlib") {
+        // crosstest will pass zlib as a transport and as a flag right now..
       } else {
         throw invalid_argument("Unknown transport type " + transport_type);
       }
@@ -212,6 +287,10 @@ int main(int argc, char** argv) {
     ssl = true;
   }
 
+  if (vm.count("zlib")) {
+    zlib = true;
+  }
+
   if (vm.count("abstract-namespace")) {
     abstract_namespace = true;
   }
@@ -220,16 +299,23 @@ int main(int argc, char** argv) {
     noinsane = true;
   }
 
-  boost::shared_ptr<TTransport> transport;
-  boost::shared_ptr<TProtocol> protocol;
-
-  boost::shared_ptr<TSocket> socket;
-  boost::shared_ptr<TSSLSocketFactory> factory;
+  // THRIFT-4164: The factory MUST outlive any sockets it creates for correct behavior!
+  std::shared_ptr<TSSLSocketFactory> factory;
+  std::shared_ptr<TSocket> socket;
+  std::shared_ptr<TTransport> transport;
+  std::shared_ptr<TProtocol> protocol;
+  std::shared_ptr<TProtocol> protocol2;  // SecondService for multiplexed
 
   if (ssl) {
-    factory = boost::shared_ptr<TSSLSocketFactory>(new TSSLSocketFactory());
+    cout << "Client Certificate File: " << certPath << endl;
+    cout << "Client Key         File: " << keyPath << endl;
+    cout << "CA                 File: " << caPath << endl;
+
+    factory = std::shared_ptr<TSSLSocketFactory>(new TSSLSocketFactory());
     factory->ciphers("ALL:!ADH:!LOW:!EXP:!MD5:@STRENGTH");
-    factory->loadTrustedCertificates(pemPath.c_str());
+    factory->loadTrustedCertificates(caPath.c_str());
+    factory->loadCertificate(certPath.c_str());
+    factory->loadPrivateKey(keyPath.c_str());
     factory->authenticate(true);
     socket = factory->createSocket(host, port);
   } else {
@@ -237,39 +323,46 @@ int main(int argc, char** argv) {
       if (abstract_namespace) {
         std::string abstract_socket("\0", 1);
         abstract_socket += domain_socket;
-        socket = boost::shared_ptr<TSocket>(new TSocket(abstract_socket));
+        socket = std::shared_ptr<TSocket>(new TSocket(abstract_socket));
       } else {
-        socket = boost::shared_ptr<TSocket>(new TSocket(domain_socket));
+        socket = std::shared_ptr<TSocket>(new TSocket(domain_socket));
       }
       port = 0;
     } else {
-      socket = boost::shared_ptr<TSocket>(new TSocket(host, port));
+      socket = std::shared_ptr<TSocket>(new TSocket(host, port));
     }
   }
 
   if (transport_type.compare("http") == 0) {
-    boost::shared_ptr<TTransport> httpSocket(new THttpClient(socket, host, "/service"));
-    transport = httpSocket;
+    transport = std::make_shared<THttpClient>(socket, host, "/service");
   } else if (transport_type.compare("framed") == 0) {
-    boost::shared_ptr<TFramedTransport> framedSocket(new TFramedTransport(socket));
-    transport = framedSocket;
+    transport = std::make_shared<TFramedTransport>(socket);
   } else {
-    boost::shared_ptr<TBufferedTransport> bufferedSocket(new TBufferedTransport(socket));
-    transport = bufferedSocket;
+    transport = std::make_shared<TBufferedTransport>(socket);
   }
 
-  if (protocol_type.compare("json") == 0) {
-    boost::shared_ptr<TProtocol> jsonProtocol(new TJSONProtocol(transport));
-    protocol = jsonProtocol;
-  } else if (protocol_type.compare("compact") == 0) {
-    boost::shared_ptr<TProtocol> compactProtocol(new TCompactProtocol(transport));
-    protocol = compactProtocol;
-  } else if (protocol_type == "header") {
-    boost::shared_ptr<TProtocol> headerProtocol(new THeaderProtocol(transport));
-    protocol = headerProtocol;
+  if (zlib) {
+    transport = std::make_shared<TZlibTransport>(transport);
+  }
+
+  if (protocol_type == "json" || protocol_type == "multij") {
+    typedef TPedanticProtocol<TJSONProtocol> TPedanticJSONProtocol;
+    protocol = std::make_shared<TPedanticJSONProtocol>(transport);
+  } else if (protocol_type == "compact" || protocol_type == "multic") {
+    typedef TPedanticProtocol<TCompactProtocol> TPedanticCompactProtocol;
+    protocol = std::make_shared<TPedanticCompactProtocol>(transport);
+  } else if (protocol_type == "header" || protocol_type == "multih") {
+    typedef TPedanticProtocol<THeaderProtocol> TPedanticHeaderProtocol;
+    protocol = std::make_shared<TPedanticHeaderProtocol>(transport);
   } else {
-    boost::shared_ptr<TBinaryProtocol> binaryProtocol(new TBinaryProtocol(transport));
-    protocol = binaryProtocol;
+    typedef TPedanticProtocol<TBinaryProtocol> TPedanticBinaryProtocol;
+    protocol = std::make_shared<TPedanticBinaryProtocol>(transport);
+  }
+
+  if (boost::starts_with(protocol_type, "multi")) {
+    protocol2 = std::make_shared<TMultiplexedProtocol>(protocol, "SecondService");
+    // we don't need access to the original protocol any more, so...
+    protocol = std::make_shared<TMultiplexedProtocol>(protocol, "ThriftTest");
   }
 
   // Connection info
@@ -291,14 +384,14 @@ int main(int argc, char** argv) {
     cout << "Libevent Features: 0x" << hex << event_base_get_features(base) << endl;
 #endif
 
-    boost::shared_ptr<TProtocolFactory> protocolFactory(new TBinaryProtocolFactory());
+    std::shared_ptr<TProtocolFactory> protocolFactory(new TBinaryProtocolFactory());
 
-    boost::shared_ptr<TAsyncChannel> channel(
+    std::shared_ptr<TAsyncChannel> channel(
         new TEvhttpClientChannel(host.c_str(), "/", host.c_str(), port, base));
     ThriftTestCobClient* client = new ThriftTestCobClient(channel, protocolFactory.get());
-    client->testVoid(tcxx::bind(testVoid_clientReturn,
+    client->testVoid(std::bind(testVoid_clientReturn,
                                 base,
-                                tcxx::placeholders::_1));
+                                std::placeholders::_1));
 
     event_base_loop(base, 0);
     return 0;
@@ -354,7 +447,30 @@ int main(int argc, char** argv) {
       return_code |= ERR_BASETYPES;
     }
 
+    //
+    // Multiplexed protocol - call another service method
+    // in the middle of the ThriftTest
+    //
+    if (boost::starts_with(protocol_type, "multi")) {
+    SecondServiceClient ssc(protocol2);
+    // transport is already open...
+
+        try {
+          cout << "secondService.secondTestString(\"foo\") => " << flush;
+        std::string result;
+      ssc.secondtestString(result, "foo");
+      cout << "{" << result << "}" << endl;
+      } catch (std::exception& e) {
+      cout << "  *** FAILED *** " << e.what() << endl;
+      return_code |= ERR_EXCEPTIONS;
+    }
+    }
+
     try {
+#ifdef _MSC_VER
+#pragma warning( push )
+#pragma warning( disable : 4566 )
+#endif
       string str(
           "}{Afrikaans, Alemannisch, Aragonés, العربية, مصرى, "
           "Asturianu, Aymar aru, Azərbaycan, Башҡорт, Boarisch, Žemaitėška, "
@@ -381,6 +497,9 @@ int main(int argc, char** argv) {
           "Türkçe, Татарча/Tatarça, Українська, اردو, Tiếng Việt, Volapük, "
           "Walon, Winaray, 吴语, isiXhosa, ייִדיש, Yorùbá, Zeêuws, 中文, "
           "Bân-lâm-gú, 粵語");
+#ifdef _MSC_VER
+#pragma warning( pop )
+#endif
       cout << "testString(" << str << ") = " << flush;
       testClient.testString(s, str);
       cout << s << endl;
@@ -447,8 +566,8 @@ int main(int argc, char** argv) {
     BASETYPE_IDENTITY_TEST(testI32, -1);
     BASETYPE_IDENTITY_TEST(testI32, 190000013);
     BASETYPE_IDENTITY_TEST(testI32, -190000013);
-    BASETYPE_IDENTITY_TEST(testI32, numeric_limits<int32_t>::max());
-    BASETYPE_IDENTITY_TEST(testI32, numeric_limits<int32_t>::min());
+    BASETYPE_IDENTITY_TEST(testI32, (numeric_limits<int32_t>::max)());
+    BASETYPE_IDENTITY_TEST(testI32, (numeric_limits<int32_t>::min)());
 
     /**
      * I64 TEST
@@ -457,12 +576,12 @@ int main(int argc, char** argv) {
     BASETYPE_IDENTITY_TEST(testI64, (int64_t)-1);
     BASETYPE_IDENTITY_TEST(testI64, (int64_t)7000000000000000123LL);
     BASETYPE_IDENTITY_TEST(testI64, (int64_t)-7000000000000000123LL);
-    BASETYPE_IDENTITY_TEST(testI64, (int64_t)pow(2LL, 32));
-    BASETYPE_IDENTITY_TEST(testI64, (int64_t)-pow(2LL, 32));
-    BASETYPE_IDENTITY_TEST(testI64, (int64_t)pow(2LL, 32) + 1);
-    BASETYPE_IDENTITY_TEST(testI64, (int64_t)-pow(2LL, 32) - 1);
-    BASETYPE_IDENTITY_TEST(testI64, numeric_limits<int64_t>::max());
-    BASETYPE_IDENTITY_TEST(testI64, numeric_limits<int64_t>::min());
+    BASETYPE_IDENTITY_TEST(testI64, (int64_t)pow(static_cast<double>(2LL), 32));
+    BASETYPE_IDENTITY_TEST(testI64, (int64_t)-pow(static_cast<double>(2LL), 32));
+    BASETYPE_IDENTITY_TEST(testI64, (int64_t)pow(static_cast<double>(2LL), 32) + 1);
+    BASETYPE_IDENTITY_TEST(testI64, (int64_t)-pow(static_cast<double>(2LL), 32) - 1);
+    BASETYPE_IDENTITY_TEST(testI64, (numeric_limits<int64_t>::max)());
+    BASETYPE_IDENTITY_TEST(testI64, (numeric_limits<int64_t>::min)());
 
     /**
      * DOUBLE TEST
@@ -472,19 +591,19 @@ int main(int argc, char** argv) {
     BASETYPE_IDENTITY_TEST(testDouble, -1.0);
     BASETYPE_IDENTITY_TEST(testDouble, -5.2098523);
     BASETYPE_IDENTITY_TEST(testDouble, -0.000341012439638598279);
-    BASETYPE_IDENTITY_TEST(testDouble, pow(2, 32));
-    BASETYPE_IDENTITY_TEST(testDouble, pow(2, 32) + 1);
-    BASETYPE_IDENTITY_TEST(testDouble, pow(2, 53) - 1);
-    BASETYPE_IDENTITY_TEST(testDouble, -pow(2, 32));
-    BASETYPE_IDENTITY_TEST(testDouble, -pow(2, 32) - 1);
-    BASETYPE_IDENTITY_TEST(testDouble, -pow(2, 53) + 1);
+    BASETYPE_IDENTITY_TEST(testDouble, pow(static_cast<double>(2), 32));
+    BASETYPE_IDENTITY_TEST(testDouble, pow(static_cast<double>(2), 32) + 1);
+    BASETYPE_IDENTITY_TEST(testDouble, pow(static_cast<double>(2), 53) - 1);
+    BASETYPE_IDENTITY_TEST(testDouble, -pow(static_cast<double>(2), 32));
+    BASETYPE_IDENTITY_TEST(testDouble, -pow(static_cast<double>(2), 32) - 1);
+    BASETYPE_IDENTITY_TEST(testDouble, -pow(static_cast<double>(2), 53) + 1);
 
     try {
-      double expected = pow(10, 307);
+      double expected = pow(static_cast<double>(10), 307);
       cout << "testDouble(" << expected << ") = " << flush;
       double actual = testClient.testDouble(expected);
       cout << "(" << actual << ")" << endl;
-      if (expected - actual > pow(10, 292)) {
+      if (expected - actual > pow(static_cast<double>(10), 292)) {
         cout << "*** FAILED ***" << endl
              << "Expected: " << expected << " but got: " << actual << endl;
       }
@@ -496,11 +615,11 @@ int main(int argc, char** argv) {
     }
 
     try {
-      double expected = pow(10, -292);
+      double expected = pow(static_cast<double>(10), -292);
       cout << "testDouble(" << expected << ") = " << flush;
       double actual = testClient.testDouble(expected);
       cout << "(" << actual << ")" << endl;
-      if (expected - actual > pow(10, -307)) {
+      if (expected - actual > pow(static_cast<double>(10), -307)) {
         cout << "*** FAILED ***" << endl
              << "Expected: " << expected << " but got: " << actual << endl;
       }
@@ -514,72 +633,9 @@ int main(int argc, char** argv) {
     /**
      * BINARY TEST
      */
-    cout << "testBinary(empty)" << endl;
-    try {
-      string bin_result;
-      testClient.testBinary(bin_result, string());
-      if (!bin_result.empty()) {
-        cout << endl << "*** FAILED ***" << endl;
-        cout << "invalid length: " << bin_result.size() << endl;
-        return_code |= ERR_BASETYPES;
-      }
-    } catch (TTransportException&) {
-      throw;
-    } catch (exception& ex) {
-      cout << "*** FAILED ***" << endl << ex.what() << endl;
-      return_code |= ERR_BASETYPES;
-    }
-    cout << "testBinary([-128..127]) = {" << flush;
-    const char bin_data[256]
-        = {-128, -127, -126, -125, -124, -123, -122, -121, -120, -119, -118, -117, -116, -115, -114,
-           -113, -112, -111, -110, -109, -108, -107, -106, -105, -104, -103, -102, -101, -100, -99,
-           -98,  -97,  -96,  -95,  -94,  -93,  -92,  -91,  -90,  -89,  -88,  -87,  -86,  -85,  -84,
-           -83,  -82,  -81,  -80,  -79,  -78,  -77,  -76,  -75,  -74,  -73,  -72,  -71,  -70,  -69,
-           -68,  -67,  -66,  -65,  -64,  -63,  -62,  -61,  -60,  -59,  -58,  -57,  -56,  -55,  -54,
-           -53,  -52,  -51,  -50,  -49,  -48,  -47,  -46,  -45,  -44,  -43,  -42,  -41,  -40,  -39,
-           -38,  -37,  -36,  -35,  -34,  -33,  -32,  -31,  -30,  -29,  -28,  -27,  -26,  -25,  -24,
-           -23,  -22,  -21,  -20,  -19,  -18,  -17,  -16,  -15,  -14,  -13,  -12,  -11,  -10,  -9,
-           -8,   -7,   -6,   -5,   -4,   -3,   -2,   -1,   0,    1,    2,    3,    4,    5,    6,
-           7,    8,    9,    10,   11,   12,   13,   14,   15,   16,   17,   18,   19,   20,   21,
-           22,   23,   24,   25,   26,   27,   28,   29,   30,   31,   32,   33,   34,   35,   36,
-           37,   38,   39,   40,   41,   42,   43,   44,   45,   46,   47,   48,   49,   50,   51,
-           52,   53,   54,   55,   56,   57,   58,   59,   60,   61,   62,   63,   64,   65,   66,
-           67,   68,   69,   70,   71,   72,   73,   74,   75,   76,   77,   78,   79,   80,   81,
-           82,   83,   84,   85,   86,   87,   88,   89,   90,   91,   92,   93,   94,   95,   96,
-           97,   98,   99,   100,  101,  102,  103,  104,  105,  106,  107,  108,  109,  110,  111,
-           112,  113,  114,  115,  116,  117,  118,  119,  120,  121,  122,  123,  124,  125,  126,
-           127};
-    try {
-      string bin_result;
-      testClient.testBinary(bin_result, string(bin_data, 256));
-      if (bin_result.size() != 256) {
-        cout << endl << "*** FAILED ***" << endl;
-        cout << "invalid length: " << bin_result.size() << endl;
-        return_code |= ERR_BASETYPES;
-      } else {
-        bool first = true;
-        bool failed = false;
-        for (int i = 0; i < 256; ++i) {
-          if (!first)
-            cout << ",";
-          else
-            first = false;
-          cout << static_cast<int>(bin_result[i]);
-          if (!failed && bin_result[i] != i - 128) {
-            failed = true;
-          }
-        }
-        cout << "}" << endl;
-        if (failed) {
-          cout << "*** FAILED ***" << endl;
-          return_code |= ERR_BASETYPES;
-        }
-      }
-    } catch (TTransportException&) {
-      throw;
-    } catch (exception& ex) {
-      cout << "*** FAILED ***" << endl << ex.what() << endl;
-      return_code |= ERR_BASETYPES;
+    for (string::size_type i = 0; i < 131073 && !return_code; ) {
+      return_code |= binary_test(testClient, i);
+      if (i > 0) { i *= 2; } else { ++i; }
     }
 
 
@@ -937,11 +993,11 @@ int main(int argc, char** argv) {
       if (it1 == whoa.end()) {
         failed = true;
       } else {
-        map<Numberz::type, Insanity>::const_iterator it12 = it1->second.find(Numberz::TWO);
+        auto it12 = it1->second.find(Numberz::TWO);
         if (it12 == it1->second.end() || it12->second != insane) {
           failed = true;
         }
-        map<Numberz::type, Insanity>::const_iterator it13 = it1->second.find(Numberz::THREE);
+        auto it13 = it1->second.find(Numberz::THREE);
         if (it13 == it1->second.end() || it13->second != insane) {
           failed = true;
         }
@@ -950,8 +1006,8 @@ int main(int argc, char** argv) {
       if (it2 == whoa.end()) {
         failed = true;
       } else {
-        map<Numberz::type, Insanity>::const_iterator it26 = it2->second.find(Numberz::SIX);
-        if (it26 == it1->second.end() || it26->second != Insanity()) {
+        auto it26 = it2->second.find(Numberz::SIX);
+        if (it26 == it2->second.end() || it26->second != Insanity()) {
           failed = true;
         }
       }
@@ -1076,11 +1132,13 @@ int main(int argc, char** argv) {
     /**
      * I32 TEST
      */
-    cout << "re-test testI32(-1)";
+    cout << "re-test testI32(-1)" << flush;
     int i32 = testClient.testI32(-1);
     cout << " = " << i32 << endl;
     if (i32 != -1)
       return_code |= ERR_BASETYPES;
+
+    cout << endl << "All tests done." << endl << flush;
 
     uint64_t stop = now();
     uint64_t tot = stop - start;
@@ -1095,10 +1153,10 @@ int main(int argc, char** argv) {
       time_max = tot;
     }
 
+    cout << flush;
     transport->close();
   }
 
-  cout << endl << "All tests done." << endl;
 
   uint64_t time_avg = time_tot / numTests;
 
@@ -1107,4 +1165,67 @@ int main(int argc, char** argv) {
   cout << "Avg time: " << time_avg << " us" << endl;
 
   return return_code;
+}
+
+void binary_fill(std::string& str, string::size_type siz)
+{
+    static const signed char bin_data[256]
+        = {-128, -127, -126, -125, -124, -123, -122, -121, -120, -119, -118, -117, -116, -115, -114,
+           -113, -112, -111, -110, -109, -108, -107, -106, -105, -104, -103, -102, -101, -100, -99,
+           -98,  -97,  -96,  -95,  -94,  -93,  -92,  -91,  -90,  -89,  -88,  -87,  -86,  -85,  -84,
+           -83,  -82,  -81,  -80,  -79,  -78,  -77,  -76,  -75,  -74,  -73,  -72,  -71,  -70,  -69,
+           -68,  -67,  -66,  -65,  -64,  -63,  -62,  -61,  -60,  -59,  -58,  -57,  -56,  -55,  -54,
+           -53,  -52,  -51,  -50,  -49,  -48,  -47,  -46,  -45,  -44,  -43,  -42,  -41,  -40,  -39,
+           -38,  -37,  -36,  -35,  -34,  -33,  -32,  -31,  -30,  -29,  -28,  -27,  -26,  -25,  -24,
+           -23,  -22,  -21,  -20,  -19,  -18,  -17,  -16,  -15,  -14,  -13,  -12,  -11,  -10,  -9,
+           -8,   -7,   -6,   -5,   -4,   -3,   -2,   -1,   0,    1,    2,    3,    4,    5,    6,
+           7,    8,    9,    10,   11,   12,   13,   14,   15,   16,   17,   18,   19,   20,   21,
+           22,   23,   24,   25,   26,   27,   28,   29,   30,   31,   32,   33,   34,   35,   36,
+           37,   38,   39,   40,   41,   42,   43,   44,   45,   46,   47,   48,   49,   50,   51,
+           52,   53,   54,   55,   56,   57,   58,   59,   60,   61,   62,   63,   64,   65,   66,
+           67,   68,   69,   70,   71,   72,   73,   74,   75,   76,   77,   78,   79,   80,   81,
+           82,   83,   84,   85,   86,   87,   88,   89,   90,   91,   92,   93,   94,   95,   96,
+           97,   98,   99,   100,  101,  102,  103,  104,  105,  106,  107,  108,  109,  110,  111,
+           112,  113,  114,  115,  116,  117,  118,  119,  120,  121,  122,  123,  124,  125,  126,
+           127};
+
+    str.resize(siz);
+    char *ptr = &str[0];
+    string::size_type pos = 0;
+    for (string::size_type i = 0; i < siz; ++i)
+    {
+        if (pos == 255) { pos = 0; } else { ++pos; }
+        *ptr++ = bin_data[pos];
+    }
+}
+
+int binary_test(ThriftTestClient& testClient, string::size_type siz)
+{
+    string bin_request;
+    string bin_result;
+
+    cout << "testBinary(siz = " << siz << ")" << endl;
+    binary_fill(bin_request, siz);
+    try {
+        testClient.testBinary(bin_result, bin_request);
+
+        if (bin_request.size() != bin_result.size()) {
+            cout << "*** FAILED: request size " << bin_request.size() << "; result size " << bin_result.size() << endl;
+            return ERR_BASETYPES;
+        }
+
+        for (string::size_type i = 0; i < siz; ++i) {
+            if (bin_request.at(i) != bin_result.at(i)) {
+                cout << "*** FAILED: at position " << i << " request[i] is h" << hex << bin_request.at(i) << " result[i] is h" << hex << bin_result.at(i) << endl;
+                return ERR_BASETYPES;
+            }
+        }
+    } catch (TTransportException&) {
+        throw;
+    } catch (exception& ex) {
+        cout << "*** FAILED ***" << endl << ex.what() << endl;
+        return ERR_BASETYPES;
+    }
+
+    return 0;
 }

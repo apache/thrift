@@ -37,6 +37,7 @@ class TProtocolException(TException):
     BAD_VERSION = 4
     NOT_IMPLEMENTED = 5
     DEPTH_LIMIT = 6
+    INVALID_PROTOCOL = 7
 
     def __init__(self, type=UNKNOWN, message=None):
         TException.__init__(self, message)
@@ -190,9 +191,7 @@ class TProtocolBase(object):
         return self.readString().decode('utf8')
 
     def skip(self, ttype):
-        if ttype == TType.STOP:
-            return
-        elif ttype == TType.BOOL:
+        if ttype == TType.BOOL:
             self.readBool()
         elif ttype == TType.BYTE:
             self.readByte()
@@ -231,6 +230,10 @@ class TProtocolBase(object):
             for i in range(size):
                 self.skip(etype)
             self.readListEnd()
+        else:
+            raise TProtocolException(
+                TProtocolException.INVALID_DATA,
+                "invalid TType")
 
     # tuple of: ( 'reader method' name, is_container bool, 'writer_method' name )
     _TTYPE_HANDLERS = (
@@ -268,7 +271,7 @@ class TProtocolBase(object):
         return self._TTYPE_HANDLERS[ttype] if ttype < len(self._TTYPE_HANDLERS) else (None, None, False)
 
     def _read_by_ttype(self, ttype, spec, espec):
-        reader_name, _, is_container = self._ttype_handlers(ttype, spec)
+        reader_name, _, is_container = self._ttype_handlers(ttype, espec)
         if reader_name is None:
             raise TProtocolException(type=TProtocolException.INVALID_DATA,
                                      message='Invalid type %d' % (ttype))
@@ -300,8 +303,14 @@ class TProtocolBase(object):
 
     def readContainerStruct(self, spec):
         (obj_class, obj_spec) = spec
-        obj = obj_class()
-        obj.read(self)
+
+        # If obj_class.read is a classmethod (e.g. in frozen structs),
+        # call it as such.
+        if getattr(obj_class.read, '__self__', None) is obj_class:
+            obj = obj_class.read(self)
+        else:
+            obj = obj_class()
+            obj.read(self)
         return obj
 
     def readContainerMap(self, spec):
@@ -389,7 +398,7 @@ class TProtocolBase(object):
         self.writeStructEnd()
 
     def _write_by_ttype(self, ttype, vals, spec, espec):
-        _, writer_name, is_container = self._ttype_handlers(ttype, spec)
+        _, writer_name, is_container = self._ttype_handlers(ttype, espec)
         writer_func = getattr(self, writer_name)
         write = (lambda v: writer_func(v, espec)) if is_container else writer_func
         for v in vals:

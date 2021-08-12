@@ -1,6 +1,6 @@
 ## Windows Setup
 
-The Thrift environment consists of two main parts: The Thrift compiler EXE and the language-dependent libraries. Most of these libraries will require some kind of build and/or installation. But regarding the Thrift compiler utility there are a number of different alternatives. 
+The Thrift environment consists of two main parts: The Thrift compiler EXE and the language-dependent libraries. Most of these libraries will require some kind of build and/or installation. But regarding the Thrift compiler utility, there are a number of different alternatives. 
 
 The first one of these alternatives is to download the **pre-built Thrift Compiler EXE** and only build the libraries needed from source, following one of the "Setup from source" methods outlined below.
 
@@ -112,7 +112,7 @@ This can be implemented in a Makefile using the following lines:
 
 Then linking using $(LTHRIFT) instead of -lthrift.
 
-	TODO - diagnose issue further
+	TODO - diagnose the issue further
 
 #### C++ runtime segfault with cygwin 1.7.5-1, g++-4.3.4, fork() and throw
 
@@ -131,7 +131,7 @@ To compile the Thrift generator & runtime libraries (untested) without the cygwi
  * MinGW 
  * [Apache Thrift Requirements](/docs/install)
 
-In addition you need to add the following entry to your windows PATH variable.
+In addition, you need to add the following entry to your windows PATH variable.
 
 	C:\MINGW\BIN
 	
@@ -145,7 +145,7 @@ Run bootstrap.sh:
 
 Make sure you have java in your $PATH variable, if not do(adjust path if necessary):
 
-	export PATH=$PATH:"/cygdrive/c/program files/java/jre1.6.0_05/bin"
+	export PATH=$PATH:"/cygdrive/c/program files/java/jre1.8.0_191/bin"
 
 Run configure - using CXXFLAGS to work around an issue with an old pthreads define (untested on MinGW - works on Cygwin):
 

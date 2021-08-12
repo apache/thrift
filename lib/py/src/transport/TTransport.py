@@ -32,10 +32,12 @@ class TTransportException(TException):
     END_OF_FILE = 4
     NEGATIVE_SIZE = 5
     SIZE_LIMIT = 6
+    INVALID_CLIENT_TYPE = 7
 
-    def __init__(self, type=UNKNOWN, message=None):
+    def __init__(self, type=UNKNOWN, message=None, inner=None):
         TException.__init__(self, message)
         self.type = type
+        self.inner = inner
 
 
 class TTransportBase(object):
@@ -58,10 +60,11 @@ class TTransportBase(object):
         have = 0
         while (have < sz):
             chunk = self.read(sz - have)
-            have += len(chunk)
+            chunkLen = len(chunk)
+            have += chunkLen
             buff += chunk
 
-            if len(chunk) == 0:
+            if chunkLen == 0:
                 raise EOFError()
 
         return buff
@@ -168,7 +171,6 @@ class TBufferedTransport(TTransportBase, CReadableTransport):
             # on exception reset wbuf so it doesn't contain a partial function call
             self.__wbuf = BufferIO()
             raise e
-        self.__wbuf.getvalue()
 
     def flush(self):
         out = self.__wbuf.getvalue()
@@ -205,7 +207,7 @@ class TMemoryBuffer(TTransportBase, CReadableTransport):
     TODO(dreiss): Make this work like the C++ version.
     """
 
-    def __init__(self, value=None):
+    def __init__(self, value=None, offset=0):
         """value -- a value to read from for stringio
 
         If value is set, this will be a transport for reading,
@@ -214,6 +216,8 @@ class TMemoryBuffer(TTransportBase, CReadableTransport):
             self._buffer = BufferIO(value)
         else:
             self._buffer = BufferIO()
+        if offset:
+            self._buffer.seek(offset)
 
     def isOpen(self):
         return not self._buffer.closed
@@ -373,7 +377,7 @@ class TSaslClientTransport(TTransportBase, CReadableTransport):
         if not self.transport.isOpen():
             self.transport.open()
 
-        self.send_sasl_msg(self.START, self.sasl.mechanism)
+        self.send_sasl_msg(self.START, bytes(self.sasl.mechanism, 'ascii'))
         self.send_sasl_msg(self.OK, self.sasl.process())
 
         while True:
@@ -414,7 +418,7 @@ class TSaslClientTransport(TTransportBase, CReadableTransport):
     def flush(self):
         data = self.__wbuf.getvalue()
         encoded = self.sasl.wrap(data)
-        self.transport.write(''.join((pack("!i", len(encoded)), encoded)))
+        self.transport.write(pack("!i", len(encoded)) + encoded)
         self.transport.flush()
         self.__wbuf = BufferIO()
 

@@ -4,9 +4,9 @@
   "homepage": "http://thrift.apache.org/",
   "repository": {
     "type": "git",
-    "url": "https://git-wip-us.apache.org/repos/asf/thrift.git"
+    "url": "https://github.com/apache/thrift.git"
   },
-  "version": "1.0.0-dev",
+  "version": "0.14.1",
   "author": {
     "name": "Apache Thrift Developers",
     "email": "dev@thrift.apache.org",
@@ -30,25 +30,43 @@
   "directories": {
     "lib": "./lib/nodejs/lib/thrift"
   },
+  "browser": "./lib/nodejs/lib/thrift/browser.js",
   "main": "./lib/nodejs/lib/thrift",
   "engines": {
-    "node": ">= 0.2.4"
+    "node": ">= 10.18.0"
   },
   "dependencies": {
-    "node-int64": "~0.3.0",
-    "q": "1.0.x",
-    "ws": "~0.4.32"
+    "browser-or-node": "^1.2.1",
+    "isomorphic-ws": "^4.0.1",
+    "node-int64": "^0.4.0",
+    "q": "^1.5.0",
+    "ws": "^5.2.2"
   },
   "devDependencies": {
-    "buffer-equals": "^1.0.3",
-    "commander": "2.1.x",
-    "connect": "2.7.x",
-    "istanbul": "^0.3.5",
-    "run-browser": "^2.0.1",
-    "tape": "~3.5.0"
+    "@types/node": "^10.12.6",
+    "@types/node-int64": "^0.4.29",
+    "@types/q": "^1.5.1",
+    "buffer-equals": "^1.0.4",
+    "commander": "^2.14.1",
+    "connect": "^3.6.6",
+    "eslint": "^5.7.0",
+    "eslint-config-prettier": "^3.1.0",
+    "eslint-plugin-prettier": "^3.0.0",
+    "html-validator-cli": "^4.1.4",
+    "nyc": "^15.0.0",
+    "jsdoc": "^3.6.3",
+    "json-int64": "^1.0.2",
+    "prettier": "^1.14.3",
+    "tape": "^4.9.0",
+    "typescript": "^3.1.6",
+    "utf-8-validate": "^5.0.0"
   },
   "scripts": {
     "cover": "lib/nodejs/test/testAll.sh COVER",
-    "test": "lib/nodejs/test/testAll.sh"
+    "test": "lib/nodejs/test/testAll.sh",
+    "test-ts": "lib/nodets/test/testAll.sh",
+    "prettier": "prettier --write '**/*.js'",
+    "lint": "eslint lib/nodejs/. --ext .js",
+    "lint-tests": "eslint lib/nodejs/test/. --ext .js"
   }
 }

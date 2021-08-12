@@ -17,7 +17,6 @@
  * under the License.
  */
 
-#include <assert.h>
 #include <glib.h>
 
 #include <thrift/c_glib/thrift_struct.h>
@@ -76,18 +75,18 @@ test_simple (void)
 
   /* write-to-read with optional fields */
   s1->im_optional = 10;
-  assert (s1->__isset_im_default == FALSE);
-  assert (s1->__isset_im_optional == FALSE);  
+  g_assert (s1->__isset_im_default == FALSE);
+  g_assert (s1->__isset_im_optional == FALSE);  
   write_to_read (THRIFT_STRUCT (s1), THRIFT_STRUCT (s2), NULL, NULL);
-  assert (s2->__isset_im_default == TRUE);
-  assert (s2->__isset_im_optional == FALSE);
-  assert (s2->im_optional == 0);
+  g_assert (s2->__isset_im_default == TRUE);
+  g_assert (s2->__isset_im_optional == FALSE);
+  g_assert (s2->im_optional == 0);
 
   s1->__isset_im_optional = TRUE;
   write_to_read (THRIFT_STRUCT (s1), THRIFT_STRUCT (s3), NULL, NULL);
-  assert (s3->__isset_im_default == TRUE);
-  assert (s3->__isset_im_optional == TRUE);
-  assert (s3->im_optional == 10);
+  g_assert (s3->__isset_im_default == TRUE);
+  g_assert (s3->__isset_im_optional == TRUE);
+  g_assert (s3->im_optional == 10);
 
   g_object_unref (s1);
   g_object_unref (s2);
@@ -109,10 +108,10 @@ test_tricky1 (void)
   write_to_read (THRIFT_STRUCT (t2), THRIFT_STRUCT (t1), NULL, NULL);
   write_to_read (THRIFT_STRUCT (t1), THRIFT_STRUCT (t2), NULL, NULL);
 
-  assert (t1->__isset_im_default == FALSE);
-  assert (t2->__isset_im_optional == TRUE);
-  assert (t1->im_default == t2->im_optional);
-  assert (t1->im_default == 0);
+  g_assert (t1->__isset_im_default == FALSE);
+  g_assert (t2->__isset_im_optional == TRUE);
+  g_assert (t1->im_default == t2->im_optional);
+  g_assert (t1->im_default == 0);
 
   g_object_unref (t1);
   g_object_unref (t2);
@@ -133,7 +132,7 @@ test_tricky2 (void)
   write_to_read (THRIFT_STRUCT (t1), THRIFT_STRUCT (t3), NULL, NULL);
   write_to_read (THRIFT_STRUCT (t3), THRIFT_STRUCT (t1), NULL, NULL);
 
-  assert (t1->__isset_im_default == TRUE);
+  g_assert (t1->__isset_im_default == TRUE);
 
   g_object_unref (t1);
   g_object_unref (t3);
@@ -176,12 +175,12 @@ test_tricky4 (void)
 
   /* throws protocol exception */
   write_to_read (THRIFT_STRUCT (t2), THRIFT_STRUCT (t3), NULL, &read_error);
-  assert (read_error != NULL);
+  g_assert (read_error != NULL);
   g_error_free (read_error);
 
   write_to_read (THRIFT_STRUCT (t3), THRIFT_STRUCT (t2), NULL, NULL);
 
-  assert (t2->__isset_im_optional);
+  g_assert (t2->__isset_im_optional);
 
   g_object_unref (t2);
   g_object_unref (t3);

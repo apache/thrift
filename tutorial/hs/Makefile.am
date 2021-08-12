@@ -27,7 +27,12 @@ install-exec-hook:
 # Make sure this doesn't fail if Haskell is not configured.
 clean-local:
 	$(CABAL) clean
-	$(RM) -r gen-*
+	$(RM) -r dist/
+	$(RM) -r gen-*/
+
+dist-hook:
+	$(RM) -r $(distdir)/dist/
+	$(RM) -r $(distdir)/gen-*/
 
 check-local:
 	$(CABAL) check
@@ -37,3 +42,6 @@ tutorialserver: all
 
 tutorialclient: all
 	dist/build/HaskellClient/HaskellClient
+
+EXTRA_DIST = \
+	LICENSE

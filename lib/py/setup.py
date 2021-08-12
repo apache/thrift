@@ -22,7 +22,7 @@
 import sys
 try:
     from setuptools import setup, Extension
-except:
+except Exception:
     from distutils.core import setup, Extension
 
 from distutils.command.build_ext import build_ext
@@ -31,7 +31,10 @@ from distutils.errors import CCompilerError, DistutilsExecError, DistutilsPlatfo
 # Fix to build sdist under vagrant
 import os
 if 'vagrant' in str(os.environ):
-    del os.link
+    try:
+        del os.link
+    except AttributeError:
+        pass
 
 include_dirs = ['src']
 if sys.platform == 'win32':
@@ -64,6 +67,7 @@ def run_setup(with_binary):
         extensions = dict(
             ext_modules=[
                 Extension('thrift.protocol.fastbinary',
+                          extra_compile_args=['-std=c++11'],
                           sources=[
                               'src/ext/module.cpp',
                               'src/ext/types.cpp',
@@ -78,14 +82,28 @@ def run_setup(with_binary):
     else:
         extensions = dict()
 
+    ssl_deps = []
+    if sys.version_info[0] == 2:
+        ssl_deps.append('ipaddress')
+    if sys.hexversion < 0x03050000:
+        ssl_deps.append('backports.ssl_match_hostname>=3.5')
+    tornado_deps = ['tornado>=4.0']
+    twisted_deps = ['twisted']
+
     setup(name='thrift',
-          version='1.0.0-dev',
+          version='0.14.1',
           description='Python bindings for the Apache Thrift RPC system',
-          author='Thrift Developers',
+          author='Apache Thrift Developers',
           author_email='dev@thrift.apache.org',
           url='http://thrift.apache.org',
           license='Apache License 2.0',
           install_requires=['six>=1.7.2'],
+          extras_require={
+              'ssl': ssl_deps,
+              'tornado': tornado_deps,
+              'twisted': twisted_deps,
+              'all': ssl_deps + tornado_deps + twisted_deps,
+          },
           packages=[
               'thrift',
               'thrift.protocol',
@@ -103,8 +121,10 @@ def run_setup(with_binary):
               'Topic :: Software Development :: Libraries',
               'Topic :: System :: Networking'
           ],
+          zip_safe=False,
           **extensions
           )
+
 
 try:
     with_binary = True

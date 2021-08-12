@@ -6,12 +6,25 @@
     ],
     "server": {
       "command": [
-        "test_server"
+        "test_server",
+        "--lt-debug"
+      ],
+      "protocols": [
+        "binary:multi",
+        "compact:multic"
       ]
     },
     "client": {
       "command": [
-        "test_client"
+        "test_client",
+        "--lt-debug"
+      ],
+      "protocols": [
+        "multi:binary",
+        "multic:compact"
+      ],
+      "sockets": [
+        "ip-ssl"
       ]
     },
     "transports": [
@@ -19,19 +32,40 @@
       "framed"
     ],
     "sockets": [
-      "ip"
+      "ip",
+      "domain"
     ],
     "protocols": [
       "binary",
-      "compact"
+      "compact",
+      "multi",
+      "multic"
     ],
     "workdir": "c_glib"
+  },
+  {
+    "name": "cl",
+    "server": {
+      "command": ["TestServer"],
+      "workdir": "cl",
+      "protocols": ["binary", "multi"],
+      "transports": ["buffered", "framed"],
+      "sockets": ["ip"]
+    },
+    "client": {
+      "command": ["TestClient"],
+      "workdir": "cl",
+      "protocols": ["binary", "multi"],
+      "transports": ["buffered", "framed"],
+      "sockets": ["ip"]
+    }
   },
   {
     "name": "d",
     "server": {
       "command": [
-        "thrift_test_server"
+        "thrift_test_server",
+        "--trace"
       ]
     },
     "client": {
@@ -42,7 +76,8 @@
     "transports": [
       "http",
       "buffered",
-      "framed"
+      "framed",
+      "zlib"
     ],
     "sockets": [
       "ip",
@@ -72,7 +107,8 @@
     "transports": [
       "buffered",
       "framed",
-      "http"
+      "http",
+      "zlib"
     ],
     "sockets": [
       "ip",
@@ -81,50 +117,56 @@
     "protocols": [
       "binary",
       "compact",
-      "json"
+      "json",
+      "header"
     ],
     "workdir": "go/bin"
   },
   {
     "name": "java",
-    "join_args": true,
-    "command": [
-      "ant",
-      "-f",
-      "build.xml",
-      "-Dno-gen-thrift=\"\"",
-      "-Dtestargs"
-    ],
-    "prepare": [
-      "ant",
-      "-f",
-      "build.xml",
-      "compile-test"
-    ],
+    "join_args": false,
     "server": {
-      "delay": 10,
-      "extra_args": ["run-testserver"]
+      "delay": 15,
+      "command": [
+        "build/runserver"
+      ],
+      "protocols": [
+        "binary:multi",
+        "compact:multic",
+        "json:multij"
+      ]
     },
     "client": {
       "timeout": 13,
-      "extra_args": ["run-testclient"],
+      "command": [
+        "build/runclient"
+      ],
       "transports": [
         "http"
+      ],
+      "protocols": [
+        "multi:binary",
+        "multic:compact",
+        "multij:json"
       ]
     },
     "transports": [
       "buffered",
       "framed",
-      "framed:fastframed"
+      "framed:fastframed",
+      "zlib"
     ],
     "sockets": [
-      "ip-ssl",
-      "ip"
+      "ip",
+      "ip-ssl"
     ],
     "protocols": [
-      "compact",
       "binary",
-      "json"
+      "compact",
+      "json",
+      "multi",
+      "multic",
+      "multij"
     ],
     "workdir": "../lib/java"
   },
@@ -141,7 +183,7 @@
       ]
     },
     "client": {
-      "timeout": 2.9,
+      "timeout": 6,
       "command": [
         "node",
         "client.js",
@@ -150,16 +192,20 @@
     },
     "transports": [
       "buffered",
-      "framed"
+      "framed",
+      "http",
+      "websocket"
     ],
     "sockets": [
       "ip",
-      "ip-ssl"
+      "ip-ssl",
+      "domain"
     ],
     "protocols": [
       "compact",
       "binary",
-      "json"
+      "json",
+      "header"
     ],
     "workdir": "../lib/nodejs/test"
   },
@@ -187,6 +233,7 @@
       "ip"
     ],
     "protocols": [
+      "header",
       "compact",
       "binary",
       "json"
@@ -214,18 +261,30 @@
     },
     "transports": [
       "buffered",
-      "framed"
+      "framed",
+      "http",
+      "zlib"
     ],
     "sockets": [
       "ip",
-      "ip-ssl"
+      "ip-ssl",
+      "domain"
     ],
     "protocols": [
-      "compact",
       "binary",
-      "json",
       "binary:accel",
-      "compact:accelc"
+      "compact",
+      "compact:accelc",
+      "header",
+      "json",
+      "multi",
+      "multi:multia",
+      "multia",
+      "multiac",
+      "multic",
+      "multic:multiac",
+      "multih",
+      "multij"
     ],
     "workdir": "py"
   },
@@ -252,18 +311,30 @@
     },
     "transports": [
       "buffered",
-      "framed"
+      "framed",
+      "http",
+      "zlib"
     ],
     "sockets": [
+      "ip",
       "ip-ssl",
-      "ip"
+      "domain"
     ],
     "protocols": [
-      "compact",
       "binary",
-      "json",
       "binary:accel",
-      "compact:accelc"
+      "compact",
+      "compact:accelc",
+      "header",
+      "json",
+      "multi",
+      "multi:multia",
+      "multia",
+      "multiac",
+      "multic",
+      "multic:multiac",
+      "multih",
+      "multij"
     ],
     "workdir": "py"
   },
@@ -272,18 +343,32 @@
     "server": {
       "command": [
         "TestServer"
+      ],
+      "protocols": [
+        "binary:multi",
+        "compact:multic",
+        "header:multih",
+        "json:multij"
       ]
     },
     "client": {
       "timeout": 8,
       "command": [
         "TestClient"
+      ],
+      "protocols": [
+        "multi:binary",
+        "multic:compact",
+        "multih:header",
+        "multij:json"
       ]
     },
     "transports": [
       "buffered",
       "http",
-      "framed"
+      "framed",
+      "zlib",
+      "websocket"
     ],
     "sockets": [
       "ip",
@@ -294,7 +379,11 @@
       "compact",
       "binary",
       "json",
-      "header"
+      "header",
+      "multi",
+      "multic",
+      "multih",
+      "multij"
     ],
     "workdir": "cpp"
   },
@@ -307,10 +396,11 @@
       ]
     },
     "client": {
-      "timeout": 5,
+      "timeout": 10,
       "command": [
         "ruby",
-        "../integration/TestClient.rb"
+        "../integration/TestClient.rb",
+        "--"
       ]
     },
     "transports": [
@@ -318,21 +408,20 @@
       "framed"
     ],
     "sockets": [
-      "ip"
+      "domain",
+      "ip",
+      "ip-ssl"
     ],
     "protocols": [
-      "compact",
       "binary",
-      "json",
-      "binary:accel"
+      "binary:accel",
+      "compact",
+      "json"
     ],
     "workdir": "rb/gen-rb"
   },
   {
-    "name": "csharp",
-    "env": {
-      "MONO_PATH": "../.."
-    },
+    "name": "netstd",
     "transports": [
       "buffered",
       "framed"
@@ -348,20 +437,24 @@
     ],
     "server": {
       "command": [
-        "mono",
-        "TestClientServer.exe",
+        "dotnet",
+        "run",
+        "--no-build",
+        "--project=Server/Server.csproj",
         "server"
       ]
     },
     "client": {
-      "timeout": 9,
+      "timeout": 10,
       "command": [
-        "mono",
-        "TestClientServer.exe",
+        "dotnet",
+        "run",
+        "--no-build",
+        "--project=Client/Client.csproj",
         "client"
       ]
     },
-    "workdir": "../lib/csharp/test/ThriftTest"
+        "workdir": "netstd"
   },
   {
     "name": "perl",
@@ -375,7 +468,8 @@
       "domain"
     ],
     "protocols": [
-      "binary"
+      "binary",
+      "multi"
     ],
     "client": {
       "command": [
@@ -383,7 +477,12 @@
         "-Igen-perl/",
         "-I../../lib/perl/lib/",
         "TestClient.pl",
-        "--cert=../keys/client.pem"
+        "--ca=../keys/CA.pem",
+        "--cert=../keys/client.crt",
+        "--key=../keys/client.key"
+      ],
+      "protocols": [
+        "multi:binary"
       ]
     },
     "server": {
@@ -392,8 +491,11 @@
         "-Igen-perl/",
         "-I../../lib/perl/lib/",
         "TestServer.pl",
-        "--cert=../keys/server.pem",
+        "--cert=../keys/server.crt",
         "--key=../keys/server.key"
+      ],
+      "protocols": [
+        "binary:multi"
       ]
     },
     "workdir": "perl"
@@ -411,11 +513,18 @@
       ],
       "protocols": [
         "binary",
+        "binary:accel",
         "compact",
-        "binary:accel"
+        "json"
       ],
       "command": [
         "php",
+        "-dextension_dir=php_ext_dir",
+        "--php-ini=test_php.ini",
+        "--no-php-ini",
+        "-ddisplay_errors=stderr",
+        "-dlog_errors=0",
+        "-derror_reporting=E_ALL",
         "TestClient.php"
       ]
     },
@@ -424,6 +533,7 @@
   {
     "name": "dart",
     "client": {
+      "timeout": 30,
       "transports": [
         "buffered",
         "framed",
@@ -439,7 +549,9 @@
       ],
       "command": [
         "dart",
-        "test_client/bin/main.dart"
+	    "--enable-asserts",
+        "test_client/bin/main.dart",
+	    "--verbose"
       ]
     },
     "workdir": "dart"
@@ -465,9 +577,9 @@
         "true",
         "-noshell",
         "-pa",
-        "../../lib/erl/ebin/",
+        "../../lib/erl/_build/default/lib/thrift/ebin/",
         "-pa",
-        "./ebin",
+        "./_build/default/lib/thrift_test/ebin",
         "-s",
         "test_client",
         "-s",
@@ -483,9 +595,9 @@
         "true",
         "-noshell",
         "-pa",
-        "../../lib/erl/ebin/",
+        "../../lib/erl/_build/default/lib/thrift/ebin/",
         "-pa",
-        "./ebin",
+        "./_build/default/lib/thrift_test/ebin",
         "-s",
         "test_thrift_server",
         "-extra"
@@ -589,5 +701,72 @@
       ]
     },
     "workdir": "lua"
+  },
+  {
+    "name": "rs",
+    "env": {
+      "RUST_BACKTRACE": "1",
+      "RUST_LOG": "info"
+    },
+    "server": {
+      "command": [
+        "test_server"
+      ],
+      "protocols": [
+        "binary:multi",
+        "compact:multic"
+      ]
+    },
+    "client": {
+      "timeout": 6,
+      "command": [
+        "test_client"
+      ],
+      "protocols": [
+        "multi:binary",
+        "multic:compact"
+      ]
+    },
+    "sockets": [
+      "ip"
+    ],
+    "transports": [
+      "buffered",
+      "framed"
+    ],
+    "protocols": [
+      "binary",
+      "compact",
+      "multi",
+      "multic"
+    ],
+    "workdir": "rs/bin"
+  },
+  {
+    "name": "nodets",
+    "env": {
+      "NODE_PATH": "../lib"
+    },
+    "server": {
+      "command": [
+        "runServer.sh"
+      ]
+    },
+    "client": {
+      "timeout": 6,
+      "command": [
+        "runClient.sh"
+      ]
+    },
+    "protocols": [
+      "binary"
+    ],
+    "sockets": [
+      "ip"
+    ],
+    "transports": [
+      "buffered"
+    ],
+    "workdir": "../lib/nodets/test"
   }
 ]

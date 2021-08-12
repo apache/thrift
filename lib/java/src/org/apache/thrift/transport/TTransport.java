@@ -19,7 +19,10 @@
 
 package org.apache.thrift.transport;
 
+import org.apache.thrift.TConfiguration;
+
 import java.io.Closeable;
+import java.nio.ByteBuffer;
 
 /**
  * Generic class that encapsulates the I/O layer. This is basically a thin
@@ -56,6 +59,26 @@ public abstract class TTransport implements Closeable {
    * Closes the transport.
    */
   public abstract void close();
+
+  /**
+   * Reads a sequence of bytes from this channel into the given buffer. An
+   * attempt is made to read up to the number of bytes remaining in the buffer,
+   * that is, dst.remaining(), at the moment this method is invoked. Upon return
+   * the buffer's position will move forward the number of bytes read; its limit
+   * will not have changed. Subclasses are encouraged to provide a more
+   * efficient implementation of this method.
+   *
+   * @param dst The buffer into which bytes are to be transferred
+   * @return The number of bytes read, possibly zero, or -1 if the channel has
+   *         reached end-of-stream
+   * @throws TTransportException if there was an error reading data
+   */
+  public int read(ByteBuffer dst) throws TTransportException {
+    byte[] arr = new byte[dst.remaining()];
+    int n = read(arr, 0, arr.length);
+    dst.put(arr, 0, n);
+    return n;
+  }
 
   /**
    * Reads up to len bytes into buffer buf, starting at offset off.
@@ -119,6 +142,24 @@ public abstract class TTransport implements Closeable {
     throws TTransportException;
 
   /**
+   * Writes a sequence of bytes to the buffer. An attempt is made to write all
+   * remaining bytes in the buffer, that is, src.remaining(), at the moment this
+   * method is invoked. Upon return the buffer's position will updated; its limit
+   * will not have changed. Subclasses are encouraged to provide a more efficient
+   * implementation of this method.
+   *
+   * @param src The buffer from which bytes are to be retrieved
+   * @return The number of bytes written, possibly zero
+   * @throws TTransportException if there was an error writing data
+   */
+  public int write(ByteBuffer src) throws TTransportException {
+    byte[] arr = new byte[src.remaining()];
+    src.get(arr);
+    write(arr, 0, arr.length);
+    return arr.length;
+  }
+
+  /**
    * Flush any pending data out of a transport buffer.
    *
    * @throws TTransportException if there was an error writing out data.
@@ -160,4 +201,10 @@ public abstract class TTransport implements Closeable {
    * @param len
    */
   public void consumeBuffer(int len) {}
+
+  public abstract TConfiguration getConfiguration();
+
+  public abstract void updateKnownMessageSize(long size) throws TTransportException;
+
+  public abstract void checkReadBytesAvailable(long numBytes) throws TTransportException;
 }

@@ -49,7 +49,8 @@ struct _ThriftServerSocket
   ThriftServerTransport parent;
 
   /* private */
-  gshort port;
+  guint port;
+  gchar *path;
   gshort backlog;
   int sd;
   guint8 *buf;

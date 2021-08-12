@@ -38,29 +38,37 @@ describe 'BinaryProtocol' do
     it "should read a message header" do
       @trans.write([protocol_class.const_get(:VERSION_1) | Thrift::MessageTypes::REPLY].pack('N'))
       @trans.write([42].pack('N'))
-      @prot.should_receive(:read_string).and_return('testMessage')
-      @prot.read_message_begin.should == ['testMessage', Thrift::MessageTypes::REPLY, 42]
+      expect(@prot).to receive(:read_string).and_return('testMessage')
+      expect(@prot.read_message_begin).to eq(['testMessage', Thrift::MessageTypes::REPLY, 42])
     end
 
     it "should raise an exception if the message header has the wrong version" do
-      @prot.should_receive(:read_i32).and_return(-1)
-      lambda { @prot.read_message_begin }.should raise_error(Thrift::ProtocolException, 'Missing version identifier') do |e|
+      expect(@prot).to receive(:read_i32).and_return(-1)
+      expect { @prot.read_message_begin }.to raise_error(Thrift::ProtocolException, 'Missing version identifier') do |e|
         e.type == Thrift::ProtocolException::BAD_VERSION
       end
     end
 
     it "should raise an exception if the message header does not exist and strict_read is enabled" do
-      @prot.should_receive(:read_i32).and_return(42)
-      @prot.should_receive(:strict_read).and_return(true)
-      lambda { @prot.read_message_begin }.should raise_error(Thrift::ProtocolException, 'No version identifier, old protocol client?') do |e|
+      expect(@prot).to receive(:read_i32).and_return(42)
+      expect(@prot).to receive(:strict_read).and_return(true)
+      expect { @prot.read_message_begin }.to raise_error(Thrift::ProtocolException, 'No version identifier, old protocol client?') do |e|
         e.type == Thrift::ProtocolException::BAD_VERSION
       end
+    end
+
+    it "should provide a reasonable to_s" do
+      expect(@prot.to_s).to eq("binary(memory)")
     end
   end
 
   describe Thrift::BinaryProtocolFactory do
     it "should create a BinaryProtocol" do
-      Thrift::BinaryProtocolFactory.new.get_protocol(mock("MockTransport")).should be_instance_of(Thrift::BinaryProtocol)
+      expect(Thrift::BinaryProtocolFactory.new.get_protocol(double("MockTransport"))).to be_instance_of(Thrift::BinaryProtocol)
+    end
+
+    it "should provide a reasonable to_s" do
+      expect(Thrift::BinaryProtocolFactory.new.to_s).to eq("binary")
     end
   end
 end

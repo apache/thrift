@@ -18,6 +18,8 @@
  */
 package org.apache.thrift.transport;
 
+import java.util.Arrays;
+
 /**
  * Helper class that wraps a byte[] so that it can expand and be reused. Users
  * should call resizeIfNecessary to make sure the buffer has suitable capacity,
@@ -28,25 +30,21 @@ package org.apache.thrift.transport;
 public class AutoExpandingBuffer {
   private byte[] array;
 
-  private final double growthCoefficient;
-
-  public AutoExpandingBuffer(int initialCapacity, double growthCoefficient) {
-    if (growthCoefficient < 1.0) {
-      throw new IllegalArgumentException("Growth coefficient must be >= 1.0");
-    }
-    array = new byte[initialCapacity];
-    this.growthCoefficient = growthCoefficient;
+  public AutoExpandingBuffer(int initialCapacity) {
+    this.array = new byte[initialCapacity];
   }
 
   public void resizeIfNecessary(int size) {
-    if (array.length < size) {
-      byte[] newBuf = new byte[(int)(size * growthCoefficient)];
-      System.arraycopy(array, 0, newBuf, 0, array.length);
-      array = newBuf;
+    final int currentCapacity = this.array.length;
+    if (currentCapacity < size) {
+      // Increase by a factor of 1.5x
+      int growCapacity = currentCapacity + (currentCapacity >> 1);
+      int newCapacity = Math.max(growCapacity, size);
+      this.array = Arrays.copyOf(array, newCapacity);
     }
   }
 
   public byte[] array() {
-    return array;
+    return this.array;
   }
 }

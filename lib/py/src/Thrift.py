@@ -17,8 +17,6 @@
 # under the License.
 #
 
-import sys
-
 
 class TType(object):
     STOP = 0
@@ -69,27 +67,30 @@ class TMessageType(object):
 
 
 class TProcessor(object):
-    """Base class for procsessor, which works on two streams."""
+    """Base class for processor, which works on two streams."""
 
-    def process(iprot, oprot):
+    def process(self, iprot, oprot):
+        """
+        Process a request.  The normal behvaior is to have the
+        processor invoke the correct handler and then it is the
+        server's responsibility to write the response to oprot.
+        """
+        pass
+
+    def on_message_begin(self, func):
+        """
+        Install a callback that receives (name, type, seqid)
+        after the message header is read.
+        """
         pass
 
 
 class TException(Exception):
     """Base class for all thrift exceptions."""
 
-    # BaseException.message is deprecated in Python v[2.6,3.0)
-    if (2, 6, 0) <= sys.version_info < (3, 0):
-        def _get_message(self):
-            return self._message
-
-        def _set_message(self, message):
-            self._message = message
-        message = property(_get_message, _set_message)
-
     def __init__(self, message=None):
         Exception.__init__(self, message)
-        self.message = message
+        super(TException, self).__setattr__("message", message)
 
 
 class TApplicationException(TException):

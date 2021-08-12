@@ -120,7 +120,7 @@ ArgResults _parseArgs(List<String> args) {
         'compact': 'TCompactProtocol',
         'json': 'TJsonProtocol'
       });
-  parser.addFlag('verbose', defaultsTo: false);
+  parser.addFlag('verbose', defaultsTo: true);
 
   ArgResults results;
   try {
@@ -251,7 +251,7 @@ List<TTest> _createTests() {
   }));
 
   tests.add(new TTest(TEST_CONTAINERS, 'testSet', () async {
-    var input = new Set.from([-2, -1, 0, 1, 2]);
+    var input = new Set<int>.from([-2, -1, 0, 1, 2]);
     var result = await client.testSet(input);
     var equality = const SetEquality();
     if (!equality.equals(result, input)) throw new TTestError(result, input);

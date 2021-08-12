@@ -30,7 +30,7 @@ func staticCheckStructArgsResults() {
 	var iface st.AServ
 	var err error
 
-	sa, err = iface.StructAFunc_1structA(sa)
+	sa, err = iface.StructAFunc_1structA(defaultCtx, sa)
 	_ = err
 	_ = sa
 }

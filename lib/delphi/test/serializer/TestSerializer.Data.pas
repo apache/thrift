@@ -22,6 +22,7 @@ unit TestSerializer.Data;
 interface
 
 uses
+  SysUtils,
   Thrift.Collections,
   DebugProtoTest;
 
@@ -194,7 +195,7 @@ begin
   {$IF cDebugProtoTest_Option_AnsiStr_Binary}
   result.SetBase64('base64');
   {$ELSE}
-  not yet impl
+  result.SetBase64( TEncoding.UTF8.GetBytes('base64'));
   {$IFEND}
 
   // byte, i16, and i64 lists are populated by default constructor
@@ -335,10 +336,14 @@ begin
   result.Byte_set_map := TDebugProtoTestConstants.COMPACT_TEST.Byte_set_map;
   result.Byte_list_map := TDebugProtoTestConstants.COMPACT_TEST.Byte_list_map;
 
+  result.Field500 := 500;
+  result.Field5000 := 5000;
+  result.Field20000 := 20000;
+
   {$IF cDebugProtoTest_Option_AnsiStr_Binary}
   result.A_binary := AnsiString( #0#1#2#3#4#5#6#7#8);
   {$ELSE}
-  not yet impl
+  result.A_binary := TEncoding.UTF8.GetBytes( #0#1#2#3#4#5#6#7#8);
   {$IFEND}
 end;
 

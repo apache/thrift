@@ -34,20 +34,11 @@ set(CMAKE_INCLUDE_DIRECTORIES_PROJECT_BEFORE ON)
 # since cmake 2.4.0
 set(CMAKE_COLOR_MAKEFILE ON)
 
-# Define the generic version of the libraries here
-set(GENERIC_LIB_VERSION "0.1.0")
-set(GENERIC_LIB_SOVERSION "0")
-
-# Set the default build type to release with debug info
-if (NOT CMAKE_BUILD_TYPE)
-  set(CMAKE_BUILD_TYPE RelWithDebInfo
-    CACHE STRING
-      "Choose the type of build, options are: None Debug Release RelWithDebInfo MinSizeRel."
-  )
-endif (NOT CMAKE_BUILD_TYPE)
-
 # Create the compile command database for clang by default
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
+# Set the CMAKE_BUILD_TYPE if it is not already defined
+include(BuildType)
 
 # Put the libraries and binaries that get built into directories at the
 # top of the build tree rather than in hard-to-find leaf
@@ -68,3 +59,34 @@ set(CMAKE_MACOSX_RPATH TRUE)
 # locations and running the executables without LD_PRELOAD or similar.
 # This requires the library to be built with rpath support.
 set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
+
+#
+# C++ Language Level Defaults - this depends on the compiler capabilities
+#
+if (NOT DEFINED CMAKE_CXX_STANDARD)
+  set(CMAKE_CXX_STANDARD 11) # C++11
+  message(STATUS "Setting C++11 as the default language level.")
+  message(STATUS "To specify a different C++ language level, set CMAKE_CXX_STANDARD")
+endif()
+
+if (CMAKE_CXX_STANDARD EQUAL 98)
+  message(FATAL_ERROR "only C++11 or above C++ standard is supported")
+elseif (CMAKE_CXX_STANDARD EQUAL 11)
+  # should not fallback to C++98
+  set(CMAKE_CXX_STANDARD_REQUIRED ON)
+endif()
+
+if (NOT DEFINED CMAKE_CXX_EXTENSIONS)
+  set(CMAKE_CXX_EXTENSIONS OFF)        # use standards compliant language level for portability
+endif()
+
+if(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
+  include(CheckCXXCompilerFlag)
+  set(CMAKE_REQUIRED_QUIET ON)
+  check_cxx_compiler_flag("/Zc:__cplusplus" res_var)
+  if (res_var)
+    # Make MSVC reporting correct value for __cplusplus
+    # See https://blogs.msdn.microsoft.com/vcblog/2018/04/09/msvc-now-correctly-reports-__cplusplus/
+    add_compile_options("/Zc:__cplusplus")
+  endif()
+endif()

@@ -212,7 +212,9 @@ class TestClient {
             case socket:
                 transport = new TSocket(args.host, args.port);
             case http:
-                transport = new THttpClient(args.host);
+                var uri = 'http://${args.host}:${args.port}';
+                trace('- http client : ${uri}');
+                transport = new THttpClient(uri);
             default:
                 throw "Unhandled transport";
         }
@@ -258,7 +260,7 @@ class TestClient {
     {
         // We need to test a few basic things used in the ClientTest
         // Anything else beyond this scope should go into /lib/haxe/ instead
-        rslt.StartTestGroup( 0);
+        rslt.StartTestGroup( TestResults.EXITCODE_FAILBIT_BASETYPES);
 
         var map32 = new IntMap<Int32>();
         var map64 = new Int64Map<Int32>();
@@ -442,6 +444,10 @@ class TestClient {
             rslt.Expect( e.message == "Xception", 'testException("Xception")  -  e.message == "Xception"');
             rslt.Expect( e.errorCode == 1001, 'testException("Xception")  -  e.errorCode == 1001');
         }
+        catch (e : TException)
+        {
+            rslt.Expect( false, 'testException("Xception")  -  ${e} : ${e.errorMsg}');
+        }
         catch (e : Dynamic)
         {
             rslt.Expect( false, 'testException("Xception")  -  $e');
@@ -455,7 +461,7 @@ class TestClient {
         }
         catch (e : TException)
         {
-            rslt.Expect( true, 'testException("TException")  -  $e');
+            rslt.Expect( true, 'testException("TException")  -  $e : ${e.errorMsg}');
         }
         catch (e : Dynamic)
         {
@@ -472,6 +478,10 @@ class TestClient {
         try {
             client.testException("bla");
             rslt.Expect( true, 'testException("bla") should not throw');
+        }
+        catch (e : TException)
+        {
+            rslt.Expect( false, 'testException("bla")  -  ${e} : ${e.errorMsg}');
         }
         catch (e : Dynamic)
         {
@@ -844,6 +854,18 @@ class TestClient {
         trace("}");
 
 
+		/**
+		* So you think you've got this all worked, out eh?
+		*
+		* Creates a the returned map with these values and prints it out:
+		*   { 1 => { 2 => argument,
+		*            3 => argument,
+		*          },
+		*     2 => { 6 => <empty Insanity struct>, },
+		*   }
+		* @return map<UserId, map<Numberz,Insanity>> - a map with the above values
+		*/
+		
         var first_map = whoa.get(Int64.make(0,1));
         var second_map = whoa.get(Int64.make(0,2));
         rslt.Expect( (first_map != null) && (second_map != null), "(first_map != null) && (second_map != null)");
@@ -855,42 +877,27 @@ class TestClient {
             rslt.Expect( (crazy2 != null) && (crazy3 != null) && (looney != null),
                         "(crazy2 != null) && (crazy3 != null) && (looney != null)");
 
-            rslt.Expect( Int64.compare( crazy2.userMap.get(Numberz.EIGHT), Int64.make(0,8)) == 0,
-                        "crazy2.UserMap.get(Numberz.EIGHT) == 8");
-            rslt.Expect( Int64.compare( crazy3.userMap.get(Numberz.EIGHT), Int64.make(0,8)) == 0,
-                        "crazy3.UserMap.get(Numberz.EIGHT) == 8");
-            rslt.Expect( Int64.compare( crazy2.userMap.get(Numberz.FIVE), Int64.make(0,5)) == 0,
-                        "crazy2.UserMap.get(Numberz.FIVE) == 5");
-            rslt.Expect( Int64.compare( crazy3.userMap.get(Numberz.FIVE), Int64.make(0,5)) == 0,
-                        "crazy3.UserMap.get(Numberz.FIVE) == 5");
-
             var crz2iter = crazy2.xtructs.iterator();
             var crz3iter = crazy3.xtructs.iterator();
             rslt.Expect( crz2iter.hasNext() && crz3iter.hasNext(), "crz2iter.hasNext() && crz3iter.hasNext()");
             var goodbye2 = crz2iter.next();
             var goodbye3 = crz3iter.next();
-            rslt.Expect( crz2iter.hasNext() && crz3iter.hasNext(), "crz2iter.hasNext() && crz3iter.hasNext()");
-            var hello2 = crz2iter.next();
-            var hello3 = crz3iter.next();
             rslt.Expect( ! (crz2iter.hasNext() || crz3iter.hasNext()), "! (crz2iter.hasNext() || crz3iter.hasNext())");
 
-            rslt.Expect( hello2.string_thing == "Hello2", 'hello2.String_thing == "Hello2"');
-            rslt.Expect( hello2.byte_thing == 2, 'hello2.Byte_thing == 2');
-            rslt.Expect( hello2.i32_thing == 2, 'hello2.I32_thing == 2');
-            rslt.Expect( Int64.compare( hello2.i64_thing, Int64.make(0,2)) == 0, 'hello2.I64_thing == 2');
-            rslt.Expect( hello3.string_thing == "Hello2", 'hello3.String_thing == "Hello2"');
-            rslt.Expect( hello3.byte_thing == 2, 'hello3.Byte_thing == 2');
-            rslt.Expect( hello3.i32_thing == 2, 'hello3.I32_thing == 2');
-            rslt.Expect( Int64.compare( hello3.i64_thing, Int64.make(0,2)) == 0, 'hello3.I64_thing == 2');
+			rslt.Expect( Int64.compare( crazy2.userMap.get(Numberz.FIVE), insane.userMap.get(Numberz.FIVE)) == 0, "crazy2.userMap[5] == insane.userMap[5]");
+			rslt.Expect( truck.string_thing == goodbye2.string_thing, "truck.string_thing == goodbye2.string_thing");
+			rslt.Expect( truck.byte_thing  == goodbye2.byte_thing, "truck.byte_thing  == goodbye2.byte_thing");
+			rslt.Expect( truck.i32_thing  == goodbye2.i32_thing, "truck.i32_thing  == goodbye2.i32_thing");
+			rslt.Expect( Int64.compare( truck.i64_thing, goodbye2.i64_thing) == 0, "truck.i64_thing  == goodbye2.i64_thing");
 
-            rslt.Expect( goodbye2.string_thing == "Goodbye4", 'goodbye2.String_thing == "Goodbye4"');
-            rslt.Expect( goodbye2.byte_thing == 4, 'goodbye2.Byte_thing == 4');
-            rslt.Expect( goodbye2.i32_thing == 4, 'goodbye2.I32_thing == 4');
-            rslt.Expect( Int64.compare( goodbye2.i64_thing, Int64.make(0,4)) == 0, 'goodbye2.I64_thing == 4');
-            rslt.Expect( goodbye3.string_thing == "Goodbye4", 'goodbye3.String_thing == "Goodbye4"');
-            rslt.Expect( goodbye3.byte_thing == 4, 'goodbye3.Byte_thing == 4');
-            rslt.Expect( goodbye3.i32_thing == 4, 'goodbye3.I32_thing == 4');
-            rslt.Expect( Int64.compare( goodbye3.i64_thing, Int64.make(0,4)) == 0, 'goodbye3.I64_thing == 4');
+			rslt.Expect( Int64.compare( crazy3.userMap.get(Numberz.FIVE), insane.userMap.get(Numberz.FIVE)) == 0, "crazy3.userMap[5] == insane.userMap[5]");
+			rslt.Expect( truck.string_thing == goodbye3.string_thing, "truck.string_thing == goodbye3.string_thing");
+			rslt.Expect( truck.byte_thing  == goodbye3.byte_thing, "truck.byte_thing  == goodbye3.byte_thing");
+			rslt.Expect( truck.i32_thing  == goodbye3.i32_thing, "truck.i32_thing  == goodbye3.i32_thing");
+			rslt.Expect( Int64.compare( truck.i64_thing, goodbye3.i64_thing) == 0, "truck.i64_thing  == goodbye3.i64_thing");
+			
+			rslt.Expect( ! looney.isSet(1), "! looney.isSet(1)");
+			rslt.Expect( ! looney.isSet(2), "! looney.isSet(2)");
         }
 
         var arg0 = 1;

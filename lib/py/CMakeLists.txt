@@ -20,7 +20,7 @@
 include_directories(${PYTHON_INCLUDE_DIRS})
 
 add_custom_target(python_build ALL
-    COMMAND ${PIP_EXECUTABLE} install -r requirements.txt || ${PIP_EXECUTABLE} install --user -r requirements.txt
+    COMMAND ${THRIFT_COMPILER} --gen py test/test_thrift_file/TestServer.thrift
     COMMAND ${PYTHON_EXECUTABLE} setup.py build
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
     COMMENT "Building Python library"
@@ -29,4 +29,9 @@ add_custom_target(python_build ALL
 if(BUILD_TESTING)
     add_test(PythonTestSSLSocket ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/test/test_sslsocket.py)
     add_test(PythonThriftJson ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/test/thrift_json.py)
+    add_test(PythonThriftTransport ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/test/thrift_transport.py)
+    add_test(PythonThriftTBinaryProtocol ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/test/thrift_TBinaryProtocol.py)
+    add_test(PythonThriftTZlibTransport ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/test/thrift_TZlibTransport.py)
+    add_test(PythonThriftProtocol ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/test/thrift_TCompactProtocol.py)
+    add_test(PythonThriftTNonblockingServer ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/test/thrift_TNonblockingServer.py)
 endif()

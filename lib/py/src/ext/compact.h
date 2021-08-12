@@ -162,7 +162,8 @@ public:
     if (!readBytes(&buf, 8)) {
       return false;
     }
-    transfer.f = letohll(*reinterpret_cast<int64_t*>(buf));
+    memcpy(&transfer.f, buf, sizeof(int64_t));
+    transfer.f = letohll(transfer.f);
     val = transfer.t;
     return true;
   }

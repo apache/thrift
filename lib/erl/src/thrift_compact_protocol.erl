@@ -34,8 +34,8 @@
 
 -define(ID_NONE, 16#10000).
 -define(CBOOL_NONE, 0).
--define(CBOOL_FALSE, 1).
--define(CBOOL_TRUE, 2).
+-define(CBOOL_TRUE, 1).
+-define(CBOOL_FALSE, 2).
 
 -record(t_compact, {transport,
                            % state for pending boolean fields
@@ -55,11 +55,12 @@
 -define(TYPE_SHIFT_AMOUNT, 5).
 
 typeid_to_compact(?tType_STOP) -> 16#0;
-typeid_to_compact(?tType_DOUBLE) -> 16#7;
+typeid_to_compact(?tType_BOOL) -> 16#2;
 typeid_to_compact(?tType_I8) -> 16#3;
 typeid_to_compact(?tType_I16) -> 16#4;
 typeid_to_compact(?tType_I32) -> 16#5;
 typeid_to_compact(?tType_I64) -> 16#6;
+typeid_to_compact(?tType_DOUBLE) -> 16#7;
 typeid_to_compact(?tType_STRING) -> 16#8;
 typeid_to_compact(?tType_STRUCT) -> 16#C;
 typeid_to_compact(?tType_MAP) -> 16#B;
@@ -113,7 +114,7 @@ write_field_begin(This0 = #t_compact{write_stack=[LastId|T]}, CompactType, Id) -
   end.
 
 -spec to_zigzag(integer()) -> non_neg_integer().
-to_zigzag(Value) -> (Value bsl 1) bxor (Value bsr 63).
+to_zigzag(Value) -> 16#FFFFFFFFFFFFFFFF band ((Value bsl 1) bxor (Value bsr 63)).
 
 -spec from_zigzag(non_neg_integer()) -> integer().
 from_zigzag(Value) -> (Value bsr 1) bxor -(Value band 1).
@@ -218,7 +219,7 @@ write(This, {i32, Value}) when is_integer(Value) ->
 write(This, {i64, Value}) when is_integer(Value) -> write(This, to_varint(to_zigzag(Value), []));
 
 write(This, {double, Double}) ->
-  write(This, <<Double:64/big-signed-float>>);
+  write(This, <<Double:64/float-signed-little>>);
 
 write(This0, {string, Str}) when is_list(Str) ->
   % TODO: limit length
@@ -355,7 +356,7 @@ read(This0, i64) ->
 read(This0, double) ->
   {This1, Bytes} = read_data(This0, 8),
   case Bytes of
-    {ok, <<Val:64/float-signed-big, _/binary>>} -> {This1, {ok, Val}};
+    {ok, <<Val:64/float-signed-little, _/binary>>} -> {This1, {ok, Val}};
     Else -> {This1, Else}
   end;
 

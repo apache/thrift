@@ -33,7 +33,11 @@ if defined? Thrift::BinaryProtocolAccelerated
 
     describe Thrift::BinaryProtocolAcceleratedFactory do
       it "should create a BinaryProtocolAccelerated" do
-        Thrift::BinaryProtocolAcceleratedFactory.new.get_protocol(mock("MockTransport")).should be_instance_of(Thrift::BinaryProtocolAccelerated)
+        expect(Thrift::BinaryProtocolAcceleratedFactory.new.get_protocol(double("MockTransport"))).to be_instance_of(Thrift::BinaryProtocolAccelerated)
+      end
+
+      it "should provide a reasonable to_s" do
+        expect(Thrift::BinaryProtocolAcceleratedFactory.new.to_s).to eq("binary-accel")
       end
     end
   end

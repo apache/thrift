@@ -17,7 +17,7 @@
  * under the License.
  */
 
-#include <boost/test/auto_unit_test.hpp>
+#include <boost/test/unit_test.hpp>
 #include <thrift/protocol/TBase64Utils.h>
 
 using apache::thrift::protocol::base64_encode;
@@ -37,6 +37,10 @@ void setupTestData(int i, uint8_t* data, int& len) {
 }
 
 void checkEncoding(uint8_t* data, int len) {
+#ifdef NDEBUG
+  ((void)data);
+#endif
+
   for (int i = 0; i < len; i++) {
     BOOST_ASSERT(isalnum(data[i]) || data[i] == '/' || data[i] == '+');
   }

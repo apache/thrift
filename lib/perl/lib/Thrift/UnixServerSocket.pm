@@ -17,19 +17,19 @@
 # under the License.
 #
 
-require 5.6.0;
+use 5.10.0;
 use strict;
 use warnings;
 
 use Thrift;
+use Thrift::ServerSocket;
 use Thrift::UnixSocket;
 
 use IO::Socket::UNIX;
-use IO::Select;
 
 package Thrift::UnixServerSocket;
-
 use base qw( Thrift::ServerSocket );
+use version 0.77; our $VERSION = version->declare("$Thrift::VERSION");
 
 #
 # Constructor.
@@ -37,8 +37,8 @@ use base qw( Thrift::ServerSocket );
 # If a single argument is given that is a hash:
 # @param[in]  path   unix domain socket file name
 # @param[in]  queue  the listen queue size (default is not specified is supplied by ServerSocket)
-# @example    my $serversock = new Thrift::UnixServerSocket($path);
-# @example    my $serversock = new Thrift::UnixServerSocket(path => "somepath", queue => 64);
+# @example    my $serversock = Thrift::UnixServerSocket->new($path);
+# @example    my $serversock = Thrift::UnixServerSocket->new(path => "somepath", queue => 64);
 #
 sub new
 {
@@ -58,7 +58,7 @@ sub new
 
 sub __client
 {
-	return new Thrift::UnixSocket();
+  return Thrift::UnixSocket->new();
 }
 
 sub __listen
@@ -75,7 +75,7 @@ sub __listen
         if ($self->{debug}) {
             $self->{debugHandler}->($error);
         }
-        die new Thrift::TException($error);
+        die Thrift::TTransportException->new($error, Thrift::TTransportException::NOT_OPEN);
     };
 
     return $sock;

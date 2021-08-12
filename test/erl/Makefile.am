@@ -17,8 +17,6 @@
 # under the License.
 #
 
-THRIFT = $(top_builddir)/compiler/cpp/thrift
-
 THRIFT_FILES = $(wildcard ../*.thrift)
 
 if ERLANG_OTP16
@@ -37,7 +35,17 @@ endif
 precross: .generated
 	$(REBAR) compile
 
+maintainer-clean-local:
+	$(RM) -r ebin/
+
 clean:
-	rm -f .generated
-	rm -rf src/gen-erl
 	$(REBAR) clean
+	$(RM)    .generated
+	$(RM) -r .rebar/
+	$(RM) -r src/gen-erl/
+
+dist-hook:
+	$(RM)    $(distdir)/.generated
+	$(RM) -r $(distdir)/.rebar/
+	$(RM) -r $(distdir)/ebin/
+	$(RM) -r $(distdir)/src/gen-erl/

@@ -77,13 +77,12 @@ public class TSimpleServer extends TServer {
             if (eventHandler_ != null) {
               eventHandler_.processContext(connectionContext, inputTransport, outputTransport);
             }
-            if(!processor.process(inputProtocol, outputProtocol)) {
-              break;
-            }
+            processor.process(inputProtocol, outputProtocol);
           }
         }
       } catch (TTransportException ttx) {
         // Client died, just move on
+        LOGGER.debug("Client Transportation Exception", ttx);
       } catch (TException tx) {
         if (!stopped_) {
           LOGGER.error("Thrift error occurred during processing of message.", tx);

@@ -18,19 +18,17 @@
  */
 
 #include <thrift/transport/TTransportException.h>
-#include <boost/lexical_cast.hpp>
 #include <cstring>
 
 #include <thrift/thrift-config.h>
 
 using std::string;
-using boost::lexical_cast;
 
 namespace apache {
 namespace thrift {
 namespace transport {
 
-const char* TTransportException::what() const throw() {
+const char* TTransportException::what() const noexcept {
   if (message_.empty()) {
     switch (type_) {
     case UNKNOWN:

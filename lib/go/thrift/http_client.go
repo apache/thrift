@@ -21,6 +21,8 @@ package thrift
 
 import (
 	"bytes"
+	"context"
+	"errors"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -46,27 +48,16 @@ type THttpClient struct {
 type THttpClientTransportFactory struct {
 	options THttpClientOptions
 	url     string
-	isPost  bool
 }
 
-func (p *THttpClientTransportFactory) GetTransport(trans TTransport) TTransport {
+func (p *THttpClientTransportFactory) GetTransport(trans TTransport) (TTransport, error) {
 	if trans != nil {
 		t, ok := trans.(*THttpClient)
 		if ok && t.url != nil {
-			if t.requestBuffer != nil {
-				t2, _ := NewTHttpPostClientWithOptions(t.url.String(), p.options)
-				return t2
-			}
-			t2, _ := NewTHttpClientWithOptions(t.url.String(), p.options)
-			return t2
+			return NewTHttpClientWithOptions(t.url.String(), p.options)
 		}
 	}
-	if p.isPost {
-		s, _ := NewTHttpPostClientWithOptions(p.url, p.options)
-		return s
-	}
-	s, _ := NewTHttpClientWithOptions(p.url, p.options)
-	return s
+	return NewTHttpClientWithOptions(p.url, p.options)
 }
 
 type THttpClientOptions struct {
@@ -79,38 +70,10 @@ func NewTHttpClientTransportFactory(url string) *THttpClientTransportFactory {
 }
 
 func NewTHttpClientTransportFactoryWithOptions(url string, options THttpClientOptions) *THttpClientTransportFactory {
-	return &THttpClientTransportFactory{url: url, isPost: false, options: options}
-}
-
-func NewTHttpPostClientTransportFactory(url string) *THttpClientTransportFactory {
-	return NewTHttpPostClientTransportFactoryWithOptions(url, THttpClientOptions{})
-}
-
-func NewTHttpPostClientTransportFactoryWithOptions(url string, options THttpClientOptions) *THttpClientTransportFactory {
-	return &THttpClientTransportFactory{url: url, isPost: true, options: options}
+	return &THttpClientTransportFactory{url: url, options: options}
 }
 
 func NewTHttpClientWithOptions(urlstr string, options THttpClientOptions) (TTransport, error) {
-	parsedURL, err := url.Parse(urlstr)
-	if err != nil {
-		return nil, err
-	}
-	response, err := http.Get(urlstr)
-	if err != nil {
-		return nil, err
-	}
-	client := options.Client
-	if client == nil {
-		client = DefaultHttpClient
-	}
-	return &THttpClient{client: client, response: response, url: parsedURL}, nil
-}
-
-func NewTHttpClient(urlstr string) (TTransport, error) {
-	return NewTHttpClientWithOptions(urlstr, THttpClientOptions{})
-}
-
-func NewTHttpPostClientWithOptions(urlstr string, options THttpClientOptions) (TTransport, error) {
 	parsedURL, err := url.Parse(urlstr)
 	if err != nil {
 		return nil, err
@@ -120,11 +83,12 @@ func NewTHttpPostClientWithOptions(urlstr string, options THttpClientOptions) (T
 	if client == nil {
 		client = DefaultHttpClient
 	}
-	return &THttpClient{client: client, url: parsedURL, requestBuffer: bytes.NewBuffer(buf), header: http.Header{}}, nil
+	httpHeader := map[string][]string{"Content-Type": {"application/x-thrift"}}
+	return &THttpClient{client: client, url: parsedURL, requestBuffer: bytes.NewBuffer(buf), header: httpHeader}, nil
 }
 
-func NewTHttpPostClient(urlstr string) (TTransport, error) {
-	return NewTHttpPostClientWithOptions(urlstr, THttpClientOptions{})
+func NewTHttpClient(urlstr string) (TTransport, error) {
+	return NewTHttpClientWithOptions(urlstr, THttpClientOptions{})
 }
 
 // Set the HTTP Header for this specific Thrift Transport
@@ -196,39 +160,56 @@ func (p *THttpClient) Read(buf []byte) (int, error) {
 		return 0, NewTTransportException(NOT_OPEN, "Response buffer is empty, no request.")
 	}
 	n, err := p.response.Body.Read(buf)
-	if n > 0 && (err == nil || err == io.EOF) {
+	if n > 0 && (err == nil || errors.Is(err, io.EOF)) {
 		return n, nil
 	}
 	return n, NewTTransportExceptionFromError(err)
 }
 
 func (p *THttpClient) ReadByte() (c byte, err error) {
+	if p.response == nil {
+		return 0, NewTTransportException(NOT_OPEN, "Response buffer is empty, no request.")
+	}
 	return readByte(p.response.Body)
 }
 
 func (p *THttpClient) Write(buf []byte) (int, error) {
-	n, err := p.requestBuffer.Write(buf)
-	return n, err
+	if p.requestBuffer == nil {
+		return 0, NewTTransportException(NOT_OPEN, "Request buffer is nil, connection may have been closed.")
+	}
+	return p.requestBuffer.Write(buf)
 }
 
 func (p *THttpClient) WriteByte(c byte) error {
+	if p.requestBuffer == nil {
+		return NewTTransportException(NOT_OPEN, "Request buffer is nil, connection may have been closed.")
+	}
 	return p.requestBuffer.WriteByte(c)
 }
 
 func (p *THttpClient) WriteString(s string) (n int, err error) {
+	if p.requestBuffer == nil {
+		return 0, NewTTransportException(NOT_OPEN, "Request buffer is nil, connection may have been closed.")
+	}
 	return p.requestBuffer.WriteString(s)
 }
 
-func (p *THttpClient) Flush() error {
+func (p *THttpClient) Flush(ctx context.Context) error {
 	// Close any previous response body to avoid leaking connections.
 	p.closeResponse()
 
-	req, err := http.NewRequest("POST", p.url.String(), p.requestBuffer)
+	// Give up the ownership of the current request buffer to http request,
+	// and create a new buffer for the next request.
+	buf := p.requestBuffer
+	p.requestBuffer = new(bytes.Buffer)
+	req, err := http.NewRequest("POST", p.url.String(), buf)
 	if err != nil {
 		return NewTTransportExceptionFromError(err)
 	}
-	p.header.Add("Content-Type", "application/x-thrift")
 	req.Header = p.header
+	if ctx != nil {
+		req = req.WithContext(ctx)
+	}
 	response, err := p.client.Do(req)
 	if err != nil {
 		return NewTTransportExceptionFromError(err)
@@ -253,5 +234,25 @@ func (p *THttpClient) RemainingBytes() (num_bytes uint64) {
 	}
 
 	const maxSize = ^uint64(0)
-	return maxSize // the thruth is, we just don't know unless framed is used
+	return maxSize // the truth is, we just don't know unless framed is used
+}
+
+// Deprecated: Use NewTHttpClientTransportFactory instead.
+func NewTHttpPostClientTransportFactory(url string) *THttpClientTransportFactory {
+	return NewTHttpClientTransportFactoryWithOptions(url, THttpClientOptions{})
+}
+
+// Deprecated: Use NewTHttpClientTransportFactoryWithOptions instead.
+func NewTHttpPostClientTransportFactoryWithOptions(url string, options THttpClientOptions) *THttpClientTransportFactory {
+	return NewTHttpClientTransportFactoryWithOptions(url, options)
+}
+
+// Deprecated: Use NewTHttpClientWithOptions instead.
+func NewTHttpPostClientWithOptions(urlstr string, options THttpClientOptions) (TTransport, error) {
+	return NewTHttpClientWithOptions(urlstr, options)
+}
+
+// Deprecated: Use NewTHttpClient instead.
+func NewTHttpPostClient(urlstr string) (TTransport, error) {
+	return NewTHttpClientWithOptions(urlstr, THttpClientOptions{})
 }

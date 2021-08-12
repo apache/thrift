@@ -21,8 +21,10 @@ EXTRA_DIST = \
 	index.html \
 	known_failures_Linux.json \
 	Makefile.am \
+        nosslv3.sh \
 	string_limit.py \
 	tests.json \
 	theader_binary.py \
 	setup.cfg \
+        tls.sh \
 	util.py

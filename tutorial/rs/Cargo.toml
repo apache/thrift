@@ -1,0 +1,15 @@
+[package]
+name = "thrift-tutorial"
+version = "0.1.0"
+edition = "2018"
+license = "Apache-2.0"
+authors = ["Apache Thrift Developers <dev@thrift.apache.org>"]
+exclude = ["Makefile*", "shared.rs", "tutorial.rs"]
+publish = false
+
+[dependencies]
+clap = "2.33"
+
+[dependencies.thrift]
+path = "../../lib/rs"
+

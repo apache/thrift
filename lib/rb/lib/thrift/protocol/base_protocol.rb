@@ -323,8 +323,6 @@ module Thrift
 
     def skip(type)
       case type
-      when Types::STOP
-        nil
       when Types::BOOL
         read_bool
       when Types::BYTE
@@ -367,13 +365,23 @@ module Thrift
           skip(etype)
         end
         read_list_end
+      else
+        raise ProtocolException.new(ProtocolException::INVALID_DATA, 'Invalid data')
       end
+    end
+    
+    def to_s
+      "#{trans.to_s}"
     end
   end
 
   class BaseProtocolFactory
     def get_protocol(trans)
       raise NotImplementedError
+    end
+    
+    def to_s
+      "base"
     end
   end
 end

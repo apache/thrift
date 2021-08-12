@@ -19,7 +19,7 @@
 #
 
 # invoke Thrift comnpiler
-thrift -r -gen haxe  ../ThriftTest.thrift
+../../compiler/cpp/thrift -r -gen haxe  ../ThriftTest.thrift
 
 # output folder
 if [ ! -d bin ]; then

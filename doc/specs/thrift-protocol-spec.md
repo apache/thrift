@@ -3,6 +3,7 @@ Thrift Protocol Structure
 
 Last Modified: 2007-Jun-29
 
+<!--
 --------------------------------------------------------------------
 
 Licensed to the Apache Software Foundation (ASF) under one
@@ -23,6 +24,7 @@ specific language governing permissions and limitations
 under the License.
 
 --------------------------------------------------------------------
+-->
 
 This document describes the structure of the Thrift protocol
 without specifying the encoding. Thus, the order of elements
@@ -31,7 +33,7 @@ implementation, but this document specifies the minimum required
 structure. There are some "dumb" terminals like STRING and INT
 that take the place of an actual encoding specification.
 
-They key point to notice is that ALL messages are just one wrapped
+The key point to notice is that ALL messages are just one wrapped
 `<struct>`. Depending upon the message type, the `<struct>` can be
 interpreted as the argument list to a function, the return value
 of a function, or an exception.

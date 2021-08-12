@@ -6,11 +6,16 @@ set -ev
 make -j3 precross
 
 set +e
-make cross
+make cross$1
 
 RET=$?
 if [ $RET -ne 0 ]; then
-  cat test/log/unexpected_failures.log
+  if [ -f "test/features/log/unexpected_failures.log" ]; then 
+    cat "test/features/log/unexpected_failures.log"
+  fi
+  if [ -f "test/log/unexpected_failures.log" ]; then
+    cat "test/log/unexpected_failures.log"
+  fi
 fi
 
 exit $RET

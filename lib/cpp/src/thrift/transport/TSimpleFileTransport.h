@@ -33,7 +33,8 @@ namespace transport {
  */
 class TSimpleFileTransport : public TFDTransport {
 public:
-  TSimpleFileTransport(const std::string& path, bool read = true, bool write = false);
+  TSimpleFileTransport(const std::string& path, bool read = true, bool write = false, 
+                                    std::shared_ptr<TConfiguration> config = nullptr);
 };
 }
 }

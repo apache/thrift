@@ -28,7 +28,7 @@ namespace thrift {
 
 class TBase {
 public:
-  virtual ~TBase(){};
+  virtual ~TBase() = default;
   virtual uint32_t read(protocol::TProtocol* iprot) = 0;
   virtual uint32_t write(protocol::TProtocol* oprot) const = 0;
 };

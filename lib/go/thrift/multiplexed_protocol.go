@@ -20,6 +20,7 @@
 package thrift
 
 import (
+	"context"
 	"fmt"
 	"strings"
 )
@@ -67,11 +68,11 @@ func NewTMultiplexedProtocol(protocol TProtocol, serviceName string) *TMultiplex
 	}
 }
 
-func (t *TMultiplexedProtocol) WriteMessageBegin(name string, typeId TMessageType, seqid int32) error {
+func (t *TMultiplexedProtocol) WriteMessageBegin(ctx context.Context, name string, typeId TMessageType, seqid int32) error {
 	if typeId == CALL || typeId == ONEWAY {
-		return t.TProtocol.WriteMessageBegin(t.serviceName+MULTIPLEXED_SEPARATOR+name, typeId, seqid)
+		return t.TProtocol.WriteMessageBegin(ctx, t.serviceName+MULTIPLEXED_SEPARATOR+name, typeId, seqid)
 	} else {
-		return t.TProtocol.WriteMessageBegin(name, typeId, seqid)
+		return t.TProtocol.WriteMessageBegin(ctx, name, typeId, seqid)
 	}
 }
 
@@ -116,6 +117,67 @@ func NewTMultiplexedProcessor() *TMultiplexedProcessor {
 	}
 }
 
+// ProcessorMap returns a mapping of "{ProcessorName}{MULTIPLEXED_SEPARATOR}{FunctionName}"
+// to TProcessorFunction for any registered processors.  If there is also a
+// DefaultProcessor, the keys for the methods on that processor will simply be
+// "{FunctionName}".  If the TMultiplexedProcessor has both a DefaultProcessor and
+// other registered processors, then the keys will be a mix of both formats.
+//
+// The implementation differs with other TProcessors in that the map returned is
+// a new map, while most TProcessors just return their internal mapping directly.
+// This means that edits to the map returned by this implementation of ProcessorMap
+// will not affect the underlying mapping within the TMultiplexedProcessor.
+func (t *TMultiplexedProcessor) ProcessorMap() map[string]TProcessorFunction {
+	processorFuncMap := make(map[string]TProcessorFunction)
+	for name, processor := range t.serviceProcessorMap {
+		for method, processorFunc := range processor.ProcessorMap() {
+			processorFuncName := name + MULTIPLEXED_SEPARATOR + method
+			processorFuncMap[processorFuncName] = processorFunc
+		}
+	}
+	if t.DefaultProcessor != nil {
+		for method, processorFunc := range t.DefaultProcessor.ProcessorMap() {
+			processorFuncMap[method] = processorFunc
+		}
+	}
+	return processorFuncMap
+}
+
+// AddToProcessorMap updates the underlying TProcessor ProccessorMaps depending on
+// the format of "name".
+//
+// If "name" is in the format "{ProcessorName}{MULTIPLEXED_SEPARATOR}{FunctionName}",
+// then it sets the given TProcessorFunction on the inner TProcessor with the
+// ProcessorName component using the FunctionName component.
+//
+// If "name" is just in the format "{FunctionName}", that is to say there is no
+// MULTIPLEXED_SEPARATOR, and the TMultiplexedProcessor has a DefaultProcessor
+// configured, then it will set the given TProcessorFunction on the DefaultProcessor
+// using the given name.
+//
+// If there is not a TProcessor available for the given name, then this function
+// does nothing.  This can happen when there is no TProcessor registered for
+// the given ProcessorName or if all that is given is the FunctionName and there
+// is no DefaultProcessor set.
+func (t *TMultiplexedProcessor) AddToProcessorMap(name string, processorFunc TProcessorFunction) {
+	components := strings.SplitN(name, MULTIPLEXED_SEPARATOR, 2)
+	if len(components) != 2 {
+		if t.DefaultProcessor != nil && len(components) == 1 {
+			t.DefaultProcessor.AddToProcessorMap(components[0], processorFunc)
+		}
+		return
+	}
+	processorName := components[0]
+	funcName := components[1]
+	if processor, ok := t.serviceProcessorMap[processorName]; ok {
+		processor.AddToProcessorMap(funcName, processorFunc)
+	}
+
+}
+
+// verify that TMultiplexedProcessor implements TProcessor
+var _ TProcessor = (*TMultiplexedProcessor)(nil)
+
 func (t *TMultiplexedProcessor) RegisterDefault(processor TProcessor) {
 	t.DefaultProcessor = processor
 }
@@ -127,29 +189,35 @@ func (t *TMultiplexedProcessor) RegisterProcessor(name string, processor TProces
 	t.serviceProcessorMap[name] = processor
 }
 
-func (t *TMultiplexedProcessor) Process(in, out TProtocol) (bool, TException) {
-	name, typeId, seqid, err := in.ReadMessageBegin()
+func (t *TMultiplexedProcessor) Process(ctx context.Context, in, out TProtocol) (bool, TException) {
+	name, typeId, seqid, err := in.ReadMessageBegin(ctx)
 	if err != nil {
-		return false, err
+		return false, NewTProtocolException(err)
 	}
 	if typeId != CALL && typeId != ONEWAY {
-		return false, fmt.Errorf("Unexpected message type %v", typeId)
+		return false, NewTProtocolException(fmt.Errorf("Unexpected message type %v", typeId))
 	}
 	//extract the service name
 	v := strings.SplitN(name, MULTIPLEXED_SEPARATOR, 2)
 	if len(v) != 2 {
 		if t.DefaultProcessor != nil {
 			smb := NewStoredMessageProtocol(in, name, typeId, seqid)
-			return t.DefaultProcessor.Process(smb, out)
+			return t.DefaultProcessor.Process(ctx, smb, out)
 		}
-		return false, fmt.Errorf("Service name not found in message name: %s.  Did you forget to use a TMultiplexProtocol in your client?", name)
+		return false, NewTProtocolException(fmt.Errorf(
+			"Service name not found in message name: %s.  Did you forget to use a TMultiplexProtocol in your client?",
+			name,
+		))
 	}
 	actualProcessor, ok := t.serviceProcessorMap[v[0]]
 	if !ok {
-		return false, fmt.Errorf("Service name not found: %s.  Did you forget to call registerProcessor()?", v[0])
+		return false, NewTProtocolException(fmt.Errorf(
+			"Service name not found: %s.  Did you forget to call registerProcessor()?",
+			v[0],
+		))
 	}
 	smb := NewStoredMessageProtocol(in, v[1], typeId, seqid)
-	return actualProcessor.Process(smb, out)
+	return actualProcessor.Process(ctx, smb, out)
 }
 
 //Protocol that use stored message for ReadMessageBegin
@@ -164,6 +232,6 @@ func NewStoredMessageProtocol(protocol TProtocol, name string, typeId TMessageTy
 	return &storedMessageProtocol{protocol, name, typeId, seqid}
 }
 
-func (s *storedMessageProtocol) ReadMessageBegin() (name string, typeId TMessageType, seqid int32, err error) {
+func (s *storedMessageProtocol) ReadMessageBegin(ctx context.Context) (name string, typeId TMessageType, seqid int32, err error) {
 	return s.name, s.typeId, s.seqid, nil
 }

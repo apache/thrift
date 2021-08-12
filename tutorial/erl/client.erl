@@ -28,7 +28,7 @@ p(X) ->
     ok.
 
 t() ->
-    Port = 9999,
+    Port = 9090,
 
     {ok, Client0} = thrift_client_util:new("127.0.0.1",
                                            Port,
@@ -44,7 +44,7 @@ t() ->
     {Client3, {ok, Sum1}} = thrift_client:call(Client2, add, [1, 4]),
     io:format("1+4=~p~n", [Sum1]),
 
-    Work = #work{op=?tutorial_Operation_SUBTRACT,
+    Work = #'Work'{op=?TUTORIAL_OPERATION_SUBTRACT,
                  num1=15,
                  num2=10},
     {Client4, {ok, Diff}} = thrift_client:call(Client3, calculate, [1, Work]),
@@ -55,7 +55,7 @@ t() ->
 
     Client6 =
         try
-            Work1 = #work{op=?tutorial_Operation_DIVIDE,
+            Work1 = #'Work'{op=?TUTORIAL_OPERATION_DIVIDE,
                           num1=1,
                           num2=0},
             {ClientS1, {ok, _Quot}} = thrift_client:call(Client5, calculate, [2, Work1]),

@@ -27,8 +27,11 @@ uses
   Classes,
   SysUtils,
   Contnrs,
+  Thrift.Exception,
   Thrift.Stream,
+  Thrift.Utils,
   Thrift.Collections,
+  Thrift.Configuration,
   Thrift.Transport;
 
 type
@@ -65,42 +68,68 @@ const
 
   VALID_MESSAGETYPES = [Low(TMessageType)..High(TMessageType)];
 
-const
-  DEFAULT_RECURSION_LIMIT = 64;
-
 type
   IProtocol = interface;
-  IStruct = interface;
+
+  TThriftMessage = record
+    Name: string;
+    Type_: TMessageType;
+    SeqID: Integer;
+  end;
+
+  TThriftStruct = record
+    Name: string;
+  end;
+
+  TThriftField = record
+    Name: string;
+    Type_: TType;
+    Id: SmallInt;
+  end;
+
+  TThriftList = record
+    ElementType: TType;
+    Count: Integer;
+  end;
+
+  TThriftMap = record
+    KeyType: TType;
+    ValueType: TType;
+    Count: Integer;
+  end;
+
+  TThriftSet = record
+    ElementType: TType;
+    Count: Integer;
+  end;
+
 
   IProtocolFactory = interface
     ['{7CD64A10-4E9F-4E99-93BF-708A31F4A67B}']
     function GetProtocol( const trans: ITransport): IProtocol;
   end;
 
-  TThriftStringBuilder = class( TStringBuilder)
+  TProtocolException = class abstract( TException)
   public
-    function Append(const Value: TBytes): TStringBuilder; overload;
-    function Append(const Value: IThriftContainer): TStringBuilder; overload;
-  end;
-
-  TProtocolException = class( Exception )
-  public
-    const // TODO(jensg): change into enum
-      UNKNOWN = 0;
-      INVALID_DATA = 1;
-      NEGATIVE_SIZE = 2;
-      SIZE_LIMIT = 3;
-      BAD_VERSION = 4;
-      NOT_IMPLEMENTED = 5;
-      DEPTH_LIMIT = 6;
-  protected
+    type TExceptionType = (
+      UNKNOWN = 0,
+      INVALID_DATA = 1,
+      NEGATIVE_SIZE = 2,
+      SIZE_LIMIT = 3,
+      BAD_VERSION = 4,
+      NOT_IMPLEMENTED = 5,
+      DEPTH_LIMIT = 6
+    );
+  strict protected
     constructor HiddenCreate(const Msg: string);
+    class function GetType: TExceptionType;  virtual; abstract;
   public
     // purposefully hide inherited constructor
     class function Create(const Msg: string): TProtocolException; overload; deprecated 'Use specialized TProtocolException types (or regenerate from IDL)';
     class function Create: TProtocolException; overload; deprecated 'Use specialized TProtocolException types (or regenerate from IDL)';
-    class function Create( type_: Integer): TProtocolException; overload; deprecated 'Use specialized TProtocolException types (or regenerate from IDL)';
-    class function Create( type_: Integer; const msg: string): TProtocolException; overload; deprecated 'Use specialized TProtocolException types (or regenerate from IDL)';
+    class function Create( aType: TExceptionType): TProtocolException; overload; deprecated 'Use specialized TProtocolException types (or regenerate from IDL)';
+    class function Create( aType: TExceptionType; const msg: string): TProtocolException; overload; deprecated 'Use specialized TProtocolException types (or regenerate from IDL)';
+    property Type_: TExceptionType read GetType;
   end;
 
   // Needed to remove deprecation warning
@@ -109,154 +138,42 @@ type
     constructor Create(const Msg: string);
   end;
 
-  TProtocolExceptionUnknown = class (TProtocolExceptionSpecialized);
-  TProtocolExceptionInvalidData = class (TProtocolExceptionSpecialized);
-  TProtocolExceptionNegativeSize = class (TProtocolExceptionSpecialized);
-  TProtocolExceptionSizeLimit = class (TProtocolExceptionSpecialized);
-  TProtocolExceptionBadVersion = class (TProtocolExceptionSpecialized);
-  TProtocolExceptionNotImplemented = class (TProtocolExceptionSpecialized);
-  TProtocolExceptionDepthLimit = class (TProtocolExceptionSpecialized);
-
-  IMap = interface
-    ['{30531D97-7E06-4233-B800-C3F53CCD23E7}']
-    function GetKeyType: TType;
-    procedure SetKeyType( Value: TType);
-    function GetValueType: TType;
-    procedure SetValueType( Value: TType);
-    function GetCount: Integer;
-    procedure SetCount( Value: Integer);
-    property KeyType: TType read GetKeyType write SetKeyType;
-    property ValueType: TType read GetValueType write SetValueType;
-    property Count: Integer read GetCount write SetCount;
+  TProtocolExceptionUnknown = class (TProtocolExceptionSpecialized)
+  strict protected
+    class function GetType: TProtocolException.TExceptionType;  override;
   end;
 
-  TMapImpl = class( TInterfacedObject, IMap)
-  private
-    FValueType: TType;
-    FKeyType: TType;
-    FCount: Integer;
-  protected
-    function GetKeyType: TType;
-    procedure SetKeyType( Value: TType);
-    function GetValueType: TType;
-    procedure SetValueType( Value: TType);
-    function GetCount: Integer;
-    procedure SetCount( Value: Integer);
-  public
-    constructor Create( AKeyType, AValueType: TType; ACount: Integer); overload;
-    constructor Create; overload;
+  TProtocolExceptionInvalidData = class (TProtocolExceptionSpecialized)
+  strict protected
+    class function GetType: TProtocolException.TExceptionType;  override;
   end;
 
-  IList = interface
-    ['{6763E1EA-A934-4472-904F-0083980B9B87}']
-    function GetElementType: TType;
-    procedure SetElementType( Value: TType);
-    function GetCount: Integer;
-    procedure SetCount( Value: Integer);
-    property ElementType: TType read GetElementType write SetElementType;
-    property Count: Integer read GetCount write SetCount;
+  TProtocolExceptionNegativeSize = class (TProtocolExceptionSpecialized)
+  strict protected
+    class function GetType: TProtocolException.TExceptionType;  override;
   end;
 
-  TListImpl = class( TInterfacedObject, IList)
-  private
-    FElementType: TType;
-    FCount : Integer;
-  protected
-    function GetElementType: TType;
-    procedure SetElementType( Value: TType);
-    function GetCount: Integer;
-    procedure SetCount( Value: Integer);
-  public
-    constructor Create( AElementType: TType; ACount: Integer); overload;
-    constructor Create; overload;
+  TProtocolExceptionSizeLimit = class (TProtocolExceptionSpecialized)
+  strict protected
+    class function GetType: TProtocolException.TExceptionType;  override;
   end;
 
-  ISet = interface
-    ['{A8671700-7514-4C1E-8A05-62786872005F}']
-    function GetElementType: TType;
-    procedure SetElementType( Value: TType);
-    function GetCount: Integer;
-    procedure SetCount( Value: Integer);
-    property ElementType: TType read GetElementType write SetElementType;
-    property Count: Integer read GetCount write SetCount;
+  TProtocolExceptionBadVersion = class (TProtocolExceptionSpecialized)
+  strict protected
+    class function GetType: TProtocolException.TExceptionType;  override;
   end;
 
-  TSetImpl = class( TInterfacedObject, ISet)
-  private
-    FCount: Integer;
-    FElementType: TType;
-  protected
-    function GetElementType: TType;
-    procedure SetElementType( Value: TType);
-    function GetCount: Integer;
-    procedure SetCount( Value: Integer);
-  public
-    constructor Create( AElementType: TType; ACount: Integer); overload;
-    constructor Create; overload;
+  TProtocolExceptionNotImplemented = class (TProtocolExceptionSpecialized)
+  strict protected
+    class function GetType: TProtocolException.TExceptionType;  override;
   end;
 
-  IMessage = interface
-    ['{9E368B4A-B1FA-43E7-8CF5-56C66D256CA7}']
-    function GetName: string;
-    procedure SetName( const Value: string);
-    function GetType: TMessageType;
-    procedure SetType( Value: TMessageType);
-    function GetSeqID: Integer;
-    procedure SetSeqID( Value: Integer);
-    property Name: string read GetName write SetName;
-    property Type_: TMessageType read GetType write SetType;
-    property SeqID: Integer read GetSeqID write SetSeqID;
+  TProtocolExceptionDepthLimit = class (TProtocolExceptionSpecialized)
+  strict protected
+    class function GetType: TProtocolException.TExceptionType;  override;
   end;
 
-  TMessageImpl = class( TInterfacedObject, IMessage )
-  private
-    FName: string;
-    FMessageType: TMessageType;
-    FSeqID: Integer;
-  protected
-    function GetName: string;
-    procedure SetName( const Value: string);
-    function GetType: TMessageType;
-    procedure SetType( Value: TMessageType);
-    function GetSeqID: Integer;
-    procedure SetSeqID( Value: Integer);
-  public
-    property Name: string read FName write FName;
-    property Type_: TMessageType read FMessageType write FMessageType;
-    property SeqID: Integer read FSeqID write FSeqID;
-    constructor Create( AName: string; AMessageType: TMessageType; ASeqID: Integer); overload;
-    constructor Create; overload;
-  end;
 
-  IField = interface
-    ['{F0D43BE5-7883-442E-83FF-0580CC632B72}']
-    function GetName: string;
-    procedure SetName( const Value: string);
-    function GetType: TType;
-    procedure SetType( Value: TType);
-    function GetId: SmallInt;
-    procedure SetId( Value: SmallInt);
-    property Name: string read GetName write SetName;
-    property Type_: TType read GetType write SetType;
-    property Id: SmallInt read GetId write SetId;
-  end;
-
-  TFieldImpl = class( TInterfacedObject, IField)
-  private
-    FName : string;
-    FType : TType;
-    FId   : SmallInt;
-  protected
-    function GetName: string;
-    procedure SetName( const Value: string);
-    function GetType: TType;
-    procedure SetType( Value: TType);
-    function GetId: SmallInt;
-    procedure SetId( Value: SmallInt);
-  public
-    constructor Create( const AName: string; const AType: TType; AId: SmallInt); overload;
-    constructor Create; overload;
-  end;
 
   TProtocolUtil = class
   public
@@ -269,7 +186,7 @@ type
   end;
 
   TProtocolRecursionTrackerImpl = class abstract( TInterfacedObject, IProtocolRecursionTracker)
-  protected
+  strict protected
     FProtocol : IProtocol;
   public
     constructor Create( prot : IProtocol);
@@ -277,20 +194,20 @@ type
   end;
 
   IProtocol = interface
-    ['{602A7FFB-0D9E-4CD8-8D7F-E5076660588A}']
+    ['{F0040D99-937F-400D-9932-AF04F665899F}']
     function GetTransport: ITransport;
-    procedure WriteMessageBegin( const msg: IMessage);
+    procedure WriteMessageBegin( const msg: TThriftMessage);
     procedure WriteMessageEnd;
-    procedure WriteStructBegin( const struc: IStruct);
+    procedure WriteStructBegin( const struc: TThriftStruct);
     procedure WriteStructEnd;
-    procedure WriteFieldBegin( const field: IField);
+    procedure WriteFieldBegin( const field: TThriftField);
     procedure WriteFieldEnd;
     procedure WriteFieldStop;
-    procedure WriteMapBegin( const map: IMap);
+    procedure WriteMapBegin( const map: TThriftMap);
     procedure WriteMapEnd;
-    procedure WriteListBegin( const list: IList);
+    procedure WriteListBegin( const list: TThriftList);
     procedure WriteListEnd();
-    procedure WriteSetBegin( const set_: ISet );
+    procedure WriteSetBegin( const set_: TThriftSet );
     procedure WriteSetEnd();
     procedure WriteBool( b: Boolean);
     procedure WriteByte( b: ShortInt);
@@ -302,17 +219,17 @@ type
     procedure WriteAnsiString( const s: AnsiString);
     procedure WriteBinary( const b: TBytes);
 
-    function ReadMessageBegin: IMessage;
+    function ReadMessageBegin: TThriftMessage;
     procedure ReadMessageEnd();
-    function ReadStructBegin: IStruct;
+    function ReadStructBegin: TThriftStruct;
     procedure ReadStructEnd;
-    function ReadFieldBegin: IField;
+    function ReadFieldBegin: TThriftField;
     procedure ReadFieldEnd();
-    function ReadMapBegin: IMap;
+    function ReadMapBegin: TThriftMap;
     procedure ReadMapEnd();
-    function ReadListBegin: IList;
+    function ReadListBegin: TThriftList;
     procedure ReadListEnd();
-    function ReadSetBegin: ISet;
+    function ReadSetBegin: TThriftSet;
     procedure ReadSetEnd();
     function ReadBool: Boolean;
     function ReadByte: ShortInt;
@@ -324,42 +241,46 @@ type
     function ReadString: string;
     function ReadAnsiString: AnsiString;
 
-    procedure SetRecursionLimit( value : Integer);
-    function  GetRecursionLimit : Integer;
     function  NextRecursionLevel : IProtocolRecursionTracker;
     procedure IncrementRecursionDepth;
     procedure DecrementRecursionDepth;
+    function  GetMinSerializedSize( const aType : TType) : Integer;
 
     property Transport: ITransport read GetTransport;
-    property RecursionLimit : Integer read GetRecursionLimit write SetRecursionLimit;
+    function Configuration : IThriftConfiguration;
   end;
 
   TProtocolImpl = class abstract( TInterfacedObject, IProtocol)
-  protected
+  strict protected
     FTrans : ITransport;
     FRecursionLimit : Integer;
     FRecursionDepth : Integer;
 
-    procedure SetRecursionLimit( value : Integer);
-    function  GetRecursionLimit : Integer;
     function  NextRecursionLevel : IProtocolRecursionTracker;
     procedure IncrementRecursionDepth;
     procedure DecrementRecursionDepth;
 
-    function GetTransport: ITransport;
-  public
-    procedure WriteMessageBegin( const msg: IMessage); virtual; abstract;
+    function  GetMinSerializedSize( const aType : TType) : Integer;  virtual; abstract;
+    procedure CheckReadBytesAvailable( const value : TThriftList);  overload; inline;
+    procedure CheckReadBytesAvailable( const value : TThriftSet);  overload; inline;
+    procedure CheckReadBytesAvailable( const value : TThriftMap);  overload; inline;
+
+    procedure Reset;  virtual;
+    function  GetTransport: ITransport;
+    function  Configuration : IThriftConfiguration;
+
+    procedure WriteMessageBegin( const msg: TThriftMessage); virtual; abstract;
     procedure WriteMessageEnd; virtual; abstract;
-    procedure WriteStructBegin( const struc: IStruct); virtual; abstract;
+    procedure WriteStructBegin( const struc: TThriftStruct); virtual; abstract;
     procedure WriteStructEnd; virtual; abstract;
-    procedure WriteFieldBegin( const field: IField); virtual; abstract;
+    procedure WriteFieldBegin( const field: TThriftField); virtual; abstract;
     procedure WriteFieldEnd; virtual; abstract;
     procedure WriteFieldStop; virtual; abstract;
-    procedure WriteMapBegin( const map: IMap); virtual; abstract;
+    procedure WriteMapBegin( const map: TThriftMap); virtual; abstract;
     procedure WriteMapEnd; virtual; abstract;
-    procedure WriteListBegin( const list: IList); virtual; abstract;
+    procedure WriteListBegin( const list: TThriftList); virtual; abstract;
     procedure WriteListEnd(); virtual; abstract;
-    procedure WriteSetBegin( const set_: ISet ); virtual; abstract;
+    procedure WriteSetBegin( const set_: TThriftSet ); virtual; abstract;
     procedure WriteSetEnd(); virtual; abstract;
     procedure WriteBool( b: Boolean); virtual; abstract;
     procedure WriteByte( b: ShortInt); virtual; abstract;
@@ -371,17 +292,17 @@ type
     procedure WriteAnsiString( const s: AnsiString); virtual;
     procedure WriteBinary( const b: TBytes); virtual; abstract;
 
-    function ReadMessageBegin: IMessage; virtual; abstract;
+    function ReadMessageBegin: TThriftMessage; virtual; abstract;
     procedure ReadMessageEnd(); virtual; abstract;
-    function ReadStructBegin: IStruct; virtual; abstract;
+    function ReadStructBegin: TThriftStruct; virtual; abstract;
     procedure ReadStructEnd; virtual; abstract;
-    function ReadFieldBegin: IField; virtual; abstract;
+    function ReadFieldBegin: TThriftField; virtual; abstract;
     procedure ReadFieldEnd(); virtual; abstract;
-    function ReadMapBegin: IMap; virtual; abstract;
+    function ReadMapBegin: TThriftMap; virtual; abstract;
     procedure ReadMapEnd(); virtual; abstract;
-    function ReadListBegin: IList; virtual; abstract;
+    function ReadListBegin: TThriftList; virtual; abstract;
     procedure ReadListEnd(); virtual; abstract;
-    function ReadSetBegin: ISet; virtual; abstract;
+    function ReadSetBegin: TThriftSet; virtual; abstract;
     procedure ReadSetEnd(); virtual; abstract;
     function ReadBool: Boolean; virtual; abstract;
     function ReadByte: ShortInt; virtual; abstract;
@@ -393,76 +314,58 @@ type
     function ReadString: string; virtual;
     function ReadAnsiString: AnsiString; virtual;
 
-    property Transport: ITransport read GetTransport;
+    property  Transport: ITransport read GetTransport;
 
-    constructor Create( trans: ITransport );
+  public
+    constructor Create( const aTransport : ITransport);
   end;
 
-  IBase = interface
-    ['{08D9BAA8-5EAA-410F-B50B-AC2E6E5E4155}']
-    function ToString: string;
+  IBase = interface( ISupportsToString)
+    ['{AFF6CECA-5200-4540-950E-9B89E0C1C00C}']
     procedure Read( const iprot: IProtocol);
     procedure Write( const iprot: IProtocol);
   end;
 
-  IStruct = interface
-    ['{5DCE39AA-C916-4BC7-A79B-96A0C36B2220}']
-    procedure SetName(const Value: string);
-    function GetName: string;
-    property Name: string read GetName write SetName;
-  end;
-
-  TStructImpl = class( TInterfacedObject, IStruct )
-  private
-    FName: string;
-  protected
-    function GetName: string;
-    procedure SetName(const Value: string);
-  public
-    constructor Create( const AName: string);
-  end;
 
   TBinaryProtocolImpl = class( TProtocolImpl )
-  protected
+  strict protected
     const
       VERSION_MASK : Cardinal = $ffff0000;
       VERSION_1 : Cardinal = $80010000;
-  protected
+  strict protected
     FStrictRead : Boolean;
     FStrictWrite : Boolean;
+    function GetMinSerializedSize( const aType : TType) : Integer;  override;
 
-  private
-    function ReadAll( var buf: TBytes; off: Integer; len: Integer ): Integer;
+  strict private
+    function ReadAll( const pBuf : Pointer; const buflen : Integer; off: Integer; len: Integer ): Integer;  inline;
     function ReadStringBody( size: Integer): string;
 
   public
-
     type
       TFactory = class( TInterfacedObject, IProtocolFactory)
-      protected
+      strict protected
         FStrictRead : Boolean;
         FStrictWrite : Boolean;
-      public
         function GetProtocol( const trans: ITransport): IProtocol;
-        constructor Create( AStrictRead, AStrictWrite: Boolean ); overload;
-        constructor Create; overload;
+      public
+        constructor Create( const aStrictRead : Boolean = FALSE; const aStrictWrite: Boolean = TRUE); reintroduce;
       end;
 
-    constructor Create( const trans: ITransport); overload;
-    constructor Create( const trans: ITransport; strictRead: Boolean; strictWrite: Boolean); overload;
+    constructor Create( const trans: ITransport; strictRead: Boolean = FALSE; strictWrite: Boolean = TRUE); reintroduce;
 
-    procedure WriteMessageBegin( const msg: IMessage); override;
+    procedure WriteMessageBegin( const msg: TThriftMessage); override;
     procedure WriteMessageEnd; override;
-    procedure WriteStructBegin( const struc: IStruct); override;
+    procedure WriteStructBegin( const struc: TThriftStruct); override;
     procedure WriteStructEnd; override;
-    procedure WriteFieldBegin( const field: IField); override;
+    procedure WriteFieldBegin( const field: TThriftField); override;
     procedure WriteFieldEnd; override;
     procedure WriteFieldStop; override;
-    procedure WriteMapBegin( const map: IMap); override;
+    procedure WriteMapBegin( const map: TThriftMap); override;
     procedure WriteMapEnd; override;
-    procedure WriteListBegin( const list: IList); override;
+    procedure WriteListBegin( const list: TThriftList); override;
     procedure WriteListEnd(); override;
-    procedure WriteSetBegin( const set_: ISet ); override;
+    procedure WriteSetBegin( const set_: TThriftSet ); override;
     procedure WriteSetEnd(); override;
     procedure WriteBool( b: Boolean); override;
     procedure WriteByte( b: ShortInt); override;
@@ -472,17 +375,17 @@ type
     procedure WriteDouble( const d: Double); override;
     procedure WriteBinary( const b: TBytes); override;
 
-    function ReadMessageBegin: IMessage; override;
+    function ReadMessageBegin: TThriftMessage; override;
     procedure ReadMessageEnd(); override;
-    function ReadStructBegin: IStruct; override;
+    function ReadStructBegin: TThriftStruct; override;
     procedure ReadStructEnd; override;
-    function ReadFieldBegin: IField; override;
+    function ReadFieldBegin: TThriftField; override;
     procedure ReadFieldEnd(); override;
-    function ReadMapBegin: IMap; override;
+    function ReadMapBegin: TThriftMap; override;
     procedure ReadMapEnd(); override;
-    function ReadListBegin: IList; override;
+    function ReadListBegin: TThriftList; override;
     procedure ReadListEnd(); override;
-    function ReadSetBegin: ISet; override;
+    function ReadSetBegin: TThriftSet; override;
     procedure ReadSetEnd(); override;
     function ReadBool: Boolean; override;
     function ReadByte: ShortInt; override;
@@ -502,26 +405,29 @@ type
     See p.175 of Design Patterns (by Gamma et al.)
   }
   TProtocolDecorator = class( TProtocolImpl)
-  private
+  strict private
     FWrappedProtocol : IProtocol;
+
+  strict protected
+    function GetMinSerializedSize( const aType : TType) : Integer;  override;
 
   public
     // Encloses the specified protocol.
     // All operations will be forward to the given protocol.  Must be non-null.
     constructor Create( const aProtocol : IProtocol);
 
-    procedure WriteMessageBegin( const msg: IMessage); override;
+    procedure WriteMessageBegin( const msg: TThriftMessage); override;
     procedure WriteMessageEnd; override;
-    procedure WriteStructBegin( const struc: IStruct); override;
+    procedure WriteStructBegin( const struc: TThriftStruct); override;
     procedure WriteStructEnd; override;
-    procedure WriteFieldBegin( const field: IField); override;
+    procedure WriteFieldBegin( const field: TThriftField); override;
     procedure WriteFieldEnd; override;
     procedure WriteFieldStop; override;
-    procedure WriteMapBegin( const map: IMap); override;
+    procedure WriteMapBegin( const map: TThriftMap); override;
     procedure WriteMapEnd; override;
-    procedure WriteListBegin( const list: IList); override;
+    procedure WriteListBegin( const list: TThriftList); override;
     procedure WriteListEnd(); override;
-    procedure WriteSetBegin( const set_: ISet ); override;
+    procedure WriteSetBegin( const set_: TThriftSet ); override;
     procedure WriteSetEnd(); override;
     procedure WriteBool( b: Boolean); override;
     procedure WriteByte( b: ShortInt); override;
@@ -533,17 +439,17 @@ type
     procedure WriteAnsiString( const s: AnsiString); override;
     procedure WriteBinary( const b: TBytes); override;
 
-    function ReadMessageBegin: IMessage; override;
+    function ReadMessageBegin: TThriftMessage; override;
     procedure ReadMessageEnd(); override;
-    function ReadStructBegin: IStruct; override;
+    function ReadStructBegin: TThriftStruct; override;
     procedure ReadStructEnd; override;
-    function ReadFieldBegin: IField; override;
+    function ReadFieldBegin: TThriftField; override;
     procedure ReadFieldEnd(); override;
-    function ReadMapBegin: IMap; override;
+    function ReadMapBegin: TThriftMap; override;
     procedure ReadMapEnd(); override;
-    function ReadListBegin: IList; override;
+    function ReadListBegin: TThriftList; override;
     procedure ReadListEnd(); override;
-    function ReadSetBegin: ISet; override;
+    function ReadSetBegin: TThriftSet; override;
     procedure ReadSetEnd(); override;
     function ReadBool: Boolean; override;
     function ReadByte: ShortInt; override;
@@ -594,69 +500,29 @@ type
   end;
 
 
+procedure Init( var rec : TThriftMessage; const AName: string = ''; const AMessageType: TMessageType = Low(TMessageType); const ASeqID: Integer = 0);  overload;  inline;
+procedure Init( var rec : TThriftStruct;  const AName: string = '');  overload;  inline;
+procedure Init( var rec : TThriftField;   const AName: string = ''; const AType: TType = Low(TType); const AID: SmallInt = 0);  overload;  inline;
+procedure Init( var rec : TThriftMap;     const AKeyType: TType = Low(TType); const AValueType: TType = Low(TType); const ACount: Integer = 0); overload;  inline;
+procedure Init( var rec : TThriftSet;     const AElementType: TType = Low(TType); const ACount: Integer = 0); overload;  inline;
+procedure Init( var rec : TThriftList;    const AElementType: TType = Low(TType); const ACount: Integer = 0); overload;  inline;
+
 
 implementation
 
-function ConvertInt64ToDouble( const n: Int64): Double;
+function ConvertInt64ToDouble( const n: Int64): Double;  inline;
 begin
   ASSERT( SizeOf(n) = SizeOf(Result));
   System.Move( n, Result, SizeOf(Result));
 end;
 
-function ConvertDoubleToInt64( const d: Double): Int64;
+function ConvertDoubleToInt64( const d: Double): Int64;  inline;
 begin
   ASSERT( SizeOf(d) = SizeOf(Result));
   System.Move( d, Result, SizeOf(Result));
 end;
 
-{ TFieldImpl }
 
-constructor TFieldImpl.Create(const AName: string; const AType: TType;
-  AId: SmallInt);
-begin
-  inherited Create;
-  FName := AName;
-  FType := AType;
-  FId := AId;
-end;
-
-constructor TFieldImpl.Create;
-begin
-  inherited Create;
-  FName := '';
-  FType := Low(TType);
-  FId   := 0;
-end;
-
-function TFieldImpl.GetId: SmallInt;
-begin
-  Result := FId;
-end;
-
-function TFieldImpl.GetName: string;
-begin
-  Result := FName;
-end;
-
-function TFieldImpl.GetType: TType;
-begin
-  Result := FType;
-end;
-
-procedure TFieldImpl.SetId(Value: SmallInt);
-begin
-  FId := Value;
-end;
-
-procedure TFieldImpl.SetName(const Value: string);
-begin
-  FName := Value;
-end;
-
-procedure TFieldImpl.SetType(Value: TType);
-begin
-  FType := Value;
-end;
 
 { TProtocolRecursionTrackerImpl }
 
@@ -684,22 +550,12 @@ end;
 
 { TProtocolImpl }
 
-constructor TProtocolImpl.Create(trans: ITransport);
+constructor TProtocolImpl.Create( const aTransport : ITransport);
 begin
   inherited Create;
-  FTrans := trans;
-  FRecursionLimit := DEFAULT_RECURSION_LIMIT;
+  FTrans := aTransport;
+  FRecursionLimit := aTransport.Configuration.RecursionLimit;
   FRecursionDepth := 0;
-end;
-
-procedure TProtocolImpl.SetRecursionLimit( value : Integer);
-begin
-  FRecursionLimit := value;
-end;
-
-function TProtocolImpl.GetRecursionLimit : Integer;
-begin
-  result := FRecursionLimit;
 end;
 
 function TProtocolImpl.NextRecursionLevel : IProtocolRecursionTracker;
@@ -724,6 +580,16 @@ begin
   Result := FTrans;
 end;
 
+function TProtocolImpl.Configuration : IThriftConfiguration;
+begin
+  Result := FTrans.Configuration;
+end;
+
+procedure TProtocolImpl.Reset;
+begin
+  FTrans.ResetConsumedMessageSize;
+end;
+
 function TProtocolImpl.ReadAnsiString: AnsiString;
 var
   b : TBytes;
@@ -732,8 +598,7 @@ begin
   Result := '';
   b := ReadBinary;
   len := Length( b );
-  if len > 0 then
-  begin
+  if len > 0 then begin
     SetLength( Result, len);
     System.Move( b[0], Pointer(Result)^, len );
   end;
@@ -751,8 +616,7 @@ var
 begin
   len := Length(s);
   SetLength( b, len);
-  if len > 0 then
-  begin
+  if len > 0 then begin
     System.Move( Pointer(s)^, b[0], len );
   end;
   WriteBinary( b );
@@ -766,13 +630,33 @@ begin
   WriteBinary( b );
 end;
 
+
+procedure TProtocolImpl.CheckReadBytesAvailable( const value : TThriftList);
+begin
+  FTrans.CheckReadBytesAvailable( value.Count * GetMinSerializedSize(value.ElementType));
+end;
+
+
+procedure TProtocolImpl.CheckReadBytesAvailable( const value : TThriftSet);
+begin
+  FTrans.CheckReadBytesAvailable( value.Count * GetMinSerializedSize(value.ElementType));
+end;
+
+
+procedure TProtocolImpl.CheckReadBytesAvailable( const value : TThriftMap);
+var nPairSize : Integer;
+begin
+  nPairSize := GetMinSerializedSize(value.KeyType) + GetMinSerializedSize(value.ValueType);
+  FTrans.CheckReadBytesAvailable( value.Count * nPairSize);
+end;
+
 { TProtocolUtil }
 
 class procedure TProtocolUtil.Skip( prot: IProtocol; type_: TType);
-var field : IField;
-    map   : IMap;
-    set_  : ISet;
-    list  : IList;
+var field : TThriftField;
+    map   : TThriftMap;
+    set_  : TThriftSet;
+    list  : TThriftList;
     i     : Integer;
     tracker : IProtocolRecursionTracker;
 begin
@@ -823,207 +707,23 @@ begin
     end;
 
   else
-    ASSERT( FALSE); // any new types?
+    raise TProtocolExceptionInvalidData.Create('Unexpected type '+IntToStr(Ord(type_)));
   end;
 end;
 
-{ TStructImpl }
-
-constructor TStructImpl.Create(const AName: string);
-begin
-  inherited Create;
-  FName := AName;
-end;
-
-function TStructImpl.GetName: string;
-begin
-  Result := FName;
-end;
-
-procedure TStructImpl.SetName(const Value: string);
-begin
-  FName := Value;
-end;
-
-{ TMapImpl }
-
-constructor TMapImpl.Create( AKeyType, AValueType: TType; ACount: Integer);
-begin
-  inherited Create;
-  FValueType := AValueType;
-  FKeyType := AKeyType;
-  FCount := ACount;
-end;
-
-constructor TMapImpl.Create;
-begin
-  inherited Create;
-end;
-
-function TMapImpl.GetCount: Integer;
-begin
-  Result := FCount;
-end;
-
-function TMapImpl.GetKeyType: TType;
-begin
-  Result := FKeyType;
-end;
-
-function TMapImpl.GetValueType: TType;
-begin
-  Result := FValueType;
-end;
-
-procedure TMapImpl.SetCount(Value: Integer);
-begin
-  FCount := Value;
-end;
-
-procedure TMapImpl.SetKeyType(Value: TType);
-begin
-  FKeyType := Value;
-end;
-
-procedure TMapImpl.SetValueType(Value: TType);
-begin
-  FValueType := Value;
-end;
-
-{ IMessage }
-
-constructor TMessageImpl.Create(AName: string; AMessageType: TMessageType;
-  ASeqID: Integer);
-begin
-  inherited Create;
-  FName := AName;
-  FMessageType := AMessageType;
-  FSeqID := ASeqID;
-end;
-
-constructor TMessageImpl.Create;
-begin
-  inherited;
-end;
-
-function TMessageImpl.GetName: string;
-begin
-  Result := FName;
-end;
-
-function TMessageImpl.GetSeqID: Integer;
-begin
-  Result := FSeqID;
-end;
-
-function TMessageImpl.GetType: TMessageType;
-begin
-  Result := FMessageType;
-end;
-
-procedure TMessageImpl.SetName(const Value: string);
-begin
-  FName := Value;
-end;
-
-procedure TMessageImpl.SetSeqID(Value: Integer);
-begin
-  FSeqID := Value;
-end;
-
-procedure TMessageImpl.SetType(Value: TMessageType);
-begin
-  FMessageType := Value;
-end;
-
-{ ISet }
-
-constructor TSetImpl.Create( AElementType: TType; ACount: Integer);
-begin
-  inherited Create;
-  FCount := ACount;
-  FElementType := AElementType;
-end;
-
-constructor TSetImpl.Create;
-begin
-  inherited Create;
-end;
-
-function TSetImpl.GetCount: Integer;
-begin
-  Result := FCount;
-end;
-
-function TSetImpl.GetElementType: TType;
-begin
-  Result := FElementType;
-end;
-
-procedure TSetImpl.SetCount(Value: Integer);
-begin
-  FCount := Value;
-end;
-
-procedure TSetImpl.SetElementType(Value: TType);
-begin
-  FElementType := Value;
-end;
-
-{ IList }
-
-constructor TListImpl.Create( AElementType: TType; ACount: Integer);
-begin
-  inherited Create;
-  FCount := ACount;
-  FElementType := AElementType;
-end;
-
-constructor TListImpl.Create;
-begin
-  inherited Create;
-end;
-
-function TListImpl.GetCount: Integer;
-begin
-  Result := FCount;
-end;
-
-function TListImpl.GetElementType: TType;
-begin
-  Result := FElementType;
-end;
-
-procedure TListImpl.SetCount(Value: Integer);
-begin
-  FCount := Value;
-end;
-
-procedure TListImpl.SetElementType(Value: TType);
-begin
-  FElementType := Value;
-end;
 
 { TBinaryProtocolImpl }
 
-constructor TBinaryProtocolImpl.Create( const trans: ITransport);
+constructor TBinaryProtocolImpl.Create( const trans: ITransport; strictRead, strictWrite: Boolean);
 begin
-  //no inherited
-  Create( trans, False, True);
-end;
-
-constructor TBinaryProtocolImpl.Create( const trans: ITransport; strictRead,
-  strictWrite: Boolean);
-begin
-  inherited Create( trans );
+  inherited Create( trans);
   FStrictRead := strictRead;
   FStrictWrite := strictWrite;
 end;
 
-function TBinaryProtocolImpl.ReadAll( var buf: TBytes; off,
-  len: Integer): Integer;
+function TBinaryProtocolImpl.ReadAll( const pBuf : Pointer; const buflen : Integer; off: Integer; len: Integer ): Integer;
 begin
-  Result := FTrans.ReadAll( buf, off, len );
+  Result := FTrans.ReadAll( pBuf, buflen, off, len );
 end;
 
 function TBinaryProtocolImpl.ReadBinary: TBytes;
@@ -1032,23 +732,20 @@ var
   buf : TBytes;
 begin
   size := ReadI32;
-  SetLength( buf, size );
+  FTrans.CheckReadBytesAvailable( size);
+  SetLength( buf, size);
   FTrans.ReadAll( buf, 0, size);
   Result := buf;
 end;
 
 function TBinaryProtocolImpl.ReadBool: Boolean;
 begin
-  Result := ReadByte = 1;
+  Result := (ReadByte = 1);
 end;
 
 function TBinaryProtocolImpl.ReadByte: ShortInt;
-var
-  bin : TBytes;
 begin
-  SetLength( bin, 1);
-  ReadAll( bin, 0, 1 );
-  Result := ShortInt( bin[0]);
+  ReadAll( @result, SizeOf(result), 0, 1);
 end;
 
 function TBinaryProtocolImpl.ReadDouble: Double;
@@ -1056,17 +753,12 @@ begin
   Result := ConvertInt64ToDouble( ReadI64 )
 end;
 
-function TBinaryProtocolImpl.ReadFieldBegin: IField;
-var
-  field : IField;
+function TBinaryProtocolImpl.ReadFieldBegin: TThriftField;
 begin
-  field := TFieldImpl.Create;
-  field.Type_ := TType( ReadByte);
-  if ( field.Type_ <> TType.Stop ) then
-  begin
-    field.Id := ReadI16;
+  Init( result, '', TType( ReadByte), 0);
+  if ( result.Type_ <> TType.Stop ) then begin
+    result.Id := ReadI16;
   end;
-  Result := field;
 end;
 
 procedure TBinaryProtocolImpl.ReadFieldEnd;
@@ -1075,20 +767,16 @@ begin
 end;
 
 function TBinaryProtocolImpl.ReadI16: SmallInt;
-var
-  i16in : TBytes;
+var i16in : packed array[0..1] of Byte;
 begin
-  SetLength( i16in, 2 );
-  ReadAll( i16in, 0, 2);
+  ReadAll( @i16in, Sizeof(i16in), 0, 2);
   Result := SmallInt(((i16in[0] and $FF) shl 8) or (i16in[1] and $FF));
 end;
 
 function TBinaryProtocolImpl.ReadI32: Integer;
-var
-  i32in : TBytes;
+var i32in : packed array[0..3] of Byte;
 begin
-  SetLength( i32in, 4 );
-  ReadAll( i32in, 0, 4);
+  ReadAll( @i32in, SizeOf(i32in), 0, 4);
 
   Result := Integer(
     ((i32in[0] and $FF) shl 24) or
@@ -1099,11 +787,9 @@ begin
 end;
 
 function TBinaryProtocolImpl.ReadI64: Int64;
-var
-  i64in : TBytes;
+var i64in : packed array[0..7] of Byte;
 begin
-  SetLength( i64in, 8);
-  ReadAll( i64in, 0, 8);
+  ReadAll( @i64in, SizeOf(i64in), 0, 8);
   Result :=
     (Int64( i64in[0] and $FF) shl 56) or
     (Int64( i64in[1] and $FF) shl 48) or
@@ -1115,14 +801,11 @@ begin
     (Int64( i64in[7] and $FF));
 end;
 
-function TBinaryProtocolImpl.ReadListBegin: IList;
-var
-  list : IList;
+function TBinaryProtocolImpl.ReadListBegin: TThriftList;
 begin
-  list := TListImpl.Create;
-  list.ElementType := TType( ReadByte );
-  list.Count := ReadI32;
-  Result := list;
+  result.ElementType := TType(ReadByte);
+  result.Count       := ReadI32;
+  CheckReadBytesAvailable(result);
 end;
 
 procedure TBinaryProtocolImpl.ReadListEnd;
@@ -1130,15 +813,12 @@ begin
 
 end;
 
-function TBinaryProtocolImpl.ReadMapBegin: IMap;
-var
-  map : IMap;
+function TBinaryProtocolImpl.ReadMapBegin: TThriftMap;
 begin
-  map := TMapImpl.Create;
-  map.KeyType := TType( ReadByte );
-  map.ValueType := TType( ReadByte );
-  map.Count := ReadI32;
-  Result := map;
+  result.KeyType   := TType(ReadByte);
+  result.ValueType := TType(ReadByte);
+  result.Count     := ReadI32;
+  CheckReadBytesAvailable(result);
 end;
 
 procedure TBinaryProtocolImpl.ReadMapEnd;
@@ -1146,35 +826,31 @@ begin
 
 end;
 
-function TBinaryProtocolImpl.ReadMessageBegin: IMessage;
+function TBinaryProtocolImpl.ReadMessageBegin: TThriftMessage;
 var
   size : Integer;
   version : Integer;
-  message : IMessage;
 begin
-  message := TMessageImpl.Create;
+  Reset;
+  Init( result);
   size := ReadI32;
-  if (size < 0) then
-  begin
+  if (size < 0) then begin
     version := size and Integer( VERSION_MASK);
-    if ( version <> Integer( VERSION_1)) then
-    begin
+    if ( version <> Integer( VERSION_1)) then begin
       raise TProtocolExceptionBadVersion.Create('Bad version in ReadMessageBegin: ' + IntToStr(version) );
     end;
-    message.Type_ := TMessageType( size and $000000ff);
-    message.Name := ReadString;
-    message.SeqID := ReadI32;
-  end else
-  begin
-    if FStrictRead then
-    begin
+    result.Type_ := TMessageType( size and $000000ff);
+    result.Name := ReadString;
+    result.SeqID := ReadI32;
+  end
+  else begin
+    if FStrictRead then begin
       raise TProtocolExceptionBadVersion.Create('Missing version in readMessageBegin, old client?' );
     end;
-    message.Name := ReadStringBody( size );
-    message.Type_ := TMessageType( ReadByte );
-    message.SeqID := ReadI32;
+    result.Name := ReadStringBody( size );
+    result.Type_ := TMessageType( ReadByte );
+    result.SeqID := ReadI32;
   end;
-  Result := message;
 end;
 
 procedure TBinaryProtocolImpl.ReadMessageEnd;
@@ -1183,14 +859,11 @@ begin
 
 end;
 
-function TBinaryProtocolImpl.ReadSetBegin: ISet;
-var
-  set_ : ISet;
+function TBinaryProtocolImpl.ReadSetBegin: TThriftSet;
 begin
-  set_ := TSetImpl.Create;
-  set_.ElementType := TType( ReadByte );
-  set_.Count := ReadI32;
-  Result := set_;
+  result.ElementType := TType(ReadByte);
+  result.Count       := ReadI32;
+  CheckReadBytesAvailable(result);
 end;
 
 procedure TBinaryProtocolImpl.ReadSetEnd;
@@ -1199,17 +872,17 @@ begin
 end;
 
 function TBinaryProtocolImpl.ReadStringBody( size: Integer): string;
-var
-  buf : TBytes;
+var buf : TBytes;
 begin
-  SetLength( buf, size );
+  FTrans.CheckReadBytesAvailable( size);
+  SetLength( buf, size);
   FTrans.ReadAll( buf, 0, size );
   Result := TEncoding.UTF8.GetString( buf);
 end;
 
-function TBinaryProtocolImpl.ReadStructBegin: IStruct;
+function TBinaryProtocolImpl.ReadStructBegin: TThriftStruct;
 begin
-  Result := TStructImpl.Create('');
+  Init( Result);
 end;
 
 procedure TBinaryProtocolImpl.ReadStructEnd;
@@ -1228,22 +901,16 @@ end;
 
 procedure TBinaryProtocolImpl.WriteBool(b: Boolean);
 begin
-  if b then
-  begin
+  if b then begin
     WriteByte( 1 );
-  end else
-  begin
+  end else begin
     WriteByte( 0 );
   end;
 end;
 
 procedure TBinaryProtocolImpl.WriteByte(b: ShortInt);
-var
-  a : TBytes;
 begin
-  SetLength( a, 1);
-  a[0] := Byte( b );
-  FTrans.Write( a, 0, 1 );
+  FTrans.Write( @b, 0, 1);
 end;
 
 procedure TBinaryProtocolImpl.WriteDouble( const d: Double);
@@ -1251,7 +918,7 @@ begin
   WriteI64(ConvertDoubleToInt64(d));
 end;
 
-procedure TBinaryProtocolImpl.WriteFieldBegin( const field: IField);
+procedure TBinaryProtocolImpl.WriteFieldBegin( const field: TThriftField);
 begin
   WriteByte(ShortInt(field.Type_));
   WriteI16(field.ID);
@@ -1268,32 +935,26 @@ begin
 end;
 
 procedure TBinaryProtocolImpl.WriteI16(i16: SmallInt);
-var
-  i16out : TBytes;
+var i16out : packed array[0..1] of Byte;
 begin
-  SetLength( i16out, 2);
   i16out[0] := Byte($FF and (i16 shr 8));
   i16out[1] := Byte($FF and i16);
-  FTrans.Write( i16out );
+  FTrans.Write( @i16out, 0, 2);
 end;
 
 procedure TBinaryProtocolImpl.WriteI32(i32: Integer);
-var
-  i32out : TBytes;
+var i32out : packed array[0..3] of Byte;
 begin
-  SetLength( i32out, 4);
   i32out[0] := Byte($FF and (i32 shr 24));
   i32out[1] := Byte($FF and (i32 shr 16));
   i32out[2] := Byte($FF and (i32 shr 8));
   i32out[3] := Byte($FF and i32);
-  FTrans.Write( i32out, 0, 4);
+  FTrans.Write( @i32out, 0, 4);
 end;
 
 procedure TBinaryProtocolImpl.WriteI64( const i64: Int64);
-var
-  i64out : TBytes;
+var i64out : packed array[0..7] of Byte;
 begin
-  SetLength( i64out, 8);
   i64out[0] := Byte($FF and (i64 shr 56));
   i64out[1] := Byte($FF and (i64 shr 48));
   i64out[2] := Byte($FF and (i64 shr 40));
@@ -1302,10 +963,10 @@ begin
   i64out[5] := Byte($FF and (i64 shr 16));
   i64out[6] := Byte($FF and (i64 shr 8));
   i64out[7] := Byte($FF and i64);
-  FTrans.Write( i64out, 0, 8);
+  FTrans.Write( @i64out, 0, 8);
 end;
 
-procedure TBinaryProtocolImpl.WriteListBegin( const list: IList);
+procedure TBinaryProtocolImpl.WriteListBegin( const list: TThriftList);
 begin
   WriteByte(ShortInt(list.ElementType));
   WriteI32(list.Count);
@@ -1316,7 +977,7 @@ begin
 
 end;
 
-procedure TBinaryProtocolImpl.WriteMapBegin( const map: IMap);
+procedure TBinaryProtocolImpl.WriteMapBegin( const map: TThriftMap);
 begin
   WriteByte(ShortInt(map.KeyType));
   WriteByte(ShortInt(map.ValueType));
@@ -1328,18 +989,16 @@ begin
 
 end;
 
-procedure TBinaryProtocolImpl.WriteMessageBegin( const msg: IMessage);
-var
-  version : Cardinal;
+procedure TBinaryProtocolImpl.WriteMessageBegin( const msg: TThriftMessage);
+var version : Cardinal;
 begin
-  if FStrictWrite then
-  begin
+  Reset;
+  if FStrictWrite then begin
     version := VERSION_1 or Cardinal( msg.Type_);
     WriteI32( Integer( version) );
     WriteString( msg.Name);
     WriteI32( msg.SeqID);
-  end else
-  begin
+  end else begin
     WriteString( msg.Name);
     WriteByte(ShortInt( msg.Type_));
     WriteI32( msg.SeqID);
@@ -1351,7 +1010,7 @@ begin
 
 end;
 
-procedure TBinaryProtocolImpl.WriteSetBegin( const set_: ISet);
+procedure TBinaryProtocolImpl.WriteSetBegin( const set_: TThriftSet);
 begin
   WriteByte(ShortInt(set_.ElementType));
   WriteI32(set_.Count);
@@ -1362,7 +1021,7 @@ begin
 
 end;
 
-procedure TBinaryProtocolImpl.WriteStructBegin( const struc: IStruct);
+procedure TBinaryProtocolImpl.WriteStructBegin( const struc: TThriftStruct);
 begin
 
 end;
@@ -1371,6 +1030,29 @@ procedure TBinaryProtocolImpl.WriteStructEnd;
 begin
 
 end;
+
+function TBinaryProtocolImpl.GetMinSerializedSize( const aType : TType) : Integer;
+// Return the minimum number of bytes a type will consume on the wire
+begin
+  case aType of
+    TType.Stop:    result := 0;
+    TType.Void:    result := 0;
+    TType.Bool_:   result := SizeOf(Byte);
+    TType.Byte_:   result := SizeOf(Byte);
+    TType.Double_: result := SizeOf(Double);
+    TType.I16:     result := SizeOf(Int16);
+    TType.I32:     result := SizeOf(Int32);
+    TType.I64:     result := SizeOf(Int64);
+    TType.String_: result := SizeOf(Int32);  // string length
+    TType.Struct:  result := 0;  // empty struct
+    TType.Map:     result := SizeOf(Int32);  // element count
+    TType.Set_:    result := SizeOf(Int32);  // element count
+    TType.List:    result := SizeOf(Int32);  // element count
+  else
+    raise TTransportExceptionBadArgs.Create('Unhandled type code');
+  end;
+end;
+
 
 { TProtocolException }
 
@@ -1389,23 +1071,24 @@ begin
   Result := TProtocolExceptionUnknown.Create('');
 end;
 
-class function TProtocolException.Create(type_: Integer): TProtocolException;
+class function TProtocolException.Create(aType: TExceptionType): TProtocolException;
 begin
 {$WARN SYMBOL_DEPRECATED OFF}
-  Result := Create(type_, '');
+  Result := Create(aType, '');
 {$WARN SYMBOL_DEPRECATED DEFAULT}
 end;
 
-class function TProtocolException.Create(type_: Integer; const msg: string): TProtocolException;
+class function TProtocolException.Create(aType: TExceptionType; const msg: string): TProtocolException;
 begin
-  case type_ of
-    INVALID_DATA:    Result := TProtocolExceptionInvalidData.Create(msg);
-    NEGATIVE_SIZE:   Result := TProtocolExceptionNegativeSize.Create(msg);
-    SIZE_LIMIT:      Result := TProtocolExceptionSizeLimit.Create(msg);
-    BAD_VERSION:     Result := TProtocolExceptionBadVersion.Create(msg);
-    NOT_IMPLEMENTED: Result := TProtocolExceptionNotImplemented.Create(msg);
-    DEPTH_LIMIT:     Result := TProtocolExceptionDepthLimit.Create(msg);
+  case aType of
+    TExceptionType.INVALID_DATA:    Result := TProtocolExceptionInvalidData.Create(msg);
+    TExceptionType.NEGATIVE_SIZE:   Result := TProtocolExceptionNegativeSize.Create(msg);
+    TExceptionType.SIZE_LIMIT:      Result := TProtocolExceptionSizeLimit.Create(msg);
+    TExceptionType.BAD_VERSION:     Result := TProtocolExceptionBadVersion.Create(msg);
+    TExceptionType.NOT_IMPLEMENTED: Result := TProtocolExceptionNotImplemented.Create(msg);
+    TExceptionType.DEPTH_LIMIT:     Result := TProtocolExceptionDepthLimit.Create(msg);
   else
+    ASSERT( TExceptionType.UNKNOWN = aType);
     Result := TProtocolExceptionUnknown.Create(msg);
   end;
 end;
@@ -1417,32 +1100,50 @@ begin
   inherited HiddenCreate(Msg);
 end;
 
-{ TThriftStringBuilder }
+{ specialized TProtocolExceptions }
 
-function TThriftStringBuilder.Append(const Value: TBytes): TStringBuilder;
+class function TProtocolExceptionUnknown.GetType: TProtocolException.TExceptionType;
 begin
-  Result := Append( string( RawByteString(Value)) );
+  result := TExceptionType.UNKNOWN;
 end;
 
-function TThriftStringBuilder.Append(
-  const Value: IThriftContainer): TStringBuilder;
+class function TProtocolExceptionInvalidData.GetType: TProtocolException.TExceptionType;
 begin
-  Result := Append( Value.ToString );
+  result := TExceptionType.INVALID_DATA;
+end;
+
+class function TProtocolExceptionNegativeSize.GetType: TProtocolException.TExceptionType;
+begin
+  result := TExceptionType.NEGATIVE_SIZE;
+end;
+
+class function TProtocolExceptionSizeLimit.GetType: TProtocolException.TExceptionType;
+begin
+  result := TExceptionType.SIZE_LIMIT;
+end;
+
+class function TProtocolExceptionBadVersion.GetType: TProtocolException.TExceptionType;
+begin
+  result := TExceptionType.BAD_VERSION;
+end;
+
+class function TProtocolExceptionNotImplemented.GetType: TProtocolException.TExceptionType;
+begin
+  result := TExceptionType.NOT_IMPLEMENTED;
+end;
+
+class function TProtocolExceptionDepthLimit.GetType: TProtocolException.TExceptionType;
+begin
+  result := TExceptionType.DEPTH_LIMIT;
 end;
 
 { TBinaryProtocolImpl.TFactory }
 
-constructor TBinaryProtocolImpl.TFactory.Create(AStrictRead, AStrictWrite: Boolean);
+constructor TBinaryProtocolImpl.TFactory.Create( const aStrictRead, aStrictWrite: Boolean);
 begin
   inherited Create;
   FStrictRead := AStrictRead;
   FStrictWrite := AStrictWrite;
-end;
-
-constructor TBinaryProtocolImpl.TFactory.Create;
-begin
-  //no inherited;
-  Create( False, True )
 end;
 
 function TBinaryProtocolImpl.TFactory.GetProtocol( const trans: ITransport): IProtocol;
@@ -1461,7 +1162,7 @@ begin
 end;
 
 
-procedure TProtocolDecorator.WriteMessageBegin( const msg: IMessage);
+procedure TProtocolDecorator.WriteMessageBegin( const msg: TThriftMessage);
 begin
   FWrappedProtocol.WriteMessageBegin( msg);
 end;
@@ -1473,7 +1174,7 @@ begin
 end;
 
 
-procedure TProtocolDecorator.WriteStructBegin( const struc: IStruct);
+procedure TProtocolDecorator.WriteStructBegin( const struc: TThriftStruct);
 begin
   FWrappedProtocol.WriteStructBegin( struc);
 end;
@@ -1485,7 +1186,7 @@ begin
 end;
 
 
-procedure TProtocolDecorator.WriteFieldBegin( const field: IField);
+procedure TProtocolDecorator.WriteFieldBegin( const field: TThriftField);
 begin
   FWrappedProtocol.WriteFieldBegin( field);
 end;
@@ -1503,7 +1204,7 @@ begin
 end;
 
 
-procedure TProtocolDecorator.WriteMapBegin( const map: IMap);
+procedure TProtocolDecorator.WriteMapBegin( const map: TThriftMap);
 begin
   FWrappedProtocol.WriteMapBegin( map);
 end;
@@ -1515,7 +1216,7 @@ begin
 end;
 
 
-procedure TProtocolDecorator.WriteListBegin( const list: IList);
+procedure TProtocolDecorator.WriteListBegin( const list: TThriftList);
 begin
   FWrappedProtocol.WriteListBegin( list);
 end;
@@ -1527,7 +1228,7 @@ begin
 end;
 
 
-procedure TProtocolDecorator.WriteSetBegin( const set_: ISet );
+procedure TProtocolDecorator.WriteSetBegin( const set_: TThriftSet );
 begin
   FWrappedProtocol.WriteSetBegin( set_);
 end;
@@ -1593,7 +1294,7 @@ begin
 end;
 
 
-function TProtocolDecorator.ReadMessageBegin: IMessage;
+function TProtocolDecorator.ReadMessageBegin: TThriftMessage;
 begin
   result := FWrappedProtocol.ReadMessageBegin;
 end;
@@ -1605,7 +1306,7 @@ begin
 end;
 
 
-function TProtocolDecorator.ReadStructBegin: IStruct;
+function TProtocolDecorator.ReadStructBegin: TThriftStruct;
 begin
   result := FWrappedProtocol.ReadStructBegin;
 end;
@@ -1617,7 +1318,7 @@ begin
 end;
 
 
-function TProtocolDecorator.ReadFieldBegin: IField;
+function TProtocolDecorator.ReadFieldBegin: TThriftField;
 begin
   result := FWrappedProtocol.ReadFieldBegin;
 end;
@@ -1629,7 +1330,7 @@ begin
 end;
 
 
-function TProtocolDecorator.ReadMapBegin: IMap;
+function TProtocolDecorator.ReadMapBegin: TThriftMap;
 begin
   result := FWrappedProtocol.ReadMapBegin;
 end;
@@ -1641,7 +1342,7 @@ begin
 end;
 
 
-function TProtocolDecorator.ReadListBegin: IList;
+function TProtocolDecorator.ReadListBegin: TThriftList;
 begin
   result := FWrappedProtocol.ReadListBegin;
 end;
@@ -1653,7 +1354,7 @@ begin
 end;
 
 
-function TProtocolDecorator.ReadSetBegin: ISet;
+function TProtocolDecorator.ReadSetBegin: TThriftSet;
 begin
   result := FWrappedProtocol.ReadSetBegin;
 end;
@@ -1716,6 +1417,58 @@ end;
 function TProtocolDecorator.ReadAnsiString: AnsiString;
 begin
   result := FWrappedProtocol.ReadAnsiString;
+end;
+
+
+function TProtocolDecorator.GetMinSerializedSize( const aType : TType) : Integer;
+begin
+  result := FWrappedProtocol.GetMinSerializedSize(aType);
+end;
+
+
+{ Init helper functions }
+
+procedure Init( var rec : TThriftMessage; const AName: string; const AMessageType: TMessageType; const ASeqID: Integer);
+begin
+  rec.Name := AName;
+  rec.Type_ := AMessageType;
+  rec.SeqID := ASeqID;
+end;
+
+
+procedure Init( var rec : TThriftStruct; const AName: string = '');
+begin
+  rec.Name := AName;
+end;
+
+
+procedure Init( var rec : TThriftField; const AName: string; const AType: TType; const AID: SmallInt);
+begin
+  rec.Name := AName;
+  rec.Type_ := AType;
+  rec.Id := AId;
+end;
+
+
+procedure Init( var rec : TThriftMap; const AKeyType, AValueType: TType; const ACount: Integer);
+begin
+  rec.ValueType := AValueType;
+  rec.KeyType := AKeyType;
+  rec.Count := ACount;
+end;
+
+
+procedure Init( var rec : TThriftSet; const AElementType: TType; const ACount: Integer);
+begin
+  rec.Count := ACount;
+  rec.ElementType := AElementType;
+end;
+
+
+procedure Init( var rec : TThriftList; const AElementType: TType; const ACount: Integer);
+begin
+  rec.Count := ACount;
+  rec.ElementType := AElementType;
 end;
 
 

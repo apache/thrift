@@ -21,25 +21,26 @@
 
 #include <thrift/transport/THttpTransport.h>
 
+using std::string;
+
 namespace apache {
 namespace thrift {
 namespace transport {
-
-using namespace std;
 
 // Yeah, yeah, hacky to put these here, I know.
 const char* THttpTransport::CRLF = "\r\n";
 const int THttpTransport::CRLF_LEN = 2;
 
-THttpTransport::THttpTransport(boost::shared_ptr<TTransport> transport)
-  : transport_(transport),
+THttpTransport::THttpTransport(std::shared_ptr<TTransport> transport, std::shared_ptr<TConfiguration> config)
+  : TVirtualTransport(config),
+    transport_(transport),
     origin_(""),
     readHeaders_(true),
     chunked_(false),
     chunkedDone_(false),
     chunkSize_(0),
     contentLength_(0),
-    httpBuf_(NULL),
+    httpBuf_(nullptr),
     httpPos_(0),
     httpBufLen_(0),
     httpBufSize_(1024) {
@@ -48,19 +49,20 @@ THttpTransport::THttpTransport(boost::shared_ptr<TTransport> transport)
 
 void THttpTransport::init() {
   httpBuf_ = (char*)std::malloc(httpBufSize_ + 1);
-  if (httpBuf_ == NULL) {
+  if (httpBuf_ == nullptr) {
     throw std::bad_alloc();
   }
   httpBuf_[httpBufLen_] = '\0';
 }
 
 THttpTransport::~THttpTransport() {
-  if (httpBuf_ != NULL) {
+  if (httpBuf_ != nullptr) {
     std::free(httpBuf_);
   }
 }
 
 uint32_t THttpTransport::read(uint8_t* buf, uint32_t len) {
+  checkReadBytesAvailable(len);
   if (readBuffer_.available_read() == 0) {
     readBuffer_.resetBuffer();
     uint32_t got = readMoreData();
@@ -84,8 +86,10 @@ uint32_t THttpTransport::readEnd() {
 uint32_t THttpTransport::readMoreData() {
   uint32_t size;
 
-  // Get more data!
-  refill();
+  if (httpPos_ == httpBufLen_) {
+    // Get more data!
+    refill();
+  }
 
   if (readHeaders_) {
     readHeaders();
@@ -130,7 +134,7 @@ void THttpTransport::readChunkedFooters() {
 
 uint32_t THttpTransport::parseChunkSize(char* line) {
   char* semi = strchr(line, ';');
-  if (semi != NULL) {
+  if (semi != nullptr) {
     *semi = '\0';
   }
   uint32_t size = 0;
@@ -164,12 +168,12 @@ uint32_t THttpTransport::readContent(uint32_t size) {
 
 char* THttpTransport::readLine() {
   while (true) {
-    char* eol = NULL;
+    char* eol = nullptr;
 
     eol = strstr(httpBuf_ + httpPos_, CRLF);
 
     // No CRLF yet?
-    if (eol == NULL) {
+    if (eol == nullptr) {
       // Shift whatever we have now to front and refill
       shift();
       refill();
@@ -200,10 +204,11 @@ void THttpTransport::refill() {
   uint32_t avail = httpBufSize_ - httpBufLen_;
   if (avail <= (httpBufSize_ / 4)) {
     httpBufSize_ *= 2;
-    httpBuf_ = (char*)std::realloc(httpBuf_, httpBufSize_ + 1);
-    if (httpBuf_ == NULL) {
+    char* tmpBuf = (char*)std::realloc(httpBuf_, httpBufSize_ + 1);
+    if (tmpBuf == nullptr) {
       throw std::bad_alloc();
     }
+    httpBuf_ = tmpBuf;
   }
 
   // Read more data
@@ -254,7 +259,7 @@ void THttpTransport::write(const uint8_t* buf, uint32_t len) {
   writeBuffer_.write(buf, len);
 }
 
-const std::string THttpTransport::getOrigin() {
+const std::string THttpTransport::getOrigin() const {
   std::ostringstream oss;
   if (!origin_.empty()) {
     oss << origin_ << ", ";

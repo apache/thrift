@@ -71,5 +71,9 @@ module Thrift
         @server_transport.close
       end
     end
+    
+    def to_s
+      "threadpool(#{super.to_s})"
+    end
   end
 end

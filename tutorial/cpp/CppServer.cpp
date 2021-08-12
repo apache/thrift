@@ -18,7 +18,7 @@
  */
 
 #include <thrift/concurrency/ThreadManager.h>
-#include <thrift/concurrency/PlatformThreadFactory.h>
+#include <thrift/concurrency/ThreadFactory.h>
 #include <thrift/protocol/TBinaryProtocol.h>
 #include <thrift/server/TSimpleServer.h>
 #include <thrift/server/TThreadPoolServer.h>
@@ -27,8 +27,6 @@
 #include <thrift/transport/TSocket.h>
 #include <thrift/transport/TTransportUtils.h>
 #include <thrift/TToString.h>
-
-#include <boost/make_shared.hpp>
 
 #include <iostream>
 #include <stdexcept>
@@ -48,16 +46,16 @@ using namespace shared;
 
 class CalculatorHandler : public CalculatorIf {
 public:
-  CalculatorHandler() {}
+  CalculatorHandler() = default;
 
-  void ping() { cout << "ping()" << endl; }
+  void ping() override { cout << "ping()" << endl; }
 
-  int32_t add(const int32_t n1, const int32_t n2) {
+  int32_t add(const int32_t n1, const int32_t n2) override {
     cout << "add(" << n1 << ", " << n2 << ")" << endl;
     return n1 + n2;
   }
 
-  int32_t calculate(const int32_t logid, const Work& work) {
+  int32_t calculate(const int32_t logid, const Work& work) override {
     cout << "calculate(" << logid << ", " << work << ")" << endl;
     int32_t val;
 
@@ -96,12 +94,12 @@ public:
     return val;
   }
 
-  void getStruct(SharedStruct& ret, const int32_t logid) {
+  void getStruct(SharedStruct& ret, const int32_t logid) override {
     cout << "getStruct(" << logid << ")" << endl;
     ret = log[logid];
   }
 
-  void zip() { cout << "zip()" << endl; }
+  void zip() override { cout << "zip()" << endl; }
 
 protected:
   map<int32_t, SharedStruct> log;
@@ -115,10 +113,10 @@ protected:
 */
 class CalculatorCloneFactory : virtual public CalculatorIfFactory {
  public:
-  virtual ~CalculatorCloneFactory() {}
-  virtual CalculatorIf* getHandler(const ::apache::thrift::TConnectionInfo& connInfo)
+  ~CalculatorCloneFactory() override = default;
+  CalculatorIf* getHandler(const ::apache::thrift::TConnectionInfo& connInfo) override
   {
-    boost::shared_ptr<TSocket> sock = boost::dynamic_pointer_cast<TSocket>(connInfo.transport);
+    std::shared_ptr<TSocket> sock = std::dynamic_pointer_cast<TSocket>(connInfo.transport);
     cout << "Incoming connection\n";
     cout << "\tSocketInfo: "  << sock->getSocketInfo() << "\n";
     cout << "\tPeerHost: "    << sock->getPeerHost() << "\n";
@@ -126,25 +124,25 @@ class CalculatorCloneFactory : virtual public CalculatorIfFactory {
     cout << "\tPeerPort: "    << sock->getPeerPort() << "\n";
     return new CalculatorHandler;
   }
-  virtual void releaseHandler( ::shared::SharedServiceIf* handler) {
+  void releaseHandler( ::shared::SharedServiceIf* handler) override {
     delete handler;
   }
 };
 
 int main() {
   TThreadedServer server(
-    boost::make_shared<CalculatorProcessorFactory>(boost::make_shared<CalculatorCloneFactory>()),
-    boost::make_shared<TServerSocket>(9090), //port
-    boost::make_shared<TBufferedTransportFactory>(),
-    boost::make_shared<TBinaryProtocolFactory>());
+    std::make_shared<CalculatorProcessorFactory>(std::make_shared<CalculatorCloneFactory>()),
+    std::make_shared<TServerSocket>(9090), //port
+    std::make_shared<TBufferedTransportFactory>(),
+    std::make_shared<TBinaryProtocolFactory>());
 
   /*
   // if you don't need per-connection state, do the following instead
   TThreadedServer server(
-    boost::make_shared<CalculatorProcessor>(boost::make_shared<CalculatorHandler>()),
-    boost::make_shared<TServerSocket>(9090), //port
-    boost::make_shared<TBufferedTransportFactory>(),
-    boost::make_shared<TBinaryProtocolFactory>());
+    std::make_shared<CalculatorProcessor>(std::make_shared<CalculatorHandler>()),
+    std::make_shared<TServerSocket>(9090), //port
+    std::make_shared<TBufferedTransportFactory>(),
+    std::make_shared<TBinaryProtocolFactory>());
   */
 
   /**
@@ -152,25 +150,25 @@ int main() {
 
   // This server only allows one connection at a time, but spawns no threads
   TSimpleServer server(
-    boost::make_shared<CalculatorProcessor>(boost::make_shared<CalculatorHandler>()),
-    boost::make_shared<TServerSocket>(9090),
-    boost::make_shared<TBufferedTransportFactory>(),
-    boost::make_shared<TBinaryProtocolFactory>());
+    std::make_shared<CalculatorProcessor>(std::make_shared<CalculatorHandler>()),
+    std::make_shared<TServerSocket>(9090),
+    std::make_shared<TBufferedTransportFactory>(),
+    std::make_shared<TBinaryProtocolFactory>());
 
   const int workerCount = 4;
 
-  boost::shared_ptr<ThreadManager> threadManager =
+  std::shared_ptr<ThreadManager> threadManager =
     ThreadManager::newSimpleThreadManager(workerCount);
   threadManager->threadFactory(
-    boost::make_shared<PlatformThreadFactory>());
+    std::make_shared<ThreadFactory>());
   threadManager->start();
 
   // This server allows "workerCount" connection at a time, and reuses threads
   TThreadPoolServer server(
-    boost::make_shared<CalculatorProcessorFactory>(boost::make_shared<CalculatorCloneFactory>()),
-    boost::make_shared<TServerSocket>(9090),
-    boost::make_shared<TBufferedTransportFactory>(),
-    boost::make_shared<TBinaryProtocolFactory>(),
+    std::make_shared<CalculatorProcessorFactory>(std::make_shared<CalculatorCloneFactory>()),
+    std::make_shared<TServerSocket>(9090),
+    std::make_shared<TBufferedTransportFactory>(),
+    std::make_shared<TBinaryProtocolFactory>(),
     threadManager);
   */
 

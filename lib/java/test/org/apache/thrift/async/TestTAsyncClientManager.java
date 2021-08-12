@@ -40,6 +40,7 @@ import org.apache.thrift.server.THsHaServer.Args;
 import org.apache.thrift.transport.TNonblockingServerSocket;
 import org.apache.thrift.transport.TNonblockingSocket;
 
+import org.apache.thrift.transport.TTransportException;
 import thrift.test.CompactProtoTestStruct;
 import thrift.test.ExceptionWithAMap;
 import thrift.test.SrvSrv;
@@ -233,7 +234,7 @@ public class TestTAsyncClientManager extends TestCase {
     assertEquals(numThreads * numCallsPerThread, numSuccesses);
   }
 
-  private SrvSrv.AsyncClient getClient() throws IOException {
+  private SrvSrv.AsyncClient getClient() throws IOException, TTransportException {
     TNonblockingSocket clientSocket = new TNonblockingSocket(ServerTestBase.HOST, ServerTestBase.PORT);
     return new SrvSrv.AsyncClient(new TBinaryProtocol.Factory(), clientManager_, clientSocket);
   }

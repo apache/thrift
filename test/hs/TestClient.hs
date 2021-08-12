@@ -46,6 +46,7 @@ import Thrift.Transport.HttpClient
 import Thrift.Protocol
 import Thrift.Protocol.Binary
 import Thrift.Protocol.Compact
+import Thrift.Protocol.Header
 import Thrift.Protocol.JSON
 
 data Options = Options
@@ -85,12 +86,14 @@ getTransport t host port = do return (NoTransport $ "Unsupported transport: " ++
 data ProtocolType = Binary
                   | Compact
                   | JSON
+                  | Header
                   deriving (Show, Eq)
 
 getProtocol :: String -> ProtocolType
 getProtocol "binary"  = Binary
 getProtocol "compact" = Compact
 getProtocol "json"    = JSON
+getProtocol "header" = Header
 getProtocol p = error $ "Unsupported Protocol: " ++ p
 
 defaultOptions :: Options
@@ -104,7 +107,7 @@ defaultOptions = Options
   , testLoops    = 1
   }
 
-runClient :: (Protocol p, Transport t) => p t -> IO ()
+runClient :: Protocol p => p -> IO ()
 runClient p = do
   let prot = (p,p)
   putStrLn "Starting Tests"
@@ -190,16 +193,16 @@ runClient p = do
 
   -- Enum Test
   putStrLn "testEnum"
-  numz1 <- Client.testEnum prot ONE
-  when (numz1 /= ONE) exitFailure
+  numz1 <- Client.testEnum prot Numberz_ONE
+  when (numz1 /= Numberz_ONE) exitFailure
 
   putStrLn "testEnum"
-  numz2 <- Client.testEnum prot TWO
-  when (numz2 /= TWO) exitFailure
+  numz2 <- Client.testEnum prot Numberz_TWO
+  when (numz2 /= Numberz_TWO) exitFailure
 
   putStrLn "testEnum"
-  numz5 <- Client.testEnum prot FIVE
-  when (numz5 /= FIVE) exitFailure
+  numz5 <- Client.testEnum prot Numberz_FIVE
+  when (numz5 /= Numberz_FIVE) exitFailure
 
   -- Typedef Test
   putStrLn "testTypedef"
@@ -266,6 +269,7 @@ main = do
                        Binary  -> runClient $ BinaryProtocol t
                        Compact -> runClient $ CompactProtocol t
                        JSON    -> runClient $ JSONProtocol t
+                       Header  -> createHeaderProtocol t t >>= runClient
     runTest loops p t = do
       let client = makeClient p t
       replicateM_ loops client

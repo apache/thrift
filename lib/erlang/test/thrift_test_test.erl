@@ -630,18 +630,6 @@ service_info_test_() ->
       {struct, struct, []},
       thrift_test_thrift:function_info('ThriftTest', testOneway, exceptions)
     )},
-    {"blahBlah params", ?_assertEqual(
-      {struct, struct, []},
-      thrift_test_thrift:function_info('SecondService', blahBlah, params_type)
-    )},
-    {"blahBlah reply", ?_assertEqual(
-      {struct, struct, []},
-      thrift_test_thrift:function_info('SecondService', blahBlah, reply_type)
-    )},
-    {"blahBlah exceptions", ?_assertEqual(
-      {struct, struct, []},
-      thrift_test_thrift:function_info('SecondService', blahBlah, exceptions)
-    )},
     {"secondtestString params", ?_assertEqual(
       {struct, struct, [{1, undefined, string, 'thing', undefined}]},
       thrift_test_thrift:function_info('SecondService', secondtestString, params_type)

@@ -18,9 +18,12 @@
  */
 package org.apache.thrift.transport;
 
+import org.apache.thrift.TConfiguration;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.Objects;
 import java.util.zip.Deflater;
 import java.util.zip.DeflaterOutputStream;
 import java.util.zip.Inflater;
@@ -38,7 +41,7 @@ public class TZlibTransport extends TIOStreamTransport {
         }
 
         @Override
-        public TTransport getTransport(TTransport base) {
+        public TTransport getTransport(TTransport base) throws TTransportException {
             return new TZlibTransport(base);
         }
     }
@@ -47,7 +50,7 @@ public class TZlibTransport extends TIOStreamTransport {
      * Constructs a new TZlibTransport instance.
      * @param  transport the underlying transport to read from and write to
      */
-    public TZlibTransport(TTransport transport) {
+    public TZlibTransport(TTransport transport) throws TTransportException {
         this(transport, Deflater.BEST_COMPRESSION);
     }
 
@@ -56,7 +59,8 @@ public class TZlibTransport extends TIOStreamTransport {
      * @param  transport the underlying transport to read from and write to
      * @param  compressionLevel 0 for no compression, 9 for maximum compression
      */
-    public TZlibTransport(TTransport transport, int compressionLevel) {
+    public TZlibTransport(TTransport transport, int compressionLevel) throws TTransportException {
+        super(Objects.isNull(transport.getConfiguration()) ? new TConfiguration() : transport.getConfiguration());
         transport_ = transport;
         inputStream_ = new InflaterInputStream(new TTransportInputStream(transport_), new Inflater());
         outputStream_ = new DeflaterOutputStream(new TTransportOutputStream(transport_), new Deflater(compressionLevel, false), true);

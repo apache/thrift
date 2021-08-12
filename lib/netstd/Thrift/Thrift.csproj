@@ -1,0 +1,75 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!--
+    Licensed to the Apache Software Foundation(ASF) under one
+    or more contributor license agreements.See the NOTICE file
+    distributed with this work for additional information
+    regarding copyright ownership.The ASF licenses this file
+    to you under the Apache License, Version 2.0 (the
+    "License"); you may not use this file except in compliance
+    with the License. You may obtain a copy of the License at
+    
+  	  http://www.apache.org/licenses/LICENSE-2.0
+    
+    Unless required by applicable law or agreed to in writing,
+    software distributed under the License is distributed on an
+    "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+    KIND, either express or implied. See the License for the
+    specific language governing permissions and limitations
+    under the License.
+  -->
+
+<PropertyGroup>
+  <TargetFrameworks>netstandard2.1;netstandard2.0</TargetFrameworks>
+  <AssemblyName>Thrift</AssemblyName>
+  <PackageId>ApacheThrift</PackageId>
+  <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
+  <GenerateBindingRedirectsOutputType>true</GenerateBindingRedirectsOutputType>
+  <GenerateAssemblyTitleAttribute>false</GenerateAssemblyTitleAttribute>
+  <GenerateAssemblyDescriptionAttribute>false</GenerateAssemblyDescriptionAttribute>
+  <GenerateAssemblyConfigurationAttribute>false</GenerateAssemblyConfigurationAttribute>
+  <GenerateAssemblyCompanyAttribute>false</GenerateAssemblyCompanyAttribute>
+  <GenerateAssemblyProductAttribute>false</GenerateAssemblyProductAttribute>
+  <GenerateAssemblyCopyrightAttribute>false</GenerateAssemblyCopyrightAttribute>
+  <GenerateAssemblyVersionAttribute>false</GenerateAssemblyVersionAttribute>
+  <GenerateAssemblyFileVersionAttribute>false</GenerateAssemblyFileVersionAttribute>
+</PropertyGroup>
+
+<PropertyGroup>
+  <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  <SignAssembly>true</SignAssembly>
+  <AssemblyOriginatorKeyFile>thrift.snk</AssemblyOriginatorKeyFile>
+  <DelaySign>false</DelaySign>
+  <Title>Apache Thrift 0.14.1</Title>
+  <Version>0.14.1.0</Version>
+  <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
+  <PackageProjectUrl>http://thrift.apache.org/</PackageProjectUrl>
+  <Authors>Apache Thrift Developers</Authors>
+  <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
+  <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
+  <PackageDescription>C# .NET Core bindings for the Apache Thrift RPC system</PackageDescription>
+  <PackageReleaseNotes></PackageReleaseNotes>
+  <PackageTags>Apache Thrift RPC</PackageTags>
+  <PackageReleaseNotes>https://github.com/apache/thrift/blob/0.14.1/CHANGES.md</PackageReleaseNotes>
+  <Copyright>Copyright 2021 The Apache Software Foundation</Copyright>
+</PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Http.Abstractions" Version="2.2.0" />
+    <PackageReference Include="Microsoft.Extensions.Logging" Version="3.1.0" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="3.1.0" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="3.1.0" />
+    <PackageReference Include="System.IO.Pipes" Version="[4.3,)" />
+    <PackageReference Include="System.IO.Pipes.AccessControl" Version="4.5.1" />
+    <PackageReference Include="System.Net.Http.WinHttpHandler" Version="4.7.0" />
+    <PackageReference Include="System.Net.NameResolution" Version="[4.3,)" />
+    <PackageReference Include="System.Net.Requests" Version="[4.3,)" />
+    <PackageReference Include="System.Net.Security" Version="4.3.2" />
+    <PackageReference Include="System.Threading.Tasks.Extensions" Version="4.5.3" />
+  </ItemGroup>
+
+  <Target Name="SetTFMAssemblyAttributesPath" BeforeTargets="GenerateTargetFrameworkMonikerAttribute">
+    <PropertyGroup>
+      <TargetFrameworkMonikerAssemblyAttributesPath>$(IntermediateOutputPath)$(TargetFrameworkMoniker).AssemblyAttributes$(DefaultLanguageSourceExtension)</TargetFrameworkMonikerAssemblyAttributesPath>
+    </PropertyGroup>
+  </Target>
+</Project>

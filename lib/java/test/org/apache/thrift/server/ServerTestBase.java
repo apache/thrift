@@ -37,11 +37,12 @@ import org.apache.thrift.protocol.TBinaryProtocol;
 import org.apache.thrift.protocol.TCompactProtocol;
 import org.apache.thrift.protocol.TProtocol;
 import org.apache.thrift.protocol.TProtocolFactory;
-import org.apache.thrift.transport.TFramedTransport;
+import org.apache.thrift.transport.TTransportException;
+import org.apache.thrift.transport.layered.TFramedTransport;
 import org.apache.thrift.transport.TSocket;
 import org.apache.thrift.transport.TTransport;
 import org.apache.thrift.transport.TTransportFactory;
-import org.apache.thrift.transport.TFramedTransport.Factory;
+import org.apache.thrift.transport.layered.TFramedTransport.Factory;
 
 import thrift.test.Insanity;
 import thrift.test.Numberz;
@@ -94,8 +95,12 @@ public abstract class ServerTestBase extends TestCase {
     public ByteBuffer testBinary(ByteBuffer thing) {
       StringBuilder sb = new StringBuilder(thing.remaining() * 3);
       thing.mark();
-      while (thing.remaining() > 0) {
+      int limit = 0;  // limit output to keep the log size sane
+      while ((thing.remaining() > 0) && (++limit < 1024)) {
         sb.append(String.format("%02X ", thing.get()));
+      }
+      if(thing.remaining() > 0) {
+        sb.append("...");  // indicate we have more date
       }
       System.out.print("testBinary(" + sb.toString() + ")\n");
       thing.reset();
@@ -199,7 +204,7 @@ public abstract class ServerTestBase extends TestCase {
       System.out.print("testInsanity()\n");
 
       HashMap<Numberz,Insanity> first_map = new HashMap<Numberz, Insanity>();
-      HashMap<Numberz,Insanity> second_map = new HashMap<Numberz, Insanity>();;
+      HashMap<Numberz,Insanity> second_map = new HashMap<Numberz, Insanity>();
 
       first_map.put(Numberz.TWO, argument);
       first_map.put(Numberz.THREE, argument);
@@ -218,7 +223,7 @@ public abstract class ServerTestBase extends TestCase {
     public Xtruct testMulti(byte arg0, int arg1, long arg2, Map<Short,String> arg3, Numberz arg4, long arg5) {
       System.out.print("testMulti()\n");
 
-      Xtruct hello = new Xtruct();;
+      Xtruct hello = new Xtruct();
       hello.string_thing = "Hello2";
       hello.byte_thing = arg0;
       hello.i32_thing = arg1;
@@ -234,7 +239,8 @@ public abstract class ServerTestBase extends TestCase {
         x.message = arg;
         throw x;
       } else if ("TException".equals(arg)) {
-        throw new TException(arg);
+        // Unspecified exception should yield a TApplicationException on client side
+        throw new RuntimeException(arg);
       } else {
         Xtruct result = new Xtruct();
         result.string_thing = arg;
@@ -263,10 +269,10 @@ public abstract class ServerTestBase extends TestCase {
     }
 
     public void testOneway(int sleepFor) {
-      System.out.println("testOneway(" + Integer.toString(sleepFor) +
+      System.out.println("testOneway(" + sleepFor +
                          ") => sleeping...");
       try {
-        Thread.sleep(sleepFor * 1000);
+        Thread.sleep(sleepFor * SLEEP_DELAY);
         System.out.println("Done sleeping!");
       } catch (InterruptedException ie) {
         throw new RuntimeException(ie);
@@ -281,6 +287,7 @@ public abstract class ServerTestBase extends TestCase {
   public static final String HOST = "localhost";
   public static final int PORT = Integer.valueOf(
     System.getProperty("test.port", "9090"));
+  protected static final int SLEEP_DELAY = 1000;
   protected static final int SOCKET_TIMEOUT = 1500;
   private static final Xtruct XSTRUCT = new Xtruct("Zero", (byte) 1, -3, -5);
   private static final Xtruct2 XSTRUCT2 = new Xtruct2((byte)1, XSTRUCT, 5);
@@ -387,7 +394,7 @@ public abstract class ServerTestBase extends TestCase {
   public void testIt() throws Exception {
 
     for (TProtocolFactory protoFactory : getProtocols()) {
-      TProcessor processor = useAsyncProcessor() ? new ThriftTestSrv.AsyncProcessor(new AsyncTestHandler()) : new ThriftTestSrv.Processor(new TestHandler());
+      TProcessor processor = useAsyncProcessor() ? new ThriftTestSrv.AsyncProcessor<AsyncTestHandler>(new AsyncTestHandler()) : new ThriftTestSrv.Processor<TestHandler>(new TestHandler());
 
       startServer(processor, protoFactory);
 
@@ -420,6 +427,7 @@ public abstract class ServerTestBase extends TestCase {
       testOneway(testClient);
       testI32(testClient);
       transport.close();
+      socket.close();
 
       stopServer();
     }
@@ -526,7 +534,7 @@ public abstract class ServerTestBase extends TestCase {
     }
 
     @Override
-    public TTransport getTransport(TTransport trans) {
+    public TTransport getTransport(TTransport trans) throws TTransportException {
       count++;
       return factory.getTransport(trans);
     }
@@ -535,7 +543,7 @@ public abstract class ServerTestBase extends TestCase {
   public void testTransportFactory() throws Exception {
     for (TProtocolFactory protoFactory : getProtocols()) {
       TestHandler handler = new TestHandler();
-      ThriftTestSrv.Processor processor = new ThriftTestSrv.Processor(handler);
+      ThriftTestSrv.Processor<TestHandler> processor = new ThriftTestSrv.Processor<TestHandler>(handler);
 
       final CallCountingTransportFactory factory = new CallCountingTransportFactory(new TFramedTransport.Factory());
 
@@ -551,6 +559,7 @@ public abstract class ServerTestBase extends TestCase {
       ThriftTestSrv.Client testClient = new ThriftTestSrv.Client(protocol);
       assertEquals(0, testClient.testByte((byte) 0));
       assertEquals(2, factory.count);
+      socket.close();
       stopServer();
     }
   }
@@ -679,13 +688,15 @@ public abstract class ServerTestBase extends TestCase {
         x.errorCode = 1001;
         x.message = arg;
         // throw and onError yield the same result.
-        // resultHandler.onError(x);
-        // return;
-        throw x;
-      } else if ("TException".equals(arg)) {
-        // throw new TException(arg);
-        resultHandler.onError(new TException(arg));
+        // throw x;
+        resultHandler.onError(x);
         return;
+      } else if ("TException".equals(arg)) {
+        // throw and onError yield the same result.
+        // resultHandler.onError(new TException(arg));
+        // return;
+        // Unspecified exception should yield a TApplicationException on client side
+        throw new RuntimeException(arg);
       }
       resultHandler.onComplete(null);
     }

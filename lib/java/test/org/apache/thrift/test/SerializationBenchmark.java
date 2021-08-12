@@ -22,6 +22,7 @@ package org.apache.thrift.test;
 
 import org.apache.thrift.Fixtures;
 import org.apache.thrift.TBase;
+import org.apache.thrift.TConfiguration;
 import org.apache.thrift.protocol.TBinaryProtocol;
 import org.apache.thrift.protocol.TProtocol;
 import org.apache.thrift.protocol.TProtocolFactory;
@@ -34,34 +35,37 @@ import thrift.test.OneOfEach;
 
 public class SerializationBenchmark {
   private final static int HOW_MANY = 10000000;
-  
+
   public static void main(String[] args) throws Exception {
     TProtocolFactory factory = new TBinaryProtocol.Factory();
 
     testSerialization(factory, Fixtures.oneOfEach);
     testDeserialization(factory, Fixtures.oneOfEach, OneOfEach.class);
   }
-  
+
   public static void testSerialization(TProtocolFactory factory, TBase object) throws Exception {
     TTransport trans = new TTransport() {
       public void write(byte[] bin, int x, int y) throws TTransportException {}
+      public TConfiguration getConfiguration() {return new TConfiguration(); }
+      public void updateKnownMessageSize(long size) throws TTransportException {}
+      public void checkReadBytesAvailable(long numBytes) throws TTransportException {}
       public int read(byte[] bin, int x, int y) throws TTransportException {return 0;}
       public void close() {}
       public void open() {}
       public boolean isOpen() {return true;}
     };
-    
+
     TProtocol proto = factory.getProtocol(trans);
-    
+
     long startTime = System.currentTimeMillis();
     for (int i = 0; i < HOW_MANY; i++) {
       object.write(proto);
     }
     long endTime = System.currentTimeMillis();
-    
+
     System.out.println("Serialization test time: " + (endTime - startTime) + " ms");
   }
-  
+
   public static <T extends TBase> void testDeserialization(TProtocolFactory factory, T object, Class<T> klass) throws Exception {
     TMemoryBuffer buf = new TMemoryBuffer(0);
     object.write(factory.getProtocol(buf));
@@ -71,7 +75,7 @@ public class SerializationBenchmark {
     long startTime = System.currentTimeMillis();
     for (int i = 0; i < HOW_MANY; i++) {
       T o2 = klass.newInstance();
-      o2.read(factory.getProtocol(new TMemoryInputTransport(serialized)));
+      o2.read(factory.getProtocol(new TMemoryInputTransport(new TConfiguration(), serialized)));
     }
     long endTime = System.currentTimeMillis();
 

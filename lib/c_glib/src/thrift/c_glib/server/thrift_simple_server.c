@@ -78,6 +78,18 @@ thrift_simple_server_serve (ThriftServer *server, GError **error)
                                                              NULL);
         THRIFT_TRANSPORT_GET_CLASS (output_transport)->close (output_transport,
                                                               NULL);
+        g_object_unref (input_transport);
+        g_object_unref (output_transport);
+        g_object_unref (input_protocol);
+        g_object_unref (output_protocol);
+      }
+      if ((*error) != NULL) {
+        g_message ("thrift_simple_server_serve : %s", (*error)->message);
+        g_clear_error (error);
+      }
+      if (t != NULL)
+      {
+        g_object_unref (t);
       }
     }
 

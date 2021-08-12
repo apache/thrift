@@ -29,6 +29,7 @@ import org.apache.thrift.protocol.TProtocolFactory;
 import org.apache.thrift.protocol.TProtocolUtil;
 import org.apache.thrift.protocol.TType;
 import org.apache.thrift.transport.TMemoryInputTransport;
+import org.apache.thrift.transport.TTransportException;
 
 /**
  * Generic utility for easily deserializing objects from a byte array or Java
@@ -42,7 +43,7 @@ public class TDeserializer {
   /**
    * Create a new TDeserializer that uses the TBinaryProtocol by default.
    */
-  public TDeserializer() {
+  public TDeserializer() throws TTransportException {
     this(new TBinaryProtocol.Factory());
   }
 
@@ -52,8 +53,8 @@ public class TDeserializer {
    *
    * @param protocolFactory Factory to create a protocol
    */
-  public TDeserializer(TProtocolFactory protocolFactory) {
-    trans_ = new TMemoryInputTransport();
+  public TDeserializer(TProtocolFactory protocolFactory) throws TTransportException {
+    trans_ = new TMemoryInputTransport(new TConfiguration());
     protocol_ = protocolFactory.getProtocol(trans_);
   }
 
@@ -105,19 +106,19 @@ public class TDeserializer {
 
   /**
    * Deserialize only a single Thrift object (addressed by recursively using field id)
-   * from a byte record.   
+   * from a byte record.
    * @param tb The object to read into
    * @param bytes The serialized object to read from
    * @param fieldIdPathFirst First of the FieldId's that define a path tb
    * @param fieldIdPathRest The rest FieldId's that define a path tb
-   * @throws TException 
+   * @throws TException
    */
   public void partialDeserialize(TBase tb, byte[] bytes, TFieldIdEnum fieldIdPathFirst, TFieldIdEnum ... fieldIdPathRest) throws TException {
     try {
       if (locateField(bytes, fieldIdPathFirst, fieldIdPathRest) != null) {
         // if this line is reached, iprot will be positioned at the start of tb.
         tb.read(protocol_);
-      }      
+      }
     } catch (Exception e) {
       throw new TException(e);
     } finally {
@@ -251,48 +252,31 @@ public class TDeserializer {
     try {
       TField field = locateField(bytes, fieldIdPathFirst, fieldIdPathRest);
       if (field != null) {
-        // if this point is reached, iprot will be positioned at the start of the field.
-        switch(ttype){
+        if (ttype == field.type) {
+          // if this point is reached, iprot will be positioned at the start of
+          // the field
+          switch (ttype) {
           case TType.BOOL:
-            if (field.type == TType.BOOL){
-              return protocol_.readBool();
-            }
-            break;
+            return protocol_.readBool();
           case TType.BYTE:
-            if (field.type == TType.BYTE) {
-              return protocol_.readByte();
-            }
-            break;
+            return protocol_.readByte();
           case TType.DOUBLE:
-            if (field.type == TType.DOUBLE) {
-              return protocol_.readDouble();
-            }
-            break;
+            return protocol_.readDouble();
           case TType.I16:
-            if (field.type == TType.I16) {
-              return protocol_.readI16();
-            }
-            break;
+            return protocol_.readI16();
           case TType.I32:
-            if (field.type == TType.I32) {
-              return protocol_.readI32();
-            }
-            break;
+            return protocol_.readI32();
           case TType.I64:
-            if (field.type == TType.I64) {
-              return protocol_.readI64();
-            }
-            break;
+            return protocol_.readI64();
           case TType.STRING:
-            if (field.type == TType.STRING) {
-              return protocol_.readString();
-            }
-            break;
-          case 100: // hack to differentiate between string and binary
-            if (field.type == TType.STRING) {
-              return protocol_.readBinary();
-            }
-            break;
+            return protocol_.readString();
+          default:
+            return null;
+          }
+        }
+        // hack to differentiate between string and binary
+        if (ttype == 100 && field.type == TType.STRING) {
+          return protocol_.readBinary();
         }
       }
       return null;
@@ -307,11 +291,9 @@ public class TDeserializer {
   private TField locateField(byte[] bytes, TFieldIdEnum fieldIdPathFirst, TFieldIdEnum ... fieldIdPathRest) throws TException {
     trans_.reset(bytes);
 
-    TFieldIdEnum[] fieldIdPath= new TFieldIdEnum[fieldIdPathRest.length + 1];
+    TFieldIdEnum[] fieldIdPath = new TFieldIdEnum[fieldIdPathRest.length + 1];
     fieldIdPath[0] = fieldIdPathFirst;
-    for (int i = 0; i < fieldIdPathRest.length; i++){
-      fieldIdPath[i + 1] = fieldIdPathRest[i];
-    }
+    System.arraycopy(fieldIdPathRest, 0, fieldIdPath, 1, fieldIdPathRest.length);
 
     // index into field ID path being currently searched for
     int curPathIndex = 0;

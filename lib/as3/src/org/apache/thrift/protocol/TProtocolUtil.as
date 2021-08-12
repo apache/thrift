@@ -141,7 +141,7 @@ package org.apache.thrift.protocol {
           break;
         }
         default:
-          break;
+          throw new TProtocolError(TProtocolError.INVALID_DATA, "invalid data");
       }
     }
   }

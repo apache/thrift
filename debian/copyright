@@ -28,9 +28,8 @@ the Thrift Software License (see doc/old-thrift-license.txt), and relicensed
 under the Apache 2.0 License:
 
   compiler/cpp/Makefile.am
-  compiler/cpp/src/generate/t_cocoa_generator.cc
   compiler/cpp/src/generate/t_cpp_generator.cc
-  compiler/cpp/src/generate/t_csharp_generator.cc
+  compiler/cpp/src/generate/t_netstd_generator.cc
   compiler/cpp/src/generate/t_erl_generator.cc
   compiler/cpp/src/generate/t_hs_generator.cc
   compiler/cpp/src/generate/t_java_generator.cc
@@ -47,36 +46,36 @@ under the Apache 2.0 License:
   compiler/cpp/src/platform.h
   compiler/cpp/src/thriftl.ll
   compiler/cpp/src/thrifty.yy
-  lib/csharp/src/Protocol/TBinaryProtocol.cs
-  lib/csharp/src/Protocol/TField.cs
-  lib/csharp/src/Protocol/TList.cs
-  lib/csharp/src/Protocol/TMap.cs
-  lib/csharp/src/Protocol/TMessage.cs
-  lib/csharp/src/Protocol/TMessageType.cs
-  lib/csharp/src/Protocol/TProtocol.cs
-  lib/csharp/src/Protocol/TProtocolException.cs
-  lib/csharp/src/Protocol/TProtocolFactory.cs
-  lib/csharp/src/Protocol/TProtocolUtil.cs
-  lib/csharp/src/Protocol/TSet.cs
-  lib/csharp/src/Protocol/TStruct.cs
-  lib/csharp/src/Protocol/TType.cs
-  lib/csharp/src/Server/TServer.cs
-  lib/csharp/src/Server/TSimpleServer.cs
-  lib/csharp/src/Server/TThreadPoolServer.cs
-  lib/csharp/src/TApplicationException.cs
-  lib/csharp/src/Thrift.csproj
-  lib/csharp/src/Thrift.sln
-  lib/csharp/src/TProcessor.cs
-  lib/csharp/src/Transport/TServerSocket.cs
-  lib/csharp/src/Transport/TServerTransport.cs
-  lib/csharp/src/Transport/TSocket.cs
-  lib/csharp/src/Transport/TStreamTransport.cs
-  lib/csharp/src/Transport/TTransport.cs
-  lib/csharp/src/Transport/TTransportException.cs
-  lib/csharp/src/Transport/TTransportFactory.cs
-  lib/csharp/ThriftMSBuildTask/Properties/AssemblyInfo.cs
-  lib/csharp/ThriftMSBuildTask/ThriftBuild.cs
-  lib/csharp/ThriftMSBuildTask/ThriftMSBuildTask.csproj
+  lib/netstd/src/Protocol/TBinaryProtocol.cs
+  lib/netstd/src/Protocol/TField.cs
+  lib/netstd/src/Protocol/TList.cs
+  lib/netstd/src/Protocol/TMap.cs
+  lib/netstd/src/Protocol/TMessage.cs
+  lib/netstd/src/Protocol/TMessageType.cs
+  lib/netstd/src/Protocol/TProtocol.cs
+  lib/netstd/src/Protocol/TProtocolException.cs
+  lib/netstd/src/Protocol/TProtocolFactory.cs
+  lib/netstd/src/Protocol/TProtocolUtil.cs
+  lib/netstd/src/Protocol/TSet.cs
+  lib/netstd/src/Protocol/TStruct.cs
+  lib/netstd/src/Protocol/TType.cs
+  lib/netstd/src/Server/TServer.cs
+  lib/netstd/src/Server/TSimpleServer.cs
+  lib/netstd/src/Server/TThreadPoolServer.cs
+  lib/netstd/src/TApplicationException.cs
+  lib/netstd/src/Thrift.csproj
+  lib/netstd/src/Thrift.sln
+  lib/netstd/src/TProcessor.cs
+  lib/netstd/src/Transport/TServerSocket.cs
+  lib/netstd/src/Transport/TServerTransport.cs
+  lib/netstd/src/Transport/TSocket.cs
+  lib/netstd/src/Transport/TStreamTransport.cs
+  lib/netstd/src/Transport/TTransport.cs
+  lib/netstd/src/Transport/TTransportException.cs
+  lib/netstd/src/Transport/TTransportFactory.cs
+  lib/netstd/ThriftMSBuildTask/Properties/AssemblyInfo.cs
+  lib/netstd/ThriftMSBuildTask/ThriftBuild.cs
+  lib/netstd/ThriftMSBuildTask/ThriftMSBuildTask.csproj
   lib/rb/lib/thrift.rb
   lib/st/README
   lib/st/thrift.st

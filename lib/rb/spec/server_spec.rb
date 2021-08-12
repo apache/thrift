@@ -21,95 +21,135 @@ require 'spec_helper'
 describe 'Server' do
 
   describe Thrift::BaseServer do
-    it "should default to BaseTransportFactory and BinaryProtocolFactory when not specified" do
-      server = Thrift::BaseServer.new(mock("Processor"), mock("BaseServerTransport"))
-      server.instance_variable_get(:'@transport_factory').should be_an_instance_of(Thrift::BaseTransportFactory)
-      server.instance_variable_get(:'@protocol_factory').should be_an_instance_of(Thrift::BinaryProtocolFactory)
+    before(:each) do
+      @processor = double("Processor")
+      @serverTrans = double("ServerTransport")
+      @trans = double("BaseTransport")
+      @prot = double("BaseProtocol")
+      @server = described_class.new(@processor, @serverTrans, @trans, @prot)
     end
 
-    # serve is a noop, so can't test that
+    it "should default to BaseTransportFactory and BinaryProtocolFactory when not specified" do
+      @server = Thrift::BaseServer.new(double("Processor"), double("BaseServerTransport"))
+      expect(@server.instance_variable_get(:'@transport_factory')).to be_an_instance_of(Thrift::BaseTransportFactory)
+      expect(@server.instance_variable_get(:'@protocol_factory')).to be_an_instance_of(Thrift::BinaryProtocolFactory)
+    end
+
+    it "should not serve" do
+      expect { @server.serve()}.to raise_error(NotImplementedError)
+    end
+    
+    it "should provide a reasonable to_s" do
+      expect(@serverTrans).to receive(:to_s).once.and_return("serverTrans")
+      expect(@trans).to receive(:to_s).once.and_return("trans")
+      expect(@prot).to receive(:to_s).once.and_return("prot")
+      expect(@server.to_s).to eq("server(prot(trans(serverTrans)))")
+    end
   end
 
   describe Thrift::SimpleServer do
     before(:each) do
-      @processor = mock("Processor")
-      @serverTrans = mock("ServerTransport")
-      @trans = mock("BaseTransport")
-      @prot = mock("BaseProtocol")
-      @client = mock("Client")
+      @processor = double("Processor")
+      @serverTrans = double("ServerTransport")
+      @trans = double("BaseTransport")
+      @prot = double("BaseProtocol")
+      @client = double("Client")
       @server = described_class.new(@processor, @serverTrans, @trans, @prot)
     end
     
+    it "should provide a reasonable to_s" do
+      expect(@serverTrans).to receive(:to_s).once.and_return("serverTrans")
+      expect(@trans).to receive(:to_s).once.and_return("trans")
+      expect(@prot).to receive(:to_s).once.and_return("prot")
+      expect(@server.to_s).to eq("simple(server(prot(trans(serverTrans))))")
+    end
+    
     it "should serve in the main thread" do
-      @serverTrans.should_receive(:listen).ordered
-      @serverTrans.should_receive(:accept).exactly(3).times.and_return(@client)
-      @trans.should_receive(:get_transport).exactly(3).times.with(@client).and_return(@trans)
-      @prot.should_receive(:get_protocol).exactly(3).times.with(@trans).and_return(@prot)
+      expect(@serverTrans).to receive(:listen).ordered
+      expect(@serverTrans).to receive(:accept).exactly(3).times.and_return(@client)
+      expect(@trans).to receive(:get_transport).exactly(3).times.with(@client).and_return(@trans)
+      expect(@prot).to receive(:get_protocol).exactly(3).times.with(@trans).and_return(@prot)
       x = 0
-      @processor.should_receive(:process).exactly(3).times.with(@prot, @prot).and_return do
+      expect(@processor).to receive(:process).exactly(3).times.with(@prot, @prot) do
         case (x += 1)
         when 1 then raise Thrift::TransportException
         when 2 then raise Thrift::ProtocolException
         when 3 then throw :stop
         end
       end
-      @trans.should_receive(:close).exactly(3).times
-      @serverTrans.should_receive(:close).ordered
-      lambda { @server.serve }.should throw_symbol(:stop)
+      expect(@trans).to receive(:close).exactly(3).times
+      expect(@serverTrans).to receive(:close).ordered
+      expect { @server.serve }.to throw_symbol(:stop)
     end
   end
 
   describe Thrift::ThreadedServer do
     before(:each) do
-      @processor = mock("Processor")
-      @serverTrans = mock("ServerTransport")
-      @trans = mock("BaseTransport")
-      @prot = mock("BaseProtocol")
-      @client = mock("Client")
+      @processor = double("Processor")
+      @serverTrans = double("ServerTransport")
+      @trans = double("BaseTransport")
+      @prot = double("BaseProtocol")
+      @client = double("Client")
       @server = described_class.new(@processor, @serverTrans, @trans, @prot)
     end
 
+    it "should provide a reasonable to_s" do
+      expect(@serverTrans).to receive(:to_s).once.and_return("serverTrans")
+      expect(@trans).to receive(:to_s).once.and_return("trans")
+      expect(@prot).to receive(:to_s).once.and_return("prot")
+      expect(@server.to_s).to eq("threaded(server(prot(trans(serverTrans))))")
+    end
+    
     it "should serve using threads" do
-      @serverTrans.should_receive(:listen).ordered
-      @serverTrans.should_receive(:accept).exactly(3).times.and_return(@client)
-      @trans.should_receive(:get_transport).exactly(3).times.with(@client).and_return(@trans)
-      @prot.should_receive(:get_protocol).exactly(3).times.with(@trans).and_return(@prot)
-      Thread.should_receive(:new).with(@prot, @trans).exactly(3).times.and_yield(@prot, @trans)
+      expect(@serverTrans).to receive(:listen).ordered
+      expect(@serverTrans).to receive(:accept).exactly(3).times.and_return(@client)
+      expect(@trans).to receive(:get_transport).exactly(3).times.with(@client).and_return(@trans)
+      expect(@prot).to receive(:get_protocol).exactly(3).times.with(@trans).and_return(@prot)
+      expect(Thread).to receive(:new).with(@prot, @trans).exactly(3).times.and_yield(@prot, @trans)
       x = 0
-      @processor.should_receive(:process).exactly(3).times.with(@prot, @prot).and_return do
+      expect(@processor).to receive(:process).exactly(3).times.with(@prot, @prot) do
         case (x += 1)
         when 1 then raise Thrift::TransportException
         when 2 then raise Thrift::ProtocolException
         when 3 then throw :stop
         end
       end
-      @trans.should_receive(:close).exactly(3).times
-      @serverTrans.should_receive(:close).ordered
-      lambda { @server.serve }.should throw_symbol(:stop)
+      expect(@trans).to receive(:close).exactly(3).times
+      expect(@serverTrans).to receive(:close).ordered
+      expect { @server.serve }.to throw_symbol(:stop)
     end
   end
 
   describe Thrift::ThreadPoolServer do
     before(:each) do
-      @processor = mock("Processor")
-      @server_trans = mock("ServerTransport")
-      @trans = mock("BaseTransport")
-      @prot = mock("BaseProtocol")
-      @client = mock("Client")
+      @processor = double("Processor")
+      @server_trans = double("ServerTransport")
+      @trans = double("BaseTransport")
+      @prot = double("BaseProtocol")
+      @client = double("Client")
       @server = described_class.new(@processor, @server_trans, @trans, @prot)
+      sleep(0.15)
     end
 
+    it "should provide a reasonable to_s" do
+      expect(@server_trans).to receive(:to_s).once.and_return("server_trans")
+      expect(@trans).to receive(:to_s).once.and_return("trans")
+      expect(@prot).to receive(:to_s).once.and_return("prot")
+      expect(@server.to_s).to eq("threadpool(server(prot(trans(server_trans))))")
+    end
+    
     it "should serve inside a thread" do
       exception_q = @server.instance_variable_get(:@exception_q)
-      described_class.any_instance.should_receive(:serve) do 
+      expect_any_instance_of(described_class).to receive(:serve) do 
         exception_q.push(StandardError.new('ERROR'))
       end
       expect { @server.rescuable_serve }.to(raise_error('ERROR'))
+      sleep(0.15)
     end
 
     it "should avoid running the server twice when retrying rescuable_serve" do
       exception_q = @server.instance_variable_get(:@exception_q)
-      described_class.any_instance.should_receive(:serve) do 
+      expect_any_instance_of(described_class).to receive(:serve) do 
         exception_q.push(StandardError.new('ERROR1'))
         exception_q.push(StandardError.new('ERROR2'))
       end
@@ -118,29 +158,29 @@ describe 'Server' do
     end
 
     it "should serve using a thread pool" do
-      thread_q = mock("SizedQueue")
-      exception_q = mock("Queue")
+      thread_q = double("SizedQueue")
+      exception_q = double("Queue")
       @server.instance_variable_set(:@thread_q, thread_q)
       @server.instance_variable_set(:@exception_q, exception_q)
-      @server_trans.should_receive(:listen).ordered
-      thread_q.should_receive(:push).with(:token)
-      thread_q.should_receive(:pop)
-      Thread.should_receive(:new).and_yield
-      @server_trans.should_receive(:accept).exactly(3).times.and_return(@client)
-      @trans.should_receive(:get_transport).exactly(3).times.and_return(@trans)
-      @prot.should_receive(:get_protocol).exactly(3).times.and_return(@prot)
+      expect(@server_trans).to receive(:listen).ordered
+      expect(thread_q).to receive(:push).with(:token)
+      expect(thread_q).to receive(:pop)
+      expect(Thread).to receive(:new).and_yield
+      expect(@server_trans).to receive(:accept).exactly(3).times.and_return(@client)
+      expect(@trans).to receive(:get_transport).exactly(3).times.and_return(@trans)
+      expect(@prot).to receive(:get_protocol).exactly(3).times.and_return(@prot)
       x = 0
       error = RuntimeError.new("Stopped")
-      @processor.should_receive(:process).exactly(3).times.with(@prot, @prot).and_return do
+      expect(@processor).to receive(:process).exactly(3).times.with(@prot, @prot) do
         case (x += 1)
         when 1 then raise Thrift::TransportException
         when 2 then raise Thrift::ProtocolException
         when 3 then raise error
         end
       end
-      @trans.should_receive(:close).exactly(3).times
-      exception_q.should_receive(:push).with(error).and_throw(:stop)
-      @server_trans.should_receive(:close)
+      expect(@trans).to receive(:close).exactly(3).times
+      expect(exception_q).to receive(:push).with(error).and_throw(:stop)
+      expect(@server_trans).to receive(:close)
       expect { @server.serve }.to(throw_symbol(:stop))
     end
   end

@@ -25,7 +25,7 @@
 #include <thrift/protocol/TBinaryProtocol.h>
 #include <thrift/concurrency/Thread.h>
 
-#include <boost/shared_ptr.hpp>
+#include <memory>
 
 namespace apache {
 namespace thrift {
@@ -48,7 +48,7 @@ using apache::thrift::transport::TTransportFactory;
  */
 class TServerEventHandler {
 public:
-  virtual ~TServerEventHandler() {}
+  virtual ~TServerEventHandler() = default;
 
   /**
    * Called before the server begins.
@@ -58,11 +58,11 @@ public:
   /**
    * Called when a new client has connected and is about to being processing.
    */
-  virtual void* createContext(boost::shared_ptr<TProtocol> input,
-                              boost::shared_ptr<TProtocol> output) {
+  virtual void* createContext(std::shared_ptr<TProtocol> input,
+                              std::shared_ptr<TProtocol> output) {
     (void)input;
     (void)output;
-    return NULL;
+    return nullptr;
   }
 
   /**
@@ -70,8 +70,8 @@ public:
    * context.
    */
   virtual void deleteContext(void* serverContext,
-                             boost::shared_ptr<TProtocol> input,
-                             boost::shared_ptr<TProtocol> output) {
+                             std::shared_ptr<TProtocol> input,
+                             std::shared_ptr<TProtocol> output) {
     (void)serverContext;
     (void)input;
     (void)output;
@@ -80,7 +80,7 @@ public:
   /**
    * Called when a client is about to call the processor.
    */
-  virtual void processContext(void* serverContext, boost::shared_ptr<TTransport> transport) {
+  virtual void processContext(void* serverContext, std::shared_ptr<TTransport> transport) {
     (void)serverContext;
     (void)transport;
   }
@@ -89,7 +89,7 @@ protected:
   /**
    * Prevent direct instantiation.
    */
-  TServerEventHandler() {}
+  TServerEventHandler() = default;
 };
 
 /**
@@ -98,71 +98,71 @@ protected:
  */
 class TServer : public concurrency::Runnable {
 public:
-  virtual ~TServer() {}
+  ~TServer() override = default;
 
   virtual void serve() = 0;
 
   virtual void stop() {}
 
   // Allows running the server as a Runnable thread
-  virtual void run() { serve(); }
+  void run() override { serve(); }
 
-  boost::shared_ptr<TProcessorFactory> getProcessorFactory() { return processorFactory_; }
+  std::shared_ptr<TProcessorFactory> getProcessorFactory() { return processorFactory_; }
 
-  boost::shared_ptr<TServerTransport> getServerTransport() { return serverTransport_; }
+  std::shared_ptr<TServerTransport> getServerTransport() { return serverTransport_; }
 
-  boost::shared_ptr<TTransportFactory> getInputTransportFactory() { return inputTransportFactory_; }
+  std::shared_ptr<TTransportFactory> getInputTransportFactory() { return inputTransportFactory_; }
 
-  boost::shared_ptr<TTransportFactory> getOutputTransportFactory() {
+  std::shared_ptr<TTransportFactory> getOutputTransportFactory() {
     return outputTransportFactory_;
   }
 
-  boost::shared_ptr<TProtocolFactory> getInputProtocolFactory() { return inputProtocolFactory_; }
+  std::shared_ptr<TProtocolFactory> getInputProtocolFactory() { return inputProtocolFactory_; }
 
-  boost::shared_ptr<TProtocolFactory> getOutputProtocolFactory() { return outputProtocolFactory_; }
+  std::shared_ptr<TProtocolFactory> getOutputProtocolFactory() { return outputProtocolFactory_; }
 
-  boost::shared_ptr<TServerEventHandler> getEventHandler() { return eventHandler_; }
+  std::shared_ptr<TServerEventHandler> getEventHandler() { return eventHandler_; }
 
 protected:
-  TServer(const boost::shared_ptr<TProcessorFactory>& processorFactory)
+  TServer(const std::shared_ptr<TProcessorFactory>& processorFactory)
     : processorFactory_(processorFactory) {
-    setInputTransportFactory(boost::shared_ptr<TTransportFactory>(new TTransportFactory()));
-    setOutputTransportFactory(boost::shared_ptr<TTransportFactory>(new TTransportFactory()));
-    setInputProtocolFactory(boost::shared_ptr<TProtocolFactory>(new TBinaryProtocolFactory()));
-    setOutputProtocolFactory(boost::shared_ptr<TProtocolFactory>(new TBinaryProtocolFactory()));
+    setInputTransportFactory(std::shared_ptr<TTransportFactory>(new TTransportFactory()));
+    setOutputTransportFactory(std::shared_ptr<TTransportFactory>(new TTransportFactory()));
+    setInputProtocolFactory(std::shared_ptr<TProtocolFactory>(new TBinaryProtocolFactory()));
+    setOutputProtocolFactory(std::shared_ptr<TProtocolFactory>(new TBinaryProtocolFactory()));
   }
 
-  TServer(const boost::shared_ptr<TProcessor>& processor)
+  TServer(const std::shared_ptr<TProcessor>& processor)
     : processorFactory_(new TSingletonProcessorFactory(processor)) {
-    setInputTransportFactory(boost::shared_ptr<TTransportFactory>(new TTransportFactory()));
-    setOutputTransportFactory(boost::shared_ptr<TTransportFactory>(new TTransportFactory()));
-    setInputProtocolFactory(boost::shared_ptr<TProtocolFactory>(new TBinaryProtocolFactory()));
-    setOutputProtocolFactory(boost::shared_ptr<TProtocolFactory>(new TBinaryProtocolFactory()));
+    setInputTransportFactory(std::shared_ptr<TTransportFactory>(new TTransportFactory()));
+    setOutputTransportFactory(std::shared_ptr<TTransportFactory>(new TTransportFactory()));
+    setInputProtocolFactory(std::shared_ptr<TProtocolFactory>(new TBinaryProtocolFactory()));
+    setOutputProtocolFactory(std::shared_ptr<TProtocolFactory>(new TBinaryProtocolFactory()));
   }
 
-  TServer(const boost::shared_ptr<TProcessorFactory>& processorFactory,
-          const boost::shared_ptr<TServerTransport>& serverTransport)
+  TServer(const std::shared_ptr<TProcessorFactory>& processorFactory,
+          const std::shared_ptr<TServerTransport>& serverTransport)
     : processorFactory_(processorFactory), serverTransport_(serverTransport) {
-    setInputTransportFactory(boost::shared_ptr<TTransportFactory>(new TTransportFactory()));
-    setOutputTransportFactory(boost::shared_ptr<TTransportFactory>(new TTransportFactory()));
-    setInputProtocolFactory(boost::shared_ptr<TProtocolFactory>(new TBinaryProtocolFactory()));
-    setOutputProtocolFactory(boost::shared_ptr<TProtocolFactory>(new TBinaryProtocolFactory()));
+    setInputTransportFactory(std::shared_ptr<TTransportFactory>(new TTransportFactory()));
+    setOutputTransportFactory(std::shared_ptr<TTransportFactory>(new TTransportFactory()));
+    setInputProtocolFactory(std::shared_ptr<TProtocolFactory>(new TBinaryProtocolFactory()));
+    setOutputProtocolFactory(std::shared_ptr<TProtocolFactory>(new TBinaryProtocolFactory()));
   }
 
-  TServer(const boost::shared_ptr<TProcessor>& processor,
-          const boost::shared_ptr<TServerTransport>& serverTransport)
+  TServer(const std::shared_ptr<TProcessor>& processor,
+          const std::shared_ptr<TServerTransport>& serverTransport)
     : processorFactory_(new TSingletonProcessorFactory(processor)),
       serverTransport_(serverTransport) {
-    setInputTransportFactory(boost::shared_ptr<TTransportFactory>(new TTransportFactory()));
-    setOutputTransportFactory(boost::shared_ptr<TTransportFactory>(new TTransportFactory()));
-    setInputProtocolFactory(boost::shared_ptr<TProtocolFactory>(new TBinaryProtocolFactory()));
-    setOutputProtocolFactory(boost::shared_ptr<TProtocolFactory>(new TBinaryProtocolFactory()));
+    setInputTransportFactory(std::shared_ptr<TTransportFactory>(new TTransportFactory()));
+    setOutputTransportFactory(std::shared_ptr<TTransportFactory>(new TTransportFactory()));
+    setInputProtocolFactory(std::shared_ptr<TProtocolFactory>(new TBinaryProtocolFactory()));
+    setOutputProtocolFactory(std::shared_ptr<TProtocolFactory>(new TBinaryProtocolFactory()));
   }
 
-  TServer(const boost::shared_ptr<TProcessorFactory>& processorFactory,
-          const boost::shared_ptr<TServerTransport>& serverTransport,
-          const boost::shared_ptr<TTransportFactory>& transportFactory,
-          const boost::shared_ptr<TProtocolFactory>& protocolFactory)
+  TServer(const std::shared_ptr<TProcessorFactory>& processorFactory,
+          const std::shared_ptr<TServerTransport>& serverTransport,
+          const std::shared_ptr<TTransportFactory>& transportFactory,
+          const std::shared_ptr<TProtocolFactory>& protocolFactory)
     : processorFactory_(processorFactory),
       serverTransport_(serverTransport),
       inputTransportFactory_(transportFactory),
@@ -170,10 +170,10 @@ protected:
       inputProtocolFactory_(protocolFactory),
       outputProtocolFactory_(protocolFactory) {}
 
-  TServer(const boost::shared_ptr<TProcessor>& processor,
-          const boost::shared_ptr<TServerTransport>& serverTransport,
-          const boost::shared_ptr<TTransportFactory>& transportFactory,
-          const boost::shared_ptr<TProtocolFactory>& protocolFactory)
+  TServer(const std::shared_ptr<TProcessor>& processor,
+          const std::shared_ptr<TServerTransport>& serverTransport,
+          const std::shared_ptr<TTransportFactory>& transportFactory,
+          const std::shared_ptr<TProtocolFactory>& protocolFactory)
     : processorFactory_(new TSingletonProcessorFactory(processor)),
       serverTransport_(serverTransport),
       inputTransportFactory_(transportFactory),
@@ -181,12 +181,12 @@ protected:
       inputProtocolFactory_(protocolFactory),
       outputProtocolFactory_(protocolFactory) {}
 
-  TServer(const boost::shared_ptr<TProcessorFactory>& processorFactory,
-          const boost::shared_ptr<TServerTransport>& serverTransport,
-          const boost::shared_ptr<TTransportFactory>& inputTransportFactory,
-          const boost::shared_ptr<TTransportFactory>& outputTransportFactory,
-          const boost::shared_ptr<TProtocolFactory>& inputProtocolFactory,
-          const boost::shared_ptr<TProtocolFactory>& outputProtocolFactory)
+  TServer(const std::shared_ptr<TProcessorFactory>& processorFactory,
+          const std::shared_ptr<TServerTransport>& serverTransport,
+          const std::shared_ptr<TTransportFactory>& inputTransportFactory,
+          const std::shared_ptr<TTransportFactory>& outputTransportFactory,
+          const std::shared_ptr<TProtocolFactory>& inputProtocolFactory,
+          const std::shared_ptr<TProtocolFactory>& outputProtocolFactory)
     : processorFactory_(processorFactory),
       serverTransport_(serverTransport),
       inputTransportFactory_(inputTransportFactory),
@@ -194,12 +194,12 @@ protected:
       inputProtocolFactory_(inputProtocolFactory),
       outputProtocolFactory_(outputProtocolFactory) {}
 
-  TServer(const boost::shared_ptr<TProcessor>& processor,
-          const boost::shared_ptr<TServerTransport>& serverTransport,
-          const boost::shared_ptr<TTransportFactory>& inputTransportFactory,
-          const boost::shared_ptr<TTransportFactory>& outputTransportFactory,
-          const boost::shared_ptr<TProtocolFactory>& inputProtocolFactory,
-          const boost::shared_ptr<TProtocolFactory>& outputProtocolFactory)
+  TServer(const std::shared_ptr<TProcessor>& processor,
+          const std::shared_ptr<TServerTransport>& serverTransport,
+          const std::shared_ptr<TTransportFactory>& inputTransportFactory,
+          const std::shared_ptr<TTransportFactory>& outputTransportFactory,
+          const std::shared_ptr<TProtocolFactory>& inputProtocolFactory,
+          const std::shared_ptr<TProtocolFactory>& outputProtocolFactory)
     : processorFactory_(new TSingletonProcessorFactory(processor)),
       serverTransport_(serverTransport),
       inputTransportFactory_(inputTransportFactory),
@@ -214,9 +214,9 @@ protected:
    * call).  This allows the TProcessorFactory to return a different processor
    * for each connection if it desires.
    */
-  boost::shared_ptr<TProcessor> getProcessor(boost::shared_ptr<TProtocol> inputProtocol,
-                                             boost::shared_ptr<TProtocol> outputProtocol,
-                                             boost::shared_ptr<TTransport> transport) {
+  std::shared_ptr<TProcessor> getProcessor(std::shared_ptr<TProtocol> inputProtocol,
+                                             std::shared_ptr<TProtocol> outputProtocol,
+                                             std::shared_ptr<TTransport> transport) {
     TConnectionInfo connInfo;
     connInfo.input = inputProtocol;
     connInfo.output = outputProtocol;
@@ -225,35 +225,35 @@ protected:
   }
 
   // Class variables
-  boost::shared_ptr<TProcessorFactory> processorFactory_;
-  boost::shared_ptr<TServerTransport> serverTransport_;
+  std::shared_ptr<TProcessorFactory> processorFactory_;
+  std::shared_ptr<TServerTransport> serverTransport_;
 
-  boost::shared_ptr<TTransportFactory> inputTransportFactory_;
-  boost::shared_ptr<TTransportFactory> outputTransportFactory_;
+  std::shared_ptr<TTransportFactory> inputTransportFactory_;
+  std::shared_ptr<TTransportFactory> outputTransportFactory_;
 
-  boost::shared_ptr<TProtocolFactory> inputProtocolFactory_;
-  boost::shared_ptr<TProtocolFactory> outputProtocolFactory_;
+  std::shared_ptr<TProtocolFactory> inputProtocolFactory_;
+  std::shared_ptr<TProtocolFactory> outputProtocolFactory_;
 
-  boost::shared_ptr<TServerEventHandler> eventHandler_;
+  std::shared_ptr<TServerEventHandler> eventHandler_;
 
 public:
-  void setInputTransportFactory(boost::shared_ptr<TTransportFactory> inputTransportFactory) {
+  void setInputTransportFactory(std::shared_ptr<TTransportFactory> inputTransportFactory) {
     inputTransportFactory_ = inputTransportFactory;
   }
 
-  void setOutputTransportFactory(boost::shared_ptr<TTransportFactory> outputTransportFactory) {
+  void setOutputTransportFactory(std::shared_ptr<TTransportFactory> outputTransportFactory) {
     outputTransportFactory_ = outputTransportFactory;
   }
 
-  void setInputProtocolFactory(boost::shared_ptr<TProtocolFactory> inputProtocolFactory) {
+  void setInputProtocolFactory(std::shared_ptr<TProtocolFactory> inputProtocolFactory) {
     inputProtocolFactory_ = inputProtocolFactory;
   }
 
-  void setOutputProtocolFactory(boost::shared_ptr<TProtocolFactory> outputProtocolFactory) {
+  void setOutputProtocolFactory(std::shared_ptr<TProtocolFactory> outputProtocolFactory) {
     outputProtocolFactory_ = outputProtocolFactory;
   }
 
-  void setServerEventHandler(boost::shared_ptr<TServerEventHandler> eventHandler) {
+  void setServerEventHandler(std::shared_ptr<TServerEventHandler> eventHandler) {
     eventHandler_ = eventHandler;
   }
 };

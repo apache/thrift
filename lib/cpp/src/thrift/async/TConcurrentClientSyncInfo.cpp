@@ -17,10 +17,11 @@
  * under the License.
  */
 
-#include <thrift/async/TConcurrentClientSyncInfo.h>
-#include <thrift/TApplicationException.h>
-#include <thrift/transport/TTransportException.h>
 #include <limits>
+#include <memory>
+#include <thrift/TApplicationException.h>
+#include <thrift/async/TConcurrentClientSyncInfo.h>
+#include <thrift/transport/TTransportException.h>
 
 namespace apache { namespace thrift { namespace async {
 
@@ -75,7 +76,7 @@ void TConcurrentClientSyncInfo::updatePending(
   MonitorPtr monitor;
   {
     Guard seqidGuard(seqidMutex_);
-    MonitorMap::iterator i = seqidToMonitorMap_.find(rseqid);
+    auto i = seqidToMonitorMap_.find(rseqid);
     if(i == seqidToMonitorMap_.end())
       throwBadSeqId_();
     monitor = i->second;
@@ -140,15 +141,15 @@ void TConcurrentClientSyncInfo::markBad_(const Guard &)
 {
   wakeupSomeone_ = true;
   stop_ = true;
-  for(MonitorMap::iterator i = seqidToMonitorMap_.begin(); i != seqidToMonitorMap_.end(); ++i)
-    i->second->notify();
+  for(auto & i : seqidToMonitorMap_)
+    i.second->notify();
 }
 
 TConcurrentClientSyncInfo::MonitorPtr
 TConcurrentClientSyncInfo::newMonitor_(const Guard &)
 {
   if(freeMonitors_.empty())
-    return MonitorPtr(new Monitor(&readMutex_));
+    return std::make_shared<Monitor>(&readMutex_);
   MonitorPtr retval;
   //swapping to avoid an atomic operation
   retval.swap(freeMonitors_.back());

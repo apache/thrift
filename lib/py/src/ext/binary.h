@@ -113,7 +113,8 @@ public:
     if (!readBytes(&buf, sizeof(int16_t))) {
       return false;
     }
-    val = static_cast<int16_t>(ntohs(*reinterpret_cast<int16_t*>(buf)));
+    memcpy(&val, buf, sizeof(int16_t));
+    val = ntohs(val);
     return true;
   }
 
@@ -122,7 +123,8 @@ public:
     if (!readBytes(&buf, sizeof(int32_t))) {
       return false;
     }
-    val = static_cast<int32_t>(ntohl(*reinterpret_cast<int32_t*>(buf)));
+    memcpy(&val, buf, sizeof(int32_t));
+    val = ntohl(val);
     return true;
   }
 
@@ -131,7 +133,8 @@ public:
     if (!readBytes(&buf, sizeof(int64_t))) {
       return false;
     }
-    val = static_cast<int64_t>(ntohll(*reinterpret_cast<int64_t*>(buf)));
+    memcpy(&val, buf, sizeof(int64_t));
+    val = ntohll(val);
     return true;
   }
 

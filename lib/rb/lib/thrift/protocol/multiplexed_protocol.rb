@@ -36,5 +36,9 @@ module Thrift
         @protocol.write_message_begin(name, type, seqid)
       end 
     end
+    
+    def to_s
+      "multiplexed(#{@service_name=@protocol.to_s})"
+    end
   end
 end

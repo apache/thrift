@@ -23,8 +23,13 @@ fi
 
 DIR="$( cd "$( dirname "$0" )" && pwd )"
 
+EPISODIC_DIR=${DIR}/episodic-code-generation-test
+
+THRIFT_FILES_DIR=${DIR}/../../../test
+
+THRIFT_COMPILER=${DIR}/../../../compiler/cpp/thrift
+
 ISTANBUL="$DIR/../../../node_modules/istanbul/lib/cli.js"
-RUNBROWSER="$DIR/../../../node_modules/run-browser/bin/cli.js"
 
 REPORT_PREFIX="${DIR}/../coverage/report"
 
@@ -34,69 +39,108 @@ export NODE_PATH="${DIR}:${DIR}/../lib:${NODE_PATH}"
 
 testServer()
 {
-  echo "   Testing $1 Client/Server with protocol $2 and transport $3 $4";
+  echo "  [ECMA $1] Testing $2 Client/Server with protocol $3 and transport $4 $5";
   RET=0
   if [ -n "${COVER}" ]; then
-    ${ISTANBUL} cover ${DIR}/server.js --dir ${REPORT_PREFIX}${COUNT} --handle-sigint -- --type $1 -p $2 -t $3 $4 &
+    ${ISTANBUL} cover ${DIR}/server.js --dir ${REPORT_PREFIX}${COUNT} --handle-sigint -- --type $2 -p $3 -t $4 $5 &
     COUNT=$((COUNT+1))
   else
-    node ${DIR}/server.js --type $1 -p $2 -t $3 $4 &
+    node ${DIR}/server.js --${1} --type $2 -p $3 -t $4 $5 &
   fi
   SERVERPID=$!
-  sleep 1
+  sleep 0.1
   if [ -n "${COVER}" ]; then
-    ${ISTANBUL} cover ${DIR}/client.js --dir ${REPORT_PREFIX}${COUNT} -- --type $1 -p $2 -t $3 $4 || RET=1
+    ${ISTANBUL} cover ${DIR}/client.js --dir ${REPORT_PREFIX}${COUNT} -- --${1} --type $2 -p $3 -t $4 $5 || RET=1
     COUNT=$((COUNT+1))
   else
-    node ${DIR}/client.js --type $1 -p $2 -t $3 $4 || RET=1
+    node ${DIR}/client.js --${1} --type $2 -p $3 -t $4 $5 || RET=1
   fi
   kill -2 $SERVERPID || RET=1
+  wait $SERVERPID
   return $RET
 }
 
-testBrowser()
+testEpisodicCompilation()
 {
-  echo "   Testing browser client with http server with json protocol and buffered transport";
   RET=0
-  node ${DIR}/server.js --type http -p json -t buffered &
+  if [ -n "${COVER}" ]; then
+    ${ISTANBUL} cover ${EPISODIC_DIR}/server.js --dir ${REPORT_PREFIX}${COUNT} --handle-sigint &
+    COUNT=$((COUNT+1))
+  else
+    node ${EPISODIC_DIR}/server.js &
+  fi
   SERVERPID=$!
-  sleep 1
-  ${RUNBROWSER} ${DIR}/browser_client.js --phantom || RET=1
+  sleep 0.1
+  if [ -n "${COVER}" ]; then
+    ${ISTANBUL} cover ${EPISODIC_DIR}/client.js --dir ${REPORT_PREFIX}${COUNT} || RET=1
+    COUNT=$((COUNT+1))
+  else
+    node ${EPISODIC_DIR}/client.js || RET=1
+  fi
   kill -2 $SERVERPID || RET=1
+  wait $SERVERPID
   return $RET
 }
+
 
 TESTOK=0
 
-#generating thrift code
+# generating Thrift code
 
-${DIR}/../../../compiler/cpp/thrift -o ${DIR} --gen js:node ${DIR}/../../../test/ThriftTest.thrift
-${DIR}/../../../compiler/cpp/thrift -o ${DIR} --gen js:node ${DIR}/../../../test/JsDeepConstructorTest.thrift
+${THRIFT_COMPILER} -o ${DIR} --gen js:node ${THRIFT_FILES_DIR}/ThriftTest.thrift
+${THRIFT_COMPILER} -o ${DIR} --gen js:node ${THRIFT_FILES_DIR}/JsDeepConstructorTest.thrift
+${THRIFT_COMPILER} -o ${DIR} --gen js:node ${THRIFT_FILES_DIR}/Int64Test.thrift
+mkdir ${DIR}/gen-nodejs-es6
+${THRIFT_COMPILER} -out ${DIR}/gen-nodejs-es6 --gen js:node,es6 ${THRIFT_FILES_DIR}/ThriftTest.thrift
+${THRIFT_COMPILER} -out ${DIR}/gen-nodejs-es6 --gen js:node,es6 ${THRIFT_FILES_DIR}/JsDeepConstructorTest.thrift
+${THRIFT_COMPILER} -out ${DIR}/gen-nodejs-es6 --gen js:node,es6 ${THRIFT_FILES_DIR}/Int64Test.thrift
 
-#unit tests
+# generate episodic compilation test code
+TYPES_PACKAGE=${EPISODIC_DIR}/node_modules/types-package
+
+# generate the first episode
+mkdir --parents ${EPISODIC_DIR}/gen-1/first-episode
+${THRIFT_COMPILER} -o ${EPISODIC_DIR}/gen-1/first-episode --gen js:node,thrift_package_output_directory=first-episode ${THRIFT_FILES_DIR}/Types.thrift
+
+# create a "package" from the first episode and "install" it, the episode file must be at the module root
+mkdir --parents ${TYPES_PACKAGE}/first-episode
+cp --force ${EPISODIC_DIR}/episodic_compilation.package.json ${TYPES_PACKAGE}/package.json
+cp --force ${EPISODIC_DIR}/gen-1/first-episode/gen-nodejs/Types_types.js ${TYPES_PACKAGE}/first-episode/
+cp --force ${EPISODIC_DIR}/gen-1/first-episode/gen-nodejs/thrift.js.episode ${TYPES_PACKAGE}
+
+# generate the second episode
+mkdir --parents ${EPISODIC_DIR}/gen-2/second-episode
+${THRIFT_COMPILER} -o ${EPISODIC_DIR}/gen-2/second-episode --gen js:node,imports=${TYPES_PACKAGE} ${THRIFT_FILES_DIR}/Service.thrift
+if [ -f ${EPISODIC_DIR}/gen-2/second-episode/Types_types.js ]; then
+  TESTOK=1
+fi
+
+# unit tests
 
 node ${DIR}/binary.test.js || TESTOK=1
+node ${DIR}/int64.test.js || TESTOK=1
 node ${DIR}/deep-constructor.test.js || TESTOK=1
 
-#integration tests
+# integration tests
 
 for type in tcp multiplex websocket http
 do
-
   for protocol in compact binary json
   do
-
     for transport in buffered framed
     do
-      testServer $type $protocol $transport || TESTOK=1
-      testServer $type $protocol $transport --ssl || TESTOK=1
-      testServer $type $protocol $transport --promise || TESTOK=1
+      for ecma_version in es5 es6
+      do
+        testServer $ecma_version $type $protocol $transport || TESTOK=1
+        testServer $ecma_version $type $protocol $transport --ssl || TESTOK=1
+        testServer $ecma_version $type $protocol $transport --callback || TESTOK=1
+      done
     done
   done
 done
 
-# XHR only until phantomjs 2 is released.
-testBrowser
+# episodic compilation test
+testEpisodicCompilation
 
 if [ -n "${COVER}" ]; then
   ${ISTANBUL} report --dir "${DIR}/../coverage" --include "${DIR}/../coverage/report*/coverage.json" lcov cobertura html

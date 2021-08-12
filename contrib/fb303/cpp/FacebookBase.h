@@ -22,6 +22,7 @@
 
 #include "FacebookService.h"
 
+#include <boost/shared_ptr.hpp>
 #include <thrift/server/TServer.h>
 #include <thrift/concurrency/Mutex.h>
 
@@ -64,7 +65,7 @@ class FacebookBase : virtual public FacebookServiceIf {
   virtual void reinitialize() {}
 
   virtual void shutdown() {
-    if (server_.get() != NULL) {
+    if (server_.get() != nullptr) {
       server_->stop();
     }
   }

@@ -22,6 +22,9 @@
   <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
   <title>Thrift Javascript Bindings: Unit Test</title>
 
+  <script src="build/js/lib/Int64.js" type="text/javascript" charset="utf-8"></script>
+  <script src="build/js/lib/Int64Util.js" type="text/javascript" charset="utf-8"></script>
+  <script src="build/js/lib/JSONInt64.js" type="text/javascript" charset="utf-8"></script>
   <script src="build/js/thrift.js"         type="text/javascript" charset="utf-8"></script>
   <script src="gen-js/ThriftTest_types.js" type="text/javascript" charset="utf-8"></script>
   <script src="gen-js/ThriftTest.js"       type="text/javascript" charset="utf-8"></script>
@@ -35,18 +38,18 @@
 
   <!-- the Test Suite-->
   <script>
-    var loc = window.location;
-    var ws_uri = ((loc.protocol === "https:") ? "wss://" : "ws://") +
+    const loc = window.location;
+    const ws_uri = ((loc.protocol === "https:") ? "wss://" : "ws://") +
                    loc.hostname + ":" + loc.port + loc.pathname;
-    var transport = new Thrift.TWebSocketTransport(ws_uri);
-    var protocol  = new Thrift.Protocol(transport);
-    var client    = new ThriftTest.ThriftTestClient(protocol);
+    const transport = new Thrift.TWebSocketTransport(ws_uri);
+    const protocol  = new Thrift.Protocol(transport);
+    const client    = new ThriftTest.ThriftTestClient(protocol);
     transport.open();
   </script>
   <script type="text/javascript" src="test-async.js" charset="utf-8"></script>
 </head>
 <body>
-  <h1 id="qunit-header">Thrift Javascript Bindings: Unit Test (<a href="https://git-wip-us.apache.org/repos/asf?p=thrift.git;a=blob;f=test/ThriftTest.thrift;hb=HEAD">ThriftTest.thrift</a>)</h1>
+  <h1 id="qunit-header">Thrift Javascript Bindings: Unit Test (<a href="https://github.com/apache/thrift/blob/master/test/ThriftTest.thrift">ThriftTest.thrift</a>)</h1>
   <h2 id="qunit-banner"></h2>
   <div id="qunit-testrunner-toolbar"></div>
   <h2 id="qunit-userAgent"></h2>

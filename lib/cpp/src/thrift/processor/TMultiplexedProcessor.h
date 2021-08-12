@@ -27,8 +27,6 @@
 
 namespace apache {
 namespace thrift {
-using boost::shared_ptr;
-
 namespace protocol {
 
 /**
@@ -38,13 +36,13 @@ namespace protocol {
  */
 class StoredMessageProtocol : public TProtocolDecorator {
 public:
-  StoredMessageProtocol(shared_ptr<protocol::TProtocol> _protocol,
+  StoredMessageProtocol(std::shared_ptr<protocol::TProtocol> _protocol,
                         const std::string& _name,
                         const TMessageType _type,
                         const int32_t _seqid)
     : TProtocolDecorator(_protocol), name(_name), type(_type), seqid(_seqid) {}
 
-  uint32_t readMessageBegin_virt(std::string& _name, TMessageType& _type, int32_t& _seqid) {
+  uint32_t readMessageBegin_virt(std::string& _name, TMessageType& _type, int32_t& _seqid) override {
 
     _name = name;
     _type = type;
@@ -67,19 +65,19 @@ public:
  * processors with it, as shown in the following example:</p>
  *
  * <blockquote><code>
- *     shared_ptr<TMultiplexedProcessor> processor(new TMultiplexedProcessor());
+ *     std::shared_ptr<TMultiplexedProcessor> processor(new TMultiplexedProcessor());
  *
  *     processor->registerProcessor(
  *         "Calculator",
- *         shared_ptr<TProcessor>( new CalculatorProcessor(
- *             shared_ptr<CalculatorHandler>( new CalculatorHandler()))));
+ *         std::shared_ptr<TProcessor>( new CalculatorProcessor(
+ *             std::shared_ptr<CalculatorHandler>( new CalculatorHandler()))));
  *
  *     processor->registerProcessor(
  *         "WeatherReport",
- *         shared_ptr<TProcessor>( new WeatherReportProcessor(
- *             shared_ptr<WeatherReportHandler>( new WeatherReportHandler()))));
+ *         std::shared_ptr<TProcessor>( new WeatherReportProcessor(
+ *             std::shared_ptr<WeatherReportHandler>( new WeatherReportHandler()))));
  *
- *     shared_ptr<TServerTransport> transport(new TServerSocket(9090));
+ *     std::shared_ptr<TServerTransport> transport(new TServerSocket(9090));
  *     TSimpleServer server(processor, transport);
  *
  *     server.serve();
@@ -87,7 +85,7 @@ public:
  */
 class TMultiplexedProcessor : public TProcessor {
 public:
-  typedef std::map<std::string, shared_ptr<TProcessor> > services_t;
+  typedef std::map<std::string, std::shared_ptr<TProcessor> > services_t;
 
   /**
     * 'Register' a service with this <code>TMultiplexedProcessor</code>.  This
@@ -100,10 +98,40 @@ public:
     *                         as "handlers", e.g. WeatherReportHandler,
     *                         implementing WeatherReportIf interface.
     */
-  void registerProcessor(const std::string& serviceName, shared_ptr<TProcessor> processor) {
+  void registerProcessor(const std::string& serviceName, std::shared_ptr<TProcessor> processor) {
     services[serviceName] = processor;
   }
 
+  /**
+   * Register a service to be called to process queries without service name
+   * \param [in] processor   Implementation of a service.
+   */
+  void registerDefault(const std::shared_ptr<TProcessor>& processor) {
+    defaultProcessor = processor;
+  }
+
+  /**
+   * Chew up invalid input and return an exception to throw.
+   */
+  TException protocol_error(std::shared_ptr<protocol::TProtocol> in,
+                            std::shared_ptr<protocol::TProtocol> out,
+                            const std::string& name, 
+                            int32_t seqid, 
+                            const std::string& msg) const {
+    in->skip(::apache::thrift::protocol::T_STRUCT);
+    in->readMessageEnd();
+    in->getTransport()->readEnd();
+    ::apache::thrift::TApplicationException
+      x(::apache::thrift::TApplicationException::PROTOCOL_ERROR,
+        "TMultiplexedProcessor: " + msg);
+    out->writeMessageBegin(name, ::apache::thrift::protocol::T_EXCEPTION, seqid);
+    x.write(out.get());
+    out->writeMessageEnd();
+    out->getTransport()->writeEnd();
+    out->getTransport()->flush();
+    return TException(msg);
+}
+   
   /**
    * This implementation of <code>process</code> performs the following steps:
    *
@@ -119,9 +147,9 @@ public:
    * the service name was not found in the message, or if the service
    * name was not found in the service map.
    */
-  bool process(shared_ptr<protocol::TProtocol> in,
-               shared_ptr<protocol::TProtocol> out,
-               void* connectionContext) {
+  bool process(std::shared_ptr<protocol::TProtocol> in,
+               std::shared_ptr<protocol::TProtocol> out,
+               void* connectionContext) override {
     std::string name;
     protocol::TMessageType type;
     int32_t seqid;
@@ -133,22 +161,10 @@ public:
 
     if (type != protocol::T_CALL && type != protocol::T_ONEWAY) {
       // Unexpected message type.
-      in->skip(::apache::thrift::protocol::T_STRUCT);
-      in->readMessageEnd();
-      in->getTransport()->readEnd();
-      const std::string msg("TMultiplexedProcessor: Unexpected message type");
-      ::apache::thrift::TApplicationException
-          x(::apache::thrift::TApplicationException::PROTOCOL_ERROR, msg);
-      out->writeMessageBegin(name, ::apache::thrift::protocol::T_EXCEPTION, seqid);
-      x.write(out.get());
-      out->writeMessageEnd();
-      out->getTransport()->writeEnd();
-      out->getTransport()->flush();
-      throw TException(msg);
+      throw protocol_error(in, out, name, seqid, "Unexpected message type");
     }
 
     // Extract the service name
-
     boost::tokenizer<boost::char_separator<char> > tok(name, boost::char_separator<char>(":"));
 
     std::vector<std::string> tokens;
@@ -158,42 +174,49 @@ public:
     // name and the name of the method to call.
     if (tokens.size() == 2) {
       // Search for a processor associated with this service name.
-      services_t::iterator it = services.find(tokens[0]);
+      auto it = services.find(tokens[0]);
 
       if (it != services.end()) {
-        shared_ptr<TProcessor> processor = it->second;
+        std::shared_ptr<TProcessor> processor = it->second;
         // Let the processor registered for this service name
         // process the message.
         return processor
-            ->process(shared_ptr<protocol::TProtocol>(
+            ->process(std::shared_ptr<protocol::TProtocol>(
                           new protocol::StoredMessageProtocol(in, tokens[1], type, seqid)),
                       out,
                       connectionContext);
       } else {
         // Unknown service.
-        in->skip(::apache::thrift::protocol::T_STRUCT);
-        in->readMessageEnd();
-        in->getTransport()->readEnd();
-
-        std::string msg("TMultiplexedProcessor: Unknown service: ");
-        msg += tokens[0];
-        ::apache::thrift::TApplicationException
-            x(::apache::thrift::TApplicationException::PROTOCOL_ERROR, msg);
-        out->writeMessageBegin(name, ::apache::thrift::protocol::T_EXCEPTION, seqid);
-        x.write(out.get());
-        out->writeMessageEnd();
-        out->getTransport()->writeEnd();
-        out->getTransport()->flush();
-        msg += ". Did you forget to call registerProcessor()?";
-        throw TException(msg);
+        throw protocol_error(in, out, name, seqid, 
+            "Unknown service: " + tokens[0] +
+				". Did you forget to call registerProcessor()?");
       }
+    } else if (tokens.size() == 1) {
+	  if (defaultProcessor) {
+        // non-multiplexed client forwards to default processor
+        return defaultProcessor            
+            ->process(std::shared_ptr<protocol::TProtocol>(
+                          new protocol::StoredMessageProtocol(in, tokens[0], type, seqid)),
+                      out,
+                      connectionContext);
+	  } else {
+		throw protocol_error(in, out, name, seqid,
+			"Non-multiplexed client request dropped. "
+			"Did you forget to call defaultProcessor()?");
+	  }
+    } else {
+		throw protocol_error(in, out, name, seqid,
+		    "Wrong number of tokens.");
     }
-    return false;
   }
 
 private:
   /** Map of service processor objects, indexed by service names. */
   services_t services;
+  
+  //! If a non-multi client requests something, it goes to the
+  //! default processor (if one is defined) for backwards compatibility.
+  std::shared_ptr<TProcessor> defaultProcessor;
 };
 }
 }

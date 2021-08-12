@@ -17,15 +17,15 @@
 # under the License.
 #
 
-AUTOMAKE_OPTIONS = subdir-objects
+AUTOMAKE_OPTIONS = subdir-objects nostdinc
 
 SUBDIRS = .
 
 lib_LTLIBRARIES = \
 			libluasocket.la \
+			liblualongnumber.la \
 			libluabpack.la \
-			libluabitwise.la \
-			liblualongnumber.la
+			libluabitwise.la
 
 libluasocket_la_SOURCES = \
 			src/luasocket.c \

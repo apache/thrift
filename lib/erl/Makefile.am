@@ -18,8 +18,12 @@
 #
 
 THRIFT = ../../compiler/cpp/thrift
+THRIFT_OMIT_FILE = test/Thrift_omit_without.thrift
 THRIFT_FILES = $(wildcard test/*.thrift) \
+		  $(THRIFT_OMIT_FILE) \
+		  ../../test/ConstantsDemo.thrift \
 		  ../../test/NameConflictTest.thrift \
+		  ../../test/DoubleConstantsTest.thrift \
 		  ../../test/ThriftTest.thrift
 
 if ERLANG_OTP16
@@ -32,6 +36,10 @@ ERL_FLAG = erl
 ERL_FLAG_LEGACY = erl:legacynames
 ERL_FLAG_MAPS = erl:maps
 endif
+
+$(THRIFT_OMIT_FILE): test/Thrift_omit_with.thrift
+	grep -v omit $< >$@
+
 .generated: $(THRIFT) $(THRIFT_FILES)
 	for f in $(THRIFT_FILES) ; do \
 		$(THRIFT) --gen $(ERL_FLAG) -o test $$f ; \
@@ -41,13 +49,10 @@ endif
 	touch .generated
 
 all: .generated
-	$(REBAR) get-deps
 	$(REBAR) compile
 
 check: .generated
-	$(REBAR) -C rebar.test.config get-deps
-	$(REBAR) -C rebar.test.config compile
-	$(REBAR) -C rebar.test.config skip_deps=true eunit
+	$(REBAR) eunit
 
 install: all
 	mkdir -p $(DESTDIR)$(ERLANG_INSTALL_LIB_DIR_thrift) ; \
@@ -59,22 +64,33 @@ install: all
 	done
 
 uninstall:
-	rm -rf $(DESTDIR)$(ERLANG_INSTALL_LIB_DIR_thrift)
+	$(RM) -rf $(DESTDIR)$(ERLANG_INSTALL_LIB_DIR_thrift)
 
-clean:
-	rm -f .generated
-	rm -rf test/gen-erl/
+clean-local:
 	$(REBAR) clean
+	$(RM)    .generated
+	$(RM) -r .rebar/
+	$(RM) -r _build/
+	$(RM) -r test/gen-erl/
+	$(RM)    $(THRIFT_OMIT_FILE)
 
 maintainer-clean-local:
-	rm -rf ebin
+	$(RM) -r ebin/
+
+dist-hook:
+	$(RM)    $(distdir)/.generated
+	$(RM) -r $(distdir)/.rebar/
+	$(RM) -r $(distdir)/_build/
+	$(RM) -r $(distdir)/ebin/
+	$(RM) -r $(distdir)/test/gen-erl/
+	$(RM)    $(distdir)/$(THRIFT_OMIT_FILE)
 
 EXTRA_DIST = \
 	include \
 	src \
 	coding_standards.md \
 	rebar.config \
-	rebar.test.config \
+	rebar.config.script \
 	test \
 	README.md
 

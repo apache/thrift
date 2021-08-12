@@ -174,7 +174,7 @@ class TClientInfoConnection {
   void eraseAddr();
 
   /**
-   * Return a string representing the present address, or NULL if none.
+   * Return a string representing the present address, or nullptr if none.
    * Copies the string into the buffer provided.
    */
   const char* getAddr(char* buf, int len) const;
@@ -193,7 +193,7 @@ class TClientInfoConnection {
   /**
    * Return as string the thrift call either currently being processed or
    * most recently processed if the connection is still open for additional
-   * calls.  Returns NULL if a call hasn't been made yet or processing
+   * calls.  Returns nullptr if a call hasn't been made yet or processing
    * has ended.
    */
   const char* getCall() const;
@@ -229,7 +229,7 @@ class TClientInfo {
    * Return the info object for a given file descriptor.  If "grow" is true
    * extend the info vector if required (such as for a file descriptor not seen
    * before).  If "grow" is false and the info vector isn't large enough,
-   * or if "fd" is negative, return NULL.
+   * or if "fd" is negative, return nullptr.
    */
   TClientInfoConnection* getConnection(int fd, bool grow);
 
@@ -258,7 +258,7 @@ class TClientInfoServerHandler : public TServerEventHandler {
 
     explicit Connect(TClientInfo* clientInfo)
       : clientInfo_(clientInfo)
-      , callInfo_(NULL) {
+      , callInfo_(nullptr) {
     }
   };
 

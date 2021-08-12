@@ -30,8 +30,6 @@ import warnings
 from contextlib import contextmanager
 
 import _import_local_thrift  # noqa
-from thrift.transport.TSSLSocket import TSSLSocket, TSSLServerSocket
-from thrift.transport.TTransport import TTransportException
 
 SCRIPT_DIR = os.path.realpath(os.path.dirname(__file__))
 ROOT_DIR = os.path.dirname(os.path.dirname(os.path.dirname(SCRIPT_DIR)))
@@ -44,7 +42,7 @@ CLIENT_CERT = os.path.join(ROOT_DIR, 'test', 'keys', 'client_v3.crt')
 CLIENT_KEY = os.path.join(ROOT_DIR, 'test', 'keys', 'client_v3.key')
 CLIENT_CA = os.path.join(ROOT_DIR, 'test', 'keys', 'CA.pem')
 
-TEST_CIPHERS = 'DES-CBC3-SHA'
+TEST_CIPHERS = 'DES-CBC3-SHA:ECDHE-RSA-AES128-GCM-SHA256'
 
 
 class ServerAcceptor(threading.Thread):
@@ -77,6 +75,9 @@ class ServerAcceptor(threading.Thread):
 
         try:
             self._client = self._server.accept()
+            if self._client:
+                self._client.read(5)  # hello
+                self._client.write(b"there")
         except Exception:
             logging.exception('error on server side (%s):' % self.name)
             if not self._expect_failure:
@@ -96,6 +97,11 @@ class ServerAcceptor(threading.Thread):
     def client(self):
         self._client_accepted.wait()
         return self._client
+
+    def close(self):
+        if self._client:
+            self._client.close()
+        self._server.close()
 
 
 # Python 2.6 compat
@@ -127,22 +133,21 @@ class TSSLSocketTest(unittest.TestCase):
             client = TSSLSocket(host, port, unix_socket=path, **client_kwargs)
             yield acc, client
         finally:
-            if acc.client:
-                acc.client.close()
-            server.close()
+            acc.close()
 
     def _assert_connection_failure(self, server, path=None, **client_args):
         logging.disable(logging.CRITICAL)
-        with self._connectable_client(server, True, path=path, **client_args) as (acc, client):
-            try:
+        try:
+            with self._connectable_client(server, True, path=path, **client_args) as (acc, client):
                 # We need to wait for a connection failure, but not too long.  20ms is a tunable
                 # compromise between test speed and stability
                 client.setTimeout(20)
                 with self._assert_raises(TTransportException):
                     client.open()
-                self.assertTrue(acc.client is None)
-            finally:
-                logging.disable(logging.NOTSET)
+                    client.write(b"hello")
+                    client.read(5)  # b"there"
+        finally:
+            logging.disable(logging.NOTSET)
 
     def _assert_raises(self, exc):
         if sys.hexversion >= 0x020700F0:
@@ -152,8 +157,10 @@ class TSSLSocketTest(unittest.TestCase):
 
     def _assert_connection_success(self, server, path=None, **client_args):
         with self._connectable_client(server, path=path, **client_args) as (acc, client):
-            client.open()
             try:
+                client.open()
+                client.write(b"hello")
+                self.assertEqual(client.read(5), b"there")
                 self.assertTrue(acc.client is not None)
             finally:
                 client.close()
@@ -212,6 +219,7 @@ class TSSLSocketTest(unittest.TestCase):
             return
         fd, path = tempfile.mkstemp()
         os.close(fd)
+        os.unlink(path)
         try:
             server = self._server_socket(unix_socket=path, keyfile=SERVER_KEY, certfile=SERVER_CERT)
             self._assert_connection_success(server, path=path, cert_reqs=ssl.CERT_NONE)
@@ -239,6 +247,9 @@ class TSSLSocketTest(unittest.TestCase):
         self._assert_connection_success(server, cert_reqs=ssl.CERT_REQUIRED, ca_certs=SERVER_CERT)
 
     def test_client_cert(self):
+        if not _match_has_ipaddress:
+            print('skipping test_client_cert')
+            return
         server = self._server_socket(
             cert_reqs=ssl.CERT_REQUIRED, keyfile=SERVER_KEY,
             certfile=SERVER_CERT, ca_certs=CLIENT_CERT)
@@ -333,7 +344,10 @@ class TSSLSocketTest(unittest.TestCase):
 
         self._assert_connection_success(server, ssl_context=client_context)
 
+
 if __name__ == '__main__':
-    # import logging
-    # logging.basicConfig(level=logging.DEBUG)
+    logging.basicConfig(level=logging.WARN)
+    from thrift.transport.TSSLSocket import TSSLSocket, TSSLServerSocket, _match_has_ipaddress
+    from thrift.transport.TTransport import TTransportException
+
     unittest.main()

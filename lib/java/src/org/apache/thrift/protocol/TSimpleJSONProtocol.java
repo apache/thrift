@@ -19,12 +19,13 @@
 
 package org.apache.thrift.protocol;
 
-import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
 import java.util.Stack;
 
 import org.apache.thrift.TException;
 import org.apache.thrift.transport.TTransport;
+import org.apache.thrift.transport.TTransportException;
 
 /**
  * JSON protocol implementation for thrift.
@@ -167,6 +168,7 @@ public class TSimpleJSONProtocol extends TProtocol {
     super(trans);
   }
 
+  @Override
   public void writeMessageBegin(TMessage message) throws TException {
     resetWriteContext(); // THRIFT-3743
     trans_.write(LBRACKET);
@@ -176,31 +178,38 @@ public class TSimpleJSONProtocol extends TProtocol {
     writeI32(message.seqid);
   }
 
+  @Override
   public void writeMessageEnd() throws TException {
     popWriteContext();
     trans_.write(RBRACKET);
   }
 
+  @Override
   public void writeStructBegin(TStruct struct) throws TException {
     writeContext_.write();
     trans_.write(LBRACE);
     pushWriteContext(new StructContext());
   }
 
+  @Override
   public void writeStructEnd() throws TException {
     popWriteContext();
     trans_.write(RBRACE);
   }
 
+  @Override
   public void writeFieldBegin(TField field) throws TException {
     // Note that extra type information is omitted in JSON!
     writeString(field.name);
   }
 
-  public void writeFieldEnd() {}
+  @Override
+  public void writeFieldEnd() throws TException {}
 
-  public void writeFieldStop() {}
+  @Override
+  public void writeFieldStop() throws TException {}
 
+  @Override
   public void writeMapBegin(TMap map) throws TException {
     assertContextIsNotMapKey(MAP);
     writeContext_.write();
@@ -209,11 +218,13 @@ public class TSimpleJSONProtocol extends TProtocol {
     // No metadata!
   }
 
+  @Override
   public void writeMapEnd() throws TException {
     popWriteContext();
     trans_.write(RBRACE);
   }
 
+  @Override
   public void writeListBegin(TList list) throws TException {
     assertContextIsNotMapKey(LIST);
     writeContext_.write();
@@ -222,11 +233,13 @@ public class TSimpleJSONProtocol extends TProtocol {
     // No metadata!
   }
 
+  @Override
   public void writeListEnd() throws TException {
     popWriteContext();
     trans_.write(RBRACKET);
   }
 
+  @Override
   public void writeSetBegin(TSet set) throws TException {
     assertContextIsNotMapKey(SET);
     writeContext_.write();
@@ -235,23 +248,28 @@ public class TSimpleJSONProtocol extends TProtocol {
     // No metadata!
   }
 
+  @Override
   public void writeSetEnd() throws TException {
     popWriteContext();
     trans_.write(RBRACKET);
   }
 
+  @Override
   public void writeBool(boolean b) throws TException {
     writeByte(b ? (byte)1 : (byte)0);
   }
 
+  @Override
   public void writeByte(byte b) throws TException {
     writeI32(b);
   }
 
+  @Override
   public void writeI16(short i16) throws TException {
     writeI32(i16);
   }
 
+  @Override
   public void writeI32(int i32) throws TException {
     if(writeContext_.isMapKey()) {
       writeString(Integer.toString(i32));
@@ -262,14 +280,11 @@ public class TSimpleJSONProtocol extends TProtocol {
   }
 
   public void _writeStringData(String s) throws TException {
-    try {
-      byte[] b = s.getBytes("UTF-8");
-      trans_.write(b);
-    } catch (UnsupportedEncodingException uex) {
-      throw new TException("JVM DOES NOT SUPPORT UTF-8");
-    }
+    byte[] b = s.getBytes(StandardCharsets.UTF_8);
+    trans_.write(b);
   }
 
+  @Override
   public void writeI64(long i64) throws TException {
     if(writeContext_.isMapKey()) {
       writeString(Long.toString(i64));
@@ -279,6 +294,7 @@ public class TSimpleJSONProtocol extends TProtocol {
     }
   }
 
+  @Override
   public void writeDouble(double dub) throws TException {
     if(writeContext_.isMapKey()) {
       writeString(Double.toString(dub));
@@ -288,6 +304,7 @@ public class TSimpleJSONProtocol extends TProtocol {
     }
   }
 
+  @Override
   public void writeString(String str) throws TException {
     writeContext_.write();
     int length = str.length();
@@ -341,90 +358,108 @@ public class TSimpleJSONProtocol extends TProtocol {
     _writeStringData(escape.toString());
   }
 
+  @Override
   public void writeBinary(ByteBuffer bin) throws TException {
-    try {
-      // TODO(mcslee): Fix this
-      writeString(new String(bin.array(), bin.position() + bin.arrayOffset(), bin.limit() - bin.position() - bin.arrayOffset(), "UTF-8"));
-    } catch (UnsupportedEncodingException uex) {
-      throw new TException("JVM DOES NOT SUPPORT UTF-8");
-    }
+    // TODO(mcslee): Fix this
+    writeString(new String(bin.array(), bin.position() + bin.arrayOffset(),
+        bin.limit() - bin.position() - bin.arrayOffset(),
+        StandardCharsets.UTF_8));
   }
 
   /**
    * Reading methods.
    */
 
+  @Override
   public TMessage readMessageBegin() throws TException {
     // TODO(mcslee): implement
     return EMPTY_MESSAGE;
   }
 
-  public void readMessageEnd() {}
+  @Override
+  public void readMessageEnd() throws TException {}
 
-  public TStruct readStructBegin() {
+  @Override
+  public TStruct readStructBegin() throws TException {
     // TODO(mcslee): implement
     return ANONYMOUS_STRUCT;
   }
 
-  public void readStructEnd() {}
+  @Override
+  public void readStructEnd() throws TException {}
 
+  @Override
   public TField readFieldBegin() throws TException {
     // TODO(mcslee): implement
     return ANONYMOUS_FIELD;
   }
 
-  public void readFieldEnd() {}
+  @Override
+  public void readFieldEnd() throws TException {}
 
+  @Override
   public TMap readMapBegin() throws TException {
     // TODO(mcslee): implement
     return EMPTY_MAP;
   }
 
-  public void readMapEnd() {}
+  @Override
+  public void readMapEnd() throws TException {}
 
+  @Override
   public TList readListBegin() throws TException {
     // TODO(mcslee): implement
     return EMPTY_LIST;
   }
 
-  public void readListEnd() {}
+  @Override
+  public void readListEnd() throws TException {}
 
+  @Override
   public TSet readSetBegin() throws TException {
     // TODO(mcslee): implement
     return EMPTY_SET;
   }
 
-  public void readSetEnd() {}
+  @Override
+  public void readSetEnd() throws TException {}
 
+  @Override
   public boolean readBool() throws TException {
     return (readByte() == 1);
   }
 
+  @Override
   public byte readByte() throws TException {
     // TODO(mcslee): implement
     return 0;
   }
 
+  @Override
   public short readI16() throws TException {
     // TODO(mcslee): implement
     return 0;
   }
 
+  @Override
   public int readI32() throws TException {
     // TODO(mcslee): implement
     return 0;
   }
 
+  @Override
   public long readI64() throws TException {
     // TODO(mcslee): implement
     return 0;
   }
 
+  @Override
   public double readDouble() throws TException {
     // TODO(mcslee): implement
     return 0;
   }
 
+  @Override
   public String readString() throws TException {
     // TODO(mcslee): implement
     return "";
@@ -435,6 +470,7 @@ public class TSimpleJSONProtocol extends TProtocol {
     return "";
   }
 
+  @Override
   public ByteBuffer readBinary() throws TException {
     // TODO(mcslee): implement
     return ByteBuffer.wrap(new byte[0]);
@@ -443,6 +479,30 @@ public class TSimpleJSONProtocol extends TProtocol {
   public static class CollectionMapKeyException extends TException {
     public CollectionMapKeyException(String message) {
       super(message);
+    }
+  }
+
+  /**
+   *
+   * Return the minimum number of bytes a type will consume on the wire
+   */
+  public int getMinSerializedSize(byte type) throws TException {
+    switch (type)
+    {
+      case 0: return 0; // Stop
+      case 1: return 0; // Void
+      case 2: return 1; // Bool
+      case 3: return 1; // Byte
+      case 4: return 1; // Double
+      case 6: return 1; // I16
+      case 8: return 1; // I32
+      case 10: return 1;// I64
+      case 11: return 2;  // string length
+      case 12: return 2;  // empty struct
+      case 13: return 2;  // element count Map
+      case 14: return 2;  // element count Set
+      case 15: return 2;  // element count List
+      default: throw new TTransportException(TTransportException.UNKNOWN, "unrecognized type code");
     }
   }
 }

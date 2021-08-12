@@ -1,0 +1,45 @@
+<?xml version="1.0"?>
+
+<!--
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+  
+      http://www.apache.org/licenses/LICENSE-2.0
+  
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+
+  Instructions for building a nuget package:
+
+  1. Open Thrift.sln in lib\netstd and build the release version of
+     the "Thrift" project.
+  2. nuget setApiKey <your-api-key>
+  3. nuget pack ApacheThrift.nuspec -Symbols -SymbolPackageFormat snupkg
+  4. nuget push ApacheThrift.0.14.1.nupkg -Source https://api.nuget.org/v3/index.json
+  -->
+
+<package xmlns="http://schemas.microsoft.com/packaging/2013/05/nuspec.xsd">
+  <metadata>
+    <id>ApacheThrift</id>
+    <version>0.14.1</version>
+    <title>Apache Thrift 0.14.1</title>
+    <authors>Apache Thrift Developers</authors>
+    <owners>Apache Software Foundation</owners>
+    <license type="expression">Apache-2.0</license>
+    <projectUrl>http://thrift.apache.org/</projectUrl>
+    <requireLicenseAcceptance>true</requireLicenseAcceptance>
+    <summary>Apache Thrift .NET Library</summary>
+    <description>
+      Contains runtime libraries from lib/netstd for netstandard2.0 framework development.
+    </description>
+    <repository type="GitHub" url="https://github.com/apache/thrift" branch="release/0.14.1" />
+    <tags>Apache Thrift RPC</tags>
+  </metadata>
+  <files>
+    <file src="lib\netstd\Thrift\bin\Release\netstandard2.0\*.*" target="lib\netstandard2.0" />
+  </files>
+</package>

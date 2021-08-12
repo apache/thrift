@@ -21,6 +21,7 @@
 
 PHP_FUNCTION(thrift_protocol_write_binary);
 PHP_FUNCTION(thrift_protocol_read_binary);
+PHP_FUNCTION(thrift_protocol_read_binary_after_message_begin);
 
 extern zend_module_entry thrift_protocol_module_entry;
 #define phpext_thrift_protocol_ptr &thrift_protocol_module_entry

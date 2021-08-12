@@ -17,10 +17,18 @@
 # under the License.
 # 
 
+require 'logger'
+
 module Thrift
   module Processor
-    def initialize(handler)
+    def initialize(handler, logger=nil)
       @handler = handler
+      if logger.nil?
+        @logger = Logger.new(STDERR)
+        @logger.level = Logger::WARN
+      else
+        @logger = logger
+      end
     end
 
     def process(iprot, oprot)
@@ -30,6 +38,7 @@ module Thrift
           send("process_#{name}", seqid, iprot, oprot)
         rescue => e
           x = ApplicationException.new(ApplicationException::INTERNAL_ERROR, 'Internal error')
+          @logger.debug "Internal error : #{e.message}\n#{e.backtrace.join("\n")}"
           write_error(x, oprot, name, seqid)
         end
         true

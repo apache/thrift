@@ -29,13 +29,45 @@ if WITH_TUTORIAL
 SUBDIRS += tutorial
 endif
 
+clean-local:
+	$(RM) -r vendor/
+
+distclean-local:
+	$(RM) -r .dub/
+	$(RM) -r autom4te.cache/
+
+CLEANFILES = \
+	composer.lock \
+	dub.selections.json
+
+DISTCLEANFILES = \
+	Makefile \
+	Makefile.in \
+	aclocal.m4 \
+	apache-thrift-test-library \
+	autoscan.log \
+	compile \
+	config.guess \
+	config.hin \
+	config.hin~ \
+	config.log \
+	config.status \
+	config.sub \
+	configure \
+	configure.scan \
+    debcomp \
+    install-sh \
+    ltmain.sh \
+    missing \
+    ylwrap
+
 dist-hook:
-	find $(distdir) -type f \( -iname ".DS_Store" -or -iname "._*" -or -iname ".gitignore" \) | xargs rm -rf
+	find $(distdir) -type f \( -iname ".DS_Store" -or -iname "._*" -or -iname ".gitignore" \) | xargs rm -f
 	find $(distdir) -type d \( -iname ".deps" -or -iname ".libs" \) | xargs rm -rf
 	find $(distdir) -type d \( -iname ".svn" -or -iname ".git" \) | xargs rm -rf
 
 print-version:
-	@echo $(VERSION)
+	@echo $(PACKAGE_VERSION)
 
 .PHONY: precross cross
 precross-%: all
@@ -46,7 +78,7 @@ empty :=
 space := $(empty) $(empty)
 comma := ,
 
-CROSS_LANGS = @MAYBE_CPP@ @MAYBE_C_GLIB@ @MAYBE_D@ @MAYBE_JAVA@ @MAYBE_CSHARP@ @MAYBE_PYTHON@ @MAYBE_PY3@ @MAYBE_RUBY@ @MAYBE_HASKELL@ @MAYBE_PERL@ @MAYBE_PHP@ @MAYBE_GO@ @MAYBE_NODEJS@ @MAYBE_DART@ @MAYBE_ERLANG@ @MAYBE_LUA@
+CROSS_LANGS = @MAYBE_CPP@ @MAYBE_C_GLIB@ @MAYBE_CL@ @MAYBE_D@ @MAYBE_JAVA@ @MAYBE_PYTHON@ @MAYBE_PY3@ @MAYBE_RUBY@ @MAYBE_HASKELL@ @MAYBE_PERL@ @MAYBE_PHP@ @MAYBE_GO@ @MAYBE_NODEJS@ @MAYBE_DART@ @MAYBE_ERLANG@ @MAYBE_LUA@ @MAYBE_RS@ @MAYBE_NETSTD@ @MAYBE_NODETS@
 CROSS_LANGS_COMMA_SEPARATED = $(subst $(space),$(comma),$(CROSS_LANGS))
 
 if WITH_PY3
@@ -56,14 +88,17 @@ CROSS_PY=$(PYTHON)
 endif
 
 if WITH_PYTHON
-cross: precross
-	$(CROSS_PY) test/test.py --retry-count 3 --features .* --skip-known-failures --server $(CROSS_LANGS_COMMA_SEPARATED)
-	$(CROSS_PY) test/test.py --retry-count 3 --skip-known-failures --server $(CROSS_LANGS_COMMA_SEPARATED) --client $(CROSS_LANGS_COMMA_SEPARATED)
+crossfeature: precross
+	$(CROSS_PY) test/test.py --retry-count 5 --features .* --skip-known-failures --server $(CROSS_LANGS_COMMA_SEPARATED)
 else
 # feature test needs python build
-cross: precross
-	$(CROSS_PY) test/test.py -s --server $(CROSS_LANGS_COMMA_SEPARATED) --client $(CROSS_LANGS_COMMA_SEPARATED)
+crossfeature:
 endif
+
+cross-%: precross crossfeature
+	$(CROSS_PY) test/test.py --retry-count 5 --skip-known-failures --server $(CROSS_LANGS_COMMA_SEPARATED) --client $(CROSS_LANGS_COMMA_SEPARATED) --regex "$*"
+
+cross: cross-.*
 
 TIMES = 1 2 3
 fail: precross
@@ -97,24 +132,38 @@ style-local:
 	codespell --write-changes --skip=$(skipped_files) --disable-colors
 
 EXTRA_DIST = \
+	.asf.yaml \
 	.clang-format \
+	.dockerignore \
 	.editorconfig \
+	.eslintignore \
+	.eslintrc.json \
+	.flake8 \
+	.gitattributes \
+	.gitignore \
 	.travis.yml \
+	.rustfmt.toml \
+	ApacheThrift.nuspec \
 	appveyor.yml \
+	bootstrap.sh \
 	bower.json \
 	build \
+	CHANGES.md \
 	CMakeLists.txt \
 	composer.json \
 	contrib \
 	CONTRIBUTING.md \
 	debian \
-	doc \
 	doap.rdf \
-	package.json \
-	sonar-project.properties \
-	Dockerfile \
+	doc \
+	dub.json \
+	jitpack.yml \
+	LANGUAGES.md \
 	LICENSE \
-	CHANGES \
 	NOTICE \
+	package.json \
+	package-lock.json \
+	phpcs.xml.dist \
 	README.md \
+	sonar-project.properties \
 	Thrift.podspec

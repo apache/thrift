@@ -17,7 +17,7 @@
 # under the License.
 #
 
-require 5.6.0;
+use 5.10.0;
 use strict;
 use warnings;
 
@@ -26,6 +26,7 @@ use Thrift::Transport;
 
 package Thrift::MemoryBuffer;
 use base('Thrift::Transport');
+use version 0.77; our $VERSION = version->declare("$Thrift::VERSION");
 
 sub new
 {
@@ -34,10 +35,10 @@ sub new
     my $bufferSize= shift || 1024;
 
     my $self = {
-        buffer    => '',
-        bufferSize=> $bufferSize,
-        wPos      => 0,
-        rPos      => 0,
+        buffer     => '',
+        bufferSize => $bufferSize,
+        wPos       => 0,
+        rPos       => 0,
     };
 
     return bless($self,$classname);
@@ -116,7 +117,8 @@ sub readAll
 
     my $avail = ($self->{wPos} - $self->{rPos});
     if ($avail < $len) {
-        die new TTransportException("Attempt to readAll($len) found only $avail available");
+        die Thrift::TTransportException->new("Attempt to readAll($len) found only $avail available",
+                                    Thrift::TTransportException::END_OF_FILE);
     }
 
     my $data = '';

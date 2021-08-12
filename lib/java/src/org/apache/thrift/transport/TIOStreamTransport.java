@@ -19,6 +19,7 @@
 
 package org.apache.thrift.transport;
 
+import org.apache.thrift.TConfiguration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -27,13 +28,13 @@ import java.io.InputStream;
 import java.io.OutputStream;
 
 /**
- * This is the most commonly used base transport. It takes an InputStream
- * and an OutputStream and uses those to perform all transport operations.
+ * This is the most commonly used base transport. It takes an InputStream or
+ * an OutputStream or both and uses it/them to perform transport operations.
  * This allows for compatibility with all the nice constructs Java already
  * has to provide a variety of types of streams.
  *
  */
-public class TIOStreamTransport extends TTransport {
+public class TIOStreamTransport extends TEndpointTransport {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(TIOStreamTransport.class.getName());
 
@@ -47,23 +48,69 @@ public class TIOStreamTransport extends TTransport {
    * Subclasses can invoke the default constructor and then assign the input
    * streams in the open method.
    */
-  protected TIOStreamTransport() {}
+  protected TIOStreamTransport(TConfiguration config) throws TTransportException {
+    super(config);
+  }
 
   /**
-   * Input stream constructor.
+   * Subclasses can invoke the default constructor and then assign the input
+   * streams in the open method.
+   */
+  protected TIOStreamTransport() throws TTransportException {
+    super(new TConfiguration());
+  }
+
+  /**
+   * Input stream constructor, constructs an input only transport.
+   *
+   * @param config
+   * @param is Input stream to read from
+   */
+  public TIOStreamTransport(TConfiguration config, InputStream is) throws TTransportException {
+    super(config);
+    inputStream_ = is;
+  }
+  /**
+   * Input stream constructor, constructs an input only transport.
    *
    * @param is Input stream to read from
    */
-  public TIOStreamTransport(InputStream is) {
+  public TIOStreamTransport(InputStream is) throws TTransportException {
+    super(new TConfiguration());
     inputStream_ = is;
   }
 
   /**
-   * Output stream constructor.
+   * Output stream constructor, constructs an output only transport.
    *
+   * @param config
+   * @param os Output stream to write to
+   */
+  public TIOStreamTransport(TConfiguration config, OutputStream os) throws TTransportException {
+    super(config);
+    outputStream_ = os;
+  }
+
+  /**
+   * Output stream constructor, constructs an output only transport.
+   *
+   * @param os Output stream to write to
+   */
+  public TIOStreamTransport(OutputStream os) throws TTransportException {
+    super(new TConfiguration());
+    outputStream_ = os;
+  }
+
+  /**
+   * Two-way stream constructor.
+   *
+   * @param config
+   * @param is Input stream to read from
    * @param os Output stream to read from
    */
-  public TIOStreamTransport(OutputStream os) {
+  public TIOStreamTransport(TConfiguration config, InputStream is, OutputStream os) throws TTransportException {
+    super(config);
+    inputStream_ = is;
     outputStream_ = os;
   }
 
@@ -73,19 +120,18 @@ public class TIOStreamTransport extends TTransport {
    * @param is Input stream to read from
    * @param os Output stream to read from
    */
-  public TIOStreamTransport(InputStream is, OutputStream os) {
+  public TIOStreamTransport(InputStream is, OutputStream os) throws TTransportException {
+    super(new TConfiguration());
     inputStream_ = is;
     outputStream_ = os;
   }
 
   /**
-   * The streams must already be open at construction time, so this should
-   * always return true.
    *
-   * @return true
+   * @return false after close is called.
    */
   public boolean isOpen() {
-    return true;
+    return inputStream_ != null || outputStream_ != null;
   }
 
   /**
@@ -97,20 +143,23 @@ public class TIOStreamTransport extends TTransport {
    * Closes both the input and output streams.
    */
   public void close() {
-    if (inputStream_ != null) {
-      try {
-        inputStream_.close();
-      } catch (IOException iox) {
-        LOGGER.warn("Error closing input stream.", iox);
+    try {
+      if (inputStream_ != null) {
+        try {
+          inputStream_.close();
+        } catch (IOException iox) {
+          LOGGER.warn("Error closing input stream.", iox);
+        }
       }
+      if (outputStream_ != null) {
+        try {
+          outputStream_.close();
+        } catch (IOException iox) {
+          LOGGER.warn("Error closing output stream.", iox);
+        }
+      }
+    } finally {
       inputStream_ = null;
-    }
-    if (outputStream_ != null) {
-      try {
-        outputStream_.close();
-      } catch (IOException iox) {
-        LOGGER.warn("Error closing output stream.", iox);
-      }
       outputStream_ = null;
     }
   }
@@ -129,7 +178,7 @@ public class TIOStreamTransport extends TTransport {
       throw new TTransportException(TTransportException.UNKNOWN, iox);
     }
     if (bytesRead < 0) {
-      throw new TTransportException(TTransportException.END_OF_FILE);
+      throw new TTransportException(TTransportException.END_OF_FILE, "Socket is closed by peer.");
     }
     return bytesRead;
   }
@@ -157,6 +206,9 @@ public class TIOStreamTransport extends TTransport {
     }
     try {
       outputStream_.flush();
+
+      resetConsumedMessageSize(-1);
+
     } catch (IOException iox) {
       throw new TTransportException(TTransportException.UNKNOWN, iox);
     }

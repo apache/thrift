@@ -21,11 +21,14 @@
 from __future__ import division
 import logging
 import os
+import signal
 import sys
 import time
 from optparse import OptionParser
 
 from util import local_libpath
+sys.path.insert(0, local_libpath())
+from thrift.protocol import TProtocol, TProtocolDecorator
 
 SCRIPT_DIR = os.path.abspath(os.path.dirname(__file__))
 
@@ -172,28 +175,92 @@ class TestHandler(object):
 
     def testMulti(self, arg0, arg1, arg2, arg3, arg4, arg5):
         if options.verbose > 1:
-            logging.info('testMulti(%s)' % [arg0, arg1, arg2, arg3, arg4, arg5])
+            logging.info('testMulti(%s, %s, %s, %s, %s, %s)' % (arg0, arg1, arg2, arg3, arg4, arg5))
         return Xtruct(string_thing='Hello2',
                       byte_thing=arg0, i32_thing=arg1, i64_thing=arg2)
 
 
+class SecondHandler(object):
+    def secondtestString(self, argument):
+        return "testString(\"" + argument + "\")"
+
+
+# LAST_SEQID is a global because we have one transport and multiple protocols
+# running on it (when multiplexed)
+LAST_SEQID = None
+
+
+class TPedanticSequenceIdProtocolWrapper(TProtocolDecorator.TProtocolDecorator):
+    """
+    Wraps any protocol with sequence ID checking: looks for outbound
+    uniqueness as well as request/response alignment.
+    """
+    def __init__(self, protocol):
+        # TProtocolDecorator.__new__ does all the heavy lifting
+        pass
+
+    def readMessageBegin(self):
+        global LAST_SEQID
+        (name, type, seqid) =\
+            super(TPedanticSequenceIdProtocolWrapper, self).readMessageBegin()
+        if LAST_SEQID is not None and LAST_SEQID == seqid:
+            raise TProtocol.TProtocolException(
+                TProtocol.TProtocolException.INVALID_DATA,
+                "We received the same seqid {0} twice in a row".format(seqid))
+        LAST_SEQID = seqid
+        return (name, type, seqid)
+
+
+def make_pedantic(proto):
+    """ Wrap a protocol in the pedantic sequence ID wrapper. """
+    # NOTE: this is disabled for now as many clients send seqid
+    #       of zero and that is okay, need a way to identify
+    #       clients that MUST send seqid unique to function right
+    #       or just force all implementations to send unique seqids (preferred)
+    return proto  # TPedanticSequenceIdProtocolWrapper(proto)
+
+
+class TPedanticSequenceIdProtocolFactory(TProtocol.TProtocolFactory):
+    def __init__(self, encapsulated):
+        super(TPedanticSequenceIdProtocolFactory, self).__init__()
+        self.encapsulated = encapsulated
+
+    def getProtocol(self, trans):
+        return make_pedantic(self.encapsulated.getProtocol(trans))
+
+
 def main(options):
+    # common header allowed client types
+    allowed_client_types = [
+        THeaderTransport.THeaderClientType.HEADERS,
+        THeaderTransport.THeaderClientType.FRAMED_BINARY,
+        THeaderTransport.THeaderClientType.UNFRAMED_BINARY,
+        THeaderTransport.THeaderClientType.FRAMED_COMPACT,
+        THeaderTransport.THeaderClientType.UNFRAMED_COMPACT,
+    ]
+
     # set up the protocol factory form the --protocol option
     prot_factories = {
-        'binary': TBinaryProtocol.TBinaryProtocolFactory,
-        'accel': TBinaryProtocol.TBinaryProtocolAcceleratedFactory,
-        'compact': TCompactProtocol.TCompactProtocolFactory,
-        'accelc': TCompactProtocol.TCompactProtocolAcceleratedFactory,
-        'json': TJSONProtocol.TJSONProtocolFactory,
+        'accel': TBinaryProtocol.TBinaryProtocolAcceleratedFactory(),
+        'multia': TBinaryProtocol.TBinaryProtocolAcceleratedFactory(),
+        'accelc': TCompactProtocol.TCompactProtocolAcceleratedFactory(),
+        'multiac': TCompactProtocol.TCompactProtocolAcceleratedFactory(),
+        'binary': TPedanticSequenceIdProtocolFactory(TBinaryProtocol.TBinaryProtocolFactory()),
+        'multi': TPedanticSequenceIdProtocolFactory(TBinaryProtocol.TBinaryProtocolFactory()),
+        'compact': TCompactProtocol.TCompactProtocolFactory(),
+        'multic': TCompactProtocol.TCompactProtocolFactory(),
+        'header': THeaderProtocol.THeaderProtocolFactory(allowed_client_types),
+        'multih': THeaderProtocol.THeaderProtocolFactory(allowed_client_types),
+        'json': TJSONProtocol.TJSONProtocolFactory(),
+        'multij': TJSONProtocol.TJSONProtocolFactory(),
     }
-    pfactory_cls = prot_factories.get(options.proto, None)
-    if pfactory_cls is None:
+    pfactory = prot_factories.get(options.proto, None)
+    if pfactory is None:
         raise AssertionError('Unknown --protocol option: %s' % options.proto)
-    pfactory = pfactory_cls()
     try:
         pfactory.string_length_limit = options.string_limit
         pfactory.container_length_limit = options.container_limit
-    except:
+    except Exception:
         # Ignore errors for those protocols that does not support length limit
         pass
 
@@ -201,14 +268,33 @@ def main(options):
     if len(args) > 1:
         raise AssertionError('Only one server type may be specified, not multiple types.')
     server_type = args[0]
+    if options.trans == 'http':
+        server_type = 'THttpServer'
 
     # Set up the handler and processor objects
     handler = TestHandler()
     processor = ThriftTest.Processor(handler)
 
+    if options.proto.startswith('multi'):
+        secondHandler = SecondHandler()
+        secondProcessor = SecondService.Processor(secondHandler)
+
+        multiplexedProcessor = TMultiplexedProcessor()
+        multiplexedProcessor.registerDefault(processor)
+        multiplexedProcessor.registerProcessor('ThriftTest', processor)
+        multiplexedProcessor.registerProcessor('SecondService', secondProcessor)
+        processor = multiplexedProcessor
+
+    global server
+
     # Handle THttpServer as a special case
     if server_type == 'THttpServer':
-        server = THttpServer.THttpServer(processor, ('', options.port), pfactory)
+        if options.ssl:
+            __certfile = os.path.join(os.path.dirname(SCRIPT_DIR), "keys", "server.crt")
+            __keyfile = os.path.join(os.path.dirname(SCRIPT_DIR), "keys", "server.key")
+            server = THttpServer.THttpServer(processor, ('', options.port), pfactory, cert_file=__certfile, key_file=__keyfile)
+        else:
+            server = THttpServer.THttpServer(processor, ('', options.port), pfactory)
         server.serve()
         sys.exit(0)
 
@@ -221,7 +307,7 @@ def main(options):
         from thrift.transport import TSSLSocket
         transport = TSSLSocket.TSSLServerSocket(host, options.port, certfile=abs_key_path)
     else:
-        transport = TSocket.TServerSocket(host, options.port)
+        transport = TSocket.TServerSocket(host, options.port, options.domain_socket)
     tfactory = TTransport.TBufferedTransportFactory()
     if options.trans == 'buffered':
         tfactory = TTransport.TBufferedTransportFactory()
@@ -255,7 +341,7 @@ def main(options):
                     logging.info('Requesting server to stop()')
                 try:
                     server.stop()
-                except:
+                except Exception:
                     pass
             signal.signal(signal.SIGALRM, clean_shutdown)
             signal.alarm(4)
@@ -267,7 +353,16 @@ def main(options):
     # enter server main loop
     server.serve()
 
+
+def exit_gracefully(signum, frame):
+    print("SIGINT received\n")
+    server.shutdown()   # doesn't work properly, yet
+    sys.exit(0)
+
+
 if __name__ == '__main__':
+    signal.signal(signal.SIGINT, exit_gracefully)
+
     parser = OptionParser()
     parser.add_option('--libpydir', type='string', dest='libpydir',
                       help='include this directory to sys.path for locating library code')
@@ -287,28 +382,32 @@ if __name__ == '__main__':
                       dest="verbose", const=0,
                       help="minimal output")
     parser.add_option('--protocol', dest="proto", type="string",
-                      help="protocol to use, one of: accel, binary, compact, json")
+                      help="protocol to use, one of: accel, accelc, binary, compact, json, multi, multia, multiac, multic, multih, multij")
     parser.add_option('--transport', dest="trans", type="string",
-                      help="transport to use, one of: buffered, framed")
+                      help="transport to use, one of: buffered, framed, http")
+    parser.add_option('--domain-socket', dest="domain_socket", type="string",
+                      help="Unix domain socket path")
     parser.add_option('--container-limit', dest='container_limit', type='int', default=None)
     parser.add_option('--string-limit', dest='string_limit', type='int', default=None)
-    parser.set_defaults(port=9090, verbose=1, proto='binary')
+    parser.set_defaults(port=9090, verbose=1, proto='binary', transport='buffered')
     options, args = parser.parse_args()
 
     # Print TServer log to stdout so that the test-runner can redirect it to log files
     logging.basicConfig(level=options.verbose)
 
     sys.path.insert(0, os.path.join(SCRIPT_DIR, options.genpydir))
-    sys.path.insert(0, local_libpath())
 
-    from ThriftTest import ThriftTest
+    from ThriftTest import ThriftTest, SecondService
     from ThriftTest.ttypes import Xtruct, Xception, Xception2, Insanity
     from thrift.Thrift import TException
+    from thrift.TMultiplexedProcessor import TMultiplexedProcessor
+    from thrift.transport import THeaderTransport
     from thrift.transport import TTransport
     from thrift.transport import TSocket
     from thrift.transport import TZlibTransport
     from thrift.protocol import TBinaryProtocol
     from thrift.protocol import TCompactProtocol
+    from thrift.protocol import THeaderProtocol
     from thrift.protocol import TJSONProtocol
     from thrift.server import TServer, TNonblockingServer, THttpServer
 

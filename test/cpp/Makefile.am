@@ -16,17 +16,19 @@
 # specific language governing permissions and limitations
 # under the License.
 #
-AUTOMAKE_OPTIONS = subdir-objects serial-tests
+AUTOMAKE_OPTIONS = subdir-objects serial-tests nostdinc
 
 BUILT_SOURCES = gen-cpp/ThriftTest.cpp \
                 gen-cpp/ThriftTest_types.cpp \
                 gen-cpp/ThriftTest_constants.cpp \
-                gen-cpp/StressTest_types.cpp \
-                gen-cpp/StressTest_constants.cpp \
+                gen-cpp/SecondService.cpp \
                 gen-cpp/Service.cpp
 
 noinst_LTLIBRARIES = libtestgencpp.la libstresstestgencpp.la
 nodist_libtestgencpp_la_SOURCES = \
+	gen-cpp/SecondService.cpp \
+	gen-cpp/SecondService.h \
+	gen-cpp/SecondService.tcc \
 	gen-cpp/ThriftTest_constants.cpp \
 	gen-cpp/ThriftTest_constants.h \
 	gen-cpp/ThriftTest_types.cpp \
@@ -40,9 +42,6 @@ nodist_libtestgencpp_la_SOURCES = \
 libtestgencpp_la_LIBADD = $(top_builddir)/lib/cpp/libthrift.la
 
 nodist_libstresstestgencpp_la_SOURCES = \
-	gen-cpp/StressTest_constants.cpp \
-	gen-cpp/StressTest_types.cpp \
-	gen-cpp/StressTest_constants.h \
 	gen-cpp/StressTest_types.h \
 	gen-cpp/Service.cpp \
 	gen-cpp/Service.h
@@ -98,20 +97,21 @@ StressTestNonBlocking_LDADD = \
 #
 # Common thrift code generation rules
 #
-THRIFT = $(top_builddir)/compiler/cpp/thrift
-
-gen-cpp/ThriftTest.cpp gen-cpp/ThriftTest_types.cpp gen-cpp/ThriftTest_constants.cpp: $(top_srcdir)/test/ThriftTest.thrift $(THRIFT)
+gen-cpp/ThriftTest.cpp gen-cpp/ThriftTest_types.cpp gen-cpp/ThriftTest_constants.cpp gen-cpp/SecondService.cpp gen-cpp/SecondService.h gen-cpp/SecondService.tcc: $(top_srcdir)/test/ThriftTest.thrift $(THRIFT)
 	$(THRIFT) --gen cpp:templates,cob_style -r $<
 
-gen-cpp/StressTest_types.cpp gen-cpp/StressTest_constants.cpp gen-cpp/Service.cpp: $(top_srcdir)/test/StressTest.thrift $(THRIFT)
+gen-cpp/Service.cpp: $(top_srcdir)/test/StressTest.thrift $(THRIFT)
 	$(THRIFT) --gen cpp $<
 
-AM_CPPFLAGS = $(BOOST_CPPFLAGS) $(LIBEVENT_CPPFLAGS) -I$(top_srcdir)/lib/cpp/src -Igen-cpp
-AM_CXXFLAGS = -Wall -Wextra -pedantic
+gen-cpp/SpecificNameTest_types.cpp gen-cpp/EchoService.cpp: $(top_srcdir)/test/SpecificName.thrift $(THRIFT)
+	$(THRIFT) --gen cpp $<
+
+AM_CPPFLAGS = $(BOOST_CPPFLAGS) $(LIBEVENT_CPPFLAGS) -I$(top_srcdir)/lib/cpp/src -Igen-cpp -I.
+AM_CXXFLAGS = -Wall -Wextra -pedantic -D__STDC_FORMAT_MACROS -D__STDC_LIMIT_MACROS
 AM_LDFLAGS = $(BOOST_LDFLAGS) $(LIBEVENT_LDFLAGS) $(ZLIB_LIBS)
 
 clean-local:
-	$(RM) gen-cpp/*
+	$(RM) -r gen-cpp/
 
 style-local:
 	$(CPPSTYLE_CMD)
@@ -120,6 +120,4 @@ EXTRA_DIST = \
 	src/TestClient.cpp \
 	src/TestServer.cpp \
 	src/StressTest.cpp \
-	src/StressTestNonBlocking.cpp \
-	realloc/realloc_test.c \
-	realloc/Makefile
+	src/StressTestNonBlocking.cpp

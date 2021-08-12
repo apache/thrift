@@ -15,7 +15,7 @@ def main(args):
     if len(args) > 1:
         incr = int(args[1])
         if incr:
-            socktype = zmq.DOWNSTREAM
+            socktype = zmq.PUSH
             endpoint = "tcp://127.0.0.1:9091"
 
     ctx = zmq.Context()
@@ -29,7 +29,7 @@ def main(args):
         time.sleep(0.05)
     else:
         value = client.get()
-        print value
+        print(value)
 
 
 if __name__ == "__main__":

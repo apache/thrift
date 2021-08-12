@@ -23,11 +23,13 @@
 #include <QIODevice>
 
 #include <thrift/transport/TBufferTransports.h>
-
-using boost::shared_ptr;
+#include <memory>
 
 namespace apache {
 namespace thrift {
+
+using std::shared_ptr;
+
 namespace transport {
 
 TQIODeviceTransport::TQIODeviceTransport(shared_ptr<QIODevice> dev) : dev_(dev) {
@@ -44,7 +46,7 @@ void TQIODeviceTransport::open() {
   }
 }
 
-bool TQIODeviceTransport::isOpen() {
+bool TQIODeviceTransport::isOpen() const {
   return dev_->isOpen();
 }
 
@@ -89,7 +91,7 @@ uint32_t TQIODeviceTransport::read(uint8_t* buf, uint32_t len) {
                               "read(): underlying QIODevice is not open");
   }
 
-  actualSize = (uint32_t)std::min((qint64)len, dev_->bytesAvailable());
+  actualSize = (uint32_t)(std::min)((qint64)len, dev_->bytesAvailable());
   readSize = dev_->read(reinterpret_cast<char*>(buf), actualSize);
 
   if (readSize < 0) {
@@ -155,7 +157,7 @@ void TQIODeviceTransport::flush() {
 uint8_t* TQIODeviceTransport::borrow(uint8_t* buf, uint32_t* len) {
   (void)buf;
   (void)len;
-  return NULL;
+  return nullptr;
 }
 
 void TQIODeviceTransport::consume(uint32_t len) {

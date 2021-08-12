@@ -352,33 +352,12 @@ class TestServerHandler implements ThriftTest {
     {
         trace("testInsanity()");
 
-        var hello = new Xtruct();
-        hello.string_thing = "Hello2";
-        hello.byte_thing = 2;
-        hello.i32_thing = 2;
-        hello.i64_thing = Int64.make(0, 2);
-
-        var goodbye = new Xtruct();
-        goodbye.string_thing = "Goodbye4";
-        goodbye.byte_thing = 4;
-        goodbye.i32_thing = 4;
-        goodbye.i64_thing = Int64.make(0, 4);
-
-        var crazy = new Insanity();
-        crazy.userMap = new IntMap< haxe.Int64>();
-        crazy.userMap.set(Numberz.EIGHT, Int64.make(0,8));
-        crazy.xtructs = new List<Xtruct>();
-        crazy.xtructs.add(goodbye);
-
-        var looney = new Insanity();
-        crazy.userMap.set(Numberz.FIVE, Int64.make(0,5));
-        crazy.xtructs.add(hello);
-
         var first_map = new IntMap< Insanity>();
-        first_map.set(Numberz.TWO, crazy);
-        first_map.set(Numberz.THREE, crazy);
+        first_map.set(Numberz.TWO, argument);
+        first_map.set(Numberz.THREE, argument);
 
         var second_map = new IntMap< Insanity>();
+        var looney = new Insanity();
         second_map.set(Numberz.SIX, looney);
 
         var insane = new Int64Map< IntMap< Insanity>>();

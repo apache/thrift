@@ -17,7 +17,7 @@
 # under the License.
 #
 
-from .TProtocol import TType, TProtocolBase, TProtocolException
+from .TProtocol import TType, TProtocolBase, TProtocolException, TProtocolFactory
 from struct import pack, unpack
 
 
@@ -235,7 +235,7 @@ class TBinaryProtocol(TProtocolBase):
         return s
 
 
-class TBinaryProtocolFactory(object):
+class TBinaryProtocolFactory(TProtocolFactory):
     def __init__(self, strictRead=False, strictWrite=True, **kwargs):
         self.strictRead = strictRead
         self.strictWrite = strictWrite
@@ -284,7 +284,7 @@ class TBinaryProtocolAccelerated(TBinaryProtocol):
             self._fast_encode = fastbinary.encode_binary
 
 
-class TBinaryProtocolAcceleratedFactory(object):
+class TBinaryProtocolAcceleratedFactory(TProtocolFactory):
     def __init__(self,
                  string_length_limit=None,
                  container_length_limit=None,

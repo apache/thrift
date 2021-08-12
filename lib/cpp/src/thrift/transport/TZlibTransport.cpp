@@ -110,7 +110,7 @@ TZlibTransport::~TZlibTransport() {
   delete wstream_;
 }
 
-bool TZlibTransport::isOpen() {
+bool TZlibTransport::isOpen() const {
   return (readAvail() > 0) || (rstream_->avail_in > 0) || transport_->isOpen();
 }
 
@@ -131,11 +131,12 @@ bool TZlibTransport::peek() {
 // In standalone objects, we set input_ended_ to true when inflate returns
 // Z_STREAM_END.  This allows to make sure that a checksum was verified.
 
-inline int TZlibTransport::readAvail() {
+inline int TZlibTransport::readAvail() const {
   return urbuf_size_ - rstream_->avail_out - urpos_;
 }
 
 uint32_t TZlibTransport::read(uint8_t* buf, uint32_t len) {
+  checkReadBytesAvailable(len);
   uint32_t need = len;
 
   // TODO(dreiss): Skip urbuf on big reads.
@@ -255,7 +256,17 @@ void TZlibTransport::flush() {
     throw TTransportException(TTransportException::BAD_ARGS, "flush() called after finish()");
   }
 
+  flushToZlib(uwbuf_, uwpos_, Z_BLOCK);
+  uwpos_ = 0;
+
+  if(wstream_->avail_out < 6){
+    transport_->write(cwbuf_, cwbuf_size_ - wstream_->avail_out);
+    wstream_->next_out = cwbuf_;
+    wstream_->avail_out = cwbuf_size_;
+  }
+
   flushToTransport(Z_FULL_FLUSH);
+  resetConsumedMessageSize();
 }
 
 void TZlibTransport::finish() {
@@ -285,7 +296,7 @@ void TZlibTransport::flushToZlib(const uint8_t* buf, int len, int flush) {
   wstream_->avail_in = len;
 
   while (true) {
-    if (flush == Z_NO_FLUSH && wstream_->avail_in == 0) {
+    if ((flush == Z_NO_FLUSH || flush == Z_BLOCK) && wstream_->avail_in == 0) {
       break;
     }
 
@@ -322,10 +333,11 @@ const uint8_t* TZlibTransport::borrow(uint8_t* buf, uint32_t* len) {
     *len = (uint32_t)readAvail();
     return urbuf_ + urpos_;
   }
-  return NULL;
+  return nullptr;
 }
 
 void TZlibTransport::consume(uint32_t len) {
+  countConsumedMessageBytes(len);
   if (readAvail() >= (int)len) {
     urpos_ += len;
   } else {
@@ -387,6 +399,18 @@ void TZlibTransport::verifyChecksum() {
   throw TTransportException(TTransportException::CORRUPTED_DATA,
                             "verifyChecksum() called before end of "
                             "zlib stream");
+}
+
+TZlibTransportFactory::TZlibTransportFactory(std::shared_ptr<TTransportFactory> transportFactory)
+  :transportFactory_(transportFactory) {
+}
+
+std::shared_ptr<TTransport> TZlibTransportFactory::getTransport(std::shared_ptr<TTransport> trans) {
+  if (transportFactory_) {
+    return std::shared_ptr<TTransport>(new TZlibTransport(transportFactory_->getTransport(trans)));
+  } else {
+    return std::shared_ptr<TTransport>(new TZlibTransport(trans));
+  }
 }
 }
 }

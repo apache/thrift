@@ -19,6 +19,8 @@
 package org.apache.thrift.transport;
 
 
+import org.apache.thrift.TConfiguration;
+
 public class ReadCountingTransport extends TTransport {
   public int readCount = 0;
   private TTransport trans;
@@ -57,5 +59,20 @@ public class ReadCountingTransport extends TTransport {
     if (!isOpen()) {
       throw new TTransportException(TTransportException.NOT_OPEN, "Transport is closed");
     }
+  }
+
+  @Override
+  public TConfiguration getConfiguration() {
+    return trans.getConfiguration();
+  }
+
+  @Override
+  public void updateKnownMessageSize(long size) throws TTransportException {
+    trans.updateKnownMessageSize(size);
+  }
+
+  @Override
+  public void checkReadBytesAvailable(long numBytes) throws TTransportException {
+    trans.checkReadBytesAvailable(numBytes);
   }
 }

@@ -1,7 +1,7 @@
 {
   "name": "thrift",
-  "version": "0.9.3",
-  "homepage": "https://git-wip-us.apache.org/repos/asf/thrift.git",
+  "version": "0.14.1",
+  "homepage": "https://github.com/apache/thrift.git",
   "authors": [
     "Apache Thrift <dev@thrift.apache.org>"
   ],
@@ -11,6 +11,5 @@
     "thrift"
   ],
   "license": "Apache v2",
-  "ignore": [
-  ]
+  "ignore": []
 }
