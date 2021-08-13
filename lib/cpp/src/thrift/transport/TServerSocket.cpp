@@ -187,7 +187,7 @@ bool TServerSocket::isOpen() const {
   if (!listening_)
     return false;
 
-  if (!path_.empty() && (path_[0] != '\0')) {
+  if (isUnixDomainSocket() && (path_[0] != '\0')) {
     // On some platforms the domain socket file may not be instantly
     // available yet, i.e. the Windows file system can be slow. Therefore
     // we should check that the domain socket file actually exists.
@@ -339,7 +339,7 @@ void TServerSocket::_setup_tcp_sockopts() {
 
   // Defer accept
 #ifdef TCP_DEFER_ACCEPT
-  if (path_.empty()) {
+  if (!isUnixDomainSocket()) {
     if (-1 == setsockopt(serverSocket_, IPPROTO_TCP, TCP_DEFER_ACCEPT, &one, sizeof(one))) {
       int errno_copy = THRIFT_GET_SOCKET_ERROR;
       GlobalOutput.perror("TServerSocket::listen() setsockopt() TCP_DEFER_ACCEPT ", errno_copy);
@@ -391,8 +391,6 @@ void TServerSocket::listen() {
         = std::shared_ptr<THRIFT_SOCKET>(new THRIFT_SOCKET(sv[0]), destroyer_of_fine_sockets);
   }
 
-  // tcp == false means Unix Domain socket
-  bool tcp = (path_.empty());
 
   // Validate port number
   if (port_ < 0 || port_ > 0xFFFF) {
@@ -401,7 +399,7 @@ void TServerSocket::listen() {
 
   // Resolve host:port strings into an iterable of struct addrinfo*
   AddressResolutionHelper resolved_addresses;
-  if (tcp) {
+  if (!isUnixDomainSocket()) {
     try {
       resolved_addresses.resolve(address_, std::to_string(port_), SOCK_STREAM,
 #ifdef ANDROID
@@ -422,7 +420,7 @@ void TServerSocket::listen() {
   int retries = 0;
   int errno_copy = 0;
 
-  if (!tcp) {
+  if (isUnixDomainSocket()) {
     // -- Unix Domain Socket -- //
 
     serverSocket_ = socket(PF_UNIX, SOCK_STREAM, IPPROTO_IP);
@@ -538,7 +536,7 @@ void TServerSocket::listen() {
   // throw an error if we failed to bind properly
   if (retries > retryLimit_) {
     char errbuf[1024];
-    if (!tcp) {
+    if (isUnixDomainSocket()) {
       THRIFT_SNPRINTF(errbuf, sizeof(errbuf), "TServerSocket::listen() PATH %s", path_.c_str());
     } else {
       THRIFT_SNPRINTF(errbuf, sizeof(errbuf), "TServerSocket::listen() BIND %d", port_);
@@ -565,8 +563,16 @@ void TServerSocket::listen() {
   listening_ = true;
 }
 
-int TServerSocket::getPort() {
+int TServerSocket::getPort() const {
   return port_;
+}
+
+std::string TServerSocket::getPath() const {
+    return path_;
+}
+
+bool TServerSocket::isUnixDomainSocket() const {
+    return !path_.empty();
 }
 
 shared_ptr<TTransport> TServerSocket::acceptImpl() {

@@ -20,6 +20,7 @@
 #define _THRIFT_PROTOCOL_TCOMPACTPROTOCOL_TCC_ 1
 
 #include <limits>
+#include <cstdlib>
 
 #include "thrift/config.h"
 

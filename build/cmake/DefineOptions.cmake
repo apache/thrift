@@ -145,7 +145,7 @@ endif ()
 
 # Visual Studio only options
 if(MSVC)
-    option(WITH_MT "Build using MT instead of MD (MSVC only)" OFF)
+    option(WITH_MT "Build using the static runtime 'MT' instead of the shared DLL-specific runtime 'MD' (MSVC only)" OFF)
 endif(MSVC)
 
 macro(MESSAGE_DEP flag summary)
@@ -207,6 +207,9 @@ message(STATUS)
 message(STATUS "  Build Python library:                       ${BUILD_PYTHON}")
 MESSAGE_DEP(WITH_PYTHON "Disabled by WITH_PYTHON=OFF")
 MESSAGE_DEP(PYTHONLIBS_FOUND "Python libraries missing")
+if(MSVC)
+    message(STATUS "  Using static runtime library:               ${WITH_MT}")
+endif(MSVC)
 message(STATUS)
 message(STATUS)
 message(STATUS "----------------------------------------------------------")
