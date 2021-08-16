@@ -24,14 +24,12 @@ under the License.
 Using Thrift with Go
 ====================
 
-Thrift supports Go 1.7+
+Thrift supports the currently officially supported Go releases (the latest 2).
 
-In following Go conventions, we recommend you use the 'go' tool to install
-Thrift for go.
+After initializing the go modules file in your project, use the following
+command to add the most recent version of the package:
 
-    $ go get github.com/apache/thrift/lib/go/thrift/...
-
-Will retrieve and install the most recent version of the package.
+    $ go get github.com/apache/thrift
 
 
 A note about optional fields

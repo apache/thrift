@@ -19,7 +19,7 @@
   -->
   <PropertyGroup>
     <TargetFramework>net5.0</TargetFramework>
-    <Version>0.15.0.0</Version>
+    <Version>0.16.0.0</Version>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="CompareNETObjects" Version="4.72.0" />

@@ -141,21 +141,29 @@ public:
    *
    * @return string host identifier
    */
-  std::string getHost();
+  std::string getHost() const;
 
   /**
    * Get the port that the socket is connected to
    *
    * @return int port number
    */
-  int getPort();
+  int getPort() const;
 
   /**
    * Get the Unix domain socket path that the socket is connected to
    *
    * @return std::string path
    */
-  std::string getPath();
+  std::string getPath() const;
+
+  /**
+   * Whether the socket is a Unix domain socket. This is the same as checking
+   * if getPath() is not empty.
+   *
+   * @return Is the socket a Unix domain socket?
+   */
+  bool isUnixDomainSocket() const;
 
   /**
    * Set the host that socket will connect to
@@ -285,7 +293,7 @@ public:
    * Constructor to create socket from file descriptor that
    * can be interrupted safely.
    */
-  TSocket(THRIFT_SOCKET socket, std::shared_ptr<THRIFT_SOCKET> interruptListener, 
+  TSocket(THRIFT_SOCKET socket, std::shared_ptr<THRIFT_SOCKET> interruptListener,
          std::shared_ptr<TConfiguration> config = nullptr);
 
   /**

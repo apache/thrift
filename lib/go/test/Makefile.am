@@ -44,11 +44,15 @@ gopath: $(THRIFT) $(THRIFTTEST) \
 				ConflictNamespaceTestB.thrift \
 				ConflictNamespaceTestC.thrift \
 				ConflictNamespaceTestD.thrift \
+				ConflictNamespaceTestE.thrift \
+				ConflictNamespaceTestF.thrift \
 				ConflictNamespaceTestSuperThing.thrift \
 				ConflictNamespaceServiceTest.thrift \
 				DuplicateImportsTest.thrift \
 				EqualsTest.thrift \
-				ConflictArgNamesTest.thrift
+				ConflictArgNamesTest.thrift \
+				ConstOptionalFieldImport.thrift \
+				ConstOptionalField.thrift
 	mkdir -p gopath/src
 	grep -v list.*map.*list.*map $(THRIFTTEST) | grep -v 'set<Insanity>' > ThriftTest.thrift
 	$(THRIFT) $(THRIFTARGS) -r IncludesTest.thrift
@@ -72,11 +76,14 @@ gopath: $(THRIFT) $(THRIFTTEST) \
 	$(THRIFT) $(THRIFTARGS) ConflictNamespaceTestB.thrift
 	$(THRIFT) $(THRIFTARGS) ConflictNamespaceTestC.thrift
 	$(THRIFT) $(THRIFTARGS) ConflictNamespaceTestD.thrift
+	$(THRIFT) $(THRIFTARGS) ConflictNamespaceTestE.thrift
+	$(THRIFT) $(THRIFTARGS) ConflictNamespaceTestF.thrift
 	$(THRIFT) $(THRIFTARGS) ConflictNamespaceTestSuperThing.thrift
 	$(THRIFT) $(THRIFTARGS) ConflictNamespaceServiceTest.thrift
 	$(THRIFT) $(THRIFTARGS) -r DuplicateImportsTest.thrift
 	$(THRIFT) $(THRIFTARGS) EqualsTest.thrift
 	$(THRIFT) $(THRIFTARGS) ConflictArgNamesTest.thrift
+	$(THRIFT) $(THRIFTARGS) -r ConstOptionalField.thrift
 	ln -nfs ../../tests gopath/src/tests
 	cp -r ./dontexportrwtest gopath/src
 	touch gopath
@@ -94,7 +101,7 @@ check: gopath
 				./gopath/src/dontexportrwtest \
 				./gopath/src/ignoreinitialismstest \
 				./gopath/src/unionbinarytest \
-				./gopath/src/conflictnamespacetestsuperthing \
+				./gopath/src/conflict/super \
 				./gopath/src/conflict/context/conflict_service-remote \
 				./gopath/src/servicestest/container_test-remote \
 				./gopath/src/duplicateimportstest \
@@ -121,6 +128,8 @@ EXTRA_DIST = \
 	ConflictNamespaceTestC.thrift \
 	ConflictNamespaceTestD.thrift \
 	ConflictNamespaceTestSuperThing.thrift \
+	ConstOptionalField.thrift \
+	ConstOptionalFieldImport.thrift \
 	DontExportRWTest.thrift \
 	DuplicateImportsTest.thrift \
 	ErrorTest.thrift \

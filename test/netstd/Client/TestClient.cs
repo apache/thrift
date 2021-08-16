@@ -15,6 +15,9 @@
 // specific language governing permissions and limitations
 // under the License.
 
+#pragma warning disable IDE0066 // switch expression
+#pragma warning disable IDE0057 // substring
+
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
