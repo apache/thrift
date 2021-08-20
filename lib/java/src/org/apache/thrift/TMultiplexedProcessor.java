@@ -70,7 +70,7 @@ public class TMultiplexedProcessor implements TProcessor {
 
     /**
      * Register a service to be called to process queries without service name
-     * @param processor
+     * @param processor the service to be called.
      */
     public void registerDefault(TProcessor processor) {
         defaultProcessor = processor;
