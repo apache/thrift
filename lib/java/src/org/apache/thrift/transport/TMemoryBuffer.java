@@ -34,6 +34,7 @@ public class TMemoryBuffer extends TEndpointTransport {
    * being written to it.
    *
    * @param size the initial size of the buffer
+   * @throws TTransportException on error initializing the underlying transport.
    */
   public TMemoryBuffer(int size) throws TTransportException {
     super(new TConfiguration());
@@ -46,8 +47,9 @@ public class TMemoryBuffer extends TEndpointTransport {
    * internal buffer will grow as necessary to accommodate the size of the data
    * being written to it.
    *
-   * @param config
+   * @param config the configuration to use.
    * @param size the initial size of the buffer
+   * @throws TTransportException on error initializing the underlying transport.
    */
   public TMemoryBuffer(TConfiguration config, int size) throws TTransportException {
     super(config);
@@ -121,4 +123,3 @@ public class TMemoryBuffer extends TEndpointTransport {
     return arr_.get();
   }
 }
-

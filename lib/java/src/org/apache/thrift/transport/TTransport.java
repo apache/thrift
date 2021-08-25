@@ -198,7 +198,7 @@ public abstract class TTransport implements Closeable {
 
   /**
    * Consume len bytes from the underlying buffer.
-   * @param len
+   * @param len the number of bytes to consume from the underlying buffer.
    */
   public void consumeBuffer(int len) {}
 

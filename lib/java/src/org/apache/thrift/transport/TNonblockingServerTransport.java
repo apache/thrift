@@ -32,7 +32,7 @@ public abstract class TNonblockingServerTransport extends TServerTransport {
   /**
    *
    * @return an incoming connection or null if there is none.
-   * @throws TTransportException
+   * @throws TTransportException on error during this operation.
    */
   @Override
   public abstract TNonblockingTransport accept() throws TTransportException;

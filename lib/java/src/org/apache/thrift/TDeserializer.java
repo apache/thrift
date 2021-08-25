@@ -43,7 +43,7 @@ public class TDeserializer {
   /**
    * Create a new TDeserializer that uses the TBinaryProtocol by default.
    *
-   * @throws TTransportException
+   * @throws TTransportException if there an error initializing the underlying transport.
    */
   public TDeserializer() throws TTransportException {
     this(new TBinaryProtocol.Factory());
@@ -54,7 +54,7 @@ public class TDeserializer {
    * factory that is passed in.
    *
    * @param protocolFactory Factory to create a protocol
-   * @throws TTransportException
+   * @throws TTransportException if there an error initializing the underlying transport.
    */
   public TDeserializer(TProtocolFactory protocolFactory) throws TTransportException {
     trans_ = new TMemoryInputTransport(new TConfiguration());

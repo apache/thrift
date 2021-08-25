@@ -31,6 +31,7 @@ public final class AutoExpandingBufferWriteTransport extends TEndpointTransport 
 
   /**
    * Constructor.
+   * @param config the configuration to use. Currently used for defining the maximum message size.
    * @param initialCapacity the initial capacity of the buffer
    * @param frontReserve space, if any, to reserve at the beginning such
    *                     that the first write is after this reserve.
