@@ -71,6 +71,8 @@ macro_rules! assert_success {
 }
 
 pub mod protocol;
+
+#[cfg(feature = "server")]
 pub mod server;
 pub mod transport;
 
