@@ -45,5 +45,4 @@
     <Exec Condition="Exists('thrift')" Command="thrift -out $(ProjectDir) -gen netstd:wcf,union,serial -r ./../../tutorial.thrift" />
     <Exec Condition="Exists('./../../../compiler/cpp/thrift')" Command="./../../../compiler/cpp/thrift -out $(ProjectDir) -gen netstd:wcf,union,serial -r ./../../tutorial.thrift" />
   </Target>
-
 </Project>
