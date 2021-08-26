@@ -36,13 +36,11 @@ import (
 var DefaultHttpClient *http.Client = http.DefaultClient
 
 type THttpClient struct {
-	client             *http.Client
-	response           *http.Response
-	url                *url.URL
-	requestBuffer      *bytes.Buffer
-	header             http.Header
-	nsecConnectTimeout int64
-	nsecReadTimeout    int64
+	client        *http.Client
+	response      *http.Response
+	url           *url.URL
+	requestBuffer *bytes.Buffer
+	header        http.Header
 }
 
 type THttpClientTransportFactory struct {

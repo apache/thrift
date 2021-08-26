@@ -36,7 +36,6 @@ var domain_socket = flag.String("domain-socket", "", "Domain Socket (e.g. /tmp/t
 var transport = flag.String("transport", "buffered", "Transport: buffered, framed, http, zlib")
 var protocol = flag.String("protocol", "binary", "Protocol: binary, compact, json")
 var ssl = flag.Bool("ssl", false, "Encrypted Transport using SSL")
-var zlib = flag.Bool("zlib", false, "Wrapped Transport using Zlib")
 var testloops = flag.Int("testloops", 1, "Number of Tests")
 
 func main() {
@@ -131,6 +130,9 @@ func callEverything(client *thrifttest.ThriftTestClient) {
 		binout[i] = byte(i)
 	}
 	bin, err := client.TestBinary(defaultCtx, binout)
+	if err != nil {
+		t.Fatalf("TestBinary failed with %v", err)
+	}
 	for i := 0; i < 256; i++ {
 		if binout[i] != bin[i] {
 			t.Fatalf("Unexpected TestBinary() result expected %d, got %d ", binout[i], bin[i])

@@ -23,6 +23,7 @@ import (
 	"errors"
 	"time"
 
+	//lint:ignore ST1001 allow dot import here
 	. "github.com/apache/thrift/test/go/src/gen/thrifttest"
 )
 
@@ -104,6 +105,7 @@ func (p *simpleHandler) TestMapMap(hello int32) (r map[int32]map[int32]int32, er
 }
 
 func (p *simpleHandler) TestInsanity(argument *Insanity) (r map[UserId]map[Numberz]*Insanity, err error) {
+	//lint:ignore ST1005 To be consistent with other language libraries.
 	return nil, errors.New("No Insanity")
 }
 
@@ -125,6 +127,7 @@ func (p *simpleHandler) TestException(arg string) (err error) {
 		e.Message = arg
 		return e
 	case "TException":
+		//lint:ignore ST1005 To be consistent with other language libraries.
 		return errors.New("Just TException")
 	}
 	return
