@@ -213,20 +213,18 @@ func ProtocolTest2(t *testing.T, pf ProtocolFactory) {
 }
 
 func TestSerializer(t *testing.T) {
-
-	var protocol_factories map[string]ProtocolFactory
-	protocol_factories = make(map[string]ProtocolFactory)
-	protocol_factories["Binary"] = NewTBinaryProtocolFactoryDefault()
-	protocol_factories["Compact"] = NewTCompactProtocolFactory()
-	//protocol_factories["SimpleJSON"] = NewTSimpleJSONProtocolFactory() - write only, can't be read back by design
-	protocol_factories["JSON"] = NewTJSONProtocolFactory()
+	protocolFactories := make(map[string]ProtocolFactory)
+	protocolFactories["Binary"] = NewTBinaryProtocolFactoryDefault()
+	protocolFactories["Compact"] = NewTCompactProtocolFactory()
+	//protocolFactories["SimpleJSON"] = NewTSimpleJSONProtocolFactory() - write only, can't be read back by design
+	protocolFactories["JSON"] = NewTJSONProtocolFactory()
 
 	tests := make(map[string]func(*testing.T, ProtocolFactory))
 	tests["Test 1"] = ProtocolTest1
 	tests["Test 2"] = ProtocolTest2
 	//tests["Test 3"] = ProtocolTest3 // Example of how to add additional tests
 
-	for name, pf := range protocol_factories {
+	for name, pf := range protocolFactories {
 		t.Run(
 			name,
 			func(t *testing.T) {
@@ -241,7 +239,6 @@ func TestSerializer(t *testing.T) {
 			},
 		)
 	}
-
 }
 
 func TestSerializerPoolAsync(t *testing.T) {

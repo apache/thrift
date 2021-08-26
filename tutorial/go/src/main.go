@@ -20,6 +20,7 @@ package main
  */
 
 import (
+	"crypto/tls"
 	"flag"
 	"fmt"
 	"os"
@@ -47,13 +48,13 @@ func main() {
 	var protocolFactory thrift.TProtocolFactory
 	switch *protocol {
 	case "compact":
-		protocolFactory = thrift.NewTCompactProtocolFactory()
+		protocolFactory = thrift.NewTCompactProtocolFactoryConf(nil)
 	case "simplejson":
-		protocolFactory = thrift.NewTSimpleJSONProtocolFactory()
+		protocolFactory = thrift.NewTSimpleJSONProtocolFactoryConf(nil)
 	case "json":
 		protocolFactory = thrift.NewTJSONProtocolFactory()
 	case "binary", "":
-		protocolFactory = thrift.NewTBinaryProtocolFactoryDefault()
+		protocolFactory = thrift.NewTBinaryProtocolFactoryConf(nil)
 	default:
 		fmt.Fprint(os.Stderr, "Invalid protocol specified", protocol, "\n")
 		Usage()
@@ -61,6 +62,11 @@ func main() {
 	}
 
 	var transportFactory thrift.TTransportFactory
+	cfg := &thrift.TConfiguration{
+		TLSConfig: &tls.Config{
+			InsecureSkipVerify: true,
+		},
+	}
 	if *buffered {
 		transportFactory = thrift.NewTBufferedTransportFactory(8192)
 	} else {
@@ -68,7 +74,7 @@ func main() {
 	}
 
 	if *framed {
-		transportFactory = thrift.NewTFramedTransportFactory(transportFactory)
+		transportFactory = thrift.NewTFramedTransportFactoryConf(transportFactory, cfg)
 	}
 
 	if *server {
@@ -76,7 +82,7 @@ func main() {
 			fmt.Println("error running server:", err)
 		}
 	} else {
-		if err := runClient(transportFactory, protocolFactory, *addr, *secure); err != nil {
+		if err := runClient(transportFactory, protocolFactory, *addr, *secure, cfg); err != nil {
 			fmt.Println("error running client:", err)
 		}
 	}
