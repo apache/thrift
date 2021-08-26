@@ -1854,7 +1854,7 @@ void t_go_generator::generate_go_struct_writer(ostream& out,
     std::string tstruct_name(publicize(tstruct->get_name()));
     out << indent() << "if c := p.CountSetFields" << tstruct_name << "(); c != 1 {" << endl
         << indent()
-        << "  return fmt.Errorf(\"%T write union: exactly one field must be set (%d set).\", p, c)"
+        << "  return fmt.Errorf(\"%T write union: exactly one field must be set (%d set)\", p, c)"
         << endl << indent() << "}" << endl;
   }
   out << indent() << "if err := oprot.WriteStructBegin(ctx, \"" << name << "\"); err != nil {" << endl;
@@ -2489,6 +2489,7 @@ void t_go_generator::generate_service_remote(t_service* tservice) {
   f_remote << indent() << endl;
   f_remote << indent() << "cmd := flag.Arg(0)" << endl;
   f_remote << indent() << "var err error" << endl;
+  f_remote << indent() << "var cfg *thrift.TConfiguration = nil" << endl;
   f_remote << indent() << "if useHttp {" << endl;
   f_remote << indent() << "  trans, err = thrift.NewTHttpClient(parsedUrl.String())" << endl;
   f_remote << indent() << "  if len(headers) > 0 {" << endl;
@@ -2507,14 +2508,13 @@ void t_go_generator::generate_service_remote(t_service* tservice) {
   f_remote << indent() << "                 os.Exit(1)" << endl;
   f_remote << indent() << "         }" << endl;
   f_remote << indent() << "  }" << endl;
-  f_remote << indent() << "  trans, err = thrift.NewTSocket(net.JoinHostPort(host, portStr))"
-           << endl;
+  f_remote << indent() << "  trans = thrift.NewTSocketConf(net.JoinHostPort(host, portStr), cfg)" << endl;
   f_remote << indent() << "  if err != nil {" << endl;
   f_remote << indent() << "    fmt.Fprintln(os.Stderr, \"error resolving address:\", err)" << endl;
   f_remote << indent() << "    os.Exit(1)" << endl;
   f_remote << indent() << "  }" << endl;
   f_remote << indent() << "  if framed {" << endl;
-  f_remote << indent() << "    trans = thrift.NewTFramedTransport(trans)" << endl;
+  f_remote << indent() << "    trans = thrift.NewTFramedTransportConf(trans, cfg)" << endl;
   f_remote << indent() << "  }" << endl;
   f_remote << indent() << "}" << endl;
   f_remote << indent() << "if err != nil {" << endl;
@@ -2525,16 +2525,16 @@ void t_go_generator::generate_service_remote(t_service* tservice) {
   f_remote << indent() << "var protocolFactory thrift.TProtocolFactory" << endl;
   f_remote << indent() << "switch protocol {" << endl;
   f_remote << indent() << "case \"compact\":" << endl;
-  f_remote << indent() << "  protocolFactory = thrift.NewTCompactProtocolFactory()" << endl;
+  f_remote << indent() << "  protocolFactory = thrift.NewTCompactProtocolFactoryConf(cfg)" << endl;
   f_remote << indent() << "  break" << endl;
   f_remote << indent() << "case \"simplejson\":" << endl;
-  f_remote << indent() << "  protocolFactory = thrift.NewTSimpleJSONProtocolFactory()" << endl;
+  f_remote << indent() << "  protocolFactory = thrift.NewTSimpleJSONProtocolFactoryConf(cfg)" << endl;
   f_remote << indent() << "  break" << endl;
   f_remote << indent() << "case \"json\":" << endl;
   f_remote << indent() << "  protocolFactory = thrift.NewTJSONProtocolFactory()" << endl;
   f_remote << indent() << "  break" << endl;
   f_remote << indent() << "case \"binary\", \"\":" << endl;
-  f_remote << indent() << "  protocolFactory = thrift.NewTBinaryProtocolFactoryDefault()" << endl;
+  f_remote << indent() << "  protocolFactory = thrift.NewTBinaryProtocolFactoryConf(cfg)" << endl;
   f_remote << indent() << "  break" << endl;
   f_remote << indent() << "default:" << endl;
   f_remote << indent() << "  fmt.Fprintln(os.Stderr, \"Invalid protocol specified: \", protocol)"

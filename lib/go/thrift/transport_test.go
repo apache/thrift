@@ -166,12 +166,3 @@ func FindAvailableTCPServerPort(startPort int) (net.Addr, error) {
 	}
 	return nil, NewTTransportException(UNKNOWN_TRANSPORT_EXCEPTION, "Could not find available server port")
 }
-
-func valueInSlice(value string, slice []string) bool {
-	for _, v := range slice {
-		if value == v {
-			return true
-		}
-	}
-	return false
-}
