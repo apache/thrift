@@ -42,6 +42,8 @@ public class TDeserializer {
 
   /**
    * Create a new TDeserializer that uses the TBinaryProtocol by default.
+   *
+   * @throws TTransportException
    */
   public TDeserializer() throws TTransportException {
     this(new TBinaryProtocol.Factory());
@@ -52,6 +54,7 @@ public class TDeserializer {
    * factory that is passed in.
    *
    * @param protocolFactory Factory to create a protocol
+   * @throws TTransportException
    */
   public TDeserializer(TProtocolFactory protocolFactory) throws TTransportException {
     trans_ = new TMemoryInputTransport(new TConfiguration());
@@ -136,6 +139,7 @@ public class TDeserializer {
    * @param bytes The serialized object to read from
    * @param fieldIdPathFirst First of the FieldId's that define a path to a boolean field
    * @param fieldIdPathRest The rest FieldId's that define a path to a boolean field
+   * @return the deserialized value.
    * @throws TException if an error is encountered during deserialization.
    */
   public Boolean partialDeserializeBool(byte[] bytes, TFieldIdEnum fieldIdPathFirst, TFieldIdEnum ... fieldIdPathRest) throws TException {
@@ -148,6 +152,7 @@ public class TDeserializer {
    * @param bytes The serialized object to read from
    * @param fieldIdPathFirst First of the FieldId's that define a path to a byte field
    * @param fieldIdPathRest The rest FieldId's that define a path to a byte field
+   * @return the deserialized value.
    * @throws TException if an error is encountered during deserialization.
    */
   public Byte partialDeserializeByte(byte[] bytes, TFieldIdEnum fieldIdPathFirst, TFieldIdEnum ... fieldIdPathRest) throws TException {
@@ -160,6 +165,7 @@ public class TDeserializer {
    * @param bytes The serialized object to read from
    * @param fieldIdPathFirst First of the FieldId's that define a path to a double field
    * @param fieldIdPathRest The rest FieldId's that define a path to a double field
+   * @return the deserialized value.
    * @throws TException if an error is encountered during deserialization.
    */
   public Double partialDeserializeDouble(byte[] bytes, TFieldIdEnum fieldIdPathFirst, TFieldIdEnum ... fieldIdPathRest) throws TException {
@@ -172,6 +178,7 @@ public class TDeserializer {
    * @param bytes The serialized object to read from
    * @param fieldIdPathFirst First of the FieldId's that define a path to an i16 field
    * @param fieldIdPathRest The rest FieldId's that define a path to an i16 field
+   * @return the deserialized value.
    * @throws TException if an error is encountered during deserialization.
    */
   public Short partialDeserializeI16(byte[] bytes, TFieldIdEnum fieldIdPathFirst, TFieldIdEnum ... fieldIdPathRest) throws TException {
@@ -184,6 +191,7 @@ public class TDeserializer {
    * @param bytes The serialized object to read from
    * @param fieldIdPathFirst First of the FieldId's that define a path to an i32 field
    * @param fieldIdPathRest The rest FieldId's that define a path to an i32 field
+   * @return the deserialized value.
    * @throws TException if an error is encountered during deserialization.
    */
   public Integer partialDeserializeI32(byte[] bytes, TFieldIdEnum fieldIdPathFirst, TFieldIdEnum ... fieldIdPathRest) throws TException {
@@ -196,6 +204,7 @@ public class TDeserializer {
    * @param bytes The serialized object to read from
    * @param fieldIdPathFirst First of the FieldId's that define a path to an i64 field
    * @param fieldIdPathRest The rest FieldId's that define a path to an i64 field
+   * @return the deserialized value.
    * @throws TException if an error is encountered during deserialization.
    */
   public Long partialDeserializeI64(byte[] bytes, TFieldIdEnum fieldIdPathFirst, TFieldIdEnum ... fieldIdPathRest) throws TException {
@@ -208,6 +217,7 @@ public class TDeserializer {
    * @param bytes The serialized object to read from
    * @param fieldIdPathFirst First of the FieldId's that define a path to a string field
    * @param fieldIdPathRest The rest FieldId's that define a path to a string field
+   * @return the deserialized value.
    * @throws TException if an error is encountered during deserialization.
    */
   public String partialDeserializeString(byte[] bytes, TFieldIdEnum fieldIdPathFirst, TFieldIdEnum ... fieldIdPathRest) throws TException {
@@ -220,6 +230,7 @@ public class TDeserializer {
    * @param bytes The serialized object to read from
    * @param fieldIdPathFirst First of the FieldId's that define a path to a binary field
    * @param fieldIdPathRest The rest FieldId's that define a path to a binary field
+   * @return the deserialized value.
    * @throws TException if an error is encountered during deserialization.
    */
   public ByteBuffer partialDeserializeByteArray(byte[] bytes, TFieldIdEnum fieldIdPathFirst, TFieldIdEnum ... fieldIdPathRest) throws TException {
@@ -233,6 +244,7 @@ public class TDeserializer {
    * @param bytes The serialized object to read from
    * @param fieldIdPathFirst First of the FieldId's that define a path to a TUnion
    * @param fieldIdPathRest The rest FieldId's that define a path to a TUnion
+   * @return the deserialized value.
    * @throws TException if an error is encountered during deserialization.
    */
   public Short partialDeserializeSetFieldIdInUnion(byte[] bytes, TFieldIdEnum fieldIdPathFirst, TFieldIdEnum ... fieldIdPathRest)  throws TException {

@@ -118,8 +118,9 @@ public class TNonblockingMultiFetchClient {
   }
 
   /**
-   * return a duplication of requestBuf, so that requestBuf will not
-   * be modified by others.
+   * Returns a copy of requestBuf, so that requestBuf will not be modified by others.
+   *
+   * @return a copy of requestBuf.
    */
   public synchronized ByteBuffer getRequestBuf() {
     if (requestBuf == null) {
@@ -144,7 +145,9 @@ public class TNonblockingMultiFetchClient {
   }
 
   /**
-   * main entry function for fetching from servers
+   * Main entry function for fetching from servers.
+   *
+   * @return The fetched data.
    */
   public synchronized ByteBuffer[] fetch() {
     // clear previous results
