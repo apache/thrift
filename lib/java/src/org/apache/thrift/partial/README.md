@@ -48,7 +48,9 @@ For the Thrift `struct`, each of the following line shows a fully qualified fiel
 - structField.i16Value
 ```
 
-TBD: add additional information on defining map keys and values.
+Note that the syntax of denoting paths involving map fields do not support a way to define sub-fields of the key type.
+
+For example, the field path `structMap.stringValue` shown above has leaf segment `stringValue` which is a field in map values.
 
 ## Components
 
