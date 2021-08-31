@@ -27,11 +27,8 @@ if(NOT BUILD_SHARED_LIBS)
   add_definitions("-DTHRIFT_STATIC_DEFINE")
 endif()
 
-# SYSLIBS contains libraries that need to be linked to all lib targets
-set(SYSLIBS "")
-
 # Create the thrift C++ library
-set( thriftcpp_SOURCES
+set(thriftcpp_SOURCES
    src/thrift/TApplicationException.cpp
    src/thrift/TOutput.cpp
    src/thrift/async/TAsyncChannel.cpp
@@ -102,12 +99,21 @@ endif()
 
 # If OpenSSL is not found or disabled just ignore the OpenSSL stuff
 if(OPENSSL_FOUND AND WITH_OPENSSL)
-    list( APPEND thriftcpp_SOURCES
+    list(APPEND thriftcpp_SOURCES
        src/thrift/transport/TSSLSocket.cpp
        src/thrift/transport/TSSLServerSocket.cpp
     )
-    include_directories(SYSTEM "${OPENSSL_INCLUDE_DIR}")
-    list(APPEND SYSLIBS "${OPENSSL_LIBRARIES}")
+    if(TARGET OpenSSL::SSL OR TARGET OpenSSL::Crypto)
+        if(TARGET OpenSSL::SSL)
+            list(APPEND SYSLIBS OpenSSL::SSL)
+        endif()
+        if(TARGET OpenSSL::Crypto)
+            list(APPEND SYSLIBS OpenSSL::Crypto)
+        endif()
+    else()
+        include_directories(SYSTEM "${OPENSSL_INCLUDE_DIR}")
+        list(APPEND SYSLIBS "${OPENSSL_LIBRARIES}")
+    endif()
 endif()
 
 if(UNIX)
@@ -117,7 +123,8 @@ if(UNIX)
         list(APPEND SYSLIBS pthread)
     endif()
 endif()
-set( thriftcpp_threads_SOURCES
+
+set(thriftcpp_threads_SOURCES
     src/thrift/concurrency/ThreadFactory.cpp
     src/thrift/concurrency/Thread.cpp
     src/thrift/concurrency/Monitor.cpp
@@ -125,7 +132,7 @@ set( thriftcpp_threads_SOURCES
 )
 
 # Thrift non blocking server
-set( thriftcppnb_SOURCES
+set(thriftcppnb_SOURCES
     src/thrift/server/TNonblockingServer.cpp
     src/thrift/transport/TNonblockingServerSocket.cpp
     src/thrift/async/TEvhttpServer.cpp
@@ -134,13 +141,13 @@ set( thriftcppnb_SOURCES
 
 # If OpenSSL is not found or disabled just ignore the OpenSSL stuff
 if(OPENSSL_FOUND AND WITH_OPENSSL)
-    list( APPEND thriftcppnb_SOURCES
+    list(APPEND thriftcppnb_SOURCES
     src/thrift/transport/TNonblockingSSLServerSocket.cpp
     )
 endif()
 
 # Thrift zlib transport
-set( thriftcppz_SOURCES
+set(thriftcppz_SOURCES
     src/thrift/transport/TZlibTransport.cpp
     src/thrift/protocol/THeaderProtocol.cpp
     src/thrift/transport/THeaderTransport.cpp
@@ -148,14 +155,13 @@ set( thriftcppz_SOURCES
     src/thrift/transport/THeaderTransport.cpp
 )
 
-# Contains the thrift specific ADD_LIBRARY_THRIFT and TARGET_LINK_LIBRARIES_THRIFT
+# Contains the thrift specific ADD_LIBRARY_THRIFT macro
 include(ThriftMacros)
 
 ADD_LIBRARY_THRIFT(thrift ${thriftcpp_SOURCES} ${thriftcpp_threads_SOURCES})
+target_link_libraries(thrift PUBLIC ${SYSLIBS})
 if(WIN32)
-    TARGET_LINK_LIBRARIES_THRIFT(thrift PUBLIC ${SYSLIBS} ws2_32)
-else()
-    TARGET_LINK_LIBRARIES_THRIFT(thrift PUBLIC ${SYSLIBS})
+    target_link_libraries(thrift PUBLIC ws2_32)
 endif()
 ADD_PKGCONFIG_THRIFT(thrift)
 
@@ -164,12 +170,12 @@ if(WITH_LIBEVENT)
     include_directories(SYSTEM ${LIBEVENT_INCLUDE_DIRS})
 
     ADD_LIBRARY_THRIFT(thriftnb ${thriftcppnb_SOURCES})
-    LINK_AGAINST_THRIFT_LIBRARY(thriftnb PUBLIC thrift)
+    target_link_libraries(thriftnb PUBLIC thrift)
     if(TARGET libevent::core AND TARGET libevent::extra)
         # libevent was found via its cmake config, use modern style targets
-        TARGET_LINK_LIBRARIES_THRIFT(thriftnb PUBLIC libevent::core libevent::extra)
+        target_link_libraries(thriftnb PUBLIC libevent::core libevent::extra)
     else()
-        TARGET_LINK_LIBRARIES_THRIFT(thriftnb PUBLIC ${LIBEVENT_LIBRARIES})
+        target_link_libraries(thriftnb PUBLIC ${LIBEVENT_LIBRARIES})
     endif()
     ADD_PKGCONFIG_THRIFT(thrift-nb)
 endif()
@@ -179,8 +185,8 @@ if(WITH_ZLIB)
     include_directories(SYSTEM ${ZLIB_INCLUDE_DIRS})
 
     ADD_LIBRARY_THRIFT(thriftz ${thriftcppz_SOURCES})
-    LINK_AGAINST_THRIFT_LIBRARY(thriftz PUBLIC thrift)
-    TARGET_LINK_LIBRARIES_THRIFT(thriftz PUBLIC ${ZLIB_LIBRARIES})
+    target_link_libraries(thriftz PUBLIC thrift)
+    target_link_libraries(thriftz PUBLIC ${ZLIB_LIBRARIES})
     ADD_PKGCONFIG_THRIFT(thrift-z)
 endif()
 
