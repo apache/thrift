@@ -426,15 +426,6 @@ abstract class PartialThriftProtocol extends TProtocol {
   @Override
   public void writeFieldEnd() throws TException {}
 
-
-  private long longToZigzag(long l) {
-    return (l << 1) ^ (l >> 63);
-  }
-
-  private int intToZigZag(int n) {
-    return (n << 1) ^ (n >> 31);
-  }
-
   private UnsupportedOperationException writeNotSupported() {
     return new UnsupportedOperationException("This protocol does not support write methods.");
   }

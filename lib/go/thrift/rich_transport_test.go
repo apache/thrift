@@ -62,17 +62,17 @@ func TestReadByte(t *testing.T) {
 	}
 }
 
-var someError = errors.New("Some error")
+var errSomeError = errors.New("Some error")
 var readByteTests = []struct {
 	r   *mockReader
 	v   byte
 	err error
 }{
-	{&mockReader{0, 55, io.EOF}, 0, io.EOF},        // reader sends EOF w/o data
-	{&mockReader{0, 55, someError}, 0, someError},  // reader sends some other error
-	{&mockReader{1, 55, nil}, 55, nil},             // reader sends data w/o error
-	{&mockReader{1, 55, io.EOF}, 55, nil},          // reader sends data with EOF
-	{&mockReader{1, 55, someError}, 55, someError}, // reader sends data withsome error
+	{&mockReader{0, 55, io.EOF}, 0, io.EOF},              // reader sends EOF w/o data
+	{&mockReader{0, 55, errSomeError}, 0, errSomeError},  // reader sends some other error
+	{&mockReader{1, 55, nil}, 55, nil},                   // reader sends data w/o error
+	{&mockReader{1, 55, io.EOF}, 55, nil},                // reader sends data with EOF
+	{&mockReader{1, 55, errSomeError}, 55, errSomeError}, // reader sends data withsome error
 }
 
 type mockReader struct {
