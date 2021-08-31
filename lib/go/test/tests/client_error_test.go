@@ -406,7 +406,9 @@ func prepareClientCallReply(protocol *MockTProtocol, failAt int, failWith error)
 	if failAt == 50 {
 		err = failWith
 	}
+	//lint:ignore SA4006 to keep it consistent with other checks above
 	last = protocol.EXPECT().ReadMessageEnd(context.Background()).Return(err).After(last)
+	//lint:ignore S1008 to keep it consistent with other checks above
 	if failAt == 50 {
 		return true
 	}
@@ -631,7 +633,9 @@ func prepareClientCallException(protocol *MockTProtocol, failAt int, failWith er
 	if failAt == 10 {
 		err = failWith
 	}
+	//lint:ignore SA4006 to keep it consistent with other checks above
 	last = protocol.EXPECT().ReadMessageEnd(context.Background()).Return(err).After(last)
+	//lint:ignore S1008 to keep it consistent with other checks above
 	if failAt == 10 {
 		return true
 	}

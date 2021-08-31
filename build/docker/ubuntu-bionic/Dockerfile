@@ -120,13 +120,16 @@ RUN \
 
 ENV DART_VERSION 2.7.2-1
 RUN apt-get install -y --no-install-recommends \
-      `# Dart dependencies` \
+`# Dart dependencies` \
       dart=$DART_VERSION
 ENV PATH /usr/lib/dart/bin:$PATH
 
 RUN apt-get install -y --no-install-recommends \
 `# dotnet core dependencies` \
-      dotnet-sdk-5.0
+      dotnet-sdk-5.0 \
+      dotnet-runtime-5.0 \
+      aspnetcore-runtime-5.0 \
+      dotnet-apphost-pack-5.0
 
 RUN apt-get install -y --no-install-recommends \
 `# Erlang dependencies` \
@@ -140,9 +143,9 @@ RUN apt-get install -y --no-install-recommends \
       libglib2.0-dev
 
 # golang
-ENV GOLANG_VERSION 1.16.2
+ENV GOLANG_VERSION 1.17
 ENV GOLANG_DOWNLOAD_URL https://golang.org/dl/go$GOLANG_VERSION.linux-amd64.tar.gz
-ENV GOLANG_DOWNLOAD_SHA256 542e936b19542e62679766194364f45141fde55169db2d8d01046555ca9eb4b8
+ENV GOLANG_DOWNLOAD_SHA256 6bf89fc4f5ad763871cf7eac80a2d594492de7a818303283f1366a7f6a30372d
 RUN curl -fsSL "$GOLANG_DOWNLOAD_URL" -o golang.tar.gz && \
       echo "$GOLANG_DOWNLOAD_SHA256  golang.tar.gz" | sha256sum -c - && \
             tar -C /usr/local -xzf golang.tar.gz && \

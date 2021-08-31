@@ -200,7 +200,7 @@ func (p *TFramedTransport) readFrame() error {
 		return err
 	}
 	size := binary.BigEndian.Uint32(buf)
-	if size < 0 || size > uint32(p.cfg.GetMaxFrameSize()) {
+	if size > uint32(p.cfg.GetMaxFrameSize()) {
 		return NewTTransportException(UNKNOWN_TRANSPORT_EXCEPTION, fmt.Sprintf("Incorrect frame size (%d)", size))
 	}
 	_, err := io.CopyN(&p.readBuf, p.reader, int64(size))

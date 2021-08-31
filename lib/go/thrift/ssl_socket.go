@@ -42,18 +42,22 @@ type TSSLSocket struct {
 //
 // Example:
 //
-//     trans, err := thrift.NewTSSLSocketConf("localhost:9090", nil, &TConfiguration{
+//     trans := thrift.NewTSSLSocketConf("localhost:9090", &TConfiguration{
 //         ConnectTimeout: time.Second, // Use 0 for no timeout
 //         SocketTimeout:  time.Second, // Use 0 for no timeout
+//
+//         TLSConfig: &tls.Config{
+//             // Fill in tls config here.
+//         }
 //     })
-func NewTSSLSocketConf(hostPort string, conf *TConfiguration) (*TSSLSocket, error) {
+func NewTSSLSocketConf(hostPort string, conf *TConfiguration) *TSSLSocket {
 	if cfg := conf.GetTLSConfig(); cfg != nil && cfg.MinVersion == 0 {
 		cfg.MinVersion = tls.VersionTLS10
 	}
 	return &TSSLSocket{
 		hostPort: hostPort,
 		cfg:      conf,
-	}, nil
+	}
 }
 
 // Deprecated: Use NewTSSLSocketConf instead.
@@ -62,7 +66,7 @@ func NewTSSLSocket(hostPort string, cfg *tls.Config) (*TSSLSocket, error) {
 		TLSConfig: cfg,
 
 		noPropagation: true,
-	})
+	}), nil
 }
 
 // Deprecated: Use NewTSSLSocketConf instead.
@@ -73,7 +77,7 @@ func NewTSSLSocketTimeout(hostPort string, cfg *tls.Config, connectTimeout, sock
 		TLSConfig:      cfg,
 
 		noPropagation: true,
-	})
+	}), nil
 }
 
 // NewTSSLSocketFromAddrConf creates a TSSLSocket from a net.Addr.
