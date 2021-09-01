@@ -81,6 +81,7 @@
 - [THRIFT-5404](https://issues.apache.org/jira/browse/THRIFT-5404) - TTransportException.Timeout would correctly return true when it's connect timeout during TSocket.Open call
 - [THRIFT-4797](https://issues.apache.org/jira/browse/THRIFT-4797) - The compiler now correctly auto renames import thrift namespaces when they collide with system imports
 - [THRIFT-5453](https://issues.apache.org/jira/browse/THRIFT-5453) - Defer DNS lookups from NewTSocketConf (without any timeout check) to TSocket.Open (subject to ConnectTimeout set in TConfiguration)
+- [THRIFT-5459](https://issues.apache.org/jira/browse/THRIFT-5459) - Client calls will return TApplicationException with MISSING_RESULT when the result is a struct but is unset, and no other error is known.
 
 ### Haskell
 
