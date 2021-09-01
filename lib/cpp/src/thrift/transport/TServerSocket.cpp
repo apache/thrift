@@ -90,13 +90,13 @@ void destroyer_of_fine_sockets(THRIFT_SOCKET* ssock) {
   delete ssock;
 }
 
+using std::shared_ptr;
 using std::string;
 
 namespace apache {
 namespace thrift {
 namespace transport {
 
-using std::shared_ptr;
 
 TServerSocket::TServerSocket(int port)
   : interruptableChildren_(true),
@@ -249,12 +249,12 @@ void TServerSocket::setInterruptableChildren(bool enable) {
 }
 
 void TServerSocket::_setup_sockopts() {
+  int one = 1;
   if (!isUnixDomainSocket()) {
     // Set THRIFT_NO_SOCKET_CACHING to prevent 2MSL delay on accept.
     // This does not work with Domain sockets on most platforms. And
     // on Windows it completely breaks the socket. Therefore do not
     // use this on Domain sockets.
-    int one = 1;
     if (-1 == setsockopt(serverSocket_,
                         SOL_SOCKET,
                         THRIFT_NO_SOCKET_CACHING,
@@ -458,7 +458,6 @@ void TServerSocket::listen() {
                               " Unix Domain socket path not supported");
 #endif
   } else {
-
     // -- TCP socket -- //
 
     auto addr_iter = AddressResolutionHelper::Iter{};
