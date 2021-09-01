@@ -59,6 +59,7 @@
 // windows
 #include <Winsock2.h>
 #include <ws2tcpip.h>
+
 #ifndef __MINGW32__
   #ifdef _WIN32_WCE
   #pragma comment(lib, "Ws2.lib")
@@ -71,5 +72,19 @@
   #pragma comment(lib, "Shlwapi.lib")  // For StrStrIA in TPipeServer
   #endif
 #endif // __MINGW32__
+
+// Replicate the logic of afunix.h on Windows (the header is only present on
+// newer Windows SDKs)
+#ifdef HAVE_AF_UNIX_H
+#include <afunix.h>
+#else
+#ifndef UNIX_PATH_MAX
+#define UNIX_PATH_MAX 108
+#endif
+typedef struct sockaddr_un {
+  ADDRESS_FAMILY sun_family;    // AF_UNIX
+  char sun_path[UNIX_PATH_MAX]; // pathname
+} SOCKADDR_UN, *PSOCKADDR_UN;
+#endif // HAVE_AF_UNIX_H
 
 #endif // _THRIFT_WINDOWS_CONFIG_H_
