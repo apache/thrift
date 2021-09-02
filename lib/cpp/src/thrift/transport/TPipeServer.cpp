@@ -26,6 +26,7 @@
 
 #ifdef _WIN32
 #include <thrift/windows/OverlappedSubmissionThread.h>
+#include <thrift/windows/Sync.h>
 #include <AccCtrl.h>
 #include <Aclapi.h>
 #include <sddl.h>
