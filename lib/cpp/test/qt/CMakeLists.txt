@@ -24,9 +24,8 @@ set(TQTcpServerTest_Qt5_SOURCES
 )
 add_executable(TQTcpServerTest_Qt5 ${TQTcpServerTest_Qt5_SOURCES})
 target_link_libraries(TQTcpServerTest_Qt5 testgencpp_cob)
-LINK_AGAINST_THRIFT_LIBRARY(TQTcpServerTest_Qt5 thriftqt5)
-LINK_AGAINST_THRIFT_LIBRARY(TQTcpServerTest_Qt5 thrift)
+target_link_libraries(TQTcpServerTest_Qt5 thriftqt5)
+target_link_libraries(TQTcpServerTest_Qt5 thrift)
 target_link_libraries(TQTcpServerTest_Qt5 Qt5::Test Qt5::Network)
 
 add_test(NAME TQTcpServerTest_Qt5 COMMAND TQTcpServerTest_Qt5)
-
