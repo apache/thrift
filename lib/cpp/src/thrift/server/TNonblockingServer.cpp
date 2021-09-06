@@ -1438,7 +1438,7 @@ void TNonblockingIOThread::setCurrentThreadHighPriority(bool value) {
 #ifdef HAVE_SCHED_H
   // Start out with a standard, low-priority setup for the sched params.
   struct sched_param sp;
-  bzero((void*)&sp, sizeof(sp));
+  memset(static_cast<void*>(&sp), 0, sizeof(sp));
   int policy = SCHED_OTHER;
 
   // If desired, set up high-priority sched params structure.

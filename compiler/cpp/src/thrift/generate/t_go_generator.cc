@@ -2295,7 +2295,23 @@ void t_go_generator::generate_service_client(t_service* tservice) {
         f_types_ << indent() << "}" << endl << endl;
       }
 
-      if (!(*f_iter)->get_returntype()->is_void()) {
+      if ((*f_iter)->get_returntype()->is_struct()) {
+        // Check if the result is nil, which likely means we have a new
+        // exception added but unknown to the client yet
+        // (e.g. client hasn't updated the thrift file).
+        // Sadly this check can only be reliable done when the return type is a
+        // struct in go.
+        std::string retName = tmp("_ret");
+        f_types_ << indent() << "if " << retName << " := " << resultName
+                 << ".GetSuccess(); " << retName << " != nil {" << endl;
+        indent_up();
+        f_types_ << indent() << "return " << retName << ", nil" << endl;
+        indent_down();
+        f_types_ << indent() << "}" << endl;
+        f_types_ << indent() << "return nil, "
+                 << "thrift.NewTApplicationException(thrift.MISSING_RESULT, \""
+                 << method << " failed: unknown result\")" << endl;
+      } else if (!(*f_iter)->get_returntype()->is_void()) {
         f_types_ << indent() << "return " << resultName << ".GetSuccess(), nil" << endl;
       } else {
         f_types_ << indent() << "return nil" << endl;

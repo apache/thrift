@@ -28,7 +28,8 @@ macro(ADD_LIBRARY_THRIFT name)
     target_include_directories(${name} INTERFACE $<INSTALL_INTERFACE:include>)
     set_target_properties(${name} PROPERTIES
         OUTPUT_NAME ${name}${THRIFT_RUNTIME_POSTFIX}   # windows link variants (/MT, /MD, /MTd, /MDd) get different names
-        VERSION ${thrift_VERSION} )
+        VERSION ${thrift_VERSION})
+
     # set_target_properties(${name} PROPERTIES PUBLIC_HEADER "${thriftcpp_HEADERS}")
     install(TARGETS ${name} EXPORT "${name}Targets"
         RUNTIME DESTINATION "${BIN_INSTALL_DIR}"
@@ -44,20 +45,4 @@ macro(ADD_LIBRARY_THRIFT name)
 		FILE "${name}Targets.cmake"
 		NAMESPACE "${name}::"
 		DESTINATION "${CMAKE_INSTALL_DIR}/thrift")
-endmacro()
-
-macro(TARGET_INCLUDE_DIRECTORIES_THRIFT name)
-    target_include_directories(${name} ${ARGN})
-endmacro()
-
-macro(TARGET_LINK_LIBRARIES_THRIFT name)
-    target_link_libraries(${name} ${ARGN})
-endmacro()
-
-macro(LINK_AGAINST_THRIFT_LIBRARY target)
-    target_link_libraries(${target} ${ARGN})
-endmacro()
-
-macro(TARGET_LINK_LIBRARIES_THRIFT_AGAINST_THRIFT_LIBRARY target libname)
-    target_link_libraries(${target} ${ARGN} ${libname})
 endmacro()
