@@ -40,8 +40,6 @@ func (slowHttpHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 func TestHttpContextTimeout(t *testing.T) {
-	certPath = "../../../keys"
-
 	unit := test_unit{"127.0.0.1", 9096, "", "http", "binary", false}
 
 	server := &http.Server{Addr: unit.host + fmt.Sprintf(":%d", unit.port), Handler: slowHttpHandler{}}
@@ -56,6 +54,7 @@ func TestHttpContextTimeout(t *testing.T) {
 
 	unwrapErr := func(err error) error {
 		for {
+			//lint:ignore S1034 type switch is more appropriate here.
 			switch err.(type) {
 			case thrift.TTransportException:
 				err = err.(thrift.TTransportException).Err()

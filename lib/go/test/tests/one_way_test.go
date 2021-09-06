@@ -66,8 +66,12 @@ func TestInitOneway(t *testing.T) {
 }
 
 func TestInitOnewayClient(t *testing.T) {
-	transport := thrift.NewTSocketFromAddrTimeout(addr, TIMEOUT, TIMEOUT)
-	protocol := thrift.NewTBinaryProtocolTransport(transport)
+	cfg := &thrift.TConfiguration{
+		ConnectTimeout: TIMEOUT,
+		SocketTimeout:  TIMEOUT,
+	}
+	transport := thrift.NewTSocketFromAddrConf(addr, cfg)
+	protocol := thrift.NewTBinaryProtocolConf(transport, cfg)
 	client = onewaytest.NewOneWayClient(thrift.NewTStandardClient(protocol, protocol))
 	err := transport.Open()
 	if err != nil {

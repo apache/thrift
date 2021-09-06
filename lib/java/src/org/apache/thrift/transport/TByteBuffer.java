@@ -14,6 +14,9 @@ public final class TByteBuffer extends TEndpointTransport {
 
   /**
    * Creates a new TByteBuffer wrapping a given NIO ByteBuffer.
+   *
+   * @param byteBuffer the NIO ByteBuffer to wrap.
+   * @throws TTransportException on error.
    */
   public TByteBuffer(ByteBuffer byteBuffer) throws TTransportException {
     super(new TConfiguration());
@@ -60,7 +63,9 @@ public final class TByteBuffer extends TEndpointTransport {
   }
 
   /**
-   * Get the underlying NIO ByteBuffer.
+   * Gets the underlying NIO ByteBuffer.
+   *
+   * @return the underlying NIO ByteBuffer.
    */
   public ByteBuffer getByteBuffer() {
     return byteBuffer;
@@ -68,6 +73,8 @@ public final class TByteBuffer extends TEndpointTransport {
 
   /**
    * Convenience method to call clear() on the underlying NIO ByteBuffer.
+   *
+   * @return this instance.
    */
   public TByteBuffer clear() {
     byteBuffer.clear();
@@ -76,15 +83,18 @@ public final class TByteBuffer extends TEndpointTransport {
 
   /**
    * Convenience method to call flip() on the underlying NIO ByteBuffer.
-     */
+   *
+   * @return this instance.
+   */
   public TByteBuffer flip() {
     byteBuffer.flip();
     return this;
   }
 
   /**
-   * Convenience method to convert the underlying NIO ByteBuffer to a
-   * plain old byte array.
+   * Convenience method to convert the underlying NIO ByteBuffer to a plain old byte array.
+   *
+   * @return the byte array backing the underlying NIO ByteBuffer.
    */
   public byte[] toByteArray() {
     final byte[] data = new byte[byteBuffer.remaining()];

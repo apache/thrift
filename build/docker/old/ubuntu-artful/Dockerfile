@@ -114,13 +114,16 @@ RUN \
     rm -rf openssl-master
 
 RUN apt-get install -y --no-install-recommends \
-      `# Dart dependencies` \
+`# Dart dependencies` \
       dart=$DART_VERSION
 ENV PATH /usr/lib/dart/bin:$PATH
 
 RUN apt-get install -y --no-install-recommends \
 `# dotnet core dependencies` \
-      dotnet-sdk-5.0
+      dotnet-sdk-5.0 \
+      dotnet-runtime-5.0 \
+      aspnetcore-runtime-5.0 \
+      dotnet-apphost-pack-5.0
 
 RUN apt-get install -y --no-install-recommends \
 `# Erlang dependencies` \

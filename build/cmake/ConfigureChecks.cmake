@@ -21,6 +21,9 @@ include(CheckFunctionExists)
 include(CheckIncludeFile)
 include(CheckIncludeFiles)
 include(CheckSymbolExists)
+include(CheckStructHasMember)
+include(CheckCSourceCompiles)
+include(CheckCXXSourceCompiles)
 
 if (Inttypes_FOUND)
   # This allows the inttypes.h and stdint.h checks to succeed on platforms that
@@ -52,14 +55,24 @@ check_include_file(sched.h HAVE_SCHED_H)
 check_include_file(string.h HAVE_STRING_H)
 check_include_file(strings.h HAVE_STRINGS_H)
 
+# Check for afunix.h on Windows (since Windows 10 Insider Build 17063):
+check_cxx_source_compiles(
+  "
+  #define WIN32_LEAN_AND_MEAN
+  #include <winsock2.h>
+  #include <windows.h>
+  #include <afunix.h>
+  int main(){(void)sizeof(((struct sockaddr_un *)0)->sun_path); return 0;}
+  "
+  HAVE_AF_UNIX_H)
+
+
 check_function_exists(gethostbyname HAVE_GETHOSTBYNAME)
 check_function_exists(gethostbyname_r HAVE_GETHOSTBYNAME_R)
 check_function_exists(strerror_r HAVE_STRERROR_R)
 check_function_exists(sched_get_priority_max HAVE_SCHED_GET_PRIORITY_MAX)
 check_function_exists(sched_get_priority_min HAVE_SCHED_GET_PRIORITY_MIN)
 
-include(CheckCSourceCompiles)
-include(CheckCXXSourceCompiles)
 
 check_cxx_source_compiles(
   "

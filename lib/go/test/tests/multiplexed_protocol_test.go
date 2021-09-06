@@ -51,8 +51,12 @@ func (s *SecondImpl) ReturnTwo(ctx context.Context) (r int64, err error) {
 }
 
 func createTransport(addr net.Addr) (thrift.TTransport, error) {
-	socket := thrift.NewTSocketFromAddrTimeout(addr, TIMEOUT, TIMEOUT)
-	transport := thrift.NewTFramedTransport(socket)
+	cfg := &thrift.TConfiguration{
+		ConnectTimeout: TIMEOUT,
+		SocketTimeout:  TIMEOUT,
+	}
+	socket := thrift.NewTSocketFromAddrConf(addr, cfg)
+	transport := thrift.NewTFramedTransportConf(socket, cfg)
 	err := transport.Open()
 	if err != nil {
 		return nil, err
@@ -62,9 +66,9 @@ func createTransport(addr net.Addr) (thrift.TTransport, error) {
 
 func TestMultiplexedProtocolFirst(t *testing.T) {
 	processor := thrift.NewTMultiplexedProcessor()
-	protocolFactory := thrift.NewTBinaryProtocolFactoryDefault()
+	protocolFactory := thrift.NewTBinaryProtocolFactoryConf(nil)
 	transportFactory := thrift.NewTTransportFactory()
-	transportFactory = thrift.NewTFramedTransportFactory(transportFactory)
+	transportFactory = thrift.NewTFramedTransportFactoryConf(transportFactory, nil)
 	addr := FindAvailableTCPServerPort()
 	serverTransport, err := thrift.NewTServerSocketTimeout(addr.String(), TIMEOUT)
 	if err != nil {
@@ -87,7 +91,7 @@ func TestMultiplexedProtocolFirst(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer transport.Close()
-	protocol := thrift.NewTMultiplexedProtocol(thrift.NewTBinaryProtocolTransport(transport), "FirstService")
+	protocol := thrift.NewTMultiplexedProtocol(thrift.NewTBinaryProtocolConf(transport, nil), "FirstService")
 
 	client := multiplexedprotocoltest.NewFirstClient(thrift.NewTStandardClient(protocol, protocol))
 
@@ -101,9 +105,9 @@ func TestMultiplexedProtocolFirst(t *testing.T) {
 
 func TestMultiplexedProtocolSecond(t *testing.T) {
 	processor := thrift.NewTMultiplexedProcessor()
-	protocolFactory := thrift.NewTBinaryProtocolFactoryDefault()
+	protocolFactory := thrift.NewTBinaryProtocolFactoryConf(nil)
 	transportFactory := thrift.NewTTransportFactory()
-	transportFactory = thrift.NewTFramedTransportFactory(transportFactory)
+	transportFactory = thrift.NewTFramedTransportFactoryConf(transportFactory, nil)
 	addr := FindAvailableTCPServerPort()
 	serverTransport, err := thrift.NewTServerSocketTimeout(addr.String(), TIMEOUT)
 	if err != nil {
@@ -126,7 +130,7 @@ func TestMultiplexedProtocolSecond(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer transport.Close()
-	protocol := thrift.NewTMultiplexedProtocol(thrift.NewTBinaryProtocolTransport(transport), "SecondService")
+	protocol := thrift.NewTMultiplexedProtocol(thrift.NewTBinaryProtocolConf(transport, nil), "SecondService")
 
 	client := multiplexedprotocoltest.NewSecondClient(thrift.NewTStandardClient(protocol, protocol))
 
@@ -140,9 +144,9 @@ func TestMultiplexedProtocolSecond(t *testing.T) {
 
 func TestMultiplexedProtocolLegacy(t *testing.T) {
 	processor := thrift.NewTMultiplexedProcessor()
-	protocolFactory := thrift.NewTBinaryProtocolFactoryDefault()
+	protocolFactory := thrift.NewTBinaryProtocolFactoryConf(nil)
 	transportFactory := thrift.NewTTransportFactory()
-	transportFactory = thrift.NewTFramedTransportFactory(transportFactory)
+	transportFactory = thrift.NewTFramedTransportFactoryConf(transportFactory, nil)
 	addr := FindAvailableTCPServerPort()
 	serverTransport, err := thrift.NewTServerSocketTimeout(addr.String(), TIMEOUT)
 	if err != nil {
@@ -167,10 +171,10 @@ func TestMultiplexedProtocolLegacy(t *testing.T) {
 	}
 	defer transport.Close()
 
-	protocol := thrift.NewTBinaryProtocolTransport(transport)
+	protocol := thrift.NewTBinaryProtocolConf(transport, nil)
 	client := multiplexedprotocoltest.NewSecondClient(thrift.NewTStandardClient(protocol, protocol))
 
-	ret, err := client.ReturnTwo(defaultCtx)
+	_, err = client.ReturnTwo(defaultCtx)
 	//expect error since default processor is not registered
 	if err == nil {
 		t.Fatal("Expecting error")
@@ -185,10 +189,10 @@ func TestMultiplexedProtocolLegacy(t *testing.T) {
 	}
 	defer transport.Close()
 
-	protocol = thrift.NewTBinaryProtocolTransport(transport)
+	protocol = thrift.NewTBinaryProtocolConf(transport, nil)
 	client = multiplexedprotocoltest.NewSecondClient(thrift.NewTStandardClient(protocol, protocol))
 
-	ret, err = client.ReturnTwo(defaultCtx)
+	ret, err := client.ReturnTwo(defaultCtx)
 	if err != nil {
 		t.Fatal("Unable to call legacy server:", err)
 	}

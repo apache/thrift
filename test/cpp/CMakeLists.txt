@@ -23,7 +23,7 @@ REQUIRE_BOOST_HEADERS()
 set(BOOST_COMPONENTS filesystem program_options random)
 REQUIRE_BOOST_LIBRARIES(BOOST_COMPONENTS)
 
-# Contains the thrift specific LINK_AGAINST_THRIFT_LIBRARY
+# Contains the thrift specific target_link_libraries
 include(ThriftMacros)
 
 find_package(OpenSSL REQUIRED)
@@ -48,34 +48,34 @@ set(crosstestgencpp_SOURCES
     src/ThriftTest_extras.cpp
 )
 add_library(crosstestgencpp STATIC ${crosstestgencpp_SOURCES})
-LINK_AGAINST_THRIFT_LIBRARY(crosstestgencpp thrift)
+target_link_libraries(crosstestgencpp thrift)
 
 set(crossstressgencpp_SOURCES
     gen-cpp/Service.cpp
 )
 add_library(crossstressgencpp STATIC ${crossstressgencpp_SOURCES})
-LINK_AGAINST_THRIFT_LIBRARY(crossstressgencpp thrift)
+target_link_libraries(crossstressgencpp thrift)
 
 set(crossspecificnamegencpp_SOURCES
-    gen-cpp/EchoService.cpp 
+    gen-cpp/EchoService.cpp
     gen-cpp/SpecificNameTest_types.cpp
 )
 add_library(crossspecificnamegencpp STATIC ${crossspecificnamegencpp_SOURCES})
-LINK_AGAINST_THRIFT_LIBRARY(crossspecificnamegencpp thrift)
+target_link_libraries(crossspecificnamegencpp thrift)
 
 add_executable(TestServer src/TestServer.cpp)
 target_link_libraries(TestServer crosstestgencpp ${Boost_LIBRARIES})
-LINK_AGAINST_THRIFT_LIBRARY(TestServer thriftnb)
-LINK_AGAINST_THRIFT_LIBRARY(TestServer thriftz)
+target_link_libraries(TestServer thriftnb)
+target_link_libraries(TestServer thriftz)
 
 add_executable(TestClient src/TestClient.cpp)
 target_link_libraries(TestClient crosstestgencpp ${Boost_LIBRARIES})
-LINK_AGAINST_THRIFT_LIBRARY(TestClient thriftnb)
-LINK_AGAINST_THRIFT_LIBRARY(TestClient thriftz)
+target_link_libraries(TestClient thriftnb)
+target_link_libraries(TestClient thriftz)
 
 add_executable(StressTest src/StressTest.cpp)
 target_link_libraries(StressTest crossstressgencpp ${Boost_LIBRARIES})
-LINK_AGAINST_THRIFT_LIBRARY(StressTest thriftnb)
+target_link_libraries(StressTest thriftnb)
 add_test(NAME StressTest COMMAND StressTest)
 add_test(NAME StressTestConcurrent COMMAND StressTest --client-type=concurrent)
 
@@ -84,15 +84,15 @@ add_test(NAME StressTestConcurrent COMMAND StressTest --client-type=concurrent)
 if (NOT WIN32 AND NOT CYGWIN)
     add_executable(StressTestNonBlocking src/StressTestNonBlocking.cpp)
     target_link_libraries(StressTestNonBlocking crossstressgencpp ${Boost_LIBRARIES})
-    LINK_AGAINST_THRIFT_LIBRARY(StressTestNonBlocking thriftnb)
-    LINK_AGAINST_THRIFT_LIBRARY(StressTestNonBlocking thriftz)
+    target_link_libraries(StressTestNonBlocking thriftnb)
+    target_link_libraries(StressTestNonBlocking thriftz)
     add_test(NAME StressTestNonBlocking COMMAND StressTestNonBlocking)
 endif()
 
 add_executable(SpecificNameTest src/SpecificNameTest.cpp)
 target_link_libraries(SpecificNameTest crossspecificnamegencpp ${Boost_LIBRARIES} ${LIBEVENT_LIB})
-LINK_AGAINST_THRIFT_LIBRARY(SpecificNameTest thrift)
-LINK_AGAINST_THRIFT_LIBRARY(SpecificNameTest thriftnb)
+target_link_libraries(SpecificNameTest thrift)
+target_link_libraries(SpecificNameTest thriftnb)
 add_test(NAME SpecificNameTest COMMAND SpecificNameTest)
 
 #

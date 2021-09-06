@@ -31,7 +31,6 @@ import (
 
 var (
 	debugServerProtocol bool
-	certPath            string
 )
 
 func init() {
@@ -46,28 +45,30 @@ func GetServerParams(
 	protocol string,
 	ssl bool,
 	certPath string,
-	handler thrifttest.ThriftTest) (thrift.TProcessor, thrift.TServerTransport, thrift.TTransportFactory, thrift.TProtocolFactory, error) {
+	handler thrifttest.ThriftTest,
+) (thrift.TProcessor, thrift.TServerTransport, thrift.TTransportFactory, thrift.TProtocolFactory, error) {
 
 	var err error
 	hostPort := fmt.Sprintf("%s:%d", host, port)
+	var cfg *thrift.TConfiguration = nil
 
 	var protocolFactory thrift.TProtocolFactory
 	switch protocol {
 	case "compact":
-		protocolFactory = thrift.NewTCompactProtocolFactory()
+		protocolFactory = thrift.NewTCompactProtocolFactoryConf(cfg)
 	case "simplejson":
-		protocolFactory = thrift.NewTSimpleJSONProtocolFactory()
+		protocolFactory = thrift.NewTSimpleJSONProtocolFactoryConf(cfg)
 	case "json":
 		protocolFactory = thrift.NewTJSONProtocolFactory()
 	case "binary":
-		protocolFactory = thrift.NewTBinaryProtocolFactoryDefault()
+		protocolFactory = thrift.NewTBinaryProtocolFactoryConf(nil)
 	case "header":
-		protocolFactory = thrift.NewTHeaderProtocolFactory()
+		protocolFactory = thrift.NewTHeaderProtocolFactoryConf(nil)
 	default:
-		return nil, nil, nil, nil, fmt.Errorf("Invalid protocol specified %s", protocol)
+		return nil, nil, nil, nil, fmt.Errorf("invalid protocol specified %s", protocol)
 	}
 	if debugServerProtocol {
-		protocolFactory = thrift.NewTDebugProtocolFactory(protocolFactory, "server:")
+		protocolFactory = thrift.NewTDebugProtocolFactoryWithLogger(protocolFactory, "server:", thrift.StdLogger(nil))
 	}
 
 	var serverTransport thrift.TServerTransport
@@ -98,7 +99,7 @@ func GetServerParams(
 		transportFactory = nil
 	case "framed":
 		transportFactory = thrift.NewTTransportFactory()
-		transportFactory = thrift.NewTFramedTransportFactory(transportFactory)
+		transportFactory = thrift.NewTFramedTransportFactoryConf(transportFactory, nil)
 	case "buffered":
 		transportFactory = thrift.NewTBufferedTransportFactory(8192)
 	case "zlib":
@@ -106,7 +107,7 @@ func GetServerParams(
 	case "":
 		transportFactory = thrift.NewTTransportFactory()
 	default:
-		return nil, nil, nil, nil, fmt.Errorf("Invalid transport specified %s", transport)
+		return nil, nil, nil, nil, fmt.Errorf("invalid transport specified %s", transport)
 	}
 	processor := thrifttest.NewThriftTestProcessor(handler)
 
