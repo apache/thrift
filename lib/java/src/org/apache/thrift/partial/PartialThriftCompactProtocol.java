@@ -49,8 +49,8 @@ public class PartialThriftCompactProtocol extends PartialThriftProtocol implemen
   public int readFieldBeginData() throws TException {
     // Having to call readFieldBegin() to compute TFieldData really results in lower
     // performance. However, readFieldBegin() accesses some private vars that this method
-    // does not have access to. We could make it more performant when contributing to
-    // origianl source code.
+    // does not have access to.
+    // TODO: make changes to TCompactProtocol to allow better performance of this method.
 
     TField tfield = readFieldBegin();
     return TFieldData.encode(tfield.type, tfield.id);

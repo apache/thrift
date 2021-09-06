@@ -307,7 +307,7 @@ public class PartialThriftDeserializer<T extends TBase> {
   private TBase fullDeserialize(PartialThriftProtocol tprot, ThriftMetadata.ThriftStruct data)
       throws TException {
     Validate.checkState(
-        data.fields.size() == 0, "Cannot fully deserialize when some fields specified");
+        data.fields.size() == 0, "Cannot fully deserialize when some fields are specified");
     TBase instance = this.createNewStruct(data);
     instance.read(tprot);
     return instance;
