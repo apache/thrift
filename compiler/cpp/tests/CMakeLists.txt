@@ -76,6 +76,8 @@ set(thrift_compiler_SOURCES
     ${THRIFT_COMPILER_SOURCE_DIR}/src/thrift/audit/t_audit.cpp
     ${THRIFT_COMPILER_SOURCE_DIR}/src/thrift/common.cc
     ${THRIFT_COMPILER_SOURCE_DIR}/src/thrift/generate/t_generator.cc
+    ${THRIFT_COMPILER_SOURCE_DIR}/src/thrift/generate/validator_parser.cc
+    ${THRIFT_COMPILER_SOURCE_DIR}/src/thrift/generate/validator_parser.h
     ${THRIFT_COMPILER_SOURCE_DIR}/src/thrift/parse/t_typedef.cc
     ${THRIFT_COMPILER_SOURCE_DIR}/src/thrift/parse/parse.cc
     ${THRIFT_COMPILER_SOURCE_DIR}/thrift/version.h
@@ -93,6 +95,18 @@ macro(THRIFT_ADD_COMPILER name description initial)
             "${CMAKE_CURRENT_SOURCE_DIR}/${name}/*.c*"
             "${CMAKE_CURRENT_SOURCE_DIR}/${name}/*.thrift"
         )
+    endif()
+endmacro()
+
+# This macro adds an option THRIFT_VALIDATOR_COMPILER_${NAME}
+# that allows enabling or disabling certain languages
+macro(THRIFT_ADD_VALIDATOR_COMPILER name description initial)
+    string(TOUPPER "THRIFT_VALIDATOR_COMPILER_${name}" enabler)
+    set(src "${THRIFT_COMPILER_SOURCE_DIR}/src/thrift/generate/${name}_validator_generator.cc")
+    list(APPEND "${THRIFT_COMPILER_SOURCE_DIR}/src/thrift/generate/${name}_validator_generator.h")
+    option(${enabler} ${description} ${initial})
+    if(${enabler})
+        list(APPEND thrift-compiler_SOURCES ${src})
     endif()
 endmacro()
 
@@ -124,6 +138,9 @@ THRIFT_ADD_COMPILER(st      "Enable compiler for Smalltalk" OFF)
 THRIFT_ADD_COMPILER(swift   "Enable compiler for Swift" OFF)
 THRIFT_ADD_COMPILER(xml     "Enable compiler for XML" OFF)
 THRIFT_ADD_COMPILER(xsd     "Enable compiler for XSD" OFF)
+
+# The following compiler can be enabled or disabled by enabling or disabling certain languages
+THRIFT_ADD_VALIDATOR_COMPILER(go           "Enable validator compiler for Go" ON)
 
 # Thrift is looking for include files in the src directory
 # we also add the current binary directory for generated files

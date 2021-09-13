@@ -20,9 +20,9 @@
 #ifndef T_ENUM_VALUE_H
 #define T_ENUM_VALUE_H
 
+#include "thrift/parse/t_doc.h"
 #include <map>
 #include <string>
-#include "thrift/parse/t_doc.h"
 
 /**
  * A constant. These are used inside of enum definitions. Constants are just
@@ -40,7 +40,7 @@ public:
 
   int get_value() const { return value_; }
 
-  std::map<std::string, std::string> annotations_;
+  std::map<std::string, std::vector<std::string>> annotations_;
 
 private:
   std::string name_;

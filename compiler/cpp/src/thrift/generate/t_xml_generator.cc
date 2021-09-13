@@ -94,7 +94,7 @@ public:
   void generate_service(t_service* tservice) override;
   void generate_struct(t_struct* tstruct) override;
 
-  void generate_annotations(std::map<std::string, std::string> annotations);
+  void generate_annotations(std::map<std::string, std::vector<std::string>> annotations);
 
 private:
   bool should_merge_includes_;
@@ -165,17 +165,23 @@ void t_xml_generator::init_generator() {
 string t_xml_generator::target_namespace(t_program* program) {
   std::map<std::string, std::string> map;
   std::map<std::string, std::string>::iterator iter;
-  map = program->get_namespace_annotations("xml");
-  if ((iter = map.find("targetNamespace")) != map.end()) {
-    return iter->second;
+  std::map<std::string, std::vector<std::string>> annotations;
+  std::map<std::string, std::vector<std::string>>::iterator annotations_iter;
+  annotations = program->get_namespace_annotations("xml");
+  if ((annotations_iter = annotations.find("targetNamespace")) != annotations.end()) {
+    if (!annotations_iter->second.empty()) {
+      return annotations_iter->second.back();
+    }
   }
   map = program->get_namespaces();
   if ((iter = map.find("xml")) != map.end()) {
     return default_ns_prefix + iter->second;
   }
-  map = program->get_namespace_annotations("*");
-  if ((iter = map.find("xml.targetNamespace")) != map.end()) {
-    return iter->second;
+  annotations = program->get_namespace_annotations("*");
+  if ((annotations_iter = annotations.find("xml.targetNamespace")) != annotations.end()) {
+    if (!annotations_iter->second.empty()) {
+      return annotations_iter->second.back();
+    }
   }
   map = program->get_namespaces();
   if ((iter = map.find("*")) != map.end()) {
@@ -432,13 +438,15 @@ void t_xml_generator::write_doc(t_doc* tdoc) {
 }
 
 void t_xml_generator::generate_annotations(
-    std::map<std::string, std::string> annotations) {
-  std::map<std::string, std::string>::iterator iter;
+    std::map<std::string, std::vector<std::string>> annotations) {
+  std::map<std::string, std::vector<std::string>>::iterator iter;
   for (iter = annotations.begin(); iter != annotations.end(); ++iter) {
-    write_element_start("annotation");
-    write_attribute("key", iter->first);
-    write_attribute("value", iter->second);
-    write_element_end();
+    for (auto& annotations_value : iter->second) {
+      write_element_start("annotation");
+      write_attribute("key", iter->first);
+      write_attribute("value", annotations_value);
+      write_element_end();
+    }
   }
 }
 

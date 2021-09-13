@@ -280,12 +280,12 @@ public:
   }
 
   static bool is_immutable(t_type* ttype) {
-    std::map<std::string, std::string>::iterator it = ttype->annotations_.find("python.immutable");
+    std::map<std::string, std::vector<std::string>>::iterator it = ttype->annotations_.find("python.immutable");
 
     if (it == ttype->annotations_.end()) {
       // Exceptions are immutable by default.
       return ttype->is_xception();
-    } else if (it->second == "false") {
+    } else if (!it->second.empty() && it->second.back() == "false") {
       return false;
     } else {
       return true;

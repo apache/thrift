@@ -374,6 +374,10 @@ public:
            || ttype->is_uuid() || ttype->is_enum();
   }
 
+  bool is_deprecated(const std::map<std::string, std::vector<std::string>>& annotations) {
+    return annotations.find("deprecated") != annotations.end();
+  }
+
   bool is_deprecated(const std::map<std::string, std::string>& annotations) {
     return annotations.find("deprecated") != annotations.end();
   }
@@ -2966,7 +2970,7 @@ void t_java_generator::generate_metadata_for_field_annotations(std::ostream& out
   indent_up();
   for (auto& annotation : field->annotations_) {
     indent(out) << ".add(new java.util.AbstractMap.SimpleImmutableEntry<>(\"" + annotation.first
-                       + "\", \"" + annotation.second + "\"))"
+                       + "\", \"" + annotation.second.back() + "\"))"
                 << endl;
   }
   indent(out) << ".build().collect(java.util.stream.Collectors.toMap(java.util.Map.Entry::getKey, "

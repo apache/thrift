@@ -20,10 +20,10 @@
 #ifndef T_FUNCTION_H
 #define T_FUNCTION_H
 
-#include <string>
-#include "thrift/parse/t_type.h"
-#include "thrift/parse/t_struct.h"
 #include "thrift/parse/t_doc.h"
+#include "thrift/parse/t_struct.h"
+#include "thrift/parse/t_type.h"
+#include <string>
 
 /**
  * Representation of a function. Key parts are return type, function name,
@@ -79,7 +79,7 @@ public:
 
   bool is_oneway() const { return oneway_; }
 
-  std::map<std::string, std::string> annotations_;
+  std::map<std::string, std::vector<std::string>> annotations_;
 
 private:
   t_type* returntype_;
