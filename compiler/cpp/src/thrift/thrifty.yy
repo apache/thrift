@@ -1301,7 +1301,7 @@ TypeAnnotationList:
     {
       pdebug("TypeAnnotationList -> TypeAnnotationList , TypeAnnotation");
       $$ = $1;
-      $$->annotations_[$2->key] = $2->val;
+      $$->annotations_[$2->key].push_back($2->val);
       delete $2;
     }
 |

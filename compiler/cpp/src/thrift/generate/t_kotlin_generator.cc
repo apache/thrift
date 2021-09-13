@@ -583,7 +583,7 @@ void t_kotlin_generator::generate_metadata_for_field_annotations(std::ostream& o
     out << "mapOf(" << endl;
     indent_up();
     for (auto& annotation : field->annotations_) {
-      indent(out) << "\"" + annotation.first + "\" to \"" + annotation.second + "\"," << endl;
+      indent(out) << "\"" + annotation.first + "\" to \"" + annotation.second.back() + "\"," << endl;
     }
     indent_down();
     indent(out) << ")";

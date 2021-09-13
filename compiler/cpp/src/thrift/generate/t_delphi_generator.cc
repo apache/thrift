@@ -3329,11 +3329,11 @@ string t_delphi_generator::function_signature(t_function* tfunction,
   // deprecated method? only at intf decl!
   if( full_cls == "") {
     auto iter = tfunction->annotations_.find("deprecated");
-    if( tfunction->annotations_.end() != iter) {
+    if( tfunction->annotations_.end() != iter && !iter->second.empty()) {
       signature += " deprecated";
       // empty annotation values end up with "1" somewhere, ignore these as well
-      if ((iter->second.length() > 0) && (iter->second != "1")) {
-        signature += " " + make_pascal_string_literal(iter->second);
+      if ((iter->second.back().length() > 0) && (iter->second.back() != "1")) {
+        signature += " " + make_pascal_string_literal(iter->second.back());
       }
       signature += ";";
     }

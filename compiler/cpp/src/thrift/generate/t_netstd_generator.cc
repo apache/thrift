@@ -2059,8 +2059,8 @@ void t_netstd_generator::generate_deprecation_attribute(ostream& out, t_function
   if( func->annotations_.end() != iter) {
     out << indent() << "[Obsolete";
     // empty annotation values end up with "1" somewhere, ignore these as well
-    if ((iter->second.length() > 0) && (iter->second != "1")) {
-      out << "(" << make_csharp_string_literal(iter->second) << ")";
+    if ((iter->second.back().length() > 0) && (iter->second.back() != "1")) {
+      out << "(" << make_csharp_string_literal(iter->second.back()) << ")";
     }
     out << "]" << endl;
   }
