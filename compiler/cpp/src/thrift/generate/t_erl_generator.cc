@@ -55,6 +55,8 @@ public:
     std::map<std::string, std::string>::const_iterator iter;
 
     legacy_names_ = false;
+    delimiter_ = ".";
+    app_prefix_ = "";
     maps_ = false;
     export_lines_first_ = true;
     export_types_lines_first_ = true;
@@ -64,6 +66,10 @@ public:
         legacy_names_ = true;
       } else if( iter->first.compare("maps") == 0) {
         maps_ = true;
+      } else if( iter->first.compare("delimiter") == 0) {
+        delimiter_ = iter->second;
+      } else if( iter->first.compare("app_prefix") == 0) {
+        app_prefix_ = iter->second;
       } else {
         throw "unknown option erl:" + iter->first;
       }
@@ -144,9 +150,9 @@ public:
 
   std::string make_safe_for_module_name(std::string in) {
     if (legacy_names_) {
-      return decapitalize(in);
+      return decapitalize(app_prefix_ + in);
     } else {
-      return underscore(in);
+      return underscore(app_prefix_) + underscore(in);
     }
   }
 
@@ -176,6 +182,12 @@ private:
 
   /* if true use maps instead of dicts in generated code */
   bool maps_;
+
+  /* delimiter between namespace and record name */
+  std::string delimiter_;
+
+  /* used to avoid module name clashes for different applications */
+  std::string app_prefix_;
 
   /**
    * add function to export list
@@ -1117,7 +1129,13 @@ string t_erl_generator::type_name(t_type* ttype) {
   string prefix = ttype->get_program()->get_namespace("erl");
   size_t prefix_length = prefix.length();
   if (prefix_length > 0 && prefix[prefix_length - 1] != '_') {
-    prefix += '.';
+    size_t delimiter_length = delimiter_.length();
+    if (delimiter_length > 0 && delimiter_length < prefix_length) {
+        bool not_match = prefix.compare(prefix_length - delimiter_length, prefix_length, delimiter_) != 0;
+        if (not_match) {
+            prefix += delimiter_;
+        }
+    }
   }
 
   string name = ttype->get_name();
@@ -1262,4 +1280,6 @@ THRIFT_REGISTER_GENERATOR(
     erl,
     "Erlang",
     "    legacynames:     Output files retain naming conventions of Thrift 0.9.1 and earlier.\n"
+    "    delimiter=       Delimiter between namespace prefix and record name. Default is '.'.\n"
+    "    app_prefix=      Application prefix for generated Erlang files.\n"
     "    maps:            Generate maps instead of dicts.\n")
