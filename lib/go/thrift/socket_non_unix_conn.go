@@ -1,4 +1,5 @@
-// +build windows
+//go:build windows || wasm
+// +build windows wasm
 
 /*
  * Licensed to the Apache Software Foundation (ASF) under one
@@ -22,13 +23,13 @@
 package thrift
 
 func (sc *socketConn) read0() error {
-	// On windows, we fallback to the default behavior of reading 0 bytes.
+	// On non-unix platforms, we fallback to the default behavior of reading 0 bytes.
 	var p []byte
 	_, err := sc.Conn.Read(p)
 	return err
 }
 
 func (sc *socketConn) checkConn() error {
-	// On windows, we always return nil for this check.
+	// On non-unix platforms, we always return nil for this check.
 	return nil
 }
