@@ -1309,7 +1309,7 @@ string t_go_generator::render_const_value(t_type* type, t_const_value* value, co
     t_type* ktype = ((t_map*)type)->get_key_type();
     t_type* vtype = ((t_map*)type)->get_val_type();
     const map<t_const_value*, t_const_value*, t_const_value::value_compare>& val = value->get_map();
-    out << "map[" << type_to_go_type(ktype) << "]" << type_to_go_type(vtype) << "{" << endl;
+    out << "map[" << type_to_go_key_type(ktype) << "]" << type_to_go_type(vtype) << "{" << endl;
     indent_up();
     map<t_const_value*, t_const_value*, t_const_value::value_compare>::const_iterator v_iter;
 
@@ -1336,7 +1336,7 @@ string t_go_generator::render_const_value(t_type* type, t_const_value* value, co
   } else if (type->is_set()) {
     t_type* etype = ((t_set*)type)->get_elem_type();
     const vector<t_const_value*>& val = value->get_list();
-    out << "[]" << type_to_go_key_type(etype) << "{" << endl;
+    out << "[]" << type_to_go_type(etype) << "{" << endl;
     indent_up();
     vector<t_const_value*>::const_iterator v_iter;
 

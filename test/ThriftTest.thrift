@@ -411,3 +411,8 @@ struct StructB {
 struct OptionalSetDefaultTest {
   1: optional set<string> with_default = [ "test" ]
 }
+
+struct OptionalBinary {
+  1: optional set<binary> bin_set = {}
+  2: optional map<binary,i32> bin_map = {}
+}
