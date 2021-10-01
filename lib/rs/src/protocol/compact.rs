@@ -638,10 +638,10 @@ fn type_to_u8(field_type: TType) -> u8 {
         TType::Set => 0x0A,
         TType::Map => 0x0B,
         TType::Struct => 0x0C,
-        _ => panic!(format!(
+        _ => panic!(
             "should not have attempted to convert {} to u8",
             field_type
-        )),
+        ),
     }
 }
 
