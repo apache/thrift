@@ -19,17 +19,28 @@
 
 package org.apache.thrift;
 
-import java.io.UnsupportedEncodingException;
-import java.nio.ByteBuffer;
-
+import org.apache.thrift.meta_data.EnumMetaData;
+import org.apache.thrift.meta_data.StructMetaData;
+import org.apache.thrift.partial.TFieldData;
+import org.apache.thrift.partial.ThriftFieldValueProcessor;
+import org.apache.thrift.partial.ThriftMetadata;
+import org.apache.thrift.partial.ThriftStructProcessor;
+import org.apache.thrift.partial.Validate;
 import org.apache.thrift.protocol.TBinaryProtocol;
 import org.apache.thrift.protocol.TField;
+import org.apache.thrift.protocol.TList;
+import org.apache.thrift.protocol.TMap;
 import org.apache.thrift.protocol.TProtocol;
 import org.apache.thrift.protocol.TProtocolFactory;
 import org.apache.thrift.protocol.TProtocolUtil;
+import org.apache.thrift.protocol.TSet;
 import org.apache.thrift.protocol.TType;
 import org.apache.thrift.transport.TMemoryInputTransport;
 import org.apache.thrift.transport.TTransportException;
+
+import java.io.UnsupportedEncodingException;
+import java.nio.ByteBuffer;
+import java.util.Collection;
 
 /**
  * Generic utility for easily deserializing objects from a byte array or Java
@@ -39,6 +50,12 @@ import org.apache.thrift.transport.TTransportException;
 public class TDeserializer {
   private final TProtocol protocol_;
   private final TMemoryInputTransport trans_;
+
+  // Metadata that describes fields to deserialize during partial deserialization.
+  private ThriftMetadata.ThriftStruct metadata_ = null;
+
+  // Processor that handles deserialized field values during partial deserialization.
+  private ThriftFieldValueProcessor processor_ = null;
 
   /**
    * Create a new TDeserializer that uses the TBinaryProtocol by default.
@@ -59,6 +76,54 @@ public class TDeserializer {
   public TDeserializer(TProtocolFactory protocolFactory) throws TTransportException {
     trans_ = new TMemoryInputTransport(new TConfiguration());
     protocol_ = protocolFactory.getProtocol(trans_);
+  }
+
+  /**
+   * Construct a new TDeserializer that supports partial deserialization
+   * that outputs instances of type controlled by the given {@code processor}.
+   *
+   * @param thriftClass a TBase derived class.
+   * @param fieldNames list of fields to deserialize.
+   * @param processor the Processor that handles deserialized field values.
+   * @param protocolFactory the Factory to create a protocol.
+   */
+  public TDeserializer(
+      Class<? extends TBase> thriftClass,
+      Collection<String> fieldNames,
+      ThriftFieldValueProcessor processor,
+      TProtocolFactory protocolFactory) throws TTransportException {
+    this(protocolFactory);
+
+    Validate.checkNotNull(thriftClass, "thriftClass");
+    Validate.checkNotNull(fieldNames, "fieldNames");
+    Validate.checkNotNull(processor, "processor");
+
+    metadata_ = ThriftMetadata.ThriftStruct.fromFieldNames(thriftClass, fieldNames);
+    processor_ = processor;
+  }
+
+  /**
+   * Construct a new TDeserializer that supports partial deserialization
+   * that outputs {@code TBase} instances.
+   *
+   * @param thriftClass a TBase derived class.
+   * @param fieldNames list of fields to deserialize.
+   * @param protocolFactory the Factory to create a protocol.
+   */
+  public TDeserializer(
+      Class<? extends TBase> thriftClass,
+      Collection<String> fieldNames,
+      TProtocolFactory protocolFactory) throws TTransportException {
+    this(thriftClass, fieldNames, new ThriftStructProcessor(), protocolFactory);
+  }
+
+  /**
+   * Gets the metadata used for partial deserialization.
+   *
+   * @return the metadata used for partial deserialization.
+   */
+  public ThriftMetadata.ThriftStruct getMetadata() {
+    return metadata_;
   }
 
   /**
@@ -352,5 +417,266 @@ public class TDeserializer {
    */
   public void fromString(TBase base, String data) throws TException {
     deserialize(base, data.getBytes());
+  }
+
+  // ----------------------------------------------------------------------
+  // Methods related to partial deserialization.
+
+  /**
+   * Deserializes the given serialized blob.
+   *
+   * @param bytes the serialized blob.
+   * @return deserialized instance.
+   * @throws TException if an error is encountered during deserialization.
+   */
+  public Object partialDeserializeObject(byte[] bytes) throws TException {
+    return this.deserialize(bytes, 0, bytes.length);
+  }
+
+  /**
+   * Deserializes the given serialized blob.
+   *
+   * @param bytes the serialized blob.
+   * @param offset the blob is read starting at this offset.
+   * @param length the size of blob read (in number of bytes).
+   * @return deserialized instance.
+   * @throws TException if an error is encountered during deserialization.
+   */
+  public Object deserialize(byte[] bytes, int offset, int length) throws TException {
+    ensurePartialDeserializationMode();
+
+    this.trans_.reset(bytes, offset, length);
+    this.protocol_.reset();
+    return this.deserializeStruct(this.metadata_);
+  }
+
+  private Object deserialize(ThriftMetadata.ThriftObject data) throws TException {
+
+    Object value;
+    byte fieldType = data.data.valueMetaData.type;
+    switch (fieldType) {
+      case TType.STRUCT:
+        return this.deserializeStruct((ThriftMetadata.ThriftStruct) data);
+
+      case TType.LIST:
+        return this.deserializeList((ThriftMetadata.ThriftList) data);
+
+      case TType.MAP:
+        return this.deserializeMap((ThriftMetadata.ThriftMap) data);
+
+      case TType.SET:
+        return this.deserializeSet((ThriftMetadata.ThriftSet) data);
+
+      case TType.ENUM:
+        return this.deserializeEnum((ThriftMetadata.ThriftEnum) data);
+
+      case TType.BOOL:
+        return this.protocol_.readBool();
+
+      case TType.BYTE:
+        return this.protocol_.readByte();
+
+      case TType.I16:
+        return this.protocol_.readI16();
+
+      case TType.I32:
+        return this.protocol_.readI32();
+
+      case TType.I64:
+        return this.protocol_.readI64();
+
+      case TType.DOUBLE:
+        return this.protocol_.readDouble();
+
+      case TType.STRING:
+        if (((ThriftMetadata.ThriftPrimitive) data).isBinary()) {
+          return this.processor_.prepareBinary(this.protocol_.readBinary());
+        } else {
+          return this.processor_.prepareString(this.protocol_.readBinary());
+        }
+
+      default:
+        throw unsupportedFieldTypeException(fieldType);
+    }
+  }
+
+  private Object deserializeStruct(ThriftMetadata.ThriftStruct data) throws TException {
+
+    if (data.fields.size() == 0) {
+      return this.fullDeserialize(data);
+    }
+
+    Object instance = this.processor_.createNewStruct(data);
+    this.protocol_.readStructBegin();
+    while (true) {
+      int tfieldData = this.protocol_.readFieldBeginData();
+      byte tfieldType = TFieldData.getType(tfieldData);
+      if (tfieldType == TType.STOP) {
+        break;
+      }
+
+      Integer id = (int) TFieldData.getId(tfieldData);
+      ThriftMetadata.ThriftObject field = (ThriftMetadata.ThriftObject) data.fields.get(id);
+
+      if (field != null) {
+        this.deserializeStructField(instance, field.fieldId, field);
+      } else {
+        this.protocol_.skip(tfieldType);
+      }
+      this.protocol_.readFieldEnd();
+    }
+    this.protocol_.readStructEnd();
+
+    return this.processor_.prepareStruct(instance);
+  }
+
+  private void deserializeStructField(
+      Object instance,
+      TFieldIdEnum fieldId,
+      ThriftMetadata.ThriftObject data) throws TException {
+
+    byte fieldType = data.data.valueMetaData.type;
+    Object value;
+
+    switch (fieldType) {
+      case TType.BOOL:
+        this.processor_.setBool(instance, fieldId, this.protocol_.readBool());
+        break;
+
+      case TType.BYTE:
+        this.processor_.setByte(instance, fieldId, this.protocol_.readByte());
+        break;
+
+      case TType.I16:
+        this.processor_.setInt16(instance, fieldId, this.protocol_.readI16());
+        break;
+
+      case TType.I32:
+        this.processor_.setInt32(instance, fieldId, this.protocol_.readI32());
+        break;
+
+      case TType.I64:
+        this.processor_.setInt64(instance, fieldId, this.protocol_.readI64());
+        break;
+
+      case TType.DOUBLE:
+        this.processor_.setDouble(instance, fieldId, this.protocol_.readDouble());
+        break;
+
+      case TType.STRING:
+        if (((ThriftMetadata.ThriftPrimitive) data).isBinary()) {
+          this.processor_.setBinary(instance, fieldId, this.protocol_.readBinary());
+        } else {
+          this.processor_.setString(instance, fieldId, this.protocol_.readBinary());
+        }
+        break;
+
+      case TType.STRUCT:
+        value = this.deserializeStruct((ThriftMetadata.ThriftStruct) data);
+        this.processor_.setStructField(instance, fieldId, value);
+        break;
+
+      case TType.LIST:
+        value = this.deserializeList((ThriftMetadata.ThriftList) data);
+        this.processor_.setListField(instance, fieldId, value);
+        break;
+
+      case TType.MAP:
+        value = this.deserializeMap((ThriftMetadata.ThriftMap) data);
+        this.processor_.setMapField(instance, fieldId, value);
+        break;
+
+      case TType.SET:
+        value = this.deserializeSet((ThriftMetadata.ThriftSet) data);
+        this.processor_.setSetField(instance, fieldId, value);
+        break;
+
+      case TType.ENUM:
+        value = this.deserializeEnum((ThriftMetadata.ThriftEnum) data);
+        this.processor_.setEnumField(instance, fieldId, value);
+        break;
+
+      default:
+        throw new RuntimeException("Unsupported field type: " + fieldId.toString());
+    }
+  }
+
+  private Object deserializeList(ThriftMetadata.ThriftList data) throws TException {
+
+    TList tlist = this.protocol_.readListBegin();
+    Object instance = this.processor_.createNewList(tlist.size);
+    for (int i = 0; i < tlist.size; i++) {
+      Object value = this.deserialize(data.elementData);
+      this.processor_.setListElement(instance, i, value);
+    }
+    this.protocol_.readListEnd();
+    return this.processor_.prepareList(instance);
+  }
+
+  private Object deserializeMap(ThriftMetadata.ThriftMap data) throws TException {
+    TMap tmap = this.protocol_.readMapBegin();
+    Object instance = this.processor_.createNewMap(tmap.size);
+    for (int i = 0; i < tmap.size; i++) {
+      Object key = this.deserialize(data.keyData);
+      Object val = this.deserialize(data.valueData);
+      this.processor_.setMapElement(instance, i, key, val);
+    }
+    this.protocol_.readMapEnd();
+    return this.processor_.prepareMap(instance);
+  }
+
+  private Object deserializeSet(ThriftMetadata.ThriftSet data) throws TException {
+    TSet tset = this.protocol_.readSetBegin();
+    Object instance = this.processor_.createNewSet(tset.size);
+    for (int i = 0; i < tset.size; i++) {
+      Object eltValue = this.deserialize(data.elementData);
+      this.processor_.setSetElement(instance, i, eltValue);
+    }
+    this.protocol_.readSetEnd();
+    return this.processor_.prepareSet(instance);
+  }
+
+  private Object deserializeEnum(ThriftMetadata.ThriftEnum data) throws TException {
+    int ordinal = this.protocol_.readI32();
+    Class<? extends TEnum> enumClass = ((EnumMetaData) data.data.valueMetaData).enumClass;
+    return this.processor_.prepareEnum(enumClass, ordinal);
+  }
+
+  private TBase fullDeserialize(ThriftMetadata.ThriftStruct data) throws TException {
+    Validate.checkState(
+        data.fields.size() == 0, "Cannot fully deserialize when some fields are specified");
+    TBase instance = this.createNewStruct(data);
+    instance.read(this.protocol_);
+    return instance;
+  }
+
+  private <T extends TBase> T createNewStruct(ThriftMetadata.ThriftStruct data) {
+    T instance = null;
+
+    try {
+      instance = (T) this.getStructClass(data).newInstance();
+    } catch (InstantiationException e) {
+      throw new RuntimeException(e);
+    } catch (IllegalAccessException e) {
+      throw new RuntimeException(e);
+    }
+
+    return instance;
+  }
+
+  private <T extends TBase> Class<T> getStructClass(ThriftMetadata.ThriftStruct data) {
+    return (Class<T>) ((StructMetaData) data.data.valueMetaData).structClass;
+  }
+
+  private static UnsupportedOperationException unsupportedFieldTypeException(byte fieldType) {
+    return new UnsupportedOperationException("field type not supported: " + fieldType);
+  }
+
+  private void ensurePartialDeserializationMode() throws IllegalStateException {
+    if (this.metadata_ == null || this.processor_ == null) {
+      throw new IllegalStateException(
+          "Members metadata and processor must be correctly initialized in order to use this method"
+      );
+    }
   }
 }

@@ -45,43 +45,38 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-public class PartialThriftDeserializerTest {
+public class TestPartialThriftDeserializer {
 
   private ThriftSerDe serde = new ThriftSerDe();
-  private PartialThriftBinaryProtocol partialBinaryProtocol;
-  private PartialThriftCompactProtocol partialCompactProtocol;
-  private ThriftStructProcessor processor = new ThriftStructProcessor();
+  private TBinaryProtocol.Factory binaryProtocolFactory = new TBinaryProtocol.Factory();
+  private TCompactProtocol.Factory compactProtocolFactory = new TCompactProtocol.Factory();
 
   private PartialThriftTestData testData = new PartialThriftTestData();
 
-  public PartialThriftDeserializerTest() throws TException {
-    this.partialBinaryProtocol = new PartialThriftBinaryProtocol();
-    this.partialCompactProtocol = new PartialThriftCompactProtocol();
+  public TestPartialThriftDeserializer() throws TException {
   }
 
   @Test
-  public void testArgChecks() {
+  public void testArgChecks() throws TException {
     // Should not throw.
-    List<ThriftField> fields = ThriftField.fromNames(Arrays.asList("i32Field"));
-    ThriftMetadata.ThriftStruct metadata =
-        ThriftMetadata.ThriftStruct.fromFields(TestStruct.class, fields);
-    new PartialThriftDeserializer(metadata, processor, partialBinaryProtocol);
+    List<String> fieldNames = Arrays.asList("i32Field");
+    new TDeserializer(TestStruct.class, fieldNames, binaryProtocolFactory);
 
     // Verify it throws correctly.
     ExceptionAsserts.assertThrows(
         IllegalArgumentException.class,
-        "'metadata' must not be null",
-        () -> new PartialThriftDeserializer(null, processor, partialBinaryProtocol));
+        "'thriftClass' must not be null",
+        () -> new TDeserializer(null, fieldNames, binaryProtocolFactory));
+
+    ExceptionAsserts.assertThrows(
+        IllegalArgumentException.class,
+        "'fieldNames' must not be null",
+        () -> new TDeserializer(TestStruct.class, null, binaryProtocolFactory));
 
     ExceptionAsserts.assertThrows(
         IllegalArgumentException.class,
         "'processor' must not be null",
-        () -> new PartialThriftDeserializer(metadata, null, partialBinaryProtocol));
-
-    ExceptionAsserts.assertThrows(
-        IllegalArgumentException.class,
-        "'protocol' must not be null",
-        () -> new PartialThriftDeserializer(metadata, processor, null));
+        () -> new TDeserializer(TestStruct.class, fieldNames, null, binaryProtocolFactory));
   }
 
   /**
@@ -113,22 +108,22 @@ public class PartialThriftDeserializerTest {
 
     List<String> fieldNames = Arrays.asList("i32Field");
 
-    PartialThriftDeserializer partialBinaryDeserializer =
-        PartialThriftDeserializerFactory.createBinary(TestStruct.class, fieldNames);
-    PartialThriftDeserializer partialCompactDeserializer =
-        PartialThriftDeserializerFactory.createCompact(TestStruct.class, fieldNames);
+    TDeserializer partialBinaryDeserializer =
+        new TDeserializer(TestStruct.class, fieldNames, binaryProtocolFactory);
+    TDeserializer partialCompactDeserializer =
+        new TDeserializer(TestStruct.class, fieldNames, compactProtocolFactory);
 
     PartialThriftComparer comparer =
         new PartialThriftComparer(partialBinaryDeserializer.getMetadata());
 
     StringBuilder sb = new StringBuilder();
-    TestStruct ts2 = (TestStruct) partialBinaryDeserializer.deserialize(bytesBinary);
+    TestStruct ts2 = (TestStruct) partialBinaryDeserializer.partialDeserializeObject(bytesBinary);
     validatePartialSimpleField(ts1, ts2);
     if (!comparer.areEqual(ts1, ts2, sb)) {
       fail(sb.toString());
     }
 
-    ts2 = (TestStruct) partialCompactDeserializer.deserialize(bytesCompact);
+    ts2 = (TestStruct) partialCompactDeserializer.partialDeserializeObject(bytesCompact);
     validatePartialSimpleField(ts1, ts2);
     if (!comparer.areEqual(ts1, ts2, sb)) {
       fail(sb.toString());
@@ -150,79 +145,77 @@ public class PartialThriftDeserializerTest {
     byte[] bytesBinary = serde.serializeBinary(ts1);
     byte[] bytesCompact = serde.serializeCompact(ts1);
 
-    List<ThriftField> fields = ThriftField.fromNames(
-        Arrays.asList(
-            "byteField",
-            "i16Field",
-            "i32Field",
-            "i64Field",
-            "doubleField",
-            "stringField",
+    List<String> fieldNames = Arrays.asList(
+        "byteField",
+        "i16Field",
+        "i32Field",
+        "i64Field",
+        "doubleField",
+        "stringField",
 
-            "enumField",
-            "binaryField",
+        "enumField",
+        "binaryField",
 
-            // List fields
-            "byteList",
-            "i16List",
-            "i32List",
-            "i64List",
-            "doubleList",
-            "stringList",
-            "enumList",
-            "listList",
-            "setList",
-            "mapList",
-            "structList",
-            "binaryList",
+        // List fields
+        "byteList",
+        "i16List",
+        "i32List",
+        "i64List",
+        "doubleList",
+        "stringList",
+        "enumList",
+        "listList",
+        "setList",
+        "mapList",
+        "structList",
+        "binaryList",
 
-            // Set fields
-            "byteSet",
-            "i16Set",
-            "i32Set",
-            "i64Set",
-            "doubleSet",
-            "stringSet",
-            "enumSet",
-            "listSet",
-            "setSet",
-            "mapSet",
-            "structSet",
-            "binarySet",
+        // Set fields
+        "byteSet",
+        "i16Set",
+        "i32Set",
+        "i64Set",
+        "doubleSet",
+        "stringSet",
+        "enumSet",
+        "listSet",
+        "setSet",
+        "mapSet",
+        "structSet",
+        "binarySet",
 
-            // Map fields
-            "byteMap",
-            "i16Map",
-            "i32Map",
-            "i64Map",
-            "doubleMap",
-            "stringMap",
-            "enumMap",
-            "listMap",
-            "setMap",
-            "mapMap",
-            "structMap",
-            "binaryMap",
+        // Map fields
+        "byteMap",
+        "i16Map",
+        "i32Map",
+        "i64Map",
+        "doubleMap",
+        "stringMap",
+        "enumMap",
+        "listMap",
+        "setMap",
+        "mapMap",
+        "structMap",
+        "binaryMap",
 
-            // Struct field
-            "structField"
-        ));
+        // Struct field
+        "structField"
+    );
     StringBuilder sb = new StringBuilder();
-    ThriftMetadata.ThriftStruct metadata =
-        ThriftMetadata.ThriftStruct.fromFields(TestStruct.class, fields);
-    PartialThriftDeserializer partialBinaryDeserializer =
-        new PartialThriftDeserializer(metadata, processor, partialBinaryProtocol);
-    PartialThriftDeserializer partialCompactDeserializer =
-        new PartialThriftDeserializer(metadata, processor, partialCompactProtocol);
-    PartialThriftComparer comparer = new PartialThriftComparer(metadata);
+    TDeserializer partialBinaryDeserializer =
+        new TDeserializer(TestStruct.class, fieldNames, binaryProtocolFactory);
+    TDeserializer partialCompactDeserializer =
+        new TDeserializer(TestStruct.class, fieldNames, compactProtocolFactory);
+    PartialThriftComparer comparer =
+        new PartialThriftComparer(partialBinaryDeserializer.getMetadata());
 
-    TestStruct ts2 = (TestStruct) partialBinaryDeserializer.deserialize(bytesBinary);
+    TestStruct ts2 = (TestStruct) partialBinaryDeserializer.partialDeserializeObject(bytesBinary);
     validatePartialComplex(ts1, ts2, id, numItems);
     if (!comparer.areEqual(ts1, ts2, sb)) {
       fail(sb.toString());
     }
 
-    ts2 = (TestStruct) partialCompactDeserializer.deserialize(bytesCompact);
+    ts2 = (TestStruct) partialCompactDeserializer.partialDeserializeObject(bytesCompact);
     validatePartialComplex(ts1, ts2, id, numItems);
     if (!comparer.areEqual(ts1, ts2, sb)) {
       fail(sb.toString());

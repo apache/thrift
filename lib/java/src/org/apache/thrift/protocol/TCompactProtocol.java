@@ -728,7 +728,7 @@ public class TCompactProtocol extends TProtocol {
     }
 
     getTransport().checkReadBytesAvailable(length);
-    
+
     if (stringLengthLimit_ != NO_LENGTH_LIMIT && length > stringLengthLimit_) {
       throw new TProtocolException(TProtocolException.SIZE_LIMIT,
                                    "Length exceeded max allowed: " + length);
@@ -941,5 +941,37 @@ public class TCompactProtocol extends TProtocol {
           default:
               throw new TTransportException(TTransportException.UNKNOWN, "unrecognized type code");
       }
+  }
+  // -----------------------------------------------------------------
+  // Additional methods to improve performance.
+
+  @Override
+  protected void skipBinary() throws TException {
+    int size = intToZigZag(readI32());
+    this.skipBytes(size);
+  }
+
+  // -------------------------------------------------------
+  // Implementing skip for the following methods is tricky (but not impossible).
+  // For now, we call the corresponding read() method.
+
+  @Override
+  protected void skipBool() throws TException {
+    this.readBool();
+  }
+
+  @Override
+  protected void skipI16() throws TException {
+    this.readI16();
+  }
+
+  @Override
+  protected void skipI32() throws TException {
+    this.readI32();
+  }
+
+  @Override
+  protected void skipI64() throws TException {
+    this.readI64();
   }
 }

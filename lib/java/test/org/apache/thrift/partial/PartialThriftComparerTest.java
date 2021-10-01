@@ -21,10 +21,12 @@ package org.apache.thrift.partial;
 
 import static org.junit.Assert.*;
 
+import org.apache.thrift.TDeserializer;
+import org.apache.thrift.TException;
 import org.apache.thrift.partial.TestStruct;
 import org.apache.thrift.partial.ThriftField;
-
-import org.apache.thrift.TException;
+import org.apache.thrift.protocol.TBinaryProtocol;
+import org.apache.thrift.protocol.TCompactProtocol;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -51,21 +53,21 @@ public class PartialThriftComparerTest {
     byte[] bytesCompact = serde.serializeCompact(ts1);
 
     List<String> fieldNames = Arrays.asList("i32Field");
-    PartialThriftDeserializer partialBinaryDeser =
-        PartialThriftDeserializerFactory.createBinary(TestStruct.class, fieldNames);
-    PartialThriftDeserializer partialCompactDeser =
-        PartialThriftDeserializerFactory.createCompact(TestStruct.class, fieldNames);
+    TDeserializer partialBinaryDeser =
+        new TDeserializer(TestStruct.class, fieldNames, new TBinaryProtocol.Factory());
+    TDeserializer partialCompactDeser =
+        new TDeserializer(TestStruct.class, fieldNames, new TCompactProtocol.Factory());
 
     ThriftMetadata.ThriftStruct metadata = partialBinaryDeser.getMetadata();
     PartialThriftComparer comparer = new PartialThriftComparer(metadata);
 
     StringBuilder sb = new StringBuilder();
-    TestStruct ts2 = (TestStruct) partialBinaryDeser.deserialize(bytesBinary);
+    TestStruct ts2 = (TestStruct) partialBinaryDeser.partialDeserializeObject(bytesBinary);
     if (!comparer.areEqual(ts1, ts2, sb)) {
       fail(sb.toString());
     }
 
-    ts2 = (TestStruct) partialCompactDeser.deserialize(bytesCompact);
+    ts2 = (TestStruct) partialCompactDeser.partialDeserializeObject(bytesCompact);
     if (!comparer.areEqual(ts1, ts2, sb)) {
       fail(sb.toString());
     }

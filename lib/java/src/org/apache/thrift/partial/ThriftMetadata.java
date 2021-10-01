@@ -19,8 +19,7 @@
 
 package org.apache.thrift.partial;
 
-import org.apache.thrift.partial.Validate;
-
+import org.apache.commons.lang3.StringUtils;
 import org.apache.thrift.TBase;
 import org.apache.thrift.TFieldIdEnum;
 import org.apache.thrift.TFieldRequirementType;
@@ -31,10 +30,13 @@ import org.apache.thrift.meta_data.ListMetaData;
 import org.apache.thrift.meta_data.MapMetaData;
 import org.apache.thrift.meta_data.SetMetaData;
 import org.apache.thrift.meta_data.StructMetaData;
+import org.apache.thrift.partial.Validate;
 import org.apache.thrift.protocol.TType;
 
 import java.io.Serializable;
 import java.lang.reflect.Field;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -45,7 +47,7 @@ import java.util.Set;
  * Container for Thrift metadata classes such as {@link ThriftPrimitive},
  * {@link ThriftList}, etc.
  * <p>
- * This class is mainly used by {@link PartialThriftDeserializer}.
+ * This class is mainly used by {@code TDeserializer}.
  */
 public class ThriftMetadata {
 
@@ -87,9 +89,9 @@ public class ThriftMetadata {
    *
    * Holds metadata necessary for partial deserialization.
    * The metadata is internally computed and used; therefore it is not visible to
-   * the users of {@link PartialThriftDeserializer}.
+   * the users of {@code TDeserializer}.
    */
-  abstract static class ThriftObject implements Serializable {
+  public abstract static class ThriftObject implements Serializable {
     public final ThriftObject parent;
     public final TFieldIdEnum fieldId;
     public final FieldMetaData data;
@@ -104,10 +106,33 @@ public class ThriftMetadata {
       this.data = data;
     }
 
-    @Override
-    public String toString() {
-      String parentId = parent == null ? "" : this.parent.toString() + " ==> ";
-      return String.format("%s%s", parentId, this.fieldId.getFieldName());
+    /**
+     * Converts this instance to formatted and indented string representation.
+     *
+     * @param sb the {@code StringBuilder} to add formatted strings to.
+     * @param level the current indent level.
+     */
+    protected abstract void toPrettyString(StringBuilder sb, int level);
+
+    /**
+     * Gets a space string whose length is proportional to the given indent level.
+     */
+    protected String getIndent(int level) {
+      return StringUtils.repeat(" ", level * 4);
+    }
+
+    /**
+     * Helper method to append a formatted string to the given {@code StringBuilder}.
+     */
+    protected void append(StringBuilder sb, String format, Object... args) {
+      sb.append(String.format(format, args));
+    }
+
+    /**
+     * Gets the name of this field.
+     */
+    protected String getName() {
+      return this.fieldId.getFieldName();
     }
 
     protected List<String> noFields = Collections.emptyList();
@@ -165,26 +190,51 @@ public class ThriftMetadata {
    * Metadata about primitive types.
    */
   public static class ThriftPrimitive extends ThriftObject {
-    // If true and if type is TType.STRING, implies a binary field.
-    // A separate state like this is required because 'binary' is not a
-    // separate primitive type in Thrift. That is, Thrift implementation
-    // overloads TType.STRING to mean either string or binary depending
-    // upon external state.
-    private boolean isBinaryField = false;
-
     ThriftPrimitive(ThriftObject parent, TFieldIdEnum fieldId, FieldMetaData data) {
       super(parent, fieldId, data);
-
-      if (data.valueMetaData.type == TType.STRING) {
-        ThriftStruct parentStruct = getParentStruct();
-        if (parentStruct != null) {
-          this.isBinaryField = parentStruct.isBinaryField(data.valueMetaData);
-        }
-      }
     }
 
     public boolean isBinary() {
-      return this.isBinaryField;
+      return this.data.valueMetaData.isBinary();
+    }
+
+    @Override
+    protected void toPrettyString(StringBuilder sb, int level) {
+      String fieldType = this.getTypeName();
+      this.append(sb, "%s%s %s;\n", this.getIndent(level), fieldType, this.getName());
+    }
+
+    private String getTypeName() {
+      byte fieldType = this.data.valueMetaData.type;
+      switch (fieldType) {
+        case TType.BOOL:
+          return "bool";
+
+        case TType.BYTE:
+          return "byte";
+
+        case TType.I16:
+          return "i16";
+
+        case TType.I32:
+          return "i32";
+
+        case TType.I64:
+          return "i64";
+
+        case TType.DOUBLE:
+          return "double";
+
+        case TType.STRING:
+          if (this.isBinary()) {
+            return "binary";
+          } else {
+            return "string";
+          }
+
+        default:
+          throw unsupportedFieldTypeException(fieldType);
+      }
     }
 
     private ThriftStruct getParentStruct() {
@@ -204,6 +254,11 @@ public class ThriftMetadata {
 
     ThriftEnum(ThriftObject parent, TFieldIdEnum fieldId, FieldMetaData data) {
       super(parent, fieldId, data);
+    }
+
+    @Override
+    protected void toPrettyString(StringBuilder sb, int level) {
+      this.append(sb, "%senum %s;\n", this.getIndent(level), this.getName());
     }
   }
 
@@ -246,6 +301,13 @@ public class ThriftMetadata {
     public boolean hasUnion() {
       return this.elementData instanceof ThriftUnion;
     }
+
+    @Override
+    protected void toPrettyString(StringBuilder sb, int level) {
+      this.append(sb, "%slist<\n", this.getIndent(level));
+      this.elementData.toPrettyString(sb, level + 1);
+      this.append(sb, "%s> %s;\n", this.getIndent(level), this.getName());
+    }
   }
 
   public static class ThriftSet extends ThriftContainer {
@@ -271,6 +333,13 @@ public class ThriftMetadata {
     @Override
     public boolean hasUnion() {
       return this.elementData instanceof ThriftUnion;
+    }
+
+    @Override
+    protected void toPrettyString(StringBuilder sb, int level) {
+      this.append(sb, "%sset<\n", this.getIndent(level));
+      this.elementData.toPrettyString(sb, level + 1);
+      this.append(sb, "%s> %s;\n", this.getIndent(level), this.getName());
     }
   }
 
@@ -301,12 +370,24 @@ public class ThriftMetadata {
               getSubElementName(fieldId, "value"),
               TFieldRequirementType.REQUIRED,
               ((MapMetaData) data.valueMetaData).valueMetaData),
-          Collections.emptyList());
+          fields);
     }
 
     @Override
     public boolean hasUnion() {
       return (this.keyData instanceof ThriftUnion) || (this.valueData instanceof ThriftUnion);
+    }
+
+    @Override
+    protected void toPrettyString(StringBuilder sb, int level) {
+      this.append(sb, "%smap<\n", this.getIndent(level));
+      this.append(sb, "%skey = {\n", this.getIndent(level + 1));
+      this.keyData.toPrettyString(sb, level + 2);
+      this.append(sb, "%s},\n", this.getIndent(level + 1));
+      this.append(sb, "%svalue = {\n", this.getIndent(level + 1));
+      this.valueData.toPrettyString(sb, level + 2);
+      this.append(sb, "%s}\n", this.getIndent(level + 1));
+      this.append(sb, "%s> %s;\n", this.getIndent(level), this.getName());
     }
   }
 
@@ -364,6 +445,15 @@ public class ThriftMetadata {
         Iterable<ThriftField> fieldsData) {
       super(parent, fieldId, data);
     }
+
+    @Override
+    protected void toPrettyString(StringBuilder sb, int level) {
+      String indent = this.getIndent(level);
+      String indent2 = this.getIndent(level + 1);
+      this.append(sb, "%sunion %s {\n", indent, this.getName());
+      this.append(sb, "%s// unions not adequately supported at present.\n", indent2);
+      this.append(sb, "%s}\n", indent);
+    }
   }
 
   /**
@@ -371,9 +461,6 @@ public class ThriftMetadata {
    */
   public static class ThriftStruct<U extends TBase> extends ThriftStructBase {
     public final Map<Integer, ThriftObject> fields;
-
-    // Contains metadata of fields of TType.STRING that should be treated as binary fields.
-    private Set<FieldValueMetaData> binaryFieldValueMetaDatas;
 
     ThriftStruct(
         ThriftObject parent,
@@ -383,7 +470,6 @@ public class ThriftMetadata {
       super(parent, fieldId, data);
 
       Class<U> clasz = getStructClass(data);
-      initBinaryFieldValueMetaDatas(clasz);
       this.fields = getFields(this, clasz, fieldsData);
     }
 
@@ -402,13 +488,14 @@ public class ThriftMetadata {
       return instance;
     }
 
-    public boolean isBinaryField(FieldValueMetaData fieldValueMetadata) {
-      return (this.binaryFieldValueMetaDatas != null)
-          && this.binaryFieldValueMetaDatas.contains(fieldValueMetadata);
-    }
-
     public static <T extends TBase> ThriftStruct of(Class<T> clasz) {
       return ThriftStruct.fromFields(clasz, Collections.emptyList());
+    }
+
+    public static <T extends TBase> ThriftStruct fromFieldNames(
+        Class<T> clasz,
+        Collection<String> fieldNames) {
+      return fromFields(clasz, ThriftField.fromNames(fieldNames));
     }
 
     public static <T extends TBase> ThriftStruct fromFields(
@@ -426,6 +513,30 @@ public class ThriftMetadata {
               TFieldRequirementType.REQUIRED,
               new StructMetaData(TType.STRUCT, clasz)),
           fields);
+    }
+
+    @Override
+    public String toString() {
+      StringBuilder sb = new StringBuilder();
+      this.toPrettyString(sb, 0);
+      return sb.toString();
+    }
+
+    @Override
+    protected void toPrettyString(StringBuilder sb, int level) {
+      String indent = this.getIndent(level);
+      String indent2 = this.getIndent(level + 1);
+      this.append(sb, "%sstruct %s {\n", indent, this.getName());
+      if (this.fields.size() == 0) {
+        this.append(sb, "%s*;", indent2);
+      } else {
+        List<Integer> ids = new ArrayList(this.fields.keySet());
+        Collections.sort(ids);
+        for (Integer id : ids) {
+          this.fields.get(id).toPrettyString(sb, level + 1);
+        }
+      }
+      this.append(sb, "%s}\n", indent);
     }
 
     private static <U extends TBase> Map<Integer, ThriftObject> getFields(
@@ -484,17 +595,6 @@ public class ThriftMetadata {
       }
 
       throw fieldNotFoundException(fieldName);
-    }
-
-    private void initBinaryFieldValueMetaDatas(Class<U> clasz) {
-      try {
-        Field field = clasz.getField("binaryFieldValueMetaDatas");
-        this.binaryFieldValueMetaDatas = (Set<FieldValueMetaData>) field.get(null);
-      } catch (NoSuchFieldException e) {
-        // If this field is missing, there are no binary fields in this class.
-      } catch (IllegalAccessException e) {
-        // If this field is inaccessible, there are no binary fields in this class.
-      }
     }
   }
 

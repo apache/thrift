@@ -29,7 +29,7 @@ import java.util.List;
 /**
  * Holds name of a thrift field and of its sub-fields recursively.
  * <p>
- * This class is meant to be used in conjunction with {@link PartialThriftDeserializer}.
+ * This class is meant to be used in conjunction with {@code TDeserializer}.
  */
 public class ThriftField {
 
@@ -42,7 +42,7 @@ public class ThriftField {
    * List of sub-fields of this field.
    *
    * This list should have only those sub-fields that need to be deserialized
-   * by the {@link PartialThriftDeserializer}.
+   * by the {@code TDeserializer}.
    */
   public final List<ThriftField> fields;
 
