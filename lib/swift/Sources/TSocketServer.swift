@@ -140,7 +140,7 @@ open class TSocketServer<InProtocol: TProtocol, OutProtocol: TProtocol, Processo
         try processor.process(on: inProtocol, outProtocol: outProtocol)
       }
     } catch let error {
-      print("Error processign request: \(error)")
+      print("Error processing request: \(error)")
     }
     DispatchQueue.main.async {
       NotificationCenter.default
