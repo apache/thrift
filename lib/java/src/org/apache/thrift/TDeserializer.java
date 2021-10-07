@@ -423,18 +423,18 @@ public class TDeserializer {
   // Methods related to partial deserialization.
 
   /**
-   * Deserializes the given serialized blob.
+   * Partially deserializes the given serialized blob.
    *
    * @param bytes the serialized blob.
    * @return deserialized instance.
    * @throws TException if an error is encountered during deserialization.
    */
   public Object partialDeserializeObject(byte[] bytes) throws TException {
-    return this.deserialize(bytes, 0, bytes.length);
+    return this.partialDeserializeObject(bytes, 0, bytes.length);
   }
 
   /**
-   * Deserializes the given serialized blob.
+   * Partially deserializes the given serialized blob.
    *
    * @param bytes the serialized blob.
    * @param offset the blob is read starting at this offset.
@@ -442,7 +442,7 @@ public class TDeserializer {
    * @return deserialized instance.
    * @throws TException if an error is encountered during deserialization.
    */
-  public Object deserialize(byte[] bytes, int offset, int length) throws TException {
+  public Object partialDeserializeObject(byte[] bytes, int offset, int length) throws TException {
     ensurePartialDeserializationMode();
 
     this.trans_.reset(bytes, offset, length);
