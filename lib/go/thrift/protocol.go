@@ -146,7 +146,11 @@ func Skip(ctx context.Context, self TProtocol, fieldType TType, maxDepth int) (e
 			if err != nil {
 				return err
 			}
-			self.Skip(ctx, valueType)
+
+			err = Skip(ctx, self, valueType, maxDepth-1)
+			if err != nil {
+				return err
+			}
 		}
 		return self.ReadMapEnd(ctx)
 	case SET:
