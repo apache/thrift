@@ -147,12 +147,16 @@ public class TDeserializer {
    * @throws TException if an error is encountered during deserialization.
    */
   public void deserialize(TBase base, byte[] bytes, int offset, int length) throws TException {
-    try {
-      trans_.reset(bytes, offset, length);
-      base.read(protocol_);
-    } finally {
-      trans_.clear();
-      protocol_.reset();
+    if (this.isPartialDeserializationMode()) {
+      this.partialDeserializeThriftObject(base, bytes, offset, length);
+    } else {
+      try {
+        trans_.reset(bytes, offset, length);
+        base.read(protocol_);
+      } finally {
+        trans_.clear();
+        protocol_.reset();
+      }
     }
   }
 
@@ -434,6 +438,23 @@ public class TDeserializer {
   }
 
   /**
+   * Partially deserializes the given serialized blob into the given {@code TBase} instance.
+   *
+   * @param base the instance into which the given blob is deserialized.
+   * @param bytes the serialized blob.
+   * @param offset the blob is read starting at this offset.
+   * @param length the size of blob read (in number of bytes).
+   * @return deserialized instance.
+   * @throws TException if an error is encountered during deserialization.
+   */
+  public Object partialDeserializeThriftObject(TBase base, byte[] bytes, int offset, int length)
+      throws TException {
+    ensurePartialThriftDeserializationMode();
+
+    return this.partialDeserializeObject(base, bytes, offset, length);
+  }
+
+  /**
    * Partially deserializes the given serialized blob.
    *
    * @param bytes the serialized blob.
@@ -445,9 +466,26 @@ public class TDeserializer {
   public Object partialDeserializeObject(byte[] bytes, int offset, int length) throws TException {
     ensurePartialDeserializationMode();
 
+    return this.partialDeserializeObject(null, bytes, offset, length);
+  }
+
+  /**
+   * Partially deserializes the given serialized blob.
+   *
+   * @param instance the instance into which the given blob is deserialized.
+   * @param bytes the serialized blob.
+   * @param offset the blob is read starting at this offset.
+   * @param length the size of blob read (in number of bytes).
+   * @return deserialized instance.
+   * @throws TException if an error is encountered during deserialization.
+   */
+  private Object partialDeserializeObject(Object instance, byte[] bytes, int offset, int length)
+      throws TException {
+    ensurePartialDeserializationMode();
+
     this.trans_.reset(bytes, offset, length);
     this.protocol_.reset();
-    return this.deserializeStruct(this.metadata_);
+    return this.deserializeStruct(instance, this.metadata_);
   }
 
   private Object deserialize(ThriftMetadata.ThriftObject data) throws TException {
@@ -456,7 +494,7 @@ public class TDeserializer {
     byte fieldType = data.data.valueMetaData.type;
     switch (fieldType) {
       case TType.STRUCT:
-        return this.deserializeStruct((ThriftMetadata.ThriftStruct) data);
+        return this.deserializeStruct(null, (ThriftMetadata.ThriftStruct) data);
 
       case TType.LIST:
         return this.deserializeList((ThriftMetadata.ThriftList) data);
@@ -500,13 +538,13 @@ public class TDeserializer {
     }
   }
 
-  private Object deserializeStruct(ThriftMetadata.ThriftStruct data) throws TException {
+  private Object deserializeStruct(Object instance, ThriftMetadata.ThriftStruct data)
+      throws TException {
 
-    if (data.fields.size() == 0) {
-      return this.fullDeserialize(data);
+    if (instance == null) {
+      instance = this.processor_.createNewStruct(data);
     }
 
-    Object instance = this.processor_.createNewStruct(data);
     this.protocol_.readStructBegin();
     while (true) {
       int tfieldData = this.protocol_.readFieldBeginData();
@@ -572,7 +610,7 @@ public class TDeserializer {
         break;
 
       case TType.STRUCT:
-        value = this.deserializeStruct((ThriftMetadata.ThriftStruct) data);
+        value = this.deserializeStruct(null, (ThriftMetadata.ThriftStruct) data);
         this.processor_.setStructField(instance, fieldId, value);
         break;
 
@@ -642,14 +680,6 @@ public class TDeserializer {
     return this.processor_.prepareEnum(enumClass, ordinal);
   }
 
-  private TBase fullDeserialize(ThriftMetadata.ThriftStruct data) throws TException {
-    Validate.checkState(
-        data.fields.size() == 0, "Cannot fully deserialize when some fields are specified");
-    TBase instance = this.createNewStruct(data);
-    instance.read(this.protocol_);
-    return instance;
-  }
-
   private <T extends TBase> T createNewStruct(ThriftMetadata.ThriftStruct data) {
     T instance = null;
 
@@ -672,10 +702,24 @@ public class TDeserializer {
     return new UnsupportedOperationException("field type not supported: " + fieldType);
   }
 
+  private boolean isPartialDeserializationMode() {
+    return (this.metadata_ != null) && (this.processor_ != null);
+  }
+
   private void ensurePartialDeserializationMode() throws IllegalStateException {
-    if (this.metadata_ == null || this.processor_ == null) {
+    if (!this.isPartialDeserializationMode()) {
       throw new IllegalStateException(
           "Members metadata and processor must be correctly initialized in order to use this method"
+      );
+    }
+  }
+
+  private void ensurePartialThriftDeserializationMode() throws IllegalStateException {
+    this.ensurePartialDeserializationMode();
+
+    if (!(this.processor_ instanceof ThriftStructProcessor)) {
+      throw new IllegalStateException(
+          "processor must be an instance of ThriftStructProcessor to use this method"
       );
     }
   }

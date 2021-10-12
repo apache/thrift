@@ -950,28 +950,4 @@ public class TCompactProtocol extends TProtocol {
     int size = intToZigZag(readI32());
     this.skipBytes(size);
   }
-
-  // -------------------------------------------------------
-  // Implementing skip for the following methods is tricky (but not impossible).
-  // For now, we call the corresponding read() method.
-
-  @Override
-  protected void skipBool() throws TException {
-    this.readBool();
-  }
-
-  @Override
-  protected void skipI16() throws TException {
-    this.readI16();
-  }
-
-  @Override
-  protected void skipI32() throws TException {
-    this.readI32();
-  }
-
-  @Override
-  protected void skipI64() throws TException {
-    this.readI64();
-  }
 }

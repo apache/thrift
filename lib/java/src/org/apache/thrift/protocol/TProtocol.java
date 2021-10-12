@@ -275,33 +275,38 @@ public abstract class TProtocol {
     }
   }
 
+  /**
+   * The default implementation of all skip() methods calls the corresponding read() method.
+   * Protocols that derive from this class are strongly encouraged to provide
+   * a more efficient alternative.
+   */
+
   protected void skipBool() throws TException {
-    this.skipBytes(1);
+    this.readBool();
   }
 
   protected void skipByte() throws TException {
-    this.skipBytes(1);
+    this.readByte();
   }
 
   protected void skipI16() throws TException {
-    this.skipBytes(2);
+    this.readI16();
   }
 
   protected void skipI32() throws TException {
-    this.skipBytes(4);
+    this.readI32();
   }
 
   protected void skipI64() throws TException {
-    this.skipBytes(8);
+    this.readI64();
   }
 
   protected void skipDouble() throws TException {
-    this.skipBytes(8);
+    this.readDouble();
   }
 
   protected void skipBinary() throws TException {
-    int size = readI32();
-    this.skipBytes(size);
+    this.readBinary();
   }
 
   static final int MAX_SKIPPED_BYTES = 256;

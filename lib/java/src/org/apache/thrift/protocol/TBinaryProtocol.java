@@ -500,4 +500,40 @@ public class TBinaryProtocol extends TProtocol {
     short id = this.readI16();
     return TFieldData.encode(type, id);
   }
+
+  @Override
+  protected void skipBool() throws TException {
+    this.skipBytes(1);
+  }
+
+  @Override
+  protected void skipByte() throws TException {
+    this.skipBytes(1);
+  }
+
+  @Override
+  protected void skipI16() throws TException {
+    this.skipBytes(2);
+  }
+
+  @Override
+  protected void skipI32() throws TException {
+    this.skipBytes(4);
+  }
+
+  @Override
+  protected void skipI64() throws TException {
+    this.skipBytes(8);
+  }
+
+  @Override
+  protected void skipDouble() throws TException {
+    this.skipBytes(8);
+  }
+
+  @Override
+  protected void skipBinary() throws TException {
+    int size = readI32();
+    this.skipBytes(size);
+  }
 }
