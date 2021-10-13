@@ -225,7 +225,7 @@ VALUE get_field_value(VALUE obj, VALUE field_name) {
 }
 
 static void write_container(int ttype, VALUE field_info, VALUE value, VALUE protocol) {
-  int sz, i;
+  long sz, i;
 
   if (ttype == TTYPE_MAP) {
     VALUE keys;
