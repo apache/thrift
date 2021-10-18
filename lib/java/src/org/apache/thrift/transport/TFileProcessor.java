@@ -84,7 +84,7 @@ public class TFileProcessor {
 
    * @param startChunkNum first chunk to be processed
    * @param endChunkNum last chunk to be processed
-   * @throws TException if endChunkNum < startChunkNum.
+   * @throws TException if endChunkNum is less than startChunkNum.
    */
   public void processChunk(int startChunkNum, int endChunkNum) throws TException {
     int numChunks = inputTransport_.getNumChunks();
