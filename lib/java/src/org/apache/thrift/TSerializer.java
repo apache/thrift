@@ -52,7 +52,7 @@ public class TSerializer {
   /**
    * Create a new TSerializer that uses the TBinaryProtocol by default.
    *
-   * @throws TTransportException
+   * @throws TTransportException if there an error initializing the underlying transport.
    */
   public TSerializer() throws TTransportException {
     this(new TBinaryProtocol.Factory());
@@ -63,7 +63,7 @@ public class TSerializer {
    * factory that is passed in.
    *
    * @param protocolFactory Factory to create a protocol
-   * @throws TTransportException
+   * @throws TTransportException if there an error initializing the underlying transport.
    */
   public TSerializer(TProtocolFactory protocolFactory) throws TTransportException {
     transport_ = new TIOStreamTransport(new TConfiguration(), baos_);
