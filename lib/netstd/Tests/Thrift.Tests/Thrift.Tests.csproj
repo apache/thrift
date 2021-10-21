@@ -17,10 +17,12 @@
     specific language governing permissions and limitations
     under the License.
   -->
+
   <PropertyGroup>
     <TargetFramework>net5.0</TargetFramework>
     <Version>0.16.0.0</Version>
   </PropertyGroup>
+
   <ItemGroup>
     <PackageReference Include="CompareNETObjects" Version="4.72.0" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.8.3" />
@@ -28,10 +30,12 @@
     <PackageReference Include="MSTest.TestFramework" Version="2.1.2" />
     <PackageReference Include="NSubstitute" Version="4.2.2" />
   </ItemGroup>
+
   <ItemGroup>
     <ProjectReference Include="..\..\Thrift\Thrift.csproj" />
     <ProjectReference Include="..\Thrift.PublicInterfaces.Compile.Tests\Thrift.PublicInterfaces.Compile.Tests.csproj" />
   </ItemGroup>
+
   <ItemGroup>
     <Service Include="{82a7f48d-3b50-4b1e-b82e-3ada8210c358}" />
   </ItemGroup>

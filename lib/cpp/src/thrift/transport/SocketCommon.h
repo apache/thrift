@@ -22,16 +22,19 @@
 #ifndef THRIFT_SOCKETCOMMON_H
 #define THRIFT_SOCKETCOMMON_H
 
-#ifndef _WIN32
-
 #include <thrift/thrift-config.h>
 
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
-
 #ifdef HAVE_SYS_UN_H
 #include <sys/un.h>
+#endif
+#ifdef HAVE_AF_UNIX_H
+#include <afunix.h>
+#endif
+#ifdef HAVE_SYS_SOCKET_H
+#include <sys/socket.h>
 #endif
 
 #include <string>
@@ -45,7 +48,5 @@ socklen_t fillUnixSocketAddr(struct sockaddr_un& address, std::string& path);
 }
 }
 } // apache::thrift::transport
-
-#endif // _WIN32
 
 #endif //THRIFT_SOCKETCOMMON_H

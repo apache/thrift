@@ -308,7 +308,7 @@ public class TSimpleJSONProtocol extends TProtocol {
   public void writeString(String str) throws TException {
     writeContext_.write();
     int length = str.length();
-    StringBuffer escape = new StringBuffer(length + 16);
+    StringBuilder escape = new StringBuilder(length + 16);
     escape.append(QUOTE);
     for (int i = 0; i < length; ++i) {
       char c = str.charAt(i);

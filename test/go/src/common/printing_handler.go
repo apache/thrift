@@ -26,6 +26,7 @@ import (
 	"fmt"
 	"time"
 
+	//lint:ignore ST1001 allow dot import here
 	. "github.com/apache/thrift/test/go/src/gen/thrifttest"
 )
 
@@ -333,6 +334,7 @@ func (p *printingHandler) TestException(ctx context.Context, arg string) (err er
 		e.Message = arg
 		return e
 	case "TException":
+		//lint:ignore ST1005 To be consistent with other language libraries.
 		return errors.New("Just TException")
 	}
 	return

@@ -103,14 +103,14 @@ func main() {
 	var transportFactory thrift.TTransportFactory
 
 	if *compact {
-		protocolFactory = thrift.NewTCompactProtocolFactory()
+		protocolFactory = thrift.NewTCompactProtocolFactoryConf(nil)
 	} else {
-		protocolFactory = thrift.NewTBinaryProtocolFactoryDefault()
+		protocolFactory = thrift.NewTBinaryProtocolFactoryConf(nil)
 	}
 
 	if *framed {
 		transportFactory = thrift.NewTTransportFactory()
-		transportFactory = thrift.NewTFramedTransportFactory(transportFactory)
+		transportFactory = thrift.NewTFramedTransportFactoryConf(transportFactory, nil)
 	} else {
 		transportFactory = thrift.NewTBufferedTransportFactory(8192)
 	}

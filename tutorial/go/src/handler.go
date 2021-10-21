@@ -51,13 +51,10 @@ func (p *CalculatorHandler) Calculate(ctx context.Context, logid int32, w *tutor
 	switch w.Op {
 	case tutorial.Operation_ADD:
 		val = w.Num1 + w.Num2
-		break
 	case tutorial.Operation_SUBTRACT:
 		val = w.Num1 - w.Num2
-		break
 	case tutorial.Operation_MULTIPLY:
 		val = w.Num1 * w.Num2
-		break
 	case tutorial.Operation_DIVIDE:
 		if w.Num2 == 0 {
 			ouch := tutorial.NewInvalidOperation()
@@ -67,7 +64,6 @@ func (p *CalculatorHandler) Calculate(ctx context.Context, logid int32, w *tutor
 			return
 		}
 		val = w.Num1 / w.Num2
-		break
 	default:
 		ouch := tutorial.NewInvalidOperation()
 		ouch.WhatOp = int32(w.Op)
@@ -93,7 +89,7 @@ func (p *CalculatorHandler) Calculate(ctx context.Context, logid int32, w *tutor
 
 func (p *CalculatorHandler) GetStruct(ctx context.Context, key int32) (*shared.SharedStruct, error) {
 	fmt.Print("getStruct(", key, ")\n")
-	v, _ := p.log[int(key)]
+	v := p.log[int(key)]
 	return v, nil
 }
 

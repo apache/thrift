@@ -73,6 +73,8 @@ public:
 
   ~TNonblockingServerSocket() override;
 
+  bool isOpen() const;
+
   void setSendTimeout(int sendTimeout);
   void setRecvTimeout(int recvTimeout);
 
@@ -103,6 +105,10 @@ public:
 
   int getListenPort() override;
 
+  std::string getPath() const;
+
+  bool isUnixDomainSocket() const;
+
   void listen() override;
   void close() override;
 
@@ -111,6 +117,10 @@ protected:
   virtual std::shared_ptr<TSocket> createSocket(THRIFT_SOCKET client);
 
 private:
+  void _setup_sockopts();
+  void _setup_unixdomain_sockopts();
+  void _setup_tcp_sockopts();
+
   int port_;
   int listenPort_;
   std::string address_;
@@ -128,9 +138,6 @@ private:
 
   socket_func_t listenCallback_;
   socket_func_t acceptCallback_;
-
-  void _setup_sockopts();
-  void _setup_tcp_sockopts();
 };
 }
 }

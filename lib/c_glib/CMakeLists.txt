@@ -24,7 +24,7 @@ include_directories(${GLIB_INCLUDE_DIRS})
 include_directories(src)
 
 # SYSLIBS contains libraries that need to be linked to all lib targets
-set(SYSLIBS ${GLIB_LIBRARIES} ${GLIB_GOBJECT_LIBRARIES})
+list(APPEND SYSLIBS ${GLIB_LIBRARIES} ${GLIB_GOBJECT_LIBRARIES})
 
 # Create the thrift C glib library
 set(thrift_c_glib_SOURCES
@@ -67,31 +67,40 @@ set(thrift_c_glib_zlib_SOURCES
     src/thrift/c_glib/transport/thrift_transport.c
     src/thrift/c_glib/transport/thrift_transport_factory.c
     src/thrift/c_glib/transport/thrift_zlib_transport.c
-    src/thrift/c_glib/transport/thrift_zlib_transport_factory.c   
+    src/thrift/c_glib/transport/thrift_zlib_transport_factory.c
 )
 
 # If OpenSSL is not found just ignore the OpenSSL stuff
-if(WITH_OPENSSL)
+if(OPENSSL_FOUND AND WITH_OPENSSL)
     list(APPEND thrift_c_glib_SOURCES
 	    src/thrift/c_glib/transport/thrift_ssl_socket.c
     )
-    include_directories(SYSTEM "${OPENSSL_INCLUDE_DIR}")
-    list(APPEND SYSLIBS "${OPENSSL_LIBRARIES}")
+    if(TARGET OpenSSL::SSL OR TARGET OpenSSL::Crypto)
+        if(TARGET OpenSSL::SSL)
+            list(APPEND SYSLIBS OpenSSL::SSL)
+        endif()
+        if(TARGET OpenSSL::Crypto)
+            list(APPEND SYSLIBS OpenSSL::Crypto)
+        endif()
+    else()
+        include_directories(SYSTEM "${OPENSSL_INCLUDE_DIR}")
+        list(APPEND SYSLIBS "${OPENSSL_LIBRARIES}")
+    endif()
 endif()
 
 
-# Contains the thrift specific ADD_LIBRARY_THRIFT and TARGET_LINK_LIBRARIES_THRIFT
+# Contains the thrift specific ADD_LIBRARY_THRIFT macro
 include(ThriftMacros)
 
 ADD_LIBRARY_THRIFT(thrift_c_glib ${thrift_c_glib_SOURCES})
-TARGET_LINK_LIBRARIES_THRIFT(thrift_c_glib PUBLIC ${SYSLIBS})
+target_link_libraries(thrift_c_glib PUBLIC ${SYSLIBS})
 
 # If Zlib is not found just ignore the Zlib stuff
 if(WITH_ZLIB)
     include_directories(SYSTEM ${ZLIB_INCLUDE_DIRS})
     ADD_LIBRARY_THRIFT(thrift_c_glib_zlib ${thrift_c_glib_zlib_SOURCES})
-    TARGET_LINK_LIBRARIES_THRIFT(thrift_c_glib_zlib ${SYSLIBS} ${ZLIB_LIBRARIES})
-    TARGET_LINK_LIBRARIES_THRIFT_AGAINST_THRIFT_LIBRARY(thrift_c_glib_zlib thrift_c_glib)
+    target_link_libraries(thrift_c_glib_zlib ${SYSLIBS} ${ZLIB_LIBRARIES})
+    target_link_libraries(thrift_c_glib_zlib thrift_c_glib)
 endif()
 
 # Install the headers

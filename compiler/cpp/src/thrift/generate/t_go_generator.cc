@@ -1309,7 +1309,7 @@ string t_go_generator::render_const_value(t_type* type, t_const_value* value, co
     t_type* ktype = ((t_map*)type)->get_key_type();
     t_type* vtype = ((t_map*)type)->get_val_type();
     const map<t_const_value*, t_const_value*, t_const_value::value_compare>& val = value->get_map();
-    out << "map[" << type_to_go_type(ktype) << "]" << type_to_go_type(vtype) << "{" << endl;
+    out << "map[" << type_to_go_key_type(ktype) << "]" << type_to_go_type(vtype) << "{" << endl;
     indent_up();
     map<t_const_value*, t_const_value*, t_const_value::value_compare>::const_iterator v_iter;
 
@@ -1336,7 +1336,7 @@ string t_go_generator::render_const_value(t_type* type, t_const_value* value, co
   } else if (type->is_set()) {
     t_type* etype = ((t_set*)type)->get_elem_type();
     const vector<t_const_value*>& val = value->get_list();
-    out << "[]" << type_to_go_key_type(etype) << "{" << endl;
+    out << "[]" << type_to_go_type(etype) << "{" << endl;
     indent_up();
     vector<t_const_value*>::const_iterator v_iter;
 
@@ -1854,7 +1854,7 @@ void t_go_generator::generate_go_struct_writer(ostream& out,
     std::string tstruct_name(publicize(tstruct->get_name()));
     out << indent() << "if c := p.CountSetFields" << tstruct_name << "(); c != 1 {" << endl
         << indent()
-        << "  return fmt.Errorf(\"%T write union: exactly one field must be set (%d set).\", p, c)"
+        << "  return fmt.Errorf(\"%T write union: exactly one field must be set (%d set)\", p, c)"
         << endl << indent() << "}" << endl;
   }
   out << indent() << "if err := oprot.WriteStructBegin(ctx, \"" << name << "\"); err != nil {" << endl;
@@ -2295,7 +2295,23 @@ void t_go_generator::generate_service_client(t_service* tservice) {
         f_types_ << indent() << "}" << endl << endl;
       }
 
-      if (!(*f_iter)->get_returntype()->is_void()) {
+      if ((*f_iter)->get_returntype()->is_struct()) {
+        // Check if the result is nil, which likely means we have a new
+        // exception added but unknown to the client yet
+        // (e.g. client hasn't updated the thrift file).
+        // Sadly this check can only be reliable done when the return type is a
+        // struct in go.
+        std::string retName = tmp("_ret");
+        f_types_ << indent() << "if " << retName << " := " << resultName
+                 << ".GetSuccess(); " << retName << " != nil {" << endl;
+        indent_up();
+        f_types_ << indent() << "return " << retName << ", nil" << endl;
+        indent_down();
+        f_types_ << indent() << "}" << endl;
+        f_types_ << indent() << "return nil, "
+                 << "thrift.NewTApplicationException(thrift.MISSING_RESULT, \""
+                 << method << " failed: unknown result\")" << endl;
+      } else if (!(*f_iter)->get_returntype()->is_void()) {
         f_types_ << indent() << "return " << resultName << ".GetSuccess(), nil" << endl;
       } else {
         f_types_ << indent() << "return nil" << endl;
@@ -2489,6 +2505,7 @@ void t_go_generator::generate_service_remote(t_service* tservice) {
   f_remote << indent() << endl;
   f_remote << indent() << "cmd := flag.Arg(0)" << endl;
   f_remote << indent() << "var err error" << endl;
+  f_remote << indent() << "var cfg *thrift.TConfiguration = nil" << endl;
   f_remote << indent() << "if useHttp {" << endl;
   f_remote << indent() << "  trans, err = thrift.NewTHttpClient(parsedUrl.String())" << endl;
   f_remote << indent() << "  if len(headers) > 0 {" << endl;
@@ -2507,14 +2524,13 @@ void t_go_generator::generate_service_remote(t_service* tservice) {
   f_remote << indent() << "                 os.Exit(1)" << endl;
   f_remote << indent() << "         }" << endl;
   f_remote << indent() << "  }" << endl;
-  f_remote << indent() << "  trans, err = thrift.NewTSocket(net.JoinHostPort(host, portStr))"
-           << endl;
+  f_remote << indent() << "  trans = thrift.NewTSocketConf(net.JoinHostPort(host, portStr), cfg)" << endl;
   f_remote << indent() << "  if err != nil {" << endl;
   f_remote << indent() << "    fmt.Fprintln(os.Stderr, \"error resolving address:\", err)" << endl;
   f_remote << indent() << "    os.Exit(1)" << endl;
   f_remote << indent() << "  }" << endl;
   f_remote << indent() << "  if framed {" << endl;
-  f_remote << indent() << "    trans = thrift.NewTFramedTransport(trans)" << endl;
+  f_remote << indent() << "    trans = thrift.NewTFramedTransportConf(trans, cfg)" << endl;
   f_remote << indent() << "  }" << endl;
   f_remote << indent() << "}" << endl;
   f_remote << indent() << "if err != nil {" << endl;
@@ -2525,16 +2541,16 @@ void t_go_generator::generate_service_remote(t_service* tservice) {
   f_remote << indent() << "var protocolFactory thrift.TProtocolFactory" << endl;
   f_remote << indent() << "switch protocol {" << endl;
   f_remote << indent() << "case \"compact\":" << endl;
-  f_remote << indent() << "  protocolFactory = thrift.NewTCompactProtocolFactory()" << endl;
+  f_remote << indent() << "  protocolFactory = thrift.NewTCompactProtocolFactoryConf(cfg)" << endl;
   f_remote << indent() << "  break" << endl;
   f_remote << indent() << "case \"simplejson\":" << endl;
-  f_remote << indent() << "  protocolFactory = thrift.NewTSimpleJSONProtocolFactory()" << endl;
+  f_remote << indent() << "  protocolFactory = thrift.NewTSimpleJSONProtocolFactoryConf(cfg)" << endl;
   f_remote << indent() << "  break" << endl;
   f_remote << indent() << "case \"json\":" << endl;
   f_remote << indent() << "  protocolFactory = thrift.NewTJSONProtocolFactory()" << endl;
   f_remote << indent() << "  break" << endl;
   f_remote << indent() << "case \"binary\", \"\":" << endl;
-  f_remote << indent() << "  protocolFactory = thrift.NewTBinaryProtocolFactoryDefault()" << endl;
+  f_remote << indent() << "  protocolFactory = thrift.NewTBinaryProtocolFactoryConf(cfg)" << endl;
   f_remote << indent() << "  break" << endl;
   f_remote << indent() << "default:" << endl;
   f_remote << indent() << "  fmt.Fprintln(os.Stderr, \"Invalid protocol specified: \", protocol)"

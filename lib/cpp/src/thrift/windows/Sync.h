@@ -27,7 +27,13 @@
 #include <thrift/concurrency/Exception.h>
 #include <thrift/TNonCopyable.h>
 
+// Including Windows.h can conflict with Winsock2 usage, and also
+// adds problematic macros like min() and max(). Try to work around:
+#define NOMINMAX
+#define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
+#undef NOMINMAX
+#undef WIN32_LEAN_AND_MEAN
 
 /*
   Lightweight synchronization objects that only make sense on Windows.  For cross-platform

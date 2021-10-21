@@ -25,9 +25,6 @@
 #ifndef _WIN32
 #include <thrift/transport/TServerSocket.h>
 #endif
-#ifdef _WIN32
-#include <thrift/windows/Sync.h>
-#endif
 
 #define TPIPE_SERVER_MAX_CONNS_DEFAULT PIPE_UNLIMITED_INSTANCES
 

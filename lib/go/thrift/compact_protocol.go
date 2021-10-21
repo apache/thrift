@@ -334,7 +334,8 @@ func (p *TCompactProtocol) WriteString(ctx context.Context, value string) error 
 	if e != nil {
 		return NewTProtocolException(e)
 	}
-	if len(value) > 0 {
+	if len(value) == 0 {
+		return nil
 	}
 	_, e = p.trans.WriteString(value)
 	return e
@@ -722,23 +723,10 @@ func (p *TCompactProtocol) int32ToZigzag(n int32) int32 {
 	return (n << 1) ^ (n >> 31)
 }
 
-func (p *TCompactProtocol) fixedUint64ToBytes(n uint64, buf []byte) {
-	binary.LittleEndian.PutUint64(buf, n)
-}
-
-func (p *TCompactProtocol) fixedInt64ToBytes(n int64, buf []byte) {
-	binary.LittleEndian.PutUint64(buf, uint64(n))
-}
-
 // Writes a byte without any possibility of all that field header nonsense.
 // Used internally by other writing methods that know they need to write a byte.
 func (p *TCompactProtocol) writeByteDirect(b byte) error {
 	return p.trans.WriteByte(b)
-}
-
-// Writes a byte without any possibility of all that field header nonsense.
-func (p *TCompactProtocol) writeIntAsByteDirect(n int) (int, error) {
-	return 1, p.writeByteDirect(byte(n))
 }
 
 //
@@ -792,13 +780,6 @@ func (p *TCompactProtocol) zigzagToInt32(n int32) int32 {
 func (p *TCompactProtocol) zigzagToInt64(n int64) int64 {
 	u := uint64(n)
 	return int64(u>>1) ^ -(n & 1)
-}
-
-// Note that it's important that the mask bytes are long literals,
-// otherwise they'll default to ints, and when you shift an int left 56 bits,
-// you just get a messed up int.
-func (p *TCompactProtocol) bytesToInt64(b []byte) int64 {
-	return int64(binary.LittleEndian.Uint64(b))
 }
 
 // Note that it's important that the mask bytes are long literals,

@@ -18,40 +18,41 @@
     under the License.
   -->
 
-<PropertyGroup>
-  <TargetFrameworks>netstandard2.1;netstandard2.0;net5.0</TargetFrameworks>
-  <AssemblyName>Thrift</AssemblyName>
-  <PackageId>ApacheThrift</PackageId>
-  <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
-  <GenerateBindingRedirectsOutputType>true</GenerateBindingRedirectsOutputType>
-  <GenerateAssemblyTitleAttribute>false</GenerateAssemblyTitleAttribute>
-  <GenerateAssemblyDescriptionAttribute>false</GenerateAssemblyDescriptionAttribute>
-  <GenerateAssemblyConfigurationAttribute>false</GenerateAssemblyConfigurationAttribute>
-  <GenerateAssemblyCompanyAttribute>false</GenerateAssemblyCompanyAttribute>
-  <GenerateAssemblyProductAttribute>false</GenerateAssemblyProductAttribute>
-  <GenerateAssemblyCopyrightAttribute>false</GenerateAssemblyCopyrightAttribute>
-  <GenerateAssemblyVersionAttribute>false</GenerateAssemblyVersionAttribute>
-  <GenerateAssemblyFileVersionAttribute>false</GenerateAssemblyFileVersionAttribute>
-</PropertyGroup>
+  <PropertyGroup>
+    <TargetFrameworks>netstandard2.1;netstandard2.0;net5.0</TargetFrameworks>
+    <AssemblyName>Thrift</AssemblyName>
+    <PackageId>ApacheThrift</PackageId>
+    <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
+    <GenerateBindingRedirectsOutputType>true</GenerateBindingRedirectsOutputType>
+    <GenerateAssemblyTitleAttribute>false</GenerateAssemblyTitleAttribute>
+    <GenerateAssemblyDescriptionAttribute>false</GenerateAssemblyDescriptionAttribute>
+    <GenerateAssemblyConfigurationAttribute>false</GenerateAssemblyConfigurationAttribute>
+    <GenerateAssemblyCompanyAttribute>false</GenerateAssemblyCompanyAttribute>
+    <GenerateAssemblyProductAttribute>false</GenerateAssemblyProductAttribute>
+    <GenerateAssemblyCopyrightAttribute>false</GenerateAssemblyCopyrightAttribute>
+    <GenerateAssemblyVersionAttribute>false</GenerateAssemblyVersionAttribute>
+    <GenerateAssemblyFileVersionAttribute>false</GenerateAssemblyFileVersionAttribute>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+  </PropertyGroup>
 
-<PropertyGroup>
-  <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-  <SignAssembly>true</SignAssembly>
-  <AssemblyOriginatorKeyFile>thrift.snk</AssemblyOriginatorKeyFile>
-  <DelaySign>false</DelaySign>
-  <Title>Apache Thrift 0.16.0</Title>
-  <Version>0.16.0.0</Version>
-  <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
-  <PackageProjectUrl>http://thrift.apache.org/</PackageProjectUrl>
-  <Authors>Apache Thrift Developers</Authors>
-  <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
-  <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
-  <PackageDescription>C# .NET Core bindings for the Apache Thrift RPC system</PackageDescription>
-  <PackageReleaseNotes></PackageReleaseNotes>
-  <PackageTags>Apache Thrift RPC</PackageTags>
-  <PackageReleaseNotes>https://github.com/apache/thrift/blob/0.16.0/CHANGES.md</PackageReleaseNotes>
-  <Copyright>Copyright 2021 The Apache Software Foundation</Copyright>
-</PropertyGroup>
+  <PropertyGroup>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <SignAssembly>true</SignAssembly>
+    <AssemblyOriginatorKeyFile>thrift.snk</AssemblyOriginatorKeyFile>
+    <DelaySign>false</DelaySign>
+    <Title>Apache Thrift 0.16.0</Title>
+    <Version>0.16.0.0</Version>
+    <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
+    <PackageProjectUrl>http://thrift.apache.org/</PackageProjectUrl>
+    <Authors>Apache Thrift Developers</Authors>
+    <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
+    <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
+    <PackageDescription>C# .NET Core bindings for the Apache Thrift RPC system</PackageDescription>
+    <PackageReleaseNotes></PackageReleaseNotes>
+    <PackageTags>Apache Thrift RPC</PackageTags>
+    <PackageReleaseNotes>https://github.com/apache/thrift/blob/0.16.0/CHANGES.md</PackageReleaseNotes>
+    <Copyright>Copyright 2021 The Apache Software Foundation</Copyright>
+  </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.Http.Abstractions" Version="2.2.0" />

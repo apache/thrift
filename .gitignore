@@ -272,6 +272,7 @@ project.lock.json
 /lib/erl/logs/
 /lib/go/pkg
 /lib/go/src
+/lib/go/test/fuzz/gopathfuzz
 /lib/go/test/gopath/
 /lib/go/test/ThriftTest.thrift
 /lib/nodets/test-compiled/

@@ -168,6 +168,7 @@ public abstract class TUnion<T extends TUnion<T,F>, F extends TFieldIdEnum> impl
    * @param iprot input protocol from which to read a value.
    * @param field the field whose value is to be read from iprot.
    * @return read Object based on the field header, as specified by the argument.
+   * @throws TException on error during read.
    */
   protected abstract Object standardSchemeReadValue(TProtocol iprot, TField field) throws TException;
   protected abstract void standardSchemeWriteValue(TProtocol oprot) throws TException;

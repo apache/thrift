@@ -501,44 +501,6 @@ func (p *TJSONProtocol) ParseElemListBegin() (elemType TType, size int, e error)
 	return elemType, size, nil
 }
 
-func (p *TJSONProtocol) readElemListBegin() (elemType TType, size int, e error) {
-	if isNull, e := p.ParseListBegin(); isNull || e != nil {
-		return VOID, 0, e
-	}
-	// We don't really use the ctx in ReadString implementation,
-	// so this is safe for now.
-	// We might want to add context to ParseElemListBegin if we start to use
-	// ctx in ReadString implementation in the future.
-	sElemType, err := p.ReadString(context.Background())
-	if err != nil {
-		return VOID, size, err
-	}
-	elemType, err = p.StringToTypeId(sElemType)
-	if err != nil {
-		return elemType, size, err
-	}
-	nSize, _, err2 := p.ParseI64()
-	size = int(nSize)
-	return elemType, size, err2
-}
-
-func (p *TJSONProtocol) writeElemListBegin(elemType TType, size int) error {
-	if e := p.OutputListBegin(); e != nil {
-		return e
-	}
-	s, e1 := p.TypeIdToString(elemType)
-	if e1 != nil {
-		return e1
-	}
-	if e := p.OutputString(s); e != nil {
-		return e
-	}
-	if e := p.OutputI64(int64(size)); e != nil {
-		return e
-	}
-	return nil
-}
-
 func (p *TJSONProtocol) TypeIdToString(fieldType TType) (string, error) {
 	switch byte(fieldType) {
 	case BOOL:
