@@ -105,6 +105,7 @@ public:
   void generate_netstd_union_reader(ostream& out, t_struct* tunion);
   void generate_function_helpers(ostream& out, t_function* tfunction);
   void generate_service_interface(ostream& out, t_service* tservice);
+  void generate_deprecation_attribute(ostream& out, t_function* func);
   void generate_service_helpers(ostream& out, t_service* tservice);
   void generate_service_client(ostream& out, t_service* tservice);
   void generate_service_server(ostream& out, t_service* tservice);
