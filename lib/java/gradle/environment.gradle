@@ -44,12 +44,13 @@ ext.mavenRepositoryUrl = property('maven-repository-url')
 // Versions used in this project
 ext.httpclientVersion = property('httpclient.version')
 ext.httpcoreVersion = property('httpcore.version')
-ext.servletVersion = property('servlet.version')
-ext.tomcatEmbedVersion = property('tomcat.embed.version')
-ext.slf4jVersion = property('slf4j.version')
+ext.jacksonVersion = property('jackson.version')
+ext.javaxAnnotationVersion = property('javax.annotation.version')
 ext.junitVersion = property('junit.version')
 ext.mockitoVersion = property('mockito.version')
-ext.javaxAnnotationVersion = property('javax.annotation.version')
+ext.servletVersion = property('servlet.version')
+ext.slf4jVersion = property('slf4j.version')
+ext.tomcatEmbedVersion = property('tomcat.embed.version')
 
 // In this section you declare where to find the dependencies of your project
 repositories {
@@ -71,6 +72,8 @@ dependencies {
     compile "javax.annotation:javax.annotation-api:${javaxAnnotationVersion}"
 
     testCompile "junit:junit:${junitVersion}"
+    testCompile "com.fasterxml.jackson.core:jackson-core:${jacksonVersion}"
+    testCompile "com.fasterxml.jackson.core:jackson-databind:${jacksonVersion}"
     testCompile "org.mockito:mockito-all:${mockitoVersion}"
     testRuntime "org.slf4j:slf4j-log4j12:${slf4jVersion}"
 }
