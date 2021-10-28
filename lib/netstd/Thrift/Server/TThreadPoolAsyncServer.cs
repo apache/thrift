@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements. See the NOTICE file
  * distributed with this work for additional information
@@ -216,9 +216,9 @@ namespace Thrift.Server
 
         /// <summary>
         /// Loops on processing a client forever
-        /// threadContext will be a TTransport instance
+        /// client will be a TTransport instance
         /// </summary>
-        /// <param name="threadContext"></param>
+        /// <param name="client"></param>
         private async Task ExecuteAsync(TTransport client)
         {
             var cancellationToken = ServerCancellationToken;
