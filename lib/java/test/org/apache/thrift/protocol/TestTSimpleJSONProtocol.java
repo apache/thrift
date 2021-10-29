@@ -20,13 +20,17 @@ package org.apache.thrift.protocol;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.core.JsonFactory;
+import com.fasterxml.jackson.core.JsonParseException;
 
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import junit.framework.TestCase;
 
 import org.apache.thrift.Fixtures;
+import org.apache.thrift.TBase;
 import org.apache.thrift.TDeserializer;
 import org.apache.thrift.TException;
+import org.apache.thrift.TSerializer;
 import org.apache.thrift.transport.TMemoryBuffer;
 
 import org.apache.thrift.transport.TTransportException;
@@ -39,43 +43,61 @@ public class TestTSimpleJSONProtocol extends TestCase {
 
   private TMemoryBuffer buf;
   private TSimpleJSONProtocol proto;
+  private TSerializer ser;
 
   @Override
   protected void setUp() throws Exception {
     buf = new TMemoryBuffer(1000);
     proto = new TSimpleJSONProtocol(buf);
+    ser = new TSerializer(new TSimpleJSONProtocol.Factory());
   }
 
   private String bufToString() {
     return buf.toString(StandardCharsets.UTF_8);
   }
 
-  public void testHolyMoley() throws TException {
+  private boolean validJSON(String mightBeJSON) throws IOException {
+    try {
+      JSON_FACTORY.createParser(mightBeJSON);
+      return true;
+    }
+    catch(IOException e){
+      throw e;
+    }
+  }
+
+  public String serializedString(TBase someThriftObj) throws TException {
+    return ser.toString(someThriftObj);
+  }
+
+  public void testHolyMoley() throws TException,IOException {
     final HolyMoley holyMoley = Fixtures.holyMoley.deepCopy();
     // unset sets that produce inconsistent ordering between JDK7/8
     holyMoley.unsetBonks();
     holyMoley.unsetContain();
     holyMoley.write(proto);
-    final String holyMoleyItsAString = bufToString();
-    JSON_FACTORY.createParser(holyMoleyItsAString);
-    assertEquals("{\"big\":[{\"im_true\":1,\"im_false\":0,\"a_bite\":35,\"integer16\":27000,\"integer32\":16777216,\"integer64\":6000000000,\"double_precision\":3.141592653589793,\"some_characters\":\"JSON THIS! \\\"\\u0001\",\"zomg_unicode\":\"ӀⅮΝ Нοⅿоɡгаρℎ Αttαⅽκ�‼\",\"what_who\":0,\"base64\":\"base64\",\"byte_list\":[1,2,3],\"i16_list\":[1,2,3],\"i64_list\":[1,2,3]},{\"im_true\":1,\"im_false\":0,\"a_bite\":-42,\"integer16\":27000,\"integer32\":16777216,\"integer64\":6000000000,\"double_precision\":3.141592653589793,\"some_characters\":\"JSON THIS! \\\"\\u0001\",\"zomg_unicode\":\"ӀⅮΝ Нοⅿоɡгаρℎ Αttαⅽκ�‼\",\"what_who\":0,\"base64\":\"base64\",\"byte_list\":[1,2,3],\"i16_list\":[1,2,3],\"i64_list\":[1,2,3]}]}", holyMoleyItsAString);
+    final String holyMoleyMemBufString = bufToString();
+    final String holyMoleySerString = serializedString(holyMoley);
+    assertTrue(validJSON(holyMoleyMemBufString));
+    assertTrue(validJSON(holyMoleySerString));
+    assertEquals("{\"big\":[{\"im_true\":1,\"im_false\":0,\"a_bite\":35,\"integer16\":27000,\"integer32\":16777216,\"integer64\":6000000000,\"double_precision\":3.141592653589793,\"some_characters\":\"JSON THIS! \\\"\\u0001\",\"zomg_unicode\":\"ӀⅮΝ Нοⅿоɡгаρℎ Αttαⅽκ�‼\",\"what_who\":0,\"base64\":\"base64\",\"byte_list\":[1,2,3],\"i16_list\":[1,2,3],\"i64_list\":[1,2,3]},{\"im_true\":1,\"im_false\":0,\"a_bite\":-42,\"integer16\":27000,\"integer32\":16777216,\"integer64\":6000000000,\"double_precision\":3.141592653589793,\"some_characters\":\"JSON THIS! \\\"\\u0001\",\"zomg_unicode\":\"ӀⅮΝ Нοⅿоɡгаρℎ Αttαⅽκ�‼\",\"what_who\":0,\"base64\":\"base64\",\"byte_list\":[1,2,3],\"i16_list\":[1,2,3],\"i64_list\":[1,2,3]}]}", holyMoleyMemBufString);
   }
 
-  public void testNesting() throws TException {
+  public void testNesting() throws IOException,TException {
     Fixtures.nesting.write(proto);
     final String nestingString = bufToString();
-    JSON_FACTORY.createParser(nestingString);
+    assertTrue(validJSON(nestingString));
     assertEquals("{\"my_bonk\":{\"type\":31337,\"message\":\"I am a bonk... xor!\"},\"my_ooe\":{\"im_true\":1,\"im_false\":0,\"a_bite\":-42,\"integer16\":27000,\"integer32\":16777216,\"integer64\":6000000000,\"double_precision\":3.141592653589793,\"some_characters\":\"JSON THIS! \\\"\\u0001\",\"zomg_unicode\":\"ӀⅮΝ Нοⅿоɡгаρℎ Αttαⅽκ�‼\",\"what_who\":0,\"base64\":\"base64\",\"byte_list\":[1,2,3],\"i16_list\":[1,2,3],\"i64_list\":[1,2,3]}}", nestingString);
   }
 
-  public void testOneOfEach() throws TException {
+  public void testOneOfEach() throws IOException,TException {
     Fixtures.oneOfEach.write(proto);
     final String oneOfEachString = bufToString();
-    JSON_FACTORY.createParser(oneOfEachString);
+    assertTrue(validJSON(oneOfEachString));
     assertEquals("{\"im_true\":1,\"im_false\":0,\"a_bite\":-42,\"integer16\":27000,\"integer32\":16777216,\"integer64\":6000000000,\"double_precision\":3.141592653589793,\"some_characters\":\"JSON THIS! \\\"\\u0001\",\"zomg_unicode\":\"ӀⅮΝ Нοⅿоɡгаρℎ Αttαⅽκ�‼\",\"what_who\":0,\"base64\":\"base64\",\"byte_list\":[1,2,3],\"i16_list\":[1,2,3],\"i64_list\":[1,2,3]}", oneOfEachString);
   }
 
-  public void testSanePartsOfCompactProtoTestStruct() throws TException {
+  public void testSanePartsOfCompactProtoTestStruct() throws IOException,TException {
     // unset all the maps with container keys
     CompactProtoTestStruct struct = Fixtures.compactProtoTestStruct.deepCopy();
     struct.unsetList_byte_map();
@@ -94,7 +116,7 @@ public class TestTSimpleJSONProtocol extends TestCase {
     struct.unsetString_byte_map();
     struct.write(proto);
     final String compactString = bufToString();
-    JSON_FACTORY.createParser(compactString);
+    assertTrue(validJSON(compactString));
     assertEquals("{\"a_byte\":127,\"a_i16\":32000,\"a_i32\":1000000000,\"a_i64\":1099511627775,\"a_double\":5.6789,\"a_string\":\"my string\",\"a_binary\":\"\\u0000\\u0001\\u0002\\u0003\\u0004\\u0005\\u0006\\u0007\\b\",\"true_field\":1,\"false_field\":0,\"empty_struct_field\":{},\"byte_list\":[-127,-1,0,1,127],\"i16_list\":[-1,0,1,32767],\"i32_list\":[-1,0,255,65535,16777215,2147483647],\"i64_list\":[-1,0,255,65535,16777215,4294967295,1099511627775,281474976710655,72057594037927935,9223372036854775807],\"double_list\":[0.1,0.2,0.3],\"string_list\":[\"first\",\"second\",\"third\"],\"boolean_list\":[1,1,1,0,0,0],\"struct_list\":[{},{}],\"i32_set\":[1,2,3],\"boolean_set\":[0,1],\"struct_set\":[{}],\"byte_byte_map\":{\"1\":2},\"boolean_byte_map\":{\"0\":0,\"1\":1},\"byte_i16_map\":{\"1\":1,\"2\":-1,\"3\":32767},\"byte_i32_map\":{\"1\":1,\"2\":-1,\"3\":2147483647},\"byte_i64_map\":{\"1\":1,\"2\":-1,\"3\":9223372036854775807},\"byte_double_map\":{\"1\":0.1,\"2\":-0.1,\"3\":1000000.1},\"byte_string_map\":{\"1\":\"\",\"2\":\"blah\",\"3\":\"loooooooooooooong string\"},\"byte_boolean_map\":{\"1\":1,\"2\":0},\"byte_map_map\":{\"0\":{},\"1\":{\"1\":1},\"2\":{\"1\":1,\"2\":2}},\"byte_set_map\":{\"0\":[],\"1\":[1],\"2\":[1,2]},\"byte_list_map\":{\"0\":[],\"1\":[1],\"2\":[1,2]},\"field500\":500,\"field5000\":5000,\"field20000\":20000}", compactString);
   }
 

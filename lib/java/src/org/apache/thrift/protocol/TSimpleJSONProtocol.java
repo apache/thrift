@@ -314,7 +314,6 @@ public class TSimpleJSONProtocol extends TProtocol {
       char c = str.charAt(i);
       switch (c) {
       case '"':
-        escape.append('\\');
       case '\\':
         escape.append('\\');
         escape.append(c);
