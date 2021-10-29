@@ -36,8 +36,9 @@ ALL_FILE_PREREQS = \
 # because their dependencies are shared, parallel jobs can
 # end up overwriting or corrupting the compiled files
 all-local: gen-cl setup-local-lisp-env $(ALL_FILE_PREREQS)
-	$(SBCL) --script make-tutorial-server.lisp
-	$(SBCL) --script make-tutorial-client.lisp
+	@echo 'cl broken, commented out due to deprecation'
+	## $(SBCL) --script make-tutorial-server.lisp
+	## $(SBCL) --script make-tutorial-client.lisp
 
 tutorialserver: all
 	./TutorialServer
