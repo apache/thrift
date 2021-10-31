@@ -280,6 +280,17 @@ void TNonblockingServerSocket::_setup_sockopts() {
       errno_copy);
   }
 
+#ifdef SO_NOSIGPIPE
+  if (-1 == setsockopt(serverSocket_, SOL_SOCKET, SO_NOSIGPIPE, &one, sizeof(one))) {
+    int errno_copy = THRIFT_GET_SOCKET_ERROR;
+    GlobalOutput.perror("TNonblockingServerSocket::listen() setsockopt() SO_NOSIGPIPE", errno_copy);
+    close();
+    throw TTransportException(TTransportException::NOT_OPEN,
+                              "Could not set SO_NOSIGPIPE",
+                              errno_copy);
+  }
+#endif
+
   // Set NONBLOCK on the accept socket
   int flags = THRIFT_FCNTL(serverSocket_, THRIFT_F_GETFL, 0);
   if (flags == -1) {

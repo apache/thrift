@@ -40,7 +40,7 @@
     "isomorphic-ws": "^4.0.1",
     "node-int64": "^0.4.0",
     "q": "^1.5.0",
-    "ws": "^5.2.2"
+    "ws": "^5.2.3"
   },
   "devDependencies": {
     "@types/node": "^10.12.6",
@@ -53,9 +53,9 @@
     "eslint-config-prettier": "^3.1.0",
     "eslint-plugin-prettier": "^3.0.0",
     "html-validator-cli": "^4.1.4",
-    "nyc": "^15.0.0",
-    "jsdoc": "^3.6.3",
+    "jsdoc": "^3.6.7",
     "json-int64": "^1.0.2",
+    "nyc": "^15.0.0",
     "prettier": "^1.14.3",
     "tape": "^4.9.0",
     "typescript": "^3.1.6",

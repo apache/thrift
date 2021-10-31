@@ -1926,21 +1926,25 @@ void t_netstd_generator::generate_service_interface(ostream& out, t_service* tse
             }
         }
 
-        auto iter = (*f_iter)->annotations_.find("deprecated");
-        if( (*f_iter)->annotations_.end() != iter) {
-          out << indent() << "[Obsolete";
-          // empty annotation values end up with "1" somewhere, ignore these as well
-          if ((iter->second.length() > 0) && (iter->second != "1")) {
-            out << "(" << make_csharp_string_literal(iter->second) << ")";
-          }
-          out << "]" << endl;
-        }
-
+        generate_deprecation_attribute(out, *f_iter);
         out << indent() << function_signature_async(*f_iter) << ";" << endl << endl;
     }
     indent_down();
     out << indent() << "}" << endl << endl;
     cleanup_member_name_mapping(tservice);
+}
+
+void t_netstd_generator::generate_deprecation_attribute(ostream& out, t_function* func)
+{
+  auto iter = func->annotations_.find("deprecated");
+  if( func->annotations_.end() != iter) {
+    out << indent() << "[Obsolete";
+    // empty annotation values end up with "1" somewhere, ignore these as well
+    if ((iter->second.length() > 0) && (iter->second != "1")) {
+      out << "(" << make_csharp_string_literal(iter->second) << ")";
+    }
+    out << "]" << endl;
+  }
 }
 
 void t_netstd_generator::generate_service_helpers(ostream& out, t_service* tservice)
@@ -2006,6 +2010,7 @@ void t_netstd_generator::generate_service_client(ostream& out, t_service* tservi
         string function_name = raw_func_name + (add_async_postfix ? "Async" : "");
 
         // async
+        generate_deprecation_attribute(out, *functions_iterator);
         out << indent() << "public async " << function_signature_async(*functions_iterator, "") << endl
             << indent() << "{" << endl;
         indent_up();
@@ -2023,6 +2028,7 @@ void t_netstd_generator::generate_service_client(ostream& out, t_service* tservi
         out << indent() << "}" << endl << endl;
 
         // async send
+        generate_deprecation_attribute(out, *functions_iterator);
         out << indent() << "public async " << function_signature_async(*functions_iterator, "send_", MODE_NO_RETURN) << endl
             << indent() << "{" << endl;
         indent_up();
@@ -2063,6 +2069,7 @@ void t_netstd_generator::generate_service_client(ostream& out, t_service* tservi
         if (!(*functions_iterator)->is_oneway())
         {
             // async recv
+            generate_deprecation_attribute(out, *functions_iterator);
             out << indent() << "public async " << function_signature_async(*functions_iterator, "recv_", MODE_NO_ARGS) << endl
                 << indent() << "{" << endl;
             indent_up();
