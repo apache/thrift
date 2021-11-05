@@ -26,16 +26,9 @@ THRIFT_FILES = $(wildcard test/*.thrift) \
 		  ../../test/DoubleConstantsTest.thrift \
 		  ../../test/ThriftTest.thrift
 
-if ERLANG_OTP16
-ERL_FLAG = erl:otp16
-ERL_FLAG_LEGACY = erl:otp16,legacynames
-# otp16 + maps does not make sense. We need to generate it anyway to avoid include error.
-ERL_FLAG_MAPS = erl:otp16
-else
 ERL_FLAG = erl
 ERL_FLAG_LEGACY = erl:legacynames
 ERL_FLAG_MAPS = erl:maps
-endif
 
 $(THRIFT_OMIT_FILE): test/Thrift_omit_with.thrift
 	grep -v omit $< >$@

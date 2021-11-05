@@ -33,9 +33,7 @@ If you would like to build Apache Thrift libraries for other programming languag
  * Erlang
 	* erlang-base erlang-eunit erlang-dev rebar
  * NetStd
-	* apt-transport-https dotnet-sdk-3.1 aspnetcore-runtime-3.1
- * Haskell
-	* ghc cabal-install libghc-binary-dev libghc-network-dev libghc-http-dev
+	* apt-transport-https dotnet-sdk-5.0 aspnetcore-runtime-5.0
  * Thrift Compiler for Windows
 	* mingw-w64 mingw-w64-x86-64-dev nsis
  * Rust

@@ -24,8 +24,10 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
-	. "gen/thrifttest"
 	"time"
+
+	//lint:ignore ST1001 allow dot import here
+	. "github.com/apache/thrift/test/go/src/gen/thrifttest"
 )
 
 var PrintingHandler = &printingHandler{}
@@ -192,7 +194,7 @@ func (p *printingHandler) TestStringMap(ctx context.Context, thing map[string]st
 func (p *printingHandler) TestSet(ctx context.Context, thing []int32) (r []int32, err error) {
 	fmt.Printf("testSet({")
 	first := true
-	for k, _ := range thing {
+	for k := range thing {
 		if first {
 			first = false
 		} else {
@@ -256,8 +258,8 @@ func (p *printingHandler) TestMapMap(ctx context.Context, hello int32) (r map[in
 	fmt.Printf("testMapMap(%d)\n", hello)
 
 	r = map[int32]map[int32]int32{
-		-4: map[int32]int32{-4: -4, -3: -3, -2: -2, -1: -1},
-		4:  map[int32]int32{4: 4, 3: 3, 2: 2, 1: 1},
+		-4: {-4: -4, -3: -3, -2: -2, -1: -1},
+		4:  {4: 4, 3: 3, 2: 2, 1: 1},
 	}
 	return
 }
@@ -332,6 +334,7 @@ func (p *printingHandler) TestException(ctx context.Context, arg string) (err er
 		e.Message = arg
 		return e
 	case "TException":
+		//lint:ignore ST1005 To be consistent with other language libraries.
 		return errors.New("Just TException")
 	}
 	return

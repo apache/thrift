@@ -96,8 +96,8 @@ public abstract class Option<T> {
 
     /**
      * Wraps value in an Option type, depending on whether or not value is null
-     * @param value
-     * @param <T> type of value
+     * @param value the value to wrap in Option
+     * @param <T> the type of value
      * @return Some(value) if value is not null, None if value is null
      */
     public static <T> Option<T> fromNullable(T value) {
@@ -110,8 +110,8 @@ public abstract class Option<T> {
 
     /**
      * Wrap value in a Some type (NB! value must not be null!)
-     * @param value
-     * @param <T> type of value
+     * @param value the value to wrap.
+     * @param <T> the type of value
      * @return a new Some(value)
      */
     public static <T> Some<T> some(T value) {

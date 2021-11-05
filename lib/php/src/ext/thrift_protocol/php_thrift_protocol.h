@@ -19,10 +19,58 @@
 
 #pragma once
 
-PHP_FUNCTION(thrift_protocol_write_binary);
-PHP_FUNCTION(thrift_protocol_read_binary);
-PHP_FUNCTION(thrift_protocol_read_binary_after_message_begin);
+/* backward compat macros */
 
-extern zend_module_entry thrift_protocol_module_entry;
-#define phpext_thrift_protocol_ptr &thrift_protocol_module_entry
+#if PHP_VERSION_ID >= 80000
+# define Z4_OBJ_P(zval)       (Z_OBJ_P(zval))
+#else
+# define Z4_OBJ_P(zval)       (zval)
+#endif
 
+#ifndef IS_MIXED
+# define IS_MIXED 0
+#endif
+
+#ifndef ZEND_PARSE_PARAMETERS_NONE
+#define ZEND_PARSE_PARAMETERS_NONE() \
+  ZEND_PARSE_PARAMETERS_START(0, 0) \
+  ZEND_PARSE_PARAMETERS_END()
+#endif
+#ifndef ZEND_ARG_INFO_WITH_DEFAULT_VALUE
+#define ZEND_ARG_INFO_WITH_DEFAULT_VALUE(pass_by_ref, name, default_value) \
+  ZEND_ARG_INFO(pass_by_ref, name)
+#endif
+
+#if PHP_VERSION_ID < 70200
+#undef ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX
+#define ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(name, return_reference, required_num_args, class_name, allow_null) \
+  static const zend_internal_arg_info name[] = { \
+    { (const char*)(zend_uintptr_t)(required_num_args), ( #class_name ), 0, return_reference, allow_null, 0 },
+#endif
+
+#ifndef ZEND_BEGIN_ARG_WITH_RETURN_OBJ_INFO_EX
+# define ZEND_BEGIN_ARG_WITH_RETURN_OBJ_INFO_EX(name, return_reference, required_num_args, class_name, allow_null) \
+  ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(name, return_reference, required_num_args, class_name, allow_null)
+#endif
+
+#ifndef ZEND_BEGIN_ARG_WITH_RETURN_TYPE_MASK_EX
+# define ZEND_BEGIN_ARG_WITH_RETURN_TYPE_MASK_EX(name, return_reference, num_args, type) \
+  ZEND_BEGIN_ARG_INFO_EX(name, 0, return_reference, num_args)
+#endif
+
+#ifndef ZEND_BEGIN_ARG_WITH_RETURN_OBJ_TYPE_MASK_EX
+# define ZEND_BEGIN_ARG_WITH_RETURN_OBJ_TYPE_MASK_EX(name, return_reference, required_num_args, class_name, type) \
+  ZEND_BEGIN_ARG_INFO_EX(name, 0, return_reference, required_num_args)
+#endif
+
+#ifndef ZEND_ARG_TYPE_MASK
+# define ZEND_ARG_TYPE_MASK(pass_by_ref, name, type_mask, default_value) \
+  ZEND_ARG_TYPE_INFO(pass_by_ref, name, 0, 0)
+#endif
+
+#ifndef ZEND_ARG_TYPE_INFO_WITH_DEFAULT_VALUE
+# define ZEND_ARG_TYPE_INFO_WITH_DEFAULT_VALUE(pass_by_ref, name, type_hint, allow_null, default_value) \
+  ZEND_ARG_TYPE_INFO(pass_by_ref, name, type_hint, allow_null)
+#endif
+
+#include "php_thrift_protocol_arginfo.h"

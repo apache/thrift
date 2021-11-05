@@ -53,7 +53,6 @@ uses
   Thrift.Test,
   Thrift.WinHTTP,
   Thrift.Utils,
-
   Thrift.Configuration,
   Thrift.Collections;
 
@@ -474,6 +473,10 @@ begin
     on e:Exception do Expect( FALSE, 'Unexpected exception "'+e.ClassName+'": '+e.Message);
   end;
 
+  // re-open connection if needed
+  if not FTransport.IsOpen
+  then FTransport.Open;
+
   // case 2: exception type NOT declared in IDL at the function call
   // this will close the connection
   try
@@ -505,6 +508,9 @@ begin
   end;
   {$ENDIF Exceptions}
 
+  // re-open connection if needed
+  if not FTransport.IsOpen
+  then FTransport.Open;
 
   // simple things
   StartTestGroup( 'simple Thrift calls', test_BaseTypes);
@@ -1444,14 +1450,7 @@ begin
   end;
 
   // create protocol instance, default to BinaryProtocol
-  case FSetup.protType of
-    prot_Binary  :  FProtocol := TBinaryProtocolImpl.Create( FTransport, BINARY_STRICT_READ, BINARY_STRICT_WRITE);
-    prot_JSON    :  FProtocol := TJSONProtocolImpl.Create( FTransport);
-    prot_Compact :  FProtocol := TCompactProtocolImpl.Create( FTransport);
-  else
-    raise Exception.Create('Unhandled protocol');
-  end;
-
+  FProtocol := PROTOCOL_CLASSES[FSetup.protType].Create(FTransport);
   ASSERT( (FTransport <> nil) and (FProtocol <> nil));
 end;
 

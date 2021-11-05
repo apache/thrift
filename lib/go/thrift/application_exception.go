@@ -64,6 +64,12 @@ type tApplicationException struct {
 	type_   int32
 }
 
+var _ TApplicationException = (*tApplicationException)(nil)
+
+func (tApplicationException) TExceptionType() TExceptionType {
+	return TExceptionTypeApplication
+}
+
 func (e tApplicationException) Error() string {
 	if e.message != "" {
 		return e.message
@@ -139,6 +145,9 @@ func (p *tApplicationException) Read(ctx context.Context, iprot TProtocol) error
 
 func (p *tApplicationException) Write(ctx context.Context, oprot TProtocol) (err error) {
 	err = oprot.WriteStructBegin(ctx, "TApplicationException")
+	if err != nil {
+		return
+	}
 	if len(p.Error()) > 0 {
 		err = oprot.WriteFieldBegin(ctx, "message", STRING, 1)
 		if err != nil {

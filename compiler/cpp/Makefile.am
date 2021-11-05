@@ -69,8 +69,7 @@ thrift_SOURCES = src/thrift/audit/t_audit.cpp \
                  src/thrift/platform.h
 
 # Specific client generator source
-thrift_SOURCES += src/thrift/generate/t_as3_generator.cc \
-                  src/thrift/generate/t_c_glib_generator.cc \
+thrift_SOURCES += src/thrift/generate/t_c_glib_generator.cc \
                   src/thrift/generate/t_cl_generator.cc \
                   src/thrift/generate/t_cpp_generator.cc \
                   src/thrift/generate/t_d_generator.cc \
@@ -80,7 +79,6 @@ thrift_SOURCES += src/thrift/generate/t_as3_generator.cc \
                   src/thrift/generate/t_go_generator.cc \
                   src/thrift/generate/t_gv_generator.cc \
                   src/thrift/generate/t_haxe_generator.cc \
-                  src/thrift/generate/t_hs_generator.cc \
                   src/thrift/generate/t_html_generator.cc \
                   src/thrift/generate/t_markdown_generator.cc \
                   src/thrift/generate/t_java_generator.cc \
@@ -115,6 +113,7 @@ EXTRA_DIST = \
              README.md \
              CMakeLists.txt \
              test \
+             tests \
              $(WINDOWS_DIST)
 
 #clean-local:

@@ -28,7 +28,7 @@ endif()
 
 # PACKAGE_VERSION is used by cpack scripts currently
 # Both thrift_VERSION and PACKAGE_VERSION should be the same for now
-set(thrift_VERSION "0.14.0")
+set(thrift_VERSION "0.16.0")
 set(PACKAGE_VERSION ${thrift_VERSION})
 
 project("thrift" VERSION ${PACKAGE_VERSION})
@@ -98,10 +98,6 @@ if(BUILD_CPP)
     endif()
 endif()
 
-if(BUILD_AS3)
-    add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/lib/as3)
-endif()
-
 if(BUILD_C_GLIB)
     add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/lib/c_glib)
     if(BUILD_TESTING)
@@ -125,13 +121,6 @@ if(BUILD_PYTHON)
     add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/lib/py)
     if(BUILD_TESTING)
         add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/test/py)
-    endif()
-endif()
-
-if(BUILD_HASKELL)
-    add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/lib/hs)
-    if(BUILD_TESTING)
-        add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/test/hs)
     endif()
 endif()
 

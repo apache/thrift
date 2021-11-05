@@ -25,7 +25,7 @@ uses
   SysUtils,
   TestServer in 'TestServer.pas',
   TestServerEvents in 'TestServerEvents.pas',
-  Thrift.Test,  // in gen-delphi folder
+  Thrift.Test in 'gen-delphi\Thrift.Test.pas',
   Thrift in '..\src\Thrift.pas',
   Thrift.Exception in '..\src\Thrift.Exception.pas',
   Thrift.Transport in '..\src\Thrift.Transport.pas',

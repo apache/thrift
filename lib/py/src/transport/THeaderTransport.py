@@ -87,7 +87,7 @@ def _writeString(trans, value):
 
 
 class THeaderTransport(TTransportBase, CReadableTransport):
-    def __init__(self, transport, allowed_client_types):
+    def __init__(self, transport, allowed_client_types, default_protocol=THeaderSubprotocolID.BINARY):
         self._transport = transport
         self._client_type = THeaderClientType.HEADERS
         self._allowed_client_types = allowed_client_types
@@ -101,7 +101,7 @@ class THeaderTransport(TTransportBase, CReadableTransport):
 
         self.flags = 0
         self.sequence_id = 0
-        self._protocol_id = THeaderSubprotocolID.BINARY
+        self._protocol_id = default_protocol
         self._max_frame_size = HARD_MAX_FRAME_SIZE
 
     def isOpen(self):

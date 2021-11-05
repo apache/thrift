@@ -334,8 +334,8 @@ type
   strict private
     FStream : IThriftStream;
     FBufSize : Integer;
-    FReadBuffer : TMemoryStream;
-    FWriteBuffer : TMemoryStream;
+    FReadBuffer : TThriftMemoryStream;
+    FWriteBuffer : TThriftMemoryStream;
   strict protected
     procedure Write( const pBuf : Pointer; offset: Integer; count: Integer); override;
     function Read( const pBuf : Pointer; const buflen : Integer; offset: Integer; count: Integer): Integer; override;
@@ -450,8 +450,8 @@ type
   strict protected type
     TFramedHeader = Int32;
   strict protected
-    FWriteBuffer : TMemoryStream;
-    FReadBuffer : TMemoryStream;
+    FWriteBuffer : TThriftMemoryStream;
+    FReadBuffer : TThriftMemoryStream;
 
     procedure InitWriteBuffer;
     procedure ReadFrame;
@@ -1053,8 +1053,8 @@ begin
   inherited Create;
   FStream := aStream;
   FBufSize := aBufSize;
-  FReadBuffer := TMemoryStream.Create;
-  FWriteBuffer := TMemoryStream.Create;
+  FReadBuffer := TThriftMemoryStream.Create(FBufSize);
+  FWriteBuffer := TThriftMemoryStream.Create(FBufSize);
 end;
 
 destructor TBufferedStreamImpl.Destroy;
@@ -1379,16 +1379,11 @@ begin
   Result := InnerTransport.IsOpen;
 end;
 
-type
-  TAccessMemoryStream = class(TMemoryStream)
-  end;
-
 procedure TFramedTransportImpl.InitWriteBuffer;
 const DUMMY_HEADER : TFramedHeader = 0;
 begin
   FreeAndNil( FWriteBuffer);
-  FWriteBuffer := TMemoryStream.Create;
-  TAccessMemoryStream(FWriteBuffer).Capacity := 1024;
+  FWriteBuffer := TThriftMemoryStream.Create(1024);
   FWriteBuffer.Write( DUMMY_HEADER, SizeOf(DUMMY_HEADER));
 end;
 
@@ -1437,7 +1432,9 @@ begin
 
   if Int64(size) > Int64(Configuration.MaxFrameSize) then begin
     Close();
-    raise TTransportExceptionCorruptedData.Create('Frame size ('+IntToStr(size)+') larger than allowed maximum ('+IntToStr(Configuration.MaxFrameSize)+')');
+    if CharUtils.IsHtmlDoctype(size)
+    then raise TTransportExceptionCorruptedData.Create('Remote end sends HTML instead of data')
+    else raise TTransportExceptionCorruptedData.Create('Frame size ('+IntToStr(size)+') larger than allowed maximum ('+IntToStr(Configuration.MaxFrameSize)+')');
   end;
 
   UpdateKnownMessageSize(size + SizeOf(size));
@@ -1446,7 +1443,7 @@ begin
   InnerTransport.ReadAll( buff, 0, size );
 
   FreeAndNil( FReadBuffer);
-  FReadBuffer := TMemoryStream.Create;
+  FReadBuffer := TThriftMemoryStream.Create(1024);
   if Length(buff) > 0
   then FReadBuffer.Write( Pointer(@buff[0])^, size );
   FReadBuffer.Position := 0;

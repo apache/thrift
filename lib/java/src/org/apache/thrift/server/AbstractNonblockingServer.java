@@ -414,8 +414,8 @@ public abstract class AbstractNonblockingServer extends TServer {
           if (trans_.write(buffer_) < 0) {
             return false;
           }
-        } catch (IOException e) {
-          LOGGER.warn("Got an IOException during write!", e);
+        } catch (TTransportException e) {
+          LOGGER.warn("Got an Exception during write", e);
           return false;
         }
 
@@ -543,8 +543,8 @@ public abstract class AbstractNonblockingServer extends TServer {
     private boolean internalRead() {
       try {
           return trans_.read(buffer_) >= 0;
-      } catch (IOException e) {
-        LOGGER.warn("Got an IOException in internalRead!", e);
+      } catch (TTransportException e) {
+        LOGGER.warn("Got an Exception in internalRead", e);
         return false;
       }
     }

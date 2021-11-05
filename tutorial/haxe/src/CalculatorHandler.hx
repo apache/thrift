@@ -31,7 +31,7 @@ import tutorial.*;
 import shared.*;
 
 
-class CalculatorHandler implements Calculator {
+class CalculatorHandler implements Calculator_service {
 
     private var log = new IntMap<SharedStruct>();
 

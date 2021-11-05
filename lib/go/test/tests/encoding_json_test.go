@@ -23,7 +23,8 @@ import (
 	"encoding"
 	"encoding/json"
 	"testing"
-	"thrifttest"
+
+	"github.com/apache/thrift/lib/go/test/gopath/src/thrifttest"
 )
 
 func TestEnumIsTextMarshaller(t *testing.T) {

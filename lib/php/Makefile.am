@@ -40,113 +40,125 @@ endif
 
 phpdir = $(PHP_PREFIX)/
 php_DATA = \
-  lib/TMultiplexedProcessor.php
+	lib/TMultiplexedProcessor.php
 
 phpbasedir = $(phpdir)/Base
 phpbase_DATA = \
-  lib/Base/TBase.php
+	lib/Base/TBase.php
 
 phpclassloaderdir = $(phpdir)/ClassLoader
 phpclassloader_DATA = \
-  lib/ClassLoader/ThriftClassLoader.php
+	lib/ClassLoader/ThriftClassLoader.php
 
 phpexceptiondir = $(phpdir)/Exception
 phpexception_DATA = \
-  lib/Exception/TApplicationException.php \
-  lib/Exception/TException.php \
-  lib/Exception/TProtocolException.php \
-  lib/Exception/TTransportException.php
+	lib/Exception/TApplicationException.php \
+	lib/Exception/TException.php \
+	lib/Exception/TProtocolException.php \
+	lib/Exception/TTransportException.php
 
 phpfactorydir = $(phpdir)/Factory
 phpfactory_DATA = \
-  lib/Factory/TBinaryProtocolFactory.php \
-  lib/Factory/TCompactProtocolFactory.php \
-  lib/Factory/TJSONProtocolFactory.php \
-  lib/Factory/TProtocolFactory.php \
-  lib/Factory/TStringFuncFactory.php \
-  lib/Factory/TTransportFactory.php
+	lib/Factory/TBinaryProtocolFactory.php \
+	lib/Factory/TCompactProtocolFactory.php \
+	lib/Factory/TJSONProtocolFactory.php \
+	lib/Factory/TProtocolFactory.php \
+	lib/Factory/TStringFuncFactory.php \
+	lib/Factory/TTransportFactory.php
 
 phpprotocoldir = $(phpdir)/Protocol
 phpprotocol_DATA = \
-  lib/Protocol/TBinaryProtocolAccelerated.php \
-  lib/Protocol/TBinaryProtocol.php \
-  lib/Protocol/TCompactProtocol.php \
-  lib/Protocol/TJSONProtocol.php \
-  lib/Protocol/TMultiplexedProtocol.php \
-  lib/Protocol/TProtocol.php \
-  lib/Protocol/TProtocolDecorator.php \
-  lib/Protocol/TSimpleJSONProtocol.php
+	lib/Protocol/TBinaryProtocolAccelerated.php \
+	lib/Protocol/TBinaryProtocol.php \
+	lib/Protocol/TCompactProtocol.php \
+	lib/Protocol/TJSONProtocol.php \
+	lib/Protocol/TMultiplexedProtocol.php \
+	lib/Protocol/TProtocol.php \
+	lib/Protocol/TProtocolDecorator.php \
+	lib/Protocol/TSimpleJSONProtocol.php
 
 phpprotocoljsondir = $(phpprotocoldir)/JSON
 phpprotocoljson_DATA = \
-  lib/Protocol/JSON/BaseContext.php \
-  lib/Protocol/JSON/ListContext.php \
-  lib/Protocol/JSON/LookaheadReader.php \
-  lib/Protocol/JSON/PairContext.php
+	lib/Protocol/JSON/BaseContext.php \
+	lib/Protocol/JSON/ListContext.php \
+	lib/Protocol/JSON/LookaheadReader.php \
+	lib/Protocol/JSON/PairContext.php
 
 phpprotocolsimplejsondir = $(phpprotocoldir)/SimpleJSON
 phpprotocolsimplejson_DATA = \
-  lib/Protocol/SimpleJSON/CollectionMapKeyException.php \
-  lib/Protocol/SimpleJSON/Context.php \
-  lib/Protocol/SimpleJSON/ListContext.php \
-  lib/Protocol/SimpleJSON/MapContext.php \
-  lib/Protocol/SimpleJSON/StructContext.php
+	lib/Protocol/SimpleJSON/CollectionMapKeyException.php \
+	lib/Protocol/SimpleJSON/Context.php \
+	lib/Protocol/SimpleJSON/ListContext.php \
+	lib/Protocol/SimpleJSON/MapContext.php \
+	lib/Protocol/SimpleJSON/StructContext.php
 
 phpserializerdir = $(phpdir)/Serializer
 phpserializer_DATA = \
-  lib/Serializer/TBinarySerializer.php
+	lib/Serializer/TBinarySerializer.php
 
 phpserverdir = $(phpdir)/Server
 phpserver_DATA = \
-  lib/Server/TServerSocket.php \
-  lib/Server/TForkingServer.php \
-  lib/Server/TServer.php \
-  lib/Server/TServerTransport.php \
-  lib/Server/TSimpleServer.php
+	lib/Server/TServerSocket.php \
+	lib/Server/TForkingServer.php \
+	lib/Server/TServer.php \
+	lib/Server/TServerTransport.php \
+	lib/Server/TSimpleServer.php
 
 phpstringfuncdir = $(phpdir)/StringFunc
 phpstringfunc_DATA = \
-  lib/StringFunc/Mbstring.php \
-  lib/StringFunc/Core.php \
-  lib/StringFunc/TStringFunc.php
+	lib/StringFunc/Mbstring.php \
+	lib/StringFunc/Core.php \
+	lib/StringFunc/TStringFunc.php
 
 phptransportdir = $(phpdir)/Transport
 phptransport_DATA = \
-  lib/Transport/TBufferedTransport.php \
-  lib/Transport/TCurlClient.php \
-  lib/Transport/TFramedTransport.php \
-  lib/Transport/THttpClient.php \
-  lib/Transport/TMemoryBuffer.php \
-  lib/Transport/TNullTransport.php \
-  lib/Transport/TPhpStream.php \
-  lib/Transport/TSocket.php \
-  lib/Transport/TSocketPool.php \
-  lib/Transport/TTransport.php
+	lib/Transport/TBufferedTransport.php \
+	lib/Transport/TCurlClient.php \
+	lib/Transport/TFramedTransport.php \
+	lib/Transport/THttpClient.php \
+	lib/Transport/TMemoryBuffer.php \
+	lib/Transport/TNullTransport.php \
+	lib/Transport/TPhpStream.php \
+	lib/Transport/TSocket.php \
+	lib/Transport/TSocketPool.php \
+	lib/Transport/TTransport.php
 
 phptypedir = $(phpdir)/Type
 phptype_DATA = \
-  lib/Type/TMessageType.php \
-  lib/Type/TType.php \
-  lib/Type/TConstant.php
+	lib/Type/TMessageType.php \
+	lib/Type/TType.php \
+	lib/Type/TConstant.php
 
 clean-local:
 	if [ -f src/ext/thrift_protocol/Makefile ]; then cd src/ext/thrift_protocol/ && $(MAKE) clean; fi
 
 
 EXTRA_DIST = \
-  lib \
-  src/autoload.php \
-  src/ext/thrift_protocol/config.m4 \
-  src/ext/thrift_protocol/config.w32 \
-  src/ext/thrift_protocol/php_thrift_protocol.cpp \
-  src/ext/thrift_protocol/php_thrift_protocol.h \
-  src/Thrift.php \
-  src/TStringUtils.php \
-  coding_standards.md \
-  thrift_protocol.ini \
-  README.apache.md \
-  README.md
+	lib \
+	src/autoload.php \
+	src/ext/thrift_protocol/config.m4 \
+	src/ext/thrift_protocol/config.w32 \
+	src/ext/thrift_protocol/php_thrift_protocol.cpp \
+	src/ext/thrift_protocol/php_thrift_protocol.h \
+	src/Thrift.php \
+	src/TStringUtils.php \
+	coding_standards.md \
+	thrift_protocol.ini \
+	README.apache.md \
+	README.md \
+	test/Fixtures.php \
+	test/TestValidators.thrift \
+	test/JsonSerialize/JsonSerializeTest.php \
+	test/Protocol/BinarySerializerTest.php \
+	test/Protocol/TJSONProtocolFixtures.php \
+	test/Protocol/TJSONProtocolTest.php \
+	test/Protocol/TSimpleJSONProtocolFixtures.php \
+	test/Protocol/TSimpleJSONProtocolTest.php \
+	test/Validator/BaseValidatorTest.php \
+	test/Validator/ValidatorTest.php \
+	test/Validator/ValidatorTestOop.php
+
 
 MAINTAINERCLEANFILES = \
-  Makefile.in
+	Makefile.in
 

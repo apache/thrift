@@ -26,9 +26,11 @@ using System.Threading.Tasks;
 using Thrift.Protocol.Entities;
 using Thrift.Transport;
 
+#pragma warning disable IDE0079 // unnecessary suppression
+#pragma warning disable IDE0066 // use switch expression
+
 namespace Thrift.Protocol
 {
-    //TODO: implementation of TProtocol
 
     // ReSharper disable once InconsistentNaming
     public class TCompactProtocol : TProtocol
@@ -805,7 +807,7 @@ namespace Thrift.Protocol
                 case TType.Map:     return sizeof(byte);  // element count
                 case TType.Set:    return sizeof(byte);  // element count
                 case TType.List:    return sizeof(byte);  // element count
-                default: throw new TTransportException(TTransportException.ExceptionType.Unknown, "unrecognized type code");
+                default: throw new TProtocolException(TProtocolException.NOT_IMPLEMENTED, "unrecognized type code");
             }
         }
 

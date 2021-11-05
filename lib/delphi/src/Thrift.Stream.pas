@@ -108,9 +108,51 @@ type
     constructor Create( const aStream: IStream);
   end;
 
+
+  TThriftMemoryStream = class(TMemoryStream)
+  strict protected
+    FInitialCapacity : NativeInt;
+  public
+    constructor Create( const aInitialCapacity : NativeInt = 4096);
+
+    // reimplemented
+    procedure Clear;
+
+    // make it publicly visible
+    property Capacity;
+  end;
+
+
+
 implementation
 
 uses Thrift.Transport;
+
+
+{ TThriftMemoryStream }
+
+constructor TThriftMemoryStream.Create( const aInitialCapacity : NativeInt);
+begin
+  inherited Create;
+  FInitialCapacity := aInitialCapacity;
+  Clear;
+end;
+
+
+procedure TThriftMemoryStream.Clear;
+// reimplemented to keep initial capacity
+begin
+  Position := 0;
+  Size     := 0;
+
+  // primary goal: minimize costly reallocations (performance!)
+  // secondary goal: prevent costly ressource over-allocations
+  if (FInitialCapacity >= 1024*1024)        // if we are talking about MB
+  or ((Capacity div 2) > FInitialCapacity)  // or the allocated buffer is really large
+  or (Capacity < FInitialCapacity)          // or we are actually below the limit
+  then Capacity := FInitialCapacity;
+end;
+
 
 { TThriftStreamAdapterCOM }
 

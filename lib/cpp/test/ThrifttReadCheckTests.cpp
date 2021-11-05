@@ -72,7 +72,7 @@ BOOST_AUTO_TEST_CASE(test_tmemorybuffer_read_check_exception) {
 
   TMemoryBuffer trans_in(config);
   memset(buffer, 0, sizeof(buffer));
-  BOOST_CHECK_THROW(trans_in.read(buffer, sizeof(buffer)), TTransportException*);
+  BOOST_CHECK_THROW(trans_in.read(buffer, sizeof(buffer)), TTransportException);
   trans_in.close();
 }
 
@@ -85,13 +85,13 @@ BOOST_AUTO_TEST_CASE(test_tpipedtransport_read_check_exception) {
   uint8_t buffer[4];
 
   underlying->write((uint8_t*)"abcd", 4);
-  BOOST_CHECK_THROW(trans->read(buffer, sizeof(buffer)), TTransportException*);
-  BOOST_CHECK_THROW(trans->readAll(buffer, sizeof(buffer)), TTransportException*);
+  BOOST_CHECK_THROW(trans->read(buffer, sizeof(buffer)), TTransportException);
+  BOOST_CHECK_THROW(trans->readAll(buffer, sizeof(buffer)), TTransportException);
   trans->readEnd();
   pipe->resetBuffer();
   underlying->write((uint8_t*)"ef", 2);
-  BOOST_CHECK_THROW(trans->read(buffer, sizeof(buffer)), TTransportException*);
-  BOOST_CHECK_THROW(trans->readAll(buffer, sizeof(buffer)), TTransportException*);
+  BOOST_CHECK_THROW(trans->read(buffer, sizeof(buffer)), TTransportException);
+  BOOST_CHECK_THROW(trans->readAll(buffer, sizeof(buffer)), TTransportException);
   trans->readEnd();
 }
 
@@ -104,7 +104,7 @@ BOOST_AUTO_TEST_CASE(test_tsimplefiletransport_read_check_exception) {
 
   TSimpleFileTransport trans_in("data",true, false, config);
   memset(buffer, 0, sizeof(buffer));
-  BOOST_CHECK_THROW(trans_in.read(buffer, sizeof(buffer)), TTransportException*);
+  BOOST_CHECK_THROW(trans_in.read(buffer, sizeof(buffer)), TTransportException);
   trans_in.close();
 
   remove("./data");
@@ -118,7 +118,7 @@ BOOST_AUTO_TEST_CASE(test_tfiletransport_read_check_exception) {
 
   TFileTransport trans_in("data", false, config);
   memset(buffer, 0, sizeof(buffer));
-  BOOST_CHECK_THROW(trans_in.read(buffer, sizeof(buffer)), TTransportException*);
+  BOOST_CHECK_THROW(trans_in.read(buffer, sizeof(buffer)), TTransportException);
 
   remove("./data");
 }
@@ -130,7 +130,7 @@ BOOST_AUTO_TEST_CASE(test_tbufferedtransport_read_check_exception) {
   std::shared_ptr<TBufferedTransport> trans (new TBufferedTransport(buffer, config));
 
   trans->write((const uint8_t*)arr, sizeof(arr));
-  BOOST_CHECK_THROW(trans->read(arr, sizeof(arr)), TTransportException*);
+  BOOST_CHECK_THROW(trans->read(arr, sizeof(arr)), TTransportException);
 }
 
 BOOST_AUTO_TEST_CASE(test_tframedtransport_read_check_exception) {
@@ -140,7 +140,7 @@ BOOST_AUTO_TEST_CASE(test_tframedtransport_read_check_exception) {
   std::shared_ptr<TFramedTransport> trans (new TFramedTransport(buffer, config));
 
   trans->write((const uint8_t*)arr, sizeof(arr));
-  BOOST_CHECK_THROW(trans->read(arr, sizeof(arr)), TTransportException*);
+  BOOST_CHECK_THROW(trans->read(arr, sizeof(arr)), TTransportException);
 }
 
 BOOST_AUTO_TEST_CASE(test_tthriftbinaryprotocol_read_check_exception) {
@@ -154,19 +154,19 @@ BOOST_AUTO_TEST_CASE(test_tthriftbinaryprotocol_read_check_exception) {
   TList list(T_I32, 8);
   protocol->writeListBegin(list.elemType_, list.size_);
   protocol->writeListEnd();
-  BOOST_CHECK_THROW(protocol->readListBegin(elemType, val), TTransportException*);
+  BOOST_CHECK_THROW(protocol->readListBegin(elemType, val), TTransportException);
   protocol->readListEnd();
 
   TSet set(T_I32, 8);
   protocol->writeSetBegin(set.elemType_, set.size_);
   protocol->writeSetEnd();
-  BOOST_CHECK_THROW(protocol->readSetBegin(elemType, val), TTransportException*);
+  BOOST_CHECK_THROW(protocol->readSetBegin(elemType, val), TTransportException);
   protocol->readSetEnd();
 
   TMap map(T_I32, T_I32, 8);
   protocol->writeMapBegin(map.keyType_, map.valueType_, map.size_);
   protocol->writeMapEnd();
-  BOOST_CHECK_THROW(protocol->readMapBegin(elemType, elemType1, val), TTransportException*);
+  BOOST_CHECK_THROW(protocol->readMapBegin(elemType, elemType1, val), TTransportException);
   protocol->readMapEnd();
 }
 
@@ -181,19 +181,19 @@ BOOST_AUTO_TEST_CASE(test_tthriftcompactprotocol_read_check_exception) {
   TList list(T_I32, 8);
   protocol->writeListBegin(list.elemType_, list.size_);
   protocol->writeListEnd();
-  BOOST_CHECK_THROW(protocol->readListBegin(elemType, val), TTransportException*);
+  BOOST_CHECK_THROW(protocol->readListBegin(elemType, val), TTransportException);
   protocol->readListEnd();
 
   TSet set(T_I32, 8);
   protocol->writeSetBegin(set.elemType_, set.size_);
   protocol->writeSetEnd();
-  BOOST_CHECK_THROW(protocol->readSetBegin(elemType, val), TTransportException*);
+  BOOST_CHECK_THROW(protocol->readSetBegin(elemType, val), TTransportException);
   protocol->readSetEnd();
 
   TMap map(T_I32, T_I32, 8);
   protocol->writeMapBegin(map.keyType_, map.valueType_, map.size_);
   protocol->writeMapEnd();
-  BOOST_CHECK_THROW(protocol->readMapBegin(elemType, elemType1, val), TTransportException*);
+  BOOST_CHECK_THROW(protocol->readMapBegin(elemType, elemType1, val), TTransportException);
   protocol->readMapEnd();
 }
 
@@ -208,19 +208,19 @@ BOOST_AUTO_TEST_CASE(test_tthriftjsonprotocol_read_check_exception) {
   TList list(T_I32, 8);
   protocol->writeListBegin(list.elemType_, list.size_);
   protocol->writeListEnd();
-  BOOST_CHECK_THROW(protocol->readListBegin(elemType, val), TTransportException*);
+  BOOST_CHECK_THROW(protocol->readListBegin(elemType, val), TTransportException);
   protocol->readListEnd();
 
   TSet set(T_I32, 8);
   protocol->writeSetBegin(set.elemType_, set.size_);
   protocol->writeSetEnd();
-  BOOST_CHECK_THROW(protocol->readSetBegin(elemType, val), TTransportException*);
+  BOOST_CHECK_THROW(protocol->readSetBegin(elemType, val), TTransportException);
   protocol->readSetEnd();
 
   TMap map(T_I32, T_I32, 8);
   protocol->writeMapBegin(map.keyType_, map.valueType_, map.size_);
   protocol->writeMapEnd();
-  BOOST_CHECK_THROW(protocol->readMapBegin(elemType, elemType1, val), TTransportException*);
+  BOOST_CHECK_THROW(protocol->readMapBegin(elemType, elemType1, val), TTransportException);
   protocol->readMapEnd();
 }
 

@@ -24,15 +24,14 @@ void main() {
   TProtocol protocol;
 
   setUp(() {
-    protocol = new TBinaryProtocol(new TBufferedTransport());
+    protocol = TBinaryProtocol(TBufferedTransport());
   });
 
   test('Write and read an application error', () {
     var expectedType = TApplicationErrorType.INTERNAL_ERROR;
     var expectedMessage = 'test error message';
 
-    TApplicationError error =
-        new TApplicationError(expectedType, expectedMessage);
+    TApplicationError error = TApplicationError(expectedType, expectedMessage);
     error.write(protocol);
 
     protocol.transport.flush();

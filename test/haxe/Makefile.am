@@ -34,6 +34,13 @@ $(BIN_CPP): \
 		../../lib/haxe/src/org/apache/thrift/**/*.hx \
 		gen-haxe/thrift/test/ThriftTest.hx
 	$(HAXE) --cwd .  cpp.hxml
+	
+#	$(HAXE) --cwd .  csharp
+#	$(HAXE) --cwd .  flash
+#	$(HAXE) --cwd .  java
+#	$(HAXE) --cwd .  javascript
+#	$(HAXE) --cwd .  neko
+#	$(HAXE) --cwd .  python
 
 $(BIN_PHP): \
 		src/*.hx \
@@ -47,15 +54,6 @@ $(BIN_PHP_WEB): \
 		gen-haxe/thrift/test/ThriftTest.hx
 	$(HAXE) --cwd .  php-web-server.hxml
 
-
-
-#TODO: other haxe targets
-#    $(HAXE)  --cwd .  csharp
-#    $(HAXE)  --cwd .  flash
-#    $(HAXE)  --cwd .  java
-#    $(HAXE)  --cwd .  javascript
-#    $(HAXE)  --cwd .  neko
-#    $(HAXE)  --cwd .  python  # needs Haxe 3.2.0
 
 
 clean-local:

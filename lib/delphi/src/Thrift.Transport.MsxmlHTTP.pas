@@ -106,7 +106,7 @@ begin
   FReadTimeout       := XMLHTTP_SENDRECV_TIMEOUT;
 
   FCustomHeaders := TThriftDictionaryImpl<string,string>.Create;
-  FOutputStream := TThriftStreamAdapterDelphi.Create( TMemoryStream.Create, True);
+  FOutputStream := TThriftStreamAdapterDelphi.Create( TThriftMemoryStream.Create, True);
 end;
 
 function TMsxmlHTTPClientImpl.CreateRequest: IXMLHTTPRequest;
@@ -197,12 +197,12 @@ end;
 
 function TMsxmlHTTPClientImpl.GetIsOpen: Boolean;
 begin
-  Result := True;
+  Result := Assigned(FOutputStream);
 end;
 
 procedure TMsxmlHTTPClientImpl.Open;
 begin
-  FOutputStream := TThriftStreamAdapterDelphi.Create( TMemoryStream.Create, True);
+  FOutputStream := TThriftStreamAdapterDelphi.Create( TThriftMemoryStream.Create, True);
 end;
 
 procedure TMsxmlHTTPClientImpl.Close;
@@ -217,7 +217,7 @@ begin
     SendRequest;
   finally
     FOutputStream := nil;
-    FOutputStream := TThriftStreamAdapterDelphi.Create( TMemoryStream.Create, True);
+    FOutputStream := TThriftStreamAdapterDelphi.Create( TThriftMemoryStream.Create, True);
     ASSERT( FOutputStream <> nil);
   end;
 end;
@@ -239,13 +239,13 @@ end;
 procedure TMsxmlHTTPClientImpl.SendRequest;
 var
   xmlhttp : IXMLHTTPRequest;
-  ms : TMemoryStream;
+  ms : TThriftMemoryStream;
   a : TBytes;
   len : Integer;
 begin
   xmlhttp := CreateRequest;
 
-  ms := TMemoryStream.Create;
+  ms := TThriftMemoryStream.Create;
   try
     a := FOutputStream.ToArray;
     len := Length(a);
@@ -256,6 +256,7 @@ begin
     xmlhttp.send( IUnknown( TStreamAdapter.Create( ms, soReference )));
     FInputStream := nil;
     FInputStream := TThriftStreamAdapterCOM.Create( IUnknown( xmlhttp.responseStream) as IStream);
+    ResetConsumedMessageSize;
     UpdateKnownMessageSize( FInputStream.Size);
   finally
     ms.Free;
@@ -264,7 +265,9 @@ end;
 
 procedure TMsxmlHTTPClientImpl.Write( const pBuf : Pointer; off, len : Integer);
 begin
-  FOutputStream.Write( pBuf, off, len);
+  if FOutputStream <> nil
+  then FOutputStream.Write( pBuf, off, len)
+  else raise TTransportExceptionNotOpen.Create('Transport closed');
 end;
 
 

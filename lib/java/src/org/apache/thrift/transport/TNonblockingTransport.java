@@ -23,7 +23,6 @@ import org.apache.thrift.TConfiguration;
 
 import java.io.IOException;
 import java.net.SocketAddress;
-import java.nio.ByteBuffer;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 
@@ -47,7 +46,4 @@ public abstract class TNonblockingTransport extends TEndpointTransport {
 
   public abstract SelectionKey registerSelector(Selector selector, int interests) throws IOException;
 
-  public abstract int read(ByteBuffer buffer) throws IOException;
-
-  public abstract int write(ByteBuffer buffer) throws IOException;
 }

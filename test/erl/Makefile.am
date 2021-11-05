@@ -19,11 +19,7 @@
 
 THRIFT_FILES = $(wildcard ../*.thrift)
 
-if ERLANG_OTP16
-ERL_FLAG = erl:otp16
-else
 ERL_FLAG = erl
-endif
 # make sure ThriftTest.thrift is generated last to prevent conflicts with other *.thrift files
 .generated: $(THRIFT_FILES)
 	for f in $(THRIFT_FILES) ; do \

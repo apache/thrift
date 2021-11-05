@@ -23,10 +23,10 @@ import haxe.io.Bytes;
 import haxe.io.BytesInput;
 import haxe.io.BytesOutput;
 import haxe.io.BytesBuffer;
+import haxe.io.Encoding;
 import haxe.ds.GenericStack;
 import haxe.Int32;
 import haxe.Int64;
-import haxe.Utf8;
 
 import org.apache.thrift.TException;
 import org.apache.thrift.transport.TTransport;
@@ -37,7 +37,7 @@ import org.apache.thrift.helper.BitConverter;
 /**
 * Compact protocol implementation for thrift.
 */
-class TCompactProtocol extends TRecursionTracker implements TProtocol {
+class TCompactProtocol extends TProtocolImplBase implements TProtocol {
 
     private static var ANONYMOUS_STRUCT : TStruct = new TStruct("");
     private static var TSTOP : TField = new TField("", TType.STOP, 0);
@@ -102,23 +102,10 @@ class TCompactProtocol extends TRecursionTracker implements TProtocol {
     private var boolValue_ : Null<Bool>;
 
 
-    // whether the underlying system holds Strings as UTF-8
-    // http://old.haxe.org/manual/encoding
-    private static var utf8Strings = haxe.Utf8.validate("Ç-ß-Æ-Ю-Ш");
-
-    // the transport used
-    public var trans(default,null) : TTransport;
-
-
     // TCompactProtocol Constructor
-    public function new( trans : TTransport) {
-        this.trans = trans;
+    public function new( transport : TTransport) {
+		super(transport);
     }
-
-    public function getTransport() : TTransport {
-      return trans;
-    }
-
 
     public function Reset() : Void{
         while ( ! lastField_.isEmpty()) {
@@ -135,7 +122,7 @@ class TCompactProtocol extends TRecursionTracker implements TProtocol {
     private function WriteByteDirect( b : Int) : Void {
         var buf = Bytes.alloc(1);
         buf.set( 0, b);
-        trans.write( buf, 0, 1);
+        Transport.write( buf, 0, 1);
     }
 
     /**
@@ -158,7 +145,7 @@ class TCompactProtocol extends TRecursionTracker implements TProtocol {
         }
 
         var tmp = i32buf.getBytes();
-        trans.write( tmp, 0, tmp.length);
+        Transport.write( tmp, 0, tmp.length);
     }
 
     /**
@@ -329,7 +316,7 @@ class TCompactProtocol extends TRecursionTracker implements TProtocol {
      */
     public function writeDouble( dub : Float) : Void {
         var data = BitConverter.fixedLongToBytes( BitConverter.DoubleToInt64Bits(dub));
-        trans.write( data, 0, data.length);
+        Transport.write( data, 0, data.length);
     }
 
     /**
@@ -337,10 +324,7 @@ class TCompactProtocol extends TRecursionTracker implements TProtocol {
      */
     public function writeString(str : String) : Void {
         var buf = new BytesBuffer();
-        if( utf8Strings)
-            buf.addString( str);  // no need to encode on UTF8 targets, the string is just fine
-        else
-            buf.addString( Utf8.encode( str));
+		buf.addString( str, Encoding.UTF8);
         var tmp = buf.getBytes();
         writeBinary( tmp);
     }
@@ -350,7 +334,7 @@ class TCompactProtocol extends TRecursionTracker implements TProtocol {
      */
     public function writeBinary( bin : Bytes) : Void {
         WriteVarint32( cast(bin.length,UInt));
-        trans.write( bin, 0, bin.length);
+        Transport.write( bin, 0, bin.length);
     }
 
 
@@ -408,7 +392,7 @@ class TCompactProtocol extends TRecursionTracker implements TProtocol {
             }
         }
         var tmp = varint64out.getBytes();
-        trans.write( tmp, 0, tmp.length);
+        Transport.write( tmp, 0, tmp.length);
     }
 
 
@@ -497,7 +481,9 @@ class TCompactProtocol extends TRecursionTracker implements TProtocol {
         var keyAndValueType : Int = ((size == 0)  ?  0  :  readByte());
         var key : Int = cast( getTType( (keyAndValueType & 0xF0) >> 4), Int);
         var val : Int = cast( getTType( keyAndValueType & 0x0F), Int);
-        return new TMap( key, val, size);
+        var map = new TMap( key, val, size);
+		CheckReadBytesAvailableMap(map);
+        return map;
     }
 
     /**
@@ -515,7 +501,9 @@ class TCompactProtocol extends TRecursionTracker implements TProtocol {
         }
 
         var type = getTType(size_and_type);
-        return new TList( type, size);
+        var list = new TList( type, size);
+		CheckReadBytesAvailableList(list);
+        return list;
     }
 
     /**
@@ -533,7 +521,9 @@ class TCompactProtocol extends TRecursionTracker implements TProtocol {
         }
 
         var type = getTType(size_and_type);
-        return new TSet( type, size);
+        var set = new TSet( type, size);
+		CheckReadBytesAvailableSet(set);
+        return set;
     }
 
     /**
@@ -556,7 +546,7 @@ class TCompactProtocol extends TRecursionTracker implements TProtocol {
      */
     public function readByte() : Int {
         var byteRawBuf = new BytesBuffer();
-        trans.readAll( byteRawBuf, 0, 1);
+        Transport.readAll( byteRawBuf, 0, 1);
         return byteRawBuf.getBytes().get(0);
     }
 
@@ -586,7 +576,7 @@ class TCompactProtocol extends TRecursionTracker implements TProtocol {
      */
     public function readDouble():Float {
         var longBits = new BytesBuffer();
-        trans.readAll( longBits, 0, 8);
+        Transport.readAll( longBits, 0, 8);
         return BitConverter.Int64BitsToDouble( BitConverter.bytesToLong( longBits.getBytes()));
     }
 
@@ -595,21 +585,19 @@ class TCompactProtocol extends TRecursionTracker implements TProtocol {
      */
     public function readString() : String {
         var length : Int = cast( ReadVarint32(), Int);
+		Transport.CheckReadBytesAvailable(length);
 
         if (length == 0) {
             return "";
         }
 
         var buf = new BytesBuffer();
-        trans.readAll( buf, 0, length);
+        Transport.readAll( buf, 0, length);
 
         length = buf.length;
         var inp = new BytesInput( buf.getBytes());
-        var str = inp.readString( length);
-        if( utf8Strings)
-            return str;  // no need to decode on UTF8 targets, the string is just fine
-        else
-            return Utf8.decode( str);
+        var str = inp.readString( length, Encoding.UTF8);
+        return str;  
     }
 
     /**
@@ -617,12 +605,13 @@ class TCompactProtocol extends TRecursionTracker implements TProtocol {
      */
     public function readBinary() : Bytes {
         var length : Int = cast( ReadVarint32(), Int);
+		Transport.CheckReadBytesAvailable(length);
         if (length == 0) {
             return Bytes.alloc(0);
         }
 
         var buf = new BytesBuffer();
-        trans.readAll( buf, 0, length);
+        Transport.readAll( buf, 0, length);
         return buf.getBytes();
     }
 
@@ -715,4 +704,27 @@ class TCompactProtocol extends TRecursionTracker implements TProtocol {
     {
         return cast( ttypeToCompactType[ttype], Int);
     }
+	
+	// Return the minimum number of bytes a type will consume on the wire
+	public override function GetMinSerializedSize(type : TType) : Int
+	{
+		switch (type)
+		{
+			case TType.STOP:    return 0;
+			case TType.VOID_:    return 0;
+			case TType.BOOL:   return 1;
+			case TType.DOUBLE: return 8;  // uses fixedLongToBytes() which always writes 8 bytes
+			case TType.BYTE: return 1;
+			case TType.I16:     return 1;  // zigzag
+			case TType.I32:     return 1;  // zigzag
+			case TType.I64:     return 1;  // zigzag
+			case TType.STRING: return 1;  // string length
+			case TType.STRUCT:  return 0;             // empty struct
+			case TType.MAP:     return 1;  // element count
+			case TType.SET:    return 1;  // element count
+			case TType.LIST:    return 1;  // element count
+			default: throw new TProtocolException(TProtocolException.NOT_IMPLEMENTED, "unrecognized type code");
+		}
+	}
+
 }

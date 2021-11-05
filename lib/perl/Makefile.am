@@ -40,6 +40,7 @@ EXTRA_DIST = \
 	coding_standards.md \
 	build-cpan-dist.sh \
 	Makefile.PL \
+	MANIFEST.SKIP \
 	test.pl \
 	lib/Thrift.pm \
 	lib/Thrift.pm \
@@ -63,6 +64,7 @@ EXTRA_DIST = \
 	lib/Thrift/UnixSocket.pm \
 	lib/Thrift/Type.pm \
 	lib/Thrift/Transport.pm \
+	tools/FixupDist.pl \
 	README.md
 
 THRIFT = @top_builddir@/compiler/cpp/thrift

@@ -36,8 +36,8 @@ uses
   Thrift.Transport.WinHTTP in '..\..\..\lib\delphi\src\Thrift.Transport.WinHTTP.pas',
   Thrift.Transport.MsxmlHTTP in '..\..\..\lib\delphi\src\Thrift.Transport.MsxmlHTTP.pas',
   Thrift.WinHTTP in '..\..\..\lib\delphi\src\Thrift.WinHTTP.pas',
-  Shared in '..\..\gen-delphi\Shared.pas',
-  Tutorial in '..\..\gen-delphi\Tutorial.pas';
+  Shared in '..\gen-delphi\Shared.pas',
+  Tutorial in '..\gen-delphi\Tutorial.pas';
 
 
 type

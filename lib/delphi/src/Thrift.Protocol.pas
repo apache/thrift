@@ -250,6 +250,8 @@ type
     function Configuration : IThriftConfiguration;
   end;
 
+  TProtocolImplClass = class of TProtocolImpl;
+
   TProtocolImpl = class abstract( TInterfacedObject, IProtocol)
   strict protected
     FTrans : ITransport;
@@ -317,7 +319,7 @@ type
     property  Transport: ITransport read GetTransport;
 
   public
-    constructor Create( const aTransport : ITransport);
+    constructor Create( const aTransport : ITransport); virtual;
   end;
 
   IBase = interface( ISupportsToString)
@@ -352,7 +354,8 @@ type
         constructor Create( const aStrictRead : Boolean = FALSE; const aStrictWrite: Boolean = TRUE); reintroduce;
       end;
 
-    constructor Create( const trans: ITransport; strictRead: Boolean = FALSE; strictWrite: Boolean = TRUE); reintroduce;
+    constructor Create( const trans: ITransport); overload; override;
+    constructor Create( const trans: ITransport; strictRead, strictWrite: Boolean); reintroduce; overload;
 
     procedure WriteMessageBegin( const msg: TThriftMessage); override;
     procedure WriteMessageEnd; override;
@@ -414,7 +417,7 @@ type
   public
     // Encloses the specified protocol.
     // All operations will be forward to the given protocol.  Must be non-null.
-    constructor Create( const aProtocol : IProtocol);
+    constructor Create( const aProtocol : IProtocol);  reintroduce;
 
     procedure WriteMessageBegin( const msg: TThriftMessage); override;
     procedure WriteMessageEnd; override;
@@ -714,6 +717,12 @@ end;
 
 { TBinaryProtocolImpl }
 
+constructor TBinaryProtocolImpl.Create( const trans: ITransport);
+begin
+  // call the real CTOR
+  Self.Create( trans, FALSE, TRUE);
+end;
+
 constructor TBinaryProtocolImpl.Create( const trans: ITransport; strictRead, strictWrite: Boolean);
 begin
   inherited Create( trans);
@@ -833,6 +842,7 @@ var
 begin
   Reset;
   Init( result);
+
   size := ReadI32;
   if (size < 0) then begin
     version := size and Integer( VERSION_MASK);
@@ -842,14 +852,20 @@ begin
     result.Type_ := TMessageType( size and $000000ff);
     result.Name := ReadString;
     result.SeqID := ReadI32;
-  end
-  else begin
-    if FStrictRead then begin
-      raise TProtocolExceptionBadVersion.Create('Missing version in readMessageBegin, old client?' );
-    end;
+    Exit;
+  end;
+
+  try
+    if FStrictRead
+    then raise TProtocolExceptionBadVersion.Create('Missing version in readMessageBegin, old client?' );
+
     result.Name := ReadStringBody( size );
     result.Type_ := TMessageType( ReadByte );
     result.SeqID := ReadI32;
+  except
+    if CharUtils.IsHtmlDoctype(size)
+    then raise TProtocolExceptionInvalidData.Create('Remote end sends HTML instead of data')
+    else raise; // something else
   end;
 end;
 

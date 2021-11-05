@@ -143,7 +143,8 @@ include_thrift_HEADERS = \
                          src/thrift/TLogging.h \
                          src/thrift/TToString.h \
                          src/thrift/TBase.h \
-                         src/thrift/TConfiguration.h
+                         src/thrift/TConfiguration.h \
+                         src/thrift/TNonCopyable.h
 
 include_concurrencydir = $(include_thriftdir)/concurrency
 include_concurrency_HEADERS = \

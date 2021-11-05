@@ -1,4 +1,5 @@
-// +build !windows
+//go:build !windows && !wasm
+// +build !windows,!wasm
 
 /*
  * Licensed to the Apache Software Foundation (ASF) under one
@@ -22,6 +23,7 @@
 package thrift
 
 import (
+	"errors"
 	"io"
 	"syscall"
 	"time"
@@ -67,7 +69,7 @@ func (sc *socketConn) checkConn() error {
 		return nil
 	}
 
-	if err == syscall.EAGAIN || err == syscall.EWOULDBLOCK {
+	if errors.Is(err, syscall.EAGAIN) || errors.Is(err, syscall.EWOULDBLOCK) {
 		// This means the connection is still open but we don't have
 		// anything to read right now.
 		return nil

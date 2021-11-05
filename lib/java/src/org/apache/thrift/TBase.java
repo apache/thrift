@@ -31,13 +31,17 @@ public interface TBase<T extends TBase<T,F>, F extends TFieldIdEnum> extends Com
 
   /**
    * Get the F instance that corresponds to fieldId.
+   *
+   * @param fieldId the ID of the requested field.
+   * @return F instance that corresponds to fieldId.
    */
   public F fieldForId(int fieldId);
 
   /**
    * Check if a field is currently set or unset.
    *
-   * @param field
+   * @param field the field to check.
+   * @return true if the field is set, false otherwise.
    */
   public boolean isSet(F field);
 
@@ -45,7 +49,8 @@ public interface TBase<T extends TBase<T,F>, F extends TFieldIdEnum> extends Com
    * Get a field's value by field variable. Primitive types will be wrapped in
    * the appropriate "boxed" types.
    *
-   * @param field
+   * @param field the field whose value is requested.
+   * @return the value of the requested field.
    */
   public Object getFieldValue(F field);
 
@@ -53,10 +58,16 @@ public interface TBase<T extends TBase<T,F>, F extends TFieldIdEnum> extends Com
    * Set a field's value by field variable. Primitive types must be "boxed" in
    * the appropriate object wrapper type.
    *
-   * @param field
+   * @param field the field whose value is to be set.
+   * @param value the value to be assigned to field.
    */
   public void setFieldValue(F field, Object value);
 
+  /**
+   * Performs a deep copy of this instance and returns the copy.
+   *
+   * @return a deep copy of this instance.
+   */
   public T deepCopy();
 
   /**

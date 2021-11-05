@@ -78,7 +78,7 @@ empty :=
 space := $(empty) $(empty)
 comma := ,
 
-CROSS_LANGS = @MAYBE_CPP@ @MAYBE_C_GLIB@ @MAYBE_CL@ @MAYBE_D@ @MAYBE_JAVA@ @MAYBE_PYTHON@ @MAYBE_PY3@ @MAYBE_RUBY@ @MAYBE_HASKELL@ @MAYBE_PERL@ @MAYBE_PHP@ @MAYBE_GO@ @MAYBE_NODEJS@ @MAYBE_DART@ @MAYBE_ERLANG@ @MAYBE_LUA@ @MAYBE_RS@ @MAYBE_NETSTD@ @MAYBE_NODETS@
+CROSS_LANGS = @MAYBE_CPP@ @MAYBE_C_GLIB@ @MAYBE_CL@ @MAYBE_D@ @MAYBE_JAVA@ @MAYBE_PYTHON@ @MAYBE_PY3@ @MAYBE_RUBY@ @MAYBE_PERL@ @MAYBE_PHP@ @MAYBE_GO@ @MAYBE_NODEJS@ @MAYBE_DART@ @MAYBE_ERLANG@ @MAYBE_LUA@ @MAYBE_RS@ @MAYBE_NETSTD@ @MAYBE_NODETS@
 CROSS_LANGS_COMMA_SEPARATED = $(subst $(space),$(comma),$(CROSS_LANGS))
 
 if WITH_PY3
@@ -132,11 +132,16 @@ style-local:
 	codespell --write-changes --skip=$(skipped_files) --disable-colors
 
 EXTRA_DIST = \
+	.asf.yaml \
 	.clang-format \
 	.dockerignore \
 	.editorconfig \
+	.eslintignore \
+	.eslintrc.json \
+	.flake8 \
+	.gitattributes \
+	.gitignore \
 	.travis.yml \
-	.rustfmt.toml \
 	ApacheThrift.nuspec \
 	appveyor.yml \
 	bootstrap.sh \
@@ -156,7 +161,9 @@ EXTRA_DIST = \
 	LICENSE \
 	NOTICE \
 	package.json \
+	package-lock.json \
 	phpcs.xml.dist \
 	README.md \
+	rust-toolchain \
 	sonar-project.properties \
 	Thrift.podspec

@@ -9,12 +9,29 @@
   "dependencies": {
     "libevent": {
       "version": "~>2.0.2"
-    },
-    "openssl": {
-      "version": ">=1.1.6"
     }
   },
-  "systemDependencies": "On systems with native openssl 1.0.x use dub package openssl~>1.1, on systems with native openssl 1.1.x use dub package openssl~>2.0",
+  "systemDependencies": "On systems with native openssl 1.0.x use dub package openssl~>1.1, on systems with native openssl 1.1.x use dub package openssl~>2.0.3 (with build bug fix: https://github.com/D-Programming-Deimos/openssl/issues/63)",
+  "configurations": [
+    {
+      "name": "use_openssl_1_0",
+      "versions": ["use_openssl_1_0_x"],
+      "dependencies": {
+        "openssl": {
+          "version": "~>1.1.6"
+        }
+      }
+    },
+    {
+      "name": "use_openssl_1_1",
+      "versions": ["use_openssl_1_1_x"],
+      "dependencies": {
+        "openssl": {
+          "version": "~>2.0.3"
+        }
+      }
+    }
+  ],
   "targetType": "library",
   "sourcePaths": [
     "lib/d/src" 

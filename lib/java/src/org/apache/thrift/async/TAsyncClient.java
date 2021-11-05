@@ -92,7 +92,9 @@ public abstract class TAsyncClient {
   }
 
   /**
-   * Called by delegate method on error
+   * Called by delegate method on error.
+   *
+   * @param exception the exception indicating the current error condition.
    */
   protected void onError(Exception exception) {
     ___transport.close();

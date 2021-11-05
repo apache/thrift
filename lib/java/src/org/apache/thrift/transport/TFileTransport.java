@@ -407,6 +407,7 @@ public class TFileTransport extends TTransport {
    *
    * @param path File path to read and write from
    * @param readOnly Whether this is a read-only transport
+   * @throws IOException if there is an error accessing the file.
    */
   public TFileTransport(final String path, boolean readOnly) throws IOException {
     inputFile_ = new TStandardFile(path);

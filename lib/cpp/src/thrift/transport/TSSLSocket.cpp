@@ -489,7 +489,7 @@ void TSSLSocket::write(const uint8_t* buf, uint32_t len) {
               && (errno_copy != THRIFT_EAGAIN)) {
             break;
           }
-        // fallthrough        
+        // fallthrough
         case SSL_ERROR_WANT_READ:
         case SSL_ERROR_WANT_WRITE:
           if (isLibeventSafe()) {
@@ -970,10 +970,12 @@ void TSSLSocketFactory::loadCertificateFromBuffer(const char* aCertificate, cons
   if (strcmp(format, "PEM") == 0) {
     BIO* mem = BIO_new(BIO_s_mem());
     BIO_puts(mem, aCertificate);
-    X509* cert = PEM_read_bio_X509(mem, nullptr, 0, nullptr);
+    X509* cert = PEM_read_bio_X509(mem, nullptr, nullptr, nullptr);
     BIO_free(mem);
+    const int status = SSL_CTX_use_certificate(ctx_->get(), cert);
+    X509_free(cert);
 
-    if (SSL_CTX_use_certificate(ctx_->get(), cert) == 0) {
+    if (status != 1) {
       int errno_copy = THRIFT_GET_SOCKET_ERROR;
       string errors;
       buildErrors(errors, errno_copy);
@@ -1005,12 +1007,18 @@ void TSSLSocketFactory::loadPrivateKeyFromBuffer(const char* aPrivateKey, const 
                               "loadPrivateKey: either <path> or <format> is nullptr");
   }
   if (strcmp(format, "PEM") == 0) {
-    BIO* mem = BIO_new(BIO_s_mem());
+    EVP_PKEY* cert;
+    BIO* mem;
+
+    mem = BIO_new(BIO_s_mem());
     BIO_puts(mem, aPrivateKey);
-    EVP_PKEY* cert = PEM_read_bio_PrivateKey(mem, nullptr, nullptr, nullptr);
+    cert = PEM_read_bio_PrivateKey(mem, nullptr, nullptr, nullptr);
 
     BIO_free(mem);
-    if (SSL_CTX_use_PrivateKey(ctx_->get(), cert) == 0) {
+    const int status = SSL_CTX_use_PrivateKey(ctx_->get(), cert);
+    EVP_PKEY_free(cert);
+
+    if (status == 0) {
       int errno_copy = THRIFT_GET_SOCKET_ERROR;
       string errors;
       buildErrors(errors, errno_copy);
@@ -1040,12 +1048,15 @@ void TSSLSocketFactory::loadTrustedCertificatesFromBuffer(const char* aCertifica
                               "loadTrustedCertificates: aCertificate is empty");
   }
   X509_STORE* vX509Store = SSL_CTX_get_cert_store(ctx_->get());
+
   BIO* mem = BIO_new(BIO_s_mem());
   BIO_puts(mem, aCertificate);
-  X509* cert = PEM_read_bio_X509(mem, nullptr, 0, nullptr);
+  X509* cert = PEM_read_bio_X509(mem, nullptr, nullptr, nullptr);
   BIO_free(mem);
+  const int status = X509_STORE_add_cert(vX509Store, cert);
+  X509_free(cert);
 
-  if (X509_STORE_add_cert(vX509Store, cert) == 0) {
+  if (status != 1) {
     int errno_copy = THRIFT_GET_SOCKET_ERROR;
     string errors;
     buildErrors(errors, errno_copy);
@@ -1055,10 +1066,14 @@ void TSSLSocketFactory::loadTrustedCertificatesFromBuffer(const char* aCertifica
   if (aChain) {
     mem = BIO_new(BIO_s_mem());
     BIO_puts(mem, aChain);
-    cert = PEM_read_bio_X509(mem, nullptr, 0, nullptr);
+    cert = PEM_read_bio_X509(mem, nullptr, nullptr, nullptr);
     BIO_free(mem);
 
+    // NOTE: The x509 certificate provided to SSL_CTX_add_extra_chain_cert()
+    // will be freed by the library when the SSL_CTX is destroyed. Do not free
+    // the x509 object manually here.
     if (SSL_CTX_add_extra_chain_cert(ctx_->get(), cert) == 0) {
+      X509_free(cert);
       int errno_copy = THRIFT_GET_SOCKET_ERROR;
       string errors;
       buildErrors(errors, errno_copy);

@@ -35,7 +35,7 @@ import org.apache.thrift.server.*;
 import org.apache.thrift.meta_data.*;
 
 #if cpp
-import cpp.vm.Thread;
+import sys.thread.Thread;
 #else
 // no thread support (yet)
 #end

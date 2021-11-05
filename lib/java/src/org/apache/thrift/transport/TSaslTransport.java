@@ -72,7 +72,7 @@ abstract class TSaslTransport extends TEndpointTransport {
   /**
    * Buffer for input.
    */
-  private TMemoryInputTransport readBuffer = new TMemoryInputTransport();
+  private TMemoryInputTransport readBuffer;
 
   /**
    * Buffer for output.
@@ -89,6 +89,7 @@ abstract class TSaslTransport extends TEndpointTransport {
   protected TSaslTransport(TTransport underlyingTransport) throws TTransportException {
     super(Objects.isNull(underlyingTransport.getConfiguration()) ? new TConfiguration() : underlyingTransport.getConfiguration());
     this.underlyingTransport = underlyingTransport;
+    this.readBuffer = new TMemoryInputTransport(underlyingTransport.getConfiguration());
   }
 
   /**
@@ -104,6 +105,7 @@ abstract class TSaslTransport extends TEndpointTransport {
     super(Objects.isNull(underlyingTransport.getConfiguration()) ? new TConfiguration() : underlyingTransport.getConfiguration());
     sasl = new SaslParticipant(saslClient);
     this.underlyingTransport = underlyingTransport;
+    this.readBuffer = new TMemoryInputTransport(underlyingTransport.getConfiguration());
   }
 
   protected void setSaslServer(SaslServer saslServer) {

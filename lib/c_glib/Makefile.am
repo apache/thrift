@@ -49,6 +49,7 @@ libthrift_c_glib_la_SOURCES = src/thrift/c_glib/thrift.c \
                               src/thrift/c_glib/transport/thrift_transport_factory.c \
                               src/thrift/c_glib/transport/thrift_buffered_transport_factory.c \
                               src/thrift/c_glib/transport/thrift_framed_transport_factory.c \
+                              src/thrift/c_glib/transport/thrift_zlib_transport_factory.c \
                               src/thrift/c_glib/transport/thrift_socket.c \
                               src/thrift/c_glib/transport/thrift_ssl_socket.c \
                               src/thrift/c_glib/transport/thrift_server_transport.c \
@@ -56,12 +57,13 @@ libthrift_c_glib_la_SOURCES = src/thrift/c_glib/thrift.c \
                               src/thrift/c_glib/transport/thrift_buffered_transport.c \
                               src/thrift/c_glib/transport/thrift_fd_transport.c \
                               src/thrift/c_glib/transport/thrift_framed_transport.c \
+                              src/thrift/c_glib/transport/thrift_zlib_transport.c \
                               src/thrift/c_glib/transport/thrift_memory_buffer.c \
                               src/thrift/c_glib/server/thrift_server.c \
                               src/thrift/c_glib/server/thrift_simple_server.c
 
 libthrift_c_glib_la_CFLAGS = $(AM_CFLAGS) $(GLIB_CFLAGS) $(GOBJECT_CFLAGS) $(OPENSSL_INCLUDES) -I$(top_builddir)/lib/c_glib/src/thrift
-libthrift_c_glib_la_LDFLAGS = $(AM_LDFLAGS) $(GLIB_LIBS) $(GOBJECT_LIBS)  $(OPENSSL_LDFLAGS) $(OPENSSL_LIBS) 
+libthrift_c_glib_la_LDFLAGS = $(AM_LDFLAGS) $(GLIB_LIBS) $(GOBJECT_LIBS)  $(OPENSSL_LDFLAGS) $(OPENSSL_LIBS) $(ZLIB_LDFLAGS) $(ZLIB_LIBS)
 
 include_thriftdir = $(includedir)/thrift/c_glib
 include_thrift_HEADERS = \
@@ -87,6 +89,7 @@ include_transportdir = $(include_thriftdir)/transport
 include_transport_HEADERS = src/thrift/c_glib/transport/thrift_buffered_transport.h \
                             src/thrift/c_glib/transport/thrift_fd_transport.h \
                             src/thrift/c_glib/transport/thrift_framed_transport.h \
+                            src/thrift/c_glib/transport/thrift_zlib_transport.h \
                             src/thrift/c_glib/transport/thrift_memory_buffer.h \
                             src/thrift/c_glib/transport/thrift_server_socket.h \
                             src/thrift/c_glib/transport/thrift_server_transport.h \
@@ -96,7 +99,8 @@ include_transport_HEADERS = src/thrift/c_glib/transport/thrift_buffered_transpor
                             src/thrift/c_glib/transport/thrift_transport.h \
                             src/thrift/c_glib/transport/thrift_transport_factory.h \
                             src/thrift/c_glib/transport/thrift_buffered_transport_factory.h \
-                            src/thrift/c_glib/transport/thrift_framed_transport_factory.h
+                            src/thrift/c_glib/transport/thrift_framed_transport_factory.h \
+                            src/thrift/c_glib/transport/thrift_zlib_transport_factory.h
 
 include_serverdir = $(include_thriftdir)/server
 include_server_HEADERS = src/thrift/c_glib/server/thrift_server.h \

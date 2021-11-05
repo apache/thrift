@@ -125,7 +125,11 @@ public:
 
   THRIFT_SOCKET getSocketFD() override { return serverSocket_; }
 
-  int getPort();
+  int getPort() const;
+
+  std::string getPath() const;
+
+  bool isUnixDomainSocket() const;
 
   void listen() override;
   void interrupt() override;

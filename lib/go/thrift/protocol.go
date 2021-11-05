@@ -122,11 +122,14 @@ func Skip(ctx context.Context, self TProtocol, fieldType TType, maxDepth int) (e
 			return err
 		}
 		for {
-			_, typeId, _, _ := self.ReadFieldBegin(ctx)
+			_, typeId, _, err := self.ReadFieldBegin(ctx)
+			if err != nil {
+				return err
+			}
 			if typeId == STOP {
 				break
 			}
-			err := Skip(ctx, self, typeId, maxDepth-1)
+			err = Skip(ctx, self, typeId, maxDepth-1)
 			if err != nil {
 				return err
 			}
@@ -143,7 +146,11 @@ func Skip(ctx context.Context, self TProtocol, fieldType TType, maxDepth int) (e
 			if err != nil {
 				return err
 			}
-			self.Skip(ctx, valueType)
+
+			err = Skip(ctx, self, valueType, maxDepth-1)
+			if err != nil {
+				return err
+			}
 		}
 		return self.ReadMapEnd(ctx)
 	case SET:
@@ -171,7 +178,7 @@ func Skip(ctx context.Context, self TProtocol, fieldType TType, maxDepth int) (e
 		}
 		return self.ReadListEnd(ctx)
 	default:
-		return NewTProtocolExceptionWithType(INVALID_DATA, errors.New(fmt.Sprintf("Unknown data type %d", fieldType)))
+		return NewTProtocolExceptionWithType(INVALID_DATA, fmt.Errorf("Unknown data type %d", fieldType))
 	}
 	return nil
 }

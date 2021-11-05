@@ -33,4 +33,5 @@ clean-local:
 
 EXTRA_DIST = \
 	PhpServer.php \
-	PhpClient.php
+	PhpClient.php \
+	runserver.py

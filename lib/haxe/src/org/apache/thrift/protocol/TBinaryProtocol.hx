@@ -31,7 +31,7 @@ import org.apache.thrift.transport.TTransport;
 /**
 * Binary protocol implementation for thrift.
 */
-class TBinaryProtocol extends TRecursionTracker implements TProtocol {
+class TBinaryProtocol extends TProtocolImplBase implements TProtocol {
 
     private static var ANONYMOUS_STRUCT:TStruct = new TStruct();
 
@@ -40,19 +40,14 @@ class TBinaryProtocol extends TRecursionTracker implements TProtocol {
 
     private var strictRead_ : Bool = false;
     private var strictWrite_ : Bool = true;
-    private var trans_ : TTransport;
 
     /**
      * Constructor
      */
-    public function new(trans:TTransport, strictRead : Bool=false, strictWrite : Bool=true) {
-      trans_ = trans;
-      strictRead_ = strictRead;
-      strictWrite_ = strictWrite;
-    }
-
-    public function getTransport():TTransport {
-      return trans_;
+    public function new(transport:TTransport, strictRead : Bool = false, strictWrite : Bool = true) {
+		super(transport);
+		strictRead_ = strictRead;
+		strictWrite_ = strictWrite;
     }
 
     public function writeMessageBegin(message:TMessage) : Void {
@@ -116,21 +111,21 @@ class TBinaryProtocol extends TRecursionTracker implements TProtocol {
         var out = new BytesOutput();
         out.bigEndian = true;
         out.writeByte(b);
-        trans_.write(out.getBytes(), 0, 1);
+        Transport.write(out.getBytes(), 0, 1);
     }
 
     public function writeI16(i16 : Int) : Void {
         var out = new BytesOutput();
         out.bigEndian = true;
         out.writeInt16(i16);
-        trans_.write(out.getBytes(), 0, 2);
+        Transport.write(out.getBytes(), 0, 2);
     }
 
     public function writeI32(i32 : Int) : Void {
         var out = new BytesOutput();
         out.bigEndian = true;
         out.writeInt32(i32);
-        trans_.write(out.getBytes(), 0, 4);
+        Transport.write(out.getBytes(), 0, 4);
     }
 
     public function writeI64(i64 : haxe.Int64) : Void {
@@ -145,14 +140,14 @@ class TBinaryProtocol extends TRecursionTracker implements TProtocol {
         out.writeInt32(i64.high);
         out.writeInt32(i64.low);
         #end
-        trans_.write(out.getBytes(), 0, 8);
+        Transport.write(out.getBytes(), 0, 8);
     }
 
     public function writeDouble(dub:Float) : Void {
         var out = new BytesOutput();
         out.bigEndian = true;
         out.writeDouble(dub);
-        trans_.write(out.getBytes(), 0, 8);
+        Transport.write(out.getBytes(), 0, 8);
     }
 
     public function writeString(str : String) : Void {
@@ -161,12 +156,12 @@ class TBinaryProtocol extends TRecursionTracker implements TProtocol {
         out.writeString(str);
         var bytes = out.getBytes();
         writeI32( bytes.length);
-        trans_.write( bytes, 0, bytes.length);
+        Transport.write( bytes, 0, bytes.length);
     }
 
     public function writeBinary(bin:Bytes) : Void {
         writeI32(bin.length);
-        trans_.write(bin, 0, bin.length);
+        Transport.write(bin, 0, bin.length);
     }
 
     /**
@@ -210,19 +205,25 @@ class TBinaryProtocol extends TRecursionTracker implements TProtocol {
     public function readFieldEnd() : Void {}
 
     public function readMapBegin() : TMap {
-        return new TMap(readByte(), readByte(), readI32());
+        var map = new TMap(readByte(), readByte(), readI32());
+		CheckReadBytesAvailableMap(map);
+        return map;
     }
 
     public function readMapEnd() : Void {}
 
     public function readListBegin():TList {
-        return new TList(readByte(), readI32());
+        var list = new TList(readByte(), readI32());
+		CheckReadBytesAvailableList(list);
+		return list;
     }
 
     public function readListEnd() : Void {}
 
     public function readSetBegin() : TSet {
-      return new TSet(readByte(), readI32());
+		var set = new TSet(readByte(), readI32());
+		CheckReadBytesAvailableSet(set);
+		return set;
     }
 
     public function readSetEnd() : Void {}
@@ -234,7 +235,7 @@ class TBinaryProtocol extends TRecursionTracker implements TProtocol {
 
     public function readByte() : Int {
         var buffer = new BytesBuffer();
-        var len = trans_.readAll( buffer, 0, 1);
+        var len = Transport.readAll( buffer, 0, 1);
         var inp = new BytesInput( buffer.getBytes(), 0, 1);
         inp.bigEndian = true;
         return inp.readByte();
@@ -242,7 +243,7 @@ class TBinaryProtocol extends TRecursionTracker implements TProtocol {
 
     public function readI16() : Int {
         var buffer = new BytesBuffer();
-        var len = trans_.readAll( buffer, 0, 2);
+        var len = Transport.readAll( buffer, 0, 2);
         var inp = new BytesInput( buffer.getBytes(), 0, 2);
         inp.bigEndian = true;
         return inp.readInt16();
@@ -250,7 +251,7 @@ class TBinaryProtocol extends TRecursionTracker implements TProtocol {
 
     public function readI32() : Int {
         var buffer = new BytesBuffer();
-        var len = trans_.readAll( buffer, 0, 4);
+        var len = Transport.readAll( buffer, 0, 4);
         var inp = new BytesInput( buffer.getBytes(), 0, 4);
         inp.bigEndian = true;
         return inp.readInt32();
@@ -258,7 +259,7 @@ class TBinaryProtocol extends TRecursionTracker implements TProtocol {
 
     public function readI64() : haxe.Int64 {
         var buffer = new BytesBuffer();
-        var len = trans_.readAll( buffer, 0, 8);
+        var len = Transport.readAll( buffer, 0, 8);
         var inp = new BytesInput( buffer.getBytes(), 0, 8);
         inp.bigEndian = true;
         var hi = inp.readInt32();
@@ -268,7 +269,7 @@ class TBinaryProtocol extends TRecursionTracker implements TProtocol {
 
     public function readDouble():Float {
         var buffer = new BytesBuffer();
-        var len = trans_.readAll( buffer, 0, 8);
+        var len = Transport.readAll( buffer, 0, 8);
         var inp = new BytesInput( buffer.getBytes(), 0, 8);
         inp.bigEndian = true;
         return inp.readDouble();
@@ -279,9 +280,10 @@ class TBinaryProtocol extends TRecursionTracker implements TProtocol {
     }
 
     public function readStringBody(len : Int) : String {
+		Transport.CheckReadBytesAvailable(len);
         if( len > 0) {
             var buffer = new BytesBuffer();
-            trans_.readAll( buffer, 0, len);
+            Transport.readAll( buffer, 0, len);
             var inp = new BytesInput( buffer.getBytes(), 0, len);
             inp.bigEndian = true;
             return inp.readString(len);
@@ -292,10 +294,33 @@ class TBinaryProtocol extends TRecursionTracker implements TProtocol {
 
     public function readBinary() : Bytes {
         var len : Int = readI32();
-        var buffer = new BytesBuffer();
-        trans_.readAll( buffer, 0, len);
+		Transport.CheckReadBytesAvailable(len);
+		var buffer = new BytesBuffer();
+        Transport.readAll( buffer, 0, len);
         return buffer.getBytes();
     }
+
+	// Return the minimum number of bytes a type will consume on the wire
+	public override function GetMinSerializedSize(type : TType) : Int
+	{
+		switch (type)
+		{
+			case TType.STOP: return 0;
+			case TType.VOID_: return 0;
+			case TType.BOOL: return 1;
+			case TType.BYTE: return 1;
+			case TType.DOUBLE: return 8;
+			case TType.I16: return 2;
+			case TType.I32: return 4;
+			case TType.I64: return 8;
+			case TType.STRING: return 4;  // string length
+			case TType.STRUCT: return 0;  // empty struct
+			case TType.MAP: return 4;  // element count
+			case TType.SET: return 4;  // element count
+			case TType.LIST: return 4;  // element count
+			default: throw new TProtocolException(TProtocolException.NOT_IMPLEMENTED, "unrecognized type code");
+		}
+	}
 
 }
 

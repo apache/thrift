@@ -22,10 +22,12 @@ package tests
 import (
 	"bytes"
 	"context"
-	gomock "github.com/golang/mock/gomock"
-	"optionalfieldstest"
 	"testing"
-	"thrift"
+
+	"github.com/golang/mock/gomock"
+
+	"github.com/apache/thrift/lib/go/test/gopath/src/optionalfieldstest"
+	"github.com/apache/thrift/lib/go/thrift"
 )
 
 func TestIsSetReturnFalseOnCreation(t *testing.T) {

@@ -21,6 +21,7 @@ package thrift
 
 import (
 	"context"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"strings"
@@ -31,10 +32,9 @@ import (
 func testTHeaderHeadersReadWriteProtocolID(t *testing.T, protoID THeaderProtocolID) {
 	trans := NewTMemoryBuffer()
 	reader := NewTHeaderTransport(trans)
-	writer, err := NewTHeaderTransportWithProtocolID(trans, protoID)
-	if err != nil {
-		t.Fatal(err)
-	}
+	writer := NewTHeaderTransportConf(trans, &TConfiguration{
+		THeaderProtocolID: &protoID,
+	})
 
 	const key1 = "key1"
 	const value1 = "value1"
@@ -263,5 +263,45 @@ func TestTHeaderTransportEndOfFrameHandling(t *testing.T) {
 	}
 	if err := quick.Check(readPartially, nil); err != nil {
 		t.Error(err)
+	}
+}
+
+func BenchmarkTHeaderProtocolIDValidate(b *testing.B) {
+	for _, c := range []THeaderProtocolID{
+		THeaderProtocolBinary,
+		THeaderProtocolCompact,
+		-1,
+	} {
+		b.Run(fmt.Sprintf("%2v", c), func(b *testing.B) {
+			b.RunParallel(func(pb *testing.PB) {
+				for pb.Next() {
+					c.Validate()
+				}
+			})
+		})
+	}
+}
+
+func TestSetTHeaderTransportProtocolID(t *testing.T) {
+	const expected = THeaderProtocolCompact
+	factory := NewTHeaderTransportFactoryConf(nil, &TConfiguration{
+		THeaderProtocolID: THeaderProtocolIDPtrMust(expected),
+	})
+	buf := NewTMemoryBuffer()
+	trans, err := factory.GetTransport(buf)
+	if err != nil {
+		t.Fatalf("Failed to get transport from factory: %v", err)
+	}
+	ht, ok := trans.(*THeaderTransport)
+	if !ok {
+		t.Fatalf("Transport is not *THeaderTransport: %#v", trans)
+	}
+	if actual := ht.Protocol(); actual != expected {
+		t.Errorf("Expected protocol id %v, got %v", expected, actual)
+	}
+
+	ht.SetTConfiguration(&TConfiguration{})
+	if actual := ht.Protocol(); actual != expected {
+		t.Errorf("Expected protocol id %v, got %v", expected, actual)
 	}
 }

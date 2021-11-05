@@ -28,7 +28,7 @@
 #include <thrift/transport/TSSLSocket.h>
 #include <thrift/transport/TTransport.h>
 #include <vector>
-#ifdef __linux__
+#ifdef HAVE_SIGNAL_H
 #include <signal.h>
 #endif
 
@@ -219,6 +219,7 @@ BOOST_AUTO_TEST_CASE(ssl_security_matrix)
     try
     {
         // matrix of connection success between client and server with different SSLProtocol selections
+        static_assert(apache::thrift::transport::LATEST == 5, "Mismatch in assumed number of ssl protocols");
         bool matrix[apache::thrift::transport::LATEST + 1][apache::thrift::transport::LATEST + 1] =
         {
     //   server    = SSLTLS   SSLv2    SSLv3    TLSv1_0  TLSv1_1  TLSv1_2

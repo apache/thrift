@@ -567,6 +567,7 @@ VALUE rb_thrift_compact_proto_read_binary(VALUE self) {
 
 static void Init_constants() {
   thrift_compact_protocol_class = rb_const_get(thrift_module, rb_intern("CompactProtocol"));
+  rb_global_variable(&thrift_compact_protocol_class);
 
   VERSION = rb_num2ll(rb_const_get(thrift_compact_protocol_class, rb_intern("VERSION")));
   VERSION_MASK = rb_num2ll(rb_const_get(thrift_compact_protocol_class, rb_intern("VERSION_MASK")));

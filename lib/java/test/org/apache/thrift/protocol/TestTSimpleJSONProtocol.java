@@ -23,9 +23,11 @@ import java.nio.charset.StandardCharsets;
 import junit.framework.TestCase;
 
 import org.apache.thrift.Fixtures;
+import org.apache.thrift.TDeserializer;
 import org.apache.thrift.TException;
 import org.apache.thrift.transport.TMemoryBuffer;
 
+import org.apache.thrift.transport.TTransportException;
 import thrift.test.CompactProtoTestStruct;
 import thrift.test.HolyMoley;
 
@@ -89,6 +91,17 @@ public class TestTSimpleJSONProtocol extends TestCase {
       fail("this should throw a CollectionMapKeyException");
     } catch (TSimpleJSONProtocol.CollectionMapKeyException e) {
       //
+    }
+  }
+
+  public void testReadingThrows() throws TTransportException {
+    String input = "{\"test\": \"value\"}";
+    TDeserializer deserializer = new TDeserializer(new TSimpleJSONProtocol.Factory());
+    try {
+      deserializer.fromString(Fixtures.oneOfEach, input);
+      fail("Was able to read SimpleJSON");
+    } catch (TException e) {
+      assertEquals("Not implemented", e.getMessage());
     }
   }
 }

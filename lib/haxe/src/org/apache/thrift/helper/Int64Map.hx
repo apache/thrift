@@ -137,6 +137,17 @@ class Int64Map<T> implements IMap< Int64, T> {
         return lomap.exists( GetLowIndex(key));
     }
 
+    public function clear() : Void {
+		SubMaps.clear();
+    }
+
+    public function copy() : IMap< Int64, T> {
+		var retval = new Int64Map<T>();
+		for( key in this.keys())
+			retval.set( key, this.get(key));
+		return retval;
+    }
+
     /**
         Removes the mapping of `key` and returns true if such a mapping existed,
         false otherwise. If `key` is null, the result is unspecified.
@@ -169,6 +180,14 @@ class Int64Map<T> implements IMap< Int64, T> {
     **/
     public function iterator() : Iterator<T> {
         return new Int64ValueIterator<T>(SubMaps);
+    }
+
+    /**
+        Returns an Iterator over the values of `this` Map.
+        The order of values is undefined.
+    **/
+    public function keyValueIterator() : KeyValueIterator<Int64, T> {
+        return new Int64KeyValueIterator<T>(SubMaps);
     }
 
     /**
@@ -246,7 +265,7 @@ private class Int64MapIteratorBase<T> {
 
 // internal helper class for Int64Map<T>
 // all class with matching methods can be used as iterator (duck typing)
-private class Int64KeyIterator<T>extends Int64MapIteratorBase<T> {
+private class Int64KeyIterator<T> extends Int64MapIteratorBase<T> {
 
     public function new( data : IntMap< IntMap< T>>) : Void {
         super(data);
@@ -264,6 +283,32 @@ private class Int64KeyIterator<T>extends Int64MapIteratorBase<T> {
         } else {
             throw "no more elements";
         }
+    }
+}
+
+
+// internal helper class for Int64Map<T>
+// all class with matching methods can be used as iterator (duck typing)
+private class Int64KeyValueIterator<T> extends Int64MapIteratorBase<T> {
+
+    public function new( data : IntMap< IntMap< T>>) : Void {
+        super(data);
+    };
+
+    /**
+        Returns the current key/item pair and advances to the next one.
+
+        This method is not required to check hasNext() first. A call to this
+        method while hasNext() is false yields unspecified behavior.
+    **/
+    public function next() : {value:T,key:Int64} {
+        if( ! hasNext()) 
+            throw "no more elements";
+
+		return { 
+			key: Int64.make( CurrentHi, LoIterator.next()), 
+			value: SubMaps.get(CurrentHi).get(LoIterator.next())
+		};
     }
 }
 

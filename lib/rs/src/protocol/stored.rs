@@ -92,7 +92,7 @@ impl<'a> TStoredInputProtocol<'a> {
     pub fn new(
         wrapped: &mut dyn TInputProtocol,
         message_ident: TMessageIdentifier,
-    ) -> TStoredInputProtocol {
+    ) -> TStoredInputProtocol<'_> {
         TStoredInputProtocol {
             inner: wrapped,
             message_ident: message_ident.into(),

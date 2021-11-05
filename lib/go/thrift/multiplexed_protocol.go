@@ -192,10 +192,10 @@ func (t *TMultiplexedProcessor) RegisterProcessor(name string, processor TProces
 func (t *TMultiplexedProcessor) Process(ctx context.Context, in, out TProtocol) (bool, TException) {
 	name, typeId, seqid, err := in.ReadMessageBegin(ctx)
 	if err != nil {
-		return false, err
+		return false, NewTProtocolException(err)
 	}
 	if typeId != CALL && typeId != ONEWAY {
-		return false, fmt.Errorf("Unexpected message type %v", typeId)
+		return false, NewTProtocolException(fmt.Errorf("Unexpected message type %v", typeId))
 	}
 	//extract the service name
 	v := strings.SplitN(name, MULTIPLEXED_SEPARATOR, 2)
@@ -204,11 +204,17 @@ func (t *TMultiplexedProcessor) Process(ctx context.Context, in, out TProtocol) 
 			smb := NewStoredMessageProtocol(in, name, typeId, seqid)
 			return t.DefaultProcessor.Process(ctx, smb, out)
 		}
-		return false, fmt.Errorf("Service name not found in message name: %s.  Did you forget to use a TMultiplexProtocol in your client?", name)
+		return false, NewTProtocolException(fmt.Errorf(
+			"Service name not found in message name: %s.  Did you forget to use a TMultiplexProtocol in your client?",
+			name,
+		))
 	}
 	actualProcessor, ok := t.serviceProcessorMap[v[0]]
 	if !ok {
-		return false, fmt.Errorf("Service name not found: %s.  Did you forget to call registerProcessor()?", v[0])
+		return false, NewTProtocolException(fmt.Errorf(
+			"Service name not found: %s.  Did you forget to call registerProcessor()?",
+			v[0],
+		))
 	}
 	smb := NewStoredMessageProtocol(in, v[1], typeId, seqid)
 	return actualProcessor.Process(ctx, smb, out)

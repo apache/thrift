@@ -21,17 +21,36 @@ specific language governing permissions and limitations
 under the License.
 
 
+Suppored Go releases
+====================
+
+Following the
+[official Go release policy](https://golang.org/doc/devel/release#policy),
+we support the latest two Go releases at the time of the Thrift release.
+
+For example, at the time of Thrift v0.14.0 release,
+the latest two Go releases are go1.15 and go1.14,
+and those are the two Go releases supported by Thrift v0.14.*
+(including v0.14.1 and v0.14.2 patch releases).
+
+Because of Go's backward compatibility guarantee,
+older Thrift libraries usually works with newer Go releases
+(e.g. Thrift v0.14.* works with go1.16, although it's not officially supported),
+but newer Thrift releases might use new APIs introduced in Go releases and no
+longer work with older Go releases.
+For example, Thrift v0.14.0 used APIs introduced in go1.13,
+and as a result no longer works on go1.12.
+
+
 Using Thrift with Go
 ====================
 
-Thrift supports Go 1.7+
+Thrift supports the currently officially supported Go releases (the latest 2).
 
-In following Go conventions, we recommend you use the 'go' tool to install
-Thrift for go.
+After initializing the go modules file in your project, use the following
+command to add the most recent version of the package:
 
-    $ go get github.com/apache/thrift/lib/go/thrift/...
-
-Will retrieve and install the most recent version of the package.
+    $ go get github.com/apache/thrift
 
 
 A note about optional fields

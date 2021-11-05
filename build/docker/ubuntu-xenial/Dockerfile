@@ -13,7 +13,7 @@
 #
 # Apache Thrift Docker build environment for Ubuntu Xenial
 # Using all stock Ubuntu Xenial packaging except for:
-# - d: does not come with Ubuntu so we're installing 2.075.1 for coverage
+# - d: does not come with Ubuntu so we're installing 2.087.0 for coverage
 # - dart: does not come with Ubuntu so we're installing 2.0.0-1 for coverage
 # - dotnet: does not come with Ubuntu
 # - go: Xenial comes with 1.6, but we need 1.10 or later
@@ -36,11 +36,6 @@ RUN apt-get update && \
       curl \
       software-properties-common \
       wget && \
-
-# D
-    apt-key adv --keyserver keyserver.ubuntu.com --recv-keys EBCF975E5BA24D5E && \
-    wget http://master.dl.sourceforge.net/project/d-apt/files/d-apt.list -O /etc/apt/sources.list.d/d-apt.list && \
-    wget -qO - https://dlang.org/d-keyring.gpg | apt-key add - && \
 
 # Dart
     curl https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - && \
@@ -93,28 +88,24 @@ RUN apt-get install -y --no-install-recommends \
       qtbase5-dev \
       qtbase5-dev-tools
 
-ENV D_VERSION 2.075.1-0
-RUN apt-get install -y --allow-unauthenticated --no-install-recommends \
+ENV D_VERSION     2.087.0
+ENV DMD_DEB       dmd_2.087.0-0_amd64.deb
+RUN \
 `# D dependencies` \
-      dmd-bin=$D_VERSION \
-      libphobos2-dev=$D_VERSION \
-      dub=1.6.0-0 \
-      dfmt \
-      dscanner \
-      libevent-dev \
-      libssl-dev \
-      xdg-utils
-RUN mkdir -p /usr/include/dmd/druntime/import/deimos /usr/include/dmd/druntime/import/C && \
-    curl -sSL https://github.com/D-Programming-Deimos/libevent/archive/master.tar.gz| tar xz && \
-    mv libevent-master/deimos/* /usr/include/dmd/druntime/import/deimos/ && \
-    mv libevent-master/C/* /usr/include/dmd/druntime/import/C/ && \
-    rm -rf libevent-master
-RUN curl -sSL https://github.com/D-Programming-Deimos/openssl/archive/v1.1.6+1.0.1g.tar.gz | tar xz && \
-    mv openssl-1.1.6-1.0.1g/deimos/* /usr/include/dmd/druntime/import/deimos/ && \
-    mv openssl-1.1.6-1.0.1g/C/* /usr/include/dmd/druntime/import/C/ && \
-    rm -rf openssl-1.1.6-1.0.1g
+    wget -q http://downloads.dlang.org/releases/2.x/${D_VERSION}/${DMD_DEB} && \
+    dpkg --install ${DMD_DEB} && \
+    rm -f ${DMD_DEB} && \
+    mkdir -p /usr/include/dmd/druntime/import/deimos /usr/include/dmd/druntime/import/C && \
+    git clone -b 'v2.0.2+2.0.16' https://github.com/D-Programming-Deimos/libevent.git deimos-libevent-2.0 && \
+    mv deimos-libevent-2.0/deimos/* /usr/include/dmd/druntime/import/deimos/ && \
+    mv deimos-libevent-2.0/C/* /usr/include/dmd/druntime/import/C/ && \
+    rm -rf deimos-libevent-2.0 && \
+    git clone -b 'v1.1.6+1.0.1g' https://github.com/D-Programming-Deimos/openssl.git deimos-openssl-1.0.1g && \
+    mv deimos-openssl-1.0.1g/deimos/* /usr/include/dmd/druntime/import/deimos/ && \
+    mv deimos-openssl-1.0.1g/C/* /usr/include/dmd/druntime/import/C/ && \
+    rm -rf deimos-openssl-1.0.1g
 
-ENV DART_VERSION 2.0.0-1
+ENV DART_VERSION 2.7.2-1
 RUN apt-get install -y --no-install-recommends \
 `# Dart dependencies` \
       dart=$DART_VERSION
@@ -122,7 +113,10 @@ ENV PATH /usr/lib/dart/bin:$PATH
 
 RUN apt-get install -y --no-install-recommends \
 `# dotnet core dependencies` \
-      dotnet-sdk-3.1
+      dotnet-sdk-5.0 \
+      dotnet-runtime-5.0 \
+      aspnetcore-runtime-5.0 \
+      dotnet-apphost-pack-5.0
 
 RUN apt-get install -y --no-install-recommends \
 `# Erlang dependencies` \
@@ -137,26 +131,14 @@ RUN apt-get install -y --no-install-recommends \
       libglib2.0-dev
 
 # golang
-ENV GOLANG_VERSION 1.10.8
+ENV GOLANG_VERSION 1.16.7
 ENV GOLANG_DOWNLOAD_URL https://golang.org/dl/go$GOLANG_VERSION.linux-amd64.tar.gz
-ENV GOLANG_DOWNLOAD_SHA256 d8626fb6f9a3ab397d88c483b576be41fa81eefcec2fd18562c87626dbb3c39e
+ENV GOLANG_DOWNLOAD_SHA256 7fe7a73f55ba3e2285da36f8b085e5c0159e9564ef5f63ee0ed6b818ade8ef04
 RUN curl -fsSL "$GOLANG_DOWNLOAD_URL" -o golang.tar.gz && \
       echo "$GOLANG_DOWNLOAD_SHA256  golang.tar.gz" | sha256sum -c - && \
       tar -C /usr/local -xzf golang.tar.gz && \
       ln -s /usr/local/go/bin/go /usr/local/bin && \
       rm golang.tar.gz
-
-# cabal 1.22 in xenial is too old so we grab a pre-built 1.24 binary
-RUN apt-get install -y --no-install-recommends \
-`# Haskell dependencies` \
-      ghc && \
-    cd /tmp && \
-    wget -q https://www.haskell.org/cabal/release/cabal-install-1.24.0.2/cabal-install-1.24.0.2-x86_64-unknown-linux.tar.gz && \
-    tar xzf cabal-install-1.24.0.2-x86_64-unknown-linux.tar.gz && \
-    find dist-newstyle/ -type f -name cabal -exec mv {} /usr/bin \; && \
-    rm -rf /tmp/cabal* && \
-    cabal --version && \
-    cabal update
 
 RUN apt-get install -y --no-install-recommends \
 `# Haxe dependencies` \
@@ -191,6 +173,7 @@ RUN apt-get install -y --no-install-recommends \
 RUN apt-get install -y --no-install-recommends \
 `# JS dependencies` \
       libxss1 \
+      libxtst6 \
       libatk-bridge2.0-0 \
       libgtk-3-0
 
@@ -254,6 +237,14 @@ RUN apt-get install -y --no-install-recommends \
 
 # Rust dependencies
 RUN curl https://sh.rustup.rs -sSf | sh -s -- --default-toolchain 1.40.0 -y
+
+# Locale(s) for cpp unit tests
+RUN apt-get install -y --no-install-recommends \
+`# Locale dependencies` \
+      locales && \
+    locale-gen en_US.UTF-8 && \
+    locale-gen de_DE.UTF-8 && \
+    update-locale
 
 # Clean up
 RUN rm -rf /var/cache/apt/* && \

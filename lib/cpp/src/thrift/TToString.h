@@ -22,6 +22,7 @@
 
 #include <cmath>
 #include <limits>
+#include <locale>
 #include <map>
 #include <set>
 #include <sstream>
@@ -34,6 +35,7 @@ namespace thrift {
 template <typename T>
 std::string to_string(const T& t) {
   std::ostringstream o;
+  o.imbue(std::locale("C"));
   o << t;
   return o.str();
 }
@@ -42,6 +44,7 @@ std::string to_string(const T& t) {
 // is enabled.
 inline std::string to_string(const float& t) {
   std::ostringstream o;
+  o.imbue(std::locale("C"));
   o.precision(static_cast<std::streamsize>(std::ceil(static_cast<double>(std::numeric_limits<float>::digits * std::log10(2.0f) + 1))));
   o << t;
   return o.str();
@@ -49,6 +52,7 @@ inline std::string to_string(const float& t) {
 
 inline std::string to_string(const double& t) {
   std::ostringstream o;
+  o.imbue(std::locale("C"));
   o.precision(static_cast<std::streamsize>(std::ceil(static_cast<double>(std::numeric_limits<double>::digits * std::log10(2.0f) + 1))));
   o << t;
   return o.str();
@@ -56,6 +60,7 @@ inline std::string to_string(const double& t) {
 
 inline std::string to_string(const long double& t) {
   std::ostringstream o;
+  o.imbue(std::locale("C"));
   o.precision(static_cast<std::streamsize>(std::ceil(static_cast<double>(std::numeric_limits<long double>::digits * std::log10(2.0f) + 1))));
   o << t;
   return o.str();

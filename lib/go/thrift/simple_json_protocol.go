@@ -97,6 +97,8 @@ var errEmptyJSONContextStack = NewTProtocolExceptionWithType(INVALID_DATA, error
 type TSimpleJSONProtocol struct {
 	trans TTransport
 
+	cfg *TConfiguration
+
 	parseContextStack jsonContextStack
 	dumpContext       jsonContextStack
 
@@ -104,9 +106,18 @@ type TSimpleJSONProtocol struct {
 	reader *bufio.Reader
 }
 
-// Constructor
+// Deprecated: Use NewTSimpleJSONProtocolConf instead.:
 func NewTSimpleJSONProtocol(t TTransport) *TSimpleJSONProtocol {
-	v := &TSimpleJSONProtocol{trans: t,
+	return NewTSimpleJSONProtocolConf(t, &TConfiguration{
+		noPropagation: true,
+	})
+}
+
+func NewTSimpleJSONProtocolConf(t TTransport, conf *TConfiguration) *TSimpleJSONProtocol {
+	PropagateTConfiguration(t, conf)
+	v := &TSimpleJSONProtocol{
+		trans:  t,
+		cfg:    conf,
 		writer: bufio.NewWriter(t),
 		reader: bufio.NewReader(t),
 	}
@@ -116,14 +127,32 @@ func NewTSimpleJSONProtocol(t TTransport) *TSimpleJSONProtocol {
 }
 
 // Factory
-type TSimpleJSONProtocolFactory struct{}
-
-func (p *TSimpleJSONProtocolFactory) GetProtocol(trans TTransport) TProtocol {
-	return NewTSimpleJSONProtocol(trans)
+type TSimpleJSONProtocolFactory struct {
+	cfg *TConfiguration
 }
 
+func (p *TSimpleJSONProtocolFactory) GetProtocol(trans TTransport) TProtocol {
+	return NewTSimpleJSONProtocolConf(trans, p.cfg)
+}
+
+// SetTConfiguration implements TConfigurationSetter for propagation.
+func (p *TSimpleJSONProtocolFactory) SetTConfiguration(conf *TConfiguration) {
+	p.cfg = conf
+}
+
+// Deprecated: Use NewTSimpleJSONProtocolFactoryConf instead.
 func NewTSimpleJSONProtocolFactory() *TSimpleJSONProtocolFactory {
-	return &TSimpleJSONProtocolFactory{}
+	return &TSimpleJSONProtocolFactory{
+		cfg: &TConfiguration{
+			noPropagation: true,
+		},
+	}
+}
+
+func NewTSimpleJSONProtocolFactoryConf(conf *TConfiguration) *TSimpleJSONProtocolFactory {
+	return &TSimpleJSONProtocolFactory{
+		cfg: conf,
+	}
 }
 
 var (
@@ -144,7 +173,6 @@ var (
 	JSON_INFINITY_BYTES          []byte
 	JSON_NEGATIVE_INFINITY_BYTES []byte
 	JSON_NAN_BYTES               []byte
-	json_nonbase_map_elem_bytes  []byte
 )
 
 func init() {
@@ -165,7 +193,6 @@ func init() {
 	JSON_INFINITY_BYTES = []byte{'I', 'n', 'f', 'i', 'n', 'i', 't', 'y'}
 	JSON_NEGATIVE_INFINITY_BYTES = []byte{'-', 'I', 'n', 'f', 'i', 'n', 'i', 't', 'y'}
 	JSON_NAN_BYTES = []byte{'N', 'a', 'N'}
-	json_nonbase_map_elem_bytes = []byte{']', ',', '['}
 }
 
 func jsonQuote(s string) string {
@@ -399,6 +426,13 @@ func (p *TSimpleJSONProtocol) ReadMapBegin(ctx context.Context) (keyType TType, 
 
 	// read size
 	iSize, err := p.ReadI64(ctx)
+	if err != nil {
+		return keyType, valueType, 0, err
+	}
+	err = checkSizeForProtocol(int32(size), p.cfg)
+	if err != nil {
+		return keyType, valueType, 0, err
+	}
 	size = int(iSize)
 	return keyType, valueType, size, err
 }
@@ -444,7 +478,6 @@ func (p *TSimpleJSONProtocol) ReadBool(ctx context.Context) (bool, error) {
 				e := fmt.Errorf("Expected \"true\" but found: %s", string(b))
 				return value, NewTProtocolExceptionWithType(INVALID_DATA, e)
 			}
-			break
 		case JSON_FALSE[0]:
 			b := make([]byte, len(JSON_FALSE))
 			_, err := p.reader.Read(b)
@@ -457,7 +490,6 @@ func (p *TSimpleJSONProtocol) ReadBool(ctx context.Context) (bool, error) {
 				e := fmt.Errorf("Expected \"false\" but found: %s", string(b))
 				return value, NewTProtocolExceptionWithType(INVALID_DATA, e)
 			}
-			break
 		case JSON_NULL[0]:
 			b := make([]byte, len(JSON_NULL))
 			_, err := p.reader.Read(b)
@@ -867,8 +899,6 @@ func (p *TSimpleJSONProtocol) readNonSignificantWhitespace() error {
 		case ' ', '\r', '\n', '\t':
 			p.reader.ReadByte()
 			continue
-		default:
-			break
 		}
 		break
 	}
@@ -1033,7 +1063,7 @@ func (p *TSimpleJSONProtocol) ParseObjectEnd() error {
 			e := fmt.Errorf("Expecting end of object \"}\", but found: \"%s\"", line)
 			return NewTProtocolExceptionWithType(INVALID_DATA, e)
 		case ' ', '\n', '\r', '\t', '}':
-			break
+			// do nothing
 		}
 	}
 	p.parseContextStack.pop()
@@ -1070,9 +1100,16 @@ func (p *TSimpleJSONProtocol) ParseElemListBegin() (elemType TType, size int, e 
 	if err != nil {
 		return elemType, size, err
 	}
-	nSize, _, err2 := p.ParseI64()
+	nSize, _, err := p.ParseI64()
+	if err != nil {
+		return elemType, 0, err
+	}
+	err = checkSizeForProtocol(int32(nSize), p.cfg)
+	if err != nil {
+		return elemType, 0, err
+	}
 	size = int(nSize)
-	return elemType, size, err2
+	return elemType, size, nil
 }
 
 func (p *TSimpleJSONProtocol) ParseListEnd() error {
@@ -1094,7 +1131,7 @@ func (p *TSimpleJSONProtocol) ParseListEnd() error {
 			e := fmt.Errorf("Expecting end of list \"]\", but found: \"%v\"", line)
 			return NewTProtocolExceptionWithType(INVALID_DATA, e)
 		case ' ', '\n', '\r', '\t', rune(JSON_RBRACKET[0]):
-			break
+			// do nothing
 		}
 	}
 	p.parseContextStack.pop()
@@ -1104,82 +1141,6 @@ func (p *TSimpleJSONProtocol) ParseListEnd() error {
 		return nil
 	}
 	return p.ParsePostValue()
-}
-
-func (p *TSimpleJSONProtocol) readSingleValue() (interface{}, TType, error) {
-	e := p.readNonSignificantWhitespace()
-	if e != nil {
-		return nil, VOID, NewTProtocolException(e)
-	}
-	b, e := p.reader.Peek(1)
-	if len(b) > 0 {
-		c := b[0]
-		switch c {
-		case JSON_NULL[0]:
-			buf := make([]byte, len(JSON_NULL))
-			_, e := p.reader.Read(buf)
-			if e != nil {
-				return nil, VOID, NewTProtocolException(e)
-			}
-			if string(JSON_NULL) != string(buf) {
-				e = mismatch(string(JSON_NULL), string(buf))
-				return nil, VOID, NewTProtocolExceptionWithType(INVALID_DATA, e)
-			}
-			return nil, VOID, nil
-		case JSON_QUOTE:
-			p.reader.ReadByte()
-			v, e := p.ParseStringBody()
-			if e != nil {
-				return v, UTF8, NewTProtocolException(e)
-			}
-			if v == JSON_INFINITY {
-				return INFINITY, DOUBLE, nil
-			} else if v == JSON_NEGATIVE_INFINITY {
-				return NEGATIVE_INFINITY, DOUBLE, nil
-			} else if v == JSON_NAN {
-				return NAN, DOUBLE, nil
-			}
-			return v, UTF8, nil
-		case JSON_TRUE[0]:
-			buf := make([]byte, len(JSON_TRUE))
-			_, e := p.reader.Read(buf)
-			if e != nil {
-				return true, BOOL, NewTProtocolException(e)
-			}
-			if string(JSON_TRUE) != string(buf) {
-				e := mismatch(string(JSON_TRUE), string(buf))
-				return true, BOOL, NewTProtocolExceptionWithType(INVALID_DATA, e)
-			}
-			return true, BOOL, nil
-		case JSON_FALSE[0]:
-			buf := make([]byte, len(JSON_FALSE))
-			_, e := p.reader.Read(buf)
-			if e != nil {
-				return false, BOOL, NewTProtocolException(e)
-			}
-			if string(JSON_FALSE) != string(buf) {
-				e := mismatch(string(JSON_FALSE), string(buf))
-				return false, BOOL, NewTProtocolExceptionWithType(INVALID_DATA, e)
-			}
-			return false, BOOL, nil
-		case JSON_LBRACKET[0]:
-			_, e := p.reader.ReadByte()
-			return make([]interface{}, 0), LIST, NewTProtocolException(e)
-		case JSON_LBRACE[0]:
-			_, e := p.reader.ReadByte()
-			return make(map[string]interface{}), STRUCT, NewTProtocolException(e)
-		case '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'e', 'E', '.', '+', '-', JSON_INFINITY[0], JSON_NAN[0]:
-			// assume numeric
-			v, e := p.readNumeric()
-			return v, DOUBLE, e
-		default:
-			e := fmt.Errorf("Expected element in list but found '%s' while parsing JSON.", string(c))
-			return nil, VOID, NewTProtocolExceptionWithType(INVALID_DATA, e)
-		}
-	}
-	e = fmt.Errorf("Cannot read a single element while parsing JSON.")
-	return nil, VOID, NewTProtocolExceptionWithType(INVALID_DATA, e)
-
 }
 
 func (p *TSimpleJSONProtocol) readIfNull() (bool, error) {
@@ -1194,10 +1155,8 @@ func (p *TSimpleJSONProtocol) readIfNull() (bool, error) {
 			return false, nil
 		case JSON_NULL[0]:
 			cont = false
-			break
 		case ' ', '\n', '\r', '\t':
 			p.reader.ReadByte()
-			break
 		}
 	}
 	if p.safePeekContains(JSON_NULL) {
@@ -1325,8 +1284,6 @@ func (p *TSimpleJSONProtocol) readNumeric() (Numeric, error) {
 		case JSON_QUOTE:
 			if !inQuotes {
 				inQuotes = true
-			} else {
-				break
 			}
 		default:
 			e := fmt.Errorf("Unable to parse number starting with character '%c'", c)
@@ -1364,3 +1321,14 @@ func (p *TSimpleJSONProtocol) write(b []byte) (int, error) {
 	}
 	return n, err
 }
+
+// SetTConfiguration implements TConfigurationSetter for propagation.
+func (p *TSimpleJSONProtocol) SetTConfiguration(conf *TConfiguration) {
+	PropagateTConfiguration(p.trans, conf)
+	p.cfg = conf
+}
+
+var (
+	_ TConfigurationSetter = (*TSimpleJSONProtocol)(nil)
+	_ TConfigurationSetter = (*TSimpleJSONProtocolFactory)(nil)
+)

@@ -27,6 +27,10 @@ using Thrift.Protocol.Entities;
 using Thrift.Protocol.Utilities;
 using Thrift.Transport;
 
+#pragma warning disable IDE0079 // unnecessary suppression
+#pragma warning disable IDE0063 // simplify using
+#pragma warning disable IDE0066 // use switch expression
+
 namespace Thrift.Protocol
 {
     /// <summary>
@@ -88,7 +92,7 @@ namespace Thrift.Protocol
         ///    even in cases where the protocol instance was in an undefined state due to
         ///    dangling/stale/obsolete contexts
         /// </summary>
-        private void resetContext()
+        private void ResetContext()
         {
             ContextStack.Clear();
             Context = new JSONBaseContext(this);
@@ -277,7 +281,7 @@ namespace Thrift.Protocol
 
         public override async Task WriteMessageBeginAsync(TMessage message, CancellationToken cancellationToken)
         {
-            resetContext();
+            ResetContext();
             await WriteJsonArrayStartAsync(cancellationToken);
             await WriteJsonIntegerAsync(Version, cancellationToken);
 
@@ -430,7 +434,12 @@ namespace Thrift.Protocol
                     // escaped?
                     if (ch != TJSONProtocolConstants.EscSequences[0])
                     {
+#if NETSTANDARD2_0
                         await buffer.WriteAsync(new[] {ch}, 0, 1, cancellationToken);
+#else
+                        var wbuf = new[] { ch };
+                        await buffer.WriteAsync(wbuf.AsMemory(0, 1), cancellationToken);
+#endif
                         continue;
                     }
 
@@ -444,7 +453,12 @@ namespace Thrift.Protocol
                             throw new TProtocolException(TProtocolException.INVALID_DATA, "Expected control char");
                         }
                         ch = TJSONProtocolConstants.EscapeCharValues[off];
+#if NETSTANDARD2_0
                         await buffer.WriteAsync(new[] {ch}, 0, 1, cancellationToken);
+#else
+                        var wbuf = new[] { ch };
+                        await buffer.WriteAsync( wbuf.AsMemory(0, 1), cancellationToken);
+#endif
                         continue;
                     }
 
@@ -473,13 +487,21 @@ namespace Thrift.Protocol
 
                         codeunits.Add((char) wch);
                         var tmp = Utf8Encoding.GetBytes(codeunits.ToArray());
+#if NETSTANDARD2_0
                         await buffer.WriteAsync(tmp, 0, tmp.Length, cancellationToken);
+#else
+                        await buffer.WriteAsync(tmp.AsMemory(0, tmp.Length), cancellationToken);
+#endif
                         codeunits.Clear();
                     }
                     else
                     {
-                        var tmp = Utf8Encoding.GetBytes(new[] {(char) wch});
+                        var tmp = Utf8Encoding.GetBytes(new[] { (char)wch });
+#if NETSTANDARD2_0
                         await buffer.WriteAsync(tmp, 0, tmp.Length, cancellationToken);
+#else
+                        await buffer.WriteAsync(tmp.AsMemory( 0, tmp.Length), cancellationToken);
+#endif
                     }
                 }
 
@@ -655,7 +677,7 @@ namespace Thrift.Protocol
         {
             var message = new TMessage();
 
-            resetContext();
+            ResetContext();
             await ReadJsonArrayStartAsync(cancellationToken);
             if (await ReadJsonIntegerAsync(cancellationToken) != Version)
             {
@@ -816,7 +838,7 @@ namespace Thrift.Protocol
                 case TType.Map: return 2;  // empty map
                 case TType.Set: return 2;  // empty set
                 case TType.List: return 2;  // empty list
-                default: throw new TTransportException(TTransportException.ExceptionType.Unknown, "unrecognized type code");
+                default: throw new TProtocolException(TProtocolException.NOT_IMPLEMENTED, "unrecognized type code");
             }
         }
 

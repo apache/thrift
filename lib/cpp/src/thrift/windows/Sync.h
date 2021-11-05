@@ -25,8 +25,15 @@
 #endif
 
 #include <thrift/concurrency/Exception.h>
-#include <boost/noncopyable.hpp>
+#include <thrift/TNonCopyable.h>
+
+// Including Windows.h can conflict with Winsock2 usage, and also
+// adds problematic macros like min() and max(). Try to work around:
+#define NOMINMAX
+#define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
+#undef NOMINMAX
+#undef WIN32_LEAN_AND_MEAN
 
 /*
   Lightweight synchronization objects that only make sense on Windows.  For cross-platform
@@ -36,13 +43,13 @@
 namespace apache {
 namespace thrift {
 
-struct TCriticalSection : boost::noncopyable {
+struct TCriticalSection : apache::thrift::TNonCopyable {
   CRITICAL_SECTION cs;
   TCriticalSection() { InitializeCriticalSection(&cs); }
   ~TCriticalSection() { DeleteCriticalSection(&cs); }
 };
 
-class TAutoCrit : boost::noncopyable {
+class TAutoCrit : apache::thrift::TNonCopyable {
 private:
   CRITICAL_SECTION* cs_;
 
@@ -51,7 +58,7 @@ public:
   ~TAutoCrit() { LeaveCriticalSection(cs_); }
 };
 
-struct TAutoResetEvent : boost::noncopyable {
+struct TAutoResetEvent : apache::thrift::TNonCopyable {
   HANDLE h;
 
   TAutoResetEvent() {
@@ -64,7 +71,7 @@ struct TAutoResetEvent : boost::noncopyable {
   ~TAutoResetEvent() { CloseHandle(h); }
 };
 
-struct TManualResetEvent : boost::noncopyable {
+struct TManualResetEvent : apache::thrift::TNonCopyable {
   HANDLE h;
 
   TManualResetEvent() {
@@ -77,7 +84,7 @@ struct TManualResetEvent : boost::noncopyable {
   ~TManualResetEvent() { CloseHandle(h); }
 };
 
-struct TAutoHandle : boost::noncopyable {
+struct TAutoHandle : apache::thrift::TNonCopyable {
   HANDLE h;
   explicit TAutoHandle(HANDLE h_ = INVALID_HANDLE_VALUE) : h(h_) {}
   ~TAutoHandle() {

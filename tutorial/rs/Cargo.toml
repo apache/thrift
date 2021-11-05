@@ -9,8 +9,7 @@ publish = false
 
 [dependencies]
 clap = "2.33"
-ordered-float = "1.0"
-try_from = "0.3"
+bitflags = "=1.2"
 
 [dependencies.thrift]
 path = "../../lib/rs"

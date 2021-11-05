@@ -27,7 +27,7 @@ uses
   DataFactory in 'Performance\DataFactory.pas',
   PerfTests in 'Performance\PerfTests.pas',
   TestClient in 'TestClient.pas',
-  Thrift.Test, // in 'gen-delphi\Thrift.Test.pas',
+  Thrift.Test in 'gen-delphi\Thrift.Test.pas',
   Thrift in '..\src\Thrift.pas',
   Thrift.Transport in '..\src\Thrift.Transport.pas',
   Thrift.Socket in '..\src\Thrift.Socket.pas',

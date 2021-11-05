@@ -437,3 +437,11 @@ func (tdp *TDebugProtocol) Flush(ctx context.Context) (err error) {
 func (tdp *TDebugProtocol) Transport() TTransport {
 	return tdp.Delegate.Transport()
 }
+
+// SetTConfiguration implements TConfigurationSetter for propagation.
+func (tdp *TDebugProtocol) SetTConfiguration(conf *TConfiguration) {
+	PropagateTConfiguration(tdp.Delegate, conf)
+	PropagateTConfiguration(tdp.DuplicateTo, conf)
+}
+
+var _ TConfigurationSetter = (*TDebugProtocol)(nil)

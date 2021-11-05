@@ -25,6 +25,9 @@ using System.Security.Cryptography.X509Certificates;
 using System.Threading;
 using System.Threading.Tasks;
 
+#pragma warning disable IDE0079 // unnecessary suppression
+#pragma warning disable IDE0063 // simplify using
+
 namespace Thrift.Transport.Client
 {
     // ReSharper disable once InconsistentNaming
@@ -89,6 +92,22 @@ namespace Thrift.Transport.Client
         // According to RFC 2616 section 3.8, the "User-Agent" header may not carry a version number
         public readonly string UserAgent = "Thrift netstd THttpClient";
 
+        public int ConnectTimeout
+        {
+            set
+            {
+                _connectTimeout = value;
+                if(_httpClient != null)
+                    _httpClient.Timeout = TimeSpan.FromMilliseconds(_connectTimeout);
+            }
+            get
+            {
+                if (_httpClient == null)
+                    return _connectTimeout;
+                return (int)_httpClient.Timeout.TotalMilliseconds;
+            }
+        }
+
         public override bool IsOpen => true;
 
         public HttpRequestHeaders RequestHeaders => _httpClient.DefaultRequestHeaders;
@@ -133,10 +152,10 @@ namespace Thrift.Transport.Client
 
             try
             {
-#if NETSTANDARD2_1
-                var ret = await _inputStream.ReadAsync(new Memory<byte>(buffer, offset, length), cancellationToken);
-#else
+#if NETSTANDARD2_0
                 var ret = await _inputStream.ReadAsync(buffer, offset, length, cancellationToken);
+#else
+                var ret = await _inputStream.ReadAsync(new Memory<byte>(buffer, offset, length), cancellationToken);
 #endif
                 if (ret == -1)
                 {
@@ -156,7 +175,11 @@ namespace Thrift.Transport.Client
         {
             cancellationToken.ThrowIfCancellationRequested();
 
+#if NETSTANDARD2_0
             await _outputStream.WriteAsync(buffer, offset, length, cancellationToken);
+#else
+            await _outputStream.WriteAsync(buffer.AsMemory(offset, length), cancellationToken);
+#endif
         }
 
         /// <summary>
@@ -224,7 +247,11 @@ namespace Thrift.Transport.Client
                     var response = (await _httpClient.PostAsync(_uri, contentStream, cancellationToken)).EnsureSuccessStatusCode();
 
                     _inputStream?.Dispose();
+#if NETSTANDARD2_0 || NETSTANDARD2_1
                     _inputStream = await response.Content.ReadAsStreamAsync();
+#else
+                    _inputStream = await response.Content.ReadAsStreamAsync(cancellationToken);
+#endif
                     if (_inputStream.CanSeek)
                     {
                         _inputStream.Seek(0, SeekOrigin.Begin);

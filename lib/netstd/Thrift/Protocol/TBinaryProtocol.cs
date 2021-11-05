@@ -23,6 +23,9 @@ using System.Threading.Tasks;
 using Thrift.Protocol.Entities;
 using Thrift.Transport;
 
+#pragma warning disable IDE0079 // unnecessary suppression
+#pragma warning disable IDE0066 // use switch expression
+
 namespace Thrift.Protocol
 {
     // ReSharper disable once InconsistentNaming
@@ -36,7 +39,7 @@ namespace Thrift.Protocol
 
         // minimize memory allocations by means of an preallocated bytes buffer
         // The value of 128 is arbitrarily chosen, the required minimum size must be sizeof(long)
-        private byte[] PreAllocatedBuffer = new byte[128];
+        private readonly byte[] PreAllocatedBuffer = new byte[128];
 
         public TBinaryProtocol(TTransport trans)
             : this(trans, false, true)
@@ -442,7 +445,7 @@ namespace Thrift.Protocol
                 case TType.Map: return sizeof(int);  // element count
                 case TType.Set: return sizeof(int);  // element count
                 case TType.List: return sizeof(int);  // element count
-                default: throw new TTransportException(TTransportException.ExceptionType.Unknown, "unrecognized type code");
+                default: throw new TProtocolException(TProtocolException.NOT_IMPLEMENTED, "unrecognized type code");
             }
         }
 

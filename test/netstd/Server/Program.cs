@@ -18,6 +18,7 @@
 using System;
 using System.Linq;
 using System.Collections.Generic;
+using System.Runtime.InteropServices;
 using ThriftTest;
 
 namespace Server
@@ -26,13 +27,16 @@ namespace Server
     {
         public static int Main(string[] args)
         {
-            try
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
-                Console.SetBufferSize(Console.BufferWidth, 4096);
-            }
-            catch (Exception)
-            {
-                Console.WriteLine("Failed to grow scroll-back buffer");
+                try
+                {
+                    Console.SetBufferSize(Console.BufferWidth, 4096);
+                }
+                catch (Exception)
+                {
+                    Console.WriteLine("Failed to grow scroll-back buffer");
+                }
             }
 
             // run whatever mode is choosen, default to test impl
@@ -62,5 +66,3 @@ namespace Server
         }
     }
 }
-
-

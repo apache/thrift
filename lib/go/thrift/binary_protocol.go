@@ -23,7 +23,6 @@ import (
 	"bytes"
 	"context"
 	"encoding/binary"
-	"errors"
 	"fmt"
 	"io"
 	"math"
@@ -32,22 +31,37 @@ import (
 type TBinaryProtocol struct {
 	trans         TRichTransport
 	origTransport TTransport
-	strictRead    bool
-	strictWrite   bool
+	cfg           *TConfiguration
 	buffer        [64]byte
 }
 
 type TBinaryProtocolFactory struct {
-	strictRead  bool
-	strictWrite bool
+	cfg *TConfiguration
 }
 
+// Deprecated: Use NewTBinaryProtocolConf instead.
 func NewTBinaryProtocolTransport(t TTransport) *TBinaryProtocol {
-	return NewTBinaryProtocol(t, false, true)
+	return NewTBinaryProtocolConf(t, &TConfiguration{
+		noPropagation: true,
+	})
 }
 
+// Deprecated: Use NewTBinaryProtocolConf instead.
 func NewTBinaryProtocol(t TTransport, strictRead, strictWrite bool) *TBinaryProtocol {
-	p := &TBinaryProtocol{origTransport: t, strictRead: strictRead, strictWrite: strictWrite}
+	return NewTBinaryProtocolConf(t, &TConfiguration{
+		TBinaryStrictRead:  &strictRead,
+		TBinaryStrictWrite: &strictWrite,
+
+		noPropagation: true,
+	})
+}
+
+func NewTBinaryProtocolConf(t TTransport, conf *TConfiguration) *TBinaryProtocol {
+	PropagateTConfiguration(t, conf)
+	p := &TBinaryProtocol{
+		origTransport: t,
+		cfg:           conf,
+	}
 	if et, ok := t.(TRichTransport); ok {
 		p.trans = et
 	} else {
@@ -56,16 +70,35 @@ func NewTBinaryProtocol(t TTransport, strictRead, strictWrite bool) *TBinaryProt
 	return p
 }
 
+// Deprecated: Use NewTBinaryProtocolFactoryConf instead.
 func NewTBinaryProtocolFactoryDefault() *TBinaryProtocolFactory {
-	return NewTBinaryProtocolFactory(false, true)
+	return NewTBinaryProtocolFactoryConf(&TConfiguration{
+		noPropagation: true,
+	})
 }
 
+// Deprecated: Use NewTBinaryProtocolFactoryConf instead.
 func NewTBinaryProtocolFactory(strictRead, strictWrite bool) *TBinaryProtocolFactory {
-	return &TBinaryProtocolFactory{strictRead: strictRead, strictWrite: strictWrite}
+	return NewTBinaryProtocolFactoryConf(&TConfiguration{
+		TBinaryStrictRead:  &strictRead,
+		TBinaryStrictWrite: &strictWrite,
+
+		noPropagation: true,
+	})
+}
+
+func NewTBinaryProtocolFactoryConf(conf *TConfiguration) *TBinaryProtocolFactory {
+	return &TBinaryProtocolFactory{
+		cfg: conf,
+	}
 }
 
 func (p *TBinaryProtocolFactory) GetProtocol(t TTransport) TProtocol {
-	return NewTBinaryProtocol(t, p.strictRead, p.strictWrite)
+	return NewTBinaryProtocolConf(t, p.cfg)
+}
+
+func (p *TBinaryProtocolFactory) SetTConfiguration(conf *TConfiguration) {
+	p.cfg = conf
 }
 
 /**
@@ -73,7 +106,7 @@ func (p *TBinaryProtocolFactory) GetProtocol(t TTransport) TProtocol {
  */
 
 func (p *TBinaryProtocol) WriteMessageBegin(ctx context.Context, name string, typeId TMessageType, seqId int32) error {
-	if p.strictWrite {
+	if p.cfg.GetTBinaryStrictWrite() {
 		version := uint32(VERSION_1) | uint32(typeId)
 		e := p.WriteI32(ctx, int32(version))
 		if e != nil {
@@ -253,7 +286,7 @@ func (p *TBinaryProtocol) ReadMessageBegin(ctx context.Context) (name string, ty
 		}
 		return name, typeId, seqId, nil
 	}
-	if p.strictRead {
+	if p.cfg.GetTBinaryStrictRead() {
 		return name, typeId, seqId, NewTProtocolExceptionWithType(BAD_VERSION, fmt.Errorf("Missing version in ReadMessageBegin"))
 	}
 	name, e2 := p.readStringBody(size)
@@ -300,8 +333,6 @@ func (p *TBinaryProtocol) ReadFieldEnd(ctx context.Context) error {
 	return nil
 }
 
-var invalidDataLength = NewTProtocolExceptionWithType(INVALID_DATA, errors.New("Invalid data length"))
-
 func (p *TBinaryProtocol) ReadMapBegin(ctx context.Context) (kType, vType TType, size int, err error) {
 	k, e := p.ReadByte(ctx)
 	if e != nil {
@@ -320,8 +351,8 @@ func (p *TBinaryProtocol) ReadMapBegin(ctx context.Context) (kType, vType TType,
 		err = NewTProtocolException(e)
 		return
 	}
-	if size32 < 0 {
-		err = invalidDataLength
+	err = checkSizeForProtocol(size32, p.cfg)
+	if err != nil {
 		return
 	}
 	size = int(size32)
@@ -344,8 +375,8 @@ func (p *TBinaryProtocol) ReadListBegin(ctx context.Context) (elemType TType, si
 		err = NewTProtocolException(e)
 		return
 	}
-	if size32 < 0 {
-		err = invalidDataLength
+	err = checkSizeForProtocol(size32, p.cfg)
+	if err != nil {
 		return
 	}
 	size = int(size32)
@@ -369,8 +400,8 @@ func (p *TBinaryProtocol) ReadSetBegin(ctx context.Context) (elemType TType, siz
 		err = NewTProtocolException(e)
 		return
 	}
-	if size32 < 0 {
-		err = invalidDataLength
+	err = checkSizeForProtocol(size32, p.cfg)
+	if err != nil {
 		return
 	}
 	size = int(size32)
@@ -428,9 +459,18 @@ func (p *TBinaryProtocol) ReadString(ctx context.Context) (value string, err err
 	if e != nil {
 		return "", e
 	}
-	if size < 0 {
-		err = invalidDataLength
+	err = checkSizeForProtocol(size, p.cfg)
+	if err != nil {
 		return
+	}
+	if size == 0 {
+		return "", nil
+	}
+	if size < int32(len(p.buffer)) {
+		// Avoid allocation on small reads
+		buf := p.buffer[:size]
+		read, e := io.ReadFull(p.trans, buf)
+		return string(buf[:read]), NewTProtocolException(e)
 	}
 
 	return p.readStringBody(size)
@@ -441,13 +481,11 @@ func (p *TBinaryProtocol) ReadBinary(ctx context.Context) ([]byte, error) {
 	if e != nil {
 		return nil, e
 	}
-	if size < 0 {
-		return nil, invalidDataLength
+	if err := checkSizeForProtocol(size, p.cfg); err != nil {
+		return nil, err
 	}
 
-	isize := int(size)
-	buf := make([]byte, isize)
-	_, err := io.ReadFull(p.trans, buf)
+	buf, err := safeReadBytes(size, p.trans)
 	return buf, NewTProtocolException(err)
 }
 
@@ -479,38 +517,32 @@ func (p *TBinaryProtocol) readAll(ctx context.Context, buf []byte) (err error) {
 	return NewTProtocolException(err)
 }
 
-const readLimit = 32768
-
 func (p *TBinaryProtocol) readStringBody(size int32) (value string, err error) {
+	buf, err := safeReadBytes(size, p.trans)
+	return string(buf), NewTProtocolException(err)
+}
+
+func (p *TBinaryProtocol) SetTConfiguration(conf *TConfiguration) {
+	PropagateTConfiguration(p.trans, conf)
+	PropagateTConfiguration(p.origTransport, conf)
+	p.cfg = conf
+}
+
+var (
+	_ TConfigurationSetter = (*TBinaryProtocolFactory)(nil)
+	_ TConfigurationSetter = (*TBinaryProtocol)(nil)
+)
+
+// This function is shared between TBinaryProtocol and TCompactProtocol.
+//
+// It tries to read size bytes from trans, in a way that prevents large
+// allocations when size is insanely large (mostly caused by malformed message).
+func safeReadBytes(size int32, trans io.Reader) ([]byte, error) {
 	if size < 0 {
-		return "", nil
+		return nil, nil
 	}
 
-	var (
-		buf bytes.Buffer
-		e   error
-		b   []byte
-	)
-
-	switch {
-	case int(size) <= len(p.buffer):
-		b = p.buffer[:size] // avoids allocation for small reads
-	case int(size) < readLimit:
-		b = make([]byte, size)
-	default:
-		b = make([]byte, readLimit)
-	}
-
-	for size > 0 {
-		_, e = io.ReadFull(p.trans, b)
-		buf.Write(b)
-		if e != nil {
-			break
-		}
-		size -= readLimit
-		if size < readLimit && size > 0 {
-			b = b[:size]
-		}
-	}
-	return buf.String(), NewTProtocolException(e)
+	buf := new(bytes.Buffer)
+	_, err := io.CopyN(buf, trans, int64(size))
+	return buf.Bytes(), err
 }

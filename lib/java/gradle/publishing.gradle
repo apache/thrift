@@ -85,9 +85,11 @@ def configurePom(pom) {
 
     pom.whenConfigured {
         // Fixup the scope for servlet-api to be 'provided' instead of 'compile'
-        dependencies.find { dep -> dep.groupId == 'javax.servlet' && dep.artifactId == 'servlet-api' }.with {
-            // it.optional = true
-            it.scope = 'provided'
+        dependencies.find { dep -> dep.groupId == 'javax.servlet' && dep.artifactId == 'javax.servlet-api' }.with {
+            if(it != null) {
+              // it.optional = true
+              it.scope = 'provided'
+            }
         }
     }
 }

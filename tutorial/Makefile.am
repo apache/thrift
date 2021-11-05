@@ -50,10 +50,6 @@ if WITH_RUBY
 SUBDIRS += rb
 endif
 
-if WITH_HASKELL
-SUBDIRS += hs
-endif
-
 if WITH_HAXE
 SUBDIRS += haxe
 endif
@@ -104,11 +100,9 @@ endif
 # Any folders or files not listed above being added to SUBDIR need to be placed here in
 # EXTRA_DIST to be included in the release
 EXTRA_DIST = \
-	as3 \
 	d \
 	delphi \
 	erl \
-	hs \
 	ocaml \
 	shared.thrift \
 	tutorial.thrift \

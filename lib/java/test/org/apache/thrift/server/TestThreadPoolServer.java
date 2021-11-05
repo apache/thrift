@@ -36,7 +36,7 @@ public class TestThreadPoolServer {
    */
   @Test
   public void testStopServerWithOpenClient() throws Exception {
-    TServerSocket serverSocket = new TServerSocket(0);
+    TServerSocket serverSocket = new TServerSocket(0, 3000);
     TThreadPoolServer server = buildServer(serverSocket);
     Thread serverThread = new Thread(() -> server.serve());
     serverThread.start();
@@ -45,11 +45,17 @@ public class TestThreadPoolServer {
       Thread.sleep(1000);
       // There is a thread listening to the client
       Assert.assertEquals(1, ((ThreadPoolExecutor) server.getExecutorService()).getActiveCount());
+
+      // Trigger the server to stop, but it does not wait
       server.stop();
-      server.waitForShutdown();
+      Assert.assertTrue(server.waitForShutdown());
+
       // After server is stopped, the executor thread pool should be shut down
-      Assert.assertTrue("Server thread pool should be terminated.", server.getExecutorService().isTerminated());
-      Assert.assertTrue("Client is still open.", client.isOpen());
+      Assert.assertTrue("Server thread pool should be terminated", server.getExecutorService().isTerminated());
+
+      // TODO: The socket is actually closed (timeout) but the client code
+      // ignores the timeout Exception and maintains the socket open state
+      Assert.assertTrue("Client should be closed after server shutdown", client.isOpen());
     }
   }
 

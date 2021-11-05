@@ -20,10 +20,12 @@
 package tests
 
 import (
-	st "servicestest"
+	st "github.com/apache/thrift/lib/go/test/gopath/src/servicestest"
 )
 
-//this function is never called, it will fail to compile if check is failed
+// This function is never called, it will fail to compile if check is failed
+//
+//lint:ignore U1000 see above ^
 func staticCheckStructArgsResults() {
 	//Check that struct args and results are passed by reference
 	var sa *st.StructA = &st.StructA{}

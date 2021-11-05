@@ -27,7 +27,7 @@ public class EncodingUtils {
   /**
    * Encode <code>integer</code> as a series of 4 bytes into <code>buf</code>
    * starting at position 0 within that buffer.
-   * 
+   *
    * @param integer
    *          The integer to encode.
    * @param buf
@@ -40,7 +40,7 @@ public class EncodingUtils {
   /**
    * Encode <code>integer</code> as a series of 4 bytes into <code>buf</code>
    * starting at position <code>offset</code>.
-   * 
+   *
    * @param integer
    *          The integer to encode.
    * @param buf
@@ -58,7 +58,7 @@ public class EncodingUtils {
   /**
    * Decode a series of 4 bytes from <code>buf</code>, starting at position 0,
    * and interpret them as an integer.
-   * 
+   *
    * @param buf
    *          The buffer to read from.
    * @return An integer, as read from the buffer.
@@ -70,7 +70,7 @@ public class EncodingUtils {
   /**
    * Decode a series of 4 bytes from <code>buf</code>, start at
    * <code>offset</code>, and interpret them as an integer.
-   * 
+   *
    * @param buf
    *          The buffer to read from.
    * @param offset
@@ -85,6 +85,12 @@ public class EncodingUtils {
   /**
    * Bitfield utilities.
    * Returns true if the bit at position is set in v.
+   *
+   * @param v
+   *          the value whose bit is to be checked.
+   * @param position
+   *          the 0 based bit number indicating the bit to check.
+   * @return true if the bit at position is set in v.
    */
   public static final boolean testBit(byte v, int position) {
     return testBit((int)v, position);
@@ -104,6 +110,12 @@ public class EncodingUtils {
 
   /**
    * Returns v, with the bit at position set to zero.
+   *
+   * @param v
+   *          the value whose bit is to be cleared.
+   * @param position
+   *          the 0 based bit number indicating the bit to clear.
+   * @return v, with the bit at position set to zero.
    */
   public static final byte clearBit(byte v, int position) {
     return (byte)clearBit((int)v, position);
@@ -123,6 +135,14 @@ public class EncodingUtils {
 
   /**
    * Returns v, with the bit at position set to 1 or 0 depending on value.
+   *
+   * @param v
+   *          the value whose bit is to be set.
+   * @param position
+   *          the 0 based bit number indicating the bit to set.
+   * @param value
+   *          if true, the given bit is set to 1; otherwise it is set to 0.
+   * @return v, with the bit at position set to 0 (if value is false) or 1 (if value is true).
    */
   public static final byte setBit(byte v, int position, boolean value) {
     return (byte)setBit((int)v, position, value);

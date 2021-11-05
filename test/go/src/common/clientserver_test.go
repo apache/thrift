@@ -22,13 +22,14 @@ package common
 import (
 	"context"
 	"errors"
-	"gen/thrifttest"
 	"reflect"
 	"sync"
 	"testing"
-	"thrift"
 
 	"github.com/golang/mock/gomock"
+
+	"github.com/apache/thrift/lib/go/thrift"
+	"github.com/apache/thrift/test/go/src/gen/thrifttest"
 )
 
 type test_unit struct {
@@ -48,7 +49,6 @@ var units = []test_unit{
 }
 
 func TestAllConnection(t *testing.T) {
-	certPath = "../../../keys"
 	wg := &sync.WaitGroup{}
 	wg.Add(len(units))
 	for _, unit := range units {
@@ -66,6 +66,9 @@ func doUnit(t *testing.T, unit *test_unit) {
 	handler := NewMockThriftTest(ctrl)
 
 	processor, serverTransport, transportFactory, protocolFactory, err := GetServerParams(unit.host, unit.port, unit.domain_socket, unit.transport, unit.protocol, unit.ssl, "../../../keys", handler)
+	if err != nil {
+		t.Errorf("GetServerParams failed: %v", err)
+	}
 
 	server := thrift.NewTSimpleServer4(processor, serverTransport, transportFactory, protocolFactory)
 	if err = server.Listen(); err != nil {
@@ -84,8 +87,8 @@ func doUnit(t *testing.T, unit *test_unit) {
 }
 
 var rmapmap = map[int32]map[int32]int32{
-	-4: map[int32]int32{-4: -4, -3: -3, -2: -2, -1: -1},
-	4:  map[int32]int32{4: 4, 3: 3, 2: 2, 1: 1},
+	-4: {-4: -4, -3: -3, -2: -2, -1: -1},
+	4:  {4: 4, 3: 3, 2: 2, 1: 1},
 }
 
 var xxs = &thrifttest.Xtruct{

@@ -109,9 +109,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
       rebar
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
-`# Haskell dependencies` \
-      ghc \
-      cabal-install \
 `# Haxe dependencies` \
       neko \
       neko-dev \

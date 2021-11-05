@@ -72,7 +72,7 @@ public class TestDataFrameWriter {
   }
 
   @Test
-  public void testWrite() throws IOException {
+  public void testWrite() throws Exception {
     DataFrameWriter frameWriter = new DataFrameWriter();
     frameWriter.withOnlyPayload(BYTES);
     // Slow socket which writes one byte per call.

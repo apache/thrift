@@ -19,7 +19,7 @@
 
 #include <thrift/windows/OverlappedSubmissionThread.h>
 #include <thrift/transport/TTransportException.h>
-#include <boost/noncopyable.hpp>
+#include <thrift/TNonCopyable.h>
 #include <boost/scope_exit.hpp>
 #include <process.h>
 

@@ -19,6 +19,11 @@
 
 // Using the legacy plugin classpath for Clover so it can be loaded optionally
 buildscript {
+    // strictly enforce the minimum version of Java required to build and fail fast
+    if (JavaVersion.current() < JavaVersion.VERSION_1_8) {
+        throw new GradleException("The java version used is ${JavaVersion.current()}, but must be at least ${JavaVersion.VERSION_1_8}")
+    }
+
     repositories {
         mavenCentral()
         google()

@@ -28,6 +28,8 @@ stubs: thrifts/Base_One.thrift thrifts/Base_Two.thrift thrifts/Midlayer.thrift t
 	$(THRIFT) -out src --gen rs $(top_builddir)/test/Identifiers.thrift #THRIFT-4953
 
 check: stubs
+	$(CARGO) fmt --all -- --check
+	$(CARGO) clippy --all -- -D warnings
 	$(CARGO) build
 	$(CARGO) test
 	[ -d bin ] || mkdir bin

@@ -41,7 +41,7 @@ type
   strict private
     FUri : string;
     FInputStream : IThriftStream;
-    FOutputMemoryStream : TMemoryStream;
+    FOutputMemoryStream : TThriftMemoryStream;
     FDnsResolveTimeout : Integer;
     FConnectionTimeout : Integer;
     FSendTimeout : Integer;
@@ -127,7 +127,7 @@ begin
   FSecureProtocols := DEFAULT_THRIFT_SECUREPROTOCOLS;
 
   FCustomHeaders := TThriftDictionaryImpl<string,string>.Create;
-  FOutputMemoryStream := TMemoryStream.Create;
+  FOutputMemoryStream := TThriftMemoryStream.Create;
 end;
 
 destructor TWinHTTPClientImpl.Destroy;
@@ -269,7 +269,7 @@ end;
 procedure TWinHTTPClientImpl.Open;
 begin
   FreeAndNil( FOutputMemoryStream);
-  FOutputMemoryStream := TMemoryStream.Create;
+  FOutputMemoryStream := TThriftMemoryStream.Create;
 end;
 
 procedure TWinHTTPClientImpl.Close;
@@ -284,7 +284,7 @@ begin
     SendRequest;
   finally
     FreeAndNil( FOutputMemoryStream);
-    FOutputMemoryStream := TMemoryStream.Create;
+    FOutputMemoryStream := TThriftMemoryStream.Create;
     ASSERT( FOutputMemoryStream <> nil);
   end;
 end;

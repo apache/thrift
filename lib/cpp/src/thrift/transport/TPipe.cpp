@@ -40,7 +40,7 @@ void pipe_write(HANDLE pipe, const uint8_t* buf, uint32_t len);
 uint32_t pseudo_sync_read(HANDLE pipe, HANDLE event, uint8_t* buf, uint32_t len);
 void pseudo_sync_write(HANDLE pipe, HANDLE event, const uint8_t* buf, uint32_t len);
 
-class TPipeImpl : boost::noncopyable {
+class TPipeImpl : apache::thrift::TNonCopyable {
 public:
   TPipeImpl() {}
   virtual ~TPipeImpl() {}
@@ -223,7 +223,7 @@ uint32_t pseudo_sync_read(HANDLE pipe, HANDLE event, uint8_t* buf, uint32_t len)
 
 //---- Constructors ----
 TPipe::TPipe(TAutoHandle &Pipe, std::shared_ptr<TConfiguration> config)
-  : impl_(new TWaitableNamedPipeImpl(Pipe)), TimeoutSeconds_(3), 
+  : impl_(new TWaitableNamedPipeImpl(Pipe)), TimeoutSeconds_(3),
   isAnonymous_(false), TVirtualTransport(config) {
 }
 
@@ -234,12 +234,12 @@ TPipe::TPipe(HANDLE Pipe, std::shared_ptr<TConfiguration> config)
   impl_.reset(new TWaitableNamedPipeImpl(pipeHandle));
 }
 
-TPipe::TPipe(const char* pipename, std::shared_ptr<TConfiguration> config) : TimeoutSeconds_(3), 
+TPipe::TPipe(const char* pipename, std::shared_ptr<TConfiguration> config) : TimeoutSeconds_(3),
   isAnonymous_(false), TVirtualTransport(config) {
   setPipename(pipename);
 }
 
-TPipe::TPipe(const std::string& pipename, std::shared_ptr<TConfiguration> config) : TimeoutSeconds_(3), 
+TPipe::TPipe(const std::string& pipename, std::shared_ptr<TConfiguration> config) : TimeoutSeconds_(3),
   isAnonymous_(false), TVirtualTransport(config) {
   setPipename(pipename);
 }
@@ -249,7 +249,7 @@ TPipe::TPipe(HANDLE PipeRd, HANDLE PipeWrt, std::shared_ptr<TConfiguration> conf
     TVirtualTransport(config) {
 }
 
-TPipe::TPipe(std::shared_ptr<TConfiguration> config) : TimeoutSeconds_(3), isAnonymous_(false), 
+TPipe::TPipe(std::shared_ptr<TConfiguration> config) : TimeoutSeconds_(3), isAnonymous_(false),
                                                        TVirtualTransport(config) {
 }
 

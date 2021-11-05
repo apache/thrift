@@ -23,12 +23,16 @@ package org.apache.thrift;
  */
 public interface TFieldIdEnum {
   /**
-   * Get the Thrift field id for the named field.
+   * Gets the Thrift field id for the named field.
+   *
+   * @return the Thrift field id for the named field.
    */
   public short getThriftFieldId();
 
   /**
-   * Get the field's name, exactly as in the IDL.
+   * Gets the field's name, exactly as in the IDL.
+   *
+   * @return the field's name, exactly as in the IDL.
    */
   public String getFieldName();
 }

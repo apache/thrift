@@ -27,15 +27,16 @@ class TMultiplexedProtocol extends TProtocolDecorator {
       : _serviceName = serviceName,
         super(protocol) {
     if (serviceName == null) {
-      throw new ArgumentError.notNull("serviceName");
+      throw ArgumentError.notNull("serviceName");
     }
   }
 
+  @override
   void writeMessageBegin(TMessage message) {
     if (message.type == TMessageType.CALL ||
         message.type == TMessageType.ONEWAY) {
       String name = _serviceName + SEPARATOR + message.name;
-      message = new TMessage(name, message.type, message.seqid);
+      message = TMessage(name, message.type, message.seqid);
     }
 
     super.writeMessageBegin(message);

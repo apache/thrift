@@ -19,7 +19,6 @@
 
 package org.apache.thrift.transport.sasl;
 
-import java.io.IOException;
 import java.nio.channels.SelectionKey;
 import java.nio.charset.StandardCharsets;
 
@@ -364,7 +363,7 @@ public class NonblockingSaslHandler {
         saslChallenge.clear();
         nextPhase = Phase.READING_SASL_RESPONSE;
       }
-    } catch (IOException e) {
+    } catch (TTransportException e) {
       fail(e);
     }
   }
@@ -378,7 +377,7 @@ public class NonblockingSaslHandler {
         saslResponse = null;
         nextPhase = Phase.READING_REQUEST;
       }
-    } catch (IOException e) {
+    } catch (TTransportException e) {
       fail(e);
     }
   }
@@ -389,7 +388,7 @@ public class NonblockingSaslHandler {
       if (saslChallenge.isComplete()) {
         nextPhase = Phase.CLOSING;
       }
-    } catch (IOException e) {
+    } catch (TTransportException e) {
       fail(e);
     }
   }
@@ -401,7 +400,7 @@ public class NonblockingSaslHandler {
         responseWriter.clear();
         nextPhase = Phase.READING_REQUEST;
       }
-    } catch (IOException e) {
+    } catch (TTransportException e) {
       fail(e);
     }
   }

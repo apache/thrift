@@ -19,13 +19,14 @@
 
 package org.apache.thrift.server;
 
-import java.util.Random;
-import java.util.WeakHashMap;
+import java.util.Optional;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.SynchronousQueue;
+import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.thrift.TException;
 import org.apache.thrift.TProcessor;
@@ -41,7 +42,7 @@ import org.slf4j.LoggerFactory;
  * a worker pool that deals with client connections in blocking way.
  */
 public class TThreadPoolServer extends TServer {
-  private static final Logger LOGGER = LoggerFactory.getLogger(TThreadPoolServer.class.getName());
+  private static final Logger LOGGER = LoggerFactory.getLogger(TThreadPoolServer.class);
 
   public static class Args extends AbstractServerArgs<Args> {
     public int minWorkerThreads = 5;
@@ -49,10 +50,6 @@ public class TThreadPoolServer extends TServer {
     public ExecutorService executorService;
     public int stopTimeoutVal = 60;
     public TimeUnit stopTimeoutUnit = TimeUnit.SECONDS;
-    public int requestTimeout = 20;
-    public TimeUnit requestTimeoutUnit = TimeUnit.SECONDS;
-    public int beBackoffSlotLength = 100;
-    public TimeUnit beBackoffSlotLengthUnit = TimeUnit.MILLISECONDS;
 
     public Args(TServerTransport transport) {
       super(transport);
@@ -78,27 +75,6 @@ public class TThreadPoolServer extends TServer {
       return this;
     }
 
-    public Args requestTimeout(int n) {
-      requestTimeout = n;
-      return this;
-    }
-
-    public Args requestTimeoutUnit(TimeUnit tu) {
-      requestTimeoutUnit = tu;
-      return this;
-    }
-    //Binary exponential backoff slot length
-    public Args beBackoffSlotLength(int n) {
-      beBackoffSlotLength = n;
-      return this;
-    }
-
-    //Binary exponential backoff slot time unit
-    public Args beBackoffSlotLengthUnit(TimeUnit tu) {
-      beBackoffSlotLengthUnit = tu;
-      return this;
-    }
-
     public Args executorService(ExecutorService executorService) {
       this.executorService = executorService;
       return this;
@@ -107,41 +83,33 @@ public class TThreadPoolServer extends TServer {
 
   // Executor service for handling client connections
   private ExecutorService executorService_;
-  private WeakHashMap<WorkerProcess, Boolean> activeWorkers = new WeakHashMap<>();
 
   private final TimeUnit stopTimeoutUnit;
 
   private final long stopTimeoutVal;
-
-  private final TimeUnit requestTimeoutUnit;
-
-  private final long requestTimeout;
-
-  private final long beBackoffSlotInMillis;
-
-  private Random random = new Random(System.currentTimeMillis());
 
   public TThreadPoolServer(Args args) {
     super(args);
 
     stopTimeoutUnit = args.stopTimeoutUnit;
     stopTimeoutVal = args.stopTimeoutVal;
-    requestTimeoutUnit = args.requestTimeoutUnit;
-    requestTimeout = args.requestTimeout;
-    beBackoffSlotInMillis = args.beBackoffSlotLengthUnit.toMillis(args.beBackoffSlotLength);
 
     executorService_ = args.executorService != null ?
         args.executorService : createDefaultExecutorService(args);
   }
 
   private static ExecutorService createDefaultExecutorService(Args args) {
-    SynchronousQueue<Runnable> executorQueue =
-      new SynchronousQueue<Runnable>();
-    return new ThreadPoolExecutor(args.minWorkerThreads,
-                                  args.maxWorkerThreads,
-                                  args.stopTimeoutVal,
-                                  args.stopTimeoutUnit,
-                                  executorQueue);
+    return new ThreadPoolExecutor(args.minWorkerThreads, args.maxWorkerThreads, 60L, TimeUnit.SECONDS,
+        new SynchronousQueue<>(), new ThreadFactory() {
+          final AtomicLong count = new AtomicLong();
+          @Override
+          public Thread newThread(Runnable r) {
+            Thread thread = new Thread(r);
+            thread.setDaemon(true);
+            thread.setName(String.format("TThreadPoolServer WorkerProcess-%d", count.getAndIncrement()));
+            return thread;
+          }
+        });
   }
 
   protected ExecutorService getExecutorService() {
@@ -149,7 +117,7 @@ public class TThreadPoolServer extends TServer {
   }
 
   protected boolean preServe() {
-  	try {
+    try {
       serverTransport_.listen();
     } catch (TTransportException ttx) {
       LOGGER.error("Error occurred during listening.", ttx);
@@ -166,13 +134,16 @@ public class TThreadPoolServer extends TServer {
   }
 
   public void serve() {
-  	if (!preServe()) {
-  		return;
-  	}
+    if (!preServe()) {
+      return;
+    }
 
-  	execute();
+    execute();
+
+    executorService_.shutdownNow();
+
     if (!waitForShutdown()) {
-  	  LOGGER.error("Shutdown is not done after " + stopTimeoutVal + stopTimeoutUnit);
+      LOGGER.error("Shutdown is not done after " + stopTimeoutVal + stopTimeoutUnit);
     }
 
     setServing(false);
@@ -182,51 +153,17 @@ public class TThreadPoolServer extends TServer {
     while (!stopped_) {
       try {
         TTransport client = serverTransport_.accept();
-        WorkerProcess wp = new WorkerProcess(client);
-
-        int retryCount = 0;
-        long remainTimeInMillis = requestTimeoutUnit.toMillis(requestTimeout);
-        while(true) {
-          try {
-            executorService_.execute(wp);
-            activeWorkers.put(wp, Boolean.TRUE);
-            break;
-          } catch(Throwable t) {
-            if (t instanceof RejectedExecutionException) {
-              retryCount++;
-              try {
-                if (remainTimeInMillis > 0) {
-                  //do a truncated 20 binary exponential backoff sleep
-                  long sleepTimeInMillis = ((long) (random.nextDouble() *
-                      (1L << Math.min(retryCount, 20)))) * beBackoffSlotInMillis;
-                  sleepTimeInMillis = Math.min(sleepTimeInMillis, remainTimeInMillis);
-                  TimeUnit.MILLISECONDS.sleep(sleepTimeInMillis);
-                  remainTimeInMillis = remainTimeInMillis - sleepTimeInMillis;
-                } else {
-                  client.close();
-                  wp = null;
-                  LOGGER.warn("Task has been rejected by ExecutorService " + retryCount
-                      + " times till timedout, reason: " + t);
-                  break;
-                }
-              } catch (InterruptedException e) {
-                LOGGER.warn("Interrupted while waiting to place client on executor queue.");
-                Thread.currentThread().interrupt();
-                break;
-              }
-            } else if (t instanceof Error) {
-              LOGGER.error("ExecutorService threw error: " + t, t);
-              throw (Error)t;
-            } else {
-              //for other possible runtime errors from ExecutorService, should also not kill serve
-              LOGGER.warn("ExecutorService threw error: " + t, t);
-              break;
-            }
+        try {
+          executorService_.execute(new WorkerProcess(client));
+        } catch (RejectedExecutionException ree) {
+          if (!stopped_) {
+            LOGGER.warn("ThreadPool is saturated with incoming requests. Closing latest connection.");
           }
+          client.close();
         }
       } catch (TTransportException ttx) {
         if (!stopped_) {
-          LOGGER.warn("Transport error occurred during acceptance of message.", ttx);
+          LOGGER.warn("Transport error occurred during acceptance of message", ttx);
         }
       }
     }
@@ -241,8 +178,7 @@ public class TThreadPoolServer extends TServer {
     long now = System.currentTimeMillis();
     while (timeoutMS >= 0) {
       try {
-        executorService_.awaitTermination(timeoutMS, TimeUnit.MILLISECONDS);
-        return true;
+        return executorService_.awaitTermination(timeoutMS, TimeUnit.MILLISECONDS);
       } catch (InterruptedException ix) {
         long newnow = System.currentTimeMillis();
         timeoutMS -= (newnow - now);
@@ -255,10 +191,6 @@ public class TThreadPoolServer extends TServer {
   public void stop() {
     stopped_ = true;
     serverTransport_.interrupt();
-    executorService_.shutdown();
-    for (WorkerProcess wp : activeWorkers.keySet()) {
-      wp.stop();
-    }
   }
 
   private class WorkerProcess implements Runnable {
@@ -287,7 +219,7 @@ public class TThreadPoolServer extends TServer {
       TProtocol inputProtocol = null;
       TProtocol outputProtocol = null;
 
-      TServerEventHandler eventHandler = null;
+      Optional<TServerEventHandler> eventHandler = Optional.empty();
       ServerContext connectionContext = null;
 
       try {
@@ -297,22 +229,25 @@ public class TThreadPoolServer extends TServer {
         inputProtocol = inputProtocolFactory_.getProtocol(inputTransport);
         outputProtocol = outputProtocolFactory_.getProtocol(outputTransport);
 
-        eventHandler = getEventHandler();
-        if (eventHandler != null) {
-          connectionContext = eventHandler.createContext(inputProtocol, outputProtocol);
+        eventHandler = Optional.ofNullable(getEventHandler());
+
+        if (eventHandler.isPresent()) {
+          connectionContext = eventHandler.get().createContext(inputProtocol, outputProtocol);
         }
-        // we check stopped_ first to make sure we're not supposed to be shutting
-        // down. this is necessary for graceful shutdown.
+
         while (true) {
-
-            if (eventHandler != null) {
-              eventHandler.processContext(connectionContext, inputTransport, outputTransport);
-            }
-
-            if (stopped_) {
-              break;
-            }
-            processor.process(inputProtocol, outputProtocol);
+          if (Thread.currentThread().isInterrupted()) {
+            LOGGER.debug("WorkerProcess requested to shutdown");
+            break;
+          }
+          if (eventHandler.isPresent()) {
+            eventHandler.get().processContext(connectionContext, inputTransport, outputTransport);
+          }
+          // This process cannot be interrupted by Interrupting the Thread. This
+          // will return once a message has been processed or the socket timeout
+          // has elapsed, at which point it will return and check the interrupt
+          // state of the thread.
+          processor.process(inputProtocol, outputProtocol);
         }
       } catch (Exception x) {
         LOGGER.debug("Error processing request", x);
@@ -322,11 +257,11 @@ public class TThreadPoolServer extends TServer {
         // Ignore err-logging all transport-level/type exceptions
         if (!isIgnorableException(x)) {
           // Log the exception at error level and continue
-          LOGGER.error((x instanceof TException? "Thrift " : "") + "Error occurred during processing of message.", x);
+          LOGGER.error((x instanceof TException ? "Thrift " : "") + "Error occurred during processing of message.", x);
         }
       } finally {
-        if (eventHandler != null) {
-          eventHandler.deleteContext(connectionContext, inputProtocol, outputProtocol);
+        if (eventHandler.isPresent()) {
+          eventHandler.get().deleteContext(connectionContext, inputProtocol, outputProtocol);
         }
         if (inputTransport != null) {
           inputTransport.close();
@@ -344,10 +279,9 @@ public class TThreadPoolServer extends TServer {
       TTransportException tTransportException = null;
 
       if (x instanceof TTransportException) {
-        tTransportException = (TTransportException)x;
-      }
-      else if (x.getCause() instanceof TTransportException) {
-        tTransportException = (TTransportException)x.getCause();
+        tTransportException = (TTransportException) x;
+      } else if (x.getCause() instanceof TTransportException) {
+        tTransportException = (TTransportException) x.getCause();
       }
 
       if (tTransportException != null) {
@@ -358,10 +292,6 @@ public class TThreadPoolServer extends TServer {
         }
       }
       return false;
-    }
-
-    private void stop() {
-      client_.close();
     }
   }
 }

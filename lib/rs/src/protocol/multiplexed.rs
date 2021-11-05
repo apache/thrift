@@ -191,7 +191,9 @@ where
 #[cfg(test)]
 mod tests {
 
-    use crate::protocol::{TBinaryOutputProtocol, TMessageIdentifier, TMessageType, TOutputProtocol};
+    use crate::protocol::{
+        TBinaryOutputProtocol, TMessageIdentifier, TMessageType, TOutputProtocol,
+    };
     use crate::transport::{TBufferChannel, TIoChannel, WriteHalf};
 
     use super::*;
@@ -203,7 +205,7 @@ mod tests {
         let ident = TMessageIdentifier::new("bar", TMessageType::Call, 2);
         assert_success!(o_prot.write_message_begin(&ident));
 
-        #[cfg_attr(rustfmt, rustfmt::skip)]
+        #[rustfmt::skip]
         let expected: [u8; 19] = [
             0x80,
             0x01, /* protocol identifier */

@@ -23,7 +23,6 @@
 -include("gen-erl/thrift3214_types.hrl").
 
 -ifdef(TEST).
--ifndef(otp16_or_less).
 -include_lib("eunit/include/eunit.hrl").
 
 record_generation_test_() ->
@@ -56,5 +55,4 @@ struct_info_test_() ->
     )}
   ].
 
--endif.
 -endif.

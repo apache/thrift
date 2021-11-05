@@ -114,13 +114,16 @@ RUN \
     rm -rf openssl-master
 
 RUN apt-get install -y --no-install-recommends \
-      `# Dart dependencies` \
+`# Dart dependencies` \
       dart=$DART_VERSION
 ENV PATH /usr/lib/dart/bin:$PATH
 
 RUN apt-get install -y --no-install-recommends \
 `# dotnet core dependencies` \
-      dotnet-sdk-2.1.4
+      dotnet-sdk-5.0 \
+      dotnet-runtime-5.0 \
+      aspnetcore-runtime-5.0 \
+      dotnet-apphost-pack-5.0
 
 RUN apt-get install -y --no-install-recommends \
 `# Erlang dependencies` \
@@ -143,11 +146,6 @@ RUN curl -fsSL "$GOLANG_DOWNLOAD_URL" -o golang.tar.gz && \
             tar -C /usr/local -xzf golang.tar.gz && \
                   ln -s /usr/local/go/bin/go /usr/local/bin && \
                         rm golang.tar.gz
-
-RUN apt-get install -y --no-install-recommends \
-`# Haskell dependencies` \
-      ghc \
-      cabal-install
 
 RUN apt-get install -y --no-install-recommends \
 `# Haxe dependencies` \

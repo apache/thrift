@@ -30,22 +30,22 @@ void main() {
     TestTObject testTObject;
 
     setUp(() {
-      serializer = new TSerializer();
-      deserializer = new TDeserializer();
-      
-      testTObject = new TestTObject();
+      serializer = TSerializer();
+      deserializer = TDeserializer();
+
+      testTObject = TestTObject();
       testTObject.b = true;
       testTObject.s = "TEST";
       testTObject.d = 15.25;
       testTObject.i = 10;
-      
-      var testList = new List<String>();
+
+      var testList = List<String>();
       testList.add("TEST 1");
       testList.add("TEST 2");
-      
+
       testTObject.l = testList;
     });
-    
+
     assertNewObjectEqualsTObject(TestTObject newObject) {
       expect(newObject.l, equals(testTObject.l));
       expect(newObject.b, equals(testTObject.b));
@@ -53,63 +53,63 @@ void main() {
       expect(newObject.d, equals(testTObject.d));
       expect(newObject.s, equals(testTObject.s));
     }
-    
+
     runWriteStringTest() {
       var s = serializer.writeString(testTObject);
 
-      var newObject = new TestTObject();
+      var newObject = TestTObject();
       deserializer.readString(newObject, s);
 
       assertNewObjectEqualsTObject(newObject);
-    };
+    }
 
     runWriteTest() {
       var s = serializer.write(testTObject);
 
-      var newObject = new TestTObject();
+      var newObject = TestTObject();
       deserializer.read(newObject, s);
 
       assertNewObjectEqualsTObject(newObject);
-    };
+    }
 
     test('JSON Protocol String', () {
-      serializer.protocol = new TJsonProtocol(serializer.transport);
-      deserializer.protocol = new TJsonProtocol(deserializer.transport);
-      
+      serializer.protocol = TJsonProtocol(serializer.transport);
+      deserializer.protocol = TJsonProtocol(deserializer.transport);
+
       runWriteStringTest();
     });
 
     test('JSON Protocol', () {
-      serializer.protocol = new TJsonProtocol(serializer.transport);
-      deserializer.protocol = new TJsonProtocol(deserializer.transport);
+      serializer.protocol = TJsonProtocol(serializer.transport);
+      deserializer.protocol = TJsonProtocol(deserializer.transport);
 
       runWriteTest();
     });
 
     test('Binary Protocol String', () {
-      serializer.protocol = new TBinaryProtocol(serializer.transport);
-      deserializer.protocol = new TBinaryProtocol(deserializer.transport);
+      serializer.protocol = TBinaryProtocol(serializer.transport);
+      deserializer.protocol = TBinaryProtocol(deserializer.transport);
 
       runWriteStringTest();
     });
 
     test('Binary Protocol', () {
-      serializer.protocol = new TBinaryProtocol(serializer.transport);
-      deserializer.protocol = new TBinaryProtocol(deserializer.transport);
+      serializer.protocol = TBinaryProtocol(serializer.transport);
+      deserializer.protocol = TBinaryProtocol(deserializer.transport);
 
       runWriteTest();
     });
 
     test('Compact Protocol String', () {
-      serializer.protocol = new TCompactProtocol(serializer.transport);
-      deserializer.protocol = new TCompactProtocol(deserializer.transport);
+      serializer.protocol = TCompactProtocol(serializer.transport);
+      deserializer.protocol = TCompactProtocol(deserializer.transport);
 
       runWriteStringTest();
     });
 
     test('Compact Protocol', () {
-      serializer.protocol = new TCompactProtocol(serializer.transport);
-      deserializer.protocol = new TCompactProtocol(deserializer.transport);
+      serializer.protocol = TCompactProtocol(serializer.transport);
+      deserializer.protocol = TCompactProtocol(deserializer.transport);
 
       runWriteTest();
     });

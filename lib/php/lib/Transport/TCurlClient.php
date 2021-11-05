@@ -84,6 +84,13 @@ class TCurlClient extends TTransport
     protected $timeout_;
 
     /**
+     * Connection timeout
+     *
+     * @var float
+     */
+    protected $connectionTimeout_;
+
+    /**
      * http headers
      *
      * @var array
@@ -109,6 +116,7 @@ class TCurlClient extends TTransport
         $this->request_ = '';
         $this->response_ = null;
         $this->timeout_ = null;
+        $this->connectionTimeout_ = null;
         $this->headers_ = array();
     }
 
@@ -120,6 +128,16 @@ class TCurlClient extends TTransport
     public function setTimeoutSecs($timeout)
     {
         $this->timeout_ = $timeout;
+    }
+
+    /**
+     * Set connection timeout
+     *
+     * @param float $connectionTimeout
+     */
+    public function setConnectionTimeoutSecs($connectionTimeout)
+    {
+        $this->connectionTimeout_ = $connectionTimeout;
     }
 
     /**
@@ -235,6 +253,14 @@ class TCurlClient extends TTransport
                 curl_setopt(self::$curlHandle, CURLOPT_TIMEOUT_MS, 1000 * $this->timeout_);
             } else {
                 curl_setopt(self::$curlHandle, CURLOPT_TIMEOUT, $this->timeout_);
+            }
+        }
+        if ($this->connectionTimeout_ > 0) {
+            if ($this->connectionTimeout_ < 1.0) {
+                // Timestamps smaller than 1 second are ignored when CURLOPT_CONNECTTIMEOUT is used
+                curl_setopt(self::$curlHandle, CURLOPT_CONNECTTIMEOUT_MS, 1000 * $this->connectionTimeout_);
+            } else {
+                curl_setopt(self::$curlHandle, CURLOPT_CONNECTTIMEOUT, $this->connectionTimeout_);
             }
         }
         curl_setopt(self::$curlHandle, CURLOPT_POSTFIELDS, $this->request_);

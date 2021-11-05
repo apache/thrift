@@ -75,19 +75,36 @@ func init() {
 	}
 }
 
-type TCompactProtocolFactory struct{}
+type TCompactProtocolFactory struct {
+	cfg *TConfiguration
+}
 
+// Deprecated: Use NewTCompactProtocolFactoryConf instead.
 func NewTCompactProtocolFactory() *TCompactProtocolFactory {
-	return &TCompactProtocolFactory{}
+	return NewTCompactProtocolFactoryConf(&TConfiguration{
+		noPropagation: true,
+	})
+}
+
+func NewTCompactProtocolFactoryConf(conf *TConfiguration) *TCompactProtocolFactory {
+	return &TCompactProtocolFactory{
+		cfg: conf,
+	}
 }
 
 func (p *TCompactProtocolFactory) GetProtocol(trans TTransport) TProtocol {
-	return NewTCompactProtocol(trans)
+	return NewTCompactProtocolConf(trans, p.cfg)
+}
+
+func (p *TCompactProtocolFactory) SetTConfiguration(conf *TConfiguration) {
+	p.cfg = conf
 }
 
 type TCompactProtocol struct {
 	trans         TRichTransport
 	origTransport TTransport
+
+	cfg *TConfiguration
 
 	// Used to keep track of the last field for the current and previous structs,
 	// so we can do the delta stuff.
@@ -107,9 +124,19 @@ type TCompactProtocol struct {
 	buffer             [64]byte
 }
 
-// Create a TCompactProtocol given a TTransport
+// Deprecated: Use NewTCompactProtocolConf instead.
 func NewTCompactProtocol(trans TTransport) *TCompactProtocol {
-	p := &TCompactProtocol{origTransport: trans, lastField: []int{}}
+	return NewTCompactProtocolConf(trans, &TConfiguration{
+		noPropagation: true,
+	})
+}
+
+func NewTCompactProtocolConf(trans TTransport, conf *TConfiguration) *TCompactProtocol {
+	PropagateTConfiguration(trans, conf)
+	p := &TCompactProtocol{
+		origTransport: trans,
+		cfg:           conf,
+	}
 	if et, ok := trans.(TRichTransport); ok {
 		p.trans = et
 	} else {
@@ -117,7 +144,6 @@ func NewTCompactProtocol(trans TTransport) *TCompactProtocol {
 	}
 
 	return p
-
 }
 
 //
@@ -308,7 +334,8 @@ func (p *TCompactProtocol) WriteString(ctx context.Context, value string) error 
 	if e != nil {
 		return NewTProtocolException(e)
 	}
-	if len(value) > 0 {
+	if len(value) == 0 {
+		return nil
 	}
 	_, e = p.trans.WriteString(value)
 	return e
@@ -451,8 +478,8 @@ func (p *TCompactProtocol) ReadMapBegin(ctx context.Context) (keyType TType, val
 		err = NewTProtocolException(e)
 		return
 	}
-	if size32 < 0 {
-		err = invalidDataLength
+	err = checkSizeForProtocol(size32, p.cfg)
+	if err != nil {
 		return
 	}
 	size = int(size32)
@@ -487,11 +514,11 @@ func (p *TCompactProtocol) ReadListBegin(ctx context.Context) (elemType TType, s
 			err = NewTProtocolException(e)
 			return
 		}
-		if size2 < 0 {
-			err = invalidDataLength
-			return
-		}
 		size = int(size2)
+	}
+	err = checkSizeForProtocol(size32, p.cfg)
+	if err != nil {
+		return
 	}
 	elemType, e := p.getTType(tCompactType(size_and_type))
 	if e != nil {
@@ -576,20 +603,21 @@ func (p *TCompactProtocol) ReadString(ctx context.Context) (value string, err er
 	if e != nil {
 		return "", NewTProtocolException(e)
 	}
-	if length < 0 {
-		return "", invalidDataLength
+	err = checkSizeForProtocol(length, p.cfg)
+	if err != nil {
+		return
 	}
-
 	if length == 0 {
 		return "", nil
 	}
-	var buf []byte
-	if length <= int32(len(p.buffer)) {
-		buf = p.buffer[0:length]
-	} else {
-		buf = make([]byte, length)
+	if length < int32(len(p.buffer)) {
+		// Avoid allocation on small reads
+		buf := p.buffer[:length]
+		read, e := io.ReadFull(p.trans, buf)
+		return string(buf[:read]), NewTProtocolException(e)
 	}
-	_, e = io.ReadFull(p.trans, buf)
+
+	buf, e := safeReadBytes(length, p.trans)
 	return string(buf), NewTProtocolException(e)
 }
 
@@ -599,15 +627,15 @@ func (p *TCompactProtocol) ReadBinary(ctx context.Context) (value []byte, err er
 	if e != nil {
 		return nil, NewTProtocolException(e)
 	}
+	err = checkSizeForProtocol(length, p.cfg)
+	if err != nil {
+		return
+	}
 	if length == 0 {
 		return []byte{}, nil
 	}
-	if length < 0 {
-		return nil, invalidDataLength
-	}
 
-	buf := make([]byte, length)
-	_, e = io.ReadFull(p.trans, buf)
+	buf, e := safeReadBytes(length, p.trans)
 	return buf, NewTProtocolException(e)
 }
 
@@ -695,23 +723,10 @@ func (p *TCompactProtocol) int32ToZigzag(n int32) int32 {
 	return (n << 1) ^ (n >> 31)
 }
 
-func (p *TCompactProtocol) fixedUint64ToBytes(n uint64, buf []byte) {
-	binary.LittleEndian.PutUint64(buf, n)
-}
-
-func (p *TCompactProtocol) fixedInt64ToBytes(n int64, buf []byte) {
-	binary.LittleEndian.PutUint64(buf, uint64(n))
-}
-
 // Writes a byte without any possibility of all that field header nonsense.
 // Used internally by other writing methods that know they need to write a byte.
 func (p *TCompactProtocol) writeByteDirect(b byte) error {
 	return p.trans.WriteByte(b)
-}
-
-// Writes a byte without any possibility of all that field header nonsense.
-func (p *TCompactProtocol) writeIntAsByteDirect(n int) (int, error) {
-	return 1, p.writeByteDirect(byte(n))
 }
 
 //
@@ -770,13 +785,6 @@ func (p *TCompactProtocol) zigzagToInt64(n int64) int64 {
 // Note that it's important that the mask bytes are long literals,
 // otherwise they'll default to ints, and when you shift an int left 56 bits,
 // you just get a messed up int.
-func (p *TCompactProtocol) bytesToInt64(b []byte) int64 {
-	return int64(binary.LittleEndian.Uint64(b))
-}
-
-// Note that it's important that the mask bytes are long literals,
-// otherwise they'll default to ints, and when you shift an int left 56 bits,
-// you just get a messed up int.
 func (p *TCompactProtocol) bytesToUint64(b []byte) uint64 {
 	return binary.LittleEndian.Uint64(b)
 }
@@ -818,10 +826,21 @@ func (p *TCompactProtocol) getTType(t tCompactType) (TType, error) {
 	case COMPACT_STRUCT:
 		return STRUCT, nil
 	}
-	return STOP, TException(fmt.Errorf("don't know what type: %v", t&0x0f))
+	return STOP, NewTProtocolException(fmt.Errorf("don't know what type: %v", t&0x0f))
 }
 
 // Given a TType value, find the appropriate TCompactProtocol.Types constant.
 func (p *TCompactProtocol) getCompactType(t TType) tCompactType {
 	return ttypeToCompactType[t]
 }
+
+func (p *TCompactProtocol) SetTConfiguration(conf *TConfiguration) {
+	PropagateTConfiguration(p.trans, conf)
+	PropagateTConfiguration(p.origTransport, conf)
+	p.cfg = conf
+}
+
+var (
+	_ TConfigurationSetter = (*TCompactProtocolFactory)(nil)
+	_ TConfigurationSetter = (*TCompactProtocol)(nil)
+)

@@ -41,8 +41,9 @@ uses
   Thrift.Stream in '..\..\src\Thrift.Stream.pas',
   Thrift.WinHTTP in '..\..\src\Thrift.WinHTTP.pas',
   Thrift.TypeRegistry in '..\..\src\Thrift.TypeRegistry.pas',
-  System_,
-  DebugProtoTest,
+  System_ in 'gen-delphi\System_.pas',
+  SysUtils_ in 'gen-delphi\SysUtils_.pas',
+  DebugProtoTest in 'gen-delphi\DebugProtoTest.pas',
   TestSerializer.Tests in 'TestSerializer.Tests.pas',
   TestSerializer.Data in 'TestSerializer.Data.pas';
 

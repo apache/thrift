@@ -44,7 +44,7 @@ env:
     - BUILD_ARG=""
     - BUILD_ENV="-e CC=gcc -e CXX=g++ -e THRIFT_CROSSTEST_CONCURRENCY=4"
     - DISTRO=ubuntu-bionic
-    - BUILD_LIBS="CPP C_GLIB HASKELL JAVA PYTHON TESTING TUTORIALS"  # only meaningful for CMake builds
+    - BUILD_LIBS="CPP C_GLIB JAVA PYTHON TESTING TUTORIALS"  # only meaningful for CMake builds
     - TRAVIS_BUILD_STAGE=test
     # DOCKER_REPO (this works for all builds as a source for docker images - you can override for fork builds in your Travis settings)
     - DOCKER_REPO="thrift/thrift-build"

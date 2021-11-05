@@ -119,11 +119,6 @@ RUN curl -fsSL "$GOLANG_DOWNLOAD_URL" -o golang.tar.gz && \
       ln -s /usr/local/go/bin/go /usr/local/bin && \
       rm golang.tar.gz
 
-RUN apt-get install -y --no-install-recommends \
-`# Haskell dependencies` \
-      ghc \
-      cabal-install
-
 # disabled because it cores while installing
 # RUN apt-get install -y --no-install-recommends \
 # `# Haxe dependencies` \

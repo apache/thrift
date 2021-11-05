@@ -34,11 +34,9 @@ func TestReadWriteHeaderProtocol(t *testing.T) {
 	t.Run(
 		"compact",
 		func(t *testing.T) {
-			f, err := NewTHeaderProtocolFactoryWithProtocolID(THeaderProtocolCompact)
-			if err != nil {
-				t.Fatal(err)
-			}
-			ReadWriteProtocolTest(t, f)
+			ReadWriteProtocolTest(t, NewTHeaderProtocolFactoryConf(&TConfiguration{
+				THeaderProtocolID: THeaderProtocolIDPtrMust(THeaderProtocolCompact),
+			}))
 		},
 	)
 }

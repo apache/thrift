@@ -45,7 +45,7 @@ public class TFileProcessor {
     outputTransport_ = outputTransport;
   }
 
-  public TFileProcessor(TProcessor processor, 
+  public TFileProcessor(TProcessor processor,
                         TProtocolFactory inputProtocolFactory,
                         TProtocolFactory outputProtocolFactory,
                         TFileTransport inputTransport,
@@ -67,7 +67,7 @@ public class TFileProcessor {
         processor_.process(ip, op);
         int newChunk = inputTransport_.getCurChunk();
         curChunk = newChunk;
-      } 
+      }
     } catch (TTransportException e) {
       // if we are processing the last chunk - we could have just hit EOF
       // on EOF - trap the error and stop processing.
@@ -84,6 +84,7 @@ public class TFileProcessor {
 
    * @param startChunkNum first chunk to be processed
    * @param endChunkNum last chunk to be processed
+   * @throws TException if endChunkNum is less than startChunkNum.
    */
   public void processChunk(int startChunkNum, int endChunkNum) throws TException {
     int numChunks = inputTransport_.getNumChunks();
@@ -104,6 +105,7 @@ public class TFileProcessor {
    * Process a single chunk
    *
    * @param chunkNum chunk to be processed
+   * @throws TException on error while processing the given chunk.
    */
   public void processChunk(int chunkNum) throws TException {
     processChunk(chunkNum, chunkNum);
@@ -111,6 +113,8 @@ public class TFileProcessor {
 
   /**
    * Process a current chunk
+   *
+   * @throws TException on error while processing the given chunk.
    */
   public void processChunk() throws TException {
     processChunk(inputTransport_.getCurChunk());

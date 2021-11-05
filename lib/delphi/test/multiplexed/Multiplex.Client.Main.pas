@@ -36,8 +36,8 @@ uses
   Thrift.Stream,
   Thrift.Collections,
   Thrift.Configuration,
-  Benchmark,  // in gen-delphi folder
-  Aggr,       // in gen-delphi folder
+  Benchmark,
+  Aggr,
   Multiplex.Test.Common;
 
 type

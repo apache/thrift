@@ -698,14 +698,23 @@ void Init_struct() {
   rb_define_method(struct_module, "read", rb_thrift_struct_read, 1);
 
   thrift_union_class = rb_const_get(thrift_module, rb_intern("Union"));
+  rb_global_variable(&thrift_union_class);
 
   rb_define_method(thrift_union_class, "write", rb_thrift_union_write, 1);
   rb_define_method(thrift_union_class, "read", rb_thrift_union_read, 1);
 
   setfield_id = rb_intern("@setfield");
+  rb_global_variable(&setfield_id);
+
   setvalue_id = rb_intern("@value");
+  rb_global_variable(&setvalue_id);
 
   to_s_method_id = rb_intern("to_s");
+  rb_global_variable(&to_s_method_id);
+
   name_to_id_method_id = rb_intern("name_to_id");
+  rb_global_variable(&name_to_id_method_id);
+
   sorted_field_ids_method_id = rb_intern("sorted_field_ids");
+  rb_global_variable(&sorted_field_ids_method_id);
 }

@@ -15,9 +15,9 @@
 // specific language governing permissions and limitations
 // under the License.
 
-extern crate ordered_float;
-extern crate thrift;
-extern crate try_from;
+
+
+
 
 mod thrift_test;
 pub use crate::thrift_test::*;

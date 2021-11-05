@@ -38,6 +38,7 @@ namespace Thrift.Transport.Client
         private readonly LocalCertificateSelectionCallback _localCertificateSelectionCallback;
         private readonly int _port;
         private readonly SslProtocols _sslProtocols;
+        private readonly string _targetHost;
         private TcpClient _client;
         private SslStream _secureStream;
         private int _timeout;
@@ -122,13 +123,13 @@ namespace Thrift.Transport.Client
         {
             try
             {
+                _targetHost = host;
+
                 var entry = Dns.GetHostEntry(host);
                 if (entry.AddressList.Length == 0)
                     throw new TTransportException(TTransportException.ExceptionType.Unknown, "unable to resolve host name");
 
-                var addr = entry.AddressList[0];
-
-                _host = new IPAddress(addr.GetAddressBytes(), addr.ScopeId);
+                _host = entry.AddressList[0];
                 _port = port;
                 _timeout = timeout;
                 _certificate = certificate;
@@ -239,7 +240,7 @@ namespace Thrift.Transport.Client
                         ? new X509CertificateCollection {_certificate}
                         : new X509CertificateCollection();
 
-                    var targetHost = _host.ToString();
+                    var targetHost = _targetHost ?? _host.ToString();
                     await _secureStream.AuthenticateAsClientAsync(targetHost, certs, _sslProtocols, true);
                 }
             }

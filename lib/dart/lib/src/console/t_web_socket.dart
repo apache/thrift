@@ -18,7 +18,7 @@
 library thrift.src.console.t_web_socket;
 
 import 'dart:async';
-import 'package:dart2_constant/convert.dart' show base64;
+import 'dart:convert' show base64;
 import 'dart:io';
 import 'dart:typed_data' show Uint8List;
 
@@ -27,20 +27,23 @@ import 'package:thrift/thrift.dart';
 /// A [TSocket] backed by a [WebSocket] from dart:io
 class TWebSocket implements TSocket {
   final StreamController<TSocketState> _onStateController;
+  @override
   Stream<TSocketState> get onState => _onStateController.stream;
 
   final StreamController<Object> _onErrorController;
+  @override
   Stream<Object> get onError => _onErrorController.stream;
 
   final StreamController<Uint8List> _onMessageController;
+  @override
   Stream<Uint8List> get onMessage => _onMessageController.stream;
 
   TWebSocket(WebSocket socket)
-      : _onStateController = new StreamController.broadcast(),
-        _onErrorController = new StreamController.broadcast(),
-        _onMessageController = new StreamController.broadcast() {
+      : _onStateController = StreamController.broadcast(),
+        _onErrorController = StreamController.broadcast(),
+        _onMessageController = StreamController.broadcast() {
     if (socket == null) {
-      throw new ArgumentError.notNull('socket');
+      throw ArgumentError.notNull('socket');
     }
 
     _socket = socket;
@@ -49,14 +52,18 @@ class TWebSocket implements TSocket {
 
   WebSocket _socket;
 
+  @override
   bool get isOpen => _socket != null;
 
+  @override
   bool get isClosed => _socket == null;
 
+  @override
   Future open() async {
     _onStateController.add(TSocketState.OPEN);
   }
 
+  @override
   Future close() async {
     if (_socket != null) {
       await _socket.close();
@@ -66,16 +73,17 @@ class TWebSocket implements TSocket {
     _onStateController.add(TSocketState.CLOSED);
   }
 
+  @override
   void send(Uint8List data) {
     _socket.add(base64.encode(data));
   }
 
   void _onMessage(String message) {
     try {
-      Uint8List data = new Uint8List.fromList(base64.decode(message));
+      Uint8List data = Uint8List.fromList(base64.decode(message));
       _onMessageController.add(data);
     } on FormatException catch (_) {
-      var error = new TProtocolError(TProtocolErrorType.INVALID_DATA,
+      var error = TProtocolError(TProtocolErrorType.INVALID_DATA,
           "Expected a Base 64 encoded string.");
       _onErrorController.add(error);
     }

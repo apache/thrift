@@ -30,7 +30,7 @@ public final class StringUtils {
   /**
    * Stringify a byte array to the hex representation for each byte.
    *
-   * @param bytes
+   * @param bytes the byte array to convert to hex string.
    * @return hex string.
    */
   public static String bytesToHexString(byte[] bytes) {

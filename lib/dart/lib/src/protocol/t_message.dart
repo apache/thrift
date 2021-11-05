@@ -31,5 +31,6 @@ class TMessage {
 
   TMessage(this.name, this.type, this.seqid);
 
+  @override
   String toString() => "<TMessage name: '$name' type: $type seqid: $seqid>";
 }

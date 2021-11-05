@@ -23,7 +23,7 @@ class TBufferedTransport extends TTransport {
   Iterator<int> _readIterator;
 
   Uint8List consumeWriteBuffer() {
-    Uint8List buffer = new Uint8List.fromList(_writeBuffer);
+    Uint8List buffer = Uint8List.fromList(_writeBuffer);
     _writeBuffer.clear();
     return buffer;
   }
@@ -32,7 +32,7 @@ class TBufferedTransport extends TTransport {
     _readIterator = readBuffer != null ? readBuffer.iterator : null;
   }
 
-  void _reset({bool isOpen: false}) {
+  void _reset({bool isOpen = false}) {
     _isOpen = isOpen;
     _writeBuffer.clear();
     _readIterator = null;
@@ -41,23 +41,27 @@ class TBufferedTransport extends TTransport {
   bool get hasReadData => _readIterator != null;
 
   bool _isOpen;
+  @override
   bool get isOpen => _isOpen;
 
+  @override
   Future open() async {
     _reset(isOpen: true);
   }
 
+  @override
   Future close() async {
     _reset(isOpen: false);
   }
 
+  @override
   int read(Uint8List buffer, int offset, int length) {
     if (buffer == null) {
-      throw new ArgumentError.notNull("buffer");
+      throw ArgumentError.notNull("buffer");
     }
 
     if (offset + length > buffer.length) {
-      throw new ArgumentError("The range exceeds the buffer length");
+      throw ArgumentError("The range exceeds the buffer length");
     }
 
     if (_readIterator == null || length <= 0) {
@@ -78,21 +82,23 @@ class TBufferedTransport extends TTransport {
     return i;
   }
 
+  @override
   void write(Uint8List buffer, int offset, int length) {
     if (buffer == null) {
-      throw new ArgumentError.notNull("buffer");
+      throw ArgumentError.notNull("buffer");
     }
 
     if (offset + length > buffer.length) {
-      throw new ArgumentError("The range exceeds the buffer length");
+      throw ArgumentError("The range exceeds the buffer length");
     }
 
     _writeBuffer.addAll(buffer.sublist(offset, offset + length));
   }
 
+  @override
   Future flush() {
     _readIterator = consumeWriteBuffer().iterator;
 
-    return new Future.value();
+    return Future.value();
   }
 }

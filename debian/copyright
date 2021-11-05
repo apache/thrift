@@ -17,69 +17,67 @@ conditions of the following licenses.
 --------------------------------------------------
 Portions of the following files are licensed under the MIT License:
 
-  lib/erl/src/Makefile.am
+  lib/erl/Makefile.am
 
-Please see doc/otp-base-license.txt for the full terms of this license.
+Please see doc/licenses/otp-base-license.txt for the full terms of this license.
 
 
 --------------------------------------------------
 The following files contain some portions of code contributed under
-the Thrift Software License (see doc/old-thrift-license.txt), and relicensed
+the Thrift Software License (see doc/licenses/old-thrift-license.txt), and relicensed
 under the Apache 2.0 License:
 
   compiler/cpp/Makefile.am
-  compiler/cpp/src/generate/t_cpp_generator.cc
-  compiler/cpp/src/generate/t_netstd_generator.cc
-  compiler/cpp/src/generate/t_erl_generator.cc
-  compiler/cpp/src/generate/t_hs_generator.cc
-  compiler/cpp/src/generate/t_java_generator.cc
-  compiler/cpp/src/generate/t_ocaml_generator.cc
-  compiler/cpp/src/generate/t_perl_generator.cc
-  compiler/cpp/src/generate/t_php_generator.cc
-  compiler/cpp/src/generate/t_py_generator.cc
-  compiler/cpp/src/generate/t_rb_generator.cc
-  compiler/cpp/src/generate/t_st_generator.cc
-  compiler/cpp/src/generate/t_xsd_generator.cc
-  compiler/cpp/src/main.cc
-  compiler/cpp/src/parse/t_field.h
-  compiler/cpp/src/parse/t_program.h
-  compiler/cpp/src/platform.h
-  compiler/cpp/src/thriftl.ll
-  compiler/cpp/src/thrifty.yy
-  lib/netstd/src/Protocol/TBinaryProtocol.cs
-  lib/netstd/src/Protocol/TField.cs
-  lib/netstd/src/Protocol/TList.cs
-  lib/netstd/src/Protocol/TMap.cs
-  lib/netstd/src/Protocol/TMessage.cs
-  lib/netstd/src/Protocol/TMessageType.cs
-  lib/netstd/src/Protocol/TProtocol.cs
-  lib/netstd/src/Protocol/TProtocolException.cs
-  lib/netstd/src/Protocol/TProtocolFactory.cs
-  lib/netstd/src/Protocol/TProtocolUtil.cs
-  lib/netstd/src/Protocol/TSet.cs
-  lib/netstd/src/Protocol/TStruct.cs
-  lib/netstd/src/Protocol/TType.cs
-  lib/netstd/src/Server/TServer.cs
-  lib/netstd/src/Server/TSimpleServer.cs
-  lib/netstd/src/Server/TThreadPoolServer.cs
-  lib/netstd/src/TApplicationException.cs
-  lib/netstd/src/Thrift.csproj
-  lib/netstd/src/Thrift.sln
-  lib/netstd/src/TProcessor.cs
-  lib/netstd/src/Transport/TServerSocket.cs
-  lib/netstd/src/Transport/TServerTransport.cs
-  lib/netstd/src/Transport/TSocket.cs
-  lib/netstd/src/Transport/TStreamTransport.cs
-  lib/netstd/src/Transport/TTransport.cs
-  lib/netstd/src/Transport/TTransportException.cs
-  lib/netstd/src/Transport/TTransportFactory.cs
-  lib/netstd/ThriftMSBuildTask/Properties/AssemblyInfo.cs
-  lib/netstd/ThriftMSBuildTask/ThriftBuild.cs
-  lib/netstd/ThriftMSBuildTask/ThriftMSBuildTask.csproj
+  compiler/cpp/src/thrift/generate/t_cpp_generator.cc
+  compiler/cpp/src/thrift/generate/t_netstd_generator.cc
+  compiler/cpp/src/thrift/generate/t_erl_generator.cc
+  compiler/cpp/src/thrift/generate/t_hs_generator.cc
+  compiler/cpp/src/thrift/generate/t_java_generator.cc
+  compiler/cpp/src/thrift/generate/t_ocaml_generator.cc
+  compiler/cpp/src/thrift/generate/t_perl_generator.cc
+  compiler/cpp/src/thrift/generate/t_php_generator.cc
+  compiler/cpp/src/thrift/generate/t_py_generator.cc
+  compiler/cpp/src/thrift/generate/t_rb_generator.cc
+  compiler/cpp/src/thrift/generate/t_st_generator.cc
+  compiler/cpp/src/thrift/generate/t_xsd_generator.cc
+  compiler/cpp/src/thrift/main.cc
+  compiler/cpp/src/thrift/parse/t_field.h
+  compiler/cpp/src/thrift/parse/t_program.h
+  compiler/cpp/src/thrift/platform.h
+  compiler/cpp/src/thrift/thriftl.ll
+  compiler/cpp/src/thrift/thrifty.yy
+  lib/netstd/Thrift/Protocol/TBinaryProtocol.cs
+  lib/netstd/Thrift/Protocol/Entities/TField.cs
+  lib/netstd/Thrift/Protocol/Entities/TList.cs
+  lib/netstd/Thrift/Protocol/Entities/TMap.cs
+  lib/netstd/Thrift/Protocol/Entities/TMessage.cs
+  lib/netstd/Thrift/Protocol/Entities/TMessageType.cs
+  lib/netstd/Thrift/Protocol/TProtocol.cs
+  lib/netstd/Thrift/Protocol/TProtocolException.cs
+  lib/netstd/Thrift/Protocol/TProtocolFactory.cs
+  lib/netstd/Thrift/Protocol/Utilities/TProtocolUtil.cs
+  lib/netstd/Thrift/Protocol/Entities/TSet.cs
+  lib/netstd/Thrift/Protocol/Entities/TStruct.cs
+  lib/netstd/Thrift/Protocol/Entities/TType.cs
+  lib/netstd/Thrift/Server/TServer.cs
+  lib/netstd/Thrift/Server/TSimpleAsyncServer.cs
+  lib/netstd/Thrift/Server/TThreadPoolAsyncServer.cs
+  lib/netstd/Thrift/TApplicationException.cs
+  lib/netstd/Thrift/Thrift.csproj
+  lib/netstd/Thrift.sln
+  lib/netstd/Thrift/Transport/Server/TServerSocketTransport.cs
+  lib/netstd/Thrift/Transport/Server/TServerTransport.cs
+  lib/netstd/Thrift/Transport/Client/TSocketTransport.cs
+  lib/netstd/Thrift/Transport/Client/TStreamTransport.cs
+  lib/netstd/Thrift/Transport/TTransport.cs
+  lib/netstd/Thrift/Transport/TTransportException.cs
+  lib/netstd/Thrift/Transport/TTransportFactory.cs
+  lib/netstd/Tests/Thrift.PublicInterfaces.Compile.Tests/Properties/AssemblyInfo.cs
+  lib/netstd/Tests/Thrift.PublicInterfaces.Compile.Tests/Thrift.PublicInterfaces.Compile.Tests.csproj
   lib/rb/lib/thrift.rb
-  lib/st/README
+  lib/st/README.md
   lib/st/thrift.st
-  test/OptionalRequiredTest.cpp
+  lib/cpp/test/OptionalRequiredTest.cpp
   test/OptionalRequiredTest.thrift
   test/ThriftTest.thrift
 
@@ -91,38 +89,3 @@ For the aclocal/ax_boost_base.m4 and contrib/fb303/aclocal/ax_boost_base.m4 comp
 #   Copying and distribution of this file, with or without
 #   modification, are permitted in any medium without royalty provided
 #   the copyright notice and this notice are preserved.
-
---------------------------------------------------
-For the compiler/cpp/src/md5.[ch] components:
-
-/*
-  Copyright (C) 1999, 2000, 2002 Aladdin Enterprises.  All rights reserved.
-
-  This software is provided 'as-is', without any express or implied
-  warranty.  In no event will the authors be held liable for any damages
-  arising from the use of this software.
-
-  Permission is granted to anyone to use this software for any purpose,
-  including commercial applications, and to alter it and redistribute it
-  freely, subject to the following restrictions:
-
-  1. The origin of this software must not be misrepresented; you must not
-     claim that you wrote the original software. If you use this software
-     in a product, an acknowledgment in the product documentation would be
-     appreciated but is not required.
-  2. Altered source versions must be plainly marked as such, and must not be
-     misrepresented as being the original software.
-  3. This notice may not be removed or altered from any source distribution.
-
-  L. Peter Deutsch
-  ghost@aladdin.com
-
- */
-
----------------------------------------------------
-For the lib/rb/setup.rb: Copyright (c) 2000-2005 Minero Aoki,
-lib/ocaml/OCamlMakefile and lib/ocaml/README-OCamlMakefile components:
-     Copyright (C) 1999 - 2007  Markus Mottl
-
-Licensed under the terms of the GNU Lesser General Public License 2.1
-(see doc/lgpl-2.1.txt for the full terms of this license)

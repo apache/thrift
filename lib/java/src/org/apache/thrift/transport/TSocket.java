@@ -118,6 +118,18 @@ public class TSocket extends TIOStreamTransport {
    * Creates a new unconnected socket that will connect to the given host
    * on the given port.
    *
+   * @param host    Remote host
+   * @param port    Remote port
+   * @param timeout Socket timeout and connection timeout
+   */
+  public TSocket(String host, int port, int timeout) throws TTransportException {
+    this(new TConfiguration(), host, port, timeout, timeout);
+  }
+
+  /**
+   * Creates a new unconnected socket that will connect to the given host
+   * on the given port.
+   *
    * @param config  check config
    * @param host    Remote host
    * @param port    Remote port

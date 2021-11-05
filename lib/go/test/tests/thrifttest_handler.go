@@ -22,9 +22,10 @@ package tests
 import (
 	"context"
 	"errors"
-	"thrift"
-	"thrifttest"
 	"time"
+
+	"github.com/apache/thrift/lib/go/test/gopath/src/thrifttest"
+	"github.com/apache/thrift/lib/go/thrift"
 )
 
 type SecondServiceHandler struct {
@@ -179,7 +180,7 @@ func (p *ThriftTestHandler) TestException(ctx context.Context, arg string) (err 
 		x.Message = arg
 		return x
 	} else if arg == "TException" {
-		return thrift.TException(errors.New(arg))
+		return thrift.WrapTException(errors.New(arg))
 	} else {
 		return nil
 	}

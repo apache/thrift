@@ -21,7 +21,7 @@
 #define _THRIFT_CONCURRENCY_MUTEX_H_ 1
 
 #include <memory>
-#include <boost/noncopyable.hpp>
+#include <thrift/TNonCopyable.h>
 
 namespace apache {
 namespace thrift {
@@ -55,7 +55,7 @@ private:
 };
 
 
-class Guard : boost::noncopyable {
+class Guard : apache::thrift::TNonCopyable {
 public:
   Guard(const Mutex& value, int64_t timeout = 0) : mutex_(&value) {
     if (timeout == 0) {

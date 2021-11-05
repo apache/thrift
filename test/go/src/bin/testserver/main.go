@@ -20,12 +20,13 @@
 package main
 
 import (
-	"common"
 	"flag"
 	"fmt"
 	"log"
 	"net/http"
-	"thrift"
+
+	"github.com/apache/thrift/lib/go/thrift"
+	"github.com/apache/thrift/test/go/src/common"
 )
 
 var host = flag.String("host", "localhost", "Host to connect")
@@ -34,7 +35,6 @@ var domain_socket = flag.String("domain-socket", "", "Domain Socket (e.g. /tmp/T
 var transport = flag.String("transport", "buffered", "Transport: buffered, framed, http, zlib")
 var protocol = flag.String("protocol", "binary", "Protocol: binary, compact, json, header")
 var ssl = flag.Bool("ssl", false, "Encrypted Transport using SSL")
-var zlib = flag.Bool("zlib", false, "Wrapped Transport using Zlib")
 var certPath = flag.String("certPath", "keys", "Directory that contains SSL certificates")
 
 func main() {

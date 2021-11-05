@@ -16,8 +16,8 @@
 # specific language governing permissions and limitations
 # under the License.
 
-setup-local-lisp-env: ensure-externals.sh
-	bash ensure-externals.sh
+setup-local-lisp-env: ../../lib/cl/ensure-externals.sh
+	bash ../../lib/cl/ensure-externals.sh
 
 gen-cl: $(top_srcdir)/tutorial/tutorial.thrift
 	$(THRIFT) --gen cl -r $<
@@ -36,8 +36,9 @@ ALL_FILE_PREREQS = \
 # because their dependencies are shared, parallel jobs can
 # end up overwriting or corrupting the compiled files
 all-local: gen-cl setup-local-lisp-env $(ALL_FILE_PREREQS)
-	$(SBCL) --script make-tutorial-server.lisp
-	$(SBCL) --script make-tutorial-client.lisp
+	@echo 'cl broken, commented out due to deprecation'
+	## $(SBCL) --script make-tutorial-server.lisp
+	## $(SBCL) --script make-tutorial-client.lisp
 
 tutorialserver: all
 	./TutorialServer
@@ -62,4 +63,5 @@ EXTRA_DIST = \
 	shared-implementation.lisp \
 	thrift-tutorial.asd \
 	make-tutorial-server.lisp \
-	make-tutorial-client.lisp
+	make-tutorial-client.lisp \
+	load-locally.lisp

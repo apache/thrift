@@ -92,7 +92,7 @@ class Arguments
     #if sys
 
     private static function GetHelp() : String {
-        var sProg = Path.withoutDirectory( Sys.executablePath());
+        var sProg = Path.withoutDirectory( Sys.programPath());
         return "\n"
             +sProg+"  [client|server]  [options]\n"
             +"\n"
