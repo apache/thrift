@@ -21,6 +21,9 @@ using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 
+#pragma warning disable IDE0079  // unused suppression
+#pragma warning disable IDE0066  // requires C# 8 
+
 namespace Thrift.Transport.Client
 {
     // ReSharper disable once InconsistentNaming
@@ -89,7 +92,7 @@ namespace Thrift.Transport.Client
 
         public override void Close()
         {
-            /** do nothing **/
+            /* do nothing */
         }
 
         public void Seek(int delta, SeekOrigin origin)
@@ -107,11 +110,11 @@ namespace Thrift.Transport.Client
                     newPos = _bytesUsed + delta;
                     break;
                 default:
-                    throw new ArgumentException(nameof(origin));
+                    throw new ArgumentException("Unrecognized value",nameof(origin));
             }
 
             if ((0 > newPos) || (newPos > _bytesUsed))
-                throw new ArgumentException(nameof(origin));
+                throw new ArgumentException("Cannot seek outside of the valid range",nameof(origin));
             Position = newPos;
 
             ResetConsumedMessageSize();
