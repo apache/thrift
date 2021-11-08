@@ -31,7 +31,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Provides a memoized way to lookup an enum by its value.
+ * Provides a memoized way to lookup an enum by its  value.
  *
  * This class is used internally by {@code TDeserializer}.
  * It is not intended to be used separately on its own.
