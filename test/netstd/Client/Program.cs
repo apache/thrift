@@ -19,13 +19,14 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.InteropServices;
+using System.Threading.Tasks;
 using ThriftTest;
 
 namespace Client
 {
     public class Program
     {
-        public static int Main(string[] args)
+        static async Task<int> Main(string[] args)
         {
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
@@ -46,15 +47,15 @@ namespace Client
                 case "client":  // crosstest wants to pass this, so just emit a hint and ignore
                     Console.WriteLine("Hint: The 'client' argument is no longer required.");
                     argslist.RemoveAt(0);
-                    return TestClient.Execute(argslist);
+                    return await TestClient.Execute(argslist);
                 case "--performance":
                 case "--performance-test":
-                    return Tests.PerformanceTests.Execute();
+                    return await Tests.PerformanceTests.Execute();
                 case "--help":
                     PrintHelp();
                     return 0;
                 default:
-                    return TestClient.Execute(argslist);
+                    return await TestClient.Execute(argslist);
             }
         }
 
