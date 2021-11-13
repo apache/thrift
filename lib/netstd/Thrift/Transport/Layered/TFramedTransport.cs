@@ -99,6 +99,7 @@ namespace Thrift.Transport
             ArraySegment<byte> bufSegment;
             ReadBuffer.TryGetBuffer(out bufSegment);
             await InnerTransport.ReadAllAsync(bufSegment.Array, 0, size, cancellationToken);
+            UpdateKnownMessageSize(-1);
         }
 
         public override async Task WriteAsync(byte[] buffer, int offset, int length, CancellationToken cancellationToken)
