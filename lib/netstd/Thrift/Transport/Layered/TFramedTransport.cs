@@ -86,6 +86,7 @@ namespace Thrift.Transport
 
         private async ValueTask ReadFrameAsync(CancellationToken cancellationToken)
         {
+            UpdateKnownMessageSize(-1);
             await InnerTransport.ReadAllAsync(HeaderBuf, 0, HeaderSize, cancellationToken);
             int size = BinaryPrimitives.ReadInt32BigEndian(HeaderBuf);
 
