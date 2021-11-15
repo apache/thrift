@@ -43,7 +43,7 @@ class TProcessPoolServer(TServer):
         self.postForkCallback = None
 
     def __getstate__(self):
-        state=self.__dict__.copy()
+        state = self.__dict__.copy()
         state['workers'] = None
         return state
 
