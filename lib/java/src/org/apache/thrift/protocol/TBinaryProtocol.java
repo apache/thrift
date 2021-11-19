@@ -23,6 +23,7 @@ import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 
 import org.apache.thrift.TException;
+import org.apache.thrift.partial.TFieldData;
 import org.apache.thrift.transport.TTransport;
 import org.apache.thrift.transport.TTransportException;
 
@@ -485,5 +486,54 @@ public class TBinaryProtocol extends TProtocol {
       case 15: return 4;  // element count List sizeof(int)
       default: throw new TTransportException(TTransportException.UNKNOWN, "unrecognized type code");
     }
+  }
+  // -----------------------------------------------------------------
+  // Additional methods to improve performance.
+
+  @Override
+  public int readFieldBeginData() throws TException {
+    byte type = this.readByte();
+    if (type == TType.STOP) {
+      return TFieldData.encode(type);
+    }
+
+    short id = this.readI16();
+    return TFieldData.encode(type, id);
+  }
+
+  @Override
+  protected void skipBool() throws TException {
+    this.skipBytes(1);
+  }
+
+  @Override
+  protected void skipByte() throws TException {
+    this.skipBytes(1);
+  }
+
+  @Override
+  protected void skipI16() throws TException {
+    this.skipBytes(2);
+  }
+
+  @Override
+  protected void skipI32() throws TException {
+    this.skipBytes(4);
+  }
+
+  @Override
+  protected void skipI64() throws TException {
+    this.skipBytes(8);
+  }
+
+  @Override
+  protected void skipDouble() throws TException {
+    this.skipBytes(8);
+  }
+
+  @Override
+  protected void skipBinary() throws TException {
+    int size = readI32();
+    this.skipBytes(size);
   }
 }
