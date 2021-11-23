@@ -13,7 +13,7 @@ Moreover, this blog provides some performance numbers and addtional information:
 
 ### Motivation
 
-The main motivation behind implementing this feature is to improve performance when we need to access only a subset of fields in any Thrift object. This situation arises often when big data is stored in Thrift encoded format (for example, SequenceFile with serialized Thrift values). Many data processing jobs may access this data. However, not every job needs to access every field of each object. In such cases, if we have prior knowledge of the fields needed for a given job, we can deserialize only that subset of fields and avoid the cost deserializing the rest of the fields. There are two benefits of this approach: we save cpu cycles by not deserializing unnecessary field and we end up reducing gc pressure. Both of the savings quickly add up when processing billions of instances in a data processing job.
+The main motivation behind implementing this feature is to improve performance when we need to access only a subset of fields in any Thrift object. This situation arises often when big data is stored in Thrift encoded format (for example, SequenceFile with serialized Thrift values). Many data processing jobs may access this data. However, not every job needs to access every field of each object. In such cases, if we have prior knowledge of the fields needed for a given job, we can deserialize only that subset of fields and avoid the cost deserializing the rest of the fields. There are two benefits of this approach: we save cpu cycles by not deserializing unnecessary fields and we end up reducing gc pressure. Both of the savings quickly add up when processing billions of instances in a data processing job.
 
 ### Partial deserialization
 
@@ -48,7 +48,7 @@ For the Thrift `struct`, each of the following line shows a fully qualified fiel
 - structField.i16Value
 ```
 
-Note that the syntax of denoting paths involving map fields do not support a way to define sub-fields of the key type.
+Note that the syntax of denoting paths involving map fields do not support a way to define sub-fields of the key type. However, that limitation can be addressed in future by amending the syntax in a backword compatible way.
 
 For example, the field path `structMap.stringValue` shown above has leaf segment `stringValue` which is a field in map values.
 
@@ -61,19 +61,17 @@ The process of partial deserialization involves the following major components. 
 Source files:
 - ThriftField.java
 - ThriftMetadata.java
+- TDeserializer.java
 
-We saw in the previous section how we can identify the subset of fields to deserialize. As the first step, we need to compile the collection of field definitions into an efficient data structure that we can traverse at runtime. This step is achieved using `ThriftField` and `ThriftMetadata` classes. For example,
+We saw in the previous section how we can identify the subset of fields to deserialize. As the first step, we need to compile the collection of field definitions into an internal efficient data structure that we can traverse at runtime. The compilation takes place internally when one creates an instance of TDeserializer using a constructor that accepts a list of field names.
 
 ```Java
 // First, create a collection of fully qualified field names.
 List<String> fieldNames = Arrays.asList("i16Field", "structField.i16Value");
 
-// Convert the flat collection into an n-ary tree of fields.
-List<ThriftField> fields = ThriftField.fromNames(fieldNames);
-
-// Compile the tree of fields into internally used metadata.
-ThriftMetadata.ThriftStruct metadata =
-    ThriftMetadata.ThriftStruct.fromFields(TestStruct.class, fields);
+// Create an instance of TDeserializer that supports partial deserialization.
+TDeserializer deserializer =
+    new TDeserializer(TestStruct.class, fieldNames, new TBinaryProtocol.Factory());
 ```
 
 At this point, we have an efficient internal representation of the fields that need to get deserialized.
@@ -81,18 +79,20 @@ At this point, we have an efficient internal representation of the fields that n
 ### Partial Thrift Protocol
 
 Source files:
-- PartialThriftProtocol.java
-- PartialThriftBinaryProtocol.java
-- PartialThriftCompactProtocol.java
+- TProtocol.java
+- TBinaryProtocol.java
+- TCompactProtocol.java
 
-This component implements efficient skipping over fields that need not be deserialized. Note that this skipping is more efficient compared to that achieved by using `TProtocolUtil.skip()`. The latter calls the corresponding `read()`, allocates and initializes certain values (for example, strings) and then discards the returned value. In comparison, `PartialThriftProtocol` skips a field by incrementing internal offset into the transport buffer.
+This component implements efficient skipping over fields that need not be deserialized. The functionality to skip over fields has been added to the above protocols by addition of `skip*()` methods. The default implementation of each such method simply calls the corresponding `read*()` method in `TProtocol.java`. A derived protocol (for example, `TBinaryProtocol`) provides a more efficient implementation of each `skip*()` method.
+
+For example, `TBinaryProtocol` skips a field by incrementing internal offset into the transport buffer.
 
 ### Partial Thrift Deserializer
 
 Source files:
-- PartialThriftDeserializer.java
+- TDeserializer.java
 
-This component, traverses a serialized blob sequentially one field at a time. At the beginning of each field, it consults the informations stored in `ThriftMetadata` to see if that field needs to be deserialized. If yes, then the field is deserialized into a value as would normally take place during regular deserialization process. If that field is not in the target subset then the deserializer calls `PartialThriftProtocol` to efficiently skip over that field.
+This component, traverses a serialized blob sequentially one field at a time. At the beginning of each field, it consults the informations stored in the compiled `ThriftMetadata` to see if that field needs to be deserialized. If yes, then the field is deserialized into a value as would normally take place during regular deserialization process. If that field is not in the target subset then the deserializer efficiently skips over that field.
 
 ### Field Value Processor
 
