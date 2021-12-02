@@ -236,17 +236,6 @@ public class ThriftMetadata {
           throw unsupportedFieldTypeException(fieldType);
       }
     }
-
-    private ThriftStruct getParentStruct() {
-      ThriftObject tparent = parent;
-      while (tparent != null) {
-        if (tparent instanceof ThriftStruct) {
-          return (ThriftStruct) tparent;
-        }
-        tparent = tparent.parent;
-      }
-      return null;
-    }
   }
 
   public static class ThriftEnum extends ThriftObject {

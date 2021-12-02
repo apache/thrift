@@ -267,13 +267,15 @@ public class PartialThriftComparer<T extends TBase> {
       return false;
     }
 
-    for (Object k1 : m1.keySet()) {
+    for (Map.Entry e1 : m1.entrySet()) {
+      Object k1 = e1.getKey();
+
       if (!m2.containsKey(k1)) {
         appendResult(data, sb, "Key %s in m1 not found in m2", k1);
         return false;
       }
 
-      Object v1 = m1.get(k1);
+      Object v1 = e1.getValue();
       Object v2 = m2.get(k1);
       if (!this.areEqual(data.valueData, v1, v2, sb)) {
         return false;
