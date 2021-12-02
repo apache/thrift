@@ -680,20 +680,6 @@ public class TDeserializer {
     return this.processor_.prepareEnum(enumClass, ordinal);
   }
 
-  private <T extends TBase> T createNewStruct(ThriftMetadata.ThriftStruct data) {
-    T instance = null;
-
-    try {
-      instance = (T) this.getStructClass(data).newInstance();
-    } catch (InstantiationException e) {
-      throw new RuntimeException(e);
-    } catch (IllegalAccessException e) {
-      throw new RuntimeException(e);
-    }
-
-    return instance;
-  }
-
   private <T extends TBase> Class<T> getStructClass(ThriftMetadata.ThriftStruct data) {
     return (Class<T>) ((StructMetaData) data.data.valueMetaData).structClass;
   }
