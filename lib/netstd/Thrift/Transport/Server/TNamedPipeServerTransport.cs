@@ -329,7 +329,7 @@ namespace Thrift.Transport.Server
                 var nBytes = Math.Min(15 * 4096, length); // 16 would exceed the limit
                 while (nBytes > 0)
                 {
-#if NET5_0
+#if NET5_0_OR_GREATER
                     await PipeStream.WriteAsync(buffer.AsMemory(offset, nBytes), cancellationToken);
 #else
                     await PipeStream.WriteAsync(buffer, offset, nBytes, cancellationToken);
