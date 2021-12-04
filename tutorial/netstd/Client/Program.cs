@@ -39,10 +39,25 @@ using shared;
 
 namespace Client
 {
+    public static class LoggingHelper
+    {
+        public static ILoggerFactory LogFactory { get; } = LoggerFactory.Create(builder => {
+            ConfigureLogging(builder);
+        });
+
+        public static void ConfigureLogging(ILoggingBuilder logging)
+        {
+            logging.SetMinimumLevel(LogLevel.Trace);
+            logging.AddConsole();
+            logging.AddDebug();
+        }
+
+        public static ILogger<T> CreateLogger<T>() => LogFactory.CreateLogger<T>();
+    }
+
     public class Program
     {
-        private static readonly ServiceCollection ServiceCollection = new();
-        private static ILogger Logger;
+        private static readonly ILogger Logger = LoggingHelper.CreateLogger<Program>();
         private static readonly TConfiguration Configuration = null;  // new TConfiguration() if  needed
 
         private static void DisplayHelp()
@@ -86,47 +101,35 @@ Sample:
         {
             args ??= Array.Empty<string>();
 
-            ServiceCollection.AddLogging(logging => ConfigureLogging(logging));
-            using (var serviceProvider = ServiceCollection.BuildServiceProvider())
+            if (args.Any(x => x.StartsWith("-help", StringComparison.OrdinalIgnoreCase)))
             {
-                Logger = serviceProvider.GetService<ILoggerFactory>().CreateLogger(nameof(Client));
+                DisplayHelp();
+                return;
+            }
 
-                if (args.Any(x => x.StartsWith("-help", StringComparison.OrdinalIgnoreCase)))
-                {
-                    DisplayHelp();
-                    return;
-                }
+            Logger.LogInformation("Starting client...");
 
-                Logger.LogInformation("Starting client...");
-
-                using (var source = new CancellationTokenSource())
-                {
-                    RunAsync(args, source.Token).GetAwaiter().GetResult();
-                }
+            using (var source = new CancellationTokenSource())
+            {
+                RunAsync(args, source.Token).GetAwaiter().GetResult();
             }
         }
 
-        private static void ConfigureLogging(ILoggingBuilder logging)
-        {
-            logging.SetMinimumLevel(LogLevel.Trace);
-            logging.AddConsole();
-            logging.AddDebug();
-        }
-
+        
         private static async Task RunAsync(string[] args, CancellationToken cancellationToken)
         {
             var numClients = GetNumberOfClients(args);
 
-            Logger.LogInformation($"Selected # of clients: {numClients}");
+            Logger.LogInformation("Selected # of clients: {numClients}", numClients);
 
             var transport = GetTransport(args);
-            Logger.LogInformation($"Selected client transport: {transport}");
+            Logger.LogInformation("Selected client transport: {transport}", transport);
 
             var protocol = MakeProtocol( args, MakeTransport(args));
-            Logger.LogInformation($"Selected client protocol: {GetProtocol(args)}");
+            Logger.LogInformation("Selected client protocol: {GetProtocol(args)}", GetProtocol(args));
 
             var mplex = GetMultiplex(args);
-            Logger.LogInformation("Multiplex " + (mplex ? "yes" : "no"));
+            Logger.LogInformation("Multiplex {mplex}", mplex);
 
             var tasks = new Task[numClients];
             for (int i = 0; i < numClients; i++)
@@ -240,7 +243,7 @@ Sample:
         {
             var numClients = args.FirstOrDefault(x => x.StartsWith("-mc"))?.Split(':')?[1];
 
-            Logger.LogInformation($"Selected # of clients: {numClients}");
+            Logger.LogInformation("Selected # of clients: {numClients}", numClients);
 
             if (int.TryParse(numClients, out int c) && (0 < c) && (c <= 100))
                 return c;
@@ -310,7 +313,7 @@ Sample:
                 }
                 catch (Exception ex)
                 {
-                    Logger.LogError(ex.ToString());
+                    Logger.LogError("{ex}",ex);
                 }
                 finally
                 {
@@ -319,7 +322,7 @@ Sample:
             }
             catch (TApplicationException x)
             {
-                Logger.LogError(x.ToString());
+                Logger.LogError("{x}",x);
             }
         }
 
@@ -329,12 +332,12 @@ Sample:
 
             // Async version
 
-            Logger.LogInformation($"{client.ClientId} Ping()");
+            Logger.LogInformation("{client.ClientId} Ping()", client.ClientId);
             await client.ping(cancellationToken);
 
-            Logger.LogInformation($"{client.ClientId} Add(1,1)");
+            Logger.LogInformation("{client.ClientId} Add(1,1)", client.ClientId);
             var sum = await client.add(1, 1, cancellationToken);
-            Logger.LogInformation($"{client.ClientId} Add(1,1)={sum}");
+            Logger.LogInformation("{client.ClientId} Add(1,1)={sum}", client.ClientId, sum);
 
             var work = new Work
             {
@@ -345,13 +348,13 @@ Sample:
 
             try
             {
-                Logger.LogInformation($"{client.ClientId} Calculate(1)");
+                Logger.LogInformation("{client.ClientId} Calculate(1)", client.ClientId);
                 await client.calculate(1, work, cancellationToken);
-                Logger.LogInformation($"{client.ClientId} Whoa we can divide by 0");
+                Logger.LogInformation("{client.ClientId} Whoa we can divide by 0", client.ClientId);
             }
             catch (InvalidOperation io)
             {
-                Logger.LogInformation($"{client.ClientId} Invalid operation: " + io);
+                Logger.LogInformation("{client.ClientId} Invalid operation: {io}", client.ClientId, io);
             }
 
             work.Op = Operation.SUBTRACT;
@@ -360,20 +363,20 @@ Sample:
 
             try
             {
-                Logger.LogInformation($"{client.ClientId} Calculate(1)");
+                Logger.LogInformation("{client.ClientId} Calculate(1)", client.ClientId);
                 var diff = await client.calculate(1, work, cancellationToken);
-                Logger.LogInformation($"{client.ClientId} 15-10={diff}");
+                Logger.LogInformation("{client.ClientId} 15-10={diff}", client.ClientId, diff);
             }
             catch (InvalidOperation io)
             {
-                Logger.LogInformation($"{client.ClientId} Invalid operation: " + io);
+                Logger.LogInformation("{client.ClientId} Invalid operation: {io}", client.ClientId, io);
             }
 
-            Logger.LogInformation($"{client.ClientId} GetStruct(1)");
+            Logger.LogInformation("{client.ClientId} GetStruct(1)", client.ClientId);
             var log = await client.getStruct(1, cancellationToken);
-            Logger.LogInformation($"{client.ClientId} Check log: {log.Value}");
+            Logger.LogInformation("{client.ClientId} Check log: {log.Value}", client.ClientId, log.Value);
 
-            Logger.LogInformation($"{client.ClientId} Zip() with delay 100mc on server side");
+            Logger.LogInformation("{client.ClientId} Zip() with delay 100mc on server side", client.ClientId);
             await client.zip(cancellationToken);
         }
 

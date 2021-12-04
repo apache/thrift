@@ -102,10 +102,10 @@ ENV PATH /usr/lib/dart/bin:$PATH
 # project isn't ready for this quite yet:
 # RUN apt-get install -y --no-install-recommends \
 # `# dotnet core dependencies` \
-#       dotnet-sdk-5.0 \
-#       dotnet-runtime-5.0 \
-#       aspnetcore-runtime-5.0 \
-#       dotnet-apphost-pack-5.0
+#       dotnet-sdk-6.0 \
+#       dotnet-runtime-6.0 \
+#       aspnetcore-runtime-6.0 \
+#       dotnet-apphost-pack-6.0
 
 RUN apt-get install -y --no-install-recommends \
 `# Erlang dependencies` \
