@@ -28,6 +28,8 @@ using System.Threading.Tasks;
 using System.Diagnostics;
 using Thrift.Transport;
 
+#pragma warning disable CS1998  // no await in async method
+
 namespace Client.Tests
 {
     public class PerformanceTests
@@ -37,9 +39,9 @@ namespace Client.Tests
         private TMemoryBufferTransport MemBuffer;
         private TTransport Transport;
         private LayeredChoice Layered;
-        private readonly TConfiguration Configuration = new TConfiguration();
+        private readonly TConfiguration Configuration = new();
 
-        internal static int Execute()
+        internal static async Task<int> Execute()
         {
             var instance = new PerformanceTests();
             instance.ProtocolPeformanceTestAsync().Wait();

@@ -728,7 +728,7 @@ public class TCompactProtocol extends TProtocol {
     }
 
     getTransport().checkReadBytesAvailable(length);
-    
+
     if (stringLengthLimit_ != NO_LENGTH_LIMIT && length > stringLengthLimit_) {
       throw new TProtocolException(TProtocolException.SIZE_LIMIT,
                                    "Length exceeded max allowed: " + length);
@@ -941,5 +941,13 @@ public class TCompactProtocol extends TProtocol {
           default:
               throw new TTransportException(TTransportException.UNKNOWN, "unrecognized type code");
       }
+  }
+  // -----------------------------------------------------------------
+  // Additional methods to improve performance.
+
+  @Override
+  protected void skipBinary() throws TException {
+    int size = intToZigZag(readI32());
+    this.skipBytes(size);
   }
 }

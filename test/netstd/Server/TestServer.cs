@@ -500,13 +500,11 @@ namespace ThriftTest
                 return Task.FromResult(result);
             }
 
-            public Task testOneway(int secondsToSleep, CancellationToken cancellationToken)
+            public async Task testOneway(int secondsToSleep, CancellationToken cancellationToken)
             {
                 logger.Invoke("testOneway({0}), sleeping...", secondsToSleep);
-                Task.Delay(secondsToSleep * 1000, cancellationToken).GetAwaiter().GetResult();
+                await Task.Delay(secondsToSleep * 1000, cancellationToken);
                 logger.Invoke("testOneway finished");
-
-                return Task.CompletedTask;
             }
         }
 
@@ -543,7 +541,7 @@ namespace ThriftTest
             return cert;
         }
 
-        public static int Execute(List<string> args)
+        public static async Task<int> Execute(List<string> args)
         {
             using (var loggerFactory = new LoggerFactory()) //.AddConsole().AddDebug();
             {
@@ -648,7 +646,7 @@ namespace ThriftTest
                                       (param.protocol == ProtocolChoice.Compact ? " with compact protocol" : "") +
                                       (param.protocol == ProtocolChoice.Json ? " with json protocol" : "") +
                                       "...");
-                    serverEngine.ServeAsync(CancellationToken.None).GetAwaiter().GetResult();
+                    await serverEngine.ServeAsync(CancellationToken.None);
                     Console.ReadLine();
                 }
                 catch (Exception x)

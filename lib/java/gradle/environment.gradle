@@ -69,6 +69,7 @@ dependencies {
     compile "org.apache.httpcomponents:httpcore:${httpcoreVersion}"
     compile "javax.servlet:javax.servlet-api:${servletVersion}"
     compile "javax.annotation:javax.annotation-api:${javaxAnnotationVersion}"
+    compile "org.apache.commons:commons-lang3:3.12.0"
 
     testCompile "junit:junit:${junitVersion}"
     testCompile "org.mockito:mockito-all:${mockitoVersion}"

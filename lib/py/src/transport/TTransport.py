@@ -397,6 +397,7 @@ class TSaslClientTransport(TTransportBase, CReadableTransport):
                     TTransportException.NOT_OPEN,
                     "Bad SASL negotiation status: %d (%s)"
                     % (status, challenge))
+
     def isOpen(self):
         return self.transport.isOpen()
 

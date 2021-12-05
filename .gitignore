@@ -198,6 +198,8 @@ project.lock.json
 /lib/dart/**/packages
 /lib/dart/**/.pub/
 /lib/dart/**/pubspec.lock
+/lib/delphi/*.local
+/lib/delphi/*.identcache
 /lib/delphi/test/skip/bin
 /lib/delphi/test/serializer/*.dat
 /lib/delphi/**/*.identcache

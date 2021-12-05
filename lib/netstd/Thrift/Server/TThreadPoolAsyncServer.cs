@@ -105,7 +105,7 @@ namespace Thrift.Server
                      TTransportFactory outputTransportFactory,
                      TProtocolFactory inputProtocolFactory,
                      TProtocolFactory outputProtocolFactory,
-                     int minThreadPoolThreads, int maxThreadPoolThreads, ILogger logger= null)
+                     int minThreadPoolThreads, int maxThreadPoolThreads, ILogger logger = null)
             : this(processorFactory, serverTransport, inputTransportFactory, outputTransportFactory,
              inputProtocolFactory, outputProtocolFactory,
              new Configuration(minThreadPoolThreads, maxThreadPoolThreads),
@@ -245,9 +245,9 @@ namespace Thrift.Server
                             connectionContext = await ServerEventHandler.CreateContextAsync(inputProtocol, outputProtocol, cancellationToken);
 
                         //Process client requests until client disconnects
-                        while (!stop)
+                        while (!(stop || cancellationToken.IsCancellationRequested))
                         {
-                            if (! await inputTransport.PeekAsync(cancellationToken))
+                            if (!await inputTransport.PeekAsync(cancellationToken))
                                 break;
 
                             //Fire processContext server event
@@ -258,7 +258,7 @@ namespace Thrift.Server
                                 await ServerEventHandler.ProcessContextAsync(connectionContext, inputTransport, cancellationToken);
 
                             //Process client request (blocks until transport is readable)
-                            if (! await processor.ProcessAsync(inputProtocol, outputProtocol, cancellationToken))
+                            if (!await processor.ProcessAsync(inputProtocol, outputProtocol, cancellationToken))
                                 break;
                         }
                     }

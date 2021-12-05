@@ -42,6 +42,11 @@ class TProcessPoolServer(TServer):
         self.stopCondition = Condition()
         self.postForkCallback = None
 
+    def __getstate__(self):
+        state = self.__dict__.copy()
+        state['workers'] = None
+        return state
+
     def setPostForkCallback(self, callback):
         if not callable(callback):
             raise TypeError("This is not a callback!")

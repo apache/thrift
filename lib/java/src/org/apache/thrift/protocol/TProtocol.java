@@ -22,6 +22,7 @@ package org.apache.thrift.protocol;
 import java.nio.ByteBuffer;
 
 import org.apache.thrift.TException;
+import org.apache.thrift.partial.TFieldData;
 import org.apache.thrift.scheme.IScheme;
 import org.apache.thrift.scheme.StandardScheme;
 import org.apache.thrift.transport.TTransport;
@@ -179,5 +180,151 @@ public abstract class TProtocol {
    */
   public Class<? extends IScheme> getScheme() {
     return StandardScheme.class;
+  }
+
+  // -----------------------------------------------------------------
+  // Additional methods to improve performance.
+
+  public int readFieldBeginData() throws TException {
+    // Derived classes should provide a more efficient version of this
+    // method if allowed by the encoding used by that protocol.
+    TField tfield = this.readFieldBegin();
+    return TFieldData.encode(tfield.type, tfield.id);
+  }
+
+  public void skip(byte fieldType) throws TException {
+    this.skip(fieldType, Integer.MAX_VALUE);
+  }
+
+  public void skip(byte fieldType, int maxDepth) throws TException {
+    if (maxDepth <= 0) {
+      throw new TException("Maximum skip depth exceeded");
+    }
+
+    switch (fieldType) {
+      case TType.BOOL:
+        this.skipBool();
+        break;
+
+      case TType.BYTE:
+        this.skipByte();
+        break;
+
+      case TType.I16:
+        this.skipI16();
+        break;
+
+      case TType.I32:
+        this.skipI32();
+        break;
+
+      case TType.I64:
+        this.skipI64();
+        break;
+
+      case TType.DOUBLE:
+        this.skipDouble();
+        break;
+
+      case TType.STRING:
+        this.skipBinary();
+        break;
+
+      case TType.STRUCT:
+        this.readStructBegin();
+        while (true) {
+          int tfieldData = this.readFieldBeginData();
+          byte tfieldType = TFieldData.getType(tfieldData);
+          if (tfieldType == TType.STOP) {
+            break;
+          }
+          this.skip(tfieldType, maxDepth - 1);
+          this.readFieldEnd();
+        }
+        this.readStructEnd();
+        break;
+
+      case TType.MAP:
+        TMap map = this.readMapBegin();
+        for (int i = 0; i < map.size; i++) {
+          this.skip(map.keyType, maxDepth - 1);
+          this.skip(map.valueType, maxDepth - 1);
+        }
+        this.readMapEnd();
+        break;
+
+      case TType.SET:
+        TSet set = this.readSetBegin();
+        for (int i = 0; i < set.size; i++) {
+          this.skip(set.elemType, maxDepth - 1);
+        }
+        this.readSetEnd();
+        break;
+
+      case TType.LIST:
+        TList list = this.readListBegin();
+        for (int i = 0; i < list.size; i++) {
+          this.skip(list.elemType, maxDepth - 1);
+        }
+        this.readListEnd();
+        break;
+
+      default:
+        throw new TProtocolException(
+            TProtocolException.INVALID_DATA, "Unrecognized type " + fieldType);
+    }
+  }
+
+  /**
+   * The default implementation of all skip() methods calls the corresponding read() method.
+   * Protocols that derive from this class are strongly encouraged to provide
+   * a more efficient alternative.
+   */
+
+  protected void skipBool() throws TException {
+    this.readBool();
+  }
+
+  protected void skipByte() throws TException {
+    this.readByte();
+  }
+
+  protected void skipI16() throws TException {
+    this.readI16();
+  }
+
+  protected void skipI32() throws TException {
+    this.readI32();
+  }
+
+  protected void skipI64() throws TException {
+    this.readI64();
+  }
+
+  protected void skipDouble() throws TException {
+    this.readDouble();
+  }
+
+  protected void skipBinary() throws TException {
+    this.readBinary();
+  }
+
+  static final int MAX_SKIPPED_BYTES = 256;
+  protected byte[] skippedBytes = new byte[MAX_SKIPPED_BYTES];
+
+  protected void skipBytes(int numBytes) throws TException {
+    if (numBytes <= MAX_SKIPPED_BYTES) {
+      if (this.getTransport().getBytesRemainingInBuffer() >= numBytes) {
+        this.getTransport().consumeBuffer(numBytes);
+      } else {
+        this.getTransport().readAll(skippedBytes, 0, numBytes);
+      }
+    } else {
+      int remaining = numBytes;
+      while (remaining > 0) {
+        skipBytes(Math.min(remaining, MAX_SKIPPED_BYTES));
+        remaining -= MAX_SKIPPED_BYTES;
+      }
+    }
   }
 }
