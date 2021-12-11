@@ -16,7 +16,11 @@
 # specific language governing permissions and limitations
 # under the License.
 #
- 
+
+struct Message {
+   1: optional string body,
+   2: optional i64 num,
+}
 
 service TestServer{
 	string add_and_get_msg(1:string msg)
