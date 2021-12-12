@@ -297,7 +297,7 @@ private:
    * True if we should generate new-style classes.
    */
   bool gen_newstyle_;
-  bool gen_enum_;
+  bool gen_enum_{false};
 
   /**
   * True if we should generate dynamic style classes.
