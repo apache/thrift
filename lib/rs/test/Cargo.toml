@@ -7,7 +7,7 @@ authors = ["Apache Thrift Developers <dev@thrift.apache.org>"]
 publish = false
 
 [dependencies]
-clap = "2.33"
+clap = "~2.33"
 bitflags = "=1.2"
 
 [dependencies.thrift]
