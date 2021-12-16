@@ -248,7 +248,10 @@
         "TestServer.py",
         "--verbose",
         "--genpydir=gen-py"
-      ]
+      ],
+      "env": {
+        "PYTHONWARNINGS": "error"
+      }
     },
     "client": {
       "timeout": 10,
@@ -257,7 +260,10 @@
         "--verbose",
         "--host=localhost",
         "--genpydir=gen-py"
-      ]
+      ],
+      "env": {
+        "PYTHONWARNINGS": "error"
+      }
     },
     "transports": [
       "buffered",
@@ -298,7 +304,10 @@
         "TestServer.py",
         "--verbose",
         "--genpydir=gen-py"
-      ]
+      ],
+      "env": {
+        "PYTHONWARNINGS": "error"
+      }
     },
     "client": {
       "timeout": 10,
@@ -307,7 +316,10 @@
         "TestClient.py",
         "--host=localhost",
         "--genpydir=gen-py"
-      ]
+      ],
+      "env": {
+        "PYTHONWARNINGS": "error"
+      }
     },
     "transports": [
       "buffered",
