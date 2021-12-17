@@ -36,10 +36,10 @@ type TFramedTransport struct {
 
 	cfg *TConfiguration
 
-	writeBuf bytes.Buffer
+	writeBuf *bytes.Buffer
 
 	reader  *bufio.Reader
-	readBuf bytes.Buffer
+	readBuf *bytes.Buffer
 
 	buffer [4]byte
 }
@@ -129,18 +129,29 @@ func (p *TFramedTransport) Close() error {
 }
 
 func (p *TFramedTransport) Read(buf []byte) (read int, err error) {
-	read, err = p.readBuf.Read(buf)
-	if err != io.EOF {
-		return
-	}
+	defer func() {
+		// Make sure we return the read buffer back to pool
+		// after we finished reading from it.
+		if p.readBuf != nil && p.readBuf.Len() == 0 {
+			returnBufToPool(&p.readBuf)
+		}
+	}()
 
-	// For bytes.Buffer.Read, EOF would only happen when read is zero,
-	// but still, do a sanity check,
-	// in case that behavior is changed in a future version of go stdlib.
-	// When that happens, just return nil error,
-	// and let the caller call Read again to read the next frame.
-	if read > 0 {
-		return read, nil
+	if p.readBuf != nil {
+
+		read, err = p.readBuf.Read(buf)
+		if err != io.EOF {
+			return
+		}
+
+		// For bytes.Buffer.Read, EOF would only happen when read is zero,
+		// but still, do a sanity check,
+		// in case that behavior is changed in a future version of go stdlib.
+		// When that happens, just return nil error,
+		// and let the caller call Read again to read the next frame.
+		if read > 0 {
+			return read, nil
+		}
 	}
 
 	// Reaching here means that the last Read finished the last frame,
@@ -162,31 +173,39 @@ func (p *TFramedTransport) ReadByte() (c byte, err error) {
 	return
 }
 
+func (p *TFramedTransport) ensureWriteBufferBeforeWrite() {
+	if p.writeBuf == nil {
+		p.writeBuf = getBufFromPool()
+	}
+}
+
 func (p *TFramedTransport) Write(buf []byte) (int, error) {
+	p.ensureWriteBufferBeforeWrite()
 	n, err := p.writeBuf.Write(buf)
 	return n, NewTTransportExceptionFromError(err)
 }
 
 func (p *TFramedTransport) WriteByte(c byte) error {
+	p.ensureWriteBufferBeforeWrite()
 	return p.writeBuf.WriteByte(c)
 }
 
 func (p *TFramedTransport) WriteString(s string) (n int, err error) {
+	p.ensureWriteBufferBeforeWrite()
 	return p.writeBuf.WriteString(s)
 }
 
 func (p *TFramedTransport) Flush(ctx context.Context) error {
+	defer returnBufToPool(&p.writeBuf)
 	size := p.writeBuf.Len()
 	buf := p.buffer[:4]
 	binary.BigEndian.PutUint32(buf, uint32(size))
 	_, err := p.transport.Write(buf)
 	if err != nil {
-		p.writeBuf.Reset()
 		return NewTTransportExceptionFromError(err)
 	}
 	if size > 0 {
-		if _, err := io.Copy(p.transport, &p.writeBuf); err != nil {
-			p.writeBuf.Reset()
+		if _, err := io.Copy(p.transport, p.writeBuf); err != nil {
 			return NewTTransportExceptionFromError(err)
 		}
 	}
@@ -195,6 +214,11 @@ func (p *TFramedTransport) Flush(ctx context.Context) error {
 }
 
 func (p *TFramedTransport) readFrame() error {
+	if p.readBuf != nil {
+		returnBufToPool(&p.readBuf)
+	}
+	p.readBuf = getBufFromPool()
+
 	buf := p.buffer[:4]
 	if _, err := io.ReadFull(p.reader, buf); err != nil {
 		return err
@@ -203,11 +227,14 @@ func (p *TFramedTransport) readFrame() error {
 	if size > uint32(p.cfg.GetMaxFrameSize()) {
 		return NewTTransportException(UNKNOWN_TRANSPORT_EXCEPTION, fmt.Sprintf("Incorrect frame size (%d)", size))
 	}
-	_, err := io.CopyN(&p.readBuf, p.reader, int64(size))
+	_, err := io.CopyN(p.readBuf, p.reader, int64(size))
 	return NewTTransportExceptionFromError(err)
 }
 
 func (p *TFramedTransport) RemainingBytes() (num_bytes uint64) {
+	if p.readBuf == nil {
+		return 0
+	}
 	return uint64(p.readBuf.Len())
 }
 

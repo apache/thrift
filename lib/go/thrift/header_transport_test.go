@@ -325,7 +325,7 @@ func TestTHeaderTransportReuseTransport(t *testing.T) {
 			}
 
 			// read
-			read, err := io.ReadAll(reader)
+			read, err := io.ReadAll(oneAtATimeReader{reader})
 			if err != nil {
 				t.Errorf("Failed to read on #%d: %v", i, err)
 			}
@@ -348,15 +348,42 @@ func TestTHeaderTransportReuseTransport(t *testing.T) {
 
 		// read
 		for i := 0; i < n; i++ {
-			buf := make([]byte, len(content))
-			n, err := reader.Read(buf)
+			const (
+				size = len(content)
+			)
+			var buf []byte
+			var err error
+			if i%2 == 0 {
+				// on even calls, use oneAtATimeReader to make
+				// sure that small reads are fine
+				buf, err = io.ReadAll(io.LimitReader(oneAtATimeReader{reader}, int64(size)))
+			} else {
+				// on odd calls, make sure that we don't read
+				// more than written per frame
+				buf = make([]byte, size*2)
+				var n int
+				n, err = reader.Read(buf)
+				buf = buf[:n]
+			}
 			if err != nil {
 				t.Errorf("Failed to read on #%d: %v", i, err)
 			}
-			read := string(buf[:n])
-			if string(read) != content {
-				t.Errorf("Read #%d: want %q, got %q", i, content, read)
+			if string(buf) != content {
+				t.Errorf("Read #%d: want %q, got %q", i, content, buf)
 			}
 		}
 	})
+}
+
+type oneAtATimeReader struct {
+	io.Reader
+}
+
+// oneAtATimeReader forces every Read call to only read 1 byte out,
+// thus forces the underlying reader's Read to be called multiple times.
+func (o oneAtATimeReader) Read(buf []byte) (int, error) {
+	if len(buf) < 1 {
+		return o.Reader.Read(buf)
+	}
+	return o.Reader.Read(buf[:1])
 }
