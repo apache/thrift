@@ -1,0 +1,13 @@
+name: build
+on:
+  - pull_request
+
+jobs:
+  build:
+    name: Build
+    runs-on: macos-11
+    steps:
+      - uses: actions/checkout@v2
+      - run: ./bootstrap.sh
+      - run: ./configure --host=aarch64-apple-darwin
+      - run: make
