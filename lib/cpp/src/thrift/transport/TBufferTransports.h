@@ -269,6 +269,11 @@ public:
    */
   uint32_t readAll(uint8_t* buf, uint32_t len) { return TBufferBase::readAll(buf, len); }
 
+  uint32_t readEnd() override {
+    resetConsumedMessageSize();
+    return 0;
+  }
+
 protected:
   void initPointers() {
     setReadBuffer(rBuf_.get(), 0);
