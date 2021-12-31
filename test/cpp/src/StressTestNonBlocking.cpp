@@ -99,6 +99,9 @@ public:
   void echoList(vector<int8_t>& out, const vector<int8_t>& arg) override { out = arg; }
   void echoSet(set<int8_t>& out, const set<int8_t>& arg) override { out = arg; }
   void echoMap(map<int8_t, int8_t>& out, const map<int8_t, int8_t>& arg) override { out = arg; }
+  void echoBinary(string& out, const string& arg) override {
+    out = arg;
+  }
 
 private:
   count_map counts_;
