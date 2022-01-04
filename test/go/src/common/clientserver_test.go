@@ -75,7 +75,7 @@ func doUnit(t *testing.T, unit *test_unit) {
 		t.Errorf("Unable to start server: %v", err)
 		return
 	}
-	go server.AcceptLoop()
+	go server.Serve()
 	defer server.Stop()
 	client, trans, err := StartClient(unit.host, unit.port, unit.domain_socket, unit.transport, unit.protocol, unit.ssl)
 	if err != nil {
