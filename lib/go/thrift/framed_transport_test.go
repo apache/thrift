@@ -24,6 +24,7 @@ import (
 	"io"
 	"strings"
 	"testing"
+	"testing/iotest"
 )
 
 func TestFramedTransport(t *testing.T) {
@@ -51,7 +52,7 @@ func TestTFramedTransportReuseTransport(t *testing.T) {
 			}
 
 			// read
-			read, err := io.ReadAll(oneAtATimeReader{reader})
+			read, err := io.ReadAll(iotest.OneByteReader(reader))
 			if err != nil {
 				t.Errorf("Failed to read on #%d: %v", i, err)
 			}
@@ -80,9 +81,9 @@ func TestTFramedTransportReuseTransport(t *testing.T) {
 			var buf []byte
 			var err error
 			if i%2 == 0 {
-				// on even calls, use oneAtATimeReader to make
+				// on even calls, use OneByteReader to make
 				// sure that small reads are fine
-				buf, err = io.ReadAll(io.LimitReader(oneAtATimeReader{reader}, int64(size)))
+				buf, err = io.ReadAll(io.LimitReader(iotest.OneByteReader(reader), int64(size)))
 			} else {
 				// on odd calls, make sure that we don't read
 				// more than written per frame
