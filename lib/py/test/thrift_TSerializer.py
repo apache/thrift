@@ -53,17 +53,13 @@ class TestSerializer(unittest.TestCase):
             42, deserialize(Message(), serialized, factory).num
         )
 
-        self.assertRaises(EOFError, deserialize, Message(), None, factory)
         self.assertRaises(EOFError, deserialize, Message(), b'', factory)
-        self.assertRaises(TypeError, deserialize, Message(), "test",  factory)
-
 
     def test_TBinaryProtocol(self):
         buf = TTransport.TMemoryBuffer()
         transport = TTransport.TBufferedTransportFactory().getTransport(buf)
         factory = TBinaryProtocolFactory(transport)
         self.verify(self.binary_serialized, factory)
-
 
     def test_TBinaryProtocolAccelerated(self):
         buf = TTransport.TMemoryBuffer()
