@@ -220,15 +220,7 @@ func (p *TSSLSocket) IsOpen() bool {
 
 // Closes the socket.
 func (p *TSSLSocket) Close() error {
-	// Close the socket
-	if p.conn != nil {
-		err := p.conn.Close()
-		if err != nil {
-			return err
-		}
-		p.conn = nil
-	}
-	return nil
+	return p.conn.Close()
 }
 
 func (p *TSSLSocket) Read(buf []byte) (int, error) {

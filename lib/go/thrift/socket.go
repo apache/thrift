@@ -194,15 +194,7 @@ func (p *TSocket) IsOpen() bool {
 
 // Closes the socket.
 func (p *TSocket) Close() error {
-	// Close the socket
-	if p.conn != nil {
-		err := p.conn.Close()
-		if err != nil {
-			return err
-		}
-		p.conn = nil
-	}
-	return nil
+	return p.conn.Close()
 }
 
 //Returns the remote address of the socket.
