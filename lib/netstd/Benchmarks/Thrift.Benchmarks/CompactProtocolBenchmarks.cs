@@ -28,8 +28,8 @@ namespace Thrift.Benchmarks
     [MemoryDiagnoser]
     public class CompactProtocolBenchmarks
     {
-        private MemoryStream _Stream;
-        private TProtocol _Protocol;
+        private MemoryStream? _Stream;
+        private TProtocol? _Protocol;
 
         [Params(10000)]
         public int NumberOfOperationsPerIteration { get; set; }
@@ -45,16 +45,18 @@ namespace Thrift.Benchmarks
         [GlobalCleanup]
         public void GlobalCleanup()
         {
-            _Protocol.Dispose();
+            _Protocol?.Dispose();
         }
 
         [Benchmark]
         public async Task WriteString()
         {
+            if ((_Protocol is null) || (_Stream is null))
+                throw new System.Exception("unexpected internal state");
+
             for (int i = 0; i < NumberOfOperationsPerIteration; i++)
             {
                 await _Protocol.WriteStringAsync("Thrift String Benchmark");
-
                 _Stream.Seek(0, SeekOrigin.Begin);
             }
         }
@@ -62,12 +64,14 @@ namespace Thrift.Benchmarks
         [Benchmark]
         public async Task ReadString()
         {
+            if ((_Protocol is null) || (_Stream is null))
+                throw new System.Exception("unexpected internal state");
+
             await _Protocol.WriteStringAsync("Thrift String Benchmark");
 
             for (int i = 0; i < NumberOfOperationsPerIteration; i++)
             {
                 _Stream.Seek(0, SeekOrigin.Begin);
-
                 await _Protocol.ReadStringAsync();
             }
         }

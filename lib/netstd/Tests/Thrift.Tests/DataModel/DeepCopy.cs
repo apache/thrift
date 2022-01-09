@@ -24,6 +24,8 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 using OptReqDefTest;
 using Thrift.Collections;
 
+#nullable disable  // this is just test code, we leave it at that
+
 namespace Thrift.Tests.DataModel
 {
     // ReSharper disable once InconsistentNaming
@@ -289,7 +291,7 @@ namespace Thrift.Tests.DataModel
             return value;
         }
 
-        private List<Dictionary<sbyte, THashSet<Distance>>> ModifyValue(List<Dictionary<sbyte, THashSet<Distance>>> value)
+        private static List<Dictionary<sbyte, THashSet<Distance>>> ModifyValue(List<Dictionary<sbyte, THashSet<Distance>>> value)
         {
             if (value == null)
                 value = new List<Dictionary<sbyte, THashSet<Distance>>>();
@@ -325,7 +327,7 @@ namespace Thrift.Tests.DataModel
             return value;
         }
 
-        private THashSet<List<Distance>> ModifyValue(THashSet<List<Distance>> value)
+        private static THashSet<List<Distance>> ModifyValue(THashSet<List<Distance>> value)
         {
             if (value == null)
                 value = new THashSet<List<Distance>>();
@@ -342,7 +344,7 @@ namespace Thrift.Tests.DataModel
             return value;
         }
 
-        private Dictionary<Distance, Distance> ModifyValue(Dictionary<Distance, Distance> value)
+        private static Dictionary<Distance, Distance> ModifyValue(Dictionary<Distance, Distance> value)
         {
             if (value == null)
                 value = new Dictionary<Distance, Distance>();
@@ -352,7 +354,7 @@ namespace Thrift.Tests.DataModel
             return value;
         }
 
-        private THashSet<Distance> ModifyValue(THashSet<Distance> value)
+        private static THashSet<Distance> ModifyValue(THashSet<Distance> value)
         {
             if (value == null)
                 value = new THashSet<Distance>();
@@ -375,7 +377,7 @@ namespace Thrift.Tests.DataModel
             return value;
         }
 
-        private List<Distance> ModifyValue(List<Distance> value)
+        private static List<Distance> ModifyValue(List<Distance> value)
         {
             if (value == null)
                 value = new List<Distance>();
@@ -385,12 +387,12 @@ namespace Thrift.Tests.DataModel
             return value;
         }
 
-        private bool ModifyValue(bool value)
+        private static bool ModifyValue(bool value)
         {
             return !value;
         }
 
-        private Dictionary<sbyte, short> ModifyValue(Dictionary<sbyte, short> value)
+        private static Dictionary<sbyte, short> ModifyValue(Dictionary<sbyte, short> value)
         {
             if (value == null)
                 value = new Dictionary<sbyte, short>();
@@ -398,7 +400,7 @@ namespace Thrift.Tests.DataModel
             return value;
         }
 
-        private THashSet<long> ModifyValue(THashSet<long> value)
+        private static THashSet<long> ModifyValue(THashSet<long> value)
         {
             if (value == null)
                 value = new THashSet<long>();
@@ -406,7 +408,7 @@ namespace Thrift.Tests.DataModel
             return value;
         }
 
-        private List<int> ModifyValue(List<int> value)
+        private static List<int> ModifyValue(List<int> value)
         {
             if (value == null)
                 value = new List<int>();
@@ -414,7 +416,7 @@ namespace Thrift.Tests.DataModel
             return value;
         }
 
-        private byte[] ModifyValue(byte[] value)
+        private static byte[] ModifyValue(byte[] value)
         {
             if (value == null)
                 value = new byte[1] { 0 };
@@ -423,27 +425,27 @@ namespace Thrift.Tests.DataModel
             return value;
         }
 
-        private string ModifyValue(string value)
+        private static string ModifyValue(string value)
         {
             return value + "1";
         }
 
-        private double ModifyValue(double value)
+        private static double ModifyValue(double value)
         {
             return value + 1.1;
         }
 
-        private short ModifyValue(short value)
+        private static short ModifyValue(short value)
         {
             return ++value;
         }
 
-        private Distance ModifyValue(Distance value)
+        private static Distance ModifyValue(Distance value)
         {
             return ++value;
         }
 
-        private void VerifyDifferentContent(RaceDetails first, RaceDetails second)
+        private static void VerifyDifferentContent(RaceDetails first, RaceDetails second)
         {
             Assert.AreNotEqual(first, second);
 
@@ -521,7 +523,7 @@ namespace Thrift.Tests.DataModel
             Assert.AreNotEqual(first.Triplesix, second.Triplesix);
         }
 
-        private void VerifyIdenticalContent(RaceDetails first, RaceDetails second)
+        private static void VerifyIdenticalContent(RaceDetails first, RaceDetails second)
         {
             Assert.AreEqual(first, second);
 
