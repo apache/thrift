@@ -36,6 +36,7 @@ using Thrift.Transport.Server;
 
 #pragma warning disable IDE0063  // using can be simplified, we don't
 #pragma warning disable IDE0057  // substr can be simplified, we don't
+#pragma warning disable CS1998   // await missing
 
 namespace ThriftTest
 {
@@ -74,7 +75,7 @@ namespace ThriftTest
         internal TransportChoice transport = TransportChoice.Socket;
         internal ServerChoice server = ServerChoice.Simple;
         internal int port = 9090;
-        internal string pipe = null;
+        internal string pipe = string.Empty;
 
         internal void Parse(List<string> args)
         {
@@ -166,7 +167,7 @@ namespace ThriftTest
         public static int _clientID = -1;  // use with Interlocked only!
         #pragma warning restore CA2211
 
-        private static readonly TConfiguration Configuration = null;  // or new TConfiguration() if needed
+        private static readonly TConfiguration Configuration = new(); 
 
         public delegate void TestLogDelegate(string msg, params object[] values);
 
@@ -180,10 +181,10 @@ namespace ThriftTest
                 return Task.CompletedTask;
             }
 
-            public Task<object> CreateContextAsync(TProtocol input, TProtocol output, CancellationToken cancellationToken)
+            public async Task<object?> CreateContextAsync(TProtocol input, TProtocol output, CancellationToken cancellationToken)
             {
                 callCount++;
-                return Task.FromResult<object>(null);
+                return null;
             }
 
             public Task DeleteContextAsync(object serverContext, TProtocol input, TProtocol output, CancellationToken cancellationToken)
@@ -201,7 +202,7 @@ namespace ThriftTest
 
         public class TestHandlerAsync : ThriftTest.IAsync
         {
-            public TServer Server { get; set; }
+            //public TServer Server { get; set; }
             private readonly int handlerID;
             private readonly StringBuilder sb = new();
             private readonly TestLogDelegate logger;
@@ -520,7 +521,7 @@ namespace ThriftTest
                 "keys/",
             };
                         
-            string existingPath = null;
+            var existingPath = string.Empty;
             foreach (var possiblePath in possiblePaths)
             {
                 var path = Path.GetFullPath(possiblePath + serverCertName);
@@ -595,7 +596,7 @@ namespace ThriftTest
                     }
 
                     // Layered transport (mandatory)
-                    TTransportFactory transFactory = null;
+                    TTransportFactory? transFactory;
                     switch (param.buffering)
                     {
                         case BufferChoice.Framed:

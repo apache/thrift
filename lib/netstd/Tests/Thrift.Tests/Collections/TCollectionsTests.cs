@@ -216,9 +216,9 @@ namespace Thrift.Tests.Collections
             public int X { get; set; }
 
             // all Thrift-generated classes override Equals(), we do just the same
-            public override bool Equals(object that)
+            public override bool Equals(object? that)
             {
-                if (!(that is ExampleClass other)) return false;
+                if (that is not ExampleClass other) return false;
                 if (ReferenceEquals(this, other)) return true;
 
                 return this.X == other.X;
