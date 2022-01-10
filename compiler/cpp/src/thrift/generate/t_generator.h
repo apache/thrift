@@ -27,6 +27,7 @@
 #include <iostream>
 #include <fstream>
 #include <limits>
+#include <cmath>
 #include <sstream>
 #include "thrift/common.h"
 #include "thrift/logging.h"
@@ -311,27 +312,38 @@ protected:
   }
 
   const std::string emit_double_as_string(const double value) {
-      std::stringstream double_output_stream;
-      // sets the maximum precision: http://en.cppreference.com/w/cpp/io/manip/setprecision
-      // sets the output format to fixed: http://en.cppreference.com/w/cpp/io/manip/fixed (not in scientific notation)
-      double_output_stream << std::setprecision(std::numeric_limits<double>::digits10 + 1);
+    std::stringstream double_output_stream;
 
-      #ifdef _MSC_VER
-          // strtod is broken in MSVC compilers older than 2015, so std::fixed fails to format a double literal.
-          // more details: https://blogs.msdn.microsoft.com/vcblog/2014/06/18/
-          //               c-runtime-crt-features-fixes-and-breaking-changes-in-visual-studio-14-ctp1/
-          //               and
-          //               http://www.exploringbinary.com/visual-c-plus-plus-strtod-still-broken/
-          #if _MSC_VER >= MSC_2015_VER
-              double_output_stream << std::fixed;
-          #endif
-      #else
-          double_output_stream << std::fixed;
+    #if defined(_MSC_VER) && _MSC_VER < MSC_2015_VER
+      // strtod is broken in MSVC compilers older than 2015, so std::fixed fails to format a double literal.
+      // more details: https://blogs.msdn.microsoft.com/vcblog/2014/06/18/
+      //               c-runtime-crt-features-fixes-and-breaking-changes-in-visual-studio-14-ctp1/
+      //               and
+      //               http://www.exploringbinary.com/visual-c-plus-plus-strtod-still-broken/
+      double_output_stream << std::scientific << std::setprecision(std::numeric_limits<double>::digits10 + 1);
+    #else
+      //question from Thrift@Rick.Gumpertz.com: Does anybody know why we avoid scientific notation here?
+      double_output_stream << std::fixed;
+      #if 0 //maintain compatibility with previous versions of emit_double_as_string that could generate extra trailing digits
+        const int min_precision = std::numeric_limits<double>::digits10 + 1;
+      #else //don't add unneeded 0's
+        const int min_precision = 1;
       #endif
+      if (std::isfinite(value) && value != 0.0) {
+        double_output_stream <<
+            std::setprecision(std::max(min_precision,
+                                       std::numeric_limits<double>::digits10 + 1
+                                       - static_cast<int>(std::floor(std::log10(std::abs(value))))
+                                      )
+                             );
+      } else {
+        double_output_stream << std::setprecision(min_precision);
+      }
+    #endif
 
-      double_output_stream << value;
+    double_output_stream << value;
 
-      return double_output_stream.str();
+    return double_output_stream.str();
   }
 
 public:
