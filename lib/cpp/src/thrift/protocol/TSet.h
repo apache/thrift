@@ -27,8 +27,6 @@ namespace apache {
 namespace thrift {
 namespace protocol {
 
-using namespace apache::thrift::protocol;
-
 /**
  * Helper class that encapsulates set metadata.
  *
