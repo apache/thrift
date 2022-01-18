@@ -620,6 +620,8 @@ void t_cpp_generator::generate_enum(t_enum* tenum) {
 
   generate_enum_to_string_helper_function_decl(f_types_, tenum);
   generate_enum_to_string_helper_function(f_types_impl_, tenum);
+
+  has_members_ = true;
 }
 
 void t_cpp_generator::generate_enum_ostream_operator_decl(std::ostream& out, t_enum* tenum) {
