@@ -1794,7 +1794,7 @@ void t_netstd_generator::generate_netstd_struct_equals(ostream& out, t_struct* t
         }
         else
         {
-            out << "System.Object.Equals(";
+            out << "global::System.Object.Equals(";
         }
         out << prop_name((*f_iter)) << ", other." << prop_name((*f_iter)) << ")";
         if (!field_is_required((*f_iter)))
