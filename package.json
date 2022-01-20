@@ -6,7 +6,7 @@
     "type": "git",
     "url": "https://github.com/apache/thrift.git"
   },
-  "version": "0.16.0",
+  "version": "0.17.0",
   "author": {
     "name": "Apache Thrift Developers",
     "email": "dev@thrift.apache.org",

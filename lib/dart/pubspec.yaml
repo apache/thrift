@@ -16,7 +16,7 @@
 # under the License.
 
 name: thrift
-version: 0.16.0
+version: 0.17.0
 description: >
   A Dart library for Apache Thrift
 author: Apache Thrift Developers <dev@thrift.apache.org>
