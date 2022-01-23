@@ -26,7 +26,7 @@ namespace Client.Tests
     
     static class TestDataFactory
     {
-        public static CrazyNesting CreateCrazyNesting(int count = 10)
+        public static CrazyNesting? CreateCrazyNesting(int count = 10)
         {
             if (count <= 0)
                 return null;
@@ -78,13 +78,15 @@ namespace Client.Tests
 
         private static Dictionary<Numberz, long> CreateUserMap(int count)
         {
-            var retval = new Dictionary<Numberz, long>();
-            retval.Add(Numberz.ONE, count);
-            retval.Add(Numberz.TWO, count);
-            retval.Add(Numberz.THREE, count);
-            retval.Add(Numberz.FIVE, count);
-            retval.Add(Numberz.SIX, count);
-            retval.Add(Numberz.EIGHT, count);
+            var retval = new Dictionary<Numberz, long>
+            {
+                { Numberz.ONE, count },
+                { Numberz.TWO, count },
+                { Numberz.THREE, count },
+                { Numberz.FIVE, count },
+                { Numberz.SIX, count },
+                { Numberz.EIGHT, count }
+            };
             return retval;
         }
 
@@ -138,9 +140,10 @@ namespace Client.Tests
 
         private static Dictionary<Insanity, string> CreateListFieldDataDictValueListDict(int count)
         {
-            var retval = new Dictionary<Insanity, string>();
-            retval.Add(CreateInsanity(count), string.Format("data level {0}", count));
-            return retval;
+            return new Dictionary<Insanity, string>
+            {
+                { CreateInsanity(count), string.Format("data level {0}", count) }
+            };
         }
 
         private static byte[] CreateBytesArray(int count)

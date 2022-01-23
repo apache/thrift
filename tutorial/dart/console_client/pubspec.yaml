@@ -16,7 +16,7 @@
 # under the License.
 
 name: tutorial_console_client
-version: 0.16.0
+version: 0.17.0
 description: >
   A Dart console client to implementation of the Apache Thrift tutorial
 author: Apache Thrift Developers <dev@thrift.apache.org>

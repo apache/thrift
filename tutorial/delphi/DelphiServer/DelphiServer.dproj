@@ -121,13 +121,13 @@ popd]]></PreBuildEvent>
 					<VersionInfoKeys>
 						<VersionInfoKeys Name="CompanyName"/>
 						<VersionInfoKeys Name="FileDescription">Thrift Tutorial</VersionInfoKeys>
-						<VersionInfoKeys Name="FileVersion">0.16.0.0</VersionInfoKeys>
+						<VersionInfoKeys Name="FileVersion">0.17.0.0</VersionInfoKeys>
 						<VersionInfoKeys Name="InternalName">DelphiServer</VersionInfoKeys>
 						<VersionInfoKeys Name="LegalCopyright">Copyright © 2012 The Apache Software Foundation</VersionInfoKeys>
 						<VersionInfoKeys Name="LegalTrademarks"/>
 						<VersionInfoKeys Name="OriginalFilename">DelphiServer.exe</VersionInfoKeys>
 						<VersionInfoKeys Name="ProductName">Thrift</VersionInfoKeys>
-						<VersionInfoKeys Name="ProductVersion">0.16.0.0</VersionInfoKeys>
+						<VersionInfoKeys Name="ProductVersion">0.17.0.0</VersionInfoKeys>
 						<VersionInfoKeys Name="Comments"/>
 					</VersionInfoKeys>
 					<Source>

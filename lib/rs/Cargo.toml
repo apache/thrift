@@ -2,7 +2,7 @@
 name = "thrift"
 description = "Rust bindings for the Apache Thrift RPC system"
 edition = "2018"
-version = "0.16.0"
+version = "0.17.0"
 license = "Apache-2.0"
 authors = ["Apache Thrift Developers <dev@thrift.apache.org>"]
 homepage = "http://thrift.apache.org"

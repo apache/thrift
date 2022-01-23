@@ -32,7 +32,7 @@
   <artifactId>thrift-maven-plugin</artifactId>
   <packaging>maven-plugin</packaging>
   <name>thrift-maven-plugin</name>
-  <version>0.16.0</version>
+  <version>0.17.0</version>
 
   <properties>
     <maven.compiler.source>1.8</maven.compiler.source>

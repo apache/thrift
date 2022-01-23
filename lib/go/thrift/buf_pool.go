@@ -17,43 +17,36 @@
  * under the License.
  */
 
-#ifndef _THRIFT_TSET_H_
-#define _THRIFT_TSET_H_
+package thrift
 
-#include <thrift/protocol/TEnum.h>
-#include <thrift/protocol/TList.h>
+import (
+	"bytes"
+	"sync"
+)
 
-namespace apache {
-namespace thrift {
-namespace protocol {
-
-/**
- * Helper class that encapsulates set metadata.
- *
- */
-class TSet {
-public:
-  TSet() : elemType_(T_STOP), size_(0) {
-
-  }
-
-  TSet(TType t, int s)
-    : elemType_(t),
-      size_(s) { 
-        
-  }
-
-  TSet(TList list)
-    : elemType_(list.elemType_),
-      size_(list.size_) { 
-        
-  }
-
-  TType elemType_;
-  int  size_;
-};
+var bufPool = sync.Pool{
+	New: func() interface{} {
+		return new(bytes.Buffer)
+	},
 }
-}
-} // apache::thrift::protocol
 
-#endif // #ifndef _THRIFT_TSET_H_
+// getBufFromPool gets a buffer out of the pool and guarantees that it's reset
+// before return.
+func getBufFromPool() *bytes.Buffer {
+	buf := bufPool.Get().(*bytes.Buffer)
+	buf.Reset()
+	return buf
+}
+
+// returnBufToPool returns a buffer to the pool, and sets it to nil to avoid
+// accidental usage after it's returned.
+//
+// You usually want to use it this way:
+//
+//     buf := getBufFromPool()
+//     defer returnBufToPool(&buf)
+//     // use buf
+func returnBufToPool(buf **bytes.Buffer) {
+	bufPool.Put(*buf)
+	*buf = nil
+}

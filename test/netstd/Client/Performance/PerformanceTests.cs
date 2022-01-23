@@ -34,10 +34,10 @@ namespace Client.Tests
 {
     public class PerformanceTests
     {
-        private CancellationTokenSource Cancel;
-        private CrazyNesting Testdata;
-        private TMemoryBufferTransport MemBuffer;
-        private TTransport Transport;
+        private CancellationTokenSource Cancel = new();
+        private CrazyNesting? Testdata;
+        private TMemoryBufferTransport? MemBuffer;
+        private TTransport? Transport;
         private LayeredChoice Layered;
         private readonly TConfiguration Configuration = new();
 
@@ -76,52 +76,49 @@ namespace Client.Tests
             }
         }
 
-        private Task<TProtocol> GenericProtocolFactory<T>(bool forWrite)
+        private async Task<TProtocol> GenericProtocolFactory<T>(bool forWrite)
             where T : TProtocol
         {
             var oldTrans = Transport;
             try
             {
+                Transport = null;
+
                 // read happens after write here, so let's take over the written bytes
                 if (forWrite)
                     MemBuffer = new TMemoryBufferTransport(Configuration);  
                 else
-                    MemBuffer = new TMemoryBufferTransport(MemBuffer.GetBuffer(), Configuration);
+                    MemBuffer = new TMemoryBufferTransport(MemBuffer?.GetBuffer(), Configuration);
 
                 //  layered transports anyone?
-                switch (Layered)
+                Transport = Layered switch
                 {
-                    case LayeredChoice.None:
-                        Transport = MemBuffer;
-                        break;
-                    case LayeredChoice.Framed:
-                        Transport = new TFramedTransport(MemBuffer);
-                        break;
-                    case LayeredChoice.Buffered:
-                        Transport = new TBufferedTransport(MemBuffer);
-                        break;
-                    default:
-                        Debug.Assert(false);
-                        break;
-                }
+                    LayeredChoice.None => MemBuffer,
+                    LayeredChoice.Framed => new TFramedTransport(MemBuffer),
+                    LayeredChoice.Buffered => new TBufferedTransport(MemBuffer),
+                    _ => throw new Exception("Unhandled case " + Layered.ToString()),
+                };
+                ;
 
                 if (!Transport.IsOpen)
                     Transport.OpenAsync().Wait();
 
-                var instance = (T)Activator.CreateInstance(typeof(T), Transport);
-                return Task.FromResult<TProtocol>(instance);
+                if (Activator.CreateInstance(typeof(T), Transport) is T instance)
+                    return instance;
+
+                throw new Exception("Unexpected.");
             }
             finally
             {
-                if (oldTrans is IDisposable)
-                    (oldTrans as IDisposable).Dispose();
+                oldTrans?.Dispose();
             }
         }
 
         private string GetProtocolTransportName(TProtocol proto)
         {
-            var name = Transport.GetType().Name;
-            if (name.Equals(MemBuffer.GetType().Name))
+            var name = Transport?.GetType().Name;
+            var bufnm = MemBuffer?.GetType().Name;
+            if ((name is null) || name.Equals(bufnm))
                 name = string.Empty;
             else
                 name = " + " + name;
@@ -134,6 +131,9 @@ namespace Client.Tests
         private async Task RunTestAsync(Func<bool, Task<TProtocol>> factory)
         {
             var stop = new Stopwatch();
+
+            if ((Testdata is null) || (Transport is null))
+                throw new Exception("unexpected internal state");
 
             var proto = await factory(true);
             stop.Start();
