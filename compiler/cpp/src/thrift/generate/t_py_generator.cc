@@ -64,6 +64,7 @@ public:
     gen_zope_interface_ = false;
     gen_twisted_ = false;
     gen_dynamic_ = false;
+    gen_enum_ = false;
     coding_ = "";
     gen_dynbaseclass_ = "";
     gen_dynbaseclass_exc_ = "";
@@ -297,7 +298,7 @@ private:
    * True if we should generate new-style classes.
    */
   bool gen_newstyle_;
-  bool gen_enum_{false};
+  bool gen_enum_;
 
   /**
   * True if we should generate dynamic style classes.
