@@ -1008,7 +1008,7 @@ void t_py_generator::generate_py_struct_reader(ostream& out, t_struct* tstruct) 
   indent_down();
 
   indent(out) << "iprot.readStructBegin()" << endl;
-  
+
   if (is_immutable(tstruct)) {
     for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
       t_field* tfield = *f_iter;
@@ -2287,8 +2287,8 @@ void t_py_generator::generate_deserialize_field(ostream& out,
     if (gen_enum_) {
       indent(out) << name << " = " << type_name(type) << "(iprot.readI32()).name";
     } else {
-      out << "readI32()";
-    }      
+      indent(out) << name << " = iprot.readI32()";
+    }
     out << endl;
   } else {
     printf("DO NOT KNOW HOW TO DESERIALIZE FIELD '%s' TYPE '%s'\n",
