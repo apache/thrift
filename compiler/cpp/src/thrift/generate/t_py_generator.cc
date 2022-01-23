@@ -467,10 +467,10 @@ string t_py_generator::py_imports() {
      << "from thrift.protocol.TProtocol import TProtocolException"
      << endl
      << "from thrift.TRecursive import fix_spec"
-     << endl
-     << (gen_enum_ ? "from enum import IntEnum" : "")
      << endl;
-
+  if (gen_enum_) {
+    ss << "from enum import IntEnum" << endl;
+  }
   if (gen_utf8strings_) {
     ss << endl << "import sys";
   }
