@@ -2837,4 +2837,5 @@ THRIFT_REGISTER_GENERATOR(
     "    package_prefix='top.package.'\n"
     "                     Package prefix for generated files.\n"
     "    old_style:       Deprecated. Generate old-style classes.\n"
-    "    enum:            Generates Python's IntEnum, connects thrift to python enums . Python 3.4 and higher.\n")
+    "    enum:            Generates Python's IntEnum, connects thrift to python enums. Python 3.4 and higher.\n"
+)
