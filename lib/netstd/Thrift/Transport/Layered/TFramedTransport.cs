@@ -97,8 +97,7 @@ namespace Thrift.Transport
             ReadBuffer.SetLength(size);
             ReadBuffer.Seek(0, SeekOrigin.Begin);
 
-            ArraySegment<byte> bufSegment;
-            ReadBuffer.TryGetBuffer(out bufSegment);
+            ReadBuffer.TryGetBuffer(out ArraySegment<byte> bufSegment);
             await InnerTransport.ReadAllAsync(bufSegment.Array, 0, size, cancellationToken);
         }
 
@@ -129,8 +128,7 @@ namespace Thrift.Transport
                 throw new TTransportException(TTransportException.ExceptionType.NotOpen);
             }
 
-            ArraySegment<byte> bufSegment;
-            WriteBuffer.TryGetBuffer(out bufSegment);
+            WriteBuffer.TryGetBuffer(out ArraySegment<byte> bufSegment);
 
             int dataLen = bufSegment.Count - HeaderSize;
             if (dataLen < 0)
