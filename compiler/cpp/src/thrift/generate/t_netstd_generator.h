@@ -69,16 +69,16 @@ public:
   map<string, int> get_keywords_list() const;
 
   // overrides
-  void init_generator();
-  void close_generator();
-  void generate_consts(vector<t_const*> consts);
+  void init_generator() override;
+  void close_generator() override;
+  void generate_consts(vector<t_const*> consts) override;
   void generate_consts(ostream& out, vector<t_const*> consts);
-  void generate_typedef(t_typedef* ttypedef);
-  void generate_enum(t_enum* tenum);
+  void generate_typedef(t_typedef* ttypedef) override;
+  void generate_enum(t_enum* tenum) override;
   void generate_enum(ostream& out, t_enum* tenum);
-  void generate_struct(t_struct* tstruct);
-  void generate_xception(t_struct* txception);
-  void generate_service(t_service* tservice);
+  void generate_struct(t_struct* tstruct) override;
+  void generate_xception(t_struct* txception) override;
+  void generate_service(t_service* tservice) override;
 
   // additional files
   void generate_extensions_file();
@@ -148,7 +148,7 @@ public:
   string func_name(t_function* tfunc, bool suppress_mapping = false);
   string func_name(std::string fname, bool suppress_mapping = false);
   string convert_to_pascal_case(const string& str);
-  string get_enum_class_name(t_type* type);
+  string get_enum_class_name(t_type* type) override;
 
 protected:
   std::string autogen_comment() override {
