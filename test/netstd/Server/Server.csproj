@@ -24,13 +24,14 @@
     <AssemblyName>Server</AssemblyName>
     <PackageId>Server</PackageId>
     <OutputType>Exe</OutputType>
-    <Version>0.16.0.0</Version>
+    <Version>0.17.0.0</Version>
     <GenerateAssemblyTitleAttribute>false</GenerateAssemblyTitleAttribute>
     <GenerateAssemblyDescriptionAttribute>false</GenerateAssemblyDescriptionAttribute>
     <GenerateAssemblyConfigurationAttribute>false</GenerateAssemblyConfigurationAttribute>
     <GenerateAssemblyCompanyAttribute>false</GenerateAssemblyCompanyAttribute>
     <GenerateAssemblyProductAttribute>false</GenerateAssemblyProductAttribute>
     <GenerateAssemblyCopyrightAttribute>false</GenerateAssemblyCopyrightAttribute>
+    <Nullable>enable</Nullable>
   </PropertyGroup>
 
   <ItemGroup>

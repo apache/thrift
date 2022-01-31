@@ -27,9 +27,6 @@ using Thrift.Protocol.Entities;
 using Thrift.Protocol.Utilities;
 using Thrift.Transport;
 
-#pragma warning disable IDE0079 // unnecessary suppression
-#pragma warning disable IDE0063 // simplify using
-#pragma warning disable IDE0066 // use switch expression
 
 namespace Thrift.Protocol
 {

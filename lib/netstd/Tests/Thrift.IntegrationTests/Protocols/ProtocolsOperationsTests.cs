@@ -25,13 +25,15 @@ using Thrift.Protocol;
 using Thrift.Protocol.Entities;
 using Thrift.Transport.Client;
 
+#pragma warning disable IDE0063  // using
+
 namespace Thrift.IntegrationTests.Protocols
 {
     [TestClass]
     public class ProtocolsOperationsTests
     {
-        private readonly CompareLogic _compareLogic = new CompareLogic();
-        private static readonly TConfiguration Configuration = null;  // or new TConfiguration() if needed
+        private readonly CompareLogic _compareLogic = new();
+        private static readonly TConfiguration Configuration = new();
 
         [DataTestMethod]
         [DataRow(typeof(TBinaryProtocol), TMessageType.Call)]
@@ -496,8 +498,9 @@ namespace Thrift.IntegrationTests.Protocols
         {
             var memoryStream = new MemoryStream();
             var streamClientTransport = new TStreamTransport(memoryStream, memoryStream,Configuration);
-            var protocol = (TProtocol) Activator.CreateInstance(protocolType, streamClientTransport);
-            return new Tuple<Stream, TProtocol>(memoryStream, protocol);
+            if( Activator.CreateInstance(protocolType, streamClientTransport) is TProtocol protocol)
+                return new Tuple<Stream, TProtocol>(memoryStream, protocol);
+            throw new Exception("Unexpected");
         }
     }
 }

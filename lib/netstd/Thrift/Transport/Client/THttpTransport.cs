@@ -25,8 +25,6 @@ using System.Security.Cryptography.X509Certificates;
 using System.Threading;
 using System.Threading.Tasks;
 
-#pragma warning disable IDE0079 // unnecessary suppression
-#pragma warning disable IDE0063 // simplify using
 
 namespace Thrift.Transport.Client
 {

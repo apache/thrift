@@ -304,7 +304,8 @@ void t_netstd_generator::reset_indent() {
 
 void t_netstd_generator::start_netstd_namespace(ostream& out)
 {
-    out << "#pragma warning disable IDE0079  // remove unnecessary pragmas" << endl
+    out << "#nullable disable                // suppress C# 8.0 nullable contexts (we still support earlier versions)" << endl
+        << "#pragma warning disable IDE0079  // remove unnecessary pragmas" << endl
         << "#pragma warning disable IDE1006  // parts of the code use IDL spelling" << endl
         << "#pragma warning disable IDE0083  // pattern matching \"that is not SomeType\" requires net5.0 but we still support earlier versions" << endl
         << endl;
@@ -862,7 +863,7 @@ void t_netstd_generator::generate_netstd_struct(t_struct* tstruct, bool is_excep
 
     f_struct.open(f_struct_name.c_str());
 
-  reset_indent();
+    reset_indent();
     f_struct << autogen_comment() << netstd_type_usings() << netstd_thrift_usings() << endl;
 
     generate_netstd_struct_definition(f_struct, tstruct, is_exception);
@@ -1793,7 +1794,7 @@ void t_netstd_generator::generate_netstd_struct_equals(ostream& out, t_struct* t
         }
         else
         {
-            out << "System.Object.Equals(";
+            out << "global::System.Object.Equals(";
         }
         out << prop_name((*f_iter)) << ", other." << prop_name((*f_iter)) << ")";
         if (!field_is_required((*f_iter)))

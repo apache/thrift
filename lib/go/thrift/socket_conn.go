@@ -21,6 +21,7 @@ package thrift
 
 import (
 	"net"
+	"sync/atomic"
 )
 
 // socketConn is a wrapped net.Conn that tries to do connectivity check.
@@ -28,6 +29,7 @@ type socketConn struct {
 	net.Conn
 
 	buffer [1]byte
+	closed int32
 }
 
 var _ net.Conn = (*socketConn)(nil)
@@ -64,7 +66,7 @@ func wrapSocketConn(conn net.Conn) *socketConn {
 // It's the same as the previous implementation of TSocket.IsOpen and
 // TSSLSocket.IsOpen before we added connectivity check.
 func (sc *socketConn) isValid() bool {
-	return sc != nil && sc.Conn != nil
+	return sc != nil && sc.Conn != nil && atomic.LoadInt32(&sc.closed) == 0
 }
 
 // IsOpen checks whether the connection is open.
@@ -99,4 +101,13 @@ func (sc *socketConn) Read(p []byte) (n int, err error) {
 	}
 
 	return sc.Conn.Read(p)
+}
+
+func (sc *socketConn) Close() error {
+	if !sc.isValid() {
+		// Already closed
+		return net.ErrClosed
+	}
+	atomic.StoreInt32(&sc.closed, 1)
+	return sc.Conn.Close()
 }

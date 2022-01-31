@@ -16,7 +16,7 @@
 # under the License.
 
 name: tutorial_client
-version: 0.16.0
+version: 0.17.0
 description: A Dart client implementation of the Apache Thrift tutorial
 author: Apache Thrift Developers <dev@thrift.apache.org>
 homepage: http://thrift.apache.org

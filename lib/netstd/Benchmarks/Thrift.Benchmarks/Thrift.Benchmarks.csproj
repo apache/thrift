@@ -23,6 +23,7 @@
     <TargetFramework>net6.0</TargetFramework>
     <TieredCompilation>false</TieredCompilation>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
+    <Nullable>enable</Nullable>
   </PropertyGroup>
 
   <ItemGroup>

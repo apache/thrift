@@ -71,12 +71,12 @@ namespace ThriftTest
             public string host = "localhost";
             public int port = 9090;
             public int numThreads = 1;
-            public string url;
-            public string pipe;
+            public string url = string.Empty;
+            public string pipe = string.Empty;
             public LayeredChoice layered = LayeredChoice.None;
             public ProtocolChoice protocol = ProtocolChoice.Binary;
             public TransportChoice transport = TransportChoice.Socket;
-            private readonly TConfiguration Configuration = null;  // or new TConfiguration() if needed
+            private readonly TConfiguration Configuration = new();
 
             internal void Parse(List<string> args)
             {
@@ -210,7 +210,7 @@ namespace ThriftTest
                     "keys/",
                 };
 
-                string existingPath = null;
+                var existingPath = string.Empty;
                 foreach (var possiblePath in possiblePaths)
                 {
                     var path = Path.GetFullPath(possiblePath + clientCertName);
@@ -234,8 +234,7 @@ namespace ThriftTest
             public TTransport CreateTransport()
             {
                 // endpoint transport
-                TTransport trans = null;
-
+                TTransport trans;
                 switch (transport)
                 {
                     case TransportChoice.Http:

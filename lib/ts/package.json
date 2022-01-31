@@ -1,6 +1,6 @@
 {
   "name": "thrift",
-  "version": "0.16.0",
+  "version": "0.17.0",
   "description": "Thrift is a software framework for scalable cross-language services development.",
   "author": {
     "name": "Apache Thrift Developers",

@@ -65,8 +65,7 @@ namespace Thrift.Processor
 
                 // Create a new TMessage, something that can be consumed by any TProtocol
                 var serviceName = message.Name.Substring(0, index);
-                ITAsyncProcessor actualProcessor;
-                if (!_serviceProcessorMap.TryGetValue(serviceName, out actualProcessor))
+                if (!_serviceProcessorMap.TryGetValue(serviceName, out ITAsyncProcessor actualProcessor))
                 {
                     await FailAsync(oprot, message, TApplicationException.ExceptionType.InternalError,
                         $"Service name not found: {serviceName}. Did you forget to call RegisterProcessor()?",
@@ -103,7 +102,7 @@ namespace Thrift.Processor
             _serviceProcessorMap.Add(serviceName, processor);
         }
 
-        private async Task FailAsync(TProtocol oprot, TMessage message, TApplicationException.ExceptionType extype,
+        private static async Task FailAsync(TProtocol oprot, TMessage message, TApplicationException.ExceptionType extype,
             string etxt, CancellationToken cancellationToken)
         {
             var appex = new TApplicationException(extype, etxt);

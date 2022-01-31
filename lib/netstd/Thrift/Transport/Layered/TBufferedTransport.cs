@@ -110,8 +110,7 @@ namespace Thrift.Transport
 
             // buffer a new chunk of bytes from the underlying transport
             ReadBuffer.Length = ReadBuffer.Capacity;
-            ArraySegment<byte> bufSegment;
-            ReadBuffer.TryGetBuffer(out bufSegment);
+            ReadBuffer.TryGetBuffer(out ArraySegment<byte> bufSegment);
             ReadBuffer.Length = await InnerTransport.ReadAsync(bufSegment.Array, 0, bufSegment.Count, cancellationToken);
             ReadBuffer.Position = 0;
 
@@ -134,8 +133,7 @@ namespace Thrift.Transport
             var free = WriteBuffer.Capacity - WriteBuffer.Length;
             if (length > free)
             {
-                ArraySegment<byte> bufSegment;
-                WriteBuffer.TryGetBuffer(out bufSegment);
+                WriteBuffer.TryGetBuffer(out ArraySegment<byte> bufSegment);
                 await InnerTransport.WriteAsync(bufSegment.Array, 0, bufSegment.Count, cancellationToken);
                 WriteBuffer.SetLength(0);
             }
@@ -163,8 +161,7 @@ namespace Thrift.Transport
 
             if (WriteBuffer.Length > 0)
             {
-                ArraySegment<byte> bufSegment;
-                WriteBuffer.TryGetBuffer(out bufSegment);
+                WriteBuffer.TryGetBuffer(out ArraySegment<byte> bufSegment);
                 await InnerTransport.WriteAsync(bufSegment.Array, 0, bufSegment.Count, cancellationToken);
                 WriteBuffer.SetLength(0);
             }
