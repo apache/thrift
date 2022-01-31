@@ -170,16 +170,16 @@ string t_netstd_generator::normalize_name(string name, bool is_arg_name)
 
     // check for reserved argument names
     if( is_arg_name && (CANCELLATION_TOKEN_NAME == name))
-	{
-		name += "_";
-	}
+    {
+        name += "_";
+    }
 
     // un-conflict keywords by prefixing with "@"
     if (netstd_keywords.find(tmp) != netstd_keywords.end())
     {
         return "@" + name;
     }
-	
+    
     // no changes necessary
     return name;
 }
@@ -393,7 +393,7 @@ void t_netstd_generator::generate_enum(ostream& out, t_enum* tenum)
     reset_indent();
     out << autogen_comment() << endl;
 
-    start_netstd_namespace(out);
+    start_netstd_namespace(out);    
     generate_netstd_doc(out, tenum);
 
     out << indent() << "public enum " << type_name(tenum,false) << endl;
@@ -1563,7 +1563,6 @@ void t_netstd_generator::generate_netstd_union_definition(ostream& out, t_struct
     out << indent() << "default:" << endl;
     indent_up();
     out << indent() << "return true;" << endl;
-    indent_down();
     indent_down();
     scope_down(out);
     scope_down(out);
@@ -2831,9 +2830,6 @@ void t_netstd_generator::generate_serialize_struct(ostream& out, t_struct* tstru
 
 void t_netstd_generator::generate_serialize_container(ostream& out, t_type* ttype, string prefix)
 {
-    out << indent() << "{" << endl;
-    indent_up();
-
     if (ttype->is_map())
     {
         out << indent() << "await oprot.WriteMapBeginAsync(new TMap(" << type_to_enum(static_cast<t_map*>(ttype)->get_key_type())
@@ -2901,9 +2897,6 @@ void t_netstd_generator::generate_serialize_container(ostream& out, t_type* ttyp
     {
         out << indent() << "await oprot.WriteListEndAsync(" << CANCELLATION_TOKEN_NAME << ");" << endl;
     }
-
-    indent_down();
-    out << indent() << "}" << endl;
 }
 
 void t_netstd_generator::generate_serialize_map_element(ostream& out, t_map* tmap, string iter, string map)
@@ -3266,8 +3259,7 @@ string t_netstd_generator::base_type_name(t_base_type* tbase)
     case t_base_type::TYPE_VOID:
         return "void";
     case t_base_type::TYPE_STRING:
-        if (tbase->is_binary())
-        {
+        if (tbase->is_binary()) {
             return "byte[]";
         } else {
             return "string";
@@ -3300,8 +3292,7 @@ string t_netstd_generator::get_deep_copy_method_call(t_type* ttype, bool& needs_
         switch (tbase)
         {
         case t_base_type::TYPE_STRING:
-            if (ttype->is_binary())
-            {
+            if (ttype->is_binary()) {
                 return ".ToArray()";
             } else {
                 return "";  // simple assignment will do, strings are immutable in C#
