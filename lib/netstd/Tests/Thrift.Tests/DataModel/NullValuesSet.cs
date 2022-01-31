@@ -25,13 +25,15 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 using OptReqDefTest;
 using Thrift.Collections;
 
+#pragma warning disable IDE0017  // init can be simplified - we don't want that here
+
 namespace Thrift.Tests.DataModel
 {
     // ReSharper disable once InconsistentNaming
     [TestClass]
     public class Thrift_5238
     {
-        private void CheckInstance(RaceDetails instance)
+        private static void CheckInstance(RaceDetails instance)
         {
             // object
             Assert.IsTrue(instance.__isset.def_nested);
@@ -42,14 +44,14 @@ namespace Thrift.Tests.DataModel
             // string
             Assert.IsTrue(instance.__isset.def_four);
             Assert.IsTrue(instance.__isset.opt_four);
-            Assert.IsNull(instance.Req_four);
+            Assert.IsTrue(string.IsNullOrEmpty(instance.Req_four));
             Assert.IsNull(instance.Def_four);
             Assert.IsNull(instance.Opt_four);
 
             // byte[]
             Assert.IsTrue(instance.__isset.def_five);
             Assert.IsTrue(instance.__isset.opt_five);
-            Assert.IsNull(instance.Req_five);
+            Assert.IsTrue((instance.Req_five == null) || (instance.Req_five.Length == 0));
             Assert.IsNull(instance.Def_five);
             Assert.IsNull(instance.Opt_five);
 
@@ -65,6 +67,9 @@ namespace Thrift.Tests.DataModel
         public void Thrift_5238_ProperNullChecks()
         {
             var instance = new OptReqDefTest.RaceDetails();
+
+            // the following code INTENTIONALLY assigns null to non.nullable reftypes
+            #pragma warning disable CS8625
 
             // object
             instance.Def_nested = null;
@@ -84,6 +89,9 @@ namespace Thrift.Tests.DataModel
             instance.Req_six = null;
             instance.Opt_six = null;
             instance.Def_six = null;
+
+            // back to normal
+            #pragma warning restore CS8625
 
             // test the setup
             CheckInstance(instance);

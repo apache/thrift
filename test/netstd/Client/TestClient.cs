@@ -644,9 +644,14 @@ namespace ThriftTest
                 Struct_thing = o,
                 I32_thing = 5
             };
-            var i2 = await client.testNest(o2, MakeTimeoutToken());
+            Xtruct2 i2 = await client.testNest(o2, MakeTimeoutToken());
             i = i2.Struct_thing;
-            Console.WriteLine(" = {" + i2.Byte_thing + ", {\"" + i.String_thing + "\", " + i.Byte_thing + ", " + i.I32_thing + ", " + i.I64_thing + "}, " + i2.I32_thing + "}");
+            Console.WriteLine(" = {" + i2.Byte_thing + ", {\""
+                            + (i?.String_thing ?? "<null>") + "\", "
+                            + (i?.Byte_thing ?? 0) + ", "
+                            + (i?.I32_thing ?? 0) + ", "
+                            + (i?.I64_thing ?? 0) + "}, "
+                            + i2.I32_thing + "}");
 
             var mapout = new Dictionary<int, int>();
             for (var j = 0; j < 5; j++)
@@ -681,7 +686,7 @@ namespace ThriftTest
 
             //set
             // TODO: Validate received message
-            var setout = new THashSet<int>();
+            var setout = new HashSet<int>();
             for (var j = -2; j < 3; j++)
             {
                 setout.Add(j);
@@ -937,7 +942,7 @@ namespace ThriftTest
             }
             catch (Xception2 ex)
             {
-                if (ex.ErrorCode != 2002 || ex.Struct_thing.String_thing != "This is an Xception2")
+                if (ex.ErrorCode != 2002 || ex.Struct_thing?.String_thing != "This is an Xception2")
                 {
                     Console.WriteLine("*** FAILED ***");
                     returnCode |= ErrorExceptions;

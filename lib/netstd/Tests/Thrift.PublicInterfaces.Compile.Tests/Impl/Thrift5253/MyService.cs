@@ -26,30 +26,30 @@ namespace Thrift.PublicInterfaces.Compile.Tests.Impl.Thrift5253
 {
     class MyServiceImpl : MyService.IAsync
     {
-        public Task<AsyncProcessor> AsyncProcessor_(AsyncProcessor input, CancellationToken cancellationToken = default)
+        public Task<AsyncProcessor> AsyncProcessor_(AsyncProcessor? input, CancellationToken cancellationToken = default)
         {
-            return Task.FromResult(new AsyncProcessor() { Foo = input.Foo });
+            return Task.FromResult(new AsyncProcessor() { Foo = input?.Foo ?? 0 });
         }
 
-        public Task<BrokenResult> Broken(BrokenArgs input, CancellationToken cancellationToken = default)
+        public Task<BrokenResult> Broken(BrokenArgs? input, CancellationToken cancellationToken = default)
         {
-            return Task.FromResult(new BrokenResult() { Foo = input.Foo });
+            return Task.FromResult(new BrokenResult() { Foo = input?.Foo ?? 0 });
         }
 
-        public Task<Client> Client_(Client input, CancellationToken cancellationToken = default)
+        public Task<Client> Client_(Client? input, CancellationToken cancellationToken = default)
         {
             _ = cancellationToken;
-            return Task.FromResult(new Client() { Foo = input.Foo });
+            return Task.FromResult(new Client() { Foo = input?.Foo ?? 0 });
         }
 
-        public Task<IAsync> IAsync_(IAsync input, CancellationToken cancellationToken = default)
+        public Task<IAsync> IAsync_(IAsync? input, CancellationToken cancellationToken = default)
         {
-            return Task.FromResult(new IAsync() { Foo = input.Foo });
+            return Task.FromResult(new IAsync() { Foo = input?.Foo ?? 0 });
         }
 
-        public Task<InternalStructs> InternalStructs_(InternalStructs input, CancellationToken cancellationToken = default)
+        public Task<InternalStructs> InternalStructs_(InternalStructs? input, CancellationToken cancellationToken = default)
         {
-            return Task.FromResult(new InternalStructs() { Foo = input.Foo });
+            return Task.FromResult(new InternalStructs() { Foo = input?.Foo ?? 0 });
         }
 
         public Task TestAsync(CancellationToken cancellationToken = default)
@@ -62,9 +62,9 @@ namespace Thrift.PublicInterfaces.Compile.Tests.Impl.Thrift5253
             return Task.CompletedTask;
         }
 
-        public Task<WorksRslt> Works(WorksArrrgs input, CancellationToken cancellationToken = default)
+        public Task<WorksRslt> Works(WorksArrrgs? input, CancellationToken cancellationToken = default)
         {
-            return Task.FromResult(new WorksRslt() { Foo = input.Foo });
+            return Task.FromResult(new WorksRslt() { Foo = input?.Foo ?? 0 });
         }
     }
 }
