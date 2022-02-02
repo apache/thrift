@@ -35,6 +35,7 @@ clean-local:
 	-$(RM) transporters.rs
 
 EXTRA_DIST = \
+	mod.rs \
 	Buses.thrift \
 	Trains.thrift \
 	Transporters.thrift

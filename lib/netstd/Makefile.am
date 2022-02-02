@@ -42,6 +42,7 @@ clean-local:
 EXTRA_DIST = \
 	README.md \
 	Directory.Build.props \
+	.editorconfig \
 	Benchmarks/Thrift.Benchmarks \
 	Tests/Thrift.IntegrationTests/Protocols \
 	Tests/Thrift.IntegrationTests/Thrift.IntegrationTests.csproj \
@@ -53,12 +54,14 @@ EXTRA_DIST = \
 	Tests/Thrift.Tests/Collections \
 	Tests/Thrift.Tests/DataModel \
 	Tests/Thrift.Tests/Protocols \
+	Tests/Thrift.Tests/Transports \
 	Tests/Thrift.Tests/Thrift.Tests.csproj \
 	Thrift/Collections \
 	Thrift/Processor \
 	Thrift/Properties \
 	Thrift/Protocol \
 	Thrift/Server \
+	Thrift/GlobalSuppressions.cs \
 	Thrift/TApplicationException.cs \
 	Thrift/TBaseClient.cs \
 	Thrift/TConfiguration.cs \
