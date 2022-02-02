@@ -42,7 +42,6 @@ clean-local:
 EXTRA_DIST = \
 	README.md \
 	Directory.Build.props \
-	.editorconfig \
 	Benchmarks/Thrift.Benchmarks \
 	Tests/Thrift.IntegrationTests/Protocols \
 	Tests/Thrift.IntegrationTests/Thrift.IntegrationTests.csproj \
@@ -56,6 +55,7 @@ EXTRA_DIST = \
 	Tests/Thrift.Tests/Protocols \
 	Tests/Thrift.Tests/Transports \
 	Tests/Thrift.Tests/Thrift.Tests.csproj \
+	Thrift/.editorconfig \
 	Thrift/Collections \
 	Thrift/Processor \
 	Thrift/Properties \
