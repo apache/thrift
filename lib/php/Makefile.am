@@ -140,7 +140,7 @@ EXTRA_DIST = \
 	src/ext/thrift_protocol/config.w32 \
 	src/ext/thrift_protocol/php_thrift_protocol.cpp \
 	src/ext/thrift_protocol/php_thrift_protocol.h \
-	src/ext/thrift_protocol/php_thrift_protocol.stub.php
+	src/ext/thrift_protocol/php_thrift_protocol.stub.php \
 	src/ext/thrift_protocol/php_thrift_protocol_arginfo.h \
 	src/Thrift.php \
 	src/TStringUtils.php \
