@@ -132,10 +132,12 @@ namespace Client.Tests
         {
             var stop = new Stopwatch();
 
-            if ((Testdata is null) || (Transport is null))
+            if (Testdata is null)
                 throw new Exception("unexpected internal state");
 
             var proto = await factory(true);
+            if (Transport is null)
+                throw new Exception("unexpected internal state");
             stop.Start();
             await Testdata.WriteAsync(proto, Cancel.Token);
             await Transport.FlushAsync(Cancel.Token);
@@ -146,6 +148,8 @@ namespace Client.Tests
 
             var restored = new CrazyNesting();
             proto = await factory(false);
+            if (Transport is null)
+                throw new Exception("unexpected internal state");
             stop.Start();
             await restored.ReadAsync(proto, Cancel.Token);
             stop.Stop();
