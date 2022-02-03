@@ -49,6 +49,10 @@ type TTransport interface {
 	Open() error
 
 	// Returns true if the transport is open
+	//
+	// NOTE: IsOpen returning false does not necessarily mean the connection
+	// is already closed. An explicit Close call should still be done to
+	// avoid connection leaks.
 	IsOpen() bool
 }
 
