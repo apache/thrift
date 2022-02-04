@@ -34,6 +34,7 @@
 - [THRIFT-5461](https://issues.apache.org/jira/browse/THRIFT-5461) - Invalid golang code generated for optional set<binary> with a default value
 - [THRIFT-5469](https://issues.apache.org/jira/browse/THRIFT-5469) - Go lib skip map value may cause stack overflow
 - [THRIFT-5490](https://issues.apache.org/jira/browse/THRIFT-5490) - Improve memory efficiency in go THeader implementation
+- [THRIFT-5509](https://issues.apache.org/jira/browse/THRIFT-5509) - Potential connection leaks caused by the connectivity check
 
 ### Haxe
 
