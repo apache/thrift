@@ -57,7 +57,7 @@
 #include <thrift/windows/SocketPair.h>
 
 // windows
-#include <Winsock2.h>
+#include <winsock2.h>
 #include <ws2tcpip.h>
 
 #ifndef __MINGW32__
