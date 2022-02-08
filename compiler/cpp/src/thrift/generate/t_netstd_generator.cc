@@ -1643,7 +1643,6 @@ void t_netstd_generator::generate_netstd_union_definition(ostream& out, t_struct
         indent_up();
         for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter)
         {
-            bool needs_typecast = false;
             string null_coalesce(is_nullable_type((*f_iter)->get_type()) ? "?" : "");  
             out << indent() << (*f_iter)->get_key() << " => As_" << (*f_iter)->get_name() << null_coalesce << ".GetHashCode()";
             if( null_coalesce.size() > 0) {
@@ -1660,7 +1659,6 @@ void t_netstd_generator::generate_netstd_union_definition(ostream& out, t_struct
         indent_up();
         for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter)
         {
-            bool needs_typecast = false;
             string null_coalesce(is_nullable_type((*f_iter)->get_type()) ? "?" : "");  
             out << indent() << "case " << (*f_iter)->get_key() << ":" << endl;
             indent_up();
