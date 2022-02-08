@@ -3565,6 +3565,8 @@ string t_netstd_generator::get_deep_copy_method_call(t_type* ttype, bool is_not_
         }        
         return "." + DEEP_COPY_METHOD_NAME + "()" + null_check;
     }
+    
+    throw "UNEXPECTED TYPE IN get_deep_copy_method_call: " + ttype->get_name();
 }
 
 string t_netstd_generator::declare_field(t_field* tfield, bool init, bool allow_nullable, string prefix)
