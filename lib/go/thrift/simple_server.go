@@ -238,7 +238,7 @@ func (p *TSimpleServer) Stop() error {
 	return nil
 }
 
-// If err is actually EOF, return nil, otherwise return err as-is.
+// If err is actually EOF or NOT_OPEN, return nil, otherwise return err as-is.
 func treatEOFErrorsAsNil(err error) error {
 	if err == nil {
 		return nil
@@ -247,7 +247,11 @@ func treatEOFErrorsAsNil(err error) error {
 		return nil
 	}
 	var te TTransportException
-	if errors.As(err, &te) && te.TypeId() == END_OF_FILE {
+	// NOT_OPEN returned by processor.Process is usually caused by client
+	// abandoning the connection (e.g. client side time out, or just client
+	// closes connections from the pool because of shutting down).
+	// Those logs will be very noisy, so suppress those logs as well.
+	if errors.As(err, &te) && (te.TypeId() == END_OF_FILE || te.TypeId() == NOT_OPEN) {
 		return nil
 	}
 	return err
