@@ -411,15 +411,28 @@ namespace ThriftTest
                     return ErrorUnknown;
                 }
 
-                var tests = Enumerable.Range(0, param.numThreads).Select(_ => new ClientTest(param)).ToArray();
-
                 //issue tests on separate threads simultaneously
+                var nThreads = Math.Max(param.numThreads, 1);
+                Console.Write("Starting {0} test thread(s) ", nThreads);
+                var tasks = new Task[nThreads];
                 var start = DateTime.Now;
-                var tasks = tests.Select(test => test.Execute()).ToArray();
+                var retcode = 0;
+                for (var i = 0; i < tasks.Length; ++i)
+                {
+                    Console.Write('.');
+                    tasks[i] = Task.Run(async () =>
+                    {
+                        var test = new ClientTest(param);
+                        await test.Execute();
+                        lock (tasks)
+                            retcode |= test.ReturnCode;
+                    });
+                }
+                Console.WriteLine(" OK");
                 Task.WaitAll(tasks);
                 Console.WriteLine("Total time: " + (DateTime.Now - start));
                 Console.WriteLine();
-                return tests.Select(t => t.ReturnCode).Aggregate((r1, r2) => r1 | r2);
+                return retcode;
             }
             catch (Exception outerEx)
             {
@@ -490,7 +503,7 @@ namespace ThriftTest
             return retval;
         }
 
-        private static CancellationToken MakeTimeoutToken(int msec = 5000)
+        private static CancellationToken MakeTimeoutToken(int msec = 15_000)
         {
             var token = new CancellationTokenSource(msec);
             return token.Token;
