@@ -32,5 +32,6 @@ clean-local:
 	-$(RM) streetcars.rs
 
 EXTRA_DIST = \
+	mod.rs \
 	LightRail.thrift \
 	Streetcars.thrift

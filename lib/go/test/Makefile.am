@@ -127,6 +127,8 @@ EXTRA_DIST = \
 	ConflictNamespaceTestB.thrift \
 	ConflictNamespaceTestC.thrift \
 	ConflictNamespaceTestD.thrift \
+	ConflictNamespaceTestE.thrift \
+	ConflictNamespaceTestF.thrift \
 	ConflictNamespaceTestSuperThing.thrift \
 	ConstOptionalField.thrift \
 	ConstOptionalFieldImport.thrift \

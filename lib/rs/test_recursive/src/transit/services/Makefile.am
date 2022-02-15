@@ -30,4 +30,5 @@ clean-local:
 	-$(RM) city_services.rs
 
 EXTRA_DIST = \
+	mod.rs \
 	CityServices.thrift

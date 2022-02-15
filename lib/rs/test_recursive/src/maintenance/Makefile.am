@@ -30,4 +30,5 @@ clean-local:
 	-$(RM) maintenance_facility.rs
 
 EXTRA_DIST = \
+	mod.rs \
 	MaintenanceFacility.thrift

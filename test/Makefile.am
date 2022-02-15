@@ -134,6 +134,7 @@ EXTRA_DIST = \
 	rb \
 	rs \
 	threads \
+	partial \
 	AnnotationTest.thrift \
 	BrokenConstants.thrift \
 	ConstantsDemo.thrift \

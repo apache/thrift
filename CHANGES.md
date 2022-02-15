@@ -17,8 +17,9 @@
 
 ### C++
 
-- [THRIFT-5456](https://issues.apache.org/jira/browse/THRIFT-5456) - ServerSocket doesn't ignore SIGPIPE
 - [THRIFT-5187](https://issues.apache.org/jira/browse/THRIFT-5187) - Add support for Unix domain sockets on Windows 10 or later
+- [THRIFT-5418](https://issues.apache.org/jira/browse/THRIFT-5418) - C++ to_string and ostream operator not always generated
+- [THRIFT-5456](https://issues.apache.org/jira/browse/THRIFT-5456) - ServerSocket doesn't ignore SIGPIPE
 
 ### Common LISP
 
@@ -31,8 +32,9 @@
 ### Go
 
 - [THRIFT-5461](https://issues.apache.org/jira/browse/THRIFT-5461) - Invalid golang code generated for optional set<binary> with a default value
-- [THRIFT-5490](https://issues.apache.org/jira/browse/THRIFT-5490) - Improve memory efficiency in go THeader implementation
 - [THRIFT-5469](https://issues.apache.org/jira/browse/THRIFT-5469) - Go lib skip map value may cause stack overflow
+- [THRIFT-5490](https://issues.apache.org/jira/browse/THRIFT-5490) - Improve memory efficiency in go THeader implementation
+- [THRIFT-5509](https://issues.apache.org/jira/browse/THRIFT-5509) - Potential connection leaks caused by the connectivity check
 
 ### Haxe
 
@@ -40,8 +42,9 @@
 
 ### Java
 
-- [THRIFT-5486](https://issues.apache.org/jira/browse/THRIFT-5486) - fix issues found by spotbugs 
 - [THRIFT-5443](https://issues.apache.org/jira/browse/THRIFT-5443) - add support for partial deserialization of Thrift
+- [THRIFT-5486](https://issues.apache.org/jira/browse/THRIFT-5486) - fix issues found by spotbugs 
+- [THRIFT-5512](https://issues.apache.org/jira/browse/THRIFT-5512) - Update java dependencies
 
 ### JavaScript
 
@@ -49,27 +52,28 @@
 
 ### netstd
 
-- [THRIFT-5500](https://issues.apache.org/jira/browse/THRIFT-5500) - Uncompilable code when .thrift struct 'System' exists
-- [THRIFT-5479](https://issues.apache.org/jira/browse/THRIFT-5479) - Add net 6 support
-- [THRIFT-5408](https://issues.apache.org/jira/browse/THRIFT-5408) - Support for deprecated methods (via annotation)
-- [THRIFT-5481](https://issues.apache.org/jira/browse/THRIFT-5481) - consolidate netstd server implementation details into one common model
-- [THRIFT-5480](https://issues.apache.org/jira/browse/THRIFT-5480) - TThreadPoolAsyncServer using TFramedTransport mistakenly drops client
 - [THRIFT-5401](https://issues.apache.org/jira/browse/THRIFT-5401) - MaxMessageSize reached exception thrown in TEndpointTransport
+- [THRIFT-5408](https://issues.apache.org/jira/browse/THRIFT-5408) - Support for deprecated methods (via annotation)
+- [THRIFT-5479](https://issues.apache.org/jira/browse/THRIFT-5479) - Add net 6 support
+- [THRIFT-5480](https://issues.apache.org/jira/browse/THRIFT-5480) - TThreadPoolAsyncServer using TFramedTransport mistakenly drops client
+- [THRIFT-5481](https://issues.apache.org/jira/browse/THRIFT-5481) - consolidate netstd server implementation details into one common model
+- [THRIFT-5500](https://issues.apache.org/jira/browse/THRIFT-5500) - Uncompilable code when .thrift struct 'System' exists
+- [THRIFT-5504](https://issues.apache.org/jira/browse/THRIFT-5504) - CA2254 Message template should be compile time constant
 
 ### Perl
 
-- [THRIFT-5416](https://issues.apache.org/jira/browse/THRIFT-5416) - Allow UDP Socket Client In Perl
 - [THRIFT-5055](https://issues.apache.org/jira/browse/THRIFT-5055) - Fix build-cpan-dist.sh to create a CPAN distribution correctly
+- [THRIFT-5416](https://issues.apache.org/jira/browse/THRIFT-5416) - Allow UDP Socket Client In Perl
 
 ### Python
 
-- [THRIFT-5488](https://issues.apache.org/jira/browse/THRIFT-5488) - SystemError when using fast binary or compact protocol in python 3.10
 - [THRIFT-5454](https://issues.apache.org/jira/browse/THRIFT-5454) - Python TProcessPoolServer does not spawn expected number of worker processes
+- [THRIFT-5488](https://issues.apache.org/jira/browse/THRIFT-5488) - SystemError when using fast binary or compact protocol in python 3.10
 
 ### Rust
 
-- [THRIFT-5457](https://issues.apache.org/jira/browse/THRIFT-5457) - Travis fails consistently on a Rust dependency
 - [THRIFT-5452](https://issues.apache.org/jira/browse/THRIFT-5452) - Make server optional
+- [THRIFT-5457](https://issues.apache.org/jira/browse/THRIFT-5457) - Travis fails consistently on a Rust dependency
 
 ### Test Suite
 
