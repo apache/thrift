@@ -345,7 +345,7 @@ Voting on the development mailing list provides additional benefits (wisdom from
 
     The merge of 1.0.0 into master should proceed as a fast-forward since the 1.0.0 release branch.  If there are discrepancies the best thing to do is resolve them and then submit a pull request.  This pull request must be *MERGED* and not *REBASED* after the CI build is successful.  You may want to do this yourself and mark the pull request as `[DO NOT MERGE]`.
 
-1. Update the web site content to include the new release. The repository is located at https://github.com/apache/thrift-website and there are plenty of instructions how to update both staging and live web site. With regard to the release, its actually quite simple: check out the main branch and editing two lines in _config.yml, then commit. The build bot will update staging. After checking everything is right, simply fast-forward "asf-site" to "asf-staging" and push, then production site will auomatically get updated as well
+1. Update the web site content to include the new release. The repository is located at https://github.com/apache/thrift-website and there are plenty of instructions how to update both staging and live web site. With regard to the release, its actually quite simple: check out the main branch and edit two lines in _config.yml, then commit. The build bot will update staging. After checking everything is right, simply fast-forward "asf-site" to "asf-staging" and push, then production site will automatically get updated as well
 
 1. Make an announcement on the dev@ and user@ mailing lists of the release.  There's no template to follow, but you can point folks to the official web site at https://thrift.apache.org, and to the GitHub site at https://github.org/apache.thrift.
 
