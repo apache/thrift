@@ -65,6 +65,7 @@ public:
     gen_twisted_ = false;
     gen_dynamic_ = false;
     gen_enum_ = false;
+    gen_type_hints_ = false;
     coding_ = "";
     gen_dynbaseclass_ = "";
     gen_dynbaseclass_exc_ = "";
@@ -127,6 +128,9 @@ public:
         gen_tornado_ = true;
       } else if( iter->first.compare("coding") == 0) {
         coding_ = iter->second;
+      } else if( iter->first.compare("type_hints") == 0) {
+        gen_type_hints_ = true;
+        gen_enum_ = true;
       } else {
         throw "unknown option py:" + iter->first;
       }
@@ -259,6 +263,10 @@ public:
                             std::vector<std::string>* post = nullptr);
   std::string type_to_enum(t_type* ttype);
   std::string type_to_spec_args(t_type* ttype);
+  std::string type_to_py_hint(t_type* type);
+  std::string type_to_py_type(t_type* type);
+  std::string arg_hint(t_type* type);
+  std::string func_hint(t_type* type);
 
   static bool is_valid_namespace(const std::string& sub_namespace) {
     return sub_namespace == "twisted";
@@ -314,6 +322,11 @@ private:
   std::string import_dynbase_;
 
   bool gen_slots_;
+
+  /**
+   * True if we should generate classes type hints and type checks in write methods.
+   */
+  bool gen_type_hints_;
 
   std::string copy_options_;
 
@@ -461,6 +474,11 @@ string t_py_generator::py_autogen_comment() {
  */
 string t_py_generator::py_imports() {
   ostringstream ss;
+  if (gen_type_hints_) {
+    ss << "from __future__ import annotations" << endl
+       << "import typing" << endl;
+  }
+
   ss << "from thrift.Thrift import TType, TMessageType, TFrozenDict, TException, "
         "TApplicationException"
      << endl
@@ -524,6 +542,7 @@ void t_py_generator::generate_enum(t_enum* tenum) {
            << (base_class.empty() ? "" : "(" + base_class + ")")
            << ":"
            << endl;
+
   indent_up();
   generate_python_docstring(f_types_, tenum);
 
@@ -878,7 +897,8 @@ void t_py_generator::generate_py_struct_definition(ostream& out,
                       << "'] = " << (*m_iter)->get_name() << endl;
         }
       } else {
-        indent(out) << "self." << (*m_iter)->get_name() << " = " << (*m_iter)->get_name() << endl;
+        indent(out) << "self." << (*m_iter)->get_name() << arg_hint((*m_iter)->get_type())
+                    << " = " << (*m_iter)->get_name() << endl;
       }
     }
 
@@ -2286,7 +2306,7 @@ void t_py_generator::generate_deserialize_field(ostream& out,
     out << endl;
   } else if (type->is_enum()) {
     if (gen_enum_) {
-      indent(out) << name << " = " << type_name(type) << "(iprot.readI32()).name";
+      indent(out) << name << " = " << type_name(type) << "(iprot.readI32())";
     } else {
       indent(out) << name << " = iprot.readI32()";
     }
@@ -2475,11 +2495,7 @@ void t_py_generator::generate_serialize_field(ostream& out, t_field* tfield, str
         throw "compiler error: no Python name for base type " + t_base_type::t_base_name(tbase);
       }
     } else if (type->is_enum()) {
-      if (gen_enum_){
-        out << "writeI32(" << type_name(type) << "[" << name << "].value)";
-      } else {
-        out << "writeI32(" << name << ")";
-      }
+          out << "writeI32(" << name << ")";
     }
     out << endl;
   } else {
@@ -2497,6 +2513,11 @@ void t_py_generator::generate_serialize_field(ostream& out, t_field* tfield, str
  * @param prefix  String prefix to attach to all fields
  */
 void t_py_generator::generate_serialize_struct(ostream& out, t_struct* tstruct, string prefix) {
+  if(gen_type_hints_) {
+    indent(out) << "if not type(" << prefix << ") is " << type_to_py_type(tstruct)
+                << ": raise ValueError('" << prefix << " is not " << type_to_py_type(tstruct) << "')" << endl;
+  }
+
   (void)tstruct;
   indent(out) << prefix << ".write(oprot)" << endl;
 }
@@ -2644,7 +2665,7 @@ void t_py_generator::generate_python_docstring(ostream& out, t_doc* tdoc) {
  */
 string t_py_generator::declare_argument(t_field* tfield) {
   std::ostringstream result;
-  result << tfield->get_name() << "=";
+  result << tfield->get_name() << arg_hint(tfield->get_type()) << " = ";
   if (tfield->get_value() != nullptr) {
     result << render_field_default_value(tfield);
   } else {
@@ -2683,6 +2704,7 @@ string t_py_generator::function_signature(t_function* tfunction, bool interface)
   }
 
   signature += argument_list(tfunction->get_arglist(), &pre, &post) + ")";
+  signature += func_hint(tfunction->get_returntype());
   return signature;
 }
 
@@ -2713,6 +2735,7 @@ string t_py_generator::argument_list(t_struct* tstruct, vector<string>* pre, vec
       result += ", ";
     }
     result += (*f_iter)->get_name();
+    result += arg_hint((*f_iter)->get_type());
   }
   if (post) {
     for (s_iter = post->begin(); s_iter != post->end(); ++s_iter) {
@@ -2742,8 +2765,71 @@ string t_py_generator::type_name(t_type* ttype) {
   return ttype->get_name();
 }
 
+string t_py_generator::arg_hint(t_type* type) {
+  if(gen_type_hints_) {
+      return ": " + type_to_py_hint(type);
+  }
+
+  return "";
+}
+
+string t_py_generator::func_hint(t_type* type) {
+  if(gen_type_hints_) {
+      return " -> " + type_to_py_hint(type);
+  }
+
+  return "";
+}
+
 /**
- * Converts the parse type to a Python tyoe
+ * Converts the parse type to a Python type hint
+ */
+string t_py_generator::type_to_py_hint(t_type* type) {
+  return "typing.Optional[" + type_to_py_type(type) + "]";
+}
+
+/**
+ * Converts the parse type to a Python type
+ */
+string t_py_generator::type_to_py_type(t_type* type) {
+  type = get_true_type(type);
+
+  if (type->is_binary()) {
+    return  "bytes";
+  }
+  if (type->is_base_type()) {
+    t_base_type::t_base tbase = ((t_base_type*)type)->get_base();
+    switch (tbase) {
+    case t_base_type::TYPE_VOID:
+      return "None";
+    case t_base_type::TYPE_STRING:
+      return "str";
+    case t_base_type::TYPE_BOOL:
+      return "bool";
+    case t_base_type::TYPE_I8:
+    case t_base_type::TYPE_I16:
+    case t_base_type::TYPE_I32:
+    case t_base_type::TYPE_I64:
+      return "int";
+    case t_base_type::TYPE_DOUBLE:
+      return "float";
+    }
+  } else if (type->is_enum() || type->is_struct() || type->is_xception()) {
+    return type_name(type);
+  } else if (type->is_map()) {
+    return "dict[" + type_to_py_type(((t_map*)type)->get_key_type()) + ", " + type_to_py_type(((t_map*)type)->get_val_type()) + "]";
+  } else if (type->is_set()) {
+    return "set[" + type_to_py_type(((t_set*)type)->get_elem_type()) + "]";
+  } else if (type->is_list()) {
+    return "list[" + type_to_py_type(((t_list*)type)->get_elem_type()) + "]";
+  }
+
+  throw "INVALID TYPE IN type_to_py_hint: " + type->get_name();
+}
+
+
+/**
+ * Converts the parse type to a Python type enum
  */
 string t_py_generator::type_to_enum(t_type* type) {
   type = get_true_type(type);
@@ -2839,4 +2925,5 @@ THRIFT_REGISTER_GENERATOR(
     "                     Package prefix for generated files.\n"
     "    old_style:       Deprecated. Generate old-style classes.\n"
     "    enum:            Generates Python's IntEnum, connects thrift to python enums. Python 3.4 and higher.\n"
+    "    type_hints:      Generate type hints and type checks in write method, including IntEnum generation.\n"
 )
