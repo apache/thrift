@@ -1,6 +1,6 @@
 # Apache Thrift Release Management
 
-Instructions for preparing and distributing a release of Apache Thrift are fairly complex.  These procedures are documented here, and we're working to automate as much of this as possible.  There are few projects like ours that integrate with 28 programming languages.  Given the extreme number of package management systems that Apache Thrift integrates with (compared to perhaps any), part of the burden of releasing Apache Thrift is to manually package and upload some of these [language-specific packages](http://apache.thrift.org/libraries).
+Instructions for preparing and distributing a release of Apache Thrift are fairly complex.  These procedures are documented here, and we're working to automate as much of this as possible.  There are few projects like ours that integrate with 28 programming languages.  Given the extreme number of package management systems that Apache Thrift integrates with (compared to perhaps any), part of the burden of releasing Apache Thrift is to manually package and upload some of these [language-specific packages](http://thrift.apache.org/lib).
 
 It is important to note here that Apache Thrift is designed for version interoperability, so one can use a version 0.7.0 client with a 0.12.0 server.  A particular version number does not make any guarantees as to the features available in any given language.  See the [Language Feature Matrix](https://github.com/apache/thrift/blob/master/LANGUAGES.md) to learn more.
 
@@ -18,7 +18,7 @@ Further, if there are only packaging changes for a single third-party distributi
 
 #### External Package Patches
 
-It is common to have language-specific critical defects or packaging errors that need to be resolved between releases of Apache Thrift.  The project handles these on a case-by-case basis for languages that have their own [package management systems](http://apache.thrift.org/libraries).  When a language-specific patch is made, the patch level of the distribution pushed to the external package manager is bumped.
+It is common to have language-specific critical defects or packaging errors that need to be resolved between releases of Apache Thrift.  The project handles these on a case-by-case basis for languages that have their own [package management systems](http://thrift.apache.org/lib).  When a language-specific patch is made, the patch level of the distribution pushed to the external package manager is bumped.
 
  As such, there may be cases between Apache Thrift releases where there are (for example) a `0.12.1` and `0.12.2` version of a Haskell Hackage package, and perhaps also a `0.12.3` version of a dlang dub package.  You will not find a tag or an official project release in these cases, however, the code changes will be reflected in the release branch and in master.  In these cases we would not release a version of Apache Thrift nor would we refresh all the external language packages.
 
