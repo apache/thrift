@@ -3250,6 +3250,10 @@ void t_java_generator::generate_service_async_client(t_service* tservice) {
                        "client.getProtocolFactory().getProtocol(memoryTransport);" << endl;
     indent(f_service_);
     if (ret_type->is_void()) { // NB: Includes oneways which always return void.
+      if (!(*f_iter)->is_oneway()) {
+        f_service_ << "(new Client(prot)).recv" + sep + javaname + "();" << endl;
+        indent(f_service_);
+      }
       f_service_ << "return null;" << endl;
     } else {
       f_service_ << "return (new Client(prot)).recv" + sep + javaname + "();" << endl;
