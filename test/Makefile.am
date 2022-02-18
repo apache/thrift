@@ -167,6 +167,7 @@ EXTRA_DIST = \
 	UnsafeTypes.thrift \
 	Service.thrift \
 	SpecificNameTest.thrift \
+	VoidMethExceptionsTest.thrift \
 	partial/thrift_test_schema.thrift \
 	known_failures_Linux.json \
 	test.py \
