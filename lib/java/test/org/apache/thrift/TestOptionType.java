@@ -20,11 +20,10 @@
 package org.apache.thrift;
 
 import junit.framework.TestCase;
-import org.apache.thrift.Option;
 
 // Tests and documents behavior for the "Option<T>" type
 public class TestOptionType extends TestCase {
-    public void testSome() throws Exception {
+    public void testSome() {
         String name = "Chuck Norris";
         Option<String> option = Option.fromNullable(name);
 

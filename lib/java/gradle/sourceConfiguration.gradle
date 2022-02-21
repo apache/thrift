@@ -37,7 +37,7 @@ sourceSets {
             exclude '**/test/TestTServletServer.java'
         }
         resources {
-            srcDir 'test'
+            srcDir 'test/resources'
             include 'log4j.properties'
         }
     }
