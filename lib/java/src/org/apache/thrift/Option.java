@@ -19,6 +19,8 @@
 
 package org.apache.thrift;
 
+import java.util.Optional;
+
 /**
  * Implementation of the Option type pattern
  */
@@ -54,6 +56,19 @@ public abstract class Option<T> {
             return other;
         }
     }
+
+    /**
+     * Turn this Option into Java 8 Optional type
+     * @return Java 8+ Optional Type
+     */
+    public Optional<T> toOptional() {
+        if (isDefined()) {
+            return Optional.of(get());
+        } else {
+            return Optional.empty();
+        }
+    }
+
     /**
      * The None type, representing an absent value (instead of "null")
      */
