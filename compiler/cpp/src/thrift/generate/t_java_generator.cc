@@ -46,6 +46,9 @@ using std::vector;
 
 static const string endl = "\n"; // avoid ostream << std::endl flushes
 
+static const string thrift_option_class = "org.apache.thrift.Option";
+static const string jdk_option_class = "java.util.Optional";
+
 /**
  * Java code generator.
  *
@@ -68,7 +71,7 @@ public:
     sorted_containers_ = false;
     java5_ = false;
     reuse_objects_ = false;
-    use_option_type_ = false;
+    use_option_type_ = NO_OPTION_TYPE;
     undated_generated_annotations_  = false;
     suppress_generated_annotations_ = false;
     rethrow_unhandled_exceptions_ = false;
@@ -95,7 +98,15 @@ public:
         // keep both reuse_objects and reuse-objects (legacy) for backwards compatibility
         reuse_objects_ = true;
       } else if( iter->first.compare("option_type") == 0) {
-        use_option_type_ = true;
+        if( iter->second.compare("jdk8") == 0) {
+          use_option_type_ = JDK8;
+        } else if( iter->second.compare("jdk8withpostfix") == 0) {
+          use_option_type_ = JDK8_WITH_POSTFIX;
+        } else if( iter->second.compare("thrift") == 0 || iter->second.compare("") == 0) {
+          use_option_type_ = THRIFT;
+        } else {
+          throw "option_type must be 'jdk8', 'jdk8withpostfix', or 'thrift'";
+        }
       } else if( iter->first.compare("rethrow_unhandled_exceptions") == 0) {
         rethrow_unhandled_exceptions_ = true;
       } else if( iter->first.compare("generated_annotations") == 0) {
@@ -403,6 +414,8 @@ private:
   ofstream_with_content_based_conditional_update f_service_;
   std::string package_dir_;
 
+  enum option_type { NO_OPTION_TYPE, THRIFT, JDK8, JDK8_WITH_POSTFIX };
+
   bool bean_style_;
   bool android_style_;
   bool private_members_;
@@ -412,7 +425,8 @@ private:
   bool java5_;
   bool sorted_containers_;
   bool reuse_objects_;
-  bool use_option_type_;
+  option_type use_option_type_;
+  bool use_option_postfix_;
   bool undated_generated_annotations_;
   bool suppress_generated_annotations_;
   bool rethrow_unhandled_exceptions_;
@@ -2189,7 +2203,7 @@ void t_java_generator::generate_reflection_getters(ostringstream& out,
                                                    string cap_name) {
   indent(out) << "case " << constant_name(field_name) << ":" << endl;
   indent_up();
-  indent(out) << "return " << (type->is_bool() ? "is" : "get") << cap_name << "();" << endl << endl;
+  indent(out) << "return " << (type->is_bool() ? "is" : "get") << cap_name << "();" << endl;
   indent_down();
 }
 
@@ -2306,31 +2320,61 @@ void t_java_generator::generate_java_bean_boilerplate(ostream& out, t_struct* ts
     t_type* type = get_true_type(field->get_type());
     std::string field_name = field->get_name();
     std::string cap_name = get_cap_name(field_name);
-    bool optional = use_option_type_ && field->get_req() == t_field::T_OPTIONAL;
+    // if the user did request gen optional type and the field is optional, then gen optional
+    bool gen_optional = use_option_type_ != NO_OPTION_TYPE && field->get_req() == t_field::T_OPTIONAL;
+    // if optional was not generated, or when user request optional fields with postfix for optional fields, generate
+    // original nullable been getter/setter as well
+    bool gen_non_optional = !gen_optional || (use_option_type_ == JDK8_WITH_POSTFIX && field->get_req() == t_field::T_OPTIONAL);
     bool is_deprecated = this->is_deprecated(field->annotations_);
 
     if (type->is_container()) {
       // Method to return the size of the collection
-      if (optional) {
+      if (gen_optional) {
         if (is_deprecated) {
           indent(out) << "@Deprecated" << endl;
         }
-        indent(out) << "public org.apache.thrift.Option<Integer> get" << cap_name;
-        out << get_cap_name("size() {") << endl;
+
+        if (use_option_type_ == JDK8 || use_option_type_ == JDK8_WITH_POSTFIX) {
+          indent(out) << "public " << jdk_option_class << "<Integer> get" << cap_name;
+        } else {
+          indent(out) << "public " << thrift_option_class << "<Integer> get" << cap_name;
+        }
+
+        if (use_option_type_ == JDK8_WITH_POSTFIX) {
+          out << get_cap_name("sizeOptional() {") << endl;
+        } else {
+          out << get_cap_name("size() {") << endl;
+        }
 
         indent_up();
         indent(out) << "if (this." << field_name << " == null) {" << endl;
         indent_up();
-        indent(out) << "return org.apache.thrift.Option.none();" << endl;
+
+        if (use_option_type_ == JDK8 || use_option_type_ == JDK8_WITH_POSTFIX) {
+          indent(out) << "return " << jdk_option_class << ".empty();" << endl;
+        } else {
+          indent(out) << "return " << thrift_option_class << ".none();" << endl;
+        }
+
         indent_down();
         indent(out) << "} else {" << endl;
         indent_up();
-        indent(out) << "return org.apache.thrift.Option.some(this." << field_name << ".size());" << endl;
+
+        if (use_option_type_ == JDK8 || use_option_type_ == JDK8_WITH_POSTFIX) {
+          indent(out) << "return " << jdk_option_class << ".of(this.";
+        } else {
+          indent(out) << "return " << thrift_option_class << ".some(this.";
+        }
+
+        out << field_name << ".size());" << endl;
+
         indent_down();
         indent(out) << "}" << endl;
         indent_down();
         indent(out) << "}" << endl << endl;
-      } else {
+      }
+
+      if (gen_non_optional) {
         if (is_deprecated) {
           indent(out) << "@Deprecated" << endl;
         }
@@ -2354,27 +2398,53 @@ void t_java_generator::generate_java_bean_boilerplate(ostream& out, t_struct* ts
       }
 
       // Iterator getter for sets and lists
-      if (optional) {
+      if (gen_optional) {
         if (is_deprecated) {
           indent(out) << "@Deprecated" << endl;
         }
-        indent(out) << "public org.apache.thrift.Option<java.util.Iterator<" << type_name(element_type, true, false)
+
+        if (use_option_type_ == JDK8 || use_option_type_ == JDK8_WITH_POSTFIX) {
+          indent(out) << "public " << jdk_option_class << "<";
+        } else {
+          indent(out) << "public " << thrift_option_class << "<";
+        }
+        out << "java.util.Iterator<" << type_name(element_type, true, false)
                     << ">> get" << cap_name;
-        out << get_cap_name("iterator() {") << endl;
+
+        if (use_option_type_ == JDK8_WITH_POSTFIX) {
+          out << get_cap_name("iteratorOptional() {") << endl;
+        } else {
+          out << get_cap_name("iterator() {") << endl;
+        }
 
         indent_up();
         indent(out) << "if (this." << field_name << " == null) {" << endl;
         indent_up();
-        indent(out) << "return org.apache.thrift.Option.none();" << endl;
+
+        if (use_option_type_ == JDK8 || use_option_type_ == JDK8_WITH_POSTFIX) {
+          indent(out) << "return " << jdk_option_class << ".empty();" << endl;
+        } else {
+          indent(out) << "return " << thrift_option_class << ".none();" << endl;
+        }
+
         indent_down();
         indent(out) << "} else {" << endl;
         indent_up();
-        indent(out) << "return org.apache.thrift.Option.some(this." << field_name << ".iterator());" << endl;
+
+        if (use_option_type_ == JDK8 || use_option_type_ == JDK8_WITH_POSTFIX) {
+          indent(out) << "return " << jdk_option_class << ".of(this.";
+        } else {
+          indent(out) << "return " << thrift_option_class << ".some(this.";
+        }
+        out << field_name << ".iterator());" << endl;
+
         indent_down();
         indent(out) << "}" << endl;
         indent_down();
         indent(out) << "}" << endl << endl;
-      } else {
+      }
+
+      if (gen_non_optional) {
         if (is_deprecated) {
           indent(out) << "@Deprecated" << endl;
         }
@@ -2463,31 +2533,58 @@ void t_java_generator::generate_java_bean_boilerplate(ostream& out, t_struct* ts
       }
       indent(out) << "}" << endl << endl;
     } else {
-      if (optional) {
+      if (gen_optional) {
         if (is_deprecated) {
           indent(out) << "@Deprecated" << endl;
         }
-        indent(out) << "public org.apache.thrift.Option<" << type_name(type, true) << ">";
+
+        if (use_option_type_ == JDK8 || use_option_type_ == JDK8_WITH_POSTFIX) {
+          indent(out) << "public " << jdk_option_class << "<" << type_name(type, true) << ">";
+        } else {
+          indent(out) << "public " << thrift_option_class << "<" << type_name(type, true) << ">";
+        }
+
         if (type->is_base_type() && ((t_base_type*)type)->get_base() == t_base_type::TYPE_BOOL) {
           out << " is";
         } else {
           out << " get";
         }
-        out << cap_name << "() {" << endl;
+
+        if (use_option_type_ == JDK8_WITH_POSTFIX) {
+          out << cap_name << "Optional() {" << endl;
+        } else {
+          out << cap_name << "() {" << endl;
+        }
+
         indent_up();
 
         indent(out) << "if (this.isSet" << cap_name << "()) {" << endl;
         indent_up();
-        indent(out) << "return org.apache.thrift.Option.some(this." << field_name << ");" << endl;
+
+        if (use_option_type_ == JDK8 || use_option_type_ == JDK8_WITH_POSTFIX) {
+          indent(out) << "return " << jdk_option_class << ".of(this.";
+        } else {
+          indent(out) << "return " << thrift_option_class << ".some(this.";
+        }
+        out << field_name << ");" << endl;
+
         indent_down();
         indent(out) << "} else {" << endl;
         indent_up();
-        indent(out) << "return org.apache.thrift.Option.none();" << endl;
+
+        if (use_option_type_ == JDK8 || use_option_type_ == JDK8_WITH_POSTFIX) {
+          indent(out) << "return " << jdk_option_class << ".empty();" << endl;
+        } else {
+          indent(out) << "return " << thrift_option_class << ".none();" << endl;
+        }
+
         indent_down();
         indent(out) << "}" << endl;
         indent_down();
         indent(out) << "}" << endl << endl;
-      } else {
+      }
+
+      if (gen_non_optional) {
         if (is_deprecated) {
           indent(out) << "@Deprecated" << endl;
         }
@@ -5449,7 +5546,11 @@ THRIFT_REGISTER_GENERATOR(
     "    android:         Generated structures are Parcelable.\n"
     "    android_legacy:  Do not use java.io.IOException(throwable) (available for Android 2.3 and "
     "above).\n"
-    "    option_type:     Wrap optional fields in an Option type.\n"
+    "    option_type=[thrift|jdk8|jdk8withpostfix]:\n"
+    "                     thrift: wrap optional fields in thrift Option type.\n"
+    "                     jdk8: Wrap optional fields in JDK8+ Option type.\n"
+    "                     jdk8withpostfix: Wrap optional fields in JDK8+ Option type with `Optional` "
+    "postfix, and leave original fields as is.\n"
     "    rethrow_unhandled_exceptions:\n"
     "                     Enable rethrow of unhandled exceptions and let them propagate further."
     " (Default behavior is to catch and log it.)\n"

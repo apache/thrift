@@ -24,11 +24,12 @@ ext.genSrc = file("$buildDir/gen-java")
 ext.genBeanSrc = file("$buildDir/gen-javabean")
 ext.genReuseSrc = file("$buildDir/gen-javareuse")
 ext.genFullCamelSrc = file("$buildDir/gen-fullcamel")
+ext.genOptionTypeSrc = file("$buildDir/gen-option-type")
 ext.genUnsafeSrc = file("$buildDir/gen-unsafe")
 
 // Add the generated code directories to the test source set
 sourceSets {
-    test.java.srcDirs genSrc, genBeanSrc, genReuseSrc, genFullCamelSrc, genUnsafeSrc
+    test.java.srcDirs genSrc, genBeanSrc, genReuseSrc, genFullCamelSrc, genUnsafeSrc, genOptionTypeSrc
 }
 
 // ----------------------------------------------------------------------------
@@ -83,6 +84,24 @@ task generateJava(group: 'Build') {
     thriftCompile(it, 'JavaBinaryDefault.thrift')
     thriftCompile(it, 'VoidMethExceptionsTest.thrift')
     thriftCompile(it, 'partial/thrift_test_schema.thrift')
+}
+
+task generateOptionalTypeJdk8Java(group: 'Build') {
+    description = 'Generate the thrift gen-option-type-jdk8 source'
+    generate.dependsOn it
+
+    ext.outputBuffer = new ByteArrayOutputStream()
+
+    thriftCompile(it, 'JavaOptionTypeJdk8Test.thrift', 'java:option_type=jdk8', genOptionTypeSrc)
+}
+
+task generateOptionalTypeJdk8WithPostfixJava(group: 'Build') {
+    description = 'Generate the thrift gen-option-type-jdk8-with-postfix source'
+    generate.dependsOn it
+
+    ext.outputBuffer = new ByteArrayOutputStream()
+
+    thriftCompile(it, 'JavaOptionTypeJdk8WithPostfixTest.thrift', 'java:option_type=jdk8withpostfix', genOptionTypeSrc)
 }
 
 task generateBeanJava(group: 'Build') {

@@ -26,7 +26,7 @@ import thrift.test.Opt30;
 import thrift.test.Opt64;
 import thrift.test.Opt80;
 
-// Exercises the isSet methods using structs from from ManyOptionals.thrift
+// Exercises the isSet methods using structs from ManyOptionals.thrift
 public class TestOptionals extends TestCase {
   public void testEncodingUtils() throws Exception {
     assertEquals((short)0x8, EncodingUtils.setBit((short)0, 3, true));
