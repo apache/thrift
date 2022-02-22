@@ -69,6 +69,11 @@ jobs:
         - JOB="Docker Build ubuntu-bionic 18.04 LTS"
         - DISTRO=ubuntu-bionic
         - TRAVIS_BUILD_STAGE=docker
+    - script: true
+      env:
+        - JOB="Docker Build ubuntu-focal 20.04 LTS"
+        - DISTRO=ubuntu-focal
+        - TRAVIS_BUILD_STAGE=docker
 
     # ========================= stage: thrift =======================
     # ------------------------- phase: cross ------------------------
@@ -121,6 +126,12 @@ jobs:
       env:
         - JOB="Autotools (Ubuntu Xenial)"
         - DISTRO=ubuntu-xenial
+        - SCRIPT="autotools.sh"
+
+    - script: build/docker/run.sh
+      env:
+        - JOB="Autotools (Ubuntu Focal)"
+        - DISTRO=ubuntu-focal
         - SCRIPT="autotools.sh"
 
     # ------------------------- phase: cmake ------------------------
