@@ -78,7 +78,8 @@ public:
         bean_style_ = true;
       } else if( iter->first.compare("android") == 0) {
         android_style_ = true;
-      } else if( iter->first.compare("private-members") == 0) {
+      } else if( iter->first.compare("private_members") == 0 || iter->first.compare("private-members") == 0) {
+        // keep both private_members and private-members (legacy) for backwards compatibility
         private_members_ = true;
       } else if( iter->first.compare("nocamel") == 0) {
         nocamel_style_ = true;
@@ -5435,8 +5436,9 @@ THRIFT_REGISTER_GENERATOR(
     java,
     "Java",
     "    beans:           Members will be private, and setter methods will return void.\n"
-    "    private-members: Members will be private, but setter methods will return 'this' like "
+    "    private_members: Members will be private, but setter methods will return 'this' like "
     "usual.\n"
+    "    private-members: Same as 'private_members'.\n"
     "    nocamel:         Do not use CamelCase field accessors with beans.\n"
     "    fullcamel:       Convert underscored_accessor_or_service_names to camelCase.\n"
     "    android:         Generated structures are Parcelable.\n"
