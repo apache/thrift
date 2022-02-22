@@ -90,7 +90,8 @@ public:
         sorted_containers_ = true;
       } else if( iter->first.compare("java5") == 0) {
         java5_ = true;
-      } else if( iter->first.compare("reuse-objects") == 0) {
+      } else if( iter->first.compare("reuse_objects") == 0 || iter->first.compare("reuse-objects") == 0) {
+        // keep both reuse_objects and reuse-objects (legacy) for backwards compatibility
         reuse_objects_ = true;
       } else if( iter->first.compare("option_type") == 0) {
         use_option_type_ = true;
@@ -5447,8 +5448,9 @@ THRIFT_REGISTER_GENERATOR(
     "                     Enable rethrow of unhandled exceptions and let them propagate further."
     " (Default behavior is to catch and log it.)\n"
     "    java5:           Generate Java 1.5 compliant code (includes android_legacy flag).\n"
-    "    reuse-objects:   Data objects will not be allocated, but existing instances will be used "
+    "    reuse_objects:   Data objects will not be allocated, but existing instances will be used "
     "(read and write).\n"
+    "    reuse-objects:   Same as 'reuse_objects'.\n"
     "    sorted_containers:\n"
     "                     Use TreeSet/TreeMap instead of HashSet/HashMap as a implementation of "
     "set/map.\n"

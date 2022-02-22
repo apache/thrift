@@ -108,7 +108,7 @@ task generateFullCamelJava(group: 'Build') {
 
     ext.outputBuffer = new ByteArrayOutputStream()
 
-    thriftCompile(it, 'ReuseObjects.thrift', 'java:reuse-objects', genReuseSrc)
+    thriftCompile(it, 'ReuseObjects.thrift', 'java:reuse_objects', genReuseSrc)
 }
 
 task generateUnsafeBinariesJava(group: 'Build') {
