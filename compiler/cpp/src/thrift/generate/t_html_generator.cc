@@ -694,7 +694,7 @@ int t_html_generator::print_type(t_type* ttype) {
     string type_name = ttype->get_name();
     f_out_ << "<a href=\"" << make_file_link(prog_name + ".html") << "#";
     if (ttype->is_typedef()) {
-      f_out_ << "Struct_";
+      f_out_ << "Typedef_";
     } else if (ttype->is_struct() || ttype->is_xception()) {
       f_out_ << "Struct_";
     } else if (ttype->is_enum()) {
