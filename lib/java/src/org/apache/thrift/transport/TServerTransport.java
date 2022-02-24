@@ -22,6 +22,8 @@ package org.apache.thrift.transport;
 import java.io.Closeable;
 import java.net.InetSocketAddress;
 
+import org.apache.thrift.TConfiguration;
+
 /**
  * Server transport. Object which provides client transports.
  *
@@ -32,6 +34,7 @@ public abstract class TServerTransport implements Closeable {
     int backlog = 0; // A value of 0 means the default value will be used (currently set at 50)
     int clientTimeout = 0;
     InetSocketAddress bindAddr;
+    int maxFrameSize = TConfiguration.DEFAULT_MAX_FRAME_SIZE;
 
     public T backlog(int backlog) {
       this.backlog = backlog;
@@ -50,6 +53,11 @@ public abstract class TServerTransport implements Closeable {
 
     public T bindAddr(InetSocketAddress bindAddr) {
       this.bindAddr = bindAddr;
+      return (T) this;
+    }
+
+    public T maxFrameSize(int maxFrameSize) {
+      this.maxFrameSize = maxFrameSize;
       return (T) this;
     }
   }
