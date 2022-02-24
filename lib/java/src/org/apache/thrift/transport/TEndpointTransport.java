@@ -26,15 +26,20 @@ public abstract class TEndpointTransport extends TTransport{
 
     protected long getMaxMessageSize() { return getConfiguration().getMaxMessageSize(); }
 
+    public int getMaxFrameSize() { return getConfiguration().getMaxFrameSize(); }
+
+    public void setMaxFrameSize(int maxFrameSize) { getConfiguration().setMaxFrameSize(maxFrameSize); }
+
     protected long knownMessageSize;
     protected long remainingMessageSize;
 
     private TConfiguration _configuration;
+
     public TConfiguration getConfiguration() {
         return _configuration;
     }
 
-    public TEndpointTransport( TConfiguration config) throws TTransportException {
+    public TEndpointTransport(TConfiguration config) throws TTransportException {
         _configuration = Objects.isNull(config) ? new TConfiguration() : config;
 
         resetConsumedMessageSize(-1);
