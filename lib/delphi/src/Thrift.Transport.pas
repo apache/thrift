@@ -45,10 +45,6 @@ uses
   Thrift.WinHTTP,
   Thrift.Stream;
 
-const
-  DEFAULT_MAX_MESSAGE_SIZE = 100 * 1024 * 1024; // 100 MB
-  DEFAULT_THRIFT_TIMEOUT = 5 * 1000; // ms
-
 type
   IStreamTransport = interface;
 
