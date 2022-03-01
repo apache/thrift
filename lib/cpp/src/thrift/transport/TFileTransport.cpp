@@ -24,8 +24,6 @@
 #include <thrift/transport/PlatformSocket.h>
 #include <thrift/concurrency/FunctionRunner.h>
 
-#include <boost/version.hpp>
-
 #ifdef HAVE_SYS_TIME_H
 #include <sys/time.h>
 #else
