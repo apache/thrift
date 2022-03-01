@@ -186,7 +186,8 @@ sub flush
     $out->setpos(0); # rewind
     my $buf = join('', <$out>);
 
-    my $request = HTTP::Request->new(POST => $self->{url}, ($self->{headers} || undef), $buf);
+    my $request = HTTP::Request->new(POST => $self->{url}, undef, $buf);
+    map { $request->header($_ => $self->{headers}->{$_}) } keys %{$self->{headers}};
     my $response = $ua->request($request);
     my $content_ref = $response->content_ref;
 
