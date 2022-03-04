@@ -48,7 +48,11 @@ thrift_gen =                                    \
         gen-py-dynamicslots/ThriftTest/__init__.py           \
         gen-py-dynamicslots/DebugProtoTest/__init__.py \
         gen-py-dynamicslots/DoubleConstantsTest/__init__.py \
-        gen-py-dynamicslots/Recursive/__init__.py
+        gen-py-dynamicslots/Recursive/__init__.py \
+        gen-py-enum/ThriftTest/__init__.py \
+        gen-py-enum/DebugProtoTest/__init__.py \
+        gen-py-enum/DoubleConstantsTest/__init__.py \
+        gen-py-enum/Recursive/__init__.py
 
 
 precross: $(thrift_gen)
@@ -92,6 +96,10 @@ gen-py-dynamic/%/__init__.py: ../%.thrift $(THRIFT)
 gen-py-dynamicslots/%/__init__.py: ../%.thrift $(THRIFT)
 	test -d gen-py-dynamicslots || $(MKDIR_P) gen-py-dynamicslots
 	$(THRIFT) --gen py:dynamic,slots -out gen-py-dynamicslots $<
+
+gen-py-enum/%/__init__.py: ../%.thrift $(THRIFT)
+	test -d gen-py-enum || $(MKDIR_P) gen-py-enum
+	$(THRIFT) --gen py:enum -out gen-py-enum $<
 
 clean-local:
 	$(RM) -r build
