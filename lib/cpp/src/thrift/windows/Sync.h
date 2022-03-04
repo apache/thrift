@@ -29,11 +29,23 @@
 
 // Including Windows.h can conflict with Winsock2 usage, and also
 // adds problematic macros like min() and max(). Try to work around:
+#ifndef NOMINMAX
 #define NOMINMAX
+#define _THRIFT_UNDEF_NOMINMAX
+#endif
+#ifndef WIN32_LEAN_AND_MEAN
 #define WIN32_LEAN_AND_MEAN
+#define _THRIFT_UNDEF_WIN32_LEAN_AND_MEAN
+#endif
 #include <Windows.h>
+#ifdef _THRIFT_UNDEF_NOMINMAX
 #undef NOMINMAX
+#undef _THRIFT_UNDEF_NOMINMAX
+#endif
+#ifdef _THRIFT_UNDEF_WIN32_LEAN_AND_MEAN
 #undef WIN32_LEAN_AND_MEAN
+#undef _THRIFT_UNDEF_WIN32_LEAN_AND_MEAN
+#endif
 
 /*
   Lightweight synchronization objects that only make sense on Windows.  For cross-platform

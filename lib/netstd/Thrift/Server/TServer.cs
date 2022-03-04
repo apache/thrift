@@ -35,7 +35,7 @@ namespace Thrift.Server
         protected TProtocolFactory OutputProtocolFactory;
         protected TTransportFactory OutputTransportFactory;
 
-        protected TServerEventHandler ServerEventHandler;
+        protected ITServerEventHandler ServerEventHandler;
         protected TServerTransport ServerTransport;
 
         protected TServer(ITProcessorFactory processorFactory, TServerTransport serverTransport,
@@ -52,12 +52,12 @@ namespace Thrift.Server
             Logger = logger; // null is absolutely legal
         }
 
-        public void SetEventHandler(TServerEventHandler seh)
+        public void SetEventHandler(ITServerEventHandler seh)
         {
             ServerEventHandler = seh;
         }
 
-        public TServerEventHandler GetEventHandler()
+        public ITServerEventHandler GetEventHandler()
         {
             return ServerEventHandler;
         }
@@ -66,7 +66,7 @@ namespace Thrift.Server
         protected void LogError( string msg)
         {
             if (Logger != null)
-                Logger.LogError(msg);
+                Logger.LogError("{Msg}",msg);  // NOTE: Log message template, not string interpolation!
         }
 
         public abstract void Stop();

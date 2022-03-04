@@ -29,3 +29,8 @@ check: gopathfuzz
 clean-local:
 	$(RM) -r gopathfuzz gen-go
 
+EXTRA_DIST = \
+	fuzz.go \
+	fuzz_test.go \
+	go.mod \
+	go.sum 

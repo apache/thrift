@@ -47,15 +47,15 @@ namespace Thrift.Protocol
                     if (first_child)
                         first_child = false;
                     else
-                        sb.Append(",");
+                        sb.Append(',');
 
                     sb.Append("{ ");
                     pair.Key.ToString(sb);
                     sb.Append(", ");
                     pair.Value.ToString(sb);
-                    sb.Append("}");
+                    sb.Append('}');
                 }
-                sb.Append("}");
+                sb.Append('}');
             }
             else if (self is IEnumerable)
             {
@@ -65,7 +65,7 @@ namespace Thrift.Protocol
                     elm.ToString(sb, first_child);
                     first_child = false;
                 }
-                sb.Append("}");
+                sb.Append('}');
             }
             else if (self is TBase)
             {

@@ -131,7 +131,7 @@ Sample:
             if (selectedTransport == Transport.Http)
             {
                 if (multiplex)
-                    throw new Exception("This tutorial semple code does not yet allow multiplex over http (although Thrift itself of course does)");
+                    throw new Exception("This tutorial sample code does not yet allow multiplex over http (although Thrift itself of course does)");
                 new HttpServerSample().Run(cancellationToken);
             }
             else

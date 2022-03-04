@@ -23,8 +23,6 @@ using Thrift.Processor;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 
-#pragma warning disable IDE0079  // remove unnecessary pragmas
-#pragma warning disable IDE0063  // using can be simplified, we don't
 
 namespace Thrift.Server
 {

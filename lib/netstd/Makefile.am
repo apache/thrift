@@ -53,12 +53,15 @@ EXTRA_DIST = \
 	Tests/Thrift.Tests/Collections \
 	Tests/Thrift.Tests/DataModel \
 	Tests/Thrift.Tests/Protocols \
+	Tests/Thrift.Tests/Transports \
 	Tests/Thrift.Tests/Thrift.Tests.csproj \
+	Thrift/.editorconfig \
 	Thrift/Collections \
 	Thrift/Processor \
 	Thrift/Properties \
 	Thrift/Protocol \
 	Thrift/Server \
+	Thrift/GlobalSuppressions.cs \
 	Thrift/TApplicationException.cs \
 	Thrift/TBaseClient.cs \
 	Thrift/TConfiguration.cs \

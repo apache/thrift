@@ -41,6 +41,7 @@ public:
     : type_(type),
       name_(name),
       key_(0),
+	  req_(T_OPT_IN_REQ_OUT),
       value_(nullptr),
       xsd_optional_(false),
       xsd_nillable_(false),

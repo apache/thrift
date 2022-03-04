@@ -50,6 +50,7 @@ namespace Thrift.Protocol
         public void Dispose()
         {
             Dispose(true);
+            GC.SuppressFinalize(this);
         }
 
         public void IncrementRecursionDepth()

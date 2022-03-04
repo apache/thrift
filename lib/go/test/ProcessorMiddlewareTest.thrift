@@ -15,33 +15,18 @@
  * KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations
  * under the License.
+ *
+ * Contains some contributions under the Thrift Software License.
+ * Please see doc/old-thrift-license.txt in the Thrift distribution for
+ * details.
  */
 
-#ifndef _THRIFT_WINDOWS_FCNTL_H_
-#define _THRIFT_WINDOWS_FCNTL_H_ 1
-
-#if defined(_MSC_VER) && (_MSC_VER > 1200)
-#pragma once
-#endif // _MSC_VER
-
-#ifndef _WIN32
-#error This is a MSVC header only.
-#endif
-
-#ifdef _WIN32_WCE
-#include <string>
-#endif
-
-// Win32
-#include <winsock2.h>
-#include <thrift/transport/PlatformSocket.h>
-
-extern "C" {
-int thrift_fcntl(THRIFT_SOCKET fd, int cmd, int flags);
+exception Error {
+  1: optional string foo,
 }
 
-#ifdef _WIN32_WCE
-std::string thrift_wstr2str(std::wstring ws);
-#endif
-
-#endif // _THRIFT_WINDOWS_FCNTL_H_
+service Service {
+  void ping() throws (
+    1: Error error,
+  );
+}

@@ -52,7 +52,8 @@ gopath: $(THRIFT) $(THRIFTTEST) \
 				EqualsTest.thrift \
 				ConflictArgNamesTest.thrift \
 				ConstOptionalFieldImport.thrift \
-				ConstOptionalField.thrift
+				ConstOptionalField.thrift \
+				ProcessorMiddlewareTest.thrift
 	mkdir -p gopath/src
 	grep -v list.*map.*list.*map $(THRIFTTEST) | grep -v 'set<Insanity>' > ThriftTest.thrift
 	$(THRIFT) $(THRIFTARGS) -r IncludesTest.thrift
@@ -84,6 +85,7 @@ gopath: $(THRIFT) $(THRIFTTEST) \
 	$(THRIFT) $(THRIFTARGS) EqualsTest.thrift
 	$(THRIFT) $(THRIFTARGS) ConflictArgNamesTest.thrift
 	$(THRIFT) $(THRIFTARGS) -r ConstOptionalField.thrift
+	$(THRIFT) $(THRIFTARGS) ProcessorMiddlewareTest.thrift
 	ln -nfs ../../tests gopath/src/tests
 	cp -r ./dontexportrwtest gopath/src
 	touch gopath
@@ -106,7 +108,8 @@ check: gopath
 				./gopath/src/servicestest/container_test-remote \
 				./gopath/src/duplicateimportstest \
 				./gopath/src/equalstest \
-				./gopath/src/conflictargnamestest
+				./gopath/src/conflictargnamestest \
+				./gopath/src/processormiddlewaretest
 	$(GO) test -mod=mod github.com/apache/thrift/lib/go/thrift
 	$(GO) test -mod=mod ./gopath/src/tests ./gopath/src/dontexportrwtest
 
@@ -127,6 +130,8 @@ EXTRA_DIST = \
 	ConflictNamespaceTestB.thrift \
 	ConflictNamespaceTestC.thrift \
 	ConflictNamespaceTestD.thrift \
+	ConflictNamespaceTestE.thrift \
+	ConflictNamespaceTestF.thrift \
 	ConflictNamespaceTestSuperThing.thrift \
 	ConstOptionalField.thrift \
 	ConstOptionalFieldImport.thrift \
@@ -143,6 +148,7 @@ EXTRA_DIST = \
 	NamesTest.thrift \
 	OnewayTest.thrift \
 	OptionalFieldsTest.thrift \
+	ProcessorMiddlewareTest.thrift \
 	RefAnnotationFieldsTest.thrift \
 	RequiredFieldTest.thrift \
 	ServicesTest.thrift \

@@ -21,8 +21,6 @@ using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 
-#pragma warning disable IDE0079  // unused suppression
-#pragma warning disable IDE0066  // requires C# 8 
 
 namespace Thrift.Transport.Client
 {

@@ -1,6 +1,6 @@
 # Apache Thrift Release Management
 
-Instructions for preparing and distributing a release of Apache Thrift are fairly complex.  These procedures are documented here, and we're working to automate as much of this as possible.  There are few projects like ours that integrate with 28 programming languages.  Given the extreme number of package management systems that Apache Thrift integrates with (compared to perhaps any), part of the burden of releasing Apache Thrift is to manually package and upload some of these [language-specific packages](http://apache.thrift.org/libraries).
+Instructions for preparing and distributing a release of Apache Thrift are fairly complex.  These procedures are documented here, and we're working to automate as much of this as possible.  There are few projects like ours that integrate with 28 programming languages.  Given the extreme number of package management systems that Apache Thrift integrates with (compared to perhaps any), part of the burden of releasing Apache Thrift is to manually package and upload some of these [language-specific packages](http://thrift.apache.org/lib).
 
 It is important to note here that Apache Thrift is designed for version interoperability, so one can use a version 0.7.0 client with a 0.12.0 server.  A particular version number does not make any guarantees as to the features available in any given language.  See the [Language Feature Matrix](https://github.com/apache/thrift/blob/master/LANGUAGES.md) to learn more.
 
@@ -18,7 +18,7 @@ Further, if there are only packaging changes for a single third-party distributi
 
 #### External Package Patches
 
-It is common to have language-specific critical defects or packaging errors that need to be resolved between releases of Apache Thrift.  The project handles these on a case-by-case basis for languages that have their own [package management systems](http://apache.thrift.org/libraries).  When a language-specific patch is made, the patch level of the distribution pushed to the external package manager is bumped.
+It is common to have language-specific critical defects or packaging errors that need to be resolved between releases of Apache Thrift.  The project handles these on a case-by-case basis for languages that have their own [package management systems](http://thrift.apache.org/lib).  When a language-specific patch is made, the patch level of the distribution pushed to the external package manager is bumped.
 
  As such, there may be cases between Apache Thrift releases where there are (for example) a `0.12.1` and `0.12.2` version of a Haskell Hackage package, and perhaps also a `0.12.3` version of a dlang dub package.  You will not find a tag or an official project release in these cases, however, the code changes will be reflected in the release branch and in master.  In these cases we would not release a version of Apache Thrift nor would we refresh all the external language packages.
 
@@ -345,22 +345,7 @@ Voting on the development mailing list provides additional benefits (wisdom from
 
     The merge of 1.0.0 into master should proceed as a fast-forward since the 1.0.0 release branch.  If there are discrepancies the best thing to do is resolve them and then submit a pull request.  This pull request must be *MERGED* and not *REBASED* after the CI build is successful.  You may want to do this yourself and mark the pull request as `[DO NOT MERGE]`.
 
-1. Update the ASF CMS content for thrift to include the new release.  Note over time we will retire this in favor of including all documentation in the GitHub repository.  The page with the variables that are important like the current release or distribution links is in trunk/lib/path.pm in the ASF CMS for thrift.
-
-    1. Go to the [ASF CMS for Thrift](https://cms.apache.org/thrift/).
-    1. Get a working copy.
-    1. On the top right, click on `trunk`.
-    1. Navigate into `lib`.
-    1. Open `path.pm`.
-    1. Edit
-    1. Change `current_release` and `current_release_date` to reflect the correct information.
-    1. Submit
-    1. Commit
-    1. Submit
-    1. Follow Staging Build until it completes.
-    1. Open the Staged site.
-    1. Ensure the download links work.
-    1. Publish Site.
+1. Update the web site content to include the new release. The repository is located at https://github.com/apache/thrift-website and there are plenty of instructions how to update both staging and live web site. With regard to the release, its actually quite simple: check out the main branch and edit two lines in _config.yml, then commit. The build bot will update staging. After checking everything is right, simply fast-forward "asf-site" to "asf-staging" and push, then production site will automatically get updated as well
 
 1. Make an announcement on the dev@ and user@ mailing lists of the release.  There's no template to follow, but you can point folks to the official web site at https://thrift.apache.org, and to the GitHub site at https://github.org/apache.thrift.
 

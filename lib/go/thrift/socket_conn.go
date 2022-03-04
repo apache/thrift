@@ -20,6 +20,7 @@
 package thrift
 
 import (
+	"errors"
 	"net"
 	"sync/atomic"
 )
@@ -83,7 +84,17 @@ func (sc *socketConn) IsOpen() bool {
 	if !sc.isValid() {
 		return false
 	}
-	return sc.checkConn() == nil
+	if err := sc.checkConn(); err != nil {
+		if !errors.Is(err, net.ErrClosed) {
+			// The connectivity check failed and the error is not
+			// that the connection is already closed, we need to
+			// close the connection explicitly here to avoid
+			// connection leaks.
+			sc.Close()
+		}
+		return false
+	}
+	return true
 }
 
 // Read implements io.Reader.

@@ -80,11 +80,8 @@ namespace Thrift.Transport.Client
                     "Cannot read from null inputstream");
             }
 
-#if NETSTANDARD2_0
-            return await InputStream.ReadAsync(buffer, offset, length, cancellationToken);
-#else
-            return await InputStream.ReadAsync(new Memory<byte>(buffer, offset, length), cancellationToken);
-#endif
+            // The ReadAsync method should not be used since it does not check the ReceiveTimeout property.
+            return await Task.Run( () => InputStream.Read( buffer, offset, length ), cancellationToken );
         }
 
         public override async Task WriteAsync(byte[] buffer, int offset, int length, CancellationToken cancellationToken)
@@ -95,11 +92,8 @@ namespace Thrift.Transport.Client
                     "Cannot write to null outputstream");
             }
 
-#if NETSTANDARD2_0
-            await OutputStream.WriteAsync(buffer, offset, length, cancellationToken);
-#else
-            await OutputStream.WriteAsync(buffer.AsMemory(offset, length), cancellationToken);
-#endif
+            // The WriteAsync method should not be used since it does not check the SendTimeout property.
+            await Task.Run( () => OutputStream.Write( buffer, offset, length ), cancellationToken );
         }
 
         public override async Task FlushAsync(CancellationToken cancellationToken)

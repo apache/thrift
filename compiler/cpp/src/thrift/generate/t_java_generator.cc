@@ -78,7 +78,8 @@ public:
         bean_style_ = true;
       } else if( iter->first.compare("android") == 0) {
         android_style_ = true;
-      } else if( iter->first.compare("private-members") == 0) {
+      } else if( iter->first.compare("private_members") == 0 || iter->first.compare("private-members") == 0) {
+        // keep both private_members and private-members (legacy) for backwards compatibility
         private_members_ = true;
       } else if( iter->first.compare("nocamel") == 0) {
         nocamel_style_ = true;
@@ -90,7 +91,8 @@ public:
         sorted_containers_ = true;
       } else if( iter->first.compare("java5") == 0) {
         java5_ = true;
-      } else if( iter->first.compare("reuse-objects") == 0) {
+      } else if( iter->first.compare("reuse_objects") == 0 || iter->first.compare("reuse-objects") == 0) {
+        // keep both reuse_objects and reuse-objects (legacy) for backwards compatibility
         reuse_objects_ = true;
       } else if( iter->first.compare("option_type") == 0) {
         use_option_type_ = true;
@@ -3250,6 +3252,10 @@ void t_java_generator::generate_service_async_client(t_service* tservice) {
                        "client.getProtocolFactory().getProtocol(memoryTransport);" << endl;
     indent(f_service_);
     if (ret_type->is_void()) { // NB: Includes oneways which always return void.
+      if (!(*f_iter)->is_oneway()) {
+        f_service_ << "(new Client(prot)).recv" + sep + javaname + "();" << endl;
+        indent(f_service_);
+      }
       f_service_ << "return null;" << endl;
     } else {
       f_service_ << "return (new Client(prot)).recv" + sep + javaname + "();" << endl;
@@ -5435,8 +5441,9 @@ THRIFT_REGISTER_GENERATOR(
     java,
     "Java",
     "    beans:           Members will be private, and setter methods will return void.\n"
-    "    private-members: Members will be private, but setter methods will return 'this' like "
+    "    private_members: Members will be private, but setter methods will return 'this' like "
     "usual.\n"
+    "    private-members: Same as 'private_members' (deprecated).\n"
     "    nocamel:         Do not use CamelCase field accessors with beans.\n"
     "    fullcamel:       Convert underscored_accessor_or_service_names to camelCase.\n"
     "    android:         Generated structures are Parcelable.\n"
@@ -5447,8 +5454,9 @@ THRIFT_REGISTER_GENERATOR(
     "                     Enable rethrow of unhandled exceptions and let them propagate further."
     " (Default behavior is to catch and log it.)\n"
     "    java5:           Generate Java 1.5 compliant code (includes android_legacy flag).\n"
-    "    reuse-objects:   Data objects will not be allocated, but existing instances will be used "
+    "    reuse_objects:   Data objects will not be allocated, but existing instances will be used "
     "(read and write).\n"
+    "    reuse-objects:   Same as 'reuse_objects' (deprecated).\n"
     "    sorted_containers:\n"
     "                     Use TreeSet/TreeMap instead of HashSet/HashMap as a implementation of "
     "set/map.\n"

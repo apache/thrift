@@ -17,31 +17,28 @@
  * under the License.
  */
 
-#ifndef _THRIFT_WINDOWS_FCNTL_H_
-#define _THRIFT_WINDOWS_FCNTL_H_ 1
+package org.apache.thrift.test.voidmethexceptions;
 
-#if defined(_MSC_VER) && (_MSC_VER > 1200)
-#pragma once
-#endif // _MSC_VER
+public class ServiceBase {
 
-#ifndef _WIN32
-#error This is a MSVC header only.
-#endif
+  private volatile boolean cancelled = false;
 
-#ifdef _WIN32_WCE
-#include <string>
-#endif
+  public boolean isCancelled() {
+    return cancelled;
+  }
 
-// Win32
-#include <winsock2.h>
-#include <thrift/transport/PlatformSocket.h>
+  public void setCancelled(boolean cancelled) {
+    this.cancelled = cancelled;
+  }
 
-extern "C" {
-int thrift_fcntl(THRIFT_SOCKET fd, int cmd, int flags);
+  protected void waitForCancel() {
+    while (!isCancelled()) {
+      try {
+        Thread.sleep(10L);
+      } catch (InterruptedException x) {
+        break;
+      }
+    }
+  }
+
 }
-
-#ifdef _WIN32_WCE
-std::string thrift_wstr2str(std::wstring ws);
-#endif
-
-#endif // _THRIFT_WINDOWS_FCNTL_H_

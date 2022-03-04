@@ -21,7 +21,7 @@
 // which will cause the test to fail
 #define MANUAL_OPENSSL_INIT 1
 #ifdef _WIN32
-#include <WinSock2.h>
+#include <winsock2.h>
 #endif
 
 #include <boost/test/unit_test.hpp>

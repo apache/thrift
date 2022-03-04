@@ -30,4 +30,5 @@ clean-local:
 	-$(RM) vehicles.rs
 
 EXTRA_DIST = \
+	lib.rs \
 	Vehicles.thrift
