@@ -25,11 +25,6 @@ SUBDIRS += c_glib
 PRECROSS_TARGET += precross-c_glib
 endif
 
-if WITH_CL
-SUBDIRS += cl
-PRECROSS_TARGET += precross-cl
-endif
-
 if WITH_CPP
 SUBDIRS += cpp
 PRECROSS_TARGET += precross-cpp
@@ -118,7 +113,6 @@ dist-hook:
 EXTRA_DIST = \
 	audit \
 	c_glib \
-	cl \
 	cpp \
 	crossrunner \
 	dart \
