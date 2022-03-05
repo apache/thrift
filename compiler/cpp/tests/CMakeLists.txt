@@ -98,7 +98,6 @@ endmacro()
 
 # The following compiler with unit tests can be enabled or disabled
 THRIFT_ADD_COMPILER(c_glib  "Enable compiler for C with Glib" OFF)
-THRIFT_ADD_COMPILER(cl      "Enable compiler for Common LISP" OFF)
 THRIFT_ADD_COMPILER(cpp     "Enable compiler for C++" OFF)
 THRIFT_ADD_COMPILER(d       "Enable compiler for D" OFF)
 THRIFT_ADD_COMPILER(dart    "Enable compiler for Dart" OFF)
