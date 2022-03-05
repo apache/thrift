@@ -54,7 +54,6 @@
     <ClCompile Include="src\thrift\audit\t_audit.cpp" />
     <ClCompile Include="src\thrift\common.cc" />
     <ClCompile Include="src\thrift\generate\t_c_glib_generator.cc" />
-    <ClCompile Include="src\thrift\generate\t_cl_generator.cc" />
     <ClCompile Include="src\thrift\generate\t_cpp_generator.cc" />
     <ClCompile Include="src\thrift\generate\t_d_generator.cc" />
     <ClCompile Include="src\thrift\generate\t_dart_generator.cc" />

@@ -73,7 +73,6 @@ endmacro()
 
 # The following compiler can be enabled or disabled
 THRIFT_ADD_COMPILER(c_glib  "Enable compiler for C with Glib" ON)
-THRIFT_ADD_COMPILER(cl      "Enable compiler for Common LISP" ON)
 THRIFT_ADD_COMPILER(cpp     "Enable compiler for C++" ON)
 THRIFT_ADD_COMPILER(d       "Enable compiler for D" ON)
 THRIFT_ADD_COMPILER(dart    "Enable compiler for Dart" ON)

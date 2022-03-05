@@ -237,9 +237,6 @@ t_generator* t_generator_registry::get_generator(t_program* program,
   if ((language == "csharp") || (language == "netcore")) {
     failure("The '%s' target is no longer available. Use 'netstd' instead.", language.c_str());
   }
-  if (language == "cl") {
-    pwarning(1, "The '%s' target is deprecated and will be removed in future versions.", language.c_str());
-  }
   
   if (iter == the_map.end()) {
     return nullptr;
