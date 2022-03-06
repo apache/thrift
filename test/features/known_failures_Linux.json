@@ -20,6 +20,7 @@
     "erl-limit_container_length_compact_buffered-ip",
     "erl-limit_string_length_binary_buffered-ip",
     "erl-limit_string_length_compact_buffered-ip",
+	"erl-tls_binary_buffered-ip-ssl",
     "go-limit_container_length_binary_buffered-ip",
     "go-limit_container_length_compact_buffered-ip",
     "go-limit_string_length_binary_buffered-ip",
