@@ -352,9 +352,10 @@ public abstract class AbstractNonblockingServer extends TServer {
 
           // if this frame will always be too large for this server, log the
           // error and close the connection.
-          if (frameSize > MAX_READ_BUFFER_BYTES) {
+          if (frameSize > trans_.getMaxFrameSize()) {
             LOGGER.error("Read a frame size of " + frameSize
-                + ", which is bigger than the maximum allowable buffer size for ALL connections.");
+                + ", which is bigger than the maximum allowable frame size "
+                + trans_.getMaxFrameSize() + " for ALL connections.");
             return false;
           }
 

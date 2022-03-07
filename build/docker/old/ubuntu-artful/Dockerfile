@@ -85,17 +85,6 @@ RUN apt-get install -y --no-install-recommends \
       qtbase5-dev \
       qtbase5-dev-tools
 
-ENV SBCL_VERSION 1.4.5
-RUN \
-`# Common Lisp (sbcl) dependencies` \
-    curl --version && \
-    curl -O -J -L https://kent.dl.sourceforge.net/project/sbcl/sbcl/${SBCL_VERSION}/sbcl-${SBCL_VERSION}-x86-64-linux-binary.tar.bz2 && \
-    tar xjf sbcl-${SBCL_VERSION}-x86-64-linux-binary.tar.bz2 && \
-    cd sbcl-${SBCL_VERSION}-x86-64-linux && \
-    ./install.sh && \
-    sbcl --version && \
-    rm -rf sbcl*
-
 ENV D_VERSION     2.080.0
 ENV DMD_DEB       dmd_2.080.0-0_amd64.deb
 RUN \
