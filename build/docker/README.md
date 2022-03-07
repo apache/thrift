@@ -176,7 +176,7 @@ Last updated: October 1, 2017
 | d         | 2.087.0       | 2.087.0       |       |
 | dart      | 2.0.0         | 2.4.0         |       |
 | delphi    |               |               | Not in CI |
-| erlang    | 18.3          | 22.0          |       |
+| erlang    | OTP-18        | OTP-23        |       |
 | go        | 1.15.10       | 1.16.2        |       |
 | haxe      | 3.2.1         | 3.4.4         | THRIFT-4352: avoid 3.4.2 |
 | java      | 1.8.0_191     | 11.0.3        |       |
