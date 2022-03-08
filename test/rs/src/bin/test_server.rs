@@ -52,7 +52,6 @@ fn main() {
 
 fn run() -> thrift::Result<()> {
     // unsupported options:
-    // --domain-socket
     // --pipe
     // --ssl
     let matches = clap_app!(rust_test_client =>
@@ -60,21 +59,27 @@ fn run() -> thrift::Result<()> {
         (author: "Apache Thrift Developers <dev@thrift.apache.org>")
         (about: "Rust Thrift test server")
         (@arg port: --port +takes_value "port on which the test server listens")
+        (@arg domain_socket: --("domain-socket") +takes_value "Unix Domain Socket on which the test server listens")
         (@arg transport: --transport +takes_value "transport implementation to use (\"buffered\", \"framed\")")
         (@arg protocol: --protocol +takes_value "protocol implementation to use (\"binary\", \"compact\")")
-        (@arg server_type: --server_type +takes_value "type of server instantiated (\"simple\", \"thread-pool\")")
+        (@arg server_type: --("server-type") +takes_value "type of server instantiated (\"simple\", \"thread-pool\")")
         (@arg workers: -n --workers +takes_value "number of thread-pool workers (\"4\")")
     )
-            .get_matches();
+        .get_matches();
 
     let port = value_t!(matches, "port", u16).unwrap_or(9090);
+    let domain_socket = matches.value_of("domain_socket").unwrap_or("");
     let transport = matches.value_of("transport").unwrap_or("buffered");
     let protocol = matches.value_of("protocol").unwrap_or("binary");
     let server_type = matches.value_of("server_type").unwrap_or("thread-pool");
     let workers = value_t!(matches, "workers", usize).unwrap_or(4);
     let listen_address = format!("127.0.0.1:{}", port);
 
-    info!("binding to {}", listen_address);
+    if domain_socket == "" {
+        info!("Server is binding to {}", listen_address);
+    } else {
+        info!("Server is binding to {} (UDS)", domain_socket);
+    }
 
     let (i_transport_factory, o_transport_factory): (
         Box<dyn TReadTransportFactory>,
@@ -135,7 +140,11 @@ fn run() -> thrift::Result<()> {
                     workers,
                 );
 
-                server.listen(&listen_address)
+                if domain_socket == "" {
+                    server.listen(&listen_address)
+                } else {
+                    server.listen_uds(domain_socket)
+                }
             } else {
                 let mut server = TServer::new(
                     i_transport_factory,
@@ -146,9 +155,14 @@ fn run() -> thrift::Result<()> {
                     workers,
                 );
 
-                server.listen(&listen_address)
+                if domain_socket.eq("") {
+                    server.listen(&listen_address)
+                } else {
+                    server.listen_uds(domain_socket)
+                }
             }
         }
+
         unknown => Err(format!("unsupported server type {}", unknown).into()),
     }
 }

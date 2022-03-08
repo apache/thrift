@@ -57,18 +57,23 @@ fn run() -> thrift::Result<()> {
         (version: "0.1.0")
         (author: "Apache Thrift Developers <dev@thrift.apache.org>")
         (about: "Thrift Rust kitchen sink test server")
-        (@arg port: --port +takes_value "port on which the test server listens")
+        (@arg port: --port +takes_value "Port on which the Thrift test server listens")
+        (@arg domain_socket: --("domain-socket") + takes_value "Unix Domain Socket on which the Thrift test server listens")
         (@arg protocol: --protocol +takes_value "Thrift protocol implementation to use (\"binary\", \"compact\")")
         (@arg service: --service +takes_value "Service type to contact (\"part\", \"full\", \"recursive\")")
     )
             .get_matches();
 
     let port = value_t!(matches, "port", u16).unwrap_or(9090);
+    let domain_socket = matches
+        .value_of("domain_socket")
+        .unwrap_or("/tmp/ThriftTest.thrift");
     let protocol = matches.value_of("protocol").unwrap_or("compact");
     let service = matches.value_of("service").unwrap_or("part");
     let listen_address = format!("127.0.0.1:{}", port);
 
     println!("binding to {}", listen_address);
+    println!("binding to {}", domain_socket);
 
     let r_transport_factory = TFramedReadTransportFactory::new();
     let w_transport_factory = TFramedWriteTransportFactory::new();

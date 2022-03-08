@@ -18,12 +18,13 @@
 use log::warn;
 
 use std::net::{TcpListener, ToSocketAddrs};
-use std::path::Path;
 use std::sync::Arc;
 use threadpool::ThreadPool;
 
 #[cfg(unix)]
 use std::os::unix::net::UnixListener;
+#[cfg(unix)]
+use std::path::Path;
 
 use crate::protocol::{
     TInputProtocol, TInputProtocolFactory, TOutputProtocol, TOutputProtocolFactory,

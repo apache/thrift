@@ -19,6 +19,9 @@ use clap::{clap_app, value_t};
 
 use std::convert::Into;
 
+#[cfg(unix)]
+use std::os::unix::net::UnixStream;
+
 use kitchen_sink::base_two::{TNapkinServiceSyncClient, TRamenServiceSyncClient};
 use kitchen_sink::midlayer::{MealServiceSyncClient, TMealServiceSyncClient};
 use kitchen_sink::recursive;
@@ -51,6 +54,7 @@ fn run() -> thrift::Result<()> {
         (about: "Thrift Rust kitchen sink client")
         (@arg host: --host +takes_value "Host on which the Thrift test server is located")
         (@arg port: --port +takes_value "Port on which the Thrift test server is listening")
+        (@arg domain_socket: --("domain-socket") + takes_value "Unix Domain Socket on which the Thrift test server is listening")
         (@arg protocol: --protocol +takes_value "Thrift protocol implementation to use (\"binary\", \"compact\")")
         (@arg service: --service +takes_value "Service type to contact (\"part\", \"full\", \"recursive\")")
     )
@@ -58,10 +62,15 @@ fn run() -> thrift::Result<()> {
 
     let host = matches.value_of("host").unwrap_or("127.0.0.1");
     let port = value_t!(matches, "port", u16).unwrap_or(9090);
+    let domain_socket = matches
+        .value_of("domain_socket")
+        .unwrap_or("/tmp/ThriftTest.thrift");
     let protocol = matches.value_of("protocol").unwrap_or("compact");
     let service = matches.value_of("service").unwrap_or("part");
 
+    //let (i_chan, o_chan) = unix_socket(domain_socket)?;
     let (i_chan, o_chan) = tcp_channel(host, port)?;
+
     let (i_tran, o_tran) = (
         TFramedReadTransport::new(i_chan),
         TFramedWriteTransport::new(o_chan),
@@ -105,6 +114,12 @@ fn tcp_channel(
     let mut c = TTcpChannel::new();
     c.open(&format!("{}:{}", host, port))?;
     c.split()
+}
+
+fn unix_socket(path: &str) -> thrift::Result<(ReadHalf<UnixStream>, WriteHalf<UnixStream>)> {
+    let stream = UnixStream::connect(path)?;
+    let socket_rx = stream.try_clone().unwrap();
+    Ok((ReadHalf::new(stream), WriteHalf::new(socket_rx)))
 }
 
 fn exec_meal_client(

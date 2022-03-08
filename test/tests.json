@@ -679,7 +679,8 @@
       ]
     },
     "sockets": [
-      "ip"
+      "ip",
+      "domain"
     ],
     "transports": [
       "buffered",
