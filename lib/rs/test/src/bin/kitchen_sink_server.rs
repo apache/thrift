@@ -16,6 +16,7 @@
 // under the License.
 
 use clap::{clap_app, value_t};
+use log::*;
 
 use thrift;
 use thrift::protocol::{
@@ -28,6 +29,7 @@ use thrift::transport::{
     TWriteTransportFactory,
 };
 
+use crate::Socket::{ListenAddress, UnixDomainSocket};
 use kitchen_sink::base_one::Noodle;
 use kitchen_sink::base_two::{
     BrothType, Napkin, NapkinServiceSyncHandler, Ramen, RamenServiceSyncHandler,
@@ -41,6 +43,11 @@ use kitchen_sink::ultimate::{
     Drink, FullMeal, FullMealAndDrinks, FullMealAndDrinksServiceSyncProcessor,
     FullMealServiceSyncHandler,
 };
+
+enum Socket {
+    ListenAddress(String),
+    UnixDomainSocket(String),
+}
 
 fn main() {
     match run() {
@@ -65,15 +72,18 @@ fn run() -> thrift::Result<()> {
             .get_matches();
 
     let port = value_t!(matches, "port", u16).unwrap_or(9090);
-    let domain_socket = matches
-        .value_of("domain_socket")
-        .unwrap_or("/tmp/ThriftTest.thrift");
+    let domain_socket = matches.value_of("domain_socket").unwrap_or("");
     let protocol = matches.value_of("protocol").unwrap_or("compact");
     let service = matches.value_of("service").unwrap_or("part");
     let listen_address = format!("127.0.0.1:{}", port);
 
-    println!("binding to {}", listen_address);
-    println!("binding to {}", domain_socket);
+    let socket = if domain_socket == "" {
+        info!("Server is binding to {}", listen_address);
+        Socket::ListenAddress(listen_address)
+    } else {
+        info!("Server is binding to {} (UDS)", domain_socket);
+        Socket::UnixDomainSocket(domain_socket.to_string())
+    };
 
     let r_transport_factory = TFramedReadTransportFactory::new();
     let w_transport_factory = TFramedWriteTransportFactory::new();
@@ -107,21 +117,21 @@ fn run() -> thrift::Result<()> {
     // Since what I'm doing is uncommon I'm just going to duplicate the code
     match &*service {
         "part" => run_meal_server(
-            &listen_address,
+            socket,
             r_transport_factory,
             i_protocol_factory,
             w_transport_factory,
             o_protocol_factory,
         ),
         "full" => run_full_meal_server(
-            &listen_address,
+            socket,
             r_transport_factory,
             i_protocol_factory,
             w_transport_factory,
             o_protocol_factory,
         ),
         "recursive" => run_recursive_server(
-            &listen_address,
+            socket,
             r_transport_factory,
             i_protocol_factory,
             w_transport_factory,
@@ -132,7 +142,7 @@ fn run() -> thrift::Result<()> {
 }
 
 fn run_meal_server<RTF, IPF, WTF, OPF>(
-    listen_address: &str,
+    socket: Socket,
     r_transport_factory: RTF,
     i_protocol_factory: IPF,
     w_transport_factory: WTF,
@@ -154,11 +164,14 @@ where
         1,
     );
 
-    server.listen(listen_address)
+    match socket {
+        ListenAddress(listen_address) => server.listen(listen_address),
+        UnixDomainSocket(s) => server.listen_uds(s),
+    }
 }
 
 fn run_full_meal_server<RTF, IPF, WTF, OPF>(
-    listen_address: &str,
+    socket: Socket,
     r_transport_factory: RTF,
     i_protocol_factory: IPF,
     w_transport_factory: WTF,
@@ -180,7 +193,10 @@ where
         1,
     );
 
-    server.listen(listen_address)
+    match socket {
+        ListenAddress(listen_address) => server.listen(listen_address),
+        UnixDomainSocket(s) => server.listen_uds(s),
+    }
 }
 
 struct PartHandler;
@@ -272,7 +288,7 @@ fn napkin() -> Napkin {
 }
 
 fn run_recursive_server<RTF, IPF, WTF, OPF>(
-    listen_address: &str,
+    socket: Socket,
     r_transport_factory: RTF,
     i_protocol_factory: IPF,
     w_transport_factory: WTF,
@@ -294,7 +310,10 @@ where
         1,
     );
 
-    server.listen(listen_address)
+    match socket {
+        ListenAddress(listen_address) => server.listen(listen_address),
+        UnixDomainSocket(s) => server.listen_uds(s),
+    }
 }
 
 struct RecursiveTestServerHandler;

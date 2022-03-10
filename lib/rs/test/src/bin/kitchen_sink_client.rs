@@ -16,11 +16,16 @@
 // under the License.
 
 use clap::{clap_app, value_t};
+use log::*;
 
 use std::convert::Into;
+use std::net::TcpStream;
+use std::net::ToSocketAddrs;
 
 #[cfg(unix)]
 use std::os::unix::net::UnixStream;
+#[cfg(unix)]
+use std::path::Path;
 
 use kitchen_sink::base_two::{TNapkinServiceSyncClient, TRamenServiceSyncClient};
 use kitchen_sink::midlayer::{MealServiceSyncClient, TMealServiceSyncClient};
@@ -33,9 +38,9 @@ use thrift::protocol::{
     TBinaryInputProtocol, TBinaryOutputProtocol, TCompactInputProtocol, TCompactOutputProtocol,
     TInputProtocol, TOutputProtocol,
 };
-use thrift::transport::{
-    ReadHalf, TFramedReadTransport, TFramedWriteTransport, TIoChannel, TTcpChannel, WriteHalf,
-};
+use thrift::transport::{TFramedReadTransport, TFramedWriteTransport, TIoChannel, TTcpChannel};
+
+type IoProtocol = (Box<dyn TInputProtocol>, Box<dyn TOutputProtocol>);
 
 fn main() {
     match run() {
@@ -62,14 +67,43 @@ fn run() -> thrift::Result<()> {
 
     let host = matches.value_of("host").unwrap_or("127.0.0.1");
     let port = value_t!(matches, "port", u16).unwrap_or(9090);
-    let domain_socket = matches
-        .value_of("domain_socket")
-        .unwrap_or("/tmp/ThriftTest.thrift");
+    let domain_socket = matches.value_of("domain_socket").unwrap_or("");
     let protocol = matches.value_of("protocol").unwrap_or("compact");
     let service = matches.value_of("service").unwrap_or("part");
 
-    //let (i_chan, o_chan) = unix_socket(domain_socket)?;
-    let (i_chan, o_chan) = tcp_channel(host, port)?;
+    let (i_prot, o_prot) = if domain_socket == "" {
+        let listen_address = format!("{}:{}", host, port);
+        info!("Client binds to {} with {}", listen_address, protocol);
+        bind(listen_address, protocol)?
+    } else {
+        info!("Client binds to {} (UDS) with {}", domain_socket, protocol);
+        bind_uds(domain_socket, protocol)?
+    };
+
+    run_client(service, i_prot, o_prot)
+}
+
+fn bind<A: ToSocketAddrs>(listen_address: A, protocol: &str) -> Result<IoProtocol, thrift::Error> {
+    let stream = TcpStream::connect(listen_address)?;
+    let channel = TTcpChannel::with_stream(stream);
+
+    let (i_prot, o_prot) = build(channel, protocol)?;
+    Ok((i_prot, o_prot))
+}
+
+#[cfg(unix)]
+fn bind_uds<P: AsRef<Path>>(domain_socket: P, protocol: &str) -> Result<IoProtocol, thrift::Error> {
+    let stream = UnixStream::connect(domain_socket)?;
+
+    let (i_prot, o_prot) = build(stream, protocol)?;
+    Ok((i_prot, o_prot))
+}
+
+fn build<C: TIoChannel + 'static>(
+    channel: C,
+    protocol: &str,
+) -> thrift::Result<(Box<dyn TInputProtocol>, Box<dyn TOutputProtocol>)> {
+    let (i_chan, o_chan) = channel.split()?;
 
     let (i_tran, o_tran) = (
         TFramedReadTransport::new(i_chan),
@@ -88,7 +122,7 @@ fn run() -> thrift::Result<()> {
         unmatched => return Err(format!("unsupported protocol {}", unmatched).into()),
     };
 
-    run_client(service, i_prot, o_prot)
+    Ok((i_prot, o_prot))
 }
 
 fn run_client(
@@ -105,21 +139,6 @@ fn run_client(
             service
         ))),
     }
-}
-
-fn tcp_channel(
-    host: &str,
-    port: u16,
-) -> thrift::Result<(ReadHalf<TTcpChannel>, WriteHalf<TTcpChannel>)> {
-    let mut c = TTcpChannel::new();
-    c.open(&format!("{}:{}", host, port))?;
-    c.split()
-}
-
-fn unix_socket(path: &str) -> thrift::Result<(ReadHalf<UnixStream>, WriteHalf<UnixStream>)> {
-    let stream = UnixStream::connect(path)?;
-    let socket_rx = stream.try_clone().unwrap();
-    Ok((ReadHalf::new(stream), WriteHalf::new(socket_rx)))
 }
 
 fn exec_meal_client(
