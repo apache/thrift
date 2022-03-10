@@ -2,7 +2,7 @@ Source: thrift
 Section: devel
 Priority: extra
 Build-Depends: dotnet-runtime-6.0, dotnet-sdk-6.0, debhelper (>= 9), build-essential, python-dev, ant,
-    erlang-base, ruby-dev | ruby1.9.1-dev, ruby-bundler ,autoconf, automake,
+    ruby-dev | ruby1.9.1-dev, ruby-bundler ,autoconf, automake,
     pkg-config, libtool, bison, flex, libboost-dev | libboost1.56-dev | libboost1.63-all-dev,
     python-all, python-setuptools, python-all-dev, python-all-dbg,
     python3-all, python3-setuptools, python3-all-dev, python3-all-dbg,
