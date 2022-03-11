@@ -30,11 +30,6 @@
 sourceSets {
     crossTest {
         java {
-            srcDir 'test'
-            include '**/test/TestClient.java'
-            include '**/test/TestServer.java'
-            include '**/test/TestNonblockingServer.java'
-            include '**/test/TestTServletServer.java'
         }
     }
 }
@@ -90,9 +85,9 @@ if (org.gradle.internal.os.OperatingSystem.current().windows) {
 // The Java executable to use with the runner scripts
 def javaExe = file("${System.getProperty('java.home')}/bin/java${execExt}").canonicalPath
 // The common Uber jar path
-def jarPath = shadowJar.archivePath.canonicalPath
-def trustStore = file('test/resources/.truststore').canonicalPath
-def keyStore = file('test/resources/.keystore').canonicalPath
+def jarPath = shadowJar.archiveFile.get().asFile.canonicalPath
+def trustStore = file("${projectDir}/src/crossTest/resources/.truststore").canonicalPath
+def keyStore = file("${projectDir}/src/crossTest/resources/.keystore").canonicalPath
 
 task generateRunnerScriptForClient(group: 'Build') {
     description = 'Generate a runner script for cross-check tests with TestClient'
