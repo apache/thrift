@@ -39,7 +39,7 @@ sourceSets {
 ext.thriftCompile = { Task task, String thriftFileName, String generator = 'java', File outputDir = genSrc ->
     def thriftFile = file("$thriftRoot/test/$thriftFileName")
     if (!thriftFile.exists()) {
-        thriftFile = file("$projectDir/test/resources/$thriftFileName")
+        thriftFile = file("$projectDir/src/test/resources/$thriftFileName")
         assert thriftFile.exists(), "can't find $thriftFile"
     }
 
