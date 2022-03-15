@@ -45,6 +45,8 @@ type TDebugProtocol struct {
 	// This feature is not available from TDebugProtocolFactory. In order to
 	// use it you have to construct TDebugProtocol directly, or set DuplicateTo
 	// field after getting a TDebugProtocol from the factory.
+	//
+	// Deprecated: Please use TDuplicateToProtocol instead.
 	DuplicateTo TProtocol
 }
 
