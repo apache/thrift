@@ -1,5 +1,11 @@
 # Apache Thrift Changelog
 
+## 0.17.0
+
+### Go
+
+- [THRIFT-5539](https://issues.apache.org/jira/browse/THRIFT-5539) - `TDebugProtocol.DuplicateTo` is now deprecated, `TDuplicateToProtocol` has been provided as the replacement
+
 ## 0.16.0
 
 ### Known Open Issues (Blocker or Critical)
