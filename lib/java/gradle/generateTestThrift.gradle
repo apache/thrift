@@ -86,6 +86,7 @@ task generateJava(group: 'Build') {
     thriftCompile(it, 'EnumContainersTest.thrift')
     thriftCompile(it, 'JavaBinaryDefault.thrift')
     thriftCompile(it, 'VoidMethExceptionsTest.thrift')
+    thriftCompile(it, 'AnnotationTest.thrift')
     thriftCompile(it, 'partial/thrift_test_schema.thrift')
 }
 
@@ -132,4 +133,13 @@ task generateUnsafeBinariesJava(group: 'Build') {
     ext.outputBuffer = new ByteArrayOutputStream()
 
     thriftCompile(it, 'UnsafeTypes.thrift', 'java:unsafe_binaries', genUnsafeSrc)
+}
+
+task generateWithAnnotationMetadata(group: 'Build') {
+    description = 'Generate with annotation enabled and add to the default source'
+    generate.dependsOn it
+
+    ext.outputBuffer = new ByteArrayOutputStream()
+
+    thriftCompile(it, 'JavaAnnotationTest.thrift', 'java:annotations_as_metadata', genSrc)
 }
