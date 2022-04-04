@@ -333,7 +333,18 @@ Voting on the development mailing list provides additional benefits (wisdom from
 
     **NOTE:** If you get the error "gpg failed to sign the data" when tagging, try this fix: ```export GPG_TTY=$(tty)```. Alternatively, it may be necessary to specify the ```-u <keyid>``` as an additional argument.
 
-1. Create a new release from the [GitHub Tags Page](https://github.com/apache/thrift/tags).  Attach the statically built Windows thrift compiler as a binary here.
+1. Create a new release from the [GitHub Tags Page](https://github.com/apache/thrift/tags).
+
+    Attach the statically built Windows thrift compiler as a binary here.
+
+    You may find it useful to use the button that automates release notes.
+
+    We have *some* automation in place to get packages published to various package managers.  To leverage this:
+    
+    - Please first create a "pre-release" and save.
+    - Then look at the Actions tab and look for the prereleased action.  It will upload packages to package managers that we have automated and support "test" or "staging" modes.
+    - Go check out those packages and make sure they look correct.
+    - Come back to the release page and uncheck the "pre-release" checkbox and save.  This will cause another action to get launched that publishes     packages for real.
 
 1. Merge the release branch into master.  This ensures all changes made to fix up the release are in master.
 
