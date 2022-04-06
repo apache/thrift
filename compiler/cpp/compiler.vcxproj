@@ -69,6 +69,7 @@
     <ClCompile Include="src\thrift\generate\t_javame_generator.cc" />
     <ClCompile Include="src\thrift\generate\t_js_generator.cc" />
     <ClCompile Include="src\thrift\generate\t_json_generator.cc" />
+    <ClCompile Include="src\thrift\generate\t_kotlin_generator.cc" />
     <ClCompile Include="src\thrift\generate\t_lua_generator.cc" />
     <ClCompile Include="src\thrift\generate\t_netstd_generator.cc" />
     <ClCompile Include="src\thrift\generate\t_ocaml_generator.cc" />

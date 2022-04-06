@@ -113,6 +113,7 @@ if test "$enable_libs" = "no"; then
   with_cpp="no"
   with_c_glib="no"
   with_java="no"
+  with_kotlin="no"
   with_python="no"
   with_py3="no"
   with_ruby="no"
@@ -205,6 +206,17 @@ if test "$with_java" = "yes";  then
   fi
 fi
 AM_CONDITIONAL([WITH_JAVA], [test "$have_java" = "yes"])
+
+AX_THRIFT_LIB(kotlin, [Kotlin], yes)
+if test "$with_kotlin" = "yes";  then
+  AX_JAVAC_AND_JAVA
+  AC_SUBST(CLASSPATH)
+  AC_SUBST(GRADLE_OPTS)
+  if test "x$JAVA" != "x" && test "x$JAVAC" != "x" ; then
+    have_kotlin="yes"
+  fi
+fi
+AM_CONDITIONAL([WITH_KOTLIN], [test "$have_kotlin" = "yes"])
 
 AX_THRIFT_LIB(erlang, [Erlang], yes)
 if test "$with_erlang" = "yes";  then
@@ -743,6 +755,7 @@ AC_CONFIG_FILES([
   lib/js/test/Makefile
   lib/json/Makefile
   lib/json/test/Makefile
+  lib/kotlin/Makefile
   lib/netstd/Makefile
   lib/nodejs/Makefile
   lib/nodets/Makefile
@@ -811,6 +824,8 @@ if test "$have_d" = "yes" -a "$have_deimos_event2" = "yes" -a "$have_deimos_open
 AC_SUBST([MAYBE_D])
 if test "$have_java" = "yes" ; then MAYBE_JAVA="java" ; else MAYBE_JAVA="" ; fi
 AC_SUBST([MAYBE_JAVA])
+if test "$have_kotlin" = "yes" ; then MAYBE_KOTLIN="kotlin" ; else MAYBE_KOTLIN="" ; fi
+AC_SUBST([MAYBE_KOTLIN])
 if test "$have_python" = "yes" ; then MAYBE_PYTHON="py" ; else MAYBE_PYTHON="" ; fi
 AC_SUBST([MAYBE_PYTHON])
 if test "$have_py3" = "yes" ; then MAYBE_PY3="py3" ; else MAYBE_PY3="" ; fi
@@ -855,6 +870,7 @@ echo "Building Erlang Library ...... : $have_erlang"
 echo "Building Go Library .......... : $have_go"
 echo "Building Haxe Library ........ : $have_haxe"
 echo "Building Java Library ........ : $have_java"
+echo "Building Kotlin Library ...... : $have_kotlin"
 echo "Building Lua Library ......... : $have_lua"
 echo "Building NodeJS Library ...... : $have_nodejs"
 echo "Building Perl Library ........ : $have_perl"
@@ -926,6 +942,15 @@ if test "$have_java" = "yes" ; then
   echo "   Using java ................ : $JAVA"
   echo "   Using javac ............... : $JAVAC"
   echo "   Using Gradle version ...... : $($GRADLE --version --quiet | grep Gradle 2>&1)"
+  echo "   Using java version ........ : $($JAVA -version 2>&1 | grep 'version ')"
+fi
+if test "$have_kotlin" = "yes" ; then
+  echo
+  echo "Kotlin (Test Only) Library:"
+  echo "   Using gradlew ............. : lib/kotlin/gradlew"
+  echo "   Using java ................ : $JAVA"
+  echo "   Using javac ............... : $JAVAC"
+  echo "   Using Gradle version ...... : $(lib/kotlin/gradlew --version --quiet | grep Gradle 2>&1)"
   echo "   Using java version ........ : $($JAVA -version 2>&1 | grep 'version ')"
 fi
 if test "$have_lua" = "yes" ; then
