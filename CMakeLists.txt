@@ -113,6 +113,10 @@ if(BUILD_JAVASCRIPT)
     add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/lib/js)
 endif()
 
+if(BUILD_KOTLIN)
+    add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/lib/kotlin)
+endif()
+
 if(BUILD_NODEJS)
     add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/lib/nodejs)
 endif()

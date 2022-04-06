@@ -243,7 +243,11 @@ def run_test(testdir, logdir, test_dict, max_retry, async_mode=True):
                 # kill them off; if we didn't kill them off, something else
                 # happened (crashed?)
                 if test.server.stop_signal != 0:
-                    if sv.killed or sv.returncode > 0:
+                    # for bash scripts, 128+N is the exit code for signal N, since we are sending
+                    # DEFAULT_SIGNAL=1, 128 + 1 is the expected err code
+                    # http://www.gnu.org/software/bash/manual/html_node/Exit-Status.html
+                    allowed_return_code = set([-1, 0, 128 + 1])
+                    if sv.killed or sv.returncode not in allowed_return_code:
                         result |= RESULT_ERROR
                 else:
                     if not sv.killed:

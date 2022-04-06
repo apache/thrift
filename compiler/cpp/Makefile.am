@@ -84,6 +84,7 @@ thrift_SOURCES += src/thrift/generate/t_c_glib_generator.cc \
                   src/thrift/generate/t_javame_generator.cc \
                   src/thrift/generate/t_js_generator.cc \
                   src/thrift/generate/t_json_generator.cc \
+                  src/thrift/generate/t_kotlin_generator.cc \
                   src/thrift/generate/t_lua_generator.cc \
                   src/thrift/generate/t_netstd_generator.cc \
                   src/thrift/generate/t_netstd_generator.h \
