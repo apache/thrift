@@ -102,6 +102,14 @@ pub use self::compact::{
 pub use self::multiplexed::TMultiplexedOutputProtocol;
 pub use self::stored::TStoredInputProtocol;
 
+/// Reads and writes the struct to Thrift protocols.
+///
+/// It is implemented in generated code for Thrift `struct`, `union`, and `enum` types.
+pub trait TSerializable: Sized {
+    fn read_from_in_protocol(i_prot: &mut dyn TInputProtocol) -> crate::Result<Self>;
+    fn write_to_out_protocol(&self, o_prot: &mut dyn TOutputProtocol) -> crate::Result<()>;
+}
+
 // Default maximum depth to which `TInputProtocol::skip` will skip a Thrift
 // field. A default is necessary because Thrift structs or collections may
 // contain nested structs and collections, which could result in indefinite
