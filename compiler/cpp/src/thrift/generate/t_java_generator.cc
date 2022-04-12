@@ -1280,6 +1280,7 @@ void t_java_generator::generate_tuple_scheme_read_value(ostream& out, t_struct* 
   indent_up();
   indent(out) << "switch (setField) {" << endl;
   indent_up();
+  
   const vector<t_field*>& members = tstruct->get_members();
   vector<t_field*>::const_iterator m_iter;
 
