@@ -91,7 +91,7 @@ task generateBeanJava(group: 'Build') {
 
     ext.outputBuffer = new ByteArrayOutputStream()
 
-    thriftCompile(it, 'JavaBeansTest.thrift', 'java:beans,nocamel', genBeanSrc)
+    thriftCompile(it, 'JavaBeansTest.thrift', 'java:beans,nocamel,future_iface', genBeanSrc)
 }
 
 task generateReuseJava(group: 'Build') {
@@ -100,7 +100,7 @@ task generateReuseJava(group: 'Build') {
 
     ext.outputBuffer = new ByteArrayOutputStream()
 
-    thriftCompile(it, 'FullCamelTest.thrift', 'java:fullcamel', genFullCamelSrc)
+    thriftCompile(it, 'FullCamelTest.thrift', 'java:fullcamel,future_iface', genFullCamelSrc)
 }
 
 task generateFullCamelJava(group: 'Build') {

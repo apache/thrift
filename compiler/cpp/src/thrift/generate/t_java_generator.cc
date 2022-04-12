@@ -69,6 +69,7 @@ public:
     java5_ = false;
     reuse_objects_ = false;
     use_option_type_ = false;
+    generate_future_iface_ = false;
     undated_generated_annotations_ = false;
     suppress_generated_annotations_ = false;
     rethrow_unhandled_exceptions_ = false;
@@ -92,6 +93,8 @@ public:
         sorted_containers_ = true;
       } else if (iter->first.compare("java5") == 0) {
         java5_ = true;
+      } else if (iter->first.compare("future_iface") == 0) {
+        generate_future_iface_ = true;
       } else if (iter->first.compare("reuse_objects") == 0
                  || iter->first.compare("reuse-objects") == 0) {
         // keep both reuse_objects and reuse-objects (legacy) for backwards compatibility
@@ -199,9 +202,11 @@ public:
 
   void generate_service_interface(t_service* tservice);
   void generate_service_async_interface(t_service* tservice);
+  void generate_service_future_interface(t_service* tservice);
   void generate_service_helpers(t_service* tservice);
   void generate_service_client(t_service* tservice);
   void generate_service_async_client(t_service* tservice);
+  void generate_service_future_client(t_service* tservice);
   void generate_service_server(t_service* tservice);
   void generate_service_async_server(t_service* tservice);
   void generate_process_function(t_service* tservice, t_function* tfunction);
@@ -329,6 +334,7 @@ public:
   std::string function_signature_async(t_function* tfunction,
                                        bool use_base_method = false,
                                        std::string prefix = "");
+  std::string function_signature_future(t_function* tfunction, std::string prefix = "");
   std::string argument_list(t_struct* tstruct, bool include_types = true);
   std::string async_function_call_arglist(t_function* tfunc,
                                           bool use_base_method = true,
@@ -414,6 +420,7 @@ private:
   bool java5_;
   bool sorted_containers_;
   bool reuse_objects_;
+  bool generate_future_iface_;
   bool use_option_type_;
   bool undated_generated_annotations_;
   bool suppress_generated_annotations_;
@@ -2904,8 +2911,14 @@ void t_java_generator::generate_service(t_service* tservice) {
   // Generate the three main parts of the service
   generate_service_interface(tservice);
   generate_service_async_interface(tservice);
+  if (generate_future_iface_) {
+    generate_service_future_interface(tservice);
+  }
   generate_service_client(tservice);
   generate_service_async_client(tservice);
+  if (generate_future_iface_) {
+    generate_service_future_client(tservice);
+  }
   generate_service_server(tservice);
   generate_service_async_server(tservice);
   generate_service_helpers(tservice);
@@ -2960,6 +2973,25 @@ void t_java_generator::generate_service_async_interface(t_service* tservice) {
   }
   indent_down();
   f_service_ << indent() << "}" << endl << endl;
+}
+
+void t_java_generator::generate_service_future_interface(t_service* tservice) {
+  string extends = "";
+  string extends_iface = "";
+  if (tservice->get_extends() != nullptr) {
+    extends = type_name(tservice->get_extends());
+    extends_iface = " extends " + extends + " .FutureIface";
+  }
+
+  f_service_ << indent() << "public interface FutureIface" << extends_iface << " {" << endl << endl;
+  indent_up();
+  for (auto tfunc : tservice->get_functions()) {
+    indent(f_service_) << "public " << function_signature_future(tfunc)
+                       << " throws org.apache.thrift.TException;" << endl
+                       << endl;
+  }
+  scope_down(f_service_);
+  f_service_ << endl << endl;
 }
 
 /**
@@ -3144,6 +3176,50 @@ void t_java_generator::generate_service_client(t_service* tservice) {
 
   indent_down();
   indent(f_service_) << "}" << endl;
+}
+
+void t_java_generator::generate_service_future_client(t_service* tservice) {
+  static string adapter_class = "org.apache.thrift.async.AsyncMethodFutureAdapter";
+  indent(f_service_) << "public static class FutureClient implements FutureIface {" << endl;
+  indent_up();
+  indent(f_service_) << "public FutureClient(AsyncIface delegate) {" << endl;
+  indent_up();
+  indent(f_service_) << "this.delegate = delegate;" << endl;
+  scope_down(f_service_);
+  indent(f_service_) << "private final AsyncIface delegate;" << endl;
+  for (auto tfunc : tservice->get_functions()) {
+    string funname = tfunc->get_name();
+    string sep = "_";
+    string javaname = funname;
+    if (fullcamel_style_) {
+      sep = "";
+      javaname = as_camel_case(javaname);
+    }
+    auto ret_type_name = type_name(tfunc->get_returntype(), /*in_container=*/true);
+    t_struct* arg_struct = tfunc->get_arglist();
+    string funclassname = funname + "_call";
+    auto fields = arg_struct->get_members();
+
+    string args_name = funname + "_args";
+    string result_name = funname + "_result";
+
+    indent(f_service_) << "@Override" << endl;
+    indent(f_service_) << "public " << function_signature_future(tfunc)
+                       << " throws org.apache.thrift.TException {" << endl;
+    indent_up();
+    auto adapter = tmp("asyncMethodFutureAdapter");
+    indent(f_service_) << adapter_class << "<" << ret_type_name << "> " << adapter << " = "
+                       << adapter_class << ".<" << ret_type_name << ">create();" << endl;
+    bool empty_args = tfunc->get_arglist()->get_members().empty();
+    indent(f_service_) << "delegate." << get_rpc_method_name(funname) << "("
+                       << argument_list(tfunc->get_arglist(), false) << (empty_args ? "" : ", ")
+                       << adapter << ");" << endl;
+    indent(f_service_) << "return " << adapter << ".getFuture();" << endl;
+    scope_down(f_service_);
+    f_service_ << endl;
+  }
+  scope_down(f_service_);
+  f_service_ << endl;
 }
 
 void t_java_generator::generate_service_async_client(t_service* tservice) {
@@ -4518,6 +4594,19 @@ string t_java_generator::function_signature_async(t_function* tfunction,
   return result;
 }
 
+/**
+ * Renders a function signature of the form 'CompletableFuture<R> name(args)'
+ *
+ * @params tfunction Function definition
+ * @return String of rendered function definition
+ */
+string t_java_generator::function_signature_future(t_function* tfunction, string prefix) {
+  t_type* ttype = tfunction->get_returntype();
+  std::string fn_name = get_rpc_method_name(tfunction->get_name());
+  return "java.util.concurrent.CompletableFuture<" + type_name(ttype, /*in_container=*/true) + "> "
+         + prefix + fn_name + "(" + argument_list(tfunction->get_arglist()) + ")";
+}
+
 string t_java_generator::async_function_call_arglist(t_function* tfunc,
                                                      bool use_base_method,
                                                      bool include_types) {
@@ -5534,6 +5623,7 @@ THRIFT_REGISTER_GENERATOR(
     "                     Enable rethrow of unhandled exceptions and let them propagate further."
     " (Default behavior is to catch and log it.)\n"
     "    java5:           Generate Java 1.5 compliant code (includes android_legacy flag).\n"
+    "    future_iface:    Generate CompletableFuture based iface based on async client.\n"
     "    reuse_objects:   Data objects will not be allocated, but existing instances will be used "
     "(read and write).\n"
     "    reuse-objects:   Same as 'reuse_objects' (deprecated).\n"
