@@ -470,7 +470,7 @@ string t_java_generator::java_nullable_annotation() {
 }
 
 string t_java_generator::java_override_annotation() {
-  return "@java.lang.Override";
+  return "@Override";
 }
 
 /**
