@@ -318,6 +318,7 @@ public:
   std::string java_package();
   std::string java_suppressions();
   std::string java_nullable_annotation();
+  std::string java_override_annotation();
   std::string type_name(t_type* ttype,
                         bool in_container = false,
                         bool in_init = false,
@@ -468,6 +469,10 @@ string t_java_generator::java_nullable_annotation() {
   return "@org.apache.thrift.annotation.Nullable";
 }
 
+string t_java_generator::java_override_annotation() {
+  return "@java.lang.Override";
+}
+
 /**
  * Nothing in Java
  */
@@ -542,6 +547,7 @@ void t_java_generator::generate_enum(t_enum* tenum) {
   indent(f_enum) << " * Get the integer value of this enum value, as defined in the Thrift IDL."
                  << endl;
   indent(f_enum) << " */" << endl;
+  indent(f_enum) << java_override_annotation() << endl;
   indent(f_enum) << "public int getValue() {" << endl;
   indent(f_enum) << "  return value;" << endl;
   indent(f_enum) << "}" << endl << endl;
@@ -934,6 +940,7 @@ void t_java_generator::generate_union_constructor(ostream& out, t_struct* tstruc
   indent(out) << "  super(other);" << endl;
   indent(out) << "}" << endl;
 
+  indent(out) << java_override_annotation() << endl;
   indent(out) << "public " << tstruct->get_name() << " deepCopy() {" << endl;
   indent(out) << "  return new " << tstruct->get_name() << "(this);" << endl;
   indent(out) << "}" << endl << endl;
@@ -1115,14 +1122,14 @@ void t_java_generator::generate_union_abstract_methods(ostream& out, t_struct* t
   out << endl;
   generate_get_struct_desc(out, tstruct);
   out << endl;
-  indent(out) << "@Override" << endl;
+  indent(out) << java_override_annotation() << endl;
   indent(out) << "protected _Fields enumForId(short id) {" << endl;
   indent(out) << "  return _Fields.findByThriftIdOrThrow(id);" << endl;
   indent(out) << "}" << endl;
 }
 
 void t_java_generator::generate_check_type(ostream& out, t_struct* tstruct) {
-  indent(out) << "@Override" << endl;
+  indent(out) << java_override_annotation() << endl;
   indent(out) << "protected void checkType(_Fields setField, java.lang.Object value) throws "
                  "java.lang.ClassCastException {"
               << endl;
@@ -1160,7 +1167,7 @@ void t_java_generator::generate_check_type(ostream& out, t_struct* tstruct) {
 }
 
 void t_java_generator::generate_standard_scheme_read_value(ostream& out, t_struct* tstruct) {
-  indent(out) << "@Override" << endl;
+  indent(out) << java_override_annotation() << endl;
   indent(out)
       << "protected java.lang.Object standardSchemeReadValue(org.apache.thrift.protocol.TProtocol "
          "iprot, org.apache.thrift.protocol.TField field) throws "
@@ -1220,7 +1227,7 @@ void t_java_generator::generate_standard_scheme_read_value(ostream& out, t_struc
 }
 
 void t_java_generator::generate_standard_scheme_write_value(ostream& out, t_struct* tstruct) {
-  indent(out) << "@Override" << endl;
+  indent(out) << java_override_annotation() << endl;
   indent(out) << "protected void standardSchemeWriteValue(org.apache.thrift.protocol.TProtocol "
                  "oprot) throws org.apache.thrift.TException {"
               << endl;
@@ -1260,7 +1267,7 @@ void t_java_generator::generate_standard_scheme_write_value(ostream& out, t_stru
 }
 
 void t_java_generator::generate_tuple_scheme_read_value(ostream& out, t_struct* tstruct) {
-  indent(out) << "@Override" << endl;
+  indent(out) << java_override_annotation() << endl;
   indent(out)
       << "protected java.lang.Object tupleSchemeReadValue(org.apache.thrift.protocol.TProtocol "
          "iprot, short fieldID) throws org.apache.thrift.TException {"
@@ -1273,7 +1280,6 @@ void t_java_generator::generate_tuple_scheme_read_value(ostream& out, t_struct* 
   indent_up();
   indent(out) << "switch (setField) {" << endl;
   indent_up();
-
   const vector<t_field*>& members = tstruct->get_members();
   vector<t_field*>::const_iterator m_iter;
 
@@ -1311,7 +1317,7 @@ void t_java_generator::generate_tuple_scheme_read_value(ostream& out, t_struct* 
 }
 
 void t_java_generator::generate_tuple_scheme_write_value(ostream& out, t_struct* tstruct) {
-  indent(out) << "@Override" << endl;
+  indent(out) << java_override_annotation() << endl;
   indent(out) << "protected void tupleSchemeWriteValue(org.apache.thrift.protocol.TProtocol oprot) "
                  "throws org.apache.thrift.TException {"
               << endl;
@@ -1351,7 +1357,7 @@ void t_java_generator::generate_tuple_scheme_write_value(ostream& out, t_struct*
 }
 
 void t_java_generator::generate_get_field_desc(ostream& out, t_struct* tstruct) {
-  indent(out) << "@Override" << endl;
+  indent(out) << java_override_annotation() << endl;
   indent(out) << "protected org.apache.thrift.protocol.TField getFieldDesc(_Fields setField) {"
               << endl;
   indent_up();
@@ -1381,7 +1387,7 @@ void t_java_generator::generate_get_field_desc(ostream& out, t_struct* tstruct) 
 
 void t_java_generator::generate_get_struct_desc(ostream& out, t_struct* tstruct) {
   (void)tstruct;
-  indent(out) << "@Override" << endl;
+  indent(out) << java_override_annotation() << endl;
   indent(out) << "protected org.apache.thrift.protocol.TStruct getStructDesc() {" << endl;
   indent(out) << "  return STRUCT_DESC;" << endl;
   indent(out) << "}" << endl;
@@ -1406,7 +1412,7 @@ void t_java_generator::generate_union_comparisons(ostream& out, t_struct* tstruc
   indent(out) << "}" << endl;
   out << endl;
 
-  indent(out) << "@Override" << endl;
+  indent(out) << java_override_annotation() << endl;
   indent(out) << "public int compareTo(" << type_name(tstruct) << " other) {" << endl;
   indent(out) << "  int lastComparison = org.apache.thrift.TBaseHelper.compareTo(getSetField(), "
                  "other.getSetField());"
@@ -1423,7 +1429,7 @@ void t_java_generator::generate_union_comparisons(ostream& out, t_struct* tstruc
 
 void t_java_generator::generate_union_hashcode(ostream& out, t_struct* tstruct) {
   (void)tstruct;
-  indent(out) << "@Override" << endl;
+  indent(out) << java_override_annotation() << endl;
   indent(out) << "public int hashCode() {" << endl;
   indent(out)
       << "  java.util.List<java.lang.Object> list = new java.util.ArrayList<java.lang.Object>();"
@@ -1677,6 +1683,7 @@ void t_java_generator::generate_java_struct_definition(ostream& out,
   indent(out) << "}" << endl << endl;
 
   // clone method, so that you can deep copy an object when you don't know its class.
+  indent(out) << java_override_annotation() << endl;
   indent(out) << "public " << tstruct->get_name() << " deepCopy() {" << endl;
   indent(out) << "  return new " << tstruct->get_name() << "(this);" << endl;
   indent(out) << "}" << endl << endl;
@@ -1720,7 +1727,7 @@ void t_java_generator::generate_java_struct_parcelable(ostream& out, t_struct* t
   const vector<t_field*>& members = tstruct->get_members();
   vector<t_field*>::const_iterator m_iter;
 
-  out << indent() << "@Override" << endl
+  out << indent() << java_override_annotation() << endl
       << indent() << "public void writeToParcel(android.os.Parcel out, int flags) {" << endl;
   indent_up();
   string bitsetPrimitiveType = "";
@@ -1806,7 +1813,8 @@ void t_java_generator::generate_java_struct_parcelable(ostream& out, t_struct* t
   scope_down(out);
   out << endl;
 
-  out << indent() << "@Override" << endl << indent() << "public int describeContents() {" << endl;
+  out << indent() << java_override_annotation() << endl
+      << indent() << "public int describeContents() {" << endl;
   indent_up();
   out << indent() << "return 0;" << endl;
   scope_down(out);
@@ -1908,14 +1916,14 @@ void t_java_generator::generate_java_struct_parcelable(ostream& out, t_struct* t
               << "> CREATOR = new android.os.Parcelable.Creator<" << tname << ">() {" << endl;
   indent_up();
 
-  indent(out) << "@Override" << endl
+  indent(out) << java_override_annotation() << endl
               << indent() << "public " << tname << "[] newArray(int size) {" << endl;
   indent_up();
   indent(out) << "return new " << tname << "[size];" << endl;
   scope_down(out);
   out << endl;
 
-  indent(out) << "@Override" << endl
+  indent(out) << java_override_annotation() << endl
               << indent() << "public " << tname << " createFromParcel(android.os.Parcel in) {"
               << endl;
   indent_up();
@@ -1933,7 +1941,7 @@ void t_java_generator::generate_java_struct_parcelable(ostream& out, t_struct* t
  * @param tstruct The struct definition
  */
 void t_java_generator::generate_java_struct_equality(ostream& out, t_struct* tstruct) {
-  out << indent() << "@Override" << endl
+  out << indent() << java_override_annotation() << endl
       << indent() << "public boolean equals(java.lang.Object that) {" << endl;
   indent_up();
   out << indent() << "if (that instanceof " << tstruct->get_name() << ")" << endl
@@ -1999,7 +2007,8 @@ void t_java_generator::generate_java_struct_equality(ostream& out, t_struct* tst
   const int MUL = 8191; // HashCode multiplier
   const int B_YES = 131071;
   const int B_NO = 524287;
-  out << indent() << "@Override" << endl << indent() << "public int hashCode() {" << endl;
+  out << indent() << java_override_annotation() << endl
+      << indent() << "public int hashCode() {" << endl;
   indent_up();
   indent(out) << "int hashCode = 1;" << endl;
 
@@ -2066,7 +2075,7 @@ void t_java_generator::generate_java_struct_equality(ostream& out, t_struct* tst
 }
 
 void t_java_generator::generate_java_struct_compare_to(ostream& out, t_struct* tstruct) {
-  indent(out) << "@Override" << endl;
+  indent(out) << java_override_annotation() << endl;
   indent(out) << "public int compareTo(" << type_name(tstruct) << " other) {" << endl;
   indent_up();
 
@@ -2108,8 +2117,8 @@ void t_java_generator::generate_java_struct_compare_to(ostream& out, t_struct* t
  *
  * @param tstruct The struct definition
  */
-void t_java_generator::generate_java_struct_reader(ostream& out, t_struct* tstruct) {
-  (void)tstruct;
+void t_java_generator::generate_java_struct_reader(ostream& out, t_struct* /*tstruct*/) {
+  indent(out) << java_override_annotation() << endl;
   indent(out) << "public void read(org.apache.thrift.protocol.TProtocol iprot) throws "
                  "org.apache.thrift.TException {"
               << endl;
@@ -2173,8 +2182,8 @@ void t_java_generator::generate_java_validator(ostream& out, t_struct* tstruct) 
  *
  * @param tstruct The struct definition
  */
-void t_java_generator::generate_java_struct_writer(ostream& out, t_struct* tstruct) {
-  (void)tstruct;
+void t_java_generator::generate_java_struct_writer(ostream& out, t_struct* /*tstruct*/) {
+  indent(out) << java_override_annotation() << endl;
   indent(out) << "public void write(org.apache.thrift.protocol.TProtocol oprot) throws "
                  "org.apache.thrift.TException {"
               << endl;
@@ -2208,6 +2217,7 @@ void t_java_generator::generate_java_struct_result_writer(ostream& out, t_struct
 void t_java_generator::generate_java_struct_field_by_id(ostream& out, t_struct* tstruct) {
   (void)tstruct;
   indent(out) << java_nullable_annotation() << endl;
+  indent(out) << java_override_annotation() << endl;
   indent(out) << "public _Fields fieldForId(int fieldId) {" << endl;
   indent(out) << "  return _Fields.findByThriftId(fieldId);" << endl;
   indent(out) << "}" << endl << endl;
@@ -2272,6 +2282,7 @@ void t_java_generator::generate_generic_field_getters_setters(std::ostream& out,
 
   // create the setter
 
+  indent(out) << java_override_annotation() << endl;
   indent(out) << "public void setFieldValue(_Fields field, " << java_nullable_annotation()
               << " java.lang.Object value) {" << endl;
   indent(out) << "  switch (field) {" << endl;
@@ -2281,6 +2292,7 @@ void t_java_generator::generate_generic_field_getters_setters(std::ostream& out,
 
   // create the getter
   indent(out) << java_nullable_annotation() << endl;
+  indent(out) << java_override_annotation() << endl;
   indent(out) << "public java.lang.Object getFieldValue(_Fields field) {" << endl;
   indent_up();
   indent(out) << "switch (field) {" << endl;
@@ -2300,6 +2312,7 @@ void t_java_generator::generate_generic_isset_method(std::ostream& out, t_struct
   indent(out) << "/** Returns true if field corresponding to fieldID is set (has been assigned a "
                  "value) and false otherwise */"
               << endl;
+  indent(out) << java_override_annotation() << endl;
   indent(out) << "public boolean isSet(_Fields field) {" << endl;
   indent_up();
   indent(out) << "if (field == null) {" << endl;
@@ -2660,7 +2673,7 @@ void t_java_generator::generate_java_bean_boilerplate(ostream& out, t_struct* ts
  * @param tstruct The struct definition
  */
 void t_java_generator::generate_java_struct_tostring(ostream& out, t_struct* tstruct) {
-  out << indent() << "@Override" << endl
+  out << indent() << java_override_annotation() << endl
       << indent() << "public java.lang.String toString() {" << endl;
   indent_up();
 
@@ -3001,12 +3014,14 @@ void t_java_generator::generate_service_client(t_service* tservice) {
       << endl;
   indent_up();
   indent(f_service_) << "public Factory() {}" << endl;
+  indent(f_service_) << java_override_annotation() << endl;
   indent(f_service_) << "public Client getClient(org.apache.thrift.protocol.TProtocol prot) {"
                      << endl;
   indent_up();
   indent(f_service_) << "return new Client(prot);" << endl;
   indent_down();
   indent(f_service_) << "}" << endl;
+  indent(f_service_) << java_override_annotation() << endl;
   indent(f_service_) << "public Client getClient(org.apache.thrift.protocol.TProtocol iprot, "
                         "org.apache.thrift.protocol.TProtocol oprot) {"
                      << endl;
@@ -3042,6 +3057,7 @@ void t_java_generator::generate_service_client(t_service* tservice) {
     }
 
     // Open function
+    indent(f_service_) << java_override_annotation() << endl;
     indent(f_service_) << "public " << function_signature(*f_iter) << endl;
     scope_up(f_service_);
     indent(f_service_) << "send" << sep << javaname << "(";
@@ -3172,6 +3188,7 @@ void t_java_generator::generate_service_async_client(t_service* tservice) {
   indent(f_service_) << "    this.clientManager = clientManager;" << endl;
   indent(f_service_) << "    this.protocolFactory = protocolFactory;" << endl;
   indent(f_service_) << "  }" << endl;
+  indent(f_service_) << "  @Override" << endl;
   indent(f_service_) << "  public AsyncClient "
                         "getAsyncClient(org.apache.thrift.transport.TNonblockingTransport "
                         "transport) {"
@@ -3210,6 +3227,7 @@ void t_java_generator::generate_service_async_client(t_service* tservice) {
     string result_name = (*f_iter)->get_name() + "_result";
 
     // Main method body
+    indent(f_service_) << java_override_annotation() << endl;
     indent(f_service_) << "public " << function_signature_async(*f_iter, false)
                        << " throws org.apache.thrift.TException {" << endl;
     indent(f_service_) << "  checkReady();" << endl;
@@ -3258,7 +3276,7 @@ void t_java_generator::generate_service_async_client(t_service* tservice) {
     }
 
     indent(f_service_) << "}" << endl << endl;
-
+    indent(f_service_) << java_override_annotation() << endl;
     indent(f_service_) << "public void write_args(org.apache.thrift.protocol.TProtocol prot) "
                           "throws org.apache.thrift.TException {"
                        << endl;
@@ -3284,6 +3302,7 @@ void t_java_generator::generate_service_async_client(t_service* tservice) {
     indent(f_service_) << "}" << endl << endl;
 
     // Return method
+    indent(f_service_) << java_override_annotation() << endl;
     indent(f_service_) << "public " + type_name(ret_type, true) + " getResult() throws ";
     vector<t_field*>::const_iterator x_iter;
     for (x_iter = xceptions.begin(); x_iter != xceptions.end(); ++x_iter) {
@@ -3519,10 +3538,12 @@ void t_java_generator::generate_process_async_function(t_service* tservice, t_fu
   indent(f_service_) << "  super(\"" << tfunction->get_name() << "\");" << endl;
   indent(f_service_) << "}" << endl << endl;
 
+  indent(f_service_) << java_override_annotation() << endl;
   indent(f_service_) << "public " << argsname << " getEmptyArgsInstance() {" << endl;
   indent(f_service_) << "  return new " << argsname << "();" << endl;
   indent(f_service_) << "}" << endl << endl;
 
+  indent(f_service_) << java_override_annotation() << endl;
   indent(f_service_) << "public org.apache.thrift.async.AsyncMethodCallback<" << resulttype
                      << "> getResultHandler(final "
                         "org.apache.thrift.server.AbstractNonblockingServer.AsyncFrameBuffer fb, "
@@ -3533,6 +3554,7 @@ void t_java_generator::generate_process_async_function(t_service* tservice, t_fu
   indent(f_service_) << "return new org.apache.thrift.async.AsyncMethodCallback<" << resulttype
                      << ">() { " << endl;
   indent_up();
+  indent(f_service_) << java_override_annotation() << endl;
   indent(f_service_) << "public void onComplete(" << resulttype << " o) {" << endl;
 
   indent_up();
@@ -3570,6 +3592,7 @@ void t_java_generator::generate_process_async_function(t_service* tservice, t_fu
   indent_down();
   indent(f_service_) << "}" << endl;
 
+  indent(f_service_) << java_override_annotation() << endl;
   indent(f_service_) << "public void onError(java.lang.Exception e) {" << endl;
   indent_up();
 
@@ -3655,10 +3678,12 @@ void t_java_generator::generate_process_async_function(t_service* tservice, t_fu
   indent_down();
   indent(f_service_) << "}" << endl << endl;
 
+  indent(f_service_) << java_override_annotation() << endl;
   indent(f_service_) << "protected boolean isOneway() {" << endl;
   indent(f_service_) << "  return " << ((tfunction->is_oneway()) ? "true" : "false") << ";" << endl;
   indent(f_service_) << "}" << endl << endl;
 
+  indent(f_service_) << java_override_annotation() << endl;
   indent(f_service_) << "public void start(I iface, " << argsname
                      << " args, org.apache.thrift.async.AsyncMethodCallback<" << resulttype
                      << "> resultHandler) throws org.apache.thrift.TException {" << endl;
@@ -3719,20 +3744,23 @@ void t_java_generator::generate_process_function(t_service* tservice, t_function
   indent(f_service_) << "  super(\"" << tfunction->get_name() << "\");" << endl;
   indent(f_service_) << "}" << endl << endl;
 
+  indent(f_service_) << java_override_annotation() << endl;
   indent(f_service_) << "public " << argsname << " getEmptyArgsInstance() {" << endl;
   indent(f_service_) << "  return new " << argsname << "();" << endl;
   indent(f_service_) << "}" << endl << endl;
 
+  indent(f_service_) << java_override_annotation() << endl;
   indent(f_service_) << "protected boolean isOneway() {" << endl;
   indent(f_service_) << "  return " << ((tfunction->is_oneway()) ? "true" : "false") << ";" << endl;
   indent(f_service_) << "}" << endl << endl;
 
-  indent(f_service_) << "@Override" << endl;
+  indent(f_service_) << java_override_annotation() << endl;
   indent(f_service_) << "protected boolean rethrowUnhandledExceptions() {" << endl;
   indent(f_service_) << "  return " << ((rethrow_unhandled_exceptions_) ? "true" : "false") << ";"
                      << endl;
   indent(f_service_) << "}" << endl << endl;
 
+  indent(f_service_) << java_override_annotation() << endl;
   indent(f_service_) << "public " << resultname << " getResult(I iface, " << argsname
                      << " args) throws org.apache.thrift.TException {" << endl;
   indent_up();
@@ -5036,10 +5064,12 @@ void t_java_generator::generate_field_name_constants(ostream& out, t_struct* tst
   indent(out) << "  _fieldName = fieldName;" << endl;
   indent(out) << "}" << endl << endl;
 
+  indent(out) << java_override_annotation() << endl;
   indent(out) << "public short getThriftFieldId() {" << endl;
   indent(out) << "  return _thriftId;" << endl;
   indent(out) << "}" << endl << endl;
 
+  indent(out) << java_override_annotation() << endl;
   indent(out) << "public java.lang.String getFieldName() {" << endl;
   indent(out) << "  return _fieldName;" << endl;
   indent(out) << "}" << endl;
@@ -5080,9 +5110,7 @@ t_java_generator::isset_type t_java_generator::needs_isset(t_struct* tstruct,
 }
 
 void t_java_generator::generate_java_struct_clear(std::ostream& out, t_struct* tstruct) {
-  if (!java5_) {
-    indent(out) << "@Override" << endl;
-  }
+  indent(out) << java_override_annotation() << endl;
   indent(out) << "public void clear() {" << endl;
 
   const vector<t_field*>& members = tstruct->get_members();
@@ -5194,8 +5222,9 @@ void t_java_generator::generate_java_struct_read_object(ostream& out, t_struct* 
 }
 
 void t_java_generator::generate_standard_reader(ostream& out, t_struct* tstruct) {
-  out << indent() << "public void read(org.apache.thrift.protocol.TProtocol iprot, "
-      << tstruct->get_name() << " struct) throws org.apache.thrift.TException {" << endl;
+  indent(out) << java_override_annotation() << endl;
+  indent(out) << "public void read(org.apache.thrift.protocol.TProtocol iprot, "
+              << tstruct->get_name() << " struct) throws org.apache.thrift.TException {" << endl;
   indent_up();
 
   const vector<t_field*>& fields = tstruct->get_members();
@@ -5290,8 +5319,9 @@ void t_java_generator::generate_standard_reader(ostream& out, t_struct* tstruct)
 
 void t_java_generator::generate_standard_writer(ostream& out, t_struct* tstruct, bool is_result) {
   indent_up();
-  out << indent() << "public void write(org.apache.thrift.protocol.TProtocol oprot, "
-      << tstruct->get_name() << " struct) throws org.apache.thrift.TException {" << endl;
+  indent(out) << java_override_annotation() << endl;
+  indent(out) << "public void write(org.apache.thrift.protocol.TProtocol oprot, "
+              << tstruct->get_name() << " struct) throws org.apache.thrift.TException {" << endl;
   indent_up();
   const vector<t_field*>& fields = tstruct->get_sorted_members();
   vector<t_field*>::const_iterator f_iter;
@@ -5348,6 +5378,7 @@ void t_java_generator::generate_java_struct_standard_scheme(ostream& out,
               << "StandardSchemeFactory implements org.apache.thrift.scheme.SchemeFactory {"
               << endl;
   indent_up();
+  indent(out) << java_override_annotation() << endl;
   indent(out) << "public " << tstruct->get_name() << "StandardScheme getScheme() {" << endl;
   indent_up();
   indent(out) << "return new " << tstruct->get_name() << "StandardScheme();" << endl;
@@ -5370,7 +5401,7 @@ void t_java_generator::generate_java_struct_standard_scheme(ostream& out,
 }
 
 void t_java_generator::generate_java_struct_tuple_reader(ostream& out, t_struct* tstruct) {
-  indent(out) << "@Override" << endl;
+  indent(out) << java_override_annotation() << endl;
   indent(out) << "public void read(org.apache.thrift.protocol.TProtocol prot, "
               << tstruct->get_name() << " struct) throws org.apache.thrift.TException {" << endl;
   indent_up();
@@ -5414,7 +5445,7 @@ void t_java_generator::generate_java_struct_tuple_reader(ostream& out, t_struct*
 }
 
 void t_java_generator::generate_java_struct_tuple_writer(ostream& out, t_struct* tstruct) {
-  indent(out) << "@Override" << endl;
+  indent(out) << java_override_annotation() << endl;
   indent(out) << "public void write(org.apache.thrift.protocol.TProtocol prot, "
               << tstruct->get_name() << " struct) throws org.apache.thrift.TException {" << endl;
   indent_up();
@@ -5473,6 +5504,7 @@ void t_java_generator::generate_java_struct_tuple_scheme(ostream& out, t_struct*
   indent(out) << "private static class " << tstruct->get_name()
               << "TupleSchemeFactory implements org.apache.thrift.scheme.SchemeFactory {" << endl;
   indent_up();
+  indent(out) << java_override_annotation() << endl;
   indent(out) << "public " << tstruct->get_name() << "TupleScheme getScheme() {" << endl;
   indent_up();
   indent(out) << "return new " << tstruct->get_name() << "TupleScheme();" << endl;
