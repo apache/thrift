@@ -299,7 +299,24 @@
     "includes": {
       "type": "array",
       "items": {
-        "type": "string"
+        "oneOf": [
+          { "type": "string" },
+          {
+            "title": "richer type of include information, containing name, path, and referenced namespaces",
+            "type": "object",
+            "properties": {
+              "name": { "type": "string" },
+              "path": { "type": "string" },
+              "namespaces": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "string"
+                }
+              }
+            },
+            "required": ["name", "path", "namespaces"]
+          }
+        ]
       },
       "uniqueItems": true
     },

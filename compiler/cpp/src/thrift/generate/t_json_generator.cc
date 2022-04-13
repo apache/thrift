@@ -23,24 +23,24 @@
 
 #include <fstream>
 #include <iostream>
-#include <sstream>
 #include <limits>
+#include <sstream>
 
+#include <sstream>
 #include <stdlib.h>
 #include <sys/stat.h>
-#include <sstream>
 
-#include "thrift/platform.h"
 #include "thrift/generate/t_generator.h"
+#include "thrift/platform.h"
 
 using std::map;
 using std::ofstream;
 using std::ostream;
 using std::ostringstream;
+using std::stack;
 using std::string;
 using std::stringstream;
 using std::vector;
-using std::stack;
 
 static const string endl = "\n";
 static const string quot = "\"";
@@ -57,12 +57,19 @@ public:
     std::map<std::string, std::string>::const_iterator iter;
 
     should_merge_includes_ = false;
-    for( iter = parsed_options.begin(); iter != parsed_options.end(); ++iter) {
-      if( iter->first.compare("merge") == 0) {
+    generate_rich_includes_ = false;
+    for (iter = parsed_options.begin(); iter != parsed_options.end(); ++iter) {
+      if (iter->first.compare("merge") == 0) {
         should_merge_includes_ = true;
+      } else if (iter->first.compare("rich_includes") == 0) {
+        generate_rich_includes_ = true;
       } else {
         throw "unknown option json:" + iter->first;
       }
+    }
+
+    if (should_merge_includes_ && generate_rich_includes_) {
+      throw "Cannot specify both `rich_includes' and `merge' for JSON generator";
     }
 
     out_dir_base_ = "gen-json";
@@ -71,8 +78,8 @@ public:
   ~t_json_generator() override = default;
 
   /**
-  * Init and close methods
-  */
+   * Init and close methods
+   */
 
   void init_generator() override;
   void close_generator() override;
@@ -88,6 +95,7 @@ public:
 
 private:
   bool should_merge_includes_;
+  bool generate_rich_includes_;
 
   ofstream_with_content_based_conditional_update f_json_;
   std::stack<bool> comma_needed_;
@@ -267,7 +275,7 @@ void t_json_generator::write_type_spec(t_type* ttype) {
   if (ttype->annotations_.size() > 0) {
     write_key_and("annotations");
     start_object();
-    for (auto & annotation : ttype->annotations_) {
+    for (auto& annotation : ttype->annotations_) {
       write_key_and_string(annotation.first, annotation.second);
     }
     end_object();
@@ -366,12 +374,24 @@ void t_json_generator::generate_program() {
     // Generate includes
     write_key_and("includes");
     start_array();
-    const vector<t_program*> includes = program_->get_includes();
-    vector<t_program*>::const_iterator inc_it;
-    for (inc_it = includes.begin(); inc_it != includes.end(); ++inc_it) {
+    for (auto tprog : program_->get_includes()) {
       write_comma_if_needed();
       f_json_ << indent();
-      write_string((*inc_it)->get_name());
+      if (generate_rich_includes_) {
+        start_object(NO_INDENT);
+        write_key_and_string("name", tprog->get_name());
+        write_key_and_string("path", tprog->get_path());
+        write_key_and("namespaces");
+        start_object(NO_INDENT);
+        for (auto ns : tprog->get_namespaces()) {
+          write_key_and_string(ns.first, ns.second);
+          indicate_comma_needed();
+        }
+        end_object();
+        end_object();
+      } else {
+        write_string(tprog->get_name());
+      }
       indicate_comma_needed();
     }
     end_array();
@@ -458,7 +478,7 @@ void t_json_generator::generate_typedef(t_typedef* ttypedef) {
   if (ttypedef->annotations_.size() > 0) {
     write_key_and("annotations");
     start_object();
-    for (auto & annotation : ttypedef->annotations_) {
+    for (auto& annotation : ttypedef->annotations_) {
       write_key_and_string(annotation.first, annotation.second);
     }
     end_object();
@@ -563,12 +583,12 @@ void t_json_generator::generate_enum(t_enum* tenum) {
   }
 
   if (tenum->annotations_.size() > 0) {
-      write_key_and("annotations");
-      start_object();
-      for (auto & annotation : tenum->annotations_) {
-        write_key_and_string(annotation.first, annotation.second);
-      }
-      end_object();
+    write_key_and("annotations");
+    start_object();
+    for (auto& annotation : tenum->annotations_) {
+      write_key_and_string(annotation.first, annotation.second);
+    }
+    end_object();
   }
 
   write_key_and("members");
@@ -604,7 +624,7 @@ void t_json_generator::generate_struct(t_struct* tstruct) {
   if (tstruct->annotations_.size() > 0) {
     write_key_and("annotations");
     start_object();
-    for (auto & annotation : tstruct->annotations_) {
+    for (auto& annotation : tstruct->annotations_) {
       write_key_and_string(annotation.first, annotation.second);
     }
     end_object();
@@ -644,7 +664,7 @@ void t_json_generator::generate_service(t_service* tservice) {
   if (tservice->annotations_.size() > 0) {
     write_key_and("annotations");
     start_object();
-    for (auto & annotation : tservice->annotations_) {
+    for (auto& annotation : tservice->annotations_) {
       write_key_and_string(annotation.first, annotation.second);
     }
     end_object();
@@ -681,7 +701,7 @@ void t_json_generator::generate_function(t_function* tfunc) {
   if (tfunc->annotations_.size() > 0) {
     write_key_and("annotations");
     start_object();
-    for (auto & annotation : tfunc->annotations_) {
+    for (auto& annotation : tfunc->annotations_) {
       write_key_and_string(annotation.first, annotation.second);
     }
     end_object();
@@ -727,7 +747,7 @@ void t_json_generator::generate_field(t_field* field) {
   if (field->annotations_.size() > 0) {
     write_key_and("annotations");
     start_object();
-    for (auto & annotation : field->annotations_) {
+    for (auto& annotation : field->annotations_) {
       write_key_and_string(annotation.first, annotation.second);
     }
     end_object();
@@ -789,6 +809,8 @@ string t_json_generator::get_qualified_name(t_type* ttype) {
   return ttype->get_program()->get_name() + "." + ttype->get_name();
 }
 
-THRIFT_REGISTER_GENERATOR(json,
-                          "JSON",
-                          "    merge:           Generate output with included files merged\n")
+THRIFT_REGISTER_GENERATOR(
+    json,
+    "JSON",
+    "    merge:           Generate output with included files merged.\n"
+    "    rich_includes:   Generate rich includes information (cannot use with merge).\n")
