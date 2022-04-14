@@ -481,7 +481,8 @@ string t_java_generator::java_package() {
 }
 
 string t_java_generator::java_suppressions() {
-  return "@SuppressWarnings({\"cast\", \"rawtypes\", \"serial\", \"unchecked\", \"unused\"})\n";
+  return "@SuppressWarnings({\"cast\", \"rawtypes\", \"serial\", \"unchecked\", \"unused\"})"
+         + endl;
 }
 
 string t_java_generator::java_nullable_annotation() {
@@ -621,7 +622,6 @@ void t_java_generator::generate_consts(std::vector<t_const*> consts) {
 
   // Print header
   f_consts << autogen_comment() << java_package() << java_suppressions();
-
   f_consts << "public class " << make_valid_java_identifier(program_name_) << "Constants {" << endl
            << endl;
   indent_up();
@@ -837,7 +837,7 @@ void t_java_generator::generate_java_struct(t_struct* tstruct, bool is_exception
   ofstream_with_content_based_conditional_update f_struct;
   f_struct.open(f_struct_name.c_str());
 
-  f_struct << autogen_comment() << java_package() << java_suppressions();
+  f_struct << autogen_comment() << java_package();
 
   generate_java_struct_definition(f_struct, tstruct, is_exception);
   f_struct.close();
@@ -855,9 +855,10 @@ void t_java_generator::generate_java_union(t_struct* tstruct) {
   ofstream_with_content_based_conditional_update f_struct;
   f_struct.open(f_struct_name.c_str());
 
-  f_struct << autogen_comment() << java_package() << java_suppressions();
+  f_struct << autogen_comment() << java_package();
 
   generate_java_doc(f_struct, tstruct);
+  f_struct << java_suppressions();
 
   bool is_final = (tstruct->annotations_.find("final") != tstruct->annotations_.end());
   bool is_deprecated = this->is_deprecated(tstruct->annotations_);
@@ -1485,6 +1486,7 @@ void t_java_generator::generate_java_struct_definition(ostream& out,
                                                        bool in_class,
                                                        bool is_result) {
   generate_java_doc(out, tstruct);
+  indent(out) << java_suppressions();
 
   bool is_final = (tstruct->annotations_.find("final") != tstruct->annotations_.end());
   bool is_deprecated = this->is_deprecated(tstruct->annotations_);
@@ -2982,11 +2984,12 @@ void t_java_generator::generate_service(t_service* tservice) {
   string f_service_name = package_dir_ + "/" + make_valid_java_filename(service_name_) + ".java";
   f_service_.open(f_service_name.c_str());
 
-  f_service_ << autogen_comment() << java_package() << java_suppressions();
+  f_service_ << autogen_comment() << java_package();
 
   if (!suppress_generated_annotations_) {
     generate_javax_generated_annotation(f_service_);
   }
+  f_service_ << java_suppressions();
   f_service_ << "public class " << service_name_ << " {" << endl << endl;
   indent_up();
 
