@@ -91,8 +91,8 @@ if (org.gradle.internal.os.OperatingSystem.current().windows) {
 def javaExe = file("${System.getProperty('java.home')}/bin/java${execExt}").canonicalPath
 // The common Uber jar path
 def jarPath = shadowJar.archivePath.canonicalPath
-def trustStore = file('test/.truststore').canonicalPath
-def keyStore = file('test/.keystore').canonicalPath
+def trustStore = file('test/resources/.truststore').canonicalPath
+def keyStore = file('test/resources/.keystore').canonicalPath
 
 task generateRunnerScriptForClient(group: 'Build') {
     description = 'Generate a runner script for cross-check tests with TestClient'

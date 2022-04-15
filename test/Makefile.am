@@ -142,11 +142,6 @@ EXTRA_DIST = \
 	Include.thrift \
 	Identifiers.thrift \
 	Int64Test.thrift \
-	JavaBeansTest.thrift \
-	JavaBinaryDefault.thrift \
-	JavaDeepCopyTest.thrift \
-	JavaOptionTypeJdk8Test.thrift \
-	JavaTypes.thrift \
 	JsDeepConstructorTest.thrift \
 	ManyOptionals.thrift \
 	ManyTypedefs.thrift \
