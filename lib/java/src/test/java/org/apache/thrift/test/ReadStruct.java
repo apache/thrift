@@ -51,11 +51,11 @@ public class ReadStruct {
 
     cpts.read(proto);
 
-    if (cpts.equals(Fixtures.compactProtoTestStruct)) {
+    if (cpts.equals(Fixtures.getCompactProtoTestStruct())) {
       System.out.println("Object verified successfully!");
     } else {
       System.out.println("Object failed verification!");
-      System.out.println("Expected: " + Fixtures.compactProtoTestStruct + " but got " + cpts);
+      System.out.println("Expected: " + Fixtures.getCompactProtoTestStruct() + " but got " + cpts);
     }
   }
 

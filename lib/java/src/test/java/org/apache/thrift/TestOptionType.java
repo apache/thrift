@@ -19,10 +19,16 @@
 
 package org.apache.thrift;
 
-import junit.framework.TestCase;
+import org.junit.jupiter.api.Test;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 // Tests and documents behavior for the "Option<T>" type
-public class TestOptionType extends TestCase {
+public class TestOptionType  {
+    @Test
     public void testSome() {
         String name = "Chuck Norris";
         Option<String> option = Option.fromNullable(name);
@@ -34,6 +40,7 @@ public class TestOptionType extends TestCase {
         assertEquals(option.get(),"Chuck Norris");
     }
 
+    @Test
     public void testNone() throws Exception {
         String name = null;
         Option<String> option = Option.fromNullable(name);
@@ -43,23 +50,18 @@ public class TestOptionType extends TestCase {
         assertEquals("None", option.toString());
         assertEquals(option.or("default value"), "default value");
         // Expect exception
-        try {
-            Object value = option.get();
-            fail("Expected IllegalStateException, got no exception");
-        } catch (IllegalStateException ex) {
-
-        } catch(Exception ex) {
-            fail("Expected IllegalStateException, got some other exception: "+ex.toString());
-        }
+        assertThrows(IllegalStateException.class, option::get);
     }
 
+    @Test
     public void testMakeSome() throws Exception {
         Option<String> some = Option.some("wee");
-        assertTrue(some instanceof Option.Some);
+        assertTrue(some.isDefined());
     }
 
+    @Test
     public void testMakeNone() throws Exception {
         Option<Integer> none = Option.none();
-        assertTrue(none instanceof Option.None);
+        assertFalse(none.isDefined());
     }
 }
