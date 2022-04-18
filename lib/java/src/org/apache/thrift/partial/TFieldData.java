@@ -27,7 +27,7 @@ package org.apache.thrift.partial;
  */
 public class TFieldData {
   public static int encode(byte type) {
-    return (int) (type & 0xff);
+    return type & 0xff;
   }
 
   public static int encode(byte type, short id) {
