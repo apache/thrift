@@ -167,7 +167,7 @@ public abstract class ProtocolTestBase extends TestCase {
       }
 
       public void readMethod(TProtocol proto) throws TException {
-        assertEquals((byte)b, proto.readByte());
+        assertEquals(b, proto.readByte());
       }
     });
   }
