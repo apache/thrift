@@ -25,23 +25,20 @@ import org.apache.thrift.TFieldIdEnum;
 import org.apache.thrift.TFieldRequirementType;
 import org.apache.thrift.TUnion;
 import org.apache.thrift.meta_data.FieldMetaData;
-import org.apache.thrift.meta_data.FieldValueMetaData;
 import org.apache.thrift.meta_data.ListMetaData;
 import org.apache.thrift.meta_data.MapMetaData;
 import org.apache.thrift.meta_data.SetMetaData;
 import org.apache.thrift.meta_data.StructMetaData;
-import org.apache.thrift.partial.Validate;
 import org.apache.thrift.protocol.TType;
 
 import java.io.Serializable;
-import java.lang.reflect.Field;
+import java.lang.reflect.Constructor;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 /**
  * Container for Thrift metadata classes such as {@link ThriftPrimitive},
@@ -415,9 +412,9 @@ public class ThriftMetadata {
         Iterable<ThriftField> fieldsData) {
 
       if (isUnion(data)) {
-        return new ThriftUnion(parent, fieldId, data, fieldsData);
+        return new ThriftUnion<>(parent, fieldId, data, fieldsData);
       } else {
-        return new ThriftStruct(parent, fieldId, data, fieldsData);
+        return new ThriftStruct<>(parent, fieldId, data, fieldsData);
       }
     }
   }
@@ -463,16 +460,13 @@ public class ThriftMetadata {
     }
 
     public <T extends TBase> T createNewStruct() {
-      T instance;
-
       try {
         Class<T> structClass = getStructClass(this.data);
-        instance = structClass.newInstance();
-      } catch (InstantiationException | IllegalAccessException e) {
+        Constructor<T> declaredConstructor = structClass.getDeclaredConstructor();
+        return declaredConstructor.newInstance();
+      } catch (ReflectiveOperationException e) {
         throw new RuntimeException(e);
       }
-
-      return instance;
     }
 
     public static <T extends TBase> ThriftStruct of(Class<T> clasz) {
@@ -492,7 +486,7 @@ public class ThriftMetadata {
       Validate.checkNotNull(clasz, "clasz");
       Validate.checkNotNull(fields, "fields");
 
-      return new ThriftStruct(
+      return new ThriftStruct<>(
           null,
           FieldTypeEnum.ROOT,
           new FieldMetaData(
