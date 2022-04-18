@@ -78,7 +78,7 @@ public class FieldMetaData implements java.io.Serializable {
       } catch (IllegalAccessException e) {
         throw new RuntimeException("IllegalAccessException for TBase class: " + sClass.getName() + ", message: " + e.getMessage());
       } catch (ReflectiveOperationException e) {
-        throw new RuntimeException("ReflectiveOperationException for TBase class: " + sClass.getName() + ", message: " + e.getMessage());
+        throw new RuntimeException(e.getClass().getSimpleName() + " for TBase class: " + sClass.getName()", e);
       }
     }
     //noinspection unchecked
