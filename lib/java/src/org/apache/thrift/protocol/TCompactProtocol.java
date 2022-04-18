@@ -117,7 +117,7 @@ public class TCompactProtocol extends TProtocol {
    * Used to keep track of the last field for the current and previous structs,
    * so we can do the delta stuff.
    */
-  private ShortStack lastField_ = new ShortStack(15);
+  private final ShortStack lastField_ = new ShortStack(15);
 
   private short lastFieldId_ = 0;
 
@@ -617,7 +617,7 @@ public class TCompactProtocol extends TProtocol {
    */
   public boolean readBool() throws TException {
     if (boolValue_ != null) {
-      boolean result = boolValue_.booleanValue();
+      boolean result = boolValue_;
       boolValue_ = null;
       return result;
     }
@@ -750,10 +750,15 @@ public class TCompactProtocol extends TProtocol {
   // These methods are here for the struct to call, but don't have any wire
   // encoding.
   //
+  @Override
   public void readMessageEnd() throws TException {}
+  @Override
   public void readFieldEnd() throws TException {}
+  @Override
   public void readMapEnd() throws TException {}
+  @Override
   public void readListEnd() throws TException {}
+  @Override
   public void readSetEnd() throws TException {}
 
   //
@@ -773,7 +778,7 @@ public class TCompactProtocol extends TProtocol {
       int off = 0;
       while (true) {
         byte b = buf[pos+off];
-        result |= (int) (b & 0x7f) << shift;
+        result |= (b & 0x7f) << shift;
         if ((b & 0x80) != 0x80) break;
         shift += 7;
         off++;
@@ -782,7 +787,7 @@ public class TCompactProtocol extends TProtocol {
     } else {
       while (true) {
         byte b = readByte();
-        result |= (int) (b & 0x7f) << shift;
+        result |= (b & 0x7f) << shift;
         if ((b & 0x80) != 0x80) break;
         shift += 7;
       }

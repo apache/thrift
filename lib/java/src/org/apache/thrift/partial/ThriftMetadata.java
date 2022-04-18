@@ -59,8 +59,8 @@ public class ThriftMetadata {
     MAP_VALUE((short) 4, "mapValue"),
     SET_ELEMENT((short) 5, "setElement");
 
-    private short id;
-    private String name;
+    private final short id;
+    private final String name;
 
     FieldTypeEnum(short id, String name) {
       this.id = id;
@@ -463,14 +463,12 @@ public class ThriftMetadata {
     }
 
     public <T extends TBase> T createNewStruct() {
-      T instance = null;
+      T instance;
 
       try {
         Class<T> structClass = getStructClass(this.data);
-        instance = (T) structClass.newInstance();
-      } catch (InstantiationException e) {
-        throw new RuntimeException(e);
-      } catch (IllegalAccessException e) {
+        instance = structClass.newInstance();
+      } catch (InstantiationException | IllegalAccessException e) {
         throw new RuntimeException(e);
       }
 
@@ -519,7 +517,7 @@ public class ThriftMetadata {
       if (this.fields.size() == 0) {
         this.append(sb, "%s*;", indent2);
       } else {
-        List<Integer> ids = new ArrayList(this.fields.keySet());
+        List<Integer> ids = new ArrayList<>(this.fields.keySet());
         Collections.sort(ids);
         for (Integer id : ids) {
           this.fields.get(id).toPrettyString(sb, level + 1);
@@ -535,7 +533,7 @@ public class ThriftMetadata {
 
       Map<? extends TFieldIdEnum, FieldMetaData> fieldsMetaData =
           FieldMetaData.getStructMetaDataMap(clasz);
-      Map<Integer, ThriftObject> fields = new HashMap();
+      Map<Integer, ThriftObject> fields = new HashMap<>();
       boolean getAllFields = !fieldsData.iterator().hasNext();
 
       if (getAllFields) {

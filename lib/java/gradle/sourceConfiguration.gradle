@@ -60,7 +60,16 @@ tasks.withType(JavaCompile) {
     if (JavaVersion.current() > JavaVersion.VERSION_1_8) {
         options.compilerArgs.addAll(['--release', '8'])
     }
-    // options.compilerArgs.addAll('-Xlint:unchecked')
+    options.compilerArgs.addAll([
+            '-Werror',
+            '-Xlint:deprecation',
+            '-Xlint:cast',
+            '-Xlint:empty',
+            '-Xlint:fallthrough',
+            '-Xlint:finally',
+            '-Xlint:overrides',
+            // we can't enable -Xlint:unchecked just yet
+    ])
 }
 
 // ----------------------------------------------------------------------------

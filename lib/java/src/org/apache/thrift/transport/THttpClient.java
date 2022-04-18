@@ -21,11 +21,11 @@ package org.apache.thrift.transport;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.io.InputStream;
 import java.io.IOException;
-
-import java.net.URL;
+import java.io.InputStream;
 import java.net.HttpURLConnection;
+import java.net.URL;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -34,9 +34,9 @@ import org.apache.http.HttpHost;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
 import org.apache.http.client.HttpClient;
+import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.ByteArrayEntity;
-import org.apache.http.params.CoreConnectionPNames;
 import org.apache.thrift.TConfiguration;
 
 /**
@@ -68,7 +68,7 @@ import org.apache.thrift.TConfiguration;
 
 public class THttpClient extends TEndpointTransport {
 
-  private URL url_ = null;
+  private final URL url_;
 
   private final ByteArrayOutputStream requestBuffer_ = new ByteArrayOutputStream();
 
@@ -83,6 +83,8 @@ public class THttpClient extends TEndpointTransport {
   private final HttpHost host;
 
   private final HttpClient client;
+
+  private static final Map<String, String> DEFAULT_HEADERS = Collections.unmodifiableMap(getDefaultHeaders());
 
   public static class Factory extends TTransportFactory {
 
@@ -159,35 +161,27 @@ public class THttpClient extends TEndpointTransport {
 
   public void setConnectTimeout(int timeout) {
     connectTimeout_ = timeout;
-    if (null != this.client) {
-      // WARNING, this modifies the HttpClient params, this might have an impact elsewhere if the
-      // same HttpClient is used for something else.
-      client.getParams().setParameter(CoreConnectionPNames.CONNECTION_TIMEOUT, connectTimeout_);
-    }
   }
 
   public void setReadTimeout(int timeout) {
     readTimeout_ = timeout;
-    if (null != this.client) {
-      // WARNING, this modifies the HttpClient params, this might have an impact elsewhere if the
-      // same HttpClient is used for something else.
-      client.getParams().setParameter(CoreConnectionPNames.SO_TIMEOUT, readTimeout_);
-    }
   }
 
   public void setCustomHeaders(Map<String,String> headers) {
-    customHeaders_ = headers;
+    customHeaders_ = new HashMap<>(headers);
   }
 
   public void setCustomHeader(String key, String value) {
     if (customHeaders_ == null) {
-      customHeaders_ = new HashMap<String, String>();
+      customHeaders_ = new HashMap<>();
     }
     customHeaders_.put(key, value);
   }
 
+  @Override
   public void open() {}
 
+  @Override
   public void close() {
     if (null != inputStream_) {
       try {
@@ -198,10 +192,12 @@ public class THttpClient extends TEndpointTransport {
     }
   }
 
+  @Override
   public boolean isOpen() {
     return true;
   }
 
+  @Override
   public int read(byte[] buf, int off, int len) throws TTransportException {
     if (inputStream_ == null) {
       throw new TTransportException("Response buffer is empty, no request.");
@@ -222,8 +218,28 @@ public class THttpClient extends TEndpointTransport {
     }
   }
 
+  @Override
   public void write(byte[] buf, int off, int len) {
     requestBuffer_.write(buf, off, len);
+  }
+
+  private RequestConfig getRequestConfig() {
+    RequestConfig requestConfig = RequestConfig.DEFAULT;
+    if (connectTimeout_ > 0) {
+      requestConfig = RequestConfig.copy(requestConfig).setConnectionRequestTimeout(connectTimeout_).build();
+    }
+    if (readTimeout_ > 0) {
+      requestConfig = RequestConfig.copy(requestConfig).setSocketTimeout(readTimeout_).build();
+    }
+    return requestConfig;
+  }
+
+  private static Map<String, String> getDefaultHeaders() {
+    Map<String, String> headers = new HashMap<>();
+    headers.put("Content-Type", "application/x-thrift");
+    headers.put("Accept", "application/x-thrift");
+    headers.put("User-Agent", "Java/THttpClient/HC");
+    return headers;
   }
 
   /**
@@ -243,7 +259,6 @@ public class THttpClient extends TEndpointTransport {
   }
 
   private void flushUsingHttpClient() throws TTransportException {
-
     if (null == this.client) {
       throw new TTransportException("Null HttpClient, aborting.");
     }
@@ -252,63 +267,36 @@ public class THttpClient extends TEndpointTransport {
     byte[] data = requestBuffer_.toByteArray();
     requestBuffer_.reset();
 
-    HttpPost post = null;
-
-    InputStream is = null;
-
+    HttpPost post = new HttpPost(this.url_.getFile());
     try {
       // Set request to path + query string
-      post = new HttpPost(this.url_.getFile());
-
-      //
-      // Headers are added to the HttpPost instance, not
-      // to HttpClient.
-      //
-
-      post.setHeader("Content-Type", "application/x-thrift");
-      post.setHeader("Accept", "application/x-thrift");
-      post.setHeader("User-Agent", "Java/THttpClient/HC");
-
+      post.setConfig(getRequestConfig());
+      DEFAULT_HEADERS.forEach(post::addHeader);
       if (null != customHeaders_) {
-        for (Map.Entry<String, String> header : customHeaders_.entrySet()) {
-          post.setHeader(header.getKey(), header.getValue());
-        }
+        customHeaders_.forEach(post::addHeader);
       }
-
       post.setEntity(new ByteArrayEntity(data));
-
       HttpResponse response = this.client.execute(this.host, post);
+      handleResponse(response);
+    } catch (IOException ioe) {
+      // Abort method so the connection gets released back to the connection manager
+      post.abort();
+      throw new TTransportException(ioe);
+    } finally {
+      resetConsumedMessageSize(-1);
+      post.releaseConnection();
+    }
+  }
+
+  private void handleResponse(HttpResponse response) throws TTransportException {
+    // Retrieve the InputStream BEFORE checking the status code so
+    // resources get freed in the with clause.
+    try (InputStream is = response.getEntity().getContent()) {
       int responseCode = response.getStatusLine().getStatusCode();
-
-      //
-      // Retrieve the inputstream BEFORE checking the status code so
-      // resources get freed in the finally clause.
-      //
-
-      is = response.getEntity().getContent();
-
       if (responseCode != HttpStatus.SC_OK) {
         throw new TTransportException("HTTP Response code: " + responseCode);
       }
-
-      // Read the responses into a byte array so we can release the connection
-      // early. This implies that the whole content will have to be read in
-      // memory, and that momentarily we might use up twice the memory (while the
-      // thrift struct is being read up the chain).
-      // Proceeding differently might lead to exhaustion of connections and thus
-      // to app failure.
-
-      byte[] buf = new byte[1024];
-      ByteArrayOutputStream baos = new ByteArrayOutputStream();
-
-      int len = 0;
-      do {
-        len = is.read(buf);
-        if (len > 0) {
-          baos.write(buf, 0, len);
-        }
-      } while (-1 != len);
-
+      byte[] readByteArray = readIntoByteArray(is);
       try {
         // Indicate we're done with the content.
         consume(response.getEntity());
@@ -316,28 +304,35 @@ public class THttpClient extends TEndpointTransport {
         // We ignore this exception, it might only mean the server has no
         // keep-alive capability.
       }
-
-      inputStream_ = new ByteArrayInputStream(baos.toByteArray());
+      inputStream_ = new ByteArrayInputStream(readByteArray);
     } catch (IOException ioe) {
-      // Abort method so the connection gets released back to the connection manager
-      if (null != post) {
-        post.abort();
-      }
       throw new TTransportException(ioe);
-    } finally {
-      resetConsumedMessageSize(-1);
-      if (null != is) {
-        // Close the entity's input stream, this will release the underlying connection
-        try {
-          is.close();
-        } catch (IOException ioe) {
-          throw new TTransportException(ioe);
-        }
-      }
-      if (post != null) {
-        post.releaseConnection();
-      }
     }
+  }
+
+  /**
+   * Read the responses into a byte array so we can release the connection
+   * early. This implies that the whole content will have to be read in
+   * memory, and that momentarily we might use up twice the memory (while the
+   * thrift struct is being read up the chain).
+   * Proceeding differently might lead to exhaustion of connections and thus
+   * to app failure.
+   *
+   * @param is input stream
+   * @return read bytes
+   * @throws IOException when exception during read
+   */
+  private static byte[] readIntoByteArray(InputStream is) throws IOException {
+    ByteArrayOutputStream baos = new ByteArrayOutputStream();
+    byte[] buf = new byte[1024];
+    int len;
+    do {
+      len = is.read(buf);
+      if (len > 0) {
+        baos.write(buf, 0, len);
+      }
+    } while (-1 != len);
+    return baos.toByteArray();
   }
 
   public void flush() throws TTransportException {
