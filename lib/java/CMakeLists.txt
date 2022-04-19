@@ -51,7 +51,7 @@ else()
     file(GLOB_RECURSE THRIFTJAVA_SOURCES LIST_DIRECTORIES false
         "${CMAKE_CURRENT_SOURCE_DIR}/src/*")
     add_custom_command(OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/build/libs/libthrift.jar"
-        COMMENT "Building Java library using Gradle Wrapper"
+        COMMENT "Building Java library using Gradle"
         COMMAND ${GRADLE_EXECUTABLE} ${GRADLE_OPTS} assemble
             --console=plain --no-daemon
             -Prelease=${PRELEASE}
