@@ -155,7 +155,7 @@ RUN apt-get install -y --no-install-recommends \
     haxelib install --always hxcpp 3.4.64 2>&1 > /dev/null
 # note: hxcpp 3.4.185 (latest) no longer ships static libraries, and caused a build failure
 
-ENV GRADLE_VERSION="6.9"
+ENV GRADLE_VERSION="6.9.2"
 RUN apt-get install -y --no-install-recommends \
 `# Java dependencies` \
       ant \
@@ -164,7 +164,7 @@ RUN apt-get install -y --no-install-recommends \
       maven && \
 `# Gradle` \
       wget https://services.gradle.org/distributions/gradle-$GRADLE_VERSION-bin.zip -q -O /tmp/gradle-$GRADLE_VERSION-bin.zip && \
-      (echo "765442b8069c6bee2ea70713861c027587591c6b1df2c857a23361512560894e  /tmp/gradle-$GRADLE_VERSION-bin.zip" | sha256sum -c -) && \
+      (echo "8b356fd8702d5ffa2e066ed0be45a023a779bba4dd1a68fd11bc2a6bdc981e8f  /tmp/gradle-$GRADLE_VERSION-bin.zip" | sha256sum -c -) && \
       unzip -d /tmp /tmp/gradle-$GRADLE_VERSION-bin.zip && \
       mv /tmp/gradle-$GRADLE_VERSION /usr/local/gradle && \
       ln -s /usr/local/gradle/bin/gradle /usr/local/bin
