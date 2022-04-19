@@ -18,21 +18,6 @@
  */
 
 // Following Gradle best practices to keep build logic organized
-
-// ----------------------------------------------------------------------------
-// source sets for main and test sources
-sourceSets {
-    test {
-        java {
-            // see functionalTests.gradle for these files
-            exclude '**/test/TestClient.java'
-            exclude '**/test/TestServer.java'
-            exclude '**/test/TestNonblockingServer.java'
-            exclude '**/test/TestTServletServer.java'
-        }
-    }
-}
-
 // ----------------------------------------------------------------------------
 // Compiler configuration details
 
