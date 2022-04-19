@@ -2732,7 +2732,7 @@ void t_go_generator::generate_service_remote(t_service* tservice) {
                  << endl;
         f_remote << indent() << "containerStruct" << i << " := " << package_name_aliased << ".New"
                  << argumentsName << "()" << endl;
-        f_remote << indent() << err2 << " := containerStruct" << i << ".ReadField" << (i + 1) << "(context.Background(), "
+        f_remote << indent() << err2 << " := containerStruct" << i << ".ReadField_" << (i + 1) << "(context.Background(), "
                  << jsProt << ")" << endl;
         f_remote << indent() << "if " << err2 << " != nil {" << endl;
         f_remote << indent() << "  Usage()" << endl;
