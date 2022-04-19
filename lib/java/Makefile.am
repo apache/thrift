@@ -67,6 +67,5 @@ EXTRA_DIST = \
 	coding_standards.md \
 	android \
 	src \
-	test \
 	code_quality_tools \
 	README.md
