@@ -160,7 +160,13 @@ RUN apt-get install -y --no-install-recommends \
       ant \
       ant-optional \
       openjdk-8-jdk \
-      maven
+      maven && \
+`# Gradle` \
+      wget https://services.gradle.org/distributions/gradle-$GRADLE_VERSION-bin.zip -q -O /tmp/gradle-$GRADLE_VERSION-bin.zip && \
+      (echo "765442b8069c6bee2ea70713861c027587591c6b1df2c857a23361512560894e  /tmp/gradle-$GRADLE_VERSION-bin.zip" | sha256sum -c -) && \
+      unzip -d /tmp /tmp/gradle-$GRADLE_VERSION-bin.zip && \
+      mv /tmp/gradle-$GRADLE_VERSION /usr/local/gradle && \
+      ln -s /usr/local/gradle/bin/gradle /usr/local/bin
 
 # disabled: same as ubuntu-bionic jobs
 # RUN apt-get install -y --no-install-recommends \
