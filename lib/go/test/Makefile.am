@@ -17,6 +17,12 @@
 # under the License.
 #
 
+if GOVERSION_GE_118
+GOBUILDEXTRA = -buildvcs=false
+else
+GOBUILDEXTRA =
+endif
+
 THRIFTARGS = -out gopath/src/ --gen go:thrift_import=github.com/apache/thrift/lib/go/thrift,package_prefix=github.com/apache/thrift/lib/go/test/gopath/src/$(COMPILER_EXTRAFLAG)
 THRIFTTEST = $(top_srcdir)/test/ThriftTest.thrift
 
@@ -91,7 +97,7 @@ gopath: $(THRIFT) $(THRIFTTEST) \
 	touch gopath
 
 check: gopath
-	$(GO) build -mod=mod \
+	$(GO) build $(GOBUILDEXTRA) -mod=mod \
 				./gopath/src/includestest \
 				./gopath/src/binarykeytest \
 				./gopath/src/servicestest \
