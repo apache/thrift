@@ -149,6 +149,7 @@ RUN apt-get install -y --no-install-recommends \
     haxelib setup --always /usr/share/haxe/lib && \
     haxelib install --always hxcpp 2>&1 > /dev/null
 
+ENV GRADLE_VERSION="6.9"
 RUN apt-get install -y --no-install-recommends \
 `# Java dependencies` \
       ant \

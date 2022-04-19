@@ -155,6 +155,7 @@ RUN apt-get install -y --no-install-recommends \
     haxelib install --always hxcpp 3.4.64 2>&1 > /dev/null
 # note: hxcpp 3.4.185 (latest) no longer ships static libraries, and caused a build failure
 
+ENV GRADLE_VERSION="6.9"
 RUN apt-get install -y --no-install-recommends \
 `# Java dependencies` \
       ant \
