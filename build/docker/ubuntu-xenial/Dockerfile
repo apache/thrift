@@ -161,7 +161,8 @@ RUN apt-get install -y --no-install-recommends \
       ant \
       ant-optional \
       openjdk-8-jdk \
-      maven && \
+      maven \
+      unzip && \
 `# Gradle` \
       wget https://services.gradle.org/distributions/gradle-$GRADLE_VERSION-bin.zip -q -O /tmp/gradle-$GRADLE_VERSION-bin.zip && \
       (echo "8b356fd8702d5ffa2e066ed0be45a023a779bba4dd1a68fd11bc2a6bdc981e8f  /tmp/gradle-$GRADLE_VERSION-bin.zip" | sha256sum -c -) && \
