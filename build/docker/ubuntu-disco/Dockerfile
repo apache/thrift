@@ -148,12 +148,19 @@ RUN apt-get install -y --no-install-recommends \
     haxelib setup --always /usr/share/haxe/lib && \
     haxelib install --always hxcpp 2>&1 > /dev/null
 
+ENV GRADLE_VERSION="6.9.2"
 RUN apt-get install -y --no-install-recommends \
 `# Java dependencies` \
       ant \
       ant-optional \
       maven \
-      openjdk-11-jdk-headless
+      openjdk-11-jdk-headless && \
+`# Gradle` \
+      wget https://services.gradle.org/distributions/gradle-$GRADLE_VERSION-bin.zip -q -O /tmp/gradle-$GRADLE_VERSION-bin.zip && \
+      (echo "8b356fd8702d5ffa2e066ed0be45a023a779bba4dd1a68fd11bc2a6bdc981e8f  /tmp/gradle-$GRADLE_VERSION-bin.zip" | sha256sum -c -) && \
+      unzip -d /tmp /tmp/gradle-$GRADLE_VERSION-bin.zip && \
+      mv /tmp/gradle-$GRADLE_VERSION /usr/local/gradle && \
+      ln -s /usr/local/gradle/bin/gradle /usr/local/bin
 
 RUN apt-get install -y --no-install-recommends \
 `# Lua dependencies` \
