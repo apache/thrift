@@ -52,7 +52,7 @@ else()
         "${CMAKE_CURRENT_SOURCE_DIR}/src/*")
     add_custom_command(OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/build/libs/libthrift.jar"
         COMMENT "Building Java library using Gradle Wrapper"
-        COMMAND ${GRADLEW_EXECUTABLE} ${GRADLE_OPTS} assemble
+        COMMAND ${GRADLE_EXECUTABLE} ${GRADLE_OPTS} assemble
             --console=plain --no-daemon
             -Prelease=${PRELEASE}
             -Pthrift.version=${thrift_VERSION}
@@ -67,7 +67,7 @@ else()
     add_custom_target(MavenPublish
         COMMENT "Publishing Java Library to Apache Maven staging"
         DEPENDS ThriftJava
-        COMMAND ${GRADLEW_EXECUTABLE} ${GRADLE_OPTS} clean uploadArchives
+        COMMAND ${GRADLE_EXECUTABLE} ${GRADLE_OPTS} clean uploadArchives
             --console=plain --no-daemon
             -Prelease=${PRELEASE}
             -Pthrift.version=${thrift_VERSION}
@@ -89,7 +89,7 @@ else()
 
     if(BUILD_TESTING)
         add_test(NAME JavaTest
-            COMMAND ${GRADLEW_EXECUTABLE} ${GRADLE_OPTS} test
+            COMMAND ${GRADLE_EXECUTABLE} ${GRADLE_OPTS} test
                 --console=plain --no-daemon
                 -Prelease=${PRELEASE}
                 -Pthrift.version=${thrift_VERSION}
