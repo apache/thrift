@@ -100,7 +100,7 @@ class THttpClient(TTransportBase):
         ap = "%s:%s" % (urllib.parse.unquote(proxy.username),
                         urllib.parse.unquote(proxy.password))
         cr = base64.b64encode(ap.encode()).strip()
-        return "Basic " + cr.decode()
+        return "Basic " + str(cr)
 
     def using_proxy(self):
         return self.realhost is not None
