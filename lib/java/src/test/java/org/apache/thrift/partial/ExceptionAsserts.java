@@ -32,24 +32,20 @@ public final class ExceptionAsserts {
   }
 
   /**
-   * Asserts that the given code throws an exception of the given type
-   * and that the exception message contains the given sub-message.
+   * Asserts that the given code throws an exception of the given type and that the exception
+   * message contains the given sub-message.
    *
-   * Usage:
+   * <p>Usage:
    *
-   * ExceptionAsserts.assertThrows(
-   *   IllegalArgumentException.class,
-   *   "'nullArg' must not be null",
-   *   () -> Preconditions.checkNotNull(null, "nullArg"));
+   * <p>ExceptionAsserts.assertThrows( IllegalArgumentException.class, "'nullArg' must not be null",
+   * () -> Preconditions.checkNotNull(null, "nullArg"));
    *
-   * Note: JUnit 5 has similar functionality but it will be a long time before
-   * we move to that framework because of significant differences and lack of
-   * backward compatibility for some JUnit rules.
+   * <p>Note: JUnit 5 has similar functionality but it will be a long time before we move to that
+   * framework because of significant differences and lack of backward compatibility for some JUnit
+   * rules.
    */
   public static <E extends Exception> void assertThrows(
-      Class<E> expectedExceptionClass,
-      String partialMessage,
-      CodeThatMayThrow code) {
+      Class<E> expectedExceptionClass, String partialMessage, CodeThatMayThrow code) {
 
     Exception thrownException = null;
 
@@ -70,23 +66,22 @@ public final class ExceptionAsserts {
               msg.contains(partialMessage));
         }
       } else {
-        fail(String.format(
-                 "Expected exception of type %s but got %s",
-                 expectedExceptionClass.getName(),
-                 e.getClass().getName()));
+        fail(
+            String.format(
+                "Expected exception of type %s but got %s",
+                expectedExceptionClass.getName(), e.getClass().getName()));
       }
     }
 
     if (thrownException == null) {
-      fail(String.format(
-               "Expected exception of type %s but got none",
-               expectedExceptionClass.getName()));
+      fail(
+          String.format(
+              "Expected exception of type %s but got none", expectedExceptionClass.getName()));
     }
   }
 
   public static <E extends Exception> void assertThrows(
-      Class<E> expectedExceptionClass,
-      CodeThatMayThrow code) {
+      Class<E> expectedExceptionClass, CodeThatMayThrow code) {
     assertThrows(expectedExceptionClass, null, code);
   }
 }

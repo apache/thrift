@@ -19,12 +19,11 @@
 
 package org.apache.thrift.transport.sasl;
 
+import java.nio.ByteBuffer;
 import org.apache.thrift.transport.TMemoryInputTransport;
 import org.apache.thrift.transport.TTransportException;
 import org.junit.Assert;
 import org.junit.Test;
-
-import java.nio.ByteBuffer;
 
 public class TestSaslNegotiationFrameReader {
 
@@ -44,7 +43,8 @@ public class TestSaslNegotiationFrameReader {
     negotiationReader.read(transport);
     Assert.assertFalse("Only header is complete", negotiationReader.isComplete());
     Assert.assertTrue("Header should be complete", negotiationReader.getHeader().isComplete());
-    Assert.assertEquals("Payload size should be 10", 10, negotiationReader.getHeader().payloadSize());
+    Assert.assertEquals(
+        "Payload size should be 10", 10, negotiationReader.getHeader().payloadSize());
     // Read payload
     transport.reset(new byte[20]);
     negotiationReader.read(transport);
@@ -52,7 +52,7 @@ public class TestSaslNegotiationFrameReader {
     Assert.assertEquals("Payload length should be 10", 10, negotiationReader.getPayload().length);
   }
 
-  @Test (expected = TSaslNegotiationException.class)
+  @Test(expected = TSaslNegotiationException.class)
   public void testReadInvalidNegotiationStatus() throws TTransportException {
     byte[] bytes = new byte[5];
     // Invalid status byte.

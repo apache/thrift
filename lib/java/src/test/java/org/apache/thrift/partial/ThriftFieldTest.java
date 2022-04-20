@@ -21,15 +21,10 @@ package org.apache.thrift.partial;
 
 import static org.junit.Assert.*;
 
-import org.apache.thrift.partial.ExceptionAsserts;
-
-import org.junit.Test;
-
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-
-import static org.junit.Assert.*;
+import org.junit.Test;
 
 public class ThriftFieldTest {
 
@@ -67,13 +62,8 @@ public class ThriftFieldTest {
 
   @Test
   public void testFromNames() {
-    List<String> fieldNames = Arrays.asList(
-        "f1",
-        "f2.f21",
-        "f3.f31.f311",
-        "f3.f32.f321",
-        "f3.f32.f322"
-    );
+    List<String> fieldNames =
+        Arrays.asList("f1", "f2.f21", "f3.f31.f311", "f3.f32.f321", "f3.f32.f322");
 
     List<ThriftField> testFields = ThriftField.fromNames(fieldNames);
 
@@ -114,13 +104,8 @@ public class ThriftFieldTest {
 
   @Test
   public void testEquality() {
-    List<String> fieldNames = Arrays.asList(
-        "f1",
-        "f2.f21",
-        "f3.f31.f311",
-        "f3.f32.f321",
-        "f3.f32.f322"
-    );
+    List<String> fieldNames =
+        Arrays.asList("f1", "f2.f21", "f3.f31.f311", "f3.f32.f321", "f3.f32.f322");
 
     List<ThriftField> testFields = ThriftField.fromNames(fieldNames);
     List<ThriftField> testFields2 = testFields;
@@ -133,13 +118,8 @@ public class ThriftFieldTest {
     assertEquals(testFields, testFields3);
     assertEquals(testFields.hashCode(), testFields3.hashCode());
 
-    List<String> fieldNamesDiff = Arrays.asList(
-        "f1",
-        "f2.f21",
-        "f3.f31.f311",
-        "f3.f32.f323",
-        "f3.f32.f322"
-    );
+    List<String> fieldNamesDiff =
+        Arrays.asList("f1", "f2.f21", "f3.f31.f311", "f3.f32.f323", "f3.f32.f322");
 
     List<ThriftField> testFields4 = ThriftField.fromNames(fieldNamesDiff);
     assertNotSame(testFields, testFields4);

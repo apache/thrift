@@ -19,12 +19,11 @@
 
 package org.apache.thrift.transport;
 
+import java.nio.ByteBuffer;
+import java.util.Random;
 import org.apache.thrift.TByteArrayOutputStream;
 import org.junit.Assert;
 import org.junit.Test;
-
-import java.nio.ByteBuffer;
-import java.util.Random;
 
 public class TestTMemoryTransport {
 
@@ -44,7 +43,7 @@ public class TestTMemoryTransport {
     Assert.assertEquals(ByteBuffer.wrap(inputBytes), ByteBuffer.wrap(read));
   }
 
-  @Test (expected = TTransportException.class)
+  @Test(expected = TTransportException.class)
   public void testReadMoreThanRemaining() throws TTransportException {
     TMemoryTransport transport = new TMemoryTransport(new byte[] {0x00, 0x32});
     byte[] read = new byte[3];
@@ -60,6 +59,8 @@ public class TestTMemoryTransport {
     transport.write(output2, 0, 2);
     byte[] expected = {0x72, 0x56, 0x29, (byte) 0xAF, (byte) 0x9B, (byte) 0x83, 0x10};
     TByteArrayOutputStream outputByteArray = transport.getOutput();
-    Assert.assertEquals(ByteBuffer.wrap(expected), ByteBuffer.wrap(outputByteArray.get(), 0, outputByteArray.len()));
+    Assert.assertEquals(
+        ByteBuffer.wrap(expected),
+        ByteBuffer.wrap(outputByteArray.get(), 0, outputByteArray.len()));
   }
 }

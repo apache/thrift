@@ -29,14 +29,11 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-
 import junit.framework.TestCase;
-
 import org.apache.thrift.protocol.TBinaryProtocol;
 import org.apache.thrift.protocol.TProtocol;
 import org.apache.thrift.protocol.TTupleProtocol;
 import org.apache.thrift.transport.TMemoryBuffer;
-
 import thrift.test.ComparableUnion;
 import thrift.test.Empty;
 import thrift.test.RandomStuff;
@@ -57,11 +54,11 @@ public class TestTUnion extends TestCase {
     union = new TestUnion(TestUnion._Fields.I32_FIELD, 25);
 
     assertEquals(Integer.valueOf(25), union.getFieldValue());
-  
+
     assertEquals(Integer.valueOf(25), union.getFieldValue(TestUnion._Fields.I32_FIELD));
-    
+
     assertTrue(union.isSetI32_field());
-  
+
     try {
       union.getFieldValue(TestUnion._Fields.STRING_FIELD);
       fail("should have thrown an exception");
@@ -79,7 +76,7 @@ public class TestTUnion extends TestCase {
     union.hashCode();
 
     assertFalse(union.isSetString_field());
-    
+
     try {
       union.getString_field();
       fail("should have thrown an exception");
@@ -89,7 +86,7 @@ public class TestTUnion extends TestCase {
 
     union = TestUnion.i32_field(1);
 
-    assertFalse(union.equals((TestUnion)null));
+    assertFalse(union.equals((TestUnion) null));
 
     union = TestUnion.enum_field(SomeEnum.ONE);
     union.hashCode();
@@ -109,16 +106,16 @@ public class TestTUnion extends TestCase {
     assertTrue(cu.compareTo(cu2) < 0);
     assertTrue(cu2.compareTo(cu) > 0);
 
-    cu2 = ComparableUnion.binary_field(ByteBuffer.wrap(new byte[]{2}));
+    cu2 = ComparableUnion.binary_field(ByteBuffer.wrap(new byte[] {2}));
 
     assertTrue(cu.compareTo(cu2) < 0);
     assertTrue(cu2.compareTo(cu) > 0);
 
-    cu = ComparableUnion.binary_field(ByteBuffer.wrap(new byte[]{1}));
+    cu = ComparableUnion.binary_field(ByteBuffer.wrap(new byte[] {1}));
 
     assertTrue(cu.compareTo(cu2) < 0);
     assertTrue(cu2.compareTo(cu) > 0);
-    
+
     TestUnion union1 = new TestUnion(TestUnion._Fields.STRUCT_LIST, new ArrayList<RandomStuff>());
     TestUnion union2 = new TestUnion(TestUnion._Fields.STRUCT_LIST, new ArrayList<RandomStuff>());
     assertTrue(union1.compareTo(union2) == 0);
@@ -130,7 +127,7 @@ public class TestTUnion extends TestCase {
     assertTrue(union3.compareTo(union4) < 0);
 
     Map<Integer, Integer> i32_map = new HashMap<Integer, Integer>();
-    i32_map.put(1,1);
+    i32_map.put(1, 1);
     TestUnion union5 = new TestUnion(TestUnion._Fields.I32_MAP, i32_map);
     TestUnion union6 = new TestUnion(TestUnion._Fields.I32_MAP, new HashMap<Integer, Integer>());
     assertTrue(union5.compareTo(union6) > 0);
@@ -186,8 +183,8 @@ public class TestTUnion extends TestCase {
     swau.write(proto);
     new Empty().read(proto);
   }
-  
-  public void testTupleProtocolSerialization () throws Exception {
+
+  public void testTupleProtocolSerialization() throws Exception {
     TestUnion union = new TestUnion(TestUnion._Fields.I32_FIELD, 25);
     union.setI32_set(Collections.singleton(42));
 
@@ -239,7 +236,7 @@ public class TestTUnion extends TestCase {
     assertEquals(cu, copy);
     assertNotSame(cu.bufferForBinary_field().array(), copy.bufferForBinary_field().array());
   }
-  
+
   public void testToString() throws Exception {
     byte[] bytes = {1, 2, 3};
     ByteBuffer value = ByteBuffer.wrap(bytes);
@@ -251,7 +248,7 @@ public class TestTUnion extends TestCase {
   public void testJavaSerializable() throws Exception {
     ByteArrayOutputStream baos = new ByteArrayOutputStream();
     ObjectOutputStream oos = new ObjectOutputStream(baos);
-    
+
     TestUnion tu = TestUnion.string_field("string");
 
     // Serialize tu the Java way...

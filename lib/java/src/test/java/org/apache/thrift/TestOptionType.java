@@ -23,43 +23,43 @@ import junit.framework.TestCase;
 
 // Tests and documents behavior for the "Option<T>" type
 public class TestOptionType extends TestCase {
-    public void testSome() {
-        String name = "Chuck Norris";
-        Option<String> option = Option.fromNullable(name);
+  public void testSome() {
+    String name = "Chuck Norris";
+    Option<String> option = Option.fromNullable(name);
 
-        assertTrue(option instanceof Option.Some);
-        assertTrue(option.isDefined());
-        assertEquals("Some(Chuck Norris)", option.toString());
-        assertEquals(option.or("default value"), "Chuck Norris");
-        assertEquals(option.get(),"Chuck Norris");
+    assertTrue(option instanceof Option.Some);
+    assertTrue(option.isDefined());
+    assertEquals("Some(Chuck Norris)", option.toString());
+    assertEquals(option.or("default value"), "Chuck Norris");
+    assertEquals(option.get(), "Chuck Norris");
+  }
+
+  public void testNone() throws Exception {
+    String name = null;
+    Option<String> option = Option.fromNullable(name);
+
+    assertTrue(option instanceof Option.None);
+    assertFalse(option.isDefined());
+    assertEquals("None", option.toString());
+    assertEquals(option.or("default value"), "default value");
+    // Expect exception
+    try {
+      Object value = option.get();
+      fail("Expected IllegalStateException, got no exception");
+    } catch (IllegalStateException ex) {
+
+    } catch (Exception ex) {
+      fail("Expected IllegalStateException, got some other exception: " + ex.toString());
     }
+  }
 
-    public void testNone() throws Exception {
-        String name = null;
-        Option<String> option = Option.fromNullable(name);
+  public void testMakeSome() throws Exception {
+    Option<String> some = Option.some("wee");
+    assertTrue(some instanceof Option.Some);
+  }
 
-        assertTrue(option instanceof Option.None);
-        assertFalse(option.isDefined());
-        assertEquals("None", option.toString());
-        assertEquals(option.or("default value"), "default value");
-        // Expect exception
-        try {
-            Object value = option.get();
-            fail("Expected IllegalStateException, got no exception");
-        } catch (IllegalStateException ex) {
-
-        } catch(Exception ex) {
-            fail("Expected IllegalStateException, got some other exception: "+ex.toString());
-        }
-    }
-
-    public void testMakeSome() throws Exception {
-        Option<String> some = Option.some("wee");
-        assertTrue(some instanceof Option.Some);
-    }
-
-    public void testMakeNone() throws Exception {
-        Option<Integer> none = Option.none();
-        assertTrue(none instanceof Option.None);
-    }
+  public void testMakeNone() throws Exception {
+    Option<Integer> none = Option.none();
+    assertTrue(none instanceof Option.None);
+  }
 }

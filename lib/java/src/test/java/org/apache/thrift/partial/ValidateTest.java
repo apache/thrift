@@ -19,17 +19,12 @@
 
 package org.apache.thrift.partial;
 
-import org.apache.thrift.partial.ExceptionAsserts;
-import org.apache.thrift.partial.TestData;
-
-import org.junit.Test;
-import org.junit.runners.JUnit4;
-
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
+import org.junit.Test;
 
 public class ValidateTest {
   @Test
@@ -214,15 +209,13 @@ public class ValidateTest {
     ExceptionAsserts.assertThrows(
         IllegalArgumentException.class,
         "'arg' must not be null",
-        () -> Validate.checkNotNullAndNumberOfElements(null, 3, "arg")
-    );
+        () -> Validate.checkNotNullAndNumberOfElements(null, 3, "arg"));
 
     // Verify it throws.
     ExceptionAsserts.assertThrows(
         IllegalArgumentException.class,
         "Number of elements in 'arg' must be exactly 3, 2 given.",
-        () -> Validate.checkNotNullAndNumberOfElements(Arrays.asList(1, 2), 3, "arg")
-    );
+        () -> Validate.checkNotNullAndNumberOfElements(Arrays.asList(1, 2), 3, "arg"));
   }
 
   @Test
@@ -294,7 +287,7 @@ public class ValidateTest {
   @Test
   public void testCheckPathExists() throws IOException {
     Path tempFile = Files.createTempFile("foo", "bar");
-    Path tempDir  = tempFile.getParent();
+    Path tempDir = tempFile.getParent();
     Path notFound = Paths.get("<not-found>");
 
     // Should not throw.

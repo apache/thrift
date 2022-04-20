@@ -18,8 +18,9 @@
  */
 package org.apache.thrift.protocol;
 
-import junit.framework.TestCase;
 import static org.junit.Assert.assertNotEquals;
+
+import junit.framework.TestCase;
 
 public abstract class TestTField extends TestCase {
 
@@ -29,7 +30,7 @@ public abstract class TestTField extends TestCase {
     assertEquals(TType.STOP, uut.type);
     assertEquals(0, uut.id);
 
-    uut = new TField("foo", TType.VOID, (short)42);
+    uut = new TField("foo", TType.VOID, (short) 42);
     assertEquals("foo", uut.name);
     assertEquals(TType.VOID, uut.type);
     assertEquals(42, uut.id);
@@ -41,20 +42,19 @@ public abstract class TestTField extends TestCase {
     assertEquals(uut1, uut2);
     assertEquals(uut1.hashCode(), uut2.hashCode());
 
-    uut1 = new TField("foo", TType.I32, (short)1);
-    uut2 = new TField("foo", TType.I32, (short)2);
+    uut1 = new TField("foo", TType.I32, (short) 1);
+    uut2 = new TField("foo", TType.I32, (short) 2);
     assertNotEquals(uut1, uut2);
     assertNotEquals(uut1.hashCode(), uut2.hashCode());
 
-    uut1 = new TField("foo", TType.VOID, (short)1);
-    uut2 = new TField("foo", TType.I32, (short)1);
+    uut1 = new TField("foo", TType.VOID, (short) 1);
+    uut2 = new TField("foo", TType.I32, (short) 1);
     assertNotEquals(uut1, uut2);
     assertNotEquals(uut1.hashCode(), uut2.hashCode());
 
-    uut1 = new TField("foo", TType.VOID, (short)5);
-    uut2 = new TField("bar", TType.I32, (short)5);
+    uut1 = new TField("foo", TType.VOID, (short) 5);
+    uut2 = new TField("bar", TType.I32, (short) 5);
     assertEquals(uut1, uut2); // name field is ignored
     assertEquals(uut1.hashCode(), uut2.hashCode());
   }
-
 }

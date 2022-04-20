@@ -19,6 +19,10 @@
 
 package org.apache.thrift.test.voidmethexceptions;
 
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.function.Supplier;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.thrift.TApplicationException;
 import org.apache.thrift.TConfiguration;
@@ -45,11 +49,6 @@ import org.slf4j.LoggerFactory;
 import thrift.test.voidmethexceptions.TAppService01;
 import thrift.test.voidmethexceptions.TExampleException;
 
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
-import java.util.function.Supplier;
-
 @RunWith(Parameterized.class)
 public class TestVoidMethExceptions {
 
@@ -63,19 +62,17 @@ public class TestVoidMethExceptions {
   private Thread serverThread;
   private int serverPort;
 
-
   public TestVoidMethExceptions(ServerImplementationType serverImplementationType) {
     Assert.assertNotNull(serverImplementationType);
     this.serverImplementationType = serverImplementationType;
   }
 
-
   @Parameters(name = "serverImplementationType = {0}")
   public static Object[][] parameters() {
-    return new Object[][]{{ServerImplementationType.SYNC_SERVER},
-        {ServerImplementationType.ASYNC_SERVER}};
+    return new Object[][] {
+      {ServerImplementationType.SYNC_SERVER}, {ServerImplementationType.ASYNC_SERVER}
+    };
   }
-
 
   @Before
   public void setUp() throws Exception {
@@ -85,23 +82,26 @@ public class TestVoidMethExceptions {
     TNonblockingServerSocket serverTransport = new TNonblockingServerSocket(0);
     TNonblockingServer.Args args = new TNonblockingServer.Args(serverTransport);
     args.processor(serverImplementationType.processor);
-    server = new TNonblockingServer(args) {
+    server =
+        new TNonblockingServer(args) {
 
-      @Override
-      protected void setServing(boolean serving) {
-        super.setServing(serving);
+          @Override
+          protected void setServing(boolean serving) {
+            super.setServing(serving);
 
-        if (serving) {
-          serverPort = serverTransport.getPort();
-          futureServerStarted.complete(null);
-        }
-      }
+            if (serving) {
+              serverPort = serverTransport.getPort();
+              futureServerStarted.complete(null);
+            }
+          }
+        };
 
-    };
-
-    serverThread = new Thread(() -> {
-      server.serve();
-    }, "thrift-server");
+    serverThread =
+        new Thread(
+            () -> {
+              server.serve();
+            },
+            "thrift-server");
     serverThread.setDaemon(true);
     serverThread.start();
     futureServerStarted.get(TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
@@ -114,10 +114,10 @@ public class TestVoidMethExceptions {
     serverThread.join(TIMEOUT_MILLIS);
   }
 
-
   @Test
   public void testSyncClientMustReturnResultReturnString() throws Exception {
-    checkSyncClient("returnString",
+    checkSyncClient(
+        "returnString",
         "sent msg",
         false,
         "sent msg",
@@ -130,7 +130,8 @@ public class TestVoidMethExceptions {
 
   @Test
   public void testSyncClientMustReturnResultReturnVoidThrows() throws Exception {
-    checkSyncClient("returnVoidThrows",
+    checkSyncClient(
+        "returnVoidThrows",
         "sent msg",
         false,
         null,
@@ -144,7 +145,8 @@ public class TestVoidMethExceptions {
 
   @Test
   public void testSyncClientMustReturnResultReturnVoidNoThrowsRuntimeException() throws Exception {
-    checkSyncClient("returnVoidNoThrowsRuntimeException",
+    checkSyncClient(
+        "returnVoidNoThrowsRuntimeException",
         "sent msg",
         false,
         null,
@@ -157,8 +159,10 @@ public class TestVoidMethExceptions {
   }
 
   @Test
-  public void testSyncClientMustReturnResultReturnVoidNoThrowsTApplicationException() throws Exception {
-    checkSyncClient("returnVoidNoThrowsTApplicationException",
+  public void testSyncClientMustReturnResultReturnVoidNoThrowsTApplicationException()
+      throws Exception {
+    checkSyncClient(
+        "returnVoidNoThrowsTApplicationException",
         "sent msg",
         false,
         null,
@@ -170,10 +174,10 @@ public class TestVoidMethExceptions {
         });
   }
 
-
   @Test
   public void testSyncClientMustThrowExceptionReturnString() throws Exception {
-    checkSyncClient("returnString",
+    checkSyncClient(
+        "returnString",
         "sent msg",
         true,
         null,
@@ -186,7 +190,8 @@ public class TestVoidMethExceptions {
 
   @Test
   public void testSyncClientMustThrowExceptionReturnVoidThrows() throws Exception {
-    checkSyncClient("returnVoidThrows",
+    checkSyncClient(
+        "returnVoidThrows",
         "sent msg",
         true,
         null,
@@ -199,14 +204,18 @@ public class TestVoidMethExceptions {
   }
 
   @Test
-  public void testSyncClientMustThrowExceptionReturnVoidNoThrowsRuntimeException() throws Exception {
-    checkSyncClient("returnVoidNoThrowsRuntimeException",
+  public void testSyncClientMustThrowExceptionReturnVoidNoThrowsRuntimeException()
+      throws Exception {
+    checkSyncClient(
+        "returnVoidNoThrowsRuntimeException",
         "sent msg",
         true,
         null,
         TApplicationException.class,
-        serverImplementationType == ServerImplementationType.ASYNC_SERVER ? "sent msg"
-            : null, // sync server return "Internal error processing returnVoidNoThrowsRuntimeException" message
+        serverImplementationType == ServerImplementationType.ASYNC_SERVER
+            ? "sent msg"
+            : null, // sync server return "Internal error processing
+        // returnVoidNoThrowsRuntimeException" message
         (client, msg, throwException) -> {
           client.returnVoidNoThrowsRuntimeException(msg, throwException);
           return null;
@@ -214,8 +223,10 @@ public class TestVoidMethExceptions {
   }
 
   @Test
-  public void testSyncClientMustThrowExceptionReturnVoidNoThrowsTApplicationException() throws Exception {
-    checkSyncClient("returnVoidNoThrowsTApplicationException",
+  public void testSyncClientMustThrowExceptionReturnVoidNoThrowsTApplicationException()
+      throws Exception {
+    checkSyncClient(
+        "returnVoidNoThrowsTApplicationException",
         "sent msg",
         true,
         null,
@@ -227,10 +238,10 @@ public class TestVoidMethExceptions {
         });
   }
 
-
   @Test
   public void testAsyncClientMustReturnResultReturnString() throws Throwable {
-    checkAsyncClient("returnString",
+    checkAsyncClient(
+        "returnString",
         "sent msg",
         false,
         "sent msg",
@@ -243,7 +254,8 @@ public class TestVoidMethExceptions {
 
   @Test
   public void testAsyncClientMustReturnResultReturnVoidThrows() throws Throwable {
-    checkAsyncClient("returnVoidThrows",
+    checkAsyncClient(
+        "returnVoidThrows",
         "sent msg",
         false,
         (Void) null,
@@ -256,7 +268,8 @@ public class TestVoidMethExceptions {
 
   @Test
   public void testAsyncClientMustReturnResultReturnVoidNoThrowsRuntimeException() throws Throwable {
-    checkAsyncClient("returnVoidNoThrowsRuntimeException",
+    checkAsyncClient(
+        "returnVoidNoThrowsRuntimeException",
         "sent msg",
         false,
         (Void) null,
@@ -268,8 +281,10 @@ public class TestVoidMethExceptions {
   }
 
   @Test
-  public void testAsyncClientMustReturnResultReturnVoidNoThrowsTApplicationException() throws Throwable {
-    checkAsyncClient("returnVoidNoThrowsTApplicationException",
+  public void testAsyncClientMustReturnResultReturnVoidNoThrowsTApplicationException()
+      throws Throwable {
+    checkAsyncClient(
+        "returnVoidNoThrowsTApplicationException",
         "sent msg",
         false,
         (Void) null,
@@ -280,10 +295,10 @@ public class TestVoidMethExceptions {
         });
   }
 
-
   @Test
   public void testAsyncClientMustThrowExceptionReturnString() throws Throwable {
-    checkAsyncClient("returnString",
+    checkAsyncClient(
+        "returnString",
         "sent msg",
         true,
         (String) null,
@@ -296,7 +311,8 @@ public class TestVoidMethExceptions {
 
   @Test
   public void testAsyncClientMustThrowExceptionReturnVoidThrows() throws Throwable {
-    checkAsyncClient("returnVoidThrows",
+    checkAsyncClient(
+        "returnVoidThrows",
         "sent msg",
         true,
         (Void) null,
@@ -308,22 +324,28 @@ public class TestVoidMethExceptions {
   }
 
   @Test
-  public void testAsyncClientMustThrowExceptionReturnVoidNoThrowsRuntimeException() throws Throwable {
-    checkAsyncClient("returnVoidNoThrowsRuntimeException",
+  public void testAsyncClientMustThrowExceptionReturnVoidNoThrowsRuntimeException()
+      throws Throwable {
+    checkAsyncClient(
+        "returnVoidNoThrowsRuntimeException",
         "sent msg",
         true,
         (Void) null,
         TApplicationException.class,
-        serverImplementationType == ServerImplementationType.ASYNC_SERVER ? "sent msg"
-            : null, // sync server return "Internal error processing returnVoidNoThrowsRuntimeException" message
+        serverImplementationType == ServerImplementationType.ASYNC_SERVER
+            ? "sent msg"
+            : null, // sync server return "Internal error processing
+        // returnVoidNoThrowsRuntimeException" message
         (client, msg, throwException, resultHandler) -> {
           client.returnVoidNoThrowsRuntimeException(msg, throwException, resultHandler);
         });
   }
 
   @Test
-  public void testAsyncClientMustThrowExceptionReturnVoidNoThrowsTApplicationException() throws Throwable {
-    checkAsyncClient("returnVoidNoThrowsTApplicationException",
+  public void testAsyncClientMustThrowExceptionReturnVoidNoThrowsTApplicationException()
+      throws Throwable {
+    checkAsyncClient(
+        "returnVoidNoThrowsTApplicationException",
         "sent msg",
         true,
         (Void) null,
@@ -334,10 +356,10 @@ public class TestVoidMethExceptions {
         });
   }
 
-
   @Test
   public void testSyncClientNoWaitForResultNoExceptionOnewayVoidNoThrows() throws Exception {
-    checkSyncClient("onewayVoidNoThrows",
+    checkSyncClient(
+        "onewayVoidNoThrows",
         "sent msg",
         false,
         null,
@@ -351,7 +373,8 @@ public class TestVoidMethExceptions {
 
   @Test
   public void testSyncClientNoWaitForResultExceptionOnewayVoidNoThrows() throws Exception {
-    checkSyncClient("onewayVoidNoThrows",
+    checkSyncClient(
+        "onewayVoidNoThrows",
         "sent msg",
         true,
         null,
@@ -365,7 +388,8 @@ public class TestVoidMethExceptions {
 
   @Test
   public void testAsyncClientNoWaitForResultNoExceptionOnewayVoidNoThrows() throws Throwable {
-    checkAsyncClient("onewayVoidNoThrows",
+    checkAsyncClient(
+        "onewayVoidNoThrows",
         "sent msg",
         false,
         (Void) null,
@@ -378,7 +402,8 @@ public class TestVoidMethExceptions {
 
   @Test
   public void testAsyncClientNoWaitForResultExceptionOnewayVoidNoThrows() throws Throwable {
-    checkAsyncClient("onewayVoidNoThrows",
+    checkAsyncClient(
+        "onewayVoidNoThrows",
         "sent msg",
         true,
         (Void) null,
@@ -389,24 +414,28 @@ public class TestVoidMethExceptions {
         });
   }
 
-
-  private void checkSyncClient(String desc,
+  private void checkSyncClient(
+      String desc,
       String msg,
       boolean throwException,
       String expectedResult,
       Class<?> expectedExceptionClass,
       String expectedExceptionMsg,
-      SyncCall<TAppService01.Iface, String, Boolean, String> call) throws Exception {
+      SyncCall<TAppService01.Iface, String, Boolean, String> call)
+      throws Exception {
     if (log.isInfoEnabled()) {
-      log.info("start test checkSyncClient::" + desc + ", throwException: " + throwException
-          + ", serverImplementationType: "
-          + serverImplementationType);
+      log.info(
+          "start test checkSyncClient::"
+              + desc
+              + ", throwException: "
+              + throwException
+              + ", serverImplementationType: "
+              + serverImplementationType);
     }
     Assert.assertNotEquals(-1, serverPort);
-    try (TTransport clientTransport = new TFramedTransport(new TSocket(new TConfiguration(),
-        "localhost",
-        serverPort,
-        TIMEOUT_MILLIS))) {
+    try (TTransport clientTransport =
+        new TFramedTransport(
+            new TSocket(new TConfiguration(), "localhost", serverPort, TIMEOUT_MILLIS))) {
       clientTransport.open();
       TAppService01.Iface client = new TAppService01.Client(new TBinaryProtocol(clientTransport));
 
@@ -437,42 +466,52 @@ public class TestVoidMethExceptions {
     }
   }
 
-  private <T> void checkAsyncClient(String desc,
+  private <T> void checkAsyncClient(
+      String desc,
       String msg,
       boolean throwException,
       T expectedResult,
       Class<?> expectedExceptionClass,
       String expectedExceptionMsg,
-      AsyncCall<TAppService01.AsyncClient, String, Boolean, AsyncMethodCallback<T>> call) throws Throwable {
+      AsyncCall<TAppService01.AsyncClient, String, Boolean, AsyncMethodCallback<T>> call)
+      throws Throwable {
     if (log.isInfoEnabled()) {
-      log.info("start test checkAsyncClient::" + desc + ", throwException: " + throwException
-          + ", serverImplementationType: "
-          + serverImplementationType);
+      log.info(
+          "start test checkAsyncClient::"
+              + desc
+              + ", throwException: "
+              + throwException
+              + ", serverImplementationType: "
+              + serverImplementationType);
     }
     Assert.assertNotEquals(serverPort, -1);
-    try (TNonblockingSocket clientTransportAsync = new TNonblockingSocket("localhost", serverPort, TIMEOUT_MILLIS)) {
+    try (TNonblockingSocket clientTransportAsync =
+        new TNonblockingSocket("localhost", serverPort, TIMEOUT_MILLIS)) {
       TAsyncClientManager asyncClientManager = new TAsyncClientManager();
       try {
-        TAppService01.AsyncClient asyncClient = new TAppService01.AsyncClient(new TBinaryProtocol.Factory(),
-            asyncClientManager,
-            clientTransportAsync);
+        TAppService01.AsyncClient asyncClient =
+            new TAppService01.AsyncClient(
+                new TBinaryProtocol.Factory(), asyncClientManager, clientTransportAsync);
         asyncClient.setTimeout(TIMEOUT_MILLIS);
 
         CompletableFuture<T> futureResult = new CompletableFuture<>();
 
-        call.apply(asyncClient, msg, throwException, new AsyncMethodCallback<T>() {
+        call.apply(
+            asyncClient,
+            msg,
+            throwException,
+            new AsyncMethodCallback<T>() {
 
-          @Override
-          public void onError(Exception exception) {
-            futureResult.completeExceptionally(exception);
-          }
+              @Override
+              public void onError(Exception exception) {
+                futureResult.completeExceptionally(exception);
+              }
 
-          @Override
-          public void onComplete(T response) {
-            futureResult.complete(response);
-          }
-
-        });
+              @Override
+              public void onComplete(T response) {
+                futureResult.complete(response);
+              }
+            });
 
         try {
           T result;
@@ -508,17 +547,17 @@ public class TestVoidMethExceptions {
     }
   }
 
-
   private enum ServerImplementationType {
-
-    SYNC_SERVER(() -> {
-      ServiceSyncImp service = new ServiceSyncImp();
-      return Pair.of(new TAppService01.Processor<>(service), service);
-    }),
-    ASYNC_SERVER(() -> {
-      ServiceAsyncImp service = new ServiceAsyncImp();
-      return Pair.of(new TAppService01.AsyncProcessor<>(service), service);
-    });
+    SYNC_SERVER(
+        () -> {
+          ServiceSyncImp service = new ServiceSyncImp();
+          return Pair.of(new TAppService01.Processor<>(service), service);
+        }),
+    ASYNC_SERVER(
+        () -> {
+          ServiceAsyncImp service = new ServiceAsyncImp();
+          return Pair.of(new TAppService01.AsyncProcessor<>(service), service);
+        });
 
     final TProcessor processor;
     final ServiceBase service;
@@ -530,20 +569,15 @@ public class TestVoidMethExceptions {
     }
   }
 
-
   @FunctionalInterface
   private interface SyncCall<T, U, V, R> {
 
     R apply(T t, U u, V v) throws Exception;
-
   }
-
 
   @FunctionalInterface
   private interface AsyncCall<T, U, V, X> {
 
     void apply(T t, U u, V v, X x) throws Exception;
-
   }
-
 }

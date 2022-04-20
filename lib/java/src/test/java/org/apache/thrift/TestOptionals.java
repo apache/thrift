@@ -20,22 +20,21 @@
 package org.apache.thrift;
 
 import junit.framework.TestCase;
-
-import thrift.test.Opt4;
 import thrift.test.Opt30;
+import thrift.test.Opt4;
 import thrift.test.Opt64;
 import thrift.test.Opt80;
 
 // Exercises the isSet methods using structs from ManyOptionals.thrift
 public class TestOptionals extends TestCase {
   public void testEncodingUtils() throws Exception {
-    assertEquals((short)0x8, EncodingUtils.setBit((short)0, 3, true));
-    assertEquals((short)0, EncodingUtils.setBit((short)0x8, 3, false));
-    assertEquals(true, EncodingUtils.testBit((short)0x8, 3));
-    assertEquals(false, EncodingUtils.testBit((short)0x8, 4));
+    assertEquals((short) 0x8, EncodingUtils.setBit((short) 0, 3, true));
+    assertEquals((short) 0, EncodingUtils.setBit((short) 0x8, 3, false));
+    assertEquals(true, EncodingUtils.testBit((short) 0x8, 3));
+    assertEquals(false, EncodingUtils.testBit((short) 0x8, 4));
 
-    assertEquals(Short.MIN_VALUE, EncodingUtils.setBit((short)0, 15, true));
-    assertEquals((short)0, EncodingUtils.setBit(Short.MIN_VALUE, 15, false));
+    assertEquals(Short.MIN_VALUE, EncodingUtils.setBit((short) 0, 15, true));
+    assertEquals((short) 0, EncodingUtils.setBit(Short.MIN_VALUE, 15, false));
     assertEquals(true, EncodingUtils.testBit(Short.MIN_VALUE, 15));
     assertEquals(false, EncodingUtils.testBit(Short.MIN_VALUE, 14));
   }

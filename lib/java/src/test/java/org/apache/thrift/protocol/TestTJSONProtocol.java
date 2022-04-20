@@ -19,9 +19,7 @@
 package org.apache.thrift.protocol;
 
 import java.nio.charset.StandardCharsets;
-
 import org.apache.thrift.TException;
-import org.apache.thrift.protocol.TJSONProtocol;
 import org.apache.thrift.transport.TMemoryBuffer;
 
 public class TestTJSONProtocol extends ProtocolTestBase {

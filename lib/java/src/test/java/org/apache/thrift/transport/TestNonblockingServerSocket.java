@@ -19,16 +19,15 @@
 
 package org.apache.thrift.transport;
 
+import java.nio.channels.ServerSocketChannel;
 import org.junit.Assert;
 import org.junit.Test;
-
-import java.nio.channels.ServerSocketChannel;
 
 public class TestNonblockingServerSocket {
 
   @Test
   public void testSocketChannelBlockingMode() throws TTransportException {
-    try (TNonblockingServerSocket nonblockingServer = new TNonblockingServerSocket(0)){
+    try (TNonblockingServerSocket nonblockingServer = new TNonblockingServerSocket(0)) {
       ServerSocketChannel socketChannel = nonblockingServer.getServerSocketChannel();
       Assert.assertFalse("Socket channel should be nonblocking", socketChannel.isBlocking());
     }

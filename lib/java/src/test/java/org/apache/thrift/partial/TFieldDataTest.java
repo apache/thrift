@@ -19,11 +19,11 @@
 
 package org.apache.thrift.partial;
 
+import static org.junit.Assert.*;
+
 import org.apache.thrift.protocol.TField;
 import org.apache.thrift.protocol.TType;
 import org.junit.Test;
-
-import static org.junit.Assert.*;
 
 public class TFieldDataTest {
 

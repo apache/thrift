@@ -21,11 +21,12 @@ package org.apache.thrift.protocol;
 
 /**
  * Helper class that encapsulates field metadata.
- * <p>Two fields are considered equal if they have the same type and id.</p>
+ *
+ * <p>Two fields are considered equal if they have the same type and id.
  */
 public class TField {
   public TField() {
-    this("", TType.STOP, (short)0);
+    this("", TType.STOP, (short) 0);
   }
 
   public TField(String n, byte t, short i) {
@@ -35,8 +36,8 @@ public class TField {
   }
 
   public final String name;
-  public final byte   type;
-  public final short  id;
+  public final byte type;
+  public final short id;
 
   public String toString() {
     return "<TField name:'" + name + "' type:" + type + " field-id:" + id + ">";
@@ -53,12 +54,9 @@ public class TField {
 
   @Override
   public boolean equals(Object obj) {
-    if (this == obj)
-      return true;
-    if (obj == null)
-      return false;
-    if (getClass() != obj.getClass())
-      return false;
+    if (this == obj) return true;
+    if (obj == null) return false;
+    if (getClass() != obj.getClass()) return false;
     TField otherField = (TField) obj;
     return type == otherField.type && id == otherField.id;
   }

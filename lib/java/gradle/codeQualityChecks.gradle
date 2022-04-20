@@ -43,3 +43,9 @@ tasks.withType(Pmd) {
         xml.enabled = false
     }
 }
+
+spotless {
+    java {
+        googleJavaFormat()
+    }
+}

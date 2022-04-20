@@ -26,10 +26,7 @@ import org.apache.thrift.protocol.TProtocolFactory;
 import org.apache.thrift.transport.TServerTransport;
 import org.apache.thrift.transport.TTransportFactory;
 
-/**
- * Generic interface for a Thrift server.
- *
- */
+/** Generic interface for a Thrift server. */
 public abstract class TServer {
 
   public static class Args extends AbstractServerArgs<Args> {
@@ -38,7 +35,7 @@ public abstract class TServer {
     }
   }
 
-  public static abstract class AbstractServerArgs<T extends AbstractServerArgs<T>> {
+  public abstract static class AbstractServerArgs<T extends AbstractServerArgs<T>> {
     final TServerTransport serverTransport;
     TProcessorFactory processorFactory;
     TTransportFactory inputTransportFactory = new TTransportFactory();
@@ -93,34 +90,22 @@ public abstract class TServer {
     }
   }
 
-  /**
-   * Core processor
-   */
+  /** Core processor */
   protected TProcessorFactory processorFactory_;
 
-  /**
-   * Server transport
-   */
+  /** Server transport */
   protected TServerTransport serverTransport_;
 
-  /**
-   * Input Transport Factory
-   */
+  /** Input Transport Factory */
   protected TTransportFactory inputTransportFactory_;
 
-  /**
-   * Output Transport Factory
-   */
+  /** Output Transport Factory */
   protected TTransportFactory outputTransportFactory_;
 
-  /**
-   * Input Protocol Factory
-   */
+  /** Input Protocol Factory */
   protected TProtocolFactory inputProtocolFactory_;
 
-  /**
-   * Output Protocol Factory
-   */
+  /** Output Protocol Factory */
   protected TProtocolFactory outputProtocolFactory_;
 
   private volatile boolean isServing;
@@ -140,14 +125,12 @@ public abstract class TServer {
     outputProtocolFactory_ = args.outputProtocolFactory;
   }
 
-  /**
-   * The run method fires up the server and gets things going.
-   */
+  /** The run method fires up the server and gets things going. */
   public abstract void serve();
 
   /**
-   * Stop the server. This is optional on a per-implementation basis. Not
-   * all servers are required to be cleanly stoppable.
+   * Stop the server. This is optional on a per-implementation basis. Not all servers are required
+   * to be cleanly stoppable.
    */
   public void stop() {}
 

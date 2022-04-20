@@ -28,7 +28,6 @@ import java.util.Arrays;
 import java.util.zip.DataFormatException;
 import java.util.zip.DeflaterOutputStream;
 import java.util.zip.InflaterInputStream;
-
 import junit.framework.TestCase;
 
 public class TestTZlibTransport extends TestCase {
@@ -38,17 +37,17 @@ public class TestTZlibTransport extends TestCase {
   }
 
   public static byte[] byteSequence(int start, int end) {
-    byte[] result = new byte[end-start+1];
-    for (int i = 0; i <= (end-start); i++) {
-      result[i] = (byte)(start+i);
+    byte[] result = new byte[end - start + 1];
+    for (int i = 0; i <= (end - start); i++) {
+      result[i] = (byte) (start + i);
     }
     return result;
   }
 
   public void testClose() throws TTransportException {
     ByteArrayOutputStream baos = new ByteArrayOutputStream();
-    WriteCountingTransport countingTrans = new WriteCountingTransport(new TIOStreamTransport(new BufferedOutputStream
-        (baos)));
+    WriteCountingTransport countingTrans =
+        new WriteCountingTransport(new TIOStreamTransport(new BufferedOutputStream(baos)));
     TTransport trans = getTransport(countingTrans);
     trans.write(byteSequence(0, 245));
     countingTrans.close();
@@ -64,7 +63,8 @@ public class TestTZlibTransport extends TestCase {
     final byte[] compressed = baos.toByteArray();
 
     final byte[] buf = new byte[255];
-    TTransport transRead = getTransport(new TIOStreamTransport(new ByteArrayInputStream(compressed)));
+    TTransport transRead =
+        getTransport(new TIOStreamTransport(new ByteArrayInputStream(compressed)));
     int readBytes = transRead.read(buf, 0, buf.length);
     assertEquals(uncompressed.length, readBytes);
     transRead.close();
@@ -87,11 +87,11 @@ public class TestTZlibTransport extends TestCase {
 
     byte[] readBuf = new byte[10];
     trans.read(readBuf, 0, 10);
-    assertTrue(Arrays.equals(readBuf, byteSequence(0,9)));
+    assertTrue(Arrays.equals(readBuf, byteSequence(0, 9)));
     assertEquals(1, countTrans.readCount);
 
     trans.read(readBuf, 0, 10);
-    assertTrue(Arrays.equals(readBuf, byteSequence(10,19)));
+    assertTrue(Arrays.equals(readBuf, byteSequence(10, 19)));
     assertEquals(1, countTrans.readCount);
 
     assertEquals(30, trans.read(new byte[30], 0, 30));
@@ -105,7 +105,8 @@ public class TestTZlibTransport extends TestCase {
 
   public void testWrite() throws TTransportException, IOException, DataFormatException {
     ByteArrayOutputStream baos = new ByteArrayOutputStream();
-    WriteCountingTransport countingTrans = new WriteCountingTransport(new TIOStreamTransport(new BufferedOutputStream(baos)));
+    WriteCountingTransport countingTrans =
+        new WriteCountingTransport(new TIOStreamTransport(new BufferedOutputStream(baos)));
     TTransport trans = getTransport(countingTrans);
 
     trans.write(byteSequence(0, 100));
@@ -121,7 +122,8 @@ public class TestTZlibTransport extends TestCase {
     trans.flush();
     assertEquals(3, countingTrans.writeCount);
 
-    DataInputStream din = new DataInputStream(new InflaterInputStream(new ByteArrayInputStream(baos.toByteArray())));
+    DataInputStream din =
+        new DataInputStream(new InflaterInputStream(new ByteArrayInputStream(baos.toByteArray())));
     byte[] buf = new byte[256];
     int n = din.read(buf, 0, 256);
     assertEquals(n, 256);
@@ -130,11 +132,10 @@ public class TestTZlibTransport extends TestCase {
     buf = new byte[246];
     n = din.read(buf, 0, 246);
     assertEquals(n, 246);
-    for (int i = 0; i<buf.length; i++) {
-      assertEquals("for "+i, byteSequence(0,245)[i], buf[i]);
+    for (int i = 0; i < buf.length; i++) {
+      assertEquals("for " + i, byteSequence(0, 245)[i], buf[i]);
     }
 
-    assertTrue(Arrays.equals(byteSequence(0,245), buf));
+    assertTrue(Arrays.equals(byteSequence(0, 245), buf));
   }
-
 }

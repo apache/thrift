@@ -33,12 +33,11 @@ public class TestStringUtils {
     Assert.assertNull(StringUtils.bytesToHexString(null));
   }
 
-
   private byte[] bytes;
 
   @Before
   public void setUp() throws Exception {
-    bytes = new byte[]{1, 2, 3, 4, 5};
+    bytes = new byte[] {1, 2, 3, 4, 5};
   }
 
   @Test(expected = IllegalArgumentException.class)
@@ -55,5 +54,4 @@ public class TestStringUtils {
   public void testInvalidRange() {
     StringUtils.bytesToHexString(bytes, 5, 1);
   }
-
 }

@@ -19,13 +19,8 @@
 
 package org.apache.thrift;
 
-import java.util.HashSet;
-
 import junit.framework.TestCase;
-
 import org.apache.thrift.protocol.TBinaryProtocol;
-import org.apache.thrift.protocol.TType;
-
 import thrift.test.fullcamel.OneOfEachZZ;
 import thrift.test.fullcamel.UnderscoreSrv;
 
@@ -34,7 +29,7 @@ import thrift.test.fullcamel.UnderscoreSrv;
 public class TestFullCamel extends TestCase {
 
   public void testCamelCaseSyntax() throws Exception {
-    TSerializer   binarySerializer   = new   TSerializer(new TBinaryProtocol.Factory());
+    TSerializer binarySerializer = new TSerializer(new TBinaryProtocol.Factory());
     TDeserializer binaryDeserializer = new TDeserializer(new TBinaryProtocol.Factory());
 
     OneOfEachZZ obj = new OneOfEachZZ();
@@ -42,18 +37,18 @@ public class TestFullCamel extends TestCase {
     obj.setImFalse(true);
     byte[] serBytes = binarySerializer.serialize(obj);
     binaryDeserializer.deserialize(obj, serBytes);
-    assertTrue( obj.getABite() == (byte) 0xae );
-    assertTrue( obj.isImFalse() == true );
+    assertTrue(obj.getABite() == (byte) 0xae);
+    assertTrue(obj.isImFalse() == true);
   }
 
   public void testCamelCaseRpcMethods() throws Exception {
-    final UnderscoreSrv.Iface srv = new UnderscoreSrv.Iface() {
-      @Override
-      public long someRpcCall(String message) {
-        return 1l;
-      }
-    };
+    final UnderscoreSrv.Iface srv =
+        new UnderscoreSrv.Iface() {
+          @Override
+          public long someRpcCall(String message) {
+            return 1l;
+          }
+        };
     assertTrue(1l == srv.someRpcCall("test"));
   }
 }
-

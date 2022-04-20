@@ -21,19 +21,6 @@ package org.apache.thrift.partial;
 
 import static org.junit.Assert.*;
 
-import org.apache.thrift.partial.TestStruct;
-import org.apache.thrift.partial.ThriftField;
-import org.apache.thrift.partial.TstEnum;
-import org.apache.thrift.partial.ExceptionAsserts;
-
-import org.apache.thrift.TBase;
-import org.apache.thrift.TDeserializer;
-import org.apache.thrift.TException;
-import org.apache.thrift.TSerializer;
-import org.apache.thrift.protocol.TBinaryProtocol;
-import org.apache.thrift.protocol.TCompactProtocol;
-import org.junit.Test;
-
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
@@ -44,6 +31,11 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import org.apache.thrift.TDeserializer;
+import org.apache.thrift.TException;
+import org.apache.thrift.protocol.TBinaryProtocol;
+import org.apache.thrift.protocol.TCompactProtocol;
+import org.junit.Test;
 
 public class TestPartialThriftDeserializer {
 
@@ -53,8 +45,7 @@ public class TestPartialThriftDeserializer {
 
   private PartialThriftTestData testData = new PartialThriftTestData();
 
-  public TestPartialThriftDeserializer() throws TException {
-  }
+  public TestPartialThriftDeserializer() throws TException {}
 
   @Test
   public void testArgChecks() throws TException {
@@ -80,8 +71,8 @@ public class TestPartialThriftDeserializer {
   }
 
   /**
-   * This test does not use partial deserialization. It is used to establish correctness
-   * of full serialization used in the other tests.
+   * This test does not use partial deserialization. It is used to establish correctness of full
+   * serialization used in the other tests.
    */
   @Test
   public void testRoundTripFull() throws TException {
@@ -90,7 +81,7 @@ public class TestPartialThriftDeserializer {
     byte[] bytesBinary = serde.serializeBinary(ts1);
     byte[] bytesCompact = serde.serializeCompact(ts1);
 
-    TestStruct ts2 =  serde.deserializeBinary(bytesBinary, TestStruct.class);
+    TestStruct ts2 = serde.deserializeBinary(bytesBinary, TestStruct.class);
     assertEquals(ts1, ts2);
 
     ts2 = serde.deserializeCompact(bytesCompact, TestStruct.class);
@@ -145,62 +136,61 @@ public class TestPartialThriftDeserializer {
     byte[] bytesBinary = serde.serializeBinary(ts1);
     byte[] bytesCompact = serde.serializeCompact(ts1);
 
-    List<String> fieldNames = Arrays.asList(
-        "byteField",
-        "i16Field",
-        "i32Field",
-        "i64Field",
-        "doubleField",
-        "stringField",
+    List<String> fieldNames =
+        Arrays.asList(
+            "byteField",
+            "i16Field",
+            "i32Field",
+            "i64Field",
+            "doubleField",
+            "stringField",
+            "enumField",
+            "binaryField",
 
-        "enumField",
-        "binaryField",
+            // List fields
+            "byteList",
+            "i16List",
+            "i32List",
+            "i64List",
+            "doubleList",
+            "stringList",
+            "enumList",
+            "listList",
+            "setList",
+            "mapList",
+            "structList",
+            "binaryList",
 
-        // List fields
-        "byteList",
-        "i16List",
-        "i32List",
-        "i64List",
-        "doubleList",
-        "stringList",
-        "enumList",
-        "listList",
-        "setList",
-        "mapList",
-        "structList",
-        "binaryList",
+            // Set fields
+            "byteSet",
+            "i16Set",
+            "i32Set",
+            "i64Set",
+            "doubleSet",
+            "stringSet",
+            "enumSet",
+            "listSet",
+            "setSet",
+            "mapSet",
+            "structSet",
+            "binarySet",
 
-        // Set fields
-        "byteSet",
-        "i16Set",
-        "i32Set",
-        "i64Set",
-        "doubleSet",
-        "stringSet",
-        "enumSet",
-        "listSet",
-        "setSet",
-        "mapSet",
-        "structSet",
-        "binarySet",
+            // Map fields
+            "byteMap",
+            "i16Map",
+            "i32Map",
+            "i64Map",
+            "doubleMap",
+            "stringMap",
+            "enumMap",
+            "listMap",
+            "setMap",
+            "mapMap",
+            "structMap",
+            "binaryMap",
 
-        // Map fields
-        "byteMap",
-        "i16Map",
-        "i32Map",
-        "i64Map",
-        "doubleMap",
-        "stringMap",
-        "enumMap",
-        "listMap",
-        "setMap",
-        "mapMap",
-        "structMap",
-        "binaryMap",
-
-        // Struct field
-        "structField"
-    );
+            // Struct field
+            "structField");
     StringBuilder sb = new StringBuilder();
     TDeserializer partialBinaryDeserializer =
         new TDeserializer(TestStruct.class, fieldNames, binaryProtocolFactory);
@@ -390,15 +380,15 @@ public class TestPartialThriftDeserializer {
 
     for (int i = 0; i < numItems; i++) {
       if (clasz == Byte.class) {
-        assertTrue(set.contains((byte)i));
+        assertTrue(set.contains((byte) i));
       } else if (clasz == Short.class) {
-        assertTrue(set.contains((short)i));
+        assertTrue(set.contains((short) i));
       } else if (clasz == Integer.class) {
         assertTrue(set.contains(i));
       } else if (clasz == Long.class) {
-        assertTrue(set.contains((long)i));
+        assertTrue(set.contains((long) i));
       } else if (clasz == Double.class) {
-        assertTrue(set.contains((double)i));
+        assertTrue(set.contains((double) i));
       }
     }
   }
@@ -481,19 +471,19 @@ public class TestPartialThriftDeserializer {
 
     for (int i = 0; i < numItems; i++) {
       if (clasz == Byte.class) {
-        assertTrue(map.containsKey((byte)i));
+        assertTrue(map.containsKey((byte) i));
         assertEquals((byte) i, map.get((byte) i));
       } else if (clasz == Short.class) {
-        assertTrue(map.containsKey((short)i));
+        assertTrue(map.containsKey((short) i));
         assertEquals((short) i, map.get((short) i));
       } else if (clasz == Integer.class) {
         assertTrue(map.containsKey(i));
         assertEquals(i, map.get(i));
       } else if (clasz == Long.class) {
-        assertTrue(map.containsKey((long)i));
+        assertTrue(map.containsKey((long) i));
         assertEquals((long) i, map.get((long) i));
       } else if (clasz == Double.class) {
-        assertTrue(map.containsKey((double)i));
+        assertTrue(map.containsKey((double) i));
         assertEquals((double) i, map.get((double) i));
       }
     }

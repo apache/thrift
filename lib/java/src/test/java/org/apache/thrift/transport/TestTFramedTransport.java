@@ -25,7 +25,6 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.util.Arrays;
-
 import junit.framework.TestCase;
 import org.apache.thrift.transport.layered.TFastFramedTransport;
 import org.apache.thrift.transport.layered.TFramedTransport;
@@ -36,14 +35,15 @@ public class TestTFramedTransport extends TestCase {
     return new TFramedTransport(underlying);
   }
 
-  protected TTransport getTransport(TTransport underlying, int maxLength) throws TTransportException {
+  protected TTransport getTransport(TTransport underlying, int maxLength)
+      throws TTransportException {
     return new TFramedTransport(underlying, maxLength);
   }
 
   public static byte[] byteSequence(int start, int end) {
-    byte[] result = new byte[end-start+1];
-    for (int i = 0; i <= (end-start); i++) {
-      result[i] = (byte)(start+i);
+    byte[] result = new byte[end - start + 1];
+    for (int i = 0; i <= (end - start); i++) {
+      result[i] = (byte) (start + i);
     }
     return result;
   }
@@ -65,11 +65,11 @@ public class TestTFramedTransport extends TestCase {
 
     byte[] readBuf = new byte[10];
     trans.read(readBuf, 0, 10);
-    assertTrue(Arrays.equals(readBuf, byteSequence(0,9)));
+    assertTrue(Arrays.equals(readBuf, byteSequence(0, 9)));
     assertEquals(2, countTrans.readCount);
 
     trans.read(readBuf, 0, 10);
-    assertTrue(Arrays.equals(readBuf, byteSequence(10,19)));
+    assertTrue(Arrays.equals(readBuf, byteSequence(10, 19)));
     assertEquals(2, countTrans.readCount);
 
     assertEquals(30, trans.read(new byte[30], 0, 30));
@@ -101,7 +101,8 @@ public class TestTFramedTransport extends TestCase {
       trans.read(readBuf, 0, 4);
       fail("Expected a TTransportException");
     } catch (TTransportException e) {
-      // We expect this exception because the frame we're trying to read is larger than our max frame length
+      // We expect this exception because the frame we're trying to read is larger than our max
+      // frame length
       assertEquals(TTransportException.CORRUPTED_DATA, e.getType());
     }
 
@@ -118,13 +119,14 @@ public class TestTFramedTransport extends TestCase {
 
   public void testWrite() throws TTransportException, IOException {
     ByteArrayOutputStream baos = new ByteArrayOutputStream();
-    WriteCountingTransport countingTrans = new WriteCountingTransport(new TIOStreamTransport(new BufferedOutputStream(baos)));
+    WriteCountingTransport countingTrans =
+        new WriteCountingTransport(new TIOStreamTransport(new BufferedOutputStream(baos)));
     TTransport trans = getTransport(countingTrans);
 
-    trans.write(byteSequence(0,100));
+    trans.write(byteSequence(0, 100));
     assertEquals(0, countingTrans.writeCount);
-    trans.write(byteSequence(101,200));
-    trans.write(byteSequence(201,255));
+    trans.write(byteSequence(101, 200));
+    trans.write(byteSequence(201, 255));
     assertEquals(0, countingTrans.writeCount);
 
     trans.flush();
@@ -139,12 +141,12 @@ public class TestTFramedTransport extends TestCase {
 
     byte[] buf = new byte[256];
     din.read(buf, 0, 256);
-    assertTrue(Arrays.equals(byteSequence(0,255), buf));
+    assertTrue(Arrays.equals(byteSequence(0, 255), buf));
 
     assertEquals(246, din.readInt());
     buf = new byte[246];
     din.read(buf, 0, 246);
-    assertTrue(Arrays.equals(byteSequence(0,245), buf));
+    assertTrue(Arrays.equals(byteSequence(0, 245), buf));
   }
 
   public void testDirectRead() throws IOException, TTransportException {
@@ -165,7 +167,7 @@ public class TestTFramedTransport extends TestCase {
 
     byte[] readBuf = new byte[10];
     trans.read(readBuf, 0, 10);
-    assertTrue(Arrays.equals(readBuf, byteSequence(0,9)));
+    assertTrue(Arrays.equals(readBuf, byteSequence(0, 9)));
 
     assertEquals(40, trans.getBytesRemainingInBuffer());
     assertEquals(10, trans.getBufferPosition());
@@ -183,7 +185,7 @@ public class TestTFramedTransport extends TestCase {
     // Known message size exceeded
     trans.read(readBuf, 0, 10);
     assertEquals(4, countTrans.readCount);
-    assertTrue(Arrays.equals(readBuf, byteSequence(125,134)));
+    assertTrue(Arrays.equals(readBuf, byteSequence(125, 134)));
     assertEquals(40, trans.getBytesRemainingInBuffer());
     assertEquals(10, trans.getBufferPosition());
   }
@@ -202,7 +204,7 @@ public class TestTFramedTransport extends TestCase {
 
     byte[] readBuf = new byte[220];
     trans.read(readBuf, 0, 220);
-    assertTrue(Arrays.equals(readBuf, byteSequence(0,219)));
+    assertTrue(Arrays.equals(readBuf, byteSequence(0, 219)));
 
     assertTrue(trans instanceof TFramedTransport || trans instanceof TFastFramedTransport);
     if (trans instanceof TFramedTransport) {

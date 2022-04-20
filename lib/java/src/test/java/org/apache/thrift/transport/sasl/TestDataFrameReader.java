@@ -19,12 +19,11 @@
 
 package org.apache.thrift.transport.sasl;
 
+import java.nio.ByteBuffer;
 import org.apache.thrift.transport.TMemoryInputTransport;
 import org.apache.thrift.transport.TTransportException;
 import org.junit.Assert;
 import org.junit.Test;
-
-import java.nio.ByteBuffer;
 
 public class TestDataFrameReader {
 
@@ -32,7 +31,8 @@ public class TestDataFrameReader {
   public void testRead() throws TTransportException {
     // Prepare data
     int payloadSize = 23;
-    ByteBuffer buffer = ByteBuffer.allocate(DataFrameHeaderReader.PAYLOAD_LENGTH_BYTES + payloadSize);
+    ByteBuffer buffer =
+        ByteBuffer.allocate(DataFrameHeaderReader.PAYLOAD_LENGTH_BYTES + payloadSize);
     buffer.putInt(payloadSize);
     for (int i = 0; i < payloadSize; i++) {
       buffer.put((byte) i);
@@ -50,12 +50,18 @@ public class TestDataFrameReader {
     dataFrameReader.read(transport);
     Assert.assertFalse("Only header is complete", dataFrameReader.isComplete());
     Assert.assertTrue("Header should be complete", dataFrameReader.getHeader().isComplete());
-    Assert.assertEquals("Payload size should be " + payloadSize, payloadSize, dataFrameReader.getHeader().payloadSize());
+    Assert.assertEquals(
+        "Payload size should be " + payloadSize,
+        payloadSize,
+        dataFrameReader.getHeader().payloadSize());
     // Read the rest of payload.
     transport.reset(buffer.array(), 6, 21);
     dataFrameReader.read(transport);
     Assert.assertTrue("Reader should be complete", dataFrameReader.isComplete());
     buffer.position(DataFrameHeaderReader.PAYLOAD_LENGTH_BYTES);
-    Assert.assertEquals("Payload should be the same as from the transport", buffer, ByteBuffer.wrap(dataFrameReader.getPayload()));
+    Assert.assertEquals(
+        "Payload should be the same as from the transport",
+        buffer,
+        ByteBuffer.wrap(dataFrameReader.getPayload()));
   }
 }

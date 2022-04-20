@@ -21,16 +21,6 @@ package org.apache.thrift.partial;
 
 import static org.junit.Assert.*;
 
-import org.apache.thrift.partial.TestStruct;
-import org.apache.thrift.partial.ThriftField;
-import org.apache.thrift.partial.ThriftMetadata;
-import org.apache.thrift.partial.TstEnum;
-
-import org.apache.thrift.TBase;
-import org.apache.thrift.TException;
-import org.apache.thrift.TFieldIdEnum;
-import org.junit.Test;
-
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
@@ -40,6 +30,10 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import org.apache.thrift.TBase;
+import org.apache.thrift.TException;
+import org.apache.thrift.TFieldIdEnum;
+import org.junit.Test;
 
 public class ThriftStructProcessorTest {
 
@@ -158,18 +152,17 @@ public class ThriftStructProcessorTest {
 
   @Test
   public void testStructPrimitiveFields() throws TException {
-    List<ThriftField> fields = ThriftField.fromNames(
-        Arrays.asList(
-            "byteField",
-            "i16Field",
-            "i32Field",
-            "i64Field",
-            "doubleField",
-            "stringField",
-
-            "enumField",
-            "binaryField"
-        ));
+    List<ThriftField> fields =
+        ThriftField.fromNames(
+            Arrays.asList(
+                "byteField",
+                "i16Field",
+                "i32Field",
+                "i64Field",
+                "doubleField",
+                "stringField",
+                "enumField",
+                "binaryField"));
 
     ThriftMetadata.ThriftStruct metadata =
         ThriftMetadata.ThriftStruct.fromFields(TestStruct.class, fields);
@@ -231,20 +224,20 @@ public class ThriftStructProcessorTest {
 
   @Test
   public void testStructContainerFields() throws TException {
-    List<ThriftField> fields = ThriftField.fromNames(
-        Arrays.asList(
-            // List field
-            "i32List",
+    List<ThriftField> fields =
+        ThriftField.fromNames(
+            Arrays.asList(
+                // List field
+                "i32List",
 
-            // Set field
-            "stringSet",
+                // Set field
+                "stringSet",
 
-            // Map field
-            "stringMap",
+                // Map field
+                "stringMap",
 
-            // Struct field
-            "structField"
-        ));
+                // Struct field
+                "structField"));
 
     ThriftMetadata.ThriftStruct metadata =
         ThriftMetadata.ThriftStruct.fromFields(TestStruct.class, fields);
@@ -259,7 +252,7 @@ public class ThriftStructProcessorTest {
     // list
     TFieldIdEnum fieldId = findFieldId(metadata, "i32List");
     assertNull(getFieldValue(struct, fieldId));
-    Integer[] ints = new Integer[] { 1, 2, 3 };
+    Integer[] ints = new Integer[] {1, 2, 3};
     List<Integer> intList = Arrays.asList(ints);
     processor.setListField(struct, fieldId, intList);
     assertArrayEquals(ints, struct.getI32List().toArray());
@@ -267,7 +260,7 @@ public class ThriftStructProcessorTest {
     // set
     fieldId = findFieldId(metadata, "stringSet");
     assertNull(getFieldValue(struct, fieldId));
-    String[] strings = new String[] { "Hello", "World!" };
+    String[] strings = new String[] {"Hello", "World!"};
     Set<String> stringSet = new HashSet<>(Arrays.asList(strings));
     processor.setSetField(struct, fieldId, stringSet);
     assertEquals(stringSet, struct.getStringSet());

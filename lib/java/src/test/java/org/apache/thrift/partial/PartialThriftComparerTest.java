@@ -21,18 +21,14 @@ package org.apache.thrift.partial;
 
 import static org.junit.Assert.*;
 
+import java.io.IOException;
+import java.util.Arrays;
+import java.util.List;
 import org.apache.thrift.TDeserializer;
 import org.apache.thrift.TException;
-import org.apache.thrift.partial.TestStruct;
-import org.apache.thrift.partial.ThriftField;
 import org.apache.thrift.protocol.TBinaryProtocol;
 import org.apache.thrift.protocol.TCompactProtocol;
 import org.junit.Test;
-
-import java.io.IOException;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
 
 public class PartialThriftComparerTest {
 

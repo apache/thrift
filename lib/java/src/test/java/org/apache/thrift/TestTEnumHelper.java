@@ -18,17 +18,16 @@
  */
 package org.apache.thrift;
 
-import thrift.test.Numberz;
-
 import junit.framework.TestCase;
+import thrift.test.Numberz;
 
 public class TestTEnumHelper extends TestCase {
 
   public void testGetByValue_ValidValues() {
-    for (Numberz n: Numberz.values()) {
+    for (Numberz n : Numberz.values()) {
       int value = n.getValue();
       assertEquals(n, TEnumHelper.getByValue(Numberz.class, value));
-    } 
+    }
   }
 
   public void testGetByValue_InvalidValue() {

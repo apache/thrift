@@ -19,9 +19,9 @@
 
 package org.apache.thrift.transport.sasl;
 
-import java.io.IOException;
-import java.nio.ByteBuffer;
+import static org.apache.thrift.transport.sasl.DataFrameHeaderReader.PAYLOAD_LENGTH_BYTES;
 
+import java.nio.ByteBuffer;
 import org.apache.thrift.EncodingUtils;
 import org.apache.thrift.transport.TNonblockingTransport;
 import org.junit.Assert;
@@ -30,11 +30,9 @@ import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 
-import static org.apache.thrift.transport.sasl.DataFrameHeaderReader.PAYLOAD_LENGTH_BYTES;
-
 public class TestDataFrameWriter {
 
-  private static final byte[] BYTES = new byte[]{0x32, 0x2A, (byte) 0xE1, 0x18, (byte) 0x90, 0x75};
+  private static final byte[] BYTES = new byte[] {0x32, 0x2A, (byte) 0xE1, 0x18, (byte) 0x90, 0x75};
 
   @Test
   public void testProvideEntireByteArrayAsPayload() {
@@ -94,7 +92,7 @@ public class TestDataFrameWriter {
     public Integer answer(InvocationOnMock invocation) throws Throwable {
       ByteBuffer bytes = (ByteBuffer) invocation.getArguments()[0];
       bytes.get();
-      written ++;
+      written++;
       return 1;
     }
   }

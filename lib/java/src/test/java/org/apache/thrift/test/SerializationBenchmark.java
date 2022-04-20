@@ -17,7 +17,6 @@
  * under the License.
  */
 
-
 package org.apache.thrift.test;
 
 import org.apache.thrift.Fixtures;
@@ -30,11 +29,10 @@ import org.apache.thrift.transport.TMemoryBuffer;
 import org.apache.thrift.transport.TMemoryInputTransport;
 import org.apache.thrift.transport.TTransport;
 import org.apache.thrift.transport.TTransportException;
-
 import thrift.test.OneOfEach;
 
 public class SerializationBenchmark {
-  private final static int HOW_MANY = 10000000;
+  private static final int HOW_MANY = 10000000;
 
   public static void main(String[] args) throws Exception {
     TProtocolFactory factory = new TBinaryProtocol.Factory();
@@ -44,16 +42,30 @@ public class SerializationBenchmark {
   }
 
   public static void testSerialization(TProtocolFactory factory, TBase object) throws Exception {
-    TTransport trans = new TTransport() {
-      public void write(byte[] bin, int x, int y) throws TTransportException {}
-      public TConfiguration getConfiguration() {return new TConfiguration(); }
-      public void updateKnownMessageSize(long size) throws TTransportException {}
-      public void checkReadBytesAvailable(long numBytes) throws TTransportException {}
-      public int read(byte[] bin, int x, int y) throws TTransportException {return 0;}
-      public void close() {}
-      public void open() {}
-      public boolean isOpen() {return true;}
-    };
+    TTransport trans =
+        new TTransport() {
+          public void write(byte[] bin, int x, int y) throws TTransportException {}
+
+          public TConfiguration getConfiguration() {
+            return new TConfiguration();
+          }
+
+          public void updateKnownMessageSize(long size) throws TTransportException {}
+
+          public void checkReadBytesAvailable(long numBytes) throws TTransportException {}
+
+          public int read(byte[] bin, int x, int y) throws TTransportException {
+            return 0;
+          }
+
+          public void close() {}
+
+          public void open() {}
+
+          public boolean isOpen() {
+            return true;
+          }
+        };
 
     TProtocol proto = factory.getProtocol(trans);
 
@@ -66,11 +78,12 @@ public class SerializationBenchmark {
     System.out.println("Serialization test time: " + (endTime - startTime) + " ms");
   }
 
-  public static <T extends TBase> void testDeserialization(TProtocolFactory factory, T object, Class<T> klass) throws Exception {
+  public static <T extends TBase> void testDeserialization(
+      TProtocolFactory factory, T object, Class<T> klass) throws Exception {
     TMemoryBuffer buf = new TMemoryBuffer(0);
     object.write(factory.getProtocol(buf));
-    byte[] serialized = new byte[100*1024];
-    buf.read(serialized, 0, 100*1024);
+    byte[] serialized = new byte[100 * 1024];
+    buf.read(serialized, 0, 100 * 1024);
 
     long startTime = System.currentTimeMillis();
     for (int i = 0; i < HOW_MANY; i++) {

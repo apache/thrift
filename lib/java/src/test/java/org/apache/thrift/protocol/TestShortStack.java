@@ -24,14 +24,14 @@ public class TestShortStack extends TestCase {
 
   public void testOps() throws Exception {
     ShortStack s = new ShortStack(1);
-    s.push((short)10);
-    s.push((short)11);
-    s.push((short)12);
-    assertEquals((short)12, s.pop());
-    assertEquals((short)11, s.pop());
-    s.push((short)40);
-    assertEquals((short)40, s.pop());
-    assertEquals((short)10, s.pop());
+    s.push((short) 10);
+    s.push((short) 11);
+    s.push((short) 12);
+    assertEquals((short) 12, s.pop());
+    assertEquals((short) 11, s.pop());
+    s.push((short) 40);
+    assertEquals((short) 40, s.pop());
+    assertEquals((short) 10, s.pop());
     try {
       s.pop();
       fail("should have thrown an exception!");

@@ -19,13 +19,12 @@
 
 package org.apache.thrift.transport.sasl;
 
-import java.nio.ByteBuffer;
+import static org.apache.thrift.transport.sasl.SaslNegotiationFrameWriter.HEADER_BYTES;
 
+import java.nio.ByteBuffer;
 import org.apache.thrift.EncodingUtils;
 import org.junit.Assert;
 import org.junit.Test;
-
-import static org.apache.thrift.transport.sasl.SaslNegotiationFrameWriter.HEADER_BYTES;
 
 public class TestSaslNegotiationFrameWriter {
 

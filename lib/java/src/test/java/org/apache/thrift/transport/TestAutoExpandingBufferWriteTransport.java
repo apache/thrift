@@ -18,11 +18,11 @@
  */
 package org.apache.thrift.transport;
 
-import java.nio.ByteBuffer;
+import static org.junit.Assert.*;
 
+import java.nio.ByteBuffer;
 import org.apache.thrift.TConfiguration;
 import org.junit.Test;
-import static org.junit.Assert.*;
 
 public class TestAutoExpandingBufferWriteTransport {
 
@@ -33,7 +33,7 @@ public class TestAutoExpandingBufferWriteTransport {
     AutoExpandingBufferWriteTransport t = new AutoExpandingBufferWriteTransport(config, 1, 0);
     assertEquals(0, t.getLength());
     assertEquals(1, t.getBuf().array().length);
-    byte[] b1 = new byte[]{1,2,3};
+    byte[] b1 = new byte[] {1, 2, 3};
     t.write(b1);
     assertEquals(3, t.getLength());
     assertTrue(t.getBuf().array().length >= 3);
@@ -42,7 +42,7 @@ public class TestAutoExpandingBufferWriteTransport {
     t.reset();
     assertEquals(0, t.getLength());
     assertTrue(t.getBuf().array().length >= 3);
-    byte[] b2 = new byte[]{4,5};
+    byte[] b2 = new byte[] {4, 5};
     t.write(b2);
     assertEquals(2, t.getLength());
     assertEquals(ByteBuffer.wrap(b2), ByteBuffer.wrap(t.getBuf().array(), 0, 2));

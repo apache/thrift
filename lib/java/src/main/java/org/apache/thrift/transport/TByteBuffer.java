@@ -1,14 +1,11 @@
 package org.apache.thrift.transport;
 
-import org.apache.thrift.TConfiguration;
-
 import java.nio.BufferOverflowException;
 import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
+import org.apache.thrift.TConfiguration;
 
-/**
- * ByteBuffer-backed implementation of TTransport.
- */
+/** ByteBuffer-backed implementation of TTransport. */
 public final class TByteBuffer extends TEndpointTransport {
   private final ByteBuffer byteBuffer;
 
@@ -30,12 +27,10 @@ public final class TByteBuffer extends TEndpointTransport {
   }
 
   @Override
-  public void open() {
-  }
+  public void open() {}
 
   @Override
-  public void close() {
-  }
+  public void close() {}
 
   @Override
   public int read(byte[] buf, int off, int len) throws TTransportException {

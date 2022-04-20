@@ -44,7 +44,7 @@ public class TestMultiplexedProcessor {
 
   @Test(expected = TException.class)
   public void testWrongMessageType() throws TException {
-    when (iprot.readMessageBegin()).thenReturn(new TMessage("service:func", TMessageType.REPLY, 42));
+    when(iprot.readMessageBegin()).thenReturn(new TMessage("service:func", TMessageType.REPLY, 42));
     mp.process(iprot, oprot);
   }
 
@@ -59,7 +59,7 @@ public class TestMultiplexedProcessor {
     @Override
     public void process(TProtocol in, TProtocol out) throws TException {
       TMessage msg = in.readMessageBegin();
-      if (!"func".equals(msg.name) || msg.type!=TMessageType.CALL || msg.seqid!=42) {
+      if (!"func".equals(msg.name) || msg.type != TMessageType.CALL || msg.seqid != 42) {
         throw new TException("incorrect parameters");
       }
       out.writeMessageBegin(new TMessage("func", TMessageType.REPLY, 42));
@@ -81,5 +81,4 @@ public class TestMultiplexedProcessor {
     mp.process(iprot, oprot);
     verify(oprot).writeMessageBegin(any(TMessage.class));
   }
-
 }

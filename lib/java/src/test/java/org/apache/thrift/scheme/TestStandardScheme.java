@@ -1,7 +1,6 @@
 package org.apache.thrift.scheme;
 
 import junit.framework.TestCase;
-
 import org.apache.thrift.Fixtures;
 import org.apache.thrift.TBase;
 import org.apache.thrift.TDeserializer;
@@ -11,7 +10,6 @@ import org.apache.thrift.protocol.TBinaryProtocol;
 import org.apache.thrift.protocol.TProtocol;
 import org.apache.thrift.transport.TMemoryBuffer;
 import org.apache.thrift.transport.TTransport;
-
 import org.apache.thrift.transport.TTransportException;
 import thrift.test.HolyMoley;
 import thrift.test.Nesting;
@@ -21,12 +19,11 @@ public class TestStandardScheme extends TestCase {
   TSerializer serializer = new TSerializer();
   TDeserializer deserializer = new TDeserializer();
 
-  public TestStandardScheme() throws TTransportException {
-  }
+  public TestStandardScheme() throws TTransportException {}
 
   /**
-   * This tests whether the Standard Scheme properly reads structs serialized
-   * using an older version of thrift.
+   * This tests whether the Standard Scheme properly reads structs serialized using an older version
+   * of thrift.
    */
   public void testPersistentStructs() throws TException {
     readAndCompare(new OneOfEach(), Fixtures.oneOfEach, Fixtures.persistentBytesOneOfEach);

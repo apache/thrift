@@ -19,19 +19,16 @@
 
 package org.apache.thrift.transport.sasl;
 
+import static org.apache.thrift.transport.sasl.TSaslNegotiationException.ErrorType.AUTHENTICATION_FAILURE;
+
 import javax.security.sasl.Sasl;
 import javax.security.sasl.SaslException;
 import javax.security.sasl.SaslServer;
-
 import org.apache.thrift.transport.TTransportException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static org.apache.thrift.transport.sasl.TSaslNegotiationException.ErrorType.AUTHENTICATION_FAILURE;
-
-/**
- * Server side sasl peer, a wrapper around SaslServer to provide some handy methods.
- */
+/** Server side sasl peer, a wrapper around SaslServer to provide some handy methods. */
 public class ServerSaslPeer implements SaslPeer {
   private static final Logger LOGGER = LoggerFactory.getLogger(ServerSaslPeer.class);
 
@@ -49,8 +46,8 @@ public class ServerSaslPeer implements SaslPeer {
     try {
       return saslServer.evaluateResponse(negotiationMessage);
     } catch (SaslException e) {
-      throw new TSaslNegotiationException(AUTHENTICATION_FAILURE,
-          "Authentication failed with " + saslServer.getMechanismName(), e);
+      throw new TSaslNegotiationException(
+          AUTHENTICATION_FAILURE, "Authentication failed with " + saslServer.getMechanismName(), e);
     }
   }
 
@@ -104,5 +101,4 @@ public class ServerSaslPeer implements SaslPeer {
   SaslServer getSaslServer() {
     return saslServer;
   }
-
 }
