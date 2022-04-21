@@ -18,8 +18,8 @@
  */
 
 plugins {
-    kotlin("jvm") version "1.5.31"
-    id("com.ncorti.ktfmt.gradle") version "0.4.0"
+    kotlin("jvm")
+    id("com.ncorti.ktfmt.gradle")
     java
     application
 }
@@ -37,8 +37,6 @@ dependencies {
     implementation("org.apache.thrift:libthrift:INCLUDED")
     // https://mvnrepository.com/artifact/ch.qos.logback/logback-classic
     implementation("ch.qos.logback:logback-classic:1.3.0-alpha14")
-    testImplementation("org.jetbrains.kotlin:kotlin-test")
-    testImplementation("org.jetbrains.kotlin:kotlin-test-junit")
 }
 
 tasks {

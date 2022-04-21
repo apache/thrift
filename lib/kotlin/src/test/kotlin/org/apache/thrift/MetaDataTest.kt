@@ -16,15 +16,22 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-pluginManagement {
-    plugins {
-        kotlin("jvm") version "1.5.31"
-        id("com.ncorti.ktfmt.gradle") version "0.4.0"
+
+package org.apache.thrift
+
+import kotlin.test.assertEquals
+import kotlin.test.assertFalse
+import org.apache.thrift.meta_data.FieldMetaData
+import org.junit.jupiter.api.Test
+import thrift.test.Bonk
+
+internal class MetaDataTest {
+    @Test
+    internal fun testFieldMetaData() {
+        val map = FieldMetaData.getStructMetaDataMap(Bonk::class.java)
+        assertEquals(2, map.size)
+        val typeField = map[Bonk._Fields.TYPE]!!
+        assertEquals("type", typeField.fieldName)
+        assertFalse(typeField.valueMetaData.isBinary)
     }
 }
-
-rootProject.name = "libthrift-kotlin"
-
-include("cross-test-client", "cross-test-server")
-
-includeBuild("../java")

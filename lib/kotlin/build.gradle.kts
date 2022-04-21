@@ -20,8 +20,6 @@
 plugins {
     kotlin("jvm")
     id("com.ncorti.ktfmt.gradle")
-    java
-    application
 }
 
 repositories {
@@ -35,18 +33,16 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-jdk8:1.6.1")
     // https://mvnrepository.com/artifact/org.apache.thrift/libthrift
     implementation("org.apache.thrift:libthrift:INCLUDED")
-    // https://mvnrepository.com/artifact/ch.qos.logback/logback-classic
-    implementation("ch.qos.logback:logback-classic:1.3.0-alpha14")
+    testImplementation(kotlin("test"))
 }
 
 tasks {
-    application {
-        applicationName = "TestServer"
-        mainClass.set("org.apache.thrift.test.TestServerKt")
-    }
-
     ktfmt {
         kotlinLangStyle()
+    }
+
+    test {
+        useJUnitPlatform()
     }
 
     task<Exec>("compileThrift") {

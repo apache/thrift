@@ -152,6 +152,7 @@ private:
                                   std::string additional_interface = "");
   void generate_struct_field_name_constants(std::ostream& out, t_struct* tstruct);
   void generate_struct_companion_object(std::ostream& out, t_struct* tstruct);
+  void generate_field_value_meta_data(std::ostream& out, t_type* ttype);
   void generate_struct_standard_scheme(std::ostream& out, t_struct* tstruct);
   void generate_struct_standard_scheme_read(std::ostream& out, t_struct* tstruct);
   void generate_struct_standard_scheme_write(std::ostream& out, t_struct* tstruct);
@@ -633,16 +634,98 @@ void t_kotlin_generator::generate_struct_companion_object(std::ostream& out, t_s
                 << tstruct->get_name() << "\")" << endl;
     {
       for (auto& field : tstruct->get_members()) {
+        // field desc
         indent(out) << "private val " << constant_name(field->get_name())
                     << "_FIELD_DESC: org.apache.thrift.protocol.TField = "
                        "org.apache.thrift.protocol.TField(\""
                     << field->get_name() << "\", " << type_to_enum(field->get_type()) << ", "
                     << field->get_key() << ")" << endl;
+        // field metadata
+        indent(out) << "private val " << constant_name(field->get_name())
+                    << "_FIELD_META_DATA: org.apache.thrift.meta_data.FieldMetaData = "
+                       "org.apache.thrift.meta_data.FieldMetaData("
+                    << endl;
+        indent_up();
+        {
+          indent(out) << '"' << field->get_name() << '"' << ',' << endl;
+          indent(out) << "org.apache.thrift.TFieldRequirementType.";
+          if (field->get_req() == t_field::T_REQUIRED) {
+            out << "REQUIRED";
+          } else if (field->get_req() == t_field::T_OPTIONAL) {
+            out << "OPTIONAL";
+          } else {
+            out << "DEFAULT";
+          }
+          out << ',' << endl;
+          generate_field_value_meta_data(indent(out), field->get_type());
+        }
+        indent_down();
+        out << ")" << endl;
       }
     }
+
+    // all fields in a map
+    indent(out)
+        << "private val metadata: Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> = mapOf("
+        << endl;
+    indent_up();
+    for (auto& field : tstruct->get_members()) {
+      indent(out) << "_Fields." << constant_name(field->get_name()) << " to "
+                  << constant_name(field->get_name()) << "_FIELD_META_DATA," << endl;
+    }
+    indent_down();
+    indent(out) << ")" << endl;
+
+    indent(out) << "init {" << endl;
+    indent_up();
+    indent(out) << "org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap("
+                << tstruct->get_name() << "::class.java, metadata)" << endl;
+    scope_down(out);
   }
   scope_down(out);
   out << endl;
+}
+
+void t_kotlin_generator::generate_field_value_meta_data(std::ostream& out, t_type* type) {
+  static const string ttype_class = "org.apache.thrift.protocol.TType.";
+  static const string meta_package = "org.apache.thrift.meta_data.";
+  out << meta_package;
+  if (type->is_struct() || type->is_xception()) {
+    out << "StructMetaData(" << ttype_class << "STRUCT, " << type_name(type) << "::class.java";
+  } else if (type->is_container()) {
+    if (type->is_list()) {
+      out << "ListMetaData(" << ttype_class << "LIST," << endl;
+      indent_up();
+      t_type* elem_type = ((t_list*)type)->get_elem_type();
+      generate_field_value_meta_data(indent(out), elem_type);
+      indent_down();
+    } else if (type->is_set()) {
+      out << "SetMetaData(" << ttype_class << "SET," << endl;
+      indent_up();
+      t_type* elem_type = ((t_set*)type)->get_elem_type();
+      generate_field_value_meta_data(indent(out), elem_type);
+      indent_down();
+    } else {
+      out << "MapMetaData(" << ttype_class << "MAP," << endl;
+      indent_up();
+      t_type* key_type = ((t_map*)type)->get_key_type();
+      t_type* val_type = ((t_map*)type)->get_val_type();
+      generate_field_value_meta_data(indent(out), key_type);
+      out << "," << endl;
+      generate_field_value_meta_data(indent(out), val_type);
+      indent_down();
+    }
+  } else if (type->is_enum()) {
+    out << "EnumMetaData(" << ttype_class << "ENUM, " << type_name(type) << "::class.java";
+  } else {
+    out << "FieldValueMetaData(" << type_to_enum(type);
+    if (type->is_typedef()) {
+      out << ", \"" << ((t_typedef*)type)->get_symbolic() << "\"";
+    } else if (type->is_binary()) {
+      out << ", true";
+    }
+  }
+  out << ")";
 }
 
 void t_kotlin_generator::generate_struct_method_deep_copy(std::ostream& out, t_struct* tstruct) {
