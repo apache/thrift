@@ -43,7 +43,7 @@ function dockerfile_changed {
 #
 # If this build has no DOCKER_PASS and it is in the docker stage
 # then there's no reason to do any processing because we cannot
-# push the result if the Dockerfile changed.
+# push the result if the Dockerfile changed.  
 #
 
 if [[ "$TRAVIS_BUILD_STAGE" == "docker" ]] && [[ -z "$DOCKER_PASS" ]]; then
@@ -70,13 +70,9 @@ popd
 #
 
 echo Rebuilding docker image $DISTRO
+docker build --tag $DOCKER_TAG build/docker/$DISTRO
 
-# https://docs.travis-ci.com/user/common-build-problems/#build-times-out-because-no-output-was-received
-# adding `travis_wait` because kerl building in the docker file takes >10 min for building erlang
-# without printing to stdout, resulting in build failures
-travis_wait 45 docker build --tag $DOCKER_TAG build/docker/$DISTRO
-
-if [[ "$TRAVIS_BUILD_STAGE" == "docker" ]] && [[ ! -z "$DOCKER_USER" ]] && [[ ! -z "$DOCKER_PASS" ]]; then
+if [[ "$TRAVIS_BUILD_STAGE" == "docker" ]] && [[ ! -z "$DOCKER_USER" ]] && [[ ! -z "$DOCKER_PASS" ]]; then 
   echo Pushing docker image $DOCKER_TAG
   docker login -u $DOCKER_USER -p $DOCKER_PASS
   docker push $DOCKER_TAG
