@@ -33,7 +33,10 @@ services:
   - docker
 
 install:
-  - if [[ `uname` == "Linux" ]]; then build/docker/refresh.sh; fi
+  # https://docs.travis-ci.com/user/common-build-problems/#build-times-out-because-no-output-was-received
+  # adding `travis_wait` because kerl building in the docker file takes >10 min for building erlang
+  # without printing to stdout, resulting in build failures
+  - if [[ `uname` == "Linux" ]]; then travis_wait build/docker/refresh.sh; fi
 
 stages:
   - docker    # docker images
