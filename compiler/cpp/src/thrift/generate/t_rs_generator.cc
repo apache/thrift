@@ -2433,7 +2433,7 @@ void t_rs_generator::render_sync_processor_definition_and_impl(t_service* tservi
   f_gen_ << indent() << "pub struct " << service_processor_name << "<H: " << handler_trait_name
          << "> {" << '\n';
   indent_up();
-  f_gen_ << indent() << "handler: H," << '\n';
+  f_gen_ << indent() << "pub handler: H," << '\n';
   indent_down();
   f_gen_ << indent() << "}" << '\n';
   f_gen_ << '\n';
