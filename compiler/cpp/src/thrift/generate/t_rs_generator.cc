@@ -2570,7 +2570,7 @@ void t_rs_generator::render_sync_processor_definition_and_impl(t_service *tservi
     << "> {"
     << endl;
   indent_up();
-  f_gen_ << indent() << "handler: H," << endl;
+  f_gen_ << indent() << "pub handler: H," << endl;
   indent_down();
   f_gen_ << indent() << "}" << endl;
   f_gen_ << endl;
