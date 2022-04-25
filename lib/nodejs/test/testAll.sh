@@ -88,11 +88,11 @@ TESTOK=0
 # generating Thrift code
 
 ${THRIFT_COMPILER} -o ${DIR} --gen js:node ${THRIFT_FILES_DIR}/ThriftTest.thrift
-${THRIFT_COMPILER} -o ${DIR} --gen js:node ${THRIFT_FILES_DIR}/JsDeepConstructorTest.thrift
+${THRIFT_COMPILER} -o ${DIR} --gen js:node ${THRIFT_FILES_DIR}/lib/js/test/JsDeepConstructorTest.thrift
 ${THRIFT_COMPILER} -o ${DIR} --gen js:node ${THRIFT_FILES_DIR}/Int64Test.thrift
 mkdir ${DIR}/gen-nodejs-es6
 ${THRIFT_COMPILER} -out ${DIR}/gen-nodejs-es6 --gen js:node,es6 ${THRIFT_FILES_DIR}/ThriftTest.thrift
-${THRIFT_COMPILER} -out ${DIR}/gen-nodejs-es6 --gen js:node,es6 ${THRIFT_FILES_DIR}/JsDeepConstructorTest.thrift
+${THRIFT_COMPILER} -out ${DIR}/gen-nodejs-es6 --gen js:node,es6 ${THRIFT_FILES_DIR}/js/lib/test/JsDeepConstructorTest.thrift
 ${THRIFT_COMPILER} -out ${DIR}/gen-nodejs-es6 --gen js:node,es6 ${THRIFT_FILES_DIR}/Int64Test.thrift
 
 # generate episodic compilation test code
