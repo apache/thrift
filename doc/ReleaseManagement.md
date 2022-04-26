@@ -130,7 +130,7 @@ All Apache Thrift releases go through a 72-hour final release candidate voting p
 
         ```text
         =CONCAT("[", B1, "]",
-                "https://issues.apache.org/jira/browse/", 
+                "https://issues.apache.org/jira/browse/",
                 B1, " - ", B3)
         ```
 
@@ -177,7 +177,7 @@ All Apache Thrift releases go through a 72-hour final release candidate voting p
         1. Install chocolatey and install winflexbison with chocolatey.
         1. Run cmake to generate an out-of-tree build environment:
             ```cmd
-            C:\build> cmake ..\thrift -DBISON_EXECUTABLE=c:\ProgramData\chocolatey\lib\winflexbison\tools\win_bison.exe -DFLEX_EXECUTABLE=c:\ProgramData\chocolatey\lib\winflexbison\tools\win_flex.exe -DWITH_MT=ON -DWITH_SHARED_LIB=OFF -DWITH_CPP=OFF -DWITH_JAVA=OFF -DWITH_HASKELL=OFF -DWITH_PYTHON=OFF -DWITH_C_GLIB=OFF -DBUILD_TESTING=OFF -DBUILD_TUTORIALS=OFF -DBUILD_COMPILER=ON
+            C:\build> cmake ..\thrift -DBISON_EXECUTABLE=c:\ProgramData\chocolatey\lib\winflexbison\tools\win_bison.exe -DFLEX_EXECUTABLE=c:\ProgramData\chocolatey\lib\winflexbison\tools\win_flex.exe -DWITH_MT=ON -DWITH_SHARED_LIB=OFF -DWITH_CPP=OFF -DWITH_JAVA=OFF -DWITH_HASKELL=OFF -DWITH_PY3=OFF -DWITH_C_GLIB=OFF -DBUILD_TESTING=OFF -DBUILD_TUTORIALS=OFF -DBUILD_COMPILER=ON
             C:\build> cmake --build . --config Release
             ```
 
@@ -237,9 +237,9 @@ All Apache Thrift releases go through a 72-hour final release candidate voting p
     https://dist.apache.org/repos/dist/dev/thrift/1.0.0-rc0/thrift-1.0.0-rc0.tar.gz.asc
 
     The release candidates checksums are:
-    md5: 
-    sha1: 
-    sha256: 
+    md5:
+    sha1:
+    sha256:
 
 
     A prebuilt statically-linked Windows compiler is available at:
@@ -249,11 +249,11 @@ All Apache Thrift releases go through a 72-hour final release candidate voting p
     https://dist.apache.org/repos/dist/dev/thrift/1.0.0-rc0/thrift-1.0.0-rc0.exe.asc
 
     Prebuilt statically-linked Windows compiler checksums are:
-    md5: 
-    sha1: 
-    sha256: 
+    md5:
+    sha1:
+    sha256:
 
-    
+
     The source tree as ZIP file to be published via Github releases:
     https://dist.apache.org/repos/dist/dev/thrift/1.0.0-rc0/thrift-1.0.0-rc0.zip
 
@@ -261,10 +261,10 @@ All Apache Thrift releases go through a 72-hour final release candidate voting p
     https://dist.apache.org/repos/dist/dev/thrift/1.0.0-rc0/thrift-1.0.0-rc0.zip.asc
 
     ZIP source tree checksums are:
-    md5: 
-    sha1: 
-    sha256: 
-    
+    md5:
+    sha1:
+    sha256:
+
     The CHANGES list for this release is available at:
     https://github.com/apache/thrift/blob/release/1.0.0/CHANGES.md
 
@@ -369,7 +369,7 @@ Voting on the development mailing list provides additional benefits (wisdom from
     https://issues.apache.org/jira/browse/THRIFT-4686
 
 1. Ensure that the [Jira release page](https://issues.apache.org/jira/projects/THRIFT?selectedItem=com.atlassian.jira.jira-projects-plugin%3Arelease-page&status=unreleased) for the version has the same number of issues in the version as issues done, and that there are no issues in progress and no issues to do, and no warnings.  Finally, mark it as released and set the date of the release.
-  
+
 * [Report any CVEs](https://apache.org/security/committers.html) that were fixed.  You can email `security@apache.org` if you are not sure if there are any CVEs to report.
 
 #### Third Party Package Managers
