@@ -17,13 +17,17 @@
  * under the License.
  */
 
+#include <array>
 #include <boost/test/unit_test.hpp>
-#include <iostream>
 #include <climits>
-#include <vector>
-#include <thrift/protocol/TBinaryProtocol.h>
+#include <cstdlib>
+#include <iostream>
 #include <memory>
+#include <numeric>
+#include <thrift/protocol/TBinaryProtocol.h>
 #include <thrift/transport/TBufferTransports.h>
+#include <vector>
+
 #include "gen-cpp/ThriftTest_types.h"
 
 BOOST_AUTO_TEST_SUITE(TMemoryBufferTest)
@@ -123,6 +127,248 @@ BOOST_AUTO_TEST_CASE(test_error_set_max_buffer_size_too_small)
 {
   TMemoryBuffer buf;
   BOOST_CHECK_THROW(buf.setMaxBufferSize(buf.getBufferSize() - 1), TTransportException);
+}
+
+BOOST_AUTO_TEST_CASE(test_observe) {
+#ifdef _MSC_VER
+  #define N 73
+#else
+  constexpr size_t N = 73;
+#endif
+  constexpr size_t M = 42;
+  uint8_t one_byte = 42;
+  std::vector<uint8_t> scratch;
+  auto filler = [=]() {
+    std::array<uint8_t, N> x;
+    // Fill buf_mem with a sequence from 0 to N - 1
+    std::iota(x.begin(), x.end(), 0);
+    return x;
+  };
+  static const std::array<uint8_t, N> buf_mem = filler();
+
+  BOOST_STATIC_ASSERT(M < N);
+
+  TMemoryBuffer buf((uint8_t*)&buf_mem.front(), N, TMemoryBuffer::MemoryPolicy::OBSERVE);
+
+  // Readable
+  BOOST_CHECK_EQUAL(N, buf.available_read());
+  // No available write space
+  BOOST_CHECK_EQUAL(0, buf.available_write());
+  // Not writeable
+  BOOST_CHECK_THROW(buf.write(&one_byte, 1), TTransportException);
+
+  // Read some but not all
+  scratch.resize(M);
+  BOOST_CHECK_EQUAL(M, buf.read(&scratch[0], M));
+  // Check remaining
+  BOOST_CHECK_EQUAL(N - M, buf.available_read());
+  // No available write space
+  BOOST_CHECK_EQUAL(0, buf.available_write());
+  // Not writeable
+  BOOST_CHECK_THROW(buf.write(&one_byte, 1), TTransportException);
+  // Contents
+  BOOST_CHECK_EQUAL_COLLECTIONS(scratch.begin(), scratch.end(), buf_mem.begin(),
+                                buf_mem.begin() + M);
+
+  // Readable (drain remaining)
+  scratch.resize(N);
+  BOOST_CHECK_EQUAL(N - M, buf.read(&scratch[M], N - M));
+  // No available write space
+  BOOST_CHECK_EQUAL(0, buf.available_write());
+  // Not writeable
+  BOOST_CHECK_THROW(buf.write(&one_byte, 1), TTransportException);
+  // Contents
+  BOOST_CHECK_EQUAL_COLLECTIONS(scratch.begin(), scratch.end(), buf_mem.begin(), buf_mem.end());
+
+  // Not readable
+  BOOST_CHECK_EQUAL(0, buf.read(&one_byte, 1));
+  BOOST_CHECK_EQUAL(0, buf.available_read());
+  // No available write space
+  BOOST_CHECK_EQUAL(0, buf.available_write());
+  // Not writeable
+  BOOST_CHECK_THROW(buf.write(&one_byte, 1), TTransportException);
+
+  /* OBSERVE buffer cannot be reread with the default reset */
+
+  buf.resetBuffer();
+  // Not Readable
+  BOOST_CHECK_EQUAL(0, buf.available_read());
+  // No available write space
+  BOOST_CHECK_EQUAL(0, buf.available_write());
+  // Not writeable
+  BOOST_CHECK_THROW(buf.write(&one_byte, 1), TTransportException);
+
+  /* OBSERVE buffers do not auto-resize when written to (implicit) */
+  /* OBSERVE buffers can be appended-to (implicit) */
+}
+
+BOOST_AUTO_TEST_CASE(test_copy) {
+#ifdef _MSC_VER
+  #define N 73
+#else
+  constexpr size_t N = 73;
+#endif
+  constexpr size_t M = 42;
+  uint8_t one_byte = 42;
+  std::vector<uint8_t> scratch;
+  auto filler = [&]() {
+    std::array<uint8_t, N> x;
+    // Fill buf_mem with a sequence from 0 to N - 1
+    std::iota(x.begin(), x.end(), 0);
+    return x;
+  };
+  static const std::array<uint8_t, N> buf_mem = filler();
+
+  BOOST_STATIC_ASSERT(M < N);
+
+  TMemoryBuffer buf((uint8_t*)&buf_mem.front(), N, TMemoryBuffer::MemoryPolicy::COPY);
+
+  // Readable
+  BOOST_CHECK_EQUAL(N, buf.available_read());
+  // No available write space
+  BOOST_CHECK_EQUAL(0, buf.available_write());
+
+  // Read some but not all
+  scratch.resize(M);
+  BOOST_CHECK_EQUAL(M, buf.read(&scratch[0], M));
+  // Check remaining
+  BOOST_CHECK_EQUAL(N - M, buf.available_read());
+  // No available write space
+  BOOST_CHECK_EQUAL(0, buf.available_write());
+  // Contents
+  BOOST_CHECK_EQUAL_COLLECTIONS(scratch.begin(), scratch.end(), buf_mem.begin(),
+                                buf_mem.begin() + M);
+
+  // Readable (drain remaining)
+  scratch.resize(N);
+  BOOST_CHECK_EQUAL(N - M, buf.read(&scratch[M], N - M));
+  // No available write space
+  BOOST_CHECK_EQUAL(0, buf.available_write());
+  // Contents
+  BOOST_CHECK_EQUAL_COLLECTIONS(scratch.begin(), scratch.end(), buf_mem.begin(), buf_mem.end());
+
+  // Not readable
+  BOOST_CHECK_EQUAL(0, buf.read(&one_byte, 1));
+  BOOST_CHECK_EQUAL(0, buf.available_read());
+  // No available write space
+  BOOST_CHECK_EQUAL(0, buf.available_write());
+
+  /* COPY buffer cannot be reread with the default reset */
+
+  buf.resetBuffer();
+  // Not readable
+  BOOST_CHECK_EQUAL(0, buf.available_read());
+  // Has available write space
+  BOOST_CHECK_EQUAL(N, buf.available_write());
+
+  /* COPY buffers auto-resize when written to */
+
+  // Not readable
+  BOOST_CHECK_EQUAL(0, buf.read(&one_byte, 1));
+  BOOST_CHECK_EQUAL(0, buf.available_read());
+  // No available write space
+  BOOST_CHECK_GT(buf.available_write(), 0);
+  // Writeable
+  one_byte = M;
+  BOOST_CHECK_NO_THROW(buf.write(&one_byte, 1));
+  // Readable
+  one_byte = 0xff;
+  BOOST_CHECK_EQUAL(1, buf.read(&one_byte, 1));
+  BOOST_CHECK_EQUAL(one_byte, M);
+
+  /* COPY buffers can be appended-to (and auto-resize) */
+
+  buf.resetBuffer((uint8_t*)&buf_mem.front(), N, TMemoryBuffer::MemoryPolicy::COPY);
+  // Appendable
+  one_byte = N + 1;
+  BOOST_CHECK_NO_THROW(buf.write(&one_byte, 1));
+  BOOST_CHECK_EQUAL(N, buf.read(&scratch[0], N));
+  BOOST_CHECK_EQUAL_COLLECTIONS(scratch.begin(), scratch.end(), buf_mem.begin(),
+                                buf_mem.begin() + N);
+  one_byte = 0xff;
+  BOOST_CHECK_EQUAL(1, buf.read(&one_byte, 1));
+  BOOST_CHECK_EQUAL(one_byte, N + 1);
+}
+
+BOOST_AUTO_TEST_CASE(test_take_ownership)
+{
+#ifdef _MSC_VER
+  #define N 73
+#else
+  constexpr size_t N = 73;
+#endif
+  constexpr size_t M = 42;
+  uint8_t one_byte = 42;
+  std::vector<uint8_t> scratch;
+  auto filler = [&]() {
+    /* TAKE_OWNERSHIP buffers MUST be malloc'ed */
+    uint8_t* x = static_cast<uint8_t*>(malloc(N));
+    // Fill buf_mem with a sequence from 0 to N - 1
+    std::iota(&x[0], &x[N], 0);
+    return x;
+  };
+  uint8_t* buf_mem = filler();
+
+  BOOST_STATIC_ASSERT(M < N);
+
+  TMemoryBuffer buf(buf_mem, N, TMemoryBuffer::MemoryPolicy::TAKE_OWNERSHIP);
+
+  // Readable
+  BOOST_CHECK_EQUAL(N, buf.available_read());
+  // No available write space
+  BOOST_CHECK_EQUAL(0, buf.available_write());
+
+  // Read some but not all
+  scratch.resize(M);
+  BOOST_CHECK_EQUAL(M, buf.read(&scratch[0], M));
+  // Check remaining
+  BOOST_CHECK_EQUAL(N - M, buf.available_read());
+  // No available write space
+  BOOST_CHECK_EQUAL(0, buf.available_write());
+  // Contents
+  BOOST_CHECK_EQUAL_COLLECTIONS(scratch.begin(), scratch.end(), &buf_mem[0], &buf_mem[M]);
+
+  // Readable (drain remaining)
+  scratch.resize(N);
+  BOOST_CHECK_EQUAL(N - M, buf.read(&scratch[M], N - M));
+  // No available write space
+  BOOST_CHECK_EQUAL(0, buf.available_write());
+  // Contents
+  BOOST_CHECK_EQUAL_COLLECTIONS(scratch.begin(), scratch.end(), &buf_mem[0], &buf_mem[N]);
+
+  // Not readable
+  BOOST_CHECK_EQUAL(0, buf.read(&one_byte, 1));
+  BOOST_CHECK_EQUAL(0, buf.available_read());
+  // No available write space
+  BOOST_CHECK_EQUAL(0, buf.available_write());
+
+  /* TAKE_OWNERSHIP buffers auto-resize when written to */
+
+  // Not readable
+  BOOST_CHECK_EQUAL(0, buf.read(&one_byte, 1));
+  BOOST_CHECK_EQUAL(0, buf.available_read());
+  // No available write space
+  BOOST_CHECK_EQUAL(buf.available_write(), 0);
+  // Writeable
+  one_byte = M;
+  BOOST_CHECK_NO_THROW(buf.write(&one_byte, 1));
+  // Readable
+  one_byte = 0xff;
+  BOOST_CHECK_EQUAL(1, buf.read(&one_byte, 1));
+  BOOST_CHECK_EQUAL(one_byte, M);
+
+  /* TAKE_OWNERSHIP buffers can be appended-to (and auto-resize) */
+
+  buf_mem = filler();
+  buf.resetBuffer(buf_mem, N, TMemoryBuffer::MemoryPolicy::COPY);
+  // Appendable
+  one_byte = N + 1;
+  BOOST_CHECK_NO_THROW(buf.write(&one_byte, 1));
+  BOOST_CHECK_EQUAL(N, buf.read(&scratch[0], N));
+  BOOST_CHECK_EQUAL_COLLECTIONS(scratch.begin(), scratch.end(), &buf_mem[0], &buf_mem[N]);
+  one_byte = 0xff;
+  BOOST_CHECK_EQUAL(1, buf.read(&one_byte, 1));
+  BOOST_CHECK_EQUAL(one_byte, N + 1);
 }
 
 BOOST_AUTO_TEST_CASE(test_maximum_buffer_size)

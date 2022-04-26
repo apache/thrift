@@ -74,9 +74,9 @@ test {
     systemProperties = [
         'build.test': "${compileTestJava.destinationDir}",
         'test.port': "${testPort}",
-        'javax.net.ssl.trustStore': "${projectDir}/test/.truststore",
+        'javax.net.ssl.trustStore': "${projectDir}/src/crossTest/resources/.truststore",
         'javax.net.ssl.trustStorePassword': 'thrift',
-        'javax.net.ssl.keyStore': "${projectDir}/test/.keystore",
+        'javax.net.ssl.keyStore': "${projectDir}/src/crossTest/resources/.keystore",
         'javax.net.ssl.keyStorePassword': 'thrift'
     ]
 }

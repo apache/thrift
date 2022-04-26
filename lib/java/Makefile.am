@@ -20,13 +20,13 @@
 export CLASSPATH
 
 all-local:
-	./gradlew $(GRADLE_OPTS) assemble \
+	gradle $(GRADLE_OPTS) assemble \
 		-Prelease=true \
 		-Pthrift.version=$(PACKAGE_VERSION) \
 		--console=plain
 
 install-exec-hook:
-	./gradlew $(GRADLE_OPTS) install \
+	gradle $(GRADLE_OPTS) install \
 		-Prelease=true \
 		-Pinstall.path=$(DESTDIR)$(JAVA_PREFIX) \
 		-Pinstall.javadoc.path=$(DESTDIR)$(docdir)/java \
@@ -34,24 +34,24 @@ install-exec-hook:
 		--console=plain
 
 clean-local:
-	./gradlew $(GRADLE_OPTS) clean --console=plain
+	gradle $(GRADLE_OPTS) clean --console=plain
 
 precross: $(THRIFT)
-	./gradlew $(GRADLE_OPTS) shadowJar \
+	gradle $(GRADLE_OPTS) shadowJar \
 		-Prelease=true \
 		-Pthrift.version=$(PACKAGE_VERSION) \
 		-Pthrift.compiler=$(THRIFT) \
 		--console=plain
 
 check-local: $(THRIFT)
-	./gradlew $(GRADLE_OPTS) test \
+	gradle $(GRADLE_OPTS) test \
 		-Prelease=true \
 		-Pthrift.version=$(PACKAGE_VERSION) \
 		-Pthrift.compiler=$(THRIFT) \
 		--console=plain
 
 maven-publish:
-	./gradlew $(GRADLE_OPTS) uploadArchives \
+	gradle $(GRADLE_OPTS) uploadArchives \
 		-Prelease=true \
 		-Pthrift.version=$(PACKAGE_VERSION) \
 		--console=plain
@@ -61,12 +61,9 @@ EXTRA_DIST = \
 	gradle.properties \
 	settings.gradle \
 	gradle \
-	gradlew \
-	gradlew.bat \
 	CMakeLists.txt \
 	coding_standards.md \
 	android \
 	src \
-	test \
 	code_quality_tools \
 	README.md

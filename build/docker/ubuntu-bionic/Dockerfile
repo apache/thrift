@@ -43,10 +43,6 @@ RUN curl https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor > /et
     chown root:root /etc/apt/trusted.gpg.d/microsoft.gpg && \
     chown root:root /etc/apt/sources.list.d/microsoft-prod.list
 
-# erlang
-RUN wget -O- https://packages.erlang-solutions.com/ubuntu/erlang_solutions.asc | apt-key add - && \
-    echo "deb https://packages.erlang-solutions.com/ubuntu bionic contrib" | tee /etc/apt/sources.list.d/erlang.list
-
 # node.js
 RUN curl -sL https://deb.nodesource.com/gpgkey/nodesource.gpg.key | apt-key add - && \
     echo "deb https://deb.nodesource.com/node_10.x bionic main" | tee /etc/apt/sources.list.d/nodesource.list
@@ -80,6 +76,8 @@ RUN mkdir -p /usr/local/adobe/flex/4.6 && \
     unzip flex_sdk_4.6.zip
 ENV FLEX_HOME /usr/local/adobe/flex/4.6
 
+# TODO: "apt-get install" without "apt-get update" in the same "RUN" step can cause cache issues if modified later.
+# See https://docs.docker.com/develop/develop-images/dockerfile_best-practices/#run
 RUN apt-get install -y --no-install-recommends \
 `# C++ dependencies` \
       libboost-all-dev \
@@ -88,18 +86,6 @@ RUN apt-get install -y --no-install-recommends \
       qt5-default \
       qtbase5-dev \
       qtbase5-dev-tools
-
-ENV SBCL_VERSION 1.5.3
-RUN \
-`# Common Lisp (sbcl) dependencies` \
-    curl --version && \
-    curl -o sbcl-${SBCL_VERSION}-x86-64-linux-binary.tar.bz2 -J -L https://sourceforge.net/projects/sbcl/files/sbcl/${SBCL_VERSION}/sbcl-${SBCL_VERSION}-x86-64-linux-binary.tar.bz2/download?use_mirror=managedway# && \
-    tar xjf sbcl-${SBCL_VERSION}-x86-64-linux-binary.tar.bz2 && \
-    cd sbcl-${SBCL_VERSION}-x86-64-linux && \
-    ./install.sh && \
-    sbcl --version && \
-    cd .. && \
-    rm -rf sbcl*
 
 ENV D_VERSION     2.087.0
 ENV DMD_DEB       dmd_2.087.0-0_amd64.deb
@@ -131,21 +117,24 @@ RUN apt-get install -y --no-install-recommends \
       aspnetcore-runtime-6.0 \
       dotnet-apphost-pack-6.0
 
-RUN apt-get install -y --no-install-recommends \
-`# Erlang dependencies` \
-      erlang && \
-    wget https://s3.amazonaws.com/rebar3/rebar3 -O /usr/bin/rebar3 && \
-    chmod 755 /usr/bin/rebar3 && \
+# Erlang dependencies
+ARG ERLANG_OTP_VERSION=23.3.4.11
+ARG ERLANG_REBAR_VERSION=3.18.0
+RUN apt-get update && apt-get install -y --no-install-recommends libncurses5-dev && \
+    curl -ssLo /usr/local/bin/kerl https://raw.githubusercontent.com/kerl/kerl/master/kerl && chmod +x /usr/local/bin/kerl && \
+    kerl build $ERLANG_OTP_VERSION && kerl install $ERLANG_OTP_VERSION /usr/local/lib/otp/ && . /usr/local/lib/otp/activate && \
+    curl -ssLo /usr/local/bin/rebar3 https://github.com/erlang/rebar3/releases/download/${ERLANG_REBAR_VERSION}/rebar3 && chmod +x /usr/local/bin/rebar3 && \
     rebar3 --version
+ENV PATH /usr/local/lib/otp/bin:$PATH
 
 RUN apt-get install -y --no-install-recommends \
 `# GlibC dependencies` \
       libglib2.0-dev
 
 # golang
-ENV GOLANG_VERSION 1.17.6
+ENV GOLANG_VERSION 1.18.1
 ENV GOLANG_DOWNLOAD_URL https://go.dev/dl/go$GOLANG_VERSION.linux-amd64.tar.gz
-ENV GOLANG_DOWNLOAD_SHA256 231654bbf2dab3d86c1619ce799e77b03d96f9b50770297c8f4dff8836fc8ca2
+ENV GOLANG_DOWNLOAD_SHA256 b3b815f47ababac13810fc6021eb73d65478e0b2db4b09d348eefad9581a2334
 RUN curl -fsSL "$GOLANG_DOWNLOAD_URL" -o golang.tar.gz && \
       echo "$GOLANG_DOWNLOAD_SHA256  golang.tar.gz" | sha256sum -c - && \
             tar -C /usr/local -xzf golang.tar.gz && \
@@ -160,12 +149,19 @@ RUN apt-get install -y --no-install-recommends \
     haxelib setup --always /usr/share/haxe/lib && \
     haxelib install --always hxcpp 2>&1 > /dev/null
 
+ENV GRADLE_VERSION="6.9.2"
 RUN apt-get install -y --no-install-recommends \
 `# Java dependencies` \
       ant \
       ant-optional \
       maven \
-      openjdk-11-jdk-headless
+      openjdk-11-jdk-headless && \
+`# Gradle` \
+      wget https://services.gradle.org/distributions/gradle-$GRADLE_VERSION-bin.zip -q -O /tmp/gradle-$GRADLE_VERSION-bin.zip && \
+      (echo "8b356fd8702d5ffa2e066ed0be45a023a779bba4dd1a68fd11bc2a6bdc981e8f  /tmp/gradle-$GRADLE_VERSION-bin.zip" | sha256sum -c -) && \
+      unzip -d /tmp /tmp/gradle-$GRADLE_VERSION-bin.zip && \
+      mv /tmp/gradle-$GRADLE_VERSION /usr/local/gradle && \
+      ln -s /usr/local/gradle/bin/gradle /usr/local/bin
 
 RUN apt-get install -y --no-install-recommends \
 `# Lua dependencies` \
@@ -274,11 +270,12 @@ RUN apt-get install -y --no-install-recommends \
     dpkg -i cppcheck_1.83-2_amd64.deb && \
     rm cppcheck_1.83-2_amd64.deb
 
-# Clean up
-RUN rm -rf /var/cache/apt/* && \
-    rm -rf /var/lib/apt/lists/* && \
-    rm -rf /tmp/* && \
-    rm -rf /var/tmp/*
+# NOTE: this does not reduce the image size but adds an additional layer.
+# # Clean up
+# RUN rm -rf /var/cache/apt/* && \
+#     rm -rf /var/lib/apt/lists/* && \
+#     rm -rf /tmp/* && \
+#     rm -rf /var/tmp/*
 
 ENV THRIFT_ROOT /thrift
 RUN mkdir -p $THRIFT_ROOT/src

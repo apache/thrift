@@ -24,7 +24,7 @@
     <AssemblyName>Server</AssemblyName>
     <PackageId>Server</PackageId>
     <OutputType>Exe</OutputType>
-    <Version>0.16.0.0</Version>
+    <Version>0.17.0.0</Version>
     <GenerateAssemblyTitleAttribute>false</GenerateAssemblyTitleAttribute>
     <GenerateAssemblyDescriptionAttribute>false</GenerateAssemblyDescriptionAttribute>
     <GenerateAssemblyConfigurationAttribute>false</GenerateAssemblyConfigurationAttribute>
@@ -51,8 +51,8 @@
     <Exec Condition="'$(OS)' == 'Windows_NT'" Command="where thrift" ConsoleToMSBuild="true">
       <Output TaskParameter="ConsoleOutput" PropertyName="PathToThrift" />
     </Exec>
-    <Exec Condition="Exists('$(PathToThrift)')" Command="&quot;$(PathToThrift)&quot; -out $(ProjectDir) -gen netstd:wcf,union,serial -r ./../../ThriftTest.thrift" />
-    <Exec Condition="Exists('thrift')" Command="thrift -out $(ProjectDir) -gen netstd:wcf,union,serial -r ./../../ThriftTest.thrift" />
-    <Exec Condition="Exists('$(ProjectDir)/../../../compiler/cpp/thrift')" Command="$(ProjectDir)/../../../compiler/cpp/thrift -out $(ProjectDir) -gen netstd:wcf,union,serial -r ./../../ThriftTest.thrift" />
+    <Exec Condition="Exists('$(PathToThrift)')" Command="&quot;$(PathToThrift)&quot; -out $(ProjectDir) -gen netstd:wcf,union,serial,net6 -r ./../../ThriftTest.thrift" />
+    <Exec Condition="Exists('thrift')" Command="thrift -out $(ProjectDir) -gen netstd:wcf,union,serial,net6 -r ./../../ThriftTest.thrift" />
+    <Exec Condition="Exists('$(ProjectDir)/../../../compiler/cpp/thrift')" Command="$(ProjectDir)/../../../compiler/cpp/thrift -out $(ProjectDir) -gen netstd:wcf,union,serial,net6 -r ./../../ThriftTest.thrift" />
   </Target>
 </Project>

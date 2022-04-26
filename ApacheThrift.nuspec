@@ -19,14 +19,14 @@
      the "Thrift" project.
   2. nuget setApiKey <your-api-key>
   3. nuget pack ApacheThrift.nuspec -Symbols -SymbolPackageFormat snupkg
-  4. nuget push ApacheThrift.0.16.0.nupkg -Source https://api.nuget.org/v3/index.json
+  4. nuget push ApacheThrift.0.17.0.nupkg -Source https://api.nuget.org/v3/index.json
   -->
 
 <package xmlns="http://schemas.microsoft.com/packaging/2013/05/nuspec.xsd">
   <metadata>
     <id>ApacheThrift</id>
-    <version>0.16.0</version>
-    <title>Apache Thrift 0.16.0</title>
+    <version>0.17.0</version>
+    <title>Apache Thrift 0.17.0</title>
     <authors>Apache Thrift Developers</authors>
     <owners>Apache Software Foundation</owners>
     <license type="expression">Apache-2.0</license>
@@ -36,7 +36,7 @@
     <description>
       Contains runtime libraries from lib/netstd for netstandard2.0 framework development.
     </description>
-    <repository type="GitHub" url="https://github.com/apache/thrift" branch="release/0.16.0" />
+    <repository type="GitHub" url="https://github.com/apache/thrift" branch="release/0.17.0" />
     <tags>Apache Thrift RPC</tags>
   </metadata>
   <files>

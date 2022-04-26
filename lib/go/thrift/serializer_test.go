@@ -258,11 +258,13 @@ func TestSerializerPoolAsync(t *testing.T) {
 					}
 					str, err := s.WriteString(context.Background(), &m)
 					if err != nil {
-						t.Fatal("serialize:", err)
+						t.Error("serialize:", err)
+						return
 					}
 					var m1 MyTestStruct
 					if err = d.ReadString(context.Background(), &m1, str); err != nil {
-						t.Fatal("deserialize:", err)
+						t.Error("deserialize:", err)
+						return
 
 					}
 

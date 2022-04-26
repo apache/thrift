@@ -44,7 +44,7 @@ developers.
 
 To compile the Java Thrift libraries, simply do the following:
 
-    ./gradlew
+    gradle
 
 Yep, that's easy. Look for libthrift-<version>.jar in the build/libs directory.
 
@@ -65,12 +65,12 @@ that.
 
 To just build the library without running unit tests you simply do this.
 
-    ./gradlew assemble
+    gradle assemble
 
 To install the library in the local Maven repository location
 where other Maven or Gradle builds can reference it simply do this.
 
-    ./gradlew install
+    gradle install
 
 The library will be placed in your home directory under .m2/repository
 
@@ -80,7 +80,7 @@ classpath, or install if in your default system classpath of choice.
 
 Build Thrift behind a proxy:
 
-    ./gradlew -Dhttp.proxyHost=myproxyhost -Dhttp.proxyPort=8080 -Dhttp.proxyUser=thriftuser -Dhttp.proxyPassword=topsecret
+    gradle -Dhttp.proxyHost=myproxyhost -Dhttp.proxyPort=8080 -Dhttp.proxyUser=thriftuser -Dhttp.proxyPassword=topsecret
 
 or via
 
@@ -107,7 +107,7 @@ under the location build/reports/clover/clover.pdf.
 
 The following command will build, unit test, and generate Clover reports:
 
-    ./gradlew -PcloverEnabled=true
+    gradle -PcloverEnabled=true
 
 
 Publishing Maven Artifacts to Maven Central
@@ -146,7 +146,7 @@ It is also possible to manually publish using the Gradle build directly.
 With the key information and credentials in place the following will generate
 if needed the build artifacts and proceed to publish the results.
 
-    ./gradlew -Prelease=true uploadArchives
+    gradle -Prelease=true uploadArchives
 
 It is also possible to override the target repository for the Maven Publication
 by using a Gradle property, for example you can publish signed JAR files to your
@@ -157,7 +157,7 @@ company internal server if you add this to the command line or in the
 
 Or the same on the command line:
 
-    ./gradlew -Pmaven-repository-url=https://my.company.com/service/local/staging/deploy/maven2 -Prelease=true -Pthrift.version=0.11.0 uploadArchives
+    gradle -Pmaven-repository-url=https://my.company.com/service/local/staging/deploy/maven2 -Prelease=true -Pthrift.version=0.11.0 uploadArchives
 
 
 Dependencies
@@ -175,7 +175,7 @@ changed to remove the boolean return type and instead rely on Exceptions.
 
 * Per THRIFT-4805, TSaslTransportException has been removed. The same condition
 is now covered by TTansportException, where `TTransportException.getType() == END_OF_FILE`.
- 
+
 ## 0.12.0
 
 The access modifier of the AutoExpandingBuffer class has been changed from

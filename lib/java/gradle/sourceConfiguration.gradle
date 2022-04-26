@@ -18,31 +18,6 @@
  */
 
 // Following Gradle best practices to keep build logic organized
-
-// ----------------------------------------------------------------------------
-// source sets for main and test sources
-sourceSets {
-    main {
-        java {
-            srcDir 'src'
-        }
-    }
-    test {
-        java {
-            srcDir 'test'
-            // see functionalTests.gradle for these files
-            exclude '**/test/TestClient.java'
-            exclude '**/test/TestServer.java'
-            exclude '**/test/TestNonblockingServer.java'
-            exclude '**/test/TestTServletServer.java'
-        }
-        resources {
-            srcDir 'test'
-            include 'log4j.properties'
-        }
-    }
-}
-
 // ----------------------------------------------------------------------------
 // Compiler configuration details
 
@@ -60,7 +35,16 @@ tasks.withType(JavaCompile) {
     if (JavaVersion.current() > JavaVersion.VERSION_1_8) {
         options.compilerArgs.addAll(['--release', '8'])
     }
-    // options.compilerArgs.addAll('-Xlint:unchecked')
+    options.compilerArgs.addAll([
+            '-Werror',
+            '-Xlint:deprecation',
+            '-Xlint:cast',
+            '-Xlint:empty',
+            '-Xlint:fallthrough',
+            '-Xlint:finally',
+            '-Xlint:overrides',
+            // we can't enable -Xlint:unchecked just yet
+    ])
 }
 
 // ----------------------------------------------------------------------------

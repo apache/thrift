@@ -22,10 +22,11 @@
 #
 # Docker Integration
 # see: build/docker/README.md
-# 
+#
 
 sudo: required
-dist: trusty
+# https://docs.travis-ci.com/user/reference/linux
+dist: xenial
 language: cpp
 
 services:

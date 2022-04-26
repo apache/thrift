@@ -5,21 +5,22 @@
 
 dependencies {
     spotbugs configurations.spotbugsPlugins.dependencies
-    spotbugsPlugins 'com.h3xstream.findsecbugs:findsecbugs-plugin:1.8.0'
+    spotbugsPlugins 'com.h3xstream.findsecbugs:findsecbugs-plugin:1.11.0'
 }
 
 apply plugin: 'com.github.spotbugs'
 
-spotbugs{
+// see https://spotbugs-gradle-plugin.netlify.app/com/github/spotbugs/snom/spotbugsextension
+spotbugs {
     ignoreFailures = true
-    toolVersion = '3.1.12'
-    sourceSets = [ sourceSets.main ]
+    toolVersion = '4.5.3'
     effort = 'max'
     reportLevel = 'low'
     excludeFilter = file('code_quality_tools/findbugs-filter.xml')
 }
 
-tasks.withType(SpotBugsTask) {
+// see https://spotbugs-gradle-plugin.netlify.app/com/github/spotbugs/snom/spotbugstask
+spotbugsMain {
     reports {
         text.enabled = false
         html.enabled = true
