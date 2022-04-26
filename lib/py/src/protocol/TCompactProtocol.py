@@ -114,7 +114,7 @@ CTYPES = {
 }
 
 TTYPES = {}
-for k, v in CTYPES.items():
+for k, v in list(CTYPES.items()):
     TTYPES[v] = k
 TTYPES[CompactType.FALSE] = TType.BOOL
 del k

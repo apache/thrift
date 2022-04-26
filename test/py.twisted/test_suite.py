@@ -131,28 +131,28 @@ class ThriftTestCase(unittest.TestCase):
 
     @defer.inlineCallbacks
     def testVoid(self):
-        self.assertEquals((yield self.client.testVoid()), None)
+        self.assertEqual((yield self.client.testVoid()), None)
 
     @defer.inlineCallbacks
     def testString(self):
-        self.assertEquals((yield self.client.testString('Python')), 'Python')
+        self.assertEqual((yield self.client.testString('Python')), 'Python')
 
     @defer.inlineCallbacks
     def testByte(self):
-        self.assertEquals((yield self.client.testByte(63)), 63)
+        self.assertEqual((yield self.client.testByte(63)), 63)
 
     @defer.inlineCallbacks
     def testI32(self):
-        self.assertEquals((yield self.client.testI32(-1)), -1)
-        self.assertEquals((yield self.client.testI32(0)), 0)
+        self.assertEqual((yield self.client.testI32(-1)), -1)
+        self.assertEqual((yield self.client.testI32(0)), 0)
 
     @defer.inlineCallbacks
     def testI64(self):
-        self.assertEquals((yield self.client.testI64(-34359738368)), -34359738368)
+        self.assertEqual((yield self.client.testI64(-34359738368)), -34359738368)
 
     @defer.inlineCallbacks
     def testDouble(self):
-        self.assertEquals((yield self.client.testDouble(-5.235098235)), -5.235098235)
+        self.assertEqual((yield self.client.testDouble(-5.235098235)), -5.235098235)
 
     # TODO: def testBinary(self) ...
 
@@ -165,10 +165,10 @@ class ThriftTestCase(unittest.TestCase):
         x.i64_thing = -5
         y = yield self.client.testStruct(x)
 
-        self.assertEquals(y.string_thing, "Zero")
-        self.assertEquals(y.byte_thing, 1)
-        self.assertEquals(y.i32_thing, -3)
-        self.assertEquals(y.i64_thing, -5)
+        self.assertEqual(y.string_thing, "Zero")
+        self.assertEqual(y.byte_thing, 1)
+        self.assertEqual(y.i32_thing, -3)
+        self.assertEqual(y.i64_thing, -5)
 
     @defer.inlineCallbacks
     def testException(self):
@@ -176,8 +176,8 @@ class ThriftTestCase(unittest.TestCase):
             yield self.client.testException('Xception')
             self.fail("should have gotten exception")
         except Xception as x:
-            self.assertEquals(x.errorCode, 1001)
-            self.assertEquals(x.message, 'Xception')
+            self.assertEqual(x.errorCode, 1001)
+            self.assertEqual(x.message, 'Xception')
 
         try:
             yield self.client.testException("throw_undeclared")
@@ -191,5 +191,5 @@ class ThriftTestCase(unittest.TestCase):
     def testOneway(self):
         yield self.client.testOneway(1)
         start, end, seconds = yield self.handler.onewaysQueue.get()
-        self.assertAlmostEquals(seconds, (end - start), places=1)
-        self.assertEquals((yield self.client.testI32(-1)), -1)
+        self.assertAlmostEqual(seconds, (end - start), places=1)
+        self.assertEqual((yield self.client.testI32(-1)), -1)

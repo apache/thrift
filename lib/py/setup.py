@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 #
 # Licensed to the Apache Software Foundation (ASF) under one
@@ -20,6 +20,7 @@
 #
 
 import sys
+
 try:
     from setuptools import setup, Extension
 except Exception:
@@ -30,15 +31,16 @@ from distutils.errors import CCompilerError, DistutilsExecError, DistutilsPlatfo
 
 # Fix to build sdist under vagrant
 import os
-if 'vagrant' in str(os.environ):
+
+if "vagrant" in str(os.environ):
     try:
         del os.link
     except AttributeError:
         pass
 
-include_dirs = ['src']
-if sys.platform == 'win32':
-    include_dirs.append('compat/win32')
+include_dirs = ["src"]
+if sys.platform == "win32":
+    include_dirs.append("compat/win32")
     ext_errors = (CCompilerError, DistutilsExecError, DistutilsPlatformError, IOError)
 else:
     ext_errors = (CCompilerError, DistutilsExecError, DistutilsPlatformError)
@@ -80,29 +82,30 @@ def run_setup(with_binary):
     if with_binary:
         extensions = dict(
             ext_modules=[
-                Extension('thrift.protocol.fastbinary',
-                          extra_compile_args=['-std=c++11'],
-                          sources=[
-                              'src/ext/module.cpp',
-                              'src/ext/types.cpp',
-                              'src/ext/binary.cpp',
-                              'src/ext/compact.cpp',
-                          ],
-                          include_dirs=include_dirs,
-                          )
+                Extension(
+                    "thrift.protocol.fastbinary",
+                    extra_compile_args=["-std=c++11"],
+                    sources=[
+                        "src/ext/module.cpp",
+                        "src/ext/types.cpp",
+                        "src/ext/binary.cpp",
+                        "src/ext/compact.cpp",
+                    ],
+                    include_dirs=include_dirs,
+                )
             ],
-            cmdclass=dict(build_ext=ve_build_ext)
+            cmdclass=dict(build_ext=ve_build_ext),
         )
     else:
         extensions = dict()
 
     ssl_deps = []
     if sys.version_info[0] == 2:
-        ssl_deps.append('ipaddress')
+        ssl_deps.append("ipaddress")
     if sys.hexversion < 0x03050000:
-        ssl_deps.append('backports.ssl_match_hostname>=3.5')
-    tornado_deps = ['tornado>=4.0']
-    twisted_deps = ['twisted']
+        ssl_deps.append("backports.ssl_match_hostname>=3.5")
+    tornado_deps = ["tornado>=4.0"]
+    twisted_deps = ["twisted"]
 
     setup(name='thrift',
           version='0.21.0',
@@ -132,7 +135,6 @@ def run_setup(with_binary):
               'Environment :: Console',
               'Intended Audience :: Developers',
               'Programming Language :: Python',
-              'Programming Language :: Python :: 2',
               'Programming Language :: Python :: 3',
               'Topic :: Software Development :: Libraries',
               'Topic :: System :: Networking'
@@ -147,10 +149,10 @@ try:
     run_setup(with_binary)
 except BuildFailed:
     print()
-    print('*' * 80)
+    print("*" * 80)
     print("An error occurred while trying to compile with the C extension enabled")
     print("Attempting to build without the extension now")
-    print('*' * 80)
+    print("*" * 80)
     print()
 
     run_setup(False)

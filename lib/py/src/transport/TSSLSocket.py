@@ -129,7 +129,7 @@ class TSSLBase(object):
             if ssl_opts:
                 raise ValueError(
                     'Incompatible arguments: ssl_context and %s'
-                    % ' '.join(ssl_opts.keys()))
+                    % ' '.join(list(ssl_opts.keys())))
             if not self._has_ssl_context:
                 raise ValueError(
                     'ssl_context is not available for this version of Python')
@@ -145,7 +145,7 @@ class TSSLBase(object):
 
             if ssl_opts:
                 raise ValueError(
-                    'Unknown keyword arguments: ', ' '.join(ssl_opts.keys()))
+                    'Unknown keyword arguments: ', ' '.join(list(ssl_opts.keys())))
 
             if self._should_verify:
                 if not self.ca_certs:

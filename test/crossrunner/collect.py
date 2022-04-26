@@ -71,7 +71,7 @@ def _collect_testlibs(config, server_match, client_match=[None]):
                     if not platforms or platform.system() in platforms:
                         yield merge_dict(base, conf)
 
-    libs, svs, cls = zip(*expand_libs(config))
+    libs, svs, cls = list(zip(*expand_libs(config)))
     servers = list(yield_testlibs(libs, svs, server_match))
     clients = list(yield_testlibs(libs, cls, client_match))
     return servers, clients
@@ -79,7 +79,7 @@ def _collect_testlibs(config, server_match, client_match=[None]):
 
 def collect_features(config, match):
     res = list(map(re.compile, match))
-    return list(filter(lambda c: any(map(lambda r: r.search(c['name']), res)), config))
+    return list([c for c in config if any([r.search(c['name']) for r in res])])
 
 
 def _do_collect_tests(servers, clients):
@@ -149,7 +149,7 @@ def _do_collect_tests(servers, clients):
 
 def _filter_entries(tests, regex):
     if regex:
-        return filter(lambda t: re.search(regex, TestEntry.get_name(**t)), tests)
+        return [t for t in tests if re.search(regex, TestEntry.get_name(**t))]
     return tests
 
 

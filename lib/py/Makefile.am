@@ -19,44 +19,27 @@
 AUTOMAKE_OPTIONS = serial-tests
 DESTDIR ?= /
 
-if WITH_PY3
-py3-build:
+all-local:
 	$(PYTHON3) setup.py build
-py3-test: py3-build
-	$(PYTHON3) test/thrift_json.py
-	$(PYTHON3) test/thrift_transport.py
-	$(PYTHON3) test/test_sslsocket.py
-	$(PYTHON3) test/thrift_TBinaryProtocol.py
-	$(PYTHON3) test/thrift_TZlibTransport.py
-	$(PYTHON3) test/thrift_TCompactProtocol.py
-	$(PYTHON3) test/thrift_TNonblockingServer.py
-	$(PYTHON3) test/thrift_TSerializer.py
-else
-py3-build:
-py3-test:
-endif
-
-all-local: py3-build
-	$(PYTHON) setup.py build
 	${THRIFT} --gen py test/test_thrift_file/TestServer.thrift
 
 # We're ignoring prefix here because site-packages seems to be
 # the equivalent of /usr/local/lib in Python land.
 # Old version (can't put inline because it's not portable).
-#$(PYTHON) setup.py install --prefix=$(prefix) --root=$(DESTDIR) $(PYTHON_SETUPUTIL_ARGS)
+#$(PYTHON3) setup.py install --prefix=$(prefix) --root=$(DESTDIR) $(PYTHON_SETUPUTIL_ARGS)
 install-exec-hook:
-	$(PYTHON) -m pip install . --root=$(DESTDIR) --prefix=$(PY_PREFIX) $(PYTHON_SETUPUTIL_ARGS)
+	$(PYTHON3) -m pip install . --root=$(DESTDIR) --prefix=$(PY_PREFIX) $(PYTHON_SETUPUTIL_ARGS)
 
-check-local: all py3-test
-	$(PYTHON) test/thrift_json.py
-	$(PYTHON) test/thrift_transport.py
-	$(PYTHON) test/test_sslsocket.py
-	$(PYTHON) test/test_socket.py
-	$(PYTHON) test/thrift_TBinaryProtocol.py
-	$(PYTHON) test/thrift_TZlibTransport.py
-	$(PYTHON) test/thrift_TCompactProtocol.py
-	$(PYTHON) test/thrift_TNonblockingServer.py
-	$(PYTHON) test/thrift_TSerializer.py
+check-local: all
+	$(PYTHON3) test/thrift_json.py
+	$(PYTHON3) test/thrift_transport.py
+	$(PYTHON3) test/test_sslsocket.py
+	$(PYTHON3) test/test_socket.py
+	$(PYTHON3) test/thrift_TBinaryProtocol.py
+	$(PYTHON3) test/thrift_TZlibTransport.py
+	$(PYTHON3) test/thrift_TCompactProtocol.py
+	$(PYTHON3) test/thrift_TNonblockingServer.py
+	$(PYTHON3) test/thrift_TSerializer.py
 
 
 clean-local:

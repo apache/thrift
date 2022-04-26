@@ -22,7 +22,7 @@ class, using the python standard library zlib module to implement
 data compression.
 """
 
-from __future__ import division
+
 import zlib
 from .TTransport import TTransportBase, CReadableTransport
 from ..compat import BufferIO

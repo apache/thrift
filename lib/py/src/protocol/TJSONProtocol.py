@@ -82,7 +82,7 @@ CTYPES = {
 }
 
 JTYPES = {}
-for key in CTYPES.keys():
+for key in list(CTYPES.keys()):
     JTYPES[CTYPES[key]] = key
 
 

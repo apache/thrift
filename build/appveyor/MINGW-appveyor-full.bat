@@ -112,7 +112,7 @@ SET CMAKEARGS=^
   -DCMAKE_C_COMPILER=/mingw%NORM_PLATFORM%/bin/gcc.exe ^
   -DCMAKE_CXX_COMPILER=/mingw%NORM_PLATFORM%/bin/g++.exe ^
   -DOPENSSL_ROOT_DIR=/mingw%NORM_PLATFORM% ^
-  -DWITH_PYTHON=OFF
+  -DWITH_PY3=OFF
 
 %BASH% -lc "mkdir -p %BUILDDIR% && cd %BUILDDIR% && cmake.exe %SRCDIR% %CMAKEARGS% && cmake --build . --config %CONFIGURATION% && cmake --install . --config %CONFIGURATION%" || EXIT /B
 

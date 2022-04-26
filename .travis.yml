@@ -107,7 +107,7 @@ jobs:
       env:
         - JOB="UBSan"
         - SCRIPT="ubsan.sh"
-        - BUILD_ARG="--without-python --without-py3"
+        - BUILD_ARG="--without-py3"
 
     # ------------------------- phase: autotools --------------------
     # TODO: Remove them once migrated to CMake

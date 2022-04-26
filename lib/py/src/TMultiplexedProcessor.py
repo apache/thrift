@@ -17,9 +17,9 @@
 # under the License.
 #
 
-from thrift.Thrift import TProcessor, TMessageType
-from thrift.protocol import TProtocolDecorator, TMultiplexedProtocol
-from thrift.protocol.TProtocol import TProtocolException
+from .thrift.Thrift import TProcessor, TMessageType
+from .thrift.protocol import TProtocolDecorator, TMultiplexedProtocol
+from .thrift.protocol.TProtocol import TProtocolException
 
 
 class TMultiplexedProcessor(TProcessor):
@@ -40,7 +40,7 @@ class TMultiplexedProcessor(TProcessor):
         self.services[serviceName] = processor
 
     def on_message_begin(self, func):
-        for key in self.services.keys():
+        for key in list(self.services.keys()):
             self.services[key].on_message_begin(func)
 
     def process(self, iprot, oprot):

@@ -27,7 +27,7 @@
 # subprocess management that are needed for reliability.
 #
 
-from __future__ import print_function
+
 from itertools import chain
 import json
 import logging
@@ -66,11 +66,11 @@ def run_cross_tests(server_match, client_match, jobs, skip_known_failures, only_
     if only_known_failures:
         logger.debug('Only running known failures')
         known = crossrunner.load_known_failures(TEST_DIR)
-        tests = list(filter(lambda t: crossrunner.test_name(**t) in known, tests))
+        tests = list([t for t in tests if crossrunner.test_name(**t) in known])
     if skip_known_failures:
         logger.debug('Skipping known failures')
         known = crossrunner.load_known_failures(TEST_DIR)
-        tests = list(filter(lambda t: crossrunner.test_name(**t) not in known, tests))
+        tests = list([t for t in tests if crossrunner.test_name(**t) not in known])
 
     dispatcher = crossrunner.TestDispatcher(TEST_DIR, ROOT_DIR, TEST_DIR_RELATIVE, jobs)
     logger.debug('Executing %d tests' % len(tests))
@@ -102,11 +102,11 @@ def run_feature_tests(server_match, feature_match, jobs, skip_known_failures, on
     if only_known_failures:
         logger.debug('Only running known failures')
         known = crossrunner.load_known_failures(basedir)
-        tests = list(filter(lambda t: crossrunner.test_name(**t) in known, tests))
+        tests = list([t for t in tests if crossrunner.test_name(**t) in known])
     if skip_known_failures:
         logger.debug('Skipping known failures')
         known = crossrunner.load_known_failures(basedir)
-        tests = list(filter(lambda t: crossrunner.test_name(**t) not in known, tests))
+        tests = list([t for t in tests if crossrunner.test_name(**t) not in known])
 
     dispatcher = crossrunner.TestDispatcher(TEST_DIR, ROOT_DIR, FEATURE_DIR_RELATIVE, jobs)
     logger.debug('Executing %d tests' % len(tests))

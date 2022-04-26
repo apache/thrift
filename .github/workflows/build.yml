@@ -15,7 +15,6 @@ env:
     --without-c_glib
     --without-java
     --without-kotlin
-    --without-python
     --without-py3
     --without-ruby
     --without-haxe
@@ -464,9 +463,7 @@ jobs:
     runs-on: ubuntu-22.04
     strategy:
       matrix:
-        python-version:
-          - "3.x"
-      fail-fast: false
+        python-version: ["3.7", "3.11"]
     steps:
       - uses: actions/checkout@v4
 
@@ -490,8 +487,7 @@ jobs:
       - name: Run bootstrap
         run: ./bootstrap.sh
 
-      - name: Run configure 3.x
-        if: matrix.python-version == '3.x'
+      - name: Run configure
         run: |
           ./configure $(echo $CONFIG_ARGS_FOR_LIBS | sed 's/without-py3/with-py3/')
 

@@ -80,8 +80,8 @@ class AbstractTest(unittest.TestCase):
         print('testString')
         self.assertEqual(self.client.testString('Python' * 20), 'Python' * 20)
         self.assertEqual(self.client.testString(''), '')
-        s1 = u'\b\t\n/\\\\\r{}:パイソン"'
-        s2 = u"""Afrikaans, Alemannisch, Aragonés, العربية, مصرى,
+        s1 = '\b\t\n/\\\\\r{}:パイソン"'
+        s2 = """Afrikaans, Alemannisch, Aragonés, العربية, مصرى,
         Asturianu, Aymar aru, Azərbaycan, Башҡорт, Boarisch, Žemaitėška,
         Беларуская, Беларуская (тарашкевіца), Български, Bamanankan,
         বাংলা, Brezhoneg, Bosanski, Català, Mìng-dĕ̤ng-ngṳ̄, Нохчийн,
@@ -233,7 +233,7 @@ class AbstractTest(unittest.TestCase):
         try:
             self.client.testException('TException')
             self.fail("should have gotten exception")
-        except TException as x:
+        except TException:
             pass
 
         # Should not throw
