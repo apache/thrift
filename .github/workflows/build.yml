@@ -78,10 +78,6 @@ jobs:
             automake \
             bison \
             flex \
-            git \
-            libboost-all-dev \
-            libevent-dev \
-            libssl-dev \
             libtool \
             make \
             pkg-config \
@@ -102,7 +98,8 @@ jobs:
         run: ./bootstrap.sh
 
       - name: Run configure
-        run: ./configure --disable-debug --disable-tests
+        # disable dependency tracing because we won't have g++ for this task
+        run: ./configure --disable-debug --disable-tests --disable-dependency-tracking
 
       - uses: actions/download-artifact@v3
         with:
