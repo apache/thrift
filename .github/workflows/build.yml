@@ -98,6 +98,7 @@ jobs:
       - uses: actions/download-artifact@v3
         with:
           name: thrift-compiler
+          path: compiler/cpp/thrift
 
       - name: Run bootstrap
         run: ./bootstrap.sh
