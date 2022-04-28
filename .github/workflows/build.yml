@@ -108,6 +108,7 @@ jobs:
       - uses: actions/download-artifact@v3
         with:
           name: thrift-compiler
+          path: compiler/cpp/
 
       - name: Run thrift-compiler
         run: |
