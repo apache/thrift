@@ -4,8 +4,8 @@ jobs:
   build-java:
     strategy:
       matrix:
-        java: [8, 11, 17]
-        distribution: 'adopt'
+        java: [8, 17]
+        distribution: ['adopt']
         os: [ubuntu-20.04]
     runs-on: ${{ matrix.os }}
     steps:
