@@ -78,6 +78,9 @@ jobs:
             automake \
             bison \
             flex \
+            git \
+            libboost-all-dev \
+            libevent-dev \
             libssl-dev \
             libtool \
             make \
