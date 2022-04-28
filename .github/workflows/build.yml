@@ -44,7 +44,7 @@ jobs:
 
       # only upload while building ubuntu-20.04
       - name: Archive built thrift compiler
-        if: ${{ matrix.os == "ubuntu-20.04" }}
+        if: matrix.os == 'ubuntu-20.04'
         uses: actions/upload-artifact@v3
         with:
           name: thrift-compiler
