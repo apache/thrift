@@ -92,7 +92,9 @@ jobs:
             pkg-config \
             wget \
             unzip \
-            curl
+            curl \
+            ant \
+            maven
 
       - name: Setup gradle
         run: |
