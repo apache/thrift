@@ -148,6 +148,9 @@ jobs:
           chmod a+x compiler/cpp/thrift
           compiler/cpp/thrift -version
 
-      - name: Run make
-        run: make -j$(nproc)
+      - name: Run make java
+        run: make -C lib/java
+
+      - name: Run make kotlin
+        run: make -C lib/kotlin
 
