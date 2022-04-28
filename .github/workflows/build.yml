@@ -55,7 +55,7 @@ jobs:
           path: compiler/cpp/thrift
           retention-days: 3
 
-  build-java:
+  build-java-and-kotlin:
     needs: build-thrift-compiler-ubuntu
     strategy:
       matrix:
@@ -115,5 +115,8 @@ jobs:
           # we do a touch to make sure it's newer than the makefile
           touch compiler/cpp/thrift
 
-      - name: Run make
-        run: make -j$(nproc) -C lib/java
+      - name: Run make java
+        run: make -C lib/java
+
+      - name: Run make kotlin
+        run: make -C lib/kotlin
