@@ -112,9 +112,10 @@ jobs:
 
       - name: Run thrift-compiler
         run: |
-          compiler/cpp/thrift -help
           # we do a touch to make sure it's newer than the makefile
           touch compiler/cpp/thrift
+          chmod a+x compiler/cpp/thrift
+          compiler/cpp/thrift -help
 
       - name: Run make java
         run: make -C lib/java
