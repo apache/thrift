@@ -109,31 +109,32 @@ jobs:
         run: ./bootstrap.sh
 
       - name: Run configure
-        run: ./configure \
-          --disable-debug \
-          --disable-tests \
-          --disable-dependency-tracking \
-          --without-cpp \
-          --without-c_glib \
-          --with-java \
-          --with-kotlin \
-          --without-python \
-          --without-py3 \
-          --without-ruby \
-          --without-haxe \
-          --without-netstd \
-          --without-perl \
-          --without-php \
-          --without-php_extension \
-          --without-dart \
-          --without-erlang \
-          --without-go \
-          --without-d \
-          --without-nodejs \
-          --without-nodets \
-          --without-lua \
-          --without-rs \
-          --without-swift
+        run: |
+          ./configure \
+            --disable-debug \
+            --disable-tests \
+            --disable-dependency-tracking \
+            --without-cpp \
+            --without-c_glib \
+            --with-java \
+            --with-kotlin \
+            --without-python \
+            --without-py3 \
+            --without-ruby \
+            --without-haxe \
+            --without-netstd \
+            --without-perl \
+            --without-php \
+            --without-php_extension \
+            --without-dart \
+            --without-erlang \
+            --without-go \
+            --without-d \
+            --without-nodejs \
+            --without-nodets \
+            --without-lua \
+            --without-rs \
+            --without-swift
 
       - uses: actions/download-artifact@v3
         with:
