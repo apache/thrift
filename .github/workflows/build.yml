@@ -1,4 +1,4 @@
-name: Build-Thrift-Compiler-And-Libraries
+name: 'Build Thrift Compiler and Libraries'
 on: [push]
 jobs:
   # TODO windows and macos
@@ -95,19 +95,22 @@ jobs:
           sudo ln -s /usr/local/gradle/bin/gradle /usr/local/bin
           gradle --version
 
-      - uses: actions/download-artifact@v3
-        with:
-          name: thrift-compiler
-          path: compiler/cpp/thrift
-
       - name: Run bootstrap
         run: ./bootstrap.sh
 
       - name: Run configure
         run: ./configure --disable-debug --disable-tests
 
+      - uses: actions/download-artifact@v3
+        with:
+          name: thrift-compiler
+          path: compiler/cpp/thrift
+
       - name: Run thrift-compiler
         run: |
           compiler/cpp/thrift -help
           # we do a touch to make sure it's newer than the makefile
           touch compiler/cpp/thrift
+
+      - name: Run make
+        run: make -j$(nproc) -C lib/java
