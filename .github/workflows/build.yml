@@ -1,5 +1,9 @@
 name: 'Build Thrift Compiler and Libraries'
-on: [push]
+on:
+  push:
+    branches: [ '*' ]
+  pull_request:
+    branches: [ '*' ]
 jobs:
   # TODO windows and macos
   build-thrift-compiler-ubuntu:
@@ -104,7 +108,6 @@ jobs:
       - uses: actions/download-artifact@v3
         with:
           name: thrift-compiler
-          path: compiler/cpp/thrift
 
       - name: Run thrift-compiler
         run: |
