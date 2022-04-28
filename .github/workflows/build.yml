@@ -60,7 +60,7 @@ jobs:
     strategy:
       matrix:
         java: [8, 17]
-        distribution: ['adopt']
+        distribution: ['temurin']
         os: [ubuntu-20.04]
     runs-on: ${{ matrix.os }}
     env:
@@ -115,7 +115,7 @@ jobs:
           # we do a touch to make sure it's newer than the makefile
           touch compiler/cpp/thrift
           chmod a+x compiler/cpp/thrift
-          compiler/cpp/thrift -help
+          compiler/cpp/thrift -version
 
       - name: Run make java
         run: make -C lib/java
