@@ -8,6 +8,8 @@ jobs:
         distribution: ['adopt']
         os: [ubuntu-20.04]
     runs-on: ${{ matrix.os }}
+    env:
+      GRADLE_VERSION: 6.9.2
     steps:
       - uses: actions/checkout@v3
 
