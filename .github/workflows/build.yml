@@ -59,7 +59,7 @@ jobs:
     needs: build-thrift-compiler-ubuntu
     strategy:
       matrix:
-        java: [8, 17]
+        java: [8, 11]
         distribution: ['temurin']
         os: [ubuntu-20.04]
     runs-on: ${{ matrix.os }}
