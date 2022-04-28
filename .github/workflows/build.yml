@@ -111,27 +111,27 @@ jobs:
           --disable-debug \
           --disable-tests \
           --disable-dependency-tracking \
-          --without_cpp \
-          --without_c_glib \
-          --with_java \
-          --with_kotlin \
-          --without_python \
-          --without_py3 \
-          --without_ruby \
-          --without_haxe \
-          --without_netstd \
-          --without_perl \
-          --without_php \
-          --without_php_extension \
-          --without_dart \
-          --without_erlang \
-          --without_go \
-          --without_d \
-          --without_nodejs \
-          --without_nodets \
-          --without_lua \
-          --without_rs \
-          --without_swift
+          --without-cpp \
+          --without-c_glib \
+          --with-java \
+          --with-kotlin \
+          --without-python \
+          --without-py3 \
+          --without-ruby \
+          --without-haxe \
+          --without-netstd \
+          --without-perl \
+          --without-php \
+          --without-php_extension \
+          --without-dart \
+          --without-erlang \
+          --without-go \
+          --without-d \
+          --without-nodejs \
+          --without-nodets \
+          --without-lua \
+          --without-rs \
+          --without-swift
 
       - uses: actions/download-artifact@v3
         with:
