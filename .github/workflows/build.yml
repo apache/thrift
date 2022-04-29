@@ -50,9 +50,6 @@ jobs:
 
   build-java-and-kotlin:
     needs: build-thrift-compiler-ubuntu
-    strategy:
-      matrix:
-        java: [11]
     runs-on: ubuntu-20.04
     env:
       GRADLE_VERSION: 6.9.2
@@ -62,7 +59,7 @@ jobs:
       - uses: actions/setup-java@v3
         with:
           distribution: temurin
-          java-version: ${{ matrix.java }}
+          java-version: 11
           cache: 'gradle'
 
       - name: Install dependencies
