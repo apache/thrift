@@ -7,10 +7,10 @@ on:
     branches: [ '*' ]
 
 env:
-  BUILD_DEPS: bison flex g++ libboost-all-dev libevent-dev libssl-dev libtool make cmake
+  BUILD_DEPS: bison flex g++ libboost-all-dev libevent-dev libssl-dev make cmake
 
 jobs:
-  build-and-test-compiler:
+  compiler:
     runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@v3
