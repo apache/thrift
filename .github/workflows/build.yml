@@ -70,7 +70,7 @@ jobs:
         run: |
           sudo apt-get update -yq
           sudo apt-get install -y --no-install-recommends $BUILD_DEPS
-          sudo apt-get install -y wge unzip ant maven
+          sudo apt-get install -y wget unzip ant maven
 
       - name: Setup gradle
         run: |
