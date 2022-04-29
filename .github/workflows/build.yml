@@ -11,7 +11,7 @@ env:
 
 jobs:
   # TODO windows and macos
-  build-thrift-compiler-ubuntu:
+  compiler:
     strategy:
       matrix:
         os: [ubuntu-18.04, ubuntu-20.04]
@@ -48,7 +48,7 @@ jobs:
           path: compiler/cpp/thrift
           retention-days: 3
 
-  build-java-and-kotlin:
+  lib-java-kotlin:
     needs: build-thrift-compiler-ubuntu
     runs-on: ubuntu-20.04
     env:
