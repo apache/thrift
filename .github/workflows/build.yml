@@ -221,8 +221,8 @@ jobs:
       - name: Run bootstrap
         run: ./bootstrap.sh
 
-      - name: Run configure "2.x"
-        if: ${{ matrix.python-version == "2.x" }}
+      - name: Run configure 2.x
+        if: matrix.python-version == '2.x'
         run: |
           ./configure \
             --disable-debug \
@@ -250,8 +250,8 @@ jobs:
             --without-rs \
             --without-swift
 
-      - name: Run configure "3.x"
-        if: ${{ matrix.python-version == "3.x" }}
+      - name: Run configure 3.x
+        if: matrix.python-version == '3.x'
         run: |
           ./configure \
             --disable-debug \
