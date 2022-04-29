@@ -1,9 +1,15 @@
-name: 'Build Thrift Compiler and Libraries'
+name: 'Build'
+
 on:
   push:
     branches: [ '*' ]
   pull_request:
     branches: [ '*' ]
+
+env:
+  BUILD_DEPS: automake bison flex g++ git libboost-all-dev libevent-dev libssl-dev libtool make pkg-config
+  THRIFT_BIN_DIR: compiler/cpp
+
 jobs:
   # TODO windows and macos
   build-thrift-compiler-ubuntu:
@@ -16,20 +22,8 @@ jobs:
 
       - name: Install dependencies
         run: |
-          # https://docs.github.com/en/actions/using-github-hosted-runners/customizing-github-hosted-runners
           sudo apt-get update -yq
-          sudo apt-get install -y --no-install-recommends \
-            automake \
-            bison \
-            flex \
-            g++ \
-            git \
-            libboost-all-dev \
-            libevent-dev \
-            libssl-dev \
-            libtool \
-            make \
-            pkg-config
+          sudo apt-get install -y --no-install-recommends $BUILD_DEPS
 
       - name: Run bootstrap
         run: ./bootstrap.sh
@@ -52,17 +46,15 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: thrift-compiler
-          path: compiler/cpp/thrift
+          path: $THRIFT_BIN_DIR/thrift
           retention-days: 3
 
   build-java-and-kotlin:
     needs: build-thrift-compiler-ubuntu
     strategy:
       matrix:
-        java: [8, 11]
-        distribution: ['temurin']
-        os: [ubuntu-20.04]
-    runs-on: ${{ matrix.os }}
+        java: [11]
+    runs-on: ubuntu-20.04
     env:
       GRADLE_VERSION: 6.9.2
     steps:
@@ -70,31 +62,15 @@ jobs:
 
       - uses: actions/setup-java@v3
         with:
-          distribution: ${{ matrix.distribution }}
+          distribution: temurin
           java-version: ${{ matrix.java }}
           cache: 'gradle'
 
       - name: Install dependencies
         run: |
-          # https://docs.github.com/en/actions/using-github-hosted-runners/customizing-github-hosted-runners
           sudo apt-get update -yq
-          sudo apt-get install -y --no-install-recommends \
-            automake \
-            bison \
-            flex \
-            g++ \
-            git \
-            libboost-all-dev \
-            libevent-dev \
-            libssl-dev \
-            libtool \
-            make \
-            pkg-config \
-            wget \
-            unzip \
-            curl \
-            ant \
-            maven
+          sudo apt-get install -y --no-install-recommends $BUILD_DEPS
+          sudo apt-get install -y wge unzip ant maven
 
       - name: Setup gradle
         run: |
@@ -139,14 +115,12 @@ jobs:
       - uses: actions/download-artifact@v3
         with:
           name: thrift-compiler
-          path: compiler/cpp/
+          path: $THRIFT_BIN_DIR
 
       - name: Run thrift-compiler
         run: |
-          # we do a touch to make sure it's newer than the makefile
-          touch compiler/cpp/thrift
-          chmod a+x compiler/cpp/thrift
-          compiler/cpp/thrift -version
+          chmod a+x $THRIFT_BIN_DIR/thrift
+          $THRIFT_BIN_DIR/thrift -version
 
       - name: Run make java
         run: make -C lib/java
