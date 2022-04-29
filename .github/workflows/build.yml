@@ -49,7 +49,7 @@ jobs:
           retention-days: 3
 
   lib-java-kotlin:
-    needs: build-thrift-compiler-ubuntu
+    needs: compiler
     runs-on: ubuntu-20.04
     env:
       GRADLE_VERSION: 6.9.2
