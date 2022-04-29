@@ -124,7 +124,7 @@ jobs:
       - name: Run make kotlin
         run: make -C lib/kotlin
 
-  build-rust:
+  lib-rust:
     needs: build-thrift-compiler-ubuntu
     runs-on: ubuntu-20.04
     env:
