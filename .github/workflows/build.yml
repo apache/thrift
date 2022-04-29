@@ -182,12 +182,12 @@ jobs:
       - uses: actions/download-artifact@v3
         with:
           name: thrift-compiler
-          path: $THRIFT_BIN_DIR
+          path: compiler/cpp
 
       - name: Run thrift-compiler
         run: |
-          chmod a+x $THRIFT_BIN_DIR/thrift
-          $THRIFT_BIN_DIR/thrift -version
+          chmod a+x compiler/cpp/thrift
+          compiler/cpp/thrift -version
 
       - name: Run make rust
         run: make -C lib/rs
