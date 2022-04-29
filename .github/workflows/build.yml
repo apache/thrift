@@ -140,7 +140,7 @@ jobs:
 
       - name: Setup cargo
         run: |
-          curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+          curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
           rustup update
           rustup install $TOOLCHAIN_VERSION
           rustup default $TOOLCHAIN_VERSION
