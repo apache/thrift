@@ -125,7 +125,7 @@ jobs:
         run: make -C lib/kotlin
 
   lib-rust:
-    needs: build-thrift-compiler-ubuntu
+    needs: compiler
     runs-on: ubuntu-20.04
     env:
       TOOLCHAIN_VERSION: 1.40.0
