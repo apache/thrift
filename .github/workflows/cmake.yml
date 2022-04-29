@@ -1,0 +1,38 @@
+name: 'Build with CMake'
+on:
+  push:
+    branches: [ '*' ]
+  pull_request:
+    branches: [ '*' ]
+jobs:
+  build-thrift-compiler-ubuntu:
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Install dependencies
+        run: |
+          # https://docs.github.com/en/actions/using-github-hosted-runners/customizing-github-hosted-runners
+          sudo apt-get update -yq
+          sudo apt-get install -y --no-install-recommends \
+            bison \
+            flex \
+            g++ \
+            libboost-all-dev \
+            libevent-dev \
+            libssl-dev \
+            libtool \
+            make \
+            cmake
+
+      - name: Generate makefile using Cmake
+        run: |
+          mkdir cmake_build
+          cd cmake_build
+          cmake .. -DBUILD_LIBRARIES=OFF
+
+      - name: Run make
+        run: cmake --build .
+
+      - name: Run test
+        run: ctest -j$(nproc)
