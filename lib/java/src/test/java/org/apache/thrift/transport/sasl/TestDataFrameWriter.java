@@ -20,12 +20,15 @@
 package org.apache.thrift.transport.sasl;
 
 import static org.apache.thrift.transport.sasl.DataFrameHeaderReader.PAYLOAD_LENGTH_BYTES;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.nio.ByteBuffer;
 import org.apache.thrift.EncodingUtils;
 import org.apache.thrift.transport.TNonblockingTransport;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
@@ -41,7 +44,7 @@ public class TestDataFrameWriter {
     byte[] expectedBytes = new byte[BYTES.length + PAYLOAD_LENGTH_BYTES];
     EncodingUtils.encodeBigEndian(BYTES.length, expectedBytes);
     System.arraycopy(BYTES, 0, expectedBytes, PAYLOAD_LENGTH_BYTES, BYTES.length);
-    Assert.assertEquals(ByteBuffer.wrap(expectedBytes), frameWriter.frameBytes);
+    assertEquals(ByteBuffer.wrap(expectedBytes), frameWriter.frameBytes);
   }
 
   @Test
@@ -53,20 +56,26 @@ public class TestDataFrameWriter {
     byte[] expectedBytes = new byte[portionLength + PAYLOAD_LENGTH_BYTES];
     EncodingUtils.encodeBigEndian(portionLength, expectedBytes);
     System.arraycopy(BYTES, portionOffset, expectedBytes, PAYLOAD_LENGTH_BYTES, portionLength);
-    Assert.assertEquals(ByteBuffer.wrap(expectedBytes), frameWriter.frameBytes);
+    assertEquals(ByteBuffer.wrap(expectedBytes), frameWriter.frameBytes);
   }
 
-  @Test(expected = IllegalArgumentException.class)
+  @Test
   public void testProvideHeaderAndPayload() {
     DataFrameWriter frameWriter = new DataFrameWriter();
-    frameWriter.withHeaderAndPayload(new byte[1], new byte[1]);
+    assertThrows(
+        IllegalArgumentException.class,
+        () -> frameWriter.withHeaderAndPayload(new byte[1], new byte[1]));
   }
 
-  @Test(expected = IllegalStateException.class)
+  @Test
   public void testProvidePayloadToIncompleteFrame() {
     DataFrameWriter frameWriter = new DataFrameWriter();
-    frameWriter.withOnlyPayload(BYTES);
-    frameWriter.withOnlyPayload(new byte[1]);
+    assertThrows(
+        IllegalStateException.class,
+        () -> {
+          frameWriter.withOnlyPayload(BYTES);
+          frameWriter.withOnlyPayload(new byte[1]);
+        });
   }
 
   @Test
@@ -79,10 +88,10 @@ public class TestDataFrameWriter {
     Mockito.when(transport.write(frameWriter.frameBytes)).thenAnswer(slowWriting);
     frameWriter.write(transport);
     while (slowWriting.written < frameWriter.frameBytes.limit()) {
-      Assert.assertFalse("Frame writer should not be complete", frameWriter.isComplete());
+      assertFalse(frameWriter.isComplete(), "Frame writer should not be complete");
       frameWriter.write(transport);
     }
-    Assert.assertTrue("Frame writer should be complete", frameWriter.isComplete());
+    assertTrue(frameWriter.isComplete(), "Frame writer should be complete");
   }
 
   private static class SlowWriting implements Answer<Integer> {

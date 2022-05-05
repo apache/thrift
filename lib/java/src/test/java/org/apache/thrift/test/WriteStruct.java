@@ -43,7 +43,7 @@ public class WriteStruct {
 
     TProtocol proto = factory.getProtocol(trans);
 
-    Fixtures.compactProtoTestStruct.write(proto);
+    Fixtures.getCompactProtoTestStruct().write(proto);
     trans.flush();
   }
 }

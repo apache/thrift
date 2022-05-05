@@ -19,13 +19,15 @@
 
 package org.apache.thrift.server;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import java.util.concurrent.ThreadPoolExecutor;
 import org.apache.thrift.protocol.TBinaryProtocol;
 import org.apache.thrift.transport.TServerSocket;
 import org.apache.thrift.transport.TServerTransport;
 import org.apache.thrift.transport.TSocket;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import thrift.test.ThriftTest;
 
 public class TestThreadPoolServer {
@@ -35,25 +37,25 @@ public class TestThreadPoolServer {
   public void testStopServerWithOpenClient() throws Exception {
     TServerSocket serverSocket = new TServerSocket(0, 3000);
     TThreadPoolServer server = buildServer(serverSocket);
-    Thread serverThread = new Thread(() -> server.serve());
+    Thread serverThread = new Thread(server::serve);
     serverThread.start();
     try (TSocket client = new TSocket("localhost", serverSocket.getServerSocket().getLocalPort())) {
       client.open();
       Thread.sleep(1000);
       // There is a thread listening to the client
-      Assert.assertEquals(1, ((ThreadPoolExecutor) server.getExecutorService()).getActiveCount());
+      assertEquals(1, ((ThreadPoolExecutor) server.getExecutorService()).getActiveCount());
 
       // Trigger the server to stop, but it does not wait
       server.stop();
-      Assert.assertTrue(server.waitForShutdown());
+      assertTrue(server.waitForShutdown());
 
       // After server is stopped, the executor thread pool should be shut down
-      Assert.assertTrue(
-          "Server thread pool should be terminated", server.getExecutorService().isTerminated());
+      assertTrue(
+          server.getExecutorService().isTerminated(), "Server thread pool should be terminated");
 
       // TODO: The socket is actually closed (timeout) but the client code
       // ignores the timeout Exception and maintains the socket open state
-      Assert.assertTrue("Client should be closed after server shutdown", client.isOpen());
+      assertTrue(client.isOpen(), "Client should be closed after server shutdown");
     }
   }
 

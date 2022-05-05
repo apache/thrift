@@ -18,6 +18,12 @@
  */
 package org.apache.thrift.async;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -29,7 +35,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
-import junit.framework.TestCase;
 import org.apache.thrift.TException;
 import org.apache.thrift.protocol.TBinaryProtocol;
 import org.apache.thrift.server.ServerTestBase;
@@ -38,17 +43,22 @@ import org.apache.thrift.server.THsHaServer.Args;
 import org.apache.thrift.transport.TNonblockingServerSocket;
 import org.apache.thrift.transport.TNonblockingSocket;
 import org.apache.thrift.transport.TTransportException;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import thrift.test.CompactProtoTestStruct;
 import thrift.test.ExceptionWithAMap;
 import thrift.test.Srv;
 import thrift.test.Srv.Iface;
 
-public class TestTAsyncClientManager extends TestCase {
+public class TestTAsyncClientManager {
 
   private THsHaServer server_;
   private Thread serverThread_;
   private TAsyncClientManager clientManager_;
 
+  @BeforeEach
   public void setUp() throws Exception {
     server_ =
         new THsHaServer(
@@ -69,17 +79,20 @@ public class TestTAsyncClientManager extends TestCase {
     Thread.sleep(500);
   }
 
+  @AfterEach
   public void tearDown() throws Exception {
     server_.stop();
     clientManager_.stop();
     serverThread_.join();
   }
 
+  @Test
   public void testBasicCall() throws Exception {
     Srv.AsyncClient client = getClient();
     basicCall(client);
   }
 
+  @Test
   public void testBasicCallWithTimeout() throws Exception {
     Srv.AsyncClient client = getClient();
     client.setTimeout(5000);
@@ -131,6 +144,7 @@ public class TestTAsyncClientManager extends TestCase {
     abstract void validateError(C client, Exception error);
   }
 
+  @Test
   public void testUnexpectedRemoteExceptionCall() throws Exception {
     new ErrorCallTest<Srv.AsyncClient, Boolean>() {
       @Override
@@ -148,6 +162,7 @@ public class TestTAsyncClientManager extends TestCase {
     }.runTest();
   }
 
+  @Test
   public void testDeclaredRemoteExceptionCall() throws Exception {
     new ErrorCallTest<Srv.AsyncClient, Boolean>() {
       @Override
@@ -168,6 +183,7 @@ public class TestTAsyncClientManager extends TestCase {
     }.runTest();
   }
 
+  @Test
   public void testTimeoutCall() throws Exception {
     new ErrorCallTest<Srv.AsyncClient, Integer>() {
       @Override
@@ -186,6 +202,7 @@ public class TestTAsyncClientManager extends TestCase {
     }.runTest();
   }
 
+  @Test
   public void testVoidCall() throws Exception {
     final CountDownLatch latch = new CountDownLatch(1);
     final AtomicBoolean returned = new AtomicBoolean(false);
@@ -202,6 +219,7 @@ public class TestTAsyncClientManager extends TestCase {
     assertTrue(returned.get());
   }
 
+  @Test
   public void testOnewayCall() throws Exception {
     final CountDownLatch latch = new CountDownLatch(1);
     final AtomicBoolean returned = new AtomicBoolean(false);
@@ -218,6 +236,7 @@ public class TestTAsyncClientManager extends TestCase {
     assertTrue(returned.get());
   }
 
+  @Test
   public void testParallelCalls() throws Exception {
     // make multiple calls with deserialization in the selector thread (repro Eric's issue)
     int numThreads = 50;
@@ -265,7 +284,7 @@ public class TestTAsyncClientManager extends TestCase {
             try {
               StringWriter sink = new StringWriter();
               exception.printStackTrace(new PrintWriter(sink, true));
-              fail("unexpected onError with exception " + sink.toString());
+              Assertions.fail("unexpected onError with exception " + sink.toString());
             } finally {
               latch.countDown();
             }
@@ -275,7 +294,7 @@ public class TestTAsyncClientManager extends TestCase {
     assertTrue(returned.get());
   }
 
-  public class SrvHandler implements Iface {
+  public static class SrvHandler implements Iface {
     // Use this method for a standard call testing
     @Override
     public int Janky(int arg) throws TException {
@@ -328,13 +347,13 @@ public class TestTAsyncClientManager extends TestCase {
   private static void fail(Exception exception) {
     StringWriter sink = new StringWriter();
     exception.printStackTrace(new PrintWriter(sink, true));
-    fail("unexpected error " + sink.toString());
+    Assertions.fail("unexpected error " + sink);
   }
 
   private class JankyRunnable implements Runnable {
-    private int numCalls_;
+    private final int numCalls_;
     private int numSuccesses_ = 0;
-    private Srv.AsyncClient client_;
+    private final Srv.AsyncClient client_;
 
     public JankyRunnable(int numCalls) throws Exception {
       numCalls_ = numCalls;
@@ -369,7 +388,8 @@ public class TestTAsyncClientManager extends TestCase {
                   try {
                     StringWriter sink = new StringWriter();
                     exception.printStackTrace(new PrintWriter(sink, true));
-                    fail("unexpected onError on iteration " + iteration + ": " + sink.toString());
+                    Assertions.fail(
+                        "unexpected onError on iteration " + iteration + ": " + sink.toString());
                   } finally {
                     latch.countDown();
                   }
@@ -377,8 +397,8 @@ public class TestTAsyncClientManager extends TestCase {
               });
 
           boolean calledBack = latch.await(30, TimeUnit.SECONDS);
-          assertTrue("wasn't called back in time on iteration " + iteration, calledBack);
-          assertTrue("onComplete not called on iteration " + iteration, returned.get());
+          assertTrue(calledBack, "wasn't called back in time on iteration " + iteration);
+          assertTrue(returned.get(), "onComplete not called on iteration " + iteration);
           this.numSuccesses_++;
         } catch (Exception e) {
           fail(e);

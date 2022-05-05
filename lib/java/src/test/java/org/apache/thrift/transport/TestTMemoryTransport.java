@@ -19,11 +19,14 @@
 
 package org.apache.thrift.transport;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+
 import java.nio.ByteBuffer;
 import java.util.Random;
 import org.apache.thrift.TByteArrayOutputStream;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.function.Executable;
 
 public class TestTMemoryTransport {
 
@@ -40,14 +43,21 @@ public class TestTMemoryTransport {
     for (int i = 0; i < inputBytes.length; i++) {
       equal = equal && inputBytes[i] == read[i];
     }
-    Assert.assertEquals(ByteBuffer.wrap(inputBytes), ByteBuffer.wrap(read));
+    assertEquals(ByteBuffer.wrap(inputBytes), ByteBuffer.wrap(read));
   }
 
-  @Test(expected = TTransportException.class)
+  @Test
   public void testReadMoreThanRemaining() throws TTransportException {
     TMemoryTransport transport = new TMemoryTransport(new byte[] {0x00, 0x32});
     byte[] read = new byte[3];
-    transport.read(read, 0, 3);
+    assertThrows(
+        TTransportException.class,
+        new Executable() {
+          @Override
+          public void execute() throws Throwable {
+            transport.read(read, 0, 3);
+          }
+        });
   }
 
   @Test
@@ -59,7 +69,7 @@ public class TestTMemoryTransport {
     transport.write(output2, 0, 2);
     byte[] expected = {0x72, 0x56, 0x29, (byte) 0xAF, (byte) 0x9B, (byte) 0x83, 0x10};
     TByteArrayOutputStream outputByteArray = transport.getOutput();
-    Assert.assertEquals(
+    assertEquals(
         ByteBuffer.wrap(expected),
         ByteBuffer.wrap(outputByteArray.get(), 0, outputByteArray.len()));
   }

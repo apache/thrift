@@ -19,12 +19,18 @@
 
 package org.apache.thrift;
 
-import junit.framework.TestCase;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import org.junit.jupiter.api.Test;
 import thrift.test.optiontypejdk8.Person;
 
 // Tests and documents behavior for the JDK8 "Option<T>" type
-public class TestOptionalsWithJdk8 extends TestCase {
+public class TestOptionalsWithJdk8 {
 
+  @Test
   public void testConstruction() {
     Person person = new Person(1L, "name");
     assertFalse(person.getAge().isPresent());
@@ -42,6 +48,7 @@ public class TestOptionalsWithJdk8 extends TestCase {
     assertEquals(Integer.valueOf(0), person.getPetsSize().orElse(0));
   }
 
+  @Test
   public void testEmpty() {
     Person person = new Person();
     person.setPhone("phone");

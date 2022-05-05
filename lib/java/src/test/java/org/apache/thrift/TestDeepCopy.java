@@ -1,11 +1,14 @@
 package org.apache.thrift;
 
-import junit.framework.TestCase;
+import static org.junit.jupiter.api.Assertions.assertNotSame;
+
+import org.junit.jupiter.api.Test;
 import thrift.test.DeepCopyBar;
 import thrift.test.DeepCopyFoo;
 
-public class TestDeepCopy extends TestCase {
+public class TestDeepCopy {
 
+  @Test
   public void testDeepCopy() throws Exception {
     final DeepCopyFoo foo = new DeepCopyFoo();
 

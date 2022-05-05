@@ -1,10 +1,14 @@
 package org.apache.thrift.transport;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
-import junit.framework.TestCase;
+import org.junit.jupiter.api.Test;
 
-public class TestTByteBuffer extends TestCase {
+public class TestTByteBuffer {
+  @Test
   public void testReadWrite() throws Exception {
     final TByteBuffer byteBuffer = new TByteBuffer(ByteBuffer.allocate(16));
     byteBuffer.write("Hello World".getBytes(StandardCharsets.UTF_8));
@@ -12,6 +16,7 @@ public class TestTByteBuffer extends TestCase {
         "Hello World", new String(byteBuffer.flip().toByteArray(), StandardCharsets.UTF_8));
   }
 
+  @Test
   public void testReuseReadWrite() throws Exception {
     final TByteBuffer byteBuffer = new TByteBuffer(ByteBuffer.allocate(16));
     byteBuffer.write("Hello World".getBytes(StandardCharsets.UTF_8));
@@ -25,13 +30,13 @@ public class TestTByteBuffer extends TestCase {
         "Goodbye Horses", new String(byteBuffer.flip().toByteArray(), StandardCharsets.UTF_8));
   }
 
+  @Test
   public void testOverflow() throws Exception {
     final TByteBuffer byteBuffer = new TByteBuffer(ByteBuffer.allocate(4));
-    try {
-      byteBuffer.write("Hello World".getBytes(StandardCharsets.UTF_8));
-      fail("Expected write operation to fail with TTransportException");
-    } catch (TTransportException e) {
-      assertEquals("Not enough room in output buffer", e.getMessage());
-    }
+    TTransportException e =
+        assertThrows(
+            TTransportException.class,
+            () -> byteBuffer.write("Hello World".getBytes(StandardCharsets.UTF_8)));
+    assertEquals("Not enough room in output buffer", e.getMessage());
   }
 }

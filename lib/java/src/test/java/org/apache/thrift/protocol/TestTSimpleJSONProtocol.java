@@ -18,22 +18,26 @@
  */
 package org.apache.thrift.protocol;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+
 import java.nio.charset.StandardCharsets;
-import junit.framework.TestCase;
 import org.apache.thrift.Fixtures;
 import org.apache.thrift.TDeserializer;
 import org.apache.thrift.TException;
 import org.apache.thrift.transport.TMemoryBuffer;
 import org.apache.thrift.transport.TTransportException;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import thrift.test.CompactProtoTestStruct;
 import thrift.test.HolyMoley;
 
-public class TestTSimpleJSONProtocol extends TestCase {
+public class TestTSimpleJSONProtocol {
   private TMemoryBuffer buf;
   private TSimpleJSONProtocol proto;
 
-  @Override
-  protected void setUp() throws Exception {
+  @BeforeEach
+  public void setUp() throws Exception {
     buf = new TMemoryBuffer(1000);
     proto = new TSimpleJSONProtocol(buf);
   }
@@ -42,8 +46,9 @@ public class TestTSimpleJSONProtocol extends TestCase {
     return buf.toString(StandardCharsets.UTF_8);
   }
 
+  @Test
   public void testHolyMoley() throws TException {
-    final HolyMoley holyMoley = Fixtures.holyMoley.deepCopy();
+    final HolyMoley holyMoley = Fixtures.getHolyMoley().deepCopy();
     // unset sets that produce inconsistent ordering between JDK7/8
     holyMoley.unsetBonks();
     holyMoley.unsetContain();
@@ -53,23 +58,26 @@ public class TestTSimpleJSONProtocol extends TestCase {
         bufToString());
   }
 
+  @Test
   public void testNesting() throws TException {
-    Fixtures.nesting.write(proto);
+    Fixtures.getNesting().write(proto);
     assertEquals(
         "{\"my_bonk\":{\"type\":31337,\"message\":\"I am a bonk... xor!\"},\"my_ooe\":{\"im_true\":1,\"im_false\":0,\"a_bite\":-42,\"integer16\":27000,\"integer32\":16777216,\"integer64\":6000000000,\"double_precision\":3.141592653589793,\"some_characters\":\"JSON THIS! \\\"\\u0001\",\"zomg_unicode\":\"ӀⅮΝ Нοⅿоɡгаρℎ Αttαⅽκ�‼\",\"what_who\":0,\"base64\":\"base64\",\"byte_list\":[1,2,3],\"i16_list\":[1,2,3],\"i64_list\":[1,2,3]}}",
         bufToString());
   }
 
+  @Test
   public void testOneOfEach() throws TException {
-    Fixtures.oneOfEach.write(proto);
+    Fixtures.getOneOfEach().write(proto);
     assertEquals(
         "{\"im_true\":1,\"im_false\":0,\"a_bite\":-42,\"integer16\":27000,\"integer32\":16777216,\"integer64\":6000000000,\"double_precision\":3.141592653589793,\"some_characters\":\"JSON THIS! \\\"\\u0001\",\"zomg_unicode\":\"ӀⅮΝ Нοⅿоɡгаρℎ Αttαⅽκ�‼\",\"what_who\":0,\"base64\":\"base64\",\"byte_list\":[1,2,3],\"i16_list\":[1,2,3],\"i64_list\":[1,2,3]}",
         bufToString());
   }
 
+  @Test
   public void testSanePartsOfCompactProtoTestStruct() throws TException {
     // unset all the maps with container keys
-    CompactProtoTestStruct struct = Fixtures.compactProtoTestStruct.deepCopy();
+    CompactProtoTestStruct struct = Fixtures.getCompactProtoTestStruct().deepCopy();
     struct.unsetList_byte_map();
     struct.unsetSet_byte_map();
     struct.unsetMap_byte_map();
@@ -90,23 +98,23 @@ public class TestTSimpleJSONProtocol extends TestCase {
         bufToString());
   }
 
+  @Test
   public void testThrowsOnCollectionKeys() throws TException {
-    try {
-      Fixtures.compactProtoTestStruct.write(proto);
-      fail("this should throw a CollectionMapKeyException");
-    } catch (TSimpleJSONProtocol.CollectionMapKeyException e) {
-      //
-    }
+    assertThrows(
+        TSimpleJSONProtocol.CollectionMapKeyException.class,
+        () -> Fixtures.getCompactProtoTestStruct().write(proto));
   }
 
+  @Test
   public void testReadingThrows() throws TTransportException {
     String input = "{\"test\": \"value\"}";
     TDeserializer deserializer = new TDeserializer(new TSimpleJSONProtocol.Factory());
-    try {
-      deserializer.fromString(Fixtures.oneOfEach, input);
-      fail("Was able to read SimpleJSON");
-    } catch (TException e) {
-      assertEquals("Not implemented", e.getMessage());
-    }
+    TException e =
+        assertThrows(
+            TException.class,
+            () -> {
+              deserializer.fromString(Fixtures.getOneOfEach(), input);
+            });
+    assertEquals("Not implemented", e.getMessage());
   }
 }

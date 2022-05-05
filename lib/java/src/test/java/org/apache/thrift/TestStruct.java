@@ -18,6 +18,14 @@
  */
 package org.apache.thrift;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.ObjectInputStream;
@@ -25,7 +33,6 @@ import java.io.ObjectOutputStream;
 import java.nio.ByteBuffer;
 import java.util.HashMap;
 import java.util.Map;
-import junit.framework.TestCase;
 import org.apache.thrift.meta_data.FieldMetaData;
 import org.apache.thrift.meta_data.ListMetaData;
 import org.apache.thrift.meta_data.MapMetaData;
@@ -33,6 +40,7 @@ import org.apache.thrift.meta_data.SetMetaData;
 import org.apache.thrift.meta_data.StructMetaData;
 import org.apache.thrift.protocol.TBinaryProtocol;
 import org.apache.thrift.protocol.TType;
+import org.junit.jupiter.api.Test;
 import thrift.test.Bonk;
 import thrift.test.CrazyNesting;
 import thrift.test.HolyMoley;
@@ -45,12 +53,13 @@ import thrift.test.StructA;
 import thrift.test.StructB;
 import thrift.test.Xtruct;
 
-public class TestStruct extends TestCase {
+public class TestStruct {
+  @Test
   public void testIdentity() throws Exception {
     TSerializer binarySerializer = new TSerializer(new TBinaryProtocol.Factory());
     TDeserializer binaryDeserializer = new TDeserializer(new TBinaryProtocol.Factory());
 
-    OneOfEach ooe = Fixtures.oneOfEach;
+    OneOfEach ooe = Fixtures.getOneOfEach();
 
     Nesting n = new Nesting();
     n.my_ooe = ooe;
@@ -64,9 +73,9 @@ public class TestStruct extends TestCase {
             + "\u043e\u0261\u0433\u0430\u03c1\u210e\u0020"
             + "\u0391\u0074\u0074\u03b1\u217d\u03ba\u01c3"
             + "\u203c";
-    n.my_bonk = Fixtures.nesting.my_bonk;
+    n.my_bonk = Fixtures.getNesting().my_bonk;
 
-    HolyMoley hm = Fixtures.holyMoley;
+    HolyMoley hm = Fixtures.getHolyMoley();
 
     OneOfEach ooe2 = new OneOfEach();
     binaryDeserializer.deserialize(ooe2, binarySerializer.serialize(ooe));
@@ -87,11 +96,12 @@ public class TestStruct extends TestCase {
     assertEquals(hm.hashCode(), hm2.hashCode());
   }
 
+  @Test
   public void testDeepCopy() throws Exception {
     TSerializer binarySerializer = new TSerializer(new TBinaryProtocol.Factory());
     TDeserializer binaryDeserializer = new TDeserializer(new TBinaryProtocol.Factory());
 
-    HolyMoley hm = Fixtures.holyMoley;
+    HolyMoley hm = Fixtures.getHolyMoley();
 
     byte[] binaryCopy = binarySerializer.serialize(hm);
     HolyMoley hmCopy = new HolyMoley();
@@ -112,6 +122,7 @@ public class TestStruct extends TestCase {
     assertFalse(hm.equals(hmCopy2));
   }
 
+  @Test
   public void testCompareTo() throws Exception {
     Bonk bonk1 = new Bonk();
     Bonk bonk2 = new Bonk();
@@ -141,6 +152,7 @@ public class TestStruct extends TestCase {
     assertEquals(0, bonk1.compareTo(bonk2));
   }
 
+  @Test
   public void testCompareToWithDataStructures() {
     Insanity insanity1 = new Insanity();
     Insanity insanity2 = new Insanity();
@@ -153,7 +165,7 @@ public class TestStruct extends TestCase {
     expectGreaterThan(insanity1, insanity2);
 
     // insanity1.map = {2:1}, insanity2.map = null
-    insanity1.getUserMap().put(Numberz.TWO, 1l);
+    insanity1.getUserMap().put(Numberz.TWO, 1L);
     expectGreaterThan(insanity1, insanity2);
 
     // insanity1.map = {2:1}, insanity2.map = {}
@@ -161,38 +173,39 @@ public class TestStruct extends TestCase {
     expectGreaterThan(insanity1, insanity2);
 
     // insanity1.map = {2:1}, insanity2.map = {2:2}
-    insanity2.getUserMap().put(Numberz.TWO, 2l);
+    insanity2.getUserMap().put(Numberz.TWO, 2L);
     expectLessThan(insanity1, insanity2);
 
     // insanity1.map = {2:1, 3:5}, insanity2.map = {2:2}
-    insanity1.getUserMap().put(Numberz.THREE, 5l);
+    insanity1.getUserMap().put(Numberz.THREE, 5L);
     expectGreaterThan(insanity1, insanity2);
 
     // insanity1.map = {2:1, 3:5}, insanity2.map = {2:1, 4:5}
-    insanity2.getUserMap().put(Numberz.TWO, 1l);
-    insanity2.getUserMap().put(Numberz.FIVE, 5l);
+    insanity2.getUserMap().put(Numberz.TWO, 1L);
+    insanity2.getUserMap().put(Numberz.FIVE, 5L);
     expectLessThan(insanity1, insanity2);
   }
 
   private void expectLessThan(Insanity insanity1, Insanity insanity2) {
     int compareTo = insanity1.compareTo(insanity2);
     assertTrue(
-        insanity1 + " should be less than " + insanity2 + ", but is: " + compareTo, compareTo < 0);
+        compareTo < 0, insanity1 + " should be less than " + insanity2 + ", but is: " + compareTo);
   }
 
   private void expectGreaterThan(Insanity insanity1, Insanity insanity2) {
     int compareTo = insanity1.compareTo(insanity2);
     assertTrue(
-        insanity1 + " should be greater than " + insanity2 + ", but is: " + compareTo,
-        compareTo > 0);
+        compareTo > 0,
+        insanity1 + " should be greater than " + insanity2 + ", but is: " + compareTo);
   }
 
   private void expectEquals(Insanity insanity1, Insanity insanity2) {
     int compareTo = insanity1.compareTo(insanity2);
     assertEquals(
-        insanity1 + " should be equal to " + insanity2 + ", but is: " + compareTo, 0, compareTo);
+        0, compareTo, insanity1 + " should be equal to " + insanity2 + ", but is: " + compareTo);
   }
 
+  @Test
   public void testMetaData() throws Exception {
     Map<CrazyNesting._Fields, FieldMetaData> mdMap = CrazyNesting.metaDataMap;
 
@@ -286,6 +299,7 @@ public class TestStruct extends TestCase {
     assertFalse(vmd.keyMetaData.isTypedef());
   }
 
+  @Test
   public void testToString() throws Exception {
     JavaTestHelper object = new JavaTestHelper();
     object.req_int = 0;
@@ -343,12 +357,7 @@ public class TestStruct extends TestCase {
     assertEquals("JavaTestHelper(req_int:0, req_obj:, req_bin:)", object.toString());
   }
 
-  private static void assertArrayEquals(byte[] expected, byte[] actual) {
-    if (!java.util.Arrays.equals(expected, actual)) {
-      fail("Expected byte array did not match actual.");
-    }
-  }
-
+  @Test
   public void testBytesBufferFeatures() throws Exception {
 
     final String testString = "testBytesBufferFeatures";
@@ -379,11 +388,12 @@ public class TestStruct extends TestCase {
     assertArrayEquals(testString.getBytes(), o.getReq_bin());
   }
 
+  @Test
   public void testJavaSerializable() throws Exception {
     ByteArrayOutputStream baos = new ByteArrayOutputStream();
     ObjectOutputStream oos = new ObjectOutputStream(baos);
 
-    OneOfEach ooe = Fixtures.oneOfEach;
+    OneOfEach ooe = Fixtures.getOneOfEach();
 
     // Serialize ooe the Java way...
     oos.writeObject(ooe);
@@ -397,35 +407,21 @@ public class TestStruct extends TestCase {
     assertEquals(ooe, ooe2);
   }
 
+  @Test
   public void testSubStructValidation() throws Exception {
     StructA valid = new StructA("valid");
     StructA invalid = new StructA();
 
     StructB b = new StructB();
-    try {
-      b.validate();
-      fail();
-    } catch (TException e) {
-      // expected
-    }
+    assertThrows(TException.class, b::validate);
 
     b = new StructB().setAb(valid);
     b.validate();
 
     b = new StructB().setAb(invalid);
-    try {
-      b.validate();
-      fail();
-    } catch (TException e) {
-      // expected
-    }
+    assertThrows(TException.class, b::validate);
 
     b = new StructB().setAb(valid).setAa(invalid);
-    try {
-      b.validate();
-      fail();
-    } catch (TException e) {
-      // expected
-    }
+    assertThrows(TException.class, b::validate);
   }
 }

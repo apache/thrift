@@ -19,7 +19,7 @@
 
 package org.apache.thrift.transport;
 
-import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import org.apache.thrift.TProcessor;
 import org.apache.thrift.protocol.TBinaryProtocol;
@@ -33,11 +33,31 @@ public class TestTSSLTransportFactory extends ServerTestBase {
   private Thread serverThread;
   private TServer server;
 
-  private static final List<TProtocolFactory> protocols = new ArrayList<TProtocolFactory>();
+  // TODO: Only supported on TBinaryProtocol. Doesn't work for TCompactProtocol
+  private static final List<TProtocolFactory> protocols =
+      Collections.singletonList(new TBinaryProtocol.Factory());
 
-  static {
-    // TODO: Only supported on TBinaryProtocol. Doesn't work for TCompactProtocol
-    protocols.add(new TBinaryProtocol.Factory());
+  private static final String keyStoreLocation = System.getProperty("javax.net.ssl.keyStore");
+  private static final String keyStorePassword =
+      System.getProperty("javax.net.ssl.keyStorePassword");
+  private static final String trustStoreLocation = System.getProperty("javax.net.ssl.trustStore");
+  private static final String trustStorePassword =
+      System.getProperty("javax.net.ssl.trustStorePassword");
+
+  protected final String getKeyStoreLocation() {
+    return keyStoreLocation;
+  }
+
+  protected final String getKeyStorePassword() {
+    return keyStorePassword;
+  }
+
+  protected final String getTrustStoreLocation() {
+    return trustStoreLocation;
+  }
+
+  protected final String getTrustStorePassword() {
+    return trustStorePassword;
   }
 
   @Override
@@ -56,19 +76,18 @@ public class TestTSSLTransportFactory extends ServerTestBase {
       final TTransportFactory factory)
       throws Exception {
     serverThread =
-        new Thread() {
-          public void run() {
-            try {
-              TServerTransport serverTransport = getServerTransport();
-              final Args args = new Args(serverTransport).processor(processor);
-              server = new TSimpleServer(args);
-              server.serve();
-            } catch (Exception e) {
-              e.printStackTrace();
-              assert false;
-            }
-          }
-        };
+        new Thread(
+            () -> {
+              try {
+                TServerTransport serverTransport = getServerTransport();
+                final Args args = new Args(serverTransport).processor(processor);
+                server = new TSimpleServer(args);
+                server.serve();
+              } catch (Exception e) {
+                e.printStackTrace();
+                assert false;
+              }
+            });
 
     serverThread.start();
     Thread.sleep(SLEEP_DELAY);

@@ -25,11 +25,7 @@ public class TestTSSLTransportFactoryCustomClient1 extends TestTSSLTransportFact
   public TTransport getClientTransport(TTransport underlyingTransport) throws Exception {
     TSSLTransportFactory.TSSLTransportParameters params =
         new TSSLTransportFactory.TSSLTransportParameters();
-
-    params.setTrustStore(
-        System.getProperty("javax.net.ssl.trustStore"),
-        System.getProperty("javax.net.ssl.trustStorePassword"));
-
+    params.setTrustStore(getTrustStoreLocation(), getTrustStorePassword());
     return TSSLTransportFactory.getClientSocket(HOST, PORT, 0 /*timeout*/, params);
   }
 }

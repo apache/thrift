@@ -18,6 +18,8 @@
  */
 package org.apache.thrift.server;
 
+import static org.junit.jupiter.api.Assertions.fail;
+
 import org.apache.thrift.TProcessor;
 import org.apache.thrift.protocol.TProtocol;
 import org.apache.thrift.protocol.TProtocolFactory;
@@ -28,6 +30,7 @@ import org.apache.thrift.transport.TTransport;
 import org.apache.thrift.transport.TTransportException;
 import org.apache.thrift.transport.TTransportFactory;
 import org.apache.thrift.transport.layered.TFramedTransport;
+import org.junit.jupiter.api.Test;
 import thrift.test.ThriftTest;
 
 public class TestNonblockingServer extends ServerTestBase {
@@ -93,6 +96,7 @@ public class TestNonblockingServer extends ServerTestBase {
     return new TFramedTransport(underlyingTransport);
   }
 
+  @Test
   public void testCleanupAllSelectionKeys() throws Exception {
     for (TProtocolFactory protoFactory : getProtocols()) {
       TestHandler handler = new TestHandler();

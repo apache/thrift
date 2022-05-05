@@ -64,8 +64,8 @@ public class BenchmarkProtocols {
         long start = System.currentTimeMillis();
         for (int rep = 0; rep < NUM_REPS; rep++) {
           TProtocol proto = factory.getProtocol(new TMemoryBuffer(128 * 1024));
-          Fixtures.compactProtoTestStruct.write(proto);
-          Fixtures.nesting.write(proto);
+          Fixtures.getCompactProtoTestStruct().write(proto);
+          Fixtures.getNesting().write(proto);
         }
         long end = System.currentTimeMillis();
         timesByFactory.get(factory).add(end - start);

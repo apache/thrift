@@ -37,8 +37,8 @@ public class SerializationBenchmark {
   public static void main(String[] args) throws Exception {
     TProtocolFactory factory = new TBinaryProtocol.Factory();
 
-    testSerialization(factory, Fixtures.oneOfEach);
-    testDeserialization(factory, Fixtures.oneOfEach, OneOfEach.class);
+    testSerialization(factory, Fixtures.getOneOfEach());
+    testDeserialization(factory, Fixtures.getOneOfEach(), OneOfEach.class);
   }
 
   public static void testSerialization(TProtocolFactory factory, TBase object) throws Exception {
@@ -87,7 +87,7 @@ public class SerializationBenchmark {
 
     long startTime = System.currentTimeMillis();
     for (int i = 0; i < HOW_MANY; i++) {
-      T o2 = klass.newInstance();
+      T o2 = klass.getConstructor().newInstance();
       o2.read(factory.getProtocol(new TMemoryInputTransport(new TConfiguration(), serialized)));
     }
     long endTime = System.currentTimeMillis();

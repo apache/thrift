@@ -18,6 +18,9 @@
  */
 package org.apache.thrift.server;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -26,7 +29,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import junit.framework.TestCase;
 import org.apache.thrift.TException;
 import org.apache.thrift.TProcessor;
 import org.apache.thrift.async.AsyncMethodCallback;
@@ -40,6 +42,7 @@ import org.apache.thrift.transport.TTransportException;
 import org.apache.thrift.transport.TTransportFactory;
 import org.apache.thrift.transport.layered.TFramedTransport;
 import org.apache.thrift.transport.layered.TFramedTransport.Factory;
+import org.junit.jupiter.api.Test;
 import thrift.test.Insanity;
 import thrift.test.Numberz;
 import thrift.test.ThriftTest;
@@ -48,46 +51,54 @@ import thrift.test.Xception2;
 import thrift.test.Xtruct;
 import thrift.test.Xtruct2;
 
-public abstract class ServerTestBase extends TestCase {
+public abstract class ServerTestBase {
 
   public static class TestHandler implements ThriftTest.Iface {
 
     public TestHandler() {}
 
+    @Override
     public void testVoid() {
       System.out.print("testVoid()\n");
     }
 
+    @Override
     public String testString(String thing) {
       System.out.print("testString(\"" + thing + "\")\n");
       return thing;
     }
 
+    @Override
     public boolean testBool(boolean thing) {
       System.out.print("testBool(" + thing + ")\n");
       return thing;
     }
 
+    @Override
     public byte testByte(byte thing) {
       System.out.print("testByte(" + thing + ")\n");
       return thing;
     }
 
+    @Override
     public int testI32(int thing) {
       System.out.print("testI32(" + thing + ")\n");
       return thing;
     }
 
+    @Override
     public long testI64(long thing) {
       System.out.print("testI64(" + thing + ")\n");
       return thing;
     }
 
+    @Override
     public double testDouble(double thing) {
       System.out.print("testDouble(" + thing + ")\n");
       return thing;
     }
 
+    @Override
     public ByteBuffer testBinary(ByteBuffer thing) {
       StringBuilder sb = new StringBuilder(thing.remaining() * 3);
       thing.mark();
@@ -98,11 +109,12 @@ public abstract class ServerTestBase extends TestCase {
       if (thing.remaining() > 0) {
         sb.append("..."); // indicate we have more date
       }
-      System.out.print("testBinary(" + sb.toString() + ")\n");
+      System.out.print("testBinary(" + sb + ")\n");
       thing.reset();
       return thing;
     }
 
+    @Override
     public Xtruct testStruct(Xtruct thing) {
       System.out.print(
           "testStruct({"
@@ -118,6 +130,7 @@ public abstract class ServerTestBase extends TestCase {
       return thing;
     }
 
+    @Override
     public Xtruct2 testNest(Xtruct2 nest) {
       Xtruct thing = nest.struct_thing;
       System.out.print(
@@ -138,6 +151,7 @@ public abstract class ServerTestBase extends TestCase {
       return nest;
     }
 
+    @Override
     public Map<Integer, Integer> testMap(Map<Integer, Integer> thing) {
       System.out.print("testMap({");
       System.out.print(thing);
@@ -145,6 +159,7 @@ public abstract class ServerTestBase extends TestCase {
       return thing;
     }
 
+    @Override
     public Map<String, String> testStringMap(Map<String, String> thing) {
       System.out.print("testStringMap({");
       System.out.print(thing);
@@ -152,6 +167,7 @@ public abstract class ServerTestBase extends TestCase {
       return thing;
     }
 
+    @Override
     public Set<Integer> testSet(Set<Integer> thing) {
       System.out.print("testSet({");
       boolean first = true;
@@ -167,6 +183,7 @@ public abstract class ServerTestBase extends TestCase {
       return thing;
     }
 
+    @Override
     public List<Integer> testList(List<Integer> thing) {
       System.out.print("testList({");
       boolean first = true;
@@ -182,22 +199,25 @@ public abstract class ServerTestBase extends TestCase {
       return thing;
     }
 
+    @Override
     public Numberz testEnum(Numberz thing) {
       System.out.print("testEnum(" + thing + ")\n");
       return thing;
     }
 
+    @Override
     public long testTypedef(long thing) {
       System.out.print("testTypedef(" + thing + ")\n");
       return thing;
     }
 
+    @Override
     public Map<Integer, Map<Integer, Integer>> testMapMap(int hello) {
       System.out.print("testMapMap(" + hello + ")\n");
-      Map<Integer, Map<Integer, Integer>> mapmap = new HashMap<Integer, Map<Integer, Integer>>();
+      Map<Integer, Map<Integer, Integer>> mapmap = new HashMap<>();
 
-      HashMap<Integer, Integer> pos = new HashMap<Integer, Integer>();
-      HashMap<Integer, Integer> neg = new HashMap<Integer, Integer>();
+      HashMap<Integer, Integer> pos = new HashMap<>();
+      HashMap<Integer, Integer> neg = new HashMap<>();
       for (int i = 1; i < 5; i++) {
         pos.put(i, i);
         neg.put(-i, -i);
@@ -209,11 +229,12 @@ public abstract class ServerTestBase extends TestCase {
       return mapmap;
     }
 
+    @Override
     public Map<Long, Map<Numberz, Insanity>> testInsanity(Insanity argument) {
       System.out.print("testInsanity()\n");
 
-      HashMap<Numberz, Insanity> first_map = new HashMap<Numberz, Insanity>();
-      HashMap<Numberz, Insanity> second_map = new HashMap<Numberz, Insanity>();
+      HashMap<Numberz, Insanity> first_map = new HashMap<>();
+      HashMap<Numberz, Insanity> second_map = new HashMap<>();
 
       first_map.put(Numberz.TWO, argument);
       first_map.put(Numberz.THREE, argument);
@@ -221,13 +242,14 @@ public abstract class ServerTestBase extends TestCase {
       Insanity looney = new Insanity();
       second_map.put(Numberz.SIX, looney);
 
-      Map<Long, Map<Numberz, Insanity>> insane = new HashMap<Long, Map<Numberz, Insanity>>();
+      Map<Long, Map<Numberz, Insanity>> insane = new HashMap<>();
       insane.put((long) 1, first_map);
       insane.put((long) 2, second_map);
 
       return insane;
     }
 
+    @Override
     public Xtruct testMulti(
         byte arg0, int arg1, long arg2, Map<Short, String> arg3, Numberz arg4, long arg5) {
       System.out.print("testMulti()\n");
@@ -240,7 +262,8 @@ public abstract class ServerTestBase extends TestCase {
       return hello;
     }
 
-    public void testException(String arg) throws Xception, TException {
+    @Override
+    public void testException(String arg) throws TException {
       System.out.print("testException(" + arg + ")\n");
       if ("Xception".equals(arg)) {
         Xception x = new Xception();
@@ -257,6 +280,7 @@ public abstract class ServerTestBase extends TestCase {
       return;
     }
 
+    @Override
     public Xtruct testMultiException(String arg0, String arg1) throws Xception, Xception2 {
       System.out.print("testMultiException(" + arg0 + ", " + arg1 + ")\n");
       if (arg0.equals("Xception")) {
@@ -277,6 +301,7 @@ public abstract class ServerTestBase extends TestCase {
       return result;
     }
 
+    @Override
     public void testOneway(int sleepFor) {
       System.out.println("testOneway(" + sleepFor + ") => sleeping...");
       try {
@@ -292,8 +317,8 @@ public abstract class ServerTestBase extends TestCase {
       Arrays.asList(new TBinaryProtocol.Factory(), new TCompactProtocol.Factory());
 
   public static final String HOST = "localhost";
-  public static final int PORT = Integer.valueOf(System.getProperty("test.port", "9090"));
-  protected static final int SLEEP_DELAY = 1000;
+  public static final int PORT = Integer.parseInt(System.getProperty("test.port", "9090"));
+  protected static final long SLEEP_DELAY = 1000;
   protected static final int SOCKET_TIMEOUT = 1500;
   private static final Xtruct XSTRUCT = new Xtruct("Zero", (byte) 1, -3, -5);
   private static final Xtruct2 XSTRUCT2 = new Xtruct2((byte) 1, XSTRUCT, 5);
@@ -350,14 +375,14 @@ public abstract class ServerTestBase extends TestCase {
     Insanity insane;
 
     insane = new Insanity();
-    insane.userMap = new HashMap<Numberz, Long>();
+    insane.userMap = new HashMap<>();
     insane.userMap.put(Numberz.FIVE, (long) 5000);
     Xtruct truck = new Xtruct();
     truck.string_thing = "Truck";
     truck.byte_thing = (byte) 8;
     truck.i32_thing = 8;
     truck.i64_thing = 8;
-    insane.xtructs = new ArrayList<Xtruct>();
+    insane.xtructs = new ArrayList<>();
     insane.xtructs.add(truck);
     System.out.print("testInsanity()");
     Map<Long, Map<Numberz, Insanity>> whoa = testClient.testInsanity(insane);
@@ -408,13 +433,14 @@ public abstract class ServerTestBase extends TestCase {
     return false;
   }
 
+  @Test
   public void testIt() throws Exception {
 
     for (TProtocolFactory protoFactory : getProtocols()) {
       TProcessor processor =
           useAsyncProcessor()
-              ? new ThriftTest.AsyncProcessor<AsyncTestHandler>(new AsyncTestHandler())
-              : new ThriftTest.Processor<TestHandler>(new TestHandler());
+              ? new ThriftTest.AsyncProcessor<>(new AsyncTestHandler())
+              : new ThriftTest.Processor<>(new TestHandler());
 
       startServer(processor, protoFactory);
 
@@ -462,7 +488,7 @@ public abstract class ServerTestBase extends TestCase {
   }
 
   private void testList(ThriftTest.Client testClient) throws TException {
-    List<Integer> listout = new ArrayList<Integer>();
+    List<Integer> listout = new ArrayList<>();
     for (int i = -2; i < 3; ++i) {
       listout.add(i);
     }
@@ -471,7 +497,7 @@ public abstract class ServerTestBase extends TestCase {
   }
 
   private void testMap(ThriftTest.Client testClient) throws TException {
-    Map<Integer, Integer> mapout = new HashMap<Integer, Integer>();
+    Map<Integer, Integer> mapout = new HashMap<>();
     for (int i = 0; i < 5; ++i) {
       mapout.put(i, i - 10);
     }
@@ -480,7 +506,7 @@ public abstract class ServerTestBase extends TestCase {
   }
 
   private void testStringMap(ThriftTest.Client testClient) throws TException {
-    Map<String, String> mapout = new HashMap<String, String>();
+    Map<String, String> mapout = new HashMap<>();
     mapout.put("a", "123");
     mapout.put(" x y ", " with spaces ");
     mapout.put("same", "same");
@@ -491,10 +517,10 @@ public abstract class ServerTestBase extends TestCase {
 
   private void testNestedMap(ThriftTest.Client testClient) throws TException {
     Map<Integer, Map<Integer, Integer>> mm = testClient.testMapMap(1);
-    Map<Integer, Map<Integer, Integer>> mapmap = new HashMap<Integer, Map<Integer, Integer>>();
+    Map<Integer, Map<Integer, Integer>> mapmap = new HashMap<>();
 
-    HashMap<Integer, Integer> pos = new HashMap<Integer, Integer>();
-    HashMap<Integer, Integer> neg = new HashMap<Integer, Integer>();
+    HashMap<Integer, Integer> pos = new HashMap<>();
+    HashMap<Integer, Integer> neg = new HashMap<>();
     for (int i = 1; i < 5; i++) {
       pos.put(i, i);
       neg.put(-i, -i);
@@ -518,7 +544,7 @@ public abstract class ServerTestBase extends TestCase {
   }
 
   private void testSet(ThriftTest.Client testClient) throws TException {
-    Set<Integer> setout = new HashSet<Integer>();
+    Set<Integer> setout = new HashSet<>();
     for (int i = -2; i < 3; ++i) {
       setout.add(i);
     }
@@ -558,10 +584,11 @@ public abstract class ServerTestBase extends TestCase {
     }
   }
 
+  @Test
   public void testTransportFactory() throws Exception {
     for (TProtocolFactory protoFactory : getProtocols()) {
       TestHandler handler = new TestHandler();
-      ThriftTest.Processor<TestHandler> processor = new ThriftTest.Processor<TestHandler>(handler);
+      ThriftTest.Processor<TestHandler> processor = new ThriftTest.Processor<>(handler);
 
       final CallCountingTransportFactory factory =
           new CallCountingTransportFactory(new TFramedTransport.Factory());
@@ -583,7 +610,7 @@ public abstract class ServerTestBase extends TestCase {
     }
   }
 
-  private void testException(ThriftTest.Client testClient) throws TException, Xception {
+  private void testException(ThriftTest.Client testClient) throws TException {
     try {
       testClient.testException("Xception");
       assert false;

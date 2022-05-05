@@ -20,6 +20,8 @@
 package org.apache.thrift.server;
 
 import static org.apache.thrift.transport.sasl.TSaslNegotiationException.ErrorType.AUTHENTICATION_FAILURE;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.apache.thrift.TProcessor;
 import org.apache.thrift.protocol.TBinaryProtocol;
@@ -33,6 +35,7 @@ import org.apache.thrift.transport.TTransportFactory;
 import org.apache.thrift.transport.TestTSaslTransports;
 import org.apache.thrift.transport.TestTSaslTransports.TestSaslCallbackHandler;
 import org.apache.thrift.transport.sasl.TSaslNegotiationException;
+import org.junit.jupiter.api.Test;
 import thrift.test.ThriftTest;
 
 public class TestSaslNonblockingServer extends TestTSaslTransports.TestTSaslTransportsWithServer {
@@ -67,10 +70,12 @@ public class TestSaslNonblockingServer extends TestTSaslTransports.TestTSaslTran
   }
 
   @Override
+  @Test
   public void testIt() throws Exception {
     super.testIt();
   }
 
+  @Test
   public void testBadPassword() throws Exception {
     TProtocolFactory protocolFactory = new TBinaryProtocol.Factory();
     TProcessor processor = new ThriftTest.Processor<>(new TestHandler());
@@ -78,7 +83,7 @@ public class TestSaslNonblockingServer extends TestTSaslTransports.TestTSaslTran
 
     TSocket socket = new TSocket(HOST, PORT);
     socket.setTimeout(SOCKET_TIMEOUT);
-    TSaslClientTransport client =
+    try (TSaslClientTransport client =
         new TSaslClientTransport(
             TestTSaslTransports.WRAPPED_MECHANISM,
             TestTSaslTransports.PRINCIPAL,
@@ -86,24 +91,23 @@ public class TestSaslNonblockingServer extends TestTSaslTransports.TestTSaslTran
             TestTSaslTransports.HOST,
             TestTSaslTransports.WRAPPED_PROPS,
             new TestSaslCallbackHandler("bad_password"),
-            socket);
-    try {
-      client.open();
-      fail("Client should fail with sasl negotiation.");
-    } catch (TTransportException error) {
+            socket)) {
+      TTransportException error =
+          assertThrows(
+              TTransportException.class, client::open, "Client should fail with sasl negotiation.");
       TSaslNegotiationException serverSideError =
           new TSaslNegotiationException(
               AUTHENTICATION_FAILURE,
               "Authentication failed with " + TestTSaslTransports.WRAPPED_MECHANISM);
       assertTrue(
-          "Server should return error message \"" + serverSideError.getSummary() + "\"",
-          error.getMessage().contains(serverSideError.getSummary()));
+          error.getMessage().contains(serverSideError.getSummary()),
+          "Server should return error message \"" + serverSideError.getSummary() + "\"");
     } finally {
       stopServer();
-      client.close();
     }
   }
 
+  @Test
   @Override
   public void testTransportFactory() {
     // This test is irrelevant here, so skipped.

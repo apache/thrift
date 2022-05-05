@@ -18,6 +18,9 @@
  */
 package org.apache.thrift.protocol;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -26,7 +29,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import junit.framework.TestCase;
 import org.apache.thrift.Fixtures;
 import org.apache.thrift.TBase;
 import org.apache.thrift.TConfiguration;
@@ -36,6 +38,7 @@ import org.apache.thrift.TSerializer;
 import org.apache.thrift.server.ServerTestBase;
 import org.apache.thrift.transport.TMemoryBuffer;
 import org.apache.thrift.transport.TTransportException;
+import org.junit.jupiter.api.Test;
 import thrift.test.CompactProtoTestStruct;
 import thrift.test.HolyMoley;
 import thrift.test.Nesting;
@@ -43,7 +46,7 @@ import thrift.test.OneOfEach;
 import thrift.test.Srv;
 import thrift.test.ThriftTest;
 
-public abstract class ProtocolTestBase extends TestCase {
+public abstract class ProtocolTestBase {
 
   /** Does it make sense to call methods like writeI32 directly on your protocol? */
   protected abstract boolean canBeUsedNaked();
@@ -51,6 +54,7 @@ public abstract class ProtocolTestBase extends TestCase {
   /** The protocol factory for the protocol being tested. */
   protected abstract TProtocolFactory getFactory();
 
+  @Test
   public void testDouble() throws Exception {
     if (canBeUsedNaked()) {
       TMemoryBuffer buf = new TMemoryBuffer(1000);
@@ -73,13 +77,15 @@ public abstract class ProtocolTestBase extends TestCase {
         });
   }
 
+  @Test
   public void testSerialization() throws Exception {
-    internalTestSerialization(OneOfEach.class, Fixtures.oneOfEach);
-    internalTestSerialization(Nesting.class, Fixtures.nesting);
-    internalTestSerialization(HolyMoley.class, Fixtures.holyMoley);
-    internalTestSerialization(CompactProtoTestStruct.class, Fixtures.compactProtoTestStruct);
+    internalTestSerialization(OneOfEach.class, Fixtures.getOneOfEach());
+    internalTestSerialization(Nesting.class, Fixtures.getNesting());
+    internalTestSerialization(HolyMoley.class, Fixtures.getHolyMoley());
+    internalTestSerialization(CompactProtoTestStruct.class, Fixtures.getCompactProtoTestStruct());
   }
 
+  @Test
   public void testBinary() throws Exception {
     for (byte[] b :
         Arrays.asList(
@@ -108,6 +114,7 @@ public abstract class ProtocolTestBase extends TestCase {
     }
   }
 
+  @Test
   public void testString() throws Exception {
     for (String s :
         Arrays.asList("", "short", "borderlinetiny", "a bit longer than the smallest possible")) {
@@ -118,6 +125,7 @@ public abstract class ProtocolTestBase extends TestCase {
     }
   }
 
+  @Test
   public void testLong() throws Exception {
     if (canBeUsedNaked()) {
       internalTestNakedI64(0);
@@ -133,6 +141,7 @@ public abstract class ProtocolTestBase extends TestCase {
     }
   }
 
+  @Test
   public void testInt() throws Exception {
     for (int i :
         Arrays.asList(
@@ -145,6 +154,7 @@ public abstract class ProtocolTestBase extends TestCase {
     }
   }
 
+  @Test
   public void testShort() throws Exception {
     for (int s : Arrays.asList(0, 1, 7, 150, 15000, 0x7fff, -1, -7, -150, -15000, -0x7fff)) {
       if (canBeUsedNaked()) {
@@ -154,6 +164,7 @@ public abstract class ProtocolTestBase extends TestCase {
     }
   }
 
+  @Test
   public void testByte() throws Exception {
     if (canBeUsedNaked()) {
       internalTestNakedByte();
@@ -302,6 +313,7 @@ public abstract class ProtocolTestBase extends TestCase {
     assertEquals(expected, actual);
   }
 
+  @Test
   public void testMessage() throws Exception {
     List<TMessage> msgs =
         Arrays.asList(
@@ -327,6 +339,7 @@ public abstract class ProtocolTestBase extends TestCase {
     }
   }
 
+  @Test
   public void testServerRequest() throws Exception {
     Srv.Iface handler =
         new Srv.Iface() {
@@ -371,15 +384,16 @@ public abstract class ProtocolTestBase extends TestCase {
     assertEquals(2, testClient.recv_Janky());
   }
 
+  @Test
   public void testTDeserializer() throws TException {
     TSerializer ser = new TSerializer(getFactory());
-    byte[] bytes = ser.serialize(Fixtures.compactProtoTestStruct);
+    byte[] bytes = ser.serialize(Fixtures.getCompactProtoTestStruct());
 
     TDeserializer deser = new TDeserializer(getFactory());
     CompactProtoTestStruct cpts = new CompactProtoTestStruct();
     deser.deserialize(cpts, bytes);
 
-    assertEquals(Fixtures.compactProtoTestStruct, cpts);
+    assertEquals(Fixtures.getCompactProtoTestStruct(), cpts);
   }
 
   //
@@ -428,7 +442,7 @@ public abstract class ProtocolTestBase extends TestCase {
       byte[] serialized = null;
       long serStart = System.currentTimeMillis();
       for (int rep = 0; rep < NUM_REPS; rep++) {
-        serialized = ser.serialize(Fixtures.holyMoley);
+        serialized = ser.serialize(Fixtures.getHolyMoley());
       }
       long serEnd = System.currentTimeMillis();
       long serElapsed = serEnd - serStart;
@@ -456,7 +470,7 @@ public abstract class ProtocolTestBase extends TestCase {
     }
   }
 
-  private ServerTestBase.TestHandler testHandler =
+  private final ServerTestBase.TestHandler testHandler =
       new ServerTestBase.TestHandler() {
         @Override
         public String testString(String thing) {
@@ -496,6 +510,7 @@ public abstract class ProtocolTestBase extends TestCase {
     return getFactory().getProtocol(bufferTrans);
   }
 
+  @Test
   public void testReadCheckMaxMessageRequestForString() throws TException {
     TProtocol clientOutProto = initConfig(15);
     TProtocol clientInProto = initConfig(15);
@@ -511,21 +526,25 @@ public abstract class ProtocolTestBase extends TestCase {
     }
   }
 
+  @Test
   public void testReadCheckMaxMessageRequestForList() throws TException {
     TProtocol clientOutProto = initConfig(15);
     TProtocol clientInProto = initConfig(15);
     ThriftTest.Client testClient = new ThriftTest.Client(clientInProto, clientOutProto);
     ThriftTest.Processor testProcessor = new ThriftTest.Processor(testHandler);
-    try {
-      testClient.send_testList(Arrays.asList(1, 23242346, 888888, 90));
-      testProcessor.process(clientOutProto, clientInProto);
-      testClient.recv_testList();
-      fail("Limitations not achieved as expected");
-    } catch (TTransportException e) {
-      assertEquals("MaxMessageSize reached", e.getMessage());
-    }
+    TTransportException e =
+        assertThrows(
+            TTransportException.class,
+            () -> {
+              testClient.send_testList(Arrays.asList(1, 23242346, 888888, 90));
+              testProcessor.process(clientOutProto, clientInProto);
+              testClient.recv_testList();
+            },
+            "Limitations not achieved as expected");
+    assertEquals("MaxMessageSize reached", e.getMessage());
   }
 
+  @Test
   public void testReadCheckMaxMessageRequestForMap() throws TException {
     TProtocol clientOutProto = initConfig(13);
     TProtocol clientInProto = initConfig(13);
@@ -533,29 +552,36 @@ public abstract class ProtocolTestBase extends TestCase {
     ThriftTest.Processor testProcessor = new ThriftTest.Processor(testHandler);
     Map<String, String> thing = new HashMap<>();
     thing.put("key", "Thrift");
-    try {
-      testClient.send_testStringMap(thing);
-      testProcessor.process(clientOutProto, clientInProto);
-      testClient.recv_testStringMap();
-      fail("Limitations not achieved as expected");
-    } catch (TTransportException e) {
-      assertEquals("MaxMessageSize reached", e.getMessage());
-    }
+
+    TTransportException e =
+        assertThrows(
+            TTransportException.class,
+            () -> {
+              testClient.send_testStringMap(thing);
+              testProcessor.process(clientOutProto, clientInProto);
+              testClient.recv_testStringMap();
+            },
+            "Limitations not achieved as expected");
+
+    assertEquals("MaxMessageSize reached", e.getMessage());
   }
 
+  @Test
   public void testReadCheckMaxMessageRequestForSet() throws TException {
     TProtocol clientOutProto = initConfig(10);
     TProtocol clientInProto = initConfig(10);
     ThriftTest.Client testClient = new ThriftTest.Client(clientInProto, clientOutProto);
     ThriftTest.Processor testProcessor = new ThriftTest.Processor(testHandler);
-    try {
-      testClient.send_testSet(
-          Stream.of(234, 0, 987087, 45, 88888888, 9).collect(Collectors.toSet()));
-      testProcessor.process(clientOutProto, clientInProto);
-      testClient.recv_testSet();
-      fail("Limitations not achieved as expected");
-    } catch (TTransportException e) {
-      assertEquals("MaxMessageSize reached", e.getMessage());
-    }
+    TTransportException e =
+        assertThrows(
+            TTransportException.class,
+            () -> {
+              testClient.send_testSet(
+                  Stream.of(234, 0, 987087, 45, 88888888, 9).collect(Collectors.toSet()));
+              testProcessor.process(clientOutProto, clientInProto);
+              testClient.recv_testSet();
+            },
+            "Limitations not achieved as expected");
+    assertEquals("MaxMessageSize reached", e.getMessage());
   }
 }

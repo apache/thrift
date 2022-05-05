@@ -32,15 +32,44 @@ import thrift.test.Nesting;
 import thrift.test.OneOfEach;
 
 public class Fixtures {
-  public static final OneOfEach oneOfEach;
-  public static final Nesting nesting;
-  public static final HolyMoley holyMoley;
-  public static final CompactProtoTestStruct compactProtoTestStruct;
+
+  public static OneOfEach getOneOfEach() {
+    return oneOfEach.deepCopy();
+  }
+
+  public static Nesting getNesting() {
+    return nesting.deepCopy();
+  }
+
+  public static HolyMoley getHolyMoley() {
+    return holyMoley.deepCopy();
+  }
+
+  public static CompactProtoTestStruct getCompactProtoTestStruct() {
+    return compactProtoTestStruct.deepCopy();
+  }
+
+  public static byte[] getPersistentBytesOneOfEach() {
+    return persistentBytesOneOfEach.clone();
+  }
+
+  public static byte[] getPersistentBytesHolyMoley() {
+    return persistentBytesHolyMoley.clone();
+  }
+
+  public static byte[] getPersistentBytesNesting() {
+    return persistentBytesNesting.clone();
+  }
+
+  private static final OneOfEach oneOfEach;
+  private static final Nesting nesting;
+  private static final HolyMoley holyMoley;
+  private static final CompactProtoTestStruct compactProtoTestStruct;
 
   // These byte arrays are serialized versions of the above structs.
   // They were serialized in binary protocol using thrift 0.6.x and are used to
   // test backwards compatibility with respect to the standard scheme.
-  public static final byte[] persistentBytesOneOfEach =
+  private static final byte[] persistentBytesOneOfEach =
       new byte[] {
         (byte) 0x02,
         (byte) 0x00,
@@ -237,7 +266,7 @@ public class Fixtures {
         (byte) 0x03,
         (byte) 0x00
       };
-  public static final byte[] persistentBytesNesting =
+  private static final byte[] persistentBytesNesting =
       new byte[] {
         (byte) 0x0C,
         (byte) 0x00,
@@ -475,7 +504,7 @@ public class Fixtures {
         (byte) 0x00,
         (byte) 0x00
       };
-  public static final byte[] persistentBytesHolyMoley =
+  private static final byte[] persistentBytesHolyMoley =
       new byte[] {
         (byte) 0x0F,
         (byte) 0x00,
@@ -1120,33 +1149,33 @@ public class Fixtures {
       nesting = new Nesting(bonk, oneOfEach);
 
       holyMoley = new HolyMoley();
-      List<OneOfEach> big = new ArrayList<OneOfEach>();
+      List<OneOfEach> big = new ArrayList<>();
       big.add(new OneOfEach(oneOfEach));
       big.add(nesting.my_ooe);
       holyMoley.setBig(big);
       holyMoley.getBig().get(0).setA_bite((byte) 0x22);
       holyMoley.getBig().get(0).setA_bite((byte) 0x23);
 
-      holyMoley.setContain(new HashSet<List<String>>());
-      ArrayList<String> stage1 = new ArrayList<String>(2);
+      holyMoley.setContain(new HashSet<>());
+      ArrayList<String> stage1 = new ArrayList<>(2);
       stage1.add("and a one");
       stage1.add("and a two");
       holyMoley.getContain().add(stage1);
-      stage1 = new ArrayList<String>(3);
+      stage1 = new ArrayList<>(3);
       stage1.add("then a one, two");
       stage1.add("three!");
       stage1.add("FOUR!!");
       holyMoley.getContain().add(stage1);
-      stage1 = new ArrayList<String>(0);
+      stage1 = new ArrayList<>(0);
       holyMoley.getContain().add(stage1);
 
-      ArrayList<Bonk> stage2 = new ArrayList<Bonk>();
-      holyMoley.setBonks(new HashMap<String, List<Bonk>>());
+      ArrayList<Bonk> stage2 = new ArrayList<>();
+      holyMoley.setBonks(new HashMap<>());
       // one empty
       holyMoley.getBonks().put("zero", stage2);
 
       // one with two
-      stage2 = new ArrayList<Bonk>();
+      stage2 = new ArrayList<>();
       Bonk b = new Bonk();
       b.setType(1);
       b.setMessage("Wait.");
@@ -1158,7 +1187,7 @@ public class Fixtures {
       holyMoley.getBonks().put("two", stage2);
 
       // one with three
-      stage2 = new ArrayList<Bonk>();
+      stage2 = new ArrayList<>();
       b = new Bonk();
       b.setType(3);
       b.setMessage("quoth");

@@ -18,12 +18,14 @@
  */
 package org.apache.thrift.protocol;
 
-import static org.junit.Assert.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 
-import junit.framework.TestCase;
+import org.junit.jupiter.api.Test;
 
-public abstract class TestTField extends TestCase {
+public abstract class TestTField {
 
+  @Test
   public void testConstructor() {
     TField uut = new TField();
     assertEquals("", uut.name);
@@ -36,6 +38,7 @@ public abstract class TestTField extends TestCase {
     assertEquals(42, uut.id);
   }
 
+  @Test
   public void testEquality() {
     TField uut1 = new TField();
     TField uut2 = new TField();

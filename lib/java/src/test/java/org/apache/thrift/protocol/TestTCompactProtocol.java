@@ -21,6 +21,7 @@ package org.apache.thrift.protocol;
 
 import org.apache.thrift.TDeserializer;
 import org.apache.thrift.TException;
+import org.junit.jupiter.api.Test;
 import thrift.test.Bonk;
 
 public class TestTCompactProtocol extends ProtocolTestBase {
@@ -34,6 +35,7 @@ public class TestTCompactProtocol extends ProtocolTestBase {
     return true;
   }
 
+  @Test
   public void testOOMDenialOfService() throws Exception {
     // Struct header, Integer.MAX_VALUE length, and only one real
     // byte of data

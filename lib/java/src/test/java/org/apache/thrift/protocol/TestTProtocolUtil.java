@@ -18,12 +18,16 @@
  */
 package org.apache.thrift.protocol;
 
-import junit.framework.TestCase;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import org.apache.thrift.TSerializer;
+import org.junit.jupiter.api.Test;
 import thrift.test.GuessProtocolStruct;
 
-public class TestTProtocolUtil extends TestCase {
+public class TestTProtocolUtil {
 
+  @Test
   public void testGuessProtocolFactory_JSON() throws Exception {
 
     byte[] data = "{foo}".getBytes();
@@ -41,6 +45,7 @@ public class TestTProtocolUtil extends TestCase {
     assertFalse(factory instanceof TJSONProtocol.Factory);
   }
 
+  @Test
   public void testGuessProtocolFactory_Binary() throws Exception {
     // Check that a last byte != 0 is correctly reported as Binary
 
@@ -59,6 +64,7 @@ public class TestTProtocolUtil extends TestCase {
     assertTrue(factory instanceof TBinaryProtocol.Factory);
   }
 
+  @Test
   public void testGuessProtocolFactory_Compact() throws Exception {
     // Check that a first byte > 0x10 is reported as Compact
     byte[] buf = new byte[3];
@@ -76,6 +82,7 @@ public class TestTProtocolUtil extends TestCase {
     }
   }
 
+  @Test
   public void testGuessProtocolFactory_Undecided() throws Exception {
     byte[] buf = new byte[3];
     buf[1] = 0x7e;

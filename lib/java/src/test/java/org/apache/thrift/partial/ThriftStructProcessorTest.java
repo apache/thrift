@@ -19,12 +19,19 @@
 
 package org.apache.thrift.partial;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -33,7 +40,7 @@ import java.util.Set;
 import org.apache.thrift.TBase;
 import org.apache.thrift.TException;
 import org.apache.thrift.TFieldIdEnum;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class ThriftStructProcessorTest {
 
@@ -41,7 +48,7 @@ public class ThriftStructProcessorTest {
 
   @Test
   public void testStruct() throws TException {
-    List<ThriftField> fields = ThriftField.fromNames(Arrays.asList("i32Field"));
+    List<ThriftField> fields = ThriftField.fromNames(Collections.singletonList("i32Field"));
     ThriftMetadata.ThriftStruct metadata =
         ThriftMetadata.ThriftStruct.fromFields(TestStruct.class, fields);
     ThriftStructProcessor processor = new ThriftStructProcessor();
@@ -292,9 +299,7 @@ public class ThriftStructProcessorTest {
         return field.fieldId;
       }
     }
-
-    fail("Field not found: " + fieldName);
-    return null;
+    throw new IllegalStateException("Field not found: " + fieldName);
   }
 
   private Object getFieldValue(TBase struct, TFieldIdEnum fieldId) {
