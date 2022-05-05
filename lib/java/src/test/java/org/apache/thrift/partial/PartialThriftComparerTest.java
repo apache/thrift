@@ -19,20 +19,17 @@
 
 package org.apache.thrift.partial;
 
-import static org.junit.Assert.*;
-
 import org.apache.thrift.TDeserializer;
 import org.apache.thrift.TException;
-import org.apache.thrift.partial.TestStruct;
-import org.apache.thrift.partial.ThriftField;
 import org.apache.thrift.protocol.TBinaryProtocol;
 import org.apache.thrift.protocol.TCompactProtocol;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
+
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class PartialThriftComparerTest {
 
@@ -63,13 +60,9 @@ public class PartialThriftComparerTest {
 
     StringBuilder sb = new StringBuilder();
     TestStruct ts2 = (TestStruct) partialBinaryDeser.partialDeserializeObject(bytesBinary);
-    if (!comparer.areEqual(ts1, ts2, sb)) {
-      fail(sb.toString());
-    }
+    assertTrue(comparer.areEqual(ts1, ts2, sb), sb::toString);
 
     ts2 = (TestStruct) partialCompactDeser.partialDeserializeObject(bytesCompact);
-    if (!comparer.areEqual(ts1, ts2, sb)) {
-      fail(sb.toString());
-    }
+    assertTrue(comparer.areEqual(ts1, ts2, sb), sb::toString);
   }
 }

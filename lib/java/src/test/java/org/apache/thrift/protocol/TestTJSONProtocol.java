@@ -18,11 +18,13 @@
  */
 package org.apache.thrift.protocol;
 
+import org.apache.thrift.TException;
+import org.apache.thrift.transport.TMemoryBuffer;
+import org.junit.jupiter.api.Test;
+
 import java.nio.charset.StandardCharsets;
 
-import org.apache.thrift.TException;
-import org.apache.thrift.protocol.TJSONProtocol;
-import org.apache.thrift.transport.TMemoryBuffer;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class TestTJSONProtocol extends ProtocolTestBase {
   @Override
@@ -35,6 +37,7 @@ public class TestTJSONProtocol extends ProtocolTestBase {
     return false;
   }
 
+  @Test
   public void testEscapedUnicode() throws TException {
     String jsonString = "\"hello unicode \\u0e01\\ud834\\udd1e world\"";
     String expectedString = "hello unicode \u0e01\ud834\udd1e world";
@@ -46,6 +49,7 @@ public class TestTJSONProtocol extends ProtocolTestBase {
     assertEquals(expectedString, protocol.readString());
   }
 
+  @Test
   public void testExactlySizedBuffer() throws TException {
     // Regression test for https://issues.apache.org/jira/browse/THRIFT-5383.
     // Ensures that a JSON string can be read after writing to a buffer just

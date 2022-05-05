@@ -18,12 +18,14 @@
  */
 package org.apache.thrift.transport;
 
+import org.apache.thrift.TConfiguration;
+import org.junit.jupiter.api.Test;
+
 import java.nio.ByteBuffer;
 
-import junit.framework.TestCase;
-import org.apache.thrift.TConfiguration;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
-public class TestAutoExpandingBufferReadTransport extends TestCase {
+public class TestAutoExpandingBufferReadTransport  {
   private static final byte[] HUNDRED_BYTES = new byte[100];
 
   static {
@@ -32,6 +34,7 @@ public class TestAutoExpandingBufferReadTransport extends TestCase {
     }
   }
 
+  @Test
   public void testIt() throws Exception {
     AutoExpandingBufferReadTransport t = new AutoExpandingBufferReadTransport(new TConfiguration(), 150);
 

@@ -19,38 +19,39 @@
 
 package org.apache.thrift.transport.sasl;
 
+import org.apache.thrift.EncodingUtils;
+import org.junit.jupiter.api.Test;
+
 import java.nio.ByteBuffer;
 
-import org.apache.thrift.EncodingUtils;
-import org.junit.Assert;
-import org.junit.Test;
-
 import static org.apache.thrift.transport.sasl.SaslNegotiationFrameWriter.HEADER_BYTES;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 public class TestSaslNegotiationFrameWriter {
 
-  private static final byte[] PAYLOAD = {0x11, 0x08, 0x3F, 0x58, 0x73, 0x22, 0x00, (byte) 0xFF};
+    private static final byte[] PAYLOAD = {0x11, 0x08, 0x3F, 0x58, 0x73, 0x22, 0x00, (byte) 0xFF};
 
-  @Test
-  public void testWithHeaderAndPayload() {
-    SaslNegotiationFrameWriter frameWriter = new SaslNegotiationFrameWriter();
-    frameWriter.withHeaderAndPayload(new byte[] {NegotiationStatus.OK.getValue()}, PAYLOAD);
-    byte[] expectedBytes = new byte[HEADER_BYTES + PAYLOAD.length];
-    expectedBytes[0] = NegotiationStatus.OK.getValue();
-    EncodingUtils.encodeBigEndian(PAYLOAD.length, expectedBytes, 1);
-    System.arraycopy(PAYLOAD, 0, expectedBytes, HEADER_BYTES, PAYLOAD.length);
-    Assert.assertEquals(ByteBuffer.wrap(expectedBytes), frameWriter.frameBytes);
-  }
+    @Test
+    public void testWithHeaderAndPayload() {
+        SaslNegotiationFrameWriter frameWriter = new SaslNegotiationFrameWriter();
+        frameWriter.withHeaderAndPayload(new byte[]{NegotiationStatus.OK.getValue()}, PAYLOAD);
+        byte[] expectedBytes = new byte[HEADER_BYTES + PAYLOAD.length];
+        expectedBytes[0] = NegotiationStatus.OK.getValue();
+        EncodingUtils.encodeBigEndian(PAYLOAD.length, expectedBytes, 1);
+        System.arraycopy(PAYLOAD, 0, expectedBytes, HEADER_BYTES, PAYLOAD.length);
+        assertEquals(ByteBuffer.wrap(expectedBytes), frameWriter.frameBytes);
+    }
 
-  @Test(expected = IllegalArgumentException.class)
-  public void testWithInvalidHeaderLength() {
-    SaslNegotiationFrameWriter frameWriter = new SaslNegotiationFrameWriter();
-    frameWriter.withHeaderAndPayload(new byte[5], 0, 2, PAYLOAD, 0, 1);
-  }
+    @Test
+    public void testWithInvalidHeaderLength() {
+        SaslNegotiationFrameWriter frameWriter = new SaslNegotiationFrameWriter();
+        assertThrows(IllegalArgumentException.class, () -> frameWriter.withHeaderAndPayload(new byte[5], 0, 2, PAYLOAD, 0, 1));
+    }
 
-  @Test(expected = UnsupportedOperationException.class)
-  public void testWithOnlyPayload() {
-    SaslNegotiationFrameWriter frameWriter = new SaslNegotiationFrameWriter();
-    frameWriter.withOnlyPayload(new byte[0]);
-  }
+    @Test
+    public void testWithOnlyPayload() {
+        SaslNegotiationFrameWriter frameWriter = new SaslNegotiationFrameWriter();
+        assertThrows(UnsupportedOperationException.class, () -> frameWriter.withOnlyPayload(new byte[0]));
+    }
 }
