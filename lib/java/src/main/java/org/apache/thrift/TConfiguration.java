@@ -18,84 +18,85 @@
  */
 package org.apache.thrift;
 
-
 public class TConfiguration {
-    public static final int DEFAULT_MAX_MESSAGE_SIZE = 100 * 1024 * 1024;
-    public static final int DEFAULT_MAX_FRAME_SIZE = 16384000;      // this value is used consistently across all Thrift libraries
-    public static final int DEFAULT_RECURSION_DEPTH = 64;
+  public static final int DEFAULT_MAX_MESSAGE_SIZE = 100 * 1024 * 1024;
+  public static final int DEFAULT_MAX_FRAME_SIZE =
+      16384000; // this value is used consistently across all Thrift libraries
+  public static final int DEFAULT_RECURSION_DEPTH = 64;
 
+  private int maxMessageSize;
+  private int maxFrameSize;
+  private int recursionLimit;
+
+  public TConfiguration() {
+    this(DEFAULT_MAX_MESSAGE_SIZE, DEFAULT_MAX_FRAME_SIZE, DEFAULT_RECURSION_DEPTH);
+  }
+
+  public TConfiguration(int maxMessageSize, int maxFrameSize, int recursionLimit) {
+    this.maxFrameSize = maxFrameSize;
+    this.maxMessageSize = maxMessageSize;
+    this.recursionLimit = recursionLimit;
+  }
+
+  public int getMaxMessageSize() {
+    return maxMessageSize;
+  }
+
+  public int getMaxFrameSize() {
+    return maxFrameSize;
+  }
+
+  public int getRecursionLimit() {
+    return recursionLimit;
+  }
+
+  public void setMaxMessageSize(int maxMessageSize) {
+    this.maxMessageSize = maxMessageSize;
+  }
+
+  public void setMaxFrameSize(int maxFrameSize) {
+    this.maxFrameSize = maxFrameSize;
+  }
+
+  public void setRecursionLimit(int recursionLimit) {
+    this.recursionLimit = recursionLimit;
+  }
+
+  public static final TConfiguration DEFAULT = new Builder().build();
+
+  public static TConfiguration.Builder custom() {
+    return new Builder();
+  }
+
+  public static class Builder {
     private int maxMessageSize;
     private int maxFrameSize;
     private int recursionLimit;
 
-    public TConfiguration() {
-        this(DEFAULT_MAX_MESSAGE_SIZE, DEFAULT_MAX_FRAME_SIZE, DEFAULT_RECURSION_DEPTH);
-    }
-    public TConfiguration(int maxMessageSize, int maxFrameSize, int recursionLimit) {
-        this.maxFrameSize = maxFrameSize;
-        this.maxMessageSize = maxMessageSize;
-        this.recursionLimit = recursionLimit;
+    Builder() {
+      super();
+      this.maxFrameSize = DEFAULT_MAX_FRAME_SIZE;
+      this.maxMessageSize = DEFAULT_MAX_MESSAGE_SIZE;
+      this.recursionLimit = DEFAULT_RECURSION_DEPTH;
     }
 
-    public int getMaxMessageSize() {
-        return maxMessageSize;
+    public Builder setMaxMessageSize(int maxMessageSize) {
+      this.maxMessageSize = maxMessageSize;
+      return this;
     }
 
-    public int getMaxFrameSize() {
-        return maxFrameSize;
+    public Builder setMaxFrameSize(int maxFrameSize) {
+      this.maxFrameSize = maxFrameSize;
+      return this;
     }
 
-    public int getRecursionLimit() {
-        return recursionLimit;
+    public Builder setRecursionLimit(int recursionLimit) {
+      this.recursionLimit = recursionLimit;
+      return this;
     }
 
-    public void setMaxMessageSize(int maxMessageSize) {
-        this.maxMessageSize = maxMessageSize;
+    public TConfiguration build() {
+      return new TConfiguration(maxMessageSize, maxFrameSize, recursionLimit);
     }
-
-    public void setMaxFrameSize(int maxFrameSize) {
-        this.maxFrameSize = maxFrameSize;
-    }
-
-    public void setRecursionLimit(int recursionLimit) {
-        this.recursionLimit = recursionLimit;
-    }
-
-    public static final TConfiguration DEFAULT = new Builder().build();
-
-    public static TConfiguration.Builder custom() {
-        return new Builder();
-    }
-
-    public static class Builder {
-        private int maxMessageSize ;
-        private int maxFrameSize;
-        private int recursionLimit ;
-
-        Builder() {
-            super();
-            this.maxFrameSize = DEFAULT_MAX_FRAME_SIZE;
-            this.maxMessageSize = DEFAULT_MAX_MESSAGE_SIZE;
-            this.recursionLimit = DEFAULT_RECURSION_DEPTH;
-        }
-
-        public Builder setMaxMessageSize(int maxMessageSize) {
-            this.maxMessageSize = maxMessageSize;
-            return this;
-        }
-
-        public Builder setMaxFrameSize(int maxFrameSize) {
-            this.maxFrameSize = maxFrameSize;
-            return this;
-        }
-
-        public Builder setRecursionLimit(int recursionLimit) {
-            this.recursionLimit = recursionLimit;
-            return this;
-        }
-
-        public TConfiguration build() {
-            return new TConfiguration(maxMessageSize, maxFrameSize, recursionLimit);
-        }
-    }
+  }
 }

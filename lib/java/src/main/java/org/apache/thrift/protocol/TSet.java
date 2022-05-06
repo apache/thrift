@@ -19,10 +19,7 @@
 
 package org.apache.thrift.protocol;
 
-/**
- * Helper class that encapsulates set metadata.
- *
- */
+/** Helper class that encapsulates set metadata. */
 public final class TSet {
   public TSet() {
     this(TType.STOP, 0);
@@ -38,5 +35,5 @@ public final class TSet {
   }
 
   public final byte elemType;
-  public final int  size;
+  public final int size;
 }

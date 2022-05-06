@@ -18,17 +18,6 @@
  */
 package org.apache.thrift.transport;
 
-import org.apache.thrift.transport.layered.TFastFramedTransport;
-import org.apache.thrift.transport.layered.TFramedTransport;
-import org.junit.jupiter.api.Test;
-
-import java.io.BufferedOutputStream;
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.IOException;
-
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -36,20 +25,31 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.io.BufferedOutputStream;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
+import org.apache.thrift.transport.layered.TFastFramedTransport;
+import org.apache.thrift.transport.layered.TFramedTransport;
+import org.junit.jupiter.api.Test;
+
 public class TestTFramedTransport {
 
   protected TTransport getTransport(TTransport underlying) throws TTransportException {
     return new TFramedTransport(underlying);
   }
 
-  protected TTransport getTransport(TTransport underlying, int maxLength) throws TTransportException {
+  protected TTransport getTransport(TTransport underlying, int maxLength)
+      throws TTransportException {
     return new TFramedTransport(underlying, maxLength);
   }
 
   public static byte[] byteSequence(int start, int end) {
-    byte[] result = new byte[end-start+1];
-    for (int i = 0; i <= (end-start); i++) {
-      result[i] = (byte)(start+i);
+    byte[] result = new byte[end - start + 1];
+    for (int i = 0; i <= (end - start); i++) {
+      result[i] = (byte) (start + i);
     }
     return result;
   }
@@ -105,12 +105,15 @@ public class TestTFramedTransport {
     TTransport trans = getTransport(countTrans, maxLength);
 
     byte[] readBuf = new byte[10];
-    TTransportException e = assertThrows(TTransportException.class, () -> trans.read(readBuf, 0, 4));
-    // We expect this exception because the frame we're trying to read is larger than our max frame length
+    TTransportException e =
+        assertThrows(TTransportException.class, () -> trans.read(readBuf, 0, 4));
+    // We expect this exception because the frame we're trying to read is larger than our max frame
+    // length
     assertEquals(TTransportException.CORRUPTED_DATA, e.getType());
     assertFalse(trans.isOpen());
 
-    TTransportException e2 = assertThrows(TTransportException.class, () -> trans.read(readBuf, 0, 4));
+    TTransportException e2 =
+        assertThrows(TTransportException.class, () -> trans.read(readBuf, 0, 4));
     // This time we get an exception indicating the connection was closed
     assertEquals(TTransportException.NOT_OPEN, e2.getType());
   }
@@ -118,13 +121,14 @@ public class TestTFramedTransport {
   @Test
   public void testWrite() throws TTransportException, IOException {
     ByteArrayOutputStream baos = new ByteArrayOutputStream();
-    WriteCountingTransport countingTrans = new WriteCountingTransport(new TIOStreamTransport(new BufferedOutputStream(baos)));
+    WriteCountingTransport countingTrans =
+        new WriteCountingTransport(new TIOStreamTransport(new BufferedOutputStream(baos)));
     TTransport trans = getTransport(countingTrans);
 
-    trans.write(byteSequence(0,100));
+    trans.write(byteSequence(0, 100));
     assertEquals(0, countingTrans.writeCount);
-    trans.write(byteSequence(101,200));
-    trans.write(byteSequence(201,255));
+    trans.write(byteSequence(101, 200));
+    trans.write(byteSequence(201, 255));
     assertEquals(0, countingTrans.writeCount);
 
     trans.flush();

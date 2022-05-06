@@ -63,7 +63,6 @@ include "shared.thrift"
  * target languages.
  */
 
-namespace cl tutorial
 namespace cpp tutorial
 namespace d tutorial
 namespace dart tutorial

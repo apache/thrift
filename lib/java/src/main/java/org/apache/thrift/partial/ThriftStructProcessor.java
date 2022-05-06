@@ -19,20 +19,19 @@
 
 package org.apache.thrift.partial;
 
-import org.apache.thrift.TBase;
-import org.apache.thrift.TEnum;
-import org.apache.thrift.TFieldIdEnum;
-
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
+import org.apache.thrift.TBase;
+import org.apache.thrift.TEnum;
+import org.apache.thrift.TFieldIdEnum;
 
 /**
  * Provides a way to create and initialize an instance of TBase during partial deserialization.
  *
- * This class is supposed to be used as a helper class for {@code PartialThriftDeserializer}.
+ * <p>This class is supposed to be used as a helper class for {@code PartialThriftDeserializer}.
  */
 public class ThriftStructProcessor implements ThriftFieldValueProcessor<TBase> {
 
@@ -109,27 +108,27 @@ public class ThriftStructProcessor implements ThriftFieldValueProcessor<TBase> {
   }
 
   @Override
-  public void setBool(TBase valueCollection, TFieldIdEnum fieldId,  boolean value) {
+  public void setBool(TBase valueCollection, TFieldIdEnum fieldId, boolean value) {
     valueCollection.setFieldValue(fieldId, value);
   }
 
   @Override
-  public void setByte(TBase valueCollection, TFieldIdEnum fieldId,  byte value) {
+  public void setByte(TBase valueCollection, TFieldIdEnum fieldId, byte value) {
     valueCollection.setFieldValue(fieldId, value);
   }
 
   @Override
-  public void setInt16(TBase valueCollection, TFieldIdEnum fieldId,  short value) {
+  public void setInt16(TBase valueCollection, TFieldIdEnum fieldId, short value) {
     valueCollection.setFieldValue(fieldId, value);
   }
 
   @Override
-  public void setInt32(TBase valueCollection, TFieldIdEnum fieldId,  int value) {
+  public void setInt32(TBase valueCollection, TFieldIdEnum fieldId, int value) {
     valueCollection.setFieldValue(fieldId, value);
   }
 
   @Override
-  public void setInt64(TBase valueCollection, TFieldIdEnum fieldId,  long value) {
+  public void setInt64(TBase valueCollection, TFieldIdEnum fieldId, long value) {
     valueCollection.setFieldValue(fieldId, value);
   }
 

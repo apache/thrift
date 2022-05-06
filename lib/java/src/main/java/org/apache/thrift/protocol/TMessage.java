@@ -19,10 +19,7 @@
 
 package org.apache.thrift.protocol;
 
-/**
- * Helper class that encapsulates struct metadata.
- *
- */
+/** Helper class that encapsulates struct metadata. */
 public final class TMessage {
   public TMessage() {
     this("", TType.STOP, 0);
@@ -55,22 +52,15 @@ public final class TMessage {
 
   @Override
   public boolean equals(Object obj) {
-    if (this == obj)
-      return true;
-    if (obj == null)
-      return false;
-    if (getClass() != obj.getClass())
-      return false;
+    if (this == obj) return true;
+    if (obj == null) return false;
+    if (getClass() != obj.getClass()) return false;
     TMessage other = (TMessage) obj;
     if (name == null) {
-      if (other.name != null)
-        return false;
-    } else if (!name.equals(other.name))
-      return false;
-    if (seqid != other.seqid)
-      return false;
-    if (type != other.type)
-      return false;
+      if (other.name != null) return false;
+    } else if (!name.equals(other.name)) return false;
+    if (seqid != other.seqid) return false;
+    if (type != other.type) return false;
     return true;
   }
 }

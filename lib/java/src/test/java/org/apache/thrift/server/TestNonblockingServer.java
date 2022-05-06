@@ -18,6 +18,8 @@
  */
 package org.apache.thrift.server;
 
+import static org.junit.jupiter.api.Assertions.fail;
+
 import org.apache.thrift.TProcessor;
 import org.apache.thrift.protocol.TProtocol;
 import org.apache.thrift.protocol.TProtocolFactory;
@@ -31,15 +33,17 @@ import org.apache.thrift.transport.layered.TFramedTransport;
 import org.junit.jupiter.api.Test;
 import thrift.test.ThriftTest;
 
-import static org.junit.jupiter.api.Assertions.fail;
-
 public class TestNonblockingServer extends ServerTestBase {
 
   private Thread serverThread;
   private TServer server;
   private static final int NUM_QUERIES = 1000;
 
-  protected TServer getServer(TProcessor processor, TNonblockingServerSocket socket, TProtocolFactory protoFactory, TTransportFactory factory) {
+  protected TServer getServer(
+      TProcessor processor,
+      TNonblockingServerSocket socket,
+      TProtocolFactory protoFactory,
+      TTransportFactory factory) {
     final Args args = new Args(socket).processor(processor).protocolFactory(protoFactory);
     if (factory != null) {
       args.transportFactory(factory);
@@ -48,25 +52,32 @@ public class TestNonblockingServer extends ServerTestBase {
   }
 
   @Override
-  public void startServer(final TProcessor processor, final TProtocolFactory protoFactory, final TTransportFactory factory) throws Exception {
-    serverThread = new Thread() {
-      public void run() {
-        try {
-          // Transport
-          TNonblockingServerSocket tServerSocket =
-            new TNonblockingServerSocket(new TNonblockingServerSocket.NonblockingAbstractServerSocketArgs().port(PORT));
+  public void startServer(
+      final TProcessor processor,
+      final TProtocolFactory protoFactory,
+      final TTransportFactory factory)
+      throws Exception {
+    serverThread =
+        new Thread() {
+          public void run() {
+            try {
+              // Transport
+              TNonblockingServerSocket tServerSocket =
+                  new TNonblockingServerSocket(
+                      new TNonblockingServerSocket.NonblockingAbstractServerSocketArgs()
+                          .port(PORT));
 
-          server = getServer(processor, tServerSocket, protoFactory, factory);
+              server = getServer(processor, tServerSocket, protoFactory, factory);
 
-          // Run it
-          System.out.println("Starting the server on port " + PORT + "...");
-          server.serve();
-        } catch (Exception e) {
-          e.printStackTrace();
-          fail();
-        }
-      }
-    };
+              // Run it
+              System.out.println("Starting the server on port " + PORT + "...");
+              server.serve();
+            } catch (Exception e) {
+              e.printStackTrace();
+              fail();
+            }
+          }
+        };
     serverThread.start();
     Thread.sleep(1000);
   }
@@ -76,14 +87,14 @@ public class TestNonblockingServer extends ServerTestBase {
     server.stop();
     try {
       serverThread.join();
-    } catch (InterruptedException e) {}
+    } catch (InterruptedException e) {
+    }
   }
 
   @Override
   public TTransport getClientTransport(TTransport underlyingTransport) throws Exception {
     return new TFramedTransport(underlyingTransport);
   }
-
 
   @Test
   public void testCleanupAllSelectionKeys() throws Exception {
@@ -109,7 +120,7 @@ public class TestNonblockingServer extends ServerTestBase {
       for (int i = 0; i < NUM_QUERIES; ++i) {
         try {
           testClient.testI32(1);
-        } catch(TTransportException e) {
+        } catch (TTransportException e) {
           System.err.println(e);
           e.printStackTrace();
           if (e.getCause() instanceof java.net.SocketTimeoutException) {

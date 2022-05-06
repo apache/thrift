@@ -18,13 +18,12 @@
  */
 package org.apache.thrift.protocol;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
+import java.nio.charset.StandardCharsets;
 import org.apache.thrift.TException;
 import org.apache.thrift.transport.TMemoryBuffer;
 import org.junit.jupiter.api.Test;
-
-import java.nio.charset.StandardCharsets;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class TestTJSONProtocol extends ProtocolTestBase {
   @Override

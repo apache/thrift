@@ -19,27 +19,27 @@
 
 package org.apache.thrift;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import org.junit.jupiter.api.Test;
 import thrift.test.Opt30;
 import thrift.test.Opt4;
 import thrift.test.Opt64;
 import thrift.test.Opt80;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-
 // Exercises the isSet methods using structs from ManyOptionals.thrift
-public class TestOptionals  {
+public class TestOptionals {
   @Test
   public void testEncodingUtils() throws Exception {
-    assertEquals((short)0x8, EncodingUtils.setBit((short)0, 3, true));
-    assertEquals((short)0, EncodingUtils.setBit((short)0x8, 3, false));
+    assertEquals((short) 0x8, EncodingUtils.setBit((short) 0, 3, true));
+    assertEquals((short) 0, EncodingUtils.setBit((short) 0x8, 3, false));
     assertTrue(EncodingUtils.testBit((short) 0x8, 3));
     assertFalse(EncodingUtils.testBit((short) 0x8, 4));
 
-    assertEquals(Short.MIN_VALUE, EncodingUtils.setBit((short)0, 15, true));
-    assertEquals((short)0, EncodingUtils.setBit(Short.MIN_VALUE, 15, false));
+    assertEquals(Short.MIN_VALUE, EncodingUtils.setBit((short) 0, 15, true));
+    assertEquals((short) 0, EncodingUtils.setBit(Short.MIN_VALUE, 15, false));
     assertTrue(EncodingUtils.testBit(Short.MIN_VALUE, 15));
     assertFalse(EncodingUtils.testBit(Short.MIN_VALUE, 14));
   }

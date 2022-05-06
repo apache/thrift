@@ -19,15 +19,14 @@
 
 package org.apache.thrift.transport.sasl;
 
-import org.apache.thrift.transport.TMemoryInputTransport;
-import org.apache.thrift.transport.TTransportException;
-import org.junit.jupiter.api.Test;
-
-import java.nio.ByteBuffer;
-
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import java.nio.ByteBuffer;
+import org.apache.thrift.transport.TMemoryInputTransport;
+import org.apache.thrift.transport.TTransportException;
+import org.junit.jupiter.api.Test;
 
 public class TestDataFrameReader {
 
@@ -35,7 +34,8 @@ public class TestDataFrameReader {
   public void testRead() throws TTransportException {
     // Prepare data
     int payloadSize = 23;
-    ByteBuffer buffer = ByteBuffer.allocate(DataFrameHeaderReader.PAYLOAD_LENGTH_BYTES + payloadSize);
+    ByteBuffer buffer =
+        ByteBuffer.allocate(DataFrameHeaderReader.PAYLOAD_LENGTH_BYTES + payloadSize);
     buffer.putInt(payloadSize);
     for (int i = 0; i < payloadSize; i++) {
       buffer.put((byte) i);
@@ -53,12 +53,18 @@ public class TestDataFrameReader {
     dataFrameReader.read(transport);
     assertFalse(dataFrameReader.isComplete(), "Only header is complete");
     assertTrue(dataFrameReader.getHeader().isComplete(), "Header should be complete");
-    assertEquals(payloadSize, dataFrameReader.getHeader().payloadSize(), "Payload size should be " + payloadSize);
+    assertEquals(
+        payloadSize,
+        dataFrameReader.getHeader().payloadSize(),
+        "Payload size should be " + payloadSize);
     // Read the rest of payload.
     transport.reset(buffer.array(), 6, 21);
     dataFrameReader.read(transport);
     assertTrue(dataFrameReader.isComplete(), "Reader should be complete");
     buffer.position(DataFrameHeaderReader.PAYLOAD_LENGTH_BYTES);
-    assertEquals(buffer, ByteBuffer.wrap(dataFrameReader.getPayload()), "Payload should be the same as from the transport");
+    assertEquals(
+        buffer,
+        ByteBuffer.wrap(dataFrameReader.getPayload()),
+        "Payload should be the same as from the transport");
   }
 }

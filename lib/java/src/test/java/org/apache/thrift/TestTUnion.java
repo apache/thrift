@@ -18,6 +18,24 @@
  */
 package org.apache.thrift;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotSame;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.nio.ByteBuffer;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 import org.apache.thrift.protocol.TBinaryProtocol;
 import org.apache.thrift.protocol.TProtocol;
 import org.apache.thrift.protocol.TTupleProtocol;
@@ -31,26 +49,7 @@ import thrift.test.StructWithAUnion;
 import thrift.test.TestUnion;
 import thrift.test.TestUnionMinusStringField;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotSame;
-import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-
-public class TestTUnion  {
+public class TestTUnion {
 
   @Test
   public void testBasic() throws Exception {
@@ -65,7 +64,9 @@ public class TestTUnion  {
       assertEquals(25, union.getFieldValue());
       assertEquals(25, union.getFieldValue(TestUnion._Fields.I32_FIELD));
       assertTrue(union.isSetI32_field());
-      assertThrows(IllegalArgumentException.class, () -> union.getFieldValue(TestUnion._Fields.STRING_FIELD));
+      assertThrows(
+          IllegalArgumentException.class,
+          () -> union.getFieldValue(TestUnion._Fields.STRING_FIELD));
     }
     {
       TestUnion union = new TestUnion();
@@ -104,12 +105,12 @@ public class TestTUnion  {
     assertTrue(cu.compareTo(cu2) < 0);
     assertTrue(cu2.compareTo(cu) > 0);
 
-    cu2 = ComparableUnion.binary_field(ByteBuffer.wrap(new byte[]{2}));
+    cu2 = ComparableUnion.binary_field(ByteBuffer.wrap(new byte[] {2}));
 
     assertTrue(cu.compareTo(cu2) < 0);
     assertTrue(cu2.compareTo(cu) > 0);
 
-    cu = ComparableUnion.binary_field(ByteBuffer.wrap(new byte[]{1}));
+    cu = ComparableUnion.binary_field(ByteBuffer.wrap(new byte[] {1}));
 
     assertTrue(cu.compareTo(cu2) < 0);
     assertTrue(cu2.compareTo(cu) > 0);
@@ -125,7 +126,7 @@ public class TestTUnion  {
     assertTrue(union3.compareTo(union4) < 0);
 
     Map<Integer, Integer> i32_map = new HashMap<Integer, Integer>();
-    i32_map.put(1,1);
+    i32_map.put(1, 1);
     TestUnion union5 = new TestUnion(TestUnion._Fields.I32_MAP, i32_map);
     TestUnion union6 = new TestUnion(TestUnion._Fields.I32_MAP, new HashMap<Integer, Integer>());
     assertTrue(union5.compareTo(union6) > 0);
@@ -185,7 +186,7 @@ public class TestTUnion  {
   }
 
   @Test
-  public void testTupleProtocolSerialization () throws Exception {
+  public void testTupleProtocolSerialization() throws Exception {
     TestUnion union = new TestUnion(TestUnion._Fields.I32_FIELD, 25);
     union.setI32_set(Collections.singleton(42));
 
