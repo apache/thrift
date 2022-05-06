@@ -19,9 +19,7 @@
 
 package org.apache.thrift.transport.sasl;
 
-/**
- * Frames for thrift (serialized) messages.
- */
+/** Frames for thrift (serialized) messages. */
 public class DataFrameReader extends FrameReader<DataFrameHeaderReader> {
 
   public DataFrameReader() {

@@ -71,7 +71,7 @@ dependencies {
     implementation "javax.annotation:javax.annotation-api:${javaxAnnotationVersion}"
     implementation "org.apache.commons:commons-lang3:3.12.0"
 
-    testImplementation "junit:junit:${junitVersion}"
+    testImplementation "org.junit.jupiter:junit-jupiter:${junitVersion}"
     testImplementation "org.mockito:mockito-all:${mockitoVersion}"
     testRuntimeOnly "org.slf4j:slf4j-log4j12:${slf4jVersion}"
 }

@@ -17,7 +17,6 @@
  * under the License.
  */
 
-
 package org.apache.thrift.server;
 
 import java.util.concurrent.ExecutorService;
@@ -25,12 +24,11 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
-
 import org.apache.thrift.transport.TNonblockingServerTransport;
 
 /**
- * An extension of the TNonblockingServer to a Half-Sync/Half-Async server.
- * Like TNonblockingServer, it relies on the use of TFramedTransport.
+ * An extension of the TNonblockingServer to a Half-Sync/Half-Async server. Like TNonblockingServer,
+ * it relies on the use of TFramedTransport.
  */
 public class THsHaServer extends TNonblockingServer {
 
@@ -45,11 +43,10 @@ public class THsHaServer extends TNonblockingServer {
       super(transport);
     }
 
-
     /**
      * Sets the min and max threads.
      *
-     * @deprecated use {@link #minWorkerThreads(int)} and {@link #maxWorkerThreads(int)}  instead.
+     * @deprecated use {@link #minWorkerThreads(int)} and {@link #maxWorkerThreads(int)} instead.
      */
     @Deprecated
     public Args workerThreads(int n) {
@@ -113,16 +110,13 @@ public class THsHaServer extends TNonblockingServer {
     }
   }
 
-
   // This wraps all the functionality of queueing and thread pool management
   // for the passing of Invocations from the Selector to workers.
   private final ExecutorService invoker;
 
   private final Args args;
 
-  /**
-   * Create the server with the specified Args configuration
-   */
+  /** Create the server with the specified Args configuration */
   public THsHaServer(Args args) {
     super(args);
 
@@ -130,18 +124,14 @@ public class THsHaServer extends TNonblockingServer {
     this.args = args;
   }
 
-  /**
-   * {@inheritDoc}
-   */
+  /** {@inheritDoc} */
   @Override
   protected void waitForShutdown() {
     joinSelector();
     gracefullyShutdownInvokerPool();
   }
 
-  /**
-   * Helper to create an invoker pool
-   */
+  /** Helper to create an invoker pool */
   protected static ExecutorService createInvokerPool(Args options) {
     int minWorkerThreads = options.minWorkerThreads;
     int maxWorkerThreads = options.maxWorkerThreads;
@@ -149,8 +139,9 @@ public class THsHaServer extends TNonblockingServer {
     TimeUnit stopTimeoutUnit = options.stopTimeoutUnit;
 
     LinkedBlockingQueue<Runnable> queue = new LinkedBlockingQueue<Runnable>();
-    ExecutorService invoker = new ThreadPoolExecutor(minWorkerThreads,
-      maxWorkerThreads, stopTimeoutVal, stopTimeoutUnit, queue);
+    ExecutorService invoker =
+        new ThreadPoolExecutor(
+            minWorkerThreads, maxWorkerThreads, stopTimeoutVal, stopTimeoutUnit, queue);
 
     return invoker;
   }
@@ -182,9 +173,8 @@ public class THsHaServer extends TNonblockingServer {
   }
 
   /**
-   * We override the standard invoke method here to queue the invocation for
-   * invoker service instead of immediately invoking. The thread pool takes care
-   * of the rest.
+   * We override the standard invoke method here to queue the invocation for invoker service instead
+   * of immediately invoking. The thread pool takes care of the rest.
    */
   @Override
   protected boolean requestInvoke(FrameBuffer frameBuffer) {
@@ -198,7 +188,7 @@ public class THsHaServer extends TNonblockingServer {
     }
   }
 
-  protected Runnable getRunnable(FrameBuffer frameBuffer){
+  protected Runnable getRunnable(FrameBuffer frameBuffer) {
     return new Invocation(frameBuffer);
   }
 }

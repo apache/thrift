@@ -18,9 +18,7 @@
  */
 package org.apache.thrift;
 
-/**
- * Interface for all generated struct Fields objects.
- */
+/** Interface for all generated struct Fields objects. */
 public interface TFieldIdEnum {
   /**
    * Gets the Thrift field id for the named field.

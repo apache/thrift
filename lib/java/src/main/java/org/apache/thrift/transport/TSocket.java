@@ -19,48 +19,34 @@
 
 package org.apache.thrift.transport;
 
-import org.apache.thrift.TConfiguration;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.net.SocketException;
+import org.apache.thrift.TConfiguration;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-/**
- * Socket implementation of the TTransport interface. To be commented soon!
- *
- */
+/** Socket implementation of the TTransport interface. To be commented soon! */
 public class TSocket extends TIOStreamTransport {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(TSocket.class.getName());
 
-  /**
-   * Wrapped Socket object
-   */
+  /** Wrapped Socket object */
   private Socket socket_;
 
-  /**
-   * Remote host
-   */
+  /** Remote host */
   private String host_;
 
-  /**
-   * Remote port
-   */
+  /** Remote port */
   private int port_;
 
-  /**
-   * Socket timeout - read timeout on the socket
-   */
+  /** Socket timeout - read timeout on the socket */
   private int socketTimeout_;
 
-  /**
-   * Connection timeout
-   */
+  /** Connection timeout */
   private int connectTimeout_;
 
   /**
@@ -92,10 +78,9 @@ public class TSocket extends TIOStreamTransport {
   }
 
   /**
-   * Creates a new unconnected socket that will connect to the given host
-   * on the given port.
+   * Creates a new unconnected socket that will connect to the given host on the given port.
    *
-   * @param config  check config
+   * @param config check config
    * @param host Remote host
    * @param port Remote port
    */
@@ -104,8 +89,7 @@ public class TSocket extends TIOStreamTransport {
   }
 
   /**
-   * Creates a new unconnected socket that will connect to the given host
-   * on the given port.
+   * Creates a new unconnected socket that will connect to the given host on the given port.
    *
    * @param host Remote host
    * @param port Remote port
@@ -115,11 +99,10 @@ public class TSocket extends TIOStreamTransport {
   }
 
   /**
-   * Creates a new unconnected socket that will connect to the given host
-   * on the given port.
+   * Creates a new unconnected socket that will connect to the given host on the given port.
    *
-   * @param host    Remote host
-   * @param port    Remote port
+   * @param host Remote host
+   * @param port Remote port
    * @param timeout Socket timeout and connection timeout
    */
   public TSocket(String host, int port, int timeout) throws TTransportException {
@@ -127,30 +110,31 @@ public class TSocket extends TIOStreamTransport {
   }
 
   /**
-   * Creates a new unconnected socket that will connect to the given host
-   * on the given port.
+   * Creates a new unconnected socket that will connect to the given host on the given port.
    *
-   * @param config  check config
-   * @param host    Remote host
-   * @param port    Remote port
+   * @param config check config
+   * @param host Remote host
+   * @param port Remote port
    * @param timeout Socket timeout and connection timeout
    */
-  public TSocket(TConfiguration config, String host, int port, int timeout) throws TTransportException {
+  public TSocket(TConfiguration config, String host, int port, int timeout)
+      throws TTransportException {
     this(config, host, port, timeout, timeout);
   }
 
   /**
-   * Creates a new unconnected socket that will connect to the given host
-   * on the given port, with a specific connection timeout and a
-   * specific socket timeout.
+   * Creates a new unconnected socket that will connect to the given host on the given port, with a
+   * specific connection timeout and a specific socket timeout.
    *
-   * @param config          check config
-   * @param host            Remote host
-   * @param port            Remote port
-   * @param socketTimeout   Socket timeout
-   * @param connectTimeout  Connection timeout
+   * @param config check config
+   * @param host Remote host
+   * @param port Remote port
+   * @param socketTimeout Socket timeout
+   * @param connectTimeout Connection timeout
    */
-  public TSocket(TConfiguration config, String host, int port, int socketTimeout, int connectTimeout) throws TTransportException {
+  public TSocket(
+      TConfiguration config, String host, int port, int socketTimeout, int connectTimeout)
+      throws TTransportException {
     super(config);
     host_ = host;
     port_ = port;
@@ -159,9 +143,7 @@ public class TSocket extends TIOStreamTransport {
     initSocket();
   }
 
-  /**
-   * Initializes the socket object
-   */
+  /** Initializes the socket object */
   private void initSocket() {
     socket_ = new Socket();
     try {
@@ -207,9 +189,7 @@ public class TSocket extends TIOStreamTransport {
     }
   }
 
-  /**
-   * Returns a reference to the underlying socket.
-   */
+  /** Returns a reference to the underlying socket. */
   public Socket getSocket() {
     if (socket_ == null) {
       initSocket();
@@ -217,9 +197,7 @@ public class TSocket extends TIOStreamTransport {
     return socket_;
   }
 
-  /**
-   * Checks whether the socket is connected.
-   */
+  /** Checks whether the socket is connected. */
   public boolean isOpen() {
     if (socket_ == null) {
       return false;
@@ -227,9 +205,7 @@ public class TSocket extends TIOStreamTransport {
     return socket_.isConnected();
   }
 
-  /**
-   * Connects the socket, creating a new socket object if necessary.
-   */
+  /** Connects the socket, creating a new socket object if necessary. */
   public void open() throws TTransportException {
     if (isOpen()) {
       throw new TTransportException(TTransportException.ALREADY_OPEN, "Socket already connected.");
@@ -256,9 +232,7 @@ public class TSocket extends TIOStreamTransport {
     }
   }
 
-  /**
-   * Closes the socket.
-   */
+  /** Closes the socket. */
   public void close() {
     // Close the underlying streams
     super.close();
@@ -273,5 +247,4 @@ public class TSocket extends TIOStreamTransport {
       socket_ = null;
     }
   }
-
 }

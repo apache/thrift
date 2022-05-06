@@ -19,29 +19,28 @@
 
 package org.apache.thrift.test;
 
+import org.apache.thrift.TMultiplexedProcessor;
 import org.apache.thrift.protocol.TBinaryProtocol;
 import org.apache.thrift.protocol.TCompactProtocol;
 import org.apache.thrift.protocol.TJSONProtocol;
 import org.apache.thrift.protocol.TProtocol;
 import org.apache.thrift.protocol.TProtocolFactory;
 import org.apache.thrift.server.ServerContext;
+import org.apache.thrift.server.ServerTestBase.TestHandler;
+import org.apache.thrift.server.TNonblockingServer;
 import org.apache.thrift.server.TServer;
+import org.apache.thrift.server.TServerEventHandler;
 import org.apache.thrift.server.TSimpleServer;
 import org.apache.thrift.server.TThreadPoolServer;
-import org.apache.thrift.server.ServerTestBase.TestHandler;
-import org.apache.thrift.server.TServerEventHandler;
 import org.apache.thrift.server.TThreadedSelectorServer;
-import org.apache.thrift.server.TNonblockingServer;
-import org.apache.thrift.transport.layered.TFramedTransport;
-import org.apache.thrift.transport.layered.TFastFramedTransport;
-import org.apache.thrift.transport.TZlibTransport;
-import org.apache.thrift.transport.TServerSocket;
+import org.apache.thrift.transport.TNonblockingServerSocket;
 import org.apache.thrift.transport.TSSLTransportFactory;
+import org.apache.thrift.transport.TServerSocket;
 import org.apache.thrift.transport.TTransport;
 import org.apache.thrift.transport.TTransportFactory;
-import org.apache.thrift.transport.TNonblockingServerSocket;
-import org.apache.thrift.TMultiplexedProcessor;
-
+import org.apache.thrift.transport.TZlibTransport;
+import org.apache.thrift.transport.layered.TFastFramedTransport;
+import org.apache.thrift.transport.layered.TFramedTransport;
 import thrift.test.SecondService;
 import thrift.test.ThriftTest;
 
@@ -60,26 +59,27 @@ public class TestServer {
   static class SecondHandler implements thrift.test.SecondService.Iface {
 
     @Override
-    public java.lang.String secondtestString(java.lang.String thing) throws org.apache.thrift.TException
-    { return "testString(\"" + thing + "\")"; }
-
+    public java.lang.String secondtestString(java.lang.String thing)
+        throws org.apache.thrift.TException {
+      return "testString(\"" + thing + "\")";
+    }
   }
 
   static class TestServerContext implements ServerContext {
 
-        int connectionId;
+    int connectionId;
 
-        public TestServerContext(int connectionId) {
-            this.connectionId = connectionId;
-        }
+    public TestServerContext(int connectionId) {
+      this.connectionId = connectionId;
+    }
 
-        public int getConnectionId() {
-            return connectionId;
-        }
+    public int getConnectionId() {
+      return connectionId;
+    }
 
-        public void setConnectionId(int connectionId) {
-            this.connectionId = connectionId;
-        }
+    public void setConnectionId(int connectionId) {
+      this.connectionId = connectionId;
+    }
 
     @Override
     public <T> T unwrap(Class<T> iface) {
@@ -90,7 +90,8 @@ public class TestServer {
           throw new RuntimeException("The context is not a wrapper for " + iface.getName());
         }
       } catch (Exception e) {
-        throw new RuntimeException("The context is not a wrapper and does not implement the interface");
+        throw new RuntimeException(
+            "The context is not a wrapper and does not implement the interface");
       }
     }
 
@@ -98,37 +99,46 @@ public class TestServer {
     public boolean isWrapperFor(Class<?> iface) {
       return iface.isInstance(this);
     }
-
   }
 
   static class TestServerEventHandler implements TServerEventHandler {
 
-        private int nextConnectionId = 1;
+    private int nextConnectionId = 1;
 
-        public void preServe() {
-            System.out.println("TServerEventHandler.preServe - called only once before server starts accepting connections");
-        }
+    public void preServe() {
+      System.out.println(
+          "TServerEventHandler.preServe - called only once before server starts accepting connections");
+    }
 
-        public ServerContext createContext(TProtocol input, TProtocol output) {
-            //we can create some connection level data which is stored while connection is alive & served
-            TestServerContext ctx = new TestServerContext(nextConnectionId++);
-            System.out.println("TServerEventHandler.createContext - connection #"+ctx.getConnectionId()+" established");
-            return ctx;
-        }
+    public ServerContext createContext(TProtocol input, TProtocol output) {
+      // we can create some connection level data which is stored while connection is alive & served
+      TestServerContext ctx = new TestServerContext(nextConnectionId++);
+      System.out.println(
+          "TServerEventHandler.createContext - connection #"
+              + ctx.getConnectionId()
+              + " established");
+      return ctx;
+    }
 
-        public void deleteContext(ServerContext serverContext, TProtocol input, TProtocol output) {
-            TestServerContext ctx = serverContext.unwrap(TestServerContext.class);
-            System.out.println("TServerEventHandler.deleteContext - connection #"+ctx.getConnectionId()+" terminated");
-        }
+    public void deleteContext(ServerContext serverContext, TProtocol input, TProtocol output) {
+      TestServerContext ctx = serverContext.unwrap(TestServerContext.class);
+      System.out.println(
+          "TServerEventHandler.deleteContext - connection #"
+              + ctx.getConnectionId()
+              + " terminated");
+    }
 
-        public void processContext(ServerContext serverContext, TTransport inputTransport, TTransport outputTransport) {
-            TestServerContext ctx = serverContext.unwrap(TestServerContext.class);
-            System.out.println("TServerEventHandler.processContext - connection #"+ctx.getConnectionId()+" is ready to process next request");
-        }
-
+    public void processContext(
+        ServerContext serverContext, TTransport inputTransport, TTransport outputTransport) {
+      TestServerContext ctx = serverContext.unwrap(TestServerContext.class);
+      System.out.println(
+          "TServerEventHandler.processContext - connection #"
+              + ctx.getConnectionId()
+              + " is ready to process next request");
+    }
   }
 
-  public static void main(String [] args) {
+  public static void main(String[] args) {
     try {
       int port = 9090;
       boolean ssl = false;
@@ -147,7 +157,7 @@ public class TestServer {
             server_type = args[i].split("=")[1];
             server_type.trim();
           } else if (args[i].startsWith("--port")) {
-            port=Integer.parseInt(args[i].split("=")[1]);
+            port = Integer.parseInt(args[i].split("=")[1]);
           } else if (args[i].startsWith("--protocol")) {
             protocol_type = args[i].split("=")[1];
             protocol_type.trim();
@@ -166,13 +176,24 @@ public class TestServer {
             System.out.println("Allowed options:");
             System.out.println("  --help\t\t\tProduce help message");
             System.out.println("  --port=arg (=" + port + ")\tPort number to connect");
-            System.out.println("  --transport=arg (=" + transport_type + ")\n\t\t\t\tTransport: buffered, framed, fastframed, zlib");
-            System.out.println("  --protocol=arg (=" + protocol_type + ")\tProtocol: binary, compact, json, multi, multic, multij");
+            System.out.println(
+                "  --transport=arg (="
+                    + transport_type
+                    + ")\n\t\t\t\tTransport: buffered, framed, fastframed, zlib");
+            System.out.println(
+                "  --protocol=arg (="
+                    + protocol_type
+                    + ")\tProtocol: binary, compact, json, multi, multic, multij");
             System.out.println("  --ssl\t\t\tEncrypted Transport using SSL");
             System.out.println("  --zlib\t\t\tCompressed Transport using Zlib");
-            System.out.println("  --server-type=arg (=" + server_type +")\n\t\t\t\tType of server: simple, thread-pool, nonblocking, threaded-selector");
-            System.out.println("  --string-limit=arg (=" + string_limit + ")\tString read length limit");
-            System.out.println("  --container-limit=arg (=" + container_limit + ")\tContainer read length limit");
+            System.out.println(
+                "  --server-type=arg (="
+                    + server_type
+                    + ")\n\t\t\t\tType of server: simple, thread-pool, nonblocking, threaded-selector");
+            System.out.println(
+                "  --string-limit=arg (=" + string_limit + ")\tString read length limit");
+            System.out.println(
+                "  --container-limit=arg (=" + container_limit + ")\tContainer read length limit");
             System.exit(0);
           }
         }
@@ -249,29 +270,31 @@ public class TestServer {
 
       // If we are multiplexing services in one server...
       TMultiplexedProcessor multiplexedProcessor = new TMultiplexedProcessor();
-      multiplexedProcessor.registerDefault  (testProcessor);
+      multiplexedProcessor.registerDefault(testProcessor);
       multiplexedProcessor.registerProcessor("ThriftTest", testProcessor);
       multiplexedProcessor.registerProcessor("SecondService", secondProcessor);
 
-      if (server_type.equals("nonblocking") ||
-          server_type.equals("threaded-selector")) {
+      if (server_type.equals("nonblocking") || server_type.equals("threaded-selector")) {
         // Nonblocking servers
         TNonblockingServerSocket tNonblockingServerSocket =
-          new TNonblockingServerSocket(new TNonblockingServerSocket.NonblockingAbstractServerSocketArgs().port(port));
+            new TNonblockingServerSocket(
+                new TNonblockingServerSocket.NonblockingAbstractServerSocketArgs().port(port));
 
         if (server_type.contains("nonblocking")) {
           // Nonblocking Server
-          TNonblockingServer.Args tNonblockingServerArgs
-              = new TNonblockingServer.Args(tNonblockingServerSocket);
-          tNonblockingServerArgs.processor(protocol_type.startsWith("multi") ? multiplexedProcessor : testProcessor);
+          TNonblockingServer.Args tNonblockingServerArgs =
+              new TNonblockingServer.Args(tNonblockingServerSocket);
+          tNonblockingServerArgs.processor(
+              protocol_type.startsWith("multi") ? multiplexedProcessor : testProcessor);
           tNonblockingServerArgs.protocolFactory(tProtocolFactory);
           tNonblockingServerArgs.transportFactory(tTransportFactory);
           serverEngine = new TNonblockingServer(tNonblockingServerArgs);
         } else { // server_type.equals("threaded-selector")
           // ThreadedSelector Server
-          TThreadedSelectorServer.Args tThreadedSelectorServerArgs
-              = new TThreadedSelectorServer.Args(tNonblockingServerSocket);
-          tThreadedSelectorServerArgs.processor(protocol_type.startsWith("multi") ? multiplexedProcessor : testProcessor);
+          TThreadedSelectorServer.Args tThreadedSelectorServerArgs =
+              new TThreadedSelectorServer.Args(tNonblockingServerSocket);
+          tThreadedSelectorServerArgs.processor(
+              protocol_type.startsWith("multi") ? multiplexedProcessor : testProcessor);
           tThreadedSelectorServerArgs.protocolFactory(tProtocolFactory);
           tThreadedSelectorServerArgs.transportFactory(tTransportFactory);
           serverEngine = new TThreadedSelectorServer(tThreadedSelectorServerArgs);
@@ -284,21 +307,23 @@ public class TestServer {
         if (ssl) {
           tServerSocket = TSSLTransportFactory.getServerSocket(port, 0);
         } else {
-          tServerSocket = new TServerSocket(new TServerSocket.ServerSocketTransportArgs().port(port));
+          tServerSocket =
+              new TServerSocket(new TServerSocket.ServerSocketTransportArgs().port(port));
         }
 
         if (server_type.equals("simple")) {
           // Simple Server
           TServer.Args tServerArgs = new TServer.Args(tServerSocket);
-          tServerArgs.processor(protocol_type.startsWith("multi") ? multiplexedProcessor : testProcessor);
+          tServerArgs.processor(
+              protocol_type.startsWith("multi") ? multiplexedProcessor : testProcessor);
           tServerArgs.protocolFactory(tProtocolFactory);
           tServerArgs.transportFactory(tTransportFactory);
           serverEngine = new TSimpleServer(tServerArgs);
         } else { // server_type.equals("threadpool")
           // ThreadPool Server
-          TThreadPoolServer.Args tThreadPoolServerArgs
-              = new TThreadPoolServer.Args(tServerSocket);
-          tThreadPoolServerArgs.processor(protocol_type.startsWith("multi") ? multiplexedProcessor : testProcessor);
+          TThreadPoolServer.Args tThreadPoolServerArgs = new TThreadPoolServer.Args(tServerSocket);
+          tThreadPoolServerArgs.processor(
+              protocol_type.startsWith("multi") ? multiplexedProcessor : testProcessor);
           tThreadPoolServerArgs.protocolFactory(tProtocolFactory);
           tThreadPoolServerArgs.transportFactory(tTransportFactory);
           serverEngine = new TThreadPoolServer(tThreadPoolServerArgs);
@@ -309,9 +334,17 @@ public class TestServer {
       serverEngine.setServerEventHandler(new TestServerEventHandler());
 
       // Run it
-      System.out.println("Starting the " + (ssl ? "ssl server" : "server") +
-        " [" + protocol_type + "/" + transport_type + "/" + server_type + "] on " +
-        ((domain_socket == "") ? ("port " + port) : ("unix socket " + domain_socket)));
+      System.out.println(
+          "Starting the "
+              + (ssl ? "ssl server" : "server")
+              + " ["
+              + protocol_type
+              + "/"
+              + transport_type
+              + "/"
+              + server_type
+              + "] on "
+              + ((domain_socket == "") ? ("port " + port) : ("unix socket " + domain_socket)));
       serverEngine.serve();
 
     } catch (Exception x) {

@@ -19,11 +19,11 @@
 
 package org.apache.thrift.partial;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
 import org.apache.thrift.protocol.TField;
 import org.apache.thrift.protocol.TType;
 import org.junit.jupiter.api.Test;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class TFieldDataTest {
 

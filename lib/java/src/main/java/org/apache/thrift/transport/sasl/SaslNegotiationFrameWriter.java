@@ -19,13 +19,12 @@
 
 package org.apache.thrift.transport.sasl;
 
-import java.nio.ByteBuffer;
-
-import org.apache.thrift.EncodingUtils;
-import org.apache.thrift.utils.StringUtils;
-
 import static org.apache.thrift.transport.sasl.SaslNegotiationHeaderReader.PAYLOAD_LENGTH_BYTES;
 import static org.apache.thrift.transport.sasl.SaslNegotiationHeaderReader.STATUS_BYTES;
+
+import java.nio.ByteBuffer;
+import org.apache.thrift.EncodingUtils;
+import org.apache.thrift.utils.StringUtils;
 
 /**
  * Writer for sasl negotiation frames. It expect a status byte as header with a payload to be
@@ -41,11 +40,19 @@ public class SaslNegotiationFrameWriter extends FrameWriter {
   }
 
   @Override
-  protected ByteBuffer buildFrame(byte[] header, int headerOffset, int headerLength,
-                                  byte[] payload, int payloadOffset, int payloadLength) {
+  protected ByteBuffer buildFrame(
+      byte[] header,
+      int headerOffset,
+      int headerLength,
+      byte[] payload,
+      int payloadOffset,
+      int payloadLength) {
     if (header == null || headerLength != STATUS_BYTES) {
-      throw new IllegalArgumentException("Header " + StringUtils.bytesToHexString(header) +
-          " does not have expected length " + STATUS_BYTES);
+      throw new IllegalArgumentException(
+          "Header "
+              + StringUtils.bytesToHexString(header)
+              + " does not have expected length "
+              + STATUS_BYTES);
     }
     byte[] bytes = new byte[HEADER_BYTES + payloadLength];
     System.arraycopy(header, headerOffset, bytes, 0, STATUS_BYTES);

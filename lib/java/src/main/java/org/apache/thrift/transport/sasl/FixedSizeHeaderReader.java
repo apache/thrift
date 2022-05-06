@@ -19,15 +19,12 @@
 
 package org.apache.thrift.transport.sasl;
 
+import java.nio.ByteBuffer;
 import org.apache.thrift.transport.TTransport;
 import org.apache.thrift.transport.TTransportException;
 import org.apache.thrift.utils.StringUtils;
 
-import java.nio.ByteBuffer;
-
-/**
- * Headers' size should be predefined.
- */
+/** Headers' size should be predefined. */
 public abstract class FixedSizeHeaderReader implements FrameHeaderReader {
 
   protected final ByteBuffer byteBuffer = ByteBuffer.allocate(headerSize());
@@ -45,7 +42,9 @@ public abstract class FixedSizeHeaderReader implements FrameHeaderReader {
   @Override
   public byte[] toBytes() {
     if (!isComplete()) {
-      throw new IllegalStateException("Header is not yet complete " + StringUtils.bytesToHexString(byteBuffer.array(), 0, byteBuffer.position()));
+      throw new IllegalStateException(
+          "Header is not yet complete "
+              + StringUtils.bytesToHexString(byteBuffer.array(), 0, byteBuffer.position()));
     }
     return byteBuffer.array();
   }
@@ -60,9 +59,7 @@ public abstract class FixedSizeHeaderReader implements FrameHeaderReader {
     return true;
   }
 
-  /**
-   * @return Size of the header.
-   */
+  /** @return Size of the header. */
   protected abstract int headerSize();
 
   /**

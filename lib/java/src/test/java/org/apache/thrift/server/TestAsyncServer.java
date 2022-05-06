@@ -20,9 +20,8 @@ package org.apache.thrift.server;
 
 public class TestAsyncServer extends TestNonblockingServer {
 
-   @Override
-   public boolean useAsyncProcessor(){
-       return true;
-   }
-
+  @Override
+  public boolean useAsyncProcessor() {
+    return true;
+  }
 }

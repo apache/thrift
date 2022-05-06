@@ -19,17 +19,17 @@
 
 package org.apache.thrift.transport;
 
-import org.apache.thrift.TConfiguration;
-import org.apache.thrift.TProcessor;
-import org.apache.thrift.protocol.TProtocolFactory;
-import org.apache.thrift.server.ServerTestBase;
-import org.apache.thrift.server.TServer;
-import org.apache.thrift.server.TServer.Args;
-import org.apache.thrift.server.TSimpleServer;
-import org.junit.jupiter.api.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
+import java.util.Map;
 import javax.security.auth.callback.Callback;
 import javax.security.auth.callback.CallbackHandler;
 import javax.security.auth.callback.NameCallback;
@@ -43,19 +43,18 @@ import javax.security.sasl.SaslClientFactory;
 import javax.security.sasl.SaslException;
 import javax.security.sasl.SaslServer;
 import javax.security.sasl.SaslServerFactory;
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.util.HashMap;
-import java.util.Map;
+import org.apache.thrift.TConfiguration;
+import org.apache.thrift.TProcessor;
+import org.apache.thrift.protocol.TProtocolFactory;
+import org.apache.thrift.server.ServerTestBase;
+import org.apache.thrift.server.TServer;
+import org.apache.thrift.server.TServer.Args;
+import org.apache.thrift.server.TSimpleServer;
+import org.junit.jupiter.api.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.junit.jupiter.api.Assertions.fail;
-
-public class TestTSaslTransports  {
+public class TestTSaslTransports {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(TestTSaslTransports.class);
 
@@ -76,15 +75,16 @@ public class TestTSaslTransports  {
     WRAPPED_PROPS.put("com.sun.security.sasl.digest.realm", REALM);
   }
 
-  private static final String testMessage1 = "Hello, world! Also, four "
-      + "score and seven years ago our fathers brought forth on this "
-      + "continent a new nation, conceived in liberty, and dedicated to the "
-      + "proposition that all men are created equal.";
+  private static final String testMessage1 =
+      "Hello, world! Also, four "
+          + "score and seven years ago our fathers brought forth on this "
+          + "continent a new nation, conceived in liberty, and dedicated to the "
+          + "proposition that all men are created equal.";
 
-  private static final String testMessage2 = "I have a dream that one day "
-      + "this nation will rise up and live out the true meaning of its creed: "
-      + "'We hold these truths to be self-evident, that all men are created equal.'";
-
+  private static final String testMessage2 =
+      "I have a dream that one day "
+          + "this nation will rise up and live out the true meaning of its creed: "
+          + "'We hold these truths to be self-evident, that all men are created equal.'";
 
   public static class TestSaslCallbackHandler implements CallbackHandler {
     private final String password;
@@ -130,19 +130,23 @@ public class TestTSaslTransports  {
     }
 
     private void internalRun() throws Exception {
-      try (TServerSocket serverSocket = new TServerSocket(
-              new TServerSocket.ServerSocketTransportArgs().
-                      port(ServerTestBase.PORT))) {
+      try (TServerSocket serverSocket =
+          new TServerSocket(
+              new TServerSocket.ServerSocketTransportArgs().port(ServerTestBase.PORT))) {
         acceptAndWrite(serverSocket);
       }
     }
 
-    private void acceptAndWrite(TServerSocket serverSocket)
-      throws Exception {
+    private void acceptAndWrite(TServerSocket serverSocket) throws Exception {
       TTransport serverTransport = serverSocket.accept();
-      TTransport saslServerTransport = new TSaslServerTransport(
-        mechanism, SERVICE, HOST,
-        props, new TestSaslCallbackHandler(PASSWORD), serverTransport);
+      TTransport saslServerTransport =
+          new TSaslServerTransport(
+              mechanism,
+              SERVICE,
+              HOST,
+              props,
+              new TestSaslCallbackHandler(PASSWORD),
+              serverTransport);
 
       saslServerTransport.open();
 
@@ -177,8 +181,15 @@ public class TestTSaslTransports  {
 
     try {
       TSocket clientSocket = new TSocket(HOST, ServerTestBase.PORT);
-      TTransport saslClientTransport = new TSaslClientTransport(mechanism,
-                                                                PRINCIPAL, SERVICE, HOST, props, new TestSaslCallbackHandler(PASSWORD), clientSocket);
+      TTransport saslClientTransport =
+          new TSaslClientTransport(
+              mechanism,
+              PRINCIPAL,
+              SERVICE,
+              HOST,
+              props,
+              new TestSaslCallbackHandler(PASSWORD),
+              clientSocket);
       saslClientTransport.open();
       LOGGER.debug("client writing: {}", testMessage1);
       saslClientTransport.write(testMessage1.getBytes());
@@ -228,8 +239,8 @@ public class TestTSaslTransports  {
   }
 
   /**
-   * Test that we get the proper exceptions thrown back the server when
-   * the client provides invalid password.
+   * Test that we get the proper exceptions thrown back the server when the client provides invalid
+   * password.
    */
   @Test
   public void testBadPassword() throws Exception {
@@ -242,13 +253,23 @@ public class TestTSaslTransports  {
       // Ah well.
     }
 
-    TTransportException tte = assertThrows(TTransportException.class, () -> {
-      TSocket clientSocket = new TSocket(HOST, ServerTestBase.PORT);
-      TTransport saslClientTransport = new TSaslClientTransport(
-              UNWRAPPED_MECHANISM, PRINCIPAL, SERVICE, HOST, UNWRAPPED_PROPS,
-              new TestSaslCallbackHandler("NOT THE PASSWORD"), clientSocket);
-      saslClientTransport.open();
-    }, "Was able to open transport with bad password");
+    TTransportException tte =
+        assertThrows(
+            TTransportException.class,
+            () -> {
+              TSocket clientSocket = new TSocket(HOST, ServerTestBase.PORT);
+              TTransport saslClientTransport =
+                  new TSaslClientTransport(
+                      UNWRAPPED_MECHANISM,
+                      PRINCIPAL,
+                      SERVICE,
+                      HOST,
+                      UNWRAPPED_PROPS,
+                      new TestSaslCallbackHandler("NOT THE PASSWORD"),
+                      clientSocket);
+              saslClientTransport.open();
+            },
+            "Was able to open transport with bad password");
     LOGGER.error("Exception for bad password", tte);
     assertNotNull(tte.getMessage());
     assertTrue(tte.getMessage().contains("Invalid response"));
@@ -271,32 +292,52 @@ public class TestTSaslTransports  {
     @Override
     public TTransport getClientTransport(TTransport underlyingTransport) throws Exception {
       return new TSaslClientTransport(
-        WRAPPED_MECHANISM, PRINCIPAL, SERVICE, HOST, WRAPPED_PROPS,
-        new TestSaslCallbackHandler(PASSWORD), underlyingTransport);
+          WRAPPED_MECHANISM,
+          PRINCIPAL,
+          SERVICE,
+          HOST,
+          WRAPPED_PROPS,
+          new TestSaslCallbackHandler(PASSWORD),
+          underlyingTransport);
     }
 
     @Override
-    public void startServer(final TProcessor processor, final TProtocolFactory protoFactory, final TTransportFactory factory) throws Exception {
-      serverThread = new Thread() {
-        public void run() {
-          try {
-            // Transport
-            TServerSocket socket = new TServerSocket(new TServerSocket.ServerSocketTransportArgs().port(PORT));
+    public void startServer(
+        final TProcessor processor,
+        final TProtocolFactory protoFactory,
+        final TTransportFactory factory)
+        throws Exception {
+      serverThread =
+          new Thread() {
+            public void run() {
+              try {
+                // Transport
+                TServerSocket socket =
+                    new TServerSocket(new TServerSocket.ServerSocketTransportArgs().port(PORT));
 
-            TTransportFactory factory = new TSaslServerTransport.Factory(
-              WRAPPED_MECHANISM, SERVICE, HOST, WRAPPED_PROPS,
-              new TestSaslCallbackHandler(PASSWORD));
-            server = new TSimpleServer(new Args(socket).processor(processor).transportFactory(factory).protocolFactory(protoFactory));
+                TTransportFactory factory =
+                    new TSaslServerTransport.Factory(
+                        WRAPPED_MECHANISM,
+                        SERVICE,
+                        HOST,
+                        WRAPPED_PROPS,
+                        new TestSaslCallbackHandler(PASSWORD));
+                server =
+                    new TSimpleServer(
+                        new Args(socket)
+                            .processor(processor)
+                            .transportFactory(factory)
+                            .protocolFactory(protoFactory));
 
-            // Run it
-            LOGGER.debug("Starting the server on port {}", PORT);
-            server.serve();
-          } catch (Exception e) {
-            e.printStackTrace();
-            fail(e);
-          }
-        }
-      };
+                // Run it
+                LOGGER.debug("Starting the server on port {}", PORT);
+                server.serve();
+              } catch (Exception e) {
+                e.printStackTrace();
+                fail(e);
+              }
+            }
+          };
       serverThread.start();
       Thread.sleep(1000);
     }
@@ -310,14 +351,9 @@ public class TestTSaslTransports  {
         LOGGER.debug("interrupted during sleep", e);
       }
     }
-
   }
 
-
-  /**
-   * Implementation of SASL ANONYMOUS, used for testing client-side
-   * initial responses.
-   */
+  /** Implementation of SASL ANONYMOUS, used for testing client-side initial responses. */
   private static class AnonymousClient implements SaslClient {
     private final String username;
     private boolean hasProvidedInitialResponse;
@@ -327,9 +363,15 @@ public class TestTSaslTransports  {
     }
 
     @Override
-    public String getMechanismName() { return "ANONYMOUS"; }
+    public String getMechanismName() {
+      return "ANONYMOUS";
+    }
+
     @Override
-    public boolean hasInitialResponse() { return true; }
+    public boolean hasInitialResponse() {
+      return true;
+    }
+
     @Override
     public byte[] evaluateChallenge(byte[] challenge) throws SaslException {
       if (hasProvidedInitialResponse) {
@@ -339,58 +381,84 @@ public class TestTSaslTransports  {
       hasProvidedInitialResponse = true;
       return username.getBytes(StandardCharsets.UTF_8);
     }
+
     @Override
-    public boolean isComplete() { return hasProvidedInitialResponse; }
+    public boolean isComplete() {
+      return hasProvidedInitialResponse;
+    }
+
     @Override
     public byte[] unwrap(byte[] incoming, int offset, int len) {
       throw new UnsupportedOperationException();
     }
+
     @Override
     public byte[] wrap(byte[] outgoing, int offset, int len) {
       throw new UnsupportedOperationException();
     }
+
     @Override
-    public Object getNegotiatedProperty(String propName) { return null; }
+    public Object getNegotiatedProperty(String propName) {
+      return null;
+    }
+
     @Override
     public void dispose() {}
   }
 
   private static class AnonymousServer implements SaslServer {
     private String user;
+
     @Override
-    public String getMechanismName() { return "ANONYMOUS"; }
+    public String getMechanismName() {
+      return "ANONYMOUS";
+    }
+
     @Override
     public byte[] evaluateResponse(byte[] response) throws SaslException {
       this.user = new String(response, StandardCharsets.UTF_8);
       return null;
     }
+
     @Override
-    public boolean isComplete() { return user != null; }
+    public boolean isComplete() {
+      return user != null;
+    }
+
     @Override
-    public String getAuthorizationID() { return user; }
+    public String getAuthorizationID() {
+      return user;
+    }
+
     @Override
     public byte[] unwrap(byte[] incoming, int offset, int len) {
       throw new UnsupportedOperationException();
     }
+
     @Override
     public byte[] wrap(byte[] outgoing, int offset, int len) {
       throw new UnsupportedOperationException();
     }
+
     @Override
-    public Object getNegotiatedProperty(String propName) { return null; }
+    public Object getNegotiatedProperty(String propName) {
+      return null;
+    }
+
     @Override
     public void dispose() {}
-
   }
 
-  public static class SaslAnonymousFactory
-    implements SaslClientFactory, SaslServerFactory {
+  public static class SaslAnonymousFactory implements SaslClientFactory, SaslServerFactory {
 
     @Override
     public SaslClient createSaslClient(
-      String[] mechanisms, String authorizationId, String protocol,
-      String serverName, Map<String,?> props, CallbackHandler cbh)
-    {
+        String[] mechanisms,
+        String authorizationId,
+        String protocol,
+        String serverName,
+        Map<String, ?> props,
+        CallbackHandler cbh) {
       for (String mech : mechanisms) {
         if ("ANONYMOUS".equals(mech)) {
           return new AnonymousClient(authorizationId);
@@ -401,22 +469,27 @@ public class TestTSaslTransports  {
 
     @Override
     public SaslServer createSaslServer(
-      String mechanism, String protocol, String serverName, Map<String,?> props, CallbackHandler cbh)
-    {
+        String mechanism,
+        String protocol,
+        String serverName,
+        Map<String, ?> props,
+        CallbackHandler cbh) {
       if ("ANONYMOUS".equals(mechanism)) {
         return new AnonymousServer();
       }
       return null;
     }
+
     @Override
     public String[] getMechanismNames(Map<String, ?> props) {
-      return new String[] { "ANONYMOUS" };
+      return new String[] {"ANONYMOUS"};
     }
   }
 
   static {
     java.security.Security.addProvider(new SaslAnonymousProvider());
   }
+
   public static class SaslAnonymousProvider extends java.security.Provider {
     public SaslAnonymousProvider() {
       super("ThriftSaslAnonymous", 1.0, "Thrift Anonymous SASL provider");
@@ -432,15 +505,15 @@ public class TestTSaslTransports  {
 
     public MockTTransport(int mode) throws TTransportException {
       readBuffer = new TMemoryInputTransport();
-      if (mode==1) {
+      if (mode == 1) {
         // Invalid status byte
-        badHeader = new byte[] { (byte)0xFF, (byte)0x00, (byte)0x00, (byte)0x00, (byte)0x05 };
+        badHeader = new byte[] {(byte) 0xFF, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x05};
       } else if (mode == 2) {
         // Valid status byte, negative payload length
-        badHeader = new byte[] { (byte)0x01, (byte)0xFF, (byte)0xFF, (byte)0xFF, (byte)0xFF };
+        badHeader = new byte[] {(byte) 0x01, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF};
       } else if (mode == 3) {
         // Valid status byte, excessively large, bogus payload length
-        badHeader = new byte[] { (byte)0x01, (byte)0x64, (byte)0x00, (byte)0x00, (byte)0x00 };
+        badHeader = new byte[] {(byte) 0x01, (byte) 0x64, (byte) 0x00, (byte) 0x00, (byte) 0x00};
       }
       readBuffer.reset(badHeader);
     }

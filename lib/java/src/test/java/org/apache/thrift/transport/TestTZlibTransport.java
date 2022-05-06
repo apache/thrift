@@ -18,7 +18,8 @@
  */
 package org.apache.thrift.transport;
 
-import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.io.BufferedOutputStream;
 import java.io.ByteArrayInputStream;
@@ -29,20 +30,18 @@ import java.io.IOException;
 import java.util.zip.DataFormatException;
 import java.util.zip.DeflaterOutputStream;
 import java.util.zip.InflaterInputStream;
+import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.assertArrayEquals;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-
-public class TestTZlibTransport  {
+public class TestTZlibTransport {
 
   protected TTransport getTransport(TTransport underlying) throws TTransportException {
     return new TZlibTransport(underlying);
   }
 
   public static byte[] byteSequence(int start, int end) {
-    byte[] result = new byte[end-start+1];
-    for (int i = 0; i <= (end-start); i++) {
-      result[i] = (byte)(start+i);
+    byte[] result = new byte[end - start + 1];
+    for (int i = 0; i <= (end - start); i++) {
+      result[i] = (byte) (start + i);
     }
     return result;
   }
@@ -50,8 +49,8 @@ public class TestTZlibTransport  {
   @Test
   public void testClose() throws TTransportException {
     ByteArrayOutputStream baos = new ByteArrayOutputStream();
-    WriteCountingTransport countingTrans = new WriteCountingTransport(new TIOStreamTransport(new BufferedOutputStream
-        (baos)));
+    WriteCountingTransport countingTrans =
+        new WriteCountingTransport(new TIOStreamTransport(new BufferedOutputStream(baos)));
     TTransport trans = getTransport(countingTrans);
     trans.write(byteSequence(0, 245));
     countingTrans.close();
@@ -68,7 +67,8 @@ public class TestTZlibTransport  {
     final byte[] compressed = baos.toByteArray();
 
     final byte[] buf = new byte[255];
-    TTransport transRead = getTransport(new TIOStreamTransport(new ByteArrayInputStream(compressed)));
+    TTransport transRead =
+        getTransport(new TIOStreamTransport(new ByteArrayInputStream(compressed)));
     int readBytes = transRead.read(buf, 0, buf.length);
     assertEquals(uncompressed.length, readBytes);
     transRead.close();
@@ -111,7 +111,8 @@ public class TestTZlibTransport  {
   @Test
   public void testWrite() throws TTransportException, IOException, DataFormatException {
     ByteArrayOutputStream baos = new ByteArrayOutputStream();
-    WriteCountingTransport countingTrans = new WriteCountingTransport(new TIOStreamTransport(new BufferedOutputStream(baos)));
+    WriteCountingTransport countingTrans =
+        new WriteCountingTransport(new TIOStreamTransport(new BufferedOutputStream(baos)));
     TTransport trans = getTransport(countingTrans);
 
     trans.write(byteSequence(0, 100));
@@ -127,7 +128,8 @@ public class TestTZlibTransport  {
     trans.flush();
     assertEquals(3, countingTrans.writeCount);
 
-    DataInputStream din = new DataInputStream(new InflaterInputStream(new ByteArrayInputStream(baos.toByteArray())));
+    DataInputStream din =
+        new DataInputStream(new InflaterInputStream(new ByteArrayInputStream(baos.toByteArray())));
     byte[] buf = new byte[256];
     int n = din.read(buf, 0, 256);
     assertEquals(n, 256);
@@ -136,11 +138,10 @@ public class TestTZlibTransport  {
     buf = new byte[246];
     n = din.read(buf, 0, 246);
     assertEquals(n, 246);
-    for (int i = 0; i<buf.length; i++) {
-      assertEquals(byteSequence(0,245)[i], buf[i], "for "+i);
+    for (int i = 0; i < buf.length; i++) {
+      assertEquals(byteSequence(0, 245)[i], buf[i], "for " + i);
     }
 
     assertArrayEquals(byteSequence(0, 245), buf);
   }
-
 }

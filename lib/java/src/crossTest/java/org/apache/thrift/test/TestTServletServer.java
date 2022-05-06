@@ -23,30 +23,26 @@ import org.apache.catalina.core.StandardContext;
 import org.apache.catalina.startup.Tomcat;
 import org.apache.catalina.startup.Tomcat.FixContextListener;
 
-
-/**
- * run tomcat for test TServlet
- */
+/** run tomcat for test TServlet */
 public class TestTServletServer {
 
   static final int port = 9090;
 
-  public static void main(String [] args) throws Exception{
+  public static void main(String[] args) throws Exception {
     Tomcat tomcat = new Tomcat();
-    tomcat.setPort( port );
-    tomcat.setBaseDir(System.getProperty("user.dir")+"\\build");
-    tomcat.getHost().setAutoDeploy( false );
+    tomcat.setPort(port);
+    tomcat.setBaseDir(System.getProperty("user.dir") + "\\build");
+    tomcat.getHost().setAutoDeploy(false);
 
     String contextPath = "/test";
     StandardContext context = new StandardContext();
-    context.setPath( contextPath );
-    context.addLifecycleListener( new FixContextListener() );
-    tomcat.getHost().addChild( context );
+    context.setPath(contextPath);
+    context.addLifecycleListener(new FixContextListener());
+    tomcat.getHost().addChild(context);
 
-    tomcat.addServlet( contextPath, "testServlet", new TestServlet() );
-    context.addServletMappingDecoded( "/service", "testServlet");
+    tomcat.addServlet(contextPath, "testServlet", new TestServlet());
+    context.addServletMappingDecoded("/service", "testServlet");
     tomcat.start();
     tomcat.getServer().await();
   }
-  
 }

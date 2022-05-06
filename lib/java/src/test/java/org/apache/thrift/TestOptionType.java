@@ -19,49 +19,49 @@
 
 package org.apache.thrift;
 
-import org.junit.jupiter.api.Test;
-
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import org.junit.jupiter.api.Test;
+
 // Tests and documents behavior for the "Option<T>" type
-public class TestOptionType  {
-    @Test
-    public void testSome() {
-        String name = "Chuck Norris";
-        Option<String> option = Option.fromNullable(name);
+public class TestOptionType {
+  @Test
+  public void testSome() {
+    String name = "Chuck Norris";
+    Option<String> option = Option.fromNullable(name);
 
-        assertTrue(option instanceof Option.Some);
-        assertTrue(option.isDefined());
-        assertEquals("Some(Chuck Norris)", option.toString());
-        assertEquals(option.or("default value"), "Chuck Norris");
-        assertEquals(option.get(),"Chuck Norris");
-    }
+    assertTrue(option instanceof Option.Some);
+    assertTrue(option.isDefined());
+    assertEquals("Some(Chuck Norris)", option.toString());
+    assertEquals(option.or("default value"), "Chuck Norris");
+    assertEquals(option.get(), "Chuck Norris");
+  }
 
-    @Test
-    public void testNone() throws Exception {
-        String name = null;
-        Option<String> option = Option.fromNullable(name);
+  @Test
+  public void testNone() throws Exception {
+    String name = null;
+    Option<String> option = Option.fromNullable(name);
 
-        assertTrue(option instanceof Option.None);
-        assertFalse(option.isDefined());
-        assertEquals("None", option.toString());
-        assertEquals(option.or("default value"), "default value");
-        // Expect exception
-        assertThrows(IllegalStateException.class, option::get);
-    }
+    assertTrue(option instanceof Option.None);
+    assertFalse(option.isDefined());
+    assertEquals("None", option.toString());
+    assertEquals(option.or("default value"), "default value");
+    // Expect exception
+    assertThrows(IllegalStateException.class, option::get);
+  }
 
-    @Test
-    public void testMakeSome() throws Exception {
-        Option<String> some = Option.some("wee");
-        assertTrue(some.isDefined());
-    }
+  @Test
+  public void testMakeSome() throws Exception {
+    Option<String> some = Option.some("wee");
+    assertTrue(some.isDefined());
+  }
 
-    @Test
-    public void testMakeNone() throws Exception {
-        Option<Integer> none = Option.none();
-        assertFalse(none.isDefined());
-    }
+  @Test
+  public void testMakeNone() throws Exception {
+    Option<Integer> none = Option.none();
+    assertFalse(none.isDefined());
+  }
 }

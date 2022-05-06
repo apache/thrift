@@ -19,6 +19,15 @@
 
 package org.apache.thrift.partial;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import java.util.Arrays;
+import java.util.List;
 import org.apache.thrift.TBase;
 import org.apache.thrift.meta_data.EnumMetaData;
 import org.apache.thrift.meta_data.FieldValueMetaData;
@@ -28,16 +37,6 @@ import org.apache.thrift.meta_data.SetMetaData;
 import org.apache.thrift.meta_data.StructMetaData;
 import org.apache.thrift.protocol.TType;
 import org.junit.jupiter.api.Test;
-
-import java.util.Arrays;
-import java.util.List;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class ThriftMetadataTest {
 
@@ -122,9 +121,7 @@ public class ThriftMetadataTest {
   }
 
   private ThriftMetadata.ThriftObject validateBasicFieldMetadata(
-      ThriftMetadata.ThriftStruct testStruct,
-      int id,
-      String fieldName) {
+      ThriftMetadata.ThriftStruct testStruct, int id, String fieldName) {
     return validateBasicFieldMetadata(testStruct, TestStruct.class, id, fieldName);
   }
 
@@ -153,17 +150,14 @@ public class ThriftMetadataTest {
   }
 
   private void validateBasicFieldValueMetadata(
-      ThriftMetadata.ThriftObject fieldMetadata,
-      String fieldName,
-      byte ttype) {
+      ThriftMetadata.ThriftObject fieldMetadata, String fieldName, byte ttype) {
 
     assertEquals(ttype, fieldMetadata.data.valueMetaData.type);
     assertEquals(getMetaDataClassForTType(ttype), fieldMetadata.data.valueMetaData.getClass());
     Class<? extends ThriftMetadata.ThriftObject> fieldMetadataClass = getClassForTType(ttype);
     assertEquals(fieldMetadataClass, fieldMetadata.getClass());
     if (fieldMetadataClass == ThriftMetadata.ThriftPrimitive.class) {
-      ThriftMetadata.ThriftPrimitive primitive
-          = (ThriftMetadata.ThriftPrimitive) fieldMetadata;
+      ThriftMetadata.ThriftPrimitive primitive = (ThriftMetadata.ThriftPrimitive) fieldMetadata;
       if (fieldName.startsWith("binary") && (ttype == TType.STRING)) {
         assertTrue(primitive.isBinary());
       } else {
@@ -173,10 +167,7 @@ public class ThriftMetadataTest {
   }
 
   private void validateFieldMetadata(
-      ThriftMetadata.ThriftStruct testStruct,
-      int id,
-      String fieldName,
-      byte ttype) {
+      ThriftMetadata.ThriftStruct testStruct, int id, String fieldName, byte ttype) {
 
     ThriftMetadata.ThriftObject fieldMetadata =
         validateBasicFieldMetadata(testStruct, id, fieldName);
@@ -184,10 +175,7 @@ public class ThriftMetadataTest {
   }
 
   private void validateListFieldMetadata(
-      ThriftMetadata.ThriftStruct testStruct,
-      int id,
-      String fieldName,
-      byte ttype) {
+      ThriftMetadata.ThriftStruct testStruct, int id, String fieldName, byte ttype) {
 
     ThriftMetadata.ThriftObject fieldMetadata =
         validateBasicFieldMetadata(testStruct, id, fieldName);
@@ -199,10 +187,7 @@ public class ThriftMetadataTest {
   }
 
   private void validateSetFieldMetadata(
-      ThriftMetadata.ThriftStruct testStruct,
-      int id,
-      String fieldName,
-      byte ttype) {
+      ThriftMetadata.ThriftStruct testStruct, int id, String fieldName, byte ttype) {
 
     ThriftMetadata.ThriftObject fieldMetadata =
         validateBasicFieldMetadata(testStruct, id, fieldName);
@@ -234,7 +219,7 @@ public class ThriftMetadataTest {
   private Class<? extends FieldValueMetaData> getMetaDataClassForTType(byte ttype) {
     switch (ttype) {
       case TType.STRUCT:
-        return  StructMetaData.class;
+        return StructMetaData.class;
 
       case TType.LIST:
         return ListMetaData.class;
@@ -265,7 +250,7 @@ public class ThriftMetadataTest {
   private Class<? extends ThriftMetadata.ThriftObject> getClassForTType(byte ttype) {
     switch (ttype) {
       case TType.STRUCT:
-        return  ThriftMetadata.ThriftStruct.class;
+        return ThriftMetadata.ThriftStruct.class;
 
       case TType.LIST:
         return ThriftMetadata.ThriftList.class;

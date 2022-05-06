@@ -1,5 +1,7 @@
 package org.apache.thrift.scheme;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
 import org.apache.thrift.Fixtures;
 import org.apache.thrift.TBase;
 import org.apache.thrift.TDeserializer;
@@ -15,23 +17,22 @@ import thrift.test.HolyMoley;
 import thrift.test.Nesting;
 import thrift.test.OneOfEach;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-
 public class TestStandardScheme {
   TSerializer serializer = new TSerializer();
   TDeserializer deserializer = new TDeserializer();
 
-  public TestStandardScheme() throws TTransportException {
-  }
+  public TestStandardScheme() throws TTransportException {}
 
   /**
-   * This tests whether the Standard Scheme properly reads structs serialized
-   * using an older version of thrift.
+   * This tests whether the Standard Scheme properly reads structs serialized using an older version
+   * of thrift.
    */
   @Test
   public void testPersistentStructs() throws TException {
-    readAndCompare(new OneOfEach(), Fixtures.getOneOfEach(), Fixtures.getPersistentBytesOneOfEach());
-    readAndCompare(new HolyMoley(), Fixtures.getHolyMoley(), Fixtures.getPersistentBytesHolyMoley());
+    readAndCompare(
+        new OneOfEach(), Fixtures.getOneOfEach(), Fixtures.getPersistentBytesOneOfEach());
+    readAndCompare(
+        new HolyMoley(), Fixtures.getHolyMoley(), Fixtures.getPersistentBytesHolyMoley());
     readAndCompare(new Nesting(), Fixtures.getNesting(), Fixtures.getPersistentBytesNesting());
   }
 

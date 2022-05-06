@@ -1,24 +1,29 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
- * or more contributor license agreements.  See the NOTICE file
+ * or more contributor license agreements. See the NOTICE file
  * distributed with this work for additional information
- * regarding copyright ownership.  The ASF licenses this file
+ * regarding copyright ownership. The ASF licenses this file
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
- * with the License.  You may obtain a copy of the License at
+ * with the License. You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *   http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied. See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
  */
 package org.apache.thrift;
 
 import java.io.Serializable;
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
@@ -26,28 +31,24 @@ import java.util.Map;
 import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
 
 public final class TBaseHelper {
 
-  private TBaseHelper(){}
+  private TBaseHelper() {}
 
   private static final Comparator comparator = new NestedStructureComparator();
 
   public static int compareTo(Object o1, Object o2) {
     if (o1 instanceof Comparable) {
-      return compareTo((Comparable)o1, (Comparable)o2);
+      return compareTo((Comparable) o1, (Comparable) o2);
     } else if (o1 instanceof List) {
-      return compareTo((List)o1, (List)o2);
+      return compareTo((List) o1, (List) o2);
     } else if (o1 instanceof Set) {
-      return compareTo((Set)o1, (Set)o2);
+      return compareTo((Set) o1, (Set) o2);
     } else if (o1 instanceof Map) {
-      return compareTo((Map)o1, (Map)o2);
+      return compareTo((Map) o1, (Map) o2);
     } else if (o1 instanceof byte[]) {
-      return compareTo((byte[])o1, (byte[])o2);
+      return compareTo((byte[]) o1, (byte[]) o2);
     } else {
       throw new IllegalArgumentException("Cannot compare objects of type " + o1.getClass());
     }
@@ -62,7 +63,7 @@ public final class TBaseHelper {
   }
 
   public static int compareTo(short a, short b) {
-    return Short.compare(a,b);
+    return Short.compare(a, b);
   }
 
   public static int compareTo(int a, int b) {
@@ -165,9 +166,7 @@ public final class TBaseHelper {
     return 0;
   }
 
-  /**
-   * Comparator to compare items inside a structure (e.g. a list, set, or map).
-   */
+  /** Comparator to compare items inside a structure (e.g. a list, set, or map). */
   private static class NestedStructureComparator implements Comparator, Serializable {
     public int compare(Object oA, Object oB) {
       if (oA == null && oB == null) {
@@ -177,15 +176,15 @@ public final class TBaseHelper {
       } else if (oB == null) {
         return 1;
       } else if (oA instanceof List) {
-        return compareTo((List)oA, (List)oB);
+        return compareTo((List) oA, (List) oB);
       } else if (oA instanceof Set) {
-        return compareTo((Set)oA, (Set)oB);
+        return compareTo((Set) oA, (Set) oB);
       } else if (oA instanceof Map) {
-        return compareTo((Map)oA, (Map)oB);
+        return compareTo((Map) oA, (Map) oB);
       } else if (oA instanceof byte[]) {
-        return compareTo((byte[])oA, (byte[])oB);
+        return compareTo((byte[]) oA, (byte[]) oB);
       } else {
-        return compareTo((Comparable)oA, (Comparable)oB);
+        return compareTo((Comparable) oA, (Comparable) oB);
       }
     }
   }
@@ -244,14 +243,15 @@ public final class TBaseHelper {
 
   public static boolean wrapsFullArray(ByteBuffer byteBuffer) {
     return byteBuffer.hasArray()
-      && byteBuffer.position() == 0
-      && byteBuffer.arrayOffset() == 0
-      && byteBuffer.remaining() == byteBuffer.capacity();
+        && byteBuffer.position() == 0
+        && byteBuffer.arrayOffset() == 0
+        && byteBuffer.remaining() == byteBuffer.capacity();
   }
 
   public static int byteBufferToByteArray(ByteBuffer byteBuffer, byte[] target, int offset) {
     int remaining = byteBuffer.remaining();
-    System.arraycopy(byteBuffer.array(),
+    System.arraycopy(
+        byteBuffer.array(),
         byteBuffer.arrayOffset() + byteBuffer.position(),
         target,
         offset,
@@ -275,7 +275,8 @@ public final class TBaseHelper {
     }
     ByteBuffer copy = ByteBuffer.wrap(new byte[orig.remaining()]);
     if (orig.hasArray()) {
-      System.arraycopy(orig.array(), orig.arrayOffset() + orig.position(), copy.array(), 0, orig.remaining());
+      System.arraycopy(
+          orig.array(), orig.arrayOffset() + orig.position(), copy.array(), 0, orig.remaining());
     } else {
       orig.slice().get(copy.array());
     }

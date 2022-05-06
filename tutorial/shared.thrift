@@ -22,7 +22,6 @@
  * these definitions.
  */
 
-namespace cl shared
 namespace cpp shared
 namespace d share // "shared" would collide with the eponymous D keyword.
 namespace dart shared

@@ -21,14 +21,13 @@ package org.apache.thrift.transport;
 
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
-import java.io.InputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.InetAddress;
-import java.net.URL;
 import java.net.MalformedURLException;
+import java.net.URL;
 import java.security.KeyStore;
 import java.util.Arrays;
-
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLServerSocket;
@@ -36,28 +35,22 @@ import javax.net.ssl.SSLServerSocketFactory;
 import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
 import javax.net.ssl.TrustManagerFactory;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- *  A Factory for providing and setting up Client and Server SSL wrapped
- *  TSocket and TServerSocket
+ * A Factory for providing and setting up Client and Server SSL wrapped TSocket and TServerSocket
  */
 public class TSSLTransportFactory {
 
-  private static final Logger LOGGER =
-      LoggerFactory.getLogger(TSSLTransportFactory.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(TSSLTransportFactory.class);
 
   /**
-   * Get a SSL wrapped TServerSocket bound to the specified port. In this
-   * configuration the default settings are used. Default settings are retrieved
-   * from System properties that are set.
+   * Get a SSL wrapped TServerSocket bound to the specified port. In this configuration the default
+   * settings are used. Default settings are retrieved from System properties that are set.
    *
-   * Example system properties:
-   * -Djavax.net.ssl.trustStore=&lt;truststore location&gt;
-   * -Djavax.net.ssl.trustStorePassword=password
-   * -Djavax.net.ssl.keyStore=&lt;keystore location&gt;
+   * <p>Example system properties: -Djavax.net.ssl.trustStore=&lt;truststore location&gt;
+   * -Djavax.net.ssl.trustStorePassword=password -Djavax.net.ssl.keyStore=&lt;keystore location&gt;
    * -Djavax.net.ssl.keyStorePassword=password
    *
    * @param port
@@ -76,7 +69,8 @@ public class TSSLTransportFactory {
    * @return A SSL wrapped TServerSocket
    * @throws TTransportException
    */
-  public static TServerSocket getServerSocket(int port, int clientTimeout) throws TTransportException {
+  public static TServerSocket getServerSocket(int port, int clientTimeout)
+      throws TTransportException {
     return getServerSocket(port, clientTimeout, false, null);
   }
 
@@ -89,15 +83,17 @@ public class TSSLTransportFactory {
    * @return A SSL wrapped TServerSocket
    * @throws TTransportException
    */
-  public static TServerSocket getServerSocket(int port, int clientTimeout, boolean clientAuth, InetAddress ifAddress) throws TTransportException {
+  public static TServerSocket getServerSocket(
+      int port, int clientTimeout, boolean clientAuth, InetAddress ifAddress)
+      throws TTransportException {
     SSLServerSocketFactory factory = (SSLServerSocketFactory) SSLServerSocketFactory.getDefault();
     return createServer(factory, port, clientTimeout, clientAuth, ifAddress, null);
   }
 
   /**
-   * Get a configured SSL wrapped TServerSocket bound to the specified port and interface.
-   * Here the TSSLTransportParameters are used to set the values for the algorithms, keystore,
-   * truststore and other settings
+   * Get a configured SSL wrapped TServerSocket bound to the specified port and interface. Here the
+   * TSSLTransportParameters are used to set the values for the algorithms, keystore, truststore and
+   * other settings
    *
    * @param port
    * @param clientTimeout
@@ -106,35 +102,47 @@ public class TSSLTransportFactory {
    * @return A SSL wrapped TServerSocket
    * @throws TTransportException
    */
-  public static TServerSocket getServerSocket(int port, int clientTimeout, InetAddress ifAddress, TSSLTransportParameters params) throws TTransportException {
+  public static TServerSocket getServerSocket(
+      int port, int clientTimeout, InetAddress ifAddress, TSSLTransportParameters params)
+      throws TTransportException {
     if (params == null || !(params.isKeyStoreSet || params.isTrustStoreSet)) {
-      throw new TTransportException("Either one of the KeyStore or TrustStore must be set for SSLTransportParameters");
+      throw new TTransportException(
+          "Either one of the KeyStore or TrustStore must be set for SSLTransportParameters");
     }
 
     SSLContext ctx = createSSLContext(params);
-    return createServer(ctx.getServerSocketFactory(), port, clientTimeout, params.clientAuth, ifAddress, params);
+    return createServer(
+        ctx.getServerSocketFactory(), port, clientTimeout, params.clientAuth, ifAddress, params);
   }
 
-  private static TServerSocket createServer(SSLServerSocketFactory factory, int port, int timeout, boolean clientAuth,
-                                    InetAddress ifAddress, TSSLTransportParameters params) throws TTransportException {
+  private static TServerSocket createServer(
+      SSLServerSocketFactory factory,
+      int port,
+      int timeout,
+      boolean clientAuth,
+      InetAddress ifAddress,
+      TSSLTransportParameters params)
+      throws TTransportException {
     try {
-      SSLServerSocket serverSocket = (SSLServerSocket) factory.createServerSocket(port, 100, ifAddress);
+      SSLServerSocket serverSocket =
+          (SSLServerSocket) factory.createServerSocket(port, 100, ifAddress);
       serverSocket.setSoTimeout(timeout);
       serverSocket.setNeedClientAuth(clientAuth);
       if (params != null && params.cipherSuites != null) {
         serverSocket.setEnabledCipherSuites(params.cipherSuites);
       }
-      return new TServerSocket(new TServerSocket.ServerSocketTransportArgs().
-        serverSocket(serverSocket).clientTimeout(timeout));
+      return new TServerSocket(
+          new TServerSocket.ServerSocketTransportArgs()
+              .serverSocket(serverSocket)
+              .clientTimeout(timeout));
     } catch (Exception e) {
       throw new TTransportException("Could not bind to port " + port, e);
     }
   }
 
   /**
-   * Get a default SSL wrapped TSocket connected to the specified host and port. All
-   * the client methods return a bound connection. So there is no need to call open() on the
-   * TTransport.
+   * Get a default SSL wrapped TSocket connected to the specified host and port. All the client
+   * methods return a bound connection. So there is no need to call open() on the TTransport.
    *
    * @param host
    * @param port
@@ -142,7 +150,8 @@ public class TSSLTransportFactory {
    * @return A SSL wrapped TSocket
    * @throws TTransportException
    */
-  public static TSocket getClientSocket(String host, int port, int timeout) throws TTransportException {
+  public static TSocket getClientSocket(String host, int port, int timeout)
+      throws TTransportException {
     SSLSocketFactory factory = (SSLSocketFactory) SSLSocketFactory.getDefault();
     return createClient(factory, host, port, timeout);
   }
@@ -160,8 +169,8 @@ public class TSSLTransportFactory {
   }
 
   /**
-   * Get a custom configured SSL wrapped TSocket. The SSL settings are obtained from the
-   * passed in TSSLTransportParameters.
+   * Get a custom configured SSL wrapped TSocket. The SSL settings are obtained from the passed in
+   * TSSLTransportParameters.
    *
    * @param host
    * @param port
@@ -170,16 +179,21 @@ public class TSSLTransportFactory {
    * @return A SSL wrapped TSocket
    * @throws TTransportException
    */
-  public static TSocket getClientSocket(String host, int port, int timeout, TSSLTransportParameters params) throws TTransportException {
+  public static TSocket getClientSocket(
+      String host, int port, int timeout, TSSLTransportParameters params)
+      throws TTransportException {
     if (params == null || !(params.isKeyStoreSet || params.isTrustStoreSet)) {
-      throw new TTransportException(TTransportException.NOT_OPEN, "Either one of the KeyStore or TrustStore must be set for SSLTransportParameters");
+      throw new TTransportException(
+          TTransportException.NOT_OPEN,
+          "Either one of the KeyStore or TrustStore must be set for SSLTransportParameters");
     }
 
     SSLContext ctx = createSSLContext(params);
     return createClient(ctx.getSocketFactory(), host, port, timeout);
   }
 
-  private static SSLContext createSSLContext(TSSLTransportParameters params) throws TTransportException {
+  private static SSLContext createSSLContext(TSSLTransportParameters params)
+      throws TTransportException {
     SSLContext ctx;
     InputStream in = null;
     InputStream is = null;
@@ -197,8 +211,7 @@ public class TSSLTransportFactory {
         } else {
           in = getStoreAsStream(params.trustStore);
         }
-        ts.load(in,
-                (params.trustPass != null ? params.trustPass.toCharArray() : null));
+        ts.load(in, (params.trustPass != null ? params.trustPass.toCharArray() : null));
         tmf.init(ts);
       }
 
@@ -206,9 +219,9 @@ public class TSSLTransportFactory {
         kmf = KeyManagerFactory.getInstance(params.keyManagerType);
         KeyStore ks = KeyStore.getInstance(params.keyStoreType);
         if (params.keyStoreStream != null) {
-        	is = params.keyStoreStream;
+          is = params.keyStoreStream;
         } else {
-        	is = getStoreAsStream(params.keyStore);
+          is = getStoreAsStream(params.keyStore);
         }
         ks.load(is, params.keyPass.toCharArray());
         kmf.init(ks, params.keyPass.toCharArray());
@@ -216,16 +229,15 @@ public class TSSLTransportFactory {
 
       if (params.isKeyStoreSet && params.isTrustStoreSet) {
         ctx.init(kmf.getKeyManagers(), tmf.getTrustManagers(), null);
-      }
-      else if (params.isKeyStoreSet) {
+      } else if (params.isKeyStoreSet) {
         ctx.init(kmf.getKeyManagers(), null, null);
-      }
-      else {
+      } else {
         ctx.init(null, tmf.getTrustManagers(), null);
       }
 
     } catch (Exception e) {
-      throw new TTransportException(TTransportException.NOT_OPEN, "Error creating the transport", e);
+      throw new TTransportException(
+          TTransportException.NOT_OPEN, "Error creating the transport", e);
     } finally {
       if (in != null) {
         try {
@@ -249,7 +261,7 @@ public class TSSLTransportFactory {
   private static InputStream getStoreAsStream(String store) throws IOException {
     try {
       return new FileInputStream(store);
-    } catch(FileNotFoundException e) {
+    } catch (FileNotFoundException e) {
     }
 
     InputStream storeStream = null;
@@ -258,7 +270,7 @@ public class TSSLTransportFactory {
       if (storeStream != null) {
         return storeStream;
       }
-    } catch(MalformedURLException e) {
+    } catch (MalformedURLException e) {
     }
 
     storeStream = Thread.currentThread().getContextClassLoader().getResourceAsStream(store);
@@ -270,7 +282,8 @@ public class TSSLTransportFactory {
     }
   }
 
-  private static TSocket createClient(SSLSocketFactory factory, String host, int port, int timeout) throws TTransportException {
+  private static TSocket createClient(SSLSocketFactory factory, String host, int port, int timeout)
+      throws TTransportException {
     try {
       SSLSocket socket = (SSLSocket) factory.createSocket(host, port);
       socket.setSoTimeout(timeout);
@@ -278,14 +291,12 @@ public class TSSLTransportFactory {
     } catch (TTransportException tte) {
       throw tte;
     } catch (Exception e) {
-      throw new TTransportException(TTransportException.NOT_OPEN, "Could not connect to " + host + " on port " + port, e);
+      throw new TTransportException(
+          TTransportException.NOT_OPEN, "Could not connect to " + host + " on port " + port, e);
     }
   }
 
-
-  /**
-   * A Class to hold all the SSL parameters
-   */
+  /** A Class to hold all the SSL parameters */
   public static class TSSLTransportParameters {
     protected String protocol = "TLS";
     protected String keyStore;
@@ -316,8 +327,8 @@ public class TSSLTransportFactory {
     }
 
     /**
-     * Create parameters specifying the protocol, cipher suites and if client authentication
-     * is required
+     * Create parameters specifying the protocol, cipher suites and if client authentication is
+     * required
      *
      * @param protocol The specific protocol (TLS/SSL) can be specified with versions
      * @param cipherSuites
@@ -327,7 +338,8 @@ public class TSSLTransportFactory {
       if (protocol != null) {
         this.protocol = protocol;
       }
-      this.cipherSuites = cipherSuites != null ? Arrays.copyOf(cipherSuites, cipherSuites.length) : null;
+      this.cipherSuites =
+          cipherSuites != null ? Arrays.copyOf(cipherSuites, cipherSuites.length) : null;
       this.clientAuth = clientAuth;
     }
 
@@ -339,7 +351,8 @@ public class TSSLTransportFactory {
      * @param keyManagerType The default is X509
      * @param keyStoreType The default is JKS
      */
-    public void setKeyStore(String keyStore, String keyPass, String keyManagerType, String keyStoreType) {
+    public void setKeyStore(
+        String keyStore, String keyPass, String keyManagerType, String keyStoreType) {
       this.keyStore = keyStore;
       this.keyPass = keyPass;
       if (keyManagerType != null) {
@@ -359,9 +372,10 @@ public class TSSLTransportFactory {
      * @param keyManagerType The default is X509
      * @param keyStoreType The default is JKS
      */
-    public void setKeyStore(InputStream keyStoreStream, String keyPass, String keyManagerType, String keyStoreType) {
-    	this.keyStoreStream = keyStoreStream;
-    	setKeyStore("", keyPass, keyManagerType, keyStoreType);
+    public void setKeyStore(
+        InputStream keyStoreStream, String keyPass, String keyManagerType, String keyStoreType) {
+      this.keyStoreStream = keyStoreStream;
+      setKeyStore("", keyPass, keyManagerType, keyStoreType);
     }
 
     /**
@@ -392,7 +406,8 @@ public class TSSLTransportFactory {
      * @param trustManagerType The default is X509
      * @param trustStoreType The default is JKS
      */
-    public void setTrustStore(String trustStore, String trustPass, String trustManagerType, String trustStoreType) {
+    public void setTrustStore(
+        String trustStore, String trustPass, String trustManagerType, String trustStoreType) {
       this.trustStore = trustStore;
       this.trustPass = trustPass;
       if (trustManagerType != null) {
@@ -412,7 +427,11 @@ public class TSSLTransportFactory {
      * @param trustManagerType The default is X509
      * @param trustStoreType The default is JKS
      */
-    public void setTrustStore(InputStream trustStoreStream, String trustPass, String trustManagerType, String trustStoreType) {
+    public void setTrustStore(
+        InputStream trustStoreStream,
+        String trustPass,
+        String trustManagerType,
+        String trustStoreType) {
       this.trustStoreStream = trustStoreStream;
       setTrustStore("", trustPass, trustManagerType, trustStoreType);
     }
@@ -444,6 +463,6 @@ public class TSSLTransportFactory {
      */
     public void requireClientAuth(boolean clientAuth) {
       this.clientAuth = clientAuth;
-		}
-	}
+    }
+  }
 }

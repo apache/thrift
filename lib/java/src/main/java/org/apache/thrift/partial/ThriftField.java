@@ -19,8 +19,6 @@
 
 package org.apache.thrift.partial;
 
-import org.apache.thrift.partial.Validate;
-
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -28,21 +26,19 @@ import java.util.List;
 
 /**
  * Holds name of a thrift field and of its sub-fields recursively.
- * <p>
- * This class is meant to be used in conjunction with {@code TDeserializer}.
+ *
+ * <p>This class is meant to be used in conjunction with {@code TDeserializer}.
  */
 public class ThriftField {
 
-  /**
-   * Name of this field as it appears in a thrift file. Case sensitive.
-   */
+  /** Name of this field as it appears in a thrift file. Case sensitive. */
   public final String name;
 
   /**
    * List of sub-fields of this field.
    *
-   * This list should have only those sub-fields that need to be deserialized
-   * by the {@code TDeserializer}.
+   * <p>This list should have only those sub-fields that need to be deserialized by the {@code
+   * TDeserializer}.
    */
   public final List<ThriftField> fields;
 
@@ -60,9 +56,7 @@ public class ThriftField {
     this.fields = Collections.unmodifiableList(fields);
   }
 
-  /**
-   * Constructs a {@link ThriftField} that does not have any sub-fields.
-   */
+  /** Constructs a {@link ThriftField} that does not have any sub-fields. */
   ThriftField(String name) {
     this(name, Collections.emptyList());
   }
@@ -146,15 +140,12 @@ public class ThriftField {
 
   /**
    * Generates and returns n-ary tree of fields and their sub-fields.
+   *
    * <p>
+   *
    * @param fieldNames collection of fully qualified field names.
-   *
-   *        for example,
-   *        In case of PinJoin thrift struct, the following are valid field names
-   *        -- signature
-   *        -- pins.user.userId
-   *        -- textSignal.termSignal.termDataMap
-   *
+   *     <p>for example, In case of PinJoin thrift struct, the following are valid field names --
+   *     signature -- pins.user.userId -- textSignal.termSignal.termDataMap
    * @return n-ary tree of fields and their sub-fields.
    */
   public static List<ThriftField> fromNames(Collection<String> fieldNames) {

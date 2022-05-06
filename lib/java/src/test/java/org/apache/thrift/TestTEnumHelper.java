@@ -18,17 +18,17 @@
  */
 package org.apache.thrift;
 
-import org.junit.jupiter.api.Test;
-import thrift.test.Numberz;
-
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 
-public class TestTEnumHelper  {
+import org.junit.jupiter.api.Test;
+import thrift.test.Numberz;
+
+public class TestTEnumHelper {
 
   @Test
   public void testGetByValue_ValidValues() {
-    for (Numberz n: Numberz.values()) {
+    for (Numberz n : Numberz.values()) {
       int value = n.getValue();
       assertEquals(n, TEnumHelper.getByValue(Numberz.class, value));
     }

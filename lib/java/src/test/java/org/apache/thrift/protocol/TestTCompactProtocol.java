@@ -17,12 +17,10 @@
  * under the License.
  */
 
-
 package org.apache.thrift.protocol;
 
 import org.apache.thrift.TDeserializer;
 import org.apache.thrift.TException;
-
 import org.junit.jupiter.api.Test;
 import thrift.test.Bonk;
 
@@ -41,14 +39,13 @@ public class TestTCompactProtocol extends ProtocolTestBase {
   public void testOOMDenialOfService() throws Exception {
     // Struct header, Integer.MAX_VALUE length, and only one real
     // byte of data
-    byte [] bytes = {24, -1, -1, -1, -17, 49};
-    TDeserializer deser = new TDeserializer(new TCompactProtocol
-					    .Factory(1000));
+    byte[] bytes = {24, -1, -1, -1, -17, 49};
+    TDeserializer deser = new TDeserializer(new TCompactProtocol.Factory(1000));
     Bonk bonk = new Bonk();
     try {
-	deser.deserialize(bonk, bytes);
+      deser.deserialize(bonk, bytes);
     } catch (TException e) {
-	// Ignore as we are only checking for OOM in the failure case
+      // Ignore as we are only checking for OOM in the failure case
     }
   }
 

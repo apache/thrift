@@ -19,6 +19,14 @@
 
 package org.apache.thrift.partial;
 
+import java.io.Serializable;
+import java.lang.reflect.Constructor;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.thrift.TBase;
 import org.apache.thrift.TFieldIdEnum;
@@ -31,20 +39,10 @@ import org.apache.thrift.meta_data.SetMetaData;
 import org.apache.thrift.meta_data.StructMetaData;
 import org.apache.thrift.protocol.TType;
 
-import java.io.Serializable;
-import java.lang.reflect.Constructor;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
 /**
- * Container for Thrift metadata classes such as {@link ThriftPrimitive},
- * {@link ThriftList}, etc.
- * <p>
- * This class is mainly used by {@code TDeserializer}.
+ * Container for Thrift metadata classes such as {@link ThriftPrimitive}, {@link ThriftList}, etc.
+ *
+ * <p>This class is mainly used by {@code TDeserializer}.
  */
 public class ThriftMetadata {
 
@@ -84,9 +82,8 @@ public class ThriftMetadata {
   /**
    * Base class of field types that can be partially deserialized.
    *
-   * Holds metadata necessary for partial deserialization.
-   * The metadata is internally computed and used; therefore it is not visible to
-   * the users of {@code TDeserializer}.
+   * <p>Holds metadata necessary for partial deserialization. The metadata is internally computed
+   * and used; therefore it is not visible to the users of {@code TDeserializer}.
    */
   public abstract static class ThriftObject implements Serializable {
     public final ThriftObject parent;
@@ -111,23 +108,17 @@ public class ThriftMetadata {
      */
     protected abstract void toPrettyString(StringBuilder sb, int level);
 
-    /**
-     * Gets a space string whose length is proportional to the given indent level.
-     */
+    /** Gets a space string whose length is proportional to the given indent level. */
     protected String getIndent(int level) {
       return StringUtils.repeat(" ", level * 4);
     }
 
-    /**
-     * Helper method to append a formatted string to the given {@code StringBuilder}.
-     */
+    /** Helper method to append a formatted string to the given {@code StringBuilder}. */
     protected void append(StringBuilder sb, String format, Object... args) {
       sb.append(String.format(format, args));
     }
 
-    /**
-     * Gets the name of this field.
-     */
+    /** Gets the name of this field. */
     protected String getName() {
       return this.fieldId.getFieldName();
     }
@@ -145,10 +136,7 @@ public class ThriftMetadata {
     private static class Factory {
 
       static ThriftObject createNew(
-          ThriftObject parent,
-          TFieldIdEnum fieldId,
-          FieldMetaData data,
-          List<ThriftField> fields) {
+          ThriftObject parent, TFieldIdEnum fieldId, FieldMetaData data, List<ThriftField> fields) {
 
         byte fieldType = data.valueMetaData.type;
         switch (fieldType) {
@@ -183,9 +171,7 @@ public class ThriftMetadata {
     }
   }
 
-  /**
-   * Metadata about primitive types.
-   */
+  /** Metadata about primitive types. */
   public static class ThriftPrimitive extends ThriftObject {
     ThriftPrimitive(ThriftObject parent, TFieldIdEnum fieldId, FieldMetaData data) {
       super(parent, fieldId, data);
@@ -248,15 +234,10 @@ public class ThriftMetadata {
     }
   }
 
-  /**
-   * Metadata of container like objects: list, set, map
-   */
+  /** Metadata of container like objects: list, set, map */
   public abstract static class ThriftContainer extends ThriftObject {
 
-    public ThriftContainer(
-        ThriftObject parent,
-        TFieldIdEnum fieldId,
-        FieldMetaData data) {
+    public ThriftContainer(ThriftObject parent, TFieldIdEnum fieldId, FieldMetaData data) {
       super(parent, fieldId, data);
     }
 
@@ -267,20 +248,18 @@ public class ThriftMetadata {
     public final ThriftObject elementData;
 
     ThriftList(
-        ThriftObject parent,
-        TFieldIdEnum fieldId,
-        FieldMetaData data,
-        List<ThriftField> fields) {
+        ThriftObject parent, TFieldIdEnum fieldId, FieldMetaData data, List<ThriftField> fields) {
       super(parent, fieldId, data);
 
-      this.elementData = ThriftObject.Factory.createNew(
-          this,
-          FieldTypeEnum.LIST_ELEMENT,
-          new FieldMetaData(
-              getSubElementName(fieldId),
-              TFieldRequirementType.REQUIRED,
-              ((ListMetaData) data.valueMetaData).elemMetaData),
-          fields);
+      this.elementData =
+          ThriftObject.Factory.createNew(
+              this,
+              FieldTypeEnum.LIST_ELEMENT,
+              new FieldMetaData(
+                  getSubElementName(fieldId),
+                  TFieldRequirementType.REQUIRED,
+                  ((ListMetaData) data.valueMetaData).elemMetaData),
+              fields);
     }
 
     @Override
@@ -300,20 +279,18 @@ public class ThriftMetadata {
     public final ThriftObject elementData;
 
     ThriftSet(
-        ThriftObject parent,
-        TFieldIdEnum fieldId,
-        FieldMetaData data,
-        List<ThriftField> fields) {
+        ThriftObject parent, TFieldIdEnum fieldId, FieldMetaData data, List<ThriftField> fields) {
       super(parent, fieldId, data);
 
-      this.elementData = ThriftObject.Factory.createNew(
-          this,
-          FieldTypeEnum.SET_ELEMENT,
-          new FieldMetaData(
-              getSubElementName(fieldId),
-              TFieldRequirementType.REQUIRED,
-              ((SetMetaData) data.valueMetaData).elemMetaData),
-          fields);
+      this.elementData =
+          ThriftObject.Factory.createNew(
+              this,
+              FieldTypeEnum.SET_ELEMENT,
+              new FieldMetaData(
+                  getSubElementName(fieldId),
+                  TFieldRequirementType.REQUIRED,
+                  ((SetMetaData) data.valueMetaData).elemMetaData),
+              fields);
     }
 
     @Override
@@ -334,29 +311,28 @@ public class ThriftMetadata {
     public final ThriftObject valueData;
 
     ThriftMap(
-        ThriftObject parent,
-        TFieldIdEnum fieldId,
-        FieldMetaData data,
-        List<ThriftField> fields) {
+        ThriftObject parent, TFieldIdEnum fieldId, FieldMetaData data, List<ThriftField> fields) {
       super(parent, fieldId, data);
 
-      this.keyData = ThriftObject.Factory.createNew(
-          this,
-          FieldTypeEnum.MAP_KEY,
-          new FieldMetaData(
-              getSubElementName(fieldId, "key"),
-              TFieldRequirementType.REQUIRED,
-              ((MapMetaData) data.valueMetaData).keyMetaData),
-          Collections.emptyList());
+      this.keyData =
+          ThriftObject.Factory.createNew(
+              this,
+              FieldTypeEnum.MAP_KEY,
+              new FieldMetaData(
+                  getSubElementName(fieldId, "key"),
+                  TFieldRequirementType.REQUIRED,
+                  ((MapMetaData) data.valueMetaData).keyMetaData),
+              Collections.emptyList());
 
-      this.valueData = ThriftObject.Factory.createNew(
-          this,
-          FieldTypeEnum.MAP_VALUE,
-          new FieldMetaData(
-              getSubElementName(fieldId, "value"),
-              TFieldRequirementType.REQUIRED,
-              ((MapMetaData) data.valueMetaData).valueMetaData),
-          fields);
+      this.valueData =
+          ThriftObject.Factory.createNew(
+              this,
+              FieldTypeEnum.MAP_VALUE,
+              new FieldMetaData(
+                  getSubElementName(fieldId, "value"),
+                  TFieldRequirementType.REQUIRED,
+                  ((MapMetaData) data.valueMetaData).valueMetaData),
+              fields);
     }
 
     @Override
@@ -378,14 +354,11 @@ public class ThriftMetadata {
   }
 
   /**
-   * Base class for metadata of ThriftStruct and ThriftUnion.
-   * Holds functionality that is common to both.
+   * Base class for metadata of ThriftStruct and ThriftUnion. Holds functionality that is common to
+   * both.
    */
   public abstract static class ThriftStructBase<U extends TBase> extends ThriftObject {
-    public ThriftStructBase(
-        ThriftObject parent,
-        TFieldIdEnum fieldId,
-        FieldMetaData data) {
+    public ThriftStructBase(ThriftObject parent, TFieldIdEnum fieldId, FieldMetaData data) {
       super(parent, fieldId, data);
     }
 
@@ -419,10 +392,7 @@ public class ThriftMetadata {
     }
   }
 
-  /**
-   * Metadata of a Thrift union.
-   * Currently not adequately supported.
-   */
+  /** Metadata of a Thrift union. Currently not adequately supported. */
   public static class ThriftUnion<U extends TBase> extends ThriftStructBase {
     public ThriftUnion(
         ThriftObject parent,
@@ -442,9 +412,7 @@ public class ThriftMetadata {
     }
   }
 
-  /**
-   * Metadata of a Thrift struct.
-   */
+  /** Metadata of a Thrift struct. */
   public static class ThriftStruct<U extends TBase> extends ThriftStructBase {
     public final Map<Integer, ThriftObject> fields;
 
@@ -474,14 +442,12 @@ public class ThriftMetadata {
     }
 
     public static <T extends TBase> ThriftStruct fromFieldNames(
-        Class<T> clasz,
-        Collection<String> fieldNames) {
+        Class<T> clasz, Collection<String> fieldNames) {
       return fromFields(clasz, ThriftField.fromNames(fieldNames));
     }
 
     public static <T extends TBase> ThriftStruct fromFields(
-        Class<T> clasz,
-        Iterable<ThriftField> fields) {
+        Class<T> clasz, Iterable<ThriftField> fields) {
 
       Validate.checkNotNull(clasz, "clasz");
       Validate.checkNotNull(fields, "fields");
@@ -521,9 +487,7 @@ public class ThriftMetadata {
     }
 
     private static <U extends TBase> Map<Integer, ThriftObject> getFields(
-        ThriftStruct parent,
-        Class<U> clasz,
-        Iterable<ThriftField> fieldsData) {
+        ThriftStruct parent, Class<U> clasz, Iterable<ThriftField> fieldsData) {
 
       Map<? extends TFieldIdEnum, FieldMetaData> fieldsMetaData =
           FieldMetaData.getStructMetaDataMap(clasz);
@@ -535,7 +499,8 @@ public class ThriftMetadata {
           TFieldIdEnum fieldId = entry.getKey();
           FieldMetaData fieldMetaData = entry.getValue();
           ThriftObject field =
-              ThriftObject.Factory.createNew(parent, fieldId, fieldMetaData, Collections.emptyList());
+              ThriftObject.Factory.createNew(
+                  parent, fieldId, fieldMetaData, Collections.emptyList());
           fields.put((int) fieldId.getThriftFieldId(), field);
         }
       } else {
@@ -553,8 +518,7 @@ public class ThriftMetadata {
     }
 
     private static FieldMetaData findFieldMetaData(
-        Map<? extends TFieldIdEnum, FieldMetaData> fieldsMetaData,
-        String fieldName) {
+        Map<? extends TFieldIdEnum, FieldMetaData> fieldsMetaData, String fieldName) {
 
       for (FieldMetaData fieldData : fieldsMetaData.values()) {
         if (fieldData.fieldName.equals(fieldName)) {
@@ -566,8 +530,7 @@ public class ThriftMetadata {
     }
 
     private static TFieldIdEnum findFieldId(
-        Map<? extends TFieldIdEnum, FieldMetaData> fieldsMetaData,
-        String fieldName) {
+        Map<? extends TFieldIdEnum, FieldMetaData> fieldsMetaData, String fieldName) {
 
       for (TFieldIdEnum fieldId : fieldsMetaData.keySet()) {
         if (fieldId.getFieldName().equals(fieldName)) {
