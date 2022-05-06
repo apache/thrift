@@ -39,7 +39,7 @@ internal class MetaDataTest {
     @Test
     internal fun testAnnotation() {
         val personMetadata = FieldMetaData.getStructMetaDataMap(Person::class.java)
-        assertEquals(2, personMetadata.size)
+        assertEquals(3, personMetadata.size)
         val idField = personMetadata[Person._Fields.ID]!!
         assertEquals("id", idField.fieldName)
         assertEquals(mapOf(), idField.fieldAnnotations)
