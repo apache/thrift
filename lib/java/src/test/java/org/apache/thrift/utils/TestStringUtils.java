@@ -19,41 +19,44 @@
 
 package org.apache.thrift.utils;
 
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 public class TestStringUtils {
 
-  @Test
-  public void testToHexString() {
-    byte[] bytes = {0x00, 0x1A, (byte) 0xEF, (byte) 0xAB, (byte) 0x92};
-    Assert.assertEquals("001AEFAB92", StringUtils.bytesToHexString(bytes));
-    Assert.assertEquals("EFAB92", StringUtils.bytesToHexString(bytes, 2, 3));
-    Assert.assertNull(StringUtils.bytesToHexString(null));
-  }
+    @Test
+    public void testToHexString() {
+        byte[] bytes = {0x00, 0x1A, (byte) 0xEF, (byte) 0xAB, (byte) 0x92};
+        assertEquals("001AEFAB92", StringUtils.bytesToHexString(bytes));
+        assertEquals("EFAB92", StringUtils.bytesToHexString(bytes, 2, 3));
+        assertNull(StringUtils.bytesToHexString(null));
+    }
 
 
-  private byte[] bytes;
+    private byte[] bytes;
 
-  @Before
-  public void setUp() throws Exception {
-    bytes = new byte[]{1, 2, 3, 4, 5};
-  }
+    @BeforeEach
+    public void setUp() throws Exception {
+        bytes = new byte[]{1, 2, 3, 4, 5};
+    }
 
-  @Test(expected = IllegalArgumentException.class)
-  public void testNegativeLength() {
-    StringUtils.bytesToHexString(bytes, 0, -1);
-  }
+    @Test
+    public void testNegativeLength() {
+        assertThrows(IllegalArgumentException.class, () -> StringUtils.bytesToHexString(bytes, 0, -1));
+    }
 
-  @Test(expected = IndexOutOfBoundsException.class)
-  public void testNegativeStartOffset() {
-    StringUtils.bytesToHexString(bytes, -1, 1);
-  }
+    @Test
+    public void testNegativeStartOffset() {
+        assertThrows(IndexOutOfBoundsException.class, () -> StringUtils.bytesToHexString(bytes, -1, 1));
+    }
 
-  @Test(expected = IndexOutOfBoundsException.class)
-  public void testInvalidRange() {
-    StringUtils.bytesToHexString(bytes, 5, 1);
-  }
+    @Test
+    public void testInvalidRange() {
+        assertThrows(IndexOutOfBoundsException.class, () -> StringUtils.bytesToHexString(bytes, 5, 1));
+    }
 
 }

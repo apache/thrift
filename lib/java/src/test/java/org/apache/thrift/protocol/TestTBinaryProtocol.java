@@ -20,10 +20,6 @@
 
 package org.apache.thrift.protocol;
 
-import org.apache.thrift.TDeserializer;
-import org.apache.thrift.TException;
-import thrift.test.Bonk;
-
 public class TestTBinaryProtocol extends ProtocolTestBase {
   @Override
   protected TProtocolFactory getFactory() {

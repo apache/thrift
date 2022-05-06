@@ -1,10 +1,18 @@
+<<<<<<< HEAD
 name: "Build"
+=======
+name: 'Build'
+>>>>>>> master
 
 on:
   push:
     branches: ["*"]
   pull_request:
+<<<<<<< HEAD
     branches: ["*"]
+=======
+    branches: [ '*' ]
+>>>>>>> master
 
 env:
   BUILD_DEPS: automake bison flex g++ git libboost-all-dev libevent-dev libssl-dev libtool make pkg-config
@@ -60,7 +68,7 @@ jobs:
         with:
           distribution: temurin
           java-version: 11
-          cache: "gradle"
+          cache: 'gradle'
 
       - name: Install dependencies
         run: |
@@ -123,6 +131,7 @@ jobs:
 
       - name: Run make kotlin
         run: make -C lib/kotlin
+<<<<<<< HEAD
 
   lib-rust:
     needs: compiler
@@ -291,3 +300,5 @@ jobs:
 
       - name: Run make python
         run: make -C lib/py
+=======
+>>>>>>> master

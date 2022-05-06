@@ -19,12 +19,12 @@
 
 package org.apache.thrift.partial;
 
-import org.apache.thrift.partial.ExceptionAsserts;
-
 import org.apache.thrift.TEnum;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 /**
  * Test ThriftCodec serializes and deserializes thrift objects correctly.
@@ -85,10 +85,10 @@ public class EnumCacheTest {
     cache.get(TestEnum.class, 0);
 
     // Verify it throws.
-    ExceptionAsserts.assertThrows(
+    assertThrows(
         IllegalArgumentException.class,
-        "'enumClass' must not be null",
-        () -> cache.get(null, 1));
+        () -> cache.get(null, 1),
+        "'enumClass' must not be null");
   }
 
   @Test

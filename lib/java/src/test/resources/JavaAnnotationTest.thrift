@@ -16,27 +16,19 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.apache.thrift.transport;
 
-import org.junit.jupiter.api.Test;
+namespace java thrift.test.annotations
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-
-
-public class TestAutoExpandingBuffer  {
-  @Test
-  public void testExpands() throws Exception {
-    // has expected initial capacity
-    AutoExpandingBuffer b = new AutoExpandingBuffer(10);
-    assertEquals(10, b.array().length);
-
-    // doesn't shrink
-    b.resizeIfNecessary(8);
-    assertEquals(10, b.array().length);
-
-    // grows when more capacity is needed
-    b.resizeIfNecessary(100);
-    assertTrue(b.array().length >= 100);
-  }
+struct OneOfEachBeansWithAnnotations {
+  1: bool boolean_field,
+  2: byte a_bite (compression = "false"),
+  3: i16 integer16 (must_be_postive = "true"),
+  4: i32 integer32,
+  5: i64 integer64,
+  6: double double_precision (nan_inf_allowed = "false"),
+  7: string some_characters,
+  8: binary base64,
+  9: list<byte> byte_list (non_empty = "true"),
+  10: list<i16> i16_list,
+  11: list<i64> i64_list
 }
