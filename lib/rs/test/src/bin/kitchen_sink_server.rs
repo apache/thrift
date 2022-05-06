@@ -18,7 +18,6 @@
 use clap::{clap_app, value_t};
 use log::*;
 
-use thrift;
 use thrift::protocol::{
     TBinaryInputProtocolFactory, TBinaryOutputProtocolFactory, TCompactInputProtocolFactory,
     TCompactOutputProtocolFactory, TInputProtocolFactory, TOutputProtocolFactory,
