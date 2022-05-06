@@ -61,7 +61,7 @@ tasks {
             "kotlin",
             "-out",
             outputDir.get().toString(),
-            project.rootDir.resolve("../../test/ThriftTest.thrift").absolutePath
+            layout.projectDirectory.file("src/test/resources/AnnotationTest.thrift").asFile.absolutePath
         )
         group = LifecycleBasePlugin.BUILD_GROUP
     }

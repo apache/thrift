@@ -19,6 +19,7 @@
 
 package org.apache.thrift
 
+import org.apache.thrift.kotlin.annotation.test.Person
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import org.apache.thrift.meta_data.FieldMetaData
@@ -33,5 +34,14 @@ internal class MetaDataTest {
         val typeField = map[Bonk._Fields.TYPE]!!
         assertEquals("type", typeField.fieldName)
         assertFalse(typeField.valueMetaData.isBinary)
+    }
+
+    @Test
+    internal fun testAnnotation() {
+        val personMetadata = FieldMetaData.getStructMetaDataMap(Person::class.java)
+        assertEquals(2, personMetadata.size)
+        val idField = personMetadata[Person._Fields.ID]!!
+        assertEquals("id", idField.fieldName)
+        assertEquals(mapOf(), idField.fieldAnnotations)
     }
 }

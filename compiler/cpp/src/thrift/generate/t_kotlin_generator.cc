@@ -153,6 +153,7 @@ private:
   void generate_struct_field_name_constants(std::ostream& out, t_struct* tstruct);
   void generate_struct_companion_object(std::ostream& out, t_struct* tstruct);
   void generate_field_value_meta_data(std::ostream& out, t_type* ttype);
+  void generate_metadata_for_field_annotations(std::ostream& out, t_field* tfield);
   void generate_struct_standard_scheme(std::ostream& out, t_struct* tstruct);
   void generate_struct_standard_scheme_read(std::ostream& out, t_struct* tstruct);
   void generate_struct_standard_scheme_write(std::ostream& out, t_struct* tstruct);
@@ -658,9 +659,11 @@ void t_kotlin_generator::generate_struct_companion_object(std::ostream& out, t_s
           }
           out << ',' << endl;
           generate_field_value_meta_data(indent(out), field->get_type());
+          out << ',' << endl;
+          generate_metadata_for_field_annotations(indent(out), field);
         }
-        indent_down();
         out << ")" << endl;
+        indent_down();
       }
     }
 
@@ -684,6 +687,21 @@ void t_kotlin_generator::generate_struct_companion_object(std::ostream& out, t_s
   }
   scope_down(out);
   out << endl;
+}
+
+void t_kotlin_generator::generate_metadata_for_field_annotations(std::ostream& out,
+                                                                 t_field* field) {
+  if (field->annotations_.size() == 0) {
+    out << "emptyMap()";
+  } else {
+    out << "mapOf(" << endl;
+    indent_up();
+    for (auto& annotation : field->annotations_) {
+      indent(out) << "\"" + annotation.first + "\" to \"" + annotation.second + "\"," << endl;
+    }
+    indent_down();
+    indent(out) << ")";
+  }
 }
 
 void t_kotlin_generator::generate_field_value_meta_data(std::ostream& out, t_type* type) {
