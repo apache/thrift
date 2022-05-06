@@ -21,9 +21,7 @@ package org.apache.thrift.transport.sasl;
 
 import org.apache.thrift.transport.TTransportException;
 
-/**
- * Exception for sasl negotiation errors.
- */
+/** Exception for sasl negotiation errors. */
 public class TSaslNegotiationException extends TTransportException {
 
   private final ErrorType error;
@@ -42,18 +40,16 @@ public class TSaslNegotiationException extends TTransportException {
     return error;
   }
 
-  /**
-   * @return Errory type plus the message.
-   */
+  /** @return Errory type plus the message. */
   public String getSummary() {
     return error.name() + ": " + getMessage();
   }
 
-  /**
-   * @return Summary and eventually the cause's message.
-   */
+  /** @return Summary and eventually the cause's message. */
   public String getDetails() {
-    return getCause() == null ? getSummary() : getSummary() + "\nReason: " + getCause().getMessage();
+    return getCause() == null
+        ? getSummary()
+        : getSummary() + "\nReason: " + getCause().getMessage();
   }
 
   public enum ErrorType {

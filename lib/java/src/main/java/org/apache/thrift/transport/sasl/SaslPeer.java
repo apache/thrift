@@ -21,9 +21,7 @@ package org.apache.thrift.transport.sasl;
 
 import org.apache.thrift.transport.TTransportException;
 
-/**
- * A peer in a sasl negotiation.
- */
+/** A peer in a sasl negotiation. */
 public interface SaslPeer {
 
   /**
@@ -35,9 +33,7 @@ public interface SaslPeer {
    */
   byte[] evaluate(byte[] negotiationMessage) throws TSaslNegotiationException;
 
-  /**
-   * @return true if authentication is done.
-   */
+  /** @return true if authentication is done. */
   boolean isAuthenticated();
 
   /**
@@ -93,8 +89,6 @@ public interface SaslPeer {
     return unwrap(data, 0, data.length);
   }
 
-  /**
-   * Close this peer and release resources.
-   */
+  /** Close this peer and release resources. */
   void dispose();
 }

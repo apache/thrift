@@ -18,22 +18,17 @@
  */
 package org.apache.thrift.transport;
 
-import org.apache.thrift.TConfiguration;
-
 import java.io.IOException;
 import java.io.RandomAccessFile;
+import org.apache.thrift.TConfiguration;
 
-
-/**
- * Basic file support for the TTransport interface
- */
+/** Basic file support for the TTransport interface */
 public final class TSimpleFileTransport extends TEndpointTransport {
 
   private RandomAccessFile file = null;
   private boolean readable;
   private boolean writable;
   private String path_;
-
 
   /**
    * Create a transport backed by a simple file
@@ -44,9 +39,8 @@ public final class TSimpleFileTransport extends TEndpointTransport {
    * @param openFile true to open the file on construction
    * @throws TTransportException if file open fails
    */
-  public TSimpleFileTransport(String path, boolean read,
-                              boolean write, boolean openFile)
-          throws TTransportException {
+  public TSimpleFileTransport(String path, boolean read, boolean write, boolean openFile)
+      throws TTransportException {
     this(new TConfiguration(), path, read, write, openFile);
   }
 
@@ -60,9 +54,9 @@ public final class TSimpleFileTransport extends TEndpointTransport {
    * @param openFile true to open the file on construction
    * @throws TTransportException if file open fails
    */
-  public TSimpleFileTransport(TConfiguration config, String path, boolean read,
-                              boolean write, boolean openFile)
-          throws TTransportException {
+  public TSimpleFileTransport(
+      TConfiguration config, String path, boolean read, boolean write, boolean openFile)
+      throws TTransportException {
     super(config);
     if (path.length() <= 0) {
       throw new TTransportException("No path specified");
@@ -79,22 +73,19 @@ public final class TSimpleFileTransport extends TEndpointTransport {
   }
 
   /**
-   * Create a transport backed by a simple file
-   * Implicitly opens file to conform to C++ behavior.
+   * Create a transport backed by a simple file Implicitly opens file to conform to C++ behavior.
    *
    * @param path the path to the file to open/create
    * @param read true to support read operations
    * @param write true to support write operations
    * @throws TTransportException if file open fails
    */
-  public TSimpleFileTransport(String path, boolean read, boolean write)
-          throws TTransportException {
+  public TSimpleFileTransport(String path, boolean read, boolean write) throws TTransportException {
     this(path, read, write, true);
   }
 
   /**
-   * Create a transport backed by a simple read only disk file (implicitly opens
-   * file)
+   * Create a transport backed by a simple read only disk file (implicitly opens file)
    *
    * @param path the path to the file to open/create
    * @throws TTransportException if file open fails
@@ -120,9 +111,9 @@ public final class TSimpleFileTransport extends TEndpointTransport {
    */
   @Override
   public void open() throws TTransportException {
-    if (file == null){
+    if (file == null) {
       try {
-        String access = "r";       //RandomAccessFile objects must be readable
+        String access = "r"; // RandomAccessFile objects must be readable
         if (writable) {
           access += "w";
         }
@@ -134,16 +125,14 @@ public final class TSimpleFileTransport extends TEndpointTransport {
     }
   }
 
-  /**
-   * Close file, subsequent read/write activity will throw exceptions
-   */
+  /** Close file, subsequent read/write activity will throw exceptions */
   @Override
   public void close() {
     if (file != null) {
       try {
         file.close();
       } catch (Exception e) {
-        //Nothing to do
+        // Nothing to do
       }
       file = null;
     }

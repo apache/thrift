@@ -21,10 +21,7 @@ package org.apache.thrift.transport;
 
 import org.apache.thrift.TException;
 
-/**
- * Transport exceptions.
- *
- */
+/** Transport exceptions. */
 public class TTransportException extends TException {
 
   private static final long serialVersionUID = 1L;
@@ -77,5 +74,4 @@ public class TTransportException extends TException {
   public int getType() {
     return type_;
   }
-
 }

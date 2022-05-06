@@ -22,7 +22,6 @@ package org.apache.thrift.protocol;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.Stack;
-
 import org.apache.thrift.TException;
 import org.apache.thrift.transport.TTransport;
 import org.apache.thrift.transport.TTransportException;
@@ -30,16 +29,12 @@ import org.apache.thrift.transport.TTransportException;
 /**
  * JSON protocol implementation for thrift.
  *
- * This protocol is write-only and produces a simple output format
- * suitable for parsing by scripting languages.  It should not be
- * confused with the full-featured TJSONProtocol.
- *
+ * <p>This protocol is write-only and produces a simple output format suitable for parsing by
+ * scripting languages. It should not be confused with the full-featured TJSONProtocol.
  */
 public class TSimpleJSONProtocol extends TProtocol {
 
-  /**
-   * Factory
-   */
+  /** Factory */
   public static class Factory implements TProtocolFactory {
     public TProtocol getProtocol(TTransport trans) {
       return new TSimpleJSONProtocol(trans);
@@ -67,10 +62,10 @@ public class TSimpleJSONProtocol extends TProtocol {
   protected class Context {
     protected void write() throws TException {}
 
-    /**
-     * Returns whether the current value is a key in a map
-     */
-    protected boolean isMapKey() { return  false; }
+    /** Returns whether the current value is a key in a map */
+    protected boolean isMapKey() {
+      return false;
+    }
   }
 
   protected class ListContext extends Context {
@@ -118,52 +113,39 @@ public class TSimpleJSONProtocol extends TProtocol {
 
   protected final Context BASE_CONTEXT = new Context();
 
-  /**
-   * Stack of nested contexts that we may be in.
-   */
+  /** Stack of nested contexts that we may be in. */
   protected Stack<Context> writeContextStack_ = new Stack<Context>();
 
-  /**
-   * Current context that we are in
-   */
+  /** Current context that we are in */
   protected Context writeContext_ = BASE_CONTEXT;
 
-  /**
-   * Push a new write context onto the stack.
-   */
+  /** Push a new write context onto the stack. */
   protected void pushWriteContext(Context c) {
     writeContextStack_.push(writeContext_);
     writeContext_ = c;
   }
 
-  /**
-   * Pop the last write context off the stack
-   */
+  /** Pop the last write context off the stack */
   protected void popWriteContext() {
     writeContext_ = writeContextStack_.pop();
   }
 
-  /**
-   * Reset the write context stack to its initial state.
-   */
+  /** Reset the write context stack to its initial state. */
   protected void resetWriteContext() {
     while (!writeContextStack_.isEmpty()) {
       popWriteContext();
     }
   }
 
-  /**
-   * Used to make sure that we are not encountering a map whose keys are containers
-   */
+  /** Used to make sure that we are not encountering a map whose keys are containers */
   protected void assertContextIsNotMapKey(String invalidKeyType) throws CollectionMapKeyException {
     if (writeContext_.isMapKey()) {
-      throw new CollectionMapKeyException("Cannot serialize a map with keys that are of type " + invalidKeyType);
+      throw new CollectionMapKeyException(
+          "Cannot serialize a map with keys that are of type " + invalidKeyType);
     }
   }
 
-  /**
-   * Constructor
-   */
+  /** Constructor */
   public TSimpleJSONProtocol(TTransport trans) {
     super(trans);
   }
@@ -256,7 +238,7 @@ public class TSimpleJSONProtocol extends TProtocol {
 
   @Override
   public void writeBool(boolean b) throws TException {
-    writeByte(b ? (byte)1 : (byte)0);
+    writeByte(b ? (byte) 1 : (byte) 0);
   }
 
   @Override
@@ -271,7 +253,7 @@ public class TSimpleJSONProtocol extends TProtocol {
 
   @Override
   public void writeI32(int i32) throws TException {
-    if(writeContext_.isMapKey()) {
+    if (writeContext_.isMapKey()) {
       writeString(Integer.toString(i32));
     } else {
       writeContext_.write();
@@ -286,7 +268,7 @@ public class TSimpleJSONProtocol extends TProtocol {
 
   @Override
   public void writeI64(long i64) throws TException {
-    if(writeContext_.isMapKey()) {
+    if (writeContext_.isMapKey()) {
       writeString(Long.toString(i64));
     } else {
       writeContext_.write();
@@ -296,7 +278,7 @@ public class TSimpleJSONProtocol extends TProtocol {
 
   @Override
   public void writeDouble(double dub) throws TException {
-    if(writeContext_.isMapKey()) {
+    if (writeContext_.isMapKey()) {
       writeString(Double.toString(dub));
     } else {
       writeContext_.write();
@@ -313,45 +295,45 @@ public class TSimpleJSONProtocol extends TProtocol {
     for (int i = 0; i < length; ++i) {
       char c = str.charAt(i);
       switch (c) {
-      case '"':
-      case '\\':
-        escape.append('\\');
-        escape.append(c);
-        break;
-      case '\b':
-        escape.append('\\');
-        escape.append('b');
-        break;
-      case '\f':
-        escape.append('\\');
-        escape.append('f');
-        break;
-      case '\n':
-        escape.append('\\');
-        escape.append('n');
-        break;
-      case '\r':
-        escape.append('\\');
-        escape.append('r');
-        break;
-      case '\t':
-        escape.append('\\');
-        escape.append('t');
-        break;
-      default:
-        // Control characters! According to JSON RFC u0020 (space)
-        if (c < ' ') {
-          String hex = Integer.toHexString(c);
+        case '"':
+        case '\\':
           escape.append('\\');
-          escape.append('u');
-          for (int j = 4; j > hex.length(); --j) {
-            escape.append('0');
-          }
-          escape.append(hex);
-        } else {
           escape.append(c);
-        }
-        break;
+          break;
+        case '\b':
+          escape.append('\\');
+          escape.append('b');
+          break;
+        case '\f':
+          escape.append('\\');
+          escape.append('f');
+          break;
+        case '\n':
+          escape.append('\\');
+          escape.append('n');
+          break;
+        case '\r':
+          escape.append('\\');
+          escape.append('r');
+          break;
+        case '\t':
+          escape.append('\\');
+          escape.append('t');
+          break;
+        default:
+          // Control characters! According to JSON RFC u0020 (space)
+          if (c < ' ') {
+            String hex = Integer.toHexString(c);
+            escape.append('\\');
+            escape.append('u');
+            for (int j = 4; j > hex.length(); --j) {
+              escape.append('0');
+            }
+            escape.append(hex);
+          } else {
+            escape.append(c);
+          }
+          break;
       }
     }
     escape.append(QUOTE);
@@ -361,19 +343,20 @@ public class TSimpleJSONProtocol extends TProtocol {
   @Override
   public void writeBinary(ByteBuffer bin) throws TException {
     // TODO(mcslee): Fix this
-    writeString(new String(bin.array(), bin.position() + bin.arrayOffset(),
-        bin.limit() - bin.position() - bin.arrayOffset(),
-        StandardCharsets.UTF_8));
+    writeString(
+        new String(
+            bin.array(),
+            bin.position() + bin.arrayOffset(),
+            bin.limit() - bin.position() - bin.arrayOffset(),
+            StandardCharsets.UTF_8));
   }
 
   /**
    * Reading methods.
    *
-   * simplejson is not meant to be read back into thrift
-   * - see http://wiki.apache.org/thrift/ThriftUsageJava
-   * - use JSON instead
+   * <p>simplejson is not meant to be read back into thrift - see
+   * http://wiki.apache.org/thrift/ThriftUsageJava - use JSON instead
    */
-
   @Override
   public TMessage readMessageBegin() throws TException {
     throw new TException("Not implemented");
@@ -381,7 +364,8 @@ public class TSimpleJSONProtocol extends TProtocol {
 
   @Override
   public void readMessageEnd() throws TException {
-    throw new TException("Not implemented");}
+    throw new TException("Not implemented");
+  }
 
   @Override
   public TStruct readStructBegin() throws TException {
@@ -390,7 +374,8 @@ public class TSimpleJSONProtocol extends TProtocol {
 
   @Override
   public void readStructEnd() throws TException {
-    throw new TException("Not implemented");}
+    throw new TException("Not implemented");
+  }
 
   @Override
   public TField readFieldBegin() throws TException {
@@ -399,7 +384,8 @@ public class TSimpleJSONProtocol extends TProtocol {
 
   @Override
   public void readFieldEnd() throws TException {
-    throw new TException("Not implemented");}
+    throw new TException("Not implemented");
+  }
 
   @Override
   public TMap readMapBegin() throws TException {
@@ -408,7 +394,8 @@ public class TSimpleJSONProtocol extends TProtocol {
 
   @Override
   public void readMapEnd() throws TException {
-    throw new TException("Not implemented");}
+    throw new TException("Not implemented");
+  }
 
   @Override
   public TList readListBegin() throws TException {
@@ -417,7 +404,8 @@ public class TSimpleJSONProtocol extends TProtocol {
 
   @Override
   public void readListEnd() throws TException {
-    throw new TException("Not implemented");}
+    throw new TException("Not implemented");
+  }
 
   @Override
   public TSet readSetBegin() throws TException {
@@ -426,7 +414,8 @@ public class TSimpleJSONProtocol extends TProtocol {
 
   @Override
   public void readSetEnd() throws TException {
-    throw new TException("Not implemented");}
+    throw new TException("Not implemented");
+  }
 
   @Override
   public boolean readBool() throws TException {
@@ -478,27 +467,37 @@ public class TSimpleJSONProtocol extends TProtocol {
     }
   }
 
-  /**
-   *
-   * Return the minimum number of bytes a type will consume on the wire
-   */
+  /** Return the minimum number of bytes a type will consume on the wire */
   public int getMinSerializedSize(byte type) throws TException {
-    switch (type)
-    {
-      case 0: return 0; // Stop
-      case 1: return 0; // Void
-      case 2: return 1; // Bool
-      case 3: return 1; // Byte
-      case 4: return 1; // Double
-      case 6: return 1; // I16
-      case 8: return 1; // I32
-      case 10: return 1;// I64
-      case 11: return 2;  // string length
-      case 12: return 2;  // empty struct
-      case 13: return 2;  // element count Map
-      case 14: return 2;  // element count Set
-      case 15: return 2;  // element count List
-      default: throw new TTransportException(TTransportException.UNKNOWN, "unrecognized type code");
+    switch (type) {
+      case 0:
+        return 0; // Stop
+      case 1:
+        return 0; // Void
+      case 2:
+        return 1; // Bool
+      case 3:
+        return 1; // Byte
+      case 4:
+        return 1; // Double
+      case 6:
+        return 1; // I16
+      case 8:
+        return 1; // I32
+      case 10:
+        return 1; // I64
+      case 11:
+        return 2; // string length
+      case 12:
+        return 2; // empty struct
+      case 13:
+        return 2; // element count Map
+      case 14:
+        return 2; // element count Set
+      case 15:
+        return 2; // element count List
+      default:
+        throw new TTransportException(TTransportException.UNKNOWN, "unrecognized type code");
     }
   }
 }

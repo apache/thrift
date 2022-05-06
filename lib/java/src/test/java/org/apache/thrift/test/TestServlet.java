@@ -24,29 +24,28 @@ import org.apache.thrift.protocol.TCompactProtocol;
 import org.apache.thrift.protocol.TProtocolFactory;
 import org.apache.thrift.server.ServerTestBase.TestHandler;
 import org.apache.thrift.server.TExtensibleServlet;
-
 import thrift.test.ThriftTest;
 
 @SuppressWarnings("serial")
 public class TestServlet extends TExtensibleServlet {
 
   @Override
-  protected TProtocolFactory getInProtocolFactory(){
-      TProtocolFactory tProtocolFactory = new TCompactProtocol.Factory();
-      return tProtocolFactory;
+  protected TProtocolFactory getInProtocolFactory() {
+    TProtocolFactory tProtocolFactory = new TCompactProtocol.Factory();
+    return tProtocolFactory;
   }
 
   @Override
-  protected TProtocolFactory getOutProtocolFactory(){
-      TProtocolFactory tProtocolFactory = new TCompactProtocol.Factory();
-      return tProtocolFactory;
+  protected TProtocolFactory getOutProtocolFactory() {
+    TProtocolFactory tProtocolFactory = new TCompactProtocol.Factory();
+    return tProtocolFactory;
   }
 
   @SuppressWarnings({"rawtypes", "unchecked"})
   @Override
-  protected TProcessor getProcessor(){
-      TestHandler testHandler = new TestHandler();
-      ThriftTest.Processor testProcessor = new ThriftTest.Processor(testHandler);
-      return testProcessor;
+  protected TProcessor getProcessor() {
+    TestHandler testHandler = new TestHandler();
+    ThriftTest.Processor testProcessor = new ThriftTest.Processor(testHandler);
+    return testProcessor;
   }
 }

@@ -25,15 +25,12 @@ import org.apache.thrift.protocol.TProtocolUtil;
 import org.apache.thrift.protocol.TStruct;
 import org.apache.thrift.protocol.TType;
 
-/**
- * Application level exception
- *
- */
+/** Application level exception */
 public class TApplicationException extends TException implements TSerializable {
 
   private static final TStruct TAPPLICATION_EXCEPTION_STRUCT = new TStruct("TApplicationException");
-  private static final TField MESSAGE_FIELD = new TField("message", TType.STRING, (short)1);
-  private static final TField TYPE_FIELD = new TField("type", TType.I32, (short)2);
+  private static final TField MESSAGE_FIELD = new TField("message", TType.STRING, (short) 1);
+  private static final TField TYPE_FIELD = new TField("type", TType.I32, (short) 2);
 
   private static final long serialVersionUID = 1L;
 
@@ -78,14 +75,12 @@ public class TApplicationException extends TException implements TSerializable {
   public String getMessage() {
     if (message_ == null) {
       return super.getMessage();
-    }
-    else {
+    } else {
       return message_;
     }
   }
 
-  public void read(TProtocol iprot) throws TException
-  {
+  public void read(TProtocol iprot) throws TException {
     TField field;
     iprot.readStructBegin();
 
@@ -130,15 +125,13 @@ public class TApplicationException extends TException implements TSerializable {
    * @return an instance of TApplicationException read from iprot.
    * @throws TException if there is an error reading from iprot.
    */
-  public static TApplicationException readFrom(TProtocol iprot) throws TException
-  {
+  public static TApplicationException readFrom(TProtocol iprot) throws TException {
     TApplicationException result = new TApplicationException();
     result.read(iprot);
     return result;
   }
 
-  public void write(TProtocol oprot) throws TException
-  {
+  public void write(TProtocol oprot) throws TException {
     oprot.writeStructBegin(TAPPLICATION_EXCEPTION_STRUCT);
     if (getMessage() != null) {
       oprot.writeFieldBegin(MESSAGE_FIELD);

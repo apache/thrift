@@ -18,16 +18,18 @@
 
 package org.apache.thrift.transport;
 
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
+import org.junit.jupiter.api.Test;
 
-import junit.framework.TestCase;
-
-public class TestTIOStreamTransport extends TestCase {
-
+public class TestTIOStreamTransport {
   // THRIFT-5022
+  @Test
   public void testOpenClose_2streams() throws TTransportException {
     byte[] dummy = {20}; // So the input stream isn't EOF immediately.
     InputStream input = new ByteArrayInputStream(dummy);
@@ -37,6 +39,7 @@ public class TestTIOStreamTransport extends TestCase {
   }
 
   // THRIFT-5022
+  @Test
   public void testOpenClose_1input() throws TTransportException {
     byte[] dummy = {20};
     InputStream input = new ByteArrayInputStream(dummy);
@@ -45,6 +48,7 @@ public class TestTIOStreamTransport extends TestCase {
   }
 
   // THRIFT-5022
+  @Test
   public void testIOpenClose_1output() throws TTransportException {
     OutputStream output = new ByteArrayOutputStream();
     TTransport transport = new TIOStreamTransport(output);

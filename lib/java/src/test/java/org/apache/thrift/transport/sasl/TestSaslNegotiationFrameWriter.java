@@ -19,13 +19,13 @@
 
 package org.apache.thrift.transport.sasl;
 
-import java.nio.ByteBuffer;
-
-import org.apache.thrift.EncodingUtils;
-import org.junit.Assert;
-import org.junit.Test;
-
 import static org.apache.thrift.transport.sasl.SaslNegotiationFrameWriter.HEADER_BYTES;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+
+import java.nio.ByteBuffer;
+import org.apache.thrift.EncodingUtils;
+import org.junit.jupiter.api.Test;
 
 public class TestSaslNegotiationFrameWriter {
 
@@ -39,18 +39,21 @@ public class TestSaslNegotiationFrameWriter {
     expectedBytes[0] = NegotiationStatus.OK.getValue();
     EncodingUtils.encodeBigEndian(PAYLOAD.length, expectedBytes, 1);
     System.arraycopy(PAYLOAD, 0, expectedBytes, HEADER_BYTES, PAYLOAD.length);
-    Assert.assertEquals(ByteBuffer.wrap(expectedBytes), frameWriter.frameBytes);
+    assertEquals(ByteBuffer.wrap(expectedBytes), frameWriter.frameBytes);
   }
 
-  @Test(expected = IllegalArgumentException.class)
+  @Test
   public void testWithInvalidHeaderLength() {
     SaslNegotiationFrameWriter frameWriter = new SaslNegotiationFrameWriter();
-    frameWriter.withHeaderAndPayload(new byte[5], 0, 2, PAYLOAD, 0, 1);
+    assertThrows(
+        IllegalArgumentException.class,
+        () -> frameWriter.withHeaderAndPayload(new byte[5], 0, 2, PAYLOAD, 0, 1));
   }
 
-  @Test(expected = UnsupportedOperationException.class)
+  @Test
   public void testWithOnlyPayload() {
     SaslNegotiationFrameWriter frameWriter = new SaslNegotiationFrameWriter();
-    frameWriter.withOnlyPayload(new byte[0]);
+    assertThrows(
+        UnsupportedOperationException.class, () -> frameWriter.withOnlyPayload(new byte[0]));
   }
 }
