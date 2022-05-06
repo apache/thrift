@@ -24,10 +24,11 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.apache.thrift.meta_data.FieldMetaData;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import thrift.test.OneOfEachBeans;
 import thrift.test.annotations.OneOfEachBeansWithAnnotations;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class TestAnnotationMetadata {
 
@@ -36,11 +37,11 @@ public class TestAnnotationMetadata {
         Map<? extends TFieldIdEnum, FieldMetaData> structMetaDataMap = FieldMetaData.getStructMetaDataMap(OneOfEachBeans.class);
         {
             Map<String, String> metadata = structMetaDataMap.get(OneOfEachBeans._Fields.I16_LIST).getFieldAnnotations();
-            Assert.assertEquals(Collections.emptyMap(), metadata);
+            assertEquals(Collections.emptyMap(), metadata);
         }
         {
             Map<String, String> metadata = structMetaDataMap.get(OneOfEachBeans._Fields.A_BITE).getFieldAnnotations();
-            Assert.assertEquals(Collections.emptyMap(), metadata);
+            assertEquals(Collections.emptyMap(), metadata);
         }
     }
 
@@ -49,13 +50,13 @@ public class TestAnnotationMetadata {
         Map<? extends TFieldIdEnum, FieldMetaData> structMetaDataMap = FieldMetaData.getStructMetaDataMap(OneOfEachBeansWithAnnotations.class);
         {
             Map<String, String> metadata = structMetaDataMap.get(OneOfEachBeansWithAnnotations._Fields.I16_LIST).getFieldAnnotations();
-            Assert.assertEquals(Collections.emptyMap(), metadata);
+            assertEquals(Collections.emptyMap(), metadata);
         }
         {
             Map<String, String> metadata = structMetaDataMap.get(OneOfEachBeansWithAnnotations._Fields.A_BITE).getFieldAnnotations();
             Map<String, String> expected = new HashMap<>();
             expected.put("compression", "false");
-            Assert.assertEquals(expected, metadata);
+            assertEquals(expected, metadata);
         }
     }
 }
