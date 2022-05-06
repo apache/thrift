@@ -19,9 +19,14 @@
 
 package org.apache.thrift.meta_data;
 
+import java.util.AbstractMap;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.apache.thrift.TBase;
 import org.apache.thrift.TFieldIdEnum;
@@ -42,18 +47,28 @@ public class FieldMetaData implements java.io.Serializable {
   public final String fieldName;
   public final byte requirementType;
   public final FieldValueMetaData valueMetaData;
-  private static final Map<Class<? extends TBase>, Map<? extends TFieldIdEnum, FieldMetaData>> structMap;
-  
-  static {
-    structMap = new ConcurrentHashMap<Class<? extends TBase>, Map<? extends TFieldIdEnum, FieldMetaData>>();
-  }
-  
+  private final Map<String, String> fieldAnnotations;
+  private static final Map<Class<? extends TBase>, Map<? extends TFieldIdEnum, FieldMetaData>> structMap = new ConcurrentHashMap<>();
+
   public FieldMetaData(String name, byte req, FieldValueMetaData vMetaData){
-    this.fieldName = name;
-    this.requirementType = req;
-    this.valueMetaData = vMetaData;
+    this(name, req, vMetaData, Collections.emptyMap());
   }
-  
+
+  public FieldMetaData(String fieldName, byte requirementType, FieldValueMetaData valueMetaData, Map<String, String> fieldAnnotations) {
+    this.fieldName = fieldName;
+    this.requirementType = requirementType;
+    this.valueMetaData = valueMetaData;
+    this.fieldAnnotations = fieldAnnotations;
+  }
+
+  /**
+   * @return an unmodifiable view of the annotations for this field, empty if no annotations present or code gen param
+   * is not turned on
+   */
+  public Map<String, String> getFieldAnnotations() {
+    return Collections.unmodifiableMap(fieldAnnotations);
+  }
+
   public static void addStructMetaDataMap(Class<? extends TBase> sClass, Map<? extends TFieldIdEnum, FieldMetaData> map){
     structMap.put(sClass, map);
   }

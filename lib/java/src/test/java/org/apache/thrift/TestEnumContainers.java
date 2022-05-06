@@ -19,7 +19,7 @@
 
 package org.apache.thrift;
 
-import junit.framework.TestCase;
+import org.junit.jupiter.api.Test;
 import thrift.test.enumcontainers.EnumContainersTestConstants;
 import thrift.test.enumcontainers.GodBean;
 import thrift.test.enumcontainers.GreekGodGoddess;
@@ -29,8 +29,14 @@ import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
 
-public class TestEnumContainers extends TestCase {
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotSame;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
+public class TestEnumContainers  {
+
+    @Test
     public void testEnumContainers() throws Exception {
         final GodBean b1 = new GodBean();
         b1.addToGoddess(GreekGodGoddess.HERA);
@@ -51,11 +57,11 @@ public class TestEnumContainers extends TestCase {
             deserializer.deserialize(b3, bytes);
         }
 
-        assertTrue(b1.getGoddess() != b2.getGoddess());
-        assertTrue(b1.getPower() != b2.getPower());
+        assertNotSame(b1.getGoddess(), b2.getGoddess());
+        assertNotSame(b1.getPower(), b2.getPower());
 
-        assertTrue(b1.getGoddess() != b3.getGoddess());
-        assertTrue(b1.getPower() != b3.getPower());
+        assertNotSame(b1.getGoddess(), b3.getGoddess());
+        assertNotSame(b1.getPower(), b3.getPower());
 
         for (GodBean each : new GodBean[]{b1, b2, b3}) {
             assertTrue(each.getGoddess().contains(GreekGodGoddess.HERA));
@@ -71,6 +77,7 @@ public class TestEnumContainers extends TestCase {
         }
     }
 
+    @Test
     public void testEnumConstants() {
         assertEquals("lightning bolt", EnumContainersTestConstants.ATTRIBUTES.get(GreekGodGoddess.ZEUS));
         assertTrue(EnumContainersTestConstants.ATTRIBUTES instanceof EnumMap);

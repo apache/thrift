@@ -1,13 +1,16 @@
 package org.apache.thrift.async;
 
-import junit.framework.TestCase;
 
 import org.apache.thrift.TException;
-
+import org.junit.jupiter.api.Test;
 import thrift.test.Srv;
 import thrift.test.Srv.AsyncClient;
 
-public class TestTAsyncClient extends TestCase {
+import static org.junit.jupiter.api.Assertions.assertThrows;
+
+
+public class TestTAsyncClient {
+  @Test
   public void testRaisesExceptionWhenUsedConcurrently() throws Exception {
     TAsyncClientManager mockClientManager = new TAsyncClientManager() {
       @Override
@@ -18,11 +21,6 @@ public class TestTAsyncClient extends TestCase {
 
     Srv.AsyncClient c = new AsyncClient(null, mockClientManager, null);
     c.Janky(0, null);
-    try {
-      c.checkReady();
-      fail("should have hit an exception");
-    } catch (Exception e) {
-      // awesome
-    }
+    assertThrows(Exception.class, c::checkReady);
   }
 }
