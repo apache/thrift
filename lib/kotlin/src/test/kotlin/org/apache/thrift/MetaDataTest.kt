@@ -20,11 +20,11 @@
 package org.apache.thrift
 
 import org.apache.thrift.kotlin.annotation.test.Person
-import kotlin.test.assertEquals
-import kotlin.test.assertFalse
 import org.apache.thrift.meta_data.FieldMetaData
 import org.junit.jupiter.api.Test
 import thrift.test.Bonk
+import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 
 internal class MetaDataTest {
     @Test
@@ -42,6 +42,11 @@ internal class MetaDataTest {
         assertEquals(3, personMetadata.size)
         val idField = personMetadata[Person._Fields.ID]!!
         assertEquals("id", idField.fieldName)
-        assertEquals(mapOf(), idField.fieldAnnotations)
+        assertEquals(
+            mapOf(
+                "max" to "100000",
+                "min" to "1",
+            ), idField.fieldAnnotations
+        )
     }
 }
