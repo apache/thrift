@@ -143,7 +143,7 @@ fun main(args: Array<String>) {
         var zlib = false
         var transportType = "buffered"
         var protocolType = "binary"
-//        var serverType = "thread-pool"
+        //        var serverType = "thread-pool"
         var serverType = "nonblocking"
         val domainSocket = ""
         var stringLimit: Long = -1
@@ -308,11 +308,12 @@ fun main(args: Array<String>) {
             // Blocking servers
 
             // SSL socket
-            val tServerSocket: TServerSocket = if (ssl) {
-                TSSLTransportFactory.getServerSocket(port, 0)
-            } else {
-                TServerSocket(ServerSocketTransportArgs().port(port))
-            }
+            val tServerSocket: TServerSocket =
+                if (ssl) {
+                    TSSLTransportFactory.getServerSocket(port, 0)
+                } else {
+                    TServerSocket(ServerSocketTransportArgs().port(port))
+                }
             if (serverType == "simple") {
                 // Simple Server
                 val tServerArgs = TServer.Args(tServerSocket)
