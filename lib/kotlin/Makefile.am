@@ -22,7 +22,7 @@ export CLASSPATH
 all-local:
 	$(GRADLE) $(GRADLE_OPTS) assemble \
 		-Pthrift.version=$(PACKAGE_VERSION) \
-    -Pthrift.compiler=$(THRIFT) \
+		-Pthrift.compiler=$(THRIFT) \
 		--console=plain
 
 clean-local:
