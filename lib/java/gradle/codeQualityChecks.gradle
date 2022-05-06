@@ -46,6 +46,9 @@ tasks.withType(Pmd) {
 
 spotless {
     java {
+        target project.fileTree(project.rootDir) {
+          include 'src/**/*.java'
+        }
         googleJavaFormat()
     }
 }
