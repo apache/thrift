@@ -19,10 +19,11 @@
 
 package org.apache.thrift.transport;
 
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.nio.channels.ServerSocketChannel;
+
+import static org.junit.jupiter.api.Assertions.assertFalse;
 
 public class TestNonblockingServerSocket {
 
@@ -30,7 +31,7 @@ public class TestNonblockingServerSocket {
   public void testSocketChannelBlockingMode() throws TTransportException {
     try (TNonblockingServerSocket nonblockingServer = new TNonblockingServerSocket(0)){
       ServerSocketChannel socketChannel = nonblockingServer.getServerSocketChannel();
-      Assert.assertFalse("Socket channel should be nonblocking", socketChannel.isBlocking());
+      assertFalse(socketChannel.isBlocking(), "Socket channel should be nonblocking");
     }
   }
 }

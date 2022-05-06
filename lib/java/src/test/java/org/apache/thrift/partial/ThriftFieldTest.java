@@ -19,17 +19,18 @@
 
 package org.apache.thrift.partial;
 
-import static org.junit.Assert.*;
-
-import org.apache.thrift.partial.ExceptionAsserts;
-
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNotSame;
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+
 
 public class ThriftFieldTest {
 
@@ -40,29 +41,29 @@ public class ThriftFieldTest {
 
     // Should not throw.
     test = new ThriftField("foo");
-    test = new ThriftField("foo", Arrays.asList(new ThriftField("bar")));
-    testFields = ThriftField.fromNames(Arrays.asList("foo"));
+    test = new ThriftField("foo", Collections.singletonList(new ThriftField("bar")));
+    testFields = ThriftField.fromNames(Collections.singletonList("foo"));
 
     // Verify it throws.
-    ExceptionAsserts.assertThrows(
-        IllegalArgumentException.class,
-        "'name' must not be null",
-        () -> new ThriftField(null, Collections.emptyList()));
+    assertThrows(
+            IllegalArgumentException.class,
+            () -> new ThriftField(null, Collections.emptyList()),
+            "'name' must not be null");
 
-    ExceptionAsserts.assertThrows(
+    assertThrows(
         IllegalArgumentException.class,
-        "'fields' must not be null",
-        () -> new ThriftField("foo", null));
+        () -> new ThriftField("foo", null),
+        "'fields' must not be null");
 
-    ExceptionAsserts.assertThrows(
+    assertThrows(
         IllegalArgumentException.class,
-        "'fieldNames' must not be null",
-        () -> ThriftField.fromNames(null));
+        () -> ThriftField.fromNames(null),
+        "'fieldNames' must not be null");
 
-    ExceptionAsserts.assertThrows(
+    assertThrows(
         IllegalArgumentException.class,
-        "'fieldNames' must have at least one element",
-        () -> ThriftField.fromNames(Collections.emptyList()));
+        () -> ThriftField.fromNames(Collections.emptyList()),
+        "'fieldNames' must have at least one element");
   }
 
   @Test
@@ -111,6 +112,7 @@ public class ThriftFieldTest {
     assertEquals(0, f321.fields.size());
     assertEquals(0, f322.fields.size());
   }
+
 
   @Test
   public void testEquality() {

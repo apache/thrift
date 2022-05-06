@@ -18,34 +18,35 @@
  */
 package org.apache.thrift;
 
-import java.nio.ByteBuffer;
-
-import junit.framework.TestCase;
-
 import org.apache.thrift.protocol.TBinaryProtocol;
 import org.apache.thrift.protocol.TCompactProtocol;
 import org.apache.thrift.protocol.TJSONProtocol;
 import org.apache.thrift.protocol.TProtocolFactory;
-
+import org.junit.jupiter.api.Test;
 import thrift.test.Backwards;
 import thrift.test.OneOfEach;
 import thrift.test.PrimitiveThenStruct;
 import thrift.test.StructWithAUnion;
 import thrift.test.TestUnion;
 
-public class TestTDeserializer extends TestCase {
+import java.nio.ByteBuffer;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
+public class TestTDeserializer  {
 
   private static final TProtocolFactory[] PROTOCOLS = new TProtocolFactory[] {
-    new TBinaryProtocol.Factory(), 
-    new TCompactProtocol.Factory(), 
+    new TBinaryProtocol.Factory(),
+    new TCompactProtocol.Factory(),
     new TJSONProtocol.Factory()
   };
 
+  @Test
   public void testPartialDeserialize() throws Exception {
     //Root:StructWithAUnion
     //  1:Union
     //    1.3:OneOfEach
-    OneOfEach level3OneOfEach = Fixtures.oneOfEach;
+    OneOfEach level3OneOfEach = Fixtures.getOneOfEach();
     TestUnion level2TestUnion = new TestUnion(TestUnion._Fields.STRUCT_FIELD, level3OneOfEach);
     StructWithAUnion level1SWU = new StructWithAUnion(level2TestUnion);
 
@@ -108,15 +109,15 @@ public class TestTDeserializer extends TestCase {
     }
   }
 
-  public static void testPartialDeserialize(TProtocolFactory protocolFactory, TBase input, TBase output, TBase expected, TFieldIdEnum fieldIdPathFirst, TFieldIdEnum ... fieldIdPathRest) throws TException {
+  private void testPartialDeserialize(TProtocolFactory protocolFactory, TBase input, TBase output, TBase expected, TFieldIdEnum fieldIdPathFirst, TFieldIdEnum ... fieldIdPathRest) throws TException {
     byte[] record = serialize(input, protocolFactory);
     TDeserializer deserializer = new TDeserializer(protocolFactory);
     for (int i = 0; i < 2; i++) {
       TBase outputCopy = output.deepCopy();
       deserializer.partialDeserialize(outputCopy, record, fieldIdPathFirst, fieldIdPathRest);
-      assertEquals("on attempt " + i + ", with " + protocolFactory.toString() 
-          + ", expected " + expected + " but got " + outputCopy,
-          expected, outputCopy);
+      assertEquals(expected,
+              outputCopy, "on attempt " + i + ", with " + protocolFactory
+                + ", expected " + expected + " but got " + outputCopy);
     }
   }
 

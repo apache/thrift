@@ -311,8 +311,6 @@ void t_netstd_generator::pragmas_and_directives(ostream& out)
 {
     if( use_net6_features) {
       out << "#nullable enable                 // requires C# 8.0" << endl;
-    } else {
-      out << "#nullable disable                // suppress C# 8.0 nullable contexts (we still support earlier versions)" << endl;
     }
 
     // this one must be first

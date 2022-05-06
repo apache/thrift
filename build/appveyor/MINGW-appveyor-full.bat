@@ -83,7 +83,7 @@ SET PACKAGES=^
 
 :: Upgrade things
 %BASH% -lc "pacman --noconfirm -Syu %IGNORE%" || EXIT /B
-%BASH% -lc "pacman --noconfirm -Su %IGNORE%" || EXIT /B
+%BASH% -lc "pacman --noconfirm -Syu %IGNORE%" || EXIT /B
 %BASH% -lc "pacman --noconfirm --needed -S %PACKAGES%" || EXIT /B
 
 

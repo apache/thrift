@@ -19,25 +19,29 @@
 
 package org.apache.thrift;
 
+import org.apache.thrift.protocol.TBinaryProtocol;
+import org.junit.jupiter.api.Test;
+import thrift.test.Reuse;
+
 import java.util.HashSet;
 
-import org.apache.thrift.protocol.TBinaryProtocol;
-
-import thrift.test.Reuse;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertSame;
 
 // Tests reusing objects for deserialization.
 //
 public class TestReuse extends TestStruct {
 
+  @Test
   public void testReuseObject() throws Exception {
     TSerializer   binarySerializer   = new   TSerializer(new TBinaryProtocol.Factory());
     TDeserializer binaryDeserializer = new TDeserializer(new TBinaryProtocol.Factory());
 
     Reuse ru1 = new Reuse();
-    HashSet<String> hs1 = new HashSet<String>();
+    HashSet<String> hs1 = new HashSet<>();
     byte[] serBytes;
-    String st1 = new String("string1");
-    String st2 = new String("string2");
+    String st1 = "string1";
+    String st2 = "string2";
 
     ru1.setVal1(11);
     ru1.setVal2(hs1);
@@ -50,8 +54,8 @@ public class TestReuse extends TestStruct {
 
     binaryDeserializer.deserialize(ru1, serBytes);
 
-    assertTrue( ru1.getVal2() == hs1 );
-    assertTrue( hs1.size() == 2 );
+    assertSame(hs1, ru1.getVal2());
+    assertEquals(2, hs1.size());
   }
 
 }

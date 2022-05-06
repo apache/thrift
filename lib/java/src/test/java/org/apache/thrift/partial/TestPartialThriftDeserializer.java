@@ -1,49 +1,48 @@
 /*
  * Licensed to the Apache Software Foundation (ASF) under one
- * or more contributor license agreements. See the NOTICE file
+ * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
- * regarding copyright ownership. The ASF licenses this file
+ * regarding copyright ownership.  The ASF licenses this file
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
- * with the License. You may obtain a copy of the License at
+ * with the License.  You may obtain a copy of the License at
  *
  *   http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing,
  * software distributed under the License is distributed on an
  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
- * KIND, either express or implied. See the License for the
+ * KIND, either express or implied.  See the License for the
  * specific language governing permissions and limitations
  * under the License.
  */
 
 package org.apache.thrift.partial;
 
-import static org.junit.Assert.*;
-
-import org.apache.thrift.partial.TestStruct;
-import org.apache.thrift.partial.ThriftField;
-import org.apache.thrift.partial.TstEnum;
-import org.apache.thrift.partial.ExceptionAsserts;
-
-import org.apache.thrift.TBase;
 import org.apache.thrift.TDeserializer;
 import org.apache.thrift.TException;
-import org.apache.thrift.TSerializer;
 import org.apache.thrift.protocol.TBinaryProtocol;
 import org.apache.thrift.protocol.TCompactProtocol;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class TestPartialThriftDeserializer {
 
@@ -59,24 +58,24 @@ public class TestPartialThriftDeserializer {
   @Test
   public void testArgChecks() throws TException {
     // Should not throw.
-    List<String> fieldNames = Arrays.asList("i32Field");
+    List<String> fieldNames = Collections.singletonList("i32Field");
     new TDeserializer(TestStruct.class, fieldNames, binaryProtocolFactory);
 
     // Verify it throws correctly.
-    ExceptionAsserts.assertThrows(
+    assertThrows(
         IllegalArgumentException.class,
-        "'thriftClass' must not be null",
-        () -> new TDeserializer(null, fieldNames, binaryProtocolFactory));
+        () -> new TDeserializer(null, fieldNames, binaryProtocolFactory),
+        "'thriftClass' must not be null");
 
-    ExceptionAsserts.assertThrows(
+    assertThrows(
         IllegalArgumentException.class,
-        "'fieldNames' must not be null",
-        () -> new TDeserializer(TestStruct.class, null, binaryProtocolFactory));
+        () -> new TDeserializer(TestStruct.class, null, binaryProtocolFactory),
+        "'fieldNames' must not be null");
 
-    ExceptionAsserts.assertThrows(
+    assertThrows(
         IllegalArgumentException.class,
-        "'processor' must not be null",
-        () -> new TDeserializer(TestStruct.class, fieldNames, null, binaryProtocolFactory));
+        () -> new TDeserializer(TestStruct.class, fieldNames, null, binaryProtocolFactory),
+        "'processor' must not be null");
   }
 
   /**
@@ -119,19 +118,15 @@ public class TestPartialThriftDeserializer {
     StringBuilder sb = new StringBuilder();
     TestStruct ts2 = (TestStruct) partialBinaryDeserializer.partialDeserializeObject(bytesBinary);
     validatePartialSimpleField(ts1, ts2);
-    if (!comparer.areEqual(ts1, ts2, sb)) {
-      fail(sb.toString());
-    }
+    assertTrue(comparer.areEqual(ts1, ts2, sb), sb::toString);
 
     ts2 = (TestStruct) partialCompactDeserializer.partialDeserializeObject(bytesCompact);
     validatePartialSimpleField(ts1, ts2);
-    if (!comparer.areEqual(ts1, ts2, sb)) {
-      fail(sb.toString());
-    }
+    assertTrue(comparer.areEqual(ts1, ts2, sb), sb::toString);
   }
 
   private void validatePartialSimpleField(TestStruct ts1, TestStruct ts2) {
-    assertTrue(ts2.toString(), ts2.isSetI32Field());
+    assertTrue(ts2.isSetI32Field(), ts2.toString());
     assertEquals(ts1.getI32Field(), ts2.getI32Field());
     assertFalse(ts2.isSetI16Field());
   }
@@ -211,21 +206,17 @@ public class TestPartialThriftDeserializer {
 
     TestStruct ts2 = (TestStruct) partialBinaryDeserializer.partialDeserializeObject(bytesBinary);
     validatePartialComplex(ts1, ts2, id, numItems);
-    if (!comparer.areEqual(ts1, ts2, sb)) {
-      fail(sb.toString());
-    }
+    assertTrue(comparer.areEqual(ts1, ts2, sb), sb::toString);
 
     ts2 = (TestStruct) partialCompactDeserializer.partialDeserializeObject(bytesCompact);
     validatePartialComplex(ts1, ts2, id, numItems);
-    if (!comparer.areEqual(ts1, ts2, sb)) {
-      fail(sb.toString());
-    }
+    assertTrue(comparer.areEqual(ts1, ts2, sb), sb::toString);
   }
 
   private void validatePartialComplex(TestStruct ts1, TestStruct ts2, int id, int numItems) {
 
     // Validate primitive fields.
-    assertTrue(ts2.toString(), ts2.isSetByteField());
+    assertTrue(ts2.isSetByteField(), ts2.toString());
     assertEquals(ts1.getByteField(), ts2.getByteField());
 
     assertTrue(ts2.isSetI16Field());
@@ -378,7 +369,7 @@ public class TestPartialThriftDeserializer {
 
     for (int i = 0; i < numItems; i++) {
       ByteBuffer bb = ByteBuffer.wrap(testData.BYTES);
-      assertTrue(bb.compareTo(list.get(i)) == 0);
+      assertEquals(0, bb.compareTo(list.get(i)));
     }
   }
 
