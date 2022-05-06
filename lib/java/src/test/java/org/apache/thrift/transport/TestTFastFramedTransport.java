@@ -21,7 +21,7 @@ package org.apache.thrift.transport;
 import org.apache.thrift.transport.layered.TFastFramedTransport;
 
 public class TestTFastFramedTransport extends TestTFramedTransport {
-  protected final static int INITIAL_CAPACITY = 50;
+  protected static final int INITIAL_CAPACITY = 50;
 
   @Override
   protected TTransport getTransport(TTransport underlying) throws TTransportException {
@@ -29,7 +29,8 @@ public class TestTFastFramedTransport extends TestTFramedTransport {
   }
 
   @Override
-  protected TTransport getTransport(TTransport underlying, int maxLength) throws TTransportException {
+  protected TTransport getTransport(TTransport underlying, int maxLength)
+      throws TTransportException {
     return new TFastFramedTransport(underlying, INITIAL_CAPACITY, maxLength);
   }
 }

@@ -28,12 +28,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-/**
- * Helpers for creating test data related to partial deserialization.
- */
+/** Helpers for creating test data related to partial deserialization. */
 public class PartialThriftTestData {
 
-  public final byte[] BYTES = new byte[] { 1, 2, 3 };
+  public final byte[] BYTES = new byte[] {1, 2, 3};
 
   public SmallStruct createSmallStruct(int id) {
     return new SmallStruct()
@@ -48,16 +46,17 @@ public class PartialThriftTestData {
 
   public TestStruct createTestStruct(int id, int numItems) {
 
-    TestStruct ts = new TestStruct()
-        .setByteField((byte) id)
-        .setI16Field((short) id)
-        .setI32Field(id)
-        .setI64Field(id)
-        .setDoubleField(id)
-        .setStringField(Integer.toString(id))
-        .setEnumField(TstEnum.E_ONE)
-        .setBinaryField(BYTES)
-        .setStructField(createSmallStruct(id));
+    TestStruct ts =
+        new TestStruct()
+            .setByteField((byte) id)
+            .setI16Field((short) id)
+            .setI32Field(id)
+            .setI64Field(id)
+            .setDoubleField(id)
+            .setStringField(Integer.toString(id))
+            .setEnumField(TstEnum.E_ONE)
+            .setBinaryField(BYTES)
+            .setStructField(createSmallStruct(id));
 
     initListFields(ts, id, numItems);
     initSetFields(ts, id, numItems);
@@ -85,7 +84,7 @@ public class PartialThriftTestData {
       byteList.add((byte) i);
       i16List.add((short) i);
       i32List.add(i);
-      i64List.add((long)i);
+      i64List.add((long) i);
       doubleList.add((double) i);
       stringList.add(Integer.toString(i));
       enumList.add(TstEnum.E_ONE);
@@ -141,7 +140,7 @@ public class PartialThriftTestData {
       byteSet.add((byte) i);
       i16Set.add((short) i);
       i32Set.add(i);
-      i64Set.add((long)i);
+      i64Set.add((long) i);
       doubleSet.add((double) i);
       stringSet.add(Integer.toString(i));
       enumSet.add(TstEnum.E_ONE);
@@ -234,78 +233,76 @@ public class PartialThriftTestData {
   }
 
   public List<String> allFieldsOfTestStruct() {
-      return new ArrayList<>(
-          Arrays.asList(
-              "byteField",
-              "i16Field",
-              "i32Field",
-              "i64Field",
-              "doubleField",
-              "stringField",
-              "structField.byteField",
-              "structField.i16Field",
-              "structField.i32Field",
-              "structField.i64Field",
-              "structField.doubleField",
-              "structField.stringField",
-              "structField.enumField",
-              "enumField",
-              "binaryField",
-              "byteList",
-              "i16List",
-              "i32List",
-              "i64List",
-              "doubleList",
-              "stringList",
-              "enumList",
-              "listList",
-              "setList",
-              "mapList",
-              "structList.byteField",
-              "structList.i16Field",
-              "structList.i32Field",
-              "structList.i64Field",
-              "structList.doubleField",
-              "structList.stringField",
-              "structList.enumField",
-              "binaryList",
-              "byteSet",
-              "i16Set",
-              "i32Set",
-              "i64Set",
-              "doubleSet",
-              "stringSet",
-              "enumSet",
-              "listSet",
-              "setSet",
-              "mapSet",
-              "structSet.byteField",
-              "structSet.i16Field",
-              "structSet.i32Field",
-              "structSet.i64Field",
-              "structSet.doubleField",
-              "structSet.stringField",
-              "structSet.enumField",
-              "binarySet",
-              "byteMap",
-              "i16Map",
-              "i32Map",
-              "i64Map",
-              "doubleMap",
-              "stringMap",
-              "enumMap",
-              "listMap",
-              "setMap",
-              "mapMap",
-              "structMap.byteField",
-              "structMap.i16Field",
-              "structMap.i32Field",
-              "structMap.i64Field",
-              "structMap.doubleField",
-              "structMap.stringField",
-              "structMap.enumField",
-              "binaryMap"
-          )
-      );
+    return new ArrayList<>(
+        Arrays.asList(
+            "byteField",
+            "i16Field",
+            "i32Field",
+            "i64Field",
+            "doubleField",
+            "stringField",
+            "structField.byteField",
+            "structField.i16Field",
+            "structField.i32Field",
+            "structField.i64Field",
+            "structField.doubleField",
+            "structField.stringField",
+            "structField.enumField",
+            "enumField",
+            "binaryField",
+            "byteList",
+            "i16List",
+            "i32List",
+            "i64List",
+            "doubleList",
+            "stringList",
+            "enumList",
+            "listList",
+            "setList",
+            "mapList",
+            "structList.byteField",
+            "structList.i16Field",
+            "structList.i32Field",
+            "structList.i64Field",
+            "structList.doubleField",
+            "structList.stringField",
+            "structList.enumField",
+            "binaryList",
+            "byteSet",
+            "i16Set",
+            "i32Set",
+            "i64Set",
+            "doubleSet",
+            "stringSet",
+            "enumSet",
+            "listSet",
+            "setSet",
+            "mapSet",
+            "structSet.byteField",
+            "structSet.i16Field",
+            "structSet.i32Field",
+            "structSet.i64Field",
+            "structSet.doubleField",
+            "structSet.stringField",
+            "structSet.enumField",
+            "binarySet",
+            "byteMap",
+            "i16Map",
+            "i32Map",
+            "i64Map",
+            "doubleMap",
+            "stringMap",
+            "enumMap",
+            "listMap",
+            "setMap",
+            "mapMap",
+            "structMap.byteField",
+            "structMap.i16Field",
+            "structMap.i32Field",
+            "structMap.i64Field",
+            "structMap.doubleField",
+            "structMap.stringField",
+            "structMap.enumField",
+            "binaryMap"));
   }
 }

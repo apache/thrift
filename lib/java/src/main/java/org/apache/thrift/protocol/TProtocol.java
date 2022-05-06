@@ -20,40 +20,28 @@
 package org.apache.thrift.protocol;
 
 import java.nio.ByteBuffer;
-
 import org.apache.thrift.TException;
 import org.apache.thrift.partial.TFieldData;
 import org.apache.thrift.scheme.IScheme;
 import org.apache.thrift.scheme.StandardScheme;
 import org.apache.thrift.transport.TTransport;
 
-/**
- * Protocol interface definition.
- *
- */
+/** Protocol interface definition. */
 public abstract class TProtocol {
 
-  /**
-   * Prevent direct instantiation
-   */
+  /** Prevent direct instantiation */
   @SuppressWarnings("unused")
   private TProtocol() {}
 
-  /**
-   * Transport
-   */
+  /** Transport */
   protected TTransport trans_;
 
-  /**
-   * Constructor
-   */
+  /** Constructor */
   protected TProtocol(TTransport trans) {
     trans_ = trans;
   }
 
-  /**
-   * Transport accessor
-   */
+  /** Transport accessor */
   public TTransport getTransport() {
     return trans_;
   }
@@ -73,16 +61,15 @@ public abstract class TProtocol {
 
   /**
    * Return
-   * @param type  Returns the minimum amount of bytes needed to store the smallest possible instance of TType.
+   *
+   * @param type Returns the minimum amount of bytes needed to store the smallest possible instance
+   *     of TType.
    * @return
    * @throws TException
    */
   public abstract int getMinSerializedSize(byte type) throws TException;
 
-  /**
-   * Writing methods.
-   */
-
+  /** Writing methods. */
   public abstract void writeMessageBegin(TMessage message) throws TException;
 
   public abstract void writeMessageEnd() throws TException;
@@ -125,10 +112,7 @@ public abstract class TProtocol {
 
   public abstract void writeBinary(ByteBuffer buf) throws TException;
 
-  /**
-   * Reading methods.
-   */
-
+  /** Reading methods. */
   public abstract TMessage readMessageBegin() throws TException;
 
   public abstract void readMessageEnd() throws TException;
@@ -170,14 +154,12 @@ public abstract class TProtocol {
   public abstract ByteBuffer readBinary() throws TException;
 
   /**
-   * Reset any internal state back to a blank slate. This method only needs to
-   * be implemented for stateful protocols.
+   * Reset any internal state back to a blank slate. This method only needs to be implemented for
+   * stateful protocols.
    */
   public void reset() {}
 
-  /**
-   * Scheme accessor
-   */
+  /** Scheme accessor */
   public Class<? extends IScheme> getScheme() {
     return StandardScheme.class;
   }
@@ -277,10 +259,9 @@ public abstract class TProtocol {
 
   /**
    * The default implementation of all skip() methods calls the corresponding read() method.
-   * Protocols that derive from this class are strongly encouraged to provide
-   * a more efficient alternative.
+   * Protocols that derive from this class are strongly encouraged to provide a more efficient
+   * alternative.
    */
-
   protected void skipBool() throws TException {
     this.readBool();
   }

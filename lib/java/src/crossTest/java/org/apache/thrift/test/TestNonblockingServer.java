@@ -19,18 +19,16 @@
 
 package org.apache.thrift.test;
 
+import org.apache.thrift.server.ServerTestBase.TestHandler;
 import org.apache.thrift.server.THsHaServer;
+import org.apache.thrift.server.THsHaServer.Args;
 import org.apache.thrift.server.TNonblockingServer;
 import org.apache.thrift.server.TServer;
-import org.apache.thrift.server.THsHaServer.Args;
 import org.apache.thrift.transport.TNonblockingServerSocket;
-import org.apache.thrift.server.ServerTestBase.TestHandler;
-
 import thrift.test.ThriftTest;
 
-
 public class TestNonblockingServer extends TestServer {
-  public static void main(String [] args) {
+  public static void main(String[] args) {
     try {
       int port = 9090;
       boolean hsha = false;
@@ -42,17 +40,16 @@ public class TestNonblockingServer extends TestServer {
           hsha = true;
         }
       }
-      //@TODO add other protocol and transport types
+      // @TODO add other protocol and transport types
 
       // Processor
-      TestHandler testHandler =
-        new TestHandler();
-      ThriftTest.Processor testProcessor =
-        new ThriftTest.Processor(testHandler);
+      TestHandler testHandler = new TestHandler();
+      ThriftTest.Processor testProcessor = new ThriftTest.Processor(testHandler);
 
       // Transport
       TNonblockingServerSocket tServerSocket =
-        new TNonblockingServerSocket(new TNonblockingServerSocket.NonblockingAbstractServerSocketArgs().port(port));
+          new TNonblockingServerSocket(
+              new TNonblockingServerSocket.NonblockingAbstractServerSocketArgs().port(port));
 
       TServer serverEngine;
 

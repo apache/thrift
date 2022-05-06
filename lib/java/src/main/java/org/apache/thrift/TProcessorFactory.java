@@ -21,10 +21,7 @@ package org.apache.thrift;
 
 import org.apache.thrift.transport.TTransport;
 
-/**
- * The default processor factory just returns a singleton
- * instance.
- */
+/** The default processor factory just returns a singleton instance. */
 public class TProcessorFactory {
 
   private final TProcessor processor_;
@@ -38,6 +35,6 @@ public class TProcessorFactory {
   }
 
   public boolean isAsyncProcessor() {
-      return processor_ instanceof TAsyncProcessor;
+    return processor_ instanceof TAsyncProcessor;
   }
 }

@@ -18,25 +18,24 @@
  */
 package org.apache.thrift.protocol;
 
-import junit.framework.TestCase;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
-public class TestShortStack extends TestCase {
+import org.junit.jupiter.api.Test;
 
+public class TestShortStack {
+
+  @Test
   public void testOps() throws Exception {
     ShortStack s = new ShortStack(1);
-    s.push((short)10);
-    s.push((short)11);
-    s.push((short)12);
-    assertEquals((short)12, s.pop());
-    assertEquals((short)11, s.pop());
-    s.push((short)40);
-    assertEquals((short)40, s.pop());
-    assertEquals((short)10, s.pop());
-    try {
-      s.pop();
-      fail("should have thrown an exception!");
-    } catch (Exception e) {
-      // yay
-    }
+    s.push((short) 10);
+    s.push((short) 11);
+    s.push((short) 12);
+    assertEquals((short) 12, s.pop());
+    assertEquals((short) 11, s.pop());
+    s.push((short) 40);
+    assertEquals((short) 40, s.pop());
+    assertEquals((short) 10, s.pop());
+    assertThrows(Exception.class, s::pop);
   }
 }

@@ -28,9 +28,9 @@ import thrift.test.voidmethexceptions.TExampleException;
 public class ServiceAsyncImp extends ServiceBase implements TAppService01.AsyncIface {
 
   @Override
-  public void returnString(String msg,
-      boolean throwException,
-      AsyncMethodCallback<String> resultHandler) throws TException {
+  public void returnString(
+      String msg, boolean throwException, AsyncMethodCallback<String> resultHandler)
+      throws TException {
     if (throwException) {
       resultHandler.onError(new TExampleException(msg));
     } else {
@@ -39,9 +39,9 @@ public class ServiceAsyncImp extends ServiceBase implements TAppService01.AsyncI
   }
 
   @Override
-  public void returnVoidThrows(String msg,
-      boolean throwException,
-      AsyncMethodCallback<Void> resultHandler) throws TException {
+  public void returnVoidThrows(
+      String msg, boolean throwException, AsyncMethodCallback<Void> resultHandler)
+      throws TException {
     if (throwException) {
       resultHandler.onError(new TExampleException(msg));
     } else {
@@ -50,9 +50,9 @@ public class ServiceAsyncImp extends ServiceBase implements TAppService01.AsyncI
   }
 
   @Override
-  public void returnVoidNoThrowsRuntimeException(String msg,
-      boolean throwException,
-      AsyncMethodCallback<Void> resultHandler) throws TException {
+  public void returnVoidNoThrowsRuntimeException(
+      String msg, boolean throwException, AsyncMethodCallback<Void> resultHandler)
+      throws TException {
     if (throwException) {
       resultHandler.onError(new RuntimeException(msg));
     } else {
@@ -61,9 +61,9 @@ public class ServiceAsyncImp extends ServiceBase implements TAppService01.AsyncI
   }
 
   @Override
-  public void returnVoidNoThrowsTApplicationException(String msg,
-      boolean throwException,
-      AsyncMethodCallback<Void> resultHandler) throws TException {
+  public void returnVoidNoThrowsTApplicationException(
+      String msg, boolean throwException, AsyncMethodCallback<Void> resultHandler)
+      throws TException {
     if (throwException) {
       resultHandler.onError(new TApplicationException(TApplicationException.INTERNAL_ERROR, msg));
     } else {
@@ -72,14 +72,13 @@ public class ServiceAsyncImp extends ServiceBase implements TAppService01.AsyncI
   }
 
   @Override
-  public void onewayVoidNoThrows(String msg,
-      boolean throwException,
-      AsyncMethodCallback<Void> resultHandler) throws TException {
+  public void onewayVoidNoThrows(
+      String msg, boolean throwException, AsyncMethodCallback<Void> resultHandler)
+      throws TException {
     if (throwException) {
       resultHandler.onError(new TApplicationException(TApplicationException.INTERNAL_ERROR, msg));
     } else {
       // simulate hang up
     }
   }
-
 }

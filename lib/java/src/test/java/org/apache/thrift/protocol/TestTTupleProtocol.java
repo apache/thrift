@@ -2,9 +2,8 @@ package org.apache.thrift.protocol;
 
 import org.apache.thrift.TDeserializer;
 import org.apache.thrift.TSerializer;
-
+import org.junit.jupiter.api.Test;
 import thrift.test.TupleProtocolTestStruct;
-
 
 public class TestTTupleProtocol extends ProtocolTestBase {
 
@@ -18,10 +17,14 @@ public class TestTTupleProtocol extends ProtocolTestBase {
     return new TTupleProtocol.Factory();
   }
 
+  @Test
   public void testBitsetLengthIssue() throws Exception {
     final TupleProtocolTestStruct t1 = new TupleProtocolTestStruct();
     t1.setField1(0);
     t1.setField2(12);
-    new TDeserializer(new TTupleProtocol.Factory()).deserialize(new TupleProtocolTestStruct(), new TSerializer(new TTupleProtocol.Factory()).serialize(t1));
+    new TDeserializer(new TTupleProtocol.Factory())
+        .deserialize(
+            new TupleProtocolTestStruct(),
+            new TSerializer(new TTupleProtocol.Factory()).serialize(t1));
   }
 }

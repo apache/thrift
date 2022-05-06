@@ -19,34 +19,27 @@
 
 package org.apache.thrift;
 
-/**
- * Utility methods for use when encoding/decoding raw data as byte arrays.
- */
+/** Utility methods for use when encoding/decoding raw data as byte arrays. */
 public class EncodingUtils {
 
   /**
-   * Encode <code>integer</code> as a series of 4 bytes into <code>buf</code>
-   * starting at position 0 within that buffer.
+   * Encode <code>integer</code> as a series of 4 bytes into <code>buf</code> starting at position 0
+   * within that buffer.
    *
-   * @param integer
-   *          The integer to encode.
-   * @param buf
-   *          The buffer to write to.
+   * @param integer The integer to encode.
+   * @param buf The buffer to write to.
    */
   public static final void encodeBigEndian(final int integer, final byte[] buf) {
     encodeBigEndian(integer, buf, 0);
   }
 
   /**
-   * Encode <code>integer</code> as a series of 4 bytes into <code>buf</code>
-   * starting at position <code>offset</code>.
+   * Encode <code>integer</code> as a series of 4 bytes into <code>buf</code> starting at position
+   * <code>offset</code>.
    *
-   * @param integer
-   *          The integer to encode.
-   * @param buf
-   *          The buffer to write to.
-   * @param offset
-   *          The offset within <code>buf</code> to start the encoding.
+   * @param integer The integer to encode.
+   * @param buf The buffer to write to.
+   * @param offset The offset within <code>buf</code> to start the encoding.
    */
   public static final void encodeBigEndian(final int integer, final byte[] buf, int offset) {
     buf[offset] = (byte) (0xff & (integer >> 24));
@@ -56,11 +49,10 @@ public class EncodingUtils {
   }
 
   /**
-   * Decode a series of 4 bytes from <code>buf</code>, starting at position 0,
-   * and interpret them as an integer.
+   * Decode a series of 4 bytes from <code>buf</code>, starting at position 0, and interpret them as
+   * an integer.
    *
-   * @param buf
-   *          The buffer to read from.
+   * @param buf The buffer to read from.
    * @return An integer, as read from the buffer.
    */
   public static final int decodeBigEndian(final byte[] buf) {
@@ -68,36 +60,33 @@ public class EncodingUtils {
   }
 
   /**
-   * Decode a series of 4 bytes from <code>buf</code>, start at
-   * <code>offset</code>, and interpret them as an integer.
+   * Decode a series of 4 bytes from <code>buf</code>, start at <code>offset</code>, and interpret
+   * them as an integer.
    *
-   * @param buf
-   *          The buffer to read from.
-   * @param offset
-   *          The offset with <code>buf</code> to start the decoding.
+   * @param buf The buffer to read from.
+   * @param offset The offset with <code>buf</code> to start the decoding.
    * @return An integer, as read from the buffer.
    */
   public static final int decodeBigEndian(final byte[] buf, int offset) {
-    return ((buf[offset] & 0xff) << 24) | ((buf[offset + 1] & 0xff) << 16)
-        | ((buf[offset + 2] & 0xff) << 8) | ((buf[offset + 3] & 0xff));
+    return ((buf[offset] & 0xff) << 24)
+        | ((buf[offset + 1] & 0xff) << 16)
+        | ((buf[offset + 2] & 0xff) << 8)
+        | ((buf[offset + 3] & 0xff));
   }
 
   /**
-   * Bitfield utilities.
-   * Returns true if the bit at position is set in v.
+   * Bitfield utilities. Returns true if the bit at position is set in v.
    *
-   * @param v
-   *          the value whose bit is to be checked.
-   * @param position
-   *          the 0 based bit number indicating the bit to check.
+   * @param v the value whose bit is to be checked.
+   * @param position the 0 based bit number indicating the bit to check.
    * @return true if the bit at position is set in v.
    */
   public static final boolean testBit(byte v, int position) {
-    return testBit((int)v, position);
+    return testBit((int) v, position);
   }
 
   public static final boolean testBit(short v, int position) {
-    return testBit((int)v, position);
+    return testBit((int) v, position);
   }
 
   public static final boolean testBit(int v, int position) {
@@ -111,18 +100,16 @@ public class EncodingUtils {
   /**
    * Returns v, with the bit at position set to zero.
    *
-   * @param v
-   *          the value whose bit is to be cleared.
-   * @param position
-   *          the 0 based bit number indicating the bit to clear.
+   * @param v the value whose bit is to be cleared.
+   * @param position the 0 based bit number indicating the bit to clear.
    * @return v, with the bit at position set to zero.
    */
   public static final byte clearBit(byte v, int position) {
-    return (byte)clearBit((int)v, position);
+    return (byte) clearBit((int) v, position);
   }
 
   public static final short clearBit(short v, int position) {
-    return (short)clearBit((int)v, position);
+    return (short) clearBit((int) v, position);
   }
 
   public static final int clearBit(int v, int position) {
@@ -136,33 +123,26 @@ public class EncodingUtils {
   /**
    * Returns v, with the bit at position set to 1 or 0 depending on value.
    *
-   * @param v
-   *          the value whose bit is to be set.
-   * @param position
-   *          the 0 based bit number indicating the bit to set.
-   * @param value
-   *          if true, the given bit is set to 1; otherwise it is set to 0.
+   * @param v the value whose bit is to be set.
+   * @param position the 0 based bit number indicating the bit to set.
+   * @param value if true, the given bit is set to 1; otherwise it is set to 0.
    * @return v, with the bit at position set to 0 (if value is false) or 1 (if value is true).
    */
   public static final byte setBit(byte v, int position, boolean value) {
-    return (byte)setBit((int)v, position, value);
+    return (byte) setBit((int) v, position, value);
   }
 
   public static final short setBit(short v, int position, boolean value) {
-    return (short)setBit((int)v, position, value);
+    return (short) setBit((int) v, position, value);
   }
 
   public static final int setBit(int v, int position, boolean value) {
-    if(value)
-      return v | (1 << position);
-    else
-      return clearBit(v, position);
+    if (value) return v | (1 << position);
+    else return clearBit(v, position);
   }
 
   public static final long setBit(long v, int position, boolean value) {
-    if(value)
-      return v | (1L << position);
-    else
-      return clearBit(v, position);
+    if (value) return v | (1L << position);
+    else return clearBit(v, position);
   }
 }

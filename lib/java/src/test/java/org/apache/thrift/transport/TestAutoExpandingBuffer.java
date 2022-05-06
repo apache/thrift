@@ -18,9 +18,13 @@
  */
 package org.apache.thrift.transport;
 
-import junit.framework.TestCase;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-public class TestAutoExpandingBuffer extends TestCase {
+import org.junit.jupiter.api.Test;
+
+public class TestAutoExpandingBuffer {
+  @Test
   public void testExpands() throws Exception {
     // has expected initial capacity
     AutoExpandingBuffer b = new AutoExpandingBuffer(10);

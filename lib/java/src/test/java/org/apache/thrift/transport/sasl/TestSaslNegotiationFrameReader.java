@@ -19,12 +19,15 @@
 
 package org.apache.thrift.transport.sasl;
 
-import org.apache.thrift.transport.TMemoryInputTransport;
-import org.apache.thrift.transport.TTransportException;
-import org.junit.Assert;
-import org.junit.Test;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.nio.ByteBuffer;
+import org.apache.thrift.transport.TMemoryInputTransport;
+import org.apache.thrift.transport.TTransportException;
+import org.junit.jupiter.api.Test;
 
 public class TestSaslNegotiationFrameReader {
 
@@ -34,31 +37,35 @@ public class TestSaslNegotiationFrameReader {
     SaslNegotiationFrameReader negotiationReader = new SaslNegotiationFrameReader();
     // No bytes received
     negotiationReader.read(transport);
-    Assert.assertFalse("No bytes received", negotiationReader.isComplete());
-    Assert.assertFalse("No bytes received", negotiationReader.getHeader().isComplete());
+    assertFalse(negotiationReader.isComplete(), "No bytes received");
+    assertFalse(negotiationReader.getHeader().isComplete(), "No bytes received");
     // Read header
     ByteBuffer buffer = ByteBuffer.allocate(5);
     buffer.put(0, NegotiationStatus.OK.getValue());
     buffer.putInt(1, 10);
     transport.reset(buffer.array());
     negotiationReader.read(transport);
-    Assert.assertFalse("Only header is complete", negotiationReader.isComplete());
-    Assert.assertTrue("Header should be complete", negotiationReader.getHeader().isComplete());
-    Assert.assertEquals("Payload size should be 10", 10, negotiationReader.getHeader().payloadSize());
+    assertFalse(negotiationReader.isComplete(), "Only header is complete");
+    assertTrue(negotiationReader.getHeader().isComplete(), "Header should be complete");
+    assertEquals(10, negotiationReader.getHeader().payloadSize(), "Payload size should be 10");
     // Read payload
     transport.reset(new byte[20]);
     negotiationReader.read(transport);
-    Assert.assertTrue("Reader should be complete", negotiationReader.isComplete());
-    Assert.assertEquals("Payload length should be 10", 10, negotiationReader.getPayload().length);
+    assertTrue(negotiationReader.isComplete(), "Reader should be complete");
+    assertEquals(10, negotiationReader.getPayload().length, "Payload length should be 10");
   }
 
-  @Test (expected = TSaslNegotiationException.class)
+  @Test
   public void testReadInvalidNegotiationStatus() throws TTransportException {
     byte[] bytes = new byte[5];
     // Invalid status byte.
     bytes[0] = -1;
     TMemoryInputTransport transport = new TMemoryInputTransport(bytes);
     SaslNegotiationFrameReader negotiationReader = new SaslNegotiationFrameReader();
-    negotiationReader.read(transport);
+    assertThrows(
+        TSaslNegotiationException.class,
+        () -> {
+          negotiationReader.read(transport);
+        });
   }
 }

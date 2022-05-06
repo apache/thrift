@@ -19,16 +19,15 @@
 
 package org.apache.thrift.transport.sasl;
 
+import static org.apache.thrift.transport.sasl.TSaslNegotiationException.ErrorType.MECHANISME_MISMATCH;
+import static org.apache.thrift.transport.sasl.TSaslNegotiationException.ErrorType.PROTOCOL_ERROR;
+
 import java.util.HashMap;
 import java.util.Map;
-
 import javax.security.auth.callback.CallbackHandler;
 import javax.security.sasl.Sasl;
 import javax.security.sasl.SaslException;
 import javax.security.sasl.SaslServer;
-
-import static org.apache.thrift.transport.sasl.TSaslNegotiationException.ErrorType.MECHANISME_MISMATCH;
-import static org.apache.thrift.transport.sasl.TSaslNegotiationException.ErrorType.PROTOCOL_ERROR;
 
 /**
  * Factory to create sasl server. Users can extend this class to customize the SaslServer creation.
@@ -41,24 +40,31 @@ public class TSaslServerFactory {
     this.saslMechanisms = new HashMap<>();
   }
 
-  public void addSaslMechanism(String mechanism, String protocol, String serverName,
-                               Map<String, String> props, CallbackHandler cbh) {
-    TSaslServerDefinition definition = new TSaslServerDefinition(mechanism, protocol, serverName,
-        props, cbh);
+  public void addSaslMechanism(
+      String mechanism,
+      String protocol,
+      String serverName,
+      Map<String, String> props,
+      CallbackHandler cbh) {
+    TSaslServerDefinition definition =
+        new TSaslServerDefinition(mechanism, protocol, serverName, props, cbh);
     saslMechanisms.put(definition.mechanism, definition);
   }
 
   public ServerSaslPeer getSaslPeer(String mechanism) throws TSaslNegotiationException {
     if (!saslMechanisms.containsKey(mechanism)) {
-      throw new TSaslNegotiationException(MECHANISME_MISMATCH, "Unsupported mechanism " + mechanism);
+      throw new TSaslNegotiationException(
+          MECHANISME_MISMATCH, "Unsupported mechanism " + mechanism);
     }
     TSaslServerDefinition saslDef = saslMechanisms.get(mechanism);
     try {
-      SaslServer saslServer = Sasl.createSaslServer(saslDef.mechanism, saslDef.protocol,
-          saslDef.serverName, saslDef.props, saslDef.cbh);
+      SaslServer saslServer =
+          Sasl.createSaslServer(
+              saslDef.mechanism, saslDef.protocol, saslDef.serverName, saslDef.props, saslDef.cbh);
       return new ServerSaslPeer(saslServer);
     } catch (SaslException e) {
-      throw new TSaslNegotiationException(PROTOCOL_ERROR, "Fail to create sasl server " + mechanism, e);
+      throw new TSaslNegotiationException(
+          PROTOCOL_ERROR, "Fail to create sasl server " + mechanism, e);
     }
   }
 }

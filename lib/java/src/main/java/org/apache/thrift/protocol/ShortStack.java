@@ -21,9 +21,9 @@ package org.apache.thrift.protocol;
 import java.util.Arrays;
 
 /**
- * ShortStack is a short-specific Stack implementation written for the express
- * purpose of very fast operations on TCompactProtocol's field id stack. This
- * implementation performs at least 10x faster than java.util.Stack.
+ * ShortStack is a short-specific Stack implementation written for the express purpose of very fast
+ * operations on TCompactProtocol's field id stack. This implementation performs at least 10x faster
+ * than java.util.Stack.
  */
 class ShortStack {
 

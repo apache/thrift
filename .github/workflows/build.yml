@@ -1,35 +1,28 @@
-name: 'Build Thrift Compiler and Libraries'
+name: 'Build'
+
 on:
   push:
     branches: [ '*' ]
   pull_request:
     branches: [ '*' ]
+
+env:
+  BUILD_DEPS: automake bison flex g++ git libboost-all-dev libevent-dev libssl-dev libtool make pkg-config
+
 jobs:
   # TODO windows and macos
-  build-thrift-compiler-ubuntu:
+  compiler:
     strategy:
-        matrix:
-          os: [ubuntu-18.04, ubuntu-20.04]
+      matrix:
+        os: [ubuntu-18.04, ubuntu-20.04]
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v3
 
       - name: Install dependencies
         run: |
-          # https://docs.github.com/en/actions/using-github-hosted-runners/customizing-github-hosted-runners
           sudo apt-get update -yq
-          sudo apt-get install -y --no-install-recommends \
-            automake \
-            bison \
-            flex \
-            g++ \
-            git \
-            libboost-all-dev \
-            libevent-dev \
-            libssl-dev \
-            libtool \
-            make \
-            pkg-config
+          sudo apt-get install -y --no-install-recommends $BUILD_DEPS
 
       - name: Run bootstrap
         run: ./bootstrap.sh
@@ -45,3 +38,93 @@ jobs:
 
       - name: Run thrift version
         run: /usr/local/bin/thrift -version
+
+      # only upload while building ubuntu-20.04
+      - name: Archive built thrift compiler
+        if: matrix.os == 'ubuntu-20.04'
+        uses: actions/upload-artifact@v3
+        with:
+          name: thrift-compiler
+          path: compiler/cpp/thrift
+          retention-days: 3
+
+  lib-java-kotlin:
+    needs: compiler
+    runs-on: ubuntu-20.04
+    env:
+      GRADLE_VERSION: 6.9.2
+    steps:
+      - uses: actions/checkout@v3
+
+      - uses: actions/setup-java@v3
+        with:
+          distribution: temurin
+          java-version: 11
+          cache: 'gradle'
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update -yq
+          sudo apt-get install -y --no-install-recommends $BUILD_DEPS
+          sudo apt-get install -y wget unzip ant maven
+
+      - name: Setup gradle
+        run: |
+          wget https://services.gradle.org/distributions/gradle-$GRADLE_VERSION-bin.zip -q -O /tmp/gradle-$GRADLE_VERSION-bin.zip
+          (echo "8b356fd8702d5ffa2e066ed0be45a023a779bba4dd1a68fd11bc2a6bdc981e8f  /tmp/gradle-$GRADLE_VERSION-bin.zip" | sha256sum -c -)
+          unzip -d /tmp /tmp/gradle-$GRADLE_VERSION-bin.zip
+          sudo mv /tmp/gradle-$GRADLE_VERSION /usr/local/gradle
+          sudo ln -s /usr/local/gradle/bin/gradle /usr/local/bin
+          gradle --version
+
+      - name: Run spotlessCheck
+        run: |
+          cd lib/java
+          gradle spotlessCheck
+
+      - name: Run bootstrap
+        run: ./bootstrap.sh
+
+      - name: Run configure
+        run: |
+          ./configure \
+            --disable-debug \
+            --disable-tests \
+            --disable-dependency-tracking \
+            --without-cpp \
+            --without-c_glib \
+            --with-java \
+            --with-kotlin \
+            --without-python \
+            --without-py3 \
+            --without-ruby \
+            --without-haxe \
+            --without-netstd \
+            --without-perl \
+            --without-php \
+            --without-php_extension \
+            --without-dart \
+            --without-erlang \
+            --without-go \
+            --without-d \
+            --without-nodejs \
+            --without-nodets \
+            --without-lua \
+            --without-rs \
+            --without-swift
+
+      - uses: actions/download-artifact@v3
+        with:
+          name: thrift-compiler
+          path: compiler/cpp
+
+      - name: Run thrift-compiler
+        run: |
+          chmod a+x compiler/cpp/thrift
+          compiler/cpp/thrift -version
+
+      - name: Run make java
+        run: make -C lib/java
+
+      - name: Run make kotlin
+        run: make -C lib/kotlin

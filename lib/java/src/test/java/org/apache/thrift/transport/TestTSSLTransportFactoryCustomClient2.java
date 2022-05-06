@@ -22,13 +22,10 @@ package org.apache.thrift.transport;
 public class TestTSSLTransportFactoryCustomClient2 extends TestTSSLTransportFactory {
 
   @Override
-  public TTransport getClientTransport(TTransport underlyingTransport)
-  throws Exception {
-    TSSLTransportFactory.TSSLTransportParameters params = new
-      TSSLTransportFactory.TSSLTransportParameters();
-
-    params.setTrustStore(System.getProperty("javax.net.ssl.trustStore"), null);
-
-    return TSSLTransportFactory.getClientSocket(HOST, PORT, 0/*timeout*/, params);
+  public TTransport getClientTransport(TTransport underlyingTransport) throws Exception {
+    TSSLTransportFactory.TSSLTransportParameters params =
+        new TSSLTransportFactory.TSSLTransportParameters();
+    params.setTrustStore(getTrustStoreLocation(), null);
+    return TSSLTransportFactory.getClientSocket(HOST, PORT, 0 /*timeout*/, params);
   }
 }

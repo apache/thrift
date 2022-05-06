@@ -18,7 +18,6 @@
  */
 package org.apache.thrift.transport;
 
-
 import org.apache.thrift.TConfiguration;
 
 public class ReadCountingTransport extends TTransport {
