@@ -19,19 +19,15 @@
 
 package org.apache.thrift.transport;
 
+import java.nio.charset.Charset;
 import org.apache.thrift.TByteArrayOutputStream;
 import org.apache.thrift.TConfiguration;
 
-import java.nio.charset.Charset;
-
-/**
- * Memory buffer-based implementation of the TTransport interface.
- */
+/** Memory buffer-based implementation of the TTransport interface. */
 public class TMemoryBuffer extends TEndpointTransport {
   /**
-   * Create a TMemoryBuffer with an initial buffer size of <i>size</i>. The
-   * internal buffer will grow as necessary to accommodate the size of the data
-   * being written to it.
+   * Create a TMemoryBuffer with an initial buffer size of <i>size</i>. The internal buffer will
+   * grow as necessary to accommodate the size of the data being written to it.
    *
    * @param size the initial size of the buffer
    * @throws TTransportException on error initializing the underlying transport.
@@ -43,9 +39,8 @@ public class TMemoryBuffer extends TEndpointTransport {
   }
 
   /**
-   * Create a TMemoryBuffer with an initial buffer size of <i>size</i>. The
-   * internal buffer will grow as necessary to accommodate the size of the data
-   * being written to it.
+   * Create a TMemoryBuffer with an initial buffer size of <i>size</i>. The internal buffer will
+   * grow as necessary to accommodate the size of the data being written to it.
    *
    * @param config the configuration to use.
    * @param size the initial size of the buffer
@@ -91,8 +86,8 @@ public class TMemoryBuffer extends TEndpointTransport {
   }
 
   /**
-   * Output the contents of the memory buffer as a String, using the supplied
-   * encoding
+   * Output the contents of the memory buffer as a String, using the supplied encoding
+   *
    * @param charset the encoding to use
    * @return the contents of the memory buffer as a String
    */
@@ -104,7 +99,7 @@ public class TMemoryBuffer extends TEndpointTransport {
     StringBuilder buf = new StringBuilder();
     byte[] bytes = arr_.toByteArray();
     for (int i = 0; i < bytes.length; i++) {
-      buf.append(pos_ == i ? "==>" : "" ).append(Integer.toHexString(bytes[i] & 0xff)).append(" ");
+      buf.append(pos_ == i ? "==>" : "").append(Integer.toHexString(bytes[i] & 0xff)).append(" ");
     }
     return buf.toString();
   }

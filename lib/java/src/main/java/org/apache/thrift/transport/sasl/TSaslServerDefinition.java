@@ -19,12 +19,10 @@
 
 package org.apache.thrift.transport.sasl;
 
-import javax.security.auth.callback.CallbackHandler;
 import java.util.Map;
+import javax.security.auth.callback.CallbackHandler;
 
-/**
- * Contains all the parameters used to define a SASL server implementation.
- */
+/** Contains all the parameters used to define a SASL server implementation. */
 public class TSaslServerDefinition {
   public final String mechanism;
   public final String protocol;
@@ -32,8 +30,12 @@ public class TSaslServerDefinition {
   public final Map<String, String> props;
   public final CallbackHandler cbh;
 
-  public TSaslServerDefinition(String mechanism, String protocol, String serverName,
-                               Map<String, String> props, CallbackHandler cbh) {
+  public TSaslServerDefinition(
+      String mechanism,
+      String protocol,
+      String serverName,
+      Map<String, String> props,
+      CallbackHandler cbh) {
     this.mechanism = mechanism;
     this.protocol = protocol;
     this.serverName = serverName;

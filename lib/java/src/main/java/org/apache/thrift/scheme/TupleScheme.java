@@ -20,6 +20,4 @@ package org.apache.thrift.scheme;
 
 import org.apache.thrift.TBase;
 
-public abstract class TupleScheme<T extends TBase> implements IScheme<T> {
-
-}
+public abstract class TupleScheme<T extends TBase> implements IScheme<T> {}

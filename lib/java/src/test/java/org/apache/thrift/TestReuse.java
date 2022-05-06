@@ -19,14 +19,13 @@
 
 package org.apache.thrift;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertSame;
+
+import java.util.HashSet;
 import org.apache.thrift.protocol.TBinaryProtocol;
 import org.junit.jupiter.api.Test;
 import thrift.test.Reuse;
-
-import java.util.HashSet;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertSame;
 
 // Tests reusing objects for deserialization.
 //
@@ -34,7 +33,7 @@ public class TestReuse extends TestStruct {
 
   @Test
   public void testReuseObject() throws Exception {
-    TSerializer   binarySerializer   = new   TSerializer(new TBinaryProtocol.Factory());
+    TSerializer binarySerializer = new TSerializer(new TBinaryProtocol.Factory());
     TDeserializer binaryDeserializer = new TDeserializer(new TBinaryProtocol.Factory());
 
     Reuse ru1 = new Reuse();
@@ -57,5 +56,4 @@ public class TestReuse extends TestStruct {
     assertSame(hs1, ru1.getVal2());
     assertEquals(2, hs1.size());
   }
-
 }

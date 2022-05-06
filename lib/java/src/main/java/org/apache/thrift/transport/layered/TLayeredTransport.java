@@ -18,35 +18,33 @@
  */
 package org.apache.thrift.transport.layered;
 
+import java.util.Objects;
 import org.apache.thrift.TConfiguration;
 import org.apache.thrift.transport.TTransport;
 import org.apache.thrift.transport.TTransportException;
 
-import java.util.Objects;
+public abstract class TLayeredTransport extends TTransport {
 
-public abstract class TLayeredTransport extends TTransport{
+  private TTransport innerTransport;
 
-    private TTransport innerTransport;
+  public TConfiguration getConfiguration() {
+    return innerTransport.getConfiguration();
+  }
 
-    public TConfiguration getConfiguration() {
-        return innerTransport.getConfiguration();
-    }
+  public TLayeredTransport(TTransport transport) {
+    Objects.requireNonNull(transport, "TTransport cannot be null.");
+    innerTransport = transport;
+  }
 
-    public TLayeredTransport(TTransport transport)
-    {
-        Objects.requireNonNull(transport, "TTransport cannot be null.");
-        innerTransport = transport;
-    }
+  public void updateKnownMessageSize(long size) throws TTransportException {
+    innerTransport.updateKnownMessageSize(size);
+  }
 
-    public void updateKnownMessageSize(long size) throws TTransportException {
-        innerTransport.updateKnownMessageSize(size);
-    }
+  public void checkReadBytesAvailable(long numBytes) throws TTransportException {
+    innerTransport.checkReadBytesAvailable(numBytes);
+  }
 
-    public void checkReadBytesAvailable(long numBytes) throws TTransportException {
-        innerTransport.checkReadBytesAvailable(numBytes);
-    }
-
-    public TTransport getInnerTransport() {
-        return innerTransport;
-    }
+  public TTransport getInnerTransport() {
+    return innerTransport;
+  }
 }

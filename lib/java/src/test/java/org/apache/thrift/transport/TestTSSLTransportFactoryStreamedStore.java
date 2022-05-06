@@ -25,23 +25,23 @@ import java.net.InetAddress;
 public class TestTSSLTransportFactoryStreamedStore extends TestTSSLTransportFactory {
 
   @Override
-  public TTransport getClientTransport(TTransport underlyingTransport)
-  throws Exception {
-    TSSLTransportFactory.TSSLTransportParameters params = new
-      TSSLTransportFactory.TSSLTransportParameters();
+  public TTransport getClientTransport(TTransport underlyingTransport) throws Exception {
+    TSSLTransportFactory.TSSLTransportParameters params =
+        new TSSLTransportFactory.TSSLTransportParameters();
 
     params.setTrustStore(new FileInputStream(getTrustStoreLocation()), getTrustStorePassword());
 
-    return TSSLTransportFactory.getClientSocket(HOST, PORT, 0/*timeout*/, params);
+    return TSSLTransportFactory.getClientSocket(HOST, PORT, 0 /*timeout*/, params);
   }
 
   @Override
   protected TServerSocket getServerTransport() throws Exception {
-    TSSLTransportFactory.TSSLTransportParameters params = new
-        TSSLTransportFactory.TSSLTransportParameters();
+    TSSLTransportFactory.TSSLTransportParameters params =
+        new TSSLTransportFactory.TSSLTransportParameters();
 
     params.setKeyStore(new FileInputStream(getKeyStoreLocation()), getKeyStorePassword());
 
-    return TSSLTransportFactory.getServerSocket(PORT, 0/*timeout*/, InetAddress.getByName(HOST), params);
+    return TSSLTransportFactory.getServerSocket(
+        PORT, 0 /*timeout*/, InetAddress.getByName(HOST), params);
   }
 }

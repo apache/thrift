@@ -19,6 +19,10 @@
 
 package org.apache.thrift.server;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import java.util.concurrent.ThreadPoolExecutor;
 import org.apache.thrift.protocol.TBinaryProtocol;
 import org.apache.thrift.transport.TServerSocket;
 import org.apache.thrift.transport.TServerTransport;
@@ -26,16 +30,9 @@ import org.apache.thrift.transport.TSocket;
 import org.junit.jupiter.api.Test;
 import thrift.test.ThriftTest;
 
-import java.util.concurrent.ThreadPoolExecutor;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-
 public class TestThreadPoolServer {
 
-  /**
-   * Test server is shut down properly even with some open clients.
-   */
+  /** Test server is shut down properly even with some open clients. */
   @Test
   public void testStopServerWithOpenClient() throws Exception {
     TServerSocket serverSocket = new TServerSocket(0, 3000);
@@ -53,7 +50,8 @@ public class TestThreadPoolServer {
       assertTrue(server.waitForShutdown());
 
       // After server is stopped, the executor thread pool should be shut down
-      assertTrue(server.getExecutorService().isTerminated(), "Server thread pool should be terminated");
+      assertTrue(
+          server.getExecutorService().isTerminated(), "Server thread pool should be terminated");
 
       // TODO: The socket is actually closed (timeout) but the client code
       // ignores the timeout Exception and maintains the socket open state
@@ -62,9 +60,10 @@ public class TestThreadPoolServer {
   }
 
   private TThreadPoolServer buildServer(TServerTransport serverSocket) {
-    TThreadPoolServer.Args args = new TThreadPoolServer.Args(serverSocket)
-        .protocolFactory(new TBinaryProtocol.Factory())
-        .processor(new ThriftTest.Processor<>(new ServerTestBase.TestHandler()));
+    TThreadPoolServer.Args args =
+        new TThreadPoolServer.Args(serverSocket)
+            .protocolFactory(new TBinaryProtocol.Factory())
+            .processor(new ThriftTest.Processor<>(new ServerTestBase.TestHandler()));
     return new TThreadPoolServer(args);
   }
 }

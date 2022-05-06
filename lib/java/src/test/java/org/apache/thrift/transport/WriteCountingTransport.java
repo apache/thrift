@@ -18,7 +18,6 @@
  */
 package org.apache.thrift.transport;
 
-
 import org.apache.thrift.TConfiguration;
 
 public class WriteCountingTransport extends TTransport {
@@ -33,7 +32,9 @@ public class WriteCountingTransport extends TTransport {
   public void close() {}
 
   @Override
-  public boolean isOpen() {return true;}
+  public boolean isOpen() {
+    return true;
+  }
 
   @Override
   public void open() throws TTransportException {}
@@ -45,7 +46,7 @@ public class WriteCountingTransport extends TTransport {
 
   @Override
   public void write(byte[] buf, int off, int len) throws TTransportException {
-    writeCount ++;
+    writeCount++;
     trans.write(buf, off, len);
   }
 

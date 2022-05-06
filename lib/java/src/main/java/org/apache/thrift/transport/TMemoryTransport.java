@@ -20,13 +20,10 @@
 package org.apache.thrift.transport;
 
 import java.nio.ByteBuffer;
-
 import org.apache.thrift.TByteArrayOutputStream;
 import org.apache.thrift.TConfiguration;
 
-/**
- * In memory transport with separate buffers for input and output.
- */
+/** In memory transport with separate buffers for input and output. */
 public class TMemoryTransport extends TEndpointTransport {
 
   private final ByteBuffer inputBuffer;
@@ -51,9 +48,7 @@ public class TMemoryTransport extends TEndpointTransport {
     return true;
   }
 
-  /**
-   * Opening on an in memory transport should have no effect.
-   */
+  /** Opening on an in memory transport should have no effect. */
   @Override
   public void open() {
     // Do nothing.
@@ -69,7 +64,8 @@ public class TMemoryTransport extends TEndpointTransport {
     checkReadBytesAvailable(len);
     int remaining = inputBuffer.remaining();
     if (remaining < len) {
-      throw new TTransportException(TTransportException.END_OF_FILE,
+      throw new TTransportException(
+          TTransportException.END_OF_FILE,
           "There's only " + remaining + "bytes, but it asks for " + len);
     }
     inputBuffer.get(buf, off, len);

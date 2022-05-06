@@ -19,18 +19,17 @@
 
 package org.apache.thrift.partial;
 
+import java.nio.ByteBuffer;
 import org.apache.thrift.TEnum;
 import org.apache.thrift.TFieldIdEnum;
 
-import java.nio.ByteBuffer;
-
 /**
- * Provides an abstraction to process deserialized field values and place them
- * into the collection that holds them. This abstraction allows different types
- * of collections to be output from partial deserialization.
+ * Provides an abstraction to process deserialized field values and place them into the collection
+ * that holds them. This abstraction allows different types of collections to be output from partial
+ * deserialization.
  *
- * In case of the usual Thrift deserialization, the collection that holds field
- * values is simply an instance of TBase.
+ * <p>In case of the usual Thrift deserialization, the collection that holds field values is simply
+ * an instance of TBase.
  */
 public interface ThriftFieldValueProcessor<V> {
 
@@ -39,15 +38,15 @@ public interface ThriftFieldValueProcessor<V> {
 
   V prepareStruct(Object instance);
 
-  void setBool(V valueCollection, TFieldIdEnum fieldId,  boolean value);
+  void setBool(V valueCollection, TFieldIdEnum fieldId, boolean value);
 
-  void setByte(V valueCollection, TFieldIdEnum fieldId,  byte value);
+  void setByte(V valueCollection, TFieldIdEnum fieldId, byte value);
 
-  void setInt16(V valueCollection, TFieldIdEnum fieldId,  short value);
+  void setInt16(V valueCollection, TFieldIdEnum fieldId, short value);
 
-  void setInt32(V valueCollection, TFieldIdEnum fieldId,  int value);
+  void setInt32(V valueCollection, TFieldIdEnum fieldId, int value);
 
-  void setInt64(V valueCollection, TFieldIdEnum fieldId,  long value);
+  void setInt64(V valueCollection, TFieldIdEnum fieldId, long value);
 
   void setDouble(V valueCollection, TFieldIdEnum fieldId, double value);
 

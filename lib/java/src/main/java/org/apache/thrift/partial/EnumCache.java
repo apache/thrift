@@ -19,22 +19,19 @@
 
 package org.apache.thrift.partial;
 
-import org.apache.thrift.partial.Validate;
-
-import org.apache.thrift.TEnum;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Map;
+import org.apache.thrift.TEnum;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Provides a memoized way to lookup an enum by its value.
  *
- * This class is used internally by {@code TDeserializer}.
- * It is not intended to be used separately on its own.
+ * <p>This class is used internally by {@code TDeserializer}. It is not intended to be used
+ * separately on its own.
  */
 public class EnumCache {
   private static Logger LOG = LoggerFactory.getLogger(EnumCache.class);
@@ -46,8 +43,7 @@ public class EnumCache {
   }
 
   /**
-   * Gets an instance of the enum type {@code enumClass}
-   * corresponding to the given {@code value}.
+   * Gets an instance of the enum type {@code enumClass} corresponding to the given {@code value}.
    *
    * @param enumClass class of the enum to be returned.
    * @param value value returned by {@code getValue()}.

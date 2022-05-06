@@ -43,3 +43,12 @@ tasks.withType(Pmd) {
         xml.enabled = false
     }
 }
+
+spotless {
+    java {
+        target project.fileTree(project.rootDir) {
+          include 'src/**/*.java'
+        }
+        googleJavaFormat()
+    }
+}

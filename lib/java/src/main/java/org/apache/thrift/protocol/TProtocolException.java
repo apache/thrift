@@ -21,12 +21,8 @@ package org.apache.thrift.protocol;
 
 import org.apache.thrift.TException;
 
-/**
- * Protocol exceptions.
- *
- */
+/** Protocol exceptions. */
 public class TProtocolException extends TException {
-
 
   private static final long serialVersionUID = 1L;
   public static final int UNKNOWN = 0;
@@ -78,5 +74,4 @@ public class TProtocolException extends TException {
   public int getType() {
     return type_;
   }
-
 }

@@ -17,7 +17,6 @@
  * under the License.
  */
 
-
 package org.apache.thrift.protocol;
 
 public class TestTBinaryProtocol extends ProtocolTestBase {
@@ -30,5 +29,4 @@ public class TestTBinaryProtocol extends ProtocolTestBase {
   protected boolean canBeUsedNaked() {
     return true;
   }
-
 }

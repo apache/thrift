@@ -19,9 +19,7 @@
 
 package org.apache.thrift.transport.sasl;
 
-/**
- * Read frames for sasl negotiatiions.
- */
+/** Read frames for sasl negotiatiions. */
 public class SaslNegotiationFrameReader extends FrameReader<SaslNegotiationHeaderReader> {
 
   public SaslNegotiationFrameReader() {

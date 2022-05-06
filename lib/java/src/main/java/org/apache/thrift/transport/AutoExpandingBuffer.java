@@ -21,11 +21,10 @@ package org.apache.thrift.transport;
 import java.util.Arrays;
 
 /**
- * Helper class that wraps a byte[] so that it can expand and be reused. Users
- * should call resizeIfNecessary to make sure the buffer has suitable capacity,
- * and then use the array as needed. Note that the internal array will grow at a
- * rate slightly faster than the requested capacity with the (untested)
- * objective of avoiding expensive buffer allocations and copies.
+ * Helper class that wraps a byte[] so that it can expand and be reused. Users should call
+ * resizeIfNecessary to make sure the buffer has suitable capacity, and then use the array as
+ * needed. Note that the internal array will grow at a rate slightly faster than the requested
+ * capacity with the (untested) objective of avoiding expensive buffer allocations and copies.
  */
 public class AutoExpandingBuffer {
   private byte[] array;

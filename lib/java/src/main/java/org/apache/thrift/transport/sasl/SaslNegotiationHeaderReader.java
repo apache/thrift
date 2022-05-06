@@ -42,7 +42,8 @@ public class SaslNegotiationHeaderReader extends FixedSizeHeaderReader {
     negotiationStatus = NegotiationStatus.byValue(byteBuffer.get(0));
     payloadSize = byteBuffer.getInt(1);
     if (payloadSize < 0) {
-      throw new TSaslNegotiationException(PROTOCOL_ERROR, "Payload size is negative: " + payloadSize);
+      throw new TSaslNegotiationException(
+          PROTOCOL_ERROR, "Payload size is negative: " + payloadSize);
     }
   }
 
