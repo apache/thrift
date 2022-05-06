@@ -19,7 +19,6 @@
 package org.apache.thrift.protocol;
 
 import java.util.BitSet;
-
 import org.apache.thrift.TException;
 import org.apache.thrift.scheme.IScheme;
 import org.apache.thrift.scheme.TupleScheme;
@@ -51,7 +50,7 @@ public final class TTupleProtocol extends TCompactProtocol {
   }
 
   public BitSet readBitSet(int i) throws TException {
-    int length = (int) Math.ceil(i/8.0);
+    int length = (int) Math.ceil(i / 8.0);
     byte[] bytes = new byte[length];
     for (int j = 0; j < length; j++) {
       bytes[j] = readByte();
@@ -60,10 +59,7 @@ public final class TTupleProtocol extends TCompactProtocol {
     return bs;
   }
 
-  /**
-   * Returns a bitset containing the values in bytes. The byte-ordering must be
-   * big-endian.
-   */
+  /** Returns a bitset containing the values in bytes. The byte-ordering must be big-endian. */
   public static BitSet fromByteArray(byte[] bytes) {
     BitSet bits = new BitSet();
     for (int i = 0; i < bytes.length * 8; i++) {
@@ -75,18 +71,17 @@ public final class TTupleProtocol extends TCompactProtocol {
   }
 
   /**
-   * Returns a byte array of at least length 1. The most significant bit in the
-   * result is guaranteed not to be a 1 (since BitSet does not support sign
-   * extension). The byte-ordering of the result is big-endian which means the
-   * most significant bit is in element 0. The bit at index 0 of the bit set is
-   * assumed to be the least significant bit.
+   * Returns a byte array of at least length 1. The most significant bit in the result is guaranteed
+   * not to be a 1 (since BitSet does not support sign extension). The byte-ordering of the result
+   * is big-endian which means the most significant bit is in element 0. The bit at index 0 of the
+   * bit set is assumed to be the least significant bit.
    *
    * @param bits
    * @param vectorWidth
    * @return a byte array of at least length 1
    */
   public static byte[] toByteArray(BitSet bits, int vectorWidth) {
-    byte[] bytes = new byte[(int) Math.ceil(vectorWidth/8.0)];
+    byte[] bytes = new byte[(int) Math.ceil(vectorWidth / 8.0)];
     for (int i = 0; i < bits.length(); i++) {
       if (bits.get(i)) {
         bytes[bytes.length - i / 8 - 1] |= 1 << (i % 8);
@@ -116,6 +111,8 @@ public final class TTupleProtocol extends TCompactProtocol {
   }
 
   public void readMapEnd() throws TException {}
+
   public void readListEnd() throws TException {}
+
   public void readSetEnd() throws TException {}
 }

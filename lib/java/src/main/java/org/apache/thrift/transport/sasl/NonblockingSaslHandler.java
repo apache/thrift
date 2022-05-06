@@ -19,11 +19,12 @@
 
 package org.apache.thrift.transport.sasl;
 
+import static org.apache.thrift.transport.sasl.NegotiationStatus.COMPLETE;
+import static org.apache.thrift.transport.sasl.NegotiationStatus.OK;
+
 import java.nio.channels.SelectionKey;
 import java.nio.charset.StandardCharsets;
-
 import javax.security.sasl.SaslServer;
-
 import org.apache.thrift.TByteArrayOutputStream;
 import org.apache.thrift.TProcessor;
 import org.apache.thrift.protocol.TProtocol;
@@ -37,12 +38,7 @@ import org.apache.thrift.transport.sasl.TSaslNegotiationException.ErrorType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static org.apache.thrift.transport.sasl.NegotiationStatus.COMPLETE;
-import static org.apache.thrift.transport.sasl.NegotiationStatus.OK;
-
-/**
- * State machine managing one sasl connection in a nonblocking way.
- */
+/** State machine managing one sasl connection in a nonblocking way. */
 public class NonblockingSaslHandler {
   private static final Logger LOGGER = LoggerFactory.getLogger(NonblockingSaslHandler.class);
 
@@ -86,10 +82,14 @@ public class NonblockingSaslHandler {
   // If sasl is negotiated for integrity/confidentiality protection
   private boolean dataProtected;
 
-  public NonblockingSaslHandler(SelectionKey selectionKey, TNonblockingTransport underlyingTransport,
-                                TSaslServerFactory saslServerFactory, TSaslProcessorFactory processorFactory,
-                                TProtocolFactory inputProtocolFactory, TProtocolFactory outputProtocolFactory,
-                                TServerEventHandler eventHandler) {
+  public NonblockingSaslHandler(
+      SelectionKey selectionKey,
+      TNonblockingTransport underlyingTransport,
+      TSaslServerFactory saslServerFactory,
+      TSaslProcessorFactory processorFactory,
+      TProtocolFactory inputProtocolFactory,
+      TProtocolFactory outputProtocolFactory,
+      TServerEventHandler eventHandler) {
     this.selectionKey = selectionKey;
     this.underlyingTransport = underlyingTransport;
     this.saslServerFactory = saslServerFactory;
@@ -114,8 +114,8 @@ public class NonblockingSaslHandler {
   }
 
   /**
-   * Get next phase of the state machine.
-   * It is different from current phase iff current phase is done (and next phase not yet started).
+   * Get next phase of the state machine. It is different from current phase iff current phase is
+   * done (and next phase not yet started).
    *
    * @return next phase.
    */
@@ -123,26 +123,17 @@ public class NonblockingSaslHandler {
     return nextPhase;
   }
 
-  /**
-   *
-   * @return underlying nonblocking socket
-   */
+  /** @return underlying nonblocking socket */
   public TNonblockingTransport getUnderlyingTransport() {
     return underlyingTransport;
   }
 
-  /**
-   *
-   * @return SaslServer instance
-   */
+  /** @return SaslServer instance */
   public SaslServer getSaslServer() {
     return saslPeer.getSaslServer();
   }
 
-  /**
-   *
-   * @return true if current phase is done.
-   */
+  /** @return true if current phase is done. */
   public boolean isCurrentPhaseDone() {
     return currentPhase != nextPhase;
   }
@@ -178,8 +169,8 @@ public class NonblockingSaslHandler {
 
   private void handleOps(int interestOps) {
     if (currentPhase.selectionInterest != interestOps) {
-      throw new IllegalStateException("Current phase " + currentPhase + " but got interest " +
-          interestOps);
+      throw new IllegalStateException(
+          "Current phase " + currentPhase + " but got interest " + interestOps);
     }
     runCurrentPhase();
     if (isCurrentPhaseDone() && nextPhase.selectionInterest == interestOps) {
@@ -190,8 +181,8 @@ public class NonblockingSaslHandler {
 
   /**
    * When current phase is finished, it's expected to call this method first before running the
-   * state machine again.
-   * By calling this, "next phase" is marked as started (and not done), thus is ready to run.
+   * state machine again. By calling this, "next phase" is marked as started (and not done), thus is
+   * ready to run.
    *
    * @throws IllegalArgumentException if current phase is not yet done.
    */
@@ -207,8 +198,8 @@ public class NonblockingSaslHandler {
     }
     // If next phase's interest is not the same as current,  nor the same as the selection key,
     // we need to change interest on the selector.
-    if (!(nextPhase.selectionInterest == currentPhase.selectionInterest ||
-        nextPhase.selectionInterest == selectionKey.interestOps())) {
+    if (!(nextPhase.selectionInterest == currentPhase.selectionInterest
+        || nextPhase.selectionInterest == selectionKey.interestOps())) {
       changeSelectionInterest(nextPhase.selectionInterest);
     }
     currentPhase = nextPhase;
@@ -222,8 +213,8 @@ public class NonblockingSaslHandler {
   private void failSaslNegotiation(TSaslNegotiationException e) {
     LOGGER.error("Sasl negotiation failed", e);
     String errorMsg = e.getDetails();
-    saslChallenge.withHeaderAndPayload(new byte[]{e.getErrorType().code.getValue()},
-        errorMsg.getBytes(StandardCharsets.UTF_8));
+    saslChallenge.withHeaderAndPayload(
+        new byte[] {e.getErrorType().code.getValue()}, errorMsg.getBytes(StandardCharsets.UTF_8));
     nextPhase = Phase.WRITING_FAILURE_MESSAGE;
   }
 
@@ -233,10 +224,8 @@ public class NonblockingSaslHandler {
   }
 
   private void failIO(TTransportException e) {
-    StringBuilder errorMsg = new StringBuilder("IO failure ")
-        .append(e.getType())
-        .append(" in ")
-        .append(currentPhase);
+    StringBuilder errorMsg =
+        new StringBuilder("IO failure ").append(e.getType()).append(" in ").append(currentPhase);
     if (e.getMessage() != null) {
       errorMsg.append(": ").append(e.getMessage());
     }
@@ -252,7 +241,8 @@ public class NonblockingSaslHandler {
       if (saslResponse.isComplete()) {
         SaslNegotiationHeaderReader startHeader = saslResponse.getHeader();
         if (startHeader.getStatus() != NegotiationStatus.START) {
-          throw new TInvalidSaslFrameException("Expecting START status but got " + startHeader.getStatus());
+          throw new TInvalidSaslFrameException(
+              "Expecting START status but got " + startHeader.getStatus());
         }
         String mechanism = new String(saslResponse.getPayload(), StandardCharsets.UTF_8);
         saslPeer = saslServerFactory.getSaslPeer(mechanism);
@@ -293,8 +283,10 @@ public class NonblockingSaslHandler {
   // Computation executions
 
   private void executeEvaluatingSaslResponse() {
-    if (!(saslResponse.getHeader().getStatus() == OK || saslResponse.getHeader().getStatus() == COMPLETE)) {
-      String error = "Expect status OK or COMPLETE, but got " + saslResponse.getHeader().getStatus();
+    if (!(saslResponse.getHeader().getStatus() == OK
+        || saslResponse.getHeader().getStatus() == COMPLETE)) {
+      String error =
+          "Expect status OK or COMPLETE, but got " + saslResponse.getHeader().getStatus();
       failSaslNegotiation(new TSaslNegotiationException(ErrorType.PROTOCOL_ERROR, error));
       return;
     }
@@ -304,10 +296,10 @@ public class NonblockingSaslHandler {
       byte[] newChallenge = saslPeer.evaluate(response);
       if (saslPeer.isAuthenticated()) {
         dataProtected = saslPeer.isDataProtected();
-        saslChallenge.withHeaderAndPayload(new byte[]{COMPLETE.getValue()}, newChallenge);
+        saslChallenge.withHeaderAndPayload(new byte[] {COMPLETE.getValue()}, newChallenge);
         nextPhase = Phase.WRITING_SUCCESS_MESSAGE;
       } else {
-        saslChallenge.withHeaderAndPayload(new byte[]{OK.getValue()}, newChallenge);
+        saslChallenge.withHeaderAndPayload(new byte[] {OK.getValue()}, newChallenge);
         nextPhase = Phase.WRITING_SASL_CHALLENGE;
       }
     } catch (TSaslNegotiationException e) {
@@ -344,7 +336,7 @@ public class NonblockingSaslHandler {
         byte[] outputPayload = saslPeer.wrap(rawOutput.get(), 0, rawOutput.len());
         responseWriter.withOnlyPayload(outputPayload);
       } else {
-        responseWriter.withOnlyPayload(rawOutput.get(), 0 ,rawOutput.len());
+        responseWriter.withOnlyPayload(rawOutput.get(), 0, rawOutput.len());
       }
       nextPhase = Phase.WRITING_RESPONSE;
     } catch (TTransportException e) {
@@ -406,8 +398,9 @@ public class NonblockingSaslHandler {
   }
 
   /**
-   * Release all the resources managed by this state machine (connection, selection and sasl server).
-   * To avoid being blocked, this should be invoked in the network thread that manages the selector.
+   * Release all the resources managed by this state machine (connection, selection and sasl
+   * server). To avoid being blocked, this should be invoked in the network thread that manages the
+   * selector.
    */
   public void close() {
     underlyingTransport.close();
@@ -416,7 +409,8 @@ public class NonblockingSaslHandler {
       saslPeer.dispose();
     }
     if (serverContextCreated) {
-      eventHandler.deleteContext(serverContext,
+      eventHandler.deleteContext(
+          serverContext,
           inputProtocolFactory.getProtocol(underlyingTransport),
           outputProtocolFactory.getProtocol(underlyingTransport));
     }
@@ -491,8 +485,7 @@ public class NonblockingSaslHandler {
       void unsafeRun(NonblockingSaslHandler statemachine) {
         // Do nothing.
       }
-    }
-    ;
+    };
 
     // The interest on the selection key during the phase
     private int selectionInterest;
@@ -511,8 +504,8 @@ public class NonblockingSaslHandler {
      */
     void runStateMachine(NonblockingSaslHandler statemachine) {
       if (statemachine.currentPhase != this) {
-        throw new IllegalArgumentException("State machine is " + statemachine.currentPhase +
-            " but is expected to be " + this);
+        throw new IllegalArgumentException(
+            "State machine is " + statemachine.currentPhase + " but is expected to be " + this);
       }
       if (statemachine.isCurrentPhaseDone()) {
         throw new IllegalStateException("State machine should step into " + statemachine.nextPhase);

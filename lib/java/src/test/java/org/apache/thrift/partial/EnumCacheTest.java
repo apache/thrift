@@ -19,16 +19,14 @@
 
 package org.apache.thrift.partial;
 
-import org.apache.thrift.TEnum;
-import org.junit.jupiter.api.Test;
-
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-/**
- * Test ThriftCodec serializes and deserializes thrift objects correctly.
- */
+import org.apache.thrift.TEnum;
+import org.junit.jupiter.api.Test;
+
+/** Test ThriftCodec serializes and deserializes thrift objects correctly. */
 public class EnumCacheTest {
 
   enum TestEnum implements TEnum {
@@ -54,7 +52,7 @@ public class EnumCacheTest {
     public static final NotEnum Bob = new NotEnum(10);
     public static final NotEnum Charlie = new NotEnum(11);
 
-    private static final NotEnum[] allValues = { Alice, Bob, Charlie };
+    private static final NotEnum[] allValues = {Alice, Bob, Charlie};
 
     private int value;
 
@@ -86,9 +84,7 @@ public class EnumCacheTest {
 
     // Verify it throws.
     assertThrows(
-        IllegalArgumentException.class,
-        () -> cache.get(null, 1),
-        "'enumClass' must not be null");
+        IllegalArgumentException.class, () -> cache.get(null, 1), "'enumClass' must not be null");
   }
 
   @Test

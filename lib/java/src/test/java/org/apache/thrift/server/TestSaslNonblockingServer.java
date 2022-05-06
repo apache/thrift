@@ -19,6 +19,10 @@
 
 package org.apache.thrift.server;
 
+import static org.apache.thrift.transport.sasl.TSaslNegotiationException.ErrorType.AUTHENTICATION_FAILURE;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import org.apache.thrift.TProcessor;
 import org.apache.thrift.protocol.TBinaryProtocol;
 import org.apache.thrift.protocol.TProtocolFactory;
@@ -34,26 +38,28 @@ import org.apache.thrift.transport.sasl.TSaslNegotiationException;
 import org.junit.jupiter.api.Test;
 import thrift.test.ThriftTest;
 
-import static org.apache.thrift.transport.sasl.TSaslNegotiationException.ErrorType.AUTHENTICATION_FAILURE;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-
 public class TestSaslNonblockingServer extends TestTSaslTransports.TestTSaslTransportsWithServer {
 
   private TSaslNonblockingServer server;
 
   @Override
-  public void startServer(TProcessor processor, TProtocolFactory protoFactory, TTransportFactory factory)
+  public void startServer(
+      TProcessor processor, TProtocolFactory protoFactory, TTransportFactory factory)
       throws Exception {
-    TNonblockingServerTransport serverSocket = new TNonblockingServerSocket(
-        new TNonblockingServerSocket.NonblockingAbstractServerSocketArgs().port(PORT));
-    TSaslNonblockingServer.Args args = new TSaslNonblockingServer.Args(serverSocket)
-        .processor(processor)
-        .transportFactory(factory)
-        .protocolFactory(protoFactory)
-        .addSaslMechanism(TestTSaslTransports.WRAPPED_MECHANISM, TestTSaslTransports.SERVICE,
-            TestTSaslTransports.HOST, TestTSaslTransports.WRAPPED_PROPS,
-            new TestSaslCallbackHandler(TestTSaslTransports.PASSWORD));
+    TNonblockingServerTransport serverSocket =
+        new TNonblockingServerSocket(
+            new TNonblockingServerSocket.NonblockingAbstractServerSocketArgs().port(PORT));
+    TSaslNonblockingServer.Args args =
+        new TSaslNonblockingServer.Args(serverSocket)
+            .processor(processor)
+            .transportFactory(factory)
+            .protocolFactory(protoFactory)
+            .addSaslMechanism(
+                TestTSaslTransports.WRAPPED_MECHANISM,
+                TestTSaslTransports.SERVICE,
+                TestTSaslTransports.HOST,
+                TestTSaslTransports.WRAPPED_PROPS,
+                new TestSaslCallbackHandler(TestTSaslTransports.PASSWORD));
     server = new TSaslNonblockingServer(args);
     server.serve();
   }
@@ -77,14 +83,25 @@ public class TestSaslNonblockingServer extends TestTSaslTransports.TestTSaslTran
 
     TSocket socket = new TSocket(HOST, PORT);
     socket.setTimeout(SOCKET_TIMEOUT);
-    try (TSaslClientTransport client = new TSaslClientTransport(TestTSaslTransports.WRAPPED_MECHANISM,
-            TestTSaslTransports.PRINCIPAL, TestTSaslTransports.SERVICE, TestTSaslTransports.HOST,
-            TestTSaslTransports.WRAPPED_PROPS, new TestSaslCallbackHandler("bad_password"), socket)) {
-      TTransportException error = assertThrows(TTransportException.class, client::open, "Client should fail with sasl negotiation.");
-      TSaslNegotiationException serverSideError = new TSaslNegotiationException(AUTHENTICATION_FAILURE,
+    try (TSaslClientTransport client =
+        new TSaslClientTransport(
+            TestTSaslTransports.WRAPPED_MECHANISM,
+            TestTSaslTransports.PRINCIPAL,
+            TestTSaslTransports.SERVICE,
+            TestTSaslTransports.HOST,
+            TestTSaslTransports.WRAPPED_PROPS,
+            new TestSaslCallbackHandler("bad_password"),
+            socket)) {
+      TTransportException error =
+          assertThrows(
+              TTransportException.class, client::open, "Client should fail with sasl negotiation.");
+      TSaslNegotiationException serverSideError =
+          new TSaslNegotiationException(
+              AUTHENTICATION_FAILURE,
               "Authentication failed with " + TestTSaslTransports.WRAPPED_MECHANISM);
-      assertTrue(error.getMessage().contains(serverSideError.getSummary()),
-              "Server should return error message \"" + serverSideError.getSummary() + "\"");
+      assertTrue(
+          error.getMessage().contains(serverSideError.getSummary()),
+          "Server should return error message \"" + serverSideError.getSummary() + "\"");
     } finally {
       stopServer();
     }

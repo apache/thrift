@@ -18,50 +18,49 @@
 
 package org.apache.thrift.transport;
 
-import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
-
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import org.junit.jupiter.api.Test;
 
 public class TestTIOStreamTransport {
-    // THRIFT-5022
-    @Test
-    public void testOpenClose_2streams() throws TTransportException {
-        byte[] dummy = {20}; // So the input stream isn't EOF immediately.
-        InputStream input = new ByteArrayInputStream(dummy);
-        OutputStream output = new ByteArrayOutputStream();
-        TTransport transport = new TIOStreamTransport(input, output);
-        runOpenClose(transport);
-    }
+  // THRIFT-5022
+  @Test
+  public void testOpenClose_2streams() throws TTransportException {
+    byte[] dummy = {20}; // So the input stream isn't EOF immediately.
+    InputStream input = new ByteArrayInputStream(dummy);
+    OutputStream output = new ByteArrayOutputStream();
+    TTransport transport = new TIOStreamTransport(input, output);
+    runOpenClose(transport);
+  }
 
-    // THRIFT-5022
-    @Test
-    public void testOpenClose_1input() throws TTransportException {
-        byte[] dummy = {20};
-        InputStream input = new ByteArrayInputStream(dummy);
-        TTransport transport = new TIOStreamTransport(input);
-        runOpenClose(transport);
-    }
+  // THRIFT-5022
+  @Test
+  public void testOpenClose_1input() throws TTransportException {
+    byte[] dummy = {20};
+    InputStream input = new ByteArrayInputStream(dummy);
+    TTransport transport = new TIOStreamTransport(input);
+    runOpenClose(transport);
+  }
 
-    // THRIFT-5022
-    @Test
-    public void testIOpenClose_1output() throws TTransportException {
-        OutputStream output = new ByteArrayOutputStream();
-        TTransport transport = new TIOStreamTransport(output);
-        runOpenClose(transport);
-    }
+  // THRIFT-5022
+  @Test
+  public void testIOpenClose_1output() throws TTransportException {
+    OutputStream output = new ByteArrayOutputStream();
+    TTransport transport = new TIOStreamTransport(output);
+    runOpenClose(transport);
+  }
 
-    private void runOpenClose(TTransport transport) throws TTransportException {
-        transport.open();
-        boolean b1 = transport.isOpen();
-        assertTrue(b1);
-        transport.close();
-        boolean b2 = transport.isOpen();
-        assertFalse(b2);
-    }
+  private void runOpenClose(TTransport transport) throws TTransportException {
+    transport.open();
+    boolean b1 = transport.isOpen();
+    assertTrue(b1);
+    transport.close();
+    boolean b2 = transport.isOpen();
+    assertFalse(b2);
+  }
 }

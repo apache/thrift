@@ -18,27 +18,28 @@
  */
 package org.apache.thrift.protocol;
 
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import org.apache.thrift.TSerializer;
 import org.junit.jupiter.api.Test;
 import thrift.test.GuessProtocolStruct;
 
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-
-public class TestTProtocolUtil  {
+public class TestTProtocolUtil {
 
   @Test
   public void testGuessProtocolFactory_JSON() throws Exception {
 
     byte[] data = "{foo}".getBytes();
-    TProtocolFactory factory = TProtocolUtil.guessProtocolFactory(data, new TCompactProtocol.Factory());
+    TProtocolFactory factory =
+        TProtocolUtil.guessProtocolFactory(data, new TCompactProtocol.Factory());
     assertTrue(factory instanceof TJSONProtocol.Factory);
 
     // Make sure data serialized with TCompact and which starts with '{'
     // is not mistakenly guessed as serialized with JSON.
 
     GuessProtocolStruct s = new GuessProtocolStruct();
-    s.putToMap_field("}","}");
+    s.putToMap_field("}", "}");
     byte[] ser = new TSerializer(new TCompactProtocol.Factory()).serialize(s);
     factory = TProtocolUtil.guessProtocolFactory(ser, new TCompactProtocol.Factory());
     assertFalse(factory instanceof TJSONProtocol.Factory);
@@ -51,13 +52,15 @@ public class TestTProtocolUtil  {
     byte[] buf = new byte[1];
     for (int i = 1; i < 256; i++) {
       buf[0] = (byte) i;
-      TProtocolFactory factory = TProtocolUtil.guessProtocolFactory(buf, new TCompactProtocol.Factory());
+      TProtocolFactory factory =
+          TProtocolUtil.guessProtocolFactory(buf, new TCompactProtocol.Factory());
       assertTrue(factory instanceof TBinaryProtocol.Factory);
     }
 
     // Check that a second byte set to 0 is reported as Binary
     buf = new byte[2];
-    TProtocolFactory factory = TProtocolUtil.guessProtocolFactory(buf, new TCompactProtocol.Factory());
+    TProtocolFactory factory =
+        TProtocolUtil.guessProtocolFactory(buf, new TCompactProtocol.Factory());
     assertTrue(factory instanceof TBinaryProtocol.Factory);
   }
 
@@ -66,7 +69,8 @@ public class TestTProtocolUtil  {
     // Check that a first byte > 0x10 is reported as Compact
     byte[] buf = new byte[3];
     buf[0] = 0x11;
-    TProtocolFactory factory = TProtocolUtil.guessProtocolFactory(buf, new TBinaryProtocol.Factory());
+    TProtocolFactory factory =
+        TProtocolUtil.guessProtocolFactory(buf, new TBinaryProtocol.Factory());
     assertTrue(factory instanceof TCompactProtocol.Factory);
 
     // Check that second byte >= 0x80 is reported as Compact
@@ -82,7 +86,8 @@ public class TestTProtocolUtil  {
   public void testGuessProtocolFactory_Undecided() throws Exception {
     byte[] buf = new byte[3];
     buf[1] = 0x7e;
-    TProtocolFactory factory = TProtocolUtil.guessProtocolFactory(buf, new TSimpleJSONProtocol.Factory());
+    TProtocolFactory factory =
+        TProtocolUtil.guessProtocolFactory(buf, new TSimpleJSONProtocol.Factory());
     assertTrue(factory instanceof TSimpleJSONProtocol.Factory);
   }
 }

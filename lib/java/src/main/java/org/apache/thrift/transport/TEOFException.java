@@ -19,9 +19,7 @@
 
 package org.apache.thrift.transport;
 
-/**
- * End of file, especially, the underlying socket is closed.
- */
+/** End of file, especially, the underlying socket is closed. */
 public class TEOFException extends TTransportException {
 
   public TEOFException(String message) {

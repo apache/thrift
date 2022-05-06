@@ -19,6 +19,9 @@
 
 package org.apache.thrift;
 
+import java.io.UnsupportedEncodingException;
+import java.nio.ByteBuffer;
+import java.util.Collection;
 import org.apache.thrift.meta_data.EnumMetaData;
 import org.apache.thrift.meta_data.StructMetaData;
 import org.apache.thrift.partial.TFieldData;
@@ -38,15 +41,7 @@ import org.apache.thrift.protocol.TType;
 import org.apache.thrift.transport.TMemoryInputTransport;
 import org.apache.thrift.transport.TTransportException;
 
-import java.io.UnsupportedEncodingException;
-import java.nio.ByteBuffer;
-import java.util.Collection;
-
-/**
- * Generic utility for easily deserializing objects from a byte array or Java
- * String.
- *
- */
+/** Generic utility for easily deserializing objects from a byte array or Java String. */
 public class TDeserializer {
   private final TProtocol protocol_;
   private final TMemoryInputTransport trans_;
@@ -67,8 +62,8 @@ public class TDeserializer {
   }
 
   /**
-   * Create a new TDeserializer. It will use the TProtocol specified by the
-   * factory that is passed in.
+   * Create a new TDeserializer. It will use the TProtocol specified by the factory that is passed
+   * in.
    *
    * @param protocolFactory Factory to create a protocol
    * @throws TTransportException if there an error initializing the underlying transport.
@@ -79,8 +74,8 @@ public class TDeserializer {
   }
 
   /**
-   * Construct a new TDeserializer that supports partial deserialization
-   * that outputs instances of type controlled by the given {@code processor}.
+   * Construct a new TDeserializer that supports partial deserialization that outputs instances of
+   * type controlled by the given {@code processor}.
    *
    * @param thriftClass a TBase derived class.
    * @param fieldNames list of fields to deserialize.
@@ -91,7 +86,8 @@ public class TDeserializer {
       Class<? extends TBase> thriftClass,
       Collection<String> fieldNames,
       ThriftFieldValueProcessor processor,
-      TProtocolFactory protocolFactory) throws TTransportException {
+      TProtocolFactory protocolFactory)
+      throws TTransportException {
     this(protocolFactory);
 
     Validate.checkNotNull(thriftClass, "thriftClass");
@@ -103,8 +99,8 @@ public class TDeserializer {
   }
 
   /**
-   * Construct a new TDeserializer that supports partial deserialization
-   * that outputs {@code TBase} instances.
+   * Construct a new TDeserializer that supports partial deserialization that outputs {@code TBase}
+   * instances.
    *
    * @param thriftClass a TBase derived class.
    * @param fieldNames list of fields to deserialize.
@@ -113,7 +109,8 @@ public class TDeserializer {
   public TDeserializer(
       Class<? extends TBase> thriftClass,
       Collection<String> fieldNames,
-      TProtocolFactory protocolFactory) throws TTransportException {
+      TProtocolFactory protocolFactory)
+      throws TTransportException {
     this(thriftClass, fieldNames, new ThriftStructProcessor(), protocolFactory);
   }
 
@@ -134,7 +131,7 @@ public class TDeserializer {
    * @throws TException if an error is encountered during deserialization.
    */
   public void deserialize(TBase base, byte[] bytes) throws TException {
-      deserialize(base, bytes, 0, bytes.length);
+    deserialize(base, bytes, 0, bytes.length);
   }
 
   /**
@@ -161,8 +158,7 @@ public class TDeserializer {
   }
 
   /**
-   * Deserialize the Thrift object from a Java string, using a specified
-   * character set for decoding.
+   * Deserialize the Thrift object from a Java string, using a specified character set for decoding.
    *
    * @param base The object to read into
    * @param data The string to read from
@@ -180,15 +176,18 @@ public class TDeserializer {
   }
 
   /**
-   * Deserialize only a single Thrift object (addressed by recursively using field id)
-   * from a byte record.
+   * Deserialize only a single Thrift object (addressed by recursively using field id) from a byte
+   * record.
+   *
    * @param tb The object to read into
    * @param bytes The serialized object to read from
    * @param fieldIdPathFirst First of the FieldId's that define a path tb
    * @param fieldIdPathRest The rest FieldId's that define a path tb
    * @throws TException if an error is encountered during deserialization.
    */
-  public void partialDeserialize(TBase tb, byte[] bytes, TFieldIdEnum fieldIdPathFirst, TFieldIdEnum ... fieldIdPathRest) throws TException {
+  public void partialDeserialize(
+      TBase tb, byte[] bytes, TFieldIdEnum fieldIdPathFirst, TFieldIdEnum... fieldIdPathRest)
+      throws TException {
     try {
       if (locateField(bytes, fieldIdPathFirst, fieldIdPathRest) != null) {
         // if this line is reached, iprot will be positioned at the start of tb.
@@ -203,123 +202,143 @@ public class TDeserializer {
   }
 
   /**
-   * Deserialize only a boolean field (addressed by recursively using field id)
-   * from a byte record.
+   * Deserialize only a boolean field (addressed by recursively using field id) from a byte record.
+   *
    * @param bytes The serialized object to read from
    * @param fieldIdPathFirst First of the FieldId's that define a path to a boolean field
    * @param fieldIdPathRest The rest FieldId's that define a path to a boolean field
    * @return the deserialized value.
    * @throws TException if an error is encountered during deserialization.
    */
-  public Boolean partialDeserializeBool(byte[] bytes, TFieldIdEnum fieldIdPathFirst, TFieldIdEnum ... fieldIdPathRest) throws TException {
+  public Boolean partialDeserializeBool(
+      byte[] bytes, TFieldIdEnum fieldIdPathFirst, TFieldIdEnum... fieldIdPathRest)
+      throws TException {
     return (Boolean) partialDeserializeField(TType.BOOL, bytes, fieldIdPathFirst, fieldIdPathRest);
   }
 
   /**
-   * Deserialize only a byte field (addressed by recursively using field id)
-   * from a byte record.
+   * Deserialize only a byte field (addressed by recursively using field id) from a byte record.
+   *
    * @param bytes The serialized object to read from
    * @param fieldIdPathFirst First of the FieldId's that define a path to a byte field
    * @param fieldIdPathRest The rest FieldId's that define a path to a byte field
    * @return the deserialized value.
    * @throws TException if an error is encountered during deserialization.
    */
-  public Byte partialDeserializeByte(byte[] bytes, TFieldIdEnum fieldIdPathFirst, TFieldIdEnum ... fieldIdPathRest) throws TException {
+  public Byte partialDeserializeByte(
+      byte[] bytes, TFieldIdEnum fieldIdPathFirst, TFieldIdEnum... fieldIdPathRest)
+      throws TException {
     return (Byte) partialDeserializeField(TType.BYTE, bytes, fieldIdPathFirst, fieldIdPathRest);
   }
 
   /**
-   * Deserialize only a double field (addressed by recursively using field id)
-   * from a byte record.
+   * Deserialize only a double field (addressed by recursively using field id) from a byte record.
+   *
    * @param bytes The serialized object to read from
    * @param fieldIdPathFirst First of the FieldId's that define a path to a double field
    * @param fieldIdPathRest The rest FieldId's that define a path to a double field
    * @return the deserialized value.
    * @throws TException if an error is encountered during deserialization.
    */
-  public Double partialDeserializeDouble(byte[] bytes, TFieldIdEnum fieldIdPathFirst, TFieldIdEnum ... fieldIdPathRest) throws TException {
+  public Double partialDeserializeDouble(
+      byte[] bytes, TFieldIdEnum fieldIdPathFirst, TFieldIdEnum... fieldIdPathRest)
+      throws TException {
     return (Double) partialDeserializeField(TType.DOUBLE, bytes, fieldIdPathFirst, fieldIdPathRest);
   }
 
   /**
-   * Deserialize only an i16 field (addressed by recursively using field id)
-   * from a byte record.
+   * Deserialize only an i16 field (addressed by recursively using field id) from a byte record.
+   *
    * @param bytes The serialized object to read from
    * @param fieldIdPathFirst First of the FieldId's that define a path to an i16 field
    * @param fieldIdPathRest The rest FieldId's that define a path to an i16 field
    * @return the deserialized value.
    * @throws TException if an error is encountered during deserialization.
    */
-  public Short partialDeserializeI16(byte[] bytes, TFieldIdEnum fieldIdPathFirst, TFieldIdEnum ... fieldIdPathRest) throws TException {
+  public Short partialDeserializeI16(
+      byte[] bytes, TFieldIdEnum fieldIdPathFirst, TFieldIdEnum... fieldIdPathRest)
+      throws TException {
     return (Short) partialDeserializeField(TType.I16, bytes, fieldIdPathFirst, fieldIdPathRest);
   }
 
   /**
-   * Deserialize only an i32 field (addressed by recursively using field id)
-   * from a byte record.
+   * Deserialize only an i32 field (addressed by recursively using field id) from a byte record.
+   *
    * @param bytes The serialized object to read from
    * @param fieldIdPathFirst First of the FieldId's that define a path to an i32 field
    * @param fieldIdPathRest The rest FieldId's that define a path to an i32 field
    * @return the deserialized value.
    * @throws TException if an error is encountered during deserialization.
    */
-  public Integer partialDeserializeI32(byte[] bytes, TFieldIdEnum fieldIdPathFirst, TFieldIdEnum ... fieldIdPathRest) throws TException {
+  public Integer partialDeserializeI32(
+      byte[] bytes, TFieldIdEnum fieldIdPathFirst, TFieldIdEnum... fieldIdPathRest)
+      throws TException {
     return (Integer) partialDeserializeField(TType.I32, bytes, fieldIdPathFirst, fieldIdPathRest);
   }
 
   /**
-   * Deserialize only an i64 field (addressed by recursively using field id)
-   * from a byte record.
+   * Deserialize only an i64 field (addressed by recursively using field id) from a byte record.
+   *
    * @param bytes The serialized object to read from
    * @param fieldIdPathFirst First of the FieldId's that define a path to an i64 field
    * @param fieldIdPathRest The rest FieldId's that define a path to an i64 field
    * @return the deserialized value.
    * @throws TException if an error is encountered during deserialization.
    */
-  public Long partialDeserializeI64(byte[] bytes, TFieldIdEnum fieldIdPathFirst, TFieldIdEnum ... fieldIdPathRest) throws TException {
+  public Long partialDeserializeI64(
+      byte[] bytes, TFieldIdEnum fieldIdPathFirst, TFieldIdEnum... fieldIdPathRest)
+      throws TException {
     return (Long) partialDeserializeField(TType.I64, bytes, fieldIdPathFirst, fieldIdPathRest);
   }
 
   /**
-   * Deserialize only a string field (addressed by recursively using field id)
-   * from a byte record.
+   * Deserialize only a string field (addressed by recursively using field id) from a byte record.
+   *
    * @param bytes The serialized object to read from
    * @param fieldIdPathFirst First of the FieldId's that define a path to a string field
    * @param fieldIdPathRest The rest FieldId's that define a path to a string field
    * @return the deserialized value.
    * @throws TException if an error is encountered during deserialization.
    */
-  public String partialDeserializeString(byte[] bytes, TFieldIdEnum fieldIdPathFirst, TFieldIdEnum ... fieldIdPathRest) throws TException {
+  public String partialDeserializeString(
+      byte[] bytes, TFieldIdEnum fieldIdPathFirst, TFieldIdEnum... fieldIdPathRest)
+      throws TException {
     return (String) partialDeserializeField(TType.STRING, bytes, fieldIdPathFirst, fieldIdPathRest);
   }
 
   /**
-   * Deserialize only a binary field (addressed by recursively using field id)
-   * from a byte record.
+   * Deserialize only a binary field (addressed by recursively using field id) from a byte record.
+   *
    * @param bytes The serialized object to read from
    * @param fieldIdPathFirst First of the FieldId's that define a path to a binary field
    * @param fieldIdPathRest The rest FieldId's that define a path to a binary field
    * @return the deserialized value.
    * @throws TException if an error is encountered during deserialization.
    */
-  public ByteBuffer partialDeserializeByteArray(byte[] bytes, TFieldIdEnum fieldIdPathFirst, TFieldIdEnum ... fieldIdPathRest) throws TException {
+  public ByteBuffer partialDeserializeByteArray(
+      byte[] bytes, TFieldIdEnum fieldIdPathFirst, TFieldIdEnum... fieldIdPathRest)
+      throws TException {
     // TType does not have binary, so we use the arbitrary num 100
-    return (ByteBuffer) partialDeserializeField((byte)100, bytes, fieldIdPathFirst, fieldIdPathRest);
+    return (ByteBuffer)
+        partialDeserializeField((byte) 100, bytes, fieldIdPathFirst, fieldIdPathRest);
   }
 
   /**
    * Deserialize only the id of the field set in a TUnion (addressed by recursively using field id)
    * from a byte record.
+   *
    * @param bytes The serialized object to read from
    * @param fieldIdPathFirst First of the FieldId's that define a path to a TUnion
    * @param fieldIdPathRest The rest FieldId's that define a path to a TUnion
    * @return the deserialized value.
    * @throws TException if an error is encountered during deserialization.
    */
-  public Short partialDeserializeSetFieldIdInUnion(byte[] bytes, TFieldIdEnum fieldIdPathFirst, TFieldIdEnum ... fieldIdPathRest)  throws TException {
+  public Short partialDeserializeSetFieldIdInUnion(
+      byte[] bytes, TFieldIdEnum fieldIdPathFirst, TFieldIdEnum... fieldIdPathRest)
+      throws TException {
     try {
       TField field = locateField(bytes, fieldIdPathFirst, fieldIdPathRest);
-      if (field != null){
+      if (field != null) {
         protocol_.readStructBegin(); // The Union
         return protocol_.readFieldBegin().id; // The field set in the union
       }
@@ -332,7 +351,9 @@ public class TDeserializer {
     }
   }
 
-  private Object partialDeserializeField(byte ttype, byte[] bytes, TFieldIdEnum fieldIdPathFirst, TFieldIdEnum ... fieldIdPathRest) throws TException {
+  private Object partialDeserializeField(
+      byte ttype, byte[] bytes, TFieldIdEnum fieldIdPathFirst, TFieldIdEnum... fieldIdPathRest)
+      throws TException {
     try {
       TField field = locateField(bytes, fieldIdPathFirst, fieldIdPathRest);
       if (field != null) {
@@ -340,22 +361,22 @@ public class TDeserializer {
           // if this point is reached, iprot will be positioned at the start of
           // the field
           switch (ttype) {
-          case TType.BOOL:
-            return protocol_.readBool();
-          case TType.BYTE:
-            return protocol_.readByte();
-          case TType.DOUBLE:
-            return protocol_.readDouble();
-          case TType.I16:
-            return protocol_.readI16();
-          case TType.I32:
-            return protocol_.readI32();
-          case TType.I64:
-            return protocol_.readI64();
-          case TType.STRING:
-            return protocol_.readString();
-          default:
-            return null;
+            case TType.BOOL:
+              return protocol_.readBool();
+            case TType.BYTE:
+              return protocol_.readByte();
+            case TType.DOUBLE:
+              return protocol_.readDouble();
+            case TType.I16:
+              return protocol_.readI16();
+            case TType.I32:
+              return protocol_.readI32();
+            case TType.I64:
+              return protocol_.readI64();
+            case TType.STRING:
+              return protocol_.readString();
+            default:
+              return null;
           }
         }
         // hack to differentiate between string and binary
@@ -372,7 +393,9 @@ public class TDeserializer {
     }
   }
 
-  private TField locateField(byte[] bytes, TFieldIdEnum fieldIdPathFirst, TFieldIdEnum ... fieldIdPathRest) throws TException {
+  private TField locateField(
+      byte[] bytes, TFieldIdEnum fieldIdPathFirst, TFieldIdEnum... fieldIdPathRest)
+      throws TException {
     trans_.reset(bytes);
 
     TFieldIdEnum[] fieldIdPath = new TFieldIdEnum[fieldIdPathRest.length + 1];
@@ -412,8 +435,7 @@ public class TDeserializer {
   }
 
   /**
-   * Deserialize the Thrift object from a Java string, using the default JVM
-   * charset encoding.
+   * Deserialize the Thrift object from a Java string, using the default JVM charset encoding.
    *
    * @param base The object to read into
    * @param data The string to read from
@@ -569,9 +591,7 @@ public class TDeserializer {
   }
 
   private void deserializeStructField(
-      Object instance,
-      TFieldIdEnum fieldId,
-      ThriftMetadata.ThriftObject data) throws TException {
+      Object instance, TFieldIdEnum fieldId, ThriftMetadata.ThriftObject data) throws TException {
 
     byte fieldType = data.data.valueMetaData.type;
     Object value;
@@ -695,8 +715,7 @@ public class TDeserializer {
   private void ensurePartialDeserializationMode() throws IllegalStateException {
     if (!this.isPartialDeserializationMode()) {
       throw new IllegalStateException(
-          "Members metadata and processor must be correctly initialized in order to use this method"
-      );
+          "Members metadata and processor must be correctly initialized in order to use this method");
     }
   }
 
@@ -705,8 +724,7 @@ public class TDeserializer {
 
     if (!(this.processor_ instanceof ThriftStructProcessor)) {
       throw new IllegalStateException(
-          "processor must be an instance of ThriftStructProcessor to use this method"
-      );
+          "processor must be an instance of ThriftStructProcessor to use this method");
     }
   }
 }

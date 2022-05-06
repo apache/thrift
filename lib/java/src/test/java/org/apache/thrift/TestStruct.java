@@ -18,6 +18,21 @@
  */
 package org.apache.thrift;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.nio.ByteBuffer;
+import java.util.HashMap;
+import java.util.Map;
 import org.apache.thrift.meta_data.FieldMetaData;
 import org.apache.thrift.meta_data.ListMetaData;
 import org.apache.thrift.meta_data.MapMetaData;
@@ -38,26 +53,10 @@ import thrift.test.StructA;
 import thrift.test.StructB;
 import thrift.test.Xtruct;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-import java.nio.ByteBuffer;
-import java.util.HashMap;
-import java.util.Map;
-
-import static org.junit.jupiter.api.Assertions.assertArrayEquals;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-
 public class TestStruct {
   @Test
   public void testIdentity() throws Exception {
-    TSerializer   binarySerializer   = new   TSerializer(new TBinaryProtocol.Factory());
+    TSerializer binarySerializer = new TSerializer(new TBinaryProtocol.Factory());
     TDeserializer binaryDeserializer = new TDeserializer(new TBinaryProtocol.Factory());
 
     OneOfEach ooe = Fixtures.getOneOfEach();
@@ -67,37 +66,31 @@ public class TestStruct {
     n.my_ooe.integer16 = 16;
     n.my_ooe.integer32 = 32;
     n.my_ooe.integer64 = 64;
-    n.my_ooe.double_precision = (Math.sqrt(5)+1)/2;
-    n.my_ooe.some_characters  = ":R (me going \"rrrr\")";
-    n.my_ooe.zomg_unicode     = "\u04c0\u216e\u039d\u0020\u041d\u03bf\u217f"+
-                                "\u043e\u0261\u0433\u0430\u03c1\u210e\u0020"+
-                                "\u0391\u0074\u0074\u03b1\u217d\u03ba\u01c3"+
-                                "\u203c";
+    n.my_ooe.double_precision = (Math.sqrt(5) + 1) / 2;
+    n.my_ooe.some_characters = ":R (me going \"rrrr\")";
+    n.my_ooe.zomg_unicode =
+        "\u04c0\u216e\u039d\u0020\u041d\u03bf\u217f"
+            + "\u043e\u0261\u0433\u0430\u03c1\u210e\u0020"
+            + "\u0391\u0074\u0074\u03b1\u217d\u03ba\u01c3"
+            + "\u203c";
     n.my_bonk = Fixtures.getNesting().my_bonk;
 
     HolyMoley hm = Fixtures.getHolyMoley();
 
     OneOfEach ooe2 = new OneOfEach();
-    binaryDeserializer.deserialize(
-        ooe2,
-        binarySerializer.serialize(ooe));
+    binaryDeserializer.deserialize(ooe2, binarySerializer.serialize(ooe));
 
     assertEquals(ooe, ooe2);
     assertEquals(ooe.hashCode(), ooe2.hashCode());
 
-
     Nesting n2 = new Nesting();
-    binaryDeserializer.deserialize(
-        n2,
-        binarySerializer.serialize(n));
+    binaryDeserializer.deserialize(n2, binarySerializer.serialize(n));
 
     assertEquals(n, n2);
     assertEquals(n.hashCode(), n2.hashCode());
 
     HolyMoley hm2 = new HolyMoley();
-    binaryDeserializer.deserialize(
-        hm2,
-        binarySerializer.serialize(hm));
+    binaryDeserializer.deserialize(hm2, binarySerializer.serialize(hm));
 
     assertEquals(hm, hm2);
     assertEquals(hm.hashCode(), hm2.hashCode());
@@ -105,7 +98,7 @@ public class TestStruct {
 
   @Test
   public void testDeepCopy() throws Exception {
-    TSerializer   binarySerializer   = new   TSerializer(new TBinaryProtocol.Factory());
+    TSerializer binarySerializer = new TSerializer(new TBinaryProtocol.Factory());
     TDeserializer binaryDeserializer = new TDeserializer(new TBinaryProtocol.Factory());
 
     HolyMoley hm = Fixtures.getHolyMoley();
@@ -195,17 +188,21 @@ public class TestStruct {
 
   private void expectLessThan(Insanity insanity1, Insanity insanity2) {
     int compareTo = insanity1.compareTo(insanity2);
-    assertTrue(compareTo < 0, insanity1 + " should be less than " + insanity2 + ", but is: " + compareTo);
+    assertTrue(
+        compareTo < 0, insanity1 + " should be less than " + insanity2 + ", but is: " + compareTo);
   }
 
   private void expectGreaterThan(Insanity insanity1, Insanity insanity2) {
     int compareTo = insanity1.compareTo(insanity2);
-    assertTrue(compareTo > 0, insanity1 + " should be greater than " + insanity2 + ", but is: " + compareTo);
+    assertTrue(
+        compareTo > 0,
+        insanity1 + " should be greater than " + insanity2 + ", but is: " + compareTo);
   }
 
   private void expectEquals(Insanity insanity1, Insanity insanity2) {
     int compareTo = insanity1.compareTo(insanity2);
-    assertEquals(0, compareTo, insanity1 + " should be equal to " + insanity2 + ", but is: " + compareTo);
+    assertEquals(
+        0, compareTo, insanity1 + " should be equal to " + insanity2 + ", but is: " + compareTo);
   }
 
   @Test
@@ -225,9 +222,13 @@ public class TestStruct {
     assertEquals("set_field", mdMap.get(CrazyNesting._Fields.SET_FIELD).fieldName);
     assertEquals("binary_field", mdMap.get(CrazyNesting._Fields.BINARY_FIELD).fieldName);
 
-    assertEquals(TFieldRequirementType.DEFAULT, mdMap.get(CrazyNesting._Fields.STRING_FIELD).requirementType);
-    assertEquals(TFieldRequirementType.REQUIRED, mdMap.get(CrazyNesting._Fields.LIST_FIELD).requirementType);
-    assertEquals(TFieldRequirementType.OPTIONAL, mdMap.get(CrazyNesting._Fields.SET_FIELD).requirementType);
+    assertEquals(
+        TFieldRequirementType.DEFAULT,
+        mdMap.get(CrazyNesting._Fields.STRING_FIELD).requirementType);
+    assertEquals(
+        TFieldRequirementType.REQUIRED, mdMap.get(CrazyNesting._Fields.LIST_FIELD).requirementType);
+    assertEquals(
+        TFieldRequirementType.OPTIONAL, mdMap.get(CrazyNesting._Fields.SET_FIELD).requirementType);
 
     assertEquals(TType.STRING, mdMap.get(CrazyNesting._Fields.STRING_FIELD).valueMetaData.type);
     assertFalse(mdMap.get(CrazyNesting._Fields.STRING_FIELD).valueMetaData.isBinary());
@@ -241,9 +242,44 @@ public class TestStruct {
 
     assertFalse(mdMap.get(CrazyNesting._Fields.LIST_FIELD).valueMetaData.isStruct());
 
-    assertEquals(TType.STRUCT, ((MapMetaData)((ListMetaData)((SetMetaData)((MapMetaData)((MapMetaData)((ListMetaData)mdMap.get(CrazyNesting._Fields.LIST_FIELD).valueMetaData).elemMetaData).valueMetaData).valueMetaData).elemMetaData).elemMetaData).keyMetaData.type);
+    assertEquals(
+        TType.STRUCT,
+        ((MapMetaData)
+                ((ListMetaData)
+                        ((SetMetaData)
+                                ((MapMetaData)
+                                        ((MapMetaData)
+                                                ((ListMetaData)
+                                                        mdMap.get(CrazyNesting._Fields.LIST_FIELD)
+                                                            .valueMetaData)
+                                                    .elemMetaData)
+                                            .valueMetaData)
+                                    .valueMetaData)
+                            .elemMetaData)
+                    .elemMetaData)
+            .keyMetaData
+            .type);
 
-    assertEquals(Insanity.class, ((StructMetaData)((MapMetaData)((ListMetaData)((SetMetaData)((MapMetaData)((MapMetaData)((ListMetaData)mdMap.get(CrazyNesting._Fields.LIST_FIELD).valueMetaData).elemMetaData).valueMetaData).valueMetaData).elemMetaData).elemMetaData).keyMetaData).structClass);
+    assertEquals(
+        Insanity.class,
+        ((StructMetaData)
+                ((MapMetaData)
+                        ((ListMetaData)
+                                ((SetMetaData)
+                                        ((MapMetaData)
+                                                ((MapMetaData)
+                                                        ((ListMetaData)
+                                                                mdMap.get(
+                                                                        CrazyNesting._Fields
+                                                                            .LIST_FIELD)
+                                                                    .valueMetaData)
+                                                            .elemMetaData)
+                                                    .valueMetaData)
+                                            .valueMetaData)
+                                    .elemMetaData)
+                            .elemMetaData)
+                    .keyMetaData)
+            .structClass);
 
     // Check that FieldMetaData contains a map with metadata for all generated struct classes
     assertNotNull(FieldMetaData.getStructMetaDataMap(CrazyNesting.class));
@@ -257,7 +293,8 @@ public class TestStruct {
       assertEquals(mdEntry.getKey(), CrazyNesting._Fields.findByName(mdEntry.getValue().fieldName));
     }
 
-    MapMetaData vmd = (MapMetaData)Insanity.metaDataMap.get(Insanity._Fields.USER_MAP).valueMetaData;
+    MapMetaData vmd =
+        (MapMetaData) Insanity.metaDataMap.get(Insanity._Fields.USER_MAP).valueMetaData;
     assertTrue(vmd.valueMetaData.isTypedef());
     assertFalse(vmd.keyMetaData.isTypedef());
   }
@@ -268,56 +305,56 @@ public class TestStruct {
     object.req_int = 0;
     object.req_obj = "";
 
-    object.req_bin = ByteBuffer.wrap(new byte[] {
-      0, -1, 2, -3, 4, -5, 6, -7, 8, -9, 10, -11, 12, -13, 14, -15,
-      16, -17, 18, -19, 20, -21, 22, -23, 24, -25, 26, -27, 28, -29,
-      30, -31, 32, -33, 34, -35, 36, -37, 38, -39, 40, -41, 42, -43, 44,
-      -45, 46, -47, 48, -49, 50, -51, 52, -53, 54, -55, 56, -57, 58, -59,
-      60, -61, 62, -63, 64, -65, 66, -67, 68, -69, 70, -71, 72, -73, 74,
-      -75, 76, -77, 78, -79, 80, -81, 82, -83, 84, -85, 86, -87, 88, -89,
-      90, -91, 92, -93, 94, -95, 96, -97, 98, -99, 100, -101, 102, -103,
-      104, -105, 106, -107, 108, -109, 110, -111, 112, -113, 114, -115,
-      116, -117, 118, -119, 120, -121, 122, -123, 124, -125, 126, -127,
-    });
+    object.req_bin =
+        ByteBuffer.wrap(
+            new byte[] {
+              0, -1, 2, -3, 4, -5, 6, -7, 8, -9, 10, -11, 12, -13, 14, -15, 16, -17, 18, -19, 20,
+              -21, 22, -23, 24, -25, 26, -27, 28, -29, 30, -31, 32, -33, 34, -35, 36, -37, 38, -39,
+              40, -41, 42, -43, 44, -45, 46, -47, 48, -49, 50, -51, 52, -53, 54, -55, 56, -57, 58,
+              -59, 60, -61, 62, -63, 64, -65, 66, -67, 68, -69, 70, -71, 72, -73, 74, -75, 76, -77,
+              78, -79, 80, -81, 82, -83, 84, -85, 86, -87, 88, -89, 90, -91, 92, -93, 94, -95, 96,
+              -97, 98, -99, 100, -101, 102, -103, 104, -105, 106, -107, 108, -109, 110, -111, 112,
+              -113, 114, -115, 116, -117, 118, -119, 120, -121, 122, -123, 124, -125, 126, -127,
+            });
 
-    assertEquals("JavaTestHelper(req_int:0, req_obj:, req_bin:"+
-        "00 FF 02 FD 04 FB 06 F9 08 F7 0A F5 0C F3 0E F1 10 EF 12 ED 14 "+
-        "EB 16 E9 18 E7 1A E5 1C E3 1E E1 20 DF 22 DD 24 DB 26 D9 28 D7 "+
-        "2A D5 2C D3 2E D1 30 CF 32 CD 34 CB 36 C9 38 C7 3A C5 3C C3 3E "+
-        "C1 40 BF 42 BD 44 BB 46 B9 48 B7 4A B5 4C B3 4E B1 50 AF 52 AD "+
-        "54 AB 56 A9 58 A7 5A A5 5C A3 5E A1 60 9F 62 9D 64 9B 66 99 68 "+
-        "97 6A 95 6C 93 6E 91 70 8F 72 8D 74 8B 76 89 78 87 7A 85 7C 83 "+
-        "7E 81)",
+    assertEquals(
+        "JavaTestHelper(req_int:0, req_obj:, req_bin:"
+            + "00 FF 02 FD 04 FB 06 F9 08 F7 0A F5 0C F3 0E F1 10 EF 12 ED 14 "
+            + "EB 16 E9 18 E7 1A E5 1C E3 1E E1 20 DF 22 DD 24 DB 26 D9 28 D7 "
+            + "2A D5 2C D3 2E D1 30 CF 32 CD 34 CB 36 C9 38 C7 3A C5 3C C3 3E "
+            + "C1 40 BF 42 BD 44 BB 46 B9 48 B7 4A B5 4C B3 4E B1 50 AF 52 AD "
+            + "54 AB 56 A9 58 A7 5A A5 5C A3 5E A1 60 9F 62 9D 64 9B 66 99 68 "
+            + "97 6A 95 6C 93 6E 91 70 8F 72 8D 74 8B 76 89 78 87 7A 85 7C 83 "
+            + "7E 81)",
         object.toString());
 
-    object.req_bin = ByteBuffer.wrap(new byte[] {
-      0, -1, 2, -3, 4, -5, 6, -7, 8, -9, 10, -11, 12, -13, 14, -15,
-      16, -17, 18, -19, 20, -21, 22, -23, 24, -25, 26, -27, 28, -29,
-      30, -31, 32, -33, 34, -35, 36, -37, 38, -39, 40, -41, 42, -43, 44,
-      -45, 46, -47, 48, -49, 50, -51, 52, -53, 54, -55, 56, -57, 58, -59,
-      60, -61, 62, -63, 64, -65, 66, -67, 68, -69, 70, -71, 72, -73, 74,
-      -75, 76, -77, 78, -79, 80, -81, 82, -83, 84, -85, 86, -87, 88, -89,
-      90, -91, 92, -93, 94, -95, 96, -97, 98, -99, 100, -101, 102, -103,
-      104, -105, 106, -107, 108, -109, 110, -111, 112, -113, 114, -115,
-      116, -117, 118, -119, 120, -121, 122, -123, 124, -125, 126, -127,
-      0,
-    });
+    object.req_bin =
+        ByteBuffer.wrap(
+            new byte[] {
+              0, -1, 2, -3, 4, -5, 6, -7, 8, -9, 10, -11, 12, -13, 14, -15, 16, -17, 18, -19, 20,
+              -21, 22, -23, 24, -25, 26, -27, 28, -29, 30, -31, 32, -33, 34, -35, 36, -37, 38, -39,
+              40, -41, 42, -43, 44, -45, 46, -47, 48, -49, 50, -51, 52, -53, 54, -55, 56, -57, 58,
+              -59, 60, -61, 62, -63, 64, -65, 66, -67, 68, -69, 70, -71, 72, -73, 74, -75, 76, -77,
+              78, -79, 80, -81, 82, -83, 84, -85, 86, -87, 88, -89, 90, -91, 92, -93, 94, -95, 96,
+              -97, 98, -99, 100, -101, 102, -103, 104, -105, 106, -107, 108, -109, 110, -111, 112,
+              -113, 114, -115, 116, -117, 118, -119, 120, -121, 122, -123, 124, -125, 126, -127, 0,
+            });
 
-    assertEquals("JavaTestHelper(req_int:0, req_obj:, req_bin:"+
-        "00 FF 02 FD 04 FB 06 F9 08 F7 0A F5 0C F3 0E F1 10 EF 12 ED 14 "+
-        "EB 16 E9 18 E7 1A E5 1C E3 1E E1 20 DF 22 DD 24 DB 26 D9 28 D7 "+
-        "2A D5 2C D3 2E D1 30 CF 32 CD 34 CB 36 C9 38 C7 3A C5 3C C3 3E "+
-        "C1 40 BF 42 BD 44 BB 46 B9 48 B7 4A B5 4C B3 4E B1 50 AF 52 AD "+
-        "54 AB 56 A9 58 A7 5A A5 5C A3 5E A1 60 9F 62 9D 64 9B 66 99 68 "+
-        "97 6A 95 6C 93 6E 91 70 8F 72 8D 74 8B 76 89 78 87 7A 85 7C 83 "+
-        "7E 81...)",
+    assertEquals(
+        "JavaTestHelper(req_int:0, req_obj:, req_bin:"
+            + "00 FF 02 FD 04 FB 06 F9 08 F7 0A F5 0C F3 0E F1 10 EF 12 ED 14 "
+            + "EB 16 E9 18 E7 1A E5 1C E3 1E E1 20 DF 22 DD 24 DB 26 D9 28 D7 "
+            + "2A D5 2C D3 2E D1 30 CF 32 CD 34 CB 36 C9 38 C7 3A C5 3C C3 3E "
+            + "C1 40 BF 42 BD 44 BB 46 B9 48 B7 4A B5 4C B3 4E B1 50 AF 52 AD "
+            + "54 AB 56 A9 58 A7 5A A5 5C A3 5E A1 60 9F 62 9D 64 9B 66 99 68 "
+            + "97 6A 95 6C 93 6E 91 70 8F 72 8D 74 8B 76 89 78 87 7A 85 7C 83 "
+            + "7E 81...)",
         object.toString());
 
     object.req_bin = ByteBuffer.wrap(new byte[] {});
     object.setOpt_binIsSet(true);
 
-    assertEquals("JavaTestHelper(req_int:0, req_obj:, req_bin:)",
-        object.toString());
+    assertEquals("JavaTestHelper(req_int:0, req_obj:, req_bin:)", object.toString());
   }
 
   @Test
@@ -326,13 +363,13 @@ public class TestStruct {
     final String testString = "testBytesBufferFeatures";
     final JavaTestHelper o = new JavaTestHelper();
 
-    o.setReq_bin((ByteBuffer)null);
+    o.setReq_bin((ByteBuffer) null);
     assertNull(o.getReq_bin());
 
     o.setReq_bin(ByteBuffer.wrap(testString.getBytes()));
     assertArrayEquals(testString.getBytes(), o.getReq_bin());
 
-    o.setReq_bin((byte[])null);
+    o.setReq_bin((byte[]) null);
     assertNull(o.getReq_bin());
 
     o.setReq_bin(testString.getBytes());

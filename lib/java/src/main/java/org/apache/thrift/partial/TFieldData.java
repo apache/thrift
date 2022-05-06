@@ -22,8 +22,8 @@ package org.apache.thrift.partial;
 /**
  * Holds the type and id members of a {@link org.apache.thrift.protocol.TField} into a single int.
  *
- * This encoding scheme obviates the need to instantiate TField
- * during the partial deserialization process.
+ * <p>This encoding scheme obviates the need to instantiate TField during the partial
+ * deserialization process.
  */
 public class TFieldData {
   public static int encode(byte type) {

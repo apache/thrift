@@ -19,9 +19,7 @@
 
 package org.apache.thrift.transport.sasl;
 
-/**
- * Got an invalid frame that does not respect the thrift sasl protocol.
- */
+/** Got an invalid frame that does not respect the thrift sasl protocol. */
 public class TInvalidSaslFrameException extends TSaslNegotiationException {
 
   public TInvalidSaslFrameException(String message) {

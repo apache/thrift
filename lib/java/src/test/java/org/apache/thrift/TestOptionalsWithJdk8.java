@@ -19,52 +19,52 @@
 
 package org.apache.thrift;
 
-import org.junit.jupiter.api.Test;
-import thrift.test.optiontypejdk8.Person;
-
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import org.junit.jupiter.api.Test;
+import thrift.test.optiontypejdk8.Person;
+
 // Tests and documents behavior for the JDK8 "Option<T>" type
-public class TestOptionalsWithJdk8  {
+public class TestOptionalsWithJdk8 {
 
-    @Test
-    public void testConstruction() {
-        Person person = new Person(1L, "name");
-        assertFalse(person.getAge().isPresent());
-        assertFalse(person.isSetAge());
-        assertFalse(person.getPhone().isPresent());
-        assertFalse(person.isSetPhone());
-        assertEquals(1L, person.getId());
-        assertTrue(person.isSetId());
-        assertEquals("name", person.getName());
-        assertTrue(person.isSetName());
+  @Test
+  public void testConstruction() {
+    Person person = new Person(1L, "name");
+    assertFalse(person.getAge().isPresent());
+    assertFalse(person.isSetAge());
+    assertFalse(person.getPhone().isPresent());
+    assertFalse(person.isSetPhone());
+    assertEquals(1L, person.getId());
+    assertTrue(person.isSetId());
+    assertEquals("name", person.getName());
+    assertTrue(person.isSetName());
 
-        assertFalse(person.getAddresses().isPresent());
-        assertEquals(Integer.valueOf(0), person.getAddressesSize().orElse(0));
-        assertFalse(person.getPets().isPresent());
-        assertEquals(Integer.valueOf(0), person.getPetsSize().orElse(0));
-    }
+    assertFalse(person.getAddresses().isPresent());
+    assertEquals(Integer.valueOf(0), person.getAddressesSize().orElse(0));
+    assertFalse(person.getPets().isPresent());
+    assertEquals(Integer.valueOf(0), person.getPetsSize().orElse(0));
+  }
 
-    @Test
-    public void testEmpty() {
-        Person person = new Person();
-        person.setPhone("phone");
-        assertFalse(person.getAge().isPresent());
-        assertFalse(person.isSetAge());
-        assertTrue(person.getPhone().isPresent());
-        assertEquals("phone", person.getPhone().get());
-        assertTrue(person.isSetPhone());
-        assertEquals(0L, person.getId());
-        assertFalse(person.isSetId());
-        assertNull(person.getName());
-        assertFalse(person.isSetName());
+  @Test
+  public void testEmpty() {
+    Person person = new Person();
+    person.setPhone("phone");
+    assertFalse(person.getAge().isPresent());
+    assertFalse(person.isSetAge());
+    assertTrue(person.getPhone().isPresent());
+    assertEquals("phone", person.getPhone().get());
+    assertTrue(person.isSetPhone());
+    assertEquals(0L, person.getId());
+    assertFalse(person.isSetId());
+    assertNull(person.getName());
+    assertFalse(person.isSetName());
 
-        assertFalse(person.getAddresses().isPresent());
-        assertEquals(Integer.valueOf(0), person.getAddressesSize().orElse(0));
-        assertFalse(person.getPets().isPresent());
-        assertEquals(Integer.valueOf(0), person.getPetsSize().orElse(0));
-    }
+    assertFalse(person.getAddresses().isPresent());
+    assertEquals(Integer.valueOf(0), person.getAddressesSize().orElse(0));
+    assertFalse(person.getPets().isPresent());
+    assertEquals(Integer.valueOf(0), person.getPetsSize().orElse(0));
+  }
 }

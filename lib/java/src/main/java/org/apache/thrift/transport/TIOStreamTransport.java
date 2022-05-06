@@ -19,21 +19,18 @@
 
 package org.apache.thrift.transport;
 
-import org.apache.thrift.TConfiguration;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.SocketTimeoutException;
+import org.apache.thrift.TConfiguration;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
- * This is the most commonly used base transport. It takes an InputStream or
- * an OutputStream or both and uses it/them to perform transport operations.
- * This allows for compatibility with all the nice constructs Java already
- * has to provide a variety of types of streams.
- *
+ * This is the most commonly used base transport. It takes an InputStream or an OutputStream or both
+ * and uses it/them to perform transport operations. This allows for compatibility with all the nice
+ * constructs Java already has to provide a variety of types of streams.
  */
 public class TIOStreamTransport extends TEndpointTransport {
 
@@ -46,16 +43,16 @@ public class TIOStreamTransport extends TEndpointTransport {
   protected OutputStream outputStream_ = null;
 
   /**
-   * Subclasses can invoke the default constructor and then assign the input
-   * streams in the open method.
+   * Subclasses can invoke the default constructor and then assign the input streams in the open
+   * method.
    */
   protected TIOStreamTransport(TConfiguration config) throws TTransportException {
     super(config);
   }
 
   /**
-   * Subclasses can invoke the default constructor and then assign the input
-   * streams in the open method.
+   * Subclasses can invoke the default constructor and then assign the input streams in the open
+   * method.
    */
   protected TIOStreamTransport() throws TTransportException {
     super(new TConfiguration());
@@ -109,7 +106,8 @@ public class TIOStreamTransport extends TEndpointTransport {
    * @param is Input stream to read from
    * @param os Output stream to read from
    */
-  public TIOStreamTransport(TConfiguration config, InputStream is, OutputStream os) throws TTransportException {
+  public TIOStreamTransport(TConfiguration config, InputStream is, OutputStream os)
+      throws TTransportException {
     super(config);
     inputStream_ = is;
     outputStream_ = os;
@@ -127,22 +125,15 @@ public class TIOStreamTransport extends TEndpointTransport {
     outputStream_ = os;
   }
 
-  /**
-   *
-   * @return false after close is called.
-   */
+  /** @return false after close is called. */
   public boolean isOpen() {
     return inputStream_ != null || outputStream_ != null;
   }
 
-  /**
-   * The streams must already be open. This method does nothing.
-   */
+  /** The streams must already be open. This method does nothing. */
   public void open() throws TTransportException {}
 
-  /**
-   * Closes both the input and output streams.
-   */
+  /** Closes both the input and output streams. */
   public void close() {
     try {
       if (inputStream_ != null) {
@@ -165,12 +156,11 @@ public class TIOStreamTransport extends TEndpointTransport {
     }
   }
 
-  /**
-   * Reads from the underlying input stream if not null.
-   */
+  /** Reads from the underlying input stream if not null. */
   public int read(byte[] buf, int off, int len) throws TTransportException {
     if (inputStream_ == null) {
-      throw new TTransportException(TTransportException.NOT_OPEN, "Cannot read from null inputStream");
+      throw new TTransportException(
+          TTransportException.NOT_OPEN, "Cannot read from null inputStream");
     }
     int bytesRead;
     try {
@@ -186,12 +176,11 @@ public class TIOStreamTransport extends TEndpointTransport {
     return bytesRead;
   }
 
-  /**
-   * Writes to the underlying output stream if not null.
-   */
+  /** Writes to the underlying output stream if not null. */
   public void write(byte[] buf, int off, int len) throws TTransportException {
     if (outputStream_ == null) {
-      throw new TTransportException(TTransportException.NOT_OPEN, "Cannot write to null outputStream");
+      throw new TTransportException(
+          TTransportException.NOT_OPEN, "Cannot write to null outputStream");
     }
     try {
       outputStream_.write(buf, off, len);
@@ -200,9 +189,7 @@ public class TIOStreamTransport extends TEndpointTransport {
     }
   }
 
-  /**
-   * Flushes the underlying output stream if not null.
-   */
+  /** Flushes the underlying output stream if not null. */
   public void flush() throws TTransportException {
     if (outputStream_ == null) {
       throw new TTransportException(TTransportException.NOT_OPEN, "Cannot flush null outputStream");

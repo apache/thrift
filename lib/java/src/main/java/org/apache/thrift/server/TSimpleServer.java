@@ -27,10 +27,7 @@ import org.apache.thrift.transport.TTransportException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/**
- * Simple singlethreaded server for testing.
- *
- */
+/** Simple singlethreaded server for testing. */
 public class TSimpleServer extends TServer {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(TSimpleServer.class.getName());
@@ -104,7 +101,6 @@ public class TSimpleServer extends TServer {
       if (outputTransport != null) {
         outputTransport.close();
       }
-
     }
     setServing(false);
   }

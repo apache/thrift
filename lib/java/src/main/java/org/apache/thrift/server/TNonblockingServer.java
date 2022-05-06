@@ -17,27 +17,25 @@
  * under the License.
  */
 
-
 package org.apache.thrift.server;
-
-import org.apache.thrift.transport.TNonblockingServerTransport;
-import org.apache.thrift.transport.TNonblockingTransport;
-import org.apache.thrift.transport.TTransportException;
 
 import java.io.IOException;
 import java.nio.channels.SelectionKey;
 import java.util.Iterator;
+import org.apache.thrift.transport.TNonblockingServerTransport;
+import org.apache.thrift.transport.TNonblockingTransport;
+import org.apache.thrift.transport.TTransportException;
 
 /**
- * A nonblocking TServer implementation. This allows for fairness amongst all
- * connected clients in terms of invocations.
+ * A nonblocking TServer implementation. This allows for fairness amongst all connected clients in
+ * terms of invocations.
  *
- * This server is inherently single-threaded. If you want a limited thread pool
- * coupled with invocation-fairness, see THsHaServer.
+ * <p>This server is inherently single-threaded. If you want a limited thread pool coupled with
+ * invocation-fairness, see THsHaServer.
  *
- * To use this server, you MUST use a TFramedTransport at the outermost
- * transport, otherwise this server will be unable to determine when a whole
- * method call has been read off the wire. Clients must also use TFramedTransport.
+ * <p>To use this server, you MUST use a TFramedTransport at the outermost transport, otherwise this
+ * server will be unable to determine when a whole method call has been read off the wire. Clients
+ * must also use TFramedTransport.
  */
 public class TNonblockingServer extends AbstractNonblockingServer {
 
@@ -53,18 +51,16 @@ public class TNonblockingServer extends AbstractNonblockingServer {
     super(args);
   }
 
-
   /**
    * Start the selector thread to deal with accepts and client messages.
    *
-   * @return true if everything went ok, false if we couldn't start for some
-   * reason.
+   * @return true if everything went ok, false if we couldn't start for some reason.
    */
   @Override
   protected boolean startThreads() {
     // start the selector
     try {
-      selectAcceptThread_ = new SelectAcceptThread((TNonblockingServerTransport)serverTransport_);
+      selectAcceptThread_ = new SelectAcceptThread((TNonblockingServerTransport) serverTransport_);
       selectAcceptThread_.start();
       return true;
     } catch (IOException e) {
@@ -78,9 +74,7 @@ public class TNonblockingServer extends AbstractNonblockingServer {
     joinSelector();
   }
 
-  /**
-   * Block until the selector thread exits.
-   */
+  /** Block until the selector thread exits. */
   protected void joinSelector() {
     // wait until the selector thread exits
     try {
@@ -91,9 +85,7 @@ public class TNonblockingServer extends AbstractNonblockingServer {
     }
   }
 
-  /**
-   * Stop serving and shut everything down.
-   */
+  /** Stop serving and shut everything down. */
   @Override
   public void stop() {
     stopped_ = true;
@@ -103,8 +95,8 @@ public class TNonblockingServer extends AbstractNonblockingServer {
   }
 
   /**
-   * Perform an invocation. This method could behave several different ways
-   * - invoke immediately inline, queue for separate execution, etc.
+   * Perform an invocation. This method could behave several different ways - invoke immediately
+   * inline, queue for separate execution, etc.
    */
   @Override
   protected boolean requestInvoke(FrameBuffer frameBuffer) {
@@ -112,26 +104,22 @@ public class TNonblockingServer extends AbstractNonblockingServer {
     return true;
   }
 
-
   public boolean isStopped() {
     return selectAcceptThread_.isStopped();
   }
 
   /**
-   * The thread that will be doing all the selecting, managing new connections
-   * and those that still need to be read.
+   * The thread that will be doing all the selecting, managing new connections and those that still
+   * need to be read.
    */
   protected class SelectAcceptThread extends AbstractSelectThread {
 
     // The server transport on which new client transports will be accepted
     private final TNonblockingServerTransport serverTransport;
 
-    /**
-     * Set up the thread that will handle the non-blocking accepts, reads, and
-     * writes.
-     */
+    /** Set up the thread that will handle the non-blocking accepts, reads, and writes. */
     public SelectAcceptThread(final TNonblockingServerTransport serverTransport)
-    throws IOException {
+        throws IOException {
       this.serverTransport = serverTransport;
       serverTransport.registerSelector(selector);
     }
@@ -141,8 +129,8 @@ public class TNonblockingServer extends AbstractNonblockingServer {
     }
 
     /**
-     * The work loop. Handles both selecting (all IO operations) and managing
-     * the selection preferences of all existing connections.
+     * The work loop. Handles both selecting (all IO operations) and managing the selection
+     * preferences of all existing connections.
      */
     public void run() {
       try {
@@ -170,12 +158,10 @@ public class TNonblockingServer extends AbstractNonblockingServer {
     }
 
     /**
-     * Select and process IO events appropriately:
-     * If there are connections to be accepted, accept them.
-     * If there are existing connections with data waiting to be read, read it,
-     * buffering until a whole frame has been read.
-     * If there are any pending responses, buffer them until their target client
-     * is available, and then send the data.
+     * Select and process IO events appropriately: If there are connections to be accepted, accept
+     * them. If there are existing connections with data waiting to be read, read it, buffering
+     * until a whole frame has been read. If there are any pending responses, buffer them until
+     * their target client is available, and then send the data.
      */
     private void select() {
       try {
@@ -213,17 +199,17 @@ public class TNonblockingServer extends AbstractNonblockingServer {
       }
     }
 
-    protected FrameBuffer createFrameBuffer(final TNonblockingTransport trans,
+    protected FrameBuffer createFrameBuffer(
+        final TNonblockingTransport trans,
         final SelectionKey selectionKey,
-        final AbstractSelectThread selectThread) throws TTransportException {
-        return processorFactory_.isAsyncProcessor() ?
-                  new AsyncFrameBuffer(trans, selectionKey, selectThread) :
-                  new FrameBuffer(trans, selectionKey, selectThread);
+        final AbstractSelectThread selectThread)
+        throws TTransportException {
+      return processorFactory_.isAsyncProcessor()
+          ? new AsyncFrameBuffer(trans, selectionKey, selectThread)
+          : new FrameBuffer(trans, selectionKey, selectThread);
     }
 
-    /**
-     * Accept a new connection.
-     */
+    /** Accept a new connection. */
     private void handleAccept() throws IOException {
       SelectionKey clientKey = null;
       TNonblockingTransport client = null;
@@ -233,9 +219,9 @@ public class TNonblockingServer extends AbstractNonblockingServer {
         clientKey = client.registerSelector(selector, SelectionKey.OP_READ);
 
         // add this key to the map
-          FrameBuffer frameBuffer = createFrameBuffer(client, clientKey, SelectAcceptThread.this);
+        FrameBuffer frameBuffer = createFrameBuffer(client, clientKey, SelectAcceptThread.this);
 
-          clientKey.attach(frameBuffer);
+        clientKey.attach(frameBuffer);
       } catch (TTransportException tte) {
         // something went wrong accepting.
         LOGGER.warn("Exception trying to accept!", tte);

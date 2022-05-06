@@ -18,88 +18,93 @@
  */
 package org.apache.thrift.transport;
 
+import java.util.Objects;
 import org.apache.thrift.TConfiguration;
 
-import java.util.Objects;
+public abstract class TEndpointTransport extends TTransport {
 
-public abstract class TEndpointTransport extends TTransport{
+  protected long getMaxMessageSize() {
+    return getConfiguration().getMaxMessageSize();
+  }
 
-    protected long getMaxMessageSize() { return getConfiguration().getMaxMessageSize(); }
+  public int getMaxFrameSize() {
+    return getConfiguration().getMaxFrameSize();
+  }
 
-    public int getMaxFrameSize() { return getConfiguration().getMaxFrameSize(); }
+  public void setMaxFrameSize(int maxFrameSize) {
+    getConfiguration().setMaxFrameSize(maxFrameSize);
+  }
 
-    public void setMaxFrameSize(int maxFrameSize) { getConfiguration().setMaxFrameSize(maxFrameSize); }
+  protected long knownMessageSize;
+  protected long remainingMessageSize;
 
-    protected long knownMessageSize;
-    protected long remainingMessageSize;
+  private TConfiguration _configuration;
 
-    private TConfiguration _configuration;
+  public TConfiguration getConfiguration() {
+    return _configuration;
+  }
 
-    public TConfiguration getConfiguration() {
-        return _configuration;
+  public TEndpointTransport(TConfiguration config) throws TTransportException {
+    _configuration = Objects.isNull(config) ? new TConfiguration() : config;
+
+    resetConsumedMessageSize(-1);
+  }
+
+  /**
+   * Resets RemainingMessageSize to the configured maximum
+   *
+   * @param newSize
+   */
+  protected void resetConsumedMessageSize(long newSize) throws TTransportException {
+    // full reset
+    if (newSize < 0) {
+      knownMessageSize = getMaxMessageSize();
+      remainingMessageSize = getMaxMessageSize();
+      return;
     }
 
-    public TEndpointTransport(TConfiguration config) throws TTransportException {
-        _configuration = Objects.isNull(config) ? new TConfiguration() : config;
+    // update only: message size can shrink, but not grow
+    if (newSize > knownMessageSize)
+      throw new TTransportException(TTransportException.END_OF_FILE, "MaxMessageSize reached");
 
-        resetConsumedMessageSize(-1);
+    knownMessageSize = newSize;
+    remainingMessageSize = newSize;
+  }
+
+  /**
+   * Updates RemainingMessageSize to reflect then known real message size (e.g. framed transport).
+   * Will throw if we already consumed too many bytes or if the new size is larger than allowed.
+   *
+   * @param size
+   */
+  public void updateKnownMessageSize(long size) throws TTransportException {
+    long consumed = knownMessageSize - remainingMessageSize;
+    resetConsumedMessageSize(size == 0 ? -1 : size);
+    countConsumedMessageBytes(consumed);
+  }
+
+  /**
+   * Throws if there are not enough bytes in the input stream to satisfy a read of numBytes bytes of
+   * data
+   *
+   * @param numBytes
+   */
+  public void checkReadBytesAvailable(long numBytes) throws TTransportException {
+    if (remainingMessageSize < numBytes)
+      throw new TTransportException(TTransportException.END_OF_FILE, "MaxMessageSize reached");
+  }
+
+  /**
+   * Consumes numBytes from the RemainingMessageSize.
+   *
+   * @param numBytes
+   */
+  protected void countConsumedMessageBytes(long numBytes) throws TTransportException {
+    if (remainingMessageSize >= numBytes) {
+      remainingMessageSize -= numBytes;
+    } else {
+      remainingMessageSize = 0;
+      throw new TTransportException(TTransportException.END_OF_FILE, "MaxMessageSize reached");
     }
-
-    /**
-     * Resets RemainingMessageSize to the configured maximum
-     * @param newSize
-     */
-    protected void resetConsumedMessageSize(long newSize) throws TTransportException {
-        // full reset
-        if (newSize < 0)
-        {
-            knownMessageSize = getMaxMessageSize();
-            remainingMessageSize = getMaxMessageSize();
-            return;
-        }
-
-        // update only: message size can shrink, but not grow
-        if (newSize > knownMessageSize)
-            throw new TTransportException(TTransportException.END_OF_FILE, "MaxMessageSize reached");
-
-        knownMessageSize = newSize;
-        remainingMessageSize = newSize;
-    }
-
-    /**
-     * Updates RemainingMessageSize to reflect then known real message size (e.g. framed transport).
-     * Will throw if we already consumed too many bytes or if the new size is larger than allowed.
-     * @param size
-     */
-    public void updateKnownMessageSize(long size) throws TTransportException {
-        long consumed = knownMessageSize - remainingMessageSize;
-        resetConsumedMessageSize(size == 0 ? -1 : size);
-        countConsumedMessageBytes(consumed);
-    }
-
-    /**
-     * Throws if there are not enough bytes in the input stream to satisfy a read of numBytes bytes of data
-     * @param numBytes
-     */
-    public void checkReadBytesAvailable(long numBytes) throws TTransportException {
-        if (remainingMessageSize < numBytes)
-            throw new TTransportException(TTransportException.END_OF_FILE, "MaxMessageSize reached");
-    }
-
-    /**
-     * Consumes numBytes from the RemainingMessageSize.
-     * @param numBytes
-     */
-    protected void countConsumedMessageBytes(long numBytes) throws TTransportException {
-        if (remainingMessageSize >= numBytes)
-        {
-            remainingMessageSize -= numBytes;
-        }
-        else
-        {
-            remainingMessageSize = 0;
-            throw new TTransportException(TTransportException.END_OF_FILE, "MaxMessageSize reached");
-        }
-    }
-
+  }
 }

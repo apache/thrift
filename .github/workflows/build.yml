@@ -77,6 +77,11 @@ jobs:
           sudo ln -s /usr/local/gradle/bin/gradle /usr/local/bin
           gradle --version
 
+      - name: Run spotlessCheck
+        run: |
+          cd lib/java
+          gradle spotlessCheck
+
       - name: Run bootstrap
         run: ./bootstrap.sh
 

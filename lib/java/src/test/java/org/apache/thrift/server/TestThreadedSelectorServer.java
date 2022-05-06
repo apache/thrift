@@ -24,7 +24,9 @@ import org.apache.thrift.server.TThreadedSelectorServer.Args;
 import org.apache.thrift.transport.TNonblockingServerSocket;
 
 public class TestThreadedSelectorServer extends TestNonblockingServer {
-  protected TServer getServer(TProcessor processor, TNonblockingServerSocket socket, TProtocolFactory protoFactory) {
-    return new TThreadedSelectorServer(new Args(socket).processor(processor).protocolFactory(protoFactory));
+  protected TServer getServer(
+      TProcessor processor, TNonblockingServerSocket socket, TProtocolFactory protoFactory) {
+    return new TThreadedSelectorServer(
+        new Args(socket).processor(processor).protocolFactory(protoFactory));
   }
 }

@@ -19,12 +19,6 @@
 
 package org.apache.thrift.server;
 
-import org.apache.thrift.transport.TNonblockingServerTransport;
-import org.apache.thrift.transport.TNonblockingTransport;
-import org.apache.thrift.transport.TTransportException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.IOException;
 import java.nio.channels.ClosedChannelException;
 import java.nio.channels.SelectableChannel;
@@ -44,58 +38,61 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
+import org.apache.thrift.transport.TNonblockingServerTransport;
+import org.apache.thrift.transport.TNonblockingTransport;
+import org.apache.thrift.transport.TTransportException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
- * A Half-Sync/Half-Async server with a separate pool of threads to handle
- * non-blocking I/O. Accepts are handled on a single thread, and a configurable
- * number of nonblocking selector threads manage reading and writing of client
- * connections. A synchronous worker thread pool handles processing of requests.
+ * A Half-Sync/Half-Async server with a separate pool of threads to handle non-blocking I/O. Accepts
+ * are handled on a single thread, and a configurable number of nonblocking selector threads manage
+ * reading and writing of client connections. A synchronous worker thread pool handles processing of
+ * requests.
  *
- * Performs better than TNonblockingServer/THsHaServer in multi-core
- * environments when the the bottleneck is CPU on the single selector thread
- * handling I/O. In addition, because the accept handling is decoupled from
- * reads/writes and invocation, the server has better ability to handle back-
- * pressure from new connections (e.g. stop accepting when busy).
+ * <p>Performs better than TNonblockingServer/THsHaServer in multi-core environments when the the
+ * bottleneck is CPU on the single selector thread handling I/O. In addition, because the accept
+ * handling is decoupled from reads/writes and invocation, the server has better ability to handle
+ * back- pressure from new connections (e.g. stop accepting when busy).
  *
- * Like TNonblockingServer, it relies on the use of TFramedTransport.
+ * <p>Like TNonblockingServer, it relies on the use of TFramedTransport.
  */
 public class TThreadedSelectorServer extends AbstractNonblockingServer {
-  private static final Logger LOGGER = LoggerFactory.getLogger(TThreadedSelectorServer.class.getName());
+  private static final Logger LOGGER =
+      LoggerFactory.getLogger(TThreadedSelectorServer.class.getName());
 
   public static class Args extends AbstractNonblockingServerArgs<Args> {
 
     /** The number of threads for selecting on already-accepted connections */
     public int selectorThreads = 2;
     /**
-     * The size of the executor service (if none is specified) that will handle
-     * invocations. This may be set to 0, in which case invocations will be
-     * handled directly on the selector threads (as is in TNonblockingServer)
+     * The size of the executor service (if none is specified) that will handle invocations. This
+     * may be set to 0, in which case invocations will be handled directly on the selector threads
+     * (as is in TNonblockingServer)
      */
     private int workerThreads = 5;
     /** Time to wait for server to stop gracefully */
     private int stopTimeoutVal = 60;
+
     private TimeUnit stopTimeoutUnit = TimeUnit.SECONDS;
     /** The ExecutorService for handling dispatched requests */
     private ExecutorService executorService = null;
     /**
-     * The size of the blocking queue per selector thread for passing accepted
-     * connections to the selector thread
+     * The size of the blocking queue per selector thread for passing accepted connections to the
+     * selector thread
      */
     private int acceptQueueSizePerThread = 4;
 
-    /**
-     * Determines the strategy for handling new accepted connections.
-     */
+    /** Determines the strategy for handling new accepted connections. */
     public static enum AcceptPolicy {
       /**
-       * Require accepted connection registration to be handled by the executor.
-       * If the worker pool is saturated, further accepts will be closed
-       * immediately. Slightly increases latency due to an extra scheduling.
+       * Require accepted connection registration to be handled by the executor. If the worker pool
+       * is saturated, further accepts will be closed immediately. Slightly increases latency due to
+       * an extra scheduling.
        */
       FAIR_ACCEPT,
       /**
-       * Handle the accepts as fast as possible, disregarding the status of the
-       * executor service.
+       * Handle the accepts as fast as possible, disregarding the status of the executor service.
        */
       FAST_ACCEPT
     }
@@ -195,9 +192,7 @@ public class TThreadedSelectorServer extends AbstractNonblockingServer {
 
   private final Args args;
 
-  /**
-   * Create the server with the specified Args configuration
-   */
+  /** Create the server with the specified Args configuration */
   public TThreadedSelectorServer(Args args) {
     super(args);
     args.validate();
@@ -208,8 +203,7 @@ public class TThreadedSelectorServer extends AbstractNonblockingServer {
   /**
    * Start the accept and selector threads running to deal with clients.
    *
-   * @return true if everything went ok, false if we couldn't start for some
-   *         reason.
+   * @return true if everything went ok, false if we couldn't start for some reason.
    */
   @Override
   protected boolean startThreads() {
@@ -217,8 +211,10 @@ public class TThreadedSelectorServer extends AbstractNonblockingServer {
       for (int i = 0; i < args.selectorThreads; ++i) {
         selectorThreads.add(new SelectorThread(args.acceptQueueSizePerThread));
       }
-      acceptThread = new AcceptThread((TNonblockingServerTransport) serverTransport_,
-        createSelectorThreadLoadBalancer(selectorThreads));
+      acceptThread =
+          new AcceptThread(
+              (TNonblockingServerTransport) serverTransport_,
+              createSelectorThreadLoadBalancer(selectorThreads));
       for (SelectorThread thread : selectorThreads) {
         thread.start();
       }
@@ -230,9 +226,7 @@ public class TThreadedSelectorServer extends AbstractNonblockingServer {
     }
   }
 
-  /**
-   * Joins the accept and selector threads and shuts down the executor service.
-   */
+  /** Joins the accept and selector threads and shuts down the executor service. */
   @Override
   protected void waitForShutdown() {
     try {
@@ -252,9 +246,7 @@ public class TThreadedSelectorServer extends AbstractNonblockingServer {
     }
   }
 
-  /**
-   * Stop serving and shut everything down.
-   */
+  /** Stop serving and shut everything down. */
   @Override
   public void stop() {
     stopped_ = true;
@@ -267,8 +259,7 @@ public class TThreadedSelectorServer extends AbstractNonblockingServer {
     }
     if (selectorThreads != null) {
       for (SelectorThread thread : selectorThreads) {
-        if (thread != null)
-          thread.wakeupSelector();
+        if (thread != null) thread.wakeupSelector();
       }
     }
   }
@@ -296,9 +287,9 @@ public class TThreadedSelectorServer extends AbstractNonblockingServer {
   }
 
   /**
-   * We override the standard invoke method here to queue the invocation for
-   * invoker service instead of immediately invoking. If there is no thread
-   * pool, handle the invocation inline on this thread
+   * We override the standard invoke method here to queue the invocation for invoker service instead
+   * of immediately invoking. If there is no thread pool, handle the invocation inline on this
+   * thread
    */
   @Override
   protected boolean requestInvoke(FrameBuffer frameBuffer) {
@@ -322,9 +313,7 @@ public class TThreadedSelectorServer extends AbstractNonblockingServer {
     return new Invocation(frameBuffer);
   }
 
-  /**
-   * Helper to create the invoker if one is not specified
-   */
+  /** Helper to create the invoker if one is not specified */
   protected static ExecutorService createDefaultExecutor(Args options) {
     return (options.workerThreads > 0) ? Executors.newFixedThreadPool(options.workerThreads) : null;
   }
@@ -338,8 +327,8 @@ public class TThreadedSelectorServer extends AbstractNonblockingServer {
   }
 
   /**
-   * The thread that selects on the server transport (listen socket) and accepts
-   * new connections to hand off to the IO selector threads
+   * The thread that selects on the server transport (listen socket) and accepts new connections to
+   * hand off to the IO selector threads
    */
   protected class AcceptThread extends Thread {
 
@@ -354,8 +343,9 @@ public class TThreadedSelectorServer extends AbstractNonblockingServer {
      *
      * @throws IOException
      */
-    public AcceptThread(TNonblockingServerTransport serverTransport,
-        SelectorThreadLoadBalancer threadChooser) throws IOException {
+    public AcceptThread(
+        TNonblockingServerTransport serverTransport, SelectorThreadLoadBalancer threadChooser)
+        throws IOException {
       this.serverTransport = serverTransport;
       this.threadChooser = threadChooser;
       this.acceptSelector = SelectorProvider.provider().openSelector();
@@ -363,9 +353,9 @@ public class TThreadedSelectorServer extends AbstractNonblockingServer {
     }
 
     /**
-     * The work loop. Selects on the server transport and accepts. If there was
-     * a server transport that had blocking accepts, and returned on blocking
-     * client transports, that should be used instead
+     * The work loop. Selects on the server transport and accepts. If there was a server transport
+     * that had blocking accepts, and returned on blocking client transports, that should be used
+     * instead
      */
     public void run() {
       try {
@@ -389,16 +379,14 @@ public class TThreadedSelectorServer extends AbstractNonblockingServer {
       }
     }
 
-    /**
-     * If the selector is blocked, wake it up.
-     */
+    /** If the selector is blocked, wake it up. */
     public void wakeupSelector() {
       acceptSelector.wakeup();
     }
 
     /**
-     * Select and process IO events appropriately: If there are connections to
-     * be accepted, accept them.
+     * Select and process IO events appropriately: If there are connections to be accepted, accept
+     * them.
      */
     private void select() {
       try {
@@ -427,9 +415,7 @@ public class TThreadedSelectorServer extends AbstractNonblockingServer {
       }
     }
 
-    /**
-     * Accept a new connection.
-     */
+    /** Accept a new connection. */
     private void handleAccept() {
       final TNonblockingTransport client = doAccept();
       if (client != null) {
@@ -441,11 +427,12 @@ public class TThreadedSelectorServer extends AbstractNonblockingServer {
         } else {
           // FAIR_ACCEPT
           try {
-            invoker.submit(new Runnable() {
-              public void run() {
-                doAddAccept(targetThread, client);
-              }
-            });
+            invoker.submit(
+                new Runnable() {
+                  public void run() {
+                    doAddAccept(targetThread, client);
+                  }
+                });
           } catch (RejectedExecutionException rx) {
             LOGGER.warn("ExecutorService rejected accept registration!", rx);
             // close immediately
@@ -472,10 +459,7 @@ public class TThreadedSelectorServer extends AbstractNonblockingServer {
     }
   } // AcceptThread
 
-  /**
-   * The SelectorThread(s) will be doing all the selecting on accepted active
-   * connections.
-   */
+  /** The SelectorThread(s) will be doing all the selecting on accepted active connections. */
   protected class SelectorThread extends AbstractSelectThread {
 
     // Accepted connections added by the accept thread.
@@ -487,8 +471,7 @@ public class TThreadedSelectorServer extends AbstractNonblockingServer {
     /**
      * Set up the SelectorThread with an unbounded queue for incoming accepts.
      *
-     * @throws IOException
-     *           if a selector cannot be created
+     * @throws IOException if a selector cannot be created
      */
     public SelectorThread() throws IOException {
       this(new LinkedBlockingQueue<TNonblockingTransport>());
@@ -497,8 +480,7 @@ public class TThreadedSelectorServer extends AbstractNonblockingServer {
     /**
      * Set up the SelectorThread with an bounded queue for incoming accepts.
      *
-     * @throws IOException
-     *           if a selector cannot be created
+     * @throws IOException if a selector cannot be created
      */
     public SelectorThread(int maxPendingAccepts) throws IOException {
       this(createDefaultAcceptQueue(maxPendingAccepts));
@@ -507,22 +489,19 @@ public class TThreadedSelectorServer extends AbstractNonblockingServer {
     /**
      * Set up the SelectorThread with a specified queue for connections.
      *
-     * @param acceptedQueue
-     *          The BlockingQueue implementation for holding incoming accepted
-     *          connections.
-     * @throws IOException
-     *           if a selector cannot be created.
+     * @param acceptedQueue The BlockingQueue implementation for holding incoming accepted
+     *     connections.
+     * @throws IOException if a selector cannot be created.
      */
     public SelectorThread(BlockingQueue<TNonblockingTransport> acceptedQueue) throws IOException {
       this.acceptedQueue = acceptedQueue;
     }
 
     /**
-     * Hands off an accepted connection to be handled by this thread. This
-     * method will block if the queue for new connections is at capacity.
+     * Hands off an accepted connection to be handled by this thread. This method will block if the
+     * queue for new connections is at capacity.
      *
-     * @param accepted
-     *          The connection that has been accepted.
+     * @param accepted The connection that has been accepted.
      * @return true if the connection has been successfully added.
      */
     public boolean addAcceptedConnection(TNonblockingTransport accepted) {
@@ -537,8 +516,8 @@ public class TThreadedSelectorServer extends AbstractNonblockingServer {
     }
 
     /**
-     * The work loop. Handles selecting (read/write IO), dispatching, and
-     * managing the selection preferences of all existing connections.
+     * The work loop. Handles selecting (read/write IO), dispatching, and managing the selection
+     * preferences of all existing connections.
      */
     public void run() {
       try {
@@ -564,10 +543,10 @@ public class TThreadedSelectorServer extends AbstractNonblockingServer {
     }
 
     /**
-     * Select and process IO events appropriately: If there are existing
-     * connections with data waiting to be read, read it, buffering until a
-     * whole frame has been read. If there are any pending responses, buffer
-     * them until their target client is available, and then send the data.
+     * Select and process IO events appropriately: If there are existing connections with data
+     * waiting to be read, read it, buffering until a whole frame has been read. If there are any
+     * pending responses, buffer them until their target client is available, and then send the
+     * data.
      */
     private void select() {
       try {
@@ -602,8 +581,7 @@ public class TThreadedSelectorServer extends AbstractNonblockingServer {
     }
 
     /**
-     * Do select and judge epoll bug happen.
-     * See : https://issues.apache.org/jira/browse/THRIFT-4251
+     * Do select and judge epoll bug happen. See : https://issues.apache.org/jira/browse/THRIFT-4251
      */
     private void doSelect() throws IOException {
       long beforeSelect = System.currentTimeMillis();
@@ -620,12 +598,12 @@ public class TThreadedSelectorServer extends AbstractNonblockingServer {
       if (selectedTime >= MONITOR_PERIOD) {
         jvmBug = 0;
       } else if (jvmBug > SELECTOR_AUTO_REBUILD_THRESHOLD) {
-        LOGGER.warn("In {} ms happen {} times jvm bug; rebuilding selector.", MONITOR_PERIOD, jvmBug);
+        LOGGER.warn(
+            "In {} ms happen {} times jvm bug; rebuilding selector.", MONITOR_PERIOD, jvmBug);
         rebuildSelector();
         selector.selectNow();
         jvmBug = 0;
       }
-
     }
 
     /**
@@ -646,8 +624,7 @@ public class TThreadedSelectorServer extends AbstractNonblockingServer {
       }
 
       for (SelectionKey key : oldSelector.selectedKeys()) {
-        if (!key.isValid() && key.readyOps() == 0)
-          continue;
+        if (!key.isValid() && key.readyOps() == 0) continue;
         SelectableChannel channel = key.channel();
         Object attachment = key.attachment();
 
@@ -660,7 +637,6 @@ public class TThreadedSelectorServer extends AbstractNonblockingServer {
         } catch (ClosedChannelException e) {
           LOGGER.error("Register new selector key error.", e);
         }
-
       }
 
       selector = newSelector;
@@ -683,12 +659,14 @@ public class TThreadedSelectorServer extends AbstractNonblockingServer {
       }
     }
 
-    protected FrameBuffer createFrameBuffer(final TNonblockingTransport trans,
+    protected FrameBuffer createFrameBuffer(
+        final TNonblockingTransport trans,
         final SelectionKey selectionKey,
-        final AbstractSelectThread selectThread) throws TTransportException {
-        return processorFactory_.isAsyncProcessor() ?
-                  new AsyncFrameBuffer(trans, selectionKey, selectThread) :
-                  new FrameBuffer(trans, selectionKey, selectThread);
+        final AbstractSelectThread selectThread)
+        throws TTransportException {
+      return processorFactory_.isAsyncProcessor()
+          ? new AsyncFrameBuffer(trans, selectionKey, selectThread)
+          : new FrameBuffer(trans, selectionKey, selectThread);
     }
 
     private void registerAccepted(TNonblockingTransport accepted) {
@@ -710,17 +688,15 @@ public class TThreadedSelectorServer extends AbstractNonblockingServer {
   } // SelectorThread
 
   /**
-   * Creates a SelectorThreadLoadBalancer to be used by the accept thread for
-   * assigning newly accepted connections across the threads.
+   * Creates a SelectorThreadLoadBalancer to be used by the accept thread for assigning newly
+   * accepted connections across the threads.
    */
-  protected SelectorThreadLoadBalancer createSelectorThreadLoadBalancer(Collection<? extends SelectorThread> threads) {
+  protected SelectorThreadLoadBalancer createSelectorThreadLoadBalancer(
+      Collection<? extends SelectorThread> threads) {
     return new SelectorThreadLoadBalancer(threads);
   }
 
-  /**
-   * A round robin load balancer for choosing selector threads for new
-   * connections.
-   */
+  /** A round robin load balancer for choosing selector threads for new connections. */
   protected static class SelectorThreadLoadBalancer {
     private final Collection<? extends SelectorThread> threads;
     private Iterator<? extends SelectorThread> nextThreadIterator;
