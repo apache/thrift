@@ -18,12 +18,17 @@
  */
 package org.apache.thrift.transport;
 
+import org.junit.jupiter.api.Test;
+
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Arrays;
-import junit.framework.TestCase;
 
-public class TestTSimpleFileTransport extends TestCase {
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
+
+public class TestTSimpleFileTransport  {
+  @Test
   public void testFresh() throws Exception {
     //Test write side
     Path tempFilePathName = Files.createTempFile("TSimpleFileTransportTest", null);
@@ -43,31 +48,31 @@ public class TestTSimpleFileTransport extends TestCase {
     assert(trans.isOpen());
 
     //Simple file trans provides no buffer access
-    assert(0 == trans.getBufferPosition());
-    assert(null == trans.getBuffer());
-    assert(-1 == trans.getBytesRemainingInBuffer());
+    assertEquals(0, trans.getBufferPosition());
+    assertNull(trans.getBuffer());
+    assertEquals(-1, trans.getBytesRemainingInBuffer());
 
     //Test file pointer operations
-    assert(0 == trans.getFilePointer());
-    assert(12 == trans.length());
+    assertEquals(0, trans.getFilePointer());
+    assertEquals(12, trans.length());
 
     final int BUFSIZ = 4;
     byte[] buf1 = new byte[BUFSIZ];
     trans.readAll(buf1, 0, BUFSIZ);
-    assert(BUFSIZ == trans.getFilePointer());
-    assert(Arrays.equals(new byte[]{1, 2, 3, 4}, buf1));
+    assertEquals(BUFSIZ, trans.getFilePointer());
+    assertArrayEquals(new byte[]{1, 2, 3, 4}, buf1);
 
     int bytesRead = trans.read(buf1, 0, BUFSIZ);
     assert(bytesRead > 0);
     for (int i = 0; i < bytesRead; ++i) {
-      assert(buf1[i] == i+5);
+      assertEquals(buf1[i], i + 5);
     }
 
     trans.seek(0);
-    assert(0 == trans.getFilePointer());
+    assertEquals(0, trans.getFilePointer());
     trans.readAll(buf1, 0, BUFSIZ);
-    assert(Arrays.equals(new byte[]{1, 2, 3, 4}, buf1));
-    assert(BUFSIZ == trans.getFilePointer());
+    assertArrayEquals(new byte[]{1, 2, 3, 4}, buf1);
+    assertEquals(BUFSIZ, trans.getFilePointer());
     trans.close();
     Files.delete(tempFilePathName);
   }

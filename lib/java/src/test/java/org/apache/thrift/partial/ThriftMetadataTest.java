@@ -19,12 +19,6 @@
 
 package org.apache.thrift.partial;
 
-import static org.junit.Assert.*;
-
-import org.apache.thrift.partial.TestStruct;
-import org.apache.thrift.partial.ThriftField;
-import org.apache.thrift.partial.ExceptionAsserts;
-
 import org.apache.thrift.TBase;
 import org.apache.thrift.meta_data.EnumMetaData;
 import org.apache.thrift.meta_data.FieldValueMetaData;
@@ -33,10 +27,17 @@ import org.apache.thrift.meta_data.MapMetaData;
 import org.apache.thrift.meta_data.SetMetaData;
 import org.apache.thrift.meta_data.StructMetaData;
 import org.apache.thrift.protocol.TType;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
 import java.util.List;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class ThriftMetadataTest {
 
@@ -49,15 +50,15 @@ public class ThriftMetadataTest {
     ThriftMetadata.ThriftStruct.fromFields(TestStruct.class, testFields);
 
     // Verify it throws correctly.
-    ExceptionAsserts.assertThrows(
+    assertThrows(
         IllegalArgumentException.class,
-        "'clasz' must not be null",
-        () -> ThriftMetadata.ThriftStruct.fromFields(null, testFields));
+        () -> ThriftMetadata.ThriftStruct.fromFields(null, testFields),
+        "'clasz' must not be null");
 
-    ExceptionAsserts.assertThrows(
+    assertThrows(
         IllegalArgumentException.class,
-        "'fields' must not be null",
-        () -> ThriftMetadata.ThriftStruct.fromFields(TestStruct.class, null));
+        () -> ThriftMetadata.ThriftStruct.fromFields(TestStruct.class, null),
+        "'fields' must not be null");
   }
 
   @Test

@@ -68,8 +68,15 @@ test {
     include '**/Test*.class'
     exclude '**/Test*\$*.class'
 
+    // https://junit.org/junit5/docs/current/user-guide/#running-tests-build-gradle
+    useJUnitPlatform() {
+        // https://junit.org/junit5/docs/current/user-guide/#writing-tests-parallel-execution
+        systemProperty("junit.jupiter.execution.parallel.enabled", "true")
+        systemProperty("junit.jupiter.execution.parallel.mode.default", "concurrent")
+        systemProperty("junit.jupiter.execution.parallel.mode.classes.default", "concurrent")
+    }
+
     maxHeapSize = '512m'
-    forkEvery = 1
 
     systemProperties = [
         'build.test': "${compileTestJava.destinationDir}",

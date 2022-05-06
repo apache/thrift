@@ -18,6 +18,19 @@
  */
 package org.apache.thrift;
 
+import org.apache.thrift.protocol.TBinaryProtocol;
+import org.apache.thrift.protocol.TProtocol;
+import org.apache.thrift.protocol.TTupleProtocol;
+import org.apache.thrift.transport.TMemoryBuffer;
+import org.junit.jupiter.api.Test;
+import thrift.test.ComparableUnion;
+import thrift.test.Empty;
+import thrift.test.RandomStuff;
+import thrift.test.SomeEnum;
+import thrift.test.StructWithAUnion;
+import thrift.test.TestUnion;
+import thrift.test.TestUnionMinusStringField;
+
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.ObjectInputStream;
@@ -30,81 +43,63 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import junit.framework.TestCase;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotSame;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import org.apache.thrift.protocol.TBinaryProtocol;
-import org.apache.thrift.protocol.TProtocol;
-import org.apache.thrift.protocol.TTupleProtocol;
-import org.apache.thrift.transport.TMemoryBuffer;
+public class TestTUnion  {
 
-import thrift.test.ComparableUnion;
-import thrift.test.Empty;
-import thrift.test.RandomStuff;
-import thrift.test.SomeEnum;
-import thrift.test.StructWithAUnion;
-import thrift.test.TestUnion;
-import thrift.test.TestUnionMinusStringField;
-
-public class TestTUnion extends TestCase {
-
+  @Test
   public void testBasic() throws Exception {
-    TestUnion union = new TestUnion();
-
-    assertFalse(union.isSet());
-    assertFalse(union.isSetI32_field());
-    assertNull(union.getFieldValue());
-
-    union = new TestUnion(TestUnion._Fields.I32_FIELD, 25);
-
-    assertEquals(Integer.valueOf(25), union.getFieldValue());
-  
-    assertEquals(Integer.valueOf(25), union.getFieldValue(TestUnion._Fields.I32_FIELD));
-    
-    assertTrue(union.isSetI32_field());
-  
-    try {
-      union.getFieldValue(TestUnion._Fields.STRING_FIELD);
-      fail("should have thrown an exception");
-    } catch (IllegalArgumentException e) {
-      // cool!
+    {
+      TestUnion union = new TestUnion();
+      assertFalse(union.isSet());
+      assertFalse(union.isSetI32_field());
+      assertNull(union.getFieldValue());
     }
-
-    union = new TestUnion();
-
-    // should not throw an exception here
-    union.hashCode();
-
-    union.setI32_field(1);
-    assertEquals(1, union.getI32_field());
-    union.hashCode();
-
-    assertFalse(union.isSetString_field());
-    
-    try {
-      union.getString_field();
-      fail("should have thrown an exception");
-    } catch (Exception e) {
-      // sweet
+    {
+      TestUnion union = new TestUnion(TestUnion._Fields.I32_FIELD, 25);
+      assertEquals(25, union.getFieldValue());
+      assertEquals(25, union.getFieldValue(TestUnion._Fields.I32_FIELD));
+      assertTrue(union.isSetI32_field());
+      assertThrows(IllegalArgumentException.class, () -> union.getFieldValue(TestUnion._Fields.STRING_FIELD));
     }
+    {
+      TestUnion union = new TestUnion();
+      // should not throw an exception here
+      union.hashCode();
+      union.setI32_field(1);
+      assertEquals(1, union.getI32_field());
+      union.hashCode();
+      assertFalse(union.isSetString_field());
 
-    union = TestUnion.i32_field(1);
-
-    assertFalse(union.equals((TestUnion)null));
-
-    union = TestUnion.enum_field(SomeEnum.ONE);
-    union.hashCode();
-
-    union = new TestUnion();
-    // should not throw an exception
-    union.toString();
+      assertThrows(Exception.class, union::getString_field);
+    }
+    {
+      TestUnion union = TestUnion.i32_field(1);
+      assertFalse(union.equals(null));
+    }
+    {
+      TestUnion union = TestUnion.enum_field(SomeEnum.ONE);
+      union.hashCode();
+    }
+    {
+      TestUnion union = new TestUnion();
+      // should not throw an exception
+      union.toString();
+    }
   }
 
+  @Test
   public void testCompareTo() throws Exception {
     ComparableUnion cu = ComparableUnion.string_field("a");
     ComparableUnion cu2 = ComparableUnion.string_field("b");
 
-    assertTrue(cu.compareTo(cu) == 0);
-    assertTrue(cu2.compareTo(cu2) == 0);
+    assertEquals(0, cu.compareTo(cu));
+    assertEquals(0, cu2.compareTo(cu2));
 
     assertTrue(cu.compareTo(cu2) < 0);
     assertTrue(cu2.compareTo(cu) > 0);
@@ -118,10 +113,10 @@ public class TestTUnion extends TestCase {
 
     assertTrue(cu.compareTo(cu2) < 0);
     assertTrue(cu2.compareTo(cu) > 0);
-    
+
     TestUnion union1 = new TestUnion(TestUnion._Fields.STRUCT_LIST, new ArrayList<RandomStuff>());
     TestUnion union2 = new TestUnion(TestUnion._Fields.STRUCT_LIST, new ArrayList<RandomStuff>());
-    assertTrue(union1.compareTo(union2) == 0);
+    assertEquals(0, union1.compareTo(union2));
 
     TestUnion union3 = new TestUnion(TestUnion._Fields.I32_SET, new HashSet<Integer>());
     Set<Integer> i32_set = new HashSet<Integer>();
@@ -136,6 +131,7 @@ public class TestTUnion extends TestCase {
     assertTrue(union5.compareTo(union6) > 0);
   }
 
+  @Test
   public void testEquality() throws Exception {
     TestUnion union = new TestUnion(TestUnion._Fields.I32_FIELD, 25);
 
@@ -152,6 +148,7 @@ public class TestTUnion extends TestCase {
     assertFalse(union.equals(otherUnion));
   }
 
+  @Test
   public void testSerialization() throws Exception {
     TestUnion union = new TestUnion(TestUnion._Fields.I32_FIELD, 25);
     union.setI32_set(Collections.singleton(42));
@@ -186,7 +183,8 @@ public class TestTUnion extends TestCase {
     swau.write(proto);
     new Empty().read(proto);
   }
-  
+
+  @Test
   public void testTupleProtocolSerialization () throws Exception {
     TestUnion union = new TestUnion(TestUnion._Fields.I32_FIELD, 25);
     union.setI32_set(Collections.singleton(42));
@@ -222,6 +220,7 @@ public class TestTUnion extends TestCase {
     new Empty().read(proto);
   }
 
+  @Test
   public void testSkip() throws Exception {
     TestUnion tu = TestUnion.string_field("string");
     byte[] tuSerialized = new TSerializer().serialize(tu);
@@ -231,6 +230,7 @@ public class TestTUnion extends TestCase {
     assertNull(tums.getFieldValue());
   }
 
+  @Test
   public void testDeepCopy() throws Exception {
     byte[] bytes = {1, 2, 3};
     ByteBuffer value = ByteBuffer.wrap(bytes);
@@ -239,7 +239,8 @@ public class TestTUnion extends TestCase {
     assertEquals(cu, copy);
     assertNotSame(cu.bufferForBinary_field().array(), copy.bufferForBinary_field().array());
   }
-  
+
+  @Test
   public void testToString() throws Exception {
     byte[] bytes = {1, 2, 3};
     ByteBuffer value = ByteBuffer.wrap(bytes);
@@ -248,10 +249,11 @@ public class TestTUnion extends TestCase {
     assertEquals(expectedString, cu.toString());
   }
 
+  @Test
   public void testJavaSerializable() throws Exception {
     ByteArrayOutputStream baos = new ByteArrayOutputStream();
     ObjectOutputStream oos = new ObjectOutputStream(baos);
-    
+
     TestUnion tu = TestUnion.string_field("string");
 
     // Serialize tu the Java way...

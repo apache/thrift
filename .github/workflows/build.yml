@@ -1,10 +1,10 @@
-name: 'Build'
+name: "Build"
 
 on:
   push:
-    branches: [ '*' ]
+    branches: ["*"]
   pull_request:
-    branches: [ '*' ]
+    branches: ["*"]
 
 env:
   BUILD_DEPS: automake bison flex g++ git libboost-all-dev libevent-dev libssl-dev libtool make pkg-config
@@ -60,7 +60,7 @@ jobs:
         with:
           distribution: temurin
           java-version: 11
-          cache: 'gradle'
+          cache: "gradle"
 
       - name: Install dependencies
         run: |

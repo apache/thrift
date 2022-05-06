@@ -19,17 +19,15 @@
 
 package org.apache.thrift.partial;
 
-import org.apache.thrift.partial.ExceptionAsserts;
-import org.apache.thrift.partial.TestData;
-
-import org.junit.Test;
-import org.junit.runners.JUnit4;
+import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
+
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 public class ValidateTest {
   @Test
@@ -41,10 +39,10 @@ public class ValidateTest {
     Validate.checkNotNull(nonNullArg, "nonNullArg");
 
     // Verify it throws.
-    ExceptionAsserts.assertThrows(
+    assertThrows(
         IllegalArgumentException.class,
-        "'nullArg' must not be null",
-        () -> Validate.checkNotNull(nullArg, "nullArg"));
+        () -> Validate.checkNotNull(nullArg, "nullArg"),
+        "'nullArg' must not be null");
   }
 
   @Test
@@ -57,14 +55,14 @@ public class ValidateTest {
     Validate.checkPositiveInteger(positiveArg, "positiveArg");
 
     // Verify it throws.
-    ExceptionAsserts.assertThrows(
+    assertThrows(
         IllegalArgumentException.class,
-        "'negativeArg' must be a positive integer",
-        () -> Validate.checkPositiveInteger(negativeArg, "negativeArg"));
-    ExceptionAsserts.assertThrows(
+        () -> Validate.checkPositiveInteger(negativeArg, "negativeArg"),
+        "'negativeArg' must be a positive integer");
+    assertThrows(
         IllegalArgumentException.class,
-        "'zero' must be a positive integer",
-        () -> Validate.checkPositiveInteger(zero, "zero"));
+        () -> Validate.checkPositiveInteger(zero, "zero"),
+        "'zero' must be a positive integer");
   }
 
   @Test
@@ -78,10 +76,10 @@ public class ValidateTest {
     Validate.checkNotNegative(positiveArg, "positiveArg");
 
     // Verify it throws.
-    ExceptionAsserts.assertThrows(
+    assertThrows(
         IllegalArgumentException.class,
-        "'negativeArg' must not be negative",
-        () -> Validate.checkNotNegative(negativeArg, "negativeArg"));
+        () -> Validate.checkNotNegative(negativeArg, "negativeArg"),
+        "'negativeArg' must not be negative");
   }
 
   @Test
@@ -90,10 +88,10 @@ public class ValidateTest {
     Validate.checkRequired(true, "arg");
 
     // Verify it throws.
-    ExceptionAsserts.assertThrows(
+    assertThrows(
         IllegalArgumentException.class,
-        "'arg' is required",
-        () -> Validate.checkRequired(false, "arg"));
+        () -> Validate.checkRequired(false, "arg"),
+        "'arg' is required");
   }
 
   @Test
@@ -102,10 +100,10 @@ public class ValidateTest {
     Validate.checkValid(true, "arg");
 
     // Verify it throws.
-    ExceptionAsserts.assertThrows(
+    assertThrows(
         IllegalArgumentException.class,
-        "'arg' is invalid",
-        () -> Validate.checkValid(false, "arg"));
+        () -> Validate.checkValid(false, "arg"),
+        "'arg' is invalid");
   }
 
   @Test
@@ -116,10 +114,10 @@ public class ValidateTest {
     Validate.checkValid(true, "arg", validValues);
 
     // Verify it throws.
-    ExceptionAsserts.assertThrows(
+    assertThrows(
         IllegalArgumentException.class,
-        "'arg' is invalid. Valid values are: foo, bar",
-        () -> Validate.checkValid(false, "arg", validValues));
+        () -> Validate.checkValid(false, "arg", validValues),
+        "'arg' is invalid. Valid values are: foo, bar");
   }
 
   @Test
@@ -132,60 +130,60 @@ public class ValidateTest {
     Validate.checkNotNullAndNotEmpty(TestData.nonEmptyLongArray, "array");
 
     // Verify it throws.
-    ExceptionAsserts.assertThrows(
+    assertThrows(
         IllegalArgumentException.class,
-        "'string' must not be empty",
-        () -> Validate.checkNotNullAndNotEmpty("", "string"));
+        () -> Validate.checkNotNullAndNotEmpty("", "string"),
+        "'string' must not be empty");
 
-    ExceptionAsserts.assertThrows(
+    assertThrows(
         IllegalArgumentException.class,
-        "'array' must not be null",
-        () -> Validate.checkNotNullAndNotEmpty(TestData.nullArray, "array"));
+        () -> Validate.checkNotNullAndNotEmpty(TestData.nullArray, "array"),
+        "'array' must not be null");
 
-    ExceptionAsserts.assertThrows(
+    assertThrows(
         IllegalArgumentException.class,
-        "'array' must have at least one element",
-        () -> Validate.checkNotNullAndNotEmpty(TestData.emptyArray, "array"));
+        () -> Validate.checkNotNullAndNotEmpty(TestData.emptyArray, "array"),
+        "'array' must have at least one element");
 
-    ExceptionAsserts.assertThrows(
+    assertThrows(
         IllegalArgumentException.class,
-        "'array' must not be null",
-        () -> Validate.checkNotNullAndNotEmpty(TestData.nullByteArray, "array"));
+        () -> Validate.checkNotNullAndNotEmpty(TestData.nullByteArray, "array"),
+        "'array' must not be null");
 
-    ExceptionAsserts.assertThrows(
+    assertThrows(
         IllegalArgumentException.class,
-        "'array' must have at least one element",
-        () -> Validate.checkNotNullAndNotEmpty(TestData.emptyByteArray, "array"));
+        () -> Validate.checkNotNullAndNotEmpty(TestData.emptyByteArray, "array"),
+        "'array' must have at least one element");
 
-    ExceptionAsserts.assertThrows(
+    assertThrows(
         IllegalArgumentException.class,
-        "'array' must not be null",
-        () -> Validate.checkNotNullAndNotEmpty(TestData.nullShortArray, "array"));
+        () -> Validate.checkNotNullAndNotEmpty(TestData.nullShortArray, "array"),
+        "'array' must not be null");
 
-    ExceptionAsserts.assertThrows(
+    assertThrows(
         IllegalArgumentException.class,
-        "'array' must have at least one element",
-        () -> Validate.checkNotNullAndNotEmpty(TestData.emptyShortArray, "array"));
+        () -> Validate.checkNotNullAndNotEmpty(TestData.emptyShortArray, "array"),
+        "'array' must have at least one element");
 
-    ExceptionAsserts.assertThrows(
+    assertThrows(
         IllegalArgumentException.class,
-        "'array' must not be null",
-        () -> Validate.checkNotNullAndNotEmpty(TestData.nullIntArray, "array"));
+        () -> Validate.checkNotNullAndNotEmpty(TestData.nullIntArray, "array"),
+        "'array' must not be null");
 
-    ExceptionAsserts.assertThrows(
+    assertThrows(
         IllegalArgumentException.class,
-        "'array' must have at least one element",
-        () -> Validate.checkNotNullAndNotEmpty(TestData.emptyIntArray, "array"));
+        () -> Validate.checkNotNullAndNotEmpty(TestData.emptyIntArray, "array"),
+        "'array' must have at least one element");
 
-    ExceptionAsserts.assertThrows(
+    assertThrows(
         IllegalArgumentException.class,
-        "'array' must not be null",
-        () -> Validate.checkNotNullAndNotEmpty(TestData.nullLongArray, "array"));
+        () -> Validate.checkNotNullAndNotEmpty(TestData.nullLongArray, "array"),
+        "'array' must not be null");
 
-    ExceptionAsserts.assertThrows(
+    assertThrows(
         IllegalArgumentException.class,
-        "'array' must have at least one element",
-        () -> Validate.checkNotNullAndNotEmpty(TestData.emptyLongArray, "array"));
+        () -> Validate.checkNotNullAndNotEmpty(TestData.emptyLongArray, "array"),
+        "'array' must have at least one element");
   }
 
   @Test
@@ -194,15 +192,15 @@ public class ValidateTest {
     Validate.checkNotNullAndNotEmpty(TestData.validList, "list");
 
     // Verify it throws.
-    ExceptionAsserts.assertThrows(
+    assertThrows(
         IllegalArgumentException.class,
-        "'list' must not be null",
-        () -> Validate.checkNotNullAndNotEmpty(TestData.nullList, "list"));
+        () -> Validate.checkNotNullAndNotEmpty(TestData.nullList, "list"),
+        "'list' must not be null");
 
-    ExceptionAsserts.assertThrows(
+    assertThrows(
         IllegalArgumentException.class,
-        "'list' must have at least one element",
-        () -> Validate.checkNotNullAndNotEmpty(TestData.emptyList, "list"));
+        () -> Validate.checkNotNullAndNotEmpty(TestData.emptyList, "list"),
+        "'list' must have at least one element");
   }
 
   @Test
@@ -211,17 +209,17 @@ public class ValidateTest {
     Validate.checkNotNullAndNumberOfElements(Arrays.asList(1, 2, 3), 3, "arg");
 
     // Verify it throws.
-    ExceptionAsserts.assertThrows(
+    assertThrows(
         IllegalArgumentException.class,
-        "'arg' must not be null",
-        () -> Validate.checkNotNullAndNumberOfElements(null, 3, "arg")
+        () -> Validate.checkNotNullAndNumberOfElements(null, 3, "arg"),
+        "'arg' must not be null"
     );
 
     // Verify it throws.
-    ExceptionAsserts.assertThrows(
+    assertThrows(
         IllegalArgumentException.class,
-        "Number of elements in 'arg' must be exactly 3, 2 given.",
-        () -> Validate.checkNotNullAndNumberOfElements(Arrays.asList(1, 2), 3, "arg")
+        () -> Validate.checkNotNullAndNumberOfElements(Arrays.asList(1, 2), 3, "arg"),
+        "Number of elements in 'arg' must be exactly 3, 2 given."
     );
   }
 
@@ -231,10 +229,10 @@ public class ValidateTest {
     Validate.checkValuesEqual(1, "arg1", 1, "arg2");
 
     // Verify it throws.
-    ExceptionAsserts.assertThrows(
+    assertThrows(
         IllegalArgumentException.class,
-        "'arg1' (1) must equal 'arg2' (2)",
-        () -> Validate.checkValuesEqual(1, "arg1", 2, "arg2"));
+        () -> Validate.checkValuesEqual(1, "arg1", 2, "arg2"),
+        "'arg1' (1) must equal 'arg2' (2)");
   }
 
   @Test
@@ -243,10 +241,10 @@ public class ValidateTest {
     Validate.checkIntegerMultiple(10, "arg1", 5, "arg2");
 
     // Verify it throws.
-    ExceptionAsserts.assertThrows(
+    assertThrows(
         IllegalArgumentException.class,
-        "'arg1' (10) must be an integer multiple of 'arg2' (3)",
-        () -> Validate.checkIntegerMultiple(10, "arg1", 3, "arg2"));
+        () -> Validate.checkIntegerMultiple(10, "arg1", 3, "arg2"),
+        "'arg1' (10) must be an integer multiple of 'arg2' (3)");
   }
 
   @Test
@@ -255,10 +253,10 @@ public class ValidateTest {
     Validate.checkGreater(10, "arg1", 5, "arg2");
 
     // Verify it throws.
-    ExceptionAsserts.assertThrows(
+    assertThrows(
         IllegalArgumentException.class,
-        "'arg1' (5) must be greater than 'arg2' (10)",
-        () -> Validate.checkGreater(5, "arg1", 10, "arg2"));
+        () -> Validate.checkGreater(5, "arg1", 10, "arg2"),
+        "'arg1' (5) must be greater than 'arg2' (10)");
   }
 
   @Test
@@ -267,10 +265,10 @@ public class ValidateTest {
     Validate.checkGreaterOrEqual(10, "arg1", 5, "arg2");
 
     // Verify it throws.
-    ExceptionAsserts.assertThrows(
+    assertThrows(
         IllegalArgumentException.class,
-        "'arg1' (5) must be greater than or equal to 'arg2' (10)",
-        () -> Validate.checkGreaterOrEqual(5, "arg1", 10, "arg2"));
+        () -> Validate.checkGreaterOrEqual(5, "arg1", 10, "arg2"),
+        "'arg1' (5) must be greater than or equal to 'arg2' (10)");
   }
 
   @Test
@@ -280,15 +278,15 @@ public class ValidateTest {
     Validate.checkWithinRange(10.0, "arg", 5.0, 15.0);
 
     // Verify it throws.
-    ExceptionAsserts.assertThrows(
+    assertThrows(
         IllegalArgumentException.class,
-        "'arg' (5) must be within the range [10, 20]",
-        () -> Validate.checkWithinRange(5, "arg", 10, 20));
+        () -> Validate.checkWithinRange(5, "arg", 10, 20),
+        "'arg' (5) must be within the range [10, 20]");
 
-    ExceptionAsserts.assertThrows(
+    assertThrows(
         IllegalArgumentException.class,
-        "'arg' (5.0) must be within the range [10.0, 20.0]",
-        () -> Validate.checkWithinRange(5.0, "arg", 10.0, 20.0));
+        () -> Validate.checkWithinRange(5.0, "arg", 10.0, 20.0),
+        "'arg' (5.0) must be within the range [10.0, 20.0]");
   }
 
   @Test
@@ -302,24 +300,24 @@ public class ValidateTest {
     Validate.checkPathExists(tempDir, "tempDir");
 
     // Verify it throws.
-    ExceptionAsserts.assertThrows(
+    assertThrows(
         IllegalArgumentException.class,
-        "'nullArg' must not be null",
-        () -> Validate.checkPathExists(null, "nullArg"));
+        () -> Validate.checkPathExists(null, "nullArg"),
+        "'nullArg' must not be null");
 
-    ExceptionAsserts.assertThrows(
+    assertThrows(
         IllegalArgumentException.class,
-        "Path notFound (<not-found>) does not exist",
-        () -> Validate.checkPathExists(notFound, "notFound"));
+        () -> Validate.checkPathExists(notFound, "notFound"),
+        "Path notFound (<not-found>) does not exist");
 
-    ExceptionAsserts.assertThrows(
+    assertThrows(
         IllegalArgumentException.class,
-        "must point to a directory",
-        () -> Validate.checkPathExistsAsDir(tempFile, "tempFile"));
+        () -> Validate.checkPathExistsAsDir(tempFile, "tempFile"),
+        "must point to a directory");
 
-    ExceptionAsserts.assertThrows(
+    assertThrows(
         IllegalArgumentException.class,
-        "must point to a file",
-        () -> Validate.checkPathExistsAsFile(tempDir, "tempDir"));
+        () -> Validate.checkPathExistsAsFile(tempDir, "tempDir"),
+        "must point to a file");
   }
 }
