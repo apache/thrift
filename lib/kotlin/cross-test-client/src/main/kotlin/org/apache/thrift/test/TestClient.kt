@@ -18,6 +18,9 @@
  */
 package org.apache.thrift.test
 
+import java.nio.ByteBuffer
+import kotlin.math.abs
+import kotlin.system.exitProcess
 import org.apache.http.impl.client.HttpClients
 import org.apache.thrift.TApplicationException
 import org.apache.thrift.TException
@@ -43,9 +46,6 @@ import thrift.test.Xception
 import thrift.test.Xception2
 import thrift.test.Xtruct
 import thrift.test.Xtruct2
-import java.nio.ByteBuffer
-import kotlin.math.abs
-import kotlin.system.exitProcess
 
 /**
  * Test Java client for thrift. Essentially just a copy of the C++ version, this makes a variety of
@@ -739,13 +739,13 @@ suspend fun main(args: Array<String>) {
                 val m1 = mm[4]!!
                 val m2 = mm[-4]!!
                 if (m1[1] != 1 ||
-                    m1[2] != 2 ||
-                    m1[3] != 3 ||
-                    m1[4] != 4 ||
-                    m2[-1] != -1 ||
-                    m2[-2] != -2 ||
-                    m2[-3] != -3 ||
-                    m2[-4] != -4
+                        m1[2] != 2 ||
+                        m1[3] != 3 ||
+                        m1[4] != 4 ||
+                        m2[-1] != -1 ||
+                        m2[-2] != -2 ||
+                        m2[-3] != -3 ||
+                        m2[-4] != -4
                 ) {
                     returnCode = returnCode or ERR_CONTAINERS
                     println("*** FAILURE ***\n")
@@ -810,12 +810,12 @@ suspend fun main(args: Array<String>) {
                     val first_map = whoa[1L]!!
                     val second_map = whoa[2L]!!
                     if (first_map.size == 2 &&
-                        first_map.containsKey(Numberz.TWO) &&
-                        first_map.containsKey(Numberz.THREE) &&
-                        second_map.size == 1 &&
-                        second_map.containsKey(Numberz.SIX) &&
-                        insane == first_map[Numberz.TWO] &&
-                        insane == first_map[Numberz.THREE]
+                            first_map.containsKey(Numberz.TWO) &&
+                            first_map.containsKey(Numberz.THREE) &&
+                            second_map.size == 1 &&
+                            second_map.containsKey(Numberz.SIX) &&
+                            insane == first_map[Numberz.TWO] &&
+                            insane == first_map[Numberz.THREE]
                     ) {
                         val six = second_map[Numberz.SIX]!!
                         // Cannot use "new Insanity().equals(six)" because as of now,
@@ -901,8 +901,8 @@ suspend fun main(args: Array<String>) {
             if (onewayElapsedMillis > 200) {
                 println(
                     "Oneway test took too long to execute failed: took " +
-                            onewayElapsedMillis +
-                            "ms"
+                        onewayElapsedMillis +
+                        "ms"
                 )
                 println(
                     "oneway calls are 'fire and forget' and therefore should not cause blocking."
@@ -1011,29 +1011,31 @@ private fun getTTransport(
             }
         }
         else -> {
-            val socket = if (ssl) {
-                TSSLTransportFactory.getClientSocket(host, port, socketTimeout)
-            } else {
-                println("using non-blocking socket $host:$port")
-                TNonblockingSocket(host, port, socketTimeout)
-            }
+            val socket =
+                if (ssl) {
+                    TSSLTransportFactory.getClientSocket(host, port, socketTimeout)
+                } else {
+                    println("using non-blocking socket $host:$port")
+                    TNonblockingSocket(host, port, socketTimeout)
+                }
             if (transport_type == "zlib") {
                 return TZlibTransport(socket)
             } else {
-                val wrapped = when (transport_type) {
-                    "buffered" -> {
-                        socket
+                val wrapped =
+                    when (transport_type) {
+                        "buffered" -> {
+                            socket
+                        }
+                        "framed" -> {
+                            TFramedTransport(socket)
+                        }
+                        "fastframed" -> {
+                            TFastFramedTransport(socket)
+                        }
+                        else -> {
+                            socket
+                        }
                     }
-                    "framed" -> {
-                        TFramedTransport(socket)
-                    }
-                    "fastframed" -> {
-                        TFastFramedTransport(socket)
-                    }
-                    else -> {
-                        socket
-                    }
-                }
                 return if (zlib) {
                     TZlibTransport(wrapped)
                 } else {
