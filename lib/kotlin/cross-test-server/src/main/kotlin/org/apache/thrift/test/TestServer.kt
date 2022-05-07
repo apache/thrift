@@ -226,8 +226,10 @@ class TestServerCommand : CliktCommand() {
     private fun getProtocolFactory(): TProtocolFactory =
         when (protocolType) {
             ProtocolType.Json, ProtocolType.MultiJson -> TJSONProtocol.Factory()
-            ProtocolType.Compact, ProtocolType.MultiCompact -> TCompactProtocol.Factory(stringLimit, containerLimit)
-            ProtocolType.Binary, ProtocolType.Multi -> TBinaryProtocol.Factory(stringLimit, containerLimit)
+            ProtocolType.Compact, ProtocolType.MultiCompact ->
+                TCompactProtocol.Factory(stringLimit, containerLimit)
+            ProtocolType.Binary, ProtocolType.Multi ->
+                TBinaryProtocol.Factory(stringLimit, containerLimit)
         }
 }
 
