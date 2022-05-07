@@ -103,7 +103,7 @@ To install the library in the local Maven repository location
 where other Maven or Gradle builds can reference it simply do this.
 
 ```bash
-gradle install
+gradle publishToMavenLocal
 ```
 
 The library will be placed in your home directory under .m2/repository
@@ -163,7 +163,7 @@ make maven-publish   -- This is for an Automake Linux build
 make MavenPublish    -- This is for a CMake generated build
 ```
 
-The uploadArchives task in Gradle is preconfigured with all necessary details
+The `publish` task in Gradle is preconfigured with all necessary details
 to sign and publish the artifacts from the build to the Apache Maven staging
 repository. The task requires the following externally provided properties to
 authenticate to the repository and sign the artifacts. The preferred approach
@@ -190,7 +190,7 @@ With the key information and credentials in place the following will generate
 if needed the build artifacts and proceed to publish the results.
 
 ```bash
-gradle -Prelease=true uploadArchives
+gradle -Prelease=true publish
 ```
 
 It is also possible to override the target repository for the Maven Publication
@@ -205,7 +205,7 @@ maven-repository-url=https://my.company.com/service/local/staging/deploy/maven2
 Or the same on the command line:
 
 ```bash
-gradle -Pmaven-repository-url=https://my.company.com/service/local/staging/deploy/maven2 -Prelease=true -Pthrift.version=0.11.0 uploadArchives
+gradle -Pmaven-repository-url=https://my.company.com/service/local/staging/deploy/maven2 -Prelease=true -Pthrift.version=0.11.0 publish
 ```
 
 
