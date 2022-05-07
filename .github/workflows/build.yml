@@ -205,6 +205,9 @@ jobs:
           chmod a+x compiler/cpp/thrift
           compiler/cpp/thrift -version
 
-      - name: Run make rust
+      - name: Run make for rust
         run: make -C lib/rs
+
+      - name: Run make check for rust
+        run: make -C lib/rs check
 
