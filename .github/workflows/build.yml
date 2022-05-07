@@ -315,7 +315,7 @@ jobs:
         run: make -C lib/py
 
       - name: Run make install for python
-        run: make -C lib/py install
+        run: sudo make -C lib/py install
 
       - name: Run make check for python
         run: make -C lib/py check
