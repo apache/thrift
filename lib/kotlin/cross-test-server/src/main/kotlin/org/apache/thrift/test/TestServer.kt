@@ -225,15 +225,9 @@ class TestServerCommand : CliktCommand() {
 
     private fun getProtocolFactory(): TProtocolFactory =
         when (protocolType) {
-            ProtocolType.Json, ProtocolType.MultiJson -> {
-                TJSONProtocol.Factory()
-            }
-            ProtocolType.Compact, ProtocolType.MultiCompact -> {
-                TCompactProtocol.Factory(stringLimit, containerLimit)
-            }
-            ProtocolType.Binary, ProtocolType.Multi -> {
-                TBinaryProtocol.Factory(stringLimit, containerLimit)
-            }
+            ProtocolType.Json, ProtocolType.MultiJson -> TJSONProtocol.Factory()
+            ProtocolType.Compact, ProtocolType.MultiCompact -> TCompactProtocol.Factory(stringLimit, containerLimit)
+            ProtocolType.Binary, ProtocolType.Multi -> TBinaryProtocol.Factory(stringLimit, containerLimit)
         }
 }
 
@@ -262,7 +256,6 @@ private fun getServerEngine(
     multiplexedProcessor.registerProcessor("SecondService", secondProcessor)
     when (serverType) {
         ServerType.NonBlocking, ServerType.ThreadedSelector -> {
-            // Nonblocking servers
             val tNonblockingServerSocket =
                 TNonblockingServerSocket(NonblockingAbstractServerSocketArgs().port(port))
             when (serverType) {
@@ -287,8 +280,7 @@ private fun getServerEngine(
                 }
             }
         }
-        else -> {
-            // Blocking servers
+        ServerType.Simple, ServerType.ThreadPool -> {
             // SSL socket
             val tServerSocket: TServerSocket =
                 if (ssl) {
