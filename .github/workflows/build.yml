@@ -77,10 +77,15 @@ jobs:
           sudo ln -s /usr/local/gradle/bin/gradle /usr/local/bin
           gradle --version
 
-      - name: Run spotlessCheck
+      - name: Run spotlessCheck for Java
         run: |
           cd lib/java
           gradle spotlessCheck
+
+      - name: Run ktfmtCheck for Kotlin
+        run: |
+          cd lib/kotlin
+          gradle ktfmtCheck
 
       - name: Run bootstrap
         run: ./bootstrap.sh
@@ -123,11 +128,17 @@ jobs:
           chmod a+x compiler/cpp/thrift
           compiler/cpp/thrift -version
 
-      - name: Run make java
+      - name: Run make for java
         run: make -C lib/java
 
-      - name: Run make kotlin
+      - name: Run make check for java
+        run: make -C lib/java check
+
+      - name: Run make for kotlin
         run: make -C lib/kotlin
+
+      - name: Run make check for kotlin
+        run: make -C lib/kotlin check
 
   lib-rust:
     needs: compiler
@@ -196,3 +207,4 @@ jobs:
 
       - name: Run make rust
         run: make -C lib/rs
+

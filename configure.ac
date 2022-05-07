@@ -956,10 +956,10 @@ fi
 if test "$have_kotlin" = "yes" ; then
   echo
   echo "Kotlin (Test Only) Library:"
-  echo "   Using gradlew ............. : lib/kotlin/gradlew"
+  echo "   Using gradle .............. : $GRADLE"
   echo "   Using java ................ : $JAVA"
   echo "   Using javac ............... : $JAVAC"
-  echo "   Using Gradle version ...... : $(lib/kotlin/gradlew --version --quiet | grep Gradle 2>&1)"
+  echo "   Using Gradle version ...... : $($GRADLE --version --quiet | grep Gradle 2>&1)"
   echo "   Using java version ........ : $($JAVA -version 2>&1 | grep 'version ')"
 fi
 if test "$have_lua" = "yes" ; then
