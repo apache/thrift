@@ -1,10 +1,10 @@
-name: 'Build'
+name: "Build"
 
 on:
   push:
-    branches: [ '*' ]
+    branches: ["*"]
   pull_request:
-    branches: [ '*' ]
+    branches: ["*"]
 
 env:
   BUILD_DEPS: automake bison flex g++ git libboost-all-dev libevent-dev libssl-dev libtool make pkg-config
@@ -60,7 +60,7 @@ jobs:
         with:
           distribution: temurin
           java-version: 11
-          cache: 'gradle'
+          cache: "gradle"
 
       - name: Install dependencies
         run: |
@@ -77,10 +77,15 @@ jobs:
           sudo ln -s /usr/local/gradle/bin/gradle /usr/local/bin
           gradle --version
 
-      - name: Run spotlessCheck
+      - name: Run spotlessCheck for Java
         run: |
           cd lib/java
           gradle spotlessCheck
+
+      - name: Run ktfmtCheck for Kotlin
+        run: |
+          cd lib/kotlin
+          gradle ktfmtCheck
 
       - name: Run bootstrap
         run: ./bootstrap.sh
@@ -123,8 +128,14 @@ jobs:
           chmod a+x compiler/cpp/thrift
           compiler/cpp/thrift -version
 
-      - name: Run make java
+      - name: Run make for java
         run: make -C lib/java
 
-      - name: Run make kotlin
+      - name: Run make check for java
+        run: make -C lib/java check
+
+      - name: Run make for kotlin
         run: make -C lib/kotlin
+
+      - name: Run make check for kotlin
+        run: make -C lib/kotlin check

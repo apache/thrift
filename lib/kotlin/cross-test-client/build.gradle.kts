@@ -18,8 +18,8 @@
  */
 
 plugins {
-    kotlin("jvm") version "1.5.31"
-    id("com.ncorti.ktfmt.gradle") version "0.4.0"
+    kotlin("jvm")
+    id("com.ncorti.ktfmt.gradle")
     java
     application
 }
