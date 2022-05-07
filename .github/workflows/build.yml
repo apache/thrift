@@ -305,6 +305,9 @@ jobs:
           chmod a+x compiler/cpp/thrift
           compiler/cpp/thrift -version
 
-      - name: Run make python
+      - name: Run make for python
         run: make -C lib/py
+
+      - name: Run make check for python
+        run: make -C lib/py check
 
