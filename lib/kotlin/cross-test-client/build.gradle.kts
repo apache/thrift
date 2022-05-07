@@ -31,6 +31,7 @@ repositories {
 dependencies {
     implementation(platform("org.jetbrains.kotlin:kotlin-bom"))
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
+    implementation("com.github.ajalt.clikt:clikt:3.4.2")
     // https://mvnrepository.com/artifact/org.jetbrains.kotlinx/kotlinx-coroutines-jdk8
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-jdk8:1.6.1")
     // https://mvnrepository.com/artifact/org.apache.thrift/libthrift
@@ -42,7 +43,7 @@ dependencies {
 tasks {
     application {
         applicationName = "TestClient"
-        mainClass.set("org.apache.thrift.test.TestClientKt")
+        mainClass.set("org.apache.thrift.test.CrossTestClientKt")
     }
 
     ktfmt {
