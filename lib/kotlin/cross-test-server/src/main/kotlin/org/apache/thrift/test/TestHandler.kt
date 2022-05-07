@@ -88,7 +88,9 @@ class TestHandler : ThriftTest {
     }
 
     override suspend fun testStruct(thing: Xtruct): Xtruct {
-        logger.info("""testStruct({"${thing.string_thing}", ${thing.byte_thing}, ${thing.i32_thing}, ${thing.i64_thing}})""")
+        logger.info(
+            """testStruct({"${thing.string_thing}", ${thing.byte_thing}, ${thing.i32_thing}, ${thing.i64_thing}})"""
+        )
         return thing
     }
 

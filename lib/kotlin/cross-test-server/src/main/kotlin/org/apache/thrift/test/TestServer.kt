@@ -173,7 +173,9 @@ class TestServerCommand : CliktCommand() {
     private val transportType: TransportType by option("--transport", help = "Transport type")
         .enum<TransportType> { it.key }
         .default(TransportType.Buffered)
-    private val serverType: ServerType by option("--server-type").enum<ServerType> { it.key }.default(ServerType.NonBlocking)
+    private val serverType: ServerType by option("--server-type")
+        .enum<ServerType> { it.key }
+        .default(ServerType.NonBlocking)
     private val useSSL: Boolean by option("--ssl", help = "Use SSL for encrypted transport")
         .flag(default = false)
     private val stringLimit: Long by option("--string-limit").long().default(-1)
@@ -185,16 +187,17 @@ class TestServerCommand : CliktCommand() {
         val testProcessor = ThriftTestProcessor(testHandler, scope = GlobalScope)
         val secondHandler = TestServer.SecondHandler()
         val secondProcessor = SecondServiceProcessor(secondHandler, scope = GlobalScope)
-        val serverEngine: TServer = getServerEngine(
-            testProcessor,
-            secondProcessor,
-            serverType,
-            port,
-            protocolType,
-            getProtocolFactory(),
-            getTransportFactory(),
-            useSSL
-        )
+        val serverEngine: TServer =
+            getServerEngine(
+                testProcessor,
+                secondProcessor,
+                serverType,
+                port,
+                protocolType,
+                getProtocolFactory(),
+                getTransportFactory(),
+                useSSL
+            )
         // Set server event handler
         serverEngine.setServerEventHandler(TestServer.TestServerEventHandler())
         // Run it
@@ -249,7 +252,9 @@ private fun getServerEngine(
     ssl: Boolean
 ): TServer {
     val isMulti =
-        protocolType == ProtocolType.Multi || protocolType == ProtocolType.MultiCompact || protocolType == ProtocolType.MultiJson
+        protocolType == ProtocolType.Multi ||
+            protocolType == ProtocolType.MultiCompact ||
+            protocolType == ProtocolType.MultiJson
     // If we are multiplexing services in one server...
     val multiplexedProcessor = TMultiplexedProcessor()
     multiplexedProcessor.registerDefault(testProcessor)
@@ -294,9 +299,7 @@ private fun getServerEngine(
             when (serverType) {
                 ServerType.Simple -> {
                     val tServerArgs = TServer.Args(tServerSocket)
-                    tServerArgs.processor(
-                        if (isMulti) multiplexedProcessor else testProcessor
-                    )
+                    tServerArgs.processor(if (isMulti) multiplexedProcessor else testProcessor)
                     tServerArgs.protocolFactory(tProtocolFactory)
                     tServerArgs.transportFactory(tTransportFactory)
                     return TSimpleServer(tServerArgs)
