@@ -43,7 +43,7 @@ dependencies {
 tasks {
     application {
         applicationName = "TestClient"
-        mainClass.set("org.apache.thrift.test.CrossTestClientKt")
+        mainClass.set("org.apache.thrift.test.TestClientKt")
     }
 
     ktfmt {

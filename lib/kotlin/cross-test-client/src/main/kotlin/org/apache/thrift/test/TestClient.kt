@@ -75,7 +75,7 @@ enum class TransportType(val key: String) {
     Http("http")
 }
 
-class CrossTestClient : CliktCommand() {
+class TestClient : CliktCommand() {
     private val host: String by option(help = "The cross test host to connect to")
         .default("localhost")
     private val port: Int by option(help = "The cross test port to connect to").int().default(9090)
@@ -756,7 +756,7 @@ private suspend fun ThriftTestClient.voidTest(returnCode: Int): Int {
 }
 
 fun main(args: Array<String>) {
-    CrossTestClient().main(args)
+    TestClient().main(args)
 }
 
 private val testByteArray =
