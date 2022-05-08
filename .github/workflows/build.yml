@@ -131,6 +131,10 @@ jobs:
       - name: Run make for java
         run: make -C lib/java
 
+      # this will invoke publishToMavenLocal and install locally
+      - name: Run make install for java
+        run: make -C lib/java install
+
       - name: Run make check for java
         run: make -C lib/java check
 
