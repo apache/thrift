@@ -22,6 +22,7 @@ package org.apache.thrift.meta_data;
 import java.util.Collections;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import org.apache.thrift.TBase;
 import org.apache.thrift.TFieldIdEnum;
 
@@ -42,7 +43,8 @@ public class FieldMetaData implements java.io.Serializable {
   public final byte requirementType;
   public final FieldValueMetaData valueMetaData;
   private final Map<String, String> fieldAnnotations;
-  private static final Map<Class<? extends TBase>, Map<? extends TFieldIdEnum, FieldMetaData>>
+  private static final ConcurrentMap<
+          Class<? extends TBase>, Map<? extends TFieldIdEnum, FieldMetaData>>
       structMap = new ConcurrentHashMap<>();
 
   public FieldMetaData(String name, byte req, FieldValueMetaData vMetaData) {
@@ -68,8 +70,8 @@ public class FieldMetaData implements java.io.Serializable {
     return Collections.unmodifiableMap(fieldAnnotations);
   }
 
-  public static void addStructMetaDataMap(
-      Class<? extends TBase> sClass, Map<? extends TFieldIdEnum, FieldMetaData> map) {
+  public static <T extends TBase<T, F>, F extends TFieldIdEnum> void addStructMetaDataMap(
+      Class<T> sClass, Map<F, FieldMetaData> map) {
     structMap.put(sClass, map);
   }
 
@@ -82,29 +84,21 @@ public class FieldMetaData implements java.io.Serializable {
    *     to {@link FieldMetaData#addStructMetaDataMap(Class, Map)} from a different thread during
    *     static initialization of the Thrift class is possible.
    */
-  public static Map<? extends TFieldIdEnum, FieldMetaData> getStructMetaDataMap(
-      Class<? extends TBase> sClass) {
+  public static <T extends TBase<T, F>, F extends TFieldIdEnum>
+      Map<F, FieldMetaData> getStructMetaDataMap(Class<T> sClass) {
     // Note: Do not use synchronized on this method declaration - it leads to a deadlock.
     // Similarly, do not trigger sClass.newInstance() while holding a lock on structMap,
     // it will lead to the same deadlock.
     // See: https://issues.apache.org/jira/browse/THRIFT-5430 for details.
     if (!structMap.containsKey(sClass)) { // Load class if it hasn't been loaded
       try {
-        sClass.newInstance();
-      } catch (InstantiationException e) {
+        sClass.getDeclaredConstructor().newInstance();
+      } catch (ReflectiveOperationException e) {
         throw new RuntimeException(
-            "InstantiationException for TBase class: "
-                + sClass.getName()
-                + ", message: "
-                + e.getMessage());
-      } catch (IllegalAccessException e) {
-        throw new RuntimeException(
-            "IllegalAccessException for TBase class: "
-                + sClass.getName()
-                + ", message: "
-                + e.getMessage());
+            e.getClass().getSimpleName() + " for TBase class: " + sClass.getName(), e);
       }
     }
-    return structMap.get(sClass);
+    //noinspection unchecked
+    return (Map<F, FieldMetaData>) structMap.get(sClass);
   }
 }
