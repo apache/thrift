@@ -47,7 +47,7 @@ publishing {
     publications {
         mavenJava(MavenPublication) {
             artifactId = "libthrift"
-            // explicitly set 3 jars because "from components.jar" will include shadow jar which isn't what we want
+            // explicitly set 3 jars because calling "from components.java" will include shadow jar which isn't what we want
             artifact jar
             artifact sourcesJar
             artifact javadocJar
