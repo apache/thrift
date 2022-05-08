@@ -37,6 +37,8 @@ val kotlinxCoroutinesJdk8Version: String by project
 dependencies {
     implementation(platform("org.jetbrains.kotlin:kotlin-bom"))
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
+    // clikt is used to drive command line parsing and validation
+    // https://mvnrepository.com/artifact/com.github.ajalt.clikt/clikt
     implementation("com.github.ajalt.clikt:clikt:3.4.2")
     // https://mvnrepository.com/artifact/org.jetbrains.kotlinx/kotlinx-coroutines-jdk8
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-jdk8:$kotlinxCoroutinesJdk8Version")
