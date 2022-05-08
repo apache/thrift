@@ -28,15 +28,26 @@ repositories {
     mavenCentral()
 }
 
+val slf4jVersion: String by project
+val httpclientVersion: String by project
+val httpcoreVersion: String by project
+val logbackVersion: String by project
+val kotlinxCoroutinesJdk8Version: String by project
+
 dependencies {
     implementation(platform("org.jetbrains.kotlin:kotlin-bom"))
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
     // https://mvnrepository.com/artifact/org.jetbrains.kotlinx/kotlinx-coroutines-jdk8
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-jdk8:1.6.1")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-jdk8:$kotlinxCoroutinesJdk8Version")
     // https://mvnrepository.com/artifact/org.apache.thrift/libthrift
     implementation("org.apache.thrift:libthrift:INCLUDED")
+    implementation("org.slf4j:slf4j-api:$slf4jVersion")
+    implementation("org.apache.httpcomponents:httpclient:$httpclientVersion")
+    implementation("org.apache.httpcomponents:httpcore:$httpcoreVersion")
     // https://mvnrepository.com/artifact/ch.qos.logback/logback-classic
-    implementation("ch.qos.logback:logback-classic:1.3.0-alpha14")
+    implementation("ch.qos.logback:logback-classic:$logbackVersion")
+    testImplementation("org.jetbrains.kotlin:kotlin-test")
+    testImplementation("org.jetbrains.kotlin:kotlin-test-junit")
 }
 
 tasks {
