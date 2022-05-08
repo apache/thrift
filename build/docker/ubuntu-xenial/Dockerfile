@@ -166,7 +166,7 @@ RUN apt-get install -y --no-install-recommends \
       unzip && \
 `# Open JDK 11 - we cannot install openjdk-11-jdk using apt-get because xenial has only openjdk-8-jdk` \
       wget https://download.java.net/openjdk/jdk11/ri/openjdk-11+28_linux-x64_bin.tar.gz -O /tmp/openjdk-11+28_linux-x64_bin.tar.gz && \
-      (echo "3784cfc4670f0d4c5482604c7c513beb1a92b005f569df9bf100e8bef6610f2e  /tmp/openjdk-11+28_linux-x64_bin.tar.g" | sha256sum -c -) && \
+      (echo "3784cfc4670f0d4c5482604c7c513beb1a92b005f569df9bf100e8bef6610f2e  /tmp/openjdk-11+28_linux-x64_bin.tar.gz" | sha256sum -c -) && \
       tar -C /usr/local -xzf /tmp/openjdk-11+28_linux-x64_bin.tar.gz && \
 `# Gradle` \
       wget https://services.gradle.org/distributions/gradle-$GRADLE_VERSION-bin.zip -q -O /tmp/gradle-$GRADLE_VERSION-bin.zip && \
