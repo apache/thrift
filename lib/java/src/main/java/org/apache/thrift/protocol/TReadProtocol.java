@@ -1,48 +1,47 @@
 package org.apache.thrift.protocol;
 
 import java.nio.ByteBuffer;
-
 import org.apache.thrift.TException;
 
 public interface TReadProtocol {
 
-    TMessage readMessageBegin() throws TException;
+  TMessage readMessageBegin() throws TException;
 
-    void readMessageEnd() throws TException;
+  void readMessageEnd() throws TException;
 
-    TStruct readStructBegin() throws TException;
+  TStruct readStructBegin() throws TException;
 
-    void readStructEnd() throws TException;
+  void readStructEnd() throws TException;
 
-    TField readFieldBegin() throws TException;
+  TField readFieldBegin() throws TException;
 
-    void readFieldEnd() throws TException;
+  void readFieldEnd() throws TException;
 
-    TMap readMapBegin() throws TException;
+  TMap readMapBegin() throws TException;
 
-    void readMapEnd() throws TException;
+  void readMapEnd() throws TException;
 
-    TList readListBegin() throws TException;
+  TList readListBegin() throws TException;
 
-    void readListEnd() throws TException;
+  void readListEnd() throws TException;
 
-    TSet readSetBegin() throws TException;
+  TSet readSetBegin() throws TException;
 
-    void readSetEnd() throws TException;
+  void readSetEnd() throws TException;
 
-    boolean readBool() throws TException;
+  boolean readBool() throws TException;
 
-    byte readByte() throws TException;
+  byte readByte() throws TException;
 
-    short readI16() throws TException;
+  short readI16() throws TException;
 
-    int readI32() throws TException;
+  int readI32() throws TException;
 
-    long readI64() throws TException;
+  long readI64() throws TException;
 
-    double readDouble() throws TException;
+  double readDouble() throws TException;
 
-    String readString() throws TException;
+  String readString() throws TException;
 
-    ByteBuffer readBinary() throws TException;
+  ByteBuffer readBinary() throws TException;
 }

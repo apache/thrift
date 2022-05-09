@@ -19,8 +19,6 @@
 
 package org.apache.thrift.protocol;
 
-import java.util.Base64;
-
 /**
  * Class for encoding and decoding Base64 data.
  *
