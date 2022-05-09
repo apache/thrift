@@ -33,10 +33,13 @@ val httpclientVersion: String by project
 val httpcoreVersion: String by project
 val logbackVersion: String by project
 val kotlinxCoroutinesJdk8Version: String by project
+val cliktVersion: String by project
 
 dependencies {
     implementation(platform("org.jetbrains.kotlin:kotlin-bom"))
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
+    // clikt is used to drive command line parsing and validation
+    implementation("com.github.ajalt.clikt:clikt:$cliktVersion")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-jdk8:$kotlinxCoroutinesJdk8Version")
     implementation("org.apache.thrift:libthrift:INCLUDED")
     implementation("org.slf4j:slf4j-api:$slf4jVersion")
