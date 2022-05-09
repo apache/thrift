@@ -32,17 +32,17 @@ val slf4jVersion: String by project
 val httpcoreVersion: String by project
 val logbackVersion: String by project
 val kotlinxCoroutinesJdk8Version: String by project
+val cliktVersion: String by project
 
 dependencies {
     implementation(platform("org.jetbrains.kotlin:kotlin-bom"))
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
-    // https://mvnrepository.com/artifact/org.jetbrains.kotlinx/kotlinx-coroutines-jdk8
+    // clikt is used to drive command line parsing and validation
+    implementation("com.github.ajalt.clikt:clikt:$cliktVersion")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-jdk8:$kotlinxCoroutinesJdk8Version")
-    // https://mvnrepository.com/artifact/org.apache.thrift/libthrift
     implementation("org.apache.thrift:libthrift:INCLUDED")
     implementation("org.slf4j:slf4j-api:$slf4jVersion")
     implementation("org.apache.httpcomponents:httpcore:$httpcoreVersion")
-    // https://mvnrepository.com/artifact/ch.qos.logback/logback-classic
     implementation("ch.qos.logback:logback-classic:$logbackVersion")
     testImplementation("org.jetbrains.kotlin:kotlin-test")
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit")
