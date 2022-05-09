@@ -201,7 +201,9 @@
       "ip"
     ],
     "protocols": [
-      "binary"
+      "binary",
+      "compact",
+      "json"
     ],
     "workdir": "../lib/kotlin"
   },
