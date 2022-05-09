@@ -19,6 +19,9 @@
 
 package org.apache.thrift.protocol;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -93,6 +96,15 @@ public abstract class TProtocol implements TWriteProtocol, TReadProtocol {
         R accept(T t) throws TException;
     }
 
+    public interface ReadCollectionCallback<R> {
+        R call() throws TException;
+    }
+
+    public interface ReadMapEntryCallback<K, V> {
+        K getKey() throws TException;
+        V getValue() throws TException;
+    }
+
     public final <T> void writeSet(byte elementType, Set<T> set, WriteCallback<T> callback) throws TException {
         writeSetBegin(new TSet(elementType, set.size()));
         for (T t : set) {
@@ -160,6 +172,16 @@ public abstract class TProtocol implements TWriteProtocol, TReadProtocol {
         return t;
     }
 
+    public final <K, V> Map<K, V> readMap(ReadMapEntryCallback<K, V> callback) throws TException {
+        return readMap(tMap -> {
+            Map<K, V> map = new HashMap<>(tMap.size);
+            for (int i = 0; i < tMap.size; i += 1) {
+                map.put(callback.getKey(), callback.getValue());
+            }
+            return map;
+        });
+    }
+
     public final <T> T readList(ReadCallback<TList, T> callback) throws TException {
         TList tList = readListBegin();
         T t = callback.accept(tList);
@@ -167,11 +189,31 @@ public abstract class TProtocol implements TWriteProtocol, TReadProtocol {
         return t;
     }
 
+    public final <T> List<T> readList(ReadCollectionCallback<T> callback) throws TException {
+        return readList(tList -> {
+            List<T> list = new ArrayList<>(tList.size);
+            for (int i = 0; i < tList.size; i += 1) {
+                list.add(callback.call());
+            }
+            return list;
+        });
+    }
+
     public final <T> T readSet(ReadCallback<TSet, T> callback) throws TException {
         TSet tSet = readSetBegin();
         T t = callback.accept(tSet);
         readSetEnd();
         return t;
+    }
+
+    public final <T> Set<T> readSet(ReadCollectionCallback<T> callback) throws TException {
+        return readSet(tSet -> {
+            Set<T> set = new HashSet<>(tSet.size);
+            for (int i = 0; i < tSet.size; i += 1) {
+                set.add(callback.call());
+            }
+            return set;
+        });
     }
 
     /**
