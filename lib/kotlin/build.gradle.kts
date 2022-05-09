@@ -19,7 +19,9 @@
 
 plugins {
     kotlin("jvm")
-    id("com.ncorti.ktfmt.gradle")
+    if (JavaVersion.current().isJava11Compatible) {
+        id("com.ncorti.ktfmt.gradle")
+    }
 }
 
 repositories {

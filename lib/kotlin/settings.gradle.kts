@@ -19,7 +19,9 @@
 pluginManagement {
     plugins {
         kotlin("jvm") version "1.6.10"
-        id("com.ncorti.ktfmt.gradle") version "0.8.0"
+        if (JavaVersion.current().isJava11Compatible) {
+            id("com.ncorti.ktfmt.gradle") version "0.8.0"
+        }
     }
 }
 

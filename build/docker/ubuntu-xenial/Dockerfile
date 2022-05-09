@@ -156,18 +156,13 @@ RUN apt-get install -y --no-install-recommends \
 # note: hxcpp 3.4.185 (latest) no longer ships static libraries, and caused a build failure
 
 ENV GRADLE_VERSION="7.4.2"
-# This is where we install and put the JDK, `java` is under $JAVA_HOME/bin
-ENV JAVA_HOME="/usr/local/jdk-11"
 RUN apt-get install -y --no-install-recommends \
 `# Java dependencies` \
       ant \
       ant-optional \
+      openjdk-8-jdk \
       maven \
       unzip && \
-`# Open JDK 11 - we cannot install openjdk-11-jdk using apt-get because xenial has only openjdk-8-jdk` \
-      wget https://download.java.net/openjdk/jdk11/ri/openjdk-11+28_linux-x64_bin.tar.gz -O /tmp/openjdk-11+28_linux-x64_bin.tar.gz && \
-      (echo "3784cfc4670f0d4c5482604c7c513beb1a92b005f569df9bf100e8bef6610f2e  /tmp/openjdk-11+28_linux-x64_bin.tar.gz" | sha256sum -c -) && \
-      tar -C /usr/local -xzf /tmp/openjdk-11+28_linux-x64_bin.tar.gz && \
 `# Gradle` \
       wget https://services.gradle.org/distributions/gradle-$GRADLE_VERSION-bin.zip -q -O /tmp/gradle-$GRADLE_VERSION-bin.zip && \
       (echo "29e49b10984e585d8118b7d0bc452f944e386458df27371b49b4ac1dec4b7fda  /tmp/gradle-$GRADLE_VERSION-bin.zip" | sha256sum -c -) && \
