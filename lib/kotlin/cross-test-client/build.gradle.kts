@@ -19,12 +19,9 @@
 
 plugins {
     kotlin("jvm")
-    // ktfmt 0.8.0+ only works on gradle 7.4+ which relies on Java 11
-    if (JavaVersion.current().isJava11Compatible) {
-        id("com.ncorti.ktfmt.gradle")
-    }
     java
     application
+    id("com.ncorti.ktfmt.gradle")
 }
 
 repositories {
@@ -59,7 +56,6 @@ tasks {
         mainClass.set("org.apache.thrift.test.TestClientKt")
     }
 
-    // ktfmt 0.8.0+ only works on gradle 7.4+ which relies on Java 11
     if (JavaVersion.current().isJava11Compatible) {
         ktfmt {
             kotlinLangStyle()

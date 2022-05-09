@@ -19,8 +19,13 @@
 pluginManagement {
     plugins {
         kotlin("jvm") version "1.6.10"
+        // per https://github.com/cortinico/ktfmt-gradle/tags the latest version requires Gradle 7.4 which in turn
+        // requires Java 11, failing the xenial build which is still on Java 8. Here we both configure the plugin
+        // but with different version, and only enabling ktfmt configure for Java 11+, to make the legacy build happy
         if (JavaVersion.current().isJava11Compatible) {
             id("com.ncorti.ktfmt.gradle") version "0.8.0"
+        } else {
+            id("com.ncorti.ktfmt.gradle") version "0.5.0"
         }
     }
 }
