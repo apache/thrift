@@ -83,6 +83,7 @@ public:
     package_flag = "";
     read_write_private_ = false;
     ignore_initialisms_ = false;
+    skip_remote_ = false;
     for( iter = parsed_options.begin(); iter != parsed_options.end(); ++iter) {
       if( iter->first.compare("package_prefix") == 0) {
         gen_package_prefix_ = (iter->second);
@@ -94,6 +95,8 @@ public:
         read_write_private_ = true;
       } else if( iter->first.compare("ignore_initialisms") == 0) {
         ignore_initialisms_ =  true;
+      } else if( iter->first.compare("skip_remote") == 0) {
+        skip_remote_ =  true;
       } else {
         throw "unknown option go:" + iter->first;
       }
@@ -297,6 +300,7 @@ private:
   std::string gen_thrift_import_;
   bool read_write_private_;
   bool ignore_initialisms_;
+  bool skip_remote_;
 
   /**
    * File streams
@@ -2015,7 +2019,9 @@ void t_go_generator::generate_service(t_service* tservice) {
   generate_service_client(tservice);
   generate_service_server(tservice);
   generate_service_helpers(tservice);
-  generate_service_remote(tservice);
+  if(!skip_remote_) {
+    generate_service_remote(tservice);
+  }
   f_types_ << endl;
 }
 
@@ -4267,4 +4273,6 @@ THRIFT_REGISTER_GENERATOR(go, "Go",
                           "    ignore_initialisms\n"
                           "                     Disable automatic spelling correction of initialisms (e.g. \"URL\")\n" \
                           "    read_write_private\n"
-                          "                     Make read/write methods private, default is public Read/Write\n")
+                          "                     Make read/write methods private, default is public Read/Write\n"
+                          "    skip_remote\n"
+                          "                     Skip the generating of -remote folders for the client binaries for services\n")
