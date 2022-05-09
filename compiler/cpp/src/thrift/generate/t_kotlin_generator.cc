@@ -94,7 +94,6 @@ public:
 private:
   std::string package_name_;
   std::string package_dir_;
-  ofstream_with_content_based_conditional_update f_extensions_;
   ofstream_with_content_based_conditional_update f_types_;
 
   std::string kotlin_package();
@@ -121,11 +120,6 @@ private:
   void generate_kdoc_comment(std::ostream& out, t_doc* tdoc);
 
   void generate_kotlin_struct(t_struct* tstruct, bool is_exception);
-
-  void generate_kotlin_ext_definition(std::ostream& out, std::string type_name);
-  void generate_kotlin_ext_field_definition(std::ostream& out);
-  void generate_kotlin_ext_map_definition(std::ostream& out);
-  void generate_kotlin_ext_container_definition(std::ostream& out, std::string type_name);
 
   void generate_service_interface(t_service* tservice);
   void generate_service_client(t_service* tservice);
@@ -207,17 +201,6 @@ void t_kotlin_generator::init_generator() {
   string f_types_name = package_dir_ + "/" + program_->get_name() + "Constants.kt";
   f_types_.open(f_types_name);
   f_types_ << autogen_comment() << kotlin_package();
-
-  string f_extensions_name = package_dir_ + "/TProtocolExt.kt";
-  f_extensions_.open(f_extensions_name);
-  f_extensions_ << autogen_comment() << kotlin_package();
-
-  generate_kotlin_ext_definition(f_extensions_, "Message");
-  generate_kotlin_ext_definition(f_extensions_, "Struct");
-  generate_kotlin_ext_field_definition(f_extensions_);
-  generate_kotlin_ext_map_definition(f_extensions_);
-  generate_kotlin_ext_container_definition(f_extensions_, "Set");
-  generate_kotlin_ext_container_definition(f_extensions_, "List");
 }
 
 /**
@@ -226,105 +209,6 @@ void t_kotlin_generator::init_generator() {
 void t_kotlin_generator::close_generator() {
   f_types_ << endl;
   f_types_.close();
-  f_extensions_ << endl;
-  f_extensions_.close();
-}
-
-void t_kotlin_generator::generate_kotlin_ext_definition(std::ostream& out, std::string type_name) {
-  out << "internal inline fun org.apache.thrift.protocol.TProtocol.write" << type_name
-      << "(marker: "
-         "org.apache.thrift.protocol.T"
-      << type_name << ", action: () -> Unit) {" << endl;
-  indent_up();
-  indent(out) << "write" << type_name << "Begin(marker)" << endl;
-  indent(out) << "try { action() }" << endl;
-  indent(out) << "finally { write" << type_name << "End() }" << endl;
-  scope_down(out);
-  out << endl;
-
-  out << "internal inline fun <R> org.apache.thrift.protocol.TProtocol.read" << type_name
-      << "(action: org.apache.thrift.protocol.T" << type_name << ".() -> R): R {" << endl;
-  indent_up();
-  indent(out) << "val marker = read" << type_name << "Begin()" << endl;
-  indent(out) << "try { return action(marker) }" << endl;
-  indent(out) << "finally { read" << type_name << "End() }" << endl;
-  scope_down(out);
-  out << endl;
-}
-
-void t_kotlin_generator::generate_kotlin_ext_field_definition(std::ostream& out) {
-  out << "internal inline fun org.apache.thrift.protocol.TProtocol.writeField(marker: "
-         "org.apache.thrift.protocol.TField, action: () -> Unit) {"
-      << endl;
-  indent_up();
-  indent(out) << "writeFieldBegin(marker)" << endl;
-  indent(out) << "try { action() }" << endl;
-  indent(out) << "finally { writeFieldEnd() }" << endl;
-  scope_down(out);
-  out << endl;
-
-  out << "internal inline fun org.apache.thrift.protocol.TProtocol.readField(action: "
-         "org.apache.thrift.protocol.TField.() -> kotlin.Unit): kotlin.Boolean {"
-      << endl;
-  indent_up();
-  indent(out) << "val marker = readFieldBegin()" << endl;
-  indent(out) << "if (marker.type == org.apache.thrift.protocol.TType.STOP) { return true }"
-              << endl;
-  indent(out) << "try {" << endl;
-  indent_up();
-  indent(out) << "action(marker)" << endl;
-  indent(out) << "return false" << endl;
-  indent_down();
-  indent(out) << "} finally { readFieldEnd() }" << endl;
-  scope_down(out);
-  out << endl;
-}
-
-void t_kotlin_generator::generate_kotlin_ext_map_definition(std::ostream& out) {
-  out << "internal inline fun <K, V> org.apache.thrift.protocol.TProtocol.writeMap(keyType: "
-         "kotlin.Byte, valueType: kotlin.Byte, map: Map<K, V>, action: (Map.Entry<K, V>) -> "
-         "Unit) {"
-      << endl;
-  indent_up();
-  indent(out) << "writeMapBegin(org.apache.thrift.protocol.TMap(keyType, valueType, map.size))"
-              << endl;
-  indent(out) << "map.forEach { action(it) }" << endl;
-  indent(out) << "writeMapEnd()" << endl;
-  scope_down(out);
-  out << endl;
-  out << "internal inline fun <R> org.apache.thrift.protocol.TProtocol.readMap(action: "
-         "org.apache.thrift.protocol.TMap.() -> R): R {"
-      << endl;
-  indent_up();
-  indent(out) << "val marker = readMapBegin()" << endl;
-  indent(out) << "val r = action(marker)" << endl;
-  indent(out) << "readMapEnd()" << endl;
-  indent(out) << "return r" << endl;
-  scope_down(out);
-  out << endl;
-}
-
-void t_kotlin_generator::generate_kotlin_ext_container_definition(std::ostream& out,
-                                                                  std::string type_name) {
-  out << "internal inline fun <T> org.apache.thrift.protocol.TProtocol.write" << type_name
-      << "(elemType: kotlin.Byte, container: " << type_name << "<T>, action: (T) -> Unit) {"
-      << endl;
-  indent_up();
-  indent(out) << "write" << type_name << "Begin(org.apache.thrift.protocol.T" << type_name
-              << "(elemType, container.size))" << endl;
-  indent(out) << "container.forEach { action(it) }" << endl;
-  indent(out) << "write" << type_name << "End()" << endl;
-  scope_down(out);
-  out << endl;
-  out << "internal inline fun <R> org.apache.thrift.protocol.TProtocol.read" << type_name
-      << "(action: org.apache.thrift.protocol.T" << type_name << ".() -> R): R {" << endl;
-  indent_up();
-  indent(out) << "val marker = read" << type_name << "Begin()" << endl;
-  indent(out) << "val r = action(marker)" << endl;
-  indent(out) << "read" << type_name << "End()" << endl;
-  indent(out) << "return r" << endl;
-  scope_down(out);
-  out << endl;
 }
 
 /**
@@ -972,17 +856,18 @@ void t_kotlin_generator::generate_struct_standard_scheme_read(std::ostream& out,
           indent_up();
           {
             indent(out) << "val skipNext = { "
-                           "org.apache.thrift.protocol.TProtocolUtil.skip(iproto, type) }"
+                           "org.apache.thrift.protocol.TProtocolUtil.skip(iproto, it.type) }"
                         << endl;
 
-            indent(out) << "when (id.toInt()) {" << endl;
+            indent(out) << "when (it.id.toInt()) {" << endl;
             indent_up();
             {
               for (auto& field : tstruct->get_members()) {
                 indent(out) << field->get_key() << " -> {" << endl;
                 indent_up();
                 {
-                  indent(out) << "if (type == " << type_to_enum(field->get_type()) << ") {" << endl;
+                  indent(out) << "if (it.type == " << type_to_enum(field->get_type()) << ") {"
+                              << endl;
                   indent_up();
                   generate_deserialize_field(out, field, "struct.");
                   indent_down();
@@ -1027,7 +912,8 @@ void t_kotlin_generator::generate_struct_standard_scheme_write(std::ostream& out
         for (auto& field : tstruct->get_members()) {
           auto is_required = field->get_req() == t_field::T_REQUIRED;
           indent(out) << "struct." << kotlin_safe_name(field->get_name())
-                      << (is_required ? "" : "?") << ".let {" << endl;
+                      << (is_required ? "" : "?") << ".let { "
+                      << kotlin_safe_name(field->get_name()) << " ->" << endl;
           indent_up();
           {
             indent(out) << "writeField(" << constant_name(field->get_name()) << "_FIELD_DESC) {"
@@ -1391,7 +1277,7 @@ void t_kotlin_generator::generate_serialize_field(ostream& out, t_field* tfield)
     throw "CANNOT GENERATE DESERIALIZE CODE FOR void TYPE: " + tfield->get_name();
   }
   indent(out);
-  generate_serialize_value(out, type);
+  generate_serialize_value(out, type, kotlin_safe_name(tfield->get_name()));
   out << endl;
 }
 
@@ -1463,7 +1349,7 @@ void t_kotlin_generator::generate_deserialize_container(ostream& out, t_type* tt
   if (ttype->is_map()) {
     out << "readMap {" << endl;
     indent_up();
-    indent(out) << "kotlin.collections.List(size) {" << endl;
+    indent(out) << "kotlin.collections.List(it.size) {" << endl;
     indent_up();
     indent(out);
     generate_deserialize_value(out, ((t_map*)ttype)->get_key_type());
@@ -1477,7 +1363,7 @@ void t_kotlin_generator::generate_deserialize_container(ostream& out, t_type* tt
   } else if (ttype->is_set()) {
     out << "readSet {" << endl;
     indent_up();
-    indent(out) << "kotlin.collections.List(size) {" << endl;
+    indent(out) << "kotlin.collections.List(it.size) {" << endl;
     indent_up();
     indent(out);
     generate_deserialize_value(out, ((t_set*)ttype)->get_elem_type());
@@ -1489,7 +1375,7 @@ void t_kotlin_generator::generate_deserialize_container(ostream& out, t_type* tt
   } else if (ttype->is_list()) {
     out << "readList {" << endl;
     indent_up();
-    indent(out) << "kotlin.collections.List(size) {" << endl;
+    indent(out) << "kotlin.collections.List(it.size) {" << endl;
     indent_up();
     indent(out);
     generate_deserialize_value(out, ((t_list*)ttype)->get_elem_type());
@@ -1664,19 +1550,19 @@ void t_kotlin_generator::generate_client_call(std::ostream& out,
     indent(out) << "return protocol.readMessage {" << endl;
     indent_up();
     {
-      indent(out) << "if (type == org.apache.thrift.protocol.TMessageType.EXCEPTION) {" << endl;
+      indent(out) << "if (it.type == org.apache.thrift.protocol.TMessageType.EXCEPTION) {" << endl;
       indent_up();
       indent(out) << "val ex = org.apache.thrift.TApplicationException().apply { read(protocol) }"
                   << endl;
       indent(out) << "throw ex" << endl;
       scope_down(out);
-      indent(out) << "if (seqid != seqId) {" << endl;
+      indent(out) << "if (it.seqid != seqId) {" << endl;
       indent_up();
       indent(out) << "throw org.apache.thrift.TApplicationException(" << endl;
       indent_up();
       indent(out) << "org.apache.thrift.TApplicationException.BAD_SEQUENCE_ID," << endl;
       indent(out) << "\"" << funname
-                  << " failed: out of sequence response: expected $seqId but got ${seqid}\""
+                  << " failed: out of sequence response: expected $seqId but got ${it.seqid}\""
                   << endl;
       indent_down();
       indent(out) << ")" << endl;
