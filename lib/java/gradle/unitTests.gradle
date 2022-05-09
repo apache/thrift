@@ -44,14 +44,14 @@ ext.markTaskDone = { task ->
 task deprecatedEqualityTest(type: JavaExec, group: 'Verification') {
     description = 'Run the non-JUnit test suite '
     classpath = sourceSets.test.runtimeClasspath
-    main 'org.apache.thrift.test.EqualityTest'
+    mainClass.set('org.apache.thrift.test.EqualityTest')
     markTaskDone(it)
 }
 
 task deprecatedJavaBeansTest(type: JavaExec, group: 'Verification') {
     description = 'Run the non-JUnit test suite '
     classpath = sourceSets.test.runtimeClasspath
-    main 'org.apache.thrift.test.JavaBeansTest'
+    mainClass.set('org.apache.thrift.test.JavaBeansTest')
     markTaskDone(it)
 }
 
