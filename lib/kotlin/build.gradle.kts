@@ -34,6 +34,12 @@ dependencies {
     testImplementation(kotlin("test"))
 }
 
+kotlin {
+    jvmToolchain {
+        (this as JavaToolchainSpec).languageVersion.set(JavaLanguageVersion.of(8))
+    }
+}
+
 tasks {
     if (JavaVersion.current().isJava11Compatible) {
         ktfmt {
