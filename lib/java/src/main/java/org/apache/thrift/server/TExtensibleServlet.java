@@ -99,7 +99,9 @@ public abstract class TExtensibleServlet extends HttpServlet {
     }
   }
 
-  /** @see HttpServlet#doPost(HttpServletRequest request, HttpServletResponse response) */
+  /**
+   * @see HttpServlet#doPost(HttpServletRequest request, HttpServletResponse response)
+   */
   @Override
   protected void doPost(HttpServletRequest request, HttpServletResponse response)
       throws ServletException, IOException {
@@ -132,7 +134,9 @@ public abstract class TExtensibleServlet extends HttpServlet {
     }
   }
 
-  /** @see HttpServlet#doGet(HttpServletRequest request, HttpServletResponse response) */
+  /**
+   * @see HttpServlet#doGet(HttpServletRequest request, HttpServletResponse response)
+   */
   @Override
   protected void doGet(HttpServletRequest req, HttpServletResponse resp)
       throws ServletException, IOException {

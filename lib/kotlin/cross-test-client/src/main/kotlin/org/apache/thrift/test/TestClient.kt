@@ -77,30 +77,27 @@ enum class TransportType(val key: String) {
 }
 
 class TestClient : CliktCommand() {
-    private val host: String by option(help = "The cross test host to connect to")
-        .default("localhost")
+    private val host: String by
+        option(help = "The cross test host to connect to").default("localhost")
     private val port: Int by option(help = "The cross test port to connect to").int().default(9090)
-    private val numTests: Int by option("--testloops", "--n", help = "Number of runs in this test")
-        .int()
-        .default(1)
-    private val protocolType: ProtocolType by option("--protocol", help = "Protocol type")
-        .enum<ProtocolType> { it.key }
-        .default(ProtocolType.Binary)
-    private val transportType: TransportType by option("--transport", help = "Transport type")
-        .enum<TransportType> { it.key }
-        .default(TransportType.Buffered)
-    private val useHttpClient: Boolean by option("--client", help = "Use http client")
-        .flag(default = false)
-    private val useSSL: Boolean by option("--ssl", help = "Use SSL for encrypted transport")
-        .flag(default = false)
-    private val useZlib: Boolean by option(
-            "--zlib",
-            help = "Use zlib wrapper for compressed transport"
-        )
-        .flag(default = false)
-    private val socketTimeout: Int by option("--timeout", help = "Socket timeout")
-        .int()
-        .default(1000)
+    private val numTests: Int by
+        option("--testloops", "--n", help = "Number of runs in this test").int().default(1)
+    private val protocolType: ProtocolType by
+        option("--protocol", help = "Protocol type")
+            .enum<ProtocolType> { it.key }
+            .default(ProtocolType.Binary)
+    private val transportType: TransportType by
+        option("--transport", help = "Transport type")
+            .enum<TransportType> { it.key }
+            .default(TransportType.Buffered)
+    private val useHttpClient: Boolean by
+        option("--client", help = "Use http client").flag(default = false)
+    private val useSSL: Boolean by
+        option("--ssl", help = "Use SSL for encrypted transport").flag(default = false)
+    private val useZlib: Boolean by
+        option("--zlib", help = "Use zlib wrapper for compressed transport").flag(default = false)
+    private val socketTimeout: Int by
+        option("--timeout", help = "Socket timeout").int().default(1000)
 
     private fun createProtocol(transport: TTransport): TProtocol =
         when (protocolType) {

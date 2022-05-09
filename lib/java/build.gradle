@@ -41,7 +41,7 @@ plugins {
     id 'signing'
     id 'com.github.johnrengelman.shadow' version '6.1.0'
     id "com.github.spotbugs" version "4.7.1"
-    id "com.diffplug.spotless" version "6.4.2"
+    id "com.diffplug.spotless" version "6.5.2"
 }
 
 description = 'Apache Thrift Java Library'

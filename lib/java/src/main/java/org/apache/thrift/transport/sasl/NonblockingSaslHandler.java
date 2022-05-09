@@ -123,17 +123,23 @@ public class NonblockingSaslHandler {
     return nextPhase;
   }
 
-  /** @return underlying nonblocking socket */
+  /**
+   * @return underlying nonblocking socket
+   */
   public TNonblockingTransport getUnderlyingTransport() {
     return underlyingTransport;
   }
 
-  /** @return SaslServer instance */
+  /**
+   * @return SaslServer instance
+   */
   public SaslServer getSaslServer() {
     return saslPeer.getSaslServer();
   }
 
-  /** @return true if current phase is done. */
+  /**
+   * @return true if current phase is done.
+   */
   public boolean isCurrentPhaseDone() {
     return currentPhase != nextPhase;
   }
