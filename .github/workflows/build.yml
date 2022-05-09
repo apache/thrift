@@ -182,6 +182,12 @@ jobs:
   cross-test:
     needs:
       - lib-java-kotlin
+    strategy:
+      matrix:
+        test_regex:
+          - "(binary)"
+          - "(header|json)"
+          - "(compact|multiplexed)"
     runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@v3
@@ -218,7 +224,13 @@ jobs:
         env:
           THRIFT_CROSSTEST_CONCURRENCY: 4
           PRECROSS_LANGS: java,kotlin
-        run: python test/test.py --retry-count 5 --skip-known-failures --server $PRECROSS_LANGS --client $PRECROSS_LANGS
+        run: |
+          python test/test.py \
+            --retry-count 5 \
+            --skip-known-failures \
+            --server $PRECROSS_LANGS \
+            --client $PRECROSS_LANGS \
+            --regex '${{ matrix.test_regex }}'
 
       - name: Upload log files from failed cross test runs
         uses: actions/upload-artifact@v3
