@@ -24,6 +24,9 @@ import org.apache.thrift.TException;
 /** Utility class with static methods for interacting with protocol data streams. */
 public class TProtocolUtil {
 
+  // no instantiation
+  private TProtocolUtil() {}
+
   /** The maximum recursive depth the skip() function will traverse before throwing a TException. */
   private static int maxSkipDepth = Integer.MAX_VALUE;
 

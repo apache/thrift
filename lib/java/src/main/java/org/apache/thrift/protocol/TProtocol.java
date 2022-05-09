@@ -19,293 +19,310 @@
 
 package org.apache.thrift.protocol;
 
-import java.nio.ByteBuffer;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
 import org.apache.thrift.TException;
 import org.apache.thrift.partial.TFieldData;
 import org.apache.thrift.scheme.IScheme;
 import org.apache.thrift.scheme.StandardScheme;
 import org.apache.thrift.transport.TTransport;
 
-/** Protocol interface definition. */
-public abstract class TProtocol {
+/**
+ * Protocol interface definition.
+ */
+public abstract class TProtocol implements TWriteProtocol, TReadProtocol {
 
-  /** Prevent direct instantiation */
-  @SuppressWarnings("unused")
-  private TProtocol() {}
-
-  /** Transport */
-  protected TTransport trans_;
-
-  /** Constructor */
-  protected TProtocol(TTransport trans) {
-    trans_ = trans;
-  }
-
-  /** Transport accessor */
-  public TTransport getTransport() {
-    return trans_;
-  }
-
-  protected void checkReadBytesAvailable(TMap map) throws TException {
-    long elemSize = getMinSerializedSize(map.keyType) + getMinSerializedSize(map.valueType);
-    trans_.checkReadBytesAvailable(map.size * elemSize);
-  }
-
-  protected void checkReadBytesAvailable(TList list) throws TException {
-    trans_.checkReadBytesAvailable(list.size * getMinSerializedSize(list.elemType));
-  }
-
-  protected void checkReadBytesAvailable(TSet set) throws TException {
-    trans_.checkReadBytesAvailable(set.size * getMinSerializedSize(set.elemType));
-  }
-
-  /**
-   * Return
-   *
-   * @param type Returns the minimum amount of bytes needed to store the smallest possible instance
-   *     of TType.
-   * @return
-   * @throws TException
-   */
-  public abstract int getMinSerializedSize(byte type) throws TException;
-
-  /** Writing methods. */
-  public abstract void writeMessageBegin(TMessage message) throws TException;
-
-  public abstract void writeMessageEnd() throws TException;
-
-  public abstract void writeStructBegin(TStruct struct) throws TException;
-
-  public abstract void writeStructEnd() throws TException;
-
-  public abstract void writeFieldBegin(TField field) throws TException;
-
-  public abstract void writeFieldEnd() throws TException;
-
-  public abstract void writeFieldStop() throws TException;
-
-  public abstract void writeMapBegin(TMap map) throws TException;
-
-  public abstract void writeMapEnd() throws TException;
-
-  public abstract void writeListBegin(TList list) throws TException;
-
-  public abstract void writeListEnd() throws TException;
-
-  public abstract void writeSetBegin(TSet set) throws TException;
-
-  public abstract void writeSetEnd() throws TException;
-
-  public abstract void writeBool(boolean b) throws TException;
-
-  public abstract void writeByte(byte b) throws TException;
-
-  public abstract void writeI16(short i16) throws TException;
-
-  public abstract void writeI32(int i32) throws TException;
-
-  public abstract void writeI64(long i64) throws TException;
-
-  public abstract void writeDouble(double dub) throws TException;
-
-  public abstract void writeString(String str) throws TException;
-
-  public abstract void writeBinary(ByteBuffer buf) throws TException;
-
-  /** Reading methods. */
-  public abstract TMessage readMessageBegin() throws TException;
-
-  public abstract void readMessageEnd() throws TException;
-
-  public abstract TStruct readStructBegin() throws TException;
-
-  public abstract void readStructEnd() throws TException;
-
-  public abstract TField readFieldBegin() throws TException;
-
-  public abstract void readFieldEnd() throws TException;
-
-  public abstract TMap readMapBegin() throws TException;
-
-  public abstract void readMapEnd() throws TException;
-
-  public abstract TList readListBegin() throws TException;
-
-  public abstract void readListEnd() throws TException;
-
-  public abstract TSet readSetBegin() throws TException;
-
-  public abstract void readSetEnd() throws TException;
-
-  public abstract boolean readBool() throws TException;
-
-  public abstract byte readByte() throws TException;
-
-  public abstract short readI16() throws TException;
-
-  public abstract int readI32() throws TException;
-
-  public abstract long readI64() throws TException;
-
-  public abstract double readDouble() throws TException;
-
-  public abstract String readString() throws TException;
-
-  public abstract ByteBuffer readBinary() throws TException;
-
-  /**
-   * Reset any internal state back to a blank slate. This method only needs to be implemented for
-   * stateful protocols.
-   */
-  public void reset() {}
-
-  /** Scheme accessor */
-  public Class<? extends IScheme> getScheme() {
-    return StandardScheme.class;
-  }
-
-  // -----------------------------------------------------------------
-  // Additional methods to improve performance.
-
-  public int readFieldBeginData() throws TException {
-    // Derived classes should provide a more efficient version of this
-    // method if allowed by the encoding used by that protocol.
-    TField tfield = this.readFieldBegin();
-    return TFieldData.encode(tfield.type, tfield.id);
-  }
-
-  public void skip(byte fieldType) throws TException {
-    this.skip(fieldType, Integer.MAX_VALUE);
-  }
-
-  public void skip(byte fieldType, int maxDepth) throws TException {
-    if (maxDepth <= 0) {
-      throw new TException("Maximum skip depth exceeded");
+    /**
+     * Prevent direct instantiation
+     */
+    @SuppressWarnings("unused")
+    private TProtocol() {
     }
 
-    switch (fieldType) {
-      case TType.BOOL:
-        this.skipBool();
-        break;
+    /**
+     * Transport
+     */
+    protected TTransport trans_;
 
-      case TType.BYTE:
-        this.skipByte();
-        break;
-
-      case TType.I16:
-        this.skipI16();
-        break;
-
-      case TType.I32:
-        this.skipI32();
-        break;
-
-      case TType.I64:
-        this.skipI64();
-        break;
-
-      case TType.DOUBLE:
-        this.skipDouble();
-        break;
-
-      case TType.STRING:
-        this.skipBinary();
-        break;
-
-      case TType.STRUCT:
-        this.readStructBegin();
-        while (true) {
-          int tfieldData = this.readFieldBeginData();
-          byte tfieldType = TFieldData.getType(tfieldData);
-          if (tfieldType == TType.STOP) {
-            break;
-          }
-          this.skip(tfieldType, maxDepth - 1);
-          this.readFieldEnd();
-        }
-        this.readStructEnd();
-        break;
-
-      case TType.MAP:
-        TMap map = this.readMapBegin();
-        for (int i = 0; i < map.size; i++) {
-          this.skip(map.keyType, maxDepth - 1);
-          this.skip(map.valueType, maxDepth - 1);
-        }
-        this.readMapEnd();
-        break;
-
-      case TType.SET:
-        TSet set = this.readSetBegin();
-        for (int i = 0; i < set.size; i++) {
-          this.skip(set.elemType, maxDepth - 1);
-        }
-        this.readSetEnd();
-        break;
-
-      case TType.LIST:
-        TList list = this.readListBegin();
-        for (int i = 0; i < list.size; i++) {
-          this.skip(list.elemType, maxDepth - 1);
-        }
-        this.readListEnd();
-        break;
-
-      default:
-        throw new TProtocolException(
-            TProtocolException.INVALID_DATA, "Unrecognized type " + fieldType);
+    /**
+     * Constructor
+     */
+    protected TProtocol(TTransport trans) {
+        trans_ = trans;
     }
-  }
 
-  /**
-   * The default implementation of all skip() methods calls the corresponding read() method.
-   * Protocols that derive from this class are strongly encouraged to provide a more efficient
-   * alternative.
-   */
-  protected void skipBool() throws TException {
-    this.readBool();
-  }
-
-  protected void skipByte() throws TException {
-    this.readByte();
-  }
-
-  protected void skipI16() throws TException {
-    this.readI16();
-  }
-
-  protected void skipI32() throws TException {
-    this.readI32();
-  }
-
-  protected void skipI64() throws TException {
-    this.readI64();
-  }
-
-  protected void skipDouble() throws TException {
-    this.readDouble();
-  }
-
-  protected void skipBinary() throws TException {
-    this.readBinary();
-  }
-
-  static final int MAX_SKIPPED_BYTES = 256;
-  protected byte[] skippedBytes = new byte[MAX_SKIPPED_BYTES];
-
-  protected void skipBytes(int numBytes) throws TException {
-    if (numBytes <= MAX_SKIPPED_BYTES) {
-      if (this.getTransport().getBytesRemainingInBuffer() >= numBytes) {
-        this.getTransport().consumeBuffer(numBytes);
-      } else {
-        this.getTransport().readAll(skippedBytes, 0, numBytes);
-      }
-    } else {
-      int remaining = numBytes;
-      while (remaining > 0) {
-        skipBytes(Math.min(remaining, MAX_SKIPPED_BYTES));
-        remaining -= MAX_SKIPPED_BYTES;
-      }
+    /**
+     * Transport accessor
+     */
+    public TTransport getTransport() {
+        return trans_;
     }
-  }
+
+    protected void checkReadBytesAvailable(TMap map) throws TException {
+        long elemSize = getMinSerializedSize(map.keyType) + getMinSerializedSize(map.valueType);
+        trans_.checkReadBytesAvailable(map.size * elemSize);
+    }
+
+    protected void checkReadBytesAvailable(TList list) throws TException {
+        long size = list.getSize();
+        trans_.checkReadBytesAvailable(size * getMinSerializedSize(list.elemType));
+    }
+
+    protected void checkReadBytesAvailable(TSet set) throws TException {
+        long size = set.getSize();
+        trans_.checkReadBytesAvailable(size * getMinSerializedSize(set.elemType));
+    }
+
+    /**
+     * Return min serialized size in bytes
+     *
+     * @param type Returns the minimum amount of bytes needed to store the smallest possible instance
+     *             of TType.
+     * @return min serialized size
+     * @throws TException when error happens
+     */
+    public abstract int getMinSerializedSize(byte type) throws TException;
+
+    public interface WriteCallback<T> {
+        void call(T e) throws TException;
+    }
+
+    public interface ReadCallback<T, R> {
+        R accept(T t) throws TException;
+    }
+
+    public final <T> void writeSet(byte elementType, Set<T> set, WriteCallback<T> callback) throws TException {
+        writeSetBegin(new TSet(elementType, set.size()));
+        for (T t : set) {
+            callback.call(t);
+        }
+        writeSetEnd();
+    }
+
+    public final <T> void writeList(byte elementType, List<T> list, WriteCallback<T> callback) throws TException {
+        writeListBegin(new TList(elementType, list.size()));
+        for (T t : list) {
+            callback.call(t);
+        }
+        writeListEnd();
+    }
+
+    public final <K, V> void writeMap(byte keyType, byte valueType, Map<K, V> map, WriteCallback<Map.Entry<K, V>> callback) throws TException {
+        writeMapBegin(new TMap(keyType, valueType, map.size()));
+        for (Map.Entry<K, V> entry : map.entrySet()) {
+            callback.call(entry);
+        }
+        writeMapEnd();
+    }
+
+    public final void writeField(TField field, WriteCallback<Void> callback) throws TException {
+        writeFieldBegin(field);
+        callback.call(null);
+        writeFieldEnd();
+    }
+
+    public final void writeStruct(TStruct struct, WriteCallback<Void> callback) throws TException {
+        writeStructBegin(struct);
+        callback.call(null);
+        writeStructEnd();
+    }
+
+    public final <T> T readMessage(ReadCallback<TMessage, T> callback) throws TException {
+        TMessage tMessage = readMessageBegin();
+        T t = callback.accept(tMessage);
+        readMessageEnd();
+        return t;
+    }
+
+    public final <T> boolean readField(ReadCallback<TField, T> callback) throws Exception {
+        TField tField = readFieldBegin();
+        if (tField.type == org.apache.thrift.protocol.TType.STOP) {
+            return true;
+        }
+        callback.accept(tField);
+        readFieldEnd();
+        return false;
+    }
+
+    public final <T> T readMap(ReadCallback<TMap, T> callback) throws TException {
+        TMap tMap = readMapBegin();
+        T t = callback.accept(tMap);
+        readMapEnd();
+        return t;
+    }
+
+    public final <T> T readList(ReadCallback<TList, T> callback) throws TException {
+        TList tList = readListBegin();
+        T t = callback.accept(tList);
+        readListEnd();
+        return t;
+    }
+
+    public final <T> T readSet(ReadCallback<TSet, T> callback) throws TException {
+        TSet tSet = readSetBegin();
+        T t = callback.accept(tSet);
+        readSetEnd();
+        return t;
+    }
+
+    /**
+     * Reset any internal state back to a blank slate. This method only needs to be implemented for
+     * stateful protocols.
+     */
+    public void reset() {
+    }
+
+    /**
+     * Scheme accessor
+     */
+    public Class<? extends IScheme> getScheme() {
+        return StandardScheme.class;
+    }
+
+    // -----------------------------------------------------------------
+    // Additional methods to improve performance.
+
+    public int readFieldBeginData() throws TException {
+        // Derived classes should provide a more efficient version of this
+        // method if allowed by the encoding used by that protocol.
+        TField tfield = this.readFieldBegin();
+        return TFieldData.encode(tfield.type, tfield.id);
+    }
+
+    public void skip(byte fieldType) throws TException {
+        this.skip(fieldType, Integer.MAX_VALUE);
+    }
+
+    public void skip(byte fieldType, int maxDepth) throws TException {
+        if (maxDepth <= 0) {
+            throw new TException("Maximum skip depth exceeded");
+        }
+
+        switch (fieldType) {
+            case TType.BOOL:
+                this.skipBool();
+                break;
+
+            case TType.BYTE:
+                this.skipByte();
+                break;
+
+            case TType.I16:
+                this.skipI16();
+                break;
+
+            case TType.I32:
+                this.skipI32();
+                break;
+
+            case TType.I64:
+                this.skipI64();
+                break;
+
+            case TType.DOUBLE:
+                this.skipDouble();
+                break;
+
+            case TType.STRING:
+                this.skipBinary();
+                break;
+
+            case TType.STRUCT:
+                this.readStructBegin();
+                while (true) {
+                    int tfieldData = this.readFieldBeginData();
+                    byte tfieldType = TFieldData.getType(tfieldData);
+                    if (tfieldType == TType.STOP) {
+                        break;
+                    }
+                    this.skip(tfieldType, maxDepth - 1);
+                    this.readFieldEnd();
+                }
+                this.readStructEnd();
+                break;
+
+            case TType.MAP:
+                TMap map = this.readMapBegin();
+                for (int i = 0; i < map.size; i++) {
+                    this.skip(map.keyType, maxDepth - 1);
+                    this.skip(map.valueType, maxDepth - 1);
+                }
+                this.readMapEnd();
+                break;
+
+            case TType.SET:
+                TSet set = this.readSetBegin();
+                for (int i = 0; i < set.size; i++) {
+                    this.skip(set.elemType, maxDepth - 1);
+                }
+                this.readSetEnd();
+                break;
+
+            case TType.LIST:
+                TList list = this.readListBegin();
+                for (int i = 0; i < list.size; i++) {
+                    this.skip(list.elemType, maxDepth - 1);
+                }
+                this.readListEnd();
+                break;
+
+            default:
+                throw new TProtocolException(
+                    TProtocolException.INVALID_DATA, "Unrecognized type " + fieldType);
+        }
+    }
+
+    /**
+     * The default implementation of all skip() methods calls the corresponding read() method.
+     * Protocols that derive from this class are strongly encouraged to provide a more efficient
+     * alternative.
+     */
+    protected void skipBool() throws TException {
+        this.readBool();
+    }
+
+    protected void skipByte() throws TException {
+        this.readByte();
+    }
+
+    protected void skipI16() throws TException {
+        this.readI16();
+    }
+
+    protected void skipI32() throws TException {
+        this.readI32();
+    }
+
+    protected void skipI64() throws TException {
+        this.readI64();
+    }
+
+    protected void skipDouble() throws TException {
+        this.readDouble();
+    }
+
+    protected void skipBinary() throws TException {
+        this.readBinary();
+    }
+
+    static final int MAX_SKIPPED_BYTES = 256;
+    protected byte[] skippedBytes = new byte[MAX_SKIPPED_BYTES];
+
+    protected void skipBytes(int numBytes) throws TException {
+        if (numBytes <= MAX_SKIPPED_BYTES) {
+            if (this.getTransport().getBytesRemainingInBuffer() >= numBytes) {
+                this.getTransport().consumeBuffer(numBytes);
+            } else {
+                this.getTransport().readAll(skippedBytes, 0, numBytes);
+            }
+        } else {
+            int remaining = numBytes;
+            while (remaining > 0) {
+                skipBytes(Math.min(remaining, MAX_SKIPPED_BYTES));
+                remaining -= MAX_SKIPPED_BYTES;
+            }
+        }
+    }
 }
