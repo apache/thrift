@@ -185,9 +185,9 @@ jobs:
     strategy:
       matrix:
         test_regex:
-          - "-(binary)"
-          - "-(header|json)"
-          - "-(compact|multiplexed)"
+          - "[-](binary)"
+          - "[-](header|json)"
+          - "[-](compact|multiplexed)"
     runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@v3
