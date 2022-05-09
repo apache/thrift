@@ -220,7 +220,7 @@ jobs:
             lib/kotlin/cross-test-client/build/install/TestClient/bin/* \
             lib/kotlin/cross-test-server/build/install/TestServer/bin/*
 
-      - name: Run precross
+      - name: Run cross test
         env:
           THRIFT_CROSSTEST_CONCURRENCY: 4
           PRECROSS_LANGS: java,kotlin
