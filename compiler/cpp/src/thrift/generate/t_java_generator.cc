@@ -265,6 +265,11 @@ public:
                                   std::string prefix = "",
                                   bool has_metadata = true);
 
+  void generate_deserialize_value(std::ostream& out,
+                                  t_type* ttype,
+                                  std::string prefix = "",
+                                  bool has_metadata = true);
+
   void generate_deserialize_struct(std::ostream& out, t_struct* tstruct, std::string prefix = "");
 
   void generate_deserialize_container(std::ostream& out,
@@ -4027,29 +4032,21 @@ void t_java_generator::generate_process_function(t_service* tservice, t_function
 }
 
 /**
- * Deserializes a field of any type.
+ * Deserializes a value of any type.
  *
- * @param tfield The field
+ * @param t_type The value's type
  * @param prefix The variable name or container for this field
  */
-void t_java_generator::generate_deserialize_field(ostream& out,
-                                                  t_field* tfield,
+void t_java_generator::generate_deserialize_value(ostream& out,
+                                                  t_type* type,
                                                   string prefix,
                                                   bool has_metadata) {
-  t_type* type = get_true_type(tfield->get_type());
-
-  if (type->is_void()) {
-    throw "CANNOT GENERATE DESERIALIZE CODE FOR void TYPE: " + prefix + tfield->get_name();
-  }
-
-  string name = prefix + tfield->get_name();
-
   if (type->is_struct() || type->is_xception()) {
-    generate_deserialize_struct(out, (t_struct*)type, name);
+    generate_deserialize_struct(out, (t_struct*)type, prefix);
   } else if (type->is_container()) {
-    generate_deserialize_container(out, type, name, has_metadata);
+    generate_deserialize_container(out, type, prefix, has_metadata);
   } else if (type->is_base_type()) {
-    indent(out) << name << " = iprot.";
+    indent(out) << prefix << " iprot.";
 
     t_base_type::t_base tbase = ((t_base_type*)type)->get_base();
     switch (tbase) {
@@ -4086,14 +4083,30 @@ void t_java_generator::generate_deserialize_field(ostream& out,
     }
     out << endl;
   } else if (type->is_enum()) {
-    indent(out) << name << " = "
-                << type_name(tfield->get_type(), true, false, false, true)
-                       + ".findByValue(iprot.readI32());"
+    indent(out) << prefix
+                << type_name(type, true, false, false, true) + ".findByValue(iprot.readI32());"
                 << endl;
   } else {
     printf("DO NOT KNOW HOW TO DESERIALIZE FIELD '%s' TYPE '%s'\n", tfield->get_name().c_str(),
            type_name(type).c_str());
   }
+}
+/**
+ * Deserializes a field of any type.
+ *
+ * @param tfield The field
+ * @param prefix The variable name or container for this field
+ */
+void t_java_generator::generate_deserialize_field(ostream& out,
+                                                  t_field* tfield,
+                                                  string prefix,
+                                                  bool has_metadata) {
+  t_type* type = get_true_type(tfield->get_type());
+  if (type->is_void()) {
+    throw "CANNOT GENERATE DESERIALIZE CODE FOR void TYPE: " + prefix + tfield->get_name();
+  }
+  string name = prefix + tfield->get_name();
+  generate_deserialize_value(out, type, name, has_metadata);
 }
 
 /**
@@ -4120,45 +4133,29 @@ void t_java_generator::generate_deserialize_container(ostream& out,
                                                       t_type* ttype,
                                                       string prefix,
                                                       bool has_metadata) {
-
-  scope_up(out);
-
-  string obj;
-
-  if (ttype->is_map()) {
-    obj = tmp("_map");
-  } else if (ttype->is_set()) {
-    obj = tmp("_set");
-  } else if (ttype->is_list()) {
-    obj = tmp("_list");
-  }
-
   if (has_metadata) {
     // Declare variables, read header
     if (ttype->is_map()) {
-      indent(out) << "org.apache.thrift.protocol.TMap " << obj << " = iprot.readMapBegin();"
-                  << endl;
+      indent(out) << "iprot.readMap(() -> {" << endl;
     } else if (ttype->is_set()) {
-      indent(out) << "org.apache.thrift.protocol.TSet " << obj << " = iprot.readSetBegin();"
-                  << endl;
+      indent(out) << "iprot.readSet(() -> {" << endl;
     } else if (ttype->is_list()) {
-      indent(out) << "org.apache.thrift.protocol.TList " << obj << " = iprot.readListBegin();"
-                  << endl;
+      indent(out) << "iprot.readList(() -> {" << endl;
     }
   } else {
     // Declare variables, read header
     if (ttype->is_map()) {
-      indent(out) << "org.apache.thrift.protocol.TMap " << obj << " = iprot.readMapBegin("
-                  << type_to_enum(((t_map*)ttype)->get_key_type()) << ", "
-                  << type_to_enum(((t_map*)ttype)->get_val_type()) << "); " << endl;
+      indent(out) << "iprot.readMapBegin(" << type_to_enum(((t_map*)ttype)->get_key_type()) << ", "
+                  << type_to_enum(((t_map*)ttype)->get_val_type()) << ", () -> {" << endl;
     } else if (ttype->is_set()) {
-      indent(out) << "org.apache.thrift.protocol.TSet " << obj << " = iprot.readSetBegin("
-                  << type_to_enum(((t_set*)ttype)->get_elem_type()) << ");" << endl;
+      indent(out) << "iprot.readSetBegin(" << type_to_enum(((t_set*)ttype)->get_elem_type())
+                  << ", () -> {" << endl;
     } else if (ttype->is_list()) {
-      indent(out) << "org.apache.thrift.protocol.TList " << obj << " = iprot.readListBegin("
-                  << type_to_enum(((t_list*)ttype)->get_elem_type()) << ");" << endl;
+      indent(out) << "iprot.readListBegin(" << type_to_enum(((t_list*)ttype)->get_elem_type())
+                  << ", () -> {" << endl;
     }
   }
+  indent_up();
 
   if (reuse_objects_) {
     indent(out) << "if (" << prefix << " == null) {" << endl;
@@ -4193,19 +4190,6 @@ void t_java_generator::generate_deserialize_container(ostream& out,
     generate_deserialize_set_element(out, (t_set*)ttype, prefix, obj, has_metadata);
   } else if (ttype->is_list()) {
     generate_deserialize_list_element(out, (t_list*)ttype, prefix, obj, has_metadata);
-  }
-
-  scope_down(out);
-
-  if (has_metadata) {
-    // Read container end
-    if (ttype->is_map()) {
-      indent(out) << "iprot.readMapEnd();" << endl;
-    } else if (ttype->is_set()) {
-      indent(out) << "iprot.readSetEnd();" << endl;
-    } else if (ttype->is_list()) {
-      indent(out) << "iprot.readListEnd();" << endl;
-    }
   }
   scope_down(out);
 }
