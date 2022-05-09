@@ -135,6 +135,12 @@ public abstract class TProtocol implements TWriteProtocol, TReadProtocol {
     writeStructEnd();
   }
 
+  public final void writeMessage(TMessage message, WriteCallback<Void> callback) throws TException {
+    writeMessageBegin(message);
+    callback.call(null);
+    writeMessageEnd();
+  }
+
   /**
    * read a message by delegating to a callback, handles {@link #readMessageBegin() begin} and
    * {@link #readMessageEnd() end} automatically.

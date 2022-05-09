@@ -1347,9 +1347,9 @@ void t_kotlin_generator::generate_serialize_container(ostream& out, t_type* ttyp
  */
 void t_kotlin_generator::generate_deserialize_container(ostream& out, t_type* ttype) {
   if (ttype->is_map()) {
-    out << "readMap {" << endl;
+    out << "readMap { tmap ->" << endl;
     indent_up();
-    indent(out) << "kotlin.collections.List(it.size) {" << endl;
+    indent(out) << "kotlin.collections.List(tmap.size) {" << endl;
     indent_up();
     indent(out);
     generate_deserialize_value(out, ((t_map*)ttype)->get_key_type());
@@ -1361,9 +1361,9 @@ void t_kotlin_generator::generate_deserialize_container(ostream& out, t_type* tt
     indent_down();
     indent(out) << "}";
   } else if (ttype->is_set()) {
-    out << "readSet {" << endl;
+    out << "readSet { tset ->" << endl;
     indent_up();
-    indent(out) << "kotlin.collections.List(it.size) {" << endl;
+    indent(out) << "kotlin.collections.List(tset.size) {" << endl;
     indent_up();
     indent(out);
     generate_deserialize_value(out, ((t_set*)ttype)->get_elem_type());
@@ -1373,9 +1373,9 @@ void t_kotlin_generator::generate_deserialize_container(ostream& out, t_type* tt
     indent_down();
     indent(out) << "}";
   } else if (ttype->is_list()) {
-    out << "readList {" << endl;
+    out << "readList { tlist ->" << endl;
     indent_up();
-    indent(out) << "kotlin.collections.List(it.size) {" << endl;
+    indent(out) << "kotlin.collections.List(tlist.size) {" << endl;
     indent_up();
     indent(out);
     generate_deserialize_value(out, ((t_list*)ttype)->get_elem_type());
