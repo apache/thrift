@@ -190,8 +190,7 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt-get update -yq
-          sudo apt-get install -y --no-install-recommends $BUILD_DEPS
-          sudo apt-get install -y --no-install-recommends curl
+          sudo apt-get install -y --no-install-recommends curl $BUILD_DEPS
 
       - name: Setup cargo
         run: |
@@ -249,6 +248,22 @@ jobs:
 
       - name: Run make check for rust
         run: make -C lib/rs check
+
+      - name: Run make test for rust
+        run: make -C lib/rs/test check
+
+      - name: Upload rust precross artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: rs-precross
+          if-no-files-found: error
+          path: |
+            lib/rs/test/bin/kitchen_sink_client
+            lib/rs/test/bin/kitchen_sink_server
+          retention-days: 3
+
+      - name: Run make test_recursive for rust
+        run: make -C lib/rs/test_recursive check
 
   cross-test:
     needs:

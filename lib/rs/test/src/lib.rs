@@ -15,11 +15,15 @@
 // specific language governing permissions and limitations
 // under the License.
 
+#![allow(clippy::vec_init_then_push)]
+#![allow(clippy::match_single_binding)]
+#![allow(clippy::derivable_impls)]
+
 pub mod base_one;
 pub mod base_two;
 pub mod midlayer;
-pub mod ultimate;
 pub mod recursive;
+pub mod ultimate;
 
 #[cfg(test)]
 mod tests {
