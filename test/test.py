@@ -121,7 +121,7 @@ def run_feature_tests(server_match, feature_match, jobs, skip_known_failures, on
         return False
 
 
-def default_concurrenty():
+def default_concurrency():
     try:
         return int(os.environ.get('THRIFT_CROSSTEST_CONCURRENCY'))
     except (TypeError, ValueError):
@@ -145,7 +145,7 @@ def main(argv):
     parser.add_argument('-r', '--retry-count', type=int,
                         default=0, help='maximum retry on failure')
     parser.add_argument('-j', '--jobs', type=int,
-                        default=default_concurrenty(),
+                        default=default_concurrency(),
                         help='number of concurrent test executions')
 
     g = parser.add_argument_group(title='Advanced')

@@ -16,15 +16,27 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-pluginManagement {
-    plugins {
-        kotlin("jvm") version "1.5.31"
-        id("com.ncorti.ktfmt.gradle") version "0.4.0"
+
+package org.apache.thrift
+
+import kotlin.test.assertEquals
+import org.apache.thrift.kotlin.annotation.test.Person
+import org.apache.thrift.meta_data.FieldMetaData
+import org.junit.jupiter.api.Test
+
+internal class MetaDataTest {
+    @Test
+    internal fun testAnnotation() {
+        val personMetadata = FieldMetaData.getStructMetaDataMap(Person::class.java)
+        assertEquals(3, personMetadata.size)
+        val idField = personMetadata[Person._Fields.ID]!!
+        assertEquals("id", idField.fieldName)
+        assertEquals(
+            mapOf(
+                "max" to "100000",
+                "min" to "1",
+            ),
+            idField.fieldAnnotations
+        )
     }
 }
-
-rootProject.name = "libthrift-kotlin"
-
-include("cross-test-client", "cross-test-server")
-
-includeBuild("../java")
