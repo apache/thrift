@@ -293,17 +293,24 @@ jobs:
           name: kotlin-precross
           path: lib/kotlin
 
+      - name: Download rust precross artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: rs-precross
+          path: lib/rs/test/bin
+
       - name: Set back executable flags
         run: |
           chmod a+x \
             lib/java/build/run* \
             lib/kotlin/cross-test-client/build/install/TestClient/bin/* \
-            lib/kotlin/cross-test-server/build/install/TestServer/bin/*
+            lib/kotlin/cross-test-server/build/install/TestServer/bin/* \
+            lib/rs/test/bin/*
 
       - name: Run cross test
         env:
           THRIFT_CROSSTEST_CONCURRENCY: 4
-          PRECROSS_LANGS: java,kotlin
+          PRECROSS_LANGS: java,kotlin,rs
         run: |
           python test/test.py \
             --retry-count 5 \
