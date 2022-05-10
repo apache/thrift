@@ -34,4 +34,16 @@ public final class TMap {
   public final byte keyType;
   public final byte valueType;
   public final int size;
+
+  public byte getKeyType() {
+    return keyType;
+  }
+
+  public byte getValueType() {
+    return valueType;
+  }
+
+  public int getSize() {
+    return size;
+  }
 }
