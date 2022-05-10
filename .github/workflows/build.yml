@@ -7,7 +7,7 @@ on:
     branches: ["*"]
 
 env:
-  BUILD_DEPS: automake bison flex g++ git libboost-all-dev libevent-dev libssl-dev libtool make pkg-config
+  BUILD_DEPS: automake bison flex git libboost-all-dev libevent-dev libssl-dev libtool make pkg-config
 
 jobs:
   # TODO windows and macos
@@ -22,7 +22,7 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt-get update -yq
-          sudo apt-get install -y --no-install-recommends $BUILD_DEPS
+          sudo apt-get install -y --no-install-recommends g++ $BUILD_DEPS
 
       - name: Run bootstrap
         run: ./bootstrap.sh
@@ -131,14 +131,53 @@ jobs:
       - name: Run make for java
         run: make -C lib/java
 
+      - name: Run make install for java
+        run: make -C lib/java install
+
+      - name: Upload java libthrift artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: libthrift
+          if-no-files-found: error
+          path: ~/.m2/repository/org/apache/thrift
+
       - name: Run make check for java
         run: make -C lib/java check
+
+      - name: Run make precross for java
+        run: make -C lib/java precross
+
+      - name: Upload java precross artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: java-precross
+          if-no-files-found: error
+          path: |
+            lib/java/build/functionalTestJar/
+            lib/java/build/runclient
+            lib/java/build/runnonblockingserver
+            lib/java/build/runserver
+            lib/java/build/runservletserver
+          retention-days: 3
 
       - name: Run make for kotlin
         run: make -C lib/kotlin
 
       - name: Run make check for kotlin
         run: make -C lib/kotlin check
+
+      - name: Run make precross for kotlin
+        run: make -C lib/kotlin precross
+
+      - name: Upload kotlin precross artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: kotlin-precross
+          if-no-files-found: error
+          path: |
+            lib/kotlin/cross-test-client/build/install/TestClient/
+            lib/kotlin/cross-test-server/build/install/TestServer/
+          retention-days: 3
 
   lib-rust:
     needs: compiler
@@ -211,3 +250,56 @@ jobs:
       - name: Run make check for rust
         run: make -C lib/rs check
 
+  cross-test:
+    needs:
+      - lib-java-kotlin
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v3
+        with:
+          python-version: "3.x"
+      - uses: actions/setup-java@v3
+        with:
+          distribution: temurin
+          # here we intentionally use java 8 so that we also verify java 11 compiles to version 8
+          java-version: 8
+          cache: "gradle"
+
+      - name: Download java precross artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: java-precross
+          path: lib/java/build
+
+      - name: Download kotlin precross artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: kotlin-precross
+          path: lib/kotlin
+
+      - name: Set back executable flags
+        run: |
+          chmod a+x \
+            lib/java/build/run* \
+            lib/kotlin/cross-test-client/build/install/TestClient/bin/* \
+            lib/kotlin/cross-test-server/build/install/TestServer/bin/*
+
+      - name: Run cross test
+        env:
+          THRIFT_CROSSTEST_CONCURRENCY: 4
+          PRECROSS_LANGS: java,kotlin
+        run: |
+          python test/test.py \
+            --retry-count 5 \
+            --skip-known-failures \
+            --server $PRECROSS_LANGS \
+            --client $PRECROSS_LANGS
+
+      - name: Upload log files from failed cross test runs
+        uses: actions/upload-artifact@v3
+        if: failure()
+        with:
+          name: cross-test-log
+          path: test/log/
+          retention-days: 3
