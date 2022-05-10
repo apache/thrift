@@ -35,6 +35,18 @@ public final class TMessage {
   public final byte type;
   public final int seqid;
 
+  public String getName() {
+    return name;
+  }
+
+  public byte getType() {
+    return type;
+  }
+
+  public int getSeqid() {
+    return seqid;
+  }
+
   @Override
   public String toString() {
     return "<TMessage name:'" + name + "' type: " + type + " seqid:" + seqid + ">";

@@ -77,6 +77,7 @@ public class TCompactProtocol extends TProtocol {
       this.stringLengthLimit_ = stringLengthLimit;
     }
 
+    @Override
     public TProtocol getProtocol(TTransport trans) {
       return new TCompactProtocol(trans, stringLengthLimit_, containerLengthLimit_);
     }
@@ -213,6 +214,7 @@ public class TCompactProtocol extends TProtocol {
    * Write a struct end. This doesn't actually put anything on the wire. We use this as an
    * opportunity to pop the last field from the current struct off of the field stack.
    */
+  @Override
   public void writeStructEnd() throws TException {
     lastFieldId_ = lastField_.pop();
   }
@@ -222,6 +224,7 @@ public class TCompactProtocol extends TProtocol {
    * current field id and the last one is small (&lt; 15), then the field id will be encoded in the
    * 4 MSB as a delta. Otherwise, the field id will follow the type header as a zigzag varint.
    */
+  @Override
   public void writeFieldBegin(TField field) throws TException {
     if (field.type == TType.BOOL) {
       // we want to possibly include the value, so we'll wait.
@@ -256,6 +259,7 @@ public class TCompactProtocol extends TProtocol {
   }
 
   /** Write the STOP symbol so we know there are no more fields in this struct. */
+  @Override
   public void writeFieldStop() throws TException {
     writeByteDirect(TType.STOP);
   }
@@ -264,6 +268,7 @@ public class TCompactProtocol extends TProtocol {
    * Write a map header. If the map is empty, omit the key and value type headers, as we don't need
    * any additional information to skip it.
    */
+  @Override
   public void writeMapBegin(TMap map) throws TException {
     if (map.size == 0) {
       writeByteDirect(0);
@@ -274,11 +279,13 @@ public class TCompactProtocol extends TProtocol {
   }
 
   /** Write a list header. */
+  @Override
   public void writeListBegin(TList list) throws TException {
     writeCollectionBegin(list.elemType, list.size);
   }
 
   /** Write a set header. */
+  @Override
   public void writeSetBegin(TSet set) throws TException {
     writeCollectionBegin(set.elemType, set.size);
   }
@@ -288,6 +295,7 @@ public class TCompactProtocol extends TProtocol {
    * header info isn't written yet. If so, decide what the right type header is for the value and
    * then write the field header. Otherwise, write a single byte.
    */
+  @Override
   public void writeBool(boolean b) throws TException {
     if (booleanField_ != null) {
       // we haven't written the field header yet
@@ -300,32 +308,38 @@ public class TCompactProtocol extends TProtocol {
   }
 
   /** Write a byte. Nothing to see here! */
+  @Override
   public void writeByte(byte b) throws TException {
     writeByteDirect(b);
   }
 
   /** Write an I16 as a zigzag varint. */
+  @Override
   public void writeI16(short i16) throws TException {
     writeVarint32(intToZigZag(i16));
   }
 
   /** Write an i32 as a zigzag varint. */
+  @Override
   public void writeI32(int i32) throws TException {
     writeVarint32(intToZigZag(i32));
   }
 
   /** Write an i64 as a zigzag varint. */
+  @Override
   public void writeI64(long i64) throws TException {
     writeVarint64(longToZigzag(i64));
   }
 
   /** Write a double to the wire as 8 bytes. */
+  @Override
   public void writeDouble(double dub) throws TException {
     fixedLongToBytes(Double.doubleToLongBits(dub), temp, 0);
     trans_.write(temp, 0, 8);
   }
 
   /** Write a string to the wire with a varint size preceding. */
+  @Override
   public void writeString(String str) throws TException {
     byte[] bytes = str.getBytes(StandardCharsets.UTF_8);
     writeVarint32(bytes.length);
@@ -333,6 +347,7 @@ public class TCompactProtocol extends TProtocol {
   }
 
   /** Write a byte array, using a varint for the size. */
+  @Override
   public void writeBinary(ByteBuffer bin) throws TException {
     ByteBuffer bb = bin.asReadOnlyBuffer();
     writeVarint32(bb.remaining());
@@ -344,14 +359,19 @@ public class TCompactProtocol extends TProtocol {
   // output or purpose.
   //
 
+  @Override
   public void writeMessageEnd() throws TException {}
 
+  @Override
   public void writeMapEnd() throws TException {}
 
+  @Override
   public void writeListEnd() throws TException {}
 
+  @Override
   public void writeSetEnd() throws TException {}
 
+  @Override
   public void writeFieldEnd() throws TException {}
 
   //
@@ -454,6 +474,7 @@ public class TCompactProtocol extends TProtocol {
   //
 
   /** Read a message header. */
+  @Override
   public TMessage readMessageBegin() throws TException {
     byte protocolId = readByte();
     if (protocolId != PROTOCOL_ID) {
@@ -478,6 +499,7 @@ public class TCompactProtocol extends TProtocol {
    * Read a struct begin. There's nothing on the wire for this, but it is our opportunity to push a
    * new struct begin marker onto the field stack.
    */
+  @Override
   public TStruct readStructBegin() throws TException {
     lastField_.push(lastFieldId_);
     lastFieldId_ = 0;
@@ -488,12 +510,14 @@ public class TCompactProtocol extends TProtocol {
    * Doesn't actually consume any wire data, just removes the last field for this struct from the
    * field stack.
    */
+  @Override
   public void readStructEnd() throws TException {
     // consume the last field we read off the wire.
     lastFieldId_ = lastField_.pop();
   }
 
   /** Read a field header off the wire. */
+  @Override
   public TField readFieldBegin() throws TException {
     byte type = readByte();
 
@@ -531,6 +555,7 @@ public class TCompactProtocol extends TProtocol {
    * Read a map header off the wire. If the size is zero, skip reading the key and value type. This
    * means that 0-length maps will yield TMaps without the "correct" types.
    */
+  @Override
   public TMap readMapBegin() throws TException {
     int size = readVarint32();
     checkContainerReadLength(size);
@@ -549,6 +574,7 @@ public class TCompactProtocol extends TProtocol {
    * element type header. If it's a longer list, the 4 MSB of the element type header will be 0xF,
    * and a varint will follow with the true size.
    */
+  @Override
   public TList readListBegin() throws TException {
     byte size_and_type = readByte();
     int size = (size_and_type >> 4) & 0x0f;
@@ -566,6 +592,7 @@ public class TCompactProtocol extends TProtocol {
    * element type header. If it's a longer set, the 4 MSB of the element type header will be 0xF,
    * and a varint will follow with the true size.
    */
+  @Override
   public TSet readSetBegin() throws TException {
     return new TSet(readListBegin());
   }
@@ -574,6 +601,7 @@ public class TCompactProtocol extends TProtocol {
    * Read a boolean off the wire. If this is a boolean field, the value should already have been
    * read during readFieldBegin, so we'll just consume the pre-stored value. Otherwise, read a byte.
    */
+  @Override
   public boolean readBool() throws TException {
     if (boolValue_ != null) {
       boolean result = boolValue_;
@@ -584,6 +612,7 @@ public class TCompactProtocol extends TProtocol {
   }
 
   /** Read a single byte off the wire. Nothing interesting here. */
+  @Override
   public byte readByte() throws TException {
     byte b;
     if (trans_.getBytesRemainingInBuffer() > 0) {
@@ -597,27 +626,32 @@ public class TCompactProtocol extends TProtocol {
   }
 
   /** Read an i16 from the wire as a zigzag varint. */
+  @Override
   public short readI16() throws TException {
     return (short) zigzagToInt(readVarint32());
   }
 
   /** Read an i32 from the wire as a zigzag varint. */
+  @Override
   public int readI32() throws TException {
     return zigzagToInt(readVarint32());
   }
 
   /** Read an i64 from the wire as a zigzag varint. */
+  @Override
   public long readI64() throws TException {
     return zigzagToLong(readVarint64());
   }
 
   /** No magic here - just read a double off the wire. */
+  @Override
   public double readDouble() throws TException {
     trans_.readAll(temp, 0, 8);
     return Double.longBitsToDouble(bytesToLong(temp));
   }
 
   /** Reads a byte[] (via readBinary), and then UTF-8 decodes it. */
+  @Override
   public String readString() throws TException {
     int length = readVarint32();
     checkStringReadLength(length);
@@ -639,6 +673,7 @@ public class TCompactProtocol extends TProtocol {
   }
 
   /** Read a ByteBuffer from the wire. */
+  @Override
   public ByteBuffer readBinary() throws TException {
     int length = readVarint32();
     if (length == 0) {
@@ -848,6 +883,7 @@ public class TCompactProtocol extends TProtocol {
   }
 
   /** Return the minimum number of bytes a type will consume on the wire */
+  @Override
   public int getMinSerializedSize(byte type) throws TTransportException {
     switch (type) {
       case 0:

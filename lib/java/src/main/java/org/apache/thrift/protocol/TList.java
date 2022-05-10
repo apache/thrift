@@ -32,4 +32,12 @@ public final class TList {
 
   public final byte elemType;
   public final int size;
+
+  public byte getElemType() {
+    return elemType;
+  }
+
+  public int getSize() {
+    return size;
+  }
 }
