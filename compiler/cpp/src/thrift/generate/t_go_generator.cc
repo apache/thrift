@@ -3375,9 +3375,6 @@ void t_go_generator::generate_deserialize_container(ostream& out,
   // Declare variables, read header
   if (ttype->is_map()) {
     out << indent() << "_, _, size, err := iprot.ReadMapBegin(ctx)" << endl;
-    out << indent() << "if size < 0 {" << endl;
-    out << indent() << "  return errors.New(\"map size is negative\")" << endl;
-    out << indent() << "}" << endl;
     out << indent() << "if err != nil {" << endl;
     out << indent() << "  return thrift.PrependError(\"error reading map begin: \", err)" << endl;
     out << indent() << "}" << endl;
@@ -3385,9 +3382,6 @@ void t_go_generator::generate_deserialize_container(ostream& out,
     out << indent() << prefix << eq << " " << (pointer_field ? "&" : "") << "tMap" << endl;
   } else if (ttype->is_set()) {
     out << indent() << "_, size, err := iprot.ReadSetBegin(ctx)" << endl;
-    out << indent() << "if size < 0 {" << endl;
-    out << indent() << "  return errors.New(\"set size is negative\")" << endl;
-    out << indent() << "}" << endl;
     out << indent() << "if err != nil {" << endl;
     out << indent() << "  return thrift.PrependError(\"error reading set begin: \", err)" << endl;
     out << indent() << "}" << endl;
@@ -3395,9 +3389,6 @@ void t_go_generator::generate_deserialize_container(ostream& out,
     out << indent() << prefix << eq << " " << (pointer_field ? "&" : "") << "tSet" << endl;
   } else if (ttype->is_list()) {
     out << indent() << "_, size, err := iprot.ReadListBegin(ctx)" << endl;
-    out << indent() << "if size < 0 {" << endl;
-    out << indent() << "  return errors.New(\"list size is negative\")" << endl;
-    out << indent() << "}" << endl;
     out << indent() << "if err != nil {" << endl;
     out << indent() << "  return thrift.PrependError(\"error reading list begin: \", err)" << endl;
     out << indent() << "}" << endl;
