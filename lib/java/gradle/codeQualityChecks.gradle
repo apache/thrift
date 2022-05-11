@@ -39,8 +39,8 @@ pmd {
 
 tasks.withType(Pmd) {
     reports {
-        html.enabled = true
-        xml.enabled = false
+        html.required = true
+        xml.required = false
     }
 }
 

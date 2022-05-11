@@ -125,7 +125,9 @@ public class TIOStreamTransport extends TEndpointTransport {
     outputStream_ = os;
   }
 
-  /** @return false after close is called. */
+  /**
+   * @return false after close is called.
+   */
   public boolean isOpen() {
     return inputStream_ != null || outputStream_ != null;
   }

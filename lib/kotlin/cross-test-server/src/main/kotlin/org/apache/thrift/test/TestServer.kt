@@ -167,17 +167,18 @@ enum class TransportType(val key: String) {
 
 class TestServerCommand : CliktCommand() {
     private val port: Int by option(help = "The cross test port to connect to").int().default(9090)
-    private val protocolType: ProtocolType by option("--protocol", help = "Protocol type")
-        .enum<ProtocolType> { it.key }
-        .default(ProtocolType.Binary)
-    private val transportType: TransportType by option("--transport", help = "Transport type")
-        .enum<TransportType> { it.key }
-        .default(TransportType.Buffered)
-    private val serverType: ServerType by option("--server-type")
-        .enum<ServerType> { it.key }
-        .default(ServerType.NonBlocking)
-    private val useSSL: Boolean by option("--ssl", help = "Use SSL for encrypted transport")
-        .flag(default = false)
+    private val protocolType: ProtocolType by
+        option("--protocol", help = "Protocol type")
+            .enum<ProtocolType> { it.key }
+            .default(ProtocolType.Binary)
+    private val transportType: TransportType by
+        option("--transport", help = "Transport type")
+            .enum<TransportType> { it.key }
+            .default(TransportType.Buffered)
+    private val serverType: ServerType by
+        option("--server-type").enum<ServerType> { it.key }.default(ServerType.NonBlocking)
+    private val useSSL: Boolean by
+        option("--ssl", help = "Use SSL for encrypted transport").flag(default = false)
     private val stringLimit: Long by option("--string-limit").long().default(-1)
     private val containerLimit: Long by option("--container-limit").long().default(-1)
 

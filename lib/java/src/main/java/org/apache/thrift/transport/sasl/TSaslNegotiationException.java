@@ -40,12 +40,16 @@ public class TSaslNegotiationException extends TTransportException {
     return error;
   }
 
-  /** @return Errory type plus the message. */
+  /**
+   * @return Errory type plus the message.
+   */
   public String getSummary() {
     return error.name() + ": " + getMessage();
   }
 
-  /** @return Summary and eventually the cause's message. */
+  /**
+   * @return Summary and eventually the cause's message.
+   */
   public String getDetails() {
     return getCause() == null
         ? getSummary()

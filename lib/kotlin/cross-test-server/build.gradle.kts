@@ -19,9 +19,9 @@
 
 plugins {
     kotlin("jvm")
-    id("com.ncorti.ktfmt.gradle")
     java
     application
+    id("com.ncorti.ktfmt.gradle")
 }
 
 repositories {
@@ -60,8 +60,10 @@ tasks {
         mainClass.set("org.apache.thrift.test.TestServerKt")
     }
 
-    ktfmt {
-        kotlinLangStyle()
+    if (JavaVersion.current().isJava11Compatible) {
+        ktfmt {
+            kotlinLangStyle()
+        }
     }
 
     task<Exec>("compileThrift") {
