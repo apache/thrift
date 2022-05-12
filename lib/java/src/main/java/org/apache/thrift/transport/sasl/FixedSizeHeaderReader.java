@@ -59,7 +59,9 @@ public abstract class FixedSizeHeaderReader implements FrameHeaderReader {
     return true;
   }
 
-  /** @return Size of the header. */
+  /**
+   * @return Size of the header.
+   */
   protected abstract int headerSize();
 
   /**

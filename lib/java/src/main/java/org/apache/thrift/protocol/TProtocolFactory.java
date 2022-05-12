@@ -24,5 +24,5 @@ import org.apache.thrift.transport.TTransport;
 
 /** Factory interface for constructing protocol instances. */
 public interface TProtocolFactory extends Serializable {
-  public TProtocol getProtocol(TTransport trans);
+  TProtocol getProtocol(TTransport trans);
 }

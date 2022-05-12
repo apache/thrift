@@ -67,7 +67,6 @@ shadowJar {
     dependsOn 'generateRunnerScriptForClient', 'generateRunnerScriptForServer', 'generateRunnerScriptForNonblockingServer', 'generateRunnerScriptForTServletServer'
     archiveBaseName.set('functionalTest')
     destinationDirectory = file("$buildDir/functionalTestJar")
-    archiveClassifier.set(null)
     // We do not need a version number for this internal jar
     archiveVersion.set(null)
     // Bundle the complete set of unit test classes including generated code
