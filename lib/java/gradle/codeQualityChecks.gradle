@@ -5,10 +5,8 @@
 
 dependencies {
     spotbugs configurations.spotbugsPlugins.dependencies
-    spotbugsPlugins 'com.h3xstream.findsecbugs:findsecbugs-plugin:1.11.0'
+    spotbugsPlugins 'com.h3xstream.findsecbugs:findsecbugs-plugin:1.12.0'
 }
-
-apply plugin: 'com.github.spotbugs'
 
 // see https://spotbugs-gradle-plugin.netlify.app/com/github/spotbugs/snom/spotbugsextension
 spotbugs {
