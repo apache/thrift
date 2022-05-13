@@ -35,13 +35,13 @@ java {
     }
 }
 
-tasks.withType(JavaCompile) {
+tasks.withType(JavaCompile).configureEach {
     options.encoding = 'UTF-8'
     options.debug = true
     options.deprecation = true
     assert JavaVersion.current().isJava11Compatible(), "we are using Java 11 to compile, this is to ensure that"
     // the following is to build with Java 8 specifications, even when building with JDK9 or later
-    options.compilerArgs += ['--release', '8']
+    options.release = 8
     options.compilerArgs += [
             '-Werror',
             '-Xlint:deprecation',
