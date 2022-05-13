@@ -21,21 +21,28 @@
 // ----------------------------------------------------------------------------
 // Compiler configuration details
 
-// These two properties are still needed on JDK8, and possibly used directly by
-// plugins. However, the '--release' option added below makes these two
-// properties redundant when building with JDK9 or later.
-sourceCompatibility = '1.8'
-targetCompatibility = '1.8'
+// We are using Java 11 toolchain to compile.
+// This enables decoupling from the Java version that gradle runs, from
+// the actual JDK version for the project. For more details, see
+// https://docs.gradle.org/current/userguide/toolchains.html
+//
+// The '--release' option added below makes sure that even if we are using
+// the toolchain version > 8, the final artifact is at version 8. There is
+// also a runtime CI that's based on Java 8 to ensure that.
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(11)
+    }
+}
 
 tasks.withType(JavaCompile) {
     options.encoding = 'UTF-8'
     options.debug = true
     options.deprecation = true
+    assert JavaVersion.current().isJava11Compatible(), "we are using Java 11 to compile, this is to ensure that"
     // the following is to build with Java 8 specifications, even when building with JDK9 or later
-    if (JavaVersion.current() > JavaVersion.VERSION_1_8) {
-        options.compilerArgs.addAll(['--release', '8'])
-    }
-    options.compilerArgs.addAll([
+    options.compilerArgs += ['--release', '8']
+    options.compilerArgs += [
             '-Werror',
             '-Xlint:deprecation',
             '-Xlint:cast',
@@ -44,7 +51,7 @@ tasks.withType(JavaCompile) {
             '-Xlint:finally',
             '-Xlint:overrides',
             // we can't enable -Xlint:unchecked just yet
-    ])
+    ]
 }
 
 // ----------------------------------------------------------------------------
