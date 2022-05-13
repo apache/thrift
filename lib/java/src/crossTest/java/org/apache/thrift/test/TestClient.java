@@ -28,7 +28,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.IntStream;
-
 import org.apache.http.impl.client.HttpClients;
 import org.apache.thrift.TApplicationException;
 import org.apache.thrift.TException;
