@@ -19,6 +19,7 @@
 
 package org.apache.thrift.server;
 
+import java.net.SocketException;
 import java.util.Optional;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.RejectedExecutionException;
@@ -253,18 +254,7 @@ public class TThreadPoolServer extends TServer {
           processor.process(inputProtocol, outputProtocol);
         }
       } catch (Exception x) {
-        LOGGER.debug("Error processing request", x);
-
-        // We'll usually receive RuntimeException types here
-        // Need to unwrap to ascertain real causing exception before we choose to ignore
-        // Ignore err-logging all transport-level/type exceptions
-        if (!isIgnorableException(x)) {
-          // Log the exception at error level and continue
-          LOGGER.error(
-              (x instanceof TException ? "Thrift " : "")
-                  + "Error occurred during processing of message.",
-              x);
-        }
+        logException(x);
       } finally {
         if (eventHandler.isPresent()) {
           eventHandler.get().deleteContext(connectionContext, inputProtocol, outputProtocol);
@@ -281,7 +271,11 @@ public class TThreadPoolServer extends TServer {
       }
     }
 
-    private boolean isIgnorableException(Exception x) {
+    private void logException( Exception x) {
+      LOGGER.debug("Error processing request", x);
+      // We'll usually receive RuntimeException types here
+      // Need to unwrap to ascertain real causing exception before we choose to ignore
+      // Ignoring err-logging all transport-level/type exceptions and SocketExceptions
       TTransportException tTransportException = null;
 
       if (x instanceof TTransportException) {
@@ -294,10 +288,17 @@ public class TThreadPoolServer extends TServer {
         switch (tTransportException.getType()) {
           case TTransportException.END_OF_FILE:
           case TTransportException.TIMED_OUT:
-            return true;
+            return; // don't log these
+        }
+        if (tTransportException.getCause() != null &&
+                ( tTransportException.getCause() instanceof SocketException ) ) {
+            LOGGER.warn( "SocketException occurred during processing of message.", tTransportException.getCause() );
+            return;
         }
       }
-      return false;
+      // Log the exception at error level and continue
+      LOGGER.error( (x instanceof TException ? "Thrift " : "")
+                      + "Error occurred during processing of message.", x);
     }
   }
 }
