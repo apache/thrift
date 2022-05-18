@@ -39,6 +39,7 @@ plugins {
     id 'java-library'
     id 'maven-publish'
     id 'signing'
+    id 'pmd'
     id 'com.github.johnrengelman.shadow' version '6.1.0'
     id "com.github.spotbugs" version "4.7.1"
     id "com.diffplug.spotless" version "6.5.2"
