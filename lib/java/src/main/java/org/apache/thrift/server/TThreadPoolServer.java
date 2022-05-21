@@ -271,7 +271,7 @@ public class TThreadPoolServer extends TServer {
       }
     }
 
-    private void logException( Exception x) {
+    private void logException(Exception x) {
       LOGGER.debug("Error processing request", x);
       // We'll usually receive RuntimeException types here
       // Need to unwrap to ascertain real causing exception before we choose to ignore
@@ -290,15 +290,19 @@ public class TThreadPoolServer extends TServer {
           case TTransportException.TIMED_OUT:
             return; // don't log these
         }
-        if (tTransportException.getCause() != null &&
-                ( tTransportException.getCause() instanceof SocketException ) ) {
-            LOGGER.warn( "SocketException occurred during processing of message.", tTransportException.getCause() );
-            return;
+        if (tTransportException.getCause() != null
+            && (tTransportException.getCause() instanceof SocketException)) {
+          LOGGER.warn(
+              "SocketException occurred during processing of message.",
+              tTransportException.getCause());
+          return;
         }
       }
       // Log the exception at error level and continue
-      LOGGER.error( (x instanceof TException ? "Thrift " : "")
-                      + "Error occurred during processing of message.", x);
+      LOGGER.error(
+          (x instanceof TException ? "Thrift " : "")
+              + "Error occurred during processing of message.",
+          x);
     }
   }
 }
