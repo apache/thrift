@@ -198,6 +198,8 @@ project.lock.json
 /lib/dart/**/packages
 /lib/dart/**/.pub/
 /lib/dart/**/pubspec.lock
+/lib/delphi/*.local
+/lib/delphi/*.identcache
 /lib/delphi/test/skip/bin
 /lib/delphi/test/serializer/*.dat
 /lib/delphi/**/*.identcache
@@ -227,6 +229,13 @@ project.lock.json
 /lib/js/dist
 /lib/js/doc
 /lib/js/test/build
+/lib/kotlin/cross-test-client/build/
+/lib/kotlin/cross-test-server/build/
+/lib/kotlin/build/
+/lib/kotlin/.gradle/
+/lib/kotlin/gradle/
+/lib/kotlin/gradlew
+/lib/kotlin/gradlew.bat
 /lib/netstd/**/bin
 /lib/netstd/**/obj
 /lib/nodejs/coverage
@@ -272,6 +281,7 @@ project.lock.json
 /lib/erl/logs/
 /lib/go/pkg
 /lib/go/src
+/lib/go/test/fuzz/gopathfuzz
 /lib/go/test/gopath/
 /lib/go/test/ThriftTest.thrift
 /lib/nodets/test-compiled/

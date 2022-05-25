@@ -20,12 +20,13 @@ using System.Linq;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using ThriftTest;
+using System.Threading.Tasks;
 
 namespace Server
 {
     public class Program
     {
-        public static int Main(string[] args)
+        static async Task<int> Main(string[] args)
         {
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
@@ -46,12 +47,12 @@ namespace Server
                 case "server":  // crosstest wants to pass this, so just emit a hint and ignore
                     Console.WriteLine("Hint: The 'server' argument is no longer required.");
                     argslist.RemoveAt(0);
-                    return TestServer.Execute(argslist);
+                    return await TestServer.Execute(argslist);
                 case "--help":
                     PrintHelp();
                     return 0;
                 default:
-                    return TestServer.Execute(argslist);
+                    return await TestServer.Execute(argslist);
             }
         }
 

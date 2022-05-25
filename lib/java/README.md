@@ -42,11 +42,41 @@ The Thrift Java source is not build using the GNU tools, but rather uses
 the Gradle build system, which tends to be predominant amongst Java
 developers.
 
+Currently we use gradle 7.4.2 to build the Thrift Java source. The usual way to setup gradle
+project is to include the gradle-wrapper.jar in the project and then run the gradle wrapper to
+bootstrap setting up gradle binaries. However to avoid putting binary files into the source tree we
+have ignored the gradle wrapper files. You are expected to install it manually, as described in
+the [gradle documentation](https://docs.gradle.org/current/userguide/installation.html), or
+following this step (which is also done in the travis CI docker images):
+
+```bash
+export GRADLE_VERSION="7.4.2"
+# install dependencies
+apt-get install -y --no-install-recommends openjdk-11-jdk-headless wget unzip
+# download gradle distribution
+wget https://services.gradle.org/distributions/gradle-$GRADLE_VERSION-bin.zip -q -O /tmp/gradle-$GRADLE_VERSION-bin.zip
+# check binary integrity
+echo "29e49b10984e585d8118b7d0bc452f944e386458df27371b49b4ac1dec4b7fda  /tmp/gradle-$GRADLE_VERSION-bin.zip" | sha256sum -c -
+# unzip and install
+unzip -d /tmp /tmp/gradle-$GRADLE_VERSION-bin.zip
+mv /tmp/gradle-$GRADLE_VERSION /usr/local/gradle
+ln -s /usr/local/gradle/bin/gradle /usr/local/bin
+```
+
+After the above step, `gradle` binary will be available in `/usr/local/bin/`. You can further choose
+to locally create the gradle wrapper (even if they are ignored) using:
+
+```bash
+gradle wrapper --gradle-version $GRADLE_VERSION
+```
+
 To compile the Java Thrift libraries, simply do the following:
 
-    ./gradlew
+```bash
+gradle
+```
 
-Yep, that's easy. Look for libthrift-<version>.jar in the build/libs directory.
+Yep, that's easy. Look for `libthrift-<version>.jar` in the build/libs directory.
 
 The default build will run the unit tests which expect a usable
 Thrift compiler to exist on the system. You have two choices for
@@ -65,12 +95,16 @@ that.
 
 To just build the library without running unit tests you simply do this.
 
-    ./gradlew assemble
+```bash
+gradle assemble
+```
 
 To install the library in the local Maven repository location
 where other Maven or Gradle builds can reference it simply do this.
 
-    ./gradlew install
+```bash
+gradle publishToMavenLocal
+```
 
 The library will be placed in your home directory under .m2/repository
 
@@ -80,12 +114,16 @@ classpath, or install if in your default system classpath of choice.
 
 Build Thrift behind a proxy:
 
-    ./gradlew -Dhttp.proxyHost=myproxyhost -Dhttp.proxyPort=8080 -Dhttp.proxyUser=thriftuser -Dhttp.proxyPassword=topsecret
+
+```bash
+gradle -Dhttp.proxyHost=myproxyhost -Dhttp.proxyPort=8080 -Dhttp.proxyUser=thriftuser -Dhttp.proxyPassword=topsecret
+```
 
 or via
 
-    ./configure --with-java GRADLE_OPTS='-Dhttp.proxyHost=myproxyhost -Dhttp.proxyPort=8080 -Dhttp.proxyUser=thriftuser -Dhttp.proxyPassword=topsecret'
-
+```bash
+./configure --with-java GRADLE_OPTS='-Dhttp.proxyHost=myproxyhost -Dhttp.proxyPort=8080 -Dhttp.proxyUser=thriftuser -Dhttp.proxyPassword=topsecret'
+```
 
 Unit Test HTML Reports
 ======================
@@ -107,8 +145,9 @@ under the location build/reports/clover/clover.pdf.
 
 The following command will build, unit test, and generate Clover reports:
 
-    ./gradlew -PcloverEnabled=true
-
+```bash
+gradle -PcloverEnabled=true
+```
 
 Publishing Maven Artifacts to Maven Central
 ===========================================
@@ -119,24 +158,28 @@ version number. The Gradle build will receive the correct value for the build.
 The same applies to the CMake build, the value from the configure.ac file will
 be used if you execute these commands:
 
-    make maven-publish   -- This is for an Automake Linux build
-    make MavenPublish    -- This is for a CMake generated build
+```bash
+make maven-publish   -- This is for an Automake Linux build
+make MavenPublish    -- This is for a CMake generated build
+```
 
-The uploadArchives task in Gradle is preconfigured with all necessary details
+The `publish` task in Gradle is preconfigured with all necessary details
 to sign and publish the artifacts from the build to the Apache Maven staging
 repository. The task requires the following externally provided properties to
 authenticate to the repository and sign the artifacts. The preferred approach
 is to create or edit the ~/.gradle/gradle.properties file and add the following
 properties to it.
 
-    # Signing key information for artifacts PGP signature (values are examples)
-    signing.keyId=24875D73
-    signing.password=secret
-    signing.secretKeyRingFile=/Users/me/.gnupg/secring.gpg
+```properties
+# Signing key information for artifacts PGP signature (values are examples)
+signing.keyId=24875D73
+signing.password=secret
+signing.secretKeyRingFile=/Users/me/.gnupg/secring.gpg
 
-    # Apache Maven staging repository user credentials
-    mavenUser=meMyselfAndI
-    mavenPassword=MySuperAwesomeSecretPassword
+# Apache Maven staging repository user credentials
+mavenUser=meMyselfAndI
+mavenPassword=MySuperAwesomeSecretPassword
+```
 
 NOTE: If you do not have a secring.gpg file, see the
 [gradle signing docs](https://docs.gradle.org/current/userguide/signing_plugin.html)
@@ -146,18 +189,24 @@ It is also possible to manually publish using the Gradle build directly.
 With the key information and credentials in place the following will generate
 if needed the build artifacts and proceed to publish the results.
 
-    ./gradlew -Prelease=true uploadArchives
+```bash
+gradle -Prelease=true publish
+```
 
 It is also possible to override the target repository for the Maven Publication
 by using a Gradle property, for example you can publish signed JAR files to your
 company internal server if you add this to the command line or in the
 ~/.gradle/gradle.properties file. The URL below assumes a Nexus Repository.
 
-    maven-repository-url=https://my.company.com/service/local/staging/deploy/maven2
+```properties
+maven-repository-url=https://my.company.com/service/local/staging/deploy/maven2
+```
 
 Or the same on the command line:
 
-    ./gradlew -Pmaven-repository-url=https://my.company.com/service/local/staging/deploy/maven2 -Prelease=true -Pthrift.version=0.11.0 uploadArchives
+```bash
+gradle -Pmaven-repository-url=https://my.company.com/service/local/staging/deploy/maven2 -Prelease=true -Pthrift.version=0.11.0 publish
+```
 
 
 Dependencies
@@ -175,7 +224,7 @@ changed to remove the boolean return type and instead rely on Exceptions.
 
 * Per THRIFT-4805, TSaslTransportException has been removed. The same condition
 is now covered by TTansportException, where `TTransportException.getType() == END_OF_FILE`.
- 
+
 ## 0.12.0
 
 The access modifier of the AutoExpandingBuffer class has been changed from

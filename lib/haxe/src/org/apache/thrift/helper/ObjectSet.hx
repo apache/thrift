@@ -22,7 +22,7 @@ package org.apache.thrift.helper;
 import Map;
 
 
-class ObjectSet<K> {
+class ObjectSet<K:{}> {
 
     private var _elements = new haxe.ds.ObjectMap<K,Int>();
     private var _size : Int = 0;

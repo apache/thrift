@@ -70,7 +70,6 @@ thrift_SOURCES = src/thrift/audit/t_audit.cpp \
 
 # Specific client generator source
 thrift_SOURCES += src/thrift/generate/t_c_glib_generator.cc \
-                  src/thrift/generate/t_cl_generator.cc \
                   src/thrift/generate/t_cpp_generator.cc \
                   src/thrift/generate/t_d_generator.cc \
                   src/thrift/generate/t_dart_generator.cc \
@@ -85,6 +84,7 @@ thrift_SOURCES += src/thrift/generate/t_c_glib_generator.cc \
                   src/thrift/generate/t_javame_generator.cc \
                   src/thrift/generate/t_js_generator.cc \
                   src/thrift/generate/t_json_generator.cc \
+                  src/thrift/generate/t_kotlin_generator.cc \
                   src/thrift/generate/t_lua_generator.cc \
                   src/thrift/generate/t_netstd_generator.cc \
                   src/thrift/generate/t_netstd_generator.h \

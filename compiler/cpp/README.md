@@ -58,8 +58,9 @@ Now open the folder cmake-ec using eclipse.
 - Install/update flex, bison and cmake with brew
 
 ```
-brew install cmake
+brew install flex
 brew install bison
+brew install cmake
 ```
 
 - Go to **thrift\compiler\cpp**
@@ -73,7 +74,7 @@ cmake --build .
 
 #### Usage of other IDEs
 
-Please check list of supported IDE 
+Please check list of supported IDE
 
 ```
 cmake --help
@@ -84,7 +85,7 @@ cmake --help
 ### Prerequisites
 - Install CMake - https://cmake.org/download/
 - In case if you want to build without Git Bash - install winflexbison - https://sourceforge.net/projects/winflexbison/
-- In case if you want to build with Visual Studio - install Visual Studio 
+- In case if you want to build with Visual Studio - install Visual Studio
   - Better to use the latest stable Visual Studio Community Edition - https://www.visualstudio.com/vs/whatsnew/ (ensure that you installed workload "Desktop Development with C++" for VS2017) - Microsoft added some support for CMake and improving it in Visual Studio
 
 ### Build using Git Bash
@@ -125,11 +126,11 @@ cpack
 
 If you don't want to use CMake you can use the already available Visual Studio 2010 solution.
 
-The Visual Studio project contains pre-build commands to generate the thriftl.cc, thrifty.cc and thrifty.hh files which are necessary to build the compiler. 
+The Visual Studio project contains pre-build commands to generate the thriftl.cc, thrifty.cc and thrifty.hh files which are necessary to build the compiler.
 
 These depend on bison, flex and their dependencies to work properly.
 
-Download flex & bison as described above. 
+Download flex & bison as described above.
 
 Place these binaries somewhere in the path and rename win_flex.exe and win_bison.exe to flex.exe and bison.exe respectively.
 
@@ -172,4 +173,4 @@ Added generic way to cover code by tests for many languages (you just need to ma
 
 - pls check **tests** folder
 
-# Have a Happy free time and holidays 
+# Have a Happy free time and holidays

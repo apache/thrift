@@ -150,7 +150,7 @@ protected:
    * performance-sensitive operation, so it is okay to just leave it to
    * the concrete class to set up pointers correctly.
    */
-  TBufferBase(std::shared_ptr<TConfiguration> config = nullptr) 
+  TBufferBase(std::shared_ptr<TConfiguration> config = nullptr)
     : TVirtualTransport(config), rBase_(nullptr), rBound_(nullptr), wBase_(nullptr), wBound_(nullptr) {}
 
   /// Convenience mutator for setting the read buffer.
@@ -211,7 +211,7 @@ public:
   }
 
   /// Use specified read and write buffer sizes.
-  TBufferedTransport(std::shared_ptr<TTransport> transport, uint32_t rsz, uint32_t wsz, 
+  TBufferedTransport(std::shared_ptr<TTransport> transport, uint32_t rsz, uint32_t wsz,
                      std::shared_ptr<TConfiguration> config = nullptr)
     : TVirtualTransport(config),
       transport_(transport),
@@ -506,7 +506,7 @@ public:
    * TAKE_OWNERSHIP:
    *   TMemoryBuffer will become the "owner" of the buffer,
    *   and will be responsible for freeing it.
-   *   The membory must have been allocated with malloc.
+   *   The memory must have been allocated with malloc.
    */
   enum MemoryPolicy { OBSERVE = 1, COPY = 2, TAKE_OWNERSHIP = 3 };
 
@@ -515,8 +515,8 @@ public:
    * owned by the TMemoryBuffer object.
    */
   TMemoryBuffer(std::shared_ptr<TConfiguration> config = nullptr)
-    : TVirtualTransport(config) { 
-    initCommon(nullptr, defaultSize, true, 0); 
+    : TVirtualTransport(config) {
+    initCommon(nullptr, defaultSize, true, 0);
   }
 
   /**
@@ -525,9 +525,9 @@ public:
    *
    * @param sz  The initial size of the buffer.
    */
-  TMemoryBuffer(uint32_t sz, std::shared_ptr<TConfiguration> config = nullptr) 
-    : TVirtualTransport(config) { 
-    initCommon(nullptr, sz, true, 0); 
+  TMemoryBuffer(uint32_t sz, std::shared_ptr<TConfiguration> config = nullptr)
+    : TVirtualTransport(config) {
+    initCommon(nullptr, sz, true, 0);
   }
 
   /**
@@ -540,7 +540,7 @@ public:
    * @param sz     The size of @c buf.
    * @param policy See @link MemoryPolicy @endlink .
    */
-  TMemoryBuffer(uint8_t* buf, uint32_t sz, MemoryPolicy policy = OBSERVE, std::shared_ptr<TConfiguration> config = nullptr) 
+  TMemoryBuffer(uint8_t* buf, uint32_t sz, MemoryPolicy policy = OBSERVE, std::shared_ptr<TConfiguration> config = nullptr)
     : TVirtualTransport(config) {
     if (buf == nullptr && sz != 0) {
       throw TTransportException(TTransportException::BAD_ARGS,

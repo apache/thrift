@@ -78,5 +78,6 @@ This allows us to distinguish between different (older) transports.
 
     INFO_KEYVALUE 0x01 - varint32 number of headers.
                        - key/value pairs of varstrings (varint16 length plus
-                         no-trailing-null string).
+                         no-trailing-null string). Implementations MUST NOT
+                         alter either key or value in any way.
 

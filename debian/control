@@ -1,8 +1,8 @@
 Source: thrift
 Section: devel
 Priority: extra
-Build-Depends: dotnet-runtime-5.0, dotnet-sdk-5.0, debhelper (>= 9), build-essential, python-dev, ant,
-    erlang-base, ruby-dev | ruby1.9.1-dev, ruby-bundler ,autoconf, automake,
+Build-Depends: dotnet-runtime-6.0, dotnet-sdk-6.0, debhelper (>= 9), build-essential, python-dev, ant,
+    ruby-dev | ruby1.9.1-dev, ruby-bundler ,autoconf, automake,
     pkg-config, libtool, bison, flex, libboost-dev | libboost1.56-dev | libboost1.63-all-dev,
     python-all, python-setuptools, python-all-dev, python-all-dbg,
     python3-all, python3-setuptools, python3-all-dev, python3-all-dbg,
@@ -129,7 +129,7 @@ Description: Java bindings for Thrift
 Package: libthrift-netstd
 Architecture: all
 Section: netstd
-Depends: dotnet-runtime-5.0, ${misc:Depends}
+Depends: dotnet-runtime-6.0, ${misc:Depends}
 Description: NET Standard bindings for Thrift
  Thrift is a software framework for scalable cross-language services
  development. It combines a software stack with a code generation engine to

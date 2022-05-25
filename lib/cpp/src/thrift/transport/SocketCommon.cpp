@@ -19,31 +19,16 @@
  * @author: David Suárez <david.sephirot@gmail.com>
  */
 
-#ifndef THRIFT_SOCKETCOMMON_H
-#define THRIFT_SOCKETCOMMON_H
-
-#ifndef _WIN32
-
-#include <thrift/thrift-config.h>
-
-#ifdef HAVE_UNISTD_H
-#include <unistd.h>
-#endif
-
-#ifdef HAVE_SYS_UN_H
-#include <sys/un.h>
-#endif
-
-#include <string>
-
+#include <thrift/transport/SocketCommon.h>
 #include <thrift/transport/PlatformSocket.h>
 #include <thrift/transport/TTransportException.h>
 #include <thrift/TOutput.h>
 
+#include <cstring>
+
 namespace apache {
 namespace thrift {
 namespace transport {
-
 
 socklen_t fillUnixSocketAddr(struct sockaddr_un& address, std::string& path)
 {
@@ -79,7 +64,3 @@ socklen_t fillUnixSocketAddr(struct sockaddr_un& address, std::string& path)
 }
 }
 } // apache::thrift::transport
-
-#endif // _WIN32
-
-#endif //THRIFT_SOCKETCOMMON_H

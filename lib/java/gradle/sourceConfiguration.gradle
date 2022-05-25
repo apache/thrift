@@ -18,49 +18,39 @@
  */
 
 // Following Gradle best practices to keep build logic organized
-
-// ----------------------------------------------------------------------------
-// source sets for main and test sources
-sourceSets {
-    main {
-        java {
-            srcDir 'src'
-        }
-    }
-    test {
-        java {
-            srcDir 'test'
-            // see functionalTests.gradle for these files
-            exclude '**/test/TestClient.java'
-            exclude '**/test/TestServer.java'
-            exclude '**/test/TestNonblockingServer.java'
-            exclude '**/test/TestTServletServer.java'
-        }
-        resources {
-            srcDir 'test'
-            include 'log4j.properties'
-        }
-    }
-}
-
 // ----------------------------------------------------------------------------
 // Compiler configuration details
 
-// These two properties are still needed on JDK8, and possibly used directly by
-// plugins. However, the '--release' option added below makes these two
-// properties redundant when building with JDK9 or later.
-sourceCompatibility = '1.8'
-targetCompatibility = '1.8'
+// We are using Java 11 toolchain to compile.
+// This enables decoupling from the Java version that gradle runs, from
+// the actual JDK version for the project. For more details, see
+// https://docs.gradle.org/current/userguide/toolchains.html
+//
+// The '--release' option added below makes sure that even if we are using
+// the toolchain version > 8, the final artifact is at version 8. There is
+// also a runtime CI that's based on Java 8 to ensure that.
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(11)
+    }
+}
 
-tasks.withType(JavaCompile) {
+tasks.withType(JavaCompile).configureEach {
     options.encoding = 'UTF-8'
     options.debug = true
     options.deprecation = true
     // the following is to build with Java 8 specifications, even when building with JDK9 or later
-    if (JavaVersion.current() > JavaVersion.VERSION_1_8) {
-        options.compilerArgs.addAll(['--release', '8'])
-    }
-    // options.compilerArgs.addAll('-Xlint:unchecked')
+    options.release = 8
+    options.compilerArgs += [
+            '-Werror',
+            '-Xlint:deprecation',
+            '-Xlint:cast',
+            '-Xlint:empty',
+            '-Xlint:fallthrough',
+            '-Xlint:finally',
+            '-Xlint:overrides',
+            // we can't enable -Xlint:unchecked just yet
+    ]
 }
 
 // ----------------------------------------------------------------------------
@@ -86,7 +76,7 @@ jar {
             "Bundle-Description": "Apache Thrift library",
             "Bundle-License": "${project.license}",
             "Bundle-ActivationPolicy": "lazy",
-            "Export-Package": "${project.group}.async;uses:=\"${project.group}.protocol,${project.group}.transport,org.slf4j,${project.group}\";version=\"${version}\",${project.group}.protocol;uses:=\"${project.group}.transport,${project.group},${project.group}.scheme\";version=\"${version}\",${project.group}.server;uses:=\"${project.group}.transport,${project.group}.protocol,${project.group},org.slf4j,javax.servlet,javax.servlet.http\";version=\"${version}\",${project.group}.transport;uses:=\"${project.group}.protocol,${project.group},org.apache.http.client,org.apache.http.params,org.apache.http.entity,org.apache.http.client.methods,org.apache.http,org.slf4j,javax.net.ssl,javax.net,javax.security.sasl,javax.security.auth.callback\";version=\"${version}\",${project.group};uses:=\"${project.group}.protocol,${project.group}.async,${project.group}.server,${project.group}.transport,org.slf4j,org.apache.log4j,${project.group}.scheme\";version=\"${version}\",${project.group}.meta_data;uses:=\"${project.group}\";version=\"${version}\",${project.group}.scheme;uses:=\"${project.group}.protocol,${project.group}\";version=\"${version}\",${project.group}.annotation;version=\"${version}\"",
+            "Export-Package": "${project.group}.async;uses:=\"${project.group}.protocol,${project.group}.transport,org.slf4j,${project.group}\";version=\"${archiveVersion}\",${project.group}.protocol;uses:=\"${project.group}.transport,${project.group},${project.group}.scheme\";version=\"${archiveVersion}\",${project.group}.server;uses:=\"${project.group}.transport,${project.group}.protocol,${project.group},org.slf4j,javax.servlet,javax.servlet.http\";version=\"${archiveVersion}\",${project.group}.transport;uses:=\"${project.group}.protocol,${project.group},org.apache.http.client,org.apache.http.params,org.apache.http.entity,org.apache.http.client.methods,org.apache.http,org.slf4j,javax.net.ssl,javax.net,javax.security.sasl,javax.security.auth.callback\";version=\"${archiveVersion}\",${project.group};uses:=\"${project.group}.protocol,${project.group}.async,${project.group}.server,${project.group}.transport,org.slf4j,org.apache.log4j,${project.group}.scheme\";version=\"${archiveVersion}\",${project.group}.meta_data;uses:=\"${project.group}\";version=\"${archiveVersion}\",${project.group}.scheme;uses:=\"${project.group}.protocol,${project.group}\";version=\"${archiveVersion}\",${project.group}.annotation;version=\"${archiveVersion}\"",
             "Import-Package": "javax.net,javax.net.ssl,javax.security.auth.callback,javax.security.sasl,javax.servlet;resolution:=optional,javax.servlet.http;resolution:=optional,org.slf4j;resolution:=optional;version=\"[1.4,2)\",org.apache.http.client;resolution:=optional,org.apache.http.params;resolution:=optional,org.apache.http.entity;resolution:=optional,org.apache.http.client.methods;resolution:=optional,org.apache.http;resolution:=optional"
         ])
     }

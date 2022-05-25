@@ -15,9 +15,5 @@
 // specific language governing permissions and limitations
 // under the License.
 
-
-
-
-
 mod thrift_test;
 pub use crate::thrift_test::*;

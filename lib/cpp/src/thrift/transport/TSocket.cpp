@@ -23,6 +23,9 @@
 #include <sstream>
 #ifdef HAVE_SYS_IOCTL_H
 #include <sys/ioctl.h>
+#ifdef __sun
+#include <sys/filio.h>
+#endif // __sun
 #endif
 #ifdef HAVE_SYS_SOCKET_H
 #include <sys/socket.h>
@@ -262,7 +265,7 @@ void TSocket::openConnection(struct addrinfo* res) {
     return;
   }
 
-  if (!path_.empty()) {
+  if (isUnixDomainSocket()) {
     socket_ = socket(PF_UNIX, SOCK_STREAM, IPPROTO_IP);
   } else {
     socket_ = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
@@ -327,24 +330,19 @@ void TSocket::openConnection(struct addrinfo* res) {
 
   // Connect the socket
   int ret;
-  if (!path_.empty()) {
-
-/*
- * TODO: seems that windows now support unix sockets,
- *       see: https://devblogs.microsoft.com/commandline/af_unix-comes-to-windows/
- */
-#ifndef _WIN32
-
+  if (isUnixDomainSocket()) {
+    // Windows supports Unix domain sockets since it ships the header
+    // HAVE_AF_UNIX_H (see https://devblogs.microsoft.com/commandline/af_unix-comes-to-windows/)
+#if (!defined(_WIN32) || defined(HAVE_AF_UNIX_H))
     struct sockaddr_un address;
     socklen_t structlen = fillUnixSocketAddr(address, path_);
 
     ret = connect(socket_, (struct sockaddr*)&address, structlen);
 #else
-    GlobalOutput.perror("TSocket::open() Unix Domain socket path not supported on windows", -99);
+    GlobalOutput.perror("TSocket::open() Unix Domain socket path not supported on this version of Windows", -99);
     throw TTransportException(TTransportException::NOT_OPEN,
                               " Unix Domain socket path not supported");
 #endif
-
   } else {
     ret = connect(socket_, res->ai_addr, static_cast<int>(res->ai_addrlen));
   }
@@ -405,7 +403,7 @@ done:
     throw TTransportException(TTransportException::NOT_OPEN, "THRIFT_FCNTL() failed", errno_copy);
   }
 
-  if (path_.empty()) {
+  if (!isUnixDomainSocket()) {
     setCachedAddress(res->ai_addr, static_cast<socklen_t>(res->ai_addrlen));
   }
 }
@@ -414,7 +412,7 @@ void TSocket::open() {
   if (isOpen()) {
     return;
   }
-  if (!path_.empty()) {
+  if (isUnixDomainSocket()) {
     unix_open();
   } else {
     local_open();
@@ -422,7 +420,7 @@ void TSocket::open() {
 }
 
 void TSocket::unix_open() {
-  if (!path_.empty()) {
+  if (isUnixDomainSocket()) {
     // Unix Domain Socket does not need addrinfo struct, so we pass NULL
     openConnection(nullptr);
   }
@@ -568,6 +566,7 @@ try_again:
         throw TTransportException(TTransportException::INTERRUPTED, "Interrupted");
       }
     } else /* ret == 0 */ {
+      GlobalOutput.perror("TSocket::read() THRIFT_EAGAIN (timed out) after %f ms", recvTimeout_);
       throw TTransportException(TTransportException::TIMED_OUT, "THRIFT_EAGAIN (timed out)");
     }
 
@@ -688,16 +687,20 @@ uint32_t TSocket::write_partial(const uint8_t* buf, uint32_t len) {
   return b;
 }
 
-std::string TSocket::getHost() {
+std::string TSocket::getHost() const {
   return host_;
 }
 
-int TSocket::getPort() {
+int TSocket::getPort() const {
   return port_;
 }
 
-std::string TSocket::getPath() {
+std::string TSocket::getPath() const {
     return path_;
+}
+
+bool TSocket::isUnixDomainSocket() const {
+    return !path_.empty();
 }
 
 void TSocket::setHost(string host) {
@@ -735,7 +738,7 @@ void TSocket::setLinger(bool on, int linger) {
 
 void TSocket::setNoDelay(bool noDelay) {
   noDelay_ = noDelay;
-  if (socket_ == THRIFT_INVALID_SOCKET || !path_.empty()) {
+  if (socket_ == THRIFT_INVALID_SOCKET || isUnixDomainSocket()) {
     return;
   }
 
@@ -796,6 +799,13 @@ void TSocket::setKeepAlive(bool keepAlive) {
     return;
   }
 
+#ifdef _WIN32
+  if (isUnixDomainSocket()) {
+      // Windows Domain sockets do not support SO_KEEPALIVE.
+      return;
+  }
+#endif
+
   int value = keepAlive_;
   int ret
       = setsockopt(socket_, SOL_SOCKET, SO_KEEPALIVE, const_cast_sockopt(&value), sizeof(value));
@@ -813,7 +823,7 @@ void TSocket::setMaxRecvRetries(int maxRecvRetries) {
 
 string TSocket::getSocketInfo() const {
   std::ostringstream oss;
-  if (path_.empty()) {
+  if (!isUnixDomainSocket()) {
     if (host_.empty() || port_ == 0) {
       oss << "<Host: " << getPeerAddress();
       oss << " Port: " << getPeerPort() << ">";
@@ -831,7 +841,7 @@ string TSocket::getSocketInfo() const {
 }
 
 std::string TSocket::getPeerHost() const {
-  if (peerHost_.empty() && path_.empty()) {
+  if (peerHost_.empty() && !isUnixDomainSocket()) {
     struct sockaddr_storage addr;
     struct sockaddr* addrPtr;
     socklen_t addrLen;
@@ -869,7 +879,7 @@ std::string TSocket::getPeerHost() const {
 }
 
 std::string TSocket::getPeerAddress() const {
-  if (peerAddress_.empty() && path_.empty()) {
+  if (peerAddress_.empty() && !isUnixDomainSocket()) {
     struct sockaddr_storage addr;
     struct sockaddr* addrPtr;
     socklen_t addrLen;
@@ -913,7 +923,7 @@ int TSocket::getPeerPort() const {
 }
 
 void TSocket::setCachedAddress(const sockaddr* addr, socklen_t len) {
-  if (!path_.empty()) {
+  if (isUnixDomainSocket()) {
     return;
   }
 

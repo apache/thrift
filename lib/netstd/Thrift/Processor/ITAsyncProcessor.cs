@@ -23,6 +23,6 @@ namespace Thrift.Processor
 {
     public interface ITAsyncProcessor
     {
-        Task<bool> ProcessAsync(TProtocol iprot, TProtocol oprot, CancellationToken cancellationToken = default(CancellationToken));
+        Task<bool> ProcessAsync(TProtocol iprot, TProtocol oprot, CancellationToken cancellationToken = default);
     }
 }

@@ -84,7 +84,7 @@ where
         // the thrift version header is intentionally negative
         // so the first check we'll do is see if the sign bit is set
         // and if so - assume it's the protocol-version header
-        if first_bytes[0] >= 8 {
+        if (first_bytes[0] & 0x80) != 0 {
             // apparently we got a protocol-version header - check
             // it, and if it matches, read the rest of the fields
             if first_bytes[0..2] != [0x80, 0x01] {

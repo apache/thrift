@@ -21,17 +21,36 @@ specific language governing permissions and limitations
 under the License.
 
 
+Suppored Go releases
+====================
+
+Following the
+[official Go release policy](https://golang.org/doc/devel/release#policy),
+we support the latest two Go releases at the time of the Thrift release.
+
+For example, at the time of Thrift v0.14.0 release,
+the latest two Go releases are go1.15 and go1.14,
+and those are the two Go releases supported by Thrift v0.14.*
+(including v0.14.1 and v0.14.2 patch releases).
+
+Because of Go's backward compatibility guarantee,
+older Thrift libraries usually works with newer Go releases
+(e.g. Thrift v0.14.* works with go1.16, although it's not officially supported),
+but newer Thrift releases might use new APIs introduced in Go releases and no
+longer work with older Go releases.
+For example, Thrift v0.14.0 used APIs introduced in go1.13,
+and as a result no longer works on go1.12.
+
+
 Using Thrift with Go
 ====================
 
-Thrift supports Go 1.7+
+Thrift supports the currently officially supported Go releases (the latest 2).
 
-In following Go conventions, we recommend you use the 'go' tool to install
-Thrift for go.
+After initializing the go modules file in your project, use the following
+command to add the most recent version of the package:
 
-    $ go get github.com/apache/thrift/lib/go/thrift/...
-
-Will retrieve and install the most recent version of the package.
+    $ go get github.com/apache/thrift
 
 
 A note about optional fields
@@ -113,3 +132,27 @@ if this interval is set to a value too low (for example, 1ms), it might cause
 excessive cpu overhead.
 
 This feature is also only enabled on non-oneway endpoints.
+
+A note about server stop implementations
+========================================
+
+[TSimpleServer.Stop](https://pkg.go.dev/github.com/apache/thrift/lib/go/thrift#TSimpleServer.Stop) will wait for all client connections to be closed after 
+the last received request to be handled, as the time spent by Stop
+ may sometimes be too long:
+* When socket timeout is not set, server might be hanged before all active
+  clients to finish handling the last received request.
+* When the socket timeout is too long (e.g one hour), server will
+  hang for that duration before all active clients to finish handling the
+  last received request.
+
+To prevent Stop from hanging for too long, you can set 
+thrift.ServerStopTimeout in your main or init function:
+
+    thrift.ServerStopTimeout = <max_duration_to_stop>
+
+If it's set to <=0, the feature will be disabled (by default), and server 
+will wait for all the client connections to be closed gracefully with 
+zero err time. Otherwise, the stop will wait for all the client 
+connections to be closed gracefully util thrift.ServerStopTimeout is 
+reached, and client connections that are not closed after thrift.ServerStopTimeout 
+will be closed abruptly which may cause some client errors.

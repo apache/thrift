@@ -139,7 +139,11 @@ namespace Thrift.Transport.Server
 
             try
             {
+                #if NET6_0_OR_GREATER
+                var client = await _server.AcceptTcpClientAsync(cancellationToken);
+                #else
                 var client = await _server.AcceptTcpClientAsync();
+                #endif
                 client.SendTimeout = client.ReceiveTimeout = _clientTimeout;
 
                 //wrap the client in an SSL Socket passing in the SSL cert

@@ -17,14 +17,20 @@
 # under the License.
 #
 
+if GOVERSION_GE_118
+GOBUILDEXTRA = -buildvcs=false
+else
+GOBUILDEXTRA =
+endif
+
 gen-go/tutorial/calculator.go gen-go/shared/shared_service.go: $(top_srcdir)/tutorial/tutorial.thrift
 	$(THRIFT) --gen go:thrift_import=github.com/apache/thrift/lib/go/thrift,package_prefix=github.com/apache/thrift/tutorial/go/gen-go/$(COMPILER_EXTRAFLAG) -r $<
 
 all-local: gen-go/tutorial/calculator.go
 
 check: thirdparty-dep all
-	$(GO) build -mod=mod -o go-tutorial ./src
-	$(GO) build -mod=mod -o calculator-remote ./gen-go/tutorial/calculator-remote/calculator-remote.go
+	$(GO) build $(GOBUILDEXTRA) -mod=mod -o go-tutorial ./src
+	$(GO) build $(GOBUILDEXTRA) -mod=mod -o calculator-remote ./gen-go/tutorial/calculator-remote/calculator-remote.go
 
 thirdparty-dep:
 

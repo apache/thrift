@@ -103,14 +103,14 @@ func main() {
 	var transportFactory thrift.TTransportFactory
 
 	if *compact {
-		protocolFactory = thrift.NewTCompactProtocolFactory()
+		protocolFactory = thrift.NewTCompactProtocolFactoryConf(nil)
 	} else {
-		protocolFactory = thrift.NewTBinaryProtocolFactoryDefault()
+		protocolFactory = thrift.NewTBinaryProtocolFactoryConf(nil)
 	}
 
 	if *framed {
 		transportFactory = thrift.NewTTransportFactory()
-		transportFactory = thrift.NewTFramedTransportFactory(transportFactory)
+		transportFactory = thrift.NewTFramedTransportFactoryConf(transportFactory, nil)
 	} else {
 		transportFactory = thrift.NewTBufferedTransportFactory(8192)
 	}
@@ -158,13 +158,11 @@ func main() {
 }
 
 func client(protocolFactory thrift.TProtocolFactory) {
-	trans, err := thrift.NewTSocket(hostPort)
-	if err != nil {
-		log.Fatalf("Unable to create server socket: %s", err)
-	}
+	ctx := context.Background()
+	trans := thrift.NewTSocketConf(hostPort, nil)
 	btrans := thrift.NewTBufferedTransport(trans, 2048)
 	client := stress.NewServiceClientFactory(btrans, protocolFactory)
-	err = trans.Open()
+	err := trans.Open()
 	if err != nil {
 		log.Fatalf("Unable to open connection: %s", err)
 	}
@@ -173,45 +171,45 @@ func client(protocolFactory thrift.TProtocolFactory) {
 	switch callType {
 	case echoVoid:
 		for i := 0; i < *loop; i++ {
-			client.EchoVoid()
+			client.EchoVoid(ctx)
 			atomic.AddInt64(&clicounter, 1)
 		}
 	case echoByte:
 		for i := 0; i < *loop; i++ {
-			client.EchoByte(42)
+			client.EchoByte(ctx, 42)
 			atomic.AddInt64(&clicounter, 1)
 		}
 	case echoI32:
 		for i := 0; i < *loop; i++ {
-			client.EchoI32(4242)
+			client.EchoI32(ctx, 4242)
 			atomic.AddInt64(&clicounter, 1)
 		}
 	case echoI64:
 		for i := 0; i < *loop; i++ {
-			client.EchoI64(424242)
+			client.EchoI64(ctx, 424242)
 			atomic.AddInt64(&clicounter, 1)
 		}
 	case echoString:
 		for i := 0; i < *loop; i++ {
-			client.EchoString("TestString")
+			client.EchoString(ctx, "TestString")
 			atomic.AddInt64(&clicounter, 1)
 		}
 	case echiList:
 		l := []int8{-10, -9, -8, -7, -6, -5, -4, -3, -2, -1, 0, 1, 2, 3, 4, 5, 6, 7, 8}
 		for i := 0; i < *loop; i++ {
-			client.EchoList(l)
+			client.EchoList(ctx, l)
 			atomic.AddInt64(&clicounter, 1)
 		}
 	case echoSet:
-		s := map[int8]struct{}{-10: {}, -9: {}, -8: {}, -7: {}, -6: {}, -5: {}, -4: {}, -3: {}, -2: {}, -1: {}, 0: {}, 1: {}, 2: {}, 3: {}, 4: {}, 5: {}, 6: {}, 7: {}, 8: {}}
+		s := []int8{-10, -9, -8, -7, -6, -5, -4, -3, -2, -1, 0, 1, 2, 3, 4, 5, 6, 7, 8}
 		for i := 0; i < *loop; i++ {
-			client.EchoSet(s)
+			client.EchoSet(ctx, s)
 			atomic.AddInt64(&clicounter, 1)
 		}
 	case echoMap:
 		m := map[int8]int8{-10: 10, -9: 9, -8: 8, -7: 7, -6: 6, -5: 5, -4: 4, -3: 3, -2: 2, -1: 1, 0: 0, 1: 1, 2: 2, 3: 3, 4: 4, 5: 5, 6: 6, 7: 7, 8: 8}
 		for i := 0; i < *loop; i++ {
-			client.EchoMap(m)
+			client.EchoMap(ctx, m)
 			atomic.AddInt64(&clicounter, 1)
 		}
 	}
@@ -245,7 +243,7 @@ func (h *handler) EchoList(ctx context.Context, arg []int8) (r []int8, err error
 	atomic.AddInt64(&counter, 1)
 	return arg, nil
 }
-func (h *handler) EchoSet(ctx context.Context, arg map[int8]struct{}) (r map[int8]struct{}, err error) {
+func (h *handler) EchoSet(ctx context.Context, arg []int8) (r []int8, err error) {
 	atomic.AddInt64(&counter, 1)
 	return arg, nil
 }

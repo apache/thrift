@@ -27,7 +27,7 @@
 #include <memory>
 #include <thrift/transport/TSSLSocket.h>
 #include <thrift/transport/TSSLServerSocket.h>
-#ifdef __linux__
+#ifdef HAVE_SIGNAL_H
 #include <signal.h>
 #endif
 

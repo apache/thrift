@@ -152,7 +152,15 @@ void cleanupOpenSSL() {
   CONF_modules_unload(1);
   EVP_cleanup();
   CRYPTO_cleanup_all_ex_data();
+#if OPENSSL_VERSION_NUMBER >= 0x10100000
+  // https://www.openssl.org/docs/man1.1.1/man3/OPENSSL_thread_stop.html
+  OPENSSL_thread_stop();
+#else
+  // ERR_remove_state() was deprecated in OpenSSL 1.0.0 and ERR_remove_thread_state()
+  // was deprecated in OpenSSL 1.1.0; these functions and should not be used.
+  // https://www.openssl.org/docs/manmaster/man3/ERR_remove_state.html
   ERR_remove_state(0);
+#endif
   ERR_free_strings();
 
   mutexes.reset();
@@ -382,7 +390,15 @@ void TSSLSocket::close() {
     SSL_free(ssl_);
     ssl_ = nullptr;
     handshakeCompleted_ = false;
+#if OPENSSL_VERSION_NUMBER >= 0x10100000
+    // https://www.openssl.org/docs/man1.1.1/man3/OPENSSL_thread_stop.html
+    OPENSSL_thread_stop();
+#else
+    // ERR_remove_state() was deprecated in OpenSSL 1.0.0 and ERR_remove_thread_state()
+    // was deprecated in OpenSSL 1.1.0; these functions and should not be used.
+    // https://www.openssl.org/docs/manmaster/man3/ERR_remove_state.html
     ERR_remove_state(0);
+#endif
   }
   TSocket::close();
 }

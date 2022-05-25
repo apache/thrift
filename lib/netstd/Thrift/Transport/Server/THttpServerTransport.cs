@@ -87,22 +87,23 @@ namespace Thrift.Transport.Server
             InputTransportFactory = inputTransFactory;
             OutputTransportFactory = outputTransFactory;
 
+            // never used
+            _ = next;
+            _ = loggerFactory;
             /* never used
             _next = next;
             _logger = (loggerFactory != null) ? loggerFactory.CreateLogger<THttpServerTransport>() : new NullLogger<THttpServerTransport>();
             */
-    }
+        }
 
-    public async Task Invoke(HttpContext context)
+        public async Task Invoke(HttpContext context)
         {
-            context.Response.ContentType = ContentType;
             await ProcessRequestAsync(context, context.RequestAborted); //TODO: check for correct logic
         }
 
         public async Task ProcessRequestAsync(HttpContext context, CancellationToken cancellationToken)
         {
             var transport = new TStreamTransport(context.Request.Body, context.Response.Body, Configuration);
-
             try
             {
                 var intrans = (InputTransportFactory != null) ? InputTransportFactory.GetTransport(transport) : transport;
@@ -111,6 +112,7 @@ namespace Thrift.Transport.Server
                 var input = InputProtocolFactory.GetProtocol(intrans);
                 var output = OutputProtocolFactory.GetProtocol(outtrans);
 
+                context.Response.ContentType = ContentType;
                 while (await Processor.ProcessAsync(input, output, cancellationToken))
                 {
                     if (!context.Response.HasStarted)  // oneway method called

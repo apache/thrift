@@ -1,0 +1,4 @@
+[*.cs]
+
+# CS1591: missing XML comment for public element
+dotnet_diagnostic.CS1591.severity = silent

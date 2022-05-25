@@ -2534,6 +2534,13 @@ void t_delphi_generator::generate_process_function(t_service* tservice, t_functi
   indent_impl(s_service_impl) << "begin" << endl;
   indent_up_impl();
 
+  if (!tfunction->is_oneway()) {
+    indent_impl(s_service_impl) << "ret := " << result_clsnm << "Impl.Create;" << endl;
+  }
+
+  indent_impl(s_service_impl) << "try" << endl;
+  indent_up_impl();
+
   if (events_) {
     indent_impl(s_service_impl) << "if events <> nil then events.PreRead;" << endl;
   }
@@ -2547,13 +2554,6 @@ void t_delphi_generator::generate_process_function(t_service* tservice, t_functi
   t_struct* xs = tfunction->get_xceptions();
   const std::vector<t_field*>& xceptions = xs->get_members();
   vector<t_field*>::const_iterator x_iter;
-
-  if (!tfunction->is_oneway()) {
-    indent_impl(s_service_impl) << "ret := " << result_clsnm << "Impl.Create;" << endl;
-  }
-
-  indent_impl(s_service_impl) << "try" << endl;
-  indent_up_impl();
 
   t_struct* arg_struct = tfunction->get_arglist();
   const std::vector<t_field*>& fields = arg_struct->get_members();

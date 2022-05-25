@@ -250,6 +250,8 @@ type
     function Configuration : IThriftConfiguration;
   end;
 
+  TProtocolImplClass = class of TProtocolImpl;
+
   TProtocolImpl = class abstract( TInterfacedObject, IProtocol)
   strict protected
     FTrans : ITransport;
@@ -317,7 +319,7 @@ type
     property  Transport: ITransport read GetTransport;
 
   public
-    constructor Create( const aTransport : ITransport);
+    constructor Create( const aTransport : ITransport); virtual;
   end;
 
   IBase = interface( ISupportsToString)
@@ -352,7 +354,8 @@ type
         constructor Create( const aStrictRead : Boolean = FALSE; const aStrictWrite: Boolean = TRUE); reintroduce;
       end;
 
-    constructor Create( const trans: ITransport; strictRead: Boolean = FALSE; strictWrite: Boolean = TRUE); reintroduce;
+    constructor Create( const trans: ITransport); overload; override;
+    constructor Create( const trans: ITransport; strictRead, strictWrite: Boolean); reintroduce; overload;
 
     procedure WriteMessageBegin( const msg: TThriftMessage); override;
     procedure WriteMessageEnd; override;
@@ -414,7 +417,7 @@ type
   public
     // Encloses the specified protocol.
     // All operations will be forward to the given protocol.  Must be non-null.
-    constructor Create( const aProtocol : IProtocol);
+    constructor Create( const aProtocol : IProtocol);  reintroduce;
 
     procedure WriteMessageBegin( const msg: TThriftMessage); override;
     procedure WriteMessageEnd; override;
@@ -713,6 +716,12 @@ end;
 
 
 { TBinaryProtocolImpl }
+
+constructor TBinaryProtocolImpl.Create( const trans: ITransport);
+begin
+  // call the real CTOR
+  Self.Create( trans, FALSE, TRUE);
+end;
 
 constructor TBinaryProtocolImpl.Create( const trans: ITransport; strictRead, strictWrite: Boolean);
 begin

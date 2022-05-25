@@ -83,8 +83,8 @@ namespace Thrift.Tests.Collections
         [TestMethod]
         public void TCollection_Set_Equals_Primitive_Test()
         {
-            var collection1 = new THashSet<int> {1,2,3};
-            var collection2 = new THashSet<int> {1,2,3};
+            var collection1 = new HashSet<int> {1,2,3};
+            var collection2 = new HashSet<int> {1,2,3};
             Assert.IsTrue(TCollections.Equals(collection1, collection2));
             Assert.IsTrue(collection1.SequenceEqual(collection2));
         }
@@ -92,8 +92,8 @@ namespace Thrift.Tests.Collections
         [TestMethod]
         public void TCollection_Set_Equals_Primitive_Different_Test()
         {
-            var collection1 = new THashSet<int> { 1, 2, 3 };
-            var collection2 = new THashSet<int> { 1, 2 };
+            var collection1 = new HashSet<int> { 1, 2, 3 };
+            var collection2 = new HashSet<int> { 1, 2 };
             Assert.IsFalse(TCollections.Equals(collection1, collection2));
             Assert.IsFalse(collection1.SequenceEqual(collection2));
 
@@ -105,8 +105,8 @@ namespace Thrift.Tests.Collections
         [TestMethod]
         public void TCollection_Set_Equals_Objects_Test()
         {
-            var collection1 = new THashSet<ExampleClass> { new ExampleClass { X = 1 }, new ExampleClass { X = 2 } };
-            var collection2 = new THashSet<ExampleClass> { new ExampleClass { X = 1 }, new ExampleClass { X = 2 } };
+            var collection1 = new HashSet<ExampleClass> { new ExampleClass { X = 1 }, new ExampleClass { X = 2 } };
+            var collection2 = new HashSet<ExampleClass> { new ExampleClass { X = 1 }, new ExampleClass { X = 2 } };
             Assert.IsTrue(TCollections.Equals(collection1, collection2));
             Assert.IsTrue(collection1.SequenceEqual(collection2));
         }
@@ -114,8 +114,8 @@ namespace Thrift.Tests.Collections
         [TestMethod]
         public void TCollection_Set_Set_Equals_Objects_Test()
         {
-            var collection1 = new THashSet<THashSet<ExampleClass>> { new THashSet<ExampleClass> { new ExampleClass { X = 1 }, new ExampleClass { X = 2 } } };
-            var collection2 = new THashSet<THashSet<ExampleClass>> { new THashSet<ExampleClass> { new ExampleClass { X = 1 }, new ExampleClass { X = 2 } } };
+            var collection1 = new HashSet<HashSet<ExampleClass>> { new HashSet<ExampleClass> { new ExampleClass { X = 1 }, new ExampleClass { X = 2 } } };
+            var collection2 = new HashSet<HashSet<ExampleClass>> { new HashSet<ExampleClass> { new ExampleClass { X = 1 }, new ExampleClass { X = 2 } } };
             Assert.IsTrue(TCollections.Equals(collection1, collection2));
             Assert.IsFalse(collection1.SequenceEqual(collection2));  // SequenceEqual() calls Equals() of the inner list instead of SequenceEqual()
         }
@@ -123,7 +123,7 @@ namespace Thrift.Tests.Collections
         [TestMethod]
         public void TCollection_Set_Equals_OneAndTheSameObject_Test()
         {
-            var collection1 = new THashSet<ExampleClass> { new ExampleClass { X = 1 }, new ExampleClass { X = 2 } };
+            var collection1 = new HashSet<ExampleClass> { new ExampleClass { X = 1 }, new ExampleClass { X = 2 } };
             var collection2 = collection1;      // references to one and the same collection
             Assert.IsTrue(TCollections.Equals(collection1, collection2));
             Assert.IsTrue(collection1.SequenceEqual(collection2));
@@ -216,9 +216,9 @@ namespace Thrift.Tests.Collections
             public int X { get; set; }
 
             // all Thrift-generated classes override Equals(), we do just the same
-            public override bool Equals(object that)
+            public override bool Equals(object? that)
             {
-                if (!(that is ExampleClass other)) return false;
+                if (that is not ExampleClass other) return false;
                 if (ReferenceEquals(this, other)) return true;
 
                 return this.X == other.X;

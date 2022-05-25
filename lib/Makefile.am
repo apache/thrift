@@ -36,6 +36,11 @@ PRECROSS_TARGET += precross-java
 SUBDIRS += js
 endif
 
+if WITH_KOTLIN
+SUBDIRS += kotlin
+PRECROSS_TARGET += precross-kotlin
+endif
+
 if WITH_PYTHON
 SUBDIRS += py
 endif
@@ -85,10 +90,6 @@ endif
 
 if WITH_RS
 SUBDIRS += rs
-endif
-
-if WITH_CL
-SUBDIRS += cl
 endif
 
 if WITH_SWIFT

@@ -567,7 +567,7 @@ begin
 
     // create protocol factory, default to BinaryProtocol
     case protType of
-      prot_Binary  :  ProtocolFactory := TBinaryProtocolImpl.TFactory.Create( BINARY_STRICT_READ, BINARY_STRICT_WRITE);
+      prot_Binary  :  ProtocolFactory := TBinaryProtocolImpl.TFactory.Create;
       prot_JSON    :  ProtocolFactory := TJSONProtocolImpl.TFactory.Create;
       prot_Compact :  ProtocolFactory := TCompactProtocolImpl.TFactory.Create;
     else

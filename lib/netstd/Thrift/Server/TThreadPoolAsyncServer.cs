@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements. See the NOTICE file
  * distributed with this work for additional information
@@ -29,8 +29,6 @@ using Thrift.Processor;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 
-#pragma warning disable IDE0079  // remove unnecessary pragmas
-#pragma warning disable IDE0063  // using can be simplified, we don't
 
 namespace Thrift.Server
 {
@@ -105,7 +103,7 @@ namespace Thrift.Server
                      TTransportFactory outputTransportFactory,
                      TProtocolFactory inputProtocolFactory,
                      TProtocolFactory outputProtocolFactory,
-                     int minThreadPoolThreads, int maxThreadPoolThreads, ILogger logger= null)
+                     int minThreadPoolThreads, int maxThreadPoolThreads, ILogger logger = null)
             : this(processorFactory, serverTransport, inputTransportFactory, outputTransportFactory,
              inputProtocolFactory, outputProtocolFactory,
              new Configuration(minThreadPoolThreads, maxThreadPoolThreads),
@@ -216,9 +214,9 @@ namespace Thrift.Server
 
         /// <summary>
         /// Loops on processing a client forever
-        /// threadContext will be a TTransport instance
+        /// client will be a TTransport instance
         /// </summary>
-        /// <param name="threadContext"></param>
+        /// <param name="client"></param>
         private async Task ExecuteAsync(TTransport client)
         {
             var cancellationToken = ServerCancellationToken;
@@ -245,9 +243,9 @@ namespace Thrift.Server
                             connectionContext = await ServerEventHandler.CreateContextAsync(inputProtocol, outputProtocol, cancellationToken);
 
                         //Process client requests until client disconnects
-                        while (!stop)
+                        while (!(stop || cancellationToken.IsCancellationRequested))
                         {
-                            if (! await inputTransport.PeekAsync(cancellationToken))
+                            if (!await inputTransport.PeekAsync(cancellationToken))
                                 break;
 
                             //Fire processContext server event
@@ -258,7 +256,7 @@ namespace Thrift.Server
                                 await ServerEventHandler.ProcessContextAsync(connectionContext, inputTransport, cancellationToken);
 
                             //Process client request (blocks until transport is readable)
-                            if (! await processor.ProcessAsync(inputProtocol, outputProtocol, cancellationToken))
+                            if (!await processor.ProcessAsync(inputProtocol, outputProtocol, cancellationToken))
                                 break;
                         }
                     }
