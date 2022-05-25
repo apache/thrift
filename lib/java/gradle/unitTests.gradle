@@ -44,14 +44,14 @@ ext.markTaskDone = { task ->
 task deprecatedEqualityTest(type: JavaExec, group: 'Verification') {
     description = 'Run the non-JUnit test suite '
     classpath = sourceSets.test.runtimeClasspath
-    main 'org.apache.thrift.test.EqualityTest'
+    mainClass.set('org.apache.thrift.test.EqualityTest')
     markTaskDone(it)
 }
 
 task deprecatedJavaBeansTest(type: JavaExec, group: 'Verification') {
     description = 'Run the non-JUnit test suite '
     classpath = sourceSets.test.runtimeClasspath
-    main 'org.apache.thrift.test.JavaBeansTest'
+    mainClass.set('org.apache.thrift.test.JavaBeansTest')
     markTaskDone(it)
 }
 
@@ -68,15 +68,22 @@ test {
     include '**/Test*.class'
     exclude '**/Test*\$*.class'
 
+    // https://junit.org/junit5/docs/current/user-guide/#running-tests-build-gradle
+    useJUnitPlatform() {
+        // https://junit.org/junit5/docs/current/user-guide/#writing-tests-parallel-execution
+        systemProperty("junit.jupiter.execution.parallel.enabled", "true")
+        systemProperty("junit.jupiter.execution.parallel.mode.default", "concurrent")
+        systemProperty("junit.jupiter.execution.parallel.mode.classes.default", "concurrent")
+    }
+
     maxHeapSize = '512m'
-    forkEvery = 1
 
     systemProperties = [
         'build.test': "${compileTestJava.destinationDir}",
         'test.port': "${testPort}",
-        'javax.net.ssl.trustStore': "${projectDir}/test/.truststore",
+        'javax.net.ssl.trustStore': "${projectDir}/src/crossTest/resources/.truststore",
         'javax.net.ssl.trustStorePassword': 'thrift',
-        'javax.net.ssl.keyStore': "${projectDir}/test/.keystore",
+        'javax.net.ssl.keyStore': "${projectDir}/src/crossTest/resources/.keystore",
         'javax.net.ssl.keyStorePassword': 'thrift'
     ]
 }

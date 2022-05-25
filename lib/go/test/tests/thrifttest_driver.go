@@ -66,7 +66,9 @@ func (p *ThriftTestDriver) Start() {
 		"Ripoarisch, Kurdî, Коми, Kernewek, Кыргызча, Latina, Ladino, " +
 		"Lëtzebuergesch, Limburgs, Lingála, ລາວ, Lietuvių, Latviešu, Basa " +
 		"Banyumasan, Malagasy, Македонски, മലയാളം, मराठी, مازِرونی, Bahasa " +
+		//lint:ignore ST1018 intentionally use unicode characters here
 		"Melayu, Nnapulitano, Nedersaksisch, नेपाल भाषा, Nederlands, ‪" +
+		//lint:ignore ST1018 intentionally use unicode characters here
 		"Norsk (nynorsk)‬, ‪Norsk (bokmål)‬, Nouormand, Diné bizaad, " +
 		"Occitan, Иронау, Papiamentu, Deitsch, Polski, پنجابی, پښتو, " +
 		"Norfuk / Pitkern, Português, Runa Simi, Rumantsch, Romani, Română, " +
@@ -222,7 +224,7 @@ func (p *ThriftTestDriver) Start() {
 	}
 
 	err := client.TestException(defaultCtx, "Xception")
-	if e, ok := err.(*thrifttest.Xception); ok == false || e == nil {
+	if e, ok := err.(*thrifttest.Xception); !ok || e == nil {
 		t.Fatal("TestException Xception failed:", err)
 	} else if e.ErrorCode != 1001 || e.Message != "Xception" {
 		t.Fatal("TestException Xception failed:", e)

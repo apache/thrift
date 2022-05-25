@@ -370,6 +370,7 @@ void t_json_generator::generate_program() {
     vector<t_program*>::const_iterator inc_it;
     for (inc_it = includes.begin(); inc_it != includes.end(); ++inc_it) {
       write_comma_if_needed();
+      f_json_ << indent();
       write_string((*inc_it)->get_name());
       indicate_comma_needed();
     }

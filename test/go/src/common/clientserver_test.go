@@ -49,7 +49,6 @@ var units = []test_unit{
 }
 
 func TestAllConnection(t *testing.T) {
-	certPath = "../../../keys"
 	wg := &sync.WaitGroup{}
 	wg.Add(len(units))
 	for _, unit := range units {
@@ -67,13 +66,16 @@ func doUnit(t *testing.T, unit *test_unit) {
 	handler := NewMockThriftTest(ctrl)
 
 	processor, serverTransport, transportFactory, protocolFactory, err := GetServerParams(unit.host, unit.port, unit.domain_socket, unit.transport, unit.protocol, unit.ssl, "../../../keys", handler)
+	if err != nil {
+		t.Errorf("GetServerParams failed: %v", err)
+	}
 
 	server := thrift.NewTSimpleServer4(processor, serverTransport, transportFactory, protocolFactory)
 	if err = server.Listen(); err != nil {
 		t.Errorf("Unable to start server: %v", err)
 		return
 	}
-	go server.AcceptLoop()
+	go server.Serve()
 	defer server.Stop()
 	client, trans, err := StartClient(unit.host, unit.port, unit.domain_socket, unit.transport, unit.protocol, unit.ssl)
 	if err != nil {

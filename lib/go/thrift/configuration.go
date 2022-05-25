@@ -56,7 +56,7 @@ const (
 //
 // For example, say you want to migrate this old code into using TConfiguration:
 //
-//     sccket := thrift.NewTSocketTimeout("host:port", time.Second)
+//     sccket, err := thrift.NewTSocketTimeout("host:port", time.Second, time.Second)
 //     transFactory := thrift.NewTFramedTransportFactoryMaxLength(
 //         thrift.NewTTransportFactory(),
 //         1024 * 1024 * 256,

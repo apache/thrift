@@ -53,7 +53,6 @@ uses
   Thrift.Test,
   Thrift.WinHTTP,
   Thrift.Utils,
-
   Thrift.Configuration,
   Thrift.Collections;
 
@@ -1451,14 +1450,7 @@ begin
   end;
 
   // create protocol instance, default to BinaryProtocol
-  case FSetup.protType of
-    prot_Binary  :  FProtocol := TBinaryProtocolImpl.Create( FTransport, BINARY_STRICT_READ, BINARY_STRICT_WRITE);
-    prot_JSON    :  FProtocol := TJSONProtocolImpl.Create( FTransport);
-    prot_Compact :  FProtocol := TCompactProtocolImpl.Create( FTransport);
-  else
-    raise Exception.Create('Unhandled protocol');
-  end;
-
+  FProtocol := PROTOCOL_CLASSES[FSetup.protType].Create(FTransport);
   ASSERT( (FTransport <> nil) and (FProtocol <> nil));
 end;
 

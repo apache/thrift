@@ -398,6 +398,9 @@ class TSaslClientTransport(TTransportBase, CReadableTransport):
                     "Bad SASL negotiation status: %d (%s)"
                     % (status, challenge))
 
+    def isOpen(self):
+        return self.transport.isOpen()
+
     def send_sasl_msg(self, status, body):
         header = pack(">BI", status, len(body))
         self.transport.write(header + body)

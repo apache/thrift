@@ -26,7 +26,6 @@
 
 #include <thrift/windows/Sync.h>
 #include <thrift/TNonCopyable.h>
-#include <Windows.h>
 
 /*
   *** Why does this class exist?

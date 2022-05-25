@@ -140,7 +140,7 @@ type
 
   public
     // TJSONProtocolImpl Constructor
-    constructor Create( const aTrans : ITransport);
+    constructor Create( const aTrans : ITransport);  override;
     destructor Destroy;   override;
 
   strict protected

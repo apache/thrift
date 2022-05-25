@@ -27,7 +27,6 @@ buildscript {
     repositories {
         mavenCentral()
         google()
-        jcenter()
         gradlePluginPortal()
     }
 
@@ -37,16 +36,13 @@ buildscript {
 }
 
 plugins {
-    id 'java'
-    id 'maven'
+    id 'java-library'
+    id 'maven-publish'
     id 'signing'
-    id 'com.github.johnrengelman.shadow' version '4.0.4'
-    id "com.github.spotbugs" version "2.0.0"
-}
-
-ext {
-    // https://github.com/spotbugs/spotbugs-gradle-plugin/issues/32#issuecomment-409951172
-    SpotBugsTask = com.github.spotbugs.SpotBugsTask
+    id 'pmd'
+    id 'com.github.johnrengelman.shadow' version '6.1.0'
+    id "com.github.spotbugs" version "4.7.1"
+    id "com.diffplug.spotless" version "6.5.2"
 }
 
 description = 'Apache Thrift Java Library'
@@ -65,7 +61,6 @@ if (Boolean.parseBoolean(project.release)) {
 // Keeping the rest of the build logic in functional named scripts for clarity
 apply from: 'gradle/environment.gradle'
 apply from: 'gradle/sourceConfiguration.gradle'
-apply from: 'gradle/additionalArtifacts.gradle'
 apply from: 'gradle/generateTestThrift.gradle'
 apply from: 'gradle/unitTests.gradle'
 apply from: 'gradle/cloverCoverage.gradle'

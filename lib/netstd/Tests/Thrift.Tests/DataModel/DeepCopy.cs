@@ -49,7 +49,7 @@ namespace Thrift.Tests.DataModel
             VerifyIdenticalContent(first, InitializeInstance(new RaceDetails()));
         }
 
-        private RaceDetails MakeNestedRaceDetails(int nesting)
+        private RaceDetails? MakeNestedRaceDetails(int nesting)
         {
             if (++nesting > 1)
                 return null;
@@ -59,7 +59,7 @@ namespace Thrift.Tests.DataModel
             return instance;
         }
 
-        private jack MakeNestedUnion(int nesting)
+        private jack? MakeNestedUnion(int nesting)
         {
             if (++nesting > 1)
                 return null;
@@ -86,11 +86,11 @@ namespace Thrift.Tests.DataModel
             instance.Req_one = default;
             instance.Req_two = default;
             instance.Req_three = default;
-            instance.Req_four = default;
-            instance.Req_five = default;
+            Assert.IsNotNull(instance.Req_four);
+            Assert.IsNotNull(instance.Req_five);
             instance.Req_six = default; 
             instance.Req_seven = default;;
-            instance.Req_eight = default; 
+            instance.Req_eight = default;
 
             // leave non-required fields unset again
             Assert.IsFalse(instance.__isset.def_one);
@@ -117,15 +117,15 @@ namespace Thrift.Tests.DataModel
             Assert.AreEqual(instance.Req_two_with_value, 2.22);
             Assert.AreEqual(instance.Req_three_with_value, 3);
             Assert.AreEqual(instance.Req_four_with_value, "four");
-            Assert.AreEqual("five", Encoding.UTF8.GetString(instance.Req_five_with_value));
+            Assert.AreEqual("five", Encoding.UTF8.GetString(instance.Req_five_with_value!));
 
-            Assert.IsTrue(instance.Req_six_with_value.Count == 1);
+            Assert.IsTrue(instance.Req_six_with_value!.Count == 1);
             Assert.AreEqual(instance.Req_six_with_value[0], 6 );
 
-            Assert.IsTrue(instance.Req_seven_with_value.Count == 1);
+            Assert.IsTrue(instance.Req_seven_with_value!.Count == 1);
             Assert.IsTrue(instance.Req_seven_with_value.Contains(7));
 
-            Assert.IsTrue(instance.Req_eight_with_value.Count == 1);
+            Assert.IsTrue(instance.Req_eight_with_value!.Count == 1);
             Assert.IsTrue(instance.Req_eight_with_value[8] == 8);
 
             Assert.IsTrue(instance.__isset.def_one_with_value);
@@ -142,12 +142,16 @@ namespace Thrift.Tests.DataModel
             if (nesting < 2)
             {
                 instance.Far_list = new List<Distance>() { Distance.foo, Distance.bar, Distance.baz };
-                instance.Far_set = new THashSet<Distance>() { Distance.foo, Distance.bar, Distance.baz };
+                instance.Far_set = new HashSet<Distance>() { Distance.foo, Distance.bar, Distance.baz };
                 instance.Far_map = new Dictionary<Distance, Distance>() { [Distance.foo] = Distance.foo, [Distance.bar] = Distance.bar, [Distance.baz] = Distance.baz };
 
-                instance.Far_set_list = new THashSet<List<Distance>>() { new List<Distance>() { Distance.foo } };
-                instance.Far_list_map_set = new List<Dictionary<sbyte, THashSet<Distance>>>() { new Dictionary<sbyte, THashSet<Distance>>() { [1] = new THashSet<Distance>() { Distance.baz } } };
-                instance.Far_map_dist_to_rds = new Dictionary<Distance, List<RaceDetails>>() { [Distance.bar] = new List<RaceDetails>() { MakeNestedRaceDetails(nesting) } };
+                instance.Far_set_list = new HashSet<List<Distance>>() { new List<Distance>() { Distance.foo } };
+                instance.Far_list_map_set = new List<Dictionary<sbyte, HashSet<Distance>>>() { new Dictionary<sbyte, HashSet<Distance>>() { [1] = new HashSet<Distance>() { Distance.baz } } };
+
+                instance.Far_map_dist_to_rds = new Dictionary<Distance, List<RaceDetails>>() { [Distance.bar] = new List<RaceDetails>()  };
+                var details = MakeNestedRaceDetails(nesting);
+                if (details != null)
+                    instance.Far_map_dist_to_rds[Distance.bar].Add(details);
 
                 instance.Req_nested = MakeNestedRaceDetails(nesting);
                 Assert.IsFalse(instance.__isset.opt_nested);
@@ -243,19 +247,19 @@ namespace Thrift.Tests.DataModel
             instance.Triplesix = ModifyValue(instance.Triplesix);
         }
 
-        private jack ModifyValue(jack value, int level)
+        private jack? ModifyValue(jack? value, int level)
         {
             if (++level > 4)
                 return value;
 
             if (value == null)
                 value = MakeNestedUnion(0);
-            Debug.Assert(value.As_nested_struct != null);
+            Debug.Assert(value?.As_nested_struct != null);
             ModifyInstance(value.As_nested_struct, level);
             return value;
         }
 
-        private RaceDetails ModifyValue(RaceDetails value, int level)
+        private RaceDetails? ModifyValue(RaceDetails? value, int level)
         {
             if (++level > 4)
                 return value;
@@ -266,7 +270,7 @@ namespace Thrift.Tests.DataModel
             return value;
         }
 
-        private Dictionary<Distance, List<RaceDetails>> ModifyValue(Dictionary<Distance, List<RaceDetails>> value, int level)
+        private Dictionary<Distance, List<RaceDetails>> ModifyValue(Dictionary<Distance, List<RaceDetails>>? value, int level)
         {
             if (value == null)
                 value = new Dictionary<Distance, List<RaceDetails>>();
@@ -281,29 +285,30 @@ namespace Thrift.Tests.DataModel
             if (value.TryGetValue(Distance.bar, out var list) && (list.Count > 0))
             {
                 ModifyInstance(list[0], level);
-                list.Add(null);
+                //list.Add(null);  -- Thrift does not allow null values in containers
             }
 
-            value[Distance.baz] = null;
+            // Thrift does not allow null values in containers
+            //value[Distance.baz] = null;
 
             return value;
         }
 
-        private List<Dictionary<sbyte, THashSet<Distance>>> ModifyValue(List<Dictionary<sbyte, THashSet<Distance>>> value)
+        private static List<Dictionary<sbyte, HashSet<Distance>>> ModifyValue(List<Dictionary<sbyte, HashSet<Distance>>>? value)
         {
             if (value == null)
-                value = new List<Dictionary<sbyte, THashSet<Distance>>>();
+                value = new List<Dictionary<sbyte, HashSet<Distance>>>();
 
             if (value.Count == 0)
-                value.Add(new Dictionary<sbyte, THashSet<Distance>>());
-            else
-                value.Add(null);
+                value.Add(new Dictionary<sbyte, HashSet<Distance>>());
+            //else
+            //value.Add(null); --Thrift does not allow null values in containers
 
             sbyte key = (sbyte)(value[0].Count + 10);
             if (value[0].Count == 0)
-                value[0].Add(key, new THashSet<Distance>());
-            else
-                value[0].Add(key, null);
+                value[0].Add(key, new HashSet<Distance>());
+            //else
+            //value[0].Add(key, null); --Thrift does not allow null values in containers
 
             foreach (var entry in value)
             {
@@ -325,15 +330,15 @@ namespace Thrift.Tests.DataModel
             return value;
         }
 
-        private THashSet<List<Distance>> ModifyValue(THashSet<List<Distance>> value)
+        private static HashSet<List<Distance>> ModifyValue(HashSet<List<Distance>>? value)
         {
             if (value == null)
-                value = new THashSet<List<Distance>>();
+                value = new HashSet<List<Distance>>();
 
             if (value.Count == 0)
                 value.Add(new List<Distance>());
-            else
-                value.Add(null);
+            //else
+            //value.Add(null); -- Thrift does not allow null values in containers
 
             foreach (var entry in value)
                 if( entry != null)
@@ -342,7 +347,7 @@ namespace Thrift.Tests.DataModel
             return value;
         }
 
-        private Dictionary<Distance, Distance> ModifyValue(Dictionary<Distance, Distance> value)
+        private static Dictionary<Distance, Distance> ModifyValue(Dictionary<Distance, Distance>? value)
         {
             if (value == null)
                 value = new Dictionary<Distance, Distance>();
@@ -352,10 +357,10 @@ namespace Thrift.Tests.DataModel
             return value;
         }
 
-        private THashSet<Distance> ModifyValue(THashSet<Distance> value)
+        private static HashSet<Distance> ModifyValue(HashSet<Distance>? value)
         {
             if (value == null)
-                value = new THashSet<Distance>();
+                value = new HashSet<Distance>();
 
             if (value.Contains(Distance.foo))
                 value.Remove(Distance.foo);
@@ -375,7 +380,7 @@ namespace Thrift.Tests.DataModel
             return value;
         }
 
-        private List<Distance> ModifyValue(List<Distance> value)
+        private static List<Distance> ModifyValue(List<Distance>? value)
         {
             if (value == null)
                 value = new List<Distance>();
@@ -385,12 +390,12 @@ namespace Thrift.Tests.DataModel
             return value;
         }
 
-        private bool ModifyValue(bool value)
+        private static bool ModifyValue(bool value)
         {
             return !value;
         }
 
-        private Dictionary<sbyte, short> ModifyValue(Dictionary<sbyte, short> value)
+        private static Dictionary<sbyte, short> ModifyValue(Dictionary<sbyte, short>? value)
         {
             if (value == null)
                 value = new Dictionary<sbyte, short>();
@@ -398,15 +403,15 @@ namespace Thrift.Tests.DataModel
             return value;
         }
 
-        private THashSet<long> ModifyValue(THashSet<long> value)
+        private static HashSet<long> ModifyValue(HashSet<long>? value)
         {
             if (value == null)
-                value = new THashSet<long>();
+                value = new HashSet<long>();
             value.Add(value.Count+100);
             return value;
         }
 
-        private List<int> ModifyValue(List<int> value)
+        private static List<int> ModifyValue(List<int>? value)
         {
             if (value == null)
                 value = new List<int>();
@@ -414,36 +419,38 @@ namespace Thrift.Tests.DataModel
             return value;
         }
 
-        private byte[] ModifyValue(byte[] value)
+        private static byte[] ModifyValue(byte[]? value)
         {
             if (value == null)
                 value = new byte[1] { 0 };
             if (value.Length > 0)
                 value[0] = (value[0] < 0xFF) ? ++value[0] : (byte)0;
+            else
+                value = new byte[1] { 0 };
             return value;
         }
 
-        private string ModifyValue(string value)
+        private static string ModifyValue(string? value)
         {
             return value + "1";
         }
 
-        private double ModifyValue(double value)
+        private static double ModifyValue(double value)
         {
             return value + 1.1;
         }
 
-        private short ModifyValue(short value)
+        private static short ModifyValue(short value)
         {
             return ++value;
         }
 
-        private Distance ModifyValue(Distance value)
+        private static Distance ModifyValue(Distance value)
         {
             return ++value;
         }
 
-        private void VerifyDifferentContent(RaceDetails first, RaceDetails second)
+        private static void VerifyDifferentContent(RaceDetails first, RaceDetails second)
         {
             Assert.AreNotEqual(first, second);
 
@@ -521,7 +528,7 @@ namespace Thrift.Tests.DataModel
             Assert.AreNotEqual(first.Triplesix, second.Triplesix);
         }
 
-        private void VerifyIdenticalContent(RaceDetails first, RaceDetails second)
+        private static void VerifyIdenticalContent(RaceDetails first, RaceDetails second)
         {
             Assert.AreEqual(first, second);
 

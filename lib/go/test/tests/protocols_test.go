@@ -26,8 +26,11 @@ import (
 	"github.com/apache/thrift/lib/go/thrift"
 )
 
-func RunSocketTestSuite(t *testing.T, protocolFactory thrift.TProtocolFactory,
-	transportFactory thrift.TTransportFactory) {
+func RunSocketTestSuite(
+	t *testing.T,
+	protocolFactory thrift.TProtocolFactory,
+	transportFactory thrift.TTransportFactory,
+) {
 	// server
 	var err error
 	addr = FindAvailableTCPServerPort()
@@ -42,7 +45,12 @@ func RunSocketTestSuite(t *testing.T, protocolFactory thrift.TProtocolFactory,
 	go server.Serve()
 
 	// client
-	var transport thrift.TTransport = thrift.NewTSocketFromAddrTimeout(addr, TIMEOUT, TIMEOUT)
+	cfg := &thrift.TConfiguration{
+		ConnectTimeout: TIMEOUT,
+		SocketTimeout:  TIMEOUT,
+	}
+	thrift.PropagateTConfiguration(transportFactory, cfg)
+	var transport thrift.TTransport = thrift.NewTSocketFromAddrConf(addr, cfg)
 	transport, err = transportFactory.GetTransport(transport)
 	if err != nil {
 		t.Fatal(err)
@@ -60,39 +68,57 @@ func RunSocketTestSuite(t *testing.T, protocolFactory thrift.TProtocolFactory,
 
 // Run test suite using TJSONProtocol
 func TestTJSONProtocol(t *testing.T) {
-	RunSocketTestSuite(t,
+	RunSocketTestSuite(
+		t,
 		thrift.NewTJSONProtocolFactory(),
-		thrift.NewTTransportFactory())
-	RunSocketTestSuite(t,
+		thrift.NewTTransportFactory(),
+	)
+	RunSocketTestSuite(
+		t,
 		thrift.NewTJSONProtocolFactory(),
-		thrift.NewTBufferedTransportFactory(8912))
-	RunSocketTestSuite(t,
+		thrift.NewTBufferedTransportFactory(8912),
+	)
+	RunSocketTestSuite(
+		t,
 		thrift.NewTJSONProtocolFactory(),
-		thrift.NewTFramedTransportFactory(thrift.NewTTransportFactory()))
+		thrift.NewTFramedTransportFactoryConf(thrift.NewTTransportFactory(), nil),
+	)
 }
 
 // Run test suite using TBinaryProtocol
 func TestTBinaryProtocol(t *testing.T) {
-	RunSocketTestSuite(t,
-		thrift.NewTBinaryProtocolFactoryDefault(),
-		thrift.NewTTransportFactory())
-	RunSocketTestSuite(t,
-		thrift.NewTBinaryProtocolFactoryDefault(),
-		thrift.NewTBufferedTransportFactory(8912))
-	RunSocketTestSuite(t,
-		thrift.NewTBinaryProtocolFactoryDefault(),
-		thrift.NewTFramedTransportFactory(thrift.NewTTransportFactory()))
+	RunSocketTestSuite(
+		t,
+		thrift.NewTBinaryProtocolFactoryConf(nil),
+		thrift.NewTTransportFactory(),
+	)
+	RunSocketTestSuite(
+		t,
+		thrift.NewTBinaryProtocolFactoryConf(nil),
+		thrift.NewTBufferedTransportFactory(8912),
+	)
+	RunSocketTestSuite(
+		t,
+		thrift.NewTBinaryProtocolFactoryConf(nil),
+		thrift.NewTFramedTransportFactoryConf(thrift.NewTTransportFactory(), nil),
+	)
 }
 
 // Run test suite using TCompactBinaryProtocol
 func TestTCompactProtocol(t *testing.T) {
-	RunSocketTestSuite(t,
-		thrift.NewTCompactProtocolFactory(),
-		thrift.NewTTransportFactory())
-	RunSocketTestSuite(t,
-		thrift.NewTCompactProtocolFactory(),
-		thrift.NewTBufferedTransportFactory(8912))
-	RunSocketTestSuite(t,
-		thrift.NewTCompactProtocolFactory(),
-		thrift.NewTFramedTransportFactory(thrift.NewTTransportFactory()))
+	RunSocketTestSuite(
+		t,
+		thrift.NewTCompactProtocolFactoryConf(nil),
+		thrift.NewTTransportFactory(),
+	)
+	RunSocketTestSuite(
+		t,
+		thrift.NewTCompactProtocolFactoryConf(nil),
+		thrift.NewTBufferedTransportFactory(8912),
+	)
+	RunSocketTestSuite(
+		t,
+		thrift.NewTCompactProtocolFactoryConf(nil),
+		thrift.NewTFramedTransportFactoryConf(thrift.NewTTransportFactory(), nil),
+	)
 }

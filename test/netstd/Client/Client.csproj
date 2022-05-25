@@ -19,34 +19,38 @@
   -->
 
   <PropertyGroup>
-    <TargetFramework>net5.0</TargetFramework>
+    <TargetFramework>net6.0</TargetFramework>
     <LangVersion>9.0</LangVersion>
     <AssemblyName>Client</AssemblyName>
     <PackageId>Client</PackageId>
     <OutputType>Exe</OutputType>
-    <Version>0.15.0.0</Version>
+    <Version>0.17.0.0</Version>
     <GenerateAssemblyTitleAttribute>false</GenerateAssemblyTitleAttribute>
     <GenerateAssemblyDescriptionAttribute>false</GenerateAssemblyDescriptionAttribute>
     <GenerateAssemblyConfigurationAttribute>false</GenerateAssemblyConfigurationAttribute>
     <GenerateAssemblyCompanyAttribute>false</GenerateAssemblyCompanyAttribute>
     <GenerateAssemblyProductAttribute>false</GenerateAssemblyProductAttribute>
     <GenerateAssemblyCopyrightAttribute>false</GenerateAssemblyCopyrightAttribute>
+    <Nullable>enable</Nullable>
   </PropertyGroup>
+
   <ItemGroup>
-    <PackageReference Include="System.Net.Http.WinHttpHandler" Version="5.0.0" />
+    <PackageReference Include="System.Net.Http.WinHttpHandler" Version="6.0.0" />
     <PackageReference Include="System.Runtime.Serialization.Primitives" Version="[4.3,)" />
-    <PackageReference Include="System.ServiceModel.Primitives" Version="4.8.1" />
+    <PackageReference Include="System.ServiceModel.Primitives" Version="4.9.0" />
     <PackageReference Include="System.Threading" Version="[4.3,)" />
   </ItemGroup>
+
   <ItemGroup>
     <ProjectReference Include="..\..\..\lib\netstd\Thrift\Thrift.csproj" />
   </ItemGroup>
+
   <Target Name="PreBuild" BeforeTargets="_GenerateRestoreProjectSpec;Restore;Compile">
     <Exec Condition="'$(OS)' == 'Windows_NT'" Command="where thrift" ConsoleToMSBuild="true">
       <Output TaskParameter="ConsoleOutput" PropertyName="PathToThrift" />
     </Exec>
-    <Exec Condition="Exists('$(PathToThrift)')" Command="&quot;$(PathToThrift)&quot; -out $(ProjectDir) -gen netstd:wcf,union,serial -r ./../../ThriftTest.thrift" />
-    <Exec Condition="Exists('thrift')" Command="thrift -out $(ProjectDir) -gen netstd:wcf,union,serial -r ./../../ThriftTest.thrift" />
-    <Exec Condition="Exists('$(ProjectDir)/../../../compiler/cpp/thrift')" Command="$(ProjectDir)/../../../compiler/cpp/thrift -out $(ProjectDir) -gen netstd:wcf,union,serial -r ./../../ThriftTest.thrift" />
+    <Exec Condition="Exists('$(PathToThrift)')" Command="&quot;$(PathToThrift)&quot; -out $(ProjectDir) -gen netstd:wcf,union,serial,net6 -r ./../../ThriftTest.thrift" />
+    <Exec Condition="Exists('thrift')" Command="thrift -out $(ProjectDir) -gen netstd:wcf,union,serial,net6 -r ./../../ThriftTest.thrift" />
+    <Exec Condition="Exists('$(ProjectDir)/../../../compiler/cpp/thrift')" Command="$(ProjectDir)/../../../compiler/cpp/thrift -out $(ProjectDir) -gen netstd:wcf,union,serial,net6 -r ./../../ThriftTest.thrift" />
   </Target>
 </Project>

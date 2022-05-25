@@ -38,52 +38,54 @@ using shared;
 using Thrift.Processor;
 using System.Diagnostics;
 
-#pragma warning disable IDE0063  // using
 #pragma warning disable IDE0057  // substr
 
 namespace Server
 {
+    public static class LoggingHelper
+    {
+        public static ILoggerFactory LogFactory { get; } = LoggerFactory.Create(builder => {
+            ConfigureLogging(builder);
+        });
+
+        public static void ConfigureLogging(ILoggingBuilder logging)
+        {
+            logging.SetMinimumLevel(LogLevel.Trace);
+            logging.AddConsole();
+            logging.AddDebug();
+        }
+
+        public static ILogger<T> CreateLogger<T>() => LogFactory.CreateLogger<T>();
+    }
+
     public class Program
     {
-        private static readonly ServiceCollection ServiceCollection = new();
-        private static ILogger Logger;
+        private static readonly ILogger Logger = LoggingHelper.CreateLogger<Program>();
         private static readonly TConfiguration Configuration = null;  // new TConfiguration() if  needed
 
         public static void Main(string[] args)
         {
             args ??= Array.Empty<string>();
 
-            ServiceCollection.AddLogging(logging => ConfigureLogging(logging));
-            using (var serviceProvider = ServiceCollection.BuildServiceProvider())
+            if (args.Any(x => x.StartsWith("-help", StringComparison.OrdinalIgnoreCase)))
             {
-                Logger = serviceProvider.GetService<ILoggerFactory>().CreateLogger(nameof(Server));
-
-                if (args.Any(x => x.StartsWith("-help", StringComparison.OrdinalIgnoreCase)))
-                {
-                    DisplayHelp();
-                    return;
-                }
-
-                using (var source = new CancellationTokenSource())
-                {
-                    RunAsync(args, source.Token).GetAwaiter().GetResult();
-
-                    Logger.LogInformation("Press any key to stop...");
-
-                    Console.ReadLine();
-                    source.Cancel();
-                }
-
-                Logger.LogInformation("Server stopped");
+                DisplayHelp();
+                return;
             }
+
+            using (var source = new CancellationTokenSource())
+            {
+                RunAsync(args, source.Token).GetAwaiter().GetResult();
+
+                Logger.LogInformation("Press any key to stop...");
+
+                Console.ReadLine();
+                source.Cancel();
+            }
+
+            Logger.LogInformation("Server stopped");
         }
 
-        private static void ConfigureLogging(ILoggingBuilder logging)
-        {
-            logging.SetMinimumLevel(LogLevel.Trace);
-            logging.AddConsole();
-            logging.AddDebug();
-        }
 
         private static void DisplayHelp()
         {
@@ -129,7 +131,7 @@ Sample:
             if (selectedTransport == Transport.Http)
             {
                 if (multiplex)
-                    throw new Exception("This tutorial semple code does not yet allow multiplex over http (although Thrift itself of course does)");
+                    throw new Exception("This tutorial sample code does not yet allow multiplex over http (although Thrift itself of course does)");
                 new HttpServerSample().Run(cancellationToken);
             }
             else
@@ -226,15 +228,12 @@ Sample:
             try
             {
                 Logger.LogInformation(
-                    string.Format(
-                        "TSimpleAsyncServer with \n{0} transport\n{1} buffering\nmultiplex = {2}\n{3} protocol",
-                        transport,
-                        buffering,
-                        multiplex ? "yes" : "no",
-                        protocol
-                        ));
-
-                var loggerFactory = ServiceCollection.BuildServiceProvider().GetService<ILoggerFactory>();
+                    "TSimpleAsyncServer with \n{transport} transport\n{buffering} buffering\nmultiplex = {multiplex}\n{protocol} protocol",
+                    transport,
+                    buffering,
+                    multiplex ? "yes" : "no",
+                    protocol
+                    );
 
                 var server = new TSimpleAsyncServer(
                     itProcessorFactory: new TSingletonProcessorFactory(processor),
@@ -243,7 +242,7 @@ Sample:
                     outputTransportFactory: transportFactory,
                     inputProtocolFactory: protocolFactory,
                     outputProtocolFactory: protocolFactory,
-                    logger: loggerFactory.CreateLogger<TSimpleAsyncServer>());
+                    logger: LoggingHelper.CreateLogger<TSimpleAsyncServer >());
 
                 Logger.LogInformation("Starting the server...");
 
@@ -251,7 +250,7 @@ Sample:
             }
             catch (Exception x)
             {
-                Logger.LogInformation(x.ToString());
+                Logger.LogInformation("{x}",x);
             }
         }
 
@@ -327,7 +326,7 @@ Sample:
                     .UseUrls("http://localhost:9090")
                     .UseContentRoot(Directory.GetCurrentDirectory())
                     .UseStartup<Startup>()
-                    .ConfigureLogging((ctx,logging) => ConfigureLogging(logging))
+                    .ConfigureLogging((ctx,logging) => LoggingHelper.ConfigureLogging(logging))
                     .Build();
 
                 Logger.LogTrace("test");
@@ -379,7 +378,7 @@ Sample:
             public async Task<SharedStruct> getStruct(int key,
                 CancellationToken cancellationToken)
             {
-                Logger.LogInformation("GetStruct({0})", key);
+                Logger.LogInformation("GetStruct({key})", key);
                 return await Task.FromResult(_log[key]);
             }
 
@@ -391,13 +390,13 @@ Sample:
 
             public async Task<int> add(int num1, int num2, CancellationToken cancellationToken)
             {
-                Logger.LogInformation($"Add({num1},{num2})");
+                Logger.LogInformation("Add({num1},{num2})", num1, num2);
                 return await Task.FromResult(num1 + num2);
             }
 
             public async Task<int> calculate(int logid, Work w, CancellationToken cancellationToken)
             {
-                Logger.LogInformation($"Calculate({logid}, [{w.Op},{w.Num1},{w.Num2}])");
+                Logger.LogInformation("Calculate({logid}, [{w.Op},{w.Num1},{w.Num2}])", logid, w.Op, w.Num1, w.Num2);
 
                 int val;
                 switch (w.Op)
@@ -462,7 +461,7 @@ Sample:
         {
             public async Task<SharedStruct> getStruct(int key, CancellationToken cancellationToken)
             {
-                Logger.LogInformation("GetStruct({0})", key);
+                Logger.LogInformation("GetStruct({key})", key);
                 return await Task.FromResult(new SharedStruct()
                 {
                     Key = key,

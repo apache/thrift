@@ -30,7 +30,7 @@
 #include <thrift/transport/TSSLSocket.h>
 #include <thrift/transport/TTransport.h>
 #include <vector>
-#ifdef __linux__
+#ifdef HAVE_SIGNAL_H
 #include <signal.h>
 #endif
 

@@ -432,7 +432,19 @@ class SerializersTest(unittest.TestCase):
         self.assertEquals(obj, objcopy)
 
         # test enums
-        for num, name in Numberz._VALUES_TO_NAMES.items():
+        def _enumerate_enum(enum_class):
+            if hasattr(enum_class, '_VALUES_TO_NAMES'):
+                # old-style enums
+                for num, name in enum_class._VALUES_TO_NAMES.items():
+                    yield (num, name)
+            else:
+                # assume Python 3.4+ IntEnum-based
+                from enum import IntEnum
+                self.assertTrue((issubclass(enum_class, IntEnum)))
+                for num in enum_class:
+                    yield (num.value, num.name)
+
+        for num, name in _enumerate_enum(Numberz):
             obj = Bonk(message='enum Numberz value %d is string %s' % (num, name), type=num)
             objcopy = Bonk()
             deserialize(objcopy, serialize(obj))

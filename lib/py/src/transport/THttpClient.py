@@ -91,6 +91,7 @@ class THttpClient(TTransportBase):
         self.__http_response = None
         self.__timeout = None
         self.__custom_headers = None
+        self.headers = None
 
     @staticmethod
     def basic_proxy_auth_header(proxy):
@@ -98,7 +99,7 @@ class THttpClient(TTransportBase):
             return None
         ap = "%s:%s" % (urllib.parse.unquote(proxy.username),
                         urllib.parse.unquote(proxy.password))
-        cr = base64.b64encode(ap).strip()
+        cr = base64.b64encode(ap.encode()).strip()
         return "Basic " + cr
 
     def using_proxy(self):
@@ -175,6 +176,12 @@ class THttpClient(TTransportBase):
             for key, val in six.iteritems(self.__custom_headers):
                 self.__http.putheader(key, val)
 
+        # Saves the cookie sent by the server in the previous response.
+        # HTTPConnection.putheader can only be called after a request has been
+        # started, and before it's been sent.
+        if self.headers and 'Set-Cookie' in self.headers:
+            self.__http.putheader('Cookie', self.headers['Set-Cookie'])
+
         self.__http.endheaders()
 
         # Write payload
@@ -185,7 +192,3 @@ class THttpClient(TTransportBase):
         self.code = self.__http_response.status
         self.message = self.__http_response.reason
         self.headers = self.__http_response.msg
-
-        # Saves the cookie sent by the server response
-        if 'Set-Cookie' in self.headers:
-            self.__http.putheader('Cookie', self.headers['Set-Cookie'])

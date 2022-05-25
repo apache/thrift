@@ -620,6 +620,8 @@ void t_cpp_generator::generate_enum(t_enum* tenum) {
 
   generate_enum_to_string_helper_function_decl(f_types_, tenum);
   generate_enum_to_string_helper_function(f_types_impl_, tenum);
+
+  has_members_ = true;
 }
 
 void t_cpp_generator::generate_enum_ostream_operator_decl(std::ostream& out, t_enum* tenum) {
@@ -2474,7 +2476,7 @@ void t_cpp_generator::generate_service_client(t_service* tservice, string style)
     f_header_ << indent() << service_name_ << style << "Client" << short_suffix << "(" << prot_ptr
 		<< " prot";
 	if (style == "Concurrent") {
-		f_header_ << ", std::shared_ptr<::apache::thrift::async::TConcurrentClientSyncInfo> sync";
+		f_header_ << ", std::shared_ptr< ::apache::thrift::async::TConcurrentClientSyncInfo> sync";
 	}
 	f_header_ << ") ";
 
@@ -2497,7 +2499,7 @@ void t_cpp_generator::generate_service_client(t_service* tservice, string style)
     f_header_ << indent() << service_name_ << style << "Client" << short_suffix << "(" << prot_ptr
 		<< " iprot, " << prot_ptr << " oprot";
 	if (style == "Concurrent") {
-		f_header_ << ", std::shared_ptr<::apache::thrift::async::TConcurrentClientSyncInfo> sync";
+		f_header_ << ", std::shared_ptr< ::apache::thrift::async::TConcurrentClientSyncInfo> sync";
 	}
 	f_header_ << ") ";
 	
@@ -2657,7 +2659,7 @@ void t_cpp_generator::generate_service_client(t_service* tservice, string style)
 
     if (style == "Concurrent") {
       f_header_ <<
-        indent() << "std::shared_ptr<::apache::thrift::async::TConcurrentClientSyncInfo> sync_;"<<endl;
+        indent() << "std::shared_ptr< ::apache::thrift::async::TConcurrentClientSyncInfo> sync_;"<<endl;
     }
     indent_down();
   }

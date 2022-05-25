@@ -57,7 +57,7 @@ sub new
         port         => 9090,
         recvTimeout  => 10000,
         sendTimeout  => 10000,
-
+        proto        => 'tcp',
         handle       => undef
     };
 
@@ -260,7 +260,7 @@ sub __open
     my $self = shift;
     return IO::Socket::INET->new(PeerAddr => $self->{host},
                                  PeerPort => $self->{port},
-                                 Proto    => 'tcp',
+                                 Proto    => $self->{proto},
                                  Timeout  => $self->{sendTimeout} / 1000);
 }
 

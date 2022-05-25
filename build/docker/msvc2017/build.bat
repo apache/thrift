@@ -42,4 +42,4 @@ cmake --build . --config Release || EXIT /B
 cmake --build . --target check || EXIT /B
 
 :: Install
-cmake --build . --target install
+cmake --install .

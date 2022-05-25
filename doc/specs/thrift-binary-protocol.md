@@ -1,4 +1,4 @@
-Thrift Binary protocol encoding 
+Thrift Binary protocol encoding
 ===============================
 
 <!--
@@ -182,12 +182,12 @@ Where:
 The following field-types are used:
 
 * `BOOL`, encoded as `2`
-* `BYTE`, encoded as `3`
+* `I8`, encoded as `3`
 * `DOUBLE`, encoded as `4`
 * `I16`, encoded as `6`
 * `I32`, encoded as `8`
 * `I64`, encoded as `10`
-* `STRING`, used for binary and string fields, encoded as `11`
+* `BINARY`, used for binary and string fields, encoded as `11`
 * `STRUCT`, used for structs and union fields, encoded as `12`
 * `MAP`, encoded as `13`
 * `SET`, encoded as `14`

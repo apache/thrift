@@ -20,6 +20,7 @@
 package thrift
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"io"
@@ -27,17 +28,6 @@ import (
 	"sync/atomic"
 	"time"
 )
-
-// ErrAbandonRequest is a special error server handler implementations can
-// return to indicate that the request has been abandoned.
-//
-// TSimpleServer will check for this error, and close the client connection
-// instead of writing the response/error back to the client.
-//
-// It shall only be used when the server handler implementation know that the
-// client already abandoned the request (by checking that the passed in context
-// is already canceled, for example).
-var ErrAbandonRequest = errors.New("request abandoned")
 
 // ServerConnectivityCheckInterval defines the ticker interval used by
 // connectivity check in thrift compiled TProcessorFunc implementations.
@@ -48,15 +38,26 @@ var ErrAbandonRequest = errors.New("request abandoned")
 // If it's changed to <=0, the feature will be disabled.
 var ServerConnectivityCheckInterval = time.Millisecond * 5
 
+// ServerStopTimeout defines max stop wait duration used by
+// server stop to avoid hanging too long to wait for all client connections to be closed gracefully.
+//
+// It's defined as a variable instead of constant, so that thrift server
+// implementations can change its value to control the behavior.
+//
+// If it's set to <=0, the feature will be disabled(by default), and the server will wait for
+// for all the client connections to be closed gracefully.
+var ServerStopTimeout = time.Duration(0)
+
 /*
  * This is not a typical TSimpleServer as it is not blocked after accept a socket.
  * It is more like a TThreadedServer that can handle different connections in different goroutines.
  * This will work if golang user implements a conn-pool like thing in client side.
  */
 type TSimpleServer struct {
-	closed int32
-	wg     sync.WaitGroup
-	mu     sync.Mutex
+	closed   int32
+	wg       sync.WaitGroup
+	mu       sync.Mutex
+	stopChan chan struct{}
 
 	processorFactory       TProcessorFactory
 	serverTransport        TServerTransport
@@ -121,6 +122,7 @@ func NewTSimpleServerFactory6(processorFactory TProcessorFactory, serverTranspor
 		outputTransportFactory: outputTransportFactory,
 		inputProtocolFactory:   inputProtocolFactory,
 		outputProtocolFactory:  outputProtocolFactory,
+		stopChan:               make(chan struct{}),
 	}
 }
 
@@ -192,11 +194,25 @@ func (p *TSimpleServer) innerAccept() (int32, error) {
 		return 0, err
 	}
 	if client != nil {
-		p.wg.Add(1)
+		ctx, cancel := context.WithCancel(context.Background())
+		p.wg.Add(2)
+
 		go func() {
 			defer p.wg.Done()
+			defer cancel()
 			if err := p.processRequests(client); err != nil {
 				p.logger(fmt.Sprintf("error processing request: %v", err))
+			}
+		}()
+
+		go func() {
+			defer p.wg.Done()
+			select {
+			case <-ctx.Done():
+				// client exited, do nothing
+			case <-p.stopChan:
+				// TSimpleServer.Close called, close the client connection
+				client.Close()
 			}
 		}()
 	}
@@ -229,16 +245,35 @@ func (p *TSimpleServer) Serve() error {
 func (p *TSimpleServer) Stop() error {
 	p.mu.Lock()
 	defer p.mu.Unlock()
+
 	if atomic.LoadInt32(&p.closed) != 0 {
 		return nil
 	}
 	atomic.StoreInt32(&p.closed, 1)
 	p.serverTransport.Interrupt()
-	p.wg.Wait()
+
+	ctx, cancel := context.WithCancel(context.Background())
+	go func() {
+		defer cancel()
+		p.wg.Wait()
+	}()
+
+	if ServerStopTimeout > 0 {
+		timer := time.NewTimer(ServerStopTimeout)
+		select {
+		case <-timer.C:
+		case <-ctx.Done():
+		}
+		close(p.stopChan)
+		timer.Stop()
+	}
+
+	<-ctx.Done()
+	p.stopChan = make(chan struct{})
 	return nil
 }
 
-// If err is actually EOF, return nil, otherwise return err as-is.
+// If err is actually EOF or NOT_OPEN, return nil, otherwise return err as-is.
 func treatEOFErrorsAsNil(err error) error {
 	if err == nil {
 		return nil
@@ -247,7 +282,11 @@ func treatEOFErrorsAsNil(err error) error {
 		return nil
 	}
 	var te TTransportException
-	if errors.As(err, &te) && te.TypeId() == END_OF_FILE {
+	// NOT_OPEN returned by processor.Process is usually caused by client
+	// abandoning the connection (e.g. client side time out, or just client
+	// closes connections from the pool because of shutting down).
+	// Those logs will be very noisy, so suppress those logs as well.
+	if errors.As(err, &te) && (te.TypeId() == END_OF_FILE || te.TypeId() == NOT_OPEN) {
 		return nil
 	}
 	return err
@@ -329,4 +368,29 @@ func (p *TSimpleServer) processRequests(client TTransport) (err error) {
 		}
 	}
 	return nil
+}
+
+// ErrAbandonRequest is a special error that server handler implementations can
+// return to indicate that the request has been abandoned.
+//
+// TSimpleServer and compiler generated Process functions will check for this
+// error, and close the client connection instead of trying to write the error
+// back to the client.
+//
+// It shall only be used when the server handler implementation know that the
+// client already abandoned the request (by checking that the passed in context
+// is already canceled, for example).
+//
+// It also implements the interface defined by errors.Unwrap and always unwrap
+// to context.Canceled error.
+var ErrAbandonRequest = abandonRequestError{}
+
+type abandonRequestError struct{}
+
+func (abandonRequestError) Error() string {
+	return "request abandoned"
+}
+
+func (abandonRequestError) Unwrap() error {
+	return context.Canceled
 }

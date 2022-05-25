@@ -73,7 +73,7 @@ build-indep-stamp: configure-stamp $(CURDIR)/compiler/cpp/thrift
 
 	# Java
 	cd $(CURDIR)/lib/java && \
-		./gradlew --no-daemon -Prelease=true jar
+		gradle --no-daemon -Prelease=true jar
 
 	# C#
 	$(MAKE) -C $(CURDIR)/lib/netstd
