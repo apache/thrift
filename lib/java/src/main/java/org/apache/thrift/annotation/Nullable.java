@@ -19,15 +19,12 @@
 
 package org.apache.thrift.annotation;
 
-import java.lang.annotation.Documented;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 
 /**
- * Annotation indicating a field, method return, or method parameter may be {@code null}.
- * We package our own annotation to avoid a mandatory third-party dependency.
+ * Annotation indicating a field, method return, or method parameter may be {@code null}. We package
+ * our own annotation to avoid a mandatory third-party dependency.
  */
 @Retention(RetentionPolicy.CLASS)
-public @interface Nullable {
-
-}
+public @interface Nullable {}

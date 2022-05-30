@@ -1,6 +1,6 @@
 package org.apache.thrift.scheme;
 
-import junit.framework.TestCase;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import org.apache.thrift.Fixtures;
 import org.apache.thrift.TBase;
@@ -11,30 +11,32 @@ import org.apache.thrift.protocol.TBinaryProtocol;
 import org.apache.thrift.protocol.TProtocol;
 import org.apache.thrift.transport.TMemoryBuffer;
 import org.apache.thrift.transport.TTransport;
-
 import org.apache.thrift.transport.TTransportException;
+import org.junit.jupiter.api.Test;
 import thrift.test.HolyMoley;
 import thrift.test.Nesting;
 import thrift.test.OneOfEach;
 
-public class TestStandardScheme extends TestCase {
+public class TestStandardScheme {
   TSerializer serializer = new TSerializer();
   TDeserializer deserializer = new TDeserializer();
 
-  public TestStandardScheme() throws TTransportException {
-  }
+  public TestStandardScheme() throws TTransportException {}
 
   /**
-   * This tests whether the Standard Scheme properly reads structs serialized
-   * using an older version of thrift.
+   * This tests whether the Standard Scheme properly reads structs serialized using an older version
+   * of thrift.
    */
+  @Test
   public void testPersistentStructs() throws TException {
-    readAndCompare(new OneOfEach(), Fixtures.oneOfEach, Fixtures.persistentBytesOneOfEach);
-    readAndCompare(new HolyMoley(), Fixtures.holyMoley, Fixtures.persistentBytesHolyMoley);
-    readAndCompare(new Nesting(), Fixtures.nesting, Fixtures.persistentBytesNesting);
+    readAndCompare(
+        new OneOfEach(), Fixtures.getOneOfEach(), Fixtures.getPersistentBytesOneOfEach());
+    readAndCompare(
+        new HolyMoley(), Fixtures.getHolyMoley(), Fixtures.getPersistentBytesHolyMoley());
+    readAndCompare(new Nesting(), Fixtures.getNesting(), Fixtures.getPersistentBytesNesting());
   }
 
-  public void readAndCompare(TBase struct, TBase fixture, byte[] inputBytes) throws TException {
+  private void readAndCompare(TBase struct, TBase fixture, byte[] inputBytes) throws TException {
     TTransport trans = new TMemoryBuffer(0);
     trans.write(inputBytes, 0, inputBytes.length);
     TProtocol iprot = new TBinaryProtocol(trans);

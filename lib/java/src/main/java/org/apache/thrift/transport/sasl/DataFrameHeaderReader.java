@@ -19,9 +19,7 @@
 
 package org.apache.thrift.transport.sasl;
 
-/**
- * The header for data frame, it only contains a 4-byte payload size.
- */
+/** The header for data frame, it only contains a 4-byte payload size. */
 public class DataFrameHeaderReader extends FixedSizeHeaderReader {
   public static final int PAYLOAD_LENGTH_BYTES = 4;
 

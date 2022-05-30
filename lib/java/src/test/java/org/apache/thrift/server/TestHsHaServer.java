@@ -24,7 +24,8 @@ import org.apache.thrift.server.THsHaServer.Args;
 import org.apache.thrift.transport.TNonblockingServerSocket;
 
 public class TestHsHaServer extends TestNonblockingServer {
-  protected TServer getServer(TProcessor processor, TNonblockingServerSocket socket, TProtocolFactory protoFactory) {
+  protected TServer getServer(
+      TProcessor processor, TNonblockingServerSocket socket, TProtocolFactory protoFactory) {
     return new THsHaServer(new Args(socket).processor(processor).protocolFactory(protoFactory));
   }
 }

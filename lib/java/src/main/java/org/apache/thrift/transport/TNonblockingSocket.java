@@ -17,7 +17,6 @@
  * under the License.
  */
 
-
 package org.apache.thrift.transport;
 
 import java.io.IOException;
@@ -29,21 +28,16 @@ import java.nio.ByteBuffer;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.SocketChannel;
-
 import org.apache.thrift.TConfiguration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/**
- * Transport for use with async client.
- */
+/** Transport for use with async client. */
 public class TNonblockingSocket extends TNonblockingTransport {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(TNonblockingSocket.class.getName());
 
-  /**
-   * Host and port if passed in, used for lazy non-blocking connect.
-   */
+  /** Host and port if passed in, used for lazy non-blocking connect. */
   private final SocketAddress socketAddress_;
 
   private final SocketChannel socketChannel_;
@@ -54,11 +48,13 @@ public class TNonblockingSocket extends TNonblockingTransport {
 
   /**
    * Create a new nonblocking socket transport that will be connected to host:port.
+   *
    * @param host
    * @param port
    * @throws IOException
    */
-  public TNonblockingSocket(String host, int port, int timeout) throws IOException, TTransportException {
+  public TNonblockingSocket(String host, int port, int timeout)
+      throws IOException, TTransportException {
     this(SocketChannel.open(), timeout, new InetSocketAddress(host, port));
   }
 
@@ -74,12 +70,13 @@ public class TNonblockingSocket extends TNonblockingTransport {
   }
 
   private TNonblockingSocket(SocketChannel socketChannel, int timeout, SocketAddress socketAddress)
-          throws IOException, TTransportException {
+      throws IOException, TTransportException {
     this(new TConfiguration(), socketChannel, timeout, socketAddress);
   }
 
-  private TNonblockingSocket(TConfiguration config, SocketChannel socketChannel, int timeout, SocketAddress socketAddress)
-          throws IOException, TTransportException {
+  private TNonblockingSocket(
+      TConfiguration config, SocketChannel socketChannel, int timeout, SocketAddress socketAddress)
+      throws IOException, TTransportException {
     super(config);
     socketChannel_ = socketChannel;
     socketAddress_ = socketAddress;
@@ -96,8 +93,8 @@ public class TNonblockingSocket extends TNonblockingTransport {
   }
 
   /**
-   * Register the new SocketChannel with our Selector, indicating
-   * we'd like to be notified when it's ready for I/O.
+   * Register the new SocketChannel with our Selector, indicating we'd like to be notified when it's
+   * ready for I/O.
    *
    * @param selector
    * @return the selection key for this socket.
@@ -107,7 +104,8 @@ public class TNonblockingSocket extends TNonblockingTransport {
   }
 
   /**
-   * Sets the socket timeout, although this implementation never uses blocking operations so it is unused.
+   * Sets the socket timeout, although this implementation never uses blocking operations so it is
+   * unused.
    *
    * @param timeout Milliseconds timeout
    */
@@ -119,31 +117,23 @@ public class TNonblockingSocket extends TNonblockingTransport {
     }
   }
 
-  /**
-   * Returns a reference to the underlying SocketChannel.
-   */
+  /** Returns a reference to the underlying SocketChannel. */
   public SocketChannel getSocketChannel() {
     return socketChannel_;
   }
 
-  /**
-   * Checks whether the socket is connected.
-   */
+  /** Checks whether the socket is connected. */
   public boolean isOpen() {
     // isConnected() does not return false after close(), but isOpen() does
     return socketChannel_.isOpen() && socketChannel_.isConnected();
   }
 
-  /**
-   * Do not call, the implementation provides its own lazy non-blocking connect.
-   */
+  /** Do not call, the implementation provides its own lazy non-blocking connect. */
   public void open() throws TTransportException {
     throw new RuntimeException("open() is not implemented for TNonblockingSocket");
   }
 
-  /**
-   * Perform a nonblocking read into buffer.
-   */
+  /** Perform a nonblocking read into buffer. */
   public int read(ByteBuffer buffer) throws TTransportException {
     try {
       return socketChannel_.read(buffer);
@@ -152,13 +142,11 @@ public class TNonblockingSocket extends TNonblockingTransport {
     }
   }
 
-  /**
-   * Reads from the underlying input stream if not null.
-   */
+  /** Reads from the underlying input stream if not null. */
   public int read(byte[] buf, int off, int len) throws TTransportException {
     if ((socketChannel_.validOps() & SelectionKey.OP_READ) != SelectionKey.OP_READ) {
-      throw new TTransportException(TTransportException.NOT_OPEN,
-        "Cannot read from write-only socket channel");
+      throw new TTransportException(
+          TTransportException.NOT_OPEN, "Cannot read from write-only socket channel");
     }
     try {
       return socketChannel_.read(ByteBuffer.wrap(buf, off, len));
@@ -167,9 +155,7 @@ public class TNonblockingSocket extends TNonblockingTransport {
     }
   }
 
-  /**
-   * Perform a nonblocking write of the data in buffer;
-   */
+  /** Perform a nonblocking write of the data in buffer; */
   public int write(ByteBuffer buffer) throws TTransportException {
     try {
       return socketChannel_.write(buffer);
@@ -178,27 +164,21 @@ public class TNonblockingSocket extends TNonblockingTransport {
     }
   }
 
-  /**
-   * Writes to the underlying output stream if not null.
-   */
+  /** Writes to the underlying output stream if not null. */
   public void write(byte[] buf, int off, int len) throws TTransportException {
     if ((socketChannel_.validOps() & SelectionKey.OP_WRITE) != SelectionKey.OP_WRITE) {
-      throw new TTransportException(TTransportException.NOT_OPEN,
-        "Cannot write to write-only socket channel");
+      throw new TTransportException(
+          TTransportException.NOT_OPEN, "Cannot write to write-only socket channel");
     }
     write(ByteBuffer.wrap(buf, off, len));
   }
 
-  /**
-   * Noop.
-   */
+  /** Noop. */
   public void flush() throws TTransportException {
     // Not supported by SocketChannel.
   }
 
-  /**
-   * Closes the socket.
-   */
+  /** Closes the socket. */
   public void close() {
     try {
       socketChannel_.close();
@@ -219,7 +199,10 @@ public class TNonblockingSocket extends TNonblockingTransport {
 
   @Override
   public String toString() {
-    return "[remote: " + socketChannel_.socket().getRemoteSocketAddress() +
-        ", local: " + socketChannel_.socket().getLocalAddress() + "]" ;
+    return "[remote: "
+        + socketChannel_.socket().getRemoteSocketAddress()
+        + ", local: "
+        + socketChannel_.socket().getLocalAddress()
+        + "]";
   }
 }

@@ -28,7 +28,6 @@ import java.net.URL;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
-
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpHost;
 import org.apache.http.HttpResponse;
@@ -40,32 +39,26 @@ import org.apache.http.entity.ByteArrayEntity;
 import org.apache.thrift.TConfiguration;
 
 /**
- * HTTP implementation of the TTransport interface. Used for working with a
- * Thrift web services implementation (using for example TServlet).
+ * HTTP implementation of the TTransport interface. Used for working with a Thrift web services
+ * implementation (using for example TServlet).
  *
- * This class offers two implementations of the HTTP transport.
- * One uses HttpURLConnection instances, the other HttpClient from Apache
- * Http Components.
- * The chosen implementation depends on the constructor used to
- * create the THttpClient instance.
- * Using the THttpClient(String url) constructor or passing null as the
- * HttpClient to THttpClient(String url, HttpClient client) will create an
- * instance which will use HttpURLConnection.
+ * <p>This class offers two implementations of the HTTP transport. One uses HttpURLConnection
+ * instances, the other HttpClient from Apache Http Components. The chosen implementation depends on
+ * the constructor used to create the THttpClient instance. Using the THttpClient(String url)
+ * constructor or passing null as the HttpClient to THttpClient(String url, HttpClient client) will
+ * create an instance which will use HttpURLConnection.
  *
- * When using HttpClient, the following configuration leads to 5-15%
- * better performance than the HttpURLConnection implementation:
+ * <p>When using HttpClient, the following configuration leads to 5-15% better performance than the
+ * HttpURLConnection implementation:
  *
- * http.protocol.version=HttpVersion.HTTP_1_1
- * http.protocol.content-charset=UTF-8
- * http.protocol.expect-continue=false
- * http.connection.stalecheck=false
+ * <p>http.protocol.version=HttpVersion.HTTP_1_1 http.protocol.content-charset=UTF-8
+ * http.protocol.expect-continue=false http.connection.stalecheck=false
  *
- * Also note that under high load, the HttpURLConnection implementation
- * may exhaust the open file descriptor limit.
+ * <p>Also note that under high load, the HttpURLConnection implementation may exhaust the open file
+ * descriptor limit.
  *
  * @see <a href="https://issues.apache.org/jira/browse/THRIFT-970">THRIFT-970</a>
  */
-
 public class THttpClient extends TEndpointTransport {
 
   private final URL url_;
@@ -78,13 +71,14 @@ public class THttpClient extends TEndpointTransport {
 
   private int readTimeout_ = 0;
 
-  private Map<String,String> customHeaders_ = null;
+  private Map<String, String> customHeaders_ = null;
 
   private final HttpHost host;
 
   private final HttpClient client;
 
-  private static final Map<String, String> DEFAULT_HEADERS = Collections.unmodifiableMap(getDefaultHeaders());
+  private static final Map<String, String> DEFAULT_HEADERS =
+      Collections.unmodifiableMap(getDefaultHeaders());
 
   public static class Factory extends TTransportFactory {
 
@@ -137,12 +131,17 @@ public class THttpClient extends TEndpointTransport {
     }
   }
 
-  public THttpClient(TConfiguration config, String url, HttpClient client) throws TTransportException {
+  public THttpClient(TConfiguration config, String url, HttpClient client)
+      throws TTransportException {
     super(config);
     try {
       url_ = new URL(url);
       this.client = client;
-      this.host = new HttpHost(url_.getHost(), -1 == url_.getPort() ? url_.getDefaultPort() : url_.getPort(), url_.getProtocol());
+      this.host =
+          new HttpHost(
+              url_.getHost(),
+              -1 == url_.getPort() ? url_.getDefaultPort() : url_.getPort(),
+              url_.getProtocol());
     } catch (IOException iox) {
       throw new TTransportException(iox);
     }
@@ -153,7 +152,11 @@ public class THttpClient extends TEndpointTransport {
     try {
       url_ = new URL(url);
       this.client = client;
-      this.host = new HttpHost(url_.getHost(), -1 == url_.getPort() ? url_.getDefaultPort() : url_.getPort(), url_.getProtocol());
+      this.host =
+          new HttpHost(
+              url_.getHost(),
+              -1 == url_.getPort() ? url_.getDefaultPort() : url_.getPort(),
+              url_.getProtocol());
     } catch (IOException iox) {
       throw new TTransportException(iox);
     }
@@ -167,7 +170,7 @@ public class THttpClient extends TEndpointTransport {
     readTimeout_ = timeout;
   }
 
-  public void setCustomHeaders(Map<String,String> headers) {
+  public void setCustomHeaders(Map<String, String> headers) {
     customHeaders_ = new HashMap<>(headers);
   }
 
@@ -226,7 +229,8 @@ public class THttpClient extends TEndpointTransport {
   private RequestConfig getRequestConfig() {
     RequestConfig requestConfig = RequestConfig.DEFAULT;
     if (connectTimeout_ > 0) {
-      requestConfig = RequestConfig.copy(requestConfig).setConnectionRequestTimeout(connectTimeout_).build();
+      requestConfig =
+          RequestConfig.copy(requestConfig).setConnectionRequestTimeout(connectTimeout_).build();
     }
     if (readTimeout_ > 0) {
       requestConfig = RequestConfig.copy(requestConfig).setSocketTimeout(readTimeout_).build();
@@ -243,19 +247,19 @@ public class THttpClient extends TEndpointTransport {
   }
 
   /**
-   * copy from org.apache.http.util.EntityUtils#consume. Android has it's own httpcore
-   * that doesn't have a consume.
+   * copy from org.apache.http.util.EntityUtils#consume. Android has it's own httpcore that doesn't
+   * have a consume.
    */
   private static void consume(final HttpEntity entity) throws IOException {
-      if (entity == null) {
-          return;
+    if (entity == null) {
+      return;
+    }
+    if (entity.isStreaming()) {
+      InputStream instream = entity.getContent();
+      if (instream != null) {
+        instream.close();
       }
-      if (entity.isStreaming()) {
-          InputStream instream = entity.getContent();
-          if (instream != null) {
-              instream.close();
-          }
-      }
+    }
   }
 
   private void flushUsingHttpClient() throws TTransportException {
@@ -311,12 +315,10 @@ public class THttpClient extends TEndpointTransport {
   }
 
   /**
-   * Read the responses into a byte array so we can release the connection
-   * early. This implies that the whole content will have to be read in
-   * memory, and that momentarily we might use up twice the memory (while the
-   * thrift struct is being read up the chain).
-   * Proceeding differently might lead to exhaustion of connections and thus
-   * to app failure.
+   * Read the responses into a byte array so we can release the connection early. This implies that
+   * the whole content will have to be read in memory, and that momentarily we might use up twice
+   * the memory (while the thrift struct is being read up the chain). Proceeding differently might
+   * lead to exhaustion of connections and thus to app failure.
    *
    * @param is input stream
    * @return read bytes
@@ -348,7 +350,7 @@ public class THttpClient extends TEndpointTransport {
 
     try {
       // Create connection object
-      HttpURLConnection connection = (HttpURLConnection)url_.openConnection();
+      HttpURLConnection connection = (HttpURLConnection) url_.openConnection();
 
       // Timeouts, only if explicitly set
       if (connectTimeout_ > 0) {

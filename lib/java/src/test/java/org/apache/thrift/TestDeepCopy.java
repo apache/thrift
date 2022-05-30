@@ -1,11 +1,14 @@
 package org.apache.thrift;
 
-import junit.framework.TestCase;
+import static org.junit.jupiter.api.Assertions.assertNotSame;
+
+import org.junit.jupiter.api.Test;
 import thrift.test.DeepCopyBar;
 import thrift.test.DeepCopyFoo;
 
-public class TestDeepCopy extends TestCase {
+public class TestDeepCopy {
 
+  @Test
   public void testDeepCopy() throws Exception {
     final DeepCopyFoo foo = new DeepCopyFoo();
 
@@ -23,12 +26,16 @@ public class TestDeepCopy extends TestCase {
 
     assertNotSame(foo.getBar(), deepCopyFoo.getBar());
 
-    assertNotSame(foo.getL().get(0),                          deepCopyFoo.getL().get(0));
-    assertNotSame(foo.getS().toArray(new DeepCopyBar[0])[0],  deepCopyFoo.getS().toArray(new DeepCopyBar[0])[0]);
-    assertNotSame(foo.getM().get("test 3"),                   deepCopyFoo.getM().get("test 3"));
+    assertNotSame(foo.getL().get(0), deepCopyFoo.getL().get(0));
+    assertNotSame(
+        foo.getS().toArray(new DeepCopyBar[0])[0],
+        deepCopyFoo.getS().toArray(new DeepCopyBar[0])[0]);
+    assertNotSame(foo.getM().get("test 3"), deepCopyFoo.getM().get("test 3"));
 
-    assertNotSame(foo.getLi().get(0),                                 deepCopyFoo.getLi().get(0));
-    assertNotSame(foo.getSi().toArray(new thrift.test.Object[0])[0],  deepCopyFoo.getSi().toArray(new thrift.test.Object[0])[0]);
-    assertNotSame(foo.getMi().get("test 3"),                          deepCopyFoo.getMi().get("test 3"));
+    assertNotSame(foo.getLi().get(0), deepCopyFoo.getLi().get(0));
+    assertNotSame(
+        foo.getSi().toArray(new thrift.test.Object[0])[0],
+        deepCopyFoo.getSi().toArray(new thrift.test.Object[0])[0]);
+    assertNotSame(foo.getMi().get("test 3"), deepCopyFoo.getMi().get("test 3"));
   }
 }

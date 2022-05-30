@@ -19,20 +19,18 @@
 
 package org.apache.thrift.transport.sasl;
 
+import static org.apache.thrift.transport.sasl.TSaslNegotiationException.ErrorType.PROTOCOL_ERROR;
+
 import java.util.HashMap;
 import java.util.Map;
 
-import static org.apache.thrift.transport.sasl.TSaslNegotiationException.ErrorType.PROTOCOL_ERROR;
-
-/**
- * Status bytes used during the initial Thrift SASL handshake.
- */
+/** Status bytes used during the initial Thrift SASL handshake. */
 public enum NegotiationStatus {
-  START((byte)0x01),
-  OK((byte)0x02),
-  BAD((byte)0x03),
-  ERROR((byte)0x04),
-  COMPLETE((byte)0x05);
+  START((byte) 0x01),
+  OK((byte) 0x02),
+  BAD((byte) 0x03),
+  ERROR((byte) 0x04),
+  COMPLETE((byte) 0x05);
 
   private static final Map<Byte, NegotiationStatus> reverseMap = new HashMap<>();
 

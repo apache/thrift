@@ -20,9 +20,7 @@ package org.apache.thrift.transport;
 
 import org.apache.thrift.TConfiguration;
 
-/**
- * TTransport for writing to an AutoExpandingBuffer.
- */
+/** TTransport for writing to an AutoExpandingBuffer. */
 public final class AutoExpandingBufferWriteTransport extends TEndpointTransport {
 
   private final AutoExpandingBuffer buf;
@@ -31,17 +29,18 @@ public final class AutoExpandingBufferWriteTransport extends TEndpointTransport 
 
   /**
    * Constructor.
+   *
    * @param config the configuration to use. Currently used for defining the maximum message size.
    * @param initialCapacity the initial capacity of the buffer
-   * @param frontReserve space, if any, to reserve at the beginning such
-   *                     that the first write is after this reserve.
-   *                     This allows framed transport to reserve space
-   *                     for the frame buffer length.
+   * @param frontReserve space, if any, to reserve at the beginning such that the first write is
+   *     after this reserve. This allows framed transport to reserve space for the frame buffer
+   *     length.
    * @throws IllegalArgumentException if initialCapacity is less than one
    * @throws IllegalArgumentException if frontReserve is less than zero
    * @throws IllegalArgumentException if frontReserve is greater than initialCapacity
    */
-  public AutoExpandingBufferWriteTransport(TConfiguration config, int initialCapacity, int frontReserve) throws TTransportException {
+  public AutoExpandingBufferWriteTransport(
+      TConfiguration config, int initialCapacity, int frontReserve) throws TTransportException {
     super(config);
     if (initialCapacity < 1) {
       throw new IllegalArgumentException("initialCapacity");
@@ -58,7 +57,9 @@ public final class AutoExpandingBufferWriteTransport extends TEndpointTransport 
   public void close() {}
 
   @Override
-  public boolean isOpen() {return true;}
+  public boolean isOpen() {
+    return true;
+  }
 
   @Override
   public void open() throws TTransportException {}

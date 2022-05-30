@@ -17,13 +17,15 @@ public abstract class ProcessFunction<I, T extends TBase> {
     this.methodName = methodName;
   }
 
-  public final void process(int seqid, TProtocol iprot, TProtocol oprot, I iface) throws TException {
+  public final void process(int seqid, TProtocol iprot, TProtocol oprot, I iface)
+      throws TException {
     T args = getEmptyArgsInstance();
     try {
       args.read(iprot);
     } catch (TProtocolException e) {
       iprot.readMessageEnd();
-      TApplicationException x = new TApplicationException(TApplicationException.PROTOCOL_ERROR, e.getMessage());
+      TApplicationException x =
+          new TApplicationException(TApplicationException.PROTOCOL_ERROR, e.getMessage());
       oprot.writeMessageBegin(new TMessage(getMethodName(), TMessageType.EXCEPTION, seqid));
       x.write(oprot);
       oprot.writeMessageEnd();
@@ -45,15 +47,17 @@ public abstract class ProcessFunction<I, T extends TBase> {
       msgType = TMessageType.EXCEPTION;
     } catch (Exception ex) {
       LOGGER.error("Internal error processing " + getMethodName(), ex);
-      if(rethrowUnhandledExceptions()) throw new RuntimeException(ex.getMessage(), ex);
-      if(!isOneway()) {
-        result = new TApplicationException(TApplicationException.INTERNAL_ERROR,
-            "Internal error processing " + getMethodName());
+      if (rethrowUnhandledExceptions()) throw new RuntimeException(ex.getMessage(), ex);
+      if (!isOneway()) {
+        result =
+            new TApplicationException(
+                TApplicationException.INTERNAL_ERROR,
+                "Internal error processing " + getMethodName());
         msgType = TMessageType.EXCEPTION;
       }
     }
 
-    if(!isOneway()) {
+    if (!isOneway()) {
       oprot.writeMessageBegin(new TMessage(getMethodName(), msgType, seqid));
       result.write(oprot);
       oprot.writeMessageEnd();
@@ -63,8 +67,9 @@ public abstract class ProcessFunction<I, T extends TBase> {
 
   private void handleException(int seqid, TProtocol oprot) throws TException {
     if (!isOneway()) {
-      TApplicationException x = new TApplicationException(TApplicationException.INTERNAL_ERROR,
-        "Internal error processing " + getMethodName());
+      TApplicationException x =
+          new TApplicationException(
+              TApplicationException.INTERNAL_ERROR, "Internal error processing " + getMethodName());
       oprot.writeMessageBegin(new TMessage(getMethodName(), TMessageType.EXCEPTION, seqid));
       x.write(oprot);
       oprot.writeMessageEnd();
@@ -72,7 +77,7 @@ public abstract class ProcessFunction<I, T extends TBase> {
     }
   }
 
-  protected boolean rethrowUnhandledExceptions(){
+  protected boolean rethrowUnhandledExceptions() {
     return false;
   }
 

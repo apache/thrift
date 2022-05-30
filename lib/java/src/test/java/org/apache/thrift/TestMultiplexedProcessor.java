@@ -19,6 +19,7 @@
 
 package org.apache.thrift;
 
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
@@ -27,39 +28,39 @@ import static org.mockito.Mockito.when;
 import org.apache.thrift.protocol.TMessage;
 import org.apache.thrift.protocol.TMessageType;
 import org.apache.thrift.protocol.TProtocol;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class TestMultiplexedProcessor {
   private TMultiplexedProcessor mp;
   private TProtocol iprot;
   private TProtocol oprot;
 
-  @Before
+  @BeforeEach
   public void setUp() throws Exception {
     mp = new TMultiplexedProcessor();
     iprot = mock(TProtocol.class);
     oprot = mock(TProtocol.class);
   }
 
-  @Test(expected = TException.class)
+  @Test
   public void testWrongMessageType() throws TException {
-    when (iprot.readMessageBegin()).thenReturn(new TMessage("service:func", TMessageType.REPLY, 42));
-    mp.process(iprot, oprot);
+    when(iprot.readMessageBegin()).thenReturn(new TMessage("service:func", TMessageType.REPLY, 42));
+    assertThrows(TException.class, () -> mp.process(iprot, oprot));
   }
 
-  @Test(expected = TException.class)
+  @Test
   public void testNoSuchService() throws TException {
     when(iprot.readMessageBegin()).thenReturn(new TMessage("service:func", TMessageType.CALL, 42));
 
-    mp.process(iprot, oprot);
+    assertThrows(TException.class, () -> mp.process(iprot, oprot));
   }
 
   static class StubProcessor implements TProcessor {
     @Override
     public void process(TProtocol in, TProtocol out) throws TException {
       TMessage msg = in.readMessageBegin();
-      if (!"func".equals(msg.name) || msg.type!=TMessageType.CALL || msg.seqid!=42) {
+      if (!"func".equals(msg.name) || msg.type != TMessageType.CALL || msg.seqid != 42) {
         throw new TException("incorrect parameters");
       }
       out.writeMessageBegin(new TMessage("func", TMessageType.REPLY, 42));
@@ -81,5 +82,4 @@ public class TestMultiplexedProcessor {
     mp.process(iprot, oprot);
     verify(oprot).writeMessageBegin(any(TMessage.class));
   }
-
 }

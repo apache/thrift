@@ -19,6 +19,7 @@
 
 package org.apache.thrift.test;
 
+import java.io.ByteArrayOutputStream;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -26,7 +27,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-
+import java.util.stream.IntStream;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.thrift.TApplicationException;
 import org.apache.thrift.TException;
@@ -37,16 +38,14 @@ import org.apache.thrift.protocol.TJSONProtocol;
 import org.apache.thrift.protocol.TMultiplexedProtocol;
 import org.apache.thrift.protocol.TProtocol;
 import org.apache.thrift.protocol.TSimpleJSONProtocol;
-import org.apache.thrift.transport.layered.TFastFramedTransport;
-import org.apache.thrift.transport.layered.TFramedTransport;
 import org.apache.thrift.transport.THttpClient;
 import org.apache.thrift.transport.TSSLTransportFactory;
 import org.apache.thrift.transport.TSocket;
 import org.apache.thrift.transport.TTransport;
 import org.apache.thrift.transport.TTransportException;
 import org.apache.thrift.transport.TZlibTransport;
-
-// Generated code
+import org.apache.thrift.transport.layered.TFastFramedTransport;
+import org.apache.thrift.transport.layered.TFramedTransport;
 import thrift.test.Insanity;
 import thrift.test.Numberz;
 import thrift.test.SecondService;
@@ -57,10 +56,8 @@ import thrift.test.Xtruct;
 import thrift.test.Xtruct2;
 
 /**
- * Test Java client for thrift. Essentially just a copy of the C++ version,
- * this makes a variety of requests to enable testing for both performance and
- * correctness of the output.
- *
+ * Test Java client for thrift. Essentially just a copy of the C++ version, this makes a variety of
+ * requests to enable testing for both performance and correctness of the output.
  */
 public class TestClient {
 
@@ -71,7 +68,7 @@ public class TestClient {
   private static int ERR_PROTOCOLS = 16;
   private static int ERR_UNKNOWN = 64;
 
-  public static void main(String [] args) {
+  public static void main(String[] args) {
     String host = "localhost";
     int port = 9090;
     int numTests = 1;
@@ -90,8 +87,7 @@ public class TestClient {
           host.trim();
         } else if (args[i].startsWith("--port")) {
           port = Integer.valueOf(args[i].split("=")[1]);
-        } else if (args[i].startsWith("--n") ||
-            args[i].startsWith("--testloops")){
+        } else if (args[i].startsWith("--n") || args[i].startsWith("--testloops")) {
           numTests = Integer.valueOf(args[i].split("=")[1]);
         } else if (args[i].equals("--timeout")) {
           socketTimeout = Integer.valueOf(args[i].split("=")[1]);
@@ -112,8 +108,14 @@ public class TestClient {
           System.out.println("  --help\t\t\tProduce help message");
           System.out.println("  --host=arg (=" + host + ")\tHost to connect");
           System.out.println("  --port=arg (=" + port + ")\tPort number to connect");
-          System.out.println("  --transport=arg (=" + transport_type + ")\n\t\t\t\tTransport: buffered, framed, fastframed, http, zlib");
-          System.out.println("  --protocol=arg (=" + protocol_type + ")\tProtocol: binary, compact, json, multi, multic, multij");
+          System.out.println(
+              "  --transport=arg (="
+                  + transport_type
+                  + ")\n\t\t\t\tTransport: buffered, framed, fastframed, http, zlib");
+          System.out.println(
+              "  --protocol=arg (="
+                  + protocol_type
+                  + ")\tProtocol: binary, compact, json, multi, multic, multij");
           System.out.println("  --ssl\t\t\tEncrypted Transport using SSL");
           System.out.println("  --zlib\t\t\tCompressed Transport using Zlib");
           System.out.println("  --testloops[--n]=arg (=" + numTests + ")\tNumber of Tests");
@@ -215,10 +217,8 @@ public class TestClient {
     int returnCode = 0;
     for (int test = 0; test < numTests; ++test) {
       try {
-        /**
-         * CONNECT TEST
-         */
-        System.out.println("Test #" + (test+1) + ", " + "connect " + host + ":" + port);
+        /** CONNECT TEST */
+        System.out.println("Test #" + (test + 1) + ", " + "connect " + host + ":" + port);
 
         if (transport.isOpen() == false) {
           try {
@@ -232,9 +232,7 @@ public class TestClient {
 
         long start = System.nanoTime();
 
-        /**
-         * VOID TEST
-         */
+        /** VOID TEST */
         try {
           System.out.print("testVoid()");
           testClient.testVoid();
@@ -244,9 +242,7 @@ public class TestClient {
           returnCode |= ERR_BASETYPES;
         }
 
-        /**
-         * STRING TEST
-         */
+        /** STRING TEST */
         System.out.print("testString(\"Test\")");
         String s = testClient.testString("Test");
         System.out.print(" = \"" + s + "\"\n");
@@ -255,9 +251,7 @@ public class TestClient {
           System.out.println("*** FAILURE ***\n");
         }
 
-        /**
-         * Multiplexed test
-         */
+        /** Multiplexed test */
         if (protocol_type.startsWith("multi")) {
           SecondService.Client secondClient = new SecondService.Client(tProtocol2);
           System.out.print("secondtestString(\"Test2\")");
@@ -268,20 +262,16 @@ public class TestClient {
             System.out.println("*** FAILURE ***\n");
           }
         }
-        /**
-         * BYTE TEST
-         */
+        /** BYTE TEST */
         System.out.print("testByte(1)");
-        byte i8 = testClient.testByte((byte)1);
+        byte i8 = testClient.testByte((byte) 1);
         System.out.print(" = " + i8 + "\n");
         if (i8 != 1) {
           returnCode |= ERR_BASETYPES;
           System.out.println("*** FAILURE ***\n");
         }
 
-        /**
-         * I32 TEST
-         */
+        /** I32 TEST */
         System.out.print("testI32(-1)");
         int i32 = testClient.testI32(-1);
         System.out.print(" = " + i32 + "\n");
@@ -290,9 +280,7 @@ public class TestClient {
           System.out.println("*** FAILURE ***\n");
         }
 
-        /**
-         * I64 TEST
-         */
+        /** I64 TEST */
         System.out.print("testI64(-34359738368)");
         long i64 = testClient.testI64(-34359738368L);
         System.out.print(" = " + i64 + "\n");
@@ -301,9 +289,7 @@ public class TestClient {
           System.out.println("*** FAILURE ***\n");
         }
 
-        /**
-         * DOUBLE TEST
-         */
+        /** DOUBLE TEST */
         System.out.print("testDouble(-5.325098235)");
         double dub = testClient.testDouble(-5.325098235);
         System.out.print(" = " + dub + "\n");
@@ -312,12 +298,10 @@ public class TestClient {
           System.out.println("*** FAILURE ***\n");
         }
 
-        /**
-         * BINARY TEST
-         */
+        /** BINARY TEST */
         try {
           System.out.print("testBinary(-128...127) = ");
-          byte[] data = new byte[] {-128, -127, -126, -125, -124, -123, -122, -121, -120, -119, -118, -117, -116, -115, -114, -113, -112, -111, -110, -109, -108, -107, -106, -105, -104, -103, -102, -101, -100, -99, -98, -97, -96, -95, -94, -93, -92, -91, -90, -89, -88, -87, -86, -85, -84, -83, -82, -81, -80, -79, -78, -77, -76, -75, -74, -73, -72, -71, -70, -69, -68, -67, -66, -65, -64, -63, -62, -61, -60, -59, -58, -57, -56, -55, -54, -53, -52, -51, -50, -49, -48, -47, -46, -45, -44, -43, -42, -41, -40, -39, -38, -37, -36, -35, -34, -33, -32, -31, -30, -29, -28, -27, -26, -25, -24, -23, -22, -21, -20, -19, -18, -17, -16, -15, -14, -13, -12, -11, -10, -9, -8, -7, -6, -5, -4, -3, -2, -1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127};
+          byte[] data = getBytesData();
           ByteBuffer bin = testClient.testBinary(ByteBuffer.wrap(data));
           bin.mark();
           byte[] bytes = new byte[bin.limit() - bin.position()];
@@ -326,10 +310,8 @@ public class TestClient {
           System.out.print("{");
           boolean first = true;
           for (int i = 0; i < bytes.length; ++i) {
-            if (first)
-              first = false;
-            else
-              System.out.print(", ");
+            if (first) first = false;
+            else System.out.print(", ");
             System.out.print(bytes[i]);
           }
           System.out.println("}");
@@ -343,9 +325,7 @@ public class TestClient {
           ex.printStackTrace(System.out);
         }
 
-        /**
-         * STRUCT TEST
-         */
+        /** STRUCT TEST */
         System.out.print("testStruct({\"Zero\", 1, -3, -5})");
         Xtruct out = new Xtruct();
         out.string_thing = "Zero";
@@ -353,43 +333,54 @@ public class TestClient {
         out.i32_thing = -3;
         out.i64_thing = -5;
         Xtruct in = testClient.testStruct(out);
-        System.out.print(" = {" + "\"" +
-                         in.string_thing + "\"," +
-                         in.byte_thing + ", " +
-                         in.i32_thing + ", " +
-                         in.i64_thing + "}\n");
+        System.out.print(
+            " = {"
+                + "\""
+                + in.string_thing
+                + "\","
+                + in.byte_thing
+                + ", "
+                + in.i32_thing
+                + ", "
+                + in.i64_thing
+                + "}\n");
         if (!in.equals(out)) {
           returnCode |= ERR_STRUCTS;
           System.out.println("*** FAILURE ***\n");
         }
 
-        /**
-         * NESTED STRUCT TEST
-         */
+        /** NESTED STRUCT TEST */
         System.out.print("testNest({1, {\"Zero\", 1, -3, -5}), 5}");
         Xtruct2 out2 = new Xtruct2();
-        out2.byte_thing = (short)1;
+        out2.byte_thing = (short) 1;
         out2.struct_thing = out;
         out2.i32_thing = 5;
         Xtruct2 in2 = testClient.testNest(out2);
         in = in2.struct_thing;
-        System.out.print(" = {" + in2.byte_thing + ", {" + "\"" +
-                         in.string_thing + "\", " +
-                         in.byte_thing + ", " +
-                         in.i32_thing + ", " +
-                         in.i64_thing + "}, " +
-                         in2.i32_thing + "}\n");
+        System.out.print(
+            " = {"
+                + in2.byte_thing
+                + ", {"
+                + "\""
+                + in.string_thing
+                + "\", "
+                + in.byte_thing
+                + ", "
+                + in.i32_thing
+                + ", "
+                + in.i64_thing
+                + "}, "
+                + in2.i32_thing
+                + "}\n");
         if (!in2.equals(out2)) {
           returnCode |= ERR_STRUCTS;
           System.out.println("*** FAILURE ***\n");
         }
 
-        /**
-         * MAP TEST
-         */
-        Map<Integer,Integer> mapout = new HashMap<Integer,Integer>();
+        /** MAP TEST */
+        Map<Integer, Integer> mapout = new HashMap<Integer, Integer>();
         for (int i = 0; i < 5; ++i) {
-          mapout.put(i, i-10);
+          mapout.put(i, i - 10);
         }
         System.out.print("testMap({");
         boolean first = true;
@@ -402,7 +393,7 @@ public class TestClient {
           System.out.print(key + " => " + mapout.get(key));
         }
         System.out.print("})");
-        Map<Integer,Integer> mapin = testClient.testMap(mapout);
+        Map<Integer, Integer> mapin = testClient.testMap(mapout);
         System.out.print(" = {");
         first = true;
         for (int key : mapin.keySet()) {
@@ -419,9 +410,7 @@ public class TestClient {
           System.out.println("*** FAILURE ***\n");
         }
 
-        /**
-         * STRING MAP TEST
-         */
+        /** STRING MAP TEST */
         try {
           Map<String, String> smapout = new HashMap<String, String>();
           smapout.put("a", "2");
@@ -458,9 +447,7 @@ public class TestClient {
           ex.printStackTrace(System.out);
         }
 
-        /**
-         * SET TEST
-         */
+        /** SET TEST */
         Set<Integer> setout = new HashSet<Integer>();
         for (int i = -2; i < 3; ++i) {
           setout.add(i);
@@ -493,9 +480,7 @@ public class TestClient {
           System.out.println("*** FAILURE ***\n");
         }
 
-        /**
-         * LIST TEST
-         */
+        /** LIST TEST */
         List<Integer> listout = new ArrayList<Integer>();
         for (int i = -2; i < 3; ++i) {
           listout.add(i);
@@ -528,9 +513,7 @@ public class TestClient {
           System.out.println("*** FAILURE ***\n");
         }
 
-        /**
-         * ENUM TEST
-         */
+        /** ENUM TEST */
         System.out.print("testEnum(ONE)");
         Numberz ret = testClient.testEnum(Numberz.ONE);
         System.out.print(" = " + ret + "\n");
@@ -571,9 +554,7 @@ public class TestClient {
           System.out.println("*** FAILURE ***\n");
         }
 
-        /**
-         * TYPEDEF TEST
-         */
+        /** TYPEDEF TEST */
         System.out.print("testTypedef(309858235082523)");
         long uid = testClient.testTypedef(309858235082523L);
         System.out.print(" = " + uid + "\n");
@@ -582,16 +563,13 @@ public class TestClient {
           System.out.println("*** FAILURE ***\n");
         }
 
-        /**
-         * NESTED MAP TEST
-         */
+        /** NESTED MAP TEST */
         System.out.print("testMapMap(1)");
-        Map<Integer,Map<Integer,Integer>> mm =
-          testClient.testMapMap(1);
+        Map<Integer, Map<Integer, Integer>> mm = testClient.testMapMap(1);
         System.out.print(" = {");
         for (int key : mm.keySet()) {
           System.out.print(key + " => {");
-          Map<Integer,Integer> m2 = mm.get(key);
+          Map<Integer, Integer> m2 = mm.get(key);
           for (int k2 : m2.keySet()) {
             System.out.print(k2 + " => " + m2.get(k2) + ", ");
           }
@@ -604,17 +582,20 @@ public class TestClient {
         } else {
           Map<Integer, Integer> m1 = mm.get(4);
           Map<Integer, Integer> m2 = mm.get(-4);
-          if (m1.get(1) != 1 || m1.get(2) != 2 || m1.get(3) != 3 || m1.get(4) != 4 ||
-              m2.get(-1) != -1 || m2.get(-2) != -2 || m2.get(-3) != -3 || m2.get(-4) != -4) {
+          if (m1.get(1) != 1
+              || m1.get(2) != 2
+              || m1.get(3) != 3
+              || m1.get(4) != 4
+              || m2.get(-1) != -1
+              || m2.get(-2) != -2
+              || m2.get(-3) != -3
+              || m2.get(-4) != -4) {
             returnCode |= ERR_CONTAINERS;
             System.out.println("*** FAILURE ***\n");
           }
         }
 
-        /**
-         * INSANITY TEST
-         */
-
+        /** INSANITY TEST */
         boolean insanityFailed = true;
         try {
           Xtruct hello = new Xtruct();
@@ -625,23 +606,22 @@ public class TestClient {
 
           Xtruct goodbye = new Xtruct();
           goodbye.string_thing = "Goodbye4";
-          goodbye.byte_thing = (byte)4;
+          goodbye.byte_thing = (byte) 4;
           goodbye.i32_thing = 4;
-          goodbye.i64_thing = (long)4;
+          goodbye.i64_thing = (long) 4;
 
           insane.userMap = new HashMap<Numberz, Long>();
-          insane.userMap.put(Numberz.EIGHT, (long)8);
-          insane.userMap.put(Numberz.FIVE, (long)5);
+          insane.userMap.put(Numberz.EIGHT, (long) 8);
+          insane.userMap.put(Numberz.FIVE, (long) 5);
           insane.xtructs = new ArrayList<Xtruct>();
           insane.xtructs.add(goodbye);
           insane.xtructs.add(hello);
 
           System.out.print("testInsanity()");
-          Map<Long,Map<Numberz,Insanity>> whoa =
-            testClient.testInsanity(insane);
+          Map<Long, Map<Numberz, Insanity>> whoa = testClient.testInsanity(insane);
           System.out.print(" = {");
           for (long key : whoa.keySet()) {
-            Map<Numberz,Insanity> val = whoa.get(key);
+            Map<Numberz, Insanity> val = whoa.get(key);
             System.out.print(key + " => {");
 
             for (Numberz k2 : val.keySet()) {
@@ -660,7 +640,17 @@ public class TestClient {
               System.out.print("{");
               if (xtructs != null) {
                 for (Xtruct x : xtructs) {
-                  System.out.print("{" + "\"" + x.string_thing + "\", " + x.byte_thing + ", " + x.i32_thing + ", "+ x.i64_thing + "}, ");
+                  System.out.print(
+                      "{"
+                          + "\""
+                          + x.string_thing
+                          + "\", "
+                          + x.byte_thing
+                          + ", "
+                          + x.i32_thing
+                          + ", "
+                          + x.i64_thing
+                          + "}, ");
                 }
               }
               System.out.print("}");
@@ -673,14 +663,14 @@ public class TestClient {
           if (whoa.size() == 2 && whoa.containsKey(1L) && whoa.containsKey(2L)) {
             Map<Numberz, Insanity> first_map = whoa.get(1L);
             Map<Numberz, Insanity> second_map = whoa.get(2L);
-            if (first_map.size() == 2 &&
-                first_map.containsKey(Numberz.TWO) &&
-                first_map.containsKey(Numberz.THREE) &&
-                second_map.size() == 1 &&
-                second_map.containsKey(Numberz.SIX) &&
-                insane.equals(first_map.get(Numberz.TWO)) &&
-                insane.equals(first_map.get(Numberz.THREE))) {
-              Insanity six =second_map.get(Numberz.SIX);
+            if (first_map.size() == 2
+                && first_map.containsKey(Numberz.TWO)
+                && first_map.containsKey(Numberz.THREE)
+                && second_map.size() == 1
+                && second_map.containsKey(Numberz.SIX)
+                && insane.equals(first_map.get(Numberz.TWO))
+                && insane.equals(first_map.get(Numberz.THREE))) {
+              Insanity six = second_map.get(Numberz.SIX);
               // Cannot use "new Insanity().equals(six)" because as of now, struct/container
               // fields with default requiredness have isset=false for local instances and yet
               // received empty values from other languages like C++ have isset=true .
@@ -701,15 +691,13 @@ public class TestClient {
           System.out.println("*** FAILURE ***\n");
         }
 
-        /**
-         * EXECPTION TEST
-         */
+        /** EXECPTION TEST */
         try {
           System.out.print("testClient.testException(\"Xception\") =>");
           testClient.testException("Xception");
           System.out.print("  void\n*** FAILURE ***\n");
           returnCode |= ERR_EXCEPTIONS;
-        } catch(Xception e) {
+        } catch (Xception e) {
           System.out.printf("  {%d, \"%s\"}\n", e.errorCode, e.message);
         }
 
@@ -718,7 +706,7 @@ public class TestClient {
           testClient.testException("TException");
           System.out.print("  void\n*** FAILURE ***\n");
           returnCode |= ERR_EXCEPTIONS;
-        } catch(TException e) {
+        } catch (TException e) {
           System.out.printf("  {\"%s\"}\n", e.getMessage());
         }
 
@@ -726,22 +714,18 @@ public class TestClient {
           System.out.print("testClient.testException(\"success\") =>");
           testClient.testException("success");
           System.out.print("  void\n");
-        }catch(Exception e) {
+        } catch (Exception e) {
           System.out.printf("  exception\n*** FAILURE ***\n");
           returnCode |= ERR_EXCEPTIONS;
         }
 
-
-        /**
-         * MULTI EXCEPTION TEST
-         */
-
+        /** MULTI EXCEPTION TEST */
         try {
           System.out.printf("testClient.testMultiException(\"Xception\", \"test 1\") =>");
           testClient.testMultiException("Xception", "test 1");
           System.out.print("  result\n*** FAILURE ***\n");
           returnCode |= ERR_EXCEPTIONS;
-        } catch(Xception e) {
+        } catch (Xception e) {
           System.out.printf("  {%d, \"%s\"}\n", e.errorCode, e.message);
         }
 
@@ -750,7 +734,7 @@ public class TestClient {
           testClient.testMultiException("Xception2", "test 2");
           System.out.print("  result\n*** FAILURE ***\n");
           returnCode |= ERR_EXCEPTIONS;
-        } catch(Xception2 e) {
+        } catch (Xception2 e) {
           System.out.printf("  {%d, {\"%s\"}}\n", e.errorCode, e.struct_thing.string_thing);
         }
 
@@ -759,42 +743,37 @@ public class TestClient {
           Xtruct result;
           result = testClient.testMultiException("success", "test 3");
           System.out.printf("  {{\"%s\"}}\n", result.string_thing);
-        } catch(Exception e) {
+        } catch (Exception e) {
           System.out.printf("  exception\n*** FAILURE ***\n");
           returnCode |= ERR_EXCEPTIONS;
         }
 
-
-
-        /**
-         * ONEWAY TEST
-         */
+        /** ONEWAY TEST */
         System.out.print("testOneway(3)...");
         long startOneway = System.nanoTime();
         testClient.testOneway(3);
         long onewayElapsedMillis = (System.nanoTime() - startOneway) / 1000000;
         if (onewayElapsedMillis > 200) {
-          System.out.println("Oneway test took too long to execute failed: took " +
-                  onewayElapsedMillis +
-                             "ms");
-          System.out.println("oneway calls are 'fire and forget' and therefore should not cause blocking.");
-          System.out.println("Some transports (HTTP) have a required response, and typically this failure");
+          System.out.println(
+              "Oneway test took too long to execute failed: took " + onewayElapsedMillis + "ms");
+          System.out.println(
+              "oneway calls are 'fire and forget' and therefore should not cause blocking.");
+          System.out.println(
+              "Some transports (HTTP) have a required response, and typically this failure");
           System.out.println("means the transport response was delayed until after the execution");
-          System.out.println("of the RPC.  The server should post the transport response immediately and");
+          System.out.println(
+              "of the RPC.  The server should post the transport response immediately and");
           System.out.println("before executing the RPC.");
           System.out.println("*** FAILURE ***");
           returnCode |= ERR_BASETYPES;
         } else {
-          System.out.println("Success - fire and forget only took " +
-                  onewayElapsedMillis +
-                             "ms");
+          System.out.println("Success - fire and forget only took " + onewayElapsedMillis + "ms");
         }
 
-
         long stop = System.nanoTime();
-        long tot = stop-start;
+        long tot = stop - start;
 
-        System.out.println("Total time: " + tot/1000 + "us");
+        System.out.println("Total time: " + tot / 1000 + "us");
 
         if (timeMin == 0 || tot < timeMin) {
           timeMin = tot;
@@ -814,9 +793,9 @@ public class TestClient {
 
     long timeAvg = timeTot / numTests;
 
-    System.out.println("Min time: " + timeMin/1000 + "us");
-    System.out.println("Max time: " + timeMax/1000 + "us");
-    System.out.println("Avg time: " + timeAvg/1000 + "us");
+    System.out.println("Min time: " + timeMin / 1000 + "us");
+    System.out.println("Max time: " + timeMax / 1000 + "us");
+    System.out.println("Avg time: " + timeAvg / 1000 + "us");
 
     try {
       String json = (new TSerializer(new TSimpleJSONProtocol.Factory())).toString(insane);
@@ -827,7 +806,12 @@ public class TestClient {
       returnCode |= ERR_BASETYPES;
     }
 
-
     System.exit(returnCode);
+  }
+
+  private static byte[] getBytesData() {
+    ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream(256);
+    IntStream.range(-128, 128).forEach(byteArrayOutputStream::write);
+    return byteArrayOutputStream.toByteArray();
   }
 }

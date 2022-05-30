@@ -19,10 +19,7 @@
 
 package org.apache.thrift.protocol;
 
-/**
- * Helper class that encapsulates struct metadata.
- *
- */
+/** Helper class that encapsulates struct metadata. */
 public final class TStruct {
   public TStruct() {
     this("");
@@ -33,4 +30,8 @@ public final class TStruct {
   }
 
   public final String name;
+
+  public String getName() {
+    return name;
+  }
 }

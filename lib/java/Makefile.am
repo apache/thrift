@@ -20,13 +20,13 @@
 export CLASSPATH
 
 all-local:
-	gradle $(GRADLE_OPTS) assemble \
+	$(GRADLE) $(GRADLE_OPTS) assemble \
 		-Prelease=true \
 		-Pthrift.version=$(PACKAGE_VERSION) \
 		--console=plain
 
 install-exec-hook:
-	gradle $(GRADLE_OPTS) install \
+	$(GRADLE) $(GRADLE_OPTS) publishToMavenLocal \
 		-Prelease=true \
 		-Pinstall.path=$(DESTDIR)$(JAVA_PREFIX) \
 		-Pinstall.javadoc.path=$(DESTDIR)$(docdir)/java \
@@ -34,24 +34,24 @@ install-exec-hook:
 		--console=plain
 
 clean-local:
-	gradle $(GRADLE_OPTS) clean --console=plain
+	$(GRADLE) $(GRADLE_OPTS) clean --console=plain
 
 precross: $(THRIFT)
-	gradle $(GRADLE_OPTS) shadowJar \
+	$(GRADLE) $(GRADLE_OPTS) shadowJar \
 		-Prelease=true \
 		-Pthrift.version=$(PACKAGE_VERSION) \
 		-Pthrift.compiler=$(THRIFT) \
 		--console=plain
 
 check-local: $(THRIFT)
-	gradle $(GRADLE_OPTS) test \
+	$(GRADLE) $(GRADLE_OPTS) test \
 		-Prelease=true \
 		-Pthrift.version=$(PACKAGE_VERSION) \
 		-Pthrift.compiler=$(THRIFT) \
 		--console=plain
 
 maven-publish:
-	gradle $(GRADLE_OPTS) uploadArchives \
+	$(GRADLE) $(GRADLE_OPTS) publish \
 		-Prelease=true \
 		-Pthrift.version=$(PACKAGE_VERSION) \
 		--console=plain

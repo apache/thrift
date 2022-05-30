@@ -19,53 +19,75 @@
 
 package org.apache.thrift.transport;
 
-import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
-
 import org.apache.thrift.TProcessor;
 import org.apache.thrift.protocol.TBinaryProtocol;
 import org.apache.thrift.protocol.TProtocolFactory;
 import org.apache.thrift.server.ServerTestBase;
 import org.apache.thrift.server.TServer;
-import org.apache.thrift.server.TSimpleServer;
 import org.apache.thrift.server.TServer.Args;
+import org.apache.thrift.server.TSimpleServer;
 
 public class TestTSSLTransportFactory extends ServerTestBase {
   private Thread serverThread;
   private TServer server;
 
-  private static final List<TProtocolFactory> protocols = new ArrayList<TProtocolFactory>();
-  static {
-    // TODO: Only supported on TBinaryProtocol. Doesn't work for TCompactProtocol
-    protocols.add(new TBinaryProtocol.Factory());
+  // TODO: Only supported on TBinaryProtocol. Doesn't work for TCompactProtocol
+  private static final List<TProtocolFactory> protocols =
+      Collections.singletonList(new TBinaryProtocol.Factory());
+
+  private static final String keyStoreLocation = System.getProperty("javax.net.ssl.keyStore");
+  private static final String keyStorePassword =
+      System.getProperty("javax.net.ssl.keyStorePassword");
+  private static final String trustStoreLocation = System.getProperty("javax.net.ssl.trustStore");
+  private static final String trustStorePassword =
+      System.getProperty("javax.net.ssl.trustStorePassword");
+
+  protected final String getKeyStoreLocation() {
+    return keyStoreLocation;
+  }
+
+  protected final String getKeyStorePassword() {
+    return keyStorePassword;
+  }
+
+  protected final String getTrustStoreLocation() {
+    return trustStoreLocation;
+  }
+
+  protected final String getTrustStorePassword() {
+    return trustStorePassword;
   }
 
   @Override
-  public TTransport getClientTransport(TTransport underlyingTransport)
-  throws Exception {
+  public TTransport getClientTransport(TTransport underlyingTransport) throws Exception {
     return TSSLTransportFactory.getClientSocket(HOST, PORT);
   }
-  
+
   protected TServerSocket getServerTransport() throws Exception {
     return TSSLTransportFactory.getServerSocket(PORT);
   }
 
   @Override
-  public void startServer(final TProcessor processor, final TProtocolFactory protoFactory, final TTransportFactory factory)
-  throws Exception {
-    serverThread = new Thread() {
-      public void run() {
-        try {
-          TServerTransport serverTransport = getServerTransport();
-          final Args args = new Args(serverTransport).processor(processor);
-          server = new TSimpleServer(args);
-          server.serve();
-        } catch (Exception e) {
-          e.printStackTrace();
-          assert false;
-        }
-      }
-    };
+  public void startServer(
+      final TProcessor processor,
+      final TProtocolFactory protoFactory,
+      final TTransportFactory factory)
+      throws Exception {
+    serverThread =
+        new Thread(
+            () -> {
+              try {
+                TServerTransport serverTransport = getServerTransport();
+                final Args args = new Args(serverTransport).processor(processor);
+                server = new TSimpleServer(args);
+                server.serve();
+              } catch (Exception e) {
+                e.printStackTrace();
+                assert false;
+              }
+            });
 
     serverThread.start();
     Thread.sleep(SLEEP_DELAY);

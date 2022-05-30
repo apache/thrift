@@ -1,49 +1,47 @@
 /*
  * Licensed to the Apache Software Foundation (ASF) under one
- * or more contributor license agreements. See the NOTICE file
+ * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
- * regarding copyright ownership. The ASF licenses this file
+ * regarding copyright ownership.  The ASF licenses this file
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
- * with the License. You may obtain a copy of the License at
+ * with the License.  You may obtain a copy of the License at
  *
  *   http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing,
  * software distributed under the License is distributed on an
  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
- * KIND, either express or implied. See the License for the
+ * KIND, either express or implied.  See the License for the
  * specific language governing permissions and limitations
  * under the License.
  */
 
 package org.apache.thrift.partial;
 
-import static org.junit.Assert.*;
-
-import org.apache.thrift.partial.TestStruct;
-import org.apache.thrift.partial.ThriftField;
-import org.apache.thrift.partial.TstEnum;
-import org.apache.thrift.partial.ExceptionAsserts;
-
-import org.apache.thrift.TBase;
-import org.apache.thrift.TDeserializer;
-import org.apache.thrift.TException;
-import org.apache.thrift.TSerializer;
-import org.apache.thrift.protocol.TBinaryProtocol;
-import org.apache.thrift.protocol.TCompactProtocol;
-import org.junit.Test;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import org.apache.thrift.TDeserializer;
+import org.apache.thrift.TException;
+import org.apache.thrift.protocol.TBinaryProtocol;
+import org.apache.thrift.protocol.TCompactProtocol;
+import org.junit.jupiter.api.Test;
 
 public class TestPartialThriftDeserializer {
 
@@ -53,35 +51,34 @@ public class TestPartialThriftDeserializer {
 
   private PartialThriftTestData testData = new PartialThriftTestData();
 
-  public TestPartialThriftDeserializer() throws TException {
-  }
+  public TestPartialThriftDeserializer() throws TException {}
 
   @Test
   public void testArgChecks() throws TException {
     // Should not throw.
-    List<String> fieldNames = Arrays.asList("i32Field");
+    List<String> fieldNames = Collections.singletonList("i32Field");
     new TDeserializer(TestStruct.class, fieldNames, binaryProtocolFactory);
 
     // Verify it throws correctly.
-    ExceptionAsserts.assertThrows(
+    assertThrows(
         IllegalArgumentException.class,
-        "'thriftClass' must not be null",
-        () -> new TDeserializer(null, fieldNames, binaryProtocolFactory));
+        () -> new TDeserializer(null, fieldNames, binaryProtocolFactory),
+        "'thriftClass' must not be null");
 
-    ExceptionAsserts.assertThrows(
+    assertThrows(
         IllegalArgumentException.class,
-        "'fieldNames' must not be null",
-        () -> new TDeserializer(TestStruct.class, null, binaryProtocolFactory));
+        () -> new TDeserializer(TestStruct.class, null, binaryProtocolFactory),
+        "'fieldNames' must not be null");
 
-    ExceptionAsserts.assertThrows(
+    assertThrows(
         IllegalArgumentException.class,
-        "'processor' must not be null",
-        () -> new TDeserializer(TestStruct.class, fieldNames, null, binaryProtocolFactory));
+        () -> new TDeserializer(TestStruct.class, fieldNames, null, binaryProtocolFactory),
+        "'processor' must not be null");
   }
 
   /**
-   * This test does not use partial deserialization. It is used to establish correctness
-   * of full serialization used in the other tests.
+   * This test does not use partial deserialization. It is used to establish correctness of full
+   * serialization used in the other tests.
    */
   @Test
   public void testRoundTripFull() throws TException {
@@ -90,7 +87,7 @@ public class TestPartialThriftDeserializer {
     byte[] bytesBinary = serde.serializeBinary(ts1);
     byte[] bytesCompact = serde.serializeCompact(ts1);
 
-    TestStruct ts2 =  serde.deserializeBinary(bytesBinary, TestStruct.class);
+    TestStruct ts2 = serde.deserializeBinary(bytesBinary, TestStruct.class);
     assertEquals(ts1, ts2);
 
     ts2 = serde.deserializeCompact(bytesCompact, TestStruct.class);
@@ -119,19 +116,15 @@ public class TestPartialThriftDeserializer {
     StringBuilder sb = new StringBuilder();
     TestStruct ts2 = (TestStruct) partialBinaryDeserializer.partialDeserializeObject(bytesBinary);
     validatePartialSimpleField(ts1, ts2);
-    if (!comparer.areEqual(ts1, ts2, sb)) {
-      fail(sb.toString());
-    }
+    assertTrue(comparer.areEqual(ts1, ts2, sb), sb::toString);
 
     ts2 = (TestStruct) partialCompactDeserializer.partialDeserializeObject(bytesCompact);
     validatePartialSimpleField(ts1, ts2);
-    if (!comparer.areEqual(ts1, ts2, sb)) {
-      fail(sb.toString());
-    }
+    assertTrue(comparer.areEqual(ts1, ts2, sb), sb::toString);
   }
 
   private void validatePartialSimpleField(TestStruct ts1, TestStruct ts2) {
-    assertTrue(ts2.toString(), ts2.isSetI32Field());
+    assertTrue(ts2.isSetI32Field(), ts2.toString());
     assertEquals(ts1.getI32Field(), ts2.getI32Field());
     assertFalse(ts2.isSetI16Field());
   }
@@ -145,62 +138,61 @@ public class TestPartialThriftDeserializer {
     byte[] bytesBinary = serde.serializeBinary(ts1);
     byte[] bytesCompact = serde.serializeCompact(ts1);
 
-    List<String> fieldNames = Arrays.asList(
-        "byteField",
-        "i16Field",
-        "i32Field",
-        "i64Field",
-        "doubleField",
-        "stringField",
+    List<String> fieldNames =
+        Arrays.asList(
+            "byteField",
+            "i16Field",
+            "i32Field",
+            "i64Field",
+            "doubleField",
+            "stringField",
+            "enumField",
+            "binaryField",
 
-        "enumField",
-        "binaryField",
+            // List fields
+            "byteList",
+            "i16List",
+            "i32List",
+            "i64List",
+            "doubleList",
+            "stringList",
+            "enumList",
+            "listList",
+            "setList",
+            "mapList",
+            "structList",
+            "binaryList",
 
-        // List fields
-        "byteList",
-        "i16List",
-        "i32List",
-        "i64List",
-        "doubleList",
-        "stringList",
-        "enumList",
-        "listList",
-        "setList",
-        "mapList",
-        "structList",
-        "binaryList",
+            // Set fields
+            "byteSet",
+            "i16Set",
+            "i32Set",
+            "i64Set",
+            "doubleSet",
+            "stringSet",
+            "enumSet",
+            "listSet",
+            "setSet",
+            "mapSet",
+            "structSet",
+            "binarySet",
 
-        // Set fields
-        "byteSet",
-        "i16Set",
-        "i32Set",
-        "i64Set",
-        "doubleSet",
-        "stringSet",
-        "enumSet",
-        "listSet",
-        "setSet",
-        "mapSet",
-        "structSet",
-        "binarySet",
+            // Map fields
+            "byteMap",
+            "i16Map",
+            "i32Map",
+            "i64Map",
+            "doubleMap",
+            "stringMap",
+            "enumMap",
+            "listMap",
+            "setMap",
+            "mapMap",
+            "structMap",
+            "binaryMap",
 
-        // Map fields
-        "byteMap",
-        "i16Map",
-        "i32Map",
-        "i64Map",
-        "doubleMap",
-        "stringMap",
-        "enumMap",
-        "listMap",
-        "setMap",
-        "mapMap",
-        "structMap",
-        "binaryMap",
-
-        // Struct field
-        "structField"
-    );
+            // Struct field
+            "structField");
     StringBuilder sb = new StringBuilder();
     TDeserializer partialBinaryDeserializer =
         new TDeserializer(TestStruct.class, fieldNames, binaryProtocolFactory);
@@ -211,21 +203,17 @@ public class TestPartialThriftDeserializer {
 
     TestStruct ts2 = (TestStruct) partialBinaryDeserializer.partialDeserializeObject(bytesBinary);
     validatePartialComplex(ts1, ts2, id, numItems);
-    if (!comparer.areEqual(ts1, ts2, sb)) {
-      fail(sb.toString());
-    }
+    assertTrue(comparer.areEqual(ts1, ts2, sb), sb::toString);
 
     ts2 = (TestStruct) partialCompactDeserializer.partialDeserializeObject(bytesCompact);
     validatePartialComplex(ts1, ts2, id, numItems);
-    if (!comparer.areEqual(ts1, ts2, sb)) {
-      fail(sb.toString());
-    }
+    assertTrue(comparer.areEqual(ts1, ts2, sb), sb::toString);
   }
 
   private void validatePartialComplex(TestStruct ts1, TestStruct ts2, int id, int numItems) {
 
     // Validate primitive fields.
-    assertTrue(ts2.toString(), ts2.isSetByteField());
+    assertTrue(ts2.isSetByteField(), ts2.toString());
     assertEquals(ts1.getByteField(), ts2.getByteField());
 
     assertTrue(ts2.isSetI16Field());
@@ -378,7 +366,7 @@ public class TestPartialThriftDeserializer {
 
     for (int i = 0; i < numItems; i++) {
       ByteBuffer bb = ByteBuffer.wrap(testData.BYTES);
-      assertTrue(bb.compareTo(list.get(i)) == 0);
+      assertEquals(0, bb.compareTo(list.get(i)));
     }
   }
 
@@ -390,15 +378,15 @@ public class TestPartialThriftDeserializer {
 
     for (int i = 0; i < numItems; i++) {
       if (clasz == Byte.class) {
-        assertTrue(set.contains((byte)i));
+        assertTrue(set.contains((byte) i));
       } else if (clasz == Short.class) {
-        assertTrue(set.contains((short)i));
+        assertTrue(set.contains((short) i));
       } else if (clasz == Integer.class) {
         assertTrue(set.contains(i));
       } else if (clasz == Long.class) {
-        assertTrue(set.contains((long)i));
+        assertTrue(set.contains((long) i));
       } else if (clasz == Double.class) {
-        assertTrue(set.contains((double)i));
+        assertTrue(set.contains((double) i));
       }
     }
   }
@@ -481,19 +469,19 @@ public class TestPartialThriftDeserializer {
 
     for (int i = 0; i < numItems; i++) {
       if (clasz == Byte.class) {
-        assertTrue(map.containsKey((byte)i));
+        assertTrue(map.containsKey((byte) i));
         assertEquals((byte) i, map.get((byte) i));
       } else if (clasz == Short.class) {
-        assertTrue(map.containsKey((short)i));
+        assertTrue(map.containsKey((short) i));
         assertEquals((short) i, map.get((short) i));
       } else if (clasz == Integer.class) {
         assertTrue(map.containsKey(i));
         assertEquals(i, map.get(i));
       } else if (clasz == Long.class) {
-        assertTrue(map.containsKey((long)i));
+        assertTrue(map.containsKey((long) i));
         assertEquals((long) i, map.get((long) i));
       } else if (clasz == Double.class) {
-        assertTrue(map.containsKey((double)i));
+        assertTrue(map.containsKey((double) i));
         assertEquals((double) i, map.get((double) i));
       }
     }
