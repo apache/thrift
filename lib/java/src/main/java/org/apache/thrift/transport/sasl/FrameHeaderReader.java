@@ -41,7 +41,9 @@ public interface FrameHeaderReader {
    */
   byte[] toBytes();
 
-  /** @return true if this header has all its fields set. */
+  /**
+   * @return true if this header has all its fields set.
+   */
   boolean isComplete();
 
   /** Clear the header and make it available to read a new header. */

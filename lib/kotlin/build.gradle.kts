@@ -41,8 +41,10 @@ kotlin {
 }
 
 tasks {
-    ktfmt {
-        kotlinLangStyle()
+    if (JavaVersion.current().isJava11Compatible) {
+        ktfmt {
+            kotlinLangStyle()
+        }
     }
 
     test {

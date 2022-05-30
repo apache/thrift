@@ -28,6 +28,7 @@ public final class TTupleProtocol extends TCompactProtocol {
   public static class Factory implements TProtocolFactory {
     public Factory() {}
 
+    @Override
     public TProtocol getProtocol(TTransport trans) {
       return new TTupleProtocol(trans);
     }
@@ -110,9 +111,12 @@ public final class TTupleProtocol extends TCompactProtocol {
     return new TSet(readListBegin(type));
   }
 
+  @Override
   public void readMapEnd() throws TException {}
 
+  @Override
   public void readListEnd() throws TException {}
 
+  @Override
   public void readSetEnd() throws TException {}
 }

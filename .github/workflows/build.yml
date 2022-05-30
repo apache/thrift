@@ -52,7 +52,7 @@ jobs:
     needs: compiler
     runs-on: ubuntu-20.04
     env:
-      GRADLE_VERSION: 6.9.2
+      GRADLE_VERSION: 7.4.2
     steps:
       - uses: actions/checkout@v3
 
@@ -71,7 +71,7 @@ jobs:
       - name: Setup gradle
         run: |
           wget https://services.gradle.org/distributions/gradle-$GRADLE_VERSION-bin.zip -q -O /tmp/gradle-$GRADLE_VERSION-bin.zip
-          (echo "8b356fd8702d5ffa2e066ed0be45a023a779bba4dd1a68fd11bc2a6bdc981e8f  /tmp/gradle-$GRADLE_VERSION-bin.zip" | sha256sum -c -)
+          (echo "29e49b10984e585d8118b7d0bc452f944e386458df27371b49b4ac1dec4b7fda  /tmp/gradle-$GRADLE_VERSION-bin.zip" | sha256sum -c -)
           unzip -d /tmp /tmp/gradle-$GRADLE_VERSION-bin.zip
           sudo mv /tmp/gradle-$GRADLE_VERSION /usr/local/gradle
           sudo ln -s /usr/local/gradle/bin/gradle /usr/local/bin
@@ -131,6 +131,7 @@ jobs:
       - name: Run make for java
         run: make -C lib/java
 
+      # this will invoke publishToMavenLocal and install locally
       - name: Run make install for java
         run: make -C lib/java install
 

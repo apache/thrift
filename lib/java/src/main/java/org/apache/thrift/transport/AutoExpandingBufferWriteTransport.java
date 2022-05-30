@@ -80,7 +80,9 @@ public final class AutoExpandingBufferWriteTransport extends TEndpointTransport 
     return buf;
   }
 
-  /** @return length of the buffer, including any front reserve */
+  /**
+   * @return length of the buffer, including any front reserve
+   */
   public int getLength() {
     return pos;
   }

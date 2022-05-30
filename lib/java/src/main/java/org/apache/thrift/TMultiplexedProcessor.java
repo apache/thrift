@@ -94,6 +94,7 @@ public class TMultiplexedProcessor implements TProcessor {
    *     called {@link #registerProcessor(String, TProcessor) registerProcessor} during
    *     initialization, right? :)
    */
+  @Override
   public void process(TProtocol iprot, TProtocol oprot) throws TException {
     /*
         Use the actual underlying protocol (e.g. TBinaryProtocol) to read the

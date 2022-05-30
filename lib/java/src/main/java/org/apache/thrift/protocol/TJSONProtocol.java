@@ -952,6 +952,7 @@ public class TJSONProtocol extends TProtocol {
   }
 
   /** Return the minimum number of bytes a type will consume on the wire */
+  @Override
   public int getMinSerializedSize(byte type) throws TTransportException {
     switch (type) {
       case 0:

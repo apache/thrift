@@ -26,7 +26,7 @@ all-local:
 		--console=plain
 
 install-exec-hook:
-	$(GRADLE) $(GRADLE_OPTS) install \
+	$(GRADLE) $(GRADLE_OPTS) publishToMavenLocal \
 		-Prelease=true \
 		-Pinstall.path=$(DESTDIR)$(JAVA_PREFIX) \
 		-Pinstall.javadoc.path=$(DESTDIR)$(docdir)/java \
@@ -51,7 +51,7 @@ check-local: $(THRIFT)
 		--console=plain
 
 maven-publish:
-	$(GRADLE) $(GRADLE_OPTS) uploadArchives \
+	$(GRADLE) $(GRADLE_OPTS) publish \
 		-Prelease=true \
 		-Pthrift.version=$(PACKAGE_VERSION) \
 		--console=plain

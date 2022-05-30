@@ -86,27 +86,37 @@ public abstract class FrameReader<T extends FrameHeaderReader> {
     return payload.hasRemaining();
   }
 
-  /** @return header of the frame */
+  /**
+   * @return header of the frame
+   */
   public T getHeader() {
     return header;
   }
 
-  /** @return number of bytes of the header */
+  /**
+   * @return number of bytes of the header
+   */
   public int getHeaderSize() {
     return header.toBytes().length;
   }
 
-  /** @return byte array of the payload */
+  /**
+   * @return byte array of the payload
+   */
   public byte[] getPayload() {
     return payload.array();
   }
 
-  /** @return size of the payload */
+  /**
+   * @return size of the payload
+   */
   public int getPayloadSize() {
     return header.payloadSize();
   }
 
-  /** @return true if the reader has fully read a frame */
+  /**
+   * @return true if the reader has fully read a frame
+   */
   public boolean isComplete() {
     return !(payload == null || payload.hasRemaining());
   }
