@@ -45,9 +45,6 @@
       <exclude name="libthrift*javadoc.jar" />
       <exclude name="libthrift*sources.jar" />
     </fileset>
-    <fileset dir="${thrift.java.dir}/build/deps">
-      <include name="*.jar" />
-    </fileset>
     <fileset dir="${build}/lib">
       <include name="*.jar" />
     </fileset>
@@ -235,6 +232,7 @@
       <dependency groupId="org.apache.httpcomponents" artifactId="httpclient" version="4.0.1"/>
       <dependency groupId="com.googlecode.jslint4java" artifactId="jslint4java-ant" version="1.4.6"/>
       <dependency groupId="eu.medsea.mimeutil" artifactId="mime-util" version="2.1.3"/>
+      <dependency groupId="javax.annotation" artifactId="javax.annotation-api" version="1.3.2"/>
       <remoteRepository url="${mvn.repo}"/>
     </artifact:dependencies>
 

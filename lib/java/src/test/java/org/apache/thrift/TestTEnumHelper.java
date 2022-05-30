@@ -18,24 +18,29 @@
  */
 package org.apache.thrift;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
+
+import org.junit.jupiter.api.Test;
 import thrift.test.Numberz;
 
-import junit.framework.TestCase;
+public class TestTEnumHelper {
 
-public class TestTEnumHelper extends TestCase {
-
+  @Test
   public void testGetByValue_ValidValues() {
-    for (Numberz n: Numberz.values()) {
+    for (Numberz n : Numberz.values()) {
       int value = n.getValue();
       assertEquals(n, TEnumHelper.getByValue(Numberz.class, value));
-    } 
+    }
   }
 
+  @Test
   public void testGetByValue_InvalidValue() {
-    assertEquals(null, TEnumHelper.getByValue(Numberz.class, 0));
+    assertNull(TEnumHelper.getByValue(Numberz.class, 0));
   }
 
+  @Test
   public void testGetByValue_InvalidClass() {
-    assertEquals(null, TEnumHelper.getByValue(TEnum.class, 0));
+    assertNull(TEnumHelper.getByValue(TEnum.class, 0));
   }
 }

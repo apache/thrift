@@ -19,15 +19,13 @@
 
 package org.apache.thrift.transport;
 
-import org.apache.thrift.TConfiguration;
-
 import java.io.Closeable;
 import java.nio.ByteBuffer;
+import org.apache.thrift.TConfiguration;
 
 /**
- * Generic class that encapsulates the I/O layer. This is basically a thin
- * wrapper around the combined functionality of Java input/output streams.
- *
+ * Generic class that encapsulates the I/O layer. This is basically a thin wrapper around the
+ * combined functionality of Java input/output streams.
  */
 public abstract class TTransport implements Closeable {
 
@@ -52,25 +50,20 @@ public abstract class TTransport implements Closeable {
    *
    * @throws TTransportException if the transport could not be opened
    */
-  public abstract void open()
-    throws TTransportException;
+  public abstract void open() throws TTransportException;
 
-  /**
-   * Closes the transport.
-   */
+  /** Closes the transport. */
   public abstract void close();
 
   /**
-   * Reads a sequence of bytes from this channel into the given buffer. An
-   * attempt is made to read up to the number of bytes remaining in the buffer,
-   * that is, dst.remaining(), at the moment this method is invoked. Upon return
-   * the buffer's position will move forward the number of bytes read; its limit
-   * will not have changed. Subclasses are encouraged to provide a more
-   * efficient implementation of this method.
+   * Reads a sequence of bytes from this channel into the given buffer. An attempt is made to read
+   * up to the number of bytes remaining in the buffer, that is, dst.remaining(), at the moment this
+   * method is invoked. Upon return the buffer's position will move forward the number of bytes
+   * read; its limit will not have changed. Subclasses are encouraged to provide a more efficient
+   * implementation of this method.
    *
    * @param dst The buffer into which bytes are to be transferred
-   * @return The number of bytes read, possibly zero, or -1 if the channel has
-   *         reached end-of-stream
+   * @return The number of bytes read, possibly zero, or -1 if the channel has reached end-of-stream
    * @throws TTransportException if there was an error reading data
    */
   public int read(ByteBuffer dst) throws TTransportException {
@@ -89,8 +82,7 @@ public abstract class TTransport implements Closeable {
    * @return The number of bytes actually read
    * @throws TTransportException if there was an error reading data
    */
-  public abstract int read(byte[] buf, int off, int len)
-    throws TTransportException;
+  public abstract int read(byte[] buf, int off, int len) throws TTransportException;
 
   /**
    * Guarantees that all of len bytes are actually read off the transport.
@@ -101,12 +93,11 @@ public abstract class TTransport implements Closeable {
    * @return The number of bytes actually read, which must be equal to len
    * @throws TTransportException if there was an error reading data
    */
-  public int readAll(byte[] buf, int off, int len)
-    throws TTransportException {
+  public int readAll(byte[] buf, int off, int len) throws TTransportException {
     int got = 0;
     int ret = 0;
     while (got < len) {
-      ret = read(buf, off+got, len-got);
+      ret = read(buf, off + got, len - got);
       if (ret <= 0) {
         throw new TTransportException(
             "Cannot read. Remote side has closed. Tried to read "
@@ -138,15 +129,13 @@ public abstract class TTransport implements Closeable {
    * @param len The number of bytes to write
    * @throws TTransportException if there was an error writing data
    */
-  public abstract void write(byte[] buf, int off, int len)
-    throws TTransportException;
+  public abstract void write(byte[] buf, int off, int len) throws TTransportException;
 
   /**
-   * Writes a sequence of bytes to the buffer. An attempt is made to write all
-   * remaining bytes in the buffer, that is, src.remaining(), at the moment this
-   * method is invoked. Upon return the buffer's position will updated; its limit
-   * will not have changed. Subclasses are encouraged to provide a more efficient
-   * implementation of this method.
+   * Writes a sequence of bytes to the buffer. An attempt is made to write all remaining bytes in
+   * the buffer, that is, src.remaining(), at the moment this method is invoked. Upon return the
+   * buffer's position will updated; its limit will not have changed. Subclasses are encouraged to
+   * provide a more efficient implementation of this method.
    *
    * @param src The buffer from which bytes are to be retrieved
    * @return The number of bytes written, possibly zero
@@ -164,12 +153,12 @@ public abstract class TTransport implements Closeable {
    *
    * @throws TTransportException if there was an error writing out data.
    */
-  public void flush()
-    throws TTransportException {}
+  public void flush() throws TTransportException {}
 
   /**
-   * Access the protocol's underlying buffer directly. If this is not a
-   * buffered transport, return null.
+   * Access the protocol's underlying buffer directly. If this is not a buffered transport, return
+   * null.
+   *
    * @return protocol's Underlying buffer
    */
   public byte[] getBuffer() {
@@ -177,20 +166,22 @@ public abstract class TTransport implements Closeable {
   }
 
   /**
-   * Return the index within the underlying buffer that specifies the next spot
-   * that should be read from.
-   * @return index within the underlying buffer that specifies the next spot
-   * that should be read from
+   * Return the index within the underlying buffer that specifies the next spot that should be read
+   * from.
+   *
+   * @return index within the underlying buffer that specifies the next spot that should be read
+   *     from
    */
   public int getBufferPosition() {
     return 0;
   }
 
   /**
-   * Get the number of bytes remaining in the underlying buffer. Returns -1 if
-   * this is a non-buffered transport.
-   * @return the number of bytes remaining in the underlying buffer. <br> Returns -1 if
-   * this is a non-buffered transport.
+   * Get the number of bytes remaining in the underlying buffer. Returns -1 if this is a
+   * non-buffered transport.
+   *
+   * @return the number of bytes remaining in the underlying buffer. <br>
+   *     Returns -1 if this is a non-buffered transport.
    */
   public int getBytesRemainingInBuffer() {
     return -1;
@@ -198,6 +189,7 @@ public abstract class TTransport implements Closeable {
 
   /**
    * Consume len bytes from the underlying buffer.
+   *
    * @param len the number of bytes to consume from the underlying buffer.
    */
   public void consumeBuffer(int len) {}

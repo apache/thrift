@@ -20,11 +20,9 @@
 package org.apache.thrift.transport;
 
 /**
- * Factory class used to create wrapped instance of Transports.
- * This is used primarily in servers, which get Transports from
- * a ServerTransport and then may want to mutate them (i.e. create
- * a BufferedTransport from the underlying base transport)
- *
+ * Factory class used to create wrapped instance of Transports. This is used primarily in servers,
+ * which get Transports from a ServerTransport and then may want to mutate them (i.e. create a
+ * BufferedTransport from the underlying base transport)
  */
 public class TTransportFactory {
 
@@ -37,5 +35,4 @@ public class TTransportFactory {
   public TTransport getTransport(TTransport trans) throws TTransportException {
     return trans;
   }
-
 }

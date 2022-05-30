@@ -32,9 +32,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
-
 import javax.security.auth.callback.CallbackHandler;
-
 import org.apache.thrift.TProcessor;
 import org.apache.thrift.transport.TNonblockingServerSocket;
 import org.apache.thrift.transport.TNonblockingServerTransport;
@@ -48,9 +46,7 @@ import org.apache.thrift.transport.sasl.TSaslServerFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/**
- * TServer with sasl support, using asynchronous execution and nonblocking io.
- */
+/** TServer with sasl support, using asynchronous execution and nonblocking io. */
 public class TSaslNonblockingServer extends TServer {
   private static final Logger LOGGER = LoggerFactory.getLogger(TSaslNonblockingServer.class);
 
@@ -85,9 +81,7 @@ public class TSaslNonblockingServer extends TServer {
     setServing(true);
   }
 
-  /**
-   * Trigger a graceful shutdown, but it does not block to wait for the shutdown to finish.
-   */
+  /** Trigger a graceful shutdown, but it does not block to wait for the shutdown to finish. */
   @Override
   public void stop() {
     if (!stopped_) {
@@ -202,8 +196,10 @@ public class TSaslNonblockingServer extends TServer {
   }
 
   private class NetworkThread extends Thread {
-    private final BlockingQueue<TNonblockingTransport> incomingConnections = new LinkedBlockingQueue<>();
-    private final BlockingQueue<NonblockingSaslHandler> stateTransitions = new LinkedBlockingQueue<>();
+    private final BlockingQueue<TNonblockingTransport> incomingConnections =
+        new LinkedBlockingQueue<>();
+    private final BlockingQueue<NonblockingSaslHandler> stateTransitions =
+        new LinkedBlockingQueue<>();
     private final Selector ioSelector;
 
     NetworkThread(String name) throws IOException {
@@ -285,9 +281,15 @@ public class TSaslNonblockingServer extends TServer {
         try {
           SelectionKey selectionKey = connection.registerSelector(ioSelector, SelectionKey.OP_READ);
           if (selectionKey.isValid()) {
-            NonblockingSaslHandler saslHandler = new NonblockingSaslHandler(selectionKey, connection,
-                saslServerFactory, saslProcessorFactory, inputProtocolFactory_, outputProtocolFactory_,
-                eventHandler_);
+            NonblockingSaslHandler saslHandler =
+                new NonblockingSaslHandler(
+                    selectionKey,
+                    connection,
+                    saslServerFactory,
+                    saslProcessorFactory,
+                    inputProtocolFactory_,
+                    outputProtocolFactory_,
+                    eventHandler_);
             selectionKey.attach(saslHandler);
           }
         } catch (IOException e) {
@@ -407,7 +409,7 @@ public class TSaslNonblockingServer extends TServer {
      * @return true if the incoming connection is accepted by network thread pool.
      */
     boolean acceptNewConnection(TNonblockingTransport connection) {
-      return networkThreads.get((accepted ++) % networkThreads.size()).accept(connection);
+      return networkThreads.get((accepted++) % networkThreads.size()).accept(connection);
     }
 
     public void start() {
@@ -441,12 +443,14 @@ public class TSaslNonblockingServer extends TServer {
     }
 
     public Args saslThreads(int authenticationThreads) {
-      this.saslThreads = authenticationThreads <= 0 ? DEFAULT_AUTHENTICATION_THREADS : authenticationThreads;
+      this.saslThreads =
+          authenticationThreads <= 0 ? DEFAULT_AUTHENTICATION_THREADS : authenticationThreads;
       return this;
     }
 
     public Args processingThreads(int processingThreads) {
-      this.processingThreads = processingThreads <= 0 ? DEFAULT_PROCESSING_THREADS : processingThreads;
+      this.processingThreads =
+          processingThreads <= 0 ? DEFAULT_PROCESSING_THREADS : processingThreads;
       return this;
     }
 
@@ -463,8 +467,12 @@ public class TSaslNonblockingServer extends TServer {
       return this;
     }
 
-    public Args addSaslMechanism(String mechanism, String protocol, String serverName,
-                                 Map<String, String> props, CallbackHandler cbh) {
+    public Args addSaslMechanism(
+        String mechanism,
+        String protocol,
+        String serverName,
+        Map<String, String> props,
+        CallbackHandler cbh) {
       saslServerFactory.addSaslMechanism(mechanism, protocol, serverName, props, cbh);
       return this;
     }

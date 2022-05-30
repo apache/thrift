@@ -1,19 +1,20 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
- * or more contributor license agreements.  See the NOTICE file
+ * or more contributor license agreements. See the NOTICE file
  * distributed with this work for additional information
- * regarding copyright ownership.  The ASF licenses this file
+ * regarding copyright ownership. The ASF licenses this file
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
- * with the License.  You may obtain a copy of the License at
+ * with the License. You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *   http://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied. See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
  */
 package org.apache.thrift;
 
@@ -24,7 +25,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-
 import org.apache.thrift.protocol.TField;
 import org.apache.thrift.protocol.TProtocol;
 import org.apache.thrift.protocol.TProtocolException;
@@ -34,7 +34,8 @@ import org.apache.thrift.scheme.SchemeFactory;
 import org.apache.thrift.scheme.StandardScheme;
 import org.apache.thrift.scheme.TupleScheme;
 
-public abstract class TUnion<T extends TUnion<T,F>, F extends TFieldIdEnum> implements TBase<T, F> {
+public abstract class TUnion<T extends TUnion<T, F>, F extends TFieldIdEnum>
+    implements TBase<T, F> {
 
   protected Object value_;
   protected F setField_;
@@ -44,7 +45,9 @@ public abstract class TUnion<T extends TUnion<T,F>, F extends TFieldIdEnum> impl
     value_ = null;
   }
 
-  private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
+  private static final Map<Class<? extends IScheme>, SchemeFactory> schemes =
+      new HashMap<Class<? extends IScheme>, SchemeFactory>();
+
   static {
     schemes.put(StandardScheme.class, new TUnionStandardSchemeFactory());
     schemes.put(TupleScheme.class, new TUnionTupleSchemeFactory());
@@ -64,15 +67,15 @@ public abstract class TUnion<T extends TUnion<T,F>, F extends TFieldIdEnum> impl
 
   private static Object deepCopyObject(Object o) {
     if (o instanceof TBase) {
-      return ((TBase)o).deepCopy();
+      return ((TBase) o).deepCopy();
     } else if (o instanceof ByteBuffer) {
-      return TBaseHelper.copyBinary((ByteBuffer)o);
+      return TBaseHelper.copyBinary((ByteBuffer) o);
     } else if (o instanceof List) {
-      return deepCopyList((List)o);
+      return deepCopyList((List) o);
     } else if (o instanceof Set) {
-      return deepCopySet((Set)o);
+      return deepCopySet((Set) o);
     } else if (o instanceof Map) {
-      return deepCopyMap((Map)o);
+      return deepCopyMap((Map) o);
     } else {
       return o;
     }
@@ -112,14 +115,18 @@ public abstract class TUnion<T extends TUnion<T,F>, F extends TFieldIdEnum> impl
 
   public Object getFieldValue(F fieldId) {
     if (fieldId != setField_) {
-      throw new IllegalArgumentException("Cannot get the value of field " + fieldId + " because union's set field is " + setField_);
+      throw new IllegalArgumentException(
+          "Cannot get the value of field "
+              + fieldId
+              + " because union's set field is "
+              + setField_);
     }
 
     return getFieldValue();
   }
 
   public Object getFieldValue(int fieldId) {
-    return getFieldValue(enumForId((short)fieldId));
+    return getFieldValue(enumForId((short) fieldId));
   }
 
   public boolean isSet() {
@@ -131,7 +138,7 @@ public abstract class TUnion<T extends TUnion<T,F>, F extends TFieldIdEnum> impl
   }
 
   public boolean isSet(int fieldId) {
-    return isSet(enumForId((short)fieldId));
+    return isSet(enumForId((short) fieldId));
   }
 
   public void read(TProtocol iprot) throws TException {
@@ -145,7 +152,7 @@ public abstract class TUnion<T extends TUnion<T,F>, F extends TFieldIdEnum> impl
   }
 
   public void setFieldValue(int fieldId, Object value) {
-    setFieldValue(enumForId((short)fieldId), value);
+    setFieldValue(enumForId((short) fieldId), value);
   }
 
   public void write(TProtocol oprot) throws TException {
@@ -153,8 +160,8 @@ public abstract class TUnion<T extends TUnion<T,F>, F extends TFieldIdEnum> impl
   }
 
   /**
-   * Implementation should be generated so that we can efficiently type check
-   * various values.
+   * Implementation should be generated so that we can efficiently type check various values.
+   *
    * @param setField the field to assign value to.
    * @param value the value to be assigned to setField.
    * @throws ClassCastException if the type of value is incompatible with the type of setField.
@@ -162,18 +169,21 @@ public abstract class TUnion<T extends TUnion<T,F>, F extends TFieldIdEnum> impl
   protected abstract void checkType(F setField, Object value) throws ClassCastException;
 
   /**
-   * Implementation should be generated to read the right stuff from the wire
-   * based on the field header.
+   * Implementation should be generated to read the right stuff from the wire based on the field
+   * header.
    *
    * @param iprot input protocol from which to read a value.
    * @param field the field whose value is to be read from iprot.
    * @return read Object based on the field header, as specified by the argument.
    * @throws TException on error during read.
    */
-  protected abstract Object standardSchemeReadValue(TProtocol iprot, TField field) throws TException;
+  protected abstract Object standardSchemeReadValue(TProtocol iprot, TField field)
+      throws TException;
+
   protected abstract void standardSchemeWriteValue(TProtocol oprot) throws TException;
 
   protected abstract Object tupleSchemeReadValue(TProtocol iprot, short fieldID) throws TException;
+
   protected abstract void tupleSchemeWriteValue(TProtocol oprot) throws TException;
 
   protected abstract TStruct getStructDesc();
@@ -193,8 +203,8 @@ public abstract class TUnion<T extends TUnion<T,F>, F extends TFieldIdEnum> impl
       Object v = getFieldValue();
       sb.append(getFieldDesc(getSetField()).name);
       sb.append(":");
-      if(v instanceof ByteBuffer) {
-        TBaseHelper.toString((ByteBuffer)v, sb);
+      if (v instanceof ByteBuffer) {
+        TBaseHelper.toString((ByteBuffer) v, sb);
       } else {
         sb.append(v.toString());
       }

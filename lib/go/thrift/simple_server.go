@@ -29,17 +29,6 @@ import (
 	"time"
 )
 
-// ErrAbandonRequest is a special error server handler implementations can
-// return to indicate that the request has been abandoned.
-//
-// TSimpleServer will check for this error, and close the client connection
-// instead of writing the response/error back to the client.
-//
-// It shall only be used when the server handler implementation know that the
-// client already abandoned the request (by checking that the passed in context
-// is already canceled, for example).
-var ErrAbandonRequest = errors.New("request abandoned")
-
 // ServerConnectivityCheckInterval defines the ticker interval used by
 // connectivity check in thrift compiled TProcessorFunc implementations.
 //
@@ -379,4 +368,29 @@ func (p *TSimpleServer) processRequests(client TTransport) (err error) {
 		}
 	}
 	return nil
+}
+
+// ErrAbandonRequest is a special error that server handler implementations can
+// return to indicate that the request has been abandoned.
+//
+// TSimpleServer and compiler generated Process functions will check for this
+// error, and close the client connection instead of trying to write the error
+// back to the client.
+//
+// It shall only be used when the server handler implementation know that the
+// client already abandoned the request (by checking that the passed in context
+// is already canceled, for example).
+//
+// It also implements the interface defined by errors.Unwrap and always unwrap
+// to context.Canceled error.
+var ErrAbandonRequest = abandonRequestError{}
+
+type abandonRequestError struct{}
+
+func (abandonRequestError) Error() string {
+	return "request abandoned"
+}
+
+func (abandonRequestError) Unwrap() error {
+	return context.Canceled
 }

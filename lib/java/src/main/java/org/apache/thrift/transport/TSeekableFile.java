@@ -19,15 +19,19 @@
 
 package org.apache.thrift.transport;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.io.IOException;
 
 public interface TSeekableFile {
 
   public InputStream getInputStream() throws IOException;
+
   public OutputStream getOutputStream() throws IOException;
+
   public void close() throws IOException;
+
   public long length() throws IOException;
+
   public void seek(long pos) throws IOException;
 }

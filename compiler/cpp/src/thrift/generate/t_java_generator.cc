@@ -78,6 +78,7 @@ public:
     suppress_generated_annotations_ = false;
     rethrow_unhandled_exceptions_ = false;
     unsafe_binaries_ = false;
+    annotations_as_metadata_ = false;
     for (iter = parsed_options.begin(); iter != parsed_options.end(); ++iter) {
       if (iter->first.compare("beans") == 0) {
         bean_style_ = true;
@@ -124,6 +125,8 @@ public:
         }
       } else if (iter->first.compare("unsafe_binaries") == 0) {
         unsafe_binaries_ = true;
+      } else if (iter->first.compare("annotations_as_metadata") == 0) {
+        annotations_as_metadata_ = true;
       } else {
         throw "unknown option java:" + iter->first;
       }
@@ -188,6 +191,7 @@ public:
   void generate_java_struct_read_object(std::ostream& out, t_struct* tstruct);
   void generate_java_meta_data_map(std::ostream& out, t_struct* tstruct);
   void generate_field_value_meta_data(std::ostream& out, t_type* type);
+  void generate_metadata_for_field_annotations(std::ostream& out, t_field* field);
   std::string get_java_type_string(t_type* type);
   void generate_java_struct_field_by_id(ostream& out, t_struct* tstruct);
   void generate_reflection_setters(std::ostringstream& out,
@@ -439,6 +443,7 @@ private:
   bool suppress_generated_annotations_;
   bool rethrow_unhandled_exceptions_;
   bool unsafe_binaries_;
+  bool annotations_as_metadata_;
 };
 
 /**
@@ -2856,6 +2861,11 @@ void t_java_generator::generate_java_meta_data_map(ostream& out, t_struct* tstru
 
     // Create value meta data
     generate_field_value_meta_data(out, field->get_type());
+
+    // Include the annotation into metadata when asked
+    if (annotations_as_metadata_) {
+      generate_metadata_for_field_annotations(out, field);
+    }
     out << "));" << endl;
   }
 
@@ -2922,6 +2932,33 @@ std::string t_java_generator::get_java_type_string(t_type* type) {
                              + "\" passed to t_java_generator::get_java_type_string!");
     // This should never happen!
   }
+}
+
+void t_java_generator::generate_metadata_for_field_annotations(std::ostream& out, t_field* field) {
+  if (field->annotations_.size() == 0) {
+    return;
+  }
+  out << ", " << endl;
+  indent_up();
+  indent_up();
+  indent(out) << "java.util.stream.Stream.<java.util.Map.Entry<java.lang.String, "
+                 "java.lang.String>>builder()"
+              << endl;
+
+  indent_up();
+  indent_up();
+  for (auto& annotation : field->annotations_) {
+    indent(out) << ".add(new java.util.AbstractMap.SimpleImmutableEntry<>(\"" + annotation.first
+                       + "\", \"" + annotation.second + "\"))"
+                << endl;
+  }
+  indent(out) << ".build().collect(java.util.stream.Collectors.toMap(java.util.Map.Entry::getKey, "
+                 "java.util.Map.Entry::getValue))";
+  indent_down();
+  indent_down();
+
+  indent_down();
+  indent_down();
 }
 
 void t_java_generator::generate_field_value_meta_data(std::ostream& out, t_type* type) {
@@ -5740,4 +5777,6 @@ THRIFT_REGISTER_GENERATOR(
     "    generated_annotations=[undated|suppress]:\n"
     "                     undated: suppress the date at @Generated annotations\n"
     "                     suppress: suppress @Generated annotations entirely\n"
-    "    unsafe_binaries: Do not copy ByteBuffers in constructors, getters, and setters.\n")
+    "    unsafe_binaries: Do not copy ByteBuffers in constructors, getters, and setters.\n"
+    "    annotations_as_metadata:\n"
+    "                     Include Thrift field annotations as metadata in the generated code.\n")

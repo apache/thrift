@@ -19,18 +19,19 @@
 
 package org.apache.thrift;
 
-import java.nio.ByteBuffer;
-import java.util.Arrays;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 
+import java.nio.ByteBuffer;
+import org.junit.jupiter.api.Test;
 import thrift.test.SafeBytes;
 import thrift.test.UnsafeBytes;
 
 //  test generating types with un-copied byte[]/ByteBuffer input/output
 //
-public class TestUnsafeBinaries extends TestStruct {
+public class TestUnsafeBinaries {
 
   private static byte[] input() {
-    return new byte[]{1, 1};
+    return new byte[] {1, 1};
   }
 
   //
@@ -38,6 +39,7 @@ public class TestUnsafeBinaries extends TestStruct {
   //
 
   //  constructor doesn't copy
+  @Test
   public void testUnsafeConstructor() throws Exception {
 
     byte[] input = input();
@@ -45,31 +47,26 @@ public class TestUnsafeBinaries extends TestStruct {
 
     input[0] = 2;
 
-    assertTrue(Arrays.equals(
-        new byte[]{2, 1},
-        struct.getBytes())
-    );
-
+    assertArrayEquals(new byte[] {2, 1}, struct.getBytes());
   }
 
   //  getter doesn't copy
-  //  note: this behavior is the same with/without the flag, but if this default ever changes, the current behavior
+  //  note: this behavior is the same with/without the flag, but if this default ever changes, the
+  // current behavior
   //        should be retained when using this flag
-  public void testUnsafeGetter(){
+  @Test
+  public void testUnsafeGetter() {
     UnsafeBytes struct = new UnsafeBytes(ByteBuffer.wrap(input()));
 
     byte[] val = struct.getBytes();
     val[0] = 2;
 
-    assertTrue(Arrays.equals(
-        new byte[]{2, 1},
-        struct.getBytes())
-    );
-
+    assertArrayEquals(new byte[] {2, 1}, struct.getBytes());
   }
 
   //  setter doesn't copy
-  public void testUnsafeSetter(){
+  @Test
+  public void testUnsafeSetter() {
     UnsafeBytes struct = new UnsafeBytes();
 
     byte[] val = input();
@@ -77,31 +74,25 @@ public class TestUnsafeBinaries extends TestStruct {
 
     val[0] = 2;
 
-    assertTrue(Arrays.equals(
-        new byte[]{2, 1},
-        struct.getBytes())
-    );
-
+    assertArrayEquals(new byte[] {2, 1}, struct.getBytes());
   }
 
   //  buffer doens't copy
-  public void testUnsafeBufferFor(){
+  @Test
+  public void testUnsafeBufferFor() {
     UnsafeBytes struct = new UnsafeBytes(ByteBuffer.wrap(input()));
 
     ByteBuffer val = struct.bufferForBytes();
     val.array()[0] = 2;
 
-    assertTrue(Arrays.equals(
-        new byte[]{2, 1},
-        struct.getBytes())
-    );
-
+    assertArrayEquals(new byte[] {2, 1}, struct.getBytes());
   }
 
   //
   //  verify that the default generator does not change behavior
   //
 
+  @Test
   public void testSafeConstructor() {
 
     byte[] input = input();
@@ -109,13 +100,10 @@ public class TestUnsafeBinaries extends TestStruct {
 
     input[0] = 2;
 
-    assertTrue(Arrays.equals(
-        new byte[]{1, 1},
-        struct.getBytes())
-    );
-
+    assertArrayEquals(new byte[] {1, 1}, struct.getBytes());
   }
 
+  @Test
   public void testSafeSetter() {
 
     byte[] input = input();
@@ -123,24 +111,16 @@ public class TestUnsafeBinaries extends TestStruct {
 
     input[0] = 2;
 
-    assertTrue(Arrays.equals(
-        new byte[]{1, 1},
-        struct.getBytes())
-    );
-
+    assertArrayEquals(new byte[] {1, 1}, struct.getBytes());
   }
 
-  public void testSafeBufferFor(){
+  @Test
+  public void testSafeBufferFor() {
     SafeBytes struct = new SafeBytes(ByteBuffer.wrap(input()));
 
     ByteBuffer val = struct.bufferForBytes();
     val.array()[0] = 2;
 
-    assertTrue(Arrays.equals(
-        new byte[]{1, 1},
-        struct.getBytes())
-    );
-
+    assertArrayEquals(new byte[] {1, 1}, struct.getBytes());
   }
-
 }

@@ -38,7 +38,8 @@ public final class TMemoryInputTransport extends TEndpointTransport {
     this(new TConfiguration(), buf);
   }
 
-  public TMemoryInputTransport(TConfiguration _configuration, byte[] buf) throws TTransportException {
+  public TMemoryInputTransport(TConfiguration _configuration, byte[] buf)
+      throws TTransportException {
     this(_configuration, buf, 0, buf.length);
   }
 
@@ -46,7 +47,8 @@ public final class TMemoryInputTransport extends TEndpointTransport {
     this(new TConfiguration(), buf, offset, length);
   }
 
-  public TMemoryInputTransport(TConfiguration _configuration, byte[] buf, int offset, int length) throws TTransportException {
+  public TMemoryInputTransport(TConfiguration _configuration, byte[] buf, int offset, int length)
+      throws TTransportException {
     super(_configuration);
     reset(buf, offset, length);
     updateKnownMessageSize(length);
@@ -120,5 +122,4 @@ public final class TMemoryInputTransport extends TEndpointTransport {
   public void consumeBuffer(int len) {
     pos_ += len;
   }
-
 }

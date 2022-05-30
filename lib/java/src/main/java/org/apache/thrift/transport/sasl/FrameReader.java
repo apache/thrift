@@ -19,16 +19,15 @@
 
 package org.apache.thrift.transport.sasl;
 
+import java.nio.ByteBuffer;
 import org.apache.thrift.transport.TEOFException;
 import org.apache.thrift.transport.TTransport;
 import org.apache.thrift.transport.TTransportException;
 
-import java.nio.ByteBuffer;
-
 /**
- * Read frames from a transport. Each frame has a header and a payload. A header will indicate
- * the size of the payload and other informations about how to decode payload.
- * Implementations should subclass it by providing a header reader implementation.
+ * Read frames from a transport. Each frame has a header and a payload. A header will indicate the
+ * size of the payload and other informations about how to decode payload. Implementations should
+ * subclass it by providing a header reader implementation.
  *
  * @param <T> Header type.
  */
@@ -70,7 +69,8 @@ public abstract class FrameReader<T extends FrameHeaderReader> {
    * @throws TSaslNegotiationException if fail to read back a validd sasl negotiation header.
    * @throws TTransportException if io error.
    */
-  private boolean readHeader(TTransport transport) throws TSaslNegotiationException, TTransportException {
+  private boolean readHeader(TTransport transport)
+      throws TSaslNegotiationException, TTransportException {
     return header.read(transport);
   }
 
@@ -87,7 +87,6 @@ public abstract class FrameReader<T extends FrameHeaderReader> {
   }
 
   /**
-   *
    * @return header of the frame
    */
   public T getHeader() {
@@ -95,7 +94,6 @@ public abstract class FrameReader<T extends FrameHeaderReader> {
   }
 
   /**
-   *
    * @return number of bytes of the header
    */
   public int getHeaderSize() {
@@ -103,7 +101,6 @@ public abstract class FrameReader<T extends FrameHeaderReader> {
   }
 
   /**
-   *
    * @return byte array of the payload
    */
   public byte[] getPayload() {
@@ -111,7 +108,6 @@ public abstract class FrameReader<T extends FrameHeaderReader> {
   }
 
   /**
-   *
    * @return size of the payload
    */
   public int getPayloadSize() {
@@ -119,16 +115,13 @@ public abstract class FrameReader<T extends FrameHeaderReader> {
   }
 
   /**
-   *
    * @return true if the reader has fully read a frame
    */
   public boolean isComplete() {
     return !(payload == null || payload.hasRemaining());
   }
 
-  /**
-   * Reset the state of the reader so that it can be reused to read a new frame.
-   */
+  /** Reset the state of the reader so that it can be reused to read a new frame. */
   public void clear() {
     header.clear();
     payload = null;
@@ -144,8 +137,8 @@ public abstract class FrameReader<T extends FrameHeaderReader> {
    */
   static int readAvailable(TTransport transport, ByteBuffer recipient) throws TTransportException {
     if (!recipient.hasRemaining()) {
-      throw new IllegalStateException("Trying to fill a full recipient with " + recipient.limit()
-          + " bytes");
+      throw new IllegalStateException(
+          "Trying to fill a full recipient with " + recipient.limit() + " bytes");
     }
     int currentPosition = recipient.position();
     byte[] bytes = recipient.array();
@@ -153,8 +146,8 @@ public abstract class FrameReader<T extends FrameHeaderReader> {
     int expectedLength = recipient.remaining();
     int got = transport.read(bytes, offset, expectedLength);
     if (got < 0) {
-      throw new TEOFException("Transport is closed, while trying to read " + expectedLength +
-          " bytes");
+      throw new TEOFException(
+          "Transport is closed, while trying to read " + expectedLength + " bytes");
     }
     recipient.position(currentPosition + got);
     return got;

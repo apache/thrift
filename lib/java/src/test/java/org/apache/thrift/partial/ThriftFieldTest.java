@@ -19,17 +19,16 @@
 
 package org.apache.thrift.partial;
 
-import static org.junit.Assert.*;
-
-import org.apache.thrift.partial.ExceptionAsserts;
-
-import org.junit.Test;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNotSame;
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-
-import static org.junit.Assert.*;
+import org.junit.jupiter.api.Test;
 
 public class ThriftFieldTest {
 
@@ -40,40 +39,35 @@ public class ThriftFieldTest {
 
     // Should not throw.
     test = new ThriftField("foo");
-    test = new ThriftField("foo", Arrays.asList(new ThriftField("bar")));
-    testFields = ThriftField.fromNames(Arrays.asList("foo"));
+    test = new ThriftField("foo", Collections.singletonList(new ThriftField("bar")));
+    testFields = ThriftField.fromNames(Collections.singletonList("foo"));
 
     // Verify it throws.
-    ExceptionAsserts.assertThrows(
+    assertThrows(
         IllegalArgumentException.class,
-        "'name' must not be null",
-        () -> new ThriftField(null, Collections.emptyList()));
+        () -> new ThriftField(null, Collections.emptyList()),
+        "'name' must not be null");
 
-    ExceptionAsserts.assertThrows(
+    assertThrows(
         IllegalArgumentException.class,
-        "'fields' must not be null",
-        () -> new ThriftField("foo", null));
+        () -> new ThriftField("foo", null),
+        "'fields' must not be null");
 
-    ExceptionAsserts.assertThrows(
+    assertThrows(
         IllegalArgumentException.class,
-        "'fieldNames' must not be null",
-        () -> ThriftField.fromNames(null));
+        () -> ThriftField.fromNames(null),
+        "'fieldNames' must not be null");
 
-    ExceptionAsserts.assertThrows(
+    assertThrows(
         IllegalArgumentException.class,
-        "'fieldNames' must have at least one element",
-        () -> ThriftField.fromNames(Collections.emptyList()));
+        () -> ThriftField.fromNames(Collections.emptyList()),
+        "'fieldNames' must have at least one element");
   }
 
   @Test
   public void testFromNames() {
-    List<String> fieldNames = Arrays.asList(
-        "f1",
-        "f2.f21",
-        "f3.f31.f311",
-        "f3.f32.f321",
-        "f3.f32.f322"
-    );
+    List<String> fieldNames =
+        Arrays.asList("f1", "f2.f21", "f3.f31.f311", "f3.f32.f321", "f3.f32.f322");
 
     List<ThriftField> testFields = ThriftField.fromNames(fieldNames);
 
@@ -114,13 +108,8 @@ public class ThriftFieldTest {
 
   @Test
   public void testEquality() {
-    List<String> fieldNames = Arrays.asList(
-        "f1",
-        "f2.f21",
-        "f3.f31.f311",
-        "f3.f32.f321",
-        "f3.f32.f322"
-    );
+    List<String> fieldNames =
+        Arrays.asList("f1", "f2.f21", "f3.f31.f311", "f3.f32.f321", "f3.f32.f322");
 
     List<ThriftField> testFields = ThriftField.fromNames(fieldNames);
     List<ThriftField> testFields2 = testFields;
@@ -133,13 +122,8 @@ public class ThriftFieldTest {
     assertEquals(testFields, testFields3);
     assertEquals(testFields.hashCode(), testFields3.hashCode());
 
-    List<String> fieldNamesDiff = Arrays.asList(
-        "f1",
-        "f2.f21",
-        "f3.f31.f311",
-        "f3.f32.f323",
-        "f3.f32.f322"
-    );
+    List<String> fieldNamesDiff =
+        Arrays.asList("f1", "f2.f21", "f3.f31.f311", "f3.f32.f323", "f3.f32.f322");
 
     List<ThriftField> testFields4 = ThriftField.fromNames(fieldNamesDiff);
     assertNotSame(testFields, testFields4);

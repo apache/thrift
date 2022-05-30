@@ -19,7 +19,7 @@
   -->
 
   <PropertyGroup>
-    <TargetFrameworks>netstandard2.1;netstandard2.0;net5.0;net6.0</TargetFrameworks>
+    <TargetFrameworks>netstandard2.1;netstandard2.0;net6.0</TargetFrameworks>
     <AssemblyName>Thrift</AssemblyName>
     <PackageId>ApacheThrift</PackageId>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>

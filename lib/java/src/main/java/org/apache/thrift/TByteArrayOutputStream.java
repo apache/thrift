@@ -22,11 +22,7 @@ package org.apache.thrift;
 import java.io.ByteArrayOutputStream;
 import java.nio.charset.Charset;
 
-/**
- * Class that allows access to the underlying buf without doing deep
- * copies on it.
- *
- */
+/** Class that allows access to the underlying buf without doing deep copies on it. */
 public class TByteArrayOutputStream extends ByteArrayOutputStream {
 
   private final int initialSize;

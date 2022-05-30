@@ -21,16 +21,12 @@ package org.apache.thrift.protocol;
 
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
-
 import org.apache.thrift.TException;
 import org.apache.thrift.partial.TFieldData;
 import org.apache.thrift.transport.TTransport;
 import org.apache.thrift.transport.TTransportException;
 
-/**
- * Binary protocol implementation for thrift.
- *
- */
+/** Binary protocol implementation for thrift. */
 public class TBinaryProtocol extends TProtocol {
   private static final TStruct ANONYMOUS_STRUCT = new TStruct();
   private static final long NO_LENGTH_LIMIT = -1;
@@ -39,15 +35,14 @@ public class TBinaryProtocol extends TProtocol {
   protected static final int VERSION_1 = 0x80010000;
 
   /**
-   * The maximum number of bytes to read from the transport for
-   * variable-length fields (such as strings or binary) or {@link #NO_LENGTH_LIMIT} for
-   * unlimited.
+   * The maximum number of bytes to read from the transport for variable-length fields (such as
+   * strings or binary) or {@link #NO_LENGTH_LIMIT} for unlimited.
    */
   private final long stringLengthLimit_;
 
   /**
-   * The maximum number of elements to read from the network for
-   * containers (maps, sets, lists), or {@link #NO_LENGTH_LIMIT} for unlimited.
+   * The maximum number of elements to read from the network for containers (maps, sets, lists), or
+   * {@link #NO_LENGTH_LIMIT} for unlimited.
    */
   private final long containerLengthLimit_;
 
@@ -56,9 +51,7 @@ public class TBinaryProtocol extends TProtocol {
 
   private final byte[] inoutTemp = new byte[8];
 
-  /**
-   * Factory
-   */
+  /** Factory */
   public static class Factory implements TProtocolFactory {
     protected long stringLengthLimit_;
     protected long containerLengthLimit_;
@@ -77,7 +70,11 @@ public class TBinaryProtocol extends TProtocol {
       this(false, true, stringLengthLimit, containerLengthLimit);
     }
 
-    public Factory(boolean strictRead, boolean strictWrite, long stringLengthLimit, long containerLengthLimit) {
+    public Factory(
+        boolean strictRead,
+        boolean strictWrite,
+        long stringLengthLimit,
+        long containerLengthLimit) {
       stringLengthLimit_ = stringLengthLimit;
       containerLengthLimit_ = containerLengthLimit;
       strictRead_ = strictRead;
@@ -85,13 +82,12 @@ public class TBinaryProtocol extends TProtocol {
     }
 
     public TProtocol getProtocol(TTransport trans) {
-      return new TBinaryProtocol(trans, stringLengthLimit_, containerLengthLimit_, strictRead_, strictWrite_);
+      return new TBinaryProtocol(
+          trans, stringLengthLimit_, containerLengthLimit_, strictRead_, strictWrite_);
     }
   }
 
-  /**
-   * Constructor
-   */
+  /** Constructor */
   public TBinaryProtocol(TTransport trans) {
     this(trans, false, true);
   }
@@ -104,7 +100,12 @@ public class TBinaryProtocol extends TProtocol {
     this(trans, stringLengthLimit, containerLengthLimit, false, true);
   }
 
-  public TBinaryProtocol(TTransport trans, long stringLengthLimit, long containerLengthLimit, boolean strictRead, boolean strictWrite) {
+  public TBinaryProtocol(
+      TTransport trans,
+      long stringLengthLimit,
+      long containerLengthLimit,
+      boolean strictRead,
+      boolean strictWrite) {
     super(trans);
     stringLengthLimit_ = stringLengthLimit;
     containerLengthLimit_ = containerLengthLimit;
@@ -179,7 +180,7 @@ public class TBinaryProtocol extends TProtocol {
 
   @Override
   public void writeBool(boolean b) throws TException {
-    writeByte(b ? (byte)1 : (byte)0);
+    writeByte(b ? (byte) 1 : (byte) 0);
   }
 
   @Override
@@ -190,30 +191,30 @@ public class TBinaryProtocol extends TProtocol {
 
   @Override
   public void writeI16(short i16) throws TException {
-    inoutTemp[0] = (byte)(0xff & (i16 >> 8));
-    inoutTemp[1] = (byte)(0xff & (i16));
+    inoutTemp[0] = (byte) (0xff & (i16 >> 8));
+    inoutTemp[1] = (byte) (0xff & (i16));
     trans_.write(inoutTemp, 0, 2);
   }
 
   @Override
   public void writeI32(int i32) throws TException {
-    inoutTemp[0] = (byte)(0xff & (i32 >> 24));
-    inoutTemp[1] = (byte)(0xff & (i32 >> 16));
-    inoutTemp[2] = (byte)(0xff & (i32 >> 8));
-    inoutTemp[3] = (byte)(0xff & (i32));
+    inoutTemp[0] = (byte) (0xff & (i32 >> 24));
+    inoutTemp[1] = (byte) (0xff & (i32 >> 16));
+    inoutTemp[2] = (byte) (0xff & (i32 >> 8));
+    inoutTemp[3] = (byte) (0xff & (i32));
     trans_.write(inoutTemp, 0, 4);
   }
 
   @Override
   public void writeI64(long i64) throws TException {
-    inoutTemp[0] = (byte)(0xff & (i64 >> 56));
-    inoutTemp[1] = (byte)(0xff & (i64 >> 48));
-    inoutTemp[2] = (byte)(0xff & (i64 >> 40));
-    inoutTemp[3] = (byte)(0xff & (i64 >> 32));
-    inoutTemp[4] = (byte)(0xff & (i64 >> 24));
-    inoutTemp[5] = (byte)(0xff & (i64 >> 16));
-    inoutTemp[6] = (byte)(0xff & (i64 >> 8));
-    inoutTemp[7] = (byte)(0xff & (i64));
+    inoutTemp[0] = (byte) (0xff & (i64 >> 56));
+    inoutTemp[1] = (byte) (0xff & (i64 >> 48));
+    inoutTemp[2] = (byte) (0xff & (i64 >> 40));
+    inoutTemp[3] = (byte) (0xff & (i64 >> 32));
+    inoutTemp[4] = (byte) (0xff & (i64 >> 24));
+    inoutTemp[5] = (byte) (0xff & (i64 >> 16));
+    inoutTemp[6] = (byte) (0xff & (i64 >> 8));
+    inoutTemp[7] = (byte) (0xff & (i64));
     trans_.write(inoutTemp, 0, 8);
   }
 
@@ -236,22 +237,21 @@ public class TBinaryProtocol extends TProtocol {
     trans_.write(bin.array(), bin.position() + bin.arrayOffset(), length);
   }
 
-  /**
-   * Reading methods.
-   */
-
+  /** Reading methods. */
   @Override
   public TMessage readMessageBegin() throws TException {
     int size = readI32();
     if (size < 0) {
       int version = size & VERSION_MASK;
       if (version != VERSION_1) {
-        throw new TProtocolException(TProtocolException.BAD_VERSION, "Bad version in readMessageBegin");
+        throw new TProtocolException(
+            TProtocolException.BAD_VERSION, "Bad version in readMessageBegin");
       }
-      return new TMessage(readString(), (byte)(size & 0x000000ff), readI32());
+      return new TMessage(readString(), (byte) (size & 0x000000ff), readI32());
     } else {
       if (strictRead_) {
-        throw new TProtocolException(TProtocolException.BAD_VERSION, "Missing version in readMessageBegin, old client?");
+        throw new TProtocolException(
+            TProtocolException.BAD_VERSION, "Missing version in readMessageBegin, old client?");
       }
       return new TMessage(readStringBody(size), readByte(), readI32());
     }
@@ -343,10 +343,7 @@ public class TBinaryProtocol extends TProtocol {
       readAll(inoutTemp, 0, 2);
     }
 
-    return
-      (short)
-      (((buf[off] & 0xff) << 8) |
-       ((buf[off+1] & 0xff)));
+    return (short) (((buf[off] & 0xff) << 8) | ((buf[off + 1] & 0xff)));
   }
 
   @Override
@@ -361,11 +358,10 @@ public class TBinaryProtocol extends TProtocol {
     } else {
       readAll(inoutTemp, 0, 4);
     }
-    return
-      ((buf[off] & 0xff) << 24) |
-      ((buf[off+1] & 0xff) << 16) |
-      ((buf[off+2] & 0xff) <<  8) |
-      ((buf[off+3] & 0xff));
+    return ((buf[off] & 0xff) << 24)
+        | ((buf[off + 1] & 0xff) << 16)
+        | ((buf[off + 2] & 0xff) << 8)
+        | ((buf[off + 3] & 0xff));
   }
 
   @Override
@@ -381,15 +377,14 @@ public class TBinaryProtocol extends TProtocol {
       readAll(inoutTemp, 0, 8);
     }
 
-    return
-      ((long)(buf[off]   & 0xff) << 56) |
-      ((long)(buf[off+1] & 0xff) << 48) |
-      ((long)(buf[off+2] & 0xff) << 40) |
-      ((long)(buf[off+3] & 0xff) << 32) |
-      ((long)(buf[off+4] & 0xff) << 24) |
-      ((long)(buf[off+5] & 0xff) << 16) |
-      ((long)(buf[off+6] & 0xff) <<  8) |
-      ((long)(buf[off+7] & 0xff));
+    return ((long) (buf[off] & 0xff) << 56)
+        | ((long) (buf[off + 1] & 0xff) << 48)
+        | ((long) (buf[off + 2] & 0xff) << 40)
+        | ((long) (buf[off + 3] & 0xff) << 32)
+        | ((long) (buf[off + 4] & 0xff) << 24)
+        | ((long) (buf[off + 5] & 0xff) << 16)
+        | ((long) (buf[off + 6] & 0xff) << 8)
+        | ((long) (buf[off + 7] & 0xff));
   }
 
   @Override
@@ -402,8 +397,8 @@ public class TBinaryProtocol extends TProtocol {
     int size = readI32();
 
     if (trans_.getBytesRemainingInBuffer() >= size) {
-      String s = new String(trans_.getBuffer(), trans_.getBufferPosition(),
-          size, StandardCharsets.UTF_8);
+      String s =
+          new String(trans_.getBuffer(), trans_.getBufferPosition(), size, StandardCharsets.UTF_8);
       trans_.consumeBuffer(size);
       return s;
     }
@@ -437,26 +432,24 @@ public class TBinaryProtocol extends TProtocol {
 
   private void checkStringReadLength(int length) throws TException {
     if (length < 0) {
-      throw new TProtocolException(TProtocolException.NEGATIVE_SIZE,
-                                   "Negative length: " + length);
+      throw new TProtocolException(TProtocolException.NEGATIVE_SIZE, "Negative length: " + length);
     }
 
     getTransport().checkReadBytesAvailable(length);
 
     if (stringLengthLimit_ != NO_LENGTH_LIMIT && length > stringLengthLimit_) {
-      throw new TProtocolException(TProtocolException.SIZE_LIMIT,
-                                   "Length exceeded max allowed: " + length);
+      throw new TProtocolException(
+          TProtocolException.SIZE_LIMIT, "Length exceeded max allowed: " + length);
     }
   }
 
   private void checkContainerReadLength(int length) throws TProtocolException {
     if (length < 0) {
-      throw new TProtocolException(TProtocolException.NEGATIVE_SIZE,
-                                   "Negative length: " + length);
+      throw new TProtocolException(TProtocolException.NEGATIVE_SIZE, "Negative length: " + length);
     }
     if (containerLengthLimit_ != NO_LENGTH_LIMIT && length > containerLengthLimit_) {
-      throw new TProtocolException(TProtocolException.SIZE_LIMIT,
-                                   "Length exceeded max allowed: " + length);
+      throw new TProtocolException(
+          TProtocolException.SIZE_LIMIT, "Length exceeded max allowed: " + length);
     }
   }
 
@@ -464,27 +457,38 @@ public class TBinaryProtocol extends TProtocol {
     return trans_.readAll(buf, off, len);
   }
 
-  /**
-   *
-   * Return the minimum number of bytes a type will consume on the wire
-   */
+  /** Return the minimum number of bytes a type will consume on the wire */
+  @Override
   public int getMinSerializedSize(byte type) throws TTransportException {
-    switch (type)
-    {
-      case 0: return 0; // Stop
-      case 1: return 0; // Void
-      case 2: return 1; // Bool sizeof(byte)
-      case 3: return 1; // Byte sizeof(byte)
-      case 4: return 8; // Double sizeof(double)
-      case 6: return 2; // I16 sizeof(short)
-      case 8: return 4; // I32 sizeof(int)
-      case 10: return 8;// I64 sizeof(long)
-      case 11: return 4;  // string length sizeof(int)
-      case 12: return 0;  // empty struct
-      case 13: return 4;  // element count Map sizeof(int)
-      case 14: return 4;  // element count Set sizeof(int)
-      case 15: return 4;  // element count List sizeof(int)
-      default: throw new TTransportException(TTransportException.UNKNOWN, "unrecognized type code");
+    switch (type) {
+      case 0:
+        return 0; // Stop
+      case 1:
+        return 0; // Void
+      case 2:
+        return 1; // Bool sizeof(byte)
+      case 3:
+        return 1; // Byte sizeof(byte)
+      case 4:
+        return 8; // Double sizeof(double)
+      case 6:
+        return 2; // I16 sizeof(short)
+      case 8:
+        return 4; // I32 sizeof(int)
+      case 10:
+        return 8; // I64 sizeof(long)
+      case 11:
+        return 4; // string length sizeof(int)
+      case 12:
+        return 0; // empty struct
+      case 13:
+        return 4; // element count Map sizeof(int)
+      case 14:
+        return 4; // element count Set sizeof(int)
+      case 15:
+        return 4; // element count List sizeof(int)
+      default:
+        throw new TTransportException(TTransportException.UNKNOWN, "unrecognized type code");
     }
   }
   // -----------------------------------------------------------------

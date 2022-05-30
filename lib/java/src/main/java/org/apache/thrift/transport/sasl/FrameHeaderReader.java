@@ -36,7 +36,6 @@ public interface FrameHeaderReader {
   int payloadSize();
 
   /**
-   *
    * @return The received bytes for the header.
    * @throws IllegalStateException if isComplete returns false.
    */
@@ -47,9 +46,7 @@ public interface FrameHeaderReader {
    */
   boolean isComplete();
 
-  /**
-   * Clear the header and make it available to read a new header.
-   */
+  /** Clear the header and make it available to read a new header. */
   void clear();
 
   /**

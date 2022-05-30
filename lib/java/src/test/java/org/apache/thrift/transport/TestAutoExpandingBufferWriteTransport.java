@@ -18,22 +18,24 @@
  */
 package org.apache.thrift.transport;
 
-import java.nio.ByteBuffer;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.nio.ByteBuffer;
 import org.apache.thrift.TConfiguration;
-import org.junit.Test;
-import static org.junit.Assert.*;
+import org.junit.jupiter.api.Test;
 
 public class TestAutoExpandingBufferWriteTransport {
 
-  private TConfiguration config = new TConfiguration();
+  private final TConfiguration config = new TConfiguration();
 
   @Test
   public void testIt() throws Exception {
     AutoExpandingBufferWriteTransport t = new AutoExpandingBufferWriteTransport(config, 1, 0);
     assertEquals(0, t.getLength());
     assertEquals(1, t.getBuf().array().length);
-    byte[] b1 = new byte[]{1,2,3};
+    byte[] b1 = new byte[] {1, 2, 3};
     t.write(b1);
     assertEquals(3, t.getLength());
     assertTrue(t.getBuf().array().length >= 3);
@@ -42,7 +44,7 @@ public class TestAutoExpandingBufferWriteTransport {
     t.reset();
     assertEquals(0, t.getLength());
     assertTrue(t.getBuf().array().length >= 3);
-    byte[] b2 = new byte[]{4,5};
+    byte[] b2 = new byte[] {4, 5};
     t.write(b2);
     assertEquals(2, t.getLength());
     assertEquals(ByteBuffer.wrap(b2), ByteBuffer.wrap(t.getBuf().array(), 0, 2));
@@ -56,18 +58,21 @@ public class TestAutoExpandingBufferWriteTransport {
     assertEquals(ByteBuffer.wrap(b1), ByteBuffer.wrap(uut.getBuf().array(), 4, 3));
   }
 
-  @Test(expected = IllegalArgumentException.class)
-  public void testBadInitialSize() throws IllegalArgumentException, TTransportException {
-    new AutoExpandingBufferWriteTransport(config, 0, 0);
+  @Test
+  public void testBadInitialSize() throws TTransportException {
+    assertThrows(
+        IllegalArgumentException.class, () -> new AutoExpandingBufferWriteTransport(config, 0, 0));
   }
 
-  @Test(expected = IllegalArgumentException.class)
+  @Test
   public void testBadFrontReserveSize() throws IllegalArgumentException, TTransportException {
-    new AutoExpandingBufferWriteTransport(config, 4, -1);
+    assertThrows(
+        IllegalArgumentException.class, () -> new AutoExpandingBufferWriteTransport(config, 4, -1));
   }
 
-  @Test(expected = IllegalArgumentException.class)
+  @Test
   public void testTooSmallFrontReserveSize() throws IllegalArgumentException, TTransportException {
-    new AutoExpandingBufferWriteTransport(config, 4, 5);
+    assertThrows(
+        IllegalArgumentException.class, () -> new AutoExpandingBufferWriteTransport(config, 4, 5));
   }
 }

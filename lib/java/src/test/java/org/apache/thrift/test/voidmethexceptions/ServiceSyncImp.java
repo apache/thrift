@@ -27,8 +27,8 @@ import thrift.test.voidmethexceptions.TExampleException;
 public class ServiceSyncImp extends ServiceBase implements TAppService01.Iface {
 
   @Override
-  public String returnString(String msg,
-      boolean throwException) throws TExampleException, TException {
+  public String returnString(String msg, boolean throwException)
+      throws TExampleException, TException {
     if (throwException) {
       throw new TExampleException(msg);
     }
@@ -36,24 +36,24 @@ public class ServiceSyncImp extends ServiceBase implements TAppService01.Iface {
   }
 
   @Override
-  public void returnVoidThrows(String msg,
-      boolean throwException) throws TExampleException, TException {
+  public void returnVoidThrows(String msg, boolean throwException)
+      throws TExampleException, TException {
     if (throwException) {
       throw new TExampleException(msg);
     }
   }
 
   @Override
-  public void returnVoidNoThrowsRuntimeException(String msg,
-      boolean throwException) throws TException {
+  public void returnVoidNoThrowsRuntimeException(String msg, boolean throwException)
+      throws TException {
     if (throwException) {
       throw new RuntimeException(msg);
     }
   }
 
   @Override
-  public void returnVoidNoThrowsTApplicationException(String msg,
-      boolean throwException) throws TException {
+  public void returnVoidNoThrowsTApplicationException(String msg, boolean throwException)
+      throws TException {
     if (throwException) {
       throw new TApplicationException(TApplicationException.INTERNAL_ERROR, msg);
     }
@@ -68,5 +68,4 @@ public class ServiceSyncImp extends ServiceBase implements TAppService01.Iface {
       waitForCancel();
     }
   }
-
 }

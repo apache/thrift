@@ -5,6 +5,7 @@
 ### Go
 
 - [THRIFT-5539](https://issues.apache.org/jira/browse/THRIFT-5539) - `TDebugProtocol.DuplicateTo` is now deprecated, `TDuplicateToProtocol` has been provided as the replacement
+- [THRIFT-5583](https://issues.apache.org/jira/browse/THRIFT-5583) - Add `skip_remote` arg to compiler, which can be used to skip the generating of -remote folders for services
 
 ## 0.16.0
 

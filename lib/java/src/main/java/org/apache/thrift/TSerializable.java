@@ -21,10 +21,7 @@ package org.apache.thrift;
 
 import org.apache.thrift.protocol.TProtocol;
 
-/**
- * Generic base interface for generated Thrift objects.
- *
- */
+/** Generic base interface for generated Thrift objects. */
 public interface TSerializable {
 
   /**
@@ -42,5 +39,4 @@ public interface TSerializable {
    * @throws TException if there is an error writing to oprot
    */
   public void write(TProtocol oprot) throws TException;
-
 }
