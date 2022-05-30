@@ -30,4 +30,8 @@ public final class TStruct {
   }
 
   public final String name;
+
+  public String getName() {
+    return name;
+  }
 }

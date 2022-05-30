@@ -113,7 +113,9 @@ public abstract class FrameWriter {
     transport.write(frameBytes);
   }
 
-  /** @return true when no more data needs to be written out */
+  /**
+   * @return true when no more data needs to be written out
+   */
   public boolean isComplete() {
     return frameBytes == null || !frameBytes.hasRemaining();
   }

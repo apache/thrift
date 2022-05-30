@@ -29,16 +29,22 @@ repositories {
 dependencies {
     implementation(platform("org.jetbrains.kotlin:kotlin-bom"))
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
-    // https://mvnrepository.com/artifact/org.jetbrains.kotlinx/kotlinx-coroutines-jdk8
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-jdk8:1.6.1")
-    // https://mvnrepository.com/artifact/org.apache.thrift/libthrift
     implementation("org.apache.thrift:libthrift:INCLUDED")
     testImplementation(kotlin("test"))
 }
 
+kotlin {
+    jvmToolchain {
+        (this as JavaToolchainSpec).languageVersion.set(JavaLanguageVersion.of(8))
+    }
+}
+
 tasks {
-    ktfmt {
-        kotlinLangStyle()
+    if (JavaVersion.current().isJava11Compatible) {
+        ktfmt {
+            kotlinLangStyle()
+        }
     }
 
     test {
