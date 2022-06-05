@@ -17,22 +17,30 @@
  * under the License.
  */
 
-package org.apache.thrift.protocol;
+package org.apache.thrift.helper;
 
-@:enum
-abstract TType(Int)  from Int to Int  {
-    public static inline var STOP : Int   = 0;
-    public static inline var VOID_ : Int  = 1;  // VOID produces collisions with cpp targets in some cases
-    public static inline var BOOL : Int   = 2;
-    public static inline var BYTE : Int   = 3;
-    public static inline var DOUBLE : Int = 4;
-    public static inline var I16 : Int    = 6;
-    public static inline var I32 : Int    = 8;
-    public static inline var I64 : Int    = 10;
-    public static inline var STRING : Int = 11;
-    public static inline var STRUCT : Int = 12;
-    public static inline var MAP : Int    = 13;
-    public static inline var SET : Int    = 14;
-    public static inline var LIST : Int   = 15;
-	public static inline var UUID : Int   = 16;
+import haxe.io.Bytes;
+import uuid.Uuid;
+
+class UuidHelper {
+	
+	public static function CanonicalUuid( uuid : String) : String {
+		uuid = StringTools.replace( uuid, "{", "");
+		uuid = StringTools.replace( uuid, "}", "");
+		uuid = Uuid.stringify( Uuid.parse( uuid));
+		return uuid;
+	}
+	
+	#if debug
+	
+	public static function UnitTest() : Void 
+	{
+		var guid : String = CanonicalUuid("{00112233-4455-6677-8899-AABBCCDDEEFF}");
+		if ( guid.length != 36)
+			throw 'UuidHelper Test: CanonicalUuid() failed';
+	}
+
+	#end
+	
 }
+
