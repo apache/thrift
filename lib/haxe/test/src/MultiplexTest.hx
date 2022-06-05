@@ -19,6 +19,8 @@
 
 package;
 
+#if ! (flash || html5 || js)
+
 import haxe.Int64;
 import haxe.Int32;
 
@@ -41,7 +43,6 @@ import BenchmarkService;
 import BenchmarkServiceImpl;
 import BenchmarkServiceProcessor;
 import Error;
-
 
 class BenchmarkServiceHandler implements BenchmarkService_service
 {
@@ -221,4 +222,5 @@ class MultiplexTest extends TestBase {
 
 }
 
+#end
 

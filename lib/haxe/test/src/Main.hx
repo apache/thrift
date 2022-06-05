@@ -76,9 +76,13 @@ class Main
 
             switch( tests) {
                 case Normal:
+                    #if sys
                     StreamTest.Run(server);
+                    #end
                 case Multiplex:
+                    #if ! (flash || html5 || js)
                     MultiplexTest.Run(server);
+                    #end
                 case Constants:
                     ConstantsTest.Run(server);
                 default:
