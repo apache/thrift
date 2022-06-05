@@ -46,6 +46,10 @@ exception Goodbye {
   3: map<i32, map<i32,i32>> complexer,
 }
 
+struct Thinger {
+  1: i32 dummy
+}
+
 service SmallService {
   Thinger testThinger(1:Thinger bootz),
   Hello testMe(1:i32 hello=64, 2: Hello wonk) throws (1: Goodbye g),
