@@ -2869,6 +2869,8 @@ string t_javame_generator::declare_field(t_field* tfield, bool init) {
       case t_base_type::TYPE_DOUBLE:
         result += " = (double)0";
         break;
+      default:
+        throw "compiler error: unhandled type";
       }
 
     } else if (ttype->is_enum()) {
@@ -2951,6 +2953,8 @@ string t_javame_generator::type_to_enum(t_type* type) {
       return "TType.I64";
     case t_base_type::TYPE_DOUBLE:
       return "TType.DOUBLE";
+    default:
+      throw "compiler error: unhandled type";
     }
   } else if (type->is_enum()) {
     return "TType.I32";

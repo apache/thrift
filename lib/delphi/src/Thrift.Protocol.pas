@@ -49,7 +49,8 @@ type
     Struct = 12,
     Map = 13,
     Set_ = 14,
-    List = 15
+    List = 15,
+    Uuid = 16
   );
 
   TMessageType = (
@@ -62,7 +63,7 @@ type
 const
   VALID_TTYPES = [
     TType.Stop, TType.Void,
-    TType.Bool_, TType.Byte_, TType.Double_, TType.I16, TType.I32, TType.I64, TType.String_,
+    TType.Bool_, TType.Byte_, TType.Double_, TType.I16, TType.I32, TType.I64, TType.String_, TType.Uuid,
     TType.Struct, TType.Map, TType.Set_, TType.List
   ];
 
@@ -218,6 +219,7 @@ type
     procedure WriteString( const s: string );
     procedure WriteAnsiString( const s: AnsiString);
     procedure WriteBinary( const b: TBytes);
+    procedure WriteUuid( const uuid: TGuid);
 
     function ReadMessageBegin: TThriftMessage;
     procedure ReadMessageEnd();
@@ -238,6 +240,7 @@ type
     function ReadI64: Int64;
     function ReadDouble:Double;
     function ReadBinary: TBytes;
+    function ReadUuid: TGuid;
     function ReadString: string;
     function ReadAnsiString: AnsiString;
 
@@ -293,6 +296,7 @@ type
     procedure WriteString( const s: string ); virtual;
     procedure WriteAnsiString( const s: AnsiString); virtual;
     procedure WriteBinary( const b: TBytes); virtual; abstract;
+    procedure WriteUuid( const b: TGuid); virtual; abstract;
 
     function ReadMessageBegin: TThriftMessage; virtual; abstract;
     procedure ReadMessageEnd(); virtual; abstract;
@@ -313,6 +317,7 @@ type
     function ReadI64: Int64; virtual; abstract;
     function ReadDouble:Double; virtual; abstract;
     function ReadBinary: TBytes; virtual; abstract;
+    function ReadUuid: TGuid; virtual; abstract;
     function ReadString: string; virtual;
     function ReadAnsiString: AnsiString; virtual;
 
@@ -377,6 +382,7 @@ type
     procedure WriteI64( const i64: Int64); override;
     procedure WriteDouble( const d: Double); override;
     procedure WriteBinary( const b: TBytes); override;
+    procedure WriteUuid( const uuid: TGuid); override;
 
     function ReadMessageBegin: TThriftMessage; override;
     procedure ReadMessageEnd(); override;
@@ -397,6 +403,7 @@ type
     function ReadI64: Int64; override;
     function ReadDouble:Double; override;
     function ReadBinary: TBytes; override;
+    function ReadUuid: TGuid; override;
 
   end;
 
@@ -441,6 +448,7 @@ type
     procedure WriteString( const s: string ); override;
     procedure WriteAnsiString( const s: AnsiString); override;
     procedure WriteBinary( const b: TBytes); override;
+    procedure WriteUuid( const uuid: TGuid); override;
 
     function ReadMessageBegin: TThriftMessage; override;
     procedure ReadMessageEnd(); override;
@@ -461,6 +469,7 @@ type
     function ReadI64: Int64; override;
     function ReadDouble:Double; override;
     function ReadBinary: TBytes; override;
+    function ReadUuid: TGuid; override;
     function ReadString: string; override;
     function ReadAnsiString: AnsiString; override;
   end;
@@ -673,6 +682,7 @@ begin
     TType.I64     :  prot.ReadI64();
     TType.Double_ :  prot.ReadDouble();
     TType.String_ :  prot.ReadBinary();// Don't try to decode the string, just skip it.
+    TType.Uuid    :  prot.ReadUuid();
 
     // structured types
     TType.Struct :  begin
@@ -745,6 +755,14 @@ begin
   SetLength( buf, size);
   FTrans.ReadAll( buf, 0, size);
   Result := buf;
+end;
+
+function TBinaryProtocolImpl.ReadUuid : TGuid;
+var network : TGuid;  // in network order (Big Endian)
+begin
+  ASSERT( SizeOf(result) = 16);
+  FTrans.ReadAll( @network, SizeOf(network), 0, SizeOf(network));
+  result := network.SwapByteOrder;
 end;
 
 function TBinaryProtocolImpl.ReadBool: Boolean;
@@ -915,6 +933,14 @@ begin
   if iLen > 0 then FTrans.Write(b, 0, iLen);
 end;
 
+procedure TBinaryProtocolImpl.WriteUuid( const uuid: TGuid);
+var network : TGuid;  // in network order (Big Endian)
+begin
+  ASSERT( SizeOf(uuid) = 16);
+  network := uuid.SwapByteOrder;
+  Transport.Write( @network, 0, SizeOf(network));
+end;
+
 procedure TBinaryProtocolImpl.WriteBool(b: Boolean);
 begin
   if b then begin
@@ -1064,6 +1090,7 @@ begin
     TType.Map:     result := SizeOf(Int32);  // element count
     TType.Set_:    result := SizeOf(Int32);  // element count
     TType.List:    result := SizeOf(Int32);  // element count
+    TType.Uuid:    result := SizeOf(TGuid);
   else
     raise TTransportExceptionBadArgs.Create('Unhandled type code');
   end;
@@ -1310,6 +1337,12 @@ begin
 end;
 
 
+procedure TProtocolDecorator.WriteUuid( const uuid: TGuid);
+begin
+  FWrappedProtocol.WriteUuid( uuid);
+end;
+
+
 function TProtocolDecorator.ReadMessageBegin: TThriftMessage;
 begin
   result := FWrappedProtocol.ReadMessageBegin;
@@ -1421,6 +1454,12 @@ end;
 function TProtocolDecorator.ReadBinary: TBytes;
 begin
   result := FWrappedProtocol.ReadBinary;
+end;
+
+
+function TProtocolDecorator.ReadUuid: TGuid;
+begin
+  result := FWrappedProtocol.ReadUuid;
 end;
 
 

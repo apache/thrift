@@ -1018,6 +1018,7 @@ void t_delphi_generator::init_known_types_list() {
   // known base types
   types_known[type_name(g_type_string)] = 1;
   types_known[type_name(g_type_binary)] = 1;
+  types_known[type_name(g_type_uuid)] = 1;
   types_known[type_name(g_type_bool)] = 1;
   types_known[type_name(g_type_i8)] = 1;
   types_known[type_name(g_type_i16)] = 1;
@@ -1391,6 +1392,9 @@ string t_delphi_generator::render_const_value(ostream& vars,
     switch (tbase) {
     case t_base_type::TYPE_STRING:
       render << "'" << get_escaped_string(value) << "'";
+      break;
+    case t_base_type::TYPE_UUID:
+      render << "['{" << value->get_uuid() << "}']";
       break;
     case t_base_type::TYPE_BOOL:
       render << ((value->get_integer() > 0) ? "True" : "False");
@@ -2703,6 +2707,9 @@ void t_delphi_generator::generate_deserialize_field(ostream& out,
           out << "ReadString();";
         }
         break;
+      case t_base_type::TYPE_UUID:
+        out << "ReadUuid();";
+        break;
       case t_base_type::TYPE_BOOL:
         out << "ReadBool();";
         break;
@@ -2903,6 +2910,9 @@ void t_delphi_generator::generate_serialize_field(ostream& out,
           out << "WriteString(";
         }
         out << name << ");";
+        break;
+      case t_base_type::TYPE_UUID:
+        out << "WriteUuid(" << name << ");";
         break;
       case t_base_type::TYPE_BOOL:
         out << "WriteBool(" << name << ");";
@@ -3189,6 +3199,7 @@ string t_delphi_generator::input_arg_prefix(t_type* ttype) {
 
     // these should be const'ed for optimal performamce
     case t_base_type::TYPE_STRING: // refcounted pointer
+    case t_base_type::TYPE_UUID:   // refcounted pointer
     case t_base_type::TYPE_I64:    // larger than 32 bit
     case t_base_type::TYPE_DOUBLE: // larger than 32 bit
       return "const ";
@@ -3241,6 +3252,8 @@ string t_delphi_generator::base_type_name(t_base_type* tbase) {
     } else {
       return "System.string";
     }
+  case t_base_type::TYPE_UUID:
+    return "System.TGuid";
   case t_base_type::TYPE_BOOL:
     return "System.Boolean";
   case t_base_type::TYPE_I8:
@@ -3407,6 +3420,8 @@ string t_delphi_generator::type_to_enum(t_type* type) {
       throw "NO T_VOID CONSTRUCT";
     case t_base_type::TYPE_STRING:
       return "TType.String_";
+    case t_base_type::TYPE_UUID:
+      return "TType.Uuid";
     case t_base_type::TYPE_BOOL:
       return "TType.Bool_";
     case t_base_type::TYPE_I8:
@@ -3455,6 +3470,8 @@ string t_delphi_generator::empty_value(t_type* type) {
       } else {
         return "''";
       }
+    case t_base_type::TYPE_UUID:
+      return "System.TGuid.Empty";
     case t_base_type::TYPE_BOOL:
       return "False";
     case t_base_type::TYPE_I8:
@@ -4059,6 +4076,9 @@ void t_delphi_generator::generate_delphi_struct_tostring_impl(ostream& out,
                        << type_name(ttype, false, true, false, false) 
                        << ">.ToString( System.Ord( Self." 
                        << prop_name((*f_iter), is_exception) << ")));" << endl;
+    } else if (ttype->is_uuid()) {
+      indent_impl(out) << tmp_sb << ".Append( GUIDToString(Self." << prop_name((*f_iter), is_exception) << "));"
+                       << endl;
     } else {
       indent_impl(out) << tmp_sb << ".Append( Self." << prop_name((*f_iter), is_exception) << ");"
                        << endl;

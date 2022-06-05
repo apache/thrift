@@ -62,7 +62,7 @@ public:
     validate_ = false;
     json_serializable_ = false;
     getters_setters_ = false;
-	    
+        
     nsglobal_ = ""; // by default global namespace is empty
     classmap_ = false;
     for (iter = parsed_options.begin(); iter != parsed_options.end(); ++iter) {
@@ -874,8 +874,8 @@ void t_php_generator::generate_reflection_getters(ostringstream& out,
  * Generates a setter for the generated private fields
  */
 void t_php_generator::generate_reflection_setters(ostringstream& out,
-						  string field_name,
-						  string cap_name) {
+                          string field_name,
+                          string cap_name) {
 
   out << indent() << "public function set" << cap_name << "(" << "$" << field_name << ")" << endl
       << indent() << "{" << endl;
@@ -2798,6 +2798,8 @@ string t_php_generator::type_to_enum(t_type* type) {
       return "TType::I64";
     case t_base_type::TYPE_DOUBLE:
       return "TType::DOUBLE";
+    default:
+      throw "compiler error: unhandled type";
     }
   } else if (type->is_enum()) {
     return "TType::I32";
@@ -2839,6 +2841,8 @@ string t_php_generator::type_to_phpdoc(t_type* type) {
       return "int";
     case t_base_type::TYPE_DOUBLE:
       return "double";
+    default:
+      throw "compiler error: unhandled type";
     }
   } else if (type->is_enum()) {
     return "int";

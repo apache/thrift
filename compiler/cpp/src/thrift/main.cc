@@ -738,6 +738,12 @@ void validate_const_rec(std::string name, t_type* type, t_const_value* value) {
         throw "type error: const \"" + name + "\" was declared as string";
       }
       break;
+    case t_base_type::TYPE_UUID:
+      if (value->get_type() != t_const_value::CV_STRING) {
+        throw "type error: const \"" + name + "\" was declared as uuid";
+      }
+      value->get_uuid(); // validates constant
+      break;
     case t_base_type::TYPE_BOOL:
       if (value->get_type() != t_const_value::CV_INTEGER) {
         throw "type error: const \"" + name + "\" was declared as bool";

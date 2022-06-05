@@ -1003,12 +1003,12 @@ void t_perl_generator::generate_service_rest(t_service* tservice) {
       f_service_ << indent() << "my $" << (*a_iter)->get_name() << " = (" << req << ") ? " << req
                  << " : undef;" << endl;
       /* slist no longer supported
-	  if (atype->is_string() && ((t_base_type*)atype)->is_string_list()) {
+      if (atype->is_string() && ((t_base_type*)atype)->is_string_list()) {
         f_service_ << indent() << "my @" << (*a_iter)->get_name() << " = split(/,/, $"
                    << (*a_iter)->get_name() << ");" << endl << indent() << "$"
                    << (*a_iter)->get_name() << " = \\@" << (*a_iter)->get_name() << endl;
       }
-	  */
+      */
     }
     f_service_ << indent() << "return $self->{impl}->" << (*f_iter)->get_name() << "("
                << argument_list((*f_iter)->get_arglist()) << ");" << endl;
@@ -1666,6 +1666,8 @@ string t_perl_generator::type_to_enum(t_type* type) {
       return "Thrift::TType::I64";
     case t_base_type::TYPE_DOUBLE:
       return "Thrift::TType::DOUBLE";
+    default:
+      throw "compiler error: unhandled type";
     }
   } else if (type->is_enum()) {
     return "Thrift::TType::I32";

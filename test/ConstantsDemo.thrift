@@ -64,6 +64,8 @@ const map<i32,thing> GEN_WHAT = { 35 : { 'hello' : 325, 'goodbye' : 325352 } }
 
 const set<i32> GEN_SET = [ 235, 235, 53235 ]
 
+const uuid GEN_UUID = "00000000-4444-CCCC-ffff-0123456789ab"
+
 exception Blah {
   1:  i32 bing }
 

@@ -85,6 +85,17 @@ public:
     }
   }
 
+  void set_uuid(std::string val) {
+    validate_uuid(val);
+    valType_ = CV_STRING;
+    stringVal_ = val;
+  }
+
+  std::string get_uuid() const {
+    validate_uuid(stringVal_);
+    return stringVal_;
+  }
+
   void set_double(double val) {
     valType_ = CV_DOUBLE;
     doubleVal_ = val;
@@ -199,6 +210,34 @@ private:
   t_enum* enum_;
 
   t_const_value_type valType_;
+  
+  void validate_uuid(std::string uuid) const {
+    bool valid = (uuid.length() == 36);
+    const std::string HEXCHARS = std::string("0123456789ABCDEFabcdef");
+
+    // canonical format "01234567-9012-4567-9012-456789012345" expected
+    for( size_t i = 0; valid && (i < uuid.length()); ++i) {
+      switch(i) {
+        case 8:
+        case 13:
+        case 18:
+        case 23:
+          if(uuid[i] != '-') {
+            valid = false;
+          }			  
+          break;
+        default:
+          if(HEXCHARS.find(uuid[i]) == std::string::npos) {
+            valid = false;
+          }			  
+          break;
+      }        
+    }
+
+    if( ! valid) {
+      throw "invalid uuid " + uuid;
+    }
+  }
 };
 
 #endif

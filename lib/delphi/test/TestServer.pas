@@ -67,6 +67,7 @@ type
         function testI64(const thing: Int64): Int64;
         function testDouble(const thing: Double): Double;
         function testBinary(const thing: TBytes): TBytes;
+        function testUuid(const thing: System.TGuid): System.TGuid;
         function testStruct(const thing: IXtruct): IXtruct;
         function testNest(const thing: IXtruct2): IXtruct2;
         function testMap(const thing: IThriftDictionary<Integer, Integer>): IThriftDictionary<Integer, Integer>;
@@ -147,6 +148,12 @@ end;
 function TTestServer.TTestHandlerImpl.testBinary(const thing: TBytes): TBytes;
 begin
   Console.WriteLine('testBinary('+IntToStr(Length(thing)) + ' bytes)');
+  Result := thing;
+end;
+
+function TTestServer.TTestHandlerImpl.testUuid(const thing: System.TGuid): System.TGuid;
+begin
+  Console.WriteLine('testUuid('+GUIDToString(thing)+')');
   Result := thing;
 end;
 

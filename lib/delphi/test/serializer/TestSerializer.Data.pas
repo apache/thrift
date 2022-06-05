@@ -23,6 +23,8 @@ interface
 
 uses
   SysUtils,
+  ActiveX,
+  ComObj,
   Thrift.Collections,
   DebugProtoTest;
 
@@ -172,6 +174,7 @@ implementation
 class function Fixtures.CreateOneOfEach : IOneOfEach;
 var db : Double;
     us : Utf8String;
+    guid : TGuid;
 begin
   result := TOneOfEachImpl.Create;
   result.setIm_true( TRUE);
@@ -191,6 +194,8 @@ begin
   SetString( us, PChar(@kUnicodeBytes[0]), Length(kUnicodeBytes));
   // !!
   result.setZomg_unicode( UnicodeString( us));
+
+  result.Rfc4122_uuid := TGuid.Create('{00112233-4455-6677-8899-aabbccddeeff}');
 
   {$IF cDebugProtoTest_Option_AnsiStr_Binary}
   result.SetBase64('base64');

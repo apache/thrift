@@ -55,6 +55,9 @@ namespace Thrift.Protocol.Utilities
                         // Don't try to decode the string, just skip it.
                         await protocol.ReadBinaryAsync(cancellationToken);
                         break;
+                    case TType.Uuid:
+                        await protocol.ReadUuidAsync(cancellationToken);
+                        break;
                     case TType.Struct:
                         await protocol.ReadStructBeginAsync(cancellationToken);
                         while (true)

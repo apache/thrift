@@ -1892,6 +1892,8 @@ string t_kotlin_generator::type_to_enum(t_type* type) {
       return "org.apache.thrift.protocol.TType.I64";
     case t_base_type::TYPE_DOUBLE:
       return "org.apache.thrift.protocol.TType.DOUBLE";
+    default:
+      throw "compiler error: unhandled type";
     }
   } else if (type->is_enum()) {
     return "org.apache.thrift.protocol.TType.I32";

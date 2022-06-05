@@ -2676,6 +2676,8 @@ string t_haxe_generator::declare_field(t_field* tfield, bool init) {
       case t_base_type::TYPE_DOUBLE:
         result += " = (double)0";
         break;
+      default:
+        throw "unhandled type";
       }
 
     } else if (ttype->is_enum()) {
@@ -2783,6 +2785,8 @@ string t_haxe_generator::type_to_enum(t_type* type) {
       return "TType.I64";
     case t_base_type::TYPE_DOUBLE:
       return "TType.DOUBLE";
+    default:
+      break;
     }
   } else if (type->is_enum()) {
     return "TType.I32";

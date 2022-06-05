@@ -239,6 +239,7 @@ literal_begin (['\"])
 "double"             { return tok_double;               }
 "string"             { return tok_string;               }
 "binary"             { return tok_binary;               }
+"uuid"               { return tok_uuid;                 }
 "slist" {
   error_no_longer_supported("slist","string");
 }

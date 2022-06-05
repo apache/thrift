@@ -1833,6 +1833,8 @@ void t_java_generator::generate_java_struct_parcelable(ostream& out, t_struct* t
           break;
         case t_base_type::TYPE_VOID:
           break;
+        default:
+          throw "compiler error: unhandled type";
         }
       }
     }
@@ -1931,6 +1933,8 @@ void t_java_generator::generate_java_struct_parcelable(ostream& out, t_struct* t
           break;
         case t_base_type::TYPE_VOID:
           break;
+        default:
+          throw "compiler error: unhandled type";
         }
       }
     }
@@ -4665,6 +4669,8 @@ string t_java_generator::declare_field(t_field* tfield, bool init, bool comment)
       case t_base_type::TYPE_DOUBLE:
         result += " = (double)0";
         break;
+      default:
+        throw "compiler error: unhandled type";
       }
     } else if (ttype->is_enum()) {
       result += " = null";
@@ -4842,6 +4848,8 @@ string t_java_generator::type_to_enum(t_type* type) {
       return "org.apache.thrift.protocol.TType.I64";
     case t_base_type::TYPE_DOUBLE:
       return "org.apache.thrift.protocol.TType.DOUBLE";
+    default:
+      throw "compiler error: unhandled type";
     }
   } else if (type->is_enum()) {
     return "org.apache.thrift.protocol.TType.I32";
