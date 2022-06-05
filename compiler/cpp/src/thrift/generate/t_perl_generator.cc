@@ -998,15 +998,17 @@ void t_perl_generator::generate_service_rest(t_service* tservice) {
     const vector<t_field*>& args = (*f_iter)->get_arglist()->get_members();
     vector<t_field*>::const_iterator a_iter;
     for (a_iter = args.begin(); a_iter != args.end(); ++a_iter) {
-      t_type* atype = get_true_type((*a_iter)->get_type());
+      //t_type* atype = get_true_type((*a_iter)->get_type());
       string req = "$request->{'" + (*a_iter)->get_name() + "'}";
       f_service_ << indent() << "my $" << (*a_iter)->get_name() << " = (" << req << ") ? " << req
                  << " : undef;" << endl;
-      if (atype->is_string() && ((t_base_type*)atype)->is_string_list()) {
+      /* slist no longer supported
+	  if (atype->is_string() && ((t_base_type*)atype)->is_string_list()) {
         f_service_ << indent() << "my @" << (*a_iter)->get_name() << " = split(/,/, $"
                    << (*a_iter)->get_name() << ");" << endl << indent() << "$"
                    << (*a_iter)->get_name() << " = \\@" << (*a_iter)->get_name() << endl;
       }
+	  */
     }
     f_service_ << indent() << "return $self->{impl}->" << (*f_iter)->get_name() << "("
                << argument_list((*f_iter)->get_arglist()) << ");" << endl;

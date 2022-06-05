@@ -134,8 +134,6 @@ const int struct_is_union = 1;
 %token tok_bool
 %token tok_string
 %token tok_binary
-%token tok_slist
-%token tok_senum
 %token tok_i8
 %token tok_i16
 %token tok_i32
@@ -204,10 +202,6 @@ const int struct_is_union = 1;
 %type<tenum>     EnumDefList
 %type<tenumv>    EnumDef
 %type<tenumv>    EnumValue
-
-%type<ttypedef>  Senum
-%type<tbase>     SenumDefList
-%type<id>        SenumDef
 
 %type<tconst>    Const
 %type<tconstv>   ConstValue
@@ -404,13 +398,6 @@ TypeDefinition:
         g_program->add_enum($1);
       }
     }
-| Senum
-    {
-      pdebug("TypeDefinition -> Senum");
-      if (g_parse_mode == PROGRAM) {
-        g_program->add_typedef($1);
-      }
-    }
 | Struct
     {
       pdebug("TypeDefinition -> Struct");
@@ -528,39 +515,6 @@ EnumValue:
       }
       ++y_enum_val;
       $$ = new t_enum_value($1, y_enum_val);
-    }
-
-Senum:
-  tok_senum tok_identifier '{' SenumDefList '}' TypeAnnotations
-    {
-      pdebug("Senum -> tok_senum tok_identifier { SenumDefList }");
-      validate_simple_identifier( $2);
-      $$ = new t_typedef(g_program, $4, $2);
-      if ($6 != nullptr) {
-        $$->annotations_ = $6->annotations_;
-        delete $6;
-      }
-    }
-
-SenumDefList:
-  SenumDefList SenumDef
-    {
-      pdebug("SenumDefList -> SenumDefList SenumDef");
-      $$ = $1;
-      $$->add_string_enum_val($2);
-    }
-|
-    {
-      pdebug("SenumDefList -> ");
-      $$ = new t_base_type("string", t_base_type::TYPE_STRING);
-      $$->set_string_enum(true);
-    }
-
-SenumDef:
-  tok_literal CommaOrSemicolonOptional
-    {
-      pdebug("SenumDef -> tok_literal");
-      $$ = $1;
     }
 
 Const:
@@ -1047,11 +1001,6 @@ SimpleBaseType:
     {
       pdebug("BaseType -> tok_binary");
       $$ = g_type_binary;
-    }
-| tok_slist
-    {
-      pdebug("BaseType -> tok_slist");
-      $$ = g_type_slist;
     }
 | tok_bool
     {

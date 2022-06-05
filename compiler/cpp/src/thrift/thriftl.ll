@@ -86,6 +86,12 @@ void unexpected_token(char* text) {
   exit(1);
 }
 
+void error_no_longer_supported(char* text, char* replace_with) {
+  yyerror("\"%s\" is no longer supported, use \"%s\" instead. Line %d\n", text, replace_with, yylineno);
+  exit(1);
+}
+
+
 %}
 
 /**
@@ -234,12 +240,10 @@ literal_begin (['\"])
 "string"             { return tok_string;               }
 "binary"             { return tok_binary;               }
 "slist" {
-  pwarning(0, "\"slist\" is deprecated and will be removed in a future compiler version.  This type should be replaced with \"string\".\n");
-  return tok_slist;
+  error_no_longer_supported("slist","string");
 }
 "senum" {
-  pwarning(0, "\"senum\" is deprecated and will be removed in a future compiler version.  This type should be replaced with \"string\".\n");
-  return tok_senum;
+  error_no_longer_supported("senum","string");
 }
 "map"                { return tok_map;                  }
 "list"               { return tok_list;                 }
