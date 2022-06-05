@@ -27,6 +27,8 @@ import haxe.ds.IntMap;
 import haxe.ds.StringMap;
 import haxe.ds.ObjectMap;
 
+import uuid.Uuid;
+
 import org.apache.thrift.*;
 import org.apache.thrift.helper.*;
 import org.apache.thrift.protocol.*;
@@ -366,6 +368,14 @@ class TestClient {
             rslt.Expect( false, 'ZigZag.UnitTest: $e  Test #101');
         }
 
+        try {
+            UuidHelper.UnitTest();
+            rslt.Expect( true, 'UuidHelper.UnitTest  Test #102');
+        }
+        catch( e : Dynamic) {
+            rslt.Expect( false, 'UuidHelper.UnitTest: $e  Test #102');
+        }
+
         #end
     }
 
@@ -537,6 +547,19 @@ class TestClient {
         trace(' = $dub');
         rslt.Expect(dub == 5.325098235, '$dub == 5.325098235');
 
+
+		var uuidOut : String = UuidHelper.CanonicalUuid("{00112233-4455-6677-8899-AABBCCDDEEFF}");
+        trace('testUuid(${uuidOut}');
+        try {
+            var uuidIn = client.testUuid(uuidOut);
+            trace('testUuid() = ${uuidIn}');
+            rslt.Expect( uuidIn == uuidOut, '${uuidIn} == ${uuidOut}');
+        }
+        catch (e : TApplicationException) {
+            trace('testUuid(${uuidOut}): '+e.errorMsg);  // may not be supported by the server
+        }
+
+        
         var binOut = PrepareTestData(true);
         trace('testBinary('+BytesToHex(binOut)+')');
         try {

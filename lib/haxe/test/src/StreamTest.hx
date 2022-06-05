@@ -18,6 +18,7 @@
  */
 
 package;
+#if sys
 
 import haxe.Int64;
 import sys.FileSystem;
@@ -95,3 +96,4 @@ class StreamTest extends TestBase {
 }
 
 
+#end

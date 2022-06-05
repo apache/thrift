@@ -544,6 +544,9 @@ void t_haxe_generator::render_const_value(std::ostream& out,
     case t_base_type::TYPE_STRING:
       out << '"' << get_escaped_string(value) << '"';
       break;
+    case t_base_type::TYPE_UUID:
+      out << '"' << get_escaped_string(value) << '"';
+      break;
     case t_base_type::TYPE_BOOL:
       out << ((value->get_integer() > 0) ? "true" : "false");
       break;
@@ -1443,6 +1446,9 @@ std::string t_haxe_generator::get_haxe_type_string(t_type* type) {
     case t_base_type::TYPE_STRING:
       return "TType.STRING";
       break;
+    case t_base_type::TYPE_UUID:
+      return "TType.UUID";
+      break;
     case t_base_type::TYPE_BOOL:
       return "TType.BOOL";
       break;
@@ -2222,6 +2228,9 @@ void t_haxe_generator::generate_deserialize_field(ostream& out, t_field* tfield,
           out << "readString();";
         }
         break;
+      case t_base_type::TYPE_UUID:
+        out << "readUuid();";
+        break;
       case t_base_type::TYPE_BOOL:
         out << "readBool();";
         break;
@@ -2405,6 +2414,9 @@ void t_haxe_generator::generate_serialize_field(ostream& out, t_field* tfield, s
         } else {
           out << "writeString(" << name << ");";
         }
+        break;
+      case t_base_type::TYPE_UUID:
+        out << "writeUuid(" << name << ");";
         break;
       case t_base_type::TYPE_BOOL:
         out << "writeBool(" << name << ");";
@@ -2651,6 +2663,8 @@ string t_haxe_generator::base_type_name(t_base_type* type, bool in_container) {
     } else {
       return "String";
     }
+  case t_base_type::TYPE_UUID:
+    return "String";
   case t_base_type::TYPE_BOOL:
     return "Bool";
   case t_base_type::TYPE_I8:
@@ -2685,6 +2699,9 @@ string t_haxe_generator::declare_field(t_field* tfield, bool init) {
         throw "NO T_VOID CONSTRUCT";
       case t_base_type::TYPE_STRING:
         result += " = null";
+        break;
+      case t_base_type::TYPE_UUID:
+        result += " = uuid.Uuid.NIL";
         break;
       case t_base_type::TYPE_BOOL:
         result += " = false";
@@ -2795,6 +2812,8 @@ string t_haxe_generator::type_to_enum(t_type* type) {
       throw "NO T_VOID CONSTRUCT";
     case t_base_type::TYPE_STRING:
       return "TType.STRING";
+    case t_base_type::TYPE_UUID:
+      return "TType.UUID";
     case t_base_type::TYPE_BOOL:
       return "TType.BOOL";
     case t_base_type::TYPE_I8:
