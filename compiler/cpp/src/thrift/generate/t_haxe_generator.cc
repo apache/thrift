@@ -94,8 +94,7 @@ public:
                          t_const_value* value,
                          bool in_static,
                          bool defval = false);
-  std::string render_const_value(ostream& out,
-                                 std::string name,
+  std::string render_const_value(std::string name,
                                  t_type* type,
                                  t_const_value* value);
 
@@ -502,7 +501,7 @@ void t_haxe_generator::print_const_value(std::ostream& out,
     out << (in_static ? "var " : "public static inline var  ");
   }
   if (type->is_base_type()) {
-    string v2 = render_const_value(out, name, type, value);
+    string v2 = render_const_value(name, type, value);
     out << name;
     if (!defval) {
       out << ":" << type_name(type);
@@ -537,7 +536,7 @@ void t_haxe_generator::print_const_value(std::ostream& out,
       if (field_type == nullptr) {
         throw "type error: " + type->get_name() + " has no field " + v_iter->first->get_string();
       }
-      string val = render_const_value(out, name, field_type, v_iter->second);
+      string val = render_const_value(name, field_type, v_iter->second);
       indent(out) << name << ".";
       out << v_iter->first->get_string() << " = " << val << ";" << endl;
     }
@@ -565,8 +564,8 @@ void t_haxe_generator::print_const_value(std::ostream& out,
     const map<t_const_value*, t_const_value*, t_const_value::value_compare>& val = value->get_map();
     map<t_const_value*, t_const_value*, t_const_value::value_compare>::const_iterator v_iter;
     for (v_iter = val.begin(); v_iter != val.end(); ++v_iter) {
-      string key = render_const_value(out, name, ktype, v_iter->first);
-      string val = render_const_value(out, name, vtype, v_iter->second);
+      string key = render_const_value(name, ktype, v_iter->first);
+      string val = render_const_value(name, vtype, v_iter->second);
       indent(out) << name << "[" << key << "] = " << val << ";" << endl;
     }
     if (!in_static) {
@@ -597,7 +596,7 @@ void t_haxe_generator::print_const_value(std::ostream& out,
     const vector<t_const_value*>& val = value->get_list();
     vector<t_const_value*>::const_iterator v_iter;
     for (v_iter = val.begin(); v_iter != val.end(); ++v_iter) {
-      string val = render_const_value(out, name, etype, *v_iter);
+      string val = render_const_value(name, etype, *v_iter);
       indent(out) << name << "." << (type->is_list() ? "push" : "add") << "(" << val << ");"
                   << endl;
     }
@@ -613,8 +612,7 @@ void t_haxe_generator::print_const_value(std::ostream& out,
   }
 }
 
-string t_haxe_generator::render_const_value(ostream& out,
-                                            string name,
+string t_haxe_generator::render_const_value(string name,
                                             t_type* type,
                                             t_const_value* value) {
   (void)name;
@@ -655,9 +653,12 @@ string t_haxe_generator::render_const_value(ostream& out,
   } else if (type->is_enum()) {
     render << value->get_integer();
   } else {
-    string t = tmp("tmp");
+    /* this is badly broken
+	string t = tmp("tmp");
     print_const_value(out, t, type, value, true);
     render << t;
+	*/
+	render << "null";  // we fix that later
   }
 
   return render.str();
@@ -801,8 +802,9 @@ void t_haxe_generator::generate_haxe_struct_definition(ostream& out,
   }
   for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
     if ((*m_iter)->get_value() != nullptr) {
-      indent(out) << "this." << (*m_iter)->get_name() << " = "
-                  << (*m_iter)->get_value()->get_integer() << ";" << endl;
+      indent(out) << "this." << (*m_iter)->get_name() << " = ";
+      out << render_const_value((*m_iter)->get_name(), (*m_iter)->get_type(), (*m_iter)->get_value());
+      out << ";" << endl;
     }
   }
   indent_down();
@@ -2653,8 +2655,7 @@ string t_haxe_generator::declare_field(t_field* tfield, bool init) {
   if (init) {
     t_type* ttype = get_true_type(tfield->get_type());
     if (ttype->is_base_type() && tfield->get_value() != nullptr) {
-      std::ofstream dummy;
-      result += " = " + render_const_value(dummy, tfield->get_name(), ttype, tfield->get_value());
+      result += " = " + render_const_value(tfield->get_name(), ttype, tfield->get_value());
     } else if (ttype->is_base_type()) {
       t_base_type::t_base tbase = ((t_base_type*)ttype)->get_base();
       switch (tbase) {

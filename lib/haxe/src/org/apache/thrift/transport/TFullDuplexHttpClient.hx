@@ -18,6 +18,7 @@
  */
 
 package org.apache.thrift.transport;
+#if swf
 
 import flash.errors.EOFError;
 import flash.events.Event;
@@ -35,13 +36,13 @@ import flash.net.Socket;
 import flash.events.EventDispatcher;
 
 
-    /**
-     * HTTP implementation of the TTransport interface. Used for working with a
-     * Thrift web services implementation.
-     * Unlike Http Client, it uses a single POST, and chunk-encoding to transfer all messages.
-     */
+/**
+ * HTTP implementation of the TTransport interface. Used for working with a
+ * Thrift web services implementation.
+ * Unlike Http Client, it uses a single POST, and chunk-encoding to transfer all messages.
+ */
 
-public class TFullDuplexHttpClient extends TEndpointTransport
+class TFullDuplexHttpClient extends TEndpointTransport
 {
 	private var socket : Socket = null;
 	private var host  :  String;
@@ -163,9 +164,9 @@ public class TFullDuplexHttpClient extends TEndpointTransport
 	{
 		var debug  :  String = "BUFFER >>";
 		var i  :  Int;
-		for (i = 0; i < buf.length; i++)
+		for (i in 0 ... buf.length)
 		{
-			debug += buf[i] as int;
+			debug += buf.get(i);
 			debug += " ";
 		}
 
@@ -255,3 +256,5 @@ public class TFullDuplexHttpClient extends TEndpointTransport
 	}
 
 }
+
+#end

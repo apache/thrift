@@ -32,6 +32,8 @@
 #defines
 -D phpwebserver
 
+# libs
+-lib uuid
 
 #Add debug information
 -debug
