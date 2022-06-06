@@ -202,6 +202,8 @@ project.lock.json
 /lib/delphi/*.identcache
 /lib/delphi/test/skip/bin
 /lib/delphi/test/serializer/*.dat
+/lib/delphi/test/serializer/bin
+/lib/delphi/test/thrift-testing
 /lib/delphi/**/*.identcache
 /lib/delphi/**/*.local
 /lib/delphi/**/*.dcu
