@@ -120,6 +120,12 @@ Booleans are encoded differently depending on whether it is a field value (in a 
 list or map). Field values are encoded directly in the field header. Element values of type `bool` are sent as an int8;
 true as `1` and false as `0`.
 
+### Universal unique identifier encoding
+
+Values of `uuid` type are first converted to a 16-byte binary in big endian order.
+
+*Note*: Since the length is fixed, no `byte length` prefix is necessary and the field is always 16 bytes long.
+
 ## Message
 
 A `Message` on the wire looks as follows:
@@ -215,6 +221,7 @@ The following field-types can be encoded:
 * `SET`, encoded as `10`
 * `MAP`, encoded as `11`
 * `STRUCT`, used for both structs and union fields, encoded as `12`
+* `UUID`, encoded as `13`
 
 Note that because there are 2 specific field types for the boolean values, the encoding of a boolean field value has no
 length (0 bytes).
@@ -258,6 +265,7 @@ The following element-types are used (see note below):
 * `SET`, encoded as `10`
 * `MAP`, encoded as `11`
 * `STRUCT`, used for structs and union fields, encoded as `12`
+* `UUID`, encoded as `13`
 
 *Note*: Although field-types and element-types lists are currently very similar, there is _no guarantee_ that this will
 remain true after new types are added.
