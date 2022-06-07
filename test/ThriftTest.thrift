@@ -112,7 +112,7 @@ struct CrazyNesting {
   // Do not insert line break as test/go/Makefile.am is removing this line with pattern match
   3: required list<map<set<i32> (python.immutable = ""), map<i32,set<list<map<Insanity,string>(python.immutable = "")> (python.immutable = "")>>>> list_field,
   4: binary binary_field
-  5: uuid uuid_field
+  //5: uuid uuid_field    -- TODO uncomment as soon as all targets implement uuid and/or for local testing
 }
 
 union SomeUnion {
@@ -201,7 +201,7 @@ service ThriftTest
    * @param uuid  thing - the uuid to print
    * @return uuid  - returns the uuid 'thing'
    */
-  uuid       testUuid(1: uuid thing),
+  //uuid       testUuid(1: uuid thing),    -- TODO uncomment as soon as all targets implement uuid and/or for local testing
 
   /**
    * Prints 'testStruct("{%s}")' where thing has been formatted into a string of comma separated values
