@@ -2192,7 +2192,7 @@ void t_java_generator::generate_java_validator(ostream& out, t_struct* tstruct) 
 
   out << indent() << "// check for sub-struct validity" << endl;
   for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
-    t_type* type = (*f_iter)->get_type();
+    t_type* type = get_true_type((*f_iter)->get_type());
     if (type->is_struct() && !((t_struct*)type)->is_union()) {
       out << indent() << "if (" << (*f_iter)->get_name() << " != null) {" << endl;
       out << indent() << "  " << (*f_iter)->get_name() << ".validate();" << endl;
@@ -2965,7 +2965,8 @@ void t_java_generator::generate_field_value_meta_data(std::ostream& out, t_type*
   out << endl;
   indent_up();
   indent_up();
-  if (type->is_struct() || type->is_xception()) {
+  t_type* ttype = get_true_type(type);
+  if (ttype->is_struct() || ttype->is_xception()) {
     indent(out) << "new "
                    "org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType."
                    "STRUCT, "
