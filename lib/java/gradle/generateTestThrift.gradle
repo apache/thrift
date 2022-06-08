@@ -26,6 +26,8 @@ ext.genReuseSrc = file("$buildDir/gen-javareuse")
 ext.genFullCamelSrc = file("$buildDir/gen-fullcamel")
 ext.genOptionTypeJdk8Src = file("$buildDir/gen-option-type-jdk8")
 ext.genUnsafeSrc = file("$buildDir/gen-unsafe")
+ext.genStructOrderTestASrc = file("$buildDir/resources/test/struct-order-test/a")
+ext.genStructOrderTestBSrc = file("$buildDir/resources/test/struct-order-test/b")
 
 // Add the generated code directories to the test source set
 sourceSets {
@@ -142,4 +144,14 @@ task generateWithAnnotationMetadata(group: 'Build') {
     ext.outputBuffer = new ByteArrayOutputStream()
 
     thriftCompile(it, 'JavaAnnotationTest.thrift', 'java:annotations_as_metadata', genSrc)
+}
+
+task generateJavaStructOrderTestJava(group: 'Build') {
+    description = 'Generate structs defined in different order and add to build dir so we can compare them'
+    generate.dependsOn it
+
+    ext.outputBuffer = new ByteArrayOutputStream()
+
+    thriftCompile(it, 'JavaStructOrderA.thrift', 'java', genStructOrderTestASrc)
+    thriftCompile(it, 'JavaStructOrderB.thrift', 'java', genStructOrderTestBSrc)
 }
