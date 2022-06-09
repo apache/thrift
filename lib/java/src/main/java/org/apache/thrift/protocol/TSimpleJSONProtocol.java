@@ -22,6 +22,7 @@ package org.apache.thrift.protocol;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.Stack;
+import java.util.UUID;
 import org.apache.thrift.TException;
 import org.apache.thrift.transport.TTransport;
 import org.apache.thrift.transport.TTransportException;
@@ -277,6 +278,11 @@ public class TSimpleJSONProtocol extends TProtocol {
   }
 
   @Override
+  public void writeUuid(UUID uuid) throws TException {
+    writeString(uuid.toString());
+  }
+
+  @Override
   public void writeDouble(double dub) throws TException {
     if (writeContext_.isMapKey()) {
       writeString(Double.toString(dub));
@@ -439,6 +445,11 @@ public class TSimpleJSONProtocol extends TProtocol {
 
   @Override
   public long readI64() throws TException {
+    throw new TException("Not implemented");
+  }
+
+  @Override
+  public UUID readUuid() throws TException {
     throw new TException("Not implemented");
   }
 

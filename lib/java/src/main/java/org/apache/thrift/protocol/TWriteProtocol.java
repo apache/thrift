@@ -1,6 +1,7 @@
 package org.apache.thrift.protocol;
 
 import java.nio.ByteBuffer;
+import java.util.UUID;
 import org.apache.thrift.TException;
 
 public interface TWriteProtocol {
@@ -40,6 +41,8 @@ public interface TWriteProtocol {
   void writeI32(int i32) throws TException;
 
   void writeI64(long i64) throws TException;
+
+  void writeUuid(UUID uuid) throws TException;
 
   void writeDouble(double dub) throws TException;
 

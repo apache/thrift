@@ -371,7 +371,7 @@ public:
     ttype = get_true_type(ttype);
 
     return ttype->is_container() || ttype->is_struct() || ttype->is_xception() || ttype->is_string()
-           || ttype->is_enum();
+           || ttype->is_uuid() || ttype->is_enum();
   }
 
   bool is_deprecated(const std::map<std::string, std::string>& annotations) {
@@ -766,6 +766,9 @@ string t_java_generator::render_const_value(ostream& out, t_type* type, t_const_
       } else {
         render << '"' << get_escaped_string(value) << '"';
       }
+      break;
+    case t_base_type::TYPE_UUID:
+      render << "java.util.UUID.fromString(\"" << get_escaped_string(value) << "\")";
       break;
     case t_base_type::TYPE_BOOL:
       render << ((value->get_integer() > 0) ? "true" : "false");
@@ -1813,6 +1816,9 @@ void t_java_generator::generate_java_struct_parcelable(ostream& out, t_struct* t
         case t_base_type::TYPE_I16:
           indent(out) << "out.writeInt(new Short(" << name << ").intValue());" << endl;
           break;
+        case t_base_type::TYPE_UUID:
+          indent(out) << "out.writeUuid(" << name << ");" << endl;
+          break;
         case t_base_type::TYPE_I32:
           indent(out) << "out.writeInt(" << name << ");" << endl;
           break;
@@ -1910,6 +1916,9 @@ void t_java_generator::generate_java_struct_parcelable(ostream& out, t_struct* t
         scope_down(out);
       } else {
         switch (bt->get_base()) {
+        case t_base_type::TYPE_I8:
+          indent(out) << prefix << " = in.readByte();" << endl;
+          break;
         case t_base_type::TYPE_I16:
           indent(out) << prefix << " = (short) in.readInt();" << endl;
           break;
@@ -1919,11 +1928,11 @@ void t_java_generator::generate_java_struct_parcelable(ostream& out, t_struct* t
         case t_base_type::TYPE_I64:
           indent(out) << prefix << " = in.readLong();" << endl;
           break;
+        case t_base_type::TYPE_UUID:
+          indent(out) << prefix << " = in.readUuid();" << endl;
+          break;
         case t_base_type::TYPE_BOOL:
           indent(out) << prefix << " = (in.readInt()==1);" << endl;
-          break;
-        case t_base_type::TYPE_I8:
-          indent(out) << prefix << " = in.readByte();" << endl;
           break;
         case t_base_type::TYPE_DOUBLE:
           indent(out) << prefix << " = in.readDouble();" << endl;
@@ -2066,6 +2075,7 @@ void t_java_generator::generate_java_struct_equality(ostream& out, t_struct* tst
     } else if (t->is_base_type()) {
       switch (((t_base_type*)t)->get_base()) {
       case t_base_type::TYPE_STRING:
+      case t_base_type::TYPE_UUID:
         indent(out) << "hashCode = hashCode * " << MUL << " + " << name << ".hashCode();" << endl;
         break;
       case t_base_type::TYPE_BOOL:
@@ -2905,6 +2915,9 @@ std::string t_java_generator::get_java_type_string(t_type* type) {
       break;
     case t_base_type::TYPE_STRING:
       return "org.apache.thrift.protocol.TType.STRING";
+      break;
+    case t_base_type::TYPE_UUID:
+      return "org.apache.thrift.protocol.TType.UUID";
       break;
     case t_base_type::TYPE_BOOL:
       return "org.apache.thrift.protocol.TType.BOOL";
@@ -4082,6 +4095,9 @@ void t_java_generator::generate_deserialize_field(ostream& out,
     case t_base_type::TYPE_I64:
       out << "readI64();";
       break;
+    case t_base_type::TYPE_UUID:
+      out << "readUuid();";
+      break;
     case t_base_type::TYPE_DOUBLE:
       out << "readDouble();";
       break;
@@ -4392,6 +4408,9 @@ void t_java_generator::generate_serialize_field(ostream& out,
       case t_base_type::TYPE_I64:
         out << "writeI64(" << name << ");";
         break;
+      case t_base_type::TYPE_UUID:
+        out << "writeUuid(" << name << ");";
+        break;
       case t_base_type::TYPE_DOUBLE:
         out << "writeDouble(" << name << ");";
         break;
@@ -4614,6 +4633,8 @@ string t_java_generator::base_type_name(t_base_type* type, bool in_container) {
     } else {
       return "java.lang.String";
     }
+  case t_base_type::TYPE_UUID:
+    return "java.util.UUID";
   case t_base_type::TYPE_BOOL:
     return (in_container ? "java.lang.Boolean" : "boolean");
   case t_base_type::TYPE_I8:
@@ -4655,6 +4676,7 @@ string t_java_generator::declare_field(t_field* tfield, bool init, bool comment)
       case t_base_type::TYPE_VOID:
         throw "NO T_VOID CONSTRUCT";
       case t_base_type::TYPE_STRING:
+      case t_base_type::TYPE_UUID:
         result += " = null";
         break;
       case t_base_type::TYPE_BOOL:
@@ -4846,6 +4868,8 @@ string t_java_generator::type_to_enum(t_type* type) {
       return "org.apache.thrift.protocol.TType.I32";
     case t_base_type::TYPE_I64:
       return "org.apache.thrift.protocol.TType.I64";
+    case t_base_type::TYPE_UUID:
+      return "org.apache.thrift.protocol.TType.UUID";
     case t_base_type::TYPE_DOUBLE:
       return "org.apache.thrift.protocol.TType.DOUBLE";
     default:
@@ -5319,12 +5343,8 @@ void t_java_generator::generate_java_struct_clear(std::ostream& out, t_struct* t
   indent(out) << java_override_annotation() << endl;
   indent(out) << "public void clear() {" << endl;
 
-  const vector<t_field*>& members = tstruct->get_members();
-  vector<t_field*>::const_iterator m_iter;
-
   indent_up();
-  for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
-    t_field* field = *m_iter;
+  for (auto field : tstruct->get_members()) {
     t_type* t = get_true_type(field->get_type());
 
     if (field->get_value() != nullptr) {
@@ -5333,16 +5353,13 @@ void t_java_generator::generate_java_struct_clear(std::ostream& out, t_struct* t
     }
 
     if (type_can_be_null(t)) {
-
       if (reuse_objects_ && (t->is_container() || t->is_struct())) {
         indent(out) << "if (this." << field->get_name() << " != null) {" << endl;
         indent_up();
         indent(out) << "this." << field->get_name() << ".clear();" << endl;
         indent_down();
         indent(out) << "}" << endl;
-
       } else {
-
         indent(out) << "this." << field->get_name() << " = null;" << endl;
       }
       continue;

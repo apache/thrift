@@ -346,6 +346,8 @@ string t_kotlin_generator::base_type_name(t_base_type* type) {
     return "kotlin.Int";
   case t_base_type::TYPE_I64:
     return "kotlin.Long";
+  case t_base_type::TYPE_UUID:
+    return "java.util.UUID";
   case t_base_type::TYPE_DOUBLE:
     return "kotlin.Double";
   default:
@@ -1200,6 +1202,8 @@ string t_kotlin_generator::base_type_write_expression(t_base_type* tbase, string
     return "writeI32(" + it + ")";
   case t_base_type::TYPE_I64:
     return "writeI64(" + it + ")";
+  case t_base_type::TYPE_UUID:
+    return "writeUuid(" + it + ")";
   case t_base_type::TYPE_DOUBLE:
     return "writeDouble(" + it + ")";
   default:
@@ -1228,6 +1232,8 @@ string t_kotlin_generator::base_type_read_expression(t_base_type* tbase) {
     return "readI32()";
   case t_base_type::TYPE_I64:
     return "readI64()";
+  case t_base_type::TYPE_UUID:
+    return "readUuid()";
   case t_base_type::TYPE_DOUBLE:
     return "readDouble()";
   default:
@@ -1890,6 +1896,8 @@ string t_kotlin_generator::type_to_enum(t_type* type) {
       return "org.apache.thrift.protocol.TType.I32";
     case t_base_type::TYPE_I64:
       return "org.apache.thrift.protocol.TType.I64";
+    case t_base_type::TYPE_UUID:
+      return "org.apache.thrift.protocol.TType.UUID";
     case t_base_type::TYPE_DOUBLE:
       return "org.apache.thrift.protocol.TType.DOUBLE";
     default:
