@@ -51,6 +51,10 @@ struct Float {
   1: double val
 }
 
+struct Uuid {
+  1: uuid val
+}
+
 struct List {
   1: list<string> vals
 }

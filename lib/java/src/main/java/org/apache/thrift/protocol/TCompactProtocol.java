@@ -21,6 +21,7 @@ package org.apache.thrift.protocol;
 
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
+import java.util.UUID;
 import org.apache.thrift.TException;
 import org.apache.thrift.transport.TTransport;
 import org.apache.thrift.transport.TTransportException;
@@ -42,7 +43,7 @@ public class TCompactProtocol extends TProtocol {
   private static final TStruct ANONYMOUS_STRUCT = new TStruct("");
   private static final TField TSTOP = new TField("", TType.STOP, (short) 0);
 
-  private static final byte[] ttypeToCompactType = new byte[16];
+  private static final byte[] ttypeToCompactType = new byte[18];
 
   static {
     ttypeToCompactType[TType.STOP] = TType.STOP;
@@ -57,6 +58,7 @@ public class TCompactProtocol extends TProtocol {
     ttypeToCompactType[TType.SET] = Types.SET;
     ttypeToCompactType[TType.MAP] = Types.MAP;
     ttypeToCompactType[TType.STRUCT] = Types.STRUCT;
+    ttypeToCompactType[TType.UUID] = Types.UUID;
   }
 
   /** TProtocolFactory that produces TCompactProtocols. */
@@ -104,6 +106,7 @@ public class TCompactProtocol extends TProtocol {
     public static final byte SET = 0x0A;
     public static final byte MAP = 0x0B;
     public static final byte STRUCT = 0x0C;
+    public static final byte UUID = 0x0D;
   }
 
   /**
@@ -141,7 +144,7 @@ public class TCompactProtocol extends TProtocol {
   /**
    * Temporary buffer used for various operations that would otherwise require a small allocation.
    */
-  private final byte[] temp = new byte[10];
+  private final byte[] temp = new byte[16];
 
   /**
    * Create a TCompactProtocol.
@@ -336,6 +339,13 @@ public class TCompactProtocol extends TProtocol {
   public void writeDouble(double dub) throws TException {
     fixedLongToBytes(Double.doubleToLongBits(dub), temp, 0);
     trans_.write(temp, 0, 8);
+  }
+
+  @Override
+  public void writeUuid(UUID uuid) throws TException {
+    fixedLongToBytes(uuid.getLeastSignificantBits(), temp, 0);
+    fixedLongToBytes(uuid.getMostSignificantBits(), temp, 8);
+    trans_.write(temp, 0, 16);
   }
 
   /** Write a string to the wire with a varint size preceding. */
@@ -650,6 +660,14 @@ public class TCompactProtocol extends TProtocol {
     return Double.longBitsToDouble(bytesToLong(temp));
   }
 
+  @Override
+  public UUID readUuid() throws TException {
+    trans_.readAll(temp, 0, 16);
+    long mostSigBits = bytesToLong(temp, 8);
+    long leastSigBits = bytesToLong(temp, 0);
+    return new UUID(mostSigBits, leastSigBits);
+  }
+
   /** Reads a byte[] (via readBinary), and then UTF-8 decodes it. */
   @Override
   public String readString() throws TException {
@@ -825,14 +843,18 @@ public class TCompactProtocol extends TProtocol {
    * ints, and when you shift an int left 56 bits, you just get a messed up int.
    */
   private long bytesToLong(byte[] bytes) {
-    return ((bytes[7] & 0xffL) << 56)
-        | ((bytes[6] & 0xffL) << 48)
-        | ((bytes[5] & 0xffL) << 40)
-        | ((bytes[4] & 0xffL) << 32)
-        | ((bytes[3] & 0xffL) << 24)
-        | ((bytes[2] & 0xffL) << 16)
-        | ((bytes[1] & 0xffL) << 8)
-        | ((bytes[0] & 0xffL));
+    return bytesToLong(bytes, 0);
+  }
+
+  private long bytesToLong(byte[] bytes, int offset) {
+    return ((bytes[offset + 7] & 0xffL) << 56)
+        | ((bytes[offset + 6] & 0xffL) << 48)
+        | ((bytes[offset + 5] & 0xffL) << 40)
+        | ((bytes[offset + 4] & 0xffL) << 32)
+        | ((bytes[offset + 3] & 0xffL) << 24)
+        | ((bytes[offset + 2] & 0xffL) << 16)
+        | ((bytes[offset + 1] & 0xffL) << 8)
+        | ((bytes[offset + 0] & 0xffL));
   }
 
   //
@@ -860,6 +882,8 @@ public class TCompactProtocol extends TProtocol {
         return TType.I32;
       case Types.I64:
         return TType.I64;
+      case Types.UUID:
+        return TType.UUID;
       case Types.DOUBLE:
         return TType.DOUBLE;
       case Types.BINARY:

@@ -24,6 +24,7 @@ import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Stack;
+import java.util.UUID;
 import org.apache.thrift.TByteArrayOutputStream;
 import org.apache.thrift.TException;
 import org.apache.thrift.transport.TTransport;
@@ -87,6 +88,7 @@ public class TJSONProtocol extends TProtocol {
   private static final byte[] NAME_I16 = new byte[] {'i', '1', '6'};
   private static final byte[] NAME_I32 = new byte[] {'i', '3', '2'};
   private static final byte[] NAME_I64 = new byte[] {'i', '6', '4'};
+  private static final byte[] NAME_UUID = new byte[] {'u', 'i', 'd'};
   private static final byte[] NAME_DOUBLE = new byte[] {'d', 'b', 'l'};
   private static final byte[] NAME_STRUCT = new byte[] {'r', 'e', 'c'};
   private static final byte[] NAME_STRING = new byte[] {'s', 't', 'r'};
@@ -96,7 +98,7 @@ public class TJSONProtocol extends TProtocol {
 
   private static final TStruct ANONYMOUS_STRUCT = new TStruct();
 
-  private static final byte[] getTypeNameForTypeID(byte typeID) throws TException {
+  private static byte[] getTypeNameForTypeID(byte typeID) throws TException {
     switch (typeID) {
       case TType.BOOL:
         return NAME_BOOL;
@@ -108,6 +110,8 @@ public class TJSONProtocol extends TProtocol {
         return NAME_I32;
       case TType.I64:
         return NAME_I64;
+      case TType.UUID:
+        return NAME_UUID;
       case TType.DOUBLE:
         return NAME_DOUBLE;
       case TType.STRING:
@@ -125,7 +129,7 @@ public class TJSONProtocol extends TProtocol {
     }
   }
 
-  private static final byte getTypeIDForTypeName(byte[] name) throws TException {
+  private static byte getTypeIDForTypeName(byte[] name) throws TException {
     byte result = TType.STOP;
     if (name.length > 1) {
       switch (name[0]) {
@@ -163,6 +167,9 @@ public class TJSONProtocol extends TProtocol {
           } else if (name[1] == 'e') {
             result = TType.SET;
           }
+          break;
+        case 'u':
+          result = TType.UUID;
           break;
         case 't':
           result = TType.BOOL;
@@ -591,6 +598,11 @@ public class TJSONProtocol extends TProtocol {
   }
 
   @Override
+  public void writeUuid(UUID uuid) throws TException {
+    writeJSONString(uuid.toString().getBytes(StandardCharsets.UTF_8));
+  }
+
+  @Override
   public void writeDouble(double dub) throws TException {
     writeJSONDouble(dub);
   }
@@ -934,6 +946,11 @@ public class TJSONProtocol extends TProtocol {
   @Override
   public long readI64() throws TException {
     return readJSONInteger();
+  }
+
+  @Override
+  public UUID readUuid() throws TException {
+    return UUID.fromString(readString());
   }
 
   @Override

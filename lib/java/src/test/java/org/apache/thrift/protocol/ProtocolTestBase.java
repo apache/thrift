@@ -27,6 +27,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.apache.thrift.Fixtures;
@@ -126,6 +127,15 @@ public abstract class ProtocolTestBase {
   }
 
   @Test
+  public void testUuid() throws Exception {
+    UUID uuid = UUID.fromString("00112233-4455-6677-8899-aabbccddeeff");
+    if (canBeUsedNaked()) {
+      internalTestNakedUuid(uuid);
+    }
+    internalTestUuidField(uuid);
+  }
+
+  @Test
   public void testLong() throws Exception {
     if (canBeUsedNaked()) {
       internalTestNakedI64(0);
@@ -211,6 +221,28 @@ public abstract class ProtocolTestBase {
 
           public void readMethod(TProtocol proto) throws TException {
             assertEquals(n, proto.readI16());
+          }
+        });
+  }
+
+  private void internalTestNakedUuid(UUID uuid) throws TException {
+    TMemoryBuffer buf = new TMemoryBuffer(0);
+    TProtocol protocol = getFactory().getProtocol(buf);
+    protocol.writeUuid(uuid);
+    assertEquals(uuid, protocol.readUuid());
+  }
+
+  private void internalTestUuidField(UUID uuid) throws Exception {
+    internalTestStructField(
+        new StructFieldTestCase(TType.UUID, (short) 17) {
+          @Override
+          public void writeMethod(TProtocol proto) throws TException {
+            proto.writeUuid(uuid);
+          }
+
+          @Override
+          public void readMethod(TProtocol proto) throws TException {
+            assertEquals(uuid, proto.readUuid());
           }
         });
   }

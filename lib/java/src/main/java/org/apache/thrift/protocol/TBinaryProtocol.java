@@ -21,6 +21,7 @@ package org.apache.thrift.protocol;
 
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
+import java.util.UUID;
 import org.apache.thrift.TException;
 import org.apache.thrift.partial.TFieldData;
 import org.apache.thrift.transport.TTransport;
@@ -49,7 +50,7 @@ public class TBinaryProtocol extends TProtocol {
   protected boolean strictRead_;
   protected boolean strictWrite_;
 
-  private final byte[] inoutTemp = new byte[8];
+  private final byte[] inoutTemp = new byte[16];
 
   /** Factory */
   public static class Factory implements TProtocolFactory {
@@ -219,6 +220,33 @@ public class TBinaryProtocol extends TProtocol {
   }
 
   @Override
+  public void writeUuid(UUID uuid) throws TException {
+    {
+      long lsb = uuid.getLeastSignificantBits();
+      inoutTemp[0] = (byte) (0xff & (lsb >> 56));
+      inoutTemp[1] = (byte) (0xff & (lsb >> 48));
+      inoutTemp[2] = (byte) (0xff & (lsb >> 40));
+      inoutTemp[3] = (byte) (0xff & (lsb >> 32));
+      inoutTemp[4] = (byte) (0xff & (lsb >> 24));
+      inoutTemp[5] = (byte) (0xff & (lsb >> 16));
+      inoutTemp[6] = (byte) (0xff & (lsb >> 8));
+      inoutTemp[7] = (byte) (0xff & (lsb));
+    }
+    {
+      long msb = uuid.getMostSignificantBits();
+      inoutTemp[8] = (byte) (0xff & (msb >> 56));
+      inoutTemp[1 + 8] = (byte) (0xff & (msb >> 48));
+      inoutTemp[2 + 8] = (byte) (0xff & (msb >> 40));
+      inoutTemp[3 + 8] = (byte) (0xff & (msb >> 32));
+      inoutTemp[4 + 8] = (byte) (0xff & (msb >> 24));
+      inoutTemp[5 + 8] = (byte) (0xff & (msb >> 16));
+      inoutTemp[6 + 8] = (byte) (0xff & (msb >> 8));
+      inoutTemp[7 + 8] = (byte) (0xff & (msb));
+    }
+    trans_.write(inoutTemp, 0, 16);
+  }
+
+  @Override
   public void writeDouble(double dub) throws TException {
     writeI64(Double.doubleToLongBits(dub));
   }
@@ -385,6 +413,40 @@ public class TBinaryProtocol extends TProtocol {
         | ((long) (buf[off + 5] & 0xff) << 16)
         | ((long) (buf[off + 6] & 0xff) << 8)
         | ((long) (buf[off + 7] & 0xff));
+  }
+
+  @Override
+  public UUID readUuid() throws TException {
+    byte[] buf = inoutTemp;
+    int off = 0;
+
+    if (trans_.getBytesRemainingInBuffer() >= 16) {
+      buf = trans_.getBuffer();
+      off = trans_.getBufferPosition();
+      trans_.consumeBuffer(16);
+    } else {
+      readAll(inoutTemp, 0, 16);
+    }
+    long lsb =
+        ((long) (buf[off] & 0xff) << 56)
+            | ((long) (buf[off + 1] & 0xff) << 48)
+            | ((long) (buf[off + 2] & 0xff) << 40)
+            | ((long) (buf[off + 3] & 0xff) << 32)
+            | ((long) (buf[off + 4] & 0xff) << 24)
+            | ((long) (buf[off + 5] & 0xff) << 16)
+            | ((long) (buf[off + 6] & 0xff) << 8)
+            | ((long) (buf[off + 7] & 0xff));
+
+    long msb =
+        ((long) (buf[off + 8] & 0xff) << 56)
+            | ((long) (buf[off + 8 + 1] & 0xff) << 48)
+            | ((long) (buf[off + 8 + 2] & 0xff) << 40)
+            | ((long) (buf[off + 8 + 3] & 0xff) << 32)
+            | ((long) (buf[off + 8 + 4] & 0xff) << 24)
+            | ((long) (buf[off + 8 + 5] & 0xff) << 16)
+            | ((long) (buf[off + 8 + 6] & 0xff) << 8)
+            | ((long) (buf[off + 8 + 7] & 0xff));
+    return new UUID(msb, lsb);
   }
 
   @Override
