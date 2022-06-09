@@ -19,6 +19,8 @@
 package org.apache.thrift.test
 
 import java.nio.ByteBuffer
+import java.util.*
+import kotlin.collections.HashMap
 import kotlinx.coroutines.delay
 import org.apache.thrift.TException
 import org.slf4j.Logger
@@ -85,6 +87,11 @@ class TestHandler : ThriftTest {
         logger.info("testBinary($sb)\n")
         buffer.reset()
         return buffer.array()
+    }
+
+    override suspend fun testUuid(thing: UUID): UUID {
+        logger.info("testUuid($thing)\n")
+        return thing
     }
 
     override suspend fun testStruct(thing: Xtruct): Xtruct {
