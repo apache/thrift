@@ -20,6 +20,7 @@
 package org.apache.thrift.protocol;
 
 import java.nio.ByteBuffer;
+import java.util.UUID;
 import org.apache.thrift.TException;
 
 /**
@@ -59,6 +60,16 @@ public abstract class TProtocolDecorator extends TProtocol {
   @Override
   public void writeStructBegin(TStruct tStruct) throws TException {
     concreteProtocol.writeStructBegin(tStruct);
+  }
+
+  @Override
+  public UUID readUuid() throws TException {
+    return concreteProtocol.readUuid();
+  }
+
+  @Override
+  public void writeUuid(UUID uuid) throws TException {
+    concreteProtocol.writeUuid(uuid);
   }
 
   @Override

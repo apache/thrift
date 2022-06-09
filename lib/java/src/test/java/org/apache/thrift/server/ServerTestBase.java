@@ -29,6 +29,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 import org.apache.thrift.TException;
 import org.apache.thrift.TProcessor;
 import org.apache.thrift.async.AsyncMethodCallback;
@@ -111,6 +112,12 @@ public abstract class ServerTestBase {
       }
       System.out.print("testBinary(" + sb + ")\n");
       thing.reset();
+      return thing;
+    }
+
+    @Override
+    public UUID testUuid(UUID thing) throws TException {
+      System.out.println("testUuid(" + thing + ")");
       return thing;
     }
 
@@ -672,6 +679,11 @@ public abstract class ServerTestBase {
     public void testBinary(ByteBuffer thing, AsyncMethodCallback<ByteBuffer> resultHandler)
         throws TException {
       resultHandler.onComplete(handler.testBinary(thing));
+    }
+
+    @Override
+    public void testUuid(UUID thing, AsyncMethodCallback<UUID> resultHandler) throws TException {
+      resultHandler.onComplete(handler.testUuid(thing));
     }
 
     @Override

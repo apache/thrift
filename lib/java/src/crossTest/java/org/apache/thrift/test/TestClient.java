@@ -27,6 +27,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 import java.util.stream.IntStream;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.thrift.TApplicationException;
@@ -247,6 +248,15 @@ public class TestClient {
         String s = testClient.testString("Test");
         System.out.print(" = \"" + s + "\"\n");
         if (!s.equals("Test")) {
+          returnCode |= ERR_BASETYPES;
+          System.out.println("*** FAILURE ***\n");
+        }
+
+        /** UUID TEST */
+        System.out.println("testUuid(\"00112233-4455-6677-8899-aabbccddeeff\")");
+        UUID uuid = testClient.testUuid(UUID.fromString("00112233-4455-6677-8899-aabbccddeeff"));
+        System.out.print(" = \"" + uuid + "\"\n");
+        if (!uuid.equals(UUID.fromString("00112233-4455-6677-8899-aabbccddeeff"))) {
           returnCode |= ERR_BASETYPES;
           System.out.println("*** FAILURE ***\n");
         }

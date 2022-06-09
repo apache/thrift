@@ -86,6 +86,10 @@ public class TProtocolUtil {
         prot.readI64();
         break;
 
+      case TType.UUID:
+        prot.readUuid();
+        break;
+
       case TType.DOUBLE:
         prot.readDouble();
         break;
