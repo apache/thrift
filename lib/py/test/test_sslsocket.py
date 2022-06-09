@@ -158,7 +158,9 @@ class TSSLSocketTest(unittest.TestCase):
     def _assert_connection_success(self, server, path=None, **client_args):
         with self._connectable_client(server, path=path, **client_args) as (acc, client):
             try:
+                self.assertFalse(client.isOpen())
                 client.open()
+                self.assertTrue(client.isOpen())
                 client.write(b"hello")
                 self.assertEqual(client.read(5), b"there")
                 self.assertTrue(acc.client is not None)
