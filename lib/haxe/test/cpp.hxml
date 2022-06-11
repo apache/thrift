@@ -25,6 +25,11 @@
 #this class wil be used as entry point for your app.
 -main Main
 
+# forced compile of all source files
+--macro include('org.apache.thrift', true)
+--macro include('thrift', true)
+--macro include('constantsDemo', true)
+
 #CPP target
 -cpp bin
 

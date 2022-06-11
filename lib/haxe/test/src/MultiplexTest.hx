@@ -48,7 +48,7 @@ class BenchmarkServiceHandler implements BenchmarkService_service
     public function new() {
     }
 
-	public function fibonacci(n : haxe.Int32) : haxe.Int32 {
+    public function fibonacci(n : haxe.Int32) : haxe.Int32 {
         trace('Benchmark.fibonacci($n)');
         var next : Int;
         var prev   = 0;
@@ -60,7 +60,7 @@ class BenchmarkServiceHandler implements BenchmarkService_service
             result = next;
             --n;
         }
-		return result;
+        return result;
     }
 }
 

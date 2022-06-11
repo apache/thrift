@@ -48,7 +48,7 @@ class StreamTest extends TestBase {
 
     public static function WriteData() : Xtruct
     {
-		var config : TConfiguration = new TConfiguration();
+        var config : TConfiguration = new TConfiguration();
         var stream : TStream = new TFileStream( tmpfile, CreateNew);
         var trans : TTransport = new TStreamTransport( null, stream, config);
         var prot = new TJSONProtocol( trans);
@@ -62,7 +62,7 @@ class StreamTest extends TestBase {
 
     public static function ReadData() : Xtruct
     {
-		var config : TConfiguration = new TConfiguration();
+        var config : TConfiguration = new TConfiguration();
         var stream : TStream = new TFileStream( tmpfile, Read);
         var trans : TTransport = new TStreamTransport( stream, null, config);
         var prot = new TJSONProtocol( trans);
