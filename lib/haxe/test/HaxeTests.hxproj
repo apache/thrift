@@ -26,7 +26,7 @@
     <option noInlineOnDebug="False" />
     <option mainClass="Main" />
     <option enabledebug="False" />
-    <option additional="--macro include('org.apache.thrift', true)&#xA;--macro include('thrift', true)" />
+    <option additional="--macro include('org.apache.thrift', true)&#xA;--macro include('thrift', true)&#xA;--macro include('constantsDemo', true)" />
   </build>
   <!-- haxelib libraries -->
   <haxelib>
@@ -54,6 +54,7 @@
   </hiddenPaths>
   <!-- Executed before build -->
   <preBuildCommand>thrift -r -gen haxe  ../../../test/ThriftTest.thrift
+thrift -r -gen haxe  ../../../test/ConstantsDemo.thrift
 thrift -r -gen haxe  ../../../contrib/async-test/aggr.thrift
 thrift -r -gen haxe  ../../../lib/rb/benchmark/Benchmark.thrift</preBuildCommand>
   <!-- Executed after build -->
