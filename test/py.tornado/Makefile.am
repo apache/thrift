@@ -19,8 +19,8 @@
 
 THRIFT = $(top_srcdir)/compiler/cpp/thrift
 
-thrift_gen: ../ThriftTest.thrift ../SmallTest.thrift
-	$(THRIFT) --gen py:tornado ../ThriftTest.thrift
+thrift_gen: ../v0.16/ThriftTest.thrift ../SmallTest.thrift
+	$(THRIFT) --gen py:tornado ../v0.16/ThriftTest.thrift
 	$(THRIFT) --gen py:tornado ../SmallTest.thrift
 
 check: thrift_gen

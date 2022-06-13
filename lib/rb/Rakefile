@@ -65,7 +65,7 @@ namespace :'gen-rb' do
   
   task :'debug_proto' do
     sh "mkdir", "-p", "test/debug_proto"
-    sh THRIFT, '--gen', 'rb', "-o", "test/debug_proto", "../../test/DebugProtoTest.thrift"
+    sh THRIFT, '--gen', 'rb', "-o", "test/debug_proto", "../../test/v0.16/DebugProtoTest.thrift"
   end
 end
 

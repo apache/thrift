@@ -87,7 +87,7 @@ SUBDIRS += php
 endif
 
 #
-# generate html for ThriftTest.thrift
+# generate html for tutorial.thrift
 #
 all-local:
 	$(top_builddir)/compiler/cpp/thrift --gen html -r $(top_srcdir)/tutorial/tutorial.thrift

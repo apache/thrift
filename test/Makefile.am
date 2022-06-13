@@ -139,6 +139,7 @@ EXTRA_DIST = \
 	BrokenConstants.thrift \
 	ConstantsDemo.thrift \
 	DebugProtoTest.thrift \
+	v0.16/DebugProtoTest.thrift \
 	DenseLinkingTest.thrift \
 	DocTest.thrift \
 	DoubleConstantsTest.thrift \
@@ -158,6 +159,7 @@ EXTRA_DIST = \
 	SmallTest.thrift \
 	StressTest.thrift \
 	ThriftTest.thrift \
+	v0.16/ThriftTest.thrift \
 	TypedefTest.thrift \
 	Types.thrift \
 	UnsafeTypes.thrift \

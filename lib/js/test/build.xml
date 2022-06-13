@@ -162,10 +162,10 @@
 
   <target name="generate">
     <exec executable="${thrift.compiler}" failonerror="true">
-      <arg line="--gen java ${thrift.dir}/test/ThriftTest.thrift" />
+      <arg line="--gen java ${thrift.dir}/test/v0.16/ThriftTest.thrift" />
     </exec>
     <exec executable="${thrift.compiler}" failonerror="true">
-      <arg line="--gen js:jquery ${thrift.dir}/test/ThriftTest.thrift" />
+      <arg line="--gen js:jquery ${thrift.dir}/test/v0.16/ThriftTest.thrift" />
     </exec>
     <exec executable="${thrift.compiler}" failonerror="true">
       <arg line="--gen js:jquery ${thrift.dir}/test/DoubleConstantsTest.thrift" />

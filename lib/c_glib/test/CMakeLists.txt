@@ -197,7 +197,7 @@ add_custom_command(OUTPUT
     gen-c_glib/t_test_service_for_exception_with_a_map.h
     gen-c_glib/t_test_srv.c
     gen-c_glib/t_test_srv.h
-    COMMAND ${THRIFT_COMPILER} --gen c_glib ${PROJECT_SOURCE_DIR}/test/DebugProtoTest.thrift
+    COMMAND ${THRIFT_COMPILER} --gen c_glib ${PROJECT_SOURCE_DIR}/test/v0.16/DebugProtoTest.thrift
 )
 
 add_custom_command(OUTPUT
@@ -221,7 +221,7 @@ add_custom_command(OUTPUT
     gen-c_glib/t_test_second_service.h
     gen-c_glib/t_test_thrift_test.h
     gen-c_glib/t_test_thrift_test_types.h
-    COMMAND ${THRIFT_COMPILER} --gen c_glib ${PROJECT_SOURCE_DIR}/test/ThriftTest.thrift
+    COMMAND ${THRIFT_COMPILER} --gen c_glib ${PROJECT_SOURCE_DIR}/test/v0.16/ThriftTest.thrift
 )
 
 add_custom_command(OUTPUT
@@ -231,7 +231,7 @@ add_custom_command(OUTPUT
     gen-cpp/ThriftTest.h
     gen-cpp/ThriftTest_constants.h
     gen-cpp/ThriftTest_types.h
-    COMMAND ${THRIFT_COMPILER} --gen cpp ${PROJECT_SOURCE_DIR}/test/ThriftTest.thrift
+    COMMAND ${THRIFT_COMPILER} --gen cpp ${PROJECT_SOURCE_DIR}/test/v0.16/ThriftTest.thrift
 )
 
 # TODO: Add memory checks using ctest_memcheck or similar
