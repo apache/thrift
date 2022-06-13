@@ -17,8 +17,8 @@
 # under the License.
 #
 
-gen-dart/thrift_test/lib/thrift_test.dart: ../ThriftTest.thrift
-	$(THRIFT) --gen dart ../ThriftTest.thrift
+gen-dart/thrift_test/lib/thrift_test.dart: ../v0.16/ThriftTest.thrift
+	$(THRIFT) --gen dart ../v0.16/ThriftTest.thrift
 
 pub-get-gen: gen-dart/thrift_test/lib/thrift_test.dart
 	cd gen-dart/thrift_test; ${DARTPUB} get

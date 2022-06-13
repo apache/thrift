@@ -17,11 +17,11 @@
 # under the License.
 #
 
-stubs: ../ThriftTest.thrift
-	$(THRIFT) --gen php ../ThriftTest.thrift
-	$(THRIFT) --gen php:inlined ../ThriftTest.thrift
+stubs: ../v0.16/ThriftTest.thrift
+	$(THRIFT) --gen php ../v0.16/ThriftTest.thrift
+	$(THRIFT) --gen php:inlined ../v0.16/ThriftTest.thrift
 	$(MKDIR_P) gen-php-classmap
-	$(THRIFT) -out gen-php-classmap --gen php:classmap ../ThriftTest.thrift
+	$(THRIFT) -out gen-php-classmap --gen php:classmap ../v0.16/ThriftTest.thrift
 
 php_ext_dir:
 	mkdir -p php_ext_dir

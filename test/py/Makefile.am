@@ -71,35 +71,51 @@ TESTS= $(py_unit_tests)
 
 
 gen-py/%/__init__.py: ../%.thrift $(THRIFT)
-	$(THRIFT) --gen py  $<
+	test -f ../v0.16/$(notdir $<) \
+	&& $(THRIFT) --gen py  ../v0.16/$(notdir $<) \
+	|| $(THRIFT) --gen py  $<
 
 gen-py-default/%/__init__.py: ../%.thrift $(THRIFT)
 	test -d gen-py-default || $(MKDIR_P) gen-py-default
-	$(THRIFT) --gen py -out gen-py-default $<
+	test -f ../v0.16/$(notdir $<) \
+	&& $(THRIFT) --gen py -out gen-py-default ../v0.16/$(notdir $<) \
+	|| $(THRIFT) --gen py -out gen-py-default $<
 
 gen-py-slots/%/__init__.py: ../%.thrift $(THRIFT)
 	test -d gen-py-slots || $(MKDIR_P) gen-py-slots
-	$(THRIFT) --gen py:slots -out gen-py-slots $<
+	test ../v0.16/$(notdir $<) \
+	&& $(THRIFT) --gen py:slots -out gen-py-slots ../v0.16/$(notdir $<) \
+	|| $(THRIFT) --gen py:slots -out gen-py-slots $<
 
 gen-py-oldstyle/%/__init__.py: ../%.thrift $(THRIFT)
 	test -d gen-py-oldstyle || $(MKDIR_P) gen-py-oldstyle
-	$(THRIFT) --gen py:old_style -out gen-py-oldstyle $<
+	test ../v0.16/$(notdir $<) \
+	&& $(THRIFT) --gen py:old_style -out gen-py-oldstyle ../v0.16/$(notdir $<) \
+	|| $(THRIFT) --gen py:old_style -out gen-py-oldstyle $<
 
 gen-py-no_utf8strings/%/__init__.py: ../%.thrift $(THRIFT)
 	test -d gen-py-no_utf8strings || $(MKDIR_P) gen-py-no_utf8strings
-	$(THRIFT) --gen py:no_utf8strings -out gen-py-no_utf8strings $<
+	test ../v0.16/$(notdir $<) \
+	&& $(THRIFT) --gen py:no_utf8strings -out gen-py-no_utf8strings ../v0.16/$(notdir $<) \
+	|| $(THRIFT) --gen py:no_utf8strings -out gen-py-no_utf8strings $<
 
 gen-py-dynamic/%/__init__.py: ../%.thrift $(THRIFT)
 	test -d gen-py-dynamic || $(MKDIR_P) gen-py-dynamic
-	$(THRIFT) --gen py:dynamic -out gen-py-dynamic $<
+	test ../v0.16/$(notdir $<) \
+	&& $(THRIFT) --gen py:dynamic -out gen-py-dynamic ../v0.16/$(notdir $<) \
+	|| $(THRIFT) --gen py:dynamic -out gen-py-dynamic $<
 
 gen-py-dynamicslots/%/__init__.py: ../%.thrift $(THRIFT)
 	test -d gen-py-dynamicslots || $(MKDIR_P) gen-py-dynamicslots
-	$(THRIFT) --gen py:dynamic,slots -out gen-py-dynamicslots $<
+	test ../v0.16/$(notdir $<) \
+	&& $(THRIFT) --gen py:dynamic,slots -out gen-py-dynamicslots ../v0.16/$(notdir $<) \
+	|| $(THRIFT) --gen py:dynamic,slots -out gen-py-dynamicslots $<
 
 gen-py-enum/%/__init__.py: ../%.thrift $(THRIFT)
 	test -d gen-py-enum || $(MKDIR_P) gen-py-enum
-	$(THRIFT) --gen py:enum -out gen-py-enum $<
+	test ../v0.16/$(notdir $<) \
+	&& $(THRIFT) --gen py:enum -out gen-py-enum ../v0.16/$(notdir $<) \
+	|| $(THRIFT) --gen py:enum -out gen-py-enum $<
 
 clean-local:
 	$(RM) -r build
