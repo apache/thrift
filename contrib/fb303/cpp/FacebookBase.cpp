@@ -47,74 +47,70 @@ void FacebookBase::getOptions(std::map<std::string, std::string> & _return) {
 }
 
 int64_t FacebookBase::incrementCounter(const std::string& key, int64_t amount) {
-  counters_.acquireRead();
+  counters_.lock();
 
   // if we didn't find the key, we need to write lock the whole map to create it
   ReadWriteCounterMap::iterator it = counters_.find(key);
   if (it == counters_.end()) {
-    counters_.release();
-    counters_.acquireWrite();
 
     // we need to check again to make sure someone didn't create this key
     // already while we released the lock
     it = counters_.find(key);
     if(it == counters_.end()){
       counters_[key].value = amount;
-      counters_.release();
+      counters_.unlock();
       return amount;
     }
   }
 
-  it->second.acquireWrite();
+  it->second.lock();
   int64_t count = it->second.value + amount;
   it->second.value = count;
-  it->second.release();
-  counters_.release();
+  it->second.unlock();
+  counters_.unlock();
   return count;
 }
 
 int64_t FacebookBase::setCounter(const std::string& key, int64_t value) {
-  counters_.acquireRead();
+  counters_.lock();
 
   // if we didn't find the key, we need to write lock the whole map to create it
   ReadWriteCounterMap::iterator it = counters_.find(key);
   if (it == counters_.end()) {
-    counters_.release();
-    counters_.acquireWrite();
     counters_[key].value = value;
-    counters_.release();
+    counters_.unlock();
     return value;
   }
 
-  it->second.acquireWrite();
+  it->second.lock();
   it->second.value = value;
-  it->second.release();
-  counters_.release();
+  it->second.unlock();
+  counters_.unlock();
   return value;
 }
 
 void FacebookBase::getCounters(std::map<std::string, int64_t>& _return) {
   // we need to lock the whole thing and actually build the map since we don't
   // want our read/write structure to go over the wire
-  counters_.acquireRead();
+  counters_.lock();
   for(ReadWriteCounterMap::iterator it = counters_.begin();
       it != counters_.end(); ++it)
   {
     _return[it->first] = it->second.value;
   }
-  counters_.release();
+  counters_.unlock();
 }
 
 int64_t FacebookBase::getCounter(const std::string& key) {
   int64_t rv = 0;
-  counters_.acquireRead();
+  counters_.lock();
   ReadWriteCounterMap::iterator it = counters_.find(key);
   if (it != counters_.end()) {
-    it->second.acquireRead();
+    it->second.lock();
     rv = it->second.value;
-    it->second.release();
+    it->second.unlock();
   }
-  counters_.release();
+  counters_.unlock();
   return rv;
 }
 
