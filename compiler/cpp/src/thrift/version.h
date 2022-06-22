@@ -24,6 +24,6 @@
 #pragma once
 #endif // _MSC_VER
 
-#define THRIFT_VERSION "0.16.0"
+#define THRIFT_VERSION "0.16.0.lumilabs"
 
 #endif // _THRIFT_VERSION_H_
