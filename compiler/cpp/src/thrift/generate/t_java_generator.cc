@@ -306,6 +306,7 @@ public:
 
   enum isset_type { ISSET_NONE, ISSET_PRIMITIVE, ISSET_BITSET };
   isset_type needs_isset(t_struct* tstruct, std::string* outPrimitiveType = nullptr);
+  long bit_vector_value(std::string* outPrimitiveType = nullptr);
 
   /**
    * Helper rendering functions
@@ -1519,7 +1520,7 @@ void t_java_generator::generate_java_struct_definition(ostream& out,
     case ISSET_NONE:
       break;
     case ISSET_PRIMITIVE:
-      indent(out) << "private " << primitiveType << " __isset_bitfield = 0;" << endl;
+      indent(out) << "private " << primitiveType << " __isset_bitfield = " << bit_vector_value(&primitiveType) << ";" << endl;
       break;
     case ISSET_BITSET:
       indent(out) << "private java.util.BitSet __isset_bit_vector = new java.util.BitSet(" << i << ");" << endl;
@@ -1909,6 +1910,7 @@ void t_java_generator::generate_java_struct_parcelable(ostream& out, t_struct* t
  * @param tstruct The struct definition
  */
 void t_java_generator::generate_java_struct_equality(ostream& out, t_struct* tstruct) {
+  const char prefix_to_ignore = '_';
   out << indent() << "@Override" << endl << indent() << "public boolean equals(java.lang.Object that) {"
       << endl;
   indent_up();
@@ -1926,14 +1928,16 @@ void t_java_generator::generate_java_struct_equality(ostream& out, t_struct* tst
   const vector<t_field*>& members = tstruct->get_members();
   vector<t_field*>::const_iterator m_iter;
   for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
-    out << endl;
-
     t_type* t = get_true_type((*m_iter)->get_type());
     // Most existing Thrift code does not use isset or optional/required,
     // so we treat "default" fields as required.
     bool is_optional = (*m_iter)->get_req() == t_field::T_OPTIONAL;
     bool can_be_null = type_can_be_null(t);
     string name = (*m_iter)->get_name();
+    if ((name.length() > 0) && (name[0] == prefix_to_ignore)) {
+      continue;
+    }
+    out << endl;
 
     string this_present = "true";
     string that_present = "true";
@@ -1978,12 +1982,14 @@ void t_java_generator::generate_java_struct_equality(ostream& out, t_struct* tst
   indent(out) << "int hashCode = 1;" << endl;
 
   for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
-    out << endl;
-
     t_type* t = get_true_type((*m_iter)->get_type());
     bool is_optional = (*m_iter)->get_req() == t_field::T_OPTIONAL;
     bool can_be_null = type_can_be_null(t);
     string name = (*m_iter)->get_name();
+    if ((name.length() > 0) && (name[0] == prefix_to_ignore)) {
+      continue;
+    }
+    out << endl;
 
     if (is_optional || can_be_null) {
       indent(out) << "hashCode = hashCode * " << MUL << " + ((" << generate_isset_check(*m_iter)
@@ -2130,6 +2136,29 @@ void t_java_generator::generate_java_validator(ostream& out, t_struct* tstruct) 
     if (type->is_struct() && !((t_struct*)type)->is_union()) {
       out << indent() << "if (" << (*f_iter)->get_name() << " != null) {" << endl;
       out << indent() << "  " << (*f_iter)->get_name() << ".validate();" << endl;
+      out << indent() << "}" << endl;
+    }
+    if(type->is_set() && ((t_set*)type)->get_elem_type()->is_struct()) {
+      out << indent() << "if (" << (*f_iter)->get_name() << " != null) {" << endl;
+      out << indent() << "  for (" << type_name(((t_set*)type)->get_elem_type()) << " setElement : " << (*f_iter)->get_name() << ") {" << endl;
+      out << indent() << "    " << "setElement.validate();" << endl;
+      out << indent() << "  }" << endl;
+      out << indent() << "}" << endl;
+    }
+
+    if(type->is_list() && ((t_list*)type)->get_elem_type()->is_struct()) {
+      out << indent() << "if (" << (*f_iter)->get_name() << " != null) {" << endl;
+      out << indent() << "  for (" << type_name(((t_list*)type)->get_elem_type()) << " listElement : " << (*f_iter)->get_name() << ") {" << endl;
+      out << indent() << "    " << "listElement.validate();" << endl;
+      out << indent() << "  }" << endl;
+      out << indent() << "}" << endl;
+    }
+
+    if(type->is_map() && ((t_map*)type)->get_val_type()->is_struct()) {
+      out << indent() << "if (" << (*f_iter)->get_name() << " != null) {" << endl;
+      out << indent() << "  for (" << type_name(((t_map*)type)->get_val_type()) << " mapElement : " << (*f_iter)->get_name() << ".values()) {" << endl;
+      out << indent() << "    " << "mapElement.validate();" << endl;
+      out << indent() << "  }" << endl;
       out << indent() << "}" << endl;
     }
   }
@@ -2313,17 +2342,17 @@ void t_java_generator::generate_java_bean_boilerplate(ostream& out, t_struct* ts
         if (is_deprecated) {
           indent(out) << "@Deprecated" << endl;
         }
-        indent(out) << "public org.apache.thrift.Option<Integer> get" << cap_name;
+        indent(out) << "public scala.Option<Integer> get" << cap_name;
         out << get_cap_name("size() {") << endl;
 
         indent_up();
         indent(out) << "if (this." << field_name << " == null) {" << endl;
         indent_up();
-        indent(out) << "return org.apache.thrift.Option.none();" << endl;
+        indent(out) << "return scala.Option.empty();" << endl;
         indent_down();
         indent(out) << "} else {" << endl;
         indent_up();
-        indent(out) << "return org.apache.thrift.Option.some(this." << field_name << ".size());" << endl;
+        indent(out) << "return scala.Option.apply(this." << field_name << ".size());" << endl;
         indent_down();
         indent(out) << "}" << endl;
         indent_down();
@@ -2356,18 +2385,18 @@ void t_java_generator::generate_java_bean_boilerplate(ostream& out, t_struct* ts
         if (is_deprecated) {
           indent(out) << "@Deprecated" << endl;
         }
-        indent(out) << "public org.apache.thrift.Option<java.util.Iterator<" << type_name(element_type, true, false)
+        indent(out) << "public scala.Option<java.util.Iterator<" << type_name(element_type, true, false)
                     << ">> get" << cap_name;
         out << get_cap_name("iterator() {") << endl;
 
         indent_up();
         indent(out) << "if (this." << field_name << " == null) {" << endl;
         indent_up();
-        indent(out) << "return org.apache.thrift.Option.none();" << endl;
+        indent(out) << "return scala.Option.empty();" << endl;
         indent_down();
         indent(out) << "} else {" << endl;
         indent_up();
-        indent(out) << "return org.apache.thrift.Option.some(this." << field_name << ".iterator());" << endl;
+        indent(out) << "return scala.Option.apply(this." << field_name << ".iterator());" << endl;
         indent_down();
         indent(out) << "}" << endl;
         indent_down();
@@ -2392,7 +2421,13 @@ void t_java_generator::generate_java_bean_boilerplate(ostream& out, t_struct* ts
       if (is_deprecated) {
         indent(out) << "@Deprecated" << endl;
       }
-      indent(out) << "public void add" << get_cap_name("to");
+      indent(out) << "public ";
+      if (bean_style_) {
+        out << "void";
+      } else {
+        out << type_name(tstruct);
+      }
+      out << " add" << get_cap_name("to");
       out << cap_name << "(" << type_name(element_type) << " elem) {" << endl;
 
       indent_up();
@@ -2406,7 +2441,23 @@ void t_java_generator::generate_java_bean_boilerplate(ostream& out, t_struct* ts
       }
       indent_down();
       indent(out) << "}" << endl;
+      indent(out) << "try {" << endl;
+      indent_up();
       indent(out) << "this." << field_name << ".add(elem);" << endl;
+      indent_down();
+      indent(out) << "} catch (UnsupportedOperationException e) {" << endl;
+      indent_up();
+      if (is_enum_set(type)) {
+        indent(out) << type_name(type, false, true) << " temp = " << type_name(type, false, true, true) << ".noneOf(" << inner_enum_type_name(type) << ");" << endl;
+      } else {
+        indent(out) << type_name(type, false, true) << " temp = new " << type_name(type, false, true) << "();" << endl;
+      }
+      indent(out) << "temp.addAll(this." << field_name << ");" << endl;
+      indent(out) << "this." << field_name << " = temp;" << endl;
+      indent(out) << "this." << field_name << ".add(elem);" << endl;
+      indent_down();
+      indent(out) << "}" << endl;
+      indent(out) << "return this;" << endl;
       indent_down();
       indent(out) << "}" << endl << endl;
     } else if (type->is_map()) {
@@ -2465,7 +2516,7 @@ void t_java_generator::generate_java_bean_boilerplate(ostream& out, t_struct* ts
         if (is_deprecated) {
           indent(out) << "@Deprecated" << endl;
         }
-        indent(out) << "public org.apache.thrift.Option<" << type_name(type, true) << ">";
+        indent(out) << "public scala.Option<" << type_name(type, true) << ">";
         if (type->is_base_type() && ((t_base_type*)type)->get_base() == t_base_type::TYPE_BOOL) {
           out << " is";
         } else {
@@ -2476,11 +2527,11 @@ void t_java_generator::generate_java_bean_boilerplate(ostream& out, t_struct* ts
 
         indent(out) << "if (this.isSet" << cap_name << "()) {" << endl;
         indent_up();
-        indent(out) << "return org.apache.thrift.Option.some(this." << field_name << ");" << endl;
+        indent(out) << "return scala.Option.apply(this." << field_name << ");" << endl;
         indent_down();
         indent(out) << "} else {" << endl;
         indent_up();
-        indent(out) << "return org.apache.thrift.Option.none();" << endl;
+        indent(out) << "return scala.Option.empty();" << endl;
         indent_down();
         indent(out) << "}" << endl;
         indent_down();
@@ -2558,6 +2609,40 @@ void t_java_generator::generate_java_bean_boilerplate(ostream& out, t_struct* ts
 
     indent_down();
     indent(out) << "}" << endl << endl;
+
+    if(type_can_be_null(type) && optional) {
+      // Setter with Option
+      if (is_deprecated) {
+	indent(out) << "@Deprecated" << endl;
+      }
+      indent(out) << "public ";
+      if (bean_style_) {
+	out << "void";
+      } else {
+	out << type_name(tstruct);
+      }
+      out << " set" << cap_name << "(" << "scala.Option<"
+	  << type_name(type) << "> " << field_name << "Opt) {" << endl;
+      indent_up();
+      indent(out) << "if(" << field_name << "Opt.isDefined()) {" << endl;
+      indent_up();
+      indent(out) << "this." << field_name << " = ";
+      if (type->is_binary() && !unsafe_binaries_) {
+	out << "org.apache.thrift.TBaseHelper.copyBinary(" << field_name << ")";
+      } else {
+	out << field_name << "Opt.get()";
+      }
+      out << ";" << endl;
+      indent_down();
+      indent(out) << "}" << endl;
+      generate_isset_set(out, field, "");
+      if (!bean_style_) {
+	indent(out) << "return this;" << endl;
+      }
+
+      indent_down();
+      indent(out) << "}" << endl << endl;
+    }
 
     // Unsetter
     if (is_deprecated) {
@@ -5011,6 +5096,15 @@ t_java_generator::isset_type t_java_generator::needs_isset(t_struct* tstruct,
   } else {
     return ISSET_BITSET;
   }
+}
+
+long t_java_generator::bit_vector_value(std::string* outPrimitiveType) {
+  if (outPrimitiveType->compare("byte") == 0)
+    return -1;        // java byte is stored as 2's compliment
+  else if (outPrimitiveType->compare("short") == 0)
+    return -32767;      // 2^16 - 1
+  else
+    return -2147483647; // 2^32 - 1
 }
 
 void t_java_generator::generate_java_struct_clear(std::ostream& out, t_struct* tstruct) {
