@@ -274,8 +274,8 @@ mod tests {
         ) -> crate::Result<()> {
             let res = self
                 .invoked
-                .compare_and_swap(false, true, Ordering::Relaxed);
-            if res {
+                .compare_exchange(false, true, Ordering::Relaxed, Ordering::Relaxed);
+            if res.is_ok() {
                 Ok(())
             } else {
                 Err("failed swap".into())
