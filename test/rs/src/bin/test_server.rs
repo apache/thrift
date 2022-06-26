@@ -254,7 +254,7 @@ impl ThriftTestSyncHandler for ThriftTestSyncHandlerImpl {
         info!("testMapMap({})", hello);
 
         let mut inner_map_0: BTreeMap<i32, i32> = BTreeMap::new();
-        for i in -4..0 {
+        for i in -4..0_i32 {
             inner_map_0.insert(i, i);
         }
 
