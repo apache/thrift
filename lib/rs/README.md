@@ -40,7 +40,7 @@ Full [Rustdoc](https://docs.rs/thrift/)
 ## Compatibility
 
 The Rust library and auto-generated code targets Rust versions 1.28+.
-It does not currently use any Rust 2018 features.
+It does not currently use any Rust 2021 features.
 
 ### Breaking Changes
 
@@ -136,7 +136,7 @@ Breaking changes are minimized. When they are made they will be outlined below w
 
   As a result of this change the Rust representation of an enum changes from a standard
   Rust enum into a newtype struct with associated constants.
-  
+
   For example:
 
   ```thrift
@@ -150,7 +150,7 @@ Breaking changes are minimized. When they are made they will be outlined below w
   ```
 
   used to generate:
-  
+
   ```rust
     // OLD AUTO-GENERATED RUST
     pub enum Operation {
@@ -162,11 +162,11 @@ Breaking changes are minimized. When they are made they will be outlined below w
   ```
 
   It *now* generates:
-  
+
   ```rust
     // NEW AUTO-GENERATED RUST
     pub struct Operation(pub i32);
-  
+
     impl Operation {
       pub const ADD: Operation = Operation(0);
       pub const SUBTRACT: Operation = Operation(1);
@@ -177,19 +177,19 @@ Breaking changes are minimized. When they are made they will be outlined below w
 
 ##### Thrift 0.14.0
 
-* **[THRIFT-5158]** - Rust library and generator now support Rust 2018 only. Required rust 1.40.0 or higher
+* **[THRIFT-5158]** - Rust library and generator now support Rust 2021 only. Required rust 1.61.0 or higher
 
-    The Rust `thrift` library was updated to Rust 2018 via `cargo fix --edition`.
+    The Rust `thrift` library was updated to Rust 2021 via `cargo fix --edition`.
     All test code in the repo was updated as well. The code generator was also updated
-    to support Rust 2018 only.
+    to support Rust 2021 only.
 
 ##### Thrift 0.13.0
 
 * **[THRIFT-4536]** - Use TryFrom from std, required rust 1.34.0 or higher
 
     Previously TryFrom was from try_from crate, it is now from the std library,
-    but this functionality is only available in rust 1.34.0. Additionally, 
-    ordered-float is now re-exported under the thrift module to reduce 
+    but this functionality is only available in rust 1.34.0. Additionally,
+    ordered-float is now re-exported under the thrift module to reduce
     possible dependency mismatches.
 
 ##### Thrift 0.12.0
@@ -208,9 +208,9 @@ Breaking changes are minimized. When they are made they will be outlined below w
       DIVIDE,
     }
     ```
-    
+
     used to generate:
-    
+
     ```rust
     // OLD AUTO-GENERATED RUST
     pub enum Operation {
@@ -220,9 +220,9 @@ Breaking changes are minimized. When they are made they will be outlined below w
        DIVIDE,
      }
     ```
-  
+
     It *now* generates:
-  
+
     ```rust
     // NEW AUTO-GENERATED RUST
     pub enum Operation {
@@ -232,7 +232,7 @@ Breaking changes are minimized. When they are made they will be outlined below w
        Divide,
      }
     ```
-    
+
     You will have to change all enum variants in your code to use camel-cased names.
     This should be a search and replace.
 

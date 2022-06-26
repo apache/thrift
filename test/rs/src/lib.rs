@@ -15,5 +15,11 @@
 // specific language governing permissions and limitations
 // under the License.
 
+// FIXME - need changes in gen before lifting this exception
+#![allow(
+    clippy::match_single_binding,
+    clippy::unnecessary_wraps,
+    clippy::derivable_impls
+)]
 mod thrift_test;
 pub use crate::thrift_test::*;

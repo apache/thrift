@@ -271,10 +271,10 @@ mod tests {
             _: &mut dyn TInputProtocol,
             _: &mut dyn TOutputProtocol,
         ) -> crate::Result<()> {
-            let res = self
-                .invoked
-                .compare_and_swap(false, true, Ordering::Relaxed);
-            if res {
+            let res =
+                self.invoked
+                    .compare_exchange(false, true, Ordering::Relaxed, Ordering::Relaxed);
+            if res.is_ok() {
                 Ok(())
             } else {
                 Err("failed swap".into())
