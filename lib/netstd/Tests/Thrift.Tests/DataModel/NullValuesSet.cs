@@ -48,19 +48,19 @@ namespace Thrift.Tests.DataModel
             Assert.IsNull(instance.Def_four);
             Assert.IsNull(instance.Opt_four);
 
-            // byte[]
-            Assert.IsTrue(instance.__isset.def_five);
-            Assert.IsTrue(instance.__isset.opt_five);
-            Assert.IsTrue((instance.Req_five == null) || (instance.Req_five.Length == 0));
-            Assert.IsNull(instance.Def_five);
-            Assert.IsNull(instance.Opt_five);
-
             // list<>
             Assert.IsTrue(instance.__isset.def_six);
             Assert.IsTrue(instance.__isset.opt_six);
             Assert.IsNull(instance.Req_six);
             Assert.IsNull(instance.Opt_six);
             Assert.IsNull(instance.Def_six);
+
+            // byte[]
+            Assert.IsTrue(instance.__isset.def_nine);
+            Assert.IsTrue(instance.__isset.opt_nine);
+            Assert.IsTrue((instance.Req_nine == null) || (instance.Req_nine.Length == 0));
+            Assert.IsNull(instance.Def_nine);
+            Assert.IsNull(instance.Opt_nine);
         }
 
         [TestMethod]
@@ -80,15 +80,15 @@ namespace Thrift.Tests.DataModel
             instance.Def_four = null;
             instance.Opt_four = null;
 
-            // byte[]
-            instance.Req_five = null;
-            instance.Def_five = null;
-            instance.Opt_five = null;
-
             // list<>
             instance.Req_six = null;
             instance.Opt_six = null;
             instance.Def_six = null;
+
+            // byte[]
+            instance.Req_nine = null;
+            instance.Def_nine = null;
+            instance.Opt_nine = null;
 
             // back to normal
             #pragma warning restore CS8625
@@ -96,11 +96,11 @@ namespace Thrift.Tests.DataModel
             // test the setup
             CheckInstance(instance);
 
-            // validate proper null checks , any of these throws if not
+            // validate proper null checks, any of these throws if not
             instance.ToString();
             instance.GetHashCode();
 
-            // validate proper null checks , any of these throws if not
+            // validate proper null checks, any of these throws if not
             var copy = instance.DeepCopy();
             CheckInstance(copy);
         }

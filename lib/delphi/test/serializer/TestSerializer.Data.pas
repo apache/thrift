@@ -23,6 +23,8 @@ interface
 
 uses
   SysUtils,
+  ActiveX,
+  ComObj,
   Thrift.Protocol,
   Thrift.Collections,
   DebugProtoTest;
@@ -192,6 +194,8 @@ begin
   SetString( us, PChar(@kUnicodeBytes[0]), Length(kUnicodeBytes));
   // !!
   result.setZomg_unicode( UnicodeString( us));
+
+  result.Rfc4122_uuid := TGuid.Create('{00112233-4455-6677-8899-aabbccddeeff}');
 
   {$IF cDebugProtoTest_Option_AnsiStr_Binary}
   result.SetBase64('base64');

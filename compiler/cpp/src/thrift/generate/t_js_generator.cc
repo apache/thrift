@@ -2697,6 +2697,8 @@ string t_js_generator::type_to_enum(t_type* type) {
       return "Thrift.Type.I64";
     case t_base_type::TYPE_DOUBLE:
       return "Thrift.Type.DOUBLE";
+    default:
+      throw "compiler error: unhandled type";
     }
   } else if (type->is_enum()) {
     return "Thrift.Type.I32";
@@ -2745,6 +2747,9 @@ string t_js_generator::ts_get_type(t_type* type) {
       break;
     case t_base_type::TYPE_VOID:
       ts_type = "void";
+      break;
+    default:
+      throw "compiler error: unhandled type";
     }
   } else if (type->is_enum() || type->is_struct() || type->is_xception()) {
     std::string type_name;

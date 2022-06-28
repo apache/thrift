@@ -36,6 +36,7 @@ public:
   enum t_base {
     TYPE_VOID,
     TYPE_STRING,
+    TYPE_UUID,
     TYPE_BOOL,
     TYPE_I8,
     TYPE_I16,
@@ -55,6 +56,8 @@ public:
 
   bool is_bool() const override { return base_ == TYPE_BOOL; }
 
+  bool is_uuid() const override { return base_ == TYPE_UUID; }
+
   void set_binary(bool val) { binary_ = val; }
 
   bool is_binary() const override { return binary_ && (base_ == TYPE_STRING); }
@@ -68,6 +71,9 @@ public:
       break;
     case TYPE_STRING:
       return "string";
+      break;
+    case TYPE_UUID:
+      return "uuid";
       break;
     case TYPE_BOOL:
       return "bool";

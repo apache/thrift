@@ -43,6 +43,7 @@ uses
   System_,
   DebugProtoTest;
 
+{$TYPEINFO ON}
 
 type
   TFactoryPair = record
@@ -208,6 +209,7 @@ begin
   ASSERT( Abs( tested.Double_precision - correct.Double_precision) < 1E-12);
   ASSERT( tested.Some_characters = correct.Some_characters);
   ASSERT( tested.Zomg_unicode = correct.Zomg_unicode);
+  ASSERT( tested.Rfc4122_uuid = correct.Rfc4122_uuid);
   ASSERT( tested.What_who = correct.What_who);
 
   ASSERT( LengthOf(tested.Base64) = LengthOf(correct.Base64));
@@ -303,9 +305,9 @@ end;
 
 
 class function TTestSerializer.UserFriendlyName( const method : TMethod) : string;
+const NAMES : array[TMethod] of string = ('TBytes','Stream');
 begin
-  result := EnumUtils<TMethod>.ToString(Ord(method));
-  result := StringReplace( result, 'mt_', '', [rfReplaceAll]);
+  result := NAMES[method];
 end;
 
 
@@ -342,7 +344,7 @@ var serial : TSerializer;
     config : IThriftConfiguration;
 begin
   config := TThriftConfigurationImpl.Create;
-  config.MaxMessageSize := 0;   // we don't read anything here
+  //config.MaxMessageSize := 0;   // we don't read anything here
 
   serial := TSerializer.Create( factory.prot, factory.trans, config);
   try
@@ -358,7 +360,7 @@ var serial : TSerializer;
     config : IThriftConfiguration;
 begin
   config := TThriftConfigurationImpl.Create;
-  config.MaxMessageSize := 0;   // we don't read anything here
+  //config.MaxMessageSize := 0;   // we don't read anything here
 
   serial := TSerializer.Create( factory.prot, factory.trans, config);
   try

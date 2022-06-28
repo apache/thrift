@@ -32,6 +32,7 @@ namespace Thrift.Protocol.Entities
         Struct = 12,
         Map = 13,
         Set = 14,
-        List = 15
+        List = 15,
+        Uuid = 16
     }
 }

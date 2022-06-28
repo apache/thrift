@@ -74,9 +74,9 @@ protected:
 
   // D reserved words are suffixed with an underscore
   static string suffix_if_reserved(const string& name) {
-	const bool isIn = std::binary_search(std::begin(d_reserved_words), std::end(d_reserved_words), name);
-	string ret = isIn ? name + "_" : name;
-	return ret;
+    const bool isIn = std::binary_search(std::begin(d_reserved_words), std::end(d_reserved_words), name);
+    string ret = isIn ? name + "_" : name;
+    return ret;
   }
 
   void init_generator() override {
@@ -403,8 +403,8 @@ private:
       out << indent() << "// Your implementation goes here." << endl << indent() << "writeln(\""
           << suffix_if_reserved((*f_iter)->get_name()) << " called\");" << endl;
 
-	  t_type* rt = (*f_iter)->get_returntype();
-	  if (!rt->is_void()) {
+      t_type* rt = (*f_iter)->get_returntype();
+      if (!rt->is_void()) {
         indent(out) << "return typeof(return).init;" << endl;
       }
 

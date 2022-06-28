@@ -81,16 +81,18 @@ namespace Thrift.Tests.DataModel
             Assert.IsFalse(instance.__isset.opt_six);
             Assert.IsFalse(instance.__isset.opt_seven);
             Assert.IsFalse(instance.__isset.opt_eight);
+            Assert.IsFalse(instance.__isset.opt_nine);
 
             // set all required to null/default
             instance.Req_one = default;
             instance.Req_two = default;
             instance.Req_three = default;
             Assert.IsNotNull(instance.Req_four);
-            Assert.IsNotNull(instance.Req_five);
-            instance.Req_six = default; 
-            instance.Req_seven = default;;
+            instance.Req_five = default;
+            instance.Req_six = default;
+            instance.Req_seven = default;
             instance.Req_eight = default;
+            Assert.IsNotNull(instance.Req_nine);
 
             // leave non-required fields unset again
             Assert.IsFalse(instance.__isset.def_one);
@@ -101,6 +103,7 @@ namespace Thrift.Tests.DataModel
             Assert.IsFalse(instance.__isset.def_six);
             Assert.IsFalse(instance.__isset.def_seven);
             Assert.IsFalse(instance.__isset.def_eight);
+            Assert.IsFalse(instance.__isset.def_nine);
 
             // these should have IDL defaults set
 
@@ -112,12 +115,13 @@ namespace Thrift.Tests.DataModel
             Assert.IsTrue(instance.__isset.opt_six_with_value);
             Assert.IsTrue(instance.__isset.opt_seven_with_value);
             Assert.IsTrue(instance.__isset.opt_eight_with_value);
+            Assert.IsTrue(instance.__isset.opt_nine_with_value);
 
             Assert.AreEqual(instance.Req_one_with_value, (Distance)1);
             Assert.AreEqual(instance.Req_two_with_value, 2.22);
             Assert.AreEqual(instance.Req_three_with_value, 3);
             Assert.AreEqual(instance.Req_four_with_value, "four");
-            Assert.AreEqual("five", Encoding.UTF8.GetString(instance.Req_five_with_value!));
+            Assert.AreEqual(new Guid("55555555-5555-5555-5555-000000000000"), instance.Req_five_with_value);
 
             Assert.IsTrue(instance.Req_six_with_value!.Count == 1);
             Assert.AreEqual(instance.Req_six_with_value[0], 6 );
@@ -128,6 +132,8 @@ namespace Thrift.Tests.DataModel
             Assert.IsTrue(instance.Req_eight_with_value!.Count == 1);
             Assert.IsTrue(instance.Req_eight_with_value[8] == 8);
 
+            Assert.AreEqual("nine", Encoding.UTF8.GetString(instance.Req_nine_with_value!));
+
             Assert.IsTrue(instance.__isset.def_one_with_value);
             Assert.IsTrue(instance.__isset.def_two_with_value);
             Assert.IsTrue(instance.__isset.def_three_with_value);
@@ -136,6 +142,7 @@ namespace Thrift.Tests.DataModel
             Assert.IsTrue(instance.__isset.def_six_with_value);
             Assert.IsTrue(instance.__isset.def_seven_with_value);
             Assert.IsTrue(instance.__isset.def_eight_with_value);
+            Assert.IsTrue(instance.__isset.def_nine_with_value);
 
             instance.Last_of_the_mohicans = true;
 
@@ -180,6 +187,7 @@ namespace Thrift.Tests.DataModel
             instance.Opt_six = ModifyValue(instance.Opt_six);
             instance.Opt_seven = ModifyValue(instance.Opt_seven);
             instance.Opt_eight = ModifyValue(instance.Opt_eight);
+            instance.Opt_nine = ModifyValue(instance.Opt_nine);
 
             instance.Req_one = ModifyValue(instance.Req_one);
             instance.Req_two = ModifyValue(instance.Req_two);
@@ -189,6 +197,7 @@ namespace Thrift.Tests.DataModel
             instance.Req_six = ModifyValue(instance.Req_six);
             instance.Req_seven = ModifyValue(instance.Req_seven);
             instance.Req_eight = ModifyValue(instance.Req_eight);
+            instance.Req_nine = ModifyValue(instance.Req_nine);
 
             instance.Def_one = ModifyValue(instance.Def_one);
             instance.Def_two = ModifyValue(instance.Def_two);
@@ -198,6 +207,7 @@ namespace Thrift.Tests.DataModel
             instance.Def_six = ModifyValue(instance.Def_six);
             instance.Def_seven = ModifyValue(instance.Def_seven);
             instance.Def_eight = ModifyValue(instance.Def_eight);
+            instance.Def_nine = ModifyValue(instance.Def_nine);
 
             instance.Opt_one_with_value = ModifyValue(instance.Opt_one_with_value);
             instance.Opt_two_with_value = ModifyValue(instance.Opt_two_with_value);
@@ -207,6 +217,7 @@ namespace Thrift.Tests.DataModel
             instance.Opt_six_with_value = ModifyValue(instance.Opt_six_with_value);
             instance.Opt_seven_with_value = ModifyValue(instance.Opt_seven_with_value);
             instance.Opt_eight_with_value = ModifyValue(instance.Opt_eight_with_value);
+            instance.Opt_nine_with_value = ModifyValue(instance.Opt_nine_with_value);
 
             instance.Req_one_with_value = ModifyValue(instance.Req_one_with_value);
             instance.Req_two_with_value = ModifyValue(instance.Req_two_with_value);
@@ -216,6 +227,7 @@ namespace Thrift.Tests.DataModel
             instance.Req_six_with_value = ModifyValue(instance.Req_six_with_value);
             instance.Req_seven_with_value = ModifyValue(instance.Req_seven_with_value);
             instance.Req_eight_with_value = ModifyValue(instance.Req_eight_with_value);
+            instance.Req_nine_with_value = ModifyValue(instance.Req_nine_with_value);
 
             instance.Def_one_with_value = ModifyValue(instance.Def_one_with_value);
             instance.Def_two_with_value = ModifyValue(instance.Def_two_with_value);
@@ -225,6 +237,7 @@ namespace Thrift.Tests.DataModel
             instance.Def_six_with_value = ModifyValue(instance.Def_six_with_value);
             instance.Def_seven_with_value = ModifyValue(instance.Def_seven_with_value);
             instance.Def_eight_with_value = ModifyValue(instance.Def_eight_with_value);
+            instance.Def_nine_with_value = ModifyValue(instance.Def_nine_with_value);
 
             instance.Last_of_the_mohicans = ModifyValue(instance.Last_of_the_mohicans);
 
@@ -435,6 +448,11 @@ namespace Thrift.Tests.DataModel
             return value + "1";
         }
 
+        private static Guid ModifyValue(Guid value)
+        {
+            return new Guid( ModifyValue(value.ToByteArray()));
+        }
+
         private static double ModifyValue(double value)
         {
             return value + 1.1;
@@ -461,6 +479,7 @@ namespace Thrift.Tests.DataModel
             Assert.IsFalse(TCollections.Equals(first.Opt_six, second.Opt_six));
             Assert.IsFalse(TCollections.Equals(first.Opt_seven, second.Opt_seven));
             Assert.IsFalse(TCollections.Equals(first.Opt_eight, second.Opt_eight));
+            Assert.IsFalse(TCollections.Equals(first.Opt_nine, second.Opt_nine));
 
             Assert.AreNotEqual(first.Req_one, second.Req_one);
             Assert.AreNotEqual(first.Req_two, second.Req_two);
@@ -470,6 +489,7 @@ namespace Thrift.Tests.DataModel
             Assert.IsFalse(TCollections.Equals(first.Req_six, second.Req_six));
             Assert.IsFalse(TCollections.Equals(first.Req_seven, second.Req_seven));
             Assert.IsFalse(TCollections.Equals(first.Req_eight, second.Req_eight));
+            Assert.IsFalse(TCollections.Equals(first.Req_nine, second.Req_nine));
 
             Assert.AreNotEqual(first.Def_one, second.Def_one);
             Assert.AreNotEqual(first.Def_two, second.Def_two);
@@ -479,6 +499,7 @@ namespace Thrift.Tests.DataModel
             Assert.IsFalse(TCollections.Equals(first.Def_six, second.Def_six));
             Assert.IsFalse(TCollections.Equals(first.Def_seven, second.Def_seven));
             Assert.IsFalse(TCollections.Equals(first.Def_eight, second.Def_eight));
+            Assert.IsFalse(TCollections.Equals(first.Def_nine, second.Def_nine));
 
             Assert.AreNotEqual(first.Opt_one_with_value, second.Opt_one_with_value);
             Assert.AreNotEqual(first.Opt_two_with_value, second.Opt_two_with_value);
@@ -488,6 +509,7 @@ namespace Thrift.Tests.DataModel
             Assert.IsFalse(TCollections.Equals(first.Opt_six_with_value, second.Opt_six_with_value));
             Assert.IsFalse(TCollections.Equals(first.Opt_seven_with_value, second.Opt_seven_with_value));
             Assert.IsFalse(TCollections.Equals(first.Opt_eight_with_value, second.Opt_eight_with_value));
+            Assert.IsFalse(TCollections.Equals(first.Opt_nine_with_value, second.Opt_nine_with_value));
 
             Assert.AreNotEqual(first.Req_one_with_value, second.Req_one_with_value);
             Assert.AreNotEqual(first.Req_two_with_value, second.Req_two_with_value);
@@ -497,6 +519,7 @@ namespace Thrift.Tests.DataModel
             Assert.IsFalse(TCollections.Equals(first.Req_six_with_value, second.Req_six_with_value));
             Assert.IsFalse(TCollections.Equals(first.Req_seven_with_value, second.Req_seven_with_value));
             Assert.IsFalse(TCollections.Equals(first.Req_eight_with_value, second.Req_eight_with_value));
+            Assert.IsFalse(TCollections.Equals(first.Req_nine_with_value, second.Req_nine_with_value));
 
             Assert.AreNotEqual(first.Def_one_with_value, second.Def_one_with_value);
             Assert.AreNotEqual(first.Def_two_with_value, second.Def_two_with_value);
@@ -506,6 +529,7 @@ namespace Thrift.Tests.DataModel
             Assert.IsFalse(TCollections.Equals(first.Def_six_with_value, second.Def_six_with_value));
             Assert.IsFalse(TCollections.Equals(first.Def_seven_with_value, second.Def_seven_with_value));
             Assert.IsFalse(TCollections.Equals(first.Def_eight_with_value, second.Def_eight_with_value));
+            Assert.IsFalse(TCollections.Equals(first.Def_nine_with_value, second.Def_nine_with_value));
 
             Assert.AreNotEqual(first.Last_of_the_mohicans, second.Last_of_the_mohicans);
 
@@ -539,6 +563,7 @@ namespace Thrift.Tests.DataModel
             Assert.IsTrue(TCollections.Equals(first.Opt_six, second.Opt_six));
             Assert.IsTrue(TCollections.Equals(first.Opt_seven, second.Opt_seven));
             Assert.IsTrue(TCollections.Equals(first.Opt_eight, second.Opt_eight));
+            Assert.IsTrue(TCollections.Equals(first.Opt_nine, second.Opt_nine));
 
             Assert.AreEqual(first.Req_one, second.Req_one);
             Assert.AreEqual(first.Req_two, second.Req_two);
@@ -548,6 +573,7 @@ namespace Thrift.Tests.DataModel
             Assert.IsTrue(TCollections.Equals(first.Req_six, second.Req_six));
             Assert.IsTrue(TCollections.Equals(first.Req_seven, second.Req_seven));
             Assert.IsTrue(TCollections.Equals(first.Req_eight, second.Req_eight));
+            Assert.IsTrue(TCollections.Equals(first.Req_nine, second.Req_nine));
 
             Assert.AreEqual(first.Def_one, second.Def_one);
             Assert.AreEqual(first.Def_two, second.Def_two);
@@ -557,6 +583,7 @@ namespace Thrift.Tests.DataModel
             Assert.IsTrue(TCollections.Equals(first.Def_six, second.Def_six));
             Assert.IsTrue(TCollections.Equals(first.Def_seven, second.Def_seven));
             Assert.IsTrue(TCollections.Equals(first.Def_eight, second.Def_eight));
+            Assert.IsTrue(TCollections.Equals(first.Def_nine, second.Def_nine));
 
             Assert.AreEqual(first.Opt_one_with_value, second.Opt_one_with_value);
             Assert.AreEqual(first.Opt_two_with_value, second.Opt_two_with_value);
@@ -566,6 +593,7 @@ namespace Thrift.Tests.DataModel
             Assert.IsTrue(TCollections.Equals(first.Opt_six_with_value, second.Opt_six_with_value));
             Assert.IsTrue(TCollections.Equals(first.Opt_seven_with_value, second.Opt_seven_with_value));
             Assert.IsTrue(TCollections.Equals(first.Opt_eight_with_value, second.Opt_eight_with_value));
+            Assert.IsTrue(TCollections.Equals(first.Opt_nine_with_value, second.Opt_nine_with_value));
 
             Assert.AreEqual(first.Req_one_with_value, second.Req_one_with_value);
             Assert.AreEqual(first.Req_two_with_value, second.Req_two_with_value);
@@ -575,6 +603,7 @@ namespace Thrift.Tests.DataModel
             Assert.IsTrue(TCollections.Equals(first.Req_six_with_value, second.Req_six_with_value));
             Assert.IsTrue(TCollections.Equals(first.Req_seven_with_value, second.Req_seven_with_value));
             Assert.IsTrue(TCollections.Equals(first.Req_eight_with_value, second.Req_eight_with_value));
+            Assert.IsTrue(TCollections.Equals(first.Req_nine_with_value, second.Req_nine_with_value));
 
             Assert.AreEqual(first.Def_one_with_value, second.Def_one_with_value);
             Assert.AreEqual(first.Def_two_with_value, second.Def_two_with_value);
@@ -584,6 +613,7 @@ namespace Thrift.Tests.DataModel
             Assert.IsTrue(TCollections.Equals(first.Def_six_with_value, second.Def_six_with_value));
             Assert.IsTrue(TCollections.Equals(first.Def_seven_with_value, second.Def_seven_with_value));
             Assert.IsTrue(TCollections.Equals(first.Def_eight_with_value, second.Def_eight_with_value));
+            Assert.IsTrue(TCollections.Equals(first.Def_nine_with_value, second.Def_nine_with_value));
 
             Assert.AreEqual(first.Last_of_the_mohicans, second.Last_of_the_mohicans);
 

@@ -48,6 +48,7 @@ struct OneOfEach {
   12: list<i8> byte_list = [1, 2, 3],
   13: list<i16> i16_list = [1,2,3],
   14: list<i64> i64_list = [1,2,3]
+  15: uuid rfc4122_uuid
 }
 
 struct Bonk {

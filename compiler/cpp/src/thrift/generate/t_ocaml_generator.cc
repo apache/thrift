@@ -1698,6 +1698,8 @@ string t_ocaml_generator::type_to_enum(t_type* type) {
       return "Protocol.T_I64";
     case t_base_type::TYPE_DOUBLE:
       return "Protocol.T_DOUBLE";
+    default:
+      throw "compiler error: unhandled type";
     }
   } else if (type->is_enum()) {
     return "Protocol.T_I32";
@@ -1739,6 +1741,8 @@ string t_ocaml_generator::render_ocaml_type(t_type* type) {
       return "Int64.t";
     case t_base_type::TYPE_DOUBLE:
       return "float";
+    default:
+      throw "compiler error: unhandled type";
     }
   } else if (type->is_enum()) {
     return capitalize(((t_enum*)type)->get_name()) + ".t";

@@ -636,6 +636,9 @@ string t_netstd_generator::render_const_value(ostream& out, string name, t_type*
                 render << '"' << get_escaped_string(value) << '"';
             }
             break;
+        case t_base_type::TYPE_UUID:
+            render << "new System.Guid(\"" << get_escaped_string(value) << "\")";
+            break;
         case t_base_type::TYPE_BOOL:
             render << ((value->get_integer() > 0) ? "true" : "false");
             break;
@@ -2703,6 +2706,9 @@ void t_netstd_generator::generate_deserialize_field(ostream& out, t_field* tfiel
                     out << "ReadStringAsync(" << CANCELLATION_TOKEN_NAME << ");";
                 }
                 break;
+            case t_base_type::TYPE_UUID:
+                out << "ReadUuidAsync(" << CANCELLATION_TOKEN_NAME << ");";
+                break;
             case t_base_type::TYPE_BOOL:
                 out << "ReadBoolAsync(" << CANCELLATION_TOKEN_NAME << ");";
                 break;
@@ -2905,6 +2911,9 @@ void t_netstd_generator::generate_serialize_field(ostream& out, t_field* tfield,
                     out << "WriteStringAsync(";
                 }
                 out << name << ", " << CANCELLATION_TOKEN_NAME << ");";
+                break;
+            case t_base_type::TYPE_UUID:
+                out << "WriteUuidAsync(" << nullable_name << ", " << CANCELLATION_TOKEN_NAME << ");";
                 break;
             case t_base_type::TYPE_BOOL:
                 out << "WriteBoolAsync(" << nullable_name << ", " << CANCELLATION_TOKEN_NAME << ");";
@@ -3453,7 +3462,7 @@ string t_netstd_generator::type_name(t_type* ttype, bool with_namespace)
     if (ttype->is_set())
     {
         t_set* tset = static_cast<t_set*>(ttype);
-		return "HashSet<" + type_name(tset->get_elem_type()) + ">";
+        return "HashSet<" + type_name(tset->get_elem_type()) + ">";
     }
 
     if (ttype->is_list())
@@ -3492,6 +3501,8 @@ string t_netstd_generator::base_type_name(t_base_type* tbase)
         } else {
             return "string";
         }
+    case t_base_type::TYPE_UUID:
+        return "global::System.Guid";
     case t_base_type::TYPE_BOOL:
         return "bool";
     case t_base_type::TYPE_I8:
@@ -3614,6 +3625,9 @@ string t_netstd_generator::initialize_field(t_field* tfield)
                 return " = null";
             }
             break;
+        case t_base_type::TYPE_UUID:
+            return " = System.Guid.Empty";
+            break;
         case t_base_type::TYPE_BOOL:
             return " = false";
             break;
@@ -3725,6 +3739,8 @@ string t_netstd_generator::type_to_enum(t_type* type)
             throw "NO T_VOID CONSTRUCT";
         case t_base_type::TYPE_STRING:
             return "TType.String";
+        case t_base_type::TYPE_UUID:
+            return "TType.Uuid";
         case t_base_type::TYPE_BOOL:
             return "TType.Bool";
         case t_base_type::TYPE_I8:
