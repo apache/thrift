@@ -34,7 +34,7 @@ unit TestClient;
 interface
 
 uses
-  Windows, SysUtils, Classes, Math, ComObj, ActiveX,
+  Classes, Windows, SysUtils, Math, ActiveX, ComObj,
   {$IFDEF SupportsAsync} System.Threading, {$ENDIF}
   DateUtils,
   Generics.Collections,
@@ -393,6 +393,7 @@ var
   i32 : Integer;
   i64 : Int64;
   binOut,binIn : TBytes;
+  guidIn, guidOut : TGuid;
   dub : Double;
   o : IXtruct;
   o2 : IXtruct2;
@@ -542,6 +543,16 @@ begin
   Console.WriteLine('testI64(-34359738368)');
   i64 := client.testI64(-34359738368);
   Expect( i64 = -34359738368, 'testI64(-34359738368) = ' + IntToStr( i64));
+
+  guidOut := StringToGUID('{00112233-4455-6677-8899-AABBCCDDEEFF}');
+  Console.WriteLine('testUuid('+GUIDToString(guidOut)+')');
+  try
+    guidIn := client.testUuid(guidOut);
+    Expect( IsEqualGUID(guidIn, guidOut), 'testUuid('+GUIDToString(guidOut)+') = '+GUIDToString(guidIn));
+  except
+    on e:TApplicationException do Console.WriteLine('testUuid(): '+e.Message);
+    on e:Exception do Expect( FALSE, 'testUuid(): Unexpected exception "'+e.ClassName+'": '+e.Message);
+  end;
 
   // random binary small
   for testsize := Low(TTestSize) to High(TTestSize) do begin

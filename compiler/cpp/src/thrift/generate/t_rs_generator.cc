@@ -1551,6 +1551,8 @@ void t_rs_generator::render_type_sync_write(const string &type_var, bool type_va
     case t_base_type::TYPE_DOUBLE:
       f_gen_ << indent() << "o_prot.write_double(" + type_var + ".into())?;" << endl;
       return;
+    default:
+      throw "compiler error: unhandled type";
     }
   } else if (ttype->is_typedef()) {
     t_typedef* ttypedef = (t_typedef*) ttype;
@@ -1926,6 +1928,8 @@ void t_rs_generator::render_type_sync_read(const string &type_var, t_type *ttype
     case t_base_type::TYPE_DOUBLE:
       f_gen_ << indent() << "let " << type_var << " = OrderedFloat::from(i_prot.read_double()?);" << endl;
       return;
+    default:
+      throw "compiler error: unhandled type";
     }
   } else if (ttype->is_typedef()) {
     // FIXME: not a fan of separate `is_boxed` parameter
@@ -3025,6 +3029,8 @@ string t_rs_generator::to_rust_type(t_type* ttype) {
       return "i64";
     case t_base_type::TYPE_DOUBLE:
       return "OrderedFloat<f64>";
+    default:
+      throw "compiler error: unhandled type";
     }
   } else if (ttype->is_typedef()) {
     t_typedef* ttypedef = (t_typedef*)ttype;
@@ -3085,6 +3091,8 @@ string t_rs_generator::to_rust_field_type_enum(t_type* ttype) {
       return "TType::I64";
     case t_base_type::TYPE_DOUBLE:
       return "TType::Double";
+    default:
+      throw "compiler error: unhandled type";
     }
   } else if (ttype->is_enum()) {
     return "TType::I32";
@@ -3123,6 +3131,8 @@ string t_rs_generator::opt_in_req_out_value(t_type* ttype) {
       return "Some(0)";
     case t_base_type::TYPE_DOUBLE:
       return "Some(OrderedFloat::from(0.0))";
+    default:
+      throw "compiler error: unhandled type";
     }
 
   } else if (ttype->is_enum() || ttype->is_struct() || ttype->is_xception()) {

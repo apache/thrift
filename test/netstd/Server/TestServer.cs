@@ -271,6 +271,12 @@ namespace ThriftTest
                 return Task.FromResult(thing ?? Array.Empty<byte>());
             }
 
+            public Task<Guid> testUuid(Guid thing, CancellationToken cancellationToken)
+            {
+                logger.Invoke("testUuid({0})", thing.ToString("B"));
+                return Task.FromResult(thing);
+            }
+
             public Task<Xtruct> testStruct(Xtruct? thing, CancellationToken cancellationToken)
             {
                 logger.Invoke("testStruct({{\"{0}\", {1}, {2}, {3}}})", thing?.String_thing ?? "<null>", thing?.Byte_thing ?? 0, thing?.I32_thing ?? 0, thing?.I64_thing ?? 0);

@@ -166,6 +166,9 @@ public:
           case t_base_type::TYPE_STRING:
             const_val->set_string(constant->get_value()->get_string());
             break;
+          case t_base_type::TYPE_UUID:
+            const_val->set_uuid(constant->get_value()->get_uuid());
+            break;
           case t_base_type::TYPE_DOUBLE:
             const_val->set_double(constant->get_value()->get_double());
             break;

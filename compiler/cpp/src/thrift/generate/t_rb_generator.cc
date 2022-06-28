@@ -1171,6 +1171,8 @@ string t_rb_generator::type_to_enum(t_type* type) {
       return "::Thrift::Types::I64";
     case t_base_type::TYPE_DOUBLE:
       return "::Thrift::Types::DOUBLE";
+    default:
+      throw "compiler error: unhandled type";
     }
   } else if (type->is_enum()) {
     return "::Thrift::Types::I32";

@@ -23,6 +23,7 @@
 t_type* g_type_void;
 t_type* g_type_string;
 t_type* g_type_binary;
+t_type* g_type_uuid;
 t_type* g_type_bool;
 t_type* g_type_i8;
 t_type* g_type_i16;
@@ -35,6 +36,7 @@ void initGlobals() {
   g_type_string = new t_base_type("string", t_base_type::TYPE_STRING);
   g_type_binary = new t_base_type("string", t_base_type::TYPE_STRING);
   ((t_base_type*)g_type_binary)->set_binary(true);
+  g_type_uuid = new t_base_type("string", t_base_type::TYPE_UUID);
   g_type_bool = new t_base_type("bool", t_base_type::TYPE_BOOL);
   g_type_i8 = new t_base_type("i8", t_base_type::TYPE_I8);
   g_type_i16 = new t_base_type("i16", t_base_type::TYPE_I16);
@@ -46,6 +48,8 @@ void initGlobals() {
 void clearGlobals() {
   delete g_type_void;
   delete g_type_string;
+  delete g_type_binary;
+  delete g_type_uuid;
   delete g_type_bool;
   delete g_type_i8;
   delete g_type_i16;

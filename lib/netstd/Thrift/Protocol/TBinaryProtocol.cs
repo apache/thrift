@@ -21,6 +21,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Thrift.Protocol.Entities;
+using Thrift.Protocol.Utilities;
 using Thrift.Transport;
 
 
@@ -206,6 +207,14 @@ namespace Thrift.Protocol
             cancellationToken.ThrowIfCancellationRequested();
 
             await WriteI32Async(bytes.Length, cancellationToken);
+            await Trans.WriteAsync(bytes, 0, bytes.Length, cancellationToken);
+        }
+
+        public override async Task WriteUuidAsync(Guid uuid, CancellationToken cancellationToken)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+
+            var bytes = uuid.SwapByteOrder().ToByteArray();
             await Trans.WriteAsync(bytes, 0, bytes.Length, cancellationToken);
         }
 
@@ -401,6 +410,16 @@ namespace Thrift.Protocol
             return buf;
         }
 
+        public override async ValueTask<Guid> ReadUuidAsync(CancellationToken cancellationToken)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+
+            Transport.CheckReadBytesAvailable(16);  // = sizeof(uuid)
+            var buf = new byte[16];
+            await Trans.ReadAllAsync(buf, 0, 16, cancellationToken);
+            return new Guid(buf).SwapByteOrder();
+        }
+
         public override async ValueTask<string> ReadStringAsync(CancellationToken cancellationToken)
         {
             cancellationToken.ThrowIfCancellationRequested();
@@ -443,6 +462,7 @@ namespace Thrift.Protocol
                 case TType.Map: return sizeof(int);  // element count
                 case TType.Set: return sizeof(int);  // element count
                 case TType.List: return sizeof(int);  // element count
+                case TType.Uuid: return 16;  // uuid bytes
                 default: throw new TProtocolException(TProtocolException.NOT_IMPLEMENTED, "unrecognized type code");
             }
         }

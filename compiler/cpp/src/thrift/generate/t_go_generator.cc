@@ -368,6 +368,8 @@ bool t_go_generator::omit_initialization(t_field* tfield) {
       } else {
         return value->get_double() == 0.;
       }
+    default:
+      throw "compiler error: unhandled type";
     }
   }
   return false;
@@ -420,6 +422,8 @@ bool t_go_generator::is_pointer_field(t_field* tfield, bool in_container_value) 
     case t_base_type::TYPE_I64:
     case t_base_type::TYPE_DOUBLE:
       return !has_default;
+    default:
+      break;
     }
   } else if (type->is_enum()) {
     return !has_default;
@@ -4057,6 +4061,9 @@ string t_go_generator::type_to_enum(t_type* type) {
 
     case t_base_type::TYPE_DOUBLE:
       return "thrift.DOUBLE";
+
+    default:
+      break;
     }
   } else if (type->is_enum()) {
     return "thrift.I32";
@@ -4144,6 +4151,9 @@ string t_go_generator::type_to_go_type_with_opt(t_type* type,
 
     case t_base_type::TYPE_DOUBLE:
       return maybe_pointer + "float64";
+
+    default:
+      break;
     }
   } else if (type->is_enum()) {
     return maybe_pointer + publicize(type_name(type));

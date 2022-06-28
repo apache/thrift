@@ -51,7 +51,7 @@ public:
                     const string& option_string)
     : t_oop_generator(program) {
     update_keywords();
-	
+    
     (void)option_string;
     map<string, string>::const_iterator iter;
 
@@ -292,7 +292,7 @@ private:
 
 protected:
   std::set<std::string> lang_keywords() const override {
-	  return {};
+      return {};
   }
 };
 
@@ -3136,6 +3136,8 @@ string t_swift_generator::type_to_enum(t_type* type, bool qualified) {
           return result + "i64";
         case t_base_type::TYPE_DOUBLE:
           return result + "double";
+        default:
+          throw "compiler error: unhandled type";
       }
     } else if (type->is_enum()) {
       return result + "i32";
@@ -3168,6 +3170,8 @@ string t_swift_generator::type_to_enum(t_type* type, bool qualified) {
           return result + "I64";
         case t_base_type::TYPE_DOUBLE:
           return result + "DOUBLE";
+        default:
+          throw "compiler error: unhandled type";
       }
     } else if (type->is_enum()) {
       return result + "I32";

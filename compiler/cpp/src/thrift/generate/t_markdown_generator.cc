@@ -199,7 +199,7 @@ void t_markdown_generator::generate_program_toc_row(t_program* tprog) {
         string fn_name = (*fn_iter)->get_name(); 
         filling.emplace_back();
         fill = &filling.back();
-        (*fill)[1] = "	[ &bull; " + fn_name + "](" 
+        (*fill)[1] = "    [ &bull; " + fn_name + "](" 
           + make_file_link(fname) 
           + "#function-" + str_to_id(name + fn_name) + ")";
       }

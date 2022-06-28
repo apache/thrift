@@ -144,6 +144,11 @@ namespace Thrift.Protocol
             await _wrappedProtocol.WriteBinaryAsync(bytes, cancellationToken);
         }
 
+        public override async Task WriteUuidAsync(Guid uuid, CancellationToken cancellationToken)
+        {
+            await _wrappedProtocol.WriteUuidAsync(uuid, cancellationToken);
+        }
+
         public override async ValueTask<TMessage> ReadMessageBeginAsync(CancellationToken cancellationToken)
         {
             return await _wrappedProtocol.ReadMessageBeginAsync(cancellationToken);
@@ -242,6 +247,11 @@ namespace Thrift.Protocol
         public override async ValueTask<byte[]> ReadBinaryAsync(CancellationToken cancellationToken)
         {
             return await _wrappedProtocol.ReadBinaryAsync(cancellationToken);
+        }
+
+        public override async ValueTask<Guid> ReadUuidAsync(CancellationToken cancellationToken)
+        {
+            return await _wrappedProtocol.ReadUuidAsync(cancellationToken);
         }
 
         // Returns the minimum amount of bytes needed to store the smallest possible instance of TType.

@@ -134,6 +134,7 @@ const int struct_is_union = 1;
 %token tok_bool
 %token tok_string
 %token tok_binary
+%token tok_uuid
 %token tok_i8
 %token tok_i16
 %token tok_i32
@@ -1001,6 +1002,11 @@ SimpleBaseType:
     {
       pdebug("BaseType -> tok_binary");
       $$ = g_type_binary;
+    }
+| tok_uuid
+    {
+      pdebug("BaseType -> tok_uuid");
+      $$ = g_type_uuid;
     }
 | tok_bool
     {

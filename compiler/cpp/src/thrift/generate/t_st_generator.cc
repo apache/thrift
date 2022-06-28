@@ -1037,6 +1037,8 @@ string t_st_generator::type_to_enum(t_type* type) {
       return "TType i64";
     case t_base_type::TYPE_DOUBLE:
       return "TType double";
+    default:
+      throw "compiler error: unhandled type";
     }
   } else if (type->is_enum()) {
     return "TType i32";
