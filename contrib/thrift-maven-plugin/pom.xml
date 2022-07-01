@@ -102,7 +102,7 @@
     <dependency>
       <groupId>org.codehaus.plexus</groupId>
       <artifactId>plexus-utils</artifactId>
-      <version>3.0.14</version>
+      <version>3.0.16</version>
     </dependency>
     <dependency>
       <groupId>org.mockito</groupId>
