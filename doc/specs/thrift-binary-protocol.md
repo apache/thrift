@@ -87,6 +87,15 @@ encode the int64 in 8 bytes in big endian order.
 
 Values of `bool` type are first converted to an int8. True is converted to `1`, false to `0`.
 
+### Universal unique identifier encoding
+
+Values of `uuid` type are expected as 16-byte binary in big endian (or "network") order. Byte order conversion 
+might be necessary on certain platforms, e.g. Windows holds GUIDs in a complex record-like structure whose 
+memory layout differs.
+
+*Note*: Since the length is fixed, no `byte length` prefix is necessary and the field is always 16 bytes long.
+
+
 ## Message
 
 A `Message` can be encoded in two different ways:
@@ -192,6 +201,7 @@ The following field-types are used:
 * `MAP`, encoded as `13`
 * `SET`, encoded as `14`
 * `LIST`, encoded as `15`
+* `UUID`, encoded as `16`
 
 ## List and Set
 

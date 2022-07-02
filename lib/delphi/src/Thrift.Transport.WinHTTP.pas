@@ -151,7 +151,7 @@ begin
     url := TWinHTTPUrlImpl.Create( FUri);
 
     info := TErrorInfo.WinHTTPSession;
-    session := TWinHTTPSessionImpl.Create('Apache Thrift Delphi WinHTTP');
+    session := TWinHTTPSessionImpl.Create('ApacheThriftDelphi/WinHTTP');
     session.EnableSecureProtocols( SecureProtocolsAsWinHTTPFlags);
 
     info := TErrorInfo.WinHTTPConnection;

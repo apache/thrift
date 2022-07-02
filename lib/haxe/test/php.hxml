@@ -25,9 +25,14 @@
 #this class wil be used as entry point for your app.
 -main Main
 
+# forced compile of all source files
+--macro include('org.apache.thrift', true)
+--macro include('thrift', true)
+--macro include('constantsDemo', true)
+
 #PHP target
 -php bin/php/
---php-front Main-debug.php
+#--php-front Main-debug.php
 
 #Add debug information
 -debug

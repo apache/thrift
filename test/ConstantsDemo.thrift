@@ -19,6 +19,7 @@
 
 namespace cpp yozone
 namespace erl consts_
+namespace haxe constantsDemo
 
 struct thing {
   1: i32 hello,
