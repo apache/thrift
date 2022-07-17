@@ -172,7 +172,7 @@ Last updated: October 1, 2017
 | C++ gcc   | 5.4.0         | 7.4.0         |       |
 | C++ clang | 3.8           | 6.0           |       |
 | C# (mono) | 4.2.1.0       | 4.6.2.7       |       |
-| c_glib    | 2.48.2        | 2.56.4        |       |
+| c\_glib    | 2.48.2        | 2.56.4        |       |
 | cl (sbcl) |               | 1.5.3         |       |
 | d         | 2.087.0       | 2.087.0       |       |
 | dart      | 2.0.0         | 2.4.0         |       |
@@ -180,7 +180,7 @@ Last updated: October 1, 2017
 | erlang    | OTP-18        | OTP-23        |       |
 | go        | 1.15.10       | 1.16.2        |       |
 | haxe      | 3.2.1         | 3.4.4         | THRIFT-4352: avoid 3.4.2 |
-| java      | 1.8.0_191     | 11.0.3        |       |
+| java      | 1.8.0\_191     | 11.0.3        |       |
 | js        | Node.js 6.17.1, V8 5.1.281.111, npm 3.10.10 | Node.js 10.18.0, V8 6.8.275.32, npm 6.13.4 |     |
 | lua       |               | 5.2.4         | Lua 5.3: see THRIFT-4386 |
 | netstd    | 6.0           | 6.0           |       |
@@ -191,6 +191,6 @@ Last updated: October 1, 2017
 | python    | 2.7.12        | 2.7.15        |       |
 | python3   | 3.5.2         | 3.6.8         |       |
 | ruby      | 2.3.1p112     | 2.5.1p57      |       |
-| rust      | 1.40.0        | 1.40.0        |       |
+| rust      | 1.61.0        | 1.61.0        |       |
 | smalltalk |               |               | Not in CI |
 | swift     |               | 5.1.4         |       |

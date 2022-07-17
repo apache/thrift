@@ -18,8 +18,8 @@
 pub mod base_one;
 pub mod base_two;
 pub mod midlayer;
-pub mod ultimate;
 pub mod recursive;
+pub mod ultimate;
 
 #[cfg(test)]
 mod tests {

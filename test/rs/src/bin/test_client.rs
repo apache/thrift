@@ -16,7 +16,6 @@
 // under the License.
 
 use clap::{clap_app, value_t};
-use env_logger;
 use log::*;
 
 use std::collections::{BTreeMap, BTreeSet};
@@ -28,7 +27,6 @@ use std::os::unix::net::UnixStream;
 #[cfg(unix)]
 use std::path::Path;
 
-use thrift;
 use thrift::protocol::{
     TBinaryInputProtocol, TBinaryOutputProtocol, TCompactInputProtocol, TCompactOutputProtocol,
     TInputProtocol, TMultiplexedOutputProtocol, TOutputProtocol,
@@ -346,60 +344,44 @@ fn make_thrift_calls(
 
     info!("testList");
     {
-        let mut v_snd: Vec<i32> = Vec::new();
-        v_snd.push(29384);
-        v_snd.push(238);
-        v_snd.push(32498);
+        let v_snd: Vec<i32> = vec![29384, 238, 32498];
 
-        let mut v_cmp: Vec<i32> = Vec::new();
-        v_cmp.push(29384);
-        v_cmp.push(238);
-        v_cmp.push(32498);
+        let v_cmp: Vec<i32> = vec![29384, 238, 32498];
 
         verify_expected_result(thrift_test_client.test_list(v_snd), v_cmp)?;
     }
 
     info!("testSet");
     {
-        let mut s_snd: BTreeSet<i32> = BTreeSet::new();
-        s_snd.insert(293_481);
-        s_snd.insert(23);
-        s_snd.insert(3234);
+        let s_snd: BTreeSet<i32> = BTreeSet::from([293_481, 23, 3234]);
 
-        let mut s_cmp: BTreeSet<i32> = BTreeSet::new();
-        s_cmp.insert(293_481);
-        s_cmp.insert(23);
-        s_cmp.insert(3234);
+        let s_cmp: BTreeSet<i32> = BTreeSet::from([293_481, 23, 3234]);
 
         verify_expected_result(thrift_test_client.test_set(s_snd), s_cmp)?;
     }
 
     info!("testMap");
     {
-        let mut m_snd: BTreeMap<i32, i32> = BTreeMap::new();
-        m_snd.insert(2, 4);
-        m_snd.insert(4, 6);
-        m_snd.insert(8, 7);
+        let m_snd: BTreeMap<i32, i32> = BTreeMap::from([(2, 4), (4, 6), (8, 7)]);
 
-        let mut m_cmp: BTreeMap<i32, i32> = BTreeMap::new();
-        m_cmp.insert(2, 4);
-        m_cmp.insert(4, 6);
-        m_cmp.insert(8, 7);
+        let m_cmp: BTreeMap<i32, i32> = BTreeMap::from([(2, 4), (4, 6), (8, 7)]);
 
         verify_expected_result(thrift_test_client.test_map(m_snd), m_cmp)?;
     }
 
     info!("testStringMap");
     {
-        let mut m_snd: BTreeMap<String, String> = BTreeMap::new();
-        m_snd.insert("2".to_owned(), "4_string".to_owned());
-        m_snd.insert("4".to_owned(), "6_string".to_owned());
-        m_snd.insert("8".to_owned(), "7_string".to_owned());
+        let m_snd: BTreeMap<String, String> = BTreeMap::from([
+            ("2".to_owned(), "4_string".to_owned()),
+            ("4".to_owned(), "6_string".to_owned()),
+            ("8".to_owned(), "7_string".to_owned()),
+        ]);
 
-        let mut m_rcv: BTreeMap<String, String> = BTreeMap::new();
-        m_rcv.insert("2".to_owned(), "4_string".to_owned());
-        m_rcv.insert("4".to_owned(), "6_string".to_owned());
-        m_rcv.insert("8".to_owned(), "7_string".to_owned());
+        let m_rcv: BTreeMap<String, String> = BTreeMap::from([
+            ("2".to_owned(), "4_string".to_owned()),
+            ("4".to_owned(), "6_string".to_owned()),
+            ("8".to_owned(), "7_string".to_owned()),
+        ]);
 
         verify_expected_result(thrift_test_client.test_string_map(m_snd), m_rcv)?;
     }
@@ -409,27 +391,19 @@ fn make_thrift_calls(
     // => 2, 3 => 3, 4 => 4, }, }
     info!("testMapMap");
     {
-        let mut m_cmp_nested_0: BTreeMap<i32, i32> = BTreeMap::new();
-        for i in (-4 as i32)..0 {
-            m_cmp_nested_0.insert(i, i);
-        }
-        let mut m_cmp_nested_1: BTreeMap<i32, i32> = BTreeMap::new();
-        for i in 1..5 {
-            m_cmp_nested_1.insert(i, i);
-        }
+        let m_cmp_nested_0: BTreeMap<i32, i32> = (-4..0).map(|i| (i, i)).collect();
+        let m_cmp_nested_1: BTreeMap<i32, i32> = (1..5).map(|i| (i, i)).collect();
 
-        let mut m_cmp: BTreeMap<i32, BTreeMap<i32, i32>> = BTreeMap::new();
-        m_cmp.insert(-4, m_cmp_nested_0);
-        m_cmp.insert(4, m_cmp_nested_1);
+        let m_cmp: BTreeMap<i32, BTreeMap<i32, i32>> =
+            BTreeMap::from([(-4, m_cmp_nested_0), (4, m_cmp_nested_1)]);
 
         verify_expected_result(thrift_test_client.test_map_map(42), m_cmp)?;
     }
 
     info!("testMulti");
     {
-        let mut m_snd: BTreeMap<i16, String> = BTreeMap::new();
-        m_snd.insert(1298, "fizz".to_owned());
-        m_snd.insert(-148, "buzz".to_owned());
+        let m_snd: BTreeMap<i16, String> =
+            BTreeMap::from([(1298, "fizz".to_owned()), (-148, "buzz".to_owned())]);
 
         let s_cmp = Xtruct {
             string_thing: Some("Hello2".to_owned()),
@@ -452,48 +426,48 @@ fn make_thrift_calls(
     //   2 => { 6 => <empty Insanity struct>, },
     // }
     {
-        let mut arg_map_usermap: BTreeMap<Numberz, i64> = BTreeMap::new();
-        arg_map_usermap.insert(Numberz::ONE, 4289);
-        arg_map_usermap.insert(Numberz::EIGHT, 19);
+        let arg_map_usermap: BTreeMap<Numberz, i64> =
+            BTreeMap::from([(Numberz::ONE, 4289), (Numberz::EIGHT, 19)]);
 
-        let mut arg_vec_xtructs: Vec<Xtruct> = Vec::new();
-        arg_vec_xtructs.push(Xtruct {
-            string_thing: Some("foo".to_owned()),
-            byte_thing: Some(8),
-            i32_thing: Some(29),
-            i64_thing: Some(92384),
-        });
-        arg_vec_xtructs.push(Xtruct {
-            string_thing: Some("bar".to_owned()),
-            byte_thing: Some(28),
-            i32_thing: Some(2),
-            i64_thing: Some(-1281),
-        });
-        arg_vec_xtructs.push(Xtruct {
-            string_thing: Some("baz".to_owned()),
-            byte_thing: Some(0),
-            i32_thing: Some(3_948_539),
-            i64_thing: Some(-12_938_492),
-        });
+        let arg_vec_xtructs: Vec<Xtruct> = vec![
+            Xtruct {
+                string_thing: Some("foo".to_owned()),
+                byte_thing: Some(8),
+                i32_thing: Some(29),
+                i64_thing: Some(92384),
+            },
+            Xtruct {
+                string_thing: Some("bar".to_owned()),
+                byte_thing: Some(28),
+                i32_thing: Some(2),
+                i64_thing: Some(-1281),
+            },
+            Xtruct {
+                string_thing: Some("baz".to_owned()),
+                byte_thing: Some(0),
+                i32_thing: Some(3_948_539),
+                i64_thing: Some(-12_938_492),
+            },
+        ];
 
-        let mut s_cmp_nested_1: BTreeMap<Numberz, Insanity> = BTreeMap::new();
         let insanity = Insanity {
             user_map: Some(arg_map_usermap),
             xtructs: Some(arg_vec_xtructs),
         };
-        s_cmp_nested_1.insert(Numberz::TWO, insanity.clone());
-        s_cmp_nested_1.insert(Numberz::THREE, insanity.clone());
+        let s_cmp_nested_1: BTreeMap<Numberz, Insanity> = BTreeMap::from([
+            (Numberz::TWO, insanity.clone()),
+            (Numberz::THREE, insanity.clone()),
+        ]);
 
-        let mut s_cmp_nested_2: BTreeMap<Numberz, Insanity> = BTreeMap::new();
         let empty_insanity = Insanity {
             user_map: Some(BTreeMap::new()),
             xtructs: Some(Vec::new()),
         };
-        s_cmp_nested_2.insert(Numberz::SIX, empty_insanity);
+        let s_cmp_nested_2: BTreeMap<Numberz, Insanity> =
+            BTreeMap::from([(Numberz::SIX, empty_insanity)]);
 
-        let mut s_cmp: BTreeMap<UserId, BTreeMap<Numberz, Insanity>> = BTreeMap::new();
-        s_cmp.insert(1 as UserId, s_cmp_nested_1);
-        s_cmp.insert(2 as UserId, s_cmp_nested_2);
+        let s_cmp: BTreeMap<UserId, BTreeMap<Numberz, Insanity>> =
+            BTreeMap::from([(1, s_cmp_nested_1), (2, s_cmp_nested_2)]);
 
         verify_expected_result(thrift_test_client.test_insanity(insanity), s_cmp)?;
     }

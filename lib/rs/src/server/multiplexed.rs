@@ -170,8 +170,7 @@ fn split_ident_name(ident_name: &str) -> (Option<&str>, &str) {
             let (_, svc_call) = svc_call.split_at(1); // remove colon from service call name
             (Some(svc_name), svc_call)
         })
-        .or_else(|| Some((None, ident_name)))
-        .unwrap()
+        .unwrap_or((None, ident_name))
 }
 
 fn missing_processor_message(svc_name: Option<&str>) -> String {
