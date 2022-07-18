@@ -127,7 +127,7 @@ private:
   void render_const_value_holder(const string& name, t_type* ttype, t_const_value* tvalue);
 
   // Write the actual const value - the right side of a const definition.
-  void render_const_value(t_type* ttype, t_const_value* tvalue, bool is_owned = true);
+  void render_const_value(t_type* ttype, t_const_value* tvalue, bool is_owned = true, bool is_inline = true);
 
   // Write a const struct (returned from `const_value` method).
   void render_const_struct(t_type* ttype, t_const_value* tvalue);
@@ -140,14 +140,6 @@ private:
 
   // Write a const map (returned from `const_value` method).
   void render_const_map(t_type* ttype, t_const_value* tvalue);
-
-  // Write the code to insert constant values into a rust vec or set. The
-  // `insert_function` is the rust function that we'll use to insert the elements.
-  void render_container_const_value(
-    const string& insert_function,
-    t_type* ttype,
-    t_const_value* tvalue
-  );
 
   // Write the rust representation of a thrift struct to the generated file. Set `struct_type` to `T_ARGS`
   // if rendering the struct used to pack arguments for a service call. When `struct_type` is `T_ARGS` the
@@ -683,7 +675,7 @@ void t_rs_generator::render_const_value_holder(const string& name, t_type* ttype
 
   f_gen_ << indent() << "pub fn const_value() -> " << to_rust_type(ttype) << " {" << endl;
   indent_up();
-  render_const_value(ttype, tvalue);
+  render_const_value(ttype, tvalue, true, false);
   indent_down();
   f_gen_ << indent() << "}" << endl;
 
@@ -692,7 +684,11 @@ void t_rs_generator::render_const_value_holder(const string& name, t_type* ttype
   f_gen_ << endl;
 }
 
-void t_rs_generator::render_const_value(t_type* ttype, t_const_value* tvalue, bool is_owned) {
+void t_rs_generator::render_const_value(t_type* ttype, t_const_value* tvalue, bool is_owned, bool is_inline) {
+  if (!is_inline) {
+    f_gen_ << indent();
+  }
+
   if (ttype->is_base_type()) {
     t_base_type* tbase_type = (t_base_type*)ttype;
     switch (tbase_type->get_base()) {
@@ -726,9 +722,9 @@ void t_rs_generator::render_const_value(t_type* ttype, t_const_value* tvalue, bo
       throw "cannot generate const value for " + t_base_type::t_base_name(tbase_type->get_base());
     }
   } else if (ttype->is_typedef()) {
-    render_const_value(get_true_type(ttype), tvalue);
+    render_const_value(get_true_type(ttype), tvalue, is_owned, true);
   } else if (ttype->is_enum()) {
-    f_gen_ << indent() << "{" << endl;
+    f_gen_ << "{" << endl;
     indent_up();
     f_gen_
       << indent()
@@ -738,13 +734,11 @@ void t_rs_generator::render_const_value(t_type* ttype, t_const_value* tvalue, bo
       << ").expect(\"expecting valid const value\")"
       << endl;
     indent_down();
-    f_gen_ << indent() << "}" << endl;
+    f_gen_ << indent() << "}";
   } else if (ttype->is_struct() || ttype->is_xception()) {
     render_const_struct(ttype, tvalue);
   } else if (ttype->is_container()) {
-    f_gen_ << indent() << "{" << endl;
-    indent_up();
-
+    // all of them use vec! or from(), extra block is no longer needed
     if (ttype->is_list()) {
       render_const_list(ttype, tvalue);
     } else if (ttype->is_set()) {
@@ -754,111 +748,87 @@ void t_rs_generator::render_const_value(t_type* ttype, t_const_value* tvalue, bo
     } else {
       throw "cannot generate const container value for " + ttype->get_name();
     }
-
-    indent_down();
-    f_gen_ << indent() << "}" << endl;
   } else {
     throw "cannot generate const value for " + ttype->get_name();
+  }
+
+  if (!is_inline) {
+    f_gen_ << endl;
   }
 }
 
 void t_rs_generator::render_const_struct(t_type* ttype, t_const_value*) {
   if (((t_struct*)ttype)->is_union()) {
-    f_gen_ << indent() << "{" << endl;
+    f_gen_ << "{" << endl;
     indent_up();
     f_gen_ << indent() << "unimplemented!()" << endl;
     indent_down();
-    f_gen_ << indent() << "}" << endl;
+    f_gen_ << indent() << "}";
   } else {
-    f_gen_ << indent() << "{" << endl;
+    f_gen_ << "{" << endl;
     indent_up();
     f_gen_ << indent() << "unimplemented!()" << endl;
     indent_down();
-    f_gen_ << indent() << "}" << endl;
+    f_gen_ << indent() << "}";
   }
 }
 
 void t_rs_generator::render_const_list(t_type* ttype, t_const_value* tvalue) {
   t_type* elem_type = ((t_list*)ttype)->get_elem_type();
-  f_gen_ << indent() << "let mut l: Vec<" << to_rust_type(elem_type) << "> = Vec::new();" << endl;
+  f_gen_ << "vec![" << endl;
+  indent_up();
   const vector<t_const_value*>& elems = tvalue->get_list();
   vector<t_const_value*>::const_iterator elem_iter;
   for(elem_iter = elems.begin(); elem_iter != elems.end(); ++elem_iter) {
+    f_gen_ << indent();
     t_const_value* elem_value = (*elem_iter);
-    render_container_const_value("l.push", elem_type, elem_value);
+    render_const_value(elem_type, elem_value);
+    f_gen_ << "," << endl;
   }
-  f_gen_ << indent() << "l" << endl;
+  indent_down();
+  f_gen_ << indent() << "]";
 }
 
 void t_rs_generator::render_const_set(t_type* ttype, t_const_value* tvalue) {
   t_type* elem_type = ((t_set*)ttype)->get_elem_type();
-  f_gen_ << indent() << "let mut s: BTreeSet<" << to_rust_type(elem_type) << "> = BTreeSet::new();" << endl;
+  f_gen_ << "BTreeSet::from([" << endl;
+  indent_up();
   const vector<t_const_value*>& elems = tvalue->get_list();
   vector<t_const_value*>::const_iterator elem_iter;
   for(elem_iter = elems.begin(); elem_iter != elems.end(); ++elem_iter) {
+    f_gen_ << indent();
     t_const_value* elem_value = (*elem_iter);
-    render_container_const_value("s.insert", elem_type, elem_value);
+    render_const_value(elem_type, elem_value);
+    f_gen_ << "," << endl;
   }
-  f_gen_ << indent() << "s" << endl;
+  indent_down();
+  f_gen_ << indent() << "])";
 }
 
 void t_rs_generator::render_const_map(t_type* ttype, t_const_value* tvalue) {
   t_type* key_type = ((t_map*)ttype)->get_key_type();
   t_type* val_type = ((t_map*)ttype)->get_val_type();
-  f_gen_
-    << indent()
-    << "let mut m: BTreeMap<"
-    << to_rust_type(key_type) << ", " << to_rust_type(val_type)
-    << "> = BTreeMap::new();"
-    << endl;
+  f_gen_ << "BTreeMap::from([" << endl;
+  indent_up();
   const map<t_const_value*, t_const_value*, t_const_value::value_compare>& elems = tvalue->get_map();
   map<t_const_value*, t_const_value*, t_const_value::value_compare>::const_iterator elem_iter;
   for (elem_iter = elems.begin(); elem_iter != elems.end(); ++elem_iter) {
     t_const_value* key_value = elem_iter->first;
     t_const_value* val_value = elem_iter->second;
-    if (get_true_type(key_type)->is_base_type()) {
-      f_gen_ << indent() << "let k = ";
-      render_const_value(key_type, key_value);
-      f_gen_ << ";" << endl;
-    } else {
-      f_gen_ << indent() << "let k = {" << endl;
-      indent_up();
-      render_const_value(key_type, key_value);
-      indent_down();
-      f_gen_ << indent() << "};" << endl;
-    }
-    if (get_true_type(val_type)->is_base_type()) {
-      f_gen_ << indent() << "let v = ";
-      render_const_value(val_type, val_value);
-      f_gen_ << ";" << endl;
-    } else {
-      f_gen_ << indent() << "let v = {" << endl;
-      indent_up();
-      render_const_value(val_type, val_value);
-      indent_down();
-      f_gen_ << indent() << "};" << endl;
-    }
-    f_gen_ <<  indent() << "m.insert(k, v);" << endl;
-  }
-  f_gen_ << indent() << "m" << endl;
-}
 
-void t_rs_generator::render_container_const_value(
-  const string& insert_function,
-  t_type* ttype,
-  t_const_value* tvalue
-) {
-  if (get_true_type(ttype)->is_base_type()) {
-    f_gen_ << indent() << insert_function << "(";
-    render_const_value(ttype, tvalue);
-    f_gen_ << ");" << endl;
-  } else {
-    f_gen_ << indent() << insert_function << "(" << endl;
+    f_gen_ << indent() << "(" << endl;
     indent_up();
-    render_const_value(ttype, tvalue);
+    f_gen_ << indent();
+    render_const_value(key_type, key_value);
+    f_gen_ << "," << endl;
+    f_gen_ << indent();
+    render_const_value(val_type, val_value);
+    f_gen_ << "," << endl;
     indent_down();
-    f_gen_ << indent() << ");" << endl;
+    f_gen_ << indent() << ")," << endl;
   }
+  indent_down();
+  f_gen_ << indent() << "])";
 }
 
 //-----------------------------------------------------------------------------
