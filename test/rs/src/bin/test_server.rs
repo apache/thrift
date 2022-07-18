@@ -16,14 +16,12 @@
 // under the License.
 
 use clap::{clap_app, value_t};
-use env_logger;
 use log::*;
 
 use std::collections::{BTreeMap, BTreeSet};
 use std::thread;
 use std::time::Duration;
 
-use thrift;
 use thrift::protocol::{
     TBinaryInputProtocolFactory, TBinaryOutputProtocolFactory, TCompactInputProtocolFactory,
     TCompactOutputProtocolFactory, TInputProtocolFactory, TOutputProtocolFactory,
@@ -256,7 +254,7 @@ impl ThriftTestSyncHandler for ThriftTestSyncHandlerImpl {
         info!("testMapMap({})", hello);
 
         let mut inner_map_0: BTreeMap<i32, i32> = BTreeMap::new();
-        for i in -4..(0 as i32) {
+        for i in -4..0 {
             inner_map_0.insert(i, i);
         }
 
