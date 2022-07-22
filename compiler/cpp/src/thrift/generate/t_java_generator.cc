@@ -2599,11 +2599,15 @@ void t_java_generator::generate_java_bean_boilerplate(ostream& out, t_struct* ts
     if (type->is_binary() && !unsafe_binaries_) {
       out << "org.apache.thrift.TBaseHelper.copyBinary(" << field_name << ")";
     } else if (type->is_set()) {
-      out << "new com.lumilabs.common.collection.HashCodeSet<" << type_name(type) << ">(" << field_name << ")";
+      t_type* element_type = ((t_set*)type)->get_elem_type();
+      out << "new com.lumilabs.common.collection.HashCodeSet<" << type_name(element_type, true) << ">(" << field_name << ")";
     } else if (type->is_list()) {
-      out << "new com.lumilabs.common.collection.HashCodeList<" << type_name(type) << ">(" << field_name << ")";
+      t_type* element_type = ((t_list*)type)->get_elem_type();
+      out << "new com.lumilabs.common.collection.HashCodeList<" << type_name(element_type, true) << ">(" << field_name << ")";
     } else if (type->is_map()) {
-      out << "new com.lumilabs.common.collection.HashCodeMap<" << type_name(type) << ">(" << field_name << ")";
+      t_type* key_type = ((t_map*)type)->get_key_type();
+      t_type* val_type = ((t_map*)type)->get_val_type();
+      out << "new com.lumilabs.common.collection.HashCodeMap<" << type_name(key_type) << "," << type_name(val_type) << ">(" << field_name << ")";
     } else {
       out << field_name;
     }
@@ -2636,11 +2640,15 @@ void t_java_generator::generate_java_bean_boilerplate(ostream& out, t_struct* ts
       if (type->is_binary() && !unsafe_binaries_) {
         out << "org.apache.thrift.TBaseHelper.copyBinary(" << field_name << ")";
       } else if (type->is_set()) {
-        out << "new com.lumilabs.common.collection.HashCodeSet<" << type_name(type) << ">(" << field_name << "Opt.get()" << ")";
+        t_type* element_type = ((t_set*)type)->get_elem_type();
+        out << "new com.lumilabs.common.collection.HashCodeSet<" << type_name(element_type, true) << ">(" << field_name << "Opt.get()" << ")";
       } else if (type->is_list()) {
-        out << "new com.lumilabs.common.collection.HashCodeList<" << type_name(type) << ">(" << field_name << "Opt.get()" << ")";
+        t_type* element_type = ((t_list*)type)->get_elem_type();
+        out << "new com.lumilabs.common.collection.HashCodeList<" << type_name(element_type, true) << ">(" << field_name << "Opt.get()" << ")";
       } else if (type->is_map()) {
-        out << "new com.lumilabs.common.collection.HashCodeList<" << type_name(type) << ">(" << field_name << "Opt.get()" << ")";
+        t_type* key_type = ((t_map*)type)->get_key_type();
+        t_type* val_type = ((t_map*)type)->get_val_type();
+        out << "new com.lumilabs.common.collection.HashCodeList<" << type_name(key_type) << "," << type_name(val_type) << ">(" << field_name << "Opt.get()" << ")";
       } else {
         out << field_name << "Opt.get()";
       }
