@@ -2599,11 +2599,11 @@ void t_java_generator::generate_java_bean_boilerplate(ostream& out, t_struct* ts
     if (type->is_binary() && !unsafe_binaries_) {
       out << "org.apache.thrift.TBaseHelper.copyBinary(" << field_name << ")";
     } else if (type->is_set()) {
-      out << "new com.lumilabs.common.HashCodeSet<" << type_name(type) << ">(" << field_name << ")";
+      out << "new com.lumilabs.common.collection.HashCodeSet<" << type_name(type) << ">(" << field_name << ")";
     } else if (type->is_list()) {
-      out << "new com.lumilabs.common.HashCodeList<" << type_name(type) << ">(" << field_name << ")";
+      out << "new com.lumilabs.common.collection.HashCodeList<" << type_name(type) << ">(" << field_name << ")";
     } else if (type->is_map()) {
-      out << "new com.lumilabs.common.HashCodeMap<" << type_name(type) << ">(" << field_name << ")";
+      out << "new com.lumilabs.common.collection.HashCodeMap<" << type_name(type) << ">(" << field_name << ")";
     } else {
       out << field_name;
     }
@@ -2636,11 +2636,11 @@ void t_java_generator::generate_java_bean_boilerplate(ostream& out, t_struct* ts
       if (type->is_binary() && !unsafe_binaries_) {
         out << "org.apache.thrift.TBaseHelper.copyBinary(" << field_name << ")";
       } else if (type->is_set()) {
-        out << "new com.lumilabs.common.HashCodeSet<" << type_name(type) << ">(" << field_name << "Opt.get()" << ")";
+        out << "new com.lumilabs.common.collection.HashCodeSet<" << type_name(type) << ">(" << field_name << "Opt.get()" << ")";
       } else if (type->is_list()) {
-        out << "new com.lumilabs.common.HashCodeList<" << type_name(type) << ">(" << field_name << "Opt.get()" << ")";
+        out << "new com.lumilabs.common.collection.HashCodeList<" << type_name(type) << ">(" << field_name << "Opt.get()" << ")";
       } else if (type->is_map()) {
-        out << "new com.lumilabs.common.HashCodeList<" << type_name(type) << ">(" << field_name << "Opt.get()" << ")";
+        out << "new com.lumilabs.common.collection.HashCodeList<" << type_name(type) << ">(" << field_name << "Opt.get()" << ")";
       } else {
         out << field_name << "Opt.get()";
       }
