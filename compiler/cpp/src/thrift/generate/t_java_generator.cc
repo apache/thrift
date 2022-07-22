@@ -2648,7 +2648,7 @@ void t_java_generator::generate_java_bean_boilerplate(ostream& out, t_struct* ts
       } else if (type->is_map()) {
         t_type* key_type = ((t_map*)type)->get_key_type();
         t_type* val_type = ((t_map*)type)->get_val_type();
-        out << "new com.lumilabs.common.collection.HashCodeList<" << type_name(key_type) << "," << type_name(val_type) << ">(" << field_name << "Opt.get()" << ")";
+        out << "new com.lumilabs.common.collection.HashCodeMap<" << type_name(key_type) << "," << type_name(val_type) << ">(" << field_name << "Opt.get()" << ")";
       } else {
         out << field_name << "Opt.get()";
       }
