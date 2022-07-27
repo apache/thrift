@@ -2600,14 +2600,14 @@ void t_java_generator::generate_java_bean_boilerplate(ostream& out, t_struct* ts
       out << "org.apache.thrift.TBaseHelper.copyBinary(" << field_name << ")";
     } else if (type->is_set()) {
       t_type* element_type = ((t_set*)type)->get_elem_type();
-      out << "new com.lumilabs.common.collection.HashCodeSet<" << type_name(element_type, true) << ">(" << field_name << ")";
+      out << field_name << " == null ? null : new com.lumilabs.common.collection.HashCodeSet<" << type_name(element_type, true) << ">(" << field_name << ")";
     } else if (type->is_list()) {
       t_type* element_type = ((t_list*)type)->get_elem_type();
-      out << "new com.lumilabs.common.collection.HashCodeList<" << type_name(element_type, true) << ">(" << field_name << ")";
+      out << field_name << " == null ? null : new com.lumilabs.common.collection.HashCodeList<" << type_name(element_type, true) << ">(" << field_name << ")";
     } else if (type->is_map()) {
       t_type* key_type = ((t_map*)type)->get_key_type();
       t_type* val_type = ((t_map*)type)->get_val_type();
-      out << "new com.lumilabs.common.collection.HashCodeMap<" << type_name(key_type, true) << "," << type_name(val_type, true) << ">(" << field_name << ")";
+      out << field_name << " == null ? null : new com.lumilabs.common.collection.HashCodeMap<" << type_name(key_type, true) << "," << type_name(val_type, true) << ">(" << field_name << ")";
     } else {
       out << field_name;
     }
