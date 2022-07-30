@@ -5290,6 +5290,10 @@ void t_java_generator::generate_standard_reader(ostream& out, t_struct* tstruct)
     indent(out) << "struct."
                 << "set" << get_cap_name((*f_iter)->get_name()) << get_cap_name("isSet")
                 << "(true);" << endl;
+    t_type* type = get_true_type((*f_iter)->get_type());
+    if (type->is_map() || type->is_list() || type->is_set()) {
+      indent(out) << "struct.set" << get_cap_name((*f_iter)->get_name()) << "(struct." << (*f_iter)->get_name() << ");" << endl;
+    }
     indent_down();
     out << indent() << "} else { " << endl << indent()
         << "  org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);" << endl
