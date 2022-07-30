@@ -21,7 +21,7 @@
 The main idea of the server is to receive and send requests
 only from the main thread.
 
-The thread poool should be sized for concurrent tasks, not
+The thread pool should be sized for concurrent tasks, not
 maximum connections
 """
 
