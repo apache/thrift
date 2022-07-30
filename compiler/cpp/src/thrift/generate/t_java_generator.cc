@@ -1639,7 +1639,17 @@ void t_java_generator::generate_java_struct_definition(ostream& out,
 
     if (type->is_container()) {
       generate_deep_copy_container(out, "other", field_name, "__this__" + field_name, type);
-      indent(out) << "this." << field_name << " = __this__" << field_name << ";" << endl;
+      t_container* container = (t_container*)type;
+      std::string container_string;
+      if (container->is_map()) {
+        t_type* key_type = ((t_map*)container)->get_key_type();
+        t_type* val_type = ((t_map*)container)->get_val_type();
+        container_string = std::string("new com.lumilabs.common.collection.HashCodeMap<") + type_name(key_type, true) + "," + type_name(val_type, true) + ">";
+      } else {
+        t_type* elem_type = container->is_list() ? ((t_list*)container)->get_elem_type() : ((t_set*)container)->get_elem_type();
+        container_string = std::string("new com.lumilabs.common.collection.") + (container->is_list() ? "HashCodeList<" : "HashCodeSet<") + type_name(elem_type, true) + ">";
+      }
+      indent(out) << "this." << field_name << " = " << container_string << "(__this__" << field_name << ");" << endl;
     } else {
       indent(out) << "this." << field_name << " = ";
       generate_deep_copy_non_container(out, "other." + field_name, field_name, type);
@@ -5280,6 +5290,10 @@ void t_java_generator::generate_standard_reader(ostream& out, t_struct* tstruct)
     indent(out) << "struct."
                 << "set" << get_cap_name((*f_iter)->get_name()) << get_cap_name("isSet")
                 << "(true);" << endl;
+    t_type* type = get_true_type((*f_iter)->get_type());
+    if (type->is_map() || type->is_list() || type->is_set()) {
+      indent(out) << "struct.set" << get_cap_name((*f_iter)->get_name()) << "(struct." << (*f_iter)->get_name() << ");" << endl;
+    }
     indent_down();
     out << indent() << "} else { " << endl << indent()
         << "  org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);" << endl
