@@ -6,6 +6,8 @@
 
 - [THRIFT-5539](https://issues.apache.org/jira/browse/THRIFT-5539) - `TDebugProtocol.DuplicateTo` is now deprecated, `TDuplicateToProtocol` has been provided as the replacement
 - [THRIFT-5583](https://issues.apache.org/jira/browse/THRIFT-5583) - Add `skip_remote` arg to compiler, which can be used to skip the generating of -remote folders for services
+- [THRIFT-5527](https://issues.apache.org/jira/browse/THRIFT-5527) - Compiler generated Process function will swallow exceptions defined in thrift IDL
+- [THRIFT-5605](https://issues.apache.org/jira/browse/THRIFT-5605) - Provide `ExtractIDLExceptionClientMiddleware` and `ExtractExceptionFromResult` to help client middlewares to gain access to exceptions defined in thrift IDL
 
 ## 0.16.0
 
