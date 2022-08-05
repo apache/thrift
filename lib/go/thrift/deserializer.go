@@ -39,8 +39,15 @@ func NewTDeserializer() *TDeserializer {
 	}
 }
 
+type reseter interface {
+	Reset()
+}
+
 func (t *TDeserializer) ReadString(ctx context.Context, msg TStruct, s string) (err error) {
 	t.Transport.Reset()
+	if r, ok := t.Protocol.(reseter); ok {
+		r.Reset()
+	}
 
 	err = nil
 	if _, err = t.Transport.Write([]byte(s)); err != nil {
@@ -54,6 +61,9 @@ func (t *TDeserializer) ReadString(ctx context.Context, msg TStruct, s string) (
 
 func (t *TDeserializer) Read(ctx context.Context, msg TStruct, b []byte) (err error) {
 	t.Transport.Reset()
+	if r, ok := t.Protocol.(reseter); ok {
+		r.Reset()
+	}
 
 	err = nil
 	if _, err = t.Transport.Write(b); err != nil {

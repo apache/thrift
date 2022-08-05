@@ -46,6 +46,9 @@ func NewTSerializer() *TSerializer {
 
 func (t *TSerializer) WriteString(ctx context.Context, msg TStruct) (s string, err error) {
 	t.Transport.Reset()
+	if r, ok := t.Protocol.(reseter); ok {
+		r.Reset()
+	}
 
 	if err = msg.Write(ctx, t.Protocol); err != nil {
 		return
@@ -63,6 +66,9 @@ func (t *TSerializer) WriteString(ctx context.Context, msg TStruct) (s string, e
 
 func (t *TSerializer) Write(ctx context.Context, msg TStruct) (b []byte, err error) {
 	t.Transport.Reset()
+	if r, ok := t.Protocol.(reseter); ok {
+		r.Reset()
+	}
 
 	if err = msg.Write(ctx, t.Protocol); err != nil {
 		return
