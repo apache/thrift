@@ -121,8 +121,7 @@ func NewTSimpleJSONProtocolConf(t TTransport, conf *TConfiguration) *TSimpleJSON
 		writer: bufio.NewWriter(t),
 		reader: bufio.NewReader(t),
 	}
-	v.parseContextStack.push(_CONTEXT_IN_TOPLEVEL)
-	v.dumpContext.push(_CONTEXT_IN_TOPLEVEL)
+	v.resetContextStack()
 	return v
 }
 
@@ -1326,6 +1325,17 @@ func (p *TSimpleJSONProtocol) write(b []byte) (int, error) {
 func (p *TSimpleJSONProtocol) SetTConfiguration(conf *TConfiguration) {
 	PropagateTConfiguration(p.trans, conf)
 	p.cfg = conf
+}
+
+// Reset resets this protocol's internal state.
+//
+// It's useful when a single protocol instance is reused after errors, to make
+// sure the next use will not be in a bad state to begin with. An example is
+// when it's used in serializer/deserializer pools.
+func (p *TSimpleJSONProtocol) Reset() {
+	p.resetContextStack()
+	p.writer.Reset(p.trans)
+	p.reader.Reset(p.trans)
 }
 
 var (
