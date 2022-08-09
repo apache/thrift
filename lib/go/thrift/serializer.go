@@ -21,7 +21,6 @@ package thrift
 
 import (
 	"context"
-	"sync"
 )
 
 type TSerializer struct {
@@ -92,7 +91,7 @@ func (t *TSerializer) Write(ctx context.Context, msg TStruct) (b []byte, err err
 // It must be initialized with either NewTSerializerPool or
 // NewTSerializerPoolSizeFactory.
 type TSerializerPool struct {
-	pool sync.Pool
+	pool *pool[TSerializer]
 }
 
 // NewTSerializerPool creates a new TSerializerPool.
@@ -100,11 +99,7 @@ type TSerializerPool struct {
 // NewTSerializer can be used as the arg here.
 func NewTSerializerPool(f func() *TSerializer) *TSerializerPool {
 	return &TSerializerPool{
-		pool: sync.Pool{
-			New: func() interface{} {
-				return f()
-			},
-		},
+		pool: newPool(f, nil),
 	}
 }
 
@@ -115,28 +110,26 @@ func NewTSerializerPool(f func() *TSerializer) *TSerializerPool {
 // larger than that. It just dictates the initial size.
 func NewTSerializerPoolSizeFactory(size int, factory TProtocolFactory) *TSerializerPool {
 	return &TSerializerPool{
-		pool: sync.Pool{
-			New: func() interface{} {
-				transport := NewTMemoryBufferLen(size)
-				protocol := factory.GetProtocol(transport)
+		pool: newPool(func() *TSerializer {
+			transport := NewTMemoryBufferLen(size)
+			protocol := factory.GetProtocol(transport)
 
-				return &TSerializer{
-					Transport: transport,
-					Protocol:  protocol,
-				}
-			},
-		},
+			return &TSerializer{
+				Transport: transport,
+				Protocol:  protocol,
+			}
+		}, nil),
 	}
 }
 
 func (t *TSerializerPool) WriteString(ctx context.Context, msg TStruct) (string, error) {
-	s := t.pool.Get().(*TSerializer)
-	defer t.pool.Put(s)
+	s := t.pool.get()
+	defer t.pool.put(&s)
 	return s.WriteString(ctx, msg)
 }
 
 func (t *TSerializerPool) Write(ctx context.Context, msg TStruct) ([]byte, error) {
-	s := t.pool.Get().(*TSerializer)
-	defer t.pool.Put(s)
+	s := t.pool.get()
+	defer t.pool.put(&s)
 	return s.Write(ctx, msg)
 }

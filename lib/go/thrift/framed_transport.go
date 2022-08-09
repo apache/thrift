@@ -133,7 +133,7 @@ func (p *TFramedTransport) Read(buf []byte) (read int, err error) {
 		// Make sure we return the read buffer back to pool
 		// after we finished reading from it.
 		if p.readBuf != nil && p.readBuf.Len() == 0 {
-			returnBufToPool(&p.readBuf)
+			bufPool.put(&p.readBuf)
 		}
 	}()
 
@@ -175,7 +175,7 @@ func (p *TFramedTransport) ReadByte() (c byte, err error) {
 
 func (p *TFramedTransport) ensureWriteBufferBeforeWrite() {
 	if p.writeBuf == nil {
-		p.writeBuf = getBufFromPool()
+		p.writeBuf = bufPool.get()
 	}
 }
 
@@ -196,7 +196,7 @@ func (p *TFramedTransport) WriteString(s string) (n int, err error) {
 }
 
 func (p *TFramedTransport) Flush(ctx context.Context) error {
-	defer returnBufToPool(&p.writeBuf)
+	defer bufPool.put(&p.writeBuf)
 	size := p.writeBuf.Len()
 	buf := p.buffer[:4]
 	binary.BigEndian.PutUint32(buf, uint32(size))
@@ -215,9 +215,9 @@ func (p *TFramedTransport) Flush(ctx context.Context) error {
 
 func (p *TFramedTransport) readFrame() error {
 	if p.readBuf != nil {
-		returnBufToPool(&p.readBuf)
+		bufPool.put(&p.readBuf)
 	}
-	p.readBuf = getBufFromPool()
+	p.readBuf = bufPool.get()
 
 	buf := p.buffer[:4]
 	if _, err := io.ReadFull(p.reader, buf); err != nil {
