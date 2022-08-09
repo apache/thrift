@@ -370,7 +370,7 @@ func (t *THeaderTransport) ReadFrame(ctx context.Context) error {
 
 	// Read the frame fully into frameBuffer.
 	if t.frameBuffer == nil {
-		t.frameBuffer = getBufFromPool()
+		t.frameBuffer = bufPool.get()
 	}
 	_, err = io.CopyN(t.frameBuffer, t.reader, int64(frameSize))
 	if err != nil {
@@ -407,7 +407,7 @@ func (t *THeaderTransport) ReadFrame(ctx context.Context) error {
 // It closes frameReader, and also resets frame related states.
 func (t *THeaderTransport) endOfFrame() error {
 	defer func() {
-		returnBufToPool(&t.frameBuffer)
+		bufPool.put(&t.frameBuffer)
 		t.frameReader = nil
 	}()
 	return t.frameReader.Close()
@@ -572,7 +572,7 @@ func (t *THeaderTransport) Read(p []byte) (read int, err error) {
 // You need to call Flush to actually write them to the transport.
 func (t *THeaderTransport) Write(p []byte) (int, error) {
 	if t.writeBuffer == nil {
-		t.writeBuffer = getBufFromPool()
+		t.writeBuffer = bufPool.get()
 	}
 	return t.writeBuffer.Write(p)
 }
@@ -583,7 +583,7 @@ func (t *THeaderTransport) Flush(ctx context.Context) error {
 		return nil
 	}
 
-	defer returnBufToPool(&t.writeBuffer)
+	defer bufPool.put(&t.writeBuffer)
 
 	switch t.clientType {
 	default:
@@ -633,8 +633,8 @@ func (t *THeaderTransport) Flush(ctx context.Context) error {
 			}
 		}
 
-		payload := getBufFromPool()
-		defer returnBufToPool(&payload)
+		payload := bufPool.get()
+		defer bufPool.put(&payload)
 		meta := headerMeta{
 			MagicFlags:   THeaderHeaderMagic + t.Flags&THeaderFlagsMask,
 			SequenceID:   t.SequenceID,

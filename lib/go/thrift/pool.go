@@ -24,29 +24,46 @@ import (
 	"sync"
 )
 
-var bufPool = sync.Pool{
-	New: func() interface{} {
-		return new(bytes.Buffer)
-	},
+// pool is a generic sync.Pool wrapper with bells and whistles.
+type pool[T any] struct {
+	pool  sync.Pool
+	reset func(*T)
 }
 
-// getBufFromPool gets a buffer out of the pool and guarantees that it's reset
-// before return.
-func getBufFromPool() *bytes.Buffer {
-	buf := bufPool.Get().(*bytes.Buffer)
+// newPool creates a new pool.
+//
+// Both generate and reset are optional.
+// Default generate is just new(T),
+// When reset is nil we don't do any additional resetting when calling get.
+func newPool[T any](generate func() *T, reset func(*T)) *pool[T] {
+	if generate == nil {
+		generate = func() *T {
+			return new(T)
+		}
+	}
+	return &pool[T]{
+		pool: sync.Pool{
+			New: func() interface{} {
+				return generate()
+			},
+		},
+		reset: reset,
+	}
+}
+
+func (p *pool[T]) get() *T {
+	r := p.pool.Get().(*T)
+	if p.reset != nil {
+		p.reset(r)
+	}
+	return r
+}
+
+func (p *pool[T]) put(r **T) {
+	p.pool.Put(*r)
+	*r = nil
+}
+
+var bufPool = newPool(nil, func(buf *bytes.Buffer) {
 	buf.Reset()
-	return buf
-}
-
-// returnBufToPool returns a buffer to the pool, and sets it to nil to avoid
-// accidental usage after it's returned.
-//
-// You usually want to use it this way:
-//
-//     buf := getBufFromPool()
-//     defer returnBufToPool(&buf)
-//     // use buf
-func returnBufToPool(buf **bytes.Buffer) {
-	bufPool.Put(*buf)
-	*buf = nil
-}
+})
