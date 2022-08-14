@@ -70,7 +70,24 @@ when is_integer(Len), Len >= 0 ->
     X when X >= Len ->
       {Result, Remaining} = split_binary(Binary, Len),
       {State#t_socket{buffer = Remaining}, {ok, Result}};
-    _ -> recv(State, Len)
+    _ ->
+     %%recv(State, Len)
+     loop_recv(State,Len,Len)
+  end.
+
+loop_recv(State=#t_socket{buffer = Buf},ReadLen,NextReadLen) when NextReadLen =< 0->
+  {Result,Remaining}=split_binary(Buf,ReadLen),
+  {State#t_socket{buffer = Remaining},{ok,Result}};
+
+loop_recv(State=#t_socket{socket = Socket,buffer = Buf},ReadLen,NextReadLen) when NextReadLen >0 ->
+  case gen_tcp:recv(Socket,0,State#t_socket.recv_timeout) of
+    {error,Error}->
+      gen_tcp:close(Socket),
+      {State,{error,Error}};
+    {ok,Data}->
+      Binary=iolist_to_binary([Buf,Data]),
+      Give=min(iolist_size(Binary),ReadLen),
+      loop_recv(State#t_socket{buffer = Binary},ReadLen,ReadLen-Give)
   end.
 
 recv(State = #t_socket{socket = Socket, buffer = Buf}, Len) ->
