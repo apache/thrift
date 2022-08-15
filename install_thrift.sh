@@ -14,8 +14,9 @@ rm -rf /usr/local/bin/thrift
 ./bootstrap.sh
 ./configure --without-cpp --without-qt4 --without-qt5 --with-c_glib --without-csharp --without-erlang \
     --without-nodejs --without-lua --without-python --without-perl --without-php --without-php_extension \
-    --without-ruby --without-haskell --without-go --without-haxe --without-d --without-py3 --without-swift \
+    --without-ruby --without-haskell --without-go --without-haxe --without-d --without-py3 \
+    --with-swift \
     --with-java \
     && make
-    
+
 make install

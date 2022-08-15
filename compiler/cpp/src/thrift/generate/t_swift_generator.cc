@@ -1090,7 +1090,7 @@ void t_swift_generator::generate_swift_union_reader(ostream& out, t_struct* tstr
     }
 
     indent(out) << padding << "ret = " << tstruct->get_name() << "."
-                << (*f_iter)->get_name() << "(val: " << "try? "
+                << (*f_iter)->get_name() << "(val: " << "try "
                 << type_name((*f_iter)->get_type(), false, false)
                 << ".read(from: proto))" << endl;
   }
