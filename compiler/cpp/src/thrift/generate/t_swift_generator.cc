@@ -51,7 +51,7 @@ public:
                     const string& option_string)
     : t_oop_generator(program) {
     update_keywords();
-	
+
     (void)option_string;
     map<string, string>::const_iterator iter;
 
@@ -1090,7 +1090,7 @@ void t_swift_generator::generate_swift_union_reader(ostream& out, t_struct* tstr
     }
 
     indent(out) << padding << "ret = " << tstruct->get_name() << "."
-                << (*f_iter)->get_name() << "(val: " << "try "
+                << (*f_iter)->get_name() << "(val: " << "try? "
                 << type_name((*f_iter)->get_type(), false, false)
                 << ".read(from: proto))" << endl;
   }
@@ -1194,7 +1194,7 @@ void t_swift_generator::generate_swift_struct_reader(ostream& out,
         padding = "            ";
       }
 
-      out << padding << maybe_escape_identifier((*f_iter)->get_name()) << " = try "
+      out << padding << maybe_escape_identifier((*f_iter)->get_name()) << " = try? "
           << type_name((*f_iter)->get_type(), false, false) << ".read(from: proto)" << endl;
     }
 
