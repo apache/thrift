@@ -17,6 +17,8 @@
 
 (require "asdf")
 (load (merge-pathnames "../../lib/cl/load-locally.lisp" *load-truename*))
+(require "sb-grovel")
+(asdf:load-asd (merge-pathnames "../../lib/cl/externals/software/clon-1.0b25/termio/net.didierverna.clon.termio.asd" *load-truename*))
 (asdf:load-system :net.didierverna.clon)
 (asdf:load-system :fiasco)
 (asdf:load-asd (merge-pathnames "gen-cl/ThriftTest/thrift-gen-ThriftTest.asd" *load-truename*))
