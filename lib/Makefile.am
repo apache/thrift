@@ -87,6 +87,10 @@ if WITH_RS
 SUBDIRS += rs
 endif
 
+if WITH_CL
+SUBDIRS += cl
+endif
+
 if WITH_SWIFT
 SUBDIRS += swift
 endif

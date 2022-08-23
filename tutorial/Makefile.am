@@ -74,6 +74,10 @@ if WITH_RS
 SUBDIRS += rs
 endif
 
+if WITH_CL
+SUBDIRS += cl
+endif
+
 if WITH_PERL
 SUBDIRS += perl
 endif
