@@ -1000,6 +1000,9 @@ void generate(t_program* program, const vector<string>& generator_strings) {
       dump_docstrings(program);
     }
 
+    // make sure all symbolic constants are properly resolved
+    program->scope()->resolve_all_consts();
+
     vector<string>::const_iterator iter;
     for (iter = generator_strings.begin(); iter != generator_strings.end(); ++iter) {
       t_generator* generator = t_generator_registry::get_generator(program, *iter);

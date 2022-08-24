@@ -24,12 +24,6 @@ struct Goodbyez {
   1: i32 val = 325;
 }
 
-senum Thinger {
-  "ASDFKJ",
-  "r32)*F#@",
-  "ASDFLJASDF"
-}
-
 struct BoolPasser {
   1: bool value = 1
 }
@@ -50,6 +44,10 @@ exception Goodbye {
   1: i32 simple,
   2: map<i32,i32> complex,
   3: map<i32, map<i32,i32>> complexer,
+}
+
+struct Thinger {
+  1: i32 dummy
 }
 
 service SmallService {

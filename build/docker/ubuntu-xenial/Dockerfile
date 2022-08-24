@@ -136,9 +136,9 @@ RUN apt-get install -y --no-install-recommends \
       libglib2.0-dev
 
 # golang
-ENV GOLANG_VERSION 1.16.13
+ENV GOLANG_VERSION 1.18.5
 ENV GOLANG_DOWNLOAD_URL https://go.dev/dl/go$GOLANG_VERSION.linux-amd64.tar.gz
-ENV GOLANG_DOWNLOAD_SHA256 275fc03c90c13b0bbff13125a43f1f7a9f9c00a0d5a9f2d5b16dbc2fa2c6e12a
+ENV GOLANG_DOWNLOAD_SHA256 9e5de37f9c49942c601b191ac5fba404b868bfc21d446d6960acc12283d6e5f2
 RUN curl -fsSL "$GOLANG_DOWNLOAD_URL" -o golang.tar.gz && \
       echo "$GOLANG_DOWNLOAD_SHA256  golang.tar.gz" | sha256sum -c - && \
       tar -C /usr/local -xzf golang.tar.gz && \
@@ -155,12 +155,20 @@ RUN apt-get install -y --no-install-recommends \
     haxelib install --always hxcpp 3.4.64 2>&1 > /dev/null
 # note: hxcpp 3.4.185 (latest) no longer ships static libraries, and caused a build failure
 
+ENV GRADLE_VERSION="7.4.2"
 RUN apt-get install -y --no-install-recommends \
 `# Java dependencies` \
       ant \
       ant-optional \
       openjdk-8-jdk \
-      maven
+      maven \
+      unzip && \
+`# Gradle` \
+      wget https://services.gradle.org/distributions/gradle-$GRADLE_VERSION-bin.zip -q -O /tmp/gradle-$GRADLE_VERSION-bin.zip && \
+      (echo "29e49b10984e585d8118b7d0bc452f944e386458df27371b49b4ac1dec4b7fda  /tmp/gradle-$GRADLE_VERSION-bin.zip" | sha256sum -c -) && \
+      unzip -d /tmp /tmp/gradle-$GRADLE_VERSION-bin.zip && \
+      mv /tmp/gradle-$GRADLE_VERSION /usr/local/gradle && \
+      ln -s /usr/local/gradle/bin/gradle /usr/local/bin
 
 # disabled: same as ubuntu-bionic jobs
 # RUN apt-get install -y --no-install-recommends \

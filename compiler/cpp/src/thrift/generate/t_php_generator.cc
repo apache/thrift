@@ -1785,10 +1785,12 @@ void t_php_generator::generate_service_rest(t_service* tservice) {
         f_service_rest << indent() << "$" << (*a_iter)->get_name() << " = isset(" << req << ") ? "
                    << cast << req << " : null;" << endl;
       }
+      /* slist no longer supported
       if (atype->is_string() && ((t_base_type*)atype)->is_string_list()) {
         f_service_rest << indent() << "$" << (*a_iter)->get_name() << " = explode(',', $"
                        << (*a_iter)->get_name() << ");" << endl;
-      } else if (atype->is_map() || atype->is_list()) {
+      } else */
+      if (atype->is_map() || atype->is_list()) {
         f_service_rest << indent() << "$" << (*a_iter)->get_name() << " = json_decode($"
                        << (*a_iter)->get_name() << ", true);" << endl;
       } else if (atype->is_set()) {

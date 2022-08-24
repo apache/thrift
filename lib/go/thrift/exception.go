@@ -21,6 +21,7 @@ package thrift
 
 import (
 	"errors"
+	"reflect"
 )
 
 // Generic Thrift exception
@@ -114,3 +115,47 @@ func (w wrappedTException) Unwrap() error {
 }
 
 var _ TException = wrappedTException{}
+
+// ExtractExceptionFromResult extracts exceptions defined in thrift IDL from
+// result TStruct used in TClient.Call.
+//
+// For a endpoint defined in thrift IDL like this:
+//
+//     service MyService {
+//       FooResponse foo(1: FooRequest request) throws (
+//         1: Exception1 error1,
+//         2: Exception2 error2,
+//       )
+//     }
+//
+// The thrift compiler generated go code for the result TStruct would be like:
+//
+//     type MyServiceFooResult struct {
+//       Success *FooResponse `thrift:"success,0" db:"success" json:"success,omitempty"`
+//       Error1 *Exception1 `thrift:"error1,1" db:"error1" json:"error1,omitempty"`
+//       Error2 *Exception2 `thrift:"error2,2" db:"error2" json:"error2,omitempty"`
+//     }
+//
+// And this function extracts the first non-nil exception out of
+// *MyServiceFooResult.
+func ExtractExceptionFromResult(result TStruct) error {
+	v := reflect.Indirect(reflect.ValueOf(result))
+	if v.Kind() != reflect.Struct {
+		return nil
+	}
+	typ := v.Type()
+	for i := 0; i < v.NumField(); i++ {
+		if typ.Field(i).Name == "Success" {
+			continue
+		}
+		field := v.Field(i)
+		if field.IsZero() {
+			continue
+		}
+		tExc, ok := field.Interface().(TException)
+		if ok && tExc != nil && tExc.TExceptionType() == TExceptionTypeCompiled {
+			return tExc
+		}
+	}
+	return nil
+}

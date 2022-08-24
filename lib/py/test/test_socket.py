@@ -25,6 +25,7 @@ class TSocketTest(unittest.TestCase):
             acc.start()
 
             sock = TSocket(host="localhost", port=acc.port)
+            self.assertFalse(sock.isOpen())
             sock.open()
             sock.setTimeout(timeout)
 

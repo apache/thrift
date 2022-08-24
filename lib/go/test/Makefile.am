@@ -17,8 +17,18 @@
 # under the License.
 #
 
-THRIFTARGS = -out gopath/src/ --gen go:thrift_import=github.com/apache/thrift/lib/go/thrift,package_prefix=github.com/apache/thrift/lib/go/test/gopath/src/$(COMPILER_EXTRAFLAG)
+if GOVERSION_GE_118
+GOBUILDEXTRA = -buildvcs=false
+else
+GOBUILDEXTRA =
+endif
+
+THRIFT_GO_ARGS_BASE = thrift_import=github.com/apache/thrift/lib/go/thrift,package_prefix=github.com/apache/thrift/lib/go/test/gopath/src/
+
+THRIFTARGS = -out gopath/src/ --gen go:$(THRIFT_GO_ARGS_BASE)$(COMPILER_EXTRAFLAG)
 THRIFTTEST = $(top_srcdir)/test/ThriftTest.thrift
+
+THRIFTARGS_SKIP_REMOTE = -out gopath/src/ --gen go:skip_remote,$(THRIFT_GO_ARGS_BASE)$(COMPILER_EXTRAFLAG)
 
 # Thrift for GO has problems with complex map keys: THRIFT-2063
 gopath: $(THRIFT) $(THRIFTTEST) \
@@ -53,7 +63,8 @@ gopath: $(THRIFT) $(THRIFTTEST) \
 				ConflictArgNamesTest.thrift \
 				ConstOptionalFieldImport.thrift \
 				ConstOptionalField.thrift \
-				ProcessorMiddlewareTest.thrift
+				ProcessorMiddlewareTest.thrift \
+				ClientMiddlewareExceptionTest.thrift
 	mkdir -p gopath/src
 	grep -v list.*map.*list.*map $(THRIFTTEST) | grep -v 'set<Insanity>' > ThriftTest.thrift
 	$(THRIFT) $(THRIFTARGS) -r IncludesTest.thrift
@@ -85,13 +96,14 @@ gopath: $(THRIFT) $(THRIFTTEST) \
 	$(THRIFT) $(THRIFTARGS) EqualsTest.thrift
 	$(THRIFT) $(THRIFTARGS) ConflictArgNamesTest.thrift
 	$(THRIFT) $(THRIFTARGS) -r ConstOptionalField.thrift
-	$(THRIFT) $(THRIFTARGS) ProcessorMiddlewareTest.thrift
+	$(THRIFT) $(THRIFTARGS_SKIP_REMOTE) ProcessorMiddlewareTest.thrift
+	$(THRIFT) $(THRIFTARGS) ClientMiddlewareExceptionTest.thrift
 	ln -nfs ../../tests gopath/src/tests
 	cp -r ./dontexportrwtest gopath/src
 	touch gopath
 
 check: gopath
-	$(GO) build -mod=mod \
+	$(GO) build $(GOBUILDEXTRA) -mod=mod \
 				./gopath/src/includestest \
 				./gopath/src/binarykeytest \
 				./gopath/src/servicestest \
@@ -109,7 +121,8 @@ check: gopath
 				./gopath/src/duplicateimportstest \
 				./gopath/src/equalstest \
 				./gopath/src/conflictargnamestest \
-				./gopath/src/processormiddlewaretest
+				./gopath/src/processormiddlewaretest \
+				./gopath/src/clientmiddlewareexceptiontest
 	$(GO) test -mod=mod github.com/apache/thrift/lib/go/thrift
 	$(GO) test -mod=mod ./gopath/src/tests ./gopath/src/dontexportrwtest
 
@@ -124,6 +137,7 @@ EXTRA_DIST = \
 	tests \
 	common \
 	BinaryKeyTest.thrift \
+	ClientMiddlewareExceptionTest.thrift \
 	ConflictArgNamesTest.thrift \
 	ConflictNamespaceServiceTest.thrift \
 	ConflictNamespaceTestA.thrift \

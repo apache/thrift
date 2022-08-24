@@ -29,6 +29,8 @@
 -php bin/php
 -D php-front=Main-debug.php
 
+# libs
+-lib uuid
 
 #Add debug information
 -debug

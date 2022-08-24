@@ -202,6 +202,8 @@ project.lock.json
 /lib/delphi/*.identcache
 /lib/delphi/test/skip/bin
 /lib/delphi/test/serializer/*.dat
+/lib/delphi/test/serializer/bin
+/lib/delphi/test/thrift-testing
 /lib/delphi/**/*.identcache
 /lib/delphi/**/*.local
 /lib/delphi/**/*.dcu
@@ -229,6 +231,13 @@ project.lock.json
 /lib/js/dist
 /lib/js/doc
 /lib/js/test/build
+/lib/kotlin/cross-test-client/build/
+/lib/kotlin/cross-test-server/build/
+/lib/kotlin/build/
+/lib/kotlin/.gradle/
+/lib/kotlin/gradle/
+/lib/kotlin/gradlew
+/lib/kotlin/gradlew.bat
 /lib/netstd/**/bin
 /lib/netstd/**/obj
 /lib/nodejs/coverage

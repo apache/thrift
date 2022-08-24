@@ -19,6 +19,12 @@
 
 package thrift
 
+// Pointer is the generic (type parameter) version of the helper function that
+// converts types to pointer types.
+func Pointer[T any](v T) *T {
+	return &v
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 // This file is home to helpers that convert from various base types to
 // respective pointer types. This is necessary because Go does not permit

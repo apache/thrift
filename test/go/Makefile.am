@@ -19,6 +19,12 @@
 
 BUILT_SOURCES = gopath
 
+if GOVERSION_GE_118
+GOINSTALLEXTRA = -buildvcs=false
+else
+GOINSTALLEXTRA =
+endif
+
 THRIFTCMD = $(THRIFT) -out src/gen --gen go:thrift_import=github.com/apache/thrift/lib/go/thrift,package_prefix=github.com/apache/thrift/test/go/src/gen/$(COMPILER_EXTRAFLAG)
 THRIFTTEST = $(top_srcdir)/test/ThriftTest.thrift
 
@@ -37,13 +43,13 @@ gopath: $(THRIFT) ThriftTest.thrift
 	touch gopath
 
 bin/testclient: gopath
-	GOPATH=`pwd` $(GO) install -mod=mod ./src/bin/testclient
+	GOPATH=`pwd` $(GO) install $(GOINSTALLEXTRA) -mod=mod ./src/bin/testclient
 
 bin/testserver: gopath
-	GOPATH=`pwd` $(GO) install -mod=mod ./src/bin/testserver
+	GOPATH=`pwd` $(GO) install $(GOINSTALLEXTRA) -mod=mod ./src/bin/testserver
 
 bin/stress: gopath
-	GOPATH=`pwd` $(GO) install -mod=mod ./src/bin/stress
+	GOPATH=`pwd` $(GO) install $(GOINSTALLEXTRA) -mod=mod ./src/bin/stress
 
 clean-local:
 	$(RM) -r src/gen src/github.com/golang src/thrift bin pkg gopath ThriftTest.thrift
