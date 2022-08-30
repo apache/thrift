@@ -20,7 +20,7 @@
 
   <PropertyGroup>
     <TargetFramework>net6.0</TargetFramework>
-    <Version>0.17.0.0</Version>
+    <Version>0.18.0.0</Version>
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
