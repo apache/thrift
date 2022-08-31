@@ -41,4 +41,11 @@ check-local: $(THRIFT)
 		--console=plain
 
 EXTRA_DIST = \
-	README.md
+	build.gradle.kts \
+	CMakeLists.txt \
+	cross-test-client \
+	cross-test-server \
+	gradle.properties \
+	README.md \
+	settings.gradle.kts \
+	src 
