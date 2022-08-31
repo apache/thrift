@@ -131,9 +131,9 @@ class TSocket(TSocketBase):
         for family, socktype, _, _, sockaddr in addrs:
             handle = self._do_open(family, socktype)
 
-            # TCP_KEEPALIVE
+            # TCP keep-alive
             if self._socket_keepalive:
-                handle.setsockopt(socket.IPPROTO_TCP, socket.SO_KEEPALIVE, 1)
+                handle.setsockopt(socket.SOL_SOCKET, socket.SO_KEEPALIVE, 1)
 
             handle.settimeout(self._timeout)
             try:
