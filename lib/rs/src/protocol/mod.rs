@@ -920,7 +920,7 @@ pub fn field_id(field_ident: &TFieldIdentifier) -> crate::Result<i16> {
     field_ident.id.ok_or_else(|| {
         crate::Error::Protocol(crate::ProtocolError {
             kind: crate::ProtocolErrorKind::Unknown,
-            message: format!("missing field in in {:?}", field_ident),
+            message: format!("missing field id in {:?}", field_ident),
         })
     })
 }
