@@ -193,8 +193,10 @@ type
     destructor Destroy; override;
   end;
 
+  IThriftBytes = interface; // forward
+
   IProtocol = interface
-    ['{F0040D99-937F-400D-9932-AF04F665899F}']
+    ['{6067A28E-15BF-4C9D-9A6F-D991BB3DCB85}']
     function GetTransport: ITransport;
     procedure WriteMessageBegin( const msg: TThriftMessage);
     procedure WriteMessageEnd;
@@ -217,7 +219,8 @@ type
     procedure WriteDouble( const d: Double);
     procedure WriteString( const s: string );
     procedure WriteAnsiString( const s: AnsiString);
-    procedure WriteBinary( const b: TBytes);
+    procedure WriteBinary( const b: TBytes); overload;
+    procedure WriteBinary( const b: IThriftBytes); overload;
 
     function ReadMessageBegin: TThriftMessage;
     procedure ReadMessageEnd();
@@ -237,7 +240,8 @@ type
     function ReadI32: Integer;
     function ReadI64: Int64;
     function ReadDouble:Double;
-    function ReadBinary: TBytes;
+    function ReadBinary: TBytes;  // IMPORTANT: this is NOT safe across module boundaries
+    function ReadBinaryCOM : IThriftBytes;
     function ReadString: string;
     function ReadAnsiString: AnsiString;
 
@@ -292,7 +296,7 @@ type
     procedure WriteDouble( const d: Double); virtual; abstract;
     procedure WriteString( const s: string ); virtual;
     procedure WriteAnsiString( const s: AnsiString); virtual;
-    procedure WriteBinary( const b: TBytes); virtual; abstract;
+    procedure WriteBinary( const b: TBytes); overload; virtual; abstract;
 
     function ReadMessageBegin: TThriftMessage; virtual; abstract;
     procedure ReadMessageEnd(); virtual; abstract;
@@ -316,6 +320,10 @@ type
     function ReadString: string; virtual;
     function ReadAnsiString: AnsiString; virtual;
 
+    // provide generic implementation for all derived classes
+    procedure WriteBinary( const bytes : IThriftBytes); overload; virtual;
+    function ReadBinaryCOM : IThriftBytes;  virtual;
+
     property  Transport: ITransport read GetTransport;
 
   public
@@ -324,8 +332,38 @@ type
 
   IBase = interface( ISupportsToString)
     ['{AFF6CECA-5200-4540-950E-9B89E0C1C00C}']
-    procedure Read( const iprot: IProtocol);
-    procedure Write( const iprot: IProtocol);
+    procedure Read( const prot: IProtocol);
+    procedure Write( const prot: IProtocol);
+  end;
+
+
+  IThriftBytes = interface( ISupportsToString)
+    ['{CDBEF7E8-BEF2-4A0A-983A-F334E3FF0016}']
+    function  GetCount : Integer;
+    procedure SetCount(const value : Integer);
+
+    // WARNING: This returns a direct pointer to the underlying data structure
+    function  QueryRawDataPtr : Pointer;
+
+    property Count : Integer read GetCount write SetCount;
+  end;
+
+
+  TThriftBytesImpl = class( TInterfacedObject, IThriftBytes, ISupportsToString)
+  strict private
+    FData : TBytes;
+
+  strict protected
+    function  GetCount : Integer;
+    procedure SetCount(const value : Integer);
+    function  QueryRawDataPtr : Pointer;
+
+  public
+    constructor Create; overload;
+    constructor Create( const bytes : TBytes); overload;
+    constructor Create( var bytes : TBytes; const aTakeOwnership : Boolean = FALSE); overload;
+
+    function ToString : string; override;
   end;
 
 
@@ -651,6 +689,95 @@ var nPairSize : Integer;
 begin
   nPairSize := GetMinSerializedSize(value.KeyType) + GetMinSerializedSize(value.ValueType);
   FTrans.CheckReadBytesAvailable( value.Count * nPairSize);
+end;
+
+
+procedure TProtocolImpl.WriteBinary( const bytes : IThriftBytes);
+var tmp : TBytes;
+begin
+  SetLength( tmp, bytes.Count);
+  if Length(tmp) > 0
+  then Move( bytes.QueryRawDataPtr^, tmp[0], Length(tmp));
+  WriteBinary( tmp);
+end;
+
+
+function TProtocolImpl.ReadBinaryCOM : IThriftBytes;
+var bytes : TBytes;
+begin
+  bytes := ReadBinary;
+  result := TThriftBytesImpl.Create(bytes,TRUE);
+end;
+
+
+{ TThriftBytesImpl }
+
+constructor TThriftBytesImpl.Create;
+begin
+  inherited Create;
+  ASSERT( Length(FData) = 0);
+end;
+
+
+constructor TThriftBytesImpl.Create( const bytes : TBytes);
+begin
+  FData := bytes; // copies the data
+end;
+
+
+constructor TThriftBytesImpl.Create( var bytes : TBytes; const aTakeOwnership : Boolean);
+
+  procedure SwapPointer( var one, two);
+  var
+    pOne : Pointer absolute one;
+    pTwo : Pointer absolute two;
+    pTmp : Pointer;
+  begin
+    pTmp := pOne;
+    pOne := pTwo;
+    pTwo := pTmp;
+  end;
+
+begin
+  inherited Create;
+  ASSERT( Length(FData) = 0);
+
+  if aTakeOwnership
+  then SwapPointer( FData, bytes)
+  else FData := bytes; // copies the data
+end;
+
+
+function TThriftBytesImpl.ToString : string;
+var sb : TThriftStringBuilder;
+begin
+  sb := TThriftStringBuilder.Create();
+  try
+    sb.Append('Bin: ');
+    sb.Append( FData);
+
+    result := sb.ToString;
+  finally
+    sb.Free;
+  end;
+end;
+
+
+function TThriftBytesImpl.GetCount : Integer;
+begin
+  result := Length(FData);
+end;
+
+
+procedure TThriftBytesImpl.SetCount(const value : Integer);
+begin
+  SetLength( FData, value);
+end;
+
+
+function TThriftBytesImpl.QueryRawDataPtr : Pointer;
+begin
+  result := FData;
 end;
 
 { TProtocolUtil }

@@ -73,6 +73,7 @@ public:
     events_ = false;
     xmldoc_ = false;
     async_ = false;
+    com_types_ = false;
     for( iter = parsed_options.begin(); iter != parsed_options.end(); ++iter) {
       if( iter->first.compare("ansistr_binary") == 0) {
         ansistr_binary_ = true;
@@ -86,9 +87,15 @@ public:
         xmldoc_ = true;
       } else if( iter->first.compare("async") == 0) {
         async_ = true;
+      } else if( iter->first.compare("com_types") == 0) {
+        com_types_ = true;
       } else {
         throw "unknown option delphi:" + iter->first;
       }
+    }
+
+    if(com_types_ && ansistr_binary_) {
+      throw "com_types and ansistr_binary are mutually exclusive";
     }
 
     out_dir_base_ = "gen-delphi";
@@ -417,6 +424,7 @@ private:
   bool events_;
   bool xmldoc_;
   bool async_;
+  bool com_types_;
   void indent_up_impl() { ++indent_impl_; };
   void indent_down_impl() { --indent_impl_; };
   std::string indent_impl() {
@@ -804,6 +812,9 @@ void t_delphi_generator::close_generator() {
   generate_delphi_doc(f_all, program_);
   f_all << "unit " << unitname << ";" << endl << endl;
   f_all << "{$WARN SYMBOL_DEPRECATED OFF}" << endl << endl;
+  if(com_types_) {
+    f_all << "{$MINENUMSIZE 4}" << endl << endl;
+  }
   f_all << "interface" << endl << endl;
   f_all << "uses" << endl;
 
@@ -831,18 +842,13 @@ void t_delphi_generator::close_generator() {
 
   f_all << "const" << endl;
   indent_up();
-  indent(f_all) << "c" << tmp_unit
-                << "_Option_AnsiStr_Binary = " << (ansistr_binary_ ? "True" : "False") << ";"
-                << endl;
-  indent(f_all) << "c" << tmp_unit
-                << "_Option_Register_Types = " << (register_types_ ? "True" : "False") << ";"
-                << endl;
-  indent(f_all) << "c" << tmp_unit
-                << "_Option_ConstPrefix    = " << (constprefix_ ? "True" : "False") << ";" << endl;
-  indent(f_all) << "c" << tmp_unit << "_Option_Events         = " << (events_ ? "True" : "False")
-                << ";" << endl;
-  indent(f_all) << "c" << tmp_unit << "_Option_XmlDoc         = " << (xmldoc_ ? "True" : "False")
-                << ";" << endl;
+  indent(f_all) << "c" << tmp_unit << "_Option_AnsiStr_Binary = " << (ansistr_binary_ ? "True" : "False") << ";" << endl;
+  indent(f_all) << "c" << tmp_unit << "_Option_Register_Types = " << (register_types_ ? "True" : "False") << ";" << endl;
+  indent(f_all) << "c" << tmp_unit << "_Option_ConstPrefix    = " << (constprefix_ ? "True" : "False") << ";" << endl;
+  indent(f_all) << "c" << tmp_unit << "_Option_Events         = " << (events_ ? "True" : "False") << ";" << endl;
+  indent(f_all) << "c" << tmp_unit << "_Option_XmlDoc         = " << (xmldoc_ ? "True" : "False") << ";" << endl;
+  indent(f_all) << "c" << tmp_unit << "_Option_Async          = " << (async_ ? "True" : "False") << ";" << endl;
+  indent(f_all) << "c" << tmp_unit << "_Option_COM_types      = " << (com_types_ ? "True" : "False") << ";" << endl;
   indent_down();
 
   f_all << endl;
@@ -2697,7 +2703,7 @@ void t_delphi_generator::generate_deserialize_field(ostream& out,
           if (ansistr_binary_) {
             out << "ReadAnsiString();";
           } else {
-            out << "ReadBinary();";
+            out << (com_types_ ? "ReadBinaryCOM();" :  "ReadBinary();");
           }
         } else {
           out << "ReadString();";
@@ -3236,10 +3242,10 @@ string t_delphi_generator::base_type_name(t_base_type* tbase) {
       if (ansistr_binary_) {
         return "System.AnsiString";
       } else {
-        return "SysUtils.TBytes";
+        return com_types_ ? "IThriftBytes" : "SysUtils.TBytes";
       }
     } else {
-      return "System.string";
+      return com_types_ ? "System.WideString" : "System.string";
     }
   case t_base_type::TYPE_BOOL:
     return "System.Boolean";
@@ -4114,4 +4120,5 @@ THRIFT_REGISTER_GENERATOR(
     "    constprefix:     Name TConstants classes after IDL to reduce ambiguities\n"
     "    events:          Enable and use processing events in the generated code.\n"
     "    xmldoc:          Enable XMLDoc comments for Help Insight etc.\n"
-    "    async:           Generate IAsync interface to use Parallel Programming Library (XE7+ only).\n")
+    "    async:           Generate IAsync interface to use Parallel Programming Library (XE7+ only).\n"
+    "    com_types:       Use COM-compatible data types (e.g. WideString).\n")

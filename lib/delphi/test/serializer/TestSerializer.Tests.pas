@@ -41,8 +41,7 @@ uses
   Thrift.WinHTTP,
   Thrift.TypeRegistry,
   System_,
-  DebugProtoTest,
-  TestSerializer.Data;
+  DebugProtoTest;
 
 
 type
@@ -58,7 +57,7 @@ type
       mt_Stream
     );
 
-  private
+  strict private
     FProtocols : TList< TFactoryPair>;
     procedure AddFactoryCombination( const aProto : IProtocolFactory; const aTrans : ITransportFactory);
     class function UserFriendlyName( const factory : TFactoryPair) : string;  overload;
@@ -73,7 +72,14 @@ type
     class procedure ValidateReadToEnd( const input : TBytes; const serial : TDeserializer);  overload;
     class procedure ValidateReadToEnd( const input : TStream; const serial : TDeserializer);  overload;
 
+    class function LengthOf( const bytes : TBytes) : Integer; overload; inline;
+    class function LengthOf( const bytes : IThriftBytes) : Integer; overload; inline;
+
+    class function DataPtrOf( const bytes : TBytes) : Pointer; overload; inline;
+    class function DataPtrOf( const bytes : IThriftBytes) : Pointer; overload; inline;
+
     procedure Test_Serializer_Deserializer;
+    procedure Test_COM_Types;
     procedure Test_OneOfEach(     const method : TMethod; const factory : TFactoryPair; const stream : TFileStream);
     procedure Test_CompactStruct( const method : TMethod; const factory : TFactoryPair; const stream : TFileStream);
 
@@ -86,6 +92,12 @@ type
 
 
 implementation
+
+const SERIALIZERDATA_DLL = 'SerializerData.dll';
+function CreateOneOfEach : IOneOfEach; stdcall; external SERIALIZERDATA_DLL;
+function CreateNesting : INesting; stdcall; external SERIALIZERDATA_DLL;
+function CreateHolyMoley : IHolyMoley; stdcall; external SERIALIZERDATA_DLL;
+function CreateCompactProtoTestStruct : ICompactProtoTestStruct; stdcall; external SERIALIZERDATA_DLL;
 
 
 { TTestSerializer }
@@ -128,13 +140,41 @@ begin
 end;
 
 
+class function TTestSerializer.LengthOf( const bytes : TBytes) : Integer;
+begin
+  result := Length(bytes);
+end;
+
+
+class function TTestSerializer.LengthOf( const bytes : IThriftBytes) : Integer;
+begin
+  if bytes <> nil
+  then result := bytes.Count
+  else result := 0;
+end;
+
+
+class function TTestSerializer.DataPtrOf( const bytes : TBytes) : Pointer;
+begin
+  result := bytes;
+end;
+
+
+class function TTestSerializer.DataPtrOf( const bytes : IThriftBytes) : Pointer;
+begin
+  if bytes <> nil
+  then result := bytes.QueryRawDataPtr
+  else result := nil;
+end;
+
+
 procedure TTestSerializer.Test_OneOfEach( const method : TMethod; const factory : TFactoryPair; const stream : TFileStream);
 var tested, correct : IOneOfEach;
     bytes   : TBytes;
     i : Integer;
 begin
   // write
-  tested := Fixtures.CreateOneOfEach;
+  tested := CreateOneOfEach;
   case method of
     mt_Bytes:  bytes := Serialize( tested, factory);
     mt_Stream: begin
@@ -158,7 +198,7 @@ begin
   end;
 
   // check
-  correct := Fixtures.CreateOneOfEach;
+  correct := CreateOneOfEach;
   ASSERT( tested.Im_true = correct.Im_true);
   ASSERT( tested.Im_false = correct.Im_false);
   ASSERT( tested.A_bite = correct.A_bite);
@@ -170,8 +210,8 @@ begin
   ASSERT( tested.Zomg_unicode = correct.Zomg_unicode);
   ASSERT( tested.What_who = correct.What_who);
 
-  ASSERT( Length(tested.Base64) = Length(correct.Base64));
-  ASSERT( CompareMem( @tested.Base64[0], @correct.Base64[0], Length(correct.Base64)));
+  ASSERT( LengthOf(tested.Base64) = LengthOf(correct.Base64));
+  ASSERT( CompareMem( DataPtrOf(tested.Base64), DataPtrOf(correct.Base64), LengthOf(correct.Base64)));
 
   ASSERT( tested.Byte_list.Count = correct.Byte_list.Count);
   for i := 0 to tested.Byte_list.Count-1
@@ -192,7 +232,7 @@ var tested, correct : ICompactProtoTestStruct;
     bytes   : TBytes;
 begin
   // write
-  tested := Fixtures.CreateCompactProtoTestStruct;
+  tested := CreateCompactProtoTestStruct;
   case method of
     mt_Bytes:  bytes := Serialize( tested, factory);
     mt_Stream: begin
@@ -216,7 +256,7 @@ begin
   end;
 
   // check
-  correct := Fixtures.CreateCompactProtoTestStruct;
+  correct := CreateCompactProtoTestStruct;
   ASSERT( correct.Field500  = tested.Field500);
   ASSERT( correct.Field5000  = tested.Field5000);
   ASSERT( correct.Field20000 = tested.Field20000);
@@ -269,10 +309,25 @@ begin
 end;
 
 
+procedure TTestSerializer.Test_COM_Types;
+var tested : IOneOfEach;
+begin
+  {$IF cDebugProtoTest_Option_COM_types}
+  ASSERT( SizeOf(TSomeEnum) = SizeOf(Int32));  // -> MINENUMSIZE 4
+
+  // try to set values that allocate memory
+  tested := CreateOneOfEach;
+  tested.Zomg_unicode := 'This is a test';
+  tested.Base64 := TThriftBytesImpl.Create( TEncoding.UTF8.GetBytes('abc'));
+  {$IFEND}
+end;
+
+
 procedure TTestSerializer.RunTests;
 begin
   try
     Test_Serializer_Deserializer;
+    Test_COM_Types;
   except
     on e:Exception do begin
       Writeln( e.ClassName+': '+ e.Message);

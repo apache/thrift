@@ -1,3 +1,4 @@
+library SerializerData;
 (*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements. See the NOTICE file
@@ -16,10 +17,6 @@
  * specific language governing permissions and limitations
  * under the License.
  *)
-
-program TestSerializer;
-
-{$APPTYPE CONSOLE}
 
 uses
   Classes,
@@ -44,16 +41,42 @@ uses
   System_ in 'gen-delphi\System_.pas',
   SysUtils_ in 'gen-delphi\SysUtils_.pas',
   DebugProtoTest in 'gen-delphi\DebugProtoTest.pas',
-  TestSerializer.Tests in 'TestSerializer.Tests.pas';
+  TestSerializer.Data in 'TestSerializer.Data.pas';
 
+{$R *.res}
 
-var test : TTestSerializer;
+function CreateOneOfEach : IOneOfEach; stdcall;
 begin
-  test := TTestSerializer.Create;
-  try
-    test.RunTests;
-  finally
-    test.Free;
-  end;
-end.
+  result := Fixtures.CreateOneOfEach;
+end;
 
+
+function CreateNesting : INesting; stdcall;
+begin
+  result := Fixtures.CreateNesting;
+end;
+
+
+function CreateHolyMoley : IHolyMoley; stdcall;
+begin
+  result := Fixtures.CreateHolyMoley;
+end;
+
+
+function CreateCompactProtoTestStruct : ICompactProtoTestStruct; stdcall;
+begin
+  result := Fixtures.CreateCompactProtoTestStruct;
+end;
+
+
+exports
+  CreateOneOfEach,
+  CreateNesting,
+  CreateHolyMoley,
+  CreateCompactProtoTestStruct;
+
+begin
+  IsMultiThread := TRUE;
+  ASSERT( cDebugProtoTest_Option_COM_types);
+  ASSERT( cSystem__Option_COM_types);
+end.
