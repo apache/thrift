@@ -3138,9 +3138,9 @@ string t_delphi_generator::type_name(t_type* ttype,
   } else if (ttype->is_set()) {
     t_set* tset = (t_set*)ttype;
     if (b_cls) {
-      typ_nm = "THashSetImpl";
+      typ_nm = "TThriftHashSetImpl";
     } else {
-      typ_nm = "IHashSet";
+      typ_nm = "IThriftHashSet";
     }
     return typ_nm + "<" + type_name(tset->get_elem_type()) + ">";
   } else if (ttype->is_list()) {

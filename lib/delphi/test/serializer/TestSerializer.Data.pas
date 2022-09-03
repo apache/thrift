@@ -230,7 +230,7 @@ begin
   result.Big[0].setA_bite( $22);
   result.Big[0].setA_bite( $23);
 
-  result.Contain := THashSetImpl< IThriftList<string>>.Create;
+  result.Contain := TThriftHashSetImpl< IThriftList<string>>.Create;
   stage1 := TThriftListImpl<String>.Create;
   stage1.add( 'and a one');
   stage1.add( 'and a two');
