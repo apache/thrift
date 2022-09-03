@@ -83,6 +83,7 @@ where
     fn read_list_set_begin(&mut self) -> crate::Result<(TType, i32)> {
         let header = self.read_byte()?;
         let element_type = collection_u8_to_type(header & 0x0F)?;
+
         let possible_element_count = (header & 0xF0) >> 4;
         let element_count = if possible_element_count != 15 {
             // high bits set high if count and type encoded separately

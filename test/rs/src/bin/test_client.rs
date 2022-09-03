@@ -345,7 +345,9 @@ fn make_thrift_calls(
     info!("testList");
     {
         let v_snd: Vec<i32> = vec![29384, 238, 32498];
+
         let v_cmp: Vec<i32> = vec![29384, 238, 32498];
+
         verify_expected_result(thrift_test_client.test_list(v_snd), v_cmp)?;
     }
 
