@@ -46,7 +46,7 @@ const
 
 function CreatePing : IPing;
 var list : IThriftList<IPong>;
-    set_ : IHashSet<string>;
+    set_ : IThriftHashSet<string>;
 begin
   result := TPingImpl.Create;
   result.Version1  := TConstants.SKIPTESTSERVICE_VERSION;
@@ -69,13 +69,13 @@ begin
   list.Add( result.StructVal);
   list.Add( result.StructVal);
 
-  set_ := THashSetImpl<string>.Create;
+  set_ := TThriftHashSetImpl<string>.Create;
   set_.Add( 'one');
   set_.Add( 'uno');
   set_.Add( 'eins');
   set_.Add( 'een');
 
-  result.MapVal := TThriftDictionaryImpl< IThriftList<IPong>, IHashSet<string>>.Create;
+  result.MapVal := TThriftDictionaryImpl< IThriftList<IPong>, IThriftHashSet<string>>.Create;
   result.MapVal.Add( list, set_);
 end;
 

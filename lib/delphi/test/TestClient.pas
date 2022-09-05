@@ -408,8 +408,8 @@ var
   strkey : string;
   listout : IThriftList<Integer>;
   listin : IThriftList<Integer>;
-  setout : IHashSet<Integer>;
-  setin : IHashSet<Integer>;
+  setout : IThriftHashSet<Integer>;
+  setin : IThriftHashSet<Integer>;
   ret : TNumberz;
   uid : Int64;
   mm : IThriftDictionary<Integer, IThriftDictionary<Integer, Integer>>;
@@ -672,7 +672,7 @@ begin
   // Translates to an STL set, Java HashSet, set in Python, etc.
   // Note: PHP does not support sets, so it is treated similar to a List
   StartTestGroup( 'testSet', test_Containers);
-  setout := THashSetImpl<Integer>.Create;
+  setout := TThriftHashSetImpl<Integer>.Create;
   for j := -2 to 2 do
   begin
     setout.Add( j );

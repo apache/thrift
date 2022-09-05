@@ -71,7 +71,7 @@ type
         function testNest(const thing: IXtruct2): IXtruct2;
         function testMap(const thing: IThriftDictionary<Integer, Integer>): IThriftDictionary<Integer, Integer>;
         function testStringMap(const thing: IThriftDictionary<string, string>): IThriftDictionary<string, string>;
-        function testSet(const thing: IHashSet<Integer>): IHashSet<Integer>;
+        function testSet(const thing: IThriftHashSet<Integer>): IThriftHashSet<Integer>;
         function testList(const thing: IThriftList<Integer>): IThriftList<Integer>;
         function testEnum(thing: TNumberz): TNumberz;
         function testTypedef(const thing: Int64): Int64;
@@ -320,7 +320,7 @@ begin
   Console.WriteLine('testOneway finished');
 end;
 
-function TTestServer.TTestHandlerImpl.testSet( const thing: IHashSet<Integer>):IHashSet<Integer>;
+function TTestServer.TTestHandlerImpl.testSet( const thing: IThriftHashSet<Integer>):IThriftHashSet<Integer>;
 begin
   Console.Write('testSet(');
   if thing <> nil then Console.Write(thing.ToString);
