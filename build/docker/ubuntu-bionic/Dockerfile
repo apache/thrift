@@ -22,8 +22,8 @@ ENV DEBIAN_FRONTEND noninteractive
 ### Add apt repos
 
 RUN apt-get update && \
-    apt-get dist-upgrade -y && \
-    apt-get install -y --no-install-recommends --fix-missing \
+      apt-get dist-upgrade -y && \
+      apt-get install -y --no-install-recommends --fix-missing \
       apt \
       apt-transport-https \
       apt-utils \
@@ -34,22 +34,22 @@ RUN apt-get update && \
 
 # Dart
 RUN curl https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - && \
-    curl https://storage.googleapis.com/download.dartlang.org/linux/debian/dart_stable.list > \
+      curl https://storage.googleapis.com/download.dartlang.org/linux/debian/dart_stable.list > \
       /etc/apt/sources.list.d/dart_stable.list
 
 # dotnet (netcore)
 RUN curl https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor > /etc/apt/trusted.gpg.d/microsoft.gpg && \
-    wget -q -O /etc/apt/sources.list.d/microsoft-prod.list https://packages.microsoft.com/config/ubuntu/18.04/prod.list && \
-    chown root:root /etc/apt/trusted.gpg.d/microsoft.gpg && \
-    chown root:root /etc/apt/sources.list.d/microsoft-prod.list
+      wget -q -O /etc/apt/sources.list.d/microsoft-prod.list https://packages.microsoft.com/config/ubuntu/18.04/prod.list && \
+      chown root:root /etc/apt/trusted.gpg.d/microsoft.gpg && \
+      chown root:root /etc/apt/sources.list.d/microsoft-prod.list
 
 # node.js
 RUN curl -sL https://deb.nodesource.com/gpgkey/nodesource.gpg.key | apt-key add - && \
-    echo "deb https://deb.nodesource.com/node_10.x bionic main" | tee /etc/apt/sources.list.d/nodesource.list
+      echo "deb https://deb.nodesource.com/node_10.x bionic main" | tee /etc/apt/sources.list.d/nodesource.list
 
 ### install general dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
-`# General dependencies` \
+      `# General dependencies` \
       bash-completion \
       bison \
       build-essential \
@@ -71,15 +71,15 @@ ENV PATH /usr/lib/llvm-6.0/bin:$PATH
 
 # lib/as3 (ActionScript)
 RUN mkdir -p /usr/local/adobe/flex/4.6 && \
-    cd /usr/local/adobe/flex/4.6 && \
-    wget -q "http://download.macromedia.com/pub/flex/sdk/flex_sdk_4.6.zip" && \
-    unzip flex_sdk_4.6.zip
+      cd /usr/local/adobe/flex/4.6 && \
+      wget -q "http://download.macromedia.com/pub/flex/sdk/flex_sdk_4.6.zip" && \
+      unzip flex_sdk_4.6.zip
 ENV FLEX_HOME /usr/local/adobe/flex/4.6
 
 # TODO: "apt-get install" without "apt-get update" in the same "RUN" step can cause cache issues if modified later.
 # See https://docs.docker.com/develop/develop-images/dockerfile_best-practices/#run
 RUN apt-get install -y --no-install-recommends \
-`# C++ dependencies` \
+      `# C++ dependencies` \
       libboost-all-dev \
       libevent-dev \
       libssl-dev \
@@ -89,41 +89,41 @@ RUN apt-get install -y --no-install-recommends \
 
 ENV SBCL_VERSION 1.5.3
 RUN \
-`# Common Lisp (sbcl) dependencies` \
-    curl --version && \
-    curl -o sbcl-${SBCL_VERSION}-x86-64-linux-binary.tar.bz2 -J -L https://sourceforge.net/projects/sbcl/files/sbcl/${SBCL_VERSION}/sbcl-${SBCL_VERSION}-x86-64-linux-binary.tar.bz2/download?use_mirror=managedway# && \
-    tar xjf sbcl-${SBCL_VERSION}-x86-64-linux-binary.tar.bz2 && \
-    cd sbcl-${SBCL_VERSION}-x86-64-linux && \
-    ./install.sh && \
-    sbcl --version && \
-    cd .. && \
-    rm -rf sbcl*
+      `# Common Lisp (sbcl) dependencies` \
+      curl --version && \
+      curl -o sbcl-${SBCL_VERSION}-x86-64-linux-binary.tar.bz2 -J -L https://sourceforge.net/projects/sbcl/files/sbcl/${SBCL_VERSION}/sbcl-${SBCL_VERSION}-x86-64-linux-binary.tar.bz2/download?use_mirror=managedway# && \
+      tar xjf sbcl-${SBCL_VERSION}-x86-64-linux-binary.tar.bz2 && \
+      cd sbcl-${SBCL_VERSION}-x86-64-linux && \
+      ./install.sh && \
+      sbcl --version && \
+      cd .. && \
+      rm -rf sbcl*
 
 ENV D_VERSION     2.087.0
 ENV DMD_DEB       dmd_2.087.0-0_amd64.deb
 RUN \
-`# D dependencies` \
-    wget -q http://downloads.dlang.org/releases/2.x/${D_VERSION}/${DMD_DEB} && \
-    dpkg --install ${DMD_DEB} && \
-    rm -f ${DMD_DEB} && \
-    mkdir -p /usr/include/dmd/druntime/import/deimos /usr/include/dmd/druntime/import/C && \
-    git clone -b 'v2.0.2+2.0.16' https://github.com/D-Programming-Deimos/libevent.git deimos-libevent-2.0 && \
-    mv deimos-libevent-2.0/deimos/* /usr/include/dmd/druntime/import/deimos/ && \
-    mv deimos-libevent-2.0/C/* /usr/include/dmd/druntime/import/C/ && \
-    rm -rf deimos-libevent-2.0 && \
-    git clone -b 'v2.0.0+1.1.0h' https://github.com/D-Programming-Deimos/openssl.git deimos-openssl-1.1.0h && \
-    mv deimos-openssl-1.1.0h/deimos/* /usr/include/dmd/druntime/import/deimos/ && \
-    mv deimos-openssl-1.1.0h/C/* /usr/include/dmd/druntime/import/C/ && \
-    rm -rf deimos-openssl-1.1.0h
+      `# D dependencies` \
+      wget -q http://downloads.dlang.org/releases/2.x/${D_VERSION}/${DMD_DEB} && \
+      dpkg --install ${DMD_DEB} && \
+      rm -f ${DMD_DEB} && \
+      mkdir -p /usr/include/dmd/druntime/import/deimos /usr/include/dmd/druntime/import/C && \
+      git clone -b 'v2.0.2+2.0.16' https://github.com/D-Programming-Deimos/libevent.git deimos-libevent-2.0 && \
+      mv deimos-libevent-2.0/deimos/* /usr/include/dmd/druntime/import/deimos/ && \
+      mv deimos-libevent-2.0/C/* /usr/include/dmd/druntime/import/C/ && \
+      rm -rf deimos-libevent-2.0 && \
+      git clone -b 'v2.0.0+1.1.0h' https://github.com/D-Programming-Deimos/openssl.git deimos-openssl-1.1.0h && \
+      mv deimos-openssl-1.1.0h/deimos/* /usr/include/dmd/druntime/import/deimos/ && \
+      mv deimos-openssl-1.1.0h/C/* /usr/include/dmd/druntime/import/C/ && \
+      rm -rf deimos-openssl-1.1.0h
 
 ENV DART_VERSION 2.7.2-1
 RUN apt-get install -y --no-install-recommends \
-`# Dart dependencies` \
+      `# Dart dependencies` \
       dart=$DART_VERSION
 ENV PATH /usr/lib/dart/bin:$PATH
 
 RUN apt-get install -y --no-install-recommends \
-`# dotnet core dependencies` \
+      `# dotnet core dependencies` \
       dotnet-sdk-6.0 \
       dotnet-runtime-6.0 \
       aspnetcore-runtime-6.0 \
@@ -133,14 +133,14 @@ RUN apt-get install -y --no-install-recommends \
 ARG ERLANG_OTP_VERSION=23.3.4.11
 ARG ERLANG_REBAR_VERSION=3.18.0
 RUN apt-get update && apt-get install -y --no-install-recommends libncurses5-dev && \
-    curl -ssLo /usr/local/bin/kerl https://raw.githubusercontent.com/kerl/kerl/master/kerl && chmod +x /usr/local/bin/kerl && \
-    kerl build $ERLANG_OTP_VERSION && kerl install $ERLANG_OTP_VERSION /usr/local/lib/otp/ && . /usr/local/lib/otp/activate && \
-    curl -ssLo /usr/local/bin/rebar3 https://github.com/erlang/rebar3/releases/download/${ERLANG_REBAR_VERSION}/rebar3 && chmod +x /usr/local/bin/rebar3 && \
-    rebar3 --version
+      curl -ssLo /usr/local/bin/kerl https://raw.githubusercontent.com/kerl/kerl/master/kerl && chmod +x /usr/local/bin/kerl && \
+      kerl build $ERLANG_OTP_VERSION && kerl install $ERLANG_OTP_VERSION /usr/local/lib/otp/ && . /usr/local/lib/otp/activate && \
+      curl -ssLo /usr/local/bin/rebar3 https://github.com/erlang/rebar3/releases/download/${ERLANG_REBAR_VERSION}/rebar3 && chmod +x /usr/local/bin/rebar3 && \
+      rebar3 --version
 ENV PATH /usr/local/lib/otp/bin:$PATH
 
 RUN apt-get install -y --no-install-recommends \
-`# GlibC dependencies` \
+      `# GlibC dependencies` \
       libglib2.0-dev
 
 # golang
@@ -149,34 +149,34 @@ ENV GOLANG_DOWNLOAD_URL https://go.dev/dl/go$GOLANG_VERSION.linux-amd64.tar.gz
 ENV GOLANG_DOWNLOAD_SHA256 464b6b66591f6cf055bc5df90a9750bf5fbc9d038722bb84a9d56a2bea974be6
 RUN curl -fsSL "$GOLANG_DOWNLOAD_URL" -o golang.tar.gz && \
       echo "$GOLANG_DOWNLOAD_SHA256  golang.tar.gz" | sha256sum -c - && \
-            tar -C /usr/local -xzf golang.tar.gz && \
-                  ln -s /usr/local/go/bin/go /usr/local/bin && \
-                        rm golang.tar.gz
+      tar -C /usr/local -xzf golang.tar.gz && \
+      ln -s /usr/local/go/bin/go /usr/local/bin && \
+      rm golang.tar.gz
 
 RUN apt-get install -y --no-install-recommends \
-`# Haxe dependencies` \
+      `# Haxe dependencies` \
       haxe \
       neko \
       neko-dev && \
-    haxelib setup --always /usr/share/haxe/lib && \
-    haxelib install --always hxcpp 2>&1 > /dev/null
+      haxelib setup --always /usr/share/haxe/lib && \
+      haxelib install --always hxcpp 2>&1 > /dev/null
 
-ENV GRADLE_VERSION="7.4.2"
+ENV GRADLE_VERSION="7.5.1"
 RUN apt-get install -y --no-install-recommends \
-`# Java dependencies` \
+      `# Java dependencies` \
       ant \
       ant-optional \
       maven \
       openjdk-11-jdk-headless && \
-`# Gradle` \
+      `# Gradle` \
       wget https://services.gradle.org/distributions/gradle-$GRADLE_VERSION-bin.zip -q -O /tmp/gradle-$GRADLE_VERSION-bin.zip && \
-      (echo "29e49b10984e585d8118b7d0bc452f944e386458df27371b49b4ac1dec4b7fda  /tmp/gradle-$GRADLE_VERSION-bin.zip" | sha256sum -c -) && \
+      (echo "f6b8596b10cce501591e92f229816aa4046424f3b24d771751b06779d58c8ec4  /tmp/gradle-$GRADLE_VERSION-bin.zip" | sha256sum -c -) && \
       unzip -d /tmp /tmp/gradle-$GRADLE_VERSION-bin.zip && \
       mv /tmp/gradle-$GRADLE_VERSION /usr/local/gradle && \
       ln -s /usr/local/gradle/bin/gradle /usr/local/bin
 
 RUN apt-get install -y --no-install-recommends \
-`# Lua dependencies` \
+      `# Lua dependencies` \
       lua5.2 \
       lua5.2-dev
 # https://bugs.launchpad.net/ubuntu/+source/lua5.3/+bug/1707212
@@ -184,24 +184,24 @@ RUN apt-get install -y --no-install-recommends \
 # need to update our luasocket code, lua doesn't have luaL_openlib any more
 
 RUN apt-get install -y --no-install-recommends \
-`# Node.js dependencies` \
+      `# Node.js dependencies` \
       nodejs
 
 # Test dependencies for running puppeteer
 RUN apt-get install -y --no-install-recommends \
-`# JS dependencies` \
+      `# JS dependencies` \
       libxss1 \
       libxtst6
 
 RUN apt-get install -y --no-install-recommends \
-`# OCaml dependencies` \
+      `# OCaml dependencies` \
       ocaml \
       opam && \
-    opam init --yes && \
-    opam install --yes oasis
+      opam init --yes && \
+      opam install --yes oasis
 
 RUN apt-get install -y --no-install-recommends \
-`# Perl dependencies` \
+      `# Perl dependencies` \
       libbit-vector-perl \
       libclass-accessor-class-perl \
       libcrypt-ssleay-perl \
@@ -210,7 +210,7 @@ RUN apt-get install -y --no-install-recommends \
       libtest-exception-perl
 
 RUN apt-get install -y --no-install-recommends \
-`# Php dependencies` \
+      `# Php dependencies` \
       php \
       php-cli \
       php-dev \
@@ -220,7 +220,7 @@ RUN apt-get install -y --no-install-recommends \
       composer
 
 RUN apt-get install -y --no-install-recommends \
-`# Python dependencies` \
+      `# Python dependencies` \
       python-all \
       python-all-dbg \
       python-all-dev \
@@ -232,10 +232,10 @@ RUN apt-get install -y --no-install-recommends \
       python-twisted \
       python-wheel \
       python-zope.interface && \
-   pip install --upgrade backports.ssl_match_hostname
+      pip install --upgrade backports.ssl_match_hostname
 
 RUN apt-get install -y --no-install-recommends \
-`# Python3 dependencies` \
+      `# Python3 dependencies` \
       python3-all \
       python3-all-dbg \
       python3-all-dev \
@@ -248,7 +248,7 @@ RUN apt-get install -y --no-install-recommends \
       python3-zope.interface
 
 RUN apt-get install -y --no-install-recommends \
-`# Ruby dependencies` \
+      `# Ruby dependencies` \
       ruby \
       ruby-dev \
       ruby-bundler
@@ -259,28 +259,28 @@ ENV PATH /root/.cargo/bin:$PATH
 
 # Swift on Linux for cross tests
 RUN cd / && \
-    wget --quiet https://swift.org/builds/swift-5.1.4-release/ubuntu1804/swift-5.1.4-RELEASE/swift-5.1.4-RELEASE-ubuntu18.04.tar.gz && \
-    tar xf swift-5.1.4-RELEASE-ubuntu18.04.tar.gz --strip-components=1 && \
-    rm swift-5.1.4-RELEASE-ubuntu18.04.tar.gz && \
-    swift --version
+      wget --quiet https://swift.org/builds/swift-5.1.4-release/ubuntu1804/swift-5.1.4-RELEASE/swift-5.1.4-RELEASE-ubuntu18.04.tar.gz && \
+      tar xf swift-5.1.4-RELEASE-ubuntu18.04.tar.gz --strip-components=1 && \
+      rm swift-5.1.4-RELEASE-ubuntu18.04.tar.gz && \
+      swift --version
 
 # Locale(s) for cpp unit tests
 RUN apt-get install -y --no-install-recommends \
-`# Locale dependencies` \
+      `# Locale dependencies` \
       locales && \
-    locale-gen en_US.UTF-8 && \
-    locale-gen de_DE.UTF-8 && \
-    update-locale
+      locale-gen en_US.UTF-8 && \
+      locale-gen de_DE.UTF-8 && \
+      update-locale
 
 # cppcheck-1.82 has a nasty cpp parser bug, so we're using something newer
 RUN apt-get install -y --no-install-recommends \
-`# Static Code Analysis dependencies` \
+      `# Static Code Analysis dependencies` \
       cppcheck \
       sloccount && \
-    pip install flake8 && \
-    wget -q "https://launchpad.net/ubuntu/+source/cppcheck/1.83-2/+build/14874703/+files/cppcheck_1.83-2_amd64.deb" && \
-    dpkg -i cppcheck_1.83-2_amd64.deb && \
-    rm cppcheck_1.83-2_amd64.deb
+      pip install flake8 && \
+      wget -q "https://launchpad.net/ubuntu/+source/cppcheck/1.83-2/+build/14874703/+files/cppcheck_1.83-2_amd64.deb" && \
+      dpkg -i cppcheck_1.83-2_amd64.deb && \
+      rm cppcheck_1.83-2_amd64.deb
 
 # NOTE: this does not reduce the image size but adds an additional layer.
 # # Clean up
