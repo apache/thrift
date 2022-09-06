@@ -22,8 +22,8 @@ ENV DEBIAN_FRONTEND noninteractive
 ### Add apt repos
 
 RUN apt-get update && \
-    apt-get dist-upgrade -y && \
-    apt-get install -y --no-install-recommends \
+      apt-get dist-upgrade -y && \
+      apt-get install -y --no-install-recommends \
       apt \
       apt-transport-https \
       apt-utils \
@@ -34,26 +34,26 @@ RUN apt-get update && \
 
 # Dart
 RUN curl https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - && \
-    curl https://storage.googleapis.com/download.dartlang.org/linux/debian/dart_stable.list > \
+      curl https://storage.googleapis.com/download.dartlang.org/linux/debian/dart_stable.list > \
       /etc/apt/sources.list.d/dart_stable.list
 
 # dotnet (netcore)
 RUN curl https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor > /etc/apt/trusted.gpg.d/microsoft.gpg && \
-    wget -q -O /etc/apt/sources.list.d/microsoft-prod.list https://packages.microsoft.com/config/ubuntu/18.04/prod.list && \
-    chown root:root /etc/apt/trusted.gpg.d/microsoft.gpg && \
-    chown root:root /etc/apt/sources.list.d/microsoft-prod.list
+      wget -q -O /etc/apt/sources.list.d/microsoft-prod.list https://packages.microsoft.com/config/ubuntu/18.04/prod.list && \
+      chown root:root /etc/apt/trusted.gpg.d/microsoft.gpg && \
+      chown root:root /etc/apt/sources.list.d/microsoft-prod.list
 
 # erlang
 RUN wget -O- https://packages.erlang-solutions.com/ubuntu/erlang_solutions.asc | apt-key add - && \
-    echo "deb https://packages.erlang-solutions.com/ubuntu disco contrib" | tee /etc/apt/sources.list.d/erlang.list
+      echo "deb https://packages.erlang-solutions.com/ubuntu disco contrib" | tee /etc/apt/sources.list.d/erlang.list
 
 # node.js
 RUN curl -sL https://deb.nodesource.com/gpgkey/nodesource.gpg.key | apt-key add - && \
-    echo "deb https://deb.nodesource.com/node_10.x disco main" | tee /etc/apt/sources.list.d/nodesource.list
+      echo "deb https://deb.nodesource.com/node_10.x disco main" | tee /etc/apt/sources.list.d/nodesource.list
 
 ### install general dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
-`# General dependencies` \
+      `# General dependencies` \
       bash-completion \
       bison \
       build-essential \
@@ -75,13 +75,13 @@ ENV PATH /usr/lib/llvm-6.0/bin:$PATH
 
 # lib/as3 (ActionScript)
 RUN mkdir -p /usr/local/adobe/flex/4.6 && \
-    cd /usr/local/adobe/flex/4.6 && \
-    wget -q "http://download.macromedia.com/pub/flex/sdk/flex_sdk_4.6.zip" && \
-    unzip flex_sdk_4.6.zip
+      cd /usr/local/adobe/flex/4.6 && \
+      wget -q "http://download.macromedia.com/pub/flex/sdk/flex_sdk_4.6.zip" && \
+      unzip flex_sdk_4.6.zip
 ENV FLEX_HOME /usr/local/adobe/flex/4.6
 
 RUN apt-get install -y --no-install-recommends \
-`# C++ dependencies` \
+      `# C++ dependencies` \
       libboost-all-dev \
       libevent-dev \
       libssl-dev \
@@ -91,55 +91,55 @@ RUN apt-get install -y --no-install-recommends \
 
 ENV SBCL_VERSION 1.5.3
 RUN \
-`# Common Lisp (sbcl) dependencies` \
-    curl --version && \
-    curl -o sbcl-${SBCL_VERSION}-x86-64-linux-binary.tar.bz2 -J -L https://sourceforge.net/projects/sbcl/files/sbcl/${SBCL_VERSION}/sbcl-${SBCL_VERSION}-x86-64-linux-binary.tar.bz2/download?use_mirror=managedway# && \
-    tar xjf sbcl-${SBCL_VERSION}-x86-64-linux-binary.tar.bz2 && \
-    cd sbcl-${SBCL_VERSION}-x86-64-linux && \
-    ./install.sh && \
-    sbcl --version && \
-    cd .. && \
-    rm -rf sbcl*
+      `# Common Lisp (sbcl) dependencies` \
+      curl --version && \
+      curl -o sbcl-${SBCL_VERSION}-x86-64-linux-binary.tar.bz2 -J -L https://sourceforge.net/projects/sbcl/files/sbcl/${SBCL_VERSION}/sbcl-${SBCL_VERSION}-x86-64-linux-binary.tar.bz2/download?use_mirror=managedway# && \
+      tar xjf sbcl-${SBCL_VERSION}-x86-64-linux-binary.tar.bz2 && \
+      cd sbcl-${SBCL_VERSION}-x86-64-linux && \
+      ./install.sh && \
+      sbcl --version && \
+      cd .. && \
+      rm -rf sbcl*
 
 ENV D_VERSION     2.087.0
 ENV DMD_DEB       dmd_2.087.0-0_amd64.deb
 RUN \
-`# D dependencies` \
-    wget -q http://downloads.dlang.org/releases/2.x/${D_VERSION}/${DMD_DEB} && \
-    dpkg --install ${DMD_DEB} && \
-    rm -f ${DMD_DEB} && \
-    mkdir -p /usr/include/dmd/druntime/import/deimos /usr/include/dmd/druntime/import/C && \
-    git clone -b 'v2.0.2+2.0.16' https://github.com/D-Programming-Deimos/libevent.git deimos-libevent-2.0 && \
-    mv deimos-libevent-2.0/deimos/* /usr/include/dmd/druntime/import/deimos/ && \
-    mv deimos-libevent-2.0/C/* /usr/include/dmd/druntime/import/C/ && \
-    rm -rf deimos-libevent-2.0 && \
-    git clone -b 'v2.0.0+1.1.0h' https://github.com/D-Programming-Deimos/openssl.git deimos-openssl-1.1.0h && \
-    mv deimos-openssl-1.1.0h/deimos/* /usr/include/dmd/druntime/import/deimos/ && \
-    mv deimos-openssl-1.1.0h/C/* /usr/include/dmd/druntime/import/C/ && \
-    rm -rf deimos-openssl-1.1.0h
+      `# D dependencies` \
+      wget -q http://downloads.dlang.org/releases/2.x/${D_VERSION}/${DMD_DEB} && \
+      dpkg --install ${DMD_DEB} && \
+      rm -f ${DMD_DEB} && \
+      mkdir -p /usr/include/dmd/druntime/import/deimos /usr/include/dmd/druntime/import/C && \
+      git clone -b 'v2.0.2+2.0.16' https://github.com/D-Programming-Deimos/libevent.git deimos-libevent-2.0 && \
+      mv deimos-libevent-2.0/deimos/* /usr/include/dmd/druntime/import/deimos/ && \
+      mv deimos-libevent-2.0/C/* /usr/include/dmd/druntime/import/C/ && \
+      rm -rf deimos-libevent-2.0 && \
+      git clone -b 'v2.0.0+1.1.0h' https://github.com/D-Programming-Deimos/openssl.git deimos-openssl-1.1.0h && \
+      mv deimos-openssl-1.1.0h/deimos/* /usr/include/dmd/druntime/import/deimos/ && \
+      mv deimos-openssl-1.1.0h/C/* /usr/include/dmd/druntime/import/C/ && \
+      rm -rf deimos-openssl-1.1.0h
 
 ENV DART_VERSION 2.7.2-1
 RUN apt-get install -y --no-install-recommends \
-`# Dart dependencies` \
+      `# Dart dependencies` \
       dart=$DART_VERSION
 ENV PATH /usr/lib/dart/bin:$PATH
 
 RUN apt-get install -y --no-install-recommends \
-`# dotnet core dependencies` \
+      `# dotnet core dependencies` \
       dotnet-sdk-6.0 \
       dotnet-runtime-6.0 \
       aspnetcore-runtime-6.0 \
       dotnet-apphost-pack-6.0
 
 RUN apt-get install -y --no-install-recommends \
-`# Erlang dependencies` \
+      `# Erlang dependencies` \
       erlang && \
-    wget https://s3.amazonaws.com/rebar3/rebar3 -O /usr/bin/rebar3 && \
-    chmod 755 /usr/bin/rebar3 && \
-    rebar3 --version
+      wget https://s3.amazonaws.com/rebar3/rebar3 -O /usr/bin/rebar3 && \
+      chmod 755 /usr/bin/rebar3 && \
+      rebar3 --version
 
 RUN apt-get install -y --no-install-recommends \
-`# GlibC dependencies` \
+      `# GlibC dependencies` \
       libglib2.0-dev
 
 # golang
@@ -148,34 +148,34 @@ ENV GOLANG_DOWNLOAD_URL https://go.dev/dl/go$GOLANG_VERSION.linux-amd64.tar.gz
 ENV GOLANG_DOWNLOAD_SHA256 464b6b66591f6cf055bc5df90a9750bf5fbc9d038722bb84a9d56a2bea974be6
 RUN curl -fsSL "$GOLANG_DOWNLOAD_URL" -o golang.tar.gz && \
       echo "$GOLANG_DOWNLOAD_SHA256  golang.tar.gz" | sha256sum -c - && \
-            tar -C /usr/local -xzf golang.tar.gz && \
-                  ln -s /usr/local/go/bin/go /usr/local/bin && \
-                        rm golang.tar.gz
+      tar -C /usr/local -xzf golang.tar.gz && \
+      ln -s /usr/local/go/bin/go /usr/local/bin && \
+      rm golang.tar.gz
 
 RUN apt-get install -y --no-install-recommends \
-`# Haxe dependencies` \
+      `# Haxe dependencies` \
       haxe \
       neko \
       neko-dev && \
-    haxelib setup --always /usr/share/haxe/lib && \
-    haxelib install --always hxcpp 2>&1 > /dev/null
+      haxelib setup --always /usr/share/haxe/lib && \
+      haxelib install --always hxcpp 2>&1 > /dev/null
 
-ENV GRADLE_VERSION="7.4.2"
+ENV GRADLE_VERSION="7.5.1"
 RUN apt-get install -y --no-install-recommends \
-`# Java dependencies` \
+      `# Java dependencies` \
       ant \
       ant-optional \
       maven \
       openjdk-11-jdk-headless && \
-`# Gradle` \
+      `# Gradle` \
       wget https://services.gradle.org/distributions/gradle-$GRADLE_VERSION-bin.zip -q -O /tmp/gradle-$GRADLE_VERSION-bin.zip && \
-      (echo "29e49b10984e585d8118b7d0bc452f944e386458df27371b49b4ac1dec4b7fda  /tmp/gradle-$GRADLE_VERSION-bin.zip" | sha256sum -c -) && \
+      (echo "f6b8596b10cce501591e92f229816aa4046424f3b24d771751b06779d58c8ec4  /tmp/gradle-$GRADLE_VERSION-bin.zip" | sha256sum -c -) && \
       unzip -d /tmp /tmp/gradle-$GRADLE_VERSION-bin.zip && \
       mv /tmp/gradle-$GRADLE_VERSION /usr/local/gradle && \
       ln -s /usr/local/gradle/bin/gradle /usr/local/bin
 
 RUN apt-get install -y --no-install-recommends \
-`# Lua dependencies` \
+      `# Lua dependencies` \
       lua5.2 \
       lua5.2-dev
 # https://bugs.launchpad.net/ubuntu/+source/lua5.3/+bug/1707212
@@ -183,12 +183,12 @@ RUN apt-get install -y --no-install-recommends \
 # need to update our luasocket code, lua doesn't have luaL_openlib any more
 
 RUN apt-get install -y --no-install-recommends \
-`# Node.js dependencies` \
+      `# Node.js dependencies` \
       nodejs
 
 # Test dependencies for running puppeteer
 RUN apt-get install -y --no-install-recommends \
-`# JS dependencies` \
+      `# JS dependencies` \
       libxss1 \
       libxtst6
 
@@ -201,7 +201,7 @@ RUN apt-get install -y --no-install-recommends \
 #     opam install --yes oasis
 
 RUN apt-get install -y --no-install-recommends \
-`# Perl dependencies` \
+      `# Perl dependencies` \
       libbit-vector-perl \
       libclass-accessor-class-perl \
       libcrypt-ssleay-perl \
@@ -210,7 +210,7 @@ RUN apt-get install -y --no-install-recommends \
       libtest-exception-perl
 
 RUN apt-get install -y --no-install-recommends \
-`# Php dependencies` \
+      `# Php dependencies` \
       php \
       php-cli \
       php-dev \
@@ -220,7 +220,7 @@ RUN apt-get install -y --no-install-recommends \
       composer
 
 RUN apt-get install -y --no-install-recommends \
-`# Python dependencies` \
+      `# Python dependencies` \
       python-all \
       python-all-dbg \
       python-all-dev \
@@ -232,10 +232,10 @@ RUN apt-get install -y --no-install-recommends \
       python-twisted \
       python-wheel \
       python-zope.interface && \
-   pip install --upgrade backports.ssl_match_hostname
+      pip install --upgrade backports.ssl_match_hostname
 
 RUN apt-get install -y --no-install-recommends \
-`# Python3 dependencies` \
+      `# Python3 dependencies` \
       python3-all \
       python3-all-dbg \
       python3-all-dev \
@@ -248,7 +248,7 @@ RUN apt-get install -y --no-install-recommends \
       python3-zope.interface
 
 RUN apt-get install -y --no-install-recommends \
-`# Ruby dependencies` \
+      `# Ruby dependencies` \
       ruby \
       ruby-dev \
       ruby-bundler
@@ -267,11 +267,11 @@ ENV PATH /root/.cargo/bin:$PATH
 
 # Locale(s) for cpp unit tests
 RUN apt-get install -y --no-install-recommends \
-`# Locale dependencies` \
+      `# Locale dependencies` \
       locales && \
-    locale-gen en_US.UTF-8 && \
-    locale-gen de_DE.UTF-8 && \
-    update-locale
+      locale-gen en_US.UTF-8 && \
+      locale-gen de_DE.UTF-8 && \
+      update-locale
 
 # cppcheck-1.82 has a nasty cpp parser bug, so we're using something newer
 # don't need this on disco, nobody uses it
@@ -286,9 +286,9 @@ RUN apt-get install -y --no-install-recommends \
 
 # Clean up
 RUN rm -rf /var/cache/apt/* && \
-    rm -rf /var/lib/apt/lists/* && \
-    rm -rf /tmp/* && \
-    rm -rf /var/tmp/*
+      rm -rf /var/lib/apt/lists/* && \
+      rm -rf /tmp/* && \
+      rm -rf /var/tmp/*
 
 ENV THRIFT_ROOT /thrift
 RUN mkdir -p $THRIFT_ROOT/src
