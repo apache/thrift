@@ -76,17 +76,17 @@
 #include "thrift/thrifty.hh"
 #endif
 
-void integer_overflow(char* text) {
+void integer_overflow(const char* text) {
   yyerror("This integer is too big: \"%s\"\n", text);
   exit(1);
 }
 
-void unexpected_token(char* text) {
+void unexpected_token(const char* text) {
   yyerror("Unexpected token in input: \"%s\"\n", text);
   exit(1);
 }
 
-void error_no_longer_supported(char* text, char* replace_with) {
+void error_no_longer_supported(const char* text, const char* replace_with) {
   yyerror("\"%s\" is no longer supported, use \"%s\" instead. Line %d\n", text, replace_with, yylineno);
   exit(1);
 }
