@@ -839,6 +839,7 @@ AC_CONFIG_FILES([
   tutorial/py.tornado/Makefile
   tutorial/rb/Makefile
   tutorial/rs/Makefile
+  tutorial/swift/Makefile
 ])
 
 if test "$have_cpp" = "yes" ; then MAYBE_CPP="cpp" ; else MAYBE_CPP="" ; fi
