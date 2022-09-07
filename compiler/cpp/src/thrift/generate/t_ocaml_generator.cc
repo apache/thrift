@@ -1665,7 +1665,7 @@ string t_ocaml_generator::type_name(t_type* ttype) {
   }
 
   string name = ttype->get_name();
-  if (ttype->is_service()) {
+  if (ttype->is_service() || ttype->is_xception()) {
     name = capitalize(name);
   } else {
     name = decapitalize(name);
