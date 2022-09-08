@@ -278,7 +278,7 @@ namespace Thrift.Transport.Server
 
         private class ServerTransport : TEndpointTransport
         {
-            private readonly NamedPipeServerStream PipeStream;
+            private NamedPipeServerStream PipeStream;
 
             public ServerTransport(NamedPipeServerStream stream, TConfiguration config)
                 : base(config)
@@ -297,6 +297,7 @@ namespace Thrift.Transport.Server
             public override void Close()
             {
                 PipeStream?.Dispose();
+                PipeStream = null;
             }
 
             public override async ValueTask<int> ReadAsync(byte[] buffer, int offset, int length, CancellationToken cancellationToken)

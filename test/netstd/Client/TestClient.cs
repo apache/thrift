@@ -407,7 +407,7 @@ namespace ThriftTest
                 {
                     Console.WriteLine("*** FAILED ***");
                     Console.WriteLine("Error while parsing arguments");
-                    Console.WriteLine(ex.Message + "\n" + ex.StackTrace);
+                    Console.WriteLine("{0} {1}\nStack:\n{2}", ex.GetType().Name, ex.Message, ex.StackTrace);
                     return ErrorUnknown;
                 }
 
