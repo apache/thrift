@@ -40,6 +40,13 @@ if(@ZLIB_FOUND@ AND @WITH_ZLIB@)
     set(THRIFT_LIBRARIES thriftz::thriftz)
 endif()
 
+if(@Qt5_FOUND@ AND @WITH_QT5@)
+    if (NOT TARGET thriftqt5::thriftqt5)
+        include("${THRIFT_CMAKE_DIR}/thriftqt5Targets.cmake")
+    endif()
+    set(THRIFT_LIBRARIES thriftqt5::thriftqt5)
+endif()
+
 if ("${THRIFT_LIBRARIES}" STREQUAL "")
     message(FATAL_ERROR "thrift libraries were not found")
 endif()
