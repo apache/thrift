@@ -96,9 +96,12 @@ type
   end;
 
 
-  TGuidHelper = record helper for System.TGuid
+  // problem: inheritance possible for class helpers ONLY but not with record helpers
+  // workaround: use static class method instead of record helper :-(
+  GuidUtils = class sealed
   public
-    function SwapByteOrder : TGuid;
+    // new stuff
+    class function SwapByteOrder( const aGuid : TGuid) : TGuid; static;
 
     {$IFDEF Debug}
     class procedure SelfTest; static;
@@ -355,16 +358,16 @@ begin
 end;
 
 
-{ TGuidHelper }
+{ GuidUtils }
 
 
-function TGuidHelper.SwapByteOrder : TGuid;
+class function GuidUtils.SwapByteOrder( const aGuid : TGuid) : TGuid;
 // convert to/from network byte order
 // - https://www.ietf.org/rfc/rfc4122.txt
 // - https://stackoverflow.com/questions/10850075/guid-uuid-compatibility-issue-between-net-and-linux
 // - https://lists.gnu.org/archive/html/bug-parted/2002-01/msg00099.html
 begin
-  result := Self;
+  result := aGuid;
 
   IntegerUtils.SwapByteOrder( @result.D1, SizeOf(result.D1));
   IntegerUtils.SwapByteOrder( @result.D2, SizeOf(result.D2));
@@ -374,7 +377,7 @@ end;
 
 
 {$IFDEF Debug}
-class procedure TGuidHelper.SelfTest;
+class procedure GuidUtils.SelfTest;
 var guid   : TGuid;
     pBytes : PByteArray;
     i, expected : Integer;
@@ -382,7 +385,7 @@ const TEST_GUID : TGuid = '{00112233-4455-6677-8899-aabbccddeeff}';
 begin
   // host to network
   guid := TEST_GUID;
-  guid := guid.SwapByteOrder;
+  guid := GuidUtils.SwapByteOrder(guid);
 
   // validate network order
   pBytes := @guid;
@@ -392,8 +395,11 @@ begin
   end;
 
   // network to host and final validation
-  guid := guid.SwapByteOrder;
+  guid := GuidUtils.SwapByteOrder(guid);
   ASSERT( IsEqualGuid( guid, TEST_GUID));
+
+  // prevent collisions with SysUtils.TGuidHelper
+  guid := TGuid.NewGuid;
 end;
 {$ENDIF}
 
@@ -494,6 +500,6 @@ end;
 
 begin
   {$IFDEF Debug}
-  TGuid.SelfTest;
+  GuidUtils.SelfTest;
   {$ENDIF}
 end.
