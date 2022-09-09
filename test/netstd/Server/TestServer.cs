@@ -204,7 +204,6 @@ namespace ThriftTest
         {
             //public TServer Server { get; set; }
             private readonly int handlerID;
-            private readonly StringBuilder sb = new();
             private readonly TestLogDelegate logger;
 
             public TestHandlerAsync()
@@ -216,11 +215,12 @@ namespace ThriftTest
 
             public void TestConsoleLogger(string msg, params object[] values)
             {
-                sb.Clear();
+                var sb = new StringBuilder();
                 sb.AppendFormat("handler{0:D3}:", handlerID);
                 sb.AppendFormat(msg, values);
                 sb.AppendLine();
-                Console.Write(sb.ToString());
+                lock (typeof(Console))
+                    Console.Write(sb.ToString());
             }
 
             public Task testVoid(CancellationToken cancellationToken)
@@ -298,7 +298,7 @@ namespace ThriftTest
 
             public Task<Dictionary<int, int>> testMap(Dictionary<int, int>? thing, CancellationToken cancellationToken)
             {
-                sb.Clear();
+                var sb = new StringBuilder();
                 sb.Append("testMap({{");
                 if (thing != null)
                 {
@@ -323,7 +323,7 @@ namespace ThriftTest
 
             public Task<Dictionary<string, string>> testStringMap(Dictionary<string, string>? thing, CancellationToken cancellationToken)
             {
-                sb.Clear();
+                var sb = new StringBuilder();
                 sb.Append("testStringMap({{");
                 if (thing != null)
                 {
@@ -348,7 +348,7 @@ namespace ThriftTest
 
             public Task<HashSet<int>> testSet(HashSet<int>? thing, CancellationToken cancellationToken)
             {
-                sb.Clear();
+                var sb = new StringBuilder();
                 sb.Append("testSet({{");
                 if (thing != null)
                 {
@@ -373,7 +373,7 @@ namespace ThriftTest
 
             public Task<List<int>> testList(List<int>? thing, CancellationToken cancellationToken)
             {
-                sb.Clear();
+                var sb = new StringBuilder();
                 sb.Append("testList({{");
                 if (thing != null)
                 {
@@ -590,7 +590,8 @@ namespace ThriftTest
                     {
                         case TransportChoice.NamedPipe:
                             Debug.Assert(param.pipe != null);
-                            trans = new TNamedPipeServerTransport(param.pipe, Configuration, NamedPipeClientFlags.OnlyLocalClients);
+                            var numListen = (param.server == ServerChoice.Simple) ? 1 : 16;
+                            trans = new TNamedPipeServerTransport(param.pipe, Configuration, NamedPipeServerFlags.OnlyLocalClients, numListen);
                             break;
 
 

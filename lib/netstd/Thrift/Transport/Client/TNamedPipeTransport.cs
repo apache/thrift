@@ -28,7 +28,7 @@ namespace Thrift.Transport.Client
     {
         private NamedPipeClientStream PipeStream;
         private readonly int ConnectTimeout;
-		private const int DEFAULT_CONNECT_TIMEOUT = 60 * 1000;   // Timeout.Infinite is not a good default
+        private const int DEFAULT_CONNECT_TIMEOUT = 60 * 1000;   // Timeout.Infinite is not a good default
 
         public TNamedPipeTransport(string pipe, TConfiguration config, int timeout = DEFAULT_CONNECT_TIMEOUT) 
             : this(".", pipe, config, timeout)
@@ -61,6 +61,8 @@ namespace Thrift.Transport.Client
         {
             if (PipeStream != null)
             {
+                if (PipeStream.IsConnected)
+                    PipeStream.Close();
                 PipeStream.Dispose();
                 PipeStream = null;
             }
@@ -107,20 +109,24 @@ namespace Thrift.Transport.Client
             }
         }
 
-        public override Task FlushAsync(CancellationToken cancellationToken)
+        public override async Task FlushAsync(CancellationToken cancellationToken)
         {
-            cancellationToken.ThrowIfCancellationRequested();
-
+            await PipeStream.FlushAsync(cancellationToken);
             ResetConsumedMessageSize();
-            return Task.CompletedTask;
         }
 
         
         protected override void Dispose(bool disposing)
         {
-            if(disposing) 
+            if (disposing)
             {
-              PipeStream?.Dispose();
+                if (PipeStream != null)
+                {
+                    if (PipeStream.IsConnected)
+                        PipeStream.Close();
+                    PipeStream.Dispose();
+                    PipeStream = null;
+                }
             }
         }
     }
