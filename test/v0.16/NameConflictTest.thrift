@@ -102,7 +102,7 @@ struct Thrift5626 {
    2: i16      i16
    3: i32      i32
    4: i64      i64
-   5: uuid     uuid
+   //5: uuid     uuid
    6: string   string
    7: binary   binary
    8: bool     bool
