@@ -442,3 +442,11 @@ project.lock.json
 /tutorial/netstd/Client/Properties/launchSettings.json
 /ylwrap
 
+# Unit test generated artifacts
+
+CMakeCache.txt
+CMakeFiles
+compiler/cpp/tests/*.cmake
+compiler/cpp/tests/Testing/
+compiler/cpp/tests/bin/
+compiler/cpp/tests/*.a

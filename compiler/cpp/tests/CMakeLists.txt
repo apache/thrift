@@ -78,7 +78,7 @@ set(thrift_compiler_SOURCES
     ${THRIFT_COMPILER_SOURCE_DIR}/src/thrift/generate/t_generator.cc
     ${THRIFT_COMPILER_SOURCE_DIR}/src/thrift/parse/t_typedef.cc
     ${THRIFT_COMPILER_SOURCE_DIR}/src/thrift/parse/parse.cc
-    ${THRIFT_COMPILER_SOURCE_DIR}/thrift/version.h
+    ${THRIFT_COMPILER_SOURCE_DIR}/src/thrift/version.h
 )
 
 # This macro adds an option THRIFT_COMPILER_${NAME}
@@ -114,7 +114,7 @@ THRIFT_ADD_COMPILER(js      "Enable compiler for JavaScript" OFF)
 THRIFT_ADD_COMPILER(json    "Enable compiler for JSON" OFF)
 THRIFT_ADD_COMPILER(lua     "Enable compiler for Lua" OFF)
 THRIFT_ADD_COMPILER(netstd  "Enable compiler for .NET Standard" ON)
-THRIFT_ADD_COMPILER(ocaml   "Enable compiler for OCaml" OFF)
+THRIFT_ADD_COMPILER(ocaml   "Enable compiler for OCaml" ON)
 THRIFT_ADD_COMPILER(perl    "Enable compiler for Perl" OFF)
 THRIFT_ADD_COMPILER(php     "Enable compiler for PHP" OFF)
 THRIFT_ADD_COMPILER(py      "Enable compiler for Python 2.0" OFF)
