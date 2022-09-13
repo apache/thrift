@@ -9,6 +9,9 @@ on:
 env:
   BUILD_DEPS: automake bison flex git libboost-all-dev libevent-dev libssl-dev libtool make pkg-config
 
+permissions:
+  contents: read
+
 jobs:
   # TODO windows and macos
   compiler:
