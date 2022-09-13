@@ -26,7 +26,7 @@
 
 sudo: required
 # https://docs.travis-ci.com/user/reference/linux
-dist: xenial
+dist: focal
 language: cpp
 
 services:
@@ -47,7 +47,7 @@ env:
     - SCRIPT="cmake.sh"
     - BUILD_ARG=""
     - BUILD_ENV="-e CC=gcc -e CXX=g++ -e THRIFT_CROSSTEST_CONCURRENCY=4"
-    - DISTRO=ubuntu-bionic
+    - DISTRO=ubuntu-focal
     - BUILD_LIBS="CPP C_GLIB JAVA PYTHON TESTING TUTORIALS"  # only meaningful for CMake builds
     - TRAVIS_BUILD_STAGE=test
     # DOCKER_REPO (this works for all builds as a source for docker images - you can override for fork builds in your Travis settings)
