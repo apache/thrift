@@ -244,9 +244,9 @@ ENV PATH /root/.cargo/bin:$PATH
 
 # Swift on Linux for cross tests
 RUN cd / && \
-      wget --quiet https://swift.org/builds/swift-5.1.4-release/ubuntu1804/swift-5.1.4-RELEASE/swift-5.1.4-RELEASE-ubuntu18.04.tar.gz && \
-      tar xf swift-5.1.4-RELEASE-ubuntu18.04.tar.gz --strip-components=1 && \
-      rm swift-5.1.4-RELEASE-ubuntu18.04.tar.gz && \
+      wget --quiet https://swift.org/builds/swift-5.3.3-release/ubuntu2004/swift-5.3.3-RELEASE/swift-5.3.3-RELEASE-ubuntu20.04.tar.gz && \
+      tar xf swift-5.3.3-RELEASE-ubuntu20.04.tar.gz --strip-components=1 && \
+      rm swift-5.3.3-RELEASE-ubuntu20.04.tar.gz && \
       swift --version
 
 # Locale(s) for cpp unit tests
