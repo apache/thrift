@@ -167,7 +167,7 @@ RUN apt-get install -y --no-install-recommends \
       ant \
       ant-optional \
       maven \
-      openjdk-11-jdk-headless && \
+      openjdk-17-jdk-headless && \
       `# Gradle` \
       wget https://services.gradle.org/distributions/gradle-$GRADLE_VERSION-bin.zip -q -O /tmp/gradle-$GRADLE_VERSION-bin.zip && \
       (echo "f6b8596b10cce501591e92f229816aa4046424f3b24d771751b06779d58c8ec4  /tmp/gradle-$GRADLE_VERSION-bin.zip" | sha256sum -c -) && \
