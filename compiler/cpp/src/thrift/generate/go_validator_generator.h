@@ -59,7 +59,7 @@ private:
   void indent_down() { go_generator->indent_down(); }
   std::string indent() { return go_generator->indent(); }
 
-  std::string get_field_name(t_field* field);
+  //std::string get_field_name(t_field* field);  -- no impl?
   std::string get_field_reference_name(t_field* field);
 
   std::string GenID(std::string id) { return id + std::to_string(tmp_[id]++); };
