@@ -1265,13 +1265,20 @@ SetType:
     }
 
 ListType:
-  tok_list '<' FieldType '>' CppType
+  tok_list CppType '<' FieldType '>' CppType   // the second CppType is for compatibility reasons = deprecated
     {
       pdebug("ListType -> tok_list<FieldType>");
-      check_for_list_of_bytes($3);
-      $$ = new t_list($3);
-      if ($5 != nullptr) {
-        ((t_container*)$$)->set_cpp_name(std::string($5));
+      check_for_list_of_bytes($4);
+      $$ = new t_list($4);
+      if ($2 != nullptr) {
+        ((t_container*)$$)->set_cpp_name(std::string($2));
+      }
+      if ($6 != nullptr) {
+        ((t_container*)$$)->set_cpp_name(std::string($6));
+        pwarning(1, "The syntax 'list<type> cpp_type \"c++ type\"' is deprecated. Use 'list cpp_type \"c++ type\" <type>' instead.\n");
+      }
+      if (($2 != nullptr) && ($6 != nullptr)) {
+        pwarning(1, "Two cpp_types clauses at list<%>\n", $2);
       }
     }
 
