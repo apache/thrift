@@ -110,8 +110,8 @@ private:
   bool bool_val = false;
   t_enum_value* enum_val = nullptr;
   std::string string_val;
-  validation_function* function_val;
-  t_field* field_reference_val;
+  validation_function* function_val = nullptr;
+  t_field* field_reference_val = nullptr;
 
   validation_value_type val_type;
 };
@@ -130,7 +130,7 @@ public:
 private:
   std::string name;
   std::vector<validation_value*> values;
-  validation_rule* inner;
+  validation_rule* inner = nullptr;
 };
 
 class validation_parser {
@@ -202,7 +202,7 @@ private:
                                 std::map<std::string, std::vector<std::string>>& annotations);
   t_field* get_referenced_field(std::string annotation_value);
   validation_value::validation_function* get_validation_function(std::string annotation_value);
-  t_struct* reference;
+  t_struct* reference = nullptr;
 };
 
 #endif
