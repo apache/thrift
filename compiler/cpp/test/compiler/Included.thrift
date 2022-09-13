@@ -19,6 +19,8 @@
  * under the License.
  */
 
+const string foo = "bar"
+
 struct a_struct {
   1: bool im_true,
   2: bool im_false,
