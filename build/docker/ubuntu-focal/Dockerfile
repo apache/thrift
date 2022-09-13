@@ -208,21 +208,6 @@ RUN apt-get install -y --no-install-recommends \
     composer
 
 RUN apt-get install -y --no-install-recommends \
-    `# Python dependencies` \
-    python-all \
-    python-all-dbg \
-    python-all-dev \
-    python-ipaddress \
-    python-pip \
-    python-setuptools \
-    python-six \
-    python-tornado \
-    python-twisted \
-    python-wheel \
-    python-zope.interface && \
-    pip install --upgrade backports.ssl_match_hostname
-
-RUN apt-get install -y --no-install-recommends \
     `# Python3 dependencies` \
     python3-all \
     python3-all-dbg \
