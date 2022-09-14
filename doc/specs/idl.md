@@ -166,7 +166,7 @@ N.B.: These have some internal purpose at Facebook but serve no current purpose 
 
     [28] SetType         ::=  'set' CppType? '<' FieldType '>'
 
-    [29] ListType        ::=  'list' '<' FieldType '>' CppType?
+    [29] ListType        ::=  'list' CppType? '<' FieldType '>' 
 
     [30] CppType         ::=  'cpp_type' Literal
 
