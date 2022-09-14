@@ -59,11 +59,15 @@ public:
   int operator++() { return ++ii_; }
 
   bool operator==(const TEnumIterator& rhs) const {
-    return ii_ == rhs.ii_ && n_ == rhs.n_;
+    bool is_end = ii_ == n_ || n_ == -1;
+    bool is_rhs_end = rhs.ii_ == rhs.n_ || rhs.n_ == -1;
+    return (ii_ == rhs.ii_ && n_ == rhs.n_) || (is_end && is_rhs_end);
   }
 
   bool operator!=(const TEnumIterator& rhs) const {
-    return ii_ != rhs.ii_ || n_ != rhs.n_;
+    bool is_end = ii_ == n_ || n_ == -1;
+    bool is_rhs_end = rhs.ii_ == rhs.n_ || rhs.n_ == -1;
+    return (ii_ != rhs.ii_ || n_ != rhs.n_) && (!is_end || !is_rhs_end);
   }
 
   std::pair<int, const char*> operator*() const { return std::make_pair(enums_[ii_], names_[ii_]); }
