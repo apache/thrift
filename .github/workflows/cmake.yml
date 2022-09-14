@@ -9,6 +9,9 @@ on:
 env:
   BUILD_DEPS: bison flex g++ libboost-all-dev libevent-dev libssl-dev make cmake
 
+permissions:
+  contents: read
+
 jobs:
   compiler:
     runs-on: ubuntu-20.04
