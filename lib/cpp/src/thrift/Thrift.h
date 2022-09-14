@@ -62,10 +62,8 @@ public:
     return ii_ == rhs.ii_ && n_ == rhs.n_;
   }
 
-  bool operator!=(const TEnumIterator& end) const {
-    THRIFT_UNUSED_VARIABLE(end);
-    assert(end.n_ == -1);
-    return (ii_ != n_);
+  bool operator!=(const TEnumIterator& rhs) const {
+    return ii_ != rhs.ii_ || n_ != rhs.n_;
   }
 
   std::pair<int, const char*> operator*() const { return std::make_pair(enums_[ii_], names_[ii_]); }
