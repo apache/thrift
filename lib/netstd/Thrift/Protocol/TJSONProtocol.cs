@@ -694,7 +694,9 @@ namespace Thrift.Protocol
 
         public override async Task ReadMessageEndAsync(CancellationToken cancellationToken)
         {
+            cancellationToken.ThrowIfCancellationRequested();
             await ReadJsonArrayEndAsync(cancellationToken);
+            Transport.ResetConsumedMessageSize();
         }
 
         public override async ValueTask<TStruct> ReadStructBeginAsync(CancellationToken cancellationToken)

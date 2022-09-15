@@ -43,7 +43,7 @@ namespace Thrift.Transport
         /// <summary>
         /// Resets RemainingMessageSize to the configured maximum 
         /// </summary>
-        protected void ResetConsumedMessageSize(long newSize = -1)
+        public override void ResetConsumedMessageSize(long newSize = -1)
         {
             // full reset 
             if (newSize < 0)
