@@ -48,7 +48,8 @@ check-local: $(THRIFT)
 		-Prelease=true \
 		-Pthrift.version=$(PACKAGE_VERSION) \
 		-Pthrift.compiler=$(THRIFT) \
-		--console=plain
+		--console=plain \
+		--debug
 
 maven-publish:
 	$(GRADLE) $(GRADLE_OPTS) publish \
