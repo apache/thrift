@@ -167,6 +167,7 @@ EXTRA_DIST = \
 	SpecificNameTest.thrift \
 	VoidMethExceptionsTest.thrift \
 	partial/thrift_test_schema.thrift \
+	keys/keygen/.gitignore \
 	known_failures_Linux.json \
 	test.py \
 	tests.json \
