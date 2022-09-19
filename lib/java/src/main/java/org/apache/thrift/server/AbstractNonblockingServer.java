@@ -190,10 +190,8 @@ public abstract class AbstractNonblockingServer extends TServer {
       }
 
       // if the buffer's frame read is complete, invoke the method.
-      if (buffer.isFrameFullyRead()) {
-        if (!requestInvoke(buffer)) {
-          cleanupSelectionKey(key);
-        }
+      if (buffer.isFrameFullyRead() && !requestInvoke(buffer)) {
+        cleanupSelectionKey(key);
       }
     }
 
