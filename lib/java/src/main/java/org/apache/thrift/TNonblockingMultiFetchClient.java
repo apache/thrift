@@ -280,16 +280,14 @@ public class TNonblockingMultiFetchClient {
             }
           }
 
-          if (selKey.isValid() && selKey.isWritable()) {
-            if (sendBuf[index].hasRemaining()) {
-              // if this socket throws an exception, print error msg and
-              // skip it.
-              try {
-                SocketChannel sChannel = (SocketChannel) selKey.channel();
-                sChannel.write(sendBuf[index]);
-              } catch (Exception e) {
-                LOGGER.error("Socket {} writes to server {} error", index, servers.get(index), e);
-              }
+          if (selKey.isValid() && selKey.isWritable() && sendBuf[index].hasRemaining()) {
+            // if this socket throws an exception, print error msg and
+            // skip it.
+            try {
+              SocketChannel sChannel = (SocketChannel) selKey.channel();
+              sChannel.write(sendBuf[index]);
+            } catch (Exception e) {
+              LOGGER.error("Socket {} writes to server {} error", index, servers.get(index), e);
             }
           }
 
