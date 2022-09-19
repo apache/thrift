@@ -246,7 +246,7 @@ public abstract class ServerTestBase {
       first_map.put(Numberz.TWO, argument);
       first_map.put(Numberz.THREE, argument);
 
-      Insanity looney = new Insanity();
+      Insanity looney = new Insanity(new HashMap<>(), Arrays.asList());
       second_map.put(Numberz.SIX, looney);
 
       Map<Long, Map<Numberz, Insanity>> insane = new HashMap<>();
