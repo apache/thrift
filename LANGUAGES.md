@@ -66,289 +66,289 @@ Thrift's core protocol is TBinary, supported by all languages except for JavaScr
 <tr align=center>
 <td align=left><a href="https://github.com/apache/thrift/blob/master/lib/c_glib/README.md">C (glib)</a></td>
 <!-- Since -----------------><td>0.6.0</td>
-<!-- Build Systems ---------><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td>
+<!-- Build Systems ---------><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cgrn.png" alt="Yes"/></td>
 <!-- Language Levels -------><td>2.48.2</td><td>2.56.4</td>
-<!-- Field types -----------><td><img src="doc/images/cred.png" alt=""/></td>
-<!-- Low-Level Transports --><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td>
-<!-- Transport Wrappers ----><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cred.png" alt=""/></td>
-<!-- Protocols -------------><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td>
-<!-- Servers ---------------><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cred.png" alt=""/></td>
+<!-- Field types -----------><td><img src="/doc/images/cred.png" alt=""/></td>
+<!-- Low-Level Transports --><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cred.png" alt=""/></td><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cgrn.png" alt="Yes"/></td>
+<!-- Transport Wrappers ----><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cred.png" alt=""/></td><td><img src="/doc/images/cred.png" alt=""/></td><td><img src="/doc/images/cred.png" alt=""/></td>
+<!-- Protocols -------------><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cred.png" alt=""/></td><td><img src="/doc/images/cgrn.png" alt="Yes"/></td>
+<!-- Servers ---------------><td><img src="/doc/images/cred.png" alt=""/></td><td><img src="/doc/images/cred.png" alt=""/></td><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cred.png" alt=""/></td><td><img src="/doc/images/cred.png" alt=""/></td>
 <td align=left><a href="https://issues.apache.org/jira/issues/?jql=project%20%3D%20THRIFT%20AND%20component%20in%20(%22C%20glib%20-%20Compiler%22%2C%20%22C%20glib%20-%20Library%22)%20and%20status%20not%20in%20(fixed%2C%20resolved%2C%20closed)">C (glib)</a></td>
 </tr>
 <tr align=center>
 <td align=left><a href="https://github.com/apache/thrift/blob/master/lib/cpp/README.md">C++</a></td>
 <!-- Since -----------------><td>0.2.0</td>
-<!-- Build Systems ---------><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td>
+<!-- Build Systems ---------><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cgrn.png" alt="Yes"/></td>
 <!-- Language Levels -------><td colspan=2>C++11</td>
-<!-- Field types -----------><td><img src="doc/images/cred.png" alt=""/></td>
-<!-- Low-Level Transports --><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td>
-<!-- Transport Wrappers ----><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td>
-<!-- Protocols -------------><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td>
-<!-- Servers ---------------><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td>
+<!-- Field types -----------><td><img src="/doc/images/cred.png" alt=""/></td>
+<!-- Low-Level Transports --><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cgrn.png" alt="Yes"/></td>
+<!-- Transport Wrappers ----><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cgrn.png" alt="Yes"/></td>
+<!-- Protocols -------------><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cgrn.png" alt="Yes"/></td>
+<!-- Servers ---------------><td><img src="/doc/images/cred.png" alt=""/></td><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cgrn.png" alt="Yes"/></td>
 <td align=left><a href="https://issues.apache.org/jira/issues/?jql=project%20%3D%20THRIFT%20AND%20component%20in%20(%22C%2B%2B%20-%20Compiler%22%2C%20%22C%2B%2B%20-%20Library%22)%20and%20status%20not%20in%20(fixed%2C%20resolved%2C%20closed)">C++</a></td>
 </tr>
 <tr align=center>
 <td align=left><a href="https://github.com/apache/thrift/blob/master/lib/cl/README.md">Common LISP</a></td>
 <!-- Since -----------------><td>0.12.0</td>
-<!-- Build Systems ---------><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cred.png" alt=""/></td>
+<!-- Build Systems ---------><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cred.png" alt=""/></td>
 <!-- Language Levels -------><td>SBCL 1.4.x</td><td>SBCL 1.5.3</td>
-<!-- Field types -----------><td><img src="doc/images/cred.png" alt=""/></td>
-<!-- Low-Level Transports --><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cred.png" alt="Yes"/></td><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cred.png" alt=""/></td>
-<!-- Transport Wrappers ----><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cred.png" alt=""/></td>
-<!-- Protocols -------------><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cred.png" alt="Yes"/></td><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td>
-<!-- Servers ---------------><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cred.png" alt="Yes"/></td><td><img src="doc/images/cgrn.png" alt=""/></td><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cred.png" alt=""/></td>
+<!-- Field types -----------><td><img src="/doc/images/cred.png" alt=""/></td>
+<!-- Low-Level Transports --><td><img src="/doc/images/cred.png" alt=""/></td><td><img src="/doc/images/cred.png" alt="Yes"/></td><td><img src="/doc/images/cred.png" alt=""/></td><td><img src="/doc/images/cred.png" alt=""/></td><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cred.png" alt=""/></td>
+<!-- Transport Wrappers ----><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cred.png" alt=""/></td><td><img src="/doc/images/cred.png" alt=""/></td><td><img src="/doc/images/cred.png" alt=""/></td>
+<!-- Protocols -------------><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cred.png" alt="Yes"/></td><td><img src="/doc/images/cred.png" alt=""/></td><td><img src="/doc/images/cgrn.png" alt="Yes"/></td>
+<!-- Servers ---------------><td><img src="/doc/images/cred.png" alt=""/></td><td><img src="/doc/images/cred.png" alt="Yes"/></td><td><img src="/doc/images/cgrn.png" alt=""/></td><td><img src="/doc/images/cred.png" alt=""/></td><td><img src="/doc/images/cred.png" alt=""/></td>
 <td align=left><a href="https://issues.apache.org/jira/issues/?jql=project%20%3D%20THRIFT%20AND%20component%20in%20(%22Common%20LISP%20-%20Compiler%22%2C%20%22Common%20LISP%20-%20Library%22)%20and%20status%20not%20in%20(fixed%2C%20resolved%2C%20closed)">Common LISP</a></td>
 </tr>
 <tr align=center>
 <td align=left><a href="https://github.com/apache/thrift/blob/master/lib/d/README.md">Dlang</a></td>
 <!-- Since -----------------><td>0.9.0</td>
-<!-- Build Systems ---------><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cred.png" alt=""/></td>
+<!-- Build Systems ---------><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cred.png" alt=""/></td>
 <!-- Language Levels -------><td>2.087.0</td><td>2.087.0</td>
-<!-- Field types -----------><td><img src="doc/images/cred.png" alt=""/></td>
-<!-- Low-Level Transports --><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td>
-<!-- Transport Wrappers ----><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td>
-<!-- Protocols -------------><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cred.png" alt=""/></td>
-<!-- Servers ---------------><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td>
+<!-- Field types -----------><td><img src="/doc/images/cred.png" alt=""/></td>
+<!-- Low-Level Transports --><td><img src="/doc/images/cred.png" alt=""/></td><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cgrn.png" alt="Yes"/></td>
+<!-- Transport Wrappers ----><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cred.png" alt=""/></td><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cgrn.png" alt="Yes"/></td>
+<!-- Protocols -------------><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cred.png" alt=""/></td>
+<!-- Servers ---------------><td><img src="/doc/images/cred.png" alt=""/></td><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cgrn.png" alt="Yes"/></td>
 <td align=left><a href="https://issues.apache.org/jira/issues/?jql=project%20%3D%20THRIFT%20AND%20component%20in%20(%22D%20-%20Compiler%22%2C%20%22D%20-%20Library%22)%20and%20status%20not%20in%20(fixed%2C%20resolved%2C%20closed)">D</a></td>
 </tr>
 <tr align=center>
 <td align=left><a href="https://github.com/apache/thrift/blob/master/lib/dart/README.md">Dart</a></td>
 <!-- Since -----------------><td>0.10.0</td>
-<!-- Build Systems ---------><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cred.png" alt=""/></td>
+<!-- Build Systems ---------><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cred.png" alt=""/></td>
 <!-- Language Levels -------><td>2.0.0</td><td>2.4.0</td>
-<!-- Field types -----------><td><img src="doc/images/cred.png" alt=""/></td>
-<!-- Low-Level Transports --><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cred.png" alt=""/></td>
-<!-- Transport Wrappers ----><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cred.png" alt=""/></td>
-<!-- Protocols -------------><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td>
-<!-- Servers ---------------><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cred.png" alt=""/></td>
+<!-- Field types -----------><td><img src="/doc/images/cred.png" alt=""/></td>
+<!-- Low-Level Transports --><td><img src="/doc/images/cred.png" alt=""/></td><td><img src="/doc/images/cred.png" alt=""/></td><td><img src="/doc/images/cred.png" alt=""/></td><td><img src="/doc/images/cred.png" alt=""/></td><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cred.png" alt=""/></td>
+<!-- Transport Wrappers ----><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cred.png" alt=""/></td><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cred.png" alt=""/></td>
+<!-- Protocols -------------><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cgrn.png" alt="Yes"/></td>
+<!-- Servers ---------------><td><img src="/doc/images/cred.png" alt=""/></td><td><img src="/doc/images/cred.png" alt=""/></td><td><img src="/doc/images/cred.png" alt=""/></td><td><img src="/doc/images/cred.png" alt=""/></td><td><img src="/doc/images/cred.png" alt=""/></td>
 <td align=left><a href="https://issues.apache.org/jira/issues/?jql=project%20%3D%20THRIFT%20AND%20component%20in%20(%22Dart%20-%20Compiler%22%2C%20%22Dart%20-%20Library%22)%20and%20status%20not%20in%20(fixed%2C%20resolved%2C%20closed)">Dart</a></td>
 </tr>
 <tr align=center>
 <td align=left><a href="https://github.com/apache/thrift/blob/master/lib/delphi/README.md">Delphi</a></td>
 <!-- Since -----------------><td>0.8.0</td>
-<!-- Build Systems ---------><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cred.png" alt=""/></td>
+<!-- Build Systems ---------><td><img src="/doc/images/cred.png" alt=""/></td><td><img src="/doc/images/cred.png" alt=""/></td>
 <!-- Language Levels -------><td>2010</td><td>Sydney 10.4.1</td>
-<!-- Field types -----------><td><img src="doc/images/cgrn.png" alt="Yes"/><td>
-<!-- Low-Level Transports --><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cred.png" alt=""/></td>
-<!-- Transport Wrappers ----><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cred.png" alt=""/></td>
-<!-- Protocols -------------><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td>
-<!-- Servers ---------------><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cred.png" alt=""/></td>
+<!-- Field types -----------><td><img src="/doc/images/cgrn.png" alt="Yes"/><td>
+<!-- Low-Level Transports --><td><img src="/doc/images/cred.png" alt=""/></td><td><img src="/doc/images/cred.png" alt=""/></td><td><img src="/doc/images/cred.png" alt=""/></td><td><img src="/doc/images/cred.png" alt=""/></td><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cred.png" alt=""/></td>
+<!-- Transport Wrappers ----><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cred.png" alt=""/></td><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cred.png" alt=""/></td>
+<!-- Protocols -------------><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cgrn.png" alt="Yes"/></td>
+<!-- Servers ---------------><td><img src="/doc/images/cred.png" alt=""/></td><td><img src="/doc/images/cred.png" alt=""/></td><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cred.png" alt=""/></td><td><img src="/doc/images/cred.png" alt=""/></td>
 <td align=left><a href="https://issues.apache.org/jira/issues/?jql=project%20%3D%20THRIFT%20AND%20component%20in%20(%22Delphi%20-%20Compiler%22%2C%20%22Delphi%20-%20Library%22)%20and%20status%20not%20in%20(fixed%2C%20resolved%2C%20closed)">Delphi</a></td>
 </tr>
 <tr align=center>
 <td align=left><a href="https://github.com/apache/thrift/blob/master/lib/netstd/README.md">.NET Standard</a></td>
 <!-- Since -----------------><td>0.13.0</td>
-<!-- Build Systems ---------><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cred.png" alt=""/></td>
+<!-- Build Systems ---------><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cred.png" alt=""/></td>
 <!-- Language Levels -------><td colspan=2>.NET 4.5+, .NET Standard 2.x, .NET 5.0</td>
-<!-- Field types -----------><td><img src="doc/images/cgrn.png" alt="Yes"/><td>
-<!-- Low-Level Transports --><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td>
-<!-- Transport Wrappers ----><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cred.png" alt=""/></td>
-<!-- Protocols -------------><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td>
-<!-- Servers ---------------><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cred.png" alt=""/></td>
+<!-- Field types -----------><td><img src="/doc/images/cgrn.png" alt="Yes"/><td>
+<!-- Low-Level Transports --><td><img src="/doc/images/cred.png" alt=""/></td><td><img src="/doc/images/cred.png" alt=""/></td><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cgrn.png" alt="Yes"/></td>
+<!-- Transport Wrappers ----><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cred.png" alt=""/></td><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cred.png" alt=""/></td>
+<!-- Protocols -------------><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cgrn.png" alt="Yes"/></td>
+<!-- Servers ---------------><td><img src="/doc/images/cred.png" alt=""/></td><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cred.png" alt=""/></td><td><img src="/doc/images/cred.png" alt=""/></td><td><img src="/doc/images/cred.png" alt=""/></td>
 <td align=left><a href="https://issues.apache.org/jira/issues/?jql=project%20%3D%20THRIFT%20AND%20component%20in%20(%22netstd%20-%20Compiler%22%2C%20%22netstd%20-%20Library%22)%20and%20status%20not%20in%20(fixed%2C%20resolved%2C%20closed)">.NET Standard</a></td>
 </tr>
 <tr align=center>
 <td align=left><a href="https://github.com/apache/thrift/blob/master/lib/erl/README.md">Erlang</a></td>
 <!-- Since -----------------><td>0.3.0</td>
-<!-- Build Systems ---------><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cred.png" alt=""/></td>
+<!-- Build Systems ---------><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cred.png" alt=""/></td>
 <!-- Language Levels -------><td>18.3</td><td>22.0</td>
-<!-- Field types -----------><td><img src="doc/images/cred.png" alt=""/></td>
-<!-- Low-Level Transports --><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td>
-<!-- Transport Wrappers ----><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cred.png" alt=""/></td>
-<!-- Protocols -------------><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td>
-<!-- Servers ---------------><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cred.png" alt=""/></td>
+<!-- Field types -----------><td><img src="/doc/images/cred.png" alt=""/></td>
+<!-- Low-Level Transports --><td><img src="/doc/images/cred.png" alt=""/></td><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cred.png" alt=""/></td><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cgrn.png" alt="Yes"/></td>
+<!-- Transport Wrappers ----><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cred.png" alt=""/></td><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cred.png" alt=""/></td>
+<!-- Protocols -------------><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cgrn.png" alt="Yes"/></td>
+<!-- Servers ---------------><td><img src="/doc/images/cred.png" alt=""/></td><td><img src="/doc/images/cred.png" alt=""/></td><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cred.png" alt=""/></td><td><img src="/doc/images/cred.png" alt=""/></td>
 <td align=left><a href="https://issues.apache.org/jira/issues/?jql=project%20%3D%20THRIFT%20AND%20component%20in%20(%22Erlang%20-%20Compiler%22%2C%20%22Erlang%20-%20Library%22)%20and%20status%20not%20in%20(fixed%2C%20resolved%2C%20closed)">Erlang</a></td>
 </tr>
 <tr align=center>
 <td align=left><a href="https://github.com/apache/thrift/blob/master/lib/go/README.md">Go</a></td>
 <!-- Since -----------------><td>0.7.0</td>
-<!-- Build Systems ---------><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cred.png" alt=""/></td>
+<!-- Build Systems ---------><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cred.png" alt=""/></td>
 <!-- Language Levels -------><td>1.18.5</td><td>1.19</td>
-<!-- Field types -----------><td><img src="doc/images/cred.png" alt=""/></td>
-<!-- Low-Level Transports --><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td>
-<!-- Transport Wrappers ----><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td>
-<!-- Protocols -------------><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td>
-<!-- Servers ---------------><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cred.png" alt=""/></td>
+<!-- Field types -----------><td><img src="/doc/images/cred.png" alt=""/></td>
+<!-- Low-Level Transports --><td><img src="/doc/images/cred.png" alt=""/></td><td><img src="/doc/images/cred.png" alt=""/></td><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cred.png" alt=""/></td><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cgrn.png" alt="Yes"/></td>
+<!-- Transport Wrappers ----><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cgrn.png" alt="Yes"/></td>
+<!-- Protocols -------------><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cgrn.png" alt="Yes"/></td>
+<!-- Servers ---------------><td><img src="/doc/images/cred.png" alt=""/></td><td><img src="/doc/images/cred.png" alt=""/></td><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cred.png" alt=""/></td><td><img src="/doc/images/cred.png" alt=""/></td>
 <td align=left><a href="https://issues.apache.org/jira/issues/?jql=project%20%3D%20THRIFT%20AND%20component%20in%20(%22Go%20-%20Compiler%22%2C%20%22Go%20-%20Library%22)%20and%20status%20not%20in%20(fixed%2C%20resolved%2C%20closed)">Go</a></td>
 </tr>
 <tr align=center>
 <td align=left><a href="https://github.com/apache/thrift/blob/master/lib/haxe/README.md">Haxe</a></td>
 <!-- Since -----------------><td>0.9.3</td>
-<!-- Build Systems ---------><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cred.png" alt=""/></td>
+<!-- Build Systems ---------><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cred.png" alt=""/></td>
 <!-- Language Levels -------><td>4.1.5</td><td>4.2.1</td>
-<!-- Field types -----------><td><img src="doc/images/cred.png" alt=""/></td>
-<!-- Low-Level Transports --><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cred.png" alt=""/></td>
-<!-- Transport Wrappers ----><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cred.png" alt=""/></td>
-<!-- Protocols -------------><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td>
-<!-- Servers ---------------><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cred.png" alt=""/></td>
+<!-- Field types -----------><td><img src="/doc/images/cred.png" alt=""/></td>
+<!-- Low-Level Transports --><td><img src="/doc/images/cred.png" alt=""/></td><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cred.png" alt=""/></td><td><img src="/doc/images/cred.png" alt=""/></td><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cred.png" alt=""/></td>
+<!-- Transport Wrappers ----><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cred.png" alt=""/></td><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cred.png" alt=""/></td>
+<!-- Protocols -------------><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cgrn.png" alt="Yes"/></td>
+<!-- Servers ---------------><td><img src="/doc/images/cred.png" alt=""/></td><td><img src="/doc/images/cred.png" alt=""/></td><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cred.png" alt=""/></td><td><img src="/doc/images/cred.png" alt=""/></td>
 <td align=left><a href="https://issues.apache.org/jira/issues/?jql=project%20%3D%20THRIFT%20AND%20component%20in%20(%22Haxe%20-%20Compiler%22%2C%20%22Haxe%20-%20Library%22)%20and%20status%20not%20in%20(fixed%2C%20resolved%2C%20closed)">Haxe</a></td>
 </tr>
 <tr align=center>
 <td align=left><a href="https://github.com/apache/thrift/blob/master/lib/java/README.md">Java (SE)</a></td>
 <!-- Since -----------------><td>0.2.0</td>
-<!-- Build Systems ---------><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td>
+<!-- Build Systems ---------><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cgrn.png" alt="Yes"/></td>
 <!-- Language Levels -------><td>1.8.0_151</td><td>11.0.3</td>
-<!-- Field types -----------><td><img src="doc/images/cred.png" alt=""/></td>
-<!-- Low-Level Transports --><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td>
-<!-- Transport Wrappers ----><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td>
-<!-- Protocols -------------><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td>
-<!-- Servers ---------------><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td>
+<!-- Field types -----------><td><img src="/doc/images/cred.png" alt=""/></td>
+<!-- Low-Level Transports --><td><img src="/doc/images/cred.png" alt=""/></td><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cred.png" alt=""/></td><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cgrn.png" alt="Yes"/></td>
+<!-- Transport Wrappers ----><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cred.png" alt=""/></td><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cgrn.png" alt="Yes"/></td>
+<!-- Protocols -------------><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cgrn.png" alt="Yes"/></td>
+<!-- Servers ---------------><td><img src="/doc/images/cred.png" alt=""/></td><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cgrn.png" alt="Yes"/></td>
 <td align=left><a href="https://issues.apache.org/jira/issues/?jql=project%20%3D%20THRIFT%20AND%20component%20in%20(%22Java%20-%20Compiler%22%2C%20%22Java%20-%20Library%22)%20and%20status%20not%20in%20(fixed%2C%20resolved%2C%20closed)">Java SE</a></td>
 </tr>
 <tr align=center>
 <td align=left><a href="https://github.com/apache/thrift/blob/master/lib/javame/README.md">Java (ME)</a></td>
 <!-- Since -----------------><td>0.5.0</td>
-<!-- Build Systems ---------><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cred.png" alt=""/></td>
+<!-- Build Systems ---------><td><img src="/doc/images/cred.png" alt=""/></td><td><img src="/doc/images/cred.png" alt=""/></td>
 <!-- Language Levels -------><td colspan=2>unknown</td>
-<!-- Field types -----------><td><img src="doc/images/cred.png" alt=""/></td>
-<!-- Low-Level Transports --><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td>
-<!-- Transport Wrappers ----><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cred.png" alt=""/></td>
-<!-- Protocols -------------><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cred.png" alt=""/></td>
-<!-- Servers ---------------><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cred.png" alt=""/></td>
+<!-- Field types -----------><td><img src="/doc/images/cred.png" alt=""/></td>
+<!-- Low-Level Transports --><td><img src="/doc/images/cred.png" alt=""/></td><td><img src="/doc/images/cred.png" alt=""/></td><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cred.png" alt=""/></td><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cgrn.png" alt="Yes"/></td>
+<!-- Transport Wrappers ----><td><img src="/doc/images/cred.png" alt=""/></td><td><img src="/doc/images/cred.png" alt=""/></td><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cred.png" alt=""/></td>
+<!-- Protocols -------------><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cred.png" alt=""/></td><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cred.png" alt=""/></td>
+<!-- Servers ---------------><td><img src="/doc/images/cred.png" alt=""/></td><td><img src="/doc/images/cred.png" alt=""/></td><td><img src="/doc/images/cred.png" alt=""/></td><td><img src="/doc/images/cred.png" alt=""/></td><td><img src="/doc/images/cred.png" alt=""/></td>
 <td align=left><a href="https://issues.apache.org/jira/issues/?jql=project%20%3D%20THRIFT%20AND%20component%20in%20(%22JavaME%20-%20Compiler%22%2C%20%22JavaME%20-%20Library%22)%20and%20status%20not%20in%20(fixed%2C%20resolved%2C%20closed)">Java ME</a></td>
 </tr>
 <tr align=center>
 <td align=left><a href="https://github.com/apache/thrift/blob/master/lib/js/README.md">Javascript</a></td>
 <!-- Since -----------------><td>0.3.0</td>
-<!-- Build Systems ---------><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cred.png" alt=""/></td>
+<!-- Build Systems ---------><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cred.png" alt=""/></td>
 <!-- Language Levels -------><td>ES5</td><td>ES6</td>
-<!-- Field types -----------><td><img src="doc/images/cred.png" alt=""/></td>
-<!-- Low-Level Transports --><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td>
-<!-- Transport Wrappers ----><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cred.png" alt=""/></td>
-<!-- Protocols -------------><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td>
-<!-- Servers ---------------><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cred.png" alt=""/></td>
+<!-- Field types -----------><td><img src="/doc/images/cred.png" alt=""/></td>
+<!-- Low-Level Transports --><td><img src="/doc/images/cred.png" alt=""/></td><td><img src="/doc/images/cred.png" alt=""/></td><td><img src="/doc/images/cred.png" alt=""/></td><td><img src="/doc/images/cred.png" alt=""/></td><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cgrn.png" alt="Yes"/></td>
+<!-- Transport Wrappers ----><td><img src="/doc/images/cred.png" alt=""/></td><td><img src="/doc/images/cred.png" alt=""/></td><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cred.png" alt=""/></td>
+<!-- Protocols -------------><td><img src="/doc/images/cred.png" alt=""/></td><td><img src="/doc/images/cred.png" alt=""/></td><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cgrn.png" alt="Yes"/></td>
+<!-- Servers ---------------><td><img src="/doc/images/cred.png" alt=""/></td><td><img src="/doc/images/cred.png" alt=""/></td><td><img src="/doc/images/cred.png" alt=""/></td><td><img src="/doc/images/cred.png" alt=""/></td><td><img src="/doc/images/cred.png" alt=""/></td>
 <td align=left><a href="https://issues.apache.org/jira/issues/?jql=project%20%3D%20THRIFT%20AND%20component%20in%20(%22Javascript%20-%20Compiler%22%2C%20%22Javascript%20-%20Library%22)%20and%20status%20not%20in%20(fixed%2C%20resolved%2C%20closed)">Javascript</a></td>
 </tr>
 <tr align=center>
 <td align=left><a href="https://github.com/apache/thrift/blob/master/lib/lua/README.md">Lua</a></td>
 <!-- Since -----------------><td>0.9.2</td>
-<!-- Build Systems ---------><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cred.png" alt=""/></td>
+<!-- Build Systems ---------><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cred.png" alt=""/></td>
 <!-- Language Levels -------><td>5.1.5</td><td>5.2.4</td>
-<!-- Field types -----------><td><img src="doc/images/cred.png" alt=""/></td>
-<!-- Low-Level Transports --><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cred.png" alt=""/></td>
-<!-- Transport Wrappers ----><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cred.png" alt=""/></td>
-<!-- Protocols -------------><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cred.png" alt=""/></td>
-<!-- Servers ---------------><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cred.png" alt=""/></td>
+<!-- Field types -----------><td><img src="/doc/images/cred.png" alt=""/></td>
+<!-- Low-Level Transports --><td><img src="/doc/images/cred.png" alt=""/></td><td><img src="/doc/images/cred.png" alt=""/></td><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cred.png" alt=""/></td><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cred.png" alt=""/></td>
+<!-- Transport Wrappers ----><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cred.png" alt=""/></td><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cred.png" alt=""/></td>
+<!-- Protocols -------------><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cred.png" alt=""/></td>
+<!-- Servers ---------------><td><img src="/doc/images/cred.png" alt=""/></td><td><img src="/doc/images/cred.png" alt=""/></td><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cred.png" alt=""/></td><td><img src="/doc/images/cred.png" alt=""/></td>
 <td align=left><a href="https://issues.apache.org/jira/issues/?jql=project%20%3D%20THRIFT%20AND%20component%20in%20(%22Lua%20-%20Compiler%22%2C%20%22Lua%20-%20Library%22)%20and%20status%20not%20in%20(fixed%2C%20resolved%2C%20closed)">Lua</a></td>
 </tr>
 <tr align=center>
 <td align=left><a href="https://github.com/apache/thrift/blob/master/lib/nodejs/README.md">node.js</a></td>
 <!-- Since -----------------><td>0.6.0</td>
-<!-- Build Systems ---------><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cred.png" alt=""/></td>
+<!-- Build Systems ---------><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cred.png" alt=""/></td>
 <!-- Language Levels -------><td>10.x</td><td>10.x</td>
-<!-- Field types -----------><td><img src="doc/images/cred.png" alt=""/></td>
-<!-- Low-Level Transports --><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td>
-<!-- Transport Wrappers ----><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cred.png" alt=""/></td>
-<!-- Protocols -------------><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td>
-<!-- Servers ---------------><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cred.png" alt=""/></td>
+<!-- Field types -----------><td><img src="/doc/images/cred.png" alt=""/></td>
+<!-- Low-Level Transports --><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cred.png" alt=""/></td><td><img src="/doc/images/cred.png" alt=""/></td><td><img src="/doc/images/cred.png" alt=""/></td><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cgrn.png" alt="Yes"/></td>
+<!-- Transport Wrappers ----><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cred.png" alt=""/></td>
+<!-- Protocols -------------><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cgrn.png" alt="Yes"/></td>
+<!-- Servers ---------------><td><img src="/doc/images/cred.png" alt=""/></td><td><img src="/doc/images/cred.png" alt=""/></td><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cred.png" alt=""/></td><td><img src="/doc/images/cred.png" alt=""/></td>
 <td align=left><a href="https://issues.apache.org/jira/issues/?jql=project%20%3D%20THRIFT%20AND%20component%20in%20(%22Node.js%20-%20Compiler%22%2C%20%22Node.js%20-%20Library%22)%20and%20status%20not%20in%20(fixed%2C%20resolved%2C%20closed)">node.js</a></td>
 </tr>
 <tr align=center>
 <td align=left><a href="https://github.com/apache/thrift/blob/master/lib/nodets/README.md">node.ts</a></td>
 <!-- Since -----------------><td>0.12.0</td>
-<!-- Build Systems ---------><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cred.png" alt=""/></td>
+<!-- Build Systems ---------><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cred.png" alt=""/></td>
 <!-- Language Levels -------><td>3.1.6</td><td></td>
-<!-- Field types -----------><td><img src="doc/images/cred.png" alt=""/></td>
-<!-- Low-Level Transports --><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td>
-<!-- Transport Wrappers ----><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cred.png" alt=""/></td>
-<!-- Protocols -------------><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cred.png" alt=""/></td>
-<!-- Servers ---------------><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cred.png" alt=""/></td>
+<!-- Field types -----------><td><img src="/doc/images/cred.png" alt=""/></td>
+<!-- Low-Level Transports --><td><img src="/doc/images/cred.png" alt=""/></td><td><img src="/doc/images/cred.png" alt=""/></td><td><img src="/doc/images/cred.png" alt=""/></td><td><img src="/doc/images/cred.png" alt=""/></td><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cgrn.png" alt="Yes"/></td>
+<!-- Transport Wrappers ----><td><img src="/doc/images/cred.png" alt=""/></td><td><img src="/doc/images/cred.png" alt=""/></td><td><img src="/doc/images/cred.png" alt=""/></td><td><img src="/doc/images/cred.png" alt=""/></td>
+<!-- Protocols -------------><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cred.png" alt=""/></td><td><img src="/doc/images/cred.png" alt=""/></td><td><img src="/doc/images/cred.png" alt=""/></td>
+<!-- Servers ---------------><td><img src="/doc/images/cred.png" alt=""/></td><td><img src="/doc/images/cred.png" alt=""/></td><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cred.png" alt=""/></td><td><img src="/doc/images/cred.png" alt=""/></td>
 <td align=left><a href="https://issues.apache.org/jira/issues/?jql=project%20%3D%20THRIFT%20AND%20component%20in%20(%22TypeScript%20-%20Library%22)%20and%20status%20not%20in%20(fixed%2C%20resolved%2C%20closed)">node.ts</a></td>
 </tr>
 <tr align=center>
 <td align=left><a href="https://github.com/apache/thrift/blob/master/lib/ocaml/README.md">OCaml</a></td>
 <!-- Since -----------------><td>0.2.0</td>
-<!-- Build Systems ---------><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cred.png" alt=""/></td>
+<!-- Build Systems ---------><td><img src="/doc/images/cred.png" alt=""/></td><td><img src="/doc/images/cred.png" alt=""/></td>
 <!-- Language Levels -------><td colspan=2>4.04.0</td>
-<!-- Field types -----------><td><img src="doc/images/cred.png" alt=""/></td>
-<!-- Low-Level Transports --><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cred.png" alt=""/></td>
-<!-- Transport Wrappers ----><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cred.png" alt=""/></td>
-<!-- Protocols -------------><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cred.png" alt=""/></td>
-<!-- Servers ---------------><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cred.png" alt=""/></td>
+<!-- Field types -----------><td><img src="/doc/images/cred.png" alt=""/></td>
+<!-- Low-Level Transports --><td><img src="/doc/images/cred.png" alt=""/></td><td><img src="/doc/images/cred.png" alt=""/></td><td><img src="/doc/images/cred.png" alt=""/></td><td><img src="/doc/images/cred.png" alt=""/></td><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cred.png" alt=""/></td>
+<!-- Transport Wrappers ----><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cred.png" alt=""/></td><td><img src="/doc/images/cred.png" alt=""/></td><td><img src="/doc/images/cred.png" alt=""/></td>
+<!-- Protocols -------------><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cred.png" alt=""/></td><td><img src="/doc/images/cred.png" alt=""/></td><td><img src="/doc/images/cred.png" alt=""/></td>
+<!-- Servers ---------------><td><img src="/doc/images/cred.png" alt=""/></td><td><img src="/doc/images/cred.png" alt=""/></td><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cred.png" alt=""/></td>
 <td align=left><a href="https://issues.apache.org/jira/issues/?jql=project%20%3D%20THRIFT%20AND%20component%20in%20(%22OCaml%20-%20Compiler%22%2C%20%22OCaml%20-%20Library%22)%20and%20status%20not%20in%20(fixed%2C%20resolved%2C%20closed)">OCaml</a></td>
 </tr>
 <tr align=center>
 <td align=left><a href="https://github.com/apache/thrift/blob/master/lib/perl/README.md">Perl</a></td>
 <!-- Since -----------------><td>0.2.0</td>
-<!-- Build Systems ---------><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cred.png" alt=""/></td>
+<!-- Build Systems ---------><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cred.png" alt=""/></td>
 <!-- Language Levels -------><td>5.22.1</td><td>5.26.1</td>
-<!-- Field types -----------><td><img src="doc/images/cred.png" alt=""/></td>
-<!-- Low-Level Transports --><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td>
-<!-- Transport Wrappers ----><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cred.png" alt=""/></td>
-<!-- Protocols -------------><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td>
-<!-- Servers ---------------><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cred.png" alt=""/></td>
+<!-- Field types -----------><td><img src="/doc/images/cred.png" alt=""/></td>
+<!-- Low-Level Transports --><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cred.png" alt=""/></td><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cred.png" alt=""/></td><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cgrn.png" alt="Yes"/></td>
+<!-- Transport Wrappers ----><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cred.png" alt=""/></td><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cred.png" alt=""/></td>
+<!-- Protocols -------------><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cred.png" alt=""/></td><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cgrn.png" alt="Yes"/></td>
+<!-- Servers ---------------><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cred.png" alt=""/></td><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cred.png" alt=""/></td><td><img src="/doc/images/cred.png" alt=""/></td>
 <td align=left><a href="https://issues.apache.org/jira/issues/?jql=project%20%3D%20THRIFT%20AND%20component%20in%20(%22Perl%20-%20Compiler%22%2C%20%22Perl%20-%20Library%22)%20and%20status%20not%20in%20(fixed%2C%20resolved%2C%20closed)">Perl</a></td>
 </tr>
 <tr align=center>
 <td align=left><a href="https://github.com/apache/thrift/blob/master/lib/php/README.md">PHP</a></td>
 <!-- Since -----------------><td>0.2.0</td>
-<!-- Build Systems ---------><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cred.png" alt=""/></td>
+<!-- Build Systems ---------><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cred.png" alt=""/></td>
 <!-- Language Levels -------><td>7.0.22</td><td>7.2.19</td>
-<!-- Field types -----------><td><img src="doc/images/cred.png" alt=""/></td>
-<!-- Low-Level Transports --><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td>
-<!-- Transport Wrappers ----><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cred.png" alt=""/></td>
-<!-- Protocols -------------><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td>
-<!-- Servers ---------------><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cred.png" alt=""/></td>
+<!-- Field types -----------><td><img src="/doc/images/cred.png" alt=""/></td>
+<!-- Low-Level Transports --><td><img src="/doc/images/cred.png" alt=""/></td><td><img src="/doc/images/cred.png" alt=""/></td><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cred.png" alt=""/></td><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cgrn.png" alt="Yes"/></td>
+<!-- Transport Wrappers ----><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cred.png" alt=""/></td><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cred.png" alt=""/></td>
+<!-- Protocols -------------><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cgrn.png" alt="Yes"/></td>
+<!-- Servers ---------------><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cred.png" alt=""/></td><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cred.png" alt=""/></td><td><img src="/doc/images/cred.png" alt=""/></td>
 <td align=left><a href="https://issues.apache.org/jira/issues/?jql=project%20%3D%20THRIFT%20AND%20component%20in%20(%22PHP%20-%20Compiler%22%2C%20%22PHP%20-%20Library%22)%20and%20status%20not%20in%20(fixed%2C%20resolved%2C%20closed)">PHP</a></td>
 </tr>
 <tr align=center>
 <td align=left><a href="https://github.com/apache/thrift/blob/master/lib/py/README.md">Python</a></td>
 <!-- Since -----------------><td>0.2.0</td>
-<!-- Build Systems ---------><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td>
+<!-- Build Systems ---------><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cgrn.png" alt="Yes"/></td>
 <!-- Language Levels -------><td>2.7.12, 3.5.2</td><td>2.7.15, 3.6.8</td>
-<!-- Field types -----------><td><img src="doc/images/cred.png" alt=""/></td>
-<!-- Low-Level Transports --><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td>
-<!-- Transport Wrappers ----><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td>
-<!-- Protocols -------------><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td>
-<!-- Servers ---------------><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cred.png" alt=""/></td>
+<!-- Field types -----------><td><img src="/doc/images/cred.png" alt=""/></td>
+<!-- Low-Level Transports --><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cred.png" alt=""/></td><td><img src="/doc/images/cred.png" alt=""/></td><td><img src="/doc/images/cred.png" alt=""/></td><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cgrn.png" alt="Yes"/></td>
+<!-- Transport Wrappers ----><td><img src="/doc/images/cred.png" alt=""/></td><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cgrn.png" alt="Yes"/></td>
+<!-- Protocols -------------><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cgrn.png" alt="Yes"/></td>
+<!-- Servers ---------------><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cred.png" alt=""/></td><td><img src="/doc/images/cred.png" alt=""/></td>
 <td align=left><a href="https://issues.apache.org/jira/issues/?jql=project%20%3D%20THRIFT%20AND%20component%20in%20(%22Python%20-%20Compiler%22%2C%20%22Python%20-%20Library%22)%20and%20status%20not%20in%20(fixed%2C%20resolved%2C%20closed)">Python</a></td>
 </tr>
 <tr align=center>
 <td align=left><a href="https://github.com/apache/thrift/blob/master/lib/rb/README.md">Ruby</a></td>
 <!-- Since -----------------><td>0.2.0</td>
-<!-- Build Systems ---------><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cred.png" alt=""/></td>
+<!-- Build Systems ---------><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cred.png" alt=""/></td>
 <!-- Language Levels -------><td>2.3.1p112</td><td>2.5.1p57</td>
-<!-- Field types -----------><td><img src="doc/images/cred.png" alt=""/></td>
-<!-- Low-Level Transports --><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td>
-<!-- Transport Wrappers ----><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cred.png" alt=""/></td>
-<!-- Protocols -------------><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td>
-<!-- Servers ---------------><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td>
+<!-- Field types -----------><td><img src="/doc/images/cred.png" alt=""/></td>
+<!-- Low-Level Transports --><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cred.png" alt=""/></td><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cred.png" alt=""/></td><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cgrn.png" alt="Yes"/></td>
+<!-- Transport Wrappers ----><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cred.png" alt=""/></td><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cred.png" alt=""/></td>
+<!-- Protocols -------------><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cgrn.png" alt="Yes"/></td>
+<!-- Servers ---------------><td><img src="/doc/images/cred.png" alt=""/></td><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cgrn.png" alt="Yes"/></td>
 <td align=left><a href="https://issues.apache.org/jira/issues/?jql=project%20%3D%20THRIFT%20AND%20component%20in%20(%22Ruby%20-%20Compiler%22%2C%20%22Ruby%20-%20Library%22)%20and%20status%20not%20in%20(fixed%2C%20resolved%2C%20closed)">Ruby</a></td>
 </tr>
 <tr align=center>
 <td align=left><a href="https://github.com/apache/thrift/blob/master/lib/rs/README.md">Rust</a></td>
 <!-- Since -----------------><td>0.11.0</td>
-<!-- Build Systems ---------><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cred.png" alt=""/></td>
+<!-- Build Systems ---------><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cred.png" alt=""/></td>
 <!-- Language Levels -------><td>1.61.0</td><td>1.xx.x</td>
-<!-- Field types -----------><td><img src="doc/images/cred.png" alt=""/></td>
-<!-- Low-Level Transports --><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cred.png" alt=""/></td>
-<!-- Transport Wrappers ----><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cred.png" alt=""/></td>
-<!-- Protocols -------------><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td>
-<!-- Servers ---------------><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cred.png" alt=""/></td>
+<!-- Field types -----------><td><img src="/doc/images/cred.png" alt=""/></td>
+<!-- Low-Level Transports --><td><img src="/doc/images/cred.png" alt=""/></td><td><img src="/doc/images/cred.png" alt=""/></td><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cred.png" alt=""/></td><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cred.png" alt=""/></td>
+<!-- Transport Wrappers ----><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cred.png" alt=""/></td><td><img src="/doc/images/cred.png" alt=""/></td><td><img src="/doc/images/cred.png" alt=""/></td>
+<!-- Protocols -------------><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cred.png" alt=""/></td><td><img src="/doc/images/cgrn.png" alt="Yes"/></td>
+<!-- Servers ---------------><td><img src="/doc/images/cred.png" alt=""/></td><td><img src="/doc/images/cred.png" alt=""/></td><td><img src="/doc/images/cred.png" alt=""/></td><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cred.png" alt=""/></td>
 <td align=left><a href="https://issues.apache.org/jira/issues/?jql=project%20%3D%20THRIFT%20AND%20component%20in%20(%22Rust%20-%20Compiler%22%2C%20%22Rust%20-%20Library%22)%20and%20status%20not%20in%20(fixed%2C%20resolved%2C%20closed)">Rust</a></td>
 </tr>
 <tr align=center>
 <td align=left><a href="https://github.com/apache/thrift/blob/master/lib/st/README.md">Smalltalk</a></td>
 <!-- Since -----------------><td>0.2.0</td>
-<!-- Build Systems ---------><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cred.png" alt=""/></td>
+<!-- Build Systems ---------><td><img src="/doc/images/cred.png" alt=""/></td><td><img src="/doc/images/cred.png" alt=""/></td>
 <!-- Language Levels -------><td colspan=2>unknown</td>
-<!-- Field types -----------><td><img src="doc/images/cred.png" alt=""/></td>
-<!-- Low-Level Transports --><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cred.png" alt=""/></td>
-<!-- Transport Wrappers ----><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cred.png" alt=""/></td>
-<!-- Protocols -------------><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cred.png" alt=""/></td>
-<!-- Servers ---------------><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cred.png" alt=""/></td>
+<!-- Field types -----------><td><img src="/doc/images/cred.png" alt=""/></td>
+<!-- Low-Level Transports --><td><img src="/doc/images/cred.png" alt=""/></td><td><img src="/doc/images/cred.png" alt=""/></td><td><img src="/doc/images/cred.png" alt=""/></td><td><img src="/doc/images/cred.png" alt=""/></td><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cred.png" alt=""/></td>
+<!-- Transport Wrappers ----><td><img src="/doc/images/cred.png" alt=""/></td><td><img src="/doc/images/cred.png" alt=""/></td><td><img src="/doc/images/cred.png" alt=""/></td><td><img src="/doc/images/cred.png" alt=""/></td>
+<!-- Protocols -------------><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cred.png" alt=""/></td><td><img src="/doc/images/cred.png" alt=""/></td><td><img src="/doc/images/cred.png" alt=""/></td>
+<!-- Servers ---------------><td><img src="/doc/images/cred.png" alt=""/></td><td><img src="/doc/images/cred.png" alt=""/></td><td><img src="/doc/images/cred.png" alt=""/></td><td><img src="/doc/images/cred.png" alt=""/></td><td><img src="/doc/images/cred.png" alt=""/></td>
 <td align=left><a href="https://issues.apache.org/jira/issues/?jql=project%20%3D%20THRIFT%20AND%20component%20in%20(%22Smalltalk%20-%20Compiler%22%2C%20%22Smalltalk%20-%20Library%22)%20and%20status%20not%20in%20(fixed%2C%20resolved%2C%20closed)">Smalltalk</a></td>
 </tr>
 <tr align=center>
 <td align=left><a href="https://github.com/apache/thrift/blob/master/lib/swift/README.md">Swift</a></td>
 <!-- Since -----------------><td>0.12.0</td>
-<!-- Build Systems ---------><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cred.png" alt=""/></td>
+<!-- Build Systems ---------><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cred.png" alt=""/></td>
 <!-- Language Levels -------><td colspan=2>4.2.1</td>
-<!-- Field types -----------><td><img src="doc/images/cred.png" alt=""/></td>
-<!-- Low-Level Transports --><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td>
-<!-- Transport Wrappers ----><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cred.png" alt=""/></td>
-<!-- Protocols -------------><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td>
-<!-- Servers ---------------><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cred.png" alt=""/></td><td><img src="doc/images/cgrn.png" alt="Yes"/></td>
+<!-- Field types -----------><td><img src="/doc/images/cred.png" alt=""/></td>
+<!-- Low-Level Transports --><td><img src="/doc/images/cred.png" alt=""/></td><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cred.png" alt=""/></td><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cgrn.png" alt="Yes"/></td>
+<!-- Transport Wrappers ----><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cred.png" alt=""/></td><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cred.png" alt=""/></td>
+<!-- Protocols -------------><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cred.png" alt=""/></td><td><img src="/doc/images/cgrn.png" alt="Yes"/></td>
+<!-- Servers ---------------><td><img src="/doc/images/cred.png" alt=""/></td><td><img src="/doc/images/cred.png" alt=""/></td><td><img src="/doc/images/cred.png" alt=""/></td><td><img src="/doc/images/cred.png" alt=""/></td><td><img src="/doc/images/cgrn.png" alt="Yes"/></td>
 <td align=left><a href="https://issues.apache.org/jira/issues/?jql=project%20%3D%20THRIFT%20AND%20component%20in%20(%22Swift%20-%20Compiler%22%2C%20%22Swift%20-%20Library%22)%20and%20status%20not%20in%20(fixed%2C%20resolved%2C%20closed)">Swift</a></td>
 </tr>
 </tbody>
