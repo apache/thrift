@@ -51,7 +51,12 @@ read_test_() ->
   {setup,
     fun() ->
       meck:new(gen_tcp, [unstick, passthrough]),
-      meck:expect(gen_tcp, recv, fun(Bin, 0, _) -> {ok, Bin} end)
+      meck:expect(gen_tcp, recv, fun(Bin, 0, _) ->
+        case Bin of
+          <<"empty">> -> {error, timeout};
+          _ -> {ok, Bin}
+        end end),
+      meck:expect(gen_tcp, close, fun(_) -> ok end)
     end,
     fun(_) -> meck:unload(gen_tcp) end,
     [
@@ -60,8 +65,8 @@ read_test_() ->
         read({t_socket, <<>>, 60000, []}, 0)
       )},
       {"read 1 byte from empty socket", ?_assertMatch(
-        {_, {ok, <<>>}},
-        read({t_socket, <<>>, 60000, []}, 1)
+        {_, {error, timeout}},
+        read({t_socket, <<"empty">>, 60000, []}, 1)
       )},
       {"read zero bytes from nonempty socket", ?_assertMatch(
         {{t_socket, _, _, _}, {ok, <<>>}},
@@ -72,8 +77,8 @@ read_test_() ->
         read({t_socket, <<"hallo world">>, 60000, []}, 1)
       )},
       {"read a zillion bytes from nonempty socket", ?_assertMatch(
-        {{t_socket, _, _, <<>>}, {ok, <<"hallo world">>}},
-        read({t_socket, <<"hallo world">>, 60000, []}, 65536)
+        {{t_socket, _, _, <<"ld">>}, {ok, <<"hallo world world world world wor">>}},
+        read({t_socket, <<"hallo world world world world world">>, 60000, []}, 33)
       )},
       {"read 1 byte from previously buffered socket", ?_assertMatch(
         {{t_socket, _, _, <<"allo">>}, {ok, <<"h">>}},
@@ -84,8 +89,8 @@ read_test_() ->
         read({t_socket, <<" world">>, 60000, <<"hallo">>}, 6)
       )},
       {"read a zillion bytes from previously buffered socket", ?_assertMatch(
-        {{t_socket, _, _, <<>>}, {ok, <<"hallo world">>}},
-        read({t_socket, <<" world">>, 60000, <<"hallo">>}, 65536)
+        {{t_socket, _, _, <<"ld">>}, {ok, <<"hallo world world world world wor">>}},
+        read({t_socket, <<" world">>, 60000, <<"hallo">>}, 33)
       )}
     ]
   }.
