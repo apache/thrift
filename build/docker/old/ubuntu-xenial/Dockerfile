@@ -121,7 +121,7 @@ RUN apt-get install -y --no-install-recommends \
       dotnet-apphost-pack-7.0
 
 # Erlang dependencies
-ARG ERLANG_OTP_VERSION=18.3.4.11
+ARG ERLANG_OTP_VERSION=20.3.8.9
 ARG ERLANG_REBAR_VERSION=3.13.2
 RUN apt-get update && apt-get install -y --no-install-recommends automake libncurses5-dev && \
       curl https://raw.githubusercontent.com/kerl/kerl/master/kerl -o /usr/local/bin/kerl && chmod +x /usr/local/bin/kerl && \

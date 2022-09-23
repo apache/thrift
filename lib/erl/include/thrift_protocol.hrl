@@ -21,46 +21,47 @@
 -define(THRIFT_PROTOCOL_INCLUDED, true).
 
 -record(protocol_message_begin, {name :: string(), type :: integer(), seqid :: integer()}).
--record(protocol_struct_begin, {name :: string()}).
--record(protocol_field_begin, {name :: string(), type :: integer(), id :: integer()}).
+-record(protocol_struct_begin, {name :: undefined | string()}).
+-record(protocol_field_begin, {
+    name :: undefined | string(), type :: integer(), id :: undefined | integer()
+}).
 -record(protocol_map_begin, {ktype :: integer(), vtype :: integer(), size :: integer()}).
 -record(protocol_list_begin, {etype :: integer(), size :: integer()}).
 -record(protocol_set_begin, {etype :: integer(), size :: integer()}).
 
--type tprot_header_val() :: #protocol_message_begin{}
-                          | #protocol_struct_begin{}
-                          | #protocol_field_begin{}
-                          | #protocol_map_begin{}
-                          | #protocol_list_begin{}
-                          | #protocol_set_begin{}
-                          .
--type tprot_empty_tag() :: message_end
-                         | struct_begin
-                         | struct_end
-                         | field_end
-                         | map_end
-                         | list_end
-                         | set_end
-                         .
--type tprot_header_tag() :: message_begin
-                          | field_begin
-                          | map_begin
-                          | list_begin
-                          | set_begin
-                          .
--type tprot_data_tag() :: ui32
-                        | bool
-                        | byte
-                        | i16
-                        | i32
-                        | i64
-                        | double
-                        | string
-                        .
--type tprot_cont_tag() :: {list, _Type}
-                        | {map, _KType, _VType}
-                        | {set, _Type}
-                        .
-
+-type tprot_header_val() ::
+    #protocol_message_begin{}
+    | #protocol_struct_begin{}
+    | #protocol_field_begin{}
+    | #protocol_map_begin{}
+    | #protocol_list_begin{}
+    | #protocol_set_begin{}.
+-type tprot_empty_tag() ::
+    message_end
+    | struct_begin
+    | struct_end
+    | field_end
+    | map_end
+    | list_end
+    | set_end.
+-type tprot_header_tag() ::
+    message_begin
+    | field_begin
+    | map_begin
+    | list_begin
+    | set_begin.
+-type tprot_data_tag() ::
+    ui32
+    | bool
+    | byte
+    | i16
+    | i32
+    | i64
+    | double
+    | string.
+-type tprot_cont_tag() ::
+    {list, _Type}
+    | {map, _KType, _VType}
+    | {set, _Type}.
 
 -endif.
