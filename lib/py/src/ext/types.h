@@ -175,7 +175,6 @@ struct StructItemSpec {
   TType type;
   PyObject* attrname;
   PyObject* typeargs;
-  PyObject* defval;
 };
 
 bool parse_set_list_args(SetListTypeArgs* dest, PyObject* typeargs);

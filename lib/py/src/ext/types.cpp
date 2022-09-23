@@ -34,8 +34,8 @@ const char* refill_signature = "y#i";
 
 bool parse_struct_item_spec(StructItemSpec* dest, PyObject* spec_tuple) {
   // i'd like to use ParseArgs here, but it seems to be a bottleneck.
-  if (PyTuple_Size(spec_tuple) != 5) {
-    PyErr_Format(PyExc_TypeError, "expecting 5 arguments for spec tuple but got %d",
+  if (PyTuple_Size(spec_tuple) != 4) {
+    PyErr_Format(PyExc_TypeError, "expecting 4 arguments for spec tuple but got %d",
                  static_cast<int>(PyTuple_Size(spec_tuple)));
     return false;
   }
@@ -52,7 +52,6 @@ bool parse_struct_item_spec(StructItemSpec* dest, PyObject* spec_tuple) {
 
   dest->attrname = PyTuple_GET_ITEM(spec_tuple, 2);
   dest->typeargs = PyTuple_GET_ITEM(spec_tuple, 3);
-  dest->defval = PyTuple_GET_ITEM(spec_tuple, 4);
   return true;
 }
 

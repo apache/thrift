@@ -758,8 +758,7 @@ void t_py_generator::generate_py_thrift_spec(ostream& out,
       indent(out) << "(" << (*m_iter)->get_key() << ", " << type_to_enum((*m_iter)->get_type())
                   << ", "
                   << "'" << (*m_iter)->get_name() << "'"
-                  << ", " << type_to_spec_args((*m_iter)->get_type()) << ", "
-                  << render_field_default_value(*m_iter) << ", "
+                  << ", " << type_to_spec_args((*m_iter)->get_type())
                   << "),"
                   << "  # " << sorted_keys_pos << endl;
 
@@ -861,8 +860,7 @@ void t_py_generator::generate_py_struct_definition(ostream& out,
       // Initialize fields
       t_type* type = (*m_iter)->get_type();
       if (!type->is_base_type() && !type->is_enum() && (*m_iter)->get_value() != nullptr) {
-        indent(out) << "if " << (*m_iter)->get_name() << " is "
-                    << "self.thrift_spec[" << (*m_iter)->get_key() << "][4]:" << endl;
+        indent(out) << "if " << (*m_iter)->get_name() << " is None:" << endl;
         indent_up();
         indent(out) << (*m_iter)->get_name() << " = " << render_field_default_value(*m_iter)
                     << endl;
@@ -2644,9 +2642,14 @@ void t_py_generator::generate_python_docstring(ostream& out, t_doc* tdoc) {
  */
 string t_py_generator::declare_argument(t_field* tfield) {
   std::ostringstream result;
+  t_type* type = get_true_type(tfield->get_type());
   result << tfield->get_name() << "=";
   if (tfield->get_value() != nullptr) {
-    result << render_field_default_value(tfield);
+    if (type->is_struct() || type->is_list() || type->is_xception() || type->is_set()) {
+      result << "None";
+    } else {
+      result << render_field_default_value(tfield);
+    }
   } else {
     result << "None";
   }
