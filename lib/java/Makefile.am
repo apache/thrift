@@ -44,7 +44,7 @@ precross: $(THRIFT)
 		--console=plain
 
 check-local: $(THRIFT)
-	$(GRADLE) $(GRADLE_OPTS) test \
+	$(GRADLE) $(GRADLE_OPTS) check \
 		-Prelease=true \
 		-Pthrift.version=$(PACKAGE_VERSION) \
 		-Pthrift.compiler=$(THRIFT) \
