@@ -28,88 +28,76 @@
 %% legacy api
 -export([new_reader/1]).
 
-
 -record(t_file, {
-  device,
-  should_close = true,
-  mode = write
+    device :: file:io_device(),
+    should_close = true :: boolean(),
+    mode = write :: file:mode()
 }).
 
--type state() :: #t_file{}.
-
-
--spec new(Device::file:io_device()) ->
-  thrift_transport:t_transport().
+-spec new(Device :: file:io_device()) -> {ok, thrift_transport:t_transport()}.
 
 new(Device) -> new(Device, []).
 
--spec new(Device::file:io_device(), Opts::list()) ->
-  thrift_transport:t_transport().
+-spec new(Device :: file:io_device(), Opts :: list()) -> {ok, thrift_transport:t_transport()}.
 
 %% Device should be opened in raw and binary mode.
 new(Device, Opts) when is_list(Opts) ->
-  State = parse_opts(Opts, #t_file{device = Device}),
-  thrift_transport:new(?MODULE, State).
+    State = parse_opts(Opts, #t_file{device = Device}),
+    thrift_transport:new(?MODULE, State).
 
-
-parse_opts([{should_close, Bool}|Rest], State)
-when is_boolean(Bool) ->
-  parse_opts(Rest, State#t_file{should_close = Bool});
-parse_opts([{mode, Mode}|Rest], State)
-when Mode =:= write; Mode =:= read ->
-  parse_opts(Rest, State#t_file{mode = Mode});
+parse_opts([{should_close, Bool} | Rest], State) when
+    is_boolean(Bool)
+->
+    parse_opts(Rest, State#t_file{should_close = Bool});
+parse_opts([{mode, Mode} | Rest], State) when
+    Mode =:= write; Mode =:= read
+->
+    parse_opts(Rest, State#t_file{mode = Mode});
 parse_opts([], State) ->
-  State.
+    State.
 
-
--include("thrift_transport_behaviour.hrl").
-
-
-read(State = #t_file{device = Device, mode = read}, Len)
-when is_integer(Len), Len >= 0 ->
-  case file:read(Device, Len) of
-    eof -> {State, {error, eof}};
-    {ok, Result} -> {State, {ok, iolist_to_binary(Result)}}
-  end;
+read(State = #t_file{device = Device, mode = read}, Len) when
+    is_integer(Len), Len >= 0
+->
+    case file:read(Device, Len) of
+        eof -> {State, {error, eof}};
+        {ok, Result} -> {State, {ok, iolist_to_binary(Result)}}
+    end;
 read(State, _) ->
-  {State, {error, write_mode}}.
+    {State, {error, write_mode}}.
 
-
-read_exact(State = #t_file{device = Device, mode = read}, Len)
-when is_integer(Len), Len >= 0 ->
-  case file:read(Device, Len) of
-    eof -> {State, {error, eof}};
-    {ok, Result} ->
-      case iolist_size(Result) of
-        X when X < Len -> {State, {error, eof}};
-        _ -> {State, {ok, iolist_to_binary(Result)}}
-      end
-  end;
+read_exact(State = #t_file{device = Device, mode = read}, Len) when
+    is_integer(Len), Len >= 0
+->
+    case file:read(Device, Len) of
+        eof ->
+            {State, {error, eof}};
+        {ok, Result} ->
+            case iolist_size(Result) of
+                X when X < Len -> {State, {error, eof}};
+                _ -> {State, {ok, iolist_to_binary(Result)}}
+            end
+    end;
 read_exact(State, _) ->
-  {State, {error, write_mode}}.
-
+    {State, {error, write_mode}}.
 
 write(State = #t_file{device = Device, mode = write}, Data) ->
-  {State, file:write(Device, Data)};
+    {State, file:write(Device, Data)};
 write(State, _) ->
-  {State, {error, read_mode}}.
-
+    {State, {error, read_mode}}.
 
 flush(State = #t_file{device = Device, mode = write}) ->
-  {State, file:sync(Device)}.
-
+    {State, file:sync(Device)}.
 
 close(State = #t_file{device = Device, should_close = SC}) ->
-  case SC of
-    true -> {State, file:close(Device)};
-    false -> {State, ok}
-  end.
-
+    case SC of
+        true -> {State, file:close(Device)};
+        false -> {State, ok}
+    end.
 
 %% legacy api. left for compatibility
 new_reader(Filename) ->
-  case file:open(Filename, [read, binary, {read_ahead, 1024*1024}]) of
-    {ok, IODevice} -> new(IODevice, [{should_close, true}, {mode, read}]);
-    Error -> Error
-  end.
-
+    case file:open(Filename, [read, binary, {read_ahead, 1024 * 1024}]) of
+        {ok, IODevice} -> new(IODevice, [{should_close, true}, {mode, read}]);
+        Error -> Error
+    end.
