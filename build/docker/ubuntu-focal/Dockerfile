@@ -197,7 +197,8 @@ RUN apt-get install -y --no-install-recommends \
       `# OCaml dependencies` \
       ocaml \
       opam && \
-      opam init --yes && \
+      `# disable sandboxing see https://github.com/ocaml/opam/issues/4327` \
+      opam init --yes --disable-sandboxing && \
       opam install --yes oasis
 
 RUN apt-get install -y --no-install-recommends \
