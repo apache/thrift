@@ -72,11 +72,11 @@ tasks {
         group = LifecycleBasePlugin.BUILD_GROUP
     }
 
-    compileKotlin {
+    compileTestKotlin {
         dependsOn("compileThrift")
     }
 }
 
-sourceSets["main"].java {
+sourceSets["test"].java {
     srcDir(layout.buildDirectory.dir("generated-sources"))
 }
