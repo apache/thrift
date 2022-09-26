@@ -27,7 +27,7 @@ jobs:
         run: |
           mkdir cmake_build
           cd cmake_build
-          cmake .. -DBUILD_COMPILER=ON -DBUILD_LIBRARIES=ON -DWITH_JAVA=ON
+          cmake .. -DBUILD_COMPILER=ON -DBUILD_LIBRARIES=ON -DWITH_JAVA=ON -DWITH_KOTLIN=ON
 
       - name: Run make
         run: |
