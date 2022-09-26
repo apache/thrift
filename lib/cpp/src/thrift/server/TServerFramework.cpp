@@ -18,6 +18,7 @@
  */
 
 #include <algorithm>
+#include <functional>
 #include <stdexcept>
 #include <stdint.h>
 #include <thrift/server/TServerFramework.h>
