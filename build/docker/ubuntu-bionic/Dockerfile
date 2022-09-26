@@ -16,12 +16,12 @@
 #
 
 FROM buildpack-deps:bionic-scm
-MAINTAINER Apache Thrift <dev@thrift.apache.org>
+LABEL MAINTAINER='Apache Thrift <dev@thrift.apache.org>'
 ENV DEBIAN_FRONTEND noninteractive
 
 ### Add apt repos
 
-RUN apt-get update && \
+RUN apt-get update -yq && \
       apt-get dist-upgrade -y && \
       apt-get install -y --no-install-recommends --fix-missing \
       apt \
