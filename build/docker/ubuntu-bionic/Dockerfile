@@ -259,7 +259,12 @@ RUN curl https://sh.rustup.rs -sSf | sh -s -- --default-toolchain 1.61.0 -y
 ENV PATH /root/.cargo/bin:$PATH
 
 # Swift on Linux for cross tests
-RUN cd / && \
+RUN apt-get install -yq \
+      libedit-dev \
+      libz3-dev \
+      libpython-dev \
+      libxml2-dev && \
+      cd / && \
       wget --quiet https://swift.org/builds/swift-5.1.4-release/ubuntu1804/swift-5.1.4-RELEASE/swift-5.1.4-RELEASE-ubuntu18.04.tar.gz && \
       tar xf swift-5.1.4-RELEASE-ubuntu18.04.tar.gz --strip-components=1 && \
       rm swift-5.1.4-RELEASE-ubuntu18.04.tar.gz && \

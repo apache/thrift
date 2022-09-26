@@ -21,7 +21,7 @@ ENV DEBIAN_FRONTEND=noninteractive
 
 ### Add apt repos
 
-RUN apt-get update && \
+RUN apt-get update -yq && \
       apt-get dist-upgrade -y && \
       apt-get install -y --no-install-recommends --fix-missing \
       apt \
@@ -48,7 +48,8 @@ RUN curl -sL https://deb.nodesource.com/gpgkey/nodesource.gpg.key | apt-key add 
       echo "deb https://deb.nodesource.com/node_16.x focal main" | tee /etc/apt/sources.list.d/nodesource.list
 
 ### install general dependencies
-RUN apt-get update && apt-get install -y --no-install-recommends \
+RUN apt-get update -yq && \
+      apt-get install -y --no-install-recommends \
       `# General dependencies` \
       bash-completion \
       bison \
@@ -244,7 +245,12 @@ RUN curl https://sh.rustup.rs -sSf | sh -s -- --default-toolchain 1.61.0 -y
 ENV PATH /root/.cargo/bin:$PATH
 
 # Swift on Linux for cross tests
-RUN cd / && \
+RUN apt-get install -yq \
+      libedit-dev \
+      libz3-dev \
+      libpython2-dev \
+      libxml2-dev && \
+      cd / && \
       wget --quiet https://swift.org/builds/swift-5.3.3-release/ubuntu2004/swift-5.3.3-RELEASE/swift-5.3.3-RELEASE-ubuntu20.04.tar.gz && \
       tar xf swift-5.3.3-RELEASE-ubuntu20.04.tar.gz --strip-components=1 && \
       rm swift-5.3.3-RELEASE-ubuntu20.04.tar.gz && \
