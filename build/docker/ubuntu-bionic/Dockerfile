@@ -278,15 +278,11 @@ RUN apt-get install -y --no-install-recommends \
       locale-gen de_DE.UTF-8 && \
       update-locale
 
-# cppcheck-1.82 has a nasty cpp parser bug, so we're using something newer
 RUN apt-get install -y --no-install-recommends \
       `# Static Code Analysis dependencies` \
       cppcheck \
       sloccount && \
-      pip install flake8 && \
-      wget -q "https://launchpad.net/ubuntu/+source/cppcheck/1.83-2/+build/14874703/+files/cppcheck_1.83-2_amd64.deb" && \
-      dpkg -i cppcheck_1.83-2_amd64.deb && \
-      rm cppcheck_1.83-2_amd64.deb
+      pip install flake8
 
 # NOTE: this does not reduce the image size but adds an additional layer.
 # # Clean up
