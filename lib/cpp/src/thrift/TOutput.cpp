@@ -105,6 +105,9 @@ void TOutput::perror(const char* message, int errno_copy) {
 }
 
 std::string TOutput::strerror_s(int errno_copy) {
+#ifdef __ZEPHYR__
+  return std::string(strerror(errno_copy));
+#else
   char b_errbuf[1024] = {'\0'};
 
 #ifdef HAVE_STRERROR_R
@@ -139,6 +142,7 @@ std::string TOutput::strerror_s(int errno_copy) {
   // to ensure that the string object is constructed before
   // b_error becomes invalid?
   return std::string(b_error);
+#endif // __ZEPHYR__
 }
 }
 } // apache::thrift
