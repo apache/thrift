@@ -26,7 +26,7 @@
 
 sudo: required
 # https://docs.travis-ci.com/user/reference/linux
-dist: focal
+dist: bionic
 language: cpp
 
 services:
