@@ -69,6 +69,11 @@ jobs:
         - JOB="Docker Build ubuntu-focal 20.04 LTS"
         - DISTRO=ubuntu-focal
         - TRAVIS_BUILD_STAGE=docker
+    - script: true
+      env:
+        - JOB="Docker Build ubuntu-jammy 22.04 LTS"
+        - DISTRO=ubuntu-jammy
+        - TRAVIS_BUILD_STAGE=docker
 
     # ========================= stage: thrift =======================
     # ------------------------- phase: cross ------------------------
@@ -112,6 +117,13 @@ jobs:
 
     # ------------------------- phase: autotools --------------------
     # TODO: Remove them once migrated to CMake
+
+    # TODO fix the missing python2 deps or get rid of python2
+    # - script: build/docker/run.sh
+    #   env:
+    #     - JOB="Autotools (Ubuntu Jammy)"
+    #     - DISTRO=ubuntu-jammy
+    #     - SCRIPT="autotools.sh"
 
     - script: build/docker/run.sh
       env:
