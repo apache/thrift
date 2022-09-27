@@ -23,8 +23,7 @@ all-local:
 	$(GRADLE) $(GRADLE_OPTS) assemble \
 		-Prelease=true \
 		-Pthrift.version=$(PACKAGE_VERSION) \
-		--console=plain \
-		--info
+		--console=plain
 
 install-exec-hook:
 	$(GRADLE) $(GRADLE_OPTS) publishToMavenLocal \
@@ -49,8 +48,7 @@ check-local: $(THRIFT)
 		-Prelease=true \
 		-Pthrift.version=$(PACKAGE_VERSION) \
 		-Pthrift.compiler=$(THRIFT) \
-		--console=plain \
-		--debug
+		--console=plain
 
 maven-publish:
 	$(GRADLE) $(GRADLE_OPTS) publish \
