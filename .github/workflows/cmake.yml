@@ -39,7 +39,12 @@ jobs:
           cd cmake_build
           cmake --build .
 
+      - name: Run pack
+        run: |
+          cd cmake_build
+          cpack
+
       - name: Run test
         run: |
           cd cmake_build
-          ctest -j$(nproc)
+          ctest -VV
