@@ -52,7 +52,7 @@ following this step (which is also done in the travis CI docker images):
 ```bash
 export GRADLE_VERSION="7.5.1"
 # install dependencies
-apt-get install -y --no-install-recommends openjdk-11-jdk-headless wget unzip
+apt-get install -y --no-install-recommends openjdk-17-jdk-headless wget unzip
 # download gradle distribution
 wget https://services.gradle.org/distributions/gradle-$GRADLE_VERSION-bin.zip -q -O /tmp/gradle-$GRADLE_VERSION-bin.zip
 # check binary integrity
