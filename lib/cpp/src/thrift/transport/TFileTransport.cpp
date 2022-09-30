@@ -60,6 +60,7 @@ using std::cerr;
 using std::cout;
 using std::endl;
 using std::string;
+using namespace apache::thrift;
 using namespace apache::thrift::protocol;
 using namespace apache::thrift::concurrency;
 
@@ -427,7 +428,7 @@ void TFileTransport::writerThread() {
 
             auto* zeros = new uint8_t[padding];
             memset(zeros, '\0', padding);
-            boost::scoped_array<uint8_t> array(zeros);
+            scoped_array<uint8_t> array(zeros);
             if (-1 == ::THRIFT_WRITE(fd_, zeros, padding)) {
               int errno_copy = THRIFT_ERRNO;
               GlobalOutput.perror("TFileTransport: writerThread() error while padding zeros ",
