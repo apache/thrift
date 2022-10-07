@@ -58,12 +58,6 @@ env:
 jobs:
   include:
     # ========================= stage: docker =========================
-    - stage: docker
-      script: true
-      env:
-        - JOB="Docker Build ubuntu-xenial 16.04 LTS"
-        - DISTRO=ubuntu-xenial
-        - TRAVIS_BUILD_STAGE=docker
     - script: true
       env:
         - JOB="Docker Build ubuntu-bionic 18.04 LTS"
@@ -128,12 +122,6 @@ jobs:
       env:
         - JOB="Autotools (Ubuntu Bionic)"
         - DISTRO=ubuntu-bionic
-        - SCRIPT="autotools.sh"
-
-    - script: build/docker/run.sh
-      env:
-        - JOB="Autotools (Ubuntu Xenial)"
-        - DISTRO=ubuntu-xenial
         - SCRIPT="autotools.sh"
 
     # ------------------------- phase: cmake ------------------------
