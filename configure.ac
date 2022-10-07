@@ -211,9 +211,10 @@ AM_CONDITIONAL([WITH_JAVA], [test "$have_java" = "yes"])
 AX_THRIFT_LIB(kotlin, [Kotlin], yes)
 if test "$with_kotlin" = "yes";  then
   AX_JAVAC_AND_JAVA
+  AC_PATH_PROG([GRADLE], [gradle])
   AC_SUBST(CLASSPATH)
   AC_SUBST(GRADLE_OPTS)
-  if test "x$JAVA" != "x" && test "x$JAVAC" != "x" ; then
+  if test "x$JAVA" != "x" && test "x$JAVAC" != "x" && "x$GRADLE" != "x" ; then
     have_kotlin="yes"
   fi
 fi
