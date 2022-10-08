@@ -441,6 +441,15 @@ impl From<io::Error> for Error {
     }
 }
 
+impl From<uuid::Error> for Error {
+    fn from(err: uuid::Error) -> Self {
+        Error::Protocol(ProtocolError {
+            kind: ProtocolErrorKind::InvalidData,
+            message: err.to_string(), // FIXME: use fmt::Error's debug string
+        })
+    }
+}
+
 impl From<string::FromUtf8Error> for Error {
     fn from(err: string::FromUtf8Error) -> Self {
         Error::Protocol(ProtocolError {

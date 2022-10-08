@@ -158,6 +158,10 @@ impl<'a> TInputProtocol for TStoredInputProtocol<'a> {
         self.inner.read_double()
     }
 
+    fn read_uuid(&mut self) -> crate::Result<uuid::Uuid> {
+        self.inner.read_uuid()
+    }
+
     fn read_string(&mut self) -> crate::Result<String> {
         self.inner.read_string()
     }

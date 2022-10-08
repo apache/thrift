@@ -152,6 +152,10 @@ where
         self.inner.write_string(s)
     }
 
+    fn write_uuid(&mut self, uuid: &uuid::Uuid) -> crate::Result<()> {
+        self.inner.write_uuid(uuid)
+    }
+
     fn write_list_begin(&mut self, identifier: &TListIdentifier) -> crate::Result<()> {
         self.inner.write_list_begin(identifier)
     }

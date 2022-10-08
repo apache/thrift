@@ -11,7 +11,7 @@ clap = "~2.33"
 bitflags = "=1.2"
 env_logger = "0.8"
 log = "0.4"
+uuid = "1"
 
 [dependencies.thrift]
 path = "../../lib/rs"
-
