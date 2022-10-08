@@ -21,7 +21,7 @@ ENV DEBIAN_FRONTEND=noninteractive
 
 ### Add apt repos
 
-RUN apt-get update && \
+RUN apt-get update -yq && \
       apt-get dist-upgrade -y && \
       apt-get install -y --no-install-recommends --fix-missing \
       apt \
@@ -48,7 +48,8 @@ RUN curl -sL https://deb.nodesource.com/gpgkey/nodesource.gpg.key | apt-key add 
       echo "deb https://deb.nodesource.com/node_16.x focal main" | tee /etc/apt/sources.list.d/nodesource.list
 
 ### install general dependencies
-RUN apt-get update && apt-get install -y --no-install-recommends \
+RUN apt-get update -yq && \
+      apt-get install -y --no-install-recommends \
       `# General dependencies` \
       bash-completion \
       bison \
@@ -167,7 +168,7 @@ RUN apt-get install -y --no-install-recommends \
       ant \
       ant-optional \
       maven \
-      openjdk-17-jdk-headless && \
+      openjdk-11-jdk-headless && \
       `# Gradle` \
       wget https://services.gradle.org/distributions/gradle-$GRADLE_VERSION-bin.zip -q -O /tmp/gradle-$GRADLE_VERSION-bin.zip && \
       (echo "f6b8596b10cce501591e92f229816aa4046424f3b24d771751b06779d58c8ec4  /tmp/gradle-$GRADLE_VERSION-bin.zip" | sha256sum -c -) && \
@@ -197,7 +198,8 @@ RUN apt-get install -y --no-install-recommends \
       `# OCaml dependencies` \
       ocaml \
       opam && \
-      opam init --yes && \
+      `# disable sandboxing see https://github.com/ocaml/opam/issues/4327` \
+      opam init --yes --disable-sandboxing && \
       opam install --yes oasis
 
 RUN apt-get install -y --no-install-recommends \
@@ -243,7 +245,12 @@ RUN curl https://sh.rustup.rs -sSf | sh -s -- --default-toolchain 1.61.0 -y
 ENV PATH /root/.cargo/bin:$PATH
 
 # Swift on Linux for cross tests
-RUN cd / && \
+RUN apt-get install -yq \
+      libedit-dev \
+      libz3-dev \
+      libpython2-dev \
+      libxml2-dev && \
+      cd / && \
       wget --quiet https://swift.org/builds/swift-5.3.3-release/ubuntu2004/swift-5.3.3-RELEASE/swift-5.3.3-RELEASE-ubuntu20.04.tar.gz && \
       tar xf swift-5.3.3-RELEASE-ubuntu20.04.tar.gz --strip-components=1 && \
       rm swift-5.3.3-RELEASE-ubuntu20.04.tar.gz && \
@@ -257,15 +264,11 @@ RUN apt-get install -y --no-install-recommends \
       locale-gen de_DE.UTF-8 && \
       update-locale
 
-# cppcheck-1.82 has a nasty cpp parser bug, so we're using something newer
 RUN apt-get install -y --no-install-recommends \
       `# Static Code Analysis dependencies` \
       cppcheck \
       sloccount && \
-      pip install flake8 && \
-      wget -q "https://launchpad.net/ubuntu/+source/cppcheck/1.83-2/+build/14874703/+files/cppcheck_1.83-2_amd64.deb" && \
-      dpkg -i cppcheck_1.83-2_amd64.deb && \
-      rm cppcheck_1.83-2_amd64.deb
+      pip install flake8
 
 # NOTE: this does not reduce the image size but adds an additional layer.
 # # Clean up

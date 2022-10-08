@@ -47,7 +47,7 @@ env:
     - SCRIPT="cmake.sh"
     - BUILD_ARG=""
     - BUILD_ENV="-e CC=gcc -e CXX=g++ -e THRIFT_CROSSTEST_CONCURRENCY=4"
-    - DISTRO=ubuntu-focal
+    - DISTRO=ubuntu-bionic
     - BUILD_LIBS="CPP C_GLIB JAVA PYTHON TESTING TUTORIALS"  # only meaningful for CMake builds
     - TRAVIS_BUILD_STAGE=test
     # DOCKER_REPO (this works for all builds as a source for docker images - you can override for fork builds in your Travis settings)
@@ -117,21 +117,23 @@ jobs:
 
     # ------------------------- phase: autotools --------------------
     # TODO: Remove them once migrated to CMake
+
+    - script: build/docker/run.sh
+      env:
+        - JOB="Autotools (Ubuntu Focal)"
+        - DISTRO=ubuntu-focal
+        - SCRIPT="autotools.sh"
+
     - script: build/docker/run.sh
       env:
         - JOB="Autotools (Ubuntu Bionic)"
+        - DISTRO=ubuntu-bionic
         - SCRIPT="autotools.sh"
 
     - script: build/docker/run.sh
       env:
         - JOB="Autotools (Ubuntu Xenial)"
         - DISTRO=ubuntu-xenial
-        - SCRIPT="autotools.sh"
-
-    - script: build/docker/run.sh
-      env:
-        - JOB="Autotools (Ubuntu Focal)"
-        - DISTRO=ubuntu-focal
         - SCRIPT="autotools.sh"
 
     # ------------------------- phase: cmake ------------------------

@@ -16,12 +16,12 @@
 #
 
 FROM buildpack-deps:bionic-scm
-MAINTAINER Apache Thrift <dev@thrift.apache.org>
+LABEL MAINTAINER='Apache Thrift <dev@thrift.apache.org>'
 ENV DEBIAN_FRONTEND noninteractive
 
 ### Add apt repos
 
-RUN apt-get update && \
+RUN apt-get update -yq && \
       apt-get dist-upgrade -y && \
       apt-get install -y --no-install-recommends --fix-missing \
       apt \
@@ -258,7 +258,12 @@ RUN curl https://sh.rustup.rs -sSf | sh -s -- --default-toolchain 1.61.0 -y
 ENV PATH /root/.cargo/bin:$PATH
 
 # Swift on Linux for cross tests
-RUN cd / && \
+RUN apt-get install -yq \
+      libedit-dev \
+      libz3-dev \
+      libpython-dev \
+      libxml2-dev && \
+      cd / && \
       wget --quiet https://swift.org/builds/swift-5.1.4-release/ubuntu1804/swift-5.1.4-RELEASE/swift-5.1.4-RELEASE-ubuntu18.04.tar.gz && \
       tar xf swift-5.1.4-RELEASE-ubuntu18.04.tar.gz --strip-components=1 && \
       rm swift-5.1.4-RELEASE-ubuntu18.04.tar.gz && \
@@ -272,15 +277,11 @@ RUN apt-get install -y --no-install-recommends \
       locale-gen de_DE.UTF-8 && \
       update-locale
 
-# cppcheck-1.82 has a nasty cpp parser bug, so we're using something newer
 RUN apt-get install -y --no-install-recommends \
       `# Static Code Analysis dependencies` \
       cppcheck \
       sloccount && \
-      pip install flake8 && \
-      wget -q "https://launchpad.net/ubuntu/+source/cppcheck/1.83-2/+build/14874703/+files/cppcheck_1.83-2_amd64.deb" && \
-      dpkg -i cppcheck_1.83-2_amd64.deb && \
-      rm cppcheck_1.83-2_amd64.deb
+      pip install flake8
 
 # NOTE: this does not reduce the image size but adds an additional layer.
 # # Clean up
