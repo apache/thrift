@@ -58,7 +58,8 @@ env:
 jobs:
   include:
     # ========================= stage: docker =========================
-    - script: true
+    - stage: docker
+      script: true
       env:
         - JOB="Docker Build ubuntu-bionic 18.04 LTS"
         - DISTRO=ubuntu-bionic
