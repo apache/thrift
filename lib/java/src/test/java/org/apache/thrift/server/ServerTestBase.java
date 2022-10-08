@@ -19,6 +19,7 @@
 package org.apache.thrift.server;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.nio.ByteBuffer;
@@ -344,14 +345,20 @@ public abstract class ServerTestBase {
 
   private void testBool(ThriftTest.Client testClient) throws TException {
     boolean t = testClient.testBool(true);
-    assertEquals(true, t);
+    assertTrue(t);
     boolean f = testClient.testBool(false);
-    assertEquals(false, f);
+    assertFalse(f);
   }
 
   private void testByte(ThriftTest.Client testClient) throws TException {
     byte i8 = testClient.testByte((byte) 1);
     assertEquals(1, i8);
+  }
+
+  private void testUuid(ThriftTest.Client testClient) throws TException {
+    UUID uuid = UUID.fromString("00112233-4455-6677-8899-aabbccddeeff");
+    UUID got = testClient.testUuid(uuid);
+    assertEquals(uuid, got);
   }
 
   private void testDouble(ThriftTest.Client testClient) throws TException {
@@ -469,6 +476,7 @@ public abstract class ServerTestBase {
       testStruct(testClient);
       testNestedStruct(testClient);
       testMap(testClient);
+      testUuid(testClient);
       testStringMap(testClient);
       testSet(testClient);
       testList(testClient);
