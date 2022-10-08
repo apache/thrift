@@ -61,6 +61,11 @@ jobs:
         with:
           go-version: '>=1.17.0'
 
+      - name: Install dependencies
+        run: |
+          sudo apt-get update -yq
+          sudo apt-get install -y --no-install-recommends $BUILD_DEPS
+
       - name: Run bootstrap
         run: ./bootstrap.sh
 
@@ -406,6 +411,7 @@ jobs:
       - lib-java-kotlin
       - lib-swift
       - lib-rust
+      - lib-go
     runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@v3
