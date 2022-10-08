@@ -415,15 +415,22 @@ jobs:
     runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@v3
+
       - uses: actions/setup-python@v3
         with:
           python-version: "3.x"
+
       - uses: actions/setup-java@v3
         with:
           distribution: temurin
           # here we intentionally use java 8 so that we also verify java 11 compiles to version 8
           java-version: 8
           cache: "gradle"
+
+      - name: Install openssl and certificates (for SSL tests)
+        run: |
+          sudo apt-get update -yq
+          sudo apt-get install -y --no-install-recommends openssl ca-certificates
 
       - name: Download java precross artifacts
         uses: actions/download-artifact@v3
