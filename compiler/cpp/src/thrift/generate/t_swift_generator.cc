@@ -1067,6 +1067,7 @@ void t_swift_generator::generate_swift_union_reader(ostream& out, t_struct* tstr
       switch (tbase) {
         case t_base_type::TYPE_STRING:
         case t_base_type::TYPE_DOUBLE:
+        case t_base_type::TYPE_UUID:
           padding = "           ";
           break;
 
@@ -1172,6 +1173,7 @@ void t_swift_generator::generate_swift_struct_reader(ostream& out,
         switch (tbase) {
           case t_base_type::TYPE_STRING:
           case t_base_type::TYPE_DOUBLE:
+          case t_base_type::TYPE_UUID:
             padding = "           ";
           break;
 
@@ -2591,6 +2593,8 @@ string t_swift_generator::base_type_name(t_base_type* type) {
     return "Int64";
   case t_base_type::TYPE_DOUBLE:
     return "Double";
+   case t_base_type::TYPE_UUID:
+    return "UUID";
   default:
     throw "compiler error: no Swift name for base type " + t_base_type::t_base_name(tbase);
   }
@@ -2628,6 +2632,9 @@ void t_swift_generator::render_const_value(ostream& out,
         out << value->get_double();
       }
       out << ")";
+      break;
+    case t_base_type::TYPE_UUID:
+      out << "UUID(uuidString: \"" << get_escaped_string(value) << "\")";
       break;
     default:
       throw "compiler error: no const of base type " + t_base_type::t_base_name(tbase);
@@ -3136,6 +3143,8 @@ string t_swift_generator::type_to_enum(t_type* type, bool qualified) {
           return result + "i64";
         case t_base_type::TYPE_DOUBLE:
           return result + "double";
+        case t_base_type::TYPE_UUID:
+          return result + "uuid";
         default:
           throw "compiler error: unhandled type";
       }
@@ -3170,6 +3179,8 @@ string t_swift_generator::type_to_enum(t_type* type, bool qualified) {
           return result + "I64";
         case t_base_type::TYPE_DOUBLE:
           return result + "DOUBLE";
+        case t_base_type::TYPE_UUID:
+          return result + "UUID";
         default:
           throw "compiler error: unhandled type";
       }

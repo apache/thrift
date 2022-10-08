@@ -24,10 +24,6 @@ import CoreFoundation
 #if os(Linux)
 /// Extensions for Linux for incomplete Foundation API's.
 /// swift-corelibs-foundation is not yet 1:1 with OSX/iOS Foundation
-
-extension CFSocketError {
-  public static let success = kCFSocketSuccess
-}
   
 extension UInt {
   public static func &(lhs: UInt, rhs: Int) -> UInt {
