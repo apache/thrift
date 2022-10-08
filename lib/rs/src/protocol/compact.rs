@@ -252,6 +252,10 @@ where
             .map_err(From::from)
     }
 
+    fn read_uuid(&mut self) -> crate::Result<uuid::Uuid> {
+        uuid::Uuid::from_slice(&self.read_bytes()?).map_err(From::from)
+    }
+
     fn read_string(&mut self) -> crate::Result<String> {
         let bytes = self.read_bytes()?;
         String::from_utf8(bytes).map_err(From::from)
@@ -538,6 +542,10 @@ where
             .map_err(From::from)
     }
 
+    fn write_uuid(&mut self, uuid: &uuid::Uuid) -> crate::Result<()> {
+        self.write_bytes(uuid.as_bytes())
+    }
+
     fn write_string(&mut self, s: &str) -> crate::Result<()> {
         self.write_bytes(s.as_bytes())
     }
@@ -637,6 +645,7 @@ fn type_to_u8(field_type: TType) -> u8 {
         TType::Set => 0x0A,
         TType::Map => 0x0B,
         TType::Struct => 0x0C,
+        TType::Uuid => 0x0D,
         _ => panic!("should not have attempted to convert {} to u8", field_type),
     }
 }
@@ -661,6 +670,7 @@ fn u8_to_type(b: u8) -> crate::Result<TType> {
         0x0A => Ok(TType::Set),
         0x0B => Ok(TType::Map),
         0x0C => Ok(TType::Struct),
+        0x0D => Ok(TType::Uuid),
         unkn => Err(crate::Error::Protocol(crate::ProtocolError {
             kind: crate::ProtocolErrorKind::InvalidData,
             message: format!("cannot convert {} into TType", unkn),

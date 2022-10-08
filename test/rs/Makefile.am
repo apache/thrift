@@ -17,8 +17,8 @@
 # under the License.
 #
 
-stubs: ../v0.16/ThriftTest.thrift
-	$(THRIFT) -I ./thrifts -out src --gen rs ../v0.16/ThriftTest.thrift
+stubs: ../ThriftTest.thrift
+	$(THRIFT) -I ./thrifts -out src --gen rs ../ThriftTest.thrift
 
 precross: stubs
 	$(CARGO) build

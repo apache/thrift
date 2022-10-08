@@ -174,6 +174,11 @@ impl ThriftTestSyncHandler for ThriftTestSyncHandlerImpl {
         Ok(thing)
     }
 
+    fn handle_test_uuid(&self, thing: uuid::Uuid) -> thrift::Result<uuid::Uuid> {
+        info!("testUUID({})", &thing);
+        Ok(thing)
+    }
+
     fn handle_test_bool(&self, thing: bool) -> thrift::Result<bool> {
         info!("testBool({})", thing);
         Ok(thing)
