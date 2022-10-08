@@ -449,6 +449,12 @@ jobs:
           name: rs-precross
           path: test/rs/bin
 
+      - name: Download go precross artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: go-precross
+          path: test/go/bin
+
       - name: Set back executable flags
         run: |
           chmod a+x \
@@ -456,12 +462,13 @@ jobs:
             lib/kotlin/cross-test-client/build/install/TestClient/bin/* \
             lib/kotlin/cross-test-server/build/install/TestServer/bin/* \
             test/swift/CrossTests/.build/x86_64-unknown-linux-gnu/debug/* \
-            test/rs/bin/*
+            test/rs/bin/* \
+            test/go/bin/*
 
       - name: Run cross test
         env:
           THRIFT_CROSSTEST_CONCURRENCY: 4
-          PRECROSS_LANGS: java,kotlin,rs,swift
+          PRECROSS_LANGS: java,kotlin,go,rs,swift
         run: |
           python test/test.py \
             --retry-count 5 \
