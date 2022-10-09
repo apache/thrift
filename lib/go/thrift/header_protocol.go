@@ -213,6 +213,10 @@ func (p *THeaderProtocol) WriteDouble(ctx context.Context, value float64) error 
 	return p.protocol.WriteDouble(ctx, value)
 }
 
+func (p *THeaderProtocol) WriteUuid(ctx context.Context, value Uuid) error {
+	return p.protocol.WriteUuid(ctx, value)
+}
+
 func (p *THeaderProtocol) WriteString(ctx context.Context, value string) error {
 	return p.protocol.WriteString(ctx, value)
 }
@@ -324,6 +328,10 @@ func (p *THeaderProtocol) ReadI64(ctx context.Context) (value int64, err error) 
 
 func (p *THeaderProtocol) ReadDouble(ctx context.Context) (value float64, err error) {
 	return p.protocol.ReadDouble(ctx)
+}
+
+func (p *THeaderProtocol) ReadUuid(ctx context.Context) (value Uuid, err error) {
+	return p.protocol.ReadUuid(ctx)
 }
 
 func (p *THeaderProtocol) ReadString(ctx context.Context) (value string, err error) {

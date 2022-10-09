@@ -51,6 +51,7 @@ type TProtocol interface {
 	WriteI64(ctx context.Context, value int64) error
 	WriteDouble(ctx context.Context, value float64) error
 	WriteString(ctx context.Context, value string) error
+	WriteUuid(ctx context.Context, value Uuid) error
 	WriteBinary(ctx context.Context, value []byte) error
 
 	ReadMessageBegin(ctx context.Context) (name string, typeId TMessageType, seqid int32, err error)
@@ -71,6 +72,7 @@ type TProtocol interface {
 	ReadI32(ctx context.Context) (value int32, err error)
 	ReadI64(ctx context.Context) (value int64, err error)
 	ReadDouble(ctx context.Context) (value float64, err error)
+	ReadUuid(ctx context.Context) (value Uuid, err error)
 	ReadString(ctx context.Context) (value string, err error)
 	ReadBinary(ctx context.Context) (value []byte, err error)
 

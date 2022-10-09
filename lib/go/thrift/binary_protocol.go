@@ -242,6 +242,11 @@ func (p *TBinaryProtocol) WriteDouble(ctx context.Context, value float64) error 
 	return p.WriteI64(ctx, int64(math.Float64bits(value)))
 }
 
+func (p *TBinaryProtocol) WriteUuid(ctx context.Context, value Uuid) error {
+	_, err := p.trans.Write(value[:])
+	return NewTProtocolException(err)
+}
+
 func (p *TBinaryProtocol) WriteString(ctx context.Context, value string) error {
 	e := p.WriteI32(ctx, int32(len(value)))
 	if e != nil {
@@ -451,6 +456,12 @@ func (p *TBinaryProtocol) ReadDouble(ctx context.Context) (value float64, err er
 	err = p.readAll(ctx, buf)
 	value = math.Float64frombits(binary.BigEndian.Uint64(buf))
 	return value, err
+}
+
+func (p *TBinaryProtocol) ReadUuid(ctx context.Context) (value Uuid, err error) {
+	uuid := Uuid{}
+	err = p.readAll(ctx, uuid[0:16])
+	return uuid, err
 }
 
 func (p *TBinaryProtocol) ReadString(ctx context.Context) (value string, err error) {

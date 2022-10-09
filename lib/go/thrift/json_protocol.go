@@ -33,7 +33,6 @@ const (
 
 // JSON protocol implementation for thrift.
 // Utilizes Simple JSON protocol
-//
 type TJSONProtocol struct {
 	*TSimpleJSONProtocol
 }
@@ -187,6 +186,10 @@ func (p *TJSONProtocol) WriteI64(ctx context.Context, v int64) error {
 
 func (p *TJSONProtocol) WriteDouble(ctx context.Context, v float64) error {
 	return p.OutputF64(v)
+}
+
+func (p *TJSONProtocol) WriteUuid(ctx context.Context, uuid Uuid) error {
+	return p.WriteString(ctx, uuid.String())
 }
 
 func (p *TJSONProtocol) WriteString(ctx context.Context, v string) error {
@@ -377,6 +380,14 @@ func (p *TJSONProtocol) ReadI64(ctx context.Context) (int64, error) {
 func (p *TJSONProtocol) ReadDouble(ctx context.Context) (float64, error) {
 	v, _, err := p.ParseF64()
 	return v, err
+}
+
+func (p *TJSONProtocol) ReadUuid(ctx context.Context) (Uuid, error) {
+	if s, err := p.ReadString(ctx); err != nil {
+		return Uuid{}, err
+	} else {
+		return NewUuidFromString(s)
+	}
 }
 
 func (p *TJSONProtocol) ReadString(ctx context.Context) (string, error) {

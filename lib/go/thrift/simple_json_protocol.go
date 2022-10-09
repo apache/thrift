@@ -93,7 +93,6 @@ var errEmptyJSONContextStack = NewTProtocolExceptionWithType(INVALID_DATA, error
 // This protocol produces/consumes a simple output format
 // suitable for parsing by scripting languages.  It should not be
 // confused with the full-featured TJSONProtocol.
-//
 type TSimpleJSONProtocol struct {
 	trans TTransport
 
@@ -316,6 +315,10 @@ func (p *TSimpleJSONProtocol) WriteString(ctx context.Context, v string) error {
 	return p.OutputString(v)
 }
 
+func (p *TSimpleJSONProtocol) WriteUuid(ctx context.Context, v Uuid) error {
+	return p.WriteString(ctx, v.String())
+}
+
 func (p *TSimpleJSONProtocol) WriteBinary(ctx context.Context, v []byte) error {
 	// JSON library only takes in a string,
 	// not an arbitrary byte array, to ensure bytes are transmitted
@@ -532,6 +535,14 @@ func (p *TSimpleJSONProtocol) ReadI64(ctx context.Context) (int64, error) {
 func (p *TSimpleJSONProtocol) ReadDouble(ctx context.Context) (float64, error) {
 	v, _, err := p.ParseF64()
 	return v, err
+}
+
+func (p *TSimpleJSONProtocol) ReadUuid(ctx context.Context) (Uuid, error) {
+	if s, err := p.ReadString(ctx); err != nil {
+		return Uuid{}, err
+	} else {
+		return NewUuidFromString(s)
+	}
 }
 
 func (p *TSimpleJSONProtocol) ReadString(ctx context.Context) (string, error) {

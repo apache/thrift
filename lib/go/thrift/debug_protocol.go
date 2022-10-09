@@ -234,6 +234,16 @@ func (tdp *TDebugProtocol) WriteI64(ctx context.Context, value int64) error {
 	}
 	return err
 }
+
+func (tdp *TDebugProtocol) WriteUuid(ctx context.Context, value Uuid) error {
+	err := tdp.Delegate.WriteUuid(ctx, value)
+	tdp.logf("%sWriteUuid(value=%#v) => %#v", tdp.LogPrefix, value, err)
+	if tdp.DuplicateTo != nil {
+		tdp.DuplicateTo.WriteUuid(ctx, value)
+	}
+	return err
+}
+
 func (tdp *TDebugProtocol) WriteDouble(ctx context.Context, value float64) error {
 	err := tdp.Delegate.WriteDouble(ctx, value)
 	tdp.logf("%sWriteDouble(value=%#v) => %#v", tdp.LogPrefix, value, err)
@@ -411,6 +421,16 @@ func (tdp *TDebugProtocol) ReadString(ctx context.Context) (value string, err er
 	}
 	return
 }
+
+func (tdp *TDebugProtocol) ReadUuid(ctx context.Context) (value Uuid, err error) {
+	value, err = tdp.Delegate.ReadUuid(ctx)
+	tdp.logf("%sReadUuid() (value=%#v, err=%#v)", tdp.LogPrefix, value, err)
+	if tdp.DuplicateTo != nil {
+		tdp.DuplicateTo.WriteUuid(ctx, value)
+	}
+	return
+}
+
 func (tdp *TDebugProtocol) ReadBinary(ctx context.Context) (value []byte, err error) {
 	value, err = tdp.Delegate.ReadBinary(ctx)
 	tdp.logf("%sReadBinary() (value=%#v, err=%#v)", tdp.LogPrefix, value, err)

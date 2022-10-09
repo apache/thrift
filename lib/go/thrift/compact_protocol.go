@@ -328,6 +328,11 @@ func (p *TCompactProtocol) WriteDouble(ctx context.Context, value float64) error
 	return NewTProtocolException(err)
 }
 
+func (p *TCompactProtocol) WriteUuid(ctx context.Context, value Uuid) error {
+	_, err := p.trans.Write(value[:])
+	return NewTProtocolException(err)
+}
+
 // Write a string to the wire with a varint size preceding.
 func (p *TCompactProtocol) WriteString(ctx context.Context, value string) error {
 	_, e := p.writeVarint32(int32(len(value)))
@@ -619,6 +624,16 @@ func (p *TCompactProtocol) ReadString(ctx context.Context) (value string, err er
 
 	buf, e := safeReadBytes(length, p.trans)
 	return string(buf), NewTProtocolException(e)
+}
+
+func (p *TCompactProtocol) ReadUuid(ctx context.Context) (value Uuid, err error) {
+	if buf, e := safeReadBytes(16, p.trans); e != nil {
+		return Uuid{}, NewTProtocolException(e)
+	} else {
+		var uuid Uuid
+		copy(uuid[:], buf)
+		return uuid, nil
+	}
 }
 
 // Read a []byte from the wire.
