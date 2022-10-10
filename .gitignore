@@ -225,6 +225,9 @@ project.lock.json
 /lib/haxe/test/data.tmp
 /lib/hs/dist
 /lib/java/.gradle
+/lib/java/gradle/wrapper
+/lib/java/gradlew
+/lib/java/gradlew.bat
 /lib/java/android/.gradle
 /lib/java/build
 /lib/java/out

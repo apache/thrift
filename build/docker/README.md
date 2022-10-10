@@ -52,9 +52,9 @@ coverage.
 
 ### Ubuntu ###
 
-* bionic (stable, current)
-* artful (previous stable)
-* xenial (legacy)
+* focal (stable, current)
+* bionic (previous stable)
+* jammy (next stable, WIP)
 
 ## Unsupported Containers ##
 
