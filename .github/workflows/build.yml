@@ -54,12 +54,17 @@ jobs:
   lib-go:
     needs: compiler
     runs-on: ubuntu-20.04
+    strategy:
+      matrix:
+        go:
+          - '1.18'
+          - '1.19'
     steps:
       - uses: actions/checkout@v3
 
       - uses: actions/setup-go@v3
         with:
-          go-version: '>=1.17.0'
+          go-version: ${{ matrix.go }}
 
       - name: Install dependencies
         run: |
@@ -110,13 +115,20 @@ jobs:
       - name: Run make for go
         run: make -C lib/go
 
-      - name: Run make check for go
+      - name: Run make check for lib/go
         run: make -C lib/go check
+
+      - name: Run make check for lib/go/test
+        run: make -C lib/go/test check
+
+      - name: Run make check for test/go
+        run: make -C test/go check
 
       - name: Run make precross for go test
         run: make -C test/go precross
 
       - name: Upload go precross artifacts
+        if: matrix.go == '1.19'
         uses: actions/upload-artifact@v3
         with:
           name: go-precross
