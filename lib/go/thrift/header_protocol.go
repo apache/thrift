@@ -221,6 +221,10 @@ func (p *THeaderProtocol) WriteBinary(ctx context.Context, value []byte) error {
 	return p.protocol.WriteBinary(ctx, value)
 }
 
+func (p *THeaderProtocol) WriteUUID(ctx context.Context, value Tuuid) error {
+	return p.protocol.WriteUUID(ctx, value)
+}
+
 // ReadFrame calls underlying THeaderTransport's ReadFrame function.
 func (p *THeaderProtocol) ReadFrame(ctx context.Context) error {
 	return p.transport.ReadFrame(ctx)
@@ -332,6 +336,10 @@ func (p *THeaderProtocol) ReadString(ctx context.Context) (value string, err err
 
 func (p *THeaderProtocol) ReadBinary(ctx context.Context) (value []byte, err error) {
 	return p.protocol.ReadBinary(ctx)
+}
+
+func (p *THeaderProtocol) ReadUUID(ctx context.Context) (value Tuuid, err error) {
+	return p.protocol.ReadUUID(ctx)
 }
 
 func (p *THeaderProtocol) Skip(ctx context.Context, fieldType TType) error {
