@@ -66,7 +66,7 @@ public abstract class AbstractNonblockingServer extends TServer {
   /** How many bytes are currently allocated to read buffers. */
   final AtomicLong readBufferBytesAllocated = new AtomicLong(0);
 
-  public AbstractNonblockingServer(AbstractNonblockingServerArgs args) {
+  public AbstractNonblockingServer(AbstractNonblockingServerArgs<?> args) {
     super(args);
     MAX_READ_BUFFER_BYTES = args.maxReadBufferBytes;
   }

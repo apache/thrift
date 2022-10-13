@@ -35,7 +35,7 @@ public class DataFrameWriter extends FrameWriter {
   public void withOnlyPayload(byte[] payload, int offset, int length) {
     if (!isComplete()) {
       throw new IllegalStateException(
-          "Previsous write is not yet complete, with " + frameBytes.remaining() + " bytes left.");
+          "Previous write is not yet complete, with " + frameBytes.remaining() + " bytes left.");
     }
     frameBytes = buildFrameWithPayload(payload, offset, length);
   }

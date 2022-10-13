@@ -25,8 +25,9 @@ import org.apache.thrift.transport.TTransportException;
 
 public abstract class TLayeredTransport extends TTransport {
 
-  private TTransport innerTransport;
+  private final TTransport innerTransport;
 
+  @Override
   public TConfiguration getConfiguration() {
     return innerTransport.getConfiguration();
   }
@@ -36,10 +37,12 @@ public abstract class TLayeredTransport extends TTransport {
     innerTransport = transport;
   }
 
+  @Override
   public void updateKnownMessageSize(long size) throws TTransportException {
     innerTransport.updateKnownMessageSize(size);
   }
 
+  @Override
   public void checkReadBytesAvailable(long numBytes) throws TTransportException {
     innerTransport.checkReadBytesAvailable(numBytes);
   }

@@ -36,6 +36,7 @@ public class TSimpleServer extends TServer {
     super(args);
   }
 
+  @Override
   public void serve() {
     try {
       serverTransport_.listen();

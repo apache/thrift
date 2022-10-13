@@ -215,7 +215,7 @@ public class NonblockingSaslHandler {
     selectionKey.interestOps(selectionInterest);
   }
 
-  // sasl negotiaion failure handling
+  // sasl negotiation failure handling
   private void failSaslNegotiation(TSaslNegotiationException e) {
     LOGGER.error("Sasl negotiation failed", e);
     String errorMsg = e.getDetails();
@@ -494,7 +494,7 @@ public class NonblockingSaslHandler {
     };
 
     // The interest on the selection key during the phase
-    private int selectionInterest;
+    private final int selectionInterest;
 
     Phase(int selectionInterest) {
       this.selectionInterest = selectionInterest;

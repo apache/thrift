@@ -26,5 +26,5 @@ import org.apache.thrift.protocol.TProtocol;
  * stream.
  */
 public interface TProcessor {
-  public void process(TProtocol in, TProtocol out) throws TException;
+  void process(TProtocol in, TProtocol out) throws TException;
 }
