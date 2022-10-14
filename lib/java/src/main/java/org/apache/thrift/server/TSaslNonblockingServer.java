@@ -171,7 +171,6 @@ public class TSaslNonblockingServer extends TServer {
             LOGGER.warn("Failed to accept incoming connection.", e);
           }
         } else {
-          // TODO fix with try-with-resource for the return value of .channel
           LOGGER.error("Not acceptable selection: " + selected.channel());
         }
       }
