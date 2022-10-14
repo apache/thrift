@@ -1,11 +1,11 @@
 # Apache Thrift Language Support #
 
-Guidance For: 0.17.0 | 
-[0.16.0](https://github.com/apache/thrift/blob/v0.16.0/LANGUAGES.md) | 
-[0.15.0](https://github.com/apache/thrift/blob/v0.15.0/LANGUAGES.md) | 
-[0.14.0](https://github.com/apache/thrift/blob/v0.14.0/LANGUAGES.md) | 
-[0.13.0](https://github.com/apache/thrift/blob/v0.13.0/LANGUAGES.md) | 
-[0.12.0](https://github.com/apache/thrift/blob/v0.12.0/LANGUAGES.md) | 
+Guidance For: 0.17.0 |
+[0.16.0](https://github.com/apache/thrift/blob/v0.16.0/LANGUAGES.md) |
+[0.15.0](https://github.com/apache/thrift/blob/v0.15.0/LANGUAGES.md) |
+[0.14.0](https://github.com/apache/thrift/blob/v0.14.0/LANGUAGES.md) |
+[0.13.0](https://github.com/apache/thrift/blob/v0.13.0/LANGUAGES.md) |
+[0.12.0](https://github.com/apache/thrift/blob/v0.12.0/LANGUAGES.md) |
 [0.11.0](https://github.com/apache/thrift/blob/0.11.0/LANGUAGES.md)
 
 Thrift supports many programming languages and has an impressive test suite that
@@ -187,7 +187,7 @@ Thrift's core protocol is TBinary, supported by all languages except for JavaScr
 <td align=left><a href="https://github.com/apache/thrift/blob/master/lib/java/README.md">Java (SE)</a></td>
 <!-- Since -----------------><td>0.2.0</td>
 <!-- Build Systems ---------><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cgrn.png" alt="Yes"/></td>
-<!-- Language Levels -------><td>1.8.0_151</td><td>11.0.3</td>
+<!-- Language Levels -------><td>11</td><td>19</td>
 <!-- Field types -----------><td><img src="/doc/images/cred.png" alt=""/></td>
 <!-- Low-Level Transports --><td><img src="/doc/images/cred.png" alt=""/></td><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cred.png" alt=""/></td><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cgrn.png" alt="Yes"/></td>
 <!-- Transport Wrappers ----><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cred.png" alt=""/></td><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cgrn.png" alt="Yes"/></td>

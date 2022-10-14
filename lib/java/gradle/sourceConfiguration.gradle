@@ -21,7 +21,7 @@
 // ----------------------------------------------------------------------------
 // Compiler configuration details
 
-// We are using Java 11 toolchain to compile.
+// We are using Java 17 toolchain to compile.
 // This enables decoupling from the Java version that gradle runs, from
 // the actual JDK version for the project. For more details, see
 // https://docs.gradle.org/current/userguide/toolchains.html
@@ -31,7 +31,7 @@
 // also a runtime CI that's based on Java 8 to ensure that.
 java {
     toolchain {
-        languageVersion = JavaLanguageVersion.of(11)
+        languageVersion = JavaLanguageVersion.of(17)
     }
 }
 
@@ -39,8 +39,8 @@ tasks.withType(JavaCompile).configureEach {
     options.encoding = 'UTF-8'
     options.debug = true
     options.deprecation = true
-    // the following is to build with Java 8 specifications, even when building with JDK9 or later
-    options.release = 8
+    // the following is to build with Java 11 specifications, even when building with later JDK
+    options.release = 11
     options.compilerArgs += [
             '-Werror',
             '-Xlint:deprecation',
