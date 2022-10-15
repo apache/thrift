@@ -69,6 +69,7 @@ public:
 
     out_dir_base_ = "gen-d";
   }
+  std::string display_name() const override;
 
 protected:
 
@@ -371,6 +372,7 @@ private:
   /**
    * Writes a server skeleton for the passed service to out.
    */
+
   void print_server_skeleton(ostream& out, t_service* tservice) {
     string svc_name = suffix_if_reserved(tservice->get_name());
 
@@ -432,6 +434,7 @@ private:
   /**
    * Writes the definition of a struct or an exception type to out.
    */
+
   void print_struct_definition(ostream& out, t_struct* tstruct, bool is_exception) {
     const vector<t_field*>& members = tstruct->get_members();
 
@@ -495,6 +498,7 @@ private:
    * Prints the D function signature (including return type) for the given
    * method.
    */
+
   void print_function_signature(ostream& out, t_function* fn) {
     out << render_type_name(fn->get_returntype()) << " " << suffix_if_reserved(fn->get_name()) << "(";
 
@@ -722,6 +726,7 @@ private:
    * Writes the default list of imports (which are written to every generated
    * module) to f.
    */
+
   void print_default_imports(ostream& out) {
     indent(out) << "import thrift.base;" << endl << "import thrift.codegen.base;" << endl
                 << "import thrift.util.hashset;" << endl << endl;
@@ -770,5 +775,10 @@ vector<string> t_d_generator::d_reserved_words = {
     "typeid", "typeof", "ubyte", "ucent", "uint", "ulong", "union", "unittest",
     "ushort", "version", "void", "wchar", "while", "with"
 };
+
+std::string t_d_generator::display_name() const {
+  return "D";
+}
+
 
 THRIFT_REGISTER_GENERATOR(d, "D", "")

@@ -76,20 +76,11 @@ void t_generator::generate_program() {
   close_generator();
 }
 
-std::set<std::string> t_generator::lang_keywords() const {
-  std::string keywords[] = { "BEGIN", "END", "__CLASS__", "__DIR__", "__FILE__", "__FUNCTION__",
-      "__LINE__", "__METHOD__", "__NAMESPACE__", "abstract", "alias", "and", "args", "as",
-      "assert", "begin", "break", "case", "catch", "class", "clone", "continue", "declare",
-      "def", "default", "del", "delete", "do", "dynamic", "elif", "else", "elseif", "elsif",
-      "end", "enddeclare", "endfor", "endforeach", "endif", "endswitch", "endwhile", "ensure",
-      "except", "exec", "finally", "float", "for", "foreach", "from", "function", "global",
-      "goto", "if", "implements", "import", "in", "inline", "instanceof", "interface", "is",
-      "lambda", "module", "native", "new", "next", "nil", "not", "or", "package", "pass",
-      "public", "print", "private", "protected", "raise", "redo", "rescue", "retry", "register",
-      "return", "self", "sizeof", "static", "super", "switch", "synchronized", "then", "this",
-      "throw", "transient", "try", "undef", "unless", "unsigned", "until", "use", "var",
-      "virtual", "volatile", "when", "while", "with", "xor", "yield" };
-  return std::set<std::string>(keywords, keywords + sizeof(keywords)/sizeof(keywords[0]) );
+std::set<std::string> t_generator::lang_keywords_for_validation() const {
+  // Nothing by default. It makes no sense to restrict the whole world to use non-PHP keywords only. 
+  // Override on a per-generator(!) basis if you cannot live without it, e.g. that particular language has no 
+  // mechanism or way to deal with it properly, so we absolutely need to fail on it as the last possible resort.
+  return {};
 }
 
 void t_generator::validate_input() const {
@@ -143,7 +134,8 @@ void t_generator::validate(t_field const* f) const {
 
 void t_generator::validate_id(const string& id) const {
   if (keywords_.find(id) != keywords_.end()) {
-    failure("Cannot use reserved language keyword: \"%s\"", id.c_str());
+    // What the message really means is "we did not get it done yet"
+    failure("Cannot use reserved language keyword \"%s\" with target language %s", id.c_str(), display_name().c_str());
   }
 }
 

@@ -145,6 +145,7 @@ public:
 
   void init_generator() override;
   void close_generator() override;
+  std::string display_name() const override;
 
   void generate_consts(std::vector<t_const*> consts) override;
 
@@ -5777,33 +5778,33 @@ void t_java_generator::generate_javax_generated_annotation(ostream& out) {
   }
 }
 
+std::string t_java_generator::display_name() const {
+  return "Java";
+}
+
+
 THRIFT_REGISTER_GENERATOR(
     java,
     "Java",
     "    beans:           Members will be private, and setter methods will return void.\n"
-    "    private_members: Members will be private, but setter methods will return 'this' like "
-    "usual.\n"
+    "    private_members: Members will be private, but setter methods will return 'this' like usual.\n"
     "    private-members: Same as 'private_members' (deprecated).\n"
     "    nocamel:         Do not use CamelCase field accessors with beans.\n"
     "    fullcamel:       Convert underscored_accessor_or_service_names to camelCase.\n"
     "    android:         Generated structures are Parcelable.\n"
-    "    android_legacy:  Do not use java.io.IOException(throwable) (available for Android 2.3 and "
-    "above).\n"
+    "    android_legacy:  Do not use java.io.IOException(throwable) (available for Android 2.3 and above).\n"
     "    option_type=[thrift|jdk8]:\n"
     "                     thrift: wrap optional fields in thrift Option type.\n"
     "                     jdk8: Wrap optional fields in JDK8+ Option type.\n"
     "                     If the Option type is not specified, 'thrift' is used.\n"
     "    rethrow_unhandled_exceptions:\n"
-    "                     Enable rethrow of unhandled exceptions and let them propagate further."
-    " (Default behavior is to catch and log it.)\n"
+    "                     Enable rethrow of unhandled exceptions and let them propagate further. (Default behavior is to catch and log it.)\n"
     "    java5:           Generate Java 1.5 compliant code (includes android_legacy flag).\n"
     "    future_iface:    Generate CompletableFuture based iface based on async client.\n"
-    "    reuse_objects:   Data objects will not be allocated, but existing instances will be used "
-    "(read and write).\n"
+    "    reuse_objects:   Data objects will not be allocated, but existing instances will be used (read and write).\n"
     "    reuse-objects:   Same as 'reuse_objects' (deprecated).\n"
     "    sorted_containers:\n"
-    "                     Use TreeSet/TreeMap instead of HashSet/HashMap as a implementation of "
-    "set/map.\n"
+    "                     Use TreeSet/TreeMap instead of HashSet/HashMap as a implementation of set/map.\n"
     "    generated_annotations=[undated|suppress]:\n"
     "                     undated: suppress the date at @Generated annotations\n"
     "                     suppress: suppress @Generated annotations entirely\n"

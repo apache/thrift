@@ -105,6 +105,7 @@ public:
   /* initialization and destruction */
   void init_generator() override;
   void close_generator() override;
+  std::string display_name() const override;
 
   /* generation functions */
   void generate_typedef(t_typedef* ttypedef) override;
@@ -4583,4 +4584,9 @@ string underscores_to_initial_caps(string name) {
 }
 
 /* register this generator with the main program */
+std::string t_c_glib_generator::display_name() const {
+  return "C, using GLib";
+}
+
+
 THRIFT_REGISTER_GENERATOR(c_glib, "C, using GLib", "")

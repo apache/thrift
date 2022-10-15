@@ -64,10 +64,12 @@ public:
   ~t_ocaml_generator() override;
 
   void init_generator() override;
+  std::string display_name() const override;
 
   /**
    * Program-level generation functions
    */
+
   void generate_program() override;
   void generate_typedef(t_typedef* ttypedef) override;
   void generate_enum(t_enum* tenum) override;
@@ -1768,5 +1770,10 @@ string t_ocaml_generator::render_ocaml_type(t_type* type) {
 
   throw "INVALID TYPE IN type_to_enum: " + type->get_name();
 }
+
+std::string t_ocaml_generator::display_name() const {
+  return "OCaml";
+}
+
 
 THRIFT_REGISTER_GENERATOR(ocaml, "OCaml", "")

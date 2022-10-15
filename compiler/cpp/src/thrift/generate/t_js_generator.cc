@@ -131,6 +131,7 @@ public:
 
   void init_generator() override;
   void close_generator() override;
+  std::string display_name() const override;
 
   /**
    * Program-level generation functions
@@ -151,6 +152,7 @@ public:
   /**
    * Structs!
    */
+
   void generate_js_struct(t_struct* tstruct, bool is_exception);
   void generate_js_struct_definition(std::ostream& out,
                                      t_struct* tstruct,
@@ -163,6 +165,7 @@ public:
   /**
    * Service-level generation functions
    */
+
   void generate_service_helpers(t_service* tservice);
   void generate_service_interface(t_service* tservice);
   void generate_service_rest(t_service* tservice);
@@ -229,6 +232,7 @@ public:
   /**
    * Helper parser functions
    */
+
   void parse_imports(t_program* program, const std::string& imports_string);
   void parse_thrift_package_output_directory(const std::string& thrift_package_output_directory);
 
@@ -2996,6 +3000,11 @@ std::string t_js_generator::next_identifier_name(const std::vector<t_field*>& fi
 
   return current_name;
 }
+
+std::string t_js_generator::display_name() const {
+  return "Javascript";
+}
+
 
 THRIFT_REGISTER_GENERATOR(js,
                           "Javascript",

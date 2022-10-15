@@ -75,6 +75,7 @@ public:
 
   void init_generator() override;
   void close_generator() override;
+  std::string display_name() const override;
 
   void generate_consts(std::vector<t_const*> consts) override;
 
@@ -3016,6 +3017,11 @@ std::string t_haxe_generator::get_enum_class_name(t_type* type) {
   }
   return package + type->get_name();
 }
+
+std::string t_haxe_generator::display_name() const {
+  return "Haxe";
+}
+
 
 THRIFT_REGISTER_GENERATOR(
     haxe,

@@ -4012,6 +4012,11 @@ bool format_go_output(const string& file_path) {
   */
  }
 
+std::string t_go_generator::display_name() const {
+  return "Go";
+}
+
+
 THRIFT_REGISTER_GENERATOR(go, "Go",
                           "    package_prefix=  Package prefix for generated files.\n" \
                           "    thrift_import=   Override thrift package import path (default:" + DEFAULT_THRIFT_IMPORT + ")\n" \

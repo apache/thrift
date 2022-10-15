@@ -67,6 +67,7 @@ public:
 
   void init_generator() override;
   void close_generator() override;
+  std::string display_name() const override;
 
   /**
    * Program-level generation functions
@@ -359,5 +360,10 @@ string t_xsd_generator::base_type_name(t_base_type::t_base tbase) {
     throw "compiler error: no XSD base type name for base type " + t_base_type::t_base_name(tbase);
   }
 }
+
+std::string t_xsd_generator::display_name() const {
+  return "XSD";
+}
+
 
 THRIFT_REGISTER_GENERATOR(xsd, "XSD", "")

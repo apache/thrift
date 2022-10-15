@@ -3874,6 +3874,11 @@ string t_netstd_generator::get_enum_class_name(t_type* type)
     return "global::" + package + type->get_name();
 }
 
+std::string t_netstd_generator::display_name() const {
+  return "C#";
+}
+
+
 THRIFT_REGISTER_GENERATOR(
     netstd,
     "C#",

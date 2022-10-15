@@ -83,6 +83,8 @@ public:
 
   void init_generator() override;
   void close_generator() override;
+  std::string display_name() const override;
+
   void generate_program() override;
 
   void iterate_program(t_program* program);
@@ -691,6 +693,11 @@ string t_xml_generator::get_type_name(t_type* ttype) {
   }
   return "(unknown)";
 }
+
+std::string t_xml_generator::display_name() const {
+  return "XML";
+}
+
 
 THRIFT_REGISTER_GENERATOR(
   xml,

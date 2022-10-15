@@ -71,6 +71,7 @@ public:
   // overrides
   void init_generator() override;
   void close_generator() override;
+  std::string display_name() const override;
   void generate_consts(vector<t_const*> consts) override;
   void generate_consts(ostream& out, vector<t_const*> consts);
   void generate_typedef(t_typedef* ttypedef) override;
