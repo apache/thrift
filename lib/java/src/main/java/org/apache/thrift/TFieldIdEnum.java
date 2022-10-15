@@ -25,12 +25,12 @@ public interface TFieldIdEnum {
    *
    * @return the Thrift field id for the named field.
    */
-  public short getThriftFieldId();
+  short getThriftFieldId();
 
   /**
    * Gets the field's name, exactly as in the IDL.
    *
    * @return the field's name, exactly as in the IDL.
    */
-  public String getFieldName();
+  String getFieldName();
 }

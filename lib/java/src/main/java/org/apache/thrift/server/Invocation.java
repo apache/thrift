@@ -14,6 +14,7 @@ class Invocation implements Runnable {
     this.frameBuffer = frameBuffer;
   }
 
+  @Override
   public void run() {
     frameBuffer.invoke();
   }

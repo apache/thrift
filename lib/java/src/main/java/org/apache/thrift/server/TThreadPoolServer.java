@@ -82,7 +82,7 @@ public class TThreadPoolServer extends TServer {
   }
 
   // Executor service for handling client connections
-  private ExecutorService executorService_;
+  private final ExecutorService executorService_;
 
   private final TimeUnit stopTimeoutUnit;
 
@@ -140,6 +140,7 @@ public class TThreadPoolServer extends TServer {
     return true;
   }
 
+  @Override
   public void serve() {
     if (!preServe()) {
       return;
@@ -196,6 +197,7 @@ public class TThreadPoolServer extends TServer {
     return false;
   }
 
+  @Override
   public void stop() {
     stopped_ = true;
     serverTransport_.interrupt();
@@ -204,7 +206,7 @@ public class TThreadPoolServer extends TServer {
   private class WorkerProcess implements Runnable {
 
     /** Client that this services. */
-    private TTransport client_;
+    private final TTransport client_;
 
     /**
      * Default constructor.
@@ -216,6 +218,7 @@ public class TThreadPoolServer extends TServer {
     }
 
     /** Loops on processing a client forever */
+    @Override
     public void run() {
       TProcessor processor = null;
       TTransport inputTransport = null;

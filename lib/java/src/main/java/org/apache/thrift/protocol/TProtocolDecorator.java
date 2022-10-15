@@ -265,8 +265,8 @@ public abstract class TProtocolDecorator extends TProtocol {
   /**
    * @param type Returns the minimum amount of bytes needed to store the smallest possible instance
    *     of TType.
-   * @return
-   * @throws TException
+   * @return size
+   * @throws TException if underlying protocol throws
    */
   @Override
   public int getMinSerializedSize(byte type) throws TException {

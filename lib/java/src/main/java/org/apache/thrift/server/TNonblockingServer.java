@@ -47,7 +47,7 @@ public class TNonblockingServer extends AbstractNonblockingServer {
 
   private SelectAcceptThread selectAcceptThread_;
 
-  public TNonblockingServer(AbstractNonblockingServerArgs args) {
+  public TNonblockingServer(AbstractNonblockingServerArgs<?> args) {
     super(args);
   }
 
@@ -132,6 +132,7 @@ public class TNonblockingServer extends AbstractNonblockingServer {
      * The work loop. Handles both selecting (all IO operations) and managing the selection
      * preferences of all existing connections.
      */
+    @Override
     public void run() {
       try {
         if (eventHandler_ != null) {

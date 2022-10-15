@@ -53,9 +53,9 @@ public class TSSLTransportFactory {
    * -Djavax.net.ssl.trustStorePassword=password -Djavax.net.ssl.keyStore=&lt;keystore location&gt;
    * -Djavax.net.ssl.keyStorePassword=password
    *
-   * @param port
+   * @param port server port
    * @return A SSL wrapped TServerSocket
-   * @throws TTransportException
+   * @throws TTransportException when failed to create server socket
    */
   public static TServerSocket getServerSocket(int port) throws TTransportException {
     return getServerSocket(port, 0);
@@ -264,7 +264,7 @@ public class TSSLTransportFactory {
     } catch (FileNotFoundException e) {
     }
 
-    InputStream storeStream = null;
+    InputStream storeStream;
     try {
       storeStream = new URL(store).openStream();
       if (storeStream != null) {

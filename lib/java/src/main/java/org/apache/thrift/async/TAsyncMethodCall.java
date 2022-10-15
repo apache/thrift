@@ -46,9 +46,9 @@ import org.apache.thrift.transport.layered.TFramedTransport;
 public abstract class TAsyncMethodCall<T> {
 
   private static final int INITIAL_MEMORY_BUFFER_SIZE = 128;
-  private static AtomicLong sequenceIdCounter = new AtomicLong(0);
+  private static final AtomicLong sequenceIdCounter = new AtomicLong(0);
 
-  public static enum State {
+  public enum State {
     CONNECTING,
     WRITING_REQUEST_SIZE,
     WRITING_REQUEST_BODY,
@@ -66,14 +66,14 @@ public abstract class TAsyncMethodCall<T> {
   protected final TAsyncClient client;
   private final AsyncMethodCallback<T> callback;
   private final boolean isOneway;
-  private long sequenceId;
+  private final long sequenceId;
   private final long timeout;
 
   private ByteBuffer sizeBuffer;
   private final byte[] sizeBufferArray = new byte[4];
   private ByteBuffer frameBuffer;
 
-  private long startTime = System.currentTimeMillis();
+  private final long startTime = System.currentTimeMillis();
 
   protected TAsyncMethodCall(
       TAsyncClient client,
@@ -177,7 +177,7 @@ public abstract class TAsyncMethodCall<T> {
    * the selector thread, we can make changes to our select interests without worrying about
    * concurrency.
    *
-   * @param key
+   * @param key selection key
    */
   void transition(SelectionKey key) {
     // Ensure key is valid
