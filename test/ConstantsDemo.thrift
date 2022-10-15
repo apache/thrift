@@ -54,8 +54,8 @@ const double e10 = 1e10   // fails with 0.9.3 and earlier
 const double e11 = -1e10  
 
 // uuids are accepted with or without curly braces
-const uuid GEN_UUID =  00000000-4444-CCCC-ffff-0123456789ab
-const uuid GEN_GUID = {00112233-4455-6677-8899-aaBBccDDeeFF}
+const uuid GEN_UUID =  '00000000-4444-CCCC-ffff-0123456789ab'
+const uuid GEN_GUID = '{00112233-4455-6677-8899-aaBBccDDeeFF}'
 
 const map<i32,i32> GEN_MAP = { 35532 : 233, 43523 : 853 }
 const list<i32> GEN_LIST = [ 235235, 23598352, 3253523 ]
@@ -64,13 +64,13 @@ const map<i32, map<i32, i32>> GEN_MAPMAP = { 235 : { 532 : 53255, 235:235}}
 
 const map<string,i32> GEN_MAP2 = { "hello" : 233, "lkj98d" : 853, 'lkjsdf' : 098325 }
 
-const thing GEN_THING = { 'hello' : 325, 'goodbye' : 325352, 'id' : {00112233-4455-6677-8899-aaBBccDDeeFF} }
+const thing GEN_THING = { 'hello' : 325, 'goodbye' : 325352, 'id' : '{00112233-4455-6677-8899-aaBBccDDeeFF}' }
 
-const map<i32,thing> GEN_WHAT = { 35 : { 'hello' : 325, 'goodbye' : 325352, 'id' : 00000000-4444-CCCC-ffff-0123456789ab } }
+const map<i32,thing> GEN_WHAT = { 35 : { 'hello' : 325, 'goodbye' : 325352, 'id' : '00000000-4444-CCCC-ffff-0123456789ab' } }
 
 const set<i32> GEN_SET = [ 235, 235, 53235 ]
 
-const set<uuid> GUID_SET = [ {00112233-4455-6677-8899-aaBBccDDeeFF}, 00000000-4444-CCCC-ffff-0123456789ab ]
+const set<uuid> GUID_SET = [ '{00112233-4455-6677-8899-aaBBccDDeeFF}', '00000000-4444-CCCC-ffff-0123456789ab' ]
 
 exception Blah {
   1:  i32 bing }
