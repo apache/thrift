@@ -73,9 +73,9 @@ public:
   /**
   * Init and close methods
   */
-
   void init_generator() override;
   void close_generator() override;
+  std::string display_name() const override;
 
   void generate_typedef(t_typedef* ttypedef) override;
   void generate_enum(t_enum* tenum) override;
@@ -802,6 +802,11 @@ string t_json_generator::get_qualified_name(t_type* ttype) {
   }
   return ttype->get_program()->get_name() + "." + ttype->get_name();
 }
+
+std::string t_json_generator::display_name() const {
+  return "JSON";
+}
+
 
 THRIFT_REGISTER_GENERATOR(json,
                           "JSON",

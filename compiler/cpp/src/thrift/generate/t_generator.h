@@ -43,7 +43,7 @@
 class t_generator {
 public:
   t_generator(t_program* program) {
-    update_keywords();
+    update_keywords_for_validation();
 
     tmp_ = 0;
     indent_ = 0;
@@ -100,18 +100,24 @@ public:
 
   /**
    * Check if all identifiers are valid for the target language
-   * See update_keywords()
+   * See update_keywords_for_validation()
    */
   virtual void validate_input() const;
 
+  /**
+   * Must override. Should be equivalent to the "long name" parameter at THRIFT_REGISTER_GENERATOR.
+   * TODO: essentially duplicates, so we should find a way to get rid of one 
+   */
+  virtual std::string display_name() const = 0;
 protected:
-  virtual std::set<std::string> lang_keywords() const;
+  virtual std::set<std::string> lang_keywords_for_validation() const;
 
   /**
-   * Call this from constructor if you implement lang_keywords()
+   * Call this from constructor if you implement lang_keywords_for_validation()
    */
-  void update_keywords() {
-    keywords_ = lang_keywords();
+
+  void update_keywords_for_validation() {
+    keywords_ = lang_keywords_for_validation();
   }
 
   /**

@@ -104,6 +104,7 @@ public:
 
   void init_generator() override;
   void close_generator() override;
+  std::string display_name() const override;
 
   void generate_consts(std::vector<t_const*> consts) override;
 
@@ -4750,6 +4751,11 @@ string t_cpp_generator::get_legal_program_name(std::string program_name)
 
   return program_name;
 }
+
+std::string t_cpp_generator::display_name() const {
+  return "C++";
+}
+
 
 THRIFT_REGISTER_GENERATOR(
     cpp,

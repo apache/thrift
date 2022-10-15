@@ -16,4 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+
+namespace * keyword_test_004
+
 typedef bool return

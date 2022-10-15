@@ -104,6 +104,7 @@ public:
 
   void init_generator() override;
   void close_generator() override;
+  std::string display_name() const override;
 
   /**
    * Program-level generation functions
@@ -1282,6 +1283,11 @@ void t_rb_generator::generate_rb_union_validator(t_rb_ofstream& out, t_struct* t
   out.indent_down();
   out.indent() << "end" << endl << endl;
 }
+
+std::string t_rb_generator::display_name() const {
+  return "Ruby";
+}
+
 
 THRIFT_REGISTER_GENERATOR(
     rb,

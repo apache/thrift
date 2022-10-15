@@ -17,4 +17,6 @@
  * under the License.
  */
 
+namespace * keyword_test_012
+
 service return {}

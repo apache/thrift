@@ -105,6 +105,7 @@ public:
 
   void init_generator() override;
   void close_generator() override;
+  std::string display_name() const override;
 
   void generate_consts(std::vector<t_const*> consts) override;
 
@@ -1996,7 +1997,7 @@ void t_delphi_generator::generate_guid(std::ostream& out) {
 #ifdef _WIN32   // TODO: add support for non-windows platforms if needed
   GUID guid;
   if (SUCCEEDED(CoCreateGuid(&guid))) {
-    OLECHAR guid_chars[40];
+    OLECHAR guid_chars[40]{};
     if (StringFromGUID2(guid, &guid_chars[0], sizeof(guid_chars) / sizeof(guid_chars[0])) > 0) {
       std::wstring guid_wstr(guid_chars);
       std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> convert;
@@ -4131,9 +4132,14 @@ bool t_delphi_generator::is_void(t_type* type) {
   return false;
 }
 
+std::string t_delphi_generator::display_name() const {
+  return "Delphi";
+}
+
+
 THRIFT_REGISTER_GENERATOR(
     delphi,
-    "delphi",
+    "Delphi",
     "    ansistr_binary:  Use AnsiString for binary datatype (default is TBytes).\n"
     "    register_types:  Enable TypeRegistry, allows for creation of struct, union\n"
     "                     and container instances by interface or TypeInfo()\n"

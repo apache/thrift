@@ -67,6 +67,7 @@ public:
 
   void init_generator() override;
   void close_generator() override;
+  std::string display_name() const override;
 
   void generate_consts(std::vector<t_const*> consts) override;
 
@@ -3294,5 +3295,10 @@ void t_javame_generator::generate_java_struct_clear(std::ostream& out, t_struct*
 
   indent(out) << "}" << endl << endl;
 }
+
+std::string t_javame_generator::display_name() const {
+  return "Java ME";
+}
+
 
 THRIFT_REGISTER_GENERATOR(javame, "Java ME", "")

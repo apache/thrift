@@ -17,6 +17,8 @@
  * under the License.
  */
 
+namespace * keyword_test_001
+
 exception exception_name {}
 
 service service_name {

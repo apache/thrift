@@ -50,7 +50,7 @@ public:
                     const map<string, string>& parsed_options,
                     const string& option_string)
     : t_oop_generator(program) {
-    update_keywords();
+    update_keywords_for_validation();
     
     (void)option_string;
     map<string, string>::const_iterator iter;
@@ -98,6 +98,7 @@ public:
 
   void init_generator() override;
   void close_generator() override;
+  std::string display_name() const override;
 
   void generate_consts(vector<t_const*> consts) override;
 
@@ -291,7 +292,7 @@ private:
   bool promise_kit_;
 
 protected:
-  std::set<std::string> lang_keywords() const override {
+  std::set<std::string> lang_keywords_for_validation() const override {
       return {};
   }
 };
@@ -3198,6 +3199,11 @@ string t_swift_generator::type_to_enum(t_type* type, bool qualified) {
   }
 
   throw "INVALID TYPE IN type_to_enum: " + type->get_name();
+}
+
+
+std::string t_swift_generator::display_name() const {
+  return "Swift 3.0";
 }
 
 

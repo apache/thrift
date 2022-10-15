@@ -81,6 +81,7 @@ public:
 
     init_allowed__markup();
   }
+  std::string display_name() const override;
 
   void generate_program() override;
   void generate_program_toc();
@@ -1075,6 +1076,11 @@ void t_html_generator::generate_service(t_service* tservice) {
     f_out_ << "</div>";
   }
 }
+
+std::string t_html_generator::display_name() const {
+  return "HTML";
+}
+
 
 THRIFT_REGISTER_GENERATOR(
     html,

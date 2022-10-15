@@ -123,6 +123,7 @@ public:
 
   void init_generator() override;
   void close_generator() override;
+  std::string display_name() const override;
 
   void export_class_to_library(string file_name, string class_name);
 
@@ -2507,6 +2508,11 @@ std::string t_dart_generator::get_ttype_class_name(t_type* ttype) {
     return named_import + "." + ttype->get_name();
   }
 }
+
+std::string t_dart_generator::display_name() const {
+  return "Dart";
+}
+
 
 THRIFT_REGISTER_GENERATOR(
     dart,
