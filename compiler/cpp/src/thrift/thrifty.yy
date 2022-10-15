@@ -83,7 +83,6 @@ const int struct_is_union = 1;
   char*          id;
   int64_t        iconst;
   double         dconst;
-  char*          uconst;
   bool           tbool;
   t_doc*         tdoc;
   t_type*        ttype;
@@ -116,7 +115,6 @@ const int struct_is_union = 1;
  */
 %token<iconst> tok_int_constant
 %token<dconst> tok_dub_constant
-%token<uconst> tok_uuid_constant
 
 /**
  * Header keywords
@@ -562,11 +560,6 @@ ConstValue:
 | tok_literal
     {
       pdebug("ConstValue => tok_literal");
-      $$ = new t_const_value($1);
-    }
-| tok_uuid_constant
-    {
-      pdebug("ConstValue => tok_uuid_constant");
       $$ = new t_const_value($1);
     }
 | tok_identifier

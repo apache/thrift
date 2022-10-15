@@ -117,8 +117,6 @@ intconstant   ([+-]?[0-9]+)
 hexconstant   ([+-]?"0x"[0-9A-Fa-f]+)
 dubconstant   ([+-]?[0-9]*(\.[0-9]+)?([eE][+-]?[0-9]+)?)
 identifier    ([a-zA-Z_](\.[a-zA-Z_0-9]|[a-zA-Z_0-9])*)
-uuidconstant  (([0-9A-Fa-f]{8})(([\-]([0-9A-Fa-f]{4})){3})[\-]([0-9A-Fa-f]{12}))
-guidconstant  ("{"([0-9A-Fa-f]{8})(([\-]([0-9A-Fa-f]{4})){3})[\-]([0-9A-Fa-f]{12})"}")
 whitespace    ([ \t\r\n]*)
 sillycomm     ("/*""*"*"*/")
 multicm_begin ("/*")
@@ -249,18 +247,6 @@ literal_begin (['\"])
   return tok_async;
 }
 "&"                  { return tok_reference;            }
-
-{uuidconstant} {
-  /* Placed before intconstant, because uuids start with either "{" or directly with some hex digit */
-  yylval.uconst = strdup(yytext);
-  return tok_uuid_constant;
-}
-
-{guidconstant} {
-  yylval.uconst = strdup(&yytext[1]);
-  yylval.uconst[36] = '\000';
-  return tok_uuid_constant;
-}
 
 {intconstant} {
   errno = 0;
