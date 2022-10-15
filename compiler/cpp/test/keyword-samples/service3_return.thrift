@@ -17,6 +17,8 @@
  * under the License.
  */
 
+namespace * keyword_test_014
+
 service service_name {
   void return()
 }

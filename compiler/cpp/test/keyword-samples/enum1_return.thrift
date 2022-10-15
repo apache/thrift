@@ -17,5 +17,8 @@
  * under the License.
  */
 
+
+namespace * keyword_test_008
+
 enum return {
 }

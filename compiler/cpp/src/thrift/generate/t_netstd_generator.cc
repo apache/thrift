@@ -427,7 +427,7 @@ void t_netstd_generator::generate_enum(ostream& out, t_enum* tenum)
     {
         generate_netstd_doc(out, *c_iter);
         int value = (*c_iter)->get_value();
-        out << indent() << (*c_iter)->get_name() << " = " << value << "," << endl;
+        out << indent() << normalize_name((*c_iter)->get_name()) << " = " << value << "," << endl;
     }
 
     scope_down(out);

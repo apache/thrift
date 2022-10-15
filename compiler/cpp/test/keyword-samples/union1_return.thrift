@@ -17,4 +17,7 @@
  * under the License.
  */
 
+
+namespace * keyword_test_005
+
 union return {}
