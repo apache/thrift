@@ -208,8 +208,6 @@ public class TCompactProtocol: TProtocol {
     case .map:    return .map
     case .set:    return .set
     case .list:   return .list
-    case .utf8:   return .binary
-      //case .utf16:  return .binary
     case .uuid:   return .uuid
     }
   }
