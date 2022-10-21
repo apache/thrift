@@ -40,9 +40,7 @@ public enum TType: Int32 {
   case map      = 13
   case set      = 14
   case list     = 15
-  case utf8     = 16
-  //case utf16    = 17
-  case uuid     = 17
+  case uuid     = 16
 }
 
 public protocol TProtocol {
