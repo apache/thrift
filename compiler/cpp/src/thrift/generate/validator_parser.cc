@@ -48,6 +48,7 @@ const char* list_delimiter = "[], ";
 std::vector<validation_rule*> validation_parser::parse_field(
     t_type* type,
     std::map<std::string, std::vector<std::string>>& annotations) {
+  std::vector<validation_rule*> empty_rules;
   if (type->is_typedef()) {
     type = type->get_true_type();
   }
@@ -58,7 +59,7 @@ std::vector<validation_rule*> validation_parser::parse_field(
     switch (tbase) {
     case t_base_type::TYPE_UUID:
     case t_base_type::TYPE_VOID:
-      break;
+      return empty_rules;
     case t_base_type::TYPE_I8:
     case t_base_type::TYPE_I16:
     case t_base_type::TYPE_I32:

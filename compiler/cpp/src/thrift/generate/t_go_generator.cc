@@ -97,6 +97,11 @@ bool t_go_generator::omit_initialization(t_field* tfield) {
       } else {
         return value->get_double() == 0.;
       }
+
+    case t_base_type::TYPE_UUID:
+      // it's hard to detect all zero uuid here, so just always inline it.
+      return false;
+
     default:
       throw "compiler error: unhandled type";
     }
@@ -150,7 +155,9 @@ bool t_go_generator::is_pointer_field(t_field* tfield, bool in_container_value) 
     case t_base_type::TYPE_I32:
     case t_base_type::TYPE_I64:
     case t_base_type::TYPE_DOUBLE:
+    case t_base_type::TYPE_UUID:
       return !has_default;
+
     default:
       break;
     }
@@ -867,7 +874,7 @@ void t_go_generator::generate_const(t_const* tconst) {
   t_type* type = tconst->get_type();
   string name = publicize(tconst->get_name());
   t_const_value* value = tconst->get_value();
-  if (type->is_base_type() || type->is_enum()) {
+  if (type->is_enum() || (type->is_base_type() && ((t_base_type*)type)->get_base() != t_base_type::TYPE_UUID)) {
     indent(f_consts_) << "const " << name << " = " << render_const_value(type, value, name) << endl;
   } else {
     f_const_values_ << indent() << name << " = " << render_const_value(type, value, name) << endl
@@ -884,8 +891,10 @@ void t_go_generator::generate_const(t_const* tconst) {
  */
 string t_go_generator::render_const_value(t_type* type, t_const_value* value, const string& name, bool opt) {
   string typedef_opt_ptr;
+  string typedef_opt;
   if (type->is_typedef()) {
-    typedef_opt_ptr = type_name(type) + "Ptr";
+    typedef_opt = publicize(type_name(type));
+    typedef_opt_ptr = typedef_opt + "Ptr";
   }
   type = get_true_type(type);
   std::ostringstream out;
@@ -966,6 +975,19 @@ string t_go_generator::render_const_value(t_type* type, t_const_value* value, co
           out << '"' + get_escaped_string(value) + '"';
           break;
 
+        case t_base_type::TYPE_UUID:
+          if (typedef_opt_ptr != "") {
+            out << typedef_opt_ptr << "(" << typedef_opt;
+          } else {
+            out << "thrift.TuuidPtr";
+          }
+          out << "(";
+          out << "thrift.Must(thrift.ParseTuuid(\"" + get_escaped_string(value) + "\"))";
+          if (typedef_opt_ptr != "") {
+            out << ")";
+          }
+          break;
+
         default:
           throw "compiler error: no const of base type " + t_base_type::t_base_name(tbase);
       }
@@ -1003,6 +1025,17 @@ string t_go_generator::render_const_value(t_type* type, t_const_value* value, co
             out << value->get_integer();
           } else {
             out << value->get_double();
+          }
+
+          break;
+
+        case t_base_type::TYPE_UUID:
+          if (typedef_opt != "") {
+            out << typedef_opt << "(";
+          }
+          out << "thrift.Must(thrift.ParseTuuid(\"" + get_escaped_string(value) + "\"))";
+          if (typedef_opt != "") {
+            out << ")";
           }
 
           break;
@@ -2425,6 +2458,15 @@ void t_go_generator::generate_service_remote(t_service* tservice) {
           f_remote << indent() << "}" << endl;
           break;
 
+        case t_base_type::TYPE_UUID:
+          f_remote << indent() << "argvalue" << i << ", " << err
+                   << " := (thrift.ParseTuuid(flag.Arg(" << flagArg << ")))" << endl;
+          f_remote << indent() << "if " << err << " != nil {" << endl;
+          f_remote << indent() << "  Usage()" << endl;
+          f_remote << indent() << "  return" << endl;
+          f_remote << indent() << "}" << endl;
+          break;
+
         default:
           throw("Invalid base type in generate_service_remote");
         }
@@ -2539,6 +2581,7 @@ void t_go_generator::generate_service_remote(t_service* tservice) {
         case t_base_type::TYPE_I32:
         case t_base_type::TYPE_I64:
         case t_base_type::TYPE_DOUBLE:
+        case t_base_type::TYPE_UUID:
           f_remote << "value" << i;
           break;
 
@@ -3052,6 +3095,10 @@ void t_go_generator::generate_deserialize_field(ostream& out,
         out << "ReadDouble(ctx)";
         break;
 
+      case t_base_type::TYPE_UUID:
+        out << "ReadUUID(ctx)";
+        break;
+
       default:
         throw "compiler error: no Go name for base type " + t_base_type::t_base_name(tbase);
       }
@@ -3301,6 +3348,10 @@ void t_go_generator::generate_serialize_field(ostream& out,
         out << "WriteDouble(ctx, float64(" << name << "))";
         break;
 
+      case t_base_type::TYPE_UUID:
+        out << "WriteUUID(ctx, thrift.Tuuid(" << name << "))";
+        break;
+
       default:
         throw "compiler error: no Go name for base type " + t_base_type::t_base_name(tbase);
       }
@@ -3500,6 +3551,7 @@ void t_go_generator::generate_go_equals(ostream& out, t_type* ori_type, string t
       case t_base_type::TYPE_I32:
       case t_base_type::TYPE_I64:
       case t_base_type::TYPE_DOUBLE:
+      case t_base_type::TYPE_UUID:
         out << tgt << " != " << src;
         break;
 
@@ -3807,6 +3859,9 @@ string t_go_generator::type_to_enum(t_type* type) {
     case t_base_type::TYPE_DOUBLE:
       return "thrift.DOUBLE";
 
+    case t_base_type::TYPE_UUID:
+      return "thrift.UUID";
+
     default:
       break;
     }
@@ -3896,6 +3951,9 @@ string t_go_generator::type_to_go_type_with_opt(t_type* type,
 
     case t_base_type::TYPE_DOUBLE:
       return maybe_pointer + "float64";
+
+    case t_base_type::TYPE_UUID:
+      return maybe_pointer + "thrift.Tuuid";
 
     default:
       break;
