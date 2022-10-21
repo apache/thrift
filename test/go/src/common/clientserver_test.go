@@ -102,6 +102,13 @@ var xcept = &thrifttest.Xception{ErrorCode: 1001, Message: "some"}
 var defaultCtx = context.Background()
 
 func callEverythingWithMock(t *testing.T, client *thrifttest.ThriftTestClient, handler *MockThriftTest) {
+	u := thrift.Tuuid{
+		0x00, 0x11, 0x22, 0x33,
+		0x44, 0x55,
+		0x66, 0x77,
+		0x88, 0x99,
+		0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff,
+	}
 	gomock.InOrder(
 		handler.EXPECT().TestVoid(gomock.Any()),
 		handler.EXPECT().TestString(gomock.Any(), "thing").Return("thing", nil),
@@ -111,6 +118,7 @@ func callEverythingWithMock(t *testing.T, client *thrifttest.ThriftTestClient, h
 		handler.EXPECT().TestI32(gomock.Any(), int32(4242)).Return(int32(4242), nil),
 		handler.EXPECT().TestI64(gomock.Any(), int64(424242)).Return(int64(424242), nil),
 		// TODO: add TestBinary()
+		handler.EXPECT().TestUuid(gomock.Any(), u).Return(u, nil),
 		handler.EXPECT().TestDouble(gomock.Any(), float64(42.42)).Return(float64(42.42), nil),
 		handler.EXPECT().TestStruct(gomock.Any(), &thrifttest.Xtruct{StringThing: "thing", ByteThing: 42, I32Thing: 4242, I64Thing: 424242}).Return(&thrifttest.Xtruct{StringThing: "thing", ByteThing: 42, I32Thing: 4242, I64Thing: 424242}, nil),
 		handler.EXPECT().TestNest(gomock.Any(), &thrifttest.Xtruct2{StructThing: &thrifttest.Xtruct{StringThing: "thing", ByteThing: 42, I32Thing: 4242, I64Thing: 424242}}).Return(&thrifttest.Xtruct2{StructThing: &thrifttest.Xtruct{StringThing: "thing", ByteThing: 42, I32Thing: 4242, I64Thing: 424242}}, nil),
@@ -182,6 +190,16 @@ func callEverythingWithMock(t *testing.T, client *thrifttest.ThriftTestClient, h
 		t.Errorf("Unexpected TestI64() result expected 424242, got %d ", i64)
 	}
 
+	// TODO: add TestBinary() call
+
+	uret, err := client.TestUuid(defaultCtx, u)
+	if err != nil {
+		t.Errorf("Unexpected error in TestUuid() call: %s", err)
+	}
+	if uret != u {
+		t.Errorf("Unexpected TestUuid() result expected %v, got %v ", uret, u)
+	}
+
 	d, err := client.TestDouble(defaultCtx, 42.42)
 	if err != nil {
 		t.Errorf("Unexpected error in TestDouble() call: %s", err)
@@ -189,8 +207,6 @@ func callEverythingWithMock(t *testing.T, client *thrifttest.ThriftTestClient, h
 	if d != 42.42 {
 		t.Errorf("Unexpected TestDouble() result expected 42.42, got %f ", d)
 	}
-
-	// TODO: add TestBinary() call
 
 	xs := thrifttest.NewXtruct()
 	xs.StringThing = "thing"

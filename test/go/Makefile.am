@@ -26,7 +26,7 @@ GOINSTALLEXTRA =
 endif
 
 THRIFTCMD = $(THRIFT) -out src/gen --gen go:thrift_import=github.com/apache/thrift/lib/go/thrift,package_prefix=github.com/apache/thrift/test/go/src/gen/$(COMPILER_EXTRAFLAG)
-THRIFTTEST = $(top_srcdir)/test/v0.16/ThriftTest.thrift
+THRIFTTEST = $(top_srcdir)/test/ThriftTest.thrift
 
 precross: bin/testclient bin/testserver
 
@@ -40,6 +40,7 @@ gopath: $(THRIFT) ThriftTest.thrift
 	mkdir -p src/gen
 	$(THRIFTCMD) ThriftTest.thrift
 	$(THRIFTCMD) ../StressTest.thrift
+	$(THRIFTCMD) ../ConstantsDemo.thrift
 	touch gopath
 
 bin/testclient: gopath
@@ -58,6 +59,7 @@ check_PROGRAMS: bin/testclient bin/testserver bin/stress
 
 check: gopath genmock
 	$(GO) test -mod=mod -v ./src/common/...
+	$(GO) test -mod=mod -v ./src/gen/...
 
 genmock: gopath
 	sh genmock.sh
