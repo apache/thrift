@@ -343,7 +343,7 @@ Thrift's core protocol is TBinary, supported by all languages except for JavaScr
 <td align=left><a href="https://github.com/apache/thrift/blob/master/lib/swift/README.md">Swift</a></td>
 <!-- Since -----------------><td>0.12.0</td>
 <!-- Build Systems ---------><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cred.png" alt=""/></td>
-<!-- Language Levels -------><td colspan=2>4.2.1</td>
+<!-- Language Levels -------><td colspan=2>5.7</td>
 <!-- Field types -----------><td><img src="/doc/images/cred.png" alt=""/></td>
 <!-- Low-Level Transports --><td><img src="/doc/images/cred.png" alt=""/></td><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cred.png" alt=""/></td><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cgrn.png" alt="Yes"/></td>
 <!-- Transport Wrappers ----><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cred.png" alt=""/></td><td><img src="/doc/images/cgrn.png" alt="Yes"/></td><td><img src="/doc/images/cred.png" alt=""/></td>

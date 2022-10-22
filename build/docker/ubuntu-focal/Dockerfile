@@ -251,10 +251,13 @@ RUN apt-get install -yq \
       libpython2-dev \
       libxml2-dev && \
       cd / && \
-      wget --quiet https://swift.org/builds/swift-5.3.3-release/ubuntu2004/swift-5.3.3-RELEASE/swift-5.3.3-RELEASE-ubuntu20.04.tar.gz && \
-      tar xf swift-5.3.3-RELEASE-ubuntu20.04.tar.gz --strip-components=1 && \
-      rm swift-5.3.3-RELEASE-ubuntu20.04.tar.gz && \
-      swift --version
+      wget --quiet https://download.swift.org/swift-5.7-release/ubuntu2004/swift-5.7-RELEASE/swift-5.7-RELEASE-ubuntu20.04.tar.gz && \
+      tar xf swift-5.7-RELEASE-ubuntu20.04.tar.gz && \
+      mv swift-5.7-RELEASE-ubuntu20.04 /usr/share/swift && \
+      rm swift-5.7-RELEASE-ubuntu20.04.tar.gz
+
+ENV PATH /usr/share/swift/usr/bin:$PATH
+RUN swift --version
 
 # Locale(s) for cpp unit tests
 RUN apt-get install -y --no-install-recommends \
