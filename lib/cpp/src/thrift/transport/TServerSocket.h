@@ -20,6 +20,8 @@
 #ifndef _THRIFT_TRANSPORT_TSERVERSOCKET_H_
 #define _THRIFT_TRANSPORT_TSERVERSOCKET_H_ 1
 
+#include <functional>
+
 #include <thrift/concurrency/Mutex.h>
 #include <thrift/transport/PlatformSocket.h>
 #include <thrift/transport/TServerTransport.h>
