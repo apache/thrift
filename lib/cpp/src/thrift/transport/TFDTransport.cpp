@@ -20,9 +20,6 @@
 #include <cerrno>
 #include <exception>
 
-#include <thrift/transport/TFDTransport.h>
-#include <thrift/transport/PlatformSocket.h>
-
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
@@ -30,6 +27,9 @@
 #ifdef _WIN32
 #include <io.h>
 #endif
+
+#include <thrift/transport/TFDTransport.h>
+#include <thrift/transport/PlatformSocket.h>
 
 using std::string;
 
