@@ -19,11 +19,6 @@
 
 #include <thrift/thrift-config.h>
 
-#include <thrift/transport/TFileTransport.h>
-#include <thrift/transport/TTransportUtils.h>
-#include <thrift/transport/PlatformSocket.h>
-#include <thrift/concurrency/FunctionRunner.h>
-
 #ifdef HAVE_SYS_TIME_H
 #include <sys/time.h>
 #else
@@ -48,6 +43,11 @@
 #ifdef _WIN32
 #include <io.h>
 #endif
+
+#include <thrift/transport/TFileTransport.h>
+#include <thrift/transport/TTransportUtils.h>
+#include <thrift/transport/PlatformSocket.h>
+#include <thrift/concurrency/FunctionRunner.h>
 
 namespace apache {
 namespace thrift {
