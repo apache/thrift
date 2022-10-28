@@ -78,7 +78,6 @@ jobs:
         run: |
           ./configure \
             --disable-debug \
-            --disable-tests \
             --disable-dependency-tracking \
             --without-cpp \
             --without-c_glib \
@@ -117,9 +116,6 @@ jobs:
 
       - name: Run make check for lib/go
         run: make -C lib/go check
-
-      - name: Run make check for lib/go/test
-        run: make -C lib/go/test check
 
       - name: Run make check for test/go
         run: make -C test/go check

@@ -17,16 +17,12 @@
 # under the License.
 #
 
-if GOVERSION_GE_118
 GOBUILDEXTRA = -buildvcs=false
-else
-GOBUILDEXTRA =
-endif
 
 THRIFT_GO_ARGS_BASE = thrift_import=github.com/apache/thrift/lib/go/thrift,package_prefix=github.com/apache/thrift/lib/go/test/gopath/src/
 
 THRIFTARGS = -out gopath/src/ --gen go:$(THRIFT_GO_ARGS_BASE)$(COMPILER_EXTRAFLAG)
-THRIFTTEST = $(top_srcdir)/test/v0.16/ThriftTest.thrift
+THRIFTTEST = $(top_srcdir)/test/ThriftTest.thrift
 
 THRIFTARGS_SKIP_REMOTE = -out gopath/src/ --gen go:skip_remote,$(THRIFT_GO_ARGS_BASE)$(COMPILER_EXTRAFLAG)
 
@@ -105,7 +101,7 @@ gopath: $(THRIFT) $(THRIFTTEST) \
 	touch gopath
 
 check: gopath
-	$(GO) build $(GOBUILDEXTRA) -mod=mod \
+	$(GO) build $(GOBUILDEXTRA) \
 				./gopath/src/includestest \
 				./gopath/src/binarykeytest \
 				./gopath/src/servicestest \
@@ -126,14 +122,14 @@ check: gopath
 				./gopath/src/processormiddlewaretest \
 				./gopath/src/clientmiddlewareexceptiontest \
 				./gopath/src/validatetest
-	$(GO) test -mod=mod github.com/apache/thrift/lib/go/thrift
-	$(GO) test -mod=mod ./gopath/src/tests ./gopath/src/dontexportrwtest
+	$(GO) test github.com/apache/thrift/lib/go/thrift
+	$(GO) test ./gopath/src/tests ./gopath/src/dontexportrwtest
 
 clean-local:
 	$(RM) -r gopath ThriftTest.thrift gen-go
 
 client: stubs
-	$(GO) run -mod=mod TestClient.go
+	$(GO) run TestClient.go
 
 EXTRA_DIST = \
 	dontexportrwtest \

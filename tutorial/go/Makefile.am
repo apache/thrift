@@ -17,11 +17,7 @@
 # under the License.
 #
 
-if GOVERSION_GE_118
 GOBUILDEXTRA = -buildvcs=false
-else
-GOBUILDEXTRA =
-endif
 
 gen-go/tutorial/calculator.go gen-go/shared/shared_service.go: $(top_srcdir)/tutorial/tutorial.thrift
 	$(THRIFT) --gen go:thrift_import=github.com/apache/thrift/lib/go/thrift,package_prefix=github.com/apache/thrift/tutorial/go/gen-go/$(COMPILER_EXTRAFLAG) -r $<
@@ -29,22 +25,22 @@ gen-go/tutorial/calculator.go gen-go/shared/shared_service.go: $(top_srcdir)/tut
 all-local: gen-go/tutorial/calculator.go
 
 check: thirdparty-dep all
-	$(GO) build $(GOBUILDEXTRA) -mod=mod -o go-tutorial ./src
-	$(GO) build $(GOBUILDEXTRA) -mod=mod -o calculator-remote ./gen-go/tutorial/calculator-remote/calculator-remote.go
+	$(GO) build $(GOBUILDEXTRA) -o go-tutorial ./src
+	$(GO) build $(GOBUILDEXTRA) -o calculator-remote ./gen-go/tutorial/calculator-remote/calculator-remote.go
 
 thirdparty-dep:
 
 tutorialserver: all
-	$(GO) run -mod=mod src/*.go -server=true
+	$(GO) run src/*.go -server=true
 
 tutorialclient: all
-	$(GO) run -mod=mod src/*.go
+	$(GO) run src/*.go
 
 tutorialsecureserver: all
-	$(GO) run -mod=mod src/*.go -server=true -secure=true
+	$(GO) run src/*.go -server=true -secure=true
 
 tutorialsecureclient: all
-	$(GO) run -mod=mod src/*.go -secure=true
+	$(GO) run src/*.go -secure=true
 
 clean-local:
 	$(RM) -r gen-* go-tutorial calculator-remote
