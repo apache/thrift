@@ -18,19 +18,16 @@
 #
 
 include(CMakePackageConfigHelpers)
-set(PACKAGE_INCLUDE_INSTALL_DIR "${includedir}/thrift")
-set(PACKAGE_CMAKE_INSTALL_DIR "${cmakedir}/thrift")
-set(PACKAGE_BIN_INSTALL_DIR "${exec_prefix}")
 
-# In CYGWIN enviroment below commands does not work properly
+# In CYGWIN environment below commands does not work properly
 if (NOT CYGWIN)
 		configure_package_config_file("${CMAKE_CURRENT_SOURCE_DIR}/build/cmake/ThriftConfig.cmake.in"
 						"${CMAKE_CURRENT_BINARY_DIR}/ThriftConfig.cmake"
 						INSTALL_DESTINATION "${CMAKE_INSTALL_DIR}/thrift"
 						PATH_VARS
-						PACKAGE_INCLUDE_INSTALL_DIR
-						PACKAGE_CMAKE_INSTALL_DIR
-						PACKAGE_BIN_INSTALL_DIR
+						INCLUDE_INSTALL_DIR
+						CMAKE_INSTALL_DIR
+						BIN_INSTALL_DIR
 						)
 
 		write_basic_package_version_file("${CMAKE_CURRENT_BINARY_DIR}/ThriftConfigVersion.cmake"
