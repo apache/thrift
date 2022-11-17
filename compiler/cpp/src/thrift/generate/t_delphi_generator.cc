@@ -45,6 +45,7 @@
 #endif
 
 using std::map;
+using std::set;
 using std::ofstream;
 using std::ostream;
 using std::ostringstream;
@@ -405,20 +406,59 @@ private:
   bool has_enum;
   bool has_const;
   std::string namespace_dir_;
-  std::map<std::string, int> delphi_keywords;  // TODO: put all into one map, value=flags tells what it is
-  std::map<std::string, int> delphi_reserved_names;
-  std::map<std::string, int> delphi_reserved_method;
-  std::map<std::string, int> delphi_reserved_method_exception;
-  std::map<std::string, int> types_known;
+  std::set<std::string> types_known;
   std::list<t_typedef*> typedefs_pending;
   std::vector<std::string> uses_list;
-  void create_keywords();
-  bool find_keyword(std::map<std::string, int>& keyword_map, std::string name);
+  std::string empty_value(t_type* type);
+
+  const std::string DELPHI_KEYWORDS[81] = {
+    // keywords
+    "and", "array", "as", "asm", "at", "automated", "begin", "case", "class", "const", "constructor", 
+    "destructor", "dispinterface", "div", "do", "downto", "else", "end", "except", "exports", "file", 
+    "finalization", "finally", "for", "function", "goto", "if", "implementation", "in", "inherited", 
+    "initialization", "inline", "interface", "is", "label", "library", "mod", "nil", "not", "object", 
+    "of", "on", "or", "out", "packed", "private", "procedure", "program", "property", "protected", 
+    "public", "published", "raise", "record", "repeat", "resourcestring", "set", "shl", "shr", "string", 
+    "then", "threadvar", "to", "try", "type", "unit", "until", "uses", "var", "while", "with", "xor",
+    // predefined types (lowercase!)
+    "ansistring", "boolean", "double", "int64", "integer", "shortint", "smallint", "string", "unicodestring"
+  };
+
+  // reserved variables and types (lowercase!)
+  const std::string DELPHI_RESERVED_NAMES[8] = {
+    "result", "system", "sysutils", "tbytes", "tclass", "thrift", "tinterfacedobject", "tobject"
+  };
+
+  // reserved method names (lowercase!)
+  const std::string DELPHI_RESERVED_METHOD[31] = {
+    "afterconstruction", "beforedestruction", "classinfo", "classname", "classnameis", "classparent", 
+    "classtype", "cleanupinstance", "create", "defaulthandler", "destroy", "dispatch", "equals", 
+    "fieldaddress", "free", "freeinstance", "gethashcode", "getinterface", "getinterfaceentry", 
+    "getinterfacetable", "inheritsfrom", "initinstance", "instancesize", "methodaddress", "methodname", 
+    "newinstance", "read", "safecallexception", "tostring", "unitname", "write"
+  };
+
+  // reserved exception class method names (lowercase!)
+  const std::string DELPHI_RESERVED_METHOD_EXCEPTION[23] = {
+    "setinnerexception", "setstackinfo", "getstacktrace", "raisingexception", "createfmt", "createres", 
+    "createresfmt", "createhelp", "createfmthelp", "createreshelp", "createresfmthelp", "getbaseexception", 
+    "baseexception", "helpcontext", "innerexception", "message", "stacktrace", "stackinfo", 
+    "getexceptionstackinfoproc", "getstackinfostringproc", "cleanupstackinfoproc", "raiseouterexception", 
+    "throwouterexception"
+  };
+
+  // TODO: put all into one map, value=flags tells what it is
+  std::set<std::string> delphi_keywords                  = std::set<string>(DELPHI_KEYWORDS,                  DELPHI_KEYWORDS                  + sizeof(DELPHI_KEYWORDS)                  / sizeof(DELPHI_KEYWORDS[0]));
+  std::set<std::string> delphi_reserved_names            = std::set<string>(DELPHI_RESERVED_NAMES,            DELPHI_RESERVED_NAMES            + sizeof(DELPHI_RESERVED_NAMES)            / sizeof(DELPHI_RESERVED_NAMES[0]));
+  std::set<std::string> delphi_reserved_method           = std::set<string>(DELPHI_RESERVED_METHOD,           DELPHI_RESERVED_METHOD           + sizeof(DELPHI_RESERVED_METHOD)           / sizeof(DELPHI_RESERVED_METHOD[0]));
+  std::set<std::string> delphi_reserved_method_exception = std::set<string>(DELPHI_RESERVED_METHOD_EXCEPTION, DELPHI_RESERVED_METHOD_EXCEPTION + sizeof(DELPHI_RESERVED_METHOD_EXCEPTION) / sizeof(DELPHI_RESERVED_METHOD_EXCEPTION[0]));
+
+  bool find_keyword(std::set<std::string>& keywords, std::string name);
   std::string normalize_name(std::string name,
                              bool b_method = false,
                              bool b_exception_method = false,
                              bool b_force_underscore = false);
-  std::string empty_value(t_type* type);
+
   bool is_fully_defined_type(t_type* ttype);
   void add_defined_type(t_type* ttype);
   void init_known_types_list();
@@ -552,7 +592,7 @@ void t_delphi_generator::generate_delphi_doc(ostream& out, t_function* tfunction
   }
 }
 
-bool t_delphi_generator::find_keyword(std::map<std::string, int>& keyword_map, std::string name) {
+bool t_delphi_generator::find_keyword(std::set<std::string>& keywords, std::string name) {
   std::string::size_type len = name.length();
 
   if (len <= 0) {
@@ -564,10 +604,11 @@ bool t_delphi_generator::find_keyword(std::map<std::string, int>& keyword_map, s
   if (nlast >= 1) {
     if (nlast == (len - 1)) {
       string new_name(name, 0, nlast);
-      return find_keyword(keyword_map, new_name);
+      return find_keyword(keywords, new_name);
     }
   }
-  return (keyword_map[name] == 1);
+
+  return (keywords.find(name) != keywords.end());
 }
 
 std::string t_delphi_generator::normalize_name(std::string name,
@@ -604,158 +645,6 @@ std::string t_delphi_generator::normalize_name(std::string name,
   }
 }
 
-void t_delphi_generator::create_keywords() {
-  delphi_keywords["and"] = 1;
-  delphi_keywords["end"] = 1;
-  delphi_keywords["interface"] = 1;
-  delphi_keywords["raise"] = 1;
-  delphi_keywords["uses"] = 1;
-  delphi_keywords["array"] = 1;
-  delphi_keywords["except"] = 1;
-  delphi_keywords["is"] = 1;
-  delphi_keywords["record"] = 1;
-  delphi_keywords["var"] = 1;
-  delphi_keywords["as"] = 1;
-  delphi_keywords["exports"] = 1;
-  delphi_keywords["label"] = 1;
-  delphi_keywords["repeat"] = 1;
-  delphi_keywords["while"] = 1;
-  delphi_keywords["asm"] = 1;
-  delphi_keywords["file"] = 1;
-  delphi_keywords["library"] = 1;
-  delphi_keywords["resourcestring"] = 1;
-  delphi_keywords["with"] = 1;
-  delphi_keywords["begin"] = 1;
-  delphi_keywords["finalization"] = 1;
-  delphi_keywords["mod"] = 1;
-  delphi_keywords["set"] = 1;
-  delphi_keywords["xor"] = 1;
-  delphi_keywords["case"] = 1;
-  delphi_keywords["finally"] = 1;
-  delphi_keywords["nil"] = 1;
-  delphi_keywords["shl"] = 1;
-  delphi_keywords["class"] = 1;
-  delphi_keywords["for"] = 1;
-  delphi_keywords["not"] = 1;
-  delphi_keywords["shr"] = 1;
-  delphi_keywords["const"] = 1;
-  delphi_keywords["function"] = 1;
-  delphi_keywords["object"] = 1;
-  delphi_keywords["string"] = 1;
-  delphi_keywords["constructor"] = 1;
-  delphi_keywords["goto"] = 1;
-  delphi_keywords["of"] = 1;
-  delphi_keywords["then"] = 1;
-  delphi_keywords["destructor"] = 1;
-  delphi_keywords["if"] = 1;
-  delphi_keywords["or"] = 1;
-  delphi_keywords["threadvar"] = 1;
-  delphi_keywords["dispinterface"] = 1;
-  delphi_keywords["implementation"] = 1;
-  delphi_keywords["out"] = 1;
-  delphi_keywords["to"] = 1;
-  delphi_keywords["div"] = 1;
-  delphi_keywords["in"] = 1;
-  delphi_keywords["packed"] = 1;
-  delphi_keywords["try"] = 1;
-  delphi_keywords["do"] = 1;
-  delphi_keywords["inherited"] = 1;
-  delphi_keywords["procedure"] = 1;
-  delphi_keywords["type"] = 1;
-  delphi_keywords["downto"] = 1;
-  delphi_keywords["initialization"] = 1;
-  delphi_keywords["program"] = 1;
-  delphi_keywords["unit"] = 1;
-  delphi_keywords["else"] = 1;
-  delphi_keywords["inline"] = 1;
-  delphi_keywords["property"] = 1;
-  delphi_keywords["until"] = 1;
-  delphi_keywords["private"] = 1;
-  delphi_keywords["protected"] = 1;
-  delphi_keywords["public"] = 1;
-  delphi_keywords["published"] = 1;
-  delphi_keywords["automated"] = 1;
-  delphi_keywords["at"] = 1;
-  delphi_keywords["on"] = 1;
-
-  // predefined types (lowercase!)
-  delphi_keywords["ansistring"] = 1;
-  delphi_keywords["string"] = 1;
-  delphi_keywords["boolean"] = 1;
-  delphi_keywords["shortint"] = 1;
-  delphi_keywords["smallint"] = 1;
-  delphi_keywords["integer"] = 1;
-  delphi_keywords["int64"] = 1;
-  delphi_keywords["double"] = 1;
-
-  // reserved variables and types (lowercase!)
-  delphi_reserved_names["result"] = 1;
-  delphi_reserved_names["system"] = 1;
-  delphi_reserved_names["sysutils"] = 1;
-  delphi_reserved_names["thrift"] = 1;
-  delphi_reserved_names["tbytes"] = 1;
-  delphi_reserved_names["tobject"] = 1;
-  delphi_reserved_names["tclass"] = 1;
-  delphi_reserved_names["tinterfacedobject"] = 1;
-
-  // reserved method names (lowercase!)
-  delphi_reserved_method["create"] = 1;
-  delphi_reserved_method["free"] = 1;
-  delphi_reserved_method["initinstance"] = 1;
-  delphi_reserved_method["cleanupinstance"] = 1;
-  delphi_reserved_method["classtype"] = 1;
-  delphi_reserved_method["classname"] = 1;
-  delphi_reserved_method["classnameis"] = 1;
-  delphi_reserved_method["classparent"] = 1;
-  delphi_reserved_method["classinfo"] = 1;
-  delphi_reserved_method["instancesize"] = 1;
-  delphi_reserved_method["inheritsfrom"] = 1;
-  delphi_reserved_method["methodaddress"] = 1;
-  delphi_reserved_method["methodname"] = 1;
-  delphi_reserved_method["fieldaddress"] = 1;
-  delphi_reserved_method["getinterface"] = 1;
-  delphi_reserved_method["getinterfaceentry"] = 1;
-  delphi_reserved_method["getinterfacetable"] = 1;
-  delphi_reserved_method["unitname"] = 1;
-  delphi_reserved_method["equals"] = 1;
-  delphi_reserved_method["gethashcode"] = 1;
-  delphi_reserved_method["tostring"] = 1;
-  delphi_reserved_method["safecallexception"] = 1;
-  delphi_reserved_method["afterconstruction"] = 1;
-  delphi_reserved_method["beforedestruction"] = 1;
-  delphi_reserved_method["dispatch"] = 1;
-  delphi_reserved_method["defaulthandler"] = 1;
-  delphi_reserved_method["newinstance"] = 1;
-  delphi_reserved_method["freeinstance"] = 1;
-  delphi_reserved_method["destroy"] = 1;
-  delphi_reserved_method["read"] = 1;
-  delphi_reserved_method["write"] = 1;
-
-  delphi_reserved_method_exception["setinnerexception"] = 1;
-  delphi_reserved_method_exception["setstackinfo"] = 1;
-  delphi_reserved_method_exception["getstacktrace"] = 1;
-  delphi_reserved_method_exception["raisingexception"] = 1;
-  delphi_reserved_method_exception["createfmt"] = 1;
-  delphi_reserved_method_exception["createres"] = 1;
-  delphi_reserved_method_exception["createresfmt"] = 1;
-  delphi_reserved_method_exception["createhelp"] = 1;
-  delphi_reserved_method_exception["createfmthelp"] = 1;
-  delphi_reserved_method_exception["createreshelp"] = 1;
-  delphi_reserved_method_exception["createresfmthelp"] = 1;
-  delphi_reserved_method_exception["getbaseexception"] = 1;
-  delphi_reserved_method_exception["baseexception"] = 1;
-  delphi_reserved_method_exception["helpcontext"] = 1;
-  delphi_reserved_method_exception["innerexception"] = 1;
-  delphi_reserved_method_exception["message"] = 1;
-  delphi_reserved_method_exception["stacktrace"] = 1;
-  delphi_reserved_method_exception["stackinfo"] = 1;
-  delphi_reserved_method_exception["getexceptionstackinfoproc"] = 1;
-  delphi_reserved_method_exception["getstackinfostringproc"] = 1;
-  delphi_reserved_method_exception["cleanupstackinfoproc"] = 1;
-  delphi_reserved_method_exception["raiseouterexception"] = 1;
-  delphi_reserved_method_exception["throwouterexception"] = 1;
-}
-
 void t_delphi_generator::add_delphi_uses_list(string unitname) {
   vector<std::string>::const_iterator s_iter;
   bool found = false;
@@ -776,7 +665,6 @@ void t_delphi_generator::init_generator() {
   has_forward = false;
   has_enum = false;
   has_const = false;
-  create_keywords();
 
   add_delphi_uses_list("Classes");
   add_delphi_uses_list("SysUtils");
@@ -996,11 +884,11 @@ bool t_delphi_generator::is_fully_defined_type(t_type* ttype) {
   }
 
   if (ttype->is_typedef()) {
-    return (1 == types_known[type_name(ttype)]);
+    return (types_known.find(type_name(ttype)) != types_known.end());
   }
 
   if (ttype->is_base_type()) {
-    return (1 == types_known[base_type_name((t_base_type*)ttype)]);
+    return (types_known.find(base_type_name((t_base_type*)ttype)) != types_known.end());
   } else if (ttype->is_enum()) {
     return true; // enums are written first, before all other types
   } else if (ttype->is_map()) {
@@ -1015,12 +903,12 @@ bool t_delphi_generator::is_fully_defined_type(t_type* ttype) {
     return is_fully_defined_type(tlist->get_elem_type());
   }
 
-  return (1 == types_known[type_name(ttype)]);
+  return (types_known.find(type_name(ttype)) != types_known.end());
 }
 
 void t_delphi_generator::add_defined_type(t_type* ttype) {
   // mark as known type
-  types_known[type_name(ttype)] = 1;
+  types_known.insert(type_name(ttype));
 
   // check all pending typedefs
   std::list<t_typedef*>::iterator iter;
@@ -1044,15 +932,15 @@ void t_delphi_generator::add_defined_type(t_type* ttype) {
 
 void t_delphi_generator::init_known_types_list() {
   // known base types
-  types_known[type_name(g_type_string)] = 1;
-  types_known[type_name(g_type_binary)] = 1;
-  types_known[type_name(g_type_uuid)] = 1;
-  types_known[type_name(g_type_bool)] = 1;
-  types_known[type_name(g_type_i8)] = 1;
-  types_known[type_name(g_type_i16)] = 1;
-  types_known[type_name(g_type_i32)] = 1;
-  types_known[type_name(g_type_i64)] = 1;
-  types_known[type_name(g_type_double)] = 1;
+  types_known.insert( type_name(g_type_string));
+  types_known.insert( type_name(g_type_binary));
+  types_known.insert( type_name(g_type_uuid));
+  types_known.insert( type_name(g_type_bool));
+  types_known.insert( type_name(g_type_i8));
+  types_known.insert( type_name(g_type_i16));
+  types_known.insert( type_name(g_type_i32));
+  types_known.insert( type_name(g_type_i64));
+  types_known.insert( type_name(g_type_double));
 }
 
 void t_delphi_generator::generate_enum(t_enum* tenum) {
