@@ -157,7 +157,6 @@ EXTRA_DIST = \
 	doc \
 	dub.json \
 	go.mod \
-	go.sum \
 	jitpack.yml \
 	LANGUAGES.md \
 	LICENSE \
