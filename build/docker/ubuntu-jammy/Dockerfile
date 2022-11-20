@@ -252,9 +252,12 @@ RUN apt-get install -yq \
   libxml2-dev && \
   cd / && \
   wget --quiet https://download.swift.org/swift-5.7-release/ubuntu2204/swift-5.7-RELEASE/swift-5.7-RELEASE-ubuntu22.04.tar.gz && \
-  tar xf swift-5.7-RELEASE-ubuntu22.04.tar.gz --strip-components=1 && \
-  rm swift-5.7-RELEASE-ubuntu22.04.tar.gz && \
-  swift --version
+  tar xf swift-5.7-RELEASE-ubuntu22.04.tar.gz && \
+  mv swift-5.7-RELEASE-ubuntu22.04 /usr/share/swift && \
+  rm swift-5.7-RELEASE-ubuntu22.04.tar.gz
+
+ENV PATH /usr/share/swift/usr/bin:$PATH
+RUN swift --version
 
 # Locale(s) for cpp unit tests
 RUN apt-get install -y --no-install-recommends \
