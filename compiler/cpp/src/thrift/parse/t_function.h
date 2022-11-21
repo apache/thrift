@@ -40,6 +40,7 @@ public:
       xceptions_(new t_struct(nullptr)),
       own_xceptions_(true),
       oneway_(oneway) {
+    xceptions_->set_method_xcepts(true);
     if (oneway_ && (!returntype_->is_void())) {
       pwarning(1, "Oneway methods should return void.\n");
     }
@@ -56,6 +57,7 @@ public:
       xceptions_(xceptions),
       own_xceptions_(false),
       oneway_(oneway) {
+    xceptions_->set_method_xcepts(true);
     if (oneway_ && !xceptions_->get_members().empty()) {
       throw std::string("Oneway methods can't throw exceptions.");
     }
