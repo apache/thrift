@@ -833,8 +833,6 @@ pub enum TType {
     Set,
     /// List.
     List,
-    /// UTF-8 string.
-    Utf8,
     /// Uuid.
     Uuid,
 }
@@ -856,7 +854,6 @@ impl Display for TType {
             TType::Map => write!(f, "map"),
             TType::Set => write!(f, "set"),
             TType::List => write!(f, "list"),
-            TType::Utf8 => write!(f, "UTF8"),
             TType::Uuid => write!(f, "UUID"),
         }
     }
