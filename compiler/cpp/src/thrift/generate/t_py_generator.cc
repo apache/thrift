@@ -257,14 +257,14 @@ public:
   std::string declare_argument(t_field* tfield);
   std::string render_field_default_value(t_field* tfield);
   std::string type_name(t_type* ttype);
-  std::string function_signature(t_function* tfunction, bool interface = false);
+  std::string function_signature(t_function* tfunction, bool interface = false, bool send_part = false);
   std::string argument_list(t_struct* tstruct,
                             std::vector<std::string>* pre = nullptr,
                             std::vector<std::string>* post = nullptr);
   std::string type_to_enum(t_type* ttype);
   std::string type_to_spec_args(t_type* ttype);
-  std::string type_to_py_hint(t_type* type);
   std::string type_to_py_type(t_type* type);
+  std::string member_hint(t_type* type, t_field::e_req req);
   std::string arg_hint(t_type* type);
   std::string func_hint(t_type* type);
 
@@ -897,7 +897,7 @@ void t_py_generator::generate_py_struct_definition(ostream& out,
                       << "'] = " << (*m_iter)->get_name() << endl;
         }
       } else {
-        indent(out) << "self." << (*m_iter)->get_name() << arg_hint((*m_iter)->get_type())
+        indent(out) << "self." << (*m_iter)->get_name() << member_hint((*m_iter)->get_type(), (*m_iter)->get_req())
                     << " = " << (*m_iter)->get_name() << endl;
       }
     }
@@ -1113,7 +1113,7 @@ void t_py_generator::generate_py_struct_writer(ostream& out, t_struct* tstruct) 
 
   indent(out) << "def write(self, oprot):" << endl;
   indent_up();
-
+  indent(out) << "self.validate()" << endl;
   indent(out) << "if oprot._fast_encode is not None and self.thrift_spec is not None:" << endl;
   indent_up();
 
@@ -1520,7 +1520,7 @@ void t_py_generator::generate_service_client(t_service* tservice) {
     }
 
     f_service_ << endl;
-    indent(f_service_) << "def send_" << function_signature(*f_iter, false) << ":" << endl;
+    indent(f_service_) << "def send_" << function_signature(*f_iter, false, true) << ":" << endl;
     indent_up();
 
     std::string argsname = (*f_iter)->get_name() + "_args";
@@ -2665,11 +2665,16 @@ void t_py_generator::generate_python_docstring(ostream& out, t_doc* tdoc) {
  */
 string t_py_generator::declare_argument(t_field* tfield) {
   std::ostringstream result;
-  result << tfield->get_name() << arg_hint(tfield->get_type()) << " = ";
-  if (tfield->get_value() != nullptr) {
-    result << render_field_default_value(tfield);
-  } else {
-    result << "None";
+  t_field::e_req req = tfield->get_req();
+  result << tfield->get_name() << member_hint(tfield->get_type(), req);
+
+  if (req != t_field::T_REQUIRED || tfield->get_value() != nullptr) {
+    result << " = ";
+    if (tfield->get_value() != nullptr) {
+      result << render_field_default_value(tfield);
+    } else {
+      result << "None";
+    }
   }
   return result.str();
 }
@@ -2694,7 +2699,7 @@ string t_py_generator::render_field_default_value(t_field* tfield) {
  * @param tfunction Function definition
  * @return String of rendered function definition
  */
-string t_py_generator::function_signature(t_function* tfunction, bool interface) {
+string t_py_generator::function_signature(t_function* tfunction, bool interface, bool send_part) {
   vector<string> pre;
   vector<string> post;
   string signature = tfunction->get_name() + "(";
@@ -2704,7 +2709,10 @@ string t_py_generator::function_signature(t_function* tfunction, bool interface)
   }
 
   signature += argument_list(tfunction->get_arglist(), &pre, &post) + ")";
-  signature += func_hint(tfunction->get_returntype());
+  if (!send_part) {
+    signature += func_hint(tfunction->get_returntype());
+  }
+
   return signature;
 }
 
@@ -2766,26 +2774,32 @@ string t_py_generator::type_name(t_type* ttype) {
 }
 
 string t_py_generator::arg_hint(t_type* type) {
-  if(gen_type_hints_) {
-      return ": " + type_to_py_hint(type);
+  if (gen_type_hints_) {
+      return ": " + type_to_py_type(type);
+  }
+
+  return "";
+}
+
+string t_py_generator::member_hint(t_type* type, t_field::e_req req) {
+  if (gen_type_hints_) {
+      if (req != t_field::T_REQUIRED) {
+        return ": typing.Optional[" + type_to_py_type(type) + "]";
+      }
+      else {
+        return ": " + type_to_py_type(type);
+      }
   }
 
   return "";
 }
 
 string t_py_generator::func_hint(t_type* type) {
-  if(gen_type_hints_) {
-      return " -> " + type_to_py_hint(type);
+  if (gen_type_hints_) {
+      return " -> " + type_to_py_type(type);
   }
 
   return "";
-}
-
-/**
- * Converts the parse type to a Python type hint
- */
-string t_py_generator::type_to_py_hint(t_type* type) {
-  return "typing.Optional[" + type_to_py_type(type) + "]";
 }
 
 /**
@@ -2824,7 +2838,7 @@ string t_py_generator::type_to_py_type(t_type* type) {
     return "list[" + type_to_py_type(((t_list*)type)->get_elem_type()) + "]";
   }
 
-  throw "INVALID TYPE IN type_to_py_hint: " + type->get_name();
+  throw "INVALID TYPE IN type_to_py_type: " + type->get_name();
 }
 
 
