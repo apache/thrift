@@ -485,6 +485,8 @@ string t_py_generator::py_imports() {
      << "from thrift.protocol.TProtocol import TProtocolException"
      << endl
      << "from thrift.TRecursive import fix_spec"
+     << endl
+     << "from uuid import UUID"
      << endl;
   if (gen_enum_) {
     ss << "from enum import IntEnum" << endl;
@@ -616,6 +618,9 @@ string t_py_generator::render_const_value(t_type* type, t_const_value* value) {
       } else {
         out << emit_double_as_string(value->get_double());
       }
+      break;
+    case t_base_type::TYPE_UUID:
+      out << "UUID(\"" << get_escaped_string(value) << "\")";
       break;
     default:
       throw "compiler error: no const of base type " + t_base_type::t_base_name(tbase);
@@ -2299,6 +2304,9 @@ void t_py_generator::generate_deserialize_field(ostream& out,
       case t_base_type::TYPE_DOUBLE:
         out << "readDouble()";
         break;
+      case t_base_type::TYPE_UUID:
+        out << "readUuid()";
+        break;
       default:
         throw "compiler error: no Python name for base type " + t_base_type::t_base_name(tbase);
       }
@@ -2491,6 +2499,9 @@ void t_py_generator::generate_serialize_field(ostream& out, t_field* tfield, str
       case t_base_type::TYPE_DOUBLE:
         out << "writeDouble(" << name << ")";
         break;
+      case t_base_type::TYPE_UUID:
+        out << "writeUuid(" << name << ")";
+        break;
       default:
         throw "compiler error: no Python name for base type " + t_base_type::t_base_name(tbase);
       }
@@ -2668,14 +2679,13 @@ string t_py_generator::declare_argument(t_field* tfield) {
   t_field::e_req req = tfield->get_req();
   result << tfield->get_name() << member_hint(tfield->get_type(), req);
 
-  if (req != t_field::T_REQUIRED || tfield->get_value() != nullptr) {
-    result << " = ";
-    if (tfield->get_value() != nullptr) {
-      result << render_field_default_value(tfield);
-    } else {
-      result << "None";
-    }
+  result << " = ";
+  if (tfield->get_value() != nullptr) {
+    result << render_field_default_value(tfield);
+  } else {
+    result << "None";
   }
+
   return result.str();
 }
 
@@ -2827,6 +2837,8 @@ string t_py_generator::type_to_py_type(t_type* type) {
       return "int";
     case t_base_type::TYPE_DOUBLE:
       return "float";
+    case t_base_type::TYPE_UUID:
+      return "UUID";
     }
   } else if (type->is_enum() || type->is_struct() || type->is_xception()) {
     return type_name(type);
@@ -2867,6 +2879,8 @@ string t_py_generator::type_to_enum(t_type* type) {
       return "TType.I64";
     case t_base_type::TYPE_DOUBLE:
       return "TType.DOUBLE";
+    case t_base_type::TYPE_UUID:
+      return "TType.UUID";
     default:
       throw "compiler error: unhandled type";
     }
