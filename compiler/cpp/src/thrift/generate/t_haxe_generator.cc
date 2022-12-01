@@ -91,13 +91,28 @@ public:
   void print_const_value(std::ostream& out,
                          std::string name,
                          t_type* type,
-                         t_const_value* value,
-                         bool in_static,
-                         bool defval = false);
-  std::string render_const_value(ostream& out,
-                                 std::string name,
-                                 t_type* type,
+                         t_const_value* value);
+
+  void render_const_value(std::ostream& out,
+                          t_type* type,
+                          t_const_value* value);
+
+  void render_struct_initializer(std::ostream& out,
+						         t_struct* type,
                                  t_const_value* value);
+  void render_map_initializer(std::ostream& out,
+						      t_map* type,
+                              t_const_value* value);
+  void render_list_initializer(std::ostream& out,
+						       t_list* type,
+                               t_const_value* value);
+  void render_set_initializer(std::ostream& out,
+						      t_set* type,
+                              t_const_value* value);
+
+  // helper
+  std::string render_const_value_str( t_type* type, t_const_value* value);
+
 
   /**
    * Service-level generation functions
@@ -301,6 +316,7 @@ string t_haxe_generator::haxe_type_imports() {
        + "import haxe.ds.IntMap;\n"
        + "import haxe.ds.StringMap;\n"
        + "import haxe.ds.ObjectMap;\n"
+       + "import org.apache.thrift.helper.ObjectSet;\n"
        + "\n"
        + "#if flash\n"
        + "import flash.errors.ArgumentError;\n"
@@ -481,8 +497,7 @@ void t_haxe_generator::generate_consts(std::vector<t_const*> consts) {
     print_const_value(f_consts,
                       (*c_iter)->get_name(),
                       (*c_iter)->get_type(),
-                      (*c_iter)->get_value(),
-                      false);
+                      (*c_iter)->get_value());
   }
   indent_down();
   indent(f_consts) << "}" << endl;
@@ -492,176 +507,187 @@ void t_haxe_generator::generate_consts(std::vector<t_const*> consts) {
 void t_haxe_generator::print_const_value(std::ostream& out,
                                          string name,
                                          t_type* type,
-                                         t_const_value* value,
-                                         bool in_static,
-                                         bool defval) {
+                                         t_const_value* value) {
   type = get_true_type(type);
+  bool complex = type->is_struct() || type->is_xception() || type->is_map() || type->is_list() || type->is_set();
 
   indent(out);
-  if (!defval) {
-    out << (in_static ? "var " : "public static inline var  ");
+
+  out << "public static ";
+  if (!complex) {
+    out << "inline ";
   }
-  if (type->is_base_type()) {
-    string v2 = render_const_value(out, name, type, value);
-    out << name;
-    if (!defval) {
-      out << ":" << type_name(type);
-    }
-    out << " = " << v2 << ";" << endl << endl;
-  } else if (type->is_enum()) {
-    out << name;
-    if (!defval) {
-      out << ":" << type_name(type);
-    }
-    out << " = " << value->get_integer() << ";" << endl << endl;
-  } else if (type->is_struct() || type->is_xception()) {
-    const vector<t_field*>& fields = ((t_struct*)type)->get_members();
-    vector<t_field*>::const_iterator f_iter;
-    const map<t_const_value*, t_const_value*, t_const_value::value_compare>& val = value->get_map();
-    map<t_const_value*, t_const_value*, t_const_value::value_compare>::const_iterator v_iter;
-    out << name << ":" << type_name(type) << " = new " << type_name(type, false, true) << "();"
-        << endl;
-    if (!in_static) {
-      indent(out) << "{" << endl;
-      indent_up();
-      indent(out) << "new function() : Void {" << endl;
-      indent_up();
-    }
-    for (v_iter = val.begin(); v_iter != val.end(); ++v_iter) {
-      t_type* field_type = nullptr;
-      for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
-        if ((*f_iter)->get_name() == v_iter->first->get_string()) {
-          field_type = (*f_iter)->get_type();
-        }
-      }
-      if (field_type == nullptr) {
-        throw "type error: " + type->get_name() + " has no field " + v_iter->first->get_string();
-      }
-      string val = render_const_value(out, name, field_type, v_iter->second);
-      indent(out) << name << ".";
-      out << v_iter->first->get_string() << " = " << val << ";" << endl;
-    }
-    if (!in_static) {
-      indent_down();
-      indent(out) << "}();" << endl;
-      indent_down();
-      indent(out) << "}" << endl;
-    }
-    out << endl;
-  } else if (type->is_map()) {
-    out << name;
-    if (!defval) {
-      out << ":" << type_name(type);
-    }
-    out << " = new " << type_name(type, false, true) << "();" << endl;
-    if (!in_static) {
-      indent(out) << "{" << endl;
-      indent_up();
-      indent(out) << "new function() : Void {" << endl;
-      indent_up();
-    }
-    t_type* ktype = ((t_map*)type)->get_key_type();
-    t_type* vtype = ((t_map*)type)->get_val_type();
-    const map<t_const_value*, t_const_value*, t_const_value::value_compare>& val = value->get_map();
-    map<t_const_value*, t_const_value*, t_const_value::value_compare>::const_iterator v_iter;
-    for (v_iter = val.begin(); v_iter != val.end(); ++v_iter) {
-      string key = render_const_value(out, name, ktype, v_iter->first);
-      string val = render_const_value(out, name, vtype, v_iter->second);
-      indent(out) << name << "[" << key << "] = " << val << ";" << endl;
-    }
-    if (!in_static) {
-      indent_down();
-      indent(out) << "}();" << endl;
-      indent_down();
-      indent(out) << "}" << endl;
-    }
-    out << endl;
-  } else if (type->is_list() || type->is_set()) {
-    out << name;
-    if (!defval) {
-      out << ":" << type_name(type);
-    }
-    out << " = new " << type_name(type, false, true) << "();" << endl;
-    if (!in_static) {
-      indent(out) << "{" << endl;
-      indent_up();
-      indent(out) << "new function() : Void {" << endl;
-      indent_up();
-    }
-    t_type* etype;
-    if (type->is_list()) {
-      etype = ((t_list*)type)->get_elem_type();
-    } else {
-      etype = ((t_set*)type)->get_elem_type();
-    }
-    const vector<t_const_value*>& val = value->get_list();
-    vector<t_const_value*>::const_iterator v_iter;
-    for (v_iter = val.begin(); v_iter != val.end(); ++v_iter) {
-      string val = render_const_value(out, name, etype, *v_iter);
-      indent(out) << name << "." << (type->is_list() ? "push" : "add") << "(" << val << ");"
-                  << endl;
-    }
-    if (!in_static) {
-      indent_down();
-      indent(out) << "}();" << endl;
-      indent_down();
-      indent(out) << "}" << endl;
-    }
-    out << endl;
-  } else {
-    throw "compiler error: no const of type " + type->get_name();
+  out << "var " << name;
+  if (complex) {
+    out << " (default,null)";
   }
+  out << " : " << get_cap_name(type_name(type)) << " = ";
+  render_const_value(out, type, value);
+  out << ";" << endl << endl;
 }
 
-string t_haxe_generator::render_const_value(ostream& out,
-                                            string name,
-                                            t_type* type,
-                                            t_const_value* value) {
-  (void)name;
-  type = get_true_type(type);
+std::string t_haxe_generator::render_const_value_str( t_type* type, t_const_value* value) {
   std::ostringstream render;
+  render_const_value(render, type, value);
+  return render.str();
+}
+
+
+void t_haxe_generator::render_const_value(std::ostream& out,
+                                          t_type* type,
+                                          t_const_value* value) {
+  type = get_true_type(type);
 
   if (type->is_base_type()) {
     t_base_type::t_base tbase = ((t_base_type*)type)->get_base();
     switch (tbase) {
     case t_base_type::TYPE_STRING:
-      render << '"' << get_escaped_string(value) << '"';
+      out << '"' << get_escaped_string(value) << '"';
+      break;
+    case t_base_type::TYPE_UUID:
+      out << '"' << get_escaped_string(value) << '"';
       break;
     case t_base_type::TYPE_BOOL:
-      render << ((value->get_integer() > 0) ? "true" : "false");
+      out << ((value->get_integer() > 0) ? "true" : "false");
       break;
     case t_base_type::TYPE_I8:
-      render << "(byte)" << value->get_integer();
+      out << "(byte)" << value->get_integer();
       break;
     case t_base_type::TYPE_I16:
-      render << "(short)" << value->get_integer();
+      out << "(short)" << value->get_integer();
       break;
     case t_base_type::TYPE_I32:
-      render << value->get_integer();
+      out << value->get_integer();
       break;
     case t_base_type::TYPE_I64:
-      render << value->get_integer() << "L";
+      out << value->get_integer() << "L";
       break;
     case t_base_type::TYPE_DOUBLE:
       if (value->get_type() == t_const_value::CV_INTEGER) {
-        render << "(double)" << value->get_integer();
+        out << "(double)" << value->get_integer();
       } else {
-        render << value->get_double();
+        out << value->get_double();
       }
       break;
     default:
       throw "compiler error: no const of base type " + t_base_type::t_base_name(tbase);
     }
   } else if (type->is_enum()) {
-    render << value->get_integer();
+    out << value->get_integer();
+  } else if (type->is_struct() || type->is_xception()) {
+    render_struct_initializer(out, (t_struct*)type, value);
+  } else if (type->is_map()) {
+    render_map_initializer(out, (t_map*)type, value);
+  } else if (type->is_list()) {
+    render_list_initializer(out, (t_list*)type, value);
+  } else if (type->is_set()) {
+    render_set_initializer(out, (t_set*)type, value);
   } else {
-    string t = tmp("tmp");
-    print_const_value(out, t, type, value, true);
-    render << t;
+    throw "compiler error: no const of type " + type->get_name();
+  }
+}
+
+void t_haxe_generator::render_struct_initializer(std::ostream& out,
+                                                 t_struct* type,
+                                                 t_const_value* value) {
+  out << "(function() : " << get_cap_name(type_name(type)) << " {" << endl;
+  indent_up();
+  indent(out) << "var tmp = new " << get_cap_name(type_name(type)) <<  "();" << endl; 
+
+  const vector<t_field*>& fields = ((t_struct*)type)->get_members();
+  vector<t_field*>::const_iterator f_iter;
+  const map<t_const_value*, t_const_value*, t_const_value::value_compare>& values = value->get_map();
+  map<t_const_value*, t_const_value*, t_const_value::value_compare>::const_iterator v_iter;
+  for (v_iter = values.begin(); v_iter != values.end(); ++v_iter) {
+    t_type* field_type = nullptr;
+    for (f_iter = fields.begin(); f_iter != fields.end(); ++f_iter) {
+      if ((*f_iter)->get_name() == v_iter->first->get_string()) {
+        field_type = (*f_iter)->get_type();
+        break;
+      }
+    }
+    if (field_type == nullptr) {
+      throw "type error: " + type->get_name() + " has no field " + v_iter->first->get_string();
+    }
+    indent(out) << "tmp." << v_iter->first->get_string() << " = ";
+    render_const_value(out, field_type, v_iter->second);
+    out << ";" << endl;
   }
 
-  return render.str();
+  indent(out) << "return tmp;" << endl; 
+  indent_down();
+  indent(out) << "})()";  // no endl
 }
+
+void t_haxe_generator::render_map_initializer(std::ostream& out,
+                                              t_map* type,
+                                              t_const_value* value) {
+  out << "(function() : " << get_cap_name(type_name(type)) << " {" << endl;
+  indent_up();
+  indent(out) << "var tmp = new " << get_cap_name(type_name(type)) <<  "();" << endl; 
+
+  t_type* key_type = ((t_map*)type)->get_key_type();
+  t_type* val_type = ((t_map*)type)->get_val_type();
+  
+  const map<t_const_value*, t_const_value*, t_const_value::value_compare>& values = value->get_map();
+  map<t_const_value*, t_const_value*, t_const_value::value_compare>::const_iterator v_iter;
+  for (v_iter = values.begin(); v_iter != values.end(); ++v_iter) {
+    indent(out) << "tmp.set(";
+    render_const_value(out, key_type, v_iter->first);
+    out << ", ";
+    render_const_value(out, val_type, v_iter->second);
+    out << ");" << endl;
+  }
+ 
+  indent(out) << "return tmp;" << endl; 
+  indent_down();
+  indent(out) << "})()";  // no endl
+}
+
+void t_haxe_generator::render_list_initializer(std::ostream& out,
+                                               t_list* type,
+                                               t_const_value* value) {
+  out << "(function() : " << get_cap_name(type_name(type)) << " {" << endl;
+  indent_up();
+  indent(out) << "var tmp = new " << get_cap_name(type_name(type)) <<  "();" << endl; 
+
+  t_type* elm_type = type->get_elem_type();
+  
+  const vector<t_const_value*>& values = value->get_list();
+  vector<t_const_value*>::const_iterator v_iter;
+  for (v_iter = values.begin(); v_iter != values.end(); ++v_iter) {
+    indent(out) << "tmp.add(";
+    render_const_value(out, elm_type, *v_iter);
+    out << ");" << endl;
+  }
+ 
+  indent(out) << "return tmp;" << endl; 
+  indent_down();
+  indent(out) << "})()";  // no endl
+}
+
+void t_haxe_generator::render_set_initializer(std::ostream& out,
+                                              t_set* type,
+                                              t_const_value* value) {
+  out << "(function() : " << get_cap_name(type_name(type)) << " {" << endl;
+  indent_up();
+  indent(out) << "var tmp = new " << get_cap_name(type_name(type)) <<  "();" << endl; 
+
+  t_type* elm_type = type->get_elem_type();
+  
+  const vector<t_const_value*>& values = value->get_list();
+  vector<t_const_value*>::const_iterator v_iter;
+  for (v_iter = values.begin(); v_iter != values.end(); ++v_iter) {
+    indent(out) << "tmp.add(";
+    render_const_value(out, elm_type, *v_iter);
+    out << ");" << endl;
+  }
+  
+  indent(out) << "return tmp;" << endl; 
+  indent_down();
+  indent(out) << "})()";  // no endl
+}
+
 
 /**
  * Generates a struct definition for a thrift data type. This is a class
@@ -801,8 +827,9 @@ void t_haxe_generator::generate_haxe_struct_definition(ostream& out,
   }
   for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
     if ((*m_iter)->get_value() != nullptr) {
-      indent(out) << "this." << (*m_iter)->get_name() << " = "
-                  << (*m_iter)->get_value()->get_integer() << ";" << endl;
+      indent(out) << "this." << (*m_iter)->get_name() << " = ";
+      render_const_value( out, (*m_iter)->get_type(), (*m_iter)->get_value());
+      out << ";" << endl;
     }
   }
   indent_down();
@@ -1418,6 +1445,9 @@ std::string t_haxe_generator::get_haxe_type_string(t_type* type) {
       break;
     case t_base_type::TYPE_STRING:
       return "TType.STRING";
+      break;
+    case t_base_type::TYPE_UUID:
+      return "TType.UUID";
       break;
     case t_base_type::TYPE_BOOL:
       return "TType.BOOL";
@@ -2198,6 +2228,9 @@ void t_haxe_generator::generate_deserialize_field(ostream& out, t_field* tfield,
           out << "readString();";
         }
         break;
+      case t_base_type::TYPE_UUID:
+        out << "readUuid();";
+        break;
       case t_base_type::TYPE_BOOL:
         out << "readBool();";
         break;
@@ -2381,6 +2414,9 @@ void t_haxe_generator::generate_serialize_field(ostream& out, t_field* tfield, s
         } else {
           out << "writeString(" << name << ");";
         }
+        break;
+      case t_base_type::TYPE_UUID:
+        out << "writeUuid(" << name << ");";
         break;
       case t_base_type::TYPE_BOOL:
         out << "writeBool(" << name << ");";
@@ -2627,6 +2663,8 @@ string t_haxe_generator::base_type_name(t_base_type* type, bool in_container) {
     } else {
       return "String";
     }
+  case t_base_type::TYPE_UUID:
+    return "String";
   case t_base_type::TYPE_BOOL:
     return "Bool";
   case t_base_type::TYPE_I8:
@@ -2653,8 +2691,7 @@ string t_haxe_generator::declare_field(t_field* tfield, bool init) {
   if (init) {
     t_type* ttype = get_true_type(tfield->get_type());
     if (ttype->is_base_type() && tfield->get_value() != nullptr) {
-      std::ofstream dummy;
-      result += " = " + render_const_value(dummy, tfield->get_name(), ttype, tfield->get_value());
+      result += " = " + render_const_value_str( ttype, tfield->get_value());
     } else if (ttype->is_base_type()) {
       t_base_type::t_base tbase = ((t_base_type*)ttype)->get_base();
       switch (tbase) {
@@ -2662,6 +2699,9 @@ string t_haxe_generator::declare_field(t_field* tfield, bool init) {
         throw "NO T_VOID CONSTRUCT";
       case t_base_type::TYPE_STRING:
         result += " = null";
+        break;
+      case t_base_type::TYPE_UUID:
+        result += " = uuid.Uuid.NIL";
         break;
       case t_base_type::TYPE_BOOL:
         result += " = false";
@@ -2675,6 +2715,8 @@ string t_haxe_generator::declare_field(t_field* tfield, bool init) {
       case t_base_type::TYPE_DOUBLE:
         result += " = (double)0";
         break;
+      default:
+        throw "unhandled type";
       }
 
     } else if (ttype->is_enum()) {
@@ -2770,6 +2812,8 @@ string t_haxe_generator::type_to_enum(t_type* type) {
       throw "NO T_VOID CONSTRUCT";
     case t_base_type::TYPE_STRING:
       return "TType.STRING";
+    case t_base_type::TYPE_UUID:
+      return "TType.UUID";
     case t_base_type::TYPE_BOOL:
       return "TType.BOOL";
     case t_base_type::TYPE_I8:
@@ -2782,6 +2826,8 @@ string t_haxe_generator::type_to_enum(t_type* type) {
       return "TType.I64";
     case t_base_type::TYPE_DOUBLE:
       return "TType.DOUBLE";
+    default:
+      break;
     }
   } else if (type->is_enum()) {
     return "TType.I32";

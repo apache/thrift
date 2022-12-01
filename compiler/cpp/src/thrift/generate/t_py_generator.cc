@@ -288,12 +288,12 @@ public:
   }
 
   static bool is_immutable(t_type* ttype) {
-    std::map<std::string, std::string>::iterator it = ttype->annotations_.find("python.immutable");
+    std::map<std::string, std::vector<std::string>>::iterator it = ttype->annotations_.find("python.immutable");
 
     if (it == ttype->annotations_.end()) {
       // Exceptions are immutable by default.
       return ttype->is_xception();
-    } else if (it->second == "false") {
+    } else if (!it->second.empty() && it->second.back() == "false") {
       return false;
     } else {
       return true;
@@ -622,7 +622,7 @@ string t_py_generator::render_const_value(t_type* type, t_const_value* value) {
     }
   } else if (type->is_enum()) {
     out << indent();
-    int int_val = value->get_integer();
+    int64_t int_val = value->get_integer();
     if (gen_enum_) {
       t_enum_value* enum_val = ((t_enum*)type)->get_constant_by_value(int_val);
       out << type->get_name() << "." << enum_val->get_name();
@@ -2867,6 +2867,8 @@ string t_py_generator::type_to_enum(t_type* type) {
       return "TType.I64";
     case t_base_type::TYPE_DOUBLE:
       return "TType.DOUBLE";
+    default:
+      throw "compiler error: unhandled type";
     }
   } else if (type->is_enum()) {
     return "TType.I32";

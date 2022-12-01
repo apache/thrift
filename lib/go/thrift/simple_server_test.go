@@ -201,11 +201,11 @@ func TestNoHangDuringStopFromClientNoDataSendDuringAcceptLoop(t *testing.T) {
 
 	netConn, err := net.Dial("tcp", ln.Addr().String())
 	if err != nil || netConn == nil {
-		t.Fatal("error when dial server")
+		t.Fatalf("error when dial server: %v", err)
 	}
 	time.Sleep(networkWaitDuration)
 
-	serverStopTimeout := 50 * time.Millisecond
+	const serverStopTimeout = 50 * time.Millisecond
 	backupServerStopTimeout := ServerStopTimeout
 	t.Cleanup(func() {
 		ServerStopTimeout = backupServerStopTimeout
@@ -213,13 +213,12 @@ func TestNoHangDuringStopFromClientNoDataSendDuringAcceptLoop(t *testing.T) {
 	ServerStopTimeout = serverStopTimeout
 
 	st := time.Now()
-	err = serv.Stop()
-	if err != nil {
+	if err := serv.Stop(); err != nil {
 		t.Errorf("error when stop server:%v", err)
 	}
 
 	if elapsed := time.Since(st); elapsed < serverStopTimeout {
-		t.Errorf("stop cost less time than server stop timeout, server stop timeout:%v,cost time:%v", ServerStopTimeout, elapsed)
+		t.Errorf("stop cost less time than server stop timeout, server stop timeout:%v,cost time:%v", serverStopTimeout, elapsed)
 	}
 }
 
@@ -285,5 +284,17 @@ func TestStopTimeoutWithSocketTimeout(t *testing.T) {
 
 	if err != nil {
 		t.Fatalf("error when stop server:%v", err)
+	}
+}
+
+func TestErrAbandonRequest(t *testing.T) {
+	if !errors.Is(ErrAbandonRequest, ErrAbandonRequest) {
+		t.Error("errors.Is(ErrAbandonRequest, ErrAbandonRequest) returned false")
+	}
+	if !errors.Is(ErrAbandonRequest, context.Canceled) {
+		t.Error("errors.Is(ErrAbandonRequest, context.Canceled) returned false")
+	}
+	if errors.Is(context.Canceled, ErrAbandonRequest) {
+		t.Error("errors.Is(context.Canceled, ErrAbandonRequest) returned true")
 	}
 }

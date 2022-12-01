@@ -130,7 +130,6 @@ func (p *TBinaryProtocol) WriteMessageBegin(ctx context.Context, name string, ty
 		e = p.WriteI32(ctx, seqId)
 		return e
 	}
-	return nil
 }
 
 func (p *TBinaryProtocol) WriteMessageEnd(ctx context.Context) error {

@@ -268,7 +268,9 @@ void t_json_generator::write_type_spec(t_type* ttype) {
     write_key_and("annotations");
     start_object();
     for (auto & annotation : ttype->annotations_) {
-      write_key_and_string(annotation.first, annotation.second);
+      for (auto& annotation_value : annotation.second) {
+        write_key_and_string(annotation.first, annotation_value);
+      }
     }
     end_object();
   }
@@ -370,6 +372,7 @@ void t_json_generator::generate_program() {
     vector<t_program*>::const_iterator inc_it;
     for (inc_it = includes.begin(); inc_it != includes.end(); ++inc_it) {
       write_comma_if_needed();
+      f_json_ << indent();
       write_string((*inc_it)->get_name());
       indicate_comma_needed();
     }
@@ -458,7 +461,9 @@ void t_json_generator::generate_typedef(t_typedef* ttypedef) {
     write_key_and("annotations");
     start_object();
     for (auto & annotation : ttypedef->annotations_) {
-      write_key_and_string(annotation.first, annotation.second);
+      for (auto& annotation_value : annotation.second) {
+        write_key_and_string(annotation.first, annotation_value);
+      }
     }
     end_object();
   }
@@ -565,7 +570,9 @@ void t_json_generator::generate_enum(t_enum* tenum) {
       write_key_and("annotations");
       start_object();
       for (auto & annotation : tenum->annotations_) {
-        write_key_and_string(annotation.first, annotation.second);
+        for (auto& annotation_value : annotation.second) {
+          write_key_and_string(annotation.first, annotation_value);
+        }
       }
       end_object();
   }
@@ -604,7 +611,9 @@ void t_json_generator::generate_struct(t_struct* tstruct) {
     write_key_and("annotations");
     start_object();
     for (auto & annotation : tstruct->annotations_) {
-      write_key_and_string(annotation.first, annotation.second);
+      for (auto& annotation_value : annotation.second) {
+        write_key_and_string(annotation.first, annotation_value);
+      }
     }
     end_object();
   }
@@ -644,7 +653,9 @@ void t_json_generator::generate_service(t_service* tservice) {
     write_key_and("annotations");
     start_object();
     for (auto & annotation : tservice->annotations_) {
-      write_key_and_string(annotation.first, annotation.second);
+      for (auto& annotation_value : annotation.second) {
+        write_key_and_string(annotation.first, annotation_value);
+      }
     }
     end_object();
   }
@@ -681,7 +692,9 @@ void t_json_generator::generate_function(t_function* tfunc) {
     write_key_and("annotations");
     start_object();
     for (auto & annotation : tfunc->annotations_) {
-      write_key_and_string(annotation.first, annotation.second);
+      for (auto& annotation_value : annotation.second) {
+        write_key_and_string(annotation.first, annotation_value);
+      }
     }
     end_object();
   }
@@ -727,7 +740,9 @@ void t_json_generator::generate_field(t_field* field) {
     write_key_and("annotations");
     start_object();
     for (auto & annotation : field->annotations_) {
-      write_key_and_string(annotation.first, annotation.second);
+      for (auto& annotation_value : annotation.second) {
+        write_key_and_string(annotation.first, annotation_value);
+      }
     }
     end_object();
   }

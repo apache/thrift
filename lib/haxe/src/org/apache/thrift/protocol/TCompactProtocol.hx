@@ -28,11 +28,13 @@ import haxe.ds.GenericStack;
 import haxe.Int32;
 import haxe.Int64;
 
+import uuid.Uuid;
+
 import org.apache.thrift.TException;
 import org.apache.thrift.transport.TTransport;
 import org.apache.thrift.helper.ZigZag;
 import org.apache.thrift.helper.BitConverter;
-
+import org.apache.thrift.helper.UuidHelper;
 
 /**
 * Compact protocol implementation for thrift.
@@ -62,7 +64,8 @@ class TCompactProtocol extends TProtocolImplBase implements TProtocol {
         TType.STRUCT  => TCompactTypes.STRUCT,
         TType.MAP     => TCompactTypes.MAP,
         TType.SET     => TCompactTypes.SET,
-        TType.LIST    => TCompactTypes.LIST
+        TType.LIST    => TCompactTypes.LIST,
+        TType.UUID    => TCompactTypes.UUID
     ];
 
     private static var tcompactTypeToType = [
@@ -78,7 +81,8 @@ class TCompactProtocol extends TProtocolImplBase implements TProtocol {
         TCompactTypes.LIST          => TType.LIST,
         TCompactTypes.SET           => TType.SET,
         TCompactTypes.MAP           => TType.MAP,
-        TCompactTypes.STRUCT        => TType.STRUCT
+        TCompactTypes.STRUCT        => TType.STRUCT,
+        TCompactTypes.UUID          => TType.UUID
     ];
 
 
@@ -337,6 +341,10 @@ class TCompactProtocol extends TProtocolImplBase implements TProtocol {
         Transport.write( bin, 0, bin.length);
     }
 
+    public function writeUuid(uuid : String) : Void {
+        var bytes : Bytes = Uuid.parse(UuidHelper.CanonicalUuid(uuid));
+        Transport.write(bytes, 0, bytes.length);
+    }
 
     // These methods are called by structs, but don't actually have any wire
     // output or purpose.
@@ -616,6 +624,13 @@ class TCompactProtocol extends TProtocolImplBase implements TProtocol {
     }
 
 
+    public function readUuid() : String {
+        var buffer = new BytesBuffer();
+        Transport.readAll( buffer, 0, 16);
+        var bytes : Bytes = buffer.getBytes();
+        return Uuid.stringify( bytes);
+    }
+
     // These methods are here for the struct to call, but don't have any wire
     // encoding.
     public function readMessageEnd() : Void { }
@@ -723,6 +738,7 @@ class TCompactProtocol extends TProtocolImplBase implements TProtocol {
 			case TType.MAP:     return 1;  // element count
 			case TType.SET:    return 1;  // element count
 			case TType.LIST:    return 1;  // element count
+			case TType.UUID: return 16;  // uuid bytes
 			default: throw new TProtocolException(TProtocolException.NOT_IMPLEMENTED, "unrecognized type code");
 		}
 	}

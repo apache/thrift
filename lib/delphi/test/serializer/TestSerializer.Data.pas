@@ -23,6 +23,9 @@ interface
 
 uses
   SysUtils,
+  ActiveX,
+  ComObj,
+  Thrift.Protocol,
   Thrift.Collections,
   DebugProtoTest;
 
@@ -192,8 +195,12 @@ begin
   // !!
   result.setZomg_unicode( UnicodeString( us));
 
+  result.Rfc4122_uuid := TGuid.Create('{00112233-4455-6677-8899-aabbccddeeff}');
+
   {$IF cDebugProtoTest_Option_AnsiStr_Binary}
   result.SetBase64('base64');
+  {$ELSEIF cDebugProtoTest_Option_COM_Types}
+  result.SetBase64( TThriftBytesImpl.Create( TEncoding.UTF8.GetBytes('base64')));
   {$ELSE}
   result.SetBase64( TEncoding.UTF8.GetBytes('base64'));
   {$IFEND}
@@ -216,8 +223,10 @@ end;
 
 
 class function Fixtures.CreateHolyMoley : IHolyMoley;
+type
+  TStringType = {$IF cDebugProtoTest_Option_COM_Types} WideString {$ELSE} String {$IFEND};
 var big : IThriftList<IOneOfEach>;
-    stage1 : IThriftList<String>;
+    stage1 : IThriftList<TStringType>;
     stage2 : IThriftList<IBonk>;
     b      : IBonk;
 begin
@@ -230,23 +239,23 @@ begin
   result.Big[0].setA_bite( $22);
   result.Big[0].setA_bite( $23);
 
-  result.Contain := THashSetImpl< IThriftList<string>>.Create;
-  stage1 := TThriftListImpl<String>.Create;
+  result.Contain := TThriftHashSetImpl< IThriftList<TStringType>>.Create;
+  stage1 := TThriftListImpl<TStringType>.Create;
   stage1.add( 'and a one');
   stage1.add( 'and a two');
   result.Contain.add( stage1);
 
-  stage1 := TThriftListImpl<String>.Create;
+  stage1 := TThriftListImpl<TStringType>.Create;
   stage1.add( 'then a one, two');
   stage1.add( 'three!');
   stage1.add( 'FOUR!!');
   result.Contain.add( stage1);
 
-  stage1 := TThriftListImpl<String>.Create;
+  stage1 := TThriftListImpl<TStringType>.Create;
   result.Contain.add( stage1);
 
   stage2 := TThriftListImpl<IBonk>.Create;
-  result.Bonks := TThriftDictionaryImpl< String, IThriftList< IBonk>>.Create;
+  result.Bonks := TThriftDictionaryImpl< TStringType, IThriftList< IBonk>>.Create;
   // one empty
   result.Bonks.Add( 'zero', stage2);
 
@@ -342,6 +351,8 @@ begin
 
   {$IF cDebugProtoTest_Option_AnsiStr_Binary}
   result.A_binary := AnsiString( #0#1#2#3#4#5#6#7#8);
+  {$ELSEIF cDebugProtoTest_Option_COM_Types}
+  result.A_binary := TThriftBytesImpl.Create( TEncoding.UTF8.GetBytes( #0#1#2#3#4#5#6#7#8));
   {$ELSE}
   result.A_binary := TEncoding.UTF8.GetBytes( #0#1#2#3#4#5#6#7#8);
   {$IFEND}

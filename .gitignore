@@ -201,7 +201,9 @@ project.lock.json
 /lib/delphi/*.local
 /lib/delphi/*.identcache
 /lib/delphi/test/skip/bin
-/lib/delphi/test/serializer/*.dat
+/lib/delphi/test/serializer/**/*.dat
+/lib/delphi/test/serializer/bin
+/lib/delphi/test/thrift-testing/*.thrift
 /lib/delphi/**/*.identcache
 /lib/delphi/**/*.local
 /lib/delphi/**/*.dcu
@@ -229,6 +231,13 @@ project.lock.json
 /lib/js/dist
 /lib/js/doc
 /lib/js/test/build
+/lib/kotlin/cross-test-client/build/
+/lib/kotlin/cross-test-server/build/
+/lib/kotlin/build/
+/lib/kotlin/.gradle/
+/lib/kotlin/gradle/
+/lib/kotlin/gradlew
+/lib/kotlin/gradlew.bat
 /lib/netstd/**/bin
 /lib/netstd/**/obj
 /lib/nodejs/coverage
@@ -276,7 +285,7 @@ project.lock.json
 /lib/go/src
 /lib/go/test/fuzz/gopathfuzz
 /lib/go/test/gopath/
-/lib/go/test/ThriftTest.thrift
+/lib/go/test/ThriftTest*.thrift
 /lib/nodets/test-compiled/
 /lib/ocaml/_build/
 /lib/ocaml/_tags
@@ -346,7 +355,7 @@ project.lock.json
 /test/erl/_build/
 /test/erl/rebar.lock
 /test/go/bin/
-/test/go/ThriftTest.thrift
+/test/go/ThriftTest*.thrift
 /test/go/gopath
 /test/go/pkg/
 /test/go/src/code.google.com/
@@ -433,3 +442,11 @@ project.lock.json
 /tutorial/netstd/Client/Properties/launchSettings.json
 /ylwrap
 
+# Unit test generated artifacts
+
+CMakeCache.txt
+CMakeFiles
+compiler/cpp/tests/*.cmake
+compiler/cpp/tests/Testing/
+compiler/cpp/tests/bin/
+compiler/cpp/tests/*.a

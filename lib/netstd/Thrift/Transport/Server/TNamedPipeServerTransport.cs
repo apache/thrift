@@ -24,41 +24,78 @@ using System.Threading.Tasks;
 using System.ComponentModel;
 using System.Security.AccessControl;
 using System.Security.Principal;
+using System.Collections.Generic;
+using System.IO;
+using System.Diagnostics;
+
+#pragma warning disable CS1998  // async no await
 
 namespace Thrift.Transport.Server
 {
+    [Obsolete("NamedPipeClientFlags is deprecated, use NamedPipeServerFlags instead.")]
     [Flags]
-    public enum NamedPipeClientFlags {
+    public enum NamedPipeClientFlags {  // bad name
         None = 0x00,
         OnlyLocalClients = 0x01
     };
 
+    [Flags]
+    public enum NamedPipeServerFlags
+    {
+        None = 0x00,
+        OnlyLocalClients = 0x01,
+    };
+
+
     // ReSharper disable once InconsistentNaming
     public class TNamedPipeServerTransport : TServerTransport
     {
+        // to manage incoming connections, we set up a task for each stream to listen on
+        private struct TaskStreamPair
+        {
+            public NamedPipeServerStream Stream;
+            public Task Task;
+
+            public TaskStreamPair(NamedPipeServerStream stream, Task task)
+            {
+                Stream = stream;
+                Task = task;    
+            }
+        }
+
         /// <summary>
         ///     This is the address of the Pipe on the localhost.
         /// </summary>
         private readonly string _pipeAddress;
         private bool _asyncMode = true;
         private volatile bool _isPending = true;
-        private NamedPipeServerStream _stream = null;
+        private readonly List<TaskStreamPair> _streams = new List<TaskStreamPair>();
         private readonly bool _onlyLocalClients = false;  // compatibility default
+        private readonly byte _numListenPipes = 1;  // compatibility default
 
-        public TNamedPipeServerTransport(string pipeAddress, TConfiguration config, NamedPipeClientFlags flags)
+        public TNamedPipeServerTransport(string pipeAddress, TConfiguration config, NamedPipeServerFlags flags, int numListenPipes)
             : base(config)
         {
+            if ((numListenPipes < 1) || (numListenPipes > 254))
+                throw new ArgumentOutOfRangeException(nameof(numListenPipes), "Value must be in the range of [1..254]");
+
+            _pipeAddress = pipeAddress;
+            _onlyLocalClients = flags.HasFlag(NamedPipeServerFlags.OnlyLocalClients);
+            _numListenPipes = (byte)numListenPipes;
+        }
+
+        [Obsolete("NamedPipeClientFlags is deprecated, use NamedPipeServerFlags instead.")]
+        public TNamedPipeServerTransport(string pipeAddress, TConfiguration config, NamedPipeClientFlags flags, int numListenPipes = 1)
+            : base(config)
+        {
+            if ((numListenPipes < 1) || (numListenPipes > 254))
+                throw new ArgumentOutOfRangeException(nameof(numListenPipes), "Value must be in the range of [1..254]");
+
             _pipeAddress = pipeAddress;
             _onlyLocalClients = flags.HasFlag(NamedPipeClientFlags.OnlyLocalClients);
+            _numListenPipes = (byte)numListenPipes;
         }
 
-        [Obsolete("This CTOR is deprecated, please use the other one instead.")]
-        public TNamedPipeServerTransport(string pipeAddress, TConfiguration config)
-            : base(config)
-        {
-            _pipeAddress = pipeAddress;
-            _onlyLocalClients = false;
-        }
 
         public override bool IsOpen() {
             return true;
@@ -69,21 +106,39 @@ namespace Thrift.Transport.Server
             // nothing to do here
         }
 
-        public override void Close()
+        private static void Close(NamedPipeServerStream pipe)
         {
-            if (_stream != null)
+            if (pipe != null)
             {
                 try
                 {
-                    if (_stream.IsConnected)
-                        _stream.Disconnect();
-                    _stream.Dispose();
+                    if (pipe.IsConnected)
+                        pipe.Disconnect();
                 }
                 finally
                 {
-                    _stream = null;
-                    _isPending = false;
+                    pipe.Dispose();
                 }
+            }
+        }
+
+        public override void Close()
+        {
+            try
+            {
+                if (_streams != null)
+                {
+                    while(_streams.Count > 0)
+                    {
+                        Close(_streams[0].Stream);
+                        _streams.RemoveAt(0);
+                    }
+                }
+            }
+            finally
+            {
+                _streams.Clear();
+                _isPending = false;
             }
         }
 
@@ -92,52 +147,71 @@ namespace Thrift.Transport.Server
             return _isPending;
         }
 
-        private void EnsurePipeInstance()
+        private void EnsurePipeInstances()
         {
-            if (_stream == null)
+            // set up a pool for accepting multiple calls when in multithread mode
+            // once connected, we hand that stream over to the processor and create a fresh one
+            try
             {
-                const PipeDirection direction = PipeDirection.InOut;
-                const int maxconn = NamedPipeServerStream.MaxAllowedServerInstances;
-                const PipeTransmissionMode mode = PipeTransmissionMode.Byte;
-                const int inbuf = 4096;
-                const int outbuf = 4096;
-                var options = _asyncMode ? PipeOptions.Asynchronous : PipeOptions.None;
+                while (_streams.Count < _numListenPipes)
+                    _streams.Add(CreatePipeInstance());
+            }
+            catch
+            {
+                // we might not be able to create all requested instances, e.g. due to some existing instances already processing calls
+                // if we have at least one pipe to listen on -> Good Enough(tm) 
+                if (_streams.Count < 1)
+                    throw;  // no pipes is really bad
+            }
+        }
+
+        private TaskStreamPair CreatePipeInstance()
+        {
+            const PipeDirection direction = PipeDirection.InOut;
+            const int maxconn = NamedPipeServerStream.MaxAllowedServerInstances;
+            const PipeTransmissionMode mode = PipeTransmissionMode.Byte;
+            const int inbuf = 4096;
+            const int outbuf = 4096;
+            var options = _asyncMode ? PipeOptions.Asynchronous : PipeOptions.None;
 
 
-                // TODO: "CreatePipeNative" ist only a workaround, and there are have basically two possible outcomes:
-                // - once NamedPipeServerStream() gets a CTOR that supports pipesec, remove CreatePipeNative()
-                // - if 31190 gets resolved before, use _stream.SetAccessControl(pipesec) instead of CreatePipeNative()
-                // EITHER WAY,
-                // - if CreatePipeNative() finally gets removed, also remove "allow unsafe code" from the project settings
+            // TODO: "CreatePipeNative" ist only a workaround, and there are have basically two possible outcomes:
+            // - once NamedPipeServerStream() gets a CTOR that supports pipesec, remove CreatePipeNative()
+            // - if 31190 gets resolved before, use _stream.SetAccessControl(pipesec) instead of CreatePipeNative()
+            // EITHER WAY,
+            // - if CreatePipeNative() finally gets removed, also remove "allow unsafe code" from the project settings
 
-                try
+            NamedPipeServerStream instance;
+            try
+            {
+                var handle = CreatePipeNative(_pipeAddress, inbuf, outbuf, _onlyLocalClients);
+                if ((handle != null) && (!handle.IsInvalid))
                 {
-                    var handle = CreatePipeNative(_pipeAddress, inbuf, outbuf, _onlyLocalClients);
-                    if ((handle != null) && (!handle.IsInvalid))
-                    {
-                        _stream = new NamedPipeServerStream(PipeDirection.InOut, _asyncMode, false, handle);
-                        handle = null; // we don't own it any longer
-                    }
-                    else
-                    {
-                        handle?.Dispose();
-                        _stream = new NamedPipeServerStream(_pipeAddress, direction, maxconn, mode, options, inbuf, outbuf/*, pipesec*/);
-                    }
+                    instance = new NamedPipeServerStream(PipeDirection.InOut, _asyncMode, false, handle);
+                    handle = null; // we don't own it any longer
                 }
-                catch (NotImplementedException) // Mono still does not support async, fallback to sync
+                else
                 {
-                    if (_asyncMode)
-                    {
-                        options &= (~PipeOptions.Asynchronous);
-                        _stream = new NamedPipeServerStream(_pipeAddress, direction, maxconn, mode, options, inbuf, outbuf);
-                        _asyncMode = false;
-                    }
-                    else
-                    {
-                        throw;
-                    }
+                    handle?.Dispose();
+                    instance = new NamedPipeServerStream(_pipeAddress, direction, maxconn, mode, options, inbuf, outbuf/*, pipesec*/);
                 }
             }
+            catch (NotImplementedException) // Mono still does not support async, fallback to sync
+            {
+                if (_asyncMode)
+                {
+                    options &= (~PipeOptions.Asynchronous);
+                    instance = new NamedPipeServerStream(_pipeAddress, direction, maxconn, mode, options, inbuf, outbuf);
+                    _asyncMode = false;
+                }
+                else
+                {
+                    throw;
+                }
+            }
+
+            // the task gets added later
+            return new TaskStreamPair( instance, null);
         }
 
 
@@ -248,14 +322,28 @@ namespace Thrift.Transport.Server
         {
             try
             {
-                EnsurePipeInstance();
+                EnsurePipeInstances();
 
-                await _stream.WaitForConnectionAsync(cancellationToken);
+                // fill the list and wait for any task to be completed
+                var tasks = new List<Task>();
+                for (var i = 0; i < _streams.Count; ++i)
+                {
+                    if (_streams[i].Task == null)
+                    {
+                        var pair = _streams[i];
+                        pair.Task = Task.Run(async () => await pair.Stream.WaitForConnectionAsync(cancellationToken), cancellationToken);
+                        _streams[i] = pair;
+                    }
 
-                var trans = new ServerTransport(_stream, Configuration);
-                _stream = null; // pass ownership to ServerTransport
+                    tasks.Add(_streams[i].Task);
+                }
 
-                //_isPending = false;
+                // there must be an exact mapping between task index and stream index
+                Debug.Assert(_streams.Count == tasks.Count);
+                var index = Task.WaitAny(tasks.ToArray(), cancellationToken);
+
+                var trans = new ServerTransport(_streams[index].Stream, Configuration);
+                _streams.RemoveAt(index); // pass stream ownership to ServerTransport
 
                 return trans;
             }
@@ -278,7 +366,7 @@ namespace Thrift.Transport.Server
 
         private class ServerTransport : TEndpointTransport
         {
-            private readonly NamedPipeServerStream PipeStream;
+            private NamedPipeServerStream PipeStream;
 
             public ServerTransport(NamedPipeServerStream stream, TConfiguration config)
                 : base(config)
@@ -296,7 +384,13 @@ namespace Thrift.Transport.Server
 
             public override void Close()
             {
-                PipeStream?.Dispose();
+                if (PipeStream != null)
+                {
+                    if (PipeStream.IsConnected)
+                        PipeStream.Disconnect();
+                    PipeStream.Dispose();
+                    PipeStream = null;
+                }
             }
 
             public override async ValueTask<int> ReadAsync(byte[] buffer, int offset, int length, CancellationToken cancellationToken)
@@ -340,19 +434,23 @@ namespace Thrift.Transport.Server
                 }
             }
 
-            public override Task FlushAsync(CancellationToken cancellationToken)
+            public override async Task FlushAsync(CancellationToken cancellationToken)
             {
-                cancellationToken.ThrowIfCancellationRequested();
-
+                await PipeStream.FlushAsync(cancellationToken);
                 ResetConsumedMessageSize();
-                return Task.CompletedTask;
             }
 
             protected override void Dispose(bool disposing)
             {
                 if (disposing)
                 {
-                    PipeStream?.Dispose();
+                    if (PipeStream != null)
+                    {
+                        if (PipeStream.IsConnected)
+                            PipeStream.Disconnect();
+                        PipeStream.Dispose();
+                        PipeStream = null;
+                    }
                 }
             }
         }

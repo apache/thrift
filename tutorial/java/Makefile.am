@@ -40,6 +40,7 @@ tutorialclient: all
 	$(ANT) $(ANT_FLAGS) tutorialclient
 
 EXTRA_DIST = \
+	build.properties \
 	build.xml \
 	src \
 	README.md

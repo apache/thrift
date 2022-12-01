@@ -40,6 +40,7 @@ class TestBase {
         if( ! expr) {
             throw ('Test "$info" failed at '+pos.methodName+' in '+pos.fileName+':'+pos.lineNumber);
         }
+        trace('Test "$info" - OK');
     }
 
 }

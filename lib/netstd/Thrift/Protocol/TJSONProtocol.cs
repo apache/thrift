@@ -401,6 +401,10 @@ namespace Thrift.Protocol
         {
             await WriteJsonBase64Async(bytes, cancellationToken);
         }
+        public override async Task WriteUuidAsync(Guid uuid, CancellationToken cancellationToken = default)
+        {
+            await WriteStringAsync(uuid.ToString("D"), cancellationToken);  // no curly braces
+        }
 
         /// <summary>
         ///     Read in a JSON string, unescaping as appropriate.. Skip Reading from the
@@ -690,7 +694,9 @@ namespace Thrift.Protocol
 
         public override async Task ReadMessageEndAsync(CancellationToken cancellationToken)
         {
+            cancellationToken.ThrowIfCancellationRequested();
             await ReadJsonArrayEndAsync(cancellationToken);
+            Transport.ResetConsumedMessageSize();
         }
 
         public override async ValueTask<TStruct> ReadStructBeginAsync(CancellationToken cancellationToken)
@@ -817,6 +823,11 @@ namespace Thrift.Protocol
             return await ReadJsonBase64Async(cancellationToken);
         }
 
+        public override async ValueTask<Guid> ReadUuidAsync(CancellationToken cancellationToken = default)
+        {
+            return new Guid( await ReadStringAsync(cancellationToken));
+        }
+
         // Return the minimum number of bytes a type will consume on the wire
         public override int GetMinSerializedSize(TType type)
         {
@@ -835,6 +846,7 @@ namespace Thrift.Protocol
                 case TType.Map: return 2;  // empty map
                 case TType.Set: return 2;  // empty set
                 case TType.List: return 2;  // empty list
+                case TType.Uuid: return 36;  // "E236974D-F0B0-4E05-8F29-0B455D41B1A1"
                 default: throw new TProtocolException(TProtocolException.NOT_IMPLEMENTED, "unrecognized type code");
             }
         }

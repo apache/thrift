@@ -33,4 +33,4 @@ EXTRA_DIST = \
 	fuzz.go \
 	fuzz_test.go \
 	go.mod \
-	go.sum 
+	go.sum

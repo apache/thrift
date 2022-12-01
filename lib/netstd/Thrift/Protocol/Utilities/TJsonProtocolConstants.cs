@@ -1,4 +1,4 @@
-﻿// Licensed to the Apache Software Foundation(ASF) under one
+// Licensed to the Apache Software Foundation(ASF) under one
 // or more contributor license agreements.See the NOTICE file
 // distributed with this work for additional information
 // regarding copyright ownership.The ASF licenses this file
@@ -56,6 +56,7 @@ namespace Thrift.Protocol.Utilities
             public static readonly byte[] NameMap = { (byte)'m', (byte)'a', (byte)'p' };
             public static readonly byte[] NameList = { (byte)'l', (byte)'s', (byte)'t' };
             public static readonly byte[] NameSet = { (byte)'s', (byte)'e', (byte)'t' };
+            public static readonly byte[] NameUuid = { (byte)'u', (byte)'i', (byte)'d' };
         }
     }
 }

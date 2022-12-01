@@ -22,17 +22,21 @@
 #
 # Docker Integration
 # see: build/docker/README.md
-# 
+#
 
 sudo: required
-dist: trusty
+# https://docs.travis-ci.com/user/reference/linux
+dist: focal
 language: cpp
 
 services:
   - docker
 
 install:
-  - if [[ `uname` == "Linux" ]]; then build/docker/refresh.sh; fi
+  # https://docs.travis-ci.com/user/common-build-problems/#build-times-out-because-no-output-was-received
+  # adding `travis_wait` because kerl building in the docker file takes >10 min for building erlang
+  # without printing to stdout, resulting in build failures
+  - if [[ `uname` == "Linux" ]]; then travis_wait 40 build/docker/refresh.sh; fi
 
 stages:
   - docker    # docker images
@@ -43,7 +47,7 @@ env:
     - SCRIPT="cmake.sh"
     - BUILD_ARG=""
     - BUILD_ENV="-e CC=gcc -e CXX=g++ -e THRIFT_CROSSTEST_CONCURRENCY=4"
-    - DISTRO=ubuntu-bionic
+    - DISTRO=ubuntu-focal
     - BUILD_LIBS="CPP C_GLIB JAVA PYTHON TESTING TUTORIALS"  # only meaningful for CMake builds
     - TRAVIS_BUILD_STAGE=test
     # DOCKER_REPO (this works for all builds as a source for docker images - you can override for fork builds in your Travis settings)
@@ -64,6 +68,11 @@ jobs:
       env:
         - JOB="Docker Build ubuntu-bionic 18.04 LTS"
         - DISTRO=ubuntu-bionic
+        - TRAVIS_BUILD_STAGE=docker
+    - script: true
+      env:
+        - JOB="Docker Build ubuntu-focal 20.04 LTS"
+        - DISTRO=ubuntu-focal
         - TRAVIS_BUILD_STAGE=docker
 
     # ========================= stage: thrift =======================
@@ -117,6 +126,12 @@ jobs:
       env:
         - JOB="Autotools (Ubuntu Xenial)"
         - DISTRO=ubuntu-xenial
+        - SCRIPT="autotools.sh"
+
+    - script: build/docker/run.sh
+      env:
+        - JOB="Autotools (Ubuntu Focal)"
+        - DISTRO=ubuntu-focal
         - SCRIPT="autotools.sh"
 
     # ------------------------- phase: cmake ------------------------

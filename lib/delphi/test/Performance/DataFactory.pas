@@ -26,17 +26,17 @@ uses
 type
   TestDataFactory = class
   strict protected
-    class function CreateSetField(const count : Integer) : IHashSet< IInsanity>;  static;
+    class function CreateSetField(const count : Integer) : IThriftHashSet< IInsanity>;  static;
     class function CreateInsanity(const count : Integer) : IInsanity; static;
     class function CreateBytesArray(const count : Integer) : TBytes; static;
     class function CreateXtructs(const count : Integer) : IThriftList< IXtruct>; static;
     class function CreateXtruct(const count : Integer) : IXtruct; static;
-    class function CreateListField(const count : Integer) : IThriftList< IThriftDictionary< IHashSet< Integer>, IThriftDictionary< Integer, IHashSet< IThriftList< IThriftDictionary< IInsanity, string>>>>>>; static;
+    class function CreateListField(const count : Integer) : IThriftList< IThriftDictionary< IThriftHashSet< Integer>, IThriftDictionary< Integer, IThriftHashSet< IThriftList< IThriftDictionary< IInsanity, string>>>>>>; static;
     class function CreateUserMap(const count : Integer) : IThriftDictionary< TNumberz, Int64>; static;
-    class function CreateListFieldData(const count : Integer) : IThriftDictionary< IHashSet< Integer>, IThriftDictionary< Integer, IHashSet< IThriftList< IThriftDictionary< IInsanity, string>>>>>; static;
-    class function CreateIntHashSet(const count : Integer) : IHashSet< Integer>; static;
-    class function CreateListFieldDataDict(const count : Integer) : IThriftDictionary< Integer, IHashSet< IThriftList< IThriftDictionary< IInsanity, string>>>>; static;
-    class function CreateListFieldDataDictValue(const count : Integer) :  IHashSet< IThriftList< IThriftDictionary< IInsanity, string>>>; static;
+    class function CreateListFieldData(const count : Integer) : IThriftDictionary< IThriftHashSet< Integer>, IThriftDictionary< Integer, IThriftHashSet< IThriftList< IThriftDictionary< IInsanity, string>>>>>; static;
+    class function CreateIntHashSet(const count : Integer) : IThriftHashSet< Integer>; static;
+    class function CreateListFieldDataDict(const count : Integer) : IThriftDictionary< Integer, IThriftHashSet< IThriftList< IThriftDictionary< IInsanity, string>>>>; static;
+    class function CreateListFieldDataDictValue(const count : Integer) :  IThriftHashSet< IThriftList< IThriftDictionary< IInsanity, string>>>; static;
     class function CreateListFieldDataDictValueList(const count : Integer) : IThriftList< IThriftDictionary< IInsanity, string>>; static;
     class function CreateListFieldDataDictValueListDict(const count : Integer) : IThriftDictionary< IInsanity, string>; static;
   public
@@ -58,10 +58,10 @@ begin
   result.String_field := Format('data level %d', [count]);
 end;
 
-class function TestDataFactory.CreateSetField(const count : Integer) : IHashSet< IInsanity>;
+class function TestDataFactory.CreateSetField(const count : Integer) : IThriftHashSet< IInsanity>;
 var i : Integer;
 begin
-  result := THashSetImpl< IInsanity>.Create;
+  result := TThriftHashSetImpl< IInsanity>.Create;
   for i := 0 to count-1 do begin
     result.Add(CreateInsanity(count));
   end;
@@ -103,46 +103,46 @@ begin
   result.Add(TNumberz.EIGHT, count);
 end;
 
-class function TestDataFactory.CreateListField(const count : Integer) : IThriftList< IThriftDictionary< IHashSet< Integer>, IThriftDictionary< Integer, IHashSet< IThriftList< IThriftDictionary< IInsanity, string>>>>>>;
+class function TestDataFactory.CreateListField(const count : Integer) : IThriftList< IThriftDictionary< IThriftHashSet< Integer>, IThriftDictionary< Integer, IThriftHashSet< IThriftList< IThriftDictionary< IInsanity, string>>>>>>;
 var i : Integer;
 begin
-  result := TThriftListImpl< IThriftDictionary< IHashSet< Integer>, IThriftDictionary< Integer, IHashSet< IThriftList< IThriftDictionary< IInsanity, string>>>>>>.Create;
+  result := TThriftListImpl< IThriftDictionary< IThriftHashSet< Integer>, IThriftDictionary< Integer, IThriftHashSet< IThriftList< IThriftDictionary< IInsanity, string>>>>>>.Create;
   for i := 0 to count-1 do begin
     result.Add(CreateListFieldData(count));
   end;
 end;
 
-class function TestDataFactory.CreateListFieldData(const count : Integer) : IThriftDictionary< IHashSet< Integer>, IThriftDictionary< Integer, IHashSet< IThriftList< IThriftDictionary< IInsanity, string>>>>>;
+class function TestDataFactory.CreateListFieldData(const count : Integer) : IThriftDictionary< IThriftHashSet< Integer>, IThriftDictionary< Integer, IThriftHashSet< IThriftList< IThriftDictionary< IInsanity, string>>>>>;
 var i : Integer;
 begin
-  result := TThriftDictionaryImpl< IHashSet< Integer>, IThriftDictionary< Integer, IHashSet< IThriftList< IThriftDictionary< IInsanity, string>>>>>.Create;
+  result := TThriftDictionaryImpl< IThriftHashSet< Integer>, IThriftDictionary< Integer, IThriftHashSet< IThriftList< IThriftDictionary< IInsanity, string>>>>>.Create;
   for i := 0 to count-1 do begin
     result.Add( CreateIntHashSet(count), CreateListFieldDataDict(count));
   end;
 end;
 
-class function TestDataFactory.CreateIntHashSet(const count : Integer) : IHashSet< Integer>;
+class function TestDataFactory.CreateIntHashSet(const count : Integer) : IThriftHashSet< Integer>;
 var i : Integer;
 begin
-  result := THashSetImpl< Integer>.Create;
+  result := TThriftHashSetImpl< Integer>.Create;
   for i := 0 to count-1 do begin
     result.Add(i);
   end;
 end;
 
-class function TestDataFactory.CreateListFieldDataDict(const count : Integer) : IThriftDictionary< Integer, IHashSet< IThriftList< IThriftDictionary< IInsanity, string>>>>;
+class function TestDataFactory.CreateListFieldDataDict(const count : Integer) : IThriftDictionary< Integer, IThriftHashSet< IThriftList< IThriftDictionary< IInsanity, string>>>>;
 var i : Integer;
 begin
-  result := TThriftDictionaryImpl< Integer, IHashSet< IThriftList< IThriftDictionary< IInsanity, string>>>>.Create;
+  result := TThriftDictionaryImpl< Integer, IThriftHashSet< IThriftList< IThriftDictionary< IInsanity, string>>>>.Create;
   for i := 0 to count-1 do begin
     result.Add(i, CreateListFieldDataDictValue(count));
   end;
 end;
 
-class function TestDataFactory.CreateListFieldDataDictValue(const count : Integer) :  IHashSet< IThriftList< IThriftDictionary< IInsanity, string>>>;
+class function TestDataFactory.CreateListFieldDataDictValue(const count : Integer) :  IThriftHashSet< IThriftList< IThriftDictionary< IInsanity, string>>>;
 var i : Integer;
 begin
-  result := THashSetImpl< IThriftList< IThriftDictionary< IInsanity, string>>>.Create;
+  result := TThriftHashSetImpl< IThriftList< IThriftDictionary< IInsanity, string>>>.Create;
   for i := 0 to count-1 do begin
     result.Add( CreateListFieldDataDictValueList(count));
   end;

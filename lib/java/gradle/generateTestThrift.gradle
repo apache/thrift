@@ -24,11 +24,14 @@ ext.genSrc = file("$buildDir/gen-java")
 ext.genBeanSrc = file("$buildDir/gen-javabean")
 ext.genReuseSrc = file("$buildDir/gen-javareuse")
 ext.genFullCamelSrc = file("$buildDir/gen-fullcamel")
+ext.genOptionTypeJdk8Src = file("$buildDir/gen-option-type-jdk8")
 ext.genUnsafeSrc = file("$buildDir/gen-unsafe")
+ext.genStructOrderTestASrc = file("$buildDir/resources/test/struct-order-test/a")
+ext.genStructOrderTestBSrc = file("$buildDir/resources/test/struct-order-test/b")
 
 // Add the generated code directories to the test source set
 sourceSets {
-    test.java.srcDirs genSrc, genBeanSrc, genReuseSrc, genFullCamelSrc, genUnsafeSrc
+    test.java.srcDirs genSrc, genBeanSrc, genReuseSrc, genFullCamelSrc, genUnsafeSrc, genOptionTypeJdk8Src
 }
 
 // ----------------------------------------------------------------------------
@@ -37,7 +40,10 @@ sourceSets {
 // A callable closure to make this easier
 ext.thriftCompile = { Task task, String thriftFileName, String generator = 'java', File outputDir = genSrc ->
     def thriftFile = file("$thriftRoot/test/$thriftFileName")
-    assert thriftFile.exists()
+    if (!thriftFile.exists()) {
+        thriftFile = file("$projectDir/src/test/resources/$thriftFileName")
+        assert thriftFile.exists(), "can't find $thriftFile"
+    }
 
     task.inputs.file thriftFile
     task.outputs.dir outputDir
@@ -82,7 +88,17 @@ task generateJava(group: 'Build') {
     thriftCompile(it, 'EnumContainersTest.thrift')
     thriftCompile(it, 'JavaBinaryDefault.thrift')
     thriftCompile(it, 'VoidMethExceptionsTest.thrift')
+    thriftCompile(it, 'AnnotationTest.thrift')
     thriftCompile(it, 'partial/thrift_test_schema.thrift')
+}
+
+task generateOptionalTypeJava(group: 'Build') {
+    description = 'Generate the thrift gen-option-type-jdk8 source'
+    generate.dependsOn it
+
+    ext.outputBuffer = new ByteArrayOutputStream()
+
+    thriftCompile(it, 'JavaOptionTypeJdk8Test.thrift', 'java:option_type=jdk8', genOptionTypeJdk8Src)
 }
 
 task generateBeanJava(group: 'Build') {
@@ -91,7 +107,7 @@ task generateBeanJava(group: 'Build') {
 
     ext.outputBuffer = new ByteArrayOutputStream()
 
-    thriftCompile(it, 'JavaBeansTest.thrift', 'java:beans,nocamel', genBeanSrc)
+    thriftCompile(it, 'JavaBeansTest.thrift', 'java:beans,nocamel,future_iface', genBeanSrc)
 }
 
 task generateReuseJava(group: 'Build') {
@@ -100,7 +116,7 @@ task generateReuseJava(group: 'Build') {
 
     ext.outputBuffer = new ByteArrayOutputStream()
 
-    thriftCompile(it, 'FullCamelTest.thrift', 'java:fullcamel', genFullCamelSrc)
+    thriftCompile(it, 'FullCamelTest.thrift', 'java:fullcamel,future_iface', genFullCamelSrc)
 }
 
 task generateFullCamelJava(group: 'Build') {
@@ -119,4 +135,23 @@ task generateUnsafeBinariesJava(group: 'Build') {
     ext.outputBuffer = new ByteArrayOutputStream()
 
     thriftCompile(it, 'UnsafeTypes.thrift', 'java:unsafe_binaries', genUnsafeSrc)
+}
+
+task generateWithAnnotationMetadata(group: 'Build') {
+    description = 'Generate with annotation enabled and add to the default source'
+    generate.dependsOn it
+
+    ext.outputBuffer = new ByteArrayOutputStream()
+
+    thriftCompile(it, 'JavaAnnotationTest.thrift', 'java:annotations_as_metadata', genSrc)
+}
+
+task generateJavaStructOrderTestJava(group: 'Build') {
+    description = 'Generate structs defined in different order and add to build dir so we can compare them'
+    generate.dependsOn it
+
+    ext.outputBuffer = new ByteArrayOutputStream()
+
+    thriftCompile(it, 'JavaStructOrderA.thrift', 'java', genStructOrderTestASrc)
+    thriftCompile(it, 'JavaStructOrderB.thrift', 'java', genStructOrderTestBSrc)
 }

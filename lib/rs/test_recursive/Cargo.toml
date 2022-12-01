@@ -3,7 +3,7 @@ name = "thrift_4098_custom_rust_namespace_support"
 description = "Test namespace support in generated thrift files using recursive Make generation"
 version = "0.1.0"
 authors = ["Allen George <allengeorge@apache.org>"]
-edition = "2018"
+edition = "2021"
 
 [dependencies]
 thrift = { path = "../" }

@@ -28,7 +28,7 @@ endif()
 
 # PACKAGE_VERSION is used by cpack scripts currently
 # Both thrift_VERSION and PACKAGE_VERSION should be the same for now
-set(thrift_VERSION "0.17.0")
+set(thrift_VERSION "0.18.0")
 set(PACKAGE_VERSION ${thrift_VERSION})
 
 project("thrift" VERSION ${PACKAGE_VERSION})
@@ -111,6 +111,10 @@ endif()
 
 if(BUILD_JAVASCRIPT)
     add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/lib/js)
+endif()
+
+if(BUILD_KOTLIN)
+    add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/lib/kotlin)
 endif()
 
 if(BUILD_NODEJS)

@@ -73,6 +73,7 @@ public:
     events_ = false;
     xmldoc_ = false;
     async_ = false;
+    com_types_ = false;
     for( iter = parsed_options.begin(); iter != parsed_options.end(); ++iter) {
       if( iter->first.compare("ansistr_binary") == 0) {
         ansistr_binary_ = true;
@@ -86,9 +87,15 @@ public:
         xmldoc_ = true;
       } else if( iter->first.compare("async") == 0) {
         async_ = true;
+      } else if( iter->first.compare("com_types") == 0) {
+        com_types_ = true;
       } else {
         throw "unknown option delphi:" + iter->first;
       }
+    }
+
+    if(com_types_ && ansistr_binary_) {
+      throw "com_types and ansistr_binary are mutually exclusive";
     }
 
     out_dir_base_ = "gen-delphi";
@@ -417,6 +424,7 @@ private:
   bool events_;
   bool xmldoc_;
   bool async_;
+  bool com_types_;
   void indent_up_impl() { ++indent_impl_; };
   void indent_down_impl() { --indent_impl_; };
   std::string indent_impl() {
@@ -804,6 +812,9 @@ void t_delphi_generator::close_generator() {
   generate_delphi_doc(f_all, program_);
   f_all << "unit " << unitname << ";" << endl << endl;
   f_all << "{$WARN SYMBOL_DEPRECATED OFF}" << endl << endl;
+  if(com_types_) {
+    f_all << "{$MINENUMSIZE 4}" << endl << endl;
+  }
   f_all << "interface" << endl << endl;
   f_all << "uses" << endl;
 
@@ -831,18 +842,13 @@ void t_delphi_generator::close_generator() {
 
   f_all << "const" << endl;
   indent_up();
-  indent(f_all) << "c" << tmp_unit
-                << "_Option_AnsiStr_Binary = " << (ansistr_binary_ ? "True" : "False") << ";"
-                << endl;
-  indent(f_all) << "c" << tmp_unit
-                << "_Option_Register_Types = " << (register_types_ ? "True" : "False") << ";"
-                << endl;
-  indent(f_all) << "c" << tmp_unit
-                << "_Option_ConstPrefix    = " << (constprefix_ ? "True" : "False") << ";" << endl;
-  indent(f_all) << "c" << tmp_unit << "_Option_Events         = " << (events_ ? "True" : "False")
-                << ";" << endl;
-  indent(f_all) << "c" << tmp_unit << "_Option_XmlDoc         = " << (xmldoc_ ? "True" : "False")
-                << ";" << endl;
+  indent(f_all) << "c" << tmp_unit << "_Option_AnsiStr_Binary = " << (ansistr_binary_ ? "True" : "False") << ";" << endl;
+  indent(f_all) << "c" << tmp_unit << "_Option_Register_Types = " << (register_types_ ? "True" : "False") << ";" << endl;
+  indent(f_all) << "c" << tmp_unit << "_Option_ConstPrefix    = " << (constprefix_ ? "True" : "False") << ";" << endl;
+  indent(f_all) << "c" << tmp_unit << "_Option_Events         = " << (events_ ? "True" : "False") << ";" << endl;
+  indent(f_all) << "c" << tmp_unit << "_Option_XmlDoc         = " << (xmldoc_ ? "True" : "False") << ";" << endl;
+  indent(f_all) << "c" << tmp_unit << "_Option_Async          = " << (async_ ? "True" : "False") << ";" << endl;
+  indent(f_all) << "c" << tmp_unit << "_Option_COM_types      = " << (com_types_ ? "True" : "False") << ";" << endl;
   indent_down();
 
   f_all << endl;
@@ -1018,6 +1024,7 @@ void t_delphi_generator::init_known_types_list() {
   // known base types
   types_known[type_name(g_type_string)] = 1;
   types_known[type_name(g_type_binary)] = 1;
+  types_known[type_name(g_type_uuid)] = 1;
   types_known[type_name(g_type_bool)] = 1;
   types_known[type_name(g_type_i8)] = 1;
   types_known[type_name(g_type_i16)] = 1;
@@ -1391,6 +1398,9 @@ string t_delphi_generator::render_const_value(ostream& vars,
     switch (tbase) {
     case t_base_type::TYPE_STRING:
       render << "'" << get_escaped_string(value) << "'";
+      break;
+    case t_base_type::TYPE_UUID:
+      render << "['{" << value->get_uuid() << "}']";
       break;
     case t_base_type::TYPE_BOOL:
       render << ((value->get_integer() > 0) ? "True" : "False");
@@ -2697,11 +2707,14 @@ void t_delphi_generator::generate_deserialize_field(ostream& out,
           if (ansistr_binary_) {
             out << "ReadAnsiString();";
           } else {
-            out << "ReadBinary();";
+            out << (com_types_ ? "ReadBinaryCOM();" :  "ReadBinary();");
           }
         } else {
           out << "ReadString();";
         }
+        break;
+      case t_base_type::TYPE_UUID:
+        out << "ReadUuid();";
         break;
       case t_base_type::TYPE_BOOL:
         out << "ReadBool();";
@@ -2903,6 +2916,9 @@ void t_delphi_generator::generate_serialize_field(ostream& out,
           out << "WriteString(";
         }
         out << name << ");";
+        break;
+      case t_base_type::TYPE_UUID:
+        out << "WriteUuid(" << name << ");";
         break;
       case t_base_type::TYPE_BOOL:
         out << "WriteBool(" << name << ");";
@@ -3138,9 +3154,9 @@ string t_delphi_generator::type_name(t_type* ttype,
   } else if (ttype->is_set()) {
     t_set* tset = (t_set*)ttype;
     if (b_cls) {
-      typ_nm = "THashSetImpl";
+      typ_nm = "TThriftHashSetImpl";
     } else {
-      typ_nm = "IHashSet";
+      typ_nm = "IThriftHashSet";
     }
     return typ_nm + "<" + type_name(tset->get_elem_type()) + ">";
   } else if (ttype->is_list()) {
@@ -3189,6 +3205,7 @@ string t_delphi_generator::input_arg_prefix(t_type* ttype) {
 
     // these should be const'ed for optimal performamce
     case t_base_type::TYPE_STRING: // refcounted pointer
+    case t_base_type::TYPE_UUID:   // refcounted pointer
     case t_base_type::TYPE_I64:    // larger than 32 bit
     case t_base_type::TYPE_DOUBLE: // larger than 32 bit
       return "const ";
@@ -3236,11 +3253,13 @@ string t_delphi_generator::base_type_name(t_base_type* tbase) {
       if (ansistr_binary_) {
         return "System.AnsiString";
       } else {
-        return "SysUtils.TBytes";
+        return com_types_ ? "IThriftBytes" : "SysUtils.TBytes";
       }
     } else {
-      return "System.string";
+      return com_types_ ? "System.WideString" : "System.string";
     }
+  case t_base_type::TYPE_UUID:
+    return "System.TGuid";
   case t_base_type::TYPE_BOOL:
     return "System.Boolean";
   case t_base_type::TYPE_I8:
@@ -3310,11 +3329,11 @@ string t_delphi_generator::function_signature(t_function* tfunction,
   // deprecated method? only at intf decl!
   if( full_cls == "") {
     auto iter = tfunction->annotations_.find("deprecated");
-    if( tfunction->annotations_.end() != iter) {
+    if( tfunction->annotations_.end() != iter && !iter->second.empty()) {
       signature += " deprecated";
       // empty annotation values end up with "1" somewhere, ignore these as well
-      if ((iter->second.length() > 0) && (iter->second != "1")) {
-        signature += " " + make_pascal_string_literal(iter->second);
+      if ((iter->second.back().length() > 0) && (iter->second.back() != "1")) {
+        signature += " " + make_pascal_string_literal(iter->second.back());
       }
       signature += ";";
     }
@@ -3407,6 +3426,8 @@ string t_delphi_generator::type_to_enum(t_type* type) {
       throw "NO T_VOID CONSTRUCT";
     case t_base_type::TYPE_STRING:
       return "TType.String_";
+    case t_base_type::TYPE_UUID:
+      return "TType.Uuid";
     case t_base_type::TYPE_BOOL:
       return "TType.Bool_";
     case t_base_type::TYPE_I8:
@@ -3455,6 +3476,8 @@ string t_delphi_generator::empty_value(t_type* type) {
       } else {
         return "''";
       }
+    case t_base_type::TYPE_UUID:
+      return "System.TGuid.Empty";
     case t_base_type::TYPE_BOOL:
       return "False";
     case t_base_type::TYPE_I8:
@@ -4059,6 +4082,9 @@ void t_delphi_generator::generate_delphi_struct_tostring_impl(ostream& out,
                        << type_name(ttype, false, true, false, false) 
                        << ">.ToString( System.Ord( Self." 
                        << prop_name((*f_iter), is_exception) << ")));" << endl;
+    } else if (ttype->is_uuid()) {
+      indent_impl(out) << tmp_sb << ".Append( GUIDToString(Self." << prop_name((*f_iter), is_exception) << "));"
+                       << endl;
     } else {
       indent_impl(out) << tmp_sb << ".Append( Self." << prop_name((*f_iter), is_exception) << ");"
                        << endl;
@@ -4114,4 +4140,5 @@ THRIFT_REGISTER_GENERATOR(
     "    constprefix:     Name TConstants classes after IDL to reduce ambiguities\n"
     "    events:          Enable and use processing events in the generated code.\n"
     "    xmldoc:          Enable XMLDoc comments for Help Insight etc.\n"
-    "    async:           Generate IAsync interface to use Parallel Programming Library (XE7+ only).\n")
+    "    async:           Generate IAsync interface to use Parallel Programming Library (XE7+ only).\n"
+    "    com_types:       Use COM-compatible data types (e.g. WideString).\n")

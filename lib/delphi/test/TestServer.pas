@@ -67,11 +67,12 @@ type
         function testI64(const thing: Int64): Int64;
         function testDouble(const thing: Double): Double;
         function testBinary(const thing: TBytes): TBytes;
+        function testUuid(const thing: System.TGuid): System.TGuid;
         function testStruct(const thing: IXtruct): IXtruct;
         function testNest(const thing: IXtruct2): IXtruct2;
         function testMap(const thing: IThriftDictionary<Integer, Integer>): IThriftDictionary<Integer, Integer>;
         function testStringMap(const thing: IThriftDictionary<string, string>): IThriftDictionary<string, string>;
-        function testSet(const thing: IHashSet<Integer>): IHashSet<Integer>;
+        function testSet(const thing: IThriftHashSet<Integer>): IThriftHashSet<Integer>;
         function testList(const thing: IThriftList<Integer>): IThriftList<Integer>;
         function testEnum(thing: TNumberz): TNumberz;
         function testTypedef(const thing: Int64): Int64;
@@ -147,6 +148,12 @@ end;
 function TTestServer.TTestHandlerImpl.testBinary(const thing: TBytes): TBytes;
 begin
   Console.WriteLine('testBinary('+IntToStr(Length(thing)) + ' bytes)');
+  Result := thing;
+end;
+
+function TTestServer.TTestHandlerImpl.testUuid(const thing: System.TGuid): System.TGuid;
+begin
+  Console.WriteLine('testUuid('+GUIDToString(thing)+')');
   Result := thing;
 end;
 
@@ -320,7 +327,7 @@ begin
   Console.WriteLine('testOneway finished');
 end;
 
-function TTestServer.TTestHandlerImpl.testSet( const thing: IHashSet<Integer>):IHashSet<Integer>;
+function TTestServer.TTestHandlerImpl.testSet( const thing: IThriftHashSet<Integer>):IThriftHashSet<Integer>;
 begin
   Console.Write('testSet(');
   if thing <> nil then Console.Write(thing.ToString);

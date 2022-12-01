@@ -16,7 +16,8 @@
  specific language governing permissions and limitations
  under the License.
 -->
-<project name="tutorial" default="test" basedir=".">
+<project name="tutorial" default="test" basedir="."
+  xmlns:artifact="antlib:org.apache.maven.artifact.ant">
 
   <description>Thrift JavaScript Tutorial</description>
 
@@ -24,11 +25,13 @@
   <property name="javasrc" location="../java/src" />
   <property name="gen" location="../java/gen-java" />
   <property name="build" location="build" />
+  <property file="${basedir}/build.properties"/>
 
   <!-- the root directory, where you unpack thrift distibution (e.g. thrift-0.x.x.tar.gz) -->
   <property name="thrift.dir" location="../../" />
   <!-- JavaScript tutorial depends on the java tutorial thrift handler and server infrastructure -->
   <property name="thrift.java.dir" location="${thrift.dir}/lib/java" />
+  <property name="build.tools.dir" location="${thrift.java.dir}/build/tools/"/>
 
   <path id="libs.classpath">
     <fileset dir="${thrift.java.dir}/build/libs">
@@ -37,7 +40,7 @@
       <exclude name="libthrift*javadoc.jar" />
       <exclude name="libthrift*sources.jar" />
     </fileset>
-    <fileset dir="${thrift.java.dir}/build/deps">
+    <fileset dir="${build}/lib">
       <include name="*.jar" />
     </fileset>
   </path>
@@ -50,9 +53,10 @@
   <target name="init">
     <tstamp />
     <mkdir dir="${build}"/>
+    <mkdir dir="${build}/lib"/>
   </target>
 
-  <target name="compile" depends="init">
+  <target name="compile" depends="init, resolve">
     <javac compiler="modern" includeantruntime="false" srcdir="${gen}" destdir="${build}" classpathref="libs.classpath" />
     <javac compiler="modern" includeantruntime="false" srcdir="${javasrc}" destdir="${build}" classpathref="build.classpath">
       <exclude name="JavaClient.java"/>
@@ -87,6 +91,37 @@
     <delete dir="${build}" />
     <delete dir="gen-js"/>
     <delete file="tutorial-js.jar" />
+  </target>
+
+  <target name="mvn.ant.tasks.download" depends="init, mvn.ant.tasks.check" unless="mvn.ant.tasks.found">
+    <get src="${mvn.ant.task.url}/${mvn.ant.task.jar}" dest="${build.tools.dir}/${mvn.ant.task.jar}" usetimestamp="true"/>
+  </target>
+
+  <target name="mvn.ant.tasks.check">
+    <condition property="mvn.ant.tasks.found">
+      <typefound uri="antlib:org.apache.maven.artifact.ant" name="artifact"/>
+    </condition>
+  </target>
+
+  <target name="resolve" depends="mvn.ant.tasks.download" unless="mvn.finished">
+    <typedef uri="antlib:org.apache.maven.artifact.ant" classpath="${thrift.java.dir}/build/tools/${mvn.ant.task.jar}"/>
+
+    <artifact:dependencies filesetId="tutorial.dependency.jars">
+      <dependency groupId="org.apache.httpcomponents" artifactId="httpclient" version="4.0.1"/>
+      <dependency groupId="com.googlecode.jslint4java" artifactId="jslint4java-ant" version="1.4.6"/>
+      <dependency groupId="eu.medsea.mimeutil" artifactId="mime-util" version="2.1.3"/>
+      <dependency groupId="javax.annotation" artifactId="javax.annotation-api" version="1.3.2"/>
+      <dependency groupId="org.slf4j" artifactId="slf4j-api" version="1.7.5"/>
+      <remoteRepository url="${mvn.repo}"/>
+    </artifact:dependencies>
+
+    <!-- Copy the dependencies to the build/lib dir -->
+    <copy todir="${build}/lib">
+      <fileset refid="tutorial.dependency.jars"/>
+      <mapper type="flatten"/>
+    </copy>
+
+    <property name="mvn.finished" value="true"/>
   </target>
 
 </project>

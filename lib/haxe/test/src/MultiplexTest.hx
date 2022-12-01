@@ -19,6 +19,8 @@
 
 package;
 
+#if ! (flash || html5 || js)
+
 import haxe.Int64;
 import haxe.Int32;
 
@@ -42,8 +44,7 @@ import BenchmarkServiceImpl;
 import BenchmarkServiceProcessor;
 import Error;
 
-
-class BenchmarkServiceHandler implements BenchmarkService
+class BenchmarkServiceHandler implements BenchmarkService_service
 {
     public function new() {
     }
@@ -65,7 +66,7 @@ class BenchmarkServiceHandler implements BenchmarkService
 }
 
 
-class AggrServiceHandler implements Aggr
+class AggrServiceHandler implements Aggr_service
 {
     private var values : List<haxe.Int32> = new List<haxe.Int32>();
 
@@ -91,7 +92,7 @@ class MultiplexTest extends TestBase {
     private inline static var NAME_AGGR             : String  = "Aggr";
 
 
-    public static override function Run(server : Bool) : Void {
+    public static function Run(server : Bool) : Void {
         if ( server) {
             RunMultiplexServer();
         } else {
@@ -102,13 +103,13 @@ class MultiplexTest extends TestBase {
 
 
     // run the multiplex server
-    public static override function RunMultiplexServer() : Void  {
+    public static function RunMultiplexServer() : Void  {
        try
        {
-            var benchHandler : BenchmarkService = new BenchmarkServiceHandler();
+            var benchHandler : BenchmarkService_service = new BenchmarkServiceHandler();
             var benchProcessor : TProcessor = new BenchmarkServiceProcessor( benchHandler);
 
-            var aggrHandler : Aggr = new AggrServiceHandler();
+            var aggrHandler : Aggr_service = new AggrServiceHandler();
             var aggrProcessor : TProcessor = new AggrProcessor( aggrHandler);
 
             var multiplex : TMultiplexedProcessor = new TMultiplexedProcessor();
@@ -137,7 +138,7 @@ class MultiplexTest extends TestBase {
 
 
     // run multiplex client against multiplex server
-    public static override function RunMultiplexClient() : Void  {
+    public static function RunMultiplexClient() : Void  {
         try
         {
             var trans : TTransport;
@@ -187,7 +188,7 @@ class MultiplexTest extends TestBase {
 
 
     // run non-multiplex client against multiplex server to test default fallback
-    public static override function RunDefaultClient() : Void  {
+    public static function RunDefaultClient() : Void  {
         try
         {
             var trans : TTransport;
@@ -221,4 +222,5 @@ class MultiplexTest extends TestBase {
 
 }
 
+#end
 

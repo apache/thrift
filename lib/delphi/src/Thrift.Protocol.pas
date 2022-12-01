@@ -49,7 +49,8 @@ type
     Struct = 12,
     Map = 13,
     Set_ = 14,
-    List = 15
+    List = 15,
+    Uuid = 16
   );
 
   TMessageType = (
@@ -62,7 +63,7 @@ type
 const
   VALID_TTYPES = [
     TType.Stop, TType.Void,
-    TType.Bool_, TType.Byte_, TType.Double_, TType.I16, TType.I32, TType.I64, TType.String_,
+    TType.Bool_, TType.Byte_, TType.Double_, TType.I16, TType.I32, TType.I64, TType.String_, TType.Uuid,
     TType.Struct, TType.Map, TType.Set_, TType.List
   ];
 
@@ -193,8 +194,10 @@ type
     destructor Destroy; override;
   end;
 
+  IThriftBytes = interface; // forward
+
   IProtocol = interface
-    ['{F0040D99-937F-400D-9932-AF04F665899F}']
+    ['{6067A28E-15BF-4C9D-9A6F-D991BB3DCB85}']
     function GetTransport: ITransport;
     procedure WriteMessageBegin( const msg: TThriftMessage);
     procedure WriteMessageEnd;
@@ -217,7 +220,9 @@ type
     procedure WriteDouble( const d: Double);
     procedure WriteString( const s: string );
     procedure WriteAnsiString( const s: AnsiString);
-    procedure WriteBinary( const b: TBytes);
+    procedure WriteBinary( const b: TBytes); overload;
+    procedure WriteBinary( const b: IThriftBytes); overload;
+    procedure WriteUuid( const uuid: TGuid);
 
     function ReadMessageBegin: TThriftMessage;
     procedure ReadMessageEnd();
@@ -237,7 +242,9 @@ type
     function ReadI32: Integer;
     function ReadI64: Int64;
     function ReadDouble:Double;
-    function ReadBinary: TBytes;
+    function ReadBinary: TBytes;  // IMPORTANT: this is NOT safe across module boundaries
+    function ReadBinaryCOM : IThriftBytes;
+    function ReadUuid: TGuid;
     function ReadString: string;
     function ReadAnsiString: AnsiString;
 
@@ -292,7 +299,8 @@ type
     procedure WriteDouble( const d: Double); virtual; abstract;
     procedure WriteString( const s: string ); virtual;
     procedure WriteAnsiString( const s: AnsiString); virtual;
-    procedure WriteBinary( const b: TBytes); virtual; abstract;
+    procedure WriteBinary( const b: TBytes); overload; virtual; abstract;
+    procedure WriteUuid( const b: TGuid); virtual; abstract;
 
     function ReadMessageBegin: TThriftMessage; virtual; abstract;
     procedure ReadMessageEnd(); virtual; abstract;
@@ -313,8 +321,13 @@ type
     function ReadI64: Int64; virtual; abstract;
     function ReadDouble:Double; virtual; abstract;
     function ReadBinary: TBytes; virtual; abstract;
+    function ReadUuid: TGuid; virtual; abstract;
     function ReadString: string; virtual;
     function ReadAnsiString: AnsiString; virtual;
+
+    // provide generic implementation for all derived classes
+    procedure WriteBinary( const bytes : IThriftBytes); overload; virtual;
+    function ReadBinaryCOM : IThriftBytes;  virtual;
 
     property  Transport: ITransport read GetTransport;
 
@@ -324,8 +337,38 @@ type
 
   IBase = interface( ISupportsToString)
     ['{AFF6CECA-5200-4540-950E-9B89E0C1C00C}']
-    procedure Read( const iprot: IProtocol);
-    procedure Write( const iprot: IProtocol);
+    procedure Read( const prot: IProtocol);
+    procedure Write( const prot: IProtocol);
+  end;
+
+
+  IThriftBytes = interface( ISupportsToString)
+    ['{CDBEF7E8-BEF2-4A0A-983A-F334E3FF0016}']
+    function  GetCount : Integer;
+    procedure SetCount(const value : Integer);
+
+    // WARNING: This returns a direct pointer to the underlying data structure
+    function  QueryRawDataPtr : Pointer;
+
+    property Count : Integer read GetCount write SetCount;
+  end;
+
+
+  TThriftBytesImpl = class( TInterfacedObject, IThriftBytes, ISupportsToString)
+  strict private
+    FData : TBytes;
+
+  strict protected
+    function  GetCount : Integer;
+    procedure SetCount(const value : Integer);
+    function  QueryRawDataPtr : Pointer;
+
+  public
+    constructor Create; overload;
+    constructor Create( const bytes : TBytes); overload;
+    constructor Create( var bytes : TBytes; const aTakeOwnership : Boolean = FALSE); overload;
+
+    function ToString : string; override;
   end;
 
 
@@ -377,6 +420,7 @@ type
     procedure WriteI64( const i64: Int64); override;
     procedure WriteDouble( const d: Double); override;
     procedure WriteBinary( const b: TBytes); override;
+    procedure WriteUuid( const uuid: TGuid); override;
 
     function ReadMessageBegin: TThriftMessage; override;
     procedure ReadMessageEnd(); override;
@@ -397,6 +441,7 @@ type
     function ReadI64: Int64; override;
     function ReadDouble:Double; override;
     function ReadBinary: TBytes; override;
+    function ReadUuid: TGuid; override;
 
   end;
 
@@ -441,6 +486,7 @@ type
     procedure WriteString( const s: string ); override;
     procedure WriteAnsiString( const s: AnsiString); override;
     procedure WriteBinary( const b: TBytes); override;
+    procedure WriteUuid( const uuid: TGuid); override;
 
     function ReadMessageBegin: TThriftMessage; override;
     procedure ReadMessageEnd(); override;
@@ -461,6 +507,7 @@ type
     function ReadI64: Int64; override;
     function ReadDouble:Double; override;
     function ReadBinary: TBytes; override;
+    function ReadUuid: TGuid; override;
     function ReadString: string; override;
     function ReadAnsiString: AnsiString; override;
   end;
@@ -653,6 +700,95 @@ begin
   FTrans.CheckReadBytesAvailable( value.Count * nPairSize);
 end;
 
+
+procedure TProtocolImpl.WriteBinary( const bytes : IThriftBytes);
+var tmp : TBytes;
+begin
+  SetLength( tmp, bytes.Count);
+  if Length(tmp) > 0
+  then Move( bytes.QueryRawDataPtr^, tmp[0], Length(tmp));
+  WriteBinary( tmp);
+end;
+
+
+function TProtocolImpl.ReadBinaryCOM : IThriftBytes;
+var bytes : TBytes;
+begin
+  bytes := ReadBinary;
+  result := TThriftBytesImpl.Create(bytes,TRUE);
+end;
+
+
+{ TThriftBytesImpl }
+
+constructor TThriftBytesImpl.Create;
+begin
+  inherited Create;
+  ASSERT( Length(FData) = 0);
+end;
+
+
+constructor TThriftBytesImpl.Create( const bytes : TBytes);
+begin
+  FData := bytes; // copies the data
+end;
+
+
+constructor TThriftBytesImpl.Create( var bytes : TBytes; const aTakeOwnership : Boolean);
+
+  procedure SwapPointer( var one, two);
+  var
+    pOne : Pointer absolute one;
+    pTwo : Pointer absolute two;
+    pTmp : Pointer;
+  begin
+    pTmp := pOne;
+    pOne := pTwo;
+    pTwo := pTmp;
+  end;
+
+begin
+  inherited Create;
+  ASSERT( Length(FData) = 0);
+
+  if aTakeOwnership
+  then SwapPointer( FData, bytes)
+  else FData := bytes; // copies the data
+end;
+
+
+function TThriftBytesImpl.ToString : string;
+var sb : TThriftStringBuilder;
+begin
+  sb := TThriftStringBuilder.Create();
+  try
+    sb.Append('Bin: ');
+    sb.Append( FData);
+
+    result := sb.ToString;
+  finally
+    sb.Free;
+  end;
+end;
+
+
+function TThriftBytesImpl.GetCount : Integer;
+begin
+  result := Length(FData);
+end;
+
+
+procedure TThriftBytesImpl.SetCount(const value : Integer);
+begin
+  SetLength( FData, value);
+end;
+
+
+function TThriftBytesImpl.QueryRawDataPtr : Pointer;
+begin
+  result := FData;
+end;
+
 { TProtocolUtil }
 
 class procedure TProtocolUtil.Skip( prot: IProtocol; type_: TType);
@@ -673,6 +809,7 @@ begin
     TType.I64     :  prot.ReadI64();
     TType.Double_ :  prot.ReadDouble();
     TType.String_ :  prot.ReadBinary();// Don't try to decode the string, just skip it.
+    TType.Uuid    :  prot.ReadUuid();
 
     // structured types
     TType.Struct :  begin
@@ -745,6 +882,14 @@ begin
   SetLength( buf, size);
   FTrans.ReadAll( buf, 0, size);
   Result := buf;
+end;
+
+function TBinaryProtocolImpl.ReadUuid : TGuid;
+var network : TGuid;  // in network order (Big Endian)
+begin
+  ASSERT( SizeOf(result) = 16);
+  FTrans.ReadAll( @network, SizeOf(network), 0, SizeOf(network));
+  result := GuidUtils.SwapByteOrder(network);
 end;
 
 function TBinaryProtocolImpl.ReadBool: Boolean;
@@ -915,6 +1060,14 @@ begin
   if iLen > 0 then FTrans.Write(b, 0, iLen);
 end;
 
+procedure TBinaryProtocolImpl.WriteUuid( const uuid: TGuid);
+var network : TGuid;  // in network order (Big Endian)
+begin
+  ASSERT( SizeOf(uuid) = 16);
+  network := GuidUtils.SwapByteOrder(uuid);
+  Transport.Write( @network, 0, SizeOf(network));
+end;
+
 procedure TBinaryProtocolImpl.WriteBool(b: Boolean);
 begin
   if b then begin
@@ -1064,6 +1217,7 @@ begin
     TType.Map:     result := SizeOf(Int32);  // element count
     TType.Set_:    result := SizeOf(Int32);  // element count
     TType.List:    result := SizeOf(Int32);  // element count
+    TType.Uuid:    result := SizeOf(TGuid);
   else
     raise TTransportExceptionBadArgs.Create('Unhandled type code');
   end;
@@ -1310,6 +1464,12 @@ begin
 end;
 
 
+procedure TProtocolDecorator.WriteUuid( const uuid: TGuid);
+begin
+  FWrappedProtocol.WriteUuid( uuid);
+end;
+
+
 function TProtocolDecorator.ReadMessageBegin: TThriftMessage;
 begin
   result := FWrappedProtocol.ReadMessageBegin;
@@ -1421,6 +1581,12 @@ end;
 function TProtocolDecorator.ReadBinary: TBytes;
 begin
   result := FWrappedProtocol.ReadBinary;
+end;
+
+
+function TProtocolDecorator.ReadUuid: TGuid;
+begin
+  result := FWrappedProtocol.ReadUuid;
 end;
 
 

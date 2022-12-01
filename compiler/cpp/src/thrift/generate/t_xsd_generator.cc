@@ -132,21 +132,8 @@ void t_xsd_generator::close_generator() {
 void t_xsd_generator::generate_typedef(t_typedef* ttypedef) {
   indent(s_xsd_types_) << "<xsd:simpleType name=\"" << ttypedef->get_name() << "\">" << endl;
   indent_up();
-  if (ttypedef->get_type()->is_string() && ((t_base_type*)ttypedef->get_type())->is_string_enum()) {
-    indent(s_xsd_types_) << "<xsd:restriction base=\"" << type_name(ttypedef->get_type()) << "\">"
-                         << endl;
-    indent_up();
-    const vector<string>& values = ((t_base_type*)ttypedef->get_type())->get_string_enum_vals();
-    vector<string>::const_iterator v_iter;
-    for (v_iter = values.begin(); v_iter != values.end(); ++v_iter) {
-      indent(s_xsd_types_) << "<xsd:enumeration value=\"" << (*v_iter) << "\" />" << endl;
-    }
-    indent_down();
-    indent(s_xsd_types_) << "</xsd:restriction>" << endl;
-  } else {
-    indent(s_xsd_types_) << "<xsd:restriction base=\"" << type_name(ttypedef->get_type()) << "\" />"
-                         << endl;
-  }
+  indent(s_xsd_types_) << "<xsd:restriction base=\"" << type_name(ttypedef->get_type()) << "\" />"
+                       << endl;
   indent_down();
   indent(s_xsd_types_) << "</xsd:simpleType>" << endl << endl;
 }
@@ -275,10 +262,10 @@ void t_xsd_generator::generate_service(t_service* tservice) {
   f_xsd_.open(f_xsd_name.c_str());
 
   string ns = program_->get_namespace("xsd");
-  const std::map<std::string, std::string> annot = program_->get_namespace_annotations("xsd");
-  const std::map<std::string, std::string>::const_iterator uri = annot.find("uri");
-  if (uri != annot.end()) {
-    ns = uri->second;
+  const std::map<std::string, std::vector<std::string>> annot = program_->get_namespace_annotations("xsd");
+  const std::map<std::string, std::vector<std::string>>::const_iterator uri = annot.find("uri");
+  if (uri != annot.end() && !uri->second.empty()) {
+    ns = uri->second.back();
   }
   if (ns.size() > 0) {
     ns = " targetNamespace=\"" + ns + "\" xmlns=\"" + ns + "\" "

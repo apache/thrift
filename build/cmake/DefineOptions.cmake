@@ -99,10 +99,10 @@ if(ANDROID)
     CMAKE_DEPENDENT_OPTION(BUILD_JAVA "Build Java library" ON
                            "BUILD_LIBRARIES;WITH_JAVA;GRADLE_FOUND" OFF)
 else()
-    find_package(Gradlew QUIET)
+    find_package(Gradle QUIET)
     find_package(Java QUIET)
     CMAKE_DEPENDENT_OPTION(BUILD_JAVA "Build Java library" ON
-                           "BUILD_LIBRARIES;WITH_JAVA;JAVA_FOUND;GRADLEW_FOUND" OFF)
+                           "BUILD_LIBRARIES;WITH_JAVA;JAVA_FOUND;GRADLE_FOUND" OFF)
 endif()
 
 # Javascript
@@ -197,7 +197,7 @@ if(ANDROID)
     MESSAGE_DEP(GRADLE_FOUND "Gradle missing")
 else()
     MESSAGE_DEP(JAVA_FOUND "Java Runtime missing")
-    MESSAGE_DEP(GRADLEW_FOUND "Gradle Wrapper missing")
+    MESSAGE_DEP(GRADLE_FOUND "Gradle missing")
 endif()
 message(STATUS "  Build Javascript library:                   ${BUILD_JAVASCRIPT}")
 MESSAGE_DEP(WITH_JAVASCRIPT "Disabled by WITH_JAVASCRIPT=OFF")

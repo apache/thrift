@@ -28,8 +28,8 @@ ENV DEBIAN_FRONTEND noninteractive
 ### Add apt repos
 
 RUN apt-get update && \
-    apt-get dist-upgrade -y && \
-    apt-get install -y --no-install-recommends \
+      apt-get dist-upgrade -y && \
+      apt-get install -y --no-install-recommends \
       apt \
       apt-transport-https \
       apt-utils \
@@ -37,26 +37,26 @@ RUN apt-get update && \
       software-properties-common \
       wget && \
 
-# Dart
-    curl https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - && \
-    curl https://storage.googleapis.com/download.dartlang.org/linux/debian/dart_stable.list > \
+      # Dart
+      curl https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - && \
+      curl https://storage.googleapis.com/download.dartlang.org/linux/debian/dart_stable.list > \
       /etc/apt/sources.list.d/dart_stable.list && \
 
-# dotnet (core)
-    curl https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor > /etc/apt/trusted.gpg.d/microsoft.gpg && \
-    echo "deb [arch=amd64] https://packages.microsoft.com/repos/microsoft-ubuntu-xenial-prod xenial main" > \
+      # dotnet (core)
+      curl https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor > /etc/apt/trusted.gpg.d/microsoft.gpg && \
+      echo "deb [arch=amd64] https://packages.microsoft.com/repos/microsoft-ubuntu-xenial-prod xenial main" > \
       /etc/apt/sources.list.d/dotnetdev.list && \
 
-# node.js
-    curl -sL https://deb.nodesource.com/gpgkey/nodesource.gpg.key | apt-key add - && \
-    echo "deb https://deb.nodesource.com/node_10.x xenial main" | tee /etc/apt/sources.list.d/nodesource.list && \
+      # node.js
+      curl -sL https://deb.nodesource.com/gpgkey/nodesource.gpg.key | apt-key add - && \
+      echo "deb https://deb.nodesource.com/node_10.x xenial main" | tee /etc/apt/sources.list.d/nodesource.list && \
 
-# ruby 2.4
-    apt-add-repository ppa:brightbox/ruby-ng
+      # ruby 2.4
+      apt-add-repository ppa:brightbox/ruby-ng
 
 ### install general dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
-`# General dependencies` \
+      `# General dependencies` \
       bash-completion \
       bison \
       build-essential \
@@ -74,8 +74,10 @@ ENV PATH /usr/lib/llvm-3.8/bin:$PATH
 
 ### languages
 
+# TODO: "apt-get install" without "apt-get update" in the same "RUN" step can cause cache issues if modified later.
+# See https://docs.docker.com/develop/develop-images/dockerfile_best-practices/#run
 RUN apt-get install -y --no-install-recommends \
-`# C++ dependencies` \
+      `# C++ dependencies` \
       libboost-dev \
       libboost-filesystem-dev \
       libboost-program-options-dev \
@@ -91,49 +93,52 @@ RUN apt-get install -y --no-install-recommends \
 ENV D_VERSION     2.087.0
 ENV DMD_DEB       dmd_2.087.0-0_amd64.deb
 RUN \
-`# D dependencies` \
-    wget -q http://downloads.dlang.org/releases/2.x/${D_VERSION}/${DMD_DEB} && \
-    dpkg --install ${DMD_DEB} && \
-    rm -f ${DMD_DEB} && \
-    mkdir -p /usr/include/dmd/druntime/import/deimos /usr/include/dmd/druntime/import/C && \
-    git clone -b 'v2.0.2+2.0.16' https://github.com/D-Programming-Deimos/libevent.git deimos-libevent-2.0 && \
-    mv deimos-libevent-2.0/deimos/* /usr/include/dmd/druntime/import/deimos/ && \
-    mv deimos-libevent-2.0/C/* /usr/include/dmd/druntime/import/C/ && \
-    rm -rf deimos-libevent-2.0 && \
-    git clone -b 'v1.1.6+1.0.1g' https://github.com/D-Programming-Deimos/openssl.git deimos-openssl-1.0.1g && \
-    mv deimos-openssl-1.0.1g/deimos/* /usr/include/dmd/druntime/import/deimos/ && \
-    mv deimos-openssl-1.0.1g/C/* /usr/include/dmd/druntime/import/C/ && \
-    rm -rf deimos-openssl-1.0.1g
+      `# D dependencies` \
+      wget -q http://downloads.dlang.org/releases/2.x/${D_VERSION}/${DMD_DEB} && \
+      dpkg --install ${DMD_DEB} && \
+      rm -f ${DMD_DEB} && \
+      mkdir -p /usr/include/dmd/druntime/import/deimos /usr/include/dmd/druntime/import/C && \
+      git clone -b 'v2.0.2+2.0.16' https://github.com/D-Programming-Deimos/libevent.git deimos-libevent-2.0 && \
+      mv deimos-libevent-2.0/deimos/* /usr/include/dmd/druntime/import/deimos/ && \
+      mv deimos-libevent-2.0/C/* /usr/include/dmd/druntime/import/C/ && \
+      rm -rf deimos-libevent-2.0 && \
+      git clone -b 'v1.1.6+1.0.1g' https://github.com/D-Programming-Deimos/openssl.git deimos-openssl-1.0.1g && \
+      mv deimos-openssl-1.0.1g/deimos/* /usr/include/dmd/druntime/import/deimos/ && \
+      mv deimos-openssl-1.0.1g/C/* /usr/include/dmd/druntime/import/C/ && \
+      rm -rf deimos-openssl-1.0.1g
 
 ENV DART_VERSION 2.7.2-1
 RUN apt-get install -y --no-install-recommends \
-`# Dart dependencies` \
+      `# Dart dependencies` \
       dart=$DART_VERSION
 ENV PATH /usr/lib/dart/bin:$PATH
 
 RUN apt-get install -y --no-install-recommends \
-`# dotnet core dependencies` \
+      `# dotnet core dependencies` \
       dotnet-sdk-6.0 \
       dotnet-runtime-6.0 \
       aspnetcore-runtime-6.0 \
       dotnet-apphost-pack-6.0
 
-RUN apt-get install -y --no-install-recommends \
-`# Erlang dependencies` \
-      erlang-base \
-      erlang-eunit \
-      erlang-dev \
-      erlang-tools \
-      rebar
+# Erlang dependencies
+ARG ERLANG_OTP_VERSION=18.3.4.11
+ARG ERLANG_REBAR_VERSION=3.13.2
+RUN apt-get update && apt-get install -y --no-install-recommends automake libncurses5-dev && \
+      curl https://raw.githubusercontent.com/kerl/kerl/master/kerl -o /usr/local/bin/kerl && chmod +x /usr/local/bin/kerl && \
+      kerl build $ERLANG_OTP_VERSION && kerl install $ERLANG_OTP_VERSION /usr/local/lib/otp/ && . /usr/local/lib/otp/activate && \
+      curl https://s3.amazonaws.com/rebar3/rebar3 -o /usr/local/bin/rebar3 && chmod +x /usr/local/bin/rebar3 && \
+      curl -ssLo /usr/local/bin/rebar3 https://github.com/erlang/rebar3/releases/download/${ERLANG_REBAR_VERSION}/rebar3 && chmod +x /usr/local/bin/rebar3 && \
+      rebar3 --version
+ENV PATH /usr/local/lib/otp/bin:$PATH
 
 RUN apt-get install -y --no-install-recommends \
-`# GlibC dependencies` \
+      `# GlibC dependencies` \
       libglib2.0-dev
 
 # golang
-ENV GOLANG_VERSION 1.16.13
+ENV GOLANG_VERSION 1.18.5
 ENV GOLANG_DOWNLOAD_URL https://go.dev/dl/go$GOLANG_VERSION.linux-amd64.tar.gz
-ENV GOLANG_DOWNLOAD_SHA256 275fc03c90c13b0bbff13125a43f1f7a9f9c00a0d5a9f2d5b16dbc2fa2c6e12a
+ENV GOLANG_DOWNLOAD_SHA256 9e5de37f9c49942c601b191ac5fba404b868bfc21d446d6960acc12283d6e5f2
 RUN curl -fsSL "$GOLANG_DOWNLOAD_URL" -o golang.tar.gz && \
       echo "$GOLANG_DOWNLOAD_SHA256  golang.tar.gz" | sha256sum -c - && \
       tar -C /usr/local -xzf golang.tar.gz && \
@@ -141,21 +146,29 @@ RUN curl -fsSL "$GOLANG_DOWNLOAD_URL" -o golang.tar.gz && \
       rm golang.tar.gz
 
 RUN apt-get install -y --no-install-recommends \
-`# Haxe dependencies` \
+      `# Haxe dependencies` \
       haxe \
       neko \
       neko-dev \
       libneko0 && \
-    haxelib setup --always /usr/share/haxe/lib && \
-    haxelib install --always hxcpp 3.4.64 2>&1 > /dev/null
+      haxelib setup --always /usr/share/haxe/lib && \
+      haxelib install --always hxcpp 3.4.64 2>&1 > /dev/null
 # note: hxcpp 3.4.185 (latest) no longer ships static libraries, and caused a build failure
 
+ENV GRADLE_VERSION="7.5.1"
 RUN apt-get install -y --no-install-recommends \
-`# Java dependencies` \
+      `# Java dependencies` \
       ant \
       ant-optional \
       openjdk-8-jdk \
-      maven
+      maven \
+      unzip && \
+      `# Gradle` \
+      wget https://services.gradle.org/distributions/gradle-$GRADLE_VERSION-bin.zip -q -O /tmp/gradle-$GRADLE_VERSION-bin.zip && \
+      (echo "f6b8596b10cce501591e92f229816aa4046424f3b24d771751b06779d58c8ec4  /tmp/gradle-$GRADLE_VERSION-bin.zip" | sha256sum -c -) && \
+      unzip -d /tmp /tmp/gradle-$GRADLE_VERSION-bin.zip && \
+      mv /tmp/gradle-$GRADLE_VERSION /usr/local/gradle && \
+      ln -s /usr/local/gradle/bin/gradle /usr/local/bin
 
 # disabled: same as ubuntu-bionic jobs
 # RUN apt-get install -y --no-install-recommends \
@@ -166,12 +179,12 @@ RUN apt-get install -y --no-install-recommends \
 # lua5.3 does not install alternatives so stick with 5.2 here
 
 RUN apt-get install -y --no-install-recommends \
-`# Node.js dependencies` \
+      `# Node.js dependencies` \
       nodejs
 
 # Test dependencies for running puppeteer
 RUN apt-get install -y --no-install-recommends \
-`# JS dependencies` \
+      `# JS dependencies` \
       libxss1 \
       libxtst6 \
       libatk-bridge2.0-0 \
@@ -186,7 +199,7 @@ RUN apt-get install -y --no-install-recommends \
 #     opam install --yes oasis
 
 RUN apt-get install -y --no-install-recommends \
-`# Perl dependencies` \
+      `# Perl dependencies` \
       libbit-vector-perl \
       libclass-accessor-class-perl \
       libcrypt-ssleay-perl \
@@ -195,7 +208,7 @@ RUN apt-get install -y --no-install-recommends \
       libtest-exception-perl
 
 RUN apt-get install -y --no-install-recommends \
-`# Php dependencies` \
+      `# Php dependencies` \
       php7.0 \
       php7.0-cli \
       php7.0-dev \
@@ -205,7 +218,7 @@ RUN apt-get install -y --no-install-recommends \
       composer
 
 RUN apt-get install -y --no-install-recommends \
-`# Python dependencies` \
+      `# Python dependencies` \
       python-all \
       python-all-dbg \
       python-all-dev \
@@ -227,30 +240,31 @@ RUN apt-get install -y --no-install-recommends \
       python3-twisted \
       python3-wheel \
       python3-zope.interface && \
-    pip install --upgrade backports.ssl_match_hostname
+      pip install --upgrade backports.ssl_match_hostname
 
 RUN apt-get install -y --no-install-recommends \
-`# Ruby dependencies` \
+      `# Ruby dependencies` \
       ruby2.4 \
       ruby2.4-dev \
       ruby-bundler
 
 # Rust dependencies
-RUN curl https://sh.rustup.rs -sSf | sh -s -- --default-toolchain 1.40.0 -y
+RUN curl https://sh.rustup.rs -sSf | sh -s -- --default-toolchain 1.61.0 -y
 
 # Locale(s) for cpp unit tests
 RUN apt-get install -y --no-install-recommends \
-`# Locale dependencies` \
+      `# Locale dependencies` \
       locales && \
-    locale-gen en_US.UTF-8 && \
-    locale-gen de_DE.UTF-8 && \
-    update-locale
+      locale-gen en_US.UTF-8 && \
+      locale-gen de_DE.UTF-8 && \
+      update-locale
 
-# Clean up
-RUN rm -rf /var/cache/apt/* && \
-    rm -rf /var/lib/apt/lists/* && \
-    rm -rf /tmp/* && \
-    rm -rf /var/tmp/*
+# NOTE: this does not reduce the image size but adds an additional layer.
+# # Clean up
+# RUN rm -rf /var/cache/apt/* && \
+#     rm -rf /var/lib/apt/lists/* && \
+#     rm -rf /tmp/* && \
+#     rm -rf /var/tmp/*
 
 ENV DOTNET_CLI_TELEMETRY_OPTOUT 1
 ENV THRIFT_ROOT /thrift

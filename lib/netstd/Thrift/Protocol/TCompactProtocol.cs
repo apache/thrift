@@ -24,6 +24,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Thrift.Protocol.Entities;
+using Thrift.Protocol.Utilities;
 using Thrift.Transport;
 
 
@@ -43,8 +44,8 @@ namespace Thrift.Protocol
         private const byte NoTypeOverride = 0xFF;
 
         // ReSharper disable once InconsistentNaming
-        private static readonly byte[] TTypeToCompactType = new byte[16];
-        private static readonly TType[] CompactTypeToTType = new TType[13];
+        private static readonly byte[] TTypeToCompactType = new byte[17];
+        private static readonly TType[] CompactTypeToTType = new TType[14];
 
         /// <summary>
         ///     Used to keep track of the last field for the current and previous structs, so we can do the delta stuff.
@@ -86,18 +87,19 @@ namespace Thrift.Protocol
         public TCompactProtocol(TTransport trans)
             : base(trans)
         {
-            TTypeToCompactType[(int) TType.Stop] = Types.Stop;
-            TTypeToCompactType[(int) TType.Bool] = Types.BooleanTrue;
-            TTypeToCompactType[(int) TType.Byte] = Types.Byte;
-            TTypeToCompactType[(int) TType.I16] = Types.I16;
-            TTypeToCompactType[(int) TType.I32] = Types.I32;
-            TTypeToCompactType[(int) TType.I64] = Types.I64;
-            TTypeToCompactType[(int) TType.Double] = Types.Double;
-            TTypeToCompactType[(int) TType.String] = Types.Binary;
-            TTypeToCompactType[(int) TType.List] = Types.List;
-            TTypeToCompactType[(int) TType.Set] = Types.Set;
-            TTypeToCompactType[(int) TType.Map] = Types.Map;
-            TTypeToCompactType[(int) TType.Struct] = Types.Struct;
+            TTypeToCompactType[(int)TType.Stop] = Types.Stop;
+            TTypeToCompactType[(int)TType.Bool] = Types.BooleanTrue;
+            TTypeToCompactType[(int)TType.Byte] = Types.Byte;
+            TTypeToCompactType[(int)TType.I16] = Types.I16;
+            TTypeToCompactType[(int)TType.I32] = Types.I32;
+            TTypeToCompactType[(int)TType.I64] = Types.I64;
+            TTypeToCompactType[(int)TType.Double] = Types.Double;
+            TTypeToCompactType[(int)TType.String] = Types.Binary;
+            TTypeToCompactType[(int)TType.List] = Types.List;
+            TTypeToCompactType[(int)TType.Set] = Types.Set;
+            TTypeToCompactType[(int)TType.Map] = Types.Map;
+            TTypeToCompactType[(int)TType.Struct] = Types.Struct;
+            TTypeToCompactType[(int)TType.Uuid] = Types.Uuid;
 
             CompactTypeToTType[Types.Stop] = TType.Stop;
             CompactTypeToTType[Types.BooleanTrue] = TType.Bool;
@@ -112,6 +114,7 @@ namespace Thrift.Protocol
             CompactTypeToTType[Types.Set] = TType.Set;
             CompactTypeToTType[Types.Map] = TType.Map;
             CompactTypeToTType[Types.Struct] = TType.Struct;
+            CompactTypeToTType[Types.Uuid] = TType.Uuid;
         }
 
         public void Reset()
@@ -395,6 +398,14 @@ namespace Thrift.Protocol
             await Trans.WriteAsync(bytes, 0, bytes.Length, cancellationToken);
         }
 
+        public override async Task WriteUuidAsync(Guid uuid, CancellationToken cancellationToken)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+
+            var bytes = uuid.SwapByteOrder().ToByteArray();
+            await Trans.WriteAsync(bytes, 0, bytes.Length, cancellationToken);
+        }
+
         public override async Task WriteMapBeginAsync(TMap map, CancellationToken cancellationToken)
         {
             cancellationToken.ThrowIfCancellationRequested();
@@ -448,6 +459,7 @@ namespace Thrift.Protocol
         public override Task ReadMessageEndAsync(CancellationToken cancellationToken)
         {
             cancellationToken.ThrowIfCancellationRequested();
+            Transport.ResetConsumedMessageSize();
             return Task.CompletedTask;
         }
 
@@ -665,6 +677,16 @@ namespace Thrift.Protocol
             return buf;
         }
 
+        public override async ValueTask<Guid> ReadUuidAsync(CancellationToken cancellationToken)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+
+            Transport.CheckReadBytesAvailable(16);  // = sizeof(uuid)
+            var buf = new byte[16];
+            await Trans.ReadAllAsync(buf, 0, 16, cancellationToken);
+            return new Guid(buf).SwapByteOrder();
+        }
+
         public override async ValueTask<TList> ReadListBeginAsync(CancellationToken cancellationToken)
         {
             cancellationToken.ThrowIfCancellationRequested();
@@ -792,19 +814,20 @@ namespace Thrift.Protocol
         {
             switch (type)
             {
-                case TType.Stop:    return 0;
-                case TType.Void:    return 0;
-                case TType.Bool:   return sizeof(byte);
+                case TType.Stop: return 0;
+                case TType.Void: return 0;
+                case TType.Bool: return sizeof(byte);
                 case TType.Double: return 8;  // uses fixedLongToBytes() which always writes 8 bytes
                 case TType.Byte: return sizeof(byte);
-                case TType.I16:     return sizeof(byte);  // zigzag
-                case TType.I32:     return sizeof(byte);  // zigzag
-                case TType.I64:     return sizeof(byte);  // zigzag
+                case TType.I16: return sizeof(byte);  // zigzag
+                case TType.I32: return sizeof(byte);  // zigzag
+                case TType.I64: return sizeof(byte);  // zigzag
                 case TType.String: return sizeof(byte);  // string length
-                case TType.Struct:  return 0;             // empty struct
-                case TType.Map:     return sizeof(byte);  // element count
-                case TType.Set:    return sizeof(byte);  // element count
-                case TType.List:    return sizeof(byte);  // element count
+                case TType.Struct: return 0;             // empty struct
+                case TType.Map: return sizeof(byte);  // element count
+                case TType.Set: return sizeof(byte);  // element count
+                case TType.List: return sizeof(byte);  // element count
+                case TType.Uuid: return 16;  // uuid bytes
                 default: throw new TProtocolException(TProtocolException.NOT_IMPLEMENTED, "unrecognized type code");
             }
         }
@@ -835,6 +858,7 @@ namespace Thrift.Protocol
             public const byte Set = 0x0A;
             public const byte Map = 0x0B;
             public const byte Struct = 0x0C;
+            public const byte Uuid = 0x0D;
         }
     }
 }

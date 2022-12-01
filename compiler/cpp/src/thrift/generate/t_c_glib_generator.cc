@@ -723,6 +723,8 @@ string t_c_glib_generator::type_to_enum(t_type* type) {
       return "T_I64";
     case t_base_type::TYPE_DOUBLE:
       return "T_DOUBLE";
+    default:
+      break;
     }
   } else if (type->is_enum()) {
     return "T_I32";

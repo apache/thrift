@@ -84,14 +84,13 @@ where
         let header = self.read_byte()?;
         let element_type = collection_u8_to_type(header & 0x0F)?;
 
-        let element_count;
         let possible_element_count = (header & 0xF0) >> 4;
-        if possible_element_count != 15 {
+        let element_count = if possible_element_count != 15 {
             // high bits set high if count and type encoded separately
-            element_count = possible_element_count as i32;
+            possible_element_count as i32
         } else {
-            element_count = self.transport.read_varint::<u32>()? as i32;
-        }
+            self.transport.read_varint::<u32>()? as i32
+        };
 
         Ok((element_type, element_count))
     }

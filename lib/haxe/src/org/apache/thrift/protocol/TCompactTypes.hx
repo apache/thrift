@@ -37,5 +37,6 @@ abstract TCompactTypes(Int)  from Int to Int  {
     public static inline var SET           = 0x0A;
     public static inline var MAP           = 0x0B;
     public static inline var STRUCT        = 0x0C;
+    public static inline var UUID          = 0x0D;
 }
 

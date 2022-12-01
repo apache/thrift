@@ -94,6 +94,9 @@ class TSocket(TSocketBase):
                 if exc.errno in (errno.EWOULDBLOCK, errno.EAGAIN):
                     return True
                 return False
+            except ValueError:
+                # SSLSocket fails on recv with non-zero flags; fallback to the old behavior
+                return True
         finally:
             self.handle.settimeout(original_timeout)
 
@@ -128,9 +131,9 @@ class TSocket(TSocketBase):
         for family, socktype, _, _, sockaddr in addrs:
             handle = self._do_open(family, socktype)
 
-            # TCP_KEEPALIVE
+            # TCP keep-alive
             if self._socket_keepalive:
-                handle.setsockopt(socket.IPPROTO_TCP, socket.SO_KEEPALIVE, 1)
+                handle.setsockopt(socket.SOL_SOCKET, socket.SO_KEEPALIVE, 1)
 
             handle.settimeout(self._timeout)
             try:

@@ -516,7 +516,7 @@ func (p *TCompactProtocol) ReadListBegin(ctx context.Context) (elemType TType, s
 		}
 		size = int(size2)
 	}
-	err = checkSizeForProtocol(size32, p.cfg)
+	err = checkSizeForProtocol(int32(size), p.cfg)
 	if err != nil {
 		return
 	}

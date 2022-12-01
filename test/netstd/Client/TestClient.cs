@@ -407,7 +407,7 @@ namespace ThriftTest
                 {
                     Console.WriteLine("*** FAILED ***");
                     Console.WriteLine("Error while parsing arguments");
-                    Console.WriteLine(ex.Message + "\n" + ex.StackTrace);
+                    Console.WriteLine("{0} {1}\nStack:\n{2}", ex.GetType().Name, ex.Message, ex.StackTrace);
                     return ErrorUnknown;
                 }
 
@@ -588,8 +588,28 @@ namespace ThriftTest
                 returnCode |= ErrorBaseTypes;
             }
 
+            // testUuid()
+            var uuidOut = new Guid("{00112233-4455-6677-8899-AABBCCDDEEFF}");
+            Console.Write("testUuid({0})", uuidOut);
+            try
+            {
+                var uuidIn = await client.testUuid(uuidOut, MakeTimeoutToken());
+                Console.WriteLine(" = {0}", uuidIn);
+                if (!uuidIn.Equals(uuidOut))
+                {
+                    Console.WriteLine("*** FAILED ***");
+                    returnCode |= ErrorBaseTypes;
+                }
+            }
+            catch (Thrift.TApplicationException ex)
+            {
+                Console.WriteLine("*** FAILED ***");
+                returnCode |= ErrorBaseTypes;
+                Console.WriteLine(ex.Message + "\n" + ex.StackTrace);
+            }
+
             // testBinary()
-            foreach(BinaryTestSize binTestCase in Enum.GetValues(typeof(BinaryTestSize)))
+            foreach (BinaryTestSize binTestCase in Enum.GetValues(typeof(BinaryTestSize)))
             {
                 var binOut = PrepareTestData(true, binTestCase);
 

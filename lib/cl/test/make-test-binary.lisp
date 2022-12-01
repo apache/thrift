@@ -20,6 +20,10 @@
 (load (merge-pathnames "../load-locally.lisp" *load-truename*))
 (asdf:load-asd (merge-pathnames "../lib/de.setf.thrift-backport-update/test/thrift-test.asd" *load-truename*))
 (asdf:load-system :thrift-test)
+
+(require "sb-grovel") ;; necessary for :net.didierverna.clon.termio
+(asdf:load-asd (first (directory (merge-pathnames "../externals/software/clon-*/termio/net.didierverna.clon.termio.asd"
+                                                  *load-truename*))))
 (asdf:load-system :net.didierverna.clon)
 
 (net.didierverna.clon:nickname-package)

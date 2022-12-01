@@ -738,6 +738,12 @@ void validate_const_rec(std::string name, t_type* type, t_const_value* value) {
         throw "type error: const \"" + name + "\" was declared as string";
       }
       break;
+    case t_base_type::TYPE_UUID:
+      if (value->get_type() != t_const_value::CV_STRING) {
+        throw "type error: const \"" + name + "\" was declared as uuid";
+      }
+      value->get_uuid(); // validates constant
+      break;
     case t_base_type::TYPE_BOOL:
       if (value->get_type() != t_const_value::CV_INTEGER) {
         throw "type error: const \"" + name + "\" was declared as bool";
@@ -999,6 +1005,9 @@ void generate(t_program* program, const vector<string>& generator_strings) {
     if (dump_docs) {
       dump_docstrings(program);
     }
+
+    // make sure all symbolic constants are properly resolved
+    program->scope()->resolve_all_consts();
 
     vector<string>::const_iterator iter;
     for (iter = generator_strings.begin(); iter != generator_strings.end(); ++iter) {

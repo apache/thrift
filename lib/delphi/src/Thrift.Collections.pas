@@ -190,7 +190,7 @@ type
     function ToString : string;  override;
   end;
 
-  IHashSet<TValue> = interface(IThriftContainer)
+  IThriftHashSet<TValue> = interface(IThriftContainer)
     ['{0923A3B5-D4D4-48A8-91AD-40238E2EAD66}']
     function GetEnumerator: TEnumerator<TValue>;
     function GetIsReadOnly: Boolean;
@@ -204,7 +204,15 @@ type
     function Remove( const item: TValue ): Boolean;
   end;
 
-  THashSetImpl<TValue> = class( TInterfacedObject, IHashSet<TValue>, IThriftContainer, ISupportsToString)
+  // compatibility
+  IHashSet<TValue> = interface( IThriftHashSet<TValue>)
+    ['{C3CF557F-21D9-4524-B899-D3145B0389BB}']
+  end deprecated 'use IThriftHashSet<T>';
+
+
+  {$WARN SYMBOL_DEPRECATED OFF}
+  TThriftHashSetImpl<TValue> = class( TInterfacedObject, IHashSet<TValue>, IThriftHashSet<TValue>, IThriftContainer, ISupportsToString)
+  {$WARN SYMBOL_DEPRECATED DEFAULT}
   strict private
     FDictionary : IThriftDictionary<TValue,Integer>;
     FIsReadOnly: Boolean;
@@ -224,11 +232,15 @@ type
     function ToString : string;  override;
   end;
 
+  // compatibility
+  THashSetImpl<TValue> = class( TThriftHashSetImpl<TValue>)
+  end deprecated 'use TThriftHashSetImpl<T>';
+
 implementation
 
-{ THashSetImpl<TValue> }
+{ TThriftHashSetImpl<TValue>. }
 
-procedure THashSetImpl<TValue>.Add( const item: TValue);
+procedure TThriftHashSetImpl<TValue>.Add( const item: TValue);
 begin
   if not FDictionary.ContainsKey(item) then
   begin
@@ -236,17 +248,17 @@ begin
   end;
 end;
 
-procedure THashSetImpl<TValue>.Clear;
+procedure TThriftHashSetImpl<TValue>.Clear;
 begin
   FDictionary.Clear;
 end;
 
-function THashSetImpl<TValue>.Contains( const item: TValue): Boolean;
+function TThriftHashSetImpl<TValue>.Contains( const item: TValue): Boolean;
 begin
   Result := FDictionary.ContainsKey(item);
 end;
 
-procedure THashSetImpl<TValue>.CopyTo(var A: TArray<TValue>; arrayIndex: Integer);
+procedure TThriftHashSetImpl<TValue>.CopyTo(var A: TArray<TValue>; arrayIndex: Integer);
 var
   i : Integer;
   Enumlator : TEnumerator<TValue>;
@@ -259,28 +271,28 @@ begin
   end;
 end;
 
-constructor THashSetImpl<TValue>.Create;
+constructor TThriftHashSetImpl<TValue>.Create;
 begin
   inherited;
   FDictionary := TThriftDictionaryImpl<TValue,Integer>.Create;
 end;
 
-function THashSetImpl<TValue>.GetCount: Integer;
+function TThriftHashSetImpl<TValue>.GetCount: Integer;
 begin
   Result := FDictionary.Count;
 end;
 
-function THashSetImpl<TValue>.GetEnumerator: TEnumerator<TValue>;
+function TThriftHashSetImpl<TValue>.GetEnumerator: TEnumerator<TValue>;
 begin
   Result := FDictionary.Keys.GetEnumerator;
 end;
 
-function THashSetImpl<TValue>.GetIsReadOnly: Boolean;
+function TThriftHashSetImpl<TValue>.GetIsReadOnly: Boolean;
 begin
   Result := FIsReadOnly;
 end;
 
-function THashSetImpl<TValue>.Remove( const item: TValue): Boolean;
+function TThriftHashSetImpl<TValue>.Remove( const item: TValue): Boolean;
 begin
   Result := False;
   if FDictionary.ContainsKey( item ) then
@@ -290,7 +302,7 @@ begin
   end;
 end;
 
-function THashSetImpl<TValue>.ToString : string;
+function TThriftHashSetImpl<TValue>.ToString : string;
 var elm : TValue;
     sb : TThriftStringBuilder;
     first : Boolean;

@@ -77,7 +77,8 @@ type
       LIST          = $09,
       SET_          = $0A,
       MAP           = $0B,
-      STRUCT        = $0C
+      STRUCT        = $0C,
+      UUID          = $0D
     );
 
   private type
@@ -100,7 +101,8 @@ type
       Types.STRUCT,         // Struct  = 12,
       Types.MAP,            // Map     = 13,
       Types.SET_,           // Set_    = 14,
-      Types.LIST            // List    = 15,
+      Types.LIST,           // List    = 15,
+      Types.UUID            // Uuid    = 16
     );
 
     tcompactTypeToType : array[Types] of TType = (
@@ -116,7 +118,8 @@ type
       TType.List,       // LIST
       TType.Set_,       // SET_
       TType.Map,        // MAP
-      TType.Struct      // STRUCT
+      TType.Struct,     // STRUCT
+      TType.Uuid        // UUID
     );
 
   strict private
@@ -173,6 +176,7 @@ type
     procedure WriteI64( const i64: Int64); override;
     procedure WriteDouble( const dub: Double); override;
     procedure WriteBinary( const b: TBytes); overload; override;
+    procedure WriteUuid( const uuid: TGuid); override;
 
   private  // unit visible stuff
     class function  DoubleToInt64Bits( const db : Double) : Int64;
@@ -219,6 +223,7 @@ type
     function  ReadI64: Int64; override;
     function  ReadDouble:Double; override;
     function  ReadBinary: TBytes; overload; override;
+    function  ReadUuid: TGuid; override;
 
   private
     // Internal Reading methods
@@ -537,6 +542,14 @@ begin
   Transport.Write( b);
 end;
 
+procedure TCompactProtocolImpl.WriteUuid( const uuid: TGuid);
+var network : TGuid;  // in network order (Big Endian)
+begin
+  ASSERT( SizeOf(uuid) = 16);
+  network := GuidUtils.SwapByteOrder(uuid);
+  Transport.Write( @network, 0, SizeOf(network));
+end;
+
 procedure TCompactProtocolImpl.WriteMessageEnd;
 begin
   // nothing to do
@@ -850,6 +863,14 @@ begin
   then Transport.ReadAll( result, 0, length);
 end;
 
+function TCompactProtocolImpl.ReadUuid: TGuid;
+var network : TGuid;  // in network order (Big Endian)
+begin
+  ASSERT( SizeOf(result) = 16);
+  FTrans.ReadAll( @network, SizeOf(network), 0, SizeOf(network));
+  result := GuidUtils.SwapByteOrder(network);
+end;
+
 
 procedure TCompactProtocolImpl.ReadMessageEnd;
 begin
@@ -994,6 +1015,7 @@ begin
     TType.Map:     result := SizeOf(Byte);  // element count
     TType.Set_:    result := SizeOf(Byte);  // element count
     TType.List:    result := SizeOf(Byte);  // element count
+    TType.Uuid:    result := SizeOf(TGuid);
   else
     raise TTransportExceptionBadArgs.Create('Unhandled type code');
   end;

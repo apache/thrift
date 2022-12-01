@@ -80,6 +80,7 @@ under the Apache 2.0 License:
   lib/cpp/test/OptionalRequiredTest.cpp
   test/OptionalRequiredTest.thrift
   test/ThriftTest.thrift
+  test/v0.16/ThriftTest.thrift
 
 --------------------------------------------------
 For the aclocal/ax_boost_base.m4 and contrib/fb303/aclocal/ax_boost_base.m4 components:

@@ -24,8 +24,6 @@
 #include <thrift/transport/PlatformSocket.h>
 #include <thrift/concurrency/FunctionRunner.h>
 
-#include <boost/version.hpp>
-
 #ifdef HAVE_SYS_TIME_H
 #include <sys/time.h>
 #else
@@ -427,7 +425,7 @@ void TFileTransport::writerThread() {
 
             auto* zeros = new uint8_t[padding];
             memset(zeros, '\0', padding);
-            boost::scoped_array<uint8_t> array(zeros);
+            std::unique_ptr<uint8_t[]> array(zeros);
             if (-1 == ::THRIFT_WRITE(fd_, zeros, padding)) {
               int errno_copy = THRIFT_ERRNO;
               GlobalOutput.perror("TFileTransport: writerThread() error while padding zeros ",

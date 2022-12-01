@@ -19,9 +19,9 @@
 
 PHPUNIT=php $(top_srcdir)/vendor/bin/phpunit
 
-stubs: ../../../test/ThriftTest.thrift  TestValidators.thrift
+stubs: ../../../test/v0.16/ThriftTest.thrift  TestValidators.thrift
 	mkdir -p ./packages/php
-	$(THRIFT) --gen php -r --out ./packages/php ../../../test/ThriftTest.thrift
+	$(THRIFT) --gen php -r --out ./packages/php ../../../test/v0.16/ThriftTest.thrift
 	mkdir -p ./packages/phpv
 	mkdir -p ./packages/phpvo
 	mkdir -p ./packages/phpjs

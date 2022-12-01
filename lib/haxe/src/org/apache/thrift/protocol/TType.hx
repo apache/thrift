@@ -34,4 +34,5 @@ abstract TType(Int)  from Int to Int  {
     public static inline var MAP : Int    = 13;
     public static inline var SET : Int    = 14;
     public static inline var LIST : Int   = 15;
+	public static inline var UUID : Int   = 16;
 }

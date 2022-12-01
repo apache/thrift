@@ -31,6 +31,7 @@ import thrift.test.*;  // generated code
 enum WhatTests {
     Normal;
     Multiplex;
+    Constants;
 }
 
 class Main
@@ -56,6 +57,8 @@ class Main
                         server = true;
                     case "multiplex" :
                         tests = Multiplex;
+                    case "constants" :
+                        tests = Constants;
                     default:
                 throw 'Invalid argument "$arg"\n'+CMDLINEHELP;
                 }
@@ -73,9 +76,15 @@ class Main
 
             switch( tests) {
                 case Normal:
+                    #if sys
                     StreamTest.Run(server);
+                    #end
                 case Multiplex:
+                    #if ! (flash || html5 || js)
                     MultiplexTest.Run(server);
+                    #end
+                case Constants:
+                    ConstantsTest.Run(server);
                 default:
                     throw "Unhandled test mode $tests";
             }
