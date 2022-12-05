@@ -24,8 +24,8 @@
 
 #include <thrift/thrift-config.h>
 
-#include <stdio.h>
 #include <assert.h>
+#include <stdio.h>
 
 #include <sys/types.h>
 #ifdef HAVE_NETINET_IN_H
@@ -34,13 +34,13 @@
 #ifdef HAVE_INTTYPES_H
 #include <inttypes.h>
 #endif
-#include <string>
-#include <map>
-#include <list>
-#include <set>
-#include <vector>
 #include <exception>
+#include <list>
+#include <map>
+#include <set>
+#include <string>
 #include <typeinfo>
+#include <vector>
 
 #include <thrift/TLogging.h>
 #include <thrift/TOutput.h>
@@ -50,9 +50,11 @@
 namespace apache {
 namespace thrift {
 
-class TEnumIterator
-    : public std::iterator<std::forward_iterator_tag, std::pair<int, const char*> > {
+class TEnumIterator {
 public:
+  using iterator_category = std::forward_iterator_tag;
+  using value_type = std::pair<int, const char*>;
+
   TEnumIterator(int n, int* enums, const char** names)
     : ii_(0), n_(n), enums_(enums), names_(names) {}
 
@@ -127,7 +129,7 @@ void profile_print_info(FILE* f);
 void profile_print_info();
 void profile_write_pprof(FILE* gen_calls_f, FILE* virtual_calls_f);
 #endif
-}
-} // apache::thrift
+} // namespace thrift
+} // namespace apache
 
 #endif // #ifndef _THRIFT_THRIFT_H_
