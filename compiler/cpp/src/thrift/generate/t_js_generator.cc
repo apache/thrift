@@ -1485,7 +1485,7 @@ void t_js_generator::generate_process_function(t_service* tservice, t_function* 
   indent_up();
 
   if (gen_es6_) {
-    indent(f_service_) << "Promise.resolve(this._handler." << tfunction->get_name() << ".bind(this._handler)(" << endl;
+    indent(f_service_) << "new Promise((resolve) => resolve(this._handler." << tfunction->get_name() << ".bind(this._handler)(" << endl;
   } else {
     string maybeComma = (fields.size() > 0 ? "," : "");
     indent(f_service_) << "Q.fcall(this._handler." << tfunction->get_name() << ".bind(this._handler)"
@@ -1500,7 +1500,7 @@ void t_js_generator::generate_process_function(t_service* tservice, t_function* 
   indent_down();
 
   if (gen_es6_) {
-    indent(f_service_) << ")).then(result => {" << endl;
+    indent(f_service_) << "))).then(result => {" << endl;
   } else {
     indent(f_service_) << ").then(function(result) {" << endl;
   }
