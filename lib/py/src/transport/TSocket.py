@@ -229,6 +229,7 @@ class TServerSocket(TSocketBase, TServerTransportBase):
                     os.unlink(res[4])
 
         self.handle = socket.socket(res[0], res[1])
+        self.handle.setsockopt(socket.IPPROTO_IPV6, socket.IPV6_V6ONLY, 0)
         self.handle.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         if hasattr(self.handle, 'settimeout'):
             self.handle.settimeout(None)
