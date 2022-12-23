@@ -28,14 +28,15 @@ import java.net.URL;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
-import org.apache.http.HttpEntity;
-import org.apache.http.HttpHost;
-import org.apache.http.HttpResponse;
-import org.apache.http.HttpStatus;
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.config.RequestConfig;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.entity.ByteArrayEntity;
+import org.apache.hc.client5.http.classic.HttpClient;
+import org.apache.hc.client5.http.classic.methods.HttpPost;
+import org.apache.hc.client5.http.config.ConnectionConfig;
+import org.apache.hc.client5.http.config.RequestConfig;
+import org.apache.hc.core5.http.HttpEntity;
+import org.apache.hc.core5.http.HttpHost;
+import org.apache.hc.core5.http.HttpStatus;
+import org.apache.hc.core5.http.io.entity.ByteArrayEntity;
+import org.apache.hc.core5.util.Timeout;
 import org.apache.thrift.TConfiguration;
 
 /**
@@ -139,9 +140,9 @@ public class THttpClient extends TEndpointTransport {
       this.client = client;
       this.host =
           new HttpHost(
+              url_.getProtocol(),
               url_.getHost(),
-              -1 == url_.getPort() ? url_.getDefaultPort() : url_.getPort(),
-              url_.getProtocol());
+              -1 == url_.getPort() ? url_.getDefaultPort() : url_.getPort());
     } catch (IOException iox) {
       throw new TTransportException(iox);
     }
@@ -154,9 +155,9 @@ public class THttpClient extends TEndpointTransport {
       this.client = client;
       this.host =
           new HttpHost(
+              url_.getProtocol(),
               url_.getHost(),
-              -1 == url_.getPort() ? url_.getDefaultPort() : url_.getPort(),
-              url_.getProtocol());
+              -1 == url_.getPort() ? url_.getDefaultPort() : url_.getPort());
     } catch (IOException iox) {
       throw new TTransportException(iox);
     }
@@ -230,12 +231,22 @@ public class THttpClient extends TEndpointTransport {
     RequestConfig requestConfig = RequestConfig.DEFAULT;
     if (connectTimeout_ > 0) {
       requestConfig =
-          RequestConfig.copy(requestConfig).setConnectionRequestTimeout(connectTimeout_).build();
-    }
-    if (readTimeout_ > 0) {
-      requestConfig = RequestConfig.copy(requestConfig).setSocketTimeout(readTimeout_).build();
+          RequestConfig.copy(requestConfig)
+              .setConnectionRequestTimeout(Timeout.ofMilliseconds(connectTimeout_))
+              .build();
     }
     return requestConfig;
+  }
+
+  private ConnectionConfig getConnectionConfig() {
+    ConnectionConfig connectionConfig = ConnectionConfig.DEFAULT;
+    if (readTimeout_ > 0) {
+      connectionConfig =
+          ConnectionConfig.copy(connectionConfig)
+              .setSocketTimeout(Timeout.ofMilliseconds(readTimeout_))
+              .build();
+    }
+    return connectionConfig;
   }
 
   private static Map<String, String> getDefaultHeaders() {
@@ -279,38 +290,38 @@ public class THttpClient extends TEndpointTransport {
       if (null != customHeaders_) {
         customHeaders_.forEach(post::addHeader);
       }
-      post.setEntity(new ByteArrayEntity(data));
-      HttpResponse response = this.client.execute(this.host, post);
-      handleResponse(response);
+      post.setEntity(new ByteArrayEntity(data, null));
+      client.execute(
+          this.host,
+          post,
+          response -> {
+            // Retrieve the InputStream BEFORE checking the status code so
+            // resources get freed in the with clause.
+            try (InputStream is = response.getEntity().getContent()) {
+              int responseCode = response.getCode();
+              if (responseCode != HttpStatus.SC_OK) {
+                throw new TTransportException("HTTP Response code: " + responseCode);
+              }
+              byte[] readByteArray = readIntoByteArray(is);
+              try {
+                // Indicate we're done with the content.
+                consume(response.getEntity());
+              } catch (IOException ioe) {
+                // We ignore this exception, it might only mean the server has no
+                // keep-alive capability.
+              }
+              inputStream_ = new ByteArrayInputStream(readByteArray);
+            } catch (IOException ioe) {
+              throw new TTransportException(ioe);
+            }
+            return null;
+          });
     } catch (IOException ioe) {
       // Abort method so the connection gets released back to the connection manager
       post.abort();
       throw new TTransportException(ioe);
     } finally {
       resetConsumedMessageSize(-1);
-      post.releaseConnection();
-    }
-  }
-
-  private void handleResponse(HttpResponse response) throws TTransportException {
-    // Retrieve the InputStream BEFORE checking the status code so
-    // resources get freed in the with clause.
-    try (InputStream is = response.getEntity().getContent()) {
-      int responseCode = response.getStatusLine().getStatusCode();
-      if (responseCode != HttpStatus.SC_OK) {
-        throw new TTransportException("HTTP Response code: " + responseCode);
-      }
-      byte[] readByteArray = readIntoByteArray(is);
-      try {
-        // Indicate we're done with the content.
-        consume(response.getEntity());
-      } catch (IOException ioe) {
-        // We ignore this exception, it might only mean the server has no
-        // keep-alive capability.
-      }
-      inputStream_ = new ByteArrayInputStream(readByteArray);
-    } catch (IOException ioe) {
-      throw new TTransportException(ioe);
     }
   }
 

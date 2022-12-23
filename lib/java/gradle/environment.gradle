@@ -61,10 +61,10 @@ repositories {
 
 dependencies {
     implementation "org.slf4j:slf4j-api:${slf4jVersion}"
-    implementation "org.apache.httpcomponents:httpclient:${httpclientVersion}"
-    implementation "org.apache.httpcomponents:httpcore:${httpcoreVersion}"
-    implementation "javax.servlet:javax.servlet-api:${servletVersion}"
-    implementation "javax.annotation:javax.annotation-api:${javaxAnnotationVersion}"
+    implementation "org.apache.httpcomponents.client5:httpclient5:${httpclientVersion}"
+    implementation "org.apache.httpcomponents.core5:httpcore5:${httpcoreVersion}"
+    implementation "jakarta.servlet:jakarta.servlet-api:${servletVersion}"
+    implementation "jakarta.annotation:jakarta.annotation-api:${javaxAnnotationVersion}"
     implementation "org.apache.commons:commons-lang3:${commonsLang3Version}"
 
     testImplementation "org.junit.jupiter:junit-jupiter:${junitVersion}"
