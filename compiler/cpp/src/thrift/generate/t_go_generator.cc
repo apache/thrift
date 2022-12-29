@@ -175,7 +175,7 @@ bool t_go_generator::is_pointer_field(t_field* tfield, bool in_container_value) 
     return has_default;
   }
 
-  throw "INVALID TYPE IN type_to_go_type: " + type->get_name();
+  throw "INVALID TYPE IN is_pointer_field: " + type->get_name();
 }
 
 std::string t_go_generator::camelcase(const std::string& value) const {
@@ -1088,7 +1088,7 @@ string t_go_generator::render_const_value(t_type* type, t_const_value* value, co
     t_type* ktype = ((t_map*)type)->get_key_type();
     t_type* vtype = ((t_map*)type)->get_val_type();
     const map<t_const_value*, t_const_value*, t_const_value::value_compare>& val = value->get_map();
-    out << "map[" << type_to_go_key_type(ktype) << "]" << type_to_go_type(vtype) << "{" << endl;
+    out << "map[" << type_to_go_key_type(ktype) << "]" << type_to_go_container_value_type(vtype) << "{" << endl;
     indent_up();
     map<t_const_value*, t_const_value*, t_const_value::value_compare>::const_iterator v_iter;
 
@@ -1102,7 +1102,7 @@ string t_go_generator::render_const_value(t_type* type, t_const_value* value, co
   } else if (type->is_list()) {
     t_type* etype = ((t_list*)type)->get_elem_type();
     const vector<t_const_value*>& val = value->get_list();
-    out << "[]" << type_to_go_type(etype) << "{" << endl;
+    out << "[]" << type_to_go_container_value_type(etype) << "{" << endl;
     indent_up();
     vector<t_const_value*>::const_iterator v_iter;
 
@@ -1115,7 +1115,7 @@ string t_go_generator::render_const_value(t_type* type, t_const_value* value, co
   } else if (type->is_set()) {
     t_type* etype = ((t_set*)type)->get_elem_type();
     const vector<t_const_value*>& val = value->get_list();
-    out << "[]" << type_to_go_type(etype) << "{" << endl;
+    out << "[]" << type_to_go_container_value_type(etype) << "{" << endl;
     indent_up();
     vector<t_const_value*>::const_iterator v_iter;
 
@@ -1258,7 +1258,7 @@ void t_go_generator::generate_go_struct_definition(ostream& out,
       }
 
       t_type* fieldType = (*m_iter)->get_type();
-      string goType = type_to_go_type_with_opt(fieldType, is_pointer_field(*m_iter));
+      string goType = type_to_go_type_with_opt(fieldType, is_pointer_field(*m_iter), false);
 
       map<string,string>tags;
       tags["db"]=escape_string((*m_iter)->get_name());
@@ -1317,7 +1317,7 @@ void t_go_generator::generate_go_struct_definition(ostream& out,
     t_const_value* def_value;
     get_publicized_name_and_def_value(*m_iter, &publicized_name, &def_value);
     t_type* fieldType = (*m_iter)->get_type();
-    string goType = type_to_go_type_with_opt(fieldType, false);
+    string goType = type_to_go_type_with_opt(fieldType, false, false);
     string def_var_name = tstruct_name + "_" + publicized_name + "_DEFAULT";
     if ((*m_iter)->get_req() == t_field::T_OPTIONAL || is_pointer_field(*m_iter)) {
       out << indent() << "var " << def_var_name << " " << goType;
@@ -1335,7 +1335,7 @@ void t_go_generator::generate_go_struct_definition(ostream& out,
     }
 
     if (is_pointer_field(*m_iter)) {
-      string goOptType = type_to_go_type_with_opt(fieldType, true);
+      string goOptType = type_to_go_type_with_opt(fieldType, true, false);
       string maybepointer = goOptType != goType ? "*" : "";
       out << indent() << "func (p *" << tstruct_name << ") Get" << publicized_name << "() "
           << goType << " {" << endl;
@@ -1758,7 +1758,7 @@ void t_go_generator::generate_go_struct_equals(ostream& out,
     field_name = (*f_iter)->get_name();
     t_type* field_type = (*f_iter)->get_type();
     publicize_field_name = publicize(field_name);
-    string goType = type_to_go_type_with_opt(field_type, is_pointer_field(*f_iter));
+    string goType = type_to_go_type_with_opt(field_type, is_pointer_field(*f_iter), false);
 
     string tgt = "p." + publicize_field_name;
     string src = "other." + publicize_field_name;
@@ -3431,7 +3431,7 @@ void t_go_generator::generate_serialize_container(ostream& out,
     if (pointer_field) {
       wrapped_prefix = "(" + prefix + ")";
     }
-    string goType = type_to_go_type(tset->get_elem_type());
+    string goType = type_to_go_container_value_type(tset->get_elem_type());
     out << indent() << "if func(tgt, src " << goType << ") bool {" << endl;
     indent_up();
     generate_go_equals(out, tset->get_elem_type(), "tgt", "src");
@@ -3892,31 +3892,40 @@ string t_go_generator::type_to_go_key_type(t_type* type) {
   }
 
   if (resolved_type->is_map() || resolved_type->is_list() || resolved_type->is_set()) {
-    throw "Cannot produce a valid type for a Go map key: " + type_to_go_type(type) + " - aborting.";
+    throw "Cannot produce a valid type for a Go map key: " + type_to_go_container_value_type(type) + " - aborting.";
   }
 
   if (resolved_type->is_binary())
     return "string";
 
-  return type_to_go_type(type);
+  return type_to_go_container_value_type(type);
+}
+
+/**
+ * Converts the parse type to a go type to be used in a container value
+ */
+string t_go_generator::type_to_go_container_value_type(t_type* type) {
+  return type_to_go_type_with_opt(type, false, true);
 }
 
 /**
  * Converts the parse type to a go type
  */
 string t_go_generator::type_to_go_type(t_type* type) {
-  return type_to_go_type_with_opt(type, false);
+  return type_to_go_type_with_opt(type, false, false);
 }
 
 /**
  * Converts the parse type to a go type, taking into account whether the field
- * associated with the type is T_OPTIONAL.
+ * associated with the type is T_OPTIONAL and whether it's used in a container
+ * type.
  */
 string t_go_generator::type_to_go_type_with_opt(t_type* type,
-                                                bool optional_field) {
+                                                bool optional_field,
+                                                bool is_container_value) {
   string maybe_pointer(optional_field ? "*" : "");
 
-  if (type->is_typedef() && ((t_typedef*)type)->is_forward_typedef()) {
+  if (is_container_value && type->is_typedef() && ((t_typedef*)type)->is_forward_typedef()) {
     type = ((t_typedef*)type)->get_true_type();
   }
 
@@ -3965,21 +3974,21 @@ string t_go_generator::type_to_go_type_with_opt(t_type* type,
   } else if (type->is_map()) {
     t_map* t = (t_map*)type;
     string keyType = type_to_go_key_type(t->get_key_type());
-    string valueType = type_to_go_type(t->get_val_type());
+    string valueType = type_to_go_container_value_type(t->get_val_type());
     return maybe_pointer + string("map[") + keyType + "]" + valueType;
   } else if (type->is_set()) {
     t_set* t = (t_set*)type;
-    string elemType = type_to_go_type(t->get_elem_type());
+    string elemType = type_to_go_container_value_type(t->get_elem_type());
     return maybe_pointer + string("[]") + elemType;
   } else if (type->is_list()) {
     t_list* t = (t_list*)type;
-    string elemType = type_to_go_type(t->get_elem_type());
+    string elemType = type_to_go_container_value_type(t->get_elem_type());
     return maybe_pointer + string("[]") + elemType;
   } else if (type->is_typedef()) {
     return maybe_pointer + publicize(type_name(type));
   }
 
-  throw "INVALID TYPE IN type_to_go_type: " + type->get_name();
+  throw "INVALID TYPE IN type_to_go_type_with_opt: " + type->get_name();
 }
 
 /** See the comment inside generate_go_struct_definition for what this is. */
