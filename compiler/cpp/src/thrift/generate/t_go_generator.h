@@ -264,8 +264,9 @@ public:
   std::string argument_list(t_struct* tstruct);
   std::string type_to_enum(t_type* ttype);
   std::string type_to_go_type(t_type* ttype);
-  std::string type_to_go_type_with_opt(t_type* ttype, bool optional_field);
+  std::string type_to_go_type_with_opt(t_type* ttype, bool optional_field, bool is_container_value);
   std::string type_to_go_key_type(t_type* ttype);
+  std::string type_to_go_container_value_type(t_type* ttype);
   std::string type_to_spec_args(t_type* ttype);
 
   void indent_up() { t_generator::indent_up(); }

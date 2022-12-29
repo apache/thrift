@@ -61,7 +61,8 @@ gopath: $(THRIFT) $(THRIFTTEST) \
 				ConstOptionalField.thrift \
 				ProcessorMiddlewareTest.thrift \
 				ClientMiddlewareExceptionTest.thrift \
-				ValidateTest.thrift
+				ValidateTest.thrift \
+				ForwardTypedef.thrift
 	mkdir -p gopath/src
 	grep -v list.*map.*list.*map $(THRIFTTEST) | grep -v 'set<Insanity>' > ThriftTest.thrift
 	$(THRIFT) $(THRIFTARGS) -r IncludesTest.thrift
@@ -96,6 +97,7 @@ gopath: $(THRIFT) $(THRIFTTEST) \
 	$(THRIFT) $(THRIFTARGS_SKIP_REMOTE) ProcessorMiddlewareTest.thrift
 	$(THRIFT) $(THRIFTARGS) ClientMiddlewareExceptionTest.thrift
 	$(THRIFT) $(THRIFTARGS) ValidateTest.thrift
+	$(THRIFT) $(THRIFTARGS) ForwardTypedef.thrift
 	ln -nfs ../../tests gopath/src/tests
 	cp -r ./dontexportrwtest gopath/src
 	touch gopath
@@ -121,7 +123,8 @@ check: gopath
 				./gopath/src/conflictargnamestest \
 				./gopath/src/processormiddlewaretest \
 				./gopath/src/clientmiddlewareexceptiontest \
-				./gopath/src/validatetest
+				./gopath/src/validatetest \
+				./gopath/src/forwardtypedef
 	$(GO) test github.com/apache/thrift/lib/go/thrift
 	$(GO) test ./gopath/src/tests ./gopath/src/dontexportrwtest
 
