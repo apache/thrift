@@ -167,6 +167,13 @@ public class THttpClient extends TEndpointTransport {
     connectTimeout_ = timeout;
   }
 
+  /**
+   * Use instead {@link
+   * org.apache.hc.client5.http.impl.io.BasicHttpClientConnectionManager#setConnectionConfig} or
+   * {@link
+   * org.apache.hc.client5.http.impl.io.PoolingHttpClientConnectionManager#setDefaultConnectionConfig}
+   */
+  @Deprecated
   public void setReadTimeout(int timeout) {
     readTimeout_ = timeout;
   }

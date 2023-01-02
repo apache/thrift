@@ -5811,10 +5811,10 @@ void t_java_generator::generate_java_scheme_lookup(ostream& out) {
 void t_java_generator::generate_javax_generated_annotation(ostream& out) {
   time_t seconds = time(nullptr);
   struct tm* now = localtime(&seconds);
-  if (!javax_annotations_) {
-    indent(out) << "@jakarta.annotation.Generated(value = \"" << autogen_summary() << "\"";
-  } else {
+  if (javax_annotations_) {
     indent(out) << "@javax.annotation.Generated(value = \"" << autogen_summary() << "\"";
+  } else {
+    indent(out) << "@jakarta.annotation.Generated(value = \"" << autogen_summary() << "\"";
   }
 
   if (undated_generated_annotations_) {
