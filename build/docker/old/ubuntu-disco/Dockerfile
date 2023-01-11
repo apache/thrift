@@ -169,7 +169,7 @@ RUN apt-get install -y --no-install-recommends \
       openjdk-11-jdk-headless && \
       `# Gradle` \
       wget https://services.gradle.org/distributions/gradle-$GRADLE_VERSION-bin.zip -q -O /tmp/gradle-$GRADLE_VERSION-bin.zip && \
-      (echo "03c0f018d043de73187fe87d1798f4c8f494aceed1c6158b0919367926a19e4d  /tmp/gradle-$GRADLE_VERSION-bin.zip" | sha256sum -c -) && \
+      (echo "7ba68c54029790ab444b39d7e293d3236b2632631fb5f2e012bb28b4ff669e4b  /tmp/gradle-$GRADLE_VERSION-bin.zip" | sha256sum -c -) && \
       unzip -d /tmp /tmp/gradle-$GRADLE_VERSION-bin.zip && \
       mv /tmp/gradle-$GRADLE_VERSION /usr/local/gradle && \
       ln -s /usr/local/gradle/bin/gradle /usr/local/bin
