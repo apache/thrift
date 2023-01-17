@@ -745,6 +745,9 @@ void TServerSocket::close() {
   if (childInterruptSockWriter_ != THRIFT_INVALID_SOCKET) {
     ::THRIFT_CLOSESOCKET(childInterruptSockWriter_);
   }
+  if (pChildInterruptSockReader_ != nullptr) {
+    ::THRIFT_CLOSESOCKET(*pChildInterruptSockReader_);
+  }
   serverSocket_ = THRIFT_INVALID_SOCKET;
   interruptSockWriter_ = THRIFT_INVALID_SOCKET;
   interruptSockReader_ = THRIFT_INVALID_SOCKET;
