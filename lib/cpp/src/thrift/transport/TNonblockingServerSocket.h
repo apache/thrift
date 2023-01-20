@@ -71,7 +71,7 @@ public:
    */
   TNonblockingServerSocket(const std::string& path);
 
-  ~TNonblockingServerSocket() override;
+  virtual ~TNonblockingServerSocket() override;
 
   bool isOpen() const;
 

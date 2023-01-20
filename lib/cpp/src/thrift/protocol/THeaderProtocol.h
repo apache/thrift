@@ -63,7 +63,7 @@ public:
     resetProtocol();
   }
 
-  ~THeaderProtocol() override = default;
+  virtual ~THeaderProtocol() override = default;
 
   /**
    * Functions to work with headers by calling into THeaderTransport

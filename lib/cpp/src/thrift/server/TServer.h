@@ -98,7 +98,7 @@ protected:
  */
 class TServer : public concurrency::Runnable {
 public:
-  ~TServer() override = default;
+  virtual ~TServer() override = default;
 
   virtual void serve() = 0;
 

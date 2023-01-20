@@ -36,7 +36,7 @@ class TConcurrentClientSyncInfo;
 class TConcurrentSendSentry {
 public:
   explicit TConcurrentSendSentry(TConcurrentClientSyncInfo* sync);
-  ~TConcurrentSendSentry();
+  virtual ~TConcurrentSendSentry();
 
   void commit();
 
@@ -48,7 +48,7 @@ private:
 class TConcurrentRecvSentry {
 public:
   TConcurrentRecvSentry(TConcurrentClientSyncInfo* sync, int32_t seqid);
-  ~TConcurrentRecvSentry();
+  virtual ~TConcurrentRecvSentry();
 
   void commit();
 

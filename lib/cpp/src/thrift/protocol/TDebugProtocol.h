@@ -139,7 +139,7 @@ private:
 class TDebugProtocolFactory : public TProtocolFactory {
 public:
   TDebugProtocolFactory() = default;
-  ~TDebugProtocolFactory() override = default;
+  virtual ~TDebugProtocolFactory() override = default;
 
   std::shared_ptr<TProtocol> getProtocol(std::shared_ptr<TTransport> trans) override {
     return std::shared_ptr<TProtocol>(new TDebugProtocol(trans));

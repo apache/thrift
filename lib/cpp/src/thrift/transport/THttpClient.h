@@ -51,7 +51,7 @@ public:
               std::string path = "",
               std::shared_ptr<TConfiguration> config = nullptr);
 
-  ~THttpClient() override;
+  virtual ~THttpClient() override;
 
   void flush() override;
 

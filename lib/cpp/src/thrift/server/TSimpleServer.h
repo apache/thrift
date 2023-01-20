@@ -61,7 +61,7 @@ public:
       const std::shared_ptr<apache::thrift::protocol::TProtocolFactory>& inputProtocolFactory,
       const std::shared_ptr<apache::thrift::protocol::TProtocolFactory>& outputProtocolFactory);
 
-  ~TSimpleServer() override;
+  virtual ~TSimpleServer() override;
 
 protected:
   void onClientConnected(const std::shared_ptr<TConnectedClient>& pClient) override /* override */;

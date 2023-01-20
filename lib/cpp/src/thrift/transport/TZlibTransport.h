@@ -38,7 +38,7 @@ public:
       zlib_status_(status),
       zlib_msg_(msg == nullptr ? "(null)" : msg) {}
 
-  ~TZlibTransportException() noexcept override = default;
+  virtual ~TZlibTransportException() noexcept override = default;
 
   int getZlibStatus() { return zlib_status_; }
   std::string getZlibMessage() { return zlib_msg_; }
@@ -138,7 +138,7 @@ public:
    * unflushed data.  You must explicitly call flush() or finish() to ensure
    * that data is actually written and flushed to the underlying transport.
    */
-  ~TZlibTransport() override;
+  virtual ~TZlibTransport() override;
 
   bool isOpen() const override;
   bool peek() override;
@@ -236,7 +236,7 @@ public:
    */
   TZlibTransportFactory(std::shared_ptr<TTransportFactory> transportFactory);
 
-  ~TZlibTransportFactory() override = default;
+  virtual ~TZlibTransportFactory() override = default;
 
   std::shared_ptr<TTransport> getTransport(std::shared_ptr<TTransport> trans) override;
 

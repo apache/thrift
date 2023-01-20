@@ -69,7 +69,7 @@ void cleanupOpenSSL();
  */
 class TSSLSocket : public TSocket {
 public:
-  ~TSSLSocket() override;
+  virtual ~TSSLSocket() override;
   /**
    * TTransport interface.
    */
