@@ -54,7 +54,7 @@ private:
   TWinsockSingleton(void);
 
 public:
-  ~TWinsockSingleton(void);
+  virtual ~TWinsockSingleton(void);
 
 public:
   static void create(void);

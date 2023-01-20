@@ -50,7 +50,7 @@ public:
    */
   TEvhttpServer(std::shared_ptr<TAsyncBufferProcessor> processor, int port);
 
-  ~TEvhttpServer();
+  virtual ~TEvhttpServer();
 
   static void request(struct evhttp_request* req, void* self);
   int serve();
