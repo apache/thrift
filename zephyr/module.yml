@@ -1,0 +1,5 @@
+name: thrift
+build:
+  cmake-ext: True
+  kconfig-ext: True
+
