@@ -145,9 +145,9 @@ RUN apt-get install -y --no-install-recommends \
   libglib2.0-dev
 
 # golang
-ENV GOLANG_VERSION 1.19.2
+ENV GOLANG_VERSION 1.20
 ENV GOLANG_DOWNLOAD_URL https://go.dev/dl/go$GOLANG_VERSION.linux-amd64.tar.gz
-ENV GOLANG_DOWNLOAD_SHA256 5e8c5a74fe6470dd7e055a461acda8bb4050ead8c2df70f227e3ff7d8eb7eeb6
+ENV GOLANG_DOWNLOAD_SHA256 5a9ebcc65c1cce56e0d2dc616aff4c4cedcfbda8cc6f0288cc08cda3b18dcbf1
 RUN curl -fsSL "$GOLANG_DOWNLOAD_URL" -o golang.tar.gz && \
   echo "$GOLANG_DOWNLOAD_SHA256  golang.tar.gz" | sha256sum -c - && \
   tar -C /usr/local -xzf golang.tar.gz && \
