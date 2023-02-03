@@ -20,7 +20,7 @@
 package org.apache.thrift;
 
 /** Generic exception class for Thrift. */
-public class TException extends RuntimeException {
+public class TException extends Exception {
 
   private static final long serialVersionUID = 1L;
 

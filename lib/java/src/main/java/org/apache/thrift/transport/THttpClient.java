@@ -19,7 +19,6 @@
 
 package org.apache.thrift.transport;
 
-import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -32,12 +31,11 @@ import org.apache.hc.client5.http.classic.HttpClient;
 import org.apache.hc.client5.http.classic.methods.HttpPost;
 import org.apache.hc.client5.http.config.ConnectionConfig;
 import org.apache.hc.client5.http.config.RequestConfig;
-import org.apache.hc.core5.http.HttpEntity;
 import org.apache.hc.core5.http.HttpHost;
-import org.apache.hc.core5.http.HttpStatus;
 import org.apache.hc.core5.http.io.entity.ByteArrayEntity;
 import org.apache.hc.core5.util.Timeout;
 import org.apache.thrift.TConfiguration;
+import org.apache.thrift.THttpClientResponseHandler;
 
 /**
  * HTTP implementation of the TTransport interface. Used for working with a Thrift web services
@@ -264,22 +262,6 @@ public class THttpClient extends TEndpointTransport {
     return headers;
   }
 
-  /**
-   * copy from org.apache.http.util.EntityUtils#consume. Android has it's own httpcore that doesn't
-   * have a consume.
-   */
-  private static void consume(final HttpEntity entity) throws IOException {
-    if (entity == null) {
-      return;
-    }
-    if (entity.isStreaming()) {
-      InputStream instream = entity.getContent();
-      if (instream != null) {
-        instream.close();
-      }
-    }
-  }
-
   private void flushUsingHttpClient() throws TTransportException {
     if (null == this.client) {
       throw new TTransportException("Null HttpClient, aborting.");
@@ -298,31 +280,7 @@ public class THttpClient extends TEndpointTransport {
         customHeaders_.forEach(post::addHeader);
       }
       post.setEntity(new ByteArrayEntity(data, null));
-      client.execute(
-          this.host,
-          post,
-          response -> {
-            // Retrieve the InputStream BEFORE checking the status code so
-            // resources get freed in the with clause.
-            try (InputStream is = response.getEntity().getContent()) {
-              int responseCode = response.getCode();
-              if (responseCode != HttpStatus.SC_OK) {
-                throw new TTransportException("HTTP Response code: " + responseCode);
-              }
-              byte[] readByteArray = readIntoByteArray(is);
-              try {
-                // Indicate we're done with the content.
-                consume(response.getEntity());
-              } catch (IOException ioe) {
-                // We ignore this exception, it might only mean the server has no
-                // keep-alive capability.
-              }
-              inputStream_ = new ByteArrayInputStream(readByteArray);
-            } catch (IOException ioe) {
-              throw new TTransportException(ioe);
-            }
-            return null;
-          });
+      inputStream_ = client.execute(this.host, post, new THttpClientResponseHandler());
     } catch (IOException ioe) {
       // Abort method so the connection gets released back to the connection manager
       post.abort();
@@ -330,29 +288,6 @@ public class THttpClient extends TEndpointTransport {
     } finally {
       resetConsumedMessageSize(-1);
     }
-  }
-
-  /**
-   * Read the responses into a byte array so we can release the connection early. This implies that
-   * the whole content will have to be read in memory, and that momentarily we might use up twice
-   * the memory (while the thrift struct is being read up the chain). Proceeding differently might
-   * lead to exhaustion of connections and thus to app failure.
-   *
-   * @param is input stream
-   * @return read bytes
-   * @throws IOException when exception during read
-   */
-  private static byte[] readIntoByteArray(InputStream is) throws IOException {
-    ByteArrayOutputStream baos = new ByteArrayOutputStream();
-    byte[] buf = new byte[1024];
-    int len;
-    do {
-      len = is.read(buf);
-      if (len > 0) {
-        baos.write(buf, 0, len);
-      }
-    } while (-1 != len);
-    return baos.toByteArray();
   }
 
   public void flush() throws TTransportException {
