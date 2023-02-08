@@ -146,11 +146,13 @@ public:
                                   bool is_user_struct = false);
   void generate_copy_constructor(std::ostream& out, t_struct* tstruct, bool is_exception);
   void generate_move_constructor(std::ostream& out, t_struct* tstruct, bool is_exception);
+  void generate_default_constructor(std::ostream& out, t_struct* tstruct, bool is_exception);
   void generate_constructor_helper(std::ostream& out,
                                    t_struct* tstruct,
                                    bool is_excpetion,
                                    bool is_move);
   void generate_assignment_operator(std::ostream& out, t_struct* tstruct);
+  void generate_equality_operator(std::ostream& out, t_struct* tstruct);
   void generate_move_assignment_operator(std::ostream& out, t_struct* tstruct);
   void generate_assignment_helper(std::ostream& out, t_struct* tstruct, bool is_move);
   void generate_struct_reader(std::ostream& out, t_struct* tstruct, bool pointers = false);
@@ -914,6 +916,10 @@ void t_cpp_generator::generate_cpp_struct(t_struct* tstruct, bool is_exception) 
   generate_struct_reader(out, tstruct);
   generate_struct_writer(out, tstruct);
   generate_struct_swap(f_types_impl_, tstruct);
+  if (!gen_no_default_operators_) {
+    generate_equality_operator(f_types_impl_, tstruct);
+  }
+  generate_default_constructor(f_types_impl_, tstruct, is_exception);
   generate_copy_constructor(f_types_impl_, tstruct, is_exception);
   if (gen_moveable_) {
     generate_move_constructor(f_types_impl_, tstruct, is_exception);
@@ -932,6 +938,117 @@ void t_cpp_generator::generate_cpp_struct(t_struct* tstruct, bool is_exception) 
   }
 
   has_members_ = true;
+}
+
+void t_cpp_generator::generate_equality_operator(std::ostream& out, t_struct* tstruct) {
+  // Get members
+  vector<t_field*>::const_iterator m_iter;
+  const vector<t_field*>& members = tstruct->get_members();
+
+  out << indent() << "bool " << tstruct->get_name()
+      << "::operator==(const " << tstruct->get_name() << " & "
+      << (members.size() > 0 ? "rhs" : "/* rhs */") << ") const" << endl;
+  scope_up(out);
+  for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
+    // Most existing Thrift code does not use isset or optional/required,
+    // so we treat "default" fields as required.
+    if ((*m_iter)->get_req() != t_field::T_OPTIONAL) {
+      out << indent() << "if (!(" << (*m_iter)->get_name() << " == rhs."
+          << (*m_iter)->get_name() << "))" << endl << indent() << "  return false;" << endl;
+    } else {
+      out << indent() << "if (__isset." << (*m_iter)->get_name() << " != rhs.__isset."
+          << (*m_iter)->get_name() << ")" << endl << indent() << "  return false;" << endl
+          << indent() << "else if (__isset." << (*m_iter)->get_name() << " && !("
+          << (*m_iter)->get_name() << " == rhs." << (*m_iter)->get_name() << "))" << endl
+          << indent() << "  return false;" << endl;
+    }
+  }
+  indent(out) << "return true;" << endl;
+  scope_down(out);
+  out << "\n";
+}
+
+void t_cpp_generator::generate_default_constructor(ostream& out,
+                                                   t_struct* tstruct,
+                                                   bool is_exception) {
+  // Get members
+  vector<t_field*>::const_iterator m_iter;
+  const vector<t_field*>& members = tstruct->get_members();
+
+  // TODO(barth) this is duplicated from generate_struct_declaration
+  bool has_default_value = false;
+  for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
+    t_type* t = get_true_type((*m_iter)->get_type());
+    if (is_reference(*m_iter) || t->is_string()) {
+      t_const_value* cv = (*m_iter)->get_value();
+      if (cv != nullptr) {
+        has_default_value = true;
+        break;
+      }
+    }
+  }
+
+  std::string clsname_ctor = tstruct->get_name() + "::" + tstruct->get_name() + "()";
+  indent(out) << clsname_ctor << (has_default_value ? "" : " noexcept");
+
+  if (has_default_value || is_exception) {
+    // We need an initializer block
+
+    bool init_ctor = false;
+    std::string args_indent("   ");
+
+    // Default-initialize TException, if it is our base type
+    if (is_exception)
+    {
+      out << "\n";
+      indent(out) << " : ";
+      out << "TException()";
+      init_ctor = true;
+    }
+
+    // Default-initialize all members that should be initialized in
+    // the initializer block
+    for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
+      t_type* t = get_true_type((*m_iter)->get_type());
+      if (t->is_base_type() || t->is_enum() || is_reference(*m_iter)) {
+        string dval;
+        t_const_value* cv = (*m_iter)->get_value();
+        if (cv != nullptr) {
+          dval += render_const_value(out, (*m_iter)->get_name(), t, cv);
+        } else if (t->is_enum()) {
+          dval += "static_cast<" + type_name(t) + ">(0)";
+        } else {
+          dval += (t->is_string() || is_reference(*m_iter)) ? "" : "0";
+        }
+        if (!init_ctor) {
+          out << "\n";
+          indent(out) << " : ";
+          init_ctor = true;
+        } else {
+          out << ",\n";
+          indent(out) << args_indent;
+        }
+
+        out << (*m_iter)->get_name() << "(" << dval << ")";
+      }
+    }
+    out << " {" << endl;
+    indent_up();
+    // TODO(dreiss): When everything else in Thrift is perfect,
+    // do more of these in the initializer list.
+    for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
+      t_type* t = get_true_type((*m_iter)->get_type());
+      if (!t->is_base_type() && !t->is_enum() && !is_reference(*m_iter)) {
+        t_const_value* cv = (*m_iter)->get_value();
+        if (cv != nullptr) {
+          print_const_value(out, (*m_iter)->get_name(), t, cv);
+        }
+      }
+    }
+    scope_down(out);
+  } else {
+    out << " {}\n";
+  }
 }
 
 void t_cpp_generator::generate_copy_constructor(ostream& out,
@@ -1168,52 +1285,7 @@ void t_cpp_generator::generate_struct_declaration(ostream& out,
 
     // Default constructor
     std::string clsname_ctor = tstruct->get_name() + "()";
-    indent(out) << clsname_ctor << (has_default_value ? "" : " noexcept");
-
-    bool init_ctor = false;
-    std::string args_indent(
-      indent().size() + clsname_ctor.size() + (has_default_value ? 3 : -1), ' ');
-
-    for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
-      t_type* t = get_true_type((*m_iter)->get_type());
-      if (t->is_base_type() || t->is_enum() || is_reference(*m_iter)) {
-        string dval;
-        t_const_value* cv = (*m_iter)->get_value();
-        if (cv != nullptr) {
-          dval += render_const_value(out, (*m_iter)->get_name(), t, cv);
-        } else if (t->is_enum()) {
-          dval += "static_cast<" + type_name(t) + ">(0)";
-        } else {
-          dval += (t->is_string() || is_reference(*m_iter)) ? "" : "0";
-        }
-        if (!init_ctor) {
-          init_ctor = true;
-          if(has_default_value) {
-            out << " : ";
-          } else {
-            out << '\n' << args_indent << ": ";
-            args_indent.append("  ");
-          }
-        } else {
-          out << ",\n" << args_indent;
-        }
-        out << (*m_iter)->get_name() << "(" << dval << ")";
-      }
-    }
-    out << " {" << endl;
-    indent_up();
-    // TODO(dreiss): When everything else in Thrift is perfect,
-    // do more of these in the initializer list.
-    for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
-      t_type* t = get_true_type((*m_iter)->get_type());
-      if (!t->is_base_type() && !t->is_enum() && !is_reference(*m_iter)) {
-        t_const_value* cv = (*m_iter)->get_value();
-        if (cv != nullptr) {
-          print_const_value(out, (*m_iter)->get_name(), t, cv);
-        }
-      }
-    }
-    scope_down(out);
+    indent(out) << clsname_ctor << (has_default_value ? "" : " noexcept") << ";" << endl;
   }
 
   if (tstruct->annotations_.find("final") == tstruct->annotations_.end()) {
@@ -1254,27 +1326,10 @@ void t_cpp_generator::generate_struct_declaration(ostream& out,
   if (!pointers) {
     // Should we generate default operators?
     if (!gen_no_default_operators_) {
-      // Generate an equality testing operator.  Make it inline since the compiler
-      // will do a better job than we would when deciding whether to inline it.
+      // Generate an equality testing operator.
       out << indent() << "bool operator == (const " << tstruct->get_name() << " & "
-          << (members.size() > 0 ? "rhs" : "/* rhs */") << ") const" << endl;
-      scope_up(out);
-      for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
-        // Most existing Thrift code does not use isset or optional/required,
-        // so we treat "default" fields as required.
-        if ((*m_iter)->get_req() != t_field::T_OPTIONAL) {
-          out << indent() << "if (!(" << (*m_iter)->get_name() << " == rhs."
-              << (*m_iter)->get_name() << "))" << endl << indent() << "  return false;" << endl;
-        } else {
-          out << indent() << "if (__isset." << (*m_iter)->get_name() << " != rhs.__isset."
-              << (*m_iter)->get_name() << ")" << endl << indent() << "  return false;" << endl
-              << indent() << "else if (__isset." << (*m_iter)->get_name() << " && !("
-              << (*m_iter)->get_name() << " == rhs." << (*m_iter)->get_name() << "))" << endl
-              << indent() << "  return false;" << endl;
-        }
-      }
-      indent(out) << "return true;" << endl;
-      scope_down(out);
+          << (members.size() > 0 ? "rhs" : "/* rhs */") << ") const;" << endl;
+
       out << indent() << "bool operator != (const " << tstruct->get_name() << " &rhs) const {"
           << endl << indent() << "  return !(*this == rhs);" << endl << indent() << "}" << endl
           << endl;
