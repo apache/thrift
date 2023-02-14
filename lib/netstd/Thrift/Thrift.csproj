@@ -51,7 +51,8 @@
     <PackageReleaseNotes></PackageReleaseNotes>
     <PackageTags>Apache Thrift RPC</PackageTags>
     <PackageReleaseNotes>https://github.com/apache/thrift/blob/0.18.0/CHANGES.md</PackageReleaseNotes>
-    <Copyright>Copyright 2022 The Apache Software Foundation</Copyright>
+	<PackageReadmeFile>README.md</PackageReadmeFile>
+    <Copyright>Copyright 2023 The Apache Software Foundation</Copyright>
   </PropertyGroup>
 
   <ItemGroup>
@@ -72,6 +73,10 @@
     <PackageReference Update="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.2" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Include="..\README.md" Pack="true" PackagePath="\"/>
+  </ItemGroup>
+	
   <Target Name="SetTFMAssemblyAttributesPath" BeforeTargets="GenerateTargetFrameworkMonikerAttribute">
     <PropertyGroup>
       <TargetFrameworkMonikerAssemblyAttributesPath>$(IntermediateOutputPath)$(TargetFrameworkMoniker).AssemblyAttributes$(DefaultLanguageSourceExtension)</TargetFrameworkMonikerAssemblyAttributesPath>
