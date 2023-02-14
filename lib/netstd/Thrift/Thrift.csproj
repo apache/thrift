@@ -19,7 +19,7 @@
   -->
 
   <PropertyGroup>
-    <TargetFrameworks>netstandard2.1;netstandard2.0;net6.0</TargetFrameworks>
+    <TargetFrameworks>netstandard2.1;netstandard2.0;net6.0;net7.0</TargetFrameworks>
     <AssemblyName>Thrift</AssemblyName>
     <PackageId>ApacheThrift</PackageId>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
@@ -57,12 +57,12 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.Http.Abstractions" Version="2.2.0" />
-    <PackageReference Include="Microsoft.Extensions.Logging" Version="6.0.0" />
-    <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="6.0.0" />
-    <PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="6.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Logging" Version="7.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="7.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="7.0.0" />
     <PackageReference Include="System.IO.Pipes" Version="[4.3,)" />
     <PackageReference Include="System.IO.Pipes.AccessControl" Version="5.0.0" />
-    <PackageReference Include="System.Net.Http.WinHttpHandler" Version="6.0.0" />
+    <PackageReference Include="System.Net.Http.WinHttpHandler" Version="7.0.0" />
     <PackageReference Include="System.Net.NameResolution" Version="[4.3,)" />
     <PackageReference Include="System.Net.Requests" Version="[4.3,)" />
     <PackageReference Include="System.Net.Security" Version="4.3.2" />
@@ -70,11 +70,11 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Update="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.2" />
+    <PackageReference Update="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.3" />
   </ItemGroup>
 
   <ItemGroup>
-    <None Include="..\README.md" Pack="true" PackagePath="\"/>
+    <None Include="..\README.md" Pack="true" PackagePath="\" />
   </ItemGroup>
 	
   <Target Name="SetTFMAssemblyAttributesPath" BeforeTargets="GenerateTargetFrameworkMonikerAttribute">

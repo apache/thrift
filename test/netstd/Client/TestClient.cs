@@ -257,7 +257,7 @@ namespace ThriftTest
                         trans = new TTlsSocketTransport(host, port, Configuration, 0,
                             cert,
                             (sender, certificate, chain, errors) => true,
-                            null, SslProtocols.Tls | SslProtocols.Tls11 | SslProtocols.Tls12);
+                            null, SslProtocols.Tls12);
                         break;
 
                     case TransportChoice.Socket:
