@@ -448,9 +448,9 @@ uint32_t TBinaryProtocolT<Transport_, ByteOrder_>::readStringBody(StrType& str, 
   }
 
   // Try to borrow first
-  const uint8_t* borrow_buf;
   uint32_t got = size;
-  if ((borrow_buf = this->trans_->borrow(nullptr, &got))) {
+  const uint8_t* borrow_buf = this->trans_->borrow(nullptr, &got);
+  if (borrow_buf) {
     str.assign((const char*)borrow_buf, size);
     this->trans_->consume(size);
     return size;
