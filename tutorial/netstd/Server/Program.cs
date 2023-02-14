@@ -191,7 +191,7 @@ Sample:
             TServerTransport serverTransport = transport switch
             {
                 Transport.Tcp => new TServerSocketTransport(9090, Configuration),
-                Transport.NamedPipe => new TNamedPipeServerTransport(".test", Configuration, NamedPipeClientFlags.None),
+                Transport.NamedPipe => new TNamedPipeServerTransport(".test", Configuration, NamedPipeServerFlags.None, 64),
                 Transport.TcpTls => new TTlsServerSocketTransport(9090, Configuration, GetCertificate(), ClientCertValidator, LocalCertificateSelectionCallback),
                 _ => throw new ArgumentException("unsupported value $transport", nameof(transport)),
             };

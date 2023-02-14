@@ -32,13 +32,6 @@ using System.Diagnostics;
 
 namespace Thrift.Transport.Server
 {
-    [Obsolete("NamedPipeClientFlags is deprecated, use NamedPipeServerFlags instead.")]
-    [Flags]
-    public enum NamedPipeClientFlags {  // bad name
-        None = 0x00,
-        OnlyLocalClients = 0x01
-    };
-
     [Flags]
     public enum NamedPipeServerFlags
     {
@@ -81,18 +74,6 @@ namespace Thrift.Transport.Server
 
             _pipeAddress = pipeAddress;
             _onlyLocalClients = flags.HasFlag(NamedPipeServerFlags.OnlyLocalClients);
-            _numListenPipes = (byte)numListenPipes;
-        }
-
-        [Obsolete("NamedPipeClientFlags is deprecated, use NamedPipeServerFlags instead.")]
-        public TNamedPipeServerTransport(string pipeAddress, TConfiguration config, NamedPipeClientFlags flags, int numListenPipes = 1)
-            : base(config)
-        {
-            if ((numListenPipes < 1) || (numListenPipes > 254))
-                throw new ArgumentOutOfRangeException(nameof(numListenPipes), "Value must be in the range of [1..254]");
-
-            _pipeAddress = pipeAddress;
-            _onlyLocalClients = flags.HasFlag(NamedPipeClientFlags.OnlyLocalClients);
             _numListenPipes = (byte)numListenPipes;
         }
 
