@@ -17,16 +17,13 @@
  * under the License.
  */
 
-// https://issues.apache.org/jira/browse/THRIFT-5601
+// https://issues.apache.org/jira/browse/THRIFT-5685
 
-namespace go forwardtypedef
+namespace go forwardtypetest
 
 struct Struct {
-  1: optional Def foo
-  2: optional Exc bar
+  1: optional Exc foo
 }
-
-typedef i32 Def
 
 exception Exc {
   1: optional i32 code
