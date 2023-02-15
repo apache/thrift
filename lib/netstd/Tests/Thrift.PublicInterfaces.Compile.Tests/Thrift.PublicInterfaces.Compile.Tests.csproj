@@ -19,7 +19,7 @@
   -->
 
   <PropertyGroup>
-    <ThriftVersion>0.18.0</ThriftVersion>
+    <ThriftVersion>0.18.1</ThriftVersion>
     <ThriftVersionOutput>Thrift version $(ThriftVersion)</ThriftVersionOutput>
     <TargetFramework>net6.0</TargetFramework>
     <Version>$(ThriftVersion).0</Version>
