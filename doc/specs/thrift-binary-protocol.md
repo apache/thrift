@@ -80,7 +80,7 @@ Where:
 ### Double encoding
 
 Values of type `double` are first converted to an int64 according to the IEEE 754 floating-point "double format" bit
-layout. Most run-times provide a library to make this conversion. Both the binary protocol as the compact protocol then
+layout. Most run-times provide a library to make this conversion. Both the binary protocol and the compact protocol then
 encode the int64 in 8 bytes in big endian order.
 
 ### Boolean encoding
