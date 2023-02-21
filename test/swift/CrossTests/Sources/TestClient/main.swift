@@ -40,7 +40,12 @@ class TestClient {
   }
 
   static func getTransport(parameters: TestClientParameters) throws -> TTransport {
-    let socketTransport = try TSocketTransport(hostname: parameters.host!, port: parameters.port!)
+      let socketTransport: TTransport = try { () throws -> TTransport in
+          if let domainSocket = parameters.domainSocket {
+            return try TSocketTransport(path: domainSocket)
+          }
+          return try TSocketTransport(hostname: parameters.host!, port: parameters.port!)
+      }()
     if parameters.transport == .framed {
       return TFramedTransport(transport: socketTransport)
     } 

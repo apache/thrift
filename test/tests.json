@@ -797,14 +797,14 @@
       "workdir": "swift/CrossTests/.build/x86_64-unknown-linux-gnu/debug",
       "protocols": ["binary", "compact"],
       "transports": ["buffered", "framed"],
-      "sockets": ["ip"]
+      "sockets": ["ip", "domain"]
     },
     "client": {
       "command": ["TestClient"],
       "workdir": "swift/CrossTests/.build/x86_64-unknown-linux-gnu/debug",
       "protocols": ["binary", "compact"],
       "transports": ["buffered", "framed"],
-      "sockets": ["ip"]
+      "sockets": ["ip", "domain"]
     }
   }
 ]

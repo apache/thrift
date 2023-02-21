@@ -624,6 +624,9 @@ jobs:
             test/rs/bin/* \
             test/go/bin/*
 
+      - name: Create tmp domain socket folder
+        run: mkdir /tmp/v0.16
+
       - name: Run cross test
         env:
           THRIFT_CROSSTEST_CONCURRENCY: 4
