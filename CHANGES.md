@@ -1,5 +1,6 @@
 # Apache Thrift Changelog
 
+
 ## 0.18.1
 
 ### Known Open Issues (Blocker or Critical)
@@ -14,6 +15,9 @@
 ### Go
 
 - [THRIFT-5685](https://issues.apache.org/jira/browse/THRIFT-5685) - Compiler generates wrong go code for forward defined types in optional fields
+- [THRIFT-5679](https://issues.apache.org/jira/browse/THRIFT-5679) - libthrift-0.17.0 has wrong version numbers in MANIFEST.MF
+
+
 
 ## 0.18.0
 
