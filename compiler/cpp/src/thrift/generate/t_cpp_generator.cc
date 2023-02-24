@@ -143,7 +143,8 @@ public:
                                   std::ostream& force_cpp_out,
                                   t_struct* tstruct,
                                   bool setters = true,
-                                  bool is_user_struct = false);
+                                  bool is_user_struct = false,
+                                  bool pointers = false);
   void generate_copy_constructor(std::ostream& out, t_struct* tstruct, bool is_exception);
   void generate_move_constructor(std::ostream& out, t_struct* tstruct, bool is_exception);
   void generate_default_constructor(std::ostream& out, t_struct* tstruct, bool is_exception);
@@ -916,7 +917,7 @@ void t_cpp_generator::generate_forward_declaration(t_struct* tstruct) {
  */
 void t_cpp_generator::generate_cpp_struct(t_struct* tstruct, bool is_exception) {
   generate_struct_declaration(f_types_, tstruct, is_exception, false, true, true, true, true);
-  generate_struct_definition(f_types_impl_, f_types_impl_, tstruct, true, true);
+  generate_struct_definition(f_types_impl_, f_types_impl_, tstruct, true, true, false);
 
   std::ostream& out = (gen_templates_ ? f_types_tcc_ : f_types_impl_);
   generate_struct_reader(out, tstruct);
@@ -925,7 +926,6 @@ void t_cpp_generator::generate_cpp_struct(t_struct* tstruct, bool is_exception) 
   if (!gen_no_default_operators_) {
     generate_equality_operator(f_types_impl_, tstruct);
   }
-  generate_default_constructor(f_types_impl_, tstruct, is_exception);
   generate_copy_constructor(f_types_impl_, tstruct, is_exception);
   if (gen_moveable_) {
     generate_move_constructor(f_types_impl_, tstruct, is_exception);
@@ -1408,7 +1408,8 @@ void t_cpp_generator::generate_struct_definition(ostream& out,
                                                  ostream& force_cpp_out,
                                                  t_struct* tstruct,
                                                  bool setters,
-                                                 bool is_user_struct) {
+                                                 bool is_user_struct,
+                                                 bool pointers) {
   // Get members
   vector<t_field*>::const_iterator m_iter;
   const vector<t_field*>& members = tstruct->get_members();
@@ -1421,6 +1422,11 @@ void t_cpp_generator::generate_struct_definition(ostream& out,
 
     indent_down();
     force_cpp_out << indent() << "}" << endl << endl;
+  }
+
+  if (!pointers)
+  {
+    generate_default_constructor(out, tstruct, false);
   }
 
   // Create a setter function for each field
@@ -2058,9 +2064,10 @@ void t_cpp_generator::generate_service_helpers(t_service* tservice) {
     generate_struct_definition(out, f_service_, ts, false);
     generate_struct_reader(out, ts);
     generate_struct_writer(out, ts);
+
     ts->set_name(tservice->get_name() + "_" + (*f_iter)->get_name() + "_pargs");
     generate_struct_declaration(f_header_, ts, false, true, false, true);
-    generate_struct_definition(out, f_service_, ts, false);
+    generate_struct_definition(out, f_service_, ts, false, false, true);
     generate_struct_writer(out, ts, true);
     ts->set_name(name_orig);
 
@@ -3508,7 +3515,7 @@ void t_cpp_generator::generate_function_helpers(t_service* tservice, t_function*
 
   result.set_name(tservice->get_name() + "_" + tfunction->get_name() + "_presult");
   generate_struct_declaration(f_header_, &result, false, true, true, gen_cob_style_);
-  generate_struct_definition(out, f_service_, &result, false);
+  generate_struct_definition(out, f_service_, &result, false, false, true);
   generate_struct_reader(out, &result, true);
   if (gen_cob_style_) {
     generate_struct_writer(out, &result, true);
