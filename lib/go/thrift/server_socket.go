@@ -52,6 +52,18 @@ func NewTServerSocketFromAddrTimeout(addr net.Addr, clientTimeout time.Duration)
 	return &TServerSocket{addr: addr, clientTimeout: clientTimeout}
 }
 
+func NewTServerSocketUnix(listenAddr string) (*TServerSocket, error) {
+	return NewTServerSocketTimeoutUnix(listenAddr, 0)
+}
+
+func NewTServerSocketTimeoutUnix(listenAddr string, clientTimeout time.Duration) (*TServerSocket, error) {
+	addr, err := net.ResolveUnixAddr("unix", listenAddr)
+	if err != nil {
+		return nil, err
+	}
+	return &TServerSocket{addr: addr, clientTimeout: clientTimeout}, nil
+}
+
 func (p *TServerSocket) Listen() error {
 	p.mu.Lock()
 	defer p.mu.Unlock()
