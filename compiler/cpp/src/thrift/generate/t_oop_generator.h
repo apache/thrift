@@ -70,7 +70,7 @@ public:
   }
 
   virtual void generate_java_doc(std::ostream& out, t_field* field) {
-    if (field->get_type()->is_enum()) {
+    if (get_true_type(field->get_type())->is_enum()) {
       std::string combined_message = field->get_doc() + "\n@see "
                                      + get_enum_class_name(field->get_type());
       generate_java_docstring_comment(out, combined_message);

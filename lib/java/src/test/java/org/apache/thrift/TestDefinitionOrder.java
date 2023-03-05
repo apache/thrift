@@ -26,20 +26,20 @@ import java.util.Arrays;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 
-// Tests that declaring structs in different order (esp. when they reference each other) generates
+// Tests that declaring fields in different order (esp. when they reference each other) generates
 // identical code
-public class TestStructOrder {
+public class TestDefinitionOrder {
 
   @Test
-  public void testStructOrder() throws Exception {
-    List<String> filenames = Arrays.asList("Parent.java", "Child.java");
+  public void testDefinitionOrder() throws Exception {
+    List<String> filenames = Arrays.asList("Parent.java", "Child.java", "MyEnum.java");
 
     for (String fn : filenames) {
-      String fnA = "struct-order-test/a/" + fn;
-      String fnB = "struct-order-test/b/" + fn;
+      String fnA = "definition-order-test/a/" + fn;
+      String fnB = "definition-order-test/b/" + fn;
 
-      try (InputStream isA = TestStructOrder.class.getClassLoader().getResourceAsStream(fnA);
-          InputStream isB = TestStructOrder.class.getClassLoader().getResourceAsStream(fnB)) {
+      try (InputStream isA = TestDefinitionOrder.class.getClassLoader().getResourceAsStream(fnA);
+          InputStream isB = TestDefinitionOrder.class.getClassLoader().getResourceAsStream(fnB)) {
 
         assertNotNull(isA, "Resource not found: " + fnA);
         assertNotNull(isB, "Resource not found: " + fnB);

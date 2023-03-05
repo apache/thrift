@@ -3023,46 +3023,46 @@ void t_java_generator::generate_metadata_for_field_annotations(std::ostream& out
 }
 
 void t_java_generator::generate_field_value_meta_data(std::ostream& out, t_type* type) {
+  t_type* ttype = get_true_type(type);
   out << endl;
   indent_up();
   indent_up();
-  t_type* ttype = get_true_type(type);
   if (ttype->is_struct() || ttype->is_xception()) {
     indent(out) << "new "
                    "org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType."
                    "STRUCT, "
-                << type_name(type) << ".class";
-  } else if (type->is_container()) {
-    if (type->is_list()) {
+                << type_name(ttype) << ".class";
+  } else if (ttype->is_container()) {
+    if (ttype->is_list()) {
       indent(out)
           << "new org.apache.thrift.meta_data.ListMetaData(org.apache.thrift.protocol.TType.LIST, ";
-      t_type* elem_type = ((t_list*)type)->get_elem_type();
+      t_type* elem_type = ((t_list*)ttype)->get_elem_type();
       generate_field_value_meta_data(out, elem_type);
-    } else if (type->is_set()) {
+    } else if (ttype->is_set()) {
       indent(out)
           << "new org.apache.thrift.meta_data.SetMetaData(org.apache.thrift.protocol.TType.SET, ";
-      t_type* elem_type = ((t_set*)type)->get_elem_type();
+      t_type* elem_type = ((t_set*)ttype)->get_elem_type();
       generate_field_value_meta_data(out, elem_type);
     } else { // map
       indent(out)
           << "new org.apache.thrift.meta_data.MapMetaData(org.apache.thrift.protocol.TType.MAP, ";
-      t_type* key_type = ((t_map*)type)->get_key_type();
-      t_type* val_type = ((t_map*)type)->get_val_type();
+      t_type* key_type = ((t_map*)ttype)->get_key_type();
+      t_type* val_type = ((t_map*)ttype)->get_val_type();
       generate_field_value_meta_data(out, key_type);
       out << ", ";
       generate_field_value_meta_data(out, val_type);
     }
-  } else if (type->is_enum()) {
+  } else if (ttype->is_enum()) {
     indent(out)
         << "new org.apache.thrift.meta_data.EnumMetaData(org.apache.thrift.protocol.TType.ENUM, "
-        << type_name(type) << ".class";
+        << type_name(ttype) << ".class";
   } else {
     indent(out) << "new org.apache.thrift.meta_data.FieldValueMetaData("
-                << get_java_type_string(type);
-    if (type->is_typedef()) {
-      indent(out) << ", \"" << ((t_typedef*)type)->get_symbolic() << "\"";
-    } else if (type->is_binary()) {
+                << get_java_type_string(ttype);
+    if (ttype->is_binary()) {
       indent(out) << ", true";
+    } else if (type->is_typedef()) {
+      indent(out) << ", \"" << ((t_typedef*)type)->get_symbolic() << "\"";
     }
   }
   out << ")";

@@ -21,9 +21,30 @@
 // fixing THRIFT-4086: Java compiler generates different meta data depending on order of structures in file
 struct Child {
     1: required string Name
-    2: required Parent Parent
+    2: required Age Age
+    3: required Parent Parent1
+    4: required MyParent Parent2
+    5: required Parents GrandParents
+    6: required MyEnum MyEnum
+    7: required MyEnumV2 MyEnumV2
+    8: required MyEnums MyEnums
+    9: required MyMapping MyMapping
+    10: required MyBinary MyBinary
 }
+
+typedef i8 Age
+typedef Parent MyParent
+typedef list<Parent> Parents
+typedef MyEnum MyEnumV2
+typedef set<MyEnum> MyEnums
+typedef map<MyEnumV2, Parent> MyMapping
+typedef binary MyBinary
 
 struct Parent {
     1: required string Name
+}
+
+enum MyEnum {
+    FOO = 1
+    BAR = 2
 }
