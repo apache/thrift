@@ -1004,64 +1004,70 @@ void t_cpp_generator::generate_default_constructor(ostream& out,
   std::string clsname_ctor = tstruct->get_name() + "::" + tstruct->get_name() + "()";
   indent(out) << clsname_ctor << (has_default_value ? "" : " noexcept");
 
-  if (has_default_value || is_exception) {
-    // We need an initializer block
+  //
+  // Start generating initializer list
+  //
 
-    bool init_ctor = false;
-    std::string args_indent("   ");
+  bool init_ctor = false;
+  std::string args_indent("   ");
 
-    // Default-initialize TException, if it is our base type
-    if (is_exception)
-    {
-      out << "\n";
-      indent(out) << " : ";
-      out << "TException()";
-      init_ctor = true;
-    }
-
-    // Default-initialize all members that should be initialized in
-    // the initializer block
-    for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
-      t_type* t = get_true_type((*m_iter)->get_type());
-      if (t->is_base_type() || t->is_enum() || is_reference(*m_iter)) {
-        string dval;
-        t_const_value* cv = (*m_iter)->get_value();
-        if (cv != nullptr) {
-          dval += render_const_value(out, (*m_iter)->get_name(), t, cv);
-        } else if (t->is_enum()) {
-          dval += "static_cast<" + type_name(t) + ">(0)";
-        } else {
-          dval += (t->is_string() || is_reference(*m_iter)) ? "" : "0";
-        }
-        if (!init_ctor) {
-          out << "\n";
-          indent(out) << " : ";
-          init_ctor = true;
-        } else {
-          out << ",\n";
-          indent(out) << args_indent;
-        }
-
-        out << (*m_iter)->get_name() << "(" << dval << ")";
-      }
-    }
-    out << " {" << endl;
-    indent_up();
-    // TODO(dreiss): When everything else in Thrift is perfect,
-    // do more of these in the initializer list.
-    for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
-      t_type* t = get_true_type((*m_iter)->get_type());
-      if (!t->is_base_type() && !t->is_enum() && !is_reference(*m_iter)) {
-        t_const_value* cv = (*m_iter)->get_value();
-        if (cv != nullptr) {
-          print_const_value(out, (*m_iter)->get_name(), t, cv);
-        }
-      }
-    }
-    scope_down(out);
-  } else {
-    out << " {}\n";
+  // Default-initialize TException, if it is our base type
+  if (is_exception)
+  {
+    out << "\n";
+    indent(out) << " : ";
+    out << "TException()";
+    init_ctor = true;
   }
+
+  // Default-initialize all members that should be initialized in
+  // the initializer block
+  for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
+    t_type* t = get_true_type((*m_iter)->get_type());
+    if (t->is_base_type() || t->is_enum() || is_reference(*m_iter)) {
+      string dval;
+      t_const_value* cv = (*m_iter)->get_value();
+      if (cv != nullptr) {
+        dval += render_const_value(out, (*m_iter)->get_name(), t, cv);
+      } else if (t->is_enum()) {
+        dval += "static_cast<" + type_name(t) + ">(0)";
+      } else {
+        dval += (t->is_string() || is_reference(*m_iter)) ? "" : "0";
+      }
+      if (!init_ctor) {
+        init_ctor = true;
+        if(has_default_value) {
+          out << " : ";
+        } else {
+          out << '\n' << args_indent << ": ";
+          args_indent.append("  ");
+        }
+      } else {
+        out << ",\n" << args_indent;
+      }
+
+      out << (*m_iter)->get_name() << "(" << dval << ")";
+    }
+  }
+
+  //
+  // Start generating body
+  //
+
+  out << " {" << endl;
+  indent_up();
+  // TODO(dreiss): When everything else in Thrift is perfect,
+  // do more of these in the initializer list.
+  for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
+    t_type* t = get_true_type((*m_iter)->get_type());
+    if (!t->is_base_type() && !t->is_enum() && !is_reference(*m_iter)) {
+      t_const_value* cv = (*m_iter)->get_value();
+      if (cv != nullptr) {
+        print_const_value(out, (*m_iter)->get_name(), t, cv);
+      }
+    }
+  }
+  scope_down(out);
 }
 
 void t_cpp_generator::generate_copy_constructor(ostream& out,
