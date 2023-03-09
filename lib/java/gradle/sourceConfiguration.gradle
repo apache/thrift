@@ -27,8 +27,8 @@
 // https://docs.gradle.org/current/userguide/toolchains.html
 //
 // The '--release' option added below makes sure that even if we are using
-// the toolchain version > 8, the final artifact is at version 8. There is
-// also a runtime CI that's based on Java 8 to ensure that.
+// the toolchain version > 11, the final artifact is at version 11. There is
+// also a runtime CI that's based on Java 11 to ensure that.
 java {
     toolchain {
         languageVersion = JavaLanguageVersion.of(17)
