@@ -24,6 +24,7 @@
 #include <boost/format.hpp>
 #include <boost/thread.hpp>
 #include <memory>
+#include <openssl/opensslv.h>
 #include <thrift/transport/TSSLServerSocket.h>
 #include <thrift/transport/TSSLSocket.h>
 #include <thrift/transport/TTransport.h>
