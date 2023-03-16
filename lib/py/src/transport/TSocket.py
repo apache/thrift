@@ -228,13 +228,14 @@ class TServerSocket(TSocketBase, TServerTransportBase):
                 if eno == errno.ECONNREFUSED:
                     os.unlink(res[4])
 
-        self.handle = socket.socket(res[0], res[1])
-        self.handle.setsockopt(socket.IPPROTO_IPV6, socket.IPV6_V6ONLY, 0)
-        self.handle.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        if hasattr(self.handle, 'settimeout'):
-            self.handle.settimeout(None)
-        self.handle.bind(res[4])
-        self.handle.listen(self._backlog)
+        self.handle = s = socket.socket(res[0], res[1])
+        if s.family is socket.AF_INET6:
+            s.setsockopt(socket.IPPROTO_IPV6, socket.IPV6_V6ONLY, 0)
+        s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        if hasattr(s, 'settimeout'):
+            s.settimeout(None)
+        s.bind(res[4])
+        s.listen(self._backlog)
 
     def accept(self):
         client, addr = self.handle.accept()
