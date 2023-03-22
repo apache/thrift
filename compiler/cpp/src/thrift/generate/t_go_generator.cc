@@ -41,6 +41,8 @@
 #include "thrift/platform.h"
 #include "thrift/version.h"
 #include "thrift/generate/t_generator.h"
+#include "thrift/generate/t_go_generator.h"
+#include "thrift/generate/go_validator_generator.h"
 
 using std::map;
 using std::ostream;
@@ -48,8 +50,6 @@ using std::ostringstream;
 using std::string;
 using std::stringstream;
 using std::vector;
-
-static const string endl = "\n"; // avoid ostream << std::endl flushes
 
 /**
  * A helper for automatically formatting the emitted Go code from the Thrift
@@ -61,277 +61,6 @@ static const string endl = "\n"; // avoid ostream << std::endl flushes
  *           still generated.
  */
 bool format_go_output(const string& file_path);
-
-const string DEFAULT_THRIFT_IMPORT = "github.com/apache/thrift/lib/go/thrift";
-static std::string package_flag;
-
-/**
- * Go code generator.
- */
-class t_go_generator : public t_generator {
-public:
-  t_go_generator(t_program* program,
-                 const std::map<std::string, std::string>& parsed_options,
-                 const std::string& option_string)
-    : t_generator(program) {
-    (void)option_string;
-    std::map<std::string, std::string>::const_iterator iter;
-
-
-    gen_thrift_import_ = DEFAULT_THRIFT_IMPORT;
-    gen_package_prefix_ = "";
-    package_flag = "";
-    read_write_private_ = false;
-    ignore_initialisms_ = false;
-    skip_remote_ = false;
-    for( iter = parsed_options.begin(); iter != parsed_options.end(); ++iter) {
-      if( iter->first.compare("package_prefix") == 0) {
-        gen_package_prefix_ = (iter->second);
-      } else if( iter->first.compare("thrift_import") == 0) {
-        gen_thrift_import_ = (iter->second);
-      } else if( iter->first.compare("package") == 0) {
-        package_flag = (iter->second);
-      } else if( iter->first.compare("read_write_private") == 0) {
-        read_write_private_ = true;
-      } else if( iter->first.compare("ignore_initialisms") == 0) {
-        ignore_initialisms_ =  true;
-      } else if( iter->first.compare("skip_remote") == 0) {
-        skip_remote_ =  true;
-      } else {
-        throw "unknown option go:" + iter->first;
-      }
-    }
-
-    out_dir_base_ = "gen-go";
-  }
-
-  /**
-   * Init and close methods
-   */
-
-  void init_generator() override;
-  void close_generator() override;
-
-  /**
-   * Program-level generation functions
-   */
-
-  void generate_typedef(t_typedef* ttypedef) override;
-  void generate_enum(t_enum* tenum) override;
-  void generate_const(t_const* tconst) override;
-  void generate_struct(t_struct* tstruct) override;
-  void generate_xception(t_struct* txception) override;
-  void generate_service(t_service* tservice) override;
-
-  std::string render_const_value(t_type* type, t_const_value* value, const string& name, bool opt = false);
-
-  /**
-   * Struct generation code
-   */
-
-  void generate_go_struct(t_struct* tstruct, bool is_exception);
-  void generate_go_struct_definition(std::ostream& out,
-                                     t_struct* tstruct,
-                                     bool is_xception = false,
-                                     bool is_result = false,
-                                     bool is_args = false);
-  void generate_go_struct_initializer(std::ostream& out,
-                                      t_struct* tstruct,
-                                      bool is_args_or_result = false);
-  void generate_isset_helpers(std::ostream& out,
-                              t_struct* tstruct,
-                              const string& tstruct_name,
-                              bool is_result = false);
-  void generate_countsetfields_helper(std::ostream& out,
-                                      t_struct* tstruct,
-                                      const string& tstruct_name,
-                                      bool is_result = false);
-  void generate_go_struct_reader(std::ostream& out,
-                                 t_struct* tstruct,
-                                 const string& tstruct_name,
-                                 bool is_result = false);
-  void generate_go_struct_writer(std::ostream& out,
-                                 t_struct* tstruct,
-                                 const string& tstruct_name,
-                                 bool is_result = false,
-                                 bool uses_countsetfields = false);
-  void generate_go_struct_equals(std::ostream& out, t_struct* tstruct, const string& tstruct_name);
-  void generate_go_function_helpers(t_function* tfunction);
-  void get_publicized_name_and_def_value(t_field* tfield,
-                                         string* OUT_pub_name,
-                                         t_const_value** OUT_def_value) const;
-
-  /**
-   * Service-level generation functions
-   */
-
-  void generate_service_helpers(t_service* tservice);
-  void generate_service_interface(t_service* tservice);
-  void generate_service_client(t_service* tservice);
-  void generate_service_remote(t_service* tservice);
-  void generate_service_server(t_service* tservice);
-  void generate_process_function(t_service* tservice, t_function* tfunction);
-
-  /**
-   * Serialization constructs
-   */
-
-  void generate_deserialize_field(std::ostream& out,
-                                  t_field* tfield,
-                                  bool declare,
-                                  std::string prefix = "",
-                                  bool inclass = false,
-                                  bool coerceData = false,
-                                  bool inkey = false,
-                                  bool in_container = false);
-
-  void generate_deserialize_struct(std::ostream& out,
-                                   t_struct* tstruct,
-                                   bool is_pointer_field,
-                                   bool declare,
-                                   std::string prefix = "");
-
-  void generate_deserialize_container(std::ostream& out,
-                                      t_type* ttype,
-                                      bool pointer_field,
-                                      bool declare,
-                                      std::string prefix = "");
-
-  void generate_deserialize_set_element(std::ostream& out,
-                                        t_set* tset,
-                                        bool declare,
-                                        std::string prefix = "");
-
-  void generate_deserialize_map_element(std::ostream& out,
-                                        t_map* tmap,
-                                        bool declare,
-                                        std::string prefix = "");
-
-  void generate_deserialize_list_element(std::ostream& out,
-                                         t_list* tlist,
-                                         bool declare,
-                                         std::string prefix = "");
-
-  void generate_serialize_field(std::ostream& out,
-                                t_field* tfield,
-                                std::string prefix = "",
-                                bool inkey = false);
-
-  void generate_serialize_struct(std::ostream& out, t_struct* tstruct, std::string prefix = "");
-
-  void generate_serialize_container(std::ostream& out,
-                                    t_type* ttype,
-                                    bool pointer_field,
-                                    std::string prefix = "");
-
-  void generate_serialize_map_element(std::ostream& out,
-                                      t_map* tmap,
-                                      std::string kiter,
-                                      std::string viter);
-
-  void generate_serialize_set_element(std::ostream& out, t_set* tmap, std::string iter);
-
-  void generate_serialize_list_element(std::ostream& out, t_list* tlist, std::string iter);
-
-  void generate_go_equals(std::ostream& out, t_type* ttype, string tgt, string src);
-
-  void generate_go_equals_struct(std::ostream& out, t_type* ttype, string tgt, string src);
-
-  void generate_go_equals_container(std::ostream& out, t_type* ttype, string tgt, string src);
-
-  void generate_go_docstring(std::ostream& out, t_struct* tstruct);
-
-  void generate_go_docstring(std::ostream& out, t_function* tfunction);
-
-  void generate_go_docstring(std::ostream& out,
-                             t_doc* tdoc,
-                             t_struct* tstruct,
-                             const char* subheader);
-
-  void generate_go_docstring(std::ostream& out, t_doc* tdoc);
-
-  void parse_go_tags(map<string,string>* tags, const string in);
-
-  /**
-   * Helper rendering functions
-   */
-
-  std::string go_autogen_comment();
-  std::string go_package();
-  std::string go_imports_begin(bool consts);
-  std::string go_imports_end();
-  std::string render_includes(bool consts);
-  std::string render_included_programs(string& unused_protection);
-  std::string render_program_import(const t_program* program, string& unused_protection);
-  std::string render_system_packages(std::vector<string> &system_packages);
-  std::string render_import_protection();
-  std::string render_fastbinary_includes();
-  std::string declare_argument(t_field* tfield);
-  std::string render_field_initial_value(t_field* tfield, const string& name, bool optional_field);
-  std::string type_name(t_type* ttype);
-  std::string module_name(t_type* ttype);
-  std::string function_signature(t_function* tfunction, std::string prefix = "");
-  std::string function_signature_if(t_function* tfunction,
-                                    std::string prefix = "",
-                                    bool addError = false);
-  std::string argument_list(t_struct* tstruct);
-  std::string type_to_enum(t_type* ttype);
-  std::string type_to_go_type(t_type* ttype);
-  std::string type_to_go_type_with_opt(t_type* ttype,
-                                       bool optional_field);
-  std::string type_to_go_key_type(t_type* ttype);
-  std::string type_to_spec_args(t_type* ttype);
-
-  static std::string get_real_go_module(const t_program* program) {
-
-    if (!package_flag.empty()) {
-      return package_flag;
-    }
-    std::string real_module = program->get_namespace("go");
-    if (!real_module.empty()) {
-      return real_module;
-    }
-
-    return lowercase(program->get_name());
-  }
-
-private:
-  std::string gen_package_prefix_;
-  std::string gen_thrift_import_;
-  bool read_write_private_;
-  bool ignore_initialisms_;
-  bool skip_remote_;
-
-  /**
-   * File streams
-   */
-
-  ofstream_with_content_based_conditional_update f_types_;
-  std::string f_types_name_;
-  ofstream_with_content_based_conditional_update f_consts_;
-  std::string f_consts_name_;
-  std::stringstream f_const_values_;
-
-  std::string package_name_;
-  std::string package_dir_;
-  std::unordered_map<std::string, std::string> package_identifiers_;
-  std::set<std::string> package_identifiers_set_;
-  std::string read_method_name_;
-  std::string write_method_name_;
-  std::string equals_method_name_;
-
-  std::set<std::string> commonInitialisms;
-
-  std::string camelcase(const std::string& value) const;
-  void fix_common_initialism(std::string& value, int i) const;
-  std::string publicize(const std::string& value, bool is_args_or_result = false) const;
-  std::string publicize(const std::string& value, bool is_args_or_result, const std::string& service_name) const;
-  std::string privatize(const std::string& value) const;
-  std::string new_prefix(const std::string& value) const;
-  static std::string variable_name_to_go_name(const std::string& value);
-  static bool is_pointer_field(t_field* tfield, bool in_container = false);
-  static bool omit_initialization(t_field* tfield);
-};
 
 // returns true if field initialization can be omitted since it has corresponding go type zero value
 // or default value is not set
@@ -368,6 +97,11 @@ bool t_go_generator::omit_initialization(t_field* tfield) {
       } else {
         return value->get_double() == 0.;
       }
+
+    case t_base_type::TYPE_UUID:
+      // it's hard to detect all zero uuid here, so just always inline it.
+      return false;
+
     default:
       throw "compiler error: unhandled type";
     }
@@ -421,7 +155,9 @@ bool t_go_generator::is_pointer_field(t_field* tfield, bool in_container_value) 
     case t_base_type::TYPE_I32:
     case t_base_type::TYPE_I64:
     case t_base_type::TYPE_DOUBLE:
+    case t_base_type::TYPE_UUID:
       return !has_default;
+
     default:
       break;
     }
@@ -973,6 +709,10 @@ string t_go_generator::go_imports_begin(bool consts) {
   system_packages.push_back("time");
   // For the thrift import, always do rename import to make sure it's called thrift.
   system_packages.push_back("thrift \"" + gen_thrift_import_ + "\"");
+
+  // validator import
+  system_packages.push_back("strings");
+  system_packages.push_back("regexp");
   return "import (\n" + render_system_packages(system_packages);
 }
 
@@ -983,7 +723,7 @@ string t_go_generator::go_imports_begin(bool consts) {
  * This will have to do in lieu of more intelligent import statement construction
  */
 string t_go_generator::go_imports_end() {
-  return string(
+  string import_end = string(
       ")\n\n"
       "// (needed to ensure safety because of naive import list construction.)\n"
       "var _ = thrift.ZERO\n"
@@ -991,7 +731,11 @@ string t_go_generator::go_imports_end() {
       "var _ = errors.New\n"
       "var _ = context.Background\n"
       "var _ = time.Now\n"
-      "var _ = bytes.Equal\n\n");
+      "var _ = bytes.Equal\n"
+      "// (needed by validator.)\n"
+      "var _ = strings.Contains\n"
+      "var _ = regexp.MatchString\n\n");
+  return import_end;
 }
 
 /**
@@ -1130,7 +874,7 @@ void t_go_generator::generate_const(t_const* tconst) {
   t_type* type = tconst->get_type();
   string name = publicize(tconst->get_name());
   t_const_value* value = tconst->get_value();
-  if (type->is_base_type() || type->is_enum()) {
+  if (type->is_enum() || (type->is_base_type() && ((t_base_type*)type)->get_base() != t_base_type::TYPE_UUID)) {
     indent(f_consts_) << "const " << name << " = " << render_const_value(type, value, name) << endl;
   } else {
     f_const_values_ << indent() << name << " = " << render_const_value(type, value, name) << endl
@@ -1147,8 +891,10 @@ void t_go_generator::generate_const(t_const* tconst) {
  */
 string t_go_generator::render_const_value(t_type* type, t_const_value* value, const string& name, bool opt) {
   string typedef_opt_ptr;
+  string typedef_opt;
   if (type->is_typedef()) {
-    typedef_opt_ptr = type_name(type) + "Ptr";
+    typedef_opt = publicize(type_name(type));
+    typedef_opt_ptr = typedef_opt + "Ptr";
   }
   type = get_true_type(type);
   std::ostringstream out;
@@ -1229,6 +975,19 @@ string t_go_generator::render_const_value(t_type* type, t_const_value* value, co
           out << '"' + get_escaped_string(value) + '"';
           break;
 
+        case t_base_type::TYPE_UUID:
+          if (typedef_opt_ptr != "") {
+            out << typedef_opt_ptr << "(" << typedef_opt;
+          } else {
+            out << "thrift.TuuidPtr";
+          }
+          out << "(";
+          out << "thrift.Must(thrift.ParseTuuid(\"" + get_escaped_string(value) + "\"))";
+          if (typedef_opt_ptr != "") {
+            out << ")";
+          }
+          break;
+
         default:
           throw "compiler error: no const of base type " + t_base_type::t_base_name(tbase);
       }
@@ -1266,6 +1025,17 @@ string t_go_generator::render_const_value(t_type* type, t_const_value* value, co
             out << value->get_integer();
           } else {
             out << value->get_double();
+          }
+
+          break;
+
+        case t_base_type::TYPE_UUID:
+          if (typedef_opt != "") {
+            out << typedef_opt << "(";
+          }
+          out << "thrift.Must(thrift.ParseTuuid(\"" + get_escaped_string(value) + "\"))";
+          if (typedef_opt != "") {
+            out << ")";
           }
 
           break;
@@ -1384,6 +1154,14 @@ void t_go_generator::generate_xception(t_struct* txception) {
  */
 void t_go_generator::generate_go_struct(t_struct* tstruct, bool is_exception) {
   generate_go_struct_definition(f_types_, tstruct, is_exception);
+  // generate Validate function
+  std::string tstruct_name(publicize(tstruct->get_name(), false));
+  f_types_ << "func (p *" << tstruct_name << ") Validate() error {" << endl;
+  indent_up();
+  go_validator_generator(this).generate_struct_validator(f_types_, tstruct);
+  f_types_ << indent() << "return nil" << endl;
+  indent_down();
+  f_types_ << "}" << endl;
 }
 
 void t_go_generator::get_publicized_name_and_def_value(t_field* tfield,
@@ -1498,9 +1276,9 @@ void t_go_generator::generate_go_struct_definition(ostream& out,
 
       // Check for user defined tags and them if there are any. User defined tags
       // can override the above db and json tags.
-      std::map<string, string>::iterator it = (*m_iter)->annotations_.find("go.tag");
+      std::map<string, std::vector<string>>::iterator it = (*m_iter)->annotations_.find("go.tag");
       if (it != (*m_iter)->annotations_.end()) {
-        parse_go_tags(&tags, it->second);
+        parse_go_tags(&tags, it->second.back());
       }
 
       string gotag;
@@ -2680,6 +2458,15 @@ void t_go_generator::generate_service_remote(t_service* tservice) {
           f_remote << indent() << "}" << endl;
           break;
 
+        case t_base_type::TYPE_UUID:
+          f_remote << indent() << "argvalue" << i << ", " << err
+                   << " := (thrift.ParseTuuid(flag.Arg(" << flagArg << ")))" << endl;
+          f_remote << indent() << "if " << err << " != nil {" << endl;
+          f_remote << indent() << "  Usage()" << endl;
+          f_remote << indent() << "  return" << endl;
+          f_remote << indent() << "}" << endl;
+          break;
+
         default:
           throw("Invalid base type in generate_service_remote");
         }
@@ -2794,6 +2581,7 @@ void t_go_generator::generate_service_remote(t_service* tservice) {
         case t_base_type::TYPE_I32:
         case t_base_type::TYPE_I64:
         case t_base_type::TYPE_DOUBLE:
+        case t_base_type::TYPE_UUID:
           f_remote << "value" << i;
           break;
 
@@ -3307,6 +3095,10 @@ void t_go_generator::generate_deserialize_field(ostream& out,
         out << "ReadDouble(ctx)";
         break;
 
+      case t_base_type::TYPE_UUID:
+        out << "ReadUUID(ctx)";
+        break;
+
       default:
         throw "compiler error: no Go name for base type " + t_base_type::t_base_name(tbase);
       }
@@ -3556,6 +3348,10 @@ void t_go_generator::generate_serialize_field(ostream& out,
         out << "WriteDouble(ctx, float64(" << name << "))";
         break;
 
+      case t_base_type::TYPE_UUID:
+        out << "WriteUUID(ctx, thrift.Tuuid(" << name << "))";
+        break;
+
       default:
         throw "compiler error: no Go name for base type " + t_base_type::t_base_name(tbase);
       }
@@ -3755,6 +3551,7 @@ void t_go_generator::generate_go_equals(ostream& out, t_type* ori_type, string t
       case t_base_type::TYPE_I32:
       case t_base_type::TYPE_I64:
       case t_base_type::TYPE_DOUBLE:
+      case t_base_type::TYPE_UUID:
         out << tgt << " != " << src;
         break;
 
@@ -4062,6 +3859,9 @@ string t_go_generator::type_to_enum(t_type* type) {
     case t_base_type::TYPE_DOUBLE:
       return "thrift.DOUBLE";
 
+    case t_base_type::TYPE_UUID:
+      return "thrift.UUID";
+
     default:
       break;
     }
@@ -4151,6 +3951,9 @@ string t_go_generator::type_to_go_type_with_opt(t_type* type,
 
     case t_base_type::TYPE_DOUBLE:
       return maybe_pointer + "float64";
+
+    case t_base_type::TYPE_UUID:
+      return maybe_pointer + "thrift.Tuuid";
 
     default:
       break;
@@ -4266,6 +4069,11 @@ bool format_go_output(const string& file_path) {
   return false;
   */
  }
+
+std::string t_go_generator::display_name() const {
+  return "Go";
+}
+
 
 THRIFT_REGISTER_GENERATOR(go, "Go",
                           "    package_prefix=  Package prefix for generated files.\n" \

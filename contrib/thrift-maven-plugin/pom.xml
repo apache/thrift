@@ -17,10 +17,7 @@
  specific language governing permissions and limitations
  under the License.
  -->
-<project
-  xmlns="http://maven.apache.org/POM/4.0.0"
-  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+ <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 
   <modelVersion>4.0.0</modelVersion>
   <parent>
@@ -32,7 +29,7 @@
   <artifactId>thrift-maven-plugin</artifactId>
   <packaging>maven-plugin</packaging>
   <name>thrift-maven-plugin</name>
-  <version>0.18.0</version>
+  <version>0.19.0</version>
 
   <properties>
     <maven.compiler.source>1.8</maven.compiler.source>
@@ -66,7 +63,7 @@
             <phase>generate-test-resources</phase>
             <configuration>
               <target>
-                <jar destfile="${project.build.directory}/SharedIdl.jar" basedir="${basedir}/src/test/resources" includes="**/*.thrift" />
+                <jar destfile="${project.build.directory}/SharedIdl.jar" basedir="${basedir}/src/test/resources" includes="**/*.thrift"/>
               </target>
             </configuration>
             <goals>
@@ -81,7 +78,7 @@
       <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
-      <version>4.11</version>
+      <version>4.13.1</version>
       <scope>test</scope>
     </dependency>
     <dependency>
@@ -97,12 +94,12 @@
     <dependency>
       <groupId>com.google.guava</groupId>
       <artifactId>guava</artifactId>
-      <version>14.0.1</version>
+      <version>30.0-jre</version>
     </dependency>
     <dependency>
       <groupId>org.codehaus.plexus</groupId>
       <artifactId>plexus-utils</artifactId>
-      <version>3.0.14</version>
+      <version>3.0.16</version>
     </dependency>
     <dependency>
       <groupId>org.mockito</groupId>

@@ -52,8 +52,6 @@ public abstract class TExtensibleServlet extends HttpServlet {
 
   private TProtocolFactory inFactory;
 
-  private TProtocolFactory outFactory;
-
   private Collection<Map.Entry<String, String>> customHeaders;
 
   /**
@@ -85,7 +83,7 @@ public abstract class TExtensibleServlet extends HttpServlet {
     super.init(config); // no-args init() happens here
     this.processor = getProcessor();
     this.inFactory = getInProtocolFactory();
-    this.outFactory = getOutProtocolFactory();
+    TProtocolFactory outFactory = getOutProtocolFactory();
     this.customHeaders = new ArrayList<Map.Entry<String, String>>();
 
     if (processor == null) {
@@ -105,8 +103,8 @@ public abstract class TExtensibleServlet extends HttpServlet {
   @Override
   protected void doPost(HttpServletRequest request, HttpServletResponse response)
       throws ServletException, IOException {
-    TTransport inTransport = null;
-    TTransport outTransport = null;
+    TTransport inTransport;
+    TTransport outTransport;
 
     try {
       response.setContentType("application/x-thrift");
@@ -146,14 +144,17 @@ public abstract class TExtensibleServlet extends HttpServlet {
   public void addCustomHeader(final String key, final String value) {
     this.customHeaders.add(
         new Map.Entry<String, String>() {
+          @Override
           public String getKey() {
             return key;
           }
 
+          @Override
           public String getValue() {
             return value;
           }
 
+          @Override
           public String setValue(String value) {
             return null;
           }

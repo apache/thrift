@@ -104,6 +104,7 @@ public:
 
   void init_generator() override;
   void close_generator() override;
+  std::string display_name() const override;
 
   void generate_consts(std::vector<t_const*> consts) override;
 
@@ -4398,9 +4399,9 @@ string t_cpp_generator::namespace_close(string ns) {
 string t_cpp_generator::type_name(t_type* ttype, bool in_typedef, bool arg) {
   if (ttype->is_base_type()) {
     string bname = base_type_name(((t_base_type*)ttype)->get_base());
-    std::map<string, string>::iterator it = ttype->annotations_.find("cpp.type");
-    if (it != ttype->annotations_.end()) {
-      bname = it->second;
+    std::map<string, std::vector<string>>::iterator it = ttype->annotations_.find("cpp.type");
+    if (it != ttype->annotations_.end() && !it->second.empty()) {
+      bname = it->second.back();
     }
 
     if (!arg) {
@@ -4750,6 +4751,11 @@ string t_cpp_generator::get_legal_program_name(std::string program_name)
 
   return program_name;
 }
+
+std::string t_cpp_generator::display_name() const {
+  return "C++";
+}
+
 
 THRIFT_REGISTER_GENERATOR(
     cpp,

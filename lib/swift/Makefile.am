@@ -30,7 +30,7 @@ clean-local:
 	rm -rf .build
 
 precross:
-	swift
+	swift build
 
 check-local:
 	swift test

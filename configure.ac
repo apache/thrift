@@ -20,7 +20,7 @@
 AC_PREREQ(2.65)
 AC_CONFIG_MACRO_DIR([./aclocal])
 
-AC_INIT([thrift], [0.18.0])
+AC_INIT([thrift], [0.19.0])
 
 AC_CONFIG_AUX_DIR([.])
 
@@ -211,9 +211,10 @@ AM_CONDITIONAL([WITH_JAVA], [test "$have_java" = "yes"])
 AX_THRIFT_LIB(kotlin, [Kotlin], yes)
 if test "$with_kotlin" = "yes";  then
   AX_JAVAC_AND_JAVA
+  AC_PATH_PROG([GRADLE], [gradle])
   AC_SUBST(CLASSPATH)
   AC_SUBST(GRADLE_OPTS)
-  if test "x$JAVA" != "x" && test "x$JAVAC" != "x" ; then
+  if test "x$JAVA" != "x" && test "x$JAVAC" != "x" && "x$GRADLE" != "x" ; then
     have_kotlin="yes"
   fi
 fi
@@ -468,7 +469,7 @@ AX_THRIFT_LIB(netstd, [.NET Core], yes)
 if test "$with_netstd" = "yes";  then
   AC_PATH_PROG([DOTNETCORE], [dotnet])
   if [[ -x "$DOTNETCORE" ]] ; then
-    AX_PROG_DOTNETCORE_VERSION( [3.1.0], have_netstd="yes", have_netstd="no")
+    AX_PROG_DOTNETCORE_VERSION( [7.0.0], have_netstd="yes", have_netstd="no")
   fi
 fi
 AM_CONDITIONAL(WITH_DOTNET, [test "$have_netstd" = "yes"])
@@ -820,6 +821,8 @@ AC_CONFIG_FILES([
   test/py.tornado/Makefile
   test/rb/Makefile
   test/rs/Makefile
+  test/swift/Makefile
+  test/swift/CrossTests/Makefile
   tutorial/Makefile
   tutorial/c_glib/Makefile
   tutorial/cl/Makefile

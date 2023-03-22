@@ -34,6 +34,7 @@ tutorialserver: all
 	$(ANT) $(ANT_FLAGS) tutorialserver
 
 EXTRA_DIST = \
+	build.properties \
 	build.xml \
 	src \
 	tutorial.html

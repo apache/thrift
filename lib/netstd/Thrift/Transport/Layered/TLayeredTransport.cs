@@ -1,4 +1,4 @@
-// Licensed to the Apache Software Foundation(ASF) under one
+﻿// Licensed to the Apache Software Foundation(ASF) under one
 // or more contributor license agreements.See the NOTICE file
 // distributed with this work for additional information
 // regarding copyright ownership.The ASF licenses this file
@@ -40,6 +40,11 @@ namespace Thrift.Transport
         public override void CheckReadBytesAvailable(long numBytes)
         {
             InnerTransport.CheckReadBytesAvailable(numBytes);
+        }
+
+        public override void ResetConsumedMessageSize(long newSize = -1)
+        {
+            InnerTransport.ResetConsumedMessageSize(newSize);
         }
     }
 }

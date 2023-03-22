@@ -22,7 +22,7 @@ THRIFT_OMIT_FILE = test/Thrift_omit_without.thrift
 THRIFT_FILES = $(wildcard test/*.thrift) \
 		  $(THRIFT_OMIT_FILE) \
 		  ../../test/v0.16/ConstantsDemo.thrift \
-		  ../../test/NameConflictTest.thrift \
+		  ../../test/v0.16/NameConflictTest.thrift \
 		  ../../test/DoubleConstantsTest.thrift \
 		  ../../test/v0.16/ThriftTest.thrift
 

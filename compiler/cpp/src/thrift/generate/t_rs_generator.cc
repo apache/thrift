@@ -76,6 +76,7 @@ public:
 
   void init_generator() override;
   void close_generator() override;
+  std::string display_name() const override;
 
   /**
    * Program-level generation functions
@@ -3365,6 +3366,11 @@ void t_rs_generator::string_replace(string& target, const string& search_string,
     search_idx = match_idx + replace_len;
   }
 }
+
+std::string t_rs_generator::display_name() const {
+  return "Rust";
+}
+
 
 THRIFT_REGISTER_GENERATOR(
   rs,

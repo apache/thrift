@@ -44,64 +44,40 @@ public:
     : t_type(program),
       is_xception_(false),
       is_union_(false),
-      members_validated(false),
-      members_with_value(0),
+      is_method_xcepts_(false),
+      union_validated_(false),
+      xcepts_validated_(false),
+      members_with_value_(0),
       xsd_all_(false) {}
 
   t_struct(t_program* program, const std::string& name)
     : t_type(program, name),
       is_xception_(false),
       is_union_(false),
-      members_validated(false),
-      members_with_value(0),
+      is_method_xcepts_(false),
+      union_validated_(false),
+      xcepts_validated_(false),
+      members_with_value_(0),
       xsd_all_(false) {}
 
   void set_name(const std::string& name) override {
     name_ = name;
-    validate_union_members();
+    union_validated_= false;
+    validate_members();
   }
 
   void set_xception(bool is_xception) { is_xception_ = is_xception; }
 
-  void validate_union_member(t_field* field) {
-    if (is_union_ && (!name_.empty())) {
-
-      // 1) unions can't have required fields
-      // 2) union members are implicitly optional, otherwise bugs like THRIFT-3650 wait to happen
-      if (field->get_req() != t_field::T_OPTIONAL) {
-        // no warning on default requiredness, but do warn on anything else that is explicitly asked for
-        if(field->get_req() != t_field::T_OPT_IN_REQ_OUT) {
-          pwarning(1,
-                   "Union %s field %s: union members must be optional, ignoring specified requiredness.\n",
-                   name_.c_str(),
-                   field->get_name().c_str());
-        }
-        field->set_req(t_field::T_OPTIONAL);
-      }
-
-      // unions may have up to one member defaulted, but not more
-      if (field->get_value() != nullptr) {
-        if (1 < ++members_with_value) {
-          throw "Error: Field " + field->get_name() + " provides another default value for union "
-              + name_;
-        }
-      }
-    }
-  }
-
-  void validate_union_members() {
-    if (is_union_ && (!name_.empty()) && (!members_validated)) {
-      members_type::const_iterator m_iter;
-      for (m_iter = members_in_id_order_.begin(); m_iter != members_in_id_order_.end(); ++m_iter) {
-        validate_union_member(*m_iter);
-      }
-      members_validated = true;
-    }
+  void set_method_xcepts(bool is_method_xcepts) {
+    is_method_xcepts_ = is_method_xcepts;
+    xcepts_validated_ = false;
+    validate_members();
   }
 
   void set_union(bool is_union) {
     is_union_ = is_union;
-    validate_union_members();
+    union_validated_= false;
+    validate_members();
   }
 
   void set_xsd_all(bool xsd_all) { xsd_all_ = xsd_all; }
@@ -123,7 +99,11 @@ public:
     }
     members_.push_back(elem);
     members_in_id_order_.insert(bounds.second, elem);
-    validate_union_member(elem);
+    if (needs_validation()) {
+      validate_members();
+    } else {
+      validate_member_field(elem);
+    }
     return true;
   }
 
@@ -154,12 +134,80 @@ public:
 private:
   members_type members_;
   members_type members_in_id_order_;
-  bool is_xception_;
-  bool is_union_;
-  bool members_validated;
-  int members_with_value;
+  bool is_xception_;       // struct is an IDL exception
+  bool is_union_;          // struct is an IDL union
+  bool is_method_xcepts_;  // struct holds the exceptions declared at a service method
+  bool union_validated_;
+  bool xcepts_validated_;
+  int members_with_value_;
 
   bool xsd_all_;
+
+  void validate_member_field(t_field* field) {
+    validate_union_member(field);
+    validate_method_exception_field(field);
+  }
+  
+  void validate_union_member(t_field* field) {
+    if (is_union_ && (!name_.empty())) {
+      union_validated_ = true;
+
+      // 1) unions can't have required fields
+      // 2) union members are implicitly optional, otherwise bugs like THRIFT-3650 wait to happen
+      if (field->get_req() != t_field::T_OPTIONAL) {
+        // no warning on default requiredness, but do warn on anything else that is explicitly asked for
+        if(field->get_req() != t_field::T_OPT_IN_REQ_OUT) {
+          pwarning(1,
+                   "Union %s field %s: union members must be optional, ignoring specified requiredness.\n",
+                   name_.c_str(),
+                   field->get_name().c_str());
+        }
+        field->set_req(t_field::T_OPTIONAL);
+      }
+
+      // unions may have up to one member defaulted, but not more
+      if (field->get_value() != nullptr) {
+        if (1 < ++members_with_value_) {
+          throw "Error: Field " + field->get_name() + " provides another default value for union "
+              + name_;
+        }
+      }
+    }
+  }
+
+  void validate_method_exception_field(t_field* field) {
+    if (is_method_xcepts_) {
+      xcepts_validated_ = true;
+
+      // THRIFT-5669: "required" makes no sense at "throws" clauses
+      if (field->get_req() == t_field::T_REQUIRED) {
+        field->set_req(t_field::T_OPT_IN_REQ_OUT);
+        pwarning(1,
+                 "Exception field %s: \"required\" is illegal here, ignoring.\n",
+                 field->get_name().c_str());
+      }
+    }
+  }
+
+  bool needs_validation() {
+    if (is_method_xcepts_) {
+      return !xcepts_validated_;
+    }
+    if (is_union_) {
+      return !union_validated_;
+    }
+    return false;
+  }
+
+  void validate_members() {
+    if (needs_validation()) {
+      members_type::const_iterator m_iter;
+      for (m_iter = members_in_id_order_.begin(); m_iter != members_in_id_order_.end(); ++m_iter) {
+        validate_member_field(*m_iter);
+      }
+    }
+  }
+
 };
 
 #endif

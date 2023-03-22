@@ -97,10 +97,16 @@ target_link_libraries(thrift_c_glib PUBLIC ${SYSLIBS})
 
 # If Zlib is not found just ignore the Zlib stuff
 if(WITH_ZLIB)
-    include_directories(SYSTEM ${ZLIB_INCLUDE_DIRS})
     ADD_LIBRARY_THRIFT(thrift_c_glib_zlib ${thrift_c_glib_zlib_SOURCES})
-    target_link_libraries(thrift_c_glib_zlib ${SYSLIBS} ${ZLIB_LIBRARIES})
-    target_link_libraries(thrift_c_glib_zlib thrift_c_glib)
+    target_link_libraries(thrift_c_glib_zlib PUBLIC ${SYSLIBS})
+    target_link_libraries(thrift_c_glib_zlib PUBLIC thrift_c_glib)
+
+    if(TARGET ZLIB::ZLIB)
+        target_link_libraries(thrift_c_glib_zlib PUBLIC ZLIB::ZLIB)
+    else()
+        include_directories(SYSTEM ${ZLIB_INCLUDE_DIRS})
+        target_link_libraries(thrift_c_glib_zlib PUBLIC ${ZLIB_LIBRARIES})
+    endif()
 endif()
 
 # Install the headers

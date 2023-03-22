@@ -18,6 +18,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Text;
 using Thrift.Protocol;
 
@@ -71,9 +72,13 @@ namespace Thrift.Protocol
             {
                 sb.Append((self as TBase).ToString());
             }
+            else if (self is double)
+            {
+                sb.Append(((double)self).ToString(CultureInfo.InvariantCulture));
+            }
             else
             {
-                sb.Append(self != null?  self.ToString() : "<null>");
+                sb.Append(self != null ? self.ToString() : "<null>");
             }
         }
     }

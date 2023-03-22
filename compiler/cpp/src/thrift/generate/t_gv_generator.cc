@@ -67,12 +67,15 @@ public:
   /**
    * Init and end of generator
    */
+
   void init_generator() override;
   void close_generator() override;
+  std::string display_name() const override;
 
   /**
    * Program-level generation functions
    */
+
   void generate_typedef(t_typedef* ttypedef) override;
   void generate_enum(t_enum* tenum) override;
   void generate_const(t_const* tconst) override;
@@ -83,6 +86,7 @@ protected:
   /**
    * Helpers
    */
+
   void print_type(t_type* ttype, string struct_field_ref);
   void print_const_value(t_type* type, t_const_value* tvalue);
 
@@ -336,8 +340,13 @@ void t_gv_generator::generate_service(t_service* tservice) {
     }
   }
 
-  f_out_ << " }" << endl;
+  f_out_ << " }" << endl;	
 }
+
+std::string t_gv_generator::display_name() const {
+  return "Graphviz";
+}
+
 
 THRIFT_REGISTER_GENERATOR(
     gv,

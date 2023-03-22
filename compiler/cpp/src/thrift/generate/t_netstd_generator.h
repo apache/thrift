@@ -37,6 +37,7 @@
 #include "thrift/generate/t_oop_generator.h"
 
 using std::map;
+using std::set;
 using std::ostream;
 using std::ostringstream;
 using std::string;
@@ -66,11 +67,11 @@ public:
   bool is_hashcode_enabled() const;
   bool is_serialize_enabled() const;
   bool is_union_enabled() const;
-  map<string, int> get_keywords_list() const;
 
   // overrides
   void init_generator() override;
   void close_generator() override;
+  std::string display_name() const override;
   void generate_consts(vector<t_const*> consts) override;
   void generate_consts(ostream& out, vector<t_const*> consts);
   void generate_typedef(t_typedef* ttypedef) override;
@@ -179,13 +180,26 @@ private:
   bool use_net6_features;
   bool add_async_postfix;
 
+  const std::string CSHARP_KEYWORDS[101] = {
+    // C# keywords
+    "abstract", "as", "base", "bool", "break", "byte", "case", "catch", "char", "checked", "class", "const", "continue", 
+    "decimal", "default", "delegate", "do", "double", "else", "enum", "event", "explicit", "extern", "false", "finally", 
+    "fixed", "float", "for", "foreach", "goto", "if", "implicit", "in", "int", "interface", "internal", "is", "lock", 
+    "long", "namespace", "new", "null", "object", "operator", "out", "override", "params", "private", "protected", 
+    "public", "readonly", "ref", "return", "sbyte", "sealed", "short", "sizeof", "stackalloc", "static", "string", 
+    "struct", "switch", "this", "throw", "true", "try", "typeof", "uint", "ulong", "unchecked", "unsafe", "ushort", 
+    "using", "virtual", "void", "volatile", "while", 
+    // C# contextual keywords
+    "add", "alias", "ascending", "async", "await", "descending", "dynamic", "from", "get", "global", "group", "into", 
+    "join", "let", "orderby", "partial", "remove", "select", "set", "value", "var", "when", "where", "yield"
+  };
+
   string wcf_namespace_;
-  map<string, int> netstd_keywords;
+  std::set<string> netstd_keywords = std::set<string>(CSHARP_KEYWORDS, CSHARP_KEYWORDS + sizeof(CSHARP_KEYWORDS) / sizeof(CSHARP_KEYWORDS[0]));
   vector<member_mapping_scope> member_mapping_scopes;
   map<string, t_type*> collected_extension_types;
   map<string, t_type*> checked_extension_types;
   
-  void init_keywords();
   string normalize_name(string name, bool is_arg_name = false);
   string make_valid_csharp_identifier(string const& fromName);
   string make_csharp_string_literal( string const& value);

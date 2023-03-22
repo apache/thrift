@@ -213,7 +213,7 @@ class function Fixtures.CreateNesting : INesting;
 var bonk : IBonk;
 begin
   bonk := TBonkImpl.Create;
-  bonk.Type_   := 31337;
+  bonk.&Type   := 31337;
   bonk.Message := 'I am a bonk... xor!';
 
   result := TNestingImpl.Create;
@@ -262,11 +262,11 @@ begin
   // one with two
   stage2 := TThriftListImpl<IBonk>.Create;
   b := TBonkImpl.Create;
-  b.type_ := 1;
+  b.&type := 1;
   b.message := 'Wait.';
   stage2.Add( b);
   b := TBonkImpl.Create;
-  b.type_ := 2;
+  b.&type := 2;
   b.message := 'What?';
   stage2.Add( b);
   result.Bonks.Add( 'two', stage2);
@@ -274,15 +274,15 @@ begin
   // one with three
   stage2 := TThriftListImpl<IBonk>.Create;
   b := TBonkImpl.Create;
-  b.type_ := 3;
+  b.&type := 3;
   b.message := 'quoth';
   stage2.Add( b);
   b := TBonkImpl.Create;
-  b.type_ := 4;
+  b.&type := 4;
   b.message := 'the raven';
   stage2.Add( b);
   b := TBonkImpl.Create;
-  b.type_ := 5;
+  b.&type := 5;
   b.message := 'nevermore';
   stage2.Add( b);
   result.bonks.Add( 'three', stage2);

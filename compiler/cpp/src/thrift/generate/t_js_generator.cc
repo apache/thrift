@@ -131,6 +131,7 @@ public:
 
   void init_generator() override;
   void close_generator() override;
+  std::string display_name() const override;
 
   /**
    * Program-level generation functions
@@ -151,6 +152,7 @@ public:
   /**
    * Structs!
    */
+
   void generate_js_struct(t_struct* tstruct, bool is_exception);
   void generate_js_struct_definition(std::ostream& out,
                                      t_struct* tstruct,
@@ -163,6 +165,7 @@ public:
   /**
    * Service-level generation functions
    */
+
   void generate_service_helpers(t_service* tservice);
   void generate_service_interface(t_service* tservice);
   void generate_service_rest(t_service* tservice);
@@ -229,6 +232,7 @@ public:
   /**
    * Helper parser functions
    */
+
   void parse_imports(t_program* program, const std::string& imports_string);
   void parse_thrift_package_output_directory(const std::string& thrift_package_output_directory);
 
@@ -1481,7 +1485,7 @@ void t_js_generator::generate_process_function(t_service* tservice, t_function* 
   indent_up();
 
   if (gen_es6_) {
-    indent(f_service_) << "Promise.resolve(this._handler." << tfunction->get_name() << ".bind(this._handler)(" << endl;
+    indent(f_service_) << "new Promise((resolve) => resolve(this._handler." << tfunction->get_name() << ".bind(this._handler)(" << endl;
   } else {
     string maybeComma = (fields.size() > 0 ? "," : "");
     indent(f_service_) << "Q.fcall(this._handler." << tfunction->get_name() << ".bind(this._handler)"
@@ -1496,7 +1500,7 @@ void t_js_generator::generate_process_function(t_service* tservice, t_function* 
   indent_down();
 
   if (gen_es6_) {
-    indent(f_service_) << ")).then(result => {" << endl;
+    indent(f_service_) << "))).then(result => {" << endl;
   } else {
     indent(f_service_) << ").then(function(result) {" << endl;
   }
@@ -2996,6 +3000,11 @@ std::string t_js_generator::next_identifier_name(const std::vector<t_field*>& fi
 
   return current_name;
 }
+
+std::string t_js_generator::display_name() const {
+  return "Javascript";
+}
+
 
 THRIFT_REGISTER_GENERATOR(js,
                           "Javascript",

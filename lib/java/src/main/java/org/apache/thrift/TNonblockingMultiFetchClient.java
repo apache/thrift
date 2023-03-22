@@ -69,20 +69,20 @@ public class TNonblockingMultiFetchClient {
 
   // if the size of the response msg exceeds this limit (in byte), we will
   // not read the msg
-  private int maxRecvBufBytesPerServer;
+  private final int maxRecvBufBytesPerServer;
 
   // time limit for fetching data from all servers (in second)
-  private int fetchTimeoutSeconds;
+  private final int fetchTimeoutSeconds;
 
   // store request that will be sent to servers
-  private ByteBuffer requestBuf;
+  private final ByteBuffer requestBuf;
   private ByteBuffer requestBufDuplication;
 
   // a list of remote servers
-  private List<InetSocketAddress> servers;
+  private final List<InetSocketAddress> servers;
 
   // store fetch results
-  private TNonblockingMultiFetchStats stats;
+  private final TNonblockingMultiFetchStats stats;
   private ByteBuffer[] recvBuf;
 
   public TNonblockingMultiFetchClient(
@@ -237,6 +237,7 @@ public class TNonblockingMultiFetchClient {
             try {
               s.close();
             } catch (Exception ex) {
+              LOGGER.error("failed to free up socket", ex);
             }
           }
           if (key != null) {
@@ -280,16 +281,14 @@ public class TNonblockingMultiFetchClient {
             }
           }
 
-          if (selKey.isValid() && selKey.isWritable()) {
-            if (sendBuf[index].hasRemaining()) {
-              // if this socket throws an exception, print error msg and
-              // skip it.
-              try {
-                SocketChannel sChannel = (SocketChannel) selKey.channel();
-                sChannel.write(sendBuf[index]);
-              } catch (Exception e) {
-                LOGGER.error("Socket {} writes to server {} error", index, servers.get(index), e);
-              }
+          if (selKey.isValid() && selKey.isWritable() && sendBuf[index].hasRemaining()) {
+            // if this socket throws an exception, print error msg and
+            // skip it.
+            try {
+              SocketChannel sChannel = (SocketChannel) selKey.channel();
+              sChannel.write(sendBuf[index]);
+            } catch (Exception e) {
+              LOGGER.error("Socket {} writes to server {} error", index, servers.get(index), e);
             }
           }
 
@@ -361,13 +360,10 @@ public class TNonblockingMultiFetchClient {
     public void close() {
       try {
         if (selector.isOpen()) {
-          Iterator<SelectionKey> it = selector.keys().iterator();
-          while (it.hasNext()) {
-            SelectionKey selKey = it.next();
+          for (SelectionKey selKey : selector.keys()) {
             SocketChannel sChannel = (SocketChannel) selKey.channel();
             sChannel.close();
           }
-
           selector.close();
         }
       } catch (IOException e) {

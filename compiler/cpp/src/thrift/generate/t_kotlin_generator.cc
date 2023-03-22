@@ -75,8 +75,10 @@ public:
   /**
    * Init and close methods
    */
+
   void init_generator() override;
   void close_generator() override;
+  std::string display_name() const override;
 
   void generate_consts(std::vector<t_const*> consts) override;
 
@@ -583,7 +585,7 @@ void t_kotlin_generator::generate_metadata_for_field_annotations(std::ostream& o
     out << "mapOf(" << endl;
     indent_up();
     for (auto& annotation : field->annotations_) {
-      indent(out) << "\"" + annotation.first + "\" to \"" + annotation.second + "\"," << endl;
+      indent(out) << "\"" + annotation.first + "\" to \"" + annotation.second.back() + "\"," << endl;
     }
     indent_down();
     indent(out) << ")";
@@ -2004,5 +2006,10 @@ void t_kotlin_generator::generate_kdoc_comment(ostream& out, t_doc* tdoc) {
     generate_docstring_comment(out, "/**\n", " * ", tdoc->get_doc(), " */\n");
   }
 }
+
+std::string t_kotlin_generator::display_name() const {
+  return "Kotlin";
+}
+
 
 THRIFT_REGISTER_GENERATOR(kotlin, "Kotlin", "")

@@ -123,11 +123,6 @@ bool t_netstd_generator::is_serialize_enabled() const { return serialize_; }
 
 bool t_netstd_generator::is_union_enabled() const { return union_; }
 
-map<string, int> t_netstd_generator::get_keywords_list() const
-{
-    return netstd_keywords;
-}
-
 void t_netstd_generator::init_generator()
 {
     MKDIR(get_out_dir().c_str());
@@ -151,7 +146,6 @@ void t_netstd_generator::init_generator()
     }
 
     namespace_dir_ = subdir;
-    init_keywords();
 
     while (!member_mapping_scopes.empty())
     {
@@ -185,120 +179,16 @@ string t_netstd_generator::normalize_name(string name, bool is_arg_name)
         return "@" + name;
     }
 
+    // prevent CS8981 "The type name only contains lower-cased ascii characters"
+	if( name.find_first_not_of("abcdefghijklmnopqrstuvwxyz") == std::string::npos)
+    {
+        return "@" + name;
+    }
+
     // no changes necessary
     return name;
 }
 
-void t_netstd_generator::init_keywords()
-{
-    netstd_keywords.clear();
-
-    // C# keywords
-    netstd_keywords["abstract"] = 1;
-    netstd_keywords["as"] = 1;
-    netstd_keywords["base"] = 1;
-    netstd_keywords["bool"] = 1;
-    netstd_keywords["break"] = 1;
-    netstd_keywords["byte"] = 1;
-    netstd_keywords["case"] = 1;
-    netstd_keywords["catch"] = 1;
-    netstd_keywords["char"] = 1;
-    netstd_keywords["checked"] = 1;
-    netstd_keywords["class"] = 1;
-    netstd_keywords["const"] = 1;
-    netstd_keywords["continue"] = 1;
-    netstd_keywords["decimal"] = 1;
-    netstd_keywords["default"] = 1;
-    netstd_keywords["delegate"] = 1;
-    netstd_keywords["do"] = 1;
-    netstd_keywords["double"] = 1;
-    netstd_keywords["else"] = 1;
-    netstd_keywords["enum"] = 1;
-    netstd_keywords["event"] = 1;
-    netstd_keywords["explicit"] = 1;
-    netstd_keywords["extern"] = 1;
-    netstd_keywords["false"] = 1;
-    netstd_keywords["finally"] = 1;
-    netstd_keywords["fixed"] = 1;
-    netstd_keywords["float"] = 1;
-    netstd_keywords["for"] = 1;
-    netstd_keywords["foreach"] = 1;
-    netstd_keywords["goto"] = 1;
-    netstd_keywords["if"] = 1;
-    netstd_keywords["implicit"] = 1;
-    netstd_keywords["in"] = 1;
-    netstd_keywords["int"] = 1;
-    netstd_keywords["interface"] = 1;
-    netstd_keywords["internal"] = 1;
-    netstd_keywords["is"] = 1;
-    netstd_keywords["lock"] = 1;
-    netstd_keywords["long"] = 1;
-    netstd_keywords["namespace"] = 1;
-    netstd_keywords["new"] = 1;
-    netstd_keywords["null"] = 1;
-    netstd_keywords["object"] = 1;
-    netstd_keywords["operator"] = 1;
-    netstd_keywords["out"] = 1;
-    netstd_keywords["override"] = 1;
-    netstd_keywords["params"] = 1;
-    netstd_keywords["private"] = 1;
-    netstd_keywords["protected"] = 1;
-    netstd_keywords["public"] = 1;
-    netstd_keywords["readonly"] = 1;
-    netstd_keywords["ref"] = 1;
-    netstd_keywords["return"] = 1;
-    netstd_keywords["sbyte"] = 1;
-    netstd_keywords["sealed"] = 1;
-    netstd_keywords["short"] = 1;
-    netstd_keywords["sizeof"] = 1;
-    netstd_keywords["stackalloc"] = 1;
-    netstd_keywords["static"] = 1;
-    netstd_keywords["string"] = 1;
-    netstd_keywords["struct"] = 1;
-    netstd_keywords["switch"] = 1;
-    netstd_keywords["this"] = 1;
-    netstd_keywords["throw"] = 1;
-    netstd_keywords["true"] = 1;
-    netstd_keywords["try"] = 1;
-    netstd_keywords["typeof"] = 1;
-    netstd_keywords["uint"] = 1;
-    netstd_keywords["ulong"] = 1;
-    netstd_keywords["unchecked"] = 1;
-    netstd_keywords["unsafe"] = 1;
-    netstd_keywords["ushort"] = 1;
-    netstd_keywords["using"] = 1;
-    netstd_keywords["virtual"] = 1;
-    netstd_keywords["void"] = 1;
-    netstd_keywords["volatile"] = 1;
-    netstd_keywords["while"] = 1;
-
-    // C# contextual keywords
-    netstd_keywords["add"] = 1;
-    netstd_keywords["alias"] = 1;
-    netstd_keywords["ascending"] = 1;
-    netstd_keywords["async"] = 1;
-    netstd_keywords["await"] = 1;
-    netstd_keywords["descending"] = 1;
-    netstd_keywords["dynamic"] = 1;
-    netstd_keywords["from"] = 1;
-    netstd_keywords["get"] = 1;
-    netstd_keywords["global"] = 1;
-    netstd_keywords["group"] = 1;
-    netstd_keywords["into"] = 1;
-    netstd_keywords["join"] = 1;
-    netstd_keywords["let"] = 1;
-    netstd_keywords["orderby"] = 1;
-    netstd_keywords["partial"] = 1;
-    netstd_keywords["remove"] = 1;
-    netstd_keywords["select"] = 1;
-    netstd_keywords["set"] = 1;
-    netstd_keywords["value"] = 1;
-    netstd_keywords["var"] = 1;
-    netstd_keywords["where"] = 1;
-    netstd_keywords["yield"] = 1;
-
-    netstd_keywords["when"] = 1;
-}
 
 void t_netstd_generator::reset_indent() {
   while( indent_count() > 0) {
@@ -427,7 +317,7 @@ void t_netstd_generator::generate_enum(ostream& out, t_enum* tenum)
     {
         generate_netstd_doc(out, *c_iter);
         int value = (*c_iter)->get_value();
-        out << indent() << (*c_iter)->get_name() << " = " << value << "," << endl;
+        out << indent() << normalize_name((*c_iter)->get_name()) << " = " << value << "," << endl;
     }
 
     scope_down(out);
@@ -472,7 +362,7 @@ void t_netstd_generator::generate_consts(ostream& out, vector<t_const*> consts)
     for (c_iter = consts.begin(); c_iter != consts.end(); ++c_iter)
     {
         generate_netstd_doc(out, *c_iter);
-        if (print_const_value(out, (*c_iter)->get_name(), (*c_iter)->get_type(), (*c_iter)->get_value(), false))
+        if (print_const_value(out, normalize_name((*c_iter)->get_name()), (*c_iter)->get_type(), (*c_iter)->get_value(), false))
         {
             need_static_constructor = true;
         }
@@ -590,7 +480,7 @@ bool t_netstd_generator::print_const_value(ostream& out, string name, t_type* ty
     if (type->is_base_type())
     {
         string v2 = render_const_value(out, name, type, value);
-        out << normalize_name(name) << " = " << v2 << ";" << endl;
+        out << name << " = " << v2 << ";" << endl;
         need_static_construction = false;
     }
     else if (type->is_enum())
@@ -668,7 +558,7 @@ string t_netstd_generator::render_const_value(ostream& out, string name, t_type*
     }
     else
     {
-        string t = tmp("tmp");
+        string t = normalize_name(tmp("tmp"));
         print_const_value(out, t, type, value, true, true, true);
         render << t;
     }
@@ -1056,7 +946,7 @@ void t_netstd_generator::generate_netstd_struct_definition(ostream& out, t_struc
         {
             if (field_is_required((*m_iter)))
             {
-                print_const_value(out, "this." + prop_name(*m_iter), t, (*m_iter)->get_value(), true, true);
+                print_const_value(out, "this." + normalize_name(prop_name(*m_iter)), t, (*m_iter)->get_value(), true, true);
             }
             else
             {
@@ -1572,14 +1462,14 @@ void t_netstd_generator::generate_netstd_union_definition(ostream& out, t_struct
     // Let's define the class first
     start_netstd_namespace(out);
 
-    out << indent() << "public abstract partial class " << tunion->get_name() << " : TUnionBase" << endl;
+    out << indent() << "public abstract partial class " << normalize_name(tunion->get_name()) << " : TUnionBase" << endl;
     out << indent() << "{" << endl;
     indent_up();
 
     out << indent() << "public abstract global::System.Threading.Tasks.Task WriteAsync(TProtocol tProtocol, CancellationToken " << CANCELLATION_TOKEN_NAME << ");" << endl
         << indent() << "public readonly int Isset;" << endl
         << indent() << "public abstract object" << nullable_suffix() <<" Data { get; }" << endl
-        << indent() << "protected " << tunion->get_name() << "(int isset)" << endl
+        << indent() << "protected " << normalize_name(tunion->get_name()) << "(int isset)" << endl
         << indent() << "{" << endl;
     indent_up();
     out << indent() << "Isset = isset;" << endl;
@@ -1785,13 +1675,13 @@ void t_netstd_generator::generate_netstd_union_class(ostream& out, t_struct* tun
         << endl;
 
 
-    out << indent() << "public class " << tfield->get_name() << " : " << tunion->get_name() << endl;
+    out << indent() << "public class " << normalize_name(tfield->get_name()) << " : " << normalize_name(tunion->get_name()) << endl;
     out << indent() << "{" << endl;
     indent_up();
 
     out << indent() << "private readonly " << type_name(tfield->get_type()) << " _data;" << endl
         << indent() << "public override object" << nullable_suffix() <<" Data { get { return _data; } }" << endl
-        << indent() << "public " << tfield->get_name() << "(" << type_name(tfield->get_type()) << " data) : base("<< tfield->get_key() <<")" << endl
+        << indent() << "public " << normalize_name(tfield->get_name()) << "(" << type_name(tfield->get_type()) << " data) : base("<< tfield->get_key() <<")" << endl
         << indent() << "{" << endl;
     indent_up();
     out << indent() << "this._data = data;" << endl;
@@ -1799,13 +1689,13 @@ void t_netstd_generator::generate_netstd_union_class(ostream& out, t_struct* tun
     out << indent() << "}" << endl;
 
     if( ! suppress_deepcopy) {
-        out << indent() << "public new " << tfield->get_name() << " " << DEEP_COPY_METHOD_NAME << "()" << endl;
+        out << indent() << "public new " << normalize_name(tfield->get_name()) << " " << DEEP_COPY_METHOD_NAME << "()" << endl;
         out << indent() << "{" << endl;
         indent_up();
         bool needs_typecast = false;
         string suffix("");
         string copy_op = get_deep_copy_method_call(tfield->get_type(), true, needs_typecast, suffix);
-        out << indent() << "return new " << tfield->get_name() << "(_data" << copy_op << ");" << endl;
+        out << indent() << "return new " << normalize_name(tfield->get_name()) << "(_data" << copy_op << ");" << endl;
         indent_down();
         out << indent() << "}" << endl << endl;
     }
@@ -2059,8 +1949,8 @@ void t_netstd_generator::generate_deprecation_attribute(ostream& out, t_function
   if( func->annotations_.end() != iter) {
     out << indent() << "[Obsolete";
     // empty annotation values end up with "1" somewhere, ignore these as well
-    if ((iter->second.length() > 0) && (iter->second != "1")) {
-      out << "(" << make_csharp_string_literal(iter->second) << ")";
+    if ((iter->second.back().length() > 0) && (iter->second.back() != "1")) {
+      out << "(" << make_csharp_string_literal(iter->second.back()) << ")";
     }
     out << "]" << endl;
   }
@@ -3873,6 +3763,11 @@ string t_netstd_generator::get_enum_class_name(t_type* type)
     }
     return "global::" + package + type->get_name();
 }
+
+std::string t_netstd_generator::display_name() const {
+  return "C#";
+}
+
 
 THRIFT_REGISTER_GENERATOR(
     netstd,

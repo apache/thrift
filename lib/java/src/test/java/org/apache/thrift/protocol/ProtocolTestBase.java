@@ -340,7 +340,7 @@ public abstract class ProtocolTestBase {
     expected.write(proto);
     System.out.println("Size in " + proto.getClass().getSimpleName() + ": " + buf.length());
 
-    T actual = klass.newInstance();
+    T actual = klass.getDeclaredConstructor().newInstance();
     actual.read(proto);
     assertEquals(expected, actual);
   }

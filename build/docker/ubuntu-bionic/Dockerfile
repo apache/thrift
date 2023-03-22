@@ -16,12 +16,12 @@
 #
 
 FROM buildpack-deps:bionic-scm
-MAINTAINER Apache Thrift <dev@thrift.apache.org>
+LABEL MAINTAINER='Apache Thrift <dev@thrift.apache.org>'
 ENV DEBIAN_FRONTEND noninteractive
 
 ### Add apt repos
 
-RUN apt-get update && \
+RUN apt-get update -yq && \
       apt-get dist-upgrade -y && \
       apt-get install -y --no-install-recommends --fix-missing \
       apt \
@@ -124,10 +124,10 @@ ENV PATH /usr/lib/dart/bin:$PATH
 
 RUN apt-get install -y --no-install-recommends \
       `# dotnet core dependencies` \
-      dotnet-sdk-6.0 \
-      dotnet-runtime-6.0 \
-      aspnetcore-runtime-6.0 \
-      dotnet-apphost-pack-6.0
+      dotnet-sdk-7.0 \
+      dotnet-runtime-7.0 \
+      aspnetcore-runtime-7.0 \
+      dotnet-apphost-pack-7.0
 
 # Erlang dependencies
 ARG ERLANG_OTP_VERSION=23.3.4.11
@@ -144,9 +144,9 @@ RUN apt-get install -y --no-install-recommends \
       libglib2.0-dev
 
 # golang
-ENV GOLANG_VERSION 1.19
+ENV GOLANG_VERSION 1.19.5
 ENV GOLANG_DOWNLOAD_URL https://go.dev/dl/go$GOLANG_VERSION.linux-amd64.tar.gz
-ENV GOLANG_DOWNLOAD_SHA256 464b6b66591f6cf055bc5df90a9750bf5fbc9d038722bb84a9d56a2bea974be6
+ENV GOLANG_DOWNLOAD_SHA256 36519702ae2fd573c9869461990ae550c8c0d955cd28d2827a6b159fda81ff95
 RUN curl -fsSL "$GOLANG_DOWNLOAD_URL" -o golang.tar.gz && \
       echo "$GOLANG_DOWNLOAD_SHA256  golang.tar.gz" | sha256sum -c - && \
       tar -C /usr/local -xzf golang.tar.gz && \
@@ -167,7 +167,7 @@ RUN apt-get install -y --no-install-recommends \
       ant \
       ant-optional \
       maven \
-      openjdk-11-jdk-headless && \
+      openjdk-17-jdk-headless && \
       `# Gradle` \
       wget https://services.gradle.org/distributions/gradle-$GRADLE_VERSION-bin.zip -q -O /tmp/gradle-$GRADLE_VERSION-bin.zip && \
       (echo "f6b8596b10cce501591e92f229816aa4046424f3b24d771751b06779d58c8ec4  /tmp/gradle-$GRADLE_VERSION-bin.zip" | sha256sum -c -) && \
@@ -258,11 +258,19 @@ RUN curl https://sh.rustup.rs -sSf | sh -s -- --default-toolchain 1.61.0 -y
 ENV PATH /root/.cargo/bin:$PATH
 
 # Swift on Linux for cross tests
-RUN cd / && \
-      wget --quiet https://swift.org/builds/swift-5.1.4-release/ubuntu1804/swift-5.1.4-RELEASE/swift-5.1.4-RELEASE-ubuntu18.04.tar.gz && \
-      tar xf swift-5.1.4-RELEASE-ubuntu18.04.tar.gz --strip-components=1 && \
-      rm swift-5.1.4-RELEASE-ubuntu18.04.tar.gz && \
-      swift --version
+RUN apt-get install -yq \
+      libedit-dev \
+      libz3-dev \
+      libpython-dev \
+      libxml2-dev && \
+      cd / && \
+      wget --quiet https://download.swift.org/swift-5.7-release/ubuntu1804/swift-5.7-RELEASE/swift-5.7-RELEASE-ubuntu18.04.tar.gz && \
+      tar xf swift-5.7-RELEASE-ubuntu18.04.tar.gz && \
+      mv swift-5.7-RELEASE-ubuntu18.04 /usr/share/swift && \
+      rm swift-5.7-RELEASE-ubuntu18.04.tar.gz
+
+ENV PATH /usr/share/swift/usr/bin:$PATH
+RUN swift --version
 
 # Locale(s) for cpp unit tests
 RUN apt-get install -y --no-install-recommends \
@@ -272,15 +280,11 @@ RUN apt-get install -y --no-install-recommends \
       locale-gen de_DE.UTF-8 && \
       update-locale
 
-# cppcheck-1.82 has a nasty cpp parser bug, so we're using something newer
 RUN apt-get install -y --no-install-recommends \
       `# Static Code Analysis dependencies` \
       cppcheck \
       sloccount && \
-      pip install flake8 && \
-      wget -q "https://launchpad.net/ubuntu/+source/cppcheck/1.83-2/+build/14874703/+files/cppcheck_1.83-2_amd64.deb" && \
-      dpkg -i cppcheck_1.83-2_amd64.deb && \
-      rm cppcheck_1.83-2_amd64.deb
+      pip install flake8
 
 # NOTE: this does not reduce the image size but adds an additional layer.
 # # Clean up

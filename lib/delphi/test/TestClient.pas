@@ -956,7 +956,7 @@ begin
   except
     on x:TXception do begin
       Expect( x.__isset_ErrorCode, 'x.__isset_ErrorCode = '+BoolToString(x.__isset_ErrorCode));
-      Expect( x.__isset_Message_,  'x.__isset_Message_ = '+BoolToString(x.__isset_Message_));
+      Expect( x.__isset_Message,  'x.__isset_Message = '+BoolToString(x.__isset_Message));
       Expect( x.ErrorCode = 1001, 'x.ErrorCode = '+IntToStr(x.ErrorCode));
       Expect( x.Message_ = 'This is an Xception', 'x.Message = "'+x.Message_+'"');
     end;

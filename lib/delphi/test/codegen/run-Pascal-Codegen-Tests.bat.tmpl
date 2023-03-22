@@ -67,6 +67,10 @@ if exist "%TARGET%\*.thrift"      del "%TARGET%\*.thrift"       /Q
 if exist "%TARGET%\%SUBDIR%\*.*"  del "%TARGET%\%SUBDIR%\*.*"   /Q
 if exist "%OUTDCU%\*.*"           del "%OUTDCU%\*.*"            /Q
 
+rem init logfile
+echo Errors > "%LOGFILE%"
+echo ---------------- >> "%LOGFILE%"
+
 rem * recurse through thrift WC and "my thrift files" folder
 rem * copies all .thrift files into thrift-testing
 call %0 %SOURCE%

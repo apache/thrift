@@ -889,7 +889,7 @@ var network : TGuid;  // in network order (Big Endian)
 begin
   ASSERT( SizeOf(result) = 16);
   FTrans.ReadAll( @network, SizeOf(network), 0, SizeOf(network));
-  result := network.SwapByteOrder;
+  result := GuidUtils.SwapByteOrder(network);
 end;
 
 function TBinaryProtocolImpl.ReadBool: Boolean;
@@ -1064,7 +1064,7 @@ procedure TBinaryProtocolImpl.WriteUuid( const uuid: TGuid);
 var network : TGuid;  // in network order (Big Endian)
 begin
   ASSERT( SizeOf(uuid) = 16);
-  network := uuid.SwapByteOrder;
+  network := GuidUtils.SwapByteOrder(uuid);
   Transport.Write( @network, 0, SizeOf(network));
 end;
 

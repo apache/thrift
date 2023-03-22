@@ -92,6 +92,11 @@ SUBDIRS += rs
 PRECROSS_TARGET += precross-rs
 endif
 
+if WITH_SWIFT
+SUBDIRS += swift
+PRECROSS_TARGET += precross-swift
+endif
+
 #
 # generate html for ThriftTest.thrift AND validate it!
 #
@@ -133,6 +138,7 @@ EXTRA_DIST = \
 	py.twisted \
 	rb \
 	rs \
+	swift \
 	threads \
 	partial \
 	AnnotationTest.thrift \
@@ -167,6 +173,7 @@ EXTRA_DIST = \
 	SpecificNameTest.thrift \
 	VoidMethExceptionsTest.thrift \
 	partial/thrift_test_schema.thrift \
+	keys/keygen/.gitignore \
 	known_failures_Linux.json \
 	test.py \
 	tests.json \

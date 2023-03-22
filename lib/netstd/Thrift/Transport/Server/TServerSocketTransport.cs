@@ -44,7 +44,8 @@ namespace Thrift.Transport.Server
             try
             {
                 // Make server socket
-                _server = new TcpListener(IPAddress.Any, port);
+		_server = new TcpListener(IPAddress.IPv6Any, port);
+                _server.Server.SetSocketOption(SocketOptionLevel.IPv6, SocketOptionName.IPv6Only, false);
                 _server.Server.NoDelay = true;
             }
             catch (Exception)

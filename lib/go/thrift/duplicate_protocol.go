@@ -166,6 +166,12 @@ func (tdtp *TDuplicateToProtocol) WriteBinary(ctx context.Context, value []byte)
 	return err
 }
 
+func (tdtp *TDuplicateToProtocol) WriteUUID(ctx context.Context, value Tuuid) error {
+	err := tdtp.Delegate.WriteUUID(ctx, value)
+	tdtp.DuplicateTo.WriteUUID(ctx, value)
+	return err
+}
+
 func (tdtp *TDuplicateToProtocol) ReadMessageBegin(ctx context.Context) (name string, typeId TMessageType, seqid int32, err error) {
 	name, typeId, seqid, err = tdtp.Delegate.ReadMessageBegin(ctx)
 	tdtp.DuplicateTo.WriteMessageBegin(ctx, name, typeId, seqid)
@@ -283,6 +289,12 @@ func (tdtp *TDuplicateToProtocol) ReadString(ctx context.Context) (value string,
 func (tdtp *TDuplicateToProtocol) ReadBinary(ctx context.Context) (value []byte, err error) {
 	value, err = tdtp.Delegate.ReadBinary(ctx)
 	tdtp.DuplicateTo.WriteBinary(ctx, value)
+	return
+}
+
+func (tdtp *TDuplicateToProtocol) ReadUUID(ctx context.Context) (value Tuuid, err error) {
+	value, err = tdtp.Delegate.ReadUUID(ctx)
+	tdtp.DuplicateTo.WriteUUID(ctx, value)
 	return
 }
 

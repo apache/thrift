@@ -209,29 +209,16 @@ literal_begin (['\"])
 "true"               { yylval.iconst=1; return tok_int_constant; }
 
 "namespace"          { return tok_namespace;            }
-"cpp_namespace"      { error_unsupported_namespace_decl("cpp"); /* do nothing */ }
 "cpp_include"        { return tok_cpp_include;          }
 "cpp_type"           { return tok_cpp_type;             }
-"java_package"       { error_unsupported_namespace_decl("java_package", "java"); /* do nothing */ }
-"delphi_namespace"   { error_unsupported_namespace_decl("delphi"); /* do nothing */ }
-"php_namespace"      { error_unsupported_namespace_decl("php"); /* do nothing */ }
-"py_module"          { error_unsupported_namespace_decl("py_module", "py"); /* do nothing */ }
-"perl_package"       { error_unsupported_namespace_decl("perl_package", "perl"); /* do nothing */ }
-"ruby_namespace"     { error_unsupported_namespace_decl("ruby"); /* do nothing */ }
-"smalltalk_category" { error_unsupported_namespace_decl("smalltalk_category", "st"); /* do nothing */ }
-"smalltalk_prefix"   { error_unsupported_namespace_decl("smalltalk_prefix", "st"); /* do nothing */ }
 "xsd_all"            { return tok_xsd_all;              }
 "xsd_optional"       { return tok_xsd_optional;         }
 "xsd_nillable"       { return tok_xsd_nillable;         }
-"xsd_namespace"      { error_unsupported_namespace_decl("xsd"); /* do nothing */ }
 "xsd_attrs"          { return tok_xsd_attrs;            }
 "include"            { return tok_include;              }
 "void"               { return tok_void;                 }
 "bool"               { return tok_bool;                 }
-"byte"               {
-  emit_byte_type_warning();
-  return tok_i8;
-}
+"byte"               { emit_byte_type_warning(); return tok_byte; }
 "i8"                 { return tok_i8;                   }
 "i16"                { return tok_i16;                  }
 "i32"                { return tok_i32;                  }
@@ -240,12 +227,6 @@ literal_begin (['\"])
 "string"             { return tok_string;               }
 "binary"             { return tok_binary;               }
 "uuid"               { return tok_uuid;                 }
-"slist" {
-  error_no_longer_supported("slist","string");
-}
-"senum" {
-  error_no_longer_supported("senum","string");
-}
 "map"                { return tok_map;                  }
 "list"               { return tok_list;                 }
 "set"                { return tok_set;                  }
@@ -263,7 +244,7 @@ literal_begin (['\"])
 "optional"           { return tok_optional;             }
 "async" {
   pwarning(0, "\"async\" is deprecated.  It is called \"oneway\" now.\n");
-  return tok_oneway;
+  return tok_async;
 }
 "&"                  { return tok_reference;            }
 

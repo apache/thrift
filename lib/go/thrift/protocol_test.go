@@ -40,6 +40,7 @@ var (
 	INT64_VALUES   []int64
 	DOUBLE_VALUES  []float64
 	STRING_VALUES  []string
+	UUID_VALUES    []Tuuid
 )
 
 func init() {
@@ -54,6 +55,13 @@ func init() {
 	INT64_VALUES = []int64{459, 0, 1, -1, -128, 127, 32767, 2147483647, -2147483535, 34359738481, -35184372088719, -9223372036854775808, 9223372036854775807}
 	DOUBLE_VALUES = []float64{459.3, 0.0, -1.0, 1.0, 0.5, 0.3333, 3.14159, 1.537e-38, 1.673e25, 6.02214179e23, -6.02214179e23, INFINITY.Float64(), NEGATIVE_INFINITY.Float64(), NAN.Float64()}
 	STRING_VALUES = []string{"", "a", "st[uf]f", "st,u:ff with spaces", "stuff\twith\nescape\\characters'...\"lots{of}fun</xml>"}
+	UUID_VALUES = []Tuuid{
+		{},
+		Must(ParseTuuid("6ba7b810-9dad-11d1-80b4-00c04fd430c8")),
+		Must(ParseTuuid("6ba7b811-9dad-11d1-80b4-00c04fd430c8")),
+		Must(ParseTuuid("6ba7b812-9dad-11d1-80b4-00c04fd430c8")),
+		Must(ParseTuuid("6ba7b814-9dad-11d1-80b4-00c04fd430c8")),
+	}
 }
 
 type HTTPEchoServer struct{}
@@ -211,10 +219,21 @@ func ReadWriteProtocolTest(t *testing.T, protocolFactory TProtocolFactory) {
 			continue
 		}
 		p := protocolFactory.GetProtocol(trans)
+		ReadWriteUUID(t, p, trans)
+		trans.Close()
+	}
+	for _, tf := range transports {
+		trans, err := tf.GetTransport(nil)
+		if err != nil {
+			t.Error(err)
+			continue
+		}
+		p := protocolFactory.GetProtocol(trans)
 		ReadWriteI64(t, p, trans)
 		ReadWriteDouble(t, p, trans)
 		ReadWriteBinary(t, p, trans)
 		ReadWriteByte(t, p, trans)
+		ReadWriteUUID(t, p, trans)
 		trans.Close()
 	}
 
@@ -517,6 +536,43 @@ func ReadWriteBinary(t testing.TB, p TProtocol, trans TTransport) {
 				t.Errorf("%s: %T %T %s != %s", "ReadWriteBinary", p, trans, v, value)
 			}
 		}
+	}
+}
+
+func ReadWriteUUID(t testing.TB, p TProtocol, trans TTransport) {
+	ctx := context.Background()
+	thetype := TType(UUID)
+	thelen := len(UUID_VALUES)
+	p.WriteListBegin(ctx, thetype, thelen)
+	for _, v := range UUID_VALUES {
+		p.WriteUUID(ctx, v)
+	}
+	p.WriteListEnd(ctx)
+	p.Flush(ctx)
+	thetype2, thelen2, err := p.ReadListBegin(ctx)
+	if err != nil {
+		t.Errorf("%s: %T %T %q Error reading list: %q", "ReadWriteUUID", p, trans, err, STRING_VALUES)
+	}
+	_, ok := p.(*TSimpleJSONProtocol)
+	if !ok {
+		if thetype != thetype2 {
+			t.Errorf("%s: %T %T type %s != type %s", "ReadWriteUUID", p, trans, thetype, thetype2)
+		}
+		if thelen != thelen2 {
+			t.Errorf("%s: %T %T len %v != len %v", "ReadWriteUUID", p, trans, thelen, thelen2)
+		}
+	}
+	for k, v := range UUID_VALUES {
+		value, err := p.ReadUUID(ctx)
+		if err != nil {
+			t.Errorf("%s: %T %T %q Error reading UUID at index %d: %q", "ReadWriteUUID", p, trans, err, k, v)
+		}
+		if v != value {
+			t.Errorf("%s: %T %T %v != %v", "ReadWriteUUID", p, trans, v, value)
+		}
+	}
+	if err != nil {
+		t.Errorf("%s: %T %T Unable to read list end: %q", "ReadWriteUUID", p, trans, err)
 	}
 }
 

@@ -20,10 +20,10 @@
 #ifndef T_FUNCTION_H
 #define T_FUNCTION_H
 
-#include <string>
-#include "thrift/parse/t_type.h"
-#include "thrift/parse/t_struct.h"
 #include "thrift/parse/t_doc.h"
+#include "thrift/parse/t_struct.h"
+#include "thrift/parse/t_type.h"
+#include <string>
 
 /**
  * Representation of a function. Key parts are return type, function name,
@@ -40,6 +40,7 @@ public:
       xceptions_(new t_struct(nullptr)),
       own_xceptions_(true),
       oneway_(oneway) {
+    xceptions_->set_method_xcepts(true);
     if (oneway_ && (!returntype_->is_void())) {
       pwarning(1, "Oneway methods should return void.\n");
     }
@@ -56,6 +57,7 @@ public:
       xceptions_(xceptions),
       own_xceptions_(false),
       oneway_(oneway) {
+    xceptions_->set_method_xcepts(true);
     if (oneway_ && !xceptions_->get_members().empty()) {
       throw std::string("Oneway methods can't throw exceptions.");
     }
@@ -79,7 +81,7 @@ public:
 
   bool is_oneway() const { return oneway_; }
 
-  std::map<std::string, std::string> annotations_;
+  std::map<std::string, std::vector<std::string>> annotations_;
 
 private:
   t_type* returntype_;

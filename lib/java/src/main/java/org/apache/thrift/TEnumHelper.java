@@ -19,11 +19,13 @@
 
 package org.apache.thrift;
 
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
 /** Utility class with static methods for interacting with TEnum */
 public class TEnumHelper {
+
+  /* no instantiation */
+  private TEnumHelper() {}
 
   /**
    * Given a TEnum class and integer value, this method will return the associated constant from the
@@ -38,11 +40,7 @@ public class TEnumHelper {
     try {
       Method method = enumClass.getMethod("findByValue", int.class);
       return (TEnum) method.invoke(null, value);
-    } catch (NoSuchMethodException nsme) {
-      return null;
-    } catch (IllegalAccessException iae) {
-      return null;
-    } catch (InvocationTargetException ite) {
+    } catch (ReflectiveOperationException nsme) {
       return null;
     }
   }

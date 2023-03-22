@@ -52,7 +52,7 @@ public:
                  const std::map<std::string, std::string>& parsed_options,
                  const std::string& option_string)
     : t_generator (program) {
-    update_keywords();
+    update_keywords_for_validation();
 
     std::map<std::string, std::string>::const_iterator iter;
 
@@ -157,6 +157,7 @@ public:
 
   void init_generator() override;
   void close_generator() override;
+  std::string display_name() const override;
 
   /**
    * Program-level generation functions
@@ -280,12 +281,12 @@ public:
   }
 
   static bool is_immutable(t_type* ttype) {
-    std::map<std::string, std::string>::iterator it = ttype->annotations_.find("python.immutable");
+    std::map<std::string, std::vector<std::string>>::iterator it = ttype->annotations_.find("python.immutable");
 
     if (it == ttype->annotations_.end()) {
       // Exceptions are immutable by default.
       return ttype->is_xception();
-    } else if (it->second == "false") {
+    } else if (!it->second.empty() && it->second.back() == "false") {
       return false;
     } else {
       return true;
@@ -357,7 +358,7 @@ private:
   std::string module_;
 
 protected:
-  std::set<std::string> lang_keywords() const override {
+  std::set<std::string> lang_keywords_for_validation() const override {
     std::string keywords[] = { "False", "None", "True", "and", "as", "assert", "break", "class",
           "continue", "def", "del", "elif", "else", "except", "exec", "finally", "for", "from",
           "global", "if", "import", "in", "is", "lambda", "nonlocal", "not", "or", "pass", "print",
@@ -2820,6 +2821,11 @@ string t_py_generator::type_to_spec_args(t_type* ttype) {
 
   throw "INVALID TYPE IN type_to_spec_args: " + ttype->get_name();
 }
+
+std::string t_py_generator::display_name() const {
+  return "Python";
+}
+
 
 THRIFT_REGISTER_GENERATOR(
     py,

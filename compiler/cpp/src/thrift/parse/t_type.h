@@ -20,11 +20,11 @@
 #ifndef T_TYPE_H
 #define T_TYPE_H
 
-#include <string>
-#include <map>
-#include <cstring>
-#include <stdint.h>
 #include "thrift/parse/t_doc.h"
+#include <cstring>
+#include <map>
+#include <stdint.h>
+#include <string>
 
 class t_program;
 
@@ -83,7 +83,7 @@ public:
     return rv;
   }
 
-  std::map<std::string, std::string> annotations_;
+  std::map<std::string, std::vector<std::string>> annotations_;
 
 protected:
   t_type() : program_(nullptr) { ; }

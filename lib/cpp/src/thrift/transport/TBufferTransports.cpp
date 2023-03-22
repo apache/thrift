@@ -17,8 +17,9 @@
  * under the License.
  */
 
-#include <cassert>
 #include <algorithm>
+#include <cassert>
+#include <cmath>
 
 #include <thrift/transport/TBufferTransports.h>
 

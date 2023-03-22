@@ -34,7 +34,7 @@ import org.slf4j.LoggerFactory;
  * separately on its own.
  */
 public class EnumCache {
-  private static Logger LOG = LoggerFactory.getLogger(EnumCache.class);
+  private static final Logger LOG = LoggerFactory.getLogger(EnumCache.class);
 
   private Map<Class<? extends TEnum>, Map<Integer, TEnum>> classMap;
 

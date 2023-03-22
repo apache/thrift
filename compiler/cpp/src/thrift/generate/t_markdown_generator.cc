@@ -84,6 +84,8 @@ public:
     init_allowed__markup();
   }
 
+  std::string display_name() const override;
+
   void generate_program() override;
   void generate_program_toc();
   void generate_program_toc_row(t_program* tprog);
@@ -1102,6 +1104,11 @@ void t_markdown_generator::generate_service(t_service* tservice) {
     f_out_ << endl;
   }
 }
+
+std::string t_markdown_generator::display_name() const {
+  return "Markdown";
+}
+
 
 THRIFT_REGISTER_GENERATOR(
     markdown,

@@ -87,6 +87,7 @@ public class TServlet extends HttpServlet {
   /**
    * @see HttpServlet#doGet(HttpServletRequest request, HttpServletResponse response)
    */
+  @Override
   protected void doGet(HttpServletRequest request, HttpServletResponse response)
       throws ServletException, IOException {
     doPost(request, response);
@@ -95,14 +96,17 @@ public class TServlet extends HttpServlet {
   public void addCustomHeader(final String key, final String value) {
     this.customHeaders.add(
         new Map.Entry<String, String>() {
+          @Override
           public String getKey() {
             return key;
           }
 
+          @Override
           public String getValue() {
             return value;
           }
 
+          @Override
           public String setValue(String value) {
             return null;
           }

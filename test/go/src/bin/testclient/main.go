@@ -140,6 +140,21 @@ func callEverything(client *thrifttest.ThriftTestClient) {
 		}
 	}
 
+	uout := thrift.Tuuid{
+		0x00, 0x11, 0x22, 0x33,
+		0x44, 0x55,
+		0x66, 0x77,
+		0x88, 0x99,
+		0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff,
+	}
+	u, err := client.TestUuid(defaultCtx, uout)
+	if err != nil {
+		t.Fatalf("TestUuid failed with %v", err)
+	}
+	if u != uout {
+		t.Fatalf("Unexpected TestUuid() result expected %v, got %v", uout, u)
+	}
+
 	xs := thrifttest.NewXtruct()
 	xs.StringThing = "thing"
 	xs.ByteThing = 42

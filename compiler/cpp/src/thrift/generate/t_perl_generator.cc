@@ -68,6 +68,7 @@ public:
 
   void init_generator() override;
   void close_generator() override;
+  std::string display_name() const override;
 
   /**
    * Program-level generation functions
@@ -1683,5 +1684,10 @@ string t_perl_generator::type_to_enum(t_type* type) {
 
   throw "INVALID TYPE IN type_to_enum: " + type->get_name();
 }
+
+std::string t_perl_generator::display_name() const {
+  return "Perl";
+}
+
 
 THRIFT_REGISTER_GENERATOR(perl, "Perl", "")
