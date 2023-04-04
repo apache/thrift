@@ -1432,7 +1432,10 @@ void t_cpp_generator::generate_struct_definition(ostream& out,
 
   if (!pointers)
   {
-    generate_default_constructor(out, tstruct, false);
+		// 'force_cpp_out' always goes into the .cpp file, and never into a .tcc
+		// file in case templates are involved. Since the constructor is not templated,
+		// putting it into the (later included) .tcc file would cause ODR violations.
+    generate_default_constructor(force_cpp_out, tstruct, false);
   }
 
   // Create a setter function for each field
