@@ -783,7 +783,7 @@ void t_go_generator::generate_enum(t_enum* tenum) {
   std::ostringstream to_string_mapping, from_string_mapping;
   std::string tenum_name(publicize(tenum->get_name()));
   generate_go_docstring(f_types_, tenum);
-  f_types_ << "type " << tenum_name << " int64" << endl << "const (" << endl;
+  f_types_ << "type " << tenum_name << " int32" << endl << "const (" << endl;
 
   to_string_mapping << indent() << "func (p " << tenum_name << ") String() string {" << endl;
   to_string_mapping << indent() << "  switch p {" << endl;
