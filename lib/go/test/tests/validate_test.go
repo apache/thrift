@@ -178,7 +178,7 @@ func TestBasicValidator(t *testing.T) {
 		t.Errorf("Error cannot be unwrapped into *ValidationError: %v", err)
 	}
 	bt = validatetest.NewBasicTest()
-	bt.Enum1 = (*validatetest.EnumFoo)(thrift.Int64Ptr(int64(validatetest.EnumFoo_e2)))
+	bt.Enum1 = (*validatetest.EnumFoo)(thrift.Int32Ptr(int32(validatetest.EnumFoo_e2)))
 	if err := bt.Validate(); err == nil {
 		t.Errorf("Expected vt.in error for Enum1")
 	} else if errors.As(err, &ve) {
