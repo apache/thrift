@@ -62,7 +62,10 @@ private:
 public:
   using PtrOwnedList = std::unique_ptr<addrinfo, addrinfo_deleter>;
 
-  struct Iter : std::iterator<std::forward_iterator_tag, const addrinfo*> {
+  struct Iter {
+    using iterator_category = std::forward_iterator_tag;
+    using value_type = const addrinfo*;
+
     value_type ptr = nullptr;
 
     Iter() = default;
