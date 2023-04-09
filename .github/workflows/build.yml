@@ -137,7 +137,7 @@ jobs:
     needs: compiler
     runs-on: ubuntu-20.04
     env:
-      GRADLE_VERSION: 7.5.1
+      GRADLE_VERSION: "7.6"
     steps:
       - uses: actions/checkout@v3
 
@@ -156,7 +156,7 @@ jobs:
       - name: Setup gradle
         run: |
           wget https://services.gradle.org/distributions/gradle-$GRADLE_VERSION-bin.zip -q -O /tmp/gradle-$GRADLE_VERSION-bin.zip
-          (echo "f6b8596b10cce501591e92f229816aa4046424f3b24d771751b06779d58c8ec4  /tmp/gradle-$GRADLE_VERSION-bin.zip" | sha256sum -c -)
+          (echo "7ba68c54029790ab444b39d7e293d3236b2632631fb5f2e012bb28b4ff669e4b  /tmp/gradle-$GRADLE_VERSION-bin.zip" | sha256sum -c -)
           unzip -d /tmp /tmp/gradle-$GRADLE_VERSION-bin.zip
           sudo mv /tmp/gradle-$GRADLE_VERSION /usr/local/gradle
           sudo ln -s /usr/local/gradle/bin/gradle /usr/local/bin
