@@ -65,7 +65,7 @@ test {
         outputs.upToDateWhen { false }
     }
 
-    // This is required for Mockito to run under Java 17
+    // This is required for Mockito to run under Java 19
     jvmArgs '--add-opens=java.base/java.lang=ALL-UNNAMED'
     include '**/Test*.class'
     exclude '**/Test*\$*.class'

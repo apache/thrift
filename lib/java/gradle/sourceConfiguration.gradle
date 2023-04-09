@@ -21,7 +21,7 @@
 // ----------------------------------------------------------------------------
 // Compiler configuration details
 
-// We are using Java 17 toolchain to compile.
+// We are using Java 19 toolchain to compile.
 // This enables decoupling from the Java version that gradle runs, from
 // the actual JDK version for the project. For more details, see
 // https://docs.gradle.org/current/userguide/toolchains.html
@@ -31,7 +31,7 @@
 // also a runtime CI that's based on Java 11 to ensure that.
 java {
     toolchain {
-        languageVersion = JavaLanguageVersion.of(17)
+        languageVersion = JavaLanguageVersion.of(19)
     }
 }
 
