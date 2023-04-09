@@ -137,7 +137,7 @@ jobs:
     needs: compiler
     runs-on: ubuntu-20.04
     env:
-      GRADLE_VERSION: "7.6"
+      GRADLE_VERSION: "8.0.2"
     steps:
       - uses: actions/checkout@v3
 

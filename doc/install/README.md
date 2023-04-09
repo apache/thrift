@@ -29,7 +29,7 @@ These are only required if you choose to build the libraries for the given langu
     * Qt (optional)
 * Java
     * Java 17
-    * Gradle 7.6
+    * Gradle 8.0.2
 * C#: Mono 1.2.4 (and pkg-config to detect it) or Visual Studio 2005+
 * Python 2.6 (including header files for extension modules)
 * PHP 5.0 (optionally including header files for extension modules)
