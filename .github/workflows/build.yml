@@ -144,7 +144,7 @@ jobs:
       - uses: actions/setup-java@v3
         with:
           distribution: temurin
-          java-version: 19
+          java-version: 17
           cache: "gradle"
 
       - name: Install dependencies
@@ -431,7 +431,7 @@ jobs:
       - uses: actions/setup-java@v3
         with:
           distribution: temurin
-          # here we intentionally use an older version so that we also verify java 19 compiles to it
+          # here we intentionally use an older version so that we also verify Java 17 compiles to it
           java-version: 11
           cache: "gradle"
 
