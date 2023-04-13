@@ -2521,7 +2521,6 @@ void t_haxe_generator::generate_serialize_struct(ostream& out, t_struct* tstruct
  * @param prefix String prefix for fields
  */
 void t_haxe_generator::generate_serialize_container(ostream& out, t_type* ttype, string prefix) {
-  scope_up(out);
 
   if (ttype->is_map()) {
     string iter = tmp("_key");
@@ -2572,7 +2571,6 @@ void t_haxe_generator::generate_serialize_container(ostream& out, t_type* ttype,
     indent(out) << "oprot.writeListEnd();" << endl;
   }
 
-  scope_down(out);
 }
 
 /**
