@@ -22,11 +22,8 @@ updates:
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
-      interval: weekly
+      interval: monthly
   - package-ecosystem: "gradle"
     directory: "/lib/java"
     schedule:
-      interval: "weekly"
-      day: "sunday"
-    open-pull-requests-limit: 5
-
+      interval: monthly
