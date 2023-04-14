@@ -435,7 +435,7 @@ jobs:
         with:
           distribution: temurin
           # here we intentionally use an older version so that we also verify Java 17 compiles to it
-          java-version: 11
+          java-version: 8
           cache: "gradle"
 
       - name: Install openssl and certificates (for SSL tests)
