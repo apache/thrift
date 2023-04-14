@@ -381,7 +381,7 @@ jobs:
         - name: Run configure 3.x
           if: matrix.python-version == '3.x'
           run: |
-            ./configure $(echo $CONFIG_ARGS_FOR_LIBS | sed 's/without-python3/with-python3/')
+            ./configure $(echo $CONFIG_ARGS_FOR_LIBS | sed 's/without-py3/with-py3/')
 
         - uses: actions/download-artifact@v3
           with:
