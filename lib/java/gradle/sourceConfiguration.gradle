@@ -39,8 +39,8 @@ tasks.withType(JavaCompile).configureEach {
     options.encoding = 'UTF-8'
     options.debug = true
     options.deprecation = true
-    // the following is to build with Java 11 specifications, even when building with later JDK
-    options.release = 11
+    // the following is to build with Java 8 specifications, even when building with later JDK
+    options.release = 8
     options.compilerArgs += [
             '-Werror',
             '-Xlint:deprecation',

@@ -492,7 +492,7 @@ public class TestTSaslTransports {
 
   public static class SaslAnonymousProvider extends java.security.Provider {
     public SaslAnonymousProvider() {
-      super("ThriftSaslAnonymous", "1.0", "Thrift Anonymous SASL provider");
+      super("ThriftSaslAnonymous", 1.0, "Thrift Anonymous SASL provider");
       put("SaslClientFactory.ANONYMOUS", SaslAnonymousFactory.class.getName());
       put("SaslServerFactory.ANONYMOUS", SaslAnonymousFactory.class.getName());
     }
