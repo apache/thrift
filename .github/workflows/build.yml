@@ -307,7 +307,7 @@ jobs:
 
       - name: Run configure
         run: |
-          ./configure $(echo $CONFIG_ARGS_FOR_LIBS | sed 's/without-rust/with-rust/')
+          ./configure $(echo $CONFIG_ARGS_FOR_LIBS | sed 's/without-rs/with-rs/')
 
       - uses: actions/download-artifact@v3
         with:
