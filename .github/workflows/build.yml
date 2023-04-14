@@ -8,6 +8,31 @@ on:
 
 env:
   BUILD_DEPS: automake bison flex git libboost-all-dev libevent-dev libssl-dev libtool make pkg-config
+  CONFIG_ARGS_FOR_LIBS: >
+    --disable-debug
+    --disable-tests
+    --disable-dependency-tracking
+    --without-cpp
+    --without-c_glib
+    --without-java
+    --without-kotlin
+    --without-python
+    --without-py3
+    --without-ruby
+    --without-haxe
+    --without-netstd
+    --without-perl
+    --without-php
+    --without-php_extension
+    --without-dart
+    --without-erlang
+    --without-go
+    --without-d
+    --without-nodejs
+    --without-nodets
+    --without-lua
+    --without-rs
+    --without-swift
 
 permissions:
   contents: read
@@ -76,30 +101,7 @@ jobs:
 
       - name: Run configure
         run: |
-          ./configure \
-            --disable-debug \
-            --disable-dependency-tracking \
-            --without-cpp \
-            --without-c_glib \
-            --without-java \
-            --without-kotlin \
-            --without-python \
-            --without-py3 \
-            --without-ruby \
-            --without-haxe \
-            --without-netstd \
-            --without-perl \
-            --without-php \
-            --without-php_extension \
-            --without-dart \
-            --without-erlang \
-            --with-go \
-            --without-d \
-            --without-nodejs \
-            --without-nodets \
-            --without-lua \
-            --without-rs \
-            --without-swift
+          ./configure $(echo $CONFIG_ARGS_FOR_LIBS | sed 's/without-go/with-go/')
 
       - uses: actions/download-artifact@v3
         with:
@@ -177,31 +179,7 @@ jobs:
 
       - name: Run configure
         run: |
-          ./configure \
-            --disable-debug \
-            --disable-tests \
-            --disable-dependency-tracking \
-            --without-cpp \
-            --without-c_glib \
-            --with-java \
-            --with-kotlin \
-            --without-python \
-            --without-py3 \
-            --without-ruby \
-            --without-haxe \
-            --without-netstd \
-            --without-perl \
-            --without-php \
-            --without-php_extension \
-            --without-dart \
-            --without-erlang \
-            --without-go \
-            --without-d \
-            --without-nodejs \
-            --without-nodets \
-            --without-lua \
-            --without-rs \
-            --without-swift
+          ./configure $(echo $CONFIG_ARGS_FOR_LIBS | sed 's/without-java/with-java/' | sed 's/without-kotlin/with-kotlin/')
 
       - uses: actions/download-artifact@v3
         with:
@@ -276,31 +254,7 @@ jobs:
 
       - name: Run configure
         run: |
-          ./configure \
-            --disable-debug \
-            --disable-tests \
-            --disable-dependency-tracking \
-            --without-cpp \
-            --without-c_glib \
-            --without-java \
-            --without-kotlin \
-            --without-python \
-            --without-py3 \
-            --without-ruby \
-            --without-haxe \
-            --without-netstd \
-            --without-perl \
-            --without-php \
-            --without-php_extension \
-            --without-dart \
-            --without-erlang \
-            --without-go \
-            --without-d \
-            --without-nodejs \
-            --without-nodets \
-            --without-lua \
-            --without-rs \
-            --with-swift
+          ./configure $(echo $CONFIG_ARGS_FOR_LIBS | sed 's/without-swift/with-swift/')
 
       - uses: actions/download-artifact@v3
         with:
@@ -353,31 +307,7 @@ jobs:
 
       - name: Run configure
         run: |
-          ./configure \
-            --disable-debug \
-            --disable-tests \
-            --disable-dependency-tracking \
-            --without-cpp \
-            --without-c_glib \
-            --without-java \
-            --without-kotlin \
-            --without-python \
-            --without-py3 \
-            --without-ruby \
-            --without-haxe \
-            --without-netstd \
-            --without-perl \
-            --without-php \
-            --without-php_extension \
-            --without-dart \
-            --without-erlang \
-            --without-go \
-            --without-d \
-            --without-nodejs \
-            --without-nodets \
-            --without-lua \
-            --with-rs \
-            --without-swift
+          ./configure $(echo $CONFIG_ARGS_FOR_LIBS | sed 's/without-rust/with-rust/')
 
       - uses: actions/download-artifact@v3
         with:
