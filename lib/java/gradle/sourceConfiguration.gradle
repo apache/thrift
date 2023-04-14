@@ -21,7 +21,7 @@
 // ----------------------------------------------------------------------------
 // Compiler configuration details
 
-// We are using Java 17 toolchain to compile.
+// We are using Java 17 (latest LTS) toolchain to compile.
 // This enables decoupling from the Java version that gradle runs, from
 // the actual JDK version for the project. For more details, see
 // https://docs.gradle.org/current/userguide/toolchains.html
