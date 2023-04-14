@@ -428,3 +428,61 @@ jobs:
           name: cross-test-log
           path: test/log/
           retention-days: 3
+
+  lib-python:
+    needs: compiler
+    runs-on: ubuntu-20.04
+    strategy:
+      matrix:
+        python-version: ["2.x", "3.x"]
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update -yq
+          sudo apt-get install -y --no-install-recommends $BUILD_DEPS
+          sudo apt-get install -y --no-install-recommends curl
+
+      - name: Set up Python
+        uses: actions/setup-python@v3
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Python setup
+        run: |
+          python -m pip install --upgrade pip setuptools wheel flake8
+          python --version
+          pip --version
+
+      - name: Run bootstrap
+        run: ./bootstrap.sh
+
+      - name: Run configure 2.x
+        if: matrix.python-version == '2.x'
+        run: |
+          ./configure $(echo $CONFIG_ARGS_FOR_LIBS | sed 's/without-python/with-python/')
+
+      - name: Run configure 3.x
+        if: matrix.python-version == '3.x'
+        run: |
+          ./configure $(echo $CONFIG_ARGS_FOR_LIBS | sed 's/without-python3/with-python3/')
+
+      - uses: actions/download-artifact@v3
+        with:
+          name: thrift-compiler
+          path: compiler/cpp
+
+      - name: Run thrift-compiler
+        run: |
+          chmod a+x compiler/cpp/thrift
+          compiler/cpp/thrift -version
+
+      - name: Run make for python
+        run: make -C lib/py
+
+      - name: Run make install for python
+        run: sudo make -C lib/py install
+
+      - name: Run make check for python
+        run: make -C lib/py check
