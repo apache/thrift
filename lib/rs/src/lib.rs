@@ -91,3 +91,48 @@ pub type Result<T> = std::result::Result<T, self::Error>;
 // Re-export ordered-float, since it is used by the generator
 // FIXME: check the guidance around type reexports
 pub use ordered_float::OrderedFloat;
+
+use std::io::{Error as IoErr, ErrorKind as IoErrKind};
+use std::ops::RangeBounds;
+
+/// A trait similar to try-from but with additional checks
+pub trait TryIntoRange<T>: TryInto<T> {
+    type ErrTy;
+
+    fn try_into_range(
+        self,
+        between: impl RangeBounds<Self>,
+    ) -> std::result::Result<T, Self::ErrTy>;
+}
+
+impl TryIntoRange<usize> for i32 {
+    type ErrTy = IoErr;
+
+    fn try_into_range(
+        self,
+        between: impl RangeBounds<Self>,
+    ) -> std::result::Result<usize, Self::ErrTy> {
+        if between.contains(&self) {
+            self.try_into()
+                .map_err(|_| IoErr::from(IoErrKind::InvalidData))
+        } else {
+            Err(IoErr::from(IoErrKind::InvalidData))
+        }
+    }
+}
+
+impl TryIntoRange<usize> for u32 {
+    type ErrTy = IoErr;
+
+    fn try_into_range(
+        self,
+        between: impl RangeBounds<Self>,
+    ) -> std::result::Result<usize, Self::ErrTy> {
+        if between.contains(&self) {
+            self.try_into()
+                .map_err(|_| IoErr::from(IoErrKind::InvalidData))
+        } else {
+            Err(IoErr::from(IoErrKind::InvalidData))
+        }
+    }
+}
