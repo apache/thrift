@@ -28,5 +28,7 @@ _ROOT_DIR = os.path.dirname(os.path.dirname(_SCRIPT_DIR))
 def local_libpath():
     globdir = os.path.join(_ROOT_DIR, 'lib', 'py', 'build', 'lib.*')
     for libpath in glob.glob(globdir):
-        if libpath.endswith('-%d.%d' % (sys.version_info[0], sys.version_info[1])):
+        # check for both old- and new-style setuptools path suffixes
+        if libpath.endswith('-%d.%d' % (sys.version_info[0], sys.version_info[1])) \
+            or libpath.endswith('-%s' % sys.implementation.cache_tag):
             return libpath
