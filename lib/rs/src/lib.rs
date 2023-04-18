@@ -99,10 +99,8 @@ use std::ops::RangeBounds;
 pub trait TryIntoRange<T>: TryInto<T> {
     type ErrTy;
 
-    fn try_into_range(
-        self,
-        between: impl RangeBounds<Self>,
-    ) -> std::result::Result<T, Self::ErrTy>;
+    fn try_into_range(self, between: impl RangeBounds<Self>)
+        -> std::result::Result<T, Self::ErrTy>;
 }
 
 impl TryIntoRange<usize> for i32 {

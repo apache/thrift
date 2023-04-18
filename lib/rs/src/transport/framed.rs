@@ -15,12 +15,12 @@
 // specific language governing permissions and limitations
 // under the License.
 
+use super::{TReadTransport, TReadTransportFactory, TWriteTransport, TWriteTransportFactory};
+use crate::TryIntoRange;
 use byteorder::{BigEndian, ReadBytesExt, WriteBytesExt};
 use std::cmp;
 use std::io;
 use std::io::{Read, Write};
-use crate::{TryIntoRange};
-use super::{TReadTransport, TReadTransportFactory, TWriteTransport, TWriteTransportFactory};
 
 /// Default capacity of the read buffer in bytes.
 const READ_CAPACITY: usize = 4096;
@@ -91,10 +91,10 @@ where
 {
     fn read(&mut self, b: &mut [u8]) -> io::Result<usize> {
         if self.cap - self.pos == 0 {
-            let message_size =
-                self.chan
-                    .read_i32::<BigEndian>()?
-                    .try_into_range(0..=i32::MAX)?; // Range should be smaller?
+            let message_size = self
+                .chan
+                .read_i32::<BigEndian>()?
+                .try_into_range(0..=i32::MAX)?; // Range should be smaller?
 
             let buf_capacity = cmp::max(message_size, READ_CAPACITY);
             self.buf.resize(buf_capacity, 0);

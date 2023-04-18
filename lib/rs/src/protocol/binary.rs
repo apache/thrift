@@ -24,8 +24,8 @@ use super::{
 };
 use super::{TOutputProtocol, TOutputProtocolFactory, TSetIdentifier, TStructIdentifier, TType};
 use crate::transport::{TReadTransport, TWriteTransport};
+use crate::TryIntoRange;
 use crate::{ProtocolError, ProtocolErrorKind};
-use crate::{TryIntoRange};
 
 const BINARY_PROTOCOL_VERSION_1: u32 = 0x8001_0000;
 
@@ -113,8 +113,7 @@ where
                 // in the non-strict version the first message field
                 // is the message name. strings (byte arrays) are length-prefixed,
                 // so we've just read the length in the first 4 bytes
-                let name_size = BigEndian::read_i32(&first_bytes)
-                                    .try_into_range(0..=i32::MAX)?;
+                let name_size = BigEndian::read_i32(&first_bytes).try_into_range(0..=i32::MAX)?;
                 let mut name_buf: Vec<u8> = vec![0; name_size];
                 self.transport.read_exact(&mut name_buf)?;
                 let name = String::from_utf8(name_buf)?;
@@ -156,7 +155,10 @@ where
     }
 
     fn read_bytes(&mut self) -> crate::Result<Vec<u8>> {
-        let num_bytes = self.transport.read_i32::<BigEndian>()?.try_into_range(0..=i32::MAX)?;
+        let num_bytes = self
+            .transport
+            .read_i32::<BigEndian>()?
+            .try_into_range(0..=i32::MAX)?;
         let mut buf = vec![0u8; num_bytes];
         self.transport
             .read_exact(&mut buf)
