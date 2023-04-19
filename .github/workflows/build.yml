@@ -404,11 +404,11 @@ jobs:
       - name: Run make install for python
         run: sudo make -C lib/py install
 
-      # - name: Run make install-exec-hook for python
-      #   run: sudo make -C lib/py install-exec-hook
-
       - name: Run make check for python
         run: make -C lib/py check
+
+      - name: Run make check for python test
+        run: make -C test/py check
 
   cross-test:
     needs:
