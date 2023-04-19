@@ -268,7 +268,7 @@ class TNonblockingServer(object):
         self.socket.listen()
         for _ in range(self.threads):
             thread = Worker(self.tasks)
-            thread.setDaemon(True)
+            thread.daemon = True
             thread.start()
         self.prepared = True
 

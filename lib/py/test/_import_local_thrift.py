@@ -25,6 +25,8 @@ SCRIPT_DIR = os.path.realpath(os.path.dirname(__file__))
 ROOT_DIR = os.path.dirname(os.path.dirname(os.path.dirname(SCRIPT_DIR)))
 
 for libpath in glob.glob(os.path.join(ROOT_DIR, 'lib', 'py', 'build', 'lib.*')):
-    if libpath.endswith('-%d.%d' % (sys.version_info[0], sys.version_info[1])):
-        sys.path.insert(0, libpath)
-        break
+    for pattern in ('-%d.%d', '-%d%d'):
+        postfix = pattern % (sys.version_info[0], sys.version_info[1])
+        if libpath.endswith(postfix):
+            sys.path.insert(0, libpath)
+            break
