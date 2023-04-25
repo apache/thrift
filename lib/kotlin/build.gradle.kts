@@ -19,9 +19,7 @@
 
 plugins {
     kotlin("jvm")
-    if (JavaVersion.current().isJava11Compatible) {
-        id("com.ncorti.ktfmt.gradle")
-    }
+    id("com.ncorti.ktfmt.gradle")
 }
 
 repositories {
@@ -43,6 +41,12 @@ kotlin {
 }
 
 tasks {
+    if (JavaVersion.current().isJava11Compatible) {
+        ktfmt {
+            kotlinLangStyle()
+        }
+    }
+
     test {
         useJUnitPlatform()
     }

@@ -138,9 +138,6 @@ jobs:
   lib-java-kotlin:
     needs: compiler
     runs-on: ubuntu-20.04
-    strategy:
-      matrix:
-        jvm: [8, 11, 17]
     env:
       GRADLE_VERSION: "8.0.2"
     steps:
@@ -149,7 +146,7 @@ jobs:
       - uses: actions/setup-java@v3
         with:
           distribution: temurin
-          java-version: ${{ matrix.jvm }}
+          java-version: 17
           cache: "gradle"
 
       - name: Install dependencies
@@ -171,13 +168,11 @@ jobs:
         run: |
           cd lib/java
           gradle spotlessCheck
-        if: ${{ matrix.java == '17' }}
 
       - name: Run ktfmtCheck for Kotlin
         run: |
           cd lib/kotlin
           gradle ktfmtCheck
-        if: ${{ matrix.java == '17' }}
 
       - name: Run bootstrap
         run: ./bootstrap.sh
@@ -231,15 +226,12 @@ jobs:
 
       - name: Run make for kotlin
         run: make -C lib/kotlin
-        if: ${{ matrix.java != '8' }}
 
       - name: Run make check for kotlin
         run: make -C lib/kotlin check
-        if: ${{ matrix.java != '8' }}
 
       - name: Run make precross for kotlin
         run: make -C lib/kotlin precross
-        if: ${{ matrix.java != '8' }}
 
       - name: Upload kotlin precross artifacts
         uses: actions/upload-artifact@v3
@@ -250,7 +242,6 @@ jobs:
             lib/kotlin/cross-test-client/build/install/TestClient/
             lib/kotlin/cross-test-server/build/install/TestServer/
           retention-days: 3
-        if: ${{ matrix.java != '8' }}
 
   lib-swift:
     needs: compiler
