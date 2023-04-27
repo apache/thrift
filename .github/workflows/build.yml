@@ -484,7 +484,7 @@ jobs:
           matrix:
             server_lang: ['java', 'kotlin', 'go', 'rs', 'swift']
             # we always join client langs to reduce the number of jobs
-            client_lang: java,kotlin,go,rs,swift
+            client_lang: ['java,kotlin,go,rs,swift']
         run: |
           python test/test.py \
             --retry-count 5 \
