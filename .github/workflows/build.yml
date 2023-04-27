@@ -423,7 +423,7 @@ jobs:
         server_lang: ['java', 'kotlin', 'go', 'rs', 'swift']
         # we always use comma join as many client langs as possible, to reduce the number of jobs
         client_lang: ['java,kotlin', 'go,rs', swift']
-        fail-fast: false
+      fail-fast: false
     steps:
       - uses: actions/checkout@v3
 
