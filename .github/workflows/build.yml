@@ -480,13 +480,17 @@ jobs:
       - name: Run cross test
         env:
           THRIFT_CROSSTEST_CONCURRENCY: 4
-          PRECROSS_LANGS: java,kotlin,go,rs,swift
+        strategy:
+          matrix:
+            server_lang: ['java', 'kotlin', 'go', 'rs', 'swift']
+            # we always join client langs to reduce the number of jobs
+            client_lang: java,kotlin,go,rs,swift
         run: |
           python test/test.py \
             --retry-count 5 \
             --skip-known-failures \
-            --server $PRECROSS_LANGS \
-            --client $PRECROSS_LANGS
+            --server ${{ matrix.server_lang }} \
+            --client ${{ matrix.client_lang }}
 
       - name: Upload log files from failed cross test runs
         uses: actions/upload-artifact@v3
