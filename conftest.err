@@ -1,7 +1,0 @@
-conftest.cpp:23:9: warning: 'BISON_VERSION' macro redefined [-Wmacro-redefined]
-#define BISON_VERSION 3.8.2
-        ^
-conftest.cpp:22:9: note: previous definition is here
-#define BISON_VERSION 0.0
-        ^
-1 warning generated.
