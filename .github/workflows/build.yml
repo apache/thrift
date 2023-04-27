@@ -418,6 +418,12 @@ jobs:
       - lib-go
       - lib-python
     runs-on: ubuntu-20.04
+    strategy:
+      matrix:
+        server_lang: ['java', 'kotlin', 'go', 'rs', 'swift']
+        # we always use comma join as many client langs as possible, to reduce the number of jobs
+        client_lang: ['java,kotlin', 'go,rs', 'swift']
+      fail-fast: false
     steps:
       - uses: actions/checkout@v3
 
@@ -480,13 +486,12 @@ jobs:
       - name: Run cross test
         env:
           THRIFT_CROSSTEST_CONCURRENCY: 4
-          PRECROSS_LANGS: java,kotlin,go,rs,swift
         run: |
           python test/test.py \
             --retry-count 5 \
             --skip-known-failures \
-            --server $PRECROSS_LANGS \
-            --client $PRECROSS_LANGS
+            --server ${{ matrix.server_lang }} \
+            --client ${{ matrix.client_lang }}
 
       - name: Upload log files from failed cross test runs
         uses: actions/upload-artifact@v3
