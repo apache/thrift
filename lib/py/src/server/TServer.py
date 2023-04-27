@@ -125,7 +125,7 @@ class TThreadedServer(TServer):
                 if not client:
                     continue
                 t = threading.Thread(target=self.handle, args=(client,))
-                t.setDaemon(self.daemon)
+                t.daemon = self.daemon
                 t.start()
             except KeyboardInterrupt:
                 raise
@@ -213,7 +213,7 @@ class TThreadPoolServer(TServer):
         for i in range(self.threads):
             try:
                 t = threading.Thread(target=self.serveThread)
-                t.setDaemon(self.daemon)
+                t.daemon = self.daemon
                 t.start()
             except Exception as x:
                 logger.exception(x)

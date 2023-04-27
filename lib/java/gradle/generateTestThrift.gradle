@@ -88,7 +88,7 @@ task generateJava(group: 'Build') {
     thriftCompile(it, 'EnumContainersTest.thrift')
     thriftCompile(it, 'JavaBinaryDefault.thrift')
     thriftCompile(it, 'VoidMethExceptionsTest.thrift')
-    thriftCompile(it, 'AnnotationTest.thrift')
+    thriftCompile(it, 'JavaAnnotationTest.thrift')
     thriftCompile(it, 'partial/thrift_test_schema.thrift')
 }
 
