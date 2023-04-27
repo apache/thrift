@@ -16,7 +16,6 @@ env:
     --without-c_glib
     --without-java
     --without-kotlin
-    --without-python
     --without-py3
     --without-ruby
     --without-haxe
@@ -349,7 +348,7 @@ jobs:
     runs-on: ubuntu-20.04
     strategy:
       matrix:
-        python-version: ["2.x", "3.x"]
+        python-version: ["3.6", "3.10"]
     steps:
       - uses: actions/checkout@v3
 
