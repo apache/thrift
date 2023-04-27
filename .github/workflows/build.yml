@@ -418,6 +418,11 @@ jobs:
       - lib-go
       - lib-python
     runs-on: ubuntu-20.04
+    strategy:
+      matrix:
+        server_lang: ['java', 'kotlin', 'go', 'rs', 'swift']
+        # we always join client langs to reduce the number of jobs
+        client_lang: ['java,kotlin,go,rs,swift']
     steps:
       - uses: actions/checkout@v3
 
@@ -480,11 +485,6 @@ jobs:
       - name: Run cross test
         env:
           THRIFT_CROSSTEST_CONCURRENCY: 4
-        strategy:
-          matrix:
-            server_lang: ['java', 'kotlin', 'go', 'rs', 'swift']
-            # we always join client langs to reduce the number of jobs
-            client_lang: ['java,kotlin,go,rs,swift']
         run: |
           python test/test.py \
             --retry-count 5 \
