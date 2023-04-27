@@ -369,21 +369,10 @@ jobs:
           python --version
           pip --version
 
-      - name: Python 2.x backport setup
-        if: matrix.python-version == '2.x'
-        run: |
-          python -m pip install --upgrade ipaddress backports.ssl_match_hostname
-
       - name: Run bootstrap
         run: ./bootstrap.sh
 
-      - name: Run configure 2.x
-        if: matrix.python-version == '2.x'
-        run: |
-          ./configure $(echo $CONFIG_ARGS_FOR_LIBS | sed 's/without-python/with-python/')
-
-      - name: Run configure 3.x
-        if: matrix.python-version != '2.x'
+      - name: Run configure
         run: |
           ./configure $(echo $CONFIG_ARGS_FOR_LIBS | sed 's/without-py3/with-py3/')
 
