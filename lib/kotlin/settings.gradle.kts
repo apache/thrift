@@ -19,7 +19,7 @@
 pluginManagement {
     plugins {
         kotlin("jvm") version "1.8.21"
-        id("com.ncorti.ktfmt.gradle") version "0.8.0"
+        id("com.ncorti.ktfmt.gradle") version "0.12.0"
     }
 }
 
