@@ -152,6 +152,6 @@ task generateJavaDefinitionOrderTestJava(group: 'Build') {
 
     ext.outputBuffer = new ByteArrayOutputStream()
 
-    thriftCompile(it, 'JavaStructOrderA.thrift', 'java:jakarta_annotations', genStructOrderTestASrc)
-    thriftCompile(it, 'JavaStructOrderB.thrift', 'java:jakarta_annotations', genStructOrderTestBSrc)
+    thriftCompile(it, 'JavaDefinitionOrderA.thrift', 'java:jakarta_annotations', genDefinitionOrderTestASrc)
+    thriftCompile(it, 'JavaDefinitionOrderB.thrift', 'java:jakarta_annotations', genDefinitionOrderTestBSrc)
 }
