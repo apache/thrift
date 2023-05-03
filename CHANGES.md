@@ -1,5 +1,118 @@
 # Apache Thrift Changelog
 
+
+## 0.18.1
+
+### Known Open Issues (Blocker or Critical)
+
+- [THRIFT-3877](https://issues.apache.org/jira/browse/THRIFT-3877) - C++ library don't work with HTTP (csharp server, cpp client; need cross test enhancement)
+- [THRIFT-5468](https://issues.apache.org/jira/browse/THRIFT-5468) - Swift service generator doesn't support oneway
+
+### Reopened issues
+
+- [THRIFT-5601](https://issues.apache.org/jira/browse/THRIFT-5601) - Typedef after first use causes incorrect go code
+
+### Go
+
+- [THRIFT-5685](https://issues.apache.org/jira/browse/THRIFT-5685) - Compiler generates wrong go code for forward defined types in optional fields
+- [THRIFT-5679](https://issues.apache.org/jira/browse/THRIFT-5679) - libthrift-0.17.0 has wrong version numbers in MANIFEST.MF
+
+
+
+## 0.18.0
+
+### Known Open Issues (Blocker or Critical)
+
+- [THRIFT-3877](https://issues.apache.org/jira/browse/THRIFT-3877) - C++ library don't work with HTTP (csharp server, cpp client; need cross test enhancement)
+- [THRIFT-5468](https://issues.apache.org/jira/browse/THRIFT-5468) - Swift service generator doesn't support oneway
+
+### Compiler (General)
+
+- [THRIFT-5587](https://issues.apache.org/jira/browse/THRIFT-5587) - Introduce uuid as additional builtin type
+- [THRIFT-5591](https://issues.apache.org/jira/browse/THRIFT-5591) - Add uuid type to IDL and implement reference code
+- [THRIFT-5626](https://issues.apache.org/jira/browse/THRIFT-5626) - Parser should not confuse data types and field names
+- [THRIFT-5627](https://issues.apache.org/jira/browse/THRIFT-5627) - More consistent syntax for cpp_type
+- [THRIFT-5652](https://issues.apache.org/jira/browse/THRIFT-5652) - IDL uuid literals can be improved 
+- [THRIFT-5669](https://issues.apache.org/jira/browse/THRIFT-5669) - "required" keyword is illegal in a "throws" clause 
+
+### C++ 
+
+- [THRIFT-5661](https://issues.apache.org/jira/browse/THRIFT-5661) - TOutput: add zephyr-specific strerror_s implementation
+- [THRIFT-5658](https://issues.apache.org/jira/browse/THRIFT-5658) - TProtocol: support zephyr byteorder 
+- [THRIFT-5659](https://issues.apache.org/jira/browse/THRIFT-5659) - protocol: declare when methods override
+
+### D language
+
+- [THRIFT-5647](https://issues.apache.org/jira/browse/THRIFT-5647) - Fix undeclared identifier ECONNRESET on macOS
+
+### Delphi
+
+- [THRIFT-5618](https://issues.apache.org/jira/browse/THRIFT-5618) - More consistent naming of container classes
+- [THRIFT-5620](https://issues.apache.org/jira/browse/THRIFT-5620) - Option to force usage of COM types to allow for cross-module references
+- [THRIFT-5656](https://issues.apache.org/jira/browse/THRIFT-5656) - Escape Delphi keywords with '&' prefix instead of '_' suffix
+- [THRIFT-5619](https://issues.apache.org/jira/browse/THRIFT-5619) - make sure CheckReadBytesAvailable() and CountConsumedMessageBytes() handle negative sizes properly
+- [THRIFT-5622](https://issues.apache.org/jira/browse/THRIFT-5622) - Garbled test output with multithreaded clients
+- [THRIFT-5625](https://issues.apache.org/jira/browse/THRIFT-5625) - SysUtils.TGuidHelper collides with ThriftUtils.TGuidHelper
+
+### Erlang
+
+- [THRIFT-5636](https://issues.apache.org/jira/browse/THRIFT-5636) - Broken client in erlang client library
+
+### Go
+
+- [THRIFT-5601](https://issues.apache.org/jira/browse/THRIFT-5601) - Typedef after first use causes incorrect go code
+- [THRIFT-5650](https://issues.apache.org/jira/browse/THRIFT-5650) - Add UUID support in go
+
+### Haxe
+
+- [THRIFT-5593](https://issues.apache.org/jira/browse/THRIFT-5593) - Implement uuid for hx
+
+### Java
+- [THRIFT-3956](https://issues.apache.org/jira/browse/THRIFT-3956) - Java keywords that are legal in IDL can lead to generated code that will not compile
+- [THRIFT-4655](https://issues.apache.org/jira/browse/THRIFT-4655) - Parser fails on the word "from"
+- [THRIFT-5631](https://issues.apache.org/jira/browse/THRIFT-5631) - Execution failed for task ':generateBeanJava'.
+- [THRIFT-5632](https://issues.apache.org/jira/browse/THRIFT-5632) - Fix java lib pmd main offending errors
+
+### Kotlin
+
+- [THRIFT-5646](https://issues.apache.org/jira/browse/THRIFT-5646) - Kotlin library should check to see if Gradle is present
+
+### netstd
+
+- [THRIFT-5610](https://issues.apache.org/jira/browse/THRIFT-5610) - Inconsistent constructors TSocketTransport
+- [THRIFT-5623](https://issues.apache.org/jira/browse/THRIFT-5623) - ref to disposed instance should be set to null
+- [THRIFT-5624](https://issues.apache.org/jira/browse/THRIFT-5624) - suboptimal performance of the c# named pipe server transport in multithread servers
+- [THRIFT-5628](https://issues.apache.org/jira/browse/THRIFT-5628) - MaxMessageSize is never reset on a read buffer
+- [THRIFT-5639](https://issues.apache.org/jira/browse/THRIFT-5639) - ToString() should use InvariantCulture
+
+### OCaml
+
+- [THRIFT-5208](https://issues.apache.org/jira/browse/THRIFT-5208) - OCaml codegen exception pattern match syntax error
+- [THRIFT-5642](https://issues.apache.org/jira/browse/THRIFT-5642) - OCaml in docker build environment is broken
+
+### Python
+
+- [THRIFT-5617](https://issues.apache.org/jira/browse/THRIFT-5617) - T(SSL)Socket TCP keep-alive incorrectly applies SO_KEEPALIVE to IPPROTO_TCP
+
+### Rust
+
+- [THRIFT-5124](https://issues.apache.org/jira/browse/THRIFT-5124) - Cannot use reserved language keyword
+- [THRIFT-5606](https://issues.apache.org/jira/browse/THRIFT-5606) - Wrong indent for const double
+- [THRIFT-5600](https://issues.apache.org/jira/browse/THRIFT-5600) - Upgrade rust toolchain to 1.61 and edition 2021
+- [THRIFT-5643](https://issues.apache.org/jira/browse/THRIFT-5643) - Please publish latest version of the Rust lib to crates.io
+
+### Swift
+
+- [THRIFT-5629](https://issues.apache.org/jira/browse/THRIFT-5629) - Add UUID support for Swift
+- [THRIFT-4547](https://issues.apache.org/jira/browse/THRIFT-4547) - Finish the conversion to native swift (LANGUAGES.md, cross test)
+- [THRIFT-5621](https://issues.apache.org/jira/browse/THRIFT-5621) - Create Swift Tutorial
+- [THRIFT-5630](https://issues.apache.org/jira/browse/THRIFT-5630) - Swift TSocketServer not working on Linux
+
+### Website	
+
+- [THRIFT-5634](https://issues.apache.org/jira/browse/THRIFT-5634) - thrift docs picture was broken
+
+
 ## 0.17.0
 
 ### Known Open Issues (Blocker or Critical)

@@ -17,13 +17,14 @@
  * under the License.
  */
 
-// Define Child, then Parent. Parent is a forward declaration and was problematic for our Java compiler before
-// fixing THRIFT-4086: Java compiler generates different meta data depending on order of structures in file
-struct Child {
-    1: required string Name
-    2: required Parent Parent
+// https://issues.apache.org/jira/browse/THRIFT-5685
+
+namespace go forwardtypetest
+
+struct Struct {
+  1: optional Exc foo
 }
 
-struct Parent {
-    1: required string Name
+exception Exc {
+  1: optional i32 code
 }

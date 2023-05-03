@@ -17,13 +17,34 @@
  * under the License.
  */
 
-#ifndef _THRIFT_VERSION_H_
-#define _THRIFT_VERSION_H_ 1
+// Define Parent, then Child. No forward declarations.
+struct Parent {
+    1: required string Name
+}
 
-#if defined(_MSC_VER) && (_MSC_VER > 1200)
-#pragma once
-#endif // _MSC_VER
+typedef Parent MyParent
+typedef list<Parent> Parents
 
-#define THRIFT_VERSION "0.19.0"
+enum MyEnum {
+    FOO = 1
+    BAR = 2
+}
 
-#endif // _THRIFT_VERSION_H_
+typedef i8 Age
+typedef MyEnum MyEnumV2
+typedef set<MyEnum> MyEnums
+typedef map<MyEnumV2, Parent> MyMapping
+typedef binary MyBinary
+
+struct Child {
+    1: required string Name
+    2: required Age Age
+    3: required Parent Parent1
+    4: required MyParent Parent2
+    5: required Parents GrandParents
+    6: required MyEnum MyEnum
+    7: required MyEnumV2 MyEnumV2
+    8: required MyEnums MyEnums
+    9: required MyMapping MyMapping
+    10: required MyBinary MyBinary
+}

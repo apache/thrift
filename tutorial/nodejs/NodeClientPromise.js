@@ -57,7 +57,7 @@ client.calculate(1, work)
   .then(function(message) {
 	console.log('Whoa? You know how to divide by zero?');
   })
-  .fail(function(err) {
+  .catch(function(err) {
     console.log("InvalidOperation " + err);
   });
 
@@ -74,7 +74,7 @@ client.calculate(1, work)
   .then(function(message) {
       console.log('Check log: ' + message.value);
   })
-  .fin(function() {
+  .finally(function() {
 	  //close the connection once we're done
       connection.end();
   });

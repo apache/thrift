@@ -179,6 +179,12 @@ string t_netstd_generator::normalize_name(string name, bool is_arg_name)
         return "@" + name;
     }
 
+    // prevent CS8981 "The type name only contains lower-cased ascii characters"
+	if( name.find_first_not_of("abcdefghijklmnopqrstuvwxyz") == std::string::npos)
+    {
+        return "@" + name;
+    }
+
     // no changes necessary
     return name;
 }
@@ -356,7 +362,7 @@ void t_netstd_generator::generate_consts(ostream& out, vector<t_const*> consts)
     for (c_iter = consts.begin(); c_iter != consts.end(); ++c_iter)
     {
         generate_netstd_doc(out, *c_iter);
-        if (print_const_value(out, (*c_iter)->get_name(), (*c_iter)->get_type(), (*c_iter)->get_value(), false))
+        if (print_const_value(out, normalize_name((*c_iter)->get_name()), (*c_iter)->get_type(), (*c_iter)->get_value(), false))
         {
             need_static_constructor = true;
         }
@@ -474,7 +480,7 @@ bool t_netstd_generator::print_const_value(ostream& out, string name, t_type* ty
     if (type->is_base_type())
     {
         string v2 = render_const_value(out, name, type, value);
-        out << normalize_name(name) << " = " << v2 << ";" << endl;
+        out << name << " = " << v2 << ";" << endl;
         need_static_construction = false;
     }
     else if (type->is_enum())
@@ -552,7 +558,7 @@ string t_netstd_generator::render_const_value(ostream& out, string name, t_type*
     }
     else
     {
-        string t = tmp("tmp");
+        string t = normalize_name(tmp("tmp"));
         print_const_value(out, t, type, value, true, true, true);
         render << t;
     }
@@ -940,7 +946,7 @@ void t_netstd_generator::generate_netstd_struct_definition(ostream& out, t_struc
         {
             if (field_is_required((*m_iter)))
             {
-                print_const_value(out, "this." + prop_name(*m_iter), t, (*m_iter)->get_value(), true, true);
+                print_const_value(out, "this." + normalize_name(prop_name(*m_iter)), t, (*m_iter)->get_value(), true, true);
             }
             else
             {
@@ -1456,14 +1462,14 @@ void t_netstd_generator::generate_netstd_union_definition(ostream& out, t_struct
     // Let's define the class first
     start_netstd_namespace(out);
 
-    out << indent() << "public abstract partial class " << tunion->get_name() << " : TUnionBase" << endl;
+    out << indent() << "public abstract partial class " << normalize_name(tunion->get_name()) << " : TUnionBase" << endl;
     out << indent() << "{" << endl;
     indent_up();
 
     out << indent() << "public abstract global::System.Threading.Tasks.Task WriteAsync(TProtocol tProtocol, CancellationToken " << CANCELLATION_TOKEN_NAME << ");" << endl
         << indent() << "public readonly int Isset;" << endl
         << indent() << "public abstract object" << nullable_suffix() <<" Data { get; }" << endl
-        << indent() << "protected " << tunion->get_name() << "(int isset)" << endl
+        << indent() << "protected " << normalize_name(tunion->get_name()) << "(int isset)" << endl
         << indent() << "{" << endl;
     indent_up();
     out << indent() << "Isset = isset;" << endl;
@@ -1669,13 +1675,13 @@ void t_netstd_generator::generate_netstd_union_class(ostream& out, t_struct* tun
         << endl;
 
 
-    out << indent() << "public class " << tfield->get_name() << " : " << tunion->get_name() << endl;
+    out << indent() << "public class " << normalize_name(tfield->get_name()) << " : " << normalize_name(tunion->get_name()) << endl;
     out << indent() << "{" << endl;
     indent_up();
 
     out << indent() << "private readonly " << type_name(tfield->get_type()) << " _data;" << endl
         << indent() << "public override object" << nullable_suffix() <<" Data { get { return _data; } }" << endl
-        << indent() << "public " << tfield->get_name() << "(" << type_name(tfield->get_type()) << " data) : base("<< tfield->get_key() <<")" << endl
+        << indent() << "public " << normalize_name(tfield->get_name()) << "(" << type_name(tfield->get_type()) << " data) : base("<< tfield->get_key() <<")" << endl
         << indent() << "{" << endl;
     indent_up();
     out << indent() << "this._data = data;" << endl;
@@ -1683,13 +1689,13 @@ void t_netstd_generator::generate_netstd_union_class(ostream& out, t_struct* tun
     out << indent() << "}" << endl;
 
     if( ! suppress_deepcopy) {
-        out << indent() << "public new " << tfield->get_name() << " " << DEEP_COPY_METHOD_NAME << "()" << endl;
+        out << indent() << "public new " << normalize_name(tfield->get_name()) << " " << DEEP_COPY_METHOD_NAME << "()" << endl;
         out << indent() << "{" << endl;
         indent_up();
         bool needs_typecast = false;
         string suffix("");
         string copy_op = get_deep_copy_method_call(tfield->get_type(), true, needs_typecast, suffix);
-        out << indent() << "return new " << tfield->get_name() << "(_data" << copy_op << ");" << endl;
+        out << indent() << "return new " << normalize_name(tfield->get_name()) << "(_data" << copy_op << ");" << endl;
         indent_down();
         out << indent() << "}" << endl << endl;
     }

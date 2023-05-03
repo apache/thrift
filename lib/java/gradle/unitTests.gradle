@@ -24,7 +24,7 @@ task testJar(type: Jar, group: 'Build') {
     description = 'Assembles a jar archive containing the test classes.'
     project.test.dependsOn it
 
-    classifier 'test'
+    archiveClassifier = 'test'
     from sourceSets.test.output
 }
 
@@ -65,8 +65,6 @@ test {
         outputs.upToDateWhen { false }
     }
 
-    // This is required for Mockito to run under Java 17
-    jvmArgs '--add-opens=java.base/java.lang=ALL-UNNAMED'
     include '**/Test*.class'
     exclude '**/Test*\$*.class'
 

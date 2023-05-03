@@ -68,6 +68,6 @@ dependencies {
     implementation "org.apache.commons:commons-lang3:${commonsLang3Version}"
 
     testImplementation "org.junit.jupiter:junit-jupiter:${junitVersion}"
-    testImplementation "org.mockito:mockito-all:${mockitoVersion}"
+    testImplementation "org.mockito:mockito-core:${mockitoVersion}"
     testRuntimeOnly "org.slf4j:slf4j-log4j12:${slf4jVersion}"
 }

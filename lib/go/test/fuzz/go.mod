@@ -1,6 +1,6 @@
 module github.com/apache/thrift/lib/go/test/fuzz
 
-go 1.18
+go 1.19
 
 replace github.com/apache/thrift => ../../../../
 

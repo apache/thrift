@@ -201,6 +201,7 @@ public:
   std::string type_name(t_type* ttype, bool in_container = false, bool in_init = false);
   std::string base_type_name(t_base_type* tbase, bool in_container = false);
   std::string declare_field(t_field* tfield, bool init = false);
+  std::string render_default_value_for_type(t_type* type, bool allow_null);
   std::string function_signature_combined(t_function* tfunction);
   std::string function_signature_normal(t_function* tfunction);
   std::string argument_list(t_struct* tstruct);
@@ -209,6 +210,8 @@ public:
   string generate_service_method_onsuccess(t_function* tfunction, bool as_type, bool omit_name);
   void generate_service_method_signature_combined(t_function* tfunction, bool is_interface);
   void generate_service_method_signature_normal(t_function* tfunction, bool is_interface);
+  void generate_deprecation_attribute(ostream& out, t_function* func, bool as_comment);
+  string make_haxe_string_literal( string const& value);
 
   bool type_can_be_null(t_type* ttype) {
     ttype = get_true_type(ttype);
@@ -1664,6 +1667,7 @@ void t_haxe_generator::generate_service_method_signature(t_function* tfunction, 
 void t_haxe_generator::generate_service_method_signature_normal(t_function* tfunction,
                                                                 bool is_interface) {
   if (is_interface) {
+    generate_deprecation_attribute(f_service_, tfunction, true);
     indent(f_service_) << function_signature_normal(tfunction) << ";" << endl << endl;
   } else {
     indent(f_service_) << "public " << function_signature_normal(tfunction) << " {" << endl;
@@ -1684,9 +1688,57 @@ void t_haxe_generator::generate_service_method_signature_combined(t_function* tf
   }
 
   if (is_interface) {
+    generate_deprecation_attribute(f_service_, tfunction, false);
     indent(f_service_) << function_signature_combined(tfunction) << ";" << endl << endl;
   } else {
     indent(f_service_) << "public " << function_signature_combined(tfunction) << " {" << endl;
+  }
+}
+
+string t_haxe_generator::make_haxe_string_literal( string const& value)
+{
+  if (value.length() == 0) {
+    return "";
+  }
+
+  std::stringstream result;
+  result << "\"";
+  for (signed char const c: value) {
+    if( (c >= 0) && (c < 32)) {  // convert ctrl chars, but leave UTF-8 alone
+      int width = std::min( (int)sizeof(c), 6);
+      result << "\\u{" << std::hex << std::setw(width) << std::setfill('0') << (int)c << '}';
+    } else if ((c == '\\') || (c == '"')) {
+      result << "\\" << c;
+    } else {
+      result << c;   // anything else "as is"
+    }
+  }
+  result << "\"";
+
+  return result.str();
+}
+
+void t_haxe_generator::generate_deprecation_attribute(ostream& out, t_function* func, bool as_comment)
+{
+  auto iter = func->annotations_.find("deprecated");
+  if( func->annotations_.end() != iter) {
+    if( as_comment) {
+      out << indent() << "// DEPRECATED";
+    } else {
+      out << indent() << "@:deprecated";
+    }
+
+    // empty annotation values end up with "1" somewhere, ignore these as well
+    if ((iter->second.back().length() > 0) && (iter->second.back() != "1")) {
+      string text = make_haxe_string_literal(iter->second.back());
+      if( as_comment) {
+        out << ": " << text;
+      } else {
+        out << "(" << text << ")";
+      }
+    }
+
+    out << endl;
   }
 }
 
@@ -1827,8 +1879,9 @@ void t_haxe_generator::generate_service_client(t_service* tservice) {
 
     string retval = tmp("retval");
     if (!((*f_iter)->is_oneway() || (*f_iter)->get_returntype()->is_void())) {
-      f_service_ << indent() << "var " << retval << " : " << type_name((*f_iter)->get_returntype()) << ";"
-                 << endl;
+      f_service_ << indent() << "var " << retval << " : " << type_name((*f_iter)->get_returntype())
+                 << " = " << render_default_value_for_type((*f_iter)->get_returntype(),true) 
+                 << ";" << endl;
     }
 
     if ((*f_iter)->is_oneway()) {
@@ -2470,7 +2523,6 @@ void t_haxe_generator::generate_serialize_struct(ostream& out, t_struct* tstruct
  * @param prefix String prefix for fields
  */
 void t_haxe_generator::generate_serialize_container(ostream& out, t_type* ttype, string prefix) {
-  scope_up(out);
 
   if (ttype->is_map()) {
     string iter = tmp("_key");
@@ -2521,7 +2573,6 @@ void t_haxe_generator::generate_serialize_container(ostream& out, t_type* ttype,
     indent(out) << "oprot.writeListEnd();" << endl;
   }
 
-  scope_down(out);
 }
 
 /**
@@ -2687,48 +2738,49 @@ string t_haxe_generator::base_type_name(t_base_type* type, bool in_container) {
  * @param ttype The type
  */
 string t_haxe_generator::declare_field(t_field* tfield, bool init) {
-  // TODO(mcslee): do we ever need to initialize the field?
   string result = "var " + tfield->get_name() + " : " + type_name(tfield->get_type());
   if (init) {
     t_type* ttype = get_true_type(tfield->get_type());
     if (ttype->is_base_type() && tfield->get_value() != nullptr) {
       result += " = " + render_const_value_str( ttype, tfield->get_value());
-    } else if (ttype->is_base_type()) {
-      t_base_type::t_base tbase = ((t_base_type*)ttype)->get_base();
-      switch (tbase) {
-      case t_base_type::TYPE_VOID:
-        throw "NO T_VOID CONSTRUCT";
-      case t_base_type::TYPE_STRING:
-        result += " = null";
-        break;
-      case t_base_type::TYPE_UUID:
-        result += " = uuid.Uuid.NIL";
-        break;
-      case t_base_type::TYPE_BOOL:
-        result += " = false";
-        break;
-      case t_base_type::TYPE_I8:
-      case t_base_type::TYPE_I16:
-      case t_base_type::TYPE_I32:
-      case t_base_type::TYPE_I64:
-        result += " = 0";
-        break;
-      case t_base_type::TYPE_DOUBLE:
-        result += " = (double)0";
-        break;
-      default:
-        throw "unhandled type";
-      }
-
-    } else if (ttype->is_enum()) {
-      result += " = 0";
-    } else if (ttype->is_container()) {
-      result += " = new " + type_name(ttype, false, true) + "()";
     } else {
-      result += " = new " + type_name(ttype, false, true) + "()";
+      result += " = " + render_default_value_for_type( ttype, false);
     }
   }
   return result + ";";
+}
+
+string t_haxe_generator::render_default_value_for_type( t_type* type, bool allow_null) {
+  t_type* ttype = get_true_type(type);
+
+  if (ttype->is_base_type()) {
+    t_base_type::t_base tbase = ((t_base_type*)ttype)->get_base();
+    switch (tbase) {
+    case t_base_type::TYPE_VOID:
+      throw "NO T_VOID CONSTRUCT";
+    case t_base_type::TYPE_STRING:
+      return "null";
+    case t_base_type::TYPE_UUID:
+      return "uuid.Uuid.NIL";
+    case t_base_type::TYPE_BOOL:
+      return "false";
+    case t_base_type::TYPE_I8:
+    case t_base_type::TYPE_I16:
+    case t_base_type::TYPE_I32:
+    case t_base_type::TYPE_I64:
+      return "0";
+    case t_base_type::TYPE_DOUBLE:
+      return "0.0";
+    default:
+      throw "unhandled type";
+    }
+  } else if (ttype->is_enum()) {
+    return "0";
+  } else if (ttype->is_container()) {
+    return allow_null ? "null" : "new " + type_name(ttype, false, true) + "()";
+  } else {
+    return allow_null ? "null" : "new " + type_name(ttype, false, true) + "()";
+  }
 }
 
 /**
