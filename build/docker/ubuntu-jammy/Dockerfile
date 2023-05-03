@@ -125,10 +125,10 @@ ENV PATH /usr/lib/dart/bin:$PATH
 
 RUN apt-get install -y --no-install-recommends \
   `# dotnet core dependencies` \
-  dotnet-sdk-6.0 \
-  dotnet-runtime-6.0 \
-  aspnetcore-runtime-6.0 \
-  dotnet-apphost-pack-6.0
+  dotnet-sdk-7.0 \
+  dotnet-runtime-7.0 \
+  aspnetcore-runtime-7.0 \
+  dotnet-apphost-pack-7.0
 
 # Erlang dependencies
 ARG ERLANG_OTP_VERSION=23.3.4.11
@@ -145,9 +145,9 @@ RUN apt-get install -y --no-install-recommends \
   libglib2.0-dev
 
 # golang
-ENV GOLANG_VERSION 1.19.2
+ENV GOLANG_VERSION 1.20
 ENV GOLANG_DOWNLOAD_URL https://go.dev/dl/go$GOLANG_VERSION.linux-amd64.tar.gz
-ENV GOLANG_DOWNLOAD_SHA256 5e8c5a74fe6470dd7e055a461acda8bb4050ead8c2df70f227e3ff7d8eb7eeb6
+ENV GOLANG_DOWNLOAD_SHA256 5a9ebcc65c1cce56e0d2dc616aff4c4cedcfbda8cc6f0288cc08cda3b18dcbf1
 RUN curl -fsSL "$GOLANG_DOWNLOAD_URL" -o golang.tar.gz && \
   echo "$GOLANG_DOWNLOAD_SHA256  golang.tar.gz" | sha256sum -c - && \
   tar -C /usr/local -xzf golang.tar.gz && \
@@ -162,7 +162,7 @@ RUN apt-get install -y --no-install-recommends \
   haxelib setup --always /usr/share/haxe/lib && \
   haxelib install --always hxcpp 2>&1 > /dev/null
 
-ENV GRADLE_VERSION="7.5.1"
+ENV GRADLE_VERSION="8.0.2"
 RUN apt-get install -y --no-install-recommends \
   `# Java dependencies` \
   ant \
@@ -171,7 +171,7 @@ RUN apt-get install -y --no-install-recommends \
   openjdk-11-jdk-headless && \
   `# Gradle` \
   wget https://services.gradle.org/distributions/gradle-$GRADLE_VERSION-bin.zip -q -O /tmp/gradle-$GRADLE_VERSION-bin.zip && \
-  (echo "f6b8596b10cce501591e92f229816aa4046424f3b24d771751b06779d58c8ec4  /tmp/gradle-$GRADLE_VERSION-bin.zip" | sha256sum -c -) && \
+  (echo "ff7bf6a86f09b9b2c40bb8f48b25fc19cf2b2664fd1d220cd7ab833ec758d0d7  /tmp/gradle-$GRADLE_VERSION-bin.zip" | sha256sum -c -) && \
   unzip -d /tmp /tmp/gradle-$GRADLE_VERSION-bin.zip && \
   mv /tmp/gradle-$GRADLE_VERSION /usr/local/gradle && \
   ln -s /usr/local/gradle/bin/gradle /usr/local/bin

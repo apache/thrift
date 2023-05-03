@@ -23,7 +23,8 @@
         "union",
         "struct",
         "binary",
-        "uuid"
+        "uuid",
+        "enum"
       ]
     },
     "base-type": {
@@ -67,7 +68,7 @@
       "type": "object",
       "properties": {
         "typeId": {
-          "enum": [ "union", "struct", "exception" ]
+          "enum": [ "union", "struct", "exception", "enum" ]
         }
       },
       "required": [ "typeId", "class" ]

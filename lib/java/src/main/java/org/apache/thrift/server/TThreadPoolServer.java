@@ -275,7 +275,6 @@ public class TThreadPoolServer extends TServer {
     }
 
     private void logException(Exception x) {
-      LOGGER.debug("Error processing request", x);
       // We'll usually receive RuntimeException types here
       // Need to unwrap to ascertain real causing exception before we choose to ignore
       // Ignoring err-logging all transport-level/type exceptions and SocketExceptions

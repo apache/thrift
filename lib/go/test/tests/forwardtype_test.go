@@ -17,13 +17,25 @@
  * under the License.
  */
 
-#ifndef _THRIFT_VERSION_H_
-#define _THRIFT_VERSION_H_ 1
+package tests
 
-#if defined(_MSC_VER) && (_MSC_VER > 1200)
-#pragma once
-#endif // _MSC_VER
+import (
+	"testing"
 
-#define THRIFT_VERSION "0.19.0"
+	"github.com/apache/thrift/lib/go/test/gopath/src/forwardtypetest"
+	"github.com/apache/thrift/lib/go/thrift"
+)
 
-#endif // _THRIFT_VERSION_H_
+func TestForwardType(t *testing.T) {
+	// See https://issues.apache.org/jira/browse/THRIFT-5685
+
+	const code = int32(1)
+	foo := &forwardtypetest.Struct{
+		Foo: &forwardtypetest.Exc{
+			Code: thrift.Pointer(code),
+		},
+	}
+	if got, want := foo.GetFoo().GetCode(), code; got != want {
+		t.Errorf("code got %v want %v", got, want)
+	}
+}
