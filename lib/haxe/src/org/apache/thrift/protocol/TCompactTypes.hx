@@ -22,8 +22,7 @@ package org.apache.thrift.protocol;
 /**
  * All of the on-wire type codes.
  */
-@:enum
-abstract TCompactTypes(Int)  from Int to Int  {
+enum abstract TCompactTypes(Int)  from Int to Int  {
     public static inline var STOP          = 0x00;
     public static inline var BOOLEAN_TRUE  = 0x01;
     public static inline var BOOLEAN_FALSE = 0x02;
