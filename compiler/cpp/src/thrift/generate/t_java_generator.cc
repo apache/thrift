@@ -440,10 +440,10 @@ private:
   // true, false, and null might seem like keywords, but they are actually literals;
   // you cannot use them as identifiers in your programs.
   const std::string JAVA_KEYWORDS[53] = {
-    "abstract", "assert", "boolean", "break", "byte", "case", "catch", "char", "class", "const", "continue", 
-    "default", "do", "double", "else", "enum", "extends", "final", "finally", "float", "for", "goto", "if", 
-    "implements", "import", "instanceof", "int", "interface", "long", "native", "new", "package", "private", 
-    "protected", "public", "return", "short", "static", "strictfp", "super", "switch", "synchronized", "this", 
+    "abstract", "assert", "boolean", "break", "byte", "case", "catch", "char", "class", "const", "continue",
+    "default", "do", "double", "else", "enum", "extends", "final", "finally", "float", "for", "goto", "if",
+    "implements", "import", "instanceof", "int", "interface", "long", "native", "new", "package", "private",
+    "protected", "public", "return", "short", "static", "strictfp", "super", "switch", "synchronized", "this",
     "throw", "throws", "transient", "try", "void", "volatile", "while", "true", "false", "null"
   };
   std::set<string> java_keywords = std::set<string>(JAVA_KEYWORDS, JAVA_KEYWORDS + sizeof(JAVA_KEYWORDS) / sizeof(JAVA_KEYWORDS[0]));
@@ -999,7 +999,7 @@ void t_java_generator::generate_union_constructor(ostream& out, t_struct* tstruc
   indent(out) << "  super(setField, value);" << endl;
   indent(out) << "}" << endl << endl;
 
-  indent(out) << "public " << type_name(tstruct) 
+  indent(out) << "public " << type_name(tstruct)
               << "(" << type_name(tstruct) << " other) {"
               << endl;
   indent(out) << "  super(other);" << endl;
@@ -1549,7 +1549,7 @@ void t_java_generator::generate_java_struct_definition(ostream& out,
   if (is_exception) {
     out << "extends org.apache.thrift.TException ";
   }
-  out << "implements org.apache.thrift.TBase<" << make_valid_java_identifier(tstruct->get_name()) 
+  out << "implements org.apache.thrift.TBase<" << make_valid_java_identifier(tstruct->get_name())
       << ", " << make_valid_java_identifier(tstruct->get_name())
       << "._Fields>, java.io.Serializable, Cloneable, Comparable<" << make_valid_java_identifier(tstruct->get_name()) << ">";
 
@@ -1682,17 +1682,17 @@ void t_java_generator::generate_java_struct_definition(ostream& out,
         t_type* type = get_true_type((*m_iter)->get_type());
         if (type->is_binary()) {
           if (unsafe_binaries_) {
-            indent(out) << "this." << make_valid_java_identifier((*m_iter)->get_name()) 
+            indent(out) << "this." << make_valid_java_identifier((*m_iter)->get_name())
                         << " = " << make_valid_java_identifier((*m_iter)->get_name()) << ";"
                         << endl;
           } else {
             indent(out) << "this." << make_valid_java_identifier((*m_iter)->get_name())
-                        << " = org.apache.thrift.TBaseHelper.copyBinary(" 
+                        << " = org.apache.thrift.TBaseHelper.copyBinary("
                         << make_valid_java_identifier((*m_iter)->get_name())
                         << ");" << endl;
           }
         } else {
-          indent(out) << "this." << make_valid_java_identifier((*m_iter)->get_name()) << " = " 
+          indent(out) << "this." << make_valid_java_identifier((*m_iter)->get_name()) << " = "
                       << make_valid_java_identifier((*m_iter)->get_name()) << ";"
                       << endl;
         }
@@ -1708,7 +1708,7 @@ void t_java_generator::generate_java_struct_definition(ostream& out,
   indent(out) << "/**" << endl;
   indent(out) << " * Performs a deep copy on <i>other</i>." << endl;
   indent(out) << " */" << endl;
-  indent(out) << "public " << make_valid_java_identifier(tstruct->get_name()) 
+  indent(out) << "public " << make_valid_java_identifier(tstruct->get_name())
               << "(" << make_valid_java_identifier(tstruct->get_name()) << " other) {"
               << endl;
   indent_up();
@@ -2182,7 +2182,7 @@ void t_java_generator::generate_java_struct_compare_to(ostream& out, t_struct* t
 
     indent(out) << "if (" << generate_isset_check(field) << ") {" << endl;
     indent(out) << "  lastComparison = org.apache.thrift.TBaseHelper.compareTo(this."
-                << make_valid_java_identifier(field->get_name()) 
+                << make_valid_java_identifier(field->get_name())
                 << ", other." << make_valid_java_identifier(field->get_name()) << ");" << endl;
     indent(out) << "  if (lastComparison != 0) {" << endl;
     indent(out) << "    return lastComparison;" << endl;
@@ -2731,7 +2731,7 @@ void t_java_generator::generate_java_bean_boilerplate(ostream& out, t_struct* ts
       out << type_name(tstruct);
     }
     out << " set" << cap_name << "("
-        << (type_can_be_null(type) ? (java_nullable_annotation() + " ") : "") 
+        << (type_can_be_null(type) ? (java_nullable_annotation() + " ") : "")
         << type_name(type)
         << " " << make_valid_java_identifier(field_name) << ") {" << endl;
     indent_up();
