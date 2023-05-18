@@ -3369,6 +3369,7 @@ void t_java_generator::generate_service_future_client(t_service* tservice) {
   string extends_client = "";
   if (tservice->get_extends() != nullptr) {
     extends_client = "extends " + type_name(tservice->get_extends()) + ".FutureClient ";
+  }
 
   static string adapter_class = "org.apache.thrift.async.AsyncMethodFutureAdapter";
   indent(f_service_) << "public static class FutureClient " << extends_client
