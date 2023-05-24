@@ -3203,13 +3203,9 @@ void t_java_generator::generate_service_helpers(t_service* tservice) {
  * @param tservice The service to generate a server for.
  */
 void t_java_generator::generate_service_client(t_service* tservice) {
-  string extends = "";
-  string extends_client = "";
-  if (tservice->get_extends() == nullptr) {
-    extends_client = "org.apache.thrift.TServiceClient";
-  } else {
-    extends = type_name(tservice->get_extends());
-    extends_client = extends + ".Client";
+  string extends_client = "org.apache.thrift.TServiceClient";
+  if (tservice->get_extends() != nullptr) {
+    extends_client = type_name(tservice->get_extends()) + ".Client";
   }
 
   indent(f_service_) << "public static class Client extends " << extends_client
@@ -3370,8 +3366,14 @@ void t_java_generator::generate_service_client(t_service* tservice) {
 }
 
 void t_java_generator::generate_service_future_client(t_service* tservice) {
+  string extends_client = "";
+  if (tservice->get_extends() != nullptr) {
+    extends_client = "extends " + type_name(tservice->get_extends()) + ".FutureClient ";
+  }
+
   static string adapter_class = "org.apache.thrift.async.AsyncMethodFutureAdapter";
-  indent(f_service_) << "public static class FutureClient implements FutureIface {" << endl;
+  indent(f_service_) << "public static class FutureClient " << extends_client
+                     << "implements FutureIface {" << endl;
   indent_up();
   indent(f_service_) << "public FutureClient(AsyncIface delegate) {" << endl;
   indent_up();
@@ -3414,13 +3416,12 @@ void t_java_generator::generate_service_future_client(t_service* tservice) {
 }
 
 void t_java_generator::generate_service_async_client(t_service* tservice) {
-  string extends = "org.apache.thrift.async.TAsyncClient";
-  string extends_client = "";
+  string extends_client = "org.apache.thrift.async.TAsyncClient";
   if (tservice->get_extends() != nullptr) {
-    extends = type_name(tservice->get_extends()) + ".AsyncClient";
+    extends_client = type_name(tservice->get_extends()) + ".AsyncClient";
   }
 
-  indent(f_service_) << "public static class AsyncClient extends " << extends
+  indent(f_service_) << "public static class AsyncClient extends " << extends_client
                      << " implements AsyncIface {" << endl;
   indent_up();
 
