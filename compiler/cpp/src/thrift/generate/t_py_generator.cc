@@ -893,12 +893,42 @@ void t_py_generator::generate_py_struct_definition(ostream& out,
 
   if (is_immutable(tstruct)) {
     out << endl;
-    out << indent() << "def __setattr__(self, *args):" << endl
-        << indent() << indent_str() << "raise TypeError(\"can't modify immutable instance\")" << endl
-        << endl;
-    out << indent() << "def __delattr__(self, *args):" << endl
-        << indent() << indent_str() << "raise TypeError(\"can't modify immutable instance\")" << endl
-        << endl;
+    out << indent() << "def __setattr__(self, *args):" << endl;
+    indent_up();
+
+    // Not user-provided fields should be editable so that the Python Standard Library can edit
+    // internal fields of std library base classes. For example, in Python 3.11 ContextManager
+    // edits the `__traceback__` field on Exceptions. Allowing this to work with `__slots__` is
+    // trivial because we know which fields are user-provided, without slots we need to build a
+    // way to know which fields are user-provided.
+    if (gen_slots_ && !gen_dynamic_) {
+        out << indent() << "if args[0] not in self.__slots__:" << endl;
+        indent_up();
+        out << indent() << "super().__setattr__(*args)" << endl
+            << indent() << "return" << endl;
+        indent_down();
+    }
+    out << indent() << "raise TypeError(\"can't modify immutable instance\")" << endl;
+    indent_down();
+    out << endl;
+    out << indent() << "def __delattr__(self, *args):" << endl;
+    indent_up();
+
+    // Not user-provided fields should be editable so that the Python Standard Library can edit
+    // internal fields of std library base classes. For example, in Python 3.11 ContextManager
+    // edits the `__traceback__` field on Exceptions. Allowing this to work with `__slots__` is
+    // trivial because we know which fields are user-provided, without slots we need to build a
+    // way to know which fields are user-provided.
+    if (gen_slots_ && !gen_dynamic_) {
+        out << indent() << "if args[0] not in self.__slots__:" << endl;
+        indent_up();
+        out << indent() << "super().__delattr__(*args)" << endl
+            << indent() << "return" << endl;
+        indent_down();
+    }
+    out << indent() << "raise TypeError(\"can't modify immutable instance\")" << endl;
+    indent_down();
+    out << endl;
 
     // Hash all of the members in order, and also hash in the class
     // to avoid collisions for stuff like single-field structures.
