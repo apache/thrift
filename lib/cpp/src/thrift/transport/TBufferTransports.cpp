@@ -363,9 +363,9 @@ void TMemoryBuffer::ensureCanWrite(uint32_t len) {
     throw TTransportException("Insufficient space in external MemoryBuffer");
   }
 
-  // Grow the buffer as necessary.
-  const uint32_t current_used = bufferSize_ - avail;
-  const uint32_t required_buffer_size = len + current_used;
+  // Grow the buffer as necessary. Use uint64_t to avoid overflow.
+  const uint64_t current_used = bufferSize_ - avail;
+  const uint64_t required_buffer_size = len + current_used;
   if (required_buffer_size > maxBufferSize_) {
     throw TTransportException(TTransportException::BAD_ARGS,
                               "Internal buffer size overflow when requesting a buffer of size " + std::to_string(required_buffer_size));
