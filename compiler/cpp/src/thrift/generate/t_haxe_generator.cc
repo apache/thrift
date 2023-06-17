@@ -2637,6 +2637,8 @@ string t_haxe_generator::type_name(t_type* ttype, bool in_container, bool in_ini
           return "StringMap< " + type_name(tval) + ">";
         }
         break; // default to ObjectMap<>
+      case t_base_type::TYPE_UUID:
+        return "StringMap< " + type_name(tval) + ">";  // uuids are stored as strings
       case t_base_type::TYPE_I8:
       case t_base_type::TYPE_I16:
       case t_base_type::TYPE_I32:
@@ -2663,6 +2665,8 @@ string t_haxe_generator::type_name(t_type* ttype, bool in_container, bool in_ini
           return "StringSet";
         }
         break; // default to ObjectSet
+      case t_base_type::TYPE_UUID:
+        return "StringSet";  // uuids are stored as strings
       case t_base_type::TYPE_I8:
       case t_base_type::TYPE_I16:
       case t_base_type::TYPE_I32:
