@@ -26,7 +26,7 @@ environment:
 
 dependencies:
   args: ">=0.13.0 <2.0.0"
-  http: ^0.11.0
+  http: ^0.13.3
   thrift:
     path: ../../../lib/dart
   thrift_test:
