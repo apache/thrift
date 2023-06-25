@@ -220,21 +220,6 @@ RUN apt-get install -y --no-install-recommends \
       composer
 
 RUN apt-get install -y --no-install-recommends \
-      `# Python dependencies` \
-      python-all \
-      python-all-dbg \
-      python-all-dev \
-      python-ipaddress \
-      python-pip \
-      python-setuptools \
-      python-six \
-      python-tornado \
-      python-twisted \
-      python-wheel \
-      python-zope.interface && \
-      pip install --upgrade backports.ssl_match_hostname
-
-RUN apt-get install -y --no-install-recommends \
       `# Python3 dependencies` \
       python3-all \
       python3-all-dbg \
@@ -245,7 +230,8 @@ RUN apt-get install -y --no-install-recommends \
       python3-tornado \
       python3-twisted \
       python3-wheel \
-      python3-zope.interface
+      python3-zope.interface && \
+      python3 -m pip install --upgrade pip
 
 RUN apt-get install -y --no-install-recommends \
       `# Ruby dependencies` \
@@ -284,7 +270,7 @@ RUN apt-get install -y --no-install-recommends \
       `# Static Code Analysis dependencies` \
       cppcheck \
       sloccount && \
-      pip install flake8
+      python3 -m pip install flake8==4.0.1
 
 # NOTE: this does not reduce the image size but adds an additional layer.
 # # Clean up

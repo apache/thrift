@@ -41,7 +41,7 @@ SUBDIRS += kotlin
 PRECROSS_TARGET += precross-kotlin
 endif
 
-if WITH_PYTHON
+if WITH_PY3
 SUBDIRS += py
 endif
 

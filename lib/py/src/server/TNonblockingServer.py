@@ -24,7 +24,6 @@ only from the main thread.
 The thread pool should be sized for concurrent tasks, not
 maximum connections
 """
-
 import logging
 import select
 import socket

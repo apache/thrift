@@ -37,10 +37,10 @@ class SimpleJSONProtocolTest(unittest.TestCase):
             return
 
         # Substitute implementation not as good as unittest library's
-        self.assertEquals(len(a), len(b), msg)
-        for k, v in a.iteritems():
+        self.assertEqual(len(a), len(b), msg)
+        for k, v in a.items():
             self.assertTrue(k in b, msg)
-            self.assertEquals(b.get(k), v, msg)
+            self.assertEqual(b.get(k), v, msg)
 
     def _serialize(self, obj):
         trans = TTransport.TMemoryBuffer()

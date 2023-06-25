@@ -188,8 +188,7 @@ Last updated: October 1, 2017
 | ocaml     |               | 4.05.0        | THRIFT-4517: ocaml 4.02.3 on xenial appears broken |
 | perl      | 5.22.1        | 5.26.1        |       |
 | php       | 7.0.32        | 7.2.19        |       |
-| python    | 2.7.12        | 2.7.15        |       |
-| python3   | 3.5.2         | 3.6.8         |       |
+| python3   | 3.5           | 3.6           |       |
 | ruby      | 2.3.1p112     | 2.5.1p57      |       |
 | rust      | 1.61.0        | 1.61.0        |       |
 | smalltalk |               |               | Not in CI |

@@ -50,7 +50,7 @@ SUBDIRS += dart
 PRECROSS_TARGET += precross-dart
 endif
 
-if WITH_PYTHON
+if WITH_PY3
 SUBDIRS += py
 PRECROSS_TARGET += precross-py
 SUBDIRS += py.tornado

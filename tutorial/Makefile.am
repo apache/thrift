@@ -40,7 +40,7 @@ SUBDIRS += java
 SUBDIRS += js
 endif
 
-if WITH_PYTHON
+if WITH_PY3
 SUBDIRS += py
 SUBDIRS += py.twisted
 SUBDIRS += py.tornado
