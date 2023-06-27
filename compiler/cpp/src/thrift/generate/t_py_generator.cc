@@ -2287,7 +2287,7 @@ void t_py_generator::generate_deserialize_field(ostream& out,
     out << endl;
   } else if (type->is_enum()) {
     if (gen_enum_) {
-      indent(out) << name << " = " << type_name(type) << "(iprot.readI32()).name";
+      indent(out) << name << " = " << type_name(type) << "(iprot.readI32())";
     } else {
       indent(out) << name << " = iprot.readI32()";
     }
@@ -2477,7 +2477,8 @@ void t_py_generator::generate_serialize_field(ostream& out, t_field* tfield, str
       }
     } else if (type->is_enum()) {
       if (gen_enum_){
-        out << "writeI32(" << type_name(type) << "[" << name << "].value)";
+        out << "writeI32(" << name << ".value if hasattr(" << name << ", 'value') else "
+            << type_name(type) << "[" << name << "].value)";
       } else {
         out << "writeI32(" << name << ")";
       }
