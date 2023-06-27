@@ -33,6 +33,7 @@ from ThriftTest.ttypes import (
     VersioningTestV2,
     Xtruct,
     Xtruct2,
+    OptionalEnum,
 )
 
 from Recursive.ttypes import RecTree
@@ -193,6 +194,8 @@ class AbstractTest(unittest.TestCase):
             ]
         )
 
+        self.optional_enum = OptionalEnum()
+
     def _serialize(self, obj):
         trans = TTransport.TMemoryBuffer()
         prot = self.protocol_factory.getProtocol(trans)
@@ -351,6 +354,12 @@ class AbstractTest(unittest.TestCase):
             out_list = self._collapseLinkedList(cur_list)
             self.assertEqual(golden_list, out_list)
 
+    def testDefaultEnum(self):
+        """Ensure default enum values are serializable"""
+        obj = self._deserialize(OptionalEnum, self._serialize(self.optional_enum))
+        self.assertEquals(obj, self.optional_enum)
+
+
 
 class NormalBinaryTest(AbstractTest):
     protocol_factory = TBinaryProtocol.TBinaryProtocolFactory()
@@ -449,6 +458,8 @@ class SerializersTest(unittest.TestCase):
             objcopy = Bonk()
             deserialize(objcopy, serialize(obj))
             self.assertEquals(obj, objcopy)
+
+
 
 
 def suite():

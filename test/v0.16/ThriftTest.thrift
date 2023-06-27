@@ -416,3 +416,7 @@ struct OptionalBinary {
   1: optional set<binary> bin_set = {}
   2: optional map<binary,i32> bin_map = {}
 }
+
+struct OptionalEnum {
+    1: optional Numberz e = Numberz.FIVE;
+}
