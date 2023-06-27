@@ -871,7 +871,12 @@ void t_py_generator::generate_py_struct_definition(ostream& out,
       }
 
       if (is_immutable(tstruct)) {
-        if (gen_newstyle_ || gen_dynamic_) {
+        if (gen_enum_ && type->is_enum()) {
+          indent(out) << "super(" << tstruct->get_name() << ", self).__setattr__('"
+                      << (*m_iter)->get_name() << "', " << (*m_iter)->get_name()
+                      << " if hasattr("  << (*m_iter)->get_name() << ", 'value') else "
+                      << type_name(type) << ".__members__.get(" << (*m_iter)->get_name() << "))" << endl;
+        } else if (gen_newstyle_ || gen_dynamic_) {
           indent(out) << "super(" << tstruct->get_name() << ", self).__setattr__('"
                       << (*m_iter)->get_name() << "', " << (*m_iter)->get_name() << ")" << endl;
         } else {
@@ -905,6 +910,32 @@ void t_py_generator::generate_py_struct_definition(ostream& out,
     }
 
     out << "))" << endl;
+  } else if (gen_enum_) {
+    bool has_enum = false;
+    for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
+      t_type* type = (*m_iter)->get_type();
+      if (type->is_enum()) {
+        has_enum = true;
+        break;
+      }
+    }
+
+    if (has_enum) {
+      out << endl;
+      indent(out) << "def __setattr__(self, name, value):" << endl;
+      indent_up();
+      for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
+        t_type* type = (*m_iter)->get_type();
+        if (type->is_enum()) {
+          out << indent() << "if name == \"" << (*m_iter)->get_name() << "\":" << endl
+              << indent() << indent_str() << "super().__setattr__(name, value if hasattr(value, 'value') else "
+              << type_name(type) << ".__members__.get(value))" << endl
+              << indent() << indent_str() << "return" << endl;
+        }
+      }
+      indent(out) << "super().__setattr__(name, value)" << endl << endl;
+      indent_down();
+    }
   }
 
   if (!gen_dynamic_) {
@@ -2287,7 +2318,7 @@ void t_py_generator::generate_deserialize_field(ostream& out,
     out << endl;
   } else if (type->is_enum()) {
     if (gen_enum_) {
-      indent(out) << name << " = " << type_name(type) << "(iprot.readI32()).name";
+      indent(out) << name << " = " << type_name(type) << "(iprot.readI32())";
     } else {
       indent(out) << name << " = iprot.readI32()";
     }
@@ -2477,7 +2508,7 @@ void t_py_generator::generate_serialize_field(ostream& out, t_field* tfield, str
       }
     } else if (type->is_enum()) {
       if (gen_enum_){
-        out << "writeI32(" << type_name(type) << "[" << name << "].value)";
+        out << "writeI32(" << name << ".value)";
       } else {
         out << "writeI32(" << name << ")";
       }
