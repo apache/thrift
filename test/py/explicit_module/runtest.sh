@@ -23,9 +23,12 @@ rm -rf gen-py
 ../../../compiler/cpp/thrift --gen py test1.thrift || exit 1
 ../../../compiler/cpp/thrift --gen py test2.thrift || exit 1
 ../../../compiler/cpp/thrift --gen py test3.thrift && exit 1  # Fail since test3.thrift has python keywords
+../../../compiler/cpp/thrift --gen py:enum shared_types.thrift || exit 1
+../../../compiler/cpp/thrift --gen py:enum test4.thrift || exit 1
 PYTHONPATH=./gen-py python -c 'import foo.bar.baz' || exit 1
 PYTHONPATH=./gen-py python -c 'import test2' || exit 1
 PYTHONPATH=./gen-py python -c 'import test1' &>/dev/null && exit 1  # Should fail.
+PYTHONPATH=./gen-py python -c 'import test4.constants' || exit 1
 cp -r gen-py simple
 ../../../compiler/cpp/thrift -r --gen py test2.thrift || exit 1
 PYTHONPATH=./gen-py python -c 'import test2' || exit 1

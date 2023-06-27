@@ -607,7 +607,7 @@ string t_py_generator::render_const_value(t_type* type, t_const_value* value) {
     int64_t int_val = value->get_integer();
     if (gen_enum_) {
       t_enum_value* enum_val = ((t_enum*)type)->get_constant_by_value(int_val);
-      out << type->get_name() << "." << enum_val->get_name();
+      out << type_name(type) << "." << enum_val->get_name();
     } else {
       out << int_val;
     }
