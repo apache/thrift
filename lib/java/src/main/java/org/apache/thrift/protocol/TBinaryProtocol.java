@@ -553,6 +553,7 @@ public class TBinaryProtocol extends TProtocol {
         throw new TTransportException(TTransportException.UNKNOWN, "unrecognized type code");
     }
   }
+
   // -----------------------------------------------------------------
   // Additional methods to improve performance.
 
