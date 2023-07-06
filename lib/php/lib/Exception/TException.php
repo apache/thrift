@@ -52,7 +52,7 @@ class TException extends \Exception
                 }
             }
         } else {
-            parent::__construct($p1, $p2);
+            parent::__construct((string)$p1, $p2);
         }
     }
 
