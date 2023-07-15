@@ -6,7 +6,7 @@
 
 - [THRIFT-3877](https://issues.apache.org/jira/browse/THRIFT-3877) - C++ library don't work with HTTP (csharp server, cpp client; need cross test enhancement)
 - [THRIFT-5468](https://issues.apache.org/jira/browse/THRIFT-5468) - Swift service generator doesn't support oneway
-
+- [THRIFT-5654](https://issues.apache.org/jira/browse/THRIFT-5654) - LNK4042 and LNK2019 in go_validator_generator.cc
 
 ## Build Process
 
