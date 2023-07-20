@@ -81,10 +81,10 @@ namespace Thrift.Transport.Client
                     "Cannot read from null inputstream");
             }
 
-#if NETSTANDARD2_0
-            return await InputStream.ReadAsync(buffer, offset, length, cancellationToken);
-#else
+#if NET5_0_OR_GREATER
             return await InputStream.ReadAsync(new Memory<byte>(buffer, offset, length), cancellationToken);
+#else
+            return await InputStream.ReadAsync(buffer, offset, length, cancellationToken);
 #endif
         }
 
@@ -96,10 +96,10 @@ namespace Thrift.Transport.Client
                     "Cannot write to null outputstream");
             }
 
-#if NETSTANDARD2_0
-            await OutputStream.WriteAsync(buffer, offset, length, cancellationToken);
-#else
+#if NET5_0_OR_GREATER
             await OutputStream.WriteAsync(buffer.AsMemory(offset, length), cancellationToken);
+#else
+            await OutputStream.WriteAsync(buffer, offset, length, cancellationToken);
 #endif
         }
 

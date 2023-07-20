@@ -382,10 +382,10 @@ namespace Thrift.Transport.Server
                 }
 
                 CheckReadBytesAvailable(length);
-#if NETSTANDARD2_0
-                var numBytes = await PipeStream.ReadAsync(buffer, offset, length, cancellationToken);
-#else
+#if NET5_0_OR_GREATER
                 var numBytes = await PipeStream.ReadAsync(buffer.AsMemory(offset, length), cancellationToken);
+#else
+                var numBytes = await PipeStream.ReadAsync(buffer, offset, length, cancellationToken);
 #endif
                 CountConsumedMessageBytes(numBytes);
                 return numBytes;

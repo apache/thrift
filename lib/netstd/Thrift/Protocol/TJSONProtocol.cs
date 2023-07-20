@@ -435,11 +435,11 @@ namespace Thrift.Protocol
                     // escaped?
                     if (ch != TJSONProtocolConstants.EscSequences[0])
                     {
-#if NETSTANDARD2_0
-                        await buffer.WriteAsync(new[] {ch}, 0, 1, cancellationToken);
-#else
+#if NET5_0_OR_GREATER
                         var wbuf = new[] { ch };
                         await buffer.WriteAsync(wbuf.AsMemory(0, 1), cancellationToken);
+#else
+                        await buffer.WriteAsync(new[] { ch }, 0, 1, cancellationToken);
 #endif
                         continue;
                     }
@@ -454,11 +454,11 @@ namespace Thrift.Protocol
                             throw new TProtocolException(TProtocolException.INVALID_DATA, "Expected control char");
                         }
                         ch = TJSONProtocolConstants.EscapeCharValues[off];
-#if NETSTANDARD2_0
-                        await buffer.WriteAsync(new[] {ch}, 0, 1, cancellationToken);
-#else
+#if NET5_0_OR_GREATER
                         var wbuf = new[] { ch };
                         await buffer.WriteAsync( wbuf.AsMemory(0, 1), cancellationToken);
+#else
+                        await buffer.WriteAsync(new[] { ch }, 0, 1, cancellationToken);
 #endif
                         continue;
                     }
@@ -488,20 +488,20 @@ namespace Thrift.Protocol
 
                         codeunits.Add((char) wch);
                         var tmp = Utf8Encoding.GetBytes(codeunits.ToArray());
-#if NETSTANDARD2_0
-                        await buffer.WriteAsync(tmp, 0, tmp.Length, cancellationToken);
-#else
+#if NET5_0_OR_GREATER
                         await buffer.WriteAsync(tmp.AsMemory(0, tmp.Length), cancellationToken);
+#else
+                        await buffer.WriteAsync(tmp, 0, tmp.Length, cancellationToken);
 #endif
                         codeunits.Clear();
                     }
                     else
                     {
                         var tmp = Utf8Encoding.GetBytes(new[] { (char)wch });
-#if NETSTANDARD2_0
-                        await buffer.WriteAsync(tmp, 0, tmp.Length, cancellationToken);
-#else
+#if NET5_0_OR_GREATER
                         await buffer.WriteAsync(tmp.AsMemory( 0, tmp.Length), cancellationToken);
+#else
+                        await buffer.WriteAsync(tmp, 0, tmp.Length, cancellationToken);
 #endif
                     }
                 }
