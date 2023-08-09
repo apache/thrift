@@ -96,6 +96,7 @@ object TestServer {
 
     internal class TestServerEventHandler() : TServerEventHandler {
         private var nextConnectionId = 1
+
         override fun preServe() {
             println(
                 "TServerEventHandler.preServe - called only once before server starts accepting connections"
