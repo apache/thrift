@@ -2797,13 +2797,13 @@ void t_go_generator::generate_process_function(t_service* tservice, t_function* 
     f_types_ << indent() << "if thrift.ServerConnectivityCheckInterval > 0 {" << endl;
 
     indent_up();
-    f_types_ << indent() << "var cancel context.CancelFunc" << endl;
-    f_types_ << indent() << "ctx, cancel = context.WithCancel(ctx)" << endl;
-    f_types_ << indent() << "defer cancel()" << endl;
+    f_types_ << indent() << "var cancel context.CancelCauseFunc" << endl;
+    f_types_ << indent() << "ctx, cancel = context.WithCancelCause(ctx)" << endl;
+    f_types_ << indent() << "defer cancel(nil)" << endl;
     f_types_ << indent() << "var tickerCtx context.Context" << endl;
     f_types_ << indent() << "tickerCtx, tickerCancel = context.WithCancel(context.Background())" << endl;
     f_types_ << indent() << "defer tickerCancel()" << endl;
-    f_types_ << indent() << "go func(ctx context.Context, cancel context.CancelFunc) {" << endl;
+    f_types_ << indent() << "go func(ctx context.Context, cancel context.CancelCauseFunc) {" << endl;
 
     indent_up();
     f_types_ << indent() << "ticker := time.NewTicker(thrift.ServerConnectivityCheckInterval)" << endl;
@@ -2821,7 +2821,7 @@ void t_go_generator::generate_process_function(t_service* tservice, t_function* 
     indent_up();
     f_types_ << indent() << "if !iprot.Transport().IsOpen() {" << endl;
     indent_up();
-    f_types_ << indent() << "cancel()" << endl;
+    f_types_ << indent() << "cancel(thrift.ErrAbandonRequest)" << endl;
     f_types_ << indent() << "return" << endl;
     indent_down();
     f_types_ << indent() << "}" << endl;
@@ -2899,6 +2899,15 @@ void t_go_generator::generate_process_function(t_service* tservice, t_function* 
     f_types_ << indent() << "if errors.Is(err2, thrift.ErrAbandonRequest) {" << endl;
     indent_up();
     f_types_ << indent() << "return false, thrift.WrapTException(err2)" << endl;
+    indent_down();
+    f_types_ << indent() << "}" << endl;
+    f_types_ << indent() << "if errors.Is(err2, context.Canceled) {" << endl;
+    indent_up();
+    f_types_ << indent() << "if err := context.Cause(ctx); errors.Is(err, thrift.ErrAbandonRequest) {" << endl;
+    indent_up();
+    f_types_ << indent() << "return false, thrift.WrapTException(err)" << endl;
+    indent_down();
+    f_types_ << indent() << "}" << endl;
     indent_down();
     f_types_ << indent() << "}" << endl;
 

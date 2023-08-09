@@ -108,13 +108,19 @@ The context object passed into the server handler function will be canceled when
 the client closes the connection (this is a best effort check, not a guarantee
 -- there's no guarantee that the context object is always canceled when client
 closes the connection, but when it's canceled you can always assume the client
-closed the connection). When implementing Go Thrift server, you can take
-advantage of that to abandon requests that's no longer needed:
+closed the connection). The cause of the cancellation (via `context.Cause(ctx)`)
+would also be set to `thrift.ErrAbandonRequest`.
+
+When implementing Go Thrift server, you can take advantage of that to abandon
+requests that's no longer needed by returning `thrift.ErrAbandonRequest`:
 
     func MyEndpoint(ctx context.Context, req *thriftRequestType) (*thriftResponseType, error) {
         ...
         if ctx.Err() == context.Canceled {
             return nil, thrift.ErrAbandonRequest
+            // Or just return ctx.Err(), compiler generated processor code will
+            // handle it for you automatically:
+            // return nil, ctx.Err()
         }
         ...
     }
