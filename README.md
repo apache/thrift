@@ -44,12 +44,12 @@ Note
 ============
 
 We decided to not remove the travis and not include github actions because we don't make changes, if you wish to make any changes to the docker images, you should follow the following steps
-• Update changes
-• Build the docker image with the following command
-docker build -t registry.jimdo-platform.net/jimdo/thrift:stable --platform=linux/amd64
-• Push the docker image
-wl docker push registry.jimdo-platform.net/jimdo/thrift:stable
-• You should be able to see the updated image everywhere
+- Update changes
+- Build the docker image with the following command
+```docker build -t registry.jimdo-platform.net/jimdo/thrift:stable --platform=linux/amd64```
+- Push the docker image
+```wl docker push registry.jimdo-platform.net/jimdo/thrift:stable```
+- You should be able to see the updated image everywhere
 
 Hierarchy
 =========
