@@ -25,7 +25,7 @@
 #
 # TODO: push to apache/thrift-compiler instead of thrift/thrift-compiler
 
-FROM debian:jessie
+FROM debian:bookworm
 MAINTAINER Apache Thrift <dev@thrift.apache.org>
 
 ENV DEBIAN_FRONTEND noninteractive

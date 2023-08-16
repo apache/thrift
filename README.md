@@ -3,6 +3,17 @@ Apache Thrift
 
 Last Modified: 2014-03-16
 
+Note
+============
+
+We decided to not remove the travis and not include github actions because we don't make changes, if you wish to make any changes to the docker images, you should follow the following steps
+- Update changes
+- Build the docker image with the following command
+  ```docker build -t registry.jimdo-platform.net/jimdo/thrift:stable --platform=linux/amd64```
+- Push the docker image
+  ```wl docker push registry.jimdo-platform.net/jimdo/thrift:stable```
+- You should be able to see the updated image everywhere
+
 License
 =======
 
@@ -14,7 +25,7 @@ to you under the Apache License, Version 2.0 (the
 "License"); you may not use this file except in compliance
 with the License. You may obtain a copy of the License at
 
-  http://www.apache.org/licenses/LICENSE-2.0
+http://www.apache.org/licenses/LICENSE-2.0
 
 Unless required by applicable law or agreed to in writing,
 software distributed under the License is distributed on an
@@ -45,11 +56,11 @@ Hierarchy
 
 thrift/
 
-  compiler/
+compiler/
 
     Contains the Thrift compiler, implemented in C++.
 
-  lib/
+lib/
 
     Contains the Thrift software library implementation, subdivided by
     language of implementation.
@@ -61,12 +72,12 @@ thrift/
     py/
     rb/
 
-  test/
+test/
 
     Contains sample Thrift files and test code across the target programming
     languages.
 
-  tutorial/
+tutorial/
 
     Contains a basic tutorial that will teach you how to develop software
     using Thrift.
