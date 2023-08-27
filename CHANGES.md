@@ -25,6 +25,10 @@
 
 - [THRIFT-5686](https://issues.apache.org/jira/browse/THRIFT-5686) - Add comparer and capacity arguments to container classes
 
+## Go
+- [THRIFT-5731](https://issues.apache.org/jira/browse/THRIFT-5731) - Handle ErrAbandonRequest automatically
+
+
 ## Haxe
 
 - [THRIFT-5717](https://issues.apache.org/jira/browse/THRIFT-5717) - uuid sets and map keys may throw on some Haxe targets
@@ -39,6 +43,8 @@
 - [THRIFT-5711](https://issues.apache.org/jira/browse/THRIFT-5711) - FutureClient does not extend when service extends from another service 
 - [THRIFT-5702](https://issues.apache.org/jira/browse/THRIFT-5702) - Support Java 8
 - [THRIFT-5696](https://issues.apache.org/jira/browse/THRIFT-5696) - TByteBuffer.java does not allow non-default TConfiguration
+- [THRIFT-5653](https://issues.apache.org/jira/browse/THRIFT-5653) - Fix Java UUID typeid
+
 
 ## JavaScript
 
