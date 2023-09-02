@@ -358,7 +358,7 @@ string t_haxe_generator::haxe_thrift_gen_imports(t_struct* tstruct, string& impo
       string package = make_package_name( program->get_namespace("haxe"));
       if (!package.empty()) {
         if (imports.find(package + "." + (*m_iter)->get_type()->get_name()) == string::npos) {
-          imports.append("import " + package + "." + (*m_iter)->get_type()->get_name() + ";\n");
+          imports.append("import " + package + "." + get_cap_name((*m_iter)->get_type()->get_name()) + ";\n");
         }
       }
     }
@@ -383,7 +383,7 @@ string t_haxe_generator::haxe_thrift_gen_imports(t_service* tservice) {
       string package = make_package_name( program->get_namespace("haxe"));
       if (!package.empty()) {
         if (imports.find(package + "." + (*f_iter)->get_returntype()->get_name()) == string::npos) {
-          imports.append("import " + package + "." + (*f_iter)->get_returntype()->get_name()+ ";\n");
+          imports.append("import " + package + "." + get_cap_name((*f_iter)->get_returntype()->get_name())+ ";\n");
         }
       }
     }
@@ -1536,7 +1536,7 @@ void t_haxe_generator::generate_service(t_service* tservice) {
     t_type* parent = tservice->get_extends();
     string parent_namespace = make_package_name( parent->get_program()->get_namespace("haxe"));
     if (!parent_namespace.empty() && parent_namespace != package_name_) {
-      f_service_ << "import " << type_name(parent) << "_service;" << endl;
+      f_service_ << "import " << get_cap_name(type_name(parent)) << "_service;" << endl;
     }
   }
 
@@ -1558,7 +1558,7 @@ void t_haxe_generator::generate_service(t_service* tservice) {
     t_type* parent = tservice->get_extends();
     string parent_namespace = make_package_name( parent->get_program()->get_namespace("haxe"));
     if (!parent_namespace.empty() && parent_namespace != package_name_) {
-      f_service_ << "import " << type_name(parent) << ";" << endl;
+      f_service_ << "import " << get_cap_name(type_name(parent)) << ";" << endl;
     }
   }
 
@@ -1578,7 +1578,7 @@ void t_haxe_generator::generate_service(t_service* tservice) {
     t_type* parent = tservice->get_extends();
     string parent_namespace = make_package_name( parent->get_program()->get_namespace("haxe"));
     if (!parent_namespace.empty() && parent_namespace != package_name_) {
-      f_service_ << "import " << type_name(parent) << "Impl;" << endl;
+      f_service_ << "import " << get_cap_name(type_name(parent)) << "Impl;" << endl;
     }
   }
 
@@ -1752,7 +1752,7 @@ void t_haxe_generator::generate_service_interface(t_service* tservice, bool comb
 
   string extends_iface = "";
   if (tservice->get_extends() != nullptr) {
-    extends_iface = " extends " + tservice->get_extends()->get_name() + cbk_postfix;
+    extends_iface = " extends " + get_cap_name(type_name(tservice->get_extends())) + cbk_postfix;
   }
 
   vector<t_function*> functions = tservice->get_functions();
@@ -1797,7 +1797,7 @@ void t_haxe_generator::generate_service_client(t_service* tservice) {
   string extends = "";
   string extends_client = "";
   if (tservice->get_extends() != nullptr) {
-    extends = get_cap_name(tservice->get_extends()->get_name());
+    extends = get_cap_name(type_name(tservice->get_extends()));
     extends_client = " extends " + extends + "Impl";
   }
 
