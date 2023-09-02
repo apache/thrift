@@ -1,5 +1,71 @@
 # Apache Thrift Changelog
 
+## 0.19.0
+
+### Known Open Issues (Blocker or Critical)
+
+- [THRIFT-3877](https://issues.apache.org/jira/browse/THRIFT-3877) - C++ library don't work with HTTP (csharp server, cpp client; need cross test enhancement)
+- [THRIFT-5468](https://issues.apache.org/jira/browse/THRIFT-5468) - Swift service generator doesn't support oneway
+- [THRIFT-5654](https://issues.apache.org/jira/browse/THRIFT-5654) - LNK4042 and LNK2019 in go_validator_generator.cc
+
+## Build Process
+
+- [THRIFT-5701](https://issues.apache.org/jira/browse/THRIFT-5701) - Add dependabot
+
+## C++
+
+- [THRIFT-5725](https://issues.apache.org/jira/browse/THRIFT-5725) - Thrift SSL server stops working if the file descriptor returned is zero
+- [THRIFT-5716](https://issues.apache.org/jira/browse/THRIFT-5716) - TMemoryBuffer resizing might shrink the buffer size due to uint32_t overflow
+
+## Compiler (General)	
+
+- [THRIFT-5690](https://issues.apache.org/jira/browse/THRIFT-5690) - Constant expects type to be defined before
+
+## Delphi
+
+- [THRIFT-5686](https://issues.apache.org/jira/browse/THRIFT-5686) - Add comparer and capacity arguments to container classes
+
+## Go
+- [THRIFT-5731](https://issues.apache.org/jira/browse/THRIFT-5731) - Handle ErrAbandonRequest automatically
+
+
+## Haxe
+
+- [THRIFT-5717](https://issues.apache.org/jira/browse/THRIFT-5717) - uuid sets and map keys may throw on some Haxe targets
+- [THRIFT-5704](https://issues.apache.org/jira/browse/THRIFT-5704) - Superfluous block scope in generated write() code
+- [THRIFT-5703](https://issues.apache.org/jira/browse/THRIFT-5703) - Haxe 4.30 emits "Local variable retval used without being initialized" on generated code
+- [THRIFT-5692](https://issues.apache.org/jira/browse/THRIFT-5692) - Support for deprecated methods (via annotation)
+- [THRIFT-5707](https://issues.apache.org/jira/browse/THRIFT-5707) - deprecation warning fixes for @:extern and @:enum
+
+## Java 
+
+- [THRIFT-5700](https://issues.apache.org/jira/browse/THRIFT-5700) - Migration to JakartaEE and Apache HttpComponents 5
+- [THRIFT-5711](https://issues.apache.org/jira/browse/THRIFT-5711) - FutureClient does not extend when service extends from another service 
+- [THRIFT-5702](https://issues.apache.org/jira/browse/THRIFT-5702) - Support Java 8
+- [THRIFT-5696](https://issues.apache.org/jira/browse/THRIFT-5696) - TByteBuffer.java does not allow non-default TConfiguration
+- [THRIFT-5653](https://issues.apache.org/jira/browse/THRIFT-5653) - Fix Java UUID typeid
+
+
+## JavaScript
+
+- [THRIFT-5674](https://issues.apache.org/jira/browse/THRIFT-5674) - Server implementation exceptions are not sent to client in ES6 promise-style invocation
+
+## netstd 
+
+- [THRIFT-5684](https://issues.apache.org/jira/browse/THRIFT-5684) - Upgrade to net7.0
+
+## Node.js 
+
+- [THRIFT-5710](https://issues.apache.org/jira/browse/THRIFT-5710) - NodeJS header transport leaks headers between all instances
+
+## PHP 
+
+- [THRIFT-5723](https://issues.apache.org/jira/browse/THRIFT-5723) - Php8.1 fix warnings
+
+## Swift 
+
+- [THRIFT-5714](https://issues.apache.org/jira/browse/THRIFT-5714) - add TJSONProtocol support in thrift-swift
+
 
 ## 0.18.1
 
