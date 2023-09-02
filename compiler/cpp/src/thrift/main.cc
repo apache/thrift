@@ -911,9 +911,12 @@ bool skip_utf8_bom(FILE* f) {
 /**
  * Parses a program
  */
-void parse(t_program* program, t_program* parent_program) {
+void parse(t_program* program, t_program* parent_program, std::set<std::string>& known_includes) {
   // Get scope file path
   string path = program->get_path();
+  if( ! known_includes.insert(path).second) {
+    failure("Recursion detected, file: \"%s\"", path.c_str());
+  }
 
   // Set current dir global, which is used in the include_file function
   g_curdir = directory_name(path);
@@ -947,7 +950,7 @@ void parse(t_program* program, t_program* parent_program) {
   vector<t_program*>& includes = program->get_includes();
   vector<t_program*>::iterator iter;
   for (iter = includes.begin(); iter != includes.end(); ++iter) {
-    parse(*iter, program);
+    parse(*iter, program, known_includes);
   }
 
   // reset program doctext status before parsing a new file
@@ -980,6 +983,8 @@ void parse(t_program* program, t_program* parent_program) {
     failure(x.c_str());
   }
   fclose(yyin);
+
+  known_includes.erase(path);
 }
 
 /**
@@ -1041,14 +1046,16 @@ void audit(t_program* new_program,
     g_incl_searchpath.push_back(old_thrift_include_path);
   }
 
-  parse(old_program, nullptr);
+  std::set<std::string> old_includes;
+  parse(old_program, nullptr, old_includes);
 
   g_incl_searchpath = temp_incl_searchpath;
   if (!new_thrift_include_path.empty()) {
     g_incl_searchpath.push_back(new_thrift_include_path);
   }
 
-  parse(new_program, nullptr);
+  std::set<std::string> new_includes;
+  parse(new_program, nullptr, new_includes);
 
   compare_namespace(new_program, old_program);
   compare_services(new_program->get_services(), old_program->get_services());
@@ -1268,7 +1275,8 @@ int main(int argc, char** argv) {
     program->set_include_prefix(include_prefix);
 
     // Parse it!
-    parse(program, nullptr);
+    std::set<std::string> known_includes;
+    parse(program, nullptr, known_includes);
 
     // The current path is not really relevant when we are doing generation.
     // Reset the variable to make warning messages clearer.
