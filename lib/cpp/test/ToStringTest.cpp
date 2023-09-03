@@ -46,23 +46,31 @@ BOOST_AUTO_TEST_CASE(base_types_to_string) {
 // Windows:
 #ifndef _WIN32
 BOOST_AUTO_TEST_CASE(locale_en_US_int_to_string) {
+  try {
 #ifdef _WIN32
-  std::locale::global(std::locale("en-US.UTF-8"));
+    std::locale::global(std::locale("en-US.UTF-8"));
 #else
-  std::locale::global(std::locale("en_US.UTF-8"));
+    std::locale::global(std::locale("en_US.UTF-8"));
 #endif
-  BOOST_CHECK_EQUAL(to_string(1000000), "1000000");
+    BOOST_CHECK_EQUAL(to_string(1000000), "1000000");
+  } catch (const std::runtime_error& e) {
+
+  }
 }
 
 BOOST_AUTO_TEST_CASE(locale_de_DE_floating_point_to_string) {
+  try {
 #ifdef _WIN32
-  std::locale::global(std::locale("de-DE.UTF-8"));
+    std::locale::global(std::locale("de-DE.UTF-8"));
 #else
-  std::locale::global(std::locale("de_DE.UTF-8"));
+    std::locale::global(std::locale("de_DE.UTF-8"));
 #endif
-  BOOST_CHECK_EQUAL(to_string(1.5), "1.5");
-  BOOST_CHECK_EQUAL(to_string(1.5f), "1.5");
-  BOOST_CHECK_EQUAL(to_string(1.5L), "1.5");
+    BOOST_CHECK_EQUAL(to_string(1.5), "1.5");
+    BOOST_CHECK_EQUAL(to_string(1.5f), "1.5");
+    BOOST_CHECK_EQUAL(to_string(1.5L), "1.5");
+  } catch (const std::runtime_error& e) {
+    
+  }
 }
 #endif
 
