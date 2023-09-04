@@ -55,7 +55,7 @@ func NewTSocket(hostPort string) (*TSocket, error) {
 //
 // Example:
 //
-//     trans, err := thrift.NewTSocketConf("localhost:9090", &TConfiguration{
+//     trans := thrift.NewTSocketConf("localhost:9090", &TConfiguration{
 //         ConnectTimeout: time.Second, // Use 0 for no timeout
 //         SocketTimeout:  time.Second, // Use 0 for no timeout
 //     })
