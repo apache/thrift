@@ -159,6 +159,13 @@ All Apache Thrift releases go through a 72-hour final release candidate voting p
 
         The result will be a file named `thrift-1.0.0.tar.gz`.  Check the size and make sure it is roughly 4MB.  It could get larger over time, but it shouldn't jump by orders of magnitude.  Once satisfied you can exit the docker container with `exit`.
 
+    1. Validate the contents of the tarball
+	
+		Unpack the tarball in some empty folder and do a fresh git clone of the branch into another. 
+		Now compare both folders and check for any files missing. These need to be added to the appropriate `EXTRA_DIST` 
+		makefile section(s). If necessary, commit the changes and repeat generating the source tarball until no more
+		differences can be found.
+
     1. Generate signatures and checksums for the tarball:
 
         ```bash
