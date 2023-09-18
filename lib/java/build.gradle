@@ -32,6 +32,8 @@ buildscript {
 
     dependencies {
         classpath 'com.bmuschko:gradle-clover-plugin:2.2.1'
+        classpath 'com.squareup.okhttp3:okhttp3:3.14.0'
+        classpath 'org.mortbay.jetty.alpn:alpn-boot:8.1.13.v20181017'
     }
 }
 
