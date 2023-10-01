@@ -40,7 +40,7 @@ dependencies {
     // clikt is used to drive command line parsing and validation
     implementation("com.github.ajalt.clikt:clikt:$cliktVersion")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-jdk8:$kotlinxCoroutinesJdk8Version")
-    implementation("org.apache.thrift:libthrift:INCLUDED")
+    implementation("org.apache.thrift:libthrift:0.19.0")
     implementation("org.slf4j:slf4j-api:$slf4jVersion")
     implementation("org.apache.httpcomponents:httpcore:$httpcoreVersion")
     implementation("ch.qos.logback:logback-classic:$logbackVersion")
