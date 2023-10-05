@@ -28,6 +28,7 @@
 #include <cassert>
 #include <unordered_map>
 
+#include <stdint.h>
 #include <stdlib.h>
 #include <sys/stat.h>
 #include <sstream>
