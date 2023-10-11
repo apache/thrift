@@ -35,5 +35,19 @@
         "branch-alias": {
             "dev-master": "1.0.x-dev"
         }
+    },
+    "archive": {
+        "exclude": [
+            "*",
+            ".*",
+            "!/CHANGES.md",
+            "!/LICENSE",
+            "!/NOTICE",
+            "!/README.md",
+            "!/composer.json",
+            "!/lib/php/README.apache.md",
+            "!/lib/php/README.md",
+            "!/lib/php/lib"
+        ]
     }
 }
