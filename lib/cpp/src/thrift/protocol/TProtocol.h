@@ -21,8 +21,26 @@
 #define _THRIFT_PROTOCOL_TPROTOCOL_H_ 1
 
 #ifdef _WIN32
+// Including Winsock2.h adds problematic macros like min() and max().
+// Try to work around:
+#ifndef NOMINMAX
+#define NOMINMAX
+#define _THRIFT_UNDEF_NOMINMAX
+#endif
+#ifndef WIN32_LEAN_AND_MEAN
+#define WIN32_LEAN_AND_MEAN
+#define _THRIFT_UNDEF_WIN32_LEAN_AND_MEAN
+#endif
 // Need to come before any Windows.h includes
 #include <winsock2.h>
+#ifdef _THRIFT_UNDEF_NOMINMAX
+#undef NOMINMAX
+#undef _THRIFT_UNDEF_NOMINMAX
+#endif
+#ifdef _THRIFT_UNDEF_WIN32_LEAN_AND_MEAN
+#undef WIN32_LEAN_AND_MEAN
+#undef _THRIFT_UNDEF_WIN32_LEAN_AND_MEAN
+#endif
 #endif
 
 #include <thrift/transport/TTransport.h>
@@ -558,14 +576,14 @@ public:
   void setRecurisionLimit(uint32_t depth) {recursion_limit_ = depth;}
 
   // Returns the minimum amount of bytes needed to store the smallest possible instance of TType.
-  virtual int getMinSerializedSize(TType type) { 
+  virtual int getMinSerializedSize(TType type) {
     THRIFT_UNUSED_VARIABLE(type);
     return 0;
   }
 
 protected:
   TProtocol(std::shared_ptr<TTransport> ptrans)
-    : ptrans_(ptrans), input_recursion_depth_(0), output_recursion_depth_(0), 
+    : ptrans_(ptrans), input_recursion_depth_(0), output_recursion_depth_(0),
       recursion_limit_(ptrans->getConfiguration()->getRecursionLimit())
   {}
 
