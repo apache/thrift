@@ -59,7 +59,7 @@ where
     pub transport: T, // FIXME: shouldn't be public
 }
 
-impl<'a, T> TBinaryInputProtocol<T>
+impl<T> TBinaryInputProtocol<T>
 where
     T: TReadTransport,
 {

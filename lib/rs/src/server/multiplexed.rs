@@ -197,7 +197,7 @@ mod tests {
     #[test]
     fn should_split_name_into_proper_separator_and_service_call() {
         let ident_name = "foo:bar_call";
-        let (serv, call) = split_ident_name(&ident_name);
+        let (serv, call) = split_ident_name(ident_name);
         assert_eq!(serv, Some("foo"));
         assert_eq!(call, "bar_call");
     }
@@ -205,7 +205,7 @@ mod tests {
     #[test]
     fn should_return_full_ident_if_no_separator_exists() {
         let ident_name = "bar_call";
-        let (serv, call) = split_ident_name(&ident_name);
+        let (serv, call) = split_ident_name(ident_name);
         assert_eq!(serv, None);
         assert_eq!(call, "bar_call");
     }
