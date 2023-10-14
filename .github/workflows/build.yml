@@ -285,7 +285,7 @@ jobs:
     needs: compiler
     runs-on: ubuntu-20.04
     env:
-      TOOLCHAIN_VERSION: 1.61.0
+      TOOLCHAIN_VERSION: 1.65.0
     steps:
       - uses: actions/checkout@v4
 

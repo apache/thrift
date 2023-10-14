@@ -249,7 +249,7 @@ RUN apt-get install -y --no-install-recommends \
       ruby-bundler
 
 # Rust dependencies
-RUN curl https://sh.rustup.rs -sSf | sh -s -- --default-toolchain 1.61.0 -y
+RUN curl https://sh.rustup.rs -sSf | sh -s -- --default-toolchain 1.65.0 -y
 
 # Locale(s) for cpp unit tests
 RUN apt-get install -y --no-install-recommends \
