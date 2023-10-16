@@ -93,7 +93,7 @@ fn run() -> thrift::Result<()> {
     let (i_protocol_factory, o_protocol_factory): (
         Box<dyn TInputProtocolFactory>,
         Box<dyn TOutputProtocolFactory>,
-    ) = match &*protocol {
+    ) = match protocol {
         "binary" => (
             Box::new(TBinaryInputProtocolFactory::new()),
             Box::new(TBinaryOutputProtocolFactory::new()),
