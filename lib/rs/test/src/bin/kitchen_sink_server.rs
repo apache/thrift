@@ -117,7 +117,7 @@ fn run() -> thrift::Result<()> {
     // different processor) this isn't possible.
     //
     // Since what I'm doing is uncommon I'm just going to duplicate the code
-    match &*service {
+    match service {
         "part" => run_meal_server(
             socket,
             r_transport_factory,
