@@ -2461,7 +2461,7 @@ mod tests {
             }
         );
         let read_value_1 = assert_success!(i_prot.read_bool());
-        assert_eq!(read_value_1, true);
+        assert!(read_value_1);
         assert_success!(i_prot.read_field_end());
 
         let read_ident_2 = assert_success!(i_prot.read_field_begin());
@@ -2473,7 +2473,7 @@ mod tests {
             }
         );
         let read_value_2 = assert_success!(i_prot.read_bool());
-        assert_eq!(read_value_2, false);
+        assert!(!read_value_2);
         assert_success!(i_prot.read_field_end());
 
         let read_ident_3 = assert_success!(i_prot.read_field_begin());
@@ -2485,7 +2485,7 @@ mod tests {
             }
         );
         let read_value_3 = assert_success!(i_prot.read_bool());
-        assert_eq!(read_value_3, true);
+        assert!(read_value_3);
         assert_success!(i_prot.read_field_end());
 
         let read_ident_4 = assert_success!(i_prot.read_field_begin());
@@ -2497,7 +2497,7 @@ mod tests {
             }
         );
         let read_value_4 = assert_success!(i_prot.read_bool());
-        assert_eq!(read_value_4, false);
+        assert!(!read_value_4);
         assert_success!(i_prot.read_field_end());
 
         let read_ident_5 = assert_success!(i_prot.read_field_begin());
@@ -2774,16 +2774,16 @@ mod tests {
         assert_eq!(&rcvd_ident, &map_ident);
         // key 1
         let b = assert_success!(i_prot.read_bool());
-        assert_eq!(b, true);
+        assert!(b);
         // val 1
         let b = assert_success!(i_prot.read_bool());
-        assert_eq!(b, false);
+        assert!(!b);
         // key 2
         let b = assert_success!(i_prot.read_bool());
-        assert_eq!(b, false);
+        assert!(!b);
         // val 2
         let b = assert_success!(i_prot.read_bool());
-        assert_eq!(b, true);
+        assert!(b);
         // map end
         assert_success!(i_prot.read_map_end());
     }

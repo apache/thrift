@@ -311,8 +311,8 @@ mod tests {
         p.process(&mut i, &mut o).unwrap();
 
         // service 1 should have been invoked, not service 2
-        assert_eq!(atm_1.load(Ordering::Relaxed), true);
-        assert_eq!(atm_2.load(Ordering::Relaxed), false);
+        assert!(atm_1.load(Ordering::Relaxed));
+        assert!(!atm_2.load(Ordering::Relaxed));
     }
 
     #[test]
@@ -344,8 +344,8 @@ mod tests {
         p.process(&mut i, &mut o).unwrap();
 
         // service 2 should have been invoked, not service 1
-        assert_eq!(atm_1.load(Ordering::Relaxed), false);
-        assert_eq!(atm_2.load(Ordering::Relaxed), true);
+        assert!(!atm_1.load(Ordering::Relaxed));
+        assert!(atm_2.load(Ordering::Relaxed));
     }
 
     fn build_objects() -> (
