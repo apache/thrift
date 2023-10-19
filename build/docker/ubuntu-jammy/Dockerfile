@@ -162,7 +162,7 @@ RUN apt-get install -y --no-install-recommends \
   haxelib setup --always /usr/share/haxe/lib && \
   haxelib install --always hxcpp 2>&1 > /dev/null
 
-ENV GRADLE_VERSION="8.0.2"
+ENV GRADLE_VERSION="8.4"
 RUN apt-get install -y --no-install-recommends \
   `# Java dependencies` \
   ant \
@@ -171,7 +171,7 @@ RUN apt-get install -y --no-install-recommends \
   openjdk-11-jdk-headless && \
   `# Gradle` \
   wget https://services.gradle.org/distributions/gradle-$GRADLE_VERSION-bin.zip -q -O /tmp/gradle-$GRADLE_VERSION-bin.zip && \
-  (echo "ff7bf6a86f09b9b2c40bb8f48b25fc19cf2b2664fd1d220cd7ab833ec758d0d7  /tmp/gradle-$GRADLE_VERSION-bin.zip" | sha256sum -c -) && \
+  (echo "3e1af3ae886920c3ac87f7a91f816c0c7c436f276a6eefdb3da152100fef72ae  /tmp/gradle-$GRADLE_VERSION-bin.zip" | sha256sum -c -) && \
   unzip -d /tmp /tmp/gradle-$GRADLE_VERSION-bin.zip && \
   mv /tmp/gradle-$GRADLE_VERSION /usr/local/gradle && \
   ln -s /usr/local/gradle/bin/gradle /usr/local/bin
