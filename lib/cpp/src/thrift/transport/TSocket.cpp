@@ -569,7 +569,7 @@ try_again:
         throw TTransportException(TTransportException::INTERRUPTED, "Interrupted");
       }
     } else /* ret == 0 */ {
-      GlobalOutput.perror("TSocket::read() THRIFT_EAGAIN (timed out) after %f ms", recvTimeout_);
+      GlobalOutput.printf("TSocket::read() THRIFT_EAGAIN (timed out) after %d ms", recvTimeout_);
       throw TTransportException(TTransportException::TIMED_OUT, "THRIFT_EAGAIN (timed out)");
     }
 
