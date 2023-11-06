@@ -18,6 +18,7 @@
 #
 
 from .TProtocol import TType, TProtocolBase, TProtocolException, TProtocolFactory
+from ..compat import binary_to_str
 from struct import pack, unpack
 
 
@@ -145,7 +146,7 @@ class TBinaryProtocol(TProtocolBase):
             if self.strictRead:
                 raise TProtocolException(type=TProtocolException.BAD_VERSION,
                                          message='No protocol version header')
-            name = self.trans.readAll(sz)
+            name = binary_to_str(self.trans.readAll(sz))
             type = self.readByte()
             seqid = self.readI32()
         return (name, type, seqid)
