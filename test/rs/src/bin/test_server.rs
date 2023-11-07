@@ -114,7 +114,7 @@ fn run() -> thrift::Result<()> {
 
     let test_processor = ThriftTestSyncProcessor::new(ThriftTestSyncHandlerImpl {});
 
-    match &*server_type {
+    match server_type {
         "simple" | "thread-pool" => {
             if protocol == "multi" || protocol == "multic" {
                 let second_service_processor =
