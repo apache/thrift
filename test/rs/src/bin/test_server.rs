@@ -114,7 +114,7 @@ fn run() -> thrift::Result<()> {
 
     let test_processor = ThriftTestSyncProcessor::new(ThriftTestSyncHandlerImpl {});
 
-    match server_type {
+    match &*server_type {
         "simple" | "thread-pool" => {
             if protocol == "multi" || protocol == "multic" {
                 let second_service_processor =
@@ -334,7 +334,7 @@ impl ThriftTestSyncHandler for ThriftTestSyncHandlerImpl {
     fn handle_test_exception(&self, arg: String) -> thrift::Result<()> {
         info!("testException({})", arg);
 
-        match arg {
+        match &*arg {
             "Xception" => Err((Xception {
                 error_code: Some(1001),
                 message: Some(arg),
@@ -354,7 +354,7 @@ impl ThriftTestSyncHandler for ThriftTestSyncHandlerImpl {
     // else:
     //   do not throw anything and return Xtruct with string_thing = arg1
     fn handle_test_multi_exception(&self, arg0: String, arg1: String) -> thrift::Result<Xtruct> {
-        match arg0 {
+        match &*arg0 {
             "Xception" => Err((Xception {
                 error_code: Some(1001),
                 message: Some("This is an Xception".to_owned()),
