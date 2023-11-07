@@ -197,7 +197,7 @@ mod tests {
     #[test]
     fn should_split_name_into_proper_separator_and_service_call() {
         let ident_name = "foo:bar_call";
-        let (serv, call) = split_ident_name(&ident_name);
+        let (serv, call) = split_ident_name(ident_name);
         assert_eq!(serv, Some("foo"));
         assert_eq!(call, "bar_call");
     }
@@ -205,7 +205,7 @@ mod tests {
     #[test]
     fn should_return_full_ident_if_no_separator_exists() {
         let ident_name = "bar_call";
-        let (serv, call) = split_ident_name(&ident_name);
+        let (serv, call) = split_ident_name(ident_name);
         assert_eq!(serv, None);
         assert_eq!(call, "bar_call");
     }
@@ -311,8 +311,8 @@ mod tests {
         p.process(&mut i, &mut o).unwrap();
 
         // service 1 should have been invoked, not service 2
-        assert_eq!(atm_1.load(Ordering::Relaxed), true);
-        assert_eq!(atm_2.load(Ordering::Relaxed), false);
+        assert!(atm_1.load(Ordering::Relaxed));
+        assert!(!atm_2.load(Ordering::Relaxed));
     }
 
     #[test]
@@ -344,8 +344,8 @@ mod tests {
         p.process(&mut i, &mut o).unwrap();
 
         // service 2 should have been invoked, not service 1
-        assert_eq!(atm_1.load(Ordering::Relaxed), false);
-        assert_eq!(atm_2.load(Ordering::Relaxed), true);
+        assert!(!atm_1.load(Ordering::Relaxed));
+        assert!(atm_2.load(Ordering::Relaxed));
     }
 
     fn build_objects() -> (

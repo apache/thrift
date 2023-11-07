@@ -59,7 +59,7 @@ where
     pub transport: T, // FIXME: shouldn't be public
 }
 
-impl<'a, T> TBinaryInputProtocol<T>
+impl<T> TBinaryInputProtocol<T>
 where
     T: TReadTransport,
 {
@@ -861,7 +861,7 @@ mod tests {
         set_readable_bytes!(i_prot, &[0x01]);
 
         let read_bool = assert_success!(i_prot.read_bool());
-        assert_eq!(read_bool, true);
+        assert!(read_bool);
     }
 
     #[test]
@@ -871,7 +871,7 @@ mod tests {
         set_readable_bytes!(i_prot, &[0x00]);
 
         let read_bool = assert_success!(i_prot.read_bool());
-        assert_eq!(read_bool, false);
+        assert!(!read_bool);
     }
 
     #[test]
@@ -881,7 +881,7 @@ mod tests {
         set_readable_bytes!(i_prot, &[0xAC]);
 
         let read_bool = assert_success!(i_prot.read_bool());
-        assert_eq!(read_bool, true);
+        assert!(read_bool);
     }
 
     #[test]
