@@ -30,9 +30,7 @@ class StringSet {
 
     public function new( values : Array<String> = null) {
         if ( values != null) {
-            for ( value in values) {
-                 add(value);
-            }
+            addRange(values.iterator());
         }
     }
 
@@ -55,6 +53,14 @@ class StringSet {
         _size++;
         _elements.set(o,_size);
         return true;
+    }
+
+    public function addRange( values : Iterator<String>) {
+        if ( values != null) {
+            for ( value in values) {
+                 add(value);
+            }
+        }
     }
 
     public function clear() : Void {

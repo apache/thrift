@@ -30,9 +30,7 @@ class IntSet {
 
     public function new( values : Array<Int> = null) {
         if ( values != null) {
-            for ( value in values) {
-                 add(value);
-            }
+            addRange(values.iterator());
         }
     }
 
@@ -55,6 +53,14 @@ class IntSet {
         _size++;
         _elements.set(o,_size);
         return true;
+    }
+
+    public function addRange( values : Iterator<Int>) {
+        if ( values != null) {
+            for ( value in values) {
+                 add(value);
+            }
+        }
     }
 
     public function clear() : Void {
