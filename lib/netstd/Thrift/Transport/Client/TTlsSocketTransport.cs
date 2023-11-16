@@ -16,6 +16,7 @@
 // under the License.
 
 using System;
+using System.Diagnostics;
 using System.Net;
 using System.Net.Security;
 using System.Net.Sockets;
@@ -43,11 +44,19 @@ namespace Thrift.Transport.Client
         private SslStream _secureStream;
         private int _timeout;
 
+        #if NET7_0_OR_GREATER
+        public const SslProtocols DefaultSslProtocols = SslProtocols.Tls12 | SslProtocols.Tls13;
+        #else
+        public const SslProtocols DefaultSslProtocols = SslProtocols.Tls12;
+        #endif
+
+
+
         public TTlsSocketTransport(TcpClient client, TConfiguration config,
             X509Certificate2 certificate, bool isServer = false,
             RemoteCertificateValidationCallback certValidator = null,
             LocalCertificateSelectionCallback localCertificateSelectionCallback = null,
-            SslProtocols sslProtocols = SslProtocols.Tls12)
+            SslProtocols sslProtocols = DefaultSslProtocols)
             : base(config)
         {
             _client = client;
@@ -74,7 +83,7 @@ namespace Thrift.Transport.Client
             string certificatePath,
             RemoteCertificateValidationCallback certValidator = null,
             LocalCertificateSelectionCallback localCertificateSelectionCallback = null,
-            SslProtocols sslProtocols = SslProtocols.Tls12)
+            SslProtocols sslProtocols = DefaultSslProtocols)
             : this(host, port, config, 0,
                 new X509Certificate2(certificatePath),
                 certValidator,
@@ -87,7 +96,7 @@ namespace Thrift.Transport.Client
             X509Certificate2 certificate = null,
             RemoteCertificateValidationCallback certValidator = null,
             LocalCertificateSelectionCallback localCertificateSelectionCallback = null,
-            SslProtocols sslProtocols = SslProtocols.Tls12)
+            SslProtocols sslProtocols = DefaultSslProtocols)
             : this(host, port, config, 0,
                 certificate,
                 certValidator,
@@ -100,7 +109,7 @@ namespace Thrift.Transport.Client
             X509Certificate2 certificate,
             RemoteCertificateValidationCallback certValidator = null,
             LocalCertificateSelectionCallback localCertificateSelectionCallback = null,
-            SslProtocols sslProtocols = SslProtocols.Tls12)
+            SslProtocols sslProtocols = DefaultSslProtocols)
             : base(config)
         {
             _host = host;
@@ -118,7 +127,7 @@ namespace Thrift.Transport.Client
             X509Certificate2 certificate,
             RemoteCertificateValidationCallback certValidator = null,
             LocalCertificateSelectionCallback localCertificateSelectionCallback = null,
-            SslProtocols sslProtocols = SslProtocols.Tls12)
+            SslProtocols sslProtocols = DefaultSslProtocols)
             : base(config)
         {
             try
@@ -237,7 +246,7 @@ namespace Thrift.Transport.Client
                 {
                     // Client authentication
                     var certs = _certificate != null
-                        ? new X509CertificateCollection {_certificate}
+                        ? new X509CertificateCollection { _certificate }
                         : new X509CertificateCollection();
 
                     var targetHost = _targetHost ?? _host.ToString();
@@ -269,5 +278,7 @@ namespace Thrift.Transport.Client
                 _secureStream = null;
             }
         }
+
+
     }
 }

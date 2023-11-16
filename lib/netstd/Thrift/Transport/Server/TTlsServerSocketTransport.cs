@@ -43,7 +43,7 @@ namespace Thrift.Transport.Server
             X509Certificate2 certificate,
             RemoteCertificateValidationCallback clientCertValidator = null,
             LocalCertificateSelectionCallback localCertificateSelectionCallback = null,
-            SslProtocols sslProtocols = SslProtocols.Tls12)
+            SslProtocols sslProtocols = TTlsSocketTransport.DefaultSslProtocols)
             : base(config)
         {
             if (!certificate.HasPrivateKey)
@@ -65,7 +65,7 @@ namespace Thrift.Transport.Server
             X509Certificate2 certificate,
             RemoteCertificateValidationCallback clientCertValidator = null,
             LocalCertificateSelectionCallback localCertificateSelectionCallback = null,
-            SslProtocols sslProtocols = SslProtocols.Tls12)
+            SslProtocols sslProtocols = TTlsSocketTransport.DefaultSslProtocols)
             : this(null, config, certificate, clientCertValidator, localCertificateSelectionCallback, sslProtocols)
         {
             try
