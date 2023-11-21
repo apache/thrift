@@ -24,7 +24,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"net"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -195,6 +194,7 @@ func (p *TSimpleServer) innerAccept() (int32, error) {
 		return 0, err
 	}
 	if client != nil {
+		defer client.Close()
 		ctx, cancel := context.WithCancel(context.Background())
 		p.wg.Add(2)
 
@@ -211,10 +211,6 @@ func (p *TSimpleServer) innerAccept() (int32, error) {
 			select {
 			case <-ctx.Done():
 				// client exited, do nothing
-				if client != nil {
-					client.Close()
-					client = nil
-				}
 			case <-p.stopChan:
 				// TSimpleServer.Close called, close the client connection
 				client.Close()
@@ -274,7 +270,6 @@ func (p *TSimpleServer) Stop() error {
 	}
 
 	<-ctx.Done()
-	p.stopChan = nil
 	p.stopChan = make(chan struct{})
 	return nil
 }
@@ -360,14 +355,7 @@ func (p *TSimpleServer) processRequests(client TTransport) (err error) {
 
 		ok, err := processor.Process(ctx, inputProtocol, outputProtocol)
 		if errors.Is(err, ErrAbandonRequest) {
-			err := client.Close()
-			client = nil
-			if errors.Is(err, net.ErrClosed) {
-				// In this case, it's kinda expected to get
-				// net.ErrClosed, treat that as no-error
-				return nil
-			}
-			return err
+			return nil
 		}
 		if errors.As(err, new(TTransportException)) && err != nil {
 			return err
