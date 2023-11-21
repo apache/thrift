@@ -1,4 +1,4 @@
-﻿// Licensed to the Apache Software Foundation(ASF) under one
+// Licensed to the Apache Software Foundation(ASF) under one
 // or more contributor license agreements.See the NOTICE file
 // distributed with this work for additional information
 // regarding copyright ownership.The ASF licenses this file
@@ -34,17 +34,17 @@ namespace Thrift.Tests.Protocols
             // input/output
             var sets = new List<Tuple<TType, byte[]>>
             {
-                new Tuple<TType, byte[]>(TType.Bool, TJSONProtocolConstants.TypeNames.NameBool),
-                new Tuple<TType, byte[]>(TType.Byte, TJSONProtocolConstants.TypeNames.NameByte),
-                new Tuple<TType, byte[]>(TType.I16, TJSONProtocolConstants.TypeNames.NameI16),
-                new Tuple<TType, byte[]>(TType.I32, TJSONProtocolConstants.TypeNames.NameI32),
-                new Tuple<TType, byte[]>(TType.I64, TJSONProtocolConstants.TypeNames.NameI64),
-                new Tuple<TType, byte[]>(TType.Double, TJSONProtocolConstants.TypeNames.NameDouble),
-                new Tuple<TType, byte[]>(TType.String, TJSONProtocolConstants.TypeNames.NameString),
-                new Tuple<TType, byte[]>(TType.Struct, TJSONProtocolConstants.TypeNames.NameStruct),
-                new Tuple<TType, byte[]>(TType.Map, TJSONProtocolConstants.TypeNames.NameMap),
-                new Tuple<TType, byte[]>(TType.Set, TJSONProtocolConstants.TypeNames.NameSet),
-                new Tuple<TType, byte[]>(TType.List, TJSONProtocolConstants.TypeNames.NameList),
+                new(TType.Bool, TJSONProtocolConstants.TypeNames.NameBool),
+                new(TType.Byte, TJSONProtocolConstants.TypeNames.NameByte),
+                new(TType.I16, TJSONProtocolConstants.TypeNames.NameI16),
+                new(TType.I32, TJSONProtocolConstants.TypeNames.NameI32),
+                new(TType.I64, TJSONProtocolConstants.TypeNames.NameI64),
+                new(TType.Double, TJSONProtocolConstants.TypeNames.NameDouble),
+                new(TType.String, TJSONProtocolConstants.TypeNames.NameString),
+                new(TType.Struct, TJSONProtocolConstants.TypeNames.NameStruct),
+                new(TType.Map, TJSONProtocolConstants.TypeNames.NameMap),
+                new(TType.Set, TJSONProtocolConstants.TypeNames.NameSet),
+                new(TType.List, TJSONProtocolConstants.TypeNames.NameList),
             };
 
             foreach (var t in sets)
@@ -73,17 +73,17 @@ namespace Thrift.Tests.Protocols
             // input/output
             var sets = new List<Tuple<TType, byte[]>>
             {
-                new Tuple<TType, byte[]>(TType.Bool, TJSONProtocolConstants.TypeNames.NameBool),
-                new Tuple<TType, byte[]>(TType.Byte, TJSONProtocolConstants.TypeNames.NameByte),
-                new Tuple<TType, byte[]>(TType.I16, TJSONProtocolConstants.TypeNames.NameI16),
-                new Tuple<TType, byte[]>(TType.I32, TJSONProtocolConstants.TypeNames.NameI32),
-                new Tuple<TType, byte[]>(TType.I64, TJSONProtocolConstants.TypeNames.NameI64),
-                new Tuple<TType, byte[]>(TType.Double, TJSONProtocolConstants.TypeNames.NameDouble),
-                new Tuple<TType, byte[]>(TType.String, TJSONProtocolConstants.TypeNames.NameString),
-                new Tuple<TType, byte[]>(TType.Struct, TJSONProtocolConstants.TypeNames.NameStruct),
-                new Tuple<TType, byte[]>(TType.Map, TJSONProtocolConstants.TypeNames.NameMap),
-                new Tuple<TType, byte[]>(TType.Set, TJSONProtocolConstants.TypeNames.NameSet),
-                new Tuple<TType, byte[]>(TType.List, TJSONProtocolConstants.TypeNames.NameList),
+                new(TType.Bool, TJSONProtocolConstants.TypeNames.NameBool),
+                new(TType.Byte, TJSONProtocolConstants.TypeNames.NameByte),
+                new(TType.I16, TJSONProtocolConstants.TypeNames.NameI16),
+                new(TType.I32, TJSONProtocolConstants.TypeNames.NameI32),
+                new(TType.I64, TJSONProtocolConstants.TypeNames.NameI64),
+                new(TType.Double, TJSONProtocolConstants.TypeNames.NameDouble),
+                new(TType.String, TJSONProtocolConstants.TypeNames.NameString),
+                new(TType.Struct, TJSONProtocolConstants.TypeNames.NameStruct),
+                new(TType.Map, TJSONProtocolConstants.TypeNames.NameMap),
+                new(TType.Set, TJSONProtocolConstants.TypeNames.NameSet),
+                new(TType.List, TJSONProtocolConstants.TypeNames.NameList),
             };
 
             foreach (var t in sets)
@@ -96,21 +96,21 @@ namespace Thrift.Tests.Protocols
         [ExpectedException(typeof(TProtocolException))]
         public void GetTypeIdForTypeName_TStopTypeName_Test()
         {
-            TJSONProtocolHelper.GetTypeIdForTypeName(new []{(byte)TType.Stop, (byte)TType.Stop});
+            TJSONProtocolHelper.GetTypeIdForTypeName([(byte)TType.Stop, (byte)TType.Stop]);
         }
 
         [TestMethod]
         [ExpectedException(typeof(TProtocolException))]
         public void GetTypeIdForTypeName_NonExistingTypeName_Test()
         {
-            TJSONProtocolHelper.GetTypeIdForTypeName(new byte[]{100});
+            TJSONProtocolHelper.GetTypeIdForTypeName([100]);
         }
 
         [TestMethod]
         [ExpectedException(typeof(TProtocolException))]
         public void GetTypeIdForTypeName_EmptyName_Test()
         {
-            TJSONProtocolHelper.GetTypeIdForTypeName(new byte[] {});
+            TJSONProtocolHelper.GetTypeIdForTypeName([]);
         }
 
         [TestMethod]

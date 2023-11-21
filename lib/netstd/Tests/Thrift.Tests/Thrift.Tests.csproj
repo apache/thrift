@@ -19,7 +19,8 @@
   -->
 
   <PropertyGroup>
-    <TargetFramework>net7.0</TargetFramework>
+    <TargetFramework>net8.0</TargetFramework>
+    <LangVersion>latestMajor</LangVersion>
     <Version>0.20.0.0</Version>
     <Nullable>enable</Nullable>
   </PropertyGroup>

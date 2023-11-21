@@ -20,6 +20,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Reflection.Metadata.Ecma335;
 using System.Security.Authentication;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
@@ -36,7 +37,6 @@ using Thrift.Transport.Server;
 
 #pragma warning disable IDE0063  // using can be simplified, we don't
 #pragma warning disable IDE0057  // substr can be simplified, we don't
-#pragma warning disable CS1998   // await missing
 
 namespace ThriftTest
 {
@@ -83,12 +83,12 @@ namespace ThriftTest
             {
                 if (args[i].StartsWith("--pipe="))
                 {
-                    pipe = args[i].Substring(args[i].IndexOf("=") + 1);
+                    pipe = args[i].Substring(args[i].IndexOf('=') + 1);
                     transport = TransportChoice.NamedPipe;
                 }
                 else if (args[i].StartsWith("--port="))
                 {
-                    port = int.Parse(args[i].Substring(args[i].IndexOf("=") + 1));
+                    port = int.Parse(args[i].Substring(args[i].IndexOf('=') + 1));
                     if(transport != TransportChoice.TlsSocket)
                         transport = TransportChoice.Socket;
                 }
@@ -163,9 +163,8 @@ namespace ThriftTest
 
     public class TestServer
     {
-        #pragma warning disable CA2211
-        public static int _clientID = -1;  // use with Interlocked only!
-        #pragma warning restore CA2211
+        private static int _clientID = -1;  // use with Interlocked only!
+        public static int ClientID => Interlocked.Add(ref _clientID, 0);
 
         private static readonly TConfiguration Configuration = new(); 
 
@@ -181,10 +180,10 @@ namespace ThriftTest
                 return Task.CompletedTask;
             }
 
-            public async Task<object?> CreateContextAsync(TProtocol input, TProtocol output, CancellationToken cancellationToken)
+            public Task<object?> CreateContextAsync(TProtocol input, TProtocol output, CancellationToken cancellationToken)
             {
                 callCount++;
-                return null;
+                return Task.FromResult<object?>(null);
             }
 
             public Task DeleteContextAsync(object serverContext, TProtocol input, TProtocol output, CancellationToken cancellationToken)
@@ -268,7 +267,7 @@ namespace ThriftTest
             public Task<byte[]> testBinary(byte[]? thing, CancellationToken cancellationToken)
             {
                 logger.Invoke("testBinary({0} bytes)", thing?.Length ?? 0);
-                return Task.FromResult(thing ?? Array.Empty<byte>());
+                return Task.FromResult(thing ?? []);
             }
 
             public Task<Guid> testUuid(Guid thing, CancellationToken cancellationToken)
@@ -318,7 +317,7 @@ namespace ThriftTest
                 }
                 sb.Append("}})");
                 logger.Invoke(sb.ToString());
-                return Task.FromResult(thing ?? new Dictionary<int, int>());   // null returns are not allowed in Thrift
+                return Task.FromResult(thing ?? []);   // null returns are not allowed in Thrift
             }
 
             public Task<Dictionary<string, string>> testStringMap(Dictionary<string, string>? thing, CancellationToken cancellationToken)
@@ -343,7 +342,7 @@ namespace ThriftTest
                 }
                 sb.Append("}})");
                 logger.Invoke(sb.ToString());
-                return Task.FromResult(thing ?? new Dictionary<string, string>());   // null returns are not allowed in Thrift
+                return Task.FromResult(thing ?? []);   // null returns are not allowed in Thrift
             }
 
             public Task<HashSet<int>> testSet(HashSet<int>? thing, CancellationToken cancellationToken)
@@ -368,7 +367,7 @@ namespace ThriftTest
                 }
                 sb.Append("}})");
                 logger.Invoke(sb.ToString());
-                return Task.FromResult(thing ?? new HashSet<int>());   // null returns are not allowed in Thrift
+                return Task.FromResult(thing ?? []);   // null returns are not allowed in Thrift
             }
 
             public Task<List<int>> testList(List<int>? thing, CancellationToken cancellationToken)
@@ -393,7 +392,7 @@ namespace ThriftTest
                 }
                 sb.Append("}})");
                 logger.Invoke(sb.ToString());
-                return Task.FromResult(thing ?? new List<int>());   // null returns are not allowed in Thrift
+                return Task.FromResult(thing ?? []);   // null returns are not allowed in Thrift
             }
 
             public Task<Numberz> testEnum(Numberz thing, CancellationToken cancellationToken)

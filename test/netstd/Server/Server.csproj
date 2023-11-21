@@ -19,8 +19,8 @@
   -->
 
   <PropertyGroup>
-    <TargetFramework>net7.0</TargetFramework>
-    <LangVersion>9.0</LangVersion>
+    <TargetFramework>net8.0</TargetFramework>
+    <LangVersion>latestMajor</LangVersion>
     <AssemblyName>Server</AssemblyName>
     <PackageId>Server</PackageId>
     <OutputType>Exe</OutputType>
@@ -50,8 +50,8 @@
     <Exec Condition="'$(OS)' == 'Windows_NT'" Command="where thrift" ConsoleToMSBuild="true">
       <Output TaskParameter="ConsoleOutput" PropertyName="PathToThrift" />
     </Exec>
-    <Exec Condition="Exists('$(PathToThrift)')" Command="&quot;$(PathToThrift)&quot; -out $(ProjectDir) -gen netstd:wcf,union,serial,net6 -r ./../../ThriftTest.thrift" />
-    <Exec Condition="Exists('thrift')" Command="thrift -out $(ProjectDir) -gen netstd:wcf,union,serial,net6 -r ./../../ThriftTest.thrift" />
-    <Exec Condition="Exists('$(ProjectDir)/../../../compiler/cpp/thrift')" Command="$(ProjectDir)/../../../compiler/cpp/thrift -out $(ProjectDir) -gen netstd:wcf,union,serial,net6 -r ./../../ThriftTest.thrift" />
+    <Exec Condition="Exists('$(PathToThrift)')" Command="&quot;$(PathToThrift)&quot; -out $(ProjectDir) -gen netstd:wcf,union,serial,net8 -r ./../../ThriftTest.thrift" />
+    <Exec Condition="Exists('thrift')" Command="thrift -out $(ProjectDir) -gen netstd:wcf,union,serial,net8 -r ./../../ThriftTest.thrift" />
+    <Exec Condition="Exists('$(ProjectDir)/../../../compiler/cpp/thrift')" Command="$(ProjectDir)/../../../compiler/cpp/thrift -out $(ProjectDir) -gen netstd:wcf,union,serial,net8 -r ./../../ThriftTest.thrift" />
   </Target>
 </Project>

@@ -56,8 +56,8 @@ namespace Thrift.Tests.Collections
         [TestMethod]
         public void TCollection_List_Equals_Objects_Test()
         {
-            var collection1 = new List<ExampleClass> { new ExampleClass { X = 1 }, new ExampleClass { X = 2 } };
-            var collection2 = new List<ExampleClass> { new ExampleClass { X = 1 }, new ExampleClass { X = 2 } };
+            var collection1 = new List<ExampleClass> { new() { X = 1 }, new() { X = 2 } };
+            var collection2 = new List<ExampleClass> { new() { X = 1 }, new() { X = 2 } };
             Assert.IsTrue(TCollections.Equals(collection1, collection2));
             Assert.IsTrue(collection1.SequenceEqual(collection2));
         }
@@ -65,8 +65,8 @@ namespace Thrift.Tests.Collections
         [TestMethod]
         public void TCollection_List_List_Equals_Objects_Test()
         {
-            var collection1 = new List<List<ExampleClass>> { new List<ExampleClass> { new ExampleClass { X = 1 }, new ExampleClass { X = 2 } } };
-            var collection2 = new List<List<ExampleClass>> { new List<ExampleClass> { new ExampleClass { X = 1 }, new ExampleClass { X = 2 } } };
+            var collection1 = new List<List<ExampleClass>> { new() { new() { X = 1 }, new() { X = 2 } } };
+            var collection2 = new List<List<ExampleClass>> { new() { new() { X = 1 }, new() { X = 2 } } };
             Assert.IsTrue(TCollections.Equals(collection1, collection2));
             Assert.IsFalse(collection1.SequenceEqual(collection2));  // SequenceEqual() calls Equals() of the inner list instead of SequenceEqual()
         }
@@ -74,7 +74,7 @@ namespace Thrift.Tests.Collections
         [TestMethod]
         public void TCollection_List_Equals_OneAndTheSameObject_Test()
         {
-            var collection1 = new List<ExampleClass> { new ExampleClass { X = 1 }, new ExampleClass { X = 2 } };
+            var collection1 = new List<ExampleClass> { new() { X = 1 }, new() { X = 2 } };
             var collection2 = collection1;
             Assert.IsTrue(TCollections.Equals(collection1, collection2));
             Assert.IsTrue(collection1.SequenceEqual(collection2));
@@ -105,8 +105,8 @@ namespace Thrift.Tests.Collections
         [TestMethod]
         public void TCollection_Set_Equals_Objects_Test()
         {
-            var collection1 = new HashSet<ExampleClass> { new ExampleClass { X = 1 }, new ExampleClass { X = 2 } };
-            var collection2 = new HashSet<ExampleClass> { new ExampleClass { X = 1 }, new ExampleClass { X = 2 } };
+            var collection1 = new HashSet<ExampleClass> { new() { X = 1 }, new() { X = 2 } };
+            var collection2 = new HashSet<ExampleClass> { new() { X = 1 }, new() { X = 2 } };
             Assert.IsTrue(TCollections.Equals(collection1, collection2));
             Assert.IsTrue(collection1.SequenceEqual(collection2));
         }
@@ -114,8 +114,8 @@ namespace Thrift.Tests.Collections
         [TestMethod]
         public void TCollection_Set_Set_Equals_Objects_Test()
         {
-            var collection1 = new HashSet<HashSet<ExampleClass>> { new HashSet<ExampleClass> { new ExampleClass { X = 1 }, new ExampleClass { X = 2 } } };
-            var collection2 = new HashSet<HashSet<ExampleClass>> { new HashSet<ExampleClass> { new ExampleClass { X = 1 }, new ExampleClass { X = 2 } } };
+            var collection1 = new HashSet<HashSet<ExampleClass>> { new() { new() { X = 1 }, new() { X = 2 } } };
+            var collection2 = new HashSet<HashSet<ExampleClass>> { new() { new() { X = 1 }, new() { X = 2 } } };
             Assert.IsTrue(TCollections.Equals(collection1, collection2));
             Assert.IsFalse(collection1.SequenceEqual(collection2));  // SequenceEqual() calls Equals() of the inner list instead of SequenceEqual()
         }
@@ -123,7 +123,7 @@ namespace Thrift.Tests.Collections
         [TestMethod]
         public void TCollection_Set_Equals_OneAndTheSameObject_Test()
         {
-            var collection1 = new HashSet<ExampleClass> { new ExampleClass { X = 1 }, new ExampleClass { X = 2 } };
+            var collection1 = new HashSet<ExampleClass> { new() { X = 1 }, new() { X = 2 } };
             var collection2 = collection1;      // references to one and the same collection
             Assert.IsTrue(TCollections.Equals(collection1, collection2));
             Assert.IsTrue(collection1.SequenceEqual(collection2));
@@ -160,13 +160,13 @@ namespace Thrift.Tests.Collections
         {
             var collection1 = new Dictionary<int, ExampleClass>
             {
-                [1] = new ExampleClass { X = 1 },
-                [-1] = new ExampleClass { X = 2 }
+                [1] = new() { X = 1 },
+                [-1] = new() { X = 2 }
             };
             var collection2 = new Dictionary<int, ExampleClass>
             {
-                [1] = new ExampleClass { X = 1 },
-                [-1] = new ExampleClass { X = 2 }
+                [1] = new() { X = 1 },
+                [-1] = new() { X = 2 }
             };
 
             Assert.IsTrue(TCollections.Equals(collection1, collection2));
@@ -180,16 +180,16 @@ namespace Thrift.Tests.Collections
             {
                 [0] = new Dictionary<int, ExampleClass>
                 {
-                    [1] = new ExampleClass { X = 1 },
-                    [-1] = new ExampleClass { X = 2 }
+                    [1] = new() { X = 1 },
+                    [-1] = new() { X = 2 }
                 }
             };
             var collection2 = new Dictionary<int, Dictionary<int, ExampleClass>>
             {
                 [0] = new Dictionary<int, ExampleClass>
                 {
-                    [1] = new ExampleClass { X = 1 },
-                    [-1] = new ExampleClass { X = 2 }
+                    [1] = new() { X = 1 },
+                    [-1] = new() { X = 2 }
                 }
             };
 
@@ -202,8 +202,8 @@ namespace Thrift.Tests.Collections
         {
             var collection1 = new Dictionary<int, ExampleClass>
             {
-                [1] = new ExampleClass { X = 1 },
-                [-1] = new ExampleClass { X = 2 }
+                [1] = new() { X = 1 },
+                [-1] = new() { X = 2 }
             };
             var collection2 = collection1;
             Assert.IsTrue(TCollections.Equals(collection1, collection2));

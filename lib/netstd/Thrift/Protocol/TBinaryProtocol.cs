@@ -24,6 +24,8 @@ using Thrift.Protocol.Entities;
 using Thrift.Protocol.Utilities;
 using Thrift.Transport;
 
+#pragma warning disable IDE0079 // net20 - unneeded suppression
+#pragma warning disable IDE0290 // net8 - primary CTOR
 
 namespace Thrift.Protocol
 {
@@ -33,8 +35,8 @@ namespace Thrift.Protocol
         protected const uint VersionMask = 0xffff0000;
         protected const uint Version1 = 0x80010000;
 
-        protected bool StrictRead;
-        protected bool StrictWrite;
+        protected readonly bool StrictRead;
+        protected readonly bool StrictWrite;
 
         // minimize memory allocations by means of an preallocated bytes buffer
         // The value of 128 is arbitrarily chosen, the required minimum size must be sizeof(long)
@@ -470,15 +472,10 @@ namespace Thrift.Protocol
 
         public class Factory : TProtocolFactory
         {
-            protected bool StrictRead;
-            protected bool StrictWrite;
+            protected readonly bool StrictRead;
+            protected readonly bool StrictWrite;
 
-            public Factory()
-                : this(false, true)
-            {
-            }
-
-            public Factory(bool strictRead, bool strictWrite)
+            public Factory(bool strictRead = false, bool strictWrite = true)
             {
                 StrictRead = strictRead;
                 StrictWrite = strictWrite;
