@@ -15,6 +15,9 @@
 // specific language governing permissions and limitations
 // under the License.
 
+#pragma warning disable IDE0079 // net20 - unneeded suppression
+#pragma warning disable IDE0300 // net8 - simplified collection init 
+
 namespace Thrift.Protocol.Utilities
 {
     // ReSharper disable once InconsistentNaming

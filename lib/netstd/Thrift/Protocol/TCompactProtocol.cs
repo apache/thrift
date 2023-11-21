@@ -27,6 +27,8 @@ using Thrift.Protocol.Entities;
 using Thrift.Protocol.Utilities;
 using Thrift.Transport;
 
+#pragma warning disable IDE0079 // net20 - unneeded suppression
+#pragma warning disable IDE0301 // net8 - simplified collection init 
 
 namespace Thrift.Protocol
 {

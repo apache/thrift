@@ -28,6 +28,11 @@ using System.Collections.Generic;
 using System.IO;
 using System.Diagnostics;
 
+#pragma warning disable IDE0079 // net20 - unneeded suppression
+#pragma warning disable IDE0028 // net8 - simplified collection init 
+#pragma warning disable IDE0300 // net8 - simplified collection init 
+#pragma warning disable IDE0290 // net8 - primary CTOR
+#pragma warning disable SYSLIB1054 // net8 - use LibraryImport attribute
 #pragma warning disable CS1998  // async no await
 
 namespace Thrift.Transport.Server
@@ -46,7 +51,7 @@ namespace Thrift.Transport.Server
         // to manage incoming connections, we set up a task for each stream to listen on
         private struct TaskStreamPair
         {
-            public NamedPipeServerStream Stream;
+            public readonly NamedPipeServerStream Stream;
             public Task Task;
 
             public TaskStreamPair(NamedPipeServerStream stream, Task task)
@@ -321,8 +326,9 @@ namespace Thrift.Transport.Server
 
                 // there must be an exact mapping between task index and stream index
                 Debug.Assert(_streams.Count == tasks.Count);
+                #pragma warning disable IDE0305  // see https://github.com/dotnet/roslyn/issues/70656 - yet unsolved
                 var index = Task.WaitAny(tasks.ToArray(), cancellationToken);
-
+                #pragma warning restore IDE0305 
                 var trans = new ServerTransport(_streams[index].Stream, Configuration);
                 _streams.RemoveAt(index); // pass stream ownership to ServerTransport
 

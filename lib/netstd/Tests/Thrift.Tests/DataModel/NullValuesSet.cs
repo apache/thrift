@@ -25,6 +25,7 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 using OptReqDefTest;
 using Thrift.Collections;
 
+#pragma warning disable IDE0079 // net20 - unneeded suppression
 #pragma warning disable IDE0017  // init can be simplified - we don't want that here
 
 namespace Thrift.Tests.DataModel

@@ -34,16 +34,16 @@ namespace Thrift.Protocol
                 sb.Append(", ");
 
             bool first_child = true;
-            if (self is string) // string is IEnumerable
+            if (self is string str) // string is IEnumerable
             {
                 sb.Append('"');
-                sb.Append(self);
+                sb.Append(str);
                 sb.Append('"');
             }
-            else if (self is IDictionary)
+            else if (self is IDictionary dict)
             {
                 sb.Append("{ ");
-                foreach (DictionaryEntry pair in (self as IDictionary))
+                foreach (DictionaryEntry pair in dict)
                 {
                     if (first_child)
                         first_child = false;
@@ -58,23 +58,23 @@ namespace Thrift.Protocol
                 }
                 sb.Append('}');
             }
-            else if (self is IEnumerable)
+            else if (self is IEnumerable enumerable)
             {
                 sb.Append("{ ");
-                foreach (var elm in (self as IEnumerable))
+                foreach (var elm in enumerable)
                 {
                     elm.ToString(sb, first_child);
                     first_child = false;
                 }
                 sb.Append('}');
             }
-            else if (self is TBase)
+            else if (self is TBase tbase)
             {
-                sb.Append((self as TBase).ToString());
+                sb.Append(tbase.ToString());
             }
-            else if (self is double)
+            else if (self is double dbVal)
             {
-                sb.Append(((double)self).ToString(CultureInfo.InvariantCulture));
+                sb.Append(dbVal.ToString(CultureInfo.InvariantCulture));
             }
             else
             {

@@ -51,12 +51,8 @@ namespace Thrift.Tests.Protocols
             Assert.IsTrue(result.WrappedReader.GetType().Name.Equals("LookaheadReader", StringComparison.OrdinalIgnoreCase));
         }
 
-        private class TJSONProtocolWrapper : TJsonProtocol
+        private class TJSONProtocolWrapper(TTransport trans) : TJsonProtocol(trans)
         {
-            public TJSONProtocolWrapper(TTransport trans) : base(trans)
-            {
-            }
-
             public object WrappedContext => Context;
             public object WrappedReader => Reader;
             public int WrappedRecursionDepth => RecursionDepth;

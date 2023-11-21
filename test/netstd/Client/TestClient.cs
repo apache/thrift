@@ -17,7 +17,6 @@
 
 #pragma warning disable IDE0066 // switch expression
 #pragma warning disable IDE0057 // substring
-#pragma warning disable CS1998  // no await in async method
 
 using System;
 using System.Collections.Generic;
@@ -93,19 +92,19 @@ namespace ThriftTest
                     }
                     else if (args[i].StartsWith("--pipe="))
                     {
-                        pipe = args[i].Substring(args[i].IndexOf("=") + 1);
+                        pipe = args[i].Substring(args[i].IndexOf('=') + 1);
                         transport = TransportChoice.NamedPipe;
                     }
                     else if (args[i].StartsWith("--host="))
                     {
                         // check there for ipaddress
-                        host = args[i].Substring(args[i].IndexOf("=") + 1);
+                        host = args[i].Substring(args[i].IndexOf('=') + 1);
                         if (transport != TransportChoice.TlsSocket)
                             transport = TransportChoice.Socket;
                     }
                     else if (args[i].StartsWith("--port="))
                     {
-                        port = int.Parse(args[i].Substring(args[i].IndexOf("=") + 1));
+                        port = int.Parse(args[i].Substring(args[i].IndexOf('=') + 1));
                         if (transport != TransportChoice.TlsSocket)
                             transport = TransportChoice.Socket;
                     }
@@ -393,7 +392,7 @@ namespace ThriftTest
             Console.WriteLine();
         }
 
-        public static async Task<int> Execute(List<string> args)
+        public static Task<int> Execute(List<string> args)
         {
             try
             {
@@ -408,7 +407,7 @@ namespace ThriftTest
                     Console.WriteLine("*** FAILED ***");
                     Console.WriteLine("Error while parsing arguments");
                     Console.WriteLine("{0} {1}\nStack:\n{2}", ex.GetType().Name, ex.Message, ex.StackTrace);
-                    return ErrorUnknown;
+                    return Task.FromResult(ErrorUnknown);
                 }
 
                 //issue tests on separate threads simultaneously
@@ -432,14 +431,14 @@ namespace ThriftTest
                 Task.WaitAll(tasks);
                 Console.WriteLine("Total time: " + (DateTime.Now - start));
                 Console.WriteLine();
-                return retcode;
+                return Task.FromResult(retcode);
             }
             catch (Exception outerEx)
             {
                 Console.WriteLine("*** FAILED ***");
                 Console.WriteLine("Unexpected error");
                 Console.WriteLine(outerEx.Message + "\n" + outerEx.StackTrace);
-                return ErrorUnknown;
+                return Task.FromResult(ErrorUnknown);
             }
         }
 
@@ -646,8 +645,8 @@ namespace ThriftTest
             var two = new CrazyNesting();
             one.String_field = "crazy";
             two.String_field = "crazy";
-            one.Binary_field = new byte[] { 0x00, 0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80, 0xFF };
-            two.Binary_field = new byte[10] { 0x00, 0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80, 0xFF };
+            one.Binary_field = [0x00, 0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80, 0xFF];
+            two.Binary_field = [0x00, 0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80, 0xFF];
             if (typeof(CrazyNesting).GetMethod("Equals")?.DeclaringType == typeof(CrazyNesting))
             {
                 if (!one.Equals(two))
@@ -820,10 +819,7 @@ namespace ThriftTest
                 I32_thing = 8,
                 I64_thing = 8
             };
-            insane.Xtructs = new List<Xtruct>
-            {
-                truck
-            };
+            insane.Xtructs = [ truck ];
             Console.Write("testInsanity()");
             var whoa = await client.testInsanity(insane, MakeTimeoutToken());
             Console.Write(" = {");

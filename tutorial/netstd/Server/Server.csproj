@@ -19,8 +19,8 @@
   -->
 
   <PropertyGroup>
-    <TargetFramework>net7.0</TargetFramework>
-    <LangVersion>9.0</LangVersion>
+    <TargetFramework>net8.0</TargetFramework>
+    <LangVersion>latestMajor</LangVersion>
     <AssemblyName>Server</AssemblyName>
     <PackageId>Server</PackageId>
     <OutputType>Exe</OutputType>
