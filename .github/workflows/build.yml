@@ -10,7 +10,6 @@ env:
   BUILD_DEPS: automake bison flex git libboost-all-dev libevent-dev libssl-dev libtool make pkg-config
   CONFIG_ARGS_FOR_LIBS: >
     --disable-debug
-    --disable-tests
     --disable-dependency-tracking
     --without-cpp
     --without-c_glib
