@@ -706,6 +706,7 @@ string t_go_generator::go_imports_begin(bool consts) {
   }
   system_packages.push_back("errors");
   system_packages.push_back("fmt");
+  system_packages.push_back("log/slog");
   system_packages.push_back("time");
   // For the thrift import, always do rename import to make sure it's called thrift.
   system_packages.push_back("thrift \"" + gen_thrift_import_ + "\"");
@@ -726,12 +727,13 @@ string t_go_generator::go_imports_end() {
   string import_end = string(
       ")\n\n"
       "// (needed to ensure safety because of naive import list construction.)\n"
-      "var _ = thrift.ZERO\n"
-      "var _ = fmt.Printf\n"
-      "var _ = errors.New\n"
-      "var _ = context.Background\n"
-      "var _ = time.Now\n"
       "var _ = bytes.Equal\n"
+      "var _ = context.Background\n"
+      "var _ = errors.New\n"
+      "var _ = fmt.Printf\n"
+      "var _ = slog.Log\n"
+      "var _ = time.Now\n"
+      "var _ = thrift.ZERO\n"
       "// (needed by validator.)\n"
       "var _ = strings.Contains\n"
       "var _ = regexp.MatchString\n\n");
@@ -1308,8 +1310,10 @@ void t_go_generator::generate_go_struct_definition(ostream& out,
   indent_down();
   out << indent() << "}" << endl << endl;
   out << indent() << "func New" << tstruct_name << "() *" << tstruct_name << " {" << endl;
-  out << indent() << "  return &";
+  indent_up();
+  out << indent() << "return &";
   generate_go_struct_initializer(out, tstruct, is_result || is_args);
+  indent_down();
   out << indent() << "}" << endl << endl;
   // Default values for optional fields
   for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
@@ -1339,16 +1343,22 @@ void t_go_generator::generate_go_struct_definition(ostream& out,
       string maybepointer = goOptType != goType ? "*" : "";
       out << indent() << "func (p *" << tstruct_name << ") Get" << publicized_name << "() "
           << goType << " {" << endl;
-      out << indent() << "  if !p.IsSet" << publicized_name << "() {" << endl;
-      out << indent() << "    return " << def_var_name << endl;
-      out << indent() << "  }" << endl;
+      indent_up();
+      out << indent() << "if !p.IsSet" << publicized_name << "() {" << endl;
+      indent_up();
+      out << indent() << "return " << def_var_name << endl;
+      indent_down();
+      out << indent() << "}" << endl;
       out << indent() << "return " << maybepointer << "p." << publicized_name << endl;
+      indent_down();
       out << indent() << "}" << endl;
     } else {
       out << endl;
       out << indent() << "func (p *" << tstruct_name << ") Get" << publicized_name << "() "
           << goType << " {" << endl;
-      out << indent() << "  return p." << publicized_name << endl;
+      indent_up();
+      out << indent() << "return p." << publicized_name << endl;
+      indent_down();
       out << indent() << "}" << endl;
     }
   }
@@ -1365,11 +1375,15 @@ void t_go_generator::generate_go_struct_definition(ostream& out,
   }
 
   out << indent() << "func (p *" << tstruct_name << ") String() string {" << endl;
-  out << indent() << "  if p == nil {" << endl;
-  out << indent() << "    return \"<nil>\"" << endl;
-  out << indent() << "  }" << endl;
-  out << indent() << "  return fmt.Sprintf(\"" << escape_string(tstruct_name) << "(%+v)\", *p)"
+  indent_up();
+  out << indent() << "if p == nil {" << endl;
+  indent_up();
+  out << indent() << "return \"<nil>\"" << endl;
+  indent_down();
+  out << indent() << "}" << endl;
+  out << indent() << "return fmt.Sprintf(\"" << escape_string(tstruct_name) << "(%+v)\", *p)"
       << endl;
+  indent_down();
   out << indent() << "}" << endl << endl;
 
   if (is_exception) {
@@ -1386,6 +1400,30 @@ void t_go_generator::generate_go_struct_definition(ostream& out,
     out << indent() << "}" << endl << endl;
 
     out << indent() << "var _ thrift.TException = (*" << tstruct_name << ")(nil)"
+        << endl << endl;
+  }
+
+  if (!read_write_private_) {
+    // Generate the implementation of slog.LogValuer,
+    // see: https://issues.apache.org/jira/browse/THRIFT-5745
+    out << indent() << "func (p *" << tstruct_name << ") LogValue() slog.Value {" << endl;
+    indent_up();
+    out << indent() << "if p == nil {" << endl;
+    indent_up();
+    out << indent() << "return slog.AnyValue(nil)" << endl;
+    indent_down();
+    out << indent() << "}" << endl;
+    out << indent() << "v := thrift.SlogTStructWrapper{" << endl;
+    indent_up();
+    out << indent() << "Type: \"*" << package_name_ << "." << tstruct_name << "\"," << endl;
+    out << indent() << "Value: p," << endl;
+    indent_down();
+    out << indent() << "}" << endl;
+    out << indent() << "return slog.AnyValue(v)" << endl;
+    indent_down();
+    out << indent() << "}" << endl << endl;
+
+    out << indent() << "var _ slog.LogValuer = (*" << tstruct_name << ")(nil)"
         << endl << endl;
   }
 }
