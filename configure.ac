@@ -311,9 +311,9 @@ AX_THRIFT_LIB(perl, [Perl], yes)
 if test "$with_perl" = "yes"; then
   AC_PATH_PROG([PERL], [perl])
   if test -n "$PERL" ; then
-    AC_PROG_PERL_MODULES([Bit::Vector], success="yes", success="no")
+    AX_PROG_PERL_MODULES([Bit::Vector],[success="yes"],[success="no"])
     have_perl_bit_vector="$success"
-    AC_PROG_PERL_MODULES([Class::Accessor], success="yes", success="no")
+    AX_PROG_PERL_MODULES([Class::Accessor],[success="yes"],[success="no"])
     have_perl_class_accessor="$success"
   fi
   if test -n "$PERL" -a "$have_perl_bit_vector" = "yes" ; then
@@ -589,13 +589,14 @@ case "${host_os}" in
   AM_CONDITIONAL(MINGW, true)
   ;;
 *)
-  AC_ISC_POSIX
+  AC_SEARCH_LIBS([strerror],[cposix])
   ;;
 esac
 
 AC_C_CONST
 AC_C_INLINE
 AC_C_VOLATILE
+AC_C_RESTRICT
 
 AC_HEADER_STDBOOL
 AC_HEADER_STDC
