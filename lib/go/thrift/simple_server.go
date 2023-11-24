@@ -194,13 +194,14 @@ func (p *TSimpleServer) innerAccept() (int32, error) {
 		return 0, err
 	}
 	if client != nil {
-		defer client.Close()
+
 		ctx, cancel := context.WithCancel(context.Background())
 		p.wg.Add(2)
 
 		go func() {
 			defer p.wg.Done()
 			defer cancel()
+			defer client.Close()
 			if err := p.processRequests(client); err != nil {
 				p.logger(fmt.Sprintf("error processing request: %v", err))
 			}
