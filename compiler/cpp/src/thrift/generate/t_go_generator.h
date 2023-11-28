@@ -124,7 +124,8 @@ public:
                                      bool is_args = false);
   void generate_go_struct_initializer(std::ostream& out,
                                       t_struct* tstruct,
-                                      bool is_args_or_result = false);
+                                      bool is_args_or_result = false,
+                                      string alias_name = "");
   void generate_isset_helpers(std::ostream& out,
                               t_struct* tstruct,
                               const string& tstruct_name,
@@ -176,7 +177,8 @@ public:
                                    t_struct* tstruct,
                                    bool is_pointer_field,
                                    bool declare,
-                                   std::string prefix = "");
+                                   std::string prefix = "",
+                                   string alias_name = "");
 
   void generate_deserialize_container(std::ostream& out,
                                       t_type* ttype,
@@ -264,7 +266,7 @@ public:
   std::string argument_list(t_struct* tstruct);
   std::string type_to_enum(t_type* ttype);
   std::string type_to_go_type(t_type* ttype);
-  std::string type_to_go_type_with_opt(t_type* ttype, bool optional_field);
+  std::string type_to_go_type_with_opt(t_type* ttype, bool optional_field = false, bool no_struct_ptr = false);
   std::string type_to_go_key_type(t_type* ttype);
   std::string type_to_spec_args(t_type* ttype);
 
