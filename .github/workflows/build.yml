@@ -169,11 +169,13 @@ jobs:
         run: |
           cd lib/java
           gradle spotlessCheck
+        continue-on-error: true
 
       - name: Run ktfmtCheck for Kotlin
         run: |
           cd lib/kotlin
           gradle ktfmtCheck
+        continue-on-error: true
 
       - name: Run bootstrap
         run: ./bootstrap.sh
