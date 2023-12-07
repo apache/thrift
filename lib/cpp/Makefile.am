@@ -133,7 +133,6 @@ libthriftqt5_la_LDFLAGS   = -release $(VERSION) $(BOOST_LDFLAGS) $(QT5_LIBS)
 include_thriftdir = $(includedir)/thrift
 include_thrift_HEADERS = \
                          $(top_builddir)/config.h \
-                         src/thrift/numeric_cast.h \
                          src/thrift/thrift-config.h \
                          src/thrift/thrift_export.h \
                          src/thrift/TDispatchProcessor.h \
