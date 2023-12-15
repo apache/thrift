@@ -18,6 +18,7 @@
  *)
 
 {$SCOPEDENUMS ON}
+{$IFOPT M+} {$DEFINE TYPEINFO_WAS_ON} {$ELSE} {$UNDEF TYPEINFO_WAS_ON} {$ENDIF}
 
 unit Thrift.Protocol;
 
@@ -335,11 +336,15 @@ type
     constructor Create( const aTransport : ITransport); virtual;
   end;
 
+  {$TYPEINFO ON}
+  {$RTTI EXPLICIT METHODS([vcPublic, vcPublished]) PROPERTIES([vcPublic, vcPublished])}
   IBase = interface( ISupportsToString)
     ['{AFF6CECA-5200-4540-950E-9B89E0C1C00C}']
     procedure Read( const prot: IProtocol);
     procedure Write( const prot: IProtocol);
   end;
+  {$RTTI EXPLICIT METHODS([]) PROPERTIES([]) FIELDS([])}
+  {$IFNDEF TYPEINFO_WAS_ON} {$TYPEINFO OFF} {$ENDIF}
 
 
   IThriftBytes = interface( ISupportsToString)
