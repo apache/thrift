@@ -19,9 +19,6 @@
 
 package org.apache.thrift.helper;
 
-import Map;
-
-
 class StringSet {
 
     private var _elements = new haxe.ds.StringMap<Int>();
