@@ -101,7 +101,7 @@
 		<Import Condition="Exists('$(BDS)\Bin\CodeGear.Delphi.Targets')" Project="$(BDS)\Bin\CodeGear.Delphi.Targets"/>
 		<Import Condition="Exists('$(APPDATA)\Embarcadero\$(BDSAPPDATABASEDIR)\$(PRODUCTVERSION)\UserTools.proj')" Project="$(APPDATA)\Embarcadero\$(BDSAPPDATABASEDIR)\$(PRODUCTVERSION)\UserTools.proj"/>
 		<PropertyGroup>
-			<PreBuildEvent><![CDATA[thrift.exe -r -gen delphi:com_types ..\keywords\ReservedKeywords.thrift
+			<PreBuildEvent><![CDATA[thrift.exe -r -gen delphi:com_types,rtti ..\keywords\ReservedKeywords.thrift
 thrift.exe -r -gen delphi:com_types ..\..\..\..\test\DebugProtoTest.thrift]]></PreBuildEvent>
 		</PropertyGroup>
 		<ProjectExtensions>

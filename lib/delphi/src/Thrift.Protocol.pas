@@ -197,6 +197,17 @@ type
 
   IThriftBytes = interface; // forward
 
+  {$TYPEINFO ON}
+  TThriftBytes = packed record  // can't use SysUtils.TBytes because it has no typinfo -> E2134
+    data : System.TArray<System.Byte>;
+
+    class operator Implicit(aRec : SysUtils.TBytes) : TThriftBytes;
+    class operator Implicit(aRec : TThriftBytes) : SysUtils.TBytes;
+    function Length : Integer;
+  end;
+  {$IFNDEF TYPEINFO_WAS_ON} {$TYPEINFO OFF} {$ENDIF}
+
+
   IProtocol = interface
     ['{6067A28E-15BF-4C9D-9A6F-D991BB3DCB85}']
     function GetTransport: ITransport;
@@ -336,13 +347,18 @@ type
     constructor Create( const aTransport : ITransport); virtual;
   end;
 
-  {$TYPEINFO ON}
+  {.$TYPEINFO ON}  // big NO -> may cause E2134 due to Delphis stupidity on enums vs TypeInfo
   {$RTTI EXPLICIT METHODS([vcPublic, vcPublished]) PROPERTIES([vcPublic, vcPublished])}
   IBase = interface( ISupportsToString)
     ['{AFF6CECA-5200-4540-950E-9B89E0C1C00C}']
     procedure Read( const prot: IProtocol);
     procedure Write( const prot: IProtocol);
   end;
+
+  {$TYPEINFO ON}
+  {$RTTI EXPLICIT METHODS([vcPublic, vcPublished]) PROPERTIES([vcPublic, vcPublished])}
+  IBaseWithTypeInfo = interface( IBase) end;
+
   {$RTTI EXPLICIT METHODS([]) PROPERTIES([]) FIELDS([])}
   {$IFNDEF TYPEINFO_WAS_ON} {$TYPEINFO OFF} {$ENDIF}
 
@@ -577,6 +593,30 @@ begin
   System.Move( d, Result, SizeOf(Result));
 end;
 
+
+//--- TThriftBytes ----------------------------------------------------------------------
+
+
+class operator TThriftBytes.Implicit(aRec : SysUtils.TBytes) : TThriftBytes;
+begin
+  ASSERT( @result.data = @result);         // must be first field
+  ASSERT( SizeOf(aRec) = SizeOf(result));  // must be the only field
+  result := TThriftBytes(aRec);
+end;
+
+
+class operator TThriftBytes.Implicit(aRec : TThriftBytes) : SysUtils.TBytes;
+begin
+  ASSERT( @aRec.data = @aRec);             // must be first field
+  ASSERT( SizeOf(aRec) = SizeOf(result));  // must be the only field
+  result := SysUtils.TBytes(aRec.data);
+end;
+
+
+function TThriftBytes.Length : Integer;
+begin
+  result := System.Length(data);
+end;
 
 
 { TProtocolRecursionTrackerImpl }
