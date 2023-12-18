@@ -1672,9 +1672,11 @@ void t_delphi_generator::generate_delphi_struct_definition(ostream& out,
     generate_delphi_doc(out, tstruct);
     if(rtti_) {
       indent(out) << "{$TYPEINFO ON}" << endl;
-      indent(out) << "{$RTTI INHERIT}" << endl;
+      indent(out) << "{$RTTI EXPLICIT METHODS([vcPublic, vcPublished]) PROPERTIES([vcPublic, vcPublished])}" << endl;
+      indent(out) << struct_intf_name << " = interface(IBaseWithTypeInfo)" << endl;
+    } else {
+      indent(out) << struct_intf_name << " = interface(IBase)" << endl;
     }
-    indent(out) << struct_intf_name << " = interface(IBase)" << endl;
     indent_up();
 
     generate_guid(out);
@@ -3177,13 +3179,15 @@ string t_delphi_generator::base_type_name(t_base_type* tbase) {
     return "";
   case t_base_type::TYPE_STRING:
     if (tbase->is_binary()) {
-      if (ansistr_binary_) {
+      if (ansistr_binary_)
         return "System.AnsiString";
-      } else {
-        return com_types_ ? "IThriftBytes" : "SysUtils.TBytes";
-      }
+      if( com_types_)
+        return "IThriftBytes";
+      if( rtti_)
+        return "Thrift.Protocol.TThriftBytes";  // has TypeInfo
+      return  "SysUtils.TBytes";
     } else {
-      return com_types_ ? "System.WideString" : "System.string";
+      return com_types_ ? "System.WideString" : "System.UnicodeString";
     }
   case t_base_type::TYPE_UUID:
     return "System.TGuid";
