@@ -348,6 +348,13 @@ class TSSLSocketTest(unittest.TestCase):
         self._assert_connection_success(server, ssl_context=client_context)
 
 
+# Add a dummy test because starting from python 3.12, if all tests in a test
+# file are skipped that's considered an error.
+class DummyTest(unittest.TestCase):
+    def test_dummy(self):
+        self.assertEqual(0, 0)
+
+
 if __name__ == '__main__':
     logging.basicConfig(level=logging.WARN)
     from thrift.transport.TSSLSocket import TSSLSocket, TSSLServerSocket, _match_has_ipaddress
