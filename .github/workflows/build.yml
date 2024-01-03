@@ -70,7 +70,7 @@ jobs:
       # only upload while building ubuntu-20.04
       - name: Archive built thrift compiler
         if: matrix.os == 'ubuntu-20.04'
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: thrift-compiler
           path: compiler/cpp/thrift
@@ -128,7 +128,7 @@ jobs:
 
       - name: Upload go precross artifacts
         if: matrix.go == '1.21'
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: go-precross
           if-no-files-found: error
@@ -200,7 +200,7 @@ jobs:
         run: make -C lib/java install
 
       - name: Upload java libthrift artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: libthrift
           if-no-files-found: error
@@ -213,7 +213,7 @@ jobs:
         run: make -C lib/java precross
 
       - name: Upload java precross artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: java-precross
           if-no-files-found: error
@@ -235,7 +235,7 @@ jobs:
         run: make -C lib/kotlin precross
 
       - name: Upload kotlin precross artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: kotlin-precross
           if-no-files-found: error
@@ -271,7 +271,7 @@ jobs:
         run: make -C test/swift precross
 
       - name: Upload swift precross artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: swift-precross
           if-no-files-found: error
@@ -333,7 +333,7 @@ jobs:
         run: make -C test/rs precross
 
       - name: Upload rust precross artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: rs-precross
           if-no-files-found: error
@@ -487,7 +487,7 @@ jobs:
             --client ${{ matrix.client_lang }}
 
       - name: Upload log files from failed cross test runs
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         if: failure()
         with:
           name: cross-test-log
