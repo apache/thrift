@@ -1285,6 +1285,7 @@ void t_php_generator::generate_php_struct_required_validator(ostream& out,
 void t_php_generator::generate_php_struct_json_serialize(ostream& out,
                                                          t_struct* tstruct,
                                                          bool is_result) {
+  indent(out) << "#[\\ReturnTypeWillChange]" << endl;                                                          
   indent(out) << "public function jsonSerialize() {" << endl;
   indent_up();
 
