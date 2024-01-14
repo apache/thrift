@@ -108,7 +108,7 @@ class TJSONProtocol extends TProtocol
     {
         $result = TType::STOP;
 
-        if (strlen($name) > 1) {
+        if (strlen((string) $name) > 1) {
             switch (substr($name, 0, 1)) {
                 case 'd':
                     $result = TType::DOUBLE;

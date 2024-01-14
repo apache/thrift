@@ -27,14 +27,14 @@ class Core implements TStringFunc
     {
         // specifying a null $length would return an empty string
         if ($length === null) {
-            return substr($str, $start);
+            return substr((string) $str, $start);
         }
 
-        return substr($str, $start, $length);
+        return substr((string) $str, $start, $length);
     }
 
     public function strlen($str)
     {
-        return strlen($str);
+        return strlen((string) $str);
     }
 }
