@@ -36,11 +36,11 @@ class Mbstring implements TStringFunc
             $length = $this->strlen($str) - $start;
         }
 
-        return mb_substr($str, $start, $length, '8bit');
+        return mb_substr((string) $str, $start, $length, '8bit');
     }
 
     public function strlen($str)
     {
-        return mb_strlen($str, '8bit');
+        return mb_strlen((string) $str, '8bit');
     }
 }
