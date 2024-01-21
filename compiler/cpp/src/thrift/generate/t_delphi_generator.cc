@@ -80,6 +80,7 @@ public:
     for( iter = parsed_options.begin(); iter != parsed_options.end(); ++iter) {
       if( iter->first.compare("ansistr_binary") == 0) {
         ansistr_binary_ = true;
+        pwarning(0, "The 'ansistr_binary' option is deprecated.");
       } else if( iter->first.compare("register_types") == 0) {
         register_types_ = true;
       } else if( iter->first.compare("old_names") == 0) {
