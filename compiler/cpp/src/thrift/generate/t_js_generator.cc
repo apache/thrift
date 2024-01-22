@@ -2851,12 +2851,12 @@ std::string t_js_generator::ts_function_signature(t_function* tfunction, bool in
         }
       }
       if (exception_types == "") {
-        str += "callback?: (error: void, response: " + ts_get_type(tfunction->get_returntype()) + ")=>void): ";
+        str += "callback: (error: void, response: " + ts_get_type(tfunction->get_returntype()) + ")=>void): ";
       } else {
-        str += "callback?: (error: " + exception_types + ", response: " + ts_get_type(tfunction->get_returntype()) + ")=>void): ";
+        str += "callback: (error: " + exception_types + ", response: " + ts_get_type(tfunction->get_returntype()) + ")=>void): ";
       }
     } else {
-      str += "callback?: (data: " + ts_get_type(tfunction->get_returntype()) + ")=>void): ";
+      str += "callback: (data: " + ts_get_type(tfunction->get_returntype()) + ")=>void): ";
     }
 
     if (gen_jquery_) {
