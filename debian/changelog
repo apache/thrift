@@ -1,3 +1,9 @@
+thrift (0.20.0) stable; urgency=low
+
+  * update to 0.20.0
+
+ -- Apache Thrift Developers <dev@thrift.apache.org>  Sat, 04 Feb 2024 14:55:00 +0100
+
 thrift (0.19.0) stable; urgency=low
 
   * update to 0.19.0
