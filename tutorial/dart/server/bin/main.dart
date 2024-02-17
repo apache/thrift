@@ -20,14 +20,15 @@ import 'dart:io';
 
 import 'package:args/args.dart';
 import 'package:logging/logging.dart';
+import 'package:shared/shared.dart';
+import 'package:tutorial/tutorial.dart';
+
 import 'package:thrift/thrift.dart';
 import 'package:thrift/thrift_console.dart';
-import 'package:tutorial/tutorial.dart';
-import 'package:shared/shared.dart';
 
-TProtocol _protocol;
-TProcessor _processor;
-WebSocket _webSocket;
+late TProtocol _protocol;
+late TProcessor _processor;
+late WebSocket _webSocket;
 
 main(List<String> args) {
   Logger.root.level = Level.ALL;
@@ -43,7 +44,7 @@ main(List<String> args) {
       help: 'The type of socket',
       allowedHelp: {'ws': 'WebSocket', 'tcp': 'TCP Socket'});
 
-  ArgResults results;
+  ArgResults? results;
   try {
     results = parser.parse(args);
   } catch (e) {
@@ -117,7 +118,7 @@ class CalculatorServer implements Calculator {
   Future<int> calculate(int logid, Work work) async {
     print('calulate($logid, ${work.toString()})');
 
-    int val;
+    late int val;
 
     switch (work.op) {
       case Operation.ADD:
@@ -158,6 +159,6 @@ class CalculatorServer implements Calculator {
   Future<SharedStruct> getStruct(int key) async {
     print('getStruct($key)');
 
-    return _log[key];
+    return _log[key]!;
   }
 }

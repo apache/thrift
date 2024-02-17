@@ -23,15 +23,4 @@ abstract class TBase {
 
   /// Writes the objects out to the [oprot] protocol.
   void write(TProtocol oprot);
-
-  /// Check if a field is currently set or unset, using the [fieldId].
-  bool isSet(int fieldId);
-
-  /// Get a field's value by [fieldId]. Primitive types will be wrapped in the
-  /// appropriate "boxed" types.
-  getFieldValue(int fieldId);
-
-  /// Set a field's value by [fieldId]. Primitive types must be "boxed" in the
-  /// appropriate object wrapper type.
-  setFieldValue(int fieldId, Object value);
 }

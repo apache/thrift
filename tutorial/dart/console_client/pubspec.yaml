@@ -19,14 +19,14 @@ name: tutorial_console_client
 version: 0.20.0
 description: >
   A Dart console client to implementation of the Apache Thrift tutorial
-author: Apache Thrift Developers <dev@thrift.apache.org>
 homepage: http://thrift.apache.org
+publish_to: none
 
 environment:
-  sdk: ">=1.13.0 <3.0.0"
+  sdk: ">=2.12.0 <4.0.0"
 
 dependencies:
-  args: ">=0.13.0 <2.0.0"
+  args: ^2.4.2
   collection: ^1.1.0
   shared:
     path: ../gen-dart/shared

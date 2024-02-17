@@ -1,3 +1,5 @@
+part of thrift;
+
 /// Licensed to the Apache Software Foundation (ASF) under one
 /// or more contributor license agreements. See the NOTICE file
 /// distributed with this work for additional information
@@ -14,8 +16,6 @@
 /// KIND, either express or implied. See the License for the
 /// specific language governing permissions and limitations
 /// under the License.
-
-part of thrift;
 
 /// [TMessageReader] extracts a [TMessage] from bytes.  This is used to allow a
 /// transport to inspect the message seqid and map responses to requests.
@@ -43,11 +43,9 @@ class TMessageReader {
 
 /// An internal class used to support [TMessageReader].
 class _TMessageReaderTransport extends TTransport {
-  _TMessageReaderTransport();
+  Iterator<int>? _readIterator;
 
-  Iterator<int> _readIterator;
-
-  void reset(Uint8List bytes, [int offset = 0]) {
+  void reset(Uint8List? bytes, [int offset = 0]) {
     if (bytes == null) {
       _readIterator = null;
       return;
@@ -57,28 +55,21 @@ class _TMessageReaderTransport extends TTransport {
       throw ArgumentError("The offset exceeds the bytes length");
     }
 
-    _readIterator = bytes.iterator;
-
-    for (var i = 0; i < offset; i++) {
-      _readIterator.moveNext();
-    }
+    _readIterator = bytes.skip(offset).iterator;
   }
 
   @override
-  get isOpen => true;
+  bool get isOpen => true;
 
   @override
-  Future open() => throw UnsupportedError("Unsupported in MessageReader");
+  Future<void> open() => throw UnsupportedError("Unsupported in MessageReader");
 
   @override
-  Future close() => throw UnsupportedError("Unsupported in MessageReader");
+  Future<void> close() =>
+      throw UnsupportedError("Unsupported in MessageReader");
 
   @override
-  int read(Uint8List buffer, int offset, int length) {
-    if (buffer == null) {
-      throw ArgumentError.notNull("buffer");
-    }
-
+  Future<int> read(Uint8List buffer, int offset, int length) async {
     if (offset + length > buffer.length) {
       throw ArgumentError("The range exceeds the buffer length");
     }
@@ -88,8 +79,8 @@ class _TMessageReaderTransport extends TTransport {
     }
 
     int i = 0;
-    while (i < length && _readIterator.moveNext()) {
-      buffer[offset + i] = _readIterator.current;
+    while (i < length && _readIterator!.moveNext()) {
+      buffer[offset + i] = _readIterator!.current;
       i++;
     }
 
@@ -97,9 +88,10 @@ class _TMessageReaderTransport extends TTransport {
   }
 
   @override
-  void write(Uint8List buffer, int offset, int length) =>
+  Future<void> write(Uint8List buffer, int offset, int length) async =>
       throw UnsupportedError("Unsupported in MessageReader");
 
   @override
-  Future flush() => throw UnsupportedError("Unsupported in MessageReader");
+  Future<void> flush() =>
+      throw UnsupportedError("Unsupported in MessageReader");
 }

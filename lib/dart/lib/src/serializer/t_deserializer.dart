@@ -18,18 +18,16 @@
 part of thrift;
 
 class TDeserializer {
-  final message = TMessage('Deserializer', TMessageType.ONEWAY, 1);
-  TBufferedTransport transport;
-  TProtocol protocol;
+  final TMessage message = TMessage('Deserializer', TMessageType.ONEWAY, 1);
+  late TBufferedTransport transport;
+  late TProtocol protocol;
 
-  TDeserializer({TProtocolFactory protocolFactory}) {
-    this.transport = TBufferedTransport();
+  TDeserializer({TProtocolFactory? protocolFactory}) {
+    transport = TBufferedTransport();
 
-    if (protocolFactory == null) {
-      protocolFactory = TBinaryProtocolFactory();
-    }
+    protocolFactory ??= TBinaryProtocolFactory();
 
-    this.protocol = protocolFactory.getProtocol(this.transport);
+    protocol = protocolFactory.getProtocol(transport);
   }
 
   void read(TBase base, Uint8List data) {

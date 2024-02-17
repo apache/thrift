@@ -3,14 +3,14 @@
 /// distributed with this work for additional information
 /// regarding copyright ownership. The ASF licenses this file
 /// to you under the Apache License, Version 2.0 (the
-/// "License"); you may not use this file except in compliance
+/// 'License'); you may not use this file except in compliance
 /// with the License. You may obtain a copy of the License at
 ///
 /// http://www.apache.org/licenses/LICENSE-2.0
 ///
 /// Unless required by applicable law or agreed to in writing,
 /// software distributed under the License is distributed on an
-/// "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+/// 'AS IS' BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
 /// KIND, either express or implied. See the License for the
 /// specific language governing permissions and limitations
 /// under the License.
@@ -26,50 +26,46 @@ import 'package:thrift/thrift.dart';
 
 /// A [TSocket] backed by a [WebSocket] from dart:io
 class TWebSocket implements TSocket {
-  final StreamController<TSocketState> _onStateController;
+  final StreamController<TSocketState> _onStateController =
+      StreamController.broadcast();
   @override
   Stream<TSocketState> get onState => _onStateController.stream;
 
-  final StreamController<Object> _onErrorController;
+  final StreamController<Object> _onErrorController =
+      StreamController.broadcast();
   @override
   Stream<Object> get onError => _onErrorController.stream;
 
-  final StreamController<Uint8List> _onMessageController;
+  final StreamController<Uint8List> _onMessageController =
+      StreamController.broadcast();
   @override
   Stream<Uint8List> get onMessage => _onMessageController.stream;
 
-  TWebSocket(WebSocket socket)
-      : _onStateController = StreamController.broadcast(),
-        _onErrorController = StreamController.broadcast(),
-        _onMessageController = StreamController.broadcast() {
-    if (socket == null) {
-      throw ArgumentError.notNull('socket');
-    }
+  final WebSocket _socket;
 
-    _socket = socket;
-    _socket.listen(_onMessage, onError: _onError, onDone: close);
+  TWebSocket(this._socket) {
+    _socket.listen(
+      (dynamic message) => _onMessage(message as String),
+      onError: (dynamic error) => _onError(error),
+      onDone: () => close(),
+    );
   }
 
-  WebSocket _socket;
+  @override
+  bool get isOpen =>
+      true; // Since _socket is not nullable, it's always considered open
 
   @override
-  bool get isOpen => _socket != null;
+  bool get isClosed => false; // Similarly, it's never considered closed
 
   @override
-  bool get isClosed => _socket == null;
-
-  @override
-  Future open() async {
+  Future<void> open() async {
     _onStateController.add(TSocketState.OPEN);
   }
 
   @override
-  Future close() async {
-    if (_socket != null) {
-      await _socket.close();
-      _socket = null;
-    }
-
+  Future<void> close() async {
+    await _socket.close();
     _onStateController.add(TSocketState.CLOSED);
   }
 
@@ -89,8 +85,7 @@ class TWebSocket implements TSocket {
     }
   }
 
-  void _onError(Object error) {
-    close();
+  void _onError(dynamic error) {
     _onErrorController.add('$error');
   }
 }

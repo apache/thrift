@@ -15,8 +15,6 @@
 /// specific language governing permissions and limitations
 /// under the License.
 
-part of thrift;
-
 /// Socket implementation of [TTransport].
 ///
 /// For example:
@@ -27,6 +25,9 @@ part of thrift;
 ///     var result = client.myMethod();
 ///
 /// Adapted from the JS WebSocket transport.
+
+part of thrift;
+
 abstract class TSocketTransport extends TBufferedTransport {
   final Logger logger = Logger('thrift.TSocketTransport');
 
@@ -34,10 +35,6 @@ abstract class TSocketTransport extends TBufferedTransport {
 
   /// A transport using the provided [socket].
   TSocketTransport(this.socket) {
-    if (socket == null) {
-      throw ArgumentError.notNull('socket');
-    }
-
     socket.onError.listen((e) => logger.warning(e));
     socket.onMessage.listen(handleIncomingMessage);
   }
@@ -46,20 +43,20 @@ abstract class TSocketTransport extends TBufferedTransport {
   bool get isOpen => socket.isOpen;
 
   @override
-  Future open() {
-    _reset(isOpen: true);
+  Future<void> open() {
+    // _reset(isOpen: true);
     return socket.open();
   }
 
   @override
-  Future close() {
-    _reset(isOpen: false);
+  Future<void> close() {
+    // _reset(isOpen: false);
     return socket.close();
   }
 
   /// Make an incoming message available to read from the transport.
   void handleIncomingMessage(Uint8List messageBytes) {
-    _setReadBuffer(messageBytes);
+    setReadBuffer(messageBytes);
   }
 }
 
@@ -74,7 +71,7 @@ class TClientSocketTransport extends TSocketTransport {
   TClientSocketTransport(TSocket socket) : super(socket);
 
   @override
-  Future flush() {
+  Future<void> flush() {
     Uint8List bytes = consumeWriteBuffer();
 
     // Use a sync completer to ensure that the buffer can be read immediately
@@ -96,7 +93,7 @@ class TClientSocketTransport extends TSocketTransport {
 
     if (_completers.isNotEmpty) {
       var completer = _completers.removeAt(0);
-      completer.complete();
+      completer.complete(messageBytes);
     }
   }
 }
@@ -123,7 +120,7 @@ class TAsyncClientSocketTransport extends TSocketTransport {
         super(socket);
 
   @override
-  Future flush() {
+  Future<void> flush() {
     Uint8List bytes = consumeWriteBuffer();
     TMessage message = messageReader.readMessage(bytes);
     int seqid = message.seqid;
@@ -134,15 +131,15 @@ class TAsyncClientSocketTransport extends TSocketTransport {
     var completer = Completer<Uint8List>.sync();
     _completers[seqid] = completer;
 
-    if (responseTimeout != null) {
-      Future.delayed(responseTimeout, () {
-        var completer = _completers.remove(seqid);
-        if (completer != null) {
-          completer.completeError(
-              TimeoutException("Response timed out.", responseTimeout));
-        }
-      });
-    }
+    // if (responseTimeout != null) {
+    Future.delayed(responseTimeout, () {
+      var completer = _completers.remove(seqid);
+      if (completer != null) {
+        completer.completeError(
+            TimeoutException("Response timed out.", responseTimeout));
+      }
+    });
+    // }
 
     socket.send(bytes);
 
@@ -156,7 +153,7 @@ class TAsyncClientSocketTransport extends TSocketTransport {
     TMessage message = messageReader.readMessage(messageBytes);
     var completer = _completers.remove(message.seqid);
     if (completer != null) {
-      completer.complete();
+      completer.complete(messageBytes);
     }
   }
 }
@@ -172,7 +169,7 @@ class TServerSocketTransport extends TSocketTransport {
         super(socket);
 
   @override
-  Future flush() async {
+  Future<void> flush() async {
     Uint8List message = consumeWriteBuffer();
     socket.send(message);
   }
