@@ -21,7 +21,7 @@
  * @package thrift.test
  */
 
-namespace Test\Thrift;
+namespace Test\Thrift\Fixtures;
 
 use ThriftTest\Xtruct;
 use ThriftTest\Xtruct2;

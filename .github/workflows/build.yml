@@ -76,6 +76,62 @@ jobs:
           path: compiler/cpp/thrift
           retention-days: 3
 
+  lib-php:
+    needs: compiler
+    runs-on: ubuntu-20.04
+    strategy:
+      matrix:
+        php-version: [5.6, 7.0, 7.1, 7.2, 7.3, 7.4, 8.0, 8.1, 8.2, 8.3]
+      fail-fast: false
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php-version }}
+          extensions: mbstring, intl, xml
+
+      - name: Install Dependencies
+        run: composer install
+
+      - name: Backward compatibility for unit test in php greater then 7.1
+        if: matrix.php-version > 7.0
+        run: |
+          sed -i 's/setUp()/setUp():void/' lib/php/test/Unit/*Test.php
+          sed -i 's/setUpBeforeClass()/setUpBeforeClass():void/' lib/php/test/Unit/*Test.php
+
+      - name: Run bootstrap
+        run: ./bootstrap.sh
+
+      - name: Run configure
+        run: |
+          ./configure $(echo $CONFIG_ARGS_FOR_LIBS | sed 's/without-php/with-php/' | sed 's/without-php_extension/with-php_extension/' )
+
+      - uses: actions/download-artifact@v3
+        with:
+          name: thrift-compiler
+          path: compiler/cpp
+
+      - name: Run thrift-compiler
+        run: |
+          chmod a+x compiler/cpp/thrift
+          compiler/cpp/thrift -version
+
+      - name: Build Thrift Classes
+        run: |
+          mkdir -p ./lib/php/test/Resources/packages/php
+          mkdir -p ./lib/php/test/Resources/packages/phpv
+          mkdir -p ./lib/php/test/Resources/packages/phpvo
+          mkdir -p ./lib/php/test/Resources/packages/phpjs
+          compiler/cpp/thrift --gen php              -r --out ./lib/php/test/Resources/packages/php    lib/php/test/Resources/ThriftTest.thrift
+          compiler/cpp/thrift --gen php:validate     -r --out ./lib/php/test/Resources/packages/phpv   lib/php/test/Resources/ThriftTest.thrift
+          compiler/cpp/thrift --gen php:validate,oop -r --out ./lib/php/test/Resources/packages/phpvo  lib/php/test/Resources/ThriftTest.thrift
+          compiler/cpp/thrift --gen php:json         -r --out ./lib/php/test/Resources/packages/phpjs  lib/php/test/Resources/ThriftTest.thrift
+
+      - name: Run Tests
+        run: vendor/bin/phpunit -c lib/php/phpunit.xml
+
   lib-go:
     needs: compiler
     runs-on: ubuntu-20.04
