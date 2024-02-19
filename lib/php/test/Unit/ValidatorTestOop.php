@@ -1,4 +1,5 @@
 <?php
+
 /*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements. See the NOTICE file
@@ -18,24 +19,23 @@
  * under the License.
  */
 
-namespace Test\Thrift;
-
-require __DIR__ . '/../../../../vendor/autoload.php';
+namespace Test\Thrift\Unit;
 
 use Thrift\ClassLoader\ThriftClassLoader;
 
-/**
- * Class TestValidators
- * @package Test\Thrift
- *
- * @runTestsInSeparateProcesses
+/***
+ * This test suite depends on running the compiler against the ./Resources/ThriftTest.thrift file:
+ * lib/php/test$ ../../../compiler/cpp/thrift --gen php:validate,oop -r --out ./Resources/packages/phpvo ./Resources/ThriftTest.thrift
  */
-class ValidatorTest extends BaseValidatorTest
+class ValidatorTestOop extends BaseValidatorTest
 {
     public function setUp()
     {
-        /** @var \Composer\Autoload\ClassLoader $loader */
-        $loader = require __DIR__ . '/../../../../vendor/autoload.php';
-        $loader->addPsr4('', __DIR__ . '/../packages/phpv');
+        $loader = new ThriftClassLoader();
+        $loader->registerNamespace('ThriftTest', __DIR__ . '/../Resources/packages/phpvo');
+        $loader->registerDefinition('ThriftTest', __DIR__ . '/../Resources/packages/phpvo');
+        $loader->registerNamespace('TestValidators', __DIR__ . '/../Resources/packages/phpvo');
+        $loader->registerDefinition('TestValidators', __DIR__ . '/../Resources/packages/phpvo');
+        $loader->register();
     }
 }

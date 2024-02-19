@@ -1,4 +1,5 @@
 <?php
+
 /*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements. See the NOTICE file
@@ -18,7 +19,7 @@
  * under the License.
  */
 
-namespace Test\Thrift;
+namespace Test\Thrift\Unit;
 
 use PHPUnit\Framework\TestCase;
 use Thrift\Exception\TProtocolException;
@@ -62,6 +63,7 @@ abstract class BaseValidatorTest extends TestCase
         $transport = new TMemoryBuffer("\000");
         $protocol = new TBinaryProtocol($transport);
         $bonk->read($protocol);
+        $this->assertTrue(true);
     }
 
     public function testWriteEmpty()
@@ -73,6 +75,8 @@ abstract class BaseValidatorTest extends TestCase
             $bonk->write($protocol);
             $this->fail('Bonk was able to write an empty object');
         } catch (TProtocolException $e) {
+            $this->expectExceptionMessage('Required field Bonk.message is unset!');
+            throw $e;
         }
     }
 
@@ -87,6 +91,8 @@ abstract class BaseValidatorTest extends TestCase
             $structa->write($protocol);
             $this->fail('StructA was able to write an empty object');
         } catch (TProtocolException $e) {
+            $this->expectExceptionMessage('Required field StructA.s is unset!');
+            throw $e;
         }
     }
 
@@ -114,6 +120,8 @@ abstract class BaseValidatorTest extends TestCase
     {
         if (!static::hasReadValidator($class)) {
             static::fail($class . ' class should have a read validator');
+        } else {
+            static::assertTrue(true);
         }
     }
 
@@ -121,6 +129,8 @@ abstract class BaseValidatorTest extends TestCase
     {
         if (static::hasReadValidator($class)) {
             static::fail($class . ' class should not have a write validator');
+        } else {
+            static::assertTrue(true);
         }
     }
 
@@ -128,6 +138,8 @@ abstract class BaseValidatorTest extends TestCase
     {
         if (!static::hasWriteValidator($class)) {
             static::fail($class . ' class should have a write validator');
+        } else {
+            static::assertTrue(true);
         }
     }
 
@@ -135,6 +147,8 @@ abstract class BaseValidatorTest extends TestCase
     {
         if (static::hasWriteValidator($class)) {
             static::fail($class . ' class should not have a write validator');
+        } else {
+            static::assertTrue(true);
         }
     }
 

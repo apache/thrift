@@ -216,8 +216,13 @@ RUN apt-get install -y --no-install-recommends \
       php-dev \
       php-json \
       php-pear \
+      php-mbstring \
+      php-xml \
       re2c \
       composer
+
+RUN pecl install xdebug-3.1.1 && \
+      echo "zend_extension=xdebug.so" > /etc/php/7.2/cli/conf.d/20-xdebug.ini
 
 RUN apt-get install -y --no-install-recommends \
       `# Python dependencies` \

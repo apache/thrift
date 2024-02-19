@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         bootstrap="../../vendor/autoload.php"
+         cacheResult="false"
+         colors="true"
+         convertErrorsToExceptions="true"
+         convertNoticesToExceptions="true"
+         convertWarningsToExceptions="true"
+         stopOnWarning="true"
+         stopOnFailure="true"
+         processIsolation="true"
+         xsi:noNamespaceSchemaLocation="https://schema.phpunit.de/9.3/phpunit.xsd">
+    <coverage includeUncoveredFiles="true">
+        <include>
+            <directory suffix=".php">./src</directory>
+            <directory suffix=".php">./lib</directory>
+        </include>
+    </coverage>
+    <testsuites>
+        <testsuite name="Thrift PHP Test Suite">
+            <directory>./test/Unit</directory>
+        </testsuite>
+    </testsuites>
+</phpunit>
