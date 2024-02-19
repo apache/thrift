@@ -21,7 +21,7 @@
  * @package thrift.test
  */
 
-namespace test\Thrift\Protocol;
+namespace Test\Thrift\Fixtures;
 
 class TSimpleJSONProtocolFixtures
 {

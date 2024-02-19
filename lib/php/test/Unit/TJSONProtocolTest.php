@@ -17,27 +17,20 @@
  * KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations
  * under the License.
- *
- * @package thrift.test
  */
 
-namespace Test\Thrift\Protocol;
+namespace Test\Thrift\Unit;
 
 use PHPUnit\Framework\TestCase;
-use Test\Thrift\Fixtures;
+use Test\Thrift\Fixtures\Fixtures;
+use Test\Thrift\Fixtures\TJSONProtocolFixtures;
+use Thrift\ClassLoader\ThriftClassLoader;
 use Thrift\Protocol\TJSONProtocol;
 use Thrift\Transport\TMemoryBuffer;
 
-require __DIR__ . '/../../../../vendor/autoload.php';
-
 /***
- * This test suite depends on running the compiler against the
- * standard ThriftTest.thrift file:
- *
- * lib/php/test$ ../../../compiler/cpp/thrift --gen php -r \
- *   --out ./packages ../../../test/ThriftTest.thrift
- *
- * @runTestsInSeparateProcesses
+ * This test suite depends on running the compiler against the ./Resources/ThriftTest.thrift file:
+ * lib/php/test$ ../../../compiler/cpp/thrift --gen php -r  --out ./Resources/packages/php ./Resources/ThriftTest.thrift
  */
 class TJSONProtocolTest extends TestCase
 {
@@ -46,9 +39,10 @@ class TJSONProtocolTest extends TestCase
 
     public static function setUpBeforeClass()
     {
-        /** @var \Composer\Autoload\ClassLoader $loader */
-        $loader = require __DIR__ . '/../../../../vendor/autoload.php';
-        $loader->addPsr4('', __DIR__ . '/../packages/php');
+        $loader = new ThriftClassLoader();
+        $loader->registerNamespace('ThriftTest', __DIR__ . '/../Resources/packages/php');
+        $loader->registerDefinition('ThriftTest', __DIR__ . '/../Resources/packages/php');
+        $loader->register();
 
         Fixtures::populateTestArgs();
         TJSONProtocolFixtures::populateTestArgsJSON();
@@ -265,7 +259,9 @@ class TJSONProtocolTest extends TestCase
             TJSONProtocolFixtures::$testArgsJSON['testVoid']
         );
         $args = new \ThriftTest\ThriftTest_testVoid_args();
-        $args->read($this->protocol);
+        $result = $args->read($this->protocol);
+
+        $this->assertEquals(0, $result);
     }
 
     public function testString1Read()

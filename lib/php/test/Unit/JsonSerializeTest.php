@@ -1,4 +1,5 @@
 <?php
+
 /*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements. See the NOTICE file
@@ -18,26 +19,24 @@
  * under the License.
  */
 
-namespace Test\Thrift\JsonSerialize;
+namespace Test\Thrift\Unit;
 
 use PHPUnit\Framework\TestCase;
 use stdClass;
+use Thrift\ClassLoader\ThriftClassLoader;
 
-require __DIR__ . '/../../../../vendor/autoload.php';
-
-/**
- * @runTestsInSeparateProcesses
+/***
+ * This test suite depends on running the compiler against the ./Resources/ThriftTest.thrift file:
+ * lib/php/test$ ../../../compiler/cpp/thrift --gen php:json -r  --out ./Resources/packages/phpjs ./Resources/ThriftTest.thrift
  */
 class JsonSerializeTest extends TestCase
 {
     protected function setUp()
     {
-        if (version_compare(phpversion(), '5.4', '<')) {
-            $this->markTestSkipped('Requires PHP 5.4 or newer!');
-        }
-        /** @var \Composer\Autoload\ClassLoader $loader */
-        $loader = require __DIR__ . '/../../../../vendor/autoload.php';
-        $loader->addPsr4('', __DIR__ . '/../packages/phpjs');
+        $loader = new ThriftClassLoader();
+        $loader->registerNamespace('ThriftTest', __DIR__ . '/../Resources/packages/phpjs');
+        $loader->registerDefinition('ThriftTest', __DIR__ . '/../Resources/packages/phpjs');
+        $loader->register();
     }
 
     public function testEmptyStruct()

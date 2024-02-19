@@ -21,7 +21,7 @@
  * @package thrift.test
  */
 
-namespace Test\Thrift\Protocol;
+namespace Test\Thrift\Fixtures;
 
 class TJSONProtocolFixtures
 {
