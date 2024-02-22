@@ -1,4 +1,5 @@
 <?php
+
 /*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements. See the NOTICE file
@@ -23,21 +24,36 @@
 namespace Thrift\Factory;
 
 use Thrift\Protocol\TBinaryProtocol;
+use Thrift\Transport\TTransport;
 
 /**
  * Binary Protocol Factory
  */
 class TBinaryProtocolFactory implements TProtocolFactory
 {
+    /**
+     * @var bool
+     */
     private $strictRead_ = false;
+    /**
+     * @var bool
+     */
     private $strictWrite_ = false;
 
+    /**
+     * @param bool $strictRead
+     * @param bool $strictWrite
+     */
     public function __construct($strictRead = false, $strictWrite = false)
     {
         $this->strictRead_ = $strictRead;
         $this->strictWrite_ = $strictWrite;
     }
 
+    /**
+     * @param TTransport $trans
+     * @return TBinaryProtocol
+     */
     public function getProtocol($trans)
     {
         return new TBinaryProtocol($trans, $this->strictRead_, $this->strictWrite_);

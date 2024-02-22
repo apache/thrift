@@ -1,4 +1,5 @@
 <?php
+
 /*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements. See the NOTICE file
@@ -23,6 +24,12 @@ namespace Thrift\StringFunc;
 
 class Core implements TStringFunc
 {
+    /**
+     * @param string $str
+     * @param int $start
+     * @param int|null $length
+     * @return false|string
+     */
     public function substr($str, $start, $length = null)
     {
         // specifying a null $length would return an empty string
@@ -33,6 +40,10 @@ class Core implements TStringFunc
         return substr((string) $str, $start, $length);
     }
 
+    /**
+     * @param string $str
+     * @return int
+     */
     public function strlen($str)
     {
         return strlen((string) $str);
