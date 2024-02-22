@@ -91,6 +91,7 @@ jobs:
         with:
           php-version: ${{ matrix.php-version }}
           extensions: mbstring, intl, xml
+          ini-values: "error_reporting=E_ALL"
 
       - name: Install Dependencies
         run: composer install
