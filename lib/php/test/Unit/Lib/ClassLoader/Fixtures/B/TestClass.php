@@ -18,23 +18,18 @@
  * specific language governing permissions and limitations
  * under the License.
  *
+ * ClassLoader to load Thrift library and definitions
+ * Inspired from UniversalClassLoader from Symfony 2
+ *
+ * @package thrift.classloader
  */
 
-namespace Thrift\StringFunc;
+namespace B;
 
-interface TStringFunc
+class TestClass
 {
-    /**
-     * @param string $str
-     * @param int $start
-     * @param int|null $length
-     * @return false|string
-     */
-    public function substr($str, $start, $length = null);
-
-    /**
-     * @param string $str
-     * @return int
-     */
-    public function strlen($str);
+    public function __invoke()
+    {
+        return __CLASS__;
+    }
 }

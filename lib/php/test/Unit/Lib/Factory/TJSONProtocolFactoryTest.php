@@ -18,23 +18,33 @@
  * specific language governing permissions and limitations
  * under the License.
  *
+ * @package thrift.protocol
  */
 
-namespace Thrift\StringFunc;
+namespace Test\Thrift\Unit\Lib\Factory;
 
-interface TStringFunc
+use PHPUnit\Framework\TestCase;
+use Thrift\Factory\TJSONProtocolFactory;
+use Thrift\Protocol\TJSONProtocol;
+use Thrift\Transport\TTransport;
+
+class TJSONProtocolFactoryTest extends TestCase
 {
     /**
-     * @param string $str
-     * @param int $start
-     * @param int|null $length
-     * @return false|string
+     * @return void
      */
-    public function substr($str, $start, $length = null);
+    public function testGetProtocol()
+    {
+        $transport = $this->createMock(TTransport::class);
+        $factory = new TJSONProtocolFactory();
+        $protocol = $factory->getProtocol($transport);
 
-    /**
-     * @param string $str
-     * @return int
-     */
-    public function strlen($str);
+        $this->assertInstanceOf(TJSONProtocol::class, $protocol);
+
+        $ref = new \ReflectionClass($protocol);
+        $refTrans = $ref->getProperty('trans_');
+        $refTrans->setAccessible(true);
+
+        $this->assertSame($transport, $refTrans->getValue($protocol));
+    }
 }

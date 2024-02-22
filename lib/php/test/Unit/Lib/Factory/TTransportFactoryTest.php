@@ -18,23 +18,26 @@
  * specific language governing permissions and limitations
  * under the License.
  *
+ * @package thrift.protocol
  */
 
-namespace Thrift\StringFunc;
+namespace Test\Thrift\Unit\Lib\Factory;
 
-interface TStringFunc
+use PHPUnit\Framework\TestCase;
+use Thrift\Factory\TTransportFactory;
+use Thrift\Transport\TTransport;
+
+class TTransportFactoryTest extends TestCase
 {
     /**
-     * @param string $str
-     * @param int $start
-     * @param int|null $length
-     * @return false|string
+     * @return void
      */
-    public function substr($str, $start, $length = null);
+    public function testGetTransport()
+    {
+        $transport = $this->createMock(TTransport::class);
+        $factory = new TTransportFactory();
+        $result = $factory::getTransport($transport);
 
-    /**
-     * @param string $str
-     * @return int
-     */
-    public function strlen($str);
+        $this->assertSame($transport, $result);
+    }
 }
