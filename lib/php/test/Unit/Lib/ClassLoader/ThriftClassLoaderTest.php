@@ -219,5 +219,5 @@ if (!function_exists('apcu_fetch')) {
 
             return false;
         }
-    };
+    }
 }
