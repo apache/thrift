@@ -20,7 +20,7 @@
  *
  */
 
-namespace Unit\Lib\StringFunc;
+namespace Test\Thrift\Unit\Lib\StringFunc;
 
 use PHPUnit\Framework\TestCase;
 use Thrift\StringFunc\Mbstring;
