@@ -81,7 +81,7 @@ jobs:
     runs-on: ubuntu-20.04
     strategy:
       matrix:
-        php-version: [5.6, 7.0, 7.1, 7.2, 7.3, 7.4, 8.0, 8.1, 8.2, 8.3]
+        php-version: [7.1, 7.2, 7.3, 7.4, 8.0, 8.1, 8.2, 8.3]
       fail-fast: false
     steps:
       - uses: actions/checkout@v4
@@ -94,12 +94,6 @@ jobs:
 
       - name: Install Dependencies
         run: composer install
-
-      - name: Backward compatibility for unit test in php greater then 7.1
-        if: matrix.php-version > 7.0
-        run: |
-          sed -i 's/setUp()/setUp():void/' lib/php/test/Unit/*Test.php
-          sed -i 's/setUpBeforeClass()/setUpBeforeClass():void/' lib/php/test/Unit/*Test.php
 
       - name: Run bootstrap
         run: ./bootstrap.sh

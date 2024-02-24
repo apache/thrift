@@ -29,7 +29,7 @@ use Thrift\ClassLoader\ThriftClassLoader;
  */
 class ValidatorTest extends BaseValidatorTest
 {
-    public function setUp()
+    public function setUp(): void
     {
         $loader = new ThriftClassLoader();
         $loader->registerNamespace('ThriftTest', __DIR__ . '/../Resources/packages/phpv');

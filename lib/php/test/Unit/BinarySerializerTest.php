@@ -31,7 +31,7 @@ use Thrift\Serializer\TBinarySerializer;
  */
 class BinarySerializerTest extends TestCase
 {
-    public function setUp()
+    public function setUp(): void
     {
         $loader = new ThriftClassLoader();
         $loader->registerNamespace('ThriftTest', __DIR__ . '/../Resources/packages/php');

@@ -31,7 +31,7 @@ use Thrift\ClassLoader\ThriftClassLoader;
  */
 class JsonSerializeTest extends TestCase
 {
-    protected function setUp()
+    protected function setUp(): void
     {
         $loader = new ThriftClassLoader();
         $loader->registerNamespace('ThriftTest', __DIR__ . '/../Resources/packages/phpjs');
