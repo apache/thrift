@@ -37,7 +37,7 @@ class TSimpleJSONProtocolTest extends TestCase
     private $transport;
     private $protocol;
 
-    public static function setUpBeforeClass()
+    public static function setUpBeforeClass(): void
     {
         $loader = new ThriftClassLoader();
         $loader->registerNamespace('ThriftTest', __DIR__ . '/../Resources/packages/php');
@@ -48,7 +48,7 @@ class TSimpleJSONProtocolTest extends TestCase
         TSimpleJSONProtocolFixtures::populateTestArgsSimpleJSON();
     }
 
-    public function setUp()
+    public function setUp(): void
     {
         $this->transport = new TMemoryBuffer();
         $this->protocol = new TSimpleJSONProtocol($this->transport);
