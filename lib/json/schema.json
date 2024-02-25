@@ -64,7 +64,7 @@
       "required": [ "typeId", "keyTypeId", "valueTypeId" ]
     },
     "struct-type": {
-      "title": "Struct, union and exception schema",
+      "title": "Struct, union, enum and exception schema",
       "type": "object",
       "properties": {
         "typeId": {
@@ -145,9 +145,9 @@
       "type": "object",
       "allOf": [
         { "$ref": "#/definitions/name-and-doc" },
-        { "$ref": "#/definitions/type-desc" },
         {
           "properties": {
+            "type": { "$ref": "#/definitions/type-desc" },
             "value": {
               "oneOf": [
                 { "type": "string" },
