@@ -3635,22 +3635,23 @@ void t_java_generator::generate_service_server(t_service* tservice) {
   indent(f_service_) << "public Processor(I iface) {" << endl;
   indent(f_service_) << "  super(iface, getProcessMap(new java.util.HashMap<java.lang.String, "
                         "org.apache.thrift.ProcessFunction<I, ? extends "
-                        "org.apache.thrift.TBase>>()));"
+                        "org.apache.thrift.TBase, ? extends org.apache.thrift.TBase>>()));"
                      << endl;
   indent(f_service_) << "}" << endl << endl;
 
   indent(f_service_) << "protected Processor(I iface, java.util.Map<java.lang.String, "
-                        "org.apache.thrift.ProcessFunction<I, ? extends org.apache.thrift.TBase>> "
-                        "processMap) {"
+                        "org.apache.thrift.ProcessFunction<I, ? extends org.apache.thrift.TBase, ? "
+                        "extends org.apache.thrift.TBase>> processMap) {"
                      << endl;
   indent(f_service_) << "  super(iface, getProcessMap(processMap));" << endl;
   indent(f_service_) << "}" << endl << endl;
 
-  indent(f_service_) << "private static <I extends Iface> java.util.Map<java.lang.String,  "
-                        "org.apache.thrift.ProcessFunction<I, ? extends org.apache.thrift.TBase>> "
+  indent(f_service_) << "private static <I extends Iface> java.util.Map<java.lang.String, "
+                        "org.apache.thrift.ProcessFunction<I, ? extends org.apache.thrift.TBase, "
+                        "? extends org.apache.thrift.TBase>> "
                         "getProcessMap(java.util.Map<java.lang.String, "
                         "org.apache.thrift.ProcessFunction<I, ? extends "
-                        " org.apache.thrift.TBase>> processMap) {"
+                        " org.apache.thrift.TBase, ? extends org.apache.thrift.TBase>> processMap) {"
                      << endl;
   indent_up();
   for (f_iter = functions.begin(); f_iter != functions.end(); ++f_iter) {
@@ -3702,13 +3703,13 @@ void t_java_generator::generate_service_async_server(t_service* tservice) {
   indent(f_service_) << "public AsyncProcessor(I iface) {" << endl;
   indent(f_service_) << "  super(iface, getProcessMap(new java.util.HashMap<java.lang.String, "
                         "org.apache.thrift.AsyncProcessFunction<I, ? extends "
-                        "org.apache.thrift.TBase, ?>>()));"
+                        "org.apache.thrift.TBase, ?, ? extends org.apache.thrift.TBase>>()));"
                      << endl;
   indent(f_service_) << "}" << endl << endl;
 
   indent(f_service_) << "protected AsyncProcessor(I iface, java.util.Map<java.lang.String,  "
                         "org.apache.thrift.AsyncProcessFunction<I, ? extends  "
-                        "org.apache.thrift.TBase, ?>> processMap) {"
+                        "org.apache.thrift.TBase, ?, ? extends org.apache.thrift.TBase>> processMap) {"
                      << endl;
   indent(f_service_) << "  super(iface, getProcessMap(processMap));" << endl;
   indent(f_service_) << "}" << endl << endl;
@@ -3716,9 +3717,9 @@ void t_java_generator::generate_service_async_server(t_service* tservice) {
   indent(f_service_)
       << "private static <I extends AsyncIface> java.util.Map<java.lang.String,  "
          "org.apache.thrift.AsyncProcessFunction<I, ? extends  "
-         "org.apache.thrift.TBase,?>> getProcessMap(java.util.Map<java.lang.String,  "
+         "org.apache.thrift.TBase, ?, ? extends org.apache.thrift.TBase>> getProcessMap(java.util.Map<java.lang.String,  "
          "org.apache.thrift.AsyncProcessFunction<I, ? extends  "
-         "org.apache.thrift.TBase, ?>> processMap) {"
+         "org.apache.thrift.TBase, ?, ? extends org.apache.thrift.TBase>> processMap) {"
       << endl;
   indent_up();
   for (f_iter = functions.begin(); f_iter != functions.end(); ++f_iter) {
@@ -3783,11 +3784,21 @@ void t_java_generator::generate_process_async_function(t_service* tservice, t_fu
   // Open class
   indent(f_service_) << "public static class " << make_valid_java_identifier(tfunction->get_name())
                      << "<I extends AsyncIface> extends org.apache.thrift.AsyncProcessFunction<I, "
-                     << argsname << ", " << resulttype << "> {" << endl;
+                     << argsname << ", " << resulttype << ", " << resultname << "> {" << endl;
   indent_up();
 
   indent(f_service_) << "public " << make_valid_java_identifier(tfunction->get_name()) << "() {" << endl;
   indent(f_service_) << "  super(\"" << tfunction->get_name() << "\");" << endl;
+  indent(f_service_) << "}" << endl << endl;
+
+  indent(f_service_) << java_override_annotation() << endl;
+  indent(f_service_) << "public " << resultname << " getEmptyResultInstance() {" << endl;
+  if (tfunction->is_oneway()) {
+    indent(f_service_) << "  return null;" << endl;
+  }
+  else {
+    indent(f_service_) << "  return new " << resultname << "();" << endl;
+  }
   indent(f_service_) << "}" << endl << endl;
 
   indent(f_service_) << java_override_annotation() << endl;
@@ -3931,7 +3942,7 @@ void t_java_generator::generate_process_async_function(t_service* tservice, t_fu
   indent(f_service_) << "}" << endl << endl;
 
   indent(f_service_) << java_override_annotation() << endl;
-  indent(f_service_) << "protected boolean isOneway() {" << endl;
+  indent(f_service_) << "public boolean isOneway() {" << endl;
   indent(f_service_) << "  return " << ((tfunction->is_oneway()) ? "true" : "false") << ";" << endl;
   indent(f_service_) << "}" << endl << endl;
 
@@ -3989,7 +4000,7 @@ void t_java_generator::generate_process_function(t_service* tservice, t_function
   // Open class
   indent(f_service_) << "public static class " << make_valid_java_identifier(tfunction->get_name())
                      << "<I extends Iface> extends org.apache.thrift.ProcessFunction<I, "
-                     << argsname << "> {" << endl;
+                     << argsname << ", " << resultname << "> {" << endl;
   indent_up();
 
   indent(f_service_) << "public " << make_valid_java_identifier(tfunction->get_name()) << "() {" << endl;
@@ -4002,7 +4013,7 @@ void t_java_generator::generate_process_function(t_service* tservice, t_function
   indent(f_service_) << "}" << endl << endl;
 
   indent(f_service_) << java_override_annotation() << endl;
-  indent(f_service_) << "protected boolean isOneway() {" << endl;
+  indent(f_service_) << "public boolean isOneway() {" << endl;
   indent(f_service_) << "  return " << ((tfunction->is_oneway()) ? "true" : "false") << ";" << endl;
   indent(f_service_) << "}" << endl << endl;
 
@@ -4013,11 +4024,21 @@ void t_java_generator::generate_process_function(t_service* tservice, t_function
   indent(f_service_) << "}" << endl << endl;
 
   indent(f_service_) << java_override_annotation() << endl;
+  indent(f_service_) << "public " << resultname << " getEmptyResultInstance() {" << endl;
+  if (tfunction->is_oneway()) {
+    indent(f_service_) << "  return null;" << endl;
+  }
+  else {
+    indent(f_service_) << "  return new " << resultname << "();" << endl;
+  }
+  indent(f_service_) << "}" << endl << endl;
+
+  indent(f_service_) << java_override_annotation() << endl;
   indent(f_service_) << "public " << resultname << " getResult(I iface, " << argsname
                      << " args) throws org.apache.thrift.TException {" << endl;
   indent_up();
   if (!tfunction->is_oneway()) {
-    indent(f_service_) << resultname << " result = new " << resultname << "();" << endl;
+    indent(f_service_) << resultname << " result = getEmptyResultInstance();" << endl;
   }
 
   t_struct* xs = tfunction->get_xceptions();
