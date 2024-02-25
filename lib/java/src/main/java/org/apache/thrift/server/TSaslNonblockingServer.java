@@ -255,7 +255,7 @@ public class TSaslNonblockingServer extends TServer {
         } else if (selected.isWritable()) {
           saslHandler.handleWrite();
         } else {
-          LOGGER.error("Invalid intrest op " + selected.interestOps());
+          LOGGER.error("Invalid interest op " + selected.interestOps());
           closeChannel(selected);
           continue;
         }
