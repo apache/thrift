@@ -39,7 +39,7 @@ RUN curl https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - &
 
 # dotnet (netcore)
 RUN curl https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor > /etc/apt/trusted.gpg.d/microsoft.gpg && \
-  wget -q -O /etc/apt/sources.list.d/microsoft-prod.list https://packages.microsoft.com/config/ubuntu/18.04/prod.list && \
+  wget -q -O /etc/apt/sources.list.d/microsoft-prod.list https://packages.microsoft.com/config/ubuntu/22.04/prod.list && \
   chown root:root /etc/apt/trusted.gpg.d/microsoft.gpg && \
   chown root:root /etc/apt/sources.list.d/microsoft-prod.list
 
@@ -84,7 +84,6 @@ RUN apt-get install -y --no-install-recommends \
   libboost-all-dev \
   libevent-dev \
   libssl-dev \
-  qt5-default \
   qtbase5-dev \
   qtbase5-dev-tools
 
@@ -131,7 +130,7 @@ RUN apt-get install -y --no-install-recommends \
   dotnet-apphost-pack-8.0
 
 # Erlang dependencies
-ARG ERLANG_OTP_VERSION=23.3.4.11
+ARG ERLANG_OTP_VERSION=25.3.2.9
 ARG ERLANG_REBAR_VERSION=3.18.0
 RUN apt-get update && apt-get install -y --no-install-recommends libncurses5-dev && \
   curl -ssLo /usr/local/bin/kerl https://raw.githubusercontent.com/kerl/kerl/master/kerl && chmod +x /usr/local/bin/kerl && \
@@ -168,7 +167,7 @@ RUN apt-get install -y --no-install-recommends \
   ant \
   ant-optional \
   maven \
-  openjdk-11-jdk-headless && \
+  openjdk-17-jdk-headless && \
   `# Gradle` \
   wget https://services.gradle.org/distributions/gradle-$GRADLE_VERSION-bin.zip -q -O /tmp/gradle-$GRADLE_VERSION-bin.zip && \
   (echo "3e1af3ae886920c3ac87f7a91f816c0c7c436f276a6eefdb3da152100fef72ae  /tmp/gradle-$GRADLE_VERSION-bin.zip" | sha256sum -c -) && \
@@ -280,7 +279,21 @@ RUN apt-get install -y --no-install-recommends \
 #     rm -rf /tmp/* && \
 #     rm -rf /var/tmp/*
 
+ARG user=build
+ARG group=build
+ARG uid=1000
+ARG gid=1000
+
+RUN apt-get install -y --no-install-recommends sudo && \
+    echo "Running with: UID: ${uid}, User: ${user}, GID: ${gid}, Group: ${group}" && \
+    if [ -z `cat /etc/group | grep "${group}:"` ]; then addgroup --gid ${gid} ${group}; fi && \
+    adduser --uid ${uid} --gid ${gid} --shell /bin/bash ${user} --disabled-password -q --gecos "" && \
+    echo "${user} ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
+
 ENV THRIFT_ROOT /thrift
-RUN mkdir -p $THRIFT_ROOT/src
+RUN mkdir -p $THRIFT_ROOT/src && \
+    chown -R ${uid}:${uid} $THRIFT_ROOT/
 COPY Dockerfile $THRIFT_ROOT/
 WORKDIR $THRIFT_ROOT/src
+
+USER ${user}

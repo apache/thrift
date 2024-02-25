@@ -124,10 +124,10 @@ ENV PATH /usr/lib/dart/bin:$PATH
 
 RUN apt-get install -y --no-install-recommends \
       `# dotnet core dependencies` \
-      dotnet-sdk-8.0 \
-      dotnet-runtime-8.0 \
-      aspnetcore-runtime-8.0 \
-      dotnet-apphost-pack-8.0
+      dotnet-sdk-7.0 \
+      dotnet-runtime-7.0 \
+      aspnetcore-runtime-7.0 \
+      dotnet-apphost-pack-7.0
 
 # Erlang dependencies
 ARG ERLANG_OTP_VERSION=23.3.4.11
@@ -298,7 +298,21 @@ RUN apt-get install -y --no-install-recommends \
 #     rm -rf /tmp/* && \
 #     rm -rf /var/tmp/*
 
+ARG user=build
+ARG group=build
+ARG uid=1000
+ARG gid=1000
+
+RUN apt-get install -y --no-install-recommends sudo && \
+    echo "Running with: UID: ${uid}, User: ${user}, GID: ${gid}, Group: ${group}" && \
+    if [ -z `cat /etc/group | grep "${group}:"` ]; then addgroup --gid ${gid} ${group}; fi && \
+    adduser --uid ${uid} --gid ${gid} --shell /bin/bash ${user} --disabled-password -q --gecos "" && \
+    echo "${user} ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
+
 ENV THRIFT_ROOT /thrift
-RUN mkdir -p $THRIFT_ROOT/src
+RUN mkdir -p $THRIFT_ROOT/src && \
+    chown -R ${uid}:${uid} $THRIFT_ROOT/
 COPY Dockerfile $THRIFT_ROOT/
 WORKDIR $THRIFT_ROOT/src
+
+USER ${user}
