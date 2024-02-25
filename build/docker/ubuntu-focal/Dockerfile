@@ -39,7 +39,7 @@ RUN curl https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - &
 
 # dotnet (netcore)
 RUN curl https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor > /etc/apt/trusted.gpg.d/microsoft.gpg && \
-      wget -q -O /etc/apt/sources.list.d/microsoft-prod.list https://packages.microsoft.com/config/ubuntu/18.04/prod.list && \
+      wget -q -O /etc/apt/sources.list.d/microsoft-prod.list https://packages.microsoft.com/config/ubuntu/20.04/prod.list && \
       chown root:root /etc/apt/trusted.gpg.d/microsoft.gpg && \
       chown root:root /etc/apt/sources.list.d/microsoft-prod.list
 
@@ -280,7 +280,21 @@ RUN apt-get install -y --no-install-recommends \
 #     rm -rf /tmp/* && \
 #     rm -rf /var/tmp/*
 
+ARG user=build
+ARG group=build
+ARG uid=1000
+ARG gid=1000
+
+RUN apt-get install -y --no-install-recommends sudo && \
+    echo "Running with: UID: ${uid}, User: ${user}, GID: ${gid}, Group: ${group}" && \
+    if [ -z `cat /etc/group | grep "${group}:"` ]; then addgroup --gid ${gid} ${group}; fi && \
+    adduser --uid ${uid} --gid ${gid} --shell /bin/bash ${user} --disabled-password -q --gecos "" && \
+    echo "${user} ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
+
 ENV THRIFT_ROOT /thrift
-RUN mkdir -p $THRIFT_ROOT/src
+RUN mkdir -p $THRIFT_ROOT/src && \
+    chown -R ${uid}:${uid} $THRIFT_ROOT/
 COPY Dockerfile $THRIFT_ROOT/
 WORKDIR $THRIFT_ROOT/src
+
+USER ${user}

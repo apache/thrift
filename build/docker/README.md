@@ -20,12 +20,12 @@ logic to determine their behavior:
 
 | Variable | Default | Usage |
 | -------- | ----- | ------- |
-| `DISTRO` | `ubuntu-bionic` | Set by various build jobs in `.travis.yml` to run builds in different containers.  Not intended to be set externally.|
+| `DISTRO` | `ubuntu-focal` | Set by various build jobs in `.travis.yml` to run builds in different containers.  Not intended to be set externally.|
 | `DOCKER_REPO` | `thrift/thrift-build` | The name of the Docker Hub repository to obtain and store docker images. |
 | `DOCKER_USER` | `<none>` | The Docker Hub account name containing the repository. |
 | `DOCKER_PASS` | `<none>` | The Docker Hub account password to use when pushing new tags. |
 
-For example, the default docker image that is used in builds if no overrides are specified would be: `thrift/thrift-build:ubuntu-bionic`
+For example, the default docker image that is used in builds if no overrides are specified would be: `thrift/thrift-build:ubuntu-focal`
 
 ### Forks ###
 
@@ -46,14 +46,13 @@ Docker Hub and push the resulting tags.
 
 ## Supported Containers ##
 
-The Travis CI (continuous integration) builds use the Ubuntu Bionic
-(18.04 LTS) and Xenial (16.04 LTS) images to maximize language level
+The Travis CI (continuous integration) builds use the Ubuntu Jammy
+(22.04 LTS) and Focal (20.04 LTS) images to maximize language level
 coverage.
 
 ### Ubuntu ###
 
 * focal (stable, current)
-* bionic (previous stable)
 * jammy (next stable, WIP)
 
 ## Unsupported Containers ##
@@ -105,16 +104,16 @@ Then, to pull down the current image being used to build (the same way
 Travis CI does it) - if it is out of date in any way it will build a
 new one for you:
 
-    thrift$ DOCKER_REPO=thrift/thrift-build DISTRO=ubuntu-bionic build/docker/refresh.sh
+    thrift$ DOCKER_REPO=thrift/thrift-build DISTRO=ubuntu-focal build/docker/refresh.sh
 
 To run all unit tests (just like Travis CI does):
 
-    thrift$ dockerrun thrift/thrift-build:ubuntu-bionic
+    thrift$ dockerrun thrift/thrift-build:ubuntu-focal
     root@8caf56b0ce7b:/thrift/src# build/docker/scripts/autotools.sh
 
 To run the cross tests (just like Travis CI does):
 
-    thrift$ dockerrun thrift/thrift-build:ubuntu-bionic
+    thrift$ dockerrun thrift/thrift-build:ubuntu-focal
     root@8caf56b0ce7b:/thrift/src# build/docker/scripts/cross-test.sh
 
 When you are done, you want to clean up occasionally so that docker isn't using lots of extra disk space:
@@ -136,7 +135,14 @@ If you do not want to use the same scripts Travis CI does, you can do it manuall
 
 Build the image:
 
-    thrift$ docker build -t thrift build/docker/ubuntu-bionic
+Linux/Mac:
+
+    thrift$ docker build --build-arg uid=$(id -u) --build-arg gid=$(id -g) -t thrift build/docker/ubuntu-jammy
+
+Windows:
+
+    thrift$ docker build -t thrift build/docker/ubuntu-jammy
+
 
 Open a command prompt in the image:
 
