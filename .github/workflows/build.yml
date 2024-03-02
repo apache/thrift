@@ -90,7 +90,7 @@ jobs:
         uses: shivammathur/setup-php@v2
         with:
           php-version: ${{ matrix.php-version }}
-          extensions: mbstring, intl, xml
+          extensions: mbstring, intl, xml, curl
           ini-values: "error_reporting=E_ALL"
 
       - name: Install Dependencies

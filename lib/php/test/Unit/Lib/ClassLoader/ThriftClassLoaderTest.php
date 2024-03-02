@@ -21,6 +21,7 @@
 
 namespace Test\Thrift\Unit\Lib\ClassLoader;
 
+use phpmock\phpunit\PHPMock;
 use PHPUnit\Framework\TestCase;
 use Thrift\ClassLoader\ThriftClassLoader;
 
@@ -30,7 +31,7 @@ use Thrift\ClassLoader\ThriftClassLoader;
  */
 class ThriftClassLoaderTest extends TestCase
 {
-    const APCU_PREFIX = 'test';
+    use PHPMock;
 
     /**
      * @dataProvider registerNamespaceDataProvider
@@ -42,6 +43,16 @@ class ThriftClassLoaderTest extends TestCase
         $useApcu = false,
         $apcuPrefix = null
     ) {
+        $this->getFunctionMock('Thrift\ClassLoader', 'apcu_fetch')
+             ->expects($useApcu ? $this->once() : $this->never())
+             ->with($apcuPrefix . $class)
+             ->willReturn(false);
+
+        $this->getFunctionMock('Thrift\ClassLoader', 'apcu_store')
+             ->expects($useApcu ? $this->once() : $this->never())
+             ->with($apcuPrefix . $class, $this->anything())
+             ->willReturn(true);
+
         $loader = new ThriftClassLoader($useApcu, $apcuPrefix);
         foreach ($namespaces as $namespace => $paths) {
             $loader->registerNamespace($namespace, $paths);
@@ -97,7 +108,7 @@ class ThriftClassLoaderTest extends TestCase
             'class' => '\E\TestClass',
             'isClassExist' => true,
             'useApcu' => true,
-            'apcuPrefix' => self::APCU_PREFIX,
+            'apcuPrefix' => 'APCU_PREFIX',
         ];
     }
 
@@ -111,6 +122,16 @@ class ThriftClassLoaderTest extends TestCase
         $useApcu = false,
         $apcuPrefix = null
     ) {
+        $this->getFunctionMock('Thrift\ClassLoader', 'apcu_fetch')
+             ->expects($useApcu ? $this->once() : $this->never())
+             ->with($apcuPrefix . $class)
+             ->willReturn(false);
+
+        $this->getFunctionMock('Thrift\ClassLoader', 'apcu_store')
+            ->expects($useApcu ? $this->once() : $this->never())
+             ->with($apcuPrefix . $class, $this->anything())
+             ->willReturn(true);
+
         $loader = new ThriftClassLoader($useApcu, $apcuPrefix);
         foreach ($definitions as $namespace => $paths) {
             $loader->registerDefinition($namespace, $paths);
@@ -191,33 +212,7 @@ class ThriftClassLoaderTest extends TestCase
             'class' => '\TestValidators\TestServiceClient',
             'checkInterfaceExist' => false,
             'useApcu' => true,
-            'apcuPrefix' => self::APCU_PREFIX,
+            'apcuPrefix' => 'APCU_PREFIX',
         ];
-    }
-}
-
-namespace Thrift\ClassLoader;
-
-use Test\Thrift\Unit\Lib\ClassLoader\ThriftClassLoaderTest;
-
-if (!function_exists('apcu_fetch')) {
-    {
-        function apcu_fetch($key, &$success = null)
-        {
-            if (strpos($key, ThriftClassLoaderTest::APCU_PREFIX) === false) {
-                throw new \Exception('apcu_fetch error, invalid key');
-            }
-
-            return false;
-        }
-
-        function apcu_store($key, $var, $ttl = 0)
-        {
-            if (strpos($key, ThriftClassLoaderTest::APCU_PREFIX) === false) {
-                throw new \Exception('apcu_store error, invalid key');
-            }
-
-            return false;
-        }
     }
 }

@@ -252,8 +252,10 @@ class TSocket extends TTransport
 
         if (function_exists('socket_import_stream') && function_exists('socket_set_option')) {
             // warnings silenced due to bug https://bugs.php.net/bug.php?id=70939
-            $socket = @socket_import_stream($this->handle_);
-            @socket_set_option($socket, SOL_TCP, TCP_NODELAY, 1);
+            $socket = socket_import_stream($this->handle_);
+            if ($socket !== false) {
+                @socket_set_option($socket, SOL_TCP, TCP_NODELAY, 1);
+            }
         }
     }
 
