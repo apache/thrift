@@ -17,11 +17,6 @@
  * KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations
  * under the License.
- *
- * ClassLoader to load Thrift library and definitions
- * Inspired from UniversalClassLoader from Symfony 2
- *
- * @package thrift.classloader
  */
 
 namespace D;

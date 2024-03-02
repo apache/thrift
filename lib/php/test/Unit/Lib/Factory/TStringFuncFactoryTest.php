@@ -17,12 +17,11 @@
  * KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations
  * under the License.
- *
- * @package thrift.protocol
  */
 
 namespace Test\Thrift\Unit\Lib\Factory;
 
+use phpmock\phpunit\PHPMock;
 use PHPUnit\Framework\TestCase;
 use Thrift\Factory\TStringFuncFactory;
 use Thrift\StringFunc\Core;
@@ -31,16 +30,21 @@ use Thrift\StringFunc\TStringFunc;
 
 class TStringFuncFactoryTest extends TestCase
 {
-    /**
-     * @return void
-     */
-    public function testCreate()
-    {
-        $factory = new TStringFuncFactory();
-        $stringFunc = $factory::create();
-        $this->assertInstanceOf(TStringFunc::class, $stringFunc);
-        $this->assertInstanceOf(Mbstring::class, $stringFunc);
+    use PHPMock;
 
+    /**
+     * @dataProvider createDataProvider
+     */
+    public function testCreate(
+        $mbstringFuncOverload,
+        $expectedClass
+    ) {
+        $this->getFunctionMock('Thrift\Factory', 'ini_get')
+             ->expects($this->once())
+             ->with('mbstring.func_overload')
+             ->willReturn($mbstringFuncOverload);
+
+        $factory = new TStringFuncFactory();
         /**
          * it is a hack to nullable the instance of TStringFuncFactory, and get a new instance based on the new ini_get value
          */
@@ -50,25 +54,21 @@ class TStringFuncFactoryTest extends TestCase
         $refInstance->setValue($factory, null);
 
         $stringFunc = $factory::create();
+
         $this->assertInstanceOf(TStringFunc::class, $stringFunc);
-        $this->assertInstanceOf(Core::class, $stringFunc);
+        $this->assertInstanceOf($expectedClass, $stringFunc);
     }
-}
 
+    public function createDataProvider()
+    {
+        yield 'mbstring' => [
+            'mbstring.func_overload' => 2,
+            'expected' => Mbstring::class
+        ];
 
-namespace Thrift\Factory;
-
-function ini_get($key)
-{
-    static $count = 0;
-    if ($key === 'mbstring.func_overload') {
-        if ($count === 0) {
-            $count++;
-            return 2;
-        } else {
-            return 0;
-        }
-    } else {
-        return \ini_get($key);
+        yield 'string' => [
+            'mbstring.func_overload' => 0,
+            'expected' => Core::class
+        ];
     }
 }
