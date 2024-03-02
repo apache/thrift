@@ -1,4 +1,5 @@
 <?php
+
 /*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements. See the NOTICE file
@@ -227,7 +228,6 @@ class TCurlClient extends TTransport
             register_shutdown_function(array('Thrift\\Transport\\TCurlClient', 'closeCurlHandle'));
             self::$curlHandle = curl_init();
             curl_setopt(self::$curlHandle, CURLOPT_RETURNTRANSFER, true);
-            curl_setopt(self::$curlHandle, CURLOPT_BINARYTRANSFER, true);
             curl_setopt(self::$curlHandle, CURLOPT_USERAGENT, 'PHP/TCurlClient');
             curl_setopt(self::$curlHandle, CURLOPT_CUSTOMREQUEST, 'POST');
             curl_setopt(self::$curlHandle, CURLOPT_FOLLOWLOCATION, true);
@@ -238,9 +238,11 @@ class TCurlClient extends TTransport
         $fullUrl = $this->scheme_ . "://" . $host . $this->uri_;
 
         $headers = array();
-        $defaultHeaders = array('Accept' => 'application/x-thrift',
+        $defaultHeaders = array(
+            'Accept' => 'application/x-thrift',
             'Content-Type' => 'application/x-thrift',
-            'Content-Length' => TStringFuncFactory::create()->strlen($this->request_));
+            'Content-Length' => TStringFuncFactory::create()->strlen($this->request_)
+        );
         foreach (array_merge($defaultHeaders, $this->headers_) as $key => $value) {
             $headers[] = "$key: $value";
         }
@@ -292,10 +294,11 @@ class TCurlClient extends TTransport
     {
         try {
             if (self::$curlHandle) {
-                curl_close(self::$curlHandle);
+                curl_close(self::$curlHandle); #This function has no effect. Prior to PHP 8.0.0, this function was used to close the resource.
                 self::$curlHandle = null;
             }
         } catch (\Exception $x) {
+            #it's not possible to throw an exception by calling a function that has no effect
             error_log('There was an error closing the curl handle: ' . $x->getMessage());
         }
     }
