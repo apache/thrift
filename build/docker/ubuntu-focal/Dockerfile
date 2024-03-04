@@ -32,6 +32,18 @@ RUN apt-get update -yq && \
       software-properties-common \
       wget
 
+# Create a user
+ARG user=build
+ARG group=build
+ARG uid=1000
+ARG gid=1000
+
+RUN apt-get install -y --no-install-recommends sudo && \
+    echo "Running with: UID: ${uid}, User: ${user}, GID: ${gid}, Group: ${group}" && \
+    if [ -z `cat /etc/group | grep "${group}:"` ]; then addgroup --gid ${gid} ${group}; fi && \
+    adduser --uid ${uid} --gid ${gid} --shell /bin/bash ${user} --disabled-password -q --gecos "" && \
+    echo "${user} ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
+
 # Dart
 RUN curl https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - && \
       curl https://storage.googleapis.com/download.dartlang.org/linux/debian/dart_stable.list > \
@@ -154,13 +166,24 @@ RUN curl -fsSL "$GOLANG_DOWNLOAD_URL" -o golang.tar.gz && \
       ln -s /usr/local/go/bin/go /usr/local/bin && \
       rm golang.tar.gz
 
-RUN apt-get install -y --no-install-recommends \
-      `# Haxe dependencies` \
-      haxe \
-      neko \
-      neko-dev && \
-      haxelib setup --always /usr/share/haxe/lib && \
-      haxelib install --always hxcpp 2>&1 > /dev/null
+# HAXE
+ARG HAXE_VERSION=4.2.1
+ARG NEKO_VERSION=2.3.0
+RUN cd $HOME && \
+    `# Haxe dependencies` && \
+    wget https://github.com/HaxeFoundation/haxe/releases/download/${HAXE_VERSION}/haxe-${HAXE_VERSION}-linux64.tar.gz && \
+    tar xvf haxe-${HAXE_VERSION}-linux64.tar.gz && \
+    rm haxe-${HAXE_VERSION}-linux64.tar.gz && \
+    mv haxe_* /opt/haxe && \
+    wget https://github.com/HaxeFoundation/neko/releases/download/v`echo ${NEKO_VERSION} | sed "s/\./-/g"`/neko-${NEKO_VERSION}-linux64.tar.gz && \
+    tar xvf neko-${NEKO_VERSION}-linux64.tar.gz && \
+    rm neko-${NEKO_VERSION}-linux64.tar.gz && \
+    mv neko-* /opt/neko
+ENV PATH /opt/haxe:/opt/neko:$PATH
+RUN echo "/opt/neko" > /etc/ld.so.conf.d/neko.conf && \
+    ldconfig && \
+    haxelib setup --always /usr/share/haxe/lib && \
+    haxelib install --always hxcpp 2>&1 > /dev/null
 
 ENV GRADLE_VERSION="8.4"
 RUN apt-get install -y --no-install-recommends \
@@ -240,9 +263,11 @@ RUN apt-get install -y --no-install-recommends \
       ruby-dev \
       ruby-bundler
 
-# Rust dependencies
-RUN curl https://sh.rustup.rs -sSf | sh -s -- --default-toolchain 1.65.0 -y
-ENV PATH /root/.cargo/bin:$PATH
+USER ${user}
+RUN `# Rust dependencies` \
+    curl https://sh.rustup.rs -sSf | sh -s -- --default-toolchain 1.65.0 -y
+ENV PATH /home/${user}/.cargo/bin:$PATH
+USER root
 
 # Swift on Linux for cross tests
 RUN apt-get install -yq \
@@ -279,17 +304,6 @@ RUN apt-get install -y --no-install-recommends \
 #     rm -rf /var/lib/apt/lists/* && \
 #     rm -rf /tmp/* && \
 #     rm -rf /var/tmp/*
-
-ARG user=build
-ARG group=build
-ARG uid=1000
-ARG gid=1000
-
-RUN apt-get install -y --no-install-recommends sudo && \
-    echo "Running with: UID: ${uid}, User: ${user}, GID: ${gid}, Group: ${group}" && \
-    if [ -z `cat /etc/group | grep "${group}:"` ]; then addgroup --gid ${gid} ${group}; fi && \
-    adduser --uid ${uid} --gid ${gid} --shell /bin/bash ${user} --disabled-password -q --gecos "" && \
-    echo "${user} ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
 
 ENV THRIFT_ROOT /thrift
 RUN mkdir -p $THRIFT_ROOT/src && \
