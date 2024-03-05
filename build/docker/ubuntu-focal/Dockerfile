@@ -236,10 +236,13 @@ RUN apt-get install -y --no-install-recommends \
 
 RUN apt-get install -y --no-install-recommends \
       `# Php dependencies` \
-      php \
-      php-cli \
-      php-dev \
-      php-json \
+      php7.4 \
+      php7.4-cli \
+      php7.4-dev \
+      php7.4-mbstring \
+      php7.4-xml \
+      php7.4-curl \
+      php7.4-xdebug \
       php-pear \
       re2c \
       composer
