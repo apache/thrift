@@ -235,10 +235,13 @@ RUN apt-get install -y --no-install-recommends \
 
 RUN apt-get install -y --no-install-recommends \
   `# Php dependencies` \
-  php \
-  php-cli \
-  php-dev \
-  php-json \
+  php8.1 \
+  php8.1-cli \
+  php8.1-dev \
+  php8.1-mbstring \
+  php8.1-xml \
+  php8.1-curl \
+  php8.1-xdebug \
   php-pear \
   re2c \
   composer
