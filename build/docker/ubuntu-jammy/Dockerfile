@@ -40,9 +40,11 @@ ARG gid=1000
 
 RUN apt-get install -y --no-install-recommends sudo && \
     echo "Running with: UID: ${uid}, User: ${user}, GID: ${gid}, Group: ${group}" && \
-    if [ -z `cat /etc/group | grep "${group}:"` ]; then addgroup --gid ${gid} ${group}; fi && \
-    adduser --uid ${uid} --gid ${gid} --shell /bin/bash ${user} --disabled-password -q --gecos "" && \
-    echo "${user} ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
+    if [ -z `cat /etc/group | grep "${group}:"` ] && [ -z `cat /etc/group | grep ":${gid}:"` ]; then addgroup --gid ${gid} ${group}; fi && \
+    if [ -z `cat /etc/passwd | grep "${user}:"` ] && [ -z `cat /etc/passwd | grep ":${uid}:"` ]; then adduser --uid ${uid} --gid ${gid} --shell /bin/bash ${user} --disabled-password -q --gecos ""; fi && \
+    echo "${user} ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers && \
+    mkdir -p /home/${user} && \
+    chown -R ${user}:${group} /home/${user}
 
 # Dart
 RUN curl https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - && \
@@ -180,9 +182,13 @@ RUN cd $HOME && \
     mv neko-* /opt/neko
 ENV PATH /opt/haxe:/opt/neko:$PATH
 RUN echo "/opt/neko" > /etc/ld.so.conf.d/neko.conf && \
-    ldconfig && \
-    haxelib setup --always /usr/share/haxe/lib && \
-    haxelib install --always hxcpp 2>&1 > /dev/null
+    ldconfig
+USER ${user}
+RUN mkdir -p $HOME/haxe/lib && \
+    haxelib setup --always $HOME/haxe/lib && \
+    haxelib install --always hxcpp 2>&1 > /dev/null && \
+    haxelib install --always uuid 2>&1 > /dev/null
+USER root
 
 ENV GRADLE_VERSION="8.4"
 RUN apt-get install -y --no-install-recommends \
