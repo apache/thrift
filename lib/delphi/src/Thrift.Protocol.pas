@@ -443,6 +443,7 @@ type
     procedure WriteI64( const i64: Int64); override;
     procedure WriteDouble( const d: Double); override;
     procedure WriteBinary( const b: TBytes); override;
+    procedure WriteBinary( const bytes : IThriftBytes); overload; override;
     procedure WriteUuid( const uuid: TGuid); override;
 
     function ReadMessageBegin: TThriftMessage; override;
@@ -509,6 +510,7 @@ type
     procedure WriteString( const s: string ); override;
     procedure WriteAnsiString( const s: AnsiString); override;
     procedure WriteBinary( const b: TBytes); override;
+    procedure WriteBinary( const bytes : IThriftBytes); overload; override;
     procedure WriteUuid( const uuid: TGuid); override;
 
     function ReadMessageBegin: TThriftMessage; override;
@@ -749,6 +751,8 @@ end;
 
 
 procedure TProtocolImpl.WriteBinary( const bytes : IThriftBytes);
+// This implementation works, but is rather inefficient due to the extra memory allocation
+// Consider overwriting this for your transport implementation
 var tmp : TBytes;
 begin
   SetLength( tmp, bytes.Count);
@@ -1112,6 +1116,14 @@ begin
   iLen := Length(b);
   WriteI32( iLen);
   if iLen > 0 then FTrans.Write(b, 0, iLen);
+end;
+
+procedure TBinaryProtocolImpl.WriteBinary( const bytes : IThriftBytes);
+var iLen : Integer;
+begin
+  iLen := bytes.Count;
+  WriteI32( iLen);
+  if iLen > 0 then FTrans.Write( bytes.QueryRawDataPtr, 0, iLen);
 end;
 
 procedure TBinaryProtocolImpl.WriteUuid( const uuid: TGuid);
@@ -1515,6 +1527,12 @@ end;
 procedure TProtocolDecorator.WriteBinary( const b: TBytes);
 begin
   FWrappedProtocol.WriteBinary( b);
+end;
+
+
+procedure TProtocolDecorator.WriteBinary( const bytes : IThriftBytes);
+begin
+  FWrappedProtocol.WriteBinary( bytes);
 end;
 
 

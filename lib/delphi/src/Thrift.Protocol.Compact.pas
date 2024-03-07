@@ -176,6 +176,7 @@ type
     procedure WriteI64( const i64: Int64); override;
     procedure WriteDouble( const dub: Double); override;
     procedure WriteBinary( const b: TBytes); overload; override;
+    procedure WriteBinary( const bytes : IThriftBytes); overload; override;
     procedure WriteUuid( const uuid: TGuid); override;
 
   private  // unit visible stuff
@@ -541,6 +542,14 @@ begin
   WriteVarint32( Cardinal(Length(b)));
   Transport.Write( b);
 end;
+
+
+procedure TCompactProtocolImpl.WriteBinary( const bytes : IThriftBytes);
+begin
+  WriteVarint32( Cardinal(bytes.Count));
+  Transport.Write( bytes.QueryRawDataPtr, 0, bytes.Count);
+end;
+
 
 procedure TCompactProtocolImpl.WriteUuid( const uuid: TGuid);
 var network : TGuid;  // in network order (Big Endian)
