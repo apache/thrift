@@ -81,6 +81,7 @@ type
 
     procedure Test_Serializer_Deserializer;
     procedure Test_COM_Types;
+    procedure Test_ThriftBytesCTORs;
     procedure Test_OneOfEach(     const method : TMethod; const factory : TFactoryPair; const stream : TFileStream);
     procedure Test_CompactStruct( const method : TMethod; const factory : TFactoryPair; const stream : TFileStream);
 
@@ -325,11 +326,28 @@ begin
 end;
 
 
+procedure TTestSerializer.Test_ThriftBytesCTORs;
+var one, two : IThriftBytes;
+    bytes : TBytes;
+    sAscii : AnsiString;
+begin
+  sAscii := 'ABC/xzy';
+  bytes  := TEncoding.ASCII.GetBytes(sAscii);
+
+  one := TThriftBytesImpl.Create( PAnsiChar(sAscii), Length(sAscii));
+  two := TThriftBytesImpl.Create( bytes, TRUE);
+
+  ASSERT( one.Count = two.Count);
+  ASSERT( CompareMem( one.QueryRawDataPtr, two.QueryRawDataPtr, one.Count));
+end;
+
+
 procedure TTestSerializer.RunTests;
 begin
   try
     Test_Serializer_Deserializer;
     Test_COM_Types;
+    Test_ThriftBytesCTORs;
   except
     on e:Exception do begin
       Writeln( e.ClassName+': '+ e.Message);

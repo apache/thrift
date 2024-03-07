@@ -28,6 +28,7 @@ uses
   Classes,
   SysUtils,
   Contnrs,
+  Math,
   Thrift.Exception,
   Thrift.Stream,
   Thrift.Utils,
@@ -388,6 +389,7 @@ type
     constructor Create; overload;
     constructor Create( const bytes : TBytes); overload;
     constructor Create( var bytes : TBytes; const aTakeOwnership : Boolean = FALSE); overload;
+    constructor Create( const pData : Pointer; const nCount : Integer); overload;
 
     function ToString : string; override;
   end;
@@ -799,6 +801,13 @@ begin
   if aTakeOwnership
   then SwapPointer( FData, bytes)
   else FData := bytes; // copies the data
+end;
+
+
+constructor TThriftBytesImpl.Create( const pData : Pointer; const nCount : Integer);
+begin
+  SetLength(FData, Max(nCount,0));
+  if Length(FData) > 0 then Move( pData^, FData[0], Length(FData));
 end;
 
 
