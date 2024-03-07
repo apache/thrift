@@ -332,7 +332,7 @@ var one, two : IThriftBytes;
     sAscii : AnsiString;
 begin
   sAscii := 'ABC/xzy';
-  bytes  := TEncoding.ASCII.GetBytes(sAscii);
+  bytes  := TEncoding.ASCII.GetBytes(string(sAscii));
 
   one := TThriftBytesImpl.Create( PAnsiChar(sAscii), Length(sAscii));
   two := TThriftBytesImpl.Create( bytes, TRUE);
