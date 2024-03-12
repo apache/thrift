@@ -1,3 +1,4 @@
+
 # Apache Thrift Changelog
 
 ## 0.20.0
@@ -33,6 +34,12 @@
 
 - [THRIFT-5635]https://issues.apache.org/jira/browse/THRIFT-5635 - Replace some removed functions with new counterparts
 
+### Go
+
+- [THRIFT-5744]https://issues.apache.org/jira/browse/THRIFT-5744 - Switch to slog for go library
+- [THRIFT-5745]https://issues.apache.org/jira/browse/THRIFT-5745 - Implement slog.LogValuer on go TStructs
+
+
 ### Haxe
 
 - [THRIFT-5734]https://issues.apache.org/jira/browse/THRIFT-5734 - generated code may lack required capitalization at class names
@@ -54,6 +61,9 @@
 - [THRIFT-5754]https://issues.apache.org/jira/browse/THRIFT-5754 - Fix PHP 8.1 deprecates passing null to non-nullable internal function parameters
 - [THRIFT-5753]https://issues.apache.org/jira/browse/THRIFT-5753 - PHP 8.1 deprecated warning about return type in jsonSerialize functions
 
+### Python
+
+- [THRIFT-5688]https://issues.apache.org/jira/browse/THRIFT-5688 - Add PyPI publishing github actions
 
 ## 0.19.0
 
