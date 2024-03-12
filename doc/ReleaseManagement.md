@@ -275,8 +275,9 @@ All Apache Thrift releases go through a 72-hour final release candidate voting p
     The CHANGES list for this release is available at:
     https://github.com/apache/thrift/blob/release/1.0.0/CHANGES.md
 
-
     Please download, verify sig/sum, install and test the libraries and languages of your choice.
+
+    I start this voting thread with my own +1 vote.
 
     This vote will close in 72 hours on 2019-07-06 21:00 UTC
 
